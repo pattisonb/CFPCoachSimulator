@@ -66,6 +66,9 @@ batch of 100 games takes about 5 seconds on Render's free CPU.
 | `fetch_results.py` | Downloads the 2026 FBS results played so far from NCAA.com into `data/season_games.json` |
 | `calibrate_season.py` | Replays every real 2026 game N times and compares predicted and actual margins |
 | `calibrate.py` | Per-team stat benchmarks against FBS 2025 averages (`league` mode uses the real rosters) |
+| `fetch_boxscores.py` | Downloads every played game's player box score into `data/boxscores/` |
+| `derive_tendencies.py` | Each team's real 2026 pass rate, pace and usage shares, used by `build_teams.py` |
+| `calibrate_players.py` | Compares sim player lines and usage shares with the real box scores |
 | `smoke_test.py` | Runs N games and checks that every team's stats add up to its score |
 
 ## API
@@ -86,7 +89,7 @@ break tackle to elusiveness, man and zone coverage to coverage, power and finess
 plus block shedding to pass rush, and so on (the full map is in the file's docstring).
 Every attribute is then re-centred so that the league-average FBS starter at that position
 group sits at the engine's neutral rating, with the spread between players scaled by
-`SPREAD_SCALE` (1.30, set by the season replay). The engine's formulas work on rating
+`SPREAD_SCALE` (1.38, set by the season replay). The engine's formulas work on rating
 differences, so this keeps a league of these teams playing like FBS football while
 keeping who is better than whom. Starters come from the data's depth chart (11
 personnel on offense, nickel on defense); the rest of the 85-man roster rotates in on fatigue.
@@ -118,11 +121,11 @@ the real venue, compared with the real score.
 
 | Measure | Sim | Reference |
 |---|---|---|
-| Straight-up picks correct | 74.5% | Vegas favorites win about 75-78% |
-| Margin error (mean absolute / RMS) | 12.9 / 16.6 | Closing spreads: about 12-13 / 16-17 |
-| Slope of actual on predicted margin | 1.00 | 1.0 means rating gaps are worth exactly what the sim says |
-| Home bias (actual minus predicted, home games) | -0.4 points | 0 |
-| Combined points, actual vs predicted | 52.2 vs 50.3 | |
+| Straight-up picks correct | 71.5% | Vegas favorites win about 75-78% |
+| Margin error (mean absolute / RMS) | 13.3 / 16.8 | Closing spreads: about 12-13 / 16-17 |
+| Slope of actual on predicted margin | 0.94 | 1.0 means rating gaps are worth exactly what the sim says |
+| Home bias (actual minus predicted, home games) | -0.6 points | 0 |
+| Combined points, actual vs predicted | 52.2 vs 50.4 | |
 
 By predicted margin, the real win rates track the sim's probabilities: home teams the sim
 makes 7-to-14-point favorites won 76% (sim 73%), 14-to-21 won 84% (sim 86%), 21 or more
@@ -148,6 +151,68 @@ TeamRankings on 2026-10-15:
 fourth-down conversions slightly easy. Average drive start after a kickoff is the own 27
 (real: 27 to 30). Every constant lives in `engine/game_config.py`; change one, rerun the
 two scripts, and compare.
+
+## Player stat lines against real box scores
+
+`fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed
+(per-player passing, rushing, receiving, kicking, punting, returns and defense, plus team
+plays, third and fourth downs, penalties and fumbles) into `data/boxscores/`.
+`derive_tendencies.py` turns those into each team's real 2026 pass rate, pace, QB run
+share, back and receiver shares and fourth-down rate (`data/observed_tendencies.json`),
+and `build_teams.py` uses them in place of the generated coach tendencies for every team
+with two or more box scores. `calibrate_players.py` replays each game and compares the
+sim's player lines with the real ones. Rerun all three after each week.
+
+Results on 333 games (8 sims each), sim against real, per team-game:
+
+| Metric | Real | Sim | Correlation | Metric | Real | Sim | Correlation |
+|---|---|---|---|---|---|---|---|
+| Pass rate | 45.8% | 44.3% | 0.64 | RB1 carries | 14.0 | 14.5 | 0.35 |
+| Pass attempts | 30.2 | 30.3 | 0.58 | RB1 share of back carries | 53% | 48% | low |
+| QB1 attempts | 28.1 | 30.3 | 0.54 | Top receiver catches | 5.6 | 5.9 | 0.33 |
+| QB1 pass yards | 208 | 228 | 0.41 | Top receiver share | 30.5% | 30.5% | low |
+| QB1 carries (sacks included) | 8.3 | 7.8 | 0.70 | Top three receivers share | 66% | 65% | low |
+| Plays | 65.8 | 68.5 | 0.36 | FG attempts | 1.4 | 1.4 | low |
+
+The correlation column says whether the sim knows which teams and players get more:
+pass rate and QB usage now track real teams (they were near zero before the observed
+tendencies were fed in). The sim's starting quarterback is the real one in 73% of
+team-games, the lead back in 43%, the top receiver in 25%; the shares are right on
+average but which player gets them is still mostly set by the EA ratings. QB1 passing
+yards run about 20 high because the sim's starter takes every attempt while real
+starters sit in blowouts.
+
+## Player stat lines and usage (box score calibration)
+
+`fetch_boxscores.py` pulls the full player box score for every final game from NCAA.com
+(the same feed its game pages use), `derive_tendencies.py` turns them into each team's
+observed 2026 pass rate, pace, quarterback run share and fourth-down rate (which
+`build_teams.py` feeds into the sim in place of the generated coach tendencies), and
+`calibrate_players.py` replays every game 8 times and compares the sim's player lines
+with the real ones. Per team-game, 333 games (bias is sim minus real; "corr" is whether
+the sim knows which teams or players get more):
+
+| Metric | Real | Sim | Corr | Metric | Real | Sim | Corr |
+|---|---|---|---|---|---|---|---|
+| Pass rate % | 45.8 | 44.2 | 0.63 | RB1 carries | 14.0 | 13.8 | 0.39 |
+| Plays | 65.8 | 66.7 | 0.34 | RB1 share of RB carries % | 52.9 | 46.8 | 0.09 |
+| Total yards | 373 | 374 | 0.43 | RB2 share % | 26.9 | 32.8 | 0.01 |
+| QB1 attempts | 28.1 | 29.5 | 0.50 | Top receiver catches | 5.6 | 5.6 | 0.36 |
+| QB1 pass yards | 208 | 224 | 0.41 | Top receiver share % | 30.5 | 29.8 | 0.10 |
+| QB1 carries (incl. sacks) | 8.3 | 7.6 | 0.69 | Top 3 receivers share % | 65.8 | 63.6 | 0.18 |
+| QB1 pass TD | 1.4 | 1.8 | 0.32 | FG attempts | 1.4 | 1.3 | 0.12 |
+
+The sim's starting quarterback is the real one in 73% of team-games, its leading rusher
+the real one in 45%, its leading receiver in 26% (the real leader changes week to week).
+Still open: the lead back's carry share runs about six points low because the fatigue
+rotation hands the backup more series than real coaches do, and the starting quarterback
+throws for about 15 yards a game too many. Before this calibration the sim did not know
+which teams throw more (correlation 0.09) and gave quarterbacks a fifth of their real carries.
+
+Weekly refresh, in order: `python fetch_results.py`, `python fetch_boxscores.py`,
+`python derive_tendencies.py`, `python build_teams.py`, then the three calibration scripts.
+footballdb.com (season team stat tables, past seasons) is reachable from Python as well
+and is a good cross-check for the team-level numbers; NCAA.com stays the primary source.
 
 ## Changes from the original football_sim engine
 

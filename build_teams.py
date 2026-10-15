@@ -42,7 +42,7 @@ SRC = ROOT / "cfb_sim_data"
 OUT = ROOT / "data" / "engine_teams.json"
 
 NEUTRAL = 55          # engine reference rating (engine/game_config.py)
-SPREAD_SCALE = 1.30   # rating points of spread kept per source point; tuned in calibrate_season.py
+SPREAD_SCALE = 1.38   # rating points of spread kept per source point; tuned in calibrate_season.py
 
 POSITION_MAP = {
     "QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE",

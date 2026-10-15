@@ -123,7 +123,7 @@ INT_PER_QB_POINT = 0.0013       # per point of decision making above neutral (fe
 INT_GUESSED_BONUS = 0.02
 INT_MIN, INT_MAX = 0.02, 0.22
 PICK_SIX_CHANCE = 0.09          # of interceptions
-PASS_YARDS_WR = (12.3, 5.5)     # gauss mean, sd for WR completions
+PASS_YARDS_WR = (12.6, 5.5)     # gauss mean, sd for WR completions
 PASS_YARDS_TE = (9.5, 4.5)
 PASS_YARDS_RB = (5.0, 4.0)
 PASS_SPEED_EFFECT = 0.007       # yards multiplier per point of receiver speed minus DB speed
@@ -134,7 +134,7 @@ SCRAMBLE_CHANCE = 0.13          # of plays with no completion and no pick
 RECEPTION_FUMBLE_CHANCE = 0.010
 
 # ----- Rushing -----
-RUSH_BASE_YARDS = (3.3, 2.7)    # gauss mean, sd
+RUSH_BASE_YARDS = (3.4, 2.7)    # gauss mean, sd
 RUSH_PER_LINE_POINT = 0.040     # yards per point of (run blocking - run defense)
 RUSH_PER_CARRIER_POINT = 0.035  # yards per point of carrier rating above neutral
 RUSH_GUESSED = -0.9
@@ -182,5 +182,5 @@ KICKOFF_RETURN_TD_CHANCE = 0.004
 # ----- Usage shares (calibrated against 2026 box scores, see calibrate_players.py) -----
 TARGET_WEIGHT_POWER = 5.0       # receiver target weight = rating ** power (steeper = more concentrated)
 QB_DESIGNED_RUN_SHARE = 0.06    # default share of carries that are designed QB runs (observed per team overrides)
-BACKUP_RB_ROTATION = 0.15       # chance the sub is the next back down rather than the best one on the bench
+BACKUP_RB_ROTATION = 0.40       # chance the sub is the next back down rather than the best one on the bench
 SKILL_SUB_FATIGUE = 62          # fatigue level at which RB/WR/TE starters rotate out (was 50)
