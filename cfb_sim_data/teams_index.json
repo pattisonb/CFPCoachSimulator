@@ -1,0 +1,10722 @@
+[
+ {
+  "slug": "air-force",
+  "school_name": "United States Air Force Academy",
+  "short_name": "Air Force",
+  "abbreviation": "AFA",
+  "mascot": "Falcons",
+  "city": "USAF Academy",
+  "state": "CO",
+  "conference": "Mountain West",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Falcon Stadium",
+   "capacity": 46692,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Air Force Blue",
+    "hex": "#003087"
+   },
+   "secondary": {
+    "name": "Silver",
+    "hex": "#8A8D8F"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "army",
+   "navy"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 69,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 57.7,
+   "defense": 55.8,
+   "special_teams": 39.0,
+   "overall": 55.0,
+   "roster_avg": 47.0,
+   "position_groups": {
+    "QB": 67,
+    "RB": 52,
+    "WR": 47.3,
+    "TE": 52,
+    "OL": 60.6,
+    "DL": 51,
+    "LB": 68,
+    "DB": 54.8,
+    "K": 36,
+    "P": 42
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Troy Calhoun",
+    "overall": 51
+   },
+   "offensive_coordinator": {
+    "name": "Mike Thiessen",
+    "overall": 58
+   },
+   "defensive_coordinator": {
+    "name": "Steve Russ",
+    "overall": 35
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "akron",
+  "school_name": "The University of Akron",
+  "short_name": "Akron",
+  "abbreviation": "AKR",
+  "mascot": "Zips",
+  "city": "Akron",
+  "state": "OH",
+  "conference": "MAC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "InfoCision Stadium-Summa Field",
+   "capacity": 30000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Blue",
+    "hex": "#041E42"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#A89968"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "kent-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 58,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 55.2,
+   "defense": 51.1,
+   "special_teams": 48.5,
+   "overall": 52.7,
+   "roster_avg": 45.2,
+   "position_groups": {
+    "QB": 50,
+    "RB": 71,
+    "WR": 61.3,
+    "TE": 58,
+    "OL": 50.8,
+    "DL": 52.2,
+    "LB": 50,
+    "DB": 50.6,
+    "K": 49,
+    "P": 48
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Joe Moorhead",
+    "overall": 41
+   },
+   "offensive_coordinator": {
+    "name": "Joe Moorhead",
+    "overall": 36
+   },
+   "defensive_coordinator": {
+    "name": "Tim Tibesar",
+    "overall": 25
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "alabama",
+  "school_name": "The University of Alabama",
+  "short_name": "Alabama",
+  "abbreviation": "ALA",
+  "mascot": "Crimson Tide",
+  "city": "Tuscaloosa",
+  "state": "AL",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Bryant-Denny Stadium",
+   "capacity": 100077,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Crimson",
+    "hex": "#9E1B32"
+   },
+   "secondary": {
+    "name": "Gray",
+    "hex": "#828A8F"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "auburn",
+   "lsu",
+   "tennessee",
+   "georgia"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 88,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 66.8,
+   "defense": 75.1,
+   "special_teams": 61.5,
+   "overall": 70.0,
+   "roster_avg": 59.0,
+   "position_groups": {
+    "QB": 67,
+    "RB": 69,
+    "WR": 77,
+    "TE": 63,
+    "OL": 60.8,
+    "DL": 73.8,
+    "LB": 66,
+    "DB": 79.8,
+    "K": 60,
+    "P": 63
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Kalen DeBoer",
+    "overall": 61
+   },
+   "offensive_coordinator": {
+    "name": "Ryan Grubb",
+    "overall": 75
+   },
+   "defensive_coordinator": {
+    "name": "Kane Wommack",
+    "overall": 69
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "alder-ridge-state",
+  "school_name": "Alder Ridge State University",
+  "short_name": "Alder Ridge St.",
+  "abbreviation": "ARSU",
+  "mascot": "Forgers",
+  "city": "Alder Ridge",
+  "state": "PA",
+  "region": "Mid-Atlantic",
+  "conference": "Eight Rivers Football Conference",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "Furnace Hill Stadium",
+   "capacity": 16500,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Ember Orange",
+    "hex": "#D4561B"
+   },
+   "secondary": {
+    "name": "Iron Gray",
+    "hex": "#3B3F45"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "kestrel-bay"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 43,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 48.8,
+   "defense": 48.5,
+   "special_teams": 47.0,
+   "overall": 48.5,
+   "roster_avg": 39.8,
+   "position_groups": {
+    "QB": 48,
+    "RB": 49,
+    "WR": 48.7,
+    "TE": 44,
+    "OL": 50.4,
+    "DL": 49.2,
+    "LB": 55,
+    "DB": 45.4,
+    "K": 38,
+    "P": 56
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Marcus Mabe",
+    "overall": 34
+   },
+   "offensive_coordinator": {
+    "name": "Mark Kincaid",
+    "overall": 38
+   },
+   "defensive_coordinator": {
+    "name": "Doug Strickland",
+    "overall": 20
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "app-st",
+  "school_name": "Appalachian State University",
+  "short_name": "App State",
+  "abbreviation": "APP",
+  "mascot": "Mountaineers",
+  "city": "Boone",
+  "state": "NC",
+  "conference": "Sun Belt",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Kidd Brewer Stadium",
+   "capacity": 30000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#FFCC00"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "ga-southern",
+   "marshall"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 58,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 52.3,
+   "defense": 55.6,
+   "special_teams": 46.5,
+   "overall": 53.2,
+   "roster_avg": 47.6,
+   "position_groups": {
+    "QB": 49,
+    "RB": 69,
+    "WR": 52,
+    "TE": 49,
+    "OL": 51.8,
+    "DL": 55,
+    "LB": 63.5,
+    "DB": 53,
+    "K": 49,
+    "P": 44
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Dowell Loggains",
+    "overall": 44
+   },
+   "offensive_coordinator": {
+    "name": "Mike Anthony",
+    "overall": 42
+   },
+   "defensive_coordinator": {
+    "name": "D.J. Smith",
+    "overall": 36
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "arizona",
+  "school_name": "University of Arizona",
+  "short_name": "Arizona",
+  "abbreviation": "ARIZ",
+  "mascot": "Wildcats",
+  "city": "Tucson",
+  "state": "AZ",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Casino Del Sol Stadium",
+   "capacity": 50782,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Arizona Blue",
+    "hex": "#0C234B"
+   },
+   "secondary": {
+    "name": "Arizona Red",
+    "hex": "#AB0520"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "arizona-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 71,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 65.8,
+   "defense": 63.9,
+   "special_teams": 56.0,
+   "overall": 64.0,
+   "roster_avg": 51.7,
+   "position_groups": {
+    "QB": 82,
+    "RB": 69,
+    "WR": 61.7,
+    "TE": 60,
+    "OL": 59.2,
+    "DL": 62.5,
+    "LB": 67,
+    "DB": 63.8,
+    "K": 58,
+    "P": 54
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Brent Brennan",
+    "overall": 47
+   },
+   "offensive_coordinator": {
+    "name": "Seth Doege",
+    "overall": 69
+   },
+   "defensive_coordinator": {
+    "name": "Danny Gonzales",
+    "overall": 46
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "arizona-state",
+  "school_name": "Arizona State University",
+  "short_name": "Arizona State",
+  "abbreviation": "ASU",
+  "mascot": "Sun Devils",
+  "city": "Tempe",
+  "state": "AZ",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Mountain America Stadium",
+   "capacity": 53599,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Maroon",
+    "hex": "#8C1D40"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#FFC627"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "arizona"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 73,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 60.7,
+   "defense": 66.6,
+   "special_teams": 56.0,
+   "overall": 62.9,
+   "roster_avg": 52.9,
+   "position_groups": {
+    "QB": 60,
+    "RB": 65,
+    "WR": 71,
+    "TE": 56,
+    "OL": 55,
+    "DL": 68.2,
+    "LB": 66,
+    "DB": 65.6,
+    "K": 56,
+    "P": 56
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Kenny Dillingham",
+    "overall": 51
+   },
+   "offensive_coordinator": {
+    "name": "Marcus Arroyo",
+    "overall": 41
+   },
+   "defensive_coordinator": {
+    "name": "Brian Ward",
+    "overall": 68
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "arkansas",
+  "school_name": "University of Arkansas",
+  "short_name": "Arkansas",
+  "abbreviation": "ARK",
+  "mascot": "Razorbacks",
+  "city": "Fayetteville",
+  "state": "AR",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Donald W. Reynolds Razorback Stadium",
+   "capacity": 76212,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Cardinal",
+    "hex": "#9D2235"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
+  },
+  "rivals": [
+   "lsu",
+   "texas-a-m",
+   "missouri",
+   "texas",
+   "ole-miss"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 81,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 62.9,
+   "defense": 63.7,
+   "special_teams": 57.5,
+   "overall": 62.7,
+   "roster_avg": 53.2,
+   "position_groups": {
+    "QB": 52,
+    "RB": 75,
+    "WR": 69,
+    "TE": 63,
+    "OL": 63.4,
+    "DL": 66.2,
+    "LB": 61.5,
+    "DB": 62.6,
+    "K": 61,
+    "P": 54
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Ryan Silverfield",
+    "overall": 46
+   },
+   "offensive_coordinator": {
+    "name": "Tim Cramsey",
+    "overall": 62
+   },
+   "defensive_coordinator": {
+    "name": "Ron Roberts",
+    "overall": 44
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "arkansas-state",
+  "school_name": "Arkansas State University",
+  "short_name": "Arkansas State",
+  "abbreviation": "ARST",
+  "mascot": "Red Wolves",
+  "city": "Jonesboro",
+  "state": "AR",
+  "conference": "Sun Belt",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Centennial Bank Stadium",
+   "capacity": 30406,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Scarlet",
+    "hex": "#CC092F"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "louisiana",
+   "ul-monroe"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 58,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 58.2,
+   "defense": 51.3,
+   "special_teams": 54.5,
+   "overall": 54.7,
+   "roster_avg": 47.1,
+   "position_groups": {
+    "QB": 52,
+    "RB": 65,
+    "WR": 63.3,
+    "TE": 50,
+    "OL": 59.2,
+    "DL": 50,
+    "LB": 46,
+    "DB": 54.4,
+    "K": 65,
+    "P": 44
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Butch Jones",
+    "overall": 33
+   },
+   "offensive_coordinator": {
+    "name": "Garrett Altman",
+    "overall": 46
+   },
+   "defensive_coordinator": {
+    "name": "Griffin McCarley",
+    "overall": 36
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "army",
+  "school_name": "United States Military Academy",
+  "short_name": "Army",
+  "abbreviation": "ARMY",
+  "mascot": "Black Knights",
+  "city": "West Point",
+  "state": "NY",
+  "conference": "American Athletic Conference",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Michie Stadium",
+   "capacity": 38000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#D3BC8D"
+   },
+   "accent": {
+    "name": "Gray",
+    "hex": "#8D8D8D"
+   }
+  },
+  "rivals": [
+   "navy",
+   "air-force"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 64,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 59.2,
+   "defense": 55.2,
+   "special_teams": 52.0,
+   "overall": 56.7,
+   "roster_avg": 44.7,
+   "position_groups": {
+    "QB": 71,
+    "RB": 56,
+    "WR": 47.7,
+    "TE": 44,
+    "OL": 62.6,
+    "DL": 57.5,
+    "LB": 48.5,
+    "DB": 56,
+    "K": 52,
+    "P": 52
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Jeff Monken",
+    "overall": 37
+   },
+   "offensive_coordinator": {
+    "name": "Cody Worley",
+    "overall": 30
+   },
+   "defensive_coordinator": {
+    "name": "Daryl Dixon",
+    "overall": 47
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "auburn",
+  "school_name": "Auburn University",
+  "short_name": "Auburn",
+  "abbreviation": "AUB",
+  "mascot": "Tigers",
+  "city": "Auburn",
+  "state": "AL",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Jordan-Hare Stadium",
+   "capacity": 88043,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Navy",
+    "hex": "#0C2340"
+   },
+   "secondary": {
+    "name": "Orange",
+    "hex": "#E87722"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "alabama",
+   "georgia",
+   "lsu"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 85,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 69.3,
+   "defense": 65.9,
+   "special_teams": 61.0,
+   "overall": 66.9,
+   "roster_avg": 55.2,
+   "position_groups": {
+    "QB": 80,
+    "RB": 78,
+    "WR": 70,
+    "TE": 67,
+    "OL": 61.2,
+    "DL": 67,
+    "LB": 70,
+    "DB": 63.4,
+    "K": 61,
+    "P": 61
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Alex Golesh",
+    "overall": 55
+   },
+   "offensive_coordinator": {
+    "name": "Joel Gordon",
+    "overall": 59
+   },
+   "defensive_coordinator": {
+    "name": "DJ Durkin",
+    "overall": 68
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "ball-state",
+  "school_name": "Ball State University",
+  "short_name": "Ball State",
+  "abbreviation": "BALL",
+  "mascot": "Cardinals",
+  "city": "Muncie",
+  "state": "IN",
+  "conference": "MAC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Scheumann Stadium",
+   "capacity": 22500,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Cardinal",
+    "hex": "#BA0C2F"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
+  },
+  "rivals": [
+   "niu"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 51,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 51.2,
+   "defense": 52.4,
+   "special_teams": 47.0,
+   "overall": 51.3,
+   "roster_avg": 45.2,
+   "position_groups": {
+    "QB": 48,
+    "RB": 56,
+    "WR": 55,
+    "TE": 48,
+    "OL": 50.4,
+    "DL": 50.2,
+    "LB": 54,
+    "DB": 53.4,
+    "K": 46,
+    "P": 48
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Mike Uremovich",
+    "overall": 42
+   },
+   "offensive_coordinator": {
+    "name": "Mike Uremovich",
+    "overall": 28
+   },
+   "defensive_coordinator": {
+    "name": "Jeff Knowles",
+    "overall": 39
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "baylor",
+  "school_name": "Baylor University",
+  "short_name": "Baylor",
+  "abbreviation": "BAY",
+  "mascot": "Bears",
+  "city": "Waco",
+  "state": "TX",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "McLane Stadium",
+   "capacity": 45140,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Green",
+    "hex": "#154734"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#FFB81C"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "tcu",
+   "texas-tech",
+   "texas"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 68,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 60.5,
+   "defense": 61.9,
+   "special_teams": 62.5,
+   "overall": 61.3,
+   "roster_avg": 52.1,
+   "position_groups": {
+    "QB": 69,
+    "RB": 69,
+    "WR": 67.7,
+    "TE": 52,
+    "OL": 51.2,
+    "DL": 63.2,
+    "LB": 60.5,
+    "DB": 61.4,
+    "K": 50,
+    "P": 75
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Dave Aranda",
+    "overall": 57
+   },
+   "offensive_coordinator": {
+    "name": "Jake Spavital",
+    "overall": 42
+   },
+   "defensive_coordinator": {
+    "name": "Joe Klanderman",
+    "overall": 57
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "boise-state",
+  "school_name": "Boise State University",
+  "short_name": "Boise State",
+  "abbreviation": "BSU",
+  "mascot": "Broncos",
+  "city": "Boise",
+  "state": "ID",
+  "conference": "Pac-12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Albertsons Stadium",
+   "capacity": 36387,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Blue",
+    "hex": "#0033A0"
+   },
+   "secondary": {
+    "name": "Orange",
+    "hex": "#D64309"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "fresno-state",
+   "nevada",
+   "byu"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 63,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 64.7,
+   "defense": 59.7,
+   "special_teams": 63.0,
+   "overall": 62.3,
+   "roster_avg": 50.1,
+   "position_groups": {
+    "QB": 76,
+    "RB": 78,
+    "WR": 60,
+    "TE": 61,
+    "OL": 58.8,
+    "DL": 64.8,
+    "LB": 53,
+    "DB": 58.4,
+    "K": 63,
+    "P": 63
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Spencer Danielson",
+    "overall": 47
+   },
+   "offensive_coordinator": {
+    "name": "Nate Potter",
+    "overall": 50
+   },
+   "defensive_coordinator": {
+    "name": "Erik Chinander",
+    "overall": 53
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "boston-college",
+  "school_name": "Boston College",
+  "short_name": "Boston College",
+  "abbreviation": "BC",
+  "mascot": "Eagles",
+  "city": "Chestnut Hill",
+  "state": "MA",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Alumni Stadium",
+   "capacity": 44500,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Maroon",
+    "hex": "#98002E"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#BC9B6A"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "notre-dame",
+   "syracuse"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 68,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 57.9,
+   "defense": 60.2,
+   "special_teams": 54.5,
+   "overall": 58.6,
+   "roster_avg": 50.2,
+   "position_groups": {
+    "QB": 50,
+    "RB": 75,
+    "WR": 57.3,
+    "TE": 75,
+    "OL": 56.2,
+    "DL": 60.8,
+    "LB": 52.5,
+    "DB": 62.8,
+    "K": 63,
+    "P": 46
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Bill O'Brien",
+    "overall": 53
+   },
+   "offensive_coordinator": {
+    "name": "Bill O'Brien",
+    "overall": 42
+   },
+   "defensive_coordinator": {
+    "name": "Ted Roof",
+    "overall": 49
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "bowling-green",
+  "school_name": "Bowling Green State University",
+  "short_name": "Bowling Green",
+  "abbreviation": "BGSU",
+  "mascot": "Falcons",
+  "city": "Bowling Green",
+  "state": "OH",
+  "conference": "MAC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Doyt L. Perry Stadium",
+   "capacity": 24000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Orange",
+    "hex": "#FE5000"
+   },
+   "secondary": {
+    "name": "Brown",
+    "hex": "#4F2C1D"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "toledo",
+   "kent-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 52,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 48.7,
+   "defense": 53.2,
+   "special_teams": 46.0,
+   "overall": 50.5,
+   "roster_avg": 43.5,
+   "position_groups": {
+    "QB": 50,
+    "RB": 63,
+    "WR": 47.3,
+    "TE": 50,
+    "OL": 45.6,
+    "DL": 56,
+    "LB": 50.5,
+    "DB": 52,
+    "K": 46,
+    "P": 46
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Eddie George",
+    "overall": 30
+   },
+   "offensive_coordinator": {
+    "name": "Greg Nosal",
+    "overall": 34
+   },
+   "defensive_coordinator": {
+    "name": "Joe Bowden",
+    "overall": 43
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "buffalo",
+  "school_name": "University at Buffalo",
+  "short_name": "Buffalo",
+  "abbreviation": "BUFF",
+  "mascot": "Bulls",
+  "city": "Amherst",
+  "state": "NY",
+  "conference": "MAC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Broadview Stadium",
+   "capacity": 25013,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "UB Blue",
+    "hex": "#005BBB"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Hayes Hall Gray",
+    "hex": "#666666"
+   }
+  },
+  "rivals": [],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 53,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 49.9,
+   "defense": 54.8,
+   "special_teams": 47.0,
+   "overall": 51.8,
+   "roster_avg": 45.4,
+   "position_groups": {
+    "QB": 46,
+    "RB": 56,
+    "WR": 56,
+    "TE": 46,
+    "OL": 48.2,
+    "DL": 48,
+    "LB": 53,
+    "DB": 61,
+    "K": 45,
+    "P": 49
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Pete Lembo",
+    "overall": 36
+   },
+   "offensive_coordinator": {
+    "name": "Tony Tokarz",
+    "overall": 34
+   },
+   "defensive_coordinator": {
+    "name": "Brian Dougherty",
+    "overall": 43
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "byu",
+  "school_name": "Brigham Young University",
+  "short_name": "BYU",
+  "abbreviation": "BYU",
+  "mascot": "Cougars",
+  "city": "Provo",
+  "state": "UT",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "LaVell Edwards Stadium",
+   "capacity": 62073,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Navy",
+    "hex": "#002E5D"
+   },
+   "secondary": {
+    "name": "Royal",
+    "hex": "#0062B8"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "utah",
+   "utah-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 76,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 70.4,
+   "defense": 71.7,
+   "special_teams": 50.5,
+   "overall": 69.0,
+   "roster_avg": 53.9,
+   "position_groups": {
+    "QB": 71,
+    "RB": 86,
+    "WR": 64.3,
+    "TE": 65,
+    "OL": 71.6,
+    "DL": 68.8,
+    "LB": 75.5,
+    "DB": 72.6,
+    "K": 52,
+    "P": 49
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Kalani Sitake",
+    "overall": 65
+   },
+   "offensive_coordinator": {
+    "name": "Aaron Roderick",
+    "overall": 67
+   },
+   "defensive_coordinator": {
+    "name": "Kelly Poppinga",
+    "overall": 71
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "c-carolina",
+  "school_name": "Coastal Carolina University",
+  "short_name": "Coastal Carolina",
+  "abbreviation": "CCU",
+  "mascot": "Chanticleers",
+  "city": "Conway",
+  "state": "SC",
+  "conference": "Sun Belt",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Brooks Stadium",
+   "capacity": 21000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Teal",
+    "hex": "#006F71"
+   },
+   "secondary": {
+    "name": "Bronze",
+    "hex": "#A27752"
+   },
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
+  },
+  "rivals": [
+   "app-st"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 49,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 50.1,
+   "defense": 52.5,
+   "special_teams": 50.5,
+   "overall": 51.2,
+   "roster_avg": 45.8,
+   "position_groups": {
+    "QB": 49,
+    "RB": 60,
+    "WR": 57.7,
+    "TE": 46,
+    "OL": 45,
+    "DL": 56.2,
+    "LB": 56,
+    "DB": 48,
+    "K": 49,
+    "P": 52
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Ryan Beard",
+    "overall": 29
+   },
+   "offensive_coordinator": {
+    "name": "Nick Petrino",
+    "overall": 20
+   },
+   "defensive_coordinator": {
+    "name": "L.D. Scott",
+    "overall": 37
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "c-michigan",
+  "school_name": "Central Michigan University",
+  "short_name": "Central Michigan",
+  "abbreviation": "CMU",
+  "mascot": "Chippewas",
+  "city": "Mount Pleasant",
+  "state": "MI",
+  "conference": "MAC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Kelly/Shorts Stadium",
+   "capacity": 30255,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Maroon",
+    "hex": "#6A0032"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#FFC82E"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "w-michigan",
+   "e-michigan"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 58,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 53.5,
+   "defense": 49.3,
+   "special_teams": 51.5,
+   "overall": 51.4,
+   "roster_avg": 44.3,
+   "position_groups": {
+    "QB": 52,
+    "RB": 60,
+    "WR": 59,
+    "TE": 45,
+    "OL": 51.4,
+    "DL": 51.5,
+    "LB": 46,
+    "DB": 48.8,
+    "K": 49,
+    "P": 54
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Matt Drinkall",
+    "overall": 46
+   },
+   "offensive_coordinator": {
+    "name": "Jim Chapin",
+    "overall": 29
+   },
+   "defensive_coordinator": {
+    "name": "Sean Cronin",
+    "overall": 41
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "calder-springs",
+  "school_name": "Calder Springs University",
+  "short_name": "Calder Springs",
+  "abbreviation": "CSU",
+  "mascot": "Cottonmouths",
+  "city": "Calder Springs",
+  "state": "SC",
+  "region": "Southeast",
+  "conference": "Eight Rivers Football Conference",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "Live Oak Bowl",
+   "capacity": 14000,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Forest Green",
+    "hex": "#1E4D2B"
+   },
+   "secondary": {
+    "name": "Old Gold",
+    "hex": "#C9A227"
+   },
+   "accent": {
+    "name": "Cream",
+    "hex": "#F3EBD3"
+   }
+  },
+  "rivals": [
+   "port-rennick-state"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 39,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 47.5,
+   "defense": 47.4,
+   "special_teams": 40.5,
+   "overall": 46.8,
+   "roster_avg": 39.6,
+   "position_groups": {
+    "QB": 46,
+    "RB": 56,
+    "WR": 54,
+    "TE": 48,
+    "OL": 42.8,
+    "DL": 45.5,
+    "LB": 46,
+    "DB": 49.4,
+    "K": 37,
+    "P": 44
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Mike Caudill",
+    "overall": 20
+   },
+   "offensive_coordinator": {
+    "name": "Doug Ferrante",
+    "overall": 20
+   },
+   "defensive_coordinator": {
+    "name": "Wes Dorsey",
+    "overall": 23
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "california",
+  "school_name": "University of California, Berkeley",
+  "short_name": "California",
+  "abbreviation": "CAL",
+  "mascot": "Golden Bears",
+  "city": "Berkeley",
+  "state": "CA",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "California Memorial Stadium",
+   "capacity": 62467,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Berkeley Blue",
+    "hex": "#003262"
+   },
+   "secondary": {
+    "name": "California Gold",
+    "hex": "#FDB515"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "stanford",
+   "ucla",
+   "usc"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 76,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 68.6,
+   "defense": 59.7,
+   "special_teams": 61.5,
+   "overall": 63.9,
+   "roster_avg": 52.7,
+   "position_groups": {
+    "QB": 73,
+    "RB": 65,
+    "WR": 74.3,
+    "TE": 80,
+    "OL": 61,
+    "DL": 60.2,
+    "LB": 51,
+    "DB": 62.8,
+    "K": 60,
+    "P": 63
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Tosh Lupoi",
+    "overall": 61
+   },
+   "offensive_coordinator": {
+    "name": "Jordan Somerville",
+    "overall": 64
+   },
+   "defensive_coordinator": {
+    "name": "Michael Hutchings",
+    "overall": 59
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "cedar-sound",
+  "school_name": "Cedar Sound University",
+  "short_name": "Cedar Sound",
+  "abbreviation": "CSDU",
+  "mascot": "Orcas",
+  "city": "Cedar Sound",
+  "state": "WA",
+  "region": "Pacific Northwest",
+  "conference": "Eight Rivers Football Conference",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "Driftwood Field",
+   "capacity": 10400,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Black",
+    "hex": "#101820"
+   },
+   "secondary": {
+    "name": "Evergreen",
+    "hex": "#2E7D5B"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "talus-peak"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 32,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 41.2,
+   "defense": 46.3,
+   "special_teams": 38.0,
+   "overall": 43.2,
+   "roster_avg": 36.6,
+   "position_groups": {
+    "QB": 42,
+    "RB": 50,
+    "WR": 44.3,
+    "TE": 40,
+    "OL": 37.2,
+    "DL": 50,
+    "LB": 44.5,
+    "DB": 44,
+    "K": 34,
+    "P": 42
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Mark Westbrook",
+    "overall": 27
+   },
+   "offensive_coordinator": {
+    "name": "Mike Brandt",
+    "overall": 21
+   },
+   "defensive_coordinator": {
+    "name": "Dwayne Brandt",
+    "overall": 22
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "charlotte",
+  "school_name": "University of North Carolina at Charlotte",
+  "short_name": "Charlotte",
+  "abbreviation": "CLT",
+  "mascot": "49ers",
+  "city": "Charlotte",
+  "state": "NC",
+  "conference": "American Athletic Conference",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Jerry Richardson Stadium",
+   "capacity": 15314,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Green",
+    "hex": "#046A38"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#B9975B"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "east-carolina"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 41,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 50.3,
+   "defense": 50.7,
+   "special_teams": 46.0,
+   "overall": 50.1,
+   "roster_avg": 44.6,
+   "position_groups": {
+    "QB": 50,
+    "RB": 56,
+    "WR": 56.3,
+    "TE": 44,
+    "OL": 47,
+    "DL": 48.2,
+    "LB": 53,
+    "DB": 51.8,
+    "K": 44,
+    "P": 48
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Tim Albin",
+    "overall": 40
+   },
+   "offensive_coordinator": {
+    "name": "Todd Fitch",
+    "overall": 26
+   },
+   "defensive_coordinator": {
+    "name": "Nate Faanes",
+    "overall": 30
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "cincinnati",
+  "school_name": "University of Cincinnati",
+  "short_name": "Cincinnati",
+  "abbreviation": "CIN",
+  "mascot": "Bearcats",
+  "city": "Cincinnati",
+  "state": "OH",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Nippert Stadium",
+   "capacity": 38088,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Red",
+    "hex": "#E00122"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "louisville",
+   "miami-oh"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 64,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 62.0,
+   "defense": 59.3,
+   "special_teams": 64.0,
+   "overall": 61.0,
+   "roster_avg": 50.7,
+   "position_groups": {
+    "QB": 58,
+    "RB": 67,
+    "WR": 60.3,
+    "TE": 52,
+    "OL": 66.4,
+    "DL": 53.5,
+    "LB": 57.5,
+    "DB": 64.6,
+    "K": 61,
+    "P": 67
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Scott Satterfield",
+    "overall": 45
+   },
+   "offensive_coordinator": {
+    "name": "Pete Thomas",
+    "overall": 51
+   },
+   "defensive_coordinator": {
+    "name": "Nate Woody",
+    "overall": 63
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "clemson",
+  "school_name": "Clemson University",
+  "short_name": "Clemson",
+  "abbreviation": "CLEM",
+  "mascot": "Tigers",
+  "city": "Clemson",
+  "state": "SC",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Memorial Stadium",
+   "capacity": 81500,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Clemson Orange",
+    "hex": "#F56600"
+   },
+   "secondary": {
+    "name": "Regalia",
+    "hex": "#522D80"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "south-carolina",
+   "georgia",
+   "florida-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 83,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 61.3,
+   "defense": 70.7,
+   "special_teams": 53.0,
+   "overall": 64.7,
+   "roster_avg": 55.7,
+   "position_groups": {
+    "QB": 54,
+    "RB": 71,
+    "WR": 75,
+    "TE": 60,
+    "OL": 55.8,
+    "DL": 71.8,
+    "LB": 72.5,
+    "DB": 69.2,
+    "K": 63,
+    "P": 43
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Dabo Swinney",
+    "overall": 54
+   },
+   "offensive_coordinator": {
+    "name": "Chad Morris",
+    "overall": 59
+   },
+   "defensive_coordinator": {
+    "name": "Tom Allen",
+    "overall": 62
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "colorado",
+  "school_name": "University of Colorado Boulder",
+  "short_name": "Colorado",
+  "abbreviation": "COLO",
+  "mascot": "Buffaloes",
+  "city": "Boulder",
+  "state": "CO",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Folsom Field",
+   "capacity": 50183,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Gold",
+    "hex": "#CFB87C"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "Silver",
+    "hex": "#A2A4A3"
+   }
+  },
+  "rivals": [
+   "nebraska",
+   "colorado-state",
+   "utah"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 71,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 62.9,
+   "defense": 65.3,
+   "special_teams": 52.5,
+   "overall": 62.9,
+   "roster_avg": 52.9,
+   "position_groups": {
+    "QB": 61,
+    "RB": 67,
+    "WR": 76.7,
+    "TE": 58,
+    "OL": 56,
+    "DL": 60,
+    "LB": 72.5,
+    "DB": 66.6,
+    "K": 44,
+    "P": 61
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Deion Sanders",
+    "overall": 67
+   },
+   "offensive_coordinator": {
+    "name": "Brennan Marion",
+    "overall": 59
+   },
+   "defensive_coordinator": {
+    "name": "Chris Marve",
+    "overall": 68
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "colorado-state",
+  "school_name": "Colorado State University",
+  "short_name": "Colorado State",
+  "abbreviation": "CSU",
+  "mascot": "Rams",
+  "city": "Fort Collins",
+  "state": "CO",
+  "conference": "Pac-12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Canvas Stadium",
+   "capacity": 36500,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Green",
+    "hex": "#1E4D2B"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#C8C372"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "colorado",
+   "wyoming",
+   "air-force"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 63,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 53.6,
+   "defense": 54.8,
+   "special_teams": 56.0,
+   "overall": 54.4,
+   "roster_avg": 47.1,
+   "position_groups": {
+    "QB": 50,
+    "RB": 63,
+    "WR": 61,
+    "TE": 65,
+    "OL": 47.2,
+    "DL": 57.2,
+    "LB": 61.5,
+    "DB": 50.2,
+    "K": 60,
+    "P": 52
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Jim Mora",
+    "overall": 48
+   },
+   "offensive_coordinator": {
+    "name": "Pryce Tracy",
+    "overall": 49
+   },
+   "defensive_coordinator": {
+    "name": "Kenny McClendon",
+    "overall": 28
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "delaware",
+  "school_name": "University of Delaware",
+  "short_name": "Delaware",
+  "abbreviation": "DEL",
+  "mascot": "Fightin' Blue Hens",
+  "city": "Newark",
+  "state": "DE",
+  "conference": "Conference USA",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Delaware Stadium",
+   "capacity": 18800,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Blue",
+    "hex": "#00539F"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#FFD200"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "james-madison"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 46,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 58.5,
+   "defense": 54.2,
+   "special_teams": 44.5,
+   "overall": 55.2,
+   "roster_avg": 46.1,
+   "position_groups": {
+    "QB": 67,
+    "RB": 69,
+    "WR": 62.3,
+    "TE": 50,
+    "OL": 50.8,
+    "DL": 50.8,
+    "LB": 58.5,
+    "DB": 55.2,
+    "K": 43,
+    "P": 46
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Ryan Carty",
+    "overall": 62
+   },
+   "offensive_coordinator": {
+    "name": "Terence Archer",
+    "overall": 33
+   },
+   "defensive_coordinator": {
+    "name": "Manny Rojas",
+    "overall": 46
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "duke",
+  "school_name": "Duke University",
+  "short_name": "Duke",
+  "abbreviation": "DUKE",
+  "mascot": "Blue Devils",
+  "city": "Durham",
+  "state": "NC",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Wallace Wade Stadium",
+   "capacity": 40004,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Duke Blue",
+    "hex": "#012169"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Royal Blue",
+    "hex": "#00539B"
+   }
+  },
+  "rivals": [
+   "north-carolina",
+   "nc-state",
+   "wake-forest"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 65,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 63.4,
+   "defense": 57.7,
+   "special_teams": 53.5,
+   "overall": 59.8,
+   "roster_avg": 50.4,
+   "position_groups": {
+    "QB": 60,
+    "RB": 82,
+    "WR": 63,
+    "TE": 76,
+    "OL": 59.4,
+    "DL": 56.2,
+    "LB": 65,
+    "DB": 56,
+    "K": 44,
+    "P": 63
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Manny Diaz",
+    "overall": 57
+   },
+   "offensive_coordinator": {
+    "name": "Jonathan Brewer",
+    "overall": 43
+   },
+   "defensive_coordinator": {
+    "name": "Jonathan Patke",
+    "overall": 43
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "e-michigan",
+  "school_name": "Eastern Michigan University",
+  "short_name": "Eastern Michigan",
+  "abbreviation": "EMU",
+  "mascot": "Eagles",
+  "city": "Ypsilanti",
+  "state": "MI",
+  "conference": "MAC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Rynearson Stadium",
+   "capacity": 30200,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Green",
+    "hex": "#006633"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "c-michigan",
+   "w-michigan"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 58,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 54.6,
+   "defense": 51.8,
+   "special_teams": 51.5,
+   "overall": 53.0,
+   "roster_avg": 44.1,
+   "position_groups": {
+    "QB": 56,
+    "RB": 61,
+    "WR": 59.7,
+    "TE": 49,
+    "OL": 50.6,
+    "DL": 52.5,
+    "LB": 47,
+    "DB": 53.2,
+    "K": 60,
+    "P": 43
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Chris Creighton",
+    "overall": 38
+   },
+   "offensive_coordinator": {
+    "name": "Mike Piatkowski",
+    "overall": 35
+   },
+   "defensive_coordinator": {
+    "name": "Kasey Teegardin",
+    "overall": 20
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "east-carolina",
+  "school_name": "East Carolina University",
+  "short_name": "East Carolina",
+  "abbreviation": "ECU",
+  "mascot": "Pirates",
+  "city": "Greenville",
+  "state": "NC",
+  "conference": "American Athletic Conference",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Dowdy-Ficklen Stadium",
+   "capacity": 50000,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Purple",
+    "hex": "#592A8A"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#FDC82F"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "nc-state",
+   "north-carolina",
+   "marshall"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 71,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 56.8,
+   "defense": 53.1,
+   "special_teams": 52.5,
+   "overall": 54.7,
+   "roster_avg": 46.7,
+   "position_groups": {
+    "QB": 56,
+    "RB": 58,
+    "WR": 68.3,
+    "TE": 46,
+    "OL": 52.2,
+    "DL": 56,
+    "LB": 52,
+    "DB": 51.2,
+    "K": 56,
+    "P": 49
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Blake Harrell",
+    "overall": 53
+   },
+   "offensive_coordinator": {
+    "name": "Jordan Davis",
+    "overall": 37
+   },
+   "defensive_coordinator": {
+    "name": "Jordon Hankins",
+    "overall": 49
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "fiu",
+  "school_name": "Florida International University",
+  "short_name": "FIU",
+  "abbreviation": "FIU",
+  "mascot": "Panthers",
+  "city": "Miami",
+  "state": "FL",
+  "conference": "Conference USA",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Pitbull Stadium",
+   "capacity": 20000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Blue",
+    "hex": "#081E3F"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#B6862C"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "fla-atlantic"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 48,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 53.2,
+   "defense": 54.9,
+   "special_teams": 53.0,
+   "overall": 53.9,
+   "roster_avg": 46.6,
+   "position_groups": {
+    "QB": 54,
+    "RB": 67,
+    "WR": 56,
+    "TE": 48,
+    "OL": 49.2,
+    "DL": 53.8,
+    "LB": 50.5,
+    "DB": 57.6,
+    "K": 48,
+    "P": 58
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Willie Simmons",
+    "overall": 44
+   },
+   "offensive_coordinator": {
+    "name": "Nick Coleman",
+    "overall": 45
+   },
+   "defensive_coordinator": {
+    "name": "Jovan Dewitt",
+    "overall": 31
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "fla-atlantic",
+  "school_name": "Florida Atlantic University",
+  "short_name": "Florida Atlantic",
+  "abbreviation": "FAU",
+  "mascot": "Owls",
+  "city": "Boca Raton",
+  "state": "FL",
+  "conference": "American Athletic Conference",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Flagler Credit Union Stadium",
+   "capacity": 29419,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Blue",
+    "hex": "#003366"
+   },
+   "secondary": {
+    "name": "Red",
+    "hex": "#CC0000"
+   },
+   "accent": {
+    "name": "Silver",
+    "hex": "#C1C6C8"
+   }
+  },
+  "rivals": [
+   "fiu"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 58,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 59.8,
+   "defense": 54.7,
+   "special_teams": 56.5,
+   "overall": 57.2,
+   "roster_avg": 48.0,
+   "position_groups": {
+    "QB": 65,
+    "RB": 60,
+    "WR": 70.7,
+    "TE": 49,
+    "OL": 52.4,
+    "DL": 59,
+    "LB": 57,
+    "DB": 50.4,
+    "K": 67,
+    "P": 46
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Zach Kittley",
+    "overall": 41
+   },
+   "offensive_coordinator": {
+    "name": "Zach Kittley",
+    "overall": 58
+   },
+   "defensive_coordinator": {
+    "name": "Brett Dewhurst",
+    "overall": 37
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "florida",
+  "school_name": "University of Florida",
+  "short_name": "Florida",
+  "abbreviation": "FLA",
+  "mascot": "Gators",
+  "city": "Gainesville",
+  "state": "FL",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Ben Hill Griffin Stadium",
+   "capacity": 88548,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Orange",
+    "hex": "#FA4616"
+   },
+   "secondary": {
+    "name": "Blue",
+    "hex": "#0021A5"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "georgia",
+   "tennessee",
+   "florida-state",
+   "lsu",
+   "miami"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 85,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 65.5,
+   "defense": 67.9,
+   "special_teams": 69.0,
+   "overall": 66.9,
+   "roster_avg": 56.9,
+   "position_groups": {
+    "QB": 54,
+    "RB": 84,
+    "WR": 76.3,
+    "TE": 56,
+    "OL": 64,
+    "DL": 69,
+    "LB": 66.5,
+    "DB": 67.6,
+    "K": 63,
+    "P": 75
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Jon Sumrall",
+    "overall": 65
+   },
+   "offensive_coordinator": {
+    "name": "Buster Faulkner",
+    "overall": 59
+   },
+   "defensive_coordinator": {
+    "name": "Brad White",
+    "overall": 64
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "florida-state",
+  "school_name": "Florida State University",
+  "short_name": "Florida State",
+  "abbreviation": "FSU",
+  "mascot": "Seminoles",
+  "city": "Tallahassee",
+  "state": "FL",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Doak Campbell Stadium",
+   "capacity": 67277,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Garnet",
+    "hex": "#782F40"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#CEB888"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "miami",
+   "florida",
+   "clemson"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 78,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 65.0,
+   "defense": 63.9,
+   "special_teams": 55.0,
+   "overall": 63.5,
+   "roster_avg": 54.3,
+   "position_groups": {
+    "QB": 58,
+    "RB": 80,
+    "WR": 72.7,
+    "TE": 63,
+    "OL": 62,
+    "DL": 67.8,
+    "LB": 64.5,
+    "DB": 60.6,
+    "K": 52,
+    "P": 58
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Mike Norvell",
+    "overall": 67
+   },
+   "offensive_coordinator": {
+    "name": "Tim Harris Jr.",
+    "overall": 60
+   },
+   "defensive_coordinator": {
+    "name": "Tony White",
+    "overall": 45
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "fresno-state",
+  "school_name": "California State University, Fresno",
+  "short_name": "Fresno State",
+  "abbreviation": "FRES",
+  "mascot": "Bulldogs",
+  "city": "Fresno",
+  "state": "CA",
+  "conference": "Pac-12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Valley Children's Stadium",
+   "capacity": 40727,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Cardinal Red",
+    "hex": "#DB0032"
+   },
+   "secondary": {
+    "name": "Blue",
+    "hex": "#002E6D"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "boise-state",
+   "san-diego-st",
+   "san-jose-state",
+   "hawai-i"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 66,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 55.5,
+   "defense": 58.0,
+   "special_teams": 57.0,
+   "overall": 56.8,
+   "roster_avg": 48.0,
+   "position_groups": {
+    "QB": 48,
+    "RB": 71,
+    "WR": 61,
+    "TE": 49,
+    "OL": 55,
+    "DL": 62,
+    "LB": 50,
+    "DB": 58,
+    "K": 60,
+    "P": 54
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Matt Entz",
+    "overall": 42
+   },
+   "offensive_coordinator": {
+    "name": "Josh Davis",
+    "overall": 55
+   },
+   "defensive_coordinator": {
+    "name": "Nick Benedetto",
+    "overall": 38
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "ga-southern",
+  "school_name": "Georgia Southern University",
+  "short_name": "Georgia Southern",
+  "abbreviation": "GASO",
+  "mascot": "Eagles",
+  "city": "Statesboro",
+  "state": "GA",
+  "conference": "Sun Belt",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Paulson Stadium",
+   "capacity": 25000,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Navy",
+    "hex": "#011E41"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Gold",
+    "hex": "#87714D"
+   }
+  },
+  "rivals": [
+   "app-st",
+   "georgia-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 53,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 55.4,
+   "defense": 56.2,
+   "special_teams": 54.5,
+   "overall": 55.7,
+   "roster_avg": 48.3,
+   "position_groups": {
+    "QB": 56,
+    "RB": 56,
+    "WR": 61,
+    "TE": 67,
+    "OL": 49.2,
+    "DL": 60.5,
+    "LB": 52,
+    "DB": 54.4,
+    "K": 49,
+    "P": 60
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Clay Helton",
+    "overall": 35
+   },
+   "offensive_coordinator": {
+    "name": "Ryan Aplin",
+    "overall": 31
+   },
+   "defensive_coordinator": {
+    "name": "Mike Mutz",
+    "overall": 46
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "georgia",
+  "school_name": "University of Georgia",
+  "short_name": "Georgia",
+  "abbreviation": "UGA",
+  "mascot": "Bulldogs",
+  "city": "Athens",
+  "state": "GA",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Sanford Stadium",
+   "capacity": 92746,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Red",
+    "hex": "#BA0C2F"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "florida",
+   "auburn",
+   "georgia-tech",
+   "tennessee",
+   "south-carolina"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 6,
+   "home_field_advantage": 86,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 73.8,
+   "defense": 73.4,
+   "special_teams": 65.5,
+   "overall": 72.8,
+   "roster_avg": 59.9,
+   "position_groups": {
+    "QB": 82,
+    "RB": 82,
+    "WR": 68.3,
+    "TE": 65,
+    "OL": 72.4,
+    "DL": 70.8,
+    "LB": 79,
+    "DB": 73.2,
+    "K": 75,
+    "P": 56
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Kirby Smart",
+    "overall": 77
+   },
+   "offensive_coordinator": {
+    "name": "Mike Bobo",
+    "overall": 72
+   },
+   "defensive_coordinator": {
+    "name": "Glenn Schumann",
+    "overall": 70
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "georgia-state",
+  "school_name": "Georgia State University",
+  "short_name": "Georgia State",
+  "abbreviation": "GSU",
+  "mascot": "Panthers",
+  "city": "Atlanta",
+  "state": "GA",
+  "conference": "Sun Belt",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Center Parc Stadium",
+   "capacity": 24333,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Blue",
+    "hex": "#0039A6"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Red",
+    "hex": "#CC0000"
+   }
+  },
+  "rivals": [
+   "ga-southern"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 53,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 54.2,
+   "defense": 50.9,
+   "special_teams": 46.0,
+   "overall": 51.9,
+   "roster_avg": 45.9,
+   "position_groups": {
+    "QB": 60,
+    "RB": 54,
+    "WR": 53.3,
+    "TE": 61,
+    "OL": 49.8,
+    "DL": 51,
+    "LB": 45.5,
+    "DB": 53,
+    "K": 43,
+    "P": 49
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Dell McGee",
+    "overall": 35
+   },
+   "offensive_coordinator": {
+    "name": "Hue Jackson",
+    "overall": 27
+   },
+   "defensive_coordinator": {
+    "name": "Cam Clark",
+    "overall": 35
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "georgia-tech",
+  "school_name": "Georgia Institute of Technology",
+  "short_name": "Georgia Tech",
+  "abbreviation": "GT",
+  "mascot": "Yellow Jackets",
+  "city": "Atlanta",
+  "state": "GA",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Bobby Dodd Stadium",
+   "capacity": 51913,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Tech Gold",
+    "hex": "#B3A369"
+   },
+   "secondary": {
+    "name": "Navy",
+    "hex": "#003057"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "georgia",
+   "clemson"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 72,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 59.9,
+   "defense": 59.8,
+   "special_teams": 67.0,
+   "overall": 60.6,
+   "roster_avg": 51.5,
+   "position_groups": {
+    "QB": 56,
+    "RB": 69,
+    "WR": 60.3,
+    "TE": 61,
+    "OL": 60,
+    "DL": 56.5,
+    "LB": 67,
+    "DB": 59.6,
+    "K": 73,
+    "P": 61
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Brent Key",
+    "overall": 50
+   },
+   "offensive_coordinator": {
+    "name": "George Godsey",
+    "overall": 68
+   },
+   "defensive_coordinator": {
+    "name": "Jason Semore",
+    "overall": 58
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "hawai-i",
+  "school_name": "University of Hawai\u02bbi at M\u0101noa",
+  "short_name": "Hawai\u02bbi",
+  "abbreviation": "HAW",
+  "mascot": "Rainbow Warriors",
+  "city": "Honolulu",
+  "state": "HI",
+  "conference": "Mountain West",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Clarence T.C. Ching Athletics Complex",
+   "capacity": 15194,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Green",
+    "hex": "#024731"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "Silver",
+    "hex": "#C8C8C8"
+   }
+  },
+  "rivals": [
+   "fresno-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 41,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 58.8,
+   "defense": 55.7,
+   "special_teams": 43.0,
+   "overall": 55.8,
+   "roster_avg": 45.5,
+   "position_groups": {
+    "QB": 67,
+    "RB": 60,
+    "WR": 64,
+    "TE": 52,
+    "OL": 51.8,
+    "DL": 53.8,
+    "LB": 54,
+    "DB": 58,
+    "K": 40,
+    "P": 46
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Timmy Chang",
+    "overall": 48
+   },
+   "offensive_coordinator": {
+    "name": "Anthony Arceneaux",
+    "overall": 50
+   },
+   "defensive_coordinator": {
+    "name": "Dennis Thurman",
+    "overall": 33
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "houston",
+  "school_name": "University of Houston",
+  "short_name": "Houston",
+  "abbreviation": "HOU",
+  "mascot": "Cougars",
+  "city": "Houston",
+  "state": "TX",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Space City Financial Stadium",
+   "capacity": 40000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Scarlet",
+    "hex": "#C8102E"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Gray",
+    "hex": "#888B8D"
+   }
+  },
+  "rivals": [
+   "rice"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 65,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 70.1,
+   "defense": 63.5,
+   "special_teams": 48.0,
+   "overall": 64.9,
+   "roster_avg": 51.9,
+   "position_groups": {
+    "QB": 75,
+    "RB": 73,
+    "WR": 72,
+    "TE": 54,
+    "OL": 68.6,
+    "DL": 62.2,
+    "LB": 63,
+    "DB": 64.6,
+    "K": 46,
+    "P": 50
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Willie Fritz",
+    "overall": 44
+   },
+   "offensive_coordinator": {
+    "name": "Slade Nagle",
+    "overall": 56
+   },
+   "defensive_coordinator": {
+    "name": "Austin Armstrong",
+    "overall": 71
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "illinois",
+  "school_name": "University of Illinois Urbana-Champaign",
+  "short_name": "Illinois",
+  "abbreviation": "ILL",
+  "mascot": "Fighting Illini",
+  "city": "Champaign",
+  "state": "IL",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Gies Memorial Stadium",
+   "capacity": 60670,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Orange",
+    "hex": "#FF5F05"
+   },
+   "secondary": {
+    "name": "Blue",
+    "hex": "#13294B"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "northwestern",
+   "purdue"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 76,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 65.2,
+   "defense": 58.3,
+   "special_teams": 46.0,
+   "overall": 60.2,
+   "roster_avg": 50.7,
+   "position_groups": {
+    "QB": 69,
+    "RB": 73,
+    "WR": 70.3,
+    "TE": 52,
+    "OL": 60.8,
+    "DL": 51,
+    "LB": 51.5,
+    "DB": 66.8,
+    "K": 42,
+    "P": 50
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Bret Bielema",
+    "overall": 65
+   },
+   "offensive_coordinator": {
+    "name": "Barry Lunney Jr.",
+    "overall": 55
+   },
+   "defensive_coordinator": {
+    "name": "Roger Cooper",
+    "overall": 43
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "indiana",
+  "school_name": "Indiana University Bloomington",
+  "short_name": "Indiana",
+  "abbreviation": "IND",
+  "mascot": "Hoosiers",
+  "city": "Bloomington",
+  "state": "IN",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Memorial Stadium",
+   "capacity": 52626,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Crimson",
+    "hex": "#990000"
+   },
+   "secondary": {
+    "name": "Cream",
+    "hex": "#EEEDEB"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "purdue"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 6,
+   "home_field_advantage": 72,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 75.4,
+   "defense": 76.6,
+   "special_teams": 72.5,
+   "overall": 75.7,
+   "roster_avg": 56.6,
+   "position_groups": {
+    "QB": 78,
+    "RB": 76,
+    "WR": 78,
+    "TE": 56,
+    "OL": 76,
+    "DL": 77.5,
+    "LB": 81,
+    "DB": 74.2,
+    "K": 69,
+    "P": 76
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Curt Cignetti",
+    "overall": 73
+   },
+   "offensive_coordinator": {
+    "name": "Mike Shanahan",
+    "overall": 78
+   },
+   "defensive_coordinator": {
+    "name": "Bryant Haines",
+    "overall": 70
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "iowa",
+  "school_name": "University of Iowa",
+  "short_name": "Iowa",
+  "abbreviation": "IOWA",
+  "mascot": "Hawkeyes",
+  "city": "Iowa City",
+  "state": "IA",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Kinnick Stadium",
+   "capacity": 69250,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Gold",
+    "hex": "#FFCD00"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "iowa-state",
+   "minnesota",
+   "wisconsin",
+   "nebraska"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 79,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 64.1,
+   "defense": 61.0,
+   "special_teams": 54.0,
+   "overall": 61.7,
+   "roster_avg": 52.5,
+   "position_groups": {
+    "QB": 48,
+    "RB": 78,
+    "WR": 60,
+    "TE": 78,
+    "OL": 70.6,
+    "DL": 56,
+    "LB": 57,
+    "DB": 66.6,
+    "K": 52,
+    "P": 56
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Kirk Ferentz",
+    "overall": 55
+   },
+   "offensive_coordinator": {
+    "name": "Tim Lester",
+    "overall": 43
+   },
+   "defensive_coordinator": {
+    "name": "Phil Parker",
+    "overall": 61
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "iowa-state",
+  "school_name": "Iowa State University",
+  "short_name": "Iowa State",
+  "abbreviation": "ISU",
+  "mascot": "Cyclones",
+  "city": "Ames",
+  "state": "IA",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Jack Trice Stadium",
+   "capacity": 61500,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Cardinal",
+    "hex": "#C8102E"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#F1BE48"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "iowa",
+   "kansas-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 76,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 58.2,
+   "defense": 57.9,
+   "special_teams": 56.0,
+   "overall": 57.8,
+   "roster_avg": 49.7,
+   "position_groups": {
+    "QB": 63,
+    "RB": 63,
+    "WR": 61.7,
+    "TE": 54,
+    "OL": 53.2,
+    "DL": 62.2,
+    "LB": 50.5,
+    "DB": 57.4,
+    "K": 69,
+    "P": 43
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Jimmy Rogers",
+    "overall": 71
+   },
+   "offensive_coordinator": {
+    "name": "Tyler Roehl",
+    "overall": 50
+   },
+   "defensive_coordinator": {
+    "name": "Jesse Bobbit",
+    "overall": 49
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "james-madison",
+  "school_name": "James Madison University",
+  "short_name": "James Madison",
+  "abbreviation": "JMU",
+  "mascot": "Dukes",
+  "city": "Harrisonburg",
+  "state": "VA",
+  "conference": "Sun Belt",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Bridgeforth Stadium",
+   "capacity": 25000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Purple",
+    "hex": "#450084"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#CBB677"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "old-dominion",
+   "app-st"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 53,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 56.9,
+   "defense": 56.9,
+   "special_teams": 53.0,
+   "overall": 56.5,
+   "roster_avg": 47.1,
+   "position_groups": {
+    "QB": 52,
+    "RB": 69,
+    "WR": 59.7,
+    "TE": 54,
+    "OL": 56.4,
+    "DL": 60.2,
+    "LB": 58.5,
+    "DB": 53.6,
+    "K": 54,
+    "P": 52
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Billy Napier",
+    "overall": 64
+   },
+   "offensive_coordinator": {
+    "name": "Cam Aiken",
+    "overall": 56
+   },
+   "defensive_coordinator": {
+    "name": "Robert Bala",
+    "overall": 46
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "jax-state",
+  "school_name": "Jacksonville State University",
+  "short_name": "Jacksonville State",
+  "abbreviation": "JVST",
+  "mascot": "Gamecocks",
+  "city": "Jacksonville",
+  "state": "AL",
+  "conference": "Conference USA",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "AmFirst Stadium",
+   "capacity": 24000,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Red",
+    "hex": "#CC0000"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
+  },
+  "rivals": [
+   "kennesaw-st"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 52,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 55.3,
+   "defense": 57.4,
+   "special_teams": 56.5,
+   "overall": 56.4,
+   "roster_avg": 46.4,
+   "position_groups": {
+    "QB": 60,
+    "RB": 56,
+    "WR": 57.7,
+    "TE": 49,
+    "OL": 52.2,
+    "DL": 53.5,
+    "LB": 62.5,
+    "DB": 58.4,
+    "K": 63,
+    "P": 50
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Charles Kelly",
+    "overall": 50
+   },
+   "offensive_coordinator": {
+    "name": "Taylor Housewright",
+    "overall": 22
+   },
+   "defensive_coordinator": {
+    "name": "Brian Williams",
+    "overall": 35
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "kansas",
+  "school_name": "University of Kansas",
+  "short_name": "Kansas",
+  "abbreviation": "KU",
+  "mascot": "Jayhawks",
+  "city": "Lawrence",
+  "state": "KS",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "David Booth Kansas Memorial Stadium",
+   "capacity": 47233,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Blue",
+    "hex": "#0051BA"
+   },
+   "secondary": {
+    "name": "Crimson",
+    "hex": "#E8000D"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "kansas-state",
+   "missouri"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 69,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 58.3,
+   "defense": 58.3,
+   "special_teams": 52.0,
+   "overall": 57.7,
+   "roster_avg": 50.5,
+   "position_groups": {
+    "QB": 52,
+    "RB": 75,
+    "WR": 70,
+    "TE": 52,
+    "OL": 53,
+    "DL": 57.2,
+    "LB": 65,
+    "DB": 56.4,
+    "K": 54,
+    "P": 50
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Lance Leipold",
+    "overall": 43
+   },
+   "offensive_coordinator": {
+    "name": "Andy Kotelnicki",
+    "overall": 60
+   },
+   "defensive_coordinator": {
+    "name": "D. K. McDonald",
+    "overall": 56
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "kansas-state",
+  "school_name": "Kansas State University",
+  "short_name": "Kansas State",
+  "abbreviation": "KSU",
+  "mascot": "Wildcats",
+  "city": "Manhattan",
+  "state": "KS",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Bill Snyder Family Football Stadium",
+   "capacity": 50000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Royal Purple",
+    "hex": "#512888"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Silver",
+    "hex": "#A7A7A7"
+   }
+  },
+  "rivals": [
+   "kansas"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 71,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 66.3,
+   "defense": 61.8,
+   "special_teams": 52.5,
+   "overall": 62.9,
+   "roster_avg": 52.1,
+   "position_groups": {
+    "QB": 78,
+    "RB": 73,
+    "WR": 63.7,
+    "TE": 76,
+    "OL": 57.6,
+    "DL": 61.8,
+    "LB": 53,
+    "DB": 65.4,
+    "K": 56,
+    "P": 49
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Collin Klein",
+    "overall": 54
+   },
+   "offensive_coordinator": {
+    "name": "Sean Gleeson",
+    "overall": 61
+   },
+   "defensive_coordinator": {
+    "name": "Jordan Peterson",
+    "overall": 59
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "kennesaw-st",
+  "school_name": "Kennesaw State University",
+  "short_name": "Kennesaw State",
+  "abbreviation": "KENN",
+  "mascot": "Owls",
+  "city": "Kennesaw",
+  "state": "GA",
+  "conference": "Conference USA",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Fifth Third Stadium",
+   "capacity": 10200,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Gold",
+    "hex": "#FDBB30"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "jax-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 31,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 54.4,
+   "defense": 56.3,
+   "special_teams": 44.0,
+   "overall": 54.2,
+   "roster_avg": 45.4,
+   "position_groups": {
+    "QB": 52,
+    "RB": 58,
+    "WR": 57.3,
+    "TE": 56,
+    "OL": 53,
+    "DL": 55,
+    "LB": 64.5,
+    "DB": 54,
+    "K": 46,
+    "P": 42
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Jerry Mack",
+    "overall": 51
+   },
+   "offensive_coordinator": {
+    "name": "Mitch Militello",
+    "overall": 53
+   },
+   "defensive_coordinator": {
+    "name": "Marc Mattioli",
+    "overall": 29
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "kent-state",
+  "school_name": "Kent State University",
+  "short_name": "Kent State",
+  "abbreviation": "KENT",
+  "mascot": "Golden Flashes",
+  "city": "Kent",
+  "state": "OH",
+  "conference": "MAC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Dix Stadium",
+   "capacity": 25319,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Navy Blue",
+    "hex": "#002664"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#EAAB00"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "akron"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 54,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 53.5,
+   "defense": 48.2,
+   "special_teams": 46.5,
+   "overall": 50.4,
+   "roster_avg": 43.3,
+   "position_groups": {
+    "QB": 54,
+    "RB": 52,
+    "WR": 60.7,
+    "TE": 54,
+    "OL": 49,
+    "DL": 46,
+    "LB": 51.5,
+    "DB": 48.6,
+    "K": 48,
+    "P": 45
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Mark Carney",
+    "overall": 29
+   },
+   "offensive_coordinator": {
+    "name": "Clay Patterson",
+    "overall": 36
+   },
+   "defensive_coordinator": {
+    "name": "Cherokee Valeria",
+    "overall": 31
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "kentucky",
+  "school_name": "University of Kentucky",
+  "short_name": "Kentucky",
+  "abbreviation": "UK",
+  "mascot": "Wildcats",
+  "city": "Lexington",
+  "state": "KY",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Kroger Field",
+   "capacity": 61000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Blue",
+    "hex": "#0033A0"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "louisville",
+   "tennessee"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 76,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 64.1,
+   "defense": 61.0,
+   "special_teams": 52.0,
+   "overall": 61.5,
+   "roster_avg": 51.7,
+   "position_groups": {
+    "QB": 63,
+    "RB": 73,
+    "WR": 61.7,
+    "TE": 61,
+    "OL": 65,
+    "DL": 66,
+    "LB": 54,
+    "DB": 59.8,
+    "K": 54,
+    "P": 50
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Will Stein",
+    "overall": 55
+   },
+   "offensive_coordinator": {
+    "name": "Joe Sloan",
+    "overall": 41
+   },
+   "defensive_coordinator": {
+    "name": "Jay Bateman",
+    "overall": 32
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "kestrel-bay",
+  "school_name": "Kestrel Bay University",
+  "short_name": "Kestrel Bay",
+  "abbreviation": "KBU",
+  "mascot": "Sea Wolves",
+  "city": "Kestrel Bay",
+  "state": "ME",
+  "region": "New England",
+  "conference": "Eight Rivers Football Conference",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "Harborview Field",
+   "capacity": 11200,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Navy",
+    "hex": "#14284B"
+   },
+   "secondary": {
+    "name": "Seafoam",
+    "hex": "#5FB7A6"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "alder-ridge-state"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 33,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 42.1,
+   "defense": 42.1,
+   "special_teams": 42.5,
+   "overall": 42.1,
+   "roster_avg": 35.4,
+   "position_groups": {
+    "QB": 37,
+    "RB": 46,
+    "WR": 43.3,
+    "TE": 38,
+    "OL": 44.4,
+    "DL": 42.5,
+    "LB": 42.5,
+    "DB": 41.6,
+    "K": 42,
+    "P": 43
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Marcus Caudill",
+    "overall": 35
+   },
+   "offensive_coordinator": {
+    "name": "Dwayne Ashby",
+    "overall": 20
+   },
+   "defensive_coordinator": {
+    "name": "Dale Tillman",
+    "overall": 20
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "liberty",
+  "school_name": "Liberty University",
+  "short_name": "Liberty",
+  "abbreviation": "LIB",
+  "mascot": "Flames",
+  "city": "Lynchburg",
+  "state": "VA",
+  "conference": "Conference USA",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Williams Stadium",
+   "capacity": 25000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Navy",
+    "hex": "#0A254E"
+   },
+   "secondary": {
+    "name": "Red",
+    "hex": "#C41230"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 53,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 58.7,
+   "defense": 55.6,
+   "special_teams": 49.0,
+   "overall": 56.3,
+   "roster_avg": 48.2,
+   "position_groups": {
+    "QB": 54,
+    "RB": 67,
+    "WR": 60,
+    "TE": 54,
+    "OL": 60,
+    "DL": 58.2,
+    "LB": 59,
+    "DB": 52.2,
+    "K": 48,
+    "P": 50
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Jamey Chadwell",
+    "overall": 32
+   },
+   "offensive_coordinator": {
+    "name": "Newland Isaac",
+    "overall": 51
+   },
+   "defensive_coordinator": {
+    "name": "Shawn Quinn",
+    "overall": 44
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "louisiana",
+  "school_name": "University of Louisiana at Lafayette",
+  "short_name": "Louisiana",
+  "abbreviation": "UL",
+  "mascot": "Ragin' Cajuns",
+  "city": "Lafayette",
+  "state": "LA",
+  "conference": "Sun Belt",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Our Lady of Lourdes Stadium",
+   "capacity": 41426,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Vermilion",
+    "hex": "#CE181E"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
+  },
+  "rivals": [
+   "ul-monroe",
+   "arkansas-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 66,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 53.6,
+   "defense": 51.2,
+   "special_teams": 51.5,
+   "overall": 52.3,
+   "roster_avg": 44.8,
+   "position_groups": {
+    "QB": 52,
+    "RB": 61,
+    "WR": 56.3,
+    "TE": 54,
+    "OL": 51.4,
+    "DL": 50.5,
+    "LB": 46,
+    "DB": 53.8,
+    "K": 60,
+    "P": 43
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Michael Desormeaux",
+    "overall": 30
+   },
+   "offensive_coordinator": {
+    "name": "Tim Leger",
+    "overall": 30
+   },
+   "defensive_coordinator": {
+    "name": "Jim Salgado",
+    "overall": 26
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "louisiana-tech",
+  "school_name": "Louisiana Tech University",
+  "short_name": "Louisiana Tech",
+  "abbreviation": "LT",
+  "mascot": "Bulldogs",
+  "city": "Ruston",
+  "state": "LA",
+  "conference": "Sun Belt",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Joe Aillet Stadium",
+   "capacity": 28019,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Blue",
+    "hex": "#002F8B"
+   },
+   "secondary": {
+    "name": "Red",
+    "hex": "#E31B23"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "southern-miss",
+   "ul-monroe"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 56,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 55.9,
+   "defense": 50.7,
+   "special_teams": 48.5,
+   "overall": 52.8,
+   "roster_avg": 45.4,
+   "position_groups": {
+    "QB": 54,
+    "RB": 54,
+    "WR": 59,
+    "TE": 71,
+    "OL": 52.6,
+    "DL": 49.2,
+    "LB": 61.5,
+    "DB": 47.6,
+    "K": 49,
+    "P": 48
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Sonny Cumbie",
+    "overall": 49
+   },
+   "offensive_coordinator": {
+    "name": "Nathan Young",
+    "overall": 37
+   },
+   "defensive_coordinator": {
+    "name": "Luke Olson",
+    "overall": 33
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "louisville",
+  "school_name": "University of Louisville",
+  "short_name": "Louisville",
+  "abbreviation": "LOU",
+  "mascot": "Cardinals",
+  "city": "Louisville",
+  "state": "KY",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "L&N Federal Credit Union Stadium",
+   "capacity": 60800,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Cardinal Red",
+    "hex": "#AD0000"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "kentucky",
+   "cincinnati"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 76,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 67.4,
+   "defense": 65.1,
+   "special_teams": 54.0,
+   "overall": 65.0,
+   "roster_avg": 53.2,
+   "position_groups": {
+    "QB": 65,
+    "RB": 86,
+    "WR": 68.7,
+    "TE": 73,
+    "OL": 63.2,
+    "DL": 64.2,
+    "LB": 72,
+    "DB": 63,
+    "K": 52,
+    "P": 56
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Jeff Brohm",
+    "overall": 51
+   },
+   "offensive_coordinator": {
+    "name": "Brian Brohm",
+    "overall": 53
+   },
+   "defensive_coordinator": {
+    "name": "Mark Ivey",
+    "overall": 72
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "lsu",
+  "school_name": "Louisiana State University",
+  "short_name": "LSU",
+  "abbreviation": "LSU",
+  "mascot": "Tigers",
+  "city": "Baton Rouge",
+  "state": "LA",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Tiger Stadium",
+   "capacity": 102321,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Purple",
+    "hex": "#461D7C"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#FDD023"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "alabama",
+   "ole-miss",
+   "arkansas",
+   "texas-a-m",
+   "florida"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 89,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 74.8,
+   "defense": 73.5,
+   "special_teams": 58.0,
+   "overall": 72.5,
+   "roster_avg": 59.2,
+   "position_groups": {
+    "QB": 82,
+    "RB": 75,
+    "WR": 77.7,
+    "TE": 86,
+    "OL": 66.4,
+    "DL": 73.2,
+    "LB": 77.5,
+    "DB": 72,
+    "K": 58,
+    "P": 58
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Lane Kiffin",
+    "overall": 66
+   },
+   "offensive_coordinator": {
+    "name": "Charlie Weis Jr.",
+    "overall": 52
+   },
+   "defensive_coordinator": {
+    "name": "Blake Baker",
+    "overall": 73
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "marshall",
+  "school_name": "Marshall University",
+  "short_name": "Marshall",
+  "abbreviation": "MRSH",
+  "mascot": "Thundering Herd",
+  "city": "Huntington",
+  "state": "WV",
+  "conference": "Sun Belt",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Joan C. Edwards Stadium",
+   "capacity": 38227,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Kelly Green",
+    "hex": "#00B140"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
+  },
+  "rivals": [
+   "ohio",
+   "app-st",
+   "east-carolina"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 64,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 59.7,
+   "defense": 51.8,
+   "special_teams": 45.5,
+   "overall": 54.7,
+   "roster_avg": 46.2,
+   "position_groups": {
+    "QB": 63,
+    "RB": 60,
+    "WR": 62.3,
+    "TE": 71,
+    "OL": 53.8,
+    "DL": 51.8,
+    "LB": 51,
+    "DB": 52.2,
+    "K": 48,
+    "P": 43
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Tony Gibson",
+    "overall": 30
+   },
+   "offensive_coordinator": {
+    "name": "Rod Smith",
+    "overall": 37
+   },
+   "defensive_coordinator": {
+    "name": "Brad Lambert",
+    "overall": 37
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "maryland",
+  "school_name": "University of Maryland, College Park",
+  "short_name": "Maryland",
+  "abbreviation": "MD",
+  "mascot": "Terrapins",
+  "city": "College Park",
+  "state": "MD",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "SECU Stadium",
+   "capacity": 51802,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Red",
+    "hex": "#E21833"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#FFD200"
+   },
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
+  },
+  "rivals": [
+   "west-virginia",
+   "virginia",
+   "penn-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 72,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 63.8,
+   "defense": 61.8,
+   "special_teams": 68.0,
+   "overall": 63.3,
+   "roster_avg": 52.1,
+   "position_groups": {
+    "QB": 67,
+    "RB": 67,
+    "WR": 60.3,
+    "TE": 76,
+    "OL": 60.8,
+    "DL": 66,
+    "LB": 64,
+    "DB": 57.6,
+    "K": 65,
+    "P": 71
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Mike Locksley",
+    "overall": 59
+   },
+   "offensive_coordinator": {
+    "name": "Clint Trickett",
+    "overall": 51
+   },
+   "defensive_coordinator": {
+    "name": "Ted Monachino",
+    "overall": 44
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "memphis",
+  "school_name": "University of Memphis",
+  "short_name": "Memphis",
+  "abbreviation": "MEM",
+  "mascot": "Tigers",
+  "city": "Memphis",
+  "state": "TN",
+  "conference": "American Athletic Conference",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Simmons Bank Liberty Stadium",
+   "capacity": 52000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Blue",
+    "hex": "#003087"
+   },
+   "secondary": {
+    "name": "Gray",
+    "hex": "#898D8D"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "ole-miss",
+   "tulane",
+   "uab"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 72,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 58.8,
+   "defense": 59.5,
+   "special_teams": 45.0,
+   "overall": 57.7,
+   "roster_avg": 49.1,
+   "position_groups": {
+    "QB": 54,
+    "RB": 63,
+    "WR": 62.3,
+    "TE": 65,
+    "OL": 57.6,
+    "DL": 59,
+    "LB": 56.5,
+    "DB": 61.2,
+    "K": 45,
+    "P": 45
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Charles Huff",
+    "overall": 39
+   },
+   "offensive_coordinator": {
+    "name": "Kevin Decker",
+    "overall": 57
+   },
+   "defensive_coordinator": {
+    "name": "Lance Guidry",
+    "overall": 47
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "miami",
+  "school_name": "University of Miami",
+  "short_name": "Miami",
+  "abbreviation": "MIA",
+  "mascot": "Hurricanes",
+  "city": "Coral Gables",
+  "state": "FL",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Hard Rock Stadium",
+   "capacity": 65326,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Orange",
+    "hex": "#F47321"
+   },
+   "secondary": {
+    "name": "Green",
+    "hex": "#005030"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "florida-state",
+   "florida",
+   "virginia-tech"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 6,
+   "home_field_advantage": 77,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 75.7,
+   "defense": 72.8,
+   "special_teams": 64.0,
+   "overall": 73.2,
+   "roster_avg": 58.9,
+   "position_groups": {
+    "QB": 84,
+    "RB": 88,
+    "WR": 83.3,
+    "TE": 69,
+    "OL": 65,
+    "DL": 76.8,
+    "LB": 63.5,
+    "DB": 73.4,
+    "K": 63,
+    "P": 65
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Mario Cristobal",
+    "overall": 75
+   },
+   "offensive_coordinator": {
+    "name": "Shannon Dawson",
+    "overall": 72
+   },
+   "defensive_coordinator": {
+    "name": "Corey Hetherman",
+    "overall": 72
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "miami-oh",
+  "school_name": "Miami University",
+  "short_name": "Miami (OH)",
+  "abbreviation": "M-OH",
+  "mascot": "RedHawks",
+  "city": "Oxford",
+  "state": "OH",
+  "conference": "MAC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Yager Stadium",
+   "capacity": 24286,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Red",
+    "hex": "#C3142D"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
+  },
+  "rivals": [
+   "ohio",
+   "cincinnati"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 53,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 54.7,
+   "defense": 57.6,
+   "special_teams": 47.0,
+   "overall": 55.2,
+   "roster_avg": 46.7,
+   "position_groups": {
+    "QB": 48,
+    "RB": 63,
+    "WR": 57.7,
+    "TE": 50,
+    "OL": 56.2,
+    "DL": 56,
+    "LB": 63.5,
+    "DB": 56.6,
+    "K": 49,
+    "P": 45
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Chuck Martin",
+    "overall": 53
+   },
+   "offensive_coordinator": {
+    "name": "Gus Ragland",
+    "overall": 47
+   },
+   "defensive_coordinator": {
+    "name": "Bill Brechin",
+    "overall": 38
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "michigan",
+  "school_name": "University of Michigan",
+  "short_name": "Michigan",
+  "abbreviation": "MICH",
+  "mascot": "Wolverines",
+  "city": "Ann Arbor",
+  "state": "MI",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Michigan Stadium",
+   "capacity": 107601,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Maize",
+    "hex": "#FFCB05"
+   },
+   "secondary": {
+    "name": "Blue",
+    "hex": "#00274C"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "ohio-state",
+   "michigan-state",
+   "notre-dame",
+   "minnesota"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 90,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 68.9,
+   "defense": 69.0,
+   "special_teams": 53.0,
+   "overall": 67.4,
+   "roster_avg": 55.9,
+   "position_groups": {
+    "QB": 69,
+    "RB": 76,
+    "WR": 68,
+    "TE": 52,
+    "OL": 71.4,
+    "DL": 70.8,
+    "LB": 57,
+    "DB": 72.4,
+    "K": 54,
+    "P": 52
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Kyle Whittingham",
+    "overall": 61
+   },
+   "offensive_coordinator": {
+    "name": "Jason Beck",
+    "overall": 60
+   },
+   "defensive_coordinator": {
+    "name": "Jay Hill",
+    "overall": 62
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "michigan-state",
+  "school_name": "Michigan State University",
+  "short_name": "Michigan State",
+  "abbreviation": "MSU",
+  "mascot": "Spartans",
+  "city": "East Lansing",
+  "state": "MI",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Spartan Stadium",
+   "capacity": 75005,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Green",
+    "hex": "#18453B"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "michigan",
+   "penn-state",
+   "notre-dame"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 81,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 60.5,
+   "defense": 63.3,
+   "special_teams": 59.0,
+   "overall": 61.6,
+   "roster_avg": 52.2,
+   "position_groups": {
+    "QB": 54,
+    "RB": 82,
+    "WR": 63.7,
+    "TE": 50,
+    "OL": 60.4,
+    "DL": 57.8,
+    "LB": 71,
+    "DB": 64.6,
+    "K": 45,
+    "P": 73
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Pat Fitzgerald",
+    "overall": 61
+   },
+   "offensive_coordinator": {
+    "name": "Nick Sheridan",
+    "overall": 57
+   },
+   "defensive_coordinator": {
+    "name": "Joe Rossi",
+    "overall": 52
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "minnesota",
+  "school_name": "University of Minnesota",
+  "short_name": "Minnesota",
+  "abbreviation": "MINN",
+  "mascot": "Golden Gophers",
+  "city": "Minneapolis",
+  "state": "MN",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Huntington Bank Stadium",
+   "capacity": 50805,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Maroon",
+    "hex": "#7A0019"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#FFCC33"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "wisconsin",
+   "iowa",
+   "michigan",
+   "nebraska"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 71,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 64.4,
+   "defense": 63.0,
+   "special_teams": 50.5,
+   "overall": 62.4,
+   "roster_avg": 51.5,
+   "position_groups": {
+    "QB": 65,
+    "RB": 76,
+    "WR": 64.7,
+    "TE": 52,
+    "OL": 64,
+    "DL": 62.5,
+    "LB": 64,
+    "DB": 63,
+    "K": 45,
+    "P": 56
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "P. J. Fleck",
+    "overall": 48
+   },
+   "offensive_coordinator": {
+    "name": "Greg Harbaugh Jr.",
+    "overall": 54
+   },
+   "defensive_coordinator": {
+    "name": "Danny Collins",
+    "overall": 74
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "mississippi-st",
+  "school_name": "Mississippi State University",
+  "short_name": "Mississippi State",
+  "abbreviation": "MSST",
+  "mascot": "Bulldogs",
+  "city": "Starkville",
+  "state": "MS",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Davis Wade Stadium",
+   "capacity": 60311,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Maroon",
+    "hex": "#660000"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "ole-miss"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 75,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 63.5,
+   "defense": 64.5,
+   "special_teams": 61.0,
+   "overall": 63.7,
+   "roster_avg": 53.7,
+   "position_groups": {
+    "QB": 69,
+    "RB": 78,
+    "WR": 66,
+    "TE": 58,
+    "OL": 57,
+    "DL": 65.2,
+    "LB": 60.5,
+    "DB": 65.6,
+    "K": 61,
+    "P": 61
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Jeff Lebby",
+    "overall": 62
+   },
+   "offensive_coordinator": {
+    "name": "Philip Montgomery",
+    "overall": 59
+   },
+   "defensive_coordinator": {
+    "name": "Zach Arnett",
+    "overall": 62
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "missouri",
+  "school_name": "University of Missouri",
+  "short_name": "Missouri",
+  "abbreviation": "MIZ",
+  "mascot": "Tigers",
+  "city": "Columbia",
+  "state": "MO",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Faurot Field at Memorial Stadium",
+   "capacity": 57321,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Gold",
+    "hex": "#F1B82D"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "arkansas",
+   "kansas",
+   "oklahoma",
+   "illinois"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 74,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 72.6,
+   "defense": 64.3,
+   "special_teams": 57.0,
+   "overall": 67.3,
+   "roster_avg": 54.8,
+   "position_groups": {
+    "QB": 65,
+    "RB": 93,
+    "WR": 71.3,
+    "TE": 75,
+    "OL": 73.4,
+    "DL": 65.5,
+    "LB": 66,
+    "DB": 62.6,
+    "K": 58,
+    "P": 56
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Eliah Drinkwitz",
+    "overall": 48
+   },
+   "offensive_coordinator": {
+    "name": "Chip Lindsey",
+    "overall": 61
+   },
+   "defensive_coordinator": {
+    "name": "Corey Batoon",
+    "overall": 62
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "missouri-state",
+  "school_name": "Missouri State University",
+  "short_name": "Missouri State",
+  "abbreviation": "MOST",
+  "mascot": "Bears",
+  "city": "Springfield",
+  "state": "MO",
+  "conference": "Conference USA",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Robert W. Plaster Stadium",
+   "capacity": 17500,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Maroon",
+    "hex": "#5E0009"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": null
+  },
+  "rivals": [],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 45,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 53.7,
+   "defense": 51.4,
+   "special_teams": 54.5,
+   "overall": 52.7,
+   "roster_avg": 46.6,
+   "position_groups": {
+    "QB": 52,
+    "RB": 63,
+    "WR": 60.3,
+    "TE": 60,
+    "OL": 47.6,
+    "DL": 53,
+    "LB": 50,
+    "DB": 50.6,
+    "K": 60,
+    "P": 49
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Casey Woods",
+    "overall": 35
+   },
+   "offensive_coordinator": {
+    "name": "Mark Cala",
+    "overall": 37
+   },
+   "defensive_coordinator": {
+    "name": "Jack Curtis",
+    "overall": 43
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "mtsu",
+  "school_name": "Middle Tennessee State University",
+  "short_name": "Middle Tennessee",
+  "abbreviation": "MTSU",
+  "mascot": "Blue Raiders",
+  "city": "Murfreesboro",
+  "state": "TN",
+  "conference": "Conference USA",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Johnny \"Red\" Floyd Stadium",
+   "capacity": 30788,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Blue",
+    "hex": "#0066CC"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "w-kentucky"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 59,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 52.3,
+   "defense": 52.9,
+   "special_teams": 57.5,
+   "overall": 53.1,
+   "roster_avg": 45.9,
+   "position_groups": {
+    "QB": 50,
+    "RB": 58,
+    "WR": 56.3,
+    "TE": 46,
+    "OL": 51.4,
+    "DL": 53.8,
+    "LB": 51,
+    "DB": 53,
+    "K": 54,
+    "P": 61
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Derek Mason",
+    "overall": 56
+   },
+   "offensive_coordinator": {
+    "name": "Anthony Scelfo",
+    "overall": 30
+   },
+   "defensive_coordinator": {
+    "name": "Brian Stewart",
+    "overall": 39
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "navy",
+  "school_name": "United States Naval Academy",
+  "short_name": "Navy",
+  "abbreviation": "NAVY",
+  "mascot": "Midshipmen",
+  "city": "Annapolis",
+  "state": "MD",
+  "conference": "American Athletic Conference",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Navy-Marine Corps Memorial Stadium",
+   "capacity": 34000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Navy Blue",
+    "hex": "#00205B"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#C5B783"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "army",
+   "air-force",
+   "notre-dame"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 61,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 56.8,
+   "defense": 54.7,
+   "special_teams": 43.5,
+   "overall": 54.5,
+   "roster_avg": 43.9,
+   "position_groups": {
+    "QB": 60,
+    "RB": 58,
+    "WR": 54,
+    "TE": 45,
+    "OL": 58.6,
+    "DL": 50.8,
+    "LB": 59.5,
+    "DB": 56,
+    "K": 37,
+    "P": 50
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Brian Newberry",
+    "overall": 42
+   },
+   "offensive_coordinator": {
+    "name": "Drew Cronic",
+    "overall": 42
+   },
+   "defensive_coordinator": {
+    "name": "Eric Lewis",
+    "overall": 50
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "nc-state",
+  "school_name": "North Carolina State University",
+  "short_name": "NC State",
+  "abbreviation": "NCST",
+  "mascot": "Wolfpack",
+  "city": "Raleigh",
+  "state": "NC",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Carter-Finley Stadium",
+   "capacity": 56919,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Wolfpack Red",
+    "hex": "#CC0000"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "north-carolina",
+   "east-carolina",
+   "wake-forest"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 74,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 63.1,
+   "defense": 58.7,
+   "special_teams": 55.0,
+   "overall": 60.3,
+   "roster_avg": 50.6,
+   "position_groups": {
+    "QB": 71,
+    "RB": 65,
+    "WR": 68,
+    "TE": 56,
+    "OL": 56.4,
+    "DL": 55.5,
+    "LB": 61.5,
+    "DB": 60.2,
+    "K": 60,
+    "P": 50
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Dave Doeren",
+    "overall": 58
+   },
+   "offensive_coordinator": {
+    "name": "Kurt Roper",
+    "overall": 52
+   },
+   "defensive_coordinator": {
+    "name": "D. J. Eliot",
+    "overall": 47
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "ndsu",
+  "school_name": "North Dakota State University",
+  "short_name": "North Dakota State",
+  "abbreviation": "NDSU",
+  "mascot": "Bison",
+  "city": "Fargo",
+  "state": "ND",
+  "conference": "Mountain West",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Fargodome",
+   "capacity": 18700,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Green",
+    "hex": "#0A5640"
+   },
+   "secondary": {
+    "name": "Yellow",
+    "hex": "#FFC72A"
+   },
+   "accent": null
+  },
+  "rivals": [],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 46,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 55.7,
+   "defense": 55.5,
+   "special_teams": 50.0,
+   "overall": 55.0,
+   "roster_avg": 46.0,
+   "position_groups": {
+    "QB": 52,
+    "RB": 69,
+    "WR": 54.7,
+    "TE": 54,
+    "OL": 56.2,
+    "DL": 57.8,
+    "LB": 60,
+    "DB": 51.8,
+    "K": 48,
+    "P": 52
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Tim Polasek",
+    "overall": 45
+   },
+   "offensive_coordinator": {
+    "name": "Dan Larson",
+    "overall": 47
+   },
+   "defensive_coordinator": {
+    "name": "Grant Olson",
+    "overall": 33
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "nebraska",
+  "school_name": "University of Nebraska\u2013Lincoln",
+  "short_name": "Nebraska",
+  "abbreviation": "NEB",
+  "mascot": "Cornhuskers",
+  "city": "Lincoln",
+  "state": "NE",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Memorial Stadium",
+   "capacity": 85458,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Scarlet",
+    "hex": "#D00000"
+   },
+   "secondary": {
+    "name": "Cream",
+    "hex": "#F5F1E7"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "iowa",
+   "oklahoma",
+   "colorado",
+   "minnesota"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 84,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 70.7,
+   "defense": 66.2,
+   "special_teams": 57.5,
+   "overall": 67.4,
+   "roster_avg": 54.5,
+   "position_groups": {
+    "QB": 76,
+    "RB": 60,
+    "WR": 74.7,
+    "TE": 67,
+    "OL": 68,
+    "DL": 63.5,
+    "LB": 76.5,
+    "DB": 64.2,
+    "K": 63,
+    "P": 52
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Matt Rhule",
+    "overall": 73
+   },
+   "offensive_coordinator": {
+    "name": "Dana Holgorsen",
+    "overall": 74
+   },
+   "defensive_coordinator": {
+    "name": "Rob Aurich",
+    "overall": 54
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "nevada",
+  "school_name": "University of Nevada, Reno",
+  "short_name": "Nevada",
+  "abbreviation": "NEV",
+  "mascot": "Wolf Pack",
+  "city": "Reno",
+  "state": "NV",
+  "conference": "Mountain West",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Mackay Stadium",
+   "capacity": 27000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Navy Blue",
+    "hex": "#003366"
+   },
+   "secondary": {
+    "name": "Silver",
+    "hex": "#807F84"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "unlv"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 55,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 53.1,
+   "defense": 54.3,
+   "special_teams": 51.5,
+   "overall": 53.5,
+   "roster_avg": 46,
+   "position_groups": {
+    "QB": 48,
+    "RB": 58,
+    "WR": 50.3,
+    "TE": 50,
+    "OL": 57.4,
+    "DL": 58.5,
+    "LB": 45.5,
+    "DB": 54.4,
+    "K": 54,
+    "P": 49
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Jeff Choate",
+    "overall": 48
+   },
+   "offensive_coordinator": {
+    "name": "Brett Bartolone",
+    "overall": 35
+   },
+   "defensive_coordinator": {
+    "name": "Kane Ioane",
+    "overall": 44
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "new-mexico",
+  "school_name": "University of New Mexico",
+  "short_name": "New Mexico",
+  "abbreviation": "UNM",
+  "mascot": "Lobos",
+  "city": "Albuquerque",
+  "state": "NM",
+  "conference": "Mountain West",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "University Stadium",
+   "capacity": 39224,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Cherry",
+    "hex": "#BA0C2F"
+   },
+   "secondary": {
+    "name": "Silver",
+    "hex": "#A7A8AA"
+   },
+   "accent": {
+    "name": "Turquoise",
+    "hex": "#007A86"
+   }
+  },
+  "rivals": [
+   "new-mexico-st",
+   "utep"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 65,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 57.5,
+   "defense": 57.5,
+   "special_teams": 47.0,
+   "overall": 56.5,
+   "roster_avg": 46.6,
+   "position_groups": {
+    "QB": 58,
+    "RB": 65,
+    "WR": 58.3,
+    "TE": 61,
+    "OL": 54.4,
+    "DL": 53.2,
+    "LB": 64.5,
+    "DB": 58,
+    "K": 46,
+    "P": 48
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Jason Eck",
+    "overall": 37
+   },
+   "offensive_coordinator": {
+    "name": "Luke Schleusner",
+    "overall": 50
+   },
+   "defensive_coordinator": {
+    "name": "Spence Nowinsky",
+    "overall": 36
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "new-mexico-st",
+  "school_name": "New Mexico State University",
+  "short_name": "New Mexico State",
+  "abbreviation": "NMSU",
+  "mascot": "Aggies",
+  "city": "Las Cruces",
+  "state": "NM",
+  "conference": "Conference USA",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Aggie Memorial Stadium",
+   "capacity": 28853,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Crimson",
+    "hex": "#8C0B42"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "utep",
+   "new-mexico"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 57,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 51.3,
+   "defense": 54.8,
+   "special_teams": 45.0,
+   "overall": 52.2,
+   "roster_avg": 46.4,
+   "position_groups": {
+    "QB": 46,
+    "RB": 58,
+    "WR": 58.3,
+    "TE": 52,
+    "OL": 48.8,
+    "DL": 52.5,
+    "LB": 61.5,
+    "DB": 54,
+    "K": 48,
+    "P": 42
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Tony Sanchez",
+    "overall": 45
+   },
+   "offensive_coordinator": {
+    "name": "David Yost",
+    "overall": 42
+   },
+   "defensive_coordinator": {
+    "name": "Joe Morris",
+    "overall": 37
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "niu",
+  "school_name": "Northern Illinois University",
+  "short_name": "Northern Illinois",
+  "abbreviation": "NIU",
+  "mascot": "Huskies",
+  "city": "DeKalb",
+  "state": "IL",
+  "conference": "Mountain West",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Huskie Stadium",
+   "capacity": 23595,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Cardinal",
+    "hex": "#C8102E"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "ball-state",
+   "toledo"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 52,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 51.3,
+   "defense": 48.9,
+   "special_teams": 47.5,
+   "overall": 49.8,
+   "roster_avg": 44.2,
+   "position_groups": {
+    "QB": 46,
+    "RB": 69,
+    "WR": 57.7,
+    "TE": 50,
+    "OL": 47.4,
+    "DL": 49,
+    "LB": 46,
+    "DB": 50,
+    "K": 50,
+    "P": 45
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Rob Harley",
+    "overall": 20
+   },
+   "offensive_coordinator": {
+    "name": "Tony Petersen",
+    "overall": 20
+   },
+   "defensive_coordinator": {
+    "name": "Rob Harley",
+    "overall": 43
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "north-carolina",
+  "school_name": "University of North Carolina at Chapel Hill",
+  "short_name": "North Carolina",
+  "abbreviation": "UNC",
+  "mascot": "Tar Heels",
+  "city": "Chapel Hill",
+  "state": "NC",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Kenan Stadium",
+   "capacity": 50500,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Carolina Blue",
+    "hex": "#7BAFD4"
+   },
+   "secondary": {
+    "name": "Navy",
+    "hex": "#13294B"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "duke",
+   "nc-state",
+   "virginia"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 71,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 59.5,
+   "defense": 61.6,
+   "special_teams": 49.0,
+   "overall": 59.4,
+   "roster_avg": 50.9,
+   "position_groups": {
+    "QB": 58,
+    "RB": 71,
+    "WR": 63,
+    "TE": 65,
+    "OL": 54.8,
+    "DL": 65.5,
+    "LB": 56,
+    "DB": 60.8,
+    "K": 54,
+    "P": 44
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Bill Belichick",
+    "overall": 57
+   },
+   "offensive_coordinator": {
+    "name": "Bobby Petrino",
+    "overall": 60
+   },
+   "defensive_coordinator": {
+    "name": "Stephen Belichick",
+    "overall": 59
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "north-texas",
+  "school_name": "University of North Texas",
+  "short_name": "North Texas",
+  "abbreviation": "UNT",
+  "mascot": "Mean Green",
+  "city": "Denton",
+  "state": "TX",
+  "conference": "American Athletic Conference",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "DATCU Stadium",
+   "capacity": 30500,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Green",
+    "hex": "#00853E"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "smu",
+   "utsa",
+   "rice"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 58,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 58.7,
+   "defense": 57.3,
+   "special_teams": 48.0,
+   "overall": 57.0,
+   "roster_avg": 48.3,
+   "position_groups": {
+    "QB": 52,
+    "RB": 78,
+    "WR": 59.7,
+    "TE": 63,
+    "OL": 57.4,
+    "DL": 57.8,
+    "LB": 56,
+    "DB": 57.4,
+    "K": 56,
+    "P": 40
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Neal Brown",
+    "overall": 38
+   },
+   "offensive_coordinator": {
+    "name": "Neal Brown",
+    "overall": 67
+   },
+   "defensive_coordinator": {
+    "name": "Matt Powledge",
+    "overall": 47
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "northwestern",
+  "school_name": "Northwestern University",
+  "short_name": "Northwestern",
+  "abbreviation": "NU",
+  "mascot": "Wildcats",
+  "city": "Evanston",
+  "state": "IL",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Ryan Field",
+   "capacity": 35000,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Purple",
+    "hex": "#4E2A84"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "illinois"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 62,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 63.5,
+   "defense": 60.0,
+   "special_teams": 55.5,
+   "overall": 61.1,
+   "roster_avg": 50.1,
+   "position_groups": {
+    "QB": 63,
+    "RB": 75,
+    "WR": 66.7,
+    "TE": 52,
+    "OL": 61.8,
+    "DL": 53.5,
+    "LB": 54,
+    "DB": 67.6,
+    "K": 63,
+    "P": 48
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "David Braun",
+    "overall": 39
+   },
+   "offensive_coordinator": {
+    "name": "Chip Kelly",
+    "overall": 48
+   },
+   "defensive_coordinator": {
+    "name": "Tim McGarigle",
+    "overall": 61
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "notre-dame",
+  "school_name": "University of Notre Dame du Lac",
+  "short_name": "Notre Dame",
+  "abbreviation": "ND",
+  "mascot": "Fighting Irish",
+  "city": "Notre Dame",
+  "state": "IN",
+  "conference": "FBS Independent",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Notre Dame Stadium",
+   "capacity": 77622,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Navy",
+    "hex": "#0C2340"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#C99700"
+   },
+   "accent": {
+    "name": "Kelly Green",
+    "hex": "#00843D"
+   }
+  },
+  "rivals": [
+   "usc",
+   "navy",
+   "stanford",
+   "boston-college",
+   "michigan"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 6,
+   "home_field_advantage": 82,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 74.6,
+   "defense": 78.7,
+   "special_teams": 52.0,
+   "overall": 74.2,
+   "roster_avg": 60.8,
+   "position_groups": {
+    "QB": 86,
+    "RB": 75,
+    "WR": 70.7,
+    "TE": 65,
+    "OL": 72,
+    "DL": 73.5,
+    "LB": 83,
+    "DB": 81.2,
+    "K": 60,
+    "P": 44
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Marcus Freeman",
+    "overall": 80
+   },
+   "offensive_coordinator": {
+    "name": "Mike Denbrock",
+    "overall": 89
+   },
+   "defensive_coordinator": {
+    "name": "Chris Ash",
+    "overall": 79
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "ohio",
+  "school_name": "Ohio University",
+  "short_name": "Ohio",
+  "abbreviation": "OHIO",
+  "mascot": "Bobcats",
+  "city": "Athens",
+  "state": "OH",
+  "conference": "MAC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Peden Stadium",
+   "capacity": 24000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Green",
+    "hex": "#00694E"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "miami-oh",
+   "marshall"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 52,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 50.1,
+   "defense": 57.4,
+   "special_teams": 48.5,
+   "overall": 53.2,
+   "roster_avg": 44.9,
+   "position_groups": {
+    "QB": 49,
+    "RB": 61,
+    "WR": 53.3,
+    "TE": 48,
+    "OL": 47,
+    "DL": 53.8,
+    "LB": 69,
+    "DB": 55.6,
+    "K": 52,
+    "P": 45
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "John Hauser",
+    "overall": 32
+   },
+   "offensive_coordinator": {
+    "name": "Scott Isphording",
+    "overall": 26
+   },
+   "defensive_coordinator": {
+    "name": "Kurt Mattix",
+    "overall": 36
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "ohio-state",
+  "school_name": "The Ohio State University",
+  "short_name": "Ohio State",
+  "abbreviation": "OSU",
+  "mascot": "Buckeyes",
+  "city": "Columbus",
+  "state": "OH",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Ohio Stadium",
+   "capacity": 102780,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Scarlet",
+    "hex": "#BB0000"
+   },
+   "secondary": {
+    "name": "Gray",
+    "hex": "#666666"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "michigan",
+   "penn-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 6,
+   "home_field_advantage": 89,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 79.7,
+   "defense": 74.4,
+   "special_teams": 60.5,
+   "overall": 75.4,
+   "roster_avg": 61.3,
+   "position_groups": {
+    "QB": 90,
+    "RB": 82,
+    "WR": 82.7,
+    "TE": 65,
+    "OL": 74.2,
+    "DL": 77.2,
+    "LB": 64.5,
+    "DB": 76,
+    "K": 63,
+    "P": 58
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Ryan Day",
+    "overall": 80
+   },
+   "offensive_coordinator": {
+    "name": "Arthur Smith",
+    "overall": 70
+   },
+   "defensive_coordinator": {
+    "name": "Matt Patricia",
+    "overall": 78
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "oklahoma",
+  "school_name": "University of Oklahoma",
+  "short_name": "Oklahoma",
+  "abbreviation": "OU",
+  "mascot": "Sooners",
+  "city": "Norman",
+  "state": "OK",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Gaylord Family Oklahoma Memorial Stadium",
+   "capacity": 80126,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Crimson",
+    "hex": "#841617"
+   },
+   "secondary": {
+    "name": "Cream",
+    "hex": "#FDF9D8"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "texas",
+   "oklahoma-state",
+   "nebraska",
+   "missouri"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 6,
+   "home_field_advantage": 83,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 72.1,
+   "defense": 73.4,
+   "special_teams": 77.5,
+   "overall": 73.2,
+   "roster_avg": 56.9,
+   "position_groups": {
+    "QB": 80,
+    "RB": 69,
+    "WR": 75.7,
+    "TE": 73,
+    "OL": 65.6,
+    "DL": 78,
+    "LB": 74.5,
+    "DB": 69.2,
+    "K": 82,
+    "P": 73
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Brent Venables",
+    "overall": 81
+   },
+   "offensive_coordinator": {
+    "name": "Ben Arbuckle",
+    "overall": 66
+   },
+   "defensive_coordinator": {
+    "name": "Todd Bates",
+    "overall": 67
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "oklahoma-state",
+  "school_name": "Oklahoma State University",
+  "short_name": "Oklahoma State",
+  "abbreviation": "OKST",
+  "mascot": "Cowboys",
+  "city": "Stillwater",
+  "state": "OK",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Boone Pickens Stadium",
+   "capacity": 52305,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Orange",
+    "hex": "#FF7300"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "oklahoma"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 72,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 68.8,
+   "defense": 62.1,
+   "special_teams": 49.5,
+   "overall": 63.9,
+   "roster_avg": 52.8,
+   "position_groups": {
+    "QB": 80,
+    "RB": 84,
+    "WR": 72.7,
+    "TE": 63,
+    "OL": 58,
+    "DL": 61.8,
+    "LB": 69.5,
+    "DB": 59.4,
+    "K": 54,
+    "P": 45
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Eric Morris",
+    "overall": 58
+   },
+   "offensive_coordinator": {
+    "name": "Sean Brophy",
+    "overall": 58
+   },
+   "defensive_coordinator": {
+    "name": "Skyler Cassity",
+    "overall": 68
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "old-dominion",
+  "school_name": "Old Dominion University",
+  "short_name": "Old Dominion",
+  "abbreviation": "ODU",
+  "mascot": "Monarchs",
+  "city": "Norfolk",
+  "state": "VA",
+  "conference": "Sun Belt",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "S.B. Ballard Stadium",
+   "capacity": 21944,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Slate Blue",
+    "hex": "#003057"
+   },
+   "secondary": {
+    "name": "Silver",
+    "hex": "#7C878E"
+   },
+   "accent": {
+    "name": "Light Blue",
+    "hex": "#98C5EA"
+   }
+  },
+  "rivals": [
+   "james-madison"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 50,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 50.9,
+   "defense": 57.1,
+   "special_teams": 46.5,
+   "overall": 53.2,
+   "roster_avg": 44.7,
+   "position_groups": {
+    "QB": 49,
+    "RB": 71,
+    "WR": 52.7,
+    "TE": 61,
+    "OL": 45,
+    "DL": 53.5,
+    "LB": 58.5,
+    "DB": 59.4,
+    "K": 49,
+    "P": 44
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Ricky Rahne",
+    "overall": 41
+   },
+   "offensive_coordinator": {
+    "name": "Kody Cook",
+    "overall": 40
+   },
+   "defensive_coordinator": {
+    "name": "Blake Seiler",
+    "overall": 30
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "ole-miss",
+  "school_name": "University of Mississippi",
+  "short_name": "Ole Miss",
+  "abbreviation": "MISS",
+  "mascot": "Rebels",
+  "city": "Oxford",
+  "state": "MS",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Vaught-Hemingway Stadium",
+   "capacity": 64038,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Red",
+    "hex": "#CE1126"
+   },
+   "secondary": {
+    "name": "Navy",
+    "hex": "#14213D"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "mississippi-st",
+   "lsu",
+   "arkansas"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 6,
+   "home_field_advantage": 77,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 72.9,
+   "defense": 74.6,
+   "special_teams": 70.5,
+   "overall": 73.4,
+   "roster_avg": 57.7,
+   "position_groups": {
+    "QB": 88,
+    "RB": 93,
+    "WR": 70.3,
+    "TE": 76,
+    "OL": 60.8,
+    "DL": 77.5,
+    "LB": 83,
+    "DB": 69,
+    "K": 76,
+    "P": 65
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Pete Golding",
+    "overall": 63
+   },
+   "offensive_coordinator": {
+    "name": "John David Baker",
+    "overall": 66
+   },
+   "defensive_coordinator": {
+    "name": "Bryan Brown",
+    "overall": 71
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "oregon",
+  "school_name": "University of Oregon",
+  "short_name": "Oregon",
+  "abbreviation": "ORE",
+  "mascot": "Ducks",
+  "city": "Eugene",
+  "state": "OR",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Autzen Stadium",
+   "capacity": 54000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Green",
+    "hex": "#154733"
+   },
+   "secondary": {
+    "name": "Yellow",
+    "hex": "#FEE123"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "oregon-state",
+   "washington"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 6,
+   "home_field_advantage": 73,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 78.2,
+   "defense": 77.4,
+   "special_teams": 54.0,
+   "overall": 75.4,
+   "roster_avg": 60.5,
+   "position_groups": {
+    "QB": 91,
+    "RB": 76,
+    "WR": 77.3,
+    "TE": 82,
+    "OL": 70.6,
+    "DL": 86.5,
+    "LB": 68,
+    "DB": 73.8,
+    "K": 48,
+    "P": 60
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Dan Lanning",
+    "overall": 68
+   },
+   "offensive_coordinator": {
+    "name": "Drew Mehringer",
+    "overall": 87
+   },
+   "defensive_coordinator": {
+    "name": "Chris Hampton",
+    "overall": 84
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "oregon-state",
+  "school_name": "Oregon State University",
+  "short_name": "Oregon State",
+  "abbreviation": "ORST",
+  "mascot": "Beavers",
+  "city": "Corvallis",
+  "state": "OR",
+  "conference": "Pac-12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Reser Stadium",
+   "capacity": 35548,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Orange",
+    "hex": "#DC4405"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "oregon",
+   "washington-st"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 62,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 56.5,
+   "defense": 58.2,
+   "special_teams": 50.5,
+   "overall": 56.7,
+   "roster_avg": 48.7,
+   "position_groups": {
+    "QB": 60,
+    "RB": 60,
+    "WR": 56,
+    "TE": 61,
+    "OL": 53.2,
+    "DL": 60.5,
+    "LB": 63.5,
+    "DB": 54.2,
+    "K": 52,
+    "P": 49
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "JaMarcus Shephard",
+    "overall": 57
+   },
+   "offensive_coordinator": {
+    "name": "Mitch Dahlen",
+    "overall": 53
+   },
+   "defensive_coordinator": {
+    "name": "Mike MacIntyre",
+    "overall": 47
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "penn-state",
+  "school_name": "The Pennsylvania State University",
+  "short_name": "Penn State",
+  "abbreviation": "PSU",
+  "mascot": "Nittany Lions",
+  "city": "University Park",
+  "state": "PA",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Beaver Stadium",
+   "capacity": 106572,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Navy",
+    "hex": "#041E42"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "ohio-state",
+   "michigan-state",
+   "pittsburgh"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 90,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 69.7,
+   "defense": 64.8,
+   "special_teams": 55.5,
+   "overall": 66.1,
+   "roster_avg": 53.8,
+   "position_groups": {
+    "QB": 78,
+    "RB": 76,
+    "WR": 66,
+    "TE": 78,
+    "OL": 64,
+    "DL": 60,
+    "LB": 74.5,
+    "DB": 64.8,
+    "K": 65,
+    "P": 46
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Matt Campbell",
+    "overall": 60
+   },
+   "offensive_coordinator": {
+    "name": "Taylor Mouser",
+    "overall": 62
+   },
+   "defensive_coordinator": {
+    "name": "D'Anton Lynn",
+    "overall": 61
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "pittsburgh",
+  "school_name": "University of Pittsburgh",
+  "short_name": "Pittsburgh",
+  "abbreviation": "PITT",
+  "mascot": "Panthers",
+  "city": "Pittsburgh",
+  "state": "PA",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Acrisure Stadium",
+   "capacity": 68400,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Pitt Royal",
+    "hex": "#003594"
+   },
+   "secondary": {
+    "name": "Pitt Gold",
+    "hex": "#FFB81C"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "penn-state",
+   "west-virginia",
+   "syracuse"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 79,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 64.2,
+   "defense": 64.2,
+   "special_teams": 46.0,
+   "overall": 62.4,
+   "roster_avg": 51.7,
+   "position_groups": {
+    "QB": 69,
+    "RB": 75,
+    "WR": 59.7,
+    "TE": 54,
+    "OL": 64,
+    "DL": 69,
+    "LB": 61.5,
+    "DB": 61.4,
+    "K": 50,
+    "P": 42
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Pat Narduzzi",
+    "overall": 53
+   },
+   "offensive_coordinator": {
+    "name": "Kade Bell",
+    "overall": 58
+   },
+   "defensive_coordinator": {
+    "name": "Cory Sanders",
+    "overall": 57
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "port-rennick-state",
+  "school_name": "Port Rennick State University",
+  "short_name": "Port Rennick St.",
+  "abbreviation": "PRSU",
+  "mascot": "Mariners",
+  "city": "Port Rennick",
+  "state": "TX",
+  "region": "Gulf Coast",
+  "conference": "Eight Rivers Football Conference",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "Seawall Stadium",
+   "capacity": 18200,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Gulf Blue",
+    "hex": "#0069A8"
+   },
+   "secondary": {
+    "name": "Coral",
+    "hex": "#F26B4F"
+   },
+   "accent": {
+    "name": "Sand",
+    "hex": "#E8D9B5"
+   }
+  },
+  "rivals": [
+   "calder-springs"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 46,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 46.8,
+   "defense": 48.8,
+   "special_teams": 40.0,
+   "overall": 47.0,
+   "roster_avg": 40.0,
+   "position_groups": {
+    "QB": 42,
+    "RB": 63,
+    "WR": 50.7,
+    "TE": 42,
+    "OL": 45,
+    "DL": 49.5,
+    "LB": 42.5,
+    "DB": 50.8,
+    "K": 32,
+    "P": 48
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Kevin Westbrook",
+    "overall": 20
+   },
+   "offensive_coordinator": {
+    "name": "Wes Dorsey",
+    "overall": 28
+   },
+   "defensive_coordinator": {
+    "name": "Greg Westbrook",
+    "overall": 29
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "purdue",
+  "school_name": "Purdue University",
+  "short_name": "Purdue",
+  "abbreviation": "PUR",
+  "mascot": "Boilermakers",
+  "city": "West Lafayette",
+  "state": "IN",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Ross\u2013Ade Stadium",
+   "capacity": 57236,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Old Gold",
+    "hex": "#CFB991"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "indiana",
+   "illinois"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 74,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 58.4,
+   "defense": 59.1,
+   "special_teams": 54.5,
+   "overall": 58.3,
+   "roster_avg": 49.6,
+   "position_groups": {
+    "QB": 54,
+    "RB": 69,
+    "WR": 64,
+    "TE": 65,
+    "OL": 54.2,
+    "DL": 60,
+    "LB": 57.5,
+    "DB": 59,
+    "K": 48,
+    "P": 61
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Barry Odom",
+    "overall": 47
+   },
+   "offensive_coordinator": {
+    "name": "Josh Henson",
+    "overall": 51
+   },
+   "defensive_coordinator": {
+    "name": "Kevin Kane",
+    "overall": 59
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "red-prairie-state",
+  "school_name": "Red Prairie State University",
+  "short_name": "Red Prairie St.",
+  "abbreviation": "RPS",
+  "mascot": "Plainsmen",
+  "city": "Red Prairie",
+  "state": "NE",
+  "region": "Plains",
+  "conference": "Eight Rivers Football Conference",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "Windbreak Stadium",
+   "capacity": 13500,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Crimson",
+    "hex": "#A3162D"
+   },
+   "secondary": {
+    "name": "Wheat",
+    "hex": "#E3C77A"
+   },
+   "accent": {
+    "name": "Black",
+    "hex": "#141414"
+   }
+  },
+  "rivals": [
+   "wendt-lake-tech"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 38,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 44.9,
+   "defense": 39.7,
+   "special_teams": 31.0,
+   "overall": 41.2,
+   "roster_avg": 35.7,
+   "position_groups": {
+    "QB": 43,
+    "RB": 49,
+    "WR": 49,
+    "TE": 38,
+    "OL": 44.2,
+    "DL": 39.5,
+    "LB": 40,
+    "DB": 39.8,
+    "K": 31,
+    "P": 31
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Lance Kincaid",
+    "overall": 20
+   },
+   "offensive_coordinator": {
+    "name": "Brian Rourke",
+    "overall": 20
+   },
+   "defensive_coordinator": {
+    "name": "Trent Dorsey",
+    "overall": 20
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "rice",
+  "school_name": "William Marsh Rice University",
+  "short_name": "Rice",
+  "abbreviation": "RICE",
+  "mascot": "Owls",
+  "city": "Houston",
+  "state": "TX",
+  "conference": "American Athletic Conference",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Rice Stadium",
+   "capacity": 47000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Blue",
+    "hex": "#00205B"
+   },
+   "secondary": {
+    "name": "Gray",
+    "hex": "#7C7E7F"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "houston",
+   "smu",
+   "tulane"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 69,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 51.1,
+   "defense": 52.5,
+   "special_teams": 46.0,
+   "overall": 51.2,
+   "roster_avg": 43.9,
+   "position_groups": {
+    "QB": 52,
+    "RB": 71,
+    "WR": 50.3,
+    "TE": 49,
+    "OL": 47.4,
+    "DL": 52,
+    "LB": 61.5,
+    "DB": 49.4,
+    "K": 50,
+    "P": 42
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Scott Abell",
+    "overall": 37
+   },
+   "offensive_coordinator": {
+    "name": "Vince Munch",
+    "overall": 22
+   },
+   "defensive_coordinator": {
+    "name": "Jon Kay",
+    "overall": 30
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "rutgers",
+  "school_name": "Rutgers, The State University of New Jersey",
+  "short_name": "Rutgers",
+  "abbreviation": "RUTG",
+  "mascot": "Scarlet Knights",
+  "city": "Piscataway",
+  "state": "NJ",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "SHI Stadium",
+   "capacity": 52454,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Scarlet",
+    "hex": "#CC0033"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "maryland",
+   "penn-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 72,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 62.2,
+   "defense": 58.2,
+   "special_teams": 60.0,
+   "overall": 60.2,
+   "roster_avg": 51.6,
+   "position_groups": {
+    "QB": 58,
+    "RB": 86,
+    "WR": 69,
+    "TE": 56,
+    "OL": 57.2,
+    "DL": 63.2,
+    "LB": 56,
+    "DB": 55,
+    "K": 60,
+    "P": 60
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Greg Schiano",
+    "overall": 44
+   },
+   "offensive_coordinator": {
+    "name": "Kirk Ciarrocca",
+    "overall": 52
+   },
+   "defensive_coordinator": {
+    "name": "Travis Johansen",
+    "overall": 33
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "sac-state",
+  "school_name": "California State University, Sacramento",
+  "short_name": "Sacramento State",
+  "abbreviation": "SAC",
+  "mascot": "Hornets",
+  "city": "Sacramento",
+  "state": "CA",
+  "conference": "MAC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Hornet Stadium",
+   "capacity": 21195,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Green",
+    "hex": "#043927"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#C4B581"
+   },
+   "accent": null
+  },
+  "rivals": [],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 49,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 52.1,
+   "defense": 50.9,
+   "special_teams": 53.0,
+   "overall": 51.7,
+   "roster_avg": 46.1,
+   "position_groups": {
+    "QB": 50,
+    "RB": 63,
+    "WR": 51.7,
+    "TE": 61,
+    "OL": 49.6,
+    "DL": 53,
+    "LB": 53,
+    "DB": 48.4,
+    "K": 48,
+    "P": 58
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Alonzo Carter",
+    "overall": 37
+   },
+   "offensive_coordinator": {
+    "name": "Eric Kiesau",
+    "overall": 32
+   },
+   "defensive_coordinator": {
+    "name": "Adam Clark",
+    "overall": 33
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "sam-houston",
+  "school_name": "Sam Houston State University",
+  "short_name": "Sam Houston",
+  "abbreviation": "SHSU",
+  "mascot": "Bearkats",
+  "city": "Huntsville",
+  "state": "TX",
+  "conference": "Conference USA",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Bowers Stadium",
+   "capacity": 12593,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Orange",
+    "hex": "#F47920"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Navy",
+    "hex": "#00205B"
+   }
+  },
+  "rivals": [
+   "texas-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 36,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 52.2,
+   "defense": 48.8,
+   "special_teams": 44.0,
+   "overall": 49.9,
+   "roster_avg": 44.6,
+   "position_groups": {
+    "QB": 46,
+    "RB": 63,
+    "WR": 63.3,
+    "TE": 50,
+    "OL": 47.6,
+    "DL": 52.5,
+    "LB": 50,
+    "DB": 45.4,
+    "K": 44,
+    "P": 44
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Phil Longo",
+    "overall": 32
+   },
+   "offensive_coordinator": {
+    "name": "Zack Patterson",
+    "overall": 20
+   },
+   "defensive_coordinator": {
+    "name": "Freddie Aughtry-Lindsay",
+    "overall": 26
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "san-diego-st",
+  "school_name": "San Diego State University",
+  "short_name": "San Diego State",
+  "abbreviation": "SDSU",
+  "mascot": "Aztecs",
+  "city": "San Diego",
+  "state": "CA",
+  "conference": "Pac-12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Snapdragon Stadium",
+   "capacity": 35000,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Scarlet",
+    "hex": "#A6192E"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "fresno-state",
+   "hawai-i"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 62,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 58.7,
+   "defense": 59.1,
+   "special_teams": 47.0,
+   "overall": 57.7,
+   "roster_avg": 48.7,
+   "position_groups": {
+    "QB": 54,
+    "RB": 76,
+    "WR": 65.3,
+    "TE": 46,
+    "OL": 56.6,
+    "DL": 57.8,
+    "LB": 63.5,
+    "DB": 58.4,
+    "K": 50,
+    "P": 44
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Sean Lewis",
+    "overall": 44
+   },
+   "offensive_coordinator": {
+    "name": "Matt Johnson",
+    "overall": 54
+   },
+   "defensive_coordinator": {
+    "name": "Demetrius Sumler",
+    "overall": 35
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "san-jose-state",
+  "school_name": "San Jos\u00e9 State University",
+  "short_name": "San Jos\u00e9 State",
+  "abbreviation": "SJSU",
+  "mascot": "Spartans",
+  "city": "San Jose",
+  "state": "CA",
+  "conference": "Mountain West",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "CEFCU Stadium",
+   "capacity": 21520,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Spartan Blue",
+    "hex": "#0055A2"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#E5A823"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "fresno-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 50,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 52.5,
+   "defense": 50.5,
+   "special_teams": 59.5,
+   "overall": 52.3,
+   "roster_avg": 45.1,
+   "position_groups": {
+    "QB": 50,
+    "RB": 60,
+    "WR": 58.3,
+    "TE": 45,
+    "OL": 50.4,
+    "DL": 51.8,
+    "LB": 54,
+    "DB": 48,
+    "K": 50,
+    "P": 69
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Ken Niumatalolo",
+    "overall": 30
+   },
+   "offensive_coordinator": {
+    "name": "Craig Stutzmann",
+    "overall": 50
+   },
+   "defensive_coordinator": {
+    "name": "Bojay Filimoeatu",
+    "overall": 45
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "smu",
+  "school_name": "Southern Methodist University",
+  "short_name": "SMU",
+  "abbreviation": "SMU",
+  "mascot": "Mustangs",
+  "city": "Dallas",
+  "state": "TX",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Gerald J. Ford Stadium",
+   "capacity": 32000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Red",
+    "hex": "#CC0035"
+   },
+   "secondary": {
+    "name": "Blue",
+    "hex": "#354CA1"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "tcu",
+   "rice",
+   "north-texas"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 60,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 73.2,
+   "defense": 61.5,
+   "special_teams": 48.0,
+   "overall": 65.4,
+   "roster_avg": 54.1,
+   "position_groups": {
+    "QB": 80,
+    "RB": 76,
+    "WR": 67,
+    "TE": 67,
+    "OL": 73.4,
+    "DL": 65.5,
+    "LB": 62.5,
+    "DB": 57.8,
+    "K": 52,
+    "P": 44
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Rhett Lashlee",
+    "overall": 57
+   },
+   "offensive_coordinator": {
+    "name": "Rob Likens",
+    "overall": 43
+   },
+   "defensive_coordinator": {
+    "name": "Maurice Crum Jr.",
+    "overall": 59
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "south-alabama",
+  "school_name": "University of South Alabama",
+  "short_name": "South Alabama",
+  "abbreviation": "USA",
+  "mascot": "Jaguars",
+  "city": "Mobile",
+  "state": "AL",
+  "conference": "Sun Belt",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Hancock Whitney Stadium",
+   "capacity": 25450,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Navy",
+    "hex": "#00205B"
+   },
+   "secondary": {
+    "name": "Red",
+    "hex": "#BF0D3E"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "troy"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 54,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 52.9,
+   "defense": 50.7,
+   "special_teams": 48.5,
+   "overall": 51.5,
+   "roster_avg": 44.3,
+   "position_groups": {
+    "QB": 54,
+    "RB": 60,
+    "WR": 54.3,
+    "TE": 49,
+    "OL": 50.8,
+    "DL": 53.2,
+    "LB": 45.5,
+    "DB": 50.8,
+    "K": 45,
+    "P": 52
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Major Applewhite",
+    "overall": 50
+   },
+   "offensive_coordinator": {
+    "name": "Major Applewhite",
+    "overall": 31
+   },
+   "defensive_coordinator": {
+    "name": "Todd Orlando",
+    "overall": 35
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "south-carolina",
+  "school_name": "University of South Carolina",
+  "short_name": "South Carolina",
+  "abbreviation": "SC",
+  "mascot": "Gamecocks",
+  "city": "Columbia",
+  "state": "SC",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Williams-Brice Stadium",
+   "capacity": 77559,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Garnet",
+    "hex": "#73000A"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "clemson",
+   "georgia",
+   "tennessee"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 82,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 67.6,
+   "defense": 65.3,
+   "special_teams": 55.0,
+   "overall": 65.3,
+   "roster_avg": 55.0,
+   "position_groups": {
+    "QB": 75,
+    "RB": 63,
+    "WR": 67.7,
+    "TE": 61,
+    "OL": 65.4,
+    "DL": 71.8,
+    "LB": 55,
+    "DB": 64.2,
+    "K": 54,
+    "P": 56
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Shane Beamer",
+    "overall": 71
+   },
+   "offensive_coordinator": {
+    "name": "Kendal Briles",
+    "overall": 66
+   },
+   "defensive_coordinator": {
+    "name": "Clayton White",
+    "overall": 58
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "southern-miss",
+  "school_name": "University of Southern Mississippi",
+  "short_name": "Southern Miss",
+  "abbreviation": "USM",
+  "mascot": "Golden Eagles",
+  "city": "Hattiesburg",
+  "state": "MS",
+  "conference": "Sun Belt",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "M.M. Roberts Stadium",
+   "capacity": 36000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#FFAB00"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "louisiana-tech",
+   "tulane"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 63,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 53.5,
+   "defense": 49.4,
+   "special_teams": 48.0,
+   "overall": 51.1,
+   "roster_avg": 45.9,
+   "position_groups": {
+    "QB": 50,
+    "RB": 61,
+    "WR": 61,
+    "TE": 48,
+    "OL": 50.6,
+    "DL": 49.5,
+    "LB": 47.5,
+    "DB": 50,
+    "K": 46,
+    "P": 50
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Blake Anderson",
+    "overall": 35
+   },
+   "offensive_coordinator": {
+    "name": "Kyle Cefalo",
+    "overall": 34
+   },
+   "defensive_coordinator": {
+    "name": "Joe Bolden",
+    "overall": 47
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "stanford",
+  "school_name": "Stanford University",
+  "short_name": "Stanford",
+  "abbreviation": "STAN",
+  "mascot": "Cardinal",
+  "city": "Stanford",
+  "state": "CA",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Stanford Stadium",
+   "capacity": 50424,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Cardinal",
+    "hex": "#8C1515"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Stanford Black",
+    "hex": "#2E2D29"
+   }
+  },
+  "rivals": [
+   "california",
+   "notre-dame",
+   "usc"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 71,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 55.6,
+   "defense": 59.0,
+   "special_teams": 58.0,
+   "overall": 57.4,
+   "roster_avg": 49.5,
+   "position_groups": {
+    "QB": 52,
+    "RB": 65,
+    "WR": 56.7,
+    "TE": 52,
+    "OL": 56,
+    "DL": 55,
+    "LB": 69,
+    "DB": 58.2,
+    "K": 60,
+    "P": 56
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Tavita Pritchard",
+    "overall": 60
+   },
+   "offensive_coordinator": {
+    "name": "Terry Heffernan",
+    "overall": 50
+   },
+   "defensive_coordinator": {
+    "name": "Kris Richard",
+    "overall": 53
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "syracuse",
+  "school_name": "Syracuse University",
+  "short_name": "Syracuse",
+  "abbreviation": "SYR",
+  "mascot": "Orange",
+  "city": "Syracuse",
+  "state": "NY",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "JMA Wireless Dome",
+   "capacity": 42784,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Orange",
+    "hex": "#F76900"
+   },
+   "secondary": {
+    "name": "Navy",
+    "hex": "#000E54"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "boston-college",
+   "pittsburgh"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 67,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 59.1,
+   "defense": 61.4,
+   "special_teams": 49.0,
+   "overall": 59.1,
+   "roster_avg": 49.6,
+   "position_groups": {
+    "QB": 65,
+    "RB": 67,
+    "WR": 61.3,
+    "TE": 54,
+    "OL": 53.6,
+    "DL": 59.2,
+    "LB": 57.5,
+    "DB": 64.6,
+    "K": 54,
+    "P": 44
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Fran Brown",
+    "overall": 43
+   },
+   "offensive_coordinator": {
+    "name": "Jeff Nixon",
+    "overall": 55
+   },
+   "defensive_coordinator": {
+    "name": "Vince Kehres",
+    "overall": 44
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "talus-peak",
+  "school_name": "Talus Peak University",
+  "short_name": "Talus Peak",
+  "abbreviation": "TPU",
+  "mascot": "Miners",
+  "city": "Talus Peak",
+  "state": "CO",
+  "region": "Mountain West",
+  "conference": "Eight Rivers Football Conference",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "Switchback Stadium",
+   "capacity": 12600,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Copper",
+    "hex": "#B5652B"
+   },
+   "secondary": {
+    "name": "Slate Blue",
+    "hex": "#2F4A63"
+   },
+   "accent": {
+    "name": "Snow",
+    "hex": "#F7F9FA"
+   }
+  },
+  "rivals": [
+   "cedar-sound"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 36,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 44.1,
+   "defense": 48.4,
+   "special_teams": 45.5,
+   "overall": 46.2,
+   "roster_avg": 39.0,
+   "position_groups": {
+    "QB": 42,
+    "RB": 63,
+    "WR": 47,
+    "TE": 45,
+    "OL": 39.6,
+    "DL": 49.8,
+    "LB": 53.5,
+    "DB": 45.2,
+    "K": 48,
+    "P": 43
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Rick Vasquez",
+    "overall": 28
+   },
+   "offensive_coordinator": {
+    "name": "Bill Ashby",
+    "overall": 35
+   },
+   "defensive_coordinator": {
+    "name": "Wes Lindgren",
+    "overall": 32
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "tcu",
+  "school_name": "Texas Christian University",
+  "short_name": "TCU",
+  "abbreviation": "TCU",
+  "mascot": "Horned Frogs",
+  "city": "Fort Worth",
+  "state": "TX",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Amon G. Carter Stadium",
+   "capacity": 47000,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Purple",
+    "hex": "#4D1979"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Gray",
+    "hex": "#A3A9AC"
+   }
+  },
+  "rivals": [
+   "smu",
+   "baylor"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 69,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 63.9,
+   "defense": 60.5,
+   "special_teams": 58.5,
+   "overall": 61.8,
+   "roster_avg": 52.0,
+   "position_groups": {
+    "QB": 63,
+    "RB": 71,
+    "WR": 67,
+    "TE": 56,
+    "OL": 62.8,
+    "DL": 63.8,
+    "LB": 51.5,
+    "DB": 61.6,
+    "K": 54,
+    "P": 63
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Sonny Dykes",
+    "overall": 72
+   },
+   "offensive_coordinator": {
+    "name": "Gordon Sammis",
+    "overall": 58
+   },
+   "defensive_coordinator": {
+    "name": "Andy Avalos",
+    "overall": 39
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "temple",
+  "school_name": "Temple University",
+  "short_name": "Temple",
+  "abbreviation": "TEM",
+  "mascot": "Owls",
+  "city": "Philadelphia",
+  "state": "PA",
+  "conference": "American Athletic Conference",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Lincoln Financial Field",
+   "capacity": 67594,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Cherry",
+    "hex": "#9D2235"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Gray",
+    "hex": "#A7A9AC"
+   }
+  },
+  "rivals": [
+   "penn-state",
+   "uconn"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 78,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 60.2,
+   "defense": 51.0,
+   "special_teams": 49.0,
+   "overall": 54.9,
+   "roster_avg": 47.2,
+   "position_groups": {
+    "QB": 50,
+    "RB": 65,
+    "WR": 61.7,
+    "TE": 78,
+    "OL": 60.8,
+    "DL": 53.5,
+    "LB": 52,
+    "DB": 48.6,
+    "K": 48,
+    "P": 50
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "K. C. Keeler",
+    "overall": 47
+   },
+   "offensive_coordinator": {
+    "name": "Tyler Walker",
+    "overall": 43
+   },
+   "defensive_coordinator": {
+    "name": "Brian Smith",
+    "overall": 55
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "tennessee",
+  "school_name": "The University of Tennessee, Knoxville",
+  "short_name": "Tennessee",
+  "abbreviation": "TENN",
+  "mascot": "Volunteers",
+  "city": "Knoxville",
+  "state": "TN",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Neyland Stadium",
+   "capacity": 101915,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Orange",
+    "hex": "#FF8200"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Smokey Gray",
+    "hex": "#58595B"
+   }
+  },
+  "rivals": [
+   "alabama",
+   "florida",
+   "georgia",
+   "kentucky",
+   "vanderbilt"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 89,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 69.5,
+   "defense": 67.7,
+   "special_teams": 55.0,
+   "overall": 67.2,
+   "roster_avg": 56.1,
+   "position_groups": {
+    "QB": 63,
+    "RB": 82,
+    "WR": 74.7,
+    "TE": 67,
+    "OL": 68.4,
+    "DL": 63.2,
+    "LB": 78,
+    "DB": 67.2,
+    "K": 56,
+    "P": 54
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Josh Heupel",
+    "overall": 71
+   },
+   "offensive_coordinator": {
+    "name": "Joey Halzle",
+    "overall": 69
+   },
+   "defensive_coordinator": {
+    "name": "Jim Knowles",
+    "overall": 42
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "texas",
+  "school_name": "The University of Texas at Austin",
+  "short_name": "Texas",
+  "abbreviation": "TEX",
+  "mascot": "Longhorns",
+  "city": "Austin",
+  "state": "TX",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Darrell K Royal-Texas Memorial Stadium",
+   "capacity": 100119,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Burnt Orange",
+    "hex": "#BF5700"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "oklahoma",
+   "texas-a-m",
+   "arkansas"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 6,
+   "home_field_advantage": 88,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 76.6,
+   "defense": 74.9,
+   "special_teams": 68.0,
+   "overall": 75.0,
+   "roster_avg": 60.0,
+   "position_groups": {
+    "QB": 84,
+    "RB": 80,
+    "WR": 77.7,
+    "TE": 58,
+    "OL": 74.6,
+    "DL": 77.2,
+    "LB": 76.5,
+    "DB": 72.4,
+    "K": 63,
+    "P": 73
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Steve Sarkisian",
+    "overall": 91
+   },
+   "offensive_coordinator": {
+    "name": "Kyle Flood",
+    "overall": 69
+   },
+   "defensive_coordinator": {
+    "name": "Will Muschamp",
+    "overall": 70
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "texas-a-m",
+  "school_name": "Texas A&M University",
+  "short_name": "Texas A&M",
+  "abbreviation": "TAMU",
+  "mascot": "Aggies",
+  "city": "College Station",
+  "state": "TX",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Kyle Field",
+   "capacity": 102733,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Maroon",
+    "hex": "#500000"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "texas",
+   "lsu",
+   "arkansas"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 89,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 71.8,
+   "defense": 71.9,
+   "special_teams": 69.0,
+   "overall": 71.6,
+   "roster_avg": 59.9,
+   "position_groups": {
+    "QB": 78,
+    "RB": 76,
+    "WR": 75,
+    "TE": 58,
+    "OL": 68.2,
+    "DL": 69.2,
+    "LB": 66,
+    "DB": 76.4,
+    "K": 69,
+    "P": 69
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Mike Elko",
+    "overall": 73
+   },
+   "offensive_coordinator": {
+    "name": "Holmon Wiggins",
+    "overall": 74
+   },
+   "defensive_coordinator": {
+    "name": "Lyle Hemphill",
+    "overall": 63
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "texas-state",
+  "school_name": "Texas State University",
+  "short_name": "Texas State",
+  "abbreviation": "TXST",
+  "mascot": "Bobcats",
+  "city": "San Marcos",
+  "state": "TX",
+  "conference": "Pac-12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "UFCU Stadium",
+   "capacity": 30000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Maroon",
+    "hex": "#501214"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#8D734A"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "utsa"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 58,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 61.0,
+   "defense": 55.6,
+   "special_teams": 47.0,
+   "overall": 57.2,
+   "roster_avg": 46.9,
+   "position_groups": {
+    "QB": 75,
+    "RB": 56,
+    "WR": 70.3,
+    "TE": 49,
+    "OL": 50.4,
+    "DL": 55.5,
+    "LB": 59,
+    "DB": 54.4,
+    "K": 56,
+    "P": 38
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "G. J. Kinne",
+    "overall": 43
+   },
+   "offensive_coordinator": {
+    "name": "Landon Keopple",
+    "overall": 62
+   },
+   "defensive_coordinator": {
+    "name": "Will Windham",
+    "overall": 46
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "texas-tech",
+  "school_name": "Texas Tech University",
+  "short_name": "Texas Tech",
+  "abbreviation": "TTU",
+  "mascot": "Red Raiders",
+  "city": "Lubbock",
+  "state": "TX",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Galaxy Stadium",
+   "capacity": 60229,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Scarlet",
+    "hex": "#CC0000"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "tcu",
+   "baylor",
+   "texas"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 75,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 69.6,
+   "defense": 74.7,
+   "special_teams": 60.5,
+   "overall": 71.0,
+   "roster_avg": 56.7,
+   "position_groups": {
+    "QB": 54,
+    "RB": 78,
+    "WR": 75,
+    "TE": 86,
+    "OL": 70.8,
+    "DL": 80.5,
+    "LB": 84,
+    "DB": 66.4,
+    "K": 61,
+    "P": 60
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Joey McGuire",
+    "overall": 80
+   },
+   "offensive_coordinator": {
+    "name": "Mack Leftwich",
+    "overall": 74
+   },
+   "defensive_coordinator": {
+    "name": "Shiel Wood",
+    "overall": 69
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "toledo",
+  "school_name": "The University of Toledo",
+  "short_name": "Toledo",
+  "abbreviation": "TOL",
+  "mascot": "Rockets",
+  "city": "Toledo",
+  "state": "OH",
+  "conference": "MAC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Glass Bowl",
+   "capacity": 26038,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Midnight Blue",
+    "hex": "#15397F"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#FFDA00"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "bowling-green"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 54,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 54.6,
+   "defense": 50.5,
+   "special_teams": 55.0,
+   "overall": 52.8,
+   "roster_avg": 45.8,
+   "position_groups": {
+    "QB": 50,
+    "RB": 65,
+    "WR": 57.3,
+    "TE": 61,
+    "OL": 52.4,
+    "DL": 54,
+    "LB": 47.5,
+    "DB": 49,
+    "K": 56,
+    "P": 54
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Mike Jacobs",
+    "overall": 20
+   },
+   "offensive_coordinator": {
+    "name": "Cris Reisert",
+    "overall": 37
+   },
+   "defensive_coordinator": {
+    "name": "Jahmal Brown",
+    "overall": 37
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "troy",
+  "school_name": "Troy University",
+  "short_name": "Troy",
+  "abbreviation": "TROY",
+  "mascot": "Trojans",
+  "city": "Troy",
+  "state": "AL",
+  "conference": "Sun Belt",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Veterans Memorial Stadium",
+   "capacity": 30402,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Cardinal",
+    "hex": "#8A2432"
+   },
+   "secondary": {
+    "name": "Silver",
+    "hex": "#8E9090"
+   },
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
+  },
+  "rivals": [
+   "south-alabama"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 58,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 53.3,
+   "defense": 53.4,
+   "special_teams": 61.5,
+   "overall": 54.2,
+   "roster_avg": 45.9,
+   "position_groups": {
+    "QB": 58,
+    "RB": 61,
+    "WR": 51.7,
+    "TE": 43,
+    "OL": 52,
+    "DL": 60,
+    "LB": 49.5,
+    "DB": 49.6,
+    "K": 50,
+    "P": 73
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Gerad Parker",
+    "overall": 44
+   },
+   "offensive_coordinator": {
+    "name": "Adam Austin",
+    "overall": 40
+   },
+   "defensive_coordinator": {
+    "name": "Dontae Wright",
+    "overall": 53
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "tulane",
+  "school_name": "Tulane University",
+  "short_name": "Tulane",
+  "abbreviation": "TULN",
+  "mascot": "Green Wave",
+  "city": "New Orleans",
+  "state": "LA",
+  "conference": "American Athletic Conference",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Yulman Stadium",
+   "capacity": 30000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Olive Green",
+    "hex": "#006747"
+   },
+   "secondary": {
+    "name": "Sky Blue",
+    "hex": "#71C5E8"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "lsu",
+   "southern-miss",
+   "memphis"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 58,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 55.0,
+   "defense": 57.5,
+   "special_teams": 51.0,
+   "overall": 55.7,
+   "roster_avg": 48.7,
+   "position_groups": {
+    "QB": 56,
+    "RB": 71,
+    "WR": 61.7,
+    "TE": 48,
+    "OL": 48.6,
+    "DL": 55.8,
+    "LB": 59.5,
+    "DB": 58.2,
+    "K": 54,
+    "P": 48
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Will Hall",
+    "overall": 44
+   },
+   "offensive_coordinator": {
+    "name": "Russ Callaway",
+    "overall": 37
+   },
+   "defensive_coordinator": {
+    "name": "Tayler Polk",
+    "overall": 50
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "tulsa",
+  "school_name": "University of Tulsa",
+  "short_name": "Tulsa",
+  "abbreviation": "TLSA",
+  "mascot": "Golden Hurricane",
+  "city": "Tulsa",
+  "state": "OK",
+  "conference": "American Athletic Conference",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Skelly Field at H. A. Chapman Stadium",
+   "capacity": 30000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Blue",
+    "hex": "#002D72"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#C5B783"
+   },
+   "accent": {
+    "name": "Crimson",
+    "hex": "#C8102E"
+   }
+  },
+  "rivals": [
+   "oklahoma-state",
+   "arkansas"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 58,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 54.6,
+   "defense": 59.7,
+   "special_teams": 46.0,
+   "overall": 56.0,
+   "roster_avg": 48.2,
+   "position_groups": {
+    "QB": 52,
+    "RB": 67,
+    "WR": 61.3,
+    "TE": 46,
+    "OL": 51.4,
+    "DL": 61,
+    "LB": 54,
+    "DB": 61,
+    "K": 52,
+    "P": 40
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Tre Lamb",
+    "overall": 33
+   },
+   "offensive_coordinator": {
+    "name": "Kevin Barbay",
+    "overall": 43
+   },
+   "defensive_coordinator": {
+    "name": "Josh Reardon",
+    "overall": 41
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "uab",
+  "school_name": "University of Alabama at Birmingham",
+  "short_name": "UAB",
+  "abbreviation": "UAB",
+  "mascot": "Blazers",
+  "city": "Birmingham",
+  "state": "AL",
+  "conference": "American Athletic Conference",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Protective Stadium",
+   "capacity": 47100,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Green",
+    "hex": "#1E6B52"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#F4C300"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "memphis",
+   "troy",
+   "southern-miss"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 69,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 56.4,
+   "defense": 50.7,
+   "special_teams": 56.0,
+   "overall": 53.8,
+   "roster_avg": 47.2,
+   "position_groups": {
+    "QB": 50,
+    "RB": 67,
+    "WR": 60.7,
+    "TE": 54,
+    "OL": 56,
+    "DL": 54.2,
+    "LB": 48.5,
+    "DB": 48.8,
+    "K": 67,
+    "P": 45
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Alex Mortensen",
+    "overall": 26
+   },
+   "offensive_coordinator": {
+    "name": "Alex Mortensen",
+    "overall": 26
+   },
+   "defensive_coordinator": {
+    "name": "Todd Grantham",
+    "overall": 42
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "ucf",
+  "school_name": "University of Central Florida",
+  "short_name": "UCF",
+  "abbreviation": "UCF",
+  "mascot": "Knights",
+  "city": "Orlando",
+  "state": "FL",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Acrisure Bounce House",
+   "capacity": 44206,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#BA9B37"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "usf"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 68,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 63.9,
+   "defense": 62.1,
+   "special_teams": 58.0,
+   "overall": 62.5,
+   "roster_avg": 51.9,
+   "position_groups": {
+    "QB": 75,
+    "RB": 69,
+    "WR": 63.3,
+    "TE": 78,
+    "OL": 53.8,
+    "DL": 61.8,
+    "LB": 57.5,
+    "DB": 64.2,
+    "K": 58,
+    "P": 58
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Scott Frost",
+    "overall": 55
+   },
+   "offensive_coordinator": {
+    "name": "Steve Cooper",
+    "overall": 50
+   },
+   "defensive_coordinator": {
+    "name": "Alex Grinch",
+    "overall": 36
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "ucla",
+  "school_name": "University of California, Los Angeles",
+  "short_name": "UCLA",
+  "abbreviation": "UCLA",
+  "mascot": "Bruins",
+  "city": "Pasadena",
+  "state": "CA",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Rose Bowl",
+   "capacity": 89702,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Blue",
+    "hex": "#2D68C4"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#F2A900"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "usc"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 85,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 66.8,
+   "defense": 63.8,
+   "special_teams": 59.5,
+   "overall": 64.7,
+   "roster_avg": 53.7,
+   "position_groups": {
+    "QB": 76,
+    "RB": 82,
+    "WR": 66,
+    "TE": 58,
+    "OL": 60.6,
+    "DL": 63.2,
+    "LB": 56,
+    "DB": 67.4,
+    "K": 69,
+    "P": 50
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Bob Chesney",
+    "overall": 54
+   },
+   "offensive_coordinator": {
+    "name": "Dean Kennedy",
+    "overall": 52
+   },
+   "defensive_coordinator": {
+    "name": "Colin Hitschler",
+    "overall": 49
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "uconn",
+  "school_name": "University of Connecticut",
+  "short_name": "UConn",
+  "abbreviation": "CONN",
+  "mascot": "Huskies",
+  "city": "Storrs",
+  "state": "CT",
+  "conference": "FBS Independent",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Pratt & Whitney Stadium at Rentschler Field",
+   "capacity": 38066,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "National Flag Blue",
+    "hex": "#000E2F"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Red",
+    "hex": "#E4002B"
+   }
+  },
+  "rivals": [
+   "umass",
+   "temple"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 64,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 53.6,
+   "defense": 54.5,
+   "special_teams": 49.0,
+   "overall": 53.5,
+   "roster_avg": 46.3,
+   "position_groups": {
+    "QB": 52,
+    "RB": 65,
+    "WR": 54,
+    "TE": 49,
+    "OL": 53,
+    "DL": 55.2,
+    "LB": 64.5,
+    "DB": 49.8,
+    "K": 44,
+    "P": 54
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Jason Candle",
+    "overall": 35
+   },
+   "offensive_coordinator": {
+    "name": "Nunzio Campanile",
+    "overall": 43
+   },
+   "defensive_coordinator": {
+    "name": "Ryan Manalac",
+    "overall": 45
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "ul-monroe",
+  "school_name": "University of Louisiana at Monroe",
+  "short_name": "UL Monroe",
+  "abbreviation": "ULM",
+  "mascot": "Warhawks",
+  "city": "Monroe",
+  "state": "LA",
+  "conference": "Sun Belt",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Malone Stadium",
+   "capacity": 27617,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Maroon",
+    "hex": "#840029"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#BC9B6A"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "louisiana",
+   "louisiana-tech"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 56,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 50.2,
+   "defense": 49.8,
+   "special_teams": 54.0,
+   "overall": 50.4,
+   "roster_avg": 44.0,
+   "position_groups": {
+    "QB": 50,
+    "RB": 56,
+    "WR": 56,
+    "TE": 48,
+    "OL": 46,
+    "DL": 46.8,
+    "LB": 58.5,
+    "DB": 48.8,
+    "K": 60,
+    "P": 48
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Bryant Vincent",
+    "overall": 32
+   },
+   "offensive_coordinator": {
+    "name": "Jesse Montalto",
+    "overall": 45
+   },
+   "defensive_coordinator": {
+    "name": "Troy Reffett",
+    "overall": 26
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "umass",
+  "school_name": "University of Massachusetts Amherst",
+  "short_name": "UMass",
+  "abbreviation": "MASS",
+  "mascot": "Minutemen",
+  "city": "Amherst",
+  "state": "MA",
+  "conference": "MAC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Warren McGuirk Alumni Stadium",
+   "capacity": 17000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Maroon",
+    "hex": "#881C1C"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
+  },
+  "rivals": [
+   "uconn"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 44,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 49.5,
+   "defense": 51.5,
+   "special_teams": 47.0,
+   "overall": 50.2,
+   "roster_avg": 44.4,
+   "position_groups": {
+    "QB": 46,
+    "RB": 54,
+    "WR": 56.7,
+    "TE": 50,
+    "OL": 46.2,
+    "DL": 49.8,
+    "LB": 58.5,
+    "DB": 50.2,
+    "K": 54,
+    "P": 40
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Joe Harasymiak",
+    "overall": 30
+   },
+   "offensive_coordinator": {
+    "name": "Max Warner",
+    "overall": 32
+   },
+   "defensive_coordinator": {
+    "name": "Jared Keyte",
+    "overall": 21
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "unlv",
+  "school_name": "University of Nevada, Las Vegas",
+  "short_name": "UNLV",
+  "abbreviation": "UNLV",
+  "mascot": "Rebels",
+  "city": "Las Vegas",
+  "state": "NV",
+  "conference": "Mountain West",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Allegiant Stadium",
+   "capacity": 65000,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Scarlet",
+    "hex": "#B10202"
+   },
+   "secondary": {
+    "name": "Gray",
+    "hex": "#8A8D8F"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "nevada"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 77,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 62.2,
+   "defense": 58.2,
+   "special_teams": 48.5,
+   "overall": 59.0,
+   "roster_avg": 48.7,
+   "position_groups": {
+    "QB": 60,
+    "RB": 80,
+    "WR": 61,
+    "TE": 61,
+    "OL": 61,
+    "DL": 59.5,
+    "LB": 56,
+    "DB": 58,
+    "K": 52,
+    "P": 45
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Dan Mullen",
+    "overall": 47
+   },
+   "offensive_coordinator": {
+    "name": "Corey Dennis",
+    "overall": 51
+   },
+   "defensive_coordinator": {
+    "name": "Paul Guenther",
+    "overall": 62
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "usc",
+  "school_name": "University of Southern California",
+  "short_name": "USC",
+  "abbreviation": "USC",
+  "mascot": "Trojans",
+  "city": "Los Angeles",
+  "state": "CA",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Los Angeles Memorial Coliseum",
+   "capacity": 77500,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Cardinal",
+    "hex": "#990000"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#FFCC00"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "ucla",
+   "notre-dame"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 82,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 71.3,
+   "defense": 68.5,
+   "special_teams": 51.5,
+   "overall": 68.1,
+   "roster_avg": 56.2,
+   "position_groups": {
+    "QB": 86,
+    "RB": 78,
+    "WR": 66.3,
+    "TE": 67,
+    "OL": 65,
+    "DL": 71.8,
+    "LB": 68,
+    "DB": 66.2,
+    "K": 58,
+    "P": 45
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Lincoln Riley",
+    "overall": 61
+   },
+   "offensive_coordinator": {
+    "name": "Luke Huard",
+    "overall": 58
+   },
+   "defensive_coordinator": {
+    "name": "Gary Patterson",
+    "overall": 53
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "usf",
+  "school_name": "University of South Florida",
+  "short_name": "USF",
+  "abbreviation": "USF",
+  "mascot": "Bulls",
+  "city": "Tampa",
+  "state": "FL",
+  "conference": "American Athletic Conference",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Raymond James Stadium",
+   "capacity": 65618,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Green",
+    "hex": "#006747"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#CFC493"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "ucf"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 78,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 59.5,
+   "defense": 58.5,
+   "special_teams": 50.0,
+   "overall": 58.1,
+   "roster_avg": 50.0,
+   "position_groups": {
+    "QB": 54,
+    "RB": 58,
+    "WR": 65.7,
+    "TE": 58,
+    "OL": 59.6,
+    "DL": 62,
+    "LB": 54,
+    "DB": 57.4,
+    "K": 54,
+    "P": 46
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Brian Hartline",
+    "overall": 39
+   },
+   "offensive_coordinator": {
+    "name": "Tim Beck",
+    "overall": 31
+   },
+   "defensive_coordinator": {
+    "name": "Josh Aldridge",
+    "overall": 40
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "utah",
+  "school_name": "University of Utah",
+  "short_name": "Utah",
+  "abbreviation": "UTAH",
+  "mascot": "Utes",
+  "city": "Salt Lake City",
+  "state": "UT",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Rice-Eccles Stadium",
+   "capacity": 51444,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Utah Red",
+    "hex": "#BE0000"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
+  },
+  "rivals": [
+   "byu",
+   "utah-state",
+   "colorado"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 71,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 67.2,
+   "defense": 59.7,
+   "special_teams": 48.0,
+   "overall": 61.9,
+   "roster_avg": 51.7,
+   "position_groups": {
+    "QB": 80,
+    "RB": 75,
+    "WR": 69.7,
+    "TE": 60,
+    "OL": 58,
+    "DL": 60.8,
+    "LB": 52,
+    "DB": 62,
+    "K": 50,
+    "P": 46
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Morgan Scalley",
+    "overall": 61
+   },
+   "offensive_coordinator": {
+    "name": "Kevin McGiven",
+    "overall": 38
+   },
+   "defensive_coordinator": {
+    "name": "Colton Swan",
+    "overall": 42
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "utah-state",
+  "school_name": "Utah State University",
+  "short_name": "Utah State",
+  "abbreviation": "USU",
+  "mascot": "Aggies",
+  "city": "Logan",
+  "state": "UT",
+  "conference": "Pac-12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Maverik Stadium",
+   "capacity": 25513,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Navy Blue",
+    "hex": "#0F2439"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": {
+    "name": "Pewter",
+    "hex": "#8A8D8F"
+   }
+  },
+  "rivals": [
+   "byu",
+   "wyoming",
+   "boise-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 54,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 56.3,
+   "defense": 59.3,
+   "special_teams": 59.0,
+   "overall": 57.9,
+   "roster_avg": 48.0,
+   "position_groups": {
+    "QB": 52,
+    "RB": 67,
+    "WR": 60.3,
+    "TE": 43,
+    "OL": 57,
+    "DL": 60.5,
+    "LB": 64.5,
+    "DB": 56.2,
+    "K": 58,
+    "P": 60
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Bronco Mendenhall",
+    "overall": 38
+   },
+   "offensive_coordinator": {
+    "name": "Robert Anae",
+    "overall": 47
+   },
+   "defensive_coordinator": {
+    "name": "Nick Howell",
+    "overall": 51
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "utep",
+  "school_name": "The University of Texas at El Paso",
+  "short_name": "UTEP",
+  "abbreviation": "UTEP",
+  "mascot": "Miners",
+  "city": "El Paso",
+  "state": "TX",
+  "conference": "Mountain West",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Sun Bowl Stadium",
+   "capacity": 51500,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Orange",
+    "hex": "#FF8200"
+   },
+   "secondary": {
+    "name": "Navy",
+    "hex": "#041E42"
+   },
+   "accent": {
+    "name": "Silver",
+    "hex": "#B1B3B3"
+   }
+  },
+  "rivals": [
+   "new-mexico-st",
+   "new-mexico"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 72,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 51.5,
+   "defense": 50.6,
+   "special_teams": 53.5,
+   "overall": 51.3,
+   "roster_avg": 44.2,
+   "position_groups": {
+    "QB": 52,
+    "RB": 58,
+    "WR": 54.3,
+    "TE": 50,
+    "OL": 48.6,
+    "DL": 49.8,
+    "LB": 49,
+    "DB": 52,
+    "K": 46,
+    "P": 61
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Scotty Walden",
+    "overall": 42
+   },
+   "offensive_coordinator": {
+    "name": "Lanear Sampson",
+    "overall": 39
+   },
+   "defensive_coordinator": {
+    "name": "Kyle Beyer",
+    "overall": 46
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "utsa",
+  "school_name": "University of Texas at San Antonio",
+  "short_name": "UTSA",
+  "abbreviation": "UTSA",
+  "mascot": "Roadrunners",
+  "city": "San Antonio",
+  "state": "TX",
+  "conference": "American Athletic Conference",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Alamodome",
+   "capacity": 64000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Blue",
+    "hex": "#0C2340"
+   },
+   "secondary": {
+    "name": "Orange",
+    "hex": "#F15A22"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "texas-state",
+   "north-texas"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 77,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 61.4,
+   "defense": 51.7,
+   "special_teams": 59.0,
+   "overall": 56.8,
+   "roster_avg": 47.6,
+   "position_groups": {
+    "QB": 69,
+    "RB": 78,
+    "WR": 62.7,
+    "TE": 49,
+    "OL": 55.2,
+    "DL": 54,
+    "LB": 48,
+    "DB": 51.4,
+    "K": 58,
+    "P": 60
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Jeff Traylor",
+    "overall": 55
+   },
+   "offensive_coordinator": {
+    "name": "Rick Bowie",
+    "overall": 45
+   },
+   "defensive_coordinator": {
+    "name": "Jess Loepp",
+    "overall": 63
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "vanderbilt",
+  "school_name": "Vanderbilt University",
+  "short_name": "Vanderbilt",
+  "abbreviation": "VAN",
+  "mascot": "Commodores",
+  "city": "Nashville",
+  "state": "TN",
+  "conference": "SEC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "FirstBank Stadium",
+   "capacity": 40350,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#CFAE70"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "tennessee",
+   "kentucky"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 65,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 64.7,
+   "defense": 65.5,
+   "special_teams": 66.5,
+   "overall": 65.2,
+   "roster_avg": 52.9,
+   "position_groups": {
+    "QB": 65,
+    "RB": 73,
+    "WR": 70,
+    "TE": 63,
+    "OL": 60,
+    "DL": 64,
+    "LB": 63.5,
+    "DB": 67.6,
+    "K": 73,
+    "P": 60
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Clark Lea",
+    "overall": 66
+   },
+   "offensive_coordinator": {
+    "name": "Tim Beck",
+    "overall": 54
+   },
+   "defensive_coordinator": {
+    "name": "Steve Gregory",
+    "overall": 46
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "virginia",
+  "school_name": "University of Virginia",
+  "short_name": "Virginia",
+  "abbreviation": "UVA",
+  "mascot": "Cavaliers",
+  "city": "Charlottesville",
+  "state": "VA",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Scott Stadium",
+   "capacity": 61500,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Orange",
+    "hex": "#F84C1E"
+   },
+   "secondary": {
+    "name": "Blue",
+    "hex": "#232D4B"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "virginia-tech",
+   "north-carolina",
+   "maryland"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 76,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 66.3,
+   "defense": 67.2,
+   "special_teams": 61.5,
+   "overall": 66.2,
+   "roster_avg": 54.6,
+   "position_groups": {
+    "QB": 61,
+    "RB": 73,
+    "WR": 65.7,
+    "TE": 60,
+    "OL": 69.8,
+    "DL": 66.5,
+    "LB": 68,
+    "DB": 67.4,
+    "K": 60,
+    "P": 63
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Tony Elliott",
+    "overall": 64
+   },
+   "offensive_coordinator": {
+    "name": "Des Kitchings",
+    "overall": 57
+   },
+   "defensive_coordinator": {
+    "name": "John Rudzinski",
+    "overall": 62
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "virginia-tech",
+  "school_name": "Virginia Polytechnic Institute and State University",
+  "short_name": "Virginia Tech",
+  "abbreviation": "VT",
+  "mascot": "Hokies",
+  "city": "Blacksburg",
+  "state": "VA",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Lane Stadium",
+   "capacity": 65632,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Chicago Maroon",
+    "hex": "#861F41"
+   },
+   "secondary": {
+    "name": "Burnt Orange",
+    "hex": "#E5751F"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "virginia",
+   "west-virginia",
+   "miami"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 78,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 62.5,
+   "defense": 64.2,
+   "special_teams": 63.5,
+   "overall": 63.4,
+   "roster_avg": 53.4,
+   "position_groups": {
+    "QB": 60,
+    "RB": 73,
+    "WR": 67.3,
+    "TE": 71,
+    "OL": 57.2,
+    "DL": 65.5,
+    "LB": 56,
+    "DB": 66.4,
+    "K": 71,
+    "P": 56
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "James Franklin",
+    "overall": 70
+   },
+   "offensive_coordinator": {
+    "name": "Ty Howle",
+    "overall": 50
+   },
+   "defensive_coordinator": {
+    "name": "Brent Pry",
+    "overall": 42
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "w-kentucky",
+  "school_name": "Western Kentucky University",
+  "short_name": "Western Kentucky",
+  "abbreviation": "WKU",
+  "mascot": "Hilltoppers",
+  "city": "Bowling Green",
+  "state": "KY",
+  "conference": "Conference USA",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Houchens Industries-L. T. Smith Stadium",
+   "capacity": 22113,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Red",
+    "hex": "#C60C30"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "mtsu",
+   "marshall"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 50,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 53.4,
+   "defense": 50.5,
+   "special_teams": 49.5,
+   "overall": 51.7,
+   "roster_avg": 45.5,
+   "position_groups": {
+    "QB": 50,
+    "RB": 63,
+    "WR": 59.7,
+    "TE": 50,
+    "OL": 50.4,
+    "DL": 48.8,
+    "LB": 47,
+    "DB": 53.4,
+    "K": 49,
+    "P": 50
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Tyson Helton",
+    "overall": 45
+   },
+   "offensive_coordinator": {
+    "name": "Bodie Reeder",
+    "overall": 45
+   },
+   "defensive_coordinator": {
+    "name": "Davis Merritt",
+    "overall": 32
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "w-michigan",
+  "school_name": "Western Michigan University",
+  "short_name": "Western Michigan",
+  "abbreviation": "WMU",
+  "mascot": "Broncos",
+  "city": "Kalamazoo",
+  "state": "MI",
+  "conference": "MAC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Waldo Stadium",
+   "capacity": 30200,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Brown",
+    "hex": "#6C4023"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#B5A167"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "c-michigan",
+   "e-michigan"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 58,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 58.2,
+   "defense": 53.2,
+   "special_teams": 54.0,
+   "overall": 55.5,
+   "roster_avg": 46,
+   "position_groups": {
+    "QB": 63,
+    "RB": 75,
+    "WR": 54,
+    "TE": 48,
+    "OL": 56.6,
+    "DL": 51.5,
+    "LB": 48,
+    "DB": 56.6,
+    "K": 60,
+    "P": 48
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Lance Taylor",
+    "overall": 36
+   },
+   "offensive_coordinator": {
+    "name": "Walt Bell",
+    "overall": 36
+   },
+   "defensive_coordinator": {
+    "name": "Greer Martini",
+    "overall": 52
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "wake-forest",
+  "school_name": "Wake Forest University",
+  "short_name": "Wake Forest",
+  "abbreviation": "WAKE",
+  "mascot": "Demon Deacons",
+  "city": "Winston-Salem",
+  "state": "NC",
+  "conference": "ACC",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Allegacy Federal Credit Union Stadium",
+   "capacity": 31500,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Old Gold",
+    "hex": "#9E7E38"
+   },
+   "secondary": {
+    "name": "Black",
+    "hex": "#000000"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "nc-state",
+   "north-carolina",
+   "duke"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 59,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 58.5,
+   "defense": 61.5,
+   "special_teams": 47.5,
+   "overall": 58.8,
+   "roster_avg": 50.6,
+   "position_groups": {
+    "QB": 61,
+    "RB": 65,
+    "WR": 67.7,
+    "TE": 56,
+    "OL": 50.8,
+    "DL": 63.8,
+    "LB": 53.5,
+    "DB": 62.8,
+    "K": 56,
+    "P": 39
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Jake Dickert",
+    "overall": 62
+   },
+   "offensive_coordinator": {
+    "name": "Rob Ezell",
+    "overall": 54
+   },
+   "defensive_coordinator": {
+    "name": "Scottie Hazelton",
+    "overall": 50
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "washington",
+  "school_name": "University of Washington",
+  "short_name": "Washington",
+  "abbreviation": "WASH",
+  "mascot": "Huskies",
+  "city": "Seattle",
+  "state": "WA",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Husky Stadium",
+   "capacity": 70138,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Purple",
+    "hex": "#4B2E83"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#B7A57A"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "washington-st",
+   "oregon"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 5,
+   "home_field_advantage": 79,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 69.3,
+   "defense": 64.5,
+   "special_teams": 61.5,
+   "overall": 66.4,
+   "roster_avg": 54.1,
+   "position_groups": {
+    "QB": 78,
+    "RB": 69,
+    "WR": 67,
+    "TE": 71,
+    "OL": 65.2,
+    "DL": 63.5,
+    "LB": 71.5,
+    "DB": 62.4,
+    "K": 60,
+    "P": 63
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Jedd Fisch",
+    "overall": 61
+   },
+   "offensive_coordinator": {
+    "name": null,
+    "overall": 58
+   },
+   "defensive_coordinator": {
+    "name": "Ryan Walters",
+    "overall": 72
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "washington-st",
+  "school_name": "Washington State University",
+  "short_name": "Washington State",
+  "abbreviation": "WSU",
+  "mascot": "Cougars",
+  "city": "Pullman",
+  "state": "WA",
+  "conference": "Pac-12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Martin Stadium",
+   "capacity": 32952,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Crimson",
+    "hex": "#981E32"
+   },
+   "secondary": {
+    "name": "Gray",
+    "hex": "#5E6A71"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "washington",
+   "oregon-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 60,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 58.5,
+   "defense": 53.5,
+   "special_teams": 51.0,
+   "overall": 55.5,
+   "roster_avg": 48.1,
+   "position_groups": {
+    "QB": 56,
+    "RB": 63,
+    "WR": 67,
+    "TE": 56,
+    "OL": 54.4,
+    "DL": 55,
+    "LB": 52,
+    "DB": 52.8,
+    "K": 52,
+    "P": 50
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Kirby Moore",
+    "overall": 37
+   },
+   "offensive_coordinator": {
+    "name": "Matt Miller",
+    "overall": 59
+   },
+   "defensive_coordinator": {
+    "name": "Trent Bray",
+    "overall": 49
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "wendt-lake-tech",
+  "school_name": "Wendt Lake Polytechnic Institute",
+  "short_name": "Wendt Lake Tech",
+  "abbreviation": "WLT",
+  "mascot": "Freighters",
+  "city": "Wendt Lake",
+  "state": "MI",
+  "region": "Great Lakes",
+  "conference": "Eight Rivers Football Conference",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "Ore Dock Field",
+   "capacity": 9800,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Maroon",
+    "hex": "#6B1E2E"
+   },
+   "secondary": {
+    "name": "Steel Silver",
+    "hex": "#A7ADB4"
+   },
+   "accent": {
+    "name": "Black",
+    "hex": "#111111"
+   }
+  },
+  "rivals": [
+   "red-prairie-state"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 30,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 40.6,
+   "defense": 40.9,
+   "special_teams": 39.5,
+   "overall": 40.6,
+   "roster_avg": 34.1,
+   "position_groups": {
+    "QB": 38,
+    "RB": 50,
+    "WR": 44.3,
+    "TE": 37,
+    "OL": 38.8,
+    "DL": 39.8,
+    "LB": 40.5,
+    "DB": 42,
+    "K": 34,
+    "P": 45
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Brian Westbrook",
+    "overall": 20
+   },
+   "offensive_coordinator": {
+    "name": "Brian Strickland",
+    "overall": 21
+   },
+   "defensive_coordinator": {
+    "name": "Phil Westbrook",
+    "overall": 20
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "west-virginia",
+  "school_name": "West Virginia University",
+  "short_name": "West Virginia",
+  "abbreviation": "WVU",
+  "mascot": "Mountaineers",
+  "city": "Morgantown",
+  "state": "WV",
+  "conference": "Big 12",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Milan Puskar Stadium",
+   "capacity": 60000,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Old Gold",
+    "hex": "#EAAA00"
+   },
+   "secondary": {
+    "name": "Blue",
+    "hex": "#002855"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "pittsburgh",
+   "virginia-tech",
+   "marshall"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 4,
+   "home_field_advantage": 75,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 63.5,
+   "defense": 58.1,
+   "special_teams": 62.5,
+   "overall": 61.0,
+   "roster_avg": 50.2,
+   "position_groups": {
+    "QB": 61,
+    "RB": 84,
+    "WR": 60.7,
+    "TE": 54,
+    "OL": 64.6,
+    "DL": 60.5,
+    "LB": 57,
+    "DB": 56.6,
+    "K": 52,
+    "P": 73
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Rich Rodriguez",
+    "overall": 58
+   },
+   "offensive_coordinator": {
+    "name": "Rich Rodriguez",
+    "overall": 51
+   },
+   "defensive_coordinator": {
+    "name": "Zac Alley",
+    "overall": 61
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "wisconsin",
+  "school_name": "University of Wisconsin\u2013Madison",
+  "short_name": "Wisconsin",
+  "abbreviation": "WIS",
+  "mascot": "Badgers",
+  "city": "Madison",
+  "state": "WI",
+  "conference": "Big Ten",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "Camp Randall Stadium",
+   "capacity": 75822,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Red",
+    "hex": "#C5050C"
+   },
+   "secondary": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   },
+   "accent": null
+  },
+  "rivals": [
+   "minnesota",
+   "iowa"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 3,
+   "home_field_advantage": 81,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 61.1,
+   "defense": 60.5,
+   "special_teams": 48.5,
+   "overall": 59.6,
+   "roster_avg": 51.4,
+   "position_groups": {
+    "QB": 71,
+    "RB": 73,
+    "WR": 59.3,
+    "TE": 56,
+    "OL": 54.8,
+    "DL": 60.5,
+    "LB": 58.5,
+    "DB": 61.2,
+    "K": 58,
+    "P": 39
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Luke Fickell",
+    "overall": 53
+   },
+   "offensive_coordinator": {
+    "name": "Jeff Grimes",
+    "overall": 53
+   },
+   "defensive_coordinator": {
+    "name": "Mike Tressel",
+    "overall": 44
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "wyoming",
+  "school_name": "University of Wyoming",
+  "short_name": "Wyoming",
+  "abbreviation": "WYO",
+  "mascot": "Cowboys",
+  "city": "Laramie",
+  "state": "WY",
+  "conference": "Mountain West",
+  "subdivision": "FBS",
+  "stadium": {
+   "name": "War Memorial Stadium",
+   "capacity": 29181,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Brown",
+    "hex": "#492F24"
+   },
+   "secondary": {
+    "name": "Gold",
+    "hex": "#FFC425"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "colorado-state"
+  ],
+  "fictional": false,
+  "program": {
+   "prestige": 2,
+   "home_field_advantage": 57,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 53.1,
+   "defense": 51.8,
+   "special_teams": 54.0,
+   "overall": 52.6,
+   "roster_avg": 45.7,
+   "position_groups": {
+    "QB": 54,
+    "RB": 67,
+    "WR": 52.3,
+    "TE": 45,
+    "OL": 51.8,
+    "DL": 51.2,
+    "LB": 47.5,
+    "DB": 54,
+    "K": 48,
+    "P": 60
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Jay Sawvel",
+    "overall": 26
+   },
+   "offensive_coordinator": {
+    "name": "Christian Taylor",
+    "overall": 34
+   },
+   "defensive_coordinator": {
+    "name": "Aaron Bohl",
+    "overall": 37
+   }
+  },
+  "roster_size": 85
+ }
+]

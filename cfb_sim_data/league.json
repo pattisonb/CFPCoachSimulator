@@ -1,0 +1,255 @@
+{
+ "season": 2026,
+ "generated_on": "2026-10-15",
+ "rating_scale": {
+  "description": "All player ratings use a 0-99 scale where 50 is an average FBS player. Converted from EA College Football 27 ratings with a piecewise-linear curve; original EA values kept in overall_ea / ratings_ea.",
+  "curve_anchors_ea_to_new": [
+   [
+    0,
+    0
+   ],
+   [
+    40,
+    10
+   ],
+   [
+    72.877,
+    50
+   ],
+   [
+    99,
+    99
+   ]
+  ]
+ },
+ "coach_rating_scale": "Coach ratings are generated (not EA or real-world data), 0-99 with 50 average, loosely tied to roster strength. Tendencies are 0-100 sliders, not quality ratings.",
+ "conferences": [
+  {
+   "name": "ACC",
+   "subdivision": "FBS",
+   "teams": [
+    "boston-college",
+    "california",
+    "clemson",
+    "duke",
+    "florida-state",
+    "georgia-tech",
+    "louisville",
+    "miami",
+    "nc-state",
+    "north-carolina",
+    "pittsburgh",
+    "smu",
+    "stanford",
+    "syracuse",
+    "virginia",
+    "virginia-tech",
+    "wake-forest"
+   ]
+  },
+  {
+   "name": "American Athletic Conference",
+   "subdivision": "FBS",
+   "teams": [
+    "army",
+    "charlotte",
+    "east-carolina",
+    "fla-atlantic",
+    "memphis",
+    "navy",
+    "north-texas",
+    "rice",
+    "temple",
+    "tulane",
+    "tulsa",
+    "uab",
+    "usf",
+    "utsa"
+   ]
+  },
+  {
+   "name": "Big 12",
+   "subdivision": "FBS",
+   "teams": [
+    "arizona",
+    "arizona-state",
+    "baylor",
+    "byu",
+    "cincinnati",
+    "colorado",
+    "houston",
+    "iowa-state",
+    "kansas",
+    "kansas-state",
+    "oklahoma-state",
+    "tcu",
+    "texas-tech",
+    "ucf",
+    "utah",
+    "west-virginia"
+   ]
+  },
+  {
+   "name": "Big Ten",
+   "subdivision": "FBS",
+   "teams": [
+    "illinois",
+    "indiana",
+    "iowa",
+    "maryland",
+    "michigan",
+    "michigan-state",
+    "minnesota",
+    "nebraska",
+    "northwestern",
+    "ohio-state",
+    "oregon",
+    "penn-state",
+    "purdue",
+    "rutgers",
+    "ucla",
+    "usc",
+    "washington",
+    "wisconsin"
+   ]
+  },
+  {
+   "name": "Conference USA",
+   "subdivision": "FBS",
+   "teams": [
+    "delaware",
+    "fiu",
+    "jax-state",
+    "kennesaw-st",
+    "liberty",
+    "missouri-state",
+    "mtsu",
+    "new-mexico-st",
+    "sam-houston",
+    "w-kentucky"
+   ]
+  },
+  {
+   "name": "Eight Rivers Football Conference",
+   "subdivision": "FCS",
+   "teams": [
+    "alder-ridge-state",
+    "calder-springs",
+    "cedar-sound",
+    "kestrel-bay",
+    "port-rennick-state",
+    "red-prairie-state",
+    "talus-peak",
+    "wendt-lake-tech"
+   ]
+  },
+  {
+   "name": "FBS Independent",
+   "subdivision": "FBS",
+   "teams": [
+    "notre-dame",
+    "uconn"
+   ]
+  },
+  {
+   "name": "MAC",
+   "subdivision": "FBS",
+   "teams": [
+    "akron",
+    "ball-state",
+    "bowling-green",
+    "buffalo",
+    "c-michigan",
+    "e-michigan",
+    "kent-state",
+    "miami-oh",
+    "ohio",
+    "sac-state",
+    "toledo",
+    "umass",
+    "w-michigan"
+   ]
+  },
+  {
+   "name": "Mountain West",
+   "subdivision": "FBS",
+   "teams": [
+    "air-force",
+    "hawai-i",
+    "ndsu",
+    "nevada",
+    "new-mexico",
+    "niu",
+    "san-jose-state",
+    "unlv",
+    "utep",
+    "wyoming"
+   ]
+  },
+  {
+   "name": "Pac-12",
+   "subdivision": "FBS",
+   "teams": [
+    "boise-state",
+    "colorado-state",
+    "fresno-state",
+    "oregon-state",
+    "san-diego-st",
+    "texas-state",
+    "utah-state",
+    "washington-st"
+   ]
+  },
+  {
+   "name": "SEC",
+   "subdivision": "FBS",
+   "teams": [
+    "alabama",
+    "arkansas",
+    "auburn",
+    "florida",
+    "georgia",
+    "kentucky",
+    "lsu",
+    "mississippi-st",
+    "missouri",
+    "oklahoma",
+    "ole-miss",
+    "south-carolina",
+    "tennessee",
+    "texas",
+    "texas-a-m",
+    "vanderbilt"
+   ]
+  },
+  {
+   "name": "Sun Belt",
+   "subdivision": "FBS",
+   "teams": [
+    "app-st",
+    "arkansas-state",
+    "c-carolina",
+    "ga-southern",
+    "georgia-state",
+    "james-madison",
+    "louisiana",
+    "louisiana-tech",
+    "marshall",
+    "old-dominion",
+    "south-alabama",
+    "southern-miss",
+    "troy",
+    "ul-monroe"
+   ]
+  }
+ ],
+ "fcs_conference": {
+  "name": "Eight Rivers Football Conference",
+  "short_name": "Eight Rivers",
+  "abbreviation": "ERFC",
+  "subdivision": "FCS",
+  "fictional": true
+ },
+ "team_count": 146,
+ "player_count": 12410
+}

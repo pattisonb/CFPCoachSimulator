@@ -1,0 +1,1393 @@
+{
+ "league": {
+  "pass_rate": 45.1,
+  "plays_per_game": 66.3,
+  "qb_rush_share": 21.3,
+  "rb1_share": 50.5,
+  "rb2_share": 26.5,
+  "wr1_share": 30.1,
+  "fourth_att_per_game": 1.8
+ },
+ "teams": {
+  "tcu": {
+   "games": 5,
+   "pass_rate": 47.9,
+   "plays_per_game": 66.0,
+   "qb_rush_share": 18.6,
+   "rb1_share": 62.6,
+   "rb2_share": 22.3,
+   "wr1_share": 33.0,
+   "fourth_att_per_game": 2.4
+  },
+  "north-carolina": {
+   "games": 5,
+   "pass_rate": 49.1,
+   "plays_per_game": 56.2,
+   "qb_rush_share": 15.4,
+   "rb1_share": 49.1,
+   "rb2_share": 29.0,
+   "wr1_share": 34.8,
+   "fourth_att_per_game": 0.8
+  },
+  "usc": {
+   "games": 7,
+   "pass_rate": 49.3,
+   "plays_per_game": 69.3,
+   "qb_rush_share": 8.1,
+   "rb1_share": 53.4,
+   "rb2_share": 29.1,
+   "wr1_share": 28.0,
+   "fourth_att_per_game": 2.29
+  },
+  "san-jose-state": {
+   "games": 6,
+   "pass_rate": 51.6,
+   "plays_per_game": 68.2,
+   "qb_rush_share": 26.3,
+   "rb1_share": 82.7,
+   "rb2_share": 12.3,
+   "wr1_share": 29.5,
+   "fourth_att_per_game": 1.83
+  },
+  "virginia": {
+   "games": 6,
+   "pass_rate": 39.8,
+   "plays_per_game": 68.7,
+   "qb_rush_share": 23.4,
+   "rb1_share": 44.6,
+   "rb2_share": 23.7,
+   "wr1_share": 26.2,
+   "fourth_att_per_game": 3.0
+  },
+  "nc-state": {
+   "games": 6,
+   "pass_rate": 47.7,
+   "plays_per_game": 71.0,
+   "qb_rush_share": 21.1,
+   "rb1_share": 52.0,
+   "rb2_share": 28.4,
+   "wr1_share": 22.5,
+   "fourth_att_per_game": 1.83
+  },
+  "ndsu": {
+   "games": 6,
+   "pass_rate": 37.3,
+   "plays_per_game": 64.3,
+   "qb_rush_share": 11.2,
+   "rb1_share": 41.8,
+   "rb2_share": 21.0,
+   "wr1_share": 25.9,
+   "fourth_att_per_game": 2.33
+  },
+  "jax-state": {
+   "games": 7,
+   "pass_rate": 45.6,
+   "plays_per_game": 61.4,
+   "qb_rush_share": 44.9,
+   "rb1_share": 52.8,
+   "rb2_share": 22.7,
+   "wr1_share": 24.8,
+   "fourth_att_per_game": 1.86
+  },
+  "e-michigan": {
+   "games": 7,
+   "pass_rate": 54.0,
+   "plays_per_game": 66.4,
+   "qb_rush_share": 12.6,
+   "rb1_share": 47.4,
+   "rb2_share": 31.3,
+   "wr1_share": 30.1,
+   "fourth_att_per_game": 1.29
+  },
+  "sac-state": {
+   "games": 6,
+   "pass_rate": 53.7,
+   "plays_per_game": 67.3,
+   "qb_rush_share": 15.0,
+   "rb1_share": 38.5,
+   "rb2_share": 29.8,
+   "wr1_share": 32.9,
+   "fourth_att_per_game": 2.5
+  },
+  "stanford": {
+   "games": 6,
+   "pass_rate": 53.8,
+   "plays_per_game": 63.2,
+   "qb_rush_share": 12.0,
+   "rb1_share": 62.6,
+   "rb2_share": 23.5,
+   "wr1_share": 24.4,
+   "fourth_att_per_game": 2.17
+  },
+  "hawai-i": {
+   "games": 6,
+   "pass_rate": 64.6,
+   "plays_per_game": 71.0,
+   "qb_rush_share": 25.8,
+   "rb1_share": 56.9,
+   "rb2_share": 32.9,
+   "wr1_share": 23.9,
+   "fourth_att_per_game": 2.17
+  },
+  "florida-state": {
+   "games": 6,
+   "pass_rate": 40.2,
+   "plays_per_game": 64.7,
+   "qb_rush_share": 30.2,
+   "rb1_share": 63.8,
+   "rb2_share": 27.8,
+   "wr1_share": 29.8,
+   "fourth_att_per_game": 2.17
+  },
+  "new-mexico-st": {
+   "games": 6,
+   "pass_rate": 50.8,
+   "plays_per_game": 64.0,
+   "qb_rush_share": 12.7,
+   "rb1_share": 57.7,
+   "rb2_share": 25.2,
+   "wr1_share": 24.2,
+   "fourth_att_per_game": 2.17
+  },
+  "unlv": {
+   "games": 6,
+   "pass_rate": 39.2,
+   "plays_per_game": 66.7,
+   "qb_rush_share": 37.9,
+   "rb1_share": 65.9,
+   "rb2_share": 16.8,
+   "wr1_share": 29.4,
+   "fourth_att_per_game": 2.0
+  },
+  "memphis": {
+   "games": 6,
+   "pass_rate": 37.9,
+   "plays_per_game": 67.7,
+   "qb_rush_share": 17.9,
+   "rb1_share": 46.4,
+   "rb2_share": 33.8,
+   "wr1_share": 29.6,
+   "fourth_att_per_game": 1.0
+  },
+  "rutgers": {
+   "games": 5,
+   "pass_rate": 45.0,
+   "plays_per_game": 65.4,
+   "qb_rush_share": 12.8,
+   "rb1_share": 62.6,
+   "rb2_share": 24.4,
+   "wr1_share": 38.0,
+   "fourth_att_per_game": 3.6
+  },
+  "umass": {
+   "games": 6,
+   "pass_rate": 41.7,
+   "plays_per_game": 55.5,
+   "qb_rush_share": 21.1,
+   "rb1_share": 49.2,
+   "rb2_share": 25.0,
+   "wr1_share": 30.1,
+   "fourth_att_per_game": 1.33
+  },
+  "kennesaw-st": {
+   "games": 6,
+   "pass_rate": 50.6,
+   "plays_per_game": 65.2,
+   "qb_rush_share": 33.2,
+   "rb1_share": 48.7,
+   "rb2_share": 21.0,
+   "wr1_share": 32.0,
+   "fourth_att_per_game": 1.33
+  },
+  "wake-forest": {
+   "games": 6,
+   "pass_rate": 48.1,
+   "plays_per_game": 65.8,
+   "qb_rush_share": 27.3,
+   "rb1_share": 50.5,
+   "rb2_share": 32.0,
+   "wr1_share": 41.3,
+   "fourth_att_per_game": 1.5
+  },
+  "akron": {
+   "games": 6,
+   "pass_rate": 48.4,
+   "plays_per_game": 64.0,
+   "qb_rush_share": 23.7,
+   "rb1_share": 53.7,
+   "rb2_share": 28.1,
+   "wr1_share": 25.3,
+   "fourth_att_per_game": 0.83
+  },
+  "buffalo": {
+   "games": 6,
+   "pass_rate": 42.9,
+   "plays_per_game": 73.8,
+   "qb_rush_share": 22.1,
+   "rb1_share": 57.2,
+   "rb2_share": 35.4,
+   "wr1_share": 37.1,
+   "fourth_att_per_game": 1.67
+  },
+  "delaware": {
+   "games": 6,
+   "pass_rate": 53.4,
+   "plays_per_game": 64.7,
+   "qb_rush_share": 23.8,
+   "rb1_share": 43.1,
+   "rb2_share": 26.1,
+   "wr1_share": 26.9,
+   "fourth_att_per_game": 1.5
+  },
+  "ucf": {
+   "games": 6,
+   "pass_rate": 46.6,
+   "plays_per_game": 60.8,
+   "qb_rush_share": 24.6,
+   "rb1_share": 50.9,
+   "rb2_share": 22.8,
+   "wr1_share": 29.0,
+   "fourth_att_per_game": 2.17
+  },
+  "georgia-tech": {
+   "games": 5,
+   "pass_rate": 49.2,
+   "plays_per_game": 63.0,
+   "qb_rush_share": 13.1,
+   "rb1_share": 65.2,
+   "rb2_share": 25.7,
+   "wr1_share": 31.3,
+   "fourth_att_per_game": 2.0
+  },
+  "colorado": {
+   "games": 5,
+   "pass_rate": 48.7,
+   "plays_per_game": 74.4,
+   "qb_rush_share": 17.3,
+   "rb1_share": 30.0,
+   "rb2_share": 23.9,
+   "wr1_share": 33.2,
+   "fourth_att_per_game": 2.8
+  },
+  "missouri": {
+   "games": 6,
+   "pass_rate": 44.0,
+   "plays_per_game": 68.5,
+   "qb_rush_share": 7.4,
+   "rb1_share": 73.3,
+   "rb2_share": 17.7,
+   "wr1_share": 39.4,
+   "fourth_att_per_game": 0.83
+  },
+  "minnesota": {
+   "games": 6,
+   "pass_rate": 54.4,
+   "plays_per_game": 62.8,
+   "qb_rush_share": 7.0,
+   "rb1_share": 49.5,
+   "rb2_share": 29.8,
+   "wr1_share": 29.6,
+   "fourth_att_per_game": 1.33
+  },
+  "illinois": {
+   "games": 6,
+   "pass_rate": 52.0,
+   "plays_per_game": 62.2,
+   "qb_rush_share": 16.8,
+   "rb1_share": 52.7,
+   "rb2_share": 30.8,
+   "wr1_share": 37.5,
+   "fourth_att_per_game": 2.0
+  },
+  "uab": {
+   "games": 6,
+   "pass_rate": 33.8,
+   "plays_per_game": 66.7,
+   "qb_rush_share": 20.0,
+   "rb1_share": 45.1,
+   "rb2_share": 30.1,
+   "wr1_share": 30.1,
+   "fourth_att_per_game": 2.0
+  },
+  "utah": {
+   "games": 5,
+   "pass_rate": 42.7,
+   "plays_per_game": 69.8,
+   "qb_rush_share": 25.5,
+   "rb1_share": 50.6,
+   "rb2_share": 18.8,
+   "wr1_share": 27.5,
+   "fourth_att_per_game": 1.8
+  },
+  "purdue": {
+   "games": 6,
+   "pass_rate": 47.1,
+   "plays_per_game": 69.0,
+   "qb_rush_share": 14.2,
+   "rb1_share": 63.7,
+   "rb2_share": 19.8,
+   "wr1_share": 24.7,
+   "fourth_att_per_game": 1.5
+  },
+  "georgia-state": {
+   "games": 5,
+   "pass_rate": 43.1,
+   "plays_per_game": 70.0,
+   "qb_rush_share": 13.1,
+   "rb1_share": 45.8,
+   "rb2_share": 27.6,
+   "wr1_share": 24.3,
+   "fourth_att_per_game": 1.6
+  },
+  "oklahoma": {
+   "games": 5,
+   "pass_rate": 45.4,
+   "plays_per_game": 60.8,
+   "qb_rush_share": 31.9,
+   "rb1_share": 48.7,
+   "rb2_share": 24.2,
+   "wr1_share": 32.0,
+   "fourth_att_per_game": 0.8
+  },
+  "utep": {
+   "games": 6,
+   "pass_rate": 37.6,
+   "plays_per_game": 54.5,
+   "qb_rush_share": 40.2,
+   "rb1_share": 48.0,
+   "rb2_share": 22.9,
+   "wr1_share": 31.8,
+   "fourth_att_per_game": 2.67
+  },
+  "kansas": {
+   "games": 5,
+   "pass_rate": 42.2,
+   "plays_per_game": 71.6,
+   "qb_rush_share": 29.0,
+   "rb1_share": 52.2,
+   "rb2_share": 27.3,
+   "wr1_share": 31.6,
+   "fourth_att_per_game": 3.0
+  },
+  "michigan-state": {
+   "games": 6,
+   "pass_rate": 42.6,
+   "plays_per_game": 65.3,
+   "qb_rush_share": 15.1,
+   "rb1_share": 59.8,
+   "rb2_share": 17.3,
+   "wr1_share": 26.4,
+   "fourth_att_per_game": 2.33
+  },
+  "toledo": {
+   "games": 6,
+   "pass_rate": 47.6,
+   "plays_per_game": 68.3,
+   "qb_rush_share": 4.7,
+   "rb1_share": 40.0,
+   "rb2_share": 33.7,
+   "wr1_share": 30.5,
+   "fourth_att_per_game": 2.83
+  },
+  "miami": {
+   "games": 5,
+   "pass_rate": 47.0,
+   "plays_per_game": 67.6,
+   "qb_rush_share": 6.7,
+   "rb1_share": 41.9,
+   "rb2_share": 27.0,
+   "wr1_share": 29.0,
+   "fourth_att_per_game": 0.8
+  },
+  "fresno-state": {
+   "games": 6,
+   "pass_rate": 48.6,
+   "plays_per_game": 60.3,
+   "qb_rush_share": 22.6,
+   "rb1_share": 44.3,
+   "rb2_share": 29.7,
+   "wr1_share": 29.7,
+   "fourth_att_per_game": 0.83
+  },
+  "west-virginia": {
+   "games": 6,
+   "pass_rate": 25.2,
+   "plays_per_game": 76.8,
+   "qb_rush_share": 33.9,
+   "rb1_share": 72.6,
+   "rb2_share": 13.8,
+   "wr1_share": 32.2,
+   "fourth_att_per_game": 2.17
+  },
+  "c-carolina": {
+   "games": 6,
+   "pass_rate": 45.2,
+   "plays_per_game": 65.3,
+   "qb_rush_share": 29.3,
+   "rb1_share": 57.6,
+   "rb2_share": 25.1,
+   "wr1_share": 25.7,
+   "fourth_att_per_game": 2.0
+  },
+  "uconn": {
+   "games": 6,
+   "pass_rate": 44.3,
+   "plays_per_game": 65.8,
+   "qb_rush_share": 30.0,
+   "rb1_share": 50.0,
+   "rb2_share": 30.2,
+   "wr1_share": 22.0,
+   "fourth_att_per_game": 2.17
+  },
+  "houston": {
+   "games": 6,
+   "pass_rate": 40.8,
+   "plays_per_game": 70.7,
+   "qb_rush_share": 19.1,
+   "rb1_share": 51.4,
+   "rb2_share": 32.5,
+   "wr1_share": 33.4,
+   "fourth_att_per_game": 1.17
+  },
+  "oregon-state": {
+   "games": 6,
+   "pass_rate": 58.2,
+   "plays_per_game": 71.8,
+   "qb_rush_share": 10.0,
+   "rb1_share": 40.7,
+   "rb2_share": 25.8,
+   "wr1_share": 24.4,
+   "fourth_att_per_game": 2.5
+  },
+  "syracuse": {
+   "games": 5,
+   "pass_rate": 47.1,
+   "plays_per_game": 80.6,
+   "qb_rush_share": 12.7,
+   "rb1_share": 52.0,
+   "rb2_share": 26.8,
+   "wr1_share": 34.6,
+   "fourth_att_per_game": 2.4
+  },
+  "nebraska": {
+   "games": 6,
+   "pass_rate": 45.8,
+   "plays_per_game": 72.8,
+   "qb_rush_share": 23.2,
+   "rb1_share": 46.8,
+   "rb2_share": 25.6,
+   "wr1_share": 30.0,
+   "fourth_att_per_game": 2.0
+  },
+  "ohio": {
+   "games": 6,
+   "pass_rate": 35.5,
+   "plays_per_game": 63.8,
+   "qb_rush_share": 23.9,
+   "rb1_share": 51.6,
+   "rb2_share": 24.5,
+   "wr1_share": 32.8,
+   "fourth_att_per_game": 1.5
+  },
+  "indiana": {
+   "games": 6,
+   "pass_rate": 38.6,
+   "plays_per_game": 59.2,
+   "qb_rush_share": 10.1,
+   "rb1_share": 51.8,
+   "rb2_share": 37.4,
+   "wr1_share": 37.6,
+   "fourth_att_per_game": 1.5
+  },
+  "north-texas": {
+   "games": 6,
+   "pass_rate": 50.1,
+   "plays_per_game": 73.2,
+   "qb_rush_share": 10.5,
+   "rb1_share": 49.7,
+   "rb2_share": 25.0,
+   "wr1_share": 24.1,
+   "fourth_att_per_game": 2.33
+  },
+  "james-madison": {
+   "games": 6,
+   "pass_rate": 42.6,
+   "plays_per_game": 68.0,
+   "qb_rush_share": 13.7,
+   "rb1_share": 48.5,
+   "rb2_share": 27.7,
+   "wr1_share": 23.7,
+   "fourth_att_per_game": 1.5
+  },
+  "liberty": {
+   "games": 6,
+   "pass_rate": 33.7,
+   "plays_per_game": 63.8,
+   "qb_rush_share": 14.6,
+   "rb1_share": 39.0,
+   "rb2_share": 25.9,
+   "wr1_share": 29.6,
+   "fourth_att_per_game": 1.5
+  },
+  "alabama": {
+   "games": 6,
+   "pass_rate": 43.0,
+   "plays_per_game": 64.7,
+   "qb_rush_share": 20.8,
+   "rb1_share": 42.0,
+   "rb2_share": 23.8,
+   "wr1_share": 26.2,
+   "fourth_att_per_game": 0.83
+  },
+  "east-carolina": {
+   "games": 5,
+   "pass_rate": 47.2,
+   "plays_per_game": 63.2,
+   "qb_rush_share": 18.6,
+   "rb1_share": 48.3,
+   "rb2_share": 27.6,
+   "wr1_share": 32.8,
+   "fourth_att_per_game": 1.8
+  },
+  "army": {
+   "games": 5,
+   "pass_rate": 18.2,
+   "plays_per_game": 65.8,
+   "qb_rush_share": 38.7,
+   "rb1_share": 43.6,
+   "rb2_share": 17.2,
+   "wr1_share": 34.6,
+   "fourth_att_per_game": 1.6
+  },
+  "bowling-green": {
+   "games": 6,
+   "pass_rate": 43.4,
+   "plays_per_game": 57.7,
+   "qb_rush_share": 16.8,
+   "rb1_share": 49.0,
+   "rb2_share": 25.8,
+   "wr1_share": 34.7,
+   "fourth_att_per_game": 1.17
+  },
+  "pittsburgh": {
+   "games": 6,
+   "pass_rate": 51.1,
+   "plays_per_game": 72.7,
+   "qb_rush_share": 17.4,
+   "rb1_share": 49.3,
+   "rb2_share": 31.0,
+   "wr1_share": 22.6,
+   "fourth_att_per_game": 2.17
+  },
+  "miami-oh": {
+   "games": 6,
+   "pass_rate": 45.5,
+   "plays_per_game": 57.5,
+   "qb_rush_share": 23.4,
+   "rb1_share": 46.2,
+   "rb2_share": 26.0,
+   "wr1_share": 30.0,
+   "fourth_att_per_game": 1.0
+  },
+  "ohio-state": {
+   "games": 6,
+   "pass_rate": 43.9,
+   "plays_per_game": 68.7,
+   "qb_rush_share": 13.9,
+   "rb1_share": 46.0,
+   "rb2_share": 30.2,
+   "wr1_share": 37.6,
+   "fourth_att_per_game": 2.33
+  },
+  "ball-state": {
+   "games": 6,
+   "pass_rate": 52.6,
+   "plays_per_game": 63.0,
+   "qb_rush_share": 27.9,
+   "rb1_share": 41.3,
+   "rb2_share": 28.4,
+   "wr1_share": 30.0,
+   "fourth_att_per_game": 2.17
+  },
+  "south-carolina": {
+   "games": 6,
+   "pass_rate": 46.7,
+   "plays_per_game": 72.8,
+   "qb_rush_share": 28.8,
+   "rb1_share": 52.7,
+   "rb2_share": 20.2,
+   "wr1_share": 28.2,
+   "fourth_att_per_game": 2.17
+  },
+  "kent-state": {
+   "games": 6,
+   "pass_rate": 44.3,
+   "plays_per_game": 62.8,
+   "qb_rush_share": 18.6,
+   "rb1_share": 30.1,
+   "rb2_share": 23.4,
+   "wr1_share": 24.1,
+   "fourth_att_per_game": 2.33
+  },
+  "kentucky": {
+   "games": 6,
+   "pass_rate": 45.8,
+   "plays_per_game": 65.5,
+   "qb_rush_share": 15.0,
+   "rb1_share": 51.9,
+   "rb2_share": 28.1,
+   "wr1_share": 31.2,
+   "fourth_att_per_game": 2.17
+  },
+  "iowa-state": {
+   "games": 6,
+   "pass_rate": 41.1,
+   "plays_per_game": 61.7,
+   "qb_rush_share": 23.4,
+   "rb1_share": 58.8,
+   "rb2_share": 19.4,
+   "wr1_share": 24.7,
+   "fourth_att_per_game": 1.5
+  },
+  "air-force": {
+   "games": 5,
+   "pass_rate": 13.1,
+   "plays_per_game": 73.2,
+   "qb_rush_share": 32.4,
+   "rb1_share": 29.9,
+   "rb2_share": 23.6,
+   "wr1_share": 29.1,
+   "fourth_att_per_game": 2.6
+  },
+  "temple": {
+   "games": 6,
+   "pass_rate": 34.6,
+   "plays_per_game": 58.3,
+   "qb_rush_share": 27.5,
+   "rb1_share": 52.2,
+   "rb2_share": 32.4,
+   "wr1_share": 31.7,
+   "fourth_att_per_game": 1.17
+  },
+  "georgia": {
+   "games": 6,
+   "pass_rate": 44.1,
+   "plays_per_game": 60.5,
+   "qb_rush_share": 12.8,
+   "rb1_share": 38.2,
+   "rb2_share": 26.5,
+   "wr1_share": 19.5,
+   "fourth_att_per_game": 0.5
+  },
+  "charlotte": {
+   "games": 6,
+   "pass_rate": 51.5,
+   "plays_per_game": 56.0,
+   "qb_rush_share": 14.7,
+   "rb1_share": 42.9,
+   "rb2_share": 29.5,
+   "wr1_share": 37.0,
+   "fourth_att_per_game": 1.67
+  },
+  "utsa": {
+   "games": 6,
+   "pass_rate": 46.7,
+   "plays_per_game": 66.3,
+   "qb_rush_share": 14.6,
+   "rb1_share": 45.7,
+   "rb2_share": 30.4,
+   "wr1_share": 32.4,
+   "fourth_att_per_game": 1.67
+  },
+  "tennessee": {
+   "games": 6,
+   "pass_rate": 37.0,
+   "plays_per_game": 69.0,
+   "qb_rush_share": 19.9,
+   "rb1_share": 53.9,
+   "rb2_share": 28.2,
+   "wr1_share": 30.9,
+   "fourth_att_per_game": 1.67
+  },
+  "duke": {
+   "games": 5,
+   "pass_rate": 42.5,
+   "plays_per_game": 70.6,
+   "qb_rush_share": 3.0,
+   "rb1_share": 61.3,
+   "rb2_share": 21.8,
+   "wr1_share": 28.0,
+   "fourth_att_per_game": 2.2
+  },
+  "tulane": {
+   "games": 5,
+   "pass_rate": 45.1,
+   "plays_per_game": 59.0,
+   "qb_rush_share": 19.1,
+   "rb1_share": 44.1,
+   "rb2_share": 28.4,
+   "wr1_share": 30.5,
+   "fourth_att_per_game": 1.2
+  },
+  "navy": {
+   "games": 5,
+   "pass_rate": 20.2,
+   "plays_per_game": 66.2,
+   "qb_rush_share": 44.3,
+   "rb1_share": 41.4,
+   "rb2_share": 26.1,
+   "wr1_share": 42.7,
+   "fourth_att_per_game": 2.6
+  },
+  "app-st": {
+   "games": 5,
+   "pass_rate": 50.6,
+   "plays_per_game": 67.2,
+   "qb_rush_share": 19.9,
+   "rb1_share": 46.0,
+   "rb2_share": 23.5,
+   "wr1_share": 27.2,
+   "fourth_att_per_game": 2.0
+  },
+  "cincinnati": {
+   "games": 5,
+   "pass_rate": 40.3,
+   "plays_per_game": 65.0,
+   "qb_rush_share": 25.8,
+   "rb1_share": 48.1,
+   "rb2_share": 29.4,
+   "wr1_share": 28.5,
+   "fourth_att_per_game": 2.0
+  },
+  "boston-college": {
+   "games": 5,
+   "pass_rate": 43.8,
+   "plays_per_game": 64.0,
+   "qb_rush_share": 52.8,
+   "rb1_share": 63.7,
+   "rb2_share": 30.6,
+   "wr1_share": 28.0,
+   "fourth_att_per_game": 2.4
+  },
+  "penn-state": {
+   "games": 6,
+   "pass_rate": 46.5,
+   "plays_per_game": 65.2,
+   "qb_rush_share": 17.7,
+   "rb1_share": 48.5,
+   "rb2_share": 25.6,
+   "wr1_share": 30.0,
+   "fourth_att_per_game": 1.83
+  },
+  "marshall": {
+   "games": 6,
+   "pass_rate": 48.8,
+   "plays_per_game": 70.0,
+   "qb_rush_share": 27.4,
+   "rb1_share": 36.5,
+   "rb2_share": 25.0,
+   "wr1_share": 31.3,
+   "fourth_att_per_game": 1.17
+  },
+  "oregon": {
+   "games": 5,
+   "pass_rate": 52.0,
+   "plays_per_game": 69.2,
+   "qb_rush_share": 6.6,
+   "rb1_share": 49.7,
+   "rb2_share": 37.9,
+   "wr1_share": 25.9,
+   "fourth_att_per_game": 2.4
+  },
+  "boise-state": {
+   "games": 6,
+   "pass_rate": 39.1,
+   "plays_per_game": 70.8,
+   "qb_rush_share": 11.2,
+   "rb1_share": 57.7,
+   "rb2_share": 34.0,
+   "wr1_share": 30.2,
+   "fourth_att_per_game": 2.33
+  },
+  "auburn": {
+   "games": 5,
+   "pass_rate": 46.9,
+   "plays_per_game": 70.0,
+   "qb_rush_share": 43.5,
+   "rb1_share": 58.3,
+   "rb2_share": 30.5,
+   "wr1_share": 31.0,
+   "fourth_att_per_game": 1.8
+  },
+  "baylor": {
+   "games": 5,
+   "pass_rate": 50.2,
+   "plays_per_game": 80.8,
+   "qb_rush_share": 7.0,
+   "rb1_share": 45.0,
+   "rb2_share": 28.4,
+   "wr1_share": 34.7,
+   "fourth_att_per_game": 2.4
+  },
+  "texas": {
+   "games": 5,
+   "pass_rate": 44.4,
+   "plays_per_game": 69.8,
+   "qb_rush_share": 20.1,
+   "rb1_share": 49.2,
+   "rb2_share": 29.7,
+   "wr1_share": 28.3,
+   "fourth_att_per_game": 1.6
+  },
+  "texas-state": {
+   "games": 5,
+   "pass_rate": 37.8,
+   "plays_per_game": 78.4,
+   "qb_rush_share": 20.9,
+   "rb1_share": 48.4,
+   "rb2_share": 30.2,
+   "wr1_share": 28.6,
+   "fourth_att_per_game": 2.4
+  },
+  "tulsa": {
+   "games": 6,
+   "pass_rate": 49.0,
+   "plays_per_game": 67.0,
+   "qb_rush_share": 16.1,
+   "rb1_share": 49.6,
+   "rb2_share": 27.8,
+   "wr1_share": 34.0,
+   "fourth_att_per_game": 3.33
+  },
+  "oklahoma-state": {
+   "games": 5,
+   "pass_rate": 47.3,
+   "plays_per_game": 74.0,
+   "qb_rush_share": 7.7,
+   "rb1_share": 64.1,
+   "rb2_share": 17.0,
+   "wr1_share": 30.6,
+   "fourth_att_per_game": 1.8
+  },
+  "iowa": {
+   "games": 6,
+   "pass_rate": 48.4,
+   "plays_per_game": 61.7,
+   "qb_rush_share": 8.9,
+   "rb1_share": 54.4,
+   "rb2_share": 21.6,
+   "wr1_share": 28.1,
+   "fourth_att_per_game": 0.83
+  },
+  "niu": {
+   "games": 5,
+   "pass_rate": 52.3,
+   "plays_per_game": 60.8,
+   "qb_rush_share": 23.4,
+   "rb1_share": 58.6,
+   "rb2_share": 28.2,
+   "wr1_share": 39.8,
+   "fourth_att_per_game": 2.6
+  },
+  "arkansas": {
+   "games": 6,
+   "pass_rate": 52.1,
+   "plays_per_game": 68.2,
+   "qb_rush_share": 24.5,
+   "rb1_share": 39.8,
+   "rb2_share": 30.7,
+   "wr1_share": 35.7,
+   "fourth_att_per_game": 1.67
+  },
+  "southern-miss": {
+   "games": 5,
+   "pass_rate": 51.3,
+   "plays_per_game": 69.8,
+   "qb_rush_share": 16.5,
+   "rb1_share": 60.8,
+   "rb2_share": 27.5,
+   "wr1_share": 27.1,
+   "fourth_att_per_game": 2.0
+  },
+  "colorado-state": {
+   "games": 5,
+   "pass_rate": 55.4,
+   "plays_per_game": 67.2,
+   "qb_rush_share": 13.3,
+   "rb1_share": 51.4,
+   "rb2_share": 30.4,
+   "wr1_share": 24.5,
+   "fourth_att_per_game": 2.4
+  },
+  "wyoming": {
+   "games": 6,
+   "pass_rate": 38.2,
+   "plays_per_game": 59.8,
+   "qb_rush_share": 34.7,
+   "rb1_share": 52.6,
+   "rb2_share": 35.9,
+   "wr1_share": 26.4,
+   "fourth_att_per_game": 2.0
+  },
+  "rice": {
+   "games": 6,
+   "pass_rate": 22.9,
+   "plays_per_game": 62.7,
+   "qb_rush_share": 36.9,
+   "rb1_share": 42.8,
+   "rb2_share": 32.1,
+   "wr1_share": 48.1,
+   "fourth_att_per_game": 2.83
+  },
+  "mtsu": {
+   "games": 6,
+   "pass_rate": 55.3,
+   "plays_per_game": 57.0,
+   "qb_rush_share": 15.7,
+   "rb1_share": 65.7,
+   "rb2_share": 23.9,
+   "wr1_share": 36.4,
+   "fourth_att_per_game": 1.5
+  },
+  "south-alabama": {
+   "games": 6,
+   "pass_rate": 35.4,
+   "plays_per_game": 71.2,
+   "qb_rush_share": 17.0,
+   "rb1_share": 42.9,
+   "rb2_share": 34.3,
+   "wr1_share": 33.8,
+   "fourth_att_per_game": 3.33
+  },
+  "utah-state": {
+   "games": 6,
+   "pass_rate": 48.5,
+   "plays_per_game": 62.2,
+   "qb_rush_share": 44.3,
+   "rb1_share": 70.6,
+   "rb2_share": 19.5,
+   "wr1_share": 39.2,
+   "fourth_att_per_game": 1.83
+  },
+  "texas-a-m": {
+   "games": 6,
+   "pass_rate": 47.0,
+   "plays_per_game": 69.8,
+   "qb_rush_share": 22.5,
+   "rb1_share": 45.5,
+   "rb2_share": 28.1,
+   "wr1_share": 27.2,
+   "fourth_att_per_game": 2.83
+  },
+  "missouri-state": {
+   "games": 6,
+   "pass_rate": 47.5,
+   "plays_per_game": 64.2,
+   "qb_rush_share": 20.8,
+   "rb1_share": 45.4,
+   "rb2_share": 27.4,
+   "wr1_share": 32.4,
+   "fourth_att_per_game": 2.67
+  },
+  "vanderbilt": {
+   "games": 6,
+   "pass_rate": 47.7,
+   "plays_per_game": 65.0,
+   "qb_rush_share": 27.9,
+   "rb1_share": 37.0,
+   "rb2_share": 26.6,
+   "wr1_share": 27.5,
+   "fourth_att_per_game": 3.0
+  },
+  "arkansas-state": {
+   "games": 6,
+   "pass_rate": 49.4,
+   "plays_per_game": 59.3,
+   "qb_rush_share": 21.1,
+   "rb1_share": 46.6,
+   "rb2_share": 20.7,
+   "wr1_share": 30.7,
+   "fourth_att_per_game": 1.0
+  },
+  "kansas-state": {
+   "games": 5,
+   "pass_rate": 48.4,
+   "plays_per_game": 69.8,
+   "qb_rush_share": 21.7,
+   "rb1_share": 48.4,
+   "rb2_share": 31.2,
+   "wr1_share": 31.3,
+   "fourth_att_per_game": 0.4
+  },
+  "texas-tech": {
+   "games": 5,
+   "pass_rate": 43.6,
+   "plays_per_game": 67.4,
+   "qb_rush_share": 10.5,
+   "rb1_share": 47.5,
+   "rb2_share": 28.9,
+   "wr1_share": 30.4,
+   "fourth_att_per_game": 1.2
+  },
+  "troy": {
+   "games": 5,
+   "pass_rate": 42.3,
+   "plays_per_game": 73.2,
+   "qb_rush_share": 19.9,
+   "rb1_share": 43.5,
+   "rb2_share": 30.3,
+   "wr1_share": 25.8,
+   "fourth_att_per_game": 2.4
+  },
+  "sam-houston": {
+   "games": 6,
+   "pass_rate": 53.8,
+   "plays_per_game": 65.3,
+   "qb_rush_share": 21.0,
+   "rb1_share": 52.0,
+   "rb2_share": 25.4,
+   "wr1_share": 22.0,
+   "fourth_att_per_game": 1.17
+  },
+  "old-dominion": {
+   "games": 6,
+   "pass_rate": 37.2,
+   "plays_per_game": 63.7,
+   "qb_rush_share": 38.8,
+   "rb1_share": 57.1,
+   "rb2_share": 21.9,
+   "wr1_share": 28.7,
+   "fourth_att_per_game": 1.33
+  },
+  "usf": {
+   "games": 6,
+   "pass_rate": 43.7,
+   "plays_per_game": 59.5,
+   "qb_rush_share": 19.4,
+   "rb1_share": 64.5,
+   "rb2_share": 22.5,
+   "wr1_share": 32.1,
+   "fourth_att_per_game": 1.0
+  },
+  "fiu": {
+   "games": 6,
+   "pass_rate": 50.0,
+   "plays_per_game": 71.3,
+   "qb_rush_share": 14.0,
+   "rb1_share": 48.9,
+   "rb2_share": 33.3,
+   "wr1_share": 27.5,
+   "fourth_att_per_game": 2.83
+  },
+  "ga-southern": {
+   "games": 6,
+   "pass_rate": 59.2,
+   "plays_per_game": 67.0,
+   "qb_rush_share": 16.5,
+   "rb1_share": 38.2,
+   "rb2_share": 25.3,
+   "wr1_share": 29.4,
+   "fourth_att_per_game": 1.67
+  },
+  "mississippi-st": {
+   "games": 5,
+   "pass_rate": 47.5,
+   "plays_per_game": 71.2,
+   "qb_rush_share": 23.0,
+   "rb1_share": 60.2,
+   "rb2_share": 24.1,
+   "wr1_share": 37.1,
+   "fourth_att_per_game": 1.2
+  },
+  "ul-monroe": {
+   "games": 5,
+   "pass_rate": 49.0,
+   "plays_per_game": 67.0,
+   "qb_rush_share": 29.8,
+   "rb1_share": 45.0,
+   "rb2_share": 22.1,
+   "wr1_share": 26.5,
+   "fourth_att_per_game": 2.4
+  },
+  "louisiana-tech": {
+   "games": 5,
+   "pass_rate": 48.2,
+   "plays_per_game": 65.2,
+   "qb_rush_share": 27.2,
+   "rb1_share": 43.7,
+   "rb2_share": 25.4,
+   "wr1_share": 34.5,
+   "fourth_att_per_game": 2.0
+  },
+  "virginia-tech": {
+   "games": 6,
+   "pass_rate": 49.6,
+   "plays_per_game": 74.3,
+   "qb_rush_share": 13.3,
+   "rb1_share": 52.3,
+   "rb2_share": 34.0,
+   "wr1_share": 29.8,
+   "fourth_att_per_game": 1.67
+  },
+  "lsu": {
+   "games": 6,
+   "pass_rate": 44.2,
+   "plays_per_game": 81.0,
+   "qb_rush_share": 22.1,
+   "rb1_share": 58.2,
+   "rb2_share": 18.8,
+   "wr1_share": 27.3,
+   "fourth_att_per_game": 1.83
+  },
+  "clemson": {
+   "games": 5,
+   "pass_rate": 45.9,
+   "plays_per_game": 66.6,
+   "qb_rush_share": 30.6,
+   "rb1_share": 53.0,
+   "rb2_share": 24.9,
+   "wr1_share": 30.9,
+   "fourth_att_per_game": 1.2
+  },
+  "michigan": {
+   "games": 5,
+   "pass_rate": 39.9,
+   "plays_per_game": 58.6,
+   "qb_rush_share": 32.4,
+   "rb1_share": 52.1,
+   "rb2_share": 36.8,
+   "wr1_share": 42.4,
+   "fourth_att_per_game": 1.2
+  },
+  "w-michigan": {
+   "games": 6,
+   "pass_rate": 40.5,
+   "plays_per_game": 60.8,
+   "qb_rush_share": 25.8,
+   "rb1_share": 41.8,
+   "rb2_share": 23.3,
+   "wr1_share": 25.2,
+   "fourth_att_per_game": 1.67
+  },
+  "florida": {
+   "games": 6,
+   "pass_rate": 42.7,
+   "plays_per_game": 69.8,
+   "qb_rush_share": 18.3,
+   "rb1_share": 57.2,
+   "rb2_share": 18.6,
+   "wr1_share": 25.3,
+   "fourth_att_per_game": 1.83
+  },
+  "fla-atlantic": {
+   "games": 5,
+   "pass_rate": 51.7,
+   "plays_per_game": 75.4,
+   "qb_rush_share": 11.0,
+   "rb1_share": 45.2,
+   "rb2_share": 26.0,
+   "wr1_share": 31.4,
+   "fourth_att_per_game": 3.8
+  },
+  "byu": {
+   "games": 5,
+   "pass_rate": 39.0,
+   "plays_per_game": 61.0,
+   "qb_rush_share": 19.4,
+   "rb1_share": 46.1,
+   "rb2_share": 22.6,
+   "wr1_share": 28.0,
+   "fourth_att_per_game": 0.8
+  },
+  "northwestern": {
+   "games": 5,
+   "pass_rate": 36.9,
+   "plays_per_game": 61.8,
+   "qb_rush_share": 22.6,
+   "rb1_share": 42.6,
+   "rb2_share": 28.5,
+   "wr1_share": 33.9,
+   "fourth_att_per_game": 1.0
+  },
+  "louisiana": {
+   "games": 6,
+   "pass_rate": 36.5,
+   "plays_per_game": 65.3,
+   "qb_rush_share": 32.9,
+   "rb1_share": 33.5,
+   "rb2_share": 28.0,
+   "wr1_share": 24.6,
+   "fourth_att_per_game": 1.33
+  },
+  "maryland": {
+   "games": 6,
+   "pass_rate": 56.3,
+   "plays_per_game": 68.7,
+   "qb_rush_share": 17.2,
+   "rb1_share": 56.2,
+   "rb2_share": 26.7,
+   "wr1_share": 32.2,
+   "fourth_att_per_game": 1.83
+  },
+  "arizona-state": {
+   "games": 5,
+   "pass_rate": 50.1,
+   "plays_per_game": 67.0,
+   "qb_rush_share": 20.4,
+   "rb1_share": 50.3,
+   "rb2_share": 20.0,
+   "wr1_share": 35.0,
+   "fourth_att_per_game": 2.4
+  },
+  "san-diego-st": {
+   "games": 6,
+   "pass_rate": 44.0,
+   "plays_per_game": 60.7,
+   "qb_rush_share": 11.8,
+   "rb1_share": 60.7,
+   "rb2_share": 24.0,
+   "wr1_share": 27.4,
+   "fourth_att_per_game": 2.17
+  },
+  "arizona": {
+   "games": 6,
+   "pass_rate": 50.6,
+   "plays_per_game": 66.8,
+   "qb_rush_share": 22.2,
+   "rb1_share": 50.9,
+   "rb2_share": 21.5,
+   "wr1_share": 26.6,
+   "fourth_att_per_game": 0.83
+  },
+  "new-mexico": {
+   "games": 5,
+   "pass_rate": 31.4,
+   "plays_per_game": 65.0,
+   "qb_rush_share": 14.3,
+   "rb1_share": 37.6,
+   "rb2_share": 25.8,
+   "wr1_share": 33.6,
+   "fourth_att_per_game": 2.0
+  },
+  "c-michigan": {
+   "games": 6,
+   "pass_rate": 32.1,
+   "plays_per_game": 57.7,
+   "qb_rush_share": 40.4,
+   "rb1_share": 37.4,
+   "rb2_share": 24.4,
+   "wr1_share": 28.4,
+   "fourth_att_per_game": 2.17
+  },
+  "california": {
+   "games": 6,
+   "pass_rate": 60.0,
+   "plays_per_game": 71.2,
+   "qb_rush_share": 8.8,
+   "rb1_share": 68.2,
+   "rb2_share": 16.5,
+   "wr1_share": 24.2,
+   "fourth_att_per_game": 2.33
+  },
+  "ucla": {
+   "games": 5,
+   "pass_rate": 37.2,
+   "plays_per_game": 66.6,
+   "qb_rush_share": 20.1,
+   "rb1_share": 42.6,
+   "rb2_share": 28.2,
+   "wr1_share": 30.2,
+   "fourth_att_per_game": 0.8
+  },
+  "nevada": {
+   "games": 5,
+   "pass_rate": 39.9,
+   "plays_per_game": 65.2,
+   "qb_rush_share": 17.9,
+   "rb1_share": 49.4,
+   "rb2_share": 36.5,
+   "wr1_share": 32.7,
+   "fourth_att_per_game": 2.2
+  },
+  "w-kentucky": {
+   "games": 7,
+   "pass_rate": 49.4,
+   "plays_per_game": 72.3,
+   "qb_rush_share": 34.4,
+   "rb1_share": 49.6,
+   "rb2_share": 23.3,
+   "wr1_share": 29.0,
+   "fourth_att_per_game": 2.0
+  },
+  "washington": {
+   "games": 6,
+   "pass_rate": 55.8,
+   "plays_per_game": 65.2,
+   "qb_rush_share": 31.8,
+   "rb1_share": 56.9,
+   "rb2_share": 28.2,
+   "wr1_share": 30.1,
+   "fourth_att_per_game": 2.0
+  },
+  "washington-st": {
+   "games": 6,
+   "pass_rate": 48.8,
+   "plays_per_game": 60.8,
+   "qb_rush_share": 39.6,
+   "rb1_share": 47.1,
+   "rb2_share": 34.2,
+   "wr1_share": 24.9,
+   "fourth_att_per_game": 1.17
+  },
+  "notre-dame": {
+   "games": 6,
+   "pass_rate": 42.1,
+   "plays_per_game": 66.5,
+   "qb_rush_share": 7.4,
+   "rb1_share": 51.0,
+   "rb2_share": 24.3,
+   "wr1_share": 26.7,
+   "fourth_att_per_game": 2.0
+  },
+  "wisconsin": {
+   "games": 5,
+   "pass_rate": 46.9,
+   "plays_per_game": 61.0,
+   "qb_rush_share": 31.5,
+   "rb1_share": 55.1,
+   "rb2_share": 28.5,
+   "wr1_share": 33.1,
+   "fourth_att_per_game": 1.6
+  },
+  "ole-miss": {
+   "games": 5,
+   "pass_rate": 54.6,
+   "plays_per_game": 67.0,
+   "qb_rush_share": 18.4,
+   "rb1_share": 47.2,
+   "rb2_share": 22.0,
+   "wr1_share": 20.5,
+   "fourth_att_per_game": 1.0
+  },
+  "louisville": {
+   "games": 6,
+   "pass_rate": 42.3,
+   "plays_per_game": 63.5,
+   "qb_rush_share": 27.7,
+   "rb1_share": 51.8,
+   "rb2_share": 35.1,
+   "wr1_share": 32.9,
+   "fourth_att_per_game": 0.67
+  },
+  "smu": {
+   "games": 5,
+   "pass_rate": 50.0,
+   "plays_per_game": 68.8,
+   "qb_rush_share": 18.6,
+   "rb1_share": 57.6,
+   "rb2_share": 28.9,
+   "wr1_share": 24.3,
+   "fourth_att_per_game": 1.4
+  }
+ }
+}

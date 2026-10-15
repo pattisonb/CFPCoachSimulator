@@ -1,0 +1,13 @@
+# Free web service on Render (https://render.com): connect the GitHub repo and Render
+# reads this file. The free tier sleeps after 15 minutes idle and wakes in about a minute;
+# game history lives in memory and resets on each deploy or restart.
+services:
+  - type: web
+    name: cfp-coach-simulator
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && python build_teams.py
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.6

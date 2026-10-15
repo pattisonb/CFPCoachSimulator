@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CFP Coach Simulator</title>
+  <meta name="theme-color" content="#131a2e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">CFP</span>
+      <span class="brand-name">Coach Simulator</span>
+    </div>
+    <div class="toolbar">
+      <button id="btn-sliders" class="ghost" type="button">Sliders</button>
+      <div class="batch">
+        <input id="sim-count" type="number" min="1" max="500" value="25" aria-label="Number of games" />
+        <button id="btn-sim-batch" class="ghost" type="button">Sim batch</button>
+      </div>
+      <button id="btn-sim" class="primary" type="button">Sim Game</button>
+    </div>
+  </header>
+
+  <section class="matchup">
+    <div class="pick">
+      <label for="away-select">Away</label>
+      <select id="away-select" aria-label="Away team"></select>
+      <div id="away-card" class="team-card"></div>
+    </div>
+    <div class="venue">
+      <div class="at">at</div>
+      <label class="radio"><input type="radio" name="venue" value="home" checked /> Home field</label>
+      <label class="radio"><input type="radio" name="venue" value="neutral" /> Neutral site</label>
+      <button id="btn-swap" class="ghost small" type="button">Swap sides</button>
+    </div>
+    <div class="pick">
+      <label for="home-select">Home</label>
+      <select id="home-select" aria-label="Home team"></select>
+      <div id="home-card" class="team-card"></div>
+    </div>
+  </section>
+
+  <aside id="sliders-panel" class="drawer" hidden>
+    <div class="drawer-head">
+      <h2>Sliders</h2>
+      <div>
+        <button id="btn-sliders-reset" class="ghost small" type="button">Reset</button>
+        <button id="btn-sliders-close" class="ghost small" type="button">Close</button>
+      </div>
+    </div>
+    <p class="muted">50 is the calibrated default. Lower penalty and fumble sliders mean more of them.</p>
+    <div id="sliders-body"></div>
+  </aside>
+
+  <main class="layout">
+    <section class="history">
+      <div class="section-head">
+        <h2>History</h2>
+        <button id="btn-clear" class="ghost small" type="button">Clear</button>
+      </div>
+      <div id="history-summary" class="history-summary muted">No games yet.</div>
+      <ul id="history-list" class="history-list"></ul>
+    </section>
+
+    <section class="content">
+      <div id="empty" class="empty">
+        <p>Pick two teams, choose the venue, then hit <strong>Sim Game</strong> for one game or <strong>Sim batch</strong> for a series.</p>
+        <div id="rosters" class="rosters"></div>
+      </div>
+
+      <div id="batch" class="panel" hidden></div>
+
+      <div id="game" hidden>
+        <div class="scoreboard panel">
+          <div class="score-row" id="score-row"></div>
+          <table class="quarters" id="quarters"></table>
+          <div class="score-meta muted" id="score-meta"></div>
+        </div>
+
+        <nav class="tabs" id="tabs">
+          <button data-tab="scoring" class="active" type="button">Scoring</button>
+          <button data-tab="team" type="button">Team Stats</button>
+          <button data-tab="home" type="button">Home Players</button>
+          <button data-tab="away" type="button">Away Players</button>
+          <button data-tab="drives" type="button">Drives</button>
+        </nav>
+
+        <div class="panel tab-body" id="tab-scoring"></div>
+        <div class="panel tab-body" id="tab-team" hidden></div>
+        <div class="panel tab-body" id="tab-home" hidden></div>
+        <div class="panel tab-body" id="tab-away" hidden></div>
+        <div class="panel tab-body" id="tab-drives" hidden></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="/app.js"></script>
+</body>
+</html>
