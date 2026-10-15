@@ -69,6 +69,8 @@ batch of 100 games takes about 5 seconds on Render's free CPU.
 | `fetch_boxscores.py` | Downloads every played game's player box score into `data/boxscores/` |
 | `derive_tendencies.py` | Each team's real 2026 pass rate, pace and usage shares, used by `build_teams.py` |
 | `calibrate_players.py` | Compares sim player lines and usage shares with the real box scores |
+| `forward_test.py` | Freezes the sim's picks for the next week of real games, then scores them once played |
+| `data/predictions/` | The frozen weekly picks (`weekNN.json`) and their score reports (`weekNN_score.*`) |
 | `smoke_test.py` | Runs N games and checks that every team's stats add up to its score |
 
 ## API
@@ -79,6 +81,8 @@ batch of 100 games takes about 5 seconds on Render's free CPU.
   returns `{"games": [...], "summary": {...}}`. The first team hosts unless the venue is neutral.
 - `GET /api/games`, `GET /api/games/{id}`, `GET /api/history/summary`, `DELETE /api/games`.
 - `GET /api/sliders` returns slider defaults and groups.
+- `GET /api/predictions` returns the latest frozen week of picks from `forward_test.py`, with a `score`
+  block once that week has been scored (`{"week": null, "games": []}` when there are none).
 
 ## How the data feeds the engine
 
@@ -213,6 +217,48 @@ Weekly refresh, in order: `python fetch_results.py`, `python fetch_boxscores.py`
 `python derive_tendencies.py`, `python build_teams.py`, then the three calibration scripts.
 footballdb.com (season team stat tables, past seasons) is reachable from Python as well
 and is a good cross-check for the team-level numbers; NCAA.com stays the primary source.
+
+## Forward test: picks frozen before kickoff
+
+Everything above is in-sample: the ratings and tendencies already reflect the games they
+are checked against. `forward_test.py` is the out-of-sample check. Before the week's games:
+
+```
+python forward_test.py predict
+```
+
+runs `fetch_results.py`, takes every unplayed game in the lowest week that still has one,
+keeps the games between two teams the engine knows, simulates each 50 times at the real
+venue (`--sims N` to change), prints the picks, and writes `data/predictions/weekNN.json`:
+predicted margin and its spread over the sims, home win probability, predicted total, each
+team's expected points, and each team's expected QB1 (attempts, completions, yards, TD),
+RB1 (carries, yards) and top-receiver (catches, yards) lines under the sim's player names,
+plus the time it was made and the git commit of the engine. An existing week file is never
+overwritten, so commit it: the commit is the proof the picks were frozen before kickoff.
+The site shows the latest file as the "This week's picks" panel; its Open button sets the
+pickers to that matchup.
+
+After the games are final:
+
+```
+python forward_test.py score 07
+```
+
+reruns `fetch_results.py` and `fetch_boxscores.py`, then scores the frozen file the way
+`calibrate_season.py` does (straight-up accuracy, margin MAE and RMSE, slope of actual on
+predicted, home bias, total-points bias, win-probability calibration by bucket) and, for
+the player lines, the error and bias of the QB1, RB1 and top receiver yards against the
+real box score, matching the sim's player to the real one by last name (a second column
+compares the same role regardless of who filled it). The report is saved next to the
+prediction file as `weekNN_score.json` and `weekNN_score.txt`, and the picks panel shows
+the headline numbers. Games not yet final are listed as pending and can be scored again later.
+
+`python forward_test.py dryrun 6` proves the whole path on a week already played: it
+predicts that week into a temporary folder, scores it, prints the report and deletes the
+folder. Being in-sample, its numbers are a check of the code, not of forward accuracy.
+On week 6 (58 games, 50 sims each) the dry run scored 62.1% straight up, margin MAE 14.3,
+slope 0.72, total points 49.4 predicted against 51.1 real, QB1 pass yards 36 high and RB1
+rush yards 22 low for the real lead back (the sim spreads carries over more backs).
 
 ## Changes from the original football_sim engine
 

@@ -148,6 +148,34 @@ table.compare td.better { font-weight: 800; }
 .batch-games { margin-top: 10px; }
 .batch-games li { cursor: pointer; }
 
+/* this week's picks (forward_test.py) */
+.picks { margin-bottom: 12px; padding: 10px 16px; }
+.picks summary { cursor: pointer; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-weight: 700; font-size: 15px; text-transform: uppercase; letter-spacing: 0.3px; color: var(--muted); }
+.picks summary::-webkit-details-marker { display: none; }
+.picks summary::before { content: "\25B8"; font-size: 12px; }
+.picks[open] summary::before { content: "\25BE"; }
+.picks summary .muted { font-weight: 400; font-size: 12px; text-transform: none; letter-spacing: 0; }
+.picks-list { list-style: none; margin: 10px 0 0; padding: 0; max-height: 300px; overflow: auto; }
+.picks-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 12px; align-items: center; padding: 7px 4px; border-bottom: 1px solid var(--border); }
+.picks-list .teams { font-weight: 600; grid-column: 1; grid-row: 1; }
+.picks-list .teams .rank { color: var(--muted); font-weight: 400; font-size: 11px; }
+.picks-list .date { font-size: 11px; color: var(--muted); grid-column: 1; grid-row: 2; }
+.picks-list .pick { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; grid-column: 2; grid-row: 1 / span 2; }
+.picks-list .pick b { color: var(--accent); }
+.picks-list .pick .prob { display: block; font-size: 11px; color: var(--muted); }
+.picks-list .pick.home b { color: var(--home); }
+.picks-list .pick.away b { color: var(--away); }
+.picks-list button { grid-column: 3; grid-row: 1 / span 2; }
+.picks .small-text { margin: 8px 0 0; }
+@media (max-width: 700px) {
+  .picks { padding: 8px 10px; }
+  .picks-list { max-height: 240px; }
+  .picks-list li { grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; font-size: 13px; }
+  .picks-list .pick { grid-row: 1; grid-column: 2; }
+  .picks-list .pick .prob { display: inline; margin-left: 6px; }
+  .picks-list button { grid-row: 2; grid-column: 2; justify-self: end; padding: 3px 8px; font-size: 11px; }
+}
+
 /* sliders drawer */
 .drawer {
   position: fixed; top: 61px; right: 0; bottom: 0; width: 360px; z-index: 6; overflow: auto;

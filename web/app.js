@@ -213,6 +213,56 @@
     catch (err) { toast(`Could not load game: ${err.message}`, 3000); }
   }
 
+  // ----- this week's picks (data/predictions, written by forward_test.py) ----
+
+  async function loadPicks() {
+    const box = $("#picks");
+    const data = await api("/api/predictions");
+    if (!data.week || !data.games.length) { box.hidden = true; return; }
+    box.hidden = false;
+    try { box.open = localStorage.getItem("cfp.picksOpen") !== "0"; } catch (_) { /* ignore */ }
+    const made = new Date(data.created_at);
+    $("#picks-title").textContent = `Week ${data.week} picks`;
+    $("#picks-sub").textContent = `${data.games.length} games · ${data.sims_per_game} sims each · frozen ${made.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+    const list = $("#picks-list");
+    list.innerHTML = "";
+    for (const g of data.games) {
+      const m = g.pred_margin;
+      const favSide = m >= 0 ? "home" : "away";
+      const fav = g[favSide];
+      const favProb = favSide === "home" ? g.home_win_prob : 1 - g.home_win_prob;
+      const sep = g.neutral ? "vs" : "at";
+      const name = (t) => [t.rank ? el("span", { class: "rank", text: `#${t.rank} ` }) : null, t.name];
+      list.appendChild(el("li", {}, [
+        el("span", { class: "teams" }, [...name(g.away), ` ${sep} `, ...name(g.home)]),
+        el("span", { class: `pick ${favSide}` }, [
+          el("b", { text: Math.abs(m) < 0.05 ? "Even" : `${fav.name} by ${Math.abs(m).toFixed(1)}` }),
+          el("span", { class: "prob", text: `${Math.round(100 * favProb)}% · total ${g.pred_total.toFixed(0)}` }),
+        ]),
+        el("button", { class: "ghost small", type: "button", onclick: () => openMatchup(g) }, "Open"),
+        el("span", { class: "date", text: g.date }),
+      ]));
+    }
+    const note = $("#picks-note");
+    if (data.score && data.score.scored) {
+      note.textContent = `Scored: ${Math.round(100 * data.score.straight_up)}% straight up over ${data.score.scored} games, margin error ${data.score.mae} points.`;
+    } else {
+      note.textContent = "Margin is the average of the sims; the percentage is how often the favorite won them. Open sets the pickers to that game.";
+    }
+    box.addEventListener("toggle", () => { try { localStorage.setItem("cfp.picksOpen", box.open ? "1" : "0"); } catch (_) { /* ignore */ } });
+  }
+
+  function openMatchup(g) {
+    if (!state.teamsBySlug[g.home.slug] || !state.teamsBySlug[g.away.slug]) return toast("Teams not loaded yet.", 2000);
+    $("#home-select").value = g.home.slug;
+    $("#away-select").value = g.away.slug;
+    const r = document.querySelector(`input[name="venue"][value="${g.neutral ? "neutral" : "home"}"]`);
+    if (r) r.checked = true;
+    renderTeamCards();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast(`${g.away.name} ${g.neutral ? "vs" : "at"} ${g.home.name} is set up. Hit Sim Game.`, 2500);
+  }
+
   // ----- game view ---------------------------------------------------------
 
   function showGame(g) {
@@ -679,4 +729,5 @@
   loadSliders().catch((err) => toast(`Sliders unavailable: ${err.message}`, 4000));
   loadTeams().catch((err) => toast(`Teams unavailable: ${err.message}`, 4000));
   loadHistory().catch((err) => toast(`History unavailable: ${err.message}`, 4000));
+  loadPicks().catch(() => { $("#picks").hidden = true; });
 })();

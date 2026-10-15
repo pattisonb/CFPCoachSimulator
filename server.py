@@ -28,6 +28,7 @@ DATA_DIR = ROOT / "data"
 TEAMS_FILE = DATA_DIR / "engine_teams.json"
 GAMES_FILE = DATA_DIR / "games.json"
 INGEST_DIR = DATA_DIR / "ingest"
+PRED_DIR = DATA_DIR / "predictions"
 WEB_DIR = ROOT / "web"
 
 MAX_HISTORY = 300
@@ -230,6 +231,28 @@ def clear_games() -> dict:
         _games.clear()
         _save_games()
     return {"ok": True}
+
+
+@app.get("/api/predictions")
+def get_predictions() -> dict:
+    """The latest frozen week of picks from forward_test.py, with its score report once
+    the week has been scored. {"week": null, "games": []} when there are no predictions."""
+    files = sorted(PRED_DIR.glob("week[0-9][0-9].json"))
+    if not files:
+        return {"week": None, "games": []}
+    latest = files[-1]
+    try:
+        data = json.loads(latest.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"week": None, "games": []}
+    score_file = latest.with_name(latest.stem + "_score.json")
+    if score_file.exists():
+        try:
+            report = json.loads(score_file.read_text(encoding="utf-8"))
+            data["score"] = {k: report.get(k) for k in ("scored", "pending", "straight_up", "mae", "slope", "total_bias")}
+        except (OSError, ValueError):
+            pass
+    return data
 
 
 @app.post("/api/ingest")
