@@ -65,7 +65,9 @@ batch of 100 games takes about 5 seconds on Render's free CPU.
 | `web/` | The site: plain HTML, CSS and JavaScript, no build step |
 | `fetch_results.py` | Downloads the 2026 FBS results played so far from NCAA.com into `data/season_games.json` |
 | `fetch_schedules.py` | Downloads every FBS team's 2026 schedule from ESPN into `data/schedules.json` |
-| `season.py` | Full-season simulation with conference standings (`python season.py ohio-state full`) |
+| `season.py` | Week-by-week season engine: polls, title games, bracket, playoff (`python season.py ohio-state full`) |
+| `polls.py` | AP poll model, committee model and the 2026 bracket rules |
+| `fetch_polls.py`, `analyze_polls.py`, `calibrate_polls.py` | 2014-2025 poll archive, the behaviour study, and the model fit |
 | `calibrate_season.py` | Replays every real 2026 game N times and compares predicted and actual margins |
 | `calibrate.py` | Per-team stat benchmarks against FBS 2025 averages (`league` mode uses the real rosters) |
 | `fetch_boxscores.py` | Downloads every played game's player box score into `data/boxscores/` |
@@ -188,23 +190,82 @@ average but which player gets them is still mostly set by the EA ratings. QB1 pa
 yards run about 20 high because the sim's starter takes every attempt while real
 starters sit in blowouts.
 
-## Season mode
+## Season mode (its own page)
 
-Pick your team in the Home box, choose **Full season** (every game from week 1) or
-**Rest of season** (real results kept through today, the remaining games simulated), and
-hit **Sim Season**. Every FBS game on the 2026 schedule is simulated (892 games in about
-20 seconds on an 8-core PC; longer on Render's free CPU), with a progress bar while it
-runs. The result shows your schedule with scores and a clickable box score for each of
-your games, conference standings for every conference (yours first), and a top 25 by
-record and point differential. Seasons are saved under `data/seasons/` and listed in
-the sidebar.
+Open **/season** (or hit **Sim Season** on the matchup page). Pick your team and a mode,
+start a season, and play it a week at a time with **Advance week**, or jump with **Sim to
+selection** or **Sim to the end**. The week strip lets you look back at any week. Tabs:
 
-Schedules come from ESPN's team schedule pages (`fetch_schedules.py` writes
-`data/schedules.json`: 138 teams, weeks, dates, neutral-site flags, results so far).
-Games against FCS schools are played against the fictional FCS school from the same
-region (`data/fcs_map.json`, built from each school's home state; edit it to change a
-counterpart). Conference records count only games between two real FBS teams in the same
-conference. No injuries, no conference championship games, no playoff yet.
+- **Games**: every game that week, your game first, with the AP ranks the teams carried
+  into it; click your game for the full box score.
+- **My Schedule**, **Standings** (every conference, champions marked after title games).
+- **AP Poll**: the poll released after the selected week, with each team's move.
+- **CFP Rankings**: the committee's ranking after weeks 9 through 13 and the final one
+  after championship week, the 2026 release calendar (Nov 3, 10, 17, 24, Dec 1, Dec 6).
+- **Bracket**: a projected bracket as soon as the first committee ranking exists (current
+  conference leaders as projected champions), then the real bracket on selection day and
+  the playoff results as the rounds are played.
+
+The calendar: weeks 1-13 are the regular season (the 2026 schedule ends Nov 28), week 14
+is championship week (the top two in every conference's standings meet on a neutral
+field; head-to-head breaks ties), week 15 holds Army-Navy and the selection, weeks 16-19
+are the playoff. **Full season** starts from the real 2026 preseason AP poll and
+simulates everything; **Rest of season** keeps the real results and real polls through
+the last completed week. FCS opponents play as the fictional school from the same region
+(`data/fcs_map.json`). No injuries.
+
+### The polls: built from twelve seasons of real polls
+
+`fetch_polls.py` downloads every weekly AP Top 25 and CFP committee ranking from 2014
+through 2025 plus every FBS result with the teams' ranks at kickoff (ESPN's archive;
+`data/history/`). `analyze_polls.py` reports how voters actually behave. The numbers
+below are from that archive, 2014-2025 (1,749 committee-vs-AP team-weeks, about 3,000
+ranked-team losses and 2,600 ranked-team wins):
+
+| After a loss, by the loser's rank | avg spots dropped (to ranked / unranked opp.) | fell out |
+|---|---|---|
+| 1-5 | 4.8 / 7.0 | 0% / 0% |
+| 6-10 | 5.6 / 9.1 | 0% / 5% |
+| 11-15 | 5.7 / 9.8 | 6% / 41% |
+| 16-20 | 5.5 / 7.6 | 42% / 87% |
+| 21-25 | 2.8 / 3.0 | 88% / 100% |
+
+| After a win, by rank | avg spots gained (ranked / unranked opp.) |
+|---|---|
+| 1-5 | 0.5 / 0.0 |
+| 6-10 | 1.9 / 0.4 |
+| 11-15 | 3.6 / 1.2 |
+| 16-20 | 4.8 / 1.7 |
+| 21-25 | 6.7 / 2.4 |
+
+Other findings used by the model: a home loss costs about a spot more than a road loss;
+margin barely matters for wins and adds about a spot for 21-point losses; a bye week
+gains 0.7 spots on average; unranked teams enter at an average rank of 22.7 and only 36%
+of them got there by beating a ranked team; 14 of the 25 preseason teams are still ranked
+at the end and 6 of the final top 10 were preseason top 10; in the final regular-season
+poll, one-loss teams sit at a median rank of 5, two-loss teams at 11, three-loss teams at
+16; the committee ranks Group of Five teams 2.6 spots lower than the AP does and its top
+12 differs from the AP's by 0.6 teams per week.
+
+`calibrate_polls.py` then fits the model: each historical season is replayed from its real
+preseason poll with the real results, and the model's weekly top 25 is compared with the
+real one. Result (data/poll_params.json): the AP model is off by **2.2 spots** per ranked
+team on average and ranks **91%** of the teams the real poll ranked; the committee model
+is off by **2.2 spots** and covers **90%**. The committee model adds strength of schedule,
+wins over ranked teams, a heavier Group of Five discount, head-to-head among close teams
+and a conference-title bonus on top of the AP-style score.
+
+### The bracket rules (2026)
+
+From NCAA.com's "How the College Football Playoff works" (Aug 27, 2026) and the CFP
+management committee's May 22, 2025 seeding revision: 12 teams; the ACC, Big Ten, Big 12
+and SEC champions and the highest-ranked team from the American, CUSA, MAC, Mountain West,
+Pac-12 or Sun Belt (champion or not) qualify automatically, Notre Dame qualifies if it is
+ranked in the top 12, and seven at-large teams fill the field by ranking; seeds are
+straight by the final ranking, so the four highest-ranked teams get the byes regardless of
+titles; an automatic qualifier ranked outside the top 12 takes the lowest seed; the first
+round is 5v12, 6v11, 7v10, 8v9 at the higher seed's home; quarterfinals are 1 vs the 8/9
+winner, 2 vs 7/10, 3 vs 6/11, 4 vs 5/12 on neutral fields; no reseeding.
 
 ## Player stat lines and usage (box score calibration)
 

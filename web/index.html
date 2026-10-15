@@ -72,7 +72,7 @@
       </div>
       <div id="history-summary" class="history-summary muted">No games yet.</div>
       <ul id="history-list" class="history-list"></ul>
-      <div class="section-head" style="margin-top:12px"><h2>Seasons</h2></div>
+      <div class="section-head" style="margin-top:12px"><h2>Seasons</h2><a class="ghost small btn-link" href="/season">Open</a></div>
       <ul id="season-list" class="history-list"></ul>
     </section>
 
@@ -92,47 +92,6 @@
       </div>
 
       <div id="batch" class="panel" hidden></div>
-
-      <div id="season-progress" class="panel" hidden>
-        <h2 id="season-progress-title">Simulating the season</h2>
-        <div class="progress"><div id="season-progress-bar" class="progress-bar"></div></div>
-        <div id="season-progress-text" class="muted"></div>
-      </div>
-
-      <div id="season" hidden>
-        <div class="panel season-head">
-          <div id="season-title"></div>
-          <div id="season-meta" class="muted"></div>
-        </div>
-        <nav class="tabs" id="season-tabs">
-          <button data-stab="schedule" class="active" type="button">My Schedule</button>
-          <button data-stab="standings" type="button">Standings</button>
-          <button data-stab="top25" type="button">Top 25</button>
-          <button data-stab="box" type="button" hidden>Box Score</button>
-        </nav>
-        <div class="panel tab-body" id="stab-schedule"></div>
-        <div class="panel tab-body" id="stab-standings" hidden></div>
-        <div class="panel tab-body" id="stab-top25" hidden></div>
-        <div id="stab-box" hidden>
-          <div class="scoreboard panel">
-            <div class="score-row" id="sbox-score-row"></div>
-            <table class="quarters" id="sbox-quarters"></table>
-            <div class="score-meta muted" id="sbox-meta"></div>
-          </div>
-          <nav class="tabs" id="sbox-tabs">
-            <button data-btab="scoring" class="active" type="button">Scoring</button>
-            <button data-btab="team" type="button">Team Stats</button>
-            <button data-btab="home" type="button">Home Players</button>
-            <button data-btab="away" type="button">Away Players</button>
-            <button data-btab="drives" type="button">Drives</button>
-          </nav>
-          <div class="panel tab-body" id="sbox-scoring"></div>
-          <div class="panel tab-body" id="sbox-team" hidden></div>
-          <div class="panel tab-body" id="sbox-home" hidden></div>
-          <div class="panel tab-body" id="sbox-away" hidden></div>
-          <div class="panel tab-body" id="sbox-drives" hidden></div>
-        </div>
-      </div>
 
       <div id="game" hidden>
         <div class="scoreboard panel">
@@ -155,10 +114,12 @@
         <div class="panel tab-body" id="tab-away" hidden></div>
         <div class="panel tab-body" id="tab-drives" hidden></div>
       </div>
+
     </section>
   </main>
 
   <div id="toast" class="toast" hidden></div>
+  <script src="/gameview.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

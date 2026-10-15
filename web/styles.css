@@ -281,3 +281,29 @@ table.stats tr.clickable:hover td { background: var(--panel-2); }
 .conf-block h3 { margin: 0 0 6px; }
 .conf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
 @media (max-width: 700px) { .conf-grid { grid-template-columns: 1fr; } .season-controls { width: 100%; justify-content: flex-end; } }
+
+/* season page */
+.brand-link { text-decoration: none; }
+.btn-link { text-decoration: none; padding: 4px 10px; font-size: 12px; border: 1px solid var(--border); border-radius: 8px; color: var(--text); }
+.season-layout { display: grid; grid-template-columns: 260px 1fr; gap: 16px; padding: 16px 20px; max-width: 1500px; margin: 0 auto; }
+.season-layout > * { min-width: 0; }
+.season-side { position: sticky; top: 68px; align-self: start; max-height: calc(100vh - 90px); overflow: auto; }
+#season-toolbar select { font: inherit; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); max-width: 220px; }
+.season-head-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.season-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill-inline { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: middle; }
+.week-strip { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+.week-chip { padding: 4px 8px; font-size: 12px; border-radius: 6px; background: var(--panel-2); border: 1px solid transparent; color: var(--muted); }
+.week-chip.future { opacity: 0.45; }
+.week-chip.current { border-color: var(--accent); color: var(--text); }
+.week-chip.active { background: var(--accent); color: var(--accent-ink); opacity: 1; }
+.games-table td .rank { color: var(--muted); font-size: 11px; }
+.bracket-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 14px; }
+.bracket-col h3 { margin-bottom: 8px; }
+.match-card { background: var(--panel-2); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; border: 1px solid transparent; }
+.match-card.mine { border-color: var(--accent); }
+.match-card.clickable { cursor: pointer; }
+.match-row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; font-size: 13px; }
+.match-row.win { color: var(--good); font-weight: 700; }
+.champ-banner { margin-top: 16px; padding: 14px; text-align: center; font-size: 18px; font-weight: 800; background: var(--accent); color: var(--accent-ink); border-radius: 8px; }
+@media (max-width: 900px) { .season-layout { grid-template-columns: 1fr; } .season-side { position: static; max-height: 200px; } }

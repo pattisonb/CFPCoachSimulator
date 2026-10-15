@@ -1,0 +1,46 @@
+{
+ "ap": {
+  "rank_points": 16,
+  "unranked_floor": 15,
+  "rating_weight": 6.0,
+  "win_base": 20,
+  "win_ranked_bonus": 7.0,
+  "win_road_bonus": 0,
+  "win_margin": 0.8,
+  "win_margin_cap": 21,
+  "loss_base": 75,
+  "loss_unranked_extra": 0.4,
+  "loss_top_discount": 0.6,
+  "loss_home_extra": 0.25,
+  "loss_margin": 2.5,
+  "loss_margin_cap": 21,
+  "decay": 0.12,
+  "record_weight": 50,
+  "late_record_weight": 1,
+  "g5_discount": 100
+ },
+ "cfp": {
+  "sos_weight": 250,
+  "quality_win_weight": 12,
+  "bad_loss_weight": 20,
+  "g5_discount": 140,
+  "loss_weight": 30,
+  "head_to_head": 4,
+  "champ_bonus": 12.0
+ },
+ "ap_error": 2.2350475125768585,
+ "cfp_error": 2.234126984126984,
+ "seasons": [
+  "2014",
+  "2015",
+  "2016",
+  "2017",
+  "2018",
+  "2019",
+  "2020",
+  "2021",
+  "2022",
+  "2023",
+  "2024"
+ ]
+}
