@@ -256,6 +256,7 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, offense_line
         big_play_chance *= 1.3
     if tendencies.get("conservative"):
         big_play_chance *= cfg.GARBAGE_BIG_PLAY
+    big_play_chance *= tendencies.get("big_play_mult", 1.0)
     if yards > 0 and random.random() < big_play_chance:
         yards += random.randint(*cfg.RUSH_BIG_PLAY_YARDS)
 
@@ -384,6 +385,8 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
         completion += cfg.COMPLETION_LONG_3RD
     if target.position == 'RB':
         completion += cfg.COMPLETION_CHECKDOWN_BONUS
+    if (tendencies or {}).get("prevent"):
+        completion += cfg.PREVENT_COMPLETION
     completion = max(cfg.COMPLETION_MIN, min(cfg.COMPLETION_MAX, completion))
 
     qb.stats["pass_attempts"] += 1
@@ -400,6 +403,9 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
         big_play_chance = cfg.PASS_BIG_PLAY_CHANCE * (target.speed / cfg.NEUTRAL)
         if (tendencies or {}).get("conservative"):
             big_play_chance *= cfg.GARBAGE_BIG_PLAY
+        big_play_chance *= (tendencies or {}).get("big_play_mult", 1.0)
+        if (tendencies or {}).get("prevent"):
+            big_play_chance *= cfg.PREVENT_BIG_PLAY
         if target.position != 'RB' and random.random() < big_play_chance:
             yards = random.randint(*cfg.PASS_BIG_PLAY_YARDS)
         yards = max(cfg.PASS_MIN_YARDS, round(yards))

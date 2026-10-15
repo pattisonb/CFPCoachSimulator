@@ -79,6 +79,8 @@ class Team:
         self.punt_returner = punt_returner
         self.tendencies = {}
         self.home_field_advantage = 50
+        self.timeouts = 3
+        self.lead, self.half, self.in_overtime = 0, 1, False
         # Team-level stats for special teams events
         self.team_stats = {
             "kickoff_return_touchdowns": 0,

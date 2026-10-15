@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 from . import play_functions
+from . import situation as sit
 from .drive_functions import sim_drive
 from . import game_config as cfg
 from .game_config import GameSliders, sliders
@@ -174,7 +175,9 @@ class GameSim:
         """Six points plus the try (PAT, or a two-point attempt from the 2nd OT on)."""
         entry = self._record(team, kind, 6, description)
         self._add_points(team, 6)
-        if self.in_overtime and self.ot_number >= 2:
+        lead_after_six = self.score[self.side(team)] - self.score[self.side(self.other(team))]
+        chart = sit.go_for_two(lead_after_six, self.seconds, self.half, self.in_overtime)
+        if (self.in_overtime and self.ot_number >= 2) or chart:
             good = sim_two_point_conversion(team.get_offense(), self.other(team).get_defense(), False, team.name)
             if good:
                 self._add_points(team, 2)
@@ -206,6 +209,14 @@ class GameSim:
         Returns (team now on offense, its starting yardline).
         """
         receiving = self.other(kicking)
+        kicking_lead = self.score[self.side(kicking)] - self.score[self.side(receiving)]
+        if sit.wants_onside(kicking_lead, self.seconds, self.half, self.in_overtime):
+            self.seconds -= random.randint(3, 6)
+            kicking.team_stats["onside_kicks"] = kicking.team_stats.get("onside_kicks", 0) + 1
+            if random.random() < cfg.ONSIDE_RECOVERY:
+                kicking.team_stats["onside_recoveries"] = kicking.team_stats.get("onside_recoveries", 0) + 1
+                return kicking, random.randint(44, 49)      # the kicking team keeps it near midfield
+            return receiving, random.randint(50, 56)        # the receiving team takes over in plus territory
         while True:
             yardline, returner, _return_yards, is_td = sim_kickoff(kicking.get_kicker(), receiving)
             self.seconds -= random.randint(4, 12)
@@ -252,11 +263,14 @@ class GameSim:
 
     def _play_half(self, receiving: Team) -> None:
         self.seconds = HALF_SECONDS
+        for team in (self.home, self.away):
+            team.timeouts = 3
+            team.lead, team.half, team.in_overtime = self.score[self.side(team)] - self.score[self.side(self.other(team))], self.half, False
         driving, start_yardline = self._kickoff(self.other(receiving))
 
         while self.seconds > 0:
             offense, defense = driving, self.other(driving)
-            hurrying = self.seconds <= cfg.HURRY_UP_SECONDS
+            hurrying = False   # pace is decided per snap by engine/situation.py
             play_ran, result, yardline, self.seconds, drive = self._run_drive(
                 offense, start_yardline, hurrying, self.seconds
             )

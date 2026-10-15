@@ -70,6 +70,7 @@ batch of 100 games takes about 5 seconds on Render's free CPU.
 | `fetch_polls.py`, `analyze_polls.py`, `calibrate_polls.py` | 2014-2025 poll archive, the behaviour study, and the model fit |
 | `calibrate_season.py` | Replays every real 2026 game N times and compares predicted and actual margins |
 | `calibrate.py` | Per-team stat benchmarks against FBS 2025 averages (`league` mode uses the real rosters) |
+| `fetch_linescores.py`, `calibrate_late.py` | Quarter scores 2014-2025 and the late-game comparison (close games, comebacks, overtime) |
 | `fetch_boxscores.py` | Downloads every played game's player box score into `data/boxscores/` |
 | `derive_tendencies.py` | Each team's real 2026 pass rate, pace and usage shares, used by `build_teams.py` |
 | `calibrate_players.py` | Compares sim player lines and usage shares with the real box scores |
@@ -340,6 +341,48 @@ folder. Being in-sample, its numbers are a check of the code, not of forward acc
 On week 6 (58 games, 50 sims each) the dry run scored 62.1% straight up, margin MAE 14.3,
 slope 0.72, total points 49.4 predicted against 51.1 real, QB1 pass yards 36 high and RB1
 rush yards 22 low for the real lead back (the sim spreads carries over more backs).
+
+## Situational football and the clock
+
+`engine/situation.py` decides what each team is trying to do on every snap, at the end of
+either half and late in close games, under the college clock rules:
+
+- **Clock rules.** The clock stops on an incomplete pass, out of bounds, a penalty, a score,
+  a change of possession and a timeout. After a first down or an out-of-bounds play it
+  restarts on the ready-for-play signal, except inside the last two minutes of either
+  half, where it stays stopped until the snap. Each team has three timeouts per half. A
+  snap takes 5 to 8 seconds; the runoff before the next snap depends on the offense's pace.
+- **Two-minute offense.** Trailing or tied inside four minutes of the game (and in the last
+  100 seconds of the first half when in or near range): fast snaps, more passes, ball
+  carriers get out of bounds, timeouts after in-bounds plays, a spike with no timeouts
+  left, a field goal on any down when the clock leaves one play, and a Hail Mary from
+  beyond range with seconds left.
+- **Running the clock.** A leader in the fourth quarter runs more, stays in bounds and
+  snaps late: fully inside five minutes, from ten minutes up two scores, all quarter up
+  17 or more. It kneels once the remaining time can be burned given the defense's
+  timeouts. Deep in its own end with under 30 seconds in the first half, a team runs it out.
+- **Defense.** Leading late by two scores or less: prevent (more completions underneath,
+  half the big plays, carriers kept in bounds). Trailing or tied late: timeouts to stop the clock.
+- **Onside kicks** trailing by one score inside two minutes or two scores inside five
+  (11% recovery), and the standard **two-point chart** in the fourth quarter (go for two
+  when trailing by 2, 5, 10, 13, 16, 18 or 21 after the touchdown, or leading by 1, 4, 5 or 12).
+- **Garbage time.** Up 28 in the second half (38 any time): conservative play, slow pace,
+  starters sit at 35.
+
+`fetch_linescores.py` pulls quarter scores for every FBS game 2014-2025 and
+`calibrate_late.py` compares how games end. Against 8,603 real regular-season games:
+
+| Measure | Real | Sim |
+|---|---|---|
+| Points by quarter | 22 / 30 / 23 / 25 % | 21 / 31 / 20 / 28 % |
+| One-score games (8 or fewer) | 36.7% | 37.0% |
+| Overtime | 4.4% | 2.5% |
+| Trailer wins when down 1-3 entering the 4th | 37.7% | 41.2% |
+| Trailer wins when down 4-8 | 24.4% | 22.8% |
+| Trailer wins when down 9-16 | 9.3% | 9.5% |
+| Trailer wins when down 17+ | 0.7% | 0.8% |
+| 4th-quarter points, team trailing after three | 6.66 | 7.01 |
+| 4th-quarter points, team leading after three | 7.22 | 6.98 |
 
 ## Changes from the original football_sim engine
 
