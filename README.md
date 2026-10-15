@@ -64,6 +64,8 @@ batch of 100 games takes about 5 seconds on Render's free CPU.
 | `server.py` | FastAPI server: team list, sim, history; serves `web/` |
 | `web/` | The site: plain HTML, CSS and JavaScript, no build step |
 | `fetch_results.py` | Downloads the 2026 FBS results played so far from NCAA.com into `data/season_games.json` |
+| `fetch_schedules.py` | Downloads every FBS team's 2026 schedule from ESPN into `data/schedules.json` |
+| `season.py` | Full-season simulation with conference standings (`python season.py ohio-state full`) |
 | `calibrate_season.py` | Replays every real 2026 game N times and compares predicted and actual margins |
 | `calibrate.py` | Per-team stat benchmarks against FBS 2025 averages (`league` mode uses the real rosters) |
 | `fetch_boxscores.py` | Downloads every played game's player box score into `data/boxscores/` |
@@ -185,6 +187,24 @@ team-games, the lead back in 43%, the top receiver in 25%; the shares are right 
 average but which player gets them is still mostly set by the EA ratings. QB1 passing
 yards run about 20 high because the sim's starter takes every attempt while real
 starters sit in blowouts.
+
+## Season mode
+
+Pick your team in the Home box, choose **Full season** (every game from week 1) or
+**Rest of season** (real results kept through today, the remaining games simulated), and
+hit **Sim Season**. Every FBS game on the 2026 schedule is simulated (892 games in about
+20 seconds on an 8-core PC; longer on Render's free CPU), with a progress bar while it
+runs. The result shows your schedule with scores and a clickable box score for each of
+your games, conference standings for every conference (yours first), and a top 25 by
+record and point differential. Seasons are saved under `data/seasons/` and listed in
+the sidebar.
+
+Schedules come from ESPN's team schedule pages (`fetch_schedules.py` writes
+`data/schedules.json`: 138 teams, weeks, dates, neutral-site flags, results so far).
+Games against FCS schools are played against the fictional FCS school from the same
+region (`data/fcs_map.json`, built from each school's home state; edit it to change a
+counterpart). Conference records count only games between two real FBS teams in the same
+conference. No injuries, no conference championship games, no playoff yet.
 
 ## Player stat lines and usage (box score calibration)
 

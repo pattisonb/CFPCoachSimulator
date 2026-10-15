@@ -269,6 +269,8 @@
     state.currentGame = g;
     $("#empty").hidden = true;
     $("#batch").hidden = true;
+    $("#season").hidden = true;
+    $("#season-progress").hidden = true;
     $("#game").hidden = false;
     renderScoreboard(g);
     renderScoring(g);
@@ -298,8 +300,11 @@
     return t && t.colors && t.colors.primary ? t.colors.primary : (side === "home" ? "#4f8cff" : "#ff6b5a");
   }
 
-  function renderScoreboard(g) {
-    const row = $("#score-row");
+  const GAME_IDS = { scoreRow: "#score-row", quarters: "#quarters", meta: "#score-meta", scoring: "#tab-scoring", team: "#tab-team", home: "#tab-home", away: "#tab-away", drives: "#tab-drives" };
+  const SBOX_IDS = { scoreRow: "#sbox-score-row", quarters: "#sbox-quarters", meta: "#sbox-meta", scoring: "#sbox-scoring", team: "#sbox-team", home: "#sbox-home", away: "#sbox-away", drives: "#sbox-drives" };
+
+  function renderScoreboard(g, ids = GAME_IDS) {
+    const row = $(ids.scoreRow);
     row.innerHTML = "";
     const block = (side, team) =>
       el("div", { class: `team-block ${side} ${g.winner === side ? "winner" : ""}` }, [
@@ -317,7 +322,7 @@
       block("home", g.home),
     );
 
-    const table = $("#quarters");
+    const table = $(ids.quarters);
     table.innerHTML = "";
     const otCols = g.home.overtime.map((_, i) => `OT${g.home.overtime.length > 1 ? i + 1 : ""}`);
     table.appendChild(el("tr", {}, [el("th", { text: "" }), ...["1", "2", "3", "4", ...otCols, "T"].map((t) => el("th", { text: t }))]));
@@ -331,7 +336,7 @@
       ]));
     }
 
-    const meta = $("#score-meta");
+    const meta = $(ids.meta);
     meta.innerHTML = "";
     const bits = [
       `${g[g.received_first].name} received the opening kickoff`,
@@ -347,8 +352,8 @@
     }
   }
 
-  function renderScoring(g) {
-    const box = $("#tab-scoring");
+  function renderScoring(g, ids = GAME_IDS) {
+    const box = $(ids.scoring);
     box.innerHTML = "";
     if (!g.scoring_plays.length) { box.append(el("p", { class: "muted", text: "No scoring." })); return; }
     const list = el("ul", { class: "scoring-list" });
@@ -410,8 +415,8 @@
     ];
   }
 
-  function renderTeamStats(g) {
-    const box = $("#tab-team");
+  function renderTeamStats(g, ids = GAME_IDS) {
+    const box = $(ids.team);
     box.innerHTML = "";
     const away = teamTotals(g.away, g.drives, "away");
     const home = teamTotals(g.home, g.drives, "home");
@@ -530,8 +535,8 @@
     if (!box.children.length) box.append(el("p", { class: "muted", text: "No player stats recorded." }));
   }
 
-  function renderDrives(g) {
-    const box = $("#tab-drives");
+  function renderDrives(g, ids = GAME_IDS) {
+    const box = $(ids.drives);
     box.innerHTML = "";
     const table = el("table", { class: "stats" });
     table.appendChild(el("tr", {}, ["#", "Qtr", "Offense", "Start", "Plays", "Yards", "Time", "Result", "Field"].map((h) => el("th", { text: h }))));
@@ -561,6 +566,8 @@
     const s = data.summary;
     $("#empty").hidden = true;
     $("#game").hidden = true;
+    $("#season").hidden = true;
+    $("#season-progress").hidden = true;
     const box = $("#batch");
     box.hidden = false;
     box.innerHTML = "";
@@ -725,6 +732,209 @@
     renderSliders();
     persistSliders();
   });
+
+
+  // ----- season mode -------------------------------------------------------
+
+  const season = { id: null, result: null, timer: null };
+
+  async function startSeason() {
+    const team = $("#home-select").value;
+    const mode = $("#season-mode").value;
+    if (!team) return toast("Pick your team in the Home box first.", 2500);
+    $("#btn-season").disabled = true;
+    try {
+      let data;
+      try {
+        data = await api("/api/season", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team, mode }) });
+      } catch (err) {
+        if (String(err.message).startsWith("409")) {
+          const j = await api("/api/season");
+          if (j.running) { data = { id: j.running.id }; toast("A season is already running; showing its progress.", 3000); }
+          else throw err;
+        } else throw err;
+      }
+      season.id = data.id;
+      $("#empty").hidden = true; $("#game").hidden = true; $("#batch").hidden = true; $("#season").hidden = true;
+      $("#season-progress").hidden = false;
+      const what = mode === "full" ? "full season" : "remaining schedule";
+      $("#season-progress-title").textContent = `Simulating the ${what} for ${state.teamsBySlug[team].name} and every other game`;
+      $("#season-progress-bar").style.width = "0%";
+      $("#season-progress-text").textContent = "Starting…";
+      revealResult($("#season-progress"));
+      pollSeason();
+    } catch (err) {
+      toast(`Season failed to start: ${err.message}`, 4000);
+      $("#btn-season").disabled = false;
+    }
+  }
+
+  function pollSeason() {
+    clearTimeout(season.timer);
+    season.timer = setTimeout(async () => {
+      try {
+        const j = await api(`/api/season/${season.id}`);
+        if (j.status === "running") {
+          const pct = j.total ? Math.round((100 * j.done) / j.total) : 0;
+          $("#season-progress-bar").style.width = `${pct}%`;
+          $("#season-progress-text").textContent = `${j.done} of ${j.total} games simulated`;
+          pollSeason();
+        } else if (j.status === "done") {
+          $("#btn-season").disabled = false;
+          showSeason(j.result);
+          loadSeasons();
+        } else {
+          $("#btn-season").disabled = false;
+          toast(`Season failed: ${j.error || "unknown error"}`, 5000);
+          $("#season-progress").hidden = true;
+        }
+      } catch (err) {
+        $("#btn-season").disabled = false;
+        toast(`Lost contact with the season sim: ${err.message}`, 5000);
+      }
+    }, 800);
+  }
+
+  function showSeason(r) {
+    season.result = r;
+    season.id = r.id;
+    $("#empty").hidden = true; $("#game").hidden = true; $("#batch").hidden = true; $("#season-progress").hidden = true;
+    $("#season").hidden = false;
+    const rec = r.my_record;
+    $("#season-title").innerHTML = "";
+    $("#season-title").append(r.team_name, el("span", { class: "rec", text: `${rec.wins}-${rec.losses}` }),
+      el("span", { class: "muted", style: "font-size:14px;margin-left:8px", text: `${rec.conf_wins}-${rec.conf_losses} ${r.conference}` }));
+    const how = r.mode === "full" ? "Full season simulated from week 1" : "Real results kept through today, rest simulated";
+    $("#season-meta").textContent = `${how} · ${r.games_simulated} games in ${r.elapsed_s}s · ${when(r.created_at)}`;
+    renderSeasonSchedule(r);
+    renderStandings(r);
+    renderTop25(r);
+    $("#season-tabs button[data-stab='box']").hidden = true;
+    selectSeasonTab("schedule");
+    revealResult($("#season"));
+  }
+
+  function renderSeasonSchedule(r) {
+    const box = $("#stab-schedule");
+    box.innerHTML = "";
+    const table = el("table", { class: "stats" });
+    table.appendChild(el("tr", {}, ["Week", "Opponent", "Where", "Result", "Score", ""].map((h) => el("th", { text: h, style: h === "Opponent" ? "text-align:left" : "" }))));
+    for (const g of r.my_record.results) {
+      const prefix = g.venue === "away" ? "at" : g.venue === "neutral" ? "vs (neutral)" : "vs";
+      const tr = el("tr", { class: g.has_box ? "clickable" : "" }, [
+        el("td", { text: g.week == null ? "" : String(g.week) }),
+        el("td", { style: "text-align:left", text: `${prefix} ${g.opponent_name}` }),
+        el("td", { text: g.venue === "home" ? "Home" : g.venue === "away" ? "Away" : "Neutral" }),
+        el("td", { class: g.won ? "win" : "loss", text: g.won ? "W" : "L" }),
+        el("td", { text: `${g.points_for}–${g.points_against}${g.overtime ? " OT" : ""}` }),
+        el("td", { class: "muted", text: g.real ? "real result" : g.has_box ? "box score" : "" }),
+      ]);
+      if (g.has_box) tr.addEventListener("click", () => openSeasonBox(g.event_id));
+      table.appendChild(tr);
+    }
+    box.appendChild(table);
+  }
+
+  function standingsTable(rows, mine) {
+    const table = el("table", { class: "stats" });
+    table.appendChild(el("tr", {}, ["#", "Team", "Conf", "Overall", "PF", "PA"].map((h) => el("th", { text: h, style: h === "Team" ? "text-align:left" : "" }))));
+    for (const t of rows) {
+      table.appendChild(el("tr", { class: t.slug === mine ? "mine" : "" }, [
+        el("td", { text: String(t.conf_rank) }),
+        el("td", { style: "text-align:left", class: "name", text: t.name }),
+        el("td", { text: `${t.conf_wins}-${t.conf_losses}` }),
+        el("td", { text: `${t.wins}-${t.losses}` }),
+        el("td", { text: String(t.points_for) }),
+        el("td", { text: String(t.points_against) }),
+      ]));
+    }
+    return table;
+  }
+
+  function renderStandings(r) {
+    const box = $("#stab-standings");
+    box.innerHTML = "";
+    const confs = Object.keys(r.standings).sort((a, b) => (a === r.conference ? -1 : b === r.conference ? 1 : a.localeCompare(b)));
+    const grid = el("div", { class: "conf-grid" });
+    for (const conf of confs) {
+      grid.appendChild(el("div", { class: "conf-block" }, [el("h3", { text: conf }), standingsTable(r.standings[conf], r.team)]));
+    }
+    box.appendChild(grid);
+  }
+
+  function renderTop25(r) {
+    const box = $("#stab-top25");
+    box.innerHTML = "";
+    box.appendChild(el("p", { class: "muted small-text", text: "Ordered by winning percentage, then point differential. No committee, no strength of schedule." }));
+    const table = el("table", { class: "stats" });
+    table.appendChild(el("tr", {}, ["#", "Team", "Conference", "Record", "PF", "PA"].map((h) => el("th", { text: h, style: ["Team", "Conference"].includes(h) ? "text-align:left" : "" }))));
+    r.top25.forEach((t, i) => {
+      table.appendChild(el("tr", { class: t.slug === r.team ? "mine" : "" }, [
+        el("td", { text: String(i + 1) }), el("td", { style: "text-align:left", class: "name", text: t.name }),
+        el("td", { style: "text-align:left", class: "muted", text: t.conference }), el("td", { text: `${t.wins}-${t.losses}` }),
+        el("td", { text: String(t.points_for) }), el("td", { text: String(t.points_against) }),
+      ]));
+    });
+    box.appendChild(table);
+  }
+
+  async function openSeasonBox(eventId) {
+    try {
+      const g = await api(`/api/season/${season.id}/game/${eventId}`);
+      renderScoreboard(g, SBOX_IDS);
+      renderScoring(g, SBOX_IDS);
+      renderTeamStats(g, SBOX_IDS);
+      renderPlayers(g.home, $("#sbox-home"));
+      renderPlayers(g.away, $("#sbox-away"));
+      renderDrives(g, SBOX_IDS);
+      $("#season-tabs button[data-stab='box']").hidden = false;
+      selectSeasonTab("box");
+      selectBoxTab("scoring");
+    } catch (err) {
+      toast(`Could not load that game: ${err.message}`, 3000);
+    }
+  }
+
+  function selectSeasonTab(name) {
+    for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.stab === name);
+    for (const t of ["schedule", "standings", "top25", "box"]) $(`#stab-${t}`).hidden = t !== name;
+  }
+  function selectBoxTab(name) {
+    for (const b of $("#sbox-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.btab === name);
+    for (const t of ["scoring", "team", "home", "away", "drives"]) $(`#sbox-${t}`).hidden = t !== name;
+  }
+
+  async function loadSeasons() {
+    try {
+      const data = await api("/api/seasons");
+      const list = $("#season-list");
+      list.innerHTML = "";
+      if (!data.seasons.length) list.appendChild(el("li", { class: "muted", text: "No seasons yet." }));
+      for (const s of data.seasons) {
+        list.appendChild(el("li", { onclick: async () => { try { showSeason((await api(`/api/season/${s.id}`)).result); } catch (err) { toast(err.message, 3000); } } }, [
+          el("span", { class: "teams", text: `${s.team_name} ${s.mode === "full" ? "season" : "rest of season"}` }),
+          el("span", { class: "score", text: `${s.wins}-${s.losses}` }),
+          el("span", { class: "when", text: `${s.conf_wins}-${s.conf_losses} conf · ${when(s.created_at)}` }),
+        ]));
+      }
+    } catch (_) { /* seasons list is optional */ }
+  }
+
+  $("#btn-season").addEventListener("click", startSeason);
+  // Attach to a season that is already simulating (page reload, or started from another device).
+  api("/api/season").then((j) => {
+    if (!j.running) return;
+    season.id = j.running.id;
+    $("#empty").hidden = true; $("#game").hidden = true; $("#batch").hidden = true; $("#season").hidden = true;
+    $("#season-progress").hidden = false;
+    const t = state.teamsBySlug[j.running.team];
+    $("#season-progress-title").textContent = `Simulating the season for ${t ? t.name : j.running.team}`;
+    $("#btn-season").disabled = true;
+    pollSeason();
+  }).catch(() => {});
+  $("#season-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-stab]"); if (b) selectSeasonTab(b.dataset.stab); });
+  $("#sbox-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-btab]"); if (b) selectBoxTab(b.dataset.btab); });
+  loadSeasons();
 
   loadSliders().catch((err) => toast(`Sliders unavailable: ${err.message}`, 4000));
   loadTeams().catch((err) => toast(`Teams unavailable: ${err.message}`, 4000));

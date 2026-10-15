@@ -263,3 +263,21 @@ table.compare td.better { font-weight: 800; }
   .quarters th, .quarters td { padding: 3px 5px; font-size: 13px; }
   .score-meta { font-size: 11px; }
 }
+
+/* season mode */
+button.accent { background: #3ddc84; color: #04210f; border-color: #3ddc84; }
+.season-controls select { font: inherit; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+.progress { height: 10px; background: var(--panel-2); border-radius: 5px; overflow: hidden; margin: 10px 0 6px; }
+.progress-bar { height: 100%; width: 0; background: var(--accent); transition: width 0.3s; }
+.season-head { margin-bottom: 12px; }
+#season-title { font-size: 22px; font-weight: 800; }
+#season-title .rec { color: var(--accent); margin-left: 10px; }
+table.stats td.win { color: var(--good); font-weight: 700; }
+table.stats td.loss { color: var(--bad); font-weight: 700; }
+table.stats tr.mine td { background: rgba(245, 185, 66, 0.10); }
+table.stats tr.clickable { cursor: pointer; }
+table.stats tr.clickable:hover td { background: var(--panel-2); }
+.conf-block { margin-bottom: 18px; }
+.conf-block h3 { margin: 0 0 6px; }
+.conf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+@media (max-width: 700px) { .conf-grid { grid-template-columns: 1fr; } .season-controls { width: 100%; justify-content: flex-end; } }

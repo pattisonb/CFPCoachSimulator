@@ -1,0 +1,507 @@
+{
+ "2184": {
+  "name": "Duquesne Dukes",
+  "state": "PA",
+  "counterpart": "alder-ridge-state"
+ },
+ "2523": {
+  "name": "Robert Morris Colonials",
+  "state": "PA",
+  "counterpart": "alder-ridge-state"
+ },
+ "236": {
+  "name": "Chattanooga Mocs",
+  "state": "TN",
+  "counterpart": "calder-springs"
+ },
+ "311": {
+  "name": "Maine Black Bears",
+  "state": "ME",
+  "counterpart": "kestrel-bay"
+ },
+ "2464": {
+  "name": "Northern Arizona Lumberjacks",
+  "state": "AZ",
+  "counterpart": "talus-peak"
+ },
+ "2415": {
+  "name": "Morgan State Bears",
+  "state": "MD",
+  "counterpart": "alder-ridge-state"
+ },
+ "2453": {
+  "name": "North Alabama Lions",
+  "state": "AL",
+  "counterpart": "calder-springs"
+ },
+ "2698": {
+  "name": "West Georgia Wolves",
+  "state": "GA",
+  "counterpart": "calder-springs"
+ },
+ "2803": {
+  "name": "Bryant Bulldogs",
+  "state": "RI",
+  "counterpart": "kestrel-bay"
+ },
+ "2535": {
+  "name": "Samford Bulldogs",
+  "state": "AL",
+  "counterpart": "calder-springs"
+ },
+ "2619": {
+  "name": "Stony Brook Seawolves",
+  "state": "NY",
+  "counterpart": "alder-ridge-state"
+ },
+ "2504": {
+  "name": "Prairie View A&M Panthers",
+  "state": "TX",
+  "counterpart": "port-rennick-state"
+ },
+ "233": {
+  "name": "South Dakota Coyotes",
+  "state": "SD",
+  "counterpart": "red-prairie-state"
+ },
+ "2627": {
+  "name": "Tarleton State Texans",
+  "state": "TX",
+  "counterpart": "port-rennick-state"
+ },
+ "399": {
+  "name": "UAlbany Great Danes",
+  "state": "NY",
+  "counterpart": "alder-ridge-state"
+ },
+ "3101": {
+  "name": "Utah Tech Trailblazers",
+  "state": "UT",
+  "counterpart": "talus-peak"
+ },
+ "2230": {
+  "name": "Fordham Rams",
+  "state": "NY",
+  "counterpart": "alder-ridge-state"
+ },
+ "2142": {
+  "name": "Colgate Raiders",
+  "state": "NY",
+  "counterpart": "alder-ridge-state"
+ },
+ "2681": {
+  "name": "Wagner Seahawks",
+  "state": "NY",
+  "counterpart": "alder-ridge-state"
+ },
+ "2643": {
+  "name": "The Citadel Bulldogs",
+  "state": "SC",
+  "counterpart": "calder-springs"
+ },
+ "2717": {
+  "name": "Western Carolina Catamounts",
+  "state": "NC",
+  "counterpart": "calder-springs"
+ },
+ "2127": {
+  "name": "Charleston Southern Buccaneers",
+  "state": "SC",
+  "counterpart": "calder-springs"
+ },
+ "2692": {
+  "name": "Weber State Wildcats",
+  "state": "UT",
+  "counterpart": "talus-peak"
+ },
+ "253": {
+  "name": "Southern Utah Thunderbirds",
+  "state": "UT",
+  "counterpart": "talus-peak"
+ },
+ "-2": {
+  "name": "TBD",
+  "state": null,
+  "counterpart": "talus-peak"
+ },
+ "2771": {
+  "name": "Merrimack Warriors",
+  "state": "MA",
+  "counterpart": "kestrel-bay"
+ },
+ "2729": {
+  "name": "William & Mary Tribe",
+  "state": "VA",
+  "counterpart": "alder-ridge-state"
+ },
+ "2815": {
+  "name": "Lindenwood Lions",
+  "state": "MO",
+  "counterpart": "red-prairie-state"
+ },
+ "2428": {
+  "name": "North Carolina Central Eagles",
+  "state": "NC",
+  "counterpart": "calder-springs"
+ },
+ "2341": {
+  "name": "Long Island University Sharks",
+  "state": "NY",
+  "counterpart": "alder-ridge-state"
+ },
+ "2640": {
+  "name": "Texas Southern Tigers",
+  "state": "TX",
+  "counterpart": "port-rennick-state"
+ },
+ "2097": {
+  "name": "Campbell Fighting Camels",
+  "state": "NC",
+  "counterpart": "calder-springs"
+ },
+ "2110": {
+  "name": "Central Arkansas Bears",
+  "state": "AR",
+  "counterpart": "port-rennick-state"
+ },
+ "2634": {
+  "name": "Tennessee State Tigers",
+  "state": "TN",
+  "counterpart": "calder-springs"
+ },
+ "2448": {
+  "name": "North Carolina A&T Aggies",
+  "state": "NC",
+  "counterpart": "calder-springs"
+ },
+ "2382": {
+  "name": "Mercer Bears",
+  "state": "GA",
+  "counterpart": "calder-springs"
+ },
+ "2582": {
+  "name": "Southern Jaguars",
+  "state": "LA",
+  "counterpart": "port-rennick-state"
+ },
+ "79": {
+  "name": "Southern Illinois Salukis",
+  "state": "IL",
+  "counterpart": "wendt-lake-tech"
+ },
+ "47": {
+  "name": "Howard Bison",
+  "state": "DC",
+  "counterpart": "alder-ridge-state"
+ },
+ "2460": {
+  "name": "Northern Iowa Panthers",
+  "state": "IA",
+  "counterpart": "red-prairie-state"
+ },
+ "2546": {
+  "name": "Southeast Missouri State Redhawks",
+  "state": "MO",
+  "counterpart": "red-prairie-state"
+ },
+ "2198": {
+  "name": "Eastern Kentucky Colonels",
+  "state": "KY",
+  "counterpart": "calder-springs"
+ },
+ "2447": {
+  "name": "Nicholls Colonels",
+  "state": "LA",
+  "counterpart": "port-rennick-state"
+ },
+ "2747": {
+  "name": "Wofford Terriers",
+  "state": "SC",
+  "counterpart": "calder-springs"
+ },
+ "2754": {
+  "name": "Youngstown State Penguins",
+  "state": null,
+  "counterpart": "wendt-lake-tech"
+ },
+ "2241": {
+  "name": "Gardner-Webb Runnin' Bulldogs",
+  "state": "NC",
+  "counterpart": "calder-springs"
+ },
+ "2320": {
+  "name": "Lamar Cardinals",
+  "state": "TX",
+  "counterpart": "port-rennick-state"
+ },
+ "2466": {
+  "name": "Northwestern State Demons",
+  "state": "LA",
+  "counterpart": "port-rennick-state"
+ },
+ "222": {
+  "name": "Villanova Wildcats",
+  "state": "PA",
+  "counterpart": "alder-ridge-state"
+ },
+ "2377": {
+  "name": "McNeese Cowboys",
+  "state": "LA",
+  "counterpart": "port-rennick-state"
+ },
+ "2261": {
+  "name": "Hampton Pirates",
+  "state": "VA",
+  "counterpart": "alder-ridge-state"
+ },
+ "2630": {
+  "name": "UT Martin Skyhawks",
+  "state": "TN",
+  "counterpart": "calder-springs"
+ },
+ "50": {
+  "name": "Florida A&M Rattlers",
+  "state": "FL",
+  "counterpart": "calder-springs"
+ },
+ "107": {
+  "name": "Holy Cross Crusaders",
+  "state": "MA",
+  "counterpart": "kestrel-bay"
+ },
+ "2197": {
+  "name": "Eastern Illinois Panthers",
+  "state": "IL",
+  "counterpart": "wendt-lake-tech"
+ },
+ "2635": {
+  "name": "Tennessee Tech Golden Eagles",
+  "state": "TN",
+  "counterpart": "calder-springs"
+ },
+ "2029": {
+  "name": "Arkansas-Pine Bluff Golden Lions",
+  "state": "AR",
+  "counterpart": "port-rennick-state"
+ },
+ "93": {
+  "name": "Murray State Racers",
+  "state": "KY",
+  "counterpart": "calder-springs"
+ },
+ "119": {
+  "name": "Towson Tigers",
+  "state": "MD",
+  "counterpart": "alder-ridge-state"
+ },
+ "257": {
+  "name": "Richmond Spiders",
+  "state": "VA",
+  "counterpart": "alder-ridge-state"
+ },
+ "155": {
+  "name": "North Dakota Fighting Hawks",
+  "state": "ND",
+  "counterpart": "red-prairie-state"
+ },
+ "147": {
+  "name": "Montana State Bobcats",
+  "state": "MT",
+  "counterpart": "talus-peak"
+ },
+ "2385": {
+  "name": "Mercyhurst Lakers",
+  "state": "PA",
+  "counterpart": "alder-ridge-state"
+ },
+ "2287": {
+  "name": "Illinois State Redbirds",
+  "state": "IL",
+  "counterpart": "wendt-lake-tech"
+ },
+ "2193": {
+  "name": "East Tennessee State Buccaneers",
+  "state": "TN",
+  "counterpart": "calder-springs"
+ },
+ "2277": {
+  "name": "Houston Christian Huskies",
+  "state": "TX",
+  "counterpart": "port-rennick-state"
+ },
+ "2571": {
+  "name": "South Dakota State Jackrabbits",
+  "state": "SD",
+  "counterpart": "red-prairie-state"
+ },
+ "284": {
+  "name": "Stonehill Skyhawks",
+  "state": "MA",
+  "counterpart": "kestrel-bay"
+ },
+ "2450": {
+  "name": "Norfolk State Spartans",
+  "state": "VA",
+  "counterpart": "alder-ridge-state"
+ },
+ "2502": {
+  "name": "Portland State Vikings",
+  "state": "OR",
+  "counterpart": "cedar-sound"
+ },
+ "149": {
+  "name": "Montana Grizzlies",
+  "state": "MT",
+  "counterpart": "talus-peak"
+ },
+ "2083": {
+  "name": "Bucknell Bison",
+  "state": "PA",
+  "counterpart": "alder-ridge-state"
+ },
+ "282": {
+  "name": "Indiana State Sycamores",
+  "state": "IN",
+  "counterpart": "wendt-lake-tech"
+ },
+ "2400": {
+  "name": "Mississippi Valley State Delta Devils",
+  "state": "MS",
+  "counterpart": "calder-springs"
+ },
+ "13": {
+  "name": "Cal Poly Mustangs",
+  "state": "CA",
+  "counterpart": "cedar-sound"
+ },
+ "302": {
+  "name": "UC Davis Aggies",
+  "state": "CA",
+  "counterpart": "cedar-sound"
+ },
+ "2545": {
+  "name": "SE Louisiana Lions",
+  "state": "LA",
+  "counterpart": "port-rennick-state"
+ },
+ "2016": {
+  "name": "Alcorn State Braves",
+  "state": "MS",
+  "counterpart": "calder-springs"
+ },
+ "2210": {
+  "name": "Elon Phoenix",
+  "state": "NC",
+  "counterpart": "calder-springs"
+ },
+ "160": {
+  "name": "New Hampshire Wildcats",
+  "state": "NH",
+  "counterpart": "kestrel-bay"
+ },
+ "2755": {
+  "name": "Grambling Tigers",
+  "state": "LA",
+  "counterpart": "port-rennick-state"
+ },
+ "227": {
+  "name": "Rhode Island Rams",
+  "state": "RI",
+  "counterpart": "kestrel-bay"
+ },
+ "231": {
+  "name": "Furman Paladins",
+  "state": "SC",
+  "counterpart": "calder-springs"
+ },
+ "2916": {
+  "name": "Incarnate Word Cardinals",
+  "state": "TX",
+  "counterpart": "port-rennick-state"
+ },
+ "2000": {
+  "name": "Abilene Christian Wildcats",
+  "state": "TX",
+  "counterpart": "port-rennick-state"
+ },
+ "2115": {
+  "name": "Central Connecticut Blue Devils",
+  "state": "CT",
+  "counterpart": "kestrel-bay"
+ },
+ "2011": {
+  "name": "Alabama State Hornets",
+  "state": "AL",
+  "counterpart": "calder-springs"
+ },
+ "2837": {
+  "name": "East Texas A&M Lions",
+  "state": "TX",
+  "counterpart": "port-rennick-state"
+ },
+ "2065": {
+  "name": "Bethune-Cookman Wildcats",
+  "state": "FL",
+  "counterpart": "calder-springs"
+ },
+ "322": {
+  "name": "Lafayette Leopards",
+  "state": "PA",
+  "counterpart": "alder-ridge-state"
+ },
+ "2529": {
+  "name": "Sacred Heart Pioneers",
+  "state": "CT",
+  "counterpart": "kestrel-bay"
+ },
+ "2169": {
+  "name": "Delaware State Hornets",
+  "state": "DE",
+  "counterpart": "alder-ridge-state"
+ },
+ "70": {
+  "name": "Idaho Vandals",
+  "state": "ID",
+  "counterpart": "talus-peak"
+ },
+ "304": {
+  "name": "Idaho State Bengals",
+  "state": "ID",
+  "counterpart": "talus-peak"
+ },
+ "292": {
+  "name": "UT Rio Grande Valley Vaqueros",
+  "state": "TX",
+  "counterpart": "port-rennick-state"
+ },
+ "2046": {
+  "name": "Austin Peay Governors",
+  "state": "TN",
+  "counterpart": "calder-springs"
+ },
+ "2678": {
+  "name": "VMI Keydets",
+  "state": "VA",
+  "counterpart": "alder-ridge-state"
+ },
+ "2405": {
+  "name": "Monmouth Hawks",
+  "state": "NJ",
+  "counterpart": "alder-ridge-state"
+ },
+ "331": {
+  "name": "Eastern Washington Eagles",
+  "state": "WA",
+  "counterpart": "cedar-sound"
+ },
+ "2710": {
+  "name": "Western Illinois Leathernecks",
+  "state": "IL",
+  "counterpart": "wendt-lake-tech"
+ },
+ "2458": {
+  "name": "Northern Colorado Bears",
+  "state": "CO",
+  "counterpart": "talus-peak"
+ }
+}

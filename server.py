@@ -12,6 +12,8 @@ import json
 import subprocess
 import sys
 import threading
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
@@ -22,6 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from engine.game import SLIDER_NAMES, default_sliders, simulate_game
+from season import SEASONS_DIR, save_season, simulate_season
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
@@ -39,6 +42,7 @@ app = FastAPI(title="CFP Coach Simulator")
 _sim_lock = threading.Lock()  # the engine uses module-level state (sliders, TD log)
 _games: list[dict] = []
 _teams: dict[str, dict] = {}
+_season_jobs: dict[str, dict] = {}   # season simulations, by job id
 
 
 # ----- data ----------------------------------------------------------------
@@ -264,6 +268,104 @@ async def ingest(request: Request, name: str) -> dict:
     body = await request.body()
     (INGEST_DIR / f"{safe}.txt").write_bytes(body)
     return {"ok": True, "bytes": len(body), "file": safe}
+
+
+# ----- season simulation ---------------------------------------------------
+
+class SeasonRequest(BaseModel):
+    team: str
+    mode: str = "full"            # "full" (every game from week 1) or "remaining" (keep real results so far)
+    seed: Optional[int] = None
+
+
+def _run_season(job: dict) -> None:
+    def progress(done: int, total: int) -> None:
+        job["done"], job["total"] = done, total
+    try:
+        result = simulate_season(job["team"], job["mode"], job["seed"], progress=progress)
+        result["id"] = job["id"]
+        save_season(result)
+        job["result"] = result
+        job["status"] = "done"
+    except Exception as exc:  # noqa: BLE001
+        job["status"] = "error"
+        job["error"] = str(exc)
+
+
+def _season_payload(result: dict) -> dict:
+    """Everything the page needs; the per-game list is left in the saved file."""
+    return {k: v for k, v in result.items() if k != "games"}
+
+
+@app.post("/api/season")
+def start_season(req: SeasonRequest) -> dict:
+    _team(req.team)
+    if req.mode not in ("full", "remaining"):
+        raise HTTPException(400, "mode must be full or remaining")
+    if any(j["status"] == "running" for j in _season_jobs.values()):
+        raise HTTPException(409, "a season is already simulating; wait for it to finish")
+    job = {"id": uuid.uuid4().hex[:12], "team": req.team, "mode": req.mode, "seed": req.seed,
+           "status": "running", "done": 0, "total": 0, "started_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    _season_jobs[job["id"]] = job
+    threading.Thread(target=_run_season, args=(job,), daemon=True).start()
+    return {"id": job["id"], "status": "running"}
+
+
+@app.get("/api/season")
+def current_season() -> dict:
+    """The running season job, if any, so a reloaded page can attach to it."""
+    running = [j for j in _season_jobs.values() if j["status"] == "running"]
+    if not running:
+        return {"running": None}
+    j = running[-1]
+    return {"running": {k: j[k] for k in ("id", "status", "done", "total", "team", "mode")}}
+
+
+@app.get("/api/season/{job_id}")
+def get_season(job_id: str) -> dict:
+    job = _season_jobs.get(job_id)
+    if job is None:
+        path = SEASONS_DIR / f"{job_id}.json"
+        if path.exists():
+            return {"id": job_id, "status": "done", "result": _season_payload(json.loads(path.read_text(encoding="utf-8")))}
+        raise HTTPException(404, "season not found")
+    out = {k: job[k] for k in ("id", "status", "done", "total", "team", "mode")}
+    if job["status"] == "done":
+        out["result"] = _season_payload(job["result"])
+    if job["status"] == "error":
+        out["error"] = job["error"]
+    return out
+
+
+@app.get("/api/seasons")
+def list_seasons() -> dict:
+    out = []
+    if SEASONS_DIR.exists():
+        for path in sorted(SEASONS_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:30]:
+            try:
+                r = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            rec = r["my_record"]
+            out.append({"id": r["id"], "team": r["team"], "team_name": r["team_name"], "mode": r["mode"],
+                        "created_at": r["created_at"], "wins": rec["wins"], "losses": rec["losses"],
+                        "conf_wins": rec["conf_wins"], "conf_losses": rec["conf_losses"]})
+    return {"seasons": out}
+
+
+@app.get("/api/season/{job_id}/game/{event_id}")
+def season_game(job_id: str, event_id: str) -> dict:
+    job = _season_jobs.get(job_id)
+    result = job["result"] if job and job.get("result") else None
+    if result is None:
+        path = SEASONS_DIR / f"{job_id}.json"
+        if not path.exists():
+            raise HTTPException(404, "season not found")
+        result = json.loads(path.read_text(encoding="utf-8"))
+    box = result.get("my_boxes", {}).get(event_id)
+    if box is None:
+        raise HTTPException(404, "no box score for that game")
+    return box
 
 
 # ----- ratings (display only; the engine uses the raw attributes) ----------
