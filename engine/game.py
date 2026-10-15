@@ -231,6 +231,9 @@ class GameSim:
             not self.in_overtime and self.half == 2 and seconds <= cfg.TRAILING_LATE_SECONDS
             and self.score[self.side(offense)] < self.score[self.side(defense)]
         )
+        lead = self.score[self.side(offense)] - self.score[self.side(defense)]
+        for team, team_lead in ((offense, lead), (defense, -lead)):
+            team.lead, team.half, team.in_overtime = team_lead, self.half, self.in_overtime
         play_ran, result, yardline, seconds_left = sim_drive(
             offense, defense, 1, 10, start_yardline, seconds, hurrying, verbose=False,
             trailing_late=trailing_late,

@@ -186,6 +186,33 @@ class Team:
                 fresh.in_game = True
 
 
+    REST_POSITIONS = {"offense": ("QB", "RB", "WR", "TE"), "defense": ("DL", "MLB", "ROLB", "LOLB", "CB", "S")}
+
+    def rest_starters(self, unit="offense"):
+        """Blowout: sit the starters at the skill and front positions and play the next
+        players on the depth chart (the roster lists are in depth order). No-op if already resting."""
+        if getattr(self, "_resting", {}).get(unit):
+            return
+        players = getattr(self, unit)
+        if not hasattr(self, "_resting"):
+            self._resting = {}
+            self._starter_snapshot = {}
+        self._starter_snapshot[unit] = [p.in_game for p in players]
+        for pos in self.REST_POSITIONS[unit]:
+            group = [p for p in players if p.position == pos]
+            starters = [p for p in group if p.in_game]
+            bench = [p for p in group if not p.in_game]
+            for s, b in zip(starters, bench):
+                s.in_game, b.in_game = False, True
+        self._resting[unit] = True
+
+    def restore_starters(self, unit="offense"):
+        if not getattr(self, "_resting", {}).get(unit):
+            return
+        for p, was in zip(getattr(self, unit), self._starter_snapshot[unit]):
+            p.in_game = was
+        self._resting[unit] = False
+
     def get_kicker(self):
         for p in self.offense:
             if p.position == "K":

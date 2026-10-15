@@ -40,7 +40,7 @@ def run_probability(down, to_go):
             return prob
     return 0.25
 
-def determine_offense_play(down, first_down, last_play_type=None, last_gain=0, pass_rate=50):
+def determine_offense_play(down, first_down, last_play_type=None, last_gain=0, pass_rate=50, run_shift=0.0):
     """Run or pass from the down-and-distance table, shifted by the coordinator's pass-rate
     tendency (50 = the table as written; a flexbone team sits near 10)."""
     run_chance = run_probability(down, first_down)
@@ -49,6 +49,7 @@ def determine_offense_play(down, first_down, last_play_type=None, last_gain=0, p
     elif last_play_type == "pass" and last_gain >= 10:
         run_chance -= 0.05
     run_chance -= (pass_rate - 50) / 100 * cfg.PASS_RATE_EFFECT
+    run_chance += run_shift
     run_chance = max(cfg.RUN_CHANCE_MIN, min(cfg.RUN_CHANCE_MAX, run_chance))
     return "run" if random.random() < run_chance else "pass"
 
@@ -125,6 +126,36 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
     progress = max(0.0, min(1.0, 1.0 - seconds_remaining / cfg.HALF_SECONDS))
     drag = 1.0 + progress * cfg.LATE_GAME_DRAG
 
+    # Score situation (set by the game loop): garbage time, comebacks, victory formation.
+    lead = getattr(offense_team, "lead", 0)
+    half = getattr(offense_team, "half", 1)
+    overtime = getattr(offense_team, "in_overtime", False)
+    run_shift = 0.0
+    if not overtime:
+        blowout = (half == 2 and lead >= cfg.GARBAGE_LEAD) or lead >= cfg.GARBAGE_LEAD_ANY
+        hopeless = (half == 2 and -lead >= cfg.GARBAGE_LEAD) or -lead >= cfg.GARBAGE_LEAD_ANY
+        if blowout:
+            game_speed_mult *= cfg.GARBAGE_CLOCK
+            run_shift += cfg.GARBAGE_RUN_SHIFT
+            hurrying = False
+            tendencies = {**tendencies, "conservative": True}
+        elif hopeless:
+            game_speed_mult *= 1 + (cfg.GARBAGE_CLOCK - 1) * 0.7
+            run_shift += cfg.GARBAGE_RUN_SHIFT * 0.6
+            hurrying = False
+        elif half == 2 and -lead >= cfg.COMEBACK_LEAD and seconds_remaining <= cfg.QUARTER_SECONDS:
+            run_shift -= 0.2
+            hurrying = True
+        # Starters sit once the game is decided (the trailing side keeps playing its starters).
+        if lead >= cfg.BENCH_LEAD and (half == 2 or lead >= cfg.GARBAGE_LEAD_ANY):
+            offense_team.rest_starters("offense")
+        elif lead < cfg.BENCH_LEAD - 14:
+            offense_team.restore_starters("offense")
+        if -lead >= cfg.BENCH_LEAD and (half == 2 or -lead >= cfg.GARBAGE_LEAD_ANY):
+            defense_team.rest_starters("defense")
+        elif -lead < cfg.BENCH_LEAD - 14:
+            defense_team.restore_starters("defense")
+
     def clock(stops_clock):
         if hurrying:
             lo, hi = cfg.PLAY_SECONDS_STOP_HURRY if stops_clock else cfg.PLAY_SECONDS_HURRY
@@ -159,8 +190,11 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
             print(f"Defensive Penalty: {penalty_type.replace('_', ' ').title()}")
         return "penalty", "defensive penalty", penalty_yards, clock(True)
 
+    # Victory formation: kneel it out.
+    if not overtime and half == 2 and lead > 0 and seconds_remaining <= cfg.KNEEL_SECONDS:
+        return "run", "run", -1, clock(False)
     offense_play = determine_offense_play(down, first_down_yardage, last_play_type, last_gain,
-                                          tendencies.get("pass_rate", 50))
+                                          tendencies.get("pass_rate", 50), run_shift)
     defense_play = determine_defense_play(down, first_down_yardage)
     # The better play caller tilts the guessing game.
     edge = (( (getattr(defense_team, "tendencies", {}) or {}).get("dc_play_calling", 50)
@@ -176,7 +210,7 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
         result, yards_gained = get_run_yards(offense, defense, down, first_down_yardage, guessed_play, offense_line_advantage, yardline, tendencies=tendencies)
     else:
         play_ran = "pass"
-        result, yards_gained = get_pass_yards(offense, defense, down, first_down_yardage, guessed_play, offense_line_advantage, yardline)
+        result, yards_gained = get_pass_yards(offense, defense, down, first_down_yardage, guessed_play, offense_line_advantage, yardline, tendencies=tendencies)
     stops_clock = result in ("incomplete", "fumble", "interception", "defensive_touchdown")
     if result in ("run", "successful_pass", "checkdown_pass") and random.random() < 0.12:
         stops_clock = True   # out of bounds
@@ -227,7 +261,7 @@ def process_play(result, play_type, yards, yardline, down, first_down_yardage) :
         first_down_yardage = 10
     return down, first_down_yardage, yardline, safety_occurred
 
-def should_go_for_it(distance, yardline, seconds_remaining=cfg.HALF_SECONDS, trailing_late=False, go_rate=50):
+def should_go_for_it(distance, yardline, seconds_remaining=cfg.HALF_SECONDS, trailing_late=False, go_rate=50, lead=0):
     """Fourth-down decision. FBS teams go for it about 2.1 times a game and convert
     about 53%: mostly short yardage in plus territory, plus desperation tries when
     trailing late in the game."""
@@ -246,6 +280,10 @@ def should_go_for_it(distance, yardline, seconds_remaining=cfg.HALF_SECONDS, tra
         table = [(1, 0.50 if late else 0.18), (3, 0.15 if late else 0.02), (99, 0.0)]
     chance = next(p for limit, p in table if distance <= limit)
     chance *= 1.0 + (go_rate - 50) / 100 * cfg.FOURTH_DOWN_TENDENCY_EFFECT
+    if lead >= cfg.BENCH_LEAD:
+        chance = 0.0
+    elif lead >= 17:
+        chance *= 0.25
     return random.random() < chance
 
 def attempt_kick(yardline, kicker, defense_team=None) :
@@ -417,7 +455,7 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
         return play_ran, "end_of_half", yardline, seconds_remaining
     if down == 4 :
         go_rate = (getattr(offense, "tendencies", {}) or {}).get("fourth_down_go_rate", 50)
-        if should_go_for_it(first_down_yardage, yardline, seconds_remaining, trailing_late, go_rate) :
+        if should_go_for_it(first_down_yardage, yardline, seconds_remaining, trailing_late, go_rate, getattr(offense, "lead", 0)) :
             play_ran, result, yards_gained, time = sim_play(offense, defense, down, first_down_yardage, yardline, hurrying, last_play_type, last_gain, seconds_remaining, False)
             seconds_remaining -= time
             down, first_down_yardage, yardline, safety_occurred = process_play(result, play_ran, yards_gained, yardline, down, first_down_yardage)

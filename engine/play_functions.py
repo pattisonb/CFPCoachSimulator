@@ -254,6 +254,8 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, offense_line
     big_play_chance = cfg.RUSH_BIG_PLAY_CHANCE * (carrier.speed / cfg.NEUTRAL)
     if not guessed_play:
         big_play_chance *= 1.3
+    if tendencies.get("conservative"):
+        big_play_chance *= cfg.GARBAGE_BIG_PLAY
     if yards > 0 and random.random() < big_play_chance:
         yards += random.randint(*cfg.RUSH_BIG_PLAY_YARDS)
 
@@ -316,7 +318,7 @@ def _pick_target(offense):
     return random.choices(receivers + backs, weights=weights, k=1)[0]
 
 
-def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_line_advantage, yardline, verbose=False):
+def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_line_advantage, yardline, verbose=False, tendencies=None):
     """One dropback. Returns (result, yards or new yardline):
     'successful_pass' / 'checkdown_pass' (yards), 'incomplete' (0), 'sack' (negative yards),
     'interception' / 'fumble' (new yardline), 'defensive_touchdown' (100), 'run' (scramble yards)."""
@@ -395,7 +397,10 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
         else:
             yards = random.gauss(*cfg.PASS_YARDS_RB)
         yards *= 1 + (target.speed - db_speed) * cfg.PASS_SPEED_EFFECT
-        if target.position != 'RB' and random.random() < cfg.PASS_BIG_PLAY_CHANCE * (target.speed / cfg.NEUTRAL):
+        big_play_chance = cfg.PASS_BIG_PLAY_CHANCE * (target.speed / cfg.NEUTRAL)
+        if (tendencies or {}).get("conservative"):
+            big_play_chance *= cfg.GARBAGE_BIG_PLAY
+        if target.position != 'RB' and random.random() < big_play_chance:
             yards = random.randint(*cfg.PASS_BIG_PLAY_YARDS)
         yards = max(cfg.PASS_MIN_YARDS, round(yards))
         is_touchdown = yardline + yards >= 100

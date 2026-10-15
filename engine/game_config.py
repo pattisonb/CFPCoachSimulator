@@ -184,3 +184,13 @@ TARGET_WEIGHT_POWER = 5.0       # receiver target weight = rating ** power (stee
 QB_DESIGNED_RUN_SHARE = 0.06    # default share of carries that are designed QB runs (observed per team overrides)
 BACKUP_RB_ROTATION = 0.40       # chance the sub is the next back down rather than the best one on the bench
 SKILL_SUB_FATIGUE = 62          # fatigue level at which RB/WR/TE starters rotate out (was 50)
+
+# ----- Garbage time (teams take their foot off the gas) -----
+GARBAGE_LEAD = 28           # second-half lead at which the leader goes conservative
+GARBAGE_LEAD_ANY = 38       # lead at which that happens at any point in the game
+BENCH_LEAD = 35             # lead at which starters sit (second half, or 3rd quarter on)
+GARBAGE_CLOCK = 1.30        # plays take this much longer when the leader is milking the clock
+GARBAGE_RUN_SHIFT = 0.35    # added to the leader's run chance
+GARBAGE_BIG_PLAY = 0.5      # big-play chance multiplier for a conservative offense
+COMEBACK_LEAD = 14          # trailing by this much in the 4th quarter: pass more, hurry
+KNEEL_SECONDS = 75          # leading inside this many seconds of the 2nd half: victory formation
