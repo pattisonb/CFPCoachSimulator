@@ -1,0 +1,4070 @@
+{
+ "season": "2026-27",
+ "source": "2026–27 NCAA football bowl games",
+ "playoff": [
+  {
+   "name": "Fiesta Bowl (Quarterfinal)",
+   "date": "December 30",
+   "time": "7:30 pm",
+   "site": "State Farm Stadium Glendale, Arizona",
+   "bowl": "Fiesta Bowl",
+   "article": "Fiesta Bowl",
+   "stadium": "State Farm Stadium",
+   "location": "Glendale, Arizona",
+   "first_played": 1971,
+   "operated": "since 1971",
+   "championship_affiliation": "CFP ( since 2014 ) BCS ( 1998 – 2013 ) Bowl Alliance ( 1995 – 1997 ) Bowl Coalition ( 1992 – 1994 )",
+   "payout": "US$ 17 million (as of 2009 )",
+   "tie_ins": [],
+   "previous_tie_ins": [
+    "WAC (1971–1978)",
+    "Big 12 (1997–2013)"
+   ],
+   "games_played": 55,
+   "most_appearances": [
+    {
+     "team": "Ohio State",
+     "games": 9,
+     "wins": 5
+    },
+    {
+     "team": "Penn State",
+     "games": 8,
+     "wins": 8
+    },
+    {
+     "team": "Arizona State",
+     "games": 6,
+     "wins": 5
+    },
+    {
+     "team": "Nebraska",
+     "games": 6,
+     "wins": 2
+    },
+    {
+     "team": "Notre Dame",
+     "games": 6,
+     "wins": 1
+    },
+    {
+     "team": "Oklahoma",
+     "games": 5,
+     "wins": 2
+    }
+   ],
+   "recent": [
+    {
+     "year": 2026,
+     "season": 2025,
+     "date": "January 8, 2026",
+     "winner": "Miami (FL)",
+     "winner_score": 31,
+     "loser": "Ole Miss",
+     "loser_score": 27
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 31, 2024",
+     "winner": "Penn State",
+     "winner_score": 31,
+     "loser": "Boise State",
+     "loser_score": 14
+    },
+    {
+     "year": 2024,
+     "season": 2023,
+     "date": "January 1, 2024",
+     "winner": "Oregon",
+     "winner_score": 45,
+     "loser": "Liberty",
+     "loser_score": 6
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 31, 2022",
+     "winner": "TCU",
+     "winner_score": 51,
+     "loser": "Michigan",
+     "loser_score": 45
+    },
+    {
+     "year": 2022,
+     "season": 2021,
+     "date": "January 1, 2022",
+     "winner": "Oklahoma State",
+     "winner_score": 37,
+     "loser": "Notre Dame",
+     "loser_score": 35
+    }
+   ],
+   "round": "quarterfinal"
+  },
+  {
+   "name": "Peach Bowl (Quarterfinal)",
+   "date": "January 1",
+   "time": "12:00 / 4:00 / 8:00 pm",
+   "site": "Mercedes-Benz Stadium Atlanta, Georgia",
+   "bowl": "Peach Bowl",
+   "article": "Peach Bowl",
+   "stadium": "Mercedes-Benz Stadium",
+   "location": "Atlanta, Georgia",
+   "first_played": 1968,
+   "operated": "1968–present",
+   "championship_affiliation": "CFP ( 2014 –present)",
+   "payout": "US$ 3,967,500 (ACC) (As of 2011 ) US$2,932,500 (SEC) (As of 2011 )",
+   "tie_ins": [],
+   "previous_tie_ins": [
+    "SEC",
+    "ACC"
+   ],
+   "games_played": 58,
+   "most_appearances": [
+    {
+     "team": "Clemson",
+     "games": 8,
+     "wins": 3
+    },
+    {
+     "team": "LSU",
+     "games": 7,
+     "wins": 6
+    },
+    {
+     "team": "Georgia",
+     "games": 7,
+     "wins": 5
+    },
+    {
+     "team": "NC State",
+     "games": 7,
+     "wins": 4
+    },
+    {
+     "team": "Auburn",
+     "games": 6,
+     "wins": 4
+    },
+    {
+     "team": "North Carolina",
+     "games": 5,
+     "wins": 2
+    }
+   ],
+   "recent": [
+    {
+     "year": 2026,
+     "season": 2025,
+     "date": "January 9, 2026",
+     "winner": "Indiana",
+     "winner_score": 56,
+     "loser": "Oregon",
+     "loser_score": 22
+    },
+    {
+     "year": 2025,
+     "season": 2024,
+     "date": "January 1, 2025",
+     "winner": "Texas",
+     "winner_score": 39,
+     "loser": "Arizona State",
+     "loser_score": 31
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 30, 2023",
+     "winner": "Ole Miss",
+     "winner_score": 38,
+     "loser": "Penn State",
+     "loser_score": 25
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 31, 2022",
+     "winner": "Georgia",
+     "winner_score": 42,
+     "loser": "Ohio State",
+     "loser_score": 41
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 30, 2021",
+     "winner": "Michigan State",
+     "winner_score": 31,
+     "loser": "Pittsburgh",
+     "loser_score": 21
+    }
+   ],
+   "round": "quarterfinal"
+  },
+  {
+   "name": "Rose Bowl (Quarterfinal)",
+   "date": "January 1",
+   "time": "12:00 / 4:00 / 8:00 pm",
+   "site": "Rose Bowl Pasadena, California",
+   "bowl": "Rose Bowl",
+   "article": "Rose Bowl Game",
+   "stadium": "Rose Bowl",
+   "location": "Pasadena, California",
+   "first_played": 1902,
+   "operated": "1902, 1916–present",
+   "championship_affiliation": "CFP ( 2014 –present) BCS ( 1998 – 2013 )",
+   "payout": "US$ 35 million/conference (As of 2016 )",
+   "tie_ins": [
+    "Big Ten"
+   ],
+   "previous_tie_ins": [
+    "Pac-12 (1917–2023)",
+    "Big Ten (1947–2026)"
+   ],
+   "games_played": 109,
+   "most_appearances": [
+    {
+     "team": "USC",
+     "games": 34,
+     "wins": 25
+    },
+    {
+     "team": "Michigan",
+     "games": 21,
+     "wins": 9
+    },
+    {
+     "team": "Ohio State",
+     "games": 17,
+     "wins": 10
+    },
+    {
+     "team": "Stanford",
+     "games": 14,
+     "wins": 7
+    },
+    {
+     "team": "Washington",
+     "games": 14,
+     "wins": 7
+    },
+    {
+     "team": "UCLA",
+     "games": 12,
+     "wins": 5
+    }
+   ],
+   "recent": [
+    {
+     "year": 2026,
+     "season": 2025,
+     "date": "January 1, 2026",
+     "winner": "Indiana",
+     "winner_score": 38,
+     "loser": "Alabama",
+     "loser_score": 3
+    },
+    {
+     "year": 2025,
+     "season": 2024,
+     "date": "January 1, 2025",
+     "winner": "Ohio State",
+     "winner_score": 41,
+     "loser": "Oregon",
+     "loser_score": 21
+    },
+    {
+     "year": 2024,
+     "season": 2023,
+     "date": "January 1, 2024",
+     "winner": "Michigan",
+     "winner_score": 27,
+     "loser": "Alabama",
+     "loser_score": 20
+    },
+    {
+     "year": 2023,
+     "season": 2022,
+     "date": "January 2, 2023",
+     "winner": "Penn State",
+     "winner_score": 35,
+     "loser": "Utah",
+     "loser_score": 21
+    },
+    {
+     "year": 2022,
+     "season": 2021,
+     "date": "January 1, 2022",
+     "winner": "Ohio State",
+     "winner_score": 48,
+     "loser": "Utah",
+     "loser_score": 45
+    }
+   ],
+   "round": "quarterfinal"
+  },
+  {
+   "name": "Cotton Bowl (Quarterfinal)",
+   "date": "January 1",
+   "time": "12:00 / 4:00 / 8:00 pm",
+   "site": "AT&T Stadium Arlington, Texas",
+   "bowl": "Cotton Bowl",
+   "article": "Cotton Bowl Classic",
+   "stadium": "AT&T Stadium",
+   "location": "Arlington, Texas",
+   "first_played": 1937,
+   "operated": "1937–present",
+   "championship_affiliation": "CFP ( 2014 –present) Bowl Coalition ( 1992 – 1994 )",
+   "payout": "US$ 4 million (non-playoff years)",
+   "tie_ins": [],
+   "previous_tie_ins": [
+    "SWC (1941–1995)",
+    "Big 12 (1997–2014)",
+    "SEC (1999–2014)"
+   ],
+   "games_played": 90,
+   "most_appearances": [
+    {
+     "team": "Texas",
+     "games": 23,
+     "wins": 12
+    },
+    {
+     "team": "Texas A&M",
+     "games": 13,
+     "wins": 5
+    },
+    {
+     "team": "Arkansas",
+     "games": 12,
+     "wins": 4
+    },
+    {
+     "team": "Alabama",
+     "games": 9,
+     "wins": 5
+    },
+    {
+     "team": "Notre Dame",
+     "games": 8,
+     "wins": 5
+    },
+    {
+     "team": "TCU",
+     "games": 6,
+     "wins": 3
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 31, 2025",
+     "winner": "Miami (FL)",
+     "winner_score": 24,
+     "loser": "Ohio State",
+     "loser_score": 14
+    },
+    {
+     "year": 2025,
+     "season": 2024,
+     "date": "January 10, 2025",
+     "winner": "Ohio State",
+     "winner_score": 28,
+     "loser": "Texas",
+     "loser_score": 14
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 29, 2023",
+     "winner": "Missouri",
+     "winner_score": 14,
+     "loser": "Ohio State",
+     "loser_score": 3
+    },
+    {
+     "year": 2023,
+     "season": 2022,
+     "date": "January 2, 2023",
+     "winner": "Tulane",
+     "winner_score": 46,
+     "loser": "USC",
+     "loser_score": 45
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 31, 2021",
+     "winner": "Alabama",
+     "winner_score": 27,
+     "loser": "Cincinnati",
+     "loser_score": 6
+    }
+   ],
+   "round": "quarterfinal"
+  },
+  {
+   "name": "Orange Bowl (Semifinal)",
+   "date": "January 14",
+   "time": "7:30 pm",
+   "site": "Hard Rock Stadium Miami Gardens, Florida",
+   "bowl": "Orange Bowl",
+   "article": "Orange Bowl",
+   "stadium": "Hard Rock Stadium",
+   "location": "Miami Gardens, Florida (December 1996–1998, 2000–present)",
+   "first_played": 1935,
+   "operated": "1935 –present",
+   "championship_affiliation": "CFP ( 2014 –present) BCS ( 1998 – 2013 ) Bowl Alliance ( 1995 – 1997 ) Bowl Coalition ( 1992 – 1994 )",
+   "payout": "US$ 35 million/conference (As of 2009 )",
+   "tie_ins": [
+    "ACC"
+   ],
+   "previous_tie_ins": [
+    "Big Eight (1954–1996)",
+    "ACC (1999–2026)",
+    "Big East (1999–2006)",
+    "SEC / Big Ten / Notre Dame (December 2014–December 2023)"
+   ],
+   "games_played": 92,
+   "most_appearances": [
+    {
+     "team": "Oklahoma",
+     "games": 20,
+     "wins": 12
+    },
+    {
+     "team": "Nebraska",
+     "games": 17,
+     "wins": 8
+    },
+    {
+     "team": "Florida State",
+     "games": 11,
+     "wins": 5
+    },
+    {
+     "team": "Miami (Florida)",
+     "games": 10,
+     "wins": 6
+    },
+    {
+     "team": "Alabama",
+     "games": 9,
+     "wins": 5
+    },
+    {
+     "team": "Clemson",
+     "games": 7,
+     "wins": 4
+    }
+   ],
+   "recent": [
+    {
+     "year": 2026,
+     "season": 2025,
+     "date": "January 1, 2026",
+     "winner": "Oregon",
+     "winner_score": 23,
+     "loser": "Texas Tech",
+     "loser_score": 0
+    },
+    {
+     "year": 2025,
+     "season": 2024,
+     "date": "January 9, 2025",
+     "winner": "Notre Dame",
+     "winner_score": 27,
+     "loser": "Penn State",
+     "loser_score": 24
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 30, 2023",
+     "winner": "Georgia",
+     "winner_score": 63,
+     "loser": "Florida State",
+     "loser_score": 3
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 30, 2022",
+     "winner": "Tennessee",
+     "winner_score": 31,
+     "loser": "Clemson",
+     "loser_score": 14
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 31, 2021",
+     "winner": "Georgia",
+     "winner_score": 34,
+     "loser": "Michigan",
+     "loser_score": 11
+    }
+   ],
+   "round": "semifinal"
+  },
+  {
+   "name": "Sugar Bowl (Semifinal)",
+   "date": "January 15",
+   "time": "",
+   "site": "Caesars Superdome New Orleans, Louisiana",
+   "bowl": "Sugar Bowl",
+   "article": "Sugar Bowl",
+   "stadium": "Caesars Superdome",
+   "location": "New Orleans, Louisiana",
+   "first_played": 1935,
+   "operated": "1935–present",
+   "championship_affiliation": "CFP ( 2014 –present) BCS ( 1998 – 2013 ) Bowl Alliance ( 1995 – 1997 ) Bowl Coalition ( 1992 – 1994 )",
+   "payout": "US$ 17 million per team (As of 2014 )",
+   "tie_ins": [
+    "SEC",
+    "Big 12"
+   ],
+   "previous_tie_ins": [
+    "SEC (unofficial 1935–1975, official 1976–2026)",
+    "Big 12 (2015–2026)"
+   ],
+   "games_played": 92,
+   "most_appearances": [
+    {
+     "team": "Alabama",
+     "games": 17,
+     "wins": 10
+    },
+    {
+     "team": "LSU",
+     "games": 13,
+     "wins": 6
+    },
+    {
+     "team": "Georgia",
+     "games": 13,
+     "wins": 5
+    },
+    {
+     "team": "Ole Miss",
+     "games": 11,
+     "wins": 7
+    },
+    {
+     "team": "Florida",
+     "games": 9,
+     "wins": 3
+    },
+    {
+     "team": "Oklahoma",
+     "games": 8,
+     "wins": 6
+    }
+   ],
+   "recent": [
+    {
+     "year": 2026,
+     "season": 2025,
+     "date": "January 1, 2026",
+     "winner": "Ole Miss",
+     "winner_score": 39,
+     "loser": "Georgia",
+     "loser_score": 34
+    },
+    {
+     "year": 2025,
+     "season": 2024,
+     "date": "January 2, 2025",
+     "winner": "Notre Dame",
+     "winner_score": 23,
+     "loser": "Georgia",
+     "loser_score": 10
+    },
+    {
+     "year": 2024,
+     "season": 2023,
+     "date": "January 1, 2024",
+     "winner": "Washington",
+     "winner_score": 37,
+     "loser": "Texas",
+     "loser_score": 31
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 31, 2022",
+     "winner": "Alabama",
+     "winner_score": 45,
+     "loser": "Kansas State",
+     "loser_score": 20
+    },
+    {
+     "year": 2022,
+     "season": 2021,
+     "date": "January 1, 2022",
+     "winner": "Baylor",
+     "winner_score": 21,
+     "loser": "Ole Miss",
+     "loser_score": 7
+    }
+   ],
+   "round": "semifinal"
+  },
+  {
+   "name": "College Football Playoff National Championship",
+   "date": "January 25",
+   "time": "",
+   "site": "Allegiant Stadium Las Vegas, Nevada",
+   "bowl": "College Football Playoff National Championship",
+   "article": "College Football Playoff National Championship",
+   "stadium": "Various NCAA stadiums",
+   "first_played": 2014,
+   "operated": "2014 –present",
+   "tie_ins": [],
+   "previous_tie_ins": [],
+   "games_played": 12,
+   "most_appearances": [
+    {
+     "team": "Alabama",
+     "games": 6,
+     "wins": 3
+    },
+    {
+     "team": "Clemson",
+     "games": 4,
+     "wins": 2
+    },
+    {
+     "team": "Georgia",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Ohio State",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Indiana",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "LSU",
+     "games": 1,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "2025",
+     "winner": "Indiana",
+     "winner_score": 27,
+     "loser": "Miami (FL)",
+     "loser_score": 21
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "2024",
+     "winner": "Ohio State",
+     "winner_score": 34,
+     "loser": "Notre Dame",
+     "loser_score": 23
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "2023",
+     "winner": "Michigan",
+     "winner_score": 34,
+     "loser": "Washington",
+     "loser_score": 13
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "2022",
+     "winner": "Georgia",
+     "winner_score": 65,
+     "loser": "TCU",
+     "loser_score": 7
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "2021",
+     "winner": "Georgia",
+     "winner_score": 33,
+     "loser": "Alabama",
+     "loser_score": 18
+    }
+   ],
+   "round": "championship"
+  }
+ ],
+ "bowls": [
+  {
+   "name": "Salute to Veterans Bowl",
+   "date": "Dec 15",
+   "time": "5:30 pm",
+   "site": "Cramton Bowl Montgomery, Alabama",
+   "bowl": "Salute to Veterans Bowl",
+   "article": "Salute to Veterans Bowl",
+   "stadium": "Cramton Bowl (25,000)",
+   "location": "Montgomery, Alabama",
+   "first_played": 2014,
+   "operated": "2014–present",
+   "payout": "US$ 300,000 (2019)",
+   "tie_ins": [
+    "MAC",
+    "Sun Belt"
+   ],
+   "previous_tie_ins": [],
+   "games_played": 12,
+   "most_appearances": [
+    {
+     "team": "Arkansas State",
+     "games": 3,
+     "wins": 1
+    },
+    {
+     "team": "Appalachian State",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "Buffalo",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "Georgia Southern",
+     "games": 2,
+     "wins": 1
+    },
+    {
+     "team": "South Alabama",
+     "games": 2,
+     "wins": 1
+    },
+    {
+     "team": "Bowling Green",
+     "games": 1,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 16, 2025",
+     "winner": "Jacksonville State",
+     "winner_score": 17,
+     "loser": "Troy",
+     "loser_score": 13
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 14, 2024",
+     "winner": "South Alabama",
+     "winner_score": 30,
+     "loser": "Western Michigan",
+     "loser_score": 23
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 23, 2023",
+     "winner": "Northern Illinois",
+     "winner_score": 21,
+     "loser": "Arkansas State",
+     "loser_score": 19
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 27, 2022",
+     "winner": "Buffalo",
+     "winner_score": 23,
+     "loser": "Georgia Southern",
+     "loser_score": 21
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 25, 2021",
+     "winner": "Georgia State",
+     "winner_score": 51,
+     "loser": "Ball State",
+     "loser_score": 20
+    }
+   ]
+  },
+  {
+   "name": "Frisco Football Classic",
+   "date": "Dec 15",
+   "time": "9:00 pm",
+   "site": "Ford Center at The Star Frisco, Texas",
+   "bowl": "Frisco Football Classic",
+   "article": "Frisco Football Classic",
+   "stadium": "Ford Center at The Star",
+   "location": "Frisco, Texas",
+   "first_played": 2025,
+   "operated": "2025–present",
+   "tie_ins": [
+    "Conference USA"
+   ],
+   "previous_tie_ins": [],
+   "games_played": 0,
+   "most_appearances": [],
+   "recent": []
+  },
+  {
+   "name": "Boca Raton Bowl",
+   "date": "Dec 18",
+   "time": "11:00 am",
+   "site": "Flagler Credit Union Stadium Boca Raton, Florida",
+   "bowl": "Boca Raton Bowl",
+   "article": "Boca Raton Bowl",
+   "stadium": "Flagler Credit Union Stadium",
+   "location": "Boca Raton, Florida",
+   "first_played": 2014,
+   "operated": "2014–present",
+   "payout": "US$ 900,000 (2019)",
+   "tie_ins": [
+    "Conference USA",
+    "American Athletic Conference",
+    "MAC",
+    "Mountain West",
+    "Sun Belt"
+   ],
+   "previous_tie_ins": [],
+   "games_played": 12,
+   "most_appearances": [
+    {
+     "team": "Toledo",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Western Kentucky",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Florida Atlantic",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "Northern Illinois",
+     "games": 2,
+     "wins": 0
+    },
+    {
+     "team": "BYU",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "James Madison",
+     "games": 1,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 23, 2025",
+     "winner": "Louisville",
+     "winner_score": 27,
+     "loser": "Toledo",
+     "loser_score": 22
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 18, 2024",
+     "winner": "James Madison",
+     "winner_score": 27,
+     "loser": "Western Kentucky",
+     "loser_score": 17
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 21, 2023",
+     "winner": "South Florida",
+     "winner_score": 45,
+     "loser": "Syracuse",
+     "loser_score": 0
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 20, 2022",
+     "winner": "Toledo",
+     "winner_score": 21,
+     "loser": "Liberty",
+     "loser_score": 19
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 18, 2021",
+     "winner": "Western Kentucky",
+     "winner_score": 59,
+     "loser": "Appalachian State",
+     "loser_score": 38
+    }
+   ]
+  },
+  {
+   "name": "Gasparilla Bowl",
+   "date": "Dec 18",
+   "time": "2:30 pm",
+   "site": "Raymond James Stadium Tampa, Florida",
+   "bowl": "Gasparilla Bowl",
+   "article": "Gasparilla Bowl",
+   "stadium": "Raymond James Stadium",
+   "location": "Tampa, Florida",
+   "first_played": 2008,
+   "operated": "2008–present",
+   "payout": "US$ 1.125 million (2019)",
+   "tie_ins": [],
+   "previous_tie_ins": [
+    "Big East / AAC",
+    "C-USA",
+    "ACC"
+   ],
+   "games_played": 17,
+   "most_appearances": [
+    {
+     "team": "UCF",
+     "games": 6,
+     "wins": 3
+    },
+    {
+     "team": "Marshall",
+     "games": 4,
+     "wins": 3
+    },
+    {
+     "team": "NC State",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "Florida",
+     "games": 2,
+     "wins": 1
+    },
+    {
+     "team": "South Florida",
+     "games": 2,
+     "wins": 1
+    },
+    {
+     "team": "FIU",
+     "games": 2,
+     "wins": 0
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 19, 2025",
+     "winner": "NC State",
+     "winner_score": 31,
+     "loser": "Memphis",
+     "loser_score": 7
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 20, 2024",
+     "winner": "Florida",
+     "winner_score": 33,
+     "loser": "Tulane",
+     "loser_score": 8
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 22, 2023",
+     "winner": "Georgia Tech",
+     "winner_score": 30,
+     "loser": "UCF",
+     "loser_score": 17
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 23, 2022",
+     "winner": "Wake Forest",
+     "winner_score": 27,
+     "loser": "Missouri",
+     "loser_score": 17
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 23, 2021",
+     "winner": "UCF",
+     "winner_score": 29,
+     "loser": "Florida",
+     "loser_score": 17
+    }
+   ]
+  },
+  {
+   "name": "Myrtle Beach Bowl",
+   "date": "Dec 21",
+   "time": "11:00 am",
+   "site": "Brooks Stadium Conway, South Carolina",
+   "bowl": "Myrtle Beach Bowl",
+   "article": "Myrtle Beach Bowl",
+   "stadium": "Brooks Stadium",
+   "location": "Conway, South Carolina",
+   "first_played": 2020,
+   "operated": "2020–present",
+   "tie_ins": [
+    "MAC"
+   ],
+   "previous_tie_ins": [],
+   "games_played": 6,
+   "most_appearances": [
+    {
+     "team": "Appalachian State",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "Marshall",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "Ohio",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "Tulsa",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "UTSA",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "Western Michigan",
+     "games": 1,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 19, 2025",
+     "winner": "Western Michigan",
+     "winner_score": 41,
+     "loser": "Kennesaw State",
+     "loser_score": 6
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 23, 2024",
+     "winner": "UTSA",
+     "winner_score": 44,
+     "loser": "Coastal Carolina",
+     "loser_score": 15
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 16, 2023",
+     "winner": "Ohio",
+     "winner_score": 41,
+     "loser": "Georgia Southern",
+     "loser_score": 21
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 19, 2022",
+     "winner": "Marshall",
+     "winner_score": 28,
+     "loser": "UConn",
+     "loser_score": 14
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 20, 2021",
+     "winner": "Tulsa",
+     "winner_score": 30,
+     "loser": "Old Dominion",
+     "loser_score": 17
+    }
+   ]
+  },
+  {
+   "name": "Famous Idaho Potato Bowl",
+   "date": "Dec 21",
+   "time": "2:30 pm",
+   "site": "Albertsons Stadium Boise, Idaho",
+   "bowl": "Famous Idaho Potato Bowl",
+   "article": "Famous Idaho Potato Bowl",
+   "stadium": "Albertsons Stadium",
+   "location": "Boise, Idaho , U.S.",
+   "first_played": 1997,
+   "operated": "1997–present",
+   "payout": "US$ 800,000 (2019 season)",
+   "tie_ins": [
+    "Mountain West",
+    "MAC"
+   ],
+   "previous_tie_ins": [
+    "Big West (1997–2000)",
+    "C-USA (1997–1999)",
+    "WAC (2000–2012)",
+    "ACC (2001–2008)"
+   ],
+   "games_played": 29,
+   "most_appearances": [
+    {
+     "team": "Utah State",
+     "games": 6,
+     "wins": 1
+    },
+    {
+     "team": "Boise State",
+     "games": 4,
+     "wins": 3
+    },
+    {
+     "team": "Fresno State",
+     "games": 4,
+     "wins": 2
+    },
+    {
+     "team": "Nevada",
+     "games": 4,
+     "wins": 1
+    },
+    {
+     "team": "Idaho",
+     "games": 3,
+     "wins": 3
+    },
+    {
+     "team": "Northern Illinois",
+     "games": 2,
+     "wins": 2
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 22, 2025",
+     "winner": "Washington State",
+     "winner_score": 34,
+     "loser": "Utah State",
+     "loser_score": 21
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 23, 2024",
+     "winner": "Northern Illinois",
+     "winner_score": 28,
+     "loser": "Fresno State",
+     "loser_score": 20
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 23, 2023",
+     "winner": "Georgia State",
+     "winner_score": 45,
+     "loser": "Utah State",
+     "loser_score": 22
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 20, 2022",
+     "winner": "Eastern Michigan",
+     "winner_score": 41,
+     "loser": "San Jose State",
+     "loser_score": 27
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 21, 2021",
+     "winner": "Wyoming",
+     "winner_score": 52,
+     "loser": "Kent State",
+     "loser_score": 38
+    }
+   ]
+  },
+  {
+   "name": "Puerto Rico Bowl",
+   "date": "Dec 22",
+   "time": "1:30 pm",
+   "site": "Juan Ramón Loubriel Stadium Bayamón, Puerto Rico",
+   "bowl": "Puerto Rico Bowl",
+   "article": "Puerto Rico Bowl",
+   "stadium": "Juan Ramón Loubriel Stadium",
+   "location": "Bayamón, Puerto Rico",
+   "first_played": 2026,
+   "operated": "2026–future",
+   "tie_ins": [
+    "MAC"
+   ],
+   "previous_tie_ins": [],
+   "games_played": 0,
+   "most_appearances": [],
+   "recent": []
+  },
+  {
+   "name": "Cure Bowl",
+   "date": "Dec 22",
+   "time": "5:00 pm",
+   "site": "Acrisure Bounce House Orlando, Florida",
+   "bowl": "Cure Bowl",
+   "article": "Cure Bowl",
+   "stadium": "Camping World Stadium",
+   "location": "Orlando, Florida",
+   "first_played": 2014,
+   "operated": "2014–present",
+   "payout": "US$ 573,125 (2023)",
+   "tie_ins": [
+    "American Athletic Conference",
+    "Conference USA",
+    "MAC",
+    "Sun Belt"
+   ],
+   "previous_tie_ins": [],
+   "games_played": 11,
+   "most_appearances": [
+    {
+     "team": "Liberty",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "Coastal Carolina",
+     "games": 2,
+     "wins": 1
+    },
+    {
+     "team": "Georgia State",
+     "games": 2,
+     "wins": 1
+    },
+    {
+     "team": "Appalachian State",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "Arkansas State",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "Ohio",
+     "games": 1,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 17, 2025",
+     "winner": "Old Dominion",
+     "winner_score": 24,
+     "loser": "South Florida",
+     "loser_score": 10
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 20, 2024",
+     "winner": "Ohio",
+     "winner_score": 30,
+     "loser": "Jacksonville State",
+     "loser_score": 27
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 16, 2023",
+     "winner": "Appalachian State",
+     "winner_score": 13,
+     "loser": "Miami (OH)",
+     "loser_score": 9
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 16, 2022",
+     "winner": "Troy",
+     "winner_score": 18,
+     "loser": "UTSA",
+     "loser_score": 12
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 17, 2021",
+     "winner": "Coastal Carolina",
+     "winner_score": 47,
+     "loser": "Northern Illinois",
+     "loser_score": 41
+    }
+   ]
+  },
+  {
+   "name": "Independence Bowl",
+   "date": "Dec 22",
+   "time": "8:30 pm",
+   "site": "Independence Stadium Shreveport, Louisiana",
+   "bowl": "Independence Bowl",
+   "article": "Independence Bowl",
+   "stadium": "Independence Stadium",
+   "location": "Shreveport, Louisiana",
+   "first_played": 1976,
+   "operated": "1976–present",
+   "payout": "US$ 2.2 million (2019)",
+   "tie_ins": [
+    "Big 12",
+    "Pac-12"
+   ],
+   "previous_tie_ins": [
+    "SLC (1976–1981)",
+    "SEC (1995–2009)",
+    "Big 12 (1998–2009)",
+    "MWC (2010–2011)",
+    "ACC (2010–2019)",
+    "SEC (2012–2019)"
+   ],
+   "games_played": 49,
+   "most_appearances": [
+    {
+     "team": "Louisiana Tech",
+     "games": 7,
+     "wins": 5
+    },
+    {
+     "team": "Ole Miss",
+     "games": 5,
+     "wins": 4
+    },
+    {
+     "team": "Air Force",
+     "games": 3,
+     "wins": 3
+    },
+    {
+     "team": "Alabama",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Missouri",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Southern Miss",
+     "games": 3,
+     "wins": 2
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 30, 2025",
+     "winner": "Louisiana Tech",
+     "winner_score": 23,
+     "loser": "Coastal Carolina",
+     "loser_score": 14
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 28, 2024",
+     "winner": "Army",
+     "winner_score": 27,
+     "loser": "Louisiana Tech",
+     "loser_score": 6
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 16, 2023",
+     "winner": "Texas Tech",
+     "winner_score": 34,
+     "loser": "California",
+     "loser_score": 14
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 23, 2022",
+     "winner": "Houston",
+     "winner_score": 23,
+     "loser": "Louisiana",
+     "loser_score": 16
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 18, 2021",
+     "winner": "UAB",
+     "winner_score": 31,
+     "loser": "BYU",
+     "loser_score": 28
+    }
+   ]
+  },
+  {
+   "name": "New Orleans Bowl",
+   "date": "Dec 23",
+   "time": "2:00 pm",
+   "site": "Caesars Superdome New Orleans, Louisiana",
+   "bowl": "New Orleans Bowl",
+   "article": "New Orleans Bowl",
+   "stadium": "Caesars Superdome",
+   "location": "New Orleans , Louisiana",
+   "first_played": 2001,
+   "operated": "2001–present",
+   "payout": "US$ 825,000 (2019)",
+   "tie_ins": [
+    "Sun Belt",
+    "Conference USA"
+   ],
+   "previous_tie_ins": [
+    "MWC (2001, 2011, 2014)"
+   ],
+   "games_played": 25,
+   "most_appearances": [
+    {
+     "team": "Southern Miss",
+     "games": 6,
+     "wins": 4
+    },
+    {
+     "team": "Louisiana-Lafayette",
+     "games": 5,
+     "wins": 4
+    },
+    {
+     "team": "North Texas",
+     "games": 5,
+     "wins": 1
+    },
+    {
+     "team": "Troy",
+     "games": 4,
+     "wins": 3
+    },
+    {
+     "team": "Appalachian State",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "Western Kentucky",
+     "games": 2,
+     "wins": 2
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 23, 2025",
+     "winner": "Western Kentucky",
+     "winner_score": 27,
+     "loser": "Southern Miss",
+     "loser_score": 16
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 19, 2024",
+     "winner": "Sam Houston",
+     "winner_score": 31,
+     "loser": "Georgia Southern",
+     "loser_score": 26
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 16, 2023",
+     "winner": "Jacksonville State",
+     "winner_score": 34,
+     "loser": "Louisiana",
+     "loser_score": 31
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 21, 2022",
+     "winner": "Western Kentucky",
+     "winner_score": 44,
+     "loser": "South Alabama",
+     "loser_score": 23
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 18, 2021",
+     "winner": "Louisiana",
+     "winner_score": 36,
+     "loser": "Marshall",
+     "loser_score": 21
+    }
+   ]
+  },
+  {
+   "name": "Armed Forces Bowl",
+   "date": "Dec 23",
+   "time": "5:30 pm",
+   "site": "Amon G. Carter Stadium Fort Worth, Texas",
+   "bowl": "Armed Forces Bowl",
+   "article": "Armed Forces Bowl",
+   "stadium": "Amon G. Carter Stadium",
+   "location": "Fort Worth, Texas",
+   "first_played": 2003,
+   "operated": "2003–present",
+   "payout": "US$ 1.35 million (2019 season)",
+   "tie_ins": [],
+   "previous_tie_ins": [],
+   "games_played": 23,
+   "most_appearances": [
+    {
+     "team": "Air Force",
+     "games": 7,
+     "wins": 3
+    },
+    {
+     "team": "Houston",
+     "games": 5,
+     "wins": 2
+    },
+    {
+     "team": "Army",
+     "games": 4,
+     "wins": 4
+    },
+    {
+     "team": "Navy",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Tulsa",
+     "games": 3,
+     "wins": 0
+    },
+    {
+     "team": "California",
+     "games": 2,
+     "wins": 2
+    }
+   ],
+   "recent": [
+    {
+     "year": 2026,
+     "season": 2025,
+     "date": "January 2, 2026",
+     "winner": "Texas State",
+     "winner_score": 41,
+     "loser": "Rice",
+     "loser_score": 10
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 27, 2024",
+     "winner": "Navy",
+     "winner_score": 21,
+     "loser": "Oklahoma",
+     "loser_score": 20
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 23, 2023",
+     "winner": "Air Force",
+     "winner_score": 31,
+     "loser": "James Madison",
+     "loser_score": 21
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 22, 2022",
+     "winner": "Air Force",
+     "winner_score": 30,
+     "loser": "Baylor",
+     "loser_score": 15
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 22, 2021",
+     "winner": "Army",
+     "winner_score": 24,
+     "loser": "Missouri",
+     "loser_score": 22
+    }
+   ]
+  },
+  {
+   "name": "Poinsettia Bowl",
+   "date": "Dec 23",
+   "time": "7:30 pm",
+   "site": "Snapdragon Stadium San Diego, California",
+   "bowl": "Poinsettia Bowl",
+   "article": "Poinsettia Bowl",
+   "stadium": "Snapdragon Stadium (2026–present) San Diego Stadium (2005–2016)",
+   "location": "San Diego , California",
+   "first_played": 2005,
+   "operated": "2005–2016; 2026–present",
+   "tie_ins": [
+    "Pac-12"
+   ],
+   "previous_tie_ins": [
+    "Pac-10",
+    "WAC",
+    "Mountain West"
+   ],
+   "games_played": 12,
+   "most_appearances": [
+    {
+     "team": "Navy",
+     "games": 4,
+     "wins": 2
+    },
+    {
+     "team": "TCU",
+     "games": 3,
+     "wins": 3
+    },
+    {
+     "team": "San Diego State",
+     "games": 3,
+     "wins": 1
+    },
+    {
+     "team": "Northern Illinois",
+     "games": 3,
+     "wins": 0
+    },
+    {
+     "team": "BYU",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "Utah",
+     "games": 2,
+     "wins": 2
+    }
+   ],
+   "recent": [
+    {
+     "year": 2016,
+     "season": 2016,
+     "date": "December 21, 2016",
+     "winner": "BYU",
+     "winner_score": 24,
+     "loser": "Wyoming",
+     "loser_score": 21
+    },
+    {
+     "year": 2015,
+     "season": 2015,
+     "date": "December 23, 2015",
+     "winner": "Boise State",
+     "winner_score": 55,
+     "loser": "Northern Illinois",
+     "loser_score": 7
+    },
+    {
+     "year": 2014,
+     "season": 2014,
+     "date": "December 23, 2014",
+     "winner": "Navy",
+     "winner_score": 17,
+     "loser": "San Diego State",
+     "loser_score": 16
+    },
+    {
+     "year": 2013,
+     "season": 2013,
+     "date": "December 26, 2013",
+     "winner": "Utah State",
+     "winner_score": 21,
+     "loser": "Northern Illinois",
+     "loser_score": 14
+    },
+    {
+     "year": 2012,
+     "season": 2012,
+     "date": "December 20, 2012",
+     "winner": "BYU",
+     "winner_score": 23,
+     "loser": "San Diego State",
+     "loser_score": 6
+    }
+   ]
+  },
+  {
+   "name": "Frisco Bowl",
+   "date": "Dec 23",
+   "time": "9:00 pm",
+   "site": "Ford Center at The Star Frisco, Texas",
+   "bowl": "Frisco Bowl",
+   "article": "Frisco Bowl",
+   "stadium": "Ford Center at The Star",
+   "location": "Frisco, Texas",
+   "first_played": 2017,
+   "operated": "2017–present",
+   "payout": "US$ 650,000 (2019)",
+   "tie_ins": [
+    "American Athletic Conference"
+   ],
+   "previous_tie_ins": [],
+   "games_played": 8,
+   "most_appearances": [
+    {
+     "team": "Ohio",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "San Diego State",
+     "games": 2,
+     "wins": 1
+    },
+    {
+     "team": "UTSA",
+     "games": 2,
+     "wins": 1
+    },
+    {
+     "team": "Boise State",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "Kent State",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "Louisiana Tech",
+     "games": 1,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 23, 2025",
+     "winner": "Ohio",
+     "winner_score": 17,
+     "loser": "UNLV",
+     "loser_score": 10
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 17, 2024",
+     "winner": "Memphis",
+     "winner_score": 42,
+     "loser": "West Virginia",
+     "loser_score": 37
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 19, 2023",
+     "winner": "UTSA",
+     "winner_score": 35,
+     "loser": "Marshall",
+     "loser_score": 17
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 17, 2022",
+     "winner": "Boise State",
+     "winner_score": 35,
+     "loser": "North Texas",
+     "loser_score": 32
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 21, 2021",
+     "winner": "San Diego State",
+     "winner_score": 38,
+     "loser": "UTSA",
+     "loser_score": 24
+    }
+   ]
+  },
+  {
+   "name": "New Mexico Bowl",
+   "date": "Dec 24",
+   "time": "2:30 pm",
+   "site": "University Stadium Albuquerque, New Mexico",
+   "bowl": "New Mexico Bowl",
+   "article": "New Mexico Bowl",
+   "stadium": "University Stadium (2006–present)",
+   "location": "Albuquerque, New Mexico (2006–present)",
+   "first_played": 2006,
+   "operated": "2006–present",
+   "payout": "US$ 1.05 million (2019)",
+   "tie_ins": [
+    "Mountain West",
+    "Conference USA"
+   ],
+   "previous_tie_ins": [
+    "WAC (2006–2010)",
+    "Pac-12 (2012–2013)"
+   ],
+   "games_played": 20,
+   "most_appearances": [
+    {
+     "team": "Fresno State",
+     "games": 4,
+     "wins": 2
+    },
+    {
+     "team": "New Mexico",
+     "games": 4,
+     "wins": 2
+    },
+    {
+     "team": "Colorado State",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "UTEP",
+     "games": 3,
+     "wins": 0
+    },
+    {
+     "team": "Arizona",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "BYU",
+     "games": 2,
+     "wins": 2
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 27, 2025",
+     "winner": "North Texas",
+     "winner_score": 49,
+     "loser": "San Diego State",
+     "loser_score": 47
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 28, 2024",
+     "winner": "TCU",
+     "winner_score": 34,
+     "loser": "Louisiana",
+     "loser_score": 3
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 16, 2023",
+     "winner": "Fresno State",
+     "winner_score": 37,
+     "loser": "New Mexico State",
+     "loser_score": 10
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 17, 2022",
+     "winner": "BYU",
+     "winner_score": 24,
+     "loser": "SMU",
+     "loser_score": 23
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 18, 2021",
+     "winner": "Fresno State",
+     "winner_score": 31,
+     "loser": "UTEP",
+     "loser_score": 24
+    }
+   ]
+  },
+  {
+   "name": "Hawaii Bowl",
+   "date": "Dec 24",
+   "time": "7:00 pm",
+   "site": "Clarence T. C. Ching Athletics Complex Honolulu, Hawaii",
+   "bowl": "Hawaii Bowl",
+   "article": "Hawaii Bowl",
+   "stadium": "Clarence T. C. Ching Athletics Complex",
+   "location": "Honolulu , Hawaii",
+   "first_played": 2002,
+   "operated": "2002–present",
+   "payout": "US$ 1.2 million (2019)",
+   "tie_ins": [
+    "Mountain West",
+    "American Athletic Conference"
+   ],
+   "previous_tie_ins": [
+    "WAC (2002–2011)",
+    "C-USA (2002–2018)",
+    "Pac-10 (2005–2008)"
+   ],
+   "games_played": 22,
+   "most_appearances": [
+    {
+     "team": "Hawaii",
+     "games": 10,
+     "wins": 6
+    },
+    {
+     "team": "Fresno State",
+     "games": 3,
+     "wins": 1
+    },
+    {
+     "team": "Nevada",
+     "games": 3,
+     "wins": 1
+    },
+    {
+     "team": "SMU",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "Middle Tennessee",
+     "games": 2,
+     "wins": 1
+    },
+    {
+     "team": "San Diego State",
+     "games": 2,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 24, 2025",
+     "winner": "Hawaii",
+     "winner_score": 35,
+     "loser": "California",
+     "loser_score": 31
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 24, 2024",
+     "winner": "South Florida",
+     "winner_score": 41,
+     "loser": "San Jose State",
+     "loser_score": 39
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 23, 2023",
+     "winner": "Coastal Carolina",
+     "winner_score": 24,
+     "loser": "San Jose State",
+     "loser_score": 14
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 24, 2022",
+     "winner": "Middle Tennessee",
+     "winner_score": 25,
+     "loser": "San Diego State",
+     "loser_score": 23
+    },
+    {
+     "year": 2019,
+     "season": 2019,
+     "date": "December 24, 2019",
+     "winner": "Hawaii",
+     "winner_score": 38,
+     "loser": "BYU",
+     "loser_score": 34
+    }
+   ]
+  },
+  {
+   "name": "Pinstripe Bowl",
+   "date": "Dec 26",
+   "time": "12:00 pm",
+   "site": "Yankee Stadium Bronx, New York",
+   "bowl": "Pinstripe Bowl",
+   "article": "Pinstripe Bowl",
+   "stadium": "Yankee Stadium",
+   "location": "The Bronx , New York City",
+   "first_played": 2010,
+   "operated": "2010–present",
+   "payout": "US$ 4.4 million (2019)",
+   "tie_ins": [
+    "ACC",
+    "Big Ten"
+   ],
+   "previous_tie_ins": [
+    "American",
+    "Big 12",
+    "Big East",
+    "Notre Dame"
+   ],
+   "games_played": 15,
+   "most_appearances": [
+    {
+     "team": "Rutgers",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Syracuse",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Boston College",
+     "games": 3,
+     "wins": 0
+    },
+    {
+     "team": "Penn State",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "Miami (FL)",
+     "games": 2,
+     "wins": 0
+    },
+    {
+     "team": "Duke",
+     "games": 1,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 27, 2025",
+     "winner": "Penn State",
+     "winner_score": 22,
+     "loser": "Clemson",
+     "loser_score": 10
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 28, 2024",
+     "winner": "Nebraska",
+     "winner_score": 20,
+     "loser": "Boston College",
+     "loser_score": 15
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 28, 2023",
+     "winner": "Rutgers",
+     "winner_score": 31,
+     "loser": "Miami (FL)",
+     "loser_score": 24
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 29, 2022",
+     "winner": "Minnesota",
+     "winner_score": 28,
+     "loser": "Syracuse",
+     "loser_score": 20
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 29, 2021",
+     "winner": "Maryland",
+     "winner_score": 54,
+     "loser": "Virginia Tech",
+     "loser_score": 10
+    }
+   ]
+  },
+  {
+   "name": "Fenway Bowl",
+   "date": "Dec 26",
+   "time": "2:00 pm",
+   "site": "Fenway Park Boston, Massachusetts",
+   "bowl": "Fenway Bowl",
+   "article": "Fenway Bowl",
+   "stadium": "Fenway Park",
+   "location": "Boston, Massachusetts",
+   "first_played": 2022,
+   "operated": "2022–present",
+   "tie_ins": [
+    "American Athletic Conference",
+    "ACC"
+   ],
+   "previous_tie_ins": [],
+   "games_played": 4,
+   "most_appearances": [
+    {
+     "team": "UConn",
+     "games": 2,
+     "wins": 1
+    },
+    {
+     "team": "Army",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "Boston College",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "Louisville",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "Cincinnati",
+     "games": 1,
+     "wins": 0
+    },
+    {
+     "team": "North Carolina",
+     "games": 1,
+     "wins": 0
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 27, 2025",
+     "winner": "Army",
+     "winner_score": 41,
+     "loser": "UConn",
+     "loser_score": 16
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 28, 2024",
+     "winner": "UConn",
+     "winner_score": 27,
+     "loser": "North Carolina",
+     "loser_score": 14
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 28, 2023",
+     "winner": "Boston College",
+     "winner_score": 23,
+     "loser": "SMU",
+     "loser_score": 14
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 17, 2022",
+     "winner": "Louisville",
+     "winner_score": 24,
+     "loser": "Cincinnati",
+     "loser_score": 7
+    }
+   ]
+  },
+  {
+   "name": "Duke's Mayo Bowl",
+   "date": "Dec 26",
+   "time": "3:30 pm",
+   "site": "Bank of America Stadium Charlotte, North Carolina",
+   "bowl": "Duke's Mayo Bowl",
+   "article": "Duke's Mayo Bowl",
+   "stadium": "Bank of America Stadium",
+   "location": "Charlotte, North Carolina",
+   "first_played": 2002,
+   "operated": "2002–present",
+   "payout": "US$ 4,780,461 (2019)",
+   "tie_ins": [
+    "ACC"
+   ],
+   "previous_tie_ins": [
+    "AAC"
+   ],
+   "games_played": 24,
+   "most_appearances": [
+    {
+     "team": "North Carolina",
+     "games": 6,
+     "wins": 1
+    },
+    {
+     "team": "Wake Forest",
+     "games": 4,
+     "wins": 3
+    },
+    {
+     "team": "NC State",
+     "games": 4,
+     "wins": 2
+    },
+    {
+     "team": "Virginia",
+     "games": 3,
+     "wins": 3
+    },
+    {
+     "team": "West Virginia",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Virginia Tech",
+     "games": 3,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2026,
+     "season": 2025,
+     "date": "January 2, 2026",
+     "winner": "Wake Forest",
+     "winner_score": 43,
+     "loser": "Mississippi State",
+     "loser_score": 29
+    },
+    {
+     "year": 2025,
+     "season": 2024,
+     "date": "January 3, 2025",
+     "winner": "Minnesota",
+     "winner_score": 24,
+     "loser": "Virginia Tech",
+     "loser_score": 10
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 27, 2023",
+     "winner": "West Virginia",
+     "winner_score": 30,
+     "loser": "North Carolina",
+     "loser_score": 10
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 30, 2022",
+     "winner": "Maryland",
+     "winner_score": 16,
+     "loser": "NC State",
+     "loser_score": 12
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 30, 2021",
+     "winner": "South Carolina",
+     "winner_score": 38,
+     "loser": "North Carolina",
+     "loser_score": 21
+    }
+   ]
+  },
+  {
+   "name": "68 Ventures Bowl",
+   "date": "Dec 26",
+   "time": "5:30 pm",
+   "site": "Hancock Whitney Stadium Mobile, Alabama",
+   "bowl": "68 Ventures Bowl",
+   "article": "68 Ventures Bowl",
+   "stadium": "Hancock Whitney Stadium",
+   "location": "Mobile, Alabama",
+   "first_played": 1999,
+   "operated": "1999–present",
+   "payout": "US$ 1.5 million (2019 season)",
+   "tie_ins": [
+    "Sun Belt",
+    "MAC"
+   ],
+   "previous_tie_ins": [
+    "ACC",
+    "C-USA",
+    "WAC"
+   ],
+   "games_played": 27,
+   "most_appearances": [
+    {
+     "team": "Arkansas State",
+     "games": 5,
+     "wins": 3
+    },
+    {
+     "team": "Bowling Green",
+     "games": 4,
+     "wins": 1
+    },
+    {
+     "team": "Southern Miss",
+     "games": 3,
+     "wins": 3
+    },
+    {
+     "team": "Miami (Ohio)",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Toledo",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Troy",
+     "games": 3,
+     "wins": 2
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 17, 2025",
+     "winner": "Delaware",
+     "winner_score": 20,
+     "loser": "Louisiana",
+     "loser_score": 13
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 26, 2024",
+     "winner": "Arkansas State",
+     "winner_score": 38,
+     "loser": "Bowling Green",
+     "loser_score": 31
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 23, 2023",
+     "winner": "South Alabama",
+     "winner_score": 59,
+     "loser": "Eastern Michigan",
+     "loser_score": 10
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 17, 2022",
+     "winner": "Southern Miss",
+     "winner_score": 38,
+     "loser": "Rice",
+     "loser_score": 24
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 18, 2021",
+     "winner": "Liberty",
+     "winner_score": 56,
+     "loser": "Eastern Michigan",
+     "loser_score": 20
+    }
+   ]
+  },
+  {
+   "name": "Cactus Bowl",
+   "date": "Dec 26",
+   "time": "7:30 pm",
+   "site": "Mountain America Stadium Tempe, Arizona",
+   "bowl": "Cactus Bowl",
+   "article": "Cactus Bowl",
+   "stadium": "Mountain America Stadium",
+   "location": "Tempe, Arizona",
+   "first_played": 1989,
+   "operated": "since 1989",
+   "payout": "US$ 1,625,560 (2019)",
+   "tie_ins": [
+    "Big 12",
+    "Big Ten"
+   ],
+   "previous_tie_ins": [
+    "WAC (1990–1997)",
+    "Big 12 (1998–2001)",
+    "Big East (1998–2005)",
+    "Pac-10 (2002–2005, 2013–2019)",
+    "Big 12 (2006 – 2013)",
+    "Big Ten (2006 – 2013)"
+   ],
+   "games_played": 36,
+   "most_appearances": [
+    {
+     "team": "Kansas State",
+     "games": 5,
+     "wins": 4
+    },
+    {
+     "team": "Minnesota",
+     "games": 5,
+     "wins": 2
+    },
+    {
+     "team": "California",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Oklahoma State",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "West Virginia",
+     "games": 3,
+     "wins": 1
+    },
+    {
+     "team": "Arizona",
+     "games": 2,
+     "wins": 2
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 26, 2025",
+     "winner": "Minnesota",
+     "winner_score": 20,
+     "loser": "New Mexico",
+     "loser_score": 17
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 26, 2024",
+     "winner": "Kansas State",
+     "winner_score": 44,
+     "loser": "Rutgers",
+     "loser_score": 41
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 26, 2023",
+     "winner": "Kansas",
+     "winner_score": 49,
+     "loser": "UNLV",
+     "loser_score": 36
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 27, 2022",
+     "winner": "Wisconsin",
+     "winner_score": 24,
+     "loser": "Oklahoma State",
+     "loser_score": 17
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 28, 2021",
+     "winner": "Minnesota",
+     "winner_score": 18,
+     "loser": "West Virginia",
+     "loser_score": 6
+    }
+   ]
+  },
+  {
+   "name": "Military Bowl",
+   "date": "Dec 28",
+   "time": "2:00 pm",
+   "site": "Navy–Marine Corps Memorial Stadium Annapolis, Maryland",
+   "bowl": "Military Bowl",
+   "article": "Military Bowl",
+   "stadium": "Navy–Marine Corps Memorial Stadium",
+   "location": "Annapolis, Maryland",
+   "first_played": 2008,
+   "operated": "2008–present",
+   "payout": "US$ 2,066,990 (2019)",
+   "tie_ins": [
+    "ACC",
+    "American Athletic Conference"
+   ],
+   "previous_tie_ins": [
+    "Army",
+    "Navy",
+    "C-USA"
+   ],
+   "games_played": 16,
+   "most_appearances": [
+    {
+     "team": "East Carolina",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Navy",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Virginia Tech",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Temple",
+     "games": 3,
+     "wins": 0
+    },
+    {
+     "team": "Wake Forest",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "Cincinnati",
+     "games": 2,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 27, 2025",
+     "winner": "East Carolina",
+     "winner_score": 23,
+     "loser": "Pittsburgh",
+     "loser_score": 17
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 28, 2024",
+     "winner": "East Carolina",
+     "winner_score": 26,
+     "loser": "NC State",
+     "loser_score": 21
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 27, 2023",
+     "winner": "Virginia Tech",
+     "winner_score": 41,
+     "loser": "Tulane",
+     "loser_score": 20
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 28, 2022",
+     "winner": "Duke",
+     "winner_score": 30,
+     "loser": "UCF",
+     "loser_score": 13
+    },
+    {
+     "year": 2019,
+     "season": 2019,
+     "date": "December 27, 2019",
+     "winner": "North Carolina",
+     "winner_score": 55,
+     "loser": "Temple",
+     "loser_score": 13
+    }
+   ]
+  },
+  {
+   "name": "Holiday Bowl",
+   "date": "Dec 28",
+   "time": "5:00 pm",
+   "site": "Snapdragon Stadium San Diego, California",
+   "bowl": "Holiday Bowl",
+   "article": "Holiday Bowl",
+   "stadium": "Snapdragon Stadium",
+   "location": "San Diego , California",
+   "first_played": 1978,
+   "operated": "1978–present",
+   "payout": "US$ 6,532,700 (2019)",
+   "tie_ins": [
+    "Pac-12",
+    "ACC"
+   ],
+   "previous_tie_ins": [
+    "WAC (1978–1997)",
+    "Big 12 (1995–2013)",
+    "Big Ten (1991–1994; 2014–2020)"
+   ],
+   "games_played": 47,
+   "most_appearances": [
+    {
+     "team": "BYU",
+     "games": 11,
+     "wins": 5
+    },
+    {
+     "team": "Texas",
+     "games": 5,
+     "wins": 3
+    },
+    {
+     "team": "Washington State",
+     "games": 5,
+     "wins": 1
+    },
+    {
+     "team": "Iowa",
+     "games": 4,
+     "wins": 3
+    },
+    {
+     "team": "Oregon",
+     "games": 4,
+     "wins": 3
+    },
+    {
+     "team": "USC",
+     "games": 4,
+     "wins": 2
+    }
+   ],
+   "recent": [
+    {
+     "year": 2026,
+     "season": 2025,
+     "date": "January 2, 2026",
+     "winner": "SMU",
+     "winner_score": 24,
+     "loser": "Arizona",
+     "loser_score": 19
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 27, 2024",
+     "winner": "Syracuse",
+     "winner_score": 52,
+     "loser": "Washington State",
+     "loser_score": 35
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 27, 2023",
+     "winner": "USC",
+     "winner_score": 42,
+     "loser": "Louisville",
+     "loser_score": 28
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 28, 2022",
+     "winner": "Oregon",
+     "winner_score": 28,
+     "loser": "North Carolina",
+     "loser_score": 27
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 28, 2021",
+     "winner": "NC State",
+     "winner_score": null,
+     "loser": "UCLA",
+     "loser_score": null
+    }
+   ]
+  },
+  {
+   "name": "Birmingham Bowl",
+   "date": "Dec 29",
+   "time": "2:00 pm",
+   "site": "Protective Stadium Birmingham, Alabama",
+   "bowl": "Birmingham Bowl",
+   "article": "Birmingham Bowl",
+   "stadium": "Protective Stadium",
+   "location": "Birmingham, Alabama",
+   "first_played": 2006,
+   "operated": "2006–present",
+   "payout": "US$ 1,374,545 (2019 season)",
+   "tie_ins": [
+    "American Athletic Conference",
+    "SEC",
+    "Conference USA",
+    "MAC"
+   ],
+   "previous_tie_ins": [],
+   "games_played": 19,
+   "most_appearances": [
+    {
+     "team": "South Florida",
+     "games": 3,
+     "wins": 3
+    },
+    {
+     "team": "East Carolina",
+     "games": 3,
+     "wins": 1
+    },
+    {
+     "team": "Pittsburgh",
+     "games": 3,
+     "wins": 1
+    },
+    {
+     "team": "Cincinnati",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "Vanderbilt",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "Auburn",
+     "games": 2,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 29, 2025",
+     "winner": "Georgia Southern",
+     "winner_score": 29,
+     "loser": "Appalachian State",
+     "loser_score": 10
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 27, 2024",
+     "winner": "Vanderbilt",
+     "winner_score": 35,
+     "loser": "Georgia Tech",
+     "loser_score": 27
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 23, 2023",
+     "winner": "Duke",
+     "winner_score": 17,
+     "loser": "Troy",
+     "loser_score": 10
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 27, 2022",
+     "winner": "East Carolina",
+     "winner_score": 53,
+     "loser": "Coastal Carolina",
+     "loser_score": 29
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 28, 2021",
+     "winner": "Houston",
+     "winner_score": 17,
+     "loser": "Auburn",
+     "loser_score": 13
+    }
+   ]
+  },
+  {
+   "name": "Pop-Tarts Bowl",
+   "date": "Dec 29",
+   "time": "5:30 pm",
+   "site": "Camping World Stadium Orlando, Florida",
+   "bowl": "Pop-Tarts Bowl",
+   "article": "Pop-Tarts Bowl",
+   "stadium": "Camping World Stadium",
+   "location": "Orlando, Florida",
+   "first_played": 1990,
+   "operated": "1990–present",
+   "championship_affiliation": "Bowl Coalition ( 1992 )",
+   "payout": "US$ 6,071,760 (2019)",
+   "tie_ins": [
+    "ACC",
+    "Big 12"
+   ],
+   "previous_tie_ins": [
+    "Big Ten",
+    "Big East"
+   ],
+   "games_played": 36,
+   "most_appearances": [
+    {
+     "team": "Miami (FL)",
+     "games": 7,
+     "wins": 3
+    },
+    {
+     "team": "NC State",
+     "games": 6,
+     "wins": 3
+    },
+    {
+     "team": "West Virginia",
+     "games": 5,
+     "wins": 0
+    },
+    {
+     "team": "Florida State",
+     "games": 4,
+     "wins": 4
+    },
+    {
+     "team": "Clemson",
+     "games": 4,
+     "wins": 3
+    },
+    {
+     "team": "Georgia Tech",
+     "games": 3,
+     "wins": 2
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 27, 2025",
+     "winner": "BYU",
+     "winner_score": 25,
+     "loser": "Georgia Tech",
+     "loser_score": 21
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 28, 2024",
+     "winner": "Iowa State",
+     "winner_score": 42,
+     "loser": "Miami (FL)",
+     "loser_score": 41
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 28, 2023",
+     "winner": "Kansas State",
+     "winner_score": 28,
+     "loser": "NC State",
+     "loser_score": 19
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 29, 2022",
+     "winner": "Florida State",
+     "winner_score": 35,
+     "loser": "Oklahoma",
+     "loser_score": 32
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 29, 2021",
+     "winner": "Clemson",
+     "winner_score": 20,
+     "loser": "Iowa State",
+     "loser_score": 13
+    }
+   ]
+  },
+  {
+   "name": "Alamo Bowl",
+   "date": "Dec 29",
+   "time": "9:00 pm",
+   "site": "Alamodome San Antonio, Texas",
+   "bowl": "Alamo Bowl",
+   "article": "Alamo Bowl",
+   "stadium": "Alamodome",
+   "location": "San Antonio, Texas",
+   "first_played": 1993,
+   "operated": "1993–present",
+   "payout": "US$ 8,252,740 (2019)",
+   "tie_ins": [
+    "Big 12"
+   ],
+   "previous_tie_ins": [
+    "Southwest (1993–1995)",
+    "Big Ten (1995–2009)"
+   ],
+   "games_played": 33,
+   "most_appearances": [
+    {
+     "team": "Texas",
+     "games": 6,
+     "wins": 4
+    },
+    {
+     "team": "Iowa",
+     "games": 4,
+     "wins": 2
+    },
+    {
+     "team": "Oklahoma State",
+     "games": 4,
+     "wins": 2
+    },
+    {
+     "team": "Colorado",
+     "games": 4,
+     "wins": 0
+    },
+    {
+     "team": "Nebraska",
+     "games": 3,
+     "wins": 3
+    },
+    {
+     "team": "TCU",
+     "games": 3,
+     "wins": 3
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 30, 2025",
+     "winner": "TCU",
+     "winner_score": 30,
+     "loser": "USC",
+     "loser_score": 27
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 28, 2024",
+     "winner": "BYU",
+     "winner_score": 36,
+     "loser": "Colorado",
+     "loser_score": 14
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 28, 2023",
+     "winner": "Arizona",
+     "winner_score": 38,
+     "loser": "Oklahoma",
+     "loser_score": 24
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 29, 2022",
+     "winner": "Washington",
+     "winner_score": 27,
+     "loser": "Texas",
+     "loser_score": 20
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 29, 2021",
+     "winner": "Oklahoma",
+     "winner_score": 47,
+     "loser": "Oregon",
+     "loser_score": 32
+    }
+   ]
+  },
+  {
+   "name": "Gator Bowl",
+   "date": "Dec 30",
+   "time": "11:30 am",
+   "site": "EverBank Stadium Jacksonville, Florida",
+   "bowl": "Gator Bowl",
+   "article": "Gator Bowl",
+   "stadium": "EverBank Stadium",
+   "location": "Jacksonville, Florida",
+   "first_played": 1946,
+   "operated": "1946–present",
+   "championship_affiliation": "Bowl Coalition ( 1992 – 1994 )",
+   "payout": "US$ 5.35 million (2019 season)",
+   "tie_ins": [
+    "ACC",
+    "SEC"
+   ],
+   "previous_tie_ins": [
+    "Southern (1946–1952)",
+    "Big East (1996–2010)",
+    "Big 12 (2006–2010)",
+    "Big Ten (2011–2021)"
+   ],
+   "games_played": 81,
+   "most_appearances": [
+    {
+     "team": "Clemson",
+     "games": 10,
+     "wins": 5
+    },
+    {
+     "team": "Florida",
+     "games": 9,
+     "wins": 7
+    },
+    {
+     "team": "Georgia Tech",
+     "games": 8,
+     "wins": 4
+    },
+    {
+     "team": "Florida State",
+     "games": 7,
+     "wins": 6
+    },
+    {
+     "team": "North Carolina",
+     "games": 7,
+     "wins": 5
+    },
+    {
+     "team": "West Virginia",
+     "games": 7,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 27, 2025",
+     "winner": "Virginia",
+     "winner_score": 13,
+     "loser": "Missouri",
+     "loser_score": 7
+    },
+    {
+     "year": 2025,
+     "season": 2024,
+     "date": "January 2, 2025",
+     "winner": "Ole Miss",
+     "winner_score": 52,
+     "loser": "Duke",
+     "loser_score": 20
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 29, 2023",
+     "winner": "Clemson",
+     "winner_score": 38,
+     "loser": "Kentucky",
+     "loser_score": 35
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 30, 2022",
+     "winner": "Notre Dame",
+     "winner_score": 45,
+     "loser": "South Carolina",
+     "loser_score": 38
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 31, 2021",
+     "winner": "Wake Forest",
+     "winner_score": 38,
+     "loser": "Rutgers",
+     "loser_score": 10
+    }
+   ]
+  },
+  {
+   "name": "Music City Bowl",
+   "date": "Dec 30",
+   "time": "3:00 pm",
+   "site": "Nissan Stadium Nashville, Tennessee",
+   "bowl": "Music City Bowl",
+   "article": "Music City Bowl",
+   "stadium": "Nissan Stadium",
+   "location": "Nashville, Tennessee",
+   "first_played": 1998,
+   "operated": "1998–present",
+   "payout": "US$ 5.7 million (2019)",
+   "tie_ins": [
+    "Big Ten",
+    "SEC"
+   ],
+   "previous_tie_ins": [
+    "ACC (2006–2019)",
+    "Big East (1998–2001)",
+    "Big Ten (2002–2005)"
+   ],
+   "games_played": 27,
+   "most_appearances": [
+    {
+     "team": "Kentucky",
+     "games": 6,
+     "wins": 2
+    },
+    {
+     "team": "Tennessee",
+     "games": 4,
+     "wins": 1
+    },
+    {
+     "team": "Auburn",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Minnesota",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Louisville",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "Vanderbilt",
+     "games": 2,
+     "wins": 2
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 30, 2025",
+     "winner": "Illinois",
+     "winner_score": 30,
+     "loser": "Tennessee",
+     "loser_score": 28
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 30, 2024",
+     "winner": "Missouri",
+     "winner_score": 27,
+     "loser": "Iowa",
+     "loser_score": 24
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 30, 2023",
+     "winner": "Maryland",
+     "winner_score": 31,
+     "loser": "Auburn",
+     "loser_score": 13
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 31, 2022",
+     "winner": "Iowa",
+     "winner_score": 21,
+     "loser": "Kentucky",
+     "loser_score": 0
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 30, 2021",
+     "winner": "Purdue",
+     "winner_score": 48,
+     "loser": "Tennessee",
+     "loser_score": 45
+    }
+   ]
+  },
+  {
+   "name": "ReliaQuest Bowl",
+   "date": "Dec 31",
+   "time": "12:00 pm",
+   "site": "Raymond James Stadium Tampa, Florida",
+   "bowl": "ReliaQuest Bowl",
+   "article": "ReliaQuest Bowl",
+   "stadium": "Raymond James Stadium",
+   "location": "Tampa, Florida",
+   "first_played": 1986,
+   "operated": "1986–present",
+   "payout": "US$ 6.67 million ($20 million aggregate for the 2022–2024 college football seasons)",
+   "tie_ins": [
+    "Big Ten",
+    "SEC"
+   ],
+   "previous_tie_ins": [],
+   "games_played": 40,
+   "most_appearances": [
+    {
+     "team": "Iowa",
+     "games": 7,
+     "wins": 4
+    },
+    {
+     "team": "Michigan",
+     "games": 7,
+     "wins": 4
+    },
+    {
+     "team": "Wisconsin",
+     "games": 6,
+     "wins": 2
+    },
+    {
+     "team": "South Carolina",
+     "games": 5,
+     "wins": 4
+    },
+    {
+     "team": "Florida",
+     "games": 5,
+     "wins": 3
+    },
+    {
+     "team": "Georgia",
+     "games": 5,
+     "wins": 3
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 31, 2025",
+     "winner": "Iowa",
+     "winner_score": 34,
+     "loser": "Vanderbilt",
+     "loser_score": 27
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 31, 2024",
+     "winner": "Michigan",
+     "winner_score": 19,
+     "loser": "Alabama",
+     "loser_score": 13
+    },
+    {
+     "year": 2024,
+     "season": 2023,
+     "date": "January 1, 2024",
+     "winner": "LSU",
+     "winner_score": 35,
+     "loser": "Wisconsin",
+     "loser_score": 31
+    },
+    {
+     "year": 2023,
+     "season": 2022,
+     "date": "January 2, 2023",
+     "winner": "Mississippi State",
+     "winner_score": 19,
+     "loser": "Illinois",
+     "loser_score": 10
+    },
+    {
+     "year": 2022,
+     "season": 2021,
+     "date": "January 1, 2022",
+     "winner": "Arkansas",
+     "winner_score": 24,
+     "loser": "Penn State",
+     "loser_score": 10
+    }
+   ]
+  },
+  {
+   "name": "Sun Bowl",
+   "date": "Dec 31",
+   "time": "2:00 pm",
+   "site": "Sun Bowl El Paso, Texas",
+   "bowl": "Sun Bowl",
+   "article": "Sun Bowl",
+   "stadium": "Sun Bowl",
+   "location": "El Paso, Texas , U.S.",
+   "first_played": 1935,
+   "operated": "1935–present",
+   "championship_affiliation": "Bowl Coalition ( 1992 – 1994 )",
+   "payout": "US$ 4.55 million (2019)",
+   "tie_ins": [
+    "Pac-12",
+    "ACC"
+   ],
+   "previous_tie_ins": [
+    "Border (1936–1961)",
+    "Big Ten (1995–2005)",
+    "Big 12 (2006–2009)",
+    "Big East (2006–2009)"
+   ],
+   "games_played": 91,
+   "most_appearances": [
+    {
+     "team": "Texas Tech",
+     "games": 9,
+     "wins": 1
+    },
+    {
+     "team": "Arizona State",
+     "games": 8,
+     "wins": 5
+    },
+    {
+     "team": "Stanford",
+     "games": 5,
+     "wins": 4
+    },
+    {
+     "team": "Texas Western",
+     "games": 5,
+     "wins": 4
+    },
+    {
+     "team": "Pittsburgh",
+     "games": 5,
+     "wins": 3
+    },
+    {
+     "team": "UCLA",
+     "games": 5,
+     "wins": 3
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 31, 2025",
+     "winner": "Duke",
+     "winner_score": 42,
+     "loser": "Arizona State",
+     "loser_score": 39
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 31, 2024",
+     "winner": "Louisville",
+     "winner_score": 35,
+     "loser": "Washington",
+     "loser_score": 34
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 29, 2023",
+     "winner": "Notre Dame",
+     "winner_score": 40,
+     "loser": "Oregon State",
+     "loser_score": 8
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 30, 2022",
+     "winner": "Pittsburgh",
+     "winner_score": 37,
+     "loser": "UCLA",
+     "loser_score": 35
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 31, 2021",
+     "winner": "Central Michigan",
+     "winner_score": 24,
+     "loser": "Washington State",
+     "loser_score": 21
+    }
+   ]
+  },
+  {
+   "name": "Las Vegas Bowl",
+   "date": "Dec 31",
+   "time": "3:45 pm",
+   "site": "Allegiant Stadium Paradise, Nevada",
+   "bowl": "Las Vegas Bowl",
+   "article": "Las Vegas Bowl",
+   "stadium": "Allegiant Stadium",
+   "location": "Paradise, Nevada",
+   "first_played": 1992,
+   "operated": "1992–present",
+   "payout": "US$ 2.9 million (2019)",
+   "tie_ins": [
+    "Big Ten",
+    "Pac-12"
+   ],
+   "previous_tie_ins": [
+    "Big West (1992–1996)",
+    "MAC (1992–1996)",
+    "WAC (1997–1998)",
+    "MWC (2001–2019)",
+    "SEC (2022 and 2024)",
+    "Big Ten (2023 and 2025–present)",
+    "Pac-12 (2024–present)"
+   ],
+   "games_played": 33,
+   "most_appearances": [
+    {
+     "team": "Utah",
+     "games": 7,
+     "wins": 5
+    },
+    {
+     "team": "BYU",
+     "games": 6,
+     "wins": 3
+    },
+    {
+     "team": "Boise State",
+     "games": 5,
+     "wins": 4
+    },
+    {
+     "team": "Oregon State",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "USC",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Fresno State",
+     "games": 3,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 31, 2025",
+     "winner": "Utah",
+     "winner_score": 44,
+     "loser": "Nebraska",
+     "loser_score": 22
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 27, 2024",
+     "winner": "USC",
+     "winner_score": 35,
+     "loser": "Texas A&M",
+     "loser_score": 31
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 23, 2023",
+     "winner": "Northwestern",
+     "winner_score": 14,
+     "loser": "Utah",
+     "loser_score": 7
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 17, 2022",
+     "winner": "Oregon State",
+     "winner_score": 30,
+     "loser": "Florida",
+     "loser_score": 3
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 30, 2021",
+     "winner": "Wisconsin",
+     "winner_score": 20,
+     "loser": "Arizona State",
+     "loser_score": 13
+    }
+   ]
+  },
+  {
+   "name": "Texas Bowl",
+   "date": "Dec 31",
+   "time": "7:30 pm",
+   "site": "Reliant Stadium Houston, Texas",
+   "bowl": "Texas Bowl",
+   "article": "Texas Bowl",
+   "stadium": "Reliant Stadium",
+   "location": "Houston , Texas",
+   "first_played": 2006,
+   "operated": "2006–present",
+   "payout": "US$ 6.4 million (2019)",
+   "tie_ins": [
+    "Big 12",
+    "SEC"
+   ],
+   "previous_tie_ins": [
+    "Big East / C-USA / MWC (alternating years)",
+    "Big Ten (2010–2013)"
+   ],
+   "games_played": 19,
+   "most_appearances": [
+    {
+     "team": "Texas A&M",
+     "games": 4,
+     "wins": 2
+    },
+    {
+     "team": "Kansas State",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Texas Tech",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Baylor",
+     "games": 3,
+     "wins": 1
+    },
+    {
+     "team": "LSU",
+     "games": 3,
+     "wins": 1
+    },
+    {
+     "team": "Houston",
+     "games": 2,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 27, 2025",
+     "winner": "Houston",
+     "winner_score": 38,
+     "loser": "LSU",
+     "loser_score": 35
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 31, 2024",
+     "winner": "LSU",
+     "winner_score": 44,
+     "loser": "Baylor",
+     "loser_score": 31
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 27, 2023",
+     "winner": "Oklahoma State",
+     "winner_score": 31,
+     "loser": "Texas A&M",
+     "loser_score": 23
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 28, 2022",
+     "winner": "Texas Tech",
+     "winner_score": 42,
+     "loser": "Ole Miss",
+     "loser_score": 25
+    },
+    {
+     "year": 2022,
+     "season": 2021,
+     "date": "January 4, 2022",
+     "winner": "Kansas State",
+     "winner_score": 42,
+     "loser": "LSU",
+     "loser_score": 20
+    }
+   ]
+  },
+  {
+   "name": "Citrus Bowl",
+   "date": "Jan 2",
+   "time": "12:00 pm",
+   "site": "Camping World Stadium Orlando, Florida",
+   "bowl": "Citrus Bowl",
+   "article": "Citrus Bowl",
+   "stadium": "Camping World Stadium",
+   "location": "Orlando, Florida",
+   "first_played": 1947,
+   "operated": "1947–present",
+   "payout": "US$ 8,224,578 (2019 season)",
+   "tie_ins": [
+    "Big Ten",
+    "SEC"
+   ],
+   "previous_tie_ins": [
+    "MAC (1968–1975)",
+    "SoCon (1968–1972)",
+    "ACC (1987–1991)"
+   ],
+   "games_played": 76,
+   "most_appearances": [
+    {
+     "team": "Michigan",
+     "games": 7,
+     "wins": 4
+    },
+    {
+     "team": "Auburn",
+     "games": 6,
+     "wins": 3
+    },
+    {
+     "team": "LSU",
+     "games": 6,
+     "wins": 3
+    },
+    {
+     "team": "Florida",
+     "games": 6,
+     "wins": 2
+    },
+    {
+     "team": "Penn State",
+     "games": 6,
+     "wins": 2
+    },
+    {
+     "team": "Georgia",
+     "games": 5,
+     "wins": 4
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 31, 2025",
+     "winner": "Texas",
+     "winner_score": 41,
+     "loser": "Michigan",
+     "loser_score": 27
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 31, 2024",
+     "winner": "Illinois",
+     "winner_score": 21,
+     "loser": "South Carolina",
+     "loser_score": 17
+    },
+    {
+     "year": 2024,
+     "season": 2023,
+     "date": "January 1, 2024",
+     "winner": "Tennessee",
+     "winner_score": 35,
+     "loser": "Iowa",
+     "loser_score": 0
+    },
+    {
+     "year": 2023,
+     "season": 2022,
+     "date": "January 2, 2023",
+     "winner": "LSU",
+     "winner_score": 63,
+     "loser": "Purdue",
+     "loser_score": 7
+    },
+    {
+     "year": 2022,
+     "season": 2021,
+     "date": "January 1, 2022",
+     "winner": "Kentucky",
+     "winner_score": 20,
+     "loser": "Iowa",
+     "loser_score": 17
+    }
+   ]
+  },
+  {
+   "name": "First Responder Bowl",
+   "date": "Jan 2",
+   "time": "3:30 pm",
+   "site": "Gerald J. Ford Stadium Dallas, Texas",
+   "bowl": "First Responder Bowl",
+   "article": "First Responder Bowl",
+   "stadium": "Gerald J. Ford Stadium",
+   "location": "University Park, Texas",
+   "first_played": 2011,
+   "operated": "2011–present",
+   "payout": "US$ 824,545 (2019)",
+   "tie_ins": [
+    "American Athletic Conference",
+    "ACC",
+    "Big 12",
+    "Conference USA"
+   ],
+   "previous_tie_ins": [
+    "Big Ten"
+   ],
+   "games_played": 15,
+   "most_appearances": [
+    {
+     "team": "North Texas",
+     "games": 3,
+     "wins": 1
+    },
+    {
+     "team": "Texas State",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "UTSA",
+     "games": 2,
+     "wins": 1
+    },
+    {
+     "team": "Air Force",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "Army",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "Houston",
+     "games": 1,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 26, 2025",
+     "winner": "UTSA",
+     "winner_score": 57,
+     "loser": "FIU",
+     "loser_score": 20
+    },
+    {
+     "year": 2025,
+     "season": 2024,
+     "date": "January 3, 2025",
+     "winner": "Texas State",
+     "winner_score": 30,
+     "loser": "North Texas",
+     "loser_score": 28
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 26, 2023",
+     "winner": "Texas State",
+     "winner_score": 45,
+     "loser": "Rice",
+     "loser_score": 21
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 27, 2022",
+     "winner": "Memphis",
+     "winner_score": 38,
+     "loser": "Utah State",
+     "loser_score": 10
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 28, 2021",
+     "winner": "Air Force",
+     "winner_score": 31,
+     "loser": "Louisville",
+     "loser_score": 28
+    }
+   ]
+  },
+  {
+   "name": "Arizona Bowl",
+   "date": "Jan 2",
+   "time": "4:30 pm",
+   "site": "Casino Del Sol Stadium Tucson, Arizona",
+   "bowl": "Arizona Bowl",
+   "article": "Arizona Bowl",
+   "stadium": "Casino Del Sol Stadium",
+   "location": "Tucson, Arizona",
+   "first_played": 2015,
+   "operated": "2015–present",
+   "payout": "US$ 350,000 (2023)",
+   "tie_ins": [
+    "Mountain West",
+    "MAC"
+   ],
+   "previous_tie_ins": [
+    "Sun Belt (2016–2019)"
+   ],
+   "games_played": 10,
+   "most_appearances": [
+    {
+     "team": "Wyoming",
+     "games": 3,
+     "wins": 2
+    },
+    {
+     "team": "Nevada",
+     "games": 2,
+     "wins": 2
+    },
+    {
+     "team": "Miami (OH)",
+     "games": 2,
+     "wins": 1
+    },
+    {
+     "team": "Colorado State",
+     "games": 2,
+     "wins": 0
+    },
+    {
+     "team": "Air Force",
+     "games": 1,
+     "wins": 1
+    },
+    {
+     "team": "Ball State",
+     "games": 1,
+     "wins": 1
+    }
+   ],
+   "recent": [
+    {
+     "year": 2025,
+     "season": 2025,
+     "date": "December 27, 2025",
+     "winner": "Fresno State",
+     "winner_score": 18,
+     "loser": "Miami (OH)",
+     "loser_score": 3
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 28, 2024",
+     "winner": "Miami (OH)",
+     "winner_score": 43,
+     "loser": "Colorado State",
+     "loser_score": 17
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 30, 2023",
+     "winner": "Wyoming",
+     "winner_score": 16,
+     "loser": "Toledo",
+     "loser_score": 15
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 30, 2022",
+     "winner": "Ohio",
+     "winner_score": 30,
+     "loser": "Wyoming",
+     "loser_score": 27
+    },
+    {
+     "year": 2020,
+     "season": 2020,
+     "date": "December 31, 2020",
+     "winner": "Ball State",
+     "winner_score": 34,
+     "loser": "San Jose State",
+     "loser_score": 13
+    }
+   ]
+  },
+  {
+   "name": "Liberty Bowl",
+   "date": "Jan 2",
+   "time": "7:30 pm",
+   "site": "Simmons Bank Liberty Stadium Memphis, Tennessee",
+   "bowl": "Liberty Bowl",
+   "article": "Liberty Bowl",
+   "stadium": "Simmons Bank Liberty Stadium",
+   "location": "Memphis, Tennessee",
+   "first_played": 1959,
+   "operated": "1959–present",
+   "payout": "US$ 6 million (2022)",
+   "tie_ins": [
+    "SEC"
+   ],
+   "previous_tie_ins": [
+    "C-USA (1996–2013)",
+    "MWC (1998–2005)",
+    "winner of the Commander in Chief's Trophy (1989–1992)"
+   ],
+   "games_played": 67,
+   "most_appearances": [
+    {
+     "team": "Arkansas",
+     "games": 7,
+     "wins": 4
+    },
+    {
+     "team": "Mississippi State",
+     "games": 5,
+     "wins": 3
+    },
+    {
+     "team": "Ole Miss",
+     "games": 4,
+     "wins": 4
+    },
+    {
+     "team": "Louisville",
+     "games": 4,
+     "wins": 3
+    },
+    {
+     "team": "Air Force",
+     "games": 4,
+     "wins": 2
+    },
+    {
+     "team": "Alabama",
+     "games": 4,
+     "wins": 2
+    }
+   ],
+   "recent": [
+    {
+     "year": 2026,
+     "season": 2025,
+     "date": "January 2, 2026",
+     "winner": "Navy",
+     "winner_score": 35,
+     "loser": "Cincinnati",
+     "loser_score": 13
+    },
+    {
+     "year": 2024,
+     "season": 2024,
+     "date": "December 27, 2024",
+     "winner": "Arkansas",
+     "winner_score": 39,
+     "loser": "Texas Tech",
+     "loser_score": 26
+    },
+    {
+     "year": 2023,
+     "season": 2023,
+     "date": "December 29, 2023",
+     "winner": "Memphis",
+     "winner_score": 36,
+     "loser": "Iowa State",
+     "loser_score": 26
+    },
+    {
+     "year": 2022,
+     "season": 2022,
+     "date": "December 28, 2022",
+     "winner": "Arkansas",
+     "winner_score": 55,
+     "loser": "Kansas",
+     "loser_score": 53
+    },
+    {
+     "year": 2021,
+     "season": 2021,
+     "date": "December 28, 2021",
+     "winner": "Texas Tech",
+     "winner_score": 34,
+     "loser": "Mississippi State",
+     "loser_score": 7
+    }
+   ]
+  }
+ ]
+}

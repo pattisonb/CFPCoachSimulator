@@ -7,3 +7,4 @@ data/engine_teams.json
 data/games.json
 data/season_results.json
 data/seasons/
+*.log

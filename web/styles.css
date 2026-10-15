@@ -307,3 +307,16 @@ table.stats tr.clickable:hover td { background: var(--panel-2); }
 .match-row.win { color: var(--good); font-weight: 700; }
 .champ-banner { margin-top: 16px; padding: 14px; text-align: center; font-size: 18px; font-weight: 800; background: var(--accent); color: var(--accent-ink); border-radius: 8px; }
 @media (max-width: 900px) { .season-layout { grid-template-columns: 1fr; } .season-side { position: static; max-height: 200px; } }
+
+/* bowls */
+.bowl-card { background: var(--panel-2); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; border: 1px solid transparent; }
+.bowl-card.mine { border-color: var(--accent); }
+.bowl-card.clickable { cursor: pointer; }
+.bowl-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.bowl-match { margin: 6px 0; font-size: 14px; }
+
+.stats td.name .crown { margin-left: 6px; font-size: 13px; line-height: 1; vertical-align: -1px; cursor: default; }
+.others-votes { margin-top: 12px; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.others-votes b { color: var(--text); }
+.conf-block table + table { margin-top: 10px; }
+.stats td .rank { color: var(--muted); font-size: 11px; }

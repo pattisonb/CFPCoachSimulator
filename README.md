@@ -67,6 +67,8 @@ batch of 100 games takes about 5 seconds on Render's free CPU.
 | `fetch_schedules.py` | Downloads every FBS team's 2026 schedule from ESPN into `data/schedules.json` |
 | `season.py` | Week-by-week season engine: polls, title games, bracket, playoff (`python season.py ohio-state full`) |
 | `polls.py` | AP poll model, committee model and the 2026 bracket rules |
+| `bowls.py` | The 2026-27 bowl lineup, selection by conference tie-ins, and which bowls host the playoff rounds |
+| `fetch_bowls.py` | Downloads the bowl schedule and every bowl's tie-ins and history from Wikipedia into `data/bowls.json` |
 | `fetch_polls.py`, `analyze_polls.py`, `calibrate_polls.py` | 2014-2025 poll archive, the behaviour study, and the model fit |
 | `calibrate_season.py` | Replays every real 2026 game N times and compares predicted and actual margins |
 | `calibrate.py` | Per-team stat benchmarks against FBS 2025 averages (`league` mode uses the real rosters) |
@@ -267,6 +269,52 @@ straight by the final ranking, so the four highest-ranked teams get the byes reg
 titles; an automatic qualifier ranked outside the top 12 takes the lowest seed; the first
 round is 5v12, 6v11, 7v10, 8v9 at the higher seed's home; quarterfinals are 1 vs the 8/9
 winner, 2 vs 7/10, 3 vs 6/11, 4 vs 5/12 on neutral fields; no reseeding.
+
+### The bowl season (weeks 16-19)
+
+Every bowl of the 2026-27 season is played, and the playoff rounds carry their real bowl
+names and sites. The lineup comes from Wikipedia's "2026-27 NCAA football bowl games"
+page (`fetch_bowls.py` writes `data/bowls.json`): 35 non-playoff bowls plus the seven
+playoff games, with each bowl's date, kickoff time and stadium. Each bowl's own article
+supplies its infobox conference tie-ins (current and previous, with the years each
+contract ran) and its complete game-by-game results table, from which the app derives the
+number of editions, the first year played, the all-time appearance leaders with their
+records, and the last five results. The "Winning team / Losing team" tables and the Rose
+Bowl's "West / East" table are both read; the winner in the two-sided table is the side
+with the higher score. Two new bowls (the Frisco Football Classic's return and the Puerto
+Rico Bowl) have no history yet.
+
+**How teams are placed.** Once the 12-team field is set, every other team with six wins is
+bowl-eligible; five-win teams are used only if a bowl would otherwise go empty, which is
+what the NCAA allows. Bowls select in order of payout and prestige (Citrus, ReliaQuest,
+Alamo, Holiday, Pop-Tarts, Gator, Music City, Texas, Las Vegas, Sun, Liberty, Duke's Mayo,
+Pinstripe, Military, Fenway, Independence, Birmingham, Armed Forces, First Responder,
+Cactus, Arizona, Hawaii, New Mexico, Frisco, Boca Raton, Gasparilla, Cure, Myrtle Beach,
+Famous Idaho Potato, New Orleans, 68 Ventures, Poinsettia, Puerto Rico, Frisco Football
+Classic, Salute to Veterans). Each bowl fills its two slots from its contracted
+conferences, taking the best remaining team there by the committee's final order, then
+record, then rating. Wikipedia's infobox mixes historical and current partners, so the
+slots used for selection are a curated 2026 table in `bowls.py` (for example Citrus: SEC
+vs Big Ten; Alamo: Big 12 vs Pac-12; Gator: ACC vs SEC; Hawaii: Mountain West vs
+American). When a conference has no eligible team left, a Group of Five bowl takes the
+best remaining Group of Five team and a power-conference bowl takes the best remaining
+team from anywhere, so the Gasparilla Bowl can end up with an SEC at-large team the way
+Florida landed there in 2024. Two teams from the same conference are never paired.
+
+**Calendar.** Bowls are dispersed into the playoff weeks by date: week 16 ("First round &
+bowls") holds the four first-round games at the higher seeds' stadiums and the bowls
+through December 24; week 17 ("Quarterfinals & bowls") holds the December 26-31 bowls
+and the quarterfinals, the Fiesta Bowl on December 30 and the Peach, Rose and Cotton Bowls
+on January 1; week 18 ("Semifinals & New Year bowls") holds the January 2 bowls (Citrus,
+First Responder, Arizona, Liberty) and the semifinals, the Orange Bowl on January 14 and
+the Sugar Bowl on January 15; week 19 is the national championship on January 25, 2027 at
+Allegiant Stadium in Las Vegas. Quarterfinal bowls go to the top four seeds by their
+traditional affinity (Rose: Big Ten or Pac-12; Peach: SEC or ACC; Cotton: Big 12 or SEC;
+Fiesta: the rest), seed 1 choosing first, which matches how the CFP has placed the byes.
+
+The **Bowls** tab lists every bowl by week with the matchup and score, tie-ins, editions
+and first year, most appearances, recent results and previous tie-ins; your own bowl opens
+the box score. The Games and My Schedule tabs show each playoff game's bowl name and site.
 
 ## Player stat lines and usage (box score calibration)
 
