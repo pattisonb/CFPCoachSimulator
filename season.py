@@ -642,22 +642,35 @@ def _make_pool() -> Optional[Pool]:
 Reporter = Callable[[str, Optional[int], Optional[int]], None]   # (stage text, games done, games total)
 
 
+def _week_seeds(state: dict, week: int) -> dict[str, int]:
+    """The random seed of every unplayed game of the week, drawn once in schedule order, so
+    playing your game first (game day) and the rest later gives the same results as the
+    whole week at once."""
+    seeds = state.setdefault("seeds", {})
+    if str(week) not in seeds:
+        rng = random.Random(state["rng_state"])
+        seeds[str(week)] = {eid: rng.randrange(1 << 30) for eid, g in state["games"].items() if g["week"] == week and not g["played"]}
+        state["rng_state"] = rng.randrange(1 << 30)
+    return seeds[str(week)]
+
+
 def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, report: Optional[Reporter] = None,
                stage: str = "Simulating") -> None:
-    rng = random.Random(state["rng_state"])
     jobs = []
+    if game_ids:
+        seeds = _week_seeds(state, state["games"][game_ids[0]]["week"])
+        spare = random.Random(state["rng_state"])
     for eid in game_ids:
         g = state["games"][eid]
         keep = True   # every game's box score is kept (on disk; yours also in the state)
         depth = state.get("depth") or {}
         injuries = state.get("injuries") or {}
-        jobs.append((eid, g["home"], g["away"], g["neutral"], rng.randrange(1 << 30), keep, (depth.get(g["home"]), depth.get(g["away"])),
+        jobs.append((eid, g["home"], g["away"], g["neutral"], seeds.get(eid) if eid in seeds else spare.randrange(1 << 30), keep, (depth.get(g["home"]), depth.get(g["away"])),
                      [(i["name"], i["position"]) for i in injuries.get(g["home"], {}).values()],
                      [(i["name"], i["position"]) for i in injuries.get(g["away"], {}).values()],
                      (player_edits(state, g["home"]), player_edits(state, g["away"])),
                      (morale_payload(state, g["home"]), morale_payload(state, g["away"]), morale_on(state))))
     before = rank_map(state, state["current_week"]) if morale_on(state) else {}
-    state["rng_state"] = rng.randrange(1 << 30)
     if not jobs:
         return
     if report:
@@ -793,19 +806,12 @@ def week_label(week: int) -> str:
     return BOWL_WEEK_LABELS.get(week) or f"Week {week}"
 
 
-def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter] = None) -> dict:
-    """Play the next week. Returns the state. `report(stage, games_done, games_total)` is
-    called as the week goes, for a live progress display."""
-    if state["done"]:
-        return state
-
-    def say(stage: str) -> None:
-        if report:
-            report(stage, None, None)
-
-    teams = load_teams()
-    week = state["current_week"] + 1
-    label = week_label(week)
+def _setup_week(state: dict, week: int, teams: dict, say) -> None:
+    """What happens before a week's games, once: injuries heal a week, and the title games,
+    the playoff round and the bowls are set. Game day and the full advance both call it."""
+    if state.get("week_setup") == week:
+        return
+    state["week_setup"] = week
     _heal(state)
     _decay_morale(state)
     if week == CCG_WEEK:
@@ -820,6 +826,49 @@ def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter]
         say("Selecting the bowls")
         for g in _bowl_games(state, teams):
             state["games"][g["event_id"]] = g
+
+
+def my_game_id(state: dict, week: Optional[int] = None) -> Optional[str]:
+    """Your unplayed game in `week` (default: the week up next), or None on a bye."""
+    week = state["current_week"] + 1 if week is None else week
+    me = state["team"]
+    return next((eid for eid, g in state["games"].items() if g["week"] == week and not g["played"] and me in (g["home"], g["away"])), None)
+
+
+def play_my_game(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter] = None) -> Optional[str]:
+    """Game day: set the week up if it is not yet, then simulate only your game. The rest
+    of the week waits for `advance`. Returns the game's event id, or None on a bye."""
+    if state["done"]:
+        return None
+
+    def say(stage: str) -> None:
+        if report:
+            report(stage, None, None)
+
+    week = state["current_week"] + 1
+    _setup_week(state, week, load_teams(), say)
+    eid = my_game_id(state, week)
+    if eid is None:
+        return None
+    _run_games(state, [eid], pool, report, stage="Simming your game")
+    return eid
+
+
+def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter] = None) -> dict:
+    """Play the next week (the rest of it, after a game day). Returns the state.
+    `report(stage, games_done, games_total)` is called as the week goes, for a live
+    progress display."""
+    if state["done"]:
+        return state
+
+    def say(stage: str) -> None:
+        if report:
+            report(stage, None, None)
+
+    teams = load_teams()
+    week = state["current_week"] + 1
+    label = week_label(week)
+    _setup_week(state, week, teams, say)
     ids = [eid for eid, g in state["games"].items() if g["week"] == week and not g["played"]]
     _run_games(state, ids, pool, report, stage=f"Simming {label}")
 

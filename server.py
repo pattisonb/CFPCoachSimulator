@@ -350,6 +350,46 @@ def _run_advance(job: dict, target: int) -> None:
         job["error"] = str(exc)
 
 
+def _run_gameday(job: dict) -> None:
+    def report(stage: str, games_done: Optional[int], games_total: Optional[int]) -> None:
+        job["stage"] = stage
+        job["week"] = job["state"]["current_week"] + 1
+        if games_total is not None:
+            job["games_done"], job["games_total"] = games_done, games_total
+        else:
+            job["games_done"] = job["games_total"] = None
+
+    try:
+        with _season_lock:
+            eid = season.play_my_game(job["state"], season.shared_pool(), report=report)
+            job["stage"] = "Saving"
+            season.save_season(job["state"])
+        job["gameday_event"] = eid
+        job["status"] = "idle"
+        job["stage"] = None
+    except Exception as exc:  # noqa: BLE001
+        job["status"] = "error"
+        job["error"] = str(exc)
+
+
+@app.post("/api/season/{season_id}/gameday")
+def gameday_season(season_id: str) -> dict:
+    """Game day: simulate only your game this week (the week's matchups are set first if
+    they are not yet). Advance then plays the rest of the week."""
+    state = _season_state(season_id)
+    job = _season_jobs[season_id]
+    if job["status"] == "running":
+        raise HTTPException(409, "already simulating")
+    if state["done"]:
+        return {"status": "idle", "done": state["current_week"], "total": state["current_week"]}
+    if season.my_game_id(state) is None:
+        raise HTTPException(409, "no game this week: a bye, or your game is already played")
+    job.update(status="running", done=state["current_week"], total=state["current_week"] + 1, stop=False, paused=False, gameday_event=None,
+               stage="Simming your game", week=state["current_week"] + 1)
+    threading.Thread(target=_run_gameday, args=(job,), daemon=True).start()
+    return {"status": "running", "done": state["current_week"], "total": state["current_week"] + 1}
+
+
 @app.post("/api/season")
 def create_season(req: SeasonRequest) -> dict:
     _team(req.team)
@@ -439,7 +479,7 @@ def season_status(season_id: str, since: Optional[int] = None) -> dict:
     """Job progress plus, while simming, your record and the results since week `since`."""
     state = _season_state(season_id)
     job = _season_jobs[season_id]
-    out = {k: job.get(k) for k in ("id", "status", "done", "total", "error", "stage", "week", "games_done", "games_total", "paused")}
+    out = {k: job.get(k) for k in ("id", "status", "done", "total", "error", "stage", "week", "games_done", "games_total", "paused", "gameday_event")}
     out["current_week"] = state["current_week"]
     rec = season._records(state)[state["team"]]
     out["record"] = {"wins": rec["wins"], "losses": rec["losses"], "conf_wins": rec["conf_wins"], "conf_losses": rec["conf_losses"]}
@@ -469,7 +509,7 @@ def advance_season(season_id: str, req: AdvanceRequest) -> dict:
         return {"status": "idle", "done": state["current_week"], "total": state["current_week"]}
     target = req.to if req.to is not None else state["current_week"] + 1
     target = max(state["current_week"] + 1, min(season.FINAL_WEEK, target))
-    job.update(status="running", done=state["current_week"], total=target, stop=False, paused=False)
+    job.update(status="running", done=state["current_week"], total=target, stop=False, paused=False, gameday_event=None)
     threading.Thread(target=_run_advance, args=(job, target), daemon=True).start()
     return {"status": "running", "done": state["current_week"], "total": target}
 
