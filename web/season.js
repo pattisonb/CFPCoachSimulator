@@ -231,10 +231,14 @@
       }
       if (!accent) accent = mix(candidates[0], target, 0.9);
     }
-    const ink = contrast(accent, [0, 0, 0]) >= contrast(accent, [255, 255, 255]) ? "#1a1200" : "#ffffff";
+    const inkFor = (rgb) => (contrast(rgb, [0, 0, 0]) >= contrast(rgb, [255, 255, 255]) ? "#1a1200" : "#ffffff");
     const primary = candidates[0];
     const secondary = candidates[1] || accent;
-    return { accent: rgbToHex(accent), ink, primary: rgbToHex(primary), secondary: rgbToHex(secondary) };
+    // the colour for buttons that sit on the primary band: the first other team colour that
+    // reads against the primary, else white or black
+    const onPrimary = candidates.slice(1).find((c) => contrast(c, primary) >= 3) || hexToRgb(inkFor(primary) === "#ffffff" ? "#ffffff" : "#1a1200");
+    return { accent: rgbToHex(accent), ink: inkFor(accent), primary: rgbToHex(primary), primaryInk: inkFor(primary),
+             secondary: rgbToHex(secondary), onPrimary: rgbToHex(onPrimary), onPrimaryInk: inkFor(onPrimary) };
   }
 
   function applyTeamTheme(slug) {
@@ -243,7 +247,7 @@
     const t = slug && window.CFP.teamsBySlug[slug];
     const theme = t && t.colors ? teamTheme(t.colors) : null;
     if (!theme) {
-      for (const v of ["--accent", "--accent-ink", "--team-primary", "--team-secondary"]) root.removeProperty(v);
+      for (const v of ["--accent", "--accent-ink", "--team-primary", "--team-primary-ink", "--team-secondary", "--team-on-primary", "--team-on-primary-ink"]) root.removeProperty(v);
       document.body.classList.remove("team-theme");
       if (meta) meta.content = document.documentElement.dataset.theme === "light" ? "#ffffff" : "#131a2e";
       return;
@@ -251,7 +255,10 @@
     root.setProperty("--accent", theme.accent);
     root.setProperty("--accent-ink", theme.ink);
     root.setProperty("--team-primary", theme.primary);
+    root.setProperty("--team-primary-ink", theme.primaryInk);
     root.setProperty("--team-secondary", theme.secondary);
+    root.setProperty("--team-on-primary", theme.onPrimary);
+    root.setProperty("--team-on-primary-ink", theme.onPrimaryInk);
     document.body.classList.add("team-theme");
     if (meta) meta.content = theme.primary;
   }

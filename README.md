@@ -273,8 +273,10 @@ chips, the progress bar, your row in tables) is the first of the team's primary,
 secondary and accent colours that reads against the page in the current light or dark
 theme (contrast at least 2.6 to the background and panels); if none does, the primary is
 pushed toward white or black until it does. The ink on the accent is black or white,
-whichever contrasts more. The top bar and the season header take a tint of the primary
-with a line of the secondary. Michigan is maize on dark and navy on light, Penn State is
+whichever contrasts more. The top bar and the season header's title band are solid in
+the primary with a line of the secondary, their buttons take the first other team colour
+that reads against the primary, the page background is washed in the primary at the top,
+and panel headings and the active tab take the accent. Michigan is maize on dark and navy on light, Penn State is
 navy on light and white on dark, Oregon is green on light and yellow on dark, and so on;
 the accent is re-picked when the theme toggle flips.
 
