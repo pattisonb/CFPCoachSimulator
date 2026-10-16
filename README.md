@@ -211,6 +211,12 @@ selection** or **Sim to the end**. The week strip lets you look back at any week
 - **Bracket**: a projected bracket as soon as the first committee ranking exists (current
   conference leaders as projected champions), then the real bracket on selection day and
   the playoff results as the rounds are played.
+- **Summary**: the season in review (or the season so far): the national champion and
+  title game, every playoff round, each conference's champion and title-game score, the
+  final CFP ranking and AP poll, then your team's record, conference finish, postseason
+  result, scoring, longest win streak, best win, worst loss, biggest win and closest loss,
+  and your statistical leaders (passer, rusher, receiver, tackler, sacks, interceptions,
+  kicker, returner) totalled from the box scores of your games (`/api/season/{id}/review`).
 
 The calendar: weeks 1-13 are the regular season (the 2026 schedule ends Nov 28), week 14
 is championship week (the top two in every conference's standings meet, on a neutral

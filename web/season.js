@@ -292,7 +292,7 @@
         el("span", { class: "muted small-text", text: `${label}: ` }),
         el("span", { class: l.won ? "win" : "loss", text: `${l.won ? "W" : "L"} ${l.points_for}-${l.points_against}${l.overtime ? " OT" : ""}` }),
         el("span", { text: ` ${vs} ` }), l.opponent_rank ? el("span", { class: "rank", text: `#${l.opponent_rank} ` }) : null,
-        name(l.opponent, l.opponent_name), el("span", { class: "muted small-text", text: ` (${l.opponent_record || ""})${l.title ? " · " + l.title : " · " + (s.week_labels[l.week] || "week " + l.week)}` }),
+        name(l.opponent, l.opponent_name), el("span", { class: "muted small-text", text: ` (${l.opponent_record || ""})${l.title && l.title !== label ? " · " + l.title : l.title ? "" : " · " + (s.week_labels[l.week] || "week " + l.week)}` }),
       ]);
       if (l.has_box) line.addEventListener("click", () => openBox(l.event_id));
       return line;
