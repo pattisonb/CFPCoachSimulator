@@ -511,7 +511,13 @@
       b.addEventListener("click", () => { ds.unit = v; renderDepthChart(); });
       return b;
     }));
-    controls.append(teamSel, viewChips, unitChips);
+    controls.append(teamSel);
+    if (ds.team !== s.team) {
+      const mineBtn = el("button", { type: "button", class: "ghost small", text: "My team" });
+      mineBtn.addEventListener("click", () => { ds.team = s.team; renderDepthChart(); });
+      controls.append(mineBtn);
+    }
+    controls.append(viewChips, unitChips);
     box.append(controls);
     if (ds.view === "position") return renderDepthByPosition(box, ds, s);
     const key = `${s.id}|${s.current_week}|${ds.team}`;
@@ -1601,6 +1607,9 @@
     card.append(injBox);
   }
 
+  // a small "you" tag after your team's name wherever teams are listed
+  const youTag = (slug) => (state.season && slug === state.season.team ? el("span", { class: "you-tag", text: "you", title: "Your team" }) : null);
+
   const scheduleState = { team: null, conf: "", data: null, key: null };
 
   async function openGamesModal() {
@@ -2051,7 +2060,7 @@
       for (const t of rows) {
         table.appendChild(el("tr", { class: t.slug === s.team ? "mine" : "" }, [
           el("td", { text: String(t.conf_rank), title: t.tiebreak ? `Tied on conference record; placed by ${t.tiebreak}` : "" }),
-          el("td", { class: "name left" }, [teamPill(t.slug), t.name, ...crownOf(t), t.ap_rank || t.cfp_rank ? el("span", { class: "pos", text: t.cfp_rank ? `CFP ${t.cfp_rank}` : `#${t.ap_rank}` }) : null]),
+          el("td", { class: "name left" }, [teamPill(t.slug), t.name, youTag(t.slug), ...crownOf(t), t.ap_rank || t.cfp_rank ? el("span", { class: "pos", text: t.cfp_rank ? `CFP ${t.cfp_rank}` : `#${t.ap_rank}` }) : null]),
           el("td", { text: `${t.conf_wins}-${t.conf_losses}` }), el("td", { text: `${t.wins}-${t.losses}` }),
           el("td", { class: "ph", text: String(t.points_for) }), el("td", { class: "ph", text: String(t.points_against) }),
         ]));
@@ -2068,7 +2077,7 @@
         const last = t.last ? `${t.last.won ? "W" : "L"} ${t.last.score} ${t.last.venue === "home" ? "vs" : t.last.venue === "away" ? "at" : "vs"} ${t.last.opponent_name}` : "–";
         table.appendChild(el("tr", { class: t.slug === s.team ? "mine" : "" }, [
           el("td", { text: String(t.conf_rank), title: t.tiebreak ? `Tied on conference record; placed by ${t.tiebreak}` : "" }),
-          el("td", { class: "name left" }, [teamPill(t.slug), t.name, ...crownOf(t), rankBadge(t)]),
+          el("td", { class: "name left" }, [teamPill(t.slug), t.name, youTag(t.slug), ...crownOf(t), rankBadge(t)]),
           el("td", { text: `${t.conf_wins}-${t.conf_losses}` }), el("td", { text: `${t.wins}-${t.losses}` }),
           el("td", { class: "ph", text: `${t.home_wins}-${t.home_losses}` }), el("td", { class: "ph", text: `${t.away_wins}-${t.away_losses}` }),
           el("td", { class: "ph", text: String(t.points_for) }), el("td", { class: "ph", text: String(t.points_against) }),
@@ -2131,7 +2140,7 @@
     table.appendChild(el("tr", {}, heads.map((h) => el("th", { text: h, class: ["Pts", "Conference", "Prev"].includes(h) ? "ph" : "", style: ["Team", "Conference"].includes(h) ? "text-align:left" : "", title: h === "Pts" ? "Poll points: 25 for a first-place vote down to 1 for 25th" : "" }))));
     for (const e of list) {
       const move = e.previous == null ? "new" : e.previous === e.rank ? "–" : e.previous > e.rank ? `▲${e.previous - e.rank}` : `▼${e.rank - e.previous}`;
-      const nameCell = el("td", { style: "text-align:left", class: "name" }, [teamPill(e.team), e.name]);
+      const nameCell = el("td", { style: "text-align:left", class: "name" }, [teamPill(e.team), e.name, youTag(e.team)]);
       if (voted && e.first_place) nameCell.append(el("span", { class: "fpv", text: ` (${e.first_place})`, title: `${e.first_place} first-place vote${e.first_place === 1 ? "" : "s"}` }));
       table.appendChild(el("tr", { class: e.team === s.team ? "mine" : "" }, [
         el("td", { text: String(e.rank) }),
@@ -2564,7 +2573,7 @@
     const st = resumeState;
     const cols = [
       { key: "rank", label: "#", get: (r) => (r.rank ? String(r.rank) : "NR"), sort: (r) => r.rank || 99 },
-      { key: "team", label: "Team", left: true, get: (r) => el("span", { "data-team": r.team }, [teamPill(r.team), r.name]), sort: (r) => r.name },
+      { key: "team", label: "Team", left: true, get: (r) => el("span", { "data-team": r.team }, [teamPill(r.team), r.name, youTag(r.team)]), sort: (r) => r.name },
       { key: "record", label: "Record", get: (r) => r.record, sort: (r) => r.wins - r.losses / 100 },
       { key: "conf", label: "Conf", ph: true, get: (r) => r.conf_record, sort: (r) => Number(r.conf_record.split("-")[0]) },
       { key: "sos", label: "SOS", get: (r) => String(r.sos_rank), sort: (r) => r.sos_rank },
