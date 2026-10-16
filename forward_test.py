@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import shutil
 import statistics as st
@@ -177,7 +178,7 @@ def _sim_game(args: tuple) -> dict:
             out[label] = round(sums[side][name][key] / n, 1)
         return out
 
-    res = {"idx": idx, "pred_margin": round(st.mean(margins), 2), "pred_sd": round(st.pstdev(margins), 2),
+    res = {"idx": idx, "pred_margin": whole_points(st.mean(margins)), "pred_sd": round(st.pstdev(margins), 2),
            "pred_total": round(st.mean(totals), 2), "home_win_prob": round(wins / n, 3)}
     for side in ("home", "away"):
         res[side] = {"expected_points": round(st.mean(pts[side]), 2),
@@ -245,12 +246,17 @@ def predict(week: int | None, out: Path | None, sims: int, fetch: bool) -> Path:
     return out
 
 
+def whole_points(x: float) -> int:
+    """Round a margin to the nearest whole point, halves away from zero (a pick is never 2.5)."""
+    return int(math.copysign(math.floor(abs(x) + 0.5), x))
+
+
 def pick_text(g: dict) -> str:
     m = g["pred_margin"]
-    if abs(m) < 0.05:
+    if m == 0:
         return "even"
     fav = g["home"]["name"] if m > 0 else g["away"]["name"]
-    return f"{fav} by {abs(m):.1f}"
+    return f"{fav} by {abs(m):.0f}"
 
 
 def print_picks(payload: dict) -> None:
@@ -458,12 +464,12 @@ def score(week: int, file: Path | None, fetch: bool) -> Path:
     lines += ["", "Worst misses (actual margin vs predicted):"]
     for r in sorted(rows, key=lambda r: -abs(r["actual_margin"] - r["pred_margin"]))[:10]:
         lines.append(f"  {r['away']['name']} {r['away_score']} at {r['home']['name']} {r['home_score']}: "
-                     f"actual {r['actual_margin']:+d}, predicted {r['pred_margin']:+.1f}")
+                     f"actual {r['actual_margin']:+d}, predicted {r['pred_margin']:+.0f}")
     lines += ["", "Every game (actual margin vs predicted, home perspective):"]
     for r in rows:
         hit = "ok " if (r["actual_margin"] > 0) == (r["pred_margin"] > 0) else "MISS"
         lines.append(f"  {hit} {r['away']['name']} {r['away_score']} at {r['home']['name']} {r['home_score']}: "
-                     f"actual {r['actual_margin']:+d}, predicted {r['pred_margin']:+.1f} ({100 * r['home_win_prob']:.0f}% home)")
+                     f"actual {r['actual_margin']:+d}, predicted {r['pred_margin']:+.0f} ({100 * r['home_win_prob']:.0f}% home)")
     if pending:
         lines += ["", "Not yet played: " + ", ".join(f"{p['away']['name']} at {p['home']['name']}" for p in pending)]
 
