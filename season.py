@@ -1047,7 +1047,10 @@ def depth_chart_view(state: dict, slug: str) -> dict:
     returners = {"KR": [p for p in players if p.get("slug") == t.get("kick_returner")],
                  "PR": [p for p in players if p.get("slug") == t.get("punt_returner")]}
 
+    injured = (state.get("injuries") or {}).get(slug, {})
+
     def card(p: dict, role: str) -> dict:
+        inj = injured.get(f"{p['name']}|{p['position']}")
         rec = ss.get(f"{p['name']}|{p['position']}")
         st = rec["stats"] if rec else {}
         group = awards.Pool._group(p["position"], p.get("role"), st) or p["position"]
@@ -1056,7 +1059,8 @@ def depth_chart_view(state: dict, slug: str) -> dict:
         return {"name": p["name"], "slug": p.get("slug"), "position": p["position"], "role": p.get("role"), "depth": p.get("depth"), "class": p.get("class"),
                 "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"), "overall": player_overall(p),
                 "starter": bool(p.get("in_game")), "games": rec["games"] if rec else 0,
-                "headline": awards.headline({"stats": st}, group) if st else ""}
+                "headline": awards.headline({"stats": st}, group) if st else "",
+                "injury": {"type": inj["type"], "weeks_left": inj["weeks_left"], "returns_week": state["current_week"] + inj["weeks_left"]} if inj else None}
 
     units = []
     for unit, rows in DEPTH_ROWS:

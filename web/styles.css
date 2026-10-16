@@ -591,3 +591,4 @@ button.tiny { padding: 0 5px; font-size: 11px; line-height: 18px; min-height: 0;
 .week-chip:disabled { cursor: not-allowed; opacity: 0.5; }
 .week-chip.active:disabled, .week-chip.next:disabled { opacity: 0.8; }
 .history-list.locked { pointer-events: none; opacity: 0.6; }
+.injury-tag { color: var(--bad); font-size: 10px; font-weight: 700; margin-left: 6px; text-transform: uppercase; }

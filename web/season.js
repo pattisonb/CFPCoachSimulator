@@ -530,7 +530,8 @@
             i < row.players.length - 1 && !["KR", "PR"].includes(row.role) ? (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "▼", title: "Move down" }); b.addEventListener("click", () => change({ role: row.role, player: p.slug, move: "down" })); return b; })() : null,
           ]);
           cells.push(el("td", { class: `left depth-cell ${i === 0 ? "starter" : ""}` }, [
-            el("div", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, p.name, el("span", { class: "pos", text: `${p.class || ""}${p.position !== row.role ? " · " + p.position : ""}` }), ctl]),
+            el("div", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, p.name, el("span", { class: "pos", text: `${p.class || ""}${p.position !== row.role ? " · " + p.position : ""}` }),
+              p.injury ? el("span", { class: "injury-tag", title: `${p.injury.type}, back ${s.week_labels[p.injury.returns_week] || "week " + p.injury.returns_week}`, text: `OUT ${p.injury.weeks_left}w` }) : null, ctl]),
             el("div", { class: "muted small-text", text: [`${p.overall} ovr`, p.height && p.weight ? `${p.height} ${p.weight}` : "", p.headline || (p.games ? `${p.games} games` : "")].filter(Boolean).join(" · ") }),
           ]));
         }
