@@ -222,7 +222,7 @@
       list.appendChild(el("li", {}, [
         el("span", { class: "teams" }, [...name(g.away), ` ${sep} `, ...name(g.home)]),
         el("span", { class: `pick ${favSide}` }, [
-          el("b", { text: Math.round(Math.abs(m)) === 0 ? "Even" : `${fav.name} by ${Math.round(Math.abs(m))}` }),
+          el("b", { text: `${fav.name} by ${Math.max(1, Math.round(Math.abs(m)))}` }),
           el("span", { class: "prob", text: `${Math.round(100 * favProb)}% · total ${g.pred_total.toFixed(0)}` }),
         ]),
         el("button", { class: "ghost small", type: "button", onclick: () => openMatchup(g) }, "Open"),

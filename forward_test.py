@@ -178,7 +178,10 @@ def _sim_game(args: tuple) -> dict:
             out[label] = round(sums[side][name][key] / n, 1)
         return out
 
-    res = {"idx": idx, "pred_margin": whole_points(st.mean(margins)), "pred_sd": round(st.pstdev(margins), 2),
+    margin = whole_points(st.mean(margins))
+    if margin == 0:   # always pick a winner: the side that won more of the sims, by a point
+        margin = 1 if wins / n >= 0.5 else -1
+    res = {"idx": idx, "pred_margin": margin, "pred_sd": round(st.pstdev(margins), 2),
            "pred_total": round(st.mean(totals), 2), "home_win_prob": round(wins / n, 3)}
     for side in ("home", "away"):
         res[side] = {"expected_points": round(st.mean(pts[side]), 2),
@@ -253,8 +256,6 @@ def whole_points(x: float) -> int:
 
 def pick_text(g: dict) -> str:
     m = g["pred_margin"]
-    if m == 0:
-        return "even"
     fav = g["home"]["name"] if m > 0 else g["away"]["name"]
     return f"{fav} by {abs(m):.0f}"
 
