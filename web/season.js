@@ -82,7 +82,9 @@
     if (!s || s.done) return;
     // the highlighted week is the one Advance plays: a week further ahead sims through to it
     if (!to && state.viewWeek > s.current_week + 1) to = state.viewWeek;
+    state.advanceFrom = s.current_week;
     setBusy(true);
+    showProgress({ status: "running", done: s.current_week, total: to || s.current_week + 1, stage: "Starting", week: s.current_week + 1 });
     try {
       await api(`/api/season/${s.id}/advance`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(to ? { to } : {}) });
       poll();
@@ -95,9 +97,7 @@
       try {
         const j = await api(`/api/season/${state.season.id}/status`);
         if (j.status === "running") {
-          const pct = j.total ? Math.round((100 * j.done) / j.total) : 0;
-          $("#season-progress").hidden = false;
-          $("#season-progress-bar").style.width = `${pct}%`;
+          showProgress(j);
           poll();
         } else {
           if (j.status === "error") toast(`Simulation error: ${j.error}`, 6000);
@@ -113,7 +113,30 @@
 
   function setBusy(b) {
     for (const id of ["btn-advance", "btn-to-selection", "btn-to-end"]) $(`#${id}`).disabled = b || (state.season && state.season.done);
-    if (!b) { $("#season-progress").hidden = true; $("#season-progress-bar").style.width = "0%"; }
+    if (!b) { $("#season-progress").hidden = true; $("#season-progress-text").hidden = true; $("#season-progress-bar").style.width = "0%"; }
+  }
+
+  // Progress while simming: weeks completed plus the fraction of the current week's games,
+  // and a line saying what the sim is doing right now.
+  function showProgress(j) {
+    const s = state.season;
+    const from = state.advanceFrom != null ? state.advanceFrom : Math.max(0, j.done - 1);
+    const span = Math.max(1, j.total - from);
+    const frac = j.games_total ? j.games_done / j.games_total : 0;
+    const pct = Math.min(100, Math.round((100 * (j.done - from + frac)) / span));
+    $("#season-progress").hidden = false;
+    $("#season-progress-bar").style.width = `${pct}%`;
+    const label = j.week ? (s.week_labels[j.week] || `Week ${j.week}`) : "";
+    const text = $("#season-progress-text");
+    text.innerHTML = "";
+    const stage = j.stage || "Simming";
+    const simming = /^Simming/.test(stage);
+    text.append(el("b", { text: simming ? stage : `${label ? label + " · " : ""}${stage}` }));
+    if (simming && j.games_total) text.append(` · ${j.games_done} of ${j.games_total} games`);
+    if (span > 1) text.append(` · ${Math.max(0, j.done - from)} of ${span} weeks done`);
+    text.append(` · ${pct}%`);
+    text.hidden = false;
+    $("#btn-advance").textContent = "Simming…";
   }
 
   // ----- rendering ---------------------------------------------------------

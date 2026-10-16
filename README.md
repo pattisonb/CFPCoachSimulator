@@ -252,6 +252,12 @@ and each game deep-copied both rosters; now only players whose fatigue changed a
 touched, and the copy is shallow, with identical results for the same seed). A week of
 about 90 games runs in 2 seconds with the worker pool and 7 seconds in one process.
 
+While a sim runs the page shows what the engine is doing, live: "Simming Week 7 · 38 of
+92 games", then "Updating the AP poll and CFP rankings", "Setting the conference title
+games", "Building the playoff bracket", "Selecting the bowls", and so on, with the bar
+counting weeks done plus the fraction of the current week's games (the status endpoint
+carries `stage`, `week`, `games_done` and `games_total`).
+
 `SIM_WORKERS` sets how many processes simulate games: unset uses the machine's cores
 (capped at 8); `1` simulates in-process, which `render.yaml` sets because the free tier
 has a fraction of one shared CPU and 512 MB, where a pool only adds memory and spawn

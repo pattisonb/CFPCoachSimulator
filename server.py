@@ -306,11 +306,22 @@ def _season_state(season_id: str) -> dict:
 def _run_advance(job: dict, target: int) -> None:
     def progress(done: int, total: int) -> None:
         job["done"], job["total"] = done, total
+
+    def report(stage: str, games_done: Optional[int], games_total: Optional[int]) -> None:
+        job["stage"] = stage
+        job["week"] = job["state"]["current_week"] + 1
+        if games_total is not None:
+            job["games_done"], job["games_total"] = games_done, games_total
+        else:
+            job["games_done"] = job["games_total"] = None
+
     try:
         with _season_lock:
-            season.advance_to(job["state"], target, progress=progress)
+            season.advance_to(job["state"], target, progress=progress, report=report)
+            job["stage"] = "Saving"
             season.save_season(job["state"])
         job["status"] = "idle"
+        job["stage"] = None
     except Exception as exc:  # noqa: BLE001
         job["status"] = "error"
         job["error"] = str(exc)
@@ -354,7 +365,7 @@ def get_season(season_id: str) -> dict:
 def season_status(season_id: str) -> dict:
     _season_state(season_id)
     job = _season_jobs[season_id]
-    return {k: job.get(k) for k in ("id", "status", "done", "total", "error")}
+    return {k: job.get(k) for k in ("id", "status", "done", "total", "error", "stage", "week", "games_done", "games_total")}
 
 
 @app.post("/api/season/{season_id}/advance")

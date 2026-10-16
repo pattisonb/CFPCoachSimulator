@@ -500,7 +500,11 @@ def _make_pool() -> Optional[Pool]:
     return Pool(processes=n, initializer=_init, initargs=(str(TEAMS_FILE),))
 
 
-def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None) -> None:
+Reporter = Callable[[str, Optional[int], Optional[int]], None]   # (stage text, games done, games total)
+
+
+def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, report: Optional[Reporter] = None,
+               stage: str = "Simulating") -> None:
     rng = random.Random(state["rng_state"])
     jobs = []
     for eid in game_ids:
@@ -510,22 +514,31 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None) ->
     state["rng_state"] = rng.randrange(1 << 30)
     if not jobs:
         return
-    if pool is not None:
-        results = list(pool.imap_unordered(_sim_one, jobs, chunksize=4))
-    elif sim_workers() <= 1:
-        if not _TEAMS:
-            _init(str(TEAMS_FILE))
-        results = [_sim_one(job) for job in jobs]
-    else:
-        with _make_pool() as p:
-            results = list(p.imap_unordered(_sim_one, jobs, chunksize=4))
-    for r in results:
+    if report:
+        report(stage, 0, len(jobs))
+
+    def take(r: dict, n: int) -> None:
         g = state["games"][r["event_id"]]
         g.update(played=True, home_score=r["home_score"], away_score=r["away_score"], overtime=r["overtime"])
         if "stats" in r:
             _accumulate_stats(state, g, r["stats"])
         if "game" in r:
             state["my_boxes"][r["event_id"]] = r["game"]
+        if report:
+            report(stage, n, len(jobs))
+
+    if pool is not None:
+        for n, r in enumerate(pool.imap_unordered(_sim_one, jobs, chunksize=2), 1):
+            take(r, n)
+    elif sim_workers() <= 1:
+        if not _TEAMS:
+            _init(str(TEAMS_FILE))
+        for n, job in enumerate(jobs, 1):
+            take(_sim_one(job), n)
+    else:
+        with _make_pool() as p:
+            for n, r in enumerate(p.imap_unordered(_sim_one, jobs, chunksize=2), 1):
+                take(r, n)
 
 
 def _ccg_matchups(state: dict, teams: dict) -> list[dict]:
@@ -616,23 +629,41 @@ def _bowl_games(state: dict, teams: dict) -> list[dict]:
     return out
 
 
-def advance(state: dict, pool: Optional[Pool] = None) -> dict:
-    """Play the next week. Returns the state."""
+def week_label(week: int) -> str:
+    if week == CCG_WEEK:
+        return "Championship week"
+    if week == SELECTION_WEEK:
+        return "Selection week"
+    return BOWL_WEEK_LABELS.get(week) or f"Week {week}"
+
+
+def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter] = None) -> dict:
+    """Play the next week. Returns the state. `report(stage, games_done, games_total)` is
+    called as the week goes, for a live progress display."""
     if state["done"]:
         return state
+
+    def say(stage: str) -> None:
+        if report:
+            report(stage, None, None)
+
     teams = load_teams()
     week = state["current_week"] + 1
+    label = week_label(week)
     if week == CCG_WEEK:
+        say("Setting the conference title games")
         for g in _ccg_matchups(state, teams):
             state["games"][g["event_id"]] = g
     if week in PLAYOFF_WEEKS:
+        say(f"Setting the {PLAYOFF_WEEKS[week].lower()} matchups")
         for g in _playoff_round(state, week, teams):
             state["games"][g["event_id"]] = g
     if week == 16:
+        say("Selecting the bowls")
         for g in _bowl_games(state, teams):
             state["games"][g["event_id"]] = g
     ids = [eid for eid, g in state["games"].items() if g["week"] == week and not g["played"]]
-    _run_games(state, ids, pool)
+    _run_games(state, ids, pool, report, stage=f"Simming {label}")
 
     if week == CCG_WEEK:
         for g in state["games"].values():
@@ -641,8 +672,10 @@ def advance(state: dict, pool: Optional[Pool] = None) -> dict:
                 state["champions"][g["conference"]] = g["home"] if won_home else g["away"]
                 state.setdefault("runners_up", {})[g["conference"]] = g["away"] if won_home else g["home"]
     if week <= CCG_WEEK:
+        say("Updating the AP poll and CFP rankings" if week in CFP_WEEKS else "Updating the AP poll")
         _update_polls_after_week(state, teams, week)
     if week == CCG_WEEK:
+        say("Building the playoff bracket")
         final = state["polls"][str(week)].get("cfp_full") or [e["team"] for e in state["polls"][str(week)]["cfp"]]
         conf_of = {slug: t["conference"] for slug, t in teams.items()}
         names = {slug: t["name"] for slug, t in teams.items()}
@@ -680,11 +713,12 @@ def close_pool() -> None:
         _SHARED_POOL = None
 
 
-def advance_to(state: dict, target_week: int, progress: Optional[Callable[[int, int], None]] = None) -> dict:
+def advance_to(state: dict, target_week: int, progress: Optional[Callable[[int, int], None]] = None,
+               report: Optional[Reporter] = None) -> dict:
     target = min(target_week, 19)
     pool = shared_pool()
     while state["current_week"] < target and not state["done"]:
-        advance(state, pool)
+        advance(state, pool, report)
         if progress:
             progress(state["current_week"], target)
     return state
