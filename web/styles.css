@@ -292,7 +292,7 @@ button.accent { background: #3ddc84; color: #04210f; border-color: #3ddc84; }
 #season-title .rec { color: var(--accent); margin-left: 10px; }
 table.stats td.win { color: var(--good); font-weight: 700; }
 table.stats td.loss { color: var(--bad); font-weight: 700; }
-table.stats tr.mine td { background: rgba(245, 185, 66, 0.10); }
+table.stats tr.mine td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 table.stats tr.clickable { cursor: pointer; }
 table.stats tr.clickable:hover td { background: var(--panel-2); }
 .conf-block { margin-bottom: 18px; }
@@ -438,3 +438,16 @@ table.review-table th, table.review-table td { white-space: normal; }
   .season-actions button { flex: 1 1 auto; }
 }
 .side-actions { display: flex; gap: 6px; }
+
+/* team colours while a season is open (applyTeamTheme sets the variables) */
+:root { --team-primary: var(--accent); --team-secondary: var(--accent); }
+body.team-theme .topbar {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--team-primary) 30%, var(--panel)) 0%, var(--panel) 65%);
+  border-bottom-color: color-mix(in srgb, var(--team-primary) 45%, var(--border));
+}
+body.team-theme .season-head {
+  border-left: 4px solid var(--team-primary);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--team-primary) 18%, var(--panel)) 0%, var(--panel) 60%);
+  box-shadow: inset 0 3px 0 color-mix(in srgb, var(--team-secondary) 70%, transparent);
+}
+body.team-theme .brand-mark { background: var(--accent); color: var(--accent-ink); }

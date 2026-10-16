@@ -62,6 +62,7 @@
   function closeSeason() {
     clearTimeout(state.timer);
     state.season = null;
+    applyTeamTheme(null);
     state.viewWeek = null;
     $("#season").hidden = true;
     $("#season-empty").hidden = false;
@@ -189,9 +190,79 @@
 
   // ----- rendering ---------------------------------------------------------
 
+  // ----- team colours --------------------------------------------------------
+  // While a season is open the page takes the team's colours: the accent (buttons, chips,
+  // progress, highlights) is the first of the team's colours that reads against the page
+  // background in the current light/dark theme, else the primary lightened or darkened
+  // until it does; the ink on it is black or white, whichever contrasts more. The top
+  // bar and season header get a tint of the primary. Every team ends up legible.
+  function hexToRgb(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
+    if (!m) return null;
+    const n = parseInt(m[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function rgbToHex(rgb) { return "#" + rgb.map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, "0")).join(""); }
+  function luminance(rgb) {
+    const f = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]);
+  }
+  function contrast(a, b) { const la = luminance(a), lb = luminance(b); return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05); }
+  function mix(a, b, t) { return a.map((v, i) => v + (b[i] - v) * t); }
+  function cssRgb(name) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return hexToRgb(v) || (v.startsWith("rgb") ? v.match(/\d+/g).slice(0, 3).map(Number) : null);
+  }
+
+  function teamTheme(colors) {
+    const bg = cssRgb("--bg") || [11, 16, 32];
+    const panel = cssRgb("--panel") || bg;
+    const light = luminance(bg) > 0.5;
+    const reads = (rgb) => Math.min(contrast(rgb, bg), contrast(rgb, panel)) >= 2.6;
+    const candidates = [colors.primary, colors.secondary, colors.accent].map(hexToRgb).filter(Boolean);
+    if (!candidates.length) return null;
+    let accent = candidates.find(reads);
+    if (!accent) {
+      // push the primary toward white (dark theme) or black (light theme) until it reads
+      const target = light ? [0, 0, 0] : [255, 255, 255];
+      for (let t = 0.1; t <= 0.9 && !accent; t += 0.1) {
+        const c = mix(candidates[0], target, t);
+        if (reads(c)) accent = c;
+      }
+      if (!accent) accent = mix(candidates[0], target, 0.9);
+    }
+    const ink = contrast(accent, [0, 0, 0]) >= contrast(accent, [255, 255, 255]) ? "#1a1200" : "#ffffff";
+    const primary = candidates[0];
+    const secondary = candidates[1] || accent;
+    return { accent: rgbToHex(accent), ink, primary: rgbToHex(primary), secondary: rgbToHex(secondary) };
+  }
+
+  function applyTeamTheme(slug) {
+    const root = document.documentElement.style;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    const t = slug && window.CFP.teamsBySlug[slug];
+    const theme = t && t.colors ? teamTheme(t.colors) : null;
+    if (!theme) {
+      for (const v of ["--accent", "--accent-ink", "--team-primary", "--team-secondary"]) root.removeProperty(v);
+      document.body.classList.remove("team-theme");
+      if (meta) meta.content = document.documentElement.dataset.theme === "light" ? "#ffffff" : "#131a2e";
+      return;
+    }
+    root.setProperty("--accent", theme.accent);
+    root.setProperty("--accent-ink", theme.ink);
+    root.setProperty("--team-primary", theme.primary);
+    root.setProperty("--team-secondary", theme.secondary);
+    document.body.classList.add("team-theme");
+    if (meta) meta.content = theme.primary;
+  }
+  // light/dark flips change what reads, so re-pick the accent when the theme attribute changes
+  new MutationObserver(() => applyTeamTheme(state.season ? state.season.team : null))
+    .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
   function showSeason(s) {
     const opening = !state.season || state.season.id !== s.id;
     state.season = s;
+    if (opening) applyTeamTheme(s.team);
     state.standings = null;
     if (opening && sidebarPreferred() !== "1") setSidebar(false, false);
     if (state.viewWeek == null || state.viewWeek > s.current_week) state.viewWeek = s.current_week;
