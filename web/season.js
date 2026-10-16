@@ -156,7 +156,7 @@
           hideSimOverlay();
           if (j.status === "error") toast(`Simulation error: ${j.error}`, 6000);
           const s = await api(`/api/season/${state.season.id}`);
-          state.viewWeek = s.current_week;
+          state.viewWeek = s.done ? s.current_week : Math.min(s.current_week + 1, 19);
           showSeason(s);
           loadSeasons();
           setBusy(false);
@@ -348,7 +348,8 @@
     if (opening) applyTeamTheme(s.team);
     state.standings = null;
     if (opening && sidebarPreferred() !== "1") setSidebar(false, false);
-    if (state.viewWeek == null || state.viewWeek > s.current_week) state.viewWeek = s.current_week;
+    const upNext = s.done ? s.current_week : Math.min(s.current_week + 1, 19);
+    if (state.viewWeek == null || state.viewWeek > upNext) state.viewWeek = upNext;
     $("#season-empty").hidden = true;
     $("#season").hidden = false;
     const r = s.record;
@@ -358,7 +359,7 @@
       s.team_name, el("span", { class: "rec", text: `${r.wins}-${r.losses}` }),
       el("span", { class: "muted conf-rec", style: "font-size:14px;margin-left:8px", text: `${r.conf_wins}-${r.conf_losses} ${s.conference}` }),
     );
-    const phase = s.done ? `Season complete · national champion: ${s.champion_name}` : s.current_week === 0 ? "Preseason" : `Through ${s.week_labels[s.current_week] || "week " + s.current_week}`;
+    const phase = s.done ? `Season complete · national champion: ${s.champion_name}` : s.current_week === 0 ? `Preseason · ${s.week_labels[1] || "Week 1"} up next` : `${s.week_labels[s.current_week + 1] || "Week " + (s.current_week + 1)} up next · through ${s.week_labels[s.current_week] || "week " + s.current_week}`;
     const simDate = simDateText(s);
     $("#season-meta").textContent = `${phase}${simDate ? ` · ${simDate}` : ""} · ${s.mode === "full" ? "full season simulated" : "real results through today"} · ${when(s.created_at)}`;
     setBusy(false);
@@ -468,7 +469,6 @@
   // class, size, rating and season headline. Starters are the first column.
   async function renderDepthChart() {
     const s = state.season;
-    if (!s) return;
     const box = $("#tab-depth");
     box.innerHTML = "";
     const ds = depthState;
@@ -1149,6 +1149,8 @@
     return w;
   }
 
+  const gamesState = { conf: "", view: "" };
+
   async function renderGames() {
     const s = state.season, w = state.viewWeek;
     const box = $("#tab-games");
@@ -1157,10 +1159,42 @@
     let data;
     try { data = await api(`/api/season/${s.id}/week/${w}`); } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
     const label = s.week_labels[w] || `Week ${w}`;
-    box.append(el("h3", { text: `${label} · ${data.games.length} games` }));
-    if (!data.games.length) { box.append(el("p", { class: "muted", text: w > s.current_week ? "Not played yet." : "No games this week." })); return; }
+    if (!data.games.length) { box.append(el("h3", { text: `${label} · 0 games` })); box.append(el("p", { class: "muted", text: w > s.current_week ? "Not played yet." : "No games this week." })); return; }
+    // filters: conference chips, then a view chip (ranked, top-25 matchups, upsets, close games, overtime, conference games, my team)
+    const gs = gamesState;
+    const confOf = (slug) => (window.CFP.teamsBySlug[slug] || {}).conference || "";
+    const confs = [...new Set(data.games.flatMap((g) => [confOf(g.home), confOf(g.away)]).filter((c) => c && !/FCS/i.test(c)))].sort();
+    const controls = el("div", { class: "stats-controls" });
+    controls.append(confChips(confs, confs.includes(gs.conf) ? gs.conf : "", (v) => { gs.conf = v; renderGames(); }));
+    const views = [["", "All"], ["ranked", "Ranked"], ["top25", "Top-25 matchups"], ["upsets", "Upsets"], ["close", "Close games"], ["ot", "Overtime"], ["conf", "Conference games"], ["mine", "My team"]];
+    const playedAny = data.games.some((g) => g.played);
+    controls.append(chipRow(views.filter(([v]) => playedAny || !["upsets", "close", "ot"].includes(v)), gs.view, (v) => { gs.view = v; renderGames(); }));
+    box.append(controls);
+    const margin = (g) => Math.abs(g.home_score - g.away_score);
+    const upset = (g) => {
+      if (!g.played) return false;
+      const hw = g.home_score > g.away_score;
+      const wr = hw ? g.home_rank : g.away_rank, lr = hw ? g.away_rank : g.home_rank;
+      return !!lr && (!wr || wr > lr);
+    };
+    const keep = (g) => {
+      if (gs.conf && confOf(g.home) !== gs.conf && confOf(g.away) !== gs.conf) return false;
+      switch (gs.view) {
+        case "ranked": return !!(g.home_rank || g.away_rank);
+        case "top25": return !!(g.home_rank && g.away_rank);
+        case "upsets": return upset(g);
+        case "close": return g.played && margin(g) <= 7;
+        case "ot": return !!g.overtime;
+        case "conf": return !!g.conference_game;
+        case "mine": return !!g.mine;
+        default: return true;
+      }
+    };
+    const shown = data.games.filter(keep);
+    box.append(el("h3", { text: `${label} · ${shown.length === data.games.length ? `${data.games.length} games` : `${shown.length} of ${data.games.length} games`}` }));
+    if (!shown.length) { box.append(el("p", { class: "muted", text: "No games match that filter." })); return; }
     const table = el("table", { class: "stats games-table" });
-    for (const g of data.games) {
+    for (const g of shown) {
       const played = g.played;
       const hw = played && g.home_score > g.away_score, aw = played && g.away_score > g.home_score;
       const rk = (r) => (r ? el("span", { class: "rank", text: `#${r} ` }) : null);
