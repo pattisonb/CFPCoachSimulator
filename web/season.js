@@ -2745,8 +2745,8 @@
     while (si < sp.length) { const s = take(); out.push({ drive: g.drives.length, off: s.team, quarter: s.quarter, clock: s.clock, kind: "score", text: `${s.team_name}: ${s.description}${s.try ? ` (${s.try})` : ""}`, score: s, big: true, home, away, situation: "" }); }
     return out;
   }
-  // The field: the home team drives left to right, the away team right to left. A
-  // yardline in the log is the offense's distance from its own goal line.
+  // The field: the home team drives left to right (toward the away end zone), the away
+  // team right to left. A yardline in the log is the offense's distance from its own goal.
   const gdX = (side, yl) => Math.max(0, Math.min(100, side === "home" ? yl : 100 - yl));
   function gdFieldNode(g) {
     const ez = (side) => {
@@ -2760,7 +2760,8 @@
       grass.append(el("div", { class: "gd-num", style: `left:${y}%`, text: String(y <= 50 ? y : 100 - y) }));
     }
     grass.append(el("div", { class: "gd-gain", id: "gd-gain" }), el("div", { class: "gd-fd", id: "gd-fd" }), el("div", { class: "gd-ball", id: "gd-ball" }, [el("span", { class: "gd-arrow", id: "gd-arrow" })]));
-    return el("div", { class: "gd-field", id: "gd-field" }, [ez("away"), grass, ez("home")]);
+    // each team attacks the other's end zone: the home team drives toward the away end zone on the right
+    return el("div", { class: "gd-field", id: "gd-field" }, [ez("home"), grass, ez("away")]);
   }
   function gdFieldUpdate(g, m, next) {
     const ball = $("#gd-ball"), fd = $("#gd-fd"), gain = $("#gd-gain"), arrow = $("#gd-arrow");
