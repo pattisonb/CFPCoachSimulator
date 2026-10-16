@@ -257,11 +257,18 @@ Belt still plays divisions, so its title game is East winner against West winner
 
 ### Speed
 
-A game takes about 70 ms of pure Python on a desktop core (it was 200 ms: the per-play
-fatigue penalty recomputed every rating of every player on both rosters on every snap,
-and each game deep-copied both rosters; now only players whose fatigue changed are
-touched, and the copy is shallow, with identical results for the same seed). A week of
-about 90 games runs in 2 seconds with the worker pool and 7 seconds in one process.
+A game is pure Python, about 100 ms on a desktop core and a fifth faster than before
+the last pass. The fatigue penalty used to be recomputed for every player carrying
+fatigue on every snap (and, with momentum on, for every player on the roster, since the
+factor moves every snap); now ratings are refreshed lazily, only for the players about
+to be read: the snap's two lineups when they are set, a returner before a kick, the
+returner candidates. A team's position groups are built once per game instead of being
+filtered from the roster ten times a snap. With momentum on a week dropped from 62 to
+28 seconds under the profiler; the only change in results is that a kick returner's
+ratings reflect his current fatigue rather than the previous snap's. `python
+tools/profile_sim.py game|week` profiles the engine and a week; `tests/test_play_log.py`
+prints the fingerprint of five seeded games that must not change when the engine is
+edited (2189b129cc2f27ba).
 
 While a sim runs the page shows what the engine is doing, live: "Simming Week 7 · 38 of
 92 games", then "Updating the AP poll and CFP rankings", "Setting the conference title

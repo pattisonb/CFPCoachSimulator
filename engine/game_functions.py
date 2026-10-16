@@ -13,6 +13,8 @@ def sim_kickoff(kicker, return_team=None):
     kick_power = (kicker.kick_power or cfg.NEUTRAL) * kick_power_mult
     kick_accuracy = kicker.kick_accuracy or cfg.NEUTRAL
     returner = return_team.get_kick_returner() if return_team else None
+    if returner is not None:
+        return_team.refresh_ratings([returner])
 
     # Out of bounds: receiving team takes it at the 40.
     if random.random() < max(0.01, cfg.KICKOFF_OOB_CHANCE - (kick_accuracy - cfg.NEUTRAL) * 0.0005):

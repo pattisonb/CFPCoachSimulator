@@ -99,6 +99,8 @@ class Team:
         self.front = None             # defensive package counts on this snap
         self._lineup = {"offense": None, "defense": None}
         self.momentum = 0.0           # -1 (reeling) to 1 (rolling); only used when cfg.MOMENTUM is on
+        self._active = set()          # players who have gained fatigue (the bench recovery visits only these)
+        self._groups = {}             # position groups in depth order, built once (depth never changes in a game)
         self.grouping_snaps = {}      # snaps per grouping / front, for the box score
         self.injuries = []            # injuries suffered in this game
         self.lead, self.half, self.in_overtime = 0, 1, False
@@ -124,14 +126,16 @@ class Team:
     def get_offense(self, side="offense"):
         if side == "offense" and self._lineup["offense"] is not None:
             return self._lineup["offense"]
-        players = getattr(self, side)
-        return [p for p in players if p.in_game and not p.injured]
+        players = [p for p in getattr(self, side) if p.in_game and not p.injured]
+        self._active.update(players)      # they are about to gain fatigue
+        return players
     
     def get_defense(self, side="defense"):
         if side == "defense" and self._lineup["defense"] is not None:
             return self._lineup["defense"]
-        players = getattr(self, side)
-        return [p for p in players if p.in_game and not p.injured]
+        players = [p for p in getattr(self, side) if p.in_game and not p.injured]
+        self._active.update(players)      # they are about to gain fatigue
+        return players
 
     # ----- personnel: build the eleven for a snap from the depth chart -----
 
@@ -143,33 +147,57 @@ class Team:
         pool.sort(key=lambda p: (0 if p.in_game else 1, p.depth))
         return pool[:n]
 
+    def _group(self, unit, pos):
+        """One position group of a unit, in roster order (built once per game)."""
+        key = (unit, pos)
+        g = self._groups.get(key)
+        if g is None:
+            players = getattr(self, unit)
+            if pos == "LB":
+                g = [p for p in players if "LB" in p.position]
+            elif pos == "EDGE":
+                g = [p for p in players if p.position == "DL" and p.role in ("LEDG", "REDG")]
+            elif pos == "DT":
+                g = [p for p in players if p.position == "DL" and p.role not in ("LEDG", "REDG")]
+            elif pos == "KP":
+                g = [p for p in players if p.position in ("K", "P")]
+            else:
+                g = [p for p in players if p.position == pos]
+            self._groups[key] = g
+        return g
+
     def set_grouping(self, name, counts):
         """Offensive grouping for this snap: counts of RB, TE, WR, OL (plus the quarterback)."""
         self.grouping = name
         self.grouping_snaps[name] = self.grouping_snaps.get(name, 0) + 1
-        lineup = self._take([p for p in self.offense if p.position == "QB"], 1)
+        lineup = self._take(self._group("offense", "QB"), 1)
         for pos in ("RB", "TE", "WR", "OL"):
-            lineup += self._take([p for p in self.offense if p.position == pos], counts[pos])
+            lineup += self._take(self._group("offense", pos), counts[pos])
         # the specialists ride along so the drive code can find the kicker and punter
-        lineup += [p for p in self.offense if p.position in ("K", "P") and p.in_game and not p.injured]
+        lineup += [p for p in self._group("offense", "KP") if p.in_game and not p.injured]
         self._lineup["offense"] = lineup
+        self._active.update(lineup)
+        self.refresh_ratings(lineup)
 
     def set_front(self, counts):
         """Defensive package for this snap: counts of EDGE, DT, LB, CB, S."""
         self.front = counts
         key = f"{counts['EDGE'] + counts['DT']}-{counts['LB']}-{counts['CB'] + counts['S']}"
         self.grouping_snaps[key] = self.grouping_snaps.get(key, 0) + 1
-        edges = [p for p in self.defense if p.position == "DL" and p.role in ("LEDG", "REDG")]
-        tackles = [p for p in self.defense if p.position == "DL" and p.role not in ("LEDG", "REDG")]
+        edges, tackles = self._group("defense", "EDGE"), self._group("defense", "DT")
         if not edges or not tackles:          # rosters without roles: split the line by depth
-            line = sorted((p for p in self.defense if p.position == "DL"), key=lambda p: p.depth)
-            edges, tackles = line[0::2], line[1::2]
+            if ("defense", "EDGE_F") not in self._groups:
+                line = sorted(self._group("defense", "DL"), key=lambda p: p.depth)
+                self._groups[("defense", "EDGE_F")], self._groups[("defense", "DT_F")] = line[0::2], line[1::2]
+            edges, tackles = self._groups[("defense", "EDGE_F")], self._groups[("defense", "DT_F")]
         lineup = self._take(edges, counts["EDGE"])
         lineup += [p for p in self._take(tackles + [e for e in edges if e not in lineup], counts["DT"]) if p not in lineup]
-        lineup += self._take([p for p in self.defense if "LB" in p.position], counts["LB"])
-        lineup += self._take([p for p in self.defense if p.position == "CB"], counts["CB"])
-        lineup += self._take([p for p in self.defense if p.position == "S"], counts["S"])
+        lineup += self._take(self._group("defense", "LB"), counts["LB"])
+        lineup += self._take(self._group("defense", "CB"), counts["CB"])
+        lineup += self._take(self._group("defense", "S"), counts["S"])
         self._lineup["defense"] = lineup
+        self._active.update(lineup)
+        self.refresh_ratings(lineup)
 
     def clear_lineups(self):
         self._lineup = {"offense": None, "defense": None}
@@ -183,13 +211,13 @@ class Team:
         self.clear_lineups()
         
     def recover_bench_players(self):
-        for unit in (self.offense, self.defense):
-            for p in unit:
-                if not p.in_game and p.fatigue:
-                    rate = p.endurance / 10
-                    if p.position == 'RB':
-                        rate *= cfg.RB_BENCH_RECOVERY
-                    p.fatigue = max(0, p.fatigue - rate)
+        # every player with fatigue is in _active (the penalty pass keeps it current)
+        for p in self._active:
+            if not p.in_game and p.fatigue:
+                rate = p.endurance / 10
+                if p.position == 'RB':
+                    rate *= cfg.RB_BENCH_RECOVERY
+                p.fatigue = max(0, p.fatigue - rate)
 
     def lead_back(self):
         """The feature back: the healthy halfback highest on the depth chart (the roster lists
@@ -379,6 +407,7 @@ class Team:
         candidates = [p for p in self.offense + self.defense if p.position not in ("K", "P", "OL", "DL", "QB")]
         if not candidates:
             return None
+        self.refresh_ratings(candidates)
         return max(candidates, key=lambda p: (return_skill(p), p.speed or 0))
 
     def get_kick_returner(self):
@@ -403,19 +432,20 @@ class Team:
     def momentum_factor(self):
         return 1.0 + cfg.MOMENTUM_EFFECT * self.momentum if cfg.MOMENTUM else 1.0
 
-    def apply_fatigue_penalties(self):
-        """Scale each player's ratings down by up to 15% with fatigue (floor two thirds).
-        Only players whose fatigue changed since the last call are touched, which is the
-        few on the field plus anyone recovering on the bench."""
+    def refresh_ratings(self, players):
+        """Bring these players' ratings up to date with their fatigue (up to 15% down, floor
+        two thirds) and, when momentum is on, the team's momentum. Called for the players
+        about to be read: the snap's lineups, a returner. Anyone whose fatigue and the
+        factor are unchanged since his last refresh is skipped."""
         factor = self.momentum_factor()
-        for unit in (self.offense, self.defense):
-            for player in unit:
-                fatigue = player.fatigue
-                key = (fatigue, factor)
-                if key == player._penalty_fatigue:
-                    continue
-                player._penalty_fatigue = key
-                penalty_scale = fatigue / 100 * 0.15  # max 15% drop
-                for attr, original_value, min_allowed in player._penalty_attrs:
-                    new_value = round(original_value * (1 - penalty_scale) * factor)
-                    setattr(player, attr, max(min_allowed, min(99, new_value)))
+        _round, _max, _min = round, max, min
+        for player in players:
+            fatigue = player.fatigue
+            key = (fatigue, factor)
+            if key == player._penalty_fatigue:
+                continue
+            player._penalty_fatigue = key
+            scale = (1 - fatigue / 100 * 0.15) * factor
+            values = player.__dict__      # plain attributes: writing the dict is setattr without the lookup
+            for attr, original_value, min_allowed in player._penalty_attrs:
+                values[attr] = _max(min_allowed, _min(99, _round(original_value * scale)))

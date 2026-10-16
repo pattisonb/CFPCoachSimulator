@@ -457,6 +457,8 @@ class GameSim:
         apply_baseline_fatigue(self.home)
         apply_baseline_fatigue(self.away)
         for team in (self.home, self.away):
+            team._active.update(p for p in team.offense + team.defense if p.fatigue)   # they recover from kickoff
+        for team in (self.home, self.away):
             for p in team.offense + team.defense:
                 if p.in_game:
                     p.stats["games_started"] = p.stats.get("games_started", 0) + 1

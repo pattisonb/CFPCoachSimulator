@@ -179,8 +179,6 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
     Returns (play_ran, result, yards, seconds_used, info) where info says whether the clock is
     stopped until the next snap and whether the carrier went out of bounds."""
     apply_general_fatigue(offense_team.get_offense(), defense_team.get_defense())
-    offense_team.apply_fatigue_penalties()
-    defense_team.apply_fatigue_penalties()
     offense_team.sub_skill_position_players(cfg.SKILL_SUB_FATIGUE)
     defense_team.sub_defensive_players(50)
     offense_team.recover_bench_players()
@@ -469,6 +467,8 @@ def _attempt_punt(yardline, punter, defense_team=None, return_team=None):
     
     # Get returner
     returner = return_team.get_punt_returner() if return_team else None
+    if returner is not None:
+        return_team.refresh_ratings([returner])
     
     # If far from end zone, max power punt is safe
     if landing_spot + 10 < 100:
