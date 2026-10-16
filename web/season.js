@@ -359,7 +359,7 @@
     $("#season-title").append(
       teamPill(s.team),
       s.team_name,
-      s.my_rank && s.my_rank.rank ? el("span", { class: "hdr-rank", text: s.my_rank.kind === "cfp" ? `CFP #${s.my_rank.rank}` : `#${s.my_rank.rank}`, title: s.my_rank.kind === "cfp" ? "College Football Playoff ranking" : "AP poll" }) : null,
+      ...(s.my_rank && s.my_rank.rank ? [el("span", { class: "hdr-rank", text: s.my_rank.kind === "cfp" ? `CFP #${s.my_rank.rank}` : `#${s.my_rank.rank}`, title: s.my_rank.kind === "cfp" ? "College Football Playoff ranking" : "AP poll" })] : []),
       el("span", { class: "rec", text: `${r.wins}-${r.losses}` }),
       el("span", { class: "muted conf-rec", style: "font-size:14px;margin-left:8px", text: `${r.conf_wins}-${r.conf_losses} ${s.conference}` }),
     );
