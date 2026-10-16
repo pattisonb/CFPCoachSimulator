@@ -164,8 +164,7 @@ def assign_sack(defense, guessed_play=False):
 
 def _rating(player, keys, default=cfg.NEUTRAL):
     """Average of the given attributes that the player actually has."""
-    vals = [getattr(player, k, None) for k in keys]
-    vals = [v for v in vals if isinstance(v, (int, float))]
+    vals = [v for k in keys if isinstance((v := getattr(player, k, None)), (int, float))]
     return sum(vals) / len(vals) if vals else default
 
 

@@ -11,3 +11,6 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.6
+      # the free tier has a fraction of one CPU and 512 MB: simulate in-process, no worker pool
+      - key: SIM_WORKERS
+        value: "1"

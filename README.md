@@ -244,6 +244,22 @@ in place of the conferences' draw. Once a step separates some of the tied teams 
 rest, each smaller group restarts at head-to-head, as the written procedures do. The Sun
 Belt still plays divisions, so its title game is East winner against West winner.
 
+### Speed
+
+A game takes about 70 ms of pure Python on a desktop core (it was 200 ms: the per-play
+fatigue penalty recomputed every rating of every player on both rosters on every snap,
+and each game deep-copied both rosters; now only players whose fatigue changed are
+touched, and the copy is shallow, with identical results for the same seed). A week of
+about 90 games runs in 2 seconds with the worker pool and 7 seconds in one process.
+
+`SIM_WORKERS` sets how many processes simulate games: unset uses the machine's cores
+(capped at 8); `1` simulates in-process, which `render.yaml` sets because the free tier
+has a fraction of one shared CPU and 512 MB, where a pool only adds memory and spawn
+cost. On that tier a week still takes 10 to 20 seconds and the service sleeps after 15
+idle minutes, so a full season is a few minutes there; the fix for that is a paid Render
+instance with a dedicated CPU or running the server locally (`python server.py`, LAN
+access from a phone as described above).
+
 ### The polls: built from twelve seasons of real polls
 
 `fetch_polls.py` downloads every weekly AP Top 25 and CFP committee ranking from 2014

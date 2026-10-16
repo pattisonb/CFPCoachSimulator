@@ -22,7 +22,7 @@ class Player:
         self.endurance = data.get("endurance", 50)
         self.fatigue = data.get("fatigue", 0)
         self.in_game = data.get("in_game", False)
-        self.stats = data.get("stats", {})
+        self.stats = dict(data.get("stats") or {})   # own copy: the source roster is shared between games
 
         # Skill-specific
         self.passing = data.get("passing")
@@ -55,6 +55,9 @@ class Player:
             "tackling": self.tackling,
             "coverage": self.coverage
         }
+        # (attribute, original value, floor) for the fatigue penalty, and the fatigue it was last applied at
+        self._penalty_attrs = [(attr, v, round(v * (2 / 3))) for attr, v in self._original_attrs.items() if v is not None]
+        self._penalty_fatigue = None
 
     def is_offense(self):
         return self.position in {"QB", "RB", "WR", "TE", "OL", "K", "P"}
@@ -123,10 +126,10 @@ class Team:
         return None
     
     def recover_bench_players(self):
-        for p in self.offense + self.defense:
-            if not p.in_game:
-                recovery = p.endurance / 10
-                p.fatigue = max(0, p.fatigue - recovery)
+        for unit in (self.offense, self.defense):
+            for p in unit:
+                if not p.in_game and p.fatigue:
+                    p.fatigue = max(0, p.fatigue - p.endurance / 10)
 
     def sub_skill_position_players(self, fatigue_threshold=50):
         from operator import itemgetter
@@ -160,7 +163,9 @@ class Team:
                 sub.in_game = True
 
     def sub_defensive_players(self, fatigue_threshold=50):
-        positions = set(p.position for p in self.defense)
+        positions = getattr(self, "_defense_positions", None)
+        if positions is None:
+            positions = self._defense_positions = sorted(set(p.position for p in self.defense))
 
         for pos in positions:
             # Players currently in the game and too tired
@@ -251,17 +256,19 @@ class Team:
         return self.best_returner()
     
     def apply_fatigue_penalties(self):
-        for player in self.offense + self.defense:
-            fatigue_pct = player.fatigue / 100
-            penalty_scale = fatigue_pct * 0.15  # max 15% drop
-
-            for attr, original_value in player._original_attrs.items():
-                if original_value is None:
+        """Scale each player's ratings down by up to 15% with fatigue (floor two thirds).
+        Only players whose fatigue changed since the last call are touched, which is the
+        few on the field plus anyone recovering on the bench."""
+        for unit in (self.offense, self.defense):
+            for player in unit:
+                fatigue = player.fatigue
+                if fatigue == player._penalty_fatigue:
                     continue
-
-                min_allowed = round(original_value * (2 / 3))
-                new_value = round(original_value * (1 - penalty_scale))
-                setattr(player, attr, max(min_allowed, new_value))
+                player._penalty_fatigue = fatigue
+                penalty_scale = fatigue / 100 * 0.15  # max 15% drop
+                for attr, original_value, min_allowed in player._penalty_attrs:
+                    new_value = round(original_value * (1 - penalty_scale))
+                    setattr(player, attr, max(min_allowed, new_value))
 
 def initialize_teams(json_path):
     with open(json_path, "r") as f:

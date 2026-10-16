@@ -62,8 +62,8 @@ class GameSim:
     """One game between two teams built from raw roster dicts."""
 
     def __init__(self, home_data: dict, away_data: dict, venue: str = "home"):
-        home_data = copy.deepcopy(home_data)
-        away_data = copy.deepcopy(away_data)
+        home_data = self._copy_roster(home_data)
+        away_data = self._copy_roster(away_data)
         self.venue = venue if venue in ("home", "neutral") else "home"
         self.home_advantage = 0.0
         if self.venue == "home":
@@ -85,6 +85,12 @@ class GameSim:
         self.in_overtime = False
         self.ot_number = 0
         self._td_stats_seen = 0
+
+    @staticmethod
+    def _copy_roster(data: dict) -> dict:
+        """A private copy of what the game mutates: the player dicts (ratings are shifted
+        for home field) and, inside Player, each stats dict. Everything else is read-only."""
+        return {**data, "offense": [dict(p) for p in data["offense"]], "defense": [dict(p) for p in data["defense"]]}
 
     @staticmethod
     def _shift_ratings(data: dict, delta: float) -> None:
