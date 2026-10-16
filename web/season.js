@@ -555,40 +555,62 @@
   // ----- season summary ------------------------------------------------------
 
   // ----- shared modal ----------------------------------------------------------
-  // openModal(title, node): shows node in the overlay with a title and a close button.
-  // Esc, the backdrop, the close button and the browser's Back all close it (opening pushes
-  // a history entry, so Back on a phone closes the modal instead of leaving the page).
-  const modalState = { open: false, pushed: false };
+  // openModal(title, node): shows node in an overlay with a title and a close button.
+  // Modals stack: opening one while another is open puts it on top, a little narrower,
+  // with the first still visible behind it (a player page over a box score). Esc, the
+  // backdrop, the close button and the browser's Back each close the top one; opening
+  // pushes a history entry so Back on a phone closes a modal instead of leaving the page.
+  const modalStack = [];   // [{layer, pushed}] bottom to top
+
+  function makeLayer(nested) {
+    const base = $("#modal");
+    if (!nested) return base;
+    const layer = base.cloneNode(true);
+    layer.removeAttribute("id");
+    layer.classList.add("modal-nested");
+    layer.style.zIndex = String(60 + modalStack.length);
+    for (const n of layer.querySelectorAll("[id]")) n.removeAttribute("id");
+    layer.querySelector(".modal-backdrop").addEventListener("click", () => closeModal());
+    layer.querySelector(".modal-close").addEventListener("click", () => closeModal());
+    document.body.append(layer);
+    return layer;
+  }
 
   function openModal(title, node) {
-    const m = $("#modal");
-    const t = $("#modal-title");
+    const layer = makeLayer(modalStack.length > 0);
+    const t = layer.querySelector(".modal-title");
     t.innerHTML = "";
     t.append(typeof title === "string" ? document.createTextNode(title) : title);
-    const body = $("#modal-body");
+    const body = layer.querySelector(".modal-body");
     body.innerHTML = "";
     body.append(node);
     body.scrollTop = 0;
-    m.hidden = false;
+    layer.hidden = false;
     document.body.classList.add("modal-open");
-    if (!modalState.open) {
-      try { history.pushState({ cfpModal: true }, ""); modalState.pushed = true; } catch (e) { modalState.pushed = false; }
-    }
-    modalState.open = true;
-    $("#modal-close").focus({ preventScroll: true });
+    let pushed = false;
+    try { history.pushState({ cfpModal: modalStack.length + 1 }, ""); pushed = true; } catch (e) { pushed = false; }
+    modalStack.push({ layer, pushed });
+    layer.querySelector(".modal-close").focus({ preventScroll: true });
   }
 
   function closeModal(fromHistory = false) {
-    if (!modalState.open) return;
-    modalState.open = false;
-    $("#modal").hidden = true;
-    document.body.classList.remove("modal-open");
-    if (!fromHistory && modalState.pushed) { modalState.pushed = false; history.back(); }
-    modalState.pushed = false;
+    const top = modalStack.pop();
+    if (!top) return;
+    if (top.layer.id === "modal") top.layer.hidden = true;
+    else top.layer.remove();
+    if (!modalStack.length) document.body.classList.remove("modal-open");
+    // going back in history fires popstate, which must not close a second layer
+    if (!fromHistory && top.pushed) { modalSkipPop = true; history.back(); }
+  }
+  let modalSkipPop = false;
+
+  function closeAllModals() {
+    while (modalStack.length) closeModal();
   }
 
-  window.addEventListener("popstate", () => { if (modalState.open) closeModal(true); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modalState.open) closeModal(); });
+  const modalOpen = () => modalStack.length > 0;
+  window.addEventListener("popstate", () => { if (modalSkipPop) { modalSkipPop = false; return; } if (modalOpen()) closeModal(true); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modalOpen()) closeModal(); });
   $("#modal-backdrop").addEventListener("click", () => closeModal());
   $("#modal-close").addEventListener("click", () => closeModal());
 
@@ -771,7 +793,7 @@
         el("td", { class: g.won ? "win" : "loss", text: `${g.won ? "W" : "L"} ${g.points_for}–${g.points_against}` }),
         ...cols.map(([, f]) => el("td", { text: String(f(g.stats)) })),
       ]);
-      row.addEventListener("click", () => { closeModal(); openBox(g.event_id); });
+      row.addEventListener("click", () => { closeAllModals(); openBox(g.event_id); });
       table.append(row);
     }
     return el("div", { class: "table-scroll" }, [table]);
