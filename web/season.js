@@ -372,6 +372,9 @@
   const awardsState = { data: null, key: null, view: "mine", filter: "", sort: null, desc: true, conf: null, selector: "consensus",
                         level: 1, mineFilter: "" };
   const ORD = (i) => `${i + 1}${["st", "nd", "rd"][i] || "th"}`;
+  // roster class codes (FR, FRRS, SO, ...) as "Fr.", "RS Fr.", ...
+  const CLASS_LABEL = { FR: "Fr.", FRRS: "RS Fr.", SO: "So.", SORS: "RS So.", JR: "Jr.", JRRS: "RS Jr.", SR: "Sr.", SRRS: "RS Sr." };
+  const classLabel = (cls) => (cls ? ` · ${CLASS_LABEL[cls] || cls}` : "");
   const OFFENSE_KINDS = new Set(["qb", "qb_upper", "rb", "wr", "te", "interior", "c", "ol", "ol_unit", "blocker", "opoy", "off_freshman"]);
   const DEFENSE_KINDS = new Set(["dpoy", "dpoy_alt", "lb", "db", "edge", "dl", "front", "def_freshman"]);
   const ST_KINDS = new Set(["k", "p", "rs", "stpoy", "versatile"]);
@@ -389,7 +392,8 @@
   function who(c, withTeam = true) {
     // name, position/class, team pill
     const bits = [el("span", { class: "pill-inline", style: `background:${color(c.team)}` }), el("b", { text: c.name || c.coach || c.team_name })];
-    const tag = c.position ? `${c.position}${c.role && c.role !== c.position ? " · " + c.role : ""}${c.class ? " · " + c.class : ""}` : (c.role || (c.coach ? "Head coach" : ""));
+    const ROLE_SHOWN = new Set(["LT", "LG", "C", "RG", "RT", "LEDG", "REDG", "DT", "SAM", "MIKE", "WILL", "FS", "SS"]);
+    const tag = c.position ? `${c.position}${c.role && ROLE_SHOWN.has(c.role) ? " · " + c.role : ""}${classLabel(c.class)}` : (c.role || (c.coach ? "Head coach" : ""));
     if (tag) bits.push(el("span", { class: "pos", text: tag }));
     if (withTeam && (c.name || c.coach)) bits.push(el("span", { class: "muted", text: ` ${c.team_name}` }));
     return el("span", { class: "award-who" }, bits);
@@ -432,7 +436,7 @@
       : [["Points", w.points], ["Share", `${h.share}%`], ["1st-place", `${w.first} of ${h.ballots}`], ["Record", `${w.record}${w.rank ? ` · #${w.rank}` : ""}`]];
     return el("div", { class: `review-card heisman-hero ${w.team === state.season.team ? "mine" : ""}` }, [
       el("div", { class: "review-label", text: live ? "Leading the straw poll" : "Heisman Trophy winner" }),
-      el("div", { class: "review-big" }, [el("span", { class: "pill-inline", style: `background:${color(w.team)}` }), w.name, el("span", { class: "pos", text: `${w.position}${w.class ? " · " + w.class : ""} · ${w.team_name}` })]),
+      el("div", { class: "review-big" }, [el("span", { class: "pill-inline", style: `background:${color(w.team)}` }), w.name, el("span", { class: "pos", text: `${w.position}${classLabel(w.class)} · ${w.team_name}` })]),
       el("div", { class: "muted small-text", text: w.line }),
       el("div", { class: "review-tiles" }, tiles.map(([k, v]) => el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: String(v) }), el("div", { class: "review-label", text: k })]))),
       live ? null : el("div", { class: "muted small-text", text: `Finalists in New York: ${h.finalists.map((f) => `${f.name} (${f.team_name}, ${f.points})`).join(", ")}` }),
@@ -472,7 +476,7 @@
     list.forEach((c, i) => {
       const row = el("div", { class: `leader-row ${i === 0 ? "top" : ""} ${c.team === state.season.team ? "mine" : ""}` }, [
         el("span", { class: "rank", text: live ? String(i + 1) : (i === 0 ? "W" : String(i + 1)) }),
-        el("span", { class: "who" }, [el("span", { class: "name" }, [el("span", { class: "pill-inline", style: `background:${color(c.team)}` }), c.name || c.coach || c.team_name, el("span", { class: "pos", text: c.position ? `${c.position}${c.class ? " · " + c.class : ""}` : (c.role || "") })]),
+        el("span", { class: "who" }, [el("span", { class: "name" }, [el("span", { class: "pill-inline", style: `background:${color(c.team)}` }), c.name || c.coach || c.team_name, el("span", { class: "pos", text: c.position ? `${c.position}${classLabel(c.class)}` : (c.role || "") })]),
           el("span", { class: "muted small-text", text: `${(c.name || c.coach) ? c.team_name + " · " : ""}${mode === "coach" ? coachLine(c) : (c.line || "")}` })]),
         el("span", { class: "value", text: headlineOf(c) }),
       ]);

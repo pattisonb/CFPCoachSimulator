@@ -509,3 +509,4 @@ body.team-theme .panel { border-color: color-mix(in srgb, var(--team-primary) 30
 .review-card.heisman { grid-column: 1 / -1; margin-bottom: 12px; border: 1px solid var(--accent); }
 .tab-body h3 { margin: 14px 0 8px; }
 @media (max-width: 700px) { .awards-grid { grid-template-columns: 1fr; } }
+.review-big .pos { margin-left: 10px; font-size: 14px; font-weight: 400; color: var(--muted); }
