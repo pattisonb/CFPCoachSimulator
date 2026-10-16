@@ -347,7 +347,7 @@
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    for (const t of ["games", "schedule", "standings", "ap", "cfp", "bracket", "bowls", "summary", "teamstats", "playerstats", "box"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "ap", "coaches", "cfp", "bracket", "bowls", "summary", "teamstats", "playerstats", "box"]) $(`#tab-${t}`).hidden = t !== name;
   }
 
   function renderTab() {
@@ -357,6 +357,7 @@
     else if (t === "schedule") renderSchedule();
     else if (t === "standings") renderStandings();
     else if (t === "ap") renderPoll("ap");
+    else if (t === "coaches") renderPoll("coaches");
     else if (t === "cfp") renderPoll("cfp");
     else if (t === "bracket") renderBracket();
     else if (t === "bowls") renderBowls();
@@ -714,6 +715,19 @@
     return partial ? "This season was started before season-long stats were kept, so only your own games are counted. " : "";
   }
 
+  // Conference picker as a row of chips (short names), shared by the stats tabs.
+  const CONF_SHORT = { "American Athletic Conference": "American", "Conference USA": "CUSA", "Mountain West": "MW",
+                       "FBS Independent": "Ind.", "FBS Independents": "Ind.", "Independent": "Ind." };
+  function confChips(confs, current, onPick) {
+    const row = el("div", { class: "view-chips conf-chips", role: "group", "aria-label": "Conference" });
+    for (const [value, label] of [["", "All"], ...confs.map((c) => [c, CONF_SHORT[c] || c])]) {
+      const b = el("button", { type: "button", class: `chip ${current === value ? "active" : ""}`, text: label, title: value || "All conferences" });
+      b.addEventListener("click", () => onPick(value));
+      row.append(b);
+    }
+    return row;
+  }
+
   async function renderSeasonTeamStats() {
     const s = state.season;
     const box = $("#tab-teamstats");
@@ -728,13 +742,9 @@
     if (!rows.length) { box.append(el("p", { class: "muted", text: "No games simulated yet. Advance a week to start collecting stats." })); return; }
     const confs = [...new Set(rows.filter((r) => !r.fictional).map((r) => r.conference))].sort();
     const controls = el("div", { class: "stats-controls" });
-    const confSel = el("select", { "aria-label": "Conference" }, [el("option", { value: "", text: "All conferences" }), ...confs.map((c) => el("option", { value: c, text: c }))]);
-    confSel.value = teamStatsState.conf;
-    confSel.addEventListener("change", () => { teamStatsState.conf = confSel.value; renderSeasonTeamStats(); });
-    controls.append(confSel);
-    const note = el("span", { class: "muted small-text", text: `${statsNote(teamStatsState.partial)}Per-game averages over simulated games through ${s.week_labels[s.current_week] || "week " + s.current_week}. Click a column to sort.` });
-    controls.append(note);
+    controls.append(confChips(confs, teamStatsState.conf, (v) => { teamStatsState.conf = v; renderSeasonTeamStats(); }));
     box.append(controls);
+    box.append(el("p", { class: "muted small-text", text: `${statsNote(teamStatsState.partial)}Per-game averages over simulated games through ${s.week_labels[s.current_week] || "week " + s.current_week}. Click a column to sort.` }));
 
     let list = rows.filter((r) => !r.fictional && (!teamStatsState.conf || r.conference === teamStatsState.conf));
     const k = teamStatsState.sort;
@@ -812,13 +822,11 @@
     const controls = el("div", { class: "stats-controls" });
     // conference picker narrows the team picker and the league views to that conference
     const confs = [...new Set(state.teams.filter((t) => !t.fictional).map((t) => t.conference))].sort();
-    const confSel = el("select", { "aria-label": "Conference" }, [el("option", { value: "", text: "All conferences" }), ...confs.map((c) => el("option", { value: c, text: c }))]);
-    confSel.value = ps.conf;
-    confSel.addEventListener("change", () => {
-      ps.conf = confSel.value;
-      const t = ps.team && window.CFP.teamsBySlug[ps.team];
-      if (ps.conf && t && t.conference !== ps.conf) ps.team = "";
-      if (ps.view === "roster" && !ps.team) ps.view = "leaders";
+    const confRow = confChips(confs, ps.conf, (v) => {
+      // picking a conference (or All) shows everyone in it, not a single team
+      ps.conf = v;
+      ps.team = "";
+      if (ps.view === "roster") ps.view = "leaders";
       ps.data = ps.leaders = ps.roster = null; ps.sort = null;
       renderSeasonPlayerStats();
     });
@@ -826,7 +834,7 @@
       ...state.teams.filter((t) => !t.fictional && (!ps.conf || t.conference === ps.conf)).map((t) => el("option", { value: t.slug, text: t.name }))]);
     teamSel.value = ps.team;
     teamSel.addEventListener("change", () => { ps.team = teamSel.value; ps.data = ps.leaders = ps.roster = null; ps.sort = null; if (ps.view === "roster" && !ps.team) ps.view = "leaders"; renderSeasonPlayerStats(); });
-    controls.append(confSel, teamSel);
+    controls.append(confRow, teamSel);
     const views = [["leaders", "Leaders"], ...Object.keys(PLAYER_COLS).map((c) => [c, c[0].toUpperCase() + c.slice(1)]), ["roster", "Roster"]];
     const chips = el("div", { class: "view-chips" }, views.filter(([v]) => v !== "roster" || ps.team).map(([v, label]) => {
       const b = el("button", { type: "button", class: `chip ${ps.view === v ? "active" : ""}`, text: label });
@@ -993,7 +1001,7 @@
     const w = pollWeekFor(state.viewWeek);
     const entry = s.polls[String(w)] || {};
     const list = entry[kind];
-    const title = kind === "ap" ? "AP Top 25" : "College Football Playoff rankings";
+    const title = kind === "ap" ? "AP Top 25" : kind === "coaches" ? "Coaches Poll (AFCA / USA Today)" : "College Football Playoff rankings";
     if (!list) {
       const note = kind === "cfp"
         ? `The committee's first ranking comes out after week ${s.cfp_weeks[0]} (Nov 3, 2026), then weekly through selection day.`
@@ -1003,7 +1011,7 @@
     }
     box.append(el("h3", { text: `${title} · ${w === 0 ? "preseason" : `after ${s.week_labels[w] || "week " + w}`}` }));
     if (kind === "cfp" && w >= 14) box.append(el("p", { class: "muted small-text", text: "Final ranking: this is the one the bracket is built from." }));
-    const voted = kind === "ap" && list.some((e) => e.points != null);
+    const voted = (kind === "ap" || kind === "coaches") && list.some((e) => e.points != null);
     const table = el("table", { class: "stats" });
     const heads = voted ? ["#", "Team", "Record", "Pts", "Conference", "Prev", ""] : ["#", "Team", "Record", "Conference", "Prev", ""];
     table.appendChild(el("tr", {}, heads.map((h) => el("th", { text: h, style: ["Team", "Conference"].includes(h) ? "text-align:left" : "", title: h === "Pts" ? "Poll points: 25 for a first-place vote down to 1 for 25th" : "" }))));
@@ -1022,7 +1030,7 @@
       ]));
     }
     box.appendChild(table);
-    const others = kind === "ap" ? (entry.ap_others || []).filter((e) => e.points == null || e.points > 0) : null;
+    const others = kind === "ap" || kind === "coaches" ? (entry[`${kind}_others`] || []).filter((e) => e.points == null || e.points > 0) : null;
     if (others && others.length) {
       const parts = others.map((e, i) => {
         const span = el("span", { class: e.team === s.team ? "win" : "" }, [e.points != null ? `${e.name} ${e.points}` : `${e.name} (${e.record})`]);
@@ -1055,7 +1063,7 @@
     const confLine = Object.entries(byConf).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([c, n]) => `${c} ${n}`).join(", ");
     box.appendChild(el("div", { class: "others-votes" }, [el("b", { text: "By conference: " }), confLine]));
     // ranked games in the coming week
-    if (kind === "ap" && !entry.final) renderRankedGames(box, list, w + 1);
+    if ((kind === "ap" || kind === "coaches") && !entry.final) renderRankedGames(box, list, w + 1);
   }
 
   async function renderRankedGames(box, list, week) {

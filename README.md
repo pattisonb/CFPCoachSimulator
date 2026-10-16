@@ -331,6 +331,15 @@ published order so they always agree with the ranking. Under the table: "Others 
 votes" with points, "Dropped from rankings" with the spot each team held, the count by
 conference, and the coming week's games involving ranked teams.
 
+**Coaches Poll.** A second tab carries the AFCA / USA Today Coaches Poll. Across 2014-2025
+(`fetch_polls.py` now pulls it too) the two polls agree on No.1 in 95% of weeks, share 24.1
+of 25 teams and sit 0.84 spots apart per team, with the coaches leaning slightly more on
+the record and on their own previous poll, and voting more unanimously at the top (the
+No.1 takes a median 93% of first-place votes, the AP's 87%). The sim builds the coaches
+order from the AP order with those nudges plus each team's standing opinion among the
+coaches for the season (damped near the top), then casts its own 65 ballots; a simulated
+season lands at 94% same No.1, 24.3 shared and 0.79 spots apart.
+
 **The final poll.** The AP's last Top 25 comes out after the national championship, so
 week 19 carries one: every bowl and playoff result is scored, the champion is first and
 the runner-up second (true of every final poll of the playoff era), and the Summary tab's

@@ -234,6 +234,7 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None) -
     pre_votes = _ap_votes(state, preseason[:25] + pre_others, tiers, ap_params, 0)
     state["polls"]["0"] = {"ap": _poll_entries(preseason[:25], {}, state, teams, votes=pre_votes),
                            "ap_others": _poll_entries(pre_others, {}, state, teams, start=26, votes=pre_votes)}
+    state["polls"]["0"].update(_coaches_entries(state, teams, preseason[:25], pre_others, {}, tiers, ap_params, 0, None))
     # remaining mode: replay the played weeks through the model (scores) but show the real polls
     if mode == "remaining" and current > 0:
         for w in range(1, current + 1):
@@ -452,6 +453,24 @@ def _ap_votes(state: dict, order: list[str], tiers: dict[str, str], params: dict
     return polls.ballots(order, state["scores"], tiers, params, seed=(state.get("seed") or 0) * 1000 + week)
 
 
+def _coaches_entries(state: dict, teams: dict, ap_order: list[str], others: list[str], rec_t: dict, tiers: dict,
+                     params: dict, week: int, prev_week: Optional[int], records: Optional[dict] = None,
+                     pinned: tuple = ()) -> dict:
+    """The Coaches Poll for a week: the AP order nudged by record and the previous
+    coaches poll, then its own 65 ballots. `pinned` teams (the champion and runner-up
+    in the final poll) stay on top."""
+    prev = state["polls"].get(str(prev_week), {}).get("coaches", []) if prev_week is not None else []
+    prev_rank = {e["team"]: e["rank"] for e in prev}
+    opinion = polls.coaches_opinion(ap_order + others, state.get("seed") or 0, week)
+    order = polls.coaches_order(ap_order + others, rec_t, prev_rank, opinion)
+    order = [t for t in pinned if t] + [t for t in order if t not in pinned]
+    top, rest = order[:25], order[25:25 + AP_OTHERS]
+    votes = polls.ballots(top + rest, state["scores"], tiers, params, n_voters=polls.COACHES_VOTERS,
+                          seed=(state.get("seed") or 0) * 1000 + week + 500, noise=polls.COACHES_NOISE)
+    return {"coaches": _poll_entries(top, prev_rank, state, teams, week, votes=votes, records=records),
+            "coaches_others": _poll_entries(rest, prev_rank, state, teams, week, start=26, votes=votes, records=records)}
+
+
 def _final_ap_poll(state: dict, teams: dict) -> None:
     """The AP's last poll, released after the national championship: every bowl and
     playoff result counts, the champion is first and the runner-up second (true of every
@@ -482,6 +501,8 @@ def _final_ap_poll(state: dict, teams: dict) -> None:
     state["polls"]["19"] = {"ap": _poll_entries(order, prev_rank, state, teams, votes=votes, records=rec),
                             "ap_others": _poll_entries(others, prev_rank, state, teams, start=26, votes=votes, records=rec),
                             "final": True}
+    state["polls"]["19"].update(_coaches_entries(state, teams, order, others, rec_t, tiers, ap_params, 19, last_week,
+                                                 records=rec, pinned=(champion, runner_up)))
 
 
 def _update_polls_after_week(state: dict, teams: dict, week: int, real_ap: Optional[list[str]] = None) -> None:
@@ -500,6 +521,7 @@ def _update_polls_after_week(state: dict, teams: dict, week: int, real_ap: Optio
     votes = _ap_votes(state, order + others, tiers, ap_params, week)
     entry = {"ap": _poll_entries(order, prev_rank, state, teams, week, votes=votes),
              "ap_others": _poll_entries(others, prev_rank, state, teams, week, start=26, votes=votes)}
+    entry.update(_coaches_entries(state, teams, order, others, rec_t, tiers, ap_params, week, week - 1))
     if week in CFP_WEEKS:
         opp = _opponents(state)
         opp_full = {t: [{"opp": o["opp"], "won": o["won"], "opp_record": rec_t.get(o["opp"], (0, 0))} for o in lst] for t, lst in opp.items()}

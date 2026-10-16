@@ -159,7 +159,7 @@ VOTER_NOISE = 28.0      # fit to 2014-2025 AP polls: No.1 first-place share and 
 
 
 def ballots(order: list[str], scores: dict[str, float], tiers: dict[str, str], params: dict,
-            n_voters: int = AP_VOTERS, seed: int = 0) -> dict[str, dict]:
+            n_voters: int = AP_VOTERS, seed: int = 0, noise: Optional[float] = None) -> dict[str, dict]:
     """First-place votes and points the way the AP publishes them. Each voter ranks the
     listed teams by the model score plus their own noise and names 25; a first place is
     25 points down to 1 for 25th. The totals are then handed down the published order so
@@ -170,7 +170,8 @@ def ballots(order: list[str], scores: dict[str, float], tiers: dict[str, str], p
     first: dict[str, int] = {}
     points: dict[str, int] = {}
     for _ in range(n_voters):
-        ballot = sorted(order, key=lambda t: -(eff[t] + rng.gauss(0.0, VOTER_NOISE)))
+        sigma = VOTER_NOISE if noise is None else noise
+        ballot = sorted(order, key=lambda t: -(eff[t] + rng.gauss(0.0, sigma)))
         first[ballot[0]] = first.get(ballot[0], 0) + 1
         for i, t in enumerate(ballot[:25]):
             points[t] = points.get(t, 0) + 25 - i
@@ -180,6 +181,42 @@ def ballots(order: list[str], scores: dict[str, float], tiers: dict[str, str], p
     for i, t in enumerate(order):
         out[t] = {"first_place": first_sorted[i] if i < len(first_sorted) else 0,
                   "points": pts_sorted[i] if i < len(pts_sorted) else 0}
+    return out
+
+
+COACHES_VOTERS = 65        # AFCA panel (53-67 ballots a week in 2014-2025)
+COACHES_NOISE = 22.0       # coaches are more unanimous: No.1 takes a median 93% of first places (AP 87%)
+COACHES_RECORD = 0.2       # spots per game of record margin, relative to the AP order
+COACHES_INERTIA = 0.2      # weight on last week's coaches spot
+COACHES_OPINION = 0.9      # spots: each team's standing opinion among the coaches for the season
+COACHES_JITTER = 0.5       # spots: week-to-week disagreement
+
+
+def coaches_order(ap_order: list[str], records: dict[str, tuple[int, int]], prev_coaches: dict[str, int],
+                  opinion: Optional[dict[str, float]] = None) -> list[str]:
+    """The Coaches Poll order from the AP order. Over 2014-2025 the two polls agree on
+    No.1 in 95% of weeks and share 24 of 25 teams, with the coaches leaning a little
+    more on the record and on their own previous poll; this nudge reproduces that
+    (0.80 spots off the real coaches poll versus 0.84 for the AP order alone)."""
+    cand = {}
+    for i, t in enumerate(ap_order, 1):
+        w, l = records.get(t, (0, 0))
+        prev = prev_coaches.get(t, 30)
+        # opinions matter less at the top: the two polls agree on No.1 in 95% of weeks
+        damp = min(1.0, (i - 1) / 4.0)
+        cand[t] = (26 - i) + COACHES_RECORD * (w - l) + COACHES_INERTIA * (26 - prev) + damp * (opinion or {}).get(t, 0.0)
+    return sorted(ap_order, key=lambda t: (-cand[t], ap_order.index(t)))
+
+
+def coaches_opinion(teams: list[str], season_seed: int, week: int) -> dict[str, float]:
+    """A separate panel has its own view of each team: a standing offset for the season
+    plus a little week-to-week movement, in spots. Sized so the two polls differ by about
+    0.8 spots per team and share 24 of 25, as they did in 2014-2025."""
+    out = {}
+    for t in teams:
+        standing = random.Random(f"{season_seed}:{t}").gauss(0.0, COACHES_OPINION)
+        weekly = random.Random(f"{season_seed}:{t}:{week}").gauss(0.0, COACHES_JITTER)
+        out[t] = standing + weekly
     return out
 
 

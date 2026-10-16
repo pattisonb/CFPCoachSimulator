@@ -72,7 +72,7 @@ def rankings_for(season: int, stype: int, week: int, names: dict) -> dict:
         name = (d.get("name") or "").lower()
         if name == "ap top 25":
             out["ap"] = parse_ranking(d, names)
-        elif "coaches" in name:
+        elif name == "afca coaches poll":        # the FBS one; ESPN also lists FCS, D-II and D-III coaches polls
             out["coaches"] = parse_ranking(d, names)
         elif "playoff" in name:
             out["cfp"] = parse_ranking(d, names)
