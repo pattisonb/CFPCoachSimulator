@@ -27,7 +27,7 @@ import json
 import random
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from multiprocessing import Pool
 from pathlib import Path
 from typing import Callable, Optional
@@ -58,6 +58,10 @@ HOSTED_CCG = {"Sun Belt", "Mountain West", "American Athletic Conference", "Conf
 PLAYOFF_WEEKS = {16: "First round", 17: "Quarterfinals", 18: "Semifinals", 19: "National championship"}
 BOWL_WEEK_LABELS = {16: "First round & bowls", 17: "Quarterfinals & bowls", 18: "Semifinals & New Year bowls", 19: "National championship"}
 CFP_WEEKS = {9, 10, 11, 12, 13, 14}   # committee rankings released after these weeks (Nov 3 ... Dec 6, 2026)
+# Calendar of the postseason weeks (regular-season weeks take their dates from the schedule).
+POSTSEASON_DATES = {CCG_WEEK: ("2026-12-04", "2026-12-05"), SELECTION_WEEK: ("2026-12-06", "2026-12-12"),
+                    16: ("2026-12-15", "2026-12-24"), 17: ("2026-12-26", "2027-01-01"), 18: ("2027-01-02", "2027-01-15"),
+                    19: ("2027-01-25", "2027-01-25")}
 
 REGION_TEAM = {
     "New England": "kestrel-bay", "Mid-Atlantic": "alder-ridge-state", "Southeast": "calder-springs",
@@ -202,7 +206,7 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None) -
         "id": uuid.uuid4().hex[:12], "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "team": team_slug, "team_name": teams[team_slug]["name"], "conference": teams[team_slug]["conference"],
         "mode": mode, "seed": seed, "current_week": current, "phase": "regular", "done": False,
-        "games": games, "polls": {}, "scores": {}, "champions": {}, "bracket": None, "playoff": {}, "my_boxes": {},
+        "games": games, "polls": {}, "scores": {}, "champions": {}, "runners_up": {}, "bracket": None, "playoff": {}, "my_boxes": {},
         "rng_state": rng.randrange(1 << 30),
     }
     real = _real_polls_2026(teams) if mode == "remaining" else {}
@@ -251,7 +255,8 @@ def _opponents(state: dict) -> dict[str, list[dict]]:
         if not g["played"] or g["kind"] == "playoff":
             continue
         for side, opp in (("home", "away"), ("away", "home")):
-            out.setdefault(g[side], []).append({"opp": g[opp], "won": g[f"{side}_score"] > g[f"{opp}_score"], "week": g["week"]})
+            out.setdefault(g[side], []).append({"opp": g[opp], "won": g[f"{side}_score"] > g[f"{opp}_score"], "week": g["week"],
+                                                "kind": g["kind"], "conference_game": g["conference_game"]})
     return out
 
 
@@ -262,12 +267,125 @@ def division_of(conference: str, slug: str) -> Optional[str]:
     return None
 
 
+TIEBREAK_STEPS = ["head-to-head", "record against common opponents", "record against the highest-placed common opponent",
+                  "conference strength of schedule", "latest ranking", "point margin"]
+
+
+def _ranking_positions(state: dict) -> dict[str, int]:
+    """Position of every team in the most recent ranking: the committee's full order when
+    it exists, else the AP poll (top 25 plus others receiving votes)."""
+    for w in sorted((int(k) for k in state["polls"]), reverse=True):
+        p = state["polls"][str(w)]
+        order = p.get("cfp_full") or [e["team"] for e in p.get("cfp", [])] or \
+            [e["team"] for e in p.get("ap", [])] + [e["team"] for e in p.get("ap_others", [])]
+        if order:
+            return {t: i for i, t in enumerate(order)}
+    return {}
+
+
+def _pct(wins: int, games: int) -> float:
+    return wins / games if games else 0.0
+
+
+def _order_rows(rows: list[dict], conf_rows: list[dict], opp: dict, rank_pos: dict[str, int]) -> list[dict]:
+    """Order a conference (or division) table the way the conferences do it.
+
+    Teams sort by conference winning percentage. Tied teams go through the ladder the
+    Power Four and most Group of Five conferences use for seeding the title game:
+      1. head-to-head among the tied teams (combined record when more than two are tied);
+      2. record against the conference opponents common to all tied teams;
+      3. record against the highest-placed common opponent, then the next one down;
+      4. conference strength of schedule (conference winning percentage of each team's
+         conference opponents);
+      5. the latest ranking (the committee's, else the AP poll), which the SEC, Big Ten and
+         ACC use directly and the Big 12 approximates with an analytics ranking;
+      6. point margin, standing in for the conferences' draw.
+    When a step separates some of the tied teams from the rest, each smaller group restarts
+    at step 1, as the written procedures do once a tie is reduced. Rows that needed the
+    ladder get `tiebreak`, the step that placed them.
+    """
+    conf_slugs = {r["slug"] for r in conf_rows}
+    by_slug = {r["slug"]: r for r in conf_rows}
+    conf_games = {sl: [o for o in opp.get(sl, []) if o["opp"] in conf_slugs and o.get("kind", "regular") == "regular"
+                       and o.get("conference_game", True)] for sl in by_slug}
+    provisional = sorted(conf_rows, key=lambda r: (-_pct(r["conf_wins"], r["conf_wins"] + r["conf_losses"]),
+                                                   -_pct(r["wins"], r["wins"] + r["losses"]), -(r["points_for"] - r["points_against"])))
+    place = {r["slug"]: i for i, r in enumerate(provisional)}
+
+    def vs(team: str, opponents: set) -> tuple[int, int]:
+        gs = [o for o in conf_games[team] if o["opp"] in opponents]
+        return sum(1 for o in gs if o["won"]), len(gs)
+
+    def metric(step: int, group: list[dict]) -> Optional[dict[str, float]]:
+        slugs = {r["slug"] for r in group}
+        if step == 0:
+            vals = {}
+            for sl in slugs:
+                w, g = vs(sl, slugs - {sl})
+                if g == 0:
+                    return None
+                vals[sl] = w / g
+            return vals
+        if step in (1, 2):
+            common = set.intersection(*[{o["opp"] for o in conf_games[sl]} for sl in slugs]) - slugs
+            if not common:
+                return None
+            if step == 1:
+                return {sl: _pct(*vs(sl, common)) for sl in slugs}
+            for c in sorted(common, key=lambda sl: place[sl]):
+                vals = {sl: _pct(*vs(sl, {c})) for sl in slugs}
+                if len(set(vals.values())) > 1:
+                    return vals
+            return None
+        if step == 3:
+            vals = {}
+            for sl in slugs:
+                gs = conf_games[sl]
+                if not gs:
+                    return None
+                vals[sl] = sum(_pct(by_slug[o["opp"]]["conf_wins"], by_slug[o["opp"]]["conf_wins"] + by_slug[o["opp"]]["conf_losses"])
+                               for o in gs) / len(gs)
+            return vals
+        if step == 4:
+            return {sl: -rank_pos.get(sl, 10_000) for sl in slugs}
+        return {sl: by_slug[sl]["points_for"] - by_slug[sl]["points_against"] for sl in slugs}
+
+    def resolve(group: list[dict]) -> list[dict]:
+        if len(group) <= 1:
+            return list(group)
+        for step in range(len(TIEBREAK_STEPS)):
+            vals = metric(step, group)
+            if vals is None:
+                continue
+            best = max(vals.values())
+            top = [r for r in group if vals[r["slug"]] == best]
+            if len(top) == len(group):
+                continue
+            rest = [r for r in group if vals[r["slug"]] != best]
+            for r in group:
+                r.setdefault("tiebreak", TIEBREAK_STEPS[step])
+            return resolve(top) + resolve(rest)
+        return list(group)
+
+    for r in rows:
+        r.pop("tiebreak", None)
+    groups: dict[float, list[dict]] = {}
+    for r in rows:
+        groups.setdefault(_pct(r["conf_wins"], r["conf_wins"] + r["conf_losses"]), []).append(r)
+    ordered: list[dict] = []
+    for pct in sorted(groups, reverse=True):
+        ordered.extend(resolve(groups[pct]))
+    return ordered
+
+
 def standings(state: dict) -> dict[str, list[dict]]:
-    """Conference tables. Rows carry `division` (None where the conference has none) and
-    `conf_rank`, which counts within the division when there is one."""
+    """Conference tables. Rows carry `division` (None where the conference has none),
+    `conf_rank` (counted within the division when there is one), `champion` and
+    `runner_up` once the title game is played, and `tiebreak` when the ladder placed them."""
     teams = load_teams()
     rec = _records(state)
     opp = _opponents(state)
+    rank_pos = _ranking_positions(state)
     table: dict[str, list[dict]] = {}
     for slug, t in teams.items():
         if t["fictional"]:
@@ -275,41 +393,26 @@ def standings(state: dict) -> dict[str, list[dict]]:
         r = {"slug": slug, "name": t["name"], "division": division_of(t["conference"], slug), **rec[slug]}
         table.setdefault(t["conference"], []).append(r)
 
-    def h2h(a: str, b: str) -> int:
-        for o in opp.get(a, []):
-            if o["opp"] == b:
-                return 1 if o["won"] else -1
-        return 0
-
-    def key(r):
-        cg = r["conf_wins"] + r["conf_losses"]
-        g = r["wins"] + r["losses"]
-        return (-(r["conf_wins"] / cg if cg else 0), -(r["wins"] / g if g else 0), -(r["points_for"] - r["points_against"]))
-
-    def order(rows: list[dict]) -> None:
-        rows.sort(key=key)
-        # head-to-head between adjacent teams with the same conference record
-        for i in range(1, len(rows)):
-            a, b = rows[i - 1], rows[i]
-            if (a["conf_wins"], a["conf_losses"]) == (b["conf_wins"], b["conf_losses"]) and h2h(b["slug"], a["slug"]) > 0:
-                rows[i - 1], rows[i] = b, a
-        for i, r in enumerate(rows, 1):
-            r["conf_rank"] = i
-
     for conf, rows in table.items():
         if conf in DIVISIONS:
             ordered = []
             for div in DIVISIONS[conf]:
-                group = [r for r in rows if r["division"] == div]
-                order(group)
+                group = _order_rows([r for r in rows if r["division"] == div], rows, opp, rank_pos)
+                for i, r in enumerate(group, 1):
+                    r["conf_rank"] = i
                 ordered.extend(group)
             rows[:] = ordered
         else:
-            order(rows)
+            rows[:] = _order_rows(rows, rows, opp, rank_pos)
+            for i, r in enumerate(rows, 1):
+                r["conf_rank"] = i
         champ = state["champions"].get(conf)
-        if champ:
-            for r in rows:
-                r["champion"] = r["slug"] == champ
+        second = state.get("runners_up", {}).get(conf)
+        for r in rows:
+            r["champion"] = bool(champ) and r["slug"] == champ
+            r["runner_up"] = bool(second) and r["slug"] == second
+            if conf in polls.INDEPENDENT:
+                r.pop("tiebreak", None)   # independents have no conference table to break
     return table
 
 
@@ -503,7 +606,9 @@ def advance(state: dict, pool: Optional[Pool] = None) -> dict:
     if week == CCG_WEEK:
         for g in state["games"].values():
             if g["kind"] == "ccg":
-                state["champions"][g["conference"]] = g["home"] if g["home_score"] > g["away_score"] else g["away"]
+                won_home = g["home_score"] > g["away_score"]
+                state["champions"][g["conference"]] = g["home"] if won_home else g["away"]
+                state.setdefault("runners_up", {})[g["conference"]] = g["away"] if won_home else g["home"]
     if week <= CCG_WEEK:
         _update_polls_after_week(state, teams, week)
     if week == CCG_WEEK:
@@ -561,6 +666,34 @@ def week_view(state: dict, week: int) -> list[dict]:
     return out
 
 
+def week_dates(state: dict) -> dict[int, dict]:
+    """{week: {"start", "end", "main"}} as ISO dates in US time. Regular-season weeks span
+    their first and last game, with the Saturday (the busiest day) as the main date; the
+    postseason weeks follow the 2026-27 calendar. Week 0 is the preseason."""
+    by_week: dict[int, list[str]] = {}
+    for g in state["games"].values():
+        d = g.get("date") or ""
+        if len(d) >= 10 and d[4] == "-":
+            try:
+                local = datetime.fromisoformat(d.replace("Z", "+00:00")) - timedelta(hours=6)
+            except ValueError:
+                continue
+            by_week.setdefault(g["week"], []).append(local.strftime("%Y-%m-%d"))
+    out: dict[int, dict] = {}
+    for w in sorted(set(by_week) | set(POSTSEASON_DATES)):
+        if w in POSTSEASON_DATES:
+            start, end = POSTSEASON_DATES[w]
+            out[w] = {"start": start, "end": end, "main": end}
+        else:
+            ds = sorted(by_week[w])
+            out[w] = {"start": ds[0], "end": ds[-1], "main": max(set(ds), key=ds.count)}
+    first = out.get(1, {}).get("start")
+    if first:
+        eve = (datetime.fromisoformat(first) - timedelta(days=1)).strftime("%Y-%m-%d")
+        out[0] = {"start": None, "end": eve, "main": eve}
+    return out
+
+
 def summary(state: dict) -> dict:
     teams = load_teams()
     rec = _records(state)[state["team"]]
@@ -597,6 +730,7 @@ def summary(state: dict) -> dict:
                         SELECTION_WEEK: "Selection", **BOWL_WEEK_LABELS},
         "polls": state["polls"], "champions": state["champions"], "bracket": state["bracket"], "playoff": state["playoff"],
         "cfp_weeks": sorted(CFP_WEEKS), "bowls": bowl_view(state), "playoff_sites": state.get("playoff_sites"),
+        "week_dates": week_dates(state),
     }
 
 

@@ -201,7 +201,10 @@ selection** or **Sim to the end**. The week strip lets you look back at any week
 
 - **Games**: every game that week, your game first, with the AP ranks the teams carried
   into it; click your game for the full box score.
-- **My Schedule**, **Standings** (every conference, champions marked after title games).
+- **My Schedule**, **Standings**: every conference, ordered by conference winning
+  percentage with the conferences' tiebreak ladder (below). After championship week the
+  champion carries a crown and the title-game loser a silver medal; hover a rank to see
+  which tiebreak placed a team.
 - **AP Poll**: the poll released after the selected week, with each team's move.
 - **CFP Rankings**: the committee's ranking after weeks 9 through 13 and the final one
   after championship week, the 2026 release calendar (Nov 3, 10, 17, 24, Dec 1, Dec 6).
@@ -210,12 +213,23 @@ selection** or **Sim to the end**. The week strip lets you look back at any week
   the playoff results as the rounds are played.
 
 The calendar: weeks 1-13 are the regular season (the 2026 schedule ends Nov 28), week 14
-is championship week (the top two in every conference's standings meet on a neutral
-field; head-to-head breaks ties), week 15 holds Army-Navy and the selection, weeks 16-19
+is championship week (the top two in every conference's standings meet, on a neutral
+field for the Power Four and at the higher seed's stadium in the Group of Five), week 15 holds Army-Navy and the selection, weeks 16-19
 are the playoff. **Full season** starts from the real 2026 preseason AP poll and
 simulates everything; **Rest of season** keeps the real results and real polls through
 the last completed week. FCS opponents play as the fictional school from the same region
 (`data/fcs_map.json`). No injuries.
+
+Ties in the standings follow the procedure the Power Four (and most Group of Five)
+conferences publish for seeding their title games, in this order: head-to-head (the
+combined record among the tied teams when more than two are tied); record against the
+conference opponents common to all tied teams; record against the highest-placed common
+opponent, then the next one down; conference strength of schedule (the conference winning
+percentage of each team's conference opponents); the latest ranking (the committee's,
+else the AP poll, which stands in for the Big 12's analytics ranking); and point margin
+in place of the conferences' draw. Once a step separates some of the tied teams from the
+rest, each smaller group restarts at head-to-head, as the written procedures do. The Sun
+Belt still plays divisions, so its title game is East winner against West winner.
 
 ### The polls: built from twelve seasons of real polls
 

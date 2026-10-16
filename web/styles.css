@@ -296,6 +296,9 @@ table.stats tr.clickable:hover td { background: var(--panel-2); }
 .week-chip { padding: 4px 8px; font-size: 12px; border-radius: 6px; background: var(--panel-2); border: 1px solid transparent; color: var(--muted); }
 .week-chip.future { opacity: 0.45; }
 .week-chip.current { border-color: var(--accent); color: var(--text); }
+.week-chip.next { border-color: var(--accent); border-style: dashed; color: var(--text); opacity: 1; }
+.week-date { margin-top: 8px; font-size: 13px; }
+.week-date b { color: var(--text); font-weight: 600; }
 .week-chip.active { background: var(--accent); color: var(--accent-ink); opacity: 1; }
 .games-table td .rank { color: var(--muted); font-size: 11px; }
 .bracket-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 14px; }

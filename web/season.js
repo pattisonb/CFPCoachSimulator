@@ -80,6 +80,8 @@
   async function advance(to) {
     const s = state.season;
     if (!s || s.done) return;
+    // the highlighted week is the one Advance plays: a week further ahead sims through to it
+    if (!to && state.viewWeek > s.current_week + 1) to = state.viewWeek;
     setBusy(true);
     try {
       await api(`/api/season/${s.id}/advance`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(to ? { to } : {}) });
@@ -100,7 +102,7 @@
         } else {
           if (j.status === "error") toast(`Simulation error: ${j.error}`, 6000);
           const s = await api(`/api/season/${state.season.id}`);
-          state.viewWeek = null;
+          state.viewWeek = s.current_week;
           showSeason(s);
           loadSeasons();
           setBusy(false);
@@ -130,7 +132,8 @@
       el("span", { class: "muted", style: "font-size:14px;margin-left:8px", text: `${r.conf_wins}-${r.conf_losses} ${s.conference}` }),
     );
     const phase = s.done ? `Season complete · national champion: ${s.champion_name}` : s.current_week === 0 ? "Preseason" : `Through ${s.week_labels[s.current_week] || "week " + s.current_week}`;
-    $("#season-meta").textContent = `${phase} · ${s.mode === "full" ? "full season simulated" : "real results through today"} · ${when(s.created_at)}`;
+    const simDate = simDateText(s);
+    $("#season-meta").textContent = `${phase}${simDate ? ` · ${simDate}` : ""} · ${s.mode === "full" ? "full season simulated" : "real results through today"} · ${when(s.created_at)}`;
     setBusy(false);
     renderWeekStrip();
     renderTab();
@@ -143,10 +146,51 @@
     const weeks = [0, ...s.weeks];
     for (const w of weeks) {
       const label = w === 0 ? "Pre" : w <= 13 ? `W${w}` : (s.week_labels[w] || `W${w}`).replace("Championship week", "CCG").replace("National championship", "Title").replace("Quarterfinals", "QF").replace("Semifinals", "SF").replace("First round", "R1").replace("Selection", "Sel");
-      const b = el("button", { type: "button", class: `week-chip ${w === state.viewWeek ? "active" : ""} ${w > s.current_week ? "future" : ""} ${w === s.current_week ? "current" : ""}`, text: label, title: s.week_labels[w] || (w === 0 ? "Preseason" : "") });
+      const next = !s.done && w === s.current_week + 1;
+      const b = el("button", { type: "button", class: `week-chip ${w === state.viewWeek ? "active" : ""} ${w > s.current_week ? "future" : ""} ${w === s.current_week ? "current" : ""} ${next ? "next" : ""}`, text: label, title: `${s.week_labels[w] || (w === 0 ? "Preseason" : "")} · ${weekDateText(s, w)}` });
       b.addEventListener("click", () => { state.viewWeek = w; renderWeekStrip(); renderTab(); });
       strip.appendChild(b);
     }
+    renderWeekDate();
+  }
+
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  function parseDay(iso) { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d); }
+  function fmtDay(iso, withDay = true) { const d = parseDay(iso); return `${withDay ? DAYS[d.getDay()] + ", " : ""}${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; }
+
+  function weekDateText(s, w) {
+    const wd = s.week_dates && s.week_dates[w];
+    if (!wd) return "";
+    if (w === 0) return wd.end ? `preseason, through ${fmtDay(wd.end)}` : "preseason";
+    if (wd.start === wd.end) return fmtDay(wd.end);
+    const a = parseDay(wd.start), b = parseDay(wd.end);
+    const span = a.getMonth() === b.getMonth() ? `${MONTHS[a.getMonth()]} ${a.getDate()}–${b.getDate()}, ${b.getFullYear()}` : `${MONTHS[a.getMonth()]} ${a.getDate()} – ${MONTHS[b.getMonth()]} ${b.getDate()}, ${b.getFullYear()}`;
+    return w <= 13 && wd.main ? `${fmtDay(wd.main)} (${span})` : span;
+  }
+
+  function simDateText(s) {
+    const wd = s.week_dates && s.week_dates[s.current_week];
+    if (!wd || !wd.end) return "";
+    return `${s.current_week === 0 ? "sim date" : "as of"} ${fmtDay(wd.end)}`;
+  }
+
+  function renderWeekDate() {
+    const s = state.season, w = state.viewWeek;
+    const box = $("#week-date");
+    box.innerHTML = "";
+    const label = w === 0 ? "Preseason" : (s.week_labels[w] || `Week ${w}`);
+    let status;
+    if (s.done && w >= s.current_week) status = "season complete";
+    else if (w <= s.current_week) status = w === 0 ? "" : "played";
+    else if (w === s.current_week + 1) status = "up next · Advance plays this week";
+    else status = `Advance sims through ${label}`;
+    box.append(el("b", { text: label }), el("span", { text: ` · ${weekDateText(s, w)}` }));
+    if (status) box.append(el("span", { text: ` · ${status}` }));
+    const btn = $("#btn-advance");
+    if (s.done) btn.textContent = "Season complete";
+    else if (w > s.current_week + 1) btn.textContent = `Sim to ${label}`;
+    else btn.textContent = `Play ${s.week_labels[s.current_week + 1] || "week " + (s.current_week + 1)}`;
   }
 
   function selectTab(name) {
@@ -287,8 +331,10 @@
       table.appendChild(el("tr", {}, ["#", division || "Team", "Conf", "Overall", "PF", "PA"].map((h) => el("th", { text: h, style: h === (division || "Team") ? "text-align:left" : "" }))));
       for (const t of rows) {
         table.appendChild(el("tr", { class: t.slug === s.team ? "mine" : "" }, [
-          el("td", { text: String(t.conf_rank) }),
-          el("td", { style: "text-align:left", class: "name" }, [t.name, t.champion ? el("span", { class: "crown", text: "👑", title: "Conference champion", "aria-label": "Conference champion" }) : null]),
+          el("td", { text: String(t.conf_rank), title: t.tiebreak ? `Tied on conference record; placed by ${t.tiebreak}` : "" }),
+          el("td", { style: "text-align:left", class: "name" }, [t.name,
+            t.champion ? el("span", { class: "crown", text: "👑", title: "Conference champion", "aria-label": "Conference champion" }) : null,
+            t.runner_up ? el("span", { class: "crown", text: "🥈", title: "Lost the conference championship game", "aria-label": "Conference runner-up" }) : null]),
           el("td", { text: `${t.conf_wins}-${t.conf_losses}` }), el("td", { text: `${t.wins}-${t.losses}` }),
           el("td", { text: String(t.points_for) }), el("td", { text: String(t.points_against) }),
         ]));
