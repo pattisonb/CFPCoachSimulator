@@ -649,6 +649,8 @@
       const tone = r.value >= 75 ? "hi" : r.value >= 55 ? "mid" : "lo";
       rat.append(el("div", { class: "rating-row" }, [el("span", { class: "rating-label", text: r.label }), el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]), el("b", { class: "rating-num", text: String(r.value) })]));
     }
+    const others = Object.entries(p.ratings_at || {}).filter(([pos]) => pos !== p.position && !(pos === "MLB" && /LB$/.test(p.position))).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    if (others.length) rat.append(el("div", { class: "muted small-text", style: "margin-top:8px", text: `Rated at other spots: ${others.map(([pos, v]) => `${pos} ${v}`).join(" · ")}` }));
     grid.append(rat);
 
     // ranks
