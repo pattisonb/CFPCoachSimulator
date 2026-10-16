@@ -183,14 +183,14 @@
     let status;
     if (s.done && w >= s.current_week) status = "season complete";
     else if (w <= s.current_week) status = w === 0 ? "" : "played";
-    else if (w === s.current_week + 1) status = "up next · Advance plays this week";
+    else if (w === s.current_week + 1) status = "up next";
     else status = `Advance sims through ${label}`;
     box.append(el("b", { text: label }), el("span", { text: ` · ${weekDateText(s, w)}` }));
     if (status) box.append(el("span", { text: ` · ${status}` }));
     const btn = $("#btn-advance");
     if (s.done) btn.textContent = "Season complete";
     else if (w > s.current_week + 1) btn.textContent = `Sim to ${label}`;
-    else btn.textContent = `Play ${s.week_labels[s.current_week + 1] || "week " + (s.current_week + 1)}`;
+    else btn.textContent = "Advance to next week";
   }
 
   function selectTab(name) {
@@ -349,10 +349,23 @@
 
     // ---- surprise and disappointment ----
     if (r.surprises.length || r.disappointments.length) {
+      // one sentence on the team's AP path: where it started, its peak, where it ended
+      const wk = (w) => (w <= 13 ? `Week ${w}` : (s.week_labels[w] || `week ${w}`).toLowerCase().replace("championship week", "championship week").replace("selection", "selection day"));
       const expl = (x) => {
-        const was = x.preseason_rank ? `preseason #${x.preseason_rank}` : `unranked, rated #${x.rating_rank} in the country`;
-        const now = x.final_rank ? `finished #${x.final_rank} in the AP poll` : "finished unranked";
-        return `${was} · ${now}`;
+        const endWord = r.done ? "finished" : "sits";
+        const start = x.preseason_rank ? `Started the season #${x.preseason_rank}` : "Started the season unranked";
+        if (x.peak_rank == null) return `${start}, never cracked the top 25, and ${endWord} ${x.record}.`;
+        if (x.final_rank != null && x.final_rank === x.peak_rank) {
+          if (x.preseason_rank === x.final_rank) return `Started and ${endWord} the season at #${x.final_rank}.`;
+          const climbed = !x.preseason_rank || x.final_rank < x.preseason_rank;
+          return `${start}, ${climbed ? "climbed" : "slipped"} to #${x.final_rank} and ${endWord} there.`;
+        }
+        // mention the peak only when it was a real climb that lasted past the week it happened
+        const improved = (!x.preseason_rank || x.peak_rank <= x.preseason_rank - 2) && x.peak_week < x.last_ranked_week;
+        const end = x.final_rank != null
+          ? `slid to #${x.final_rank}`
+          : `dropped out of the poll after ${wk(x.last_ranked_week)} and ${endWord} unranked`;
+        return improved ? `${start}, reached #${x.peak_rank} by ${wk(x.peak_week)}, then ${end}.` : `${start}, ${end}.`;
       };
       const storyCard = (title, rows, cls) => {
         if (!rows.length) return null;
@@ -360,9 +373,9 @@
         const card = el("div", { class: `review-card ${cls}` }, [
           el("div", { class: "review-label", text: title }),
           el("div", { class: "review-big" }, [pill(first.team), `${first.name} ${first.record}`]),
-          el("div", { class: "small-text", text: `${first.conference} · ${expl(first)}` }),
+          el("div", { class: "small-text", text: `${first.conference}. ${expl(first)}` }),
         ]);
-        if (rest.length) card.append(el("div", { class: "review-runners muted small-text" }, rest.map((x) => el("div", {}, [team(x.team, `${x.name} ${x.record}`), el("span", { text: ` · ${expl(x)}` })]))));
+        if (rest.length) card.append(el("div", { class: "review-runners muted small-text" }, rest.map((x) => el("div", {}, [team(x.team, `${x.name} ${x.record}`), el("span", { text: ` — ${expl(x)}` })]))));
         return card;
       };
       box.append(el("h3", { text: r.done ? "Surprise and disappointment" : "Surprise and disappointment so far" }));

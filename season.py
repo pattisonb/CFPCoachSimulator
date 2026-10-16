@@ -23,8 +23,10 @@ Usage:  python season.py ohio-state [full|remaining]      # simulate to the end 
 """
 from __future__ import annotations
 
+import contextlib
 import json
 import math
+import os
 import random
 import time
 import uuid
@@ -477,6 +479,25 @@ def _sim_one(args: tuple) -> dict:
     return out
 
 
+def sim_workers() -> int:
+    """How many processes simulate games: SIM_WORKERS if set (1 means in-process, which
+    is right for a small host like Render's free tier), else the machine's cores, capped."""
+    try:
+        n = int(os.environ.get("SIM_WORKERS", "0"))
+    except ValueError:
+        n = 0
+    return n if n > 0 else max(1, min(os.cpu_count() or 1, 8))
+
+
+def _make_pool() -> Optional[Pool]:
+    """A worker pool, or None to simulate in this process."""
+    n = sim_workers()
+    if n <= 1:
+        _init(str(TEAMS_FILE))
+        return None
+    return Pool(processes=n, initializer=_init, initargs=(str(TEAMS_FILE),))
+
+
 def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None) -> None:
     rng = random.Random(state["rng_state"])
     jobs = []
@@ -487,11 +508,15 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None) ->
     state["rng_state"] = rng.randrange(1 << 30)
     if not jobs:
         return
-    if pool is None:
-        with Pool(initializer=_init, initargs=(str(TEAMS_FILE),)) as p:
-            results = list(p.imap_unordered(_sim_one, jobs, chunksize=4))
-    else:
+    if pool is not None:
         results = list(pool.imap_unordered(_sim_one, jobs, chunksize=4))
+    elif sim_workers() <= 1:
+        if not _TEAMS:
+            _init(str(TEAMS_FILE))
+        results = [_sim_one(job) for job in jobs]
+    else:
+        with _make_pool() as p:
+            results = list(p.imap_unordered(_sim_one, jobs, chunksize=4))
     for r in results:
         g = state["games"][r["event_id"]]
         g.update(played=True, home_score=r["home_score"], away_score=r["away_score"], overtime=r["overtime"])
@@ -634,7 +659,8 @@ def advance(state: dict, pool: Optional[Pool] = None) -> dict:
 
 def advance_to(state: dict, target_week: int, progress: Optional[Callable[[int, int], None]] = None) -> dict:
     target = min(target_week, 19)
-    with Pool(initializer=_init, initargs=(str(TEAMS_FILE),)) as pool:
+    pool = _make_pool()
+    with (pool if pool is not None else contextlib.nullcontext()):
         while state["current_week"] < target and not state["done"]:
             advance(state, pool)
             if progress:
@@ -998,6 +1024,15 @@ def _surprises(state: dict, teams: dict, final_ap: list[dict]) -> tuple[list[dic
     finish_rank = {**fin_ap, **{s: 26 + i for i, s in enumerate(unranked)}}
     pre_unranked = [s for s in by_rating if s not in pre_ap]
     expected_rank = {**pre_ap, **{s: 26 + i for i, s in enumerate(pre_unranked)}}
+    # each team's AP path through the season: [(week, rank)] for the weeks it was ranked
+    path: dict[str, list[tuple[int, int]]] = {}
+    poll_weeks = sorted(int(k) for k in state["polls"])
+    for w in poll_weeks:
+        if w == 0:
+            continue
+        for e in state["polls"][str(w)].get("ap", []):
+            path.setdefault(e["team"], []).append((w, e["rank"]))
+    last_week = poll_weeks[-1] if poll_weeks else 0
     rows = []
     for s in fbs:
         r = records[s]
@@ -1007,9 +1042,14 @@ def _surprises(state: dict, teams: dict, final_ap: list[dict]) -> tuple[list[dic
         # to 50th, and a preseason #1 that finishes #8 is not a bigger letdown than a
         # preseason #10 that finishes 7-6 and unranked
         swing = math.log((expected_rank[s] + 10) / (finish_rank[s] + 10))
+        ranked = path.get(s, [])
+        peak = min(ranked, key=lambda wr: (wr[1], wr[0])) if ranked else None
         rows.append({"team": s, "name": teams[s]["name"], "conference": teams[s]["conference"], "record": f"{r['wins']}-{r['losses']}",
                      "preseason_rank": pre_ap.get(s), "rating_rank": rating_rank[s], "expected": expected_rank[s],
-                     "final_rank": fin_ap.get(s), "finish": finish_rank[s], "swing": round(swing, 3)})
+                     "final_rank": fin_ap.get(s), "finish": finish_rank[s], "swing": round(swing, 3),
+                     "peak_rank": peak[1] if peak else None, "peak_week": peak[0] if peak else None,
+                     "first_ranked_week": ranked[0][0] if ranked else None, "last_ranked_week": ranked[-1][0] if ranked else None,
+                     "last_week": last_week})
     rows.sort(key=lambda x: -x["swing"])
     return rows[:3], list(reversed(rows[-3:]))
 
