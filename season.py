@@ -24,6 +24,7 @@ Usage:  python season.py ohio-state [full|remaining]      # simulate to the end 
 from __future__ import annotations
 
 import json
+import math
 import random
 import time
 import uuid
@@ -954,6 +955,65 @@ def _player_leaders(boxes: list[dict], me: str) -> dict:
     }
 
 
+def _national_leaders(state: dict) -> dict:
+    """The country's leader in each category from the season-long stats of every
+    simulated game (empty when the season only has your own games' box scores)."""
+    if state.get("season_stats_partial") or not state.get("season_stats"):
+        _season_stats(state)
+        if state.get("season_stats_partial"):
+            return {}
+
+    def top(category: str, key: str):
+        players = player_stats_view(state, None, category, limit=10_000)["players"]
+        best = max(players, key=lambda p: p["stats"].get(key, 0), default=None)
+        return best if best and best["stats"].get(key, 0) > 0 else None
+
+    out = {"passing": top("passing", "pass_yards"), "rushing": top("rushing", "rush_yards"), "receiving": top("receiving", "receiving_yards"),
+           "sacks": top("defense", "sacks"), "interceptions": top("defense", "interceptions")}
+    defenders = player_stats_view(state, None, "defense", limit=10_000)["players"]
+    for p in defenders:
+        p["stats"]["tackles"] = p["stats"].get("solo_tackles", 0) + p["stats"].get("assisted_tackles", 0)
+    out["tackles"] = max(defenders, key=lambda p: p["stats"]["tackles"], default=None)
+    kickers = player_stats_view(state, None, "kicking", limit=10_000)["players"]
+    for p in kickers:
+        p["stats"]["points"] = p["stats"].get("fg_made", 0) * 3 + p["stats"].get("pat_made", 0)
+    out["kicking"] = max(kickers, key=lambda p: p["stats"]["points"], default=None)
+    return {k: v for k, v in out.items() if v}
+
+
+def _surprises(state: dict, teams: dict, final_ap: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Teams whose finish most exceeded (surprise) or fell short of (disappointment) what
+    was expected of them. Expectation is the preseason AP rank, or for unranked teams a
+    slot below the top 25 by roster rating. The finish is the final AP rank, or for
+    unranked teams a slot below the top 25 by record and point differential."""
+    records = _records(state)
+    fbs = [s for s, t in teams.items() if not t["fictional"]]
+    by_rating = sorted(fbs, key=lambda s: -teams[s]["team_ratings"]["overall"])
+    rating_rank = {s: i + 1 for i, s in enumerate(by_rating)}
+    pre_ap = {e["team"]: e["rank"] for e in state["polls"].get("0", {}).get("ap", [])}
+    fin_ap = {e["team"]: e["rank"] for e in final_ap}
+    unranked = [s for s in fbs if s not in fin_ap]
+    unranked.sort(key=lambda s: (-(records[s]["wins"] / max(1, records[s]["wins"] + records[s]["losses"])),
+                                 -(records[s]["points_for"] - records[s]["points_against"])))
+    finish_rank = {**fin_ap, **{s: 26 + i for i, s in enumerate(unranked)}}
+    pre_unranked = [s for s in by_rating if s not in pre_ap]
+    expected_rank = {**pre_ap, **{s: 26 + i for i, s in enumerate(pre_unranked)}}
+    rows = []
+    for s in fbs:
+        r = records[s]
+        if r["wins"] + r["losses"] < 6:
+            continue
+        # log ratio of (rank + 10): climbing from 99th to 19th outweighs climbing from 138th
+        # to 50th, and a preseason #1 that finishes #8 is not a bigger letdown than a
+        # preseason #10 that finishes 7-6 and unranked
+        swing = math.log((expected_rank[s] + 10) / (finish_rank[s] + 10))
+        rows.append({"team": s, "name": teams[s]["name"], "conference": teams[s]["conference"], "record": f"{r['wins']}-{r['losses']}",
+                     "preseason_rank": pre_ap.get(s), "rating_rank": rating_rank[s], "expected": expected_rank[s],
+                     "final_rank": fin_ap.get(s), "finish": finish_rank[s], "swing": round(swing, 3)})
+    rows.sort(key=lambda x: -x["swing"])
+    return rows[:3], list(reversed(rows[-3:]))
+
+
 def season_review(state: dict) -> dict:
     """The season's big results (title game, playoff rounds, conference champions, final
     polls) and your team's season in review (record, finish, best win, worst loss, streaks,
@@ -1028,8 +1088,10 @@ def season_review(state: dict) -> dict:
     else:
         finish = None
     boxes = [b for b in state["my_boxes"].values()]
+    surprises, disappointments = _surprises(state, teams, ap)
     return {
         "done": state["done"], "current_week": state["current_week"],
+        "national_leaders": _national_leaders(state), "surprises": surprises, "disappointments": disappointments,
         "champion": state.get("champion"), "champion_name": teams[state["champion"]]["name"] if state.get("champion") else None,
         "title_game": title_game, "rounds": rounds, "champions": champions,
         "final_ap": ap[:10], "final_cfp": cfp[:12], "poll_week": max((int(k) for k in state["polls"]), default=0),

@@ -215,8 +215,15 @@ selection** or **Sim to the end**. The week strip lets you look back at any week
   title game, every playoff round, each conference's champion and title-game score, the
   final CFP ranking and AP poll, then your team's record, conference finish, postseason
   result, scoring, longest win streak, best win, worst loss, biggest win and closest loss,
-  and your statistical leaders (passer, rusher, receiver, tackler, sacks, interceptions,
-  kicker, returner) totalled from the box scores of your games (`/api/season/{id}/review`).
+  your statistical leaders (passer, rusher, receiver, tackler, sacks, interceptions,
+  kicker, returner) totalled from the box scores of your games, the national leaders in
+  passing, rushing and receiving yards, tackles, sacks, interceptions and kicker scoring
+  from the season-long stats of every simulated game, and the biggest surprise and
+  disappointment of the season: each FBS team's expectation is its preseason AP rank, or
+  a slot below the top 25 by roster rating, and its finish is its final AP rank, or a slot
+  below the top 25 by record and point differential; the swing is the log ratio of the two
+  (plus ten, so a preseason #1 that finishes #8 is not a bigger letdown than a preseason
+  #10 that goes 7-6), and the three largest each way are shown (`/api/season/{id}/review`).
 
 The calendar: weeks 1-13 are the regular season (the 2026 schedule ends Nov 28), week 14
 is championship week (the top two in every conference's standings meet, on a neutral

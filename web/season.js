@@ -223,110 +223,201 @@
     let r;
     try { r = await api(`/api/season/${s.id}/review`); } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
     const m = r.mine;
-    const name = (slug, text) => el("span", {}, [el("span", { class: "pill-inline", style: `background:${color(slug)}` }), text]);
-    const score = (g) => {
-      if (!g) return el("span", { class: "muted", text: "not yet played" });
-      if (!g.played) return el("span", { class: "muted", text: `${g.away_name} vs ${g.home_name} · not yet played` });
+    const pill = (slug) => el("span", { class: "pill-inline", style: `background:${color(slug)}` });
+    const team = (slug, text, cls = "") => el("span", { class: `review-team ${cls}` }, [pill(slug), text]);
+    const weekName = (w) => s.week_labels[w] || `Week ${w}`;
+
+    // one playoff / title game as "winner score – loser score · bowl"
+    const gameRow = (g, note) => {
+      const row = el("div", { class: "review-game" });
+      if (!g || !g.played) {
+        row.append(el("span", { class: "muted", text: g ? `${g.away_name} vs ${g.home_name}` : "TBD" }), el("span", { class: "review-note muted", text: "not yet played" }));
+        return row;
+      }
       const hw = g.home_score > g.away_score;
-      const w = hw ? [g.home, g.home_name, g.home_score] : [g.away, g.away_name, g.away_score];
-      const l = hw ? [g.away, g.away_name, g.away_score] : [g.home, g.home_name, g.home_score];
-      return el("span", {}, [name(w[0], `${w[1]} ${w[2]}`), el("span", { class: "muted", text: ", " }), name(l[0], `${l[1]} ${l[2]}`), g.overtime ? el("span", { class: "muted", text: ` (${g.overtime > 1 ? g.overtime : ""}OT)` }) : null]);
+      const [ws, wn, wsc] = hw ? [g.home, g.home_name, g.home_score] : [g.away, g.away_name, g.away_score];
+      const [ls, ln, lsc] = hw ? [g.away, g.away_name, g.away_score] : [g.home, g.home_name, g.home_score];
+      const ot = g.overtime ? `${g.overtime > 1 ? g.overtime : ""}OT` : "";
+      const noteText = [note, ot].filter(Boolean).join(" · ");
+      row.append(...[
+        el("span", { class: "review-side win" }, [team(ws, wn), el("b", { text: String(wsc) })]),
+        el("span", { class: "review-side" }, [team(ls, ln), el("span", { text: String(lsc) })]),
+        noteText ? el("span", { class: "review-note muted", text: noteText }) : null,
+      ].filter(Boolean));
+      if (s.schedule.some((x) => x.event_id === g.event_id && x.has_box)) { row.classList.add("clickable"); row.addEventListener("click", () => openBox(g.event_id)); }
+      return row;
     };
-    const card = (title, body, cls = "") => el("div", { class: `bowl-card ${cls}` }, [el("div", { class: "bowl-title" }, [el("b", { text: title })]), body]);
+    const bowlOf = (g) => g.title ? g.title.replace(/ \((Quarterfinal|Semifinal)\)/, "").replace("College Football Playoff National Championship", "") : "";
 
-    box.append(el("h3", { text: r.done ? "Season in review" : `Season so far · through ${s.week_labels[r.current_week] || "week " + r.current_week}` }));
+    // ---- hero: champion and your season ----
+    const hero = el("div", { class: "review-hero" });
+    const champ = el("div", { class: "review-card" }, [el("div", { class: "review-label", text: r.done ? "National champion" : "National championship" })]);
+    if (r.champion_name) {
+      champ.append(el("div", { class: "review-big" }, [pill(r.champion), r.champion_name]));
+      if (r.title_game) champ.append(...[gameRow(r.title_game), r.title_game.site ? el("div", { class: "muted small-text", text: r.title_game.site }) : null].filter(Boolean));
+    } else {
+      champ.append(el("div", { class: "review-big muted", text: "Not decided yet" }), el("div", { class: "muted small-text", text: r.title_game && r.title_game.site ? `${r.title_game.site} · January 25` : "January 25, 2027" }));
+    }
+    hero.append(champ);
 
-    // --- the big results ---
-    const big = el("div", { class: "review-grid" });
-    big.append(card("National champion", r.champion_name
-      ? el("div", {}, [el("div", { class: "review-headline" }, [name(r.champion, r.champion_name)]), el("div", { class: "muted small-text" }, [score(r.title_game), r.title_game && r.title_game.site ? el("div", { text: r.title_game.site }) : null])])
-      : el("div", { class: "muted", text: r.title_game ? `${r.title_game.title} · ${r.title_game.site || ""}` : "Decided on January 25" }), "review-champ"));
-    if (r.rounds.length) {
-      const rounds = el("div");
-      for (const rd of r.rounds) {
-        rounds.append(el("div", { class: "review-sub", text: rd.round }));
-        for (const g of rd.games) {
-          const line = el("div", { class: `review-line ${g.event_id ? "clickable" : ""}` }, [score(g), g.title && !g.title.startsWith("First round") ? el("span", { class: "muted small-text", text: ` · ${g.title.replace(/ \((Quarterfinal|Semifinal)\)/, "")}` }) : null]);
-          if (s.schedule.some((x) => x.event_id === g.event_id && x.has_box)) line.addEventListener("click", () => openBox(g.event_id));
-          rounds.append(line);
-        }
-      }
-      big.append(card("Playoff", rounds));
-    }
-    if (r.champions.length) {
-      const t = el("table", { class: "stats" });
-      for (const c of r.champions) {
-        t.append(el("tr", {}, [el("td", { style: "text-align:left" }, [name(c.team, c.name)]), el("td", { class: "muted", style: "text-align:left", text: c.conference }), el("td", { style: "text-align:left" }, [c.game ? score(c.game) : el("span", { class: "muted", text: "" })])]));
-      }
-      big.append(card("Conference champions", t));
-    }
-    if (r.final_ap.length || r.final_cfp.length) {
-      const polls = el("div", { class: "review-polls" });
-      const list = (title, rows) => {
-        const t = el("table", { class: "stats" });
-        t.append(el("tr", {}, [el("th", { text: "" }), el("th", { text: title, style: "text-align:left" }), el("th", { text: "Rec" })]));
-        for (const e of rows) t.append(el("tr", { class: e.team === m.team ? "mine" : "" }, [el("td", { text: String(e.rank) }), el("td", { style: "text-align:left" }, [name(e.team, e.name)]), el("td", { text: e.record })]));
-        return t;
-      };
-      if (r.final_cfp.length) polls.append(list(r.done ? "Final CFP ranking" : "CFP ranking", r.final_cfp));
-      if (r.final_ap.length) polls.append(list(r.done ? "Final AP poll" : "AP poll", r.final_ap));
-      big.append(card("Rankings", polls));
-    }
-    box.append(big);
-
-    // --- your season ---
-    box.append(el("h3", { style: "margin-top:18px" }, [name(m.team, `${m.name} · ${m.wins}-${m.losses}`)]));
-    const bits = [`${m.conf_wins}-${m.conf_losses} ${m.conference}`];
+    const mineCard = el("div", { class: "review-card mine" }, [el("div", { class: "review-label", text: "Your season" })]);
+    mineCard.append(el("div", { class: "review-big" }, [pill(m.team), `${m.name} ${m.wins}-${m.losses}`]));
+    const bits = [`${m.conf_wins}-${m.conf_losses} in the ${m.conference}`];
     if (m.conf_rank) bits.push(`${ordinal(m.conf_rank)} in the ${m.division ? m.conference + " " + m.division : m.conference}`);
     if (m.conf_champion) bits.push(`${m.conference} champion`);
     if (m.finish) bits.push(m.finish);
-    if (m.final_cfp) bits.push(`CFP #${m.final_cfp}`);
-    if (m.final_ap) bits.push(`AP #${m.final_ap}`);
-    box.append(el("p", { class: "muted", text: bits.join(" · ") }));
+    mineCard.append(el("div", { class: "small-text", text: bits.join(" · ") }));
+    const tile = (label, value) => el("div", { class: "review-tile" }, [el("div", { class: "review-tile-value", text: String(value) }), el("div", { class: "review-tile-label", text: label })]);
+    mineCard.append(el("div", { class: "review-tiles" }, [
+      tile("Points / game", m.points_per_game), tile("Allowed / game", m.allowed_per_game), tile("Longest streak", m.longest_streak),
+      m.final_cfp ? tile(r.done ? "Final CFP" : "CFP rank", `#${m.final_cfp}`) : null, m.final_ap ? tile(r.done ? "Final AP" : "AP rank", `#${m.final_ap}`) : null,
+    ]));
+    hero.append(mineCard);
+    box.append(el("h3", { text: r.done ? "Season in review" : `Season so far · through ${weekName(r.current_week)}` }), hero);
 
-    const mine = el("div", { class: "review-grid" });
-    const gameLine = (l, label) => {
-      if (!l) return null;
-      const vs = l.venue === "away" ? "at" : "vs";
-      const line = el("div", { class: `review-line ${l.has_box ? "clickable" : ""}` }, [
-        el("span", { class: "muted small-text", text: `${label}: ` }),
-        el("span", { class: l.won ? "win" : "loss", text: `${l.won ? "W" : "L"} ${l.points_for}-${l.points_against}${l.overtime ? " OT" : ""}` }),
-        el("span", { text: ` ${vs} ` }), l.opponent_rank ? el("span", { class: "rank", text: `#${l.opponent_rank} ` }) : null,
-        name(l.opponent, l.opponent_name), el("span", { class: "muted small-text", text: ` (${l.opponent_record || ""})${l.title && l.title !== label ? " · " + l.title : l.title ? "" : " · " + (s.week_labels[l.week] || "week " + l.week)}` }),
-      ]);
-      if (l.has_box) line.addEventListener("click", () => openBox(l.event_id));
-      return line;
-    };
-    const facts = el("div");
-    facts.append(el("div", { class: "review-line" }, [el("span", { class: "muted small-text", text: "Scoring: " }), `${m.points_per_game} per game, ${m.allowed_per_game} allowed`]));
-    facts.append(el("div", { class: "review-line" }, [el("span", { class: "muted small-text", text: "Longest win streak: " }), String(m.longest_streak)]));
-    for (const x of [gameLine(m.best_win, "Best win"), gameLine(m.worst_loss, "Worst loss"), gameLine(m.biggest_win, "Biggest win"), gameLine(m.closest_loss, "Closest loss")]) if (x) facts.append(x);
-    mine.append(card("Results", facts));
-    if (m.postseason.length) {
-      const ps = el("div");
-      for (const l of m.postseason) ps.append(gameLine(l, l.title || s.week_labels[l.week]));
-      mine.append(card("Postseason", ps));
+    // ---- playoff rounds ----
+    if (r.rounds.length) {
+      box.append(el("h3", { text: "Playoff" }));
+      const rounds = el("div", { class: "review-rounds" });
+      for (const rd of r.rounds) {
+        const col = el("div", { class: "review-round" }, [el("div", { class: "review-label", text: rd.round })]);
+        for (const g of rd.games) col.append(gameRow(g, rd.round === "First round" ? "" : bowlOf(g)));
+        rounds.append(col);
+      }
+      box.append(rounds);
     }
 
+    // ---- conference champions and rankings, side by side ----
+    const two = el("div", { class: "review-two" });
+    if (r.champions.length) {
+      const sec = el("div", {}, [el("h3", { text: "Conference champions" })]);
+      const t = el("table", { class: "stats review-table" });
+      t.append(el("tr", {}, [el("th", { text: "Conference", style: "text-align:left" }), el("th", { text: "Champion", style: "text-align:left" }), el("th", { text: "Title game", style: "text-align:left" })]));
+      for (const c of r.champions) {
+        const g = c.game;
+        const line = g && g.played ? `${g.winner === g.home ? g.home_name : g.away_name} ${Math.max(g.home_score, g.away_score)}, ${g.winner === g.home ? g.away_name : g.home_name} ${Math.min(g.home_score, g.away_score)}` : "";
+        t.append(el("tr", { class: c.team === m.team ? "mine" : "" }, [el("td", { class: "muted", text: c.conference }), el("td", {}, [team(c.team, c.name)]), el("td", { class: "muted", text: line })]));
+      }
+      sec.append(t);
+      two.append(sec);
+    }
+    if (r.final_cfp.length || r.final_ap.length) {
+      const sec = el("div", {}, [el("h3", { text: r.done ? "Final rankings" : "Rankings" })]);
+      const polls = el("div", { class: "review-polls" });
+      const list = (title, rows) => {
+        const t = el("table", { class: "stats review-table" });
+        t.append(el("tr", {}, [el("th", { text: "#" }), el("th", { text: title, style: "text-align:left" }), el("th", { text: "Record" })]));
+        for (const e of rows) t.append(el("tr", { class: e.team === m.team ? "mine" : "" }, [el("td", { text: String(e.rank) }), el("td", {}, [team(e.team, e.name)]), el("td", { text: e.record })]));
+        return t;
+      };
+      if (r.final_cfp.length) polls.append(list("CFP ranking", r.final_cfp));
+      if (r.final_ap.length) polls.append(list("AP poll", r.final_ap));
+      sec.append(polls);
+      two.append(sec);
+    }
+    if (two.children.length) box.append(two);
+
+    // ---- your results ----
+    const resultRow = (l, label, note) => {
+      if (!l) return null;
+      const vs = l.venue === "away" ? "at" : "vs";
+      if (note === undefined) note = l.title && l.title !== label ? l.title : l.title ? "" : weekName(l.week);
+      const row = el("div", { class: `review-result ${l.has_box ? "clickable" : ""}` }, [
+        el("span", { class: "review-result-label muted", text: label }),
+        el("span", { class: `review-result-score ${l.won ? "win" : "loss"}`, text: `${l.won ? "W" : "L"} ${l.points_for}-${l.points_against}${l.overtime ? " OT" : ""}` }),
+        el("span", { class: "review-result-opp" }, [`${vs} `, l.opponent_rank ? el("span", { class: "rank", text: `#${l.opponent_rank} ` }) : null, team(l.opponent, l.opponent_name), el("span", { class: "muted", text: l.opponent_record ? ` (${l.opponent_record})` : "" })]),
+        el("span", { class: "review-note muted", text: note }),
+      ]);
+      if (l.has_box) row.addEventListener("click", () => openBox(l.event_id));
+      return row;
+    };
+    const results = el("div", { class: "review-two results" });
+    const high = el("div", {}, [el("h3", { text: "Highlights" })]);
+    for (const x of [resultRow(m.best_win, "Best win"), resultRow(m.worst_loss, "Worst loss"), resultRow(m.biggest_win, "Biggest win"), resultRow(m.closest_loss, "Closest loss")]) if (x) high.append(x);
+    if (high.children.length > 1) results.append(high);
+    if (m.postseason.length) {
+      const ps = el("div", {}, [el("h3", { text: "Postseason" })]);
+      const roundLabel = { 16: "First round", 17: "Quarterfinal", 18: "Semifinal", 19: "Final" };
+      for (const l of m.postseason) {
+        const label = l.kind === "ccg" ? "Conf. title" : l.kind === "bowl" ? "Bowl" : roundLabel[l.week] || "Playoff";
+        const note = l.kind === "playoff" && l.week === 19 ? "" : l.kind === "playoff" ? bowlOf(l) : l.title || "";
+        ps.append(resultRow(l, label, note));
+      }
+      results.append(ps);
+    }
+    if (results.children.length) box.append(results);
+
+    // ---- surprise and disappointment ----
+    if (r.surprises.length || r.disappointments.length) {
+      const expl = (x) => {
+        const was = x.preseason_rank ? `preseason #${x.preseason_rank}` : `unranked, rated #${x.rating_rank} in the country`;
+        const now = x.final_rank ? `finished #${x.final_rank} in the AP poll` : "finished unranked";
+        return `${was} · ${now}`;
+      };
+      const storyCard = (title, rows, cls) => {
+        if (!rows.length) return null;
+        const [first, ...rest] = rows;
+        const card = el("div", { class: `review-card ${cls}` }, [
+          el("div", { class: "review-label", text: title }),
+          el("div", { class: "review-big" }, [pill(first.team), `${first.name} ${first.record}`]),
+          el("div", { class: "small-text", text: `${first.conference} · ${expl(first)}` }),
+        ]);
+        if (rest.length) card.append(el("div", { class: "review-runners muted small-text" }, rest.map((x) => el("div", {}, [team(x.team, `${x.name} ${x.record}`), el("span", { text: ` · ${expl(x)}` })]))));
+        return card;
+      };
+      box.append(el("h3", { text: r.done ? "Surprise and disappointment" : "Surprise and disappointment so far" }));
+      box.append(el("div", { class: "review-hero" }, [storyCard("Biggest surprise", r.surprises, "surprise"), storyCard("Biggest disappointment", r.disappointments, "letdown")].filter(Boolean)));
+    }
+
+    // ---- statistical leaders ----
     const L = m.leaders;
     const st = (p, k) => (p && p.stats[k]) || 0;
     const pct = (n, d) => (d ? `${Math.round((100 * n) / d)}%` : "–");
-    const leader = (title, p, line) => p ? el("div", { class: "review-leader" }, [el("div", { class: "muted small-text", text: title }), el("div", { class: "review-leader-name" }, [p.name, el("span", { class: "pos", text: p.position })]), el("div", { class: "small-text", text: line(p) })]) : null;
+    const leader = (title, p, big, line) => p ? el("div", { class: "review-leader" }, [
+      el("div", { class: "review-label", text: title }),
+      el("div", { class: "review-leader-name" }, [p.name, el("span", { class: "pos", text: p.position })]),
+      el("div", { class: "review-leader-big", text: big(p) }),
+      el("div", { class: "muted small-text", text: line(p) }),
+    ]) : null;
     const leaders = [
-      leader("Top passer", L.passer, (p) => `${st(p, "pass_yards").toLocaleString()} yds · ${st(p, "completions")}/${st(p, "pass_attempts")} (${pct(st(p, "completions"), st(p, "pass_attempts"))}) · ${st(p, "passing_touchdowns")} TD, ${st(p, "interceptions_thrown")} INT`),
-      leader("Top rusher", L.rusher, (p) => `${st(p, "rush_yards").toLocaleString()} yds · ${st(p, "carries")} car (${(st(p, "rush_yards") / Math.max(1, st(p, "carries"))).toFixed(1)} avg) · ${st(p, "rushing_touchdowns")} TD`),
-      leader("Top receiver", L.receiver, (p) => `${st(p, "receiving_yards").toLocaleString()} yds · ${st(p, "receptions")} rec (${(st(p, "receiving_yards") / Math.max(1, st(p, "receptions"))).toFixed(1)} avg) · ${st(p, "receiving_touchdowns")} TD`),
-      leader("Top tackler", L.tackler, (p) => `${st(p, "solo_tackles") + st(p, "assisted_tackles")} tackles (${st(p, "solo_tackles")} solo) · ${st(p, "sacks")} sacks`),
-      leader("Sack leader", L.sacks, (p) => `${st(p, "sacks")} sacks · ${st(p, "forced_fumbles")} FF`),
-      leader("Interceptions", L.interceptions, (p) => `${st(p, "interceptions")} INT · ${st(p, "interception_return_yards")} return yds`),
-      leader("Kicker", L.kicker, (p) => `${st(p, "fg_made")}/${st(p, "fg_attempted")} FG · ${st(p, "pat_made")}/${st(p, "pat_attempts")} PAT · ${st(p, "fg_made") * 3 + st(p, "pat_made")} pts`),
-      leader("Returner", L.returner, (p) => `${st(p, "kickoff_returns")} KR for ${st(p, "kickoff_return_yards")} · ${st(p, "punt_returns")} PR for ${st(p, "punt_return_yards")}`),
+      leader("Passing", L.passer, (p) => `${st(p, "pass_yards").toLocaleString()} yds`, (p) => `${st(p, "completions")}/${st(p, "pass_attempts")} (${pct(st(p, "completions"), st(p, "pass_attempts"))}) · ${st(p, "passing_touchdowns")} TD · ${st(p, "interceptions_thrown")} INT`),
+      leader("Rushing", L.rusher, (p) => `${st(p, "rush_yards").toLocaleString()} yds`, (p) => `${st(p, "carries")} carries · ${(st(p, "rush_yards") / Math.max(1, st(p, "carries"))).toFixed(1)} avg · ${st(p, "rushing_touchdowns")} TD`),
+      leader("Receiving", L.receiver, (p) => `${st(p, "receiving_yards").toLocaleString()} yds`, (p) => `${st(p, "receptions")} catches · ${(st(p, "receiving_yards") / Math.max(1, st(p, "receptions"))).toFixed(1)} avg · ${st(p, "receiving_touchdowns")} TD`),
+      leader("Tackles", L.tackler, (p) => `${st(p, "solo_tackles") + st(p, "assisted_tackles")} tackles`, (p) => `${st(p, "solo_tackles")} solo · ${st(p, "assisted_tackles")} assisted · ${st(p, "sacks")} sacks`),
+      leader("Sacks", L.sacks, (p) => `${st(p, "sacks")} sacks`, (p) => `${st(p, "solo_tackles") + st(p, "assisted_tackles")} tackles · ${st(p, "forced_fumbles")} forced fumbles`),
+      leader("Interceptions", L.interceptions, (p) => `${st(p, "interceptions")} INT`, (p) => `${st(p, "interception_return_yards")} return yds · ${st(p, "defensive_touchdowns")} TD`),
+      leader("Kicking", L.kicker, (p) => `${st(p, "fg_made") * 3 + st(p, "pat_made")} points`, (p) => `${st(p, "fg_made")}/${st(p, "fg_attempted")} FG · ${st(p, "pat_made")}/${st(p, "pat_attempts")} PAT`),
+      leader("Returns", L.returner, (p) => `${st(p, "kickoff_return_yards") + st(p, "punt_return_yards")} yds`, (p) => `${st(p, "kickoff_returns")} kickoffs for ${st(p, "kickoff_return_yards")} · ${st(p, "punt_returns")} punts for ${st(p, "punt_return_yards")}`),
     ].filter(Boolean);
     if (leaders.length) {
-      const grid = el("div", { class: "review-leaders" }, leaders);
-      mine.append(card(`Statistical leaders${L.games_with_stats < (m.wins + m.losses) ? ` (${L.games_with_stats} simulated games)` : ""}`, grid));
+      box.append(el("h3", { text: `${m.name} leaders${L.games_with_stats < (m.wins + m.losses) ? ` · ${L.games_with_stats} simulated games` : ""}` }));
+      box.append(el("div", { class: "review-leaders" }, leaders));
     }
-    box.append(mine);
+
+    // ---- national leaders ----
+    const N = r.national_leaders || {};
+    const nat = (title, p, big, line) => p ? el("div", { class: "review-leader" }, [
+      el("div", { class: "review-label", text: title }),
+      el("div", { class: "review-leader-name" }, [p.name, el("span", { class: "pos", text: p.position })]),
+      el("div", { class: "small-text" }, [team(p.team, p.team_name)]),
+      el("div", { class: "review-leader-big", text: big(p) }),
+      el("div", { class: "muted small-text", text: line(p) }),
+    ]) : null;
+    const national = [
+      nat("Passing yards", N.passing, (p) => `${st(p, "pass_yards").toLocaleString()} yds`, (p) => `${st(p, "completions")}/${st(p, "pass_attempts")} (${pct(st(p, "completions"), st(p, "pass_attempts"))}) · ${st(p, "passing_touchdowns")} TD · ${st(p, "interceptions_thrown")} INT · ${p.games} g`),
+      nat("Rushing yards", N.rushing, (p) => `${st(p, "rush_yards").toLocaleString()} yds`, (p) => `${st(p, "carries")} carries · ${(st(p, "rush_yards") / Math.max(1, st(p, "carries"))).toFixed(1)} avg · ${st(p, "rushing_touchdowns")} TD · ${p.games} g`),
+      nat("Receiving yards", N.receiving, (p) => `${st(p, "receiving_yards").toLocaleString()} yds`, (p) => `${st(p, "receptions")} catches · ${(st(p, "receiving_yards") / Math.max(1, st(p, "receptions"))).toFixed(1)} avg · ${st(p, "receiving_touchdowns")} TD · ${p.games} g`),
+      nat("Tackles", N.tackles, (p) => `${st(p, "tackles")} tackles`, (p) => `${st(p, "solo_tackles")} solo · ${st(p, "assisted_tackles")} assisted · ${p.games} g`),
+      nat("Sacks", N.sacks, (p) => `${st(p, "sacks")} sacks`, (p) => `${st(p, "solo_tackles") + st(p, "assisted_tackles")} tackles · ${st(p, "forced_fumbles")} forced fumbles · ${p.games} g`),
+      nat("Interceptions", N.interceptions, (p) => `${st(p, "interceptions")} INT`, (p) => `${st(p, "interception_return_yards")} return yds · ${st(p, "defensive_touchdowns")} TD · ${p.games} g`),
+      nat("Scoring (kickers)", N.kicking, (p) => `${st(p, "points")} points`, (p) => `${st(p, "fg_made")}/${st(p, "fg_attempted")} FG · ${st(p, "pat_made")}/${st(p, "pat_attempts")} PAT · ${p.games} g`),
+    ].filter(Boolean);
+    if (national.length) {
+      box.append(el("h3", { text: r.done ? "National leaders" : "National leaders so far" }));
+      box.append(el("div", { class: "review-leaders" }, national));
+    } else if (r.done || r.current_week > 0) {
+      box.append(el("h3", { text: "National leaders" }), el("p", { class: "muted small-text", text: "This season was simulated before league-wide stats were kept; start a new season to see national leaders." }));
+    }
   }
 
   function ordinal(n) { const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
