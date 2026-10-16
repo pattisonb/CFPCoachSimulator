@@ -756,3 +756,10 @@ body:not(.team-theme) .hdr-rank { background: var(--panel-2); border-color: var(
   .gd-clock { min-width: 64px; font-size: 13px; }
   .gd-name { font-size: 13px; }
 }
+
+/* committee resume */
+.resume { display: flex; flex-direction: column; gap: 12px; }
+.resume-grid { margin: 0; }
+.resume .review-tiles { margin: 0; }
+.resume-game { white-space: nowrap; }
+.resume-games tr.won td.name { font-weight: 700; }

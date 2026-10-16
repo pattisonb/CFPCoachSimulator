@@ -2031,6 +2031,7 @@
     const box = $("#poll-body");
     box.innerHTML = "";
     const w = pollWeekFor(state.viewWeek);
+    if (kind === "resume") { renderResume(box, w); return; }
     const entry = s.polls[String(w)] || {};
     const list = entry[kind];
     const title = kind === "ap" ? "AP Top 25" : kind === "coaches" ? "Coaches Poll (AFCA / USA Today)" : "College Football Playoff rankings";
@@ -2333,6 +2334,82 @@
   function selectBoxTab(name) {
     for (const b of $("#sbox-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.btab === name);
     for (const t of ["scoring", "team", "home", "away", "drives"]) $(`#sbox-${t}`).hidden = t !== name;
+  }
+
+  // ----- the committee's resume -------------------------------------------------
+  const resumeState = { sort: "rank", desc: false, cache: {} };
+  async function renderResume(box, w) {
+    const s = state.season;
+    box.append(el("h3", { text: `Committee resume · ${w === 0 ? "preseason" : `through ${s.week_labels[w] || "week " + w}`}` }));
+    const note = el("p", { class: "muted small-text", text: "Loading…" });
+    box.append(note);
+    let data = resumeState.cache[`${s.id}|${w}`];
+    if (!data) {
+      try { data = await api(`/api/season/${s.id}/resume?week=${w}`); } catch (err) { note.textContent = `Could not load the resume: ${err.message}`; return; }
+      resumeState.cache[`${s.id}|${w}`] = data;
+    }
+    if (!box.isConnected) return;
+    note.textContent = `The way the committee explains its rankings: wins over teams ranked today (${data.kind === "cfp" ? "CFP ranking" : "AP poll"}), strength of schedule (two thirds the opponents' record, one third their opponents'; rank of ${data.rows.length}), the record against teams over .500, the best win and the worst loss. Click a team for its full resume.`;
+    const top = data.rows.filter((r) => r.rank).length ? data.rows : data.rows.slice(0, 25);
+    const rows = top.filter((r) => r.rank || r.team === s.team).length >= 10 ? top.filter((r) => r.rank || r.team === s.team) : top.slice(0, 25);
+    const gameTag = (x, win) => (x ? el("span", { class: "resume-game" }, [x.rank_now ? el("span", { class: "rank", text: `#${x.rank_now} ` }) : null, teamPill(x.opp), x.opp_name, el("span", { class: "muted small-text", text: ` ${x.venue === "away" ? "(A)" : x.venue === "neutral" ? "(N)" : "(H)"} ${x.pf}–${x.pa}` })]) : el("span", { class: "muted", text: "–" }));
+    const st = resumeState;
+    const cols = [
+      { key: "rank", label: "#", get: (r) => (r.rank ? String(r.rank) : "NR"), sort: (r) => r.rank || 99 },
+      { key: "team", label: "Team", left: true, get: (r) => el("span", { "data-team": r.team }, [teamPill(r.team), r.name]), sort: (r) => r.name },
+      { key: "record", label: "Record", get: (r) => r.record, sort: (r) => r.wins - r.losses / 100 },
+      { key: "conf", label: "Conf", ph: true, get: (r) => r.conf_record, sort: (r) => Number(r.conf_record.split("-")[0]) },
+      { key: "sos", label: "SOS", get: (r) => String(r.sos_rank), sort: (r) => r.sos_rank },
+      { key: "top25", label: "vs Top 25", get: (r) => r.top25, sort: (r) => r.top25_wins - Number(r.top25.split("-")[1]) / 100 },
+      { key: "winning", label: "vs .500+", ph: true, get: (r) => r.vs_winning, sort: (r) => Number(r.vs_winning.split("-")[0]) - Number(r.vs_winning.split("-")[1]) / 100 },
+      { key: "best", label: "Best win", left: true, get: (r) => gameTag(r.best_win, true) },
+      { key: "worst", label: "Worst loss", left: true, ph: true, get: (r) => gameTag(r.worst_loss, false) },
+    ];
+    const table = sortableTable(cols, rows, st, () => renderPoll("resume"), (r) => `clickable ${r.team === s.team ? "mine" : ""}`);
+    table.addEventListener("click", (e) => { const tr = e.target.closest("tr"); const t = tr && tr.querySelector("[data-team]"); if (t) openResume(t.dataset.team, w); });
+    box.append(table);
+    if (rows.length < data.rows.length) box.append(el("p", { class: "muted small-text", text: `${rows.length} of ${data.rows.length} teams shown; every team's resume opens from its schedule.` }));
+  }
+
+  async function openResume(slug, w) {
+    const s = state.season;
+    let data;
+    try { data = await api(`/api/season/${s.id}/resume?week=${w}&team=${slug}`); } catch (err) { toast(`Could not load the resume: ${err.message}`, 3000); return; }
+    const r = data.rows[0];
+    if (!r) return;
+    const node = el("div", { class: "resume" });
+    const tile = (label, value, sub) => el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: value }), el("div", { class: "review-label", text: label }), sub ? el("div", { class: "muted small-text", text: sub }) : null]);
+    node.append(
+      el("div", { class: "muted small-text", text: `${r.conference} · ${w === 0 ? "preseason" : `through ${s.week_labels[w] || "week " + w}`} · ranks are today's ${data.kind === "cfp" ? "CFP ranking" : "AP poll"}` }),
+      el("div", { class: "review-tiles" }, [
+        tile("Record", r.record, `${r.conf_record} ${r.conference}`),
+        tile("Strength of schedule", `#${r.sos_rank}`, `opponents ${(r.opp_pct * 100).toFixed(1)}% · theirs ${(r.oo_pct * 100).toFixed(1)}%`),
+        tile("vs Top 25", r.top25, `${r.road_wins} win${r.road_wins === 1 ? "" : "s"} away from home`),
+        tile("vs teams over .500", r.vs_winning, `${r.margin > 0 ? "+" : ""}${r.margin} points per game`),
+      ]),
+    );
+    const gameLine = (x) => el("span", {}, [x.venue === "away" ? "at " : x.venue === "neutral" ? "vs " : "vs ", x.rank_now ? el("span", { class: "rank", text: `#${x.rank_now} ` }) : null, teamPill(x.opp), x.opp_name, el("span", { class: "muted small-text", text: ` (${x.opp_record}) ${x.pf}–${x.pa}${x.rank_then && x.rank_then !== x.rank_now ? ` · #${x.rank_then} at the time` : ""}` })]);
+    node.append(el("div", { class: "leaders-grid resume-grid" }, [
+      el("div", { class: "leader-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: "Best win" })]), r.best_win ? gameLine(r.best_win) : el("span", { class: "muted", text: "No wins yet." })]),
+      el("div", { class: "leader-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: "Worst loss" })]), r.worst_loss ? gameLine(r.worst_loss) : el("span", { class: "muted", text: "Unbeaten." })]),
+    ]));
+    const table = el("table", { class: "stats resume-games" });
+    table.append(el("tr", {}, ["Wk", "Opponent", "Rank then", "Rank now", "Their record", "Result", ""].map((h, i) => el("th", { class: `${i === 1 ? "left" : ""} ${[2, 4].includes(i) ? "ph" : ""}`, text: h }))));
+    for (const x of r.games || []) {
+      const tr = el("tr", { class: `${x.event_id ? "clickable" : ""} ${x.won ? "won" : "lost"}` }, [
+        el("td", { class: "muted", text: x.week > 14 ? (s.week_labels[x.week] || "").replace("Championship week", "CCG").replace(" & bowls", "").replace(" & New Year bowls", "") : String(x.week) }),
+        el("td", { class: "left name" }, [el("span", { class: "muted", text: `${x.venue === "away" ? "at" : "vs"} ` }), teamPill(x.opp), x.opp_name, x.fcs ? el("span", { class: "pos", text: "FCS" }) : null, x.title ? el("div", { class: "muted small-text", text: x.title }) : null]),
+        el("td", { class: "muted ph", text: x.rank_then ? `#${x.rank_then}` : "–" }),
+        el("td", { class: x.rank_now ? "win" : "muted", text: x.rank_now ? `#${x.rank_now}` : "–" }),
+        el("td", { class: "muted ph", text: x.fcs ? "" : x.opp_record }),
+        el("td", { class: x.won ? "win" : "loss", text: `${x.won ? "W" : "L"} ${x.pf}–${x.pa}` }),
+        el("td", { class: "muted small-text", text: x.event_id ? "box" : "" }),
+      ]);
+      if (x.event_id) tr.addEventListener("click", () => openBox(x.event_id));
+      table.append(tr);
+    }
+    node.append(el("h4", { text: "Games" }), el("div", { class: "table-scroll" }, [table]));
+    openModal(el("span", {}, [teamPill(slug), `${r.name} resume`, el("span", { class: "muted small-text", text: ` · ${r.rank ? `#${r.rank} · ` : ""}${r.record}` })]), node);
   }
 
   // ----- game day: your game, drive by drive ----------------------------------

@@ -488,6 +488,13 @@ def season_review(season_id: str) -> dict:
     return season.season_review(_season_state(season_id))
 
 
+@app.get("/api/season/{season_id}/resume")
+def season_resume(season_id: str, week: Optional[int] = None, team: Optional[str] = None) -> dict:
+    """The committee's resume for every FBS team through `week` (default: now); with
+    `team`, that one team with its full game list."""
+    return season.resume(_season_state(season_id), week, team)
+
+
 @app.get("/api/season/{season_id}/game/{event_id}")
 def season_game(season_id: str, event_id: str) -> dict:
     state = _season_state(season_id)

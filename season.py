@@ -1221,6 +1221,90 @@ def rank_map(state: dict, after_week: int) -> dict[str, int]:
     return {e["team"]: e["rank"] for e in p.get("ap", [])}
 
 
+# ----- the committee's resume -------------------------------------------------------
+
+def _pct(w: int, l: int) -> float:
+    return w / (w + l) if (w + l) else 0.0
+
+
+def resume(state: dict, after_week: Optional[int] = None, team: Optional[str] = None) -> dict:
+    """How the committee reads every FBS team through `after_week`: record, wins over
+    ranked teams (rank at the time and today), strength of schedule, record against
+    winning teams, best win and worst loss. With `team`, that team's full game list too.
+    "Ranked" means the current top 25: the CFP ranking once released, the AP poll before."""
+    teams = load_teams()
+    cur = state["current_week"]
+    w = cur if after_week is None else max(0, min(int(after_week), cur))
+    rec = _records(state, w)
+    now = rank_map(state, w)
+    p = state["polls"].get(str(w), {})
+    kind = "cfp" if (p.get("cfp_full") or p.get("cfp")) else "ap"
+    real = {s for s, t in teams.items() if not t["fictional"]}
+    games: dict[str, list[dict]] = {s: [] for s in teams}
+    for eid, g in state["games"].items():
+        if not g["played"] or g["week"] > w or g["kind"] == "playoff":
+            continue
+        before = rank_map(state, g["week"] - 1)
+        for side, opp in (("home", "away"), (" away".strip(), "home")):
+            me, o = g[side], g[opp]
+            pf, pa = g[f"{side}_score"], g[f"{opp}_score"]
+            r = rec.get(o, {"wins": 0, "losses": 0})
+            games[me].append({"opp": o, "opp_name": g[f"{opp}_display"], "won": pf > pa, "pf": pf, "pa": pa, "week": g["week"],
+                              "venue": "neutral" if g["neutral"] else ("home" if side == "home" else "away"),
+                              "rank_then": before.get(o), "rank_now": now.get(o), "opp_record": f"{r['wins']}-{r['losses']}",
+                              "opp_pct": _pct(r["wins"], r["losses"]), "fcs": o not in real, "event_id": eid,
+                              "title": g.get("title"), "conference_game": g["conference_game"]})
+    # strength of schedule: two thirds the opponents' record, one third their opponents'
+    # (FBS opponents only; the FCS stand-ins play too many schedules to have a record)
+    opp_pct: dict[str, float] = {}
+    for s in real:
+        opps = [x["opp"] for x in games[s] if not x["fcs"]]
+        ow, ol = sum(rec[o]["wins"] for o in opps), sum(rec[o]["losses"] for o in opps)
+        opp_pct[s] = _pct(ow, ol)
+    sos: dict[str, float] = {}
+    oo_pct: dict[str, float] = {}
+    for s in real:
+        opps = [x["opp"] for x in games[s] if not x["fcs"]]
+        oo_pct[s] = sum(opp_pct[o] for o in opps) / len(opps) if opps else 0.0
+        sos[s] = (2 * opp_pct[s] + oo_pct[s]) / 3
+    order = sorted(real, key=lambda s: (-sos[s], s))
+    sos_rank = {s: i + 1 for i, s in enumerate(order)}
+
+    def quality(x: dict) -> tuple:
+        # a ranked opponent first (the higher the better), then the opponent's record, then the margin
+        return (x["rank_now"] is not None, -(x["rank_now"] or 99), x["opp_pct"], x["pf"] - x["pa"])
+
+    def badness(x: dict) -> tuple:
+        # an unranked opponent first, then the worse its record, then the bigger the margin
+        return (x["rank_now"] is not None, x["opp_pct"], -(x["pa"] - x["pf"]))
+
+    def wl(lst: list[dict]) -> str:
+        return f"{sum(1 for x in lst if x['won'])}-{sum(1 for x in lst if not x['won'])}"
+
+    rows = []
+    for s in real:
+        gl = games[s]
+        wins = [x for x in gl if x["won"]]
+        losses = [x for x in gl if not x["won"]]
+        r = rec[s]
+        conf = [x for x in gl if x["conference_game"]]
+        row = {"team": s, "name": teams[s]["name"], "conference": teams[s]["conference"], "rank": now.get(s),
+               "record": f"{r['wins']}-{r['losses']}", "wins": r["wins"], "losses": r["losses"], "conf_record": wl(conf),
+               "sos_rank": sos_rank[s], "sos": round(sos[s], 3), "opp_pct": round(opp_pct[s], 3), "oo_pct": round(oo_pct[s], 3),
+               "top25": wl([x for x in gl if x["rank_now"]]), "top25_wins": sum(1 for x in wins if x["rank_now"]),
+               "vs_winning": wl([x for x in gl if not x["fcs"] and x["opp_pct"] > 0.5]),
+               "road_wins": sum(1 for x in wins if x["venue"] != "home"), "fcs_wins": sum(1 for x in wins if x["fcs"]),
+               "margin": round((r["points_for"] - r["points_against"]) / len(gl), 1) if gl else 0.0,
+               "best_win": max(wins, key=quality) if wins else None, "worst_loss": min(losses, key=badness) if losses else None}
+        if team == s:
+            row["games"] = sorted(gl, key=lambda x: x["week"])
+        rows.append(row)
+    rows.sort(key=lambda x: (x["rank"] is None, x["rank"] or 99, -_pct(x["wins"], x["losses"]), x["sos_rank"]))
+    if team is not None:
+        rows = [x for x in rows if x["team"] == team]
+    return {"week": w, "kind": kind, "rows": rows}
+
+
 def current_rank(state: dict) -> Optional[dict]:
     """Your team's rank in the latest ranking, with which poll it came from."""
     for w in range(state["current_week"], -1, -1):

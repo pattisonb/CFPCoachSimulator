@@ -493,6 +493,18 @@ role.
 rank, Group of Five and defensive finalists, All-America consensus counts and the coach of
 the year profile against the research targets.
 
+### The committee's resume
+
+The Rankings tab has a Resume chip: the way the committee explains its rankings, for
+every FBS team through the week you are looking at. Record and conference record, wins
+and losses against teams ranked today (the CFP ranking once released, the AP poll
+before), strength of schedule (two thirds the opponents' record, one third their
+opponents', ranked 1 to 136 with FCS stand-ins left out), the record against teams over
+.500, the best win and the worst loss. Click a team for its full resume: tiles, the best
+win and worst loss with the opponent's rank at the time and today, and every game with
+a click through to its box score. `GET /api/season/{id}/resume?week=&team=` serves it;
+`python test_resume.py` checks the numbers against the standings and a hand count.
+
 ### Game day: your game, drive by drive
 
 "Advance to next week" simulates the week as before (same seed, same results), then
