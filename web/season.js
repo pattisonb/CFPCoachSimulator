@@ -3,7 +3,7 @@
   "use strict";
   const { $, el, SBOX_IDS, teamPill, renderScoreboard, renderScoring, renderTeamStats, renderPlayers, renderDrives } = window.CFP;
 
-  const state = { teams: [], season: null, viewWeek: null, tab: "games", poll: "ap", timer: null, standings: null };
+  const state = { teams: [], season: null, viewWeek: null, tab: "schedule", poll: "ap", timer: null, standings: null };
 
   async function api(path, options) {
     const res = await fetch(path, options);
@@ -344,7 +344,8 @@
     $("#season-tabs button[data-tab=games]").hidden = !!s.done;
     $("#season-tabs button[data-tab=summary]").hidden = !s.done;
     if (s.done && state.tab === "games") state.tab = "summary";
-    if (!s.done && state.tab === "summary") state.tab = "games";
+    if (s.done && state.tab === "schedule" && !state.summaryShown && state.season && state.season.id === s.id) { state.tab = "summary"; state.summaryShown = true; }
+    if (!s.done && state.tab === "summary") state.tab = "schedule";
     if (opening) { depthState.team = null; depthState.data = null; }
     if (opening) applyTeamTheme(s.team);
     state.standings = null;
@@ -1415,9 +1416,10 @@
 
   const gamesState = { conf: "", view: "" };
 
-  async function renderGames() {
+  async function renderGames(container) {
     const s = state.season, w = state.viewWeek;
-    const box = $("#tab-games");
+    if (container) gamesState.container = container;
+    const box = gamesState.container && gamesState.container.isConnected ? gamesState.container : $("#tab-games");
     box.innerHTML = "";
     if (w === 0) { box.append(el("p", { class: "muted", text: "Preseason. Advance a week to play games." })); return; }
     let data;
@@ -1489,7 +1491,7 @@
     for (const i of rows) {
       const s = state.season;
       table.append(el("tr", { class: i.team === s.team ? "mine" : "" }, [
-        withTeam ? el("td", { class: "left" }, [el("span", { class: "pill-inline", style: `background:${color(i.team)}` }), i.team_name]) : null,
+        withTeam ? el("td", { class: "left" }, [teamPill(i.team), i.team_name]) : null,
         el("td", { class: "name" }, [i.name, el("span", { class: "pos", text: i.position })]),
         el("td", { class: "left", text: i.type }),
         el("td", { class: "left", text: `${i.weeks_left} ${i.weeks_left === 1 ? "week" : "weeks"} (${i.weeks} total, since ${s.week_labels[i.since_week] || "week " + i.since_week})` }),
@@ -1518,14 +1520,55 @@
     box.append(el("div", { class: "injury-league" }, [head, holder]));
   }
 
-  function renderSchedule() {
+  const scheduleState = { team: null, conf: "", data: null, key: null };
+
+  async function openGamesModal() {
+    const s = state.season;
+    const node = el("div", { class: "games-modal" });
+    const label = state.viewWeek === 0 ? "Preseason" : (s.week_labels[state.viewWeek] || `Week ${state.viewWeek}`);
+    const nav = el("div", { class: "stats-controls" });
+    const weeks = [0, ...s.weeks].filter((w) => w <= Math.min(s.done ? s.current_week : s.current_week + 1, 20));
+    nav.append(chipRow(weeks.map((w) => [w, w === 0 ? "Pre" : w <= 14 ? `W${w}` : (s.week_labels[w] || `W${w}`).replace("Championship week", "CCG").replace("National championship", "Title").replace("Quarterfinals", "QF").replace("Semifinals", "SF").replace("First round", "R1").replace("Selection", "Sel")]),
+      state.viewWeek, (w) => { state.viewWeek = w; renderWeekStrip(); renderGames(body); $("#modal-title").textContent = `All games · ${w === 0 ? "Preseason" : (s.week_labels[w] || `Week ${w}`)}`; }));
+    const body = el("div");
+    node.append(nav, body);
+    openModal(`All games · ${label}`, node);
+    await renderGames(body);
+  }
+
+  async function renderSchedule() {
     const s = state.season;
     const box = $("#tab-schedule");
     box.innerHTML = "";
+    const st = scheduleState;
+    if (st.team === null || !window.CFP.teamsBySlug[st.team]) st.team = s.team;
+    // pick any team: conference chips narrow the team list; a button opens every game of the week
+    const controls = el("div", { class: "stats-controls" });
+    const confs = [...new Set(state.teams.filter((t) => !t.fictional).map((t) => t.conference))].sort();
+    controls.append(confChips(confs, st.conf, (v) => { st.conf = v; const first = state.teams.find((t) => !t.fictional && (!v || t.conference === v)); if (v && !(window.CFP.teamsBySlug[st.team] || {}).conference === v) st.team = first ? first.slug : st.team; renderSchedule(); }));
+    const row = el("div", { class: "schedule-pick" });
+    const sel = el("select", { "aria-label": "Team" }, state.teams.filter((t) => !t.fictional && (!st.conf || t.conference === st.conf)).map((t) => el("option", { value: t.slug, text: t.slug === s.team ? `${t.name} (your team)` : t.name })));
+    if (![...sel.options].some((o) => o.value === st.team)) st.team = sel.options.length ? sel.options[0].value : s.team;
+    sel.value = st.team;
+    sel.addEventListener("change", () => { st.team = sel.value; renderSchedule(); });
+    const mineBtn = el("button", { type: "button", class: "ghost small", text: "My team" });
+    mineBtn.addEventListener("click", () => { st.team = s.team; st.conf = ""; renderSchedule(); });
+    const allBtn = el("button", { type: "button", class: "ghost small", text: "View all games" });
+    allBtn.addEventListener("click", openGamesModal);
+    row.append(sel, st.team !== s.team ? mineBtn : null, allBtn);
+    controls.append(row);
+    box.append(controls);
+    const key = `${s.id}|${s.current_week}|${st.team}`;
+    if (!st.data || st.key !== key) {
+      try { st.data = await api(`/api/season/${s.id}/schedule/${st.team}`); st.key = key; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+    }
+    const d = st.data;
+    const mine = st.team === s.team;
+    box.append(el("h3", {}, [teamPill(d.team), d.team_name, el("span", { class: "pos", text: `${d.rank ? `#${d.rank} · ` : ""}${d.record.wins}-${d.record.losses} · ${d.record.conf_wins}-${d.record.conf_losses} ${d.conference}` })]));
     const table = el("table", { class: "stats schedule-table" });
     table.appendChild(el("tr", {}, ["Week", "Date", "Rank", "Opponent", "Where", "Result", "Score", ""].map((h) => el("th", { class: ["Date", "Opponent"].includes(h) ? "left" : "", text: h }))));
     const wk = (w) => (w <= 14 ? String(w) : (s.week_labels[w] || `W${w}`).replace("Championship week", "CCG").replace("Selection", "Sel").replace(" & bowls", "").replace(" & New Year bowls", ""));
-    for (const g of s.schedule) {
+    for (const g of d.schedule) {
       if (g.kind === "bye") {
         const wd = s.week_dates && s.week_dates[g.week];
         table.appendChild(el("tr", { class: "bye" }, [
@@ -1540,7 +1583,7 @@
       const tr = el("tr", { class: `${g.has_box ? "clickable" : ""} ${g.played ? (g.won ? "won" : "lost") : ""}` }, [
         el("td", { text: wk(g.week) }),
         el("td", { class: "left muted small-text", text: when }),
-        el("td", { class: "muted", text: g.my_rank ? `#${g.my_rank}` : "", title: "Your AP rank entering the game" }),
+        el("td", { class: "muted", text: g.my_rank ? `#${g.my_rank}` : "", title: "Rank entering the game" }),
         el("td", { class: "left name" }, [el("span", { class: "muted", text: `${prefix} ` }), teamPill(g.opponent), g.opponent_rank ? el("span", { class: "rank", text: `#${g.opponent_rank} ` }) : null, g.opponent_name,
           g.opponent_record && !((window.CFP.teamsBySlug[g.opponent] || {}).fictional) ? el("span", { class: "pos", text: g.opponent_record }) : null,
           g.title ? el("div", { class: "muted small-text", text: `${g.title}${g.site ? " · " + g.site : ""}` }) : (g.site ? el("div", { class: "muted small-text", text: g.site }) : null)]),
@@ -1553,7 +1596,7 @@
       table.appendChild(tr);
     }
     box.append(el("div", { class: "table-scroll" }, [table]));
-    if (s.current_week > 0) renderInjuries(box);
+    if (mine && s.current_week > 0) renderInjuries(box);
   }
 
   // ----- season stats ------------------------------------------------------

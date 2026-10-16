@@ -52,6 +52,13 @@ Free-tier limits: the service sleeps after 15 minutes without traffic and takes 
 minute to wake; game history is kept in memory and resets on each deploy or wake. A
 batch of 100 games takes about 5 seconds on Render's free CPU.
 
+## House style for team marks
+
+Every team mark on the site is the diagonal square from `teamPill(slug)` in
+`web/gameview.js`: primary over secondary on a diagonal with the accent color as the
+border. Never draw a flat single-color square (`pill-inline` with an inline background);
+the only plain square is the gray "empty" placeholder for a slot with no team yet.
+
 ## What is where
 
 | Path | What it is |
