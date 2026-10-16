@@ -23,7 +23,6 @@ Usage:  python season.py ohio-state [full|remaining]      # simulate to the end 
 """
 from __future__ import annotations
 
-import contextlib
 import json
 import math
 import os
@@ -657,14 +656,25 @@ def advance(state: dict, pool: Optional[Pool] = None) -> dict:
     return state
 
 
+_SHARED_POOL: Optional[Pool] = None
+
+
+def shared_pool() -> Optional[Pool]:
+    """One worker pool for the life of the process: spawning the workers and loading the
+    league into each costs a few seconds, which should not be paid on every click."""
+    global _SHARED_POOL
+    if _SHARED_POOL is None:
+        _SHARED_POOL = _make_pool()
+    return _SHARED_POOL
+
+
 def advance_to(state: dict, target_week: int, progress: Optional[Callable[[int, int], None]] = None) -> dict:
     target = min(target_week, 19)
-    pool = _make_pool()
-    with (pool if pool is not None else contextlib.nullcontext()):
-        while state["current_week"] < target and not state["done"]:
-            advance(state, pool)
-            if progress:
-                progress(state["current_week"], target)
+    pool = shared_pool()
+    while state["current_week"] < target and not state["done"]:
+        advance(state, pool)
+        if progress:
+            progress(state["current_week"], target)
     return state
 
 
