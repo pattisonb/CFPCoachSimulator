@@ -396,6 +396,32 @@ def _order_rows(rows: list[dict], conf_rows: list[dict], opp: dict, rank_pos: di
     return ordered
 
 
+def _team_form(state: dict, teams: dict) -> dict[str, dict]:
+    """Per team: home and away records, streak (+n wins / -n losses), the last game, and
+    the current AP and CFP ranks. Playoff games are left out like the records."""
+    latest = state["polls"].get(str(state["current_week"])) or {}
+    ap = {e["team"]: e["rank"] for e in latest.get("ap", [])}
+    cfp = {e["team"]: e["rank"] for e in latest.get("cfp", [])}
+    out = {slug: {"home_wins": 0, "home_losses": 0, "away_wins": 0, "away_losses": 0, "streak": 0, "last": None,
+                  "ap_rank": ap.get(slug), "cfp_rank": cfp.get(slug)} for slug in teams}
+    played = sorted((g for g in state["games"].values() if g["played"] and g["kind"] != "playoff"),
+                    key=lambda g: (g["week"], g.get("date") or ""))
+    for g in played:
+        hs, as_ = g["home_score"], g["away_score"]
+        for slug, opp, pf, pa, side in ((g["home"], g["away"], hs, as_, "home"), (g["away"], g["home"], as_, hs, "away")):
+            f = out.get(slug)
+            if f is None:
+                continue
+            won = pf > pa
+            venue = "neutral" if g["neutral"] else side
+            if venue != "neutral":
+                f[f"{venue}_{'wins' if won else 'losses'}"] += 1
+            f["streak"] = (f["streak"] + 1 if f["streak"] > 0 else 1) if won else (f["streak"] - 1 if f["streak"] < 0 else -1)
+            f["last"] = {"won": won, "score": f"{pf}-{pa}", "opponent": opp,
+                         "opponent_name": teams[opp]["name"] if opp in teams else opp, "venue": venue, "week": g["week"]}
+    return out
+
+
 def standings(state: dict) -> dict[str, list[dict]]:
     """Conference tables. Rows carry `division` (None where the conference has none),
     `conf_rank` (counted within the division when there is one), `champion` and
@@ -404,11 +430,12 @@ def standings(state: dict) -> dict[str, list[dict]]:
     rec = _records(state)
     opp = _opponents(state)
     rank_pos = _ranking_positions(state)
+    form = _team_form(state, teams)
     table: dict[str, list[dict]] = {}
     for slug, t in teams.items():
         if t["fictional"]:
             continue
-        r = {"slug": slug, "name": t["name"], "division": division_of(t["conference"], slug), **rec[slug]}
+        r = {"slug": slug, "name": t["name"], "division": division_of(t["conference"], slug), **rec[slug], **form[slug]}
         table.setdefault(t["conference"], []).append(r)
 
     for conf, rows in table.items():

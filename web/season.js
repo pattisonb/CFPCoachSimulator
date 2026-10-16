@@ -961,37 +961,85 @@
     box.append(grid);
   }
 
+  const standingsState = { conf: null };
+
+  // Standings: a chip row of conferences. One conference shows a full table (home and
+  // away records, points, margin, streak, last game, poll rank); All shows the compact
+  // grid of every conference.
   async function renderStandings() {
     const s = state.season;
+    if (!s) return;
     const box = $("#tab-standings");
     box.innerHTML = "";
     if (!state.standings) {
       try { state.standings = (await api(`/api/season/${s.id}/standings`)).standings; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
     }
-    const confs = Object.keys(state.standings).sort((a, b) => (a === s.conference ? -1 : b === s.conference ? 1 : a.localeCompare(b)));
-    const grid = el("div", { class: "conf-grid" });
-    const standingsTable = (rows, division) => {
+    const st = standingsState;
+    if (st.conf === null) st.conf = state.standings[s.conference] ? s.conference : "";
+    const confs = Object.keys(state.standings).sort();
+    box.append(el("div", { class: "stats-controls" }, [confChips(confs, st.conf, (v) => { st.conf = v; renderStandings(); })]));
+
+    const crownOf = (t) => [
+      t.champion ? el("span", { class: "crown", text: "👑", title: "Conference champion", "aria-label": "Conference champion" }) : null,
+      t.runner_up ? el("span", { class: "crown", text: "🥈", title: "Lost the conference championship game", "aria-label": "Conference runner-up" }) : null,
+    ];
+    const rankBadge = (t) => (t.cfp_rank ? el("span", { class: "rank-badge cfp", text: `CFP ${t.cfp_rank}`, title: "CFP ranking" })
+      : t.ap_rank ? el("span", { class: "rank-badge", text: `#${t.ap_rank}`, title: "AP rank" }) : null);
+    const diff = (t) => { const d = t.points_for - t.points_against; return d > 0 ? `+${d}` : String(d); };
+
+    const compactTable = (rows, division) => {
       const table = el("table", { class: "stats" });
-      table.appendChild(el("tr", {}, ["#", division || "Team", "Conf", "Overall", "PF", "PA"].map((h) => el("th", { text: h, style: h === (division || "Team") ? "text-align:left" : "" }))));
+      table.appendChild(el("tr", {}, ["#", division || "Team", "Conf", "Overall", "PF", "PA"].map((h) => el("th", { text: h, class: h === (division || "Team") ? "left" : "" }))));
       for (const t of rows) {
         table.appendChild(el("tr", { class: t.slug === s.team ? "mine" : "" }, [
           el("td", { text: String(t.conf_rank), title: t.tiebreak ? `Tied on conference record; placed by ${t.tiebreak}` : "" }),
-          el("td", { style: "text-align:left", class: "name" }, [t.name,
-            t.champion ? el("span", { class: "crown", text: "👑", title: "Conference champion", "aria-label": "Conference champion" }) : null,
-            t.runner_up ? el("span", { class: "crown", text: "🥈", title: "Lost the conference championship game", "aria-label": "Conference runner-up" }) : null]),
+          el("td", { class: "name left" }, [teamPill(t.slug), t.name, ...crownOf(t), t.ap_rank || t.cfp_rank ? el("span", { class: "pos", text: t.cfp_rank ? `CFP ${t.cfp_rank}` : `#${t.ap_rank}` }) : null]),
           el("td", { text: `${t.conf_wins}-${t.conf_losses}` }), el("td", { text: `${t.wins}-${t.losses}` }),
           el("td", { text: String(t.points_for) }), el("td", { text: String(t.points_against) }),
         ]));
       }
       return table;
     };
-    for (const conf of confs) {
+
+    const fullTable = (rows, division) => {
+      const table = el("table", { class: "stats standings-full" });
+      const heads = ["#", division || "Team", "Conf", "Overall", "Home", "Away", "PF", "PA", "Diff", "Streak", "Last game"];
+      table.appendChild(el("tr", {}, heads.map((h) => el("th", { text: h, class: [division || "Team", "Last game"].includes(h) ? "left" : "" }))));
+      for (const t of rows) {
+        const last = t.last ? `${t.last.won ? "W" : "L"} ${t.last.score} ${t.last.venue === "home" ? "vs" : t.last.venue === "away" ? "at" : "vs"} ${t.last.opponent_name}` : "–";
+        table.appendChild(el("tr", { class: t.slug === s.team ? "mine" : "" }, [
+          el("td", { text: String(t.conf_rank), title: t.tiebreak ? `Tied on conference record; placed by ${t.tiebreak}` : "" }),
+          el("td", { class: "name left" }, [teamPill(t.slug), t.name, ...crownOf(t), rankBadge(t)]),
+          el("td", { text: `${t.conf_wins}-${t.conf_losses}` }), el("td", { text: `${t.wins}-${t.losses}` }),
+          el("td", { text: `${t.home_wins}-${t.home_losses}` }), el("td", { text: `${t.away_wins}-${t.away_losses}` }),
+          el("td", { text: String(t.points_for) }), el("td", { text: String(t.points_against) }),
+          el("td", { class: t.points_for > t.points_against ? "win" : t.points_for < t.points_against ? "loss" : "", text: diff(t) }),
+          el("td", { class: t.streak > 0 ? "win" : t.streak < 0 ? "loss" : "muted", text: t.streak > 0 ? `W${t.streak}` : t.streak < 0 ? `L${-t.streak}` : "–" }),
+          el("td", { class: `left ${t.last ? (t.last.won ? "" : "muted") : "muted"}`, text: last }),
+        ]));
+      }
+      return table;
+    };
+
+    const blockFor = (conf, full) => {
       const rows = state.standings[conf];
       const divisions = [...new Set(rows.map((t) => t.division).filter(Boolean))];
-      const tables = divisions.length ? divisions.map((d) => standingsTable(rows.filter((t) => t.division === d), d)) : [standingsTable(rows, null)];
-      grid.appendChild(el("div", { class: "conf-block" }, [el("h3", { text: conf }), ...tables]));
+      const make = full ? fullTable : compactTable;
+      const tables = divisions.length ? divisions.map((d) => make(rows.filter((t) => t.division === d), d)) : [make(rows, null)];
+      return el("div", { class: "conf-block" }, [el("h3", { text: conf }), ...tables]);
+    };
+
+    if (st.conf && state.standings[st.conf]) {
+      const rows = state.standings[st.conf];
+      const champ = rows.find((t) => t.champion);
+      box.append(el("p", { class: "muted small-text", text: `${st.conf} · ${rows.length} teams · ${champ ? `champion ${champ.name}` : s.current_week >= 14 ? "title game played" : "through " + (s.week_labels[s.current_week] || "week " + s.current_week)} · conference record decides the order, then the tiebreak ladder.` }));
+      box.append(el("div", { class: "table-scroll" }, [blockFor(st.conf, true)]));
+    } else {
+      const ordered = confs.slice().sort((a, b) => (a === s.conference ? -1 : b === s.conference ? 1 : a.localeCompare(b)));
+      const grid = el("div", { class: "conf-grid" });
+      for (const conf of ordered) grid.appendChild(blockFor(conf, false));
+      box.appendChild(grid);
     }
-    box.appendChild(grid);
   }
 
   function renderPoll(kind) {
