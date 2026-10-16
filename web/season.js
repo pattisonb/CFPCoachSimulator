@@ -1037,6 +1037,35 @@
       const voters = Math.round(list.reduce((a, e) => a + (e.first_place || 0), 0));
       box.appendChild(el("p", { class: "muted small-text", text: `${voters} ballots · first-place votes in parentheses · points: 25 for first down to 1 for 25th` }));
     }
+    // by conference, the way the AP prints it
+    const byConf = {};
+    for (const e of list) byConf[e.conference] = (byConf[e.conference] || 0) + 1;
+    const confLine = Object.entries(byConf).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([c, n]) => `${c} ${n}`).join(", ");
+    box.appendChild(el("div", { class: "others-votes" }, [el("b", { text: "By conference: " }), confLine]));
+    // ranked games in the coming week
+    if (kind === "ap" && !entry.final) renderRankedGames(box, list, w + 1);
+  }
+
+  async function renderRankedGames(box, list, week) {
+    const s = state.season;
+    if (week > 19 || !s.weeks.includes(week)) return;
+    const rankOf = {};
+    for (const e of list) rankOf[e.team] = e.rank;
+    let data;
+    try { data = await api(`/api/season/${s.id}/week/${week}`); } catch (err) { return; }
+    const games = data.games.filter((g) => rankOf[g.home] || rankOf[g.away]);
+    if (!games.length) return;
+    games.sort((a, b) => Math.min(rankOf[a.home] || 99, rankOf[a.away] || 99) - Math.min(rankOf[b.home] || 99, rankOf[b.away] || 99));
+    const label = s.week_labels[week] || `Week ${week}`;
+    const nm = (slug) => `${rankOf[slug] ? `No. ${rankOf[slug]} ` : ""}${name(slug)}`;
+    const parts = games.slice(0, 12).map((g, i) => {
+      const text = g.played
+        ? `${nm(g.away)} ${g.away_score}${g.away_score > g.home_score ? "" : ""} at ${nm(g.home)} ${g.home_score}`
+        : `${nm(g.away)} ${g.neutral ? "vs" : "at"} ${nm(g.home)}`;
+      const span = el("span", { class: (g.home === s.team || g.away === s.team) ? "win" : "" }, [text]);
+      return i < Math.min(games.length, 12) - 1 ? [span, "; "] : [span];
+    }).flat();
+    box.appendChild(el("div", { class: "others-votes" }, [el("b", { text: `Ranked teams in ${label}${games.length > 12 ? ` (first 12 of ${games.length})` : ""}: ` }), ...parts]));
   }
 
   function renderBracket() {

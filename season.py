@@ -244,12 +244,14 @@ def _rating_poll(teams: dict) -> list[str]:
     return [slug for slug, t in sorted(teams.items(), key=lambda kv: -kv[1]["team_ratings"]["overall"]) if not t["fictional"]][:25]
 
 
-def _records(state: dict, through_week: Optional[int] = None) -> dict[str, dict]:
+def _records(state: dict, through_week: Optional[int] = None, include_playoff: bool = False) -> dict[str, dict]:
+    """Won-lost records. Playoff games are left out (standings and bowl records stop at the
+    bowls) unless include_playoff is set, which the final AP poll uses."""
     teams = load_teams()
     rec = {slug: {"wins": 0, "losses": 0, "conf_wins": 0, "conf_losses": 0, "points_for": 0, "points_against": 0}
            for slug in teams}
     for g in state["games"].values():
-        if not g["played"] or (through_week is not None and g["week"] > through_week) or g["kind"] == "playoff":
+        if not g["played"] or (through_week is not None and g["week"] > through_week) or (g["kind"] == "playoff" and not include_playoff):
             continue
         hs, as_ = g["home_score"], g["away_score"]
         for slug, pf, pa in ((g["home"], hs, as_), (g["away"], as_, hs)):
@@ -431,8 +433,8 @@ def standings(state: dict) -> dict[str, list[dict]]:
 
 
 def _poll_entries(order: list[str], prev_rank: dict[str, int], state: dict, teams: dict, week: Optional[int] = None,
-                  start: int = 1, votes: Optional[dict] = None) -> list[dict]:
-    rec = _records(state, week)
+                  start: int = 1, votes: Optional[dict] = None, records: Optional[dict] = None) -> list[dict]:
+    rec = records if records is not None else _records(state, week)
     out = []
     for i, slug in enumerate(order, start):
         r = rec.get(slug, {"wins": 0, "losses": 0})
@@ -447,6 +449,38 @@ def _poll_entries(order: list[str], prev_rank: dict[str, int], state: dict, team
 
 def _ap_votes(state: dict, order: list[str], tiers: dict[str, str], params: dict, week: int) -> dict[str, dict]:
     return polls.ballots(order, state["scores"], tiers, params, seed=(state.get("seed") or 0) * 1000 + week)
+
+
+def _final_ap_poll(state: dict, teams: dict) -> None:
+    """The AP's last poll, released after the national championship: every bowl and
+    playoff result counts, the champion is first and the runner-up second (true of every
+    final poll of the playoff era), and the rest fall in by the model."""
+    ap_params, _ = polls.load_params()
+    tiers = {slug: tier_of(t) for slug, t in teams.items()}
+    last_week = max((int(k) for k, v in state["polls"].items() if v.get("ap")), default=CCG_WEEK)
+    prev = state["polls"][str(last_week)]["ap"]
+    prev_rank = {e["team"]: e["rank"] for e in prev}
+    post_games = [{"home": g["home"], "away": g["away"], "home_score": g["home_score"], "away_score": g["away_score"],
+                   "neutral": g["neutral"]} for g in state["games"].values() if g["played"] and g["week"] > SELECTION_WEEK]
+    rec = _records(state, include_playoff=True)
+    rec_t = {s: (r["wins"], r["losses"]) for s, r in rec.items()}
+    scores = polls.update_scores(state["scores"], post_games, prev_rank, rec_t, tiers, CCG_WEEK, CCG_WEEK, ap_params)
+    final = state["games"].get("cfp-final")
+    champion = state.get("champion")
+    runner_up = None
+    if final and champion:
+        runner_up = final["away"] if final["home"] == champion else final["home"]
+        top = max(scores.values())
+        scores[champion] = top + 120.0          # the title settles the top of the poll
+        scores[runner_up] = max(scores.get(runner_up, 0.0), top + 40.0)
+    state["scores"] = scores
+    full = polls.rank(scores, rec_t, tiers, ap_params, n=25 + AP_OTHERS)
+    order = [t for t in (champion, runner_up) if t] + [t for t in full if t not in (champion, runner_up)]
+    order, others = order[:25], order[25:25 + AP_OTHERS]
+    votes = _ap_votes(state, order + others, tiers, ap_params, 19)
+    state["polls"]["19"] = {"ap": _poll_entries(order, prev_rank, state, teams, votes=votes, records=rec),
+                            "ap_others": _poll_entries(others, prev_rank, state, teams, start=26, votes=votes, records=rec),
+                            "final": True}
 
 
 def _update_polls_after_week(state: dict, teams: dict, week: int, real_ap: Optional[list[str]] = None) -> None:
@@ -706,6 +740,8 @@ def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter]
         if week == 19:
             g = state["games"]["cfp-final"]
             state["champion"] = g["home"] if g["home_score"] > g["away_score"] else g["away"]
+            say("Final AP poll")
+            _final_ap_poll(state, teams)
             state["done"] = True
             state["phase"] = "done"
     state["current_week"] = week
@@ -807,7 +843,10 @@ def _compact_side(side: dict, drives: list[dict], which: str) -> dict:
 def _add_into(total: dict, add: dict) -> None:
     for k, v in add.items():
         if isinstance(v, (int, float)):
-            total[k] = total.get(k, 0) + v
+            if k.startswith("long_"):
+                total[k] = max(total.get(k, 0), v)
+            else:
+                total[k] = total.get(k, 0) + v
 
 
 def _accumulate_stats(state: dict, g: dict, lines: dict) -> None:

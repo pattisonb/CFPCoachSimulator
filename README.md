@@ -327,7 +327,14 @@ vote down to 1 for 25th) and "Others receiving votes" with their points. The num
 from 62 simulated ballots (`polls.ballots`): each voter ranks the teams by the model's
 score plus their own noise, so a close race at the top splits the first-place votes and a
 runaway number one takes nearly all of them, while the totals are handed down the
-published order so they always agree with the ranking.
+published order so they always agree with the ranking. Under the table: "Others receiving
+votes" with points, "Dropped from rankings" with the spot each team held, the count by
+conference, and the coming week's games involving ranked teams.
+
+**The final poll.** The AP's last Top 25 comes out after the national championship, so
+week 19 carries one: every bowl and playoff result is scored, the champion is first and
+the runner-up second (true of every final poll of the playoff era), and the Summary tab's
+final AP is that poll.
 
 ### The bracket rules (2026)
 

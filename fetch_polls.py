@@ -72,6 +72,8 @@ def rankings_for(season: int, stype: int, week: int, names: dict) -> dict:
         name = (d.get("name") or "").lower()
         if name == "ap top 25":
             out["ap"] = parse_ranking(d, names)
+        elif "coaches" in name:
+            out["coaches"] = parse_ranking(d, names)
         elif "playoff" in name:
             out["cfp"] = parse_ranking(d, names)
         time.sleep(0.1)
@@ -135,9 +137,14 @@ def fetch_season(season: int) -> tuple[dict, dict]:
     final = get(f"{CORE}/seasons/{season}/types/3/weeks/1/rankings/1")
     if final:
         polls["final"] = parse_ranking(final, names)
-    cfp_final = rankings_for(season, 3, 1, names).get("cfp")
-    if cfp_final:
-        polls["cfp_final"] = cfp_final
+    post = rankings_for(season, 3, 1, names)
+    if post.get("cfp"):
+        polls["cfp_final"] = post["cfp"]
+    if post.get("coaches"):
+        polls["coaches_final"] = post["coaches"]
+    pre_coaches = rankings_for(season, 1, 1, names).get("coaches")
+    if pre_coaches:
+        polls["coaches_preseason"] = pre_coaches
     return polls, results
 
 

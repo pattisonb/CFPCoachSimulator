@@ -155,7 +155,7 @@ def rank(scores: dict[str, float], records: dict[str, tuple[int, int]], tiers: d
 
 
 AP_VOTERS = 62          # ballots on the AP panel (62 in 2024, 66 in 2025)
-VOTER_NOISE = 22.0      # score noise per voter; the preseason gap between spots is about 16
+VOTER_NOISE = 28.0      # fit to 2014-2025 AP polls: No.1 first-place share and 25th-place points
 
 
 def ballots(order: list[str], scores: dict[str, float], tiers: dict[str, str], params: dict,
