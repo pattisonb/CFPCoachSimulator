@@ -672,3 +672,7 @@ body.modal-open { overflow: hidden; }
 .dev-impact { --dev-color: #2f8f5b; }
 .dev-star { --dev-color: #d9a21b; }
 .dev-elite { --dev-color: #a24ad6; }
+
+.recruit-stars { display: inline-flex; gap: 1px; margin-left: 10px; vertical-align: middle; font-size: 16px; line-height: 1; }
+.recruit-stars .rs { color: var(--border); }
+.recruit-stars .rs.on { color: #e3a81b; }

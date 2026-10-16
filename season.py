@@ -2000,6 +2000,22 @@ def player_game_log(state: dict, team: str, name: str, position: str) -> Optiona
     return out
 
 
+_STAR_CUTS: Optional[list[int]] = None
+
+
+def recruit_stars(p: dict) -> int:
+    """Recruiting stars estimated from the player's rating against the whole FBS player
+    pool (the rosters carry no recruiting rankings): the top 1% are five stars, the next
+    12% four, the next 60% three, the rest two."""
+    global _STAR_CUTS
+    if _STAR_CUTS is None:
+        vals = sorted((player_overall(x) for t in load_teams().values() if not t["fictional"] for x in t["offense"] + t["defense"]), reverse=True)
+        n = max(1, len(vals))
+        _STAR_CUTS = [vals[min(n - 1, int(n * q))] for q in (0.01, 0.13, 0.73)]
+    o = player_overall(p)
+    return 5 if o >= _STAR_CUTS[0] else 4 if o >= _STAR_CUTS[1] else 3 if o >= _STAR_CUTS[2] else 2
+
+
 def player_profile(state: dict, team: str, name: Optional[str] = None, position: Optional[str] = None,
                    slug: Optional[str] = None) -> Optional[dict]:
     teams = load_teams()
@@ -2027,7 +2043,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         "name": name, "slug": p.get("slug"), "position": position, "role": p.get("role"), "depth": p.get("depth"),
         "class": p.get("class"), "class_name": CLASS_NAMES.get(p.get("class") or "", p.get("class")), "height": p.get("height"),
         "weight": p.get("weight"), "jersey": p.get("jersey"), "dev_trait": p.get("dev_trait"), "starter": bool(p.get("in_game")),
-        "injured": injured, "overall": player_overall(p), "ratings": ratings,
+        "injured": injured, "overall": player_overall(p), "stars": recruit_stars(p), "ratings": ratings,
         "ratings_at": {k: int(v) for k, v in (p.get("ratings_at") or {}).items() if isinstance(v, (int, float))},
         "team": {"slug": team, "name": t["name"], "conference": t["conference"], "coach": hc.get("name"),
                  "record": f"{rec['wins']}-{rec['losses']}", "rank": awards.Pool(state, teams, _records(state)).rank_of(team) if ss else None},

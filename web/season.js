@@ -661,14 +661,14 @@
     // development trait on a five-star scale: Normal 2, Impact 3, Star 4, Elite 5 (the data has those four tiers)
     const DEV_STARS = { Normal: 2, Impact: 3, Star: 4, Elite: 5 };
     const devStars = DEV_STARS[p.dev_trait] || 0;
-    const devTag = devStars ? el("span", { class: `tag dev dev-${(p.dev_trait || "").toLowerCase()}`, title: `Development trait: ${p.dev_trait} (${devStars} of 5). How quickly the player improves.` }, [
-      el("span", { class: "dev-label", text: "Development" }),
-      el("span", { class: "dev-dots" }, [1, 2, 3, 4, 5].map((i) => el("span", { class: `dev-star ${i <= devStars ? "on" : ""}`, text: "★" }))), el("b", { text: p.dev_trait })]) : null;
+    const devTag = devStars ? el("span", { class: `tag dev dev-${(p.dev_trait || "").toLowerCase()}`, title: "Development trait: how quickly the player improves (Normal, Impact, Star, Elite)." }, [el("b", { text: `${p.dev_trait} Development` })]) : null;
+    // recruiting stars next to the name (estimated from the rating; the rosters carry no recruiting rankings)
+    const recruit = p.stars ? el("span", { class: "recruit-stars", title: `${p.stars}-star recruit (estimated from the rating against the whole FBS pool)` }, [1, 2, 3, 4, 5].map((i) => el("span", { class: `rs ${i <= p.stars ? "on" : ""}`, text: "★" }))) : null;
     hero.append(
       el("div", { class: "player-hero-main" }, [
         (() => { const pill = teamPill(team.slug); pill.classList.add("big"); return pill; })(),
         el("div", {}, [
-          el("div", { class: "player-name" }, [p.jersey ? el("span", { class: "player-jersey", text: `#${p.jersey} ` }) : null, p.name]),
+          el("div", { class: "player-name" }, [p.jersey ? el("span", { class: "player-jersey", text: `#${p.jersey} ` }) : null, p.name, recruit]),
           el("div", { class: "muted player-facts", text: facts.join(" · ") }),
           el("div", { class: "player-tags" }, [
             p.starter ? el("span", { class: "tag good", text: "Starter" }) : el("span", { class: "tag", text: p.depth ? `${p.role || p.position} #${p.depth}` : "Reserve" }),
