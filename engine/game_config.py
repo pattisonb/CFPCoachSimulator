@@ -14,6 +14,27 @@ import random as _random
 # Random source for stat attribution only (which lineman allowed a pressure, which defender
 # broke up a pass). It never touches the game's own stream, so results are unchanged by it.
 stat_rng = _random.Random(0)
+# Injuries roll on their own stream too, so a sim with injuries off reproduces the same game.
+injury_rng = _random.Random(1)
+
+# ----- personnel (engine/personnel.py) -----
+HEAVY_JUMBO_SHARE = 0.25        # short yardage / goal line: share of snaps with a sixth lineman
+HEAVY_13_SHARE = 0.30           # ... with three tight ends
+PASSING_DOWN_10_SHARE = 0.35    # third-and-long: share of snaps in four-wide (Air Raid 1.6x)
+CONSERVATIVE_HEAVY_SHARE = 0.5  # a leader milking the clock: share of snaps in 12 or 21
+NICKEL_VS_11 = 0.55             # a 4-3 or 3-4 answers three receivers with a nickel back this often
+DIME_ON_PASSING_DOWN = 0.35     # third-and-long against three receivers: dime this often, else nickel
+DEF_SUB_FATIGUE = {"DL": 30, "MLB": 50, "ROLB": 50, "LOLB": 50, "CB": 58, "S": 58}   # rotation points by position (linemen rotate most)
+TE_BLOCK_CREDIT_SHARE = 0.45    # a tight end's or fullback's share of a blocking credit, relative to a lineman
+FB_CARRY_WEIGHT = 0.10          # a fullback's carry weight next to a halfback's 0.80
+
+# ----- injuries -----
+INJURIES = True
+INJURY_PER_SNAP = 0.00085       # per player on the field per snap: about 1.3 injuries a game per team
+# cumulative probability, weeks out (0 = rest of this game only)
+INJURY_SEVERITY = [(0.55, 0), (0.72, 1), (0.84, 2), (0.91, 3), (0.95, 5), (0.98, 8), (1.0, 20)]
+INJURY_TYPES = ["ankle sprain", "hamstring strain", "knee sprain", "shoulder injury", "concussion", "groin strain",
+                "wrist injury", "hip pointer", "calf strain", "high ankle sprain", "foot injury", "back spasms"]
 
 class GameSliders:
     """Centralized slider configuration for game parameters"""

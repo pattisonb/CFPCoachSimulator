@@ -4,6 +4,7 @@ from .game_functions import get_kick_attempt_range, get_punt_distance, apply_gen
 from .game_config import sliders
 from .roster import return_skill
 from . import game_config as cfg
+from . import personnel
 from . import situation as sit
 RUN_PASS_TABLE = {
     1: [
@@ -118,6 +119,14 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
     defense_team.sub_defensive_players(50)
     offense_team.recover_bench_players()
     defense_team.recover_bench_players()
+    # Personnel for this snap: the offense's grouping from its scheme and the situation, the
+    # defense's package in answer to it.
+    lead0 = getattr(offense_team, "lead", 0)
+    half0 = getattr(offense_team, "half", 1)
+    conservative0 = (half0 == 2 and lead0 >= cfg.GARBAGE_LEAD) or lead0 >= cfg.GARBAGE_LEAD_ANY
+    grouping = personnel.offense_grouping(getattr(offense_team, "offense_scheme", "Multiple"), down, first_down_yardage, yardline, conservative0, hurrying)
+    offense_team.set_grouping(grouping, personnel.GROUPINGS[grouping])
+    defense_team.set_front(personnel.defense_package(getattr(defense_team, "defense_scheme", "4-2-5"), grouping, down, first_down_yardage))
     offense = offense_team.get_offense()
     defense = defense_team.get_defense()
     for p in offense:
@@ -233,7 +242,23 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
         result, yards_gained = get_pass_yards(offense, defense, down, first_down_yardage, guessed_play, offense_line_advantage, yardline, tendencies=tendencies)
     oob = sit.out_of_bounds(result, situation, posture)
     first_down = result in ("run", "successful_pass", "checkdown_pass") and isinstance(yards_gained, (int, float)) and yards_gained >= first_down_yardage
+    if cfg.INJURIES:
+        roll_injuries(offense_team, offense)
+        roll_injuries(defense_team, defense)
     return play_ran, result, yards_gained, *clock(result, oob, first_down)
+
+
+def roll_injuries(team, on_field):
+    """Each player on the field can go down on a snap; most injuries end only his day,
+    some cost weeks. Uses the injury RNG so results are unchanged when injuries are off."""
+    rng = cfg.injury_rng
+    for p in on_field:
+        if p.position in ("K", "P"):
+            continue
+        if rng.random() < cfg.INJURY_PER_SNAP:
+            r = rng.random()
+            weeks = next(w for cum, w in cfg.INJURY_SEVERITY if r <= cum)
+            team.injure(p, weeks, rng.choice(cfg.INJURY_TYPES))
 
 def process_play(result, play_type, yards, yardline, down, first_down_yardage) :
     """Apply a play result to down, distance and yardline. Returns
@@ -499,8 +524,8 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
     Results: touchdown, field goal, missed kick, punt, turnover, safety,
     defensive_touchdown, punt_return_td, first_down (fallback).
     """
-    kicker = next(p for p in offense.get_offense() if p.position == 'K')
-    punter = next(p for p in offense.get_offense() if p.position == 'P')
+    kicker = offense.get_kicker()
+    punter = offense.get_punter()
     last_play_type =  None
     last_gain = 0
     result = ""

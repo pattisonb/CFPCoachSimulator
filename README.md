@@ -486,6 +486,34 @@ role.
 rank, Group of Five and defensive finalists, All-America consensus counts and the coach of
 the year profile against the research targets.
 
+### Personnel, schemes and injuries
+
+The engine now fields a different eleven on every snap (`engine/personnel.py`). The
+offense picks a grouping from its coordinator's scheme in the coach data (Air Raid, Spread
+RPO, Spread Option, Power Spread, West Coast, Pro Style, Multiple, Flexbone) and the
+situation: 11, 12, 10, 21, 13 and 22 personnel on normal downs in the scheme's mix, four
+wide on third-and-long, three tight ends or a sixth lineman in short yardage and at the
+goal line, heavier sets when a leader is milking the clock, the flexbone's three backs for
+option teams. The defense answers from its scheme's base front (4-3, 3-4, 4-2-5, 3-3-5)
+with a fifth back against three receivers, a sixth against four or on passing downs, and
+a linebacker for a back against extra tight ends; a three-man front sends its best-rushing
+linebacker. Who is on the field follows the depth chart, the fatigue rotation (linemen now
+rotate at a lower fatigue point than backs, so edge rushers and tackles play about 60% of
+snaps with the next men up behind them), the blowout rest (linemen included) and injuries.
+Tight ends and fullbacks earn blocking credits on runs and, with two tight ends in, in pass
+protection; a fullback carries rarely. The Blocking stats category lists all of them, and
+each box score shows the personnel snap counts and schemes.
+
+Injuries: every player on the field can go down on a snap (about 1.3 per team per game),
+most for the rest of the day only, some for one to eight weeks, a few for the season. The
+injured sit out in the sim, the season carries the list week to week and heals it, the My
+Schedule tab shows your injury report with the league's behind it, and each box score
+lists the game's injuries. Injury rolls use their own random stream, so a seed reproduces
+the same game with injuries off. The calibrations after the change: 2026 replay 70.3%
+straight up (was 72.4%), margin error 13.4 (was 13.5), slope 1.06; player usage closer to
+the real box scores (lead back yards within 9 a game, was 13); all 31 league benchmarks in
+band.
+
 ## Player stat lines and usage (box score calibration)
 
 `fetch_boxscores.py` pulls the full player box score for every final game from NCAA.com

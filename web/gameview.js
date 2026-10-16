@@ -116,6 +116,19 @@ window.CFP = (function () {
     const sl = Object.entries(g.sliders || {});
     if (sl.length) bits.push("sliders: " + sl.map(([k, v]) => `${label(k)} ${v}`).join(", "));
     meta.append(bits.join(" · "));
+    // injuries suffered in this game, per team
+    for (const side of ["away", "home"]) {
+      const inj = (g[side].injuries || []);
+      if (!inj.length) continue;
+      meta.append(el("div", { class: "injury-line" }, [
+        el("b", { text: `${g[side].name} injuries: ` }),
+        inj.map((i) => `${i.name} (${i.position}, ${i.type}${i.weeks ? `, out ${i.weeks} ${i.weeks === 1 ? "week" : "weeks"}` : ", returned to the bench"})`).join("; "),
+      ]));
+    }
+    if (g.home.personnel || g.away.personnel) {
+      const show = (t) => Object.entries(t.personnel || {}).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(", ");
+      meta.append(el("div", { class: "muted small-text", text: `Personnel (snaps) · ${g.away.name}: ${show(g.away)} · ${g.home.name}: ${show(g.home)}` }));
+    }
     for (const side of ["home", "away"]) {
       const v = g[side].verification;
       if (!v.ok) meta.append(el("div", { class: "warn", text: `${g[side].name}: stats imply ${v.expected} points but the score is ${v.actual}` }));
@@ -227,7 +240,7 @@ window.CFP = (function () {
       table.appendChild(el("tr", {}, [el("th", { text: "Player" }), ...cols.map((c) => el("th", { text: c[0] }))]));
       for (const p of rows) {
         table.appendChild(el("tr", {}, [
-          el("td", { class: "name" }, [p.name, el("span", { class: "pos", text: p.position })]),
+          el("td", { class: "name" }, [p.name, el("span", { class: "pos", text: p.position }), p.injury ? el("span", { class: "pos injured", text: `injured (${p.injury.type})` }) : null]),
           ...cols.map((c) => el("td", { text: String(c[1](p)) })),
         ]));
       }

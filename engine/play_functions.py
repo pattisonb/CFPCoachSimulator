@@ -1,5 +1,6 @@
 import random
 from .game_functions import apply_pass_fatigue, apply_run_fatigue
+from .personnel import pass_rushers
 from .game_config import sliders
 from . import game_config as cfg
 
@@ -145,9 +146,12 @@ def assign_tackles(defense, base_yards, verbose=False):
     return tacklers, is_assisted and len(tacklers) == 2
 
 
-def assign_sack(defense, guessed_play=False):
-    # Sack candidates: DL always, LB only if not guessed correctly
-    candidates = [p for p in defense if p.position == 'DL' or (guessed_play and 'LB' in p.position)]
+def assign_sack(defense, guessed_play=False, rushers=None):
+    # Sack candidates: the pass rushers (linemen, plus linebackers in a three-man front), and any
+    # linebacker when the defense guessed the play
+    candidates = list(rushers) if rushers else [p for p in defense if p.position == 'DL']
+    if guessed_play:
+        candidates += [p for p in defense if 'LB' in p.position and p not in candidates]
     if not candidates:
         return [], False
 
@@ -172,14 +176,23 @@ def _stat_max(player, key, value):
         player.stats[key] = value
 
 
-def _credit_lineman(offense, key, attr, worse=False):
-    """Credit one offensive lineman on the field: the weakest blocker is likeliest to
-    allow a pressure or a stuff, the best to spring a long run. Uses the stat RNG only."""
+def _credit_lineman(offense, key, attr, worse=False, run=False):
+    """Credit one blocker on the field: the weakest blocker is likeliest to allow a
+    pressure or a stuff, the best to spring a long run. Tight ends and fullbacks count on
+    runs (at a lower share) and tight ends in pass protection when two are in. Uses the
+    stat RNG only."""
     line = [p for p in offense if p.position == 'OL']
-    if not line:
+    extra = [p for p in offense if p.position == 'TE' or (p.position == 'RB' and getattr(p, "role", None) == 'FB')]
+    if not run:
+        extra = [p for p in extra if p.position == 'TE'] if sum(1 for p in offense if p.position == 'TE') >= 2 else []
+    if not line and not extra:
         return
-    weights = [max(1.0, (101 - (getattr(p, attr, None) or cfg.NEUTRAL)) if worse else ((getattr(p, attr, None) or cfg.NEUTRAL))) for p in line]
-    _stat(cfg.stat_rng.choices(line, weights=weights, k=1)[0], key)
+    def w(p):
+        r = getattr(p, attr, None) or cfg.NEUTRAL
+        base = max(1.0, (101 - r) if worse else r)
+        return base * (1.0 if p.position == 'OL' else cfg.TE_BLOCK_CREDIT_SHARE)
+    pool = line + extra
+    _stat(cfg.stat_rng.choices(pool, weights=[w(p) for p in pool], k=1)[0], key)
 
 
 # ===================== rating helpers =====================
@@ -253,7 +266,7 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, offense_line
         candidates = [p for p in offense if p.position in ('RB', 'WR')]
         if not candidates:
             candidates = [p for p in offense if p.position in ('RB', 'WR', 'QB', 'TE')]
-        weights = [0.80 if p.position == 'RB' else 0.012 if p.position == 'WR' else 0.02 for p in candidates]
+        weights = [(cfg.FB_CARRY_WEIGHT if getattr(p, "role", None) == 'FB' else 0.80) if p.position == 'RB' else 0.012 if p.position == 'WR' else 0.02 for p in candidates]
         carrier = random.choices(candidates, weights=weights, k=1)[0]
 
     # Line battle: blockers vs. the front seven (plus whoever the defense committed).
@@ -316,9 +329,9 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, offense_line
     _stat_max(carrier, "long_rush", yards)
     if yards >= 20:
         _stat(carrier, "explosive_runs")
-        _credit_lineman(offense, "key_blocks", "run_blocking")
+        _credit_lineman(offense, "key_blocks", "run_blocking", run=True)
     elif yards <= 0:
-        _credit_lineman(offense, "stuffs_allowed", "run_blocking", worse=True)
+        _credit_lineman(offense, "stuffs_allowed", "run_blocking", worse=True, run=True)
     if yards >= first_down:
         _stat(carrier, "rushing_first_downs")
         if down >= 3:
@@ -371,7 +384,8 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
 
     # --- Pass rush vs. protection ---
     protection = _group_rating(offense, ('OL',), ('strength', 'pass_blocking')) + _slider_points(sliders.pass_blocking)
-    rush = _group_rating(defense, ('DL',), ('strength', 'rushing')) + _slider_points(sliders.pass_rush)
+    rushers = pass_rushers(defense)
+    rush = (sum(_rating(p, ('strength', 'rushing')) for p in rushers) / len(rushers) if rushers else cfg.NEUTRAL) + _slider_points(sliders.pass_rush)
     sack_rate = cfg.SACK_BASE + (rush - protection) * cfg.SACK_PER_LINE_POINT
     sack_rate -= (qb_decisions - cfg.NEUTRAL) * cfg.SACK_PER_QB_POINT
     if guessed_play:
@@ -379,7 +393,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     sack_rate = max(0.01, min(0.25, sack_rate))
     if random.random() < sack_rate:
         sack_yards = -max(1, int(round(random.gauss(*cfg.SACK_YARDS))))
-        sackers, is_half = assign_sack(defense, guessed_play=guessed_play)
+        sackers, is_half = assign_sack(defense, guessed_play=guessed_play, rushers=rushers)
         for sacker in sackers:
             sacker.stats['sacks'] += 0.5 if is_half else 1
             sacker.stats['solo_tackles'] += 1
@@ -398,7 +412,6 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
 
     # A pressure that did not become a sack (stat only; the play goes on as before).
     if cfg.stat_rng.random() < min(0.6, sack_rate * 2.5):
-        rushers = [p for p in defense if p.position == 'DL']
         if rushers:
             _stat(cfg.stat_rng.choices(rushers, weights=[max(1, p.rushing or 1) for p in rushers], k=1)[0], 'hurries')
             _credit_lineman(offense, "pressures_allowed", "pass_blocking", worse=True)

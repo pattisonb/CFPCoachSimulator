@@ -39,6 +39,11 @@ class Player:
         self.endurance = data.get("endurance", 50)
         self.fatigue = data.get("fatigue", 0)
         self.in_game = data.get("in_game", False)
+        self.role = data.get("role")          # depth-chart role: LT, LG, C, RG, RT, LEDG, REDG, DT, SAM, MIKE, WILL, CB, FS, SS, HB, FB...
+        self.depth = data.get("depth") or 99
+        self.cls = data.get("class")
+        self.injured = bool(data.get("injured"))
+        self.injury = None
         self.stats = dict(data.get("stats") or {})   # own copy: the source roster is shared between games
 
         # Skill-specific
@@ -100,6 +105,13 @@ class Team:
         self.tendencies = {}
         self.home_field_advantage = 50
         self.timeouts = 3
+        self.offense_scheme = "Multiple"
+        self.defense_scheme = "4-2-5"
+        self.grouping = None          # offensive grouping on this snap ("11", "12", ...)
+        self.front = None             # defensive package counts on this snap
+        self._lineup = {"offense": None, "defense": None}
+        self.grouping_snaps = {}      # snaps per grouping / front, for the box score
+        self.injuries = []            # injuries suffered in this game
         self.lead, self.half, self.in_overtime = 0, 1, False
         # Team-level stats for special teams events
         self.team_stats = {
@@ -121,16 +133,69 @@ class Team:
         }
 
     def get_offense(self, side="offense"):
+        if side == "offense" and self._lineup["offense"] is not None:
+            return self._lineup["offense"]
         players = getattr(self, side)
-        return [p for p in players if p.in_game]
+        return [p for p in players if p.in_game and not p.injured]
     
     def get_all_offense(self, side="offense"):
         players = getattr(self, side)
         return [p for p in players]
     
     def get_defense(self, side="defense"):
+        if side == "defense" and self._lineup["defense"] is not None:
+            return self._lineup["defense"]
         players = getattr(self, side)
-        return [p for p in players if p.in_game]
+        return [p for p in players if p.in_game and not p.injured]
+
+    # ----- personnel: build the eleven for a snap from the depth chart -----
+
+    @staticmethod
+    def _take(players, n):
+        """The first n available players: the fatigue rotation's in-game players first, then
+        the bench, each by depth-chart order; injured players never."""
+        pool = [p for p in players if not p.injured]
+        pool.sort(key=lambda p: (0 if p.in_game else 1, p.depth))
+        return pool[:n]
+
+    def set_grouping(self, name, counts):
+        """Offensive grouping for this snap: counts of RB, TE, WR, OL (plus the quarterback)."""
+        self.grouping = name
+        self.grouping_snaps[name] = self.grouping_snaps.get(name, 0) + 1
+        lineup = self._take([p for p in self.offense if p.position == "QB"], 1)
+        for pos in ("RB", "TE", "WR", "OL"):
+            lineup += self._take([p for p in self.offense if p.position == pos], counts[pos])
+        # the specialists ride along so the drive code can find the kicker and punter
+        lineup += [p for p in self.offense if p.position in ("K", "P") and p.in_game and not p.injured]
+        self._lineup["offense"] = lineup
+
+    def set_front(self, counts):
+        """Defensive package for this snap: counts of EDGE, DT, LB, CB, S."""
+        self.front = counts
+        key = f"{counts['EDGE'] + counts['DT']}-{counts['LB']}-{counts['CB'] + counts['S']}"
+        self.grouping_snaps[key] = self.grouping_snaps.get(key, 0) + 1
+        edges = [p for p in self.defense if p.position == "DL" and p.role in ("LEDG", "REDG")]
+        tackles = [p for p in self.defense if p.position == "DL" and p.role not in ("LEDG", "REDG")]
+        if not edges or not tackles:          # rosters without roles: split the line by depth
+            line = sorted((p for p in self.defense if p.position == "DL"), key=lambda p: p.depth)
+            edges, tackles = line[0::2], line[1::2]
+        lineup = self._take(edges, counts["EDGE"])
+        lineup += [p for p in self._take(tackles + [e for e in edges if e not in lineup], counts["DT"]) if p not in lineup]
+        lineup += self._take([p for p in self.defense if "LB" in p.position], counts["LB"])
+        lineup += self._take([p for p in self.defense if p.position == "CB"], counts["CB"])
+        lineup += self._take([p for p in self.defense if p.position == "S"], counts["S"])
+        self._lineup["defense"] = lineup
+
+    def clear_lineups(self):
+        self._lineup = {"offense": None, "defense": None}
+
+    def injure(self, player, weeks, kind):
+        """A player leaves the game (and misses `weeks` more weeks)."""
+        player.injured = True
+        player.in_game = False
+        player.injury = {"weeks": weeks, "type": kind}
+        self.injuries.append({"name": player.name, "position": player.position, "weeks": weeks, "type": kind})
+        self.clear_lineups()
         
     def get_all_defense(self, side="defense"):
         players = getattr(self, side)
@@ -160,7 +225,7 @@ class Team:
                 continue  # no one too tired
 
             # Get bench players of same position who are fresh enough
-            bench = [p for p in self.offense if p.position == pos and not p.in_game and p.fatigue <= fatigue_threshold]
+            bench = [p for p in self.offense if p.position == pos and not p.in_game and not p.injured and p.fatigue <= fatigue_threshold]
             if not bench:
                 continue  # no fresh players available
 
@@ -185,13 +250,14 @@ class Team:
             positions = self._defense_positions = sorted(set(p.position for p in self.defense))
 
         for pos in positions:
+            threshold = cfg.DEF_SUB_FATIGUE.get(pos, fatigue_threshold)
             # Players currently in the game and too tired
-            tired_players = [p for p in self.defense if p.position == pos and p.in_game and p.fatigue > fatigue_threshold]
+            tired_players = [p for p in self.defense if p.position == pos and p.in_game and p.fatigue > threshold]
             if not tired_players:
                 continue
 
             # Bench players eligible to sub in
-            bench = [p for p in self.defense if p.position == pos and not p.in_game and p.fatigue <= fatigue_threshold]
+            bench = [p for p in self.defense if p.position == pos and not p.in_game and not p.injured and p.fatigue <= threshold * 0.6]
             if not bench:
                 continue
 
@@ -210,7 +276,7 @@ class Team:
                 fresh.in_game = True
 
 
-    REST_POSITIONS = {"offense": ("QB", "RB", "WR", "TE"), "defense": ("DL", "MLB", "ROLB", "LOLB", "CB", "S")}
+    REST_POSITIONS = {"offense": ("QB", "RB", "WR", "TE", "OL"), "defense": ("DL", "MLB", "ROLB", "LOLB", "CB", "S")}
 
     def rest_starters(self, unit="offense"):
         """Blowout: sit the starters at the skill and front positions and play the next
@@ -223,7 +289,7 @@ class Team:
             self._starter_snapshot = {}
         self._starter_snapshot[unit] = [p.in_game for p in players]
         for pos in self.REST_POSITIONS[unit]:
-            group = [p for p in players if p.position == pos]
+            group = [p for p in players if p.position == pos and not p.injured]
             starters = [p for p in group if p.in_game]
             bench = [p for p in group if not p.in_game]
             for s, b in zip(starters, bench):
@@ -238,10 +304,22 @@ class Team:
         self._resting[unit] = False
 
     def get_kicker(self):
+        """The kicker: the in-game one, else any healthy K, else the punter, else anyone."""
+        return self._specialist("K", "P")
+
+    def get_punter(self):
+        return self._specialist("P", "K")
+
+    def _specialist(self, pos, alt):
+        pool = [p for p in self.offense if p.position == pos]
+        for cond in (lambda p: p.in_game and not p.injured, lambda p: not p.injured, lambda p: True):
+            for p in pool:
+                if cond(p):
+                    return p
         for p in self.offense:
-            if p.position == "K":
+            if p.position == alt and not p.injured:
                 return p
-        return None
+        return self.offense[0] if self.offense else None
     
     def _designated(self, slug):
         if not slug:

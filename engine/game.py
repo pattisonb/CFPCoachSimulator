@@ -106,6 +106,11 @@ class GameSim:
                     kick_returner=data.get("kick_returner"), punt_returner=data.get("punt_returner"))
         team.tendencies = data.get("tendencies", {})
         team.home_field_advantage = data.get("home_field_advantage", 50)
+        coaches = data.get("coaches") or {}
+        team.offense_scheme = ((coaches.get("offensive_coordinator") or {}).get("scheme") or {}).get("offensive_scheme") \
+            or ((coaches.get("head_coach") or {}).get("scheme") or {}).get("offensive_philosophy") or "Multiple"
+        team.defense_scheme = ((coaches.get("defensive_coordinator") or {}).get("scheme") or {}).get("defensive_scheme") \
+            or ((coaches.get("head_coach") or {}).get("scheme") or {}).get("defensive_philosophy") or "4-2-5"
         return team
 
     # ----- helpers -------------------------------------------------------
@@ -358,9 +363,10 @@ class GameSim:
                     "name": p.name,
                     "position": p.position,
                     "unit": unit,
-                    "starter": bool(p.in_game),
+                    "starter": bool(p.in_game) or bool(p.injury),
                     "fatigue": round(p.fatigue, 1),
                     "stats": stats,
+                    "injury": p.injury,
                 })
         return out
 
@@ -407,6 +413,9 @@ class GameSim:
             "team_stats": summarize_stats(team),
             "team_events": events,
             "players": self._players(team),
+            "injuries": list(team.injuries),
+            "personnel": dict(team.grouping_snaps),
+            "schemes": {"offense": team.offense_scheme, "defense": team.defense_scheme},
             "verification": self._verify(team),
         }
 
@@ -461,8 +470,10 @@ def simulate_game(
     if seed is not None:
         random.seed(seed)
         cfg.stat_rng.seed(seed)
+        cfg.injury_rng.seed(seed + 7919)
     else:
         cfg.stat_rng.seed()
+        cfg.injury_rng.seed()
     active = apply_sliders(slider_overrides)
     defaults = default_sliders()
     started = time.perf_counter()
