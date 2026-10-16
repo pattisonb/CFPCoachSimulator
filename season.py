@@ -2152,6 +2152,23 @@ def season_review(state: dict) -> dict:
 # Everything about one player: bio and ratings from the roster, season totals, league and
 # conference ranks, the game log (your own team's games keep full box scores), honors.
 
+# the ratings that matter at each position, most important first: the player card shows
+# these; the All ratings view shows everything the player carries
+POSITION_RATINGS = {
+    "QB": ["passing", "decision_making", "intelligence", "speed", "elusiveness", "strength", "endurance"],
+    "RB": ["speed", "elusiveness", "vision", "strength", "hands", "pass_blocking", "endurance"],
+    "WR": ["hands", "route_running", "speed", "elusiveness", "run_blocking", "strength", "endurance"],
+    "TE": ["hands", "route_running", "run_blocking", "pass_blocking", "speed", "strength", "endurance"],
+    "OL": ["run_blocking", "pass_blocking", "strength", "intelligence", "speed", "endurance"],
+    "DL": ["rushing", "tackling", "strength", "speed", "intelligence", "endurance"],
+    "MLB": ["tackling", "rushing", "coverage", "speed", "intelligence", "strength", "endurance"],
+    "ROLB": ["tackling", "rushing", "coverage", "speed", "intelligence", "strength", "endurance"],
+    "LOLB": ["tackling", "rushing", "coverage", "speed", "intelligence", "strength", "endurance"],
+    "CB": ["coverage", "speed", "tackling", "hands", "intelligence", "endurance"],
+    "S": ["coverage", "tackling", "speed", "hands", "intelligence", "strength", "endurance"],
+    "K": ["kick_power", "kick_accuracy"],
+    "P": ["punt_power", "punt_accuracy"],
+}
 RATING_LABELS = [("speed", "Speed"), ("strength", "Strength"), ("intelligence", "Awareness"), ("endurance", "Stamina"),
                  ("passing", "Passing"), ("decision_making", "Decisions"), ("elusiveness", "Elusiveness"), ("vision", "Vision"),
                  ("hands", "Hands"), ("route_running", "Route running"), ("run_blocking", "Run blocking"), ("pass_blocking", "Pass blocking"),
@@ -2598,6 +2615,10 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     mf = morale_factor(state, team, name, position)
     ratings = [{"key": k, "label": lbl, "value": int(p[k]), "boost": max(1, min(99, round(p[k] * mf))) - int(p[k])}
                for k, lbl in RATING_LABELS if isinstance(p.get(k), (int, float)) and p.get(k) is not None]
+    have = {r["key"] for r in ratings}
+    key_ratings = [k for k in POSITION_RATINGS.get(position, []) if k in have]
+    if p.get("slug") and p["slug"] in (t.get("kick_returner"), t.get("punt_returner")) and "return_rating" in have:
+        key_ratings.append("return_rating")
     injuries = state.get("injuries") or {}
     injured = False
     for entry in (injuries.get(team) or []) if isinstance(injuries, dict) else []:
@@ -2612,6 +2633,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         "weight": p.get("weight"), "jersey": p.get("jersey"), "dev_trait": p.get("dev_trait"), "starter": bool(p.get("in_game")),
         "injured": injured, "overall": player_overall(p), "stars": recruit_stars(p), "ratings": ratings,
         "edited": sorted(player_edits(state, team).get(p.get("slug"), {}).keys()), "editable_classes": list(CLASS_NAMES), "dev_traits": list(DEV_TRAITS),
+        "key_ratings": key_ratings,
         "morale": morale_view(state, team, name, position),
         "ratings_at": {k: int(v) for k, v in (p.get("ratings_at") or {}).items() if isinstance(v, (int, float))},
         "team": {"slug": team, "name": t["name"], "conference": t["conference"], "coach": hc.get("name"),

@@ -809,3 +809,14 @@ body:not(.team-theme) .hdr-rank { background: var(--panel-2); border-color: var(
 .tag.hot { background: color-mix(in srgb, #e8641b 18%, transparent); border-color: #e8641b; color: #e8641b; }
 .tag.cold { background: color-mix(in srgb, #3b82f6 18%, transparent); border-color: #3b82f6; color: #3b82f6; }
 .depth-table .form { margin-left: 4px; font-size: 12px; }
+
+/* all ratings modal and the card's action buttons */
+.card-actions { display: inline-flex; gap: 6px; align-items: center; }
+.all-ratings { display: flex; flex-direction: column; gap: 10px; }
+.ratings-table td { vertical-align: middle; }
+.ratings-table td:nth-child(2) { width: 45%; }
+.ratings-table .rating-bar { width: 100%; }
+.ratings-table tr.key td { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.ratings-table .rating-label.edited { color: var(--accent); font-weight: 600; }
+.ratings-at { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.ratings-at .review-tile.mine { border: 1px solid var(--accent); }

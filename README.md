@@ -493,6 +493,16 @@ role.
 rank, Group of Five and defensive finalists, All-America consensus counts and the coach of
 the year profile against the research targets.
 
+### Player cards: the ratings that matter
+
+A player card shows the ratings that matter at his position, most important first
+(`POSITION_RATINGS` in season.py: passing, decisions and awareness for a quarterback;
+coverage, speed and tackling for a corner; kick power and accuracy for a kicker, and so
+on; a returner gets his return rating too). "All ratings" opens a modal with every
+rating he carries, the position ratings marked, morale arrows and god-mode edits
+shown, and his rating at every position (what the depth chart's "By position" view
+uses when you move him).
+
 ### Momentum and morale
 
 A season setting (on for new seasons, off for older ones; ⚙ Settings). Inside a game,
