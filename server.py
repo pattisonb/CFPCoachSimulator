@@ -462,20 +462,21 @@ def season_team_stats(season_id: str) -> dict:
 
 
 @app.get("/api/season/{season_id}/stats/leaders")
-def season_player_leaders(season_id: str, team: Optional[str] = None, n: int = 5) -> dict:
+def season_player_leaders(season_id: str, team: Optional[str] = None, n: int = 5, conference: Optional[str] = None) -> dict:
     state = _season_state(season_id)
     if team and team not in _teams:
         raise HTTPException(404, "unknown team")
-    return season.player_leaders_view(state, team or None, max(1, min(n, 25)))
+    return season.player_leaders_view(state, team or None, max(1, min(n, 25)), conference or None)
 
 
 @app.get("/api/season/{season_id}/stats/players")
-def season_player_stats(season_id: str, team: Optional[str] = None, cat: str = "passing", limit: int = 100) -> dict:
+def season_player_stats(season_id: str, team: Optional[str] = None, cat: str = "passing", limit: int = 100,
+                        conference: Optional[str] = None) -> dict:
     state = _season_state(season_id)
     if team and team not in _teams:
         raise HTTPException(404, "unknown team")
     try:
-        return season.player_stats_view(state, team or None, cat, limit)
+        return season.player_stats_view(state, team or None, cat, limit, conference or None)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
 

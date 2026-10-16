@@ -35,6 +35,7 @@ from multiprocessing import Pool
 from pathlib import Path
 from typing import Callable, Optional
 
+import awards
 import bowls
 import polls
 
@@ -745,7 +746,37 @@ def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter]
             state["done"] = True
             state["phase"] = "done"
     state["current_week"] = week
+    if week in (CCG_WEEK, SELECTION_WEEK, 19):
+        say({CCG_WEEK: "Handing out the conference awards", SELECTION_WEEK: "Counting the Heisman vote and the national awards",
+             19: "Handing out the postseason awards"}[week])
+        _award_step(state, teams, week)
     return state
+
+
+def _award_step(state: dict, teams: dict, week: int) -> None:
+    """Conference awards after championship week, the Heisman and national awards in
+    selection week, the postseason awards after the title game."""
+    aw = state.setdefault("awards", {})
+    pool = awards.Pool(state, teams, _records(state, include_playoff=(week == 19)))
+    if week == CCG_WEEK:
+        aw["conference"] = awards.conference_awards(pool, state)
+    elif week == SELECTION_WEEK:
+        aw["national"] = awards.national_awards(pool, state)
+    elif week == 19:
+        aw["postseason"] = awards.postseason_awards(pool, state)
+    aw["given_through"] = week
+
+
+def awards_view(state: dict) -> dict:
+    """The Awards tab: the live race until the awards are given, then the results."""
+    teams = load_teams()
+    aw = state.get("awards") or {}
+    out = {"given_through": aw.get("given_through", 0), "conference": aw.get("conference", {}), "national": aw.get("national"),
+           "postseason": aw.get("postseason"), "mine": awards.my_awards(state, aw) if aw else [],
+           "my_conference": teams[state["team"]]["conference"], "team": state["team"]}
+    if not aw.get("national"):
+        out["race"] = awards.race_view(state, teams, _records(state))
+    return out
 
 
 _SHARED_POOL: Optional[Pool] = None
@@ -929,7 +960,8 @@ def team_stats_view(state: dict) -> dict:
     return {"teams": rows, "partial": bool(state.get("season_stats_partial"))}
 
 
-def player_stats_view(state: dict, team: Optional[str] = None, category: str = "passing", limit: int = 100) -> dict:
+def player_stats_view(state: dict, team: Optional[str] = None, category: str = "passing", limit: int = 100,
+                      conference: Optional[str] = None) -> dict:
     teams = load_teams()
     ss = _season_stats(state)
     if category not in PLAYER_CATEGORIES:
@@ -941,6 +973,8 @@ def player_stats_view(state: dict, team: Optional[str] = None, category: str = "
             continue
         info = teams.get(slug)
         if not info or (info["fictional"] and not team):
+            continue
+        if conference and not team and info["conference"] != conference:
             continue
         for p in t["players"].values():
             st = p["stats"]
@@ -967,8 +1001,8 @@ LEADER_KEYS = {
 }
 
 
-def player_leaders_view(state: dict, team: Optional[str] = None, n: int = 5) -> dict:
-    """Top n in each leader category, for one team or the league, with full stat lines."""
+def player_leaders_view(state: dict, team: Optional[str] = None, n: int = 5, conference: Optional[str] = None) -> dict:
+    """Top n in each leader category, for one team, one conference or the league, with full stat lines."""
     teams = load_teams()
     ss = _season_stats(state)
     rows: list[dict] = []
@@ -977,6 +1011,8 @@ def player_leaders_view(state: dict, team: Optional[str] = None, n: int = 5) -> 
             continue
         info = teams.get(slug)
         if not info or (info["fictional"] and not team):
+            continue
+        if conference and not team and info["conference"] != conference:
             continue
         for pl in t["players"].values():
             rows.append({"name": pl["name"], "position": pl["position"], "unit": pl["unit"], "team": slug, "team_name": info["name"],
@@ -988,7 +1024,7 @@ def player_leaders_view(state: dict, team: Optional[str] = None, n: int = 5) -> 
             keys = sorted(set(PLAYER_CATEGORIES["rushing"][1]) | set(PLAYER_CATEGORIES["receiving"][1]))
         ranked = sorted((r for r in rows if value(r["stats"]) > 0), key=lambda r: (-value(r["stats"]), r["name"]))[:n]
         out[cat] = [{**r, "stats": {k: r["stats"].get(k, 0) for k in keys}, "value": value(r["stats"])} for r in ranked]
-    return {"team": team, "leaders": out, "partial": bool(state.get("season_stats_partial"))}
+    return {"team": team, "conference": conference, "leaders": out, "partial": bool(state.get("season_stats_partial"))}
 
 
 def week_dates(state: dict) -> dict[int, dict]:
@@ -1057,6 +1093,8 @@ def summary(state: dict) -> dict:
         "polls": state["polls"], "champions": state["champions"], "bracket": state["bracket"], "playoff": state["playoff"],
         "cfp_weeks": sorted(CFP_WEEKS), "bowls": bowl_view(state), "playoff_sites": state.get("playoff_sites"),
         "week_dates": week_dates(state),
+        "heisman": ((state.get("awards") or {}).get("national") or {}).get("heisman"),
+        "my_awards": awards.my_awards(state, state["awards"]) if state.get("awards") else [],
     }
 
 

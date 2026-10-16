@@ -782,7 +782,7 @@
     returns: [["KR", (p) => p.stats.kickoff_returns], ["KR Yds", (p) => p.stats.kickoff_return_yards, "kickoff_return_yards"], ["KR Avg", (p) => p.stats.kickoff_returns ? (p.stats.kickoff_return_yards / p.stats.kickoff_returns).toFixed(1) : "–"],
       ["PR", (p) => p.stats.punt_returns], ["PR Yds", (p) => p.stats.punt_return_yards, "punt_return_yards"], ["TD", (p) => p.stats.kickoff_return_touchdowns + p.stats.punt_return_touchdowns]],
   };
-  const playerStatsState = { team: null, view: "leaders", sort: null, data: null, leaders: null, roster: null };
+  const playerStatsState = { team: null, conf: "", view: "leaders", sort: null, data: null, leaders: null, roster: null };
   const LEADER_CARDS = [
     ["passing", "Passing yards", (p) => `${p.stats.pass_yards.toLocaleString()} yds`, (p) => `${p.stats.completions}/${p.stats.pass_attempts} · ${p.stats.passing_touchdowns} TD · ${p.stats.interceptions_thrown} INT`],
     ["rushing", "Rushing yards", (p) => `${p.stats.rush_yards.toLocaleString()} yds`, (p) => `${p.stats.carries} car · ${p.stats.carries ? (p.stats.rush_yards / p.stats.carries).toFixed(1) : "–"} avg · ${p.stats.rushing_touchdowns} TD`],
@@ -810,11 +810,23 @@
     const played = s.current_week > 0;
 
     const controls = el("div", { class: "stats-controls" });
-    const teamSel = el("select", { "aria-label": "Team" }, [el("option", { value: "", text: "All teams (league leaders)" }),
-      ...state.teams.filter((t) => !t.fictional).map((t) => el("option", { value: t.slug, text: t.name }))]);
+    // conference picker narrows the team picker and the league views to that conference
+    const confs = [...new Set(state.teams.filter((t) => !t.fictional).map((t) => t.conference))].sort();
+    const confSel = el("select", { "aria-label": "Conference" }, [el("option", { value: "", text: "All conferences" }), ...confs.map((c) => el("option", { value: c, text: c }))]);
+    confSel.value = ps.conf;
+    confSel.addEventListener("change", () => {
+      ps.conf = confSel.value;
+      const t = ps.team && window.CFP.teamsBySlug[ps.team];
+      if (ps.conf && t && t.conference !== ps.conf) ps.team = "";
+      if (ps.view === "roster" && !ps.team) ps.view = "leaders";
+      ps.data = ps.leaders = ps.roster = null; ps.sort = null;
+      renderSeasonPlayerStats();
+    });
+    const teamSel = el("select", { "aria-label": "Team" }, [el("option", { value: "", text: ps.conf ? `All ${ps.conf} teams` : "All teams (league leaders)" }),
+      ...state.teams.filter((t) => !t.fictional && (!ps.conf || t.conference === ps.conf)).map((t) => el("option", { value: t.slug, text: t.name }))]);
     teamSel.value = ps.team;
     teamSel.addEventListener("change", () => { ps.team = teamSel.value; ps.data = ps.leaders = ps.roster = null; ps.sort = null; if (ps.view === "roster" && !ps.team) ps.view = "leaders"; renderSeasonPlayerStats(); });
-    controls.append(teamSel);
+    controls.append(confSel, teamSel);
     const views = [["leaders", "Leaders"], ...Object.keys(PLAYER_COLS).map((c) => [c, c[0].toUpperCase() + c.slice(1)]), ["roster", "Roster"]];
     const chips = el("div", { class: "view-chips" }, views.filter(([v]) => v !== "roster" || ps.team).map(([v, label]) => {
       const b = el("button", { type: "button", class: `chip ${ps.view === v ? "active" : ""}`, text: label });
@@ -838,16 +850,16 @@
 
   async function renderLeaders(box, ps, through) {
     const s = state.season;
-    const key = `${s.id}|${s.current_week}|${ps.team}`;
+    const key = `${s.id}|${s.current_week}|${ps.team}|${ps.conf}`;
     if (!ps.leaders || ps.leaders.key !== key) {
       try {
-        const j = await api(`/api/season/${s.id}/stats/leaders?n=5${ps.team ? `&team=${ps.team}` : ""}`);
+        const j = await api(`/api/season/${s.id}/stats/leaders?n=5${ps.team ? `&team=${ps.team}` : ""}${!ps.team && ps.conf ? `&conference=${encodeURIComponent(ps.conf)}` : ""}`);
         ps.leaders = { key, ...j };
       } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
     }
     const L = ps.leaders.leaders;
     if (!Object.values(L).some((rows) => rows.length)) { box.append(el("p", { class: "muted", text: "No stats yet." })); return; }
-    box.append(el("p", { class: "muted small-text", text: `${statsNote(ps.leaders.partial)}${ps.team ? "Team" : "National"} leaders through ${through}. Click a card for the full table.` }));
+    box.append(el("p", { class: "muted small-text", text: `${statsNote(ps.leaders.partial)}${ps.team ? "Team" : ps.conf ? ps.conf : "National"} leaders through ${through}. Click a card for the full table.` }));
     const grid = el("div", { class: "leaders-grid" });
     for (const [cat, title, value, line] of LEADER_CARDS) {
       const rows = L[cat] || [];
@@ -873,17 +885,17 @@
 
   async function renderCategoryTable(box, ps, through) {
     const s = state.season;
-    const key = `${s.id}|${s.current_week}|${ps.team}|${ps.view}`;
+    const key = `${s.id}|${s.current_week}|${ps.team}|${ps.conf}|${ps.view}`;
     if (!ps.data || ps.data.key !== key) {
       try {
-        const j = await api(`/api/season/${s.id}/stats/players?cat=${ps.view}${ps.team ? `&team=${ps.team}` : ""}`);
+        const j = await api(`/api/season/${s.id}/stats/players?cat=${ps.view}${ps.team ? `&team=${ps.team}` : ""}${!ps.team && ps.conf ? `&conference=${encodeURIComponent(ps.conf)}` : ""}`);
         ps.data = { key, players: j.players, partial: j.partial };
       } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
     }
     const cols = PLAYER_COLS[ps.view];
     const players = ps.data.players.slice();
     if (!players.length) { box.append(el("p", { class: "muted", text: "No stats in this category yet." })); return; }
-    box.append(el("p", { class: "muted small-text", text: `${statsNote(ps.data.partial)}Season totals through ${through}${ps.team ? "" : " · top 100"}. Click a column to sort.` }));
+    box.append(el("p", { class: "muted small-text", text: `${statsNote(ps.data.partial)}${!ps.team && ps.conf ? ps.conf + " · " : ""}Season totals through ${through}${ps.team ? "" : " · top 100"}. Click a column to sort.` }));
     const sortKey = ps.sort || cols.find((c) => c[2])[2];
     const val = (p, c) => { const v = c[1](p); return typeof v === "number" ? v : parseFloat(v) || 0; };
     const sortCol = cols.find((c) => c[2] === sortKey) || cols.find((c) => c[2]);
