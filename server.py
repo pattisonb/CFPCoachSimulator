@@ -39,6 +39,11 @@ MAX_BATCH = 500
 
 app = FastAPI(title="CFP Coach Simulator")
 
+
+@app.on_event("shutdown")
+def _stop_workers() -> None:
+    season.close_pool()
+
 _sim_lock = threading.Lock()  # the engine uses module-level state (sliders, TD log)
 _games: list[dict] = []
 _teams: dict[str, dict] = {}

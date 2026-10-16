@@ -27,6 +27,7 @@ import json
 import math
 import os
 import random
+import signal
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -463,6 +464,8 @@ _TEAMS: dict = {}
 
 def _init(path: str) -> None:
     global _TEAMS
+    # workers ignore Ctrl-C; the server stops them on shutdown (keeps tracebacks out of the console)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
     _TEAMS = json.loads(Path(path).read_text(encoding="utf-8"))["teams"]
 
 
@@ -666,6 +669,15 @@ def shared_pool() -> Optional[Pool]:
     if _SHARED_POOL is None:
         _SHARED_POOL = _make_pool()
     return _SHARED_POOL
+
+
+def close_pool() -> None:
+    """Stop the workers (called when the server shuts down, so Ctrl-C exits at once)."""
+    global _SHARED_POOL
+    if _SHARED_POOL is not None:
+        _SHARED_POOL.terminate()
+        _SHARED_POOL.join()
+        _SHARED_POOL = None
 
 
 def advance_to(state: dict, target_week: int, progress: Optional[Callable[[int, int], None]] = None) -> dict:
