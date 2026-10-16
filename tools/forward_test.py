@@ -51,6 +51,7 @@ from multiprocessing import Pool
 from pathlib import Path
 
 from teamnames import build_matcher, match
+from fetch_lines import lines_for_dates   # the betting board (scoresandodds.com)
 
 ROOT = Path(__file__).resolve().parents[1]
 GAMES_FILE = ROOT / "data" / "season_games.json"
@@ -206,6 +207,39 @@ def simulate_week(games: list[dict], sims: int) -> None:
 
 # ----- predict ---------------------------------------------------------------
 
+def iso_date(us: str) -> str:
+    """'10/13/2026' -> '2026-10-13' (NCAA.com dates are month/day/year)."""
+    m, d, y = us.split("/")
+    return f"{y}-{int(m):02d}-{int(d):02d}"
+
+
+def board_lines(games: list[dict], teams: dict) -> dict[tuple[str, str], dict]:
+    """The betting board for the games' dates: (home slug, away slug) -> line, or {} offline."""
+    dates = sorted({iso_date(g["date"]) for g in games if g.get("date")})
+    try:
+        return lines_for_dates(dates, teams)
+    except Exception as exc:  # noqa: BLE001
+        print(f"  lines: skipped ({exc})")
+        return {}
+
+
+def line_entry(line: dict | None) -> dict | None:
+    if not line or line.get("spread_home") is None:
+        return None
+    return {"spread_home": line["spread_home"], "total": line.get("total"), "open_spread_home": line.get("open_spread_home"),
+            "open_total": line.get("open_total"), "source": "scoresandodds.com"}
+
+
+def ats(pred_margin: float, actual_margin: int, spread_home: float) -> str:
+    """Against the closing spread: the sim's side of the line (home covers if its margin
+    beats the spread), scored against the result; a push when the game lands on the number."""
+    sim_home = pred_margin + spread_home > 0
+    cover = actual_margin + spread_home
+    if cover == 0:
+        return "push"
+    return "win" if (cover > 0) == sim_home else "loss"
+
+
 def predict(week: int | None, out: Path | None, sims: int, fetch: bool) -> Path:
     if fetch:
         run_script("fetch_results.py")
@@ -229,6 +263,8 @@ def predict(week: int | None, out: Path | None, sims: int, fetch: bool) -> Path:
         sys.exit("nothing to predict")
 
     simulate_week(games, sims)
+    lines = board_lines(games, teams)
+    print(f"  betting lines found for {sum(1 for g in games if (g['home_slug'], g['away_slug']) in lines)} of {len(games)} games")
     payload = {
         "week": week,
         "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -245,6 +281,7 @@ def predict(week: int | None, out: Path | None, sims: int, fetch: bool) -> Path:
                      "rank": g.get("away_rank"), **g["away"]},
             "pred_margin": g["pred_margin"], "pred_sd": g["pred_sd"],
             "home_win_prob": g["home_win_prob"], "pred_total": g["pred_total"],
+            "line": line_entry(lines.get((g["home_slug"], g["away_slug"]))),
         })
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=1), encoding="utf-8")
@@ -335,6 +372,7 @@ def score(week: int, file: Path | None, fetch: bool) -> Path:
         run_script("fetch_results.py")
         run_script("fetch_boxscores.py")
     season = {g["contest_id"]: g for g in load_season()}
+    teams = load_teams()
 
     rows, pending = [], []
     for p in payload["games"]:
@@ -344,6 +382,12 @@ def score(week: int, file: Path | None, fetch: bool) -> Path:
             continue
         rows.append({**p, "home_score": real["home_score"], "away_score": real["away_score"],
                      "actual_margin": real["home_score"] - real["away_score"], "home_seo": real["home_seo"]})
+    # the closing line for every scored game (the board keeps the week's finals); the frozen line is the fallback
+    closing = board_lines(rows, teams)   # one small request per game date; falls back to the frozen line offline
+    for r in rows:
+        c = line_entry(closing.get((r["home"]["slug"], r["away"]["slug"])))
+        r["closing"] = c or r.get("line")
+        r["ats"] = ats(r["pred_margin"], r["actual_margin"], r["closing"]["spread_home"]) if r["closing"] else None
     lines = [f"Week {payload['week']} forward test: predictions made {payload['created_at']} at commit {payload['commit']}, "
              f"{payload['sims_per_game']} sims per game",
              f"{len(payload['games'])} predicted games, {len(rows)} final, {len(pending)} not yet played"]
@@ -369,10 +413,19 @@ def score(week: int, file: Path | None, fetch: bool) -> Path:
     tot_actual = st.mean(r["home_score"] + r["away_score"] for r in rows)
     tot_pred = st.mean(r["pred_total"] for r in rows)
     neutral_n = sum(1 for r in rows if r["neutral"])
+    ats_rows = [r for r in rows if r["ats"]]
+    ats_w = sum(1 for r in ats_rows if r["ats"] == "win")
+    ats_l = sum(1 for r in ats_rows if r["ats"] == "loss")
+    ats_p = sum(1 for r in ats_rows if r["ats"] == "push")
+    ats_pct = ats_w / (ats_w + ats_l) if (ats_w + ats_l) else float("nan")
+    market_err = [abs(r["pred_margin"] + r["closing"]["spread_home"]) for r in ats_rows]
     lines += [
         "",
         f"{len(rows)} games ({neutral_n} neutral site)",
         f"straight-up picks correct:      {100 * su:.1f}%   (Vegas favorites win about 75-78%)",
+        (f"against the closing spread:     {ats_w}-{ats_l}" + (f"-{ats_p}" if ats_p else "") + f" ({100 * ats_pct:.1f}%)   "
+         f"sim margin vs the line: MAE {st.mean(market_err):.1f} points over {len(ats_rows)} games with a line"
+         if ats_rows else "against the closing spread:     no lines found"),
         f"margin MAE / RMSE:              {mae:.1f} / {rmse:.1f} points   (closing spreads: MAE about 12-13)",
         f"actual-on-predicted slope:      {slope:.2f}   (1.0 = rating gaps worth exactly what the sim says)",
         f"correlation:                    {corr:.2f}",
@@ -473,8 +526,10 @@ def score(week: int, file: Path | None, fetch: bool) -> Path:
     lines += ["", "Every game (actual margin vs predicted, home perspective):"]
     for r in rows:
         hit = "ok " if (r["actual_margin"] > 0) == (r["pred_margin"] > 0) else "MISS"
+        c = r.get("closing")
+        spread = f", line {r['home']['name']} {c['spread_home']:+.1f} -> ATS {r['ats']}" if c else ", no line"
         lines.append(f"  {hit} {r['away']['name']} {r['away_score']} at {r['home']['name']} {r['home_score']}: "
-                     f"actual {r['actual_margin']:+d}, predicted {r['pred_margin']:+.0f} ({100 * r['home_win_prob']:.0f}% home)")
+                     f"actual {r['actual_margin']:+d}, predicted {r['pred_margin']:+.0f} ({100 * r['home_win_prob']:.0f}% home){spread}")
     if pending:
         lines += ["", "Not yet played: " + ", ".join(f"{p['away']['name']} at {p['home']['name']}" for p in pending)]
 
@@ -483,12 +538,14 @@ def score(week: int, file: Path | None, fetch: bool) -> Path:
     summary = {
         "week": payload["week"], "scored_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "prediction_file": file.name, "predicted": len(payload["games"]), "scored": len(rows), "pending": len(pending),
-        "straight_up": round(su, 4), "mae": round(mae, 2), "rmse": round(rmse, 2), "slope": round(slope, 3),
+        "straight_up": round(su, 4), "ats": {"wins": ats_w, "losses": ats_l, "pushes": ats_p, "pct": round(ats_pct, 4) if ats_rows else None,
+                                              "games_with_line": len(ats_rows), "sim_vs_line_mae": round(st.mean(market_err), 2) if ats_rows else None},
+        "mae": round(mae, 2), "rmse": round(rmse, 2), "slope": round(slope, 3),
         "correlation": round(corr, 3), "home_bias": round(home_bias, 2),
         "total_actual": round(tot_actual, 2), "total_pred": round(tot_pred, 2), "total_bias": round(tot_pred - tot_actual, 2),
         "win_prob_buckets": prob_buckets, "players": player_summary, "games_with_boxscore": boxes,
-        "games": [{k: r[k] for k in ("contest_id", "date", "neutral", "pred_margin", "pred_sd", "home_win_prob",
-                                      "pred_total", "home_score", "away_score", "actual_margin", "player")}
+        "games": [{k: r.get(k) for k in ("contest_id", "date", "neutral", "pred_margin", "pred_sd", "home_win_prob",
+                                          "pred_total", "home_score", "away_score", "actual_margin", "player", "closing", "ats")}
                   | {"home": r["home"]["name"], "away": r["away"]["name"]} for r in rows],
     }
     stem = file.with_suffix("")

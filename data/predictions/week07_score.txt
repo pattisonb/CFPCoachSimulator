@@ -1,0 +1,52 @@
+Week 7 forward test: predictions made 2026-10-16T01:20:57+00:00 at commit 1a5854a, 100 sims per game
+59 predicted games, 7 final, 52 not yet played
+
+7 games (0 neutral site)
+straight-up picks correct:      85.7%   (Vegas favorites win about 75-78%)
+against the closing spread:     5-1-1 (83.3%)   sim margin vs the line: MAE 4.8 points over 7 games with a line
+margin MAE / RMSE:              8.3 / 12.4 points   (closing spreads: MAE about 12-13)
+actual-on-predicted slope:      2.61   (1.0 = rating gaps worth exactly what the sim says)
+correlation:                    0.86
+home bias (actual - predicted): +4.6 points
+mean home margin actual/pred:   +5.7 / +1.1
+total points actual/pred:       50.9 / 48.8   (bias -2.1)
+
+Win-probability calibration (home win probability from the sim):
+      bucket  games  sim prob  home won
+      20-40%      1       35%        0%
+      40-60%      3       47%       67%
+      60-80%      3       70%      100%
+
+By predicted margin bucket (home favored by...):
+      bucket  games    pred  actual  home win%  sim prob
+    -7 to -3      2    -5.5   -10.5         0%       38%
+     -3 to 3      2     0.0     3.0       100%       50%
+      3 to 7      2     5.0     8.0       100%       67%
+     7 to 14      1     9.0    39.0       100%       77%
+
+Player lines against the real box scores (7 of 7 games have one; sim player matched to the real one by last name):
+line                   team-games  matched is real #1   pred   real   bias    MAE   | same role regardless of name: pred / real / bias / MAE
+QB1 pass yards                 14        9          7  244.0  184.9  +59.2   96.2   | 243.6 / 220.8 / +22.8 / 62.7
+RB1 rush yards                 14       12          4   43.0   36.4   +6.6   35.8   | 42.7 / 66.8 / -24.1 / 37.3
+Top receiver yards             14       10          1   77.3   47.1  +30.2   35.2   | 74.6 / 63.1 / +11.5 / 50.3
+bias = predicted minus real. 'matched' = the sim's player appears in the real box score; 'is real #1' = that player was also the real leader in the role.
+
+Worst misses (actual margin vs predicted):
+  Colorado State 27 at Texas State 66: actual +39, predicted +9
+  East Carolina 17 at UAB 30: actual +13, predicted +4
+  Western Kentucky 16 at Sam Houston 3: actual -13, predicted -5
+  Delaware 30 at Middle Tennessee 33: actual +3, predicted -1
+  Kennesaw State 21 at Missouri State 24: actual +3, predicted +6
+  FIU 24 at Jacksonville State 27: actual +3, predicted +1
+  Georgia Southern 23 at Old Dominion 15: actual -8, predicted -6
+
+Every game (actual margin vs predicted, home perspective):
+  MISS Delaware 30 at Middle Tennessee 33: actual +3, predicted -1 (49% home), line Middle Tennessee +1.5 -> ATS win
+  ok  FIU 24 at Jacksonville State 27: actual +3, predicted +1 (51% home), line Jacksonville State -3.0 -> ATS push
+  ok  Kennesaw State 21 at Missouri State 24: actual +3, predicted +6 (69% home), line Missouri State +2.5 -> ATS win
+  ok  Western Kentucky 16 at Sam Houston 3: actual -13, predicted -5 (41% home), line Sam Houston +1.5 -> ATS win
+  ok  Georgia Southern 23 at Old Dominion 15: actual -8, predicted -6 (35% home), line Old Dominion +3.0 -> ATS win
+  ok  East Carolina 17 at UAB 30: actual +13, predicted +4 (65% home), line UAB +5.5 -> ATS win
+  ok  Colorado State 27 at Texas State 66: actual +39, predicted +9 (77% home), line Texas State -15.5 -> ATS loss
+
+Not yet played: Memphis at Tulane, Washington at Purdue, App State at Coastal Carolina, Kansas at Kansas State, Virginia at SMU, Ohio State at Indiana, Georgia State at James Madison, Cincinnati at West Virginia, Florida Atlantic at Army, Ball State at Bowling Green, Mississippi State at LSU, Northwestern at Michigan State, Pittsburgh at Boston College, Florida at Texas, Rutgers at Maryland, UMass at Buffalo, Charlotte at Temple, Western Michigan at Central Michigan, Toledo at Eastern Michigan, Northern Illinois at Wyoming, Missouri at Ole Miss, Auburn at Georgia, Arizona State at Texas Tech, North Carolina at Duke, Penn State at Michigan, Georgia Tech at Virginia Tech, Alabama at Tennessee, Akron at Miami (OH), UNLV at Air Force, Tulsa at Rice, Troy at Louisiana, Washington State at Oregon State, Kent State at USF, Arkansas at Vanderbilt, Arkansas State at Southern Miss, Florida State at Miami, TCU at Baylor, Nevada at North Dakota State, Kentucky at Oklahoma, Louisville at Syracuse, Wisconsin at UCLA, Notre Dame at BYU, Oklahoma State at Houston, Louisiana Tech at UL Monroe, Navy at UTSA, San José State at UTEP, Ohio at Sacramento State, Utah at Colorado, Wake Forest at California, Fresno State at San Diego State, New Mexico at Hawaiʻi, Nebraska at Oregon

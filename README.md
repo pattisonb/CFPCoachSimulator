@@ -737,6 +737,15 @@ compares the same role regardless of who filled it). The report is saved next to
 prediction file as `weekNN_score.json` and `weekNN_score.txt`, and the picks panel shows
 the headline numbers. Games not yet final are listed as pending and can be scored again later.
 
+Betting lines come from scoresandodds.com (`tools/fetch_lines.py`, one small request per
+game date). `predict` stores the line on the board when the picks are frozen (spread,
+total and the opener); `score` fetches the closing line for every final game and reports
+the record against the closing spread next to straight up (the sim's side of the line is
+the home team when its predicted margin beats the spread; a game that lands on the number
+is a push), plus how far the sim's margins sit from the market on average. A frozen file
+without lines, or a day the board cannot be reached, falls back to the frozen line or to
+"no line" for that game.
+
 `python tools/forward_test.py dryrun 6` proves the whole path on a week already played: it
 predicts that week into a temporary folder, scores it, prints the report and deletes the
 folder. Being in-sample, its numbers are a check of the code, not of forward accuracy.

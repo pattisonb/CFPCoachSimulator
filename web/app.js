@@ -228,7 +228,9 @@
     }
     const note = $("#picks-note");
     if (data.score && data.score.scored) {
-      note.textContent = `Scored: ${Math.round(100 * data.score.straight_up)}% straight up over ${data.score.scored} games, margin error ${data.score.mae} points.`;
+      const a = data.score.ats;
+      const atsText = a && a.games_with_line ? `, ${a.wins}-${a.losses}${a.pushes ? "-" + a.pushes : ""} against the closing spread` : "";
+      note.textContent = `Scored: ${Math.round(100 * data.score.straight_up)}% straight up over ${data.score.scored} games${atsText}, margin error ${data.score.mae} points.`;
     } else {
       note.textContent = "Margin is the average of the sims; the percentage is how often the favorite won them. Open sets the pickers to that game.";
     }

@@ -1,0 +1,593 @@
+{
+ "week": 7,
+ "scored_at": "2026-10-16T18:18:07+00:00",
+ "prediction_file": "week07.json",
+ "predicted": 59,
+ "scored": 7,
+ "pending": 52,
+ "straight_up": 0.8571,
+ "ats": {
+  "wins": 5,
+  "losses": 1,
+  "pushes": 1,
+  "pct": 0.8333,
+  "games_with_line": 7,
+  "sim_vs_line_mae": 4.79
+ },
+ "mae": 8.29,
+ "rmse": 12.41,
+ "slope": 2.613,
+ "correlation": 0.861,
+ "home_bias": 4.57,
+ "total_actual": 50.86,
+ "total_pred": 48.77,
+ "total_bias": -2.09,
+ "win_prob_buckets": [
+  {
+   "bucket": "20-40%",
+   "games": 1,
+   "sim_prob": 0.35,
+   "home_won": 0
+  },
+  {
+   "bucket": "40-60%",
+   "games": 3,
+   "sim_prob": 0.47,
+   "home_won": 0.667
+  },
+  {
+   "bucket": "60-80%",
+   "games": 3,
+   "sim_prob": 0.703,
+   "home_won": 1
+  }
+ ],
+ "players": {
+  "qb1": {
+   "team_games": 14,
+   "matched": 9,
+   "is_real_top": 7,
+   "pred_mean": 244.0,
+   "real_mean": 184.9,
+   "bias": 59.2,
+   "mae": 96.2,
+   "role_pred_mean": 243.6,
+   "role_real_mean": 220.8,
+   "role_bias": 22.8,
+   "role_mae": 62.7
+  },
+  "rb1": {
+   "team_games": 14,
+   "matched": 12,
+   "is_real_top": 4,
+   "pred_mean": 43.0,
+   "real_mean": 36.4,
+   "bias": 6.6,
+   "mae": 35.8,
+   "role_pred_mean": 42.7,
+   "role_real_mean": 66.8,
+   "role_bias": -24.1,
+   "role_mae": 37.3
+  },
+  "wr1": {
+   "team_games": 14,
+   "matched": 10,
+   "is_real_top": 1,
+   "pred_mean": 77.3,
+   "real_mean": 47.1,
+   "bias": 30.2,
+   "mae": 35.2,
+   "role_pred_mean": 74.6,
+   "role_real_mean": 63.1,
+   "role_bias": 11.5,
+   "role_mae": 50.3
+  }
+ },
+ "games_with_boxscore": 7,
+ "games": [
+  {
+   "contest_id": 6604077,
+   "date": "10/13/2026",
+   "neutral": false,
+   "pred_margin": -1,
+   "pred_sd": 12.34,
+   "home_win_prob": 0.49,
+   "pred_total": 51.13,
+   "home_score": 33,
+   "away_score": 30,
+   "actual_margin": 3,
+   "player": {
+    "home_qb1": {
+     "pred_name": "Roman Gagliano",
+     "pred_yards": 266.0,
+     "real_name": "ROMAN GAGLIANO",
+     "real_yards": 291.0,
+     "real_top_name": "ROMAN GAGLIANO",
+     "real_top_yards": 291.0
+    },
+    "home_rb1": {
+     "pred_name": "Antonio Martin",
+     "pred_yards": 38.4,
+     "real_name": "ANTONIO MARTIN JR.",
+     "real_yards": 48.0,
+     "real_top_name": "ANTONIO MARTIN JR.",
+     "real_top_yards": 48.0
+    },
+    "home_wr1": {
+     "pred_name": "Cam'ron Lacy",
+     "pred_yards": 76.4,
+     "real_name": "CAM'RON LACY",
+     "real_yards": 34.0,
+     "real_top_name": "TERRENCE BROWN JR.",
+     "real_top_yards": 26.0
+    },
+    "away_qb1": {
+     "pred_name": "Nick Minicucci",
+     "pred_yards": 278.8,
+     "real_name": null,
+     "real_yards": null,
+     "real_top_name": "TYLER BELL",
+     "real_top_yards": 306.0
+    },
+    "away_rb1": {
+     "pred_name": "Jo Silver",
+     "pred_yards": 41.6,
+     "real_name": "JO SILVER",
+     "real_yards": 19.0,
+     "real_top_name": "TYLER BELL",
+     "real_top_yards": 18.0
+    },
+    "away_wr1": {
+     "pred_name": "Sean Wilson",
+     "pred_yards": 123.9,
+     "real_name": "SEAN WILSON",
+     "real_yards": 35.0,
+     "real_top_name": "DONOVAN LEWIS",
+     "real_top_yards": 83.0
+    }
+   },
+   "closing": {
+    "spread_home": 1.5,
+    "total": 49.5,
+    "open_spread_home": null,
+    "open_total": null,
+    "source": "scoresandodds.com"
+   },
+   "ats": "win",
+   "home": "Middle Tennessee",
+   "away": "Delaware"
+  },
+  {
+   "contest_id": 6603849,
+   "date": "10/13/2026",
+   "neutral": false,
+   "pred_margin": 1,
+   "pred_sd": 13.58,
+   "home_win_prob": 0.51,
+   "pred_total": 47.45,
+   "home_score": 27,
+   "away_score": 24,
+   "actual_margin": 3,
+   "player": {
+    "home_qb1": {
+     "pred_name": "Caden Creel",
+     "pred_yards": 218.2,
+     "real_name": "CADEN CREEL",
+     "real_yards": 214.0,
+     "real_top_name": "CADEN CREEL",
+     "real_top_yards": 214.0
+    },
+    "home_rb1": {
+     "pred_name": "Khristian Lando",
+     "pred_yards": 35.9,
+     "real_name": "KHRISTIAN LANDO",
+     "real_yards": 3.0,
+     "real_top_name": "CADEN CREEL",
+     "real_top_yards": 95.0
+    },
+    "home_wr1": {
+     "pred_name": "Deondre Johnson",
+     "pred_yards": 78.1,
+     "real_name": "DEONDRE JOHNSON",
+     "real_yards": 93.0,
+     "real_top_name": "JAMILL WILLIAMS",
+     "real_top_yards": 18.0
+    },
+    "away_qb1": {
+     "pred_name": "JJ Kohl",
+     "pred_yards": 242.3,
+     "real_name": "JJ KOHL",
+     "real_yards": 278.0,
+     "real_top_name": "JJ KOHL",
+     "real_top_yards": 278.0
+    },
+    "away_rb1": {
+     "pred_name": "Anthony Carrie",
+     "pred_yards": 44.9,
+     "real_name": "ANTHONY CARRIE",
+     "real_yards": 26.0,
+     "real_top_name": "DEVONTE LYONS",
+     "real_top_yards": 73.0
+    },
+    "away_wr1": {
+     "pred_name": "JoJo Stone",
+     "pred_yards": 52.2,
+     "real_name": null,
+     "real_yards": null,
+     "real_top_name": "MAGUIRE ANDERSON",
+     "real_top_yards": 133.0
+    }
+   },
+   "closing": {
+    "spread_home": -3.0,
+    "total": 44.5,
+    "open_spread_home": null,
+    "open_total": null,
+    "source": "scoresandodds.com"
+   },
+   "ats": "push",
+   "home": "Jacksonville State",
+   "away": "FIU"
+  },
+  {
+   "contest_id": 6604185,
+   "date": "10/14/2026",
+   "neutral": false,
+   "pred_margin": 6,
+   "pred_sd": 14.4,
+   "home_win_prob": 0.69,
+   "pred_total": 49.4,
+   "home_score": 24,
+   "away_score": 21,
+   "actual_margin": 3,
+   "player": {
+    "home_qb1": {
+     "pred_name": "Skyler Locklear",
+     "pred_yards": 243.6,
+     "real_name": null,
+     "real_yards": null,
+     "real_top_name": "HENRY BELIN IV",
+     "real_top_yards": 300.0
+    },
+    "home_rb1": {
+     "pred_name": "Breezy Dubar",
+     "pred_yards": 49.7,
+     "real_name": null,
+     "real_yards": null,
+     "real_top_name": "CONNOR LAIR",
+     "real_top_yards": 65.0
+    },
+    "home_wr1": {
+     "pred_name": "Jmariyae Robinson",
+     "pred_yards": 71.2,
+     "real_name": "JMARIYAE ROBINSON",
+     "real_yards": 77.0,
+     "real_top_name": "JMARIYAE ROBINSON",
+     "real_top_yards": 77.0
+    },
+    "away_qb1": {
+     "pred_name": "Rickie Collins",
+     "pred_yards": 231.1,
+     "real_name": "RICKIE COLLINS",
+     "real_yards": 260.0,
+     "real_top_name": "RICKIE COLLINS",
+     "real_top_yards": 260.0
+    },
+    "away_rb1": {
+     "pred_name": "Triston Morgan",
+     "pred_yards": 34.1,
+     "real_name": "TRISTON MORGAN",
+     "real_yards": 3.0,
+     "real_top_name": "BOOGIE WOODS III",
+     "real_top_yards": 47.0
+    },
+    "away_wr1": {
+     "pred_name": "Zion Booker",
+     "pred_yards": 55.5,
+     "real_name": null,
+     "real_yards": null,
+     "real_top_name": "DYLAN GARY",
+     "real_top_yards": 135.0
+    }
+   },
+   "closing": {
+    "spread_home": 2.5,
+    "total": 52.5,
+    "open_spread_home": null,
+    "open_total": null,
+    "source": "scoresandodds.com"
+   },
+   "ats": "win",
+   "home": "Missouri State",
+   "away": "Kennesaw State"
+  },
+  {
+   "contest_id": 6603882,
+   "date": "10/14/2026",
+   "neutral": false,
+   "pred_margin": -5,
+   "pred_sd": 14.38,
+   "home_win_prob": 0.41,
+   "pred_total": 50.14,
+   "home_score": 3,
+   "away_score": 16,
+   "actual_margin": -13,
+   "player": {
+    "home_qb1": {
+     "pred_name": "Landyn Locke",
+     "pred_yards": 273.4,
+     "real_name": "LANDYN LOCKE",
+     "real_yards": 112.0,
+     "real_top_name": "LANDYN LOCKE",
+     "real_top_yards": 112.0
+    },
+    "home_rb1": {
+     "pred_name": "Alton McCaskill",
+     "pred_yards": 35.8,
+     "real_name": "ALTON MCCASKILL",
+     "real_yards": 10.0,
+     "real_top_name": "MJ DOWDY",
+     "real_top_yards": 55.0
+    },
+    "home_wr1": {
+     "pred_name": "Chris Reed",
+     "pred_yards": 95.2,
+     "real_name": "CHRIS REED",
+     "real_yards": 51.0,
+     "real_top_name": "GRADY O'NEILL",
+     "real_top_yards": 5.0
+    },
+    "away_qb1": {
+     "pred_name": "Rodney Tisdale Jr.",
+     "pred_yards": 256.8,
+     "real_name": "RODNEY TISDALE JR.",
+     "real_yards": 5.0,
+     "real_top_name": "BROCK GLENN",
+     "real_top_yards": 127.0
+    },
+    "away_rb1": {
+     "pred_name": "Ajay Allen",
+     "pred_yards": 42.2,
+     "real_name": "AJAY ALLEN",
+     "real_yards": 25.0,
+     "real_top_name": "BROCK GLENN",
+     "real_top_yards": 54.0
+    },
+    "away_wr1": {
+     "pred_name": "K.D. Hutchinson",
+     "pred_yards": 100.7,
+     "real_name": null,
+     "real_yards": null,
+     "real_top_name": "AJAY ALLEN",
+     "real_top_yards": 26.0
+    }
+   },
+   "closing": {
+    "spread_home": 1.5,
+    "total": 53.5,
+    "open_spread_home": null,
+    "open_total": null,
+    "source": "scoresandodds.com"
+   },
+   "ats": "win",
+   "home": "Sam Houston",
+   "away": "Western Kentucky"
+  },
+  {
+   "contest_id": 6603784,
+   "date": "10/15/2026",
+   "neutral": false,
+   "pred_margin": -6,
+   "pred_sd": 11.68,
+   "home_win_prob": 0.35,
+   "pred_total": 46.77,
+   "home_score": 15,
+   "away_score": 23,
+   "actual_margin": -8,
+   "player": {
+    "home_qb1": {
+     "pred_name": "Jaxon Potter",
+     "pred_yards": 210.7,
+     "real_name": null,
+     "real_yards": null,
+     "real_top_name": "RYAN HUFF",
+     "real_top_yards": 121.0
+    },
+    "home_rb1": {
+     "pred_name": "Devin Roche",
+     "pred_yards": 43.1,
+     "real_name": "DEVIN ROCHE",
+     "real_yards": 25.0,
+     "real_top_name": "DEVIN ROCHE",
+     "real_top_yards": 25.0
+    },
+    "home_wr1": {
+     "pred_name": "Leon Haughton Jr.",
+     "pred_yards": 46.1,
+     "real_name": "LEON HAUGHTON JR.",
+     "real_yards": 34.0,
+     "real_top_name": "KENDALL HARRIS",
+     "real_top_yards": 47.0
+    },
+    "away_qb1": {
+     "pred_name": "Max Johnson",
+     "pred_yards": 284.2,
+     "real_name": "MAX JOHNSON",
+     "real_yards": 29.0,
+     "real_top_name": "TURNER HELTON",
+     "real_top_yards": 199.0
+    },
+    "away_rb1": {
+     "pred_name": "David Mbadinga",
+     "pred_yards": 32.2,
+     "real_name": null,
+     "real_yards": null,
+     "real_top_name": "TYRESE WOODGETT",
+     "real_top_yards": 77.0
+    },
+    "away_wr1": {
+     "pred_name": "Josh Dallas",
+     "pred_yards": 84.1,
+     "real_name": "JOSH DALLAS",
+     "real_yards": 27.0,
+     "real_top_name": "ALEX TAYLOR",
+     "real_top_yards": 75.0
+    }
+   },
+   "closing": {
+    "spread_home": 3.0,
+    "total": 44.5,
+    "open_spread_home": null,
+    "open_total": null,
+    "source": "scoresandodds.com"
+   },
+   "ats": "win",
+   "home": "Old Dominion",
+   "away": "Georgia Southern"
+  },
+  {
+   "contest_id": 6603738,
+   "date": "10/15/2026",
+   "neutral": false,
+   "pred_margin": 4,
+   "pred_sd": 13.09,
+   "home_win_prob": 0.65,
+   "pred_total": 45.08,
+   "home_score": 30,
+   "away_score": 17,
+   "actual_margin": 13,
+   "player": {
+    "home_qb1": {
+     "pred_name": "Ryder Burton",
+     "pred_yards": 185.0,
+     "real_name": "RYDER BURTON",
+     "real_yards": 262.0,
+     "real_top_name": "RYDER BURTON",
+     "real_top_yards": 262.0
+    },
+    "home_rb1": {
+     "pred_name": "Braylon McReynolds",
+     "pred_yards": 63.0,
+     "real_name": "BRAYLON MCREYNOLDS",
+     "real_yards": 19.0,
+     "real_top_name": "BRAYLON MCREYNOLDS",
+     "real_top_yards": 19.0
+    },
+    "home_wr1": {
+     "pred_name": "Tiaquelin Mims",
+     "pred_yards": 42.7,
+     "real_name": "TY MIMS",
+     "real_yards": 47.0,
+     "real_top_name": "CJ SMITH",
+     "real_top_yards": 119.0
+    },
+    "away_qb1": {
+     "pred_name": "Mitch Griffis",
+     "pred_yards": 228.1,
+     "real_name": null,
+     "real_yards": null,
+     "real_top_name": "EMORY WILLIAMS",
+     "real_top_yards": 126.0
+    },
+    "away_rb1": {
+     "pred_name": "Michael Allen",
+     "pred_yards": 40.7,
+     "real_name": "MICHAEL ALLEN",
+     "real_yards": 13.0,
+     "real_top_name": "TJ ENGLEMAN JR.",
+     "real_top_yards": 104.0
+    },
+    "away_wr1": {
+     "pred_name": "Landon Sides",
+     "pred_yards": 56.6,
+     "real_name": "LANDON SIDES",
+     "real_yards": 16.0,
+     "real_top_name": "RAY RAY JOSEPH JR.",
+     "real_top_yards": 5.0
+    }
+   },
+   "closing": {
+    "spread_home": 5.5,
+    "total": 49.5,
+    "open_spread_home": null,
+    "open_total": null,
+    "source": "scoresandodds.com"
+   },
+   "ats": "win",
+   "home": "UAB",
+   "away": "East Carolina"
+  },
+  {
+   "contest_id": 6604200,
+   "date": "10/15/2026",
+   "neutral": false,
+   "pred_margin": 9,
+   "pred_sd": 14.87,
+   "home_win_prob": 0.77,
+   "pred_total": 51.4,
+   "home_score": 66,
+   "away_score": 27,
+   "actual_margin": 39,
+   "player": {
+    "home_qb1": {
+     "pred_name": "Brad Jackson",
+     "pred_yards": 239.4,
+     "real_name": "BRAD JACKSON",
+     "real_yards": 213.0,
+     "real_top_name": "BRAD JACKSON",
+     "real_top_yards": 213.0
+    },
+    "home_rb1": {
+     "pred_name": "Torrance Burgess Jr.",
+     "pred_yards": 58.4,
+     "real_name": "TORRANCE BURGESS JR.",
+     "real_yards": 224.0,
+     "real_top_name": "TORRANCE BURGESS JR.",
+     "real_top_yards": 224.0
+    },
+    "home_wr1": {
+     "pred_name": "Beau Sparks",
+     "pred_yards": 99.2,
+     "real_name": "BEAU SPARKS",
+     "real_yards": 57.0,
+     "real_top_name": "JR. DAWN",
+     "real_top_yards": 44.0
+    },
+    "away_qb1": {
+     "pred_name": "Hauss Hejny",
+     "pred_yards": 252.9,
+     "real_name": null,
+     "real_yards": null,
+     "real_top_name": "KSAAN FARRAR",
+     "real_top_yards": 282.0
+    },
+    "away_rb1": {
+     "pred_name": "Mel Brown",
+     "pred_yards": 37.9,
+     "real_name": "MEL BROWN",
+     "real_yards": 22.0,
+     "real_top_name": "DURELL ROBINSON",
+     "real_top_yards": 31.0
+    },
+    "away_wr1": {
+     "pred_name": "Jordan Mosley",
+     "pred_yards": 62.7,
+     "real_name": null,
+     "real_yards": null,
+     "real_top_name": "JACKSON HARPER",
+     "real_top_yards": 91.0
+    }
+   },
+   "closing": {
+    "spread_home": -15.5,
+    "total": 69.5,
+    "open_spread_home": null,
+    "open_total": null,
+    "source": "scoresandodds.com"
+   },
+   "ats": "loss",
+   "home": "Texas State",
+   "away": "Colorado State"
+  }
+ ]
+}
