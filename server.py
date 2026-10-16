@@ -377,6 +377,11 @@ def season_standings(season_id: str) -> dict:
     return {"standings": season.standings(_season_state(season_id))}
 
 
+@app.get("/api/season/{season_id}/review")
+def season_review(season_id: str) -> dict:
+    return season.season_review(_season_state(season_id))
+
+
 @app.get("/api/season/{season_id}/game/{event_id}")
 def season_game(season_id: str, event_id: str) -> dict:
     state = _season_state(season_id)
@@ -384,6 +389,22 @@ def season_game(season_id: str, event_id: str) -> dict:
     if box is None:
         raise HTTPException(404, "no box score for that game")
     return box
+
+
+@app.get("/api/season/{season_id}/stats/teams")
+def season_team_stats(season_id: str) -> dict:
+    return season.team_stats_view(_season_state(season_id))
+
+
+@app.get("/api/season/{season_id}/stats/players")
+def season_player_stats(season_id: str, team: Optional[str] = None, cat: str = "passing", limit: int = 100) -> dict:
+    state = _season_state(season_id)
+    if team and team not in _teams:
+        raise HTTPException(404, "unknown team")
+    try:
+        return season.player_stats_view(state, team or None, cat, limit)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
 
 
 # ----- ratings (display only; the engine uses the raw attributes) ----------

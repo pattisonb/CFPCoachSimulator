@@ -330,6 +330,21 @@ The **Bowls** tab lists every bowl by week with the matchup and score, tie-ins, 
 and first year, most appearances, recent results and previous tie-ins; your own bowl opens
 the box score. The Games and My Schedule tabs show each playoff game's bowl name and site.
 
+### Team and player stats all season
+
+Two more tabs, **Team Stats** and **Player Stats**, work at any point in the season. Full
+box scores are kept only for your own games, so for every simulated game the workers send
+back a compact line per team (team totals, situational counts, plays, possession, and
+each player's stat line) that is summed into the season as it goes. Team Stats is a
+sortable per-game table for every FBS team (points, yards, pass and rush yards, yards per
+play, completion rate, third-down and red-zone rates, possession, turnovers, sacks,
+penalties, and the same on defense), with a conference filter. Player Stats shows season
+totals by category (passing, rushing, receiving, defense, kicking, punting, returns),
+either the top 100 across the league or one team's full list, with per-game columns and
+sortable headers. Stats cover simulated games only, so in **Rest of season** mode the real
+games already played are not in them; a season saved before this existed shows only your
+own games.
+
 ## Player stat lines and usage (box score calibration)
 
 `fetch_boxscores.py` pulls the full player box score for every final game from NCAA.com

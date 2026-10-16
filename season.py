@@ -468,7 +468,8 @@ def _sim_one(args: tuple) -> dict:
     from engine.game import simulate_game
     event_id, home, away, neutral, seed, keep_full = args
     r = simulate_game(_TEAMS[home], _TEAMS[away], None, seed, venue="neutral" if neutral else "home")
-    out = {"event_id": event_id, "home_score": r["home"]["score"], "away_score": r["away"]["score"], "overtime": r["overtime_periods"]}
+    out = {"event_id": event_id, "home_score": r["home"]["score"], "away_score": r["away"]["score"], "overtime": r["overtime_periods"],
+           "stats": {"home": _compact_side(r["home"], r["drives"], "home"), "away": _compact_side(r["away"], r["drives"], "away")}}
     if keep_full:
         r["home_slug"], r["away_slug"] = home, away
         out["game"] = r
@@ -493,6 +494,8 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None) ->
     for r in results:
         g = state["games"][r["event_id"]]
         g.update(played=True, home_score=r["home_score"], away_score=r["away_score"], overtime=r["overtime"])
+        if "stats" in r:
+            _accumulate_stats(state, g, r["stats"])
         if "game" in r:
             state["my_boxes"][r["event_id"]] = r["game"]
 
@@ -666,6 +669,142 @@ def week_view(state: dict, week: int) -> list[dict]:
     return out
 
 
+# ----- season stats --------------------------------------------------------
+# Full box scores are kept only for your own games; for every game the workers send
+# back a compact per-team line (team totals, situational counts, plays, possession and
+# each player's stat line) which is summed into state["season_stats"] as the season goes.
+
+PLAYER_CATEGORIES = {
+    "passing": ("pass_attempts", ["completions", "pass_attempts", "pass_yards", "passing_touchdowns", "interceptions_thrown", "sacks_taken"], "pass_yards"),
+    "rushing": ("carries", ["carries", "rush_yards", "rushing_touchdowns", "fumbles"], "rush_yards"),
+    "receiving": ("receptions", ["targets", "receptions", "receiving_yards", "receiving_touchdowns"], "receiving_yards"),
+    "defense": ("solo_tackles", ["solo_tackles", "assisted_tackles", "sacks", "interceptions", "interception_return_yards", "forced_fumbles", "fumble_recoveries", "defensive_touchdowns"], "solo_tackles"),
+    "kicking": ("fg_attempted", ["fg_made", "fg_attempted", "pat_made", "pat_attempts"], "fg_made"),
+    "punting": ("punts", ["punts", "punt_yards"], "punts"),
+    "returns": ("kickoff_returns", ["kickoff_returns", "kickoff_return_yards", "kickoff_return_touchdowns", "punt_returns", "punt_return_yards", "punt_return_touchdowns"], "kickoff_return_yards"),
+}
+
+
+def _compact_side(side: dict, drives: list[dict], which: str) -> dict:
+    own = [d for d in drives if d["offense"] == which and d["quarter"] <= 4]
+    return {"score": side["score"], "team": side["team_stats"], "events": side.get("team_events") or {},
+            "plays": sum(d["plays"] for d in own), "top": sum(d["seconds"] for d in own),
+            "players": [{"name": p["name"], "position": p["position"], "unit": p["unit"], "stats": {k: v for k, v in p["stats"].items() if v}}
+                        for p in side["players"] if any(p["stats"].values())]}
+
+
+def _add_into(total: dict, add: dict) -> None:
+    for k, v in add.items():
+        if isinstance(v, (int, float)):
+            total[k] = total.get(k, 0) + v
+
+
+def _accumulate_stats(state: dict, g: dict, lines: dict) -> None:
+    ss = state.setdefault("season_stats", {})
+    for side, opp in (("home", "away"), ("away", "home")):
+        mine, theirs = lines[side], lines[opp]
+        t = ss.setdefault(g[side], {"games": 0, "wins": 0, "points": 0, "opp_points": 0, "plays": 0, "top": 0, "opp_plays": 0,
+                                    "team": {}, "events": {}, "opp": {}, "opp_events": {}, "players": {}})
+        t["games"] += 1
+        t["wins"] += 1 if mine["score"] > theirs["score"] else 0
+        t["points"] += mine["score"]
+        t["opp_points"] += theirs["score"]
+        t["plays"] += mine["plays"]
+        t["top"] += mine["top"]
+        t["opp_plays"] += theirs["plays"]
+        _add_into(t["team"], mine["team"])
+        _add_into(t["events"], mine["events"])
+        _add_into(t["opp"], theirs["team"])
+        _add_into(t["opp_events"], theirs["events"])
+        for p in mine["players"]:
+            key = f"{p['name']}|{p['position']}"
+            rec = t["players"].setdefault(key, {"name": p["name"], "position": p["position"], "unit": p["unit"], "games": 0, "stats": {}})
+            rec["games"] += 1
+            _add_into(rec["stats"], p["stats"])
+
+
+def _season_stats(state: dict) -> dict:
+    """The accumulated stats; a season saved before this existed is rebuilt from the box
+    scores it kept (your own games only)."""
+    if "season_stats" in state:
+        return state["season_stats"]
+    tmp = {"season_stats": {}}
+    for eid, box in state["my_boxes"].items():
+        g = state["games"].get(eid)
+        if not g:
+            continue
+        lines = {"home": _compact_side(box["home"], box["drives"], "home"), "away": _compact_side(box["away"], box["drives"], "away")}
+        _accumulate_stats(tmp, g, lines)
+    state["season_stats"] = tmp["season_stats"]
+    state["season_stats_partial"] = True
+    return state["season_stats"]
+
+
+def team_stats_view(state: dict) -> dict:
+    """Per-game team numbers for every team that has played a simulated game."""
+    teams = load_teams()
+    ss = _season_stats(state)
+    rows = []
+    for slug, t in ss.items():
+        info = teams.get(slug)
+        if not info:
+            continue
+        g = t["games"] or 1
+        s, o, e, oe = t["team"], t["opp"], t["events"], t["opp_events"]
+        yards = s.get("Pass Yards", 0) + s.get("Rush Yards", 0)
+        opp_yards = o.get("Pass Yards", 0) + o.get("Rush Yards", 0)
+        lost = e.get("fumbles_lost", s.get("Fumbles", 0))
+        opp_lost = oe.get("fumbles_lost", o.get("Fumbles", 0))
+        rows.append({
+            "team": slug, "name": info["name"], "conference": info["conference"], "fictional": info["fictional"],
+            "games": t["games"], "wins": t["wins"], "losses": t["games"] - t["wins"],
+            "ppg": t["points"] / g, "opp_ppg": t["opp_points"] / g, "margin": (t["points"] - t["opp_points"]) / g,
+            "ypg": yards / g, "pass_ypg": s.get("Pass Yards", 0) / g, "rush_ypg": s.get("Rush Yards", 0) / g,
+            "ypp": yards / t["plays"] if t["plays"] else 0, "plays_pg": t["plays"] / g,
+            "ypc": s.get("Rush Yards", 0) / s["Carries"] if s.get("Carries") else 0,
+            "ypa": s.get("Pass Yards", 0) / s["Pass Attempts"] if s.get("Pass Attempts") else 0,
+            "comp_pct": 100 * s.get("Completions", 0) / s["Pass Attempts"] if s.get("Pass Attempts") else 0,
+            "third_pct": 100 * e.get("third_down_conversions", 0) / e["third_downs"] if e.get("third_downs") else 0,
+            "red_zone_pct": 100 * e.get("red_zone_scores", 0) / e["red_zone_trips"] if e.get("red_zone_trips") else 0,
+            "first_downs_pg": e.get("first_downs", 0) / g, "top": t["top"] / g,
+            "turnovers": s.get("Interceptions Thrown", 0) + lost, "takeaways": s.get("Interceptions", 0) + s.get("Fumble Recoveries", 0),
+            "sacks": s.get("Sacks", 0), "sacks_allowed": s.get("Sacks Taken", 0), "penalties_pg": e.get("penalties", 0) / g,
+            "penalty_ypg": e.get("penalty_yards", 0) / g,
+            "opp_ypg": opp_yards / g, "opp_pass_ypg": o.get("Pass Yards", 0) / g, "opp_rush_ypg": o.get("Rush Yards", 0) / g,
+            "opp_ypp": opp_yards / t["opp_plays"] if t["opp_plays"] else 0,
+            "opp_third_pct": 100 * oe.get("third_down_conversions", 0) / oe["third_downs"] if oe.get("third_downs") else 0,
+            "opp_turnovers": o.get("Interceptions Thrown", 0) + opp_lost,
+        })
+    rows.sort(key=lambda r: (-r["margin"], r["name"]))
+    return {"teams": rows, "partial": bool(state.get("season_stats_partial"))}
+
+
+def player_stats_view(state: dict, team: Optional[str] = None, category: str = "passing", limit: int = 100) -> dict:
+    teams = load_teams()
+    ss = _season_stats(state)
+    if category not in PLAYER_CATEGORIES:
+        raise ValueError(f"unknown category {category}")
+    gate, keys, sort_key = PLAYER_CATEGORIES[category]
+    out = []
+    for slug, t in ss.items():
+        if team and slug != team:
+            continue
+        info = teams.get(slug)
+        if not info or (info["fictional"] and not team):
+            continue
+        for p in t["players"].values():
+            st = p["stats"]
+            if not st.get(gate) and not (category == "defense" and any(st.get(k) for k in keys)) \
+                    and not (category == "returns" and st.get("punt_returns")) and not (category == "kicking" and st.get("pat_attempts")):
+                continue
+            out.append({"name": p["name"], "position": p["position"], "team": slug, "team_name": info["name"], "games": p["games"],
+                        "team_games": t["games"], "stats": {k: st.get(k, 0) for k in keys}})
+    out.sort(key=lambda p: (-p["stats"].get(sort_key, 0), p["name"]))
+    if not team:
+        out = out[:limit]
+    return {"category": category, "team": team, "players": out, "partial": bool(state.get("season_stats_partial"))}
+
+
 def week_dates(state: dict) -> dict[int, dict]:
     """{week: {"start", "end", "main"}} as ISO dates in US time. Regular-season weeks span
     their first and last game, with the Saturday (the busiest day) as the main date; the
@@ -771,3 +910,136 @@ if __name__ == "__main__":
     print("Champions:", st["champions"])
     print("Bracket seeds:", [(x["seed"], x["name"], x["bid"]) for x in st["bracket"]["seeds"]])
     print("saved", save_season(st))
+
+
+# ----- season summary ------------------------------------------------------
+
+def _game_line(g: dict, teams: dict) -> dict:
+    return {"event_id": g["event_id"], "week": g["week"], "title": g.get("title"), "site": g.get("site"), "played": g["played"],
+            "home": g["home"], "away": g["away"], "home_name": g.get("home_display") or teams[g["home"]]["name"],
+            "away_name": g.get("away_display") or teams[g["away"]]["name"], "home_score": g["home_score"], "away_score": g["away_score"],
+            "overtime": g.get("overtime", 0), "winner": (g["home"] if g["home_score"] > g["away_score"] else g["away"]) if g["played"] else None}
+
+
+def _player_leaders(boxes: list[dict], me: str) -> dict:
+    """Season totals for your players from the stored box scores, and the leader in each category."""
+    totals: dict[tuple[str, str], dict] = {}
+    for box in boxes:
+        side = box["home"] if box.get("home_slug") == me else box["away"]
+        for p in side["players"]:
+            if not any(p["stats"].values()):
+                continue
+            t = totals.setdefault((p["name"], p["position"]), {"name": p["name"], "position": p["position"], "games": 0, "stats": {}})
+            t["games"] += 1
+            for k, v in p["stats"].items():
+                t["stats"][k] = t["stats"].get(k, 0) + v
+    players = list(totals.values())
+
+    def top(key, *needs):
+        pool = [p for p in players if all(p["stats"].get(n) for n in needs)]
+        best = max(pool, key=lambda p: p["stats"].get(key, 0), default=None)
+        return best if best and best["stats"].get(key, 0) > 0 else None
+
+    def tackles(p):
+        return p["stats"].get("solo_tackles", 0) + p["stats"].get("assisted_tackles", 0)
+
+    tackler = max(players, key=tackles, default=None)
+    returner = max(players, key=lambda p: p["stats"].get("kickoff_return_yards", 0) + p["stats"].get("punt_return_yards", 0), default=None)
+    return {
+        "passer": top("pass_yards", "pass_attempts"), "rusher": top("rush_yards", "carries"), "receiver": top("receiving_yards", "receptions"),
+        "tackler": tackler if tackler and tackles(tackler) else None, "sacks": top("sacks"), "interceptions": top("interceptions"),
+        "kicker": top("fg_made", "fg_attempted") or top("pat_made", "pat_attempts"),
+        "returner": returner if returner and (returner["stats"].get("kickoff_return_yards", 0) + returner["stats"].get("punt_return_yards", 0)) else None,
+        "games_with_stats": len(boxes),
+    }
+
+
+def season_review(state: dict) -> dict:
+    """The season's big results (title game, playoff rounds, conference champions, final
+    polls) and your team's season in review (record, finish, best win, worst loss, streaks,
+    postseason, and your statistical leaders from the box scores)."""
+    teams = load_teams()
+    me = state["team"]
+    games = state["games"]
+    last_poll = state["polls"].get(str(max((int(k) for k in state["polls"]), default=0)), {})
+    ap = last_poll.get("ap", [])
+    cfp = last_poll.get("cfp", [])
+    my_ap = next((e["rank"] for e in ap if e["team"] == me), None)
+    my_cfp = next((e["rank"] for e in cfp if e["team"] == me), None)
+
+    rounds = []
+    for week, label in sorted(PLAYOFF_WEEKS.items()):
+        gs = sorted((g for g in games.values() if g["kind"] == "playoff" and g["week"] == week), key=lambda g: g["event_id"])
+        if gs:
+            rounds.append({"round": label, "week": week, "games": [_game_line(g, teams) for g in gs]})
+    final = games.get("cfp-final")
+    title_game = _game_line(final, teams) if final else None
+    ccgs = {g["event_id"]: g for g in games.values() if g["kind"] == "ccg"}
+    champions = []
+    for conf, slug in sorted(state["champions"].items()):
+        g = ccgs.get(f"ccg-{conf.lower().replace(' ', '-')}")
+        champions.append({"conference": conf, "team": slug, "name": teams[slug]["name"], "game": _game_line(g, teams) if g else None})
+
+    rec = _records(state)[me]
+    row = next((r for r in standings(state).get(state["conference"], []) if r["slug"] == me), None)
+    my_games = sorted((g for g in games.values() if me in (g["home"], g["away"]) and g["played"]), key=lambda g: (g["week"], g["date"] or ""))
+
+    def ap_before(week: int) -> dict[str, int]:
+        return {e["team"]: e["rank"] for e in state["polls"].get(str(week - 1), {}).get("ap", [])}
+
+    lines, wins, losses = [], [], []
+    streak, best_streak, cur = 0, 0, 0
+    for g in my_games:
+        home = g["home"] == me
+        opp = g["away"] if home else g["home"]
+        pf = g["home_score"] if home else g["away_score"]
+        pa = g["away_score"] if home else g["home_score"]
+        won = pf > pa
+        orank = ap_before(g["week"]).get(opp)
+        orec = _records(state)[opp] if opp in teams else None
+        line = {"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "opponent": opp,
+                "opponent_name": teams[opp]["name"], "opponent_rank": orank, "opponent_record": f"{orec['wins']}-{orec['losses']}" if orec else None,
+                "venue": "neutral" if g["neutral"] else ("home" if home else "away"), "won": won, "points_for": pf, "points_against": pa,
+                "margin": pf - pa, "overtime": g.get("overtime", 0), "has_box": g["event_id"] in state["my_boxes"]}
+        lines.append(line)
+        (wins if won else losses).append(line)
+        cur = cur + 1 if won else 0
+        best_streak = max(best_streak, cur)
+
+    def opp_quality(line):   # ranked opponents first, then by their record
+        return (0 if line["opponent_rank"] else 1, line["opponent_rank"] or 99, -_records(state)[line["opponent"]]["wins"])
+
+    best_win = min(wins, key=opp_quality) if wins else None
+    worst_loss = max(losses, key=opp_quality) if losses else None
+    biggest_win = max(wins, key=lambda l: l["margin"]) if wins else None
+    closest_loss = min(losses, key=lambda l: -l["margin"]) if losses else None
+    n = len(my_games) or 1
+    postseason = [l for l in lines if l["kind"] in ("ccg", "bowl", "playoff")]
+    if state.get("champion") == me:
+        finish = "National champion"
+    elif any(l["kind"] == "playoff" for l in lines):
+        last = [l for l in lines if l["kind"] == "playoff"][-1]
+        finish = "Lost the national championship game" if last["event_id"] == "cfp-final" else f"Lost in the {PLAYOFF_WEEKS.get(last['week'], 'playoff').lower()}"
+    elif any(l["kind"] == "bowl" for l in lines):
+        last = [l for l in lines if l["kind"] == "bowl"][-1]
+        finish = f"{'Won' if last['won'] else 'Lost'} the {last['title']}"
+    elif state["done"]:
+        finish = "No bowl"
+    else:
+        finish = None
+    boxes = [b for b in state["my_boxes"].values()]
+    return {
+        "done": state["done"], "current_week": state["current_week"],
+        "champion": state.get("champion"), "champion_name": teams[state["champion"]]["name"] if state.get("champion") else None,
+        "title_game": title_game, "rounds": rounds, "champions": champions,
+        "final_ap": ap[:10], "final_cfp": cfp[:12], "poll_week": max((int(k) for k in state["polls"]), default=0),
+        "mine": {
+            "team": me, "name": state["team_name"], "conference": state["conference"], "wins": rec["wins"], "losses": rec["losses"],
+            "conf_wins": rec["conf_wins"], "conf_losses": rec["conf_losses"], "conf_rank": row["conf_rank"] if row else None,
+            "division": row["division"] if row else None, "conf_champion": state["champions"].get(state["conference"]) == me,
+            "final_ap": my_ap, "final_cfp": my_cfp, "finish": finish,
+            "points_per_game": round(sum(l["points_for"] for l in lines) / n, 1), "allowed_per_game": round(sum(l["points_against"] for l in lines) / n, 1),
+            "best_win": best_win, "worst_loss": worst_loss, "biggest_win": biggest_win, "closest_loss": closest_loss,
+            "longest_streak": best_streak, "postseason": postseason, "leaders": _player_leaders(boxes, me),
+        },
+    }

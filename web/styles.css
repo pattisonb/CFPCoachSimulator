@@ -323,3 +323,31 @@ table.stats tr.clickable:hover td { background: var(--panel-2); }
 .others-votes b { color: var(--text); }
 .conf-block table + table { margin-top: 10px; }
 .stats td .rank { color: var(--muted); font-size: 11px; }
+
+/* season stats tabs */
+.stats-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.stats-controls select { max-width: 260px; }
+.stats-controls .small-text { margin: 0; }
+.table-scroll { overflow-x: auto; }
+table.stats th.sortable { cursor: pointer; user-select: none; }
+table.stats th.sortable:hover { color: var(--text); }
+table.stats th.sorted-desc::after { content: " ▼"; font-size: 9px; }
+table.stats th.sorted-asc::after { content: " ▲"; font-size: 9px; }
+table.team-season td.name { white-space: nowrap; }
+table.stats td.name, table.stats th.left, table.stats td.left { text-align: left; }
+
+/* season summary */
+.review-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin-top: 10px; }
+.review-grid .bowl-card { margin-bottom: 0; }
+.review-champ .review-headline { font-size: 22px; font-weight: 800; margin: 6px 0 4px; }
+.review-sub { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; margin: 8px 0 2px; }
+.review-line { padding: 3px 0; font-size: 13px; }
+.review-line.clickable { cursor: pointer; }
+.review-line.clickable:hover { background: var(--panel); border-radius: 4px; }
+.review-polls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.review-polls table.stats tr.mine td { color: var(--accent); font-weight: 700; }
+.review-leaders { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.review-leader { background: var(--panel); border-radius: 6px; padding: 8px 10px; }
+.review-leader-name { font-weight: 700; margin: 2px 0; }
+.review-leader-name .pos { color: var(--muted); font-weight: 400; font-size: 11px; margin-left: 6px; }
+@media (max-width: 700px) { .review-polls { grid-template-columns: 1fr; } }

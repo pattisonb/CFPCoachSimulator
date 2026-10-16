@@ -196,7 +196,7 @@
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    for (const t of ["games", "schedule", "standings", "ap", "cfp", "bracket", "bowls", "box"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "ap", "cfp", "bracket", "bowls", "summary", "teamstats", "playerstats", "box"]) $(`#tab-${t}`).hidden = t !== name;
   }
 
   function renderTab() {
@@ -209,7 +209,127 @@
     else if (t === "cfp") renderPoll("cfp");
     else if (t === "bracket") renderBracket();
     else if (t === "bowls") renderBowls();
+    else if (t === "summary") renderSummary();
+    else if (t === "teamstats") renderSeasonTeamStats();
+    else if (t === "playerstats") renderSeasonPlayerStats();
   }
+
+  // ----- season summary ------------------------------------------------------
+
+  async function renderSummary() {
+    const s = state.season;
+    const box = $("#tab-summary");
+    box.innerHTML = "";
+    let r;
+    try { r = await api(`/api/season/${s.id}/review`); } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+    const m = r.mine;
+    const name = (slug, text) => el("span", {}, [el("span", { class: "pill-inline", style: `background:${color(slug)}` }), text]);
+    const score = (g) => {
+      if (!g) return el("span", { class: "muted", text: "not yet played" });
+      if (!g.played) return el("span", { class: "muted", text: `${g.away_name} vs ${g.home_name} · not yet played` });
+      const hw = g.home_score > g.away_score;
+      const w = hw ? [g.home, g.home_name, g.home_score] : [g.away, g.away_name, g.away_score];
+      const l = hw ? [g.away, g.away_name, g.away_score] : [g.home, g.home_name, g.home_score];
+      return el("span", {}, [name(w[0], `${w[1]} ${w[2]}`), el("span", { class: "muted", text: ", " }), name(l[0], `${l[1]} ${l[2]}`), g.overtime ? el("span", { class: "muted", text: ` (${g.overtime > 1 ? g.overtime : ""}OT)` }) : null]);
+    };
+    const card = (title, body, cls = "") => el("div", { class: `bowl-card ${cls}` }, [el("div", { class: "bowl-title" }, [el("b", { text: title })]), body]);
+
+    box.append(el("h3", { text: r.done ? "Season in review" : `Season so far · through ${s.week_labels[r.current_week] || "week " + r.current_week}` }));
+
+    // --- the big results ---
+    const big = el("div", { class: "review-grid" });
+    big.append(card("National champion", r.champion_name
+      ? el("div", {}, [el("div", { class: "review-headline" }, [name(r.champion, r.champion_name)]), el("div", { class: "muted small-text" }, [score(r.title_game), r.title_game && r.title_game.site ? el("div", { text: r.title_game.site }) : null])])
+      : el("div", { class: "muted", text: r.title_game ? `${r.title_game.title} · ${r.title_game.site || ""}` : "Decided on January 25" }), "review-champ"));
+    if (r.rounds.length) {
+      const rounds = el("div");
+      for (const rd of r.rounds) {
+        rounds.append(el("div", { class: "review-sub", text: rd.round }));
+        for (const g of rd.games) {
+          const line = el("div", { class: `review-line ${g.event_id ? "clickable" : ""}` }, [score(g), g.title && !g.title.startsWith("First round") ? el("span", { class: "muted small-text", text: ` · ${g.title.replace(/ \((Quarterfinal|Semifinal)\)/, "")}` }) : null]);
+          if (s.schedule.some((x) => x.event_id === g.event_id && x.has_box)) line.addEventListener("click", () => openBox(g.event_id));
+          rounds.append(line);
+        }
+      }
+      big.append(card("Playoff", rounds));
+    }
+    if (r.champions.length) {
+      const t = el("table", { class: "stats" });
+      for (const c of r.champions) {
+        t.append(el("tr", {}, [el("td", { style: "text-align:left" }, [name(c.team, c.name)]), el("td", { class: "muted", style: "text-align:left", text: c.conference }), el("td", { style: "text-align:left" }, [c.game ? score(c.game) : el("span", { class: "muted", text: "" })])]));
+      }
+      big.append(card("Conference champions", t));
+    }
+    if (r.final_ap.length || r.final_cfp.length) {
+      const polls = el("div", { class: "review-polls" });
+      const list = (title, rows) => {
+        const t = el("table", { class: "stats" });
+        t.append(el("tr", {}, [el("th", { text: "" }), el("th", { text: title, style: "text-align:left" }), el("th", { text: "Rec" })]));
+        for (const e of rows) t.append(el("tr", { class: e.team === m.team ? "mine" : "" }, [el("td", { text: String(e.rank) }), el("td", { style: "text-align:left" }, [name(e.team, e.name)]), el("td", { text: e.record })]));
+        return t;
+      };
+      if (r.final_cfp.length) polls.append(list(r.done ? "Final CFP ranking" : "CFP ranking", r.final_cfp));
+      if (r.final_ap.length) polls.append(list(r.done ? "Final AP poll" : "AP poll", r.final_ap));
+      big.append(card("Rankings", polls));
+    }
+    box.append(big);
+
+    // --- your season ---
+    box.append(el("h3", { style: "margin-top:18px" }, [name(m.team, `${m.name} · ${m.wins}-${m.losses}`)]));
+    const bits = [`${m.conf_wins}-${m.conf_losses} ${m.conference}`];
+    if (m.conf_rank) bits.push(`${ordinal(m.conf_rank)} in the ${m.division ? m.conference + " " + m.division : m.conference}`);
+    if (m.conf_champion) bits.push(`${m.conference} champion`);
+    if (m.finish) bits.push(m.finish);
+    if (m.final_cfp) bits.push(`CFP #${m.final_cfp}`);
+    if (m.final_ap) bits.push(`AP #${m.final_ap}`);
+    box.append(el("p", { class: "muted", text: bits.join(" · ") }));
+
+    const mine = el("div", { class: "review-grid" });
+    const gameLine = (l, label) => {
+      if (!l) return null;
+      const vs = l.venue === "away" ? "at" : "vs";
+      const line = el("div", { class: `review-line ${l.has_box ? "clickable" : ""}` }, [
+        el("span", { class: "muted small-text", text: `${label}: ` }),
+        el("span", { class: l.won ? "win" : "loss", text: `${l.won ? "W" : "L"} ${l.points_for}-${l.points_against}${l.overtime ? " OT" : ""}` }),
+        el("span", { text: ` ${vs} ` }), l.opponent_rank ? el("span", { class: "rank", text: `#${l.opponent_rank} ` }) : null,
+        name(l.opponent, l.opponent_name), el("span", { class: "muted small-text", text: ` (${l.opponent_record || ""})${l.title ? " · " + l.title : " · " + (s.week_labels[l.week] || "week " + l.week)}` }),
+      ]);
+      if (l.has_box) line.addEventListener("click", () => openBox(l.event_id));
+      return line;
+    };
+    const facts = el("div");
+    facts.append(el("div", { class: "review-line" }, [el("span", { class: "muted small-text", text: "Scoring: " }), `${m.points_per_game} per game, ${m.allowed_per_game} allowed`]));
+    facts.append(el("div", { class: "review-line" }, [el("span", { class: "muted small-text", text: "Longest win streak: " }), String(m.longest_streak)]));
+    for (const x of [gameLine(m.best_win, "Best win"), gameLine(m.worst_loss, "Worst loss"), gameLine(m.biggest_win, "Biggest win"), gameLine(m.closest_loss, "Closest loss")]) if (x) facts.append(x);
+    mine.append(card("Results", facts));
+    if (m.postseason.length) {
+      const ps = el("div");
+      for (const l of m.postseason) ps.append(gameLine(l, l.title || s.week_labels[l.week]));
+      mine.append(card("Postseason", ps));
+    }
+
+    const L = m.leaders;
+    const st = (p, k) => (p && p.stats[k]) || 0;
+    const pct = (n, d) => (d ? `${Math.round((100 * n) / d)}%` : "–");
+    const leader = (title, p, line) => p ? el("div", { class: "review-leader" }, [el("div", { class: "muted small-text", text: title }), el("div", { class: "review-leader-name" }, [p.name, el("span", { class: "pos", text: p.position })]), el("div", { class: "small-text", text: line(p) })]) : null;
+    const leaders = [
+      leader("Top passer", L.passer, (p) => `${st(p, "pass_yards").toLocaleString()} yds · ${st(p, "completions")}/${st(p, "pass_attempts")} (${pct(st(p, "completions"), st(p, "pass_attempts"))}) · ${st(p, "passing_touchdowns")} TD, ${st(p, "interceptions_thrown")} INT`),
+      leader("Top rusher", L.rusher, (p) => `${st(p, "rush_yards").toLocaleString()} yds · ${st(p, "carries")} car (${(st(p, "rush_yards") / Math.max(1, st(p, "carries"))).toFixed(1)} avg) · ${st(p, "rushing_touchdowns")} TD`),
+      leader("Top receiver", L.receiver, (p) => `${st(p, "receiving_yards").toLocaleString()} yds · ${st(p, "receptions")} rec (${(st(p, "receiving_yards") / Math.max(1, st(p, "receptions"))).toFixed(1)} avg) · ${st(p, "receiving_touchdowns")} TD`),
+      leader("Top tackler", L.tackler, (p) => `${st(p, "solo_tackles") + st(p, "assisted_tackles")} tackles (${st(p, "solo_tackles")} solo) · ${st(p, "sacks")} sacks`),
+      leader("Sack leader", L.sacks, (p) => `${st(p, "sacks")} sacks · ${st(p, "forced_fumbles")} FF`),
+      leader("Interceptions", L.interceptions, (p) => `${st(p, "interceptions")} INT · ${st(p, "interception_return_yards")} return yds`),
+      leader("Kicker", L.kicker, (p) => `${st(p, "fg_made")}/${st(p, "fg_attempted")} FG · ${st(p, "pat_made")}/${st(p, "pat_attempts")} PAT · ${st(p, "fg_made") * 3 + st(p, "pat_made")} pts`),
+      leader("Returner", L.returner, (p) => `${st(p, "kickoff_returns")} KR for ${st(p, "kickoff_return_yards")} · ${st(p, "punt_returns")} PR for ${st(p, "punt_return_yards")}`),
+    ].filter(Boolean);
+    if (leaders.length) {
+      const grid = el("div", { class: "review-leaders" }, leaders);
+      mine.append(card(`Statistical leaders${L.games_with_stats < (m.wins + m.losses) ? ` (${L.games_with_stats} simulated games)` : ""}`, grid));
+    }
+    box.append(mine);
+  }
+
+  function ordinal(n) { const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
 
   function renderBowls() {
     const s = state.season;
@@ -315,6 +435,146 @@
       table.appendChild(tr);
     }
     box.appendChild(table);
+  }
+
+  // ----- season stats ------------------------------------------------------
+
+  const TEAM_COLS = [
+    ["G", "games", 0], ["W-L", null, null], ["PPG", "ppg", 1], ["Opp PPG", "opp_ppg", 1], ["Margin", "margin", 1],
+    ["Yds/G", "ypg", 1], ["Pass/G", "pass_ypg", 1], ["Rush/G", "rush_ypg", 1], ["Yds/Play", "ypp", 2], ["Plays/G", "plays_pg", 1],
+    ["Cmp%", "comp_pct", 1], ["Y/A", "ypa", 1], ["Y/C", "ypc", 1], ["3rd%", "third_pct", 1], ["RZ%", "red_zone_pct", 1], ["1st/G", "first_downs_pg", 1],
+    ["TOP", "top", "time"], ["TO", "turnovers", 0], ["Sacks all.", "sacks_allowed", 0], ["Pen/G", "penalties_pg", 1],
+    ["Opp Yds/G", "opp_ypg", 1], ["Opp Pass/G", "opp_pass_ypg", 1], ["Opp Rush/G", "opp_rush_ypg", 1], ["Opp Y/Play", "opp_ypp", 2],
+    ["Opp 3rd%", "opp_third_pct", 1], ["Sacks", "sacks", 0], ["Takeaways", "takeaways", 0],
+  ];
+  const LOWER_BETTER = new Set(["opp_ppg", "turnovers", "sacks_allowed", "penalties_pg", "opp_ypg", "opp_pass_ypg", "opp_rush_ypg", "opp_ypp", "opp_third_pct"]);
+  const teamStatsState = { rows: null, sort: "margin", desc: true, conf: "", fbs: true };
+
+  function fmtStat(v, digits) {
+    if (digits === "time") return window.CFP.fmtTime(Math.round(v));
+    return Number(v).toFixed(digits);
+  }
+
+  function statsNote(partial) {
+    return partial ? "This season was started before season-long stats were kept, so only your own games are counted. " : "";
+  }
+
+  async function renderSeasonTeamStats() {
+    const s = state.season;
+    const box = $("#tab-teamstats");
+    box.innerHTML = "";
+    if (!teamStatsState.rows || teamStatsState.seasonId !== s.id || teamStatsState.week !== s.current_week) {
+      try {
+        const j = await api(`/api/season/${s.id}/stats/teams`);
+        teamStatsState.rows = j.teams; teamStatsState.partial = j.partial; teamStatsState.seasonId = s.id; teamStatsState.week = s.current_week;
+      } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+    }
+    const rows = teamStatsState.rows;
+    if (!rows.length) { box.append(el("p", { class: "muted", text: "No games simulated yet. Advance a week to start collecting stats." })); return; }
+    const confs = [...new Set(rows.filter((r) => !r.fictional).map((r) => r.conference))].sort();
+    const controls = el("div", { class: "stats-controls" });
+    const confSel = el("select", { "aria-label": "Conference" }, [el("option", { value: "", text: "All conferences" }), ...confs.map((c) => el("option", { value: c, text: c }))]);
+    confSel.value = teamStatsState.conf;
+    confSel.addEventListener("change", () => { teamStatsState.conf = confSel.value; renderSeasonTeamStats(); });
+    controls.append(confSel);
+    const note = el("span", { class: "muted small-text", text: `${statsNote(teamStatsState.partial)}Per-game averages over simulated games through ${s.week_labels[s.current_week] || "week " + s.current_week}. Click a column to sort.` });
+    controls.append(note);
+    box.append(controls);
+
+    let list = rows.filter((r) => !r.fictional && (!teamStatsState.conf || r.conference === teamStatsState.conf));
+    const k = teamStatsState.sort;
+    list.sort((a, b) => {
+      const av = k === "name" ? a.name : a[k], bv = k === "name" ? b.name : b[k];
+      const c = typeof av === "string" ? av.localeCompare(bv) : av - bv;
+      return teamStatsState.desc ? -c : c;
+    });
+    const table = el("table", { class: "stats team-season" });
+    const head = el("tr", {}, [el("th", { text: "#" }), el("th", { class: "sortable left", text: "Team", "data-key": "name" }),
+      ...TEAM_COLS.map((c) => el("th", { class: c[1] ? "sortable" : "", text: c[0], "data-key": c[1] || "", title: c[0] }))]);
+    head.addEventListener("click", (e) => {
+      const th = e.target.closest("th[data-key]");
+      if (!th || !th.dataset.key) return;
+      if (teamStatsState.sort === th.dataset.key) teamStatsState.desc = !teamStatsState.desc;
+      else { teamStatsState.sort = th.dataset.key; teamStatsState.desc = th.dataset.key !== "name" && !LOWER_BETTER.has(th.dataset.key); }
+      renderSeasonTeamStats();
+    });
+    for (const th of head.querySelectorAll("th[data-key]")) if (th.dataset.key === k) th.classList.add(teamStatsState.desc ? "sorted-desc" : "sorted-asc");
+    table.append(head);
+    list.forEach((r, i) => {
+      table.append(el("tr", { class: r.team === s.team ? "mine" : "" }, [
+        el("td", { class: "muted", text: String(i + 1) }),
+        el("td", { class: "name" }, [el("span", { class: "pill-inline", style: `background:${color(r.team)}` }), r.name, el("span", { class: "pos", text: r.conference })]),
+        ...TEAM_COLS.map((c) => el("td", { text: c[1] === null ? `${r.wins}-${r.losses}` : fmtStat(r[c[1]], c[2]) })),
+      ]));
+    });
+    box.append(el("div", { class: "table-scroll" }, [table]));
+  }
+
+  const PLAYER_COLS = {
+    passing: [["C/ATT", (p) => `${p.stats.completions}/${p.stats.pass_attempts}`], ["Pct", (p) => p.stats.pass_attempts ? Math.round(100 * p.stats.completions / p.stats.pass_attempts) : "–"],
+      ["Yds", (p) => p.stats.pass_yards, "pass_yards"], ["Yds/G", (p) => (p.stats.pass_yards / p.games).toFixed(1)], ["Y/A", (p) => p.stats.pass_attempts ? (p.stats.pass_yards / p.stats.pass_attempts).toFixed(1) : "–"],
+      ["TD", (p) => p.stats.passing_touchdowns, "passing_touchdowns"], ["INT", (p) => p.stats.interceptions_thrown, "interceptions_thrown"], ["Sacked", (p) => p.stats.sacks_taken]],
+    rushing: [["Car", (p) => p.stats.carries, "carries"], ["Yds", (p) => p.stats.rush_yards, "rush_yards"], ["Yds/G", (p) => (p.stats.rush_yards / p.games).toFixed(1)],
+      ["Avg", (p) => p.stats.carries ? (p.stats.rush_yards / p.stats.carries).toFixed(1) : "–"], ["TD", (p) => p.stats.rushing_touchdowns, "rushing_touchdowns"], ["Fum", (p) => p.stats.fumbles]],
+    receiving: [["Tgt", (p) => p.stats.targets], ["Rec", (p) => p.stats.receptions, "receptions"], ["Yds", (p) => p.stats.receiving_yards, "receiving_yards"], ["Yds/G", (p) => (p.stats.receiving_yards / p.games).toFixed(1)],
+      ["Avg", (p) => p.stats.receptions ? (p.stats.receiving_yards / p.stats.receptions).toFixed(1) : "–"], ["TD", (p) => p.stats.receiving_touchdowns, "receiving_touchdowns"]],
+    defense: [["Solo", (p) => p.stats.solo_tackles, "solo_tackles"], ["Ast", (p) => p.stats.assisted_tackles], ["Tot", (p) => p.stats.solo_tackles + p.stats.assisted_tackles, "total"],
+      ["Sacks", (p) => p.stats.sacks, "sacks"], ["INT", (p) => p.stats.interceptions, "interceptions"], ["INT Yds", (p) => p.stats.interception_return_yards],
+      ["FF", (p) => p.stats.forced_fumbles, "forced_fumbles"], ["FR", (p) => p.stats.fumble_recoveries], ["TD", (p) => p.stats.defensive_touchdowns]],
+    kicking: [["FG", (p) => `${p.stats.fg_made}/${p.stats.fg_attempted}`, "fg_made"], ["FG%", (p) => p.stats.fg_attempted ? Math.round(100 * p.stats.fg_made / p.stats.fg_attempted) : "–"],
+      ["PAT", (p) => `${p.stats.pat_made}/${p.stats.pat_attempts}`], ["Pts", (p) => p.stats.fg_made * 3 + p.stats.pat_made, "points"]],
+    punting: [["Punts", (p) => p.stats.punts, "punts"], ["Yds", (p) => p.stats.punt_yards], ["Avg", (p) => p.stats.punts ? (p.stats.punt_yards / p.stats.punts).toFixed(1) : "–"]],
+    returns: [["KR", (p) => p.stats.kickoff_returns], ["KR Yds", (p) => p.stats.kickoff_return_yards, "kickoff_return_yards"], ["KR Avg", (p) => p.stats.kickoff_returns ? (p.stats.kickoff_return_yards / p.stats.kickoff_returns).toFixed(1) : "–"],
+      ["PR", (p) => p.stats.punt_returns], ["PR Yds", (p) => p.stats.punt_return_yards, "punt_return_yards"], ["TD", (p) => p.stats.kickoff_return_touchdowns + p.stats.punt_return_touchdowns]],
+  };
+  const playerStatsState = { team: null, cat: "passing", sort: null, data: null };
+
+  async function renderSeasonPlayerStats() {
+    const s = state.season;
+    const box = $("#tab-playerstats");
+    box.innerHTML = "";
+    if (playerStatsState.team === null) playerStatsState.team = s.team;
+    const ps = playerStatsState;
+    const controls = el("div", { class: "stats-controls" });
+    const teamSel = el("select", { "aria-label": "Team" }, [el("option", { value: "", text: "All teams (leaders)" }),
+      ...state.teams.filter((t) => !t.fictional).map((t) => el("option", { value: t.slug, text: t.name }))]);
+    teamSel.value = ps.team;
+    teamSel.addEventListener("change", () => { ps.team = teamSel.value; ps.data = null; ps.sort = null; renderSeasonPlayerStats(); });
+    const catSel = el("select", { "aria-label": "Category" }, Object.keys(PLAYER_COLS).map((c) => el("option", { value: c, text: c[0].toUpperCase() + c.slice(1) })));
+    catSel.value = ps.cat;
+    catSel.addEventListener("change", () => { ps.cat = catSel.value; ps.data = null; ps.sort = null; renderSeasonPlayerStats(); });
+    controls.append(teamSel, catSel);
+    box.append(controls);
+    const key = `${s.id}|${s.current_week}|${ps.team}|${ps.cat}`;
+    if (!ps.data || ps.data.key !== key) {
+      try {
+        const j = await api(`/api/season/${s.id}/stats/players?cat=${ps.cat}${ps.team ? `&team=${ps.team}` : ""}`);
+        ps.data = { key, players: j.players, partial: j.partial };
+      } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+    }
+    const cols = PLAYER_COLS[ps.cat];
+    const players = ps.data.players.slice();
+    if (!players.length) { box.append(el("p", { class: "muted", text: "No stats in this category yet." })); return; }
+    box.append(el("p", { class: "muted small-text", text: `${statsNote(ps.data.partial)}Season totals over simulated games through ${s.week_labels[s.current_week] || "week " + s.current_week}${ps.team ? "" : " · top 100"}. Click a column to sort.` }));
+    const sortKey = ps.sort || cols.find((c) => c[2])[2];
+    const val = (p, c) => { const v = c[1](p); return typeof v === "number" ? v : parseFloat(v) || 0; };
+    const sortCol = cols.find((c) => c[2] === sortKey) || cols.find((c) => c[2]);
+    players.sort((a, b) => val(b, sortCol) - val(a, sortCol) || a.name.localeCompare(b.name));
+    const table = el("table", { class: "stats" });
+    const head = el("tr", {}, [el("th", { text: "#" }), el("th", { class: "left", text: "Player" }), ps.team ? null : el("th", { class: "left", text: "Team" }), el("th", { text: "G" }),
+      ...cols.map((c) => el("th", { class: c[2] ? `sortable ${c[2] === sortKey ? "sorted-desc" : ""}` : "", text: c[0], "data-key": c[2] || "" }))]);
+    head.addEventListener("click", (e) => { const th = e.target.closest("th[data-key]"); if (th && th.dataset.key) { ps.sort = th.dataset.key; renderSeasonPlayerStats(); } });
+    table.append(head);
+    players.forEach((p, i) => {
+      table.append(el("tr", {}, [
+        el("td", { class: "muted", text: String(i + 1) }),
+        el("td", { class: "name" }, [p.name, el("span", { class: "pos", text: p.position })]),
+        ps.team ? null : el("td", { class: "left" }, [el("span", { class: "pill-inline", style: `background:${color(p.team)}` }), p.team_name]),
+        el("td", { text: String(p.games) }),
+        ...cols.map((c) => el("td", { text: String(c[1](p)) })),
+      ]));
+    });
+    box.append(el("div", { class: "table-scroll" }, [table]));
   }
 
   async function renderStandings() {
