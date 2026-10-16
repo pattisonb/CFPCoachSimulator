@@ -181,7 +181,7 @@ def _real_polls_2026(teams: dict) -> dict:
     hist = json.loads(HISTORY_POLLS.read_text(encoding="utf-8")).get("2026")
     if not hist:
         return {}
-    from calibrate_season import build_matcher, match
+    from teamnames import build_matcher, match
     lookup = build_matcher(teams)
     out = {}
     pre = hist.get("preseason") or []
@@ -1280,7 +1280,8 @@ def rank_map(state: dict, after_week: int) -> dict[str, int]:
 
 # ----- the committee's resume -------------------------------------------------------
 
-def _pct(w: int, l: int) -> float:
+def _wl_pct(w: int, l: int) -> float:
+    """Winning percentage from wins and losses."""
     return w / (w + l) if (w + l) else 0.0
 
 
@@ -1309,7 +1310,7 @@ def resume(state: dict, after_week: Optional[int] = None, team: Optional[str] = 
             games[me].append({"opp": o, "opp_name": g[f"{opp}_display"], "won": pf > pa, "pf": pf, "pa": pa, "week": g["week"],
                               "venue": "neutral" if g["neutral"] else ("home" if side == "home" else "away"),
                               "rank_then": before.get(o), "rank_now": now.get(o), "opp_record": f"{r['wins']}-{r['losses']}",
-                              "opp_pct": _pct(r["wins"], r["losses"]), "fcs": o not in real, "event_id": eid,
+                              "opp_pct": _wl_pct(r["wins"], r["losses"]), "fcs": o not in real, "event_id": eid,
                               "title": g.get("title"), "conference_game": g["conference_game"]})
     # strength of schedule: two thirds the opponents' record, one third their opponents'
     # (FBS opponents only; the FCS stand-ins play too many schedules to have a record)
@@ -1317,7 +1318,7 @@ def resume(state: dict, after_week: Optional[int] = None, team: Optional[str] = 
     for s in real:
         opps = [x["opp"] for x in games[s] if not x["fcs"]]
         ow, ol = sum(rec[o]["wins"] for o in opps), sum(rec[o]["losses"] for o in opps)
-        opp_pct[s] = _pct(ow, ol)
+        opp_pct[s] = _wl_pct(ow, ol)
     sos: dict[str, float] = {}
     oo_pct: dict[str, float] = {}
     for s in real:
@@ -1356,7 +1357,7 @@ def resume(state: dict, after_week: Optional[int] = None, team: Optional[str] = 
         if team == s:
             row["games"] = sorted(gl, key=lambda x: x["week"])
         rows.append(row)
-    rows.sort(key=lambda x: (x["rank"] is None, x["rank"] or 99, -_pct(x["wins"], x["losses"]), x["sos_rank"]))
+    rows.sort(key=lambda x: (x["rank"] is None, x["rank"] or 99, -_wl_pct(x["wins"], x["losses"]), x["sos_rank"]))
     if team is not None:
         rows = [x for x in rows if x["team"] == team]
     return {"week": w, "kind": kind, "rows": rows}
@@ -1766,13 +1767,6 @@ def _preview_team(state: dict, slug: str) -> dict:
     return _with_injuries(apply_depth(base, (state.get("depth") or {}).get(slug)), out)
 
 
-def next_game(state: dict, slug: str) -> Optional[dict]:
-    """The team's next unplayed game (this week's, or the first after a bye)."""
-    games = sorted((g for g in state["games"].values() if slug in (g["home"], g["away"]) and not g["played"] and g["week"] > state["current_week"]),
-                   key=lambda g: g["week"])
-    return games[0] if games else None
-
-
 def game_preview(state: dict, slug: str, sims: int = 20) -> dict:
     """This week for one team: the next game with both ranks and records, and a prediction
     from simulating it `sims` times (win odds, the likely score, the margin, the passer and
@@ -1842,7 +1836,7 @@ def game_preview(state: dict, slug: str, sims: int = 20) -> dict:
         p_margin = 0.5 * (1 + math.erf((avg["home"] - avg["away"]) / (16 * math.sqrt(2))))
         p_home = max(0.02, min(0.98, 0.5 * p_sims + 0.5 * p_margin))
         pred = {"sims": sims, "home_win_prob": round(p_home, 2), "home_points": round(avg["home"], 1), "away_points": round(avg["away"], 1),
-                "margin": round(avg["home"] - avg["away"], 1), "total": round(avg["home"] + avg["away"], 1),
+                "margin": round(round(avg["home"], 1) - round(avg["away"], 1), 1), "total": round(round(avg["home"], 1) + round(avg["away"], 1), 1),
                 "watch": {side: {"passer": watch(side, "pass_yards", ["completions", "pass_attempts", "pass_yards", "passing_touchdowns", "interceptions_thrown"]),
                                  "rusher": watch(side, "rush_yards", ["carries", "rush_yards", "rushing_touchdowns"]),
                                  "receiver": watch(side, "receiving_yards", ["receptions", "receiving_yards", "receiving_touchdowns"])} for side in ("home", "away")}}

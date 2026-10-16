@@ -778,7 +778,7 @@
     const rk = el("div", { class: "leader-card player-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: "Where he ranks" }), el("span", { class: "muted small-text", text: p.ranks.length ? "FBS · conference" : "" })])]);
     if (!p.ranks.length) rk.append(el("p", { class: "muted small-text", text: p.games ? "Not enough games to rank yet." : "No games played yet." }));
     for (const r of p.ranks) {
-      const ord = (n) => `${n}${["th", "st", "nd", "rd"][(n % 100 > 10 && n % 100 < 14) ? 0 : Math.min(n % 10, 4) % 4] || "th"}`;
+      const ord = ordinal;
       rk.append(el("div", { class: "leader-row" }, [
         el("span", { class: "rank", text: "" }),
         el("span", { class: "who" }, [el("span", { class: "name", text: r.label }), el("span", { class: "muted small-text", text: `${ord(r.fbs_rank)} of ${r.fbs_n} in FBS · ${ord(r.conf_rank)} of ${r.conf_n} in the ${team.conference}` })]),
@@ -863,7 +863,7 @@
 
   const awardsState = { data: null, key: null, view: "mine", filter: "", sort: null, desc: true, conf: null, selector: "consensus",
                         level: 1, mineFilter: "" };
-  const ORD = (i) => `${i + 1}${["st", "nd", "rd"][i] || "th"}`;
+  const ORD = (i) => ordinal(i + 1);   // a 0-based index as an ordinal: 0 -> "1st"
   // roster class codes (FR, FRRS, SO, ...) as "Fr.", "RS Fr.", ...
   const CLASS_LABEL = { FR: "Fr.", FRRS: "RS Fr.", SO: "So.", SORS: "RS So.", JR: "Jr.", JRRS: "RS Jr.", SR: "Sr.", SRRS: "RS Sr." };
   const classLabel = (cls) => (cls ? ` · ${CLASS_LABEL[cls] || cls}` : "");

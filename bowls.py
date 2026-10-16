@@ -186,10 +186,3 @@ def playoff_sites(seeds: dict[int, str], conference_of: dict[str, str]) -> dict[
         sites["final"] = champ
     return sites
 
-
-def short_site(site: Optional[str]) -> str:
-    """'State Farm Stadium Glendale, Arizona' -> 'State Farm Stadium, Glendale, AZ'-ish: keep the city part."""
-    if not site:
-        return ""
-    m = re.match(r"^(.*?)\s+([A-Z][\w.' ]+?, [A-Z][\w ]+)$", site)
-    return f"{m.group(1)} · {m.group(2)}" if m else site

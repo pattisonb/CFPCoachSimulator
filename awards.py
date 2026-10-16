@@ -13,7 +13,6 @@ awards in selection week (16), the postseason awards after the title game (20).
 """
 from __future__ import annotations
 
-import math
 import random
 import statistics
 from typing import Callable, Optional
@@ -427,24 +426,6 @@ def stat_line(p: dict, group: str) -> str:
 
 
 # ----- award selection ----------------------------------------------------------------
-
-
-def _pick(pool: Pool, candidates: list[dict], group: str, team_weight: float, rng: random.Random, n: int = 5,
-          noise: float = 0.0, extra: Optional[Callable[[dict], float]] = None) -> list[dict]:
-    """Top n by standardized production plus the team term; cards carry the final score."""
-    scored = []
-    for p in candidates:
-        s = p["z"][group] + team_weight * pool.team_term(p["team"]) + (extra(p) if extra else 0.0)
-        if noise:
-            s += rng.gauss(0, noise)
-        scored.append((s, p))
-    scored.sort(key=lambda x: -x[0])
-    out = []
-    for s, p in scored[:n]:
-        c = pool.card(p, group)
-        c["score"] = round(s, 2)
-        out.append(c)
-    return out
 
 
 def _candidates(pool: Pool, kind: str, conference: Optional[str] = None) -> list[tuple[list[dict], str]]:

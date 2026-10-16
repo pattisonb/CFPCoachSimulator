@@ -81,18 +81,6 @@ class Player:
         self._penalty_attrs = [(attr, v, round(v * (2 / 3))) for attr, v in self._original_attrs.items() if v is not None]
         self._penalty_fatigue = None
 
-    def is_offense(self):
-        return self.position in {"QB", "RB", "WR", "TE", "OL", "K", "P"}
-
-    def is_defense(self):
-        return self.position in {"DL", "ROLB", "MLB", "LOLB", "CB", "S"}
-
-    def fatigue_level(self):
-        return self.fatigue / max(self.endurance, 1)
-
-    def to_dict(self):
-        return self.__dict__.copy()
-
 
 class Team:
     def __init__(self, name, offense, defense, kick_returner=None, punt_returner=None):
@@ -138,10 +126,6 @@ class Team:
             return self._lineup["offense"]
         players = getattr(self, side)
         return [p for p in players if p.in_game and not p.injured]
-    
-    def get_all_offense(self, side="offense"):
-        players = getattr(self, side)
-        return [p for p in players]
     
     def get_defense(self, side="defense"):
         if side == "defense" and self._lineup["defense"] is not None:
@@ -198,16 +182,6 @@ class Team:
         self.injuries.append({"name": player.name, "position": player.position, "weeks": weeks, "type": kind})
         self.clear_lineups()
         
-    def get_all_defense(self, side="defense"):
-        players = getattr(self, side)
-        return [p for p in players]
-
-    def get_player_by_name(self, name):
-        for p in self.offense + self.defense:
-            if p.name == name:
-                return p
-        return None
-    
     def recover_bench_players(self):
         for unit in (self.offense, self.defense):
             for p in unit:
@@ -445,18 +419,3 @@ class Team:
                 for attr, original_value, min_allowed in player._penalty_attrs:
                     new_value = round(original_value * (1 - penalty_scale) * factor)
                     setattr(player, attr, max(min_allowed, min(99, new_value)))
-
-def initialize_teams(json_path):
-    with open(json_path, "r") as f:
-        data = json.load(f)
-
-    teams = []
-    for team_data in data["teams"]:
-        team = Team(
-            name=team_data["team_name"],
-            offense=team_data["offense"],
-            defense=team_data["defense"]
-        )
-        teams.append(team)
-
-    return teams

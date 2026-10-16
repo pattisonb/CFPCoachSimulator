@@ -70,22 +70,26 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `engine/game_config.py` | Sliders and every calibration constant |
 | `server.py` | FastAPI server: team list, sim, history; serves `web/` |
 | `web/` | The site: plain HTML, CSS and JavaScript, no build step |
-| `fetch_results.py` | Downloads the 2026 FBS results played so far from NCAA.com into `data/season_games.json` |
-| `fetch_schedules.py` | Downloads every FBS team's 2026 schedule from ESPN into `data/schedules.json` |
+| `tools/fetch_results.py` | Downloads the 2026 FBS results played so far from NCAA.com into `data/season_games.json` |
+| `tools/fetch_schedules.py` | Downloads every FBS team's 2026 schedule from ESPN into `data/schedules.json` |
 | `season.py` | Week-by-week season engine: polls, title games, bracket, playoff (`python season.py ohio-state full`) |
 | `polls.py` | AP poll model, committee model and the 2026 bracket rules |
+| `awards.py` | The awards: Heisman vote, national awards, All-America and all-conference teams, coaches |
+| `teamnames.py` | Matches real-world team names (NCAA.com, ESPN, poll archives) to the engine's slugs |
+| `data/rivalries.json` | Rivalry games, trophies and the all-time series entering 2025 |
+| `tests/` | The checks, one script each, run as files: `python tests/run_all.py` runs them all and reports pass/fail |
+| `tools/` | Data downloads, calibration and research scripts, run from the project root (`python tools/fetch_polls.py`) |
 | `bowls.py` | The 2026-27 bowl lineup, selection by conference tie-ins, and which bowls host the playoff rounds |
-| `fetch_bowls.py` | Downloads the bowl schedule and every bowl's tie-ins and history from Wikipedia into `data/bowls.json` |
-| `fetch_polls.py`, `analyze_polls.py`, `calibrate_polls.py` | 2014-2025 poll archive, the behaviour study, and the model fit |
-| `calibrate_season.py` | Replays every real 2026 game N times and compares predicted and actual margins |
-| `calibrate.py` | Per-team stat benchmarks against FBS 2025 averages (`league` mode uses the real rosters) |
-| `fetch_linescores.py`, `calibrate_late.py` | Quarter scores 2014-2025 and the late-game comparison (close games, comebacks, overtime) |
-| `fetch_boxscores.py` | Downloads every played game's player box score into `data/boxscores/` |
-| `derive_tendencies.py` | Each team's real 2026 pass rate, pace and usage shares, used by `build_teams.py` |
-| `calibrate_players.py` | Compares sim player lines and usage shares with the real box scores |
-| `forward_test.py` | Freezes the sim's picks for the next week of real games, then scores them once played |
+| `tools/fetch_bowls.py` | Downloads the bowl schedule and every bowl's tie-ins and history from Wikipedia into `data/bowls.json` |
+| `tools/fetch_polls.py`, `tools/analyze_polls.py`, `tools/calibrate_polls.py` | 2014-2025 poll archive, the behaviour study, and the model fit |
+| `tools/calibrate_season.py` | Replays every real 2026 game N times and compares predicted and actual margins |
+| `tools/calibrate.py` | Per-team stat benchmarks against FBS 2025 averages (`league` mode uses the real rosters) |
+| `tools/fetch_linescores.py`, `tools/calibrate_late.py` | Quarter scores 2014-2025 and the late-game comparison (close games, comebacks, overtime) |
+| `tools/fetch_boxscores.py` | Downloads every played game's player box score into `data/boxscores/` |
+| `tools/derive_tendencies.py` | Each team's real 2026 pass rate, pace and usage shares, used by `build_teams.py` |
+| `tools/calibrate_players.py` | Compares sim player lines and usage shares with the real box scores |
+| `tools/forward_test.py` | Freezes the sim's picks for the next week of real games, then scores them once played |
 | `data/predictions/` | The frozen weekly picks (`weekNN.json`) and their score reports (`weekNN_score.*`) |
-| `smoke_test.py` | Runs N games and checks that every team's stats add up to its score |
 
 ## API
 
@@ -95,7 +99,7 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
   returns `{"games": [...], "summary": {...}}`. The first team hosts unless the venue is neutral.
 - `GET /api/games`, `GET /api/games/{id}`, `GET /api/history/summary`, `DELETE /api/games`.
 - `GET /api/sliders` returns slider defaults and groups.
-- `GET /api/predictions` returns the latest frozen week of picks from `forward_test.py`, with a `score`
+- `GET /api/predictions` returns the latest frozen week of picks from `tools/forward_test.py`, with a `score`
   block once that week has been scored (`{"week": null, "games": []}` when there are none).
 
 ## How the data feeds the engine
@@ -133,7 +137,7 @@ nothing. The `home_field_advantage` slider scales it.
 
 Two checks, both reproducible.
 
-**Season replay** (`python fetch_results.py` then `python calibrate_season.py 30`): the 333
+**Season replay** (`python tools/fetch_results.py` then `python tools/calibrate_season.py 30`): the 333
 games played through week 6 of 2026 between two FBS teams, each simulated 30 times at
 the real venue, compared with the real score.
 
@@ -150,7 +154,7 @@ makes 7-to-14-point favorites won 76% (sim 73%), 14-to-21 won 84% (sim 86%), 21 
 won 96% (sim 96%). The sim knows nothing about injuries, weather or week-to-week form,
 which is most of the remaining gap to the betting market.
 
-**League benchmarks** (`python calibrate.py league 400`): 400 random FBS matchups with the
+**League benchmarks** (`python tools/calibrate.py league 400`): 400 random FBS matchups with the
 real rosters, per team per game, against the mean of all 137 FBS teams in 2025 read from
 TeamRankings on 2026-10-15:
 
@@ -172,13 +176,13 @@ two scripts, and compare.
 
 ## Player stat lines against real box scores
 
-`fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed
+`tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed
 (per-player passing, rushing, receiving, kicking, punting, returns and defense, plus team
 plays, third and fourth downs, penalties and fumbles) into `data/boxscores/`.
-`derive_tendencies.py` turns those into each team's real 2026 pass rate, pace, QB run
+`tools/derive_tendencies.py` turns those into each team's real 2026 pass rate, pace, QB run
 share, back and receiver shares and fourth-down rate (`data/observed_tendencies.json`),
 and `build_teams.py` uses them in place of the generated coach tendencies for every team
-with two or more box scores. `calibrate_players.py` replays each game and compares the
+with two or more box scores. `tools/calibrate_players.py` replays each game and compares the
 sim's player lines with the real ones. Rerun all three after each week.
 
 Results on 333 games (8 sims each), sim against real, per team-game:
@@ -289,9 +293,9 @@ the accent is re-picked when the theme toggle flips.
 
 ### The polls: built from twelve seasons of real polls
 
-`fetch_polls.py` downloads every weekly AP Top 25 and CFP committee ranking from 2014
+`tools/fetch_polls.py` downloads every weekly AP Top 25 and CFP committee ranking from 2014
 through 2025 plus every FBS result with the teams' ranks at kickoff (ESPN's archive;
-`data/history/`). `analyze_polls.py` reports how voters actually behave. The numbers
+`data/history/`). `tools/analyze_polls.py` reports how voters actually behave. The numbers
 below are from that archive, 2014-2025 (1,749 committee-vs-AP team-weeks, about 3,000
 ranked-team losses and 2,600 ranked-team wins):
 
@@ -320,7 +324,7 @@ poll, one-loss teams sit at a median rank of 5, two-loss teams at 11, three-loss
 16; the committee ranks Group of Five teams 2.6 spots lower than the AP does and its top
 12 differs from the AP's by 0.6 teams per week.
 
-`calibrate_polls.py` then fits the model: each historical season is replayed from its real
+`tools/calibrate_polls.py` then fits the model: each historical season is replayed from its real
 preseason poll with the real results, and the model's weekly top 25 is compared with the
 real one. Result (data/poll_params.json): the AP model is off by **2.2 spots** per ranked
 team on average and ranks **91%** of the teams the real poll ranked; the committee model
@@ -339,7 +343,7 @@ votes" with points, "Dropped from rankings" with the spot each team held, the co
 conference, and the coming week's games involving ranked teams.
 
 **Coaches Poll.** A second tab carries the AFCA / USA Today Coaches Poll. Across 2014-2025
-(`fetch_polls.py` now pulls it too) the two polls agree on No.1 in 95% of weeks, share 24.1
+(`tools/fetch_polls.py` now pulls it too) the two polls agree on No.1 in 95% of weeks, share 24.1
 of 25 teams and sit 0.84 spots apart per team, with the coaches leaning slightly more on
 the record and on their own previous poll, and voting more unanimously at the top (the
 No.1 takes a median 93% of first-place votes, the AP's 87%). The sim builds the coaches
@@ -368,7 +372,7 @@ winner, 2 vs 7/10, 3 vs 6/11, 4 vs 5/12 on neutral fields; no reseeding.
 
 Every bowl of the 2026-27 season is played, and the playoff rounds carry their real bowl
 names and sites. The lineup comes from Wikipedia's "2026-27 NCAA football bowl games"
-page (`fetch_bowls.py` writes `data/bowls.json`): 35 non-playoff bowls plus the seven
+page (`tools/fetch_bowls.py` writes `data/bowls.json`): 35 non-playoff bowls plus the seven
 playoff games, with each bowl's date, kickoff time and stadium. Each bowl's own article
 supplies its infobox conference tie-ins (current and previous, with the years each
 contract ran) and its complete game-by-game results table, from which the app derives the
@@ -489,7 +493,7 @@ explosive plays and net punting, the team table adds TFL, hurries, PBU, explosiv
 and pressures allowed, and the roster cards show class, height, weight and depth-chart
 role.
 
-`calibrate_awards.py N` runs N seasons and reports the Heisman position mix, winner team
+`tools/calibrate_awards.py N` runs N seasons and reports the Heisman position mix, winner team
 rank, Group of Five and defensive finalists, All-America consensus counts and the coach of
 the year profile against the research targets.
 
@@ -516,7 +520,7 @@ player a form from how each game compared with his season so far; both fade 15% 
 Entering a game, a player's ratings scale by up to 4% for his form and 3% for the team's
 mood. The player card shows the boosts as green ▲ and red ▼ arrows next to each rating,
 with a 🔥 Hot streak or ❄ Cold streak tag and the team's mood; the depth chart marks hot
-and cold players. `python test_morale.py` checks that the engine is unchanged with the
+and cold players. `python tests/test_morale.py` checks that the engine is unchanged with the
 setting off and that moods, form and the boosts move with results when it is on.
 
 ### Settings and god mode
@@ -528,7 +532,7 @@ stay, since the season's stats are keyed on them) and every team's depth chart b
 editable, not just yours. Edits are saved with the season (`player_edits` in the state)
 and used by every game from the next sim on; an edited rating is marked on the card.
 `GET/POST /api/season/{id}/settings`, `POST /api/season/{id}/player/edit`;
-`python test_godmode.py` checks validation, the views and the sim's team data.
+`python tests/test_godmode.py` checks validation, the views and the sim's team data.
 
 ### This week
 
@@ -554,7 +558,7 @@ the Team Schedule marks a rivalry game with the trophy and the series entering i
 box score says who takes or keeps the trophy and the series after it, and the Summary
 tab's Rivalries card lists each rival, this season's meeting and the series today, with
 who holds the trophy. Army-Navy in selection week counts like any other game.
-`GET /api/season/{id}/rivalries?team=` serves a team's list; `python test_rivalries.py`
+`GET /api/season/{id}/rivalries?team=` serves a team's list; `python tests/test_rivalries.py`
 checks every slug resolves and that a series moves when the game is played.
 
 ### The committee's resume
@@ -567,7 +571,7 @@ opponents', ranked 1 to 136 with FCS stand-ins left out), the record against tea
 .500, the best win and the worst loss. Click a team for its full resume: tiles, the best
 win and worst loss with the opponent's rank at the time and today, and every game with
 a click through to its box score. `GET /api/season/{id}/resume?week=&team=` serves it;
-`python test_resume.py` checks the numbers against the standings and a hand count.
+`python tests/test_resume.py` checks the numbers against the standings and a hand count.
 
 ### Game day: your game, drive by drive
 
@@ -585,7 +589,7 @@ once your game is played.
 The log comes from the engine: every snap, kick, punt and kickoff is recorded per drive
 (`log` on each drive in the box score) with the players involved. Nothing in the logging
 draws a random number, so a game's result is identical with or without it
-(`python test_play_log.py --check` prints a fingerprint of five seeded games that must not
+(`python tests/test_play_log.py --check` prints a fingerprint of five seeded games that must not
 change when the engine is edited).
 
 ### Personnel, schemes and injuries
@@ -618,11 +622,11 @@ band.
 
 ## Player stat lines and usage (box score calibration)
 
-`fetch_boxscores.py` pulls the full player box score for every final game from NCAA.com
-(the same feed its game pages use), `derive_tendencies.py` turns them into each team's
+`tools/fetch_boxscores.py` pulls the full player box score for every final game from NCAA.com
+(the same feed its game pages use), `tools/derive_tendencies.py` turns them into each team's
 observed 2026 pass rate, pace, quarterback run share and fourth-down rate (which
 `build_teams.py` feeds into the sim in place of the generated coach tendencies), and
-`calibrate_players.py` replays every game 8 times and compares the sim's player lines
+`tools/calibrate_players.py` replays every game 8 times and compares the sim's player lines
 with the real ones. Per team-game, 333 games (bias is sim minus real; "corr" is whether
 the sim knows which teams or players get more):
 
@@ -684,23 +688,23 @@ The leading rusher now ends a 13-game regular season around 1,600 to 2,000 yards
 one because the sim hands non-quarterbacks two or three more carries a game than real
 teams do, and the sim still does not know which real teams ride one back (correlation
 0.10): the feature score comes from the roster, not from the observed shares that
-`derive_tendencies.py` already computes per team.
+`tools/derive_tendencies.py` already computes per team.
 
-Weekly refresh, in order: `python fetch_results.py`, `python fetch_boxscores.py`,
-`python derive_tendencies.py`, `python build_teams.py`, then the three calibration scripts.
+Weekly refresh, in order: `python tools/fetch_results.py`, `python tools/fetch_boxscores.py`,
+`python tools/derive_tendencies.py`, `python build_teams.py`, then the three calibration scripts.
 footballdb.com (season team stat tables, past seasons) is reachable from Python as well
 and is a good cross-check for the team-level numbers; NCAA.com stays the primary source.
 
 ## Forward test: picks frozen before kickoff
 
 Everything above is in-sample: the ratings and tendencies already reflect the games they
-are checked against. `forward_test.py` is the out-of-sample check. Before the week's games:
+are checked against. `tools/forward_test.py` is the out-of-sample check. Before the week's games:
 
 ```
-python forward_test.py predict
+python tools/forward_test.py predict
 ```
 
-runs `fetch_results.py`, takes every unplayed game in the lowest week that still has one,
+runs `tools/fetch_results.py`, takes every unplayed game in the lowest week that still has one,
 keeps the games between two teams the engine knows, simulates each 50 times at the real
 venue (`--sims N` to change), prints the picks, and writes `data/predictions/weekNN.json`:
 predicted margin and its spread over the sims, home win probability, predicted total, each
@@ -714,11 +718,11 @@ pickers to that matchup.
 After the games are final:
 
 ```
-python forward_test.py score 07
+python tools/forward_test.py score 07
 ```
 
-reruns `fetch_results.py` and `fetch_boxscores.py`, then scores the frozen file the way
-`calibrate_season.py` does (straight-up accuracy, margin MAE and RMSE, slope of actual on
+reruns `tools/fetch_results.py` and `tools/fetch_boxscores.py`, then scores the frozen file the way
+`tools/calibrate_season.py` does (straight-up accuracy, margin MAE and RMSE, slope of actual on
 predicted, home bias, total-points bias, win-probability calibration by bucket) and, for
 the player lines, the error and bias of the QB1, RB1 and top receiver yards against the
 real box score, matching the sim's player to the real one by last name (a second column
@@ -726,7 +730,7 @@ compares the same role regardless of who filled it). The report is saved next to
 prediction file as `weekNN_score.json` and `weekNN_score.txt`, and the picks panel shows
 the headline numbers. Games not yet final are listed as pending and can be scored again later.
 
-`python forward_test.py dryrun 6` proves the whole path on a week already played: it
+`python tools/forward_test.py dryrun 6` proves the whole path on a week already played: it
 predicts that week into a temporary folder, scores it, prints the report and deletes the
 folder. Being in-sample, its numbers are a check of the code, not of forward accuracy.
 On week 6 (58 games, 50 sims each) the dry run scored 62.1% straight up, margin MAE 14.3,
@@ -772,8 +776,8 @@ either half and late in close games, under the college clock rules:
 - **Garbage time.** Up 28 in the second half (38 any time): conservative play, slow pace,
   starters sit at 35.
 
-`fetch_linescores.py` pulls quarter scores for every FBS game 2014-2025 and
-`calibrate_late.py` compares how games end. Against 8,603 real regular-season games:
+`tools/fetch_linescores.py` pulls quarter scores for every FBS game 2014-2025 and
+`tools/calibrate_late.py` compares how games end. Against 8,603 real regular-season games:
 
 | Measure | Real | Sim |
 |---|---|---|
@@ -803,5 +807,5 @@ including trailing-late desperation, a college field goal make table, college ki
 and per-team counters for first downs, third and fourth downs, red zone trips, penalties
 and fumbles lost.
 
-`smoke_test.py 400` runs 400 games and reports any game whose stats do not add up to its
+`tests/smoke_test.py 400` runs 400 games and reports any game whose stats do not add up to its
 score. It should report zero mismatches.

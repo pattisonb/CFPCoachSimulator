@@ -19,27 +19,6 @@ def _note(**kw) -> None:
 #{'pass_attempts': 0, 'completions': 0, 'pass_yards': 0, 'interceptions_thrown': 0, 'sacks_taken': 0, 'carries': 0, 
 # 'rush_yards': 0, 'fumbles': 0, 'receptions': 0, 'receiving_yards': 0, 'targets': 0, 'passing_touchdowns': 0, 
 # 'receiving_touchdowns': 0, 'rushing_touchdowns': 0}
-def handle_qb_scramble(qb, verbose=False):
-    intelligence = qb.intelligence
-    speed = qb.speed
-    # Chance to scramble if no one is open
-    scramble_chance = max(0.05, (100 - intelligence) / 150)
-    if speed < 60:
-        scramble_chance *= 0.5
-
-    if random.random() > scramble_chance:
-        return None  # No scramble
-
-    # Scramble happens
-    gain_odds = 0.5 + ((speed - 50) / 100)  # 50% base + bonus for speed > 50
-    gain_odds = min(0.95, max(0.1, gain_odds))  # Clamp between 10% and 95%
-
-    gain_yards = random.randint(1, 12)
-    lose_yards = random.randint(-6, -1)
-
-    yards = gain_yards if random.random() < gain_odds else lose_yards
-    return yards
-
 def assign_forced_fumble(defense, base_yards, verbose=False):
     # Map yardage to positional group
     if base_yards <= 2:

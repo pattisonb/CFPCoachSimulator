@@ -14,8 +14,7 @@ import sys
 import contextlib
 import shutil
 import threading
-import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 

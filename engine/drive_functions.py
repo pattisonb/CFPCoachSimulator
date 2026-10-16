@@ -1,7 +1,7 @@
 import random
 from . import play_functions
 from .play_functions import get_pass_yards, get_run_yards
-from .game_functions import get_kick_attempt_range, get_punt_distance, apply_general_fatigue, fg_max_distance
+from .game_functions import get_punt_distance, apply_general_fatigue, fg_max_distance
 from .game_config import sliders
 from .roster import return_skill
 from . import game_config as cfg
