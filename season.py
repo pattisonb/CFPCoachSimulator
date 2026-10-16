@@ -28,6 +28,7 @@ import math
 import os
 import random
 import signal
+import threading
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -583,8 +584,11 @@ _TEAMS: dict = {}
 
 def _init(path: str) -> None:
     global _TEAMS
-    # workers ignore Ctrl-C; the server stops them on shutdown (keeps tracebacks out of the console)
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    # Pool workers ignore Ctrl-C; the server stops them on shutdown (keeps tracebacks out of the
+    # console). In-process sims (SIM_WORKERS=1, as on Render) run on the server's job thread,
+    # where Python refuses signal.signal, so only a process's main thread sets it.
+    if threading.current_thread() is threading.main_thread():
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
     _TEAMS = json.loads(Path(path).read_text(encoding="utf-8"))["teams"]
 
 
