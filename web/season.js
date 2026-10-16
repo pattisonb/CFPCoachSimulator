@@ -897,7 +897,7 @@
       table.append(el("tr", {}, [
         el("td", { class: "muted", text: String(i + 1) }),
         el("td", { class: "name" }, [p.name, el("span", { class: "pos", text: p.position })]),
-        ps.team ? null : el("td", { class: "left" }, [el("span", { class: "pill-inline", style: `background:${color(p.team)}` }), p.team_name]),
+        ps.team ? null : el("td", { class: "left" }, [teamPill(p.team), p.team_name]),
         el("td", { text: String(p.games) }),
         ...cols.map((c) => el("td", { text: String(c[1](p)) })),
       ]));
@@ -913,7 +913,7 @@
     const t = ps.roster;
     const r = t.ratings || {};
     box.append(el("div", { class: "roster-head" }, [
-      el("span", { class: "pill-inline", style: `background:${color(slug)}` }), el("b", { text: t.name }),
+      teamPill(slug), el("b", { text: t.name }),
       el("span", { class: "muted", text: ` · ${t.conference} · ${t.head_coach} · overall ${r.overall} (off ${r.offense}, def ${r.defense}, ST ${r.special_teams})` }),
     ]));
     const groups = new Map();
