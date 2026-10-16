@@ -510,3 +510,12 @@ body.team-theme .panel { border-color: color-mix(in srgb, var(--team-primary) 30
 .tab-body h3 { margin: 14px 0 8px; }
 @media (max-width: 700px) { .awards-grid { grid-template-columns: 1fr; } }
 .review-big .pos { margin-left: 10px; font-size: 14px; font-weight: 400; color: var(--muted); }
+
+/* stats tab: sub-views and the depth chart */
+.stats-chips { margin-bottom: 10px; }
+.depth-table td.depth-role { white-space: nowrap; vertical-align: top; min-width: 70px; }
+.depth-table td.depth-cell { vertical-align: top; min-width: 150px; white-space: normal; }
+.depth-table td.depth-cell .name { font-weight: 600; }
+.depth-table td.depth-cell .name .pos { color: var(--muted); font-weight: 400; font-size: 11px; margin-left: 6px; }
+.depth-table td.depth-cell.starter { background: rgba(245, 185, 66, 0.08); }
+.depth-table td.depth-cell .small-text { margin: 0; }

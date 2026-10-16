@@ -462,6 +462,15 @@ def season_team_stats(season_id: str) -> dict:
     return season.team_stats_view(_season_state(season_id))
 
 
+@app.get("/api/season/{season_id}/depth/{slug}")
+def season_depth_chart(season_id: str, slug: str) -> dict:
+    """One team's depth chart with each player's season headline."""
+    state = _season_state(season_id)
+    if slug not in _teams:
+        raise HTTPException(404, "unknown team")
+    return season.depth_chart_view(state, slug)
+
+
 @app.get("/api/season/{season_id}/awards")
 def season_awards(season_id: str) -> dict:
     """Every award: the live race until they are given, then the results."""
@@ -495,36 +504,7 @@ _OFF_KEYS = ["speed", "strength", "intelligence", "passing", "decision_making", 
 _DEF_KEYS = ["speed", "strength", "intelligence", "tackling", "coverage", "rushing"]
 
 
-def _overall(p: dict) -> int:
-    pos = p["position"]
-    if pos == "K":
-        primary, secondary = ["kick_power", "kick_accuracy"], []
-    elif pos == "P":
-        primary, secondary = ["punt_power", "punt_accuracy"], []
-    elif pos == "QB":
-        primary, secondary = ["passing", "decision_making", "intelligence"], ["speed", "elusiveness"]
-    elif pos == "RB":
-        primary, secondary = ["speed", "elusiveness", "vision", "strength"], ["hands", "pass_blocking"]
-    elif pos in ("WR", "TE"):
-        primary, secondary = ["hands", "route_running", "speed"], ["run_blocking", "elusiveness"]
-    elif pos == "OL":
-        primary, secondary = ["run_blocking", "pass_blocking", "strength"], ["intelligence"]
-    elif pos == "DL":
-        primary, secondary = ["rushing", "tackling", "strength"], ["intelligence", "speed"]
-    elif pos in ("MLB", "ROLB", "LOLB"):
-        primary, secondary = ["tackling", "rushing", "coverage", "speed"], ["intelligence"]
-    else:
-        primary, secondary = ["coverage", "speed", "tackling"], ["intelligence", "hands"]
-    total = count = 0
-    for k in primary:
-        if isinstance(p.get(k), (int, float)):
-            total += p[k] * 3
-            count += 3
-    for k in secondary:
-        if isinstance(p.get(k), (int, float)):
-            total += p[k]
-            count += 1
-    return round(total / count) if count else 0
+_overall = season.player_overall
 
 
 # ----- static site ---------------------------------------------------------

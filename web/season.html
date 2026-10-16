@@ -59,15 +59,14 @@
 
         <nav class="tabs" id="season-tabs">
           <button data-tab="games" class="active" type="button">Games</button>
+          <button data-tab="summary" type="button" hidden>Summary</button>
           <button data-tab="schedule" type="button">My Schedule</button>
           <button data-tab="standings" type="button">Standings</button>
           <button data-tab="rankings" type="button">Rankings</button>
           <button data-tab="bracket" type="button">Bracket</button>
           <button data-tab="bowls" type="button">Bowls</button>
-          <button data-tab="summary" type="button">Summary</button>
           <button data-tab="awards" type="button">Awards</button>
-          <button data-tab="teamstats" type="button">Team Stats</button>
-          <button data-tab="playerstats" type="button">Player Stats</button>
+          <button data-tab="stats" type="button">Stats</button>
           <button data-tab="box" type="button" hidden>Box Score</button>
         </nav>
 
@@ -86,8 +85,12 @@
         <div class="panel tab-body" id="tab-bowls" hidden></div>
         <div class="panel tab-body" id="tab-summary" hidden></div>
         <div class="panel tab-body" id="tab-awards" hidden></div>
-        <div class="panel tab-body" id="tab-teamstats" hidden></div>
-        <div class="panel tab-body" id="tab-playerstats" hidden></div>
+        <div class="panel tab-body" id="tab-stats" hidden>
+          <div class="view-chips stats-chips" id="stats-chips"></div>
+          <div id="tab-teamstats" hidden></div>
+          <div id="tab-playerstats" hidden></div>
+          <div id="tab-depth" hidden></div>
+        </div>
         <div id="tab-box" hidden>
           <div class="scoreboard panel">
             <div class="score-row" id="sbox-score-row"></div>

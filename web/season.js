@@ -269,6 +269,12 @@
   function showSeason(s) {
     const opening = !state.season || state.season.id !== s.id;
     state.season = s;
+    // no more games once the season is complete: the Summary tab takes the Games tab's place
+    $("#season-tabs button[data-tab=games]").hidden = !!s.done;
+    $("#season-tabs button[data-tab=summary]").hidden = !s.done;
+    if (s.done && state.tab === "games") state.tab = "summary";
+    if (!s.done && state.tab === "summary") state.tab = "games";
+    if (opening) { depthState.team = null; depthState.data = null; }
     if (opening) applyTeamTheme(s.team);
     state.standings = null;
     if (opening && sidebarPreferred() !== "1") setSidebar(false, false);
@@ -347,7 +353,7 @@
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "teamstats", "playerstats", "box"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "box"]) $(`#tab-${t}`).hidden = t !== name;
   }
 
   function renderTab() {
@@ -361,9 +367,84 @@
     else if (t === "bowls") renderBowls();
     else if (t === "summary") renderSummary();
     else if (t === "awards") renderAwards();
-    else if (t === "teamstats") renderSeasonTeamStats();
-    else if (t === "playerstats") renderSeasonPlayerStats();
+    else if (t === "stats") renderStats();
   }
+
+  // ----- stats tab: team stats, player stats and the depth chart under one tab --------
+
+  const statsState = { view: "players" };
+  const depthState = { team: null, data: null, key: null, unit: "" };
+
+  function renderStats() {
+    const s = state.season;
+    if (!s) return;
+    const st = statsState;
+    const chips = $("#stats-chips");
+    chips.innerHTML = "";
+    for (const [v, label] of [["team", "Team stats"], ["players", "Player stats"], ["depth", "Depth chart"]]) {
+      const b = el("button", { type: "button", class: `chip ${st.view === v ? "active" : ""}`, text: label });
+      b.addEventListener("click", () => { st.view = v; renderStats(); });
+      chips.append(b);
+    }
+    for (const v of ["teamstats", "playerstats", "depth"]) $(`#tab-${v}`).hidden = v !== (st.view === "team" ? "teamstats" : st.view === "players" ? "playerstats" : "depth");
+    if (st.view === "team") renderSeasonTeamStats();
+    else if (st.view === "players") renderSeasonPlayerStats();
+    else renderDepthChart();
+  }
+
+  // Depth chart: every role in formation order with the players in depth order, their
+  // class, size, rating and season headline. Starters are the first column.
+  async function renderDepthChart() {
+    const s = state.season;
+    const box = $("#tab-depth");
+    box.innerHTML = "";
+    const ds = depthState;
+    if (ds.team === null) ds.team = s.team;
+    const controls = el("div", { class: "stats-controls" });
+    const confs = [...new Set(state.teams.filter((t) => !t.fictional).map((t) => t.conference))].sort();
+    const teamSel = el("select", { "aria-label": "Team" }, state.teams.filter((t) => !t.fictional).map((t) => el("option", { value: t.slug, text: `${t.name} (${CONF_SHORT[t.conference] || t.conference})` })));
+    teamSel.value = ds.team;
+    teamSel.addEventListener("change", () => { ds.team = teamSel.value; renderDepthChart(); });
+    const unitChips = el("div", { class: "view-chips" }, [["", "All"], ["Offense", "Offense"], ["Defense", "Defense"], ["Special teams", "Special teams"]].map(([v, label]) => {
+      const b = el("button", { type: "button", class: `chip ${ds.unit === v ? "active" : ""}`, text: label });
+      b.addEventListener("click", () => { ds.unit = v; renderDepthChart(); });
+      return b;
+    }));
+    controls.append(teamSel, unitChips);
+    box.append(controls);
+    const key = `${s.id}|${s.current_week}|${ds.team}`;
+    if (!ds.data || ds.key !== key) {
+      try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`); ds.key = key; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+    }
+    const d = ds.data;
+    const r = d.ratings || {};
+    box.append(el("div", { class: "roster-head" }, [
+      teamPill(ds.team), el("b", { text: d.name }),
+      el("span", { class: "muted", text: ` · ${d.conference} · ${d.head_coach || ""} · overall ${r.overall} (off ${r.offense}, def ${r.defense}, ST ${r.special_teams}) · ${d.roster_size} players` }),
+    ]));
+    for (const unit of d.units) {
+      if (ds.unit && unit.name !== ds.unit) continue;
+      box.append(el("h3", { text: unit.name }));
+      const width = Math.max(2, ...unit.rows.map((row) => Math.min(row.players.length, unit.name === "Offense" && row.role === "WR" ? 5 : 3)));
+      const table = el("table", { class: "stats depth-table" });
+      table.append(el("tr", {}, [el("th", { text: "" }), ...Array.from({ length: width }, (_, i) => el("th", { class: "left", text: i === 0 ? "Starter" : ORD(i) }))]));
+      for (const row of unit.rows) {
+        const cells = [el("td", { class: "depth-role" }, [el("b", { text: row.role }), el("div", { class: "muted small-text", text: row.label })])];
+        for (let i = 0; i < width; i++) {
+          const p = row.players[i];
+          if (!p) { cells.push(el("td", { class: "left muted", text: "" })); continue; }
+          cells.push(el("td", { class: `left depth-cell ${i === 0 ? "starter" : ""}` }, [
+            el("div", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, p.name, el("span", { class: "pos", text: `${p.class || ""}${p.position !== row.role ? " · " + p.position : ""}` })]),
+            el("div", { class: "muted small-text", text: [`${p.overall} ovr`, p.height && p.weight ? `${p.height} ${p.weight}` : "", p.headline || (p.games ? `${p.games} games` : "")].filter(Boolean).join(" · ") }),
+          ]));
+        }
+        table.append(el("tr", {}, cells));
+      }
+      box.append(el("div", { class: "table-scroll" }, [table]));
+    }
+  }
+
+
 
   // ----- season summary ------------------------------------------------------
 

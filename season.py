@@ -816,6 +816,89 @@ def _award_step(state: dict, teams: dict, week: int) -> None:
     aw["given_through"] = week
 
 
+def player_overall(p: dict) -> int:
+    """A display rating from the engine attributes that matter at the position."""
+    pos = p["position"]
+    if pos == "K":
+        primary, secondary = ["kick_power", "kick_accuracy"], []
+    elif pos == "P":
+        primary, secondary = ["punt_power", "punt_accuracy"], []
+    elif pos == "QB":
+        primary, secondary = ["passing", "decision_making", "intelligence"], ["speed", "elusiveness"]
+    elif pos == "RB":
+        primary, secondary = ["speed", "elusiveness", "vision", "strength"], ["hands", "pass_blocking"]
+    elif pos in ("WR", "TE"):
+        primary, secondary = ["hands", "route_running", "speed"], ["run_blocking", "elusiveness"]
+    elif pos == "OL":
+        primary, secondary = ["run_blocking", "pass_blocking", "strength"], ["intelligence"]
+    elif pos == "DL":
+        primary, secondary = ["rushing", "tackling", "strength"], ["intelligence", "speed"]
+    elif pos in ("MLB", "ROLB", "LOLB"):
+        primary, secondary = ["tackling", "rushing", "coverage", "speed"], ["intelligence"]
+    else:
+        primary, secondary = ["coverage", "speed", "tackling"], ["intelligence", "hands"]
+    total = count = 0
+    for k in primary:
+        if isinstance(p.get(k), (int, float)):
+            total += p[k] * 3
+            count += 3
+    for k in secondary:
+        if isinstance(p.get(k), (int, float)):
+            total += p[k]
+            count += 1
+    return round(total / count) if count else 0
+
+
+DEPTH_ROWS = [
+    ("Offense", [("QB", "Quarterback"), ("HB", "Running back"), ("FB", "Fullback"), ("WR", "Wide receiver"), ("TE", "Tight end"),
+                 ("LT", "Left tackle"), ("LG", "Left guard"), ("C", "Center"), ("RG", "Right guard"), ("RT", "Right tackle")]),
+    ("Defense", [("LEDG", "Left edge"), ("DT", "Defensive tackle"), ("REDG", "Right edge"), ("SAM", "Strongside LB"), ("MIKE", "Middle LB"),
+                 ("WILL", "Weakside LB"), ("CB", "Cornerback"), ("FS", "Free safety"), ("SS", "Strong safety")]),
+    ("Special teams", [("K", "Kicker"), ("P", "Punter"), ("KR", "Kick returner"), ("PR", "Punt returner")]),
+]
+
+
+def depth_chart_view(state: dict, slug: str) -> dict:
+    """A team's depth chart: every role in formation order, players in depth order, with
+    class, size, rating and the player's season headline."""
+    teams = load_teams()
+    t = teams[slug]
+    ss = (state.get("season_stats") or {}).get(slug, {}).get("players", {})
+    players = t["offense"] + t["defense"]
+    by_role: dict[str, list[dict]] = {}
+    for p in players:
+        if p.get("role"):
+            by_role.setdefault(p["role"], []).append(p)
+    for role in by_role:
+        by_role[role].sort(key=lambda p: (p.get("depth") or 99, -player_overall(p)))
+    returners = {"KR": [p for p in players if p.get("slug") == t.get("kick_returner")],
+                 "PR": [p for p in players if p.get("slug") == t.get("punt_returner")]}
+
+    def card(p: dict, role: str) -> dict:
+        rec = ss.get(f"{p['name']}|{p['position']}")
+        st = rec["stats"] if rec else {}
+        group = awards.Pool._group(p["position"], p.get("role"), st) or p["position"]
+        if role in ("KR", "PR"):
+            group = "RS"
+        return {"name": p["name"], "position": p["position"], "role": p.get("role"), "depth": p.get("depth"), "class": p.get("class"),
+                "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"), "overall": player_overall(p),
+                "starter": bool(p.get("in_game")), "games": rec["games"] if rec else 0,
+                "headline": awards.headline({"stats": st}, group) if st else ""}
+
+    units = []
+    for unit, rows in DEPTH_ROWS:
+        out_rows = []
+        for role, label in rows:
+            group = returners.get(role) if role in returners else by_role.get(role, [])
+            if not group:
+                continue
+            out_rows.append({"role": role, "label": label, "players": [card(p, role) for p in group[:6]]})
+        units.append({"name": unit, "rows": out_rows})
+    hc = (t.get("coaches") or {}).get("head_coach") or {}
+    return {"team": slug, "name": t["name"], "conference": t["conference"], "head_coach": hc.get("name"),
+            "ratings": t.get("team_ratings", {}), "roster_size": len(players), "units": units}
+
+
 def awards_view(state: dict) -> dict:
     """The Awards tab: the live race until the awards are given, then the results."""
     teams = load_teams()
