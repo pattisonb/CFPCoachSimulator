@@ -171,6 +171,7 @@
     for (const chip of document.querySelectorAll("#week-strip .week-chip")) chip.disabled = b;
     $("#btn-new").disabled = b;
     $("#season-list").classList.toggle("locked", b);
+    document.body.classList.toggle("simming", b);   // tabs, chips, pills and the toolbar ignore clicks
     if (!b) { $("#season-progress").hidden = true; $("#season-progress-text").hidden = true; $("#season-progress-bar").style.width = "0%"; }
   }
 
@@ -356,7 +357,9 @@
     $("#season-title").innerHTML = "";
     $("#season-title").append(
       teamPill(s.team),
-      s.team_name, el("span", { class: "rec", text: `${r.wins}-${r.losses}` }),
+      s.team_name,
+      s.my_rank && s.my_rank.rank ? el("span", { class: "hdr-rank", text: s.my_rank.kind === "cfp" ? `CFP #${s.my_rank.rank}` : `#${s.my_rank.rank}`, title: s.my_rank.kind === "cfp" ? "College Football Playoff ranking" : "AP poll" }) : null,
+      el("span", { class: "rec", text: `${r.wins}-${r.losses}` }),
       el("span", { class: "muted conf-rec", style: "font-size:14px;margin-left:8px", text: `${r.conf_wins}-${r.conf_losses} ${s.conference}` }),
     );
     const phase = s.done ? `Season complete · national champion: ${s.champion_name}` : s.current_week === 0 ? `Preseason · ${s.week_labels[1] || "Week 1"} up next` : `${s.week_labels[s.current_week + 1] || "Week " + (s.current_week + 1)} up next · through ${s.week_labels[s.current_week] || "week " + s.current_week}`;

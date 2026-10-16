@@ -676,3 +676,9 @@ body.modal-open { overflow: hidden; }
 .recruit-stars { display: inline-flex; gap: 1px; margin-left: 10px; vertical-align: middle; font-size: 16px; line-height: 1; }
 .recruit-stars .rs { color: var(--border); }
 .recruit-stars .rs.on { color: #e3a81b; }
+
+/* while a sim runs nothing but the sim panel (and its Pause button) takes clicks */
+body.simming #season-tabs, body.simming .season-main .tab-body, body.simming #week-strip,
+body.simming #season-side, body.simming #season-toolbar select, body.simming #btn-seasons { pointer-events: none; }
+body.simming #season-tabs, body.simming #week-strip, body.simming #season-toolbar select { opacity: 0.6; }
+.hdr-rank { font-size: 15px; font-weight: 700; color: var(--accent); margin: 0 8px 0 10px; vertical-align: middle; }

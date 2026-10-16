@@ -1205,9 +1205,32 @@ def load_season(season_id: str) -> Optional[dict]:
 
 # ----- views for the page --------------------------------------------------
 
+def rank_map(state: dict, after_week: int) -> dict[str, int]:
+    """Team -> rank from the poll released after `after_week`: the CFP ranking once the
+    committee has released one, the AP poll before that (top 25 either way)."""
+    p = state["polls"].get(str(after_week), {})
+    if p.get("cfp_full"):
+        return {t: i + 1 for i, t in enumerate(p["cfp_full"][:25])}
+    if p.get("cfp"):
+        return {e["team"]: e["rank"] for e in p["cfp"]}
+    return {e["team"]: e["rank"] for e in p.get("ap", [])}
+
+
+def current_rank(state: dict) -> Optional[dict]:
+    """Your team's rank in the latest ranking, with which poll it came from."""
+    for w in range(state["current_week"], -1, -1):
+        p = state["polls"].get(str(w))
+        if not p:
+            continue
+        kind = "cfp" if (p.get("cfp_full") or p.get("cfp")) else "ap"
+        r = rank_map(state, w).get(state["team"])
+        return {"rank": r, "kind": kind, "week": w}
+    return None
+
+
 def week_view(state: dict, week: int) -> list[dict]:
     teams = load_teams()
-    ap = {e["team"]: e["rank"] for e in state["polls"].get(str(week - 1), {}).get("ap", [])}
+    ap = rank_map(state, week - 1)
     rec = _records(state, include_playoff=True)
     out = []
     for g in state["games"].values():
@@ -1464,7 +1487,7 @@ def summary(state: dict) -> dict:
 
     def ap_before(week: int) -> dict[str, int]:
         if week not in ap_cache:
-            ap_cache[week] = {e["team"]: e["rank"] for e in state["polls"].get(str(week - 1), {}).get("ap", [])}
+            ap_cache[week] = rank_map(state, week - 1)
         return ap_cache[week]
 
     for g in my_games:
@@ -1494,7 +1517,7 @@ def summary(state: dict) -> dict:
         "mode": state["mode"], "created_at": state["created_at"], "current_week": state["current_week"],
         "phase": state["phase"], "done": state["done"], "champion": state.get("champion"),
         "champion_name": teams[state["champion"]]["name"] if state.get("champion") else None,
-        "record": rec, "schedule": schedule, "weeks": weeks,
+        "record": rec, "schedule": schedule, "weeks": weeks, "my_rank": current_rank(state),
         "week_labels": {**{w: f"Week {w}" for w in range(1, LAST_REGULAR_WEEK + 1)}, CCG_WEEK: "Championship week",
                         SELECTION_WEEK: "Selection", **BOWL_WEEK_LABELS},
         "polls": state["polls"], "champions": state["champions"], "bracket": state["bracket"], "playoff": state["playoff"],
