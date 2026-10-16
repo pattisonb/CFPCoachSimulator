@@ -1476,10 +1476,9 @@ def week_dates(state: dict) -> dict[int, dict]:
     return out
 
 
-def summary(state: dict) -> dict:
-    teams = load_teams()
-    rec = _records(state)[state["team"]]
-    my_games = sorted((g for g in state["games"].values() if state["team"] in (g["home"], g["away"])),
+def team_schedule(state: dict, slug: str) -> list[dict]:
+    """One team's season, game by game, with byes: the Team Schedule tab."""
+    my_games = sorted((g for g in state["games"].values() if slug in (g["home"], g["away"])),
                       key=lambda g: (g["week"], g["date"] or ""))
     schedule = []
     all_rec = _records(state, include_playoff=True)
@@ -1491,12 +1490,12 @@ def summary(state: dict) -> dict:
         return ap_cache[week]
 
     for g in my_games:
-        home = g["home"] == state["team"]
+        home = g["home"] == slug
         opp = g["away"] if home else g["home"]
         ap = ap_before(g["week"])
         schedule.append({"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "site": g.get("site"),
                          "opponent": opp, "opponent_name": g["away_display"] if home else g["home_display"],
-                         "opponent_rank": ap.get(opp), "my_rank": ap.get(state["team"]),
+                         "opponent_rank": ap.get(opp), "my_rank": ap.get(slug),
                          "venue": "neutral" if g["neutral"] else ("home" if home else "away"), "played": g["played"],
                          "won": (g["home_score"] > g["away_score"]) == home if g["played"] else None,
                          "points_for": (g["home_score"] if home else g["away_score"]) if g["played"] else None,
@@ -1507,10 +1506,31 @@ def summary(state: dict) -> dict:
     for w in range(1, LAST_REGULAR_WEEK + 1):
         if w not in played_weeks:
             schedule.append({"event_id": None, "week": w, "kind": "bye", "title": None, "site": None, "opponent": None, "opponent_name": "Bye",
-                             "opponent_rank": None, "my_rank": ap_before(w).get(state["team"]), "venue": None, "played": w <= state["current_week"],
+                             "opponent_rank": None, "my_rank": ap_before(w).get(slug), "venue": None, "played": w <= state["current_week"],
                              "won": None, "points_for": None, "points_against": None, "overtime": 0, "real": False, "has_box": False,
                              "opponent_record": None, "date": None})
     schedule.sort(key=lambda g: (g["week"], g["date"] or ""))
+    return schedule
+
+
+def team_schedule_view(state: dict, slug: str) -> dict:
+    teams = load_teams()
+    t = teams[slug]
+    rec = _records(state, include_playoff=True)[slug]
+    ranks = rank_map(state, state["current_week"]) if state["current_week"] else {}
+    rk = None
+    for w in range(state["current_week"], -1, -1):
+        if str(w) in state["polls"]:
+            rk = rank_map(state, w).get(slug)
+            break
+    return {"team": slug, "team_name": t["name"], "conference": t["conference"], "record": {"wins": rec["wins"], "losses": rec["losses"],
+            "conf_wins": rec["conf_wins"], "conf_losses": rec["conf_losses"]}, "rank": rk, "schedule": team_schedule(state, slug)}
+
+
+def summary(state: dict) -> dict:
+    teams = load_teams()
+    rec = _records(state)[state["team"]]
+    schedule = team_schedule(state, state["team"])
     weeks = sorted({g["week"] for g in state["games"].values()} | {CCG_WEEK, SELECTION_WEEK} | set(PLAYOFF_WEEKS))
     return {
         "id": state["id"], "team": state["team"], "team_name": state["team_name"], "conference": state["conference"],

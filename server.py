@@ -469,6 +469,15 @@ def season_week(season_id: str, week: int) -> dict:
     return {"week": week, "games": season.week_view(state, week), "standings": table}
 
 
+@app.get("/api/season/{season_id}/schedule/{slug}")
+def season_team_schedule(season_id: str, slug: str) -> dict:
+    """Any team's schedule with results, byes, ranks and opponent records."""
+    state = _season_state(season_id)
+    if slug not in _teams:
+        raise HTTPException(404, "unknown team")
+    return season.team_schedule_view(state, slug)
+
+
 @app.get("/api/season/{season_id}/standings")
 def season_standings(season_id: str) -> dict:
     return {"standings": season.standings(_season_state(season_id))}

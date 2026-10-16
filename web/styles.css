@@ -692,3 +692,10 @@ body:not(.team-theme) .hdr-rank { background: var(--panel-2); border-color: var(
   .modal.modal-nested { padding: 28px 0 0; }
   .modal.modal-nested .modal-panel { max-height: calc(100dvh - 28px); border-radius: 14px 14px 0 0; border-top: 1px solid var(--border); }
 }
+
+/* team schedule picker and the games modal */
+.schedule-pick { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.games-modal .stats-controls { margin-bottom: 8px; }
+.games-modal .view-chips { max-height: 80px; overflow-y: auto; }
+.tab-body h3 .pos { margin-left: 10px; font-weight: 400; font-size: 13px; color: var(--muted); }
+#season-tabs button[data-tab="games"] { display: none; }

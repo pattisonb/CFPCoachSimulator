@@ -1555,7 +1555,9 @@
     mineBtn.addEventListener("click", () => { st.team = s.team; st.conf = ""; renderSchedule(); });
     const allBtn = el("button", { type: "button", class: "ghost small", text: "View all games" });
     allBtn.addEventListener("click", openGamesModal);
-    row.append(sel, st.team !== s.team ? mineBtn : null, allBtn);
+    row.append(sel);
+    if (st.team !== s.team) row.append(mineBtn);
+    row.append(allBtn);
     controls.append(row);
     box.append(controls);
     const key = `${s.id}|${s.current_week}|${st.team}`;
