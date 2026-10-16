@@ -23,6 +23,7 @@ higher seed's home; quarterfinals 1v8/9, 2v7/10, 3v6/11, 4v5/12; no reseeding.
 from __future__ import annotations
 
 import json
+import random
 import math
 from pathlib import Path
 from typing import Optional
@@ -151,6 +152,35 @@ def rank(scores: dict[str, float], records: dict[str, tuple[int, int]], tiers: d
         return (-(s + params["record_weight"] * (w - l) * 0.0), -w, l)
     eligible = [t for t in scores if tiers.get(t) != "FCS"]
     return sorted(eligible, key=key)[:n]
+
+
+AP_VOTERS = 62          # ballots on the AP panel (62 in 2024, 66 in 2025)
+VOTER_NOISE = 22.0      # score noise per voter; the preseason gap between spots is about 16
+
+
+def ballots(order: list[str], scores: dict[str, float], tiers: dict[str, str], params: dict,
+            n_voters: int = AP_VOTERS, seed: int = 0) -> dict[str, dict]:
+    """First-place votes and points the way the AP publishes them. Each voter ranks the
+    listed teams by the model score plus their own noise and names 25; a first place is
+    25 points down to 1 for 25th. The totals are then handed down the published order so
+    the numbers always agree with the ranking (a close race at the top splits the
+    first-place votes; a runaway number one takes nearly all of them)."""
+    rng = random.Random(seed)
+    eff = {t: scores.get(t, 0.0) - (params["g5_discount"] if tiers.get(t) == "G5" else 0.0) for t in order}
+    first: dict[str, int] = {}
+    points: dict[str, int] = {}
+    for _ in range(n_voters):
+        ballot = sorted(order, key=lambda t: -(eff[t] + rng.gauss(0.0, VOTER_NOISE)))
+        first[ballot[0]] = first.get(ballot[0], 0) + 1
+        for i, t in enumerate(ballot[:25]):
+            points[t] = points.get(t, 0) + 25 - i
+    pts_sorted = sorted(points.values(), reverse=True)
+    first_sorted = sorted(first.values(), reverse=True)
+    out = {}
+    for i, t in enumerate(order):
+        out[t] = {"first_place": first_sorted[i] if i < len(first_sorted) else 0,
+                  "points": pts_sorted[i] if i < len(pts_sorted) else 0}
+    return out
 
 
 # ----- CFP committee model -------------------------------------------------

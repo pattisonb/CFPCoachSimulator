@@ -882,26 +882,36 @@
     }
     box.append(el("h3", { text: `${title} · ${w === 0 ? "preseason" : `after ${s.week_labels[w] || "week " + w}`}` }));
     if (kind === "cfp" && w >= 14) box.append(el("p", { class: "muted small-text", text: "Final ranking: this is the one the bracket is built from." }));
+    const voted = kind === "ap" && list.some((e) => e.points != null);
     const table = el("table", { class: "stats" });
-    table.appendChild(el("tr", {}, ["#", "Team", "Record", "Conference", "Prev", ""].map((h) => el("th", { text: h, style: ["Team", "Conference"].includes(h) ? "text-align:left" : "" }))));
+    const heads = voted ? ["#", "Team", "Record", "Pts", "Conference", "Prev", ""] : ["#", "Team", "Record", "Conference", "Prev", ""];
+    table.appendChild(el("tr", {}, heads.map((h) => el("th", { text: h, style: ["Team", "Conference"].includes(h) ? "text-align:left" : "", title: h === "Pts" ? "Poll points: 25 for a first-place vote down to 1 for 25th" : "" }))));
     for (const e of list) {
       const move = e.previous == null ? "new" : e.previous === e.rank ? "–" : e.previous > e.rank ? `▲${e.previous - e.rank}` : `▼${e.rank - e.previous}`;
+      const nameCell = el("td", { style: "text-align:left", class: "name" }, [teamPill(e.team), e.name]);
+      if (voted && e.first_place) nameCell.append(el("span", { class: "fpv", text: ` (${e.first_place})`, title: `${e.first_place} first-place vote${e.first_place === 1 ? "" : "s"}` }));
       table.appendChild(el("tr", { class: e.team === s.team ? "mine" : "" }, [
         el("td", { text: String(e.rank) }),
-        el("td", { style: "text-align:left", class: "name" }, [teamPill(e.team), e.name]),
-        el("td", { text: e.record }), el("td", { style: "text-align:left", class: "muted", text: e.conference }),
+        nameCell,
+        el("td", { text: e.record }),
+        voted ? el("td", { text: String(e.points) }) : null,
+        el("td", { style: "text-align:left", class: "muted", text: e.conference }),
         el("td", { class: "muted", text: e.previous == null ? "NR" : String(e.previous) }),
         el("td", { class: move.startsWith("▲") ? "win" : move.startsWith("▼") ? "loss" : "muted", text: move }),
       ]));
     }
     box.appendChild(table);
-    const others = kind === "ap" ? entry.ap_others : null;
+    const others = kind === "ap" ? (entry.ap_others || []).filter((e) => e.points == null || e.points > 0) : null;
     if (others && others.length) {
       const parts = others.map((e, i) => {
-        const span = el("span", { class: e.team === s.team ? "win" : "" }, [`${e.name} (${e.record})`]);
+        const span = el("span", { class: e.team === s.team ? "win" : "" }, [e.points != null ? `${e.name} ${e.points}` : `${e.name} (${e.record})`]);
         return i < others.length - 1 ? [span, ", "] : [span];
       }).flat();
-      box.appendChild(el("div", { class: "others-votes" }, [el("b", { text: "Also receiving votes: " }), ...parts]));
+      box.appendChild(el("div", { class: "others-votes" }, [el("b", { text: "Others receiving votes: " }), ...parts]));
+    }
+    if (voted) {
+      const voters = Math.round(list.reduce((a, e) => a + (e.first_place || 0), 0));
+      box.appendChild(el("p", { class: "muted small-text", text: `${voters} ballots · first-place votes in parentheses · points: 25 for first down to 1 for 25th` }));
     }
   }
 

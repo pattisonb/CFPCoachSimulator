@@ -230,8 +230,9 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None) -
     tiers = {slug: tier_of(t) for slug, t in teams.items()}
     pre_full = polls.rank(state["scores"], {}, tiers, ap_params, n=25 + AP_OTHERS)
     pre_others = [t for t in pre_full if t not in set(preseason[:25])][:AP_OTHERS]
-    state["polls"]["0"] = {"ap": _poll_entries(preseason[:25], {}, state, teams),
-                           "ap_others": _poll_entries(pre_others, {}, state, teams, start=26)}
+    pre_votes = _ap_votes(state, preseason[:25] + pre_others, tiers, ap_params, 0)
+    state["polls"]["0"] = {"ap": _poll_entries(preseason[:25], {}, state, teams, votes=pre_votes),
+                           "ap_others": _poll_entries(pre_others, {}, state, teams, start=26, votes=pre_votes)}
     # remaining mode: replay the played weeks through the model (scores) but show the real polls
     if mode == "remaining" and current > 0:
         for w in range(1, current + 1):
@@ -430,14 +431,22 @@ def standings(state: dict) -> dict[str, list[dict]]:
 
 
 def _poll_entries(order: list[str], prev_rank: dict[str, int], state: dict, teams: dict, week: Optional[int] = None,
-                  start: int = 1) -> list[dict]:
+                  start: int = 1, votes: Optional[dict] = None) -> list[dict]:
     rec = _records(state, week)
     out = []
     for i, slug in enumerate(order, start):
         r = rec.get(slug, {"wins": 0, "losses": 0})
-        out.append({"rank": i, "team": slug, "name": teams[slug]["name"], "previous": prev_rank.get(slug),
-                    "record": f"{r['wins']}-{r['losses']}", "conference": teams[slug]["conference"]})
+        e = {"rank": i, "team": slug, "name": teams[slug]["name"], "previous": prev_rank.get(slug),
+             "record": f"{r['wins']}-{r['losses']}", "conference": teams[slug]["conference"]}
+        if votes is not None:
+            v = votes.get(slug, {"first_place": 0, "points": 0})
+            e["first_place"], e["points"] = v["first_place"], v["points"]
+        out.append(e)
     return out
+
+
+def _ap_votes(state: dict, order: list[str], tiers: dict[str, str], params: dict, week: int) -> dict[str, dict]:
+    return polls.ballots(order, state["scores"], tiers, params, seed=(state.get("seed") or 0) * 1000 + week)
 
 
 def _update_polls_after_week(state: dict, teams: dict, week: int, real_ap: Optional[list[str]] = None) -> None:
@@ -453,8 +462,9 @@ def _update_polls_after_week(state: dict, teams: dict, week: int, real_ap: Optio
     full = polls.rank(state["scores"], rec_t, tiers, ap_params, n=25 + AP_OTHERS)
     order = real_ap[:25] if real_ap else full[:25]
     others = [t for t in full if t not in set(order)][:AP_OTHERS]
-    entry = {"ap": _poll_entries(order, prev_rank, state, teams, week),
-             "ap_others": _poll_entries(others, prev_rank, state, teams, week, start=26)}
+    votes = _ap_votes(state, order + others, tiers, ap_params, week)
+    entry = {"ap": _poll_entries(order, prev_rank, state, teams, week, votes=votes),
+             "ap_others": _poll_entries(others, prev_rank, state, teams, week, start=26, votes=votes)}
     if week in CFP_WEEKS:
         opp = _opponents(state)
         opp_full = {t: [{"opp": o["opp"], "won": o["won"], "opp_record": rec_t.get(o["opp"], (0, 0))} for o in lst] for t, lst in opp.items()}

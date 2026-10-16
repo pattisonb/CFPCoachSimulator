@@ -321,6 +321,14 @@ is off by **2.2 spots** and covers **90%**. The committee model adds strength of
 wins over ranked teams, a heavier Group of Five discount, head-to-head among close teams
 and a conference-title bonus on top of the AP-style score.
 
+**First-place votes and points.** The AP tab shows the poll the way the AP publishes it:
+first-place votes in parentheses after the team, a points column (25 for a first-place
+vote down to 1 for 25th) and "Others receiving votes" with their points. The numbers come
+from 62 simulated ballots (`polls.ballots`): each voter ranks the teams by the model's
+score plus their own noise, so a close race at the top splits the first-place votes and a
+runaway number one takes nearly all of them, while the totals are handed down the
+published order so they always agree with the ranking.
+
 ### The bracket rules (2026)
 
 From NCAA.com's "How the College Football Playoff works" (Aug 27, 2026) and the CFP
