@@ -909,28 +909,84 @@ DEPTH_ROWS = [
 ]
 
 
+ROLE_POSITION = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL", "LG": "OL", "C": "OL", "RG": "OL", "RT": "OL",
+                 "LEDG": "DL", "REDG": "DL", "DT": "DL", "MIKE": "MLB", "WILL": "ROLB", "SAM": "LOLB", "CB": "CB", "FS": "S", "SS": "S",
+                 "K": "K", "P": "P"}
+OFFENSE_POSITIONS = {"QB", "RB", "WR", "TE", "OL", "K", "P"}
+RATING_KEY = {"MLB": "MLB", "ROLB": "MLB", "LOLB": "MLB"}   # linebacker roles share one rating
+
+
+def overall_at(p: dict, pos: str) -> int:
+    """A player's rating at an engine position (his own, or another one he could be moved to)."""
+    ra = p.get("ratings_at") or {}
+    key = RATING_KEY.get(pos, pos)
+    if key in ra:
+        return int(ra[key])
+    return player_overall(p) if pos == p["position"] else 0
+
+
 def apply_depth(team: dict, overrides: Optional[dict]) -> dict:
-    """A copy of the team with the season's depth-chart changes applied: the players in an
-    overridden role take the saved order, and the first N of them start, N being the
-    role's usual number of starters (three receivers, two tackles, one everywhere else).
-    KR and PR overrides pick the returner."""
+    """A copy of the team with the season's depth-chart changes applied. Players named in an
+    overridden role take that role (and its position, even from another position group),
+    in the saved order; every role then starts its usual number of players (three
+    receivers, two tackles, one everywhere else). KR and PR overrides pick the returner."""
     if not overrides:
         return team
-    out = {**team, "offense": [dict(p) for p in team["offense"]], "defense": [dict(p) for p in team["defense"]]}
-    players = out["offense"] + out["defense"]
+    out = {**team}
+    players = [dict(p) for p in team["offense"] + team["defense"]]
     by_slug = {p["slug"]: p for p in players}
+    starters = {}
+    for p in players:
+        if p.get("role") and p.get("in_game"):
+            starters[p["role"]] = starters.get(p["role"], 0) + 1
+    moved = set()
     for role, order in overrides.items():
         if role in ("KR", "PR"):
             if order and order[0] in by_slug:
                 out["kick_returner" if role == "KR" else "punt_returner"] = order[0]
             continue
-        current = [p for p in players if p.get("role") == role]
-        n_start = sum(1 for p in current if p.get("in_game"))
         chosen = [by_slug[s] for s in order if s in by_slug]
-        rest = sorted((p for p in current if p["slug"] not in set(order)), key=lambda p: p.get("depth") or 99)
-        for i, p in enumerate(chosen + rest):
-            p["role"], p["depth"], p["in_game"] = role, i + 1, i < n_start
+        for i, p in enumerate(chosen):
+            p["role"], p["depth"] = role, i + 1
+            moved.add(p["slug"])
+        rest = sorted((p for p in players if p.get("role") == role and p["slug"] not in moved), key=lambda p: p.get("depth") or 99)
+        for i, p in enumerate(rest):
+            p["depth"] = len(chosen) + i + 1
+    stat_keys = sorted({k for p in players for k in (p.get("stats") or {})})
+    for role in {p.get("role") for p in players if p.get("role")}:
+        group = sorted((p for p in players if p.get("role") == role), key=lambda p: (p.get("depth") or 99, p["name"]))
+        for i, p in enumerate(group):
+            p["depth"] = i + 1
+            p["in_game"] = i < starters.get(role, 1 if role in ROLE_POSITION else 0)
+            new_pos = ROLE_POSITION.get(role, p["position"])
+            if new_pos != p["position"]:
+                p["position"] = new_pos
+                p["stats"] = {k: 0 for k in stat_keys}   # a player crossing units needs every box-score key
+    out["offense"] = [p for p in players if p["position"] in OFFENSE_POSITIONS]
+    out["defense"] = [p for p in players if p["position"] not in OFFENSE_POSITIONS]
     return out
+
+
+def position_candidates(state: dict, slug: str, role: str) -> dict:
+    """Every player on the roster rated at one depth-chart role, best first, with where he
+    sits now, so anyone can be moved into that spot."""
+    team = apply_depth(load_teams()[slug], (state.get("depth") or {}).get(slug))
+    ss = (state.get("season_stats") or {}).get(slug, {}).get("players", {})
+    pos = "KR" if role in ("KR", "PR") else ROLE_POSITION.get(role, role)
+    current = depth_order(state, slug, role)
+    rows = []
+    for p in team["offense"] + team["defense"]:
+        rating = int(p.get("return_rating") or 0) if pos == "KR" else overall_at(p, pos)
+        rec = ss.get(f"{p['name']}|{p['position']}")
+        st = rec["stats"] if rec else {}
+        group = awards.Pool._group(p["position"], p.get("role"), st) or p["position"]
+        rows.append({"name": p["name"], "slug": p["slug"], "position": p["position"], "role": p.get("role"), "depth": p.get("depth"),
+                     "class": p.get("class"), "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"),
+                     "rating": rating, "natural": player_overall(p), "starter": bool(p.get("in_game")),
+                     "in_role": p["slug"] in current, "spot": (current.index(p["slug"]) + 1) if p["slug"] in current else None,
+                     "games": rec["games"] if rec else 0, "headline": awards.headline({"stats": st}, group) if st else ""})
+    rows.sort(key=lambda r: (-r["rating"], r["name"]))
+    return {"role": role, "position": pos, "players": rows, "current": current}
 
 
 def depth_order(state: dict, slug: str, role: str) -> list[str]:
@@ -955,8 +1011,10 @@ def move_depth(state: dict, slug: str, role: str, player: str, move: str) -> Non
         return
     order = depth_order(state, slug, role)
     if player not in order:
-        if by_slug[player]["position"] != next((by_slug[s]["position"] for s in order), by_slug[player]["position"]):
-            raise ValueError("that player does not play this position")
+        # a player from any position group can be moved into the role; he leaves his old one
+        for other, lst in overrides.items():
+            if other != role and player in lst:
+                lst.remove(player)
         order.append(player)
     i = order.index(player)
     if move == "top":

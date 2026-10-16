@@ -468,6 +468,7 @@
   // class, size, rating and season headline. Starters are the first column.
   async function renderDepthChart() {
     const s = state.season;
+    if (!s) return;
     const box = $("#tab-depth");
     box.innerHTML = "";
     const ds = depthState;

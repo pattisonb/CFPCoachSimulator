@@ -498,6 +498,17 @@ def season_depth_chart(season_id: str, slug: str) -> dict:
     return season.depth_chart_view(state, slug)
 
 
+@app.get("/api/season/{season_id}/depth/{slug}/position/{role}")
+def season_depth_position(season_id: str, slug: str, role: str) -> dict:
+    """Every player on the roster rated at one depth-chart role."""
+    state = _season_state(season_id)
+    if slug not in _teams:
+        raise HTTPException(404, "unknown team")
+    if role not in season.ROLE_POSITION and role not in ("KR", "PR"):
+        raise HTTPException(404, "unknown role")
+    return season.position_candidates(state, slug, role)
+
+
 @app.post("/api/season/{season_id}/depth/{slug}")
 def season_depth_change(season_id: str, slug: str, req: DepthRequest) -> dict:
     """Move a player on a team's depth chart (or reset the team). The change is saved with

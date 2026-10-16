@@ -68,10 +68,11 @@ def avg(r: dict, *keys: str, default: float = 50.0) -> float:
     return sum(vals) / len(vals) if vals else default
 
 
-def map_player(p: dict) -> dict:
-    """Raw engine attributes (before normalization) for one source player."""
+def map_player(p: dict, pos: str | None = None) -> dict:
+    """Raw engine attributes (before normalization) for one source player, at his own
+    position or, with `pos`, as if he played another engine position."""
     r = p["ratings"]
-    pos = POSITION_MAP.get(p["position"])
+    pos = pos or POSITION_MAP.get(p["position"])
     if pos is None:
         return {}
     out = {
@@ -178,6 +179,7 @@ def load_team(path: Path) -> dict:
             continue
         m["starter"] = p["slug"] in starters
         m["role"], m["depth"] = roles.get(p["slug"], (None, None))
+        m["_src"] = p
         # the engine finds K and P among in-game offense players
         if m["position"] == "K":
             m["starter"] = p["slug"] in st_special.get("K", [])
@@ -292,6 +294,73 @@ def normalize(teams: list[dict]) -> dict:
     return {f"{pos}:{a}": round(m, 1) for (pos, a), m in sorted(means.items())}
 
 
+ENGINE_POSITIONS = ["QB", "RB", "WR", "TE", "OL", "DL", "MLB", "CB", "S", "K", "P"]
+CORE_SKILLS = {"QB": ("passing", "decision_making"), "RB": ("elusiveness", "vision"), "WR": ("hands", "route_running"), "TE": ("hands", "run_blocking"),
+               "OL": ("run_blocking", "pass_blocking"), "DL": ("rushing", "tackling"), "MLB": ("tackling", "coverage"), "CB": ("coverage",),
+               "S": ("coverage", "tackling"), "K": ("kick_power", "kick_accuracy"), "P": ("punt_power", "punt_accuracy")}
+
+
+def player_overall(p: dict) -> int:
+    """A display rating from the engine attributes that matter at the position (the same
+    formula as season.player_overall)."""
+    pos = p["position"]
+    if pos == "K":
+        primary, secondary = ["kick_power", "kick_accuracy"], []
+    elif pos == "P":
+        primary, secondary = ["punt_power", "punt_accuracy"], []
+    elif pos == "QB":
+        primary, secondary = ["passing", "decision_making", "intelligence"], ["speed", "elusiveness"]
+    elif pos == "RB":
+        primary, secondary = ["speed", "elusiveness", "vision", "strength"], ["hands", "pass_blocking"]
+    elif pos in ("WR", "TE"):
+        primary, secondary = ["hands", "route_running", "speed"], ["run_blocking", "elusiveness"]
+    elif pos == "OL":
+        primary, secondary = ["run_blocking", "pass_blocking", "strength"], ["intelligence"]
+    elif pos == "DL":
+        primary, secondary = ["rushing", "tackling", "strength"], ["intelligence", "speed"]
+    elif pos in ("MLB", "ROLB", "LOLB"):
+        primary, secondary = ["tackling", "rushing", "coverage", "speed"], ["intelligence"]
+    else:
+        primary, secondary = ["coverage", "speed", "tackling"], ["intelligence", "hands"]
+    total = count = 0
+    for k in primary:
+        if isinstance(p.get(k), (int, float)):
+            total += p[k] * 3
+            count += 3
+    for k in secondary:
+        if isinstance(p.get(k), (int, float)):
+            total += p[k]
+            count += 1
+    return round(total / count) if count else 0
+
+
+def ratings_at_every_position(teams: list[dict], means: dict) -> None:
+    """Give every player a rating at every engine position: his source ratings run through
+    that position's attribute formulas, normalized with that position's starter means,
+    then scored like a native player. Linebacker roles share the MLB rating."""
+    for t in teams:
+        for m in t["players"]:
+            src = m.pop("_src")
+            out = {}
+            for pos in ENGINE_POSITIONS:
+                raw = map_player(src, pos)
+                attrs = {}
+                for a, v in raw.items():
+                    if a in ATTRS and isinstance(v, (int, float)):
+                        mean = means.get(f"{pos}:{a}", 50.0)
+                        attrs[a] = int(round(max(1, min(99, NEUTRAL + (v - mean) * SPREAD_SCALE))))
+                attrs["position"] = pos
+                rating = player_overall(attrs)
+                if pos != m["position"]:
+                    # away from his own position a player is no better than his weakest core skill allows
+                    core = [attrs[a] for a in CORE_SKILLS.get(pos, ()) if a in attrs]
+                    if core:
+                        rating = min(rating, min(core) + 15)
+                out[pos] = rating
+            out["KR"] = m[RETURN_ATTR]
+            m["ratings_at"] = out
+
+
 def engine_roster(t: dict) -> tuple[list[dict], list[dict]]:
     """Split a converted team into the engine's offense and defense player lists."""
     offense, defense = [], []
@@ -312,6 +381,7 @@ def main() -> None:
     paths = sorted((SRC / "teams").glob("*.json"))
     teams = [load_team(p) for p in paths]
     means = normalize(teams)
+    ratings_at_every_position(teams, means)
     tendency_means = normalize_tendencies(teams)
     print("league tendency means before centring:", tendency_means)
     print("teams with observed 2026 tendencies:", apply_observed_tendencies(teams))
