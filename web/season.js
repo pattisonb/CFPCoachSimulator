@@ -1,7 +1,7 @@
 /* Season page: play a season week by week with polls, standings, the bracket and the playoff. */
 (function () {
   "use strict";
-  const { $, el, SBOX_IDS, renderScoreboard, renderScoring, renderTeamStats, renderPlayers, renderDrives } = window.CFP;
+  const { $, el, SBOX_IDS, teamPill, renderScoreboard, renderScoring, renderTeamStats, renderPlayers, renderDrives } = window.CFP;
 
   const state = { teams: [], season: null, viewWeek: null, tab: "games", timer: null, standings: null };
 
@@ -150,7 +150,7 @@
     const r = s.record;
     $("#season-title").innerHTML = "";
     $("#season-title").append(
-      el("span", { class: "pill-inline", style: `background:${color(s.team)}` }),
+      teamPill(s.team),
       s.team_name, el("span", { class: "rec", text: `${r.wins}-${r.losses}` }),
       el("span", { class: "muted", style: "font-size:14px;margin-left:8px", text: `${r.conf_wins}-${r.conf_losses} ${s.conference}` }),
     );
@@ -246,7 +246,7 @@
     let r;
     try { r = await api(`/api/season/${s.id}/review`); } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
     const m = r.mine;
-    const pill = (slug) => el("span", { class: "pill-inline", style: `background:${color(slug)}` });
+    const pill = (slug) => teamPill(slug);
     const team = (slug, text, cls = "") => el("span", { class: `review-team ${cls}` }, [pill(slug), text]);
     const weekName = (w) => s.week_labels[w] || `Week ${w}`;
 
@@ -483,9 +483,9 @@
           card.append(el("div", { class: "muted", text: "No eligible teams left for this bowl." }));
         } else {
           card.append(el("div", { class: "bowl-match" }, [
-            el("span", { class: aw ? "win" : "" }, [el("span", { class: "pill-inline", style: `background:${color(b.away)}` }), b.away_name, played ? el("b", { text: ` ${b.away_score}` }) : null]),
+            el("span", { class: aw ? "win" : "" }, [teamPill(b.away), b.away_name, played ? el("b", { text: ` ${b.away_score}` }) : null]),
             el("span", { class: "muted", text: " vs " }),
-            el("span", { class: hw ? "win" : "" }, [el("span", { class: "pill-inline", style: `background:${color(b.home)}` }), b.home_name, played ? el("b", { text: ` ${b.home_score}` }) : null]),
+            el("span", { class: hw ? "win" : "" }, [teamPill(b.home), b.home_name, played ? el("b", { text: ` ${b.home_score}` }) : null]),
           ]));
         }
         const bits = [];
@@ -630,7 +630,7 @@
     list.forEach((r, i) => {
       table.append(el("tr", { class: r.team === s.team ? "mine" : "" }, [
         el("td", { class: "muted", text: String(i + 1) }),
-        el("td", { class: "name" }, [el("span", { class: "pill-inline", style: `background:${color(r.team)}` }), r.name, el("span", { class: "pos", text: r.conference })]),
+        el("td", { class: "name" }, [teamPill(r.team), r.name, el("span", { class: "pos", text: r.conference })]),
         ...TEAM_COLS.map((c) => el("td", { text: c[1] === null ? `${r.wins}-${r.losses}` : fmtStat(r[c[1]], c[2]) })),
       ]));
     });
@@ -696,7 +696,7 @@
       table.append(el("tr", {}, [
         el("td", { class: "muted", text: String(i + 1) }),
         el("td", { class: "name" }, [p.name, el("span", { class: "pos", text: p.position })]),
-        ps.team ? null : el("td", { class: "left" }, [el("span", { class: "pill-inline", style: `background:${color(p.team)}` }), p.team_name]),
+        ps.team ? null : el("td", { class: "left" }, [teamPill(p.team), p.team_name]),
         el("td", { text: String(p.games) }),
         ...cols.map((c) => el("td", { text: String(c[1](p)) })),
       ]));
@@ -760,7 +760,7 @@
       const move = e.previous == null ? "new" : e.previous === e.rank ? "–" : e.previous > e.rank ? `▲${e.previous - e.rank}` : `▼${e.rank - e.previous}`;
       table.appendChild(el("tr", { class: e.team === s.team ? "mine" : "" }, [
         el("td", { text: String(e.rank) }),
-        el("td", { style: "text-align:left", class: "name" }, [el("span", { class: "pill-inline", style: `background:${color(e.team)}` }), e.name]),
+        el("td", { style: "text-align:left", class: "name" }, [teamPill(e.team), e.name]),
         el("td", { text: e.record }), el("td", { style: "text-align:left", class: "muted", text: e.conference }),
         el("td", { class: "muted", text: e.previous == null ? "NR" : String(e.previous) }),
         el("td", { class: move.startsWith("▲") ? "win" : move.startsWith("▼") ? "loss" : "muted", text: move }),
@@ -797,7 +797,7 @@
     for (const x of b.seeds) {
       seeds.appendChild(el("tr", { class: x.team === s.team ? "mine" : "" }, [
         el("td", { text: String(x.seed) }),
-        el("td", { style: "text-align:left", class: "name" }, [el("span", { class: "pill-inline", style: `background:${color(x.team)}` }), x.name]),
+        el("td", { style: "text-align:left", class: "name" }, [teamPill(x.team), x.name]),
         el("td", { text: String(x.rank) }), el("td", { style: "text-align:left", class: "muted", text: x.bid }),
         el("td", { class: "muted", text: x.bye ? "bye" : "" }),
       ]));
@@ -881,7 +881,7 @@
     seeded.forEach((t, i) => {
       table.appendChild(el("tr", { class: t === s.team ? "mine" : "" }, [
         el("td", { text: String(i + 1) }),
-        el("td", { style: "text-align:left", class: "name" }, [el("span", { class: "pill-inline", style: `background:${color(t)}` }), name(t)]),
+        el("td", { style: "text-align:left", class: "name" }, [teamPill(t), name(t)]),
         el("td", { text: pos[t] ? String(pos[t]) : "NR" }), el("td", { style: "text-align:left", class: "muted", text: reason[t] || "at-large" }),
         el("td", { class: "muted", text: i < 4 ? "bye" : "" }),
       ]));

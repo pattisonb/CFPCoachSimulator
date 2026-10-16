@@ -23,6 +23,51 @@ window.CFP = (function () {
 
   const SBOX_IDS = { scoreRow: "#sbox-score-row", quarters: "#sbox-quarters", meta: "#sbox-meta", scoring: "#sbox-scoring", team: "#sbox-team", home: "#sbox-home", away: "#sbox-away", drives: "#sbox-drives" };
 
+  // A small square in the team's colors: primary and secondary split on a diagonal,
+  // the accent color as the border. Teams without an accent get a theme-aware ring.
+  function teamPill(slug) {
+    const t = teamsBySlug[slug];
+    const col = (t && t.colors) || {};
+    const c1 = col.primary || "#888", c2 = col.secondary || c1, c3 = col.accent;
+    const node = document.createElement("span");
+    node.className = `pill-inline team-pill${c3 ? "" : " no-accent"}`;
+    node.style.setProperty("--c1", c1);
+    node.style.setProperty("--c2", c2);
+    if (c3) node.style.setProperty("--c3", c3);
+    node.title = t ? t.name : "";
+    return node;
+  }
+
+  // ----- theme (dark / light) -------------------------------------------------
+  const THEME_KEY = "cfp.theme";
+  function currentTheme() {
+    const set = document.documentElement.dataset.theme;
+    if (set) return set;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  }
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = theme === "light" ? "#ffffff" : "#131a2e";
+    for (const b of document.querySelectorAll(".btn-theme")) {
+      b.textContent = theme === "light" ? "\u263E" : "\u2600";
+      b.title = theme === "light" ? "Switch to dark mode" : "Switch to light mode";
+    }
+  }
+  function initTheme() {
+    let saved = null;
+    try { saved = localStorage.getItem(THEME_KEY); } catch (_) { /* ignore */ }
+    applyTheme(saved || currentTheme());
+    for (const b of document.querySelectorAll(".btn-theme")) {
+      b.addEventListener("click", () => {
+        const next = currentTheme() === "light" ? "dark" : "light";
+        try { localStorage.setItem(THEME_KEY, next); } catch (_) { /* ignore */ }
+        applyTheme(next);
+      });
+    }
+  }
+  document.addEventListener("DOMContentLoaded", initTheme);
+
   function teamColor(g, side) {
     const t = teamsBySlug[g[`${side}_slug`]];
     return t && t.colors && t.colors.primary ? t.colors.primary : (side === "home" ? "#4f8cff" : "#ff6b5a");
@@ -303,6 +348,6 @@ window.CFP = (function () {
 
   function fmtTime(sec) { return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`; }
 
-  return { $, el, teamsBySlug, GAME_IDS, SBOX_IDS, teamColor, renderScoreboard, renderScoring, renderTeamStats,
+  return { $, el, teamsBySlug, GAME_IDS, SBOX_IDS, teamColor, teamPill, applyTheme, renderScoreboard, renderScoring, renderTeamStats,
            renderPlayers, renderDrives, label, quarterName, kindLabel, resultLabel, fieldPos, fmtTime };
 })();

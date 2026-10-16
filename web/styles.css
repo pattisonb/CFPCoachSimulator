@@ -12,6 +12,22 @@
   --good: #3ddc84;
   --bad: #ff5c5c;
   --radius: 10px;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --pill-ring: rgba(255, 255, 255, 0.45);   /* border of a team pill with no accent color */
+  color-scheme: dark;
+}
+/* light theme: picked with the toggle, or by the system when nothing is picked */
+:root[data-theme="light"] {
+  --bg: #eef1f7; --panel: #ffffff; --panel-2: #f3f5fa; --border: #d6dceb; --text: #141b2e; --muted: #5d6882;
+  --accent: #e39b14; --accent-ink: #1a1200; --home: #2d6be0; --away: #e0503f; --good: #1d9c58; --bad: #d63f3a;
+  --shadow: rgba(20, 27, 46, 0.18); --pill-ring: rgba(20, 27, 46, 0.35); color-scheme: light;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eef1f7; --panel: #ffffff; --panel-2: #f3f5fa; --border: #d6dceb; --text: #141b2e; --muted: #5d6882;
+    --accent: #e39b14; --accent-ink: #1a1200; --home: #2d6be0; --away: #e0503f; --good: #1d9c58; --bad: #d63f3a;
+    --shadow: rgba(20, 27, 46, 0.18); --pill-ring: rgba(20, 27, 46, 0.35); color-scheme: light;
+  }
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
@@ -179,7 +195,7 @@ table.compare td.better { font-weight: 800; }
 /* sliders drawer */
 .drawer {
   position: fixed; top: 61px; right: 0; bottom: 0; width: 360px; z-index: 6; overflow: auto;
-  background: var(--panel); border-left: 1px solid var(--border); padding: 16px; box-shadow: -8px 0 24px rgba(0,0,0,0.4);
+  background: var(--panel); border-left: 1px solid var(--border); padding: 16px; box-shadow: -8px 0 24px var(--shadow);
 }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .slider-group h3 { margin-top: 14px; }
@@ -294,6 +310,11 @@ table.stats tr.clickable:hover td { background: var(--panel-2); }
 .season-head-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
 .season-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .pill-inline { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: middle; }
+/* team pill: primary over secondary on a diagonal, the accent color as the border;
+   with no accent, a ring that reads against the current theme */
+.team-pill { width: 12px; height: 12px; background: linear-gradient(135deg, var(--c1) 0 50%, var(--c2) 50% 100%); border: 1.5px solid var(--c3, var(--pill-ring)); border-radius: 3px; }
+.team-pill.no-accent { border-style: solid; box-shadow: inset 0 0 0 1px var(--pill-ring); border-color: transparent; }
+.btn-theme { padding: 6px 9px; line-height: 1; font-size: 15px; }
 .week-strip { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
 .week-chip { padding: 4px 8px; font-size: 12px; border-radius: 6px; background: var(--panel-2); border: 1px solid transparent; color: var(--muted); }
 .week-chip.future { opacity: 0.45; }
@@ -345,7 +366,7 @@ table.stats td.name, table.stats th.left, table.stats td.left { text-align: left
 .review-card { background: var(--panel-2); border-radius: 10px; padding: 14px 16px; min-width: 0; }
 .review-card.mine { border: 1px solid var(--accent); }
 .review-big { font-size: 24px; font-weight: 800; margin: 2px 0 6px; line-height: 1.2; }
-.review-big .pill-inline { width: 14px; height: 14px; border-radius: 4px; }
+.review-big .pill-inline { width: 16px; height: 16px; border-radius: 4px; }
 .review-card.surprise { border: 1px solid var(--good); }
 .review-card.letdown { border: 1px solid var(--bad); }
 .review-runners { margin-top: 10px; display: grid; gap: 4px; }
