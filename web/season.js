@@ -425,7 +425,7 @@
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "box"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth"]) $(`#tab-${t}`).hidden = t !== name;
   }
 
   function renderTab() {
@@ -2238,12 +2238,16 @@
     try {
       const g = await api(`/api/season/${s.id}/game/${eventId}`);
       window.CFP.currentBoxSlugs = { home: g.home_slug, away: g.away_slug };
+      // the box score lives in #tab-box; it is rendered in place, then moved into the shared modal
+      const node = state.boxNode || (state.boxNode = $("#tab-box"));
+      if (!node.isConnected) document.body.append(node);
+      node.hidden = false;
       renderScoreboard(g, SBOX_IDS); renderScoring(g, SBOX_IDS); renderTeamStats(g, SBOX_IDS);
       renderPlayers(g.home, $("#sbox-home")); renderPlayers(g.away, $("#sbox-away")); renderDrives(g, SBOX_IDS);
-      $("#season-tabs button[data-tab='box']").hidden = false;
-      selectTab("box");
       selectBoxTab("scoring");
-      window.scrollTo({ top: 0 });
+      const title = el("span", {}, [teamPill(g.away_slug), `${g.away.name} ${g.away.score}`, el("span", { class: "muted", text: " at " }), teamPill(g.home_slug), `${g.home.name} ${g.home.score}`,
+        el("span", { class: "muted small-text", text: g.overtime_periods ? ` · Final / ${g.overtime_periods}OT` : " · Final" })]);
+      openModal(title, node);
     } catch (err) { toast(`Could not load that game: ${err.message}`, 3000); }
   }
   function selectBoxTab(name) {
