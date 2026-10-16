@@ -67,11 +67,9 @@
           <button data-tab="bracket" type="button">Bracket</button>
           <button data-tab="bowls" type="button">Bowls</button>
           <button data-tab="awards" type="button">Awards</button>
-          <button data-tab="stats" type="button">Stats</button>
           <button data-tab="box" type="button" hidden>Box Score</button>
-          <button data-tab="player" type="button" hidden>Player</button>
-          <button data-tab="player" type="button" hidden>Player</button>
-          <button data-tab="player" type="button" hidden>Player</button>
+          <button data-tab="stats" type="button">Stats</button>
+
         </nav>
 
         <div class="panel" id="sim-overlay" hidden>
@@ -107,9 +105,6 @@
           <div id="tab-playerstats" hidden></div>
         </div>
         <div class="panel tab-body" id="tab-depth" hidden></div>
-        <div class="panel tab-body" id="tab-player" hidden></div>
-        <div class="panel tab-body" id="tab-player" hidden></div>
-        <div class="panel tab-body" id="tab-player" hidden></div>
         <div id="tab-box" hidden>
           <div class="scoreboard panel">
             <div class="score-row" id="sbox-score-row"></div>
@@ -133,6 +128,16 @@
     </section>
   </main>
 
+  <div id="modal" class="modal" hidden>
+    <div class="modal-backdrop" id="modal-backdrop"></div>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-head">
+        <div id="modal-title" class="modal-title"></div>
+        <button class="ghost modal-close" id="modal-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
   <div id="toast" class="toast" hidden></div>
   <script src="/gameview.js"></script>
   <script src="/season.js"></script>

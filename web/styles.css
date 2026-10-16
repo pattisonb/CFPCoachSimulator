@@ -628,3 +628,34 @@ button.tiny { padding: 0 5px; font-size: 11px; line-height: 18px; min-height: 0;
   .player-grid { grid-template-columns: 1fr; }
   .rating-row { grid-template-columns: 96px 1fr 30px; }
 }
+
+/* games and schedule tables in the standings style */
+.games-table td.team-cell { white-space: nowrap; }
+.games-table td.team-cell.win { font-weight: 700; }
+.games-table td.team-cell.lost, .schedule-table tr.lost td.name { opacity: 0.7; }
+.games-table td.score { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 34px; }
+.games-table td.score.win { color: var(--good); }
+.schedule-table tr.bye td { color: var(--muted); background: color-mix(in srgb, var(--panel-2) 50%, transparent); }
+.schedule-table td.score { font-variant-numeric: tabular-nums; font-weight: 700; }
+
+/* shared modal: player pages (and box scores once converted) */
+.modal { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal[hidden] { display: none; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(5, 8, 18, 0.6); backdrop-filter: blur(2px); }
+.modal-panel { position: relative; width: min(1100px, 100%); max-height: calc(100vh - 40px); background: var(--panel); color: var(--text);
+  border: 1px solid var(--border); border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45); }
+.modal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.modal-title { font-weight: 800; font-size: 16px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modal-close { font-size: 15px; padding: 5px 10px; line-height: 1; flex: none; }
+.modal-body { overflow: auto; padding: 14px 16px; -webkit-overflow-scrolling: touch; }
+body.modal-open { overflow: hidden; }
+@media (max-width: 700px) {
+  .modal { padding: 0; align-items: stretch; }
+  .modal-panel { width: 100%; max-height: 100dvh; border-radius: 0; border: 0; }
+  .modal-body { padding: 12px; }
+}
+
+.tag.dev { display: inline-flex; align-items: center; gap: 4px; }
+.dev-dots { display: inline-flex; gap: 2px; }
+.dev-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); display: inline-block; }
+.dev-dot.on { background: var(--accent); }

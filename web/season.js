@@ -156,7 +156,7 @@
           hideSimOverlay();
           if (j.status === "error") toast(`Simulation error: ${j.error}`, 6000);
           const s = await api(`/api/season/${state.season.id}`);
-          state.viewWeek = s.done ? s.current_week : Math.min(s.current_week + 1, 19);
+          state.viewWeek = s.done ? s.current_week : Math.min(s.current_week + 1, 20);
           showSeason(s);
           loadSeasons();
           setBusy(false);
@@ -232,7 +232,7 @@
       state.simShown.add(key);
       const vs = r.venue === "away" ? "at" : "vs";
       const row = el("div", { class: `sim-result new ${r.won ? "win" : "loss"}` }, [
-        el("span", { class: "muted", text: s.week_labels[r.week] && r.week > 13 ? (s.week_labels[r.week] || "").replace("Championship week", "CCG").replace(" & bowls", "").replace(" & New Year bowls", "") : `Week ${r.week}` }),
+        el("span", { class: "muted", text: s.week_labels[r.week] && r.week > 14 ? (s.week_labels[r.week] || "").replace("Championship week", "CCG").replace(" & bowls", "").replace(" & New Year bowls", "") : `Week ${r.week}` }),
         el("span", { class: "wl", text: r.won ? "W" : "L" }),
         el("span", {}, [`${vs} `, teamPill(r.opponent), r.opponent_name, r.title ? el("span", { class: "muted small-text", text: ` · ${r.title}` }) : null]),
         el("span", { class: "score", text: `${r.points_for}–${r.points_against}${r.overtime ? " OT" : ""}` }),
@@ -348,7 +348,7 @@
     if (opening) applyTeamTheme(s.team);
     state.standings = null;
     if (opening && sidebarPreferred() !== "1") setSidebar(false, false);
-    const upNext = s.done ? s.current_week : Math.min(s.current_week + 1, 19);
+    const upNext = s.done ? s.current_week : Math.min(s.current_week + 1, 20);
     if (state.viewWeek == null || state.viewWeek > upNext) state.viewWeek = upNext;
     $("#season-empty").hidden = true;
     $("#season").hidden = false;
@@ -373,7 +373,7 @@
     strip.innerHTML = "";
     const weeks = [0, ...s.weeks];
     for (const w of weeks) {
-      const label = w === 0 ? "Pre" : w <= 13 ? `W${w}` : (s.week_labels[w] || `W${w}`).replace("Championship week", "CCG").replace("National championship", "Title").replace("Quarterfinals", "QF").replace("Semifinals", "SF").replace("First round", "R1").replace("Selection", "Sel");
+      const label = w === 0 ? "Pre" : w <= 14 ? `W${w}` : (s.week_labels[w] || `W${w}`).replace("Championship week", "CCG").replace("National championship", "Title").replace("Quarterfinals", "QF").replace("Semifinals", "SF").replace("First round", "R1").replace("Selection", "Sel");
       const next = !s.done && w === s.current_week + 1;
       const b = el("button", { type: "button", class: `week-chip ${w === state.viewWeek ? "active" : ""} ${w > s.current_week ? "future" : ""} ${w === s.current_week ? "current" : ""} ${next ? "next" : ""}`, text: label, title: `${s.week_labels[w] || (w === 0 ? "Preseason" : "")} · ${weekDateText(s, w)}` });
       b.addEventListener("click", () => { if (state.simming) return; state.viewWeek = w; renderWeekStrip(); renderTab(); });
@@ -395,7 +395,7 @@
     if (wd.start === wd.end) return fmtDay(wd.end);
     const a = parseDay(wd.start), b = parseDay(wd.end);
     const span = a.getMonth() === b.getMonth() ? `${MONTHS[a.getMonth()]} ${a.getDate()}–${b.getDate()}, ${b.getFullYear()}` : `${MONTHS[a.getMonth()]} ${a.getDate()} – ${MONTHS[b.getMonth()]} ${b.getDate()}, ${b.getFullYear()}`;
-    return w <= 13 && wd.main ? `${fmtDay(wd.main)} (${span})` : span;
+    return w <= 14 && wd.main ? `${fmtDay(wd.main)} (${span})` : span;
   }
 
   function simDateText(s) {
@@ -425,7 +425,7 @@
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "box", "player"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "box"]) $(`#tab-${t}`).hidden = t !== name;
   }
 
   function renderTab() {
@@ -439,7 +439,6 @@
     else if (t === "bowls") renderBowls();
     else if (t === "summary") renderSummary();
     else if (t === "awards") renderAwards();
-    else if (t === "player") { /* rendered by openPlayer */ }
     else if (t === "stats") renderStats();
     else if (t === "depth") renderDepthChart();
   }
@@ -552,6 +551,44 @@
 
   // ----- season summary ------------------------------------------------------
 
+  // ----- shared modal ----------------------------------------------------------
+  // openModal(title, node): shows node in the overlay with a title and a close button.
+  // Esc, the backdrop, the close button and the browser's Back all close it (opening pushes
+  // a history entry, so Back on a phone closes the modal instead of leaving the page).
+  const modalState = { open: false, pushed: false };
+
+  function openModal(title, node) {
+    const m = $("#modal");
+    const t = $("#modal-title");
+    t.innerHTML = "";
+    t.append(typeof title === "string" ? document.createTextNode(title) : title);
+    const body = $("#modal-body");
+    body.innerHTML = "";
+    body.append(node);
+    body.scrollTop = 0;
+    m.hidden = false;
+    document.body.classList.add("modal-open");
+    if (!modalState.open) {
+      try { history.pushState({ cfpModal: true }, ""); modalState.pushed = true; } catch (e) { modalState.pushed = false; }
+    }
+    modalState.open = true;
+    $("#modal-close").focus({ preventScroll: true });
+  }
+
+  function closeModal(fromHistory = false) {
+    if (!modalState.open) return;
+    modalState.open = false;
+    $("#modal").hidden = true;
+    document.body.classList.remove("modal-open");
+    if (!fromHistory && modalState.pushed) { modalState.pushed = false; history.back(); }
+    modalState.pushed = false;
+  }
+
+  window.addEventListener("popstate", () => { if (modalState.open) closeModal(true); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modalState.open) closeModal(); });
+  $("#modal-backdrop").addEventListener("click", () => closeModal());
+  $("#modal-close").addEventListener("click", () => closeModal());
+
   // ----- player profiles ------------------------------------------------------
   // Any element with data-player="team|name|position" opens the player's page. The page
   // is its own tab (like the box score) with a Back button to the tab you came from.
@@ -583,12 +620,9 @@
       catch (err) { toast(`Could not load that player: ${err.message}`, 3000); return; }
       playerState.cache.set(key, p);
     }
-    if (state.tab !== "player") playerState.back = state.tab;
-    renderPlayer(p);
-    $("#season-tabs button[data-tab='player']").hidden = false;
-    selectTab("player");
-    state.tab = "player";
-    window.scrollTo({ top: 0 });
+    const node = el("div", { class: "player-page" });
+    renderPlayer(p, node);
+    openModal(`${p.jersey ? "#" + p.jersey + " " : ""}${p.name}`, node);
   }
 
   function headlineTiles(p) {
@@ -607,9 +641,8 @@
     return tiles;
   }
 
-  function renderPlayer(p) {
+  function renderPlayer(p, box) {
     const s = state.season;
-    const box = $("#tab-player");
     box.innerHTML = "";
     const team = p.team;
     const t = window.CFP.teamsBySlug[team.slug] || {};
@@ -618,14 +651,18 @@
 
     // header: back link, hero in team colours
     const bar = el("div", { class: "player-bar" }, [
-      (() => { const b = el("button", { type: "button", class: "ghost", text: "‹ Back" }); b.addEventListener("click", () => { state.tab = playerState.back || "games"; renderTab(); }); return b; })(),
       el("span", { class: "muted small-text", text: `${team.name}${team.rank ? ` · #${team.rank}` : ""} · ${team.record} · ${team.conference}` }),
     ]);
     box.append(bar);
     const hero = el("div", { class: `player-hero ${team.slug === s.team ? "mine" : ""}` });
     hero.style.setProperty("--p-primary", primary);
     hero.style.setProperty("--p-secondary", col.secondary || primary);
-    const facts = [p.position + (p.role && !["QB", "WR", "TE", "K", "P", "HB", "CB"].includes(p.role) ? ` · ${p.role}` : ""), p.class_name, p.height && p.weight ? `${p.height}, ${p.weight} lbs` : (p.height || ""), p.dev_trait ? `${p.dev_trait} prospect` : ""].filter(Boolean);
+    const facts = [p.position + (p.role && !["QB", "WR", "TE", "K", "P", "HB", "CB"].includes(p.role) ? ` · ${p.role}` : ""), p.class_name, p.height && p.weight ? `${p.height}, ${p.weight} lbs` : (p.height || "")].filter(Boolean);
+    // development trait on its four-tier scale (Normal, Impact, Star, Elite): how fast he improves, not a recruiting ranking
+    const DEV_TIERS = ["Normal", "Impact", "Star", "Elite"];
+    const devTier = DEV_TIERS.indexOf(p.dev_trait || "");
+    const devTag = devTier >= 0 ? el("span", { class: "tag dev", title: "Development trait (EA): Normal, Impact, Star or Elite. How quickly the player improves; not a recruiting star rating." }, [
+      el("span", { class: "dev-dots" }, DEV_TIERS.map((_, i) => el("span", { class: `dev-dot ${i <= devTier ? "on" : ""}` }))), ` ${p.dev_trait}`]) : null;
     hero.append(
       el("div", { class: "player-hero-main" }, [
         (() => { const pill = teamPill(team.slug); pill.classList.add("big"); return pill; })(),
@@ -636,6 +673,7 @@
             p.starter ? el("span", { class: "tag good", text: "Starter" }) : el("span", { class: "tag", text: p.depth ? `${p.role || p.position} #${p.depth}` : "Reserve" }),
             p.injured ? el("span", { class: "tag bad", text: "Injured" }) : null,
             p.games ? el("span", { class: "tag", text: `${p.games} of ${p.team_games} games` }) : el("span", { class: "tag", text: "No games yet" }),
+            devTag,
           ]),
         ]),
       ]),
@@ -724,12 +762,12 @@
     table.append(el("tr", {}, [el("th", { text: "Wk" }), el("th", { class: "left", text: "Opponent" }), el("th", { text: "Result" }), ...cols.map(([lbl]) => el("th", { text: lbl }))]));
     for (const g of p.game_log) {
       const row = el("tr", { class: "clickable" }, [
-        el("td", { class: "muted", text: g.week > 13 ? (s.week_labels[g.week] || "").replace("Championship week", "CCG").replace(" & bowls", "").replace(" & New Year bowls", "") : String(g.week) }),
+        el("td", { class: "muted", text: g.week > 14 ? (s.week_labels[g.week] || "").replace("Championship week", "CCG").replace(" & bowls", "").replace(" & New Year bowls", "") : String(g.week) }),
         el("td", { class: "left" }, [`${g.venue === "away" ? "at " : "vs "}`, teamPill(g.opponent), g.opponent_name, g.title ? el("span", { class: "muted small-text", text: ` · ${g.title}` }) : null]),
         el("td", { class: g.won ? "win" : "loss", text: `${g.won ? "W" : "L"} ${g.points_for}–${g.points_against}` }),
         ...cols.map(([, f]) => el("td", { text: String(f(g.stats)) })),
       ]);
-      row.addEventListener("click", () => openBox(g.event_id));
+      row.addEventListener("click", () => { closeModal(); openBox(g.event_id); });
       table.append(row);
     }
     return el("div", { class: "table-scroll" }, [table]);
@@ -1150,7 +1188,7 @@
     if (high.children.length > 1) results.append(high);
     if (m.postseason.length) {
       const ps = el("div", {}, [el("h3", { text: "Postseason" })]);
-      const roundLabel = { 16: "First round", 17: "Quarterfinal", 18: "Semifinal", 19: "Final" };
+      const roundLabel = { 17: "First round", 18: "Quarterfinal", 19: "Semifinal", 20: "Final" };
       for (const l of m.postseason) {
         const label = l.kind === "ccg" ? "Conf. title" : l.kind === "bowl" ? "Bowl" : roundLabel[l.week] || "Playoff";
         const note = l.kind === "playoff" && l.week === 19 ? "" : l.kind === "playoff" ? bowlOf(l) : l.title || "";
@@ -1163,7 +1201,7 @@
     // ---- surprise and disappointment ----
     if (r.surprises.length || r.disappointments.length) {
       // one sentence on the team's AP path: where it started, its peak, where it ended
-      const wk = (w) => (w <= 13 ? `Week ${w}` : (s.week_labels[w] || `week ${w}`).toLowerCase().replace("championship week", "championship week").replace("selection", "selection day"));
+      const wk = (w) => (w <= 14 ? `Week ${w}` : (s.week_labels[w] || `week ${w}`).toLowerCase().replace("championship week", "championship week").replace("selection", "selection day"));
       const expl = (x, cls) => {
         const endWord = r.done ? "finished" : "sits";
         const start = x.preseason_rank ? `Started the season #${x.preseason_rank}` : "Started the season unranked";
@@ -1291,8 +1329,8 @@
     list = list.slice().sort((a, b) => { const ka = key(a), kb = key(b); for (let i = 0; i < ka.length; i++) { if (ka[i] < kb[i]) return -1; if (ka[i] > kb[i]) return 1; } return 0; });
     if (!list.length) { box.append(el("p", { class: "muted", text: "No bowls match that filter." })); return; }
 
-    const groups = { 16: "Early bowls (Dec 15-24)", 17: "Holiday week (Dec 26-31)", 18: "New Year's bowls (Jan 2)" };
-    const rankWeek = (b) => (b.projected ? (s.current_week || 14) : 14);
+    const groups = { 17: "Early bowls (Dec 15-24)", 18: "Holiday week (Dec 26-31)", 19: "New Year's bowls (Jan 2)" };
+    const rankWeek = (b) => (b.projected ? (s.current_week || 15) : 15);
     const side = (slug, name, record, won, b) => el("span", { class: won ? "win" : "" }, [teamPill(slug), rankTag(slug, rankWeek(b)), name, record ? el("span", { class: "muted small-text", text: ` (${record})` }) : null]);
     const card = (b) => {
       const played = b.played;
@@ -1330,7 +1368,7 @@
       return c;
     };
     if (bowlsState.sort === "date") {
-      for (const w of [16, 17, 18]) {
+      for (const w of [17, 18, 19]) {
         const wk = list.filter((b) => b.week === w);
         if (!wk.length) continue;
         box.append(el("h3", { text: groups[w] }));
@@ -1394,23 +1432,29 @@
     box.append(el("h3", { text: `${label} · ${shown.length === data.games.length ? `${data.games.length} games` : `${shown.length} of ${data.games.length} games`}` }));
     if (!shown.length) { box.append(el("p", { class: "muted", text: "No games match that filter." })); return; }
     const table = el("table", { class: "stats games-table" });
+    table.append(el("tr", {}, ["Away", "", "", "Home", "", "Game"].map((h, i) => el("th", { class: [0, 3, 5].includes(i) ? "left" : "", text: h }))));
+    const fictional = (slug) => !!((window.CFP.teamsBySlug[slug] || {}).fictional);   // FCS stand-ins play many schedules: no record
+    const teamCell = (slug, display, rank, record, won, lost) => el("td", { class: `left name team-cell ${won ? "win" : ""} ${lost ? "lost" : ""}` }, [
+      teamPill(slug), rank ? el("span", { class: "rank", text: `#${rank} ` }) : null, display,
+      record && !fictional(slug) ? el("span", { class: "pos", text: record }) : null,
+    ]);
     for (const g of shown) {
       const played = g.played;
       const hw = played && g.home_score > g.away_score, aw = played && g.away_score > g.home_score;
-      const rk = (r) => (r ? el("span", { class: "rank", text: `#${r} ` }) : null);
+      const note = [g.title, g.site, played ? (g.overtime ? `OT${g.overtime > 1 ? g.overtime : ""}` : g.real ? "real result" : "") : (g.neutral ? "neutral site" : "")].filter(Boolean).join(" · ");
       const tr = el("tr", { class: `${g.mine ? "mine" : ""} ${g.has_box ? "clickable" : ""}` }, [
-        el("td", { class: "muted small-text" }, [g.title || (g.neutral ? "neutral" : ""), g.site ? el("div", { class: "muted", style: "font-size:10px", text: g.site }) : null]),
-        el("td", { style: "text-align:left", class: aw ? "win" : "" }, [rk(g.away_rank), g.away_display]),
-        el("td", { text: played ? String(g.away_score) : "" }),
+        teamCell(g.away, g.away_display, g.away_rank, g.away_record, aw, played && !aw),
+        el("td", { class: `score ${aw ? "win" : ""}`, text: played ? String(g.away_score) : "" }),
         el("td", { class: "muted", text: g.neutral ? "vs" : "at" }),
-        el("td", { style: "text-align:left", class: hw ? "win" : "" }, [rk(g.home_rank), g.home_display]),
-        el("td", { text: played ? String(g.home_score) : "" }),
-        el("td", { class: "muted small-text", text: played ? (g.overtime ? `OT${g.overtime > 1 ? g.overtime : ""}` : g.real ? "real" : "") : "" }),
+        teamCell(g.home, g.home_display, g.home_rank, g.home_record, hw, played && !hw),
+        el("td", { class: `score ${hw ? "win" : ""}`, text: played ? String(g.home_score) : "" }),
+        el("td", { class: "left muted small-text", text: note }),
       ]);
       if (g.has_box) tr.addEventListener("click", () => openBox(g.event_id));
       table.appendChild(tr);
     }
-    box.appendChild(table);
+    box.append(el("div", { class: "table-scroll" }, [table]));
+    if (shown.some((g) => g.has_box)) box.append(el("p", { class: "muted small-text", text: "Click any played game for its box score." }));
   }
 
   function injuryTable(rows, withTeam) {
@@ -1452,24 +1496,37 @@
     const s = state.season;
     const box = $("#tab-schedule");
     box.innerHTML = "";
-    const table = el("table", { class: "stats" });
-    table.appendChild(el("tr", {}, ["Week", "Rank", "Opponent", "Where", "Result", "Score", ""].map((h) => el("th", { text: h, style: h === "Opponent" ? "text-align:left" : "" }))));
+    const table = el("table", { class: "stats schedule-table" });
+    table.appendChild(el("tr", {}, ["Week", "Date", "Rank", "Opponent", "Where", "Result", "Score", ""].map((h) => el("th", { class: ["Date", "Opponent"].includes(h) ? "left" : "", text: h }))));
+    const wk = (w) => (w <= 14 ? String(w) : (s.week_labels[w] || `W${w}`).replace("Championship week", "CCG").replace("Selection", "Sel").replace(" & bowls", "").replace(" & New Year bowls", ""));
     for (const g of s.schedule) {
-      const prefix = g.venue === "away" ? "at" : g.venue === "neutral" ? "vs" : "vs";
-      const oppRank = g.opponent_rank ? el("span", { class: "rank", text: `#${g.opponent_rank} ` }) : null;
-      const tr = el("tr", { class: g.has_box ? "clickable" : "" }, [
-        el("td", { text: s.week_labels[g.week] && g.week > 13 ? s.week_labels[g.week] : String(g.week) }),
-        el("td", { class: "muted", text: g.my_rank ? `#${g.my_rank}` : "" , title: "Your AP rank entering the game" }),
-        el("td", { style: "text-align:left" }, [`${prefix} `, oppRank, `${g.opponent_name}${g.title ? ` · ${g.title}` : ""}`, g.site ? el("div", { class: "muted", style: "font-size:11px", text: g.site }) : null]),
+      if (g.kind === "bye") {
+        const wd = s.week_dates && s.week_dates[g.week];
+        table.appendChild(el("tr", { class: "bye" }, [
+          el("td", { text: wk(g.week) }), el("td", { class: "left muted small-text", text: wd && wd.main ? fmtDay(wd.main, false) : "" }),
+          el("td", { class: "muted", text: g.my_rank ? `#${g.my_rank}` : "" }),
+          el("td", { class: "left muted", text: "Bye" }), el("td", {}), el("td", { class: "muted", text: "–" }), el("td", {}), el("td", {}),
+        ]));
+        continue;
+      }
+      const prefix = g.venue === "away" ? "at" : "vs";
+      const when = g.date ? fmtDay(g.date.slice(0, 10), false) : ((s.week_dates || {})[g.week] || {}).main ? fmtDay(s.week_dates[g.week].main, false) : "";
+      const tr = el("tr", { class: `${g.has_box ? "clickable" : ""} ${g.played ? (g.won ? "won" : "lost") : ""}` }, [
+        el("td", { text: wk(g.week) }),
+        el("td", { class: "left muted small-text", text: when }),
+        el("td", { class: "muted", text: g.my_rank ? `#${g.my_rank}` : "", title: "Your AP rank entering the game" }),
+        el("td", { class: "left name" }, [el("span", { class: "muted", text: `${prefix} ` }), teamPill(g.opponent), g.opponent_rank ? el("span", { class: "rank", text: `#${g.opponent_rank} ` }) : null, g.opponent_name,
+          g.opponent_record && !((window.CFP.teamsBySlug[g.opponent] || {}).fictional) ? el("span", { class: "pos", text: g.opponent_record }) : null,
+          g.title ? el("div", { class: "muted small-text", text: `${g.title}${g.site ? " · " + g.site : ""}` }) : (g.site ? el("div", { class: "muted small-text", text: g.site }) : null)]),
         el("td", { text: g.venue === "home" ? "Home" : g.venue === "away" ? "Away" : "Neutral" }),
         el("td", { class: g.played ? (g.won ? "win" : "loss") : "muted", text: g.played ? (g.won ? "W" : "L") : "—" }),
-        el("td", { text: g.played ? `${g.points_for}–${g.points_against}${g.overtime ? " OT" : ""}` : "" }),
-        el("td", { class: "muted", text: g.real ? "real result" : g.has_box ? "box score" : "" }),
+        el("td", { class: "score", text: g.played ? `${g.points_for}–${g.points_against}${g.overtime ? " OT" : ""}` : "" }),
+        el("td", { class: "muted small-text", text: g.real ? "real result" : g.has_box ? "box score" : "" }),
       ]);
       if (g.has_box) tr.addEventListener("click", () => openBox(g.event_id));
       table.appendChild(tr);
     }
-    box.appendChild(table);
+    box.append(el("div", { class: "table-scroll" }, [table]));
     if (s.current_week > 0) renderInjuries(box);
   }
 
@@ -2007,10 +2064,10 @@
   const rankTag = (slug, week) => { const r = rankAt(slug, week); return r ? el("span", { class: "rank", text: `#${r} ` }) : null; };
 
   const BRACKET_ROUNDS = [
-    { name: "First round", week: 16, games: [["cfp-r1-8", 8, 9], ["cfp-r1-5", 5, 12], ["cfp-r1-7", 7, 10], ["cfp-r1-6", 6, 11]] },
-    { name: "Quarterfinals", week: 17, games: [["cfp-qf-1", 1, "8/9"], ["cfp-qf-4", 4, "5/12"], ["cfp-qf-2", 2, "7/10"], ["cfp-qf-3", 3, "6/11"]] },
-    { name: "Semifinals", week: 18, games: [["cfp-sf-1", "QF1", "QF4"], ["cfp-sf-2", "QF2", "QF3"]] },
-    { name: "National championship", week: 19, games: [["cfp-final", "SF1", "SF2"]] },
+    { name: "First round", week: 17, games: [["cfp-r1-8", 8, 9], ["cfp-r1-5", 5, 12], ["cfp-r1-7", 7, 10], ["cfp-r1-6", 6, 11]] },
+    { name: "Quarterfinals", week: 18, games: [["cfp-qf-1", 1, "8/9"], ["cfp-qf-4", 4, "5/12"], ["cfp-qf-2", 2, "7/10"], ["cfp-qf-3", 3, "6/11"]] },
+    { name: "Semifinals", week: 19, games: [["cfp-sf-1", "QF1", "QF4"], ["cfp-sf-2", "QF2", "QF3"]] },
+    { name: "National championship", week: 20, games: [["cfp-final", "SF1", "SF2"]] },
   ];
   const bracketState = { games: null, key: null };
 
@@ -2133,7 +2190,7 @@
         const card = el("div", { class: `bmatch ${mine ? "mine" : ""} ${g && g.has_box ? "clickable" : ""} ${projected ? "projected" : ""}` }, [
           ...rows.map(([team, text, score, won, lost]) => el("div", { class: `bmatch-row ${won ? "win" : ""} ${lost ? "lost" : ""}` }, [
             team ? teamPill(team) : el("span", { class: "pill-inline empty" }),
-            el("span", { class: "bmatch-name" }, [text, team && rankAt(team, 14) ? el("span", { class: "rank muted", text: ` #${rankAt(team, projected ? (s.current_week || 14) : 14)}` }) : null]),
+            el("span", { class: "bmatch-name" }, [text, team && rankAt(team, 15) ? el("span", { class: "rank muted", text: ` #${rankAt(team, projected ? (s.current_week || 15) : 15)}` }) : null]),
             el("b", { class: "bmatch-score", text: score == null ? "" : String(score) }),
           ])),
           el("div", { class: "muted small-text bmatch-note", text: note + (g && g.overtime ? ` · ${g.overtime > 1 ? g.overtime : ""}OT` : "") }),
@@ -2202,8 +2259,8 @@
   $("#btn-hide-seasons").addEventListener("click", () => setSidebar(false));
   setSidebar(true, false);
   $("#btn-advance").addEventListener("click", () => advance());
-  $("#btn-to-selection").addEventListener("click", () => advance(14));
-  $("#btn-to-end").addEventListener("click", () => advance(19));
+  $("#btn-to-selection").addEventListener("click", () => advance(15));
+  $("#btn-to-end").addEventListener("click", () => advance(20));
   $("#season-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) { state.tab = b.dataset.tab; renderTab(); } });
   $("#poll-pills").addEventListener("click", (e) => { const b = e.target.closest("button[data-poll]"); if (b) { state.poll = b.dataset.poll; renderRankings(); } });
   $("#sbox-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-btab]"); if (b) selectBoxTab(b.dataset.btab); });
