@@ -116,8 +116,8 @@ window.CFP = (function () {
     const bits = [
       `${g[g.received_first].name} received the opening kickoff`,
       `${g.drives.length} drives`,
-      g.venue === "neutral" ? "neutral site" : `home edge ${g.home_advantage_points} rating pts`,
-    ];
+      g.venue === "neutral" ? "neutral site" : null,
+    ].filter(Boolean);
     const sl = Object.entries(g.sliders || {});
     if (sl.length) bits.push("sliders: " + sl.map(([k, v]) => `${label(k)} ${v}`).join(", "));
     meta.append(bits.join(" · "));
@@ -129,10 +129,6 @@ window.CFP = (function () {
         el("b", { text: `${g[side].name} injuries: ` }),
         inj.map((i) => `${i.name} (${i.position}, ${i.type}${i.weeks ? `, out ${i.weeks} ${i.weeks === 1 ? "week" : "weeks"}` : ", returned to the bench"})`).join("; "),
       ]));
-    }
-    if (g.home.personnel || g.away.personnel) {
-      const show = (t) => Object.entries(t.personnel || {}).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(", ");
-      meta.append(el("div", { class: "muted small-text", text: `Personnel (snaps) · ${g.away.name}: ${show(g.away)} · ${g.home.name}: ${show(g.home)}` }));
     }
     for (const side of ["home", "away"]) {
       const v = g[side].verification;
