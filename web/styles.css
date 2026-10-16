@@ -681,4 +681,5 @@ body.modal-open { overflow: hidden; }
 body.simming #season-tabs, body.simming .season-main .tab-body, body.simming #week-strip,
 body.simming #season-side, body.simming #season-toolbar select, body.simming #btn-seasons { pointer-events: none; }
 body.simming #season-tabs, body.simming #week-strip, body.simming #season-toolbar select { opacity: 0.6; }
-.hdr-rank { font-size: 15px; font-weight: 700; color: var(--accent); margin: 0 8px 0 10px; vertical-align: middle; }
+.hdr-rank { display: inline-block; font-size: 13px; font-weight: 800; color: inherit; background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.35); border-radius: 999px; padding: 2px 9px; margin: 0 8px 0 10px; vertical-align: middle; }
+body:not(.team-theme) .hdr-rank { background: var(--panel-2); border-color: var(--border); color: var(--accent); }
