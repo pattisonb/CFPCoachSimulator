@@ -120,6 +120,10 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
     defense_team.recover_bench_players()
     offense = offense_team.get_offense()
     defense = defense_team.get_defense()
+    for p in offense:
+        p.stats["snaps"] = p.stats.get("snaps", 0) + 1
+    for p in defense:
+        p.stats["snaps"] = p.stats.get("snaps", 0) + 1
 
     # Clock pace: higher game-speed slider means faster plays; plays drag late in a half.
     tendencies = getattr(offense_team, "tendencies", {}) or {}
@@ -314,11 +318,37 @@ def attempt_kick(yardline, kicker, defense_team=None) :
     make += ((kicker.kick_accuracy or cfg.NEUTRAL) - cfg.NEUTRAL) * cfg.FG_PER_ACCURACY_POINT
     make = max(0.03, min(0.98, make))
     made = random.random() < make
+    bucket = "fg_50" if distance >= 50 else "fg_40" if distance >= 40 else "fg_short"
+    kicker.stats[bucket + "_att"] = kicker.stats.get(bucket + "_att", 0) + 1
     if made:
         kicker.stats["fg_made"] += 1
+        kicker.stats[bucket + "_made"] = kicker.stats.get(bucket + "_made", 0) + 1
+        if distance > kicker.stats.get("long_fg", 0):
+            kicker.stats["long_fg"] = distance
     return made, False
 
 def attempt_punt(yardline, punter, defense_team=None, return_team=None):
+    """Punt and return. Returns (final_yardline, punt_yards, is_blocked, returner, return_yards,
+    is_return_td) and records the punter's placement stats (net yards, inside the 20,
+    touchbacks, long) and the returner's long return."""
+    out = _attempt_punt(yardline, punter, defense_team, return_team)
+    final_spot, punt_yards, blocked, returner, return_yards, td = out
+    if not blocked and punt_yards:
+        st = punter.stats
+        st["punt_net_yards"] = st.get("punt_net_yards", 0) + punt_yards - return_yards
+        if punt_yards > st.get("long_punt", 0):
+            st["long_punt"] = punt_yards
+        if not td and final_spot >= 80:
+            if final_spot == 80 and returner is None and return_yards == 0:
+                st["punt_touchbacks"] = st.get("punt_touchbacks", 0) + 1
+            else:
+                st["punts_inside_20"] = st.get("punts_inside_20", 0) + 1
+        if returner is not None and return_yards > returner.stats.get("long_punt_return", 0):
+            returner.stats["long_punt_return"] = return_yards
+    return out
+
+
+def _attempt_punt(yardline, punter, defense_team=None, return_team=None):
     """
     Simulate punt and return
     Returns: (final_yardline, punt_yards, is_blocked, returner_player, return_yards, is_return_td)

@@ -10,6 +10,11 @@ formulas are written as differences from NEUTRAL, so a league of better or worse
 still plays like football; only the gap between the two teams decides the game.
 """
 
+import random as _random
+# Random source for stat attribution only (which lineman allowed a pressure, which defender
+# broke up a pass). It never touches the game's own stream, so results are unchanged by it.
+stat_rng = _random.Random(0)
+
 class GameSliders:
     """Centralized slider configuration for game parameters"""
 

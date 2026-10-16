@@ -11,6 +11,23 @@ def return_skill(player):
     return ((player.speed or 50) + (getattr(player, "elusiveness", None) or 50)) / 200
 
 
+# The box-score stats that existed before the award stats were added. Substitution order
+# ranks bench players by these only, so the extra stats (snaps, pressures, long plays...)
+# never change who comes into the game.
+PRODUCTION_STATS = frozenset({
+    "pass_attempts", "completions", "pass_yards", "interceptions_thrown", "sacks_taken", "carries", "rush_yards", "fumbles",
+    "receptions", "receiving_yards", "targets", "passing_touchdowns", "receiving_touchdowns", "rushing_touchdowns",
+    "solo_tackles", "assisted_tackles", "sacks", "interceptions", "forced_fumbles", "fumble_recoveries", "fumble_return_yards",
+    "interception_return_yards", "defensive_touchdowns", "fg_attempted", "fg_made", "pat_attempts", "pat_made",
+    "kickoff_returns", "kickoff_return_yards", "kickoff_return_touchdowns", "punt_returns", "punt_return_yards",
+    "punt_return_touchdowns", "punts", "punt_yards",
+})
+
+
+def production(player) -> float:
+    return sum(v for k, v in player.stats.items() if k in PRODUCTION_STATS)
+
+
 class Player:
     def __init__(self, data):
         self.name = data["name"]
@@ -149,7 +166,7 @@ class Team:
 
             # Prioritize fresh subs by fatigue ASC, then by total stats DESC
             def stat_sum(player):
-                return sum(player.stats.values())
+                return production(player)
 
             bench.sort(key=lambda p: (-stat_sum(p), p.fatigue))
 
@@ -180,7 +197,7 @@ class Team:
 
             # Prioritize by freshest and most productive
             def stat_sum(player):
-                return sum(player.stats.values())
+                return production(player)
 
             bench.sort(key=lambda p: (p.fatigue, -stat_sum(p)))
 

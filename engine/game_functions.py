@@ -45,6 +45,8 @@ def sim_kickoff(kicker, return_team=None):
     if returner:
         returner.stats["kickoff_returns"] = returner.stats.get("kickoff_returns", 0) + 1
         returner.stats["kickoff_return_yards"] = returner.stats.get("kickoff_return_yards", 0) + return_yards
+        if return_yards > returner.stats.get("long_kickoff_return", 0):
+            returner.stats["long_kickoff_return"] = return_yards
     return end, returner, return_yards, False
 
 def sim_pat(kicker, verbose=False):

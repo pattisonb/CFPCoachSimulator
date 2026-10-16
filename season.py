@@ -1141,22 +1141,95 @@ def summary(state: dict) -> dict:
                         SELECTION_WEEK: "Selection", **BOWL_WEEK_LABELS},
         "polls": state["polls"], "champions": state["champions"], "bracket": state["bracket"], "playoff": state["playoff"],
         "cfp_weeks": sorted(CFP_WEEKS), "bowls": bowl_view(state), "playoff_sites": state.get("playoff_sites"),
+        "bowl_projection": bowl_projection(state),
         "week_dates": week_dates(state),
         "heisman": ((state.get("awards") or {}).get("national") or {}).get("heisman"),
         "my_awards": awards.my_awards(state, state["awards"]) if state.get("awards") else [],
     }
 
 
+def bowl_projection(state: dict) -> Optional[dict]:
+    """Projected bowl lineup from the current committee ranking: each team's record is
+    carried to the end of the regular season with rating-based win odds, the playoff
+    field is the projected bracket (current conference leaders as champions), and the
+    bowls then pick as they will on selection day. None until the first CFP ranking."""
+    if state.get("bowls") or state["current_week"] < min(CFP_WEEKS):
+        return None
+    polls_state = state.get("polls", {})
+    weeks = [w for w in range(state["current_week"], 0, -1) if polls_state.get(str(w), {}).get("cfp")]
+    if not weeks:
+        return None
+    pw = weeks[0]
+    p = polls_state[str(pw)]
+    order = p.get("cfp_full") or [e["team"] for e in p["cfp"]]
+    teams = load_teams()
+    rec = _records(state)
+    ratings = {slug: t["team_ratings"]["overall"] for slug, t in teams.items()}
+    # carry every record through the regular season
+    expected = {slug: 0.0 for slug in teams}
+    for g in state["games"].values():
+        if g["played"] or g["week"] > LAST_REGULAR_WEEK:
+            continue
+        edge = (ratings[g["home"]] - ratings[g["away"]]) / 60 + (0.0 if g["neutral"] else 0.04)
+        p_home = max(0.08, min(0.92, 0.5 + edge))
+        expected[g["home"]] += p_home
+        expected[g["away"]] += 1 - p_home
+    projected = {}
+    for slug, r in rec.items():
+        add = expected[slug]
+        projected[slug] = {**r, "wins": r["wins"] + int(round(add)), "losses": r["losses"] + int(round(_remaining(state, slug) - add))}
+    # projected champions: the current leader of each conference
+    conf_of = {slug: t["conference"] for slug, t in teams.items()}
+    leaders: dict[str, tuple] = {}
+    for slug, t in teams.items():
+        if t["fictional"]:
+            continue
+        r = rec[slug]
+        cg = r["conf_wins"] + r["conf_losses"]
+        key = (r["conf_wins"] / cg if cg else 0.0, r["wins"] / max(1, r["wins"] + r["losses"]), -order.index(slug) if slug in order else -99, ratings[slug])
+        if t["conference"] not in leaders or key > leaders[t["conference"]][0]:
+            leaders[t["conference"]] = (key, slug)
+    champions = {conf: slug for conf, (_, slug) in leaders.items()}
+    names = {slug: t["name"] for slug, t in teams.items()}
+    try:
+        bracket = polls.build_bracket(order, champions, conf_of, names)
+        field = {x["team"] for x in bracket.get("seeds", [])}
+    except Exception:  # noqa: BLE001
+        field = set(order[:12])
+    info = {b["bowl"]: b for b in bowls.load_bowls()["bowls"]}
+    out = []
+    for b in bowls.select_bowls(projected, teams, field, order, ratings):
+        meta = info.get(b["bowl"], {})
+        entry = {**b, "projected": True, "played": False, "has_box": False, "mine": state["team"] in (b.get("home"), b.get("away")),
+                 "home_name": teams[b["home"]]["name"] if b.get("home") else None, "away_name": teams[b["away"]]["name"] if b.get("away") else None,
+                 "home_record": f"{projected[b['home']]['wins']}-{projected[b['home']]['losses']}" if b.get("home") else None,
+                 "away_record": f"{projected[b['away']]['wins']}-{projected[b['away']]['losses']}" if b.get("away") else None,
+                 "home_conference": conf_of.get(b.get("home")), "away_conference": conf_of.get(b.get("away")),
+                 "games_played": meta.get("games_played"), "first_played": meta.get("first_played")}
+        out.append(entry)
+    out.sort(key=lambda b: (b["week"], b["date"] or "", b["time"] or ""))
+    return {"week": pw, "bowls": out, "playoff": sorted(field, key=lambda s: order.index(s) if s in order else 99)}
+
+
+def _remaining(state: dict, slug: str) -> int:
+    return sum(1 for g in state["games"].values() if not g["played"] and g["week"] <= LAST_REGULAR_WEEK and slug in (g["home"], g["away"]))
+
+
 def bowl_view(state: dict) -> list[dict]:
     """Every bowl of the season with its matchup, result, tie-ins and history."""
     teams = load_teams()
     info = {b["bowl"]: b for b in bowls.load_bowls()["bowls"]}
+    rec = _records(state)
     out = []
     for b in state.get("bowls", []):
         g = state["games"].get(b["event_id"])
         meta = info.get(b["bowl"], {})
         out.append({**b, "home_name": teams[b["home"]]["name"] if b.get("home") else None,
                     "away_name": teams[b["away"]]["name"] if b.get("away") else None,
+                    "home_conference": teams[b["home"]]["conference"] if b.get("home") else None,
+                    "away_conference": teams[b["away"]]["conference"] if b.get("away") else None,
+                    "home_record": f"{rec[b['home']]['wins']}-{rec[b['home']]['losses']}" if b.get("home") else None,
+                    "away_record": f"{rec[b['away']]['wins']}-{rec[b['away']]['losses']}" if b.get("away") else None,
                     "played": bool(g and g["played"]), "home_score": g["home_score"] if g else None, "away_score": g["away_score"] if g else None,
                     "mine": state["team"] in (b.get("home"), b.get("away")), "has_box": b["event_id"] in state["my_boxes"],
                     "games_played": meta.get("games_played"), "first_played": meta.get("first_played"),

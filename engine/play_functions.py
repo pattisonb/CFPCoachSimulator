@@ -160,6 +160,28 @@ def assign_sack(defense, guessed_play=False):
     return selected, is_half
 
 
+# ===================== award-stat helpers =====================
+
+def _stat(player, key, n=1):
+    """Add to a stat the roster template may not carry."""
+    player.stats[key] = player.stats.get(key, 0) + n
+
+
+def _stat_max(player, key, value):
+    if value > player.stats.get(key, 0):
+        player.stats[key] = value
+
+
+def _credit_lineman(offense, key, attr, worse=False):
+    """Credit one offensive lineman on the field: the weakest blocker is likeliest to
+    allow a pressure or a stuff, the best to spring a long run. Uses the stat RNG only."""
+    line = [p for p in offense if p.position == 'OL']
+    if not line:
+        return
+    weights = [max(1.0, (101 - (getattr(p, attr, None) or cfg.NEUTRAL)) if worse else ((getattr(p, attr, None) or cfg.NEUTRAL))) for p in line]
+    _stat(cfg.stat_rng.choices(line, weights=weights, k=1)[0], key)
+
+
 # ===================== rating helpers =====================
 
 def _rating(player, keys, default=cfg.NEUTRAL):
@@ -189,6 +211,8 @@ def _credit_tackle(defense, yards):
         tacklers[1].stats['assisted_tackles'] += 1
     elif tacklers:
         tacklers[0].stats['solo_tackles'] += 1
+    if yards < 0 and tacklers:
+        _stat(tacklers[0], 'tackles_for_loss')
 
 
 def _lose_fumble(offense, defense, fumbler, spot, forcer_positions, yards_for_forcer):
@@ -289,6 +313,16 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, offense_line
         print("Rush for", yards, "yards by", carrier.name)
     carrier.stats["carries"] += 1
     carrier.stats["rush_yards"] += yards
+    _stat_max(carrier, "long_rush", yards)
+    if yards >= 20:
+        _stat(carrier, "explosive_runs")
+        _credit_lineman(offense, "key_blocks", "run_blocking")
+    elif yards <= 0:
+        _credit_lineman(offense, "stuffs_allowed", "run_blocking", worse=True)
+    if yards >= first_down:
+        _stat(carrier, "rushing_first_downs")
+        if down >= 3:
+            _stat(carrier, "rushing_conversions")
     apply_run_fatigue(offense, defense, carrier, yards)
     if not is_touchdown:
         _credit_tackle(defense, yards)
@@ -349,6 +383,8 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
         for sacker in sackers:
             sacker.stats['sacks'] += 0.5 if is_half else 1
             sacker.stats['solo_tackles'] += 1
+            _stat(sacker, 'tackles_for_loss', 0.5 if is_half else 1)
+        _credit_lineman(offense, "sacks_allowed", "pass_blocking", worse=True)
         qb.stats["sacks_taken"] += 1
         apply_pass_fatigue(offense, defense)
         strip_chance = sliders.get_inverse_percentage_adjustment(sliders.fumble_frequency, cfg.SACK_FUMBLE_CHANCE)
@@ -359,6 +395,13 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
             if result is not None:
                 return result, new_spot
         return "sack", sack_yards
+
+    # A pressure that did not become a sack (stat only; the play goes on as before).
+    if cfg.stat_rng.random() < min(0.6, sack_rate * 2.5):
+        rushers = [p for p in defense if p.position == 'DL']
+        if rushers:
+            _stat(cfg.stat_rng.choices(rushers, weights=[max(1, p.rushing or 1) for p in rushers], k=1)[0], 'hurries')
+            _credit_lineman(offense, "pressures_allowed", "pass_blocking", worse=True)
 
     # --- Target and coverage ---
     target = _pick_target(offense)
@@ -438,6 +481,15 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
         qb.stats["pass_yards"] += yards
         target.stats["receptions"] += 1
         target.stats["receiving_yards"] += yards
+        _stat_max(target, "long_reception", yards)
+        _stat_max(qb, "long_pass", yards)
+        if yards >= 25:
+            _stat(target, "explosive_catches")
+        if yards >= first_down:
+            _stat(target, "receiving_first_downs")
+            _stat(qb, "passing_first_downs")
+            if down >= 3:
+                _stat(qb, "passing_conversions")
         apply_pass_fatigue(offense, defense, target, yards)
         return ("checkdown_pass" if target.position == 'RB' else "successful_pass"), yards
 
@@ -453,6 +505,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
         picker = random.choices(defenders, weights=[max(1, p.coverage or 1) for p in defenders], k=1)[0]
         qb.stats["interceptions_thrown"] += 1
         picker.stats["interceptions"] += 1
+        _stat(picker, "passes_defended")
         apply_pass_fatigue(offense, defense)
         spot = max(1, min(99, yardline + random.randint(5, 25)))   # where the ball was caught
         distance_to_goal = spot   # yards the defense must return it
@@ -485,4 +538,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
         return "run", yards
 
     apply_pass_fatigue(offense, defense)
+    # About a third of incompletions are a defender's play on the ball (stat only).
+    if defenders and cfg.stat_rng.random() < 0.35:
+        _stat(cfg.stat_rng.choices(defenders, weights=[max(1, p.coverage or 1) for p in defenders], k=1)[0], "passes_defended")
     return "incomplete", 0

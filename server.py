@@ -461,6 +461,12 @@ def season_team_stats(season_id: str) -> dict:
     return season.team_stats_view(_season_state(season_id))
 
 
+@app.get("/api/season/{season_id}/awards")
+def season_awards(season_id: str) -> dict:
+    """Every award: the live race until they are given, then the results."""
+    return season.awards_view(_season_state(season_id))
+
+
 @app.get("/api/season/{season_id}/stats/leaders")
 def season_player_leaders(season_id: str, team: Optional[str] = None, n: int = 5, conference: Optional[str] = None) -> dict:
     state = _season_state(season_id)

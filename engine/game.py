@@ -415,6 +415,10 @@ class GameSim:
         self._td_stats_seen = 0
         apply_baseline_fatigue(self.home)
         apply_baseline_fatigue(self.away)
+        for team in (self.home, self.away):
+            for p in team.offense + team.defense:
+                if p.in_game:
+                    p.stats["games_started"] = p.stats.get("games_started", 0) + 1
 
         toss_winner = random.choice(["home", "away"])
         if random.random() < 0.8:
@@ -456,6 +460,9 @@ def simulate_game(
     `venue` is "home" (the first team hosts) or "neutral"."""
     if seed is not None:
         random.seed(seed)
+        cfg.stat_rng.seed(seed)
+    else:
+        cfg.stat_rng.seed()
     active = apply_sliders(slider_overrides)
     defaults = default_sliders()
     started = time.perf_counter()

@@ -399,6 +399,12 @@ Allegiant Stadium in Las Vegas. Quarterfinal bowls go to the top four seeds by t
 traditional affinity (Rose: Big Ten or Pac-12; Peach: SEC or ACC; Cotton: Big 12 or SEC;
 Fiesta: the rest), seed 1 choosing first, which matches how the CFP has placed the byes.
 
+From the committee's first ranking (week 9) until selection day, the **Bowls** tab shows a
+projected lineup: every record is carried to the end of the regular season on rating-based
+win odds, the current conference leaders stand in as champions, the projected playoff field
+is left out, and each bowl picks from its tie-ins. The tab sorts by date, bowl, team or
+conference, filters to one conference, or shows only your team's bowl.
+
 The **Bowls** tab lists every bowl by week with the matchup and score, tie-ins, editions
 and first year, most appearances, recent results and previous tie-ins; your own bowl opens
 the box score. The Games and My Schedule tabs show each playoff game's bowl name and site.
@@ -420,6 +426,55 @@ sortable), or Roster for the team's players by position with ratings and starter
 which is also what shows before the first game is played. Stats cover simulated games only, so in **Rest of season** mode the real
 games already played are not in them; a season saved before this existed shows only your
 own games.
+
+### Awards: the Heisman, every national award, All-America and all-conference teams
+
+The research is in `docs/AWARDS_RESEARCH.md` (every award and who wins it, the Heisman
+vote 2014-2025, the All-America and all-conference formats, winning stat lines). The
+engine now keeps the stats the awards need: tackles for loss, passes defended, hurries,
+explosive plays, first downs, long plays, field goals by distance, punt placement, snaps
+and starts, and offensive-line credits (sacks and pressures allowed, stuffs, key blocks).
+Attribution choices use a separate random source, so game results for a given seed are
+unchanged. Rosters now carry class, height, weight, jersey and the depth-chart role (LT,
+LG, C, RG, RT, edge, DT, SAM/MIKE/WILL, CB, FS, SS).
+
+`awards.py` scores every player from the season stats: a production score per position
+(for example a quarterback's yards, touchdowns, interceptions and passer rating), then
+standardized against the league's starters at that position so a cross-position vote can
+compare a quarterback with a back. Each award is a pool (position, class, role), a
+production score and a team term where the real award rewards team success:
+
+- **Heisman**: 870 media voters in six regions, the past winners and a fan vote, each
+  ranking three players (3-2-1 points), with a regional bump, a per-voter team-quality
+  bias and noise; finalists are the top four (five when close). The position prior
+  (QB 1.0, RB and WR about 0.6, defenders about 0.4) comes from the twelve-year history.
+- National awards: Maxwell, Walter Camp, AP and Sporting News player of the year, Davey
+  O'Brien, Unitas Golden Arm (upperclassmen), Doak Walker, Biletnikoff, Mackey, Outland
+  (interior OL and DTs), Rimington (centers), Lombardi (linemen and linebackers), Bednarik,
+  Nagurski, Lott IMPACT, Butkus, Thorpe, Hendricks (edge rushers), Groza, Ray Guy, Jet,
+  Hornung (versatile), Shaun Alexander Freshman; coach of the year from the AP, AFCA, FWAA
+  (Eddie Robinson), Dodd, Munger, Home Depot and Walter Camp, each weighing wins over
+  expectation (from the roster's rating rank and the preseason poll) differently; the
+  Broyles Award for the coordinator whose unit most outran its rating; after the playoff,
+  the Manning Award, the Bear Bryant Award and the Joe Moore Award for the best line.
+- **All-America**: five selectors (AP, AFCA, FWAA, Sporting News, Walter Camp) each pick
+  first and second teams with their own bias and noise; consensus is first team on three of
+  five, unanimous on all five.
+- **Conference awards and all-conference teams** for all ten conferences with their real
+  award names (the Big Ten's sixteen named awards, the Big 12's lineman and freshman
+  awards, the SEC's Jacobs Blocking Trophy, the Pac-12's Morris Trophy, the MAC's Vern
+  Smith award) and each conference's team layout and selectors (coaches, media, or both).
+
+Calendar: conference awards after championship week, the Heisman and national awards in
+selection week, the postseason awards after the title game. Until an award is given, the
+**Awards** tab shows the live race: a Heisman straw poll, the top five for every national
+award, the coach-of-the-year races and your conference's races, with your team's players
+listed first. The Summary tab shows the Heisman winner. Awards that need data the sim does
+not have (transfers, walk-ons, academics, hometowns, injuries) are not given.
+
+`calibrate_awards.py N` runs N seasons and reports the Heisman position mix, winner team
+rank, Group of Five and defensive finalists, All-America consensus counts and the coach of
+the year profile against the research targets.
 
 ## Player stat lines and usage (box score calibration)
 

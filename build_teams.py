@@ -80,6 +80,12 @@ def map_player(p: dict) -> dict:
         "position": pos,
         "source_position": p["position"],
         "overall": p["overall"],
+        # identity for awards and the roster view: FR, FRRS, SO, SORS, JR, JRRS, SR, SRRS
+        "class": p.get("class"),
+        "height": p.get("height"),
+        "weight": p.get("weight_lbs"),
+        "jersey": p.get("jersey"),
+        "dev_trait": p.get("dev_trait"),
         "speed": 0.7 * r.get("speed", 50) + 0.3 * r.get("acceleration", 50),
         "strength": r.get("strength", 50),
         "intelligence": r.get("awareness", 50),
@@ -159,12 +165,19 @@ def load_team(path: Path) -> dict:
     t = json.loads(path.read_text(encoding="utf-8"))
     starters = starter_slugs(t)
     st_special = t["starters"]["special_teams"]
+    # depth-chart role (LT, LG, C, RG, RT, LEDG, DT, REDG, SAM, MIKE, WILL, CB, FS, SS, HB, ...)
+    # and depth order, for awards that go by sub-position (center, edge, interior, tackle)
+    roles = {}
+    for role, slugs in (t.get("depth_chart") or {}).items():
+        for i, slug in enumerate(slugs or []):
+            roles.setdefault(slug, (role, i + 1))
     players = []
     for p in t["roster"]:
         m = map_player(p)
         if not m:
             continue
         m["starter"] = p["slug"] in starters
+        m["role"], m["depth"] = roles.get(p["slug"], (None, None))
         # the engine finds K and P among in-game offense players
         if m["position"] == "K":
             m["starter"] = p["slug"] in st_special.get("K", [])
@@ -193,6 +206,8 @@ def load_team(path: Path) -> dict:
         "mascot": t["mascot"],
         "conference": t["conference"],
         "subdivision": t["subdivision"],
+        "city": t.get("city"),
+        "state": t.get("state"),
         "fictional": t["fictional"],
         "colors": {k: (v["hex"] if v else None) for k, v in t["colors"].items()},
         "stadium": t["stadium"],

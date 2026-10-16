@@ -347,7 +347,7 @@
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "teamstats", "playerstats", "box"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "teamstats", "playerstats", "box"]) $(`#tab-${t}`).hidden = t !== name;
   }
 
   function renderTab() {
@@ -360,11 +360,275 @@
     else if (t === "bracket") renderBracket();
     else if (t === "bowls") renderBowls();
     else if (t === "summary") renderSummary();
+    else if (t === "awards") renderAwards();
     else if (t === "teamstats") renderSeasonTeamStats();
     else if (t === "playerstats") renderSeasonPlayerStats();
   }
 
   // ----- season summary ------------------------------------------------------
+
+  // ----- awards ------------------------------------------------------------
+
+  const awardsState = { data: null, key: null, view: "mine", filter: "", sort: null, desc: true, conf: null, selector: "consensus",
+                        level: 1, mineFilter: "" };
+  const ORD = (i) => `${i + 1}${["st", "nd", "rd"][i] || "th"}`;
+  const OFFENSE_KINDS = new Set(["qb", "qb_upper", "rb", "wr", "te", "interior", "c", "ol", "ol_unit", "blocker", "opoy", "off_freshman"]);
+  const DEFENSE_KINDS = new Set(["dpoy", "dpoy_alt", "lb", "db", "edge", "dl", "front", "def_freshman"]);
+  const ST_KINDS = new Set(["k", "p", "rs", "stpoy", "versatile"]);
+
+  function chipRow(items, current, onPick, cls = "") {
+    const row = el("div", { class: `view-chips ${cls}` });
+    for (const [value, label, title] of items) {
+      const b = el("button", { type: "button", class: `chip ${current === value ? "active" : ""}`, text: label, title: title || label });
+      b.addEventListener("click", () => onPick(value));
+      row.append(b);
+    }
+    return row;
+  }
+
+  function who(c, withTeam = true) {
+    // name, position/class, team pill
+    const bits = [el("span", { class: "pill-inline", style: `background:${color(c.team)}` }), el("b", { text: c.name || c.coach || c.team_name })];
+    const tag = c.position ? `${c.position}${c.role && c.role !== c.position ? " · " + c.role : ""}${c.class ? " · " + c.class : ""}` : (c.role || (c.coach ? "Head coach" : ""));
+    if (tag) bits.push(el("span", { class: "pos", text: tag }));
+    if (withTeam && (c.name || c.coach)) bits.push(el("span", { class: "muted", text: ` ${c.team_name}` }));
+    return el("span", { class: "award-who" }, bits);
+  }
+
+  function coachLine(c) {
+    if (!c) return "";
+    if (c.role) return `${c.role} · unit rank ${c.unit_rank} (roster rank ${c.rating_rank}) · ${c.wins} wins`;
+    if ("surprise" in c) return `${c.wins}-${c.losses}${c.rank ? ` · #${c.rank}` : ""} · expected ${c.expected} wins${c.preseason_rank ? ` · preseason #${c.preseason_rank}` : " · preseason unranked"}${c.champion ? " · conference champion" : ""}`;
+    if ("sack_rate" in c) return `${c.rush_ypg} rush yds/g · ${c.ypc} per carry · sacks on ${c.sack_rate}% of dropbacks`;
+    return "";
+  }
+  const headlineOf = (c) => c.headline || (c.role ? `${c.wins} wins` : "surprise" in c ? `${c.wins}-${c.losses}` : "sack_rate" in c ? `${c.ypc} ypc` : "");
+
+  // A sortable table. cols: [{key, label, left, get(row) -> text/node, sort(row) -> number|string}]
+  function sortableTable(cols, rows, st, onSort, rowClass) {
+    const table = el("table", { class: "stats" });
+    const head = el("tr", {}, cols.map((c) => el("th", { class: `${c.sort ? "sortable" : ""} ${c.left ? "left" : ""} ${st.sort === c.key ? (st.desc ? "sorted-desc" : "sorted-asc") : ""}`, text: c.label, "data-key": c.sort ? c.key : "" })));
+    head.addEventListener("click", (e) => { const th = e.target.closest("th[data-key]"); if (th && th.dataset.key) { if (st.sort === th.dataset.key) st.desc = !st.desc; else { st.sort = th.dataset.key; st.desc = true; } onSort(); } });
+    table.append(head);
+    let list = rows.slice();
+    const sc = cols.find((c) => c.key === st.sort && c.sort);
+    if (sc) list.sort((a, b) => { const av = sc.sort(a), bv = sc.sort(b); const r = typeof av === "string" ? av.localeCompare(bv) : av - bv; return st.desc ? -r : r; });
+    for (const r of list) {
+      table.append(el("tr", { class: rowClass ? rowClass(r) : "" }, cols.map((c) => { const v = c.get(r); return el("td", { class: c.left ? "left" : "" }, [v == null ? "" : v]); })));
+    }
+    return el("div", { class: "table-scroll" }, [table]);
+  }
+
+  function heismanHero(h, live) {
+    const w = h.winner;
+    const tiles = live
+      ? [["Points", w.points], ["1st-place", w.first], ["Ballots", h.ballots], ["Record", w.record]]
+      : [["Points", w.points], ["Share", `${h.share}%`], ["1st-place", `${w.first} of ${h.ballots}`], ["Record", `${w.record}${w.rank ? ` · #${w.rank}` : ""}`]];
+    return el("div", { class: `review-card heisman-hero ${w.team === state.season.team ? "mine" : ""}` }, [
+      el("div", { class: "review-label", text: live ? "Leading the straw poll" : "Heisman Trophy winner" }),
+      el("div", { class: "review-big" }, [el("span", { class: "pill-inline", style: `background:${color(w.team)}` }), w.name, el("span", { class: "pos", text: `${w.position}${w.class ? " · " + w.class : ""} · ${w.team_name}` })]),
+      el("div", { class: "muted small-text", text: w.line }),
+      el("div", { class: "review-tiles" }, tiles.map(([k, v]) => el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: String(v) }), el("div", { class: "review-label", text: k })]))),
+      live ? null : el("div", { class: "muted small-text", text: `Finalists in New York: ${h.finalists.map((f) => `${f.name} (${f.team_name}, ${f.points})`).join(", ")}` }),
+    ]);
+  }
+
+  function heismanView(box, h, live) {
+    if (!h || !h.candidates || !h.candidates.length) { box.append(el("p", { class: "muted", text: "No Heisman race yet. Advance a week." })); return; }
+    box.append(heismanHero(h, live));
+    box.append(el("p", { class: "muted small-text", text: live
+      ? `Straw poll of the Heisman electorate on the season so far: ${h.ballots} ballots, three names each, 3-2-1 points. Click a column to sort.`
+      : `${h.ballots} ballots (870 media voters in six regions, the past winners and the fan vote), three names each, 3-2-1 points. Click a column to sort.` }));
+    const st = awardsState;
+    if (!st.sort) { st.sort = "points"; st.desc = true; }
+    const cols = [
+      { key: "rank", label: "#", get: (c) => String(c.i + 1), sort: (c) => c.i },
+      { key: "player", label: "Player", left: true, get: (c) => who(c, false), sort: (c) => c.name },
+      { key: "team", label: "Team", left: true, get: (c) => el("span", {}, [el("span", { class: "pill-inline", style: `background:${color(c.team)}` }), c.team_name]), sort: (c) => c.team_name },
+      { key: "record", label: "Rec", get: (c) => c.record, sort: (c) => Number(c.record.split("-")[0]) - Number(c.record.split("-")[1]) / 100 },
+      { key: "cfp", label: "Rank", get: (c) => (c.rank ? `#${c.rank}` : "–"), sort: (c) => -(c.rank || 99) },
+      { key: "region", label: "Region", get: (c) => c.region, sort: (c) => c.region },
+      { key: "first", label: "1st", get: (c) => String(c.first), sort: (c) => c.first },
+      { key: "second", label: "2nd", get: (c) => String(c.second), sort: (c) => c.second },
+      { key: "third", label: "3rd", get: (c) => String(c.third), sort: (c) => c.third },
+      { key: "points", label: "Pts", get: (c) => el("b", { text: String(c.points) }), sort: (c) => c.points },
+      { key: "line", label: "Season", left: true, get: (c) => el("span", { class: "muted small-text", text: c.line }) },
+    ];
+    box.append(sortableTable(cols, h.candidates.map((c, i) => ({ ...c, i })), st, () => renderAwards(), (c) => c.team === state.season.team ? "mine" : ""));
+  }
+
+  function awardCard(a, live, mode) {
+    // one award as a leader card: winner (or leader) on top, then the rest of the top five
+    const card = el("div", { class: "leader-card award-card" });
+    card.append(el("div", { class: "leader-head" }, [el("h4", { text: a.name }), a.honors ? el("span", { class: "muted small-text", text: a.honors }) : null]));
+    const list = live ? (a.race || a.finalists || []) : (a.finalists || []);
+    if (!list.length) { card.append(el("p", { class: "muted small-text", text: "No eligible players yet." })); return card; }
+    list.forEach((c, i) => {
+      const row = el("div", { class: `leader-row ${i === 0 ? "top" : ""} ${c.team === state.season.team ? "mine" : ""}` }, [
+        el("span", { class: "rank", text: live ? String(i + 1) : (i === 0 ? "W" : String(i + 1)) }),
+        el("span", { class: "who" }, [el("span", { class: "name" }, [el("span", { class: "pill-inline", style: `background:${color(c.team)}` }), c.name || c.coach || c.team_name, el("span", { class: "pos", text: c.position ? `${c.position}${c.class ? " · " + c.class : ""} · ${c.team_name}` : (c.role ? `${c.role} · ${c.team_name}` : (c.coach ? c.team_name : c.conference || "")) })]),
+          el("span", { class: "muted small-text", text: mode === "coach" ? coachLine(c) : (c.line || "") })]),
+        el("span", { class: "value", text: headlineOf(c) }),
+      ]);
+      card.append(row);
+    });
+    return card;
+  }
+
+  function awardGrid(items, live, mode) {
+    return el("div", { class: "leaders-grid awards-grid" }, items.map((a) => awardCard(a, live, mode)));
+  }
+
+  function awardSummaryTable(items, live, st) {
+    // the compact view: one row per award
+    const rows = items.map((a) => ({ a, w: (live ? (a.race || a.finalists || []) : (a.finalists || []))[0] })).filter((r) => r.w);
+    const cols = [
+      { key: "award", label: "Award", left: true, get: (r) => el("b", { text: r.a.name }), sort: (r) => r.a.name },
+      { key: "who", label: live ? "Leader" : "Winner", left: true, get: (r) => who(r.w, false), sort: (r) => r.w.name || r.w.coach || "" },
+      { key: "team", label: "Team", left: true, get: (r) => el("span", {}, [el("span", { class: "pill-inline", style: `background:${color(r.w.team)}` }), r.w.team_name]), sort: (r) => r.w.team_name },
+      { key: "conf", label: "Conference", left: true, get: (r) => r.w.conference || "", sort: (r) => r.w.conference || "" },
+      { key: "line", label: "Season", left: true, get: (r) => el("span", { class: "muted small-text", text: r.w.line || coachLine(r.w) }) },
+    ];
+    return sortableTable(cols, rows, st, () => renderAwards(), (r) => r.w.team === state.season.team ? "mine" : "");
+  }
+
+  function teamTableView(box, title, picks, levels, st) {
+    box.append(el("h3", { text: title }));
+    const level = Math.min(st.level, levels || 1);
+    if ((levels || 1) > 1) box.append(chipRow([[1, "First team"], [2, "Second team"], [3, "Third team"]].slice(0, levels), level, (v) => { st.level = v; renderAwards(); }));
+    const rows = picks.filter((p) => p.level === level);
+    const cols = [
+      { key: "slot", label: "Slot", get: (c) => c.slot, sort: (c) => c.order },
+      { key: "player", label: "Player", left: true, get: (c) => who(c, false), sort: (c) => c.name },
+      { key: "team", label: "Team", left: true, get: (c) => el("span", {}, [el("span", { class: "pill-inline", style: `background:${color(c.team)}` }), c.team_name]), sort: (c) => c.team_name },
+      { key: "conf", label: "Conference", left: true, get: (c) => c.conference, sort: (c) => c.conference },
+      { key: "sel", label: "Selectors", get: (c) => (c.unanimous ? el("span", { class: "award-extra", text: "unanimous" }) : c.selectors ? `${c.selectors} of 5` : ""), sort: (c) => c.selectors || 0 },
+      { key: "line", label: "Season", left: true, get: (c) => el("span", { class: "muted small-text", text: c.line }) },
+    ];
+    if (!rows.some((c) => c.selectors)) cols.splice(4, 1);
+    box.append(sortableTable(cols, rows.map((c, i) => ({ ...c, order: i })), st, () => renderAwards(), (c) => c.team === state.season.team ? "mine" : ""));
+  }
+
+  async function renderAwards() {
+    const s = state.season;
+    if (!s) return;
+    const box = $("#tab-awards");
+    box.innerHTML = "";
+    const key = `${s.id}|${s.current_week}`;
+    if (!awardsState.data || awardsState.key !== key) {
+      try { awardsState.data = await api(`/api/season/${s.id}/awards`); awardsState.key = key; awardsState.sort = null; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+    }
+    const d = awardsState.data;
+    const st = awardsState;
+    const live = !d.national;
+    const nat = live ? d.race : d.national;
+    if (st.conf === null) st.conf = d.my_conference;
+    const views = [["mine", "My team"], ["heisman", "Heisman"], ["national", "National awards"], ["coaches", "Coach awards"],
+                   ["allamerica", "All-America"], ["conference", "Conference awards"]].filter(([v]) => !(live && v === "allamerica"));
+    if (live && st.view === "allamerica") st.view = "mine";
+    const controls = el("div", { class: "stats-controls" });
+    controls.append(chipRow(views, st.view, (v) => { st.view = v; st.sort = null; st.filter = ""; renderAwards(); }));
+    const given = d.given_through || 0;
+    const through = s.week_labels[s.current_week] || `week ${s.current_week}`;
+    controls.append(el("span", { class: "muted small-text", text: live
+      ? `Live race through ${through}: who would win if the voting were held now. Conference awards are given after championship week, the Heisman and national awards in selection week, the postseason awards after the title game.`
+      : `Conference awards given after championship week${given >= 15 ? "; Heisman, national awards and All-America teams in selection week" : ""}${given >= 19 ? "; postseason awards after the national championship" : ""}.` }));
+    box.append(controls);
+    const v = st.view;
+
+    if (v === "heisman") { heismanView(box, nat && nat.heisman, live); return; }
+
+    if (v === "national") {
+      const all = [...(nat ? nat.awards : []), ...(!live && d.postseason ? d.postseason.awards.filter((a) => a.kind !== "coach") : [])];
+      const filters = [["", "All"], ["offense", "Offense"], ["defense", "Defense"], ["special", "Special teams"], ["poy", "Player of the year"], ["table", "Table view"]];
+      box.append(chipRow(filters, st.filter, (f) => { st.filter = f; st.sort = null; renderAwards(); }));
+      const kindOf = (a) => (["mvp", "mvp_team", "freshman"].includes(a.kind) ? "poy" : OFFENSE_KINDS.has(a.kind) ? "offense" : DEFENSE_KINDS.has(a.kind) ? "defense" : ST_KINDS.has(a.kind) ? "special" : "poy");
+      const items = st.filter && st.filter !== "table" ? all.filter((a) => kindOf(a) === st.filter) : all;
+      if (st.filter === "table") box.append(awardSummaryTable(items, live, st));
+      else box.append(awardGrid(items, live, items.some((a) => a.kind === "ol_unit") ? null : null));
+      return;
+    }
+
+    if (v === "coaches") {
+      const all = [...(nat ? nat.coach_awards : []), ...(!live && d.postseason ? d.postseason.awards.filter((a) => a.kind === "coach") : [])];
+      box.append(chipRow([["", "Cards"], ["table", "Table view"]], st.filter, (f) => { st.filter = f; st.sort = null; renderAwards(); }));
+      if (st.filter === "table") box.append(awardSummaryTable(all, live, st));
+      else box.append(awardGrid(all, live, "coach"));
+      return;
+    }
+
+    if (v === "allamerica") {
+      const aa = nat.all_america;
+      const sels = [["consensus", "Consensus"], ...Object.keys(aa.selectors).map((k) => [k, k])];
+      box.append(chipRow(sels, st.selector, (k) => { st.selector = k; st.level = 1; st.sort = null; renderAwards(); }));
+      if (st.selector === "consensus") {
+        box.append(el("p", { class: "muted small-text", text: `${aa.consensus.length} consensus All-Americans (first team on at least three of the five NCAA-recognized selectors), ${aa.unanimous.length} unanimous.` }));
+        teamTableView(box, "Consensus All-America team", aa.consensus.map((c) => ({ ...c, level: 1 })), 1, st);
+      } else {
+        teamTableView(box, `${st.selector} All-America team`, aa.selectors[st.selector], 2, st);
+      }
+      return;
+    }
+
+    if (v === "conference") {
+      const confs = live ? (nat.conference || {}) : (d.conference || {});
+      const names = Object.keys(confs).sort((a, b) => (a === d.my_conference ? -1 : b === d.my_conference ? 1 : a.localeCompare(b)));
+      if (!names.length) { box.append(el("p", { class: "muted", text: "No conference races yet." })); return; }
+      if (!live) box.append(confChips(names, st.conf in confs ? st.conf : "", (c) => { st.conf = c; st.sort = null; st.level = 1; renderAwards(); }));
+      const picked = live ? names : (st.conf in confs ? [st.conf] : names);
+      if (!live && picked.length > 1) {
+        // all conferences: one row per award
+        const rows = [];
+        for (const conf of names) for (const a of confs[conf].awards || []) if (a.winner) rows.push({ conf, a, w: a.winner });
+        const cols = [
+          { key: "conf", label: "Conference", left: true, get: (r) => r.conf, sort: (r) => r.conf },
+          { key: "award", label: "Award", left: true, get: (r) => el("b", { text: r.a.name }), sort: (r) => r.a.name },
+          { key: "who", label: "Winner", left: true, get: (r) => who(r.w, false), sort: (r) => r.w.name || r.w.coach || "" },
+          { key: "team", label: "Team", left: true, get: (r) => el("span", {}, [el("span", { class: "pill-inline", style: `background:${color(r.w.team)}` }), r.w.team_name]), sort: (r) => r.w.team_name },
+          { key: "line", label: "Season", left: true, get: (r) => el("span", { class: "muted small-text", text: r.w.line || coachLine(r.w) }) },
+        ];
+        box.append(sortableTable(cols, rows, st, () => renderAwards(), (r) => r.w.team === s.team ? "mine" : ""));
+        return;
+      }
+      for (const conf of picked) {
+        const entry = confs[conf];
+        box.append(el("h3", { text: live ? `${conf} races` : `${conf} awards` }));
+        box.append(awardGrid(entry.awards || [], live, "mixed"));
+        if (!live && entry.teams && entry.teams.selectors) {
+          for (const [sel, picks] of Object.entries(entry.teams.selectors)) teamTableView(box, `All-${conf} team (${sel})`, picks, entry.teams.levels, st);
+        }
+      }
+      return;
+    }
+
+    // "mine": your players in every race (live) or every award and placement (final)
+    const rows = [];
+    if (live) {
+      const h = nat && nat.heisman;
+      if (h) h.candidates.forEach((c, i) => { if (c.team === s.team) rows.push({ stage: "Heisman", award: "Heisman straw poll", who: c.name, position: c.position, place: `${ORD(i)} · ${c.points} points`, rank: i + 1, line: c.line }); });
+      for (const a of (nat ? nat.awards : [])) (a.race || []).forEach((c, i) => { if (c.team === s.team) rows.push({ stage: "National awards", award: a.name, who: c.name, position: c.position, place: `${ORD(i)} of 5`, rank: i + 1, line: c.line }); });
+      for (const a of (nat ? nat.coach_awards : [])) (a.finalists || []).forEach((c, i) => { if (c.team === s.team) rows.push({ stage: "Coach awards", award: a.name, who: c.coach, position: c.role || "Head coach", place: ORD(i), rank: i + 1, line: coachLine(c) }); });
+      for (const [conf, entry] of Object.entries(nat && nat.conference ? nat.conference : {})) for (const a of entry.awards || []) (a.finalists || []).forEach((c, i) => { if (c.team === s.team) rows.push({ stage: `${conf} awards`, award: a.name, who: c.name || c.coach, position: c.position || "Head coach", place: ORD(i), rank: i + 1, line: c.line || coachLine(c) }); });
+    } else {
+      for (const m of d.mine || []) rows.push({ ...m, rank: /winner|unanimous/i.test(m.place) ? 0 : /first/i.test(m.place) ? 1 : /second/i.test(m.place) ? 2 : /finalist|third/i.test(m.place) ? 3 : 9 });
+    }
+    box.append(el("h3", { text: live ? `${s.team_name} in the races` : `${s.team_name} awards and honors` }));
+    if (!rows.length) { box.append(el("p", { class: "muted", text: live ? "Nobody from your team is in a top five yet." : "No awards or placements this season." })); return; }
+    const stages = [...new Set(rows.map((r) => r.stage))];
+    box.append(chipRow([["", "All"], ...stages.map((x) => [x, x])], st.mineFilter, (f) => { st.mineFilter = f; renderAwards(); }));
+    const shown = st.mineFilter ? rows.filter((r) => r.stage === st.mineFilter) : rows;
+    const wins = shown.filter((r) => r.rank === 0).length;
+    box.append(el("div", { class: "review-tiles" }, [[String(shown.length), "honors"], [String(wins), live ? "races led" : "awards won"], [String(new Set(shown.map((r) => r.who)).size), "players and coaches"]].map(([v, k]) => el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: v }), el("div", { class: "review-label", text: k })]))));
+    if (!st.sort) { st.sort = "result"; st.desc = false; }
+    const cols = [
+      { key: "stage", label: "Stage", left: true, get: (r) => r.stage, sort: (r) => r.stage },
+      { key: "award", label: "Award", left: true, get: (r) => el("b", { text: r.award }), sort: (r) => r.award },
+      { key: "who", label: "Who", left: true, get: (r) => el("span", { class: "name" }, [r.who, r.position ? el("span", { class: "pos", text: r.position }) : null]), sort: (r) => r.who || "" },
+      { key: "result", label: "Result", left: true, get: (r) => el("span", { class: r.rank === 0 ? "win" : "", text: r.place }), sort: (r) => r.rank },
+      { key: "line", label: "Season", left: true, get: (r) => el("span", { class: "muted small-text", text: r.line || "" }) },
+    ];
+    box.append(sortableTable(cols, shown, st, () => renderAwards()));
+  }
 
   async function renderSummary() {
     const s = state.season;
@@ -376,6 +640,18 @@
     const pill = (slug) => teamPill(slug);
     const team = (slug, text, cls = "") => el("span", { class: `review-team ${cls}` }, [pill(slug), text]);
     const weekName = (w) => s.week_labels[w] || `Week ${w}`;
+    if (s.heisman && s.heisman.winner) {
+      const w = s.heisman.winner;
+      const card = el("div", { class: `review-card heisman ${w.team === s.team ? "mine" : ""}` }, [
+        el("div", { class: "review-label", text: "Heisman Trophy" }),
+        el("div", { class: "review-big" }, [el("span", { class: "pill-inline", style: `background:${color(w.team)}` }), w.name, el("span", { class: "pos", text: `${w.position} · ${w.team_name}` })]),
+        el("div", { class: "muted small-text", text: `${w.line} · ${w.points} points, ${s.heisman.share}% of the possible points` }),
+        el("div", { class: "muted small-text", text: `Finalists: ${s.heisman.finalists.map((f) => `${f.name} (${f.team_name}, ${f.points})`).join(", ")}` }),
+      ]);
+      card.classList.add("clickable");
+      card.addEventListener("click", () => { state.tab = "awards"; awardsState.view = "heisman"; renderTab(); });
+      box.append(card);
+    }
 
     // one playoff / title game as "winner score – loser score · bowl"
     const gameRow = (g, note) => {
@@ -585,47 +861,87 @@
 
   function ordinal(n) { const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
 
+  const bowlsState = { sort: "date", conf: "", mine: false };
+
   function renderBowls() {
     const s = state.season;
     const box = $("#tab-bowls");
     box.innerHTML = "";
-    box.append(el("h3", { text: "Bowl season 2026-27" }));
-    if (!s.bowls || !s.bowls.length) {
-      box.append(el("p", { class: "muted", text: "Bowl matchups are set on selection day (after championship week), once the playoff field is known. Teams with six wins are eligible; bowls pick from their tie-in conferences in payout order." }));
+    const projection = !s.bowls || !s.bowls.length ? s.bowl_projection : null;
+    const rows = (s.bowls && s.bowls.length) ? s.bowls : (projection ? projection.bowls : []);
+    box.append(el("h3", { text: projection ? "Projected bowl lineup" : "Bowl season 2026-27" }));
+    if (!rows.length) {
+      box.append(el("p", { class: "muted", text: "Bowl projections start with the committee's first ranking (after week 9). The matchups are set on selection day, after championship week, once the playoff field is known: teams with six wins are eligible, and bowls pick from their tie-in conferences in payout order." }));
       return;
     }
+    if (projection) {
+      box.append(el("p", { class: "muted small-text", text: `As of the ${s.week_labels[projection.week] || "week " + projection.week} committee ranking: records carried to the end of the regular season on rating-based win odds, the current conference leaders as champions, the projected playoff field left out, then each bowl picks from its tie-ins. Projected final records in parentheses.` }));
+    }
+    // controls: sort, conference filter, my team
+    const confs = [...new Set(rows.flatMap((b) => [b.home_conference, b.away_conference]).filter(Boolean))].sort();
+    const controls = el("div", { class: "stats-controls" });
+    const sortSel = el("select", { "aria-label": "Sort bowls" }, [
+      el("option", { value: "date", text: "By date" }), el("option", { value: "bowl", text: "By bowl name" }),
+      el("option", { value: "team", text: "By team" }), el("option", { value: "conference", text: "By conference" }),
+    ]);
+    sortSel.value = bowlsState.sort;
+    sortSel.addEventListener("change", () => { bowlsState.sort = sortSel.value; renderBowls(); });
+    const confSel = el("select", { "aria-label": "Conference" }, [el("option", { value: "", text: "All conferences" }), ...confs.map((c) => el("option", { value: c, text: c }))]);
+    confSel.value = bowlsState.conf;
+    confSel.addEventListener("change", () => { bowlsState.conf = confSel.value; renderBowls(); });
+    const mineBtn = el("button", { type: "button", class: `ghost small ${bowlsState.mine ? "active" : ""}`, text: `${s.team_name} only` });
+    mineBtn.addEventListener("click", () => { bowlsState.mine = !bowlsState.mine; renderBowls(); });
+    controls.append(sortSel, confSel, mineBtn);
+    box.append(controls);
+
+    let list = rows.filter((b) => (!bowlsState.conf || b.home_conference === bowlsState.conf || b.away_conference === bowlsState.conf) && (!bowlsState.mine || b.mine));
+    const key = {
+      date: (b) => [b.week, b.date || "", b.time || ""],
+      bowl: (b) => [b.name],
+      team: (b) => [[b.away_name, b.home_name].filter(Boolean).sort()[0] || "zz"],
+      conference: (b) => [[b.away_conference, b.home_conference].filter(Boolean).sort()[0] || "zz", b.name],
+    }[bowlsState.sort];
+    list = list.slice().sort((a, b) => { const ka = key(a), kb = key(b); for (let i = 0; i < ka.length; i++) { if (ka[i] < kb[i]) return -1; if (ka[i] > kb[i]) return 1; } return 0; });
+    if (!list.length) { box.append(el("p", { class: "muted", text: "No bowls match that filter." })); return; }
+
     const groups = { 16: "Early bowls (Dec 15-24)", 17: "Holiday week (Dec 26-31)", 18: "New Year's bowls (Jan 2)" };
-    for (const w of [16, 17, 18]) {
-      const rows = s.bowls.filter((b) => b.week === w);
-      if (!rows.length) continue;
-      box.append(el("h3", { text: groups[w] }));
-      for (const b of rows) {
-        const played = b.played;
-        const aw = played && b.away_score > b.home_score, hw = played && b.home_score > b.away_score;
-        const card = el("div", { class: `bowl-card ${b.mine ? "mine" : ""} ${b.has_box ? "clickable" : ""}` });
-        card.append(el("div", { class: "bowl-head" }, [
-          el("b", { text: b.name }), el("span", { class: "muted small-text", text: ` ${b.date}${b.time ? " · " + b.time : ""} · ${b.site || ""}` }),
+    const side = (slug, name, record, won) => el("span", { class: won ? "win" : "" }, [teamPill(slug), name, record ? el("span", { class: "muted small-text", text: ` (${record})` }) : null]);
+    const card = (b) => {
+      const played = b.played;
+      const aw = played && b.away_score > b.home_score, hw = played && b.home_score > b.away_score;
+      const c = el("div", { class: `bowl-card ${b.mine ? "mine" : ""} ${b.has_box ? "clickable" : ""}` });
+      c.append(el("div", { class: "bowl-head" }, [
+        el("b", { text: b.name }), el("span", { class: "muted small-text", text: ` ${b.date}${b.time ? " · " + b.time : ""} · ${b.site || ""}` }),
+      ]));
+      if (b.unfilled) {
+        c.append(el("div", { class: "muted", text: "No eligible teams left for this bowl." }));
+      } else {
+        c.append(el("div", { class: "bowl-match" }, [
+          side(b.away, b.away_name, b.away_record, aw), played ? el("b", { text: ` ${b.away_score}` }) : null,
+          el("span", { class: "muted", text: " vs " }),
+          side(b.home, b.home_name, b.home_record, hw), played ? el("b", { text: ` ${b.home_score}` }) : null,
         ]));
-        if (b.unfilled) {
-          card.append(el("div", { class: "muted", text: "No eligible teams left for this bowl." }));
-        } else {
-          card.append(el("div", { class: "bowl-match" }, [
-            el("span", { class: aw ? "win" : "" }, [teamPill(b.away), b.away_name, played ? el("b", { text: ` ${b.away_score}` }) : null]),
-            el("span", { class: "muted", text: " vs " }),
-            el("span", { class: hw ? "win" : "" }, [teamPill(b.home), b.home_name, played ? el("b", { text: ` ${b.home_score}` }) : null]),
-          ]));
-        }
-        const bits = [];
-        if (b.tie_ins && b.tie_ins.length) bits.push(`Tie-ins: ${b.tie_ins.join(" vs ")}`);
-        if (b.games_played) bits.push(`${b.games_played} editions${b.first_played ? ` since ${b.first_played}` : ""}`);
-        else if (b.first_played) bits.push(`First played ${b.first_played}`);
-        if (b.most_appearances && b.most_appearances.length) bits.push("Most appearances: " + b.most_appearances.map((a) => `${a.team} (${a.games}, ${a.wins}-${a.games - a.wins})`).join(", "));
-        if (b.recent && b.recent.length) bits.push("Recent: " + b.recent.map((r) => `${r.season || r.year} ${r.winner}${r.winner_score != null ? " " + r.winner_score : ""} over ${r.loser}${r.loser_score != null ? " " + r.loser_score : ""}`).join("; "));
-        if (b.previous_tie_ins && b.previous_tie_ins.length) bits.push(`Previous tie-ins: ${b.previous_tie_ins.join(", ")}`);
-        card.append(el("div", { class: "muted small-text", text: bits.join(" · ") }));
-        if (b.has_box) card.addEventListener("click", () => openBox(b.event_id));
-        box.append(card);
       }
+      const bits = [];
+      if (b.tie_ins && b.tie_ins.length) bits.push(`Tie-ins: ${b.tie_ins.join(" vs ")}`);
+      if (b.games_played) bits.push(`${b.games_played} editions${b.first_played ? ` since ${b.first_played}` : ""}`);
+      else if (b.first_played) bits.push(`First played ${b.first_played}`);
+      if (b.most_appearances && b.most_appearances.length) bits.push("Most appearances: " + b.most_appearances.map((a) => `${a.team} (${a.games}, ${a.wins}-${a.games - a.wins})`).join(", "));
+      if (b.recent && b.recent.length) bits.push("Recent: " + b.recent.map((r) => `${r.season || r.year} ${r.winner}${r.winner_score != null ? " " + r.winner_score : ""} over ${r.loser}${r.loser_score != null ? " " + r.loser_score : ""}`).join("; "));
+      if (b.previous_tie_ins && b.previous_tie_ins.length) bits.push(`Previous tie-ins: ${b.previous_tie_ins.join(", ")}`);
+      if (bits.length) c.append(el("div", { class: "muted small-text", text: bits.join(" · ") }));
+      if (b.has_box) c.addEventListener("click", () => openBox(b.event_id));
+      return c;
+    };
+    if (bowlsState.sort === "date") {
+      for (const w of [16, 17, 18]) {
+        const wk = list.filter((b) => b.week === w);
+        if (!wk.length) continue;
+        box.append(el("h3", { text: groups[w] }));
+        for (const b of wk) box.append(card(b));
+      }
+    } else {
+      for (const b of list) box.append(card(b));
     }
   }
 
