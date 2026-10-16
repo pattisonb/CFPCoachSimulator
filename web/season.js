@@ -1162,8 +1162,8 @@
     if (!data.games.length) { box.append(el("h3", { text: `${label} · 0 games` })); box.append(el("p", { class: "muted", text: w > s.current_week ? "Not played yet." : "No games this week." })); return; }
     // filters: conference chips, then a view chip (ranked, top-25 matchups, upsets, close games, overtime, conference games, my team)
     const gs = gamesState;
-    const confOf = (slug) => (window.CFP.teamsBySlug[slug] || {}).conference || "";
-    const confs = [...new Set(data.games.flatMap((g) => [confOf(g.home), confOf(g.away)]).filter((c) => c && !/FCS/i.test(c)))].sort();
+    const confOf = (slug) => { const t = window.CFP.teamsBySlug[slug]; return t && !t.fictional ? (t.conference || "") : ""; };
+    const confs = [...new Set(data.games.flatMap((g) => [confOf(g.home), confOf(g.away)]).filter(Boolean))].sort();
     const controls = el("div", { class: "stats-controls" });
     controls.append(confChips(confs, confs.includes(gs.conf) ? gs.conf : "", (v) => { gs.conf = v; renderGames(); }));
     const views = [["", "All"], ["ranked", "Ranked"], ["top25", "Top-25 matchups"], ["upsets", "Upsets"], ["close", "Close games"], ["ot", "Overtime"], ["conf", "Conference games"], ["mine", "My team"]];
