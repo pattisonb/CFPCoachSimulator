@@ -661,8 +661,9 @@
     // development trait on a five-star scale: Normal 2, Impact 3, Star 4, Elite 5 (the data has those four tiers)
     const DEV_STARS = { Normal: 2, Impact: 3, Star: 4, Elite: 5 };
     const devStars = DEV_STARS[p.dev_trait] || 0;
-    const devTag = devStars ? el("span", { class: "tag dev", title: `Development trait: ${p.dev_trait} (${devStars} of 5). How quickly the player improves.` }, [
-      el("span", { class: "dev-dots" }, [1, 2, 3, 4, 5].map((i) => el("span", { class: `dev-star ${i <= devStars ? "on" : ""}`, text: "★" }))), ` ${p.dev_trait}`]) : null;
+    const devTag = devStars ? el("span", { class: `tag dev dev-${(p.dev_trait || "").toLowerCase()}`, title: `Development trait: ${p.dev_trait} (${devStars} of 5). How quickly the player improves.` }, [
+      el("span", { class: "dev-label", text: "Development" }),
+      el("span", { class: "dev-dots" }, [1, 2, 3, 4, 5].map((i) => el("span", { class: `dev-star ${i <= devStars ? "on" : ""}`, text: "★" }))), el("b", { text: p.dev_trait })]) : null;
     hero.append(
       el("div", { class: "player-hero-main" }, [
         (() => { const pill = teamPill(team.slug); pill.classList.add("big"); return pill; })(),
@@ -673,8 +674,8 @@
             p.starter ? el("span", { class: "tag good", text: "Starter" }) : el("span", { class: "tag", text: p.depth ? `${p.role || p.position} #${p.depth}` : "Reserve" }),
             p.injured ? el("span", { class: "tag bad", text: "Injured" }) : null,
             p.games ? el("span", { class: "tag", text: `${p.games} of ${p.team_games} games` }) : el("span", { class: "tag", text: "No games yet" }),
-            devTag,
           ]),
+          devTag ? el("div", { class: "player-dev" }, [devTag]) : null,
         ]),
       ]),
       el("div", { class: "player-ovr" }, [el("div", { class: "player-ovr-num", text: String(p.overall) }), el("div", { class: "review-label", text: "Overall" })]),

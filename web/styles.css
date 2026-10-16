@@ -661,3 +661,14 @@ body.modal-open { overflow: hidden; }
 .dev-dot.on { background: var(--accent); }
 .dev-star { font-size: 11px; color: var(--border); line-height: 1; }
 .dev-star.on { color: var(--accent); }
+
+/* development trait: its own line, colored by tier */
+.player-dev { margin-top: 8px; }
+.tag.dev { gap: 6px; padding: 4px 10px; font-size: 12px; color: var(--text); background: color-mix(in srgb, var(--dev-color) 14%, var(--panel)); border-color: var(--dev-color); }
+.tag.dev .dev-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; }
+.tag.dev .dev-star.on { color: var(--dev-color); }
+.tag.dev b { color: var(--dev-color); }
+.dev-normal { --dev-color: #8a94ad; }
+.dev-impact { --dev-color: #2f8f5b; }
+.dev-star { --dev-color: #d9a21b; }
+.dev-elite { --dev-color: #a24ad6; }
