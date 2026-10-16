@@ -1023,11 +1023,25 @@
       if (b.unfilled) {
         c.append(el("div", { class: "muted", text: "No eligible teams left for this bowl." }));
       } else {
-        c.append(el("div", { class: "bowl-match" }, [
-          side(b.away, b.away_name, b.away_record, aw, b), played ? el("b", { text: ` ${b.away_score}` }) : null,
-          el("span", { class: "muted", text: " vs " }),
-          side(b.home, b.home_name, b.home_record, hw, b), played ? el("b", { text: ` ${b.home_score}` }) : null,
-        ]));
+        if (played) {
+          // a played bowl reads like a bracket card: one row per team, the winner bold with a check, the loser faded
+          const row = (slug, nm, rec, score, won) => el("div", { class: `bmatch-row ${won ? "win" : "lost"}` }, [
+            teamPill(slug),
+            el("span", { class: "bmatch-name" }, [rankTag(slug, rankWeek(b)), nm, rec ? el("span", { class: "muted small-text", text: ` (${rec})` }) : null, won ? el("span", { class: "won-tag", text: " ✓" }) : null]),
+            el("b", { class: "bmatch-score", text: String(score) }),
+          ]);
+          c.append(el("div", { class: "bowl-result" }, [
+            row(b.away, b.away_name, b.away_record, b.away_score, aw),
+            row(b.home, b.home_name, b.home_record, b.home_score, hw),
+            el("div", { class: "muted small-text", text: `Final${b.overtime ? ` · ${b.overtime > 1 ? b.overtime : ""}OT` : ""}` }),
+          ]));
+        } else {
+          c.append(el("div", { class: "bowl-match" }, [
+            side(b.away, b.away_name, b.away_record, false, b),
+            el("span", { class: "muted", text: " vs " }),
+            side(b.home, b.home_name, b.home_record, false, b),
+          ]));
+        }
       }
       // the tie-ins explain a projection; once the matchups are set the card is just the game
       if (b.projected && b.tie_ins && b.tie_ins.length) c.append(el("div", { class: "muted small-text", text: `Tie-ins: ${b.tie_ins.join(" vs ")}` }));

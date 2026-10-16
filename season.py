@@ -1455,6 +1455,7 @@ def bowl_view(state: dict) -> list[dict]:
                     "home_record": f"{rec[b['home']]['wins']}-{rec[b['home']]['losses']}" if b.get("home") else None,
                     "away_record": f"{rec[b['away']]['wins']}-{rec[b['away']]['losses']}" if b.get("away") else None,
                     "played": bool(g and g["played"]), "home_score": g["home_score"] if g else None, "away_score": g["away_score"] if g else None,
+                    "overtime": (g.get("overtime") or 0) if g else 0,
                     "mine": state["team"] in (b.get("home"), b.get("away")), "has_box": b["event_id"] in state["my_boxes"],
                     "games_played": meta.get("games_played"), "first_played": meta.get("first_played"),
                     "most_appearances": meta.get("most_appearances", [])[:4], "recent": meta.get("recent", [])[:3],

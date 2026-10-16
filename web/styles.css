@@ -563,3 +563,12 @@ button.tiny { padding: 0 5px; font-size: 11px; line-height: 18px; min-height: 0;
 /* injuries */
 .injury-league { margin-top: 14px; }
 .injury-league .leader-head { margin-bottom: 6px; }
+.injury-line { margin-top: 4px; font-size: 12px; }
+.pos.injured { color: var(--bad); }
+
+/* played bowls: winner bold with a check, loser faded, score on the right */
+.bowl-result { max-width: 420px; margin: 4px 0 2px; }
+.bowl-result .bmatch-row { font-size: 14px; }
+.bowl-result .bmatch-row.win .bmatch-name { color: var(--good); }
+.bowl-result .won-tag { color: var(--good); font-weight: 700; }
+.bowl-result .bmatch-row.lost { opacity: 0.6; }
