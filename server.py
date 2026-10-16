@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import contextlib
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -37,12 +38,13 @@ WEB_DIR = ROOT / "web"
 MAX_HISTORY = 300
 MAX_BATCH = 500
 
-app = FastAPI(title="CFP Coach Simulator")
+@contextlib.asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    yield
+    season.close_pool()   # stop the season workers so Ctrl-C exits at once
 
 
-@app.on_event("shutdown")
-def _stop_workers() -> None:
-    season.close_pool()
+app = FastAPI(title="CFP Coach Simulator", lifespan=_lifespan)
 
 _sim_lock = threading.Lock()  # the engine uses module-level state (sliders, TD log)
 _games: list[dict] = []
