@@ -448,8 +448,10 @@
     const week = { "First round": 16, "Quarterfinals": 17, "Semifinals": 18, "National championship": 19 }[rname];
     try {
       const data = await api(`/api/season/${s.id}/week/${week}`);
-      for (const g of data.games) {
-        const card = matchCard(g.away_display, g.home_display, g.away_score, g.home_score, g.neutral ? "neutral site" : `at ${g.home_name}`, g.mine, g.has_box ? () => openBox(g.event_id) : null);
+      // bowls share these weeks; the bracket shows only the playoff games
+      for (const g of data.games.filter((x) => x.kind === "playoff")) {
+        const where = g.bowl ? `${g.bowl}${g.site ? " · " + g.site : ""}` : g.neutral ? "neutral site" : `at ${g.home_name}`;
+        const card = matchCard(g.away_display, g.home_display, g.away_score, g.home_score, where, g.mine, g.has_box ? () => openBox(g.event_id) : null);
         col.appendChild(card);
       }
     } catch (err) { col.appendChild(el("p", { class: "muted", text: err.message })); }

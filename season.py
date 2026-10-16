@@ -618,7 +618,7 @@ def advance(state: dict, pool: Optional[Pool] = None) -> dict:
         state["bracket"] = polls.build_bracket(final, state["champions"], conf_of, names)
         state["phase"] = "playoff"
     if week in PLAYOFF_WEEKS:
-        state["playoff"][PLAYOFF_WEEKS[week]] = [eid for eid, g in state["games"].items() if g["week"] == week]
+        state["playoff"][PLAYOFF_WEEKS[week]] = [eid for eid, g in state["games"].items() if g["week"] == week and g["kind"] == "playoff"]
         if week == 19:
             g = state["games"]["cfp-final"]
             state["champion"] = g["home"] if g["home_score"] > g["away_score"] else g["away"]
@@ -686,7 +686,8 @@ def week_dates(state: dict) -> dict[int, dict]:
             out[w] = {"start": start, "end": end, "main": end}
         else:
             ds = sorted(by_week[w])
-            out[w] = {"start": ds[0], "end": ds[-1], "main": max(set(ds), key=ds.count)}
+            saturdays = [d for d in ds if datetime.fromisoformat(d).weekday() == 5]
+            out[w] = {"start": ds[0], "end": ds[-1], "main": saturdays[0] if saturdays else max(set(ds), key=ds.count)}
     first = out.get(1, {}).get("start")
     if first:
         eve = (datetime.fromisoformat(first) - timedelta(days=1)).strftime("%Y-%m-%d")
