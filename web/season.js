@@ -157,9 +157,12 @@
           if (j.status === "error") toast(`Simulation error: ${j.error}`, 6000);
           const s = await api(`/api/season/${state.season.id}`);
           state.viewWeek = s.done ? s.current_week : Math.min(s.current_week + 1, 20);
+          const singleWeek = state.simTarget === state.advanceFrom + 1;
+          const mine = singleWeek && gamedayOn() && j.status !== "error" ? (j.results || []).find((r) => r.week === state.advanceFrom + 1 && r.event_id && r.has_box) : null;
           showSeason(s);
           loadSeasons();
           setBusy(false);
+          if (mine) openGameDay(mine.event_id, mine);
         }
       } catch (err) { toast(err.message, 4000); setBusy(false); }
     }, 500);
@@ -2332,6 +2335,206 @@
     for (const t of ["scoring", "team", "home", "away", "drives"]) $(`#sbox-${t}`).hidden = t !== name;
   }
 
+  // ----- game day: your game, drive by drive ----------------------------------
+  // After "Advance to next week" the week is simulated as usual; your game then replays
+  // from its play log: one play at a time, the score and clock moving, a Skip to the
+  // final box score. Multi-week sims and bye weeks never open it.
+  const GAMEDAY_KEY = "cfp.gameday";
+  function gamedayOn() { try { return localStorage.getItem(GAMEDAY_KEY) !== "off"; } catch (e) { return true; } }
+  function renderGamedayToggle() {
+    const b = $("#btn-gameday");
+    if (!b) return;
+    const on = gamedayOn();
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+    b.textContent = on ? "Game day: on" : "Game day: off";
+    b.title = on ? "Advance to next week replays your game drive by drive" : "Advance to next week goes straight to the result";
+  }
+  function toggleGameday() { try { localStorage.setItem(GAMEDAY_KEY, gamedayOn() ? "off" : "on"); } catch (e) {} renderGamedayToggle(); }
+
+  const gameday = { timer: null, speed: "normal", moments: [], i: 0, g: null, eventId: null, node: null };
+  const GD_PACE = { slow: 1600, normal: 900, fast: 320 };
+  const gdSpeed = () => { try { return localStorage.getItem("cfp.gameday.speed") || "normal"; } catch (e) { return "normal"; } };
+
+  const gdAbbr = (g, side) => { const t = window.CFP.teamsBySlug[g[`${side}_slug`]]; return (t && t.abbreviation) || g[side].name; };
+  // a yardline is the offense's distance from its own goal line
+  const gdSpot = (g, off, yl) => (yl === 50 ? "the 50" : yl < 50 ? `the ${gdAbbr(g, off)} ${yl}` : `the ${gdAbbr(g, off === "home" ? "away" : "home")} ${100 - yl}`);
+  const gdGain = (n) => (n > 0 ? `${n} yard gain` : n === 0 ? "no gain" : `loss of ${-n}`);
+  const gdDown = (e) => (e.down ? `${ordinal(e.down)} & ${e.yl + e.dist >= 100 ? "Goal" : e.dist}` : "");
+
+  function gdDescribe(g, d, e) {
+    const off = d.offense, def = off === "home" ? "away" : "home";
+    const td = e.after === 6 || e.result === "defensive_touchdown" || e.result === "return_td";
+    if (e.type === "kickoff") {
+      if (e.result === "onside_recovered") return `${e.kicking} tries an onside kick and recovers it at ${gdSpot(g, off, e.to)}.`;
+      if (e.result === "onside_failed") return `${e.kicking} tries an onside kick; ${g[off].name} recovers at ${gdSpot(g, off, e.to)}.`;
+      if (e.result === "return_td") return `${e.kicking} kicks off; ${e.returner || "the returner"} takes it all the way back for a TOUCHDOWN.`;
+      if (e.returner && e.return_yards) return `${e.kicking} kicks off; ${e.returner} returns it ${e.return_yards} yards to ${gdSpot(g, off, e.to)}.`;
+      return `${e.kicking} kicks off; touchback, ${g[off].name} starts at ${gdSpot(g, off, e.to)}.`;
+    }
+    if (e.type === "penalty") {
+      const on = e.result === "offensive penalty" ? g[off].name : g[def].name;
+      return `Penalty on ${on}: ${e.penalty || "penalty"}, ${Math.abs(e.yards || 0)} yards.`;
+    }
+    if (e.type === "field_goal") {
+      const who = e.kicker ? `${e.kicker}'s ` : "";
+      return `${who}${e.distance} yard field goal is ${e.result === "good" ? "GOOD" : e.result === "blocked" ? "BLOCKED" : "NO GOOD"}.`;
+    }
+    if (e.type === "punt") {
+      const who = e.punter || g[off].name;
+      if (e.result === "blocked") return `${who}'s punt is BLOCKED.`;
+      if (e.result === "return_td") return `${who} punts ${e.yards} yards; ${e.returner || "the returner"} takes it back for a TOUCHDOWN.`;
+      if (e.returner && e.return_yards) return `${who} punts ${e.yards} yards; ${e.returner} returns it ${e.return_yards} yards to ${gdSpot(g, def, 100 - e.to)}.`;
+      return `${who} punts ${e.yards} yards; ${g[def].name} takes over at ${gdSpot(g, def, 100 - e.to)}.`;
+    }
+    const first = e.after === 1 && !td ? " for a first down" : "";
+    const fumble = (base) => {
+      if (!e.fumble) return base;
+      if (e.fumble_kept) return `${base}, fumbles and ${g[off].name} recovers`;
+      if (e.result === "defensive_touchdown") return `${base}, FUMBLES, ${e.recovered_by || g[def].name} picks it up and returns it for a TOUCHDOWN`;
+      return `${base}, FUMBLES, recovered by ${e.recovered_by || g[def].name}`;
+    };
+    if (e.type === "run") {
+      if (e.kneel) return `${g[off].name} takes a knee.`;
+      const who = e.who || g[off].name;
+      if (td && !e.fumble) return `${who} ${e.yards} yard run for a TOUCHDOWN.`;
+      return fumble(`${who} runs for a ${gdGain(e.yards)}`) + first + (e.safety ? ". SAFETY" : "") + ".";
+    }
+    // passes
+    const qb = e.qb || "The quarterback";
+    if (e.spike) return `${qb} spikes the ball to stop the clock.`;
+    if (e.throwaway) return `${qb} throws it away.`;
+    if (e.result === "sack") return fumble(`${qb} sacked${e.sacked_by ? ` by ${e.sacked_by}` : ""} for a ${gdGain(e.yards)}`) + (e.safety ? ". SAFETY" : "") + ".";
+    if (e.result === "interception") return `${qb} INTERCEPTED by ${e.picked_by || "the defense"}; ${g[def].name} takes over at ${gdSpot(g, def, 100 - e.to)}.`;
+    if (e.result === "defensive_touchdown" && e.picked_by) return `${qb} INTERCEPTED by ${e.picked_by}, returned for a TOUCHDOWN.`;
+    if (e.result === "run") return `${qb} scrambles for a ${gdGain(e.yards)}${td ? " and a TOUCHDOWN" : first}.`;
+    if (e.result === "incomplete") return `${qb} incomplete${e.target ? `, intended for ${e.target}` : ""}${e.hail_mary ? " on the Hail Mary" : ""}.`;
+    const to = e.target ? ` to ${e.target}` : "";
+    if (td && !e.fumble) return `${qb} complete${to} for ${e.yards} yards and a TOUCHDOWN${e.hail_mary ? " on the Hail Mary" : ""}.`;
+    return fumble(`${qb} complete${to} for a ${gdGain(e.yards)}`) + first + ".";
+  }
+
+  function gdMoments(g) {
+    const sp = g.scoring_plays || [];
+    let si = 0, home = 0, away = 0;
+    const take = () => { if (si < sp.length) { const s = sp[si++]; home = s.home_score; away = s.away_score; return s; } return null; };
+    const out = [];
+    g.drives.forEach((d, di) => {
+      const off = d.offense;
+      let scored = false;
+      for (const e of d.log || []) {
+        const m = { drive: di, off, quarter: e.quarter, clock: e.clock, kind: e.type, text: gdDescribe(g, d, e), situation: "", big: false };
+        if (e.type === "run" || e.type === "pass") {
+          m.situation = e.down ? `${gdDown(e)} at ${gdSpot(g, off, e.yl)}` : `At ${gdSpot(g, off, e.yl)}`;
+          if (Math.abs(e.yards || 0) >= 20 || ["interception", "fumble", "defensive_touchdown"].includes(e.result) || e.fumble) m.big = true;
+        } else if (e.type === "field_goal" || e.type === "punt") m.situation = `4th${e.dist != null ? ` & ${e.dist}` : ""} at ${gdSpot(g, off, e.yl)}`;
+        const scores = e.after === 6 || e.result === "defensive_touchdown" || e.result === "return_td" || (e.type === "field_goal" && e.result === "good") || e.safety;
+        if (scores) { m.score = take(); m.big = true; scored = true; }
+        m.home = home; m.away = away;
+        out.push(m);
+      }
+      if (!scored && ["touchdown", "field goal", "safety", "defensive_touchdown", "punt_return_td"].includes(d.result)) {
+        const s = take();
+        if (s) { const last = out[out.length - 1]; if (last && last.drive === di) { last.score = s; last.big = true; last.home = home; last.away = away; } else out.push({ drive: di, off, quarter: d.quarter, clock: "", kind: "score", text: `${s.team_name}: ${s.description}`, score: s, big: true, home, away, situation: "" }); }
+      }
+      out.push({ drive: di, off, quarter: d.quarter, clock: "", kind: "drive-end", text: gdDriveResult(g, d), home, away, situation: "", end: true });
+    });
+    while (si < sp.length) { const s = take(); out.push({ drive: g.drives.length, off: s.team, quarter: s.quarter, clock: s.clock, kind: "score", text: `${s.team_name}: ${s.description}${s.try ? ` (${s.try})` : ""}`, score: s, big: true, home, away, situation: "" }); }
+    return out;
+  }
+  function gdDriveResult(g, d) {
+    const r = { touchdown: "Touchdown", "field goal": "Field goal", "missed kick": "Missed field goal", punt: "Punt", turnover: "Turnover", safety: "Safety",
+      defensive_touchdown: "Defensive touchdown", punt_return_td: "Punt return touchdown", end_of_half: "End of half", first_down: "Drive over" }[d.result] || d.result;
+    return `${r} · ${d.plays} play${d.plays === 1 ? "" : "s"}, ${d.end_yardline - d.start_yardline} yards, ${Math.floor(d.seconds / 60)}:${String(d.seconds % 60).padStart(2, "0")}`;
+  }
+
+  async function openGameDay(eventId, info) {
+    const s = state.season;
+    let g;
+    try { g = await api(`/api/season/${s.id}/game/${eventId}`); } catch (err) { toast(`Could not load the game: ${err.message}`, 3000); return; }
+    if (!g.drives || !g.drives.some((d) => d.log && d.log.length)) { openBox(eventId); return; }
+    gameday.g = g; gameday.eventId = eventId; gameday.moments = gdMoments(g); gameday.i = 0; gameday.speed = gdSpeed();
+    clearTimeout(gameday.timer);
+    const node = el("div", { class: "gameday" });
+    gameday.node = node;
+    const block = (side) => {
+      const t = g[side];
+      const mine = g[`${side}_slug`] === s.team;
+      const parts = [el("div", { class: "gd-name" }, [teamPill(g[`${side}_slug`]), el("span", { text: t.name }), mine ? el("span", { class: "muted small-text", text: " (you)" }) : null]), el("div", { class: "gd-pts", id: `gd-${side}`, text: "0" })];
+      return el("div", { class: `gd-team ${side}` }, side === "home" ? parts : parts.reverse());
+    };
+    node.append(
+      el("div", { class: "gd-score" }, [block("away"), el("div", { class: "gd-clock" }, [el("div", { id: "gd-q", text: "Kickoff" }), el("div", { id: "gd-time", class: "muted small-text", text: "" })]), block("home")]),
+      el("div", { id: "gd-situation", class: "gd-situation muted" }),
+      el("div", { class: "gd-controls" }, [
+        chipRow([["slow", "Slow"], ["normal", "Normal"], ["fast", "Fast"]], gameday.speed, (v) => { gameday.speed = v; try { localStorage.setItem("cfp.gameday.speed", v); } catch (e) {} for (const c of node.querySelectorAll(".gd-controls .chip")) c.classList.toggle("active", c.dataset.v === v); }),
+        (() => { const b = el("button", { type: "button", class: "ghost small", id: "gd-skip", text: "Skip to final" }); b.addEventListener("click", () => gdFinish(true)); return b; })(),
+      ]),
+      el("div", { class: "gd-current" }, [el("h4", { id: "gd-drive-title", text: "" }), el("ol", { id: "gd-plays", class: "gd-plays" })]),
+      el("div", { class: "gd-scoring" }, [el("h4", { text: "Scoring" }), el("ul", { id: "gd-scores", class: "scoring-list" })]),
+      el("div", { class: "gd-drives" }, [el("h4", { text: "Drives" }), el("ul", { id: "gd-drives", class: "gd-drive-list" })]),
+    );
+    for (const c of node.querySelectorAll(".gd-controls .chip")) c.dataset.v = c.dataset.v || c.textContent.trim().toLowerCase();
+    const title = el("span", {}, [el("span", { class: "gd-live", text: "LIVE" }), ` ${g.away.name} at ${g.home.name}`, info && info.title ? el("span", { class: "muted small-text", text: ` · ${info.title}` }) : null]);
+    openModal(title, node);
+    gameday.layerNode = node.closest(".modal");
+    gdStep();
+  }
+
+  function gdStep() {
+    const { moments, g, node } = gameday;
+    if (!node || !node.isConnected) { clearTimeout(gameday.timer); return; }
+    if (gameday.i >= moments.length) { gdFinish(false); return; }
+    const m = moments[gameday.i++];
+    $("#gd-home").textContent = String(m.home); $("#gd-away").textContent = String(m.away);
+    const qn = (q) => (q <= 4 ? `${ordinal(q)} quarter` : `Overtime${q > 5 ? " " + (q - 4) : ""}`);
+    $("#gd-q").textContent = qn(m.quarter); $("#gd-time").textContent = m.clock || "";
+    // the next snap's down and distance is the situation on the board
+    const next = moments[gameday.i];
+    $("#gd-situation").textContent = m.end ? "" : m.situation ? `${m.situation} · ${g[m.off].name} ball` : next && next.situation && next.drive === m.drive ? `${next.situation} · ${g[m.off].name} ball` : "";
+    const d = g.drives[m.drive];
+    if (d) $("#gd-drive-title").textContent = `Drive ${m.drive + 1} · ${d.offense_name}${d.quarter ? ` · ${qn(d.quarter)}` : ""}`;
+    const list = $("#gd-plays");
+    if (m.kind !== "drive-end") {
+      if (list.dataset.drive !== String(m.drive)) { list.innerHTML = ""; list.dataset.drive = String(m.drive); }
+      const li = el("li", { class: `gd-play ${m.big ? "big" : ""} ${m.score ? "score" : ""}` }, [
+        el("span", { class: "gd-when muted small-text", text: `${m.clock || ""}${m.situation ? ` · ${m.situation}` : ""}` }),
+        el("span", { class: "gd-text", text: m.text }),
+        m.score && m.score.try ? el("span", { class: "muted small-text", text: ` (${m.score.try})` }) : null,
+      ]);
+      list.append(li);
+      li.scrollIntoView({ block: "nearest" });
+    } else {
+      const d2 = g.drives[m.drive];
+      $("#gd-drives").append(el("li", {}, [teamPill(g[`${d2.offense}_slug`]), el("b", { text: d2.offense_name }), el("span", { class: "muted small-text", text: ` · ${m.text}` })]));
+    }
+    if (m.score) {
+      const sc = m.score;
+      $("#gd-scores").append(el("li", {}, [
+        el("span", { class: "q", text: `${sc.quarter <= 4 ? `Q${sc.quarter}` : `OT${sc.quarter - 4}`} ${sc.clock}` }),
+        el("span", { class: "kind", text: sc.points === 3 ? "FG" : sc.kind === "safety" ? "SAF" : "TD" }),
+        el("span", { class: "desc" }, [`${sc.team_name}: ${sc.description || ""}`, sc.try ? el("span", { class: "try", text: ` (${sc.try})` }) : null]),
+        el("span", { class: "running", html: `<b>${sc.away_score}</b> – <b>${sc.home_score}</b>` }),
+      ]));
+    }
+    const pace = GD_PACE[gameday.speed] || GD_PACE.normal;
+    const delay = m.end ? pace * 0.6 : m.big ? pace * 2 : m.kind === "kickoff" ? pace * 0.8 : pace;
+    gameday.timer = setTimeout(gdStep, delay);
+  }
+
+  function gdFinish(skipped) {
+    clearTimeout(gameday.timer);
+    const { g, eventId, node } = gameday;
+    if (!g) return;
+    if (skipped || !node || !node.isConnected) { closeAllModals(); openBox(eventId); gameday.g = null; return; }
+    $("#gd-home").textContent = String(g.home.score); $("#gd-away").textContent = String(g.away.score);
+    $("#gd-q").textContent = g.overtime_periods ? `Final / ${g.overtime_periods}OT` : "Final"; $("#gd-time").textContent = "";
+    $("#gd-situation").textContent = "";
+    const skip = $("#gd-skip");
+    if (skip) { skip.textContent = "Box score"; skip.classList.remove("ghost"); skip.classList.add("primary"); }
+    const live = node.closest(".modal") && node.closest(".modal").querySelector(".gd-live");
+    if (live) live.textContent = "FINAL";
+  }
+
   // ----- wiring ------------------------------------------------------------
 
   $("#btn-new").addEventListener("click", newSeason);
@@ -2341,6 +2544,8 @@
   $("#btn-hide-seasons").addEventListener("click", () => setSidebar(false));
   setSidebar(true, false);
   $("#btn-advance").addEventListener("click", () => advance());
+  $("#btn-gameday").addEventListener("click", toggleGameday);
+  renderGamedayToggle();
   $("#btn-to-selection").addEventListener("click", () => advance(15));
   $("#btn-to-end").addEventListener("click", () => advance(20));
   $("#season-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) { state.tab = b.dataset.tab; renderTab(); } });

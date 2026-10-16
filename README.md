@@ -493,6 +493,23 @@ role.
 rank, Group of Five and defensive finalists, All-America consensus counts and the coach of
 the year profile against the research targets.
 
+### Game day: your game, drive by drive
+
+"Advance to next week" simulates the week as before (same seed, same results), then
+replays your game from its play log instead of jumping to the final box score: a live
+scoreboard with the quarter and clock, the down and distance, each play appearing in
+turn (runs, passes, sacks, turnovers, penalties, kicks and punts with the players
+involved), a scoring summary and a list of finished drives. Slow / Normal / Fast set the
+pace; "Skip to final" opens the normal box score at once. Bye weeks and multi-week sims
+(Sim to selection / Sim to the end) never open it, and the "Game day: on/off" button next
+to the sim buttons turns the replay off for good if you would rather see the result.
+
+The log comes from the engine: every snap, kick, punt and kickoff is recorded per drive
+(`log` on each drive in the box score) with the players involved. Nothing in the logging
+draws a random number, so a game's result is identical with or without it
+(`python test_play_log.py --check` prints a fingerprint of five seeded games that must not
+change when the engine is edited).
+
 ### Personnel, schemes and injuries
 
 The engine now fields a different eleven on every snap (`engine/personnel.py`). The

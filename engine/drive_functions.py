@@ -1,4 +1,5 @@
 import random
+from . import play_functions
 from .play_functions import get_pass_yards, get_run_yards
 from .game_functions import get_kick_attempt_range, get_punt_distance, apply_general_fatigue, fg_max_distance
 from .game_config import sliders
@@ -108,6 +109,18 @@ def determine_line_advantage(offense, defense, offense_play, defense_play) :
                 defense_rushing += player.rushing
     return offense_blocking - defense_rushing
     
+# Every snap, kick and punt of the game in order; game.py slices it into drives for the
+# box score's play-by-play. Names come from play_functions.last_play. Nothing here draws
+# a random number, so the log never changes a result.
+play_log: list = []
+
+
+def _log(**entry) -> dict:
+    entry.update({k: v for k, v in play_functions.last_play.items()})
+    play_log.append(entry)
+    return entry
+
+
 def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hurrying=False, last_play_type=None, last_gain=0, seconds_remaining=cfg.HALF_SECONDS, verbose=True, clock_stopped=True, situation=None, posture=None) :
     """One snap: fatigue and substitutions, a possible penalty, then a run or a pass.
     Returns (play_ran, result, yards, seconds_used, info) where info says whether the clock is
@@ -180,6 +193,7 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
                                        offense_team, defense_team, pace_mult)
         return max(1, secs), {"stopped": stopped, "oob": oob}
 
+    play_functions.last_play.clear()
     off_penalty_chance = sliders.get_inverse_percentage_adjustment(sliders.offensive_penalties, cfg.OFF_PENALTY_CHANCE)
     if random.random() < off_penalty_chance:
         penalty_type = random.choices(
@@ -190,6 +204,7 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
         offense_team.team_stats["penalty_yards"] += abs(penalty_yards)
         if verbose:
             print(f"Penalty: {penalty_type.replace('_', ' ').title()} for {abs(penalty_yards)} yards")
+        play_functions.last_play["penalty"] = penalty_type.replace("_", " ")
         return "penalty", "offensive penalty", penalty_yards, *clock("offensive penalty")
 
     def_penalty_chance = sliders.get_inverse_percentage_adjustment(sliders.defensive_penalties, cfg.DEF_PENALTY_CHANCE)
@@ -205,6 +220,7 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
         defense_team.team_stats["penalty_yards"] += penalty_yards
         if verbose:
             print(f"Defensive Penalty: {penalty_type.replace('_', ' ').title()}")
+        play_functions.last_play["penalty"] = penalty_type.replace("_", " ")
         return "penalty", "defensive penalty", penalty_yards, *clock("defensive penalty")
 
     # Victory formation: kneel it out (the leader can burn the rest of the clock).
@@ -212,12 +228,14 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
         secs = cfg.KNEEL_PLAY_SECONDS + (0 if getattr(defense_team, "timeouts", 0) > 0 else cfg.KNEEL_RUNOFF)
         if getattr(defense_team, "timeouts", 0) > 0:
             defense_team.timeouts -= 1
+        play_functions.last_play["kneel"] = True
         return "run", "run", -1, max(1, min(secs, max(1, seconds_remaining))), {"stopped": False, "oob": False, "kneel": True}
     # Spike: stop the clock at the cost of a down.
     if situation.get("spike"):
         qb = next((p for p in offense if p.position == "QB"), None)
         if qb is not None:
             qb.stats["pass_attempts"] += 1
+        play_functions.last_play["spike"] = True
         return "pass", "incomplete", 0, *clock("spike")
     run_shift -= situation.get("pass_shift", 0.0) * -1 if False else 0.0
     run_shift += situation.get("pass_shift", 0.0)
@@ -490,6 +508,9 @@ def _clutch_kick(offense, defense, kicker, yardline, seconds_remaining, in_red_z
     result = "field goal" if kick_made and not kick_blocked else "missed kick"
     if in_red_zone and result == "field goal":
         offense.team_stats["red_zone_scores"] += 1
+    play_functions.last_play.clear()
+    _log(type="field_goal", result="blocked" if kick_blocked else ("good" if kick_made else "missed"), distance=(100 - yardline) + 17,
+         down=None, dist=None, yl=yardline, kicker=kicker.name if kicker else None, left=seconds_remaining, clutch=True)
     return play_ran, result, yardline, seconds_remaining
 
 
@@ -502,6 +523,8 @@ def _hail_mary(offense, defense, yardline, seconds_remaining):
     if qb is None or not targets:
         return "pass", "end_of_half", yardline, seconds_remaining
     target = max(targets, key=lambda p: (p.hands or 50) + (p.speed or 50))
+    play_functions.last_play.clear()
+    hm = _log(type="pass", result="incomplete", down=None, dist=None, yl=yardline, yards=0, to=yardline, left=seconds_remaining, hail_mary=True, qb=qb.name, target=target.name, target_pos=target.position)
     qb.stats["pass_attempts"] += 1
     target.stats["targets"] += 1
     if random.random() < cfg.HAIL_MARY_SUCCESS * (1 + (getattr(qb, "passing", 50) - cfg.NEUTRAL) / 100):
@@ -514,6 +537,7 @@ def _hail_mary(offense, defense, yardline, seconds_remaining):
         target.stats["receiving_touchdowns"] += 1
         from .play_functions import debug_td_stats
         debug_td_stats.append({"type": "passing", "qb": qb.name, "receiver": target.name, "receiver_position": target.position})
+        hm.update(result="successful_pass", yards=yards, to=100, after=6)
         return "pass", "touchdown", 100, seconds_remaining
     return "pass", "end_of_half", yardline, seconds_remaining
 
@@ -544,10 +568,12 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
             return _clutch_kick(offense, defense, kicker, yardline, seconds_remaining, in_red_zone, play_ran or "pass")
         if situation.get("hail_mary"):
             return _hail_mary(offense, defense, yardline, seconds_remaining)
+        pre = (down, first_down_yardage, yardline)
         play_ran, result, yards_gained, time, info = sim_play(offense, defense, down, first_down_yardage, yardline, hurrying, last_play_type, last_gain, seconds_remaining, False, clock_stopped, situation, posture)
         clock_stopped = info.get("stopped", False)
         seconds_remaining -= time
         down, first_down_yardage, yardline, safety_occurred = process_play(result, play_ran, yards_gained, yardline, down, first_down_yardage)
+        _log(type=play_ran, result=result, down=pre[0], dist=pre[1], yl=pre[2], yards=yards_gained, to=yardline, after=down, secs=time, left=seconds_remaining, safety=safety_occurred)
         if down == 1 and result in ("run", "successful_pass", "checkdown_pass", "defensive penalty"):
             offense.team_stats["first_downs"] += 1
         if was_third and result != "offensive penalty" and result != "defensive penalty":
@@ -576,10 +602,12 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
             return _hail_mary(offense, defense, yardline, seconds_remaining)
         must_go = situation.get("mode") in ("hurry", "desperate") and getattr(offense, "lead", 0) < -3 and seconds_remaining <= cfg.HURRY_SECONDS_TRAILING / 2
         if must_go or should_go_for_it(first_down_yardage, yardline, seconds_remaining, trailing_late, go_rate, getattr(offense, "lead", 0)) :
+            pre = (down, first_down_yardage, yardline)
             play_ran, result, yards_gained, time, info = sim_play(offense, defense, down, first_down_yardage, yardline, hurrying, last_play_type, last_gain, seconds_remaining, False, clock_stopped, situation, posture)
             clock_stopped = info.get("stopped", False)
             seconds_remaining -= time
             down, first_down_yardage, yardline, safety_occurred = process_play(result, play_ran, yards_gained, yardline, down, first_down_yardage)
+            _log(type=play_ran, result=result, down=pre[0], dist=pre[1], yl=pre[2], yards=yards_gained, to=yardline, after=down, secs=time, left=seconds_remaining, safety=safety_occurred, fourth=True)
             if result not in ("offensive penalty", "defensive penalty"):
                 offense.team_stats["fourth_down_attempts"] += 1
                 if down in (1, 6):
@@ -615,10 +643,18 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
                     result = "field goal"
                 else :
                     result = "missed kick"
+                play_functions.last_play.clear()
+                _log(type="field_goal", result="blocked" if kick_blocked else ("good" if kick_made else "missed"), distance=fg_distance,
+                     down=4, dist=first_down_yardage, yl=yardline, kicker=kicker.name if kicker else None, secs=kick_time, left=seconds_remaining)
             else:
+                punt_from = yardline
                 yardline, punt_distance, punt_blocked, returner, return_yards, is_return_td = attempt_punt(yardline, punter, defense, defense)  # the defense returns the punt
                 punt_time = random.randint(6, 10)
                 seconds_remaining -= punt_time
+                play_functions.last_play.clear()
+                _log(type="punt", result="blocked" if punt_blocked else ("return_td" if is_return_td else "punt"), yards=punt_distance,
+                     down=4, dist=first_down_yardage, yl=punt_from, to=yardline, punter=punter.name if punter else None,
+                     returner=returner.name if returner else None, return_yards=return_yards, secs=punt_time, left=seconds_remaining)
                 if punt_blocked:
                     if verbose:
                         print("Punt BLOCKED!")

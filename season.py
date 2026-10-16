@@ -1149,14 +1149,15 @@ def my_results(state: dict, since_week: int) -> list[dict]:
     """Your team's played games after `since_week`, for the live ticker while simming."""
     me = state["team"]
     out = []
-    for g in state["games"].values():
+    for eid, g in state["games"].items():
         if not g["played"] or g["week"] <= since_week or me not in (g["home"], g["away"]):
             continue
         home = g["home"] == me
         pf, pa = (g["home_score"], g["away_score"]) if home else (g["away_score"], g["home_score"])
         out.append({"week": g["week"], "title": g.get("title"), "kind": g["kind"], "won": pf > pa, "points_for": pf, "points_against": pa,
                     "opponent": g["away"] if home else g["home"], "opponent_name": g["away_display"] if home else g["home_display"],
-                    "venue": "neutral" if g["neutral"] else ("home" if home else "away"), "overtime": g.get("overtime") or 0})
+                    "venue": "neutral" if g["neutral"] else ("home" if home else "away"), "overtime": g.get("overtime") or 0,
+                    "event_id": eid, "has_box": eid in state.get("my_boxes", {}) or (box_dir(state) / f"{eid}.json").exists()})
     out.sort(key=lambda r: r["week"])
     return out
 

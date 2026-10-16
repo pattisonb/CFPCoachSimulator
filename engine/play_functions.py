@@ -7,6 +7,15 @@ from . import game_config as cfg
 # Debug tracking for touchdown stat assignments
 debug_td_stats = []
 
+# Who was involved in the most recent snap (names only; read by the drive log, never by
+# the simulation itself, so it changes no result).
+last_play: dict = {}
+
+
+def _note(**kw) -> None:
+    last_play.clear()
+    last_play.update(kw)
+
 #{'pass_attempts': 0, 'completions': 0, 'pass_yards': 0, 'interceptions_thrown': 0, 'sacks_taken': 0, 'carries': 0, 
 # 'rush_yards': 0, 'fumbles': 0, 'receptions': 0, 'receiving_yards': 0, 'targets': 0, 'passing_touchdowns': 0, 
 # 'receiving_touchdowns': 0, 'rushing_touchdowns': 0}
@@ -234,12 +243,15 @@ def _lose_fumble(offense, defense, fumbler, spot, forcer_positions, yards_for_fo
     fumbler.stats["fumbles"] += 1
     if random.random() < sliders.get_percentage_adjustment(sliders.forced_fumbles, 1.0):
         assign_forced_fumble(defense, yards_for_forcer)   # increments forced_fumbles itself
+    last_play["fumble"] = fumbler.name
     if random.random() < cfg.FUMBLE_OFFENSE_RECOVERY:
+        last_play["fumble_kept"] = True
         return None, spot                                  # offense keeps it, play stands
     candidates = [p for p in defense if p.position in forcer_positions] or defense
     weights = [(p.speed + p.intelligence) / 2 for p in candidates]
     recoverer = random.choices(candidates, weights=weights, k=1)[0]
     recoverer.stats["fumble_recoveries"] = recoverer.stats.get("fumble_recoveries", 0) + 1
+    last_play["recovered_by"] = recoverer.name
     distance_to_goal = spot   # yards the defense must return it
     if spot < 60 and random.random() < cfg.FUMBLE_RETURN_TD_CHANCE:
         recoverer.stats["defensive_touchdowns"] = recoverer.stats.get("defensive_touchdowns", 0) + 1
@@ -272,6 +284,8 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, offense_line
         weights = [((cfg.FB_CARRY_WEIGHT if getattr(p, "role", None) == 'FB' else 0.80 if p.depth == lead_depth else cfg.RB_SECOND_BACK_CARRY_WEIGHT)
                     if p.position == 'RB' else 0.012 if p.position == 'WR' else 0.02) for p in candidates]
         carrier = random.choices(candidates, weights=weights, k=1)[0]
+
+    _note(who=carrier.name, pos=carrier.position)
 
     # Line battle: blockers vs. the front seven (plus whoever the defense committed).
     blockers = _group_rating(offense, ('OL', 'TE'), ('strength', 'run_blocking'))
@@ -375,7 +389,9 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     'interception' / 'fumble' (new yardline), 'defensive_touchdown' (100), 'run' (scramble yards)."""
     qb = next((p for p in offense if p.position == "QB"), None)
     if qb is None:
+        _note()
         return "incomplete", 0
+    _note(qb=qb.name)
     qb_accuracy = 0.6 * (qb.passing or cfg.NEUTRAL) + 0.25 * (qb.decision_making or cfg.NEUTRAL) + 0.15 * qb.intelligence
     qb_accuracy += _slider_points(sliders.qb_accuracy)
     qb_decisions = (qb.decision_making or cfg.NEUTRAL)
@@ -384,6 +400,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     if random.random() < cfg.THROWAWAY_CHANCE:
         qb.stats["pass_attempts"] += 1
         apply_pass_fatigue(offense, defense)
+        last_play["throwaway"] = True
         return "incomplete", 0
 
     # --- Pass rush vs. protection ---
@@ -398,6 +415,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     if random.random() < sack_rate:
         sack_yards = -max(1, int(round(random.gauss(*cfg.SACK_YARDS))))
         sackers, is_half = assign_sack(defense, guessed_play=guessed_play, rushers=rushers)
+        last_play["sacked_by"] = " and ".join(s.name for s in sackers)
         for sacker in sackers:
             sacker.stats['sacks'] += 0.5 if is_half else 1
             sacker.stats['solo_tackles'] += 1
@@ -425,6 +443,8 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     if target is None:
         qb.stats["pass_attempts"] += 1
         return "incomplete", 0
+    last_play["target"] = target.name
+    last_play["target_pos"] = target.position
     db_positions = ('CB', 'S') if target.position == 'WR' else ('CB', 'S', 'MLB', 'ROLB', 'LOLB', 'OLB')
     coverage = _group_rating(defense, db_positions, ('coverage',)) + _slider_points(sliders.pass_defense)
     db_speed = _group_rating(defense, ('CB', 'S'), ('speed',))
@@ -520,6 +540,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     defenders = [p for p in defense if p.position in db_positions]
     if defenders and random.random() < int_chance:
         picker = random.choices(defenders, weights=[max(1, p.coverage or 1) for p in defenders], k=1)[0]
+        last_play["picked_by"] = picker.name
         qb.stats["interceptions_thrown"] += 1
         picker.stats["interceptions"] += 1
         _stat(picker, "passes_defended")
@@ -542,6 +563,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     if random.random() < cfg.SCRAMBLE_CHANCE * (qb.speed / cfg.NEUTRAL):
         qb.stats["pass_attempts"] -= 1
         target.stats["targets"] -= 1
+        last_play["scramble"] = True
         yards = random.randint(1, 12) if random.random() < 0.5 + (qb.speed - 50) / 100 else -random.randint(1, 5)
         if yardline + yards >= 100:
             yards = 100 - yardline

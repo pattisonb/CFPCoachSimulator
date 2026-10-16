@@ -13,6 +13,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+from . import drive_functions
 from . import play_functions
 from . import situation as sit
 from .drive_functions import sim_drive
@@ -220,17 +221,27 @@ class GameSim:
         Returns (team now on offense, its starting yardline).
         """
         receiving = self.other(kicking)
+        self._log_mark = len(drive_functions.play_log)
         kicking_lead = self.score[self.side(kicking)] - self.score[self.side(receiving)]
         if sit.wants_onside(kicking_lead, self.seconds, self.half, self.in_overtime):
             self.seconds -= random.randint(3, 6)
             kicking.team_stats["onside_kicks"] = kicking.team_stats.get("onside_kicks", 0) + 1
             if random.random() < cfg.ONSIDE_RECOVERY:
                 kicking.team_stats["onside_recoveries"] = kicking.team_stats.get("onside_recoveries", 0) + 1
-                return kicking, random.randint(44, 49)      # the kicking team keeps it near midfield
-            return receiving, random.randint(50, 56)        # the receiving team takes over in plus territory
+                spot = random.randint(44, 49)
+                play_functions.last_play.clear()
+                drive_functions._log(type="kickoff", result="onside_recovered", kicking=kicking.name, to=spot, left=self.seconds)
+                return kicking, spot      # the kicking team keeps it near midfield
+            spot = random.randint(50, 56)
+            play_functions.last_play.clear()
+            drive_functions._log(type="kickoff", result="onside_failed", kicking=kicking.name, to=spot, left=self.seconds)
+            return receiving, spot        # the receiving team takes over in plus territory
         while True:
             yardline, returner, _return_yards, is_td = sim_kickoff(kicking.get_kicker(), receiving)
             self.seconds -= random.randint(4, 12)
+            play_functions.last_play.clear()
+            drive_functions._log(type="kickoff", result="return_td" if is_td else "kickoff", kicking=kicking.name, to=yardline,
+                                 returner=returner.name if returner else None, return_yards=_return_yards, left=self.seconds)
             if not is_td:
                 return receiving, yardline
             receiving.team_stats["kickoff_return_touchdowns"] += 1
@@ -246,9 +257,24 @@ class GameSim:
             n += p.stats.get("pass_attempts", 0) + p.stats.get("carries", 0) + p.stats.get("sacks_taken", 0)
         return n
 
+    def _stamp(self, entry: dict) -> dict:
+        """Quarter and clock for a log entry, from the seconds left in the half."""
+        left = entry.get("left")
+        if self.in_overtime or left is None:
+            entry["quarter"] = 4 + self.ot_number if self.in_overtime else self.quarter()
+            entry["clock"] = f"OT{self.ot_number}" if self.in_overtime else self.clock()
+            return entry
+        q = (self.half - 1) * 2 + (1 if left > QUARTER_MARK else 2)
+        secs = max(0, left - QUARTER_MARK if left > QUARTER_MARK else left)
+        entry["quarter"] = q
+        entry["clock"] = f"{secs // 60}:{secs % 60:02d}"
+        return entry
+
     def _run_drive(self, offense: Team, start_yardline: int, hurrying: bool, seconds: int):
         defense = self.other(offense)
         plays_before = self._play_count(offense)
+        log_from = self._log_mark if getattr(self, "_log_mark", None) is not None else len(drive_functions.play_log)
+        self._log_mark = None
         trailing_late = (
             not self.in_overtime and self.half == 2 and seconds <= cfg.TRAILING_LATE_SECONDS
             and self.score[self.side(offense)] < self.score[self.side(defense)]
@@ -269,6 +295,7 @@ class GameSim:
             "result": result,
             "plays": self._play_count(offense) - plays_before,
             "seconds": max(0, seconds - seconds_left),
+            "log": [self._stamp(e) for e in drive_functions.play_log[log_from:]],
         }
         return play_ran, result, yardline, seconds_left, drive
 
@@ -421,6 +448,8 @@ class GameSim:
 
     def run(self) -> dict:
         play_functions.debug_td_stats.clear()
+        drive_functions.play_log.clear()
+        self._log_mark = None
         self._td_stats_seen = 0
         apply_baseline_fatigue(self.home)
         apply_baseline_fatigue(self.away)
