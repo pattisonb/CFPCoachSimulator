@@ -1053,19 +1053,24 @@
     for (const e of list) rankOf[e.team] = e.rank;
     let data;
     try { data = await api(`/api/season/${s.id}/week/${week}`); } catch (err) { return; }
-    const games = data.games.filter((g) => rankOf[g.home] || rankOf[g.away]);
-    if (!games.length) return;
+    // only games between two ranked teams
+    const games = data.games.filter((g) => rankOf[g.home] && rankOf[g.away]);
+    const label0 = s.week_labels[week] || `Week ${week}`;
+    if (!games.length) {
+      box.appendChild(el("div", { class: "others-votes" }, [el("b", { text: `Ranked matchups in ${label0}: ` }), "none"]));
+      return;
+    }
     games.sort((a, b) => Math.min(rankOf[a.home] || 99, rankOf[a.away] || 99) - Math.min(rankOf[b.home] || 99, rankOf[b.away] || 99));
     const label = s.week_labels[week] || `Week ${week}`;
     const nm = (slug) => `${rankOf[slug] ? `No. ${rankOf[slug]} ` : ""}${name(slug)}`;
-    const parts = games.slice(0, 12).map((g, i) => {
+    const parts = games.map((g, i) => {
       const text = g.played
         ? `${nm(g.away)} ${g.away_score}${g.away_score > g.home_score ? "" : ""} at ${nm(g.home)} ${g.home_score}`
         : `${nm(g.away)} ${g.neutral ? "vs" : "at"} ${nm(g.home)}`;
       const span = el("span", { class: (g.home === s.team || g.away === s.team) ? "win" : "" }, [text]);
-      return i < Math.min(games.length, 12) - 1 ? [span, "; "] : [span];
+      return i < games.length - 1 ? [span, "; "] : [span];
     }).flat();
-    box.appendChild(el("div", { class: "others-votes" }, [el("b", { text: `Ranked teams in ${label}${games.length > 12 ? ` (first 12 of ${games.length})` : ""}: ` }), ...parts]));
+    box.appendChild(el("div", { class: "others-votes" }, [el("b", { text: `Ranked matchups in ${label}: ` }), ...parts]));
   }
 
   function renderBracket() {
