@@ -1052,6 +1052,11 @@ def _surprises(state: dict, teams: dict, final_ap: list[dict]) -> tuple[list[dic
         # to 50th, and a preseason #1 that finishes #8 is not a bigger letdown than a
         # preseason #10 that finishes 7-6 and unranked
         swing = math.log((expected_rank[s] + 10) / (finish_rank[s] + 10))
+        # plus the poll itself: climbing into the top 25 and up it (or falling out of it)
+        # counts more than the same number of slots among the unranked, so a 12-1 team that
+        # finishes #5 out of nowhere beats an 11-3 team that stays just outside the poll
+        poll_points = (26 - fin_ap[s] if s in fin_ap else 0) - (26 - pre_ap[s] if s in pre_ap else 0)
+        swing += 0.08 * poll_points
         ranked = path.get(s, [])
         peak = min(ranked, key=lambda wr: (wr[1], wr[0])) if ranked else None
         rows.append({"team": s, "name": teams[s]["name"], "conference": teams[s]["conference"], "record": f"{r['wins']}-{r['losses']}",
