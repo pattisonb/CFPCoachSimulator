@@ -6,9 +6,9 @@ field when NCAA flags neither team as home) and the average predicted margin is 
 with the real margin.
 
 Usage:
-    python calibrate_season.py              # 30 sims per game
-    python calibrate_season.py 50           # more sims per game
-    python calibrate_season.py 30 --spread 0.7   # rebuild teams with another spread scale first
+    python tools/calibrate_season.py        # 30 sims per game
+    python tools/calibrate_season.py 50     # more sims per game
+    python tools/calibrate_season.py 30 --spread 0.7   # rebuild teams with another spread scale first
 
 Reports: straight-up accuracy, mean absolute error of the margin, the slope of actual
 margin on predicted margin (1.0 means rating gaps are worth exactly what the sim thinks),

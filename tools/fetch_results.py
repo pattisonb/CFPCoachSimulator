@@ -5,7 +5,7 @@ needs only the HTML. Each record keeps the NCAA short names and "seo" ids, both 
 whether the game was at a home site (NCAA flags neither team as home for neutral sites),
 and whether it is final.
 
-Usage:  python fetch_results.py            # weeks 1-14, skipping weeks with no finals
+Usage:  python tools/fetch_results.py      # weeks 1-14, skipping weeks with no finals
 """
 from __future__ import annotations
 import sys as _sys

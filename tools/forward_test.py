@@ -73,7 +73,7 @@ WR_KEYS = {"catches": "receptions", "yards": "receiving_yards", "td": "receiving
 def run_script(name: str) -> None:
     """Run a sibling script; a failure (no network, NCAA change) is a warning, not a stop."""
     print(f"--- running {name}")
-    proc = subprocess.run([sys.executable, str(ROOT / name)], cwd=ROOT)
+    proc = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / name)], cwd=ROOT)   # the tools sit beside this script
     if proc.returncode != 0:
         print(f"warning: {name} exited with {proc.returncode}; continuing with the data on disk")
 

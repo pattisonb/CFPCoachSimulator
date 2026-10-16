@@ -11,7 +11,7 @@ Output: {"season": 2026, "teams": {slug: {"espn_id", "espn_name"}}, "fcs": {espn
 "away_score"}]}. A slug of null means the opponent is not one of the 138 FBS teams in
 the data (an FCS school); its name and ESPN id are kept.
 
-Usage:  python fetch_schedules.py
+Usage:  python tools/fetch_schedules.py
 """
 from __future__ import annotations
 import sys as _sys

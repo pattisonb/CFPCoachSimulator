@@ -5,8 +5,8 @@ sdataprod.ncaa.com. Each response holds, for both teams, per-player lines by cat
 (rushing, passing, receiving, kicking, punting, returns, defense) and team totals
 (plays, yards, first downs, third and fourth downs, penalties, fumbles).
 
-Usage:  python fetch_boxscores.py          # fetch what is missing in data/boxscores/
-        python fetch_boxscores.py 50       # only the first 50 missing games
+Usage:  python tools/fetch_boxscores.py    # fetch what is missing in data/boxscores/
+        python tools/fetch_boxscores.py 50 # only the first 50 missing games
 """
 from __future__ import annotations
 import sys as _sys
