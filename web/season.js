@@ -417,6 +417,16 @@
       try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`); ds.key = key; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
     }
     const d = ds.data;
+    // moves are saved with the season and used by every game from then on
+    const change = async (body) => {
+      try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); renderDepthChart(); }
+      catch (err) { toast(`Could not change the depth chart: ${err.message}`, 4000); }
+    };
+    const note = el("div", { class: "stats-controls depth-note" }, [
+      el("span", { class: "muted small-text", text: s.done ? "Season complete; the depth chart is read-only." : "▲ ▼ move a player one spot, ★ makes him the starter. Changes are saved with this season and used by every game from the next sim on." }),
+      d.overridden && !s.done ? (() => { const b = el("button", { type: "button", class: "ghost small", text: "Reset to the original depth chart" }); b.addEventListener("click", () => { if (confirm(`Reset the ${d.name} depth chart to the original?`)) change({ reset: true }); }); return b; })() : null,
+    ]);
+    box.append(note);
     const r = d.ratings || {};
     box.append(el("div", { class: "roster-head" }, [
       teamPill(ds.team), el("b", { text: d.name }),
@@ -433,8 +443,13 @@
         for (let i = 0; i < width; i++) {
           const p = row.players[i];
           if (!p) { cells.push(el("td", { class: "left muted", text: "" })); continue; }
+          const ctl = s.done ? null : el("span", { class: "depth-ctl" }, [
+            i > 0 ? (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "★", title: "Make starter" }); b.addEventListener("click", () => change({ role: row.role, player: p.slug, move: "top" })); return b; })() : null,
+            i > 0 ? (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "▲", title: "Move up" }); b.addEventListener("click", () => change({ role: row.role, player: p.slug, move: "up" })); return b; })() : null,
+            i < row.players.length - 1 && !["KR", "PR"].includes(row.role) ? (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "▼", title: "Move down" }); b.addEventListener("click", () => change({ role: row.role, player: p.slug, move: "down" })); return b; })() : null,
+          ]);
           cells.push(el("td", { class: `left depth-cell ${i === 0 ? "starter" : ""}` }, [
-            el("div", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, p.name, el("span", { class: "pos", text: `${p.class || ""}${p.position !== row.role ? " · " + p.position : ""}` })]),
+            el("div", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, p.name, el("span", { class: "pos", text: `${p.class || ""}${p.position !== row.role ? " · " + p.position : ""}` }), ctl]),
             el("div", { class: "muted small-text", text: [`${p.overall} ovr`, p.height && p.weight ? `${p.height} ${p.weight}` : "", p.headline || (p.games ? `${p.games} games` : "")].filter(Boolean).join(" · ") }),
           ]));
         }
@@ -996,7 +1011,8 @@
     if (!list.length) { box.append(el("p", { class: "muted", text: "No bowls match that filter." })); return; }
 
     const groups = { 16: "Early bowls (Dec 15-24)", 17: "Holiday week (Dec 26-31)", 18: "New Year's bowls (Jan 2)" };
-    const side = (slug, name, record, won) => el("span", { class: won ? "win" : "" }, [teamPill(slug), name, record ? el("span", { class: "muted small-text", text: ` (${record})` }) : null]);
+    const rankWeek = (b) => (b.projected ? (s.current_week || 14) : 14);
+    const side = (slug, name, record, won, b) => el("span", { class: won ? "win" : "" }, [teamPill(slug), rankTag(slug, rankWeek(b)), name, record ? el("span", { class: "muted small-text", text: ` (${record})` }) : null]);
     const card = (b) => {
       const played = b.played;
       const aw = played && b.away_score > b.home_score, hw = played && b.home_score > b.away_score;
@@ -1008,19 +1024,13 @@
         c.append(el("div", { class: "muted", text: "No eligible teams left for this bowl." }));
       } else {
         c.append(el("div", { class: "bowl-match" }, [
-          side(b.away, b.away_name, b.away_record, aw), played ? el("b", { text: ` ${b.away_score}` }) : null,
+          side(b.away, b.away_name, b.away_record, aw, b), played ? el("b", { text: ` ${b.away_score}` }) : null,
           el("span", { class: "muted", text: " vs " }),
-          side(b.home, b.home_name, b.home_record, hw), played ? el("b", { text: ` ${b.home_score}` }) : null,
+          side(b.home, b.home_name, b.home_record, hw, b), played ? el("b", { text: ` ${b.home_score}` }) : null,
         ]));
       }
-      const bits = [];
-      if (b.tie_ins && b.tie_ins.length) bits.push(`Tie-ins: ${b.tie_ins.join(" vs ")}`);
-      if (b.games_played) bits.push(`${b.games_played} editions${b.first_played ? ` since ${b.first_played}` : ""}`);
-      else if (b.first_played) bits.push(`First played ${b.first_played}`);
-      if (b.most_appearances && b.most_appearances.length) bits.push("Most appearances: " + b.most_appearances.map((a) => `${a.team} (${a.games}, ${a.wins}-${a.games - a.wins})`).join(", "));
-      if (b.recent && b.recent.length) bits.push("Recent: " + b.recent.map((r) => `${r.season || r.year} ${r.winner}${r.winner_score != null ? " " + r.winner_score : ""} over ${r.loser}${r.loser_score != null ? " " + r.loser_score : ""}`).join("; "));
-      if (b.previous_tie_ins && b.previous_tie_ins.length) bits.push(`Previous tie-ins: ${b.previous_tie_ins.join(", ")}`);
-      if (bits.length) c.append(el("div", { class: "muted small-text", text: bits.join(" · ") }));
+      // the tie-ins explain a projection; once the matchups are set the card is just the game
+      if (b.projected && b.tie_ins && b.tie_ins.length) c.append(el("div", { class: "muted small-text", text: `Tie-ins: ${b.tie_ins.join(" vs ")}` }));
       if (b.has_box) c.addEventListener("click", () => openBox(b.event_id));
       return c;
     };
@@ -1579,7 +1589,34 @@
     box.appendChild(el("div", { class: "others-votes" }, [el("b", { text: `Ranked matchups in ${label}: ` }), ...parts]));
   }
 
-  function renderBracket() {
+  // ----- bracket -----------------------------------------------------------
+  // Drawn like the real 12-team bracket: first round (5-12, 6-11, 7-10, 8-9 at the higher
+  // seed), quarterfinals (1 vs 8/9, 4 vs 5/12, 2 vs 7/10, 3 vs 6/11 in the New Year's Six
+  // bowls), semifinals (QF1 vs QF4, QF2 vs QF3), national championship.
+
+  function rankAt(slug, week) {
+    const s = state.season;
+    if (!s || !s.polls) return null;
+    for (let w = Math.min(week, s.current_week); w >= 0; w--) {
+      const p = s.polls[String(w)];
+      if (!p) continue;
+      if (p.cfp_full) { const i = p.cfp_full.indexOf(slug); return i >= 0 && i < 25 ? i + 1 : null; }
+      if (p.cfp) { const e = p.cfp.find((x) => x.team === slug); return e ? e.rank : null; }
+      if (p.ap) { const e = p.ap.find((x) => x.team === slug); return e ? e.rank : null; }
+    }
+    return null;
+  }
+  const rankTag = (slug, week) => { const r = rankAt(slug, week); return r ? el("span", { class: "rank", text: `#${r} ` }) : null; };
+
+  const BRACKET_ROUNDS = [
+    { name: "First round", week: 16, games: [["cfp-r1-8", 8, 9], ["cfp-r1-5", 5, 12], ["cfp-r1-7", 7, 10], ["cfp-r1-6", 6, 11]] },
+    { name: "Quarterfinals", week: 17, games: [["cfp-qf-1", 1, "8/9"], ["cfp-qf-4", 4, "5/12"], ["cfp-qf-2", 2, "7/10"], ["cfp-qf-3", 3, "6/11"]] },
+    { name: "Semifinals", week: 18, games: [["cfp-sf-1", "QF1", "QF4"], ["cfp-sf-2", "QF2", "QF3"]] },
+    { name: "National championship", week: 19, games: [["cfp-final", "SF1", "SF2"]] },
+  ];
+  const bracketState = { games: null, key: null };
+
+  async function renderBracket() {
     const s = state.season;
     const box = $("#tab-bracket");
     box.innerHTML = "";
@@ -1588,76 +1625,38 @@
       const w = pollWeekFor(state.viewWeek);
       const cfp = (s.polls[String(w)] || {}).cfp;
       if (!cfp) { box.append(el("p", { class: "muted", text: "The projection starts with the committee's first ranking after week 9. Until then, the AP poll is the only ranking." })); return; }
-      box.append(el("p", { class: "muted small-text", text: "Projection from the current committee ranking and current conference leaders: ACC, Big Ten, Big 12 and SEC champions plus the highest-ranked Group of Six team get in; seeds 1-4 are the four highest-ranked teams and get byes." }));
-      box.append(projectionTable(cfp));
+      const proj = projectField(cfp);
+      if (!proj) return;
+      box.append(el("p", { class: "muted small-text", text: `Projection from the committee ranking after ${s.week_labels[w] || "week " + w} and the current conference leaders: ACC, Big Ten, Big 12 and SEC champions plus the highest-ranked Group of Six team get in; seeds 1-4 are the four highest-ranked teams and get byes. First-round games are at the higher seed.` }));
+      box.append(bracketTree(proj.seeds, {}, true));
+      box.append(seedTable(proj.seeds, proj.reason, proj.pos));
       return;
     }
     const b = s.bracket;
     box.append(el("h3", { text: s.done ? "College Football Playoff" : "College Football Playoff bracket" }));
-    const seeds = el("table", { class: "stats" });
-    seeds.appendChild(el("tr", {}, ["Seed", "Team", "Rank", "Bid", ""].map((h) => el("th", { text: h, style: ["Team", "Bid"].includes(h) ? "text-align:left" : "" }))));
-    for (const x of b.seeds) {
-      seeds.appendChild(el("tr", { class: x.team === s.team ? "mine" : "" }, [
-        el("td", { text: String(x.seed) }),
-        el("td", { style: "text-align:left", class: "name" }, [teamPill(x.team), x.name]),
-        el("td", { text: String(x.rank) }), el("td", { style: "text-align:left", class: "muted", text: x.bid }),
-        el("td", { class: "muted", text: x.bye ? "bye" : "" }),
-      ]));
+    const key = `${s.id}|${s.current_week}`;
+    if (!bracketState.games || bracketState.key !== key) {
+      bracketState.games = {};
+      bracketState.key = key;
+      const weeks = BRACKET_ROUNDS.filter((r) => s.current_week >= r.week).map((r) => r.week);
+      try {
+        const views = await Promise.all(weeks.map((w) => api(`/api/season/${s.id}/week/${w}`)));
+        for (const v of views) for (const g of v.games) if (g.kind === "playoff") bracketState.games[g.event_id] = g;
+      } catch (err) { box.append(el("p", { class: "muted", text: err.message })); }
     }
-    box.append(seeds);
+    const seeds = {};
+    for (const x of b.seeds) seeds[x.seed] = x;
+    const sites = s.playoff_sites || {};
+    box.append(bracketTree(seeds, bracketState.games, false, sites));
+    if (s.done) box.append(el("div", { class: "champ-banner", text: `National champion: ${s.champion_name}` }));
+    box.append(el("p", { class: "muted small-text", text: "Click a game you were in for the box score. Seeds, ranks and bids:" }));
+    box.append(seedTable(seeds, Object.fromEntries(b.seeds.map((x) => [x.team, x.bid])), Object.fromEntries(b.seeds.map((x) => [x.team, x.rank]))));
     if (b.first_four_out && b.first_four_out.length) {
       box.append(el("p", { class: "muted small-text", text: "First four out: " + b.first_four_out.map((x) => `${x.name} (#${x.rank})`).join(", ") }));
     }
-    // rounds
-    const rounds = ["First round", "Quarterfinals", "Semifinals", "National championship"];
-    const played = s.playoff || {};
-    const grid = el("div", { class: "bracket-grid" });
-    for (const rname of rounds) {
-      const col = el("div", { class: "bracket-col" }, [el("h3", { text: rname })]);
-      const ids = played[rname];
-      if (ids && ids.length) {
-        col.appendChild(el("p", { class: "muted small-text", text: "Click a game you were in for the box score." }));
-        col.dataset.pending = "1";
-        loadRoundGames(rname, col);
-      } else if (rname === "First round") {
-        for (const g of b.first_round) col.appendChild(matchCard(`(${g.away.seed}) ${g.away.name}`, `(${g.home.seed}) ${g.home.name}`, null, null, `at ${g.home.name}`));
-      } else if (rname === "Quarterfinals") {
-        for (const q of b.quarterfinals) col.appendChild(matchCard(`winner of ${q.winner_of}`, `(${q.bye.seed}) ${q.bye.name}`, null, null, "neutral site"));
-      } else {
-        col.appendChild(el("p", { class: "muted small-text", text: "To be determined." }));
-      }
-      grid.appendChild(col);
-    }
-    box.append(grid);
-    if (s.done) box.append(el("div", { class: "champ-banner", text: `National champion: ${s.champion_name}` }));
   }
 
-  async function loadRoundGames(rname, col) {
-    const s = state.season;
-    const week = { "First round": 16, "Quarterfinals": 17, "Semifinals": 18, "National championship": 19 }[rname];
-    try {
-      const data = await api(`/api/season/${s.id}/week/${week}`);
-      // bowls share these weeks; the bracket shows only the playoff games
-      for (const g of data.games.filter((x) => x.kind === "playoff")) {
-        const where = g.bowl ? `${g.bowl}${g.site ? " · " + g.site : ""}` : g.neutral ? "neutral site" : `at ${g.home_name}`;
-        const card = matchCard(g.away_display, g.home_display, g.away_score, g.home_score, where, g.mine, g.has_box ? () => openBox(g.event_id) : null);
-        col.appendChild(card);
-      }
-    } catch (err) { col.appendChild(el("p", { class: "muted", text: err.message })); }
-  }
-
-  function matchCard(awayLabel, homeLabel, awayScore, homeScore, note, mine, onClick) {
-    const played = awayScore != null;
-    const card = el("div", { class: `match-card ${mine ? "mine" : ""} ${onClick ? "clickable" : ""}` }, [
-      el("div", { class: `match-row ${played && awayScore > homeScore ? "win" : ""}` }, [el("span", { text: awayLabel }), el("b", { text: played ? String(awayScore) : "" })]),
-      el("div", { class: `match-row ${played && homeScore > awayScore ? "win" : ""}` }, [el("span", { text: homeLabel }), el("b", { text: played ? String(homeScore) : "" })]),
-      el("div", { class: "muted small-text", text: note }),
-    ]);
-    if (onClick) card.addEventListener("click", onClick);
-    return card;
-  }
-
-  function projectionTable(cfp) {
+  function projectField(cfp) {
     // Mirror the bracket rules on the client for the mid-season projection.
     const s = state.season;
     const P4 = ["ACC", "Big Ten", "Big 12", "SEC"];
@@ -1666,6 +1665,7 @@
     const pos = {}; cfp.forEach((e) => { pos[e.team] = e.rank; });
     const leaders = {};
     if (state.standings) for (const [conf, rows] of Object.entries(state.standings)) if (rows.length) leaders[conf] = rows[0].slug;
+    else api(`/api/season/${s.id}/standings`).then((d) => { state.standings = d.standings; if (state.tab === "bracket") renderBracket(); }).catch(() => {});
     const autos = [];
     for (const conf of P4) if (leaders[conf]) autos.push([leaders[conf], `${conf} leader`]);
     const g6 = cfp.find((e) => G6.has(e.conference));
@@ -1677,19 +1677,81 @@
     const inside = field.filter((t) => (pos[t] || 99) <= 12).sort((a, b) => pos[a] - pos[b]);
     const outside = field.filter((t) => (pos[t] || 99) > 12).sort((a, b) => (pos[a] || 99) - (pos[b] || 99));
     const seeded = inside.concat(outside);
-    const reason = Object.fromEntries(autos);
-    const table = el("table", { class: "stats" });
-    table.appendChild(el("tr", {}, ["Seed", "Team", "Rank", "Bid", ""].map((h) => el("th", { text: h, style: ["Team", "Bid"].includes(h) ? "text-align:left" : "" }))));
-    seeded.forEach((t, i) => {
-      table.appendChild(el("tr", { class: t === s.team ? "mine" : "" }, [
-        el("td", { text: String(i + 1) }),
-        el("td", { style: "text-align:left", class: "name" }, [teamPill(t), name(t)]),
-        el("td", { text: pos[t] ? String(pos[t]) : "NR" }), el("td", { style: "text-align:left", class: "muted", text: reason[t] || "at-large" }),
-        el("td", { class: "muted", text: i < 4 ? "bye" : "" }),
+    const seeds = {};
+    seeded.forEach((t, i) => { seeds[i + 1] = { seed: i + 1, team: t, name: name(t), rank: pos[t] || null, bid: Object.fromEntries(autos)[t] || "at-large", bye: i < 4 }; });
+    return { seeds, reason: Object.fromEntries(autos), pos };
+  }
+
+  function seedTable(seeds, reason, pos) {
+    const s = state.season;
+    const table = el("table", { class: "stats seed-table" });
+    table.appendChild(el("tr", {}, ["Seed", "Team", "Rank", "Bid", ""].map((h) => el("th", { class: ["Team", "Bid"].includes(h) ? "left" : "", text: h }))));
+    for (let i = 1; i <= 12; i++) {
+      const x = seeds[i];
+      if (!x) continue;
+      table.appendChild(el("tr", { class: x.team === s.team ? "mine" : "" }, [
+        el("td", { text: String(i) }),
+        el("td", { class: "left name" }, [teamPill(x.team), x.name]),
+        el("td", { text: pos[x.team] ? String(pos[x.team]) : "NR" }),
+        el("td", { class: "left muted", text: (reason && reason[x.team]) || x.bid || "at-large" }),
+        el("td", { class: "muted", text: i <= 4 ? "bye" : "" }),
       ]));
+    }
+    return el("div", { class: "table-scroll" }, [table]);
+  }
+
+  function bracketTree(seeds, games, projected, sites) {
+    const s = state.season;
+    const tree = el("div", { class: "bracket-tree" });
+    const label = (ref) => {
+      // a seed number -> that team; "8/9" -> winner of the first-round game; "QF1" -> winner of that quarterfinal
+      if (typeof ref === "number") return seeds[ref] ? { seed: ref, team: seeds[ref].team, name: seeds[ref].name } : { name: "TBD" };
+      if (/^\d+\/\d+$/.test(ref)) { const g = games[`cfp-r1-${ref.split("/")[0]}`]; return winnerOf(g) || { name: `${ref} winner` }; }
+      if (/^QF\d$/.test(ref)) { const g = games[`cfp-qf-${ref[2]}`]; return winnerOf(g) || { name: `${ref} winner` }; }
+      if (/^SF\d$/.test(ref)) { const g = games[`cfp-sf-${ref[2]}`]; return winnerOf(g) || { name: `${ref} winner` }; }
+      return { name: "TBD" };
+    };
+    BRACKET_ROUNDS.forEach((round, ri) => {
+      const col = el("div", { class: "bracket-round" }, [el("div", { class: "bracket-round-name", text: round.name })]);
+      for (const [eid, top, bottom] of round.games) {
+        const g = games[eid];
+        const a = label(top), b = label(bottom);
+        let note = "";
+        if (g) note = g.bowl ? `${g.bowl}${g.site ? " · " + g.site : ""}` : (g.neutral ? "neutral site" : `at ${g.home_name}`);
+        else if (ri === 0 && a.name !== "TBD") note = `at ${a.name}`;
+        else if (sites) { const key = { "cfp-qf-1": "qf-1", "cfp-qf-4": "qf-4", "cfp-qf-2": "qf-2", "cfp-qf-3": "qf-3", "cfp-sf-1": "sf-1", "cfp-sf-2": "sf-2", "cfp-final": "final" }[eid]; const site = key && sites[key]; note = site ? `${site.bowl || site.name || ""}${site.site ? " · " + site.site : ""}` : "neutral site"; }
+        else note = ri === 0 ? "" : "neutral site";
+        // rows: the game's home side is the higher seed; show it first
+        let rows;
+        if (g) {
+          const hw = g.played && g.home_score > g.away_score, aw = g.played && g.away_score > g.home_score;
+          rows = [[g.home, g.home_display, g.home_score, hw, g.played && !hw], [g.away, g.away_display, g.away_score, aw, g.played && !aw]];
+        } else {
+          rows = [[a.team, a.seed ? `(${a.seed}) ${a.name}` : a.name, null, false, false], [b.team, b.seed ? `(${b.seed}) ${b.name}` : b.name, null, false, false]];
+        }
+        const mine = rows.some((r) => r[0] === s.team);
+        const card = el("div", { class: `bmatch ${mine ? "mine" : ""} ${g && g.has_box ? "clickable" : ""} ${projected ? "projected" : ""}` }, [
+          ...rows.map(([team, text, score, won, lost]) => el("div", { class: `bmatch-row ${won ? "win" : ""} ${lost ? "lost" : ""}` }, [
+            team ? el("span", { class: "pill-inline", style: `background:${color(team)}` }) : el("span", { class: "pill-inline empty" }),
+            el("span", { class: "bmatch-name" }, [text, team && rankAt(team, 14) ? el("span", { class: "rank muted", text: ` #${rankAt(team, projected ? (s.current_week || 14) : 14)}` }) : null]),
+            el("b", { class: "bmatch-score", text: score == null ? "" : String(score) }),
+          ])),
+          el("div", { class: "muted small-text bmatch-note", text: note + (g && g.overtime ? ` · ${g.overtime > 1 ? g.overtime : ""}OT` : "") }),
+        ]);
+        if (g && g.has_box) card.addEventListener("click", () => openBox(g.event_id));
+        col.append(card);
+      }
+      tree.append(col);
     });
-    if (!state.standings) api(`/api/season/${s.id}/standings`).then((d) => { state.standings = d.standings; if (state.tab === "bracket") renderBracket(); }).catch(() => {});
-    return table;
+    return tree;
+  }
+
+  function winnerOf(g) {
+    if (!g || !g.played) return null;
+    const hw = g.home_score > g.away_score;
+    const disp = hw ? g.home_display : g.away_display;
+    const m = /^\((\d+)\)\s*(.*)$/.exec(disp || "");
+    return { team: hw ? g.home : g.away, seed: m ? Number(m[1]) : null, name: m ? m[2] : disp };
   }
 
   async function openBox(eventId) {
