@@ -605,9 +605,9 @@ def _with_injuries(team: dict, injured: list) -> dict:
 
 def _sim_one(args: tuple) -> dict:
     from engine.game import simulate_game
-    event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out = args
-    home_team = _with_injuries(apply_depth(_TEAMS[home], depth[0]), home_out)
-    away_team = _with_injuries(apply_depth(_TEAMS[away], depth[1]), away_out)
+    event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out, edits = args
+    home_team = _with_injuries(apply_depth(with_edits(_TEAMS[home], edits[0]), depth[0]), home_out)
+    away_team = _with_injuries(apply_depth(with_edits(_TEAMS[away], edits[1]), depth[1]), away_out)
     r = simulate_game(home_team, away_team, None, seed, venue="neutral" if neutral else "home")
     out = {"event_id": event_id, "home_score": r["home"]["score"], "away_score": r["away"]["score"], "overtime": r["overtime_periods"],
            "stats": {"home": _compact_side(r["home"], r["drives"], "home"), "away": _compact_side(r["away"], r["drives"], "away")},
@@ -651,7 +651,8 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
         injuries = state.get("injuries") or {}
         jobs.append((eid, g["home"], g["away"], g["neutral"], rng.randrange(1 << 30), keep, (depth.get(g["home"]), depth.get(g["away"])),
                      [(i["name"], i["position"]) for i in injuries.get(g["home"], {}).values()],
-                     [(i["name"], i["position"]) for i in injuries.get(g["away"], {}).values()]))
+                     [(i["name"], i["position"]) for i in injuries.get(g["away"], {}).values()],
+                     (player_edits(state, g["home"]), player_edits(state, g["away"]))))
     state["rng_state"] = rng.randrange(1 << 30)
     if not jobs:
         return
@@ -991,7 +992,7 @@ def apply_depth(team: dict, overrides: Optional[dict]) -> dict:
 def position_candidates(state: dict, slug: str, role: str) -> dict:
     """Every player on the roster rated at one depth-chart role, best first, with where he
     sits now, so anyone can be moved into that spot."""
-    team = apply_depth(load_teams()[slug], (state.get("depth") or {}).get(slug))
+    team = apply_depth(team_data(state, slug), (state.get("depth") or {}).get(slug))
     ss = (state.get("season_stats") or {}).get(slug, {}).get("players", {})
     pos = "KR" if role in ("KR", "PR") else ROLE_POSITION.get(role, role)
     current = depth_order(state, slug, role)
@@ -1056,7 +1057,7 @@ def depth_chart_view(state: dict, slug: str) -> dict:
     class, size, rating and the player's season headline."""
     teams = load_teams()
     overrides = (state.get("depth") or {}).get(slug)
-    t = apply_depth(teams[slug], overrides)
+    t = apply_depth(team_data(state, slug), overrides)
     ss = (state.get("season_stats") or {}).get(slug, {}).get("players", {})
     players = t["offense"] + t["defense"]
     by_role: dict[str, list[dict]] = {}
@@ -1727,6 +1728,7 @@ def summary(state: dict) -> dict:
         "bowl_projection": bowl_projection(state),
         "week_dates": week_dates(state),
         "heisman": ((state.get("awards") or {}).get("national") or {}).get("heisman"),
+        "settings": settings(state),
         "injuries": injury_report(state, state["team"]),
         "injury_count": sum(len(v) for v in state.get("injuries", {}).values()),
         "my_awards": awards.my_awards(state, state["awards"]) if state.get("awards") else [],
@@ -2063,6 +2065,94 @@ RATING_LABELS = [("speed", "Speed"), ("strength", "Strength"), ("intelligence", 
                  ("kick_accuracy", "Kick accuracy"), ("punt_power", "Punt power"), ("punt_accuracy", "Punt accuracy"), ("return_rating", "Returns")]
 CLASS_NAMES = {"FR": "Freshman", "FRRS": "Redshirt freshman", "SO": "Sophomore", "SORS": "Redshirt sophomore", "JR": "Junior",
                "JRRS": "Redshirt junior", "SR": "Senior", "SRRS": "Redshirt senior"}
+
+# ----- settings and god mode -----------------------------------------------------------
+
+DEFAULT_SETTINGS = {"god_mode": False}
+DEV_TRAITS = ("Normal", "Impact", "Star", "Elite")
+EDITABLE_RATINGS = tuple(k for k, _ in RATING_LABELS)
+EDITABLE_FIELDS = EDITABLE_RATINGS + ("jersey", "class", "height", "weight", "dev_trait")
+
+
+def settings(state: dict) -> dict:
+    return {**DEFAULT_SETTINGS, **(state.get("settings") or {})}
+
+
+def update_settings(state: dict, changes: dict) -> dict:
+    cur = settings(state)
+    for k, v in changes.items():
+        if k in DEFAULT_SETTINGS and v is not None:
+            cur[k] = bool(v) if isinstance(DEFAULT_SETTINGS[k], bool) else v
+    state["settings"] = cur
+    return cur
+
+
+def player_edits(state: dict, slug: str) -> dict:
+    """God-mode edits for one team: player slug -> {field: value}."""
+    return (state.get("player_edits") or {}).get(slug) or {}
+
+
+def with_edits(team: dict, edits: Optional[dict]) -> dict:
+    """A copy of the team with god-mode edits merged into its players."""
+    if not edits:
+        return team
+    out = {**team}
+    for unit in ("offense", "defense"):
+        out[unit] = [dict(p, **edits[p["slug"]]) if p.get("slug") in edits else p for p in team[unit]]
+    return out
+
+
+def team_data(state: dict, slug: str) -> dict:
+    """The team as this season sees it: the base data plus any god-mode edits."""
+    return with_edits(load_teams()[slug], player_edits(state, slug))
+
+
+def edit_player(state: dict, slug: str, player_slug: str, changes: dict) -> dict:
+    """Store god-mode changes to one player. Ratings are whole numbers 0-99; the class, the
+    development trait and the size must be real values. Names and positions stay as they
+    are (the season's stats are keyed on them). Returns the stored edits for the player."""
+    team = load_teams().get(slug)
+    if team is None:
+        raise ValueError("unknown team")
+    base = next((p for p in team["offense"] + team["defense"] if p.get("slug") == player_slug), None)
+    if base is None:
+        raise ValueError("unknown player")
+    cur = dict(player_edits(state, slug).get(player_slug) or {})
+    for k, v in changes.items():
+        if k not in EDITABLE_FIELDS:
+            raise ValueError(f"{k} cannot be edited")
+        if k in EDITABLE_RATINGS:
+            if not isinstance(base.get(k), (int, float)):
+                raise ValueError(f"{base['name']} has no {k} rating")
+            try:
+                v = int(round(float(v)))
+            except (TypeError, ValueError):
+                raise ValueError(f"{k} must be a number")
+            v = max(0, min(99, v))
+        elif k == "class":
+            if v not in CLASS_NAMES:
+                raise ValueError("class must be one of " + ", ".join(CLASS_NAMES))
+        elif k == "dev_trait":
+            if v not in DEV_TRAITS:
+                raise ValueError("development trait must be one of " + ", ".join(DEV_TRAITS))
+        elif k == "weight":
+            try:
+                v = max(150, min(400, int(v)))
+            except (TypeError, ValueError):
+                raise ValueError("weight must be a number")
+        else:
+            v = str(v).strip()[:12]
+        if base.get(k) == v:
+            cur.pop(k, None)
+        else:
+            cur[k] = v
+    edits = state.setdefault("player_edits", {}).setdefault(slug, {})
+    if cur:
+        edits[player_slug] = cur
+    else:
+        edits.pop(player_slug, None)
+    return cur
+
 # the stats a position is ranked on: (stat key or derived name, label, higher is better, minimum qualifier)
 RANK_STATS = {
     "QB": [("pass_yards", "Passing yards"), ("passing_touchdowns", "Passing TDs"), ("rating", "Passer rating"), ("completion_pct", "Completion %"),
@@ -2247,6 +2337,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     t = teams.get(team)
     if not t:
         return None
+    t = with_edits(t, player_edits(state, team))
     roster = t["offense"] + t["defense"]
     p = next((x for x in roster if (slug and x.get("slug") == slug) or (name and x["name"] == name and (not position or x["position"] == position))), None)
     if not p:
@@ -2269,6 +2360,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         "class": p.get("class"), "class_name": CLASS_NAMES.get(p.get("class") or "", p.get("class")), "height": p.get("height"),
         "weight": p.get("weight"), "jersey": p.get("jersey"), "dev_trait": p.get("dev_trait"), "starter": bool(p.get("in_game")),
         "injured": injured, "overall": player_overall(p), "stars": recruit_stars(p), "ratings": ratings,
+        "edited": sorted(player_edits(state, team).get(p.get("slug"), {}).keys()), "editable_classes": list(CLASS_NAMES), "dev_traits": list(DEV_TRAITS),
         "ratings_at": {k: int(v) for k, v in (p.get("ratings_at") or {}).items() if isinstance(v, (int, float))},
         "team": {"slug": team, "name": t["name"], "conference": t["conference"], "coach": hc.get("name"),
                  "record": f"{rec['wins']}-{rec['losses']}", "rank": awards.Pool(state, teams, _records(state)).rank_of(team) if ss else None},

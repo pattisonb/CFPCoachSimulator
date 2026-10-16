@@ -175,6 +175,7 @@
   function setBusy(b) {
     if (!b) state.simming = false;
     for (const id of ["btn-advance", "btn-to-selection", "btn-to-end", "btn-gameday"]) $(`#${id}`).disabled = b || (state.season && state.season.done);
+    $("#btn-settings").disabled = b;
     for (const chip of document.querySelectorAll("#week-strip .week-chip")) chip.disabled = b;
     $("#btn-new").disabled = b;
     $("#season-list").classList.toggle("locked", b);
@@ -525,9 +526,10 @@
       try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); renderDepthChart(); }
       catch (err) { toast(`Could not change the depth chart: ${err.message}`, 4000); }
     };
+    const canEdit = !s.done && (ds.team === s.team || godMode());
     const note = el("div", { class: "stats-controls depth-note" }, [
-      el("span", { class: "muted small-text", text: s.done ? "Season complete; the depth chart is read-only." : "▲ ▼ move a player one spot, ★ makes him the starter. Changes are saved with this season and used by every game from the next sim on." }),
-      d.overridden && !s.done ? (() => { const b = el("button", { type: "button", class: "ghost small", text: "Reset to the original depth chart" }); b.addEventListener("click", () => { if (confirm(`Reset the ${d.name} depth chart to the original?`)) change({ reset: true }); }); return b; })() : null,
+      el("span", { class: "muted small-text", text: s.done ? "Season complete; the depth chart is read-only." : !canEdit ? "Another team's depth chart: turn on god mode in ⚙ Settings to edit it." : `▲ ▼ move a player one spot, ★ makes him the starter.${ds.team !== s.team ? " God mode: this is another team's chart." : ""} Changes are saved with this season and used by every game from the next sim on.` }),
+      d.overridden && canEdit ? (() => { const b = el("button", { type: "button", class: "ghost small", text: "Reset to the original depth chart" }); b.addEventListener("click", () => { if (confirm(`Reset the ${d.name} depth chart to the original?`)) change({ reset: true }); }); return b; })() : null,
     ]);
     box.append(note);
     const r = d.ratings || {};
@@ -546,7 +548,7 @@
         for (let i = 0; i < width; i++) {
           const p = row.players[i];
           if (!p) { cells.push(el("td", { class: `left muted ${i >= 2 ? "ph" : ""}`, text: "" })); continue; }
-          const ctl = s.done ? null : el("span", { class: "depth-ctl" }, [
+          const ctl = !canEdit ? null : el("span", { class: "depth-ctl" }, [
             i > 0 ? (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "★", title: "Make starter" }); b.addEventListener("click", () => change({ role: row.role, player: p.slug, move: "top" })); return b; })() : null,
             i > 0 ? (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "▲", title: "Move up" }); b.addEventListener("click", () => change({ role: row.role, player: p.slug, move: "up" })); return b; })() : null,
             i < row.players.length - 1 && !["KR", "PR"].includes(row.role) ? (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "▼", title: "Move down" }); b.addEventListener("click", () => change({ role: row.role, player: p.slug, move: "down" })); return b; })() : null,
@@ -726,11 +728,14 @@
 
     const grid = el("div", { class: "player-grid" });
     // ratings
-    const rat = el("div", { class: "leader-card player-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: "Ratings" }), el("span", { class: "muted small-text", text: "0-99, 50 is an average FBS player" })])]);
+    const edited = new Set(p.edited || []);
+    const editBtn = godMode() && !s.done ? el("button", { type: "button", class: "ghost small player-edit-open", text: "Edit", title: "God mode: change the ratings and identity" }) : null;
+    const rat = el("div", { class: "leader-card player-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: "Ratings" }), el("span", { class: "muted small-text", text: edited.size ? `edited in god mode (${[...edited].length})` : "0-99, 50 is an average FBS player" }), editBtn])]);
+    if (editBtn) editBtn.addEventListener("click", () => { editBtn.hidden = true; rat.append(playerEditForm(p, rat)); });
     for (const r of p.ratings) {
       const pct = Math.max(2, Math.min(100, r.value));
       const tone = r.value >= 75 ? "hi" : r.value >= 55 ? "mid" : "lo";
-      rat.append(el("div", { class: "rating-row" }, [el("span", { class: "rating-label", text: r.label }), el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]), el("b", { class: "rating-num", text: String(r.value) })]));
+      rat.append(el("div", { class: `rating-row ${edited.has(r.key) ? "edited" : ""}` }, [el("span", { class: "rating-label", text: r.label, title: edited.has(r.key) ? "Edited in god mode" : "" }), el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]), el("b", { class: "rating-num", text: String(r.value) })]));
     }
     const others = Object.entries(p.ratings_at || {}).filter(([pos]) => pos !== p.position && !(pos === "MLB" && /LB$/.test(p.position))).sort((a, b) => b[1] - a[1]).slice(0, 5);
     if (others.length) rat.append(el("div", { class: "muted small-text", style: "margin-top:8px", text: `Rated at other spots: ${others.map(([pos, v]) => `${pos} ${v}`).join(" · ")}` }));
@@ -2349,6 +2354,77 @@
     for (const t of ["scoring", "team", "home", "away", "drives"]) $(`#sbox-${t}`).hidden = t !== name;
   }
 
+  // ----- settings and god mode ------------------------------------------------------
+  const godMode = () => !!((state.season && state.season.settings) || {}).god_mode;
+  async function saveSettings(changes) {
+    const s = state.season;
+    const j = await api(`/api/season/${s.id}/settings`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) });
+    s.settings = j.settings;
+    playerState.cache.clear();
+    return j.settings;
+  }
+  function openSettings() {
+    const s = state.season;
+    if (!s) return;
+    const node = el("div", { class: "settings" });
+    const row = (title, desc, control) => el("div", { class: "settings-row" }, [el("div", { class: "settings-text" }, [el("b", { text: title }), el("div", { class: "muted small-text", text: desc })]), control]);
+    const toggle = (on, onChange) => {
+      const b = el("button", { type: "button", class: `switch ${on ? "on" : ""}`, role: "switch", "aria-checked": on ? "true" : "false" }, [el("span", { class: "knob" })]);
+      b.addEventListener("click", async () => { const next = !b.classList.contains("on"); b.disabled = true; try { await onChange(next); b.classList.toggle("on", next); b.setAttribute("aria-checked", next ? "true" : "false"); } catch (err) { toast(err.message, 4000); } b.disabled = false; });
+      return b;
+    };
+    node.append(
+      row("God mode", "Edit every player's ratings, class, size, jersey and development trait from his player card, and every team's depth chart. Changes are saved with this season and used by every game from the next sim on.",
+        toggle(godMode(), async (on) => { await saveSettings({ god_mode: on }); toast(on ? "God mode on: open any player or depth chart to edit it." : "God mode off.", 3000); renderTab(); })),
+      row("Game day pace", "How fast the plays come during a game day replay.",
+        chipRow([["slow", "Slow"], ["normal", "Normal"], ["fast", "Fast"]], gdSpeed(), (v) => { try { localStorage.setItem("cfp.gameday.speed", v); } catch (e) {} for (const c of node.querySelectorAll(".chip")) c.classList.toggle("active", c.textContent.trim().toLowerCase() === v); })),
+    );
+    openModal("Settings", node);
+  }
+
+  const CLASS_FULL = { FR: "Freshman", FRRS: "Redshirt freshman", SO: "Sophomore", SORS: "Redshirt sophomore", JR: "Junior", JRRS: "Redshirt junior", SR: "Senior", SRRS: "Redshirt senior" };
+  // the player card's edit form (god mode): ratings as numbers, then the identity fields
+  function playerEditForm(p, card) {
+    const s = state.season;
+    const form = el("div", { class: "player-edit" });
+    const inputs = {};
+    const num = (key, value) => { const i = el("input", { type: "number", min: "0", max: "99", step: "1", value: String(value), "aria-label": key }); inputs[key] = i; return i; };
+    for (const r of p.ratings) form.append(el("div", { class: "rating-row edit" }, [el("span", { class: "rating-label", text: r.label }), el("div", {}), num(r.key, r.value)]));
+    const text = (key, value, attrs = {}) => { const i = el("input", { type: "text", value: value == null ? "" : String(value), "aria-label": key, ...attrs }); inputs[key] = i; return i; };
+    const select = (key, value, options) => { const sel = el("select", { "aria-label": key }, options.map(([v, label]) => el("option", { value: v, text: label }))); sel.value = value || options[0][0]; inputs[key] = sel; return sel; };
+    const grid = el("div", { class: "player-edit-grid" }, [
+      el("label", {}, ["Jersey", text("jersey", p.jersey, { maxlength: "3" })]),
+      el("label", {}, ["Class", select("class", p.class, (p.editable_classes || []).map((c) => [c, CLASS_FULL[c] || c]))]),
+      el("label", {}, ["Height", text("height", p.height, { placeholder: "6'2\"" })]),
+      el("label", {}, ["Weight", (() => { const i = el("input", { type: "number", min: "150", max: "400", value: String(p.weight || ""), "aria-label": "weight" }); inputs.weight = i; return i; })()]),
+      el("label", {}, ["Development", select("dev_trait", p.dev_trait, (p.dev_traits || ["Normal", "Impact", "Star", "Elite"]).map((d) => [d, d]))]),
+    ]);
+    form.append(el("h4", { text: "Identity" }), grid);
+    const actions = el("div", { class: "player-edit-actions" });
+    const save = el("button", { type: "button", class: "primary small", text: "Save changes" });
+    const cancel = el("button", { type: "button", class: "ghost small", text: "Cancel" });
+    cancel.addEventListener("click", () => { form.remove(); card.querySelector(".player-edit-open").hidden = false; });
+    save.addEventListener("click", async () => {
+      const changes = {};
+      for (const r of p.ratings) { const v = Number(inputs[r.key].value); if (Number.isFinite(v) && v !== r.value) changes[r.key] = Math.round(v); }
+      for (const k of ["jersey", "class", "height", "dev_trait"]) if (inputs[k].value !== String(p[k] == null ? "" : p[k])) changes[k] = inputs[k].value;
+      if (inputs.weight.value && Number(inputs.weight.value) !== p.weight) changes.weight = Number(inputs.weight.value);
+      if (!Object.keys(changes).length) { toast("Nothing changed.", 2000); return; }
+      save.disabled = true;
+      try {
+        const j = await api(`/api/season/${s.id}/player/edit`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team: p.team.slug, player: p.slug, changes }) });
+        playerState.cache.clear();
+        toast(`${p.name} updated.`, 2500);
+        const box = card.closest(".player-page");
+        if (box && j.player) renderPlayer(j.player, box);
+        if (state.tab === "depth") renderDepthChart();
+      } catch (err) { toast(`Could not save: ${err.message}`, 4000); save.disabled = false; }
+    });
+    actions.append(save, cancel);
+    form.append(actions);
+    return form;
+  }
+
   // ----- rivalries ---------------------------------------------------------------
   async function renderRivalriesCard(box) {
     const s = state.season;
@@ -2651,6 +2727,7 @@
   setSidebar(true, false);
   $("#btn-advance").addEventListener("click", () => advance());
   $("#btn-gameday").addEventListener("click", () => advance(null, true));
+  $("#btn-settings").addEventListener("click", openSettings);
   $("#btn-to-selection").addEventListener("click", () => advance(15));
   $("#btn-to-end").addEventListener("click", () => advance(20));
   $("#season-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) { state.tab = b.dataset.tab; renderTab(); } });

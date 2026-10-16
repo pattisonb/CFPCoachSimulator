@@ -493,6 +493,17 @@ role.
 rank, Group of Five and defensive finalists, All-America consensus counts and the coach of
 the year profile against the research targets.
 
+### Settings and god mode
+
+The ⚙ Settings button next to the sim buttons opens the season's settings. God mode
+lets you edit every player and every depth chart: any player card gets an Edit button
+(ratings 0-99, jersey, class, height, weight and development trait; names and positions
+stay, since the season's stats are keyed on them) and every team's depth chart becomes
+editable, not just yours. Edits are saved with the season (`player_edits` in the state)
+and used by every game from the next sim on; an edited rating is marked on the card.
+`GET/POST /api/season/{id}/settings`, `POST /api/season/{id}/player/edit`;
+`python test_godmode.py` checks validation, the views and the sim's team data.
+
 ### Rivalry trophies and the all-time series
 
 `data/rivalries.json` lists 90 FBS rivalries: the game's name, its trophy (Paul Bunyan's

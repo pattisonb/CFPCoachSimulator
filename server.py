@@ -291,6 +291,16 @@ class AdvanceRequest(BaseModel):
     to: Optional[int] = None      # target week; omitted = one week
 
 
+class SettingsRequest(BaseModel):
+    god_mode: Optional[bool] = None
+
+
+class PlayerEditRequest(BaseModel):
+    team: str
+    player: str                   # the player's slug
+    changes: dict[str, Any]
+
+
 class DepthRequest(BaseModel):
     role: Optional[str] = None
     player: Optional[str] = None
@@ -509,6 +519,43 @@ def season_game(season_id: str, event_id: str) -> dict:
     return box
 
 
+@app.get("/api/season/{season_id}/settings")
+def season_settings(season_id: str) -> dict:
+    return {"settings": season.settings(_season_state(season_id))}
+
+
+@app.post("/api/season/{season_id}/settings")
+def season_settings_change(season_id: str, req: SettingsRequest) -> dict:
+    """Change a season's settings (god mode and the rest); saved with the season."""
+    state = _season_state(season_id)
+    with _season_lock:
+        out = season.update_settings(state, req.model_dump())
+        season.save_season(state)
+    return {"settings": out}
+
+
+@app.post("/api/season/{season_id}/player/edit")
+def season_player_edit(season_id: str, req: PlayerEditRequest) -> dict:
+    """God mode: change a player's ratings, class, size, jersey or development trait. The
+    edit is saved with the season and used by every game from the next sim on."""
+    state = _season_state(season_id)
+    if not season.settings(state)["god_mode"]:
+        raise HTTPException(403, "turn on god mode in Settings to edit players")
+    if req.team not in _teams:
+        raise HTTPException(404, "unknown team")
+    job = _season_jobs.get(season_id)
+    if job and job.get("status") == "running":
+        raise HTTPException(409, "wait for the sim to finish")
+    with _season_lock:
+        try:
+            edits = season.edit_player(state, req.team, req.player, req.changes)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc))
+        season.save_season(state)
+    profile = season.player_profile(state, req.team, slug=req.player)
+    return {"edits": edits, "player": profile}
+
+
 @app.get("/api/season/{season_id}/rivalries")
 def season_rivalries(season_id: str, team: Optional[str] = None) -> dict:
     """A team's rivalries (default: yours): trophy, series today and this season's meeting."""
@@ -548,6 +595,8 @@ def season_depth_change(season_id: str, slug: str, req: DepthRequest) -> dict:
     state = _season_state(season_id)
     if slug not in _teams:
         raise HTTPException(404, "unknown team")
+    if slug != state["team"] and not season.settings(state)["god_mode"]:
+        raise HTTPException(403, "turn on god mode in Settings to edit another team's depth chart")
     job = _season_jobs.get(season_id)
     if job and job.get("status") == "running":
         raise HTTPException(409, "wait for the sim to finish")
