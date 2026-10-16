@@ -351,10 +351,10 @@
     if (r.surprises.length || r.disappointments.length) {
       // one sentence on the team's AP path: where it started, its peak, where it ended
       const wk = (w) => (w <= 13 ? `Week ${w}` : (s.week_labels[w] || `week ${w}`).toLowerCase().replace("championship week", "championship week").replace("selection", "selection day"));
-      const expl = (x) => {
+      const expl = (x, cls) => {
         const endWord = r.done ? "finished" : "sits";
         const start = x.preseason_rank ? `Started the season #${x.preseason_rank}` : "Started the season unranked";
-        if (x.peak_rank == null) return `${start}, never cracked the top 25, and ${endWord} ${x.record}.`;
+        if (x.peak_rank == null) return cls === "surprise" ? `${start} and ${r.done ? "went" : "is"} ${x.record} without the poll noticing.` : `${start} and ${r.done ? "stumbled to" : "is a disappointing"} ${x.record}.`;
         if (x.final_rank != null && x.final_rank === x.peak_rank) {
           if (x.preseason_rank === x.final_rank) return `Started and ${endWord} the season at #${x.final_rank}.`;
           const climbed = !x.preseason_rank || x.final_rank < x.preseason_rank;
@@ -373,9 +373,9 @@
         const card = el("div", { class: `review-card ${cls}` }, [
           el("div", { class: "review-label", text: title }),
           el("div", { class: "review-big" }, [pill(first.team), `${first.name} ${first.record}`]),
-          el("div", { class: "small-text", text: `${first.conference}. ${expl(first)}` }),
+          el("div", { class: "small-text", text: `${first.conference}. ${expl(first, cls)}` }),
         ]);
-        if (rest.length) card.append(el("div", { class: "review-runners muted small-text" }, rest.map((x) => el("div", {}, [team(x.team, `${x.name} ${x.record}`), el("span", { text: ` — ${expl(x)}` })]))));
+        if (rest.length) card.append(el("div", { class: "review-runners muted small-text" }, rest.map((x) => el("div", {}, [team(x.team, `${x.name} ${x.record}`), el("span", { text: ` — ${expl(x, cls)}` })]))));
         return card;
       };
       box.append(el("h3", { text: r.done ? "Surprise and disappointment" : "Surprise and disappointment so far" }));
