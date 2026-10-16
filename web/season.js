@@ -132,6 +132,8 @@
     // the highlighted week is the one Advance plays: a week further ahead sims through to it
     if (!to && state.viewWeek > s.current_week + 1) to = state.viewWeek;
     state.advanceFrom = s.current_week;
+    state.simResults = [];
+    state.simTarget = to || s.current_week + 1;
     setBusy(true);
     showProgress({ status: "running", done: s.current_week, total: to || s.current_week + 1, stage: "Starting", week: s.current_week + 1 });
     try {
@@ -144,11 +146,13 @@
     clearTimeout(state.timer);
     state.timer = setTimeout(async () => {
       try {
-        const j = await api(`/api/season/${state.season.id}/status`);
+        const j = await api(`/api/season/${state.season.id}/status?since=${state.advanceFrom != null ? state.advanceFrom : state.season.current_week}`);
         if (j.status === "running") {
           showProgress(j);
           poll();
         } else {
+          if (j.paused) toast("Paused. Advance when you are ready.", 3000);
+          hideSimOverlay();
           if (j.status === "error") toast(`Simulation error: ${j.error}`, 6000);
           const s = await api(`/api/season/${state.season.id}`);
           state.viewWeek = s.current_week;
@@ -186,6 +190,67 @@
     text.append(` · ${pct}%`);
     text.hidden = false;
     $("#btn-advance").textContent = "Simming…";
+    if (span > 1) showSimOverlay(j, pct, span, from);
+  }
+
+  // A multi-week sim hides the tabs and shows what is happening: the stage, the bar, your
+  // record ticking up in the header, each of your results as it lands, and a Pause button.
+  function showSimOverlay(j, pct, span, from) {
+    const s = state.season;
+    const ov = $("#sim-overlay");
+    if (ov.hidden) {
+      ov.hidden = false;
+      $("#season-tabs").hidden = true;
+      for (const t of document.querySelectorAll(".season-main .tab-body, #tab-box")) t.hidden = true;
+      $("#sim-results").innerHTML = "";
+      state.simShown = new Set();
+      $("#btn-pause").disabled = false;
+      $("#btn-pause").textContent = "Pause after this week";
+    }
+    const label = j.week ? (s.week_labels[j.week] || `Week ${j.week}`) : "";
+    const stage = j.stage || "Simming";
+    $("#sim-stage").textContent = /^Simming/.test(stage) ? stage : `${label} · ${stage}`;
+    $("#sim-overlay .review-label").textContent = `Simming through ${s.week_labels[j.total] || "week " + j.total}`;
+    $("#sim-sub").textContent = `${Math.max(0, j.done - from)} of ${span} weeks done${j.games_total ? ` · ${j.games_done} of ${j.games_total} games this week` : ""} · ${pct}%`;
+    $("#sim-bar").style.width = `${pct}%`;
+    if (j.record) {
+      const rec = $("#season-title .rec");
+      if (rec) rec.textContent = `${j.record.wins}-${j.record.losses}`;
+      const conf = $("#season-title .conf-rec");
+      if (conf) conf.textContent = `${j.record.conf_wins}-${j.record.conf_losses} ${s.conference}`;
+    }
+    // the week strip follows the sim
+    if (j.done !== state.simLastDone) { state.simLastDone = j.done; state.viewWeek = j.done; state.season.current_week = j.done; renderWeekStrip(); $("#btn-advance").textContent = "Simming…"; }
+    for (const r of j.results || []) {
+      const key = `${r.week}|${r.opponent}`;
+      if (state.simShown.has(key)) continue;
+      state.simShown.add(key);
+      const vs = r.venue === "away" ? "at" : "vs";
+      const row = el("div", { class: `sim-result new ${r.won ? "win" : "loss"}` }, [
+        el("span", { class: "muted", text: s.week_labels[r.week] && r.week > 13 ? (s.week_labels[r.week] || "").replace("Championship week", "CCG").replace(" & bowls", "").replace(" & New Year bowls", "") : `Week ${r.week}` }),
+        el("span", { class: "wl", text: r.won ? "W" : "L" }),
+        el("span", {}, [`${vs} `, teamPill(r.opponent), r.opponent_name, r.title ? el("span", { class: "muted small-text", text: ` · ${r.title}` }) : null]),
+        el("span", { class: "score", text: `${r.points_for}–${r.points_against}${r.overtime ? " OT" : ""}` }),
+      ]);
+      $("#sim-results").prepend(row);
+    }
+  }
+
+  function hideSimOverlay() {
+    const ov = $("#sim-overlay");
+    if (ov.hidden) return;
+    ov.hidden = true;
+    $("#season-tabs").hidden = false;
+    selectTab(state.tab === "box" ? "games" : state.tab);
+  }
+
+  async function pauseSim() {
+    const s = state.season;
+    if (!s) return;
+    try {
+      const r = await api(`/api/season/${s.id}/pause`, { method: "POST" });
+      if (r.stopping) { $("#btn-pause").disabled = true; $("#btn-pause").textContent = "Pausing after this week…"; }
+    } catch (err) { toast(`Could not pause: ${err.message}`, 3000); }
   }
 
   // ----- rendering ---------------------------------------------------------
@@ -286,7 +351,7 @@
     $("#season-title").append(
       teamPill(s.team),
       s.team_name, el("span", { class: "rec", text: `${r.wins}-${r.losses}` }),
-      el("span", { class: "muted", style: "font-size:14px;margin-left:8px", text: `${r.conf_wins}-${r.conf_losses} ${s.conference}` }),
+      el("span", { class: "muted conf-rec", style: "font-size:14px;margin-left:8px", text: `${r.conf_wins}-${r.conf_losses} ${s.conference}` }),
     );
     const phase = s.done ? `Season complete · national champion: ${s.champion_name}` : s.current_week === 0 ? "Preseason" : `Through ${s.week_labels[s.current_week] || "week " + s.current_week}`;
     const simDate = simDateText(s);
@@ -1847,6 +1912,7 @@
   // ----- wiring ------------------------------------------------------------
 
   $("#btn-new").addEventListener("click", newSeason);
+  $("#btn-pause").addEventListener("click", pauseSim);
   $("#btn-seasons").addEventListener("click", () => setSidebar($("#btn-seasons").getAttribute("aria-pressed") !== "true"));
   $("#btn-clear-seasons").addEventListener("click", clearSeasons);
   $("#btn-hide-seasons").addEventListener("click", () => setSidebar(false));

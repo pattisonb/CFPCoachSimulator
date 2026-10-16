@@ -1049,14 +1049,33 @@ def close_pool() -> None:
 
 
 def advance_to(state: dict, target_week: int, progress: Optional[Callable[[int, int], None]] = None,
-               report: Optional[Reporter] = None) -> dict:
+               report: Optional[Reporter] = None, should_stop: Optional[Callable[[], bool]] = None) -> dict:
+    """Play weeks up to target_week; `should_stop` is checked between weeks (the Pause button)."""
     target = min(target_week, 19)
     pool = shared_pool()
     while state["current_week"] < target and not state["done"]:
+        if should_stop and should_stop():
+            break
         advance(state, pool, report)
         if progress:
             progress(state["current_week"], target)
     return state
+
+
+def my_results(state: dict, since_week: int) -> list[dict]:
+    """Your team's played games after `since_week`, for the live ticker while simming."""
+    me = state["team"]
+    out = []
+    for g in state["games"].values():
+        if not g["played"] or g["week"] <= since_week or me not in (g["home"], g["away"]):
+            continue
+        home = g["home"] == me
+        pf, pa = (g["home_score"], g["away_score"]) if home else (g["away_score"], g["home_score"])
+        out.append({"week": g["week"], "title": g.get("title"), "kind": g["kind"], "won": pf > pa, "points_for": pf, "points_against": pa,
+                    "opponent": g["away"] if home else g["home"], "opponent_name": g["away_display"] if home else g["home_display"],
+                    "venue": "neutral" if g["neutral"] else ("home" if home else "away"), "overtime": g.get("overtime") or 0})
+    out.sort(key=lambda r: r["week"])
+    return out
 
 
 def save_season(state: dict) -> Path:

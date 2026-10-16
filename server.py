@@ -325,9 +325,11 @@ def _run_advance(job: dict, target: int) -> None:
 
     try:
         with _season_lock:
-            season.advance_to(job["state"], target, progress=progress, report=report)
+            season.advance_to(job["state"], target, progress=progress, report=report, should_stop=lambda: job.get("stop", False))
             job["stage"] = "Saving"
             season.save_season(job["state"])
+        job["paused"] = bool(job.get("stop")) and job["state"]["current_week"] < target and not job["state"]["done"]
+        job["stop"] = False
         job["status"] = "idle"
         job["stage"] = None
     except Exception as exc:  # noqa: BLE001
@@ -417,10 +419,28 @@ def delete_all_seasons() -> dict:
 
 
 @app.get("/api/season/{season_id}/status")
-def season_status(season_id: str) -> dict:
+def season_status(season_id: str, since: Optional[int] = None) -> dict:
+    """Job progress plus, while simming, your record and the results since week `since`."""
+    state = _season_state(season_id)
+    job = _season_jobs[season_id]
+    out = {k: job.get(k) for k in ("id", "status", "done", "total", "error", "stage", "week", "games_done", "games_total", "paused")}
+    out["current_week"] = state["current_week"]
+    rec = season._records(state)[state["team"]]
+    out["record"] = {"wins": rec["wins"], "losses": rec["losses"], "conf_wins": rec["conf_wins"], "conf_losses": rec["conf_losses"]}
+    if since is not None:
+        out["results"] = season.my_results(state, since)
+    return out
+
+
+@app.post("/api/season/{season_id}/pause")
+def pause_season(season_id: str) -> dict:
+    """Stop a running sim after the week in progress finishes."""
     _season_state(season_id)
     job = _season_jobs[season_id]
-    return {k: job.get(k) for k in ("id", "status", "done", "total", "error", "stage", "week", "games_done", "games_total")}
+    if job.get("status") != "running":
+        return {"status": job.get("status"), "stopping": False}
+    job["stop"] = True
+    return {"status": "running", "stopping": True}
 
 
 @app.post("/api/season/{season_id}/advance")
@@ -433,7 +453,7 @@ def advance_season(season_id: str, req: AdvanceRequest) -> dict:
         return {"status": "idle", "done": state["current_week"], "total": state["current_week"]}
     target = req.to if req.to is not None else state["current_week"] + 1
     target = max(state["current_week"] + 1, min(19, target))
-    job.update(status="running", done=state["current_week"], total=target)
+    job.update(status="running", done=state["current_week"], total=target, stop=False, paused=False)
     threading.Thread(target=_run_advance, args=(job, target), daemon=True).start()
     return {"status": "running", "done": state["current_week"], "total": target}
 

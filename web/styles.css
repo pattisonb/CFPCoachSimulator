@@ -572,3 +572,17 @@ button.tiny { padding: 0 5px; font-size: 11px; line-height: 18px; min-height: 0;
 .bowl-result .bmatch-row.win .bmatch-name { color: var(--good); }
 .bowl-result .won-tag { color: var(--good); font-weight: 700; }
 .bowl-result .bmatch-row.lost { opacity: 0.6; }
+
+/* simming overlay */
+#sim-overlay { border: 1px solid var(--accent); }
+.sim-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.sim-stage { font-size: 22px; font-weight: 800; margin: 2px 0 4px; }
+.sim-results { display: grid; gap: 4px; margin-top: 10px; }
+.sim-result { display: grid; grid-template-columns: 70px 28px 1fr auto; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 8px; background: var(--panel-2); font-size: 13px; }
+.sim-result .wl { font-weight: 800; }
+.sim-result.win .wl { color: var(--good); }
+.sim-result.loss .wl { color: var(--bad); }
+.sim-result .score { font-variant-numeric: tabular-nums; font-weight: 700; }
+.sim-result.new { animation: simpop 0.5s ease-out; }
+@keyframes simpop { from { transform: translateY(-4px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (max-width: 700px) { .sim-result { grid-template-columns: 56px 24px 1fr auto; } }

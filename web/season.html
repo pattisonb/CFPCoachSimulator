@@ -71,6 +71,18 @@
           <button data-tab="box" type="button" hidden>Box Score</button>
         </nav>
 
+        <div class="panel" id="sim-overlay" hidden>
+          <div class="sim-head">
+            <div>
+              <div class="review-label">Simming</div>
+              <div id="sim-stage" class="sim-stage"></div>
+              <div id="sim-sub" class="muted small-text"></div>
+            </div>
+            <button id="btn-pause" class="ghost" type="button">Pause after this week</button>
+          </div>
+          <div class="progress"><div id="sim-bar" class="progress-bar"></div></div>
+          <div id="sim-results" class="sim-results"></div>
+        </div>
         <div class="panel tab-body" id="tab-games"></div>
         <div class="panel tab-body" id="tab-schedule" hidden></div>
         <div class="panel tab-body" id="tab-standings" hidden></div>
