@@ -27,7 +27,7 @@ if __name__ == "__main__":
     t0 = time.perf_counter()
     for i in range(n):
         st = season.new_season("ohio-state", "full", seed=seed0 + i)
-        season.advance_to(st, 19)
+        season.advance_to(st, 20)
         nat = st["awards"]["national"]
         h = nat["heisman"]
         w = h["winner"]

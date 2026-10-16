@@ -54,17 +54,17 @@ def load_bowls() -> dict:
 
 
 def bowl_week(date: Optional[str]) -> int:
-    """Place a bowl date in the season's playoff weeks: 16 (through Dec 24, with the first
-    round), 17 (Dec 26-31, with the quarterfinals), 18 (January bowls, with the semifinals)."""
+    """Place a bowl date in the season's playoff weeks: 17 (through Dec 24, with the first
+    round), 18 (Dec 26-31, with the quarterfinals), 19 (January bowls, with the semifinals)."""
     if not date:
-        return 17
+        return 18
     m = re.match(r"(Dec|Jan)\w*\s+(\d+)", date)
     if not m:
-        return 17
+        return 18
     month, day = m.group(1), int(m.group(2))
     if month == "Jan":
-        return 18
-    return 16 if day <= 24 else 17
+        return 19
+    return 17 if day <= 24 else 18
 
 
 def _payout(b: dict) -> float:

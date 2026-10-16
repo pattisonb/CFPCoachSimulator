@@ -9,7 +9,7 @@ be compared, and a team term is added where the real award rewards team success.
 
 The same scoring powers the live "race" shown during the season and the final results.
 Calendar: conference awards after championship week (14), the Heisman and the national
-awards in selection week (15), the postseason awards after the title game (19).
+awards in selection week (16), the postseason awards after the title game (20).
 """
 from __future__ import annotations
 
@@ -846,7 +846,7 @@ def national_awards(pool: Pool, state: dict, final: bool = True) -> dict:
 
 
 def postseason_awards(pool: Pool, state: dict) -> dict:
-    """After the national championship (week 19): Manning, Bear Bryant, Joe Moore."""
+    """After the national championship (week 20): Manning, Bear Bryant, Joe Moore."""
     rng = _rng(state, "postseason")
     out = []
     manning = award_race(pool, "qb", 0.7, rng, n=5, noise=0.2)

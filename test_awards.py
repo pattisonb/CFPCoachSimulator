@@ -16,7 +16,7 @@ if __name__ == "__main__":
     print(f"--- week 10 race ({time.perf_counter() - t0:.0f}s)")
     for c in race["heisman"]["candidates"][:6]:
         print(f"  {c['name']:<22} {c['position']:<3} {c['team_name']:<16} {c['record']:<5} #{c['rank']} pts {c['points']} | {c['line']}")
-    season.advance_to(st, 19)
+    season.advance_to(st, 20)
     aw = st["awards"]
     h = aw["national"]["heisman"]
     print(f"--- Heisman ({time.perf_counter() - t0:.0f}s): share {h['share']}% of {h['possible']}")

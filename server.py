@@ -12,6 +12,7 @@ import json
 import subprocess
 import sys
 import contextlib
+import shutil
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -390,6 +391,9 @@ def _delete_season_file(season_id: str) -> bool:
         return False
     _season_jobs.pop(season_id, None)
     _season_cards.pop(season_id, None)
+    folder = season.SEASONS_DIR / season_id
+    if folder.exists():
+        shutil.rmtree(folder, ignore_errors=True)
     path = season.SEASONS_DIR / f"{season_id}.json"
     if path.exists():
         path.unlink()
@@ -452,7 +456,7 @@ def advance_season(season_id: str, req: AdvanceRequest) -> dict:
     if state["done"]:
         return {"status": "idle", "done": state["current_week"], "total": state["current_week"]}
     target = req.to if req.to is not None else state["current_week"] + 1
-    target = max(state["current_week"] + 1, min(19, target))
+    target = max(state["current_week"] + 1, min(season.FINAL_WEEK, target))
     job.update(status="running", done=state["current_week"], total=target, stop=False, paused=False)
     threading.Thread(target=_run_advance, args=(job, target), daemon=True).start()
     return {"status": "running", "done": state["current_week"], "total": target}
@@ -478,7 +482,7 @@ def season_review(season_id: str) -> dict:
 @app.get("/api/season/{season_id}/game/{event_id}")
 def season_game(season_id: str, event_id: str) -> dict:
     state = _season_state(season_id)
-    box = state["my_boxes"].get(event_id)
+    box = season.load_box(state, event_id)
     if box is None:
         raise HTTPException(404, "no box score for that game")
     return box

@@ -10,7 +10,7 @@ if __name__ == "__main__":
     slug = sys.argv[1] if len(sys.argv) > 1 else "michigan"
     t0 = time.perf_counter()
     st = season.new_season(slug, "full", seed=3)
-    season.advance_to(st, 19)
+    season.advance_to(st, 20)
     s = season.summary(st)
     print(f"{s['team_name']} {s['record']['wins']}-{s['record']['losses']} in {time.perf_counter() - t0:.1f}s; champion {s['champion_name']}")
     for g in s["schedule"]:

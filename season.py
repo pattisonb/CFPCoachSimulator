@@ -739,11 +739,11 @@ def _playoff_round(state: dict, week: int, teams: dict) -> list[dict]:
     if week == min(PLAYOFF_WEEKS):
         for hs, as_ in ((5, 12), (6, 11), (7, 10), (8, 9)):
             games.append(mk(f"cfp-r1-{hs}", seeds[hs], seeds[as_], False, f"First round: {hs} vs {as_}", hs, as_))
-    elif week == 17:
+    elif week == min(PLAYOFF_WEEKS) + 1:
         for top, eid, label in ((1, "cfp-r1-8", "1 vs 8/9"), (2, "cfp-r1-7", "2 vs 7/10"), (3, "cfp-r1-6", "3 vs 6/11"), (4, "cfp-r1-5", "4 vs 5/12")):
             w, ws = winner(eid)
             games.append(mk(f"cfp-qf-{top}", seeds[top], w, True, f"Quarterfinal: {label}", top, ws, site_key=f"qf-{top}"))
-    elif week == 18:
+    elif week == min(PLAYOFF_WEEKS) + 2:
         (a, a_s), (b, b_s) = winner("cfp-qf-1"), winner("cfp-qf-4")
         games.append(mk("cfp-sf-1", a, b, True, "Semifinal", a_s, b_s, site_key="sf-1"))
         (c, c_s), (d, d_s) = winner("cfp-qf-2"), winner("cfp-qf-3")

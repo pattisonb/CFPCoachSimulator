@@ -76,16 +76,21 @@ window.CFP = (function () {
   function renderScoreboard(g, ids = GAME_IDS) {
     const row = $(ids.scoreRow);
     row.innerHTML = "";
+    // the home side reads bar, name, score; the away side is its mirror: score, name, bar
+    const bar = (side) => {
+      const t = teamsBySlug[g[`${side}_slug`]];
+      const col = (t && t.colors) || {};
+      const c1 = col.primary || teamColor(g, side), c2 = col.secondary || c1;
+      return el("div", { class: "pill", style: `background: linear-gradient(135deg, ${c1} 0 50%, ${c2} 50% 100%)` });
+    };
+    const text = (side, team) => el("div", {}, [
+      el("div", { class: "name", text: team.name }),
+      el("div", { class: "sub", text: side === "home" ? (g.venue === "neutral" ? "Neutral site" : "Home") : "Away" }),
+    ]);
     const block = (side, team) =>
-      el("div", { class: `team-block ${side} ${g.winner === side ? "winner" : ""}` }, [
-        side === "home" ? el("div", { class: "pill", style: `background:${teamColor(g, side)}` }) : null,
-        el("div", {}, [
-          el("div", { class: "name", text: team.name }),
-          el("div", { class: "sub", text: side === "home" ? (g.venue === "neutral" ? "Neutral site" : "Home") : "Away" }),
-        ]),
-        el("div", { class: "big", text: String(team.score) }),
-        side === "away" ? el("div", { class: "pill", style: `background:${teamColor(g, side)}` }) : null,
-      ]);
+      el("div", { class: `team-block ${side} ${g.winner === side ? "winner" : ""}` },
+        side === "home" ? [bar(side), text(side, team), el("div", { class: "big", text: String(team.score) })]
+                        : [el("div", { class: "big", text: String(team.score) }), text(side, team), bar(side)]);
     row.append(
       block("away", g.away),
       el("div", { class: "final-tag", text: g.overtime_periods ? `Final / ${g.overtime_periods}OT` : "Final" }),
