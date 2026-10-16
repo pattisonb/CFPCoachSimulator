@@ -61,9 +61,7 @@
           <button data-tab="games" class="active" type="button">Games</button>
           <button data-tab="schedule" type="button">My Schedule</button>
           <button data-tab="standings" type="button">Standings</button>
-          <button data-tab="ap" type="button">AP Poll</button>
-          <button data-tab="coaches" type="button">Coaches Poll</button>
-          <button data-tab="cfp" type="button">CFP Rankings</button>
+          <button data-tab="rankings" type="button">Rankings</button>
           <button data-tab="bracket" type="button">Bracket</button>
           <button data-tab="bowls" type="button">Bowls</button>
           <button data-tab="summary" type="button">Summary</button>
@@ -75,9 +73,14 @@
         <div class="panel tab-body" id="tab-games"></div>
         <div class="panel tab-body" id="tab-schedule" hidden></div>
         <div class="panel tab-body" id="tab-standings" hidden></div>
-        <div class="panel tab-body" id="tab-ap" hidden></div>
-        <div class="panel tab-body" id="tab-coaches" hidden></div>
-        <div class="panel tab-body" id="tab-cfp" hidden></div>
+        <div class="panel tab-body" id="tab-rankings" hidden>
+          <div class="view-chips" id="poll-pills">
+            <button class="chip active" data-poll="ap" type="button">AP Poll</button>
+            <button class="chip" data-poll="coaches" type="button">Coaches Poll</button>
+            <button class="chip" data-poll="cfp" type="button">CFP Rankings</button>
+          </div>
+          <div id="poll-body"></div>
+        </div>
         <div class="panel tab-body" id="tab-bracket" hidden></div>
         <div class="panel tab-body" id="tab-bowls" hidden></div>
         <div class="panel tab-body" id="tab-summary" hidden></div>

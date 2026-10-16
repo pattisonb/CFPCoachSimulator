@@ -501,3 +501,5 @@ body.team-theme .panel { border-color: color-mix(in srgb, var(--team-primary) 30
 .rank-badge { display: inline-block; margin-left: 8px; padding: 1px 6px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--panel-2); border: 1px solid var(--border); color: var(--muted); vertical-align: 1px; }
 .rank-badge.cfp { background: color-mix(in srgb, var(--accent) 18%, var(--panel-2)); color: var(--text); border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); }
 table.standings-full td.name { white-space: nowrap; }
+#poll-pills { margin: 4px 0 16px; padding: 0 2px; }
+#poll-pills .chip { padding: 7px 14px; font-size: 13px; }

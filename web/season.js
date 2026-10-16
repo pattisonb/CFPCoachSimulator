@@ -3,7 +3,7 @@
   "use strict";
   const { $, el, SBOX_IDS, teamPill, renderScoreboard, renderScoring, renderTeamStats, renderPlayers, renderDrives } = window.CFP;
 
-  const state = { teams: [], season: null, viewWeek: null, tab: "games", timer: null, standings: null };
+  const state = { teams: [], season: null, viewWeek: null, tab: "games", poll: "ap", timer: null, standings: null };
 
   async function api(path, options) {
     const res = await fetch(path, options);
@@ -347,7 +347,7 @@
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    for (const t of ["games", "schedule", "standings", "ap", "coaches", "cfp", "bracket", "bowls", "summary", "teamstats", "playerstats", "box"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "teamstats", "playerstats", "box"]) $(`#tab-${t}`).hidden = t !== name;
   }
 
   function renderTab() {
@@ -356,9 +356,7 @@
     if (t === "games") renderGames();
     else if (t === "schedule") renderSchedule();
     else if (t === "standings") renderStandings();
-    else if (t === "ap") renderPoll("ap");
-    else if (t === "coaches") renderPoll("coaches");
-    else if (t === "cfp") renderPoll("cfp");
+    else if (t === "rankings") renderRankings();
     else if (t === "bracket") renderBracket();
     else if (t === "bowls") renderBowls();
     else if (t === "summary") renderSummary();
@@ -1042,9 +1040,15 @@
     }
   }
 
+  // One Rankings tab; pills switch between the AP poll, the Coaches Poll and the CFP rankings.
+  function renderRankings() {
+    for (const b of $("#poll-pills").querySelectorAll("button[data-poll]")) b.classList.toggle("active", b.dataset.poll === state.poll);
+    renderPoll(state.poll);
+  }
+
   function renderPoll(kind) {
     const s = state.season;
-    const box = $(`#tab-${kind}`);
+    const box = $("#poll-body");
     box.innerHTML = "";
     const w = pollWeekFor(state.viewWeek);
     const entry = s.polls[String(w)] || {};
@@ -1282,6 +1286,7 @@
   $("#btn-to-selection").addEventListener("click", () => advance(14));
   $("#btn-to-end").addEventListener("click", () => advance(19));
   $("#season-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) { state.tab = b.dataset.tab; renderTab(); } });
+  $("#poll-pills").addEventListener("click", (e) => { const b = e.target.closest("button[data-poll]"); if (b) { state.poll = b.dataset.poll; renderRankings(); } });
   $("#sbox-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-btab]"); if (b) selectBoxTab(b.dataset.btab); });
 
   (async () => {
