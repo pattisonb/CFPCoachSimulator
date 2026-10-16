@@ -132,6 +132,7 @@
     // the highlighted week is the one Advance plays: a week further ahead sims through to it
     if (!to && state.viewWeek > s.current_week + 1) to = state.viewWeek;
     state.advanceFrom = s.current_week;
+    state.simming = true;
     state.simResults = [];
     state.simTarget = to || s.current_week + 1;
     setBusy(true);
@@ -165,7 +166,11 @@
   }
 
   function setBusy(b) {
+    if (!b) state.simming = false;
     for (const id of ["btn-advance", "btn-to-selection", "btn-to-end"]) $(`#${id}`).disabled = b || (state.season && state.season.done);
+    for (const chip of document.querySelectorAll("#week-strip .week-chip")) chip.disabled = b;
+    $("#btn-new").disabled = b;
+    $("#season-list").classList.toggle("locked", b);
     if (!b) { $("#season-progress").hidden = true; $("#season-progress-text").hidden = true; $("#season-progress-bar").style.width = "0%"; }
   }
 
@@ -370,7 +375,8 @@
       const label = w === 0 ? "Pre" : w <= 13 ? `W${w}` : (s.week_labels[w] || `W${w}`).replace("Championship week", "CCG").replace("National championship", "Title").replace("Quarterfinals", "QF").replace("Semifinals", "SF").replace("First round", "R1").replace("Selection", "Sel");
       const next = !s.done && w === s.current_week + 1;
       const b = el("button", { type: "button", class: `week-chip ${w === state.viewWeek ? "active" : ""} ${w > s.current_week ? "future" : ""} ${w === s.current_week ? "current" : ""} ${next ? "next" : ""}`, text: label, title: `${s.week_labels[w] || (w === 0 ? "Preseason" : "")} · ${weekDateText(s, w)}` });
-      b.addEventListener("click", () => { state.viewWeek = w; renderWeekStrip(); renderTab(); });
+      b.addEventListener("click", () => { if (state.simming) return; state.viewWeek = w; renderWeekStrip(); renderTab(); });
+      if (state.simming) b.disabled = true;   // the strip only follows the sim while it runs
       strip.appendChild(b);
     }
     renderWeekDate();
@@ -439,7 +445,8 @@
   // ----- stats tab: team stats, player stats and the depth chart under one tab --------
 
   const statsState = { view: "players" };
-  const depthState = { team: null, data: null, key: null, unit: "" };
+  const depthState = { team: null, data: null, key: null, unit: "", view: "chart", role: "QB", pos: null, posKey: null };
+  const DEPTH_ROLES = ["QB", "HB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT", "LEDG", "DT", "REDG", "SAM", "MIKE", "WILL", "CB", "FS", "SS", "K", "P", "KR", "PR"];
 
   function renderStats() {
     const s = state.season;
@@ -470,13 +477,21 @@
     const teamSel = el("select", { "aria-label": "Team" }, state.teams.filter((t) => !t.fictional).map((t) => el("option", { value: t.slug, text: `${t.name} (${CONF_SHORT[t.conference] || t.conference})` })));
     teamSel.value = ds.team;
     teamSel.addEventListener("change", () => { ds.team = teamSel.value; renderDepthChart(); });
-    const unitChips = el("div", { class: "view-chips" }, [["", "All"], ["Offense", "Offense"], ["Defense", "Defense"], ["Special teams", "Special teams"]].map(([v, label]) => {
+    const viewChips = el("div", { class: "view-chips" }, [["chart", "Depth chart"], ["position", "By position"]].map(([v, label]) => {
+      const b = el("button", { type: "button", class: `chip ${ds.view === v ? "active" : ""}`, text: label });
+      b.addEventListener("click", () => { ds.view = v; renderDepthChart(); });
+      return b;
+    }));
+    const unitChips = ds.view === "position"
+      ? el("div", { class: "view-chips" }, DEPTH_ROLES.map((r) => { const b = el("button", { type: "button", class: `chip ${ds.role === r ? "active" : ""}`, text: r }); b.addEventListener("click", () => { ds.role = r; renderDepthChart(); }); return b; }))
+      : el("div", { class: "view-chips" }, [["", "All"], ["Offense", "Offense"], ["Defense", "Defense"], ["Special teams", "Special teams"]].map(([v, label]) => {
       const b = el("button", { type: "button", class: `chip ${ds.unit === v ? "active" : ""}`, text: label });
       b.addEventListener("click", () => { ds.unit = v; renderDepthChart(); });
       return b;
     }));
-    controls.append(teamSel, unitChips);
+    controls.append(teamSel, viewChips, unitChips);
     box.append(controls);
+    if (ds.view === "position") return renderDepthByPosition(box, ds, s);
     const key = `${s.id}|${s.current_week}|${ds.team}`;
     if (!ds.data || ds.key !== key) {
       try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`); ds.key = key; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
@@ -1516,6 +1531,39 @@
       grid.append(card);
     }
     box.append(grid);
+  }
+
+  // Every player on the roster rated at one role, so anyone can be moved into that spot
+  // (a safety to corner, a tight end to receiver, the fastest back to kick returner).
+  async function renderDepthByPosition(box, ds, s) {
+    const key = `${s.id}|${s.current_week}|${ds.team}|${ds.role}`;
+    if (!ds.pos || ds.posKey !== key) {
+      try { ds.pos = await api(`/api/season/${s.id}/depth/${ds.team}/position/${ds.role}`); ds.posKey = key; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+    }
+    const d = ds.pos;
+    const change = async (body) => {
+      try {
+        await api(`/api/season/${s.id}/depth/${ds.team}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        ds.pos = null; ds.data = null; renderDepthChart();
+      } catch (err) { toast(`Could not change the depth chart: ${err.message}`, 4000); }
+    };
+    const label = { QB: "quarterback", HB: "running back", FB: "fullback", WR: "receiver", TE: "tight end", LT: "left tackle", LG: "left guard", C: "center", RG: "right guard", RT: "right tackle", LEDG: "left edge", DT: "defensive tackle", REDG: "right edge", SAM: "strongside linebacker", MIKE: "middle linebacker", WILL: "weakside linebacker", CB: "cornerback", FS: "free safety", SS: "strong safety", K: "kicker", P: "punter", KR: "kick returner", PR: "punt returner" }[ds.role] || ds.role;
+    box.append(el("p", { class: "muted small-text", text: `Every ${d.name || ""}player rated as a ${label}. Rating is what he would be at this spot; Natural is his rating at his own position. ★ makes him the starter here${["KR", "PR"].includes(ds.role) ? "" : ", + adds him to the rotation at the bottom"}. Changes save with this season.` }));
+    const cols = [
+      { key: "rank", label: "#", get: (p) => String(p.i + 1), sort: (p) => p.i },
+      { key: "player", label: "Player", left: true, get: (p) => el("span", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, p.name, el("span", { class: "pos", text: `${p.class || ""}` })]), sort: (p) => p.name },
+      { key: "rating", label: "Rating here", get: (p) => el("b", { text: String(p.rating) }), sort: (p) => p.rating },
+      { key: "natural", label: "Natural", get: (p) => `${p.natural} ${p.role || p.position}`, sort: (p) => p.natural },
+      { key: "now", label: "Now", left: true, get: (p) => (p.in_role ? el("span", { class: p.spot === 1 ? "win" : "", text: p.spot === 1 ? "Starter here" : `${ORD(p.spot - 1)} here` }) : `${p.role || p.position}${p.depth ? " " + p.depth : ""}${p.starter ? " (starter)" : ""}`), sort: (p) => (p.in_role ? p.spot : 99) },
+      { key: "size", label: "Size", get: (p) => (p.height && p.weight ? `${p.height} ${p.weight}` : ""), sort: (p) => p.weight || 0 },
+      { key: "line", label: "Season", left: true, get: (p) => el("span", { class: "muted small-text", text: p.headline || (p.games ? `${p.games} games` : "") }) },
+      { key: "act", label: "", get: (p) => (s.done ? "" : el("span", { class: "depth-ctl" }, [
+          p.spot === 1 ? null : (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "★", title: "Make starter here" }); b.addEventListener("click", () => change({ role: ds.role, player: p.slug, move: "top" })); return b; })(),
+          p.in_role || ["KR", "PR"].includes(ds.role) ? null : (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "+", title: "Add to this spot's rotation" }); b.addEventListener("click", () => change({ role: ds.role, player: p.slug, move: "add" })); return b; })(),
+        ])) },
+    ];
+    if (!ds.posSort) { ds.posSort = { sort: "rating", desc: true }; }
+    box.append(sortableTable(cols, d.players.map((p, i) => ({ ...p, i })), ds.posSort, () => renderDepthChart(), (p) => (p.in_role ? "mine" : "")));
   }
 
   const standingsState = { conf: null };

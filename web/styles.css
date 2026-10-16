@@ -586,3 +586,8 @@ button.tiny { padding: 0 5px; font-size: 11px; line-height: 18px; min-height: 0;
 .sim-result.new { animation: simpop 0.5s ease-out; }
 @keyframes simpop { from { transform: translateY(-4px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (max-width: 700px) { .sim-result { grid-template-columns: 56px 24px 1fr auto; } }
+
+/* while a sim runs: week chips and the season list do not respond */
+.week-chip:disabled { cursor: not-allowed; opacity: 0.5; }
+.week-chip.active:disabled, .week-chip.next:disabled { opacity: 0.8; }
+.history-list.locked { pointer-events: none; opacity: 0.6; }
