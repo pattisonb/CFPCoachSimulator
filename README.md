@@ -133,6 +133,19 @@ edge of 2.0 rating points plus up to 0.8 for stadium size (the data's 0-99 home 
 number), which comes to about 4 points of margin for a big stadium. A neutral site applies
 nothing. The `home_field_advantage` slider scales it.
 
+## Any given Saturday: upsets
+
+Each team plays a little above or below itself on the day: a gaussian shift of
+`GAME_FORM_SD` (3.6) rating points per team per game, drawn once before kickoff on the
+same attributes as home field and shown in the box score's meta line. It widens the
+spread of outcomes from a 13-point standard deviation to about 16, which is what real
+college football shows around the closing line, so a 21-point favourite now loses about
+one game in ten and a 28-point favourite a few in a hundred (they lost almost never
+before). `python tools/upset_odds.py` simulates seven mismatches 200 times and prints the
+upset rate and margins; `tools/calibrate_season.py` showed the sim's margins were not too
+steep (actual margins run 15% larger than predicted on the 2026 games), only too sure of
+themselves in the 7-to-14-point range.
+
 ## How realistic is it?
 
 Two checks, both reproducible.
@@ -268,7 +281,7 @@ filtered from the roster ten times a snap. With momentum on a week dropped from 
 ratings reflect his current fatigue rather than the previous snap's. `python
 tools/profile_sim.py game|week` profiles the engine and a week; `tests/test_play_log.py`
 prints the fingerprint of five seeded games that must not change when the engine is
-edited (2189b129cc2f27ba).
+edited (a88354947af56886).
 
 While a sim runs the page shows what the engine is doing, live: "Simming Week 7 · 38 of
 92 games", then "Updating the AP poll and CFP rankings", "Setting the conference title

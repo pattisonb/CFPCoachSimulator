@@ -36,6 +36,19 @@ RESULTS_FILE = ROOT / "data" / "season_results.json"
 from teamnames import build_matcher, match  # noqa: E402  (shared with the season engine)
 
 
+def load_games() -> list[dict]:
+    """Final games from data/season_games.json (see fetch_results.py)."""
+    games = json.loads(GAMES_FILE.read_text(encoding="utf-8"))
+    out = []
+    for g in games:
+        if not g.get("final"):
+            continue
+        out.append({"week": g["week"], "date": g["date"], "neutral": g.get("neutral", False),
+                    "home": g["home_name"], "home_seo": g["home_seo"], "home_score": g["home_score"],
+                    "away": g["away_name"], "away_seo": g["away_seo"], "away_score": g["away_score"]})
+    return out
+
+
 # ----- simulation (one process per core) -----------------------------------
 
 _TEAMS: dict = {}

@@ -73,6 +73,12 @@ class GameSim:
             self.home_advantage *= sliders.get_multiplier(sliders.home_field_advantage)
             self._shift_ratings(home_data, self.home_advantage / 2)
             self._shift_ratings(away_data, -self.home_advantage / 2)
+        # the day's form: each side a little above or below itself (see cfg.GAME_FORM_SD)
+        self.form = {"home": 0.0, "away": 0.0}
+        if cfg.GAME_FORM_SD:
+            self.form = {"home": random.gauss(0, cfg.GAME_FORM_SD), "away": random.gauss(0, cfg.GAME_FORM_SD)}
+            self._shift_ratings(home_data, self.form["home"])
+            self._shift_ratings(away_data, self.form["away"])
         self.home = self._make_team(home_data)
         self.away = self._make_team(away_data)
         self.key = {id(self.home): "home", id(self.away): "away"}
@@ -484,6 +490,7 @@ class GameSim:
             "winner": winner,
             "venue": self.venue,
             "home_advantage_points": round(self.home_advantage, 2),
+            "form": {k: round(v, 1) for k, v in self.form.items()},
             "received_first": receives_first,
             "overtime_periods": len(self.ot_periods),
             "scoring_plays": self.scoring_plays,

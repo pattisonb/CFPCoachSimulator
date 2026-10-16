@@ -189,6 +189,10 @@ TRAILING_LATE_SECONDS = 420     # trailing in the 2nd half with this much left: 
 PUNT_DISTANCE = (43.0, 5.0)
 
 # ----- Venue and coaching -----
+# Any given Saturday: each team plays a little above or below itself on the day. Drawn once
+# per game per team (gaussian, in rating points, on the same attributes as home field), it
+# widens the spread of outcomes so a 28-point favourite still loses a few times in a hundred.
+GAME_FORM_SD = 3.6
 HFA_BASE_POINTS = 2.0           # rating points moved from the away team to the home team
 HFA_STADIUM_POINTS = 0.8        # extra at a 99 stadium rating, less at a 0 (data: 30-90)
 HFA_ATTRS = ("speed", "strength", "intelligence", "passing", "decision_making", "elusiveness",

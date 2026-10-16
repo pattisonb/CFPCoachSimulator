@@ -113,10 +113,12 @@ window.CFP = (function () {
 
     const meta = $(ids.meta);
     meta.innerHTML = "";
+    const form = g.form && (g.form.home || g.form.away) ? `form on the day: ${g.home.name} ${g.form.home > 0 ? "+" : ""}${g.form.home}, ${g.away.name} ${g.form.away > 0 ? "+" : ""}${g.form.away}` : null;
     const bits = [
       `${g[g.received_first].name} received the opening kickoff`,
       `${g.drives.length} drives`,
       g.venue === "neutral" ? "neutral site" : null,
+      form,
     ].filter(Boolean);
     const sl = Object.entries(g.sliders || {});
     if (sl.length) bits.push("sliders: " + sl.map(([k, v]) => `${label(k)} ${v}`).join(", "));
