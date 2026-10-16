@@ -338,11 +338,21 @@ def create_season(req: SeasonRequest) -> dict:
     return season.summary(state)
 
 
+_season_cards: dict[str, tuple[float, dict]] = {}   # season id -> (file mtime, card)
+
+
 @app.get("/api/seasons")
 def list_seasons() -> dict:
+    """The saved seasons, newest first. A season file can be several megabytes, so each
+    card is cached by the file's modification time instead of re-read on every call."""
     out = []
     if season.SEASONS_DIR.exists():
         for path in sorted(season.SEASONS_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:30]:
+            mtime = path.stat().st_mtime
+            cached = _season_cards.get(path.stem)
+            if cached and cached[0] == mtime:
+                out.append(cached[1])
+                continue
             try:
                 st = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, ValueError):
@@ -350,15 +360,52 @@ def list_seasons() -> dict:
             if "current_week" not in st:
                 continue
             rec = season._records(st)[st["team"]]
-            out.append({"id": st["id"], "team": st["team"], "team_name": st["team_name"], "mode": st["mode"],
-                        "created_at": st["created_at"], "current_week": st["current_week"], "done": st["done"],
-                        "wins": rec["wins"], "losses": rec["losses"], "champion_name": _teams.get(st.get("champion") or "", {}).get("name")})
+            card = {"id": st["id"], "team": st["team"], "team_name": st["team_name"], "mode": st["mode"],
+                    "created_at": st["created_at"], "current_week": st["current_week"], "done": st["done"],
+                    "wins": rec["wins"], "losses": rec["losses"], "champion_name": _teams.get(st.get("champion") or "", {}).get("name")}
+            _season_cards[path.stem] = (mtime, card)
+            out.append(card)
     return {"seasons": out}
 
 
 @app.get("/api/season/{season_id}")
 def get_season(season_id: str) -> dict:
     return season.summary(_season_state(season_id))
+
+
+def _delete_season_file(season_id: str) -> bool:
+    """Remove one saved season; False if it is simulating right now."""
+    job = _season_jobs.get(season_id)
+    if job and job.get("status") == "running":
+        return False
+    _season_jobs.pop(season_id, None)
+    _season_cards.pop(season_id, None)
+    path = season.SEASONS_DIR / f"{season_id}.json"
+    if path.exists():
+        path.unlink()
+    return True
+
+
+@app.delete("/api/season/{season_id}")
+def delete_season(season_id: str) -> dict:
+    if not (season.SEASONS_DIR / f"{season_id}.json").exists() and season_id not in _season_jobs:
+        raise HTTPException(404, "season not found")
+    if not _delete_season_file(season_id):
+        raise HTTPException(409, "that season is simulating; wait for it to finish")
+    return {"ok": True}
+
+
+@app.delete("/api/seasons")
+def delete_all_seasons() -> dict:
+    """Delete every saved season except any that is simulating."""
+    removed, kept = 0, 0
+    if season.SEASONS_DIR.exists():
+        for path in list(season.SEASONS_DIR.glob("*.json")):
+            if _delete_season_file(path.stem):
+                removed += 1
+            else:
+                kept += 1
+    return {"ok": True, "removed": removed, "kept": kept}
 
 
 @app.get("/api/season/{season_id}/status")

@@ -304,6 +304,15 @@ table.stats tr.clickable:hover td { background: var(--panel-2); }
 .brand-link { text-decoration: none; }
 .btn-link { text-decoration: none; padding: 4px 10px; font-size: 12px; border: 1px solid var(--border); border-radius: 8px; color: var(--text); }
 .season-layout { display: grid; grid-template-columns: 260px 1fr; gap: 16px; padding: 16px 20px; max-width: 1500px; margin: 0 auto; }
+.season-layout.side-hidden { grid-template-columns: 1fr; }
+.season-layout.side-hidden .season-side { display: none; }
+#btn-seasons[aria-pressed="true"] { background: var(--panel-2); border-color: var(--border); color: var(--text); }
+button.small { padding: 4px 8px; font-size: 12px; }
+.history-list li { position: relative; }
+.history-list .del { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; padding: 0; line-height: 20px; font-size: 14px; border-radius: 6px; background: transparent; border-color: transparent; color: var(--muted); }
+.history-list li:hover .del { color: var(--text); }
+.history-list .del:hover { background: var(--panel-2); color: var(--bad); }
+.history-list li .score { margin-right: 26px; }
 .season-layout > * { min-width: 0; }
 .season-side { position: sticky; top: 68px; align-self: start; max-height: calc(100vh - 90px); overflow: auto; }
 #season-toolbar select { font: inherit; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); max-width: 220px; }
@@ -419,4 +428,12 @@ table.review-table th, table.review-table td { white-space: normal; }
   .review-two > div { overflow-x: auto; }
   .review-result { grid-template-columns: 84px 72px minmax(0, 1fr); }
   .review-result .review-note { grid-column: 2 / -1; margin-left: 0; max-width: none; text-align: left; }
+}
+
+/* phones: every season tab visible (wrapped), game titles wrap instead of forcing a scroll */
+@media (max-width: 700px) {
+  #season-tabs { flex-wrap: wrap; overflow: visible; }
+  .games-table td:first-child { white-space: normal; min-width: 120px; }
+  .tab-body { overflow-x: auto; }
+  .season-actions button { flex: 1 1 auto; }
 }

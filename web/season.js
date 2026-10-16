@@ -44,14 +44,62 @@
     list.innerHTML = "";
     if (!data.seasons.length) list.appendChild(el("li", { class: "muted", text: "No seasons yet." }));
     for (const s of data.seasons) {
+      const del = el("button", { class: "del", type: "button", title: "Delete this season", "aria-label": "Delete this season", text: "×" });
+      del.addEventListener("click", (e) => { e.stopPropagation(); deleteSeason(s); });
       const li = el("li", { onclick: () => openSeason(s.id) }, [
         el("span", { class: "teams", text: `${s.team_name} · ${s.mode === "full" ? "full" : "rest of season"}` }),
         el("span", { class: "score", text: `${s.wins}-${s.losses}` }),
         el("span", { class: "when", text: `${s.done ? `done · champion ${s.champion_name}` : `through week ${s.current_week}`} · ${when(s.created_at)}` }),
+        del,
       ]);
       if (state.season && state.season.id === s.id) li.classList.add("active");
       list.appendChild(li);
     }
+    $("#btn-seasons").textContent = data.seasons.length ? `Seasons (${data.seasons.length})` : "Seasons";
+    $("#btn-clear-seasons").hidden = !data.seasons.length;
+  }
+
+  function closeSeason() {
+    clearTimeout(state.timer);
+    state.season = null;
+    state.viewWeek = null;
+    $("#season").hidden = true;
+    $("#season-empty").hidden = false;
+    history.replaceState(null, "", "/season");
+    setSidebar(true, false);
+  }
+
+  async function deleteSeason(s) {
+    const label = `${s.team_name} ${s.wins}-${s.losses} (${s.done ? "complete" : `through week ${s.current_week}`})`;
+    if (!confirm(`Delete the ${label} season? This cannot be undone.`)) return;
+    try {
+      await api(`/api/season/${s.id}`, { method: "DELETE" });
+      if (state.season && state.season.id === s.id) closeSeason();
+      await loadSeasons();
+      toast("Season deleted");
+    } catch (err) { toast(`Could not delete: ${err.message}`, 4000); }
+  }
+
+  async function clearSeasons() {
+    if (!confirm("Delete every saved season? This cannot be undone.")) return;
+    try {
+      const r = await api("/api/seasons", { method: "DELETE" });
+      closeSeason();
+      await loadSeasons();
+      toast(r.kept ? `Deleted ${r.removed} seasons; ${r.kept} still simulating` : `Deleted ${r.removed} seasons`);
+    } catch (err) { toast(`Could not clear: ${err.message}`, 4000); }
+  }
+
+  // The Seasons sidebar hides once a season is open so the season takes the full width;
+  // the toolbar button brings it back, and the choice is remembered.
+  function setSidebar(show, remember = true) {
+    document.querySelector(".season-layout").classList.toggle("side-hidden", !show);
+    $("#btn-seasons").setAttribute("aria-pressed", show ? "true" : "false");
+    if (remember) { try { localStorage.setItem("cfp.seasonSide", show ? "1" : "0"); } catch (e) { /* private mode */ } }
+  }
+
+  function sidebarPreferred() {
+    try { return localStorage.getItem("cfp.seasonSide"); } catch (e) { return null; }
   }
 
   async function newSeason() {
@@ -142,8 +190,10 @@
   // ----- rendering ---------------------------------------------------------
 
   function showSeason(s) {
+    const opening = !state.season || state.season.id !== s.id;
     state.season = s;
     state.standings = null;
+    if (opening && sidebarPreferred() !== "1") setSidebar(false, false);
     if (state.viewWeek == null || state.viewWeek > s.current_week) state.viewWeek = s.current_week;
     $("#season-empty").hidden = true;
     $("#season").hidden = false;
@@ -910,6 +960,9 @@
   // ----- wiring ------------------------------------------------------------
 
   $("#btn-new").addEventListener("click", newSeason);
+  $("#btn-seasons").addEventListener("click", () => setSidebar($("#btn-seasons").getAttribute("aria-pressed") !== "true"));
+  $("#btn-clear-seasons").addEventListener("click", clearSeasons);
+  setSidebar(true, false);
   $("#btn-advance").addEventListener("click", () => advance());
   $("#btn-to-selection").addEventListener("click", () => advance(14));
   $("#btn-to-end").addEventListener("click", () => advance(19));

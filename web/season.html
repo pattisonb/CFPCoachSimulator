@@ -22,13 +22,14 @@
         <option value="remaining">Rest of season</option>
       </select>
       <button id="btn-new" class="accent" type="button">New season</button>
+      <button id="btn-seasons" class="ghost" type="button" aria-pressed="false" title="Show or hide the saved seasons">Seasons</button>
       <button class="ghost btn-theme" type="button" aria-label="Toggle light or dark mode"></button>
     </div>
   </header>
 
   <main class="season-layout">
-    <aside class="season-side">
-      <div class="section-head"><h2>Seasons</h2></div>
+    <aside class="season-side" id="season-side">
+      <div class="section-head"><h2>Seasons</h2><button id="btn-clear-seasons" class="ghost small" type="button">Clear all</button></div>
       <ul id="season-list" class="history-list"></ul>
     </aside>
 
