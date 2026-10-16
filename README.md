@@ -479,6 +479,18 @@ On week 6 (58 games, 50 sims each) the dry run scored 62.1% straight up, margin 
 slope 0.72, total points 49.4 predicted against 51.1 real, QB1 pass yards 36 high and RB1
 rush yards 22 low for the real lead back (the sim spreads carries over more backs).
 
+### Week 7 re-pick with the current engine
+
+`data/predictions/week07.json` stays as frozen on Oct 15 (commit 1fb13db, 50 sims, before
+the garbage-time, situational-football and speed work). `week07_v2.json` is the same week
+re-simulated 100 times with the engine as of 1a5854a, made Thursday evening Oct 15 before
+the Thursday games; the four Tuesday and Wednesday games it includes were already final
+(it got three of the four right) and are not out of sample. Against the frozen file: 9 of
+55 picks flipped, all games the first file had inside 6 points; the average pick moved
+2.5 points and the engine now gives shorter blowouts (Texas over Florida 27 to 18, Oregon
+over Nebraska 22 to 16). Score either file with
+`python forward_test.py score 7 --file data/predictions/week07_v2.json`.
+
 ## Situational football and the clock
 
 `engine/situation.py` decides what each team is trying to do on every snap, at the end of
