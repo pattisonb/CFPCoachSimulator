@@ -1578,7 +1578,7 @@
     const s = state.season;
     const card = el("div", { class: "review-card this-week" });
     box.append(card);
-    const key = `${s.id}|${s.current_week}|${d.team}`;
+    const key = `${s.id}|${s.current_week}|${(s.schedule || []).filter((g) => g.played).length}|${d.team}`;
     let data = thisWeekState.key === key ? thisWeekState.data : null;
     if (!data) {
       card.append(el("div", { class: "review-label", text: "This week" }), el("p", { class: "muted small-text", text: "Simulating the matchup…" }));
@@ -1588,19 +1588,42 @@
     if (!card.isConnected) return;
     card.innerHTML = "";
     const g = data.game;
-    if (!g) { card.append(el("div", { class: "review-label", text: "This week" }), el("p", { class: "muted", text: data.reason === "done" ? "Season complete." : "No game left on the schedule." })); return; }
+    const injuryReport = () => {
+      const inj = data.injuries || [];
+      const injBox = el("div", { class: "this-week-injuries" }, [el("h4", { text: `Injury report · ${inj.length ? `${inj.length} out` : "nobody out"}` })]);
+      if (inj.length) injBox.append(injuryTable(inj, false));
+      card.append(injBox);
+    };
+    if (!g) {
+      const wkLabel = data.week ? (s.week_labels[data.week] || `Week ${data.week}`) : "";
+      card.append(el("div", { class: "review-label", text: data.reason === "bye" ? `Bye this week${wkLabel ? " · " + wkLabel : ""}` : "This week" }),
+        el("p", { class: "muted", text: data.reason === "done" ? "Season complete." : data.reason === "bye" ? "No game this week." : "No game left on the schedule." }));
+      if (data.reason === "bye") injuryReport();
+      return;
+    }
     const p = data.prediction;
     const wk = s.week_labels[g.week] || `Week ${g.week}`;
     const dateText = g.date && /^\d{4}-\d{2}-\d{2}/.test(g.date) ? fmtDay(g.date.slice(0, 10), true) : (g.date || ((s.week_dates || {})[g.week] || {}).main ? fmtDay(s.week_dates[g.week].main, true) : "");
     const where = g.venue === "home" ? "Home" : g.venue === "away" ? "Away" : "Neutral site";
-    card.append(el("div", { class: "review-label", text: g.bye_first ? `Bye this week · next up ${wk}` : `This week · ${wk}` }));
+    card.append(el("div", { class: "review-label", text: g.played ? `This week · ${wk} · Final` : `This week · ${wk}` }));
     const oppLine = el("div", { class: "review-big" }, [
       el("span", { class: "muted", text: `${g.venue === "away" ? "at" : "vs"} ` }), g.opponent_rank ? el("span", { class: "rank", text: `#${g.opponent_rank} ` }) : null, teamPill(g.opponent), g.opponent_name,
       el("span", { class: "pos", text: `${g.opponent_record ? g.opponent_record + " · " : ""}${where}${g.title ? " · " + g.title : ""}` }),
     ]);
     card.append(oppLine);
-    const bits = [dateText, g.site, g.rivalry ? `${g.rivalry.trophy ? "🏆 " + g.rivalry.trophy : "🔥 " + g.rivalry.name} · ${g.rivalry.series}` : null].filter(Boolean);
+    const bits = [dateText, g.site, g.rivalry ? `${g.rivalry.trophy ? "🏆 " + g.rivalry.trophy : "🔥 " + g.rivalry.name} · ${g.rivalry.headline ? g.rivalry.headline + " · " : ""}${g.rivalry.series}` : null].filter(Boolean);
     if (bits.length) card.append(el("div", { class: "muted small-text", text: bits.join(" · ") }));
+    if (g.played) {
+      // game day is done: the result, and the box score a click away
+      card.append(el("div", { class: "review-tiles" }, [
+        el("div", { class: "review-tile" }, [el("div", { class: `review-leader-big ${g.won ? "win" : "loss"}`, text: `${g.won ? "W" : "L"} ${g.points_for}–${g.points_against}${g.overtime ? " OT" : ""}` }), el("div", { class: "review-label", text: "Final" })]),
+        el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: g.my_record || "" }), el("div", { class: "review-label", text: "Record" })]),
+      ]));
+      if (g.has_box) { const b = el("button", { type: "button", class: "ghost small", text: "Box score" }); b.addEventListener("click", () => openBox(g.event_id)); card.append(b); }
+      card.append(el("div", { class: "muted small-text", text: "Advance to Next Week plays the rest of the week." }));
+      injuryReport();
+      return;
+    }
     // the prediction: the likely score, the odds, who to watch
     // whole points, unless rounding would call it a tie
     const tie = Math.round(p.points_for) === Math.round(p.points_against);
@@ -1620,11 +1643,7 @@
       w.receiver ? `${w.receiver.name}: ${Math.round(w.receiver.receptions)} rec, ${Math.round(w.receiver.receiving_yards)} yds` : null,
     ].filter(Boolean);
     card.append(el("div", { class: "muted small-text", text: `From ${p.sims} simulations of the matchup with the current depth charts and injuries.${watchBits.length ? " Projected: " + watchBits.join(" · ") : ""}` }));
-    // the injury report
-    const inj = data.injuries || [];
-    const injBox = el("div", { class: "this-week-injuries" }, [el("h4", { text: `Injury report · ${inj.length ? `${inj.length} out` : "nobody out"}` })]);
-    if (inj.length) injBox.append(injuryTable(inj, false));
-    card.append(injBox);
+    injuryReport();
   }
 
   // a small "you" tag after your team's name wherever teams are listed
@@ -1670,7 +1689,7 @@
     row.append(allBtn);
     controls.append(row);
     box.append(controls);
-    const key = `${s.id}|${s.current_week}|${st.team}`;
+    const key = `${s.id}|${s.current_week}|${(s.schedule || []).filter((g) => g.played).length}|${st.team}`;
     if (!st.data || st.key !== key) {
       try { st.data = await api(`/api/season/${s.id}/schedule/${st.team}`); st.key = key; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
     }

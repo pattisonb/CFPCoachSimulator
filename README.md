@@ -537,7 +537,9 @@ and record, the venue, the date and the trophy on the line, then a prediction fr
 simulations of the matchup with the current depth charts, injuries and edits (the likely
 score, your win odds, the line and the total, the passer, rusher and receiver to watch),
 and your injury report. The week's row in the schedule below is highlighted with a
-"this week" tag. On a bye the card shows the next game after it.
+"this week" tag. On a bye the card just says so. Once game day has played your game
+the card shows the result instead of a prediction, with the box score a click away, and
+the schedule rows update as soon as a game of yours is in.
 `GET /api/season/{id}/preview?team=`.
 
 ### Rivalry trophies and the all-time series

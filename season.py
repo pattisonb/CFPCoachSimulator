@@ -1779,14 +1779,27 @@ def game_preview(state: dict, slug: str, sims: int = 20) -> dict:
     rusher to watch). Nothing here touches the season's random stream."""
     from engine.game import simulate_game
     teams = load_teams()
-    g = next_game(state, slug)
-    if state["done"] or g is None:
-        return {"team": slug, "game": None, "reason": "done" if state["done"] else "no game"}
+    week = state["current_week"] + 1
+    g = next((x for x in state["games"].values() if slug in (x["home"], x["away"]) and x["week"] == week), None)
+    if state["done"]:
+        return {"team": slug, "team_name": teams[slug]["name"], "game": None, "reason": "done", "injuries": injury_report(state, slug)}
+    if g is None:
+        return {"team": slug, "team_name": teams[slug]["name"], "game": None, "reason": "bye", "week": week, "injuries": injury_report(state, slug)}
     home = g["home"] == slug
     opp = g["away"] if home else g["home"]
     ranks = rank_map(state, state["current_week"])
     rec = _records(state, include_playoff=True)
     riv = globals().get("game_rivalry")
+    if g["played"]:
+        # game day is done: the result, not a prediction
+        pf, pa = (g["home_score"], g["away_score"]) if home else (g["away_score"], g["home_score"])
+        game = {"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "site": g.get("site"), "date": g.get("date"),
+                "opponent": opp, "opponent_name": g["away_display"] if home else g["home_display"], "opponent_rank": ranks.get(opp),
+                "opponent_record": f"{rec[opp]['wins']}-{rec[opp]['losses']}" if opp in rec and not teams.get(opp, {}).get("fictional") else "",
+                "my_rank": ranks.get(slug), "my_record": f"{rec[slug]['wins']}-{rec[slug]['losses']}",
+                "venue": "neutral" if g["neutral"] else ("home" if home else "away"), "rivalry": riv(state, g, after=True) if riv else None,
+                "played": True, "won": pf > pa, "points_for": pf, "points_against": pa, "overtime": g.get("overtime") or 0, "has_box": has_box(state, g)}
+        return {"team": slug, "team_name": teams[slug]["name"], "game": game, "played": True, "prediction": None, "injuries": injury_report(state, slug)}
     game = {"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "site": g.get("site"), "date": g.get("date"),
             "bye_first": g["week"] > state["current_week"] + 1,
             "opponent": opp, "opponent_name": g["away_display"] if home else g["home_display"], "opponent_rank": ranks.get(opp),
