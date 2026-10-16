@@ -437,3 +437,4 @@ table.review-table th, table.review-table td { white-space: normal; }
   .tab-body { overflow-x: auto; }
   .season-actions button { flex: 1 1 auto; }
 }
+.side-actions { display: flex; gap: 6px; }

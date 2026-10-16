@@ -962,6 +962,7 @@
   $("#btn-new").addEventListener("click", newSeason);
   $("#btn-seasons").addEventListener("click", () => setSidebar($("#btn-seasons").getAttribute("aria-pressed") !== "true"));
   $("#btn-clear-seasons").addEventListener("click", clearSeasons);
+  $("#btn-hide-seasons").addEventListener("click", () => setSidebar(false));
   setSidebar(true, false);
   $("#btn-advance").addEventListener("click", () => advance());
   $("#btn-to-selection").addEventListener("click", () => advance(14));
