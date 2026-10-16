@@ -211,12 +211,82 @@ class Team:
         for unit in (self.offense, self.defense):
             for p in unit:
                 if not p.in_game and p.fatigue:
-                    p.fatigue = max(0, p.fatigue - p.endurance / 10)
+                    rate = p.endurance / 10
+                    if p.position == 'RB':
+                        rate *= cfg.RB_BENCH_RECOVERY
+                    p.fatigue = max(0, p.fatigue - rate)
+
+    def lead_back(self):
+        """The feature back: the healthy halfback highest on the depth chart (the roster lists
+        are in depth order, so list order breaks ties); any back when there is no halfback."""
+        backs = [p for p in self.offense if p.position == 'RB' and not p.injured]
+        halfbacks = [p for p in backs if p.role != 'FB'] or backs
+        return min(halfbacks, key=lambda p: p.depth, default=None)
+
+    def _lead_profile(self, lead, backs):
+        """(per-snap out chance, per-snap return chance) for the lead back, from the committee
+        values to the workhorse values (cfg.RB_LEAD_*) by how much better he is than the next
+        back. Uses the unpenalized ratings the run game uses; cached for the game."""
+        cache = getattr(self, "_rb_lead", None)
+        if cache is not None and cache[0] is lead:
+            return cache[1]
+
+        def rating(p):
+            o = p._original_attrs
+            return sum(o[k] or 50 for k in ("speed", "strength", "elusiveness", "vision")) / 4
+
+        others = [p for p in backs if p is not lead and p.role != 'FB'] or [p for p in backs if p is not lead]
+        gap = rating(lead) - max(rating(p) for p in others)
+        lo, hi = cfg.RB_LEAD_GAP_RANGE
+        feature = min(1.0, max(0.0, (gap - lo) / (hi - lo)))
+        ret_lo, ret_hi = cfg.RB_LEAD_RETURN_CHANCE
+        profile = (cfg.RB_LEAD_OUT_CHANCE * (1 - feature) ** cfg.RB_LEAD_OUT_CURVE,
+                   ret_lo + (ret_hi - ret_lo) * feature ** cfg.RB_LEAD_CURVE)
+        self._rb_lead = (lead, profile)
+        return profile
+
+    def rotate_backs(self, fatigue_threshold=50):
+        """Running back rotation (the RB_LEAD_* constants in game_config). The lead back comes
+        out when he tires or, on a committee team, by the coach's series rotation; he returns
+        once rested, at once for a feature back and after the backups' series on a committee.
+        The backups rotate among themselves at the skill-position threshold and call on the lead
+        back only when no other fresh back is left. In a blowout the starters sit
+        (rest_starters), so only the tired-for-fresh rotation runs."""
+        backs = [p for p in self.offense if p.position == 'RB' and not p.injured]
+        if len(backs) < 2:
+            return
+        lead = None if getattr(self, "_resting", {}).get("offense") else self.lead_back()
+        out_chance, return_chance = self._lead_profile(lead, backs) if lead is not None else (0.0, 0.0)
+        if lead is not None and not lead.in_game and lead.fatigue <= cfg.RB_LEAD_RETURN_FATIGUE \
+                and random.random() < return_chance:
+            on_field = [p for p in backs if p.in_game]
+            if on_field:
+                max(on_field, key=lambda p: p.fatigue).in_game = False
+            lead.in_game = True
+            return
+        lead_out = lead is not None and lead.in_game and (lead.fatigue > cfg.RB_LEAD_SUB_FATIGUE or random.random() < out_chance)
+        tired = [p for p in backs if p.in_game and (lead_out if p is lead else p.fatigue > fatigue_threshold)]
+        if not tired:
+            return
+        bench = [p for p in backs if not p.in_game and p is not lead and p.fatigue <= fatigue_threshold]
+        if not bench and lead is not None and not lead.in_game and lead.fatigue <= cfg.RB_LEAD_RETURN_FATIGUE:
+            bench = [lead]
+        if not bench:
+            return
+        # the most productive fresh back first; sometimes the next back down gets the series instead
+        bench.sort(key=lambda p: (-production(p), p.fatigue))
+        for tired_player in tired:
+            if not bench:
+                break
+            pick = 1 if len(bench) > 1 and random.random() < cfg.BACKUP_RB_ROTATION else 0
+            sub = bench.pop(pick)
+            tired_player.in_game = False
+            sub.in_game = True
 
     def sub_skill_position_players(self, fatigue_threshold=50):
-        from operator import itemgetter
+        self.rotate_backs(fatigue_threshold)
 
-        skill_positions = ['RB', 'WR', 'TE']
+        skill_positions = ['WR', 'TE']
 
         for pos in skill_positions:
             # Get current in-game players of this position

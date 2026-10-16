@@ -209,7 +209,30 @@ KICKOFF_RETURN_TD_CHANCE = 0.004
 TARGET_WEIGHT_POWER = 5.0       # receiver target weight = rating ** power (steeper = more concentrated)
 QB_DESIGNED_RUN_SHARE = 0.06    # default share of carries that are designed QB runs (observed per team overrides)
 BACKUP_RB_ROTATION = 0.40       # chance the sub is the next back down rather than the best one on the bench
-SKILL_SUB_FATIGUE = 62          # fatigue level at which RB/WR/TE starters rotate out (was 50)
+SKILL_SUB_FATIGUE = 62          # fatigue level at which WR/TE starters (and backup RBs) rotate out (was 50)
+
+# ----- Running back usage (roster.Team.rotate_backs) -----
+# Real backfields are not even rotations: the lead back takes about half of the non-QB carries
+# on an average team, a third on a committee and 70-80% on a team with a feature back (2026 box
+# scores, season level: lead back share mean 46%, p10 33%, p90 63%, max 83%). The lead back (the
+# healthy halfback highest on the depth chart) comes out when he passes RB_LEAD_SUB_FATIGUE or,
+# on a committee, by the coach's series rotation (RB_LEAD_OUT_CHANCE per snap); once rested to
+# RB_LEAD_RETURN_FATIGUE he comes back with a per-snap chance between the committee and the
+# workhorse values. Both chances follow the team's "feature" score: how much better the lead
+# back's carrier rating is than the next back's, mapped onto 0..1 by RB_LEAD_GAP_RANGE; the
+# return chance rises as feature ** RB_LEAD_CURVE and the series rotation fades as
+# (1 - feature) ** RB_LEAD_OUT_CURVE, so only a clear star goes straight back in while a lead back
+# who is a little better than the next man still loses the committee's series rotation quickly.
+# Backs recover faster on the bench than receivers: a back's rest is a few plays, not a series.
+RB_LEAD_SUB_FATIGUE = 78
+RB_LEAD_RETURN_FATIGUE = 40
+RB_LEAD_OUT_CHANCE = 0.14             # committee: per-snap chance the fresh lead back comes out for a series (workhorse 0)
+RB_LEAD_OUT_CURVE = 2                 # series rotation fades as (1 - feature) ** this
+RB_LEAD_RETURN_CHANCE = (0.07, 1.0)   # committee .. workhorse, per snap once rested
+RB_LEAD_GAP_RANGE = (-4.0, 24.0)      # lead-minus-next-back carrier rating: committee .. workhorse
+RB_LEAD_CURVE = 4                     # return chance rises as feature ** this
+RB_BENCH_RECOVERY = 2.0               # bench recovery multiplier for running backs
+RB_SECOND_BACK_CARRY_WEIGHT = 0.45    # a second halfback on the field, next to the lead back's 0.80
 
 # ----- Garbage time (teams take their foot off the gas) -----
 GARBAGE_LEAD = 28           # second-half lead at which the leader goes conservative

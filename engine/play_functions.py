@@ -266,7 +266,11 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, offense_line
         candidates = [p for p in offense if p.position in ('RB', 'WR')]
         if not candidates:
             candidates = [p for p in offense if p.position in ('RB', 'WR', 'QB', 'TE')]
-        weights = [(cfg.FB_CARRY_WEIGHT if getattr(p, "role", None) == 'FB' else 0.80) if p.position == 'RB' else 0.012 if p.position == 'WR' else 0.02 for p in candidates]
+        # The lead back (the halfback highest on the depth chart) is the main carrier; a second
+        # halfback on the field with him carries less, a fullback rarely, a receiver almost never.
+        lead_depth = min((p.depth for p in candidates if p.position == 'RB' and getattr(p, "role", None) != 'FB'), default=None)
+        weights = [((cfg.FB_CARRY_WEIGHT if getattr(p, "role", None) == 'FB' else 0.80 if p.depth == lead_depth else cfg.RB_SECOND_BACK_CARRY_WEIGHT)
+                    if p.position == 'RB' else 0.012 if p.position == 'WR' else 0.02) for p in candidates]
         carrier = random.choices(candidates, weights=weights, k=1)[0]
 
     # Line battle: blockers vs. the front seven (plus whoever the defense committed).

@@ -533,20 +533,63 @@ the sim knows which teams or players get more):
 
 | Metric | Real | Sim | Corr | Metric | Real | Sim | Corr |
 |---|---|---|---|---|---|---|---|
-| Pass rate % | 45.8 | 44.2 | 0.63 | RB1 carries | 14.0 | 13.8 | 0.39 |
-| Plays | 65.8 | 66.7 | 0.34 | RB1 share of RB carries % | 52.9 | 46.8 | 0.09 |
-| Total yards | 373 | 374 | 0.43 | RB2 share % | 26.9 | 32.8 | 0.01 |
-| QB1 attempts | 28.1 | 29.5 | 0.50 | Top receiver catches | 5.6 | 5.6 | 0.36 |
-| QB1 pass yards | 208 | 224 | 0.41 | Top receiver share % | 30.5 | 29.8 | 0.10 |
-| QB1 carries (incl. sacks) | 8.3 | 7.6 | 0.69 | Top 3 receivers share % | 65.8 | 63.6 | 0.18 |
-| QB1 pass TD | 1.4 | 1.8 | 0.32 | FG attempts | 1.4 | 1.3 | 0.12 |
+| Pass rate % | 45.8 | 46.0 | 0.58 | RB1 carries | 14.0 | 14.7 | 0.33 |
+| Plays | 65.8 | 65.3 | 0.35 | RB1 share of RB carries % | 52.9 | 52.4 | 0.10 |
+| Total yards | 373 | 367 | 0.40 | RB2 share % | 26.9 | 27.8 | 0.09 |
+| QB1 attempts | 28.1 | 29.7 | 0.48 | Top receiver catches | 5.6 | 6.0 | 0.26 |
+| QB1 pass yards | 208 | 220 | 0.32 | Top receiver share % | 30.5 | 31.5 | 0.12 |
+| QB1 carries (incl. sacks) | 8.3 | 7.1 | 0.69 | Top 3 receivers share % | 65.8 | 65.4 | 0.15 |
+| QB1 pass TD | 1.4 | 1.8 | 0.24 | FG attempts | 1.4 | 1.4 | 0.13 |
 
 The sim's starting quarterback is the real one in 73% of team-games, its leading rusher
-the real one in 45%, its leading receiver in 26% (the real leader changes week to week).
-Still open: the lead back's carry share runs about six points low because the fatigue
-rotation hands the backup more series than real coaches do, and the starting quarterback
-throws for about 15 yards a game too many. Before this calibration the sim did not know
-which teams throw more (correlation 0.09) and gave quarterbacks a fifth of their real carries.
+the real one in 45%, its leading receiver in 25% (the real leader changes week to week).
+Still open: the starting quarterback throws for about 12 yards a game too many. Before this
+calibration the sim did not know which teams throw more (correlation 0.09) and gave
+quarterbacks a fifth of their real carries; the lead back's share ran six points low until
+the running back rotation below.
+
+### Running back usage
+
+Real backfields are not even rotations. In the 2026 box scores the lead back takes 51% of
+his team's non-quarterback carries in an average game, about a third on a committee team
+and 70% or more on a team with a feature back (season level, 138 teams: mean 46%, p10 33%,
+p90 63%, max 83%), and the top backs project to 275-330 carries and 1,700-1,900 yards over
+13 games. The engine used to rotate backs by fatigue alone, so every lead back landed
+between 44% and 50% and the country's leading rusher ended a season near 1,300 yards on
+240 carries, which made the Heisman and Doak Walker races look wrong.
+
+`roster.Team.rotate_backs` now runs the backfield the way coaches do (the constants under
+"Running back usage" in `engine/game_config.py`). The lead back is the healthy halfback
+highest on the depth chart. He comes out when he passes his fatigue limit or, on a
+committee team, by the coach's series rotation; once rested he returns at once if he is a
+clear feature back and after the backups' series if he is not; the backups rotate among
+themselves and call on him only when no other fresh back is left. Where a team sits
+between committee and workhorse is its feature score: the lead back's carrier rating
+(speed, strength, elusiveness, vision) minus the next back's, mapped onto 0..1 over a gap
+of -4 to +24 points, with the return chance rising as the fourth power of that score so
+only a clear star carries 70%. Backs recover on the bench twice as fast as receivers (a
+back's rest is a few plays, not a series), a second halfback on the field next to the lead
+back carries at 0.45 against his 0.80, and the quarterback's designed runs and the pass
+game are untouched. Game results for a seed changed with this.
+
+Season level, three seeds (11 to 13) against the real 2026 teams, lead back's share of
+non-quarterback carries:
+
+| | Real | Sim |
+|---|---|---|
+| Mean | 46% | 47% |
+| Standard deviation | 11.3 | 10.9 to 11.5 |
+| p10 / p50 / p90 | 33 / 45 / 63 | 34 / 45 / 64 |
+| Teams at 60% or more | 13% | 14 to 15% |
+| Lead back carries a game, mean / p90 | 12.3 / 16.7 | 13.6 / 20 to 21 |
+| Lead back yards a game, mean / p90 | 65 / 100 | 62 / 101 to 107 |
+
+The leading rusher now ends a 13-game regular season around 1,600 to 2,000 yards on 300 to
+360 carries, the real 2026 pace (seed 13's Doak Walker winner: 348 carries, 2,038 yards). The sim's lead back carries a little more than the real
+one because the sim hands non-quarterbacks two or three more carries a game than real
+teams do, and the sim still does not know which real teams ride one back (correlation
+0.10): the feature score comes from the roster, not from the observed shares that
+`derive_tendencies.py` already computes per team.
 
 Weekly refresh, in order: `python fetch_results.py`, `python fetch_boxscores.py`,
 `python derive_tendencies.py`, `python build_teams.py`, then the three calibration scripts.
