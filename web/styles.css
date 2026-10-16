@@ -461,3 +461,24 @@ body.team-theme .tab-body h3, body.team-theme .section-head h2 { color: var(--ac
 body.team-theme .panel { border-color: color-mix(in srgb, var(--team-primary) 30%, var(--border)); }
 @media (max-width: 700px) { body.team-theme .season-head-row { padding: 12px; } }
 .fpv { color: var(--muted); font-weight: 400; margin-left: 2px; }
+
+/* player stats: leaders board and roster cards */
+.view-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.view-chips .chip { padding: 5px 10px; font-size: 12px; border-radius: 999px; background: transparent; color: var(--muted); }
+.view-chips .chip.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.leaders-grid, .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 10px; }
+.leader-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; background: var(--panel-2); }
+.leader-head { display: flex; justify-content: space-between; align-items: baseline; cursor: pointer; margin-bottom: 6px; }
+.leader-head h4 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.3px; color: var(--accent); }
+.leader-head:hover .small-text { color: var(--text); }
+.leader-row { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center; padding: 5px 0; border-top: 1px solid var(--border); }
+.leader-row:first-of-type { border-top: 0; }
+.leader-row .rank { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.leader-row .who { display: flex; flex-direction: column; min-width: 0; }
+.leader-row .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.leader-row .name .pos { color: var(--muted); font-weight: 400; font-size: 11px; margin-left: 6px; }
+.leader-row .value { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.leader-row.top .value { color: var(--accent); font-size: 15px; }
+.leader-row .small-text { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.roster-head { margin: 4px 0 2px; }
+@media (max-width: 700px) { .leaders-grid, .roster-grid { grid-template-columns: 1fr; } }

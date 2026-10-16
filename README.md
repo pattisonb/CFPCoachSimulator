@@ -395,10 +395,13 @@ back a compact line per team (team totals, situational counts, plays, possession
 each player's stat line) that is summed into the season as it goes. Team Stats is a
 sortable per-game table for every FBS team (points, yards, pass and rush yards, yards per
 play, completion rate, third-down and red-zone rates, possession, turnovers, sacks,
-penalties, and the same on defense), with a conference filter. Player Stats shows season
-totals by category (passing, rushing, receiving, defense, kicking, punting, returns),
-either the top 100 across the league or one team's full list, with per-game columns and
-sortable headers. Stats cover simulated games only, so in **Rest of season** mode the real
+penalties, and the same on defense), with a conference filter. Player Stats opens on a
+leaders board for your team (passing, rushing and receiving yards, tackles, sacks,
+interceptions, touchdowns, kicking points, top five each, from `/stats/leaders`); pick
+"All teams" for the national leaders, a chip for the full category table (passing,
+rushing, receiving, defense, kicking, punting, returns; top 100 or one team's full list,
+sortable), or Roster for the team's players by position with ratings and starters marked,
+which is also what shows before the first game is played. Stats cover simulated games only, so in **Rest of season** mode the real
 games already played are not in them; a season saved before this existed shows only your
 own games.
 

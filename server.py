@@ -461,6 +461,14 @@ def season_team_stats(season_id: str) -> dict:
     return season.team_stats_view(_season_state(season_id))
 
 
+@app.get("/api/season/{season_id}/stats/leaders")
+def season_player_leaders(season_id: str, team: Optional[str] = None, n: int = 5) -> dict:
+    state = _season_state(season_id)
+    if team and team not in _teams:
+        raise HTTPException(404, "unknown team")
+    return season.player_leaders_view(state, team or None, max(1, min(n, 25)))
+
+
 @app.get("/api/season/{season_id}/stats/players")
 def season_player_stats(season_id: str, team: Optional[str] = None, cat: str = "passing", limit: int = 100) -> dict:
     state = _season_state(season_id)

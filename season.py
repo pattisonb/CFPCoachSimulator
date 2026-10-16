@@ -916,6 +916,42 @@ def player_stats_view(state: dict, team: Optional[str] = None, category: str = "
     return {"category": category, "team": team, "players": out, "partial": bool(state.get("season_stats_partial"))}
 
 
+LEADER_KEYS = {
+    "passing": ("passing", lambda st: st.get("pass_yards", 0)),
+    "rushing": ("rushing", lambda st: st.get("rush_yards", 0)),
+    "receiving": ("receiving", lambda st: st.get("receiving_yards", 0)),
+    "tackles": ("defense", lambda st: st.get("solo_tackles", 0) + st.get("assisted_tackles", 0)),
+    "sacks": ("defense", lambda st: st.get("sacks", 0)),
+    "interceptions": ("defense", lambda st: st.get("interceptions", 0)),
+    "touchdowns": ("rushing", lambda st: st.get("rushing_touchdowns", 0) + st.get("receiving_touchdowns", 0)),
+    "kicking": ("kicking", lambda st: st.get("fg_made", 0) * 3 + st.get("pat_made", 0)),
+}
+
+
+def player_leaders_view(state: dict, team: Optional[str] = None, n: int = 5) -> dict:
+    """Top n in each leader category, for one team or the league, with full stat lines."""
+    teams = load_teams()
+    ss = _season_stats(state)
+    rows: list[dict] = []
+    for slug, t in ss.items():
+        if team and slug != team:
+            continue
+        info = teams.get(slug)
+        if not info or (info["fictional"] and not team):
+            continue
+        for pl in t["players"].values():
+            rows.append({"name": pl["name"], "position": pl["position"], "unit": pl["unit"], "team": slug, "team_name": info["name"],
+                         "games": pl["games"], "stats": pl["stats"]})
+    out: dict[str, list[dict]] = {}
+    for cat, (table, value) in LEADER_KEYS.items():
+        keys = PLAYER_CATEGORIES[table][1]
+        if cat == "touchdowns":
+            keys = sorted(set(PLAYER_CATEGORIES["rushing"][1]) | set(PLAYER_CATEGORIES["receiving"][1]))
+        ranked = sorted((r for r in rows if value(r["stats"]) > 0), key=lambda r: (-value(r["stats"]), r["name"]))[:n]
+        out[cat] = [{**r, "stats": {k: r["stats"].get(k, 0) for k in keys}, "value": value(r["stats"])} for r in ranked]
+    return {"team": team, "leaders": out, "partial": bool(state.get("season_stats_partial"))}
+
+
 def week_dates(state: dict) -> dict[int, dict]:
     """{week: {"start", "end", "main"}} as ISO dates in US time. Regular-season weeks span
     their first and last game, with the Saturday (the busiest day) as the main date; the

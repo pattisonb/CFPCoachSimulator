@@ -802,6 +802,7 @@
   // the roster with ratings before any game has been played.
   async function renderSeasonPlayerStats() {
     const s = state.season;
+    if (!s) return;
     const box = $("#tab-playerstats");
     box.innerHTML = "";
     const ps = playerStatsState;
