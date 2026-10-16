@@ -353,9 +353,7 @@
       const wk = (w) => (w <= 13 ? `Week ${w}` : (s.week_labels[w] || `week ${w}`).toLowerCase().replace("championship week", "championship week").replace("selection", "selection day"));
       const expl = (x, cls) => {
         const endWord = r.done ? "finished" : "sits";
-        const ord = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
-        // the expectation: preseason rank, or for unranked teams how good the roster was rated
-        const start = x.preseason_rank ? `Started the season #${x.preseason_rank}` : `Started the season unranked with the ${ord(x.rating_rank)}-rated roster in the country`;
+        const start = x.preseason_rank ? `Started the season #${x.preseason_rank}` : "Started the season unranked";
         if (x.peak_rank == null) return cls === "surprise" ? `${start} and ${r.done ? "went" : "is"} ${x.record} without the poll noticing.` : `${start} and ${r.done ? "stumbled to" : "is a disappointing"} ${x.record}.`;
         if (x.final_rank != null && x.final_rank === x.peak_rank) {
           if (x.preseason_rank === x.final_rank) return `Started and ${endWord} the season at #${x.final_rank}.`;
