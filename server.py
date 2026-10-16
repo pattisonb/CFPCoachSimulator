@@ -501,7 +501,19 @@ def season_game(season_id: str, event_id: str) -> dict:
     box = season.load_box(state, event_id)
     if box is None:
         raise HTTPException(404, "no box score for that game")
+    g = state["games"].get(event_id)
+    if g is not None:
+        riv = season.game_rivalry(state, g, after=True)
+        if riv is not None:
+            box = dict(box, rivalry=riv)
     return box
+
+
+@app.get("/api/season/{season_id}/rivalries")
+def season_rivalries(season_id: str, team: Optional[str] = None) -> dict:
+    """A team's rivalries (default: yours): trophy, series today and this season's meeting."""
+    state = _season_state(season_id)
+    return season.rivalries_view(state, team or state["team"])
 
 
 @app.get("/api/season/{season_id}/stats/teams")

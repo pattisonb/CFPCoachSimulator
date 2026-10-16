@@ -763,3 +763,9 @@ body:not(.team-theme) .hdr-rank { background: var(--panel-2); border-color: var(
 .resume .review-tiles { margin: 0; }
 .resume-game { white-space: nowrap; }
 .resume-games tr.won td.name { font-weight: 700; }
+
+/* rivalries */
+.rivalry-line { margin-top: 2px; }
+.rivalry-line .trophy { color: var(--accent); font-weight: 600; }
+#sbox-meta .rivalry-line { margin-bottom: 4px; }
+.rivalry-table td.name { white-space: normal; }

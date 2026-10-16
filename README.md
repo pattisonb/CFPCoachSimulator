@@ -493,6 +493,19 @@ role.
 rank, Group of Five and defensive finalists, All-America consensus counts and the coach of
 the year profile against the research targets.
 
+### Rivalry trophies and the all-time series
+
+`data/rivalries.json` lists 90 FBS rivalries: the game's name, its trophy (Paul Bunyan's
+Axe, Floyd of Rosedale, the Old Oaken Bucket, the Commander-in-Chief's Trophy, the Iron
+Skillet, the Jeweled Shillelagh and the rest; blank where the game has none) and the
+all-time series entering 2025, leader first. The simulator adds its own games on top:
+the Team Schedule marks a rivalry game with the trophy and the series entering it, the
+box score says who takes or keeps the trophy and the series after it, and the Summary
+tab's Rivalries card lists each rival, this season's meeting and the series today, with
+who holds the trophy. Army-Navy in selection week counts like any other game.
+`GET /api/season/{id}/rivalries?team=` serves a team's list; `python test_rivalries.py`
+checks every slug resolves and that a series moves when the game is played.
+
 ### The committee's resume
 
 The Rankings tab has a Resume chip: the way the committee explains its rankings, for

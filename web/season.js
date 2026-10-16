@@ -1108,6 +1108,8 @@
       box.append(card);
     }
 
+    renderRivalriesCard(box);
+
     // one playoff / title game as "winner score – loser score · bowl"
     const gameRow = (g, note) => {
       const row = el("div", { class: "review-game" });
@@ -1597,7 +1599,8 @@
         el("td", { class: "muted ph", text: g.my_rank ? `#${g.my_rank}` : "", title: "Rank entering the game" }),
         el("td", { class: "left name" }, [el("span", { class: "muted", text: `${prefix} ` }), teamPill(g.opponent), g.opponent_rank ? el("span", { class: "rank", text: `#${g.opponent_rank} ` }) : null, g.opponent_name,
           g.opponent_record && !((window.CFP.teamsBySlug[g.opponent] || {}).fictional) ? el("span", { class: "pos", text: g.opponent_record }) : null,
-          g.title ? el("div", { class: "muted small-text", text: `${g.title}${g.site ? " · " + g.site : ""}` }) : (g.site ? el("div", { class: "muted small-text", text: g.site }) : null)]),
+          g.title ? el("div", { class: "muted small-text", text: `${g.title}${g.site ? " · " + g.site : ""}` }) : (g.site ? el("div", { class: "muted small-text", text: g.site }) : null),
+          g.rivalry ? el("div", { class: "rivalry-line small-text", title: g.rivalry.name }, [el("span", { class: "trophy", text: g.rivalry.trophy ? `🏆 ${g.rivalry.trophy}` : `🔥 ${g.rivalry.name}` }), el("span", { class: "muted", text: ` · ${g.rivalry.series}` })]) : null]),
         el("td", { class: "ph", text: g.venue === "home" ? "Home" : g.venue === "away" ? "Away" : "Neutral" }),
         el("td", { class: g.played ? (g.won ? "win" : "loss") : "muted", text: g.played ? (g.won ? "W" : "L") : "—" }),
         el("td", { class: "score", text: g.played ? `${g.points_for}–${g.points_against}${g.overtime ? " OT" : ""}` : "" }),
@@ -2324,6 +2327,7 @@
       if (!node.isConnected) document.body.append(node);
       node.hidden = false;
       renderScoreboard(g, SBOX_IDS); renderScoring(g, SBOX_IDS); renderTeamStats(g, SBOX_IDS);
+      if (g.rivalry) $("#sbox-meta").prepend(el("div", { class: "rivalry-line" }, [el("b", { text: `${g.rivalry.trophy ? "🏆 " + g.rivalry.trophy : "🔥 " + g.rivalry.name}: ` }), `${g.rivalry.headline ? g.rivalry.headline + ". " : ""}${g.rivalry.series}.`]));
       renderPlayers(g.home, $("#sbox-home")); renderPlayers(g.away, $("#sbox-away")); renderDrives(g, SBOX_IDS);
       selectBoxTab("scoring");
       const title = el("span", {}, [teamPill(g.away_slug), `${g.away.name} ${g.away.score}`, el("span", { class: "muted", text: " at " }), teamPill(g.home_slug), `${g.home.name} ${g.home.score}`,
@@ -2334,6 +2338,33 @@
   function selectBoxTab(name) {
     for (const b of $("#sbox-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.btab === name);
     for (const t of ["scoring", "team", "home", "away", "drives"]) $(`#sbox-${t}`).hidden = t !== name;
+  }
+
+  // ----- rivalries ---------------------------------------------------------------
+  async function renderRivalriesCard(box) {
+    const s = state.season;
+    let data;
+    try { data = await api(`/api/season/${s.id}/rivalries`); } catch (err) { return; }
+    if (!data.rivalries.length || !box.isConnected) return;
+    const card = el("div", { class: "review-card rivalries" }, [el("div", { class: "review-label", text: "Rivalries" })]);
+    const table = el("table", { class: "stats rivalry-table" });
+    table.append(el("tr", {}, ["Rival", "Trophy", "This season", "Series"].map((h, i) => el("th", { class: `left ${i === 1 ? "ph" : ""}`, text: h }))));
+    for (const r of data.rivalries) {
+      const g = r.game;
+      const result = !g ? el("span", { class: "muted", text: "not scheduled" })
+        : !g.played ? el("span", { class: "muted", text: `${s.week_labels[g.week] || "Week " + g.week} · ${g.venue === "away" ? "at" : "vs"} ${r.opponent_name}` })
+        : el("span", { class: g.won ? "win" : "loss", text: `${g.won ? "W" : "L"} ${g.points_for}–${g.points_against} ${g.venue === "away" ? "at" : "vs"} ${r.opponent_name}` });
+      const tr = el("tr", { class: g && g.has_box ? "clickable" : "" }, [
+        el("td", { class: "left name" }, [teamPill(r.opponent), r.opponent_name, el("div", { class: "muted small-text", text: r.name })]),
+        el("td", { class: "left ph", text: r.trophy || "–" }),
+        el("td", { class: "left" }, [result]),
+        el("td", { class: "left" }, [el("span", { class: r.leader === s.team ? "win" : r.leader ? "loss" : "muted", text: r.series }), r.holder && r.trophy ? el("div", { class: "muted small-text", text: `${r.holder === s.team ? "You hold" : r.opponent_name + " holds"} the ${r.trophy}` }) : null]),
+      ]);
+      if (g && g.has_box) tr.addEventListener("click", () => openBox(g.event_id));
+      table.append(tr);
+    }
+    card.append(el("div", { class: "table-scroll" }, [table]), el("div", { class: "muted small-text", text: `All-time series as of the ${data.as_of}, plus this season's games.` }));
+    box.append(card);
   }
 
   // ----- the committee's resume -------------------------------------------------

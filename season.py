@@ -1565,6 +1565,98 @@ def week_dates(state: dict) -> dict[int, dict]:
     return out
 
 
+# ----- rivalries: trophies and the all-time series -----------------------------------
+
+RIVALRIES_FILE = ROOT / "data" / "rivalries.json"
+_rivalry_cache: dict = {}
+
+
+def load_rivalries() -> dict[frozenset, dict]:
+    """Pair of slugs -> rivalry (name, trophy, base series), from data/rivalries.json."""
+    if not _rivalry_cache:
+        data = json.loads(RIVALRIES_FILE.read_text(encoding="utf-8"))
+        for r in data["rivalries"]:
+            _rivalry_cache[frozenset(r["teams"])] = r
+        _rivalry_cache["__as_of__"] = data.get("as_of", "")
+    return _rivalry_cache
+
+
+def rivalry_for(a: str, b: str) -> Optional[dict]:
+    return load_rivalries().get(frozenset((a, b)))
+
+
+def rivalry_series(state: dict, riv: dict, before_week: Optional[int] = None, teams: Optional[dict] = None) -> dict:
+    """The series entering `before_week` (or today): the base record plus this season's
+    games between the two. Says who leads, by how much, and who won the last meeting."""
+    teams = teams or load_teams()
+    a, b = riv["teams"]
+    wins = {a: riv["series"].get(a, 0), b: riv["series"].get(b, 0)}
+    ties = riv["series"].get("ties", 0)
+    last = None
+    for g in sorted((g for g in state["games"].values() if {g["home"], g["away"]} == {a, b} and g["played"]), key=lambda g: g["week"]):
+        if before_week is not None and g["week"] >= before_week:
+            break
+        if g["home_score"] == g["away_score"]:
+            ties += 1
+            continue
+        winner = g["home"] if g["home_score"] > g["away_score"] else g["away"]
+        wins[winner] += 1
+        last = {"winner": winner, "week": g["week"], "event_id": g["event_id"],
+                "score": f"{max(g['home_score'], g['away_score'])}–{min(g['home_score'], g['away_score'])}"}
+    lead = a if wins[a] > wins[b] else b if wins[b] > wins[a] else None
+    if lead is None:
+        text = f"Series tied {wins[a]}-{wins[b]}" + (f"-{ties}" if ties else "")
+    else:
+        other = b if lead == a else a
+        text = f"{teams[lead]['name']} leads {wins[lead]}-{wins[other]}" + (f"-{ties}" if ties else "")
+    return {"wins": wins, "ties": ties, "leader": lead, "text": text, "last": last}
+
+
+def game_rivalry(state: dict, g: dict, after: bool = False) -> Optional[dict]:
+    """The rivalry line for one game: the trophy and the series entering it (or, with
+    `after`, including it, with who takes or keeps the trophy)."""
+    riv = rivalry_for(g["home"], g["away"])
+    if riv is None:
+        return None
+    teams = load_teams()
+    series = rivalry_series(state, riv, None if after else g["week"], teams)
+    out = {"name": riv["name"], "trophy": riv.get("trophy") or "", "series": series["text"], "leader": series["leader"]}
+    if after and g["played"] and g["home_score"] != g["away_score"]:
+        winner = g["home"] if g["home_score"] > g["away_score"] else g["away"]
+        loser = g["away"] if winner == g["home"] else g["home"]
+        before = rivalry_series(state, riv, g["week"], teams)
+        kept = before["last"] and before["last"]["winner"] == winner
+        thing = riv.get("trophy") or "bragging rights"
+        out["headline"] = f"{teams[winner]['name']} {'keeps' if kept else 'takes'} the {thing}" + (f" from {teams[loser]['name']}" if not kept and riv.get("trophy") else "")
+    return out
+
+
+def rivalries_view(state: dict, slug: str) -> dict:
+    """Your rivals this season: the trophy, the series today and this season's meeting."""
+    teams = load_teams()
+    out = []
+    for pair, riv in load_rivalries().items():
+        if not isinstance(pair, frozenset) or slug not in pair:
+            continue
+        opp = next(t for t in pair if t != slug)
+        if opp not in teams:
+            continue
+        series = rivalry_series(state, riv, None, teams)
+        game = next((g for g in state["games"].values() if {g["home"], g["away"]} == pair), None)
+        this = None
+        if game is not None:
+            home = game["home"] == slug
+            this = {"week": game["week"], "played": game["played"], "event_id": game["event_id"], "venue": "neutral" if game["neutral"] else ("home" if home else "away"),
+                    "won": ((game["home_score"] > game["away_score"]) == home) if game["played"] else None,
+                    "points_for": (game["home_score"] if home else game["away_score"]) if game["played"] else None,
+                    "points_against": (game["away_score"] if home else game["home_score"]) if game["played"] else None, "has_box": has_box(state, game)}
+        out.append({"name": riv["name"], "trophy": riv.get("trophy") or "", "opponent": opp, "opponent_name": teams[opp]["name"],
+                    "series": series["text"], "leader": series["leader"], "my_wins": series["wins"][slug], "their_wins": series["wins"][opp], "ties": series["ties"],
+                    "holder": series["last"]["winner"] if series["last"] else None, "game": this})
+    out.sort(key=lambda r: (r["game"] is None, r["game"]["week"] if r["game"] else 99))
+    return {"team": slug, "as_of": load_rivalries().get("__as_of__", ""), "rivalries": out}
+
+
 def team_schedule(state: dict, slug: str) -> list[dict]:
     """One team's season, game by game, with byes: the Team Schedule tab."""
     my_games = sorted((g for g in state["games"].values() if slug in (g["home"], g["away"])),
@@ -1590,7 +1682,8 @@ def team_schedule(state: dict, slug: str) -> list[dict]:
                          "points_for": (g["home_score"] if home else g["away_score"]) if g["played"] else None,
                          "points_against": (g["away_score"] if home else g["home_score"]) if g["played"] else None,
                          "overtime": g["overtime"], "real": g["real"], "has_box": has_box(state, g),
-                         "opponent_record": f"{all_rec[opp]['wins']}-{all_rec[opp]['losses']}", "date": g.get("date")})
+                         "opponent_record": f"{all_rec[opp]['wins']}-{all_rec[opp]['losses']}", "date": g.get("date"),
+                         "rivalry": game_rivalry(state, g)})
     played_weeks = {g["week"] for g in schedule}
     for w in range(1, LAST_REGULAR_WEEK + 1):
         if w not in played_weeks:
