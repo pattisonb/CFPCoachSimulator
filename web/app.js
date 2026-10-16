@@ -71,15 +71,12 @@
     for (const id of ["home-select", "away-select"]) {
       const sel = document.getElementById(id);
       sel.innerHTML = "";
-      let group = null, groupName = null;
+      // FBS teams alphabetically, then the FCS stand-ins in their own group (the API sorts by name)
+      let fcs = null;
       for (const t of data.teams) {
-        const g = t.fictional ? `${t.conference} (FCS)` : t.conference;
-        if (g !== groupName) {
-          groupName = g;
-          group = el("optgroup", { label: g });
-          sel.appendChild(group);
-        }
-        group.appendChild(el("option", { value: t.slug, text: `${t.name} (${t.ratings.overall.toFixed(0)})` }));
+        const opt = el("option", { value: t.slug, text: `${t.name} (${t.ratings.overall.toFixed(0)})${t.fictional ? "" : " · " + t.conference}` });
+        if (t.fictional) { if (!fcs) { fcs = el("optgroup", { label: "FCS" }); sel.appendChild(fcs); } fcs.appendChild(opt); }
+        else sel.appendChild(opt);
       }
     }
     let saved = {};

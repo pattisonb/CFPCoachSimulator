@@ -159,7 +159,7 @@ class SimRequest(BaseModel):
 @app.get("/api/teams")
 def list_teams() -> dict:
     # alphabetical (FBS first, then the FCS stand-ins): every team drop-down follows this order
-    cards = sorted((_team_card(t) for t in _teams.values()), key=lambda c: (c["fictional"], c["name"]))
+    cards = sorted((_team_card(t) for t in _teams.values()), key=lambda c: (c["fictional"], c["name"].casefold()))
     return {"teams": cards}
 
 
