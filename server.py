@@ -290,6 +290,13 @@ class AdvanceRequest(BaseModel):
     to: Optional[int] = None      # target week; omitted = one week
 
 
+class DepthRequest(BaseModel):
+    role: Optional[str] = None
+    player: Optional[str] = None
+    move: str = "up"              # up, down or top
+    reset: bool = False
+
+
 _season_lock = threading.Lock()
 
 
@@ -469,6 +476,37 @@ def season_depth_chart(season_id: str, slug: str) -> dict:
     if slug not in _teams:
         raise HTTPException(404, "unknown team")
     return season.depth_chart_view(state, slug)
+
+
+@app.post("/api/season/{season_id}/depth/{slug}")
+def season_depth_change(season_id: str, slug: str, req: DepthRequest) -> dict:
+    """Move a player on a team's depth chart (or reset the team). The change is saved with
+    the season and used by every game from then on."""
+    state = _season_state(season_id)
+    if slug not in _teams:
+        raise HTTPException(404, "unknown team")
+    job = _season_jobs.get(season_id)
+    if job and job.get("status") == "running":
+        raise HTTPException(409, "wait for the sim to finish")
+    with _season_lock:
+        if req.reset:
+            season.reset_depth(state, slug)
+        else:
+            if not req.role or not req.player:
+                raise HTTPException(400, "role and player are required")
+            try:
+                season.move_depth(state, slug, req.role, req.player, req.move)
+            except ValueError as exc:
+                raise HTTPException(400, str(exc))
+        season.save_season(state)
+    return season.depth_chart_view(state, slug)
+
+
+@app.get("/api/season/{season_id}/injuries")
+def season_injuries(season_id: str, team: Optional[str] = None) -> dict:
+    """The injury list: one team or the whole league, with weeks left and the return week."""
+    state = _season_state(season_id)
+    return {"injuries": season.injury_report(state, team or None), "week": state["current_week"]}
 
 
 @app.get("/api/season/{season_id}/awards")

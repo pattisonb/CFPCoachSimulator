@@ -487,7 +487,7 @@
 
   function who(c, withTeam = true) {
     // name, position/class, team pill
-    const bits = [el("span", { class: "pill-inline", style: `background:${color(c.team)}` }), el("b", { text: c.name || c.coach || c.team_name })];
+    const bits = [teamPill(c.team), el("b", { text: c.name || c.coach || c.team_name })];
     const ROLE_SHOWN = new Set(["LT", "LG", "C", "RG", "RT", "LEDG", "REDG", "DT", "SAM", "MIKE", "WILL", "FS", "SS"]);
     const tag = c.position ? `${c.position}${c.role && ROLE_SHOWN.has(c.role) ? " · " + c.role : ""}${classLabel(c.class)}` : (c.role || (c.coach ? "Head coach" : ""));
     if (tag) bits.push(el("span", { class: "pos", text: tag }));
@@ -532,7 +532,7 @@
       : [["Points", w.points], ["Share", `${h.share}%`], ["1st-place", `${w.first} of ${h.ballots}`], ["Record", `${w.record}${w.rank ? ` · #${w.rank}` : ""}`]];
     return el("div", { class: `review-card heisman-hero ${w.team === state.season.team ? "mine" : ""}` }, [
       el("div", { class: "review-label", text: live ? "Leading the straw poll" : "Heisman Trophy winner" }),
-      el("div", { class: "review-big" }, [el("span", { class: "pill-inline", style: `background:${color(w.team)}` }), w.name, el("span", { class: "pos", text: `${w.position}${classLabel(w.class)} · ${w.team_name}` })]),
+      el("div", { class: "review-big" }, [teamPill(w.team), w.name, el("span", { class: "pos", text: `${w.position}${classLabel(w.class)} · ${w.team_name}` })]),
       el("div", { class: "muted small-text", text: w.line }),
       el("div", { class: "review-tiles" }, tiles.map(([k, v]) => el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: String(v) }), el("div", { class: "review-label", text: k })]))),
       live ? null : el("div", { class: "muted small-text", text: `Finalists in New York: ${h.finalists.map((f) => `${f.name} (${f.team_name}, ${f.points})`).join(", ")}` }),
@@ -550,7 +550,7 @@
     const cols = [
       { key: "rank", label: "#", get: (c) => String(c.i + 1), sort: (c) => c.i },
       { key: "player", label: "Player", left: true, get: (c) => who(c, false), sort: (c) => c.name },
-      { key: "team", label: "Team", left: true, get: (c) => el("span", {}, [el("span", { class: "pill-inline", style: `background:${color(c.team)}` }), c.team_name]), sort: (c) => c.team_name },
+      { key: "team", label: "Team", left: true, get: (c) => el("span", {}, [teamPill(c.team), c.team_name]), sort: (c) => c.team_name },
       { key: "record", label: "Rec", get: (c) => c.record, sort: (c) => Number(c.record.split("-")[0]) - Number(c.record.split("-")[1]) / 100 },
       { key: "cfp", label: "Rank", get: (c) => (c.rank ? `#${c.rank}` : "–"), sort: (c) => -(c.rank || 99) },
       { key: "region", label: "Region", get: (c) => c.region, sort: (c) => c.region },
@@ -572,7 +572,7 @@
     list.forEach((c, i) => {
       const row = el("div", { class: `leader-row ${i === 0 ? "top" : ""} ${c.team === state.season.team ? "mine" : ""}` }, [
         el("span", { class: "rank", text: live ? String(i + 1) : (i === 0 ? "W" : String(i + 1)) }),
-        el("span", { class: "who" }, [el("span", { class: "name" }, [el("span", { class: "pill-inline", style: `background:${color(c.team)}` }), c.name || c.coach || c.team_name, el("span", { class: "pos", text: c.position ? `${c.position}${classLabel(c.class)}` : (c.role || "") })]),
+        el("span", { class: "who" }, [el("span", { class: "name" }, [teamPill(c.team), c.name || c.coach || c.team_name, el("span", { class: "pos", text: c.position ? `${c.position}${classLabel(c.class)}` : (c.role || "") })]),
           el("span", { class: "muted small-text", text: `${(c.name || c.coach) ? c.team_name + " · " : ""}${mode === "coach" ? coachLine(c) : (c.line || "")}` })]),
         el("span", { class: "value", text: headlineOf(c) }),
       ]);
@@ -591,7 +591,7 @@
     const cols = [
       { key: "award", label: "Award", left: true, get: (r) => el("b", { text: r.a.name }), sort: (r) => r.a.name },
       { key: "who", label: live ? "Leader" : "Winner", left: true, get: (r) => who(r.w, false), sort: (r) => r.w.name || r.w.coach || "" },
-      { key: "team", label: "Team", left: true, get: (r) => el("span", {}, [el("span", { class: "pill-inline", style: `background:${color(r.w.team)}` }), r.w.team_name]), sort: (r) => r.w.team_name },
+      { key: "team", label: "Team", left: true, get: (r) => el("span", {}, [teamPill(r.w.team), r.w.team_name]), sort: (r) => r.w.team_name },
       { key: "conf", label: "Conference", left: true, get: (r) => r.w.conference || "", sort: (r) => r.w.conference || "" },
       { key: "line", label: "Season", left: true, get: (r) => el("span", { class: "muted small-text", text: r.w.line || coachLine(r.w) }) },
     ];
@@ -606,7 +606,7 @@
     const cols = [
       { key: "slot", label: "Slot", get: (c) => c.slot, sort: (c) => c.order },
       { key: "player", label: "Player", left: true, get: (c) => who(c, false), sort: (c) => c.name },
-      { key: "team", label: "Team", left: true, get: (c) => el("span", {}, [el("span", { class: "pill-inline", style: `background:${color(c.team)}` }), c.team_name]), sort: (c) => c.team_name },
+      { key: "team", label: "Team", left: true, get: (c) => el("span", {}, [teamPill(c.team), c.team_name]), sort: (c) => c.team_name },
       { key: "conf", label: "Conference", left: true, get: (c) => c.conference, sort: (c) => c.conference },
       { key: "sel", label: "Selectors", get: (c) => (c.unanimous ? el("span", { class: "award-extra", text: "unanimous" }) : c.selectors ? `${c.selectors} of 5` : ""), sort: (c) => c.selectors || 0 },
       { key: "line", label: "Season", left: true, get: (c) => el("span", { class: "muted small-text", text: c.line }) },
@@ -690,7 +690,7 @@
           { key: "conf", label: "Conference", left: true, get: (r) => r.conf, sort: (r) => r.conf },
           { key: "award", label: "Award", left: true, get: (r) => el("b", { text: r.a.name }), sort: (r) => r.a.name },
           { key: "who", label: "Winner", left: true, get: (r) => who(r.w, false), sort: (r) => r.w.name || r.w.coach || "" },
-          { key: "team", label: "Team", left: true, get: (r) => el("span", {}, [el("span", { class: "pill-inline", style: `background:${color(r.w.team)}` }), r.w.team_name]), sort: (r) => r.w.team_name },
+          { key: "team", label: "Team", left: true, get: (r) => el("span", {}, [teamPill(r.w.team), r.w.team_name]), sort: (r) => r.w.team_name },
           { key: "line", label: "Season", left: true, get: (r) => el("span", { class: "muted small-text", text: r.w.line || coachLine(r.w) }) },
         ];
         box.append(sortableTable(cols, rows, st, () => renderAwards(), (r) => r.w.team === s.team ? "mine" : ""));
@@ -750,7 +750,7 @@
       const w = s.heisman.winner;
       const card = el("div", { class: `review-card heisman ${w.team === s.team ? "mine" : ""}` }, [
         el("div", { class: "review-label", text: "Heisman Trophy" }),
-        el("div", { class: "review-big" }, [el("span", { class: "pill-inline", style: `background:${color(w.team)}` }), w.name, el("span", { class: "pos", text: `${w.position} · ${w.team_name}` })]),
+        el("div", { class: "review-big" }, [teamPill(w.team), w.name, el("span", { class: "pos", text: `${w.position} · ${w.team_name}` })]),
         el("div", { class: "muted small-text", text: `${w.line} · ${w.points} points, ${s.heisman.share}% of the possible points` }),
         el("div", { class: "muted small-text", text: `Finalists: ${s.heisman.finalists.map((f) => `${f.name} (${f.team_name}, ${f.points})`).join(", ")}` }),
       ]);
@@ -1084,6 +1084,41 @@
     box.appendChild(table);
   }
 
+  function injuryTable(rows, withTeam) {
+    const table = el("table", { class: "stats" });
+    table.append(el("tr", {}, [withTeam ? "Team" : null, "Player", "Injury", "Out", "Returns"].filter(Boolean).map((t) => el("th", { class: "left", text: t }))));
+    for (const i of rows) {
+      const s = state.season;
+      table.append(el("tr", { class: i.team === s.team ? "mine" : "" }, [
+        withTeam ? el("td", { class: "left" }, [el("span", { class: "pill-inline", style: `background:${color(i.team)}` }), i.team_name]) : null,
+        el("td", { class: "name" }, [i.name, el("span", { class: "pos", text: i.position })]),
+        el("td", { class: "left", text: i.type }),
+        el("td", { class: "left", text: `${i.weeks_left} ${i.weeks_left === 1 ? "week" : "weeks"} (${i.weeks} total, since ${s.week_labels[i.since_week] || "week " + i.since_week})` }),
+        el("td", { class: "left", text: i.returns_week > 19 ? "next season" : (s.week_labels[i.returns_week] || `week ${i.returns_week}`) }),
+      ].filter(Boolean)));
+    }
+    return el("div", { class: "table-scroll" }, [table]);
+  }
+
+  async function renderInjuries(box) {
+    const s = state.season;
+    const mine = s.injuries || [];
+    box.append(el("h3", { text: `Injury report · ${s.team_name}` }));
+    if (!mine.length) box.append(el("p", { class: "muted small-text", text: "Nobody out this week." }));
+    else box.append(injuryTable(mine, false));
+    const head = el("div", { class: "leader-head" }, [el("h4", { text: `Around the league · ${s.injury_count || 0} players out` }), el("span", { class: "muted small-text", text: "show" })]);
+    const holder = el("div", { hidden: true });
+    head.addEventListener("click", async () => {
+      holder.hidden = !holder.hidden;
+      head.querySelector(".small-text").textContent = holder.hidden ? "show" : "hide";
+      if (!holder.hidden && !holder.children.length) {
+        try { const j = await api(`/api/season/${s.id}/injuries`); holder.append(j.injuries.length ? injuryTable(j.injuries, true) : el("p", { class: "muted", text: "No injuries anywhere." })); }
+        catch (err) { holder.append(el("p", { class: "muted", text: err.message })); }
+      }
+    });
+    box.append(el("div", { class: "injury-league" }, [head, holder]));
+  }
+
   function renderSchedule() {
     const s = state.season;
     const box = $("#tab-schedule");
@@ -1106,6 +1141,7 @@
       table.appendChild(tr);
     }
     box.appendChild(table);
+    if (s.current_week > 0) renderInjuries(box);
   }
 
   // ----- season stats ------------------------------------------------------
@@ -1648,7 +1684,7 @@
     for (const x of b.seeds) seeds[x.seed] = x;
     const sites = s.playoff_sites || {};
     box.append(bracketTree(seeds, bracketState.games, false, sites));
-    if (s.done) box.append(el("div", { class: "champ-banner", text: `National champion: ${s.champion_name}` }));
+    if (s.done) box.append(champBanner(s.champion, s.champion_name));
     box.append(el("p", { class: "muted small-text", text: "Click a game you were in for the box score. Seeds, ranks and bids:" }));
     box.append(seedTable(seeds, Object.fromEntries(b.seeds.map((x) => [x.team, x.bid])), Object.fromEntries(b.seeds.map((x) => [x.team, x.rank]))));
     if (b.first_four_out && b.first_four_out.length) {
@@ -1713,6 +1749,8 @@
     };
     BRACKET_ROUNDS.forEach((round, ri) => {
       const col = el("div", { class: "bracket-round" }, [el("div", { class: "bracket-round-name", text: round.name })]);
+      const games = el("div", { class: "bracket-games" });
+      col.append(games);
       for (const [eid, top, bottom] of round.games) {
         const g = games[eid];
         const a = label(top), b = label(bottom);
@@ -1732,18 +1770,39 @@
         const mine = rows.some((r) => r[0] === s.team);
         const card = el("div", { class: `bmatch ${mine ? "mine" : ""} ${g && g.has_box ? "clickable" : ""} ${projected ? "projected" : ""}` }, [
           ...rows.map(([team, text, score, won, lost]) => el("div", { class: `bmatch-row ${won ? "win" : ""} ${lost ? "lost" : ""}` }, [
-            team ? el("span", { class: "pill-inline", style: `background:${color(team)}` }) : el("span", { class: "pill-inline empty" }),
+            team ? teamPill(team) : el("span", { class: "pill-inline empty" }),
             el("span", { class: "bmatch-name" }, [text, team && rankAt(team, 14) ? el("span", { class: "rank muted", text: ` #${rankAt(team, projected ? (s.current_week || 14) : 14)}` }) : null]),
             el("b", { class: "bmatch-score", text: score == null ? "" : String(score) }),
           ])),
           el("div", { class: "muted small-text bmatch-note", text: note + (g && g.overtime ? ` · ${g.overtime > 1 ? g.overtime : ""}OT` : "") }),
         ]);
         if (g && g.has_box) card.addEventListener("click", () => openBox(g.event_id));
-        col.append(card);
+        games.append(card);
       }
       tree.append(col);
     });
     return tree;
+  }
+
+  function champBanner(slug, name) {
+    // the national champion in the winner's own colors: primary background, the lighter
+    // of secondary/white for the text, the diagonal team square beside the name
+    const t = window.CFP.teamsBySlug[slug];
+    const col = (t && t.colors) || {};
+    const bg = col.primary || "var(--accent)";
+    const banner = el("div", { class: "champ-banner team-colors" }, [teamPill(slug), el("span", { text: `National champion: ${name}` })]);
+    banner.style.background = bg;
+    banner.style.color = readableOn(bg, col.secondary);
+    return banner;
+  }
+
+  function readableOn(bg, preferred) {
+    // white or near-black, whichever reads on the background; a light secondary color wins
+    const rgb = (hex) => { const m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); return m ? [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16)) : null; };
+    const lum = (c) => c ? (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255 : 0.5;
+    const b = rgb(bg), pref = rgb(preferred);
+    if (pref && Math.abs(lum(pref) - lum(b)) > 0.45) return preferred;
+    return lum(b) > 0.55 ? "#111" : "#fff";
   }
 
   function winnerOf(g) {

@@ -573,12 +573,26 @@ def _init(path: str) -> None:
     _TEAMS = json.loads(Path(path).read_text(encoding="utf-8"))["teams"]
 
 
+def _with_injuries(team: dict, injured: list) -> dict:
+    """The team data with the listed (name, position) players marked out."""
+    if not injured:
+        return team
+    out = set(tuple(x) for x in injured)
+    t = dict(team)
+    for unit in ("offense", "defense"):
+        t[unit] = [dict(p, injured=True, in_game=False) if (p["name"], p["position"]) in out else p for p in team[unit]]
+    return t
+
+
 def _sim_one(args: tuple) -> dict:
     from engine.game import simulate_game
-    event_id, home, away, neutral, seed, keep_full = args
-    r = simulate_game(_TEAMS[home], _TEAMS[away], None, seed, venue="neutral" if neutral else "home")
+    event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out = args
+    home_team = _with_injuries(apply_depth(_TEAMS[home], depth[0]), home_out)
+    away_team = _with_injuries(apply_depth(_TEAMS[away], depth[1]), away_out)
+    r = simulate_game(home_team, away_team, None, seed, venue="neutral" if neutral else "home")
     out = {"event_id": event_id, "home_score": r["home"]["score"], "away_score": r["away"]["score"], "overtime": r["overtime_periods"],
-           "stats": {"home": _compact_side(r["home"], r["drives"], "home"), "away": _compact_side(r["away"], r["drives"], "away")}}
+           "stats": {"home": _compact_side(r["home"], r["drives"], "home"), "away": _compact_side(r["away"], r["drives"], "away")},
+           "injuries": {"home": r["home"].get("injuries", []), "away": r["away"].get("injuries", [])}}
     if keep_full:
         r["home_slug"], r["away_slug"] = home, away
         out["game"] = r
@@ -614,7 +628,11 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
     for eid in game_ids:
         g = state["games"][eid]
         keep = state["team"] in (g["home"], g["away"])
-        jobs.append((eid, g["home"], g["away"], g["neutral"], rng.randrange(1 << 30), keep))
+        depth = state.get("depth") or {}
+        injuries = state.get("injuries") or {}
+        jobs.append((eid, g["home"], g["away"], g["neutral"], rng.randrange(1 << 30), keep, (depth.get(g["home"]), depth.get(g["away"])),
+                     [(i["name"], i["position"]) for i in injuries.get(g["home"], {}).values()],
+                     [(i["name"], i["position"]) for i in injuries.get(g["away"], {}).values()]))
     state["rng_state"] = rng.randrange(1 << 30)
     if not jobs:
         return
@@ -628,6 +646,13 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
             _accumulate_stats(state, g, r["stats"])
         if "game" in r:
             state["my_boxes"][r["event_id"]] = r["game"]
+        for side in ("home", "away"):
+            for inj in r.get("injuries", {}).get(side, []):
+                if inj["weeks"] > 0:
+                    key = f"{inj['name']}|{inj['position']}"
+                    state.setdefault("injuries", {}).setdefault(g[side], {})[key] = {
+                        "name": inj["name"], "position": inj["position"], "type": inj["type"], "weeks": inj["weeks"],
+                        "weeks_left": inj["weeks"], "since_week": g["week"], "event_id": r["event_id"]}
         if report:
             report(stage, n, len(jobs))
 
@@ -754,6 +779,7 @@ def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter]
     teams = load_teams()
     week = state["current_week"] + 1
     label = week_label(week)
+    _heal(state)
     if week == CCG_WEEK:
         say("Setting the conference title games")
         for g in _ccg_matchups(state, teams):
@@ -800,6 +826,31 @@ def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter]
              19: "Handing out the postseason awards"}[week])
         _award_step(state, teams, week)
     return state
+
+
+def _heal(state: dict) -> None:
+    """One week passes: everyone on the injury list gets a week closer to returning."""
+    for slug, lst in list(state.get("injuries", {}).items()):
+        for key, inj in list(lst.items()):
+            inj["weeks_left"] -= 1
+            if inj["weeks_left"] <= 0:
+                del lst[key]
+        if not lst:
+            del state["injuries"][slug]
+
+
+def injury_report(state: dict, team: Optional[str] = None) -> list[dict]:
+    """Current injuries, longest absences first; one team or the whole league."""
+    teams = load_teams()
+    out = []
+    for slug, lst in state.get("injuries", {}).items():
+        if team and slug != team:
+            continue
+        for inj in lst.values():
+            out.append({**inj, "team": slug, "team_name": teams[slug]["name"], "conference": teams[slug]["conference"],
+                        "returns_week": state["current_week"] + inj["weeks_left"]})
+    out.sort(key=lambda i: (-i["weeks_left"], i["team_name"], i["name"]))
+    return out
 
 
 def _award_step(state: dict, teams: dict, week: int) -> None:
@@ -858,11 +909,75 @@ DEPTH_ROWS = [
 ]
 
 
+def apply_depth(team: dict, overrides: Optional[dict]) -> dict:
+    """A copy of the team with the season's depth-chart changes applied: the players in an
+    overridden role take the saved order, and the first N of them start, N being the
+    role's usual number of starters (three receivers, two tackles, one everywhere else).
+    KR and PR overrides pick the returner."""
+    if not overrides:
+        return team
+    out = {**team, "offense": [dict(p) for p in team["offense"]], "defense": [dict(p) for p in team["defense"]]}
+    players = out["offense"] + out["defense"]
+    by_slug = {p["slug"]: p for p in players}
+    for role, order in overrides.items():
+        if role in ("KR", "PR"):
+            if order and order[0] in by_slug:
+                out["kick_returner" if role == "KR" else "punt_returner"] = order[0]
+            continue
+        current = [p for p in players if p.get("role") == role]
+        n_start = sum(1 for p in current if p.get("in_game"))
+        chosen = [by_slug[s] for s in order if s in by_slug]
+        rest = sorted((p for p in current if p["slug"] not in set(order)), key=lambda p: p.get("depth") or 99)
+        for i, p in enumerate(chosen + rest):
+            p["role"], p["depth"], p["in_game"] = role, i + 1, i < n_start
+    return out
+
+
+def depth_order(state: dict, slug: str, role: str) -> list[str]:
+    """The current order of a role, overrides applied."""
+    team = apply_depth(load_teams()[slug], (state.get("depth") or {}).get(slug))
+    if role in ("KR", "PR"):
+        pick = team.get("kick_returner" if role == "KR" else "punt_returner")
+        return [pick] if pick else []
+    return [p["slug"] for p in sorted((p for p in team["offense"] + team["defense"] if p.get("role") == role), key=lambda p: p.get("depth") or 99)]
+
+
+def move_depth(state: dict, slug: str, role: str, player: str, move: str) -> None:
+    """Move a player within his role: up, down, or to the top (the starter spot). KR and
+    PR take the named player as the returner."""
+    team = load_teams()[slug]
+    by_slug = {p["slug"]: p for p in team["offense"] + team["defense"]}
+    if player not in by_slug:
+        raise ValueError("unknown player")
+    overrides = state.setdefault("depth", {}).setdefault(slug, {})
+    if role in ("KR", "PR"):
+        overrides[role] = [player]
+        return
+    order = depth_order(state, slug, role)
+    if player not in order:
+        if by_slug[player]["position"] != next((by_slug[s]["position"] for s in order), by_slug[player]["position"]):
+            raise ValueError("that player does not play this position")
+        order.append(player)
+    i = order.index(player)
+    if move == "top":
+        order.insert(0, order.pop(i))
+    elif move == "up" and i > 0:
+        order[i - 1], order[i] = order[i], order[i - 1]
+    elif move == "down" and i < len(order) - 1:
+        order[i + 1], order[i] = order[i], order[i + 1]
+    overrides[role] = order
+
+
+def reset_depth(state: dict, slug: str) -> None:
+    (state.get("depth") or {}).pop(slug, None)
+
+
 def depth_chart_view(state: dict, slug: str) -> dict:
     """A team's depth chart: every role in formation order, players in depth order, with
     class, size, rating and the player's season headline."""
     teams = load_teams()
-    t = teams[slug]
+    overrides = (state.get("depth") or {}).get(slug)
+    t = apply_depth(teams[slug], overrides)
     ss = (state.get("season_stats") or {}).get(slug, {}).get("players", {})
     players = t["offense"] + t["defense"]
     by_role: dict[str, list[dict]] = {}
@@ -880,7 +995,7 @@ def depth_chart_view(state: dict, slug: str) -> dict:
         group = awards.Pool._group(p["position"], p.get("role"), st) or p["position"]
         if role in ("KR", "PR"):
             group = "RS"
-        return {"name": p["name"], "position": p["position"], "role": p.get("role"), "depth": p.get("depth"), "class": p.get("class"),
+        return {"name": p["name"], "slug": p.get("slug"), "position": p["position"], "role": p.get("role"), "depth": p.get("depth"), "class": p.get("class"),
                 "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"), "overall": player_overall(p),
                 "starter": bool(p.get("in_game")), "games": rec["games"] if rec else 0,
                 "headline": awards.headline({"stats": st}, group) if st else ""}
@@ -896,7 +1011,8 @@ def depth_chart_view(state: dict, slug: str) -> dict:
         units.append({"name": unit, "rows": out_rows})
     hc = (t.get("coaches") or {}).get("head_coach") or {}
     return {"team": slug, "name": t["name"], "conference": t["conference"], "head_coach": hc.get("name"),
-            "ratings": t.get("team_ratings", {}), "roster_size": len(players), "units": units}
+            "ratings": t.get("team_ratings", {}), "roster_size": len(players), "units": units,
+            "overridden": bool(overrides), "editable": True}
 
 
 def awards_view(state: dict) -> dict:
@@ -1003,6 +1119,7 @@ PLAYER_CATEGORIES = {
 def _compact_side(side: dict, drives: list[dict], which: str) -> dict:
     own = [d for d in drives if d["offense"] == which and d["quarter"] <= 4]
     return {"score": side["score"], "team": side["team_stats"], "events": side.get("team_events") or {},
+            "personnel": side.get("personnel") or {}, "schemes": side.get("schemes") or {},
             "plays": sum(d["plays"] for d in own), "top": sum(d["seconds"] for d in own),
             "players": [{"name": p["name"], "position": p["position"], "unit": p["unit"], "stats": {k: v for k, v in p["stats"].items() if v}}
                         for p in side["players"] if any(p["stats"].values())]}
@@ -1030,6 +1147,11 @@ def _accumulate_stats(state: dict, g: dict, lines: dict) -> None:
         t["plays"] += mine["plays"]
         t["top"] += mine["top"]
         t["opp_plays"] += theirs["plays"]
+        pers = t.setdefault("personnel", {})
+        for k, v in (mine.get("personnel") or {}).items():
+            pers[k] = pers.get(k, 0) + v
+        if mine.get("schemes"):
+            t["schemes"] = mine["schemes"]
         _add_into(t["team"], mine["team"])
         _add_into(t["events"], mine["events"])
         _add_into(t["opp"], theirs["team"])
@@ -1121,7 +1243,7 @@ def player_stats_view(state: dict, team: Optional[str] = None, category: str = "
             continue
         for p in t["players"].values():
             st = p["stats"]
-            if category == "blocking" and p["position"] != "OL":
+            if category == "blocking" and (p["position"] not in ("OL", "TE", "RB") or not st.get("snaps")):
                 continue
             if not st.get(gate) and not (category == "defense" and any(st.get(k) for k in keys)) \
                     and not (category == "returns" and st.get("punt_returns")) and not (category == "kicking" and st.get("pat_attempts")):
@@ -1244,6 +1366,8 @@ def summary(state: dict) -> dict:
         "bowl_projection": bowl_projection(state),
         "week_dates": week_dates(state),
         "heisman": ((state.get("awards") or {}).get("national") or {}).get("heisman"),
+        "injuries": injury_report(state, state["team"]),
+        "injury_count": sum(len(v) for v in state.get("injuries", {}).values()),
         "my_awards": awards.my_awards(state, state["awards"]) if state.get("awards") else [],
     }
 
