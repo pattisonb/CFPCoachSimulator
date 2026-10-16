@@ -658,11 +658,11 @@
     hero.style.setProperty("--p-primary", primary);
     hero.style.setProperty("--p-secondary", col.secondary || primary);
     const facts = [p.position + (p.role && !["QB", "WR", "TE", "K", "P", "HB", "CB"].includes(p.role) ? ` · ${p.role}` : ""), p.class_name, p.height && p.weight ? `${p.height}, ${p.weight} lbs` : (p.height || "")].filter(Boolean);
-    // development trait on its four-tier scale (Normal, Impact, Star, Elite): how fast he improves, not a recruiting ranking
-    const DEV_TIERS = ["Normal", "Impact", "Star", "Elite"];
-    const devTier = DEV_TIERS.indexOf(p.dev_trait || "");
-    const devTag = devTier >= 0 ? el("span", { class: "tag dev", title: "Development trait (EA): Normal, Impact, Star or Elite. How quickly the player improves; not a recruiting star rating." }, [
-      el("span", { class: "dev-dots" }, DEV_TIERS.map((_, i) => el("span", { class: `dev-dot ${i <= devTier ? "on" : ""}` }))), ` ${p.dev_trait}`]) : null;
+    // development trait on a five-star scale: Normal 2, Impact 3, Star 4, Elite 5 (the data has those four tiers)
+    const DEV_STARS = { Normal: 2, Impact: 3, Star: 4, Elite: 5 };
+    const devStars = DEV_STARS[p.dev_trait] || 0;
+    const devTag = devStars ? el("span", { class: "tag dev", title: `Development trait: ${p.dev_trait} (${devStars} of 5). How quickly the player improves.` }, [
+      el("span", { class: "dev-dots" }, [1, 2, 3, 4, 5].map((i) => el("span", { class: `dev-star ${i <= devStars ? "on" : ""}`, text: "★" }))), ` ${p.dev_trait}`]) : null;
     hero.append(
       el("div", { class: "player-hero-main" }, [
         (() => { const pill = teamPill(team.slug); pill.classList.add("big"); return pill; })(),

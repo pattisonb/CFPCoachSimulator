@@ -659,3 +659,5 @@ body.modal-open { overflow: hidden; }
 .dev-dots { display: inline-flex; gap: 2px; }
 .dev-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); display: inline-block; }
 .dev-dot.on { background: var(--accent); }
+.dev-star { font-size: 11px; color: var(--border); line-height: 1; }
+.dev-star.on { color: var(--accent); }
