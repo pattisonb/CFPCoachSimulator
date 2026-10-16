@@ -126,6 +126,16 @@ def tier_of(team: dict) -> str:
     return "G5"
 
 
+TEAM_REGION = {slug: region for region, slug in REGION_TEAM.items()}
+
+
+def fcs_label(slug: str) -> str:
+    """How a fictional FCS stand-in is shown on a schedule: 'FCS Southeast', never the
+    real school it replaces."""
+    region = TEAM_REGION.get(slug)
+    return f"FCS {region}" if region else "FCS"
+
+
 def fcs_map(schedules: dict, teams: dict) -> dict[str, str]:
     saved = json.loads(FCS_MAP_FILE.read_text(encoding="utf-8")) if FCS_MAP_FILE.exists() else {}
     fictional = sorted(slug for slug, t in teams.items() if t["fictional"])
@@ -187,8 +197,8 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None) -
             week = SELECTION_WEEK  # ESPN "week 14" is after the title games on this calendar
         rec = {"event_id": g["event_id"], "week": week, "date": g["date"], "neutral": g["neutral"],
                "home": home, "away": away,
-               "home_display": teams[home]["name"] if g["home_slug"] else f"{g['home_name']} (as {teams[home]['name']})",
-               "away_display": teams[away]["name"] if g["away_slug"] else f"{g['away_name']} (as {teams[away]['name']})",
+               "home_display": teams[home]["name"] if g["home_slug"] else fcs_label(home),
+               "away_display": teams[away]["name"] if g["away_slug"] else fcs_label(away),
                "conference_game": teams[home]["conference"] == teams[away]["conference"] and not teams[home]["fictional"],
                "played": False, "home_score": None, "away_score": None, "overtime": 0, "real": False, "kind": "regular"}
         if mode == "remaining" and g["final"] and g["home_score"] is not None:
@@ -733,7 +743,15 @@ def save_season(state: dict) -> Path:
 
 def load_season(season_id: str) -> Optional[dict]:
     path = SEASONS_DIR / f"{season_id}.json"
-    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+    if not path.exists():
+        return None
+    state = json.loads(path.read_text(encoding="utf-8"))
+    # seasons saved before the FCS stand-ins were anonymised still carry "Duquesne (as ...)"
+    for g in state["games"].values():
+        for side in ("home", "away"):
+            if " (as " in (g.get(f"{side}_display") or ""):
+                g[f"{side}_display"] = fcs_label(g[side])
+    return state
 
 
 # ----- views for the page --------------------------------------------------
