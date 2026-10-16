@@ -353,7 +353,7 @@
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "box"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "box"]) $(`#tab-${t}`).hidden = t !== name;
   }
 
   function renderTab() {
@@ -368,6 +368,7 @@
     else if (t === "summary") renderSummary();
     else if (t === "awards") renderAwards();
     else if (t === "stats") renderStats();
+    else if (t === "depth") renderDepthChart();
   }
 
   // ----- stats tab: team stats, player stats and the depth chart under one tab --------
@@ -381,15 +382,14 @@
     const st = statsState;
     const chips = $("#stats-chips");
     chips.innerHTML = "";
-    for (const [v, label] of [["team", "Team stats"], ["players", "Player stats"], ["depth", "Depth chart"]]) {
+    for (const [v, label] of [["team", "Team stats"], ["players", "Player stats"]]) {
       const b = el("button", { type: "button", class: `chip ${st.view === v ? "active" : ""}`, text: label });
       b.addEventListener("click", () => { st.view = v; renderStats(); });
       chips.append(b);
     }
-    for (const v of ["teamstats", "playerstats", "depth"]) $(`#tab-${v}`).hidden = v !== (st.view === "team" ? "teamstats" : st.view === "players" ? "playerstats" : "depth");
+    for (const v of ["teamstats", "playerstats"]) $(`#tab-${v}`).hidden = v !== (st.view === "team" ? "teamstats" : "playerstats");
     if (st.view === "team") renderSeasonTeamStats();
-    else if (st.view === "players") renderSeasonPlayerStats();
-    else renderDepthChart();
+    else renderSeasonPlayerStats();
   }
 
   // Depth chart: every role in formation order with the players in depth order, their
