@@ -493,6 +493,22 @@ role.
 rank, Group of Five and defensive finalists, All-America consensus counts and the coach of
 the year profile against the research targets.
 
+### Momentum and morale
+
+A season setting (on for new seasons, off for older ones; ⚙ Settings). Inside a game,
+big plays swing each team's momentum between -1 and 1: touchdowns, turnovers, sacks,
+explosive plays, fourth-down stops and conversions, blocked and missed kicks, return
+touchdowns. Momentum fades a little every snap and halves at halftime, and at full swing
+a team's ratings move 5% either way (the same fatigue pass that already scales ratings
+applies it, so with the setting off a game is bit-for-bit what it was). Between games,
+every team carries a mood from its results (wins and losses, upsets, blowouts) and every
+player a form from how each game compared with his season so far; both fade 15% a week.
+Entering a game, a player's ratings scale by up to 4% for his form and 3% for the team's
+mood. The player card shows the boosts as green ▲ and red ▼ arrows next to each rating,
+with a 🔥 Hot streak or ❄ Cold streak tag and the team's mood; the depth chart marks hot
+and cold players. `python test_morale.py` checks that the engine is unchanged with the
+setting off and that moods, form and the boosts move with results when it is on.
+
 ### Settings and god mode
 
 The ⚙ Settings button next to the sim buttons opens the season's settings. God mode

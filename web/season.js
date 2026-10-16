@@ -25,12 +25,10 @@
     const data = await api("/api/teams");
     state.teams = data.teams;
     const sel = $("#pick-team");
-    let group = null, groupName = null;
+    // one alphabetical list (the API sorts by name); the conference rides in the label
     for (const t of data.teams) {
       window.CFP.teamsBySlug[t.slug] = t;
-      const g = t.fictional ? `${t.conference} (FCS)` : t.conference;
-      if (g !== groupName) { groupName = g; group = el("optgroup", { label: g }); sel.appendChild(group); }
-      if (!t.fictional) group.appendChild(el("option", { value: t.slug, text: `${t.name} (${t.ratings.overall.toFixed(0)})` }));
+      if (!t.fictional) sel.appendChild(el("option", { value: t.slug, text: `${t.name} (${t.ratings.overall.toFixed(0)}) · ${CONF_SHORT[t.conference] || t.conference}` }));
     }
     const params = new URLSearchParams(location.search);
     if (params.get("team") && window.CFP.teamsBySlug[params.get("team")]) sel.value = params.get("team");
@@ -555,6 +553,7 @@
           ]);
           cells.push(el("td", { class: `left depth-cell ${i === 0 ? "starter" : ""} ${i >= 2 ? "ph" : ""}` }, [
             el("div", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, el("span", { text: p.name, ...playerAttrs(ds.team, p.name, p.position) }), el("span", { class: "pos", text: `${p.class || ""}${p.position !== row.role ? " · " + p.position : ""}` }),
+              p.form >= 0.35 ? el("span", { class: "form hot", text: "🔥", title: `Hot streak (form +${p.form})` }) : p.form <= -0.35 ? el("span", { class: "form cold", text: "❄", title: `Cold streak (form ${p.form})` }) : null,
               p.injury ? el("span", { class: "injury-tag", title: `${p.injury.type}, back ${s.week_labels[p.injury.returns_week] || "week " + p.injury.returns_week}`, text: `OUT ${p.injury.weeks_left}w` }) : null, ctl]),
             el("div", { class: "muted small-text", text: [`${p.overall} ovr`, p.height && p.weight ? `${p.height} ${p.weight}` : "", p.headline || (p.games ? `${p.games} games` : "")].filter(Boolean).join(" · ") }),
           ]));
@@ -713,6 +712,8 @@
           el("div", { class: "player-tags" }, [
             p.starter ? el("span", { class: "tag good", text: "Starter" }) : el("span", { class: "tag", text: p.depth ? `${p.role || p.position} #${p.depth}` : "Reserve" }),
             p.injured ? el("span", { class: "tag bad", text: "Injured" }) : null,
+            p.morale && p.morale.enabled && p.morale.label !== "Steady" ? el("span", { class: `tag ${p.morale.label === "Hot streak" ? "good hot" : "bad cold"}`, text: `${p.morale.label === "Hot streak" ? "🔥" : "❄"} ${p.morale.label}`, title: `Form ${p.morale.form > 0 ? "+" : ""}${p.morale.form}: his recent games against his season so far` }) : null,
+            p.morale && p.morale.enabled && p.morale.team_label ? el("span", { class: `tag ${p.morale.team > 0 ? "good" : "bad"}`, text: p.morale.team_label, title: `Team mood ${p.morale.team > 0 ? "+" : ""}${p.morale.team}` }) : null,
             p.games ? el("span", { class: "tag", text: `${p.games} of ${p.team_games} games` }) : el("span", { class: "tag", text: "No games yet" }),
           ]),
           devTag ? el("div", { class: "player-dev" }, [devTag]) : null,
@@ -735,8 +736,10 @@
     for (const r of p.ratings) {
       const pct = Math.max(2, Math.min(100, r.value));
       const tone = r.value >= 75 ? "hi" : r.value >= 55 ? "mid" : "lo";
-      rat.append(el("div", { class: `rating-row ${edited.has(r.key) ? "edited" : ""}` }, [el("span", { class: "rating-label", text: r.label, title: edited.has(r.key) ? "Edited in god mode" : "" }), el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]), el("b", { class: "rating-num", text: String(r.value) })]));
+      const boost = r.boost ? el("span", { class: `boost ${r.boost > 0 ? "up" : "down"}`, text: `${r.boost > 0 ? "▲" : "▼"}${Math.abs(r.boost)}`, title: `${r.boost > 0 ? "+" : ""}${r.boost} from ${p.morale && p.morale.label !== "Steady" ? p.morale.label.toLowerCase() : "morale"}${p.morale && p.morale.team_label ? " and the team's mood" : ""}` }) : null;
+      rat.append(el("div", { class: `rating-row ${edited.has(r.key) ? "edited" : ""} ${r.boost ? "boosted" : ""}` }, [el("span", { class: "rating-label", text: r.label, title: edited.has(r.key) ? "Edited in god mode" : "" }), el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]), el("b", { class: "rating-num" }, [String(r.value), boost])]));
     }
+    if (p.morale && p.morale.enabled && p.ratings.some((r) => r.boost)) rat.append(el("div", { class: "muted small-text", style: "margin-top:6px", text: `Arrows: how his ratings enter the next game (${p.morale.label.toLowerCase()}${p.morale.team_label ? ", " + p.morale.team_label.toLowerCase() : ""}, ×${p.morale.factor}).` }));
     const others = Object.entries(p.ratings_at || {}).filter(([pos]) => pos !== p.position && !(pos === "MLB" && /LB$/.test(p.position))).sort((a, b) => b[1] - a[1]).slice(0, 5);
     if (others.length) rat.append(el("div", { class: "muted small-text", style: "margin-top:8px", text: `Rated at other spots: ${others.map(([pos, v]) => `${pos} ${v}`).join(" · ")}` }));
     grid.append(rat);
@@ -2433,6 +2436,8 @@
     node.append(
       row("God mode", "Edit every player's ratings, class, size, jersey and development trait from his player card, and every team's depth chart. Changes are saved with this season and used by every game from the next sim on.",
         toggle(godMode(), async (on) => { await saveSettings({ god_mode: on }); toast(on ? "God mode on: open any player or depth chart to edit it." : "God mode off.", 3000); renderTab(); })),
+      row("Momentum and morale", "Big plays swing momentum inside a game and nudge ratings play by play; wins, losses and each player's own games set a mood that carries into the next game and fades week by week. Player cards show the boosts as green and red arrows.",
+        toggle(!!(s.settings || {}).morale, async (on) => { await saveSettings({ morale: on }); toast(on ? "Momentum and morale on from the next sim." : "Momentum and morale off.", 3000); })),
       row("Game day pace", "How fast the plays come during a game day replay.",
         chipRow([["slow", "Slow"], ["normal", "Normal"], ["fast", "Fast"]], gdSpeed(), (v) => { try { localStorage.setItem("cfp.gameday.speed", v); } catch (e) {} for (const c of node.querySelectorAll(".chip")) c.classList.toggle("active", c.textContent.trim().toLowerCase() === v); })),
     );

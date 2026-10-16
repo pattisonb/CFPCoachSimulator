@@ -245,6 +245,8 @@ class GameSim:
             if not is_td:
                 return receiving, yardline
             receiving.team_stats["kickoff_return_touchdowns"] += 1
+            receiving.swing(0.4)
+            kicking.swing(-0.3)
             who = f"{returner.name} ({returner.position})" if returner else "Unknown"
             self._touchdown(receiving, "kickoff_return", f"{who} kickoff return")
             kicking, receiving = receiving, kicking
@@ -303,6 +305,7 @@ class GameSim:
         self.seconds = HALF_SECONDS
         for team in (self.home, self.away):
             team.timeouts = 3
+            team.momentum *= cfg.MOMENTUM_HALF
             team.lead, team.half, team.in_overtime = self.score[self.side(team)] - self.score[self.side(self.other(team))], self.half, False
         driving, start_yardline = self._kickoff(self.other(receiving))
 
@@ -492,10 +495,13 @@ def simulate_game(
     slider_overrides: Optional[dict] = None,
     seed: Optional[int] = None,
     venue: str = "home",
+    momentum: bool = False,
 ) -> dict:
     """Simulate one game and return the result dict (see GameSim.run).
 
-    `venue` is "home" (the first team hosts) or "neutral"."""
+    `venue` is "home" (the first team hosts) or "neutral". With `momentum`, big plays
+    swing each team's momentum and nudge its ratings play by play."""
+    cfg.MOMENTUM = bool(momentum)
     if seed is not None:
         random.seed(seed)
         cfg.stat_rng.seed(seed)
@@ -506,7 +512,10 @@ def simulate_game(
     active = apply_sliders(slider_overrides)
     defaults = default_sliders()
     started = time.perf_counter()
-    result = GameSim(home_data, away_data, venue).run()
+    try:
+        result = GameSim(home_data, away_data, venue).run()
+    finally:
+        cfg.MOMENTUM = False
     result.update({
         "id": uuid.uuid4().hex[:12],
         "played_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),

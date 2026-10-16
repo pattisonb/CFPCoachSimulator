@@ -110,6 +110,7 @@ class Team:
         self.grouping = None          # offensive grouping on this snap ("11", "12", ...)
         self.front = None             # defensive package counts on this snap
         self._lineup = {"offense": None, "defense": None}
+        self.momentum = 0.0           # -1 (reeling) to 1 (rolling); only used when cfg.MOMENTUM is on
         self.grouping_snaps = {}      # snaps per grouping / front, for the box score
         self.injuries = []            # injuries suffered in this game
         self.lead, self.half, self.in_overtime = 0, 1, False
@@ -420,20 +421,30 @@ class Team:
             return designated
         return self.best_returner()
     
+    def swing(self, amount):
+        """A momentum swing (positive is good for this team), clamped to [-1, 1]."""
+        if cfg.MOMENTUM:
+            self.momentum = max(-1.0, min(1.0, self.momentum + amount))
+
+    def momentum_factor(self):
+        return 1.0 + cfg.MOMENTUM_EFFECT * self.momentum if cfg.MOMENTUM else 1.0
+
     def apply_fatigue_penalties(self):
         """Scale each player's ratings down by up to 15% with fatigue (floor two thirds).
         Only players whose fatigue changed since the last call are touched, which is the
         few on the field plus anyone recovering on the bench."""
+        factor = self.momentum_factor()
         for unit in (self.offense, self.defense):
             for player in unit:
                 fatigue = player.fatigue
-                if fatigue == player._penalty_fatigue:
+                key = (fatigue, factor)
+                if key == player._penalty_fatigue:
                     continue
-                player._penalty_fatigue = fatigue
+                player._penalty_fatigue = key
                 penalty_scale = fatigue / 100 * 0.15  # max 15% drop
                 for attr, original_value, min_allowed in player._penalty_attrs:
-                    new_value = round(original_value * (1 - penalty_scale))
-                    setattr(player, attr, max(min_allowed, new_value))
+                    new_value = round(original_value * (1 - penalty_scale) * factor)
+                    setattr(player, attr, max(min_allowed, min(99, new_value)))
 
 def initialize_teams(json_path):
     with open(json_path, "r") as f:

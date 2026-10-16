@@ -801,3 +801,11 @@ body:not(.team-theme) .hdr-rank { background: var(--panel-2); border-color: var(
 .schedule-table tr.upnext td:first-child { box-shadow: inset 3px 0 0 var(--accent); font-weight: 700; }
 .upnext-tag { display: inline-block; margin-left: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: var(--accent-ink); background: var(--accent); border-radius: 999px; padding: 1px 6px; vertical-align: middle; }
 @media (max-width: 700px) { .upnext-tag { display: block; margin: 2px 0 0; width: max-content; } }
+
+/* morale: boosts on the player card, hot and cold marks */
+.rating-num .boost { font-size: 11px; font-weight: 700; margin-left: 4px; }
+.rating-num .boost.up { color: var(--good); }
+.rating-num .boost.down { color: var(--bad); }
+.tag.hot { background: color-mix(in srgb, #e8641b 18%, transparent); border-color: #e8641b; color: #e8641b; }
+.tag.cold { background: color-mix(in srgb, #3b82f6 18%, transparent); border-color: #3b82f6; color: #3b82f6; }
+.depth-table .form { margin-left: 4px; font-size: 12px; }

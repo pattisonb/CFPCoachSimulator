@@ -30,6 +30,13 @@ FB_CARRY_WEIGHT = 0.10          # a fullback's carry weight next to a halfback's
 
 # ----- injuries -----
 INJURIES = True
+
+# In-game momentum (off unless the season setting turns it on per game): big plays swing a
+# team's momentum between -1 and 1, which nudges its ratings by up to MOMENTUM_EFFECT.
+MOMENTUM = False
+MOMENTUM_EFFECT = 0.05
+MOMENTUM_DECAY = 0.93          # per snap, so a swing fades over a drive or two
+MOMENTUM_HALF = 0.5            # what is left at the start of the second half
 INJURY_PER_SNAP = 0.00085       # per player on the field per snap: about 1.3 injuries a game per team
 # cumulative probability, weeks out (0 = rest of this game only)
 INJURY_SEVERITY = [(0.55, 0), (0.72, 1), (0.84, 2), (0.91, 3), (0.95, 5), (0.98, 8), (1.0, 20)]

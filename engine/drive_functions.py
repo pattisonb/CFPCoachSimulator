@@ -121,6 +121,59 @@ def _log(**entry) -> dict:
     return entry
 
 
+def _momentum_play(offense, defense, play_ran, result, yards, after, pre_down, fourth, safety):
+    """Momentum after a snap (no random numbers; nothing happens unless cfg.MOMENTUM)."""
+    if not cfg.MOMENTUM:
+        return
+    offense.momentum *= cfg.MOMENTUM_DECAY
+    defense.momentum *= cfg.MOMENTUM_DECAY
+    if result == "defensive_touchdown":
+        offense.swing(-0.4); defense.swing(0.5)
+    elif result in ("interception", "fumble"):
+        offense.swing(-0.35); defense.swing(0.4)
+    elif after == 6:
+        offense.swing(0.35); defense.swing(-0.25)
+    elif safety:
+        offense.swing(-0.3); defense.swing(0.3)
+    elif result == "sack":
+        offense.swing(-0.06); defense.swing(0.1)
+    elif result == "offensive penalty":
+        offense.swing(-0.03)
+    elif result == "defensive penalty":
+        defense.swing(-0.03)
+    elif result in ("run", "successful_pass", "checkdown_pass"):
+        if isinstance(yards, (int, float)) and yards >= 20:
+            offense.swing(0.12); defense.swing(-0.06)
+        elif play_ran == "run" and isinstance(yards, (int, float)) and yards < 0:
+            defense.swing(0.05)
+        if after == 1 and pre_down == 3:
+            offense.swing(0.05)
+    if pre_down == 3 and after == 4:
+        defense.swing(0.05)
+    if fourth:
+        if after == 1 or after == 6:
+            offense.swing(0.2); defense.swing(-0.15)
+        elif after == 5:
+            offense.swing(-0.2); defense.swing(0.25)
+
+
+def _momentum_kick(offense, defense, kind, result):
+    if not cfg.MOMENTUM:
+        return
+    if kind == "field_goal":
+        if result == "good":
+            offense.swing(0.1)
+        elif result == "blocked":
+            offense.swing(-0.25); defense.swing(0.25)
+        else:
+            offense.swing(-0.15); defense.swing(0.1)
+    elif kind == "punt":
+        if result == "blocked":
+            offense.swing(-0.25); defense.swing(0.25)
+        elif result == "return_td":
+            offense.swing(-0.3); defense.swing(0.4)
+
+
 def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hurrying=False, last_play_type=None, last_gain=0, seconds_remaining=cfg.HALF_SECONDS, verbose=True, clock_stopped=True, situation=None, posture=None) :
     """One snap: fatigue and substitutions, a possible penalty, then a run or a pass.
     Returns (play_ran, result, yards, seconds_used, info) where info says whether the clock is
@@ -511,6 +564,7 @@ def _clutch_kick(offense, defense, kicker, yardline, seconds_remaining, in_red_z
     play_functions.last_play.clear()
     _log(type="field_goal", result="blocked" if kick_blocked else ("good" if kick_made else "missed"), distance=(100 - yardline) + 17,
          down=None, dist=None, yl=yardline, kicker=kicker.name if kicker else None, left=seconds_remaining, clutch=True)
+    _momentum_kick(offense, defense, "field_goal", "blocked" if kick_blocked else ("good" if kick_made else "missed"))
     return play_ran, result, yardline, seconds_remaining
 
 
@@ -574,6 +628,7 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
         seconds_remaining -= time
         down, first_down_yardage, yardline, safety_occurred = process_play(result, play_ran, yards_gained, yardline, down, first_down_yardage)
         _log(type=play_ran, result=result, down=pre[0], dist=pre[1], yl=pre[2], yards=yards_gained, to=yardline, after=down, secs=time, left=seconds_remaining, safety=safety_occurred)
+        _momentum_play(offense, defense, play_ran, result, yards_gained, down, pre[0], False, safety_occurred)
         if down == 1 and result in ("run", "successful_pass", "checkdown_pass", "defensive penalty"):
             offense.team_stats["first_downs"] += 1
         if was_third and result != "offensive penalty" and result != "defensive penalty":
@@ -608,6 +663,7 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
             seconds_remaining -= time
             down, first_down_yardage, yardline, safety_occurred = process_play(result, play_ran, yards_gained, yardline, down, first_down_yardage)
             _log(type=play_ran, result=result, down=pre[0], dist=pre[1], yl=pre[2], yards=yards_gained, to=yardline, after=down, secs=time, left=seconds_remaining, safety=safety_occurred, fourth=True)
+            _momentum_play(offense, defense, play_ran, result, yards_gained, down, pre[0], True, safety_occurred)
             if result not in ("offensive penalty", "defensive penalty"):
                 offense.team_stats["fourth_down_attempts"] += 1
                 if down in (1, 6):
@@ -646,6 +702,7 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
                 play_functions.last_play.clear()
                 _log(type="field_goal", result="blocked" if kick_blocked else ("good" if kick_made else "missed"), distance=fg_distance,
                      down=4, dist=first_down_yardage, yl=yardline, kicker=kicker.name if kicker else None, secs=kick_time, left=seconds_remaining)
+                _momentum_kick(offense, defense, "field_goal", "blocked" if kick_blocked else ("good" if kick_made else "missed"))
             else:
                 punt_from = yardline
                 yardline, punt_distance, punt_blocked, returner, return_yards, is_return_td = attempt_punt(yardline, punter, defense, defense)  # the defense returns the punt
@@ -655,6 +712,7 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
                 _log(type="punt", result="blocked" if punt_blocked else ("return_td" if is_return_td else "punt"), yards=punt_distance,
                      down=4, dist=first_down_yardage, yl=punt_from, to=yardline, punter=punter.name if punter else None,
                      returner=returner.name if returner else None, return_yards=return_yards, secs=punt_time, left=seconds_remaining)
+                _momentum_kick(offense, defense, "punt", "blocked" if punt_blocked else ("return_td" if is_return_td else "punt"))
                 if punt_blocked:
                     if verbose:
                         print("Punt BLOCKED!")

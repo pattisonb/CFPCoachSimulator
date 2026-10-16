@@ -158,7 +158,8 @@ class SimRequest(BaseModel):
 
 @app.get("/api/teams")
 def list_teams() -> dict:
-    cards = sorted((_team_card(t) for t in _teams.values()), key=lambda c: (c["fictional"], c["conference"], c["name"]))
+    # alphabetical (FBS first, then the FCS stand-ins): every team drop-down follows this order
+    cards = sorted((_team_card(t) for t in _teams.values()), key=lambda c: (c["fictional"], c["name"]))
     return {"teams": cards}
 
 
@@ -293,6 +294,7 @@ class AdvanceRequest(BaseModel):
 
 class SettingsRequest(BaseModel):
     god_mode: Optional[bool] = None
+    morale: Optional[bool] = None
 
 
 class PlayerEditRequest(BaseModel):

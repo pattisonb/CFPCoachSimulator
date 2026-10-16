@@ -238,6 +238,7 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None) -
         "team": team_slug, "team_name": teams[team_slug]["name"], "conference": teams[team_slug]["conference"],
         "mode": mode, "seed": seed, "current_week": current, "phase": "regular", "done": False,
         "games": games, "polls": {}, "scores": {}, "champions": {}, "runners_up": {}, "bracket": None, "playoff": {}, "my_boxes": {},
+        "settings": {"god_mode": False, "morale": True},
         "rng_state": rng.randrange(1 << 30),
     }
     real = _real_polls_2026(teams) if mode == "remaining" else {}
@@ -606,10 +607,10 @@ def _with_injuries(team: dict, injured: list) -> dict:
 
 def _sim_one(args: tuple) -> dict:
     from engine.game import simulate_game
-    event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out, edits = args
-    home_team = _with_injuries(apply_depth(with_edits(_TEAMS[home], edits[0]), depth[0]), home_out)
-    away_team = _with_injuries(apply_depth(with_edits(_TEAMS[away], edits[1]), depth[1]), away_out)
-    r = simulate_game(home_team, away_team, None, seed, venue="neutral" if neutral else "home")
+    event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out, edits, morale = args
+    home_team = _with_injuries(apply_depth(with_morale(with_edits(_TEAMS[home], edits[0]), morale[0]), depth[0]), home_out)
+    away_team = _with_injuries(apply_depth(with_morale(with_edits(_TEAMS[away], edits[1]), morale[1]), depth[1]), away_out)
+    r = simulate_game(home_team, away_team, None, seed, venue="neutral" if neutral else "home", momentum=morale[2])
     out = {"event_id": event_id, "home_score": r["home"]["score"], "away_score": r["away"]["score"], "overtime": r["overtime_periods"],
            "stats": {"home": _compact_side(r["home"], r["drives"], "home"), "away": _compact_side(r["away"], r["drives"], "away")},
            "injuries": {"home": r["home"].get("injuries", []), "away": r["away"].get("injuries", [])}}
@@ -653,7 +654,9 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
         jobs.append((eid, g["home"], g["away"], g["neutral"], rng.randrange(1 << 30), keep, (depth.get(g["home"]), depth.get(g["away"])),
                      [(i["name"], i["position"]) for i in injuries.get(g["home"], {}).values()],
                      [(i["name"], i["position"]) for i in injuries.get(g["away"], {}).values()],
-                     (player_edits(state, g["home"]), player_edits(state, g["away"]))))
+                     (player_edits(state, g["home"]), player_edits(state, g["away"])),
+                     (morale_payload(state, g["home"]), morale_payload(state, g["away"]), morale_on(state))))
+    before = rank_map(state, state["current_week"]) if morale_on(state) else {}
     state["rng_state"] = rng.randrange(1 << 30)
     if not jobs:
         return
@@ -665,6 +668,7 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
         g.update(played=True, home_score=r["home_score"], away_score=r["away_score"], overtime=r["overtime"])
         if "stats" in r:
             _accumulate_stats(state, g, r["stats"])
+            _update_morale(state, g, r["stats"], before)
         if "game" in r:
             if state["team"] in (g["home"], g["away"]):
                 state["my_boxes"][r["event_id"]] = r["game"]
@@ -803,6 +807,7 @@ def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter]
     week = state["current_week"] + 1
     label = week_label(week)
     _heal(state)
+    _decay_morale(state)
     if week == CCG_WEEK:
         say("Setting the conference title games")
         for g in _ccg_matchups(state, teams):
@@ -1082,6 +1087,7 @@ def depth_chart_view(state: dict, slug: str) -> dict:
         return {"name": p["name"], "slug": p.get("slug"), "position": p["position"], "role": p.get("role"), "depth": p.get("depth"), "class": p.get("class"),
                 "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"), "overall": player_overall(p),
                 "starter": bool(p.get("in_game")), "games": rec["games"] if rec else 0,
+                "form": round(player_form(state, slug, p["name"], p["position"]), 2) if morale_on(state) else 0.0,
                 "headline": awards.headline({"stats": st}, group) if st else "",
                 "injury": {"type": inj["type"], "weeks_left": inj["weeks_left"], "returns_week": state["current_week"] + inj["weeks_left"]} if inj else None}
 
@@ -2156,7 +2162,7 @@ CLASS_NAMES = {"FR": "Freshman", "FRRS": "Redshirt freshman", "SO": "Sophomore",
 
 # ----- settings and god mode -----------------------------------------------------------
 
-DEFAULT_SETTINGS = {"god_mode": False}
+DEFAULT_SETTINGS = {"god_mode": False, "morale": False}   # new seasons turn morale on (see new_season)
 DEV_TRAITS = ("Normal", "Impact", "Star", "Elite")
 EDITABLE_RATINGS = tuple(k for k, _ in RATING_LABELS)
 EDITABLE_FIELDS = EDITABLE_RATINGS + ("jersey", "class", "height", "weight", "dev_trait")
@@ -2173,6 +2179,161 @@ def update_settings(state: dict, changes: dict) -> dict:
             cur[k] = bool(v) if isinstance(DEFAULT_SETTINGS[k], bool) else v
     state["settings"] = cur
     return cur
+
+
+# ----- morale: form carried from game to game -------------------------------------------
+# Each team and each player carries a value between -1 and 1. A team's moves with results
+# (wins, losses, upsets, blowouts); a player's with how his game compared with his season
+# so far. Both fade week by week. Entering a game, ratings scale by a few percent either
+# way; inside the game, momentum takes over play by play (engine/game_config.MOMENTUM).
+
+MORALE_PLAYER_EFFECT = 0.06      # a hot player is up to 6% better, a cold one 6% worse
+MORALE_TEAM_EFFECT = 0.03        # a team riding high adds up to 3% to everyone
+MORALE_WEEKLY_DECAY = 0.85
+MORALE_HOT = 0.35                # form above this is a hot streak, below minus this a cold one
+
+
+def morale_on(state: dict) -> bool:
+    return bool(settings(state).get("morale"))
+
+
+def _morale_store(state: dict) -> dict:
+    return state.setdefault("morale", {"teams": {}, "players": {}})
+
+
+def team_morale(state: dict, slug: str) -> float:
+    return float((state.get("morale") or {}).get("teams", {}).get(slug, 0.0))
+
+
+def player_form(state: dict, slug: str, name: str, position: str) -> float:
+    return float(((state.get("morale") or {}).get("players", {}).get(slug) or {}).get(f"{name}|{position}", 0.0))
+
+
+def morale_factor(state: dict, slug: str, name: str, position: str) -> float:
+    """How a player's ratings scale entering the next game."""
+    if not morale_on(state):
+        return 1.0
+    f = 1.0 + MORALE_PLAYER_EFFECT * player_form(state, slug, name, position) + MORALE_TEAM_EFFECT * team_morale(state, slug)
+    return max(0.9, min(1.1, f))
+
+
+def morale_payload(state: dict, slug: str) -> Optional[dict]:
+    """What a game needs for one team: the team value and every player's form."""
+    if not morale_on(state):
+        return None
+    return {"team": team_morale(state, slug), "players": dict((state.get("morale") or {}).get("players", {}).get(slug) or {})}
+
+
+def with_morale(team: dict, morale: Optional[dict]) -> dict:
+    """A copy of the team with every player's ratings scaled by his form and the team's mood."""
+    if not morale:
+        return team
+    tm = morale.get("team", 0.0)
+    players = morale.get("players") or {}
+    if not tm and not players:
+        return team
+    out = {**team}
+    for unit in ("offense", "defense"):
+        rows = []
+        for p in team[unit]:
+            form = players.get(f"{p['name']}|{p['position']}", 0.0)
+            f = max(0.9, min(1.1, 1.0 + MORALE_PLAYER_EFFECT * form + MORALE_TEAM_EFFECT * tm))
+            if abs(f - 1.0) < 0.004:
+                rows.append(p)
+                continue
+            q = dict(p)
+            for k, _ in RATING_LABELS:
+                v = p.get(k)
+                if isinstance(v, (int, float)):
+                    q[k] = max(1, min(99, round(v * f)))
+            rows.append(q)
+        out[unit] = rows
+    return out
+
+
+def _perf_score(position: str, st: dict) -> float:
+    """One number for a game (or a per-game average) at a position, on a points-like scale."""
+    n = lambda k: st.get(k, 0) or 0
+    if position == "QB":
+        return n("pass_yards") * 0.04 + n("passing_touchdowns") * 4 - n("interceptions_thrown") * 4 + n("rush_yards") * 0.1 + n("rushing_touchdowns") * 6 - n("fumbles") * 3
+    if position in ("RB", "WR", "TE"):
+        return n("rush_yards") * 0.1 + n("receiving_yards") * 0.1 + (n("rushing_touchdowns") + n("receiving_touchdowns")) * 6 - n("fumbles") * 4
+    if position == "OL":
+        return n("key_blocks") * 2 - n("sacks_allowed") * 3 - n("pressures_allowed") * 0.5 - n("stuffs_allowed") * 0.5 + n("snaps") * 0.05
+    if position in ("DL", "MLB", "ROLB", "LOLB", "CB", "S"):
+        return n("solo_tackles") + n("assisted_tackles") * 0.5 + n("tackles_for_loss") * 2 + n("sacks") * 4 + n("interceptions") * 6 + n("passes_defended") * 1.5 + n("forced_fumbles") * 4 + n("fumble_recoveries") * 2
+    if position == "K":
+        return n("fg_made") * 3 - (n("fg_attempted") - n("fg_made")) * 4 + n("pat_made") * 0.5 - (n("pat_attempts") - n("pat_made")) * 2
+    return 0.0
+
+
+def _decay_morale(state: dict) -> None:
+    """A week passes: every team's mood and every player's form fade toward neutral."""
+    if not morale_on(state):
+        return
+    m = _morale_store(state)
+    m["teams"] = {k: round(v * MORALE_WEEKLY_DECAY, 4) for k, v in m["teams"].items() if abs(v * MORALE_WEEKLY_DECAY) >= 0.02}
+    for slug, rows in list(m["players"].items()):
+        kept = {k: round(v * MORALE_WEEKLY_DECAY, 4) for k, v in rows.items() if abs(v * MORALE_WEEKLY_DECAY) >= 0.02}
+        if kept:
+            m["players"][slug] = kept
+        else:
+            del m["players"][slug]
+
+
+def _update_morale(state: dict, g: dict, lines: dict, before: dict[str, int]) -> None:
+    """After a game: the result moves both teams' moods; each player's game against his
+    season so far moves his form. `before` is the ranking entering the week."""
+    if not morale_on(state) or g.get("real"):
+        return
+    m = _morale_store(state)
+    teams = m["teams"]
+    margin = g["home_score"] - g["away_score"]
+    for side, opp in (("home", "away"), ("away", "home")):
+        slug, other = g[side], g[opp]
+        won = (margin > 0) if side == "home" else (margin < 0)
+        own_margin = margin if side == "home" else -margin
+        delta = 0.25 if won else -0.25
+        if won and before.get(other):
+            delta += 0.15
+        if not won and before.get(slug) and not before.get(other):
+            delta -= 0.15
+        if abs(own_margin) >= 21:
+            delta += 0.1 if won else -0.1
+        teams[slug] = round(max(-1.0, min(1.0, teams.get(slug, 0.0) + delta)), 4)
+        # players: this game against the per-game average before it
+        ss = (state.get("season_stats") or {}).get(slug, {})
+        rows = m["players"].setdefault(slug, {})
+        for p in lines[side].get("players", []):
+            key = f"{p['name']}|{p['position']}"
+            game = _perf_score(p["position"], p["stats"])
+            line = (ss.get("players") or {}).get(key)
+            games = line["games"] if line else 1
+            if games > 1:
+                prior = {k: (v - p["stats"].get(k, 0)) for k, v in line["stats"].items() if isinstance(v, (int, float))}
+                avg = _perf_score(p["position"], prior) / (games - 1)
+                z = (game - avg) / max(abs(avg) * 0.6, 4.0)
+            else:
+                z = 0.0
+            z = max(-1.0, min(1.0, z)) + (0.1 if won else -0.1)
+            form = round(max(-1.0, min(1.0, 0.7 * rows.get(key, 0.0) + 0.3 * z)), 4)
+            if abs(form) >= 0.02:
+                rows[key] = form
+            else:
+                rows.pop(key, None)
+        if not rows:
+            m["players"].pop(slug, None)
+
+
+def morale_view(state: dict, slug: str, name: str, position: str) -> dict:
+    """The player card's morale block: form, the team's mood and the boost each gives."""
+    on = morale_on(state)
+    form = player_form(state, slug, name, position) if on else 0.0
+    tm = team_morale(state, slug) if on else 0.0
+    label = "Hot streak" if form >= MORALE_HOT else "Cold streak" if form <= -MORALE_HOT else "Steady"
+    team_label = "Team riding high" if tm >= MORALE_HOT else "Team in a slump" if tm <= -MORALE_HOT else ""
+    return {"enabled": on, "form": round(form, 2), "team": round(tm, 2), "factor": round(morale_factor(state, slug, name, position), 3),
+            "label": label, "team_label": team_label}
 
 
 def player_edits(state: dict, slug: str) -> dict:
@@ -2434,7 +2595,9 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     ss = state.get("season_stats", {}).get(team, {})
     line = (ss.get("players") or {}).get(f"{name}|{position}")
     stats = dict(line["stats"]) if line else {}
-    ratings = [{"key": k, "label": lbl, "value": int(p[k])} for k, lbl in RATING_LABELS if isinstance(p.get(k), (int, float)) and p.get(k) is not None]
+    mf = morale_factor(state, team, name, position)
+    ratings = [{"key": k, "label": lbl, "value": int(p[k]), "boost": max(1, min(99, round(p[k] * mf))) - int(p[k])}
+               for k, lbl in RATING_LABELS if isinstance(p.get(k), (int, float)) and p.get(k) is not None]
     injuries = state.get("injuries") or {}
     injured = False
     for entry in (injuries.get(team) or []) if isinstance(injuries, dict) else []:
@@ -2449,6 +2612,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         "weight": p.get("weight"), "jersey": p.get("jersey"), "dev_trait": p.get("dev_trait"), "starter": bool(p.get("in_game")),
         "injured": injured, "overall": player_overall(p), "stars": recruit_stars(p), "ratings": ratings,
         "edited": sorted(player_edits(state, team).get(p.get("slug"), {}).keys()), "editable_classes": list(CLASS_NAMES), "dev_traits": list(DEV_TRAITS),
+        "morale": morale_view(state, team, name, position),
         "ratings_at": {k: int(v) for k, v in (p.get("ratings_at") or {}).items() if isinstance(v, (int, float))},
         "team": {"slug": team, "name": t["name"], "conference": t["conference"], "coach": hc.get("name"),
                  "record": f"{rec['wins']}-{rec['losses']}", "rank": awards.Pool(state, teams, _records(state)).rank_of(team) if ss else None},
