@@ -540,7 +540,9 @@ and your injury report. The week's row in the schedule below is highlighted with
 "this week" tag. On a bye the card just says so. Once game day has played your game
 the card shows the result instead of a prediction, with the box score a click away, and
 the schedule rows update as soon as a game of yours is in.
-`GET /api/season/{id}/preview?team=`.
+`GET /api/season/{id}/preview?team=`. Win odds blend the simulated
+win rate (with a one-game prior) with a margin model and stay between 2% and 98%:
+never 100%, since upsets happen.
 
 ### Rivalry trophies and the all-time series
 

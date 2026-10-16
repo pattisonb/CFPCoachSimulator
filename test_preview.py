@@ -15,7 +15,7 @@ if __name__ == "__main__":
     dt = time.perf_counter() - t0
     g, p = pv["game"], pv["prediction"]
     assert g["week"] == 2 and g["opponent"] == "ball-state" and not g.get("played"), g
-    assert 0 <= p["win_prob"] <= 1 and p["sims"] == 20
+    assert 0.02 <= p["win_prob"] <= 0.98 and p["sims"] == 20, "never a sure thing"
     assert abs(p["points_for"] - p["points_against"] - p["margin"]) < 0.01
     assert abs(p["points_for"] + p["points_against"] - p["total"]) < 0.01
     assert p["watch"]["passer"] and p["watch"]["passer"]["position"] == "QB"

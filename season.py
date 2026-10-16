@@ -1835,7 +1835,12 @@ def game_preview(state: dict, slug: str, sims: int = 20) -> dict:
             return {"name": best["name"], "position": best["position"], **{k: round(best["stats"].get(k, 0) / sims, 1) for k in keys}}
 
         avg = {s: sum(v) / sims for s, v in pts.items()}
-        p_home = wins / sims
+        # Win odds: the simulated win rate (with a one-game prior so 20 of 20 is not "certain")
+        # blended with a margin model (a 16-point favourite wins about 84% of the time in
+        # college football), and never below 2% or above 98%: upsets happen.
+        p_sims = (wins + 1) / (sims + 2)
+        p_margin = 0.5 * (1 + math.erf((avg["home"] - avg["away"]) / (16 * math.sqrt(2))))
+        p_home = max(0.02, min(0.98, 0.5 * p_sims + 0.5 * p_margin))
         pred = {"sims": sims, "home_win_prob": round(p_home, 2), "home_points": round(avg["home"], 1), "away_points": round(avg["away"], 1),
                 "margin": round(avg["home"] - avg["away"], 1), "total": round(avg["home"] + avg["away"], 1),
                 "watch": {side: {"passer": watch(side, "pass_yards", ["completions", "pass_attempts", "pass_yards", "passing_touchdowns", "interceptions_thrown"]),
