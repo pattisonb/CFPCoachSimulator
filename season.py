@@ -902,13 +902,18 @@ def week_view(state: dict, week: int) -> list[dict]:
 # each player's stat line) which is summed into state["season_stats"] as the season goes.
 
 PLAYER_CATEGORIES = {
-    "passing": ("pass_attempts", ["completions", "pass_attempts", "pass_yards", "passing_touchdowns", "interceptions_thrown", "sacks_taken"], "pass_yards"),
-    "rushing": ("carries", ["carries", "rush_yards", "rushing_touchdowns", "fumbles"], "rush_yards"),
-    "receiving": ("receptions", ["targets", "receptions", "receiving_yards", "receiving_touchdowns"], "receiving_yards"),
-    "defense": ("solo_tackles", ["solo_tackles", "assisted_tackles", "sacks", "interceptions", "interception_return_yards", "forced_fumbles", "fumble_recoveries", "defensive_touchdowns"], "solo_tackles"),
-    "kicking": ("fg_attempted", ["fg_made", "fg_attempted", "pat_made", "pat_attempts"], "fg_made"),
-    "punting": ("punts", ["punts", "punt_yards"], "punts"),
-    "returns": ("kickoff_returns", ["kickoff_returns", "kickoff_return_yards", "kickoff_return_touchdowns", "punt_returns", "punt_return_yards", "punt_return_touchdowns"], "kickoff_return_yards"),
+    "passing": ("pass_attempts", ["completions", "pass_attempts", "pass_yards", "passing_touchdowns", "interceptions_thrown", "sacks_taken",
+                                  "passing_first_downs", "passing_conversions", "long_pass"], "pass_yards"),
+    "rushing": ("carries", ["carries", "rush_yards", "rushing_touchdowns", "fumbles", "explosive_runs", "rushing_first_downs", "rushing_conversions", "long_rush"], "rush_yards"),
+    "receiving": ("receptions", ["targets", "receptions", "receiving_yards", "receiving_touchdowns", "explosive_catches", "receiving_first_downs", "long_reception"], "receiving_yards"),
+    "defense": ("solo_tackles", ["solo_tackles", "assisted_tackles", "tackles_for_loss", "sacks", "hurries", "interceptions", "interception_return_yards",
+                                 "passes_defended", "forced_fumbles", "fumble_recoveries", "defensive_touchdowns"], "solo_tackles"),
+    "kicking": ("fg_attempted", ["fg_made", "fg_attempted", "fg_40_made", "fg_40_att", "fg_50_made", "fg_50_att", "long_fg", "pat_made", "pat_attempts"], "fg_made"),
+    "punting": ("punts", ["punts", "punt_yards", "punt_net_yards", "punts_inside_20", "punt_touchbacks", "long_punt"], "punts"),
+    "returns": ("kickoff_returns", ["kickoff_returns", "kickoff_return_yards", "kickoff_return_touchdowns", "long_kickoff_return", "punt_returns",
+                                    "punt_return_yards", "punt_return_touchdowns", "long_punt_return"], "kickoff_return_yards"),
+    # offensive linemen: snaps, starts and the line credits the engine keeps
+    "blocking": ("snaps", ["snaps", "games_started", "sacks_allowed", "pressures_allowed", "stuffs_allowed", "key_blocks"], "snaps"),
 }
 
 
@@ -985,7 +990,13 @@ def team_stats_view(state: dict) -> dict:
         opp_yards = o.get("Pass Yards", 0) + o.get("Rush Yards", 0)
         lost = e.get("fumbles_lost", s.get("Fumbles", 0))
         opp_lost = oe.get("fumbles_lost", o.get("Fumbles", 0))
+        extra = {k: 0 for k in ("tackles_for_loss", "passes_defended", "hurries", "explosive_runs", "explosive_catches", "pressures_allowed")}
+        for pl in t.get("players", {}).values():
+            for k in extra:
+                extra[k] += pl["stats"].get(k, 0)
         rows.append({
+            "tfl": extra["tackles_for_loss"], "pbu": extra["passes_defended"], "hurries": extra["hurries"],
+            "explosives": extra["explosive_runs"] + extra["explosive_catches"], "pressures_allowed": extra["pressures_allowed"],
             "team": slug, "name": info["name"], "conference": info["conference"], "fictional": info["fictional"],
             "games": t["games"], "wins": t["wins"], "losses": t["games"] - t["wins"],
             "ppg": t["points"] / g, "opp_ppg": t["opp_points"] / g, "margin": (t["points"] - t["opp_points"]) / g,
@@ -1027,6 +1038,8 @@ def player_stats_view(state: dict, team: Optional[str] = None, category: str = "
             continue
         for p in t["players"].values():
             st = p["stats"]
+            if category == "blocking" and p["position"] != "OL":
+                continue
             if not st.get(gate) and not (category == "defense" and any(st.get(k) for k in keys)) \
                     and not (category == "returns" and st.get("punt_returns")) and not (category == "kicking" and st.get("pat_attempts")):
                 continue
@@ -1047,6 +1060,10 @@ LEADER_KEYS = {
     "interceptions": ("defense", lambda st: st.get("interceptions", 0)),
     "touchdowns": ("rushing", lambda st: st.get("rushing_touchdowns", 0) + st.get("receiving_touchdowns", 0)),
     "kicking": ("kicking", lambda st: st.get("fg_made", 0) * 3 + st.get("pat_made", 0)),
+    "tfl": ("defense", lambda st: st.get("tackles_for_loss", 0)),
+    "pbu": ("defense", lambda st: st.get("passes_defended", 0)),
+    "explosives": ("rushing", lambda st: st.get("explosive_runs", 0) + st.get("explosive_catches", 0)),
+    "punting": ("punting", lambda st: round(st.get("punt_net_yards", 0) / st["punts"], 1) if st.get("punts", 0) >= 10 else 0),
 }
 
 
@@ -1069,7 +1086,7 @@ def player_leaders_view(state: dict, team: Optional[str] = None, n: int = 5, con
     out: dict[str, list[dict]] = {}
     for cat, (table, value) in LEADER_KEYS.items():
         keys = PLAYER_CATEGORIES[table][1]
-        if cat == "touchdowns":
+        if cat in ("touchdowns", "explosives"):
             keys = sorted(set(PLAYER_CATEGORIES["rushing"][1]) | set(PLAYER_CATEGORIES["receiving"][1]))
         ranked = sorted((r for r in rows if value(r["stats"]) > 0), key=lambda r: (-value(r["stats"]), r["name"]))[:n]
         out[cat] = [{**r, "stats": {k: r["stats"].get(k, 0) for k in keys}, "value": value(r["stats"])} for r in ranked]

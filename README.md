@@ -472,6 +472,16 @@ award, the coach-of-the-year races and your conference's races, with your team's
 listed first. The Summary tab shows the Heisman winner. Awards that need data the sim does
 not have (transfers, walk-ons, academics, hometowns, injuries) are not given.
 
+The stats pages show the new numbers too: every Player Stats category gained columns
+(passer rating, first downs, third-down conversions and long plays for passing and
+rushing, 20-plus runs and 25-plus catches, tackles for loss, hurries and passes defended,
+field goals by distance, net punting with punts inside the 20 and touchbacks, return
+longs), a **Blocking** category lists linemen by snaps, starts, sacks and pressures
+allowed, stuffs and key blocks, the leaders board adds tackles for loss, passes defended,
+explosive plays and net punting, the team table adds TFL, hurries, PBU, explosive plays
+and pressures allowed, and the roster cards show class, height, weight and depth-chart
+role.
+
 `calibrate_awards.py N` runs N seasons and reports the Heisman position mix, winner team
 rank, Group of Five and defensive finalists, All-America consensus counts and the coach of
 the year profile against the research targets.

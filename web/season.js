@@ -1145,7 +1145,6 @@
     ["pbu", "Passes defended", (p) => `${p.stats.passes_defended || 0}`, (p) => `${p.stats.interceptions} INT · ${p.stats.solo_tackles + p.stats.assisted_tackles} tkl`],
     ["explosives", "Explosive plays", (p) => `${(p.stats.explosive_runs || 0) + (p.stats.explosive_catches || 0)}`, (p) => `${p.stats.explosive_runs || 0} runs of 20+ · ${p.stats.explosive_catches || 0} catches of 25+`],
     ["punting", "Net punting", (p) => `${p.value.toFixed(1)} net`, (p) => `${p.stats.punts} punts · ${p.stats.punts ? (p.stats.punt_yards / p.stats.punts).toFixed(1) : "–"} gross · ${p.stats.punts_inside_20 || 0} inside 20`],
-    ["blocking", "Offensive line", (p) => `${p.value > 0 ? "+" : ""}${p.value}`, (p) => `${p.stats.snaps || 0} snaps · ${p.stats.sacks_allowed || 0} sacks allowed · ${p.stats.key_blocks || 0} key blocks`],
   ];
   const LEADER_TO_TABLE = { tackles: "defense", sacks: "defense", interceptions: "defense", touchdowns: "rushing", tfl: "defense", pbu: "defense", explosives: "rushing" };
   const ROSTER_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LOLB", "MLB", "ROLB", "CB", "S", "K", "P"];

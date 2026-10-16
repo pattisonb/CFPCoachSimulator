@@ -171,7 +171,8 @@ def get_team(slug: str) -> dict:
     card["players"] = [
         {"name": p["name"], "slug": p.get("slug"), "position": p["position"], "unit": unit,
          "starter": bool(p.get("in_game")), "overall": _overall(p),
-         "return_rating": p.get("return_rating")}
+         "return_rating": p.get("return_rating"), "class": p.get("class"), "height": p.get("height"),
+         "weight": p.get("weight"), "jersey": p.get("jersey"), "role": p.get("role")}
         for unit in ("offense", "defense") for p in t[unit]
     ]
     return card
