@@ -1569,7 +1569,13 @@
     box.append(el("h3", {}, [teamPill(d.team), d.team_name, el("span", { class: "pos", text: `${d.rank ? `#${d.rank} · ` : ""}${d.record.wins}-${d.record.losses} · ${d.record.conf_wins}-${d.record.conf_losses} ${d.conference}` })]));
     const table = el("table", { class: "stats schedule-table" });
     table.appendChild(el("tr", {}, ["Week", "Date", "Rank", "Opponent", "Where", "Result", "Score", ""].map((h) => el("th", { class: ["Date", "Opponent"].includes(h) ? "left" : "", text: h }))));
-    const wk = (w) => (w <= 14 ? String(w) : (s.week_labels[w] || `W${w}`).replace("Championship week", "CCG").replace("Selection", "Sel").replace(" & bowls", "").replace(" & New Year bowls", ""));
+    const wk = (w, g) => {
+      if (w <= 14) return String(w);
+      if (g && g.kind === "bowl") return "Bowl";
+      return (s.week_labels[w] || `W${w}`).replace("Championship week", "CCG").replace("Selection", "Sel").replace(" & bowls", "").replace(" & New Year bowls", "");
+    };
+    // game dates are ISO for the regular season and bowl-style text ("Dec 30", "January 1") after it
+    const gameDate = (g) => (g.date && /^\d{4}-\d{2}-\d{2}/.test(g.date) ? fmtDay(g.date.slice(0, 10), false) : (g.date || ""));
     for (const g of d.schedule) {
       if (g.kind === "bye") {
         const wd = s.week_dates && s.week_dates[g.week];
@@ -1581,9 +1587,9 @@
         continue;
       }
       const prefix = g.venue === "away" ? "at" : "vs";
-      const when = g.date ? fmtDay(g.date.slice(0, 10), false) : ((s.week_dates || {})[g.week] || {}).main ? fmtDay(s.week_dates[g.week].main, false) : "";
+      const when = g.date ? gameDate(g) : ((s.week_dates || {})[g.week] || {}).main ? fmtDay(s.week_dates[g.week].main, false) : "";
       const tr = el("tr", { class: `${g.has_box ? "clickable" : ""} ${g.played ? (g.won ? "won" : "lost") : ""}` }, [
-        el("td", { text: wk(g.week) }),
+        el("td", { text: wk(g.week, g) }),
         el("td", { class: "left muted small-text", text: when }),
         el("td", { class: "muted", text: g.my_rank ? `#${g.my_rank}` : "", title: "Rank entering the game" }),
         el("td", { class: "left name" }, [el("span", { class: "muted", text: `${prefix} ` }), teamPill(g.opponent), g.opponent_rank ? el("span", { class: "rank", text: `#${g.opponent_rank} ` }) : null, g.opponent_name,
