@@ -402,7 +402,13 @@
     if ("sack_rate" in c) return `${c.rush_ypg} rush yds/g · ${c.ypc} per carry · sacks on ${c.sack_rate}% of dropbacks`;
     return "";
   }
-  const headlineOf = (c) => c.headline || (c.role ? `${c.wins} wins` : "surprise" in c ? `${c.wins}-${c.losses}` : "sack_rate" in c ? `${c.ypc} ypc` : "");
+  const headlineOf = (c) => {
+    if (c.headline) return c.headline;
+    if ("surprise" in c) return `${c.wins}-${c.losses}`;
+    if ("sack_rate" in c) return `${c.ypc} ypc`;
+    if (c.coach) return `${c.wins} wins`;
+    return c.line ? c.line.split(";")[0].split(",").slice(0, 2).join(",") : "";
+  };
 
   // A sortable table. cols: [{key, label, left, get(row) -> text/node, sort(row) -> number|string}]
   function sortableTable(cols, rows, st, onSort, rowClass) {
@@ -466,8 +472,8 @@
     list.forEach((c, i) => {
       const row = el("div", { class: `leader-row ${i === 0 ? "top" : ""} ${c.team === state.season.team ? "mine" : ""}` }, [
         el("span", { class: "rank", text: live ? String(i + 1) : (i === 0 ? "W" : String(i + 1)) }),
-        el("span", { class: "who" }, [el("span", { class: "name" }, [el("span", { class: "pill-inline", style: `background:${color(c.team)}` }), c.name || c.coach || c.team_name, el("span", { class: "pos", text: c.position ? `${c.position}${c.class ? " · " + c.class : ""} · ${c.team_name}` : (c.role ? `${c.role} · ${c.team_name}` : (c.coach ? c.team_name : c.conference || "")) })]),
-          el("span", { class: "muted small-text", text: mode === "coach" ? coachLine(c) : (c.line || "") })]),
+        el("span", { class: "who" }, [el("span", { class: "name" }, [el("span", { class: "pill-inline", style: `background:${color(c.team)}` }), c.name || c.coach || c.team_name, el("span", { class: "pos", text: c.position ? `${c.position}${c.class ? " · " + c.class : ""}` : (c.role || "") })]),
+          el("span", { class: "muted small-text", text: `${(c.name || c.coach) ? c.team_name + " · " : ""}${mode === "coach" ? coachLine(c) : (c.line || "")}` })]),
         el("span", { class: "value", text: headlineOf(c) }),
       ]);
       card.append(row);
@@ -1015,9 +1021,10 @@
     ["Cmp%", "comp_pct", 1], ["Y/A", "ypa", 1], ["Y/C", "ypc", 1], ["3rd%", "third_pct", 1], ["RZ%", "red_zone_pct", 1], ["1st/G", "first_downs_pg", 1],
     ["TOP", "top", "time"], ["TO", "turnovers", 0], ["Sacks all.", "sacks_allowed", 0], ["Pen/G", "penalties_pg", 1],
     ["Opp Yds/G", "opp_ypg", 1], ["Opp Pass/G", "opp_pass_ypg", 1], ["Opp Rush/G", "opp_rush_ypg", 1], ["Opp Y/Play", "opp_ypp", 2],
-    ["Opp 3rd%", "opp_third_pct", 1], ["Sacks", "sacks", 0], ["Takeaways", "takeaways", 0],
+    ["Opp 3rd%", "opp_third_pct", 1], ["Sacks", "sacks", 0], ["TFL", "tfl", 0], ["Hurries", "hurries", 0], ["PBU", "pbu", 0], ["Takeaways", "takeaways", 0],
+    ["20+ plays", "explosives", 0], ["Press. all.", "pressures_allowed", 0],
   ];
-  const LOWER_BETTER = new Set(["opp_ppg", "turnovers", "sacks_allowed", "penalties_pg", "opp_ypg", "opp_pass_ypg", "opp_rush_ypg", "opp_ypp", "opp_third_pct"]);
+  const LOWER_BETTER = new Set(["opp_ppg", "turnovers", "sacks_allowed", "penalties_pg", "opp_ypg", "opp_pass_ypg", "opp_rush_ypg", "opp_ypp", "opp_third_pct", "pressures_allowed"]);
   const teamStatsState = { rows: null, sort: "margin", desc: true, conf: "", fbs: true };
 
   function fmtStat(v, digits) {
@@ -1089,23 +1096,41 @@
     box.append(el("div", { class: "table-scroll" }, [table]));
   }
 
+  // Column = [header, value(p), sort key or null, title]. Sortable columns carry a key.
   const PLAYER_COLS = {
-    passing: [["C/ATT", (p) => `${p.stats.completions}/${p.stats.pass_attempts}`], ["Pct", (p) => p.stats.pass_attempts ? Math.round(100 * p.stats.completions / p.stats.pass_attempts) : "–"],
-      ["Yds", (p) => p.stats.pass_yards, "pass_yards"], ["Yds/G", (p) => (p.stats.pass_yards / p.games).toFixed(1)], ["Y/A", (p) => p.stats.pass_attempts ? (p.stats.pass_yards / p.stats.pass_attempts).toFixed(1) : "–"],
-      ["TD", (p) => p.stats.passing_touchdowns, "passing_touchdowns"], ["INT", (p) => p.stats.interceptions_thrown, "interceptions_thrown"], ["Sacked", (p) => p.stats.sacks_taken]],
-    rushing: [["Car", (p) => p.stats.carries, "carries"], ["Yds", (p) => p.stats.rush_yards, "rush_yards"], ["Yds/G", (p) => (p.stats.rush_yards / p.games).toFixed(1)],
-      ["Avg", (p) => p.stats.carries ? (p.stats.rush_yards / p.stats.carries).toFixed(1) : "–"], ["TD", (p) => p.stats.rushing_touchdowns, "rushing_touchdowns"], ["Fum", (p) => p.stats.fumbles]],
-    receiving: [["Tgt", (p) => p.stats.targets], ["Rec", (p) => p.stats.receptions, "receptions"], ["Yds", (p) => p.stats.receiving_yards, "receiving_yards"], ["Yds/G", (p) => (p.stats.receiving_yards / p.games).toFixed(1)],
-      ["Avg", (p) => p.stats.receptions ? (p.stats.receiving_yards / p.stats.receptions).toFixed(1) : "–"], ["TD", (p) => p.stats.receiving_touchdowns, "receiving_touchdowns"]],
-    defense: [["Solo", (p) => p.stats.solo_tackles, "solo_tackles"], ["Ast", (p) => p.stats.assisted_tackles], ["Tot", (p) => p.stats.solo_tackles + p.stats.assisted_tackles, "total"],
-      ["Sacks", (p) => p.stats.sacks, "sacks"], ["INT", (p) => p.stats.interceptions, "interceptions"], ["INT Yds", (p) => p.stats.interception_return_yards],
-      ["FF", (p) => p.stats.forced_fumbles, "forced_fumbles"], ["FR", (p) => p.stats.fumble_recoveries], ["TD", (p) => p.stats.defensive_touchdowns]],
-    kicking: [["FG", (p) => `${p.stats.fg_made}/${p.stats.fg_attempted}`, "fg_made"], ["FG%", (p) => p.stats.fg_attempted ? Math.round(100 * p.stats.fg_made / p.stats.fg_attempted) : "–"],
-      ["PAT", (p) => `${p.stats.pat_made}/${p.stats.pat_attempts}`], ["Pts", (p) => p.stats.fg_made * 3 + p.stats.pat_made, "points"]],
-    punting: [["Punts", (p) => p.stats.punts, "punts"], ["Yds", (p) => p.stats.punt_yards], ["Avg", (p) => p.stats.punts ? (p.stats.punt_yards / p.stats.punts).toFixed(1) : "–"]],
-    returns: [["KR", (p) => p.stats.kickoff_returns], ["KR Yds", (p) => p.stats.kickoff_return_yards, "kickoff_return_yards"], ["KR Avg", (p) => p.stats.kickoff_returns ? (p.stats.kickoff_return_yards / p.stats.kickoff_returns).toFixed(1) : "–"],
-      ["PR", (p) => p.stats.punt_returns], ["PR Yds", (p) => p.stats.punt_return_yards, "punt_return_yards"], ["TD", (p) => p.stats.kickoff_return_touchdowns + p.stats.punt_return_touchdowns]],
+    passing: [["C/ATT", (p) => `${p.stats.completions}/${p.stats.pass_attempts}`], ["Pct", (p) => p.stats.pass_attempts ? Math.round(100 * p.stats.completions / p.stats.pass_attempts) : "–", "pct"],
+      ["Yds", (p) => p.stats.pass_yards, "pass_yards"], ["Yds/G", (p) => (p.stats.pass_yards / p.games).toFixed(1), "ypg"], ["Y/A", (p) => p.stats.pass_attempts ? (p.stats.pass_yards / p.stats.pass_attempts).toFixed(1) : "–", "ypa"],
+      ["TD", (p) => p.stats.passing_touchdowns, "passing_touchdowns"], ["INT", (p) => p.stats.interceptions_thrown, "interceptions_thrown"],
+      ["Rtg", (p) => p.stats.pass_attempts ? ((8.4 * p.stats.pass_yards + 330 * p.stats.passing_touchdowns + 100 * p.stats.completions - 200 * p.stats.interceptions_thrown) / p.stats.pass_attempts).toFixed(1) : "–", "rating", "NCAA passer rating"],
+      ["Sacked", (p) => p.stats.sacks_taken, "sacks_taken"], ["1st D", (p) => p.stats.passing_first_downs || 0, "passing_first_downs", "First downs by pass"],
+      ["3rd conv", (p) => p.stats.passing_conversions || 0, "passing_conversions", "Third-down conversions by pass"], ["Long", (p) => p.stats.long_pass || 0, "long_pass"]],
+    rushing: [["Car", (p) => p.stats.carries, "carries"], ["Yds", (p) => p.stats.rush_yards, "rush_yards"], ["Yds/G", (p) => (p.stats.rush_yards / p.games).toFixed(1), "ypg"],
+      ["Avg", (p) => p.stats.carries ? (p.stats.rush_yards / p.stats.carries).toFixed(1) : "–", "avg"], ["TD", (p) => p.stats.rushing_touchdowns, "rushing_touchdowns"],
+      ["20+", (p) => p.stats.explosive_runs || 0, "explosive_runs", "Runs of 20 yards or more"], ["1st D", (p) => p.stats.rushing_first_downs || 0, "rushing_first_downs"],
+      ["3rd conv", (p) => p.stats.rushing_conversions || 0, "rushing_conversions", "Third-down conversions by run"], ["Long", (p) => p.stats.long_rush || 0, "long_rush"], ["Fum", (p) => p.stats.fumbles, "fumbles"]],
+    receiving: [["Tgt", (p) => p.stats.targets, "targets"], ["Rec", (p) => p.stats.receptions, "receptions"], ["Yds", (p) => p.stats.receiving_yards, "receiving_yards"], ["Yds/G", (p) => (p.stats.receiving_yards / p.games).toFixed(1), "ypg"],
+      ["Avg", (p) => p.stats.receptions ? (p.stats.receiving_yards / p.stats.receptions).toFixed(1) : "–", "avg"], ["TD", (p) => p.stats.receiving_touchdowns, "receiving_touchdowns"],
+      ["25+", (p) => p.stats.explosive_catches || 0, "explosive_catches", "Catches of 25 yards or more"], ["1st D", (p) => p.stats.receiving_first_downs || 0, "receiving_first_downs"], ["Long", (p) => p.stats.long_reception || 0, "long_reception"]],
+    defense: [["Solo", (p) => p.stats.solo_tackles, "solo_tackles"], ["Ast", (p) => p.stats.assisted_tackles, "assisted_tackles"], ["Tot", (p) => p.stats.solo_tackles + p.stats.assisted_tackles, "total"],
+      ["TFL", (p) => p.stats.tackles_for_loss || 0, "tackles_for_loss", "Tackles for loss, sacks included"], ["Sacks", (p) => p.stats.sacks, "sacks"], ["Hur", (p) => p.stats.hurries || 0, "hurries", "Quarterback hurries"],
+      ["INT", (p) => p.stats.interceptions, "interceptions"], ["INT Yds", (p) => p.stats.interception_return_yards, "interception_return_yards"], ["PBU", (p) => p.stats.passes_defended || 0, "passes_defended", "Passes defended, interceptions included"],
+      ["FF", (p) => p.stats.forced_fumbles, "forced_fumbles"], ["FR", (p) => p.stats.fumble_recoveries, "fumble_recoveries"], ["TD", (p) => p.stats.defensive_touchdowns, "defensive_touchdowns"]],
+    kicking: [["FG", (p) => `${p.stats.fg_made}/${p.stats.fg_attempted}`, "fg_made"], ["FG%", (p) => p.stats.fg_attempted ? Math.round(100 * p.stats.fg_made / p.stats.fg_attempted) : "–", "fg_pct"],
+      ["40-49", (p) => `${p.stats.fg_40_made || 0}/${p.stats.fg_40_att || 0}`, "fg_40_made"], ["50+", (p) => `${p.stats.fg_50_made || 0}/${p.stats.fg_50_att || 0}`, "fg_50_made"], ["Long", (p) => p.stats.long_fg || 0, "long_fg"],
+      ["PAT", (p) => `${p.stats.pat_made}/${p.stats.pat_attempts}`, "pat_made"], ["Pts", (p) => p.stats.fg_made * 3 + p.stats.pat_made, "points"]],
+    punting: [["Punts", (p) => p.stats.punts, "punts"], ["Yds", (p) => p.stats.punt_yards, "punt_yards"], ["Avg", (p) => p.stats.punts ? (p.stats.punt_yards / p.stats.punts).toFixed(1) : "–", "avg"],
+      ["Net", (p) => p.stats.punts ? ((p.stats.punt_net_yards || 0) / p.stats.punts).toFixed(1) : "–", "net", "Net average after returns"], ["In 20", (p) => p.stats.punts_inside_20 || 0, "punts_inside_20"],
+      ["TB", (p) => p.stats.punt_touchbacks || 0, "punt_touchbacks"], ["Long", (p) => p.stats.long_punt || 0, "long_punt"]],
+    returns: [["KR", (p) => p.stats.kickoff_returns, "kickoff_returns"], ["KR Yds", (p) => p.stats.kickoff_return_yards, "kickoff_return_yards"], ["KR Avg", (p) => p.stats.kickoff_returns ? (p.stats.kickoff_return_yards / p.stats.kickoff_returns).toFixed(1) : "–", "kr_avg"],
+      ["KR Long", (p) => p.stats.long_kickoff_return || 0, "long_kickoff_return"], ["PR", (p) => p.stats.punt_returns, "punt_returns"], ["PR Yds", (p) => p.stats.punt_return_yards, "punt_return_yards"],
+      ["PR Avg", (p) => p.stats.punt_returns ? (p.stats.punt_return_yards / p.stats.punt_returns).toFixed(1) : "–", "pr_avg"], ["PR Long", (p) => p.stats.long_punt_return || 0, "long_punt_return"],
+      ["TD", (p) => p.stats.kickoff_return_touchdowns + p.stats.punt_return_touchdowns, "td"]],
+    blocking: [["Snaps", (p) => p.stats.snaps || 0, "snaps"], ["GS", (p) => p.stats.games_started || 0, "games_started", "Games started"],
+      ["Sacks all.", (p) => p.stats.sacks_allowed || 0, "sacks_allowed", "Sacks allowed"], ["Press.", (p) => p.stats.pressures_allowed || 0, "pressures_allowed", "Pressures allowed"],
+      ["Stuffs", (p) => p.stats.stuffs_allowed || 0, "stuffs_allowed", "Runs stopped for no gain on this blocker"], ["Key blk", (p) => p.stats.key_blocks || 0, "key_blocks", "Blocks that sprang a 20-yard run"],
+      ["Per 100", (p) => p.stats.snaps ? (100 * ((p.stats.sacks_allowed || 0) + 0.5 * (p.stats.pressures_allowed || 0) + (p.stats.stuffs_allowed || 0)) / p.stats.snaps).toFixed(1) : "–", "per100", "Sacks, half-pressures and stuffs allowed per 100 snaps (lower is better)"]],
   };
+  const LOWER_BETTER_PLAYER = new Set(["interceptions_thrown", "sacks_taken", "fumbles", "sacks_allowed", "pressures_allowed", "stuffs_allowed", "per100", "punt_touchbacks"]);
   const playerStatsState = { team: null, conf: "", view: "leaders", sort: null, data: null, leaders: null, roster: null };
   const LEADER_CARDS = [
     ["passing", "Passing yards", (p) => `${p.stats.pass_yards.toLocaleString()} yds`, (p) => `${p.stats.completions}/${p.stats.pass_attempts} · ${p.stats.passing_touchdowns} TD · ${p.stats.interceptions_thrown} INT`],
@@ -1116,8 +1141,13 @@
     ["interceptions", "Interceptions", (p) => `${p.stats.interceptions}`, (p) => `${p.stats.interception_return_yards} ret yds · ${p.stats.defensive_touchdowns} TD`],
     ["touchdowns", "Touchdowns", (p) => `${p.stats.rushing_touchdowns + p.stats.receiving_touchdowns}`, (p) => `${p.stats.rushing_touchdowns} rush · ${p.stats.receiving_touchdowns} rec`],
     ["kicking", "Kicking points", (p) => `${p.stats.fg_made * 3 + p.stats.pat_made} pts`, (p) => `FG ${p.stats.fg_made}/${p.stats.fg_attempted} · PAT ${p.stats.pat_made}/${p.stats.pat_attempts}`],
+    ["tfl", "Tackles for loss", (p) => `${p.stats.tackles_for_loss || 0}`, (p) => `${p.stats.sacks} sacks · ${p.stats.hurries || 0} hurries`],
+    ["pbu", "Passes defended", (p) => `${p.stats.passes_defended || 0}`, (p) => `${p.stats.interceptions} INT · ${p.stats.solo_tackles + p.stats.assisted_tackles} tkl`],
+    ["explosives", "Explosive plays", (p) => `${(p.stats.explosive_runs || 0) + (p.stats.explosive_catches || 0)}`, (p) => `${p.stats.explosive_runs || 0} runs of 20+ · ${p.stats.explosive_catches || 0} catches of 25+`],
+    ["punting", "Net punting", (p) => `${p.value.toFixed(1)} net`, (p) => `${p.stats.punts} punts · ${p.stats.punts ? (p.stats.punt_yards / p.stats.punts).toFixed(1) : "–"} gross · ${p.stats.punts_inside_20 || 0} inside 20`],
+    ["blocking", "Offensive line", (p) => `${p.value > 0 ? "+" : ""}${p.value}`, (p) => `${p.stats.snaps || 0} snaps · ${p.stats.sacks_allowed || 0} sacks allowed · ${p.stats.key_blocks || 0} key blocks`],
   ];
-  const LEADER_TO_TABLE = { tackles: "defense", sacks: "defense", interceptions: "defense", touchdowns: "rushing" };
+  const LEADER_TO_TABLE = { tackles: "defense", sacks: "defense", interceptions: "defense", touchdowns: "rushing", tfl: "defense", pbu: "defense", explosives: "rushing" };
   const ROSTER_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LOLB", "MLB", "ROLB", "CB", "S", "K", "P"];
   const ROSTER_LABELS = { LOLB: "OLB", ROLB: "OLB", MLB: "MLB" };
 
@@ -1221,10 +1251,11 @@
     const sortKey = ps.sort || cols.find((c) => c[2])[2];
     const val = (p, c) => { const v = c[1](p); return typeof v === "number" ? v : parseFloat(v) || 0; };
     const sortCol = cols.find((c) => c[2] === sortKey) || cols.find((c) => c[2]);
-    players.sort((a, b) => val(b, sortCol) - val(a, sortCol) || a.name.localeCompare(b.name));
+    const asc = LOWER_BETTER_PLAYER.has(sortKey);
+    players.sort((a, b) => (asc ? val(a, sortCol) - val(b, sortCol) : val(b, sortCol) - val(a, sortCol)) || a.name.localeCompare(b.name));
     const table = el("table", { class: "stats" });
     const head = el("tr", {}, [el("th", { text: "#" }), el("th", { class: "left", text: "Player" }), ps.team ? null : el("th", { class: "left", text: "Team" }), el("th", { text: "G" }),
-      ...cols.map((c) => el("th", { class: c[2] ? `sortable ${c[2] === sortKey ? "sorted-desc" : ""}` : "", text: c[0], "data-key": c[2] || "" }))]);
+      ...cols.map((c) => el("th", { class: c[2] ? `sortable ${c[2] === sortKey ? (asc ? "sorted-asc" : "sorted-desc") : ""}` : "", text: c[0], "data-key": c[2] || "", title: c[3] || c[0] }))]);
     head.addEventListener("click", (e) => { const th = e.target.closest("th[data-key]"); if (th && th.dataset.key) { ps.sort = th.dataset.key; renderSeasonPlayerStats(); } });
     table.append(head);
     players.forEach((p, i) => {
@@ -1266,7 +1297,10 @@
       players.forEach((p, i) => {
         card.append(el("div", { class: `leader-row ${p.starter ? "top" : ""}` }, [
           el("span", { class: "rank", text: p.starter ? "★" : String(i + 1) }),
-          el("span", { class: "who" }, [el("span", { class: "name", text: p.name }), el("span", { class: "muted small-text", text: p.starter ? "starter" : "" })]),
+          el("span", { class: "who" }, [
+            el("span", { class: "name" }, [p.name, p.class ? el("span", { class: "pos", text: p.class }) : null]),
+            el("span", { class: "muted small-text", text: [p.starter ? (p.role && p.role !== p.position ? `starter · ${p.role}` : "starter") : (p.role && p.role !== p.position ? p.role : ""), p.height && p.weight ? `${p.height} ${p.weight}` : ""].filter(Boolean).join(" · ") }),
+          ]),
           el("span", { class: "value", text: String(p.overall) }),
         ]));
       });

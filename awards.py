@@ -147,14 +147,16 @@ def _z(values: list[float]) -> tuple[float, float]:
 
 def _rank_bonus(rank: Optional[int]) -> float:
     if rank is None:
-        return -0.6
+        return -1.0
     if rank <= 4:
         return 1.5
     if rank <= 10:
         return 0.8
+    if rank <= 15:
+        return 0.1
     if rank <= 25:
-        return 0.2
-    return -0.3
+        return -0.2
+    return -0.6
 
 
 # ----- the player pool ------------------------------------------------------------
@@ -355,6 +357,8 @@ class Pool:
     def heisman_score(self, p: dict) -> float:
         """Standardized production times the position prior, plus the team term."""
         best = max((p["zb"][g] * POSITION_PRIOR.get(g, 0.3) for g in p["zb"]), default=-9)
+        if self.teams[p["team"]]["conference"] in G5:
+            best *= 0.85
         return best + 0.45 * self.team_term(p["team"])
 
     def card(self, p: dict, group: Optional[str] = None) -> dict:
