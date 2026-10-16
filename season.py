@@ -23,6 +23,7 @@ Usage:  python season.py ohio-state [full|remaining]      # simulate to the end 
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -1694,6 +1695,93 @@ def team_schedule(state: dict, slug: str) -> list[dict]:
                              "opponent_record": None, "date": None})
     schedule.sort(key=lambda g: (g["week"], g["date"] or ""))
     return schedule
+
+
+# ----- this week: the upcoming game and a simulated prediction ------------------------
+
+_preview_cache: dict = {}
+
+
+def _preview_team(state: dict, slug: str) -> dict:
+    """The team as the next sim will see it: god-mode edits where that exists, the depth
+    chart and the injury list."""
+    td = globals().get("team_data")
+    base = td(state, slug) if td else load_teams()[slug]
+    out = [(i["name"], i["position"]) for i in (state.get("injuries") or {}).get(slug, {}).values()]
+    return _with_injuries(apply_depth(base, (state.get("depth") or {}).get(slug)), out)
+
+
+def next_game(state: dict, slug: str) -> Optional[dict]:
+    """The team's next unplayed game (this week's, or the first after a bye)."""
+    games = sorted((g for g in state["games"].values() if slug in (g["home"], g["away"]) and not g["played"] and g["week"] > state["current_week"]),
+                   key=lambda g: g["week"])
+    return games[0] if games else None
+
+
+def game_preview(state: dict, slug: str, sims: int = 20) -> dict:
+    """This week for one team: the next game with both ranks and records, and a prediction
+    from simulating it `sims` times (win odds, the likely score, the margin, the passer and
+    rusher to watch). Nothing here touches the season's random stream."""
+    from engine.game import simulate_game
+    teams = load_teams()
+    g = next_game(state, slug)
+    if state["done"] or g is None:
+        return {"team": slug, "game": None, "reason": "done" if state["done"] else "no game"}
+    home = g["home"] == slug
+    opp = g["away"] if home else g["home"]
+    ranks = rank_map(state, state["current_week"])
+    rec = _records(state, include_playoff=True)
+    riv = globals().get("game_rivalry")
+    game = {"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "site": g.get("site"), "date": g.get("date"),
+            "bye_first": g["week"] > state["current_week"] + 1,
+            "opponent": opp, "opponent_name": g["away_display"] if home else g["home_display"], "opponent_rank": ranks.get(opp),
+            "opponent_record": f"{rec[opp]['wins']}-{rec[opp]['losses']}" if opp in rec and not teams.get(opp, {}).get("fictional") else "",
+            "my_rank": ranks.get(slug), "my_record": f"{rec[slug]['wins']}-{rec[slug]['losses']}",
+            "venue": "neutral" if g["neutral"] else ("home" if home else "away"), "rivalry": riv(state, g) if riv else None}
+    key = (state["id"], state["current_week"], g["event_id"], json.dumps(state.get("player_edits") or {}, sort_keys=True)[:200],
+           json.dumps(state.get("depth") or {}, sort_keys=True)[:200], len(json.dumps(state.get("injuries") or {})))
+    pred = _preview_cache.get(key)
+    if pred is None:
+        h, a = _preview_team(state, g["home"]), _preview_team(state, g["away"])
+        seed0 = int(hashlib.sha256(f"{state['id']}|{g['event_id']}|{state['current_week']}".encode()).hexdigest()[:8], 16)
+        wins = 0
+        pts = {"home": [], "away": []}
+        stat_sum: dict[str, dict[str, dict]] = {"home": {}, "away": {}}
+        for i in range(sims):
+            r = simulate_game(h, a, seed=seed0 + i, venue="neutral" if g["neutral"] else "home")
+            if r["home"]["score"] > r["away"]["score"]:
+                wins += 1
+            for side in ("home", "away"):
+                pts[side].append(r[side]["score"])
+                for p in r[side]["players"]:
+                    if p.get("stats"):
+                        acc = stat_sum[side].setdefault(f"{p['name']}|{p['position']}", {"name": p["name"], "position": p["position"], "stats": {}})
+                        for k, v in p["stats"].items():
+                            if isinstance(v, (int, float)):
+                                acc["stats"][k] = acc["stats"].get(k, 0) + v
+
+        def watch(side: str, key_stat: str, keys: list[str]) -> Optional[dict]:
+            best = max(stat_sum[side].values(), key=lambda x: x["stats"].get(key_stat, 0), default=None)
+            if not best or not best["stats"].get(key_stat):
+                return None
+            return {"name": best["name"], "position": best["position"], **{k: round(best["stats"].get(k, 0) / sims, 1) for k in keys}}
+
+        avg = {s: sum(v) / sims for s, v in pts.items()}
+        p_home = wins / sims
+        pred = {"sims": sims, "home_win_prob": round(p_home, 2), "home_points": round(avg["home"], 1), "away_points": round(avg["away"], 1),
+                "margin": round(avg["home"] - avg["away"], 1), "total": round(avg["home"] + avg["away"], 1),
+                "watch": {side: {"passer": watch(side, "pass_yards", ["completions", "pass_attempts", "pass_yards", "passing_touchdowns", "interceptions_thrown"]),
+                                 "rusher": watch(side, "rush_yards", ["carries", "rush_yards", "rushing_touchdowns"]),
+                                 "receiver": watch(side, "receiving_yards", ["receptions", "receiving_yards", "receiving_touchdowns"])} for side in ("home", "away")}}
+        _preview_cache.clear() if len(_preview_cache) > 64 else None
+        _preview_cache[key] = pred
+    mine, theirs = ("home", "away") if home else ("away", "home")
+    prediction = {"sims": pred["sims"], "win_prob": pred["home_win_prob"] if home else round(1 - pred["home_win_prob"], 2),
+                  "points_for": pred[f"{mine}_points"], "points_against": pred[f"{theirs}_points"],
+                  "margin": round(pred[f"{mine}_points"] - pred[f"{theirs}_points"], 1), "total": pred["total"],
+                  "watch": pred["watch"][mine], "their_watch": pred["watch"][theirs]}
+    return {"team": slug, "team_name": teams[slug]["name"], "game": game, "prediction": prediction,
+            "injuries": injury_report(state, slug)}
 
 
 def team_schedule_view(state: dict, slug: str) -> dict:

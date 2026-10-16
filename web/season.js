@@ -1539,6 +1539,61 @@
     box.append(el("div", { class: "injury-league" }, [head, holder]));
   }
 
+  // ----- this week: the next game, a prediction, the injury report ----------------
+  const thisWeekState = { key: null, data: null };
+  async function renderThisWeek(box, d) {
+    const s = state.season;
+    const card = el("div", { class: "review-card this-week" });
+    box.append(card);
+    const key = `${s.id}|${s.current_week}|${d.team}`;
+    let data = thisWeekState.key === key ? thisWeekState.data : null;
+    if (!data) {
+      card.append(el("div", { class: "review-label", text: "This week" }), el("p", { class: "muted small-text", text: "Simulating the matchup…" }));
+      try { data = await api(`/api/season/${s.id}/preview?team=${d.team}`); } catch (err) { card.innerHTML = ""; card.append(el("div", { class: "review-label", text: "This week" }), el("p", { class: "muted small-text", text: err.message })); return; }
+      thisWeekState.key = key; thisWeekState.data = data;
+    }
+    if (!card.isConnected) return;
+    card.innerHTML = "";
+    const g = data.game;
+    if (!g) { card.append(el("div", { class: "review-label", text: "This week" }), el("p", { class: "muted", text: data.reason === "done" ? "Season complete." : "No game left on the schedule." })); return; }
+    const p = data.prediction;
+    const wk = s.week_labels[g.week] || `Week ${g.week}`;
+    const dateText = g.date && /^\d{4}-\d{2}-\d{2}/.test(g.date) ? fmtDay(g.date.slice(0, 10), true) : (g.date || ((s.week_dates || {})[g.week] || {}).main ? fmtDay(s.week_dates[g.week].main, true) : "");
+    const where = g.venue === "home" ? "Home" : g.venue === "away" ? "Away" : "Neutral site";
+    card.append(el("div", { class: "review-label", text: g.bye_first ? `Bye this week · next up ${wk}` : `This week · ${wk}` }));
+    const oppLine = el("div", { class: "review-big" }, [
+      el("span", { class: "muted", text: `${g.venue === "away" ? "at" : "vs"} ` }), g.opponent_rank ? el("span", { class: "rank", text: `#${g.opponent_rank} ` }) : null, teamPill(g.opponent), g.opponent_name,
+      el("span", { class: "pos", text: `${g.opponent_record ? g.opponent_record + " · " : ""}${where}${g.title ? " · " + g.title : ""}` }),
+    ]);
+    card.append(oppLine);
+    const bits = [dateText, g.site, g.rivalry ? `${g.rivalry.trophy ? "🏆 " + g.rivalry.trophy : "🔥 " + g.rivalry.name} · ${g.rivalry.series}` : null].filter(Boolean);
+    if (bits.length) card.append(el("div", { class: "muted small-text", text: bits.join(" · ") }));
+    // the prediction: the likely score, the odds, who to watch
+    // whole points, unless rounding would call it a tie
+    const tie = Math.round(p.points_for) === Math.round(p.points_against);
+    const pf = tie ? p.points_for.toFixed(1) : Math.round(p.points_for), pa = tie ? p.points_against.toFixed(1) : Math.round(p.points_against);
+    const fav = p.win_prob >= 0.5;
+    const line = fav ? `${data.team_name} by ${Math.abs(p.margin).toFixed(1)}` : `${g.opponent_name} by ${Math.abs(p.margin).toFixed(1)}`;
+    card.append(el("div", { class: "review-tiles" }, [
+      el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: `${pf}–${pa}` }), el("div", { class: "review-label", text: "Predicted score" })]),
+      el("div", { class: "review-tile" }, [el("div", { class: `review-leader-big ${fav ? "win" : "loss"}`, text: `${Math.round(p.win_prob * 100)}%` }), el("div", { class: "review-label", text: "Win odds" })]),
+      el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: line }), el("div", { class: "review-label", text: "Line" })]),
+      el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: p.total.toFixed(1) }), el("div", { class: "review-label", text: "Total" })]),
+    ]));
+    const w = p.watch || {};
+    const watchBits = [
+      w.passer ? `${w.passer.name}: ${Math.round(w.passer.completions)}/${Math.round(w.passer.pass_attempts)}, ${Math.round(w.passer.pass_yards)} yds, ${w.passer.passing_touchdowns.toFixed(1)} TD` : null,
+      w.rusher ? `${w.rusher.name}: ${Math.round(w.rusher.carries)} car, ${Math.round(w.rusher.rush_yards)} yds` : null,
+      w.receiver ? `${w.receiver.name}: ${Math.round(w.receiver.receptions)} rec, ${Math.round(w.receiver.receiving_yards)} yds` : null,
+    ].filter(Boolean);
+    card.append(el("div", { class: "muted small-text", text: `From ${p.sims} simulations of the matchup with the current depth charts and injuries.${watchBits.length ? " Projected: " + watchBits.join(" · ") : ""}` }));
+    // the injury report
+    const inj = data.injuries || [];
+    const injBox = el("div", { class: "this-week-injuries" }, [el("h4", { text: `Injury report · ${inj.length ? `${inj.length} out` : "nobody out"}` })]);
+    if (inj.length) injBox.append(injuryTable(inj, false));
+    card.append(injBox);
+  }
+
   const scheduleState = { team: null, conf: "", data: null, key: null };
 
   async function openGamesModal() {
@@ -1586,6 +1641,7 @@
     const d = st.data;
     const mine = st.team === s.team;
     box.append(el("h3", {}, [teamPill(d.team), d.team_name, el("span", { class: "pos", text: `${d.rank ? `#${d.rank} · ` : ""}${d.record.wins}-${d.record.losses} · ${d.record.conf_wins}-${d.record.conf_losses} ${d.conference}` })]));
+    if (mine && !s.done) renderThisWeek(box, d);
     const table = el("table", { class: "stats schedule-table" });
     table.appendChild(el("tr", {}, ["Week", "Date", "Rank", "Opponent", "Where", "Result", "Score", ""].map((h) => el("th", { class: `${["Date", "Opponent"].includes(h) ? "left" : ""} ${["Rank", "Where", ""].includes(h) ? "ph" : ""}`, text: h }))));
     const wk = (w, g) => {
@@ -1596,10 +1652,11 @@
     // game dates are ISO for the regular season and bowl-style text ("Dec 30", "January 1") after it
     const gameDate = (g) => (g.date && /^\d{4}-\d{2}-\d{2}/.test(g.date) ? fmtDay(g.date.slice(0, 10), false) : (g.date || ""));
     for (const g of d.schedule) {
+      const upNext = !s.done && g.week === s.current_week + 1;
       if (g.kind === "bye") {
         const wd = s.week_dates && s.week_dates[g.week];
-        table.appendChild(el("tr", { class: "bye" }, [
-          el("td", { text: wk(g.week) }), el("td", { class: "left muted small-text", text: wd && wd.main ? fmtDay(wd.main, false) : "" }),
+        table.appendChild(el("tr", { class: `bye ${upNext ? "upnext" : ""}` }, [
+          el("td", {}, [wk(g.week), upNext ? el("span", { class: "upnext-tag", text: "this week" }) : null]), el("td", { class: "left muted small-text", text: wd && wd.main ? fmtDay(wd.main, false) : "" }),
           el("td", { class: "muted ph", text: g.my_rank ? `#${g.my_rank}` : "" }),
           el("td", { class: "left muted", text: "Bye" }), el("td", { class: "ph" }), el("td", { class: "muted", text: "–" }), el("td", {}), el("td", { class: "ph" }),
         ]));
@@ -1607,8 +1664,8 @@
       }
       const prefix = g.venue === "away" ? "at" : "vs";
       const when = g.date ? gameDate(g) : ((s.week_dates || {})[g.week] || {}).main ? fmtDay(s.week_dates[g.week].main, false) : "";
-      const tr = el("tr", { class: `${g.has_box ? "clickable" : ""} ${g.played ? (g.won ? "won" : "lost") : ""}` }, [
-        el("td", { text: wk(g.week, g) }),
+      const tr = el("tr", { class: `${g.has_box ? "clickable" : ""} ${g.played ? (g.won ? "won" : "lost") : ""} ${upNext ? "upnext" : ""}` }, [
+        el("td", {}, [wk(g.week, g), upNext ? el("span", { class: "upnext-tag", text: "this week" }) : null]),
         el("td", { class: "left muted small-text", text: when }),
         el("td", { class: "muted ph", text: g.my_rank ? `#${g.my_rank}` : "", title: "Rank entering the game" }),
         el("td", { class: "left name" }, [el("span", { class: "muted", text: `${prefix} ` }), teamPill(g.opponent), g.opponent_rank ? el("span", { class: "rank", text: `#${g.opponent_rank} ` }) : null, g.opponent_name,

@@ -556,6 +556,17 @@ def season_player_edit(season_id: str, req: PlayerEditRequest) -> dict:
     return {"edits": edits, "player": profile}
 
 
+@app.get("/api/season/{season_id}/preview")
+def season_preview(season_id: str, team: Optional[str] = None) -> dict:
+    """This week for a team (default: yours): the next game, a prediction from simulating
+    it, and the injury report."""
+    state = _season_state(season_id)
+    slug = team or state["team"]
+    if slug not in _teams:
+        raise HTTPException(404, "unknown team")
+    return season.game_preview(state, slug)
+
+
 @app.get("/api/season/{season_id}/rivalries")
 def season_rivalries(season_id: str, team: Optional[str] = None) -> dict:
     """A team's rivalries (default: yours): trophy, series today and this season's meeting."""

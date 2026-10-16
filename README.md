@@ -504,6 +504,16 @@ and used by every game from the next sim on; an edited rating is marked on the c
 `GET/POST /api/season/{id}/settings`, `POST /api/season/{id}/player/edit`;
 `python test_godmode.py` checks validation, the views and the sim's team data.
 
+### This week
+
+Your Team Schedule opens with a "This week" card: the next game with both teams' rank
+and record, the venue, the date and the trophy on the line, then a prediction from 20
+simulations of the matchup with the current depth charts, injuries and edits (the likely
+score, your win odds, the line and the total, the passer, rusher and receiver to watch),
+and your injury report. The week's row in the schedule below is highlighted with a
+"this week" tag. On a bye the card shows the next game after it.
+`GET /api/season/{id}/preview?team=`.
+
 ### Rivalry trophies and the all-time series
 
 `data/rivalries.json` lists 90 FBS rivalries: the game's name, its trophy (Paul Bunyan's
