@@ -470,8 +470,14 @@
   // class, size, rating and season headline. Starters are the first column.
   async function renderDepthChart() {
     const s = state.season;
+    if (!s) return;
     const box = $("#tab-depth");
     box.innerHTML = "";
+    try { await renderDepthChartBody(box, s); }
+    catch (err) { box.append(el("p", { class: "muted", text: `Could not draw the depth chart: ${err.message}` })); console.error(err); }
+  }
+
+  async function renderDepthChartBody(box, s) {
     const ds = depthState;
     if (ds.team === null) ds.team = s.team;
     const controls = el("div", { class: "stats-controls" });
