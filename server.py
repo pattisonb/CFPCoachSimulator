@@ -546,6 +546,18 @@ def season_awards(season_id: str) -> dict:
     return season.awards_view(_season_state(season_id))
 
 
+@app.get("/api/season/{season_id}/player")
+def season_player(season_id: str, team: str, name: Optional[str] = None, position: Optional[str] = None, slug: Optional[str] = None) -> dict:
+    """One player's page: bio, ratings, season totals, ranks, game log, honors."""
+    state = _season_state(season_id)
+    if team not in _teams:
+        raise HTTPException(404, "unknown team")
+    prof = season.player_profile(state, team, name=name or None, position=position or None, slug=slug or None)
+    if prof is None:
+        raise HTTPException(404, "player not found")
+    return prof
+
+
 @app.get("/api/season/{season_id}/stats/leaders")
 def season_player_leaders(season_id: str, team: Optional[str] = None, n: int = 5, conference: Optional[str] = None) -> dict:
     state = _season_state(season_id)

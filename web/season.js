@@ -425,7 +425,7 @@
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "box"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "box", "player"]) $(`#tab-${t}`).hidden = t !== name;
   }
 
   function renderTab() {
@@ -439,6 +439,7 @@
     else if (t === "bowls") renderBowls();
     else if (t === "summary") renderSummary();
     else if (t === "awards") renderAwards();
+    else if (t === "player") { /* rendered by openPlayer */ }
     else if (t === "stats") renderStats();
     else if (t === "depth") renderDepthChart();
   }
@@ -530,7 +531,7 @@
             i < row.players.length - 1 && !["KR", "PR"].includes(row.role) ? (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "▼", title: "Move down" }); b.addEventListener("click", () => change({ role: row.role, player: p.slug, move: "down" })); return b; })() : null,
           ]);
           cells.push(el("td", { class: `left depth-cell ${i === 0 ? "starter" : ""}` }, [
-            el("div", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, p.name, el("span", { class: "pos", text: `${p.class || ""}${p.position !== row.role ? " · " + p.position : ""}` }),
+            el("div", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, el("span", { text: p.name, ...playerAttrs(ds.team, p.name, p.position) }), el("span", { class: "pos", text: `${p.class || ""}${p.position !== row.role ? " · " + p.position : ""}` }),
               p.injury ? el("span", { class: "injury-tag", title: `${p.injury.type}, back ${s.week_labels[p.injury.returns_week] || "week " + p.injury.returns_week}`, text: `OUT ${p.injury.weeks_left}w` }) : null, ctl]),
             el("div", { class: "muted small-text", text: [`${p.overall} ovr`, p.height && p.weight ? `${p.height} ${p.weight}` : "", p.headline || (p.games ? `${p.games} games` : "")].filter(Boolean).join(" · ") }),
           ]));
@@ -544,6 +545,196 @@
 
 
   // ----- season summary ------------------------------------------------------
+
+  // ----- player profiles ------------------------------------------------------
+  // Any element with data-player="team|name|position" opens the player's page. The page
+  // is its own tab (like the box score) with a Back button to the tab you came from.
+
+  const playerState = { back: null, cache: new Map() };
+  const STAT_GROUPS = [
+    ["Passing", [["pass_attempts", "Att"], ["completions", "Cmp"], ["pass_yards", "Yds"], ["passing_touchdowns", "TD"], ["interceptions_thrown", "INT"], ["sacks_taken", "Sacked"], ["passing_first_downs", "1st downs"], ["long_pass", "Long"]]],
+    ["Rushing", [["carries", "Car"], ["rush_yards", "Yds"], ["rushing_touchdowns", "TD"], ["explosive_runs", "20+"], ["rushing_first_downs", "1st downs"], ["long_rush", "Long"], ["fumbles", "Fum"]]],
+    ["Receiving", [["targets", "Tgt"], ["receptions", "Rec"], ["receiving_yards", "Yds"], ["receiving_touchdowns", "TD"], ["explosive_catches", "25+"], ["receiving_first_downs", "1st downs"], ["long_reception", "Long"]]],
+    ["Defense", [["solo_tackles", "Solo"], ["assisted_tackles", "Ast"], ["tackles_for_loss", "TFL"], ["sacks", "Sacks"], ["hurries", "Hurries"], ["interceptions", "INT"], ["interception_return_yards", "INT yds"], ["passes_defended", "PBU"], ["forced_fumbles", "FF"], ["fumble_recoveries", "FR"], ["defensive_touchdowns", "TD"]]],
+    ["Blocking", [["snaps", "Snaps"], ["games_started", "Starts"], ["key_blocks", "Key blocks"], ["sacks_allowed", "Sacks allowed"], ["pressures_allowed", "Pressures"], ["stuffs_allowed", "Stuffs"]]],
+    ["Kicking", [["fg_made", "FGM"], ["fg_attempted", "FGA"], ["fg_40_made", "40-49 made"], ["fg_50_made", "50+ made"], ["long_fg", "Long"], ["pat_made", "PAT"], ["pat_attempts", "PAT att"]]],
+    ["Punting", [["punts", "Punts"], ["punt_yards", "Yds"], ["punt_net_yards", "Net yds"], ["punts_inside_20", "Inside 20"], ["punt_touchbacks", "TB"], ["long_punt", "Long"]]],
+    ["Returns", [["kickoff_returns", "KR"], ["kickoff_return_yards", "KR yds"], ["kickoff_return_touchdowns", "KR TD"], ["long_kickoff_return", "KR long"], ["punt_returns", "PR"], ["punt_return_yards", "PR yds"], ["punt_return_touchdowns", "PR TD"], ["long_punt_return", "PR long"]]],
+  ];
+  const DEF_POS = new Set(["DL", "MLB", "ROLB", "LOLB", "OLB", "CB", "S"]);
+
+  function playerAttrs(team, name, position) {
+    return team && name ? { "data-player": `${team}|${name}|${position || ""}`, class: "plink", title: "Open player page" } : {};
+  }
+
+  async function openPlayer(team, name, position) {
+    const s = state.season;
+    if (!s) return;
+    const key = `${s.id}|${s.current_week}|${team}|${name}|${position}`;
+    let p = playerState.cache.get(key);
+    if (!p) {
+      try { p = await api(`/api/season/${s.id}/player?team=${encodeURIComponent(team)}&name=${encodeURIComponent(name)}&position=${encodeURIComponent(position || "")}`); }
+      catch (err) { toast(`Could not load that player: ${err.message}`, 3000); return; }
+      playerState.cache.set(key, p);
+    }
+    if (state.tab !== "player") playerState.back = state.tab;
+    renderPlayer(p);
+    $("#season-tabs button[data-tab='player']").hidden = false;
+    selectTab("player");
+    state.tab = "player";
+    window.scrollTo({ top: 0 });
+  }
+
+  function headlineTiles(p) {
+    const st = p.stats || {};
+    const g = Math.max(1, p.games || 1);
+    const n = (k) => st[k] || 0;
+    const pos = p.position;
+    let tiles = [];
+    if (pos === "QB") tiles = [["Pass yds", n("pass_yards").toLocaleString()], ["TD", `${n("passing_touchdowns")}`], ["INT", `${n("interceptions_thrown")}`], ["Rating", p.rating ? p.rating.toFixed(1) : "–"], ["Cmp %", n("pass_attempts") ? `${Math.round(100 * n("completions") / n("pass_attempts"))}%` : "–"], ["Rush yds", n("rush_yards").toLocaleString()]];
+    else if (pos === "RB") tiles = [["Rush yds", n("rush_yards").toLocaleString()], ["TD", `${n("rushing_touchdowns") + n("receiving_touchdowns")}`], ["Yds/car", n("carries") ? (n("rush_yards") / n("carries")).toFixed(1) : "–"], ["Yds/game", (n("rush_yards") / g).toFixed(1)], ["Rec yds", n("receiving_yards").toLocaleString()], ["20+ runs", `${n("explosive_runs")}`]];
+    else if (pos === "WR" || pos === "TE") tiles = [["Rec", `${n("receptions")}`], ["Yds", n("receiving_yards").toLocaleString()], ["TD", `${n("receiving_touchdowns")}`], ["Yds/rec", n("receptions") ? (n("receiving_yards") / n("receptions")).toFixed(1) : "–"], ["Yds/game", (n("receiving_yards") / g).toFixed(1)], ["25+ catches", `${n("explosive_catches")}`]];
+    else if (pos === "OL") tiles = [["Snaps", `${n("snaps")}`], ["Starts", `${n("games_started")}`], ["Sacks allowed", `${n("sacks_allowed")}`], ["Pressures", `${n("pressures_allowed")}`], ["Key blocks", `${n("key_blocks")}`], ["Stuffs", `${n("stuffs_allowed")}`]];
+    else if (DEF_POS.has(pos)) tiles = [["Tackles", `${n("solo_tackles") + n("assisted_tackles")}`], ["TFL", `${n("tackles_for_loss")}`], ["Sacks", `${n("sacks")}`], ["INT", `${n("interceptions")}`], ["PBU", `${n("passes_defended")}`], ["FF", `${n("forced_fumbles")}`]];
+    else if (pos === "K") tiles = [["FG", `${n("fg_made")}/${n("fg_attempted")}`], ["FG %", n("fg_attempted") ? `${Math.round(100 * n("fg_made") / n("fg_attempted"))}%` : "–"], ["50+", `${n("fg_50_made")}/${n("fg_50_att")}`], ["Long", `${n("long_fg") || "–"}`], ["PAT", `${n("pat_made")}/${n("pat_attempts")}`], ["Points", `${3 * n("fg_made") + n("pat_made")}`]];
+    else if (pos === "P") tiles = [["Punts", `${n("punts")}`], ["Avg", n("punts") ? (n("punt_yards") / n("punts")).toFixed(1) : "–"], ["Net", n("punts") ? (n("punt_net_yards") / n("punts")).toFixed(1) : "–"], ["Inside 20", `${n("punts_inside_20")}`], ["Touchbacks", `${n("punt_touchbacks")}`], ["Long", `${n("long_punt") || "–"}`]];
+    return tiles;
+  }
+
+  function renderPlayer(p) {
+    const s = state.season;
+    const box = $("#tab-player");
+    box.innerHTML = "";
+    const team = p.team;
+    const t = window.CFP.teamsBySlug[team.slug] || {};
+    const col = (t.colors || {});
+    const primary = col.primary || "#888";
+
+    // header: back link, hero in team colours
+    const bar = el("div", { class: "player-bar" }, [
+      (() => { const b = el("button", { type: "button", class: "ghost", text: "‹ Back" }); b.addEventListener("click", () => { state.tab = playerState.back || "games"; renderTab(); }); return b; })(),
+      el("span", { class: "muted small-text", text: `${team.name}${team.rank ? ` · #${team.rank}` : ""} · ${team.record} · ${team.conference}` }),
+    ]);
+    box.append(bar);
+    const hero = el("div", { class: `player-hero ${team.slug === s.team ? "mine" : ""}` });
+    hero.style.setProperty("--p-primary", primary);
+    hero.style.setProperty("--p-secondary", col.secondary || primary);
+    const facts = [p.position + (p.role && !["QB", "WR", "TE", "K", "P", "HB", "CB"].includes(p.role) ? ` · ${p.role}` : ""), p.class_name, p.height && p.weight ? `${p.height}, ${p.weight} lbs` : (p.height || ""), p.dev_trait ? `${p.dev_trait} prospect` : ""].filter(Boolean);
+    hero.append(
+      el("div", { class: "player-hero-main" }, [
+        (() => { const pill = teamPill(team.slug); pill.classList.add("big"); return pill; })(),
+        el("div", {}, [
+          el("div", { class: "player-name" }, [p.jersey ? el("span", { class: "player-jersey", text: `#${p.jersey} ` }) : null, p.name]),
+          el("div", { class: "muted player-facts", text: facts.join(" · ") }),
+          el("div", { class: "player-tags" }, [
+            p.starter ? el("span", { class: "tag good", text: "Starter" }) : el("span", { class: "tag", text: p.depth ? `${p.role || p.position} #${p.depth}` : "Reserve" }),
+            p.injured ? el("span", { class: "tag bad", text: "Injured" }) : null,
+            p.games ? el("span", { class: "tag", text: `${p.games} of ${p.team_games} games` }) : el("span", { class: "tag", text: "No games yet" }),
+          ]),
+        ]),
+      ]),
+      el("div", { class: "player-ovr" }, [el("div", { class: "player-ovr-num", text: String(p.overall) }), el("div", { class: "review-label", text: "Overall" })]),
+    );
+    box.append(hero);
+
+    // headline tiles
+    const tiles = headlineTiles(p);
+    if (tiles.length && p.games) box.append(el("div", { class: "review-tiles player-tiles" }, tiles.map(([k, v]) => el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: v }), el("div", { class: "review-label", text: k })]))));
+
+    const grid = el("div", { class: "player-grid" });
+    // ratings
+    const rat = el("div", { class: "leader-card player-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: "Ratings" }), el("span", { class: "muted small-text", text: "0-99, 50 is an average FBS player" })])]);
+    for (const r of p.ratings) {
+      const pct = Math.max(2, Math.min(100, r.value));
+      const tone = r.value >= 75 ? "hi" : r.value >= 55 ? "mid" : "lo";
+      rat.append(el("div", { class: "rating-row" }, [el("span", { class: "rating-label", text: r.label }), el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]), el("b", { class: "rating-num", text: String(r.value) })]));
+    }
+    grid.append(rat);
+
+    // ranks
+    const rk = el("div", { class: "leader-card player-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: "Where he ranks" }), el("span", { class: "muted small-text", text: p.ranks.length ? "FBS · conference" : "" })])]);
+    if (!p.ranks.length) rk.append(el("p", { class: "muted small-text", text: p.games ? "Not enough games to rank yet." : "No games played yet." }));
+    for (const r of p.ranks) {
+      const ord = (n) => `${n}${["th", "st", "nd", "rd"][(n % 100 > 10 && n % 100 < 14) ? 0 : Math.min(n % 10, 4) % 4] || "th"}`;
+      rk.append(el("div", { class: "leader-row" }, [
+        el("span", { class: "rank", text: "" }),
+        el("span", { class: "who" }, [el("span", { class: "name", text: r.label }), el("span", { class: "muted small-text", text: `${ord(r.fbs_rank)} of ${r.fbs_n} in FBS · ${ord(r.conf_rank)} of ${r.conf_n} in the ${team.conference}` })]),
+        el("span", { class: `value ${r.fbs_rank <= 10 ? "top" : ""}`, text: String(r.value) }),
+      ]));
+    }
+    grid.append(rk);
+    box.append(grid);
+
+    // season totals by group
+    const used = STAT_GROUPS.filter(([, cols]) => cols.some(([k]) => p.stats[k]));
+    if (used.length) {
+      box.append(el("h3", { text: "Season totals" }));
+      const wrap = el("div", { class: "player-grid" });
+      for (const [title, cols] of used) {
+        const shown = cols.filter(([k]) => p.stats[k] != null && p.stats[k] !== 0);
+        const table = el("table", { class: "stats" });
+        table.append(el("tr", {}, [el("th", { class: "left", text: title === "Blocking" && p.position !== "OL" ? "Playing time" : title }), ...shown.map(([, lbl]) => el("th", { text: lbl }))]));
+        table.append(el("tr", {}, [el("td", { class: "left muted", text: "Total" }), ...shown.map(([k]) => el("td", { text: fmtStatValue(p.stats[k]) }))]));
+        if (p.games > 1) table.append(el("tr", {}, [el("td", { class: "left muted", text: "Per game" }), ...shown.map(([k]) => el("td", { class: "muted", text: /^long_/.test(k) ? "" : (p.stats[k] / p.games).toFixed(1) }))]));
+        wrap.append(el("div", { class: "table-scroll" }, [table]));
+      }
+      box.append(wrap);
+    }
+
+    // game log
+    box.append(el("h3", { text: "Game log" }));
+    if (p.game_log === null) box.append(el("p", { class: "muted small-text", text: "Game-by-game lines are kept for your own team's games; other teams carry season totals." }));
+    else if (!p.game_log.length) box.append(el("p", { class: "muted small-text", text: "No games played yet." }));
+    else box.append(gameLogTable(p));
+
+    // honors
+    if (p.honors.length) {
+      box.append(el("h3", { text: "Honors" }));
+      const table = el("table", { class: "stats" });
+      table.append(el("tr", {}, ["Stage", "Award", "Result"].map((h) => el("th", { class: "left", text: h }))));
+      for (const h of p.honors) table.append(el("tr", {}, [el("td", { class: "left muted", text: h.stage }), el("td", { class: "left" }, [el("b", { text: h.award }), h.detail ? el("span", { class: "muted small-text", text: ` · ${h.detail}` }) : null]), el("td", { class: `left ${/winner|unanimous|first/i.test(h.place) ? "win" : ""}`, text: h.place })]));
+      box.append(el("div", { class: "table-scroll" }, [table]));
+    }
+  }
+
+  function fmtStatValue(v) { return typeof v === "number" && !Number.isInteger(v) ? v.toFixed(1) : String(v); }
+
+  function gameLogTable(p) {
+    const s = state.season;
+    const pos = p.position;
+    const n = (st, k) => st[k] || 0;
+    let cols;
+    if (pos === "QB") cols = [["C/ATT", (st) => `${n(st, "completions")}/${n(st, "pass_attempts")}`], ["Yds", (st) => n(st, "pass_yards")], ["TD", (st) => n(st, "passing_touchdowns")], ["INT", (st) => n(st, "interceptions_thrown")], ["Rush", (st) => `${n(st, "carries")}-${n(st, "rush_yards")}`], ["Rush TD", (st) => n(st, "rushing_touchdowns")]];
+    else if (pos === "RB") cols = [["Car", (st) => n(st, "carries")], ["Yds", (st) => n(st, "rush_yards")], ["Avg", (st) => n(st, "carries") ? (n(st, "rush_yards") / n(st, "carries")).toFixed(1) : "–"], ["TD", (st) => n(st, "rushing_touchdowns")], ["Rec", (st) => `${n(st, "receptions")}-${n(st, "receiving_yards")}`], ["Rec TD", (st) => n(st, "receiving_touchdowns")]];
+    else if (pos === "WR" || pos === "TE") cols = [["Tgt", (st) => n(st, "targets")], ["Rec", (st) => n(st, "receptions")], ["Yds", (st) => n(st, "receiving_yards")], ["TD", (st) => n(st, "receiving_touchdowns")], ["Long", (st) => n(st, "long_reception")]];
+    else if (pos === "OL") cols = [["Snaps", (st) => n(st, "snaps")], ["Sacks all.", (st) => n(st, "sacks_allowed")], ["Pressures", (st) => n(st, "pressures_allowed")], ["Key blocks", (st) => n(st, "key_blocks")]];
+    else if (DEF_POS.has(pos)) cols = [["Tkl", (st) => n(st, "solo_tackles") + n(st, "assisted_tackles")], ["TFL", (st) => n(st, "tackles_for_loss")], ["Sacks", (st) => n(st, "sacks")], ["INT", (st) => n(st, "interceptions")], ["PBU", (st) => n(st, "passes_defended")], ["FF", (st) => n(st, "forced_fumbles")]];
+    else if (pos === "K") cols = [["FG", (st) => `${n(st, "fg_made")}/${n(st, "fg_attempted")}`], ["Long", (st) => n(st, "long_fg")], ["PAT", (st) => `${n(st, "pat_made")}/${n(st, "pat_attempts")}`]];
+    else if (pos === "P") cols = [["Punts", (st) => n(st, "punts")], ["Avg", (st) => n(st, "punts") ? (n(st, "punt_yards") / n(st, "punts")).toFixed(1) : "–"], ["In 20", (st) => n(st, "punts_inside_20")]];
+    else cols = [["Snaps", (st) => n(st, "snaps")]];
+    const table = el("table", { class: "stats" });
+    table.append(el("tr", {}, [el("th", { text: "Wk" }), el("th", { class: "left", text: "Opponent" }), el("th", { text: "Result" }), ...cols.map(([lbl]) => el("th", { text: lbl }))]));
+    for (const g of p.game_log) {
+      const row = el("tr", { class: "clickable" }, [
+        el("td", { class: "muted", text: g.week > 13 ? (s.week_labels[g.week] || "").replace("Championship week", "CCG").replace(" & bowls", "").replace(" & New Year bowls", "") : String(g.week) }),
+        el("td", { class: "left" }, [`${g.venue === "away" ? "at " : "vs "}`, teamPill(g.opponent), g.opponent_name, g.title ? el("span", { class: "muted small-text", text: ` · ${g.title}` }) : null]),
+        el("td", { class: g.won ? "win" : "loss", text: `${g.won ? "W" : "L"} ${g.points_for}–${g.points_against}` }),
+        ...cols.map(([, f]) => el("td", { text: String(f(g.stats)) })),
+      ]);
+      row.addEventListener("click", () => openBox(g.event_id));
+      table.append(row);
+    }
+    return el("div", { class: "table-scroll" }, [table]);
+  }
+
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-player]");
+    if (!t || e.target.closest("button")) return;
+    const [team, name, position] = t.dataset.player.split("|");
+    e.preventDefault();
+    e.stopPropagation();
+    openPlayer(team, name, position);
+  }, true);
 
   // ----- awards ------------------------------------------------------------
 
@@ -569,7 +760,7 @@
 
   function who(c, withTeam = true) {
     // name, position/class, team pill
-    const bits = [teamPill(c.team), el("b", { text: c.name || c.coach || c.team_name })];
+    const bits = [teamPill(c.team), el("b", { text: c.name || c.coach || c.team_name, ...(c.name ? playerAttrs(c.team, c.name, c.position) : {}) })];
     const ROLE_SHOWN = new Set(["LT", "LG", "C", "RG", "RT", "LEDG", "REDG", "DT", "SAM", "MIKE", "WILL", "FS", "SS"]);
     const tag = c.position ? `${c.position}${c.role && ROLE_SHOWN.has(c.role) ? " · " + c.role : ""}${classLabel(c.class)}` : (c.role || (c.coach ? "Head coach" : ""));
     if (tag) bits.push(el("span", { class: "pos", text: tag }));
@@ -654,7 +845,7 @@
     list.forEach((c, i) => {
       const row = el("div", { class: `leader-row ${i === 0 ? "top" : ""} ${c.team === state.season.team ? "mine" : ""}` }, [
         el("span", { class: "rank", text: live ? String(i + 1) : (i === 0 ? "W" : String(i + 1)) }),
-        el("span", { class: "who" }, [el("span", { class: "name" }, [teamPill(c.team), c.name || c.coach || c.team_name, el("span", { class: "pos", text: c.position ? `${c.position}${classLabel(c.class)}` : (c.role || "") })]),
+        el("span", { class: "who" }, [el("span", { class: "name" }, [teamPill(c.team), el("span", { text: c.name || c.coach || c.team_name, ...(c.name ? playerAttrs(c.team, c.name, c.position) : {}) }), el("span", { class: "pos", text: c.position ? `${c.position}${classLabel(c.class)}` : (c.role || "") })]),
           el("span", { class: "muted small-text", text: `${(c.name || c.coach) ? c.team_name + " · " : ""}${mode === "coach" ? coachLine(c) : (c.line || "")}` })]),
         el("span", { class: "value", text: headlineOf(c) }),
       ]);
@@ -811,7 +1002,7 @@
     const cols = [
       { key: "stage", label: "Stage", left: true, get: (r) => r.stage, sort: (r) => r.stage },
       { key: "award", label: "Award", left: true, get: (r) => el("b", { text: r.award }), sort: (r) => r.award },
-      { key: "who", label: "Who", left: true, get: (r) => el("span", { class: "name" }, [r.who, r.position ? el("span", { class: "pos", text: r.position }) : null]), sort: (r) => r.who || "" },
+      { key: "who", label: "Who", left: true, get: (r) => el("span", { class: "name" }, [el("span", { text: r.who, ...(r.position && r.position !== "Head coach" && !/coordinator/i.test(r.position) ? playerAttrs(state.season.team, r.who, r.position) : {}) }), r.position ? el("span", { class: "pos", text: r.position }) : null]), sort: (r) => r.who || "" },
       { key: "result", label: "Result", left: true, get: (r) => el("span", { class: r.rank === 0 ? "win" : "", text: r.place }), sort: (r) => r.rank },
       { key: "line", label: "Season", left: true, get: (r) => el("span", { class: "muted small-text", text: r.line || "" }) },
     ];
@@ -1484,7 +1675,7 @@
         card.append(el("div", { class: `leader-row ${i === 0 ? "top" : ""}` }, [
           el("span", { class: "rank", text: String(i + 1) }),
           el("span", { class: "who" }, [
-            el("span", { class: "name" }, [p.name, el("span", { class: "pos", text: p.position })]),
+            el("span", { class: "name" }, [el("span", { text: p.name, ...playerAttrs(p.team || ps.team, p.name, p.position) }), el("span", { class: "pos", text: p.position })]),
             el("span", { class: "muted small-text", text: `${ps.team ? "" : p.team_name + " · "}${line(p)}` }),
           ]),
           el("span", { class: "value", text: value(p) }),
@@ -1521,7 +1712,7 @@
     players.forEach((p, i) => {
       table.append(el("tr", {}, [
         el("td", { class: "muted", text: String(i + 1) }),
-        el("td", { class: "name" }, [p.name, el("span", { class: "pos", text: p.position })]),
+        el("td", { class: "name" }, [el("span", { text: p.name, ...playerAttrs(p.team || ps.team, p.name, p.position) }), el("span", { class: "pos", text: p.position })]),
         ps.team ? null : el("td", { class: "left" }, [teamPill(p.team), p.team_name]),
         el("td", { text: String(p.games) }),
         ...cols.map((c) => el("td", { text: String(c[1](p)) })),
@@ -1558,7 +1749,7 @@
         card.append(el("div", { class: `leader-row ${p.starter ? "top" : ""}` }, [
           el("span", { class: "rank", text: p.starter ? "★" : String(i + 1) }),
           el("span", { class: "who" }, [
-            el("span", { class: "name" }, [p.name, p.class ? el("span", { class: "pos", text: p.class }) : null]),
+            el("span", { class: "name" }, [el("span", { text: p.name, ...playerAttrs(slug, p.name, p.position) }), p.class ? el("span", { class: "pos", text: p.class }) : null]),
             el("span", { class: "muted small-text", text: [p.starter ? (p.role && p.role !== p.position ? `starter · ${p.role}` : "starter") : (p.role && p.role !== p.position ? p.role : ""), p.height && p.weight ? `${p.height} ${p.weight}` : ""].filter(Boolean).join(" · ") }),
           ]),
           el("span", { class: "value", text: String(p.overall) }),
@@ -1980,6 +2171,7 @@
     const s = state.season;
     try {
       const g = await api(`/api/season/${s.id}/game/${eventId}`);
+      window.CFP.currentBoxSlugs = { home: g.home_slug, away: g.away_slug };
       renderScoreboard(g, SBOX_IDS); renderScoring(g, SBOX_IDS); renderTeamStats(g, SBOX_IDS);
       renderPlayers(g.home, $("#sbox-home")); renderPlayers(g.away, $("#sbox-away")); renderDrives(g, SBOX_IDS);
       $("#season-tabs button[data-tab='box']").hidden = false;

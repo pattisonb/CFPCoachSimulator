@@ -1770,3 +1770,214 @@ def season_review(state: dict) -> dict:
             "longest_streak": best_streak, "postseason": postseason, "leaders": _player_leaders(boxes, me),
         },
     }
+
+
+# ----- player profiles --------------------------------------------------------------------
+# Everything about one player: bio and ratings from the roster, season totals, league and
+# conference ranks, the game log (your own team's games keep full box scores), honors.
+
+RATING_LABELS = [("speed", "Speed"), ("strength", "Strength"), ("intelligence", "Awareness"), ("endurance", "Stamina"),
+                 ("passing", "Passing"), ("decision_making", "Decisions"), ("elusiveness", "Elusiveness"), ("vision", "Vision"),
+                 ("hands", "Hands"), ("route_running", "Route running"), ("run_blocking", "Run blocking"), ("pass_blocking", "Pass blocking"),
+                 ("rushing", "Pass rush"), ("tackling", "Tackling"), ("coverage", "Coverage"), ("kick_power", "Kick power"),
+                 ("kick_accuracy", "Kick accuracy"), ("punt_power", "Punt power"), ("punt_accuracy", "Punt accuracy"), ("return_rating", "Returns")]
+CLASS_NAMES = {"FR": "Freshman", "FRRS": "Redshirt freshman", "SO": "Sophomore", "SORS": "Redshirt sophomore", "JR": "Junior",
+               "JRRS": "Redshirt junior", "SR": "Senior", "SRRS": "Redshirt senior"}
+# the stats a position is ranked on: (stat key or derived name, label, higher is better, minimum qualifier)
+RANK_STATS = {
+    "QB": [("pass_yards", "Passing yards"), ("passing_touchdowns", "Passing TDs"), ("rating", "Passer rating"), ("completion_pct", "Completion %"),
+           ("rush_yards", "Rushing yards"), ("total_touchdowns", "Total TDs")],
+    "RB": [("rush_yards", "Rushing yards"), ("rushing_touchdowns", "Rushing TDs"), ("yards_per_carry", "Yards per carry"), ("receiving_yards", "Receiving yards"),
+           ("scrimmage_yards", "Scrimmage yards"), ("explosive_runs", "Runs of 20+")],
+    "WR": [("receiving_yards", "Receiving yards"), ("receptions", "Receptions"), ("receiving_touchdowns", "Receiving TDs"), ("yards_per_catch", "Yards per catch"),
+           ("explosive_catches", "Catches of 25+")],
+    "TE": [("receiving_yards", "Receiving yards"), ("receptions", "Receptions"), ("receiving_touchdowns", "Receiving TDs")],
+    "OL": [("snaps", "Snaps"), ("key_blocks", "Key blocks"), ("sacks_allowed", "Sacks allowed")],
+    "DEF": [("tackles", "Tackles"), ("tackles_for_loss", "Tackles for loss"), ("sacks", "Sacks"), ("interceptions", "Interceptions"),
+            ("passes_defended", "Passes defended"), ("forced_fumbles", "Forced fumbles")],
+    "K": [("fg_made", "Field goals"), ("points", "Points"), ("fg_pct", "Field goal %"), ("long_fg", "Long field goal")],
+    "P": [("punt_avg", "Punt average"), ("net_avg", "Net average"), ("punts_inside_20", "Inside the 20")],
+}
+RANK_MINIMUM = {"rating": ("pass_attempts", 100), "completion_pct": ("pass_attempts", 100), "yards_per_carry": ("carries", 60),
+                "yards_per_catch": ("receptions", 20), "fg_pct": ("fg_attempted", 8), "punt_avg": ("punts", 15), "net_avg": ("punts", 15)}
+LOWER_IS_BETTER = {"sacks_allowed"}
+
+
+def derived_stat(st: dict, key: str) -> Optional[float]:
+    get = st.get
+    if key == "rating":
+        return awards.passer_rating(st) if get("pass_attempts") else None
+    if key == "completion_pct":
+        return 100 * get("completions", 0) / get("pass_attempts") if get("pass_attempts") else None
+    if key == "total_touchdowns":
+        return get("passing_touchdowns", 0) + get("rushing_touchdowns", 0) + get("receiving_touchdowns", 0)
+    if key == "yards_per_carry":
+        return get("rush_yards", 0) / get("carries") if get("carries") else None
+    if key == "scrimmage_yards":
+        return get("rush_yards", 0) + get("receiving_yards", 0)
+    if key == "yards_per_catch":
+        return get("receiving_yards", 0) / get("receptions") if get("receptions") else None
+    if key == "tackles":
+        return get("solo_tackles", 0) + get("assisted_tackles", 0)
+    if key == "points":
+        return 3 * get("fg_made", 0) + get("pat_made", 0)
+    if key == "fg_pct":
+        return 100 * get("fg_made", 0) / get("fg_attempted") if get("fg_attempted") else None
+    if key == "punt_avg":
+        return get("punt_yards", 0) / get("punts") if get("punts") else None
+    if key == "net_avg":
+        return get("punt_net_yards", 0) / get("punts") if get("punts") else None
+    v = get(key)
+    return float(v) if isinstance(v, (int, float)) else None
+
+
+def _rank_group(position: str) -> str:
+    return "DEF" if position in ("DL", "MLB", "ROLB", "LOLB", "OLB", "CB", "S") else position
+
+
+def player_ranks(state: dict, teams: dict, team: str, name: str, position: str) -> list[dict]:
+    """Where the player's main numbers rank among FBS players at his position group, and
+    within his conference."""
+    ss = state.get("season_stats", {})
+    group = _rank_group(position)
+    specs = RANK_STATS.get(group, [])
+    if not specs:
+        return []
+    conf = teams[team]["conference"]
+    rows = []
+    for slug, ts in ss.items():
+        info = teams.get(slug)
+        if not info or info["fictional"]:
+            continue
+        for p in ts["players"].values():
+            if _rank_group(p["position"]) != group:
+                continue
+            rows.append((slug, info["conference"], p["name"], p["position"], p["stats"]))
+    out = []
+    for key, label in specs:
+        qual = RANK_MINIMUM.get(key)
+        vals = []
+        mine = None
+        for slug, c, n, pos, st in rows:
+            if qual and st.get(qual[0], 0) < qual[1]:
+                continue
+            v = derived_stat(st, key)
+            if v is None or (not qual and v == 0):
+                continue
+            vals.append((v, slug, c))
+            if slug == team and n == name and pos == position:
+                mine = v
+        if mine is None:
+            continue
+        better = (lambda a, b: a < b) if key in LOWER_IS_BETTER else (lambda a, b: a > b)
+        fbs_rank = 1 + sum(1 for v, _, _ in vals if better(v, mine))
+        conf_rank = 1 + sum(1 for v, _, c in vals if c == conf and better(v, mine))
+        conf_n = sum(1 for _, _, c in vals if c == conf)
+        out.append({"key": key, "label": label, "value": round(mine, 1) if isinstance(mine, float) and mine != int(mine) else int(mine),
+                    "fbs_rank": fbs_rank, "fbs_n": len(vals), "conf_rank": conf_rank, "conf_n": conf_n})
+    return out
+
+
+def player_honors(state: dict, team: str, name: str) -> list[dict]:
+    """Awards, finalist spots, All-America and all-conference selections, Heisman finish."""
+    aw = state.get("awards") or {}
+    out = []
+
+    def hit(c: Optional[dict]) -> bool:
+        return bool(c) and c.get("team") == team and c.get("name") == name
+
+    nat = aw.get("national") or {}
+    h = nat.get("heisman") or {}
+    for i, c in enumerate(h.get("candidates", [])):
+        if hit(c):
+            place = "Heisman Trophy winner" if i == 0 else f"{i + 1}{'th' if 4 <= i + 1 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get((i + 1) % 10, 'th')} in the Heisman vote"
+            out.append({"stage": "Heisman", "award": "Heisman Trophy", "place": place + (" (finalist)" if i and c in h.get("finalists", []) else ""), "detail": f"{c['points']} points"})
+    for a in nat.get("awards", []) + (aw.get("postseason") or {}).get("awards", []):
+        if hit(a.get("winner")):
+            out.append({"stage": "National awards", "award": a["name"], "place": "winner", "detail": a.get("honors", "")})
+        else:
+            for c in a.get("finalists", [])[1:]:
+                if hit(c):
+                    out.append({"stage": "National awards", "award": a["name"], "place": "finalist", "detail": a.get("honors", "")})
+    aa = nat.get("all_america") or {}
+    for c in aa.get("consensus", []):
+        if hit(c):
+            out.append({"stage": "All-America", "award": "Consensus All-American" + (" (unanimous)" if c.get("unanimous") else ""), "place": c["slot"], "detail": f"first team on {c['selectors']} of 5 selectors"})
+    for sel, picks in (aa.get("selectors") or {}).items():
+        for c in picks:
+            if hit(c):
+                out.append({"stage": "All-America", "award": f"{sel} All-America", "place": f"{'first' if c['level'] == 1 else 'second'} team ({c['slot']})", "detail": ""})
+    for conf, entry in (aw.get("conference") or {}).items():
+        for a in entry.get("awards", []):
+            if hit(a.get("winner")):
+                out.append({"stage": f"{conf} awards", "award": a["name"], "place": "winner", "detail": ""})
+            else:
+                for c in a.get("finalists", [])[1:]:
+                    if hit(c):
+                        out.append({"stage": f"{conf} awards", "award": a["name"], "place": "finalist", "detail": ""})
+        for sel, picks in (entry.get("teams") or {}).get("selectors", {}).items():
+            for c in picks:
+                if hit(c):
+                    out.append({"stage": f"All-{conf}", "award": f"{sel} {['first', 'second', 'third'][c['level'] - 1]} team", "place": c["slot"], "detail": ""})
+    return out
+
+
+def player_game_log(state: dict, team: str, name: str, position: str) -> Optional[list[dict]]:
+    """Per-game lines from the box scores the season keeps (your own team's games)."""
+    if team != state["team"]:
+        return None
+    out = []
+    for eid, box in state["my_boxes"].items():
+        g = state["games"].get(eid)
+        if not g:
+            continue
+        side = "home" if g["home"] == team else "away"
+        p = next((x for x in box[side]["players"] if x["name"] == name and x["position"] == position), None)
+        if not p:
+            continue
+        opp = g["away"] if side == "home" else g["home"]
+        pf, pa = (g["home_score"], g["away_score"]) if side == "home" else (g["away_score"], g["home_score"])
+        out.append({"event_id": eid, "week": g["week"], "title": g.get("title"), "opponent": opp,
+                    "opponent_name": g["away_display"] if side == "home" else g["home_display"],
+                    "venue": "neutral" if g["neutral"] else ("home" if side == "home" else "away"),
+                    "won": pf > pa, "points_for": pf, "points_against": pa, "stats": p["stats"], "started": bool(p.get("starter"))})
+    out.sort(key=lambda r: r["week"])
+    return out
+
+
+def player_profile(state: dict, team: str, name: Optional[str] = None, position: Optional[str] = None,
+                   slug: Optional[str] = None) -> Optional[dict]:
+    teams = load_teams()
+    t = teams.get(team)
+    if not t:
+        return None
+    roster = t["offense"] + t["defense"]
+    p = next((x for x in roster if (slug and x.get("slug") == slug) or (name and x["name"] == name and (not position or x["position"] == position))), None)
+    if not p:
+        return None
+    name, position = p["name"], p["position"]
+    ss = state.get("season_stats", {}).get(team, {})
+    line = (ss.get("players") or {}).get(f"{name}|{position}")
+    stats = dict(line["stats"]) if line else {}
+    ratings = [{"key": k, "label": lbl, "value": int(p[k])} for k, lbl in RATING_LABELS if isinstance(p.get(k), (int, float)) and p.get(k) is not None]
+    injuries = state.get("injuries") or {}
+    injured = False
+    for entry in (injuries.get(team) or []) if isinstance(injuries, dict) else []:
+        n = entry[0] if isinstance(entry, (list, tuple)) else (entry.get("name") if isinstance(entry, dict) else None)
+        if n == name:
+            injured = True
+    hc = (t.get("coaches") or {}).get("head_coach") or {}
+    rec = _records(state)[team]
+    return {
+        "name": name, "slug": p.get("slug"), "position": position, "role": p.get("role"), "depth": p.get("depth"),
+        "class": p.get("class"), "class_name": CLASS_NAMES.get(p.get("class") or "", p.get("class")), "height": p.get("height"),
+        "weight": p.get("weight"), "jersey": p.get("jersey"), "dev_trait": p.get("dev_trait"), "starter": bool(p.get("in_game")),
+        "injured": injured, "overall": player_overall(p), "ratings": ratings,
+        "team": {"slug": team, "name": t["name"], "conference": t["conference"], "coach": hc.get("name"),
+                 "record": f"{rec['wins']}-{rec['losses']}", "rank": awards.Pool(state, teams, _records(state)).rank_of(team) if ss else None},
+        "games": line["games"] if line else 0, "team_games": ss.get("games", 0), "stats": stats,
+        "rating": awards.passer_rating(stats) if stats.get("pass_attempts") else None,
+        "ranks": player_ranks(state, teams, team, name, position) if line else [],
+        "game_log": player_game_log(state, team, name, position),
+        "honors": player_honors(state, team, name),
+    }
