@@ -126,11 +126,14 @@
 
   // ----- advancing ---------------------------------------------------------
 
-  async function advance(to) {
+  async function advance(to, gameday = false) {
     const s = state.season;
     if (!s || s.done) return;
-    // the highlighted week is the one Advance plays: a week further ahead sims through to it
-    if (!to && state.viewWeek > s.current_week + 1) to = state.viewWeek;
+    // the highlighted week is the one Sim plays: a week further ahead sims through to it.
+    // Game day always plays just this week, and replays your game when it is done.
+    if (gameday) to = s.current_week + 1;
+    else if (!to && state.viewWeek > s.current_week + 1) to = state.viewWeek;
+    state.gamedayWanted = gameday;
     state.advanceFrom = s.current_week;
     state.simming = true;
     state.simResults = [];
@@ -158,7 +161,8 @@
           const s = await api(`/api/season/${state.season.id}`);
           state.viewWeek = s.done ? s.current_week : Math.min(s.current_week + 1, 20);
           const singleWeek = state.simTarget === state.advanceFrom + 1;
-          const mine = singleWeek && gamedayOn() && j.status !== "error" ? (j.results || []).find((r) => r.week === state.advanceFrom + 1 && r.event_id && r.has_box) : null;
+          const mine = singleWeek && state.gamedayWanted && j.status !== "error" ? (j.results || []).find((r) => r.week === state.advanceFrom + 1 && r.event_id && r.has_box) : null;
+          state.gamedayWanted = false;
           showSeason(s);
           loadSeasons();
           setBusy(false);
@@ -170,7 +174,7 @@
 
   function setBusy(b) {
     if (!b) state.simming = false;
-    for (const id of ["btn-advance", "btn-to-selection", "btn-to-end"]) $(`#${id}`).disabled = b || (state.season && state.season.done);
+    for (const id of ["btn-advance", "btn-to-selection", "btn-to-end", "btn-gameday"]) $(`#${id}`).disabled = b || (state.season && state.season.done);
     for (const chip of document.querySelectorAll("#week-strip .week-chip")) chip.disabled = b;
     $("#btn-new").disabled = b;
     $("#season-list").classList.toggle("locked", b);
@@ -426,7 +430,12 @@
     const btn = $("#btn-advance");
     if (s.done) btn.textContent = "Season complete";
     else if (w > s.current_week + 1) btn.textContent = `Sim to ${label}`;
-    else btn.textContent = "Advance to next week";
+    else btn.textContent = "Sim to next week";
+    // Game day plays your game this week (hidden on a bye and once the season is over)
+    const gd = $("#btn-gameday");
+    const next = (s.schedule || []).find((g) => g.week === s.current_week + 1 && g.opponent);
+    gd.hidden = s.done || !next;
+    if (next) gd.textContent = `Game day · ${next.venue === "away" ? "at" : "vs"} ${next.opponent_name}`;
   }
 
   function selectTab(name) {
@@ -2444,20 +2453,9 @@
   }
 
   // ----- game day: your game, drive by drive ----------------------------------
-  // After "Advance to next week" the week is simulated as usual; your game then replays
-  // from its play log: one play at a time, the score and clock moving, a Skip to the
-  // final box score. Multi-week sims and bye weeks never open it.
-  const GAMEDAY_KEY = "cfp.gameday";
-  function gamedayOn() { try { return localStorage.getItem(GAMEDAY_KEY) !== "off"; } catch (e) { return true; } }
-  function renderGamedayToggle() {
-    const b = $("#btn-gameday");
-    if (!b) return;
-    const on = gamedayOn();
-    b.setAttribute("aria-pressed", on ? "true" : "false");
-    b.textContent = on ? "Game day: on" : "Game day: off";
-    b.title = on ? "Advance to next week replays your game drive by drive" : "Advance to next week goes straight to the result";
-  }
-  function toggleGameday() { try { localStorage.setItem(GAMEDAY_KEY, gamedayOn() ? "off" : "on"); } catch (e) {} renderGamedayToggle(); }
+  // The Game day button simulates this week as usual, then replays your game from its
+  // play log: one play at a time, the score and clock moving, a Skip to the final box
+  // score. "Sim to next week" and the multi-week sims go straight to the results.
 
   const gameday = { timer: null, speed: "normal", moments: [], i: 0, g: null, eventId: null, node: null };
   const GD_PACE = { slow: 1600, normal: 900, fast: 320 };
@@ -2652,8 +2650,7 @@
   $("#btn-hide-seasons").addEventListener("click", () => setSidebar(false));
   setSidebar(true, false);
   $("#btn-advance").addEventListener("click", () => advance());
-  $("#btn-gameday").addEventListener("click", toggleGameday);
-  renderGamedayToggle();
+  $("#btn-gameday").addEventListener("click", () => advance(null, true));
   $("#btn-to-selection").addEventListener("click", () => advance(15));
   $("#btn-to-end").addEventListener("click", () => advance(20));
   $("#season-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) { state.tab = b.dataset.tab; renderTab(); } });

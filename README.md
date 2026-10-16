@@ -520,14 +520,14 @@ a click through to its box score. `GET /api/season/{id}/resume?week=&team=` serv
 
 ### Game day: your game, drive by drive
 
-"Advance to next week" simulates the week as before (same seed, same results), then
-replays your game from its play log instead of jumping to the final box score: a live
-scoreboard with the quarter and clock, the down and distance, each play appearing in
-turn (runs, passes, sacks, turnovers, penalties, kicks and punts with the players
-involved), a scoring summary and a list of finished drives. Slow / Normal / Fast set the
-pace; "Skip to final" opens the normal box score at once. Bye weeks and multi-week sims
-(Sim to selection / Sim to the end) never open it, and the "Game day: on/off" button next
-to the sim buttons turns the replay off for good if you would rather see the result.
+The "Game day · vs Michigan" button plays this week: the week is simulated as before
+(same seed, same results), then your game replays from its play log instead of jumping
+to the final box score: a live scoreboard with the quarter and clock, the down and
+distance, each play appearing in turn (runs, passes, sacks, turnovers, penalties, kicks
+and punts with the players involved), a scoring summary and a list of finished drives.
+Slow / Normal / Fast set the pace; "Skip to final" opens the normal box score at once.
+"Sim to next week" plays the week without the replay, the multi-week sims (Sim to
+selection / Sim to the end) never open it, and the button hides on a bye week.
 
 The log comes from the engine: every snap, kick, punt and kickoff is recorded per drive
 (`log` on each drive in the box score) with the players involved. Nothing in the logging
