@@ -528,18 +528,18 @@
       box.append(el("h3", { text: unit.name }));
       const width = Math.max(2, ...unit.rows.map((row) => Math.min(row.players.length, unit.name === "Offense" && row.role === "WR" ? 5 : 3)));
       const table = el("table", { class: "stats depth-table" });
-      table.append(el("tr", {}, [el("th", { text: "" }), ...Array.from({ length: width }, (_, i) => el("th", { class: "left", text: i === 0 ? "Starter" : ORD(i) }))]));
+      table.append(el("tr", {}, [el("th", { text: "" }), ...Array.from({ length: width }, (_, i) => el("th", { class: `left ${i >= 2 ? "ph" : ""}`, text: i === 0 ? "Starter" : ORD(i) }))]));
       for (const row of unit.rows) {
         const cells = [el("td", { class: "depth-role" }, [el("b", { text: row.role }), el("div", { class: "muted small-text", text: row.label })])];
         for (let i = 0; i < width; i++) {
           const p = row.players[i];
-          if (!p) { cells.push(el("td", { class: "left muted", text: "" })); continue; }
+          if (!p) { cells.push(el("td", { class: `left muted ${i >= 2 ? "ph" : ""}`, text: "" })); continue; }
           const ctl = s.done ? null : el("span", { class: "depth-ctl" }, [
             i > 0 ? (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "★", title: "Make starter" }); b.addEventListener("click", () => change({ role: row.role, player: p.slug, move: "top" })); return b; })() : null,
             i > 0 ? (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "▲", title: "Move up" }); b.addEventListener("click", () => change({ role: row.role, player: p.slug, move: "up" })); return b; })() : null,
             i < row.players.length - 1 && !["KR", "PR"].includes(row.role) ? (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "▼", title: "Move down" }); b.addEventListener("click", () => change({ role: row.role, player: p.slug, move: "down" })); return b; })() : null,
           ]);
-          cells.push(el("td", { class: `left depth-cell ${i === 0 ? "starter" : ""}` }, [
+          cells.push(el("td", { class: `left depth-cell ${i === 0 ? "starter" : ""} ${i >= 2 ? "ph" : ""}` }, [
             el("div", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, el("span", { text: p.name, ...playerAttrs(ds.team, p.name, p.position) }), el("span", { class: "pos", text: `${p.class || ""}${p.position !== row.role ? " · " + p.position : ""}` }),
               p.injury ? el("span", { class: "injury-tag", title: `${p.injury.type}, back ${s.week_labels[p.injury.returns_week] || "week " + p.injury.returns_week}`, text: `OUT ${p.injury.weeks_left}w` }) : null, ctl]),
             el("div", { class: "muted small-text", text: [`${p.overall} ovr`, p.height && p.weight ? `${p.height} ${p.weight}` : "", p.headline || (p.games ? `${p.games} games` : "")].filter(Boolean).join(" · ") }),
@@ -859,14 +859,14 @@
   // A sortable table. cols: [{key, label, left, get(row) -> text/node, sort(row) -> number|string}]
   function sortableTable(cols, rows, st, onSort, rowClass) {
     const table = el("table", { class: "stats" });
-    const head = el("tr", {}, cols.map((c) => el("th", { class: `${c.sort ? "sortable" : ""} ${c.left ? "left" : ""} ${st.sort === c.key ? (st.desc ? "sorted-desc" : "sorted-asc") : ""}`, text: c.label, "data-key": c.sort ? c.key : "" })));
+    const head = el("tr", {}, cols.map((c) => el("th", { class: `${c.sort ? "sortable" : ""} ${c.left ? "left" : ""} ${c.ph ? "ph" : ""} ${st.sort === c.key ? (st.desc ? "sorted-desc" : "sorted-asc") : ""}`, text: c.label, "data-key": c.sort ? c.key : "" })));
     head.addEventListener("click", (e) => { const th = e.target.closest("th[data-key]"); if (th && th.dataset.key) { if (st.sort === th.dataset.key) st.desc = !st.desc; else { st.sort = th.dataset.key; st.desc = true; } onSort(); } });
     table.append(head);
     let list = rows.slice();
     const sc = cols.find((c) => c.key === st.sort && c.sort);
     if (sc) list.sort((a, b) => { const av = sc.sort(a), bv = sc.sort(b); const r = typeof av === "string" ? av.localeCompare(bv) : av - bv; return st.desc ? -r : r; });
     for (const r of list) {
-      table.append(el("tr", { class: rowClass ? rowClass(r) : "" }, cols.map((c) => { const v = c.get(r); return el("td", { class: c.left ? "left" : "" }, [v == null ? "" : v]); })));
+      table.append(el("tr", { class: rowClass ? rowClass(r) : "" }, cols.map((c) => { const v = c.get(r); return el("td", { class: `${c.left ? "left" : ""} ${c.ph ? "ph" : ""}` }, [v == null ? "" : v]); })));
     }
     return el("div", { class: "table-scroll" }, [table]);
   }
@@ -897,14 +897,14 @@
       { key: "rank", label: "#", get: (c) => String(c.i + 1), sort: (c) => c.i },
       { key: "player", label: "Player", left: true, get: (c) => who(c, false), sort: (c) => c.name },
       { key: "team", label: "Team", left: true, get: (c) => el("span", {}, [teamPill(c.team), c.team_name]), sort: (c) => c.team_name },
-      { key: "record", label: "Rec", get: (c) => c.record, sort: (c) => Number(c.record.split("-")[0]) - Number(c.record.split("-")[1]) / 100 },
+      { key: "record", label: "Rec", ph: true, get: (c) => c.record, sort: (c) => Number(c.record.split("-")[0]) - Number(c.record.split("-")[1]) / 100 },
       { key: "cfp", label: "Rank", get: (c) => (c.rank ? `#${c.rank}` : "–"), sort: (c) => -(c.rank || 99) },
-      { key: "region", label: "Region", get: (c) => c.region, sort: (c) => c.region },
-      { key: "first", label: "1st", get: (c) => String(c.first), sort: (c) => c.first },
-      { key: "second", label: "2nd", get: (c) => String(c.second), sort: (c) => c.second },
-      { key: "third", label: "3rd", get: (c) => String(c.third), sort: (c) => c.third },
+      { key: "region", label: "Region", ph: true, get: (c) => c.region, sort: (c) => c.region },
+      { key: "first", label: "1st", ph: true, get: (c) => String(c.first), sort: (c) => c.first },
+      { key: "second", label: "2nd", ph: true, get: (c) => String(c.second), sort: (c) => c.second },
+      { key: "third", label: "3rd", ph: true, get: (c) => String(c.third), sort: (c) => c.third },
       { key: "points", label: "Pts", get: (c) => el("b", { text: String(c.points) }), sort: (c) => c.points },
-      { key: "line", label: "Season", left: true, get: (c) => el("span", { class: "muted small-text", text: c.line }) },
+      { key: "line", label: "Season", left: true, ph: true, get: (c) => el("span", { class: "muted small-text", text: c.line }) },
     ];
     box.append(sortableTable(cols, h.candidates.map((c, i) => ({ ...c, i })), st, () => renderAwards(), (c) => c.team === state.season.team ? "mine" : ""));
   }
@@ -938,8 +938,8 @@
       { key: "award", label: "Award", left: true, get: (r) => el("b", { text: r.a.name }), sort: (r) => r.a.name },
       { key: "who", label: live ? "Leader" : "Winner", left: true, get: (r) => who(r.w, false), sort: (r) => r.w.name || r.w.coach || "" },
       { key: "team", label: "Team", left: true, get: (r) => el("span", {}, [teamPill(r.w.team), r.w.team_name]), sort: (r) => r.w.team_name },
-      { key: "conf", label: "Conference", left: true, get: (r) => r.w.conference || "", sort: (r) => r.w.conference || "" },
-      { key: "line", label: "Season", left: true, get: (r) => el("span", { class: "muted small-text", text: r.w.line || coachLine(r.w) }) },
+      { key: "conf", label: "Conference", left: true, ph: true, get: (r) => r.w.conference || "", sort: (r) => r.w.conference || "" },
+      { key: "line", label: "Season", left: true, ph: true, get: (r) => el("span", { class: "muted small-text", text: r.w.line || coachLine(r.w) }) },
     ];
     return sortableTable(cols, rows, st, () => renderAwards(), (r) => r.w.team === state.season.team ? "mine" : "");
   }
@@ -953,9 +953,9 @@
       { key: "slot", label: "Slot", get: (c) => c.slot, sort: (c) => c.order },
       { key: "player", label: "Player", left: true, get: (c) => who(c, false), sort: (c) => c.name },
       { key: "team", label: "Team", left: true, get: (c) => el("span", {}, [teamPill(c.team), c.team_name]), sort: (c) => c.team_name },
-      { key: "conf", label: "Conference", left: true, get: (c) => c.conference, sort: (c) => c.conference },
+      { key: "conf", label: "Conference", left: true, ph: true, get: (c) => c.conference, sort: (c) => c.conference },
       { key: "sel", label: "Selectors", get: (c) => (c.unanimous ? el("span", { class: "award-extra", text: "unanimous" }) : c.selectors ? `${c.selectors} of 5` : ""), sort: (c) => c.selectors || 0 },
-      { key: "line", label: "Season", left: true, get: (c) => el("span", { class: "muted small-text", text: c.line }) },
+      { key: "line", label: "Season", left: true, ph: true, get: (c) => el("span", { class: "muted small-text", text: c.line }) },
     ];
     if (!rows.some((c) => c.selectors)) cols.splice(4, 1);
     box.append(sortableTable(cols, rows.map((c, i) => ({ ...c, order: i })), st, () => renderAwards(), (c) => c.team === state.season.team ? "mine" : ""));
@@ -1073,11 +1073,11 @@
     box.append(el("div", { class: "review-tiles" }, [[String(shown.length), "honors"], [String(wins), live ? "races led" : "awards won"], [String(new Set(shown.map((r) => r.who)).size), "players and coaches"]].map(([v, k]) => el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: v }), el("div", { class: "review-label", text: k })]))));
     if (!st.sort) { st.sort = "result"; st.desc = false; }
     const cols = [
-      { key: "stage", label: "Stage", left: true, get: (r) => r.stage, sort: (r) => r.stage },
+      { key: "stage", label: "Stage", left: true, ph: true, get: (r) => r.stage, sort: (r) => r.stage },
       { key: "award", label: "Award", left: true, get: (r) => el("b", { text: r.award }), sort: (r) => r.award },
       { key: "who", label: "Who", left: true, get: (r) => el("span", { class: "name" }, [el("span", { text: r.who, ...(r.position && r.position !== "Head coach" && !/coordinator/i.test(r.position) ? playerAttrs(state.season.team, r.who, r.position) : {}) }), r.position ? el("span", { class: "pos", text: r.position }) : null]), sort: (r) => r.who || "" },
       { key: "result", label: "Result", left: true, get: (r) => el("span", { class: r.rank === 0 ? "win" : "", text: r.place }), sort: (r) => r.rank },
-      { key: "line", label: "Season", left: true, get: (r) => el("span", { class: "muted small-text", text: r.line || "" }) },
+      { key: "line", label: "Season", left: true, ph: true, get: (r) => el("span", { class: "muted small-text", text: r.line || "" }) },
     ];
     box.append(sortableTable(cols, shown, st, () => renderAwards()));
   }
@@ -1460,7 +1460,7 @@
     box.append(el("h3", { text: `${label} · ${shown.length === data.games.length ? `${data.games.length} games` : `${shown.length} of ${data.games.length} games`}` }));
     if (!shown.length) { box.append(el("p", { class: "muted", text: "No games match that filter." })); return; }
     const table = el("table", { class: "stats games-table" });
-    table.append(el("tr", {}, ["Away", "", "", "Home", "", "Game"].map((h, i) => el("th", { class: [0, 3, 5].includes(i) ? "left" : "", text: h }))));
+    table.append(el("tr", {}, ["Away", "", "", "Home", "", "Game"].map((h, i) => el("th", { class: `${[0, 3, 5].includes(i) ? "left" : ""} ${i === 5 ? "ph" : ""}`, text: h }))));
     const fictional = (slug) => !!((window.CFP.teamsBySlug[slug] || {}).fictional);   // FCS stand-ins play many schedules: no record
     const teamCell = (slug, display, rank, record, won, lost) => el("td", { class: `left name team-cell ${won ? "win" : ""} ${lost ? "lost" : ""}` }, [
       teamPill(slug), rank ? el("span", { class: "rank", text: `#${rank} ` }) : null, display,
@@ -1476,7 +1476,7 @@
         el("td", { class: "muted", text: g.neutral ? "vs" : "at" }),
         teamCell(g.home, g.home_display, g.home_rank, g.home_record, hw, played && !hw),
         el("td", { class: `score ${hw ? "win" : ""}`, text: played ? String(g.home_score) : "" }),
-        el("td", { class: "left muted small-text", text: note }),
+        el("td", { class: "left muted small-text ph", text: note }),
       ]);
       if (g.has_box) tr.addEventListener("click", () => openBox(g.event_id));
       table.appendChild(tr);
@@ -1487,14 +1487,14 @@
 
   function injuryTable(rows, withTeam) {
     const table = el("table", { class: "stats" });
-    table.append(el("tr", {}, [withTeam ? "Team" : null, "Player", "Injury", "Out", "Returns"].filter(Boolean).map((t) => el("th", { class: "left", text: t }))));
+    table.append(el("tr", {}, [withTeam ? "Team" : null, "Player", "Injury", "Out", "Returns"].filter(Boolean).map((t) => el("th", { class: `left ${t === "Out" ? "ph" : ""}`, text: t }))));
     for (const i of rows) {
       const s = state.season;
       table.append(el("tr", { class: i.team === s.team ? "mine" : "" }, [
         withTeam ? el("td", { class: "left" }, [teamPill(i.team), i.team_name]) : null,
         el("td", { class: "name" }, [i.name, el("span", { class: "pos", text: i.position })]),
         el("td", { class: "left", text: i.type }),
-        el("td", { class: "left", text: `${i.weeks_left} ${i.weeks_left === 1 ? "week" : "weeks"} (${i.weeks} total, since ${s.week_labels[i.since_week] || "week " + i.since_week})` }),
+        el("td", { class: "left ph", text: `${i.weeks_left} ${i.weeks_left === 1 ? "week" : "weeks"} (${i.weeks} total, since ${s.week_labels[i.since_week] || "week " + i.since_week})` }),
         el("td", { class: "left", text: i.returns_week > 19 ? "next season" : (s.week_labels[i.returns_week] || `week ${i.returns_week}`) }),
       ].filter(Boolean)));
     }
@@ -1568,7 +1568,7 @@
     const mine = st.team === s.team;
     box.append(el("h3", {}, [teamPill(d.team), d.team_name, el("span", { class: "pos", text: `${d.rank ? `#${d.rank} · ` : ""}${d.record.wins}-${d.record.losses} · ${d.record.conf_wins}-${d.record.conf_losses} ${d.conference}` })]));
     const table = el("table", { class: "stats schedule-table" });
-    table.appendChild(el("tr", {}, ["Week", "Date", "Rank", "Opponent", "Where", "Result", "Score", ""].map((h) => el("th", { class: ["Date", "Opponent"].includes(h) ? "left" : "", text: h }))));
+    table.appendChild(el("tr", {}, ["Week", "Date", "Rank", "Opponent", "Where", "Result", "Score", ""].map((h) => el("th", { class: `${["Date", "Opponent"].includes(h) ? "left" : ""} ${["Rank", "Where", ""].includes(h) ? "ph" : ""}`, text: h }))));
     const wk = (w, g) => {
       if (w <= 14) return String(w);
       if (g && g.kind === "bowl") return "Bowl";
@@ -1581,8 +1581,8 @@
         const wd = s.week_dates && s.week_dates[g.week];
         table.appendChild(el("tr", { class: "bye" }, [
           el("td", { text: wk(g.week) }), el("td", { class: "left muted small-text", text: wd && wd.main ? fmtDay(wd.main, false) : "" }),
-          el("td", { class: "muted", text: g.my_rank ? `#${g.my_rank}` : "" }),
-          el("td", { class: "left muted", text: "Bye" }), el("td", {}), el("td", { class: "muted", text: "–" }), el("td", {}), el("td", {}),
+          el("td", { class: "muted ph", text: g.my_rank ? `#${g.my_rank}` : "" }),
+          el("td", { class: "left muted", text: "Bye" }), el("td", { class: "ph" }), el("td", { class: "muted", text: "–" }), el("td", {}), el("td", { class: "ph" }),
         ]));
         continue;
       }
@@ -1591,14 +1591,14 @@
       const tr = el("tr", { class: `${g.has_box ? "clickable" : ""} ${g.played ? (g.won ? "won" : "lost") : ""}` }, [
         el("td", { text: wk(g.week, g) }),
         el("td", { class: "left muted small-text", text: when }),
-        el("td", { class: "muted", text: g.my_rank ? `#${g.my_rank}` : "", title: "Rank entering the game" }),
+        el("td", { class: "muted ph", text: g.my_rank ? `#${g.my_rank}` : "", title: "Rank entering the game" }),
         el("td", { class: "left name" }, [el("span", { class: "muted", text: `${prefix} ` }), teamPill(g.opponent), g.opponent_rank ? el("span", { class: "rank", text: `#${g.opponent_rank} ` }) : null, g.opponent_name,
           g.opponent_record && !((window.CFP.teamsBySlug[g.opponent] || {}).fictional) ? el("span", { class: "pos", text: g.opponent_record }) : null,
           g.title ? el("div", { class: "muted small-text", text: `${g.title}${g.site ? " · " + g.site : ""}` }) : (g.site ? el("div", { class: "muted small-text", text: g.site }) : null)]),
-        el("td", { text: g.venue === "home" ? "Home" : g.venue === "away" ? "Away" : "Neutral" }),
+        el("td", { class: "ph", text: g.venue === "home" ? "Home" : g.venue === "away" ? "Away" : "Neutral" }),
         el("td", { class: g.played ? (g.won ? "win" : "loss") : "muted", text: g.played ? (g.won ? "W" : "L") : "—" }),
         el("td", { class: "score", text: g.played ? `${g.points_for}–${g.points_against}${g.overtime ? " OT" : ""}` : "" }),
-        el("td", { class: "muted small-text", text: g.real ? "real result" : g.has_box ? "box score" : "" }),
+        el("td", { class: "muted small-text ph", text: g.real ? "real result" : g.has_box ? "box score" : "" }),
       ]);
       if (g.has_box) tr.addEventListener("click", () => openBox(g.event_id));
       table.appendChild(tr);
@@ -1846,8 +1846,8 @@
     const sortCol = cols.find((c) => c[2] === sortKey) || cols.find((c) => c[2]);
     const asc = LOWER_BETTER_PLAYER.has(sortKey);
     players.sort((a, b) => (asc ? val(a, sortCol) - val(b, sortCol) : val(b, sortCol) - val(a, sortCol)) || a.name.localeCompare(b.name));
-    const table = el("table", { class: "stats" });
-    const head = el("tr", {}, [el("th", { text: "#" }), el("th", { class: "left", text: "Player" }), ps.team ? null : el("th", { class: "left", text: "Team" }), el("th", { text: "G" }),
+    const table = el("table", { class: "stats player-season" });
+    const head = el("tr", {}, [el("th", { text: "#" }), el("th", { class: "left", text: "Player" }), ps.team ? null : el("th", { class: "left ph", text: "Team" }), el("th", { text: "G" }),
       ...cols.map((c) => el("th", { class: c[2] ? `sortable ${c[2] === sortKey ? (asc ? "sorted-asc" : "sorted-desc") : ""}` : "", text: c[0], "data-key": c[2] || "", title: c[3] || c[0] }))]);
     head.addEventListener("click", (e) => { const th = e.target.closest("th[data-key]"); if (th && th.dataset.key) { ps.sort = th.dataset.key; renderSeasonPlayerStats(); } });
     table.append(head);
@@ -1855,7 +1855,7 @@
       table.append(el("tr", {}, [
         el("td", { class: "muted", text: String(i + 1) }),
         el("td", { class: "name" }, [el("span", { text: p.name, ...playerAttrs(p.team || ps.team, p.name, p.position) }), el("span", { class: "pos", text: p.position })]),
-        ps.team ? null : el("td", { class: "left" }, [teamPill(p.team), p.team_name]),
+        ps.team ? null : el("td", { class: "left ph" }, [teamPill(p.team), p.team_name]),
         el("td", { text: String(p.games) }),
         ...cols.map((c) => el("td", { text: String(c[1](p)) })),
       ]));
@@ -1963,13 +1963,13 @@
 
     const compactTable = (rows, division) => {
       const table = el("table", { class: "stats" });
-      table.appendChild(el("tr", {}, ["#", division || "Team", "Conf", "Overall", "PF", "PA"].map((h) => el("th", { text: h, class: h === (division || "Team") ? "left" : "" }))));
+      table.appendChild(el("tr", {}, ["#", division || "Team", "Conf", "Overall", "PF", "PA"].map((h) => el("th", { text: h, class: `${h === (division || "Team") ? "left" : ""} ${["PF", "PA"].includes(h) ? "ph" : ""}` }))));
       for (const t of rows) {
         table.appendChild(el("tr", { class: t.slug === s.team ? "mine" : "" }, [
           el("td", { text: String(t.conf_rank), title: t.tiebreak ? `Tied on conference record; placed by ${t.tiebreak}` : "" }),
           el("td", { class: "name left" }, [teamPill(t.slug), t.name, ...crownOf(t), t.ap_rank || t.cfp_rank ? el("span", { class: "pos", text: t.cfp_rank ? `CFP ${t.cfp_rank}` : `#${t.ap_rank}` }) : null]),
           el("td", { text: `${t.conf_wins}-${t.conf_losses}` }), el("td", { text: `${t.wins}-${t.losses}` }),
-          el("td", { text: String(t.points_for) }), el("td", { text: String(t.points_against) }),
+          el("td", { class: "ph", text: String(t.points_for) }), el("td", { class: "ph", text: String(t.points_against) }),
         ]));
       }
       return table;
@@ -1978,18 +1978,19 @@
     const fullTable = (rows, division) => {
       const table = el("table", { class: "stats standings-full" });
       const heads = ["#", division || "Team", "Conf", "Overall", "Home", "Away", "PF", "PA", "Diff", "Streak", "Last game"];
-      table.appendChild(el("tr", {}, heads.map((h) => el("th", { text: h, class: [division || "Team", "Last game"].includes(h) ? "left" : "" }))));
+      const phone = new Set(["Home", "Away", "PF", "PA", "Diff", "Last game"]);
+      table.appendChild(el("tr", {}, heads.map((h) => el("th", { text: h, class: `${[division || "Team", "Last game"].includes(h) ? "left" : ""} ${phone.has(h) ? "ph" : ""}` }))));
       for (const t of rows) {
         const last = t.last ? `${t.last.won ? "W" : "L"} ${t.last.score} ${t.last.venue === "home" ? "vs" : t.last.venue === "away" ? "at" : "vs"} ${t.last.opponent_name}` : "–";
         table.appendChild(el("tr", { class: t.slug === s.team ? "mine" : "" }, [
           el("td", { text: String(t.conf_rank), title: t.tiebreak ? `Tied on conference record; placed by ${t.tiebreak}` : "" }),
           el("td", { class: "name left" }, [teamPill(t.slug), t.name, ...crownOf(t), rankBadge(t)]),
           el("td", { text: `${t.conf_wins}-${t.conf_losses}` }), el("td", { text: `${t.wins}-${t.losses}` }),
-          el("td", { text: `${t.home_wins}-${t.home_losses}` }), el("td", { text: `${t.away_wins}-${t.away_losses}` }),
-          el("td", { text: String(t.points_for) }), el("td", { text: String(t.points_against) }),
-          el("td", { class: t.points_for > t.points_against ? "win" : t.points_for < t.points_against ? "loss" : "", text: diff(t) }),
+          el("td", { class: "ph", text: `${t.home_wins}-${t.home_losses}` }), el("td", { class: "ph", text: `${t.away_wins}-${t.away_losses}` }),
+          el("td", { class: "ph", text: String(t.points_for) }), el("td", { class: "ph", text: String(t.points_against) }),
+          el("td", { class: `ph ${t.points_for > t.points_against ? "win" : t.points_for < t.points_against ? "loss" : ""}`, text: diff(t) }),
           el("td", { class: t.streak > 0 ? "win" : t.streak < 0 ? "loss" : "muted", text: t.streak > 0 ? `W${t.streak}` : t.streak < 0 ? `L${-t.streak}` : "–" }),
-          el("td", { class: `left ${t.last ? (t.last.won ? "" : "muted") : "muted"}`, text: last }),
+          el("td", { class: `left ph ${t.last ? (t.last.won ? "" : "muted") : "muted"}`, text: last }),
         ]));
       }
       return table;
@@ -2042,7 +2043,7 @@
     const voted = (kind === "ap" || kind === "coaches") && list.some((e) => e.points != null);
     const table = el("table", { class: "stats" });
     const heads = voted ? ["#", "Team", "Record", "Pts", "Conference", "Prev", ""] : ["#", "Team", "Record", "Conference", "Prev", ""];
-    table.appendChild(el("tr", {}, heads.map((h) => el("th", { text: h, style: ["Team", "Conference"].includes(h) ? "text-align:left" : "", title: h === "Pts" ? "Poll points: 25 for a first-place vote down to 1 for 25th" : "" }))));
+    table.appendChild(el("tr", {}, heads.map((h) => el("th", { text: h, class: ["Pts", "Conference", "Prev"].includes(h) ? "ph" : "", style: ["Team", "Conference"].includes(h) ? "text-align:left" : "", title: h === "Pts" ? "Poll points: 25 for a first-place vote down to 1 for 25th" : "" }))));
     for (const e of list) {
       const move = e.previous == null ? "new" : e.previous === e.rank ? "–" : e.previous > e.rank ? `▲${e.previous - e.rank}` : `▼${e.rank - e.previous}`;
       const nameCell = el("td", { style: "text-align:left", class: "name" }, [teamPill(e.team), e.name]);
@@ -2051,9 +2052,9 @@
         el("td", { text: String(e.rank) }),
         nameCell,
         el("td", { text: e.record }),
-        voted ? el("td", { text: String(e.points) }) : null,
-        el("td", { style: "text-align:left", class: "muted", text: e.conference }),
-        el("td", { class: "muted", text: e.previous == null ? "NR" : String(e.previous) }),
+        voted ? el("td", { class: "ph", text: String(e.points) }) : null,
+        el("td", { style: "text-align:left", class: "muted ph", text: e.conference }),
+        el("td", { class: "muted ph", text: e.previous == null ? "NR" : String(e.previous) }),
         el("td", { class: move.startsWith("▲") ? "win" : move.startsWith("▼") ? "loss" : "muted", text: move }),
       ]));
     }
@@ -2217,14 +2218,14 @@
   function seedTable(seeds, reason, pos) {
     const s = state.season;
     const table = el("table", { class: "stats seed-table" });
-    table.appendChild(el("tr", {}, ["Seed", "Team", "Rank", "Bid", ""].map((h) => el("th", { class: ["Team", "Bid"].includes(h) ? "left" : "", text: h }))));
+    table.appendChild(el("tr", {}, ["Seed", "Team", "Rank", "Bid", ""].map((h) => el("th", { class: `${["Team", "Bid"].includes(h) ? "left" : ""} ${h === "Rank" ? "ph" : ""}`, text: h }))));
     for (let i = 1; i <= 12; i++) {
       const x = seeds[i];
       if (!x) continue;
       table.appendChild(el("tr", { class: x.team === s.team ? "mine" : "" }, [
         el("td", { text: String(i) }),
         el("td", { class: "left name" }, [teamPill(x.team), x.name]),
-        el("td", { text: pos[x.team] ? String(pos[x.team]) : "NR" }),
+        el("td", { class: "ph", text: pos[x.team] ? String(pos[x.team]) : "NR" }),
         el("td", { class: "left muted", text: (reason && reason[x.team]) || x.bid || "at-large" }),
         el("td", { class: "muted", text: i <= 4 ? "bye" : "" }),
       ]));

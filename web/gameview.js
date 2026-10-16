@@ -323,7 +323,7 @@ window.CFP = (function () {
     const box = $(ids.drives);
     box.innerHTML = "";
     const table = el("table", { class: "stats" });
-    table.appendChild(el("tr", {}, ["#", "Qtr", "Offense", "Start", "Plays", "Yards", "Time", "Result", "Field"].map((h) => el("th", { text: h }))));
+    table.appendChild(el("tr", {}, ["#", "Qtr", "Offense", "Start", "Plays", "Yards", "Time", "Result", "Field"].map((h) => el("th", { class: ["Start", "Time", "Field"].includes(h) ? "ph" : "", text: h }))));
     g.drives.forEach((d, i) => {
       const yards = d.end_yardline - d.start_yardline;
       const resClass = "res-" + d.result.split(" ")[0];
@@ -333,12 +333,12 @@ window.CFP = (function () {
         el("td", { text: String(i + 1) }),
         el("td", { text: d.quarter > 4 ? `OT${d.quarter - 4}` : String(d.quarter) }),
         el("td", { style: "text-align:left", text: d.offense_name }),
-        el("td", { text: fieldPos(d.start_yardline) }),
+        el("td", { class: "ph", text: fieldPos(d.start_yardline) }),
         el("td", { text: String(d.plays) }),
         el("td", { text: String(yards) }),
-        el("td", { text: fmtTime(d.seconds) }),
+        el("td", { class: "ph", text: fmtTime(d.seconds) }),
         el("td", { class: resClass, style: "text-align:left", text: resultLabel(d.result) }),
-        el("td", {}, [el("div", { class: "bar" }, [el("span", { style: `left:${left}%;width:${width}%;background:${teamColor(g, d.offense)}` })])]),
+        el("td", { class: "ph" }, [el("div", { class: "bar" }, [el("span", { style: `left:${left}%;width:${width}%;background:${teamColor(g, d.offense)}` })])]),
       ]));
     });
     box.appendChild(table);
