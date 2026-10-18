@@ -105,12 +105,14 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 ## How the data feeds the engine
 
 **Players.** Each source player has 54 EA-style ratings (0-99, 50 = average FBS player).
-The player card shows ratings on that EA scale: the EA overall (Jeremiah Smith is a 99),
-and each attribute de-normalized with the stored starter means, so a 91-speed receiver
-reads 91. The engine works on its own position-relative values underneath (an average
-starter at the position is 55, scaled by `SPREAD_SCALE`), and god-mode edits typed on the
-EA scale are converted back; the "rated at every position" numbers stay position-relative
-since that is what the depth chart compares.
+The pages show the house scale instead: 0-100 where 50 is an average Power 4 starter at
+the position, 65, 80 and 95 are a Power 4 starter one, two and three standard deviations
+better, and 25 is an average FBS roster player (`_house_scale` in season.py, one pair of
+slopes per position group and attribute, computed from the league). Jeremiah Smith is a
+99 on it, a good Power 4 quarterback about 70, a typical Group of 5 starter in the 30s.
+The engine works on its own position-relative values underneath (an average FBS starter
+at the position is 55, scaled by `SPREAD_SCALE`); god-mode edits typed on the house scale
+are converted back, and "rated at every position" uses the same scale.
 `build_teams.py` maps them to the engine's attributes: throw accuracy and power to
 passing, awareness and throwing under pressure to decision making, agility, jukes and
 break tackle to elusiveness, man and zone coverage to coverage, power and finesse moves

@@ -761,7 +761,7 @@
     const shown = keySet.size ? p.ratings.filter((r) => keySet.has(r.key)).sort((a, b) => p.key_ratings.indexOf(a.key) - p.key_ratings.indexOf(b.key)) : p.ratings;
     const allBtn = el("button", { type: "button", class: "ghost small", text: `All ratings (${p.ratings.length})`, title: "Every rating he carries, and how he rates at other positions" });
     allBtn.addEventListener("click", () => openAllRatings(p));
-    const rat = el("div", { class: "leader-card player-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: `${p.position} ratings` }), el("span", { class: "muted small-text", text: edited.size ? `edited in god mode (${[...edited].length})` : "EA scale, 0-99" }), el("span", { class: "card-actions" }, [allBtn, editBtn])])]);
+    const rat = el("div", { class: "leader-card player-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: `${p.position} ratings` }), el("span", { class: "muted small-text", text: edited.size ? `edited in god mode (${[...edited].length})` : "50 = average Power 4 starter" }), el("span", { class: "card-actions" }, [allBtn, editBtn])])]);
     if (editBtn) editBtn.addEventListener("click", () => { editBtn.hidden = true; rat.append(playerEditForm(p, rat)); });
     for (const r of shown) {
       const pct = Math.max(2, Math.min(100, r.value));
@@ -2501,7 +2501,7 @@
     const edited = new Set(p.edited || []);
     const keySet = new Set(p.key_ratings || []);
     const node = el("div", { class: "all-ratings" });
-    node.append(el("p", { class: "muted small-text", text: `The EA 0-99 scale. The ${p.position} ratings the card shows are marked; the rest still matter when he lines up somewhere else, returns kicks or tires.` }));
+    node.append(el("p", { class: "muted small-text", text: `0-100: 50 is an average Power 4 starter at the position, 65 a good one, 80 elite, 95 generational, 25 an average FBS roster player. The ${p.position} ratings the card shows are marked; the rest still matter when he lines up somewhere else, returns kicks or tires.` }));
     const table = el("table", { class: "stats ratings-table" });
     table.append(el("tr", {}, ["Rating", "", "Value"].map((h, i) => el("th", { class: i === 0 ? "left" : "", text: h }))));
     for (const r of p.ratings) {
@@ -2516,7 +2516,7 @@
     node.append(el("div", { class: "table-scroll" }, [table]));
     const others = Object.entries(p.ratings_at || {}).filter(([pos]) => !(pos === "MLB" && /LB$/.test(p.position))).sort((a, b) => b[1] - a[1]);
     if (others.length) {
-      node.append(el("h4", { text: "Rated at every position" }), el("p", { class: "muted small-text", text: "Relative to the position: 55 is an average FBS starter there, which is how the depth chart compares players when you move one." }));
+      node.append(el("h4", { text: "Rated at every position" }), el("p", { class: "muted small-text", text: "On the same scale: 50 is an average Power 4 starter at that position. The depth chart's By position view uses these when you move someone." }));
       node.append(el("div", { class: "ratings-at" }, others.map(([pos, v]) => el("div", { class: `review-tile ${pos === p.position ? "mine" : ""}` }, [el("div", { class: "review-leader-big", text: String(v) }), el("div", { class: "review-label", text: pos === p.position ? `${pos} (his spot)` : pos })]))));
     }
     openModal(el("span", {}, [`${p.name} · all ratings`, el("span", { class: "muted small-text", text: ` · ${p.overall} overall at ${p.position}` })]), node);

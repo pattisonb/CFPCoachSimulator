@@ -135,48 +135,80 @@ def load_teams() -> dict:
     return _teams_cache
 
 
-_norms_cache: dict = {}
+# ----- the house rating scale ------------------------------------------------------------
+# What the pages show. The engine works on position-relative values (an average FBS
+# starter at the position is 55); the house scale puts an average Power 4 starter at 50,
+# a Power 4 starter one, two and three standard deviations better at 65, 80 and 95, and
+# an average FBS roster player (starters and backups everywhere) at 25. One pair of slopes
+# per position group and attribute, computed from the league once.
+
+SCALE_GROUP = {"MLB": "LB", "ROLB": "LB", "LOLB": "LB"}    # linebackers share one group (the roles are small)
+_scale_cache: dict = {}
 
 
-def load_norms() -> dict:
-    """How build_teams normalized the ratings: the engine's neutral value, the spread scale
-    and each position group's starter mean per attribute (before normalization). Lets the
-    pages show ratings on the EA 0-99 scale and turn edits back into engine values."""
-    if not _norms_cache:
-        d = json.loads(TEAMS_FILE.read_text(encoding="utf-8"))
-        _norms_cache.update(neutral=d.get("neutral", 55), spread=d.get("spread_scale", 1.0) or 1.0,
-                            means=d.get("starter_means_before_normalization", {}))
-    return _norms_cache
+def _house_scale() -> dict:
+    """(group, key) -> (p4_mean, slope_above, slope_below) for every attribute and 'overall'."""
+    if _scale_cache:
+        return _scale_cache
+    import statistics as st
+    teams = load_teams()
+    all_vals: dict = {}
+    p4_vals: dict = {}
+    for slug, t in teams.items():
+        if t["fictional"]:
+            continue
+        p4 = t["conference"] in polls.P4 or slug == "notre-dame"
+        for p in t["offense"] + t["defense"]:
+            g = SCALE_GROUP.get(p["position"], p["position"])
+            keys = [(k, p[k]) for k, _ in RATING_LABELS if isinstance(p.get(k), (int, float))] + [("overall", player_overall(p))]
+            for k, v in keys:
+                all_vals.setdefault((g, k), []).append(v)
+                if p4 and p.get("in_game"):
+                    p4_vals.setdefault((g, k), []).append(v)
+    # the slopes come from the position's overall, so a player's attributes keep their
+    # proportions; each attribute has its own Power 4 starter mean as the 50 mark
+    slopes = {}
+    for (g, k), vals in all_vals.items():
+        if k != "overall":
+            continue
+        p4 = p4_vals.get((g, k)) or vals
+        m4 = st.mean(p4)
+        sd4 = st.pstdev(p4) if len(p4) > 1 else 0.0
+        k_hi = 15 / sd4 if sd4 > 1.0 else 2.0
+        k_lo = 25 / max(3.0, m4 - st.mean(vals))
+        slopes[g] = (max(0.5, min(4.0, k_hi)), max(0.5, min(4.0, k_lo)))
+    for gk, vals in all_vals.items():
+        p4 = p4_vals.get(gk) or vals
+        k_hi, k_lo = slopes.get(gk[0], (1.5, 1.5))
+        _scale_cache[gk] = (st.mean(p4), k_hi, k_lo)
+    return _scale_cache
 
 
-def _norm_mean(p: dict, key: str) -> float:
-    n = load_norms()
-    k = "returners:return_rating" if key == "return_rating" else f"{p['position']}:{key}"
-    return float(n["means"].get(k, n["neutral"]))
+def house_value(pos: str, key: str, v: float) -> int:
+    """An engine value of attribute `key` (or 'overall') at `pos` on the house scale."""
+    m4, k_hi, k_lo = _house_scale().get((SCALE_GROUP.get(pos, pos), key), (55.0, 1.5, 1.5))
+    out = 50 + (v - m4) * (k_hi if v >= m4 else k_lo)
+    return int(round(max(1, min(100, out))))
+
+
+def house_to_engine(pos: str, key: str, ours: float) -> int:
+    """The inverse: a house-scale rating typed in god mode back into engine units."""
+    m4, k_hi, k_lo = _house_scale().get((SCALE_GROUP.get(pos, pos), key), (55.0, 1.5, 1.5))
+    v = m4 + (ours - 50) / (k_hi if ours >= 50 else k_lo)
+    return int(round(max(1, min(99, v))))
 
 
 def display_rating(p: dict, key: str, value: Optional[float] = None) -> int:
-    """An engine attribute (position-relative, neutral 55) back on the EA 0-99 scale."""
-    n = load_norms()
-    v = p.get(key) if value is None else value
-    return int(round(max(1, min(99, _norm_mean(p, key) + (v - n["neutral"]) / n["spread"]))))
+    return house_value(p["position"], key, p.get(key) if value is None else value)
 
 
-def engine_rating(p: dict, key: str, ea: float) -> int:
-    """An EA-scale rating turned into the engine's position-relative value."""
-    n = load_norms()
-    return int(round(max(1, min(99, n["neutral"] + (ea - _norm_mean(p, key)) * n["spread"]))))
+def engine_rating(p: dict, key: str, ours: float) -> int:
+    return house_to_engine(p["position"], key, ours)
 
 
 def shown_overall(p: dict, base: Optional[dict] = None) -> int:
-    """The overall on the card: the EA overall, moved by any god-mode edit's effect on the
-    engine's own composite (so an edit shows), else the engine composite."""
-    ea = (base or p).get("ea_overall")
-    if ea is None:
-        return player_overall(p)
-    if base is not None and base is not p:
-        ea += (player_overall(p) - player_overall(base)) / load_norms()["spread"]
-    return int(round(max(1, min(99, ea))))
+    """The overall on the card: the engine's composite on the house scale (edits show)."""
+    return house_value(p["position"], "overall", player_overall(p))
 
 
 def tier_of(team: dict) -> str:
@@ -1097,13 +1129,13 @@ def position_candidates(state: dict, slug: str, role: str) -> dict:
     current = depth_order(state, slug, role)
     rows = []
     for p in team["offense"] + team["defense"]:
-        rating = int(p.get("return_rating") or 0) if pos == "KR" else overall_at(p, pos)
+        rating = house_value(p["position"], "return_rating", int(p.get("return_rating") or 0)) if pos == "KR" else house_value(pos, "overall", overall_at(p, pos))
         rec = ss.get(f"{p['name']}|{p['position']}")
         st = rec["stats"] if rec else {}
         group = awards.Pool._group(p["position"], p.get("role"), st) or p["position"]
         rows.append({"name": p["name"], "slug": p["slug"], "position": p["position"], "role": p.get("role"), "depth": p.get("depth"),
                      "class": p.get("class"), "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"),
-                     "rating": rating, "natural": player_overall(p), "starter": bool(p.get("in_game")),
+                     "rating": rating, "natural": shown_overall(p), "starter": bool(p.get("in_game")),
                      "in_role": p["slug"] in current, "spot": (current.index(p["slug"]) + 1) if p["slug"] in current else None,
                      "games": rec["games"] if rec else 0, "headline": awards.headline({"stats": st}, group) if st else ""})
     rows.sort(key=lambda r: (-r["rating"], r["name"]))
@@ -2743,7 +2775,8 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         "edited": sorted(player_edits(state, team).get(p.get("slug"), {}).keys()), "editable_classes": list(CLASS_NAMES), "dev_traits": list(DEV_TRAITS),
         "key_ratings": key_ratings,
         "morale": morale_view(state, team, name, position),
-        "ratings_at": {k: int(v) for k, v in (p.get("ratings_at") or {}).items() if isinstance(v, (int, float))},
+        "ratings_at": {k: house_value(RATING_KEY.get(k, k) if k != "KR" else "KR", "return_rating" if k == "KR" else "overall", int(v))
+                       for k, v in (p.get("ratings_at") or {}).items() if isinstance(v, (int, float))},
         "team": {"slug": team, "name": t["name"], "conference": t["conference"], "coach": hc.get("name"),
                  "record": f"{rec['wins']}-{rec['losses']}", "rank": awards.Pool(state, teams, _records(state)).rank_of(team) if ss else None},
         "games": line["games"] if line else 0, "team_games": ss.get("games", 0), "stats": stats,
