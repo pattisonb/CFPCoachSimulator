@@ -39,11 +39,21 @@ WEB_DIR = ROOT / "web"
 MAX_HISTORY = 300
 MAX_BATCH = 500
 
+_real_ready = threading.Event()
+
+
+def _startup_real() -> None:
+    try:
+        if realdata.stale():
+            _refresh_real()
+    finally:
+        _real_ready.set()
+
+
 @contextlib.asynccontextmanager
 async def _lifespan(_app: FastAPI):
     # the real season is rebuilt in the background when its data changed, so /real opens at once
-    if realdata.stale():
-        threading.Thread(target=lambda: _refresh_real(), daemon=True).start()
+    threading.Thread(target=_startup_real, daemon=True).start()
     yield
     season.close_pool()   # stop the season workers so Ctrl-C exits at once
 
@@ -317,8 +327,10 @@ _season_lock = threading.Lock()
 
 
 def _season_state(season_id: str) -> dict:
-    if season_id == realdata.REAL_ID and realdata.stale():
-        _refresh_real()
+    if season_id == realdata.REAL_ID:
+        _real_ready.wait(timeout=600)          # a rebuild started at launch: wait for it, do not start another
+        if realdata.stale():
+            _refresh_real()
     job = _season_jobs.get(season_id)
     if job and job.get("state") is not None:
         return job["state"]

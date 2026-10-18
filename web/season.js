@@ -639,9 +639,9 @@
       try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); renderDepthChart(); }
       catch (err) { toast(`Could not change the depth chart: ${err.message}`, 4000); }
     };
-    const canEdit = !s.done && (ds.team === s.team || godMode());
+    const canEdit = !s.done && s.mode !== "real" && (ds.team === s.team || godMode());
     const note = el("div", { class: "stats-controls depth-note" }, [
-      el("span", { class: "muted small-text", text: s.done ? "Season complete; the depth chart is read-only." : !canEdit ? "Another team's depth chart: turn on god mode in ⚙ Settings to edit it." : `▲ ▼ move a player one spot, ★ makes him the starter.${ds.team !== s.team ? " God mode: this is another team's chart." : ""} Changes are saved with this season and used by every game from the next sim on.` }),
+      el("span", { class: "muted small-text", text: s.mode === "real" ? "The real depth chart: who has actually played the most over the last three games (tools/tune_from_real.py)." : s.done ? "Season complete; the depth chart is read-only." : !canEdit ? "Another team's depth chart: turn on god mode in ⚙ Settings to edit it." : `▲ ▼ move a player one spot, ★ makes him the starter.${ds.team !== s.team ? " God mode: this is another team's chart." : ""} Changes are saved with this season and used by every game from the next sim on.` }),
       d.overridden && canEdit ? (() => { const b = el("button", { type: "button", class: "ghost small", text: "Reset to the original depth chart" }); b.addEventListener("click", () => { if (confirm(`Reset the ${d.name} depth chart to the original?`)) change({ reset: true }); }); return b; })() : null,
     ]);
     box.append(note);
