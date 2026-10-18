@@ -271,6 +271,39 @@ def _real_polls_2026(teams: dict) -> dict:
     return {w: [s for s in lst if s] for w, lst in out.items()}
 
 
+def _real_ap_votes_2026(week: int, teams: dict) -> Optional[tuple[list[str], list[str], dict]]:
+    """The real AP poll after our week `week` (0 = preseason) with its vote points: (top 25,
+    others receiving votes, slug -> {points, first_place}); None when it is not in the archive."""
+    if not HISTORY_POLLS.exists():
+        return None
+    hist = json.loads(HISTORY_POLLS.read_text(encoding="utf-8")).get("2026") or {}
+    if week == 0:
+        top, others = hist.get("preseason") or [], hist.get("preseason_others") or []
+    else:
+        entry = (hist.get("weeks") or {}).get(str(week)) or {}
+        top, others = entry.get("ap") or [], entry.get("ap_others") or []
+    if not top:
+        return None
+    from teamnames import build_matcher, match
+    lookup = build_matcher(teams)
+    votes, order, rest = {}, [], []
+    for rows, dest in ((sorted(top, key=lambda r: r["rank"]), order), (sorted(others, key=lambda r: r["rank"]), rest)):
+        for r in rows:
+            slug = match(r.get("name") or "", lookup)
+            if slug and slug not in votes and not teams[slug]["fictional"]:
+                votes[slug] = {"points": int(r.get("points") or 0), "first_place": int(r.get("first_place") or 0)}
+                dest.append(slug)
+    return order[:25], rest[:AP_OTHERS], votes
+
+
+def _poll_votes_from_key(state: dict, order: list[str], key: dict[str, float], tiers: dict[str, str], week: int) -> dict[str, dict]:
+    """Ballots for a poll made by polls.next_poll: each voter ranks the teams by their share
+    plus his own noise (a share of 0.04 is one spot, the voter noise about 1.75 spots)."""
+    ap_params, _ = polls.load_params()
+    scores = {t: key.get(t, 0.0) * 400.0 for t in order}
+    return polls.ballots(order, scores, tiers, {**ap_params, "g5_discount": 0.0}, seed=(state.get("seed") or 0) * 1000 + week)
+
+
 # ----- season state --------------------------------------------------------
 
 def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None) -> dict:
@@ -326,6 +359,9 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None) -
     pre_full = polls.rank(state["scores"], {}, tiers, ap_params, n=25 + AP_OTHERS)
     pre_others = [t for t in pre_full if t not in set(preseason[:25])][:AP_OTHERS]
     pre_votes = _ap_votes(state, preseason[:25] + pre_others, tiers, ap_params, 0)
+    real_pre = _real_ap_votes_2026(0, teams)
+    if real_pre and real_pre[0][:25] == preseason[:25]:
+        preseason, pre_others, pre_votes = real_pre[0], real_pre[1] or pre_others, {**pre_votes, **real_pre[2]}
     state["polls"]["0"] = {"ap": _poll_entries(preseason[:25], {}, state, teams, votes=pre_votes),
                            "ap_others": _poll_entries(pre_others, {}, state, teams, start=26, votes=pre_votes)}
     state["polls"]["0"].update(_coaches_entries(state, teams, preseason[:25], pre_others, {}, tiers, ap_params, 0, None))
@@ -615,10 +651,22 @@ def _final_ap_poll(state: dict, teams: dict) -> None:
         scores[champion] = top + 120.0          # the title settles the top of the poll
         scores[runner_up] = max(scores.get(runner_up, 0.0), top + 40.0)
     state["scores"] = scores
-    full = polls.rank(scores, rec_t, tiers, ap_params, n=25 + AP_OTHERS)
-    order = [t for t in (champion, runner_up) if t] + [t for t in full if t not in (champion, runner_up)]
-    order, others = order[:25], order[25:25 + AP_OTHERS]
-    votes = _ap_votes(state, order + others, tiers, ap_params, FINAL_WEEK)
+    prev_full = prev + state["polls"][str(last_week)].get("ap_others", [])
+    if any(e.get("points") for e in prev_full):
+        nxt, key = polls.next_poll(prev_full, post_games, rec_t, tiers, polls.load_next_params(), n=25 + AP_OTHERS + 2)
+        if champion:
+            key[champion] = max(key.values()) + 0.2
+        if runner_up:
+            key[runner_up] = max(key.get(runner_up, 0.0), max(v for t, v in key.items() if t != champion) + 0.1)
+        full = sorted((t for t in key if tiers.get(t) != "FCS"), key=lambda t: -key[t])
+        order = [t for t in (champion, runner_up) if t] + [t for t in full if t not in (champion, runner_up)]
+        order, others = order[:25], order[25:25 + AP_OTHERS]
+        votes = _poll_votes_from_key(state, order + others, key, tiers, FINAL_WEEK)
+    else:
+        full = polls.rank(scores, rec_t, tiers, ap_params, n=25 + AP_OTHERS)
+        order = [t for t in (champion, runner_up) if t] + [t for t in full if t not in (champion, runner_up)]
+        order, others = order[:25], order[25:25 + AP_OTHERS]
+        votes = _ap_votes(state, order + others, tiers, ap_params, FINAL_WEEK)
     state["polls"]["19"] = {"ap": _poll_entries(order, prev_rank, state, teams, votes=votes, records=rec),
                             "ap_others": _poll_entries(others, prev_rank, state, teams, start=26, votes=votes, records=rec),
                             "final": True}
@@ -635,11 +683,22 @@ def _update_polls_after_week(state: dict, teams: dict, week: int, real_ap: Optio
                    "neutral": g["neutral"]} for g in state["games"].values() if g["played"] and g["week"] == week and g["kind"] != "playoff"]
     rec = _records(state, week)
     rec_t = {s: (r["wins"], r["losses"]) for s, r in rec.items()}
+    # the season-long scores still move (the committee model reads them) ...
     state["scores"] = polls.update_scores(state["scores"], week_games, prev_rank, rec_t, tiers, week, CCG_WEEK, ap_params)
-    full = polls.rank(state["scores"], rec_t, tiers, ap_params, n=25 + AP_OTHERS)
-    order = real_ap[:25] if real_ap else full[:25]
-    others = [t for t in full if t not in set(order)][:AP_OTHERS]
-    votes = _ap_votes(state, order + others, tiers, ap_params, week)
+    # ... but the AP poll moves from last week's poll and its vote points, the way voters do
+    prev_full = prev + state["polls"].get(str(week - 1), {}).get("ap_others", [])
+    real = _real_ap_votes_2026(week, teams) if real_ap else None
+    if real:
+        order, others, votes = real
+    elif any(e.get("points") for e in prev_full):
+        nxt, key = polls.next_poll(prev_full, week_games, rec_t, tiers, polls.load_next_params(), n=25 + AP_OTHERS)
+        order, others = nxt[:25], nxt[25:]
+        votes = _poll_votes_from_key(state, order + others, key, tiers, week)
+    else:                                  # an old saved season without vote points
+        full = polls.rank(state["scores"], rec_t, tiers, ap_params, n=25 + AP_OTHERS)
+        order = real_ap[:25] if real_ap else full[:25]
+        others = [t for t in full if t not in set(order)][:AP_OTHERS]
+        votes = _ap_votes(state, order + others, tiers, ap_params, week)
     entry = {"ap": _poll_entries(order, prev_rank, state, teams, week, votes=votes),
              "ap_others": _poll_entries(others, prev_rank, state, teams, week, start=26, votes=votes)}
     entry.update(_coaches_entries(state, teams, order, others, rec_t, tiers, ap_params, week, week - 1))

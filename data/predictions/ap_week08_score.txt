@@ -1,0 +1,36 @@
+AP forecast for the poll after week 8: made 2026-10-18T16:13:15+00:00 at commit 1a4235f, starting from the real AP poll after week 7
+
+forecast    in top 25  rank MAE  exact  within 2  top 10  No. 1
+game             23/25      2.08      2        16     9/10     no
+anchored         23/25      2.20      2        16     9/10     no
+last_week        23/25      3.52      0        11     8/10     no
+rank MAE: mean |forecast rank - real rank| over the real Top 25, unranked counted as 26
+
+real  team                    record   game  anchored  last wk
+   1  Miami                      6-0      3         3        3
+   2  BYU                        6-0      2         2        8
+   3  Ohio State                 6-1      1         1        4
+   4  Notre Dame                 6-1      7         7        2
+   5  Georgia                    6-1      4        11        1
+   6  Indiana                    6-1      9         8        5
+   7  Ole Miss                   5-1      6         4        9
+   8  Texas Tech                 6-0      5         6       10
+   9  UCLA                       6-0     10        10       12
+  10  Utah                       6-0     11         9       11
+  11  Tennessee                  6-1      8         5       14
+  12  Kentucky                   6-1     12        13       15
+  13  Alabama                    5-2     15        12        6
+  14  Houston                    6-1     13        14       20
+  15  Iowa                       5-1     19        16       17
+  16  USC                        6-1     14        19       19
+  17  Wake Forest                6-1     16        18       21
+  18  LSU                        5-2     17        15       22
+  19  Texas                      4-2     18        17        7
+  20  Florida                    5-2     25        23        -
+  21  Boise State                5-1      -         -       23
+  22  Missouri                   5-2      -        20       13
+  23  SMU                        5-1     21        21       24
+  24  Northwestern               5-1     23        22       25
+  25  Arizona                    5-1     22         -        -
+game ranked but the real poll did not: Oregon, James Madison
+anchored ranked but the real poll did not: Oregon, Oklahoma State

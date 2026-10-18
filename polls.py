@@ -73,6 +73,13 @@ def load_params() -> tuple[dict, dict]:
     return dict(AP_PARAMS), dict(CFP_PARAMS)
 
 
+def load_next_params() -> dict:
+    """The week-to-week model's fitted parameters (tools/backtest_polls.py)."""
+    if PARAMS_FILE.exists():
+        return {**NEXT_PARAMS, **json.loads(PARAMS_FILE.read_text(encoding="utf-8")).get("next", {})}
+    return dict(NEXT_PARAMS)
+
+
 # ----- AP model ------------------------------------------------------------
 
 def preseason_scores(preseason_poll: list[str], ratings: dict[str, float], params: dict) -> dict[str, float]:
@@ -151,6 +158,91 @@ def rank(scores: dict[str, float], records: dict[str, tuple[int, int]], tiers: d
         return (-(s + params["record_weight"] * (w - l) * 0.0), -w, l)
     eligible = [t for t in scores if tiers.get(t) != "FCS"]
     return sorted(eligible, key=key)[:n]
+
+
+# ----- AP week-to-week model ---------------------------------------------------
+# How voters actually move a poll: last week's vote points (Top 25 and the others receiving
+# votes) are the starting line, each team moves by its result, unbeaten teams get the
+# benefit of the doubt, and a head-to-head winner goes above a close loser. Fit one week
+# ahead (real poll + real results -> next real poll) over 2014-2023 by
+# tools/backtest_polls.py; data/poll_params.json carries the fitted values under "next".
+NEXT_PARAMS = {
+    "win_base": 0.010,       # share of the maximum points gained for any win
+    "win_opp": 0.10,         # extra x the opponent's share of the maximum (a win over No. 1 ~ +0.10)
+    "win_margin": 0.010,     # extra for a 21-point win (scaled by margin, capped)
+    "win_road": 0.005,
+    "loss_base": 0.10,       # share lost for any loss
+    "loss_bad": 0.15,        # extra x (1 - opponent's share): losing to an unranked team costs most
+    "loss_margin": 0.06,     # extra for a 21-point loss
+    "loss_home": 0.02,
+    "loss_own": 0.0,         # extra x the loser's own share (top teams lose more points)
+    "bye": 0.0,              # change for a team that did not play
+    "unbeaten": 0.03,        # ranking edge for a team with no losses
+    "loss_edge": 0.015,      # ranking drag per loss on the season
+    "new_entry": 0.006,      # share per win minus 2 x losses for a team nobody voted for (P4)
+    "g5_entry": 0.5,         # multiplier on new_entry for a Group of Five team
+    "fcs_win": 0.3,          # a win over an FCS team counts this much of a normal win
+    "h2h": 0.04,             # a head-to-head winner goes above the loser within this share
+}
+
+
+def _share_table(prev: list[dict]) -> tuple[dict[str, float], int]:
+    """team -> share of the maximum points (0..1) from a published poll with its others."""
+    voters = sum((e.get("first_place") or 0) for e in prev if (e.get("rank") or 99) <= 25) or AP_VOTERS
+    top = 25.0 * voters
+    return {e["team"]: (e.get("points") or 0.0) / top for e in prev}, voters
+
+
+def next_poll(prev: list[dict], games: list[dict], records: dict[str, tuple[int, int]], tiers: dict[str, str],
+              params: Optional[dict] = None, n: int = 25) -> tuple[list[str], dict[str, float]]:
+    """The next AP poll from the last one. prev: [{team, rank, points, first_place}] for the
+    Top 25 and the others receiving votes; games: this week's results; records: (wins, losses)
+    after the games. Returns the order (n teams) and each listed team's share."""
+    p = {**NEXT_PARAMS, **(params or {})}
+    share, _ = _share_table(prev)
+    val = dict(share)
+    played = set()
+    for g in games:
+        for side, opp in (("home", "away"), ("away", "home")):
+            t, o = g[side], g[opp]
+            played.add(t)
+            if tiers.get(t) == "FCS":
+                continue
+            if t not in val:
+                w, l = records.get(t, (0, 0))
+                entry = p["new_entry"] * max(0, w - 2 * l)
+                val[t] = entry * (p["g5_entry"] if tiers.get(t) == "G5" else 1.0) - p["new_entry"]
+            ts, os_ = g[f"{side}_score"], g[f"{opp}_score"]
+            m = min(abs(ts - os_), 21) / 21.0
+            ov = share.get(o, 0.0)
+            at_home = side == "home" and not g.get("neutral")
+            if ts > os_:
+                gain = p["win_base"] + p["win_opp"] * ov + p["win_margin"] * m + (0 if at_home or g.get("neutral") else p["win_road"])
+                if tiers.get(o) == "FCS":
+                    gain *= p["fcs_win"]
+                val[t] += gain
+            else:
+                bad = 1.0 if tiers.get(o) == "FCS" else (1.0 - min(1.0, ov))
+                val[t] -= p["loss_base"] + p["loss_bad"] * bad + p["loss_margin"] * m + (p["loss_home"] if at_home else 0.0)                     + p["loss_own"] * share.get(t, 0.0)
+    for t in val:
+        if t not in played:
+            val[t] += p["bye"]
+    key = {}
+    for t, v in val.items():
+        if tiers.get(t) == "FCS":
+            continue
+        w, l = records.get(t, (0, 0))
+        key[t] = v + (p["unbeaten"] if l == 0 and w > 0 else 0.0) - p["loss_edge"] * l
+    order = sorted(key, key=lambda t: -key[t])
+    # head to head: this week's winner goes just above a loser it trails by less than h2h
+    for g in games:
+        if g["home_score"] == g["away_score"]:
+            continue
+        w_, l_ = (g["home"], g["away"]) if g["home_score"] > g["away_score"] else (g["away"], g["home"])
+        if w_ in key and l_ in key and key[l_] > key[w_] and key[l_] - key[w_] < p["h2h"]:
+            order.remove(w_)
+            order.insert(order.index(l_), w_)
+    return order[:n], key
 
 
 AP_VOTERS = 62          # ballots on the AP panel (62 in 2024, 66 in 2025)

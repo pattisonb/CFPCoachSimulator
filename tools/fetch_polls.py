@@ -50,12 +50,17 @@ def ref_id(ref: str) -> str:
     return ref.split("?")[0].rstrip("/").split("/")[-1]
 
 
-def parse_ranking(d: dict, names: dict) -> list[dict]:
+def parse_ranking(d: dict, names: dict, key: str = "ranks") -> list[dict]:
+    """One ranking's teams. key="others": the teams receiving votes outside the Top 25,
+    numbered 26, 27, ... by points."""
     out = []
-    for r in d.get("ranks", []):
+    rows = d.get(key, []) or []
+    if key == "others":
+        rows = sorted(rows, key=lambda r: -(r.get("points") or 0))
+    for i, r in enumerate(rows):
         tid = ref_id(r["team"]["$ref"])
         rec = r.get("record")
-        out.append({"rank": r.get("current"), "previous": r.get("previous"), "team": tid, "name": names.get(tid),
+        out.append({"rank": r.get("current") if key == "ranks" else 26 + i, "previous": r.get("previous"), "team": tid, "name": names.get(tid),
                     "record": rec.get("summary") if isinstance(rec, dict) else rec,
                     "points": r.get("points"), "first_place": r.get("firstPlaceVotes")})
     return out
@@ -76,6 +81,7 @@ def rankings_for(season: int, stype: int, week: int, names: dict) -> dict:
         name = (d.get("name") or "").lower()
         if name == "ap top 25":
             out["ap"] = parse_ranking(d, names)
+            out["ap_others"] = parse_ranking(d, names, "others")
         elif name == "afca coaches poll":        # the FBS one; ESPN also lists FCS, D-II and D-III coaches polls
             out["coaches"] = parse_ranking(d, names)
         elif "playoff" in name:
@@ -152,11 +158,38 @@ def fetch_season(season: int) -> tuple[dict, dict]:
     return polls, results
 
 
+def backfill_others(polls: dict, results: dict) -> None:
+    """Add the AP 'others receiving votes' to every saved week (older archives lack them)."""
+    for season in sorted(polls):
+        names = {}
+        for games in results.get(season, {}).values():
+            for g in games:
+                for side in ("home", "away"):
+                    names[g[side]["id"]] = g[side]["name"]
+        n = 0
+        for week, entry in polls[season]["weeks"].items():
+            if "ap" not in entry or entry.get("ap_others"):
+                continue
+            d = get(f"{CORE}/seasons/{season}/types/2/weeks/{week}/rankings/1")
+            if d and (d.get("name") or "").lower() == "ap top 25":
+                entry["ap_others"] = parse_ranking(d, names, "others")
+                n += 1
+            time.sleep(0.1)
+        pre = get(f"{CORE}/seasons/{season}/types/1/weeks/1/rankings/1")
+        if pre and not polls[season].get("preseason_others"):
+            polls[season]["preseason_others"] = parse_ranking(pre, names, "others")
+        print(f"{season}: others added for {n} weeks")
+
+
 def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     polls_file, results_file = OUT_DIR / "polls.json", OUT_DIR / "results.json"
     polls = json.loads(polls_file.read_text(encoding="utf-8")) if polls_file.exists() else {}
     results = json.loads(results_file.read_text(encoding="utf-8")) if results_file.exists() else {}
+    if sys.argv[1:] == ["--others"]:
+        backfill_others(polls, results)
+        polls_file.write_text(json.dumps(polls), encoding="utf-8")
+        return
     seasons = [int(sys.argv[1])] if len(sys.argv) > 1 else SEASONS + [2026]
     for season in seasons:
         if str(season) in polls and len(sys.argv) == 1 and season != 2026:

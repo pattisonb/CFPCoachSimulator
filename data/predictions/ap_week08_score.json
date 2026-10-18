@@ -1,0 +1,206 @@
+{
+ "week": 8,
+ "metrics": {
+  "game": {
+   "in_top25": 23,
+   "mae": 2.08,
+   "exact": 2,
+   "within2": 16,
+   "top10": 9,
+   "no1": false
+  },
+  "anchored": {
+   "in_top25": 23,
+   "mae": 2.2,
+   "exact": 2,
+   "within2": 16,
+   "top10": 9,
+   "no1": false
+  },
+  "last_week": {
+   "in_top25": 23,
+   "mae": 3.52,
+   "exact": 0,
+   "within2": 11,
+   "top10": 8,
+   "no1": false
+  }
+ },
+ "real": [
+  {
+   "slug": "miami",
+   "name": "Miami",
+   "rank": 1,
+   "points": 1697.0,
+   "record": "6-0"
+  },
+  {
+   "slug": "byu",
+   "name": "BYU",
+   "rank": 2,
+   "points": 1675.0,
+   "record": "6-0"
+  },
+  {
+   "slug": "ohio-state",
+   "name": "Ohio State",
+   "rank": 3,
+   "points": 1649.0,
+   "record": "6-1"
+  },
+  {
+   "slug": "notre-dame",
+   "name": "Notre Dame",
+   "rank": 4,
+   "points": 1395.0,
+   "record": "6-1"
+  },
+  {
+   "slug": "georgia",
+   "name": "Georgia",
+   "rank": 5,
+   "points": 1382.0,
+   "record": "6-1"
+  },
+  {
+   "slug": "indiana",
+   "name": "Indiana",
+   "rank": 6,
+   "points": 1370.0,
+   "record": "6-1"
+  },
+  {
+   "slug": "ole-miss",
+   "name": "Ole Miss",
+   "rank": 7,
+   "points": 1360.0,
+   "record": "5-1"
+  },
+  {
+   "slug": "texas-tech",
+   "name": "Texas Tech",
+   "rank": 8,
+   "points": 1336.0,
+   "record": "6-0"
+  },
+  {
+   "slug": "ucla",
+   "name": "UCLA",
+   "rank": 9,
+   "points": 1159.0,
+   "record": "6-0"
+  },
+  {
+   "slug": "utah",
+   "name": "Utah",
+   "rank": 10,
+   "points": 1153.0,
+   "record": "6-0"
+  },
+  {
+   "slug": "tennessee",
+   "name": "Tennessee",
+   "rank": 11,
+   "points": 1151.0,
+   "record": "6-1"
+  },
+  {
+   "slug": "kentucky",
+   "name": "Kentucky",
+   "rank": 12,
+   "points": 932.0,
+   "record": "6-1"
+  },
+  {
+   "slug": "alabama",
+   "name": "Alabama",
+   "rank": 13,
+   "points": 870.0,
+   "record": "5-2"
+  },
+  {
+   "slug": "houston",
+   "name": "Houston",
+   "rank": 14,
+   "points": 785.0,
+   "record": "6-1"
+  },
+  {
+   "slug": "iowa",
+   "name": "Iowa",
+   "rank": 15,
+   "points": 747.0,
+   "record": "5-1"
+  },
+  {
+   "slug": "usc",
+   "name": "USC",
+   "rank": 16,
+   "points": 592.0,
+   "record": "6-1"
+  },
+  {
+   "slug": "wake-forest",
+   "name": "Wake Forest",
+   "rank": 17,
+   "points": 574.0,
+   "record": "6-1"
+  },
+  {
+   "slug": "lsu",
+   "name": "LSU",
+   "rank": 18,
+   "points": 529.0,
+   "record": "5-2"
+  },
+  {
+   "slug": "texas",
+   "name": "Texas",
+   "rank": 19,
+   "points": 440.0,
+   "record": "4-2"
+  },
+  {
+   "slug": "florida",
+   "name": "Florida",
+   "rank": 20,
+   "points": 355.0,
+   "record": "5-2"
+  },
+  {
+   "slug": "boise-state",
+   "name": "Boise State",
+   "rank": 21,
+   "points": 295.0,
+   "record": "5-1"
+  },
+  {
+   "slug": "missouri",
+   "name": "Missouri",
+   "rank": 22,
+   "points": 290.0,
+   "record": "5-2"
+  },
+  {
+   "slug": "smu",
+   "name": "SMU",
+   "rank": 23,
+   "points": 265.0,
+   "record": "5-1"
+  },
+  {
+   "slug": "northwestern",
+   "name": "Northwestern",
+   "rank": 24,
+   "points": 254.0,
+   "record": "5-1"
+  },
+  {
+   "slug": "arizona",
+   "name": "Arizona",
+   "rank": 25,
+   "points": 136.0,
+   "record": "5-1"
+  }
+ ]
+}
