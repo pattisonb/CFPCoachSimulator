@@ -3029,6 +3029,7 @@
     await loadSeasons().catch(() => {});
     const id = REAL ? REAL_ID : new URLSearchParams(location.search).get("id");
     if (REAL) { document.body.classList.add("real-mode"); $("#season-empty").querySelector("p").textContent = "Loading the real 2026 season…"; }
+    for (const a of document.querySelectorAll(".site-nav a")) a.classList.toggle("active", a.dataset.nav === (REAL ? "real" : "season"));
     if (id) openSeason(id);
   })();
 })();

@@ -41,6 +41,9 @@ MAX_BATCH = 500
 
 @contextlib.asynccontextmanager
 async def _lifespan(_app: FastAPI):
+    # the real season is rebuilt in the background when its data changed, so /real opens at once
+    if realdata.stale():
+        threading.Thread(target=lambda: _refresh_real(), daemon=True).start()
     yield
     season.close_pool()   # stop the season workers so Ctrl-C exits at once
 
