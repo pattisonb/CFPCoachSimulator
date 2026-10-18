@@ -25,6 +25,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from engine.game import SLIDER_NAMES, default_sliders, simulate_game
+import realdata
 import season
 
 ROOT = Path(__file__).resolve().parent
@@ -313,6 +314,8 @@ _season_lock = threading.Lock()
 
 
 def _season_state(season_id: str) -> dict:
+    if season_id == realdata.REAL_ID and realdata.stale():
+        _refresh_real()
     job = _season_jobs.get(season_id)
     if job and job.get("state") is not None:
         return job["state"]
@@ -321,6 +324,20 @@ def _season_state(season_id: str) -> dict:
         raise HTTPException(404, "season not found")
     _season_jobs[season_id] = {"id": season_id, "status": "idle", "state": state, "done": state["current_week"], "total": state["current_week"]}
     return state
+
+
+def _refresh_real(follow: Optional[str] = None) -> dict:
+    """Rebuild the real season from the data on disk (results, box scores, polls)."""
+    with _season_lock:
+        old = _season_jobs.get(realdata.REAL_ID, {}).get("state")
+        st = realdata.build(follow or (old or {}).get("team") or (season.load_season(realdata.REAL_ID) or {}).get("team") or realdata.DEFAULT_FOLLOW)
+        _season_jobs[realdata.REAL_ID] = {"id": realdata.REAL_ID, "status": "idle", "state": st, "done": st["current_week"], "total": st["current_week"]}
+    return st
+
+
+def _no_real(state: dict) -> None:
+    if state.get("mode") == "real":
+        raise HTTPException(403, "the real season is read-only")
 
 
 def _run_advance(job: dict, target: int) -> None:
@@ -376,6 +393,7 @@ def gameday_season(season_id: str) -> dict:
     """Game day: simulate only your game this week (the week's matchups are set first if
     they are not yet). Advance then plays the rest of the week."""
     state = _season_state(season_id)
+    _no_real(state)
     job = _season_jobs[season_id]
     if job["status"] == "running":
         raise HTTPException(409, "already simulating")
@@ -409,7 +427,8 @@ def list_seasons() -> dict:
     card is cached by the file's modification time instead of re-read on every call."""
     out = []
     if season.SEASONS_DIR.exists():
-        for path in sorted(season.SEASONS_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:30]:
+        for path in sorted((p for p in season.SEASONS_DIR.glob("*.json") if p.stem != realdata.REAL_ID),
+                           key=lambda p: p.stat().st_mtime, reverse=True)[:30]:
             mtime = path.stat().st_mtime
             cached = _season_cards.get(path.stem)
             if cached and cached[0] == mtime:
@@ -453,6 +472,8 @@ def _delete_season_file(season_id: str) -> bool:
 
 @app.delete("/api/season/{season_id}")
 def delete_season(season_id: str) -> dict:
+    if season_id == realdata.REAL_ID:
+        raise HTTPException(403, "the real season is rebuilt from the real data, not deleted")
     if not (season.SEASONS_DIR / f"{season_id}.json").exists() and season_id not in _season_jobs:
         raise HTTPException(404, "season not found")
     if not _delete_season_file(season_id):
@@ -466,6 +487,8 @@ def delete_all_seasons() -> dict:
     removed, kept = 0, 0
     if season.SEASONS_DIR.exists():
         for path in list(season.SEASONS_DIR.glob("*.json")):
+            if path.stem == realdata.REAL_ID:
+                continue
             if _delete_season_file(path.stem):
                 removed += 1
             else:
@@ -501,6 +524,7 @@ def pause_season(season_id: str) -> dict:
 @app.post("/api/season/{season_id}/advance")
 def advance_season(season_id: str, req: AdvanceRequest) -> dict:
     state = _season_state(season_id)
+    _no_real(state)
     job = _season_jobs[season_id]
     if job["status"] == "running":
         raise HTTPException(409, "already simulating")
@@ -569,6 +593,7 @@ def season_settings(season_id: str) -> dict:
 def season_settings_change(season_id: str, req: SettingsRequest) -> dict:
     """Change a season's settings (god mode and the rest); saved with the season."""
     state = _season_state(season_id)
+    _no_real(state)
     with _season_lock:
         out = season.update_settings(state, req.model_dump())
         season.save_season(state)
@@ -580,6 +605,7 @@ def season_player_edit(season_id: str, req: PlayerEditRequest) -> dict:
     """God mode: change a player's ratings, class, size, jersey or development trait. The
     edit is saved with the season and used by every game from the next sim on."""
     state = _season_state(season_id)
+    _no_real(state)
     if not season.settings(state)["god_mode"]:
         raise HTTPException(403, "turn on god mode in Settings to edit players")
     if req.team not in _teams:
@@ -645,6 +671,7 @@ def season_depth_change(season_id: str, slug: str, req: DepthRequest) -> dict:
     """Move a player on a team's depth chart (or reset the team). The change is saved with
     the season and used by every game from then on."""
     state = _season_state(season_id)
+    _no_real(state)
     if slug not in _teams:
         raise HTTPException(404, "unknown team")
     if slug != state["team"] and not season.settings(state)["god_mode"]:
@@ -740,6 +767,56 @@ def index() -> FileResponse:
 @app.get("/season")
 def season_page() -> FileResponse:
     return FileResponse(WEB_DIR / "season.html")
+
+
+@app.get("/real")
+def real_page() -> FileResponse:
+    """The real 2026 season: the season page in read-only mode on the real data."""
+    return FileResponse(WEB_DIR / "season.html")
+
+
+class FollowRequest(BaseModel):
+    team: str
+
+
+@app.post("/api/real/follow")
+def real_follow(req: FollowRequest) -> dict:
+    """Which team the real season page centres on (header, schedule, awards)."""
+    if req.team not in _teams:
+        raise HTTPException(404, "unknown team")
+    state = _season_state(realdata.REAL_ID)
+    with _season_lock:
+        teams = season.load_teams()
+        state.update(team=req.team, team_name=teams[req.team]["name"], conference=teams[req.team]["conference"])
+        season.save_season(state)
+    return season.summary(state)
+
+
+_real_fetch = {"status": "idle", "error": None}
+
+
+def _run_real_fetch() -> None:
+    try:
+        realdata.fetch()
+        _refresh_real()
+        _real_fetch.update(status="idle", error=None, finished=datetime.now().isoformat(timespec="seconds"))
+    except Exception as exc:  # noqa: BLE001
+        _real_fetch.update(status="error", error=str(exc))
+
+
+@app.post("/api/real/refresh")
+def real_refresh() -> dict:
+    """Download the latest real results, box scores and polls, then rebuild (a few minutes)."""
+    if _real_fetch["status"] == "running":
+        return dict(_real_fetch)
+    _real_fetch.update(status="running", error=None, started=datetime.now().isoformat(timespec="seconds"))
+    threading.Thread(target=_run_real_fetch, daemon=True).start()
+    return dict(_real_fetch)
+
+
+@app.get("/api/real/refresh")
+def real_refresh_status() -> dict:
+    return dict(_real_fetch)
 
 
 app.mount("/", StaticFiles(directory=WEB_DIR), name="web")

@@ -406,7 +406,8 @@ def stat_line(p: dict, group: str) -> str:
         return (f"{get('carries', 0)} car, {get('rush_yards', 0):,} yds, {get('rushing_touchdowns', 0)} TD; "
                 f"{get('receptions', 0)} rec, {get('receiving_yards', 0):,} yds, {get('receiving_touchdowns', 0)} TD")
     if group in ("WR", "TE"):
-        return f"{get('receptions', 0)} rec, {get('receiving_yards', 0):,} yds, {get('receiving_touchdowns', 0)} TD, {get('explosive_catches', 0)} plays of 25+"
+        line = f"{get('receptions', 0)} rec, {get('receiving_yards', 0):,} yds, {get('receiving_touchdowns', 0)} TD"
+        return line + (f", {get('explosive_catches', 0)} plays of 25+" if get('explosive_catches', 0) else "")   # real box scores carry no play lengths
     if group in ("EDGE", "DT", "LB", "DB"):
         tk = get("solo_tackles", 0) + get("assisted_tackles", 0)
         return (f"{tk} tackles, {get('tackles_for_loss', 0):g} TFL, {get('sacks', 0):g} sacks, {get('interceptions', 0)} INT, "

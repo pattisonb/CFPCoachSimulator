@@ -15,6 +15,12 @@
       <a class="brand-link" href="/"><span class="brand-mark">CFP</span></a>
       <span class="brand-name">Season</span>
     </div>
+    <nav class="site-nav" aria-label="Sections">
+      <a href="/" data-nav="game">Sim a game</a>
+      <a href="/season" data-nav="season">Sim a season</a>
+      <a href="/real" data-nav="real">Real 2026</a>
+    </nav>
+
     <div class="toolbar" id="season-toolbar">
       <select id="pick-team" aria-label="Your team"></select>
       <select id="pick-mode" aria-label="Season mode">
@@ -51,6 +57,7 @@
               <button id="btn-to-selection" class="ghost" type="button">Sim to selection</button>
               <button id="btn-to-end" class="ghost" type="button">Sim to the end</button>
               <button id="btn-settings" class="ghost" type="button" title="Season settings: god mode and more">⚙ Settings</button>
+              <button id="btn-real-refresh" class="ghost" type="button" hidden title="Download the latest real results, box scores and polls">Refresh real data</button>
             </div>
           </div>
           <div id="season-progress" class="progress" hidden><div id="season-progress-bar" class="progress-bar"></div></div>

@@ -225,6 +225,20 @@ average but which player gets them is still mostly set by the EA ratings. QB1 pa
 yards run about 20 high because the sim's starter takes every attempt while real
 starters sit in blowouts.
 
+## Real 2026 (its own page)
+
+`/real` (the "Real 2026" tab in the top nav) shows the actual 2026 season with the season
+page's tabs, read-only: every real result, the real AP polls with their vote points, the
+standings, the bracket and bowl projections from them, and real stats from the NCAA.com
+box scores (`realdata.py` turns each one into the game's stat lines and matches 93% of
+player lines to a roster player by name and jersey number). Every FBS game opens its real
+box score; player pages show the real season, a real game-by-game log and FBS ranks; the
+Awards tab runs a real Heisman straw poll and award races on the real numbers. Pick any
+team in the header to follow it. "Refresh real data" downloads the latest results, box
+scores and polls (a few minutes) and rebuilds; `python realdata.py --fetch` does the same
+from the command line. The page never simulates anything; the sim sections are "Sim a
+game" and "Sim a season".
+
 ## Season mode (its own page)
 
 Open **/season** (or hit **Sim Season** on the matchup page). Pick your team and a mode,

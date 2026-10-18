@@ -116,10 +116,90 @@
   async function openSeason(id) {
     try {
       const s = await api(`/api/season/${id}`);
-      history.replaceState(null, "", `/season?id=${s.id}`);
+      if (s.mode !== "real") history.replaceState(null, "", `/season?id=${s.id}`);
       showSeason(s);
-      loadSeasons();
+      if (s.mode !== "real") loadSeasons();
     } catch (err) { toast(`Could not open the season: ${err.message}`, 4000); }
+  }
+
+  // ----- the real 2026 season (/real) ------------------------------------------------
+  const REAL = location.pathname === "/real";
+  const REAL_ID = "real-2026";
+
+  async function followTeam(slug) {
+    try { const s = await api("/api/real/follow", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team: slug }) }); applyTeamTheme(s.team); showSeason(s); }
+    catch (err) { toast(`Could not follow that team: ${err.message}`, 3000); }
+  }
+
+  async function refreshReal() {
+    const b = $("#btn-real-refresh");
+    b.disabled = true;
+    b.textContent = "Downloading the latest results…";
+    try {
+      await api("/api/real/refresh", { method: "POST" });
+      for (;;) {
+        await new Promise((r) => setTimeout(r, 4000));
+        const j = await api("/api/real/refresh");
+        if (j.status !== "running") { if (j.status === "error") throw new Error(j.error); break; }
+      }
+      toast("Real data refreshed.", 2500);
+      await openSeason(REAL_ID);
+    } catch (err) { toast(`Refresh failed: ${err.message}`, 5000); }
+    b.disabled = false;
+    b.textContent = "Refresh real data";
+  }
+
+  // a real NCAA box score: the score, the team stats side by side, each team's players by category
+  function renderRealBox(g) {
+    const s = state.season;
+    const node = el("div", { class: "real-box" });
+    const sides = [["away", g.away], ["home", g.home]];
+    const won = (side) => g[side].score > g[side === "home" ? "away" : "home"].score;
+    node.append(el("div", { class: "real-box-score" }, sides.map(([side, t]) => el("div", { class: `real-box-team ${won(side) ? "win" : ""}` }, [
+      teamPill(t.slug), el("span", { class: "name", text: t.name }), el("span", { class: "pts", text: String(t.score) })]))));
+    const T = (t, k) => t.team[k] || 0;
+    const E = (t, k) => (t.events || {})[k] || 0;
+    const rows = [
+      ["Total yards", (t) => T(t, "Pass Yards") + T(t, "Rush Yards")], ["Plays", (t) => t.plays || 0],
+      ["Passing", (t) => `${T(t, "Completions")}/${T(t, "Pass Attempts")}, ${T(t, "Pass Yards")}`], ["Rushing", (t) => `${T(t, "Carries")}, ${T(t, "Rush Yards")}`],
+      ["First downs", (t) => E(t, "first_downs")], ["Third downs", (t) => `${E(t, "third_down_conversions")}/${E(t, "third_downs")}`],
+      ["Fourth downs", (t) => `${E(t, "fourth_down_conversions")}/${E(t, "fourth_down_attempts")}`],
+      ["Turnovers", (t) => T(t, "Interceptions Thrown") + E(t, "fumbles_lost")], ["Sacks", (t) => T(t, "Sacks")],
+      ["Penalties", (t) => `${E(t, "penalties")}-${E(t, "penalty_yards")}`],
+    ];
+    const ts = el("table", { class: "stats real-team-stats" });
+    ts.append(el("tr", {}, [el("th", { class: "left", text: g.away.name }), el("th", { text: "" }), el("th", { text: g.home.name })]));
+    for (const [label, f] of rows) ts.append(el("tr", {}, [el("td", { class: "left", text: String(f(g.away)) }), el("td", { class: "muted", style: "text-align:center", text: label }), el("td", { text: String(f(g.home)) })]));
+    node.append(el("h4", { text: "Team stats" }), el("div", { class: "table-scroll" }, [ts]));
+    const n = (p, k) => p.stats[k] || 0;
+    const cats = [
+      ["Passing", (p) => n(p, "pass_attempts"), [["C/ATT", (p) => `${n(p, "completions")}/${n(p, "pass_attempts")}`], ["YDS", (p) => n(p, "pass_yards")], ["TD", (p) => n(p, "passing_touchdowns")], ["INT", (p) => n(p, "interceptions_thrown")], ["LONG", (p) => n(p, "long_pass")]], "pass_yards"],
+      ["Rushing", (p) => n(p, "carries"), [["CAR", (p) => n(p, "carries")], ["YDS", (p) => n(p, "rush_yards")], ["AVG", (p) => (n(p, "rush_yards") / n(p, "carries")).toFixed(1)], ["TD", (p) => n(p, "rushing_touchdowns")], ["LONG", (p) => n(p, "long_rush")]], "rush_yards"],
+      ["Receiving", (p) => n(p, "receptions"), [["REC", (p) => n(p, "receptions")], ["YDS", (p) => n(p, "receiving_yards")], ["TD", (p) => n(p, "receiving_touchdowns")], ["LONG", (p) => n(p, "long_reception")]], "receiving_yards"],
+      ["Defense", (p) => n(p, "solo_tackles") + n(p, "assisted_tackles") + n(p, "sacks") + n(p, "interceptions"), [["TKL", (p) => n(p, "solo_tackles") + n(p, "assisted_tackles")], ["SOLO", (p) => n(p, "solo_tackles")], ["TFL", (p) => n(p, "tackles_for_loss")], ["SACK", (p) => n(p, "sacks")], ["INT", (p) => n(p, "interceptions")], ["FF", (p) => n(p, "forced_fumbles")]], "solo_tackles"],
+      ["Kicking", (p) => n(p, "fg_attempted") + n(p, "pat_attempts"), [["FG", (p) => `${n(p, "fg_made")}/${n(p, "fg_attempted")}`], ["LONG", (p) => n(p, "long_fg")], ["PAT", (p) => `${n(p, "pat_made")}/${n(p, "pat_attempts")}`]], "fg_made"],
+      ["Punting", (p) => n(p, "punts"), [["PUNTS", (p) => n(p, "punts")], ["YDS", (p) => n(p, "punt_yards")], ["AVG", (p) => (n(p, "punt_yards") / n(p, "punts")).toFixed(1)], ["LONG", (p) => n(p, "long_punt")]], "punt_yards"],
+      ["Returns", (p) => n(p, "kickoff_returns") + n(p, "punt_returns"), [["KR", (p) => `${n(p, "kickoff_returns")}-${n(p, "kickoff_return_yards")}`], ["PR", (p) => `${n(p, "punt_returns")}-${n(p, "punt_return_yards")}`], ["TD", (p) => n(p, "kickoff_return_touchdowns") + n(p, "punt_return_touchdowns")]], "kickoff_return_yards"],
+    ];
+    const pick = { side: "away" };
+    const chips = chipRow(sides.map(([side, t]) => [side, t.name]), pick.side, (v) => { pick.side = v; draw(); for (const c of chips.querySelectorAll(".chip")) c.classList.toggle("active", c.textContent === g[v].name); });
+    const body = el("div");
+    function draw() {
+      body.innerHTML = "";
+      const t = g[pick.side];
+      for (const [title, has, cols, sortKey] of cats) {
+        const players = t.players.filter((p) => has(p) > 0).sort((a, b) => n(b, sortKey) - n(a, sortKey));
+        if (!players.length) continue;
+        const tb = el("table", { class: "stats" });
+        tb.append(el("tr", {}, [el("th", { class: "left", text: title }), ...cols.map(([h]) => el("th", { text: h }))]));
+        for (const p of players) tb.append(el("tr", {}, [el("td", { class: "left name" }, [el("span", { text: p.name, ...playerAttrs(t.slug, p.name, p.position) }), el("span", { class: "pos", text: `${p.number != null ? "#" + p.number + " " : ""}${p.position}` })]), ...cols.map(([, f]) => el("td", { text: String(f(p)) }))]));
+        body.append(el("div", { class: "table-scroll" }, [tb]));
+      }
+    }
+    draw();
+    node.append(el("h4", { text: "Players" }), chips, body, el("p", { class: "muted small-text", text: "Real box score from NCAA.com. A player name opens his page with his real season." }));
+    const title = el("span", {}, [teamPill(g.away.slug), `${g.away.name} ${g.away.score}`, el("span", { class: "muted", text: " at " }), teamPill(g.home.slug), `${g.home.name} ${g.home.score}`, el("span", { class: "muted small-text", text: " · Final" })]);
+    openModal(title, node);
   }
 
   // ----- advancing ---------------------------------------------------------
@@ -390,6 +470,15 @@
     const phase = s.done ? `Season complete · national champion: ${s.champion_name}` : s.current_week === 0 ? `Preseason · ${s.week_labels[1] || "Week 1"} up next${played}` : `${s.week_labels[s.current_week + 1] || "Week " + (s.current_week + 1)} up next · through ${s.week_labels[s.current_week] || "week " + s.current_week}${played}`;
     const simDate = simDateText(s);
     $("#season-meta").textContent = `${phase}${simDate ? ` · ${simDate}` : ""} · ${s.mode === "full" ? "full season simulated" : "real results through today"} · ${when(s.created_at)}`;
+    const real = s.mode === "real";
+    document.body.classList.toggle("real-mode", real);
+    $("#btn-real-refresh").hidden = !real;
+    $(".brand-name").textContent = real ? "Real 2026" : "Season";
+    for (const a of document.querySelectorAll(".site-nav a")) a.classList.toggle("active", a.dataset.nav === (real ? "real" : "season"));
+    if (real) {
+      $("#pick-team").value = s.team;
+      $("#season-meta").textContent = `The real 2026 season through ${s.week_labels[s.current_week] || "week " + s.current_week}${simDate ? ` (${simDate})` : ""} · real results, real AP polls, real stats from the NCAA box scores · following ${s.team_name}, pick any team above · built ${when(s.real_built_at || s.created_at)}`;
+    }
     setBusy(false);
     renderWeekStrip();
     renderTab();
@@ -1589,6 +1678,7 @@
     card.innerHTML = "";
     const g = data.game;
     const injuryReport = () => {
+      if (s.mode === "real") return;      // no real injury data
       const inj = data.injuries || [];
       const injBox = el("div", { class: "this-week-injuries" }, [el("h4", { text: `Injury report · ${inj.length ? `${inj.length} out` : "nobody out"}` })]);
       if (inj.length) injBox.append(injuryTable(inj, false));
@@ -1730,7 +1820,7 @@
         el("td", { class: "ph", text: g.venue === "home" ? "Home" : g.venue === "away" ? "Away" : "Neutral" }),
         el("td", { class: g.played ? (g.won ? "win" : "loss") : "muted", text: g.played ? (g.won ? "W" : "L") : "—" }),
         el("td", { class: "score", text: g.played ? `${g.points_for}–${g.points_against}${g.overtime ? " OT" : ""}` : "" }),
-        el("td", { class: "muted small-text ph", text: g.real ? "real result" : g.has_box ? "box score" : "" }),
+        el("td", { class: "muted small-text ph", text: g.has_box ? "box score" : g.real ? "real result" : "" }),
       ]);
       if (g.has_box) tr.addEventListener("click", () => openBox(g.event_id));
       table.appendChild(tr);
@@ -2447,6 +2537,7 @@
     const s = state.season;
     try {
       const g = await api(`/api/season/${s.id}/game/${eventId}`);
+      if (g.real_box) { renderRealBox(g); return; }
       window.CFP.currentBoxSlugs = { home: g.home_slug, away: g.away_slug };
       // the box score lives in #tab-box; it is rendered in place, then moved into the shared modal
       const node = state.boxNode || (state.boxNode = $("#tab-box"));
@@ -2925,6 +3016,8 @@
   $("#btn-advance").addEventListener("click", () => advance());
   $("#btn-gameday").addEventListener("click", playGameDay);
   $("#btn-settings").addEventListener("click", openSettings);
+  $("#btn-real-refresh").addEventListener("click", refreshReal);
+  $("#pick-team").addEventListener("change", () => { if (REAL) followTeam($("#pick-team").value); });
   $("#btn-to-selection").addEventListener("click", () => advance(15));
   $("#btn-to-end").addEventListener("click", () => advance(20));
   $("#season-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) { state.tab = b.dataset.tab; renderTab(); } });
@@ -2934,7 +3027,8 @@
   (async () => {
     try { await loadTeams(); } catch (err) { toast(`Teams unavailable: ${err.message}`, 4000); }
     await loadSeasons().catch(() => {});
-    const id = new URLSearchParams(location.search).get("id");
+    const id = REAL ? REAL_ID : new URLSearchParams(location.search).get("id");
+    if (REAL) { document.body.classList.add("real-mode"); $("#season-empty").querySelector("p").textContent = "Loading the real 2026 season…"; }
     if (id) openSeason(id);
   })();
 })();

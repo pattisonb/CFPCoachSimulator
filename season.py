@@ -1378,7 +1378,7 @@ def load_box(state: dict, event_id: str) -> Optional[dict]:
 
 
 def has_box(state: dict, g: dict) -> bool:
-    return bool(g.get("played")) and not g.get("real") and (g["event_id"] in state.get("my_boxes", {}) or (box_dir(state) / f"{g['event_id']}.json").exists())
+    return bool(g.get("played")) and (g["event_id"] in state.get("my_boxes", {}) or (box_dir(state) / f"{g['event_id']}.json").exists())
 
 
 def save_season(state: dict) -> Path:
@@ -2756,13 +2756,17 @@ def player_honors(state: dict, team: str, name: str) -> list[dict]:
 
 
 def player_game_log(state: dict, team: str, name: str, position: str) -> Optional[list[dict]]:
-    """Per-game lines from the box scores the season keeps (your own team's games)."""
-    if team != state["team"]:
+    """Per-game lines from the box scores the season keeps (your own team's games; every
+    team's in the real season)."""
+    real = state.get("mode") == "real"
+    if team != state["team"] and not real:
         return None
     out = []
-    for eid, box in state["my_boxes"].items():
+    boxes = ((g["event_id"], load_box(state, g["event_id"])) for g in state["games"].values()
+             if team in (g["home"], g["away"]) and g["played"]) if real else state["my_boxes"].items()
+    for eid, box in boxes:
         g = state["games"].get(eid)
-        if not g:
+        if not g or not box:
             continue
         side = "home" if g["home"] == team else "away"
         p = next((x for x in box[side]["players"] if x["name"] == name and x["position"] == position), None)
