@@ -188,7 +188,7 @@ def house_value(pos: str, key: str, v: float) -> int:
     """An engine value of attribute `key` (or 'overall') at `pos` on the house scale."""
     m4, k_hi, k_lo = _house_scale().get((SCALE_GROUP.get(pos, pos), key), (55.0, 1.5, 1.5))
     out = 50 + (v - m4) * (k_hi if v >= m4 else k_lo)
-    return int(round(max(1, min(100, out))))
+    return int(round(max(1, min(99, out))))
 
 
 def house_to_engine(pos: str, key: str, ours: float) -> int:

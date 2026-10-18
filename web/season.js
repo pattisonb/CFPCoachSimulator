@@ -2501,7 +2501,7 @@
     const edited = new Set(p.edited || []);
     const keySet = new Set(p.key_ratings || []);
     const node = el("div", { class: "all-ratings" });
-    node.append(el("p", { class: "muted small-text", text: `0-100: 50 is an average Power 4 starter at the position, 65 a good one, 80 elite, 95 generational, 25 an average FBS roster player. The ${p.position} ratings the card shows are marked; the rest still matter when he lines up somewhere else, returns kicks or tires.` }));
+    node.append(el("p", { class: "muted small-text", text: `1-99: 50 is an average Power 4 starter at the position, 65 a good one, 80 elite, 95 generational, 25 an average FBS roster player. The ${p.position} ratings the card shows are marked; the rest still matter when he lines up somewhere else, returns kicks or tires.` }));
     const table = el("table", { class: "stats ratings-table" });
     table.append(el("tr", {}, ["Rating", "", "Value"].map((h, i) => el("th", { class: i === 0 ? "left" : "", text: h }))));
     for (const r of p.ratings) {

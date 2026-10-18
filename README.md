@@ -105,7 +105,7 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 ## How the data feeds the engine
 
 **Players.** Each source player has 54 EA-style ratings (0-99, 50 = average FBS player).
-The pages show the house scale instead: 0-100 where 50 is an average Power 4 starter at
+The pages show the house scale instead: 1-99 where 50 is an average Power 4 starter at
 the position, 65, 80 and 95 are a Power 4 starter one, two and three standard deviations
 better, and 25 is an average FBS roster player (`_house_scale` in season.py, one pair of
 slopes per position group and attribute, computed from the league). Jeremiah Smith is a
