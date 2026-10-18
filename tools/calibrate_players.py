@@ -157,6 +157,11 @@ def main() -> None:
     lookup = build_matcher(teams)
     games = [g for g in json.loads(GAMES_FILE.read_text(encoding="utf-8")) if g.get("final")]
     rows = []
+    # --from-week N: only games in NCAA week N and later (an out-of-sample check after tuning on earlier weeks)
+    if "--from-week" in sys.argv:
+        first = int(sys.argv[sys.argv.index("--from-week") + 1])
+        games = [g for g in games if g.get("week", 0) >= first]
+        print(f"games from NCAA week {first} on: {len(games)}")
     for g in games:
         path = BOX_DIR / f"{g['contest_id']}.json"
         if not path.exists():

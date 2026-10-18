@@ -352,7 +352,7 @@ def _pick_target(offense):
         w = (max(1.0, _rating(p, ('route_running', 'hands')) + p.speed / 2) / 100) ** cfg.TARGET_WEIGHT_POWER
         if p.position == 'TE':
             w *= cfg.TE_TARGET_WEIGHT
-        weights.append(w)
+        weights.append(w * p.target_mult)
     total = sum(weights) or 1.0
     if backs and receivers:
         rb_each = total * cfg.RB_TARGET_SHARE / (1 - cfg.RB_TARGET_SHARE) / len(backs)

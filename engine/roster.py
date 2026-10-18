@@ -45,6 +45,7 @@ class Player:
         self.injured = bool(data.get("injured"))
         self.injury = None
         self.stats = dict(data.get("stats") or {})   # own copy: the source roster is shared between games
+        self.target_mult = data.get("target_mult", 1.0)  # real 2026 share of his team's catches against his ratings' share
 
         # Skill-specific
         self.passing = data.get("passing")
@@ -242,6 +243,9 @@ class Team:
         gap = rating(lead) - max(rating(p) for p in others)
         lo, hi = cfg.RB_LEAD_GAP_RANGE
         feature = min(1.0, max(0.0, (gap - lo) / (hi - lo)))
+        observed = (self.tendencies or {}).get("rb_lead_feature")
+        if observed is not None and lead.depth == 1:
+            feature = observed      # the team's real 2026 split (tools/tune_from_real.py), when its real lead back leads
         ret_lo, ret_hi = cfg.RB_LEAD_RETURN_CHANCE
         profile = (cfg.RB_LEAD_OUT_CHANCE * (1 - feature) ** cfg.RB_LEAD_OUT_CURVE,
                    ret_lo + (ret_hi - ret_lo) * feature ** cfg.RB_LEAD_CURVE)

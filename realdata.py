@@ -113,7 +113,7 @@ def player_lines(tb: dict, roster: Optional[RosterMatcher]) -> list[dict]:
             found = roster.find(first, last, number) if roster else None
             name = found["name"] if found else " ".join(w.capitalize() for w in f"{first} {last}".split())
             rec = {"name": name, "position": found["position"] if found else GUESS_POSITION[cat], "matched": bool(found),
-                   "number": number, "stats": {}, "cats": set()}
+                   "slug": found.get("slug") if found else None, "number": number, "stats": {}, "cats": set()}
             players[key] = rec
         rec["cats"].add(cat)
         for src, dst in STAT_MAP[cat].items():
@@ -136,7 +136,7 @@ def player_lines(tb: dict, roster: Optional[RosterMatcher]) -> list[dict]:
         if not rec["matched"] and rec["position"] == "QB" and rec["stats"].get("pass_attempts", 0) < 3:
             rec["position"] = "RB" if "rushing" in rec["cats"] else "WR"     # a trick-play pass by a skill player
         unit = "defense" if rec["position"] in DEF_POSITIONS else "special" if rec["position"] in ("K", "P") else "offense"
-        out.append({"name": rec["name"], "position": rec["position"], "unit": unit, "number": rec["number"],
+        out.append({"name": rec["name"], "position": rec["position"], "unit": unit, "number": rec["number"], "slug": rec["slug"],
                     "matched": rec["matched"], "stats": {k: v for k, v in rec["stats"].items() if v}})
     return out
 

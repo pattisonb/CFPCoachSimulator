@@ -225,6 +225,33 @@ average but which player gets them is still mostly set by the EA ratings. QB1 pa
 yards run about 20 high because the sim's starter takes every attempt while real
 starters sit in blowouts.
 
+## Tuned to how teams really play in 2026
+
+`python tools/tune_from_real.py` reads the real season (`realdata.py`) and writes
+`data/real_adjustments.json`, which `build_teams.py` applies on top of the source rosters
+(the source data is never edited; delete the file and rebuild to go back):
+
+- **Depth charts from who plays.** Within each depth-chart role, players are reordered by
+  real usage over the team's last three games: pass attempts for quarterbacks, carries for
+  backs, catches and yards for receivers and tight ends, tackles, sacks and interceptions for
+  defenders, kicks for specialists. Each role keeps its number of starters; offensive
+  linemen keep the source order (box scores have nothing on them). After week 8 this
+  changed the starting quarterback at 41 teams, the lead back at 70 and the kicker at 22.
+- **Usage from who gets the ball.** The engine hands out carries and targets from ratings.
+  Each team now carries its real lead-back split (its share of running back carries,
+  mapped to the engine's committee-to-workhorse scale by simulation), and each receiver a
+  target weight: his real share of the team's catches over his ratings' share, shrunk
+  toward 1 for small samples.
+
+Tested out of sample (built from weeks 1-6, scored on weeks 7-8 with
+`tools/calibrate_players.py --from-week 6`): the sim starts the real quarterback in 76% of
+team-games (63% before), its top running back is the real one in 56% (39%) and its top
+receiver in 28% (24%); the lead back's carries correlate 0.39 with the real ones (0.26)
+and the top receiver's yards run 3 high instead of 9. Nudging ratings toward each
+player's real efficiency (completion %, yards per carry or catch, field goal %) was tried
+too and made weeks 7-8 worse, so ratings stay as the source has them: a season of box
+scores is not enough to tell talent from context and luck.
+
 ## Real 2026 (its own page)
 
 `/real` (the "Real 2026" tab in the top nav) shows the actual 2026 season with the season
@@ -303,7 +330,7 @@ filtered from the roster ten times a snap. With momentum on a week dropped from 
 ratings reflect his current fatigue rather than the previous snap's. `python
 tools/profile_sim.py game|week` profiles the engine and a week; `tests/test_play_log.py`
 prints the fingerprint of five seeded games that must not change when the engine is
-edited (a88354947af56886).
+edited (7f1f625a5f714c6c).
 
 While a sim runs the page shows what the engine is doing, live: "Simming Week 7 · 38 of
 92 games", then "Updating the AP poll and CFP rankings", "Setting the conference title

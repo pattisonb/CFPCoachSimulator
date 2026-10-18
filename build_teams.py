@@ -268,6 +268,47 @@ def apply_observed_tendencies(teams: list[dict]) -> int:
     return n
 
 
+REAL_ADJUSTMENTS = ROOT / "data" / "real_adjustments.json"
+
+
+def apply_real_adjustments(teams: list[dict]) -> tuple[int, int]:
+    """Apply data/real_adjustments.json (tools/tune_from_real.py): rating nudges in engine
+    points, then depth orders by real usage, keeping each role's number of starters.
+    Returns (players nudged, roles reordered)."""
+    if not REAL_ADJUSTMENTS.exists():
+        return 0, 0
+    adj = json.loads(REAL_ADJUSTMENTS.read_text(encoding="utf-8"))
+    nudged = reordered = 0
+    for t in teams:
+        by_slug = {p["slug"]: p for p in t["players"]}
+        usage = (adj.get("usage") or {}).get(t["slug"]) or {}
+        if usage.get("rb_lead_feature") is not None:
+            t["tendencies"]["rb_lead_feature"] = usage["rb_lead_feature"]
+        for ps, m in (usage.get("targets") or {}).items():
+            if ps in by_slug:
+                by_slug[ps]["target_mult"] = m
+        for ps, deltas in (adj.get("ratings") or {}).get(t["slug"], {}).items():
+            p = by_slug.get(ps)
+            if not p:
+                continue
+            for attr, d in deltas.items():
+                if isinstance(p.get(attr), (int, float)):
+                    p[attr] = int(round(max(1, min(99, p[attr] + d))))
+            nudged += 1
+        for role, order in (adj.get("depth") or {}).get(t["slug"], {}).items():
+            group = [p for p in t["players"] if p.get("role") == role]
+            if not group:
+                continue
+            n_start = sum(1 for p in group if p["starter"])
+            ranked = [by_slug[s] for s in order if s in by_slug and by_slug[s].get("role") == role]
+            ranked += [p for p in sorted(group, key=lambda p: p.get("depth") or 99) if p not in ranked]
+            for i, p in enumerate(ranked):
+                p["depth"] = i + 1
+                p["starter"] = i < n_start
+            reordered += 1
+    return nudged, reordered
+
+
 def normalize(teams: list[dict]) -> dict:
     """Re-centre every attribute per position group on the FBS starter mean."""
     groups = defaultdict(list)
@@ -381,6 +422,9 @@ def main() -> None:
     paths = sorted((SRC / "teams").glob("*.json"))
     teams = [load_team(p) for p in paths]
     means = normalize(teams)
+    nudged, reordered = apply_real_adjustments(teams)
+    if nudged or reordered:
+        print(f"real 2026 adjustments: {reordered} depth-chart roles reordered" + (f", {nudged} players' ratings nudged" if nudged else ""))
     ratings_at_every_position(teams, means)
     tendency_means = normalize_tendencies(teams)
     print("league tendency means before centring:", tendency_means)
