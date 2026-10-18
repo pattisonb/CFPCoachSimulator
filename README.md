@@ -384,6 +384,26 @@ week 19 carries one: every bowl and playoff result is scored, the champion is fi
 the runner-up second (true of every final poll of the playoff era), and the Summary tab's
 final AP is that poll.
 
+### The AP poll week to week
+
+Each week's AP poll moves from last week's poll the way voters move it: last week's vote
+points (the Top 25 and the others receiving votes) are the starting line, a win adds
+points scaled by the opponent's own share of the vote, a loss takes points away (more
+for losing to a team nobody voted for, at home, or by a lot), teams on a bye hold, and
+a head-to-head winner goes above a close loser (`polls.next_poll`). It was fit one week
+ahead, every week since 2014 (`python tools/backtest_polls.py fit`): from the real poll
+and the real results it lands within 1.07 spots per team of the next real poll on
+2014-2023 and 1.04 on the held-out 2024-2025, against 2.3-2.4 for "last week's poll
+unchanged"; on the October 18, 2026 poll it was 1.68 with all ten of the real top ten.
+In a simulated season a top-5 team drops 6 spots after a loss to a ranked team and 8 to
+an unranked one, against 5 and 7 in real polls, and about 3 teams a week turn over
+(`tests/test_poll_behaviour.py`). In "rest of season" mode the real weeks show the real
+polls with their real vote points, so the first modelled poll starts from the real one.
+The season-long scores still run underneath for the committee model.
+`python tools/ap_forecast.py predict` freezes a forecast of the next real poll and
+`score NN` compares it once the poll is out; `python tools/fetch_polls.py --others` adds
+the others receiving votes to an older archive.
+
 ### The bracket rules (2026)
 
 From NCAA.com's "How the College Football Playoff works" (Aug 27, 2026) and the CFP

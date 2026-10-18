@@ -2,15 +2,14 @@
 
 The poll model in polls.py moves each team's "poll score" by its result and ranks the
 scores. This tool feeds it last week's real AP poll and this week's real results and
-freezes three forecasts in data/predictions/ap_weekNN.json:
+freezes two forecasts in data/predictions/ap_weekNN.json:
 
-  game      what the game's "rest of season" mode shows: every real result since the
-            preseason replayed through the model, last week's real ranks as the
-            opponent-strength input, the model's own scores (never reset to the real poll)
-  anchored  the same, but before this week's games the scores of last week's real Top 25
-            are reset to match its real vote points, so the forecast starts from the real
-            poll and only this week's results move it
+  model     the game's own poll for the week (polls.next_poll from last week's real poll,
+            its vote points and this week's results; see tools/backtest_polls.py)
   last_week a baseline: last week's real poll unchanged
+
+(the week 8 file predates the week-to-week model: its "game" and "anchored" columns are
+the old season-long score model.)
 
 Usage (from the project root):
     python tools/ap_forecast.py predict          # forecast the poll after the last completed week
@@ -21,7 +20,6 @@ forecast file is never overwritten.
 from __future__ import annotations
 
 import argparse
-import copy
 import json
 import statistics as st
 import subprocess
@@ -65,30 +63,6 @@ def real_poll(week: int, teams: dict) -> list[dict]:
     return out
 
 
-def anchor(scores: dict[str, float], poll: list[dict]) -> dict[str, float]:
-    """Reset the scores of a real poll's teams to a line fitted through their vote points, so
-    the model's order and gaps match the real poll; keep everyone else below No. 25."""
-    pairs = [(e["points"], scores[e["slug"]]) for e in poll if e.get("points") is not None and e["slug"] in scores]
-    if len(pairs) < 10:
-        return scores
-    xs, ys = [p for p, _ in pairs], [s for _, s in pairs]
-    mx, my = st.mean(xs), st.mean(ys)
-    b = sum((x - mx) * (y - my) for x, y in pairs) / max(1e-9, sum((x - mx) ** 2 for x in xs))
-    if b <= 0:                       # the model's order disagrees completely: fall back to a fixed spacing
-        b = 1.0
-    a = my - b * mx
-    out = dict(scores)
-    for e in poll:
-        if e.get("points") is not None:
-            out[e["slug"]] = a + b * e["points"]
-    floor = min(out[e["slug"]] for e in poll if e.get("points") is not None)
-    ranked = {e["slug"] for e in poll}
-    for t in out:
-        if t not in ranked and out[t] >= floor:
-            out[t] = floor - 1.0
-    return out
-
-
 def forecast(no_fetch: bool) -> dict:
     if not no_fetch:
         run_tool("fetch_schedules.py")
@@ -104,24 +78,13 @@ def forecast(no_fetch: bool) -> dict:
     if not last:
         raise SystemExit(f"no real AP poll after week {week - 1} to start from")
 
-    # anchored: replay through last week, reset the scores to last week's real poll, then this week
-    st_anch = copy.deepcopy(st_game)
-    ap_params, _ = polls.load_params()
-    ratings = {slug: t["team_ratings"]["overall"] for slug, t in teams.items() if not t["fictional"]}
-    st_anch["scores"] = polls.preseason_scores(real[0][:25], ratings, ap_params)
-    st_anch["polls"] = {"0": st_game["polls"]["0"]}
-    for w in range(1, week):
-        season._update_polls_after_week(st_anch, teams, w, real_ap=real.get(w))
-    st_anch["scores"] = anchor(st_anch["scores"], last)
-    season._update_polls_after_week(st_anch, teams, week, real_ap=None)
-
     def listing(entries):
         return [{"slug": e["team"], "name": e["name"], "rank": e["rank"], "record": e.get("record")} for e in entries[:25]]
 
+    # the game's own poll for the week: polls.next_poll from last week's real poll and its vote points
     return {"week": week, "made_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "commit": git_commit(),
             "starts_from": f"the real AP poll after week {week - 1}",
-            "forecasts": {"game": listing(st_game["polls"][str(week)]["ap"]),
-                          "anchored": listing(st_anch["polls"][str(week)]["ap"]),
+            "forecasts": {"model": listing(st_game["polls"][str(week)]["ap"]),
                           "last_week": [{"slug": e["slug"], "name": e["name"], "rank": e["rank"], "record": e["record"]} for e in last]}}
 
 
@@ -134,10 +97,10 @@ def predict(no_fetch: bool) -> None:
     path.write_text(json.dumps(data, indent=1), encoding="utf-8")
     print(f"AP forecast for the poll after week {data['week']}, made {data['made_at']} at commit {data['commit']}")
     f = data["forecasts"]
-    print(f"{'#':>3}  {'game mode':<22} {'anchored':<22} {'last week':<22}")
+    print(f"{'#':>3}  {'model':<22} {'last week':<22}")
     for i in range(25):
-        cells = [f.get(k)[i]["name"] if i < len(f.get(k)) else "" for k in ("game", "anchored", "last_week")]
-        print(f"{i + 1:>3}  {cells[0]:<22} {cells[1]:<22} {cells[2]:<22}")
+        cells = [f.get(k)[i]["name"] if i < len(f.get(k)) else "" for k in ("model", "last_week")]
+        print(f"{i + 1:>3}  {cells[0]:<22} {cells[1]:<22}")
     print(f"\nwritten to {path}")
 
 
@@ -165,18 +128,17 @@ def score(week: int, no_fetch: bool) -> None:
     res = {k: metrics(v, real) for k, v in f.items()}
     lines = [f"AP forecast for the poll after week {week}: made {data['made_at']} at commit {data['commit']}, starting from {data['starts_from']}",
              "", f"{'forecast':<11}{'in top 25':>10}{'rank MAE':>10}{'exact':>7}{'within 2':>10}{'top 10':>8}{'No. 1':>7}"]
-    for k in ("game", "anchored", "last_week"):
+    for k in f:
         m = res[k]
         lines.append(f"{k:<11}{m['in_top25']:>8}/25{m['mae']:>10.2f}{m['exact']:>7}{m['within2']:>10}{m['top10']:>6}/10{'yes' if m['no1'] else 'no':>7}")
     lines.append("rank MAE: mean |forecast rank - real rank| over the real Top 25, unranked counted as 26")
     lines.append("")
     pos = {k: {e["slug"]: i + 1 for i, e in enumerate(v)} for k, v in f.items()}
-    lines.append(f"{'real':>4}  {'team':<22}{'record':>8}{'game':>7}{'anchored':>10}{'last wk':>9}")
+    lines.append(f"{'real':>4}  {'team':<22}{'record':>8}" + "".join(f"{k:>11}" for k in f))
     for e in real:
-        cell = lambda k: str(pos[k].get(e["slug"], "-"))
-        lines.append(f"{e['rank']:>4}  {e['name']:<22}{e['record'] or '':>8}{cell('game'):>7}{cell('anchored'):>10}{cell('last_week'):>9}")
+        lines.append(f"{e['rank']:>4}  {e['name']:<22}{e['record'] or '':>8}" + "".join(f"{str(pos[k].get(e['slug'], '-')):>11}" for k in f))
     realset = {e["slug"] for e in real}
-    for k in ("game", "anchored"):
+    for k in [k for k in f if k != "last_week"]:
         extra = [e["name"] for e in f[k] if e["slug"] not in realset]
         if extra:
             lines.append(f"{k} ranked but the real poll did not: {', '.join(extra)}")
