@@ -81,6 +81,7 @@ def map_player(p: dict, pos: str | None = None) -> dict:
         "position": pos,
         "source_position": p["position"],
         "overall": p["overall"],
+        "ea_overall": p.get("overall_ea"),   # the EA overall, shown on the player card (the engine never reads it)
         # identity for awards and the roster view: FR, FRRS, SO, SORS, JR, JRRS, SR, SRRS
         "class": p.get("class"),
         "height": p.get("height"),

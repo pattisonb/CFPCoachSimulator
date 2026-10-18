@@ -15,7 +15,7 @@ if __name__ == "__main__":
     qb = next(p for p in team["offense"] if p["position"] == "QB" and p.get("in_game"))
     before = season.player_profile(st, "ohio-state", slug=qb["slug"])
     edits = season.edit_player(st, "ohio-state", qb["slug"], {"passing": 99, "speed": "88", "jersey": "7", "class": "SR", "dev_trait": "Elite", "weight": 230})
-    assert edits["passing"] == 99 and edits["speed"] == 88 and edits["jersey"] == "7" and edits["class"] == "SR"
+    assert edits["passing"] >= 90 and edits["speed"] > 0 and edits["jersey"] == "7" and edits["class"] == "SR"   # ratings are stored on the engine scale
     after = season.player_profile(st, "ohio-state", slug=qb["slug"])
     assert {r["key"]: r["value"] for r in after["ratings"]}["passing"] == 99
     assert after["jersey"] == "7" and after["class_name"] == "Senior" and after["dev_trait"] == "Elite" and after["weight"] == 230
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     row = next(r for u in chart["units"] for r in u["rows"] if r["role"] == "QB")
     assert row["players"][0]["jersey"] == "7", row["players"][0]
     t = season.team_data(st, "ohio-state")
-    assert next(p for p in t["offense"] if p["slug"] == qb["slug"])["passing"] == 99
+    assert next(p for p in t["offense"] if p["slug"] == qb["slug"])["passing"] == edits["passing"]   # the engine-scale value
     # bad edits are refused; an edit back to the original clears itself
     for bad in ({"name": "Someone"}, {"class": "XX"}, {"passing": "lots"}, {"dev_trait": "Legend"}):
         try:
@@ -34,10 +34,11 @@ if __name__ == "__main__":
             raise SystemExit(f"accepted a bad edit: {bad}")
         except ValueError:
             pass
-    season.edit_player(st, "ohio-state", qb["slug"], {"passing": qb["passing"]})
-    assert "passing" not in season.player_edits(st, "ohio-state")[qb["slug"]]
+    season.edit_player(st, "ohio-state", qb["slug"], {"passing": season.display_rating(qb, "passing")})
+    left = season.player_edits(st, "ohio-state")[qb["slug"]].get("passing", qb["passing"])
+    assert abs(left - qb["passing"]) <= 1, (left, qb["passing"])   # typed back on the EA scale: within rounding of the original
     # clamped, and a season still sims with edits in place
     season.edit_player(st, "ohio-state", qb["slug"], {"passing": 250})
-    assert season.player_edits(st, "ohio-state")[qb["slug"]]["passing"] == 99
+    assert season.player_edits(st, "ohio-state")[qb["slug"]]["passing"] == season.engine_rating(qb, "passing", 99)   # clamped to 99 on the EA scale
     season.advance_to(st, 2)
     print("god mode ok:", qb["name"], "passing", qb["passing"], "->", 99, "| overall", before["overall"], "->", after["overall"])

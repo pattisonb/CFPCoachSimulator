@@ -135,6 +135,50 @@ def load_teams() -> dict:
     return _teams_cache
 
 
+_norms_cache: dict = {}
+
+
+def load_norms() -> dict:
+    """How build_teams normalized the ratings: the engine's neutral value, the spread scale
+    and each position group's starter mean per attribute (before normalization). Lets the
+    pages show ratings on the EA 0-99 scale and turn edits back into engine values."""
+    if not _norms_cache:
+        d = json.loads(TEAMS_FILE.read_text(encoding="utf-8"))
+        _norms_cache.update(neutral=d.get("neutral", 55), spread=d.get("spread_scale", 1.0) or 1.0,
+                            means=d.get("starter_means_before_normalization", {}))
+    return _norms_cache
+
+
+def _norm_mean(p: dict, key: str) -> float:
+    n = load_norms()
+    k = "returners:return_rating" if key == "return_rating" else f"{p['position']}:{key}"
+    return float(n["means"].get(k, n["neutral"]))
+
+
+def display_rating(p: dict, key: str, value: Optional[float] = None) -> int:
+    """An engine attribute (position-relative, neutral 55) back on the EA 0-99 scale."""
+    n = load_norms()
+    v = p.get(key) if value is None else value
+    return int(round(max(1, min(99, _norm_mean(p, key) + (v - n["neutral"]) / n["spread"]))))
+
+
+def engine_rating(p: dict, key: str, ea: float) -> int:
+    """An EA-scale rating turned into the engine's position-relative value."""
+    n = load_norms()
+    return int(round(max(1, min(99, n["neutral"] + (ea - _norm_mean(p, key)) * n["spread"]))))
+
+
+def shown_overall(p: dict, base: Optional[dict] = None) -> int:
+    """The overall on the card: the EA overall, moved by any god-mode edit's effect on the
+    engine's own composite (so an edit shows), else the engine composite."""
+    ea = (base or p).get("ea_overall")
+    if ea is None:
+        return player_overall(p)
+    if base is not None and base is not p:
+        ea += (player_overall(p) - player_overall(base)) / load_norms()["spread"]
+    return int(round(max(1, min(99, ea))))
+
+
 def tier_of(team: dict) -> str:
     if team["fictional"]:
         return "FCS"
@@ -1115,6 +1159,7 @@ def depth_chart_view(state: dict, slug: str) -> dict:
     t = apply_depth(team_data(state, slug), overrides)
     ss = (state.get("season_stats") or {}).get(slug, {}).get("players", {})
     players = t["offense"] + t["defense"]
+    base_by_slug = {x.get("slug"): x for x in teams[slug]["offense"] + teams[slug]["defense"]}
     by_role: dict[str, list[dict]] = {}
     for p in players:
         if p.get("role"):
@@ -1134,7 +1179,7 @@ def depth_chart_view(state: dict, slug: str) -> dict:
         if role in ("KR", "PR"):
             group = "RS"
         return {"name": p["name"], "slug": p.get("slug"), "position": p["position"], "role": p.get("role"), "depth": p.get("depth"), "class": p.get("class"),
-                "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"), "overall": player_overall(p),
+                "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"), "overall": shown_overall(p, base_by_slug.get(p.get("slug"))),
                 "starter": bool(p.get("in_game")), "games": rec["games"] if rec else 0,
                 "form": round(player_form(state, slug, p["name"], p["position"]), 2) if morale_on(state) else 0.0,
                 "headline": awards.headline({"stats": st}, group) if st else "",
@@ -2455,7 +2500,7 @@ def edit_player(state: dict, slug: str, player_slug: str, changes: dict) -> dict
                 v = int(round(float(v)))
             except (TypeError, ValueError):
                 raise ValueError(f"{k} must be a number")
-            v = max(0, min(99, v))
+            v = engine_rating(base, k, max(0, min(99, v)))   # the form shows the EA scale; the engine keeps its own
         elif k == "class":
             if v not in CLASS_NAMES:
                 raise ValueError("class must be one of " + ", ".join(CLASS_NAMES))
@@ -2651,10 +2696,10 @@ def recruit_stars(p: dict) -> int:
     12% four, the next 60% three, the rest two."""
     global _STAR_CUTS
     if _STAR_CUTS is None:
-        vals = sorted((player_overall(x) for t in load_teams().values() if not t["fictional"] for x in t["offense"] + t["defense"]), reverse=True)
+        vals = sorted((shown_overall(x) for t in load_teams().values() if not t["fictional"] for x in t["offense"] + t["defense"]), reverse=True)
         n = max(1, len(vals))
         _STAR_CUTS = [vals[min(n - 1, int(n * q))] for q in (0.01, 0.13, 0.73)]
-    o = player_overall(p)
+    o = shown_overall(p)
     return 5 if o >= _STAR_CUTS[0] else 4 if o >= _STAR_CUTS[1] else 3 if o >= _STAR_CUTS[2] else 2
 
 
@@ -2674,7 +2719,9 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     line = (ss.get("players") or {}).get(f"{name}|{position}")
     stats = dict(line["stats"]) if line else {}
     mf = morale_factor(state, team, name, position)
-    ratings = [{"key": k, "label": lbl, "value": int(p[k]), "boost": max(1, min(99, round(p[k] * mf))) - int(p[k])}
+    base_p = next((x for x in teams[team]["offense"] + teams[team]["defense"] if x.get("slug") == p.get("slug")), p)
+    ratings = [{"key": k, "label": lbl, "value": display_rating(p, k),
+                "boost": display_rating(p, k, max(1, min(99, round(p[k] * mf)))) - display_rating(p, k)}
                for k, lbl in RATING_LABELS if isinstance(p.get(k), (int, float)) and p.get(k) is not None]
     have = {r["key"] for r in ratings}
     key_ratings = [k for k in POSITION_RATINGS.get(position, []) if k in have]
@@ -2692,7 +2739,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         "name": name, "slug": p.get("slug"), "position": position, "role": p.get("role"), "depth": p.get("depth"),
         "class": p.get("class"), "class_name": CLASS_NAMES.get(p.get("class") or "", p.get("class")), "height": p.get("height"),
         "weight": p.get("weight"), "jersey": p.get("jersey"), "dev_trait": p.get("dev_trait"), "starter": bool(p.get("in_game")),
-        "injured": injured, "overall": player_overall(p), "stars": recruit_stars(p), "ratings": ratings,
+        "injured": injured, "overall": shown_overall(p, base_p), "stars": recruit_stars(base_p), "ratings": ratings,
         "edited": sorted(player_edits(state, team).get(p.get("slug"), {}).keys()), "editable_classes": list(CLASS_NAMES), "dev_traits": list(DEV_TRAITS),
         "key_ratings": key_ratings,
         "morale": morale_view(state, team, name, position),
