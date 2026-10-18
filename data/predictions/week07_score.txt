@@ -1,44 +1,50 @@
 Week 7 forward test: predictions made 2026-10-16T01:20:57+00:00 at commit 1a5854a, 100 sims per game
-59 predicted games, 7 final, 52 not yet played
+59 predicted games, 59 final, 0 not yet played
 
-7 games (0 neutral site)
-straight-up picks correct:      85.7%   (Vegas favorites win about 75-78%)
-against the closing spread:     5-1-1 (83.3%)   sim margin vs the line: MAE 4.8 points over 7 games with a line
-margin MAE / RMSE:              8.3 / 12.4 points   (closing spreads: MAE about 12-13)
-actual-on-predicted slope:      2.61   (1.0 = rating gaps worth exactly what the sim says)
-correlation:                    0.86
-home bias (actual - predicted): +4.6 points
-mean home margin actual/pred:   +5.7 / +1.1
-total points actual/pred:       50.9 / 48.8   (bias -2.1)
+59 games (0 neutral site)
+straight-up picks correct:      55.9%   (Vegas favorites win about 75-78%)
+against the closing spread:     33-24-2 (57.9%)   sim margin vs the line: MAE 7.0 points over 59 games with a line
+margin MAE / RMSE:              12.1 / 16.0 points   (closing spreads: MAE about 12-13)
+actual-on-predicted slope:      0.50   (1.0 = rating gaps worth exactly what the sim says)
+correlation:                    0.21
+home bias (actual - predicted): -1.4 points
+mean home margin actual/pred:   +2.8 / +4.2
+total points actual/pred:       50.8 / 49.7   (bias -1.1)
 
 Win-probability calibration (home win probability from the sim):
       bucket  games  sim prob  home won
-      20-40%      1       35%        0%
-      40-60%      3       47%       67%
-      60-80%      3       70%      100%
+      20-40%      8       32%       50%
+      40-60%     18       50%       44%
+      60-80%     22       70%       59%
+     80-100%     11       86%       73%
 
 By predicted margin bucket (home favored by...):
       bucket  games    pred  actual  home win%  sim prob
-    -7 to -3      2    -5.5   -10.5         0%       38%
-     -3 to 3      2     0.0     3.0       100%       50%
-      3 to 7      2     5.0     8.0       100%       67%
-     7 to 14      1     9.0    39.0       100%       77%
+   -14 to -7      1    -9.0   -12.0         0%       24%
+    -7 to -3      7    -6.0    -1.0        43%       34%
+     -3 to 3     19     0.0     0.4        47%       51%
+      3 to 7     11     4.8     2.5        55%       67%
+     7 to 14     14     9.3     6.2        71%       76%
+    14 to 21      7    16.4     9.0        71%       88%
 
-Player lines against the real box scores (7 of 7 games have one; sim player matched to the real one by last name):
+Player lines against the real box scores (59 of 59 games have one; sim player matched to the real one by last name):
 line                   team-games  matched is real #1   pred   real   bias    MAE   | same role regardless of name: pred / real / bias / MAE
-QB1 pass yards                 14        9          7  244.0  184.9  +59.2   96.2   | 243.6 / 220.8 / +22.8 / 62.7
-RB1 rush yards                 14       12          4   43.0   36.4   +6.6   35.8   | 42.7 / 66.8 / -24.1 / 37.3
-Top receiver yards             14       10          1   77.3   47.1  +30.2   35.2   | 74.6 / 63.1 / +11.5 / 50.3
+QB1 pass yards                118       82         75  226.0  214.6  +11.4   71.1   | 227.3 / 213.6 / +13.6 / 64.7
+RB1 rush yards                118       85         39   51.8   53.1   -1.3   31.9   | 51.3 / 75.3 / -24.0 / 35.4
+Top receiver yards            118       84         32   67.2   59.5   +7.7   31.2   | 66.1 / 76.1 / -10.0 / 33.7
 bias = predicted minus real. 'matched' = the sim's player appears in the real box score; 'is real #1' = that player was also the real leader in the role.
 
 Worst misses (actual margin vs predicted):
+  Ohio 48 at Sacramento State 7: actual -41, predicted +8
+  Wake Forest 41 at California 7: actual -34, predicted +12
+  Florida Atlantic 24 at Army 56: actual +32, predicted -6
   Colorado State 27 at Texas State 66: actual +39, predicted +9
-  East Carolina 17 at UAB 30: actual +13, predicted +4
-  Western Kentucky 16 at Sam Houston 3: actual -13, predicted -5
-  Delaware 30 at Middle Tennessee 33: actual +3, predicted -1
-  Kennesaw State 21 at Missouri State 24: actual +3, predicted +6
-  FIU 24 at Jacksonville State 27: actual +3, predicted +1
-  Georgia Southern 23 at Old Dominion 15: actual -8, predicted -6
+  Troy 6 at Louisiana 33: actual +27, predicted -3
+  Louisiana Tech 24 at UL Monroe 0: actual -24, predicted +1
+  Kentucky 21 at Oklahoma 13: actual -8, predicted +15
+  Florida 27 at Texas 24: actual -3, predicted +18
+  Toledo 34 at Eastern Michigan 14: actual -20, predicted +1
+  Georgia State 22 at James Madison 49: actual +27, predicted +8
 
 Every game (actual margin vs predicted, home perspective):
   MISS Delaware 30 at Middle Tennessee 33: actual +3, predicted -1 (49% home), line Middle Tennessee +1.5 -> ATS win
@@ -48,5 +54,55 @@ Every game (actual margin vs predicted, home perspective):
   ok  Georgia Southern 23 at Old Dominion 15: actual -8, predicted -6 (35% home), line Old Dominion +3.0 -> ATS win
   ok  East Carolina 17 at UAB 30: actual +13, predicted +4 (65% home), line UAB +5.5 -> ATS win
   ok  Colorado State 27 at Texas State 66: actual +39, predicted +9 (77% home), line Texas State -15.5 -> ATS loss
-
-Not yet played: Memphis at Tulane, Washington at Purdue, App State at Coastal Carolina, Kansas at Kansas State, Virginia at SMU, Ohio State at Indiana, Georgia State at James Madison, Cincinnati at West Virginia, Florida Atlantic at Army, Ball State at Bowling Green, Mississippi State at LSU, Northwestern at Michigan State, Pittsburgh at Boston College, Florida at Texas, Rutgers at Maryland, UMass at Buffalo, Charlotte at Temple, Western Michigan at Central Michigan, Toledo at Eastern Michigan, Northern Illinois at Wyoming, Missouri at Ole Miss, Auburn at Georgia, Arizona State at Texas Tech, North Carolina at Duke, Penn State at Michigan, Georgia Tech at Virginia Tech, Alabama at Tennessee, Akron at Miami (OH), UNLV at Air Force, Tulsa at Rice, Troy at Louisiana, Washington State at Oregon State, Kent State at USF, Arkansas at Vanderbilt, Arkansas State at Southern Miss, Florida State at Miami, TCU at Baylor, Nevada at North Dakota State, Kentucky at Oklahoma, Louisville at Syracuse, Wisconsin at UCLA, Notre Dame at BYU, Oklahoma State at Houston, Louisiana Tech at UL Monroe, Navy at UTSA, San José State at UTEP, Ohio at Sacramento State, Utah at Colorado, Wake Forest at California, Fresno State at San Diego State, New Mexico at Hawaiʻi, Nebraska at Oregon
+  MISS Memphis 17 at Tulane 31: actual +14, predicted -1 (42% home), line Tulane +6.5 -> ATS win
+  ok  Washington 38 at Purdue 26: actual -12, predicted -9 (24% home), line Purdue -3.0 -> ATS win
+  ok  App State 35 at Coastal Carolina 32: actual -3, predicted -1 (52% home), line Coastal Carolina +1.5 -> ATS loss
+  ok  Kansas 24 at Kansas State 35: actual +11, predicted +13 (84% home), line Kansas State -3.0 -> ATS win
+  ok  Virginia 13 at SMU 23: actual +10, predicted +11 (84% home), line SMU -10.0 -> ATS push
+  ok  Ohio State 19 at Indiana 15: actual -4, predicted -2 (51% home), line Indiana +3.0 -> ATS loss
+  ok  Georgia State 22 at James Madison 49: actual +27, predicted +8 (73% home), line James Madison -7.5 -> ATS win
+  MISS Cincinnati 42 at West Virginia 45: actual +3, predicted -2 (39% home), line West Virginia -1.5 -> ATS loss
+  MISS Florida Atlantic 24 at Army 56: actual +32, predicted -6 (32% home), line Army -2.5 -> ATS loss
+  MISS Ball State 32 at Bowling Green 31: actual -1, predicted +1 (51% home), line Bowling Green -6.0 -> ATS win
+  ok  Mississippi State 0 at LSU 31: actual +31, predicted +18 (91% home), line LSU -17.5 -> ATS win
+  MISS Northwestern 24 at Michigan State 21: actual -3, predicted +1 (52% home), line Michigan State +7.5 -> ATS win
+  MISS Pittsburgh 21 at Boston College 27: actual +6, predicted -7 (33% home), line Boston College +6.5 -> ATS loss
+  MISS Florida 27 at Texas 24: actual -3, predicted +18 (85% home), line Texas -13.5 -> ATS loss
+  MISS Rutgers 37 at Maryland 30: actual -7, predicted +6 (71% home), line Maryland -5.5 -> ATS loss
+  ok  UMass 18 at Buffalo 25: actual +7, predicted +5 (68% home), line Buffalo -6.5 -> ATS loss
+  MISS Charlotte 38 at Temple 31: actual -7, predicted +4 (63% home), line Temple -17.5 -> ATS win
+  ok  Western Michigan 21 at Central Michigan 14: actual -7, predicted -5 (32% home), line Central Michigan +7.5 -> ATS win
+  MISS Toledo 34 at Eastern Michigan 14: actual -20, predicted +1 (54% home), line Eastern Michigan +7.5 -> ATS loss
+  ok  Northern Illinois 23 at Wyoming 41: actual +18, predicted +10 (82% home), line Wyoming -7.0 -> ATS win
+  ok  Missouri 3 at Ole Miss 31: actual +28, predicted +15 (86% home), line Ole Miss -4.0 -> ATS win
+  MISS Auburn 27 at Georgia 24: actual -3, predicted +6 (70% home), line Georgia -19.5 -> ATS win
+  ok  Arizona State 25 at Texas Tech 53: actual +28, predicted +11 (76% home), line Texas Tech -16.5 -> ATS loss
+  MISS North Carolina 24 at Duke 20: actual -4, predicted +1 (60% home), line Duke -3.0 -> ATS win
+  ok  Penn State 18 at Michigan 21: actual +3, predicted +2 (65% home), line Michigan -6.0 -> ATS win
+  ok  Georgia Tech 24 at Virginia Tech 34: actual +10, predicted +8 (64% home), line Virginia Tech -8.5 -> ATS loss
+  MISS Alabama 10 at Tennessee 26: actual +16, predicted -1 (44% home), line Tennessee +7.5 -> ATS win
+  ok  Akron 14 at Miami (OH) 34: actual +20, predicted +1 (53% home), line Miami (OH) -9.5 -> ATS loss
+  ok  UNLV 31 at Air Force 41: actual +10, predicted +1 (52% home), line Air Force +1.5 -> ATS win
+  ok  Tulsa 38 at Rice 17: actual -21, predicted -6 (32% home), line Rice +3.5 -> ATS win
+  MISS Troy 6 at Louisiana 33: actual +27, predicted -3 (40% home), line Louisiana -3.0 -> ATS loss
+  ok  Washington State 30 at Oregon State 48: actual +18, predicted +6 (71% home), line Oregon State -18.5 -> ATS win
+  ok  Kent State 2 at USF 29: actual +27, predicted +11 (79% home), line USF -20.5 -> ATS loss
+  MISS Arkansas 31 at Vanderbilt 21: actual -10, predicted +7 (72% home), line Vanderbilt -5.5 -> ATS loss
+  MISS Arkansas State 23 at Southern Miss 13: actual -10, predicted +3 (67% home), line Southern Miss +5.5 -> ATS loss
+  ok  Florida State 35 at Miami 43: actual +8, predicted +17 (90% home), line Miami -20.5 -> ATS win
+  MISS TCU 17 at Baylor 6: actual -11, predicted +1 (49% home), line Baylor -3.5 -> ATS win
+  ok  Nevada 17 at North Dakota State 31: actual +14, predicted +4 (66% home), line North Dakota State -14.5 -> ATS win
+  MISS Kentucky 21 at Oklahoma 13: actual -8, predicted +15 (88% home), line Oklahoma -7.0 -> ATS loss
+  MISS Louisville 34 at Syracuse 26: actual -8, predicted +2 (57% home), line Syracuse +14.5 -> ATS win
+  ok  Wisconsin 7 at UCLA 17: actual +10, predicted +7 (75% home), line UCLA -1.5 -> ATS win
+  MISS Notre Dame 24 at BYU 28: actual +4, predicted -7 (32% home), line BYU +10.5 -> ATS win
+  ok  Oklahoma State 32 at Houston 35: actual +3, predicted +3 (55% home), line Houston -4.0 -> ATS win
+  MISS Louisiana Tech 24 at UL Monroe 0: actual -24, predicted +1 (55% home), line UL Monroe +13.5 -> ATS loss
+  ok  Navy 34 at UTSA 38: actual +4, predicted +16 (90% home), line UTSA -5.5 -> ATS loss
+  ok  San José State 24 at UTEP 11: actual -13, predicted -2 (47% home), line UTEP +6.5 -> ATS loss
+  MISS Ohio 48 at Sacramento State 7: actual -41, predicted +8 (65% home), line Sacramento State +17.5 -> ATS loss
+  MISS Utah 27 at Colorado 24: actual -3, predicted +6 (67% home), line Colorado +15.5 -> ATS win
+  MISS Wake Forest 41 at California 7: actual -34, predicted +12 (84% home), line California +10.0 -> ATS loss
+  ok  Fresno State 23 at San Diego State 26: actual +3, predicted +7 (71% home), line San Diego State +6.5 -> ATS win
+  MISS New Mexico 21 at Hawaiʻi 10: actual -11, predicted +8 (76% home), line Hawaiʻi +14.5 -> ATS win
+  ok  Nebraska 14 at Oregon 17: actual +3, predicted +16 (87% home), line Oregon -6.5 -> ATS loss

@@ -1,0 +1,464 @@
+{
+ "week": 8,
+ "made_at": "2026-10-18T16:13:15+00:00",
+ "commit": "1a4235f",
+ "starts_from": "the real AP poll after week 7",
+ "forecasts": {
+  "game": [
+   {
+    "slug": "ohio-state",
+    "name": "Ohio State",
+    "rank": 1,
+    "record": "6-1"
+   },
+   {
+    "slug": "byu",
+    "name": "BYU",
+    "rank": 2,
+    "record": "6-0"
+   },
+   {
+    "slug": "miami",
+    "name": "Miami",
+    "rank": 3,
+    "record": "6-0"
+   },
+   {
+    "slug": "georgia",
+    "name": "Georgia",
+    "rank": 4,
+    "record": "6-1"
+   },
+   {
+    "slug": "texas-tech",
+    "name": "Texas Tech",
+    "rank": 5,
+    "record": "6-0"
+   },
+   {
+    "slug": "ole-miss",
+    "name": "Ole Miss",
+    "rank": 6,
+    "record": "5-1"
+   },
+   {
+    "slug": "notre-dame",
+    "name": "Notre Dame",
+    "rank": 7,
+    "record": "6-1"
+   },
+   {
+    "slug": "tennessee",
+    "name": "Tennessee",
+    "rank": 8,
+    "record": "6-1"
+   },
+   {
+    "slug": "indiana",
+    "name": "Indiana",
+    "rank": 9,
+    "record": "6-1"
+   },
+   {
+    "slug": "ucla",
+    "name": "UCLA",
+    "rank": 10,
+    "record": "6-0"
+   },
+   {
+    "slug": "utah",
+    "name": "Utah",
+    "rank": 11,
+    "record": "6-0"
+   },
+   {
+    "slug": "kentucky",
+    "name": "Kentucky",
+    "rank": 12,
+    "record": "6-1"
+   },
+   {
+    "slug": "houston",
+    "name": "Houston",
+    "rank": 13,
+    "record": "6-1"
+   },
+   {
+    "slug": "usc",
+    "name": "USC",
+    "rank": 14,
+    "record": "6-1"
+   },
+   {
+    "slug": "alabama",
+    "name": "Alabama",
+    "rank": 15,
+    "record": "5-2"
+   },
+   {
+    "slug": "wake-forest",
+    "name": "Wake Forest",
+    "rank": 16,
+    "record": "6-1"
+   },
+   {
+    "slug": "lsu",
+    "name": "LSU",
+    "rank": 17,
+    "record": "5-2"
+   },
+   {
+    "slug": "texas",
+    "name": "Texas",
+    "rank": 18,
+    "record": "4-2"
+   },
+   {
+    "slug": "iowa",
+    "name": "Iowa",
+    "rank": 19,
+    "record": "5-1"
+   },
+   {
+    "slug": "oregon",
+    "name": "Oregon",
+    "rank": 20,
+    "record": "4-2"
+   },
+   {
+    "slug": "smu",
+    "name": "SMU",
+    "rank": 21,
+    "record": "5-1"
+   },
+   {
+    "slug": "arizona",
+    "name": "Arizona",
+    "rank": 22,
+    "record": "5-1"
+   },
+   {
+    "slug": "northwestern",
+    "name": "Northwestern",
+    "rank": 23,
+    "record": "5-1"
+   },
+   {
+    "slug": "james-madison",
+    "name": "James Madison",
+    "rank": 24,
+    "record": "7-0"
+   },
+   {
+    "slug": "florida",
+    "name": "Florida",
+    "rank": 25,
+    "record": "5-2"
+   }
+  ],
+  "anchored": [
+   {
+    "slug": "ohio-state",
+    "name": "Ohio State",
+    "rank": 1,
+    "record": "6-1"
+   },
+   {
+    "slug": "byu",
+    "name": "BYU",
+    "rank": 2,
+    "record": "6-0"
+   },
+   {
+    "slug": "miami",
+    "name": "Miami",
+    "rank": 3,
+    "record": "6-0"
+   },
+   {
+    "slug": "ole-miss",
+    "name": "Ole Miss",
+    "rank": 4,
+    "record": "5-1"
+   },
+   {
+    "slug": "tennessee",
+    "name": "Tennessee",
+    "rank": 5,
+    "record": "6-1"
+   },
+   {
+    "slug": "texas-tech",
+    "name": "Texas Tech",
+    "rank": 6,
+    "record": "6-0"
+   },
+   {
+    "slug": "notre-dame",
+    "name": "Notre Dame",
+    "rank": 7,
+    "record": "6-1"
+   },
+   {
+    "slug": "indiana",
+    "name": "Indiana",
+    "rank": 8,
+    "record": "6-1"
+   },
+   {
+    "slug": "utah",
+    "name": "Utah",
+    "rank": 9,
+    "record": "6-0"
+   },
+   {
+    "slug": "ucla",
+    "name": "UCLA",
+    "rank": 10,
+    "record": "6-0"
+   },
+   {
+    "slug": "georgia",
+    "name": "Georgia",
+    "rank": 11,
+    "record": "6-1"
+   },
+   {
+    "slug": "alabama",
+    "name": "Alabama",
+    "rank": 12,
+    "record": "5-2"
+   },
+   {
+    "slug": "kentucky",
+    "name": "Kentucky",
+    "rank": 13,
+    "record": "6-1"
+   },
+   {
+    "slug": "houston",
+    "name": "Houston",
+    "rank": 14,
+    "record": "6-1"
+   },
+   {
+    "slug": "lsu",
+    "name": "LSU",
+    "rank": 15,
+    "record": "5-2"
+   },
+   {
+    "slug": "iowa",
+    "name": "Iowa",
+    "rank": 16,
+    "record": "5-1"
+   },
+   {
+    "slug": "texas",
+    "name": "Texas",
+    "rank": 17,
+    "record": "4-2"
+   },
+   {
+    "slug": "wake-forest",
+    "name": "Wake Forest",
+    "rank": 18,
+    "record": "6-1"
+   },
+   {
+    "slug": "usc",
+    "name": "USC",
+    "rank": 19,
+    "record": "6-1"
+   },
+   {
+    "slug": "missouri",
+    "name": "Missouri",
+    "rank": 20,
+    "record": "5-2"
+   },
+   {
+    "slug": "smu",
+    "name": "SMU",
+    "rank": 21,
+    "record": "5-1"
+   },
+   {
+    "slug": "northwestern",
+    "name": "Northwestern",
+    "rank": 22,
+    "record": "5-1"
+   },
+   {
+    "slug": "florida",
+    "name": "Florida",
+    "rank": 23,
+    "record": "5-2"
+   },
+   {
+    "slug": "oregon",
+    "name": "Oregon",
+    "rank": 24,
+    "record": "4-2"
+   },
+   {
+    "slug": "oklahoma-state",
+    "name": "Oklahoma State",
+    "rank": 25,
+    "record": "4-2"
+   }
+  ],
+  "last_week": [
+   {
+    "slug": "georgia",
+    "name": "Georgia",
+    "rank": 1,
+    "record": "6-0"
+   },
+   {
+    "slug": "notre-dame",
+    "name": "Notre Dame",
+    "rank": 2,
+    "record": "6-0"
+   },
+   {
+    "slug": "miami",
+    "name": "Miami",
+    "rank": 3,
+    "record": "5-0"
+   },
+   {
+    "slug": "ohio-state",
+    "name": "Ohio State",
+    "rank": 4,
+    "record": "5-1"
+   },
+   {
+    "slug": "indiana",
+    "name": "Indiana",
+    "rank": 5,
+    "record": "6-0"
+   },
+   {
+    "slug": "alabama",
+    "name": "Alabama",
+    "rank": 6,
+    "record": "5-1"
+   },
+   {
+    "slug": "texas",
+    "name": "Texas",
+    "rank": 7,
+    "record": "4-1"
+   },
+   {
+    "slug": "byu",
+    "name": "BYU",
+    "rank": 8,
+    "record": "5-0"
+   },
+   {
+    "slug": "ole-miss",
+    "name": "Ole Miss",
+    "rank": 9,
+    "record": "4-1"
+   },
+   {
+    "slug": "texas-tech",
+    "name": "Texas Tech",
+    "rank": 10,
+    "record": "5-0"
+   },
+   {
+    "slug": "utah",
+    "name": "Utah",
+    "rank": 11,
+    "record": "5-0"
+   },
+   {
+    "slug": "ucla",
+    "name": "UCLA",
+    "rank": 12,
+    "record": "5-0"
+   },
+   {
+    "slug": "missouri",
+    "name": "Missouri",
+    "rank": 13,
+    "record": "5-1"
+   },
+   {
+    "slug": "tennessee",
+    "name": "Tennessee",
+    "rank": 14,
+    "record": "5-1"
+   },
+   {
+    "slug": "kentucky",
+    "name": "Kentucky",
+    "rank": 15,
+    "record": "5-1"
+   },
+   {
+    "slug": "mississippi-st",
+    "name": "Mississippi State",
+    "rank": 16,
+    "record": "4-1"
+   },
+   {
+    "slug": "iowa",
+    "name": "Iowa",
+    "rank": 17,
+    "record": "5-1"
+   },
+   {
+    "slug": "oklahoma-state",
+    "name": "Oklahoma State",
+    "rank": 18,
+    "record": "4-1"
+   },
+   {
+    "slug": "usc",
+    "name": "USC",
+    "rank": 19,
+    "record": "6-1"
+   },
+   {
+    "slug": "houston",
+    "name": "Houston",
+    "rank": 20,
+    "record": "5-1"
+   },
+   {
+    "slug": "wake-forest",
+    "name": "Wake Forest",
+    "rank": 21,
+    "record": "5-1"
+   },
+   {
+    "slug": "lsu",
+    "name": "LSU",
+    "rank": 22,
+    "record": "4-2"
+   },
+   {
+    "slug": "boise-state",
+    "name": "Boise State",
+    "rank": 23,
+    "record": "5-1"
+   },
+   {
+    "slug": "smu",
+    "name": "SMU",
+    "rank": 24,
+    "record": "4-1"
+   },
+   {
+    "slug": "northwestern",
+    "name": "Northwestern",
+    "rank": 25,
+    "record": "4-1"
+   }
+  ]
+ }
+}
