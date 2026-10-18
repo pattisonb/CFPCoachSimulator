@@ -2,7 +2,7 @@
 
 This replaces the original `start_game.py`, which kept the teams as module globals and
 printed everything. The half, overtime, kickoff and scoring logic here follow the
-original; the differences are listed in the project README.
+original; the differences are listed in docs/HOW_IT_WORKS.md.
 """
 from __future__ import annotations
 

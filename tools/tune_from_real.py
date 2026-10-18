@@ -22,7 +22,7 @@ the lead-back split it really uses (its share of running back carries mapped to 
 engine's committee-to-workhorse scale, measured by simulation) and each receiver a target
 weight: his real share of the team's catches over his ratings' share, shrunk toward 1 for
 small samples. Ratings themselves are not changed: nudging them toward real efficiency
-was tried and made weeks 7-8 worse out of sample (README).
+was tried and made weeks 7-8 worse out of sample (docs/HOW_IT_WORKS.md).
 """
 from __future__ import annotations
 

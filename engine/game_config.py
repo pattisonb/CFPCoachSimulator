@@ -5,7 +5,7 @@ All values range from 0-100, where 50 = default/normal
 Adjusting above 50 increases that attribute, below 50 decreases it
 
 The TUNING block below holds every calibration constant the engine uses. They were set
-by running `calibrate.py` against FBS averages (see README). Ratings are 0-100 and the
+by running `calibrate.py` against FBS averages (see docs/HOW_IT_WORKS.md). Ratings are 0-100 and the
 formulas are written as differences from NEUTRAL, so a league of better or worse teams
 still plays like football; only the gap between the two teams decides the game.
 """

@@ -4,5 +4,29 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0b1020",
-  "theme_color": "#131a2e"
+  "theme_color": "#131a2e",
+  "description": "Simulate any college football game or a full season with real 2026 schedules, rosters, polls, the playoff and bowls, or follow the real 2026 season with live stats.",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
 }

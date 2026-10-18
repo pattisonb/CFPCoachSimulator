@@ -473,7 +473,7 @@
     const real = s.mode === "real";
     document.body.classList.toggle("real-mode", real);
     $("#btn-real-refresh").hidden = !real;
-    $(".brand-name").textContent = real ? "Real 2026" : "Season";
+    document.title = `${real ? "Real 2026" : "Season"} · CFP Coach Simulator`;
     for (const a of document.querySelectorAll(".site-nav a")) a.classList.toggle("active", a.dataset.nav === (real ? "real" : "season"));
     if (real) {
       $("#pick-team").value = s.team;
