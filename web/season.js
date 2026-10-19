@@ -259,6 +259,7 @@
     state.simResults = [];
     state.simTarget = s.current_week + 1;
     state.gamedayWanted = true;
+    state.headWeek = s.current_week;
     setBusy(true);
     showProgress({ status: "running", done: s.current_week, total: s.current_week + 1, stage: "Simming your game", week: s.current_week + 1 });
     try {
@@ -277,6 +278,7 @@
     state.simming = true;
     state.simResults = [];
     state.simTarget = to || s.current_week + 1;
+    state.headWeek = s.current_week;
     setBusy(true);
     showProgress({ status: "running", done: s.current_week, total: to || s.current_week + 1, stage: "Starting", week: s.current_week + 1 });
     try {
@@ -332,8 +334,37 @@
 
   // Progress while simming: weeks completed plus the fraction of the current week's games,
   // and a line saying what the sim is doing right now.
+  // While a sim runs the header follows it week by week: rank, record, and where the
+  // season is; Game day waits until the sim is done.
+  function liveHead(j) {
+    const s = state.season;
+    if (!s || s.mode === "real") return;
+    $("#btn-gameday").hidden = true;
+    if (j.record) {
+      const rec = $("#season-title .rec");
+      if (rec) rec.textContent = `${j.record.wins}-${j.record.losses}`;
+      const conf = $("#season-title .conf-rec");
+      if (conf) conf.textContent = `${j.record.conf_wins}-${j.record.conf_losses} ${s.conference}`;
+    }
+    if (j.done === state.headWeek) return;
+    state.headWeek = j.done;
+    s.current_week = j.done;
+    if ("my_rank" in j) {
+      s.my_rank = j.my_rank;
+      const old = $("#season-title .hdr-rank");
+      const r = j.my_rank && j.my_rank.rank ? el("span", { class: "hdr-rank", text: j.my_rank.kind === "cfp" ? `CFP #${j.my_rank.rank}` : `#${j.my_rank.rank}`,
+                                                              title: j.my_rank.kind === "cfp" ? "College Football Playoff ranking" : "AP poll" }) : null;
+      if (old && r) old.replaceWith(r);
+      else if (old) old.remove();
+      else if (r && $("#season-title .rec")) $("#season-title .rec").before(r);
+    }
+    const simDate = simDateText(s);
+    $("#season-meta").textContent = `Simming · through ${j.done === 0 ? "the preseason" : s.week_labels[j.done] || "week " + j.done}${simDate ? ` · ${simDate}` : ""}`;
+  }
+
   function showProgress(j) {
     const s = state.season;
+    liveHead(j);
     const from = state.advanceFrom != null ? state.advanceFrom : Math.max(0, j.done - 1);
     const span = Math.max(1, j.total - from);
     const frac = j.games_total ? j.games_done / j.games_total : 0;
@@ -374,12 +405,6 @@
     $("#sim-overlay .review-label").textContent = `Simming through ${s.week_labels[j.total] || "week " + j.total}`;
     $("#sim-sub").textContent = `${Math.max(0, j.done - from)} of ${span} weeks done${j.games_total ? ` · ${j.games_done} of ${j.games_total} games this week` : ""} · ${pct}%`;
     $("#sim-bar").style.width = `${pct}%`;
-    if (j.record) {
-      const rec = $("#season-title .rec");
-      if (rec) rec.textContent = `${j.record.wins}-${j.record.losses}`;
-      const conf = $("#season-title .conf-rec");
-      if (conf) conf.textContent = `${j.record.conf_wins}-${j.record.conf_losses} ${s.conference}`;
-    }
     // the week strip follows the sim
     if (j.done !== state.simLastDone) { state.simLastDone = j.done; state.viewWeek = j.done; state.season.current_week = j.done; renderWeekStrip(); $("#btn-advance").textContent = "Simming…"; }
     for (const r of j.results || []) {

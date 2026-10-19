@@ -540,10 +540,12 @@ def season_status(season_id: str, since: Optional[int] = None) -> dict:
         rec = season._records(state, include_playoff=True)[state["team"]]
         record = {"wins": rec["wins"], "losses": rec["losses"], "conf_wins": rec["conf_wins"], "conf_losses": rec["conf_losses"]}
         results = season.my_results(state, since) if since is not None else None
-        job["last_status"] = (record, results)
+        rank = season.current_rank(state)
+        job["last_status"] = (record, results, rank)
     except RuntimeError:
-        record, results = job.get("last_status") or ({"wins": 0, "losses": 0, "conf_wins": 0, "conf_losses": 0}, [])
+        record, results, rank = job.get("last_status") or ({"wins": 0, "losses": 0, "conf_wins": 0, "conf_losses": 0}, [], None)
     out["record"] = record
+    out["my_rank"] = rank           # the header's rank follows the sim week by week
     if since is not None:
         out["results"] = results or []
     return out
