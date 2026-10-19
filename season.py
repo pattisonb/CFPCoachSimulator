@@ -136,11 +136,14 @@ def load_teams() -> dict:
 
 
 # ----- the house rating scale ------------------------------------------------------------
-# What the pages show. The engine works on position-relative values (an average FBS
-# starter at the position is 55); the house scale puts an average Power 4 starter at 50,
-# a Power 4 starter one, two and three standard deviations better at 65, 80 and 95, and
-# an average FBS roster player (starters and backups everywhere) at 25. One pair of slopes
-# per position group and attribute, computed from the league once.
+# What the pages show. The engine keeps position-relative values (a
+# typical FBS starter at the position is 55); the house scale puts an average Power 4
+# starter at 50, and a Power 4 starter one, two and three standard deviations better at 65,
+# 80 and 95. Below the Power 4 starter average a standard deviation is worth 60% as much
+# (BELOW): a typical Power 4 backup or Group of 5 starter reads about 40, not the 20s.
+# A card's overall comes from EA's own overall (the source data keeps it beside its curved
+# ratings, which stretch the low end); attributes and "rated at" numbers come from the
+# engine values on the same shape. One pair of slopes per position group, computed once.
 
 SCALE_GROUP = {"MLB": "LB", "ROLB": "LB", "LOLB": "LB"}    # linebackers share one group (the roles are small)
 _scale_cache: dict = {}
@@ -174,9 +177,8 @@ def _house_scale() -> dict:
         p4 = p4_vals.get((g, k)) or vals
         m4 = st.mean(p4)
         sd4 = st.pstdev(p4) if len(p4) > 1 else 0.0
-        k_hi = 15 / sd4 if sd4 > 1.0 else 2.0
-        k_lo = 25 / max(3.0, m4 - st.mean(vals))
-        slopes[g] = (max(0.5, min(4.0, k_hi)), max(0.5, min(4.0, k_lo)))
+        k_hi = max(0.5, min(4.0, 15 / sd4 if sd4 > 1.0 else 2.0))
+        slopes[g] = (k_hi, k_hi * BELOW)
     for gk, vals in all_vals.items():
         p4 = p4_vals.get(gk) or vals
         k_hi, k_lo = slopes.get(gk[0], (1.5, 1.5))
@@ -206,9 +208,50 @@ def engine_rating(p: dict, key: str, ours: float) -> int:
     return house_to_engine(p["position"], key, ours)
 
 
+BELOW = 0.6      # below the Power 4 starter average, a standard deviation is worth 60% as much
+_ea_cache: dict = {}
+
+
+def _ea_scale() -> dict:
+    """position group -> (mean, sd) of EA's overall for Power 4 starters."""
+    if _ea_cache:
+        return _ea_cache
+    import statistics as st
+    vals: dict = {}
+    for slug, t in load_teams().items():
+        if t["fictional"] or not (t["conference"] in polls.P4 or slug == "notre-dame"):
+            continue
+        for p in t["offense"] + t["defense"]:
+            if p.get("in_game") and isinstance(p.get("ea_overall"), (int, float)):
+                vals.setdefault(SCALE_GROUP.get(p["position"], p["position"]), []).append(p["ea_overall"])
+    for g, v in vals.items():
+        _ea_cache[g] = (st.mean(v), max(2.0, st.pstdev(v)))
+    return _ea_cache
+
+
+def ea_house(pos: str, ea: float) -> int:
+    """EA's overall on the house scale: 50 at the Power 4 starter average for the position,
+    15 per standard deviation above it, 9 per standard deviation below (BELOW)."""
+    m4, sd4 = _ea_scale().get(SCALE_GROUP.get(pos, pos), (79.0, 6.0))
+    k = 15 / sd4
+    out = 50 + (ea - m4) * (k if ea >= m4 else k * BELOW)
+    return int(round(max(1, min(99, out))))
+
+
 def shown_overall(p: dict, base: Optional[dict] = None) -> int:
-    """The overall on the card: the engine's composite on the house scale (edits show)."""
-    return house_value(p["position"], "overall", player_overall(p))
+    """The overall on the card: EA's overall on the house scale. A god-mode edit moves it by
+    what the edit does to the engine composite (`base` is the unedited player). Players
+    without an EA overall fall back to the engine composite."""
+    if not isinstance(p.get("ea_overall"), (int, float)):
+        return house_value(p["position"], "overall", player_overall(p))
+    out = ea_house(p["position"], p["ea_overall"])
+    if base is not None and base is not p:
+        out += house_value(p["position"], "overall", player_overall(p)) - house_value(base["position"], "overall", player_overall(base))
+    return int(max(1, min(99, out)))
+
+
+def same_group(a: str, b: str) -> bool:
+    return SCALE_GROUP.get(a, a) == SCALE_GROUP.get(b, b)
 
 
 def tier_of(team: dict) -> str:
@@ -1286,7 +1329,8 @@ def position_candidates(state: dict, slug: str, role: str) -> dict:
     current = depth_order(state, slug, role)
     rows = []
     for p in team["offense"] + team["defense"]:
-        rating = house_value(p["position"], "return_rating", int(p.get("return_rating") or 0)) if pos == "KR" else house_value(pos, "overall", overall_at(p, pos))
+        rating = (house_value(p["position"], "return_rating", int(p.get("return_rating") or 0)) if pos == "KR"
+                  else shown_overall(p) if same_group(pos, p["position"]) else house_value(pos, "overall", overall_at(p, pos)))
         rec = ss.get(f"{p['name']}|{p['position']}")
         st = rec["stats"] if rec else {}
         group = awards.Pool._group(p["position"], p.get("role"), st) or p["position"]
@@ -2989,7 +3033,9 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         "edited": sorted(player_edits(state, team).get(p.get("slug"), {}).keys()), "editable_classes": list(CLASS_NAMES), "dev_traits": list(DEV_TRAITS),
         "key_ratings": key_ratings,
         "morale": morale_view(state, team, name, position),
-        "ratings_at": {k: house_value(RATING_KEY.get(k, k) if k != "KR" else "KR", "return_rating" if k == "KR" else "overall", int(v))
+        # rated at every position; at his own position it is the card's overall
+        "ratings_at": {k: (shown_overall(p, base_p) if k != "KR" and same_group(RATING_KEY.get(k, k), position)
+                           else house_value(RATING_KEY.get(k, k) if k != "KR" else "KR", "return_rating" if k == "KR" else "overall", int(v)))
                        for k, v in (p.get("ratings_at") or {}).items() if isinstance(v, (int, float))},
         "team": {"slug": team, "name": t["name"], "conference": t["conference"], "coach": hc.get("name"),
                  "record": f"{rec['wins']}-{rec['losses']}", "rank": awards.Pool(state, teams, _records(state)).rank_of(team) if ss else None},

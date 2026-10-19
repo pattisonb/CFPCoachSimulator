@@ -61,13 +61,13 @@ to follow it.
 
 ## Player ratings
 
-Ratings run from 1 to 99 on our own scale:
+Ratings start from EA College Football's ratings and run from 1 to 99 on our own scale:
 
 | Rating | Meaning |
 |---|---|
 | 50 | An average starter in the Power 4 conferences |
 | 65 / 80 / 95 | One, two and three steps above that |
-| 25 | An average player on an FBS roster |
+| About 40 | A typical Power 4 backup or Group of 5 starter |
 | 99 | The top of the scale |
 
 Rosters follow how teams really play in 2026. Depth charts and who gets the ball are

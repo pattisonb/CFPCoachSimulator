@@ -108,15 +108,22 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 
 ## How the data feeds the engine
 
-**Players.** Each source player has 54 EA-style ratings (0-99, 50 = average FBS player).
+**Players.** Each source player has 54 EA-style ratings (0-99, 50 = average FBS player):
+EA College Football ratings put through one curve that stretches the low end (EA 90
+becomes 82, EA 80 becomes 63, EA 72 becomes 49). The source keeps EA's own numbers too
+(`overall_ea`, `ratings_ea`); `build_teams.py` carries the EA overall as `ea_overall`.
 The pages show the house scale instead: 1-99 where 50 is an average Power 4 starter at
 the position, 65, 80 and 95 are a Power 4 starter one, two and three standard deviations
-better, and 25 is an average FBS roster player (`_house_scale` in season.py, one pair of
-slopes per position group and attribute, computed from the league). Jeremiah Smith is a
-99 on it, a good Power 4 quarterback about 70, a typical Group of 5 starter in the 30s.
+better, and below the average a standard deviation is worth 60% as much (`BELOW` in
+season.py), so a typical Power 4 backup or Group of 5 starter reads about 40 and a
+walk-on in the 20s. A card's overall is EA's overall on that scale (`ea_house`; a
+god-mode edit moves it by what the edit does to the engine composite); attributes and
+"rated at every position" put the engine values on the same shape (`_house_scale`, one
+pair of slopes per position group). Jeremiah Smith is a 98, a good Power 4 quarterback
+about 70, a former five-star rated EA 82 about 51 whether he starts or not.
 The engine works on its own position-relative values underneath (an average FBS starter
-at the position is 55, scaled by `SPREAD_SCALE`); god-mode edits typed on the house scale
-are converted back, and "rated at every position" uses the same scale.
+at the position is 55, scaled by `SPREAD_SCALE`) and never reads the EA overall;
+god-mode edits typed on the house scale are converted back.
 `build_teams.py` maps them to the engine's attributes: throw accuracy and power to
 passing, awareness and throwing under pressure to decision making, agility, jukes and
 break tackle to elusiveness, man and zone coverage to coverage, power and finesse moves
