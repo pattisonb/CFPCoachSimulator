@@ -712,7 +712,9 @@ body:not(.team-theme) .hdr-rank { background: var(--panel-2); border-color: var(
   .table-scroll { scrollbar-width: thin; }
   .depth-table td.depth-role { min-width: 0; }
   .depth-table td.depth-cell { min-width: 100px; }
-  .schedule-table td:nth-child(2) { white-space: normal; max-width: 72px; }
+  .schedule-table td:nth-child(2) { white-space: nowrap; }   /* short dates ("Sep 12") stay on one line */
+  .schedule-table .upnext-tag { display: block; margin: 2px 0 0; width: max-content; font-size: 8px; padding: 1px 4px; }
+  .schedule-table th, .schedule-table td { padding-left: 5px; padding-right: 5px; }   /* five columns fit a phone without side scrolling */
   .modal .tabs, #sbox-tabs { flex-wrap: wrap; overflow: visible; }
   #sbox-home table.stats td.name, #sbox-away table.stats td.name, #sbox-home table.stats th:first-child, #sbox-away table.stats th:first-child { position: sticky; left: 0; z-index: 1; background: var(--panel); box-shadow: 1px 0 0 var(--border); white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
   #tab-awards table.stats td.left, #tab-awards table.stats th.left { white-space: normal; }
@@ -860,3 +862,17 @@ body.real-mode .season-layout { grid-template-columns: 1fr; }
 /* the real page is league-wide: no team picker in the header, no depth chart tab */
 body.real-mode #pick-team, body.real-mode #season-tabs button[data-tab=depth] { display: none !important; }
 body.real-mode #season-tabs button[data-tab="games"] { display: revert; }
+
+/* AP and CFP ranks beside a team's name (standings, schedules): a small tag, not run-on text */
+.rank-badge { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 4px; font-size: 10px; font-weight: 700;
+  line-height: 16px; vertical-align: 1px; color: var(--muted); background: color-mix(in srgb, var(--muted) 14%, transparent); white-space: nowrap; }
+.rank-badge.cfp { color: var(--accent-ink); background: var(--accent); }
+
+/* visual sweep, phone first */
+.nowrap { white-space: nowrap; }
+.bowl-match .muted.small-text, .bmatch-name .muted.small-text { white-space: nowrap; }   /* "(7-5)" never splits */
+@media (max-width: 700px) {
+  .topbar { position: static; }   /* sticky, the header took a quarter of the screen */
+  .this-week .review-tiles { display: grid; grid-template-columns: 1fr 1fr; }   /* four tiles in two even rows */
+  .this-week .review-leader-big { font-size: 18px; }
+}

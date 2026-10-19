@@ -260,6 +260,8 @@
     renderTeamStats(g);
     renderPlayers(g.home, $("#tab-home"));
     renderPlayers(g.away, $("#tab-away"));
+    $("#tabs button[data-tab=home]").textContent = `${g.home.name} players`;   // the tabs name the teams
+    $("#tabs button[data-tab=away]").textContent = `${g.away.name} players`;
     renderDrives(g);
     selectTab("scoring");
     renderHistory();

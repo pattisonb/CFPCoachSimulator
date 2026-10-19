@@ -561,6 +561,7 @@
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   function parseDay(iso) { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d); }
+  function shortDay(iso) { const d = parseDay(iso); return `${MONTHS[d.getMonth()]} ${d.getDate()}`; }
   function fmtDay(iso, withDay = true) { const d = parseDay(iso); return `${withDay ? DAYS[d.getDay()] + ", " : ""}${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; }
 
   function weekDateText(s, w) {
@@ -710,7 +711,7 @@
     const r = d.ratings || {};
     box.append(el("div", { class: "roster-head" }, [
       teamPill(ds.team), el("b", { text: d.name }),
-      el("span", { class: "muted", text: ` · ${d.conference} · ${d.head_coach || ""} · overall ${r.overall} (off ${r.offense}, def ${r.defense}, ST ${r.special_teams}) · ${d.roster_size} players` }),
+      el("span", { class: "muted", text: ` · ${d.conference} · ${d.head_coach || ""} · overall ${Math.round(r.overall)} (off ${Math.round(r.offense)}, def ${Math.round(r.defense)}, ST ${Math.round(r.special_teams)}) · ${d.roster_size} players` }),
     ]));
     for (const unit of d.units) {
       if (ds.unit && unit.name !== ds.unit) continue;
@@ -920,7 +921,7 @@
       const boost = r.boost ? el("span", { class: `boost ${r.boost > 0 ? "up" : "down"}`, text: `${r.boost > 0 ? "▲" : "▼"}${Math.abs(r.boost)}`, title: `${r.boost > 0 ? "+" : ""}${r.boost} from ${p.morale && p.morale.label !== "Steady" ? p.morale.label.toLowerCase() : "morale"}${p.morale && p.morale.team_label ? " and the team's mood" : ""}` }) : null;
       rat.append(el("div", { class: `rating-row ${edited.has(r.key) ? "edited" : ""} ${r.boost ? "boosted" : ""}` }, [el("span", { class: "rating-label", text: r.label, title: edited.has(r.key) ? "Edited in god mode" : "" }), el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]), el("b", { class: "rating-num" }, [String(r.value), boost])]));
     }
-    if (p.morale && p.morale.enabled && p.ratings.some((r) => r.boost)) rat.append(el("div", { class: "muted small-text", style: "margin-top:6px", text: `Arrows: how his ratings enter the next game (${p.morale.label.toLowerCase()}${p.morale.team_label ? ", " + p.morale.team_label.toLowerCase() : ""}, ×${p.morale.factor}).` }));
+    if (p.morale && p.morale.enabled && p.ratings.some((r) => r.boost)) rat.append(el("div", { class: "muted small-text", style: "margin-top:6px", text: `Arrows: how his ratings enter the next game (${p.morale.label.toLowerCase()}${p.morale.team_label ? ", " + p.morale.team_label.toLowerCase() : ""}).` }));
     const others = Object.entries(p.ratings_at || {}).filter(([pos]) => pos !== p.position && !(pos === "MLB" && /LB$/.test(p.position))).sort((a, b) => b[1] - a[1]).slice(0, 5);
     if (others.length) rat.append(el("div", { class: "muted small-text", style: "margin-top:8px", text: `Rated at other spots: ${others.map(([pos, v]) => `${pos} ${v}`).join(" · ")}` }));
     grid.append(rat);
@@ -1865,25 +1866,25 @@
       return (s.week_labels[w] || `W${w}`).replace("Championship week", "CCG").replace("Selection", "Sel").replace(" & bowls", "").replace(" & New Year bowls", "");
     };
     // game dates are ISO for the regular season and bowl-style text ("Dec 30", "January 1") after it
-    const gameDate = (g) => (g.date && /^\d{4}-\d{2}-\d{2}/.test(g.date) ? fmtDay(g.date.slice(0, 10), false) : (g.date || ""));
+    const gameDate = (g) => (g.date && /^\d{4}-\d{2}-\d{2}/.test(g.date) ? shortDay(g.date.slice(0, 10)) : (g.date || ""));
     for (const g of d.schedule) {
       const upNext = !s.done && g.week === s.current_week + 1;
       if (g.kind === "bye") {
         const wd = s.week_dates && s.week_dates[g.week];
         table.appendChild(el("tr", { class: `bye ${upNext ? "upnext" : ""}` }, [
-          el("td", {}, [wk(g.week), upNext ? el("span", { class: "upnext-tag", text: "this week" }) : null]), el("td", { class: "left muted small-text", text: wd && wd.main ? fmtDay(wd.main, false) : "" }),
+          el("td", {}, [wk(g.week), upNext ? el("span", { class: "upnext-tag", text: "this week" }) : null]), el("td", { class: "left muted small-text nowrap", text: wd && wd.main ? shortDay(wd.main) : "" }),
           el("td", { class: "muted ph", text: g.my_rank ? `#${g.my_rank}` : "" }),
           el("td", { class: "left muted", text: "Bye" }), el("td", { class: "ph" }), el("td", { class: "muted", text: "–" }), el("td", {}), el("td", { class: "ph" }),
         ]));
         continue;
       }
       const prefix = g.venue === "away" ? "at" : "vs";
-      const when = g.date ? gameDate(g) : ((s.week_dates || {})[g.week] || {}).main ? fmtDay(s.week_dates[g.week].main, false) : "";
+      const when = g.date ? gameDate(g) : ((s.week_dates || {})[g.week] || {}).main ? shortDay(s.week_dates[g.week].main) : "";
       const tr = el("tr", { class: `${g.has_box ? "clickable" : ""} ${g.played ? (g.won ? "won" : "lost") : ""} ${upNext ? "upnext" : ""}` }, [
         el("td", {}, [wk(g.week, g), upNext ? el("span", { class: "upnext-tag", text: "this week" }) : null]),
-        el("td", { class: "left muted small-text", text: when }),
+        el("td", { class: "left muted small-text nowrap", text: when }),
         el("td", { class: "muted ph", text: g.my_rank ? `#${g.my_rank}` : "", title: "Rank entering the game" }),
-        el("td", { class: "left name" }, [el("span", { class: "muted", text: `${prefix} ` }), teamPill(g.opponent), g.opponent_rank ? el("span", { class: "rank", text: `#${g.opponent_rank} ` }) : null, g.opponent_name,
+        el("td", { class: "left name" }, [el("span", { class: "nowrap" }, [el("span", { class: "muted", text: `${prefix} ` }), teamPill(g.opponent)]), g.opponent_rank ? el("span", { class: "rank", text: `#${g.opponent_rank} ` }) : null, g.opponent_name,
           g.opponent_record && !((window.CFP.teamsBySlug[g.opponent] || {}).fictional) ? el("span", { class: "pos", text: g.opponent_record }) : null,
           g.title ? el("div", { class: "muted small-text", text: `${g.title}${g.site ? " · " + g.site : ""}` }) : (g.site ? el("div", { class: "muted small-text", text: g.site }) : null),
           g.rivalry ? el("div", { class: "rivalry-line small-text", title: g.rivalry.name }, [el("span", { class: "trophy", text: g.rivalry.trophy ? `🏆 ${g.rivalry.trophy}` : `🔥 ${g.rivalry.name}` }), el("span", { class: "muted", text: ` · ${g.rivalry.series}` })]) : null]),
@@ -2164,7 +2165,7 @@
     const r = t.ratings || {};
     box.append(el("div", { class: "roster-head" }, [
       teamPill(slug), el("b", { text: t.name }),
-      el("span", { class: "muted", text: ` · ${t.conference} · ${t.head_coach} · overall ${r.overall} (off ${r.offense}, def ${r.defense}, ST ${r.special_teams})` }),
+      el("span", { class: "muted", text: ` · ${t.conference} · ${t.head_coach} · overall ${Math.round(r.overall)} (off ${Math.round(r.offense)}, def ${Math.round(r.defense)}, ST ${Math.round(r.special_teams)})` }),
     ]));
     const groups = new Map();
     for (const p of t.players) {
@@ -2259,7 +2260,7 @@
       for (const t of rows) {
         table.appendChild(el("tr", { class: t.slug === s.team ? "mine" : "" }, [
           el("td", { text: String(t.conf_rank), title: t.tiebreak ? `Tied on conference record; placed by ${t.tiebreak}` : "" }),
-          el("td", { class: "name left" }, [teamPill(t.slug), t.name, youTag(t.slug), ...crownOf(t), t.ap_rank || t.cfp_rank ? el("span", { class: "pos", text: t.cfp_rank ? `CFP ${t.cfp_rank}` : `#${t.ap_rank}` }) : null]),
+          el("td", { class: "name left" }, [teamPill(t.slug), t.name, youTag(t.slug), ...crownOf(t), rankBadge(t)]),
           el("td", { text: `${t.conf_wins}-${t.conf_losses}` }), el("td", { text: `${t.wins}-${t.losses}` }),
           el("td", { class: "ph", text: String(t.points_for) }), el("td", { class: "ph", text: String(t.points_against) }),
         ]));
@@ -2270,7 +2271,7 @@
     const fullTable = (rows, division) => {
       const table = el("table", { class: "stats standings-full" });
       const heads = ["#", division || "Team", "Conf", "Overall", "Home", "Away", "PF", "PA", "Diff", "Streak", "Last game"];
-      const phone = new Set(["Home", "Away", "PF", "PA", "Diff", "Last game"]);
+      const phone = new Set(["Home", "Away", "PF", "PA", "Diff", "Streak", "Last game"]);   // a phone shows #, team, conference and overall
       table.appendChild(el("tr", {}, heads.map((h) => el("th", { text: h, class: `${[division || "Team", "Last game"].includes(h) ? "left" : ""} ${phone.has(h) ? "ph" : ""}` }))));
       for (const t of rows) {
         const last = t.last ? `${t.last.won ? "W" : "L"} ${t.last.score} ${t.last.venue === "home" ? "vs" : t.last.venue === "away" ? "at" : "vs"} ${t.last.opponent_name}` : "–";
@@ -2281,7 +2282,7 @@
           el("td", { class: "ph", text: `${t.home_wins}-${t.home_losses}` }), el("td", { class: "ph", text: `${t.away_wins}-${t.away_losses}` }),
           el("td", { class: "ph", text: String(t.points_for) }), el("td", { class: "ph", text: String(t.points_against) }),
           el("td", { class: `ph ${t.points_for > t.points_against ? "win" : t.points_for < t.points_against ? "loss" : ""}`, text: diff(t) }),
-          el("td", { class: t.streak > 0 ? "win" : t.streak < 0 ? "loss" : "muted", text: t.streak > 0 ? `W${t.streak}` : t.streak < 0 ? `L${-t.streak}` : "–" }),
+          el("td", { class: `ph ${t.streak > 0 ? "win" : t.streak < 0 ? "loss" : "muted"}`, text: t.streak > 0 ? `W${t.streak}` : t.streak < 0 ? `L${-t.streak}` : "–" }),
           el("td", { class: `left ph ${t.last ? (t.last.won ? "" : "muted") : "muted"}`, text: last }),
         ]));
       }
@@ -2616,6 +2617,8 @@
       renderScoreboard(g, SBOX_IDS); renderScoring(g, SBOX_IDS); renderTeamStats(g, SBOX_IDS);
       if (g.rivalry) $("#sbox-meta").prepend(el("div", { class: "rivalry-line" }, [el("b", { text: `${g.rivalry.trophy ? "🏆 " + g.rivalry.trophy : "🔥 " + g.rivalry.name}: ` }), `${g.rivalry.headline ? g.rivalry.headline + ". " : ""}${g.rivalry.series}.`]));
       renderPlayers(g.home, $("#sbox-home")); renderPlayers(g.away, $("#sbox-away")); renderDrives(g, SBOX_IDS);
+      $("#sbox-tabs button[data-btab=home]").textContent = `${g.home.name} players`;
+      $("#sbox-tabs button[data-btab=away]").textContent = `${g.away.name} players`;
       selectBoxTab("scoring");
       const title = el("span", {}, [teamPill(g.away_slug), `${g.away.name} ${g.away.score}`, el("span", { class: "muted", text: " at " }), teamPill(g.home_slug), `${g.home.name} ${g.home.score}`,
         el("span", { class: "muted small-text", text: g.overtime_periods ? ` · Final / ${g.overtime_periods}OT` : " · Final" })]);
