@@ -126,9 +126,22 @@
   const REAL = location.pathname === "/real";
   const REAL_ID = "real-2026";
 
-  async function followTeam(slug) {
-    try { const s = await api("/api/real/follow", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team: slug }) }); applyTeamTheme(s.team); showSeason(s); }
-    catch (err) { toast(`Could not follow that team: ${err.message}`, 3000); }
+  // The real page follows no team: the season is shown league-wide (Games first), and the
+  // Schedule and Stats tabs pick a team inside the tab. The server still stores a team for
+  // the state's sake; the page drops it so nothing is marked "yours".
+  function leagueWide(s) {
+    s.team = null;
+    s.my_rank = null;
+    return s;
+  }
+
+  // the team at the top of the latest AP poll: the Schedule tab's first team on the real page
+  function topTeam(s) {
+    for (let w = s.current_week; w >= 0; w--) {
+      const ap = ((s.polls || {})[String(w)] || {}).ap;
+      if (ap && ap.length) return ap[0].team;
+    }
+    return null;
   }
 
   async function refreshReal() {
@@ -182,7 +195,7 @@
       ["Returns", (p) => n(p, "kickoff_returns") + n(p, "punt_returns"), [["KR", (p) => `${n(p, "kickoff_returns")}-${n(p, "kickoff_return_yards")}`], ["PR", (p) => `${n(p, "punt_returns")}-${n(p, "punt_return_yards")}`], ["TD", (p) => n(p, "kickoff_return_touchdowns") + n(p, "punt_return_touchdowns")]], "kickoff_return_yards"],
     ];
     const pick = { side: "away" };
-    const chips = chipRow(sides.map(([side, t]) => [side, t.name]), pick.side, (v) => { pick.side = v; draw(); for (const c of chips.querySelectorAll(".chip")) c.classList.toggle("active", c.textContent === g[v].name); });
+    const chips = chipRow(sides.map(([side, t]) => [side, t.name]), pick.side, (v) => { pick.side = v; draw(); });
     const body = el("div");
     function draw() {
       body.innerHTML = "";
@@ -440,6 +453,7 @@
     .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
   function showSeason(s) {
+    if (s.mode === "real") leagueWide(s);
     const opening = !state.season || state.season.id !== s.id;
     state.season = s;
     // no more games once the season is complete: the Summary tab takes the Games tab's place
@@ -453,12 +467,15 @@
     state.standings = null;
     if (opening && sidebarPreferred() !== "1") setSidebar(false, false);
     const upNext = s.done ? s.current_week : Math.min(s.current_week + 1, 20);
-    if (state.viewWeek == null || state.viewWeek > upNext) state.viewWeek = upNext;
+    // the real page opens on the latest week with results; a sim season on the week up next
+    if (state.viewWeek == null) state.viewWeek = s.mode === "real" ? Math.max(s.current_week, 1) : upNext;
+    if (state.viewWeek > upNext) state.viewWeek = upNext;
     $("#season-empty").hidden = true;
     $("#season").hidden = false;
     const r = s.record;
     $("#season-title").innerHTML = "";
-    $("#season-title").append(
+    if (s.mode === "real") $("#season-title").append("The 2026 college football season");
+    else $("#season-title").append(
       teamPill(s.team),
       s.team_name,
       ...(s.my_rank && s.my_rank.rank ? [el("span", { class: "hdr-rank", text: s.my_rank.kind === "cfp" ? `CFP #${s.my_rank.rank}` : `#${s.my_rank.rank}`, title: s.my_rank.kind === "cfp" ? "College Football Playoff ranking" : "AP poll" })] : []),
@@ -476,8 +493,7 @@
     document.title = `${real ? "Real 2026" : "Season"} · CFP Coach Simulator`;
     for (const a of document.querySelectorAll(".site-nav a")) a.classList.toggle("active", a.dataset.nav === (real ? "real" : "season"));
     if (real) {
-      $("#pick-team").value = s.team;
-      $("#season-meta").textContent = `The real 2026 season through ${s.week_labels[s.current_week] || "week " + s.current_week}${simDate ? ` (${simDate})` : ""} · real results, real AP polls, real stats from the NCAA box scores · following ${s.team_name}, pick any team above · built ${when(s.real_built_at || s.created_at)}`;
+      $("#season-meta").textContent = `The real 2026 season through ${s.week_labels[s.current_week] || "week " + s.current_week}${simDate ? ` (${simDate})` : ""} · real results, real AP polls, real stats from the NCAA box scores · built ${when(s.real_built_at || s.created_at)}`;
     }
     setBusy(false);
     renderWeekStrip();
@@ -960,14 +976,21 @@
   const DEFENSE_KINDS = new Set(["dpoy", "dpoy_alt", "lb", "db", "edge", "dl", "front", "def_freshman"]);
   const ST_KINDS = new Set(["k", "p", "rs", "stpoy", "versatile"]);
 
+  // A row of chips; clicking one moves the highlight to it, then calls onPick (callers that
+  // redraw the row get the same result, callers that keep it, like a modal, stay correct).
   function chipRow(items, current, onPick, cls = "") {
     const row = el("div", { class: `view-chips ${cls}` });
     for (const [value, label, title] of items) {
       const b = el("button", { type: "button", class: `chip ${current === value ? "active" : ""}`, text: label, title: title || label });
-      b.addEventListener("click", () => onPick(value));
+      b.dataset.v = String(value);
+      b.addEventListener("click", () => { markChip(row, b); onPick(value); });
       row.append(b);
     }
     return row;
+  }
+
+  function markChip(row, chip) {
+    for (const c of row.querySelectorAll(":scope > .chip")) c.classList.toggle("active", c === chip);
   }
 
   function who(c, withTeam = true) {
@@ -1115,8 +1138,8 @@
     const nat = live ? d.race : d.national;
     if (st.conf === null) st.conf = d.my_conference;
     const views = [["mine", "My team"], ["heisman", "Heisman"], ["national", "National awards"], ["coaches", "Coach awards"],
-                   ["allamerica", "All-America"], ["conference", "Conference awards"]].filter(([v]) => !(live && v === "allamerica"));
-    if (live && st.view === "allamerica") st.view = "mine";
+                   ["allamerica", "All-America"], ["conference", "Conference awards"]].filter(([v]) => !(live && v === "allamerica") && (v !== "mine" || s.team));
+    if (!views.some(([v]) => v === st.view)) st.view = views[0][0];
     const controls = el("div", { class: "stats-controls" });
     controls.append(chipRow(views, st.view, (v) => { st.view = v; st.sort = null; st.filter = ""; renderAwards(); }));
     const given = d.given_through || 0;
@@ -1484,7 +1507,8 @@
     confSel.addEventListener("change", () => { bowlsState.conf = confSel.value; renderBowls(); });
     const mineBtn = el("button", { type: "button", class: `ghost small ${bowlsState.mine ? "active" : ""}`, text: `${s.team_name} only` });
     mineBtn.addEventListener("click", () => { bowlsState.mine = !bowlsState.mine; renderBowls(); });
-    controls.append(sortSel, confSel, mineBtn);
+    controls.append(sortSel, confSel);
+    if (s.team) controls.append(mineBtn);
     box.append(controls);
 
     let list = rows.filter((b) => (!bowlsState.conf || b.home_conference === bowlsState.conf || b.away_conference === bowlsState.conf) && (!bowlsState.mine || b.mine));
@@ -1503,7 +1527,7 @@
     const card = (b) => {
       const played = b.played;
       const aw = played && b.away_score > b.home_score, hw = played && b.home_score > b.away_score;
-      const c = el("div", { class: `bowl-card ${b.mine ? "mine" : ""} ${b.has_box ? "clickable" : ""}` });
+      const c = el("div", { class: `bowl-card ${b.mine && s.team ? "mine" : ""} ${b.has_box ? "clickable" : ""}` });
       c.append(el("div", { class: "bowl-head" }, [
         el("b", { text: b.name }), el("span", { class: "muted small-text", text: ` ${b.date}${b.time ? " · " + b.time : ""} · ${b.site || ""}` }),
       ]));
@@ -1573,7 +1597,7 @@
     const confs = [...new Set(data.games.flatMap((g) => [confOf(g.home), confOf(g.away)]).filter(Boolean))].sort();
     const controls = el("div", { class: "stats-controls" });
     controls.append(confChips(confs, confs.includes(gs.conf) ? gs.conf : "", (v) => { gs.conf = v; renderGames(); }));
-    const views = [["", "All"], ["ranked", "Ranked"], ["top25", "Top-25 matchups"], ["upsets", "Upsets"], ["close", "Close games"], ["ot", "Overtime"], ["conf", "Conference games"], ["mine", "My team"]];
+    const views = [["", "All"], ["ranked", "Ranked"], ["top25", "Top-25 matchups"], ["upsets", "Upsets"], ["close", "Close games"], ["ot", "Overtime"], ["conf", "Conference games"], ...(s.team ? [["mine", "My team"]] : [])];
     const playedAny = data.games.some((g) => g.played);
     controls.append(chipRow(views.filter(([v]) => playedAny || !["upsets", "close", "ot"].includes(v)), gs.view, (v) => { gs.view = v; renderGames(); }));
     box.append(controls);
@@ -1611,7 +1635,7 @@
       const played = g.played;
       const hw = played && g.home_score > g.away_score, aw = played && g.away_score > g.home_score;
       const note = [g.title, g.site, played ? (g.overtime ? `OT${g.overtime > 1 ? g.overtime : ""}` : g.real ? "real result" : "") : (g.neutral ? "neutral site" : "")].filter(Boolean).join(" · ");
-      const tr = el("tr", { class: `${g.mine ? "mine" : ""} ${g.has_box ? "clickable" : ""}` }, [
+      const tr = el("tr", { class: `${g.mine && s.team ? "mine" : ""} ${g.has_box ? "clickable" : ""}` }, [
         teamCell(g.away, g.away_display, g.away_rank, g.away_record, aw, played && !aw),
         el("td", { class: `score ${aw ? "win" : ""}`, text: played ? String(g.away_score) : "" }),
         el("td", { class: "muted", text: g.neutral ? "vs" : "at" }),
@@ -1760,11 +1784,11 @@
     const box = $("#tab-schedule");
     box.innerHTML = "";
     const st = scheduleState;
-    if (st.team === null || !window.CFP.teamsBySlug[st.team]) st.team = s.team;
+    if (st.team === null || !window.CFP.teamsBySlug[st.team]) st.team = s.team || topTeam(s);
     // pick any team: conference chips narrow the team list; a button opens every game of the week
     const controls = el("div", { class: "stats-controls" });
     const confs = [...new Set(state.teams.filter((t) => !t.fictional).map((t) => t.conference))].sort();
-    controls.append(confChips(confs, st.conf, (v) => { st.conf = v; const first = state.teams.find((t) => !t.fictional && (!v || t.conference === v)); if (v && !(window.CFP.teamsBySlug[st.team] || {}).conference === v) st.team = first ? first.slug : st.team; renderSchedule(); }));
+    controls.append(confChips(confs, st.conf, (v) => { st.conf = v; renderSchedule(); }));
     const row = el("div", { class: "schedule-pick" });
     const sel = el("select", { "aria-label": "Team" }, state.teams.filter((t) => !t.fictional && (!st.conf || t.conference === st.conf)).map((t) => el("option", { value: t.slug, text: t.slug === s.team ? `${t.name} (your team)` : t.name })));
     if (![...sel.options].some((o) => o.value === st.team)) st.team = sel.options.length ? sel.options[0].value : s.team;
@@ -1775,8 +1799,8 @@
     const allBtn = el("button", { type: "button", class: "ghost small", text: "View all games" });
     allBtn.addEventListener("click", openGamesModal);
     row.append(sel);
-    if (st.team !== s.team) row.append(mineBtn);
-    row.append(allBtn);
+    if (s.team && st.team !== s.team) row.append(mineBtn);
+    if (s.mode !== "real") row.append(allBtn);       // the real page has its own Games tab
     controls.append(row);
     box.append(controls);
     const key = `${s.id}|${s.current_week}|${(s.schedule || []).filter((g) => g.played).length}|${st.team}`;
@@ -1784,7 +1808,7 @@
       try { st.data = await api(`/api/season/${s.id}/schedule/${st.team}`); st.key = key; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
     }
     const d = st.data;
-    const mine = st.team === s.team;
+    const mine = !!s.team && st.team === s.team;
     box.append(el("h3", {}, [teamPill(d.team), d.team_name, el("span", { class: "pos", text: `${d.rank ? `#${d.rank} · ` : ""}${d.record.wins}-${d.record.losses} · ${d.record.conf_wins}-${d.record.conf_losses} ${d.conference}` })]));
     if (mine && !s.done) renderThisWeek(box, d);
     const table = el("table", { class: "stats schedule-table" });
@@ -1859,7 +1883,7 @@
     const row = el("div", { class: "view-chips conf-chips", role: "group", "aria-label": "Conference" });
     for (const [value, label] of [["", "All"], ...confs.map((c) => [c, CONF_SHORT[c] || c])]) {
       const b = el("button", { type: "button", class: `chip ${current === value ? "active" : ""}`, text: label, title: value || "All conferences" });
-      b.addEventListener("click", () => onPick(value));
+      b.addEventListener("click", () => { markChip(row, b); onPick(value); });
       row.append(b);
     }
     return row;
@@ -1975,7 +1999,7 @@
     const box = $("#tab-playerstats");
     box.innerHTML = "";
     const ps = playerStatsState;
-    if (ps.team === null) ps.team = s.team;
+    if (ps.team === null) ps.team = s.team || "";
     const played = s.current_week > 0;
 
     const controls = el("div", { class: "stats-controls" });
@@ -2582,7 +2606,7 @@
       row("Momentum and morale", "Big plays swing momentum inside a game and nudge ratings play by play; wins, losses and each player's own games set a mood that carries into the next game and fades week by week. Player cards show the boosts as green and red arrows.",
         toggle(!!(s.settings || {}).morale, async (on) => { await saveSettings({ morale: on }); toast(on ? "Momentum and morale on from the next sim." : "Momentum and morale off.", 3000); })),
       row("Game day pace", "How fast the plays come during a game day replay.",
-        chipRow([["slow", "Slow"], ["normal", "Normal"], ["fast", "Fast"]], gdSpeed(), (v) => { try { localStorage.setItem("cfp.gameday.speed", v); } catch (e) {} for (const c of node.querySelectorAll(".chip")) c.classList.toggle("active", c.textContent.trim().toLowerCase() === v); })),
+        chipRow([["slow", "Slow"], ["normal", "Normal"], ["fast", "Fast"]], gdSpeed(), (v) => { try { localStorage.setItem("cfp.gameday.speed", v); } catch (e) {} })),
     );
     openModal("Settings", node);
   }
@@ -2932,7 +2956,7 @@
       el("div", { id: "gd-situation", class: "gd-situation muted" }),
       gdFieldNode(g),
       el("div", { class: "gd-controls" }, [
-        chipRow([["slow", "Slow"], ["normal", "Normal"], ["fast", "Fast"]], gameday.speed, (v) => { gameday.speed = v; try { localStorage.setItem("cfp.gameday.speed", v); } catch (e) {} for (const c of node.querySelectorAll(".gd-controls .chip")) c.classList.toggle("active", c.dataset.v === v); }),
+        chipRow([["slow", "Slow"], ["normal", "Normal"], ["fast", "Fast"]], gameday.speed, (v) => { gameday.speed = v; try { localStorage.setItem("cfp.gameday.speed", v); } catch (e) {} }),
         (() => { const b = el("button", { type: "button", class: "ghost small", id: "gd-skip", text: "Skip to final" }); b.addEventListener("click", () => gdFinish(true)); return b; })(),
       ]),
       el("div", { class: "gd-current" }, [el("h4", { id: "gd-drive-title", text: "" }), el("ol", { id: "gd-plays", class: "gd-plays" })]),
@@ -3017,7 +3041,6 @@
   $("#btn-gameday").addEventListener("click", playGameDay);
   $("#btn-settings").addEventListener("click", openSettings);
   $("#btn-real-refresh").addEventListener("click", refreshReal);
-  $("#pick-team").addEventListener("change", () => { if (REAL) followTeam($("#pick-team").value); });
   $("#btn-to-selection").addEventListener("click", () => advance(15));
   $("#btn-to-end").addEventListener("click", () => advance(20));
   $("#season-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) { state.tab = b.dataset.tab; renderTab(); } });
@@ -3028,7 +3051,14 @@
     try { await loadTeams(); } catch (err) { toast(`Teams unavailable: ${err.message}`, 4000); }
     await loadSeasons().catch(() => {});
     const id = REAL ? REAL_ID : new URLSearchParams(location.search).get("id");
-    if (REAL) { document.body.classList.add("real-mode"); $("#season-empty").querySelector("p").textContent = "Loading the real 2026 season…"; }
+    if (REAL) {
+      document.body.classList.add("real-mode");
+      $("#season-empty").querySelector("p").textContent = "Loading the real 2026 season…";
+      const tabs = $("#season-tabs");
+      for (const t of ["games", "schedule", "rankings", "standings", "stats", "awards", "bracket", "bowls"]) tabs.append(tabs.querySelector(`button[data-tab=${t}]`));
+      tabs.querySelector("button[data-tab=schedule]").textContent = "Schedules";
+      state.tab = "games";
+    }
     for (const a of document.querySelectorAll(".site-nav a")) a.classList.toggle("active", a.dataset.nav === (REAL ? "real" : "season"));
     if (id) openSeason(id);
   })();

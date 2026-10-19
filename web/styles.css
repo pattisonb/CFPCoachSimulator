@@ -853,3 +853,7 @@ body.real-mode .season-layout { grid-template-columns: 1fr; }
 .real-box-team.win { opacity: 1; }
 .real-box-team .pts { font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; margin-left: 6px; }
 .real-box h4 { margin: 6px 0 0; }
+
+/* the real page is league-wide: no team picker in the header, no depth chart tab */
+body.real-mode #pick-team, body.real-mode #season-tabs button[data-tab=depth] { display: none !important; }
+body.real-mode #season-tabs button[data-tab="games"] { display: revert; }
