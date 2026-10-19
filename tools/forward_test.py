@@ -52,7 +52,7 @@ from pathlib import Path
 
 from teamnames import build_matcher, match
 from fetch_lines import lines_for_dates   # the betting board (scoresandodds.com)
-from form import form_shift, load_form, with_form   # in-season form from the real results
+from form import PLAYER_FORM_APPLIED, apply_form, form_shift, load_all_form   # in-season form from the real results and box scores
 
 ROOT = Path(__file__).resolve().parents[1]
 GAMES_FILE = ROOT / "data" / "season_games.json"
@@ -264,13 +264,14 @@ def predict(week: int | None, out: Path | None, sims: int, fetch: bool, use_form
         sys.exit("nothing to predict")
 
     # in-season form from every result before this week, applied to the ratings the sims use
-    table = load_form(teams, through_week=week - 1) if use_form else {}
+    table, players = load_all_form(teams, through_week=week - 1) if use_form else ({}, {})
     if table:
-        adjusted = {slug: with_form(t, form_shift(table.get(slug))) for slug, t in teams.items()}
+        adjusted = {slug: apply_form(t, form_shift(table.get(slug)), players.get(slug)) for slug, t in teams.items()}
         tmp = Path(tempfile.mkdtemp(prefix="forward_form_")) / "teams.json"
         tmp.write_text(json.dumps({"teams": adjusted}), encoding="utf-8")
         shown = sum(1 for g in games for sl in (g["home_slug"], g["away_slug"]) if abs(form_shift(table.get(sl))) >= 0.5)
-        print(f"  in-season form through week {week - 1}: {len(table)} teams fitted, {shown} of {2 * len(games)} sides shifted")
+        print(f"  in-season form through week {week - 1}: {len(table)} teams fitted, {shown} of {2 * len(games)} sides shifted, "
+              f"{sum(len(d) for d in players.values())} players with a box-score form{' applied' if PLAYER_FORM_APPLIED else ' (not applied; FORM_PLAYERS=1 to apply)'}")
         try:
             simulate_week(games, sims, tmp)
         finally:
@@ -285,6 +286,7 @@ def predict(week: int | None, out: Path | None, sims: int, fetch: bool, use_form
         "commit": git_commit(),
         "sims_per_game": sims,
         "form_through": week - 1 if table else None,
+        "players_moved": sum(len(d) for d in players.values()) if table and PLAYER_FORM_APPLIED else 0,
         "games": [],
     }
     for g in games:

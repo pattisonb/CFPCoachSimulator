@@ -917,6 +917,8 @@
             p.injured ? el("span", { class: "tag bad", text: "Injured" }) : null,
             p.morale && p.morale.enabled && p.morale.label !== "Steady" ? el("span", { class: `tag ${p.morale.label === "Hot streak" ? "good hot" : "bad cold"}`, text: `${p.morale.label === "Hot streak" ? "🔥" : "❄"} ${p.morale.label}`, title: `Form ${p.morale.form > 0 ? "+" : ""}${p.morale.form}: his recent games against his season so far` }) : null,
             p.morale && p.morale.enabled && p.morale.team_label ? el("span", { class: `tag ${p.morale.team > 0 ? "good" : "bad"}`, text: p.morale.team_label, title: `Team mood ${p.morale.team > 0 ? "+" : ""}${p.morale.team}` }) : null,
+            // rest-of-season seasons: what the real 2026 box scores say about him against his rating
+            p.form ? el("span", { class: `tag ${p.form.shift > 0 ? "good" : "bad"}`, text: `${p.form.shift > 0 ? "📈" : "📉"} Box scores ${p.form.shift > 0 ? "+" : ""}${Math.round(p.form.shift)}`, title: `Real 2026 box scores: ${p.form.note}. The rating shift is informational unless player form is switched on.` }) : null,
             p.games ? el("span", { class: "tag", text: `${p.games} of ${p.team_games} games` }) : el("span", { class: "tag", text: "No games yet" }),
           ]),
           devTag ? el("div", { class: "player-dev" }, [devTag]) : null,

@@ -12,8 +12,8 @@ from test_play_log import fingerprint
 
 if __name__ == "__main__":
     base = fingerprint()
-    print("fingerprint with momentum off:", base, "(must match the value before the change: 7f1f625a5f714c6c)")
-    assert base == "7f1f625a5f714c6c"
+    print("fingerprint with momentum off:", base, "(must match the value before the change: 2bd7f157898d6956)")
+    assert base == "2bd7f157898d6956"
 
     # in-game momentum changes a game and leaves the flag off afterwards
     season._init(str(season.TEAMS_FILE))

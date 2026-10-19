@@ -913,6 +913,30 @@ from the closing line instead of 7.5. Straight up (66.1%) and against the spread
 (36-21-2 against 37-20-2) did not move that week: the form fixes how big the margins are
 far more than which side they fall on.
 
+### Game-day spread
+
+Real college football margins land about 16-17 points from the line; the engine's own
+spread was 15.6 with `GAME_FORM_SD` at 3.6, so it is 4.4 now (16.3 measured by
+`python tools/measure_variance.py`). With team form and the wider spread together the
+week 7 back-test reads 72.9% straight up, 38-19-2 against the closing spread, margin MAE
+10.9, and the win odds are calibrated bucket by bucket (sim 32% / won 29%, 50 / 50,
+72 / 75, 84 / 83).
+
+### Player form (fitted, shown, not applied)
+
+`form.py` also fits every matched player from the real box scores: his production
+(passer rating, yards a carry with volume, receiving yards a game, field goal rate, punt
+average, tackles with loss tackles, sacks and interceptions weighted) placed on the
+league's distribution for his position, against where his rating sits among the league's
+starters, shrunk by games played and capped at 5 rating points; defensive backs are left
+out because tackles say little about coverage. The player card in a rest-of-season
+season shows the result as a "Box scores" tag. The shifts reach the sims only with
+`FORM_PLAYERS=1` set, because on the week 7 back-test they made the picks worse (72.9% to
+66-70% straight up, MAE 10.9 to 11.1-11.3): production percentiles punish players on
+dominant teams, whose defenses sit and whose backs rest in blowouts. A production model
+that accounts for the team's pace, leads and opponents would be the way to make this
+pay; the fit and the plumbing are in place for it.
+
 ## Forward test: picks frozen before kickoff
 
 Everything above is in-sample: the ratings and tendencies already reflect the games they

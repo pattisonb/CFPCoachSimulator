@@ -56,4 +56,18 @@ if __name__ == "__main__":
         print(f"remaining mode: Ohio State form {st['form']['ohio-state']['points']:+.1f} pts, shift {d:+.1f}; week {st['current_week']}")
         full = season.new_season("ohio-state", "full", seed=1)
         assert full["form"] == {}, "a full season from preseason carries no form"
+        # player form: bounded shifts on the position ratings, no defensive backs, the card carries the note
+        players = form.load_player_form(teams)
+        if players:
+            flat = [(s, ps, f) for s, d in players.items() for ps, f in d.items()]
+            assert all(abs(f["shift"]) <= form.PLAYER_MAX_SHIFT and f["games"] >= form.MIN_GAMES for _, _, f in flat)
+            name_of = {p["slug"]: p for t in teams.values() for p in t["offense"] + t["defense"] if p.get("slug")}
+            assert not any(name_of[ps]["position"] in ("CB", "S") for _, ps, _ in flat), "defensive backs are not moved on tackles"
+            s0, ps0, f0 = flat[0]
+            moved = form.with_player_form(teams[s0], {ps0: f0})
+            p0 = name_of[ps0]; p1 = next(p for p in moved["offense"] + moved["defense"] if p.get("slug") == ps0)
+            key = form.PLAYER_ATTRS[form.GROUP[p0["position"]]][0]
+            assert p1[key] == max(1, min(99, int(round(p0[key] + f0["shift"])))), (p0[key], p1[key], f0["shift"])
+            print(f"player form: {len(flat)} players moved, e.g. {p0['name']} ({p0['position']}) {f0['shift']:+.1f}: {f0['note']}")
+            assert st["player_form"] is not None
     print("form ok")
