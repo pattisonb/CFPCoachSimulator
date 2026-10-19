@@ -499,6 +499,8 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
         "mode": mode, "seed": seed, "current_week": current, "phase": "regular", "done": False,
         "games": games, "polls": {}, "scores": {}, "champions": {}, "runners_up": {}, "bracket": None, "playoff": {}, "my_boxes": {},
         "settings": {"god_mode": False, "morale": True},
+        # remaining mode: each team's in-season form from the real results so far (form.py), applied in every sim
+        "form": _form_table(teams, current) if mode == "remaining" else {},
         "rng_state": rng.randrange(1 << 30),
     }
     real = _real_polls_2026(teams) if mode == "remaining" else {}
@@ -886,9 +888,10 @@ def _with_injuries(team: dict, injured: list) -> dict:
 
 def _sim_one(args: tuple) -> dict:
     from engine.game import simulate_game
-    event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out, edits, morale = args
-    home_team = _with_injuries(apply_depth(with_morale(with_edits(_TEAMS[home], edits[0]), morale[0]), depth[0]), home_out)
-    away_team = _with_injuries(apply_depth(with_morale(with_edits(_TEAMS[away], edits[1]), morale[1]), depth[1]), away_out)
+    event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out, edits, morale, form = args
+    from form import with_form
+    home_team = _with_injuries(apply_depth(with_morale(with_edits(with_form(_TEAMS[home], form[0]), edits[0]), morale[0]), depth[0]), home_out)
+    away_team = _with_injuries(apply_depth(with_morale(with_edits(with_form(_TEAMS[away], form[1]), edits[1]), morale[1]), depth[1]), away_out)
     r = simulate_game(home_team, away_team, None, seed, venue="neutral" if neutral else "home", momentum=morale[2])
     out = {"event_id": event_id, "home_score": r["home"]["score"], "away_score": r["away"]["score"], "overtime": r["overtime_periods"],
            "stats": {"home": _compact_side(r["home"], r["drives"], "home"), "away": _compact_side(r["away"], r["drives"], "away")},
@@ -933,6 +936,22 @@ def _week_seeds(state: dict, week: int) -> dict[str, int]:
     return seeds[str(week)]
 
 
+def _form_table(teams: dict, through_week: int) -> dict:
+    """Form fit from the real 2026 results through `through_week` (empty without results)."""
+    try:
+        from form import load_form
+        return load_form(teams, through_week)
+    except Exception as exc:  # noqa: BLE001
+        print(f"form: skipped ({exc})")
+        return {}
+
+
+def team_form_shift(state: dict, slug: str) -> float:
+    """The rating shift a team carries into its sims from its in-season form (remaining mode)."""
+    f = (state.get("form") or {}).get(slug)
+    return float(f["rating"]) if f else 0.0
+
+
 def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, report: Optional[Reporter] = None,
                stage: str = "Simulating") -> None:
     jobs = []
@@ -948,7 +967,8 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
                      [(i["name"], i["position"]) for i in injuries.get(g["home"], {}).values()],
                      [(i["name"], i["position"]) for i in injuries.get(g["away"], {}).values()],
                      (player_edits(state, g["home"]), player_edits(state, g["away"])),
-                     (morale_payload(state, g["home"]), morale_payload(state, g["away"]), morale_on(state))))
+                     (morale_payload(state, g["home"]), morale_payload(state, g["away"]), morale_on(state)),
+                     (team_form_shift(state, g["home"]), team_form_shift(state, g["away"]))))
     before = rank_map(state, state["current_week"]) if morale_on(state) else {}
     if not jobs:
         return
@@ -2054,8 +2074,9 @@ _preview_cache: dict = {}
 def _preview_team(state: dict, slug: str) -> dict:
     """The team as the next sim will see it: god-mode edits where that exists, the depth
     chart and the injury list."""
+    from form import with_form
     td = globals().get("team_data")
-    base = td(state, slug) if td else load_teams()[slug]
+    base = with_form(td(state, slug) if td else load_teams()[slug], team_form_shift(state, slug))
     out = [(i["name"], i["position"]) for i in (state.get("injuries") or {}).get(slug, {}).values()]
     return _with_injuries(apply_depth(base, (state.get("depth") or {}).get(slug)), out)
 
@@ -2210,6 +2231,7 @@ def summary(state: dict) -> dict:
         "phase": state["phase"], "done": state["done"], "champion": state.get("champion"),
         "champion_name": teams[state["champion"]]["name"] if state.get("champion") else None,
         "record": rec, "schedule": schedule, "weeks": weeks, "my_rank": current_rank(state),
+        "form": (state.get("form") or {}).get(state["team"]),
         "week_labels": {**{w: f"Week {w}" for w in range(1, LAST_REGULAR_WEEK + 1)}, CCG_WEEK: "Championship week",
                         SELECTION_WEEK: "Selection", **BOWL_WEEK_LABELS},
         "polls": state["polls"], "champions": state["champions"], "bracket": state["bracket"], "playoff": state["playoff"],

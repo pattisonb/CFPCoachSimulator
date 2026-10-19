@@ -886,6 +886,33 @@ Weekly refresh, in order: `python tools/fetch_results.py`, `python tools/fetch_b
 footballdb.com (season team stat tables, past seasons) is reachable from Python as well
 and is a good cross-check for the team-level numbers; NCAA.com stays the primary source.
 
+## In-season form
+
+The preseason ratings never moved during a season, so by midseason the sim was still
+rating teams the way the rosters looked in August while the market had six weeks of
+results priced in. On the week 7 forward test the market beat the sim 12-5 when the two
+disagreed on a winner, and the gap sat in G5 games, where the roster ratings are
+thinnest. `form.py` fits one number per team, in points of margin, by ridge least
+squares on the real 2026 margins (`data/season_games.json`): margin = home field +
+preseason gap + form of the home team minus form of the away team. Margins are capped at
+28 so a blowout does not swing a team, and the ridge pulls toward zero, so after n games
+a team keeps n / (n + 4) of what the results say. The sim carries the form as a shift of
+every player's ratings (points divided by 1.36, the sim's margin per rating point, capped
+at 12). `python form.py [through_week]` prints the table.
+
+The forward test fits the form from every result before the predicted week and sims with
+the shifted ratings (`--no-form` for preseason ratings only; the frozen file records each
+side's form). A "rest of season" season fits it once, from the results through its
+current week, and applies it in every sim and in the This week preview; a full season
+from the preseason carries none. `python tests/test_form.py` checks the fit and the shift.
+
+Back-test on week 7 (59 games, 50 sims each, the same engine and seeds, form fitted on
+weeks 1-6 only): margin MAE 11.8 to 11.2, RMSE 16.1 to 14.2, slope of actual on
+predicted 0.47 to 0.89, correlation 0.21 to 0.46, and the sim's margins sit 4.5 points
+from the closing line instead of 7.5. Straight up (66.1%) and against the spread
+(36-21-2 against 37-20-2) did not move that week: the form fixes how big the margins are
+far more than which side they fall on.
+
 ## Forward test: picks frozen before kickoff
 
 Everything above is in-sample: the ratings and tendencies already reflect the games they

@@ -52,6 +52,7 @@ from pathlib import Path
 
 from teamnames import build_matcher, match
 from fetch_lines import lines_for_dates   # the betting board (scoresandodds.com)
+from form import form_shift, load_form, with_form   # in-season form from the real results
 
 ROOT = Path(__file__).resolve().parents[1]
 GAMES_FILE = ROOT / "data" / "season_games.json"
@@ -194,9 +195,9 @@ def _sim_game(args: tuple) -> dict:
     return res
 
 
-def simulate_week(games: list[dict], sims: int) -> None:
+def simulate_week(games: list[dict], sims: int, teams_path: Path = TEAMS_FILE) -> None:
     jobs = [(i, g["home_slug"], g["away_slug"], sims, "neutral" if g.get("neutral") else "home") for i, g in enumerate(games)]
-    with Pool(initializer=_init, initargs=(str(TEAMS_FILE),)) as pool:
+    with Pool(initializer=_init, initargs=(str(teams_path),)) as pool:
         done = 0
         for res in pool.imap_unordered(_sim_game, jobs, chunksize=2):
             games[res.pop("idx")].update(res)
@@ -240,7 +241,7 @@ def ats(pred_margin: float, actual_margin: int, spread_home: float) -> str:
     return "win" if (cover > 0) == sim_home else "loss"
 
 
-def predict(week: int | None, out: Path | None, sims: int, fetch: bool) -> Path:
+def predict(week: int | None, out: Path | None, sims: int, fetch: bool, use_form: bool = True) -> Path:
     if fetch:
         run_script("fetch_results.py")
     season = load_season()
@@ -262,7 +263,20 @@ def predict(week: int | None, out: Path | None, sims: int, fetch: bool) -> Path:
     if not games:
         sys.exit("nothing to predict")
 
-    simulate_week(games, sims)
+    # in-season form from every result before this week, applied to the ratings the sims use
+    table = load_form(teams, through_week=week - 1) if use_form else {}
+    if table:
+        adjusted = {slug: with_form(t, form_shift(table.get(slug))) for slug, t in teams.items()}
+        tmp = Path(tempfile.mkdtemp(prefix="forward_form_")) / "teams.json"
+        tmp.write_text(json.dumps({"teams": adjusted}), encoding="utf-8")
+        shown = sum(1 for g in games for sl in (g["home_slug"], g["away_slug"]) if abs(form_shift(table.get(sl))) >= 0.5)
+        print(f"  in-season form through week {week - 1}: {len(table)} teams fitted, {shown} of {2 * len(games)} sides shifted")
+        try:
+            simulate_week(games, sims, tmp)
+        finally:
+            shutil.rmtree(tmp.parent, ignore_errors=True)
+    else:
+        simulate_week(games, sims)
     lines = board_lines(games, teams)
     print(f"  betting lines found for {sum(1 for g in games if (g['home_slug'], g['away_slug']) in lines)} of {len(games)} games")
     payload = {
@@ -270,15 +284,16 @@ def predict(week: int | None, out: Path | None, sims: int, fetch: bool) -> Path:
         "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "commit": git_commit(),
         "sims_per_game": sims,
+        "form_through": week - 1 if table else None,
         "games": [],
     }
     for g in games:
         payload["games"].append({
             "contest_id": g["contest_id"], "date": g["date"], "neutral": bool(g.get("neutral")),
             "home": {"slug": g["home_slug"], "name": teams[g["home_slug"]]["name"], "ncaa_name": g["home_name"],
-                     "rank": g.get("home_rank"), **g["home"]},
+                     "rank": g.get("home_rank"), "form": table.get(g["home_slug"]), **g["home"]},
             "away": {"slug": g["away_slug"], "name": teams[g["away_slug"]]["name"], "ncaa_name": g["away_name"],
-                     "rank": g.get("away_rank"), **g["away"]},
+                     "rank": g.get("away_rank"), "form": table.get(g["away_slug"]), **g["away"]},
             "pred_margin": g["pred_margin"], "pred_sd": g["pred_sd"],
             "home_win_prob": g["home_win_prob"], "pred_total": g["pred_total"],
             "line": line_entry(lines.get((g["home_slug"], g["away_slug"]))),
@@ -303,12 +318,14 @@ def pick_text(g: dict) -> str:
 
 def print_picks(payload: dict) -> None:
     print(f"\nWeek {payload['week']} picks ({payload['sims_per_game']} sims per game)")
-    print(f"{'date':<11}{'away':<22}{'home':<22}{'pick':<28}{'sd':>5}{'home win':>10}{'total':>7}  QB1 (pass yds) away / home")
+    print(f"{'date':<11}{'away':<22}{'home':<22}{'pick':<28}{'sd':>5}{'home win':>10}{'total':>7}{'form a/h':>13}  QB1 (pass yds) away / home")
     for g in payload["games"]:
         sep = "vs" if g["neutral"] else "at"
         qb = f"{g['away']['qb1']['name']} {g['away']['qb1']['yards']:.0f} / {g['home']['qb1']['name']} {g['home']['qb1']['yards']:.0f}"
+        fa, fh = (g["away"].get("form") or {}).get("points"), (g["home"].get("form") or {}).get("points")
+        form_txt = f"{fa:+.0f}/{fh:+.0f}" if fa is not None and fh is not None else "-"
         print(f"{g['date']:<11}{g['away']['name'][:21]:<22}{(sep + ' ' + g['home']['name'])[:21]:<22}{pick_text(g):<28}"
-              f"{g['pred_sd']:>5.1f}{100 * g['home_win_prob']:>9.0f}%{g['pred_total']:>7.1f}  {qb}")
+              f"{g['pred_sd']:>5.1f}{100 * g['home_win_prob']:>9.0f}%{g['pred_total']:>7.1f}{form_txt:>13}  {qb}")
 
 
 # ----- score -----------------------------------------------------------------
@@ -558,7 +575,7 @@ def score(week: int, file: Path | None, fetch: bool) -> Path:
 
 # ----- dry run ---------------------------------------------------------------
 
-def dryrun(week: int, sims: int, fetch: bool) -> None:
+def dryrun(week: int, sims: int, fetch: bool, use_form: bool = True) -> None:
     """Prove the scoring path on a week already played: predict into a temp folder, score, delete.
 
     This is in-sample (the ratings already reflect these games), so the numbers are a
@@ -567,7 +584,7 @@ def dryrun(week: int, sims: int, fetch: bool) -> None:
     try:
         out = tmp / f"week{week:02d}.json"
         print(f"dry run: predicting week {week} into {out}")
-        predict(week, out, sims, fetch)
+        predict(week, out, sims, fetch, use_form)
         print("\ndry run: scoring")
         score(week, out, fetch=False)
     finally:
@@ -589,6 +606,7 @@ def main() -> None:
     p.add_argument("--week", type=int, help="predict this week instead (includes played games)")
     p.add_argument("--out", type=Path, help="write here instead of data/predictions/weekNN.json")
     p.add_argument("--no-fetch", action="store_true", help="do not run fetch_results.py first")
+    p.add_argument("--no-form", action="store_true", help="preseason ratings only: no in-season form adjustment")
     s = sub.add_parser("score", help="score a frozen week against the real results")
     s.add_argument("week", type=int)
     s.add_argument("--file", type=Path, help="score this prediction file instead")
@@ -597,13 +615,14 @@ def main() -> None:
     d.add_argument("week", type=int)
     d.add_argument("--sims", type=int, default=DEFAULT_SIMS)
     d.add_argument("--no-fetch", action="store_true")
+    d.add_argument("--no-form", action="store_true", help="preseason ratings only: no in-season form adjustment")
     a = ap.parse_args()
     if a.mode == "predict":
-        predict(a.week, a.out, a.sims, fetch=not a.no_fetch)
+        predict(a.week, a.out, a.sims, fetch=not a.no_fetch, use_form=not a.no_form)
     elif a.mode == "score":
         score(a.week, a.file, fetch=not a.no_fetch)
     else:
-        dryrun(a.week, a.sims, fetch=not a.no_fetch)
+        dryrun(a.week, a.sims, fetch=not a.no_fetch, use_form=not a.no_form)
 
 
 if __name__ == "__main__":
