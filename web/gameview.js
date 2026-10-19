@@ -113,7 +113,8 @@ window.CFP = (function () {
 
     const meta = $(ids.meta);
     meta.innerHTML = "";
-    const form = g.form && (g.form.home || g.form.away) ? `form on the day: ${g.home.name} ${g.form.home > 0 ? "+" : ""}${g.form.home}, ${g.away.name} ${g.form.away > 0 ? "+" : ""}${g.form.away}` : null;
+    const signed = (x) => `${x > 0 ? "+" : ""}${Number(x).toFixed(1)}`;   // one decimal for both teams
+    const form = g.form && (g.form.home || g.form.away) ? `form on the day: ${g.home.name} ${signed(g.form.home)}, ${g.away.name} ${signed(g.form.away)}` : null;
     const bits = [
       `${g[g.received_first].name} received the opening kickoff`,
       `${g.drives.length} drives`,

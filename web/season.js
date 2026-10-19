@@ -57,6 +57,35 @@
     $("#btn-clear-seasons").hidden = !data.seasons.length;
   }
 
+  // An API error as a sentence: FastAPI sends {"detail": "..."} after the status code.
+  function errText(err) {
+    const m = /^(\d{3}) (.*)$/s.exec(err.message || "");
+    if (!m) return err.message;
+    try { return JSON.parse(m[2]).detail || m[2]; } catch (e) { return m[2] || m[1]; }
+  }
+  const isGone = (err) => /^404\b/.test(err.message || "");
+
+  // The server no longer has this season: the free host forgets saved seasons when it
+  // restarts. Close it and say so instead of leaving the page waiting.
+  function seasonGone() {
+    closeSeason();
+    loadSeasons().catch(() => {});
+    toast("This season is no longer on the server. It forgets saved seasons when it restarts, so start a new one.", 9000);
+  }
+
+  // A sim request failed: put the page back the way it was, with the season reloaded so the
+  // buttons and week strip match the server again.
+  async function simFailed(err, what) {
+    clearTimeout(state.timer);
+    state.gamedayWanted = false;
+    hideSimOverlay();
+    setBusy(false);
+    if (isGone(err)) return seasonGone();
+    toast(`${what}: ${errText(err)}`, 5000);
+    try { showSeason(await api(`/api/season/${state.season.id}`)); }
+    catch (e) { if (isGone(e)) seasonGone(); }
+  }
+
   function closeSeason() {
     clearTimeout(state.timer);
     state.season = null;
@@ -119,7 +148,10 @@
       if (s.mode !== "real") history.replaceState(null, "", `/season?id=${s.id}`);
       showSeason(s);
       if (s.mode !== "real") loadSeasons();
-    } catch (err) { toast(`Could not open the season: ${err.message}`, 4000); }
+    } catch (err) {
+      if (isGone(err) && !REAL) { closeSeason(); loadSeasons().catch(() => {}); toast("That season is no longer on the server. It forgets saved seasons when it restarts.", 8000); }
+      else toast(`Could not open the season: ${errText(err)}`, 4000);
+    }
   }
 
   // ----- the real 2026 season (/real) ------------------------------------------------
@@ -232,7 +264,7 @@
     try {
       await api(`/api/season/${s.id}/gameday`, { method: "POST" });
       poll();
-    } catch (err) { toast(`Could not play the game: ${err.message}`, 4000); state.gamedayWanted = false; setBusy(false); }
+    } catch (err) { simFailed(err, "Could not play the game"); }
   }
 
   async function advance(to) {
@@ -250,7 +282,7 @@
     try {
       await api(`/api/season/${s.id}/advance`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(to ? { to } : {}) });
       poll();
-    } catch (err) { toast(`Could not advance: ${err.message}`, 4000); setBusy(false); }
+    } catch (err) { simFailed(err, "Could not advance"); }
   }
 
   function poll() {
@@ -275,7 +307,15 @@
           setBusy(false);
           if (gdEvent) openGameDay(gdEvent, mine);
         }
-      } catch (err) { toast(err.message, 4000); setBusy(false); }
+        state.pollMisses = 0;
+      } catch (err) {
+        // a slow or dropped check (a busy server, a phone switching networks) is retried;
+        // only a missing season or five misses in a row end the wait
+        state.pollMisses = (state.pollMisses || 0) + 1;
+        if (!isGone(err) && state.pollMisses < 5) { poll(); return; }
+        state.pollMisses = 0;
+        simFailed(err, "Lost track of the sim");
+      }
     }, 500);
   }
 
@@ -464,6 +504,8 @@
     if (!s.done && state.tab === "summary") state.tab = "schedule";
     if (opening) { depthState.team = null; depthState.data = null; }
     if (opening) applyTeamTheme(s.team);
+    // the team picker (for a new season) starts on the open season's team
+    if (opening && s.mode !== "real" && $("#pick-team").querySelector(`option[value="${s.team}"]`)) $("#pick-team").value = s.team;
     state.standings = null;
     if (opening && sidebarPreferred() !== "1") setSidebar(false, false);
     const upNext = s.done ? s.current_week : Math.min(s.current_week + 1, 20);
@@ -557,6 +599,10 @@
     else btn.textContent = "Advance to Next Week";
     btn.title = mineDone ? "Your game is in the books: this plays the rest of the week" : "Plays every game this week";
     // Game day plays only your game this week (hidden on a bye, once it is played, and after the season)
+    // after the title game there is nothing left to sim; past selection, "Sim to selection" is moot
+    btn.hidden = !!s.done;
+    $("#btn-to-end").hidden = !!s.done;
+    $("#btn-to-selection").hidden = !!s.done || s.current_week >= 15;
     const gd = $("#btn-gameday");
     gd.hidden = s.done || !next || mineDone;
     if (next) gd.textContent = `Game day · ${next.venue === "away" ? "at" : "vs"} ${next.opponent_name}`;

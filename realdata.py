@@ -193,7 +193,7 @@ def build(follow: str = DEFAULT_FOLLOW) -> dict:
     teams = season.load_teams()
     if follow not in teams or teams[follow]["fictional"]:
         follow = DEFAULT_FOLLOW
-    st = season.new_season(follow, "remaining")
+    st = season.new_season(follow, "remaining", fill_open_dates=False)
     st.update(id=REAL_ID, mode="real", settings={"god_mode": False, "morale": False}, season_stats={}, my_boxes={},
               real_built_at=datetime.now().isoformat(timespec="seconds"))
     lookup = build_matcher(teams)

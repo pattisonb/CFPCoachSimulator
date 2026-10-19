@@ -336,10 +336,12 @@ class Pool:
         return p["games"] >= share * p["team_games"] and p["team_games"] >= 3
 
     def by_group(self, group: str, **cond) -> list[dict]:
+        # the players with a score in the group who played enough, listed once per group
+        index = self.__dict__.setdefault("_eligible", {})
+        if group not in index:
+            index[group] = [p for p in self.players if group in p["z"] and self.played_enough(p)]
         out = []
-        for p in self.players:
-            if group not in p["z"] or not self.played_enough(p):
-                continue
+        for p in index[group]:
             if cond.get("conference") and p["conference"] != cond["conference"]:
                 continue
             if cond.get("roles") and p["role"] not in cond["roles"]:

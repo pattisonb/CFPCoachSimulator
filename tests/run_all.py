@@ -1,6 +1,7 @@
 """Run every test in this folder, each as its own process (the season engine uses
 multiprocessing, which on Windows cannot start workers from a piped script), and print a
 pass/fail line per test: `python tests/run_all.py [name ...]`."""
+import os
 import pathlib
 import subprocess
 import sys
@@ -16,7 +17,9 @@ if __name__ == "__main__":
     failed = []
     for t in tests:
         t0 = time.perf_counter()
-        r = subprocess.run([sys.executable, str(t)], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        # UTF-8 output: team and player names such as Hawaiʻi do not fit the Windows console code page
+        r = subprocess.run([sys.executable, str(t)], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                           env={**os.environ, "PYTHONIOENCODING": "utf-8"})
         dt = time.perf_counter() - t0
         ok = r.returncode == 0
         print(f"{'PASS' if ok else 'FAIL'}  {t.name:<26} {dt:6.1f}s  {(r.stdout.strip().splitlines() or [''])[-1][:90]}")

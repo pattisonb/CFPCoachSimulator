@@ -355,6 +355,21 @@ def _no_real(state: dict) -> None:
         raise HTTPException(403, "the real season is read-only")
 
 
+def _warm_preview(state: dict) -> None:
+    """Start the This week card's simulations for the next game in the background, so the
+    card is ready, or nearly, when the page asks for it (the page's request waits for this
+    one instead of simulating the game again)."""
+    if state.get("mode") == "real" or state.get("done"):
+        return
+
+    def run() -> None:
+        try:
+            season.game_preview(state, state["team"])
+        except Exception:  # noqa: BLE001 - a failed warm-up only means the page's request computes it
+            pass
+    threading.Thread(target=run, daemon=True).start()
+
+
 def _run_advance(job: dict, target: int) -> None:
     def progress(done: int, total: int) -> None:
         job["done"], job["total"] = done, total
@@ -374,6 +389,7 @@ def _run_advance(job: dict, target: int) -> None:
             season.save_season(job["state"])
         job["paused"] = bool(job.get("stop")) and job["state"]["current_week"] < target and not job["state"]["done"]
         job["stop"] = False
+        _warm_preview(job["state"])
         job["status"] = "idle"
         job["stage"] = None
     except Exception as exc:  # noqa: BLE001
@@ -455,7 +471,7 @@ def list_seasons() -> dict:
                 continue
             if "current_week" not in st:
                 continue
-            rec = season._records(st)[st["team"]]
+            rec = season._records(st, include_playoff=True)[st["team"]]
             card = {"id": st["id"], "team": st["team"], "team_name": st["team_name"], "mode": st["mode"],
                     "created_at": st["created_at"], "current_week": st["current_week"], "done": st["done"],
                     "wins": rec["wins"], "losses": rec["losses"], "champion_name": _teams.get(st.get("champion") or "", {}).get("name")}
@@ -518,10 +534,18 @@ def season_status(season_id: str, since: Optional[int] = None) -> dict:
     job = _season_jobs[season_id]
     out = {k: job.get(k) for k in ("id", "status", "done", "total", "error", "stage", "week", "games_done", "games_total", "paused", "gameday_event")}
     out["current_week"] = state["current_week"]
-    rec = season._records(state)[state["team"]]
-    out["record"] = {"wins": rec["wins"], "losses": rec["losses"], "conf_wins": rec["conf_wins"], "conf_losses": rec["conf_losses"]}
+    # The sim thread adds games and results to this state while we read it; if the read
+    # collides with a change, answer with the last good record and results instead of failing.
+    try:
+        rec = season._records(state, include_playoff=True)[state["team"]]
+        record = {"wins": rec["wins"], "losses": rec["losses"], "conf_wins": rec["conf_wins"], "conf_losses": rec["conf_losses"]}
+        results = season.my_results(state, since) if since is not None else None
+        job["last_status"] = (record, results)
+    except RuntimeError:
+        record, results = job.get("last_status") or ({"wins": 0, "losses": 0, "conf_wins": 0, "conf_losses": 0}, [])
+    out["record"] = record
     if since is not None:
-        out["results"] = season.my_results(state, since)
+        out["results"] = results or []
     return out
 
 

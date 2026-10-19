@@ -321,6 +321,28 @@ in place of the conferences' draw. Once a step separates some of the tied teams 
 rest, each smaller group restarts at head-to-head, as the written procedures do. The Sun
 Belt still plays divisions, so its title game is East winner against West winner.
 
+### The schedule: real games, two clean-ups
+
+A new season takes every real 2026 game from `data/schedules.json` and places it in a
+week by its kickoff date (weeks run Tuesday to Monday from Aug 25). Two things in the
+real data need help, and `season.new_season` handles both:
+
+- **No team plays twice in one week.** A few games land in the same sim week as another
+  game of the same team: MAC Tuesday nights, and games whose kickoff time is not set
+  yet (stored at midnight Eastern, so a Tuesday game reads as Monday night of the week
+  before). `_spread_double_bookings` moves the later unplayed game to the nearest week
+  where both teams are free.
+- **Unannounced games are filled in.** The Pac-12's Nov. 28 "flex" games name their
+  opponents about a week ahead, so Boise State, Oregon State, Texas State and San Diego
+  State had 11 games. `_fill_open_dates` pairs every FBS team with fewer than 12 games,
+  trying every pairing and keeping the one with the oldest rematches (then conference
+  mates together), in the latest week both teams have open. The game is titled
+  "Pac-12 flex game". The real 2026 page skips this step and shows only real games.
+
+Records shown anywhere on the page (header, standings, schedules, summary, the saved
+season list) count playoff games. Bowl selection, the committee and the weekly polls
+work on the record before the playoff.
+
 ### Speed
 
 A game is pure Python, about 100 ms on a desktop core and a fifth faster than before
@@ -349,6 +371,18 @@ cost. On that tier a week still takes 10 to 20 seconds and the service sleeps af
 idle minutes, so a full season is a few minutes there; the fix for that is a paid Render
 instance with a dedicated CPU or running the server locally (`python server.py`, LAN
 access from a phone as described above).
+
+The This week card simulates your next game 20 times. Those sims run in parallel on the
+worker pool (about 1 second instead of 4 on a desktop), and the server starts them in
+the background the moment a week finishes, so the card is ready or nearly ready when the
+page asks; a second request for the same game waits for the first instead of simulating
+it again. The Awards tab's live race is cached until more games are played (or god mode
+edits a player), and the award pools list each position group's eligible players once
+instead of scanning the whole league for every award (2.5 seconds to 1 on first load).
+If a progress check collides with the sim thread changing the season, it answers with
+the last good record; the page retries a missed check up to five times, and if the
+server no longer has the season (the free host forgets saved seasons when it restarts)
+it closes the season and says so instead of waiting forever.
 
 ### Team colours
 
