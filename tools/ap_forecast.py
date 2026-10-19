@@ -4,7 +4,7 @@ The poll model in polls.py moves each team's "poll score" by its result and rank
 scores. This tool feeds it last week's real AP poll and this week's real results and
 freezes two forecasts in data/predictions/ap_weekNN.json:
 
-  model     the game's own poll for the week (polls.next_poll from last week's real poll,
+  model     the game's own poll for the week (its simulated voters' ballots, seeded from last week's real poll,
             its vote points and this week's results; see tools/backtest_polls.py)
   ballots   the same rules applied to every AP voter's own ballot from last week, added up
             (tools/backtest_ballots.py; ballots from tools/fetch_ballots.py). About 2% closer
@@ -105,7 +105,7 @@ def forecast(no_fetch: bool) -> dict:
         return [{"slug": e["team"], "name": e["name"], "rank": e["rank"], "record": e.get("record")} for e in entries[:25]]
 
     forecasts_ballots = ballot_listing(week, teams)
-    # the game's own poll for the week: polls.next_poll from last week's real poll and its vote points
+    # the game's own poll for the week: its simulated voters, seeded from last week's real poll and its vote points
     return {"week": week, "made_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "commit": git_commit(),
             "starts_from": f"the real AP poll after week {week - 1}",
             "forecasts": {"model": listing(st_game["polls"][str(week)]["ap"]),

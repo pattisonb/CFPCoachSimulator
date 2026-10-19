@@ -339,12 +339,24 @@ def _real_ap_votes_2026(week: int, teams: dict) -> Optional[tuple[list[str], lis
     return order[:25], rest[:AP_OTHERS], votes
 
 
-def _poll_votes_from_key(state: dict, order: list[str], key: dict[str, float], tiers: dict[str, str], week: int) -> dict[str, dict]:
-    """Ballots for a poll made by polls.next_poll: each voter ranks the teams by their share
-    plus his own noise (a share of 0.04 is one spot, the voter noise about 1.75 spots)."""
-    ap_params, _ = polls.load_params()
-    scores = {t: key.get(t, 0.0) * 400.0 for t in order}
-    return polls.ballots(order, scores, tiers, {**ap_params, "g5_discount": 0.0}, seed=(state.get("seed") or 0) * 1000 + week)
+def _ballot_poll(state: dict, prev_full: list[dict], games: list[dict], rec_t: dict, tiers: dict, week: int,
+                 pinned: tuple = ()) -> tuple[list[str], list[str], dict[str, dict]]:
+    """The AP poll from the voters' ballots (polls.next_ballots): each simulated voter moves
+    their own ballot with the week's results, and the poll is the ballots added up, so the
+    points and first-place votes are the voters' own. The ballots are kept in the season;
+    the first simulated week seeds them from the last poll's vote points. `pinned` (the
+    champion, then the runner-up) go first and second on every ballot for the final poll."""
+    ballots = state.get("ap_ballots") or polls.seed_ballots(prev_full, seed=(state.get("seed") or 0) * 1000 + week)
+    ballots, _, _ = polls.next_ballots(ballots, prev_full, games, rec_t, tiers, polls.load_ballot_params())
+    top = [t for t in pinned if t]
+    if top:
+        ballots = [(top + [t for t in b if t not in top])[:25] for b in ballots]
+    state["ap_ballots"] = ballots
+    points, first = polls.tally(ballots)
+    ranked = sorted((t for t in points if tiers.get(t) != "FCS"), key=lambda t: (-points[t], -first.get(t, 0), t))
+    order, others = ranked[:25], ranked[25:25 + AP_OTHERS]
+    votes = {t: {"points": points.get(t, 0), "first_place": first.get(t, 0)} for t in order + others}
+    return order, others, votes
 
 
 # ----- season state --------------------------------------------------------
@@ -794,15 +806,7 @@ def _final_ap_poll(state: dict, teams: dict) -> None:
     state["scores"] = scores
     prev_full = prev + state["polls"][str(last_week)].get("ap_others", [])
     if any(e.get("points") for e in prev_full):
-        nxt, key = polls.next_poll(prev_full, post_games, rec_t, tiers, polls.load_next_params(), n=25 + AP_OTHERS + 2)
-        if champion:
-            key[champion] = max(key.values()) + 0.2
-        if runner_up:
-            key[runner_up] = max(key.get(runner_up, 0.0), max(v for t, v in key.items() if t != champion) + 0.1)
-        full = sorted((t for t in key if tiers.get(t) != "FCS"), key=lambda t: -key[t])
-        order = [t for t in (champion, runner_up) if t] + [t for t in full if t not in (champion, runner_up)]
-        order, others = order[:25], order[25:25 + AP_OTHERS]
-        votes = _poll_votes_from_key(state, order + others, key, tiers, FINAL_WEEK)
+        order, others, votes = _ballot_poll(state, prev_full, post_games, rec_t, tiers, FINAL_WEEK, pinned=(champion, runner_up))
     else:
         full = polls.rank(scores, rec_t, tiers, ap_params, n=25 + AP_OTHERS)
         order = [t for t in (champion, runner_up) if t] + [t for t in full if t not in (champion, runner_up)]
@@ -831,10 +835,9 @@ def _update_polls_after_week(state: dict, teams: dict, week: int, real_ap: Optio
     real = _real_ap_votes_2026(week, teams) if real_ap else None
     if real:
         order, others, votes = real
+        state["ap_ballots"] = None         # the next simulated week seeds its voters from this real poll
     elif any(e.get("points") for e in prev_full):
-        nxt, key = polls.next_poll(prev_full, week_games, rec_t, tiers, polls.load_next_params(), n=25 + AP_OTHERS)
-        order, others = nxt[:25], nxt[25:]
-        votes = _poll_votes_from_key(state, order + others, key, tiers, week)
+        order, others, votes = _ballot_poll(state, prev_full, week_games, rec_t, tiers, week)
     else:                                  # an old saved season without vote points
         full = polls.rank(state["scores"], rec_t, tiers, ap_params, n=25 + AP_OTHERS)
         order = real_ap[:25] if real_ap else full[:25]

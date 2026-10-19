@@ -521,6 +521,32 @@ points at each rank matches real polls within a point from No. 1 to No. 15 (No. 
 20.8% in the game, 23.2% for real), and No. 1 takes 82% of first-place votes in the
 game against 87% for real.
 
+**Season mode runs on the ballots.** A simulated season has no real poll to lean on after
+its start, so the question that matters is how each model holds up when it rolls its own
+polls forward for a whole season. Replaying 2014-2025 from each season's first ballots
+through the real results, never resetting to the real poll (159 weeks):
+
+| Weeks since the last real poll | Vote-share model | Ballot model |
+|---|---|---|
+| 1 to 4 | 2.19 | 2.27 |
+| 5 to 8 | 3.46 | 3.24 |
+| 9 to 12 | 3.81 | 3.32 |
+| 13 and later | 4.00 | 2.95 |
+| All weeks | 3.23 | 2.94 |
+
+Each voter keeps their own view, so the poll does not drift the way a single consensus
+does (the ballot model wins 9 of the 12 seasons). The game cannot ship the real ballots,
+so it seeds its voters from the last poll's vote points (`polls.seed_ballots`: each voter
+ranks by the team's share of the vote plus their own noise, 0.06 of a share), which
+keeps most of the gain (2.997 against 2.942 from the real ballots). From then on
+`season._ballot_poll` moves every voter's ballot each week (`polls.next_ballots`, the
+same step the backtest runs), keeps the ballots in the season, and publishes the ballots
+added up: the points and first-place votes are the voters' own. In "rest of season" mode
+the voters are seeded from the last real poll. The final poll runs the bowl and playoff
+results through the same ballots with the champion first and the runner-up second on
+every ballot. One difference from real polls: late in a simulated season the voters
+agree more, so 3 to 5 teams receive votes outside the Top 25 where real polls list 10 to 15.
+
 ### The bracket rules (2026)
 
 From NCAA.com's "How the College Football Playoff works" (Aug 27, 2026) and the CFP

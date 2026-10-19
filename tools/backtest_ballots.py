@@ -159,59 +159,10 @@ def ballots_by_week(season: str, p: dict) -> dict[int, list[list[str]]]:
 
 def next_from_ballots(ballots: list[list[str]], prev: list[dict], games: list[dict], records: dict, tiers: dict,
                       params: dict, n: int = 25) -> list[str]:
-    """Every voter's next ballot from their last one, added up into the poll."""
-    p = {**polls.NEXT_PARAMS, **params}
-    share, _ = polls._share_table(prev)                     # the consensus: everyone's share of the vote
-    off = p.get("off_ballot", 0.5)
-    # one week's game facts, computed once
-    facts = []
-    played = set()
-    for g in games:
-        if g["home_score"] == g["away_score"]:
-            continue
-        for side, opp in (("home", "away"), ("away", "home")):
-            t, o = g[side], g[opp]
-            played.add(t)
-            if tiers.get(t) == "FCS":
-                continue
-            ts, os_ = g[f"{side}_score"], g[f"{opp}_score"]
-            facts.append((t, o, ts > os_, min(abs(ts - os_), 21) / 21.0, side == "home" and not g.get("neutral"), bool(g.get("neutral"))))
-    winners_over = [(g["home"], g["away"]) if g["home_score"] > g["away_score"] else (g["away"], g["home"])
-                    for g in games if g["home_score"] != g["away_score"]]
-    points: Counter = Counter()
-    for ballot in ballots:
-        mine = {t: (25 - i) / 25.0 for i, t in enumerate(ballot[:25])}
-        # off the ballot: the consensus share, scaled down (the voter left them off for a reason)
-        val = {t: mine.get(t, share.get(t, 0.0) * off) for t in set(share) | set(mine)}
-        for t, o, won, m, at_home, neutral in facts:
-            if t not in val:
-                w, l = records.get(t, (0, 0))
-                entry = p["new_entry"] * max(0, w - 2 * l)
-                val[t] = entry * (p["g5_entry"] if tiers.get(t) == "G5" else 1.0) - p["new_entry"]
-            ov = mine.get(o, share.get(o, 0.0) * off)
-            own = mine.get(t, share.get(t, 0.0) * off)
-            if won:
-                gain = p["win_base"] + p["win_opp"] * ov + p["win_margin"] * m + (0 if at_home or neutral else p["win_road"])
-                if tiers.get(o) == "FCS":
-                    gain *= p["fcs_win"]
-                val[t] += gain
-            else:
-                bad = 1.0 if tiers.get(o) == "FCS" else (1.0 - min(1.0, ov))
-                val[t] -= p["loss_base"] + p["loss_bad"] * bad + p["loss_margin"] * m + (p["loss_home"] if at_home else 0.0) + p["loss_own"] * own
-        key = {}
-        for t, v in val.items():
-            if tiers.get(t) == "FCS":
-                continue
-            w, l = records.get(t, (0, 0))
-            key[t] = v + (p["bye"] if t not in played else 0.0) + (p["unbeaten"] if l == 0 and w > 0 else 0.0) - p["loss_edge"] * l
-        order = sorted(key, key=lambda t: -key[t])
-        for w_, l_ in winners_over:
-            if w_ in key and l_ in key and key[l_] > key[w_] and key[l_] - key[w_] < p["h2h"]:
-                order.remove(w_)
-                order.insert(order.index(l_), w_)
-        for i, t in enumerate(order[:25]):
-            points[t] += 25 - i
-    return [t for t, _ in points.most_common(n)]
+    """Every voter's next ballot from their last one, added up into the poll (polls.next_ballots,
+    the same step season mode runs)."""
+    _, points, _ = polls.next_ballots(ballots, prev, games, records, tiers, params)
+    return [t for t, _ in Counter(points).most_common(n)]
 
 
 def forecast_order(season: str, week: int, n: int = 25) -> tuple[list[str], dict[str, str]] | None:

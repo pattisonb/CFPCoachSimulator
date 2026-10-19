@@ -80,6 +80,15 @@ def load_next_params() -> dict:
     return dict(NEXT_PARAMS)
 
 
+def load_ballot_params() -> dict:
+    """The ballot model's parameters: the week-to-week ones, with the ballot fit on top
+    (tools/backtest_ballots.py fit)."""
+    base = load_next_params()
+    if PARAMS_FILE.exists():
+        base.update(json.loads(PARAMS_FILE.read_text(encoding="utf-8")).get("ballots", {}))
+    return base
+
+
 # ----- AP model ------------------------------------------------------------
 
 def preseason_scores(preseason_poll: list[str], ratings: dict[str, float], params: dict) -> dict[str, float]:
@@ -406,3 +415,105 @@ def build_bracket(ranking: list[str], champions: dict[str, str], conference_of: 
                               {"bye": seeds[1], "winner_of": "7 vs 10"}, {"bye": seeds[2], "winner_of": "6 vs 11"}] if len(seeds) == 12 else [],
             "first_four_out": [{"team": t, "name": (names or {}).get(t, t), "rank": pos.get(t)} for t in first_four_out],
             "autos": [{"team": t, "bid": b, "name": (names or {}).get(t, t)} for t, b in autos]}
+
+
+# ----- the AP poll from the voters' ballots ----------------------------------------------
+# Each voter's ballot moves with the week's results and the voter names a new 25; the poll
+# is the ballots added up (25 points for first down to 1 for 25th). One week ahead this is
+# about 2% closer to the real poll than moving the vote shares; across a whole season with
+# no real poll to lean on (season mode) it is 9% closer, and 26% by the last weeks, because
+# each voter keeps their own view instead of the consensus drifting
+# (tools/backtest_ballots.py; the season replay is in docs/HOW_IT_WORKS.md).
+
+BALLOT_SEED_NOISE = 0.06     # a voter's spread around the consensus when ballots are made from a poll's points
+
+
+def seed_ballots(prev: list[dict], n_voters: Optional[int] = None, seed: int = 0, noise: float = BALLOT_SEED_NOISE) -> list[list[str]]:
+    """Ballots that add up to about the given poll (its Top 25 and others receiving votes,
+    with vote points): each voter ranks the teams by their share of the vote plus their own
+    noise. Used where no real ballots exist: the preseason of a simulated season, or the
+    first simulated week after a real poll."""
+    share, voters = _share_table(prev)
+    n = n_voters or voters or AP_VOTERS
+    rng = random.Random(seed)
+    teams = list(share)
+    out = []
+    for _ in range(n):
+        out.append(sorted(teams, key=lambda t: -(share[t] + rng.gauss(0.0, noise)))[:25])
+    return out
+
+
+def next_ballots(ballots: list[list[str]], prev: list[dict], games: list[dict], records: dict[str, tuple[int, int]],
+                 tiers: dict[str, str], params: Optional[dict] = None) -> tuple[list[list[str]], dict[str, int], dict[str, int]]:
+    """Every voter's next ballot from their last one and the week's results. prev is last
+    week's published poll with vote points (the consensus a voter falls back on for a team
+    not on their ballot). Returns (the new ballots, points, first-place votes)."""
+    p = {**NEXT_PARAMS, **(params or {})}
+    share, _ = _share_table(prev)
+    off = p.get("off_ballot", 0.5)
+    facts = []
+    played = set()
+    for g in games:
+        if g["home_score"] == g["away_score"]:
+            continue
+        for side, opp in (("home", "away"), ("away", "home")):
+            t, o = g[side], g[opp]
+            played.add(t)
+            if tiers.get(t) == "FCS":
+                continue
+            ts, os_ = g[f"{side}_score"], g[f"{opp}_score"]
+            facts.append((t, o, ts > os_, min(abs(ts - os_), 21) / 21.0, side == "home" and not g.get("neutral"), bool(g.get("neutral"))))
+    winners_over = [(g["home"], g["away"]) if g["home_score"] > g["away_score"] else (g["away"], g["home"])
+                    for g in games if g["home_score"] != g["away_score"]]
+    new: list[list[str]] = []
+    points: dict[str, int] = {}
+    first: dict[str, int] = {}
+    for ballot in ballots:
+        mine = {t: (25 - i) / 25.0 for i, t in enumerate(ballot[:25])}
+        # off the ballot: the consensus share, scaled down (the voter left them off for a reason)
+        val = {t: mine.get(t, share.get(t, 0.0) * off) for t in set(share) | set(mine)}
+        for t, o, won, m, at_home, neutral in facts:
+            if t not in val:
+                w, l = records.get(t, (0, 0))
+                entry = p["new_entry"] * max(0, w - 2 * l)
+                val[t] = entry * (p["g5_entry"] if tiers.get(t) == "G5" else 1.0) - p["new_entry"]
+            ov = mine.get(o, share.get(o, 0.0) * off)
+            own = mine.get(t, share.get(t, 0.0) * off)
+            if won:
+                gain = p["win_base"] + p["win_opp"] * ov + p["win_margin"] * m + (0 if at_home or neutral else p["win_road"])
+                if tiers.get(o) == "FCS":
+                    gain *= p["fcs_win"]
+                val[t] += gain
+            else:
+                bad = 1.0 if tiers.get(o) == "FCS" else (1.0 - min(1.0, ov))
+                val[t] -= p["loss_base"] + p["loss_bad"] * bad + p["loss_margin"] * m + (p["loss_home"] if at_home else 0.0) + p["loss_own"] * own
+        key = {}
+        for t, v in val.items():
+            if tiers.get(t) == "FCS":
+                continue
+            w, l = records.get(t, (0, 0))
+            key[t] = v + (p["bye"] if t not in played else 0.0) + (p["unbeaten"] if l == 0 and w > 0 else 0.0) - p["loss_edge"] * l
+        order = sorted(key, key=lambda t: -key[t])
+        for w_, l_ in winners_over:            # a close call goes to the team that won the game
+            if w_ in key and l_ in key and key[l_] > key[w_] and key[l_] - key[w_] < p["h2h"]:
+                order.remove(w_)
+                order.insert(order.index(l_), w_)
+        new.append(order[:25])
+    for b in new:
+        if b:
+            first[b[0]] = first.get(b[0], 0) + 1
+        for i, t in enumerate(b):
+            points[t] = points.get(t, 0) + 25 - i
+    return new, points, first
+
+
+def tally(ballots: list[list[str]]) -> tuple[dict[str, int], dict[str, int]]:
+    """(points, first-place votes) of a set of ballots."""
+    points: dict[str, int] = {}
+    first: dict[str, int] = {}
+    for b in ballots:
+        if b:
+            first[b[0]] = first.get(b[0], 0) + 1
+        for i, t in enumerate(b[:25]):
+            points[t] = points.get(t, 0) + 25 - i
+    return points, first
