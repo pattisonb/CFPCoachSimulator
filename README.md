@@ -28,8 +28,10 @@ Every game comes with:
 
 ### Sim a season
 
-Pick your team and start a season. You can play the whole 2026 schedule, or start from
-today with the real results so far. Then play a week at a time or jump ahead.
+Pick your team and start a season. **New season** plays the whole 2026 schedule from week 1.
+**Start from today** picks up the real season where it stands, with the real results, polls,
+player stats and box scores so far, and you play the rest. Then play a week at a time or
+jump ahead.
 
 - **Game day.** Play your own game drive by drive, then advance the week to play
   everyone else's.

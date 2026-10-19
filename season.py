@@ -2385,7 +2385,7 @@ def _player_leaders(boxes: list[dict], me: str) -> dict:
     """Season totals for your players from the stored box scores, and the leader in each category."""
     totals: dict[tuple[str, str], dict] = {}
     for box in boxes:
-        side = box["home"] if box.get("home_slug") == me else box["away"]
+        side = box["home"] if (box.get("home_slug") or box["home"].get("slug")) == me else box["away"]
         for p in side["players"]:
             if not any(p["stats"].values()):
                 continue
@@ -2533,7 +2533,7 @@ def season_review(state: dict) -> dict:
         line = {"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "opponent": opp,
                 "opponent_name": teams[opp]["name"], "opponent_rank": orank, "opponent_record": f"{orec['wins']}-{orec['losses']}" if orec else None,
                 "venue": "neutral" if g["neutral"] else ("home" if home else "away"), "won": won, "points_for": pf, "points_against": pa,
-                "margin": pf - pa, "overtime": g.get("overtime", 0), "has_box": g["event_id"] in state["my_boxes"]}
+                "margin": pf - pa, "overtime": g.get("overtime", 0), "has_box": has_box(state, g)}
         lines.append(line)
         (wins if won else losses).append(line)
         cur = cur + 1 if won else 0
@@ -2561,6 +2561,8 @@ def season_review(state: dict) -> dict:
     else:
         finish = None
     boxes = [b for b in state["my_boxes"].values()]
+    boxes += [b for g in state["games"].values() if g.get("real") and g["played"] and me in (g["home"], g["away"])
+              and g["event_id"] not in state["my_boxes"] for b in [load_box(state, g["event_id"])] if b]
     surprises, disappointments = _surprises(state, teams, ap)
     return {
         "done": state["done"], "current_week": state["current_week"],
@@ -2991,14 +2993,18 @@ def player_honors(state: dict, team: str, name: str) -> list[dict]:
 
 
 def player_game_log(state: dict, team: str, name: str, position: str) -> Optional[list[dict]]:
-    """Per-game lines from the box scores the season keeps (your own team's games; every
-    team's in the real season)."""
+    """Per-game lines from the box scores the season keeps: your own team's simulated games,
+    and every team's real games (the real season, and the real weeks of a season started
+    from today)."""
     real = state.get("mode") == "real"
-    if team != state["team"] and not real:
+    mine = team == state["team"]
+    real_games = [g["event_id"] for g in state["games"].values()
+                  if team in (g["home"], g["away"]) and g["played"] and (real or g.get("real"))
+                  and g["event_id"] not in state["my_boxes"] and (box_dir(state) / f"{g['event_id']}.json").exists()]
+    if not mine and not real_games:
         return None
     out = []
-    boxes = ((g["event_id"], load_box(state, g["event_id"])) for g in state["games"].values()
-             if team in (g["home"], g["away"]) and g["played"]) if real else state["my_boxes"].items()
+    boxes = [(eid, load_box(state, eid)) for eid in real_games] + (list(state["my_boxes"].items()) if mine else [])
     for eid, box in boxes:
         g = state["games"].get(eid)
         if not g or not box:

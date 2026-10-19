@@ -196,16 +196,29 @@ def build(follow: str = DEFAULT_FOLLOW) -> dict:
     st = season.new_season(follow, "remaining", fill_open_dates=False)
     st.update(id=REAL_ID, mode="real", settings={"god_mode": False, "morale": False}, season_stats={}, my_boxes={},
               real_built_at=datetime.now().isoformat(timespec="seconds"))
+    st["real_summary"] = import_real_boxes(st, fresh=True)
+    season.save_season(st)
+    return st
+
+
+def import_real_boxes(st: dict, fresh: bool = False) -> dict:
+    """Every played real game's NCAA box score, turned into the game's stat lines: added to
+    the season's stats and saved as a box score the season can open. Used by the real
+    season page and by a season started from today (its real weeks then carry real stats,
+    game logs and box scores). Returns counts: box scores, player lines, matched lines."""
+    teams = season.load_teams()
     lookup = build_matcher(teams)
     index = _ncaa_index(lookup)
     rosters = {slug: RosterMatcher(t) for slug, t in teams.items() if not t["fictional"]}
     box_dir = season.box_dir(st)
     box_dir.mkdir(parents=True, exist_ok=True)
-    for old in box_dir.glob("*.json"):
-        old.unlink()
+    if fresh:
+        for old in box_dir.glob("*.json"):
+            old.unlink()
+    st.setdefault("season_stats", {})
     n_box = n_players = n_matched = 0
     for eid, g in sorted(st["games"].items(), key=lambda kv: kv[1]["week"]):
-        if not g["played"]:
+        if not g["played"] or not g.get("real"):
             continue
         cands = index.get(frozenset((g["home"], g["away"])), [])
         if not cands:
@@ -236,10 +249,8 @@ def build(follow: str = DEFAULT_FOLLOW) -> dict:
         season._accumulate_stats(st, g, lines)
         (box_dir / f"{eid}.json").write_text(json.dumps(real_box), encoding="utf-8")
         n_box += 1
-    st["real_summary"] = {"box_scores": n_box, "players": n_players, "matched": n_matched,
-                          "played": sum(1 for g in st["games"].values() if g["played"])}
-    season.save_season(st)
-    return st
+    return {"box_scores": n_box, "players": n_players, "matched": n_matched,
+            "played": sum(1 for g in st["games"].values() if g["played"])}
 
 
 def stale() -> bool:

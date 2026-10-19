@@ -444,6 +444,9 @@ def create_season(req: SeasonRequest) -> dict:
     if req.mode not in ("full", "remaining"):
         raise HTTPException(400, "mode must be full or remaining")
     state = season.new_season(req.team, req.mode, req.seed)
+    if req.mode == "remaining":
+        # started from today: the weeks already played carry their real stats and box scores
+        state["real_import"] = realdata.import_real_boxes(state)
     season.save_season(state)
     _season_jobs[state["id"]] = {"id": state["id"], "status": "idle", "state": state, "done": state["current_week"], "total": state["current_week"]}
     return season.summary(state)

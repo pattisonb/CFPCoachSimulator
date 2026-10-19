@@ -33,7 +33,8 @@
     const params = new URLSearchParams(location.search);
     if (params.get("team") && window.CFP.teamsBySlug[params.get("team")]) sel.value = params.get("team");
     else sel.value = "ohio-state";
-    if (params.get("mode")) $("#pick-mode").value = params.get("mode");
+    // from the Sim a game page: the button for the mode picked there is the highlighted one
+    if (params.get("mode") === "remaining") { $("#btn-today").classList.replace("ghost", "accent"); $("#btn-new").classList.replace("accent", "ghost"); }
   }
 
   async function loadSeasons() {
@@ -45,7 +46,7 @@
       const del = el("button", { class: "del", type: "button", title: "Delete this season", "aria-label": "Delete this season", text: "×" });
       del.addEventListener("click", (e) => { e.stopPropagation(); deleteSeason(s); });
       const li = el("li", { onclick: () => openSeason(s.id) }, [
-        el("span", { class: "teams", text: `${s.team_name} · ${s.mode === "full" ? "full" : "rest of season"}` }),
+        el("span", { class: "teams", text: `${s.team_name} · ${s.mode === "full" ? "full" : "from today"}` }),
         el("span", { class: "score", text: `${s.wins}-${s.losses}` }),
         el("span", { class: "when", text: `${s.done ? `done · champion ${s.champion_name}` : `through week ${s.current_week}`} · ${when(s.created_at)}` }),
         del,
@@ -130,16 +131,20 @@
     try { return localStorage.getItem("cfp.seasonSide"); } catch (e) { return null; }
   }
 
-  async function newSeason() {
-    const team = $("#pick-team").value, mode = $("#pick-mode").value;
-    $("#btn-new").disabled = true;
+  // mode "full" plays 2026 from week 1; "remaining" starts from today with the real results,
+  // polls, stats and box scores so far (loading those takes a few seconds)
+  async function newSeason(mode) {
+    const team = $("#pick-team").value;
+    $("#btn-new").disabled = $("#btn-today").disabled = true;
+    if (mode === "remaining") toast("Loading the real season so far: results, polls, stats and box scores…");
     try {
       const s = await api("/api/season", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team, mode }) });
       history.replaceState(null, "", `/season?id=${s.id}`);
       showSeason(s);
       loadSeasons();
-    } catch (err) { toast(`Could not start the season: ${err.message}`, 4000); }
-    finally { $("#btn-new").disabled = false; }
+      if (mode === "remaining") toast(`Started from today: ${s.week_labels[s.current_week] || "week " + s.current_week} is in with the real results and stats.`, 3500);
+    } catch (err) { toast(`Could not start the season: ${errText(err)}`, 4000); }
+    finally { $("#btn-new").disabled = $("#btn-today").disabled = false; }
   }
 
   async function openSeason(id) {
@@ -326,7 +331,7 @@
     for (const id of ["btn-advance", "btn-to-selection", "btn-to-end", "btn-gameday"]) $(`#${id}`).disabled = b || (state.season && state.season.done);
     $("#btn-settings").disabled = b;
     for (const chip of document.querySelectorAll("#week-strip .week-chip")) chip.disabled = b;
-    $("#btn-new").disabled = b;
+    $("#btn-new").disabled = $("#btn-today").disabled = b;
     $("#season-list").classList.toggle("locked", b);
     document.body.classList.toggle("simming", b);   // tabs, chips, pills and the toolbar ignore clicks
     if (!b) { $("#season-progress").hidden = true; $("#season-progress-text").hidden = true; $("#season-progress-bar").style.width = "0%"; }
@@ -553,7 +558,7 @@
     const played = myNext && myNext.played ? ` · your game is played (${myNext.won ? "W" : "L"} ${myNext.points_for}–${myNext.points_against}); Advance plays the rest of the week` : "";
     const phase = s.done ? `Season complete · national champion: ${s.champion_name}` : s.current_week === 0 ? `Preseason · ${s.week_labels[1] || "Week 1"} up next${played}` : `${s.week_labels[s.current_week + 1] || "Week " + (s.current_week + 1)} up next · through ${s.week_labels[s.current_week] || "week " + s.current_week}${played}`;
     const simDate = simDateText(s);
-    $("#season-meta").textContent = `${phase}${simDate ? ` · ${simDate}` : ""} · ${s.mode === "full" ? "full season simulated" : "real results through today"} · ${when(s.created_at)}`;
+    $("#season-meta").textContent = `${phase}${simDate ? ` · ${simDate}` : ""} · ${s.mode === "full" ? "full season simulated" : "started from today: real results, polls and stats through then"} · ${when(s.created_at)}`;
     const real = s.mode === "real";
     document.body.classList.toggle("real-mode", real);
     $("#btn-real-refresh").hidden = !real;
@@ -3107,7 +3112,8 @@
 
   // ----- wiring ------------------------------------------------------------
 
-  $("#btn-new").addEventListener("click", newSeason);
+  $("#btn-new").addEventListener("click", () => newSeason("full"));
+  $("#btn-today").addEventListener("click", () => newSeason("remaining"));
   $("#btn-pause").addEventListener("click", pauseSim);
   $("#btn-seasons").addEventListener("click", () => setSidebar($("#btn-seasons").getAttribute("aria-pressed") !== "true"));
   $("#btn-clear-seasons").addEventListener("click", clearSeasons);

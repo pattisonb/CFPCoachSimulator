@@ -313,8 +313,12 @@ The calendar: weeks 1-13 are the regular season (the 2026 schedule ends Nov 28),
 is championship week (the top two in every conference's standings meet, on a neutral
 field for the Power Four and at the higher seed's stadium in the Group of Five), week 15 holds Army-Navy and the selection, weeks 16-19
 are the playoff. **Full season** starts from the real 2026 preseason AP poll and
-simulates everything; **Rest of season** keeps the real results and real polls through
-the last completed week. FCS opponents play as the fictional school from the same region
+simulates everything (the **New season** button); **Start from today** (the "remaining"
+mode) keeps the real results, real polls, real stats and real box scores through the last
+completed week: `realdata.import_real_boxes`, the same import the Real 2026 page runs,
+turns every played game's NCAA box score into the game's stat lines and a box score the
+season can open, so the leaders, awards races, player game logs and your season summary
+start from the real numbers and simulated weeks add to them. FCS opponents play as the fictional school from the same region
 (`data/fcs_map.json`). No injuries.
 
 Ties in the standings follow the procedure the Power Four (and most Group of Five)
@@ -625,9 +629,9 @@ interceptions, touchdowns, kicking points, top five each, from `/stats/leaders`)
 "All teams" for the national leaders, a chip for the full category table (passing,
 rushing, receiving, defense, kicking, punting, returns; top 100 or one team's full list,
 sortable), or Roster for the team's players by position with ratings and starters marked,
-which is also what shows before the first game is played. Stats cover simulated games only, so in **Rest of season** mode the real
-games already played are not in them; a season saved before this existed shows only your
-own games.
+which is also what shows before the first game is played. A season started from today counts the real games already played (from their NCAA
+box scores) and adds every simulated game; a season saved before season-long stats
+existed shows only your own games.
 
 ### Awards: the Heisman, every national award, All-America and all-conference teams
 
