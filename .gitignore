@@ -8,3 +8,5 @@ data/games.json
 data/season_results.json
 data/seasons/
 *.log
+# AP ballots from collegepolltracker.com (tools/fetch_ballots.py): their compilation, kept local
+data/ballots/

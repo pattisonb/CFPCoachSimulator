@@ -6,6 +6,10 @@ freezes two forecasts in data/predictions/ap_weekNN.json:
 
   model     the game's own poll for the week (polls.next_poll from last week's real poll,
             its vote points and this week's results; see tools/backtest_polls.py)
+  ballots   the same rules applied to every AP voter's own ballot from last week, added up
+            (tools/backtest_ballots.py; ballots from tools/fetch_ballots.py). About 2% closer
+            than "model" over 2014-2026, a gain too small to be sure of yet: these forecasts
+            settle it
   last_week a baseline: last week's real poll unchanged
 
 (the week 8 file predates the week-to-week model: its "game" and "anchored" columns are
@@ -63,10 +67,29 @@ def real_poll(week: int, teams: dict) -> list[dict]:
     return out
 
 
+def ballot_listing(week: int, teams: dict) -> list[dict] | None:
+    """The ballot model's forecast of the poll after `week` (from the poll after week - 1,
+    its ballots and this week's results), as [{slug, name, rank}], or None without ballots."""
+    from backtest_ballots import forecast_order
+    out = forecast_order("2026", week - 1)
+    if not out:
+        print("note: no ballots or no results for the ballot forecast")
+        return None
+    order, names = out
+    lookup = build_matcher(teams)
+    listing = []
+    for espn_id in order:
+        slug = match(names.get(espn_id, ""), lookup)
+        if slug:
+            listing.append({"slug": slug, "name": teams[slug]["name"], "rank": len(listing) + 1, "record": None})
+    return listing[:25]
+
+
 def forecast(no_fetch: bool) -> dict:
     if not no_fetch:
         run_tool("fetch_schedules.py")
         run_tool("fetch_polls.py", "2026")
+        run_tool("fetch_ballots.py", "2026")
     teams = season.load_teams()
     any_team = next(s for s, t in teams.items() if not t["fictional"])
     st_game = season.new_season(any_team, "remaining")
@@ -81,10 +104,12 @@ def forecast(no_fetch: bool) -> dict:
     def listing(entries):
         return [{"slug": e["team"], "name": e["name"], "rank": e["rank"], "record": e.get("record")} for e in entries[:25]]
 
+    forecasts_ballots = ballot_listing(week, teams)
     # the game's own poll for the week: polls.next_poll from last week's real poll and its vote points
     return {"week": week, "made_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "commit": git_commit(),
             "starts_from": f"the real AP poll after week {week - 1}",
             "forecasts": {"model": listing(st_game["polls"][str(week)]["ap"]),
+                          **({"ballots": forecasts_ballots} if forecasts_ballots else {}),
                           "last_week": [{"slug": e["slug"], "name": e["name"], "rank": e["rank"], "record": e["record"]} for e in last]}}
 
 
@@ -97,10 +122,10 @@ def predict(no_fetch: bool) -> None:
     path.write_text(json.dumps(data, indent=1), encoding="utf-8")
     print(f"AP forecast for the poll after week {data['week']}, made {data['made_at']} at commit {data['commit']}")
     f = data["forecasts"]
-    print(f"{'#':>3}  {'model':<22} {'last week':<22}")
+    cols = [k for k in ("model", "ballots", "last_week") if f.get(k)]
+    print(f"{'#':>3}  " + " ".join(f"{k.replace('_', ' '):<22}" for k in cols))
     for i in range(25):
-        cells = [f.get(k)[i]["name"] if i < len(f.get(k)) else "" for k in ("model", "last_week")]
-        print(f"{i + 1:>3}  {cells[0]:<22} {cells[1]:<22}")
+        print(f"{i + 1:>3}  " + " ".join(f"{(f[k][i]['name'] if i < len(f[k]) else ''):<22}" for k in cols))
     print(f"\nwritten to {path}")
 
 

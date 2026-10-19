@@ -490,6 +490,37 @@ The season-long scores still run underneath for the committee model.
 `score NN` compares it once the poll is out; `python tools/fetch_polls.py --others` adds
 the others receiving votes to an older archive.
 
+
+#### The voters' own ballots
+
+`tools/fetch_ballots.py` downloads every AP voter's ballot from collegepolltracker.com,
+2014 to now: about 200 weekly polls and 13,000 ballots (60 to 70 voters a week). It waits
+2.5 seconds between requests, caches every page it fetches, and keeps the data local in
+`data/ballots/` (git-ignored: the site's compilation is its own). Run it with a season to
+add the new weeks: `python tools/fetch_ballots.py 2026`.
+
+`tools/backtest_ballots.py` maps the site's teams to ESPN ids by their point totals
+(each team's ballot points equal the published points in the same week, so the totals
+are a fingerprint; a name match covers the few teams with a vote or two) and finds which
+of our weeks each site week is (2026 numbers its weeks one lower than ESPN). Then it runs
+the week-to-week rules on each voter's ballot instead of the vote shares: the week's
+results move the value the voter gives each team, the voter re-ranks and names 25, and
+the ballots are added up. Fitted on 2014-2023:
+
+| Rank error one week ahead | Vote-share model | Ballot model |
+|---|---|---|
+| 2014-2023 (fitted, 129 weeks) | 1.021 | 1.013 |
+| 2024-2025 (held out, 28 weeks) | 1.007 | 0.985 |
+| 2026 so far (6 weeks) | 1.560 | 1.540 |
+
+The ballot model is ahead in each set but by about 2%, which the week-to-week noise
+does not let us call real yet (it wins 13 of the 22 held-out weeks that differ).
+`tools/ap_forecast.py` freezes both every week ("model" and "ballots") so the live
+season settles it. The ballots also check the game's simulated voters: the share of
+points at each rank matches real polls within a point from No. 1 to No. 15 (No. 20 gets
+20.8% in the game, 23.2% for real), and No. 1 takes 82% of first-place votes in the
+game against 87% for real.
+
 ### The bracket rules (2026)
 
 From NCAA.com's "How the College Football Playoff works" (Aug 27, 2026) and the CFP
