@@ -250,6 +250,7 @@ def summarize_stats(team):
         "Field Goals Attempted": stat_totals.get("fg_attempted", 0),
         "Punts": stat_totals.get("punts", 0),
         "Punt Yards": stat_totals.get("punt_yards", 0),
+        "Punt Net Yards": stat_totals.get("punt_net_yards", 0),
         "Kickoff Returns": stat_totals.get("kickoff_returns", 0),
         "Kickoff Return Yards": stat_totals.get("kickoff_return_yards", 0),
         "Kickoff Return Touchdowns": stat_totals.get("kickoff_return_touchdowns", 0),

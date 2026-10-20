@@ -190,7 +190,18 @@ FG_LONG_ATTEMPT_CHANCE = 0.45   # chance to attempt (rather than punt) from 50+ 
 FG_MAKE = [(30, 0.95), (39, 0.86), (46, 0.74), (52, 0.58), (999, 0.40)]   # average kicker, by distance
 FG_PER_ACCURACY_POINT = 0.004   # make chance per point of kick accuracy above neutral
 TRAILING_LATE_SECONDS = 420     # trailing in the 2nd half with this much left: go for it
-PUNT_DISTANCE = (43.0, 5.0)
+# Punts, tuned so gross and net match real FBS (about 43 and 39.5 yards; tools/calibrate.py).
+PUNT_DISTANCE = (44.2, 5.0)     # full kick in the air (mean, sd), + (punt_power - 50) / 5
+PUNT_PIN_CHANCE = 0.75          # would carry inside the 10: chance to stop it short of the goal line
+                                # (+ (punt_accuracy - NEUTRAL) / 100), else a touchback (real: about 7% of punts)
+PUNT_RETURN_CHANCE = (0.54, 0.28)   # chance a punt is returned, landing outside / inside the receiving 20
+PUNT_UNRETURNED = (0.55, 0.30, 0.15)   # the rest: fair catch, downed after a roll, out of bounds
+PUNT_ROLL = (4.0, 4.0)          # yards a downed punt rolls on (mean, sd)
+PUNT_RETURN_YARDS = (1.6, 5.4)  # an ordinary return: gamma (shape, scale) less 2 yards
+PUNT_BREAKAWAY = (0.06, 30.0, 12.0)   # chance of a long return, its yards (mean, sd); real returns average 8-9
+PUNT_RETURN_TD = 0.008          # per return, average returner
+PUNT_RETURNER_TYPICAL = 0.53    # return_skill of a typical punt returner
+PUNT_RETURN_SKILL = 1.5         # return yards and TD chance per point of return_skill above typical
 
 # ----- Venue and coaching -----
 # Any given Saturday: each team plays a little above or below itself on the day. Drawn once

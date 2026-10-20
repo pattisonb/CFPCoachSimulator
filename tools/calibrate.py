@@ -48,7 +48,8 @@ BENCHMARKS = {
     "fum_lost":    (0.51, 0.38, 0.65, "Fumbles lost"),
     "turnovers":   (1.32, 1.1, 1.55, "Giveaways (INT + fumbles lost)"),
     "punts":       (4.11, 3.5, 4.7, "Punts"),
-    "punt_avg":    (39.5, 36.0, 43.0, "Punt net average (gross is 43.0)"),
+    "punt_gross":  (43.0, 41.5, 44.5, "Punt gross average"),
+    "punt_net":    (39.5, 38.0, 41.0, "Punt net average"),   # gross less returns, 20 a touchback
     "fga":         (1.59, 1.25, 1.95, "FG attempts"),
     "fg_pct":      (75.4, 69.0, 82.0, "FG %"),
     "penalties":   (6.03, 5.0, 7.1, "Penalties (flags)"),
@@ -73,7 +74,8 @@ GAME_BENCHMARKS = {
 # Percentage and per-attempt stats are computed from batch totals, not averaged per game.
 RATIOS = {
     "ypp": ("tot", "plays", 1), "cmp_pct": ("completions", "att", 100), "ypa": ("pass_yds", "att", 1),
-    "int_pct": ("ints", "att", 100), "ypc": ("rush_yds", "car", 1), "punt_avg": ("punt_yds", "punts", 1),
+    "int_pct": ("ints", "att", 100), "ypc": ("rush_yds", "car", 1), "punt_gross": ("punt_yds", "punts", 1),
+    "punt_net": ("punt_net_yds", "punts", 1),
     "fg_pct": ("fgm", "fga", 100), "third_pct": ("third_conv", "third_downs", 100),
     "rz_pct": ("rz_scores", "rz_trips", 100), "fourth_pct": ("fourth_conv", "fourth_att", 100),
 }
@@ -101,7 +103,8 @@ def team_line(r: dict, side: str) -> dict:
         int_pct=100 * s["Interceptions Thrown"] / max(1, att), sacks_taken=s["Sacks Taken"],
         car=car, ypc=rush / max(1, car), rush_yds=rush,
         fum=s["Fumbles"], fum_lost=lost, turnovers=s["Interceptions Thrown"] + lost,
-        punts=s["Punts"], punt_avg=s["Punt Yards"] / max(1, s["Punts"]),
+        punts=s["Punts"], punt_gross=s["Punt Yards"] / max(1, s["Punts"]),
+        punt_net=s.get("Punt Net Yards", 0) / max(1, s["Punts"]),
         fga=s["Field Goals Attempted"], fg_pct=100 * s["Field Goals Made"] / max(1, s["Field Goals Attempted"]),
         penalties=t["team_events"].get("penalties", 0),
         first_downs=ev.get("first_downs", 0),
@@ -112,7 +115,7 @@ def team_line(r: dict, side: str) -> dict:
         fourth_pct=100 * ev.get("fourth_down_conversions", 0) / max(1, ev.get("fourth_down_attempts", 0)),
         rz_pct=100 * ev.get("red_zone_scores", 0) / max(1, ev.get("red_zone_trips", 0)),
         drives=len(own), tackles=s["Solo Tackles"] + s["Assisted Tackles"],
-        completions=s["Completions"], ints=s["Interceptions Thrown"], punt_yds=s["Punt Yards"], fgm=s["Field Goals Made"],
+        completions=s["Completions"], ints=s["Interceptions Thrown"], punt_yds=s["Punt Yards"], punt_net_yds=s.get("Punt Net Yards", 0), fgm=s["Field Goals Made"],
         third_conv=ev.get("third_down_conversions", 0), rz_scores=ev.get("red_zone_scores", 0),
         fourth_conv=ev.get("fourth_down_conversions", 0),
     )

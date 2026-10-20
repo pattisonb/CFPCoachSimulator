@@ -141,6 +141,18 @@ the best return rating: 35% EA kick-return skill, 20% speed, 15% acceleration, 1
 elusiveness, 10% vision, 5% ball security. Return yardage and return-touchdown odds use
 the same rating.
 
+**Punts** (`_attempt_punt` in `engine/drive_functions.py`, constants `PUNT_*` in
+`engine/game_config.py`). The kick carries `PUNT_DISTANCE` (44.2 yards, sd 5) plus a fifth of
+the punter's power above 50. One that would carry inside the 10 is aimed short: it is
+fair-caught or downed between the 1 and the 12 (75% for an average punter, more with
+accuracy) or goes into the end zone for a touchback. Anything shorter is returned 54% of
+the time (28% when it lands inside the 20); a return is usually a few yards with an
+occasional breakaway, and a better returner gains more. The rest are fair catches, downed
+after a short roll (sometimes into the end zone) or kicked out of bounds. Across 400
+random FBS games: 34% of punts returned for 8.5 yards a return, 7% touchbacks, gross 43.4
+and net 39.2 (real FBS: about 43 and 39.5). Gross is the official distance (to the goal line
+on a touchback); net takes off the return and 20 yards a touchback.
+
 **Coaches.** The coordinators' pass-rate and tempo tendencies shift the run/pass table and
 the clock, the head coach's fourth-down tendency scales the go-for-it odds, and the
 play-calling ratings of the two coordinators tilt whether the defense guesses the play.
@@ -193,18 +205,20 @@ lost, so the tool counts the sim's rushing the same way (the engine keeps sacks 
 
 | Stat | Sim | FBS 2025 | Stat | Sim | FBS 2025 |
 |---|---|---|---|---|---|
-| Points | 26.7 | 25.9 | First downs | 19.0 | 20.0 |
-| Plays | 65.6 | 68.7 | Third down % | 42.5 | 39.0 |
-| Total yards | 361 | 375 | Red zone trips / % | 4.05 / 85 | 3.5 / 83 |
-| Yards per play | 5.5 | 5.46 | Fourth down tries / % | 1.55 / 55 | 2.1 / 53 |
-| Completion % | 63.2 | 61.7 | Punts / net | 4.1 / 39.7 | 4.1 / 39.5 |
-| Yards per attempt | 7.35 | 7.24 | Field goal tries / % | 1.35 / 79 | 1.6 / 75 |
-| Yards per carry (sacks as rushes) | 3.95 | 4.23 | Penalties | 5.9 | 6.0 |
+| Points | 25.1 | 25.9 | First downs | 19.4 | 20.0 |
+| Plays | 65.6 | 68.7 | Third down % | 42.9 | 39.0 |
+| Total yards | 366 | 375 | Red zone trips / % | 3.85 / 85 | 3.5 / 83 |
+| Yards per play | 5.6 | 5.46 | Fourth down tries / % | 1.5 / 55 | 2.1 / 53 |
+| Completion % | 63.4 | 61.7 | Punts / gross / net | 4.15 / 43.4 / 39.2 | 4.1 / 43.0 / 39.5 |
+| Yards per attempt | 7.4 | 7.24 | Field goal tries / % | 1.3 / 77 | 1.6 / 75 |
+| Yards per carry (sacks as rushes) | 4.05 | 4.23 | Penalties | 5.9 | 6.0 |
 | Sacks taken | 2.2 | 2.03 | Giveaways | 1.45 | 1.32 |
 
-29 of 31 checks are inside their band; red zone trips run a little high and fourth-down
-tries a little low. Combined points 53.3 (51.7), and the margins of random FBS matchups
-spread 22.9 points (real FBS-vs-FBS games 2023-2025: 21.8-22.2).
+31 of 32 checks are inside their band (October 19, after the punting change); fourth-down
+tries run a little low. Combined points 50.0 (51.7), and the margins of random FBS matchups
+spread 21.1 points (real FBS-vs-FBS games 2023-2025: 21.8-22.2). Before punts had fair
+catches and touchbacks, every punt short of the 10 was returned 5-15 yards and the same
+run gave 53.3 combined points and 4.05 red zone trips.
 
 **Season stats against real seasons** (`python tools/fetch_leaders.py`, then
 `python tools/realism.py --seeds 3`): whole simulated seasons, bowls and playoff
@@ -270,6 +284,17 @@ The play-log fingerprint is now 18d9479c93b6e1e5. On the week 7 forward test (th
 from 11.8 to 11.2 points (RMS 15.8 to 14.2) and the distance from the closing line from
 7.4 to 4.8 points; against the spread 64.9% to 59.6%. Every constant lives in
 `engine/game_config.py`; change one, rerun the three tools, and compare.
+
+**Punting (October 19, later).** Punts now end in fair catches, downed balls, kicks out of
+bounds and touchbacks as well as returns (see "Punts" above), and `tools/calibrate.py`
+reports gross and net separately (it used to compare the gross with the real net). Gross
+43.4 and net 39.2 (real 43 and 39.5); `tools/realism.py` now prints the net punting
+leaders, #1 44.7 over three seasons (real leaders net about 44-46). Receiving teams start
+about ten yards further back than when every punt was returned, so scoring fell: combined
+points 53.3 to 50.0 in `calibrate.py league 400` (real 51.7), 52.9 to 50.5 in the season
+replay (real 52.0), and the replay's slope rose from 1.01 to 1.07 (predicted margins a
+little narrower than the real ones). The engine's offense has not been retuned for this.
+The play-log fingerprint is now d85b69de4e69a568.
 
 ## Game randomness and defense weight (overnight review, items 2.2 and 2.4)
 
