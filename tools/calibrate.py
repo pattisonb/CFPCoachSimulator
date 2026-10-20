@@ -23,6 +23,8 @@ from engine.game import simulate_game
 
 ROSTERS = "engine/rosters.json"
 
+SACK_LOSS = 7.5      # yards lost on an average sack (engine/game_config.SACK_YARDS)
+
 # Per-team, per-game FBS averages (2022-2024 seasons, rounded) and an acceptable band.
 # Per-team, per-game FBS averages: the mean across all 137 FBS teams for the 2025 season,
 # read from teamrankings.com team stat tables on 2026-10-15, with an acceptable band of
@@ -83,16 +85,21 @@ def team_line(r: dict, side: str) -> dict:
     own = [d for d in r["drives"] if d["offense"] == side and d["quarter"] <= 4]
     plays = sum(d["plays"] for d in own)
     att = s["Pass Attempts"]
-    car = s["Carries"]
+    # Official stats (and these benchmarks) count a sack as a rushing play for the yards it
+    # lost; the engine keeps sacks apart, so they join the carries here and their loss
+    # (engine/game_config.SACK_YARDS, 7.5 on average) comes off rushing and total yards.
+    sacked = s["Sacks Taken"]
+    car = s["Carries"] + sacked
+    rush = s["Rush Yards"] - SACK_LOSS * sacked
     ev = t["team_events"]
     lost = ev.get("fumbles_lost", 0)
     return dict(
-        pts=t["score"], plays=plays, tot=s["Pass Yards"] + s["Rush Yards"],
-        ypp=(s["Pass Yards"] + s["Rush Yards"]) / max(1, plays),
+        pts=t["score"], plays=plays, tot=s["Pass Yards"] + rush,
+        ypp=(s["Pass Yards"] + rush) / max(1, plays),
         att=att, cmp_pct=100 * s["Completions"] / max(1, att), ypa=s["Pass Yards"] / max(1, att),
         pass_yds=s["Pass Yards"], off_td=s["Passing Touchdowns"] + s["Rushing Touchdowns"],
         int_pct=100 * s["Interceptions Thrown"] / max(1, att), sacks_taken=s["Sacks Taken"],
-        car=car, ypc=s["Rush Yards"] / max(1, car), rush_yds=s["Rush Yards"],
+        car=car, ypc=rush / max(1, car), rush_yds=rush,
         fum=s["Fumbles"], fum_lost=lost, turnovers=s["Interceptions Thrown"] + lost,
         punts=s["Punts"], punt_avg=s["Punt Yards"] / max(1, s["Punts"]),
         fga=s["Field Goals Attempted"], fg_pct=100 * s["Field Goals Made"] / max(1, s["Field Goals Attempted"]),
@@ -138,13 +145,18 @@ def run_batch(home: dict, away: dict, n: int, seed: int = 10_000, sliders: dict 
     }
 
 
-def print_report(res: dict, home_name: str, away_name: str) -> None:
+# League mode plays random FBS matchups, so its margins spread with the gap between the
+# teams as well: real FBS-vs-FBS margins had a standard deviation of 21.8-22.2 in 2023-2025.
+LEAGUE_MARGIN_SD = (22.0, 19.5, 24.5, "Margin std dev (FBS matchups)")
+
+
+def print_report(res: dict, home_name: str, away_name: str, league: bool = False) -> None:
     n = res["n"]
     print(f"\n{n} games: {home_name} {res['home_win_pct']:.0f}% wins, margin {res['margin_mean']:+.1f} "
           f"(sd {res['margin_sd']:.1f}), total {res['total_mean']:.1f} (sd {res['total_sd']:.1f}), OT {res['ot_pct']:.1f}%")
     game_vals = {"total_pts": res["total_mean"], "margin_sd": res["margin_sd"], "ot_pct": res["ot_pct"]}
     print(f"{'stat':<32}{'sim':>8}{'target':>8}{'band':>14}  ok")
-    for k, (target, lo, hi, label) in GAME_BENCHMARKS.items():
+    for k, (target, lo, hi, label) in {**GAME_BENCHMARKS, **({"margin_sd": LEAGUE_MARGIN_SD} if league else {})}.items():
         v = game_vals[k]
         print(f"{label:<32}{v:>8.1f}{target:>8.1f}{f'{lo}-{hi}':>14}  {'ok' if lo <= v <= hi else 'OUT'}")
     print(f"\n{'stat (per team per game)':<32}{'home':>8}{'away':>8}{'target':>8}{'band':>14}  ok")
@@ -229,7 +241,7 @@ def league_report(n: int) -> None:
            "home_win_pct": 100 * sum(m > 0 for m in margins) / n, "margin_mean": st.mean(margins),
            "margin_sd": st.pstdev(margins), "total_mean": st.mean(totals), "total_sd": st.pstdev(totals),
            "ot_pct": 100 * ot / n, "pts_dist": Counter(min(x["pts"] // 10 * 10, 60) for s in rows for x in rows[s])}
-    print_report(res, "random home team", "random away team")
+    print_report(res, "random home team", "random away team", league=True)
 
 
 def main() -> None:

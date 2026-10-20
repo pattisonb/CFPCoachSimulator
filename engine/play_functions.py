@@ -47,29 +47,21 @@ def assign_forced_fumble(defense, base_yards, verbose=False):
 
 import random
 
+# Who makes the tackle, by how far the play went: per player on the field, by position
+# group (the middle linebacker is "lb", the outside linebackers "olb"). Calibrated so the
+# defensive line makes about a fifth of a team's tackles, linebackers about two fifths and
+# the secondary the rest, with the middle linebacker usually the team's leader.
+TACKLE_GROUP = {"DL": "dl", "MLB": "lb", "ROLB": "olb", "LOLB": "olb", "OLB": "olb", "CB": "cb", "S": "s"}
+
+
 def assign_tackles(defense, base_yards, verbose=False):
-    # Define tiered weights
-    short_weights = {
-        'dl': 0.35,
-        'rolb': 0.2,
-        'olb': 0.15,
-        'lb': 0.2,
-        's': 0.1
-    }
-    mid_weights = {
-        'rolb': 0.25,
-        'olb': 0.2,
-        'lb': 0.25,
-        's': 0.2,
-        'dl': 0.1
-    }
-    long_weights = {
-        's': 0.4,
-        'cb': 0.4,
-        'rolb': 0.08,
-        'olb': 0.06,
-        'lb': 0.06
-    }
+    # per-player weights by position group (a group's share also grows with how many are on the field)
+    short_weights = {'dl': cfg.TACKLE_WEIGHTS_SHORT[0], 'lb': cfg.TACKLE_WEIGHTS_SHORT[1], 'olb': cfg.TACKLE_WEIGHTS_SHORT[2],
+                     's': cfg.TACKLE_WEIGHTS_SHORT[3], 'cb': cfg.TACKLE_WEIGHTS_SHORT[4]}
+    mid_weights = {'dl': cfg.TACKLE_WEIGHTS_MID[0], 'lb': cfg.TACKLE_WEIGHTS_MID[1], 'olb': cfg.TACKLE_WEIGHTS_MID[2],
+                   's': cfg.TACKLE_WEIGHTS_MID[3], 'cb': cfg.TACKLE_WEIGHTS_MID[4]}
+    long_weights = {'dl': cfg.TACKLE_WEIGHTS_LONG[0], 'lb': cfg.TACKLE_WEIGHTS_LONG[1], 'olb': cfg.TACKLE_WEIGHTS_LONG[2],
+                    's': cfg.TACKLE_WEIGHTS_LONG[3], 'cb': cfg.TACKLE_WEIGHTS_LONG[4]}
 
     # Determine blend weights
     if base_yards <= 2:
@@ -85,8 +77,7 @@ def assign_tackles(defense, base_yards, verbose=False):
     cb_count = 0
 
     for p in defense:
-        pos = p.position.lower()
-        pos_group = pos if pos in weight_profile else pos[:2]
+        pos_group = TACKLE_GROUP.get(p.position, p.position.lower())
 
         if pos_group == 'cb':
             if cb_count >= 3:
@@ -94,7 +85,8 @@ def assign_tackles(defense, base_yards, verbose=False):
             cb_count += 1
 
         if pos_group in weight_profile:
-            skill_weight = (p.tackling + p.intelligence) / 2
+            # the better tackler at a spot gets clearly more of them (real leaders stand out)
+            skill_weight = ((p.tackling + p.intelligence) / 2 / cfg.NEUTRAL) ** cfg.TACKLE_SKILL_POWER
             position_weight = weight_profile[pos_group]
             candidates.append(p)
             weights.append(position_weight * skill_weight)
@@ -104,8 +96,8 @@ def assign_tackles(defense, base_yards, verbose=False):
         candidates = defense
         weights = [(p.tackling + p.intelligence) / 2 for p in defense]
 
-    # Solo vs assisted tackle (reduced to 20% to prevent double counting)
-    is_assisted = random.random() < 0.20
+    # Solo vs assisted: about 30% of tackles are shared (real leaders split theirs near half solo, half assisted)
+    is_assisted = random.random() < cfg.TACKLE_ASSIST_CHANCE
 
     if is_assisted:
         # Weighted sampling without replacement
@@ -147,7 +139,7 @@ def assign_sack(defense, guessed_play=False, rushers=None):
     is_half = random.random() < 0.25
 
     # Pick 1 or 2 players based on is_half
-    selected = random.choices(candidates, weights=[p.rushing for p in candidates], k=2 if is_half else 1)
+    selected = random.choices(candidates, weights=[(max(1, p.rushing) / cfg.NEUTRAL) ** cfg.SACK_SKILL_POWER for p in candidates], k=2 if is_half else 1)
 
     return selected, is_half
 
@@ -518,7 +510,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     int_chance = max(cfg.INT_MIN, min(cfg.INT_MAX, int_chance)) * int_mult
     defenders = [p for p in defense if p.position in db_positions]
     if defenders and random.random() < int_chance:
-        picker = random.choices(defenders, weights=[max(1, p.coverage or 1) for p in defenders], k=1)[0]
+        picker = random.choices(defenders, weights=[(max(1, p.coverage or 1) / cfg.NEUTRAL) ** cfg.INT_SKILL_POWER for p in defenders], k=1)[0]
         last_play["picked_by"] = picker.name
         qb.stats["interceptions_thrown"] += 1
         picker.stats["interceptions"] += 1

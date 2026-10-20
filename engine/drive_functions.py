@@ -227,14 +227,14 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
         elif half == 2 and -lead >= cfg.COMEBACK_LEAD and seconds_remaining <= cfg.QUARTER_SECONDS:
             run_shift -= 0.2
             hurrying = True
-        # Starters sit once the game is decided (the trailing side keeps playing its starters).
-        if lead >= cfg.BENCH_LEAD and (half == 2 or lead >= cfg.GARBAGE_LEAD_ANY):
+        # Starters sit once the game is decided, on both sides: the leader rests its stars
+        # and the trailing team plays its backups too (as real teams do in a blowout).
+        decided = abs(lead) >= cfg.BENCH_LEAD and (half == 2 or abs(lead) >= cfg.GARBAGE_LEAD_ANY)
+        if decided:
             offense_team.rest_starters("offense")
-        elif lead < cfg.BENCH_LEAD - 14:
-            offense_team.restore_starters("offense")
-        if -lead >= cfg.BENCH_LEAD and (half == 2 or -lead >= cfg.GARBAGE_LEAD_ANY):
             defense_team.rest_starters("defense")
-        elif -lead < cfg.BENCH_LEAD - 14:
+        elif abs(lead) < cfg.BENCH_LEAD - 14:
+            offense_team.restore_starters("offense")
             defense_team.restore_starters("defense")
 
     pace_mult = game_speed_mult * drag
@@ -324,7 +324,7 @@ def roll_injuries(team, on_field):
     for p in on_field:
         if p.position in ("K", "P"):
             continue
-        if rng.random() < cfg.INJURY_PER_SNAP:
+        if rng.random() < cfg.INJURY_PER_SNAP * cfg.INJURY_POSITION_MULT.get(p.position, 1.0):
             r = rng.random()
             weeks = next(w for cum, w in cfg.INJURY_SEVERITY if r <= cum)
             team.injure(p, weeks, rng.choice(cfg.INJURY_TYPES))

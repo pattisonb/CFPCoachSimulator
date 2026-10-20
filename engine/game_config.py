@@ -38,6 +38,9 @@ MOMENTUM_EFFECT = 0.05
 MOMENTUM_DECAY = 0.93          # per snap, so a swing fades over a drive or two
 MOMENTUM_HALF = 0.5            # what is left at the start of the second half
 INJURY_PER_SNAP = 0.00085       # per player on the field per snap: about 1.3 injuries a game per team
+# Quarterbacks and backs take the most hits: real teams start more than one passer and lead back
+# over a season (tools/realism.py: the 100th passer's yards, the 1,000-yard rushers).
+INJURY_POSITION_MULT = {"QB": 2.2, "RB": 1.7}
 # cumulative probability, weeks out (0 = rest of this game only)
 INJURY_SEVERITY = [(0.55, 0), (0.72, 1), (0.84, 2), (0.91, 3), (0.95, 5), (0.98, 8), (1.0, 20)]
 INJURY_TYPES = ["ankle sprain", "hamstring strain", "knee sprain", "shoulder injury", "concussion", "groin strain",
@@ -167,7 +170,7 @@ SCRAMBLE_CHANCE = 0.13          # of plays with no completion and no pick
 RECEPTION_FUMBLE_CHANCE = 0.010
 
 # ----- Rushing -----
-RUSH_BASE_YARDS = (3.4, 2.7)    # gauss mean, sd
+RUSH_BASE_YARDS = (3.75, 2.7)   # gauss mean, sd (3.75: official YPC counts sacks as runs; see tools/calibrate.py)
 RUSH_PER_LINE_POINT = 0.040     # yards per point of (run blocking - run defense)
 RUSH_PER_CARRIER_POINT = 0.035  # yards per point of carrier rating above neutral
 RUSH_GUESSED = -0.9
@@ -199,7 +202,7 @@ HFA_ATTRS = ("speed", "strength", "intelligence", "passing", "decision_making", 
              "vision", "hands", "route_running", "run_blocking", "pass_blocking", "rushing",
              "tackling", "coverage", "kick_accuracy", "punt_accuracy")
 PASS_RATE_EFFECT = 0.6          # run chance shift at a 0 or 100 pass-rate tendency
-TEMPO_EFFECT = 0.40             # clock multiplier range for tempo 0..100
+TEMPO_EFFECT = 0.60             # clock multiplier range for tempo 0..100 (tools/realism.py: plays per game from fastest to slowest)
 FOURTH_DOWN_TENDENCY_EFFECT = 0.8   # go-for-it odds scale for the fourth_down_go_rate tendency
 PLAY_CALLING_EFFECT = 0.5       # chance the better play caller wins the guessing game
 RUN_CHANCE_MIN, RUN_CHANCE_MAX = 0.08, 0.92
@@ -217,7 +220,19 @@ KICKOFF_BIG_RETURN_CHANCE = 0.06
 KICKOFF_RETURN_TD_CHANCE = 0.004
 
 # ----- Usage shares (calibrated against 2026 box scores, see calibrate_players.py) -----
-TARGET_WEIGHT_POWER = 5.0       # receiver target weight = rating ** power (steeper = more concentrated)
+TARGET_WEIGHT_POWER = 4.0       # receiver target weight = rating ** power (steeper = more concentrated)
+TARGET_MULT_MAX = 2.0           # cap on a receiver's real-usage target weight (data/real_adjustments.json)
+
+# ----- Who gets the defensive stats (tools/realism.py: season leaders against real seasons) -----
+# Tackle weight per player on the field: (dl, lb, olb, s, cb) for runs of 2 yards or less,
+# 3-7 yards, and longer plays, times (skill / neutral) ** TACKLE_SKILL_POWER.
+TACKLE_WEIGHTS_SHORT = (0.22, 0.29, 0.30, 0.12, 0.05)
+TACKLE_WEIGHTS_MID = (0.08, 0.28, 0.30, 0.20, 0.10)
+TACKLE_WEIGHTS_LONG = (0.02, 0.16, 0.12, 0.34, 0.30)
+TACKLE_SKILL_POWER = 1.0
+TACKLE_ASSIST_CHANCE = 0.30     # share of tackles made by two players (a solo plus an assist)
+SACK_SKILL_POWER = 1.3          # sack credit among the rushers: (pass rush / neutral) ** power
+INT_SKILL_POWER = 1.5           # interception credit among the defensive backs: (coverage / neutral) ** power
 QB_DESIGNED_RUN_SHARE = 0.06    # default share of carries that are designed QB runs (observed per team overrides)
 BACKUP_RB_ROTATION = 0.40       # chance the sub is the next back down rather than the best one on the bench
 SKILL_SUB_FATIGUE = 62          # fatigue level at which WR/TE starters (and backup RBs) rotate out (was 50)
@@ -246,12 +261,12 @@ RB_BENCH_RECOVERY = 2.0               # bench recovery multiplier for running ba
 RB_SECOND_BACK_CARRY_WEIGHT = 0.45    # a second halfback on the field, next to the lead back's 0.80
 
 # ----- Garbage time (teams take their foot off the gas) -----
-GARBAGE_LEAD = 28           # second-half lead at which the leader goes conservative
-GARBAGE_LEAD_ANY = 38       # lead at which that happens at any point in the game
-BENCH_LEAD = 35             # lead at which starters sit (second half, or 3rd quarter on)
-GARBAGE_CLOCK = 1.30        # plays take this much longer when the leader is milking the clock
-GARBAGE_RUN_SHIFT = 0.35    # added to the leader's run chance
-GARBAGE_BIG_PLAY = 0.5      # big-play chance multiplier for a conservative offense
+GARBAGE_LEAD = 35           # second-half lead at which the leader goes conservative
+GARBAGE_LEAD_ANY = 45       # lead at which that happens at any point in the game
+BENCH_LEAD = 42             # lead at which starters sit (second half, or 3rd quarter on)
+GARBAGE_CLOCK = 1.15        # plays take this much longer when the leader is milking the clock
+GARBAGE_RUN_SHIFT = 0.25    # added to the leader's run chance
+GARBAGE_BIG_PLAY = 0.75      # big-play chance multiplier for a conservative offense
 COMEBACK_LEAD = 14          # trailing by this much in the 4th quarter: pass more, hurry
 KNEEL_SECONDS = 75          # leading inside this many seconds of the 2nd half: victory formation
 

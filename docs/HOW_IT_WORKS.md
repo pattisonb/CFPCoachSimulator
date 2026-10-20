@@ -167,44 +167,109 @@ themselves in the 7-to-14-point range.
 
 ## How realistic is it?
 
-Two checks, both reproducible.
+Three checks, all reproducible.
 
-**Season replay** (`python tools/fetch_results.py` then `python tools/calibrate_season.py 30`): the 333
-games played through week 6 of 2026 between two FBS teams, each simulated 30 times at
+**Season replay** (`python tools/fetch_results.py` then `python tools/calibrate_season.py 30`): the 388
+games played through week 8 of 2026 between two FBS teams, each simulated 30 times at
 the real venue, compared with the real score.
 
 | Measure | Sim | Reference |
 |---|---|---|
-| Straight-up picks correct | 71.5% | Vegas favorites win about 75-78% |
-| Margin error (mean absolute / RMS) | 13.3 / 16.8 | Closing spreads: about 12-13 / 16-17 |
-| Slope of actual on predicted margin | 0.94 | 1.0 means rating gaps are worth exactly what the sim says |
-| Home bias (actual minus predicted, home games) | -0.6 points | 0 |
-| Combined points, actual vs predicted | 52.2 vs 50.4 | |
+| Straight-up picks correct | 71.1% | Vegas favorites win about 75-78% |
+| Margin error (mean absolute / RMS) | 12.9 / 16.7 | Closing spreads: about 12-13 / 16-17 |
+| Slope of actual on predicted margin | 1.01 | 1.0 means rating gaps are worth exactly what the sim says |
+| Home bias (actual minus predicted, home games) | -0.1 points | 0 |
+| Combined points, actual vs predicted | 52.0 vs 52.9 | |
 
-By predicted margin, the real win rates track the sim's probabilities: home teams the sim
-makes 7-to-14-point favorites won 76% (sim 73%), 14-to-21 won 84% (sim 86%), 21 or more
-won 96% (sim 96%). The sim knows nothing about injuries, weather or week-to-week form,
-which is most of the remaining gap to the betting market.
+By predicted margin the real results track the sim all the way out: home teams the sim
+makes 14-to-21-point favorites won by 16.0 (sim 16.9) and 84% of the time (sim 84%), and
+21 or more by 32.5 (sim 29.8), 95% (sim 96%). Before the October 19 tuning (below) the
+biggest mismatches ended about 5 points too close (slope 1.10).
 
 **League benchmarks** (`python tools/calibrate.py league 400`): 400 random FBS matchups with the
 real rosters, per team per game, against the mean of all 137 FBS teams in 2025 read from
-TeamRankings on 2026-10-15:
+TeamRankings on 2026-10-15. Official stats count a sack as a rushing play for the yards it
+lost, so the tool counts the sim's rushing the same way (the engine keeps sacks apart).
 
 | Stat | Sim | FBS 2025 | Stat | Sim | FBS 2025 |
 |---|---|---|---|---|---|
-| Points | 25.4 | 25.9 | First downs | 19.1 | 20.0 |
-| Plays | 68.8 | 68.7 | Third down % | 40.7 | 39.1 |
-| Total yards | 384 | 375 | Red zone trips / % | 3.9 / 83 | 3.5 / 83 |
-| Yards per play | 5.6 | 5.46 | Fourth down tries / % | 1.65 / 63 | 2.1 / 53 |
-| Completion % | 63.6 | 61.7 | Punts / net | 4.9 / 39.7 | 4.1 / 39.5 |
-| Yards per attempt | 7.4 | 7.24 | Field goal tries / % | 1.45 / 80 | 1.59 / 75 |
-| Yards per carry | 4.35 | 4.23 | Penalties | 6.0 | 6.0 |
-| Sacks taken | 2.35 | 2.03 | Giveaways | 1.35 | 1.32 |
+| Points | 26.7 | 25.9 | First downs | 19.0 | 20.0 |
+| Plays | 65.6 | 68.7 | Third down % | 42.5 | 39.0 |
+| Total yards | 361 | 375 | Red zone trips / % | 4.05 / 85 | 3.5 / 83 |
+| Yards per play | 5.5 | 5.46 | Fourth down tries / % | 1.55 / 55 | 2.1 / 53 |
+| Completion % | 63.2 | 61.7 | Punts / net | 4.1 / 39.7 | 4.1 / 39.5 |
+| Yards per attempt | 7.35 | 7.24 | Field goal tries / % | 1.35 / 79 | 1.6 / 75 |
+| Yards per carry (sacks as rushes) | 3.95 | 4.23 | Penalties | 5.9 | 6.0 |
+| Sacks taken | 2.2 | 2.03 | Giveaways | 1.45 | 1.32 |
 
-29 of 31 checks sit within about a tenth of the real number; punts run slightly high and
-fourth-down conversions slightly easy. Average drive start after a kickoff is the own 27
-(real: 27 to 30). Every constant lives in `engine/game_config.py`; change one, rerun the
-two scripts, and compare.
+29 of 31 checks are inside their band; red zone trips run a little high and fourth-down
+tries a little low. Combined points 53.3 (51.7), and the margins of random FBS matchups
+spread 22.9 points (real FBS-vs-FBS games 2023-2025: 21.8-22.2).
+
+**Season stats against real seasons** (`python tools/fetch_leaders.py`, then
+`python tools/realism.py --seeds 3`): whole simulated seasons, bowls and playoff
+included, against the real 2023, 2024 and 2025 seasons from cfbstats.com (the national
+top 100 by season total in each category, and every FBS team's per-game offense; only the
+numbers are kept, in `data/history/fbs_leaders.json`). Sim and real (the three-season
+average) at each rank:
+
+| | #1 | #10 | #25 | #50 |
+|---|---|---|---|---|
+| Passing yards | 4,303 / 4,687 | 3,435 / 3,635 | 3,088 / 3,157 | 2,765 / 2,724 |
+| Rushing yards | 2,133 / 1,997 | 1,487 / 1,362 | 1,183 / 1,155 | 976 / 969 |
+| Receiving yards | 1,568 / 1,497 | 1,239 / 1,159 | 1,040 / 1,018 | 891 / 880 |
+| Tackles | 215 / 163 | 130 / 130 | 113 / 114 | 101 / 103 |
+| Sacks | 15 / 16 | 11 / 10 | 10 / 9 | 8 / 7 |
+| Interceptions | 7 / 7 | 5 / 5 | 4 / 4 | 4 / 4 |
+
+Over the usual marks (sim / real 2023, 2024, 2025): 3,000-yard passers 32 / 34, 30, 37;
+1,000-yard rushers 45 / 45, 51, 44; 1,000-yard receivers 30 / 33, 28, 22; 100-tackle
+players 56 / 59, 51, 64; 5-interception players 17 / 18, 20, 22; 10-sack players 24 /
+17, 15, 17. Teams, best / median / worst per game: points 42.8 / 26.9 / 15.0 against
+44.8 / 27.6 / 13.2; yards 470 / 368 / 259 against 531 / 387 / 238; plays 76.0 / 65.8 / 55.9
+against 78.3 / 66.8 / 56.3. What is left: the very best offenses (about 7.8 yards a play
+in real seasons, 6.7 in the sim) are still not quite as explosive, lead backs carry about
+10% more for the same yards, and the number-one tackler of a season runs high (one
+linebacker on a team that faces many plays). The same tool compares the first 8 weeks of
+a simulated 2026 with the real 2026 box scores: team scoring is about 10% higher than the
+real season so far (2026 is a lower-scoring year than 2023-2025, which the engine is tuned
+to), and real player totals run a few percent low because 7% of real stat lines do not
+match a roster player.
+
+**The October 19, 2026 tuning** that got it there, from the first run of
+`tools/realism.py`:
+
+- **Blowouts.** Real FBS-vs-FBS games end 42 or more apart 8-9% of the time; the sim had
+  2-3%, so good teams never ran up the yardage real ones do. Garbage time came on too early
+  (now a 35-point lead in the second half, 45 any time; was 28 and 38), slowed the clock
+  less (1.15, was 1.30), ran less (0.25, was 0.35) and kept more of the big plays (0.75,
+  was 0.5). Starters sit at 42 (was 35), and on both sides: the trailing team used to keep
+  its starters in against the leader's backups.
+- **Team rating spread** 1.38 to 1.50 (`build_teams.SPREAD_SCALE`) and **tempo** 0.40 to
+  0.60 (`TEMPO_EFFECT`): the gap between the best and worst teams, and between fast and
+  slow ones, closer to real seasons.
+- **Rushing** was about 15% short of real once sacks are counted the official way (the
+  benchmark used to compare the sim's sack-free rushing with official rushing that
+  includes them); `RUSH_BASE_YARDS` 3.4 to 3.75.
+- **Tackles.** Middle and left outside linebackers were never credited with a tackle (a
+  position lookup missed them), so the line had 40% of all tackles. Tackles now go by
+  position group with the middle linebacker usually the team's leader, 30% are assisted
+  (was 20%), and the better tackler at a spot gets more of them
+  (`TACKLE_WEIGHTS_*`, `TACKLE_SKILL_POWER`, `TACKLE_ASSIST_CHANCE`).
+- **Sacks and interceptions** lean toward the best pass rusher and cover man
+  (`SACK_SKILL_POWER` 1.3, `INT_SKILL_POWER` 1.5): five-interception players 14 to 17,
+  real 18-22.
+- **Quarterbacks and backs get hurt more** (`INJURY_POSITION_MULT`: QB 2.2, RB 1.7): real
+  teams start more than one passer and lead back over a season; 3,000-yard passers 38 to 32.
+- **Receivers.** A real-usage target weight is capped at 2 (`TARGET_MULT_MAX`, was up to 3)
+  and targets are a little less steep (`TARGET_WEIGHT_POWER` 4, was 5): the season's top
+  receiver 1,782 to 1,568 yards (real 1,497).
+
+The play-log fingerprint is now 18d9479c93b6e1e5. On the week 7 forward test (the same
+59 games and rosters) the picks went from 61.0% to 67.8% straight up, the margin error
+from 11.8 to 11.2 points (RMS 15.8 to 14.2) and the distance from the closing line from
+7.4 to 4.8 points; against the spread 64.9% to 59.6%. Every constant lives in
+`engine/game_config.py`; change one, rerun the three tools, and compare.
 
 ## Player stat lines against real box scores
 
@@ -1028,8 +1093,8 @@ either half and late in close games, under the college clock rules:
 - **Onside kicks** trailing by one score inside two minutes or two scores inside five
   (11% recovery), and the standard **two-point chart** in the fourth quarter (go for two
   when trailing by 2, 5, 10, 13, 16, 18 or 21 after the touchdown, or leading by 1, 4, 5 or 12).
-- **Garbage time.** Up 28 in the second half (38 any time): conservative play, slow pace,
-  starters sit at 35.
+- **Garbage time.** Up 35 in the second half (45 any time): conservative play, slower pace;
+  at 42 both teams' starters sit (see "The October 19, 2026 tuning").
 
 `tools/fetch_linescores.py` pulls quarter scores for every FBS game 2014-2025 and
 `tools/calibrate_late.py` compares how games end. Against 8,603 real regular-season games:

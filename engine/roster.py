@@ -45,7 +45,7 @@ class Player:
         self.injured = bool(data.get("injured"))
         self.injury = None
         self.stats = dict(data.get("stats") or {})   # own copy: the source roster is shared between games
-        self.target_mult = data.get("target_mult", 1.0)  # real 2026 share of his team's catches against his ratings' share
+        self.target_mult = min(cfg.TARGET_MULT_MAX, data.get("target_mult", 1.0))  # real 2026 share of his team's catches against his ratings' share
 
         # Skill-specific
         self.passing = data.get("passing")
