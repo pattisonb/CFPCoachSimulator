@@ -439,6 +439,57 @@ scores and polls (a few minutes) and rebuilds; `python realdata.py --fetch` does
 from the command line. The page never simulates anything; the sim sections are "Sim a
 game" and "Sim a season".
 
+### How the real box scores are read
+
+`realdata.import_real_boxes` reads every real game's NCAA box score twice: first every
+game's player lines, then the season stats and saved box scores from them. What it does
+with the gaps and quirks in the NCAA feed (fixed after the overnight review, week 8):
+
+- **Names.** A box score row is matched to a roster player by full name with accents,
+  apostrophes, suffixes and quoted nicknames ignored (Ja'Bari Odoemenem, Ethan "Boobie"
+  Feaster, a nickname such as "JayR" also tried as the first name). Letters the feed lost
+  match any letter (it spells Öhrström with a replacement mark for each Ö and ö). Then
+  jersey number and last name; then a last name only one player has, if the first name
+  fits ("Cam" for Cameron, "BJ"
+  for Boubacar, or a first name the feed dropped: it lists Kenny Soares Jr. as "Jr. Soares").
+- **Side of the ball.** Each row is matched on its own, against the side of the ball its
+  stat belongs to (passing, rushing and receiving: offense; defense; kicking and punting:
+  specialists; returns: anyone). NCAA stat crews give two players who share a number one
+  name, so a name on the wrong side gives way to a same-number, same-last-name player on
+  the right side: USC's #0 receiver is listed as CB Jontez Williams, and his 18 catches now
+  go to WR Zacharyus Williams. Florida's Duke and Kanye Clark (#20) and West Virginia's
+  Latimers (#1) were the same case. A name on the wrong side with no such teammate stays
+  (a punter's fake-punt pass, a corner's jet sweep).
+- **Players missing from the rosters** get one position for the season, set from all their
+  games: quarterback at 5 or more passes (Navy's Jackson Gutierrez, NIU's Taron Dickens and
+  Utah State's Grady Brosterhous were filed as backs), back or receiver by carries against
+  catches, defenders by jersey (60 and up a lineman, 40-59 a linebacker, under 40 a safety).
+  Before, the first stat seen in each game set it, so 46 players were split across two
+  positions; now none are.
+- **Kicking.** The kicking table lists only kickers who tried a field goal (all 687 lines
+  have one), so a team without a kicker line tried none: its field goals are a true 0. Its
+  extra points are not listed anywhere, so they are left out (the team line has no PAT keys
+  and `events.pats_listed` is 0; 220 team-games through week 8). NCAA lists no extra-point
+  attempts at all (`patAttempted` is 0 on every line), and a missed kick cannot be told from
+  a failed two-point try in the score, so real PAT attempts count each make as one attempt.
+  Real PAT percentage cannot be measured from this feed; compare PATs made per listed game.
+- **Net punting** is gross less the opponent's punt return yards, less 20 yards on the
+  expected 7% of punts that are touchbacks (`PUNT_TOUCHBACK_RATE`; box scores list no
+  touchbacks). Without that charge, a punter whose punts were never returned showed net
+  equal to gross. League net reads 39.3 on 43.3 gross (the official FBS net is about 39.5).
+  Team lines now carry "Punt Net Yards" too, as the sim's do.
+- **Fumbles.** "Fumbles" is every fumble on both sides (the engine counts each fumble before
+  the recovery, as NCAA does); fumbles lost are `events.fumbles_lost` on both sides. Real
+  1.11 fumbles and 0.52 lost a team-game.
+
+Through week 8: 25,610 player lines, 92.8% matched (was 92.7%, with the cross-unit jersey
+matches counted as right); 138 notable lines unmatched (was 142), all players missing from
+the rosters. Real field goals: 1,111 tried, 927 made (83.4%), 1.43 a team-game; 1,513 extra
+points made in the 556 team-games that list them. `tests/test_realdata.py` checks the
+matching rules. Re-tuned from the new import (`tools/tune_from_real.py`): depth charts
+changed at Miami, Oregon State, USC, Utah State and UTSA, and USC's target weights now
+include Zacharyus Williams and Ethan Feaster. Play-log fingerprint 74752a0512ab4386.
+
 ## Season mode (its own page)
 
 Open **/season** (or hit **Sim Season** on the matchup page). Pick your team and a mode,
