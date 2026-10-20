@@ -244,7 +244,7 @@ TACKLE_WEIGHTS_MID = (0.065, 0.28, 0.30, 0.20, 0.10)     # DL was 0.08
 TACKLE_WEIGHTS_LONG = (0.02, 0.16, 0.12, 0.34, 0.30)
 TACKLE_SKILL_POWER = 0.7
 TACKLE_ASSIST_CHANCE = 0.33     # share of tackles made by two players; both get an assist (NCAA scoring),
-                                # so assisted / solo = 2 x 0.31 / 0.69 = 0.9 (real FBS 0.91)
+                                # so assisted / solo is about 1.0 (real 2026 box scores 0.94)
 NO_TACKLE_CHANCE = 0.16        # a gain of 4+ yards that ends out of bounds: nobody is credited
 COVERAGE_TACKLE_WEIGHTS = (0.3, 1.0, 0.4)   # who makes the tackle on a returned kick: by depth at the
                                 # position (starter, second, the rest); real coverage units are mostly backups
@@ -272,7 +272,7 @@ RB_LEAD_SUB_FATIGUE = 78
 RB_LEAD_RETURN_FATIGUE = 40
 RB_LEAD_OUT_CHANCE = 0.14             # committee: per-snap chance the fresh lead back comes out for a series (workhorse 0)
 RB_LEAD_OUT_CURVE = 2                 # series rotation fades as (1 - feature) ** this
-RB_LEAD_RETURN_CHANCE = (0.07, 1.0)   # committee .. workhorse, per snap once rested
+RB_LEAD_RETURN_CHANCE = (0.07, 0.6)   # committee .. workhorse, per snap once rested (workhorse was 1.0: lead backs took 42% of carries, real 38%)
 RB_LEAD_GAP_RANGE = (-4.0, 24.0)      # lead-minus-next-back carrier rating: committee .. workhorse
 RB_LEAD_CURVE = 4                     # return chance rises as feature ** this
 RB_BENCH_RECOVERY = 2.0               # bench recovery multiplier for running backs

@@ -388,6 +388,16 @@ favourite won 72.4% before, 73.6% after; Brier 0.187, 0.182; `calibrate_season.p
 but play 5+ sim games rose from 170 to 188, because coverage tackles give backups a stat
 line. Play-log fingerprint 5368e4b5cb876edc.
 
+**Tested and left out: more fourth-down tries.** The sim goes for it 1.5 times a game
+(real 2.1) and tries 1.4 field goals (real 1.6). Multiplying the go-for-it odds by 1.8
+short of the opponent's 40 or on fourth-and-1 or 2, and trying 60% of 50+ yard field goals
+instead of 45%, gave 1.7 tries a game at a 52% conversion rate, points +0.7 a game in
+`calibrate.py league 400` (+0.3 over full seasons), and every benchmark in band. It cost
+picks in both checks: 20 seasons through week 8, favourite won 73.6% to 71.4% and Brier
+0.182 to 0.187; `calibrate_season.py 30` 74.0% to 71.9%. More fourth-down tries add variance,
+which helps underdogs. (A version applying the multiplier everywhere took the tries from
+field-goal range: 1.8 tries but 1.25 field goals.)
+
 ## Player stat lines against real box scores
 
 `tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed
@@ -1088,6 +1098,14 @@ one because the sim hands non-quarterbacks two or three more carries a game than
 teams do, and the sim still does not know which real teams ride one back (correlation
 0.10): the feature score comes from the roster, not from the observed shares that
 `tools/derive_tendencies.py` already computes per team.
+
+Later, with the depth-chart fix and the carrier running against the defense's pursuit, the
+lead backs ran hot over full seasons (54 thousand-yard rushers against 44-51 real, leaders
+8% above real at ranks 1-50). The workhorse end of the return chance went from 1.0 to 0.6 a
+snap (`RB_LEAD_RETURN_CHANCE` (0.07, 0.6)): over 4 full seasons 47 thousand-yard rushers and
+the rushing leaders 5% off; game picks held (20 seasons through week 8: favourite won 73.6%
+to 74.0%, Brier 0.182 both; real-versus-sim wins correlation 0.62 to 0.66;
+`calibrate_season.py 30` 74.5%, MAE 12.4, slope 1.02).
 
 Weekly refresh, in order: `python tools/fetch_results.py`, `python tools/fetch_boxscores.py`,
 `python tools/derive_tendencies.py`, `python build_teams.py`, then the three calibration scripts.
