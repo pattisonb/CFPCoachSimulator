@@ -4,6 +4,7 @@ written report (REPORT.md) and the per-team realism scores if they exist.
 
 Usage (from the project root):
     python tools/realism_pdf.py [--dir data/analysis/overnight] [--scores scores.json] [--out report.pdf]
+                                [--fullseason fullseason.json] [--report-title "Where things stand"]
 """
 from __future__ import annotations
 
@@ -74,7 +75,7 @@ def scatter(ax, pts, title, xlabel, ylabel, label_top=0):
             ax.annotate(p[3], (p[0], p[1]), fontsize=6.5, color=MUTED, xytext=(3, 3), textcoords="offset points")
 
 
-def title_page(pdf, teams, league, scores):
+def title_page(pdf, teams, league, scores, contents):
     fig = plt.figure(figsize=PAGE)
     fig.text(0.08, 0.90, "How real is the sim?", fontsize=26, fontweight="bold", color=INK)
     fig.text(0.08, 0.865, f"{league['sim_seasons']} simulated 2026 seasons against the real season through week {league['through_week']}, all {len(teams)} FBS teams",
@@ -106,15 +107,11 @@ def title_page(pdf, teams, league, scores):
         y = 0.76 - (i // 2) * 0.135
         fig.text(x, y, big, fontsize=28, fontweight="bold", color="#c8102e")
         fig.text(x, y - 0.045, small, fontsize=9.5, color=INK, va="top")
-    contents = ["1. Wins and game odds", "2. Team offense and defense per game", "3. Players: real vs simulated totals",
-                "4. AP poll and the league week by week", "5. Realism score per team (from the analysts)",
-                "6. The analysts' report: engine changes, AP poll, morale, ratings, tendencies, bugs",
-                "7. League, AP and bug analysts' notes"]
     fig.text(0.08, 0.36, "In this report", fontsize=12, fontweight="bold", color=INK)
     for i, c in enumerate(contents):
-        fig.text(0.08, 0.33 - i * 0.022, c, fontsize=9.5, color=INK)
+        fig.text(0.08, 0.33 - i * 0.022, f"{i + 1}. {c}", fontsize=9.5, color=INK)
     fig.text(0.08, 0.16, "\n".join(textwrap.wrap(
-        "Every chart compares the real 2026 season (box scores and AP polls through week 8) with the average of the simulated seasons, "
+        f"The week-by-week charts compare the real 2026 season (box scores and AP polls through week {league['through_week']}) with the average of the simulated seasons, "
         "which play the same schedule from week 1. Points on a scatter are teams (red Power 4, blue Group of 5); the dashed line is a "
         "perfect match. 'Avg gap' is sim minus real, 'avg miss' the average distance. Rushing counts sacks as rushes, as official stats do.", 100)),
         fontsize=8.5, color=MUTED, va="top")
@@ -323,6 +320,86 @@ def scores_page(pdf, teams, scores):
     plt.close(fig)
 
 
+RANK_LABELS = {"pass_yards": "Passing yards", "pass_att": "Pass attempts", "rush_yards": "Rushing yards", "rush_att": "Carries",
+               "rec_yards": "Receiving yards", "receptions": "Receptions", "tackles": "Tackles", "sacks": "Sacks", "interceptions": "Interceptions"}
+TEAM_KEYS = [("ppg", "Points per game"), ("ypg", "Yards per game"), ("plays", "Plays per game"), ("ypp", "Yards per play"),
+             ("pass_ypg", "Passing yards per game"), ("rush_ypg", "Rushing yards per game")]
+REAL_TACKLE_SHARE = {"DL": 0.20, "LB": 0.40, "CB": 0.18, "S": 0.22}   # approximate real FBS split
+
+
+def fullseason_pages(pdf, fs: dict):
+    """Full simulated seasons (bowls and playoff included) against real 2023-2025 FBS seasons
+    (tools/realism.py --json): national leaders by rank, then team per-game spreads and marks."""
+    years = f"{fs['years'][0]}-{fs['years'][-1]}"
+    ranks = fs["ranks"]
+    fig, axes = plt.subplots(3, 3, figsize=PAGE)
+    fig.suptitle(f"End of season: national leaders at each rank,\n{fs['seasons']} simulated seasons vs real {years}", fontsize=13, fontweight="bold", color=INK)
+    for ax, (key, label) in zip(axes.flat, RANK_LABELS.items()):
+        d = fs["leaders"].get(key)
+        if not d:
+            ax.set_visible(False)
+            continue
+        ax.plot(ranks, d["real"], color=REAL, marker="o", markersize=3.5, linewidth=1.6, label=f"real {years}")
+        ax.plot(ranks, d["sim"], color=SIM, marker="o", markersize=3.5, linewidth=1.6, label="simulated")
+        ax.set_xscale("log")
+        ax.set_xticks(ranks)
+        ax.set_xticklabels([f"#{r}" for r in ranks], fontsize=7)
+        ax.minorticks_off()
+        off = 100 * fs["area_off"].get(key, 0)
+        ax.set_title(f"{label}  (off {off:.0f}%)", fontsize=9.5)
+        ax.set_ylim(0, max(d["real"][0], d["sim"][0]) * 1.12)
+    axes.flat[0].legend(loc="upper right", fontsize=7, frameon=False)
+    fig.text(0.5, 0.015, "'Off' is the average gap between the simulated and real value at ranks 1-50. Real values average the 2023, 2024 and 2025 FBS leaders.",
+             ha="center", fontsize=8, color=MUTED)
+    fig.tight_layout(rect=(0, 0.03, 1, 0.95), pad=1.6)
+    pdf.savefig(fig)
+    plt.close(fig)
+
+    fig = plt.figure(figsize=PAGE)
+    fig.suptitle("End of season: team averages from best to worst,\nplayers over the usual marks, and who makes the tackles", fontsize=13, fontweight="bold", color=INK)
+    gs = fig.add_gridspec(4, 3, height_ratios=[1, 1, 1.15, 0.9], hspace=0.75, wspace=0.35, top=0.88, bottom=0.05)
+    spots = fs["team_ranks"]
+    for i, (key, label) in enumerate(TEAM_KEYS):
+        ax = fig.add_subplot(gs[i // 3, i % 3])
+        d = fs["teams"].get(key)
+        if not d:
+            continue
+        x = list(range(len(spots)))
+        ax.plot(x, d["real"], color=REAL, marker="o", markersize=3.5, linewidth=1.6, label="real")
+        ax.plot(x, d["sim"], color=SIM, marker="o", markersize=3.5, linewidth=1.6, label="sim")
+        ax.set_xticks(x)
+        ax.set_xticklabels(spots, fontsize=6.5, rotation=30)
+        fmt = "{:.2f}" if key == "ypp" else "{:.1f}"
+        ax.set_title(f"{label}\nmean {fmt.format(d['sim_mean'])} sim, {fmt.format(d['real_mean'])} real", fontsize=8.5)
+        if i == 0:
+            ax.legend(fontsize=7, frameon=False)
+    ax = fig.add_subplot(gs[2, :])
+    marks = fs["marks"]
+    short = {"pass_yards": "passing yds", "rush_yards": "rushing yds", "rec_yards": "receiving yds", "sacks": "sacks", "tackles": "tackles", "interceptions": "INTs"}
+    xs = list(range(len(marks)))
+    ax.bar([x - 0.2 for x in xs], [st.mean(m["real"]) for m in marks], width=0.4, color=REAL, label=f"real {years} (average)")
+    ax.bar([x + 0.2 for x in xs], [m["sim"] for m in marks], width=0.4, color=SIM, label="simulated")
+    for x, m in zip(xs, marks):
+        ax.plot([x - 0.2] * len(m["real"]), m["real"], linestyle="none", marker="_", color="#9aa3b5", markersize=9)
+    ax.set_xticks(xs)
+    ax.set_xticklabels([f"{m['mark']:,}+\n{short.get(m['stat'], m['stat'])}" for m in marks], fontsize=8)
+    ax.set_title("Players over a season mark (grey ticks: each real season)", fontsize=10)
+    ax.legend(fontsize=7.5, frameon=False)
+    ax = fig.add_subplot(gs[3, :])
+    sh = fs.get("tackle_shares") or {}
+    groups = [g for g in REAL_TACKLE_SHARE if g in sh]
+    xs = list(range(len(groups)))
+    ax.bar([x - 0.2 for x in xs], [100 * REAL_TACKLE_SHARE[g] for g in groups], width=0.4, color=REAL, label="real FBS (approximate)")
+    ax.bar([x + 0.2 for x in xs], [100 * sh[g] for g in groups], width=0.4, color=SIM, label="simulated")
+    ax.set_xticks(xs)
+    ax.set_xticklabels(groups)
+    ax.set_ylabel("% of tackles")
+    ax.set_title("Who makes the tackles", fontsize=10)
+    ax.legend(fontsize=7.5, frameon=False)
+    pdf.savefig(fig)
+    plt.close(fig)
+
+
 def text_pages(pdf, md: str, heading: str):
     """Render markdown as text pages: headings bold, tables and code in monospace."""
     lines = []
@@ -377,21 +454,37 @@ def main() -> None:
     ap.add_argument("--dir", default="data/analysis/overnight")
     ap.add_argument("--scores", default=None, help="JSON list of {team, score} (the workflow's realism scores)")
     ap.add_argument("--out", default=None)
+    ap.add_argument("--fullseason", default=None, help="tools/realism.py --json output: adds the end-of-season pages")
+    ap.add_argument("--report-title", default="The analysts' report", help="heading for REPORT.md's pages")
     a = ap.parse_args()
     d = ROOT / a.dir
     teams, league = load(d)
     scores = json.loads(Path(a.scores).read_text(encoding="utf-8")) if a.scores and Path(a.scores).exists() else None
     out = Path(a.out) if a.out else d / "Sim realism report.pdf"
+    fs = json.loads(Path(a.fullseason).read_text(encoding="utf-8")) if a.fullseason else None
+    rep = d / "REPORT.md"
+    notes = [n for n in ("_league.md", "_ap.md", "_bugs.md") if (d / "findings" / n).exists()]
+    contents = ["Wins and game odds", "Team offense and defense per game", "Players: real vs simulated totals",
+                "AP poll and the league week by week"]
+    if fs:
+        contents += ["End of season: national leaders vs real 2023-2025", "End of season: team averages, season marks, tackles"]
+    if scores:
+        contents.append("Realism score per team (from the analysts)")
+    if rep.exists():
+        contents.append(a.report_title)
+    if notes:
+        contents.append("League, AP and bug analysts' notes")
     with PdfPages(out) as pdf:
-        title_page(pdf, teams, league, scores)
+        title_page(pdf, teams, league, scores, contents)
         records_and_games(pdf, teams)
         team_stats(pdf, teams)
         players(pdf, teams)
         ap_and_league(pdf, teams, league)
+        if fs:
+            fullseason_pages(pdf, fs)
         scores_page(pdf, teams, scores)
-        rep = d / "REPORT.md"
         if rep.exists():
-            text_pages(pdf, rep.read_text(encoding="utf-8"), "The analysts' report")
+            text_pages(pdf, rep.read_text(encoding="utf-8"), a.report_title)
         for name, title in (("_league.md", "League analyst"), ("_ap.md", "AP poll analyst"), ("_bugs.md", "Bug sweep")):
             f = d / "findings" / name
             if f.exists():

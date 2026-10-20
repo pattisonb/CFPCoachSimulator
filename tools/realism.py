@@ -7,6 +7,7 @@ Usage (from the project root):
     python tools/realism.py              # 2 simulated seasons
     python tools/realism.py --seeds 3    # more seasons, steadier numbers
     python tools/realism.py --no-2026    # skip the week-8 comparison
+    python tools/realism.py --json out.json   # also write the numbers (for tools/realism_pdf.py --fullseason)
 Prints the leaders at ranks 1-100 in each category, the players over the usual marks, the
 net punting leaders, team scoring and offense from best to worst with tempo (plays per
 game) and efficiency (yards per play) split out, and a one-line score per area (mean
@@ -124,7 +125,11 @@ def simulate(seeds: list[int], snapshot_week: int | None) -> tuple[list[dict], l
     return ends, snaps
 
 
-def report(ends: list[dict], snaps: list[dict], teams: dict) -> str:
+def report(ends: list[dict], snaps: list[dict], teams: dict, data: dict | None = None) -> str:
+    """The text report; with `data`, also fills it with the same numbers for charts (--json)."""
+    data = {} if data is None else data
+    data.update({"seasons": len(ends), "years": list(YEARS), "ranks": list(RANKS), "team_ranks": list(TEAM_RANKS),
+                 "leaders": {}, "marks": [], "teams": {}, "tackle_shares": {}, "area_off": {}})
     hist = json.loads(HISTORY.read_text(encoding="utf-8"))
     sp = [sim_players(e, teams) for e in ends]
     stm = [sim_teams(e, teams) for e in ends]
@@ -141,6 +146,8 @@ def report(ends: list[dict], snaps: list[dict], teams: dict) -> str:
             if r <= 50:
                 errs.append(abs(gap))
             cells.append(f"#{r} {sim:.0f}/{real:.0f} {100 * gap:+.0f}%")
+            data["leaders"].setdefault(name, {"label": label, "sim": [], "real": []})
+            data["leaders"][name]["sim"].append(sim); data["leaders"][name]["real"].append(real)
         area_err[name] = st.mean(errs)
         lines.append(f"  {label:<16} " + " | ".join(cells) + f"   [off {100 * area_err[name]:.0f}%]")
     lines.append("  Players over a mark (sim / real 2023, 2024, 2025):")
@@ -149,6 +156,7 @@ def report(ends: list[dict], snaps: list[dict], teams: dict) -> str:
         sim = st.mean(sum(1 for v in x[name] if v >= mark) for x in sp)
         reals = [sum(1 for v in real_values(hist, y, cat) if v >= mark) for y in YEARS]
         lines.append(f"    {name} >= {mark}: {sim:.0f} / {', '.join(map(str, reals))}")
+        data["marks"].append({"stat": name, "mark": mark, "sim": sim, "real": reals})
     shares: dict = {}
     for e in ends:
         for slug, t in e.items():
@@ -158,6 +166,7 @@ def report(ends: list[dict], snaps: list[dict], teams: dict) -> str:
                 grp = {"MLB": "LB", "ROLB": "LB", "LOLB": "LB"}.get(p["position"], p["position"])
                 shares[grp] = shares.get(grp, 0) + p["stats"].get("solo_tackles", 0) + p["stats"].get("assisted_tackles", 0)
     tot = sum(shares.values()) or 1
+    data["tackle_shares"] = {k: v / tot for k, v in shares.items() if v}
     lines.append("  Tackles by position (real FBS is roughly DL 20%, LB 40%, DB 40%): "
                  + ", ".join(f"{k} {100 * v / tot:.0f}%" for k, v in sorted(shares.items(), key=lambda kv: -kv[1]) if v))
     punters = [sorted(((p["stats"].get("punt_net_yards", 0) / p["stats"]["punts"], p["stats"]["punt_yards"] / p["stats"]["punts"])
@@ -175,10 +184,12 @@ def report(ends: list[dict], snaps: list[dict], teams: dict) -> str:
         smean = st.mean(st.mean(t[key]) for t in stm)
         rmean = st.mean(st.mean(rteams[y][key]) for y in YEARS)
         area_err["team_" + key] = st.mean(abs(sim[k] / real[k] - 1) for k in TEAM_RANKS)
+        data["teams"][key] = {"sim": [sim[k] for k in TEAM_RANKS], "real": [real[k] for k in TEAM_RANKS], "sim_mean": smean, "real_mean": rmean}
         fmt = "{:.2f}" if key == "ypp" else "{:.1f}"
         lines.append(f"    {key:<9} sim  " + " / ".join(fmt.format(sim[k]) for k in TEAM_RANKS) + f"; {fmt.format(smean)}")
         lines.append(f"    {'':<9} real " + " / ".join(fmt.format(real[k]) for k in TEAM_RANKS) + f"; {fmt.format(rmean)}"
                      + f"   [off {100 * area_err['team_' + key]:.0f}%]")
+    data["area_off"] = dict(area_err)
     lines.append("  Score (mean |gap| at ranks 1-50, teams over all spots): "
                  + ", ".join(f"{k} {100 * v:.0f}%" for k, v in area_err.items()))
     if snaps and REAL_2026.exists():
@@ -209,8 +220,12 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--seeds", type=int, default=2)
     ap.add_argument("--no-2026", action="store_true")
+    ap.add_argument("--json", default=None, help="also write the numbers to this file (tools/realism_pdf.py --fullseason charts them)")
     a = ap.parse_args()
     import season
     teams = season.load_teams()
     ends, snaps = simulate([101 + 101 * i for i in range(a.seeds)], None if a.no_2026 else 8)
-    print(report(ends, snaps, teams))
+    data: dict = {}
+    print(report(ends, snaps, teams, data))
+    if a.json:
+        Path(a.json).write_text(json.dumps(data, indent=1), encoding="utf-8")
