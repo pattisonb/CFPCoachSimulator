@@ -394,6 +394,9 @@ def should_go_for_it(distance, yardline, seconds_remaining=cfg.HALF_SECONDS, tra
     else:
         table = [(1, 0.50 if late else 0.18), (3, 0.15 if late else 0.02), (99, 0.0)]
     chance = next(p for limit, p in table if distance <= limit)
+    if not trailing_late and (yardline < 60 or distance <= 2):
+        # more tries around midfield and on short yardage; in field-goal range they kick
+        chance = min(0.95, chance * cfg.FOURTH_DOWN_AGGRESSION)
     chance *= 1.0 + (go_rate - 50) / 100 * cfg.FOURTH_DOWN_TENDENCY_EFFECT
     if lead >= cfg.BENCH_LEAD:
         chance = 0.0

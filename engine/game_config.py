@@ -188,7 +188,7 @@ FUMBLE_RETURN_TD_CHANCE = 0.05  # of fumbles lost beyond midfield
 
 # ----- Kicking -----
 FG_MAX_DISTANCE = 52            # yards, average kicker; + (kick_power - 50) / 8
-FG_LONG_ATTEMPT_CHANCE = 0.45   # chance to attempt (rather than punt) from 50+ yards
+FG_LONG_ATTEMPT_CHANCE = 0.6    # chance to attempt (rather than punt) from 50+ yards (was 0.45: 1.4 tries a game, real 1.6)
 FG_MAKE = [(30, 0.95), (39, 0.86), (46, 0.74), (52, 0.58), (999, 0.40)]   # average kicker, by distance
 FG_PER_ACCURACY_POINT = 0.004   # make chance per point of kick accuracy above neutral
 TRAILING_LATE_SECONDS = 420     # trailing in the 2nd half with this much left: go for it
@@ -220,6 +220,8 @@ PASS_LEAN = 0.016               # taken off every run chance: teams passed 1.6 p
 TEMPO_EFFECT = 0.80             # clock multiplier range for tempo 0..100 (was 0.60: plays per game varied 3.6 across teams, real
                                 # about 4.4 once the 7-game sampling noise is taken out)
 FOURTH_DOWN_TENDENCY_EFFECT = 0.8   # go-for-it odds scale for the fourth_down_go_rate tendency
+FOURTH_DOWN_AGGRESSION = 1.8       # x the go-for-it odds short of the opponent 40 or on 4th and 1-2 (not trailing late):
+                                   # the tables gave 1.5 tries a game, real 2.1
 PLAY_CALLING_EFFECT = 0.5       # chance the better play caller wins the guessing game
 RUN_CHANCE_MIN, RUN_CHANCE_MAX = 0.08, 0.92
 RUN_CHANCE_MAX_OPTION = 0.96     # a team that almost never throws (pass_rate 5 or lower) runs up to this often

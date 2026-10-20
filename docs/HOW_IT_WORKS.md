@@ -388,7 +388,7 @@ favourite won 72.4% before, 73.6% after; Brier 0.187, 0.182; `calibrate_season.p
 but play 5+ sim games rose from 170 to 188, because coverage tackles give backups a stat
 line. Play-log fingerprint 5368e4b5cb876edc.
 
-**Tested and left out: more fourth-down tries.** The sim goes for it 1.5 times a game
+**More fourth-down tries (left out at first, kept on a 40-season retest).** The sim goes for it 1.5 times a game
 (real 2.1) and tries 1.4 field goals (real 1.6). Multiplying the go-for-it odds by 1.8
 short of the opponent's 40 or on fourth-and-1 or 2, and trying 60% of 50+ yard field goals
 instead of 45%, gave 1.7 tries a game at a 52% conversion rate, points +0.7 a game in
@@ -397,6 +397,14 @@ picks in both checks: 20 seasons through week 8, favourite won 73.6% to 71.4% an
 0.182 to 0.187; `calibrate_season.py 30` 74.0% to 71.9%. More fourth-down tries add variance,
 which helps underdogs. (A version applying the multiplier everywhere took the tries from
 field-goal range: 1.8 tries but 1.25 field goals.)
+
+Retested later on 40 seasons, once the run-to-run noise had been measured (about +-0.004
+Brier and 2-3 points of favourite-won rate on 20 seasons) and on top of the margin-corrected
+fourth-down tendencies: favourite won 75.0% to 75.9%, Brier 0.173 to 0.171, wins correlation
+0.656 to 0.667; `calibrate_season.py 30` 71.9% both, MAE 12.7 to 12.8. League (400 games):
+1.6 tries a game at 53% (real 2.1 at 53%), combined points 52.0 (real 51.7), field goals 1.4.
+So it is in (`FOURTH_DOWN_AGGRESSION` 1.8, `FG_LONG_ATTEMPT_CHANCE` 0.6). Play-log fingerprint
+4702d67fb4482f2d.
 
 **Tested and left out: fewer sacks.** Full seasons have 24-27 ten-sack players against
 15-17 real, and every rank of the sack leaderboard runs 10-19% high (team sacks 2.25 a game
