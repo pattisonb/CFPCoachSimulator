@@ -346,8 +346,9 @@ def _ballot_poll(state: dict, prev_full: list[dict], games: list[dict], rec_t: d
     points and first-place votes are the voters' own. The ballots are kept in the season;
     the first simulated week seeds them from the last poll's vote points. `pinned` (the
     champion, then the runner-up) go first and second on every ballot for the final poll."""
-    ballots = state.get("ap_ballots") or polls.seed_ballots(prev_full, seed=(state.get("seed") or 0) * 1000 + week)
-    ballots, _, _ = polls.next_ballots(ballots, prev_full, games, rec_t, tiers, polls.load_ballot_params())
+    seed = (state.get("seed") or 0) * 1000 + week
+    ballots = state.get("ap_ballots") or polls.seed_ballots(prev_full, seed=seed)
+    ballots, _, _ = polls.next_ballots(ballots, prev_full, games, rec_t, tiers, polls.load_ballot_params(), seed=seed)
     top = [t for t in pinned if t]
     if top:
         ballots = [(top + [t for t in b if t not in top])[:25] for b in ballots]

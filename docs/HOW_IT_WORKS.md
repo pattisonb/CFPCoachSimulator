@@ -808,6 +808,60 @@ results through the same ballots with the champion first and the runner-up secon
 every ballot. One difference from real polls: late in a simulated season the voters
 agree more, so 3 to 5 teams receive votes outside the Top 25 where real polls list 10 to 15.
 
+**How the poll behaves over a season (October 20 review).** Ten simulated 2026 seasons
+against the real 2026 poll flagged three behaviours: narrow wins were never punished, teams
+ranked 16-25 always fell out after a loss, and teams with three or more losses stayed
+ranked. `python tools/backtest_ballots.py season` now measures each of them on the real
+2014-2025 polls and on the model rolled through the same seasons (seeded voters, real
+results, never reset), so one season's small samples do not decide it:
+
+| 2014-2025 season replay | Real | Model before | Model now |
+|---|---|---|---|
+| Ranked team beats an unranked FBS team by 7 or fewer: share that dropped | 24% | 5% | 8% |
+| Ranked 16-25 loses to a ranked team: share out of the poll | 63% | 63% | 66% |
+| Ranked 21-25 loses: share out | 95% | 100% | 97% |
+| Teams with 3+ losses in the week-8 poll, per season | 0.08 | 1.25 | 0.83 |
+| Teams with 3+ losses ranked, weeks 6-12, per week | 0.98 | 2.35 | 1.75 |
+| Ranked loser, mean drop (spots, out = 30) | 7.56 | 7.18 | 7.27 |
+| Top-10 loser, mean drop | 6.59 | 6.15 | 6.32 |
+| No. 1's share of first-place votes | 0.82 | 0.74 | 0.74 |
+
+- **16-25 teams after a loss** were right all along over twelve seasons; the 2026 figure
+  (4 of 9 stayed) is a small sample.
+- **Three-loss teams** stayed because 5-1 and 6-0 teams outside the poll could not climb
+  past a preseason-ranked 3-3 team (2015 Tennessee, 2022 Texas A&M and Notre Dame, and
+  others). A loss now costs a little more against a weak opponent (`loss_bad_pow` 1.19: the
+  bad-loss term is `loss_bad` x (1 - opponent's value) ** 1.19) and each loss drags a team
+  a little more (`loss_edge` 0.014 to 0.023).
+- **Narrow wins** barely moved. A narrow-win penalty (`close_win`, scaled by how narrow the
+  win was and by the winner's own value) does make narrow winners drop (12% at 0.15), but
+  it makes the one-week-ahead forecast worse every time: most real narrow winners still
+  move up (mean +0.7 spots), and the ones voters drop are dropped for something the score
+  does not show. The fit keeps it near zero.
+- **Unanimous No. 1** (the review's optional item): over 2014-2025 the model's No. 1 is
+  already less unanimous than real voters (0.74 against 0.82 of first-place votes), so the
+  per-voter wobble (`voter_noise`) stays off.
+
+The new terms live in `polls.BALLOT_PARAMS` (all off by default) and the fitted values in
+`data/poll_params.json` under "ballots". `python tools/backtest_ballots.py fit` scores the
+season replay plus 0.05 x the gap to the real behaviours above (`BEHAVIOURS`), with the
+one-week-ahead error held within 0.01 of the earlier fit (train 1.013) and the season replay
+no worse than it was (3.114); it starts from the best of a few starting points
+(`FIT_STARTS`), since a coordinate search cannot leave a switched-off term. Result, with
+2024-2025 held out:
+
+| | Before | Now |
+|---|---|---|
+| One week ahead, 2014-2023 (fitted) | 1.013 | 1.021 |
+| One week ahead, 2024-2025 (held out) | 0.985 | 0.963 |
+| Season replay, 2014-2023 | 3.114 | 2.965 |
+| Season replay, 2024-2025 | 2.841 | 2.699 |
+| Behaviour gap, 2024-2025 (units) | 6.30 | 4.29 |
+
+On 20 simulated 2026 seasons (weeks 1-8): teams with 3+ losses in the week-8 poll 1.10 to
+0.80 a season, top-10 loser drop 6.38 to 6.59 spots (real 6.7), ranked loser drop 7.19 to
+7.29 (real 7.76); narrow winners still drop 5% of the time (real 2026: 40%).
+
 ### The bracket rules (2026)
 
 From NCAA.com's "How the College Football Playoff works" (Aug 27, 2026) and the CFP

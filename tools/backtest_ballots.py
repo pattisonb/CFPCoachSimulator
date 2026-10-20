@@ -257,33 +257,244 @@ def report(params_next: dict, params_ballots: dict) -> None:
         print(f"{label:<22} {len(fr):>4} weeks | vote-share model MAE {a[0]:.3f}, {a[1]:.2f}/25 | ballot model MAE {b[0]:.3f}, {b[1]:.2f}/25")
 
 
+ONE_WEEK_SLACK = 0.01     # the fit may give up this much one-week-ahead error (train), no more
+REPLAY_SEEDS = (0, 1)     # voter seeds the season replay is averaged over (one seed's luck is not a fit)
+FIXED = {"voter_noise"}   # left out of the fit: random by design (and the model's No. 1 is already less unanimous than real)
+# Where the fit starts the ballot-only terms (BALLOT_PARAMS has them switched off, which a
+# coordinate search could not leave: a cap of 1.0 or a zero weight changes nothing nearby).
+FIT_STARTS = [{"close_win": 0.04, "close_own": 1.0, "entry_all": 1.0, "loss_edge_extra": 0.02, "loss_ranked_cap": 0.30},
+              {"close_win": 0.15, "close_own": 2.0},
+              {"close_win": 0.12, "close_own": 1.5, "loss_edge_extra": 0.02},
+              {"close_win": 0.15, "close_own": 2.0, "entry_all": 1.0, "new_entry": 0.02}]
+# The caps hold against the parameters before the behaviour terms (a3d8dd6), so a refit
+# from fitted parameters cannot ratchet them: one week ahead 1.013 (train), season replay 3.114.
+BASE_ONE_WEEK, BASE_SEASON = 1.013, 3.114
+# Poll behaviours the season replay must reproduce (the 2026 realism review's list), each
+# with the gap that counts as one unit. Rank error alone cannot see them: a model that is
+# right on average about narrow wins (most real narrow winners still move up) is not
+# punished for never dropping one.
+BEHAVIOURS = {"close win: share dropped": 0.10, "3+ losses ranked, weeks 6-12 mean": 0.5,
+              "21-25 lose: share out": 0.05, "16-25 lose to ranked: share out": 0.10,
+              "ranked loser: mean drop": 1.0, "top-10 loser: mean drop": 1.0}
+BEHAVIOUR_WEIGHT = 0.05   # rank-error points per unit of behaviour gap
+
+
+def season_check(seasons: list[str], params: dict) -> tuple[float, float, dict]:
+    """(season replay rank error, behaviour gap in units, the model's behaviour counts),
+    averaged over REPLAY_SEEDS."""
+    errs, gaps, counts = [], [], defaultdict(list)
+    for s in REPLAY_SEEDS:
+        real_seq, model_seq = season_replay(seasons, params, seed=s)
+        errs.append(rolling_error(real_seq, model_seq)["all"])
+        rb, mb = behaviour(real_seq), behaviour(model_seq)
+        gaps.append(sum(abs(mb[k] - rb[k]) / u for k, u in BEHAVIOURS.items()))
+        for k in BEHAVIOURS:
+            counts[k].append(mb[k])
+    return st.mean(errs), st.mean(gaps), {k: st.mean(v) for k, v in counts.items()}
+
+
+def season_error(seasons: list[str], params: dict) -> float:
+    return season_check(seasons, params)[0]
+
+
+def objective(week_frames: list[dict], seasons: list[str], params: dict, one_week_cap: float,
+              season_cap: float) -> tuple[float, float, float, float]:
+    """(fit score, one week ahead MAE, season replay MAE, behaviour gap). The score is the
+    season replay's rank error plus BEHAVIOUR_WEIGHT x the behaviour gap; going over either
+    cap (one week ahead, or the season replay) counts ten times over."""
+    one = evaluate(week_frames, params, "ballots")[0]
+    roll, gap, _ = season_check(seasons, params)
+    score = roll + BEHAVIOUR_WEIGHT * gap + 10.0 * max(0.0, one - one_week_cap) + 10.0 * max(0.0, roll - season_cap)
+    return score, one, roll, gap
+
+
 def fit() -> None:
-    nxt, _ = saved_params()
+    """Coordinate search on 2014-2023 over every ballot parameter. The score is the rank
+    error of whole seasons rolled forward from seeded voters (the way season mode runs)
+    plus the gap to the real polls' behaviours (BEHAVIOURS), with the one-week-ahead error
+    (from the real ballots) held within ONE_WEEK_SLACK of the saved parameters' and the
+    season replay no worse than theirs. One week ahead alone cannot see a poll that
+    drifts over a season, because it starts from the real ballots every week."""
+    nxt, bal = saved_params()
     train, valid = frames_with_ballots(TRAIN), frames_with_ballots(VALID)
-    params = {**polls.NEXT_PARAMS, **nxt, "off_ballot": 0.5}
-    best = evaluate(train, params, "ballots")[0]
-    print(f"start: train MAE {best:.3f}")
+    saved = {**polls.NEXT_PARAMS, **polls.BALLOT_PARAMS, **nxt, **bal}
+    one_cap, season_cap = BASE_ONE_WEEK + ONE_WEEK_SLACK, BASE_SEASON
+    line = lambda e: f"score {e[0]:.3f} (one week {e[1]:.3f}, season {e[2]:.3f}, behaviour gap {e[3]:.2f})"  # noqa: E731
+    start = objective(train, TRAIN, saved, one_cap, season_cap)
+    print(f"saved params: {line(start)}")
+    best, params = start, saved
+    for extra in FIT_STARTS:                 # the search starts from the best of these
+        trial = {**saved, **extra}
+        e = objective(train, TRAIN, trial, one_cap, season_cap)
+        print(f"  start {extra}: {line(e)}", flush=True)
+        if e[0] < best[0]:
+            best, params = e, trial
     steps = {k: abs(v) * 0.25 + 0.005 for k, v in params.items()}
     t0 = time.time()
     for rnd in range(3):
-        for k in sorted(params):
+        for k in sorted(set(params) - FIXED):
             for sign in (1, -1):
                 trial = {**params, k: max(0.0, params[k] + sign * steps[k])}
-                e = evaluate(train, trial, "ballots")[0]
-                if e < best - 1e-4:
+                e = objective(train, TRAIN, trial, one_cap, season_cap)
+                if e[0] < best[0] - 1e-4:
                     best, params = e, trial
-                    print(f"  round {rnd + 1}: {k} -> {params[k]:.4f}  train MAE {best:.3f}  ({time.time() - t0:.0f}s)", flush=True)
+                    print(f"  round {rnd + 1}: {k} -> {params[k]:.4f}  {line(best)}  ({time.time() - t0:.0f}s)", flush=True)
                     break
         steps = {k: v * 0.5 for k, v in steps.items()}
     v = evaluate(valid, params, "ballots")
-    vn = evaluate(valid, {**polls.NEXT_PARAMS, **nxt}, "share")
-    print(f"validation 2024-2025: ballot model MAE {v[0]:.3f} ({v[1]:.2f}/25) vs vote-share model {vn[0]:.3f} ({vn[1]:.2f}/25)")
-    extra = {k: round(params[k], 4) for k in params}
+    vs = season_check(VALID, params)
+    v0 = evaluate(valid, saved, "ballots")[0], season_check(VALID, saved)
+    print(f"validation 2024-2025: one week {v0[0]:.3f} -> {v[0]:.3f}, season {v0[1][0]:.3f} -> {vs[0]:.3f}, "
+          f"behaviour gap {v0[1][1]:.2f} -> {vs[1]:.2f}")
     d = json.loads(PARAMS_FILE.read_text(encoding="utf-8")) if PARAMS_FILE.exists() else {}
-    d["ballots"] = extra
-    d["ballots_note"] = f"tools/backtest_ballots.py fit: train {best:.3f}, validation {v[0]:.3f} (vote-share model {vn[0]:.3f})"
+    d["ballots"] = {k: round(params[k], 4) for k in params}
+    d["ballots_note"] = (f"tools/backtest_ballots.py fit (season replay + {BEHAVIOUR_WEIGHT} x behaviour gap; one week "
+                         f"within {ONE_WEEK_SLACK}): train one week {best[1]:.3f}, season {best[2]:.3f}, gap {best[3]:.2f}; "
+                         f"validation one week {v[0]:.3f}, season {vs[0]:.3f}, gap {vs[1]:.2f}")
     PARAMS_FILE.write_text(json.dumps(d, indent=1), encoding="utf-8")
     print("saved under 'ballots' in", PARAMS_FILE)
+
+
+# ----- the season replay: rolling the poll forward with no real poll to lean on ----------------
+
+OTHERS = 15          # teams receiving votes carried into the next week's consensus (season mode keeps about this many)
+
+
+def _entries_from(points: dict[str, int], first: dict[str, int], tiers: dict, n: int = 25 + OTHERS) -> list[dict]:
+    ranked = sorted((t for t in points if tiers.get(t) != "FCS"), key=lambda t: (-points[t], -first.get(t, 0), t))[:n]
+    return [{"team": t, "rank": i + 1, "points": points[t], "first_place": first.get(t, 0)} for i, t in enumerate(ranked)]
+
+
+_REPLAY: dict[str, tuple[list[dict], list[dict]]] = {}
+
+
+def _replay_frames(season: str) -> tuple[list[dict], list[dict]]:
+    """(the season's weekly frames, the real weeks in behaviour form), built once per run."""
+    if season not in _REPLAY:
+        p, r, _ = load()
+        frames = weeks_of(p, r, season)
+        real = []
+        for i, f in enumerate(frames):
+            label = f["week"] + 1
+            real_after = (p[season]["weeks"].get(str(label)) or {}).get("ap") or []
+            real.append({"season": season, "week": f["week"], "label": label, "games": f["games"], "records": f["records"],
+                         "tiers": f["tiers"], "since": i + 1,
+                         "before": {e["team"]: e["rank"] for e in f["prev"] if (e.get("rank") or 99) <= 25},
+                         "after": f["real"], "first": {e["team"]: e.get("first_place") or 0 for e in real_after}})
+        _REPLAY[season] = frames, real
+    return _REPLAY[season]
+
+
+def season_replay(seasons: list[str], params: dict, seed: int = 0) -> tuple[list[dict], list[dict]]:
+    """Each season from its first poll, seeded the way the game seeds its voters
+    (polls.seed_ballots from the poll's vote points), then rolled forward through the real
+    results without ever resetting to the real poll: the job season mode does. Returns two
+    lists of weeks, real and model, each {season, week, label, before, after, first, games,
+    records, tiers, since} so the same behaviour counts run on both."""
+    real_seq, model_seq = [], []
+    for s in seasons:
+        frames, real = _replay_frames(s)
+        if not frames:
+            continue
+        prev = frames[0]["prev"]
+        ballots = polls.seed_ballots(prev, seed=seed * 1000 + int(s))
+        for f, rw in zip(frames, real):
+            ballots, points, first = polls.next_ballots(ballots, prev, f["games"], f["records"], f["tiers"], params,
+                                                        seed=seed * 100000 + int(s) * 100 + f["week"])
+            after = _entries_from(points, first, f["tiers"])
+            model_seq.append({**rw, "before": {e["team"]: e["rank"] for e in prev if e["rank"] <= 25},
+                              "after": {e["team"]: e["rank"] for e in after[:25]},
+                              "first": {e["team"]: e["first_place"] for e in after[:25]}})
+            real_seq.append(rw)
+            prev = after
+    return real_seq, model_seq
+
+
+OUT = 30             # a team that drops out counts as rank 30 (as in the realism review)
+
+
+def behaviour(seq: list[dict]) -> dict[str, float]:
+    """The poll behaviours the 2026 realism review measured, over a run of weeks."""
+    close, close_drop, win_drop, n_wins = [], 0, 0, 0
+    ranked_loss, top10_loss = [], []
+    lr_16, lr_16_out, l21, l21_out, lu_16, lu_16_out = 0, 0, 0, 0, 0, 0
+    three_loss_w8, three_loss_mid, n1_share, n1_unanimous, n1_weeks = 0, [], [], 0, 0
+    for wk in seq:
+        b, a, tiers = wk["before"], wk["after"], wk["tiers"]
+        for g in wk["games"]:
+            if g["home_score"] is None or g["away_score"] is None or g["home_score"] == g["away_score"]:
+                continue
+            hw = g["home_score"] > g["away_score"]
+            w_, l_ = (g["home"], g["away"]) if hw else (g["away"], g["home"])
+            margin = abs(g["home_score"] - g["away_score"])
+            if w_ in b:
+                n_wins += 1
+                win_drop += a.get(w_, OUT) > b[w_]
+                if l_ not in b and tiers.get(l_) != "FCS" and margin <= 7:
+                    close.append(b[w_] - a.get(w_, OUT))
+                    close_drop += a.get(w_, OUT) > b[w_]
+            if l_ in b:
+                rk = b[l_]
+                ranked_loss.append(a.get(l_, OUT) - rk)
+                if rk <= 10:
+                    top10_loss.append(a.get(l_, OUT) - rk)
+                if rk >= 16:
+                    if w_ in b:
+                        lr_16 += 1
+                        lr_16_out += l_ not in a
+                    else:
+                        lu_16 += 1
+                        lu_16_out += l_ not in a
+                if rk >= 21:
+                    l21 += 1
+                    l21_out += l_ not in a
+        three = sum(1 for t in a if wk["records"].get(t, (0, 0))[1] >= 3)
+        if wk["label"] == 8:
+            three_loss_w8 += three
+        if 6 <= wk["label"] <= 12:
+            three_loss_mid.append(three)
+        fp = wk["first"]
+        total = sum(fp.values())
+        no1 = min(a, key=a.get) if a else None
+        if total and no1:
+            n1_weeks += 1
+            n1_share.append(fp.get(no1, 0) / total)
+            n1_unanimous += fp.get(no1, 0) / total >= 0.97
+    m = lambda xs: st.mean(xs) if xs else float("nan")  # noqa: E731
+    seasons = len({wk["season"] for wk in seq}) or 1
+    return {"close win: games": len(close), "close win: mean change": m(close),
+            "close win: share dropped": close_drop / max(1, len(close)),
+            "ranked winners: share dropped": win_drop / max(1, n_wins),
+            "ranked loser: mean drop": m(ranked_loss), "top-10 loser: mean drop": m(top10_loss),
+            "16-25 lose to ranked: n": lr_16, "16-25 lose to ranked: share out": lr_16_out / max(1, lr_16),
+            "16-25 lose to unranked: share out": lu_16_out / max(1, lu_16),
+            "21-25 lose: n": l21, "21-25 lose: share out": l21_out / max(1, l21),
+            "3+ losses ranked in week 8, per season": three_loss_w8 / seasons,
+            "3+ losses ranked, weeks 6-12 mean": m(three_loss_mid),
+            "No. 1 first-place share": m(n1_share), "No. 1 unanimous (97%+) weeks": n1_unanimous / max(1, n1_weeks)}
+
+
+def rolling_error(real_seq: list[dict], model_seq: list[dict]) -> dict[str, float]:
+    """Rank error of the rolled-forward poll against the real one, by weeks since the start."""
+    buckets: dict[str, list[float]] = defaultdict(list)
+    for rw, mw in zip(real_seq, model_seq):
+        order = sorted(mw["after"], key=mw["after"].get)
+        e, _ = score_week(order, rw["after"])
+        k = "1-4" if mw["since"] <= 4 else "5-8" if mw["since"] <= 8 else "9-12" if mw["since"] <= 12 else "13+"
+        buckets[k].append(e)
+        buckets["all"].append(e)
+    return {k: st.mean(v) for k, v in buckets.items()}
+
+
+def season_report(params: dict, label: str = "saved", seasons: list[str] = TRAIN + VALID) -> None:
+    real_seq, model_seq = season_replay(seasons, params)
+    err = rolling_error(real_seq, model_seq)
+    print(f"season replay {seasons[0]}-{seasons[-1]} ({len(model_seq)} weeks), params: {label}")
+    print("  rank error by weeks since the start: " + ", ".join(f"{k} {err[k]:.2f}" for k in ("1-4", "5-8", "9-12", "13+", "all") if k in err))
+    rb, mb = behaviour(real_seq), behaviour(model_seq)
+    print(f"  {'behaviour':<42}{'real':>8}{'model':>8}")
+    for k in rb:
+        print(f"  {k:<42}{rb[k]:>8.2f}{mb[k]:>8.2f}")
 
 
 if __name__ == "__main__":
@@ -292,5 +503,7 @@ if __name__ == "__main__":
         check()
     elif cmd == "fit":
         fit()
+    elif cmd == "season":
+        season_report(polls.load_ballot_params())
     else:
         report(*saved_params())

@@ -427,6 +427,20 @@ def build_bracket(ranking: list[str], champions: dict[str, str], conference_of: 
 
 BALLOT_SEED_NOISE = 0.06     # a voter's spread around the consensus when ballots are made from a poll's points
 
+# Terms only the ballot model has (on top of NEXT_PARAMS); the values here leave them off,
+# data/poll_params.json "ballots" carries the fitted ones.
+BALLOT_PARAMS = {
+    "off_ballot": 0.5,         # a team off the voter's ballot is worth its consensus share x this
+    "close_win": 0.0,          # taken from a narrow winner: x (1 - opponent's value) x how narrow
+    "close_margin": 8.0,       # points: a win by this much or more is not narrow
+    "close_own": 0.0,          # the narrow-win cost x the winner's own value ** this (0: the same for everyone)
+    "loss_bad_pow": 1.0,       # the bad-loss term is loss_bad x (1 - opponent's value) ** this
+    "loss_ranked_cap": 1.0,    # most a loss can cost when the winner is on the voter's ballot
+    "loss_edge_extra": 0.0,    # extra ranking drag per loss beyond the second
+    "voter_noise": 0.0,        # each voter's own week-to-week wobble (sd, share of the maximum)
+    "entry_all": 0.0,          # an off-ballot team with votes elsewhere is worth at least this x its record value
+}
+
 
 def seed_ballots(prev: list[dict], n_voters: Optional[int] = None, seed: int = 0, noise: float = BALLOT_SEED_NOISE) -> list[list[str]]:
     """Ballots that add up to about the given poll (its Top 25 and others receiving votes,
@@ -444,13 +458,15 @@ def seed_ballots(prev: list[dict], n_voters: Optional[int] = None, seed: int = 0
 
 
 def next_ballots(ballots: list[list[str]], prev: list[dict], games: list[dict], records: dict[str, tuple[int, int]],
-                 tiers: dict[str, str], params: Optional[dict] = None) -> tuple[list[list[str]], dict[str, int], dict[str, int]]:
+                 tiers: dict[str, str], params: Optional[dict] = None, seed: int = 0) -> tuple[list[list[str]], dict[str, int], dict[str, int]]:
     """Every voter's next ballot from their last one and the week's results. prev is last
     week's published poll with vote points (the consensus a voter falls back on for a team
-    not on their ballot). Returns (the new ballots, points, first-place votes)."""
-    p = {**NEXT_PARAMS, **(params or {})}
+    not on their ballot). `seed` drives each voter's own wobble (voter_noise). Returns
+    (the new ballots, points, first-place votes)."""
+    p = {**NEXT_PARAMS, **BALLOT_PARAMS, **(params or {})}
     share, _ = _share_table(prev)
-    off = p.get("off_ballot", 0.5)
+    off = p["off_ballot"]
+    rng = random.Random(seed)
     facts = []
     played = set()
     for g in games:
@@ -473,26 +489,41 @@ def next_ballots(ballots: list[list[str]], prev: list[dict], games: list[dict], 
         # off the ballot: the consensus share, scaled down (the voter left them off for a reason)
         val = {t: mine.get(t, share.get(t, 0.0) * off) for t in set(share) | set(mine)}
         for t, o, won, m, at_home, neutral in facts:
-            if t not in val:
+            if t not in mine:
+                # a team the voter does not rank is worth at least what its record says
+                # (entry_all: also when others vote for it), so a 6-0 team can climb past a 3-3 one
                 w, l = records.get(t, (0, 0))
-                entry = p["new_entry"] * max(0, w - 2 * l)
-                val[t] = entry * (p["g5_entry"] if tiers.get(t) == "G5" else 1.0) - p["new_entry"]
+                entry = p["new_entry"] * max(0, w - 2 * l) * (p["g5_entry"] if tiers.get(t) == "G5" else 1.0) - p["new_entry"]
+                if t not in val:
+                    val[t] = entry
+                elif p["entry_all"]:
+                    val[t] = max(val[t], p["entry_all"] * entry)
             ov = mine.get(o, share.get(o, 0.0) * off)
             own = mine.get(t, share.get(t, 0.0) * off)
+            bad = 1.0 if tiers.get(o) == "FCS" else (1.0 - min(1.0, ov))
             if won:
                 gain = p["win_base"] + p["win_opp"] * ov + p["win_margin"] * m + (0 if at_home or neutral else p["win_road"])
                 if tiers.get(o) == "FCS":
                     gain *= p["fcs_win"]
+                # a narrow escape against a weak team costs the winner (m is the margin / 21)
+                gain -= p["close_win"] * bad * max(0.0, 1.0 - m * 21.0 / p["close_margin"]) * own ** p["close_own"]
                 val[t] += gain
             else:
-                bad = 1.0 if tiers.get(o) == "FCS" else (1.0 - min(1.0, ov))
-                val[t] -= p["loss_base"] + p["loss_bad"] * bad + p["loss_margin"] * m + (p["loss_home"] if at_home else 0.0) + p["loss_own"] * own
+                loss = p["loss_base"] + p["loss_bad"] * bad ** p["loss_bad_pow"] + p["loss_margin"] * m \
+                    + (p["loss_home"] if at_home else 0.0) + p["loss_own"] * own
+                if o in mine:                  # losing to a team the voter ranks costs less
+                    loss = min(loss, p["loss_ranked_cap"])
+                val[t] -= loss
         key = {}
-        for t, v in val.items():
+        noise = p["voter_noise"]
+        for t in sorted(val):                  # sorted: the same team draws the same noise every run
             if tiers.get(t) == "FCS":
                 continue
             w, l = records.get(t, (0, 0))
-            key[t] = v + (p["bye"] if t not in played else 0.0) + (p["unbeaten"] if l == 0 and w > 0 else 0.0) - p["loss_edge"] * l
+            key[t] = val[t] + (p["bye"] if t not in played else 0.0) + (p["unbeaten"] if l == 0 and w > 0 else 0.0) \
+                - p["loss_edge"] * l - p["loss_edge_extra"] * max(0, l - 2)
+            if noise:
+                key[t] += rng.gauss(0.0, noise)
         order = sorted(key, key=lambda t: -key[t])
         for w_, l_ in winners_over:            # a close call goes to the team that won the game
             if w_ in key and l_ in key and key[l_] > key[w_] and key[l_] - key[w_] < p["h2h"]:
