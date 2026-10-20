@@ -398,6 +398,32 @@ picks in both checks: 20 seasons through week 8, favourite won 73.6% to 71.4% an
 which helps underdogs. (A version applying the multiplier everywhere took the tries from
 field-goal range: 1.8 tries but 1.25 field goals.)
 
+## Quarterback runs (overnight review item 2.7)
+
+Designed QB runs came from QB1's share of his team's rushes less a flat 10 points (6 for
+sacks, which college box scores count as rushes, and 4 for scrambles). Low-sack teams and
+teams with a run-package second quarterback lost most of their designed runs: James Madison
+3.7% (real 15-18%), Texas Tech 0.5, Notre Dame 0, NDSU 1.2. Now `tools/derive_tendencies.py`
+counts every quarterback's carries (anyone who threw a pass, or is on the roster as a QB) and
+the sacks the team took (the opponent's defensive line), and `build_teams.py` takes the
+team's own sack share and 4 points of scrambles off (`SCRAMBLE_SHARE`). Navy 34 to 44,
+Army 29 to 39, Air Force 22 to 36, James Madison 4 to 15, Texas Tech 0.5 to 11, NDSU 1 to 7,
+Kansas State 12 to 19. (The two new fields in `data/observed_tendencies.json`, `qb_all_rush_share`
+and `sack_share`, come from the box scores on hand on October 20; the other fields were left as
+they were, so the change is only this.) A designed QB run also reads the runner the way a
+back's carry does, on speed, strength, elusiveness and vision (it used speed and strength
+only, so Kansas State's Avery Johnson, elusiveness 80 and vision 93, gained 5.3 a carry
+against 9.3 real).
+
+League (400 games): yards per carry 4.05 to 4.2 (real 4.2), points +0.5 a team-game. Full
+seasons: carries leaders' gap 9% to 4%, rushing leaders 5% to 4%. Game picks are mixed: the
+Brier score is the best of this round (20 seasons through week 8: 0.182 to 0.181) and the
+margin error held (`calibrate_season.py 30`: MAE 12.4, slope 1.00), but the favourite won
+less often (73.9% to 71.1%; `calibrate_season` 74.5% to 72.2%; the October 20 baseline before
+this round was 72.7% in both). The share fix alone was worse on every measure (Brier 0.185),
+so the two go together. Rebuild the teams after pulling this (`python build_teams.py`).
+Play-log fingerprint 098527ba508d3a73.
+
 ## Player stat lines against real box scores
 
 `tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed

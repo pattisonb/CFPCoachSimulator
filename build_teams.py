@@ -246,6 +246,9 @@ def normalize_tendencies(teams: list[dict]) -> dict:
 OBSERVED = ROOT / "data" / "observed_tendencies.json"
 
 
+SCRAMBLE_SHARE = 4.0      # points of a team's rushes that are QB scrambles (the engine adds its own)
+
+
 def apply_observed_tendencies(teams: list[dict]) -> int:
     """Replace generated coach tendencies with what each team has actually done in 2026
     (derive_tendencies.py), scaled to the engine's tendency effects. Teams without box
@@ -264,8 +267,14 @@ def apply_observed_tendencies(teams: list[dict]) -> int:
         td["tempo"] = int(round(max(0, min(100, 50 + 3.0 * (o["plays_per_game"] - league["plays_per_game"])))))
         ratio = o["fourth_att_per_game"] / max(0.1, league["fourth_att_per_game"])
         td["fourth_down_go_rate"] = int(round(max(0, min(100, 50 + (ratio - 1) * 125))))
-        # Observed QB rushes include sacks (college convention) and scrambles; designed runs are the rest.
-        td["qb_run_share"] = round(max(0.0, o["qb_rush_share"] - 6.0 - 4.0), 1)
+        # Observed QB rushes include sacks (college convention) and scrambles; designed runs are the
+        # rest: every quarterback's carries less the team's own sacks and about 4 points of scrambles
+        # (the engine plays scrambles itself). A flat 10 points used to come off QB1's carries alone,
+        # which left low-sack teams and run-package QB2s with almost no designed runs.
+        if "qb_all_rush_share" in o:
+            td["qb_run_share"] = round(max(0.0, o["qb_all_rush_share"] - o["sack_share"] - SCRAMBLE_SHARE), 1)
+        else:
+            td["qb_run_share"] = round(max(0.0, o["qb_rush_share"] - 6.0 - SCRAMBLE_SHARE), 1)
         td["observed"] = True
         n += 1
     return n

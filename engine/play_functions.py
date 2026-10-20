@@ -295,7 +295,9 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, offense_line
     front = _group_rating(defense, front_positions, ('strength', 'tackling'))
     front += _slider_points(sliders.run_defense)
 
-    if carrier.position == 'RB':
+    if carrier.position in ('RB', 'QB'):
+        # a designed QB run reads the runner the way a back's carry does (it used speed and
+        # strength only, so elusive, patient runners such as Kansas State's QB gained too little)
         carrier_rating = _rating(carrier, ('speed', 'strength', 'elusiveness', 'vision'))
     else:
         carrier_rating = _rating(carrier, ('speed', 'strength'))
