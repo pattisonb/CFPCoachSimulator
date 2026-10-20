@@ -216,7 +216,9 @@ HFA_ATTRS = ("speed", "strength", "intelligence", "passing", "decision_making", 
              "vision", "hands", "route_running", "run_blocking", "pass_blocking", "rushing",
              "tackling", "coverage", "kick_accuracy", "punt_accuracy")
 PASS_RATE_EFFECT = 0.6          # run chance shift at a 0 or 100 pass-rate tendency
-TEMPO_EFFECT = 0.60             # clock multiplier range for tempo 0..100 (tools/realism.py: plays per game from fastest to slowest)
+PASS_LEAN = 0.016               # taken off every run chance: teams passed 1.6 points of share less than real (45.7%)
+TEMPO_EFFECT = 0.80             # clock multiplier range for tempo 0..100 (was 0.60: plays per game varied 3.6 across teams, real
+                                # about 4.4 once the 7-game sampling noise is taken out)
 FOURTH_DOWN_TENDENCY_EFFECT = 0.8   # go-for-it odds scale for the fourth_down_go_rate tendency
 PLAY_CALLING_EFFECT = 0.5       # chance the better play caller wins the guessing game
 RUN_CHANCE_MIN, RUN_CHANCE_MAX = 0.08, 0.92

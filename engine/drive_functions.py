@@ -52,6 +52,7 @@ def determine_offense_play(down, first_down, last_play_type=None, last_gain=0, p
     elif last_play_type == "pass" and last_gain >= 10:
         run_chance -= 0.05
     run_chance -= (pass_rate - 50) / 100 * cfg.PASS_RATE_EFFECT
+    run_chance -= cfg.PASS_LEAN
     run_chance += run_shift
     run_chance = max(cfg.RUN_CHANCE_MIN, min(cfg.RUN_CHANCE_MAX_OPTION if pass_rate <= 5 else cfg.RUN_CHANCE_MAX, run_chance))
     return "run" if random.random() < run_chance else "pass"

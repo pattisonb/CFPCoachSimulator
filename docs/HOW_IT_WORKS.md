@@ -594,6 +594,15 @@ Tested together with the added players (40 seasons through week 8): favourite wo
 0.639 to 0.652; `calibrate_season.py 30` 70.4% to 72.9%, MAE 12.5, slope 0.99. Play-log
 fingerprint e8d02e170713db66.
 
+Then the engine side: teams still passed 1.2 points of share less than real across the
+board (`PASS_LEAN` 0.016 now comes off every run chance), and plays per game varied too
+little from team to team (`TEMPO_EFFECT` 0.60 to 0.80). Over 40 seasons: pass-share bias
+-1.2 to +0.2 points (error 2.19 to 2.06), plays per game across teams spread 3.5 to 4.1 (real
+5.1, about 4.4 once the sampling noise of seven games is taken out) and correlation 0.76 to
+0.81; favourite won 71.9% to 73.3%, Brier 0.177 to 0.176. `calibrate_season.py 30`: 72.2%,
+MAE 12.7, slope 0.94 (0.99 before: faster teams run up wider margins). Play-log fingerprint
+276d229ae94c1256.
+
 ## Real 2026 (its own page)
 
 `/real` (the "Real 2026" tab in the top nav) shows the actual 2026 season with the season
