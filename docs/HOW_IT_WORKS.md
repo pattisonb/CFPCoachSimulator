@@ -603,6 +603,12 @@ little from team to team (`TEMPO_EFFECT` 0.60 to 0.80). Over 40 seasons: pass-sh
 MAE 12.7, slope 0.94 (0.99 before: faster teams run up wider margins). Play-log fingerprint
 276d229ae94c1256.
 
+**Schemes the source codes wrong.** `data/scheme_overrides.json` (applied by `build_teams.py`,
+the source data untouched) plays Oklahoma's defense as a 4-2-5 (coded 3-4), Wisconsin's as a
+3-4 (coded 4-3) and New Mexico's offense as a Spread Option (coded Air Raid, four receivers,
+for a team that passes about 27% of the time). Their 15 games through week 8 over 40 seasons:
+Brier 0.234 to 0.213.
+
 ## Real 2026 (its own page)
 
 `/real` (the "Real 2026" tab in the top nav) shows the actual 2026 season with the season

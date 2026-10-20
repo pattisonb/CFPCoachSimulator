@@ -1,0 +1,6 @@
+{
+ "_note": "Schemes the source data codes differently from what the team plays in 2026 (overnight realism review, section 6). build_teams.py applies these on top of cfb_sim_data; each value replaces both the coordinator's scheme and the head coach's philosophy for that side of the ball.",
+ "oklahoma": {"defense": "4-2-5", "why": "coded 3-4; Venables' defense plays a 4-2-5 with a nickel-backer"},
+ "wisconsin": {"defense": "3-4", "why": "coded 4-3; Wisconsin plays a 3-4 front"},
+ "new-mexico": {"offense": "Spread Option", "why": "coded Air Raid (four receivers) for a team that passes about 27% of the time"}
+}

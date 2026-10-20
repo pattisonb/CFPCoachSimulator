@@ -202,6 +202,13 @@ def load_team(path: Path) -> dict:
             m["starter"] = p["slug"] in st_special.get("P", [])
         players.append(m)
     hc, oc, dc = t["coaches"]["head_coach"], t["coaches"]["offensive_coordinator"], t["coaches"]["defensive_coordinator"]
+    fix = SCHEME_OVERRIDES.get(t["slug"]) or {}
+    if fix.get("offense"):
+        hc["scheme"] = {**hc["scheme"], "offensive_philosophy": fix["offense"]}
+        oc["scheme"] = {**oc["scheme"], "offensive_scheme": fix["offense"]}
+    if fix.get("defense"):
+        hc["scheme"] = {**hc["scheme"], "defensive_philosophy": fix["defense"]}
+        dc["scheme"] = {**dc["scheme"], "defensive_scheme": fix["defense"]}
     # Returners are roles, not roster slots: a starter can also return kicks.
     kr = (st_special.get("KR") or [None])[0]
     pr = (st_special.get("PR") or [None])[0]
@@ -302,6 +309,8 @@ def apply_observed_tendencies(teams: list[dict]) -> int:
 
 
 REAL_ADJUSTMENTS = ROOT / "data" / "real_adjustments.json"
+SCHEME_FILE = ROOT / "data" / "scheme_overrides.json"     # schemes the source codes wrong (section 6 of the review)
+SCHEME_OVERRIDES = json.loads(SCHEME_FILE.read_text(encoding="utf-8")) if SCHEME_FILE.exists() else {}
 
 
 LB_ROLES = ("SAM", "MIKE", "WILL")
