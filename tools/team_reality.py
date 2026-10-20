@@ -13,8 +13,9 @@ one JSON file per FBS team plus a league file, for review by people or agents:
   <out>/README.md           what the fields mean
 
 Counting note: official (real) rushing counts a sack as a rush for the yards it lost; the
-engine keeps sacks apart. Sim team rushing is given both ways ("rush_yds" official-style,
-"rush_yds_engine" without sacks) so the two can be compared like for like.
+engine keeps sacks apart. Sim team rushing is given both ways ("rush_yds" and "carries"
+official-style, "rush_yds_engine" and "carries_engine" without sacks) so the two can be
+compared like for like; sim player rushing (the QBs') is counted the official way too.
 
 Usage (from the project root): python tools/team_reality.py [--seasons 10] [--out data/analysis/overnight]
 """
@@ -32,7 +33,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-SACK_LOSS = 7.5
+from engine import game_config as cfg  # noqa: E402
+
+SACK_LOSS = cfg.SACK_YARDS[0]      # the engine's mean sack loss: what official counting moves from passing to rushing
 TEAM_KEYS = {"pass_att": "Pass Attempts", "completions": "Completions", "pass_yds": "Pass Yards", "pass_td": "Passing Touchdowns",
              "int_thrown": "Interceptions Thrown", "carries": "Carries", "rush_yds_engine": "Rush Yards", "rush_td": "Rushing Touchdowns",
              "sacks_taken": "Sacks Taken", "fumbles": "Fumbles", "punts": "Punts", "fg_att": "Field Goals Attempted", "fg_made": "Field Goals Made",
@@ -40,7 +43,19 @@ TEAM_KEYS = {"pass_att": "Pass Attempts", "completions": "Completions", "pass_yd
 PLAYER_KEYS = ["pass_attempts", "completions", "pass_yards", "passing_touchdowns", "interceptions_thrown", "carries", "rush_yards",
                "rushing_touchdowns", "receptions", "receiving_yards", "receiving_touchdowns", "solo_tackles", "assisted_tackles",
                "tackles_for_loss", "sacks", "interceptions", "forced_fumbles", "fg_made", "fg_attempted", "pat_made", "pat_attempts",
-               "punts", "punt_yards", "punt_net_yards", "kickoff_returns", "kickoff_return_yards", "punt_returns", "punt_return_yards"]
+               "punts", "punt_yards", "punt_net_yards", "kickoff_returns", "kickoff_return_yards", "punt_returns", "punt_return_yards",
+               "sacks_taken"]
+
+
+def official_player(stats: dict) -> dict:
+    """A sim player's line counted the official way: each sack taken is a carry for the
+    sack's loss (real box scores count it so; the engine keeps sacks apart)."""
+    out = dict(stats)
+    sk = out.get("sacks_taken", 0)
+    if sk:
+        out["carries"] = out.get("carries", 0) + sk
+        out["rush_yards"] = round(out.get("rush_yards", 0) - SACK_LOSS * sk, 1)
+    return out
 
 
 def line_from(team_stats: dict, points: float, plays: float, official: bool) -> dict:
@@ -50,6 +65,9 @@ def line_from(team_stats: dict, points: float, plays: float, official: bool) -> 
     out["rush_yds"] = out["rush_yds_engine"] if official else out["rush_yds_engine"] - SACK_LOSS * sacks
     if official:
         out["rush_yds_engine"] = None          # real box scores only have the official number
+    else:
+        out["carries_engine"] = out["carries"]
+        out["carries"] = out["carries"] + sacks   # official counting: a sack is a rush
     out["total_yds"] = out["pass_yds"] + out["rush_yds"]
     out["points"] = points
     out["plays"] = plays
@@ -70,7 +88,8 @@ def diff(a: dict, b: dict) -> dict:
 def snapshot(state: dict) -> dict:
     """Every team's cumulative team-level numbers (not players: those are taken at the end)."""
     return {t: {"games": v.get("games", 0), "wins": v.get("wins", 0), "points": v.get("points", 0), "opp_points": v.get("opp_points", 0),
-                "plays": v.get("plays", 0), "team": dict(v.get("team") or {}), "opp": dict(v.get("opp") or {})}
+                "plays": v.get("plays", 0), "opp_plays": v.get("opp_plays", 0),
+                "team": dict(v.get("team") or {}), "opp": dict(v.get("opp") or {})}
             for t, v in (state.get("season_stats") or {}).items()}
 
 
@@ -139,7 +158,8 @@ def main() -> None:
                     for side, opp in (("home", "away"), ("away", "home")):
                         games[g[side]][w] = {"opponent": g[opp], "points": g[f"{side}_score"], "opp_points": g[f"{opp}_score"],
                                              "won": g[f"{side}_score"] > g[f"{opp}_score"]}
-        players = {t: {k: {"name": p["name"], "position": p["position"], "games": p["games"], "stats": {s_: p["stats"].get(s_, 0) for s_ in PLAYER_KEYS}}
+        players = {t: {k: {"name": p["name"], "position": p["position"], "games": p["games"],
+                           "stats": official_player({s_: p["stats"].get(s_, 0) for s_ in PLAYER_KEYS})}
                        for k, p in v.get("players", {}).items()} for t, v in stt["season_stats"].items()}
         morale = copy.deepcopy(stt.get("morale") or {})
         sims.append({"weekly": weekly, "polls": polls, "games": games, "players": players, "morale": morale})
@@ -159,7 +179,7 @@ def main() -> None:
         d = diff(a_ or {}, b)
         src = d.get("team" if key == "line" else "opp", {})
         pts = d.get("points" if key == "line" else "opp_points", 0)
-        return line_from(src, pts, d.get("plays", 0) if key == "line" else 0, official=False)
+        return line_from(src, pts, d.get("plays" if key == "line" else "opp_plays", 0), official=False)
 
     for t in fbs:
         info = teams[t]
@@ -181,7 +201,7 @@ def main() -> None:
                         "line": avg_lines([x for x in sl if x]), "allowed": avg_lines([x for x in sa if x])},
                 "ap": {"real": (real_rank.get(w, {}).get(t) or {}).get("rank"),
                        "real_points": (real_rank.get(w, {}).get(t) or {}).get("points"),
-                       "sim_ranks": [next((e["rank"] for e in s["polls"][w] if e["team"] == t), None) for s in sims]}})
+                       "sim_ranks": [next((e["rank"] for e in s["polls"][w][:25] if e["team"] == t), None) for s in sims]}})
         real_wins = sum(1 for wk in weeks if (wk.get("real") or {}).get("won"))
         real_losses = sum(1 for wk in weeks if wk.get("real") and not wk["real"].get("won"))
         sim_records = []
@@ -224,7 +244,8 @@ def main() -> None:
         real_allowed = avg_lines([wk["real"]["allowed"] for wk in weeks if (wk.get("real") or {}).get("allowed")])
         sim_line = avg_lines([wk["sim"]["line"] for wk in weeks if (wk.get("sim") or {}).get("line")])
         sim_allowed = avg_lines([wk["sim"]["allowed"] for wk in weeks if (wk.get("sim") or {}).get("allowed")])
-        team_morale = [((s["morale"] or {}).get("teams") or {}).get(t) for s in sims]
+        # season._decay_morale drops values under 0.02, so a missing team is at 0
+        team_morale = [((s["morale"] or {}).get("teams") or {}).get(t, 0.0) for s in sims]
         doc = {"team": t, "name": info["name"], "conference": info["conference"], "tier": season.tier_of(info),
                "through_week": W, "sim_seasons": a.seasons,
                "record": {"real": f"{real_wins}-{real_losses}", "sim": sim_records,
@@ -234,7 +255,8 @@ def main() -> None:
                "per_game": {"real_offense": real_line, "sim_offense": sim_line, "real_defense_allowed": real_allowed, "sim_defense_allowed": sim_allowed},
                "weeks": weeks, "players": players[:45],
                "sim_team_morale_at_week": team_morale,
-               "notes": ["rush_yds counts sacks as rushes (official); sim rush_yds_engine leaves them out",
+               "notes": ["rush_yds and carries count sacks as rushes (official, sim players too); sim rush_yds_engine and carries_engine leave them out",
+                         "plays_allowed is the opponents' plays",
                          "real player lines match a roster player about 93% of the time; unmatched real players appear only under 'real' with no rating",
                          "sim_mean player stats average over all sim seasons (a player who did not play in a season counts as 0)"]}
         (out / "teams" / f"{t}.json").write_text(json.dumps(doc, indent=1), encoding="utf-8")
