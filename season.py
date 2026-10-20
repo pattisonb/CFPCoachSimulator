@@ -516,8 +516,9 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
     real_pre = _real_ap_votes_2026(0, teams)
     if real_pre and real_pre[0][:25] == preseason[:25]:
         preseason, pre_others, pre_votes = real_pre[0], real_pre[1] or pre_others, {**pre_votes, **real_pre[2]}
-    state["polls"]["0"] = {"ap": _poll_entries(preseason[:25], {}, state, teams, votes=pre_votes),
-                           "ap_others": _poll_entries(pre_others, {}, state, teams, start=26, votes=pre_votes)}
+    # week=0: the preseason poll shows 0-0 even in "remaining" mode, where games are already played
+    state["polls"]["0"] = {"ap": _poll_entries(preseason[:25], {}, state, teams, 0, votes=pre_votes),
+                           "ap_others": _poll_entries(pre_others, {}, state, teams, 0, start=26, votes=pre_votes)}
     state["polls"]["0"].update(_coaches_entries(state, teams, preseason[:25], pre_others, {}, tiers, ap_params, 0, None))
     # remaining mode: replay the played weeks through the model (scores) but show the real polls
     if mode == "remaining" and current > 0:
