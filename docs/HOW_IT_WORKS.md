@@ -398,6 +398,14 @@ picks in both checks: 20 seasons through week 8, favourite won 73.6% to 71.4% an
 which helps underdogs. (A version applying the multiplier everywhere took the tries from
 field-goal range: 1.8 tries but 1.25 field goals.)
 
+**Tested and left out: fewer sacks.** Full seasons have 24-27 ten-sack players against
+15-17 real, and every rank of the sack leaderboard runs 10-19% high (team sacks 2.25 a game
+against 2.0), so it is volume, not who gets the credit. The review's `SACK_BASE` 0.050 to
+0.046 with `SACK_PER_QB_POINT` 0.0004 to 0.0002 brought ten-sack players to 19, but cost
+picks (20 seasons: favourite won 74.0% to 71.8%, Brier 0.182 to 0.184); the base cut alone
+was worse (Brier 0.190, real-versus-sim wins correlation 0.66 to 0.61). The sack rate is
+one of the places where line and QB ratings decide games, so it stays.
+
 ## Quarterback runs (overnight review item 2.7)
 
 Designed QB runs came from QB1's share of his team's rushes less a flat 10 points (6 for
@@ -423,6 +431,18 @@ less often (73.9% to 71.1%; `calibrate_season` 74.5% to 72.2%; the October 20 ba
 this round was 72.7% in both). The share fix alone was worse on every measure (Brier 0.185),
 so the two go together. Rebuild the teams after pulling this (`python build_teams.py`).
 Play-log fingerprint 098527ba508d3a73.
+
+**Flexbone fullbacks.** Air Force, Army and Navy's dive fullbacks carry 30-44% of the time
+for real; at the usual fullback weight (0.10 next to a halfback's 0.80) they got 6-8%. A
+Flexbone Triple Option team now gives its fullback a weight of 1.5
+(`FLEXBONE_FB_CARRY_WEIGHT`), and a team that almost never throws (pass_rate 5 or lower)
+may run up to 96% of the time instead of 92% (`RUN_CHANCE_MAX_OPTION`): fullback share
+Navy 28%, Army 33%, Air Force 35% over 30 games each. The academies' games are now picked
+better (Brier over their 16 games through week 8 0.170 to 0.150). The other 409 games
+changed only through what carries over inside a season (opponents' injuries, morale and
+form), and that alone moved their Brier 0.172 to 0.176: a direct measure of the run-to-run
+noise in these checks (about +-0.004 Brier, 2-3 points of favourite-won rate).
+Play-log fingerprint 99510529d1e1827c.
 
 ## Player stat lines against real box scores
 

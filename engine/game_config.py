@@ -27,6 +27,7 @@ DIME_ON_PASSING_DOWN = 0.35     # third-and-long against three receivers: dime t
 DEF_SUB_FATIGUE = {"DL": 30, "MLB": 50, "ROLB": 50, "LOLB": 50, "CB": 58, "S": 58}   # rotation points by position (linemen rotate most)
 TE_BLOCK_CREDIT_SHARE = 0.45    # a tight end's or fullback's share of a blocking credit, relative to a lineman
 FB_CARRY_WEIGHT = 0.10          # a fullback's carry weight next to a halfback's 0.80
+FLEXBONE_FB_CARRY_WEIGHT = 1.5  # ... in a Flexbone Triple Option, where the dive fullback carries 30-44% (Air Force, Army, Navy)
 
 # ----- injuries -----
 INJURIES = True
@@ -219,6 +220,7 @@ TEMPO_EFFECT = 0.60             # clock multiplier range for tempo 0..100 (tools
 FOURTH_DOWN_TENDENCY_EFFECT = 0.8   # go-for-it odds scale for the fourth_down_go_rate tendency
 PLAY_CALLING_EFFECT = 0.5       # chance the better play caller wins the guessing game
 RUN_CHANCE_MIN, RUN_CHANCE_MAX = 0.08, 0.92
+RUN_CHANCE_MAX_OPTION = 0.96     # a team that almost never throws (pass_rate 5 or lower) runs up to this often
 
 # ----- Kickoffs (college rules: kick from the 35, touchback to the 25) -----
 KICKOFF_DISTANCE = 63.0             # yards from the 35 for an average leg (lands at the 2)

@@ -118,6 +118,8 @@ class GameSim:
             or ((coaches.get("head_coach") or {}).get("scheme") or {}).get("offensive_philosophy") or "Multiple"
         team.defense_scheme = ((coaches.get("defensive_coordinator") or {}).get("scheme") or {}).get("defensive_scheme") \
             or ((coaches.get("head_coach") or {}).get("scheme") or {}).get("defensive_philosophy") or "4-2-5"
+        if team.offense_scheme == "Flexbone Triple Option":
+            team.tendencies = {**team.tendencies, "fb_carry_weight": cfg.FLEXBONE_FB_CARRY_WEIGHT}
         return team
 
     # ----- helpers -------------------------------------------------------
