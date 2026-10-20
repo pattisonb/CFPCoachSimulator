@@ -17,6 +17,7 @@ import json
 import re
 import subprocess
 import sys
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -33,6 +34,12 @@ DEFAULT_FOLLOW = "ohio-state"
 
 SUFFIX = {"JR", "SR", "II", "III", "IV", "V"}
 DEF_POSITIONS = {"DL", "MLB", "ROLB", "LOLB", "CB", "S"}
+LOST = "\ufffd"                 # a letter the NCAA feed lost (Öhrström arrives as "\ufffdHRSTR\ufffdM")
+NICKNAME = re.compile(r"[\"“”][^\"“”]*[\"“”]")
+# NCAA box scores list no punt touchbacks. FBS punts end in the end zone about 7% of the
+# time, so real net punting is charged 20 yards on that share of punts (the official net
+# charges 20 per touchback, as the engine does).
+PUNT_TOUCHBACK_RATE = 0.07
 
 
 def num(x) -> float:
@@ -43,31 +50,108 @@ def num(x) -> float:
 
 
 def norm_name(name: str) -> str:
-    """'Kenyatta Jackson Jr.' and 'KENYATTA JACKSON JR.' -> 'KENYATTA JACKSON'."""
-    words = re.sub(r"[.,'’\-]", " ", name.upper()).split()
+    """'Kenyatta Jackson Jr.' -> 'KENYATTA JACKSON'. Accents and apostrophes are dropped
+    ("Ja'Bari" -> 'JABARI', 'Öhrström' -> 'OHRSTROM') and quoted nicknames removed
+    ('Ethan "Boobie" Feaster' -> 'ETHAN FEASTER')."""
+    s = unicodedata.normalize("NFKD", NICKNAME.sub(" ", name))
+    s = "".join(c for c in s if not unicodedata.combining(c)).upper()
+    words = re.sub(r"[.,\-]", " ", re.sub(r"['’‘`]", "", s)).split()
     return " ".join(w for w in words if w not in SUFFIX)
 
 
+def letters(s: str) -> str:
+    return re.sub(rf"[^A-Z{LOST}]", "", s)
+
+
+def compact(name: str) -> str:
+    """The normalized name without spaces or hyphens, so 'Jaron-Keawe' and 'Jaron Keawe' agree."""
+    return letters(norm_name(name))
+
+
+def last_word(name: str) -> str:
+    n = norm_name(name).split()
+    return letters(n[-1]) if n else ""
+
+
+def nickname(name: str) -> Optional[str]:
+    m = NICKNAME.search(name)
+    return m.group(0)[1:-1].strip() if m else None
+
+
+def same(a: str, b: str) -> bool:
+    """Two compact names agree; a lost letter in `a` stands for one or two letters of `b`."""
+    if LOST not in a:
+        return a == b
+    return re.fullmatch("".join(".{1,2}" if c == LOST else re.escape(c) for c in a), b) is not None
+
+
+def same_first(box_first: str, roster_name: str) -> bool:
+    """A box score first name (compact) that can be the roster player's: missing, a short
+    form ('CAM' / 'Cameron'), the same first four letters ('WILLIE' / 'William') or initials
+    ('BJ' / 'Boubacar')."""
+    words = norm_name(roster_name).split()
+    first = letters(words[0]) if words else ""
+    a, b = box_first, first
+    return (not a or a.startswith(b) or b.startswith(a) or (len(a) >= 4 and a[:4] == b[:4])
+            or (len(a) <= 2 and b[:1] == a[:1]))
+
+
+def unit_of(position: str) -> str:
+    return "defense" if position in DEF_POSITIONS else "special" if position in ("K", "P") else "offense"
+
+
+# The side of the ball each box score category belongs to (a returner can be anyone).
+CATEGORY_SIDE = {"passing": "offense", "rushing": "offense", "receiving": "offense", "defense": "defense",
+                 "kicking": "special", "punting": "special", "kickReturn": None, "puntReturn": None}
+
+
 class RosterMatcher:
-    """A team's real box score names -> its roster players (name, then jersey and last name)."""
+    """A team's real box score names -> its roster players.
+
+    In order: the full name (accents, apostrophes, suffixes and nicknames ignored; a quoted
+    nickname is also tried as the first name), then jersey number and last name, then a last
+    name only one player has whose first name fits (same_first). The number and last-name steps look only at players on the side
+    of the ball the stat belongs to, and they overrule a name match from the other side: NCAA
+    stat crews give two players who share a number one name, so USC's #0 receiver reads as
+    CB Jontez Williams, and his catches belong to WR Zacharyus Williams (also #0)."""
 
     def __init__(self, team: dict):
         self.players = team["offense"] + team["defense"]
-        self.by_name = {}
-        self.by_jersey_last = {}
+        self.by_name: dict[str, list[dict]] = {}
         for p in self.players:
-            n = norm_name(p["name"])
-            self.by_name.setdefault(n, p)
-            if p.get("jersey"):
-                self.by_jersey_last.setdefault((str(p["jersey"]), n.split()[-1] if n else ""), p)
+            self.by_name.setdefault(compact(p["name"]), []).append(p)
 
-    def find(self, first: str, last: str, number) -> Optional[dict]:
-        n = norm_name(f"{first} {last}")
-        if n in self.by_name:
-            return self.by_name[n]
-        last_n = norm_name(last).split()[-1] if norm_name(last) else ""
-        if number is not None and (str(number), last_n) in self.by_jersey_last:
-            return self.by_jersey_last[(str(number), last_n)]
+    def _named(self, first: str, last: str) -> list[dict]:
+        keys = [compact(f"{first} {last}")]
+        nick = nickname(first)
+        if nick:
+            keys.append(compact(f"{nick} {last}"))
+        for k in keys:
+            if not k:
+                continue
+            hits = [p for n, ps in self.by_name.items() if same(k, n) for p in ps] if LOST in k else self.by_name.get(k, [])
+            if hits:
+                return hits
+        return []
+
+    def find(self, first: str, last: str, number, side: Optional[str] = None) -> Optional[dict]:
+        named = self._named(first, last)
+        on_side = [p for p in named if side is None or unit_of(p["position"]) == side]
+        if on_side:
+            return next((p for p in on_side if number is not None and str(p.get("jersey")) == str(number)), on_side[0])
+        pool = [p for p in self.players if side is None or unit_of(p["position"]) == side]
+        last_n = last_word(last)
+        if last_n and number is not None:
+            hits = [p for p in pool if str(p.get("jersey")) == str(number) and same(last_n, last_word(p["name"]))]
+            if len(hits) == 1:
+                return hits[0]
+        if named:
+            return named[0]                    # a two-way player: right name, not his usual side
+        if last_n:
+            first_n = compact(first)
+            hits = [p for p in pool if same(last_n, last_word(p["name"])) and same_first(first_n, p["name"])]
+            if len(hits) == 1:
+                return hits[0]                 # 'Jr. Soares' (first name lost), 'Cam' for 'Cameron', 'BJ' for 'Boubacar'
         return None
 
 
@@ -79,16 +163,47 @@ STAT_MAP = {
                   "receivingLong": "long_reception"},
     "defense": {"soloTackles": "solo_tackles", "lossTackles": "tackles_for_loss", "sacks": "sacks", "defenseInterceptions": "interceptions",
                 "fumblesForced": "forced_fumbles", "fumblesRecovered": "fumble_recoveries"},
-    "kicking": {"fieldGoalsAttempted": "fg_attempted", "fieldGoalsMade": "fg_made", "fieldGoalsLong": "long_fg",
-                "patAttempted": "pat_attempts", "patMade": "pat_made"},
+    # patAttempted is 0 on every NCAA kicking line; attempts are filled in fill_special_teams
+    "kicking": {"fieldGoalsAttempted": "fg_attempted", "fieldGoalsMade": "fg_made", "fieldGoalsLong": "long_fg", "patMade": "pat_made"},
     "punting": {"puntingPunts": "punts", "puntingYards": "punt_yards", "puntingLong": "long_punt"},
     "kickReturn": {"kickReturns": "kickoff_returns", "kickReturnsYards": "kickoff_return_yards", "kickReturnsTDs": "kickoff_return_touchdowns",
                    "kickReturnsLong": "long_kick_return"},
     "puntReturn": {"puntReturns": "punt_returns", "puntReturnsYards": "punt_return_yards", "puntReturnsTDs": "punt_return_touchdowns",
                    "puntReturnsLong": "long_punt_return"},
 }
-GUESS_POSITION = {"passing": "QB", "rushing": "RB", "receiving": "WR", "defense": "S", "kicking": "K", "punting": "P",
-                  "kickReturn": "WR", "puntReturn": "WR"}
+
+
+def guess_position(stats: dict, number) -> str:
+    """A position for a player missing from the roster, from everything he did (one game's
+    line, or his whole season): a kicker or punter if kicking is most of his work, a
+    quarterback if he threw 5 or more passes, then the bigger of his offensive and defensive
+    work. Defenders go by jersey number: 60 and up a lineman, 40-59 a linebacker (a lineman
+    if sacks and tackles for loss are half his tackles), under 40 a safety."""
+    g = lambda k: stats.get(k, 0)
+    offense = g("pass_attempts") + g("carries") + g("receptions")
+    tackles = g("solo_tackles") + g("assisted_tackles") + g("sacks") + g("interceptions")
+    kicks, punts = g("fg_attempted") + g("pat_made"), g("punts")
+    if (kicks or punts) and kicks + punts >= offense + tackles:
+        return "K" if kicks >= punts else "P"
+    if g("pass_attempts") >= 5 and offense >= tackles:
+        return "QB"
+    if offense and offense >= tackles:
+        return "RB" if g("carries") >= g("receptions") else "WR"
+    if tackles:
+        n = int(num(number)) if number is not None else 0
+        if n >= 60 or (n >= 40 and 2 * (g("sacks") + g("tackles_for_loss")) >= tackles):
+            return "DL"
+        return "MLB" if n >= 40 else "S"
+    return "WR"                                 # returns only
+
+
+def display_name(first: str, last: str) -> str:
+    """'JR.' 'SOARES' -> 'Soares Jr.'; a quoted nickname is left out."""
+    first = NICKNAME.sub(" ", first).strip()
+    if first.upper().rstrip(".") in SUFFIX:
+        first, last = "", f"{last} {first}"
+    word = lambda w: w.upper() if w.upper() in ("II", "III", "IV") else "-".join(x.capitalize() for x in w.split("-"))
+    return " ".join(word(w) for w in f"{first} {last}".split())
 
 
 def team_side(box: dict, slug_of) -> dict:
@@ -100,22 +215,23 @@ def team_side(box: dict, slug_of) -> dict:
 
 
 def player_lines(tb: dict, roster: Optional[RosterMatcher]) -> list[dict]:
-    """One team's players from a real box score, in the game's stat keys."""
+    """One team's players from a real box score, in the game's stat keys. Each stat row is
+    matched on its own, against the side of the ball it belongs to. An unmatched player's
+    position comes from his whole line, read after every row (import_real_boxes then gives
+    him one position for the season)."""
     players: dict[tuple, dict] = {}
     for r in tb["playerStats"]:
         cat = r.get("category")
         if cat not in STAT_MAP:
             continue
         first, last, number = (r.get("firstName") or "").strip(), (r.get("lastName") or "").strip(), r.get("number")
-        key = (norm_name(f"{first} {last}"), number)
+        found = roster.find(first, last, number, CATEGORY_SIDE[cat]) if roster else None
+        key = ("slug", found["slug"]) if found else ("name", compact(f"{first} {last}") or display_name(first, last))
         rec = players.get(key)
         if rec is None:
-            found = roster.find(first, last, number) if roster else None
-            name = found["name"] if found else " ".join(w.capitalize() for w in f"{first} {last}".split())
-            rec = {"name": name, "position": found["position"] if found else GUESS_POSITION[cat], "matched": bool(found),
-                   "slug": found.get("slug") if found else None, "number": number, "stats": {}, "cats": set()}
+            rec = {"name": found["name"] if found else display_name(first, last), "position": found["position"] if found else None,
+                   "matched": bool(found), "slug": found.get("slug") if found else None, "number": number, "key": key[1], "stats": {}}
             players[key] = rec
-        rec["cats"].add(cat)
         for src, dst in STAT_MAP[cat].items():
             v = num(r.get(src))
             if dst.startswith("long_"):
@@ -133,19 +249,34 @@ def player_lines(tb: dict, roster: Optional[RosterMatcher]) -> list[dict]:
                 rec["stats"]["fg_50_made"] = rec["stats"].get("fg_50_made", 0) + 1
     out = []
     for rec in players.values():
-        if not rec["matched"] and rec["position"] == "QB" and rec["stats"].get("pass_attempts", 0) < 3:
-            rec["position"] = "RB" if "rushing" in rec["cats"] else "WR"     # a trick-play pass by a skill player
-        unit = "defense" if rec["position"] in DEF_POSITIONS else "special" if rec["position"] in ("K", "P") else "offense"
-        out.append({"name": rec["name"], "position": rec["position"], "unit": unit, "number": rec["number"], "slug": rec["slug"],
-                    "matched": rec["matched"], "stats": {k: v for k, v in rec["stats"].items() if v}})
+        position = rec["position"] or guess_position(rec["stats"], rec["number"])
+        out.append({"name": rec["name"], "position": position, "unit": unit_of(position), "number": rec["number"], "slug": rec["slug"],
+                    "matched": rec["matched"], "key": rec["key"], "stats": {k: v for k, v in rec["stats"].items() if v}})
     return out
+
+
+def touchdowns(tb: dict) -> int:
+    """A team's offensive and return touchdowns in a box score (defensive scores are not listed)."""
+    ts = tb["teamStats"]
+    n = num((ts.get("TeamPassingStats") or {}).get("passingTDs")) + num((ts.get("TeamRushingStats") or {}).get("rushingTDs"))
+    n += sum(num(r.get("kickReturnsTDs")) + num(r.get("puntReturnsTDs")) for r in tb["playerStats"]
+             if r.get("category") in ("kickReturn", "puntReturn"))
+    return int(n)
+
+
+def kicking_listed(tb: dict) -> bool:
+    """NCAA box scores have a kicking line only for kickers who tried a field goal (all 687 such
+    lines do). A team without one tried no field goal, a true zero, but its extra points are
+    not listed anywhere."""
+    return any(r.get("category") == "kicking" for r in tb["playerStats"])
 
 
 def fill_special_teams(players: list[dict], opp_tb: dict) -> None:
     """Two numbers NCAA box scores leave out, filled in so real weeks read like simulated ones:
-    extra-point attempts (only makes are listed; about 98% of real kicks are good, so each
-    make counts as one attempt) and net punt yards (a punter's yards less the opponent's
-    punt return yards, shared out by punts; touchbacks are not listed, so no 20-yard charge)."""
+    extra-point attempts (only makes are listed, so each make counts as one attempt; a missed
+    kick cannot be told from a failed two-point try in the score) and net punt yards (a
+    punter's yards less the opponent's punt return yards, shared out by punts, less 20 yards
+    on the expected share of touchbacks, PUNT_TOUCHBACK_RATE, since touchbacks are not listed)."""
     for p in players:
         st = p["stats"]
         if st.get("pat_made") and not st.get("pat_attempts"):
@@ -157,16 +288,26 @@ def fill_special_teams(players: list[dict], opp_tb: dict) -> None:
     returned = num(((opp_tb.get("teamStats") or {}).get("TeamPuntReturnsStats") or {}).get("puntReturnYards"))
     for p in punters:
         st = p["stats"]
-        st["punt_net_yards"] = int(round(st.get("punt_yards", 0) - returned * st["punts"] / total))
+        st["punt_net_yards"] = int(round(st.get("punt_yards", 0) - returned * st["punts"] / total - 20 * PUNT_TOUCHBACK_RATE * st["punts"]))
 
 
 def compact_side(tb: dict, players: list[dict], score: int, opp_tb: dict) -> dict:
-    """A team's game in the shape season._accumulate_stats takes."""
+    """A team's game in the shape season._accumulate_stats takes.
+
+    Field goals are 0 when no kicker line is listed (none was tried). Extra points are then
+    missing, not 0: the PAT keys are left out and events["pats_listed"] is 0, so a per-game
+    PAT figure divides by the games that list them. "Fumbles" is every fumble, as in the
+    engine (which counts each one before the recovery); events["fumbles_lost"] is the ones
+    the other team recovered, also as in the engine."""
     ts = tb["teamStats"]
     sub = lambda k: ts.get(k) or {}
     pas, rush, rec = sub("TeamPassingStats"), sub("TeamRushingStats"), sub("TeamReceivingStats")
     dfn, kr, pr, pun = sub("TeamDefenseStats"), sub("TeamKickReturnsStats"), sub("TeamPuntReturnsStats"), sub("TeamPuntingStats")
     psum = lambda key: sum(p["stats"].get(key, 0) for p in players)
+    listed = kicking_listed(tb)
+    pats_listed = listed or (score == 0 and not touchdowns(tb))
+    punts, punt_yards = num(pun.get("puntingPunts")), num(pun.get("puntingYards"))
+    returned = num(((opp_tb.get("teamStats") or {}).get("TeamPuntReturnsStats") or {}).get("puntReturnYards"))
     team = {
         "Pass Attempts": num(pas.get("passingAttempts")), "Completions": num(pas.get("passingCompletions")),
         "Pass Yards": num(pas.get("passingYards")), "Interceptions Thrown": num(pas.get("passingInterceptions")),
@@ -177,17 +318,20 @@ def compact_side(tb: dict, players: list[dict], score: int, opp_tb: dict) -> dic
         "Rushing Touchdowns": num(rush.get("rushingTDs")), "Solo Tackles": num(dfn.get("soloTackles")),
         "Assisted Tackles": max(0.0, num(dfn.get("totalTackles")) - num(dfn.get("soloTackles"))), "Sacks": num(dfn.get("sacks")),
         "Interceptions": num(dfn.get("defenseInterceptions")), "Forced Fumbles": num(dfn.get("fumblesForced")),
-        "PATs Made": psum("pat_made"), "PATS Attempted": psum("pat_attempts"), "Field Goals Made": psum("fg_made"),
-        "Field Goals Attempted": psum("fg_attempted"), "Punts": num(pun.get("puntingPunts")), "Punt Yards": num(pun.get("puntingYards")),
+        "Field Goals Made": psum("fg_made"), "Field Goals Attempted": psum("fg_attempted"), "Punts": punts, "Punt Yards": punt_yards,
+        "Punt Net Yards": round(punt_yards - returned - 20 * PUNT_TOUCHBACK_RATE * punts) if punts else 0,
         "Kickoff Returns": num(kr.get("kickReturns")), "Kickoff Return Yards": num(kr.get("kickReturnYards")),
         "Kickoff Return Touchdowns": psum("kickoff_return_touchdowns"), "Punt Returns": num(pr.get("puntReturns")),
         "Punt Return Yards": num(pr.get("puntReturnYards")), "Punt Return Touchdowns": psum("punt_return_touchdowns"),
         "Defensive Touchdowns": 0, "Fumble Recoveries": num(dfn.get("fumblesRecovered")),
     }
+    if pats_listed:
+        team["PATs Made"], team["PATS Attempted"] = psum("pat_made"), psum("pat_attempts")
     events = {"first_downs": num(ts.get("firstDowns")), "third_downs": num(ts.get("thirdDownAttempts")),
               "third_down_conversions": num(ts.get("thirdDowns")), "fourth_down_attempts": num(ts.get("fourthDownAttempts")),
               "fourth_down_conversions": num(ts.get("fourthDowns")), "penalties": num(ts.get("penalty")),
-              "penalty_yards": num(ts.get("penaltyYards")), "fumbles_lost": num(ts.get("fumblesLost"))}
+              "penalty_yards": num(ts.get("penaltyYards")), "fumbles_lost": num(ts.get("fumblesLost")),
+              "kicking_listed": int(listed), "pats_listed": int(pats_listed)}
     return {"score": score, "team": team, "events": events, "personnel": {}, "schemes": {}, "plays": num(ts.get("teamPlays")), "top": 0,
             "players": [{"name": p["name"], "position": p["position"], "unit": p["unit"], "stats": p["stats"]} for p in players]}
 
@@ -224,7 +368,11 @@ def import_real_boxes(st: dict, fresh: bool = False) -> dict:
     """Every played real game's NCAA box score, turned into the game's stat lines: added to
     the season's stats and saved as a box score the season can open. Used by the real
     season page and by a season started from today (its real weeks then carry real stats,
-    game logs and box scores). Returns counts: box scores, player lines, matched lines."""
+    game logs and box scores). Returns counts: box scores, player lines, matched lines, and
+    the team-games whose extra points are not listed (no kicker line, points scored).
+
+    Two passes: every game's lines are read first, so a player missing from the roster gets
+    one position for the season from all his games (guess_position), not one per game."""
     teams = season.load_teams()
     lookup = build_matcher(teams)
     index = _ncaa_index(lookup)
@@ -235,7 +383,45 @@ def import_real_boxes(st: dict, fresh: bool = False) -> dict:
         for old in box_dir.glob("*.json"):
             old.unlink()
     st.setdefault("season_stats", {})
-    n_box = n_players = n_matched = 0
+    games = []
+    unmatched: dict[tuple, dict] = {}
+    for eid, g, cid, sides in _real_games(st, index, lookup):
+        players = {side: player_lines(sides[side], rosters.get(g[side])) for side in ("home", "away")}
+        for side in players:
+            for p in players[side]:
+                if not p["matched"]:
+                    u = unmatched.setdefault((g[side], p["key"]), {"stats": {}, "number": p["number"]})
+                    season._add_into(u["stats"], p["stats"])
+        games.append((eid, g, cid, sides, players))
+    position = {k: guess_position(u["stats"], u["number"]) for k, u in unmatched.items()}
+    n_box = n_players = n_matched = n_no_pats = 0
+    for eid, g, cid, sides, players in games:
+        lines, real_box = {}, {"real_box": True, "contest_id": cid, "event_id": eid}
+        for side, opp in (("home", "away"), ("away", "home")):
+            plist = players[side]
+            for p in plist:
+                if not p["matched"]:
+                    p["position"] = position[(g[side], p["key"])]
+                    p["unit"] = unit_of(p["position"])
+            fill_special_teams(plist, sides[opp])
+            n_players += len(plist)
+            n_matched += sum(1 for p in plist if p["matched"])
+            score = g[f"{side}_score"]
+            lines[side] = compact_side(sides[side], plist, score, sides[opp])
+            n_no_pats += not lines[side]["events"]["pats_listed"]
+            real_box[side] = {"slug": g[side], "name": teams[g[side]]["name"], "score": score,
+                              "team": lines[side]["team"], "events": lines[side]["events"], "plays": lines[side]["plays"],
+                              "players": [{k: v for k, v in p.items() if k not in ("matched", "key")} for p in plist]}
+        season._accumulate_stats(st, g, lines)
+        (box_dir / f"{eid}.json").write_text(json.dumps(real_box), encoding="utf-8")
+        n_box += 1
+    return {"box_scores": n_box, "players": n_players, "matched": n_matched, "pats_not_listed": n_no_pats,
+            "played": sum(1 for g in st["games"].values() if g["played"])}
+
+
+def _real_games(st: dict, index: dict, lookup: dict):
+    """(event id, game, contest id, {"home": team box, "away": team box}) for every played real
+    game of the season with a saved NCAA box score, in week order."""
     for eid, g in sorted(st["games"].items(), key=lambda kv: kv[1]["week"]):
         if not g["played"] or not g.get("real"):
             continue
@@ -253,24 +439,8 @@ def import_real_boxes(st: dict, fresh: bool = False) -> dict:
                 sides["home"] = tb
             elif slug == g["away"]:
                 sides["away"] = tb
-        if set(sides) != {"home", "away"}:
-            continue
-        lines, real_box = {}, {"real_box": True, "contest_id": cid, "event_id": eid}
-        for side, opp in (("home", "away"), ("away", "home")):
-            players = player_lines(sides[side], rosters.get(g[side]))
-            fill_special_teams(players, sides[opp])
-            n_players += len(players)
-            n_matched += sum(1 for p in players if p["matched"])
-            score = g[f"{side}_score"]
-            lines[side] = compact_side(sides[side], players, score, sides[opp])
-            real_box[side] = {"slug": g[side], "name": teams[g[side]]["name"], "score": score,
-                              "team": lines[side]["team"], "events": lines[side]["events"], "plays": lines[side]["plays"],
-                              "players": [{k: v for k, v in p.items() if k != "matched"} for p in players]}
-        season._accumulate_stats(st, g, lines)
-        (box_dir / f"{eid}.json").write_text(json.dumps(real_box), encoding="utf-8")
-        n_box += 1
-    return {"box_scores": n_box, "players": n_players, "matched": n_matched,
-            "played": sum(1 for g in st["games"].values() if g["played"])}
+        if set(sides) == {"home", "away"}:
+            yield eid, g, cid, sides
 
 
 def stale() -> bool:
@@ -296,4 +466,5 @@ if __name__ == "__main__":
     st = build()
     s = st["real_summary"]
     print(f"real 2026 season through week {st['current_week']}: {s['played']} games played, {s['box_scores']} with a box score, "
-          f"{s['players']} player lines ({100 * s['matched'] / max(1, s['players']):.0f}% matched to a roster player)")
+          f"{s['players']} player lines ({100 * s['matched'] / max(1, s['players']):.1f}% matched to a roster player); "
+          f"extra points not listed for {s['pats_not_listed']} team-games (no kicker line, points scored)")
