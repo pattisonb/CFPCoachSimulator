@@ -2643,6 +2643,9 @@ MORALE_PLAYER_EFFECT = 0.06      # a hot player is up to 6% better, a cold one 6
 MORALE_TEAM_EFFECT = 0.03        # a team riding high adds up to 3% to everyone
 MORALE_WEEKLY_DECAY = 0.85
 MORALE_HOT = 0.35                # form above this is a hot streak, below minus this a cold one
+MORALE_RESULT = 0.5              # a team's mood moves by this x (result - pre-game win chance): an expected win adds little
+MORALE_BLOWOUT = 0.05            # a 21-point result on top
+MORALE_Z_TRACK = 0.02            # the league's running mean player z is subtracted (each game nudges it by this share)
 
 
 def morale_on(state: dict) -> bool:
@@ -2740,34 +2743,54 @@ def _update_morale(state: dict, g: dict, lines: dict, before: dict[str, int]) ->
         return
     m = _morale_store(state)
     teams = m["teams"]
+    all_teams = load_teams()
     margin = g["home_score"] - g["away_score"]
+    edge = (all_teams[g["home"]]["team_ratings"]["overall"] - all_teams[g["away"]]["team_ratings"]["overall"]) / 60         + (0.0 if g["neutral"] else 0.04)
+    p_home = max(0.05, min(0.95, 0.5 + edge))     # the same pre-game chance the bracket projection uses
     for side, opp in (("home", "away"), ("away", "home")):
         slug, other = g[side], g[opp]
         won = (margin > 0) if side == "home" else (margin < 0)
         own_margin = margin if side == "home" else -margin
-        delta = 0.25 if won else -0.25
-        if won and before.get(other):
-            delta += 0.15
-        if not won and before.get(slug) and not before.get(other):
-            delta -= 0.15
+        expected = p_home if side == "home" else 1.0 - p_home
+        # the result against what was expected: a heavy favourite's win (or an FCS win) adds
+        # little, an upset moves both teams a lot (this replaced flat +-0.25 steps, which
+        # left good teams pinned at +1 by midseason)
+        delta = MORALE_RESULT * ((1.0 if won else 0.0) - expected)
         if abs(own_margin) >= 21:
-            delta += 0.1 if won else -0.1
+            delta += MORALE_BLOWOUT if won else -MORALE_BLOWOUT
         teams[slug] = round(max(-1.0, min(1.0, teams.get(slug, 0.0) + delta)), 4)
-        # players: this game against the per-game average before it
+        # players: this game against the per-game average of the games before it. Games
+        # against FCS teams are left out of both (an FCS opener inflated the average, so
+        # most later games read as below par), and the league's running mean z is taken
+        # off so a typical game reads as typical (the clamp cuts big games more than
+        # quiet ones, which tilted form negative).
+        fcs_game = all_teams[other]["fictional"]
+        fcs = m.setdefault("fcs_lines", {}).setdefault(slug, {})
         ss = (state.get("season_stats") or {}).get(slug, {})
         rows = m["players"].setdefault(slug, {})
         for p in lines[side].get("players", []):
             key = f"{p['name']}|{p['position']}"
+            if fcs_game:
+                f_ = fcs.setdefault(key, {"games": 0, "stats": {}})
+                f_["games"] += 1
+                for k, v in p["stats"].items():
+                    if isinstance(v, (int, float)):
+                        f_["stats"][k] = f_["stats"].get(k, 0) + v
+                continue
             game = _perf_score(p["position"], p["stats"])
             line = (ss.get("players") or {}).get(key)
-            games = line["games"] if line else 1
+            skip = fcs.get(key, {"games": 0, "stats": {}})
+            games = (line["games"] - skip["games"]) if line else 1
             if games > 1:
-                prior = {k: (v - p["stats"].get(k, 0)) for k, v in line["stats"].items() if isinstance(v, (int, float))}
+                prior = {k: (v - p["stats"].get(k, 0) - skip["stats"].get(k, 0)) for k, v in line["stats"].items() if isinstance(v, (int, float))}
                 avg = _perf_score(p["position"], prior) / (games - 1)
-                z = (game - avg) / max(abs(avg) * 0.6, 4.0)
+                z = max(-1.0, min(1.0, (game - avg) / max(abs(avg) * 0.6, 4.0)))
+                bias = m.get("z_mean", 0.0)
+                m["z_mean"] = round(bias + MORALE_Z_TRACK * (z - bias), 5)
+                z -= bias
             else:
                 z = 0.0
-            z = max(-1.0, min(1.0, z)) + (0.1 if won else -0.1)
+            z += 0.1 if won else -0.1
             form = round(max(-1.0, min(1.0, 0.7 * rows.get(key, 0.0) + 0.3 * z)), 4)
             if abs(form) >= 0.02:
                 rows[key] = form
