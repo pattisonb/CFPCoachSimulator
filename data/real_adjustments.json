@@ -99,6 +99,12 @@
     "mehki-flowers",
     "austin-wondolowski"
    ],
+   "SS": [
+    "real-donelius-johnson",
+    "rodrick-hunter",
+    "daymon-david",
+    "jamari-somerville"
+   ],
    "LB_POOL": [
     "dwight-nunoo",
     "daunte-curtis",
@@ -2137,6 +2143,7 @@
   },
   "e-michigan": {
    "WR": [
+    "real-joshua-long",
     "harold-mack",
     "benson-prosper",
     "santonyo-isaac",
@@ -2878,6 +2885,7 @@
   },
   "georgia-tech": {
    "HB": [
+    "real-justice-haynes",
     "trelain-maddox",
     "malachi-hosley",
     "chad-alexander",
@@ -4168,6 +4176,7 @@
     "luke-watkins"
    ],
    "HB": [
+    "real-andrew-burnette",
     "dylone-brooks",
     "jaden-miller",
     "riley-small",
@@ -5331,6 +5340,20 @@
    ]
   },
   "navy": {
+   "QB": [
+    "real-jackson-gutierrez",
+    "braxton-woodson",
+    "james-hartman",
+    "brennan-hall",
+    "drew-bonner",
+    "jashon-dewberry"
+   ],
+   "HB": [
+    "real-michael-barrow",
+    "isaiah-bryant",
+    "charles-robinson",
+    "trevon-radden"
+   ],
    "LB_POOL": [
     "coleman-cauley",
     "nolan-mccamy",
@@ -5822,6 +5845,13 @@
     "duane-cousins",
     "zaire-mckinney",
     "afy-ibekwe"
+   ],
+   "QB": [
+    "real-taron-dickens",
+    "jalen-macon",
+    "brady-davidson",
+    "ean-hamric",
+    "bryshawn-brown"
    ],
    "CB": [
     "yassine-falke",
@@ -7979,6 +8009,7 @@
     "zaid-lott"
    ],
    "WR": [
+    "real-umari-hatcher",
     "darius-johnson",
     "cole-weaver",
     "zamondre-merriweather",
@@ -9627,6 +9658,13 @@
     "sesi-vailahi",
     "amari-spriggs",
     "nehemiah-washington"
+   ],
+   "QB": [
+    "real-grady-brosterhous",
+    "mccae-hillstead",
+    "nathan-childress",
+    "kaleb-maryland",
+    "chris-clinton"
    ],
    "MIKE": [
     "jordan-pendleton",
@@ -12640,5 +12678,68 @@
     "hands": 3
    }
   }
+ },
+ "added": {
+  "e-michigan": [
+   {
+    "name": "Joshua Long",
+    "position": "WR",
+    "role": "WR"
+   }
+  ],
+  "akron": [
+   {
+    "name": "Donelius Johnson",
+    "position": "S",
+    "role": "SS"
+   }
+  ],
+  "georgia-tech": [
+   {
+    "name": "Justice Haynes",
+    "position": "RB",
+    "role": "HB"
+   }
+  ],
+  "niu": [
+   {
+    "name": "Taron Dickens",
+    "position": "QB",
+    "role": "QB"
+   }
+  ],
+  "syracuse": [
+   {
+    "name": "Umari Hatcher",
+    "position": "WR",
+    "role": "WR"
+   }
+  ],
+  "utah-state": [
+   {
+    "name": "Grady Brosterhous",
+    "position": "QB",
+    "role": "QB"
+   }
+  ],
+  "navy": [
+   {
+    "name": "Michael Barrow",
+    "position": "RB",
+    "role": "HB"
+   },
+   {
+    "name": "Jackson Gutierrez",
+    "position": "QB",
+    "role": "QB"
+   }
+  ],
+  "louisiana-tech": [
+   {
+    "name": "Andrew Burnette",
+    "position": "RB",
+    "role": "HB"
+   }
+  ]
  }
 }

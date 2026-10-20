@@ -258,6 +258,9 @@ def normalize_tendencies(teams: list[dict]) -> dict:
 OBSERVED = ROOT / "data" / "observed_tendencies.json"
 
 
+GAME_SCRIPT_PASS = 0.10   # points of pass share credited back per point of a team's average margin
+FOURTH_PER_MARGIN = 0.013 # fourth-down tries a game added back per point of average margin (trailing teams try
+                          # more: the slope across FBS teams in 2026)
 SCRAMBLE_SHARE = 4.0      # points of a team's rushes that are QB scrambles (the engine adds its own)
 
 
@@ -275,9 +278,15 @@ def apply_observed_tendencies(teams: list[dict]) -> int:
         if not o or o["games"] < 2:
             continue
         td = t["tendencies"]
-        td["pass_rate"] = int(round(max(0, min(100, 50 + 1.67 * (o["pass_rate"] - league["pass_rate"])))))
+        # Game script: a team that leads a lot runs to protect leads, and the engine already
+        # plays that out (it runs more when ahead), so the observed rate is credited back
+        # GAME_SCRIPT_PASS points of pass share per point of average margin.
+        margin = o.get("margin_per_game", 0.0)
+        td["pass_rate"] = int(round(max(0, min(100, 50 + 1.67 * (o["pass_rate"] - league["pass_rate"] + GAME_SCRIPT_PASS * margin)))))
         td["tempo"] = int(round(max(0, min(100, 50 + 3.0 * (o["plays_per_game"] - league["plays_per_game"])))))
-        ratio = o["fourth_att_per_game"] / max(0.1, league["fourth_att_per_game"])
+        # Fourth-down tries: a team that trails a lot tries more out of need, not choice
+        # (Sac State 99, Texas A&M 100), so the attempts expected from its margin come off.
+        ratio = (o["fourth_att_per_game"] + FOURTH_PER_MARGIN * margin) / max(0.1, league["fourth_att_per_game"])
         td["fourth_down_go_rate"] = int(round(max(0, min(100, 50 + (ratio - 1) * 125))))
         # Observed QB rushes include sacks (college convention) and scrambles; designed runs are the
         # rest: every quarterback's carries less the team's own sacks and about 4 points of scrambles
@@ -311,6 +320,8 @@ def apply_real_adjustments(teams: list[dict], means: dict) -> tuple[int, int]:
     adj = json.loads(REAL_ADJUSTMENTS.read_text(encoding="utf-8"))
     nudged = reordered = 0
     for t in teams:
+        for a in (adj.get("added") or {}).get(t["slug"], []):
+            add_real_player(t, a)
         by_slug = {p["slug"]: p for p in t["players"]}
         usage = (adj.get("usage") or {}).get(t["slug"]) or {}
         if usage.get("rb_lead_feature") is not None:
@@ -346,6 +357,27 @@ def apply_real_adjustments(teams: list[dict], means: dict) -> tuple[int, int]:
             if slug in by_slug:
                 reordered += move_specialist(t, by_slug[slug], pos, means)
     return nudged, reordered
+
+
+def add_real_player(t: dict, a: dict) -> None:
+    """A real 2026 player the source rosters lack (data/real_adjustments.json "added"), listed
+    last at his role; the depth order by real usage then puts him where he plays."""
+    slug = "real-" + "".join(ch if ch.isalnum() else "-" for ch in a["name"].lower()).strip("-")
+    if any(p["slug"] == slug or (p["name"] == a["name"] and p["position"] == a["position"]) for p in t["players"]):
+        return
+    group = sorted((p for p in t["players"] if p.get("role") == a["role"]), key=lambda p: p.get("depth") or 99)
+    template = group[0] if group else next((p for p in t["players"] if p["position"] == a["position"]), None)
+    # His ratings are the ones of the player at the top of his role: the team plays as
+    # strong as it did, and the real player's line goes to the right name. (Rated as an
+    # average FBS starter instead, the added quarterbacks lifted NIU from 1.5 to 2.1 sim
+    # wins at week 8 against a real 0-6, and picks got worse.)
+    attrs = {k: template[k] for k in ATTRS if template and isinstance(template.get(k), (int, float))} or {k: NEUTRAL for k in ATTRS}
+    p = {"name": a["name"], "slug": slug, "position": a["position"], "source_position": a["position"],
+         "ea_overall": None, "class": None, "height": None, "weight": None, "jersey": None, "dev_trait": "Normal",
+         **attrs, RETURN_ATTR: 30, "role": a["role"],
+         "depth": max((q.get("depth") or 0 for q in group), default=0) + 1, "starter": False, "added": True}
+    p["overall"] = player_overall(p)
+    t["players"].append(p)
 
 
 def pool_linebackers(t: dict, order: list[str], by_slug: dict) -> int:
@@ -484,7 +516,11 @@ def ratings_at_every_position(teams: list[dict], means: dict) -> None:
     then scored like a native player. Linebacker roles share the MLB rating."""
     for t in teams:
         for m in t["players"]:
-            src = m.pop("_src")
+            src = m.pop("_src", None)
+            if src is None:              # an added real player: no source card to convert
+                m["ratings_at"] = {pos: (m["overall"] if pos == m["position"] else 16) for pos in ENGINE_POSITIONS}
+                m["ratings_at"]["KR"] = m[RETURN_ATTR]
+                continue
             out = {}
             for pos in ENGINE_POSITIONS:
                 raw = map_player(src, pos)

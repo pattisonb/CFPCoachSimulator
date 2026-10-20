@@ -560,6 +560,40 @@ checked the same way before it is kept.
 ordering quarterbacks by the season so far changes one team's starter, and the sim's QB1 is
 the real one in 76% of later team-games either way, so `QB_RECENT` stays at 3.
 
+**Real starters missing from the rosters** (section 5's list). Nine real players with a
+real season's work have no EA card, so the sim played someone else in their place: Navy QB
+Jackson Gutierrez and FB Michael Barrow, Utah State QB Grady Brosterhous, NIU QB Taron
+Dickens, Georgia Tech RB Justice Haynes, Louisiana Tech RB Andrew Burnette, Syracuse WR
+Umari Hatcher, Eastern Michigan WR Joshua Long and Akron S Donelius Johnson.
+`tune_from_real.py` now lists them under "added" in `data/real_adjustments.json` (a line
+scoring `MISSING_MIN_SCORE` 100: pass attempts + 2 x carries + 3 x catches + 2 x tackles +
+5 x field-goal tries) and `build_teams.add_real_player` puts each on his roster with the
+ratings of the player at the top of his role, so the team plays as strong as it did and the
+real line goes to the right name; then `realdata.py` matches his box scores and the depth
+order by real usage starts him. Rated as an average FBS starter instead, the added
+quarterbacks lifted NIU from 1.5 to 2.1 sim wins at week 8 (real 0-6) and picks fell, so
+that was not kept. Real lines matched to a roster player: 92.8% to 93.0%.
+
+**Team tendencies (section 6), from the box scores.** The observed tendencies were
+refreshed from all eight weeks of box scores (they were from the first five or six), and
+`tools/derive_tendencies.py` now records each team's average margin. Two corrections use it:
+
+- **Pass rate and game script.** A team that leads a lot runs to protect leads, and the
+  engine already plays that out, so the observed pass rate counted it twice: the sim's error
+  ran -0.07 points of pass share per point of margin, and Indiana (+24 a game) passed 34% in
+  the sim against 44% real. The observed rate now gets back `GAME_SCRIPT_PASS` 0.10 points per
+  point of margin. Over 40 seasons: pass-share error 2.9 to 2.2 points, the margin slope
+  gone (+0.008), Indiana 39%.
+- **Fourth-down go rate.** Teams that trail try more fourth downs out of need (FBS slope:
+  0.013 fewer tries a game per point of margin), which pushed bad teams' go rates to the
+  limit (Sac State 99). The tries expected from the margin come off first
+  (`FOURTH_PER_MARGIN`).
+
+Tested together with the added players (40 seasons through week 8): favourite won 73.1% to
+71.9% and Brier 0.176 to 0.177 (both inside the noise), real-versus-sim wins correlation
+0.639 to 0.652; `calibrate_season.py 30` 70.4% to 72.9%, MAE 12.5, slope 0.99. Play-log
+fingerprint e8d02e170713db66.
+
 ## Real 2026 (its own page)
 
 `/real` (the "Real 2026" tab in the top nav) shows the actual 2026 season with the season

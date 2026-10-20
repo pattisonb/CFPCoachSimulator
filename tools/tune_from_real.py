@@ -50,6 +50,10 @@ TARGET_RATING_FIX = True        # a receiver whose real usage needs more than cf
 TARGET_FIX_MAX = 85             # ... up to this rating
 ZERO_CATCH_FLOOR = 0.3          # target weight for a rostered WR/TE high on the depth chart with no real catches
 ZERO_CATCH_DEPTH = 2            # ... at this depth or better
+MISSING_MIN_SCORE = 100         # a real player not on the roster is added once his line scores this much
+                                # (pass attempts + 2 x carries + 3 x catches + 2 x tackles + 5 x field-goal tries)
+ADD_ROLE = {"QB": "QB", "RB": "HB", "WR": "WR", "TE": "TE", "OL": "LT", "DL": "DT", "MLB": "MIKE",
+            "ROLB": "WILL", "LOLB": "SAM", "CB": "CB", "S": "SS", "K": "K", "P": "P"}
 TARGET_GAMES = 4                # games that decide the target weights
 THROUGH = 99                    # --through W: use real games through our week W only
 ROLE_USAGE = {
@@ -86,6 +90,25 @@ def real_games_by_team(st_real: dict) -> dict[str, list[tuple[int, dict]]]:
             out.setdefault(g[side], []).append((g["week"], lines))
     for v in out.values():
         v.sort(key=lambda x: x[0])
+    return out
+
+
+def missing_players(st_real: dict, teams: dict) -> dict:
+    """team -> [{"name", "position", "role"}]: real players with a real season's work who are
+    not on the roster (no EA card: build_teams.py adds them as an average FBS starter)."""
+    out: dict[str, list[dict]] = {}
+    for slug, v in (st_real.get("season_stats") or {}).items():
+        t = teams.get(slug)
+        if not t or t["fictional"]:
+            continue
+        roster = {f"{p['name']}|{p['position']}" for p in t["offense"] + t["defense"] if not p.get("added")}
+        for key, p in v["players"].items():
+            name, _, pos = key.rpartition("|")
+            s = p["stats"]
+            score = (s.get("pass_attempts", 0) + 2 * s.get("carries", 0) + 3 * s.get("receptions", 0)
+                     + 2 * (s.get("solo_tackles", 0) + s.get("assisted_tackles", 0)) + 5 * s.get("fg_attempted", 0))
+            if key not in roster and pos in ADD_ROLE and score >= MISSING_MIN_SCORE:
+                out.setdefault(slug, []).append({"name": name, "position": pos, "role": ADD_ROLE[pos]})
     return out
 
 
@@ -293,7 +316,8 @@ def main() -> None:
     # depth mode keeps the usage already on file (lead-back splits and target weights)
     old = json.loads(OUT.read_text(encoding="utf-8")) if mode == "depth" and OUT.exists() else {}
     old_usage, old_ratings = old.get("usage", {}), old.get("ratings", {})
-    OUT.write_text(json.dumps({"depth": {}, "usage": {}}), encoding="utf-8")
+    added = missing_players(st_real, season.load_teams())
+    OUT.write_text(json.dumps({"depth": {}, "usage": {}, "added": added}), encoding="utf-8")
     build()
     teams = season.load_teams()
     by_team = real_games_by_team(st_real)
@@ -301,7 +325,8 @@ def main() -> None:
     print(f"depth: {len(depth)} teams, {sum(len(v) for v in depth.values())} roles reordered; a different starter at QB on "
           f"{starter_changes(teams, depth, 'QB')} teams, HB {starter_changes(teams, depth, 'HB')}, K {starter_changes(teams, depth, 'K')}")
     data = {"built_from": f"real season through week {min(THROUGH, st_real['current_week'])}", "depth": depth, "usage": old_usage,
-            "ratings": old_ratings}
+            "ratings": old_ratings, "added": added}
+    print(f"added to rosters: {sum(len(v) for v in added.values())} real players without a card")
     OUT.write_text(json.dumps(data, indent=1), encoding="utf-8")
     if mode == "all":
         build()

@@ -3,7 +3,7 @@
 Reads data/boxscores/*.json (fetch_boxscores.py) and data/season_games.json and writes
 data/observed_tendencies.json with, per team slug: games, pass rate, plays per game,
 QB1 and all-QB carry shares of all rushes, sacks taken as a share of rushes, RB1 and RB2 share of non-QB carries, top receiver share
-of catches, fourth-down attempts per game. build_teams.py blends these into the team
+of catches, fourth-down attempts per game, average scoring margin. build_teams.py blends these into the team
 tendencies the engine uses, so a team that throws 60% of the time in real life throws
 about 60% of the time in the sim.
 """
@@ -57,6 +57,8 @@ def main() -> None:
             qbs |= roster_qbs.get(slug, set())
             m["qb_all_rush_att"] = sum(float(p.get("rushingAttempts") or 0) for p in tb["playerStats"] if p.get("category") == "rushing"
                                        and f"{p.get('firstName', '')} {p.get('lastName', '')}".strip().upper() in qbs)
+            home = info.get("seoname") == g.get("home_seo")
+            m["margin"] = (g["home_score"] - g["away_score"]) * (1 if home else -1) if g.get("home_score") is not None else 0.0
             opp = next((o for o in box["teamBoxscore"] if str(o["teamId"]) != str(tb["teamId"])), None)
             m["sacks_taken"] = float(((opp or {}).get("teamStats") or {}).get("TeamDefenseStats", {}).get("sacks") or 0)
             per_team.setdefault(slug, []).append(m)
@@ -77,6 +79,7 @@ def main() -> None:
             "rb2_share": round(st.mean(r["rb2_share"] for r in rows), 1),
             "wr1_share": round(st.mean(r["wr1_share"] for r in rows), 1),
             "fourth_att_per_game": round(st.mean(r["fourth_att"] for r in rows), 2),
+            "margin_per_game": round(st.mean(r["margin"] for r in rows), 1),
         }
     league = {k: round(st.mean(v[k] for v in out.values()), 1)
               for k in ("pass_rate", "plays_per_game", "qb_rush_share", "qb_all_rush_share", "sack_share", "rb1_share", "rb2_share",
