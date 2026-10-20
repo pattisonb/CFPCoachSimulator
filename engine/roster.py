@@ -11,16 +11,14 @@ def return_skill(player):
     return ((player.speed or 50) + (getattr(player, "elusiveness", None) or 50)) / 200
 
 
-# The box-score stats that existed before the award stats were added. Substitution order
-# ranks bench players by these only, so the extra stats (snaps, pressures, long plays...)
-# never change who comes into the game.
+# The scrimmage stats that break ties between bench players at the same depth. Return,
+# kicking and punting stats are left out (a designated returner would otherwise jump the
+# depth chart), and so are the award stats (snaps, pressures, long plays...).
 PRODUCTION_STATS = frozenset({
     "pass_attempts", "completions", "pass_yards", "interceptions_thrown", "sacks_taken", "carries", "rush_yards", "fumbles",
     "receptions", "receiving_yards", "targets", "passing_touchdowns", "receiving_touchdowns", "rushing_touchdowns",
     "solo_tackles", "assisted_tackles", "sacks", "interceptions", "forced_fumbles", "fumble_recoveries", "fumble_return_yards",
-    "interception_return_yards", "defensive_touchdowns", "fg_attempted", "fg_made", "pat_attempts", "pat_made",
-    "kickoff_returns", "kickoff_return_yards", "kickoff_return_touchdowns", "punt_returns", "punt_return_yards",
-    "punt_return_touchdowns", "punts", "punt_yards",
+    "interception_return_yards", "defensive_touchdowns",
 })
 
 
@@ -41,6 +39,9 @@ class Player:
         self.in_game = data.get("in_game", False)
         self.role = data.get("role")          # depth-chart role: LT, LG, C, RG, RT, LEDG, REDG, DT, SAM, MIKE, WILL, CB, FS, SS, HB, FB...
         self.depth = data.get("depth") or 99
+        # place in the position group's playing order: the depth, except for linebackers,
+        # who are ordered across SAM, MIKE and WILL by real usage (build_teams.pool_linebackers)
+        self.order = data.get("order") or self.depth
         self.cls = data.get("class")
         self.injured = bool(data.get("injured"))
         self.injury = None
@@ -143,9 +144,9 @@ class Team:
     @staticmethod
     def _take(players, n):
         """The first n available players: the fatigue rotation's in-game players first, then
-        the bench, each by depth-chart order; injured players never."""
+        the bench, each by playing order (ties in roster order, which is depth order); injured players never."""
         pool = [p for p in players if not p.injured]
-        pool.sort(key=lambda p: (0 if p.in_game else 1, p.depth))
+        pool.sort(key=lambda p: (0 if p.in_game else 1, p.order))
         return pool[:n]
 
     def _group(self, unit, pos):
@@ -280,8 +281,9 @@ class Team:
             bench = [lead]
         if not bench:
             return
-        # the most productive fresh back first; sometimes the next back down gets the series instead
-        bench.sort(key=lambda p: (-production(p), p.fatigue))
+        # the next fresh halfback on the depth chart first (fullbacks last), the more productive
+        # one on a tie; sometimes the next back down gets the series instead
+        bench.sort(key=lambda p: (p.role == 'FB', p.order, -production(p), p.fatigue))
         for tired_player in tired:
             if not bench:
                 break
@@ -306,13 +308,10 @@ class Team:
             if not bench:
                 continue  # no fresh players available
 
-            # Prioritize fresh subs by fatigue ASC, then by total stats DESC
-            def stat_sum(player):
-                return production(player)
+            # the next fresh player on the depth chart first, the more productive one on a tie
+            bench.sort(key=lambda p: (p.order, -production(p), p.fatigue))
 
-            bench.sort(key=lambda p: (-stat_sum(p), p.fatigue))
-
-            # Sub one-for-one; sometimes the next back down gets the series instead of the best one
+            # Sub one-for-one; sometimes the next player down gets the series instead
             for tired_player in starters:
                 if not bench:
                     break
@@ -338,11 +337,8 @@ class Team:
             if not bench:
                 continue
 
-            # Prioritize by freshest and most productive
-            def stat_sum(player):
-                return production(player)
-
-            bench.sort(key=lambda p: (p.fatigue, -stat_sum(p)))
+            # the next fresh player on the depth chart first, then the freshest and most productive
+            bench.sort(key=lambda p: (p.order, p.fatigue, -production(p)))
 
             # Swap one-for-one
             for tired in tired_players:
@@ -368,7 +364,7 @@ class Team:
         for pos in self.REST_POSITIONS[unit]:
             group = [p for p in players if p.position == pos and not p.injured]
             starters = [p for p in group if p.in_game]
-            bench = [p for p in group if not p.in_game]
+            bench = sorted((p for p in group if not p.in_game), key=lambda p: p.order)
             for s, b in zip(starters, bench):
                 s.in_game, b.in_game = False, True
         self._resting[unit] = True

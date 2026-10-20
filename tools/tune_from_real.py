@@ -7,13 +7,15 @@ season built by realdata.py (data/seasons/real-2026.json and its box scores).
 
     python tools/tune_from_real.py                 # depth charts and usage from every real game so far
     python tools/tune_from_real.py --through 6     # from our weeks 1-6 only (to test on later weeks)
-    python tools/tune_from_real.py depth           # depth charts only
+    python tools/tune_from_real.py depth           # depth charts only (keeps the usage on file)
 
 Depth: within each depth-chart role a team's players are reordered by their real usage
 over its last 3 games (pass attempts for quarterbacks, carries for backs, catches and yards
 for receivers and tight ends, tackles, sacks and interceptions for defenders, kicks for the
 specialists); players with no recent usage keep their order behind them, and each role
-keeps its number of starters. Offensive linemen have no box score stats and keep theirs.
+keeps its number of starters. Offensive linemen have no box score stats and keep theirs. Linebackers also get one order
+across SAM, MIKE and WILL (their starters are chosen from it), and a real kicker or punter
+listed at the other specialist spot is moved there.
 
 Usage: the engine hands out carries and targets from ratings (a lead back's share comes
 from how much better he rates than the next back; a receiver's targets grow steeply with
@@ -53,6 +55,9 @@ ROLE_USAGE = {
 }
 DEF_USAGE = lambda s: s.get("solo_tackles", 0) + s.get("assisted_tackles", 0) + 3 * s.get("sacks", 0) + 2 * s.get("tackles_for_loss", 0) + 4 * s.get("interceptions", 0)
 DEF_ROLES = {"LEDG", "DT", "REDG", "SAM", "MIKE", "WILL", "CB", "FS", "SS"}
+LB_ROLES = ("SAM", "MIKE", "WILL")
+LB_POOL = "LB_POOL"             # depth entry: every linebacker by real usage, across the three roles
+SPECIALISTS = "SPECIALISTS"     # depth entry: {"K" or "P": slug} for a real kicker or punter listed at the other spot
 MIN_USAGE = {"QB": 10, "HB": 5, "FB": 1, "WR": 3, "TE": 2, "K": 2, "P": 2}
 FEATURES = [0.0, 0.25, 0.5, 0.75, 1.0]
 LEAD_SHRINK = 60                # RB carries at which a team's real lead share counts half
@@ -100,6 +105,26 @@ def depth_orders(teams: dict, by_team: dict) -> dict:
             order = [p["slug"] for p in used + [p for p in plist if use[p["slug"]] < floor]]
             if order != [p["slug"] for p in plist]:
                 changes[role] = order
+        # Linebackers are one pool: a team plays its most-used linebackers whatever their
+        # labels (SAM, MIKE, WILL), so its linebacker starters are chosen across the roles.
+        lbs = sorted((p for r in LB_ROLES for p in by_role.get(r, [])), key=lambda p: p.get("depth") or 99)
+        if lbs:
+            use = {p["slug"]: sum(DEF_USAGE(lines.get(p["slug"], {})) for _, lines in recent) for p in lbs}
+            floor = 4 * len(recent) / RECENT
+            used = sorted((p for p in lbs if use[p["slug"]] >= floor), key=lambda p: -use[p["slug"]])
+            if used:
+                changes[LB_POOL] = [p["slug"] for p in used + [p for p in lbs if use[p["slug"]] < floor]]
+        # Kickers and punters: the real kicker kicks even when the source lists him as the
+        # punter, and the other way round (one player who does both keeps his listing).
+        swaps = {}
+        specialists = by_role.get("K", []) + by_role.get("P", [])
+        for pos in ("K", "P"):
+            use = {p["slug"]: sum(ROLE_USAGE[pos](lines.get(p["slug"], {})) for _, lines in recent) for p in specialists}
+            top = max(specialists, key=lambda p: use[p["slug"]], default=None)
+            if top and top.get("role") != pos and use[top["slug"]] >= MIN_USAGE[pos] * len(recent) / RECENT:
+                swaps[pos] = top["slug"]
+        if len(set(swaps.values())) == len(swaps) and swaps:
+            changes[SPECIALISTS] = swaps
         if changes:
             out[slug] = changes
     return out
@@ -239,6 +264,8 @@ def main() -> None:
     st_real = season.load_season("real-2026")
     if st_real is None:
         raise SystemExit("build the real season first: python realdata.py")
+    # depth mode keeps the usage already on file (lead-back splits and target weights)
+    old_usage = json.loads(OUT.read_text(encoding="utf-8")).get("usage", {}) if mode == "depth" and OUT.exists() else {}
     OUT.write_text(json.dumps({"depth": {}, "usage": {}}), encoding="utf-8")
     build()
     teams = season.load_teams()
@@ -246,7 +273,7 @@ def main() -> None:
     depth = depth_orders(teams, by_team)
     print(f"depth: {len(depth)} teams, {sum(len(v) for v in depth.values())} roles reordered; a different starter at QB on "
           f"{starter_changes(teams, depth, 'QB')} teams, HB {starter_changes(teams, depth, 'HB')}, K {starter_changes(teams, depth, 'K')}")
-    data = {"built_from": f"real season through week {min(THROUGH, st_real['current_week'])}", "depth": depth, "usage": {}}
+    data = {"built_from": f"real season through week {min(THROUGH, st_real['current_week'])}", "depth": depth, "usage": old_usage}
     OUT.write_text(json.dumps(data, indent=1), encoding="utf-8")
     if mode == "all":
         build()

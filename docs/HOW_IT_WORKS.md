@@ -313,6 +313,18 @@ starters sit in blowouts.
   defenders, kicks for specialists. Each role keeps its number of starters; offensive
   linemen keep the source order (box scores have nothing on them). After week 8 this
   changed the starting quarterback at 41 teams, the lead back at 70 and the kicker at 22.
+- **Linebackers as one pool; specialists where they really kick.** Linebacker starters are
+  picked across SAM, MIKE and WILL from one usage order (EA's starter count per role had
+  benched real tackle leaders such as Alabama's Luke Metz and Utah's Trey Reynolds), and a
+  2-linebacker front plays the two most-used. A real kicker listed as a punter (or the other
+  way round) is moved to that spot with his attributes rebuilt for it (Liberty, Missouri,
+  Navy, North Carolina after week 8).
+- **The engine plays the depth chart.** `build_teams.py` writes each roster in depth order
+  (the source lists are not), and bench players come in by depth: the next halfback, receiver
+  or defender down, with production only breaking ties. Before, every backup tied at zero at
+  kickoff, so the first player in the file came in and then kept winning on production, and
+  return yards counted, so a designated returner jumped the depth chart. Return, kicking and
+  punting stats no longer count toward substitution. Play-log fingerprint 2f629474cdddbbf2.
 - **Usage from who gets the ball.** The engine hands out carries and targets from ratings.
   Each team now carries its real lead-back split (its share of running back carries,
   mapped to the engine's committee-to-workhorse scale by simulation), and each receiver a

@@ -274,10 +274,17 @@ def apply_observed_tendencies(teams: list[dict]) -> int:
 REAL_ADJUSTMENTS = ROOT / "data" / "real_adjustments.json"
 
 
-def apply_real_adjustments(teams: list[dict]) -> tuple[int, int]:
+LB_ROLES = ("SAM", "MIKE", "WILL")
+LB_POOL = "LB_POOL"             # tools/tune_from_real.py: every linebacker by real usage, across the three roles
+SPECIALISTS = "SPECIALISTS"     # tools/tune_from_real.py: {"K" or "P": slug} for a specialist listed at the other spot
+
+
+def apply_real_adjustments(teams: list[dict], means: dict) -> tuple[int, int]:
     """Apply data/real_adjustments.json (tools/tune_from_real.py): rating nudges in engine
     points, then depth orders by real usage, keeping each role's number of starters.
-    Returns (players nudged, roles reordered)."""
+    Linebacker starters are picked across SAM, MIKE and WILL from one usage order (the
+    engine plays them in that order), and a real kicker or punter listed at the other
+    spot is moved there. Returns (players nudged, roles reordered)."""
     if not REAL_ADJUSTMENTS.exists():
         return 0, 0
     adj = json.loads(REAL_ADJUSTMENTS.read_text(encoding="utf-8"))
@@ -298,7 +305,10 @@ def apply_real_adjustments(teams: list[dict]) -> tuple[int, int]:
                 if isinstance(p.get(attr), (int, float)):
                     p[attr] = int(round(max(1, min(99, p[attr] + d))))
             nudged += 1
-        for role, order in (adj.get("depth") or {}).get(t["slug"], {}).items():
+        changes = (adj.get("depth") or {}).get(t["slug"], {})
+        for role, order in changes.items():
+            if role in (LB_POOL, SPECIALISTS):
+                continue
             group = [p for p in t["players"] if p.get("role") == role]
             if not group:
                 continue
@@ -309,7 +319,58 @@ def apply_real_adjustments(teams: list[dict]) -> tuple[int, int]:
                 p["depth"] = i + 1
                 p["starter"] = i < n_start
             reordered += 1
+        if changes.get(LB_POOL):
+            reordered += pool_linebackers(t, changes[LB_POOL], by_slug)
+        for pos, slug in (changes.get(SPECIALISTS) or {}).items():
+            if slug in by_slug:
+                reordered += move_specialist(t, by_slug[slug], pos, means)
     return nudged, reordered
+
+
+def pool_linebackers(t: dict, order: list[str], by_slug: dict) -> int:
+    """Pick a team's linebacker starters from one usage order across SAM, MIKE and WILL
+    (EA's starter count per role can leave its real leading tackler on the bench). Each
+    linebacker's `order` is his place in that pool, which the engine plays by."""
+    lbs = [p for p in t["players"] if p.get("role") in LB_ROLES]
+    if not lbs:
+        return 0
+    n_start = sum(1 for p in lbs if p["starter"])
+    ranked = [by_slug[s] for s in order if s in by_slug and by_slug[s].get("role") in LB_ROLES]
+    ranked += [p for p in sorted(lbs, key=lambda p: p.get("depth") or 99) if p not in ranked]
+    for i, p in enumerate(ranked):
+        p["order"] = i + 1
+        p["starter"] = i < n_start
+    return 1
+
+
+def move_specialist(t: dict, p: dict, pos: str, means: dict) -> int:
+    """Make `p` the starting kicker (pos "K") or punter ("P"): his attributes are rebuilt for
+    that spot from the source ratings, and both spots' depth charts close up behind the move."""
+    old_role = p.get("role")
+    if p["position"] == pos or "_src" not in p:
+        return 0
+    raw = map_player(p["_src"], pos)
+    for a in ATTRS:
+        p.pop(a, None)
+    for a, v in raw.items():
+        if a in ATTRS and isinstance(v, (int, float)):
+            p[a] = int(round(max(1, min(99, NEUTRAL + (v - means.get(f"{pos}:{a}", 50.0)) * SPREAD_SCALE))))
+    p["position"], p["role"] = pos, pos
+    for role, first in ((pos, p), (old_role, None)):
+        if role is None:
+            continue
+        rest = sorted((q for q in t["players"] if q.get("role") == role and q is not first), key=lambda q: q.get("depth") or 99)
+        for i, q in enumerate(([first] if first else []) + rest):
+            q["depth"] = i + 1
+            q["starter"] = i == 0
+    return 1
+
+
+def depth_sort(t: dict) -> None:
+    """Put a team's roster in depth-chart order (the source lists are not), so the engine's
+    list-order tie-breaks follow the depth chart: depth, then linebacker pool order, then the
+    better player first."""
+    t["players"].sort(key=lambda p: (p.get("depth") or 99, p.get("order") or 99, -(p.get("overall") or 0)))
 
 
 def normalize(teams: list[dict]) -> dict:
@@ -425,7 +486,9 @@ def main() -> None:
     paths = sorted((SRC / "teams").glob("*.json"))
     teams = [load_team(p) for p in paths]
     means = normalize(teams)
-    nudged, reordered = apply_real_adjustments(teams)
+    nudged, reordered = apply_real_adjustments(teams, means)
+    for t in teams:
+        depth_sort(t)
     if nudged or reordered:
         print(f"real 2026 adjustments: {reordered} depth-chart roles reordered" + (f", {nudged} players' ratings nudged" if nudged else ""))
     ratings_at_every_position(teams, means)
