@@ -299,7 +299,7 @@ The play-log fingerprint is now d85b69de4e69a568.
 ## Game randomness and defense weight (overnight review, items 2.2 and 2.4)
 
 The overnight review (10 simulated seasons against the real 2026 season through week 8,
-`tools/team_reality.py`) found records bunched toward .500 for two engine reasons. The same
+team by team) found records bunched toward .500 for two engine reasons. The same
 matchup swung 17.5 points from game to game, more than real football's whole unexplained
 spread (15.9). And defense counted for too little: points allowed per defense-rating point
 were -0.28 in the sim against -0.50 real, while offense counted for too much (0.73 against 0.58).
@@ -330,6 +330,31 @@ were -0.28 in the sim against -0.50 real, while offense counted for too much (0.
 MAE 12.9 to 12.7, correlation 0.59 to 0.61, home bias +0.1 to -0.5. League scoring is
 27.1 points a team-game against 26.0 real; the extra passing touchdowns and punt returns
 (items 2.3 and 2.6) are the known causes, left for their own fixes. Play-log fingerprint ebe00215526c19dd.
+
+## Red-zone passing (overnight review, items 2.5 and 2.6)
+
+The sim threw 25% too many touchdown passes (1.81 a team-game against 1.53 real; 9.7% of
+completions against 8.1%) and kicked too few field goals. A short field now squeezes the
+coverage (`REDZONE_COMPLETION`: -0.06 completion inside the 20, -0.10 inside the 10), and
+`COMPLETION_BASE` 0.637 to 0.641 keeps league completion at 62-63%. Over 20 seasons through
+week 8: touchdown passes 1.81 to 1.67 a team-game (9.0% of completions), field goals made
+0.97 to 1.05, with game picks unchanged (favourite won 72.6% / 72.8%).
+
+Two other changes were tested the same way (20 seasons each, one change at a time) and
+left out:
+
+- **Fewer interceptions** (the scramble decided before the throw, `INT_BASE` 0.065 to
+  0.060; and the review's flatter slopes, 0.0013 to 0.0007 a point). Interceptions fell from
+  3.0 to 2.5 per 100 attempts (real 2.3 through week 8, 2.6 over the 2025 season), but every
+  run with it picked fewer winners: favourite won 70.2% against 72.6%, Brier 0.190 against
+  0.177. Interceptions are one of the places where QB and coverage ratings decide games, so
+  they stay; the worst cases (low-rated QBs who throw few real interceptions) are rating
+  cards to fix, not the engine.
+- **Kicker accuracy** (`FG_PER_ACCURACY_POINT` 0.004 to 0.002) made no difference to field
+  goals made.
+
+`tools/calibrate_season.py 30`: straight up 72.7%, margin MAE 12.7, slope 0.99, home bias
+-0.1. Play-log fingerprint 6ffc7217ca716433.
 
 ## Player stat lines against real box scores
 

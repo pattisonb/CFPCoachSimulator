@@ -439,6 +439,9 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
         completion += cfg.COMPLETION_CHECKDOWN_BONUS
     if (tendencies or {}).get("prevent"):
         completion += cfg.PREVENT_COMPLETION
+    # red zone: a short field squeezes the coverage
+    to_goal = 100 - yardline
+    completion += next((adj for inside, adj in cfg.REDZONE_COMPLETION if to_goal <= inside), 0.0)
     completion = max(cfg.COMPLETION_MIN, min(cfg.COMPLETION_MAX, completion))
 
     qb.stats["pass_attempts"] += 1
