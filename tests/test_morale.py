@@ -12,8 +12,8 @@ from test_play_log import fingerprint
 
 if __name__ == "__main__":
     base = fingerprint()
-    print("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: 6ffc7217ca716433)")
-    assert base == "6ffc7217ca716433"
+    print("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: 5368e4b5cb876edc)")
+    assert base == "5368e4b5cb876edc"
 
     # in-game momentum changes a game and leaves the flag off afterwards
     season._init(str(season.TEAMS_FILE))
@@ -30,7 +30,16 @@ if __name__ == "__main__":
     tm = m["teams"].get("ohio-state", 0.0)
     rec = season._records(st)["ohio-state"]
     print(f"Ohio State {rec['wins']}-{rec['losses']}: team mood {tm:+.2f}")
-    assert (tm > 0) == (rec["wins"] > rec["losses"]) or rec["wins"] == rec["losses"]
+    # moods move with the result against expectation (a favourite's loss costs more than its
+    # wins add), so one team's sign need not follow its record; across the league they do
+    recs = season._records(st)
+    by = {}
+    for slug, r in recs.items():
+        if r["wins"] + r["losses"]:
+            by.setdefault("up" if r["wins"] > r["losses"] else "down" if r["wins"] < r["losses"] else "even", []).append(m["teams"].get(slug, 0.0))
+    mean = {k: sum(v) / len(v) for k, v in by.items()}
+    print("mean mood by record:", {k: round(v, 2) for k, v in mean.items()})
+    assert mean["up"] > 0 > mean["down"]
     forms = m["players"].get("ohio-state", {})
     hot = sorted(forms.items(), key=lambda kv: -kv[1])[:3]
     cold = sorted(forms.items(), key=lambda kv: kv[1])[:3]

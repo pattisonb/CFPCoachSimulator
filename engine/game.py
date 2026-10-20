@@ -249,6 +249,8 @@ class GameSim:
             drive_functions._log(type="kickoff", result="return_td" if is_td else "kickoff", kicking=kicking.name, to=yardline,
                                  returner=returner.name if returner else None, return_yards=_return_yards, left=self.seconds)
             if not is_td:
+                if returner is not None:
+                    play_functions.credit_coverage_tackle(kicking)
                 return receiving, yardline
             receiving.team_stats["kickoff_return_touchdowns"] += 1
             receiving.swing(0.4)

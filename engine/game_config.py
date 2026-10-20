@@ -239,11 +239,16 @@ TARGET_MULT_MAX = 2.0           # cap on a receiver's real-usage target weight (
 # ----- Who gets the defensive stats (tools/realism.py: season leaders against real seasons) -----
 # Tackle weight per player on the field: (dl, lb, olb, s, cb) for runs of 2 yards or less,
 # 3-7 yards, and longer plays, times (skill / neutral) ** TACKLE_SKILL_POWER.
-TACKLE_WEIGHTS_SHORT = (0.22, 0.29, 0.30, 0.12, 0.05)
-TACKLE_WEIGHTS_MID = (0.08, 0.28, 0.30, 0.20, 0.10)
+TACKLE_WEIGHTS_SHORT = (0.18, 0.29, 0.30, 0.12, 0.05)   # DL was 0.22: linemen made 23% of tackles (real about 20%)
+TACKLE_WEIGHTS_MID = (0.065, 0.28, 0.30, 0.20, 0.10)     # DL was 0.08
 TACKLE_WEIGHTS_LONG = (0.02, 0.16, 0.12, 0.34, 0.30)
-TACKLE_SKILL_POWER = 1.0
-TACKLE_ASSIST_CHANCE = 0.30     # share of tackles made by two players (a solo plus an assist)
+TACKLE_SKILL_POWER = 0.7
+TACKLE_ASSIST_CHANCE = 0.33     # share of tackles made by two players; both get an assist (NCAA scoring),
+                                # so assisted / solo = 2 x 0.31 / 0.69 = 0.9 (real FBS 0.91)
+NO_TACKLE_CHANCE = 0.16        # a gain of 4+ yards that ends out of bounds: nobody is credited
+COVERAGE_TACKLE_WEIGHTS = (0.3, 1.0, 0.4)   # who makes the tackle on a returned kick: by depth at the
+                                # position (starter, second, the rest); real coverage units are mostly backups
+FORCED_FUMBLE_SHARE = 0.7       # share of fumbles credited as forced (real 0.67 forced a team-game on about 1.1 fumbles)
 SACK_SKILL_POWER = 1.3          # sack credit among the rushers: (pass rush / neutral) ** power
 INT_SKILL_POWER = 1.5           # interception credit among the defensive backs: (coverage / neutral) ** power
 QB_DESIGNED_RUN_SHARE = 0.06    # default share of carries that are designed QB runs (observed per team overrides)

@@ -197,10 +197,12 @@ def _slider_points(slider_value, scale=20.0):
 
 
 def _credit_tackle(defense, yards):
+    if yards > 3 and random.random() < cfg.NO_TACKLE_CHANCE:
+        return                      # pushed out of bounds: no tackle in the box score
     tacklers, is_assisted = assign_tackles(defense, yards)
     tackle_mult = sliders.get_multiplier(sliders.tackling)
     if is_assisted and len(tacklers) == 2 and random.random() < tackle_mult:
-        tacklers[0].stats['solo_tackles'] += 1
+        tacklers[0].stats['assisted_tackles'] += 1      # a shared tackle: an assist each (NCAA)
         tacklers[1].stats['assisted_tackles'] += 1
     elif tacklers:
         tacklers[0].stats['solo_tackles'] += 1
@@ -208,11 +210,39 @@ def _credit_tackle(defense, yards):
         _stat(tacklers[0], 'tackles_for_loss')
 
 
+COVERAGE_POSITIONS = {"MLB": 1.0, "ROLB": 1.0, "LOLB": 1.0, "OLB": 1.0, "S": 1.0, "CB": 0.8, "DL": 0.25}
+
+
+def credit_coverage_tackle(team):
+    """A returned kickoff or punt ends in a tackle by the kicking team's coverage unit:
+    mostly backup linebackers and defensive backs (real box scores count these with the
+    defense's tackles, about 3-4 a team-game, and they spread the totals off the starters)."""
+    groups: dict = {}
+    for p in team.defense:
+        if p.position in COVERAGE_POSITIONS and not p.injured:
+            groups.setdefault(p.position, []).append(p)
+    cands, weights = [], []
+    for pos, ps in groups.items():
+        for i, p in enumerate(sorted(ps, key=lambda q: q.order)):
+            cands.append(p)
+            weights.append(COVERAGE_POSITIONS[pos] * cfg.COVERAGE_TACKLE_WEIGHTS[min(i, len(cfg.COVERAGE_TACKLE_WEIGHTS) - 1)])
+    if not cands:
+        return
+    if len(cands) >= 2 and random.random() < cfg.TACKLE_ASSIST_CHANCE:
+        a = random.choices(cands, weights=weights, k=1)[0]
+        rest = [(c, w) for c, w in zip(cands, weights) if c is not a]
+        b = random.choices([c for c, _ in rest], weights=[w for _, w in rest], k=1)[0]
+        a.stats["assisted_tackles"] += 1
+        b.stats["assisted_tackles"] += 1
+    else:
+        random.choices(cands, weights=weights, k=1)[0].stats["solo_tackles"] += 1
+
+
 def _lose_fumble(offense, defense, fumbler, spot, forcer_positions, yards_for_forcer):
     """A fumble by `fumbler` at `spot`. Returns (result, yardline) for the drive logic
     and records the stats. The offense recovers half of them."""
     fumbler.stats["fumbles"] += 1
-    if random.random() < sliders.get_percentage_adjustment(sliders.forced_fumbles, 1.0):
+    if random.random() < sliders.get_percentage_adjustment(sliders.forced_fumbles, cfg.FORCED_FUMBLE_SHARE):
         assign_forced_fumble(defense, yards_for_forcer)   # increments forced_fumbles itself
     last_play["fumble"] = fumbler.name
     if random.random() < cfg.FUMBLE_OFFENSE_RECOVERY:

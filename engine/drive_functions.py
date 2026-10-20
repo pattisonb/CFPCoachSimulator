@@ -664,6 +664,8 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
             else:
                 punt_from = yardline
                 yardline, punt_distance, punt_blocked, returner, return_yards, is_return_td, punt_how = attempt_punt(yardline, punter, defense, defense)  # the defense returns the punt
+                if punt_how == "returned" and not is_return_td:
+                    play_functions.credit_coverage_tackle(offense)
                 punt_time = random.randint(6, 10)
                 seconds_remaining -= punt_time
                 play_functions.last_play.clear()

@@ -356,6 +356,38 @@ left out:
 `tools/calibrate_season.py 30`: straight up 72.7%, margin MAE 12.7, slope 0.99, home bias
 -0.1. Play-log fingerprint 6ffc7217ca716433.
 
+## Tackles (overnight review item 2.8 and the full-season check)
+
+Over full seasons the sim had 84 hundred-tackle players against 51-64 in real 2023-2025
+seasons, and every leaderboard rank from #1 to #100 ran 8-14% high. Team totals were right
+(67.7 tackles a team-game against 66.6 real), so the tackles were too concentrated. Changing
+defensive rotation moved it little: on-field shares were already about 65% for the top
+linebacker. The causes were elsewhere:
+
+- **No special-teams tackles.** Real totals include about 3-4 coverage tackles a team-game
+  on returned kicks and punts, mostly by second-string linebackers and defensive backs. A
+  returned kickoff or punt now ends in a coverage tackle (`play_functions.credit_coverage_tackle`,
+  `COVERAGE_TACKLE_WEIGHTS` 0.3 / 1.0 / 0.4 for the starter, the second-stringer and the rest).
+- **Every gain ended in a tackle.** 16% of gains of 4+ yards now go out of bounds with
+  nobody credited (`NO_TACKLE_CHANCE`), which keeps the team total level.
+- **The best tackler at a spot took too much.** `TACKLE_SKILL_POWER` 1.0 to 0.7.
+- **Shared tackles are scored the NCAA way:** an assist each (was a solo and an assist),
+  with `TACKLE_ASSIST_CHANCE` 0.33: assisted / solo about 1.0 against 0.94 in real 2026 box
+  scores (was 0.28). The review suggested 0.38-0.40, which under NCAA scoring would have
+  overshot.
+- **The defensive line** made 23% of tackles (real about 20%): its short-run weight 0.22 to
+  0.18 and mid-run weight 0.08 to 0.065. Cutting it to the review's 0.13 sent the tackles to
+  the linebackers who already led and raised the hundred-tackle count to 114.
+- **Forced fumbles** were credited on every fumble (1.03 a team-game against 0.67 real);
+  `FORCED_FUMBLE_SHARE` 0.7.
+
+Result (4 full seasons): hundred-tackle players 64 (real 51-64), tackle leaders within 1%
+of real at ranks 5-100 (mean gap 10% to 2%). Game picks held (20 seasons through week 8:
+favourite won 72.4% before, 73.6% after; Brier 0.187, 0.182; `calibrate_season.py 30`:
+74.0%, MAE 12.5, slope 1.01). One cost: sim players who never appear in a real box score
+but play 5+ sim games rose from 170 to 188, because coverage tackles give backups a stat
+line. Play-log fingerprint 5368e4b5cb876edc.
+
 ## Player stat lines against real box scores
 
 `tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed
@@ -872,9 +904,19 @@ explosive plays, fourth-down stops and conversions, blocked and missed kicks, re
 touchdowns. Momentum fades a little every snap and halves at halftime, and at full swing
 a team's ratings move 5% either way (the same fatigue pass that already scales ratings
 applies it, so with the setting off a game is bit-for-bit what it was). Between games,
-every team carries a mood from its results (wins and losses, upsets, blowouts) and every
-player a form from how each game compared with his season so far; both fade 15% a week.
-Entering a game, a player's ratings scale by up to 4% for his form and 3% for the team's
+every team carries a mood from its results and every player a form from how each game
+compared with his season so far; both fade 15% a week. A team's mood moves by half of
+(result minus its pre-game win chance, from the rating gap and home field) plus 0.05 for
+a 21-point result, so a heavy favourite's win or an FCS win adds little and an upset
+moves both teams a lot (`MORALE_RESULT`, `MORALE_BLOWOUT`). Flat steps of 0.25 a result
+used to pin good teams at +1 by midseason: in 5 simulated seasons at week 8, 50 of 690
+team values sat at +1 and Notre Dame was at +1 in 4 of 5; now 7 of 690, Notre Dame
+0.72-0.82, still in record order. Player form leaves FCS games out (an FCS opener inflated
+the season average, so later games read below par) and takes off the league's running
+mean (`MORALE_Z_TRACK`): form averaged -0.04 with 56% of values negative, now -0.004 and
+51%, with hot and cold streaks equally common (8% each). Game picks did not move
+(20 seasons through week 8: favourite won 72.7% before, 72.4% after; Brier 0.186, 0.187).
+Entering a game, a player's ratings scale by up to 6% for his form and 3% for the team's
 mood. The player card shows the boosts as green ▲ and red ▼ arrows next to each rating,
 with a 🔥 Hot streak or ❄ Cold streak tag and the team's mood; the depth chart marks hot
 and cold players. `python tests/test_morale.py` checks that the engine is unchanged with the
