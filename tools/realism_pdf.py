@@ -91,8 +91,8 @@ def title_page(pdf, teams, league, scores):
                 brier.append((p - (1 if r["won"] else 0)) ** 2)
     rw = [int(t["record"]["real"].split("-")[0]) for t in teams.values()]
     sw = [t["record"]["sim_mean_wins"] for t in teams.values()]
-    pts_r = [t["per_game"]["real_offense"].get("points") for t in teams.values()]
-    pts_s = [t["per_game"]["sim_offense"].get("points") for t in teams.values()]
+    pts_r = [matched(t, "offense")[0].get("points") for t in teams.values()]
+    pts_s = [matched(t, "offense")[1].get("points") for t in teams.values()]
     pp = [(a, b) for a, b in zip(pts_r, pts_s) if a is not None and b is not None]
     tiles = [(f"{100 * right / games:.0f}%", f"of {games} FBS-vs-FBS games picked right\n(the sims' favorite won)"),
              (f"{st.mean(brier):.3f}", "Brier score of the sims' win odds\n(0.25 = coin flip; Vegas is about 0.18)"),
@@ -103,7 +103,7 @@ def title_page(pdf, teams, league, scores):
         tiles.append((f"{st.mean(vals):.1f}/10", f"average realism score from\n{len(vals)} team analysts"))
     for i, (big, small) in enumerate(tiles):
         x = 0.08 + (i % 2) * 0.43
-        y = 0.70 - (i // 2) * 0.15
+        y = 0.76 - (i // 2) * 0.135
         fig.text(x, y, big, fontsize=28, fontweight="bold", color="#c8102e")
         fig.text(x, y - 0.045, small, fontsize=9.5, color=INK, va="top")
     contents = ["1. Wins and game odds", "2. Team offense and defense per game", "3. Players: real vs simulated totals",
@@ -158,10 +158,27 @@ def records_and_games(pdf, teams):
     plt.close(fig)
 
 
+def matched(t: dict, side: str) -> tuple[dict, dict]:
+    """Per-game averages over the same games only: weeks where the real game has a box score
+    (real games against FCS teams usually do not) and the sims played it. Returns (real, sim)."""
+    rk, sk = ("line", "line") if side == "offense" else ("allowed", "allowed")
+    pairs = [(w["real"][rk], w["sim"][sk]) for w in t["weeks"]
+             if (w.get("real") or {}).get(rk) and (w.get("sim") or {}).get(sk)]
+    def avg(ls):
+        keys = set().union(*[l.keys() for l in ls]) if ls else set()
+        return {k: st.mean([l[k] for l in ls if isinstance(l.get(k), (int, float))]) if any(isinstance(l.get(k), (int, float)) for l in ls) else None for k in keys}
+    return avg([a for a, _ in pairs]), avg([b for _, b in pairs])
+
+
 def team_stats(pdf, teams):
     fig, axes = plt.subplots(3, 2, figsize=PAGE)
     def pts(side, key):
-        return [(t["per_game"][f"real_{side}"].get(key), t["per_game"][f"sim_{side}"].get(key), t["tier"], t["name"]) for t in teams.values()]
+        side = "offense" if side == "offense" else "allowed"
+        out = []
+        for t in teams.values():
+            r, s = matched(t, side)
+            out.append((r.get(key), s.get(key), t["tier"], t["name"]))
+        return out
     scatter(axes[0][0], pts("offense", "points"), "Points per game", "real", "simulated", 6)
     scatter(axes[0][1], pts("defense_allowed", "points"), "Points allowed per game", "real", "simulated", 6)
     scatter(axes[1][0], pts("offense", "pass_yds"), "Passing yards per game", "real", "simulated", 6)
@@ -169,7 +186,7 @@ def team_stats(pdf, teams):
     scatter(axes[2][0], pts("offense", "plays"), "Offensive plays per game", "real", "simulated", 6)
     share = []
     for t in teams.values():
-        r, s = t["per_game"]["real_offense"], t["per_game"]["sim_offense"]
+        r, s = matched(t, "offense")
         def ps(d, sacks_in_carries):
             a, c, sk = d.get("pass_att") or 0, d.get("carries") or 0, d.get("sacks_taken") or 0
             plays = a + c + (0 if sacks_in_carries else sk)        # official carries already include the sacks
@@ -178,7 +195,7 @@ def team_stats(pdf, teams):
         ss = ps(s, False)
         share.append((rs, ss, t["tier"], t["name"]))
     scatter(axes[2][1], share, "Pass play share % (dropbacks / plays)", "real", "simulated", 6)
-    fig.suptitle("Team offense and defense, per game: real vs simulated", fontsize=13, fontweight="bold", color=INK)
+    fig.suptitle("Team offense and defense per game, same games only: real vs simulated", fontsize=13, fontweight="bold", color=INK)
     fig.tight_layout(pad=1.6, rect=(0, 0, 1, 0.97))
     pdf.savefig(fig)
     plt.close(fig)
@@ -312,7 +329,8 @@ def text_pages(pdf, md: str, heading: str):
     for raw in md.splitlines():
         line = raw.rstrip()
         if line.startswith("#"):
-            lines.append(("h", re.sub(r"^#+\s*", "", line)))
+            for w in textwrap.wrap(re.sub(r"^#+\s*", "", line), 82):
+                lines.append(("h", w))
         elif line.startswith("|") or line.startswith("    ") or line.startswith("```"):
             if not set(line.replace("|", "").strip()) <= set("-: "):
                 lines.append(("m", line[:118]))
@@ -337,9 +355,10 @@ def text_pages(pdf, md: str, heading: str):
         while lines and count < per_page and y > 0.04:
             kind, text = lines.pop(0)
             if kind == "h":
+                more = bool(lines) and lines[0][0] == "h"   # a long heading wrapped onto the next line
                 y -= 0.006
                 fig.text(0.07, y, text, fontsize=11.5, fontweight="bold", color="#c8102e")
-                y -= 0.02
+                y -= 0.012 if more else 0.02
             elif kind == "m":
                 fig.text(0.07, y, text, fontsize=6.6, family="DejaVu Sans Mono", color=INK)
                 y -= 0.0125
