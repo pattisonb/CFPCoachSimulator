@@ -2902,7 +2902,9 @@
       if (e.result === "blocked") return `${who}'s punt is BLOCKED.`;
       if (e.result === "return_td") return `${who} punts ${e.yards} yards; ${e.returner || "the returner"} takes it back for a TOUCHDOWN.`;
       if (e.returner && e.return_yards) return `${who} punts ${e.yards} yards; ${e.returner} returns it ${e.return_yards} yards to ${gdSpot(g, def, 100 - e.to)}.`;
-      return `${who} punts ${e.yards} yards; ${g[def].name} takes over at ${gdSpot(g, def, 100 - e.to)}.`;
+      if (e.how === "touchback") return `${who} punts ${e.yards} yards into the end zone for a touchback.`;
+      const how = { fair_catch: "fair catch", downed: "downed", out_of_bounds: "out of bounds" }[e.how];
+      return `${who} punts ${e.yards} yards${how ? `, ${how}` : ""}; ${g[def].name} takes over at ${gdSpot(g, def, 100 - e.to)}.`;
     }
     const first = e.after === 1 && !td ? " for a first down" : "";
     const fumble = (base) => {

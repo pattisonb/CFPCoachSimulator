@@ -423,136 +423,94 @@ def attempt_kick(yardline, kicker, defense_team=None) :
 
 def attempt_punt(yardline, punter, defense_team=None, return_team=None):
     """Punt and return. Returns (final_yardline, punt_yards, is_blocked, returner, return_yards,
-    is_return_td) and records the punter's placement stats (net yards, inside the 20,
-    touchbacks, long) and the returner's long return."""
-    out = _attempt_punt(yardline, punter, defense_team, return_team)
-    final_spot, punt_yards, blocked, returner, return_yards, td = out
-    if not blocked and punt_yards:
-        st = punter.stats
-        st["punt_net_yards"] = st.get("punt_net_yards", 0) + punt_yards - return_yards
-        if punt_yards > st.get("long_punt", 0):
-            st["long_punt"] = punt_yards
-        if not td and final_spot >= 80:
-            if final_spot == 80 and returner is None and return_yards == 0:
-                st["punt_touchbacks"] = st.get("punt_touchbacks", 0) + 1
-            else:
-                st["punts_inside_20"] = st.get("punts_inside_20", 0) + 1
-        if returner is not None and return_yards > returner.stats.get("long_punt_return", 0):
-            returner.stats["long_punt_return"] = return_yards
-    return out
+    is_return_td, how) and records the punter's stats (gross and net yards, inside the 20,
+    touchbacks, long) and the returner's. `how` is how the punt ended: returned, fair_catch,
+    downed, out_of_bounds, touchback, blocked or fake. punt_yards is the gross (official)
+    distance; net is the gross less the return, and 20 yards less on a touchback."""
+    final_spot, gross, blocked, returner, return_yards, td, how = _attempt_punt(yardline, punter, defense_team, return_team)
+    st = punter.stats
+    st["punts"] += 1
+    if not blocked and how != "fake":
+        st["punt_yards"] += gross
+        st["punt_net_yards"] = st.get("punt_net_yards", 0) + gross - return_yards - (20 if how == "touchback" else 0)
+        if gross > st.get("long_punt", 0):
+            st["long_punt"] = gross
+        if how == "touchback":
+            st["punt_touchbacks"] = st.get("punt_touchbacks", 0) + 1
+        elif not td and final_spot >= 80:
+            st["punts_inside_20"] = st.get("punts_inside_20", 0) + 1
+    if returner is not None and how == "returned":
+        rs = returner.stats
+        rs["punt_returns"] = rs.get("punt_returns", 0) + 1
+        rs["punt_return_yards"] = rs.get("punt_return_yards", 0) + return_yards
+        if td:
+            rs["punt_return_touchdowns"] = rs.get("punt_return_touchdowns", 0) + 1
+        if return_yards > rs.get("long_punt_return", 0):
+            rs["long_punt_return"] = return_yards
+    return final_spot, gross, blocked, returner, return_yards, td, how
+
+
+def _punt_return_yards(returner):
+    """Yards on a punt that is returned: mostly short (a typical return is 4-7 yards, a few
+    lose yards), with the odd breakaway that pulls the average up to about 8-9."""
+    mult = sliders.get_multiplier(sliders.kickoff_return)   # the return slider covers both kicks
+    mult *= 1 + (return_skill(returner) - cfg.PUNT_RETURNER_TYPICAL) * cfg.PUNT_RETURN_SKILL
+    chance, mean, sd = cfg.PUNT_BREAKAWAY
+    if random.random() < chance * mult:
+        return max(15, round(random.gauss(mean, sd)))
+    shape, scale = cfg.PUNT_RETURN_YARDS
+    return round(random.gammavariate(shape, scale) * mult) - 2
 
 
 def _attempt_punt(yardline, punter, defense_team=None, return_team=None):
-    """
-    Simulate punt and return
-    Returns: (final_yardline, punt_yards, is_blocked, returner_player, return_yards, is_return_td)
-    """
-    # College chaos: occasional fake punt attempt (0.3% chance when in own territory)
+    """The kick and what happens to it. Returns (final_yardline, gross_yards, is_blocked,
+    returner, return_yards, is_return_td, how); attempt_punt keeps the stats."""
+    # College chaos: an occasional fake from the punter's own side of the field, treated as
+    # a failed one (the ball goes over where it was snapped).
     if yardline < 50 and random.random() < 0.003:
-        # Fake punt - treat as turnover for now (could add fake punt logic later)
-        punter.stats["punts"] += 1
-        return yardline, 0, False, None, 0, False  # No yards gained, turnover, not blocked
-    
-    punt_distance = get_punt_distance(punter)
-    punt_accuracy = punter.punt_accuracy  # default to 50 if missing
-
-    landing_spot = yardline + punt_distance
-    punter.stats["punts"] += 1
-    
-    # College chaos: occasional blocked punt (0.5% chance)
+        return yardline, 0, False, None, 0, False, "fake"
     if random.random() < 0.005:
         if defense_team:
             defense_team.team_stats["blocked_punts"] += 1
-        return yardline, 0, True, None, 0, False  # Punt blocked, no yards
-    
-    # Get returner
+        return yardline, 0, True, None, 0, False, "blocked"
+
+    landing = yardline + get_punt_distance(punter)
+
+    # Would carry inside the 10: the punter aims short of the goal line (a pooch or a
+    # coffin-corner kick) and either pins the receiving team or loses it into the end zone.
+    if landing >= 90:
+        pin = cfg.PUNT_PIN_CHANCE + ((punter.punt_accuracy or cfg.NEUTRAL) - cfg.NEUTRAL) / 100
+        if random.random() < pin:
+            spot = min(landing, random.randint(88, 99))
+            return spot, spot - yardline, False, None, 0, False, random.choice(("fair_catch", "downed", "out_of_bounds"))
+        return 80, 100 - yardline, False, None, 0, False, "touchback"
+
     returner = return_team.get_punt_returner() if return_team else None
     if returner is not None:
         return_team.refresh_ratings([returner])
-    
-    # If far from end zone, max power punt is safe
-    if landing_spot + 10 < 100:
-        punter.stats["punt_yards"] += (punt_distance)
-        # Check for punt return
-        if returner and landing_spot < 90:
-            # Punt return chance
-            return_mult = sliders.get_multiplier(sliders.kickoff_return)  # Reuse kickoff return slider
-            if returner:
-                returner_skill = return_skill(returner)
-                return_td_chance = (0.003 * return_mult) * (1 + returner_skill * 0.5)  # Slightly lower than kickoff
-            else:
-                return_td_chance = 0.003 * return_mult
-            
-            if random.random() < return_td_chance:
-                # Punt return TD
-                if returner:
-                    returner.stats["punt_returns"] = returner.stats.get("punt_returns", 0) + 1
-                    returner.stats["punt_return_yards"] = returner.stats.get("punt_return_yards", 0) + (100 - landing_spot)
-                    returner.stats["punt_return_touchdowns"] = returner.stats.get("punt_return_touchdowns", 0) + 1
-                return 100, punt_distance, False, returner, (100 - landing_spot), True
-            
-            # Regular punt return
-            base_return = 5 + (return_mult - 1.0) * 10
-            if returner:
-                returner_boost = return_skill(returner)
-                base_return += returner_boost * 8
-            return_yards = random.randint(int(base_return), int(base_return + 10))
-            final_spot = max(landing_spot - return_yards, 1)
-            if returner:
-                returner.stats["punt_returns"] = returner.stats.get("punt_returns", 0) + 1
-                returner.stats["punt_return_yards"] = returner.stats.get("punt_return_yards", 0) + return_yards
-            return final_spot, punt_distance, False, returner, return_yards, False
-        return landing_spot, punt_distance, False, None, 0, False
+    deep, short = cfg.PUNT_RETURN_CHANCE
+    if returner is not None and random.random() < (short if landing >= 80 else deep):
+        gross = landing - yardline
+        td_chance = cfg.PUNT_RETURN_TD * sliders.get_multiplier(sliders.kickoff_return) \
+            * (1 + (return_skill(returner) - cfg.PUNT_RETURNER_TYPICAL) * cfg.PUNT_RETURN_SKILL)
+        if random.random() < td_chance:
+            return 100, gross, False, returner, landing, True, "returned"
+        ret = min(_punt_return_yards(returner), landing - 1)
+        return landing - ret, gross, False, returner, ret, False, "returned"
 
-    # Placement needed – evaluate touchback or pin inside 5
-    accuracy_factor = (punt_accuracy - 50) / 100  # range: -0.5 to +0.5
-
-    # Base chance to pin inside the 5 is 25%, modulated by accuracy
-    pin_chance = 0.25 + accuracy_factor
-
-    if landing_spot >= 95:  # Ball lands inside the 5
-        if random.random() < pin_chance:
-            pinned_spot = random.randint(1, 4)  # Stick inside the 5
-            punter.stats["punt_yards"] += (100 - pinned_spot - yardline)
-            return 100 - pinned_spot, 100 - pinned_spot - yardline, False, None, 0, False
-        else:
-            punter.stats["punt_yards"] += (100 - yardline - 20)
-            return 80, 100 - yardline - 20, False, None, 0, False  # Ball placed at 20
-
-    # Else: standard returnable punt
-    if returner and landing_spot < 90:
-        return_mult = sliders.get_multiplier(sliders.kickoff_return)
-        if returner:
-            returner_skill = return_skill(returner)
-            return_td_chance = (0.003 * return_mult) * (1 + returner_skill * 0.5)
-        else:
-            return_td_chance = 0.003 * return_mult
-        
-        if random.random() < return_td_chance:
-            # Punt return TD
-            if returner:
-                returner.stats["punt_returns"] = returner.stats.get("punt_returns", 0) + 1
-                returner.stats["punt_return_yards"] = returner.stats.get("punt_return_yards", 0) + (100 - landing_spot)
-                returner.stats["punt_return_touchdowns"] = returner.stats.get("punt_return_touchdowns", 0) + 1
-            return 100, (100 - yardline), False, returner, (100 - landing_spot), True
-        
-        # Regular punt return
-        base_return = 5 + (return_mult - 1.0) * 10
-        if returner:
-            returner_boost = return_skill(returner)
-            base_return += returner_boost * 8
-        return_yards = random.randint(int(base_return), int(base_return + 10))
-        final_spot = max(landing_spot - return_yards, 1)
-        if returner:
-            returner.stats["punt_returns"] = returner.stats.get("punt_returns", 0) + 1
-            returner.stats["punt_return_yards"] = returner.stats.get("punt_return_yards", 0) + return_yards
-        punter.stats["punt_yards"] += (final_spot - yardline)
-        return final_spot, final_spot - yardline, False, returner, return_yards, False
-    
-    return_yards = 0
-    final_spot = max(landing_spot - return_yards, 1)
-    punter.stats["punt_yards"] += (final_spot - yardline)
-    return final_spot, final_spot - yardline, False, None, 0, False
+    # Not returned: a fair catch where it comes down, downed after it rolls on, or out of bounds.
+    fair, downed, _ = cfg.PUNT_UNRETURNED
+    r = random.random()
+    if r < fair:
+        spot, how = landing, "fair_catch"
+    elif r < fair + downed:
+        spot, how = landing + round(random.gauss(*cfg.PUNT_ROLL)), "downed"
+    else:
+        spot, how = landing - random.randint(0, 4), "out_of_bounds"
+    if spot >= 100:
+        return 80, 100 - yardline, False, None, 0, False, "touchback"
+    spot = min(spot, 99)
+    return spot, spot - yardline, False, None, 0, False, how
 
 def _clutch_kick(offense, defense, kicker, yardline, seconds_remaining, in_red_zone, play_ran):
     """Field goal with the clock about to run out, on any down."""
@@ -705,13 +663,14 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
                 _momentum_kick(offense, defense, "field_goal", "blocked" if kick_blocked else ("good" if kick_made else "missed"))
             else:
                 punt_from = yardline
-                yardline, punt_distance, punt_blocked, returner, return_yards, is_return_td = attempt_punt(yardline, punter, defense, defense)  # the defense returns the punt
+                yardline, punt_distance, punt_blocked, returner, return_yards, is_return_td, punt_how = attempt_punt(yardline, punter, defense, defense)  # the defense returns the punt
                 punt_time = random.randint(6, 10)
                 seconds_remaining -= punt_time
                 play_functions.last_play.clear()
                 _log(type="punt", result="blocked" if punt_blocked else ("return_td" if is_return_td else "punt"), yards=punt_distance,
                      down=4, dist=first_down_yardage, yl=punt_from, to=yardline, punter=punter.name if punter else None,
-                     returner=returner.name if returner else None, return_yards=return_yards, secs=punt_time, left=seconds_remaining)
+                     returner=returner.name if returner else None, return_yards=return_yards, how=punt_how,
+                     secs=punt_time, left=seconds_remaining)
                 _momentum_kick(offense, defense, "punt", "blocked" if punt_blocked else ("return_td" if is_return_td else "punt"))
                 if punt_blocked:
                     if verbose:

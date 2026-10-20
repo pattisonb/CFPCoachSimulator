@@ -7,10 +7,10 @@ Usage (from the project root):
     python tools/realism.py              # 2 simulated seasons
     python tools/realism.py --seeds 3    # more seasons, steadier numbers
     python tools/realism.py --no-2026    # skip the week-8 comparison
-Prints the leaders at ranks 1-100 in each category, the players over the usual marks,
-team scoring and offense from best to worst with tempo (plays per game) and efficiency
-(yards per play) split out, and a one-line score per area (mean |sim/real - 1| over the
-ranks shown) to tune against.
+Prints the leaders at ranks 1-100 in each category, the players over the usual marks, the
+net punting leaders, team scoring and offense from best to worst with tempo (plays per
+game) and efficiency (yards per play) split out, and a one-line score per area (mean
+|sim/real - 1| over the ranks shown) to tune against.
 """
 from __future__ import annotations
 
@@ -30,6 +30,7 @@ REAL_2026 = ROOT / "data" / "seasons" / "real-2026.json"
 YEARS = ("2023", "2024", "2025")
 SACK_LOSS = 7.5      # engine/game_config.SACK_YARDS mean: official stats count a sack as a run for its loss
 RANKS = (1, 5, 10, 25, 50, 100)
+PUNT_QUALIFY = 40   # punts in a season to rank among the net punting leaders
 TEAM_RANKS = ("best", "10th", "25%", "median", "75%", "worst")
 
 # name, label, sim value from a player's season stats, the real table and column
@@ -159,6 +160,13 @@ def report(ends: list[dict], snaps: list[dict], teams: dict) -> str:
     tot = sum(shares.values()) or 1
     lines.append("  Tackles by position (real FBS is roughly DL 20%, LB 40%, DB 40%): "
                  + ", ".join(f"{k} {100 * v / tot:.0f}%" for k, v in sorted(shares.items(), key=lambda kv: -kv[1]) if v))
+    punters = [sorted(((p["stats"].get("punt_net_yards", 0) / p["stats"]["punts"], p["stats"]["punt_yards"] / p["stats"]["punts"])
+                       for slug, t in e.items() if not teams[slug]["fictional"] for p in t["players"].values()
+                       if p["stats"].get("punts", 0) >= PUNT_QUALIFY), reverse=True) for e in ends]
+    lines.append(f"  Net punting leaders, {PUNT_QUALIFY}+ punts (net / gross; real FBS #1 nets about 44-46): "
+                 + " | ".join(f"#{r} {st.mean(x[r - 1][0] for x in punters if len(x) >= r):.1f} / "
+                              f"{st.mean(x[r - 1][1] for x in punters if len(x) >= r):.1f}" for r in (1, 5, 10, 25))
+                 + f"   ({st.mean(len(x) for x in punters):.0f} qualify)")
     lines.append("  Teams per game (" + " / ".join(TEAM_RANKS) + "; mean):")
     rteams = {y: real_teams(hist, y) for y in YEARS}
     for key in ("ppg", "ypg", "plays", "ypp", "pass_ypg", "rush_ypg"):
