@@ -161,14 +161,9 @@ RETURN_ATTR = "return_rating"
 # stretching by SPREAD_SCALE turns an ordinary raw value into an extreme one when the
 # position's starters bunch: linemen got coverage of 90-99 and a few starting receivers
 # route running of 1. A skill a position does not use is held to OFF_SKILL_RANGE; a core
-# skill of an established player (EA overall CORE_FLOOR_EA or more) keeps CORE_FLOOR.
-CORE_SKILLS = {"QB": ("passing", "decision_making"), "RB": ("speed", "strength", "elusiveness", "vision"),
-               "WR": ("speed", "hands", "route_running"), "TE": ("hands", "route_running", "run_blocking"),
-               "OL": ("strength", "run_blocking", "pass_blocking"), "DL": ("strength", "rushing", "tackling"),
-               "MLB": ("tackling", "coverage"), "ROLB": ("tackling", "rushing"), "LOLB": ("tackling", "rushing"),
-               "OLB": ("tackling", "rushing"), "CB": ("speed", "coverage"), "S": ("tackling", "coverage"),
-               "K": ("kick_power", "kick_accuracy"), "P": ("punt_power", "punt_accuracy")}
-PHYSICAL = ("speed", "strength", "intelligence", "endurance")   # every position uses these: never clamped
+# skill (CORE_SKILLS, below) of an established player (EA overall CORE_FLOOR_EA or more)
+# keeps CORE_FLOOR. Speed, strength, intelligence and endurance are left alone.
+PHYSICAL = ("speed", "strength", "intelligence", "endurance")   # every position uses these
 OFF_SKILL_RANGE = (25, 85)
 CORE_FLOOR, CORE_FLOOR_EA = 20, 60
 CLAMP_EXTREMES = not os.environ.get("BUILD_NO_CLAMP")   # BUILD_NO_CLAMP=1 builds without it (for before/after tests)
