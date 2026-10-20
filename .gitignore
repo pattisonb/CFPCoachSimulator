@@ -13,3 +13,6 @@ data/ballots/
 
 # cfbstats pages cached by tools/fetch_leaders.py
 data/history/cfbstats_cache/
+
+# overnight comparison output (tools/team_reality.py)
+data/analysis/
