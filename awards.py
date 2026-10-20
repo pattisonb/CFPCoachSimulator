@@ -852,8 +852,11 @@ def my_awards(state: dict, awards: dict) -> list[dict]:
 
     def add(stage: str, award: str, c: Optional[dict], place: str) -> None:
         if c and c.get("team") == me:
-            out.append({"stage": stage, "award": award, "place": place, "who": c.get("name") or c.get("coach"),
-                        "position": c.get("position"), "line": c.get("line", "")})
+            # a unit award (the Joe Moore Award goes to an offensive line) has no one person
+            unit = not (c.get("name") or c.get("coach"))
+            out.append({"stage": stage, "award": award, "place": place,
+                        "who": c.get("name") or c.get("coach") or f"{c.get('team_name', 'Your')} offensive line",
+                        "position": "OL" if unit else c.get("position"), "line": c.get("line", "")})
 
     nat = awards.get("national") or {}
     h = nat.get("heisman") or {}
