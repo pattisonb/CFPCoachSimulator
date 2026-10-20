@@ -141,6 +141,25 @@ def player_lines(tb: dict, roster: Optional[RosterMatcher]) -> list[dict]:
     return out
 
 
+def fill_special_teams(players: list[dict], opp_tb: dict) -> None:
+    """Two numbers NCAA box scores leave out, filled in so real weeks read like simulated ones:
+    extra-point attempts (only makes are listed; about 98% of real kicks are good, so each
+    make counts as one attempt) and net punt yards (a punter's yards less the opponent's
+    punt return yards, shared out by punts; touchbacks are not listed, so no 20-yard charge)."""
+    for p in players:
+        st = p["stats"]
+        if st.get("pat_made") and not st.get("pat_attempts"):
+            st["pat_attempts"] = st["pat_made"]
+    punters = [p for p in players if p["stats"].get("punts")]
+    total = sum(p["stats"]["punts"] for p in punters)
+    if not total:
+        return
+    returned = num(((opp_tb.get("teamStats") or {}).get("TeamPuntReturnsStats") or {}).get("puntReturnYards"))
+    for p in punters:
+        st = p["stats"]
+        st["punt_net_yards"] = int(round(st.get("punt_yards", 0) - returned * st["punts"] / total))
+
+
 def compact_side(tb: dict, players: list[dict], score: int, opp_tb: dict) -> dict:
     """A team's game in the shape season._accumulate_stats takes."""
     ts = tb["teamStats"]
@@ -239,6 +258,7 @@ def import_real_boxes(st: dict, fresh: bool = False) -> dict:
         lines, real_box = {}, {"real_box": True, "contest_id": cid, "event_id": eid}
         for side, opp in (("home", "away"), ("away", "home")):
             players = player_lines(sides[side], rosters.get(g[side]))
+            fill_special_teams(players, sides[opp])
             n_players += len(players)
             n_matched += sum(1 for p in players if p["matched"])
             score = g[f"{side}_score"]
