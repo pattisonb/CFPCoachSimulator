@@ -10796,71 +10796,42 @@
   }
  },
  "usage": {
-  "air-force": {
-   "rb_lead_feature": 0.0
-  },
-  "akron": {
-   "rb_lead_feature": 0.505,
+  "unlv": {
+   "rb_lead_feature": 0.696,
    "targets": {
-    "marcel-williams": 0.931,
-    "conner-cravaack": 0.919,
-    "miles-burris": 1.151,
-    "elijah-alexander": 1.324,
-    "kyan-mason": 0.924
+    "keyan-burnett": 0.882,
+    "kayden-mcgee": 1.775,
+    "taz-reddicks": 0.879,
+    "vincent-carner": 1.231,
+    "tavian-mcnair": 1.057,
+    "taeshaun-lyons": 0.849,
+    "peyton-zachary": 1.075,
+    "matt-byrnes": 0.3
    }
   },
-  "alabama": {
-   "rb_lead_feature": 0.001,
+  "ball-state": {
+   "rb_lead_feature": 0.31,
    "targets": {
-    "lotzeir-brooks": 0.907,
-    "marshall-pritchett": 1.589,
-    "kaleb-edwards": 1.082,
-    "rico-scott": 2.28,
-    "ryan-coleman-williams": 0.9,
-    "josh-ford": 0.904,
-    "noah-rogers": 0.795,
-    "danny-lewis-jr": 0.94
+    "jamarion-mcdougle": 1.314,
+    "alex-scherle": 0.906,
+    "jabari-smith-jr": 1.139,
+    "tate-hoover": 0.891,
+    "cj-nelson": 1.261,
+    "isaiah-thacker": 0.942,
+    "dj-young": 0.916
    }
   },
-  "app-st": {
-   "rb_lead_feature": 0.422,
+  "c-michigan": {
+   "rb_lead_feature": 0.319,
    "targets": {
-    "sam-pickett-iii": 1.903,
-    "darrin-fugitt": 1.451,
-    "nate-branch": 1.445,
-    "jamel-howse": 0.813,
-    "chris-lofton": 1.115,
-    "gavin-barber": 0.874,
-    "samuel-mbake": 0.866,
-    "dazmin-james": 0.872,
-    "jackson-grier": 1.059
-   }
-  },
-  "arizona-state": {
-   "rb_lead_feature": 0.0,
-   "targets": {
-    "reed-harris": 1.221,
-    "omarion-miller": 0.923,
-    "derek-eusebio": 1.302,
-    "anthony-miller": 0.946,
-    "jalen-moss": 0.921,
-    "jaren-hamilton": 0.905
-   }
-  },
-  "arizona": {
-   "rb_lead_feature": 0.459,
-   "targets": {
-    "isaiah-mizell": 2.259,
-    "tyler-powell": 1.209,
-    "tre-spivey": 1.119,
-    "shane-king": 0.865,
-    "cole-rusk": 0.84,
-    "brandon-phelps": 1.576,
-    "caleb-smith": 2.244,
-    "giovanni-richardson": 0.845,
-    "dj-jordan": 0.859,
-    "rodney-gallagher-iii": 0.866,
-    "r-j-mosley": 0.891
+    "langston-lewis": 0.806,
+    "jaden-allen-c-michigan": 1.092,
+    "myles-peters": 0.88,
+    "braylen-naves": 1.422,
+    "shawn-foster-ii": 1.456,
+    "nasir-williams": 1.172,
+    "collin-payne": 0.913,
+    "justin-ruffin-jr": 1.141
    }
   },
   "arkansas-state": {
@@ -10874,6 +10845,101 @@
     "ezra-burgess": 0.924
    }
   },
+  "fiu": {
+   "rb_lead_feature": 0.346,
+   "targets": {
+    "maguire-anderson": 1.594,
+    "james-resar": 1.083,
+    "tyson-carter": 1.345,
+    "jojo-stone": 0.849,
+    "greg-gaines-iii": 0.858,
+    "eric-nelson": 0.81
+   }
+  },
+  "w-michigan": {
+   "rb_lead_feature": 0.49,
+   "targets": {
+    "aveion-chenault": 1.105,
+    "nate-levicki": 1.48,
+    "baylin-brooks": 0.819,
+    "adam-parks": 0.909,
+    "harper-hughes": 1.092,
+    "keivin-boone-nelson-ii": 1.078,
+    "emazon-littlejohn": 1.102,
+    "kordell-gouldsby": 0.3
+   }
+  },
+  "maryland": {
+   "rb_lead_feature": 0.053,
+   "targets": {
+    "dorian-fleming": 0.863,
+    "chris-durr-jr": 2.0,
+    "preston-howard": 0.884,
+    "kaleb-webb": 1.145,
+    "jt-taggart": 0.924,
+    "jayden-kitchens": 1.279,
+    "ryan-manning": 1.081,
+    "damon-hall-jr": 0.915,
+    "na-eem-abdul-rahim-gladding": 0.81,
+    "ejani-shakir": 0.942
+   }
+  },
+  "ucla": {
+   "rb_lead_feature": 0.312,
+   "targets": {
+    "semaj-morgan": 2.0,
+    "aidan-mizell": 0.896,
+    "landon-ellis": 0.796,
+    "noah-fox-flores": 0.912,
+    "brian-rowe-jr": 1.121,
+    "leland-smith": 0.949
+   }
+  },
+  "louisiana-tech": {
+   "rb_lead_feature": 0.311,
+   "targets": {
+    "jalen-mickens": 1.879,
+    "talyn-shettron": 0.735,
+    "brayden-bockler": 0.934,
+    "marcus-calwise-jr": 1.196,
+    "jay-wilkerson": 0.822
+   }
+  },
+  "west-virginia": {
+   "rb_lead_feature": 0.921,
+   "targets": {
+    "dj-epps": 1.488,
+    "ryan-ward": 1.145,
+    "josh-sapp": 0.889,
+    "jaden-bray": 0.835,
+    "john-neider": 0.919
+   }
+  },
+  "nevada": {
+   "rb_lead_feature": 0.368,
+   "targets": {
+    "gary-givens-iii": 1.306,
+    "trace-estes": 1.07,
+    "dj-asiasi": 0.86,
+    "damien-morgan": 2.0,
+    "marshaun-brown": 0.817,
+    "donnie-cheers": 0.909,
+    "don-henry": 0.881
+   }
+  },
+  "texas-state": {
+   "rb_lead_feature": 0.703,
+   "targets": {
+    "chris-dawn-jr": 1.114,
+    "ty-stamey": 1.219,
+    "beau-sparks": 0.756,
+    "kylen-evans": 1.324,
+    "arvis-battle-jr": 0.931,
+    "zechariah-sample": 1.144,
+    "tucker-cusano": 1.139,
+    "jordan-martin": 1.052
+   }
+  },
   "arkansas": {
    "rb_lead_feature": 0.0,
    "targets": {
@@ -10884,31 +10950,150 @@
     "cj-brown": 0.873
    }
   },
-  "army": {
-   "rb_lead_feature": 0.0
-  },
-  "auburn": {
-   "rb_lead_feature": 0.35,
+  "kansas": {
+   "rb_lead_feature": 0.553,
    "targets": {
-    "keshaun-singleton": 1.182,
-    "arlis-boardingham": 0.905,
-    "chas-nimrod": 1.505,
-    "jake-johnson": 0.938,
-    "jeremiah-koger": 0.836,
-    "jonathan-echols": 0.865,
-    "christian-neptune": 0.932
+    "cam-pickett": 1.171,
+    "nik-mcmillan": 0.878,
+    "carson-bruhn": 1.067,
+    "bryson-hayes": 1.075,
+    "tate-nagy": 1.092,
+    "keaton-kubecka": 0.939
    }
   },
-  "ball-state": {
+  "akron": {
+   "rb_lead_feature": 0.505,
+   "targets": {
+    "marcel-williams": 0.931,
+    "conner-cravaack": 0.919,
+    "miles-burris": 1.151,
+    "elijah-alexander": 1.324,
+    "kyan-mason": 0.924
+   }
+  },
+  "east-carolina": {
+   "rb_lead_feature": 0.286,
+   "targets": {
+    "ray-ray-joseph": 1.11,
+    "ismael-smith-flores": 1.248,
+    "kanen-hamlett": 0.923,
+    "jason-dickerson": 1.15,
+    "landon-sides": 0.77,
+    "jeremiah-melvin": 1.266,
+    "dawson-quarterman": 1.682,
+    "dillon-lorick": 0.933
+   }
+  },
+  "usf": {
+   "rb_lead_feature": 0.6,
+   "targets": {
+    "bryson-rodgers": 1.089,
+    "wyatt-sullivan": 0.847,
+    "cameron-seldon": 0.922,
+    "joshua-porter": 2.0,
+    "mudia-reuben": 0.898,
+    "kade-caton": 0.946,
+    "luke-clyburn": 0.3
+   }
+  },
+  "illinois": {
+   "rb_lead_feature": 0.336,
+   "targets": {
+    "collin-dixon": 1.163,
+    "kaden-feagin": 0.883,
+    "hudson-clement": 0.859,
+    "davin-stoffel": 0.921,
+    "brayden-trimble": 1.592,
+    "christian-abney": 0.902
+   }
+  },
+  "mississippi-st": {
+   "rb_lead_feature": 0.0,
+   "targets": {
+    "anthony-evans-iii": 1.117,
+    "sam-west": 0.845,
+    "sanfrisco-magee": 1.33,
+    "joeseph-skipworth": 0.86,
+    "zion-ragins": 1.066,
+    "riley-williams": 0.921
+   }
+  },
+  "wake-forest": {
+   "rb_lead_feature": 0.281,
+   "targets": {
+    "carlos-hernandez": 1.168,
+    "dominick-barry": 1.194,
+    "kamrean-johnson": 0.906,
+    "jack-foley": 2.0,
+    "kam-shanks": 0.869,
+    "will-loerzel": 0.921,
+    "drayden-dickmann": 0.889,
+    "antonio-meeks": 0.816,
+    "matthew-lusardi": 0.925
+   }
+  },
+  "duke": {
+   "rb_lead_feature": 0.66,
+   "targets": {
+    "jeremiah-hasley": 1.225,
+    "jared-richardson": 1.409,
+    "nate-kurisky": 0.884,
+    "jaivon-solomon": 1.27,
+    "jake-taylor": 0.879,
+    "jayden-moore": 1.059,
+    "kavon-simmons": 1.363,
+    "javen-nicholas": 0.81
+   }
+  },
+  "texas-tech": {
+   "rb_lead_feature": 0.259,
+   "targets": {
+    "kenny-johnson": 1.218,
+    "coy-eakin": 1.079,
+    "jett-carpenter": 1.261,
+    "micah-hudson": 1.365,
+    "matt-ludwig": 0.916,
+    "malcolm-simmons": 0.876,
+    "donte-lee-jr": 0.889,
+    "jalen-jones": 1.063
+   }
+  },
+  "niu": {
+   "rb_lead_feature": 0.501,
+   "targets": {
+    "dearee-rogers": 1.231,
+    "jason-fowler": 0.876,
+    "la-don-bryant": 1.345,
+    "joe-stein": 0.895,
+    "george-dimopoulos": 1.079,
+    "liam-russo": 0.872,
+    "kenji-lewis": 0.924,
+    "zaire-mckinney": 1.222,
+    "caleb-haack": 0.3
+   }
+  },
+  "san-diego-st": {
+   "rb_lead_feature": 0.436,
+   "targets": {
+    "jaylon-hawkins": 1.949,
+    "jordan-napier": 0.883,
+    "jackson-ford-san-diego-st": 1.35,
+    "nathan-acevedo": 1.191,
+    "bert-emanuel-jr": 1.05,
+    "donovan-brown": 0.831,
+    "justius-lowe": 0.909,
+    "kime-fangupo": 0.3
+   }
+  },
+  "virginia": {
    "rb_lead_feature": 0.31,
    "targets": {
-    "jamarion-mcdougle": 1.314,
-    "alex-scherle": 0.906,
-    "jabari-smith-jr": 1.139,
-    "tate-hoover": 0.891,
-    "cj-nelson": 1.261,
-    "isaiah-thacker": 0.942,
-    "dj-young": 0.916
+    "dashawn-martin-virginia": 1.141,
+    "john-rogers": 1.114,
+    "jacquon-gibson": 0.85,
+    "dakota-twitty": 0.853,
+    "tylyric-coleman": 1.241,
+    "josiah-abdullah": 1.082
    }
   },
   "baylor": {
@@ -10925,30 +11110,102 @@
     "taz-williams-jr": 0.918
    }
   },
-  "boise-state": {
-   "rb_lead_feature": 0.444,
+  "cincinnati": {
+   "rb_lead_feature": 0.105,
    "targets": {
-    "matt-wagner": 1.296,
-    "rasean-jones": 3.0,
-    "ben-ford": 0.913,
-    "akeem-wright": 1.3,
-    "carter-kuchenbuch": 0.929,
-    "austin-terry": 0.908,
-    "terrious-favors": 0.887,
-    "quinton-brown": 0.872,
-    "cameron-bates": 0.845
+    "isaiah-johnson-cincinnati": 1.98,
+    "lyviel-waters": 1.162,
+    "jv-gibson": 0.881,
+    "ka-maurri-smith": 0.882,
+    "larenzo-fenner": 1.081,
+    "elijah-jones": 0.913
    }
   },
-  "boston-college": {
-   "rb_lead_feature": 0.45,
+  "iowa": {
+   "rb_lead_feature": 0.616,
    "targets": {
-    "javarius-green": 1.44,
-    "danny-edgehille": 1.055,
-    "zeke-moore": 0.938,
-    "jaedn-skeete": 0.873,
-    "dawson-pough": 1.245,
-    "brady-clough": 0.919,
-    "reed-swanson": 0.904
+    "dj-vonnahme": 0.831,
+    "reece-vander-zee": 1.197,
+    "tony-diaz": 1.741,
+    "zach-ortwerth": 0.91,
+    "jarriett-buie": 0.909,
+    "thomas-meyer": 0.87
+   }
+  },
+  "oklahoma": {
+   "rb_lead_feature": 0.39,
+   "targets": {
+    "isaiah-sategna-iii": 1.29,
+    "rocky-beers": 1.349,
+    "hayden-hansen": 0.891,
+    "mackenzie-alleyne": 1.054,
+    "parker-livingstone": 0.793,
+    "jer-michael-carter": 0.907,
+    "jacob-jordan": 0.938
+   }
+  },
+  "byu": {
+   "rb_lead_feature": 0.296,
+   "targets": {
+    "walker-lyons": 1.138,
+    "jojo-phillips": 1.054,
+    "roger-saleapaga-ii": 0.862
+   }
+  },
+  "georgia-tech": {
+   "rb_lead_feature": 0.483,
+   "targets": {
+    "jordan-allen-georgia-tech": 1.423,
+    "kevin-roche-jr": 2.0,
+    "isaiah-fuhrmann": 0.825,
+    "chris-corbo": 1.338,
+    "gavin-harris": 0.738,
+    "jaiven-plummer": 0.838,
+    "debron-gatling": 0.892
+   }
+  },
+  "liberty": {
+   "rb_lead_feature": 0.266,
+   "targets": {
+    "makai-jackson": 1.255,
+    "zeke-wimbush": 0.94,
+    "lakelsey-johnson-jr": 0.904,
+    "caleb-ryan": 0.915,
+    "darius-copeland": 1.303,
+    "rashawn-cunningham": 0.9
+   }
+  },
+  "texas": {
+   "rb_lead_feature": 0.085,
+   "targets": {
+    "ryan-wingo": 1.064,
+    "cam-coleman": 0.875,
+    "emmett-mosley-v": 1.118,
+    "emaree-winston": 0.932,
+    "jermaine-bishop-jr": 1.475,
+    "sterling-berkhalter": 0.924,
+    "michael-masunas": 0.3
+   }
+  },
+  "virginia-tech": {
+   "rb_lead_feature": 0.454,
+   "targets": {
+    "que-sean-brown": 1.788,
+    "luke-reynolds": 1.114,
+    "benji-gosnell": 0.827,
+    "ayden-greene": 0.803,
+    "ja-ricous-hairston": 0.921,
+    "tyseer-denmark": 0.911
+   }
+  },
+  "umass": {
+   "rb_lead_feature": 0.702,
+   "targets": {
+    "t-y-harding": 1.17,
+    "max-dowling": 0.94,
+    "reece-adkins": 0.931,
+    "kezion-dia-johnson": 1.066,
+    "dallas-elliott": 0.925
    }
   },
   "bowling-green": {
@@ -10962,147 +11219,6 @@
     "kentrell-white": 0.864
    }
   },
-  "buffalo": {
-   "rb_lead_feature": 0.398,
-   "targets": {
-    "chance-morrow": 1.212,
-    "clint-walker": 3.0,
-    "dwayne-early-jr": 1.298,
-    "jaylen-andrews": 0.866,
-    "jasaiah-gathings": 0.847,
-    "phillip-folmar": 0.924
-   }
-  },
-  "byu": {
-   "rb_lead_feature": 0.296,
-   "targets": {
-    "walker-lyons": 1.138,
-    "jojo-phillips": 1.054,
-    "roger-saleapaga-ii": 0.862
-   }
-  },
-  "c-carolina": {
-   "rb_lead_feature": 0.411,
-   "targets": {
-    "robby-washington": 0.908,
-    "karmello-english": 1.227,
-    "ben-verges": 1.136,
-    "tristian-gardner": 1.14,
-    "cyrus-ellison": 0.927,
-    "colton-hinton": 1.094,
-    "clayton-coppock": 0.913,
-    "goldie-lawrence": 0.907
-   }
-  },
-  "c-michigan": {
-   "rb_lead_feature": 0.319,
-   "targets": {
-    "langston-lewis": 0.806,
-    "jaden-allen-c-michigan": 1.092,
-    "myles-peters": 0.88,
-    "braylen-naves": 1.422,
-    "shawn-foster-ii": 1.456,
-    "nasir-williams": 1.172,
-    "collin-payne": 0.913,
-    "justin-ruffin-jr": 1.141
-   }
-  },
-  "california": {
-   "rb_lead_feature": 0.276,
-   "targets": {
-    "chase-hendricks": 1.166,
-    "taimane-purcell": 1.57,
-    "ian-strong": 0.789,
-    "mason-mini": 1.261,
-    "dorian-thomas": 0.844,
-    "tyree-sams": 2.326,
-    "kyion-grayes": 1.125,
-    "cooper-perry": 0.889,
-    "mark-hamper": 0.927
-   }
-  },
-  "charlotte": {
-   "rb_lead_feature": 0.208,
-   "targets": {
-    "jaden-barnes": 0.806,
-    "brody-dawyot": 1.541,
-    "derrick-eley": 1.576,
-    "jaylen-hampton": 1.715,
-    "tank-boston": 0.893,
-    "zyheem-collick": 0.897
-   }
-  },
-  "cincinnati": {
-   "rb_lead_feature": 0.105,
-   "targets": {
-    "isaiah-johnson-cincinnati": 1.98,
-    "lyviel-waters": 1.162,
-    "jv-gibson": 0.881,
-    "ka-maurri-smith": 0.882,
-    "larenzo-fenner": 1.081,
-    "elijah-jones": 0.913
-   }
-  },
-  "clemson": {
-   "rb_lead_feature": 0.46,
-   "targets": {
-    "bryant-wesco-jr": 1.088,
-    "tyler-brown": 1.626,
-    "christian-bentancur": 0.918,
-    "t-j-moore": 0.831,
-    "gordon-sellars-iii": 0.901
-   }
-  },
-  "colorado-state": {
-   "rb_lead_feature": 0.35,
-   "targets": {
-    "juice-vereen": 0.837,
-    "rj-vick": 1.625,
-    "nader-chirchi": 1.126,
-    "terrence-smith-jr": 2.297,
-    "dominic-toy": 0.827,
-    "jackson-harper": 1.433,
-    "tommy-maher": 0.831,
-    "lavon-brown": 0.881,
-    "jaivyn-moore": 0.947
-   }
-  },
-  "colorado": {
-   "rb_lead_feature": 0.05,
-   "targets": {
-    "joseph-williams": 1.411,
-    "quanell-farrakhan-jr": 1.82,
-    "charlie-williams": 1.176,
-    "deandre-moore-jr": 0.805,
-    "quentin-gibson": 1.18,
-    "kam-perry": 0.836,
-    "ernest-campbell": 0.945
-   }
-  },
-  "delaware": {
-   "rb_lead_feature": 0.382,
-   "targets": {
-    "elijah-sessoms": 0.915,
-    "donovan-lewis": 2.18,
-    "bryson-graves": 0.948,
-    "sean-wilson": 0.8,
-    "da-wain-lofton": 1.219,
-    "taesean-robinson": 0.943
-   }
-  },
-  "duke": {
-   "rb_lead_feature": 0.66,
-   "targets": {
-    "jeremiah-hasley": 1.225,
-    "jared-richardson": 1.409,
-    "nate-kurisky": 0.884,
-    "jaivon-solomon": 1.27,
-    "jake-taylor": 0.879,
-    "jayden-moore": 1.059,
-    "kavon-simmons": 1.363,
-    "javen-nicholas": 0.81
-   }
-  },
   "e-michigan": {
    "rb_lead_feature": 0.0,
    "targets": {
@@ -11110,192 +11226,140 @@
     "benson-prosper": 1.295,
     "santonyo-isaac": 1.086,
     "nick-devereaux": 0.742,
-    "antonio-floyd": 1.502
+    "antonio-floyd": 1.502,
+    "luke-grant": 0.3
    }
   },
-  "east-carolina": {
-   "rb_lead_feature": 0.286,
+  "louisville": {
+   "rb_lead_feature": 0.368,
    "targets": {
-    "ray-ray-joseph": 1.11,
-    "ismael-smith-flores": 1.248,
-    "kanen-hamlett": 0.923,
-    "jason-dickerson": 1.15,
-    "landon-sides": 0.77,
-    "jeremiah-melvin": 1.266,
-    "dawson-quarterman": 1.682,
-    "dillon-lorick": 0.933
+    "jaleel-skinner": 0.897,
+    "treyshun-hurry": 1.829,
+    "justyn-reid": 0.901,
+    "tre-richardson": 0.879,
+    "jackson-voth": 0.918
    }
   },
-  "fiu": {
-   "rb_lead_feature": 0.346,
-   "targets": {
-    "maguire-anderson": 1.594,
-    "james-resar": 1.083,
-    "tyson-carter": 1.345,
-    "jojo-stone": 0.849,
-    "greg-gaines-iii": 0.858,
-    "eric-nelson": 0.81
-   }
-  },
-  "fla-atlantic": {
-   "rb_lead_feature": 0.335,
-   "targets": {
-    "kelby-valsin": 1.534,
-    "aj-johnson": 1.056,
-    "dominique-henry": 0.947,
-    "tucker-holloway": 0.92,
-    "branden-hoch": 0.935,
-    "rj-garcia-ii": 0.805,
-    "antojuan-woody": 1.058
-   }
-  },
-  "florida-state": {
-   "rb_lead_feature": 0.572,
-   "targets": {
-    "duce-robinson": 0.862,
-    "jayvan-boggs": 1.406
-   }
-  },
-  "florida": {
-   "rb_lead_feature": 0.587,
-   "targets": {
-    "bailey-stockton": 1.725,
-    "luke-harpring": 1.143,
-    "dallas-wilson": 1.262,
-    "lacota-dippre": 1.111,
-    "eric-singleton-jr": 0.836,
-    "micah-mays-jr": 0.827,
-    "vernell-brown-iii": 0.832,
-    "kahleil-jackson": 0.92
-   }
-  },
-  "fresno-state": {
-   "rb_lead_feature": 0.259,
-   "targets": {
-    "ezekiel-avit": 1.31,
-    "gavin-correia": 1.327,
-    "jahlil-mcclain": 1.262,
-    "jake-appleget": 0.911,
-    "brock-lium": 0.885,
-    "jordan-malau-ulu": 0.917,
-    "jaylen-garrison": 0.94
-   }
-  },
-  "ga-southern": {
+  "louisiana": {
    "rb_lead_feature": 0.0,
    "targets": {
-    "river-helms": 0.874,
-    "alex-taylor": 1.457,
-    "josh-dallas": 0.83,
-    "andre-greene-jr": 1.406,
-    "jeremiah-ware": 1.094,
-    "taylor-bradshaw": 0.869,
-    "king-phillips": 0.927
+    "brock-chappell": 1.105,
+    "trenton-chaney": 2.0,
+    "caden-jensen": 0.917,
+    "kedarius-wade": 1.39,
+    "shelton-sampson-jr": 0.692,
+    "kristion-brooks": 2.0,
+    "landon-strother": 1.292
    }
   },
-  "georgia-state": {
-   "rb_lead_feature": 0.318,
+  "uab": {
+   "rb_lead_feature": 0.347,
    "targets": {
-    "grant-hollier": 0.812,
-    "rodshaun-dorsey": 1.803,
-    "dj-riles": 1.873,
-    "avion-mcbride": 1.121,
-    "derrick-avery-jr": 0.843,
-    "owen-dupree": 0.897,
-    "wesley-campbell-vi": 0.883,
-    "kyle-washington": 0.939
+    "cj-smith": 1.379,
+    "sean-persson": 1.088,
+    "tiaquelin-mims": 1.134,
+    "antonio-ferguson": 0.877,
+    "ej-reid": 2.0,
+    "aj-johnson-uab": 1.062,
+    "kaleb-brown": 0.864,
+    "lamar-white": 0.927
    }
   },
-  "georgia-tech": {
-   "rb_lead_feature": 0.483,
+  "rutgers": {
+   "rb_lead_feature": 0.563,
    "targets": {
-    "jordan-allen-georgia-tech": 1.423,
-    "kevin-roche-jr": 2.159,
-    "isaiah-fuhrmann": 0.825,
-    "chris-corbo": 1.338,
-    "gavin-harris": 0.738,
-    "jaiven-plummer": 0.838,
-    "debron-gatling": 0.892
+    "kj-duff": 0.854,
+    "dyzier-carter": 1.479,
+    "ben-black": 0.92,
+    "vernon-allen-iii": 0.884,
+    "jourdin-houston": 1.733,
+    "elias-coke": 1.112,
+    "dj-howerton": 0.3
    }
   },
-  "georgia": {
-   "rb_lead_feature": 0.037,
+  "nebraska": {
+   "rb_lead_feature": 0.26,
    "targets": {
-    "lawson-luckie": 0.872,
-    "craig-dandridge": 1.269,
-    "talyn-taylor": 1.548,
-    "jaden-reddell": 0.883,
-    "london-humphreys": 0.895,
-    "elyiss-williams": 0.908,
-    "ethan-barbour": 0.876,
-    "sacovie-white-helton": 1.231,
-    "thomas-blackshear": 1.07
+    "kwazi-gilmer": 1.274,
+    "luke-lindenmeyer": 1.486,
+    "nyziah-hunter": 0.761,
+    "janiran-bonner": 0.882,
+    "quinn-clark": 0.93,
+    "carter-nelson": 0.3
    }
   },
-  "hawai-i": {
-   "rb_lead_feature": 0.0,
+  "ucf": {
+   "rb_lead_feature": 0.424,
    "targets": {
-    "devon-tauaefa": 0.869,
-    "kainoa-carvalho": 2.392,
-    "tama-uiliata": 1.169,
-    "carson-brown": 0.864,
-    "frank-abreu": 1.117,
-    "audric-harris": 0.822,
-    "josiah-fetui": 0.939,
-    "koa-eldredge": 0.935
+    "josh-derry": 2.0,
+    "caden-piening": 1.77,
+    "dylan-wade": 0.657,
+    "waden-charles": 1.426,
+    "tyren-hornes": 1.272,
+    "ric-darious-farmer": 1.231,
+    "grayson-brousseau": 0.911,
+    "jonathan-bibbs": 0.856,
+    "jordyn-bridgewater": 0.913,
+    "caleb-rollerson": 0.932
    }
   },
-  "houston": {
-   "rb_lead_feature": 0.297,
+  "tulsa": {
+   "rb_lead_feature": 0.47,
    "targets": {
-    "trent-walker": 0.947,
-    "patrick-overmyer": 2.642,
-    "amare-thomas": 0.749,
-    "koby-young": 1.103,
-    "traville-frederick-jr": 0.898
+    "oran-singleton-jr": 1.874,
+    "chris-gacayan-ii": 1.121,
+    "david-wells-jr": 0.769,
+    "javon-ross": 1.446,
+    "luke-tevis": 0.931,
+    "jimmy-calloway": 0.851,
+    "grant-mcatee": 0.901,
+    "donnell-gee-jr": 1.131
    }
   },
-  "illinois": {
-   "rb_lead_feature": 0.336,
+  "kent-state": {
+   "rb_lead_feature": 0.17,
    "targets": {
-    "collin-dixon": 1.163,
-    "kaden-feagin": 0.883,
-    "hudson-clement": 0.859,
-    "davin-stoffel": 0.921,
-    "brayden-trimble": 1.592,
-    "christian-abney": 0.902
+    "da-realyst-clark": 1.714,
+    "hunter-hopperton": 1.074,
+    "ardell-banks": 0.891,
+    "terik-mulder": 0.854,
+    "wayne-harris": 0.9,
+    "tommy-arnold": 0.935,
+    "brendyn-smith": 1.554
    }
   },
-  "indiana": {
-   "rb_lead_feature": 0.262,
+  "old-dominion": {
+   "rb_lead_feature": 0.54,
    "targets": {
-    "charlie-becker": 1.183,
-    "nick-marsh": 1.106,
-    "brock-schott": 0.904,
-    "davion-chandler": 1.518,
-    "shazz-preston": 0.768
+    "leon-haughton-jr": 0.745,
+    "kendall-harris": 1.273,
+    "tj-johnson": 1.257,
+    "christopher-warren": 0.893,
+    "joshua-rodriguez": 1.716,
+    "jj-harrell": 0.875,
+    "zialis-blackmon": 1.289
    }
   },
-  "iowa-state": {
-   "rb_lead_feature": 0.49,
+  "penn-state": {
+   "rb_lead_feature": 0.174,
    "targets": {
-    "cody-jackson": 1.125,
-    "omari-hayes": 0.913,
-    "vince-benetti": 0.902,
-    "dominic-overby": 1.162,
-    "christian-greenlaw": 0.915,
-    "jamal-polite-jr": 1.336
+    "chase-sowell": 1.063,
+    "andrew-rappleyea": 1.311,
+    "benjamin-brahmer": 0.86,
+    "brett-eskildsen": 0.928,
+    "gabe-burkle": 0.903
    }
   },
-  "iowa": {
-   "rb_lead_feature": 0.616,
+  "ohio": {
+   "rb_lead_feature": 0.327,
    "targets": {
-    "dj-vonnahme": 0.831,
-    "reece-vander-zee": 1.197,
-    "tony-diaz": 1.741,
-    "zach-ortwerth": 0.91,
-    "jarriett-buie": 0.909,
-    "thomas-meyer": 0.87
+    "riley-neer": 1.4,
+    "jake-furtney": 0.945,
+    "riley-palmeter": 0.944,
+    "delaney-crawford": 0.909,
+    "blake-guffey": 0.922,
+    "zach-hackleman": 1.076,
+    "andrew-metzger": 0.3
    }
   },
   "james-madison": {
@@ -11311,126 +11375,18 @@
     "za-ron-collins": 0.844
    }
   },
-  "jax-state": {
-   "rb_lead_feature": 0.175,
+  "miami": {
+   "rb_lead_feature": 0.158,
    "targets": {
-    "deondre-johnson": 0.662,
-    "luke-gilbert": 1.144,
-    "darius-cannon": 2.113,
-    "jamill-williams": 1.451,
-    "ronnel-johnson": 0.833,
-    "dylan-gentry": 1.109
-   }
-  },
-  "kansas-state": {
-   "rb_lead_feature": 0.332,
-   "targets": {
-    "derrick-salley-jr": 1.541,
-    "linkon-cure": 0.899,
-    "brandon-white": 1.206,
-    "izaiah-williams": 0.904,
-    "adonis-moise": 0.92
-   }
-  },
-  "kansas": {
-   "rb_lead_feature": 0.553,
-   "targets": {
-    "cam-pickett": 1.171,
-    "nik-mcmillan": 0.878,
-    "carson-bruhn": 1.067,
-    "bryson-hayes": 1.075,
-    "tate-nagy": 1.092,
-    "keaton-kubecka": 0.939
-   }
-  },
-  "kennesaw-st": {
-   "rb_lead_feature": 0.452,
-   "targets": {
-    "reed-jesiolowski": 0.913,
-    "brayden-munroe": 1.849,
-    "jamari-harrold": 0.833,
-    "dylan-gary": 1.188,
-    "navelle-dean": 1.142,
-    "zion-booker": 0.834,
-    "keon-davis": 0.924
-   }
-  },
-  "kent-state": {
-   "rb_lead_feature": 0.17,
-   "targets": {
-    "da-realyst-clark": 1.714,
-    "hunter-hopperton": 1.074,
-    "ardell-banks": 0.891,
-    "terik-mulder": 0.854,
-    "wayne-harris": 0.9,
-    "tommy-arnold": 0.935,
-    "brendyn-smith": 1.554
-   }
-  },
-  "kentucky": {
-   "rb_lead_feature": 0.358,
-   "targets": {
-    "willie-rodriguez": 1.194,
-    "kenny-darby": 3.0,
-    "nic-anderson": 0.833,
-    "dj-miller": 0.896,
-    "mikkel-skinner": 0.792,
-    "shane-carr": 0.857,
-    "brock-coffman": 0.94
-   }
-  },
-  "liberty": {
-   "rb_lead_feature": 0.266,
-   "targets": {
-    "makai-jackson": 1.255,
-    "zeke-wimbush": 0.94,
-    "lakelsey-johnson-jr": 0.904,
-    "caleb-ryan": 0.915,
-    "darius-copeland": 1.303,
-    "rashawn-cunningham": 0.9
-   }
-  },
-  "louisiana-tech": {
-   "rb_lead_feature": 0.311,
-   "targets": {
-    "jalen-mickens": 1.879,
-    "talyn-shettron": 0.735,
-    "brayden-bockler": 0.934,
-    "marcus-calwise-jr": 1.196,
-    "jay-wilkerson": 0.822
-   }
-  },
-  "louisiana": {
-   "rb_lead_feature": 0.0,
-   "targets": {
-    "brock-chappell": 1.105,
-    "trenton-chaney": 2.119,
-    "caden-jensen": 0.917,
-    "kedarius-wade": 1.39,
-    "shelton-sampson-jr": 0.692,
-    "kristion-brooks": 2.485,
-    "landon-strother": 1.292
-   }
-  },
-  "louisville": {
-   "rb_lead_feature": 0.368,
-   "targets": {
-    "jaleel-skinner": 0.897,
-    "treyshun-hurry": 1.829,
-    "justyn-reid": 0.901,
-    "tre-richardson": 0.879,
-    "jackson-voth": 0.918
-   }
-  },
-  "lsu": {
-   "rb_lead_feature": 0.696,
-   "targets": {
-    "jackson-harris": 1.221,
-    "trey-dez-green": 0.764,
-    "winston-watkins-jr": 2.252,
-    "eugene-wilson-iii": 1.237,
-    "jayce-brown": 0.801,
-    "tre-brown": 0.896
+    "malachi-toney": 1.324,
+    "elija-lofton": 1.081,
+    "cooper-barkate": 0.821,
+    "daylyn-upshaw": 1.818,
+    "vandrevius-jacobs": 0.824,
+    "vance-spafford": 0.94,
+    "somourian-wingo": 0.859,
+    "joshua-moore": 0.895,
+    "luka-gilbert": 0.3
    }
   },
   "marshall": {
@@ -11439,39 +11395,43 @@
     "toby-payne": 0.808,
     "adrian-norton": 1.293,
     "xayvion-turner-bradshaw": 1.772,
-    "owen-sweeney": 2.123,
+    "owen-sweeney": 2.0,
     "christian-hamilton": 0.89,
     "de-andre-tamarez": 0.76,
-    "chris-culliver": 0.86
+    "chris-culliver": 0.86,
+    "tracy-stephens": 0.3
    }
   },
-  "maryland": {
-   "rb_lead_feature": 0.053,
+  "vanderbilt": {
+   "rb_lead_feature": 0.328,
    "targets": {
-    "dorian-fleming": 0.863,
-    "chris-durr-jr": 2.511,
-    "preston-howard": 0.884,
-    "kaleb-webb": 1.145,
-    "jt-taggart": 0.924,
-    "jayden-kitchens": 1.279,
-    "ryan-manning": 1.081,
-    "damon-hall-jr": 0.915,
-    "na-eem-abdul-rahim-gladding": 0.81,
-    "ejani-shakir": 0.942
+    "junior-sherrill": 1.284,
+    "cole-adams": 0.891,
+    "brycen-coleman": 0.918,
+    "tristen-brown": 0.949
    }
   },
-  "memphis": {
-   "rb_lead_feature": 0.392,
+  "tulane": {
+   "rb_lead_feature": 0.18,
    "targets": {
-    "hunter-tipton": 1.054,
-    "stonka-burnside": 2.199,
-    "jermane-hayes": 1.627,
-    "aidan-ocallaghan": 1.148,
-    "jemyri-davis": 1.057,
-    "tychaun-chapman": 0.833,
-    "brady-kluse": 0.819,
-    "alante-brown": 0.869,
-    "terrell-timmons-jr": 0.906
+    "anthony-brown-stephens": 0.89,
+    "dawson-johnson": 1.081,
+    "destyn-hill": 1.419,
+    "cameron-roberts": 0.948,
+    "bredell-richardson": 1.422,
+    "vance-bolyard": 0.929,
+    "zycarl-lewis-jr": 0.895
+   }
+  },
+  "stanford": {
+   "rb_lead_feature": 0.537,
+   "targets": {
+    "caden-high": 1.283,
+    "benji-blackburn": 1.119,
+    "chico-holt": 0.89,
+    "jordan-onovughe": 1.051,
+    "jonanthony-hall": 0.918,
+    "liam-thorpe": 0.918
    }
   },
   "miami-oh": {
@@ -11486,17 +11446,91 @@
     "carl-jenkins": 0.894
    }
   },
-  "miami": {
-   "rb_lead_feature": 0.158,
+  "app-st": {
+   "rb_lead_feature": 0.422,
    "targets": {
-    "malachi-toney": 1.324,
-    "elija-lofton": 1.081,
-    "cooper-barkate": 0.821,
-    "daylyn-upshaw": 1.818,
-    "vandrevius-jacobs": 0.824,
-    "vance-spafford": 0.94,
-    "somourian-wingo": 0.859,
-    "joshua-moore": 0.895
+    "sam-pickett-iii": 1.903,
+    "darrin-fugitt": 1.451,
+    "nate-branch": 1.445,
+    "jamel-howse": 0.813,
+    "chris-lofton": 1.115,
+    "gavin-barber": 0.874,
+    "samuel-mbake": 0.866,
+    "dazmin-james": 0.872,
+    "jackson-grier": 1.059
+   }
+  },
+  "w-kentucky": {
+   "rb_lead_feature": 0.719,
+   "targets": {
+    "jonathan-stafford-jr": 2.0,
+    "lofton-howard": 1.615,
+    "quincy-burroughs": 0.874,
+    "qua-vez-humphreys": 0.797,
+    "cc-ezirim": 0.809,
+    "zion-taylor": 0.811,
+    "cameron-flowers": 0.862
+   }
+  },
+  "memphis": {
+   "rb_lead_feature": 0.392,
+   "targets": {
+    "hunter-tipton": 1.054,
+    "stonka-burnside": 2.0,
+    "jermane-hayes": 1.627,
+    "aidan-ocallaghan": 1.148,
+    "jemyri-davis": 1.057,
+    "tychaun-chapman": 0.833,
+    "brady-kluse": 0.819,
+    "alante-brown": 0.869,
+    "terrell-timmons-jr": 0.906
+   }
+  },
+  "fla-atlantic": {
+   "rb_lead_feature": 0.335,
+   "targets": {
+    "kelby-valsin": 1.534,
+    "aj-johnson": 1.056,
+    "dominique-henry": 0.947,
+    "tucker-holloway": 0.92,
+    "branden-hoch": 0.935,
+    "rj-garcia-ii": 0.805,
+    "antojuan-woody": 1.058,
+    "brooks-johnson": 0.3
+   }
+  },
+  "alabama": {
+   "rb_lead_feature": 0.001,
+   "targets": {
+    "lotzeir-brooks": 0.907,
+    "marshall-pritchett": 1.589,
+    "kaleb-edwards": 1.082,
+    "rico-scott": 2.0,
+    "ryan-coleman-williams": 0.9,
+    "josh-ford": 0.904,
+    "noah-rogers": 0.795,
+    "danny-lewis-jr": 0.94
+   }
+  },
+  "utah-state": {
+   "rb_lead_feature": 0.656,
+   "targets": {
+    "eli-wood": 2.0,
+    "kache-kaio": 0.923,
+    "javon-robinson": 0.708,
+    "collin-remenowsky": 0.3
+   }
+  },
+  "washington": {
+   "rb_lead_feature": 0.406,
+   "targets": {
+    "chris-lawson": 2.0,
+    "baron-naone": 1.231,
+    "decker-degraaf": 0.698,
+    "trez-davis": 1.068,
+    "justice-williams-washington": 0.924,
+    "mason-james": 1.106,
+    "jordan-clay": 0.9
    }
   },
   "michigan-state": {
@@ -11506,7 +11540,137 @@
     "jayden-savoury": 1.691,
     "fredrick-moore": 1.307,
     "kk-smith": 0.885,
-    "kai-rios": 0.894
+    "kai-rios": 0.894,
+    "carson-gulker": 0.3
+   }
+  },
+  "oklahoma-state": {
+   "rb_lead_feature": 0.716,
+   "targets": {
+    "wyatt-young": 0.868,
+    "carson-kolb": 1.247,
+    "justin-bowick": 1.155,
+    "miles-coleman": 1.132,
+    "chris-barnes": 0.763,
+    "terrence-lewis": 1.466,
+    "donovan-green": 0.3
+   }
+  },
+  "arizona-state": {
+   "rb_lead_feature": 0.0,
+   "targets": {
+    "reed-harris": 1.221,
+    "omarion-miller": 0.923,
+    "derek-eusebio": 1.302,
+    "anthony-miller": 0.946,
+    "jalen-moss": 0.921,
+    "jaren-hamilton": 0.905,
+    "khamari-anderson": 0.3
+   }
+  },
+  "kennesaw-st": {
+   "rb_lead_feature": 0.452,
+   "targets": {
+    "reed-jesiolowski": 0.913,
+    "brayden-munroe": 1.849,
+    "jamari-harrold": 0.833,
+    "dylan-gary": 1.188,
+    "navelle-dean": 1.142,
+    "zion-booker": 0.834,
+    "keon-davis": 0.924
+   }
+  },
+  "houston": {
+   "rb_lead_feature": 0.297,
+   "targets": {
+    "trent-walker": 0.947,
+    "patrick-overmyer": 2.0,
+    "amare-thomas": 0.749,
+    "koby-young": 1.103,
+    "traville-frederick-jr": 0.898
+   }
+  },
+  "arizona": {
+   "rb_lead_feature": 0.459,
+   "targets": {
+    "isaiah-mizell": 2.0,
+    "tyler-powell": 1.209,
+    "tre-spivey": 1.119,
+    "shane-king": 0.865,
+    "cole-rusk": 0.84,
+    "brandon-phelps": 1.576,
+    "caleb-smith": 2.0,
+    "giovanni-richardson": 0.845,
+    "dj-jordan": 0.859,
+    "rodney-gallagher-iii": 0.866,
+    "r-j-mosley": 0.891
+   }
+  },
+  "north-texas": {
+   "rb_lead_feature": 0.527,
+   "targets": {
+    "max-reese": 0.787,
+    "justin-stevenson": 1.782,
+    "kyle-koch": 2.0,
+    "baron-tipton": 0.931,
+    "corri-milliner": 0.801,
+    "josiah-martin": 1.303,
+    "tj-chukwurah": 0.935,
+    "dalton-carnes": 0.865
+   }
+  },
+  "sac-state": {
+   "rb_lead_feature": 0.233,
+   "targets": {
+    "jordan-williams": 0.767,
+    "matthew-coleman": 1.217,
+    "onterrio-smith-jr": 1.546,
+    "kyle-koontz": 0.939,
+    "kenyon-shabazz": 1.081,
+    "jace-wilson": 0.893
+   }
+  },
+  "new-mexico-st": {
+   "rb_lead_feature": 0.489,
+   "targets": {
+    "myles-libman": 1.149,
+    "jerry-lydiatt": 0.899,
+    "aj-williams-iii": 1.278,
+    "lyndon-ravare": 1.093,
+    "terrione-graves": 1.061,
+    "brodie-malone-bradford": 0.904,
+    "tj-pride": 0.929,
+    "joshua-goines": 0.3
+   }
+  },
+  "c-carolina": {
+   "rb_lead_feature": 0.411,
+   "targets": {
+    "robby-washington": 0.908,
+    "karmello-english": 1.227,
+    "ben-verges": 1.136,
+    "tristian-gardner": 1.14,
+    "cyrus-ellison": 0.927,
+    "colton-hinton": 1.094,
+    "clayton-coppock": 0.913,
+    "goldie-lawrence": 0.907
+   }
+  },
+  "army": {
+   "rb_lead_feature": 0.0
+  },
+  "colorado-state": {
+   "rb_lead_feature": 0.35,
+   "targets": {
+    "juice-vereen": 0.837,
+    "rj-vick": 1.625,
+    "nader-chirchi": 1.126,
+    "terrence-smith-jr": 2.0,
+    "dominic-toy": 0.827,
+    "jackson-harper": 1.433,
+    "tommy-maher": 0.831,
+    "lavon-brown": 0.881,
+    "jaivyn-moore": 0.947
    }
   },
   "michigan": {
@@ -11516,79 +11680,20 @@
     "hogan-hansen": 1.056,
     "andrew-marsh": 0.93,
     "travis-johnson": 0.885,
-    "salesi-moa": 0.903
+    "salesi-moa": 0.903,
+    "zack-marshall": 0.3
    }
   },
-  "minnesota": {
-   "rb_lead_feature": 0.261,
+  "uconn": {
+   "rb_lead_feature": 0.299,
    "targets": {
-    "roman-voss": 0.865,
-    "noah-jennings": 2.653,
-    "jalen-smith-minnesota": 0.811,
-    "julian-johnson": 0.917
-   }
-  },
-  "mississippi-st": {
-   "rb_lead_feature": 0.0,
-   "targets": {
-    "anthony-evans-iii": 1.117,
-    "sam-west": 0.845,
-    "sanfrisco-magee": 1.33,
-    "joeseph-skipworth": 0.86,
-    "zion-ragins": 1.066,
-    "riley-williams": 0.921
-   }
-  },
-  "missouri-state": {
-   "rb_lead_feature": 0.19,
-   "targets": {
-    "jeron-askren": 0.89,
-    "isaiah-myers": 1.849,
-    "dillon-hipp": 1.068,
-    "mekhi-miller": 1.184,
-    "makai-cope": 0.829,
-    "witt-edwards": 0.861
-   }
-  },
-  "missouri": {
-   "rb_lead_feature": 0.931,
-   "targets": {
-    "cayden-lee": 1.295,
-    "jude-james": 1.124,
-    "brett-norfleet": 0.785,
-    "donovan-olugbode": 1.408,
-    "naeshaun-montgomery": 1.223,
-    "jordon-harris": 0.914,
-    "caleb-goodie": 0.826,
-    "kenric-lanier-ii": 0.889,
-    "damarion-fowlkes": 0.938
-   }
-  },
-  "mtsu": {
-   "rb_lead_feature": 0.587,
-   "targets": {
-    "cam-ron-lacy": 1.097,
-    "koraun-perdue": 1.06,
-    "neo-clifton": 1.746,
-    "markus-allen": 0.929,
-    "hogan-wasson": 0.937,
-    "aj-jones": 0.83
-   }
-  },
-  "navy": {
-   "rb_lead_feature": 0.0
-  },
-  "nc-state": {
-   "rb_lead_feature": 0.314,
-   "targets": {
-    "keenan-jackson": 1.262,
-    "preston-douglas": 2.151,
-    "hunter-provience": 1.219,
-    "victor-snow": 0.701,
-    "tyran-warren": 1.198,
-    "chance-robinson": 1.143,
-    "davion-dozier": 0.86,
-    "amiri-acker": 0.901
+    "ryder-treadway": 1.174,
+    "shamar-porter": 0.804,
+    "xavier-watson": 0.893,
+    "ky-wilson": 1.163,
+    "jediyah-willoughby": 1.394,
+    "cam-abshire": 0.898,
+    "julian-allen": 1.178
    }
   },
   "ndsu": {
@@ -11602,94 +11707,71 @@
     "logan-conklin": 0.932
    }
   },
-  "nebraska": {
-   "rb_lead_feature": 0.26,
+  "mtsu": {
+   "rb_lead_feature": 0.587,
    "targets": {
-    "kwazi-gilmer": 1.274,
-    "luke-lindenmeyer": 1.486,
-    "nyziah-hunter": 0.761,
-    "janiran-bonner": 0.882,
-    "quinn-clark": 0.93
+    "cam-ron-lacy": 1.097,
+    "koraun-perdue": 1.06,
+    "neo-clifton": 1.746,
+    "markus-allen": 0.929,
+    "hogan-wasson": 0.937,
+    "aj-jones": 0.83,
+    "tayvion-galloway": 0.3
    }
   },
-  "nevada": {
-   "rb_lead_feature": 0.368,
+  "south-carolina": {
+   "rb_lead_feature": 0.434,
    "targets": {
-    "gary-givens-iii": 1.306,
-    "trace-estes": 1.07,
-    "dj-asiasi": 0.86,
-    "damien-morgan": 2.561,
-    "marshaun-brown": 0.817,
-    "donnie-cheers": 0.909,
-    "don-henry": 0.881
+    "mazeo-bennett-jr": 1.65,
+    "maurice-brown-ii": 1.405,
+    "nyck-harbor": 0.789,
+    "nitro-tuggle": 0.863,
+    "malik-clark": 0.918
    }
   },
-  "new-mexico-st": {
-   "rb_lead_feature": 0.489,
+  "sam-houston": {
+   "rb_lead_feature": 0.437,
    "targets": {
-    "myles-libman": 1.149,
-    "jerry-lydiatt": 0.899,
-    "aj-williams-iii": 1.278,
-    "lyndon-ravare": 1.093,
-    "terrione-graves": 1.061,
-    "brodie-malone-bradford": 0.904,
-    "tj-pride": 0.929
+    "kyan-berry-johnson": 1.705,
+    "max-whisner": 0.927,
+    "grady-o-neill": 1.133,
+    "chris-reed": 0.768,
+    "tim-burns-jr": 1.072,
+    "shane-wilder": 0.3
    }
   },
-  "new-mexico": {
-   "rb_lead_feature": 0.336,
+  "temple": {
+   "rb_lead_feature": 0.455,
    "targets": {
-    "cade-keith": 1.154,
-    "bailen-george": 3.0,
-    "dj-darling": 1.079,
-    "massiah-mingo": 1.117,
-    "troy-omeire": 0.81
+    "peter-clarke": 0.884,
+    "ryder-kusch": 1.103,
+    "jayce-freeman": 1.751,
+    "jojo-bermudez": 0.847,
+    "joey-schlaffer": 0.936
    }
   },
-  "niu": {
-   "rb_lead_feature": 0.501,
+  "utsa": {
+   "rb_lead_feature": 0.369,
    "targets": {
-    "dearee-rogers": 1.231,
-    "jason-fowler": 0.876,
-    "la-don-bryant": 1.345,
-    "joe-stein": 0.895,
-    "george-dimopoulos": 1.079,
-    "liam-russo": 0.872,
-    "kenji-lewis": 0.924,
-    "zaire-mckinney": 1.222
+    "david-amador-ii": 1.094,
+    "brandon-young-jr": 1.698,
+    "mekhi-anderson-utsa": 1.508,
+    "dj-allen-jr": 1.499,
+    "miles-campbell": 0.878,
+    "aj-wilson-jr": 0.77,
+    "jamel-hardy-jr": 0.819,
+    "t-j-west": 0.897
    }
   },
-  "north-carolina": {
-   "rb_lead_feature": 0.291,
+  "south-alabama": {
+   "rb_lead_feature": 0.254,
    "targets": {
-    "jordan-shipp": 1.127,
-    "jelani-thurman": 1.217,
-    "trech-kekahuna": 0.862,
-    "shamar-easter": 0.896,
-    "cj-sadler": 1.058,
-    "mason-humphrey": 0.904
-   }
-  },
-  "north-texas": {
-   "rb_lead_feature": 0.527,
-   "targets": {
-    "max-reese": 0.787,
-    "justin-stevenson": 1.782,
-    "kyle-koch": 2.13,
-    "baron-tipton": 0.931,
-    "corri-milliner": 0.801,
-    "josiah-martin": 1.303,
-    "tj-chukwurah": 0.935,
-    "dalton-carnes": 0.865
-   }
-  },
-  "northwestern": {
-   "rb_lead_feature": 0.35,
-   "targets": {
-    "alex-honig": 1.849,
-    "drew-wagner": 1.292,
-    "hayden-eligon-ii": 0.77,
-    "ricky-ahumaraeze": 0.866
+    "anthony-eager": 0.92,
+    "rod-gibbs": 1.518,
+    "brendan-jenkins": 1.293,
+    "everett-hunter": 0.885,
+    "micah-woods": 0.879,
+    "noah-toster": 1.089
    }
   },
   "notre-dame": {
@@ -11705,294 +11787,6 @@
     "mylan-graham": 0.9,
     "ty-washington": 0.892,
     "devin-fitzgerald": 0.918
-   }
-  },
-  "ohio-state": {
-   "rb_lead_feature": 0.39,
-   "targets": {
-    "jeremiah-smith": 1.153,
-    "nate-roberts": 1.223,
-    "devin-mccuin": 1.193,
-    "mason-williams": 1.117,
-    "chris-henry-jr": 0.909,
-    "hunter-welcing": 0.917,
-    "brandon-inniss": 0.834,
-    "kyle-parker": 0.909,
-    "brock-boyd": 1.076
-   }
-  },
-  "ohio": {
-   "rb_lead_feature": 0.327,
-   "targets": {
-    "riley-neer": 1.4,
-    "jake-furtney": 0.945,
-    "riley-palmeter": 0.944,
-    "delaney-crawford": 0.909,
-    "blake-guffey": 0.922,
-    "zach-hackleman": 1.076
-   }
-  },
-  "oklahoma-state": {
-   "rb_lead_feature": 0.716,
-   "targets": {
-    "wyatt-young": 0.868,
-    "carson-kolb": 1.247,
-    "justin-bowick": 1.155,
-    "miles-coleman": 1.132,
-    "chris-barnes": 0.763,
-    "terrence-lewis": 1.466
-   }
-  },
-  "oklahoma": {
-   "rb_lead_feature": 0.39,
-   "targets": {
-    "isaiah-sategna-iii": 1.29,
-    "rocky-beers": 1.349,
-    "hayden-hansen": 0.891,
-    "mackenzie-alleyne": 1.054,
-    "parker-livingstone": 0.793,
-    "jer-michael-carter": 0.907,
-    "jacob-jordan": 0.938
-   }
-  },
-  "old-dominion": {
-   "rb_lead_feature": 0.54,
-   "targets": {
-    "leon-haughton-jr": 0.745,
-    "kendall-harris": 1.273,
-    "tj-johnson": 1.257,
-    "christopher-warren": 0.893,
-    "joshua-rodriguez": 1.716,
-    "jj-harrell": 0.875,
-    "zialis-blackmon": 1.289
-   }
-  },
-  "ole-miss": {
-   "rb_lead_feature": 0.0,
-   "targets": {
-    "deuce-alexander": 1.123,
-    "caleb-odom": 1.162,
-    "luke-hasz": 0.77,
-    "traylon-ray": 1.455,
-    "michael-smith": 0.894,
-    "johntay-cook-ii": 0.905
-   }
-  },
-  "oregon-state": {
-   "rb_lead_feature": 0.18,
-   "targets": {
-    "jesse-legree": 3.0,
-    "decorion-temple": 1.15,
-    "aeryn-hampton": 0.861,
-    "gabe-milbourn": 0.805,
-    "jackson-bowers": 0.897,
-    "eddie-freauff": 0.825,
-    "malachi-durant": 0.906
-   }
-  },
-  "oregon": {
-   "rb_lead_feature": 0.333,
-   "targets": {
-    "jamari-johnson": 0.932,
-    "dakorien-moore": 1.397,
-    "evan-stewart": 1.154,
-    "kendre-harrison": 0.906,
-    "messiah-hampton": 1.984,
-    "andrew-olesh": 0.887,
-    "jeremiah-mcclellan": 0.861
-   }
-  },
-  "penn-state": {
-   "rb_lead_feature": 0.174,
-   "targets": {
-    "chase-sowell": 1.063,
-    "andrew-rappleyea": 1.311,
-    "benjamin-brahmer": 0.86,
-    "brett-eskildsen": 0.928,
-    "gabe-burkle": 0.903
-   }
-  },
-  "pittsburgh": {
-   "rb_lead_feature": 0.273,
-   "targets": {
-    "cataurus-hicks": 0.887,
-    "carson-kent": 1.249,
-    "censere-lee": 1.092,
-    "bryce-yates": 0.941
-   }
-  },
-  "purdue": {
-   "rb_lead_feature": 0.691,
-   "targets": {
-    "asaad-waseem": 1.165,
-    "george-burhenn": 0.781,
-    "chauncey-magwood": 1.225,
-    "xavier-townsend": 1.055,
-    "tra-mar-harris": 1.685,
-    "de-nylon-morrissette": 1.056,
-    "armari-towns": 0.948,
-    "bisi-owens": 0.852,
-    "jesse-watson": 0.911
-   }
-  },
-  "rice": {
-   "rb_lead_feature": 0.35,
-   "targets": {
-    "jordan-clark": 1.899,
-    "barry-jackson-jr": 0.914,
-    "braylen-walker": 0.904,
-    "max-mosey": 0.925,
-    "payton-matthews": 0.946
-   }
-  },
-  "rutgers": {
-   "rb_lead_feature": 0.563,
-   "targets": {
-    "kj-duff": 0.854,
-    "dyzier-carter": 1.479,
-    "ben-black": 0.92,
-    "vernon-allen-iii": 0.884,
-    "jourdin-houston": 1.733,
-    "elias-coke": 1.112
-   }
-  },
-  "sac-state": {
-   "rb_lead_feature": 0.233,
-   "targets": {
-    "jordan-williams": 0.767,
-    "matthew-coleman": 1.217,
-    "onterrio-smith-jr": 1.546,
-    "kyle-koontz": 0.939,
-    "kenyon-shabazz": 1.081,
-    "jace-wilson": 0.893
-   }
-  },
-  "sam-houston": {
-   "rb_lead_feature": 0.437,
-   "targets": {
-    "kyan-berry-johnson": 1.705,
-    "max-whisner": 0.927,
-    "grady-o-neill": 1.133,
-    "chris-reed": 0.768,
-    "tim-burns-jr": 1.072
-   }
-  },
-  "san-diego-st": {
-   "rb_lead_feature": 0.436,
-   "targets": {
-    "jaylon-hawkins": 1.949,
-    "jordan-napier": 0.883,
-    "jackson-ford-san-diego-st": 1.35,
-    "nathan-acevedo": 1.191,
-    "bert-emanuel-jr": 1.05,
-    "donovan-brown": 0.831,
-    "justius-lowe": 0.909
-   }
-  },
-  "san-jose-state": {
-   "rb_lead_feature": 0.578,
-   "targets": {
-    "carson-clark": 3.0,
-    "kamaehu-kopa-kaawalauole": 0.839,
-    "jerry-mcclure": 0.95,
-    "cooper-hoch": 1.245,
-    "jordan-anderson": 0.917,
-    "anthony-ivey": 0.912,
-    "malachi-riley": 0.858
-   }
-  },
-  "smu": {
-   "rb_lead_feature": 0.596,
-   "targets": {
-    "yamir-knight": 1.118,
-    "theo-melin-ohrstrom": 0.878,
-    "jalen-cooper": 1.5,
-    "yannick-smith": 0.842,
-    "jalen-hale": 0.883
-   }
-  },
-  "south-alabama": {
-   "rb_lead_feature": 0.254,
-   "targets": {
-    "anthony-eager": 0.92,
-    "rod-gibbs": 1.518,
-    "brendan-jenkins": 1.293,
-    "everett-hunter": 0.885,
-    "micah-woods": 0.879,
-    "noah-toster": 1.089
-   }
-  },
-  "south-carolina": {
-   "rb_lead_feature": 0.434,
-   "targets": {
-    "mazeo-bennett-jr": 1.65,
-    "maurice-brown-ii": 1.405,
-    "nyck-harbor": 0.789,
-    "nitro-tuggle": 0.863,
-    "malik-clark": 0.918
-   }
-  },
-  "southern-miss": {
-   "rb_lead_feature": 0.585,
-   "targets": {
-    "mario-sanders-ii": 1.506,
-    "preston-kilgore": 0.88,
-    "kaden-saunders": 0.83,
-    "jeremiah-beck-jr": 1.166,
-    "a-j-little": 1.338,
-    "davis-dalton": 0.892,
-    "mj-johnson": 1.382,
-    "jaylen-himes": 0.847,
-    "grant-page": 0.855
-   }
-  },
-  "stanford": {
-   "rb_lead_feature": 0.537,
-   "targets": {
-    "caden-high": 1.283,
-    "benji-blackburn": 1.119,
-    "chico-holt": 0.89,
-    "jordan-onovughe": 1.051,
-    "jonanthony-hall": 0.918,
-    "liam-thorpe": 0.918
-   }
-  },
-  "syracuse": {
-   "rb_lead_feature": 0.159,
-   "targets": {
-    "daunte-bacheyie": 1.075,
-    "darius-johnson": 2.1,
-    "cole-weaver": 0.78,
-    "david-clement": 1.135,
-    "tyshawn-russell": 0.897
-   }
-  },
-  "tcu": {
-   "rb_lead_feature": 0.613,
-   "targets": {
-    "jordan-dwyer": 0.729,
-    "ka-morreun-pimpton": 0.923,
-    "ed-small": 1.793,
-    "jacobe-hayes": 1.363
-   }
-  },
-  "temple": {
-   "rb_lead_feature": 0.455,
-   "targets": {
-    "peter-clarke": 0.884,
-    "ryder-kusch": 1.103,
-    "jayce-freeman": 1.751,
-    "jojo-bermudez": 0.847,
-    "joey-schlaffer": 0.936
-   }
-  },
-  "tennessee": {
-   "rb_lead_feature": 0.569,
-   "targets": {
-    "mike-matthews": 1.138,
-    "dasaahn-brame": 1.317,
-    "radarious-jackson": 0.894,
-    "tk-keys": 0.861
    }
   },
   "texas-a-m": {
@@ -12011,54 +11805,202 @@
     "jayden-warren": 0.922
    }
   },
-  "texas-state": {
-   "rb_lead_feature": 0.703,
+  "buffalo": {
+   "rb_lead_feature": 0.398,
    "targets": {
-    "chris-dawn-jr": 1.114,
-    "ty-stamey": 1.219,
-    "beau-sparks": 0.756,
-    "kylen-evans": 1.324,
-    "arvis-battle-jr": 0.931,
-    "zechariah-sample": 1.144,
-    "tucker-cusano": 1.139,
-    "jordan-martin": 1.052
+    "chance-morrow": 1.212,
+    "clint-walker": 2.0,
+    "dwayne-early-jr": 1.298,
+    "jaylen-andrews": 0.866,
+    "jasaiah-gathings": 0.847,
+    "phillip-folmar": 0.924,
+    "trevor-wilson": 0.3
    }
   },
-  "texas-tech": {
-   "rb_lead_feature": 0.259,
+  "navy": {
+   "rb_lead_feature": 0.0
+  },
+  "purdue": {
+   "rb_lead_feature": 0.691,
    "targets": {
-    "kenny-johnson": 1.218,
-    "coy-eakin": 1.079,
-    "jett-carpenter": 1.261,
-    "micah-hudson": 1.365,
-    "matt-ludwig": 0.916,
-    "malcolm-simmons": 0.876,
-    "donte-lee-jr": 0.889,
-    "jalen-jones": 1.063
+    "asaad-waseem": 1.165,
+    "george-burhenn": 0.781,
+    "chauncey-magwood": 1.225,
+    "xavier-townsend": 1.055,
+    "tra-mar-harris": 1.685,
+    "de-nylon-morrissette": 1.056,
+    "armari-towns": 0.948,
+    "bisi-owens": 0.852,
+    "jesse-watson": 0.911,
+    "kylan-fox": 0.3
    }
   },
-  "texas": {
-   "rb_lead_feature": 0.085,
+  "san-jose-state": {
+   "rb_lead_feature": 0.578,
    "targets": {
-    "ryan-wingo": 1.064,
-    "cam-coleman": 0.875,
-    "emmett-mosley-v": 1.118,
-    "emaree-winston": 0.932,
-    "jermaine-bishop-jr": 1.475,
-    "sterling-berkhalter": 0.924
+    "carson-clark": 2.0,
+    "kamaehu-kopa-kaawalauole": 0.839,
+    "jerry-mcclure": 0.95,
+    "cooper-hoch": 1.245,
+    "jordan-anderson": 0.917,
+    "anthony-ivey": 0.912,
+    "malachi-riley": 0.858,
+    "ryan-boultwood": 0.3
    }
   },
-  "toledo": {
-   "rb_lead_feature": 0.022,
+  "iowa-state": {
+   "rb_lead_feature": 0.49,
    "targets": {
-    "adjatay-dabbs": 1.46,
-    "sam-lee": 1.371,
-    "jake-newell": 0.836,
-    "terrell-crosby-jr": 0.939,
-    "bryson-hammer": 2.137,
-    "daryl-barnett-jr": 1.168,
-    "cooper-rusk": 0.941,
-    "rico-bond": 0.797
+    "cody-jackson": 1.125,
+    "omari-hayes": 0.913,
+    "vince-benetti": 0.902,
+    "dominic-overby": 1.162,
+    "christian-greenlaw": 0.915,
+    "jamal-polite-jr": 1.336
+   }
+  },
+  "florida-state": {
+   "rb_lead_feature": 0.572,
+   "targets": {
+    "duce-robinson": 0.862,
+    "jayvan-boggs": 1.406
+   }
+  },
+  "wisconsin": {
+   "rb_lead_feature": 0.344,
+   "targets": {
+    "jacob-harris": 1.342,
+    "tyrell-henry": 2.0,
+    "grant-stec": 0.887,
+    "eugene-hilton-jr": 1.067,
+    "emmett-bork": 0.913,
+    "malachi-coleman": 0.875,
+    "shamar-rigby": 0.892
+   }
+  },
+  "ga-southern": {
+   "rb_lead_feature": 0.0,
+   "targets": {
+    "river-helms": 0.874,
+    "alex-taylor": 1.457,
+    "josh-dallas": 0.83,
+    "andre-greene-jr": 1.406,
+    "jeremiah-ware": 1.094,
+    "taylor-bradshaw": 0.869,
+    "king-phillips": 0.927,
+    "jp-mikhael": 0.3
+   }
+  },
+  "new-mexico": {
+   "rb_lead_feature": 0.336,
+   "targets": {
+    "cade-keith": 1.154,
+    "bailen-george": 2.0,
+    "dj-darling": 1.079,
+    "massiah-mingo": 1.117,
+    "troy-omeire": 0.81,
+    "tripp-walsh": 0.3
+   }
+  },
+  "missouri-state": {
+   "rb_lead_feature": 0.19,
+   "targets": {
+    "jeron-askren": 0.89,
+    "isaiah-myers": 1.849,
+    "dillon-hipp": 1.068,
+    "mekhi-miller": 1.184,
+    "makai-cope": 0.829,
+    "witt-edwards": 0.861
+   }
+  },
+  "auburn": {
+   "rb_lead_feature": 0.35,
+   "targets": {
+    "keshaun-singleton": 1.182,
+    "arlis-boardingham": 0.905,
+    "chas-nimrod": 1.505,
+    "jake-johnson": 0.938,
+    "jeremiah-koger": 0.836,
+    "jonathan-echols": 0.865,
+    "christian-neptune": 0.932
+   }
+  },
+  "boise-state": {
+   "rb_lead_feature": 0.444,
+   "targets": {
+    "matt-wagner": 1.296,
+    "rasean-jones": 2.0,
+    "ben-ford": 0.913,
+    "akeem-wright": 1.3,
+    "carter-kuchenbuch": 0.929,
+    "austin-terry": 0.908,
+    "terrious-favors": 0.887,
+    "quinton-brown": 0.872,
+    "cameron-bates": 0.845
+   }
+  },
+  "oregon-state": {
+   "rb_lead_feature": 0.18,
+   "targets": {
+    "jesse-legree": 2.0,
+    "decorion-temple": 1.15,
+    "aeryn-hampton": 0.861,
+    "gabe-milbourn": 0.805,
+    "jackson-bowers": 0.897,
+    "eddie-freauff": 0.825,
+    "malachi-durant": 0.906
+   }
+  },
+  "utep": {
+   "rb_lead_feature": 0.532,
+   "targets": {
+    "cash-cheeks": 0.784,
+    "kam-thomas": 1.147,
+    "carver-cheeks": 1.08,
+    "nik-henry": 0.95,
+    "jeremiah-nash": 1.823,
+    "judah-ezinwa": 0.3
+   }
+  },
+  "pittsburgh": {
+   "rb_lead_feature": 0.273,
+   "targets": {
+    "cataurus-hicks": 0.887,
+    "carson-kent": 1.249,
+    "censere-lee": 1.092,
+    "bryce-yates": 0.941,
+    "max-hunt": 0.3
+   }
+  },
+  "clemson": {
+   "rb_lead_feature": 0.46,
+   "targets": {
+    "bryant-wesco-jr": 1.088,
+    "tyler-brown": 1.626,
+    "christian-bentancur": 0.918,
+    "t-j-moore": 0.831,
+    "gordon-sellars-iii": 0.901
+   }
+  },
+  "charlotte": {
+   "rb_lead_feature": 0.208,
+   "targets": {
+    "jaden-barnes": 0.806,
+    "brody-dawyot": 1.541,
+    "derrick-eley": 1.576,
+    "jaylen-hampton": 1.715,
+    "tank-boston": 0.893,
+    "zyheem-collick": 0.897
+   }
+  },
+  "syracuse": {
+   "rb_lead_feature": 0.159,
+   "targets": {
+    "daunte-bacheyie": 1.075,
+    "darius-johnson": 2.0,
+    "cole-weaver": 0.78,
+    "david-clement": 1.135,
+    "tyshawn-russell": 0.897
    }
   },
   "troy": {
@@ -12068,115 +12010,276 @@
     "mojo-dortch": 1.111,
     "howard-kinchen": 1.051,
     "tj-lott": 0.791,
-    "tk-keyes": 2.018
+    "tk-keyes": 2.0,
+    "jackson-worley": 0.3,
+    "marquis-harris": 0.3
    }
   },
-  "tulane": {
-   "rb_lead_feature": 0.18,
+  "oregon": {
+   "rb_lead_feature": 0.333,
    "targets": {
-    "anthony-brown-stephens": 0.89,
-    "dawson-johnson": 1.081,
-    "destyn-hill": 1.419,
-    "cameron-roberts": 0.948,
-    "bredell-richardson": 1.422,
-    "vance-bolyard": 0.929,
-    "zycarl-lewis-jr": 0.895
+    "jamari-johnson": 0.932,
+    "dakorien-moore": 1.397,
+    "evan-stewart": 1.154,
+    "kendre-harrison": 0.906,
+    "messiah-hampton": 1.984,
+    "andrew-olesh": 0.887,
+    "jeremiah-mcclellan": 0.861
    }
   },
-  "tulsa": {
-   "rb_lead_feature": 0.47,
+  "tennessee": {
+   "rb_lead_feature": 0.569,
    "targets": {
-    "oran-singleton-jr": 1.874,
-    "chris-gacayan-ii": 1.121,
-    "david-wells-jr": 0.769,
-    "javon-ross": 1.446,
-    "luke-tevis": 0.931,
-    "jimmy-calloway": 0.851,
-    "grant-mcatee": 0.901,
-    "donnell-gee-jr": 1.131
+    "mike-matthews": 1.138,
+    "dasaahn-brame": 1.317,
+    "radarious-jackson": 0.894,
+    "tk-keys": 0.861
    }
   },
-  "uab": {
-   "rb_lead_feature": 0.347,
+  "missouri": {
+   "rb_lead_feature": 0.931,
    "targets": {
-    "cj-smith": 1.379,
-    "sean-persson": 1.088,
-    "tiaquelin-mims": 1.134,
-    "antonio-ferguson": 0.877,
-    "ej-reid": 2.109,
-    "aj-johnson-uab": 1.062,
-    "kaleb-brown": 0.864,
-    "lamar-white": 0.927
+    "cayden-lee": 1.295,
+    "jude-james": 1.124,
+    "brett-norfleet": 0.785,
+    "donovan-olugbode": 1.408,
+    "naeshaun-montgomery": 1.223,
+    "jordon-harris": 0.914,
+    "caleb-goodie": 0.826,
+    "kenric-lanier-ii": 0.889,
+    "damarion-fowlkes": 0.938
    }
   },
-  "ucf": {
-   "rb_lead_feature": 0.424,
+  "kansas-state": {
+   "rb_lead_feature": 0.332,
    "targets": {
-    "josh-derry": 2.534,
-    "caden-piening": 1.77,
-    "dylan-wade": 0.657,
-    "waden-charles": 1.426,
-    "tyren-hornes": 1.272,
-    "ric-darious-farmer": 1.231,
-    "grayson-brousseau": 0.911,
-    "jonathan-bibbs": 0.856,
-    "jordyn-bridgewater": 0.913,
-    "caleb-rollerson": 0.932
+    "derrick-salley-jr": 1.541,
+    "linkon-cure": 0.899,
+    "brandon-white": 1.206,
+    "izaiah-williams": 0.904,
+    "adonis-moise": 0.92
    }
   },
-  "ucla": {
-   "rb_lead_feature": 0.312,
+  "georgia-state": {
+   "rb_lead_feature": 0.318,
    "targets": {
-    "semaj-morgan": 2.228,
-    "aidan-mizell": 0.896,
-    "landon-ellis": 0.796,
-    "noah-fox-flores": 0.912,
-    "brian-rowe-jr": 1.121,
-    "leland-smith": 0.949
+    "grant-hollier": 0.812,
+    "rodshaun-dorsey": 1.803,
+    "dj-riles": 1.873,
+    "avion-mcbride": 1.121,
+    "derrick-avery-jr": 0.843,
+    "owen-dupree": 0.897,
+    "wesley-campbell-vi": 0.883,
+    "kyle-washington": 0.939
    }
   },
-  "uconn": {
-   "rb_lead_feature": 0.299,
+  "north-carolina": {
+   "rb_lead_feature": 0.291,
    "targets": {
-    "ryder-treadway": 1.174,
-    "shamar-porter": 0.804,
-    "xavier-watson": 0.893,
-    "ky-wilson": 1.163,
-    "jediyah-willoughby": 1.394,
-    "cam-abshire": 0.898,
-    "julian-allen": 1.178
+    "jordan-shipp": 1.127,
+    "jelani-thurman": 1.217,
+    "trech-kekahuna": 0.862,
+    "shamar-easter": 0.896,
+    "cj-sadler": 1.058,
+    "mason-humphrey": 0.904
+   }
+  },
+  "california": {
+   "rb_lead_feature": 0.276,
+   "targets": {
+    "chase-hendricks": 1.166,
+    "taimane-purcell": 1.57,
+    "ian-strong": 0.789,
+    "mason-mini": 1.261,
+    "dorian-thomas": 0.844,
+    "tyree-sams": 2.0,
+    "kyion-grayes": 1.125,
+    "cooper-perry": 0.889,
+    "mark-hamper": 0.927
+   }
+  },
+  "tcu": {
+   "rb_lead_feature": 0.613,
+   "targets": {
+    "jordan-dwyer": 0.729,
+    "ka-morreun-pimpton": 0.923,
+    "ed-small": 1.793,
+    "jacobe-hayes": 1.363,
+    "lafayette-kaiuway": 0.3
+   }
+  },
+  "northwestern": {
+   "rb_lead_feature": 0.35,
+   "targets": {
+    "alex-honig": 1.849,
+    "drew-wagner": 1.292,
+    "hayden-eligon-ii": 0.77,
+    "ricky-ahumaraeze": 0.866,
+    "blake-van-buren": 0.3
+   }
+  },
+  "delaware": {
+   "rb_lead_feature": 0.382,
+   "targets": {
+    "elijah-sessoms": 0.915,
+    "donovan-lewis": 2.0,
+    "bryson-graves": 0.948,
+    "sean-wilson": 0.8,
+    "da-wain-lofton": 1.219,
+    "taesean-robinson": 0.943
+   }
+  },
+  "boston-college": {
+   "rb_lead_feature": 0.45,
+   "targets": {
+    "javarius-green": 1.44,
+    "danny-edgehille": 1.055,
+    "zeke-moore": 0.938,
+    "jaedn-skeete": 0.873,
+    "dawson-pough": 1.245,
+    "brady-clough": 0.919,
+    "reed-swanson": 0.904
+   }
+  },
+  "hawai-i": {
+   "rb_lead_feature": 0.0,
+   "targets": {
+    "devon-tauaefa": 0.869,
+    "kainoa-carvalho": 2.0,
+    "tama-uiliata": 1.169,
+    "carson-brown": 0.864,
+    "frank-abreu": 1.117,
+    "audric-harris": 0.822,
+    "josiah-fetui": 0.939,
+    "koa-eldredge": 0.935,
+    "oakie-salave-a": 0.3
+   }
+  },
+  "minnesota": {
+   "rb_lead_feature": 0.261,
+   "targets": {
+    "roman-voss": 0.865,
+    "noah-jennings": 2.0,
+    "jalen-smith-minnesota": 0.811,
+    "julian-johnson": 0.917
+   }
+  },
+  "smu": {
+   "rb_lead_feature": 0.596,
+   "targets": {
+    "yamir-knight": 1.118,
+    "theo-melin-ohrstrom": 0.878,
+    "jalen-cooper": 1.5,
+    "yannick-smith": 0.842,
+    "jalen-hale": 0.883
+   }
+  },
+  "rice": {
+   "rb_lead_feature": 0.35,
+   "targets": {
+    "jordan-clark": 1.899,
+    "barry-jackson-jr": 0.914,
+    "braylen-walker": 0.904,
+    "max-mosey": 0.925,
+    "payton-matthews": 0.946,
+    "jake-renda": 0.3,
+    "james-falk": 0.3
+   }
+  },
+  "lsu": {
+   "rb_lead_feature": 0.696,
+   "targets": {
+    "jackson-harris": 1.221,
+    "trey-dez-green": 0.764,
+    "winston-watkins-jr": 2.0,
+    "eugene-wilson-iii": 1.237,
+    "jayce-brown": 0.801,
+    "tre-brown": 0.896
+   }
+  },
+  "jax-state": {
+   "rb_lead_feature": 0.175,
+   "targets": {
+    "deondre-johnson": 0.662,
+    "luke-gilbert": 1.144,
+    "darius-cannon": 2.0,
+    "jamill-williams": 1.451,
+    "ronnel-johnson": 0.833,
+    "dylan-gentry": 1.109,
+    "david-alpers-iii": 0.3
+   }
+  },
+  "georgia": {
+   "rb_lead_feature": 0.037,
+   "targets": {
+    "lawson-luckie": 0.872,
+    "craig-dandridge": 1.269,
+    "talyn-taylor": 1.548,
+    "jaden-reddell": 0.883,
+    "london-humphreys": 0.895,
+    "elyiss-williams": 0.908,
+    "ethan-barbour": 0.876,
+    "sacovie-white-helton": 1.231,
+    "thomas-blackshear": 1.07
+   }
+  },
+  "southern-miss": {
+   "rb_lead_feature": 0.585,
+   "targets": {
+    "mario-sanders-ii": 1.506,
+    "preston-kilgore": 0.88,
+    "kaden-saunders": 0.83,
+    "jeremiah-beck-jr": 1.166,
+    "a-j-little": 1.338,
+    "davis-dalton": 0.892,
+    "mj-johnson": 1.382,
+    "jaylen-himes": 0.847,
+    "grant-page": 0.855
+   }
+  },
+  "fresno-state": {
+   "rb_lead_feature": 0.259,
+   "targets": {
+    "ezekiel-avit": 1.31,
+    "gavin-correia": 1.327,
+    "jahlil-mcclain": 1.262,
+    "jake-appleget": 0.911,
+    "brock-lium": 0.885,
+    "jordan-malau-ulu": 0.917,
+    "jaylen-garrison": 0.94
+   }
+  },
+  "indiana": {
+   "rb_lead_feature": 0.262,
+   "targets": {
+    "charlie-becker": 1.183,
+    "nick-marsh": 1.106,
+    "brock-schott": 0.904,
+    "davion-chandler": 1.518,
+    "shazz-preston": 0.768
+   }
+  },
+  "nc-state": {
+   "rb_lead_feature": 0.314,
+   "targets": {
+    "keenan-jackson": 1.262,
+    "preston-douglas": 2.0,
+    "hunter-provience": 1.219,
+    "victor-snow": 0.701,
+    "tyran-warren": 1.198,
+    "chance-robinson": 1.143,
+    "davion-dozier": 0.86,
+    "amiri-acker": 0.901
    }
   },
   "ul-monroe": {
    "rb_lead_feature": 0.468,
    "targets": {
-    "marcellus-jackson": 3.0,
+    "marcellus-jackson": 2.0,
     "bryce-anderson-ul-monroe": 1.216,
     "jase-hoath": 0.91,
     "nic-trujillo": 0.766,
     "brandon-buckhaulter": 0.868
-   }
-  },
-  "umass": {
-   "rb_lead_feature": 0.702,
-   "targets": {
-    "t-y-harding": 1.17,
-    "max-dowling": 0.94,
-    "reece-adkins": 0.931,
-    "kezion-dia-johnson": 1.066,
-    "dallas-elliott": 0.925
-   }
-  },
-  "unlv": {
-   "rb_lead_feature": 0.696,
-   "targets": {
-    "keyan-burnett": 0.882,
-    "kayden-mcgee": 1.775,
-    "taz-reddicks": 0.879,
-    "vincent-carner": 1.231,
-    "tavian-mcnair": 1.057,
-    "taeshaun-lyons": 0.849,
-    "peyton-zachary": 1.075
    }
   },
   "usc": {
@@ -12192,174 +12295,6 @@
     "corey-simms": 1.115
    }
   },
-  "usf": {
-   "rb_lead_feature": 0.6,
-   "targets": {
-    "bryson-rodgers": 1.089,
-    "wyatt-sullivan": 0.847,
-    "cameron-seldon": 0.922,
-    "joshua-porter": 2.088,
-    "mudia-reuben": 0.898,
-    "kade-caton": 0.946
-   }
-  },
-  "utah-state": {
-   "rb_lead_feature": 0.656,
-   "targets": {
-    "eli-wood": 2.444,
-    "kache-kaio": 0.923,
-    "javon-robinson": 0.708
-   }
-  },
-  "utah": {
-   "rb_lead_feature": 0.612,
-   "targets": {
-    "noah-bennee": 1.169,
-    "creed-whittemore": 1.05,
-    "hunter-andrews": 1.069,
-    "ricky-johnson": 2.115,
-    "larry-simmons": 0.803,
-    "will-monney": 0.936,
-    "mana-carvalho": 0.929
-   }
-  },
-  "utep": {
-   "rb_lead_feature": 0.532,
-   "targets": {
-    "cash-cheeks": 0.784,
-    "kam-thomas": 1.147,
-    "carver-cheeks": 1.08,
-    "nik-henry": 0.95,
-    "jeremiah-nash": 1.823
-   }
-  },
-  "utsa": {
-   "rb_lead_feature": 0.369,
-   "targets": {
-    "david-amador-ii": 1.094,
-    "brandon-young-jr": 1.698,
-    "mekhi-anderson-utsa": 1.508,
-    "dj-allen-jr": 1.499,
-    "miles-campbell": 0.878,
-    "aj-wilson-jr": 0.77,
-    "jamel-hardy-jr": 0.819,
-    "t-j-west": 0.897
-   }
-  },
-  "vanderbilt": {
-   "rb_lead_feature": 0.328,
-   "targets": {
-    "junior-sherrill": 1.284,
-    "cole-adams": 0.891,
-    "brycen-coleman": 0.918,
-    "tristen-brown": 0.949
-   }
-  },
-  "virginia-tech": {
-   "rb_lead_feature": 0.454,
-   "targets": {
-    "que-sean-brown": 1.788,
-    "luke-reynolds": 1.114,
-    "benji-gosnell": 0.827,
-    "ayden-greene": 0.803,
-    "ja-ricous-hairston": 0.921,
-    "tyseer-denmark": 0.911
-   }
-  },
-  "virginia": {
-   "rb_lead_feature": 0.31,
-   "targets": {
-    "dashawn-martin-virginia": 1.141,
-    "john-rogers": 1.114,
-    "jacquon-gibson": 0.85,
-    "dakota-twitty": 0.853,
-    "tylyric-coleman": 1.241,
-    "josiah-abdullah": 1.082
-   }
-  },
-  "w-kentucky": {
-   "rb_lead_feature": 0.719,
-   "targets": {
-    "jonathan-stafford-jr": 3.0,
-    "lofton-howard": 1.615,
-    "quincy-burroughs": 0.874,
-    "qua-vez-humphreys": 0.797,
-    "cc-ezirim": 0.809,
-    "zion-taylor": 0.811,
-    "cameron-flowers": 0.862
-   }
-  },
-  "w-michigan": {
-   "rb_lead_feature": 0.49,
-   "targets": {
-    "aveion-chenault": 1.105,
-    "nate-levicki": 1.48,
-    "baylin-brooks": 0.819,
-    "adam-parks": 0.909,
-    "harper-hughes": 1.092,
-    "keivin-boone-nelson-ii": 1.078,
-    "emazon-littlejohn": 1.102
-   }
-  },
-  "wake-forest": {
-   "rb_lead_feature": 0.281,
-   "targets": {
-    "carlos-hernandez": 1.168,
-    "dominick-barry": 1.194,
-    "kamrean-johnson": 0.906,
-    "jack-foley": 2.542,
-    "kam-shanks": 0.869,
-    "will-loerzel": 0.921,
-    "drayden-dickmann": 0.889,
-    "antonio-meeks": 0.816,
-    "matthew-lusardi": 0.925
-   }
-  },
-  "washington-st": {
-   "rb_lead_feature": 0.328,
-   "targets": {
-    "jack-pedersen": 0.934,
-    "branden-ganashamoorthy": 3.0,
-    "daniel-blood": 1.063,
-    "trey-leckner": 0.728,
-    "tank-hawkins": 1.507,
-    "darrius-clemons": 0.696
-   }
-  },
-  "washington": {
-   "rb_lead_feature": 0.406,
-   "targets": {
-    "chris-lawson": 2.006,
-    "baron-naone": 1.231,
-    "decker-degraaf": 0.698,
-    "trez-davis": 1.068,
-    "justice-williams-washington": 0.924,
-    "mason-james": 1.106,
-    "jordan-clay": 0.9
-   }
-  },
-  "west-virginia": {
-   "rb_lead_feature": 0.921,
-   "targets": {
-    "dj-epps": 1.488,
-    "ryan-ward": 1.145,
-    "josh-sapp": 0.889,
-    "jaden-bray": 0.835,
-    "john-neider": 0.919
-   }
-  },
-  "wisconsin": {
-   "rb_lead_feature": 0.344,
-   "targets": {
-    "jacob-harris": 1.342,
-    "tyrell-henry": 2.311,
-    "grant-stec": 0.887,
-    "eugene-hilton-jr": 1.067,
-    "emmett-bork": 0.913,
-    "malachi-coleman": 0.875,
-    "shamar-rigby": 0.892
-   }
-  },
   "wyoming": {
    "rb_lead_feature": 0.294,
    "targets": {
@@ -12370,6 +12305,339 @@
     "deion-deblanc": 1.106,
     "tyler-siddons": 0.922,
     "ke-lyn-washom": 0.938
+   }
+  },
+  "ohio-state": {
+   "rb_lead_feature": 0.39,
+   "targets": {
+    "jeremiah-smith": 1.153,
+    "nate-roberts": 1.223,
+    "devin-mccuin": 1.193,
+    "mason-williams": 1.117,
+    "chris-henry-jr": 0.909,
+    "hunter-welcing": 0.917,
+    "brandon-inniss": 0.834,
+    "kyle-parker": 0.909,
+    "brock-boyd": 1.076
+   }
+  },
+  "utah": {
+   "rb_lead_feature": 0.612,
+   "targets": {
+    "noah-bennee": 1.169,
+    "creed-whittemore": 1.05,
+    "hunter-andrews": 1.069,
+    "ricky-johnson": 2.0,
+    "larry-simmons": 0.803,
+    "will-monney": 0.936,
+    "mana-carvalho": 0.929
+   }
+  },
+  "washington-st": {
+   "rb_lead_feature": 0.328,
+   "targets": {
+    "jack-pedersen": 0.934,
+    "branden-ganashamoorthy": 2.0,
+    "daniel-blood": 1.063,
+    "trey-leckner": 0.728,
+    "tank-hawkins": 1.507,
+    "darrius-clemons": 0.696
+   }
+  },
+  "florida": {
+   "rb_lead_feature": 0.587,
+   "targets": {
+    "bailey-stockton": 1.725,
+    "luke-harpring": 1.143,
+    "dallas-wilson": 1.262,
+    "lacota-dippre": 1.111,
+    "eric-singleton-jr": 0.836,
+    "micah-mays-jr": 0.827,
+    "vernell-brown-iii": 0.832,
+    "kahleil-jackson": 0.92
+   }
+  },
+  "toledo": {
+   "rb_lead_feature": 0.022,
+   "targets": {
+    "adjatay-dabbs": 1.46,
+    "sam-lee": 1.371,
+    "jake-newell": 0.836,
+    "terrell-crosby-jr": 0.939,
+    "bryson-hammer": 2.0,
+    "daryl-barnett-jr": 1.168,
+    "cooper-rusk": 0.941,
+    "rico-bond": 0.797
+   }
+  },
+  "colorado": {
+   "rb_lead_feature": 0.05,
+   "targets": {
+    "joseph-williams": 1.411,
+    "quanell-farrakhan-jr": 1.82,
+    "charlie-williams": 1.176,
+    "deandre-moore-jr": 0.805,
+    "quentin-gibson": 1.18,
+    "kam-perry": 0.836,
+    "ernest-campbell": 0.945
+   }
+  },
+  "kentucky": {
+   "rb_lead_feature": 0.358,
+   "targets": {
+    "willie-rodriguez": 1.194,
+    "kenny-darby": 2.0,
+    "nic-anderson": 0.833,
+    "dj-miller": 0.896,
+    "mikkel-skinner": 0.792,
+    "shane-carr": 0.857,
+    "brock-coffman": 0.94
+   }
+  },
+  "air-force": {
+   "rb_lead_feature": 0.0
+  },
+  "ole-miss": {
+   "rb_lead_feature": 0.0,
+   "targets": {
+    "deuce-alexander": 1.123,
+    "caleb-odom": 1.162,
+    "luke-hasz": 0.77,
+    "traylon-ray": 1.455,
+    "michael-smith": 0.894,
+    "johntay-cook-ii": 0.905
+   }
+  }
+ },
+ "ratings": {
+  "alabama": {
+   "rico-scott": {
+    "route_running": 2,
+    "hands": 2
+   }
+  },
+  "arizona": {
+   "isaiah-mizell": {
+    "route_running": 2,
+    "hands": 2
+   },
+   "caleb-smith": {
+    "route_running": 1,
+    "hands": 1
+   }
+  },
+  "boise-state": {
+   "rasean-jones": {
+    "route_running": 3,
+    "hands": 3
+   }
+  },
+  "buffalo": {
+   "clint-walker": {
+    "route_running": 4,
+    "hands": 4
+   }
+  },
+  "california": {
+   "tyree-sams": {
+    "route_running": 2,
+    "hands": 2
+   }
+  },
+  "colorado-state": {
+   "terrence-smith-jr": {
+    "route_running": 2,
+    "hands": 2
+   }
+  },
+  "delaware": {
+   "donovan-lewis": {
+    "route_running": 1,
+    "hands": 1
+   }
+  },
+  "georgia-tech": {
+   "kevin-roche-jr": {
+    "route_running": 1,
+    "hands": 1
+   }
+  },
+  "hawai-i": {
+   "kainoa-carvalho": {
+    "route_running": 2,
+    "hands": 2
+   }
+  },
+  "houston": {
+   "patrick-overmyer": {
+    "route_running": 5,
+    "hands": 5
+   }
+  },
+  "jax-state": {
+   "darius-cannon": {
+    "route_running": 1,
+    "hands": 1
+   }
+  },
+  "kentucky": {
+   "kenny-darby": {
+    "route_running": 6,
+    "hands": 6
+   }
+  },
+  "louisiana": {
+   "trenton-chaney": {
+    "route_running": 1,
+    "hands": 1
+   },
+   "kristion-brooks": {
+    "route_running": 2,
+    "hands": 2
+   }
+  },
+  "lsu": {
+   "winston-watkins-jr": {
+    "route_running": 3,
+    "hands": 3
+   }
+  },
+  "marshall": {
+   "owen-sweeney": {
+    "route_running": 1,
+    "hands": 1
+   }
+  },
+  "maryland": {
+   "chris-durr-jr": {
+    "route_running": 4,
+    "hands": 4
+   }
+  },
+  "memphis": {
+   "stonka-burnside": {
+    "route_running": 1,
+    "hands": 1
+   }
+  },
+  "minnesota": {
+   "noah-jennings": {
+    "route_running": 5,
+    "hands": 5
+   }
+  },
+  "nc-state": {
+   "preston-douglas": {
+    "route_running": 1,
+    "hands": 1
+   }
+  },
+  "nevada": {
+   "damien-morgan": {
+    "route_running": 3,
+    "hands": 3
+   }
+  },
+  "new-mexico": {
+   "bailen-george": {
+    "route_running": 3,
+    "hands": 3
+   }
+  },
+  "north-texas": {
+   "kyle-koch": {
+    "route_running": 1,
+    "hands": 1
+   }
+  },
+  "oregon-state": {
+   "jesse-legree": {
+    "route_running": 5,
+    "hands": 5
+   }
+  },
+  "san-jose-state": {
+   "carson-clark": {
+    "route_running": 5,
+    "hands": 5
+   }
+  },
+  "syracuse": {
+   "darius-johnson": {
+    "route_running": 1,
+    "hands": 1
+   }
+  },
+  "toledo": {
+   "bryson-hammer": {
+    "route_running": 1,
+    "hands": 1
+   }
+  },
+  "uab": {
+   "ej-reid": {
+    "route_running": 1,
+    "hands": 1
+   }
+  },
+  "ucf": {
+   "josh-derry": {
+    "route_running": 4,
+    "hands": 4
+   }
+  },
+  "ucla": {
+   "semaj-morgan": {
+    "route_running": 2,
+    "hands": 2
+   }
+  },
+  "ul-monroe": {
+   "marcellus-jackson": {
+    "route_running": 5,
+    "hands": 5
+   }
+  },
+  "usf": {
+   "joshua-porter": {
+    "route_running": 1,
+    "hands": 1
+   }
+  },
+  "utah-state": {
+   "eli-wood": {
+    "route_running": 3,
+    "hands": 3
+   }
+  },
+  "utah": {
+   "ricky-johnson": {
+    "route_running": 1,
+    "hands": 1
+   }
+  },
+  "w-kentucky": {
+   "jonathan-stafford-jr": {
+    "route_running": 2,
+    "hands": 2
+   }
+  },
+  "wake-forest": {
+   "jack-foley": {
+    "route_running": 3,
+    "hands": 3
+   }
+  },
+  "washington-st": {
+   "branden-ganashamoorthy": {
+    "route_running": 5,
+    "hands": 5
+   }
+  },
+  "wisconsin": {
+   "tyrell-henry": {
+    "route_running": 3,
+    "hands": 3
    }
   }
  }

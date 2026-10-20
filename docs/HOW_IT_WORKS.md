@@ -527,6 +527,39 @@ player's real efficiency (completion %, yards per carry or catch, field goal %) 
 too and made weeks 7-8 worse, so ratings stay as the source has them: a season of box
 scores is not enough to tell talent from context and luck.
 
+**Receivers the target cap cannot cover, and card extremes (overnight review section 5,
+bugs 8 and 11).** Section 5 listed about 1,000 rating and depth edits; most are cards that
+disagree with 2026 production, and nudging ratings toward production was tried before and
+lost out of sample (above). Two narrower fixes were tested the same way (tuned on weeks 1-6,
+scored on 7-8 with `calibrate_players.py --from-week 6`, then 40 seasons through week 8):
+
+- **Receivers.** When a receiver's real share of catches needs a target weight above the
+  engine's cap (`TARGET_MULT_MAX` 2.0), his route running and hands are what is off, not
+  his coach: `tune_from_real.py` now raises both by what the capped weight cannot give (up
+  to 85; `TARGET_RATING_FIX`, written under "ratings" in `data/real_adjustments.json`).
+  39 receivers, among them the review's Oregon State, Kentucky, Wake Forest, New Mexico,
+  Western Kentucky and Boise State WR1s. A rostered WR or TE at depth 1-2 with no real catch
+  is hardly thrown to (`ZERO_CATCH_FLOOR` 0.3). Out of sample: QB1 pass-yard error 71.2 to
+  69.6, top receiver's yards 34.9 to 34.6.
+- **Card extremes.** Re-centring each attribute on the position's starter mean and
+  stretching it by `SPREAD_SCALE` turned ordinary raw values into extremes where a
+  position's starters bunch: 35 starting linemen had coverage of 90 or more, and a few
+  starting receivers route running of 1. `build_teams.clamp_extremes` now holds a skill a
+  position does not use to 25-85 and gives a core skill of an EA-60+ player a floor of 20
+  (`CORE_SKILLS`, `OFF_SKILL_RANGE`, `CORE_FLOOR`; `BUILD_NO_CLAMP=1` builds without it).
+
+40 seasons through week 8 against the committed data: favourite won 72.7% to 73.1%, Brier
+0.177 to 0.176, real-versus-sim receiving yards correlation 0.515 to 0.537, sim-only players
+178 to 171; `calibrate_season.py 30` 70.4%, MAE 12.5, slope 1.00. The lead-back splits in
+`data/real_adjustments.json` are the ones from before this change: rerunning the tool with
+today's engine re-measured them and that tested worse (20 seasons: Brier 0.184 to 0.188,
+back carries' average miss 15.4 to 17.1), so a fresh `tune_from_real.py` run should be
+checked the same way before it is kept.
+
+**Bug 11 (quarterbacks by the last 3 games)** no longer matters: with the real-import fixes,
+ordering quarterbacks by the season so far changes one team's starter, and the sim's QB1 is
+the real one in 76% of later team-games either way, so `QB_RECENT` stays at 3.
+
 ## Real 2026 (its own page)
 
 `/real` (the "Real 2026" tab in the top nav) shows the actual 2026 season with the season

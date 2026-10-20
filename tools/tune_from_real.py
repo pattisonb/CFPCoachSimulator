@@ -23,7 +23,9 @@ his route running, hands and speed). Real coaches do not always agree, so each t
 the lead-back split it really uses (its share of running back carries mapped to the
 engine's committee-to-workhorse scale, measured by simulation) and each receiver a target
 weight: his real share of the team's catches over his ratings' share, shrunk toward 1 for
-small samples. Ratings themselves are not changed: nudging them toward real efficiency
+small samples. A receiver whose real share needs more than the engine's target cap gets the
+rest as route running and hands (TARGET_RATING_FIX): his card, not his coach, is what is off.
+Otherwise ratings are not changed: nudging them toward real efficiency
 was tried and made weeks 7-8 worse out of sample (docs/HOW_IT_WORKS.md).
 """
 from __future__ import annotations
@@ -42,6 +44,12 @@ import season  # noqa: E402
 
 OUT = ROOT / "data" / "real_adjustments.json"
 RECENT = 3                      # games that decide the depth order
+QB_RECENT = 3                   # ... for quarterbacks (99: the season so far)
+TARGET_RATING_FIX = True        # a receiver whose real usage needs more than cfg.TARGET_MULT_MAX gets the rest as
+                                # route running and hands (his ratings, not the coach, are what is off)
+TARGET_FIX_MAX = 85             # ... up to this rating
+ZERO_CATCH_FLOOR = 0.3          # target weight for a rostered WR/TE high on the depth chart with no real catches
+ZERO_CATCH_DEPTH = 2            # ... at this depth or better
 TARGET_GAMES = 4                # games that decide the target weights
 THROUGH = 99                    # --through W: use real games through our week W only
 ROLE_USAGE = {
@@ -88,7 +96,6 @@ def depth_orders(teams: dict, by_team: dict) -> dict:
         games = by_team.get(slug)
         if t["fictional"] or not games:
             continue
-        recent = games[-RECENT:]
         by_role: dict[str, list[dict]] = {}
         for p in t["offense"] + t["defense"]:
             if p.get("role"):
@@ -99,6 +106,7 @@ def depth_orders(teams: dict, by_team: dict) -> dict:
             if usage_fn is None:
                 continue
             plist = sorted(plist, key=lambda p: p.get("depth") or 99)
+            recent = games[-(QB_RECENT if role == "QB" else RECENT):]
             use = {p["slug"]: sum(usage_fn(lines.get(p["slug"], {})) for _, lines in recent) for p in plist}
             floor = MIN_USAGE.get(role, 4) * len(recent) / RECENT
             used = sorted((p for p in plist if use[p["slug"]] >= floor), key=lambda p: -use[p["slug"]])
@@ -107,6 +115,7 @@ def depth_orders(teams: dict, by_team: dict) -> dict:
                 changes[role] = order
         # Linebackers are one pool: a team plays its most-used linebackers whatever their
         # labels (SAM, MIKE, WILL), so its linebacker starters are chosen across the roles.
+        recent = games[-RECENT:]
         lbs = sorted((p for r in LB_ROLES for p in by_role.get(r, [])), key=lambda p: p.get("depth") or 99)
         if lbs:
             use = {p["slug"]: sum(DEF_USAGE(lines.get(p["slug"], {})) for _, lines in recent) for p in lbs}
@@ -206,8 +215,11 @@ def target_weight(p: dict) -> float:
     return w * (cfg.TE_TARGET_WEIGHT if p["position"] == "TE" else 1.0)
 
 
-def usage(teams: dict, by_team: dict, games: list[dict]) -> dict:
-    """team -> {"rb_lead_feature": f, "targets": {slug: multiplier}}."""
+def usage(teams: dict, by_team: dict, games: list[dict], ratings: dict | None = None) -> dict:
+    """team -> {"rb_lead_feature": f, "targets": {slug: multiplier}}. With `ratings`, receivers
+    whose real usage needs more than the engine's target cap get the rest as a rating fix
+    there: team -> {slug: {"route_running": d, "hands": d}}."""
+    from engine import game_config as cfg
     curve = feature_curve(teams, games)
     real_lead = {}
     for slug, t in teams.items():
@@ -241,8 +253,22 @@ def usage(teams: dict, by_team: dict, games: list[dict]) -> dict:
             model_share = target_weight(p) / wsum
             k = caught[p["slug"]] / (caught[p["slug"]] + TARGET_SHRINK)
             m = max(0.3, min(3.0, (real_share / model_share) ** k))
+            if TARGET_RATING_FIX and ratings is not None and m > cfg.TARGET_MULT_MAX:
+                # the weight the capped multiplier cannot give comes from route running and hands
+                need = target_weight(p) * m / cfg.TARGET_MULT_MAX / (cfg.TE_TARGET_WEIGHT if p["position"] == "TE" else 1.0)
+                skill = 100 * need ** (1 / cfg.TARGET_WEIGHT_POWER) - (p.get("speed") or 50) / 2
+                rr, hands = p.get("route_running") or 50, p.get("hands") or 50
+                d = max(0, min(TARGET_FIX_MAX - min(rr, hands), round(skill - (rr + hands) / 2)))
+                if d:
+                    ratings.setdefault(slug, {})[p["slug"]] = {"route_running": d, "hands": d}
+                m = cfg.TARGET_MULT_MAX
             if abs(m - 1) >= 0.05:
                 mults[p["slug"]] = round(m, 3)
+        # a receiver high on the depth chart who has not caught a ball (hurt, or not really
+        # a receiver in this offense) is hardly thrown to
+        for p in rec:
+            if caught[p["slug"]] == 0 and (p.get("depth") or 99) <= ZERO_CATCH_DEPTH:
+                mults[p["slug"]] = ZERO_CATCH_FLOOR
         if mults:
             out.setdefault(slug, {})["targets"] = mults
     return out
@@ -265,7 +291,8 @@ def main() -> None:
     if st_real is None:
         raise SystemExit("build the real season first: python realdata.py")
     # depth mode keeps the usage already on file (lead-back splits and target weights)
-    old_usage = json.loads(OUT.read_text(encoding="utf-8")).get("usage", {}) if mode == "depth" and OUT.exists() else {}
+    old = json.loads(OUT.read_text(encoding="utf-8")) if mode == "depth" and OUT.exists() else {}
+    old_usage, old_ratings = old.get("usage", {}), old.get("ratings", {})
     OUT.write_text(json.dumps({"depth": {}, "usage": {}}), encoding="utf-8")
     build()
     teams = season.load_teams()
@@ -273,17 +300,21 @@ def main() -> None:
     depth = depth_orders(teams, by_team)
     print(f"depth: {len(depth)} teams, {sum(len(v) for v in depth.values())} roles reordered; a different starter at QB on "
           f"{starter_changes(teams, depth, 'QB')} teams, HB {starter_changes(teams, depth, 'HB')}, K {starter_changes(teams, depth, 'K')}")
-    data = {"built_from": f"real season through week {min(THROUGH, st_real['current_week'])}", "depth": depth, "usage": old_usage}
+    data = {"built_from": f"real season through week {min(THROUGH, st_real['current_week'])}", "depth": depth, "usage": old_usage,
+            "ratings": old_ratings}
     OUT.write_text(json.dumps(data, indent=1), encoding="utf-8")
     if mode == "all":
         build()
         teams = season.load_teams()
         games = [g for g in st_real["games"].values() if g["played"] and g["week"] <= THROUGH and season.has_box(st_real, g)
                  and not teams[g["home"]]["fictional"] and not teams[g["away"]]["fictional"]]
-        data["usage"] = usage(teams, by_team, games)
+        data["ratings"] = {}
+        data["usage"] = usage(teams, by_team, games, data["ratings"])
         n_lead = sum(1 for v in data["usage"].values() if "rb_lead_feature" in v)
         n_tgt = sum(len(v.get("targets", {})) for v in data["usage"].values())
-        print(f"usage: real lead-back split for {n_lead} teams, target weights for {n_tgt} receivers")
+        n_fix = sum(len(v) for v in data["ratings"].values())
+        print(f"usage: real lead-back split for {n_lead} teams, target weights for {n_tgt} receivers; "
+              f"route running and hands raised for {n_fix} receivers the target cap could not cover")
         OUT.write_text(json.dumps(data, indent=1), encoding="utf-8")
     subprocess.run([sys.executable, str(ROOT / "build_teams.py")], cwd=ROOT, check=True)
     print(f"written to {OUT}; build_teams.py applied it")

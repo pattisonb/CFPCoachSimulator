@@ -32,6 +32,7 @@ of these teams playing like FBS football while preserving who is better than who
 from __future__ import annotations
 
 import json
+import os
 import statistics as st
 import sys
 from collections import defaultdict
@@ -155,6 +156,22 @@ ATTRS = ["speed", "strength", "intelligence", "endurance", "passing", "decision_
          "coverage", "kick_power", "kick_accuracy", "punt_power", "punt_accuracy"]
 # Return rating is centred on the league's designated returners rather than per position.
 RETURN_ATTR = "return_rating"
+
+# After normalization (overnight review, bug 8). Re-centring on the starter mean and
+# stretching by SPREAD_SCALE turns an ordinary raw value into an extreme one when the
+# position's starters bunch: linemen got coverage of 90-99 and a few starting receivers
+# route running of 1. A skill a position does not use is held to OFF_SKILL_RANGE; a core
+# skill of an established player (EA overall CORE_FLOOR_EA or more) keeps CORE_FLOOR.
+CORE_SKILLS = {"QB": ("passing", "decision_making"), "RB": ("speed", "strength", "elusiveness", "vision"),
+               "WR": ("speed", "hands", "route_running"), "TE": ("hands", "route_running", "run_blocking"),
+               "OL": ("strength", "run_blocking", "pass_blocking"), "DL": ("strength", "rushing", "tackling"),
+               "MLB": ("tackling", "coverage"), "ROLB": ("tackling", "rushing"), "LOLB": ("tackling", "rushing"),
+               "OLB": ("tackling", "rushing"), "CB": ("speed", "coverage"), "S": ("tackling", "coverage"),
+               "K": ("kick_power", "kick_accuracy"), "P": ("punt_power", "punt_accuracy")}
+PHYSICAL = ("speed", "strength", "intelligence", "endurance")   # every position uses these: never clamped
+OFF_SKILL_RANGE = (25, 85)
+CORE_FLOOR, CORE_FLOOR_EA = 20, 60
+CLAMP_EXTREMES = not os.environ.get("BUILD_NO_CLAMP")   # BUILD_NO_CLAMP=1 builds without it (for before/after tests)
 
 
 def starter_slugs(team: dict) -> set[str]:
@@ -382,6 +399,23 @@ def depth_sort(t: dict) -> None:
     t["players"].sort(key=lambda p: (p.get("depth") or 99, p.get("order") or 99, -(p.get("overall") or 0)))
 
 
+def clamp_extremes(p: dict) -> None:
+    """Hold normalized attributes inside sensible bounds (see CORE_SKILLS)."""
+    if not CLAMP_EXTREMES:
+        return
+    core = CORE_SKILLS.get(p.get("position"), ())
+    lo, hi = OFF_SKILL_RANGE
+    for a in ATTRS:
+        v = p.get(a)
+        if not isinstance(v, (int, float)) or a in PHYSICAL and a not in core:
+            continue
+        if a in core:
+            if (p.get("ea_overall") or 0) >= CORE_FLOOR_EA and v < CORE_FLOOR:
+                p[a] = CORE_FLOOR
+        else:
+            p[a] = max(lo, min(hi, v))
+
+
 def normalize(teams: list[dict]) -> dict:
     """Re-centre every attribute per position group on the FBS starter mean."""
     groups = defaultdict(list)
@@ -404,6 +438,7 @@ def normalize(teams: list[dict]) -> dict:
                     m = means.get((p["position"], a), 50.0)
                     p[a] = int(round(max(1, min(99, NEUTRAL + (p[a] - m) * SPREAD_SCALE))))
             p[RETURN_ATTR] = int(round(max(1, min(99, NEUTRAL + (p[RETURN_ATTR] - return_mean) * SPREAD_SCALE))))
+            clamp_extremes(p)
     means[("returners", RETURN_ATTR)] = return_mean
     return {f"{pos}:{a}": round(m, 1) for (pos, a), m in sorted(means.items())}
 
