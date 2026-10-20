@@ -273,7 +273,9 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, offense_line
 
     yards = random.gauss(*cfg.RUSH_BASE_YARDS)
     yards += (blockers - front) * cfg.RUSH_PER_LINE_POINT
-    yards += (carrier_rating - cfg.NEUTRAL) * cfg.RUSH_PER_CARRIER_POINT
+    # the carrier against the defenders who chase him, not against an average defense
+    pursuit = _group_rating(defense, front_positions, ('speed', 'tackling'))
+    yards += (carrier_rating - pursuit) * cfg.RUSH_PER_CARRIER_POINT
     yards += cfg.RUSH_GUESSED if guessed_play else cfg.RUSH_NOT_GUESSED
 
     big_play_chance = cfg.RUSH_BIG_PLAY_CHANCE * (carrier.speed / cfg.NEUTRAL)
@@ -449,7 +451,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
             yards = random.gauss(*cfg.PASS_YARDS_TE)
         else:
             yards = random.gauss(*cfg.PASS_YARDS_RB)
-        yards *= 1 + (target.speed - db_speed) * cfg.PASS_SPEED_EFFECT
+        yards *= 1 + (target.speed - db_speed) * cfg.PASS_SPEED_EFFECT             - (_group_rating(defense, db_positions, ('tackling',)) - cfg.NEUTRAL) * cfg.PASS_TACKLE_EFFECT
         big_play_chance = cfg.PASS_BIG_PLAY_CHANCE * (target.speed / cfg.NEUTRAL)
         if (tendencies or {}).get("conservative"):
             big_play_chance *= cfg.GARBAGE_BIG_PLAY

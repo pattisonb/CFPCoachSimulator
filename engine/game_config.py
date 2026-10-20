@@ -142,10 +142,10 @@ SACK_PER_QB_POINT = 0.0004      # per point of QB decision making above neutral 
 SACK_GUESSED_BONUS = 0.035      # defense called a pass defense
 SACK_YARDS = (7.5, 2.0)         # gauss mean, sd (loss)
 SACK_FUMBLE_CHANCE = 0.13
-COMPLETION_BASE = 0.645         # equal QB, receiver and coverage
-COMPLETION_PER_QB_POINT = 0.0030
+COMPLETION_BASE = 0.637         # equal QB, receiver and coverage
+COMPLETION_PER_QB_POINT = 0.0026
 COMPLETION_PER_RECV_POINT = 0.0015
-COMPLETION_PER_COV_POINT = 0.0025
+COMPLETION_PER_COV_POINT = 0.0032   # was 0.0025: points allowed per defense-rating point -0.28 in the sim vs -0.50 real
 COMPLETION_GUESSED = -0.055
 COMPLETION_NOT_GUESSED = 0.015
 COMPLETION_LONG_3RD = -0.05     # 3rd/4th and 7+
@@ -159,10 +159,11 @@ INT_PER_QB_POINT = 0.0013       # per point of decision making above neutral (fe
 INT_GUESSED_BONUS = 0.02
 INT_MIN, INT_MAX = 0.02, 0.22
 PICK_SIX_CHANCE = 0.09          # of interceptions
-PASS_YARDS_WR = (12.6, 5.5)     # gauss mean, sd for WR completions
+PASS_YARDS_WR = (12.3, 5.5)     # gauss mean, sd for WR completions (12.6 before the defense terms grew)
 PASS_YARDS_TE = (9.5, 4.5)
 PASS_YARDS_RB = (5.0, 4.0)
 PASS_SPEED_EFFECT = 0.007       # yards multiplier per point of receiver speed minus DB speed
+PASS_TACKLE_EFFECT = 0.006      # yards multiplier per point of the coverage players' tackling below neutral (yards after the catch)
 PASS_BIG_PLAY_CHANCE = 0.08    # of WR/TE completions
 PASS_BIG_PLAY_YARDS = (22, 65)
 PASS_MIN_YARDS = -2
@@ -172,7 +173,7 @@ RECEPTION_FUMBLE_CHANCE = 0.010
 # ----- Rushing -----
 RUSH_BASE_YARDS = (3.75, 2.7)   # gauss mean, sd (3.75: official YPC counts sacks as runs; see tools/calibrate.py)
 RUSH_PER_LINE_POINT = 0.040     # yards per point of (run blocking - run defense)
-RUSH_PER_CARRIER_POINT = 0.035  # yards per point of carrier rating above neutral
+RUSH_PER_CARRIER_POINT = 0.035  # yards per point of carrier rating above the front seven's pursuit (speed and tackling)
 RUSH_GUESSED = -0.9
 RUSH_NOT_GUESSED = 0.5
 RUSH_BIG_PLAY_CHANCE = 0.045    # per carry (scaled by carrier speed)
@@ -195,8 +196,8 @@ PUNT_DISTANCE = (43.0, 5.0)
 # Any given Saturday: each team plays a little above or below itself on the day. Drawn once
 # per game per team (gaussian, in rating points, on the same attributes as home field), it
 # widens the spread of outcomes so a 28-point favourite still loses a few times in a hundred.
-GAME_FORM_SD = 4.4
-HFA_BASE_POINTS = 2.0           # rating points moved from the away team to the home team
+GAME_FORM_SD = 2.5              # was 4.4: the same matchup swung 17.5 points game to game (real football's whole residual is 15.9)
+HFA_BASE_POINTS = 1.7           # rating points moved from the away team to the home team (2.0 before the defense terms grew)
 HFA_STADIUM_POINTS = 0.8        # extra at a 99 stadium rating, less at a 0 (data: 30-90)
 HFA_ATTRS = ("speed", "strength", "intelligence", "passing", "decision_making", "elusiveness",
              "vision", "hands", "route_running", "run_blocking", "pass_blocking", "rushing",

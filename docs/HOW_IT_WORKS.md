@@ -271,6 +271,41 @@ from 11.8 to 11.2 points (RMS 15.8 to 14.2) and the distance from the closing li
 7.4 to 4.8 points; against the spread 64.9% to 59.6%. Every constant lives in
 `engine/game_config.py`; change one, rerun the three tools, and compare.
 
+## Game randomness and defense weight (overnight review, items 2.2 and 2.4)
+
+The overnight review (10 simulated seasons against the real 2026 season through week 8,
+`tools/team_reality.py`) found records bunched toward .500 for two engine reasons. The same
+matchup swung 17.5 points from game to game, more than real football's whole unexplained
+spread (15.9). And defense counted for too little: points allowed per defense-rating point
+were -0.28 in the sim against -0.50 real, while offense counted for too much (0.73 against 0.58).
+
+- **Less day-to-day form** (`GAME_FORM_SD` 4.4 to 2.5).
+- **Coverage matters more** (`COMPLETION_PER_COV_POINT` 0.0025 to 0.0032) and the QB a
+  little less (`COMPLETION_PER_QB_POINT` 0.0030 to 0.0026); `COMPLETION_BASE` 0.645 to 0.637
+  keeps league completion at 63%.
+- **The ball carrier runs against the defense.** His rating is measured against the front
+  seven's pursuit (speed and tackling) instead of a neutral 55, so a slow front gives up more.
+- **Tackling limits yards after the catch** (`PASS_TACKLE_EFFECT` 0.006 per point of the
+  coverage players' tackling); WR catch yards 12.6 to 12.3 hold yards per attempt at 7.4.
+- **Home field 2.0 to 1.7 rating points**: the bigger defense terms made each rating point
+  worth more, and the predicted home margin had grown to 8.2 against a real 7.1.
+
+| 10 seasons through week 8 | Real | Before | After |
+|---|---|---|---|
+| Same-matchup margin SD | (15.9 residual) | 17.5 | 15.9 |
+| Favourite wins, rating gap 6-10 | 92.5% | 77.6% | 84.2% |
+| Power 4 over Group of Five | 96.2% | 87.9% | 92.8% |
+| Points allowed per defense-rating point | -0.50 | -0.28 | -0.51 |
+| Points scored per offense-rating point | 0.58 | 0.73 | 0.65 |
+| Bottom-third defenses, points allowed | 30.2 | 28.4 | 30.7 |
+| Sim favourite won (388 games) | | 68.6% | 70.6% |
+| Brier score | | 0.202 | 0.195 |
+
+`tools/calibrate_season.py 30` (the real games so far): straight up 71.6% to 73.5%, margin
+MAE 12.9 to 12.7, correlation 0.59 to 0.61, home bias +0.1 to -0.5. League scoring is
+27.1 points a team-game against 26.0 real; the extra passing touchdowns and punt returns
+(items 2.3 and 2.6) are the known causes, left for their own fixes. Play-log fingerprint ebe00215526c19dd.
+
 ## Player stat lines against real box scores
 
 `tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed
