@@ -1365,7 +1365,7 @@
         el("span", { class: "review-side" }, [team(ls, ln), el("span", { text: String(lsc) })]),
         noteText ? el("span", { class: "review-note muted", text: noteText }) : null,
       ].filter(Boolean));
-      if (s.schedule.some((x) => x.event_id === g.event_id && x.has_box)) { row.classList.add("clickable"); row.addEventListener("click", () => openBox(g.event_id)); }
+      if (g.has_box) { row.classList.add("clickable"); row.addEventListener("click", () => openBox(g.event_id)); }
       return row;
     };
     const bowlOf = (g) => g.title ? g.title.replace(/ \((Quarterfinal|Semifinal)\)/, "").replace("College Football Playoff National Championship", "") : "";
@@ -1417,7 +1417,9 @@
       for (const c of r.champions) {
         const g = c.game;
         const line = g && g.played ? `${g.winner === g.home ? g.home_name : g.away_name} ${Math.max(g.home_score, g.away_score)}, ${g.winner === g.home ? g.away_name : g.home_name} ${Math.min(g.home_score, g.away_score)}` : "";
-        t.append(el("tr", { class: c.team === m.team ? "mine" : "" }, [el("td", { class: "muted", text: c.conference }), el("td", {}, [team(c.team, c.name)]), el("td", { class: "muted", text: line })]));
+        const tr = el("tr", { class: `${c.team === m.team ? "mine" : ""} ${g && g.has_box ? "clickable" : ""}` }, [el("td", { class: "muted", text: c.conference }), el("td", {}, [team(c.team, c.name)]), el("td", { class: "muted", text: line })]);
+        if (g && g.has_box) tr.addEventListener("click", () => openBox(g.event_id));
+        t.append(tr);
       }
       sec.append(t);
       two.append(sec);
@@ -2508,7 +2510,7 @@
     const sites = s.playoff_sites || {};
     box.append(bracketTree(seeds, bracketState.games, false, sites));
     if (s.done) box.append(champBanner(s.champion, s.champion_name));
-    box.append(el("p", { class: "muted small-text", text: "Click a game you were in for the box score. Seeds, ranks and bids:" }));
+    box.append(el("p", { class: "muted small-text", text: "Click any played game for its box score. Seeds, ranks and bids:" }));
     box.append(seedTable(seeds, Object.fromEntries(b.seeds.map((x) => [x.team, x.bid])), Object.fromEntries(b.seeds.map((x) => [x.team, x.rank]))));
     if (b.first_four_out && b.first_four_out.length) {
       box.append(el("p", { class: "muted small-text", text: "First four out: " + b.first_four_out.map((x) => `${x.name} (#${x.rank})`).join(", ") }));
@@ -2572,8 +2574,8 @@
     };
     BRACKET_ROUNDS.forEach((round, ri) => {
       const col = el("div", { class: "bracket-round" }, [el("div", { class: "bracket-round-name", text: round.name })]);
-      const games = el("div", { class: "bracket-games" });
-      col.append(games);
+      const list = el("div", { class: "bracket-games" });   // not "games": that name is the played games passed in
+      col.append(list);
       for (const [eid, top, bottom] of round.games) {
         const g = games[eid];
         const a = label(top), b = label(bottom);
@@ -2600,7 +2602,7 @@
           el("div", { class: "muted small-text bmatch-note", text: note + (g && g.overtime ? ` · ${g.overtime > 1 ? g.overtime : ""}OT` : "") }),
         ]);
         if (g && g.has_box) card.addEventListener("click", () => openBox(g.event_id));
-        games.append(card);
+        list.append(card);
       }
       tree.append(col);
     });

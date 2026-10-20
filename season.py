@@ -2345,7 +2345,7 @@ def bowl_view(state: dict) -> list[dict]:
                     "away_record": f"{rec[b['away']]['wins']}-{rec[b['away']]['losses']}" if b.get("away") else None,
                     "played": bool(g and g["played"]), "home_score": g["home_score"] if g else None, "away_score": g["away_score"] if g else None,
                     "overtime": (g.get("overtime") or 0) if g else 0,
-                    "mine": state["team"] in (b.get("home"), b.get("away")), "has_box": b["event_id"] in state["my_boxes"],
+                    "mine": state["team"] in (b.get("home"), b.get("away")), "has_box": bool(g) and has_box(state, g),
                     "games_played": meta.get("games_played"), "first_played": meta.get("first_played"),
                     "most_appearances": meta.get("most_appearances", [])[:4], "recent": meta.get("recent", [])[:3],
                     "wiki_tie_ins": meta.get("tie_ins", []), "previous_tie_ins": meta.get("previous_tie_ins", []),
@@ -2374,8 +2374,8 @@ if __name__ == "__main__":
 
 # ----- season summary ------------------------------------------------------
 
-def _game_line(g: dict, teams: dict) -> dict:
-    return {"event_id": g["event_id"], "week": g["week"], "title": g.get("title"), "site": g.get("site"), "played": g["played"],
+def _game_line(g: dict, teams: dict, state: Optional[dict] = None) -> dict:
+    return {"has_box": has_box(state, g) if state else False,"event_id": g["event_id"], "week": g["week"], "title": g.get("title"), "site": g.get("site"), "played": g["played"],
             "home": g["home"], "away": g["away"], "home_name": g.get("home_display") or teams[g["home"]]["name"],
             "away_name": g.get("away_display") or teams[g["away"]]["name"], "home_score": g["home_score"], "away_score": g["away_score"],
             "overtime": g.get("overtime", 0), "winner": (g["home"] if g["home_score"] > g["away_score"] else g["away"]) if g["played"] else None}
@@ -2504,14 +2504,14 @@ def season_review(state: dict) -> dict:
     for week, label in sorted(PLAYOFF_WEEKS.items()):
         gs = sorted((g for g in games.values() if g["kind"] == "playoff" and g["week"] == week), key=lambda g: g["event_id"])
         if gs:
-            rounds.append({"round": label, "week": week, "games": [_game_line(g, teams) for g in gs]})
+            rounds.append({"round": label, "week": week, "games": [_game_line(g, teams, state) for g in gs]})
     final = games.get("cfp-final")
-    title_game = _game_line(final, teams) if final else None
+    title_game = _game_line(final, teams, state) if final else None
     ccgs = {g["event_id"]: g for g in games.values() if g["kind"] == "ccg"}
     champions = []
     for conf, slug in sorted(state["champions"].items()):
         g = ccgs.get(f"ccg-{conf.lower().replace(' ', '-')}")
-        champions.append({"conference": conf, "team": slug, "name": teams[slug]["name"], "game": _game_line(g, teams) if g else None})
+        champions.append({"conference": conf, "team": slug, "name": teams[slug]["name"], "game": _game_line(g, teams, state) if g else None})
 
     rec = _records(state, include_playoff=True)[me]
     row = next((r for r in standings(state).get(state["conference"], []) if r["slug"] == me), None)
