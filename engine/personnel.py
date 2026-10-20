@@ -42,7 +42,7 @@ FRONTS = {
     "4-3": {"EDGE": 2, "DT": 2, "LB": 3, "CB": 2, "S": 2},
     "3-4": {"EDGE": 2, "DT": 1, "LB": 4, "CB": 2, "S": 2},
     "4-2-5": {"EDGE": 2, "DT": 2, "LB": 2, "CB": 3, "S": 2},
-    "3-3-5": {"EDGE": 2, "DT": 1, "LB": 3, "CB": 3, "S": 2},
+    "3-3-5": {"EDGE": 2, "DT": 1, "LB": 3, "CB": 2, "S": 3},   # three safeties (Wake Forest, Troy, Tulsa, UAB)
 }
 SCHEME_FRONT = {"4-3": "4-3", "3-4": "3-4", "Tite Front 3-4": "3-4", "4-2-5": "4-2-5", "Multiple 4-2-5": "4-2-5", "3-3-5": "3-3-5"}
 

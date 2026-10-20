@@ -451,6 +451,13 @@ through week 8: 158 of about 1,900). Now a sack goes to a corner or safety on th
 89 across FBS). It is credit only, drawn from the stat random stream, so every game score
 is unchanged (checked on 40 games). Play-log fingerprint 0b3de0274cc130a7.
 
+**3-3-5 fronts play three safeties** (Wake Forest, Troy, Tulsa and UAB do; `personnel.FRONTS`
+had three corners and two safeties). Tested together with a 75/25 split between the second
+and third running back (`BACKUP_RB_ROTATION` 0.40 to 0.20): picks held (20 seasons: favourite
+won 69.8% to 72.0%, Brier 0.185 to 0.183; `calibrate_season.py 30` 72.2% to 70.9%, MAE 12.4
+to 12.6), but the backs' carries matched real box scores worse (average miss 15.8 to 18.0
+carries), so the running-back split was left out. Play-log fingerprint 33a30b0570a78958.
+
 ## Player stat lines against real box scores
 
 `tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed
