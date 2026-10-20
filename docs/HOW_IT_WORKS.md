@@ -406,6 +406,20 @@ fourth-down tendencies: favourite won 75.0% to 75.9%, Brier 0.173 to 0.171, wins
 So it is in (`FOURTH_DOWN_AGGRESSION` 1.8, `FG_LONG_ATTEMPT_CHANCE` 0.6). Play-log fingerprint
 4702d67fb4482f2d.
 
+**The pass lean, halved.** Over full seasons against real 2023-2025, the full lean (0.016)
+had teams passing 235 yards a game against 226 and rushing 148 against 157: 2026's first
+eight weeks run more pass-heavy than whole past seasons. At 0.008 both sit within about 2%
+(2026 week 8: pass share -0.5 points; 2023-2025: 231 pass yards, 150 rush yards a game), with
+picks inside the noise (40 seasons: Brier 0.171 to 0.172; `calibrate_season.py 30` 70.1%, MAE
+12.7, slope 0.95). Play-log fingerprint a4be3c99a12835b2.
+
+**Still open: receiving leaders.** Over full seasons the receiving leaderboard runs about 20%
+above real 2023-2025 seasons at ranks 1-50 (48 thousand-yard receivers against 22-33). It was
+13% before this round (37); the receiver rating fix took it to 42 and the tempo and
+fourth-down changes to 48. Per game the top receiver's share of catches is right (30% against
+32% in 2026 box scores), so the excess is a season-level effect, most likely that sim
+receivers miss fewer games than real ones. Not changed here.
+
 **Tested and left out: fewer sacks.** Full seasons have 24-27 ten-sack players against
 15-17 real, and every rank of the sack leaderboard runs 10-19% high (team sacks 2.25 a game
 against 2.0), so it is volume, not who gets the credit. The review's `SACK_BASE` 0.050 to
@@ -413,6 +427,15 @@ against 2.0), so it is volume, not who gets the credit. The review's `SACK_BASE`
 picks (20 seasons: favourite won 74.0% to 71.8%, Brier 0.182 to 0.184); the base cut alone
 was worse (Brier 0.190, real-versus-sim wins correlation 0.66 to 0.61). The sack rate is
 one of the places where line and QB ratings decide games, so it stays.
+
+After the real-import fixes the sack leaderboard came back to real size on its own (13 to 20
+ten-sack players over 4 full seasons, real 15-17). The other complaint, team sack totals too
+narrow (UTEP is sacked 5.8 times a game; no rating gap took the sim past about 12% of
+dropbacks), was retested on 40 seasons with a steeper line slope (`SACK_PER_LINE_POINT`
+0.0015 to 0.0022): team sacks taken spread only 0.55 to 0.62 a game (real 0.92), the
+real-versus-sim correlation stayed 0.32, and picks fell (favourite won 75.9% to 73.1%, Brier
+0.171 to 0.176; `calibrate_season` slope 0.94 to 0.92). Left out: the spread is a rating
+question (pass rush and protection cards), not the slope.
 
 ## Quarterback runs (overnight review item 2.7)
 

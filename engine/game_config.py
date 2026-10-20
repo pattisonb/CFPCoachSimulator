@@ -216,7 +216,8 @@ HFA_ATTRS = ("speed", "strength", "intelligence", "passing", "decision_making", 
              "vision", "hands", "route_running", "run_blocking", "pass_blocking", "rushing",
              "tackling", "coverage", "kick_accuracy", "punt_accuracy")
 PASS_RATE_EFFECT = 0.6          # run chance shift at a 0 or 100 pass-rate tendency
-PASS_LEAN = 0.016               # taken off every run chance: teams passed 1.6 points of share less than real (45.7%)
+PASS_LEAN = 0.008               # taken off every run chance: half the 1.6-point shortfall against 2026 through week 8
+                                # (all of it overshot full 2023-2025 seasons: 235 pass yards a game against 226)
 TEMPO_EFFECT = 0.80             # clock multiplier range for tempo 0..100 (was 0.60: plays per game varied 3.6 across teams, real
                                 # about 4.4 once the 7-game sampling noise is taken out)
 FOURTH_DOWN_TENDENCY_EFFECT = 0.8   # go-for-it odds scale for the fourth_down_go_rate tendency
