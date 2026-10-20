@@ -444,6 +444,13 @@ form), and that alone moved their Brier 0.172 to 0.176: a direct measure of the 
 noise in these checks (about +-0.004 Brier, 2-3 points of favourite-won rate).
 Play-log fingerprint 99510529d1e1827c.
 
+**Blitzing defensive backs.** `blitz_rate` was written into every team but read nowhere,
+and only linemen and linebackers rushed, so corners and safeties had no sacks (real 2026
+through week 8: 158 of about 1,900). Now a sack goes to a corner or safety on the field
+`DB_SACK_SHARE` 8% of the time at blitz_rate 50, scaled by the defense's blitz_rate (13 to
+89 across FBS). It is credit only, drawn from the stat random stream, so every game score
+is unchanged (checked on 40 games). Play-log fingerprint 0b3de0274cc130a7.
+
 ## Player stat lines against real box scores
 
 `tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed

@@ -126,7 +126,7 @@ def assign_tackles(defense, base_yards, verbose=False):
     return tacklers, is_assisted and len(tacklers) == 2
 
 
-def assign_sack(defense, guessed_play=False, rushers=None):
+def assign_sack(defense, guessed_play=False, rushers=None, blitz_rate=50):
     # Sack candidates: the pass rushers (linemen, plus linebackers in a three-man front), and any
     # linebacker when the defense guessed the play
     candidates = list(rushers) if rushers else [p for p in defense if p.position == 'DL']
@@ -140,6 +140,12 @@ def assign_sack(defense, guessed_play=False, rushers=None):
 
     # Pick 1 or 2 players based on is_half
     selected = random.choices(candidates, weights=[(max(1, p.rushing) / cfg.NEUTRAL) ** cfg.SACK_SKILL_POWER for p in candidates], k=2 if is_half else 1)
+
+    # A blitzing corner or safety gets the credit now and then, more for a team that blitzes
+    # a lot (the defense's blitz_rate tendency). Drawn from stat_rng: the game is unchanged.
+    dbs = [p for p in defense if p.position in ("CB", "S")]
+    if dbs and cfg.stat_rng.random() < cfg.DB_SACK_SHARE * blitz_rate / 50:
+        selected[0] = cfg.stat_rng.choices(dbs, weights=[max(1, p.rushing or 1) for p in dbs], k=1)[0]
 
     return selected, is_half
 
@@ -389,7 +395,8 @@ def _pick_target(offense):
     return random.choices(receivers + backs, weights=weights, k=1)[0]
 
 
-def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_line_advantage, yardline, verbose=False, tendencies=None):
+def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_line_advantage, yardline, verbose=False, tendencies=None,
+                   blitz_rate=50):
     """One dropback. Returns (result, yards or new yardline):
     'successful_pass' / 'checkdown_pass' (yards), 'incomplete' (0), 'sack' (negative yards),
     'interception' / 'fumble' (new yardline), 'defensive_touchdown' (100), 'run' (scramble yards)."""
@@ -420,7 +427,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     sack_rate = max(0.01, min(0.25, sack_rate))
     if random.random() < sack_rate:
         sack_yards = -max(1, int(round(random.gauss(*cfg.SACK_YARDS))))
-        sackers, is_half = assign_sack(defense, guessed_play=guessed_play, rushers=rushers)
+        sackers, is_half = assign_sack(defense, guessed_play=guessed_play, rushers=rushers, blitz_rate=blitz_rate)
         last_play["sacked_by"] = " and ".join(s.name for s in sackers)
         for sacker in sackers:
             sacker.stats['sacks'] += 0.5 if is_half else 1

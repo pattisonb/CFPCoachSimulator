@@ -308,7 +308,8 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
         result, yards_gained = get_run_yards(offense, defense, down, first_down_yardage, guessed_play, offense_line_advantage, yardline, tendencies=tendencies)
     else:
         play_ran = "pass"
-        result, yards_gained = get_pass_yards(offense, defense, down, first_down_yardage, guessed_play, offense_line_advantage, yardline, tendencies=tendencies)
+        result, yards_gained = get_pass_yards(offense, defense, down, first_down_yardage, guessed_play, offense_line_advantage, yardline, tendencies=tendencies,
+                                              blitz_rate=(getattr(defense_team, "tendencies", None) or {}).get("blitz_rate", 50))
     oob = sit.out_of_bounds(result, situation, posture)
     first_down = result in ("run", "successful_pass", "checkdown_pass") and isinstance(yards_gained, (int, float)) and yards_gained >= first_down_yardage
     if cfg.INJURIES:

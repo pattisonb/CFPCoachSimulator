@@ -252,6 +252,8 @@ COVERAGE_TACKLE_WEIGHTS = (0.3, 1.0, 0.4)   # who makes the tackle on a returned
                                 # position (starter, second, the rest); real coverage units are mostly backups
 FORCED_FUMBLE_SHARE = 0.7       # share of fumbles credited as forced (real 0.67 forced a team-game on about 1.1 fumbles)
 SACK_SKILL_POWER = 1.3          # sack credit among the rushers: (pass rush / neutral) ** power
+DB_SACK_SHARE = 0.08            # share of sacks credited to a blitzing corner or safety at blitz_rate 50 (scales with it;
+                                # real 2026 through week 8: 158 of about 1,900); credit only, drawn from stat_rng
 INT_SKILL_POWER = 1.5           # interception credit among the defensive backs: (coverage / neutral) ** power
 QB_DESIGNED_RUN_SHARE = 0.06    # default share of carries that are designed QB runs (observed per team overrides)
 BACKUP_RB_ROTATION = 0.40       # chance the sub is the next back down rather than the best one on the bench
