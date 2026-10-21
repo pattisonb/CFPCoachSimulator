@@ -46,6 +46,12 @@ OUT = ROOT / "data" / "engine_teams.json"
 
 NEUTRAL = 55          # engine reference rating (engine/game_config.py)
 SPREAD_SCALE = 1.50   # rating points of spread kept per source point; tuned in calibrate_season.py and tools/realism.py
+# Diminishing returns at the top (team_level): of a team's talent above the FBS starter average,
+# only this share counts. Through week 8 of 2026 a point of rating gap was worth 1.4 real points
+# of margin between Power 4 teams and 3.1 between Group of Five teams; the sim paid 2.0 in both,
+# so Power 4 margins ran 1.5x too wide (real on sim margin slope 0.58-0.70) while Group of Five
+# margins were right (0.95-1.02). BUILD_TOP_SCALE=1 builds without it (for before/after tests).
+TEAM_LEVEL_TOP_SCALE = float(os.environ.get("BUILD_TOP_SCALE", "0.70"))
 
 POSITION_MAP = {
     "QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE",
@@ -335,11 +341,6 @@ def apply_observed_tendencies(teams: list[dict]) -> int:
             td["qb_run_share"] = round(max(0.0, o["qb_all_rush_share"] - o["sack_share"] - SCRAMBLE_SHARE), 1)
         else:
             td["qb_run_share"] = round(max(0.0, o["qb_rush_share"] - 6.0 - SCRAMBLE_SHARE), 1)
-        # Backfield split: the top back's average share of the team's running back carries in a
-        # game (and the second back's). roster.Team._lead_profile turns rb1_share into the lead
-        # back's feature score, so a team that rides one back does so in the sim.
-        td["rb1_share"] = o["rb1_share"]
-        td["rb2_share"] = o["rb2_share"]
         td["observed"] = True
         n += 1
     return n
@@ -568,6 +569,26 @@ def normalize(teams: list[dict]) -> dict:
     return {f"{pos}:{a}": round(m, 1) for (pos, a), m in sorted(means.items())}
 
 
+def team_level(teams: list[dict]) -> dict:
+    """Diminishing returns at the top. A team's level is its starters' mean engine rating over
+    NEUTRAL across the composites; above zero only TEAM_LEVEL_TOP_SCALE of it counts, and every
+    player on the team moves down by the rest (the same amount, so who is better than whom on
+    the roster does not change). Returns {slug: shift} in engine points."""
+    shifts = {}
+    for t in teams:
+        vals = [p[a] - NEUTRAL for p in t["players"] if p["starter"] for a in ATTRS if isinstance(p.get(a), (int, float))]
+        level = st.mean(vals) if vals else 0.0
+        shift = -(1.0 - TEAM_LEVEL_TOP_SCALE) * level if level > 0 else 0.0
+        t["level_shift"] = round(shift, 2)
+        shifts[t["slug"]] = shift
+        if shift:
+            for p in t["players"]:
+                for a in ATTRS:
+                    if isinstance(p.get(a), (int, float)):
+                        p[a] = int(round(max(1, min(99, p[a] + shift))))
+    return shifts
+
+
 ENGINE_POSITIONS = ["QB", "RB", "WR", "TE", "OL", "DL", "MLB", "CB", "S", "K", "P"]
 CORE_SKILLS = {"QB": ("passing", "decision_making"), "RB": ("elusiveness", "vision"), "WR": ("hands", "route_running"), "TE": ("hands", "run_blocking"),
                "OL": ("run_blocking", "pass_blocking"), "DL": ("rushing", "tackling"), "MLB": ("tackling", "coverage"), "CB": ("coverage",),
@@ -626,7 +647,7 @@ def ratings_at_every_position(teams: list[dict], means: dict) -> None:
                 for a, v in raw.items():
                     if a in ATTRS and isinstance(v, (int, float)):
                         mean = means.get(f"{pos}:{a}", 50.0)
-                        attrs[a] = int(round(max(1, min(99, NEUTRAL + (v - mean) * SPREAD_SCALE))))
+                        attrs[a] = int(round(max(1, min(99, NEUTRAL + (v - mean) * SPREAD_SCALE + t.get("level_shift", 0.0)))))
                 attrs["position"] = pos
                 rating = player_overall(attrs)
                 if pos != m["position"]:
@@ -659,6 +680,9 @@ def main() -> None:
     paths = sorted((SRC / "teams").glob("*.json"))
     teams = [load_team(p) for p in paths]
     means = normalize(teams)
+    shifts = team_level(teams)
+    print(f"team level: {sum(1 for v in shifts.values() if v)} teams above the FBS starter average shifted "
+          f"{min(shifts.values()):.1f} to {max(v for v in shifts.values() if v) if any(shifts.values()) else 0:.1f} engine points (top scale {TEAM_LEVEL_TOP_SCALE})")
     house_attributes(teams)
     nudged, reordered = apply_real_adjustments(teams, means)
     for t in teams:
@@ -670,7 +694,7 @@ def main() -> None:
     decouple_discipline(teams)
     print("league tendency means before centring:", tendency_means)
     print("teams with observed 2026 tendencies:", apply_observed_tendencies(teams))
-    out = {"source": str(SRC), "neutral": NEUTRAL, "spread_scale": SPREAD_SCALE,
+    out = {"source": str(SRC), "neutral": NEUTRAL, "spread_scale": SPREAD_SCALE, "team_level_top_scale": TEAM_LEVEL_TOP_SCALE,
            "starter_means_before_normalization": means, "tendency_means": tendency_means,
            "attribute_scale": ATTR_SCALE, "teams": {}}
     for t in teams:
