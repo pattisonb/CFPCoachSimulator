@@ -22,6 +22,19 @@ PRODUCTION_STATS = frozenset({
 })
 
 
+def lead_feature_for_share(share: float) -> float:
+    """The lead back's feature score (0 committee .. 1 workhorse) that gives a team its observed
+    split: `share` is the top back's share of running back carries in an average game, in
+    percent, read off cfg.RB_LEAD_SHARE_CURVE between the measured points and clamped at its ends."""
+    curve = cfg.RB_LEAD_SHARE_CURVE
+    if share <= curve[0][1]:
+        return curve[0][0]
+    for (f0, s0), (f1, s1) in zip(curve, curve[1:]):
+        if share <= s1:
+            return f0 + (f1 - f0) * (share - s0) / max(1e-9, s1 - s0)
+    return curve[-1][0]
+
+
 def production(player) -> float:
     return sum(v for k, v in player.stats.items() if k in PRODUCTION_STATS)
 
@@ -255,9 +268,12 @@ class Team:
         gap = rating(lead) - max(rating(p) for p in others)
         lo, hi = cfg.RB_LEAD_GAP_RANGE
         feature = min(1.0, max(0.0, (gap - lo) / (hi - lo)))
-        observed = (self.tendencies or {}).get("rb_lead_feature")
-        if observed is not None and lead.depth == 1:
-            feature = observed      # the team's real 2026 split (tools/tune_from_real.py), when its real lead back leads
+        td = self.tendencies or {}
+        if lead.depth == 1:         # the team's real 2026 split, when its real lead back leads
+            if td.get("rb1_share") is not None:
+                feature = lead_feature_for_share(td["rb1_share"])    # observed share (derive_tendencies.py)
+            elif td.get("rb_lead_feature") is not None:
+                feature = td["rb_lead_feature"]                       # tools/tune_from_real.py, when there is no observed share
         ret_lo, ret_hi = cfg.RB_LEAD_RETURN_CHANCE
         profile = (cfg.RB_LEAD_OUT_CHANCE * (1 - feature) ** cfg.RB_LEAD_OUT_CURVE,
                    ret_lo + (ret_hi - ret_lo) * feature ** cfg.RB_LEAD_CURVE)

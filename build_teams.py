@@ -335,6 +335,11 @@ def apply_observed_tendencies(teams: list[dict]) -> int:
             td["qb_run_share"] = round(max(0.0, o["qb_all_rush_share"] - o["sack_share"] - SCRAMBLE_SHARE), 1)
         else:
             td["qb_run_share"] = round(max(0.0, o["qb_rush_share"] - 6.0 - SCRAMBLE_SHARE), 1)
+        # Backfield split: the top back's average share of the team's running back carries in a
+        # game (and the second back's). roster.Team._lead_profile turns rb1_share into the lead
+        # back's feature score, so a team that rides one back does so in the sim.
+        td["rb1_share"] = o["rb1_share"]
+        td["rb2_share"] = o["rb2_share"]
         td["observed"] = True
         n += 1
     return n

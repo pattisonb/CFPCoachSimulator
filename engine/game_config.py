@@ -408,7 +408,20 @@ SKILL_SUB_FATIGUE = 62          # fatigue level at which WR/TE starters (and bac
 # return chance rises as feature ** RB_LEAD_CURVE and the series rotation fades as
 # (1 - feature) ** RB_LEAD_OUT_CURVE, so only a clear star goes straight back in while a lead back
 # who is a little better than the next man still loses the committee's series rotation quickly.
+# A real team's observed split (tendencies rb1_share from derive_tendencies.py: the top back's
+# share of running back carries in an average game) replaces the roster gap when its real lead
+# back leads: RB_LEAD_SHARE_CURVE is the share each feature score produces in the sim, and the
+# feature is read off it in reverse. Measured over 120 real games between FBS teams with the
+# constants below (tools/tune_from_real.feature_curve), the lead back's own share runs 38% at
+# feature 0 to 73% at 1 and the top back's (he changes from game to game on a committee)
+# 48% to 75%. The observed share counts games against FCS schools too, where real teams
+# bench their backs harder than the sim does, so it sits about two points under the FBS
+# share: the curve is the midpoint of the two measurements, which puts the per-game share
+# (calibrate_players.py, FBS games) a point low and the season-level share a point or two
+# high. Re-measure both if the RB_LEAD_* constants change.
 # Backs recover faster on the bench than receivers: a back's rest is a few plays, not a series.
+RB_LEAD_SHARE_CURVE = ((0.0, 43.0), (0.125, 45.2), (0.25, 48.4), (0.375, 52.3), (0.5, 57.3),
+                       (0.625, 64.1), (0.75, 68.5), (0.875, 72.8), (1.0, 74.0))   # (feature, top back's share %)
 RB_LEAD_SUB_FATIGUE = 78
 RB_LEAD_RETURN_FATIGUE = 40
 RB_LEAD_OUT_CHANCE = 0.14             # committee: per-snap chance the fresh lead back comes out for a series (workhorse 0)
