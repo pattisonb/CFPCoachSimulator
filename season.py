@@ -1127,21 +1127,48 @@ def _setup_week(state: dict, week: int, teams: dict, say) -> None:
     the playoff round and the bowls are set. Game day and the full advance both call it."""
     if state.get("week_setup") == week:
         return
+    _set_matchups(state, week, teams, say)
     state["week_setup"] = week
     _heal(state)
     _decay_morale(state)
+
+
+def _set_matchups(state: dict, week: int, teams: dict, say) -> None:
+    """Create a postseason week's games once: the title games, a playoff round, the bowls.
+    Nothing here is random, so setting them early changes no result."""
+    done = state.setdefault("matchups_set", [])
+    if week in done or (state.get("week_setup") or 0) >= week:
+        return                        # already set (a season saved before matchups_set existed set them in _setup_week)
+    done.append(week)
     if week == CCG_WEEK:
         say("Setting the conference title games")
         for g in _ccg_matchups(state, teams):
-            state["games"][g["event_id"]] = g
+            state["games"].setdefault(g["event_id"], g)
     if week in PLAYOFF_WEEKS:
         say(f"Setting the {PLAYOFF_WEEKS[week].lower()} matchups")
         for g in _playoff_round(state, week, teams):
-            state["games"][g["event_id"]] = g
+            state["games"].setdefault(g["event_id"], g)
     if week == min(PLAYOFF_WEEKS):
         say("Selecting the bowls")
         for g in _bowl_games(state, teams):
-            state["games"][g["event_id"]] = g
+            state["games"].setdefault(g["event_id"], g)
+
+
+def schedule_ahead(state: dict, say=lambda stage: None) -> None:
+    """Set the next postseason games as soon as the real calendar announces them, so the
+    schedule and This week show them before they are played: the title games once the
+    regular season ends, the first playoff round and the bowls on selection day (right
+    after championship week), each later round once the one before it is played."""
+    if state["done"]:
+        return
+    nxt = state["current_week"] + 1
+    if nxt == CCG_WEEK and any(not g["played"] for g in state["games"].values() if g["week"] <= LAST_REGULAR_WEEK):
+        return                        # the regular season is not finished (a game day in progress)
+    weeks = [nxt, min(PLAYOFF_WEEKS)] if nxt == SELECTION_WEEK else [nxt]
+    teams = load_teams()
+    for week in weeks:
+        if week == CCG_WEEK or (week in PLAYOFF_WEEKS and state.get("bracket")):
+            _set_matchups(state, week, teams, say)
 
 
 def my_game_id(state: dict, week: Optional[int] = None) -> Optional[str]:
@@ -1218,6 +1245,7 @@ def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter]
         say({CCG_WEEK: "Handing out the conference awards", SELECTION_WEEK: "Counting the Heisman vote and the national awards",
              FINAL_WEEK: "Handing out the postseason awards"}[week])
         _award_step(state, teams, week)
+    schedule_ahead(state, say)
     return state
 
 
@@ -1480,6 +1508,9 @@ def awards_view(state: dict) -> dict:
     out = {"given_through": aw.get("given_through", 0), "conference": aw.get("conference", {}), "national": aw.get("national"),
            "postseason": aw.get("postseason"), "mine": awards.my_awards(state, aw) if aw else [],
            "my_conference": teams[state["team"]]["conference"], "team": state["team"]}
+    nat = aw.get("national")
+    if nat and nat.get("heisman") and state["current_week"] > SELECTION_WEEK:
+        out["national"] = {**nat, "heisman": _heisman_with_final_lines(state, nat["heisman"])}
     if not aw.get("national"):
         # the race only moves when games are played (or god mode edits a player)
         key = (state["id"], state["current_week"], sum(1 for g in state["games"].values() if g["played"]),
@@ -1495,6 +1526,27 @@ def awards_view(state: dict) -> dict:
 
 
 _race_cache: dict = {}
+
+# the award-card stat line for a position (awards.stat_line groups)
+_LINE_GROUP = {"QB": "QB", "RB": "RB", "WR": "WR", "TE": "TE", "DL": "EDGE", "MLB": "LB", "ROLB": "LB", "LOLB": "LB",
+               "CB": "DB", "S": "DB", "K": "K", "P": "P"}
+
+
+def _heisman_with_final_lines(state: dict, h: dict) -> dict:
+    """The Heisman vote with each candidate's season line as it stands now ("final_line"),
+    beside the line the voters saw ("line", through championship week). Bowl and playoff
+    games come after the vote, so the two differ for anyone who played in them."""
+    def final(c: dict) -> Optional[str]:
+        rec = ((state.get("season_stats") or {}).get(c["team"], {}).get("players") or {}).get(f"{c['name']}|{c['position']}")
+        group = _LINE_GROUP.get(c["position"])
+        if not rec or not group:
+            return None
+        line = awards.stat_line({"stats": rec["stats"]}, group)
+        return line if line != c.get("line") else None
+    out = {**h, "candidates": [{**c, "final_line": final(c)} for c in h.get("candidates", [])]}
+    if h.get("winner"):
+        out["winner"] = {**h["winner"], "final_line": final(h["winner"])}
+    return out
 
 
 _SHARED_POOL: Optional[Pool] = None
@@ -1592,6 +1644,8 @@ def load_season(season_id: str) -> Optional[dict]:
         for side in ("home", "away"):
             if " (as " in (g.get(f"{side}_display") or ""):
                 g[f"{side}_display"] = fcs_label(g[side])
+    if state.get("mode") != "real":
+        schedule_ahead(state)         # seasons saved before the postseason was set a week early
     return state
 
 

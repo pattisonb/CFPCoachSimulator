@@ -1120,7 +1120,8 @@
     return el("div", { class: `review-card heisman-hero ${w.team === state.season.team ? "mine" : ""}` }, [
       el("div", { class: "review-label", text: live ? "Leading the straw poll" : "Heisman Trophy winner" }),
       el("div", { class: "review-big" }, [teamPill(w.team), w.name, el("span", { class: "pos", text: `${w.position}${classLabel(w.class)} · ${w.team_name}` })]),
-      el("div", { class: "muted small-text", text: w.line }),
+      el("div", { class: "muted small-text", text: live || !w.final_line ? w.line : `At the vote: ${w.line}` }),
+      !live && w.final_line ? el("div", { class: "muted small-text", text: `Final season, with the bowls and playoff: ${w.final_line}` }) : null,
       el("div", { class: "review-tiles" }, tiles.map(([k, v]) => el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: String(v) }), el("div", { class: "review-label", text: k })]))),
       live ? null : el("div", { class: "muted small-text", text: `Finalists in New York: ${h.finalists.map((f) => `${f.name} (${f.team_name}, ${f.points})`).join(", ")}` }),
     ]);
@@ -1131,7 +1132,7 @@
     box.append(heismanHero(h, live));
     box.append(el("p", { class: "muted small-text", text: live
       ? `Straw poll of the Heisman electorate on the season so far: ${h.ballots} ballots, three names each, 3-2-1 points. Click a column to sort.`
-      : `${h.ballots} ballots (870 media voters in six regions, the past winners and the fan vote), three names each, 3-2-1 points. Click a column to sort.` }));
+      : `${h.ballots} ballots (870 media voters in six regions, the past winners and the fan vote), three names each, 3-2-1 points. The vote is in selection week, so the lines voters saw stop at championship week; bowl and playoff games come after it. Click a column to sort.` }));
     const st = awardsState;
     if (!st.sort) { st.sort = "points"; st.desc = true; }
     const cols = [
@@ -1145,8 +1146,12 @@
       { key: "second", label: "2nd", ph: true, get: (c) => String(c.second), sort: (c) => c.second },
       { key: "third", label: "3rd", ph: true, get: (c) => String(c.third), sort: (c) => c.third },
       { key: "points", label: "Pts", get: (c) => el("b", { text: String(c.points) }), sort: (c) => c.points },
-      { key: "line", label: "Season", left: true, ph: true, get: (c) => el("span", { class: "muted small-text", text: c.line }) },
+      { key: "line", label: live ? "Season" : "At the vote", left: true, ph: true, get: (c) => el("span", { class: "muted small-text", text: c.line }) },
     ];
+    // after the playoff starts: the line the voters saw (through championship week) and the season as it ended
+    if (!live && h.candidates.some((c) => c.final_line)) {
+      cols.push({ key: "final", label: "Final season", left: true, ph: true, get: (c) => el("span", { class: "muted small-text", text: c.final_line || c.line }) });
+    }
     box.append(sortableTable(cols, h.candidates.map((c, i) => ({ ...c, i })), st, () => renderAwards(), (c) => c.team === state.season.team ? "mine" : ""));
   }
 
@@ -1338,7 +1343,7 @@
       const card = el("div", { class: `review-card heisman ${w.team === s.team ? "mine" : ""}` }, [
         el("div", { class: "review-label", text: "Heisman Trophy" }),
         el("div", { class: "review-big" }, [teamPill(w.team), w.name, el("span", { class: "pos", text: `${w.position} · ${w.team_name}` })]),
-        el("div", { class: "muted small-text", text: `${w.line} · ${w.points} points, ${s.heisman.share}% of the possible points` }),
+        el("div", { class: "muted small-text", text: `${w.line} at the vote · ${w.points} points, ${s.heisman.share}% of the possible points` }),
         el("div", { class: "muted small-text", text: `Finalists: ${s.heisman.finalists.map((f) => `${f.name} (${f.team_name}, ${f.points})`).join(", ")}` }),
       ]);
       card.classList.add("clickable");

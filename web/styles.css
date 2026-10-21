@@ -295,7 +295,10 @@ table.stats tr.clickable { cursor: pointer; }
 table.stats tr.clickable:hover td { background: var(--panel-2); }
 .conf-block { margin-bottom: 18px; }
 .conf-block h3 { margin: 0 0 6px; }
-.conf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+.conf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 16px 24px; }
+/* a conference's table never spills into its neighbour: it scrolls inside its own column */
+.conf-grid .conf-block { min-width: 0; overflow-x: auto; }
+.conf-grid .conf-block table { width: 100%; }
 @media (max-width: 700px) { .conf-grid { grid-template-columns: 1fr; } .season-controls { width: 100%; justify-content: flex-end; } }
 
 /* season page */
