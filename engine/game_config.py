@@ -132,6 +132,58 @@ LATE_GAME_DRAG = 0.10           # plays take up to this much longer at the end o
 NEUTRAL = 55
 
 # Penalties per snap (before the sliders).
+# ----- Turnovers, injuries and penalties (ratings v2, phase 5) -----
+# Multipliers around 1 that average out over the league, per house-scale point over the FBS
+# starter average (ATTR_LEAGUE_AVG; 50 is the Power 4 starter average, FBS starters sit at 45-48).
+ATTR_LEAGUE_AVG = 46
+FUMBLE_SECURITY_EFFECT = 0.0072   # fumble chance x (1 - this per point of the carrier's Ball Security)
+FUMBLE_HIT_EFFECT = 0.0048        # ... x (1 + this per point of the tacklers' Hit Power)
+INT_DEPTH_MULT = {"short": 0.75, "mid": 1.05, "deep": 1.65}   # deep throws are picked off more (averages about 1)
+INT_PRESSURE_MULT = 1.3          # a hurried throw ...
+INT_POISE_EFFECT = 0.006         # ... less so for a poised quarterback (per point of Pocket Poise)
+INT_BALL_SKILLS_EFFECT = 0.004   # x (1 + this per point of the coverage players' Ball Skills)
+INJURY_DURABILITY_EFFECT = 0.012 # injury chance x (1 - this per point of Durability)
+PENALTY_IQ_EFFECT = 0.006        # penalty chance x (1 - this per point of the unit's Football IQ)
+# ----- Traits (ratings v2, phase 6) -----
+# Each trait (ratings.TRAITS) has a tier, 1 bronze to 4 platinum; the effects below are per
+# tier. A unit's traits add up ("points" = the sum of the tiers on the field).
+TRAIT_FX = {
+    "pinpoint": 0.003,          # completion, clean pocket
+    "timing_passer": 0.0024,     # completion, short throws
+    "unflappable": 0.0036,       # completion when pressured
+    "on_the_move": 0.0018,       # completion when pressured: accurate_on_the_run, poised_on_the_run, off_platform
+    "sack_avoid": 0.009,         # sack rate x (1 - this): steps_up, escape_artist, play_extender
+    "glue_hands": 0.0018,        # completion on throws to him
+    "jump_ball": 0.006,         # completion on contested throws to him
+    "double_move": 0.0045,       # completion on deep throws to him
+    "sharp_cutter": 0.0024,      # completion on short and intermediate throws to him
+    "press_beater": 0.003,      # completion against man coverage
+    "target_pull": 0.03,        # target weight x (1 + this): qbs_favorite, checkdown_target
+    "breakaway": 0.036,          # long-gain chance x (1 + this): breakaway_speed
+    "open_field": 0.045,         # yards on outside runs: quick_feet, slippery, spin_artist, stiff_arm_specialist
+    "power_run": 0.036,          # yards on inside runs: tough_runner, downhill_runner, bulldozer, balance
+    "extra_effort": 0.03,       # yards on every carry
+    "bulldozer_push": 0.009,     # short-yardage conversion
+    "ball_protector": 0.045,     # fumble x (1 - this)
+    "line_run": 0.009,           # run yards per point of the line's run-blocking traits
+    "line_pass": 0.0036,         # sack rate x (1 - this per point) of the line's pass-protection traits
+    "rush": 0.0036,              # sack rate x (1 + this per point) of the rushers' traits
+    "cover": 0.0012,             # completion - this per point of coverage traits in the right call
+    "ballhawk": 0.006,           # interception x (1 + this per point)
+    "tackle": 0.009,             # run yards - this per point of the front's tackling and shedding traits
+    "hitter": 0.012,             # fumble x (1 + this per point) of the hitters on the field
+    "iron_horse": 0.9,            # stamina (endurance) points
+    "quick_recovery": 0.045,     # sideline recovery x (1 + this)
+    "long_range": 0.6,            # field-goal range, yards
+    "automatic": 0.006,          # make chance on kicks under 40 yards
+    "crowd": 0.15,               # rating points at home: crowd_favorite
+    "road_warrior": 0.075,       # share of the road penalty he shrugs off
+}
+LINE_RUN_TRAITS = ("road_grader", "edge_sealer", "second_level_blocker", "vise_grip", "option_blocker")
+LINE_PASS_TRAITS = ("pocket_protector", "quick_set", "quick_pass_set", "interior_wall", "play_action_protector")
+RUSH_TRAITS = ("pocket_collapser", "edge_bender", "gap_penetrator", "pressure_player", "finisher", "jump_the_snap")
+TACKLE_TRAITS = ("sure_tackler", "pack_tackler", "block_buster", "hand_fighter", "edge_setter")
+HIT_TRAITS = ("heavy_hitter", "jarring_hits", "ball_jarrer")
 OFF_PENALTY_CHANCE = 0.050
 DEF_PENALTY_CHANCE = 0.035
 
@@ -141,9 +193,22 @@ SACK_BASE = 0.050               # per dropback with equal lines
 SACK_PER_LINE_POINT = 0.0015    # per point of (pass rush - pass protection)
 SACK_PER_QB_POINT = 0.0004      # per point of QB decision making above neutral (fewer sacks)
 SACK_GUESSED_BONUS = 0.035      # defense called a pass defense
+# ----- Pass rush and protection (ratings v2, phase 4) -----
+# Each dropback the rush is a power rush or a speed rush (the rushers' style tilts it). Power
+# Rush meets Pass Pro: Anchor and Speed Rush meets Footwork, each as the side's lean over its
+# own average of the two (the composites still set the level). Rates per house-scale point.
+RUSH_POWER_SHARE = 0.5
+RUSH_STYLE_TILT = 0.01           # power share + this per point of the rushers' power over speed
+RUSH_MATCHUP_EFFECT = 0.0012     # sack rate per point of (the rushers' lean in this rush - the line's lean against it)
+SACK_ESCAPE_EFFECT = 0.0024       # sack rate x (1 - this per point of Sack Escape over 50)
+# Pressure that does not become a sack now hurries the throw: completion falls, less for a
+# poised quarterback, and the stat credit follows the same pressure.
+PRESSURE_PER_SACK_RATE = 2.5     # pressure chance = this x the sack rate (at most 0.6)
+PRESSURE_COMPLETION = -0.08      # completion change when pressured
+POISE_EFFECT = 0.0015            # ... back by this per point of Pocket Poise over 50
 SACK_YARDS = (7.5, 2.0)         # gauss mean, sd (loss)
 SACK_FUMBLE_CHANCE = 0.13
-COMPLETION_BASE = 0.641         # equal QB, receiver and coverage
+COMPLETION_BASE = 0.656         # equal QB, receiver and coverage (0.641 before pressure cost completions)
 COMPLETION_PER_QB_POINT = 0.0026
 COMPLETION_PER_RECV_POINT = 0.0015
 COMPLETION_PER_COV_POINT = 0.0032   # was 0.0025: points allowed per defense-rating point -0.28 in the sim vs -0.50 real
@@ -155,7 +220,7 @@ REDZONE_COMPLETION = ((10, -0.10), (20, -0.06))   # (yards to goal or fewer, com
 COMPLETION_MIN, COMPLETION_MAX = 0.25, 0.86
 RB_TARGET_SHARE = 0.16          # share of targets that go to running backs
 TE_TARGET_WEIGHT = 0.75         # tight ends targeted a bit less than their ratings imply
-INT_BASE = 0.065                # per incompletion (not throwaways)
+INT_BASE = 0.055                # per incompletion (not throwaways); 0.065 before hurried throws drew more picks
 INT_PER_COV_POINT = 0.0013
 INT_PER_QB_POINT = 0.0013       # per point of decision making above neutral (fewer picks)
 INT_GUESSED_BONUS = 0.02
@@ -199,6 +264,19 @@ RECEPTION_FUMBLE_CHANCE = 0.010
 RUSH_BASE_YARDS = (3.75, 2.7)   # gauss mean, sd (3.75: official YPC counts sacks as runs; see tools/calibrate.py)
 RUSH_PER_LINE_POINT = 0.040     # yards per point of (run blocking - run defense)
 RUSH_PER_CARRIER_POINT = 0.035  # yards per point of carrier rating above the front seven's pursuit (speed and tackling)
+# ----- Running by direction (ratings v2, phase 3) -----
+# Each carry goes inside or outside. Blocking, the front and the carrier's style read
+# differently in each; like the pass game, the attributes add how a player differs from his
+# own average (the composites above still set his level), in yards per house-scale point.
+RUN_OUTSIDE_SHARE = 0.40         # of carries, before the carrier's style tilts it
+RUN_STYLE_TILT = 0.006           # outside share + this per point of his speed style over his power style
+RUN_LINE_STYLE_EFFECT = 0.025    # yards per point: the line's drive (inside) or reach (outside) over its average of the two
+RUN_FRONT_STYLE_EFFECT = 0.020   # yards per point: the front's shedding (inside) or pursuit (outside) over its average
+RUN_WEIGHT_EFFECT = 0.015        # inside runs: yards per pound of line weight over the front's, against the usual gap
+LINE_WEIGHT_GAP = 52             # the usual gap: FBS starting linemen 312 lb, starting fronts 260
+RUN_CARRIER_STYLE_EFFECT = 0.020 # yards per point: power style inside, speed style outside, over his own average
+RUN_VISION_EFFECT = 0.015        # yards per point of Running Vision over his ball-carrying average
+SHORT_YARDAGE_STYLE_EFFECT = 0.0024   # conversion chance per point of power running and drive blocking over shedding
 RUSH_GUESSED = -0.9
 RUSH_NOT_GUESSED = 0.5
 RUSH_BIG_PLAY_CHANCE = 0.045    # per carry (scaled by carrier speed)
@@ -233,7 +311,7 @@ PUNT_RETURN_SKILL = 1.5         # return yards and TD chance per point of return
 # per game per team (gaussian, in rating points, on the same attributes as home field), it
 # widens the spread of outcomes so a 28-point favourite still loses a few times in a hundred.
 GAME_FORM_SD = 2.5              # was 4.4: the same matchup swung 17.5 points game to game (real football's whole residual is 15.9)
-HFA_BASE_POINTS = 1.7           # rating points moved from the away team to the home team (2.0 before the defense terms grew)
+HFA_BASE_POINTS = 1.5           # rating points moved from the away team to the home team (2.0 before the defense terms grew)
 HFA_STADIUM_POINTS = 0.8        # extra at a 99 stadium rating, less at a 0 (data: 30-90)
 HFA_ATTRS = ("speed", "strength", "intelligence", "passing", "decision_making", "elusiveness",
              "vision", "hands", "route_running", "run_blocking", "pass_blocking", "rushing",

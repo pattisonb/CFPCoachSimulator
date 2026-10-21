@@ -130,7 +130,8 @@ def sim_two_point_conversion(offense_list, defense_list, verbose=False, team_nam
 def fg_max_distance(kicker):
     """Longest field goal this kicker will attempt, in yards."""
     power_mult = sliders.get_multiplier(sliders.kicking_power)
-    return round(cfg.FG_MAX_DISTANCE * power_mult + ((kicker.kick_power or 50) * power_mult - 50) / 8)
+    long_range = (getattr(kicker, "traits", None) or {}).get("long_range", 0) * cfg.TRAIT_FX["long_range"]
+    return round(cfg.FG_MAX_DISTANCE * power_mult + ((kicker.kick_power or 50) * power_mult - 50) / 8 + long_range)
 
 def get_kick_attempt_range(kicker) :
     """Yardline (0-100, offense's direction) from which a field goal is in range."""
