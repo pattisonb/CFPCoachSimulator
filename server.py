@@ -27,6 +27,7 @@ from pydantic import BaseModel, Field
 from engine.game import SLIDER_NAMES, default_sliders, simulate_game
 import realdata
 import season
+import coaches
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
@@ -299,6 +300,11 @@ class SeasonRequest(BaseModel):
     team: str
     mode: str = "full"            # "full" or "remaining"
     seed: Optional[int] = None
+    coach: Optional[str] = None   # a saved coach (the Your coach page) to put on the team
+
+
+class CoachRequest(BaseModel):
+    coach: dict[str, Any]
 
 
 class AdvanceRequest(BaseModel):
@@ -443,7 +449,12 @@ def create_season(req: SeasonRequest) -> dict:
     _team(req.team)
     if req.mode not in ("full", "remaining"):
         raise HTTPException(400, "mode must be full or remaining")
-    state = season.new_season(req.team, req.mode, req.seed)
+    coach = None
+    if req.coach:
+        coach = coaches.load(req.coach)
+        if coach is None:
+            raise HTTPException(404, "unknown coach")
+    state = season.new_season(req.team, req.mode, req.seed, coach=coach)
     if req.mode == "remaining":
         # started from today: the weeks already played carry their real stats and box scores
         state["real_import"] = realdata.import_real_boxes(state)
@@ -811,6 +822,46 @@ def index() -> FileResponse:
 @app.get("/season")
 def season_page() -> FileResponse:
     return FileResponse(WEB_DIR / "season.html")
+
+
+@app.get("/coach")
+def coach_page() -> FileResponse:
+    """Your coach: create a head coach, his background, style and look."""
+    return FileResponse(WEB_DIR / "coach.html")
+
+
+@app.get("/api/coach-options")
+def coach_options() -> dict:
+    return coaches.options()
+
+
+@app.get("/api/coaches")
+def coach_list() -> dict:
+    return {"coaches": coaches.list_all()}
+
+
+@app.get("/api/coaches/{coach_id}")
+def coach_get(coach_id: str) -> dict:
+    c = coaches.load(coach_id)
+    if c is None:
+        raise HTTPException(404, "unknown coach")
+    return c
+
+
+@app.post("/api/coaches")
+def coach_save(req: CoachRequest) -> dict:
+    try:
+        return coaches.save(req.coach)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
+@app.delete("/api/coaches/{coach_id}")
+def coach_delete(coach_id: str) -> dict:
+    try:
+        return {"deleted": coaches.delete(coach_id)}
+    except ValueError as exc:
+        raise HTTPException(404, str(exc))
 
 
 @app.get("/real")

@@ -39,6 +39,7 @@ from typing import Callable, Optional
 
 import awards
 import ratings as ratings_v2
+import coaches
 import bowls
 import polls
 
@@ -460,7 +461,8 @@ def _fill_open_dates(games: dict, teams: dict) -> int:
     return added
 
 
-def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, fill_open_dates: bool = True) -> dict:
+def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, fill_open_dates: bool = True,
+               coach: Optional[dict] = None) -> dict:
     """A new season from the 2026 schedule. `fill_open_dates` adds a game for teams whose
     schedule has an unannounced date (the real 2026 page turns it off: it shows only real games)."""
     teams = load_teams()
@@ -502,6 +504,7 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
                 break
 
     state = {
+        "coach": coach,
         "id": uuid.uuid4().hex[:12], "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "team": team_slug, "team_name": teams[team_slug]["name"], "conference": teams[team_slug]["conference"],
         "mode": mode, "seed": seed, "current_week": current, "phase": "regular", "done": False,
@@ -989,7 +992,7 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
         jobs.append((eid, g["home"], g["away"], g["neutral"], seeds.get(eid) if eid in seeds else spare.randrange(1 << 30), keep, (depth.get(g["home"]), depth.get(g["away"])),
                      [(i["name"], i["position"]) for i in injuries.get(g["home"], {}).values()],
                      [(i["name"], i["position"]) for i in injuries.get(g["away"], {}).values()],
-                     (player_edits(state, g["home"]), player_edits(state, g["away"])),
+                     (team_edits(state, g["home"]), team_edits(state, g["away"])),
                      (morale_payload(state, g["home"]), morale_payload(state, g["away"]), morale_on(state)),
                      (team_form_shift(state, g["home"]), team_form_shift(state, g["away"]),
                       player_form_shifts(state, g["home"]), player_form_shifts(state, g["away"]))))
@@ -2316,6 +2319,10 @@ def summary(state: dict) -> dict:
         "phase": state["phase"], "done": state["done"], "champion": state.get("champion"),
         "champion_name": teams[state["champion"]]["name"] if state.get("champion") else None,
         "record": rec, "schedule": schedule, "weeks": weeks, "my_rank": current_rank(state),
+        "coach": ({k: state["coach"].get(k) for k in ("id", "first_name", "last_name", "archetype", "offense_scheme",
+                                                     "defense_scheme", "calls_offense", "calls_defense", "look")}
+                  | {"staff": coaches.staff(state["coach"])}
+                  if state.get("coach") else None),
         "form": (state.get("form") or {}).get(state["team"]),
         "week_labels": {**{w: f"Week {w}" for w in range(1, LAST_REGULAR_WEEK + 1)}, CCG_WEEK: "Championship week",
                         SELECTION_WEEK: "Selection", **BOWL_WEEK_LABELS},
@@ -2891,6 +2898,12 @@ def with_edits(team: dict, edits: Optional[dict]) -> dict:
     merge into the player's own; the engine composites they move are stored with them)."""
     if not edits:
         return team
+    if "__coach__" in edits:
+        # your coach (coaches.apply_coach): his schemes and tendencies on this team
+        team = coaches.apply_coach(team, edits["__coach__"])
+        edits = {k: v for k, v in edits.items() if k != "__coach__"}
+        if not edits:
+            return team
     out = {**team}
 
     def merged(p: dict) -> dict:
@@ -2948,9 +2961,18 @@ def _edit_attributes(base: dict, cur: dict, changes: dict) -> None:
         cur.pop("attributes", None)
 
 
+def team_edits(state: dict, slug: str) -> dict:
+    """What this season changes on a team before a game: god-mode edits to its players, and
+    your coach (state["coach"]) on your team."""
+    edits = player_edits(state, slug)
+    if state.get("coach") and slug == state.get("team"):
+        edits = {**edits, "__coach__": state["coach"]}
+    return edits
+
+
 def team_data(state: dict, slug: str) -> dict:
-    """The team as this season sees it: the base data plus any god-mode edits."""
-    return with_edits(load_teams()[slug], player_edits(state, slug))
+    """The team as this season sees it: the base data plus god-mode edits and your coach."""
+    return with_edits(load_teams()[slug], team_edits(state, slug))
 
 
 def edit_player(state: dict, slug: str, player_slug: str, changes: dict) -> dict:

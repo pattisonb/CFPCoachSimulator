@@ -611,6 +611,34 @@ Same Ohio State roster, different offensive coordinators (120 games against Penn
 Raid 27% deep throws and 3.6 plays of 25+ a game; West Coast 7.5% deep, 79% completion, 1.6
 plays of 25+; Pro Style 34% play-action and 72% inside runs; Spread Option 47% outside runs.
 
+## Your coach
+
+The Your coach page (`/coach`, `web/coach.js`, `coaches.py`) builds a head coach and starts a
+season with him. Coaches are saved in `data/coaches/` (git-ignored).
+
+- **Who he is:** name, age, hometown, alma mater, the position and level he played. Story
+  only; the Background box can be written by hand or filled from these choices.
+- **Archetype and ratings:** six archetypes (Offensive Guru, Defensive Mastermind, Recruiting
+  Ace, Program Builder, Players' Coach, Game-Day CEO) set starting values for seven ratings,
+  which may total at most 525. In the sim today: his offense or defense rating is the
+  play-calling rating on a side he calls, and his discipline moves penalties by the
+  difference from the coach he replaces. Recruiting, development, game management and
+  motivation are stored for coach mode.
+- **Coaching style:** offensive and defensive scheme, and sliders on the league scale (50 =
+  FBS average) for pass rate, tempo, deep shots, play-action, fourth-down aggressiveness,
+  blitz, man coverage and press. The offensive sliders apply when he calls his own offense,
+  the defensive ones when he calls his own defense; fourth downs always apply.
+- **Your staff:** for a side he does not call, hire a coordinator from a pool of fictional
+  coordinators (eight offensive, six defensive), each with a scheme, a play-calling rating
+  and a style, or keep the team's own. `apply_coach` writes the hired coordinator's scheme
+  and tendencies over the team's. Same Ohio State roster against Michigan, 40 games each:
+  its own staff 27 passes and 39 carries a game; a triple-option OC 13 and 51; an Air Raid
+  OC 37 and 33.
+- **His look:** skin tone, hair, hair color, facial hair, glasses, headwear and sideline
+  outfit, drawn as an SVG portrait in the colors of the team picked for the preview.
+
+The season page shows the coach and who calls each side under the title.
+
 ## Player stat lines against real box scores
 
 `tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed

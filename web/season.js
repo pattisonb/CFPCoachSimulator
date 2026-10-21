@@ -559,6 +559,18 @@
     const phase = s.done ? `Season complete · national champion: ${s.champion_name}` : s.current_week === 0 ? `Preseason · ${s.week_labels[1] || "Week 1"} up next${played}` : `${s.week_labels[s.current_week + 1] || "Week " + (s.current_week + 1)} up next · through ${s.week_labels[s.current_week] || "week " + s.current_week}${played}`;
     const simDate = simDateText(s);
     $("#season-meta").textContent = `${phase}${simDate ? ` · ${simDate}` : ""} · ${s.mode === "full" ? "full season simulated" : "started from today: real results, polls and stats through then"} · ${when(s.created_at)}`;
+    // your coach (the Your coach page): his name and style under the title
+    if (s.coach) {
+      const c = s.coach;
+      const st = c.staff || {};
+      const calls = [st.offense, st.defense].filter(Boolean).join(" · ");
+      const pic = el("span", { class: "coach-line-pic", "aria-hidden": "true" });
+      const myTeam = window.CFP.teamsBySlug[s.team] || {};
+      if (window.CoachSprite) pic.innerHTML = window.CoachSprite(c.look, myTeam.colors);
+      $("#season-meta").prepend(el("span", { class: "coach-line" }, [pic,
+        el("a", { href: `/coach?id=${encodeURIComponent(c.id)}`, text: `Coach ${c.first_name} ${c.last_name}` }),
+        ` · ${c.archetype}${calls ? ` · ${calls}` : ""} · `]));
+    }
     const real = s.mode === "real";
     document.body.classList.toggle("real-mode", real);
     $("#btn-real-refresh").hidden = !real;

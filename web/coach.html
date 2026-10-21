@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your coach · CFP Coach Simulator</title>
+  <meta name="theme-color" content="#131a2e" />
+  <meta name="description" content="Create your head coach: his background, coaching style and look. Start a season with him and his team plays the way he coaches." />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <script>try{var t=localStorage.getItem("cfp.theme");if(!t&&window.matchMedia("(prefers-color-scheme: light)").matches)t="light";if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <a class="brand-link" href="/" aria-label="CFP Coach Simulator home">
+        <img class="brand-icon" src="/favicon.svg" alt="" width="28" height="28" />
+        <span class="brand-name">CFP Coach Simulator</span>
+      </a>
+    </div>
+    <nav class="site-nav" aria-label="Sections">
+      <a href="/" data-nav="game">Sim a game</a>
+      <a href="/season" data-nav="season">Sim a season</a>
+      <a href="/real" data-nav="real">Real 2026</a>
+      <a href="/coach" data-nav="coach" class="active" aria-current="page">Your coach</a>
+    </nav>
+    <div class="toolbar">
+      <button class="ghost btn-theme" type="button" aria-label="Toggle light or dark mode"></button>
+    </div>
+  </header>
+
+  <main class="coach-layout">
+    <section class="panel coach-saved" id="coach-saved">
+      <div class="section-head"><h2>Your coaches</h2><button id="btn-new-coach" class="ghost small" type="button">New coach</button></div>
+      <div id="coach-list" class="coach-list"></div>
+    </section>
+
+    <section class="coach-main">
+      <form id="coach-form" class="coach-form" autocomplete="off"></form>
+      <aside class="coach-preview panel" id="coach-preview">
+        <div id="coach-sprite" class="coach-sprite" aria-label="Your coach"></div>
+        <div id="coach-card" class="coach-card"></div>
+        <label class="muted small-text coach-colors">Colors from
+          <select id="preview-team" aria-label="Team colors for the preview"></select>
+        </label>
+      </aside>
+    </section>
+  </main>
+  <div id="toast" class="toast" hidden></div>
+  <script src="/gameview.js"></script>
+  <script src="/coachsprite.js"></script>
+  <script src="/coach.js"></script>
+</body>
+</html>

@@ -16,3 +16,4 @@ data/history/cfbstats_cache/
 
 # overnight comparison output (tools/team_reality.py)
 data/analysis/
+data/coaches/
