@@ -554,6 +554,63 @@ Brier 0.181 (0.179); forward test MAE 12.5 (12.6), correlation 0.62 (0.60), stra
 71.6% (73.7%, eight games); full seasons, receiving leaders 7% over real (10%), receptions 2%
 (6%), passing leaders 4% (3%). Play-log fingerprint 2fe2a3cb1e3a5d74.
 
+## Running, pass rush, turnovers and traits (ratings v2, phases 3-6)
+
+- **Running (phase 3).** Every carry goes inside or outside (`RUN_OUTSIDE_SHARE` 40%, tilted
+  by the back's speed style over his power style). Inside runs read the line's Drive Blocking
+  over Reach Blocking and the line's weight over the front's (against the usual 52-pound
+  gap), against the front's Block Shedding; outside runs the reverse, against Pursuit. The
+  carrier's power or speed style and Running Vision add yards; short yardage leans on Power
+  Running and drive blocking. Controlled test, Bo Jackson as a power back: inside 85% of
+  carries at 6.7 a carry; as a speed back: outside 75% at 6.6.
+- **Pass rush (phase 4).** Each rush is power or speed (the rushers' style tilts it): Power
+  Rush meets Pass Pro: Anchor, Speed Rush meets Footwork. Sack Escape slips sacks. A pressure
+  that is not a sack now hurries the throw (completion -0.08, back up for Pocket Poise).
+  Controlled test: power rushers against a line that cannot anchor double the sack rate
+  (3% to 7% of dropbacks); a matched line holds it at 3%.
+- **Turnovers and the body (phase 5).** Fumbles from Ball Security against the tacklers' Hit
+  Power; interceptions more likely on deep (x1.65) and hurried throws and against ball-hawking
+  coverage; Durability scales injuries and Football IQ penalties. Level effects are centred
+  on the FBS starter average (`ATTR_LEAGUE_AVG` 46).
+- **Traits (phase 6).** About 30 traits change games a little, per tier (`TRAIT_FX`): Pinpoint
+  and Timing Passer (accuracy), Unflappable (pressure), Jump-Ball Winner, Glue Hands, Double
+  Move, Breakaway Speed, Bulldozer, Road Grader and the line's traits, Pocket Collapser and
+  the rushers' traits, Sure Tackler, Heavy Hitter, Iron Horse (stamina), Long Range and
+  Automatic (kicking), Crowd Favorite and Road Warrior (venue).
+
+The effects that reward absolute levels, and the traits, mostly favour teams that are
+already better, so they widened margins: the forward test's slope fell to 0.78. They were
+scaled down (level effects to 60%, traits to 30% of the first design) and home field to 1.5
+rating points. Forward test against main before these phases: straight up 73.5% (71.6%),
+correlation 0.62 (0.62), MAE 12.6 (12.5), slope 0.87 (0.94). 20 seasons through week 8:
+records spread more like real ones (win SD 1.05 against 0.97, real 1.50) and favourites in the
+6-10 rating gap win 87.6% (82.9%, real 92.5%).
+
+## Coach styles
+
+Coaches now change how a team plays, so a new coach or coordinator plays differently:
+
+- **Offensive scheme** (`SCHEME_STYLE`): throw depth (Air Raid more deep and quick throws,
+  West Coast short), run direction (Power Spread and Pro Style inside, Spread Option and Spread
+  RPO outside) and how often play-action is used.
+- **The OC's deep-shot and play-action rates.** Play-action is a real call now (20% of first-
+  and second-down dropbacks at an average rate): the fake holds linebackers by the QB's
+  Play-Action against the defense's Diagnosis (+0.05 completion on intermediate and deep
+  throws, deep share x1.3), at the cost of a longer dropback (sack rate x1.15).
+- **The DC's man-coverage and press rates** set how often his defense plays man and presses;
+  press puts the receiver's Release against the corners' Press (0.00125 completion per point).
+- **Blitz** (the DC's blitz rate): a blitz raises the sack rate 35% and long gains 35%; a
+  defense that does not blitz gives back 12% of each. (At 60% and 20% the blitz magnified
+  talent edges: team margins spread 4% wider than the ratings support and game picks fell.)
+- **The head coach's discipline** scales penalties. Only the part his team's talent does not
+  explain counts (`build_teams.decouple_discipline`): the source gives better programs more
+  disciplined coaches, and their players' Football IQ already cuts their penalties, so the raw
+  rating counted that edge twice and spread margins too far.
+
+Same Ohio State roster, different offensive coordinators (120 games against Penn State): Air
+Raid 27% deep throws and 3.6 plays of 25+ a game; West Coast 7.5% deep, 79% completion, 1.6
+plays of 25+; Pro Style 34% play-action and 72% inside runs; Spread Option 47% outside runs.
+
 ## Player stat lines against real box scores
 
 `tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed
@@ -1599,17 +1656,23 @@ either half and late in close games, under the college clock rules:
   restarts on the ready-for-play signal, except inside the last two minutes of either
   half, where it stays stopped until the snap. Each team has three timeouts per half. A
   snap takes 5 to 8 seconds; the runoff before the next snap depends on the offense's pace.
-- **Two-minute offense.** Trailing or tied inside four minutes of the game (and in the last
-  100 seconds of the first half when in or near range): fast snaps, more passes, ball
-  carriers get out of bounds, timeouts after in-bounds plays, a spike with no timeouts
+- **Two-minute offense.** Trailing inside four minutes of the game, tied inside 1:40 (and in
+  the last 100 seconds of the first half when in or near range): fast snaps, more passes,
+  ball carriers get out of bounds, timeouts after in-bounds plays, a spike with no timeouts
   left, a field goal on any down when the clock leaves one play, and a Hail Mary from
-  beyond range with seconds left.
+  beyond range with seconds left. Tied before 1:40, a team plays normal football; tied and
+  inside its own 30 with under 40 seconds, it runs it out and takes overtime.
+- **Playing for the kick.** Tied or down 1-3 inside the last minute with a field goal of 40
+  yards or less: run more, fewer big-play risks, kick at the end. Down 1-3 late on fourth
+  down with a kick of 50 or less, the coach kicks to tie or take the lead instead of going
+  for it. Down one score with more than four minutes left, fourth downs are normal football,
+  40% bolder, not desperation.
 - **Running the clock.** A leader in the fourth quarter runs more, stays in bounds and
   snaps late: fully inside five minutes, from ten minutes up two scores, all quarter up
   17 or more. It kneels once the remaining time can be burned given the defense's
   timeouts. Deep in its own end with under 30 seconds in the first half, a team runs it out.
 - **Defense.** Leading late by two scores or less: prevent (more completions underneath,
-  half the big plays, carriers kept in bounds). Trailing or tied late: timeouts to stop the clock.
+  half the big plays, carriers kept in bounds). Trailing late (tied: inside 1:40): timeouts to stop the clock.
 - **Onside kicks** trailing by one score inside two minutes or two scores inside five
   (11% recovery), and the standard **two-point chart** in the fourth quarter (go for two
   when trailing by 2, 5, 10, 13, 16, 18 or 21 after the touchdown, or leading by 1, 4, 5 or 12).
@@ -1617,19 +1680,22 @@ either half and late in close games, under the college clock rules:
   at 42 both teams' starters sit (see "The October 19, 2026 tuning").
 
 `tools/fetch_linescores.py` pulls quarter scores for every FBS game 2014-2025 and
-`tools/calibrate_late.py` compares how games end. Against 8,603 real regular-season games:
+`tools/calibrate_late.py` compares how games end. Against 8,603 real regular-season games
+(the sim plays 1,500 random FBS matchups, which are more lopsided than real schedules, so it
+has fewer one-score games); "before" is the engine before the late-game changes above
+(tied teams hurrying from 4:00, no playing for the kick):
 
-| Measure | Real | Sim |
-|---|---|---|
-| Points by quarter | 22 / 30 / 23 / 25 % | 21 / 31 / 20 / 28 % |
-| One-score games (8 or fewer) | 36.7% | 37.0% |
-| Overtime | 4.4% | 2.5% |
-| Trailer wins when down 1-3 entering the 4th | 37.7% | 41.2% |
-| Trailer wins when down 4-8 | 24.4% | 22.8% |
-| Trailer wins when down 9-16 | 9.3% | 9.5% |
-| Trailer wins when down 17+ | 0.7% | 0.8% |
-| 4th-quarter points, team trailing after three | 6.66 | 7.01 |
-| 4th-quarter points, team leading after three | 7.22 | 6.98 |
+| Measure | Real | Sim | Before |
+|---|---|---|---|
+| Points by quarter | 22 / 30 / 23 / 25 % | 21 / 31 / 21 / 28 % | 21 / 31 / 21 / 28 % |
+| One-score games (8 or fewer) | 36.7% | 29.1% | 27.4% |
+| Overtime | 4.4% | 3.2% | 2.3% |
+| Trailer wins when down 1-3 entering the 4th | 37.7% | 33.1% | 39.3% |
+| Trailer wins when down 4-8 | 24.4% | 21.9% | 22.3% |
+| Trailer wins when down 9-16 | 9.3% | 9.0% | 6.7% |
+| Trailer wins when down 17+ | 0.7% | 0.4% | 0.0% |
+| 4th-quarter points, team trailing after three | 6.66 | 5.68 | 5.69 |
+| 4th-quarter points, team leading after three | 7.22 | 8.39 | 8.45 |
 
 ## Changes from the original football_sim engine
 

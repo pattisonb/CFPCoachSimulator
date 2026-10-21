@@ -230,6 +230,12 @@ def load_team(path: Path) -> dict:
             "blitz_rate": dc["tendencies"].get("blitz_rate", 50),
             "oc_play_calling": oc["ratings"].get("play_calling", 50),
             "dc_play_calling": dc["ratings"].get("play_calling", 50),
+            # coach styles: what the coordinators like to call and the head coach's discipline
+            "deep_shot_rate": oc["tendencies"].get("deep_shot_rate", 50),
+            "play_action_rate": oc["tendencies"].get("play_action_rate", 50),
+            "man_coverage_rate": dc["tendencies"].get("man_coverage_rate", 50),
+            "press_rate": dc["tendencies"].get("press_rate", 50),
+            "discipline": hc["ratings"].get("discipline", 50),
         },
         "slug": t["slug"],
         "name": t["short_name"],
@@ -255,7 +261,8 @@ def load_team(path: Path) -> dict:
     }
 
 
-TENDENCY_KEYS = ("pass_rate", "tempo", "fourth_down_go_rate", "blitz_rate", "oc_play_calling", "dc_play_calling")
+TENDENCY_KEYS = ("pass_rate", "tempo", "fourth_down_go_rate", "blitz_rate", "oc_play_calling", "dc_play_calling",
+                 "deep_shot_rate", "play_action_rate", "man_coverage_rate", "press_rate", "discipline")
 
 
 def normalize_tendencies(teams: list[dict]) -> dict:
@@ -268,6 +275,23 @@ def normalize_tendencies(teams: list[dict]) -> dict:
         for t in teams:
             t["tendencies"][key] = int(round(max(0, min(100, 50 + t["tendencies"][key] - means[key]))))
     return {k: round(v, 1) for k, v in means.items()}
+
+
+def decouple_discipline(teams: list[dict]) -> float:
+    """Keep only the part of the head coach's discipline that the team's talent does not
+    already explain. The source ratings give better programs more disciplined coaches
+    (r about 0.7 with team overall), and the players' Football IQ already lowers penalties
+    for those teams; using the raw rating counted that edge twice and spread margins too far.
+    Returns the slope taken out (discipline points per overall point)."""
+    fbs = [t for t in teams if not t["fictional"]]
+    xs = [t["team_ratings"]["overall"] for t in fbs]
+    ys = [t["tendencies"]["discipline"] for t in fbs]
+    mx, my = st.mean(xs), st.mean(ys)
+    slope = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sum((x - mx) ** 2 for x in xs)
+    for t in teams:
+        fit = my + slope * (t["team_ratings"]["overall"] - mx)
+        t["tendencies"]["discipline"] = int(round(max(0, min(100, 50 + t["tendencies"]["discipline"] - fit))))
+    return round(slope, 3)
 
 
 OBSERVED = ROOT / "data" / "observed_tendencies.json"
@@ -638,6 +662,7 @@ def main() -> None:
         print(f"real 2026 adjustments: {reordered} depth-chart roles reordered" + (f", {nudged} players' ratings nudged" if nudged else ""))
     ratings_at_every_position(teams, means)
     tendency_means = normalize_tendencies(teams)
+    decouple_discipline(teams)
     print("league tendency means before centring:", tendency_means)
     print("teams with observed 2026 tendencies:", apply_observed_tendencies(teams))
     out = {"source": str(SRC), "neutral": NEUTRAL, "spread_scale": SPREAD_SCALE,

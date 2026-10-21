@@ -211,11 +211,13 @@ def _routes(player):
     return {"short": short, "mid": mid, "deep": deep}
 
 
-def _throw_depth(target, tendencies):
-    """short, mid or deep for a throw to this target (backs catch short)."""
+def _throw_depth(target, tendencies, play_action=False):
+    """short, mid or deep for a throw to this target (backs catch short). The offensive
+    scheme, the OC's deep-shot rate and a play-action fake move the shares."""
     shares = cfg.PASS_DEPTH_SHARE.get(target.position)
     if not shares:
         return "short"
+    style = cfg.SCHEME_STYLE.get(tendencies.get("offense_scheme"), {})
     r = _routes(target)
     tilt = (target.speed / cfg.NEUTRAL) ** cfg.PASS_DEEP_SPEED_TILT \
         * max(0.3, 1 + cfg.PASS_DEEP_ROUTE_TILT * (r["deep"] - sum(r.values()) / 3))
@@ -224,7 +226,11 @@ def _throw_depth(target, tendencies):
     if tendencies.get("prevent"):
         tilt *= cfg.PREVENT_BIG_PLAY
     tilt *= tendencies.get("big_play_mult", 1.0)
+    tilt *= style.get("deep", 1.0) * max(0.4, 1 + (tendencies.get("deep_shot_rate", 50) - 50) * cfg.DEEP_SHOT_EFFECT)
+    if play_action:
+        tilt *= cfg.PLAY_ACTION_DEEP
     short, mid, deep = shares
+    short *= style.get("short", 1.0)
     deep *= tilt
     rest = (1 - deep) / (short + mid)
     return random.choices(DEPTHS, weights=[short * rest, mid * rest, deep], k=1)[0]
@@ -373,7 +379,8 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, offense_line
     # ratings v2: inside or outside, and the attributes that read differently in each
     power_style = (_attr(carrier, "power_running") + _attr(carrier, "tackle_breaking") + _attr(carrier, "strength")) / 3
     speed_style = (_attr(carrier, "burst") + _attr(carrier, "agility") + _attr(carrier, "elusiveness")) / 3
-    outside_share = max(0.15, min(0.75, cfg.RUN_OUTSIDE_SHARE + (speed_style - power_style) * cfg.RUN_STYLE_TILT))
+    outside_share = max(0.15, min(0.75, cfg.RUN_OUTSIDE_SHARE + (speed_style - power_style) * cfg.RUN_STYLE_TILT
+                                  + cfg.SCHEME_STYLE.get(tendencies.get("offense_scheme"), {}).get("outside", 0.0)))
     outside = random.random() < outside_share
     last_play["direction"] = "outside" if outside else "inside"
     line = [p for p in offense if p.position in ('OL', 'TE')]
@@ -489,7 +496,7 @@ def _pick_target(offense):
 
 
 def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_line_advantage, yardline, verbose=False, tendencies=None,
-                   blitz_rate=50):
+                   blitz_rate=50, def_tendencies=None):
     """One dropback. Returns (result, yards or new yardline):
     'successful_pass' / 'checkdown_pass' (yards), 'incomplete' (0), 'sack' (negative yards),
     'interception' / 'fumble' (new yardline), 'defensive_touchdown' (100), 'run' (scramble yards)."""
@@ -526,6 +533,18 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
         last_play["rush"] = "power" if power else "speed"
     sack_rate *= max(0.5, 1 - (_attr(qb, "sack_escape") - cfg.ATTR_LEAGUE_AVG) * cfg.SACK_ESCAPE_EFFECT)
     sack_rate *= max(0.4, 1 - _tr(qb, "steps_up", "escape_artist", "play_extender") * cfg.TRAIT_FX["sack_avoid"])
+    # coach styles: the DC's blitz (more sacks, more big plays behind it) and the OC's play-action
+    def_t = def_tendencies or {}
+    off_t = tendencies or {}
+    blitz = random.random() < min(0.7, cfg.BLITZ_BASE * blitz_rate / 50)
+    sack_rate *= cfg.BLITZ_SACK[0] if blitz else cfg.BLITZ_SACK[1]
+    last_play["blitz"] = blitz
+    pa_share = cfg.PLAY_ACTION_BASE * cfg.SCHEME_STYLE.get(off_t.get("offense_scheme"), {}).get("pa", 1.0) \
+        * max(0.2, 1 + (off_t.get("play_action_rate", 50) - 50) * cfg.PLAY_ACTION_RATE_EFFECT)
+    play_action = down <= 2 and random.random() < min(0.6, pa_share)
+    if play_action:
+        sack_rate *= cfg.PLAY_ACTION_SACK
+        last_play["play_action"] = True
     sack_rate *= max(0.5, 1 - _tr_points(linemen, cfg.LINE_PASS_TRAITS) * cfg.TRAIT_FX["line_pass"])
     sack_rate *= 1 + _tr_points(rushers, cfg.RUSH_TRAITS) * cfg.TRAIT_FX["rush"]
     if guessed_play:
@@ -579,9 +598,10 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
 
     # ratings v2: the throw's depth, the coverage call, and the attributes for both
     tendencies = tendencies or {}
-    depth = _throw_depth(target, tendencies) if target.position != 'RB' else "short"
+    depth = _throw_depth(target, tendencies, play_action) if target.position != 'RB' else "short"
     last_play["depth"] = depth
-    man = random.random() < cfg.MAN_COVERAGE_SHARE
+    man_share = cfg.MAN_COVERAGE_SHARE + ((def_tendencies or {}).get("man_coverage_rate", 50) - 50) * cfg.MAN_RATE_EFFECT
+    man = random.random() < max(0.1, min(0.85, man_share))
     covers = [p for p in defense if p.position in db_positions]
 
     completion = cfg.COMPLETION_BASE
@@ -621,6 +641,14 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
         completion += _tr(target, "double_move") * fx["double_move"]
     if last_play.get("contested"):
         completion += _tr(target, "jump_ball_winner") * fx["jump_ball"]
+    if man and depth != "deep" and covers and random.random() < cfg.PRESS_RATE * (def_tendencies or {}).get("press_rate", 50) / 50:
+        press = sum(_attr(p, "press") for p in covers) / len(covers)
+        completion += (_attr(target, "release") - press) * cfg.PRESS_EFFECT
+        last_play["press"] = True
+    if play_action and depth != "short":
+        front_iq = [p for p in defense if p.position in ('MLB', 'ROLB', 'LOLB', 'S')]
+        diag = sum(_attr(p, "diagnosis") for p in front_iq) / len(front_iq) if front_iq else cfg.ATTR_LEAGUE_AVG
+        completion += cfg.PLAY_ACTION_COMPLETION + (_attr(qb, "play_action") - diag) * cfg.PLAY_ACTION_SKILL
     if man:
         completion += _tr(target, "press_beater") * fx["press_beater"]
         completion -= _tr_points(covers, ("shadow", "jam_artist")) * fx["cover"]
@@ -654,7 +682,8 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
         yards *= 1 + (target.speed - db_speed) * cfg.PASS_SPEED_EFFECT             - (_group_rating(defense, db_positions, ('tackling',)) - cfg.NEUTRAL) * cfg.PASS_TACKLE_EFFECT
         # a short or intermediate catch broken for a long gain (deep throws have their own yards)
         big_play_chance = cfg.PASS_BREAKAWAY_CHANCE * (target.speed / cfg.NEUTRAL) \
-            * (1 + _tr(target, "breakaway_speed") * cfg.TRAIT_FX["breakaway"])
+            * (1 + _tr(target, "breakaway_speed") * cfg.TRAIT_FX["breakaway"]) \
+            * (cfg.BLITZ_BIG_PLAY[0] if blitz else cfg.BLITZ_BIG_PLAY[1])
         if tendencies.get("conservative"):
             big_play_chance *= cfg.GARBAGE_BIG_PLAY
         big_play_chance *= tendencies.get("big_play_mult", 1.0)

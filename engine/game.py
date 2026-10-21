@@ -125,13 +125,15 @@ class GameSim:
     def _make_team(data: dict) -> Team:
         team = Team(data.get("team_name") or data.get("name"), data["offense"], data["defense"],
                     kick_returner=data.get("kick_returner"), punt_returner=data.get("punt_returner"))
-        team.tendencies = data.get("tendencies", {})
+        team.tendencies = dict(data.get("tendencies", {}))
         team.home_field_advantage = data.get("home_field_advantage", 50)
         coaches = data.get("coaches") or {}
         team.offense_scheme = ((coaches.get("offensive_coordinator") or {}).get("scheme") or {}).get("offensive_scheme") \
             or ((coaches.get("head_coach") or {}).get("scheme") or {}).get("offensive_philosophy") or "Multiple"
         team.defense_scheme = ((coaches.get("defensive_coordinator") or {}).get("scheme") or {}).get("defensive_scheme") \
             or ((coaches.get("head_coach") or {}).get("scheme") or {}).get("defensive_philosophy") or "4-2-5"
+        # coach styles read the schemes from the tendencies the plays get
+        team.tendencies.update(offense_scheme=team.offense_scheme, defense_scheme=team.defense_scheme)
         if team.offense_scheme == "Flexbone Triple Option":
             team.tendencies = {**team.tendencies, "fb_carry_weight": cfg.FLEXBONE_FB_CARRY_WEIGHT}
         return team

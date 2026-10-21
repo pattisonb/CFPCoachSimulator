@@ -249,6 +249,7 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
     off_penalty_chance = sliders.get_inverse_percentage_adjustment(sliders.offensive_penalties, cfg.OFF_PENALTY_CHANCE)
     # ratings v2: a smart unit commits fewer penalties
     off_penalty_chance *= max(0.5, 1 - (_unit_iq(offense) - cfg.ATTR_LEAGUE_AVG) * cfg.PENALTY_IQ_EFFECT)
+    off_penalty_chance *= max(0.5, 1 - ((getattr(offense_team, "tendencies", None) or {}).get("discipline", 50) - 50) * cfg.DISCIPLINE_EFFECT)
     if random.random() < off_penalty_chance:
         penalty_type = random.choices(
             ["false_start", "holding", "offensive_pass_interference", "delay_of_game"],
@@ -263,6 +264,7 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
 
     def_penalty_chance = sliders.get_inverse_percentage_adjustment(sliders.defensive_penalties, cfg.DEF_PENALTY_CHANCE)
     def_penalty_chance *= max(0.5, 1 - (_unit_iq(defense) - cfg.ATTR_LEAGUE_AVG) * cfg.PENALTY_IQ_EFFECT)
+    def_penalty_chance *= max(0.5, 1 - ((getattr(defense_team, "tendencies", None) or {}).get("discipline", 50) - 50) * cfg.DISCIPLINE_EFFECT)
     if random.random() < def_penalty_chance:
         penalty_type = random.choices(["offside", "pass_interference", "facemask"], weights=[0.4, 0.4, 0.2], k=1)[0]
         if penalty_type == "offside":
@@ -313,7 +315,8 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
     else:
         play_ran = "pass"
         result, yards_gained = get_pass_yards(offense, defense, down, first_down_yardage, guessed_play, offense_line_advantage, yardline, tendencies=tendencies,
-                                              blitz_rate=(getattr(defense_team, "tendencies", None) or {}).get("blitz_rate", 50))
+                                              blitz_rate=(getattr(defense_team, "tendencies", None) or {}).get("blitz_rate", 50),
+                                              def_tendencies=getattr(defense_team, "tendencies", None) or {})
     oob = sit.out_of_bounds(result, situation, posture)
     first_down = result in ("run", "successful_pass", "checkdown_pass") and isinstance(yards_gained, (int, float)) and yards_gained >= first_down_yardage
     if cfg.INJURIES:
@@ -391,6 +394,10 @@ def should_go_for_it(distance, yardline, seconds_remaining=cfg.HALF_SECONDS, tra
     about 53%: mostly short yardage in plus territory, plus desperation tries when
     trailing late in the game."""
     late = seconds_remaining < 300
+    one_score_early = trailing_late and -lead <= 8 and seconds_remaining > cfg.TRAILING_DESPERATE_SECONDS
+    if one_score_early:
+        # down one score with time left: still mostly normal football, a bit bolder
+        trailing_late = False
     if trailing_late:
         table = [(2, 0.95), (5, 0.80), (10, 0.60), (99, 0.35)] if yardline >= 35 else [(2, 0.6), (99, 0.3)]
     elif yardline >= 80:
@@ -408,6 +415,8 @@ def should_go_for_it(distance, yardline, seconds_remaining=cfg.HALF_SECONDS, tra
         # more tries around midfield and on short yardage; in field-goal range they kick
         chance = min(0.95, chance * cfg.FOURTH_DOWN_AGGRESSION)
     chance *= 1.0 + (go_rate - 50) / 100 * cfg.FOURTH_DOWN_TENDENCY_EFFECT
+    if one_score_early:
+        chance = min(0.95, chance * cfg.TRAILING_ONE_SCORE_BOLDNESS)
     if lead >= cfg.BENCH_LEAD:
         chance = 0.0
     elif lead >= 17:
@@ -630,8 +639,12 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
             return _clutch_kick(offense, defense, kicker, yardline, seconds_remaining, in_red_zone, play_ran or "pass")
         if situation.get("hail_mary"):
             return _hail_mary(offense, defense, yardline, seconds_remaining)
-        must_go = situation.get("mode") in ("hurry", "desperate") and getattr(offense, "lead", 0) < -3 and seconds_remaining <= cfg.HURRY_SECONDS_TRAILING / 2
-        if must_go or should_go_for_it(first_down_yardage, yardline, seconds_remaining, trailing_late, go_rate, getattr(offense, "lead", 0)) :
+        lead_now = getattr(offense, "lead", 0)
+        must_go = situation.get("mode") in ("hurry", "desperate") and lead_now < -3 and seconds_remaining <= cfg.HURRY_SECONDS_TRAILING / 2
+        # down 1-3 late with a makeable kick: take the points to tie or go ahead
+        tying_kick = (trailing_late and -3 <= lead_now < 0
+                      and (100 - yardline) + 17 <= min(fg_max_distance(kicker), cfg.TYING_KICK_MAX_DISTANCE))
+        if must_go or should_go_for_it(first_down_yardage, yardline, seconds_remaining, trailing_late and not tying_kick, go_rate, lead_now) :
             pre = (down, first_down_yardage, yardline)
             play_ran, result, yards_gained, time, info = sim_play(offense, defense, down, first_down_yardage, yardline, hurrying, last_play_type, last_gain, seconds_remaining, False, clock_stopped, situation, posture)
             clock_stopped = info.get("stopped", False)

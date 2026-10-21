@@ -184,6 +184,33 @@ LINE_PASS_TRAITS = ("pocket_protector", "quick_set", "quick_pass_set", "interior
 RUSH_TRAITS = ("pocket_collapser", "edge_bender", "gap_penetrator", "pressure_player", "finisher", "jump_the_snap")
 TACKLE_TRAITS = ("sure_tackler", "pack_tackler", "block_buster", "hand_fighter", "edge_setter")
 HIT_TRAITS = ("heavy_hitter", "jarring_hits", "ball_jarrer")
+# ----- Coach styles -----
+# What the offensive scheme leans toward: deep and short shares of throws (x), the share of
+# runs that go outside (+), how often it uses play-action (x). Multiple is neutral.
+SCHEME_STYLE = {
+    "Air Raid": {"deep": 1.25, "short": 1.10, "outside": 0.05, "pa": 0.6},
+    "West Coast": {"deep": 0.80, "short": 1.20, "outside": 0.00, "pa": 1.1},
+    "Spread RPO": {"deep": 0.95, "short": 1.10, "outside": 0.08, "pa": 1.3},
+    "Power Spread": {"deep": 1.05, "short": 0.95, "outside": -0.10, "pa": 1.2},
+    "Spread Option": {"deep": 1.00, "short": 1.00, "outside": 0.12, "pa": 1.0},
+    "Pro Style": {"deep": 1.05, "short": 0.95, "outside": -0.08, "pa": 1.4},
+    "Flexbone Triple Option": {"deep": 1.30, "short": 0.80, "outside": 0.05, "pa": 1.5},
+}
+DEEP_SHOT_EFFECT = 0.012         # deep share x (1 + this per point of the OC's deep-shot rate over 50)
+PLAY_ACTION_BASE = 0.20          # share of first- and second-down dropbacks with a play-action fake
+PLAY_ACTION_RATE_EFFECT = 0.015  # ... x (1 + this per point of the OC's play-action rate over 50)
+PLAY_ACTION_COMPLETION = 0.05    # intermediate and deep throws off a fake that holds
+PLAY_ACTION_SKILL = 0.0015       # ... per point of the QB's Play-Action over the front's Diagnosis
+PLAY_ACTION_DEEP = 1.3           # deep share x this off a fake
+PLAY_ACTION_SACK = 1.15          # sack rate x this (the longer dropback)
+MAN_RATE_EFFECT = 0.008          # man share + this per point of the DC's man-coverage rate over 50
+PRESS_RATE = 0.5                 # share of man calls with press at a press rate of 50 (x rate / 50)
+PRESS_EFFECT = 0.00125           # short and intermediate completion per point of Release over the coverage's Press
+BLITZ_BASE = 0.25                # share of dropbacks blitzed at a blitz rate of 50 (x rate / 50)
+BLITZ_SACK = (1.35, 0.883)       # sack rate x (blitz, no blitz): about 1 on average (1.6/0.8 magnified talent edges)
+BLITZ_BIG_PLAY = (1.35, 0.883)   # long-gain chance x (blitz, no blitz): fewer men in coverage
+DISCIPLINE_EFFECT = 0.006        # penalty chance x (1 - this per point of discipline over 50; discipline is the
+                                 # head coach's rating beyond what the team's talent predicts, build_teams.decouple_discipline)
 OFF_PENALTY_CHANCE = 0.050
 DEF_PENALTY_CHANCE = 0.035
 
@@ -208,7 +235,7 @@ PRESSURE_COMPLETION = -0.08      # completion change when pressured
 POISE_EFFECT = 0.0015            # ... back by this per point of Pocket Poise over 50
 SACK_YARDS = (7.5, 2.0)         # gauss mean, sd (loss)
 SACK_FUMBLE_CHANCE = 0.13
-COMPLETION_BASE = 0.656         # equal QB, receiver and coverage (0.641 before pressure cost completions)
+COMPLETION_BASE = 0.652         # equal QB, receiver and coverage (0.641 before pressure cost completions)
 COMPLETION_PER_QB_POINT = 0.0026
 COMPLETION_PER_RECV_POINT = 0.0015
 COMPLETION_PER_COV_POINT = 0.0032   # was 0.0025: points allowed per defense-rating point -0.28 in the sim vs -0.50 real
@@ -293,6 +320,9 @@ FG_LONG_ATTEMPT_CHANCE = 0.6    # chance to attempt (rather than punt) from 50+ 
 FG_MAKE = [(30, 0.95), (39, 0.86), (46, 0.74), (52, 0.58), (999, 0.40)]   # average kicker, by distance
 FG_PER_ACCURACY_POINT = 0.004   # make chance per point of kick accuracy above neutral
 TRAILING_LATE_SECONDS = 420     # trailing in the 2nd half with this much left: go for it
+TYING_KICK_MAX_DISTANCE = 50    # down 1-3 late: kick from this distance or closer instead of going for it
+TRAILING_DESPERATE_SECONDS = 240  # down one score: desperation fourth downs only inside 4:00
+TRAILING_ONE_SCORE_BOLDNESS = 1.4  # down one score with more time: this much likelier to go than usual
 # Punts, tuned so gross and net match real FBS (about 43 and 39.5 yards; tools/calibrate.py).
 PUNT_DISTANCE = (44.2, 5.0)     # full kick in the air (mean, sd), + (punt_power - 50) / 5
 PUNT_PIN_CHANCE = 0.75          # would carry inside the 10: chance to stop it short of the goal line
@@ -418,7 +448,14 @@ MILK_SECONDS = 300              # leading in the 2nd half inside 5:00: run clock
 MILK_LIGHT_SECONDS = 600        # leading by 9+ inside 10:00: run clock
 MILK_RUN_SHIFT = 0.25
 MILK_BIG_PLAY = 0.7
-HURRY_SECONDS_TRAILING = 240    # trailing or tied in the 2nd half inside 4:00: two-minute offense
+HURRY_SECONDS_TRAILING = 240    # trailing in the 2nd half inside 4:00: two-minute offense
+TIED_HURRY_SECONDS = 100        # tied: two-minute offense only inside 1:40 (before that, normal football)
+TIED_RUN_OUT_SECONDS = 40       # tied, deep in own territory with this little left: run it out to overtime
+TIED_RUN_OUT_YARDLINE = 30
+PLAY_FOR_KICK_SECONDS = 60      # tied or down 1-3 in easy range with this little left: play for the kick
+PLAY_FOR_KICK_DISTANCE = 40     # field goal of this length or shorter
+PLAY_FOR_KICK_RUN_SHIFT = 0.3   # run more
+PLAY_FOR_KICK_BIG_PLAY = 0.85
 HURRY_PASS_SHIFT = 0.35
 H1_HURRY_SECONDS = 100          # end of the first half, in or near range: two-minute offense
 H1_RUN_OUT_SECONDS = 30         # end of the first half, deep in own territory: run it out

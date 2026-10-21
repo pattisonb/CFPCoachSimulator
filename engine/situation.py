@@ -7,9 +7,11 @@ signal, except inside the last two minutes of either half, where it stays stoppe
 the snap. Each team has three timeouts per half. The play clock is 40 seconds.
 
 Behavior by situation:
-  hurry      trailing or tied and short on time: snap fast, throw more, get out of bounds,
+  hurry      trailing inside 4:00 (tied: inside 1:40) and short on time: snap fast, throw more, get out of bounds,
              use timeouts after in-bounds plays, spike with no timeouts, kick a field goal
              as soon as the clock demands it, throw a Hail Mary with seconds left
+  play_for_kick  tied or down 1-3, inside easy field-goal range in the last minute: run the
+             ball, avoid sacks and turnovers, kick at the end
   milk       leading in the second half with the game close: run more, stay in bounds,
              snap late in the play clock, kneel when the clock allows it
   run_out    deep in own territory at the end of the first half: run it out
@@ -68,11 +70,20 @@ def assess(offense, defense, seconds: int, down: int, distance: int, yardline: i
         if lead >= 9:
             s.update(mode="milk", snap_late=True, pass_shift=cfg.MILK_RUN_SHIFT * 0.5, oob_want=cfg.OOB_STAY_IN)
             return s
-    if lead <= 0 and (seconds <= cfg.HURRY_SECONDS_TRAILING or (lead < 0 and -lead >= cfg.COMEBACK_LEAD and seconds <= cfg.QUARTER_SECONDS)):
+    if lead == 0 and seconds <= cfg.TIED_RUN_OUT_SECONDS and yardline < cfg.TIED_RUN_OUT_YARDLINE:
+        # tied, deep in own territory with seconds left: run it out and take overtime
+        s.update(mode="run_out", run_out=True, pass_shift=0.6, oob_want=0.02, snap_late=True)
+        return s
+    hurry_window = cfg.TIED_HURRY_SECONDS if lead == 0 else cfg.HURRY_SECONDS_TRAILING
+    if lead <= 0 and (seconds <= hurry_window or (lead < 0 and -lead >= cfg.COMEBACK_LEAD and seconds <= cfg.QUARTER_SECONDS)):
         deficit = -lead
         s.update(mode="hurry", snap_fast=True, pass_shift=-cfg.HURRY_PASS_SHIFT, oob_want=cfg.OOB_HURRY)
         if deficit > cfg.CLOSE_GAME:
             s["mode"] = "desperate"
+        elif deficit <= 3 and seconds <= cfg.PLAY_FOR_KICK_SECONDS and (100 - yardline) + 17 <= cfg.PLAY_FOR_KICK_DISTANCE:
+            # tied or down 1-3 in easy range with a minute left: protect the ball and set up the kick
+            s.update(mode="play_for_kick", snap_fast=False, pass_shift=cfg.PLAY_FOR_KICK_RUN_SHIFT,
+                     oob_want=cfg.OOB_BASE, big_play_mult=cfg.PLAY_FOR_KICK_BIG_PLAY)
         _end_of_half_kicks(s, seconds, yardline, down, clock_stopped, off_timeouts, lead, half)
         return s
     return s
@@ -90,7 +101,7 @@ def defense_posture(offense, defense, seconds: int) -> dict:
         return out
     if lead > 0 and lead <= cfg.CLOSE_GAME and seconds <= cfg.PREVENT_SECONDS:
         out.update(prevent=True, keep_in_bounds=True)
-    if lead <= 0 and seconds <= cfg.DEF_TIMEOUT_SECONDS:
+    if (lead < 0 and seconds <= cfg.DEF_TIMEOUT_SECONDS) or (lead == 0 and seconds <= cfg.TIED_HURRY_SECONDS):
         out["def_timeout"] = True
     return out
 

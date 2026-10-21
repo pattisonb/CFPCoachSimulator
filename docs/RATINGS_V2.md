@@ -6,7 +6,8 @@ catalogue; build_teams writes each player's attributes (house scale), height in 
 play style and traits; the player card, its details view and god mode use them; edits move
 the engine composites through `ratings.COMPOSITES`. The sim is unchanged (same play-log
 fingerprint). Phase 2 (passing by depth, man and zone, contested catches) is built; see
-docs/HOW_IT_WORKS.md, "Passing by depth".
+docs/HOW_IT_WORKS.md, "Passing by depth". Phases 3-6 are built too (running, pass rush,
+turnovers and the body, traits); see "Running, pass rush, turnovers and traits".
 
 ## Why
 
