@@ -796,7 +796,10 @@ body:not(.team-theme) .hdr-rank { background: var(--panel-2); border-color: var(
 .rating-row.edited .rating-label { color: var(--accent); font-weight: 600; }
 .rating-row.edited .rating-label::after { content: " ✎"; }
 .player-edit { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; }
-.player-edit .rating-row.edit input { width: 100%; max-width: 70px; justify-self: end; font: inherit; padding: 3px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+/* the edit rows need room for a two-digit number and the spinner: the display rows' 34px value column is too narrow */
+.player-edit .rating-row.edit { grid-template-columns: 110px 1fr 76px; }
+.player-edit .rating-row.edit input { width: 76px; box-sizing: border-box; justify-self: end; font: inherit; padding: 3px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); text-align: right; }
+@media (max-width: 700px) { .player-edit .rating-row.edit { grid-template-columns: 96px 1fr 72px; } .player-edit .rating-row.edit input { width: 72px; } }
 .player-edit h4 { margin: 10px 0 6px; }
 .player-edit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
 .player-edit-grid label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
