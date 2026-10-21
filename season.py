@@ -2746,7 +2746,8 @@ def _update_morale(state: dict, g: dict, lines: dict, before: dict[str, int]) ->
     teams = m["teams"]
     all_teams = load_teams()
     margin = g["home_score"] - g["away_score"]
-    edge = (all_teams[g["home"]]["team_ratings"]["overall"] - all_teams[g["away"]]["team_ratings"]["overall"]) / 60         + (0.0 if g["neutral"] else 0.04)
+    edge = (all_teams[g["home"]]["team_ratings"]["overall"] - all_teams[g["away"]]["team_ratings"]["overall"]) / 60 \
+        + (0.0 if g["neutral"] else 0.04)
     p_home = max(0.05, min(0.95, 0.5 + edge))     # the same pre-game chance the bracket projection uses
     for side, opp in (("home", "away"), ("away", "home")):
         slug, other = g[side], g[opp]

@@ -95,7 +95,7 @@ def real_games_by_team(st_real: dict) -> dict[str, list[tuple[int, dict]]]:
 
 def missing_players(st_real: dict, teams: dict) -> dict:
     """team -> [{"name", "position", "role"}]: real players with a real season's work who are
-    not on the roster (no EA card: build_teams.py adds them as an average FBS starter)."""
+    not on the roster (no EA card: build_teams.py adds them with the ratings of the player atop their role)."""
     out: dict[str, list[dict]] = {}
     for slug, v in (st_real.get("season_stats") or {}).items():
         t = teams.get(slug)
