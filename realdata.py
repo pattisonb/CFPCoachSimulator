@@ -40,6 +40,10 @@ NICKNAME = re.compile(r"[\"“”][^\"“”]*[\"“”]")
 # time, so real net punting is charged 20 yards on that share of punts (the official net
 # charges 20 per touchback, as the engine does).
 PUNT_TOUCHBACK_RATE = 0.07
+# _ncaa_index files a game against an FCS school under this in place of the FCS team's slug.
+FCS = "fcs"
+# Season dates are in UTC, NCAA dates local; a game against an FCS school must be this close.
+FCS_DATE_DAYS = 2
 
 
 def num(x) -> float:
@@ -337,7 +341,12 @@ def compact_side(tb: dict, players: list[dict], score: int, opp_tb: dict) -> dic
 
 
 def _ncaa_index(lookup: dict) -> dict:
-    """frozenset(slugs) -> [(date, contest_id)] for every final NCAA game with a saved box score."""
+    """frozenset(slugs) -> [(date, contest_id)] for every final NCAA game with a saved box score.
+
+    A game where one side is an FBS team and the other matches no team is a game against an
+    FCS school. The season plays it against the school's fictional stand-in (season.fcs_map),
+    which the NCAA name cannot tell, so it is filed under frozenset((slug, FCS)) and found by
+    date (_real_games)."""
     out: dict = {}
     if not GAMES_FILE.exists():
         return out
@@ -346,8 +355,11 @@ def _ncaa_index(lookup: dict) -> dict:
             continue
         h = match(g["home_name"], lookup) or match(g["home_seo"], lookup)
         a = match(g["away_name"], lookup) or match(g["away_seo"], lookup)
+        when = (datetime.strptime(g["date"], "%m/%d/%Y"), g["contest_id"])
         if h and a and h != a:
-            out.setdefault(frozenset((h, a)), []).append((datetime.strptime(g["date"], "%m/%d/%Y"), g["contest_id"]))
+            out.setdefault(frozenset((h, a)), []).append(when)
+        elif bool(h) != bool(a):
+            out.setdefault(frozenset((h or a, FCS)), []).append(when)
     return out
 
 
@@ -369,7 +381,14 @@ def import_real_boxes(st: dict, fresh: bool = False) -> dict:
     the season's stats and saved as a box score the season can open. Used by the real
     season page and by a season started from today (its real weeks then carry real stats,
     game logs and box scores). Returns counts: box scores, player lines, matched lines, and
-    the team-games whose extra points are not listed (no kicker line, points scored).
+    the team-games whose extra points are not listed (no kicker line, points scored), and the
+    games against an FCS school (played by its fictional stand-in).
+
+    In a game against an FCS school only the FBS team's players are kept. The FCS school's
+    team line is imported (its field goals and punting are read from its player rows), but
+    its players are left out of the box score and the season stats: the stand-in never shows
+    the real school it replaces (season.fcs_label), and its roster is fictional. Player
+    counts and the match rate are for FBS teams only.
 
     Two passes: every game's lines are read first, so a player missing from the roster gets
     one position for the season from all his games (guess_position), not one per game."""
@@ -377,6 +396,7 @@ def import_real_boxes(st: dict, fresh: bool = False) -> dict:
     lookup = build_matcher(teams)
     index = _ncaa_index(lookup)
     rosters = {slug: RosterMatcher(t) for slug, t in teams.items() if not t["fictional"]}
+    fictional = {slug for slug, t in teams.items() if t["fictional"]}
     box_dir = season.box_dir(st)
     box_dir.mkdir(parents=True, exist_ok=True)
     if fresh:
@@ -385,29 +405,35 @@ def import_real_boxes(st: dict, fresh: bool = False) -> dict:
     st.setdefault("season_stats", {})
     games = []
     unmatched: dict[tuple, dict] = {}
-    for eid, g, cid, sides in _real_games(st, index, lookup):
+    for eid, g, cid, sides in _real_games(st, index, lookup, fictional):
         players = {side: player_lines(sides[side], rosters.get(g[side])) for side in ("home", "away")}
         for side in players:
+            if g[side] in fictional:
+                continue
             for p in players[side]:
                 if not p["matched"]:
                     u = unmatched.setdefault((g[side], p["key"]), {"stats": {}, "number": p["number"]})
                     season._add_into(u["stats"], p["stats"])
         games.append((eid, g, cid, sides, players))
     position = {k: guess_position(u["stats"], u["number"]) for k, u in unmatched.items()}
-    n_box = n_players = n_matched = n_no_pats = 0
+    n_box = n_players = n_matched = n_no_pats = n_fcs = 0
     for eid, g, cid, sides, players in games:
         lines, real_box = {}, {"real_box": True, "contest_id": cid, "event_id": eid}
+        n_fcs += any(g[side] in fictional for side in ("home", "away"))
         for side, opp in (("home", "away"), ("away", "home")):
             plist = players[side]
+            fcs = g[side] in fictional
             for p in plist:
-                if not p["matched"]:
+                if not p["matched"] and not fcs:
                     p["position"] = position[(g[side], p["key"])]
                     p["unit"] = unit_of(p["position"])
             fill_special_teams(plist, sides[opp])
-            n_players += len(plist)
-            n_matched += sum(1 for p in plist if p["matched"])
             score = g[f"{side}_score"]
             lines[side] = compact_side(sides[side], plist, score, sides[opp])
+            if fcs:
+                plist = lines[side]["players"] = []
+            n_players += len(plist)
+            n_matched += sum(1 for p in plist if p["matched"])
             n_no_pats += not lines[side]["events"]["pats_listed"]
             real_box[side] = {"slug": g[side], "name": teams[g[side]]["name"], "score": score,
                               "team": lines[side]["team"], "events": lines[side]["events"], "plays": lines[side]["plays"],
@@ -415,20 +441,28 @@ def import_real_boxes(st: dict, fresh: bool = False) -> dict:
         season._accumulate_stats(st, g, lines)
         (box_dir / f"{eid}.json").write_text(json.dumps(real_box), encoding="utf-8")
         n_box += 1
-    return {"box_scores": n_box, "players": n_players, "matched": n_matched, "pats_not_listed": n_no_pats,
+    return {"box_scores": n_box, "players": n_players, "matched": n_matched, "pats_not_listed": n_no_pats, "fcs_games": n_fcs,
             "played": sum(1 for g in st["games"].values() if g["played"])}
 
 
-def _real_games(st: dict, index: dict, lookup: dict):
+def _real_games(st: dict, index: dict, lookup: dict, fictional: set):
     """(event id, game, contest id, {"home": team box, "away": team box}) for every played real
-    game of the season with a saved NCAA box score, in week order."""
+    game of the season with a saved NCAA box score, in week order.
+
+    A game against a fictional FCS stand-in takes the FBS team's game against an FCS school
+    on the same date (within FCS_DATE_DAYS); the FCS school's team box goes to the stand-in."""
     for eid, g in sorted(st["games"].items(), key=lambda kv: kv[1]["week"]):
         if not g["played"] or not g.get("real"):
             continue
-        cands = index.get(frozenset((g["home"], g["away"])), [])
+        fcs_side = next((s for s in ("home", "away") if g[s] in fictional), None)
+        fbs = g["away" if fcs_side == "home" else "home"] if fcs_side else None
+        key = frozenset((fbs, FCS)) if fcs_side else frozenset((g["home"], g["away"]))
+        cands = index.get(key, [])
+        gdate = datetime.strptime(g["date"][:10], "%Y-%m-%d") if g.get("date") else None
+        if fcs_side:
+            cands = [c for c in cands if gdate and abs((c[0] - gdate).days) <= FCS_DATE_DAYS]
         if not cands:
             continue
-        gdate = datetime.strptime(g["date"][:10], "%Y-%m-%d") if g.get("date") else None
         cid = min(cands, key=lambda c: abs((c[0] - gdate).days) if gdate else 0)[1]
         box = json.loads((BOX_DIR / f"{cid}.json").read_text(encoding="utf-8"))["data"]["boxscore"]
         side_slug = team_side(box, lambda n: match(n, lookup))
@@ -439,6 +473,8 @@ def _real_games(st: dict, index: dict, lookup: dict):
                 sides["home"] = tb
             elif slug == g["away"]:
                 sides["away"] = tb
+            elif fcs_side and slug is None:
+                sides[fcs_side] = tb
         if set(sides) == {"home", "away"}:
             yield eid, g, cid, sides
 
@@ -465,6 +501,7 @@ if __name__ == "__main__":
         fetch()
     st = build()
     s = st["real_summary"]
-    print(f"real 2026 season through week {st['current_week']}: {s['played']} games played, {s['box_scores']} with a box score, "
+    print(f"real 2026 season through week {st['current_week']}: {s['played']} games played, {s['box_scores']} with a box score "
+          f"({s['fcs_games']} against FCS schools), "
           f"{s['players']} player lines ({100 * s['matched'] / max(1, s['players']):.1f}% matched to a roster player); "
           f"extra points not listed for {s['pats_not_listed']} team-games (no kicker line, points scored)")

@@ -696,6 +696,18 @@ with the gaps and quirks in the NCAA feed (fixed after the overnight review, wee
 - **Fumbles.** "Fumbles" is every fumble on both sides (the engine counts each fumble before
   the recovery, as NCAA does); fumbles lost are `events.fumbles_lost` on both sides. Real
   1.11 fumbles and 0.52 lost a team-game.
+- **Games against FCS schools.** The season plays them against the fictional stand-in for
+  the school's region (`data/fcs_map.json`), so the NCAA name (UNI) never matches the
+  season's opponent (Red Prairie St.). `_ncaa_index` files a game where one side is an FBS
+  team and the other matches no team under (the FBS team, `FCS`), and `_real_games` takes
+  it for a stand-in game when the dates are within 2 days (`FCS_DATE_DAYS`; season dates
+  are UTC). The FCS school's team box goes to the stand-in's side: its team line (yards,
+  punts, field goals) counts in both teams' season stats and opponent stats, as a
+  simulated stand-in game does. Its players are left out of the box score and season
+  stats, since the stand-in never names the real school it replaces and its roster is
+  fictional. Before, these 122 games had no box score, so real per-game averages left out
+  the FBS teams' easiest games while the sim's included them (overnight review item A1:
+  about +2.7 points and +13.7 yards a game on the sim side).
 
 Through week 8: 25,610 player lines, 92.8% matched (was 92.7%, with the cross-unit jersey
 matches counted as right); 138 notable lines unmatched (was 142), all players missing from
@@ -704,6 +716,14 @@ points made in the 556 team-games that list them. `tests/test_realdata.py` check
 matching rules. Re-tuned from the new import (`tools/tune_from_real.py`): depth charts
 changed at Miami, Oregon State, USC, Utah State and UTSA, and USC's target weights now
 include Zacharyus Williams and Ethan Feaster. Play-log fingerprint 74752a0512ab4386.
+
+With the FCS games added (the figures above are before them): all 510 played games through
+week 8 have a box score (was 388), 122 of them against FCS schools. 30,566 FBS player lines,
+92.2% matched (the FCS games bring in walk-ons and backups who play in blowouts and are not
+on the rosters). Real FBS teams average 28.9 points and 393.5 yards a team-game, up from
+26.0 and 374.6 without the FCS games. Extra points are not listed for 307 team-games (was
+220; the FCS games add 87 team-games that scored without trying a field goal). Re-tuned: depth
+charts changed at 13 teams and target weights at 127. Play-log fingerprint 9e2043dd737958e7.
 
 ## Season mode (its own page)
 

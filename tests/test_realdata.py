@@ -46,4 +46,17 @@ if __name__ == "__main__":
     players = [{"stats": {"punts": 5, "punt_yards": 220}}]
     rd.fill_special_teams(players, {"teamStats": {"TeamPuntReturnsStats": {"puntReturnYards": "-4"}}})
     assert players[0]["stats"]["punt_net_yards"] < 220, players
-    print("real import: names, sides, positions and net punting as expected")
+
+    # a game against an FCS school (Iowa vs UNI, 9/19) is played by the fictional stand-in:
+    # found by date, and UNI's team box goes to the stand-in's side
+    if (rd.BOX_DIR / "6603607.json").exists():
+        lookup = rd.build_matcher(rd.season.load_teams())
+        index = rd._ncaa_index(lookup)
+        assert any(c[1] == 6603607 for c in index[frozenset(("iowa", rd.FCS))])
+        game = {"played": True, "real": True, "week": 3, "home": "iowa", "away": "red-prairie-state"}
+        on_day = {"games": {"e1": {**game, "date": "2026-09-19T23:00Z"}}}
+        (_, _, cid, sides), = rd._real_games(on_day, index, lookup, {"red-prairie-state"})
+        assert cid == 6603607 and set(sides) == {"home", "away"}
+        week_off = {"games": {"e1": {**game, "date": "2026-09-26T23:00Z"}}}
+        assert not [x for x in rd._real_games(week_off, index, lookup, {"red-prairie-state"}) if x[2] == 6603607]
+    print("real import: names, sides, positions, net punting and FCS games as expected")
