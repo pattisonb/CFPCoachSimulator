@@ -216,8 +216,8 @@ HFA_ATTRS = ("speed", "strength", "intelligence", "passing", "decision_making", 
              "vision", "hands", "route_running", "run_blocking", "pass_blocking", "rushing",
              "tackling", "coverage", "kick_accuracy", "punt_accuracy")
 PASS_RATE_EFFECT = 0.6          # run chance shift at a 0 or 100 pass-rate tendency
-PASS_LEAN = 0.008               # taken off every run chance: half the 1.6-point shortfall against 2026 through week 8
-                                # (all of it overshot full 2023-2025 seasons: 235 pass yards a game against 226)
+PASS_LEAN = 0.004               # taken off every run chance (0.008 put passing volume 4-7% over 2026 through week 8 and
+                                # fed the receiving leaders; 0 left 2026 passing 1.6 points short)
 TEMPO_EFFECT = 0.80             # clock multiplier range for tempo 0..100 (was 0.60: plays per game varied 3.6 across teams, real
                                 # about 4.4 once the 7-game sampling noise is taken out)
 FOURTH_DOWN_TENDENCY_EFFECT = 0.8   # go-for-it odds scale for the fourth_down_go_rate tendency
@@ -240,7 +240,8 @@ KICKOFF_BIG_RETURN_CHANCE = 0.06
 KICKOFF_RETURN_TD_CHANCE = 0.004
 
 # ----- Usage shares (calibrated against 2026 box scores, see calibrate_players.py) -----
-TARGET_WEIGHT_POWER = 4.0       # receiver target weight = rating ** power (steeper = more concentrated)
+TARGET_WEIGHT_POWER = 3.5       # receiver target weight = rating ** power (steeper = more concentrated; 4.0 put the
+                                # full-season receiving leaders 17% over 2023-2025)
 TARGET_MULT_MAX = 2.0           # cap on a receiver's real-usage target weight (data/real_adjustments.json)
 
 # ----- Who gets the defensive stats (tools/realism.py: season leaders against real seasons) -----

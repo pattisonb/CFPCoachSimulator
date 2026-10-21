@@ -73,7 +73,8 @@ SPECIALISTS = "SPECIALISTS"     # depth entry: {"K" or "P": slug} for a real kic
 MIN_USAGE = {"QB": 10, "HB": 5, "FB": 1, "WR": 3, "TE": 2, "K": 2, "P": 2}
 FEATURES = [0.0, 0.25, 0.5, 0.75, 1.0]
 LEAD_SHRINK = 60                # RB carries at which a team's real lead share counts half
-TARGET_SHRINK = 15              # catches at which a receiver's real share counts half
+TARGET_SHRINK = 30              # catches at which a receiver's real share counts half (15 followed a hot start too
+                                # closely: a receiver's week-8 share held all season and the leaders ran 17% high)
 
 
 def real_games_by_team(st_real: dict) -> dict[str, list[tuple[int, dict]]]:

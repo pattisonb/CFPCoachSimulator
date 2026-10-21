@@ -489,6 +489,31 @@ won 69.8% to 72.0%, Brier 0.185 to 0.183; `calibrate_season.py 30` 72.2% to 70.9
 to 12.6), but the backs' carries matched real box scores worse (average miss 15.8 to 18.0
 carries), so the running-back split was left out. Play-log fingerprint 33a30b0570a78958.
 
+## Receiving leaders and repeatable seasons (October 20 check)
+
+The full-season check after the overnight fixes had the receiving leaders 17% over real
+2023-2025 seasons (45 thousand-yard receivers against about 28) while the passing leaders
+matched. At week 8 each team's top receiver had about his real share (32% against 31%),
+so the excess came from a few receivers whose early real share the sim held all season.
+
+- **Real target shares count half at 30 catches** (`TARGET_SHRINK` in tools/tune_from_real.py,
+  was 15). A receiver's share over his last four real games is partly a hot start; real
+  seasons pull it back toward his ratings, and the sim now does too.
+- **Targets a little less steep** (`TARGET_WEIGHT_POWER` 4.0 to 3.5); the real-usage weights
+  are re-tuned against it.
+- **Pass lean halved again** (`PASS_LEAN` 0.008 to 0.004): passing volume ran 4-7% over real
+  2026 at week 8.
+
+Tested one at a time over full seasons: dropping the receiver rating fix, a weaker speed
+effect on catch yards, and following real shares more closely (all games, shrink 8) all
+left the leaders 14-19% high.
+
+**Seeded seasons repeat.** Games finish in any order across the worker processes and their
+results were applied as they arrived; the morale baseline and the injury list depend on
+that order, so the same seed gave a different champion on every run. Results are now
+applied in schedule order (progress is still reported as games finish), and a seed gives
+the same 950 scores every time.
+
 ## Player stat lines against real box scores
 
 `tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed
