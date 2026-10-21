@@ -934,18 +934,17 @@ body.real-mode #season-tabs button[data-tab="games"] { display: revert; }
 .coach-item-actions { display: flex; flex-direction: column; gap: 4px; }
 @media (max-width: 860px) { .coach-main { grid-template-columns: 1fr; } .coach-preview { position: static; order: -1; } }
 
-/* Your coach: hired coordinators */
-.staff-card { margin-top: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-2, transparent); }
-.staff-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
-.staff-card p { margin: 6px 0; }
-.staff-bars { display: grid; gap: 6px; }
-.staff-bar { display: grid; grid-template-columns: 110px 1fr 28px; gap: 8px; align-items: center; }
-.staff-track { position: relative; height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; }
-.staff-fill { position: absolute; inset: 0 auto 0 0; background: var(--accent, #2f6db3); border-radius: 4px; }
-.staff-mid { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 2px; background: var(--muted, #888); opacity: 0.6; }
-
 /* season page: your coach's portrait before his line */
 .coach-line-pic { display: inline-block; width: 36px; height: 36px; vertical-align: middle; margin-right: 8px;
   border-radius: 50%; overflow: hidden; background: #f4f6fb; box-shadow: 0 0 0 2px rgba(255,255,255,0.7); }
 .coach-line-pic svg { width: 100%; height: 115%; display: block; }
 .coach-line a { color: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+
+/* season start: who coaches */
+.start-choice { display: grid; gap: 12px; }
+.start-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; }
+.start-card p { margin: 0; }
+.start-coaches { display: grid; gap: 6px; }
+.start-coach { display: flex; align-items: center; gap: 8px; text-align: left; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); color: var(--text); cursor: pointer; }
+.start-coach:hover { border-color: var(--accent); }
+.start-card .coach-actions a { text-decoration: none; }

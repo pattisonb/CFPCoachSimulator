@@ -106,6 +106,7 @@ def _team_card(t: dict) -> dict:
         "home_field_advantage": t["home_field_advantage"], "prestige": t["prestige"],
         "ratings": t["team_ratings"],
         "head_coach": t["coaches"]["head_coach"]["name"],
+        "staff": coaches.staff(None, t),
         "tendencies": t.get("tendencies", {}),
     }
 

@@ -77,8 +77,9 @@ STYLE = {
     "man_coverage_rate": ("Man coverage", "defense", "How often the defense plays man instead of zone."),
     "press_rate": ("Press", "defense", "How often corners press receivers at the line in man coverage."),
 }
-# Coordinators you can hire for the side of the ball your coach does not call. Fictional
-# names; each has a scheme, a play-calling rating and a style on the league scale.
+# Coordinators to hire after the season (the offseason, coming with coach mode). During a
+# season the team's own coordinators stay. Fictional names; each has a scheme, a play-calling
+# rating and a style on the league scale.
 OC_POOL = {
     "kessler": {"name": "Dale Kessler", "scheme": "Air Raid", "play_calling": 82,
                 "about": "Four wide on every snap. Throws it 50 times and takes his shots.",
@@ -145,7 +146,6 @@ def blank() -> dict:
             "archetype": "Program Builder", "ratings": dict(ARCHETYPES["Program Builder"]["ratings"]),
             "played": "Did not play", "playing_level": "Walk-on", "background": "",
             "offense_scheme": "Multiple", "defense_scheme": "4-2-5", "calls_offense": True, "calls_defense": False,
-            "oc": None, "dc": None,
             "style": {k: 50 for k in STYLE},
             "look": {"skin": LOOK["skin"][1], "hair": "short", "hair_color": LOOK["hair_color"][1], "facial_hair": "none",
                      "glasses": "none", "headwear": "cap", "outfit": "polo"}}
@@ -184,9 +184,6 @@ def clean(data: dict) -> dict:
         raise ValueError("pick an offensive and a defensive scheme")
     c["offense_scheme"], c["defense_scheme"] = data["offense_scheme"], data["defense_scheme"]
     c["calls_offense"], c["calls_defense"] = bool(data.get("calls_offense")), bool(data.get("calls_defense"))
-    # a hired coordinator only matters for the side he does not call himself
-    c["oc"] = data.get("oc") if (data.get("oc") in OC_POOL and not c["calls_offense"]) else None
-    c["dc"] = data.get("dc") if (data.get("dc") in DC_POOL and not c["calls_defense"]) else None
     style = {}
     for k in STYLE:
         try:
@@ -248,30 +245,40 @@ def options() -> dict:
     return {"offense_schemes": OFFENSE_SCHEMES, "defense_schemes": DEFENSE_SCHEMES,
             "archetypes": ARCHETYPES, "rating_keys": RATING_KEYS, "rating_labels": RATING_LABELS, "rating_about": RATING_ABOUT,
             "rating_budget": RATING_BUDGET, "style": {k: {"label": v[0], "side": v[1], "about": v[2]} for k, v in STYLE.items()},
-            "oc_pool": OC_POOL, "dc_pool": DC_POOL, "positions_played": POSITIONS_PLAYED, "playing_levels": PLAYING_LEVELS, "look": LOOK, "blank": blank()}
+            "positions_played": POSITIONS_PLAYED, "playing_levels": PLAYING_LEVELS, "look": LOOK, "blank": blank()}
 
 
-def staff(coach: dict) -> dict:
-    """Who calls each side for this coach: {"offense": text or None, "defense": ...}.
-    None means the team's own coordinator."""
+def _coordinator(team: dict, side: str) -> str:
+    """'OC Brian Hartline (Spread RPO)': the team's own coordinator on one side."""
+    cs = team.get("coaches") or {}
+    hc_scheme = (cs.get("head_coach") or {}).get("scheme") or {}
+    if side == "offense":
+        oc = cs.get("offensive_coordinator") or {}
+        scheme = (oc.get("scheme") or {}).get("offensive_scheme") or hc_scheme.get("offensive_philosophy") or "Multiple"
+        return f"OC {oc.get('name') or 'unnamed'} ({scheme})"
+    dc = cs.get("defensive_coordinator") or {}
+    scheme = (dc.get("scheme") or {}).get("defensive_scheme") or hc_scheme.get("defensive_philosophy") or "4-2-5"
+    return f"DC {dc.get('name') or 'unnamed'} ({scheme})"
+
+
+def staff(coach: Optional[dict], team: dict) -> dict:
+    """Who runs each side of the ball this season: {"offense": text, "defense": text}. The
+    team's coordinators stay for the season; a created coach who calls a side himself uses
+    his own scheme and style on it."""
     out = {}
-    for side, calls, pool, key, scheme in (("offense", "calls_offense", OC_POOL, "oc", "offense_scheme"),
-                                           ("defense", "calls_defense", DC_POOL, "dc", "defense_scheme")):
-        hired = pool.get(coach.get(key) or "")
-        if coach.get(calls):
+    for side, calls, scheme in (("offense", "calls_offense", "offense_scheme"), ("defense", "calls_defense", "defense_scheme")):
+        if coach and coach.get(calls):
             out[side] = f"calls the {coach[scheme]} {side} himself"
-        elif hired:
-            out[side] = f"{'OC' if side == 'offense' else 'DC'} {hired['name']} ({hired['scheme']})"
         else:
-            out[side] = None
+            out[side] = _coordinator(team, side)
     return out
 
 
 def apply_coach(team: dict, coach: Optional[dict]) -> dict:
-    """The team with `coach` as its head coach. Where he calls his own offense or defense, his
-    schemes and tendencies replace the coordinator's; where he hired a coordinator from the
-    pool, the hired coordinator's do; otherwise the team keeps its own. His head-coach
-    tendencies (fourth downs, discipline) always apply. Ratings: his offense or defense rating is the play-calling
+    """The team with `coach` as its head coach. The team's coordinators stay for the season;
+    where he calls his own offense or defense, his scheme and tendencies are used on that
+    side instead of the coordinator's. His head-coach tendencies (fourth downs, discipline)
+    always apply. Ratings: his offense or defense rating is the play-calling
     rating on the side he calls."""
     if not coach:
         return team
@@ -292,29 +299,13 @@ def apply_coach(team: dict, coach: Optional[dict]) -> dict:
     tend.update(fourth_down_go_rate=s["fourth_down_go_rate"], discipline=disc, observed=False)
     if coach.get("calls_offense"):
         oc = t["coaches"].get("offensive_coordinator") or {}
-        t["coaches"]["offensive_coordinator"] = {**oc, "name": f"{name} (calls the offense)",
-                                                 "scheme": {**(oc.get("scheme") or {}), "offensive_scheme": coach["offense_scheme"]}}
+        t["coaches"]["offensive_coordinator"] = {**oc, "scheme": {**(oc.get("scheme") or {}), "offensive_scheme": coach["offense_scheme"]}}
         tend.update(pass_rate=s["pass_rate"], tempo=s["tempo"], deep_shot_rate=s["deep_shot_rate"],
                     play_action_rate=s["play_action_rate"], oc_play_calling=r["offense"])
         tend.pop("qb_run_share", None) if coach["offense_scheme"] != "Spread Option" else None
-    hired_oc = None if coach.get("calls_offense") else OC_POOL.get(coach.get("oc") or "")
-    if hired_oc:
-        t["coaches"]["offensive_coordinator"] = {"name": hired_oc["name"], "custom": True,
-                                                 "ratings": {"play_calling": hired_oc["play_calling"]},
-                                                 "scheme": {"offensive_scheme": hired_oc["scheme"]}}
-        tend.update(**hired_oc["style"], oc_play_calling=hired_oc["play_calling"])
-        if hired_oc["scheme"] != "Spread Option":
-            tend.pop("qb_run_share", None)
-    hired_dc = None if coach.get("calls_defense") else DC_POOL.get(coach.get("dc") or "")
-    if hired_dc:
-        t["coaches"]["defensive_coordinator"] = {"name": hired_dc["name"], "custom": True,
-                                                 "ratings": {"play_calling": hired_dc["play_calling"]},
-                                                 "scheme": {"defensive_scheme": hired_dc["scheme"]}}
-        tend.update(**hired_dc["style"], dc_play_calling=hired_dc["play_calling"])
     if coach.get("calls_defense"):
         dc = t["coaches"].get("defensive_coordinator") or {}
-        t["coaches"]["defensive_coordinator"] = {**dc, "name": f"{name} (calls the defense)",
-                                                 "scheme": {**(dc.get("scheme") or {}), "defensive_scheme": coach["defense_scheme"]}}
+        t["coaches"]["defensive_coordinator"] = {**dc, "scheme": {**(dc.get("scheme") or {}), "defensive_scheme": coach["defense_scheme"]}}
         tend.update(blitz_rate=s["blitz_rate"], man_coverage_rate=s["man_coverage_rate"], press_rate=s["press_rate"],
                     dc_play_calling=r["defense"])
     return t

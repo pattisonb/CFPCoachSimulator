@@ -133,12 +133,52 @@
 
   // mode "full" plays 2026 from week 1; "remaining" starts from today with the real results,
   // polls, stats and box scores so far (loading those takes a few seconds)
-  async function newSeason(mode) {
+  // Who coaches: take over the team's own head coach, or one of your created coaches (the Your
+  // coach page). The team's coordinators stay for the season either way.
+  async function chooseCoach(mode) {
+    const slug = $("#pick-team").value;
+    const t = window.CFP.teamsBySlug[slug] || {};
+    const staff = t.staff || {};
+    const box = el("div", { class: "start-choice" });
+    const own = el("div", { class: "start-card" }, [
+      el("div", { class: "start-card-head" }, [el("b", { text: `Take over as ${t.head_coach || "the head coach"}` })]),
+      el("p", { class: "muted small-text", text: `${t.name}'s own head coach, with his scheme and tendencies.` }),
+    ]);
+    const go = el("button", { type: "button", class: "accent", text: mode === "remaining" ? `Start from today as ${t.head_coach || "him"}` : `Start as ${t.head_coach || "him"}` });
+    go.addEventListener("click", () => { closeModal(); newSeason(mode, null); });
+    own.append(go);
+    const mine = el("div", { class: "start-card" }, [
+      el("div", { class: "start-card-head" }, [el("b", { text: "Your own coach" })]),
+      el("p", { class: "muted small-text", text: "A head coach you created: his ratings, scheme and style on the sides he calls." }),
+    ]);
+    const list = el("div", { class: "start-coaches" }, [el("span", { class: "muted small-text", text: "Loading your coaches…" })]);
+    mine.append(list);
+    const create = el("a", { class: "ghost small", href: `/coach?team=${encodeURIComponent(slug)}&mode=${mode}`, text: "Create a new coach" });
+    mine.append(el("div", { class: "coach-actions" }, [create]));
+    box.append(own, mine,
+      el("p", { class: "muted small-text", text: `Either way the staff stays for the season: ${staff.offense || "the offensive coordinator"} and ${staff.defense || "the defensive coordinator"}. Staff changes come after the season.` }));
+    openModal(`Who coaches ${t.name || "your team"}?`, box);
+    try {
+      const coaches = (await api("/api/coaches")).coaches;
+      list.innerHTML = "";
+      if (!coaches.length) list.append(el("span", { class: "muted small-text", text: "No coaches yet." }));
+      for (const c of coaches) {
+        const row = el("button", { type: "button", class: "start-coach" });
+        const pic = el("span", { class: "coach-line-pic", "aria-hidden": "true" });
+        if (window.CoachSprite) pic.innerHTML = window.CoachSprite(c.look, t.colors);
+        row.append(pic, el("span", {}, [el("b", { text: `${c.first_name} ${c.last_name}` }), el("span", { class: "muted small-text", text: ` ${c.archetype}` })]));
+        row.addEventListener("click", () => { closeModal(); newSeason(mode, c.id); });
+        list.append(row);
+      }
+    } catch (err) { list.textContent = `Could not load your coaches: ${errText(err)}`; }
+  }
+
+  async function newSeason(mode, coach) {
     const team = $("#pick-team").value;
     $("#btn-new").disabled = $("#btn-today").disabled = true;
     if (mode === "remaining") toast("Loading the real season so far: results, polls, stats and box scores…");
     try {
-      const s = await api("/api/season", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team, mode }) });
+      const s = await api("/api/season", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team, mode, coach: coach || null }) });
       history.replaceState(null, "", `/season?id=${s.id}`);
       showSeason(s);
       loadSeasons();
@@ -564,12 +604,16 @@
       const c = s.coach;
       const st = c.staff || {};
       const calls = [st.offense, st.defense].filter(Boolean).join(" · ");
-      const pic = el("span", { class: "coach-line-pic", "aria-hidden": "true" });
-      const myTeam = window.CFP.teamsBySlug[s.team] || {};
-      if (window.CoachSprite) pic.innerHTML = window.CoachSprite(c.look, myTeam.colors);
-      $("#season-meta").prepend(el("span", { class: "coach-line" }, [pic,
-        el("a", { href: `/coach?id=${encodeURIComponent(c.id)}`, text: `Coach ${c.first_name} ${c.last_name}` }),
-        ` · ${c.archetype}${calls ? ` · ${calls}` : ""} · `]));
+      if (c.existing) {
+        $("#season-meta").prepend(el("span", { class: "coach-line" }, [el("b", { text: `Coach ${c.name}` }), `${calls ? ` · ${calls}` : ""} · `]));
+      } else {
+        const pic = el("span", { class: "coach-line-pic", "aria-hidden": "true" });
+        const myTeam = window.CFP.teamsBySlug[s.team] || {};
+        if (window.CoachSprite) pic.innerHTML = window.CoachSprite(c.look, myTeam.colors);
+        $("#season-meta").prepend(el("span", { class: "coach-line" }, [pic,
+          el("a", { href: `/coach?id=${encodeURIComponent(c.id)}`, text: `Coach ${c.first_name} ${c.last_name}` }),
+          ` · ${c.archetype}${calls ? ` · ${calls}` : ""} · `]));
+      }
     }
     const real = s.mode === "real";
     document.body.classList.toggle("real-mode", real);
@@ -3215,8 +3259,8 @@
 
   // ----- wiring ------------------------------------------------------------
 
-  $("#btn-new").addEventListener("click", () => newSeason("full"));
-  $("#btn-today").addEventListener("click", () => newSeason("remaining"));
+  $("#btn-new").addEventListener("click", () => chooseCoach("full"));
+  $("#btn-today").addEventListener("click", () => chooseCoach("remaining"));
   $("#btn-pause").addEventListener("click", pauseSim);
   $("#btn-seasons").addEventListener("click", () => setSidebar($("#btn-seasons").getAttribute("aria-pressed") !== "true"));
   $("#btn-clear-seasons").addEventListener("click", clearSeasons);

@@ -1,5 +1,6 @@
-"""Your coach: a coach is validated, his hired coordinators replace the team's, his discipline
-moves relative to the coach he replaces, and a season started with him plays his staff.
+"""Your coach: a coach is validated, the team's coordinators stay when he takes over (his own
+scheme only on a side he calls), his discipline moves relative to the coach he replaces, and
+a season started with him or with the team's own coach says who is coaching.
 (Run as a file: multiprocessing on Windows.)"""
 import sys as _sys
 from pathlib import Path as _Path
@@ -23,30 +24,35 @@ if __name__ == "__main__":
         raise AssertionError("ratings over the budget were accepted")
     except ValueError:
         pass
-    # a hire only counts for a side he does not call
-    c = coaches.clean({**c, "calls_offense": True, "oc": "kessler", "dc": "cole"})
-    assert c["oc"] is None and c["dc"] == "cole", (c["oc"], c["dc"])
-    c = coaches.clean({**c, "calls_offense": False, "oc": "dorsey"})
-    assert c["oc"] == "dorsey"
+    c = coaches.clean({**c, "calls_offense": True, "calls_defense": False, "offense_scheme": "Air Raid"})
+    assert "oc" not in c and "dc" not in c   # no in-season hiring
 
     team = season.load_teams()["ohio-state"]
     t = coaches.apply_coach(team, c)
-    assert t["coaches"]["offensive_coordinator"]["scheme"]["offensive_scheme"] == "Flexbone Triple Option"
-    assert t["coaches"]["defensive_coordinator"]["scheme"]["defensive_scheme"] == "3-4"
-    assert t["tendencies"]["pass_rate"] == coaches.OC_POOL["dorsey"]["style"]["pass_rate"]
-    assert t["tendencies"]["blitz_rate"] == coaches.DC_POOL["cole"]["style"]["blitz_rate"]
-    assert team["coaches"]["offensive_coordinator"]["scheme"]["offensive_scheme"] != "Flexbone Triple Option"   # the team itself is untouched
+    oc, dc = team["coaches"]["offensive_coordinator"], team["coaches"]["defensive_coordinator"]
+    # the coordinators stay; his scheme is used on the side he calls
+    assert t["coaches"]["offensive_coordinator"]["name"] == oc["name"]
+    assert t["coaches"]["offensive_coordinator"]["scheme"]["offensive_scheme"] == "Air Raid"
+    assert t["coaches"]["defensive_coordinator"] == dc
+    assert t["tendencies"]["pass_rate"] == c["style"]["pass_rate"]
+    assert t["tendencies"]["blitz_rate"] == team["tendencies"]["blitz_rate"]
+    assert team["coaches"]["offensive_coordinator"]["scheme"]["offensive_scheme"] != "Air Raid"   # the team itself is untouched
     # discipline moves by the difference from the coach he replaces
     old = team["coaches"]["head_coach"]["ratings"].get("discipline", 50)
     want = max(0, min(100, team["tendencies"].get("discipline", 50) + c["ratings"]["discipline"] - old))
     assert t["tendencies"]["discipline"] == want, (t["tendencies"]["discipline"], want)
-    staff = coaches.staff(c)
-    assert staff["offense"].startswith("OC Hank Dorsey") and staff["defense"].startswith("DC Reggie Cole"), staff
+    staff = coaches.staff(c, team)
+    assert staff["offense"] == "calls the Air Raid offense himself" and staff["defense"].startswith(f"DC {dc['name']}"), staff
 
-    # a season with him: his staff is in the summary and in the team the games use
+    # a season with him: he is in the summary, and the team the games use has his offense
     st = season.new_season("ohio-state", "full", seed=3, coach=c)
-    summary = season.summary(st)
-    assert summary["coach"]["staff"]["offense"].startswith("OC Hank Dorsey"), summary["coach"]
+    line = season.summary(st)["coach"]
+    assert line["existing"] is False and line["staff"] == staff, line
     played = season.with_edits(season.load_teams()["ohio-state"], season.team_edits(st, "ohio-state"))
-    assert played["coaches"]["offensive_coordinator"]["name"] == "Hank Dorsey"
-    print("coach ok:", staff)
+    assert played["coaches"]["offensive_coordinator"]["scheme"]["offensive_scheme"] == "Air Raid"
+    # taking over the team's own coach: the summary names him and his staff
+    st2 = season.new_season("ohio-state", "full", seed=3)
+    line2 = season.summary(st2)["coach"]
+    assert line2["existing"] is True and line2["name"] == team["coaches"]["head_coach"]["name"], line2
+    assert line2["staff"]["offense"].startswith(f"OC {oc['name']}"), line2
+    print("coach ok:", line2["name"], "|", staff)

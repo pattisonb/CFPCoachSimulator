@@ -613,8 +613,11 @@ plays of 25+; Pro Style 34% play-action and 72% inside runs; Spread Option 47% o
 
 ## Your coach
 
-The Your coach page (`/coach`, `web/coach.js`, `coaches.py`) builds a head coach and starts a
-season with him. Coaches are saved in `data/coaches/` (git-ignored).
+Starting a season asks who coaches your team: **take over as the team's own head coach**
+(his scheme and tendencies, as built) or **your own coach**, one you created on the Your
+coach page (`/coach`, `web/coach.js`, `coaches.py`; saved in `data/coaches/`, git-ignored).
+Either way the team's coordinators stay for the season; staff changes come after it
+(the offseason, with coach mode).
 
 - **Who he is:** name, age, hometown, alma mater, the position and level he played. Story
   only; the Background box can be written by hand or filled from these choices.
@@ -626,18 +629,18 @@ season with him. Coaches are saved in `data/coaches/` (git-ignored).
   motivation are stored for coach mode.
 - **Coaching style:** offensive and defensive scheme, and sliders on the league scale (50 =
   FBS average) for pass rate, tempo, deep shots, play-action, fourth-down aggressiveness,
-  blitz, man coverage and press. The offensive sliders apply when he calls his own offense,
-  the defensive ones when he calls his own defense; fourth downs always apply.
-- **Your staff:** for a side he does not call, hire a coordinator from a pool of fictional
-  coordinators (eight offensive, six defensive), each with a scheme, a play-calling rating
-  and a style, or keep the team's own. `apply_coach` writes the hired coordinator's scheme
-  and tendencies over the team's. Same Ohio State roster against Michigan, 40 games each:
-  its own staff 27 passes and 39 carries a game; a triple-option OC 13 and 51; an Air Raid
-  OC 37 and 33.
+  blitz, man coverage and press. When he calls his own offense, his scheme and the offensive
+  sliders are used instead of the coordinator's (the coordinator stays on staff); the same
+  on defense. Fourth downs always apply. Same Ohio State roster against Michigan, 40 games
+  each: the team's own staff throws 27 passes a game; a coach calling a triple option 13; an
+  Air Raid 37.
 - **His look:** skin tone, hair, hair color, facial hair, glasses, headwear and sideline
-  outfit, drawn as an SVG portrait in the colors of the team picked for the preview.
+  outfit, drawn as an SVG portrait (`web/coachsprite.js`) in the colors of the team picked
+  for the preview.
 
-The season page shows the coach and who calls each side under the title.
+The season page shows the coach, with his portrait when he is yours, and who runs each side
+under the title. `coaches.OC_POOL` and `DC_POOL` hold fictional coordinators for the
+offseason hiring to come.
 
 ## Player stat lines against real box scores
 
@@ -1486,8 +1489,8 @@ band.
 
 `tools/fetch_boxscores.py` pulls the full player box score for every final game from NCAA.com
 (the same feed its game pages use), `tools/derive_tendencies.py` turns them into each team's
-observed 2026 pass rate, pace, quarterback run share and fourth-down rate (which
-`build_teams.py` feeds into the sim in place of the generated coach tendencies), and
+observed 2026 pass rate, pace, quarterback run share, fourth-down rate and backfield split
+(which `build_teams.py` feeds into the sim in place of the generated coach tendencies), and
 `tools/calibrate_players.py` replays every game 8 times and compares the sim's player lines
 with the real ones. Per team-game, 333 games (bias is sim minus real; "corr" is whether
 the sim knows which teams or players get more):
@@ -1548,9 +1551,32 @@ non-quarterback carries:
 The leading rusher now ends a 13-game regular season around 1,600 to 2,000 yards on 300 to
 360 carries, the real 2026 pace (seed 13's Doak Walker winner: 348 carries, 2,038 yards). The sim's lead back carries a little more than the real
 one because the sim hands non-quarterbacks two or three more carries a game than real
-teams do, and the sim still does not know which real teams ride one back (correlation
-0.10): the feature score comes from the roster, not from the observed shares that
-`tools/derive_tendencies.py` already computes per team.
+teams do.
+
+The sim now knows which real teams ride one back. `tools/derive_tendencies.py` computes
+each team's observed split (the top back's share of running back carries in an average
+game, `rb1_share`, and the second back's), `build_teams.py` passes it into the team's
+tendencies for every team with two or more box scores, and `roster.Team._lead_profile`
+reads the feature score off `RB_LEAD_SHARE_CURVE` in `engine/game_config.py`, the share
+each feature produces in the sim (measured by forcing a feature over 120 real games),
+whenever the team's real lead back leads. Fictional teams, teams without box scores and a
+team whose lead back is hurt keep the roster-derived score; the split that
+`tools/tune_from_real.py` writes is the fallback when there is no observed share. The
+observed share counts games against FCS schools, where real teams bench their backs harder
+than the sim does, so it runs about two points under the share in FBS games; the curve is
+the midpoint of the lead back's own share and the top back's, which leaves the per-game
+share a point low and the season-level share a point or two high.
+
+`calibrate_players.py 8` (388 games): RB1 share of RB carries 52.1% against 53.1 real
+(was 52.9), correlation 0.49 (was 0.34 with the tuned split, 0.10 from the roster alone),
+average miss 10.8 points (12.0); RB2 share 27.8 (26.8 real); RB1 carries 13.7 (14.0),
+yards 67 (70); the sim's top back is the real one in 61% of team-games (63%). The honest
+ceiling for that correlation is about 0.40 to 0.60: a team's own season mean predicts its
+per-game share at 0.40 leaving each game out, 0.61 keeping it in. Season level (seed 11):
+lead back share mean 48.7% (real 46), sd 10.5 (11.3), p10 / p50 / p90 37 / 47 / 63
+(33 / 45 / 63), max 82 (83), 15% of teams at 60% or more (13%); the sim's season share
+correlates 0.81 with the observed per-game share across the 138 real teams. smoke_test 400:
+0 mismatches. Game results for a seed change.
 
 Later, with the depth-chart fix and the carrier running against the defense's pursuit, the
 lead backs ran hot over full seasons (54 thousand-yard rushers against 44-51 real, leaders

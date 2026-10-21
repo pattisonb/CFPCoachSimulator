@@ -2350,6 +2350,18 @@ def team_schedule_view(state: dict, slug: str) -> dict:
             "conf_wins": rec["conf_wins"], "conf_losses": rec["conf_losses"]}, "rank": rk, "schedule": team_schedule(state, slug)}
 
 
+def _coach_line(state: dict, team: dict) -> dict:
+    """Who is coaching your team this season, for the season page header: your created coach
+    (the Your coach page) or the team's own head coach, and who runs each side."""
+    coach = state.get("coach")
+    if coach:
+        return {**{k: coach.get(k) for k in ("id", "first_name", "last_name", "archetype", "offense_scheme",
+                                              "defense_scheme", "calls_offense", "calls_defense", "look")},
+                "existing": False, "staff": coaches.staff(coach, team)}
+    hc = (team.get("coaches") or {}).get("head_coach") or {}
+    return {"existing": True, "name": hc.get("name") or "the head coach", "staff": coaches.staff(None, team)}
+
+
 def summary(state: dict) -> dict:
     teams = load_teams()
     rec = _records(state, include_playoff=True)[state["team"]]
@@ -2361,10 +2373,7 @@ def summary(state: dict) -> dict:
         "phase": state["phase"], "done": state["done"], "champion": state.get("champion"),
         "champion_name": teams[state["champion"]]["name"] if state.get("champion") else None,
         "record": rec, "schedule": schedule, "weeks": weeks, "my_rank": current_rank(state),
-        "coach": ({k: state["coach"].get(k) for k in ("id", "first_name", "last_name", "archetype", "offense_scheme",
-                                                     "defense_scheme", "calls_offense", "calls_defense", "look")}
-                  | {"staff": coaches.staff(state["coach"])}
-                  if state.get("coach") else None),
+        "coach": _coach_line(state, teams[state["team"]]),
         "form": (state.get("form") or {}).get(state["team"]),
         "week_labels": {**{w: f"Week {w}" for w in range(1, LAST_REGULAR_WEEK + 1)}, CCG_WEEK: "Championship week",
                         SELECTION_WEEK: "Selection", **BOWL_WEEK_LABELS},

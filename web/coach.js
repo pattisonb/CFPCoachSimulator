@@ -7,6 +7,8 @@
   let OPT = null;          // /api/coach-options
   let TEAMS = [];          // FBS teams for the alma mater, colors and the season picker
   let coach = null;        // the coach being edited
+  const START_PARAMS = new URLSearchParams(location.search);
+  const START_MODE = START_PARAMS.get("mode") === "remaining" ? "remaining" : "full";   // from the season page's start choice
 
   async function api(url, opts) {
     const r = await fetch(url, opts);
@@ -36,8 +38,6 @@
     }
     bits.push(((OPT.archetypes[c.archetype] || {}).about) || "");
     bits.push(`His offenses run ${c.offense_scheme === "Multiple" ? "a multiple system" : `the ${c.offense_scheme}`}${c.calls_offense ? ", and he calls the plays himself" : ""}; his defenses line up in ${c.defense_scheme === "Multiple 4-2-5" ? "a multiple 4-2-5" : `a ${c.defense_scheme}`}${c.calls_defense ? ", which he runs himself" : ""}.`);
-    const oc = !c.calls_offense && OPT.oc_pool[c.oc || ""], dc = !c.calls_defense && OPT.dc_pool[c.dc || ""];
-    if (oc || dc) bits.push(`He hired ${[oc && `${oc.name} to run the ${oc.scheme} offense`, dc && `${dc.name} to run the ${dc.scheme} defense`].filter(Boolean).join(" and ")}.`);
     return bits.filter(Boolean).join(" ");
   }
 
@@ -56,35 +56,6 @@
     const r = el("input", { type: "range", min: String(min), max: String(max), step: "1", value: String(value), "aria-label": label });
     r.addEventListener("input", () => { out.textContent = r.value; onChange(Number(r.value)); });
     return el("div", { class: "coach-slider" }, [el("div", { class: "coach-slider-head" }, [el("span", { text: label }), out]), r, el("span", { class: "muted small-text", text: about })]);
-  }
-
-  // One coordinator choice: keep the team's own, or hire one from the pool (coaches.py).
-  function staffPicker(key, label, pool, styleKeys) {
-    const c = coach;
-    const opts = [["", "Keep the team's coordinator"], ...Object.entries(pool).map(([k, o]) => [k, `${o.name} (${o.scheme})`])];
-    const card = el("div", { class: "staff-card" });
-    const show = () => {
-      card.innerHTML = "";
-      const o = pool[c[key] || ""];
-      if (!o) { card.append(el("p", { class: "muted small-text", text: "The team's real coordinator stays, with the scheme and tendencies he showed this season." })); return; }
-      card.append(
-        el("div", { class: "staff-head" }, [el("b", { text: o.name }), el("span", { class: "muted small-text", text: ` ${o.scheme} · play-calling ${o.play_calling}` })]),
-        el("p", { class: "small-text", text: o.about }),
-      );
-      const bars = el("div", { class: "staff-bars" });
-      for (const k of styleKeys) {
-        const v = o.style[k];
-        bars.append(el("div", { class: "staff-bar" }, [
-          el("span", { class: "small-text", text: OPT.style[k].label }),
-          el("div", { class: "staff-track" }, [el("div", { class: "staff-fill", style: `width:${v}%` }), el("div", { class: "staff-mid" })]),
-          el("b", { class: "small-text", text: String(v) }),
-        ]));
-      }
-      card.append(bars);
-    };
-    const sel = select(c[key] || "", opts, (v) => { c[key] = v || null; show(); renderPreview(); });
-    show();
-    return el("div", {}, [field(label, sel), card]);
   }
 
   function renderForm() {
@@ -128,7 +99,7 @@
 
     // coaching style
     const sty = el("section", { class: "panel coach-section" }, [el("h3", { text: "Coaching style" }),
-      el("p", { class: "muted small-text", text: "50 is the FBS average. These change how his team plays when he calls that side of the ball." })]);
+      el("p", { class: "muted small-text", text: "50 is the FBS average. These change how his team plays when he calls that side of the ball. The team's coordinators stay for the season; staff changes come after it." })]);
     const offSel = select(c.offense_scheme, Object.keys(OPT.offense_schemes).map((s) => [s, s]), (v) => { c.offense_scheme = v; renderForm(); });
     const defSel = select(c.defense_scheme, Object.keys(OPT.defense_schemes).map((s) => [s, s]), (v) => { c.defense_scheme = v; renderForm(); });
     const callO = el("input", { type: "checkbox" }); callO.checked = !!c.calls_offense;
@@ -137,9 +108,9 @@
     callD.addEventListener("change", () => { c.calls_defense = callD.checked; renderForm(); });
     sty.append(el("div", { class: "coach-grid two" }, [
       el("div", {}, [field("Offensive scheme", offSel, OPT.offense_schemes[c.offense_scheme]),
-        el("label", { class: "coach-check" }, [callO, " Calls his own offense (otherwise hire a coordinator under Your staff)"])]),
+        el("label", { class: "coach-check" }, [callO, " Calls his own offense (his scheme and style; otherwise the team's offensive coordinator calls it)"])]),
       el("div", {}, [field("Defensive scheme", defSel, OPT.defense_schemes[c.defense_scheme]),
-        el("label", { class: "coach-check" }, [callD, " Calls his own defense (otherwise hire a coordinator under Your staff)"])]),
+        el("label", { class: "coach-check" }, [callD, " Calls his own defense (his scheme and style; otherwise the team's defensive coordinator calls it)"])]),
     ]));
     const sliders = el("div", { class: "coach-sliders" });
     for (const [k, s] of Object.entries(OPT.style)) {
@@ -150,17 +121,6 @@
     }
     sty.append(sliders);
     f.append(sty);
-
-    // staff: coordinators for the sides he does not call
-    if (!c.calls_offense || !c.calls_defense) {
-      const staff = el("section", { class: "panel coach-section" }, [el("h3", { text: "Your staff" }),
-        el("p", { class: "muted small-text", text: "Hire the coordinator who calls the side of the ball he does not. Their scheme and style decide how that side plays; keep the team's own and nothing changes." })]);
-      const grid2 = el("div", { class: "coach-grid two" });
-      if (!c.calls_offense) grid2.append(staffPicker("oc", "Offensive coordinator", OPT.oc_pool, ["pass_rate", "tempo", "deep_shot_rate", "play_action_rate"]));
-      if (!c.calls_defense) grid2.append(staffPicker("dc", "Defensive coordinator", OPT.dc_pool, ["blitz_rate", "man_coverage_rate", "press_rate"]));
-      staff.append(grid2);
-      f.append(staff);
-    }
 
     // look
     const look = el("section", { class: "panel coach-section" }, [el("h3", { text: "His look" })]);
@@ -198,28 +158,18 @@
     save.addEventListener("click", saveCoach);
     const teamSel = el("select", { "aria-label": "Team to coach" }, fbs.map((t) => el("option", { value: t.slug, text: t.name })));
     teamSel.value = $("#preview-team").value || (fbs[0] || {}).slug;
-    const start = el("button", { type: "button", class: "accent", text: "Start a season with him" });
+    const start = el("button", { type: "button", class: "accent", text: START_MODE === "remaining" ? "Start from today with him" : "Start a season with him" });
     start.addEventListener("click", () => startSeason(teamSel.value));
     actions.append(el("div", { class: "coach-actions" }, [save, el("span", { class: "muted small-text", text: "then" }), teamSel, start]));
     f.append(actions);
     renderPreview();
   }
 
-  // The scheme a coach's team runs on one side: his own when he calls it, else his hire's.
-  function schemeUsed(c, side) {
-    const calls = side === "offense" ? c.calls_offense : c.calls_defense;
-    const hired = (side === "offense" ? OPT.oc_pool : OPT.dc_pool)[(side === "offense" ? c.oc : c.dc) || ""];
-    if (calls || !hired) return calls ? (side === "offense" ? c.offense_scheme : c.defense_scheme) : "team's own";
-    return hired.scheme;
-  }
-
-  // Who runs one side of the ball: the coach himself, a hired coordinator or the team's own.
+  // Who runs one side of the ball: the coach himself, or the team's own coordinator.
   function sideLine(side) {
     const calls = side === "offense" ? coach.calls_offense : coach.calls_defense;
     const scheme = side === "offense" ? coach.offense_scheme : coach.defense_scheme;
-    if (calls) return `${scheme} (calls it)`;
-    const hired = (side === "offense" ? OPT.oc_pool : OPT.dc_pool)[(side === "offense" ? coach.oc : coach.dc) || ""];
-    return hired ? `${hired.scheme} (${hired.name})` : "the team's coordinator";
+    return calls ? `${scheme} (calls it)` : "the team's coordinator";
   }
 
   function renderPreview() {
@@ -254,7 +204,8 @@
     const saved = await saveCoach();
     if (!saved) return;
     try {
-      const s = await api("/api/season", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team, mode: "full", coach: saved.id }) });
+      if (START_MODE === "remaining") toast("Loading the real season so far…");
+      const s = await api("/api/season", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team, mode: START_MODE, coach: saved.id }) });
       location.href = `/season?id=${encodeURIComponent(s.id)}`;
     } catch (err) { toast(`Could not start the season: ${err.message}`, 4000); }
   }
@@ -280,7 +231,7 @@
         if (coach && coach.id === c.id) coach = clone(OPT.blank);
         renderForm(); renderList();
       });
-      item.append(pic, el("div", { class: "coach-item-text" }, [el("b", { text: fullName(c) }), el("span", { class: "muted small-text", text: `${c.archetype} · ${schemeUsed(c, "offense")} / ${schemeUsed(c, "defense")}` })]), el("div", { class: "coach-item-actions" }, [edit, del]));
+      item.append(pic, el("div", { class: "coach-item-text" }, [el("b", { text: fullName(c) }), el("span", { class: "muted small-text", text: `${c.archetype} · ${c.calls_offense ? c.offense_scheme : "team's OC"} / ${c.calls_defense ? c.defense_scheme : "team's DC"}` })]), el("div", { class: "coach-item-actions" }, [edit, del]));
       box.append(item);
     }
   }
@@ -291,7 +242,8 @@
     } catch (err) { $("#coach-form").append(el("p", { class: "muted", text: `Could not load: ${err.message}` })); return; }
     const sel = $("#preview-team");
     for (const t of TEAMS.filter((x) => !x.fictional)) sel.append(el("option", { value: t.slug, text: t.name }));
-    sel.value = TEAMS.some((t) => t.slug === "ohio-state") ? "ohio-state" : sel.options[0].value;
+    const wanted = START_PARAMS.get("team");
+    sel.value = TEAMS.some((t) => t.slug === wanted) ? wanted : TEAMS.some((t) => t.slug === "ohio-state") ? "ohio-state" : sel.options[0].value;
     sel.addEventListener("change", () => { renderPreview(); renderList(); });
     coach = clone(OPT.blank);
     const params = new URLSearchParams(location.search);
