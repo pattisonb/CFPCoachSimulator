@@ -929,7 +929,7 @@
           devTag ? el("div", { class: "player-dev" }, [devTag]) : null,
           (p.archetype || (p.traits || []).length) ? el("div", { class: "player-traits" }, [
             p.archetype ? el("span", { class: "tag style", text: p.archetype, title: "Play style" }) : null,
-            ...(p.traits || []).map((tr) => el("span", { class: `trait tier-${tr.tier}`, text: tr.name, title: `${tr.tier_name} trait: ${tr.about}` })),
+            ...(p.traits || []).map((tr) => el("span", { class: `trait tier-${tr.tier}`, text: tr.name, title: traitHover(tr) })),
           ]) : null,
         ]),
       ]),
@@ -2749,6 +2749,16 @@
     openModal(el("span", {}, [`${p.name} · all ratings`, el("span", { class: "muted small-text", text: ` · ${p.overall} overall at ${p.position}` })]), node);
   }
 
+  // a trait badge's hover: what it does and the attributes it rests on, with his values
+  function traitBasis(tr) {
+    if (tr.intangible) return "An intangible: no single rating stands behind it.";
+    if (!(tr.built_on || []).length) return "";
+    return `Built on ${tr.built_on.map((b) => `${b.label} ${b.value}`).join(" · ")}.`;
+  }
+  function traitHover(tr) {
+    return `${tr.tier_name} trait: ${tr.about}.\n${traitBasis(tr)}`.trim();
+  }
+
   // ratings v2: every attribute with what it does, the traits, and the rating at every position
   function openAttributes(p) {
     const edited = new Set(p.edited_attributes || []);
@@ -2776,8 +2786,8 @@
     if ((p.traits || []).length || p.archetype) {
       node.append(el("h4", { text: "Play style and traits" }));
       if (p.archetype) node.append(el("p", { class: "small-text" }, [el("b", { text: p.archetype }), el("span", { class: "muted", text: " · play style" })]));
-      for (const tr of p.traits || []) node.append(el("div", { class: "trait-line" }, [el("span", { class: `trait tier-${tr.tier}`, text: tr.name }), el("span", { class: "muted small-text", text: ` ${tr.tier_name} · ${tr.about}` })]));
-      node.append(el("p", { class: "muted small-text", text: "Traits are earned at four tiers: bronze, silver, gold and platinum. Their effects in games come in a later phase of the ratings revamp." }));
+      for (const tr of p.traits || []) node.append(el("div", { class: "trait-line" }, [el("span", { class: `trait tier-${tr.tier}`, text: tr.name, title: traitHover(tr) }), el("span", { class: "muted small-text", text: ` ${tr.tier_name} · ${tr.about}. ${traitBasis(tr)}` })]));
+      node.append(el("p", { class: "muted small-text", text: "Traits come at four tiers (bronze, silver, gold, platinum) and are carried over from the source rosters, which list each player's tiers but not the exact thresholds that earned them. Each one rests on the attributes shown. Their effects in games come in a later phase of the ratings revamp." }));
     }
     const others = Object.entries(p.ratings_at || {}).filter(([pos]) => !(pos === "MLB" && /LB$/.test(p.position))).sort((a, b) => b[1] - a[1]);
     if (others.length) {

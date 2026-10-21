@@ -3235,7 +3235,11 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         "height_in": p.get("height_in"), "archetype": p.get("archetype"),
         "traits": [{"key": tr["key"], "name": ratings_v2.TRAIT_INFO.get(tr["key"], (tr["key"], ""))[0],
                     "about": ratings_v2.TRAIT_INFO.get(tr["key"], ("", ""))[1], "tier": tr["tier"],
-                    "tier_name": ratings_v2.TIER_NAMES.get(tr["tier"], "")} for tr in (p.get("traits") or [])],
+                    "tier_name": ratings_v2.TIER_NAMES.get(tr["tier"], ""),
+                    # the attributes it rests on, with his values (the ones his position carries)
+                    "built_on": [{"label": ratings_v2.ATTRIBUTES[k][0], "value": (p.get("attributes") or {})[k]}
+                                 for k in ratings_v2.TRAIT_KEYS.get(tr["key"], []) if k in (p.get("attributes") or {})],
+                    "intangible": not ratings_v2.TRAIT_KEYS.get(tr["key"])} for tr in (p.get("traits") or [])],
         "edited_attributes": sorted((player_edits(state, team).get(p.get("slug"), {}).get("attributes") or {}).keys()),
         "morale": morale_view(state, team, name, position),
         "form": player_form_shifts(state, team).get(p.get("slug") or ""),

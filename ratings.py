@@ -278,6 +278,41 @@ def traits_of(abilities: list[dict]) -> list[dict]:
 
 TRAIT_INFO = {key: (name, desc) for key, name, desc in TRAITS.values()}
 
+# The attributes each trait rests on (shown on the badge with the player's values). The source
+# data names a player's traits and tiers but not the rules that earned them; some follow one
+# rating closely (kick power for Long Range, the spin and juke moves for Spin Artist), others
+# barely follow any. An empty list is an intangible: no rating stands behind it.
+TRAIT_KEYS: dict[str, list[str]] = {
+    "iron_horse": ["stamina", "durability"], "quick_recovery": ["stamina"], "crowd_favorite": [], "closer": ["football_iq"],
+    "natural_talent": [], "road_warrior": ["football_iq"], "ice_water": ["football_iq"],
+    "steps_up": ["pocket_poise", "sack_escape"], "timing_passer": ["short_accuracy", "football_iq"], "unflappable": ["pocket_poise"],
+    "pinpoint": ["short_accuracy", "mid_accuracy"], "ball_handler": ["play_action"], "play_extender": ["throw_on_move", "sack_escape"],
+    "option_maestro": ["run_vision", "football_iq"], "escape_artist": ["sack_escape", "elusiveness"],
+    "accurate_on_the_run": ["throw_on_move"], "tuck_and_run": ["run_vision", "top_speed"], "off_platform": ["throw_on_move", "arm_strength"],
+    "coach_on_the_field": ["football_iq", "decision_making"], "poised_on_the_run": ["throw_on_move", "pocket_poise"],
+    "quick_feet": ["elusiveness", "agility"], "spin_artist": ["elusiveness"], "slippery": ["agility", "burst"],
+    "stiff_arm_specialist": ["stiff_arm"], "tough_runner": ["tackle_breaking", "power_running"], "downhill_runner": ["power_running", "burst"],
+    "balance": ["tackle_breaking"], "checkdown_target": ["hands", "short_routes"], "breakaway_speed": ["top_speed", "burst"],
+    "bulldozer": ["power_running", "strength"], "ball_protector": ["ball_security"], "extra_effort": ["power_running"],
+    "lead_back": ["lead_block"],
+    "jump_ball_winner": ["contested_catch", "leaping"], "double_move": ["deep_routes", "mid_routes"], "sharp_cutter": ["short_routes", "agility"],
+    "glue_hands": ["hands"], "qbs_favorite": ["short_routes", "hands"], "press_beater": ["release"],
+    "quick_set": ["pass_footwork", "burst"], "second_level_blocker": ["finish_block", "reach_block"],
+    "pocket_protector": ["pass_anchor", "pass_footwork"], "quick_pass_set": ["pass_footwork"], "edge_sealer": ["reach_block"],
+    "road_grader": ["drive_block"], "interior_wall": ["pass_anchor"], "screen_blocker": ["lead_block"],
+    "play_action_protector": ["pass_anchor"], "vise_grip": ["strength", "drive_block"], "grinder": ["strength", "stamina"],
+    "line_leader": ["football_iq"], "option_blocker": ["reach_block"],
+    "block_buster": ["block_shedding", "hit_power"], "heavy_hitter": ["hit_power"], "jarring_hits": ["hit_power"],
+    "pick_six": ["ball_skills", "top_speed"], "route_jumper": ["zone_coverage", "diagnosis"], "jump_the_snap": ["burst"],
+    "sure_tackler": ["tackling"], "pocket_collapser": ["power_rush"], "turnover_magnet": ["ball_skills"], "finisher": ["tackling"],
+    "hand_fighter": ["block_shedding"], "jam_artist": ["press"], "ball_jarrer": ["hit_power"], "shadow": ["man_coverage"],
+    "gap_penetrator": ["speed_rush", "burst"], "edge_setter": ["block_shedding", "tackling"], "diving_breakup": ["ball_skills", "leaping"],
+    "pack_tackler": ["pursuit", "tackling"], "option_killer": ["diagnosis"], "defensive_leader": ["football_iq"],
+    "pressure_player": ["speed_rush", "power_rush"], "edge_bender": ["speed_rush", "agility"],
+    "pin_artist": ["punt_accuracy", "punt_power", "kick_power"], "long_range": ["kick_power", "punt_power"],
+    "automatic": ["kick_accuracy"], "cannon_leg": ["kick_power", "punt_power"], "clutch_leg": ["kick_accuracy"],
+}
+
 
 # ----- god mode: the engine composites each attribute feeds ------------------------------------
 # A change to an attribute moves the engine's composite ratings (the ones the sim reads until
