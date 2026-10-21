@@ -2650,8 +2650,12 @@
     const order = cfp.map((e) => e.team);
     const pos = {}; cfp.forEach((e) => { pos[e.team] = e.rank; });
     const leaders = {};
-    if (state.standings) for (const [conf, rows] of Object.entries(state.standings)) if (rows.length) leaders[conf] = rows[0].slug;
-    else api(`/api/season/${s.id}/standings`).then((d) => { state.standings = d.standings; if (state.tab === "bracket") renderBracket(); }).catch(() => {});
+    if (state.standings) {
+      for (const [conf, rows] of Object.entries(state.standings)) if (rows.length) leaders[conf] = rows[0].slug;
+    } else {
+      // no standings yet: fetch them, then redraw the bracket with the conference leaders
+      api(`/api/season/${s.id}/standings`).then((d) => { state.standings = d.standings; if (state.tab === "bracket") renderBracket(); }).catch(() => {});
+    }
     const autos = [];
     for (const conf of P4) if (leaders[conf]) autos.push([leaders[conf], `${conf} leader`]);
     const g6 = cfp.find((e) => G6.has(e.conference));
