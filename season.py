@@ -992,7 +992,7 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
     if report:
         report(stage, 0, len(jobs))
 
-    def take(r: dict, n: int) -> None:
+    def take(r: dict) -> None:
         g = state["games"][r["event_id"]]
         g.update(played=True, home_score=r["home_score"], away_score=r["away_score"], overtime=r["overtime"])
         if "stats" in r:
@@ -1009,21 +1009,28 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
                     state.setdefault("injuries", {}).setdefault(g[side], {})[key] = {
                         "name": inj["name"], "position": inj["position"], "type": inj["type"], "weeks": inj["weeks"],
                         "weeks_left": inj["weeks"], "since_week": g["week"], "event_id": r["event_id"]}
-        if report:
-            report(stage, n, len(jobs))
+
+    def collect(results) -> None:
+        # Games finish in any order across the workers; progress is reported as they do, but
+        # the results are applied in schedule order, so a seeded season plays out the same
+        # every time (the morale baseline and the injury list depend on the order).
+        done = {}
+        for n, r in enumerate(results, 1):
+            done[r["event_id"]] = r
+            if report:
+                report(stage, n, len(jobs))
+        for eid in game_ids:
+            take(done[eid])
 
     if pool is not None:
-        for n, r in enumerate(pool.imap_unordered(_sim_one, jobs, chunksize=2), 1):
-            take(r, n)
+        collect(pool.imap_unordered(_sim_one, jobs, chunksize=2))
     elif sim_workers() <= 1:
         if not _TEAMS:
             _init(str(TEAMS_FILE))
-        for n, job in enumerate(jobs, 1):
-            take(_sim_one(job), n)
+        collect(_sim_one(job) for job in jobs)
     else:
         with _make_pool() as p:
-            for n, r in enumerate(p.imap_unordered(_sim_one, jobs, chunksize=2), 1):
-                take(r, n)
+            collect(p.imap_unordered(_sim_one, jobs, chunksize=2))
 
 
 def _ccg_matchups(state: dict, teams: dict) -> list[dict]:
