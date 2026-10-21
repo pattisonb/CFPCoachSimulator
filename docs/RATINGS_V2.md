@@ -5,7 +5,8 @@ roll out phase by phase, build traits in this revamp. Phase 1 is built: `ratings
 catalogue; build_teams writes each player's attributes (house scale), height in inches,
 play style and traits; the player card, its details view and god mode use them; edits move
 the engine composites through `ratings.COMPOSITES`. The sim is unchanged (same play-log
-fingerprint).
+fingerprint). Phase 2 (passing by depth, man and zone, contested catches) is built; see
+docs/HOW_IT_WORKS.md, "Passing by depth".
 
 ## Why
 
