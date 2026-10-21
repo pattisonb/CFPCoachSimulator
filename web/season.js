@@ -31,7 +31,7 @@
     // one alphabetical list (the API sorts by name); the conference rides in the label
     for (const t of data.teams) {
       window.CFP.teamsBySlug[t.slug] = t;
-      if (!t.fictional) sel.appendChild(el("option", { value: t.slug, text: `${t.name} (${t.ratings.overall.toFixed(0)}) · ${CONF_SHORT[t.conference] || t.conference}` }));
+      if (!t.fictional) sel.appendChild(el("option", { value: t.slug, text: `${t.name} (${t.ratings.overall.toFixed(0)} OVR) · ${CONF_SHORT[t.conference] || t.conference}` }));
     }
     const params = new URLSearchParams(location.search);
     if (params.get("team") && window.CFP.teamsBySlug[params.get("team")]) sel.value = params.get("team");
@@ -63,9 +63,13 @@
 
   // An API error as a sentence: FastAPI sends {"detail": "..."} after the status code.
   function errText(err) {
-    const m = /^(\d{3}) (.*)$/s.exec(err.message || "");
-    if (!m) return err.message;
-    try { return JSON.parse(m[2]).detail || m[2]; } catch (e) { return m[2] || m[1]; }
+    const msg = (err && err.message) || "";
+    const m = /^(\d{3}) (.*)$/s.exec(msg);
+    if (!m) return /failed to fetch|networkerror|load failed/i.test(msg) ? "could not reach the server. Check your connection and try again." : msg;
+    let detail = "";
+    try { detail = JSON.parse(m[2]).detail; } catch (e) { /* not JSON */ }
+    if (typeof detail === "string" && detail) return detail;
+    return Number(m[1]) >= 500 ? "the server hit an error. Try again in a moment." : `the server said no (${m[1]}).`;
   }
   const isGone = (err) => /^404\b/.test(err.message || "");
 
@@ -109,7 +113,7 @@
       if (state.season && state.season.id === s.id) closeSeason();
       await loadSeasons();
       toast("Season deleted");
-    } catch (err) { toast(`Could not delete: ${err.message}`, 4000); }
+    } catch (err) { toast(`Could not delete: ${errText(err)}`, 4000); }
   }
 
   async function clearSeasons() {
@@ -119,7 +123,7 @@
       closeSeason();
       await loadSeasons();
       toast(r.kept ? `Deleted ${r.removed} seasons; ${r.kept} still simulating` : `Deleted ${r.removed} seasons`);
-    } catch (err) { toast(`Could not clear: ${err.message}`, 4000); }
+    } catch (err) { toast(`Could not clear: ${errText(err)}`, 4000); }
   }
 
   // The Seasons sidebar hides once a season is open so the season takes the full width;
@@ -179,12 +183,15 @@
   async function newSeason(mode, coach) {
     const team = $("#pick-team").value;
     $("#btn-new").disabled = $("#btn-today").disabled = true;
-    if (mode === "remaining") toast("Loading the real season so far: results, polls, stats and box scores…");
+    // building a season takes a few seconds (schedules, rosters, preseason polls): say so
+    const teamName = (window.CFP.teamsBySlug[team] || {}).name || "your team";
+    toast(mode === "remaining" ? "Loading the real season so far: results, polls, stats and box scores…" : `Setting up the ${teamName} season: schedule, rosters and preseason polls…`);
     try {
       const s = await api("/api/season", postJSON({ team, mode, coach: coach || null }));
       history.replaceState(null, "", `/season?id=${s.id}`);
       showSeason(s);
       loadSeasons();
+      if (mode !== "remaining") { clearTimeout(toastTimer); $("#toast").hidden = true; }
       if (mode === "remaining") toast(`Started from today: ${s.week_labels[s.current_week] || "week " + s.current_week} is in with the real results and stats.`, 3500);
     } catch (err) { toast(`Could not start the season: ${errText(err)}`, 4000); }
     finally { $("#btn-new").disabled = $("#btn-today").disabled = false; }
@@ -237,7 +244,7 @@
       }
       toast("Real data refreshed.", 2500);
       await openSeason(REAL_ID);
-    } catch (err) { toast(`Refresh failed: ${err.message}`, 5000); }
+    } catch (err) { toast(`Refresh failed: ${errText(err)}`, 5000); }
     b.disabled = false;
     b.textContent = "Refresh real data";
   }
@@ -352,10 +359,17 @@
           const gdEvent = state.gamedayWanted && j.status !== "error" ? j.gameday_event : null;
           const mine = gdEvent ? (j.results || []).find((r) => r.event_id === gdEvent) : null;
           state.gamedayWanted = false;
-          showSeason(s);
-          loadSeasons();
-          setBusy(false);
-          if (gdEvent) openGameDay(gdEvent, mine);
+          if (gdEvent) {
+            // the page behind the live game would give the score away (record, "your game is
+            // played"), so it updates when the game is over, skipped or closed
+            state.afterGameday = s;
+            setBusy(false);
+            openGameDay(gdEvent, mine);
+          } else {
+            showSeason(s);
+            loadSeasons();
+            setBusy(false);
+          }
         }
         state.pollMisses = 0;
       } catch (err) {
@@ -490,7 +504,7 @@
     try {
       const r = await api(`/api/season/${s.id}/pause`, { method: "POST" });
       if (r.stopping) { $("#btn-pause").disabled = true; $("#btn-pause").textContent = "Pausing after this week…"; }
-    } catch (err) { toast(`Could not pause: ${err.message}`, 3000); }
+    } catch (err) { toast(`Could not pause: ${errText(err)}`, 3000); }
   }
 
   // ----- rendering ---------------------------------------------------------
@@ -606,7 +620,7 @@
     const played = myNext && myNext.played ? ` · your game is played (${myNext.won ? "W" : "L"} ${myNext.points_for}–${myNext.points_against}); Advance plays the rest of the week` : "";
     const phase = s.done ? `Season complete · national champion: ${s.champion_name}` : s.current_week === 0 ? `Preseason · ${s.week_labels[1] || "Week 1"} up next${played}` : `${s.week_labels[s.current_week + 1] || "Week " + (s.current_week + 1)} up next · through ${s.week_labels[s.current_week] || "week " + s.current_week}${played}`;
     const simDate = simDateText(s);
-    $("#season-meta").textContent = `${phase}${simDate ? ` · ${simDate}` : ""} · ${s.mode === "full" ? "full season simulated" : "started from today: real results, polls and stats through then"} · ${when(s.created_at)}`;
+    $("#season-meta").textContent = `${phase}${simDate ? ` · ${simDate}` : ""} · ${s.mode === "full" ? "full season from week 1" : "started from today: real results, polls and stats through then"} · created ${when(s.created_at)}`;
     // your coach (the Your coach page): his name and style under the title
     if (s.coach) {
       const c = s.coach;
@@ -644,7 +658,7 @@
     for (const w of weeks) {
       const label = weekChipLabel(s, w);
       const next = !s.done && w === s.current_week + 1;
-      const b = el("button", { type: "button", class: `week-chip ${w === state.viewWeek ? "active" : ""} ${w > s.current_week ? "future" : ""} ${w === s.current_week ? "current" : ""} ${next ? "next" : ""}`, text: label, title: `${s.week_labels[w] || (w === 0 ? "Preseason" : "")} · ${weekDateText(s, w)}` });
+      const b = el("button", { type: "button", class: `week-chip ${w === state.viewWeek ? "active" : ""} ${w > s.current_week ? "future" : ""} ${w === s.current_week ? "current" : ""} ${next ? "next" : ""}`, text: label, title: `${s.week_labels[w] || (w === 0 ? "Preseason" : "")} · ${weekDateText(s, w)}`, "aria-label": s.week_labels[w] || (w === 0 ? "Preseason" : `Week ${w}`) });
       b.addEventListener("click", () => { if (state.simming) return; state.viewWeek = w; renderWeekStrip(); renderTab(); });
       if (state.simming) b.disabled = true;   // the strip only follows the sim while it runs
       strip.appendChild(b);
@@ -766,7 +780,7 @@
     const box = $("#tab-depth");
     box.innerHTML = "";
     try { await renderDepthChartBody(box, s); }
-    catch (err) { box.append(el("p", { class: "muted", text: `Could not draw the depth chart: ${err.message}` })); console.error(err); }
+    catch (err) { box.append(el("p", { class: "muted", text: `Could not draw the depth chart: ${errText(err)}` })); console.error(err); }
   }
 
   // A depth-chart control button (★ ▲ ▼ + or Reset); a title of null leaves the attribute off.
@@ -806,13 +820,13 @@
     if (ds.view === "position") return renderDepthByPosition(box, ds, s);
     const key = `${s.id}|${s.current_week}|${ds.team}`;
     if (!ds.data || ds.key !== key) {
-      try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`); ds.key = key; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+      try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`); ds.key = key; } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
     }
     const d = ds.data;
     // moves are saved with the season and used by every game from then on
     const change = async (body) => {
       try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`, postJSON(body)); renderDepthChart(); }
-      catch (err) { toast(`Could not change the depth chart: ${err.message}`, 4000); }
+      catch (err) { toast(`Could not change the depth chart: ${errText(err)}`, 4000); }
     };
     const canEdit = !s.done && s.mode !== "real" && (ds.team === s.team || godMode());
     const resetBtn = d.overridden && canEdit
@@ -892,7 +906,9 @@
     document.body.classList.add("modal-open");
     let pushed = false;
     try { history.pushState({ cfpModal: modalStack.length + 1 }, ""); pushed = true; } catch (e) { pushed = false; }
-    modalStack.push({ layer, pushed });
+    // remember what opened it, so focus goes back there when it closes
+    const opener = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
+    modalStack.push({ layer, pushed, opener });
     layer.querySelector(".modal-close").focus({ preventScroll: true });
   }
 
@@ -902,6 +918,11 @@
     if (top.layer.id === "modal") top.layer.hidden = true;
     else top.layer.remove();
     if (!modalStack.length) document.body.classList.remove("modal-open");
+    if (state.afterGameday && gameday.layerNode === top.layer) showAfterGameday();
+    // back to what opened it; if that is gone or hidden now (Game day, once played), the next step
+    const under = modalStack.length ? modalStack[modalStack.length - 1].layer.querySelector(".modal-close") : $("#btn-advance");
+    const back = [top.opener, under].find((n) => n && n.isConnected && n.offsetParent !== null && !n.disabled);
+    if (back) back.focus({ preventScroll: true });
     // going back in history fires popstate, which must not close a second layer
     if (!fromHistory && top.pushed) { modalSkipPop = true; history.back(); }
   }
@@ -913,7 +934,18 @@
 
   const modalOpen = () => modalStack.length > 0;
   window.addEventListener("popstate", () => { if (modalSkipPop) { modalSkipPop = false; return; } if (modalOpen()) closeModal(true); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modalOpen()) closeModal(); });
+  document.addEventListener("keydown", (e) => {
+    if (!modalOpen()) return;
+    if (e.key === "Escape") { closeModal(); return; }
+    if (e.key !== "Tab") return;
+    // keep Tab inside the top dialog: the page behind it is covered
+    const panel = modalStack[modalStack.length - 1].layer.querySelector(".modal-panel") || modalStack[modalStack.length - 1].layer;
+    const items = [...panel.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter((n) => n.offsetParent !== null);
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && (document.activeElement === first || !panel.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (document.activeElement === last || !panel.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+  });
   $("#modal-backdrop").addEventListener("click", () => closeModal());
   $("#modal-close").addEventListener("click", () => closeModal());
 
@@ -945,7 +977,7 @@
     let p = playerState.cache.get(key);
     if (!p) {
       try { p = await api(`/api/season/${s.id}/player?team=${encodeURIComponent(team)}&name=${encodeURIComponent(name)}&position=${encodeURIComponent(position || "")}`); }
-      catch (err) { toast(`Could not load that player: ${err.message}`, 3000); return; }
+      catch (err) { toast(`Could not load that player: ${errText(err)}`, 3000); return; }
       playerState.cache.set(key, p);
     }
     const node = el("div", { class: "player-page" });
@@ -1331,7 +1363,7 @@
     box.innerHTML = "";
     const key = `${s.id}|${s.current_week}`;
     if (!awardsState.data || awardsState.key !== key) {
-      try { awardsState.data = await api(`/api/season/${s.id}/awards`); awardsState.key = key; awardsState.sort = null; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+      try { awardsState.data = await api(`/api/season/${s.id}/awards`); awardsState.key = key; awardsState.sort = null; } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
     }
     const d = awardsState.data;
     const st = awardsState;
@@ -1450,7 +1482,7 @@
     const box = $("#tab-summary");
     box.innerHTML = "";
     let r;
-    try { r = await api(`/api/season/${s.id}/review`); } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+    try { r = await api(`/api/season/${s.id}/review`); } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
     const m = r.mine;
     const pill = (slug) => teamPill(slug);
     const team = (slug, text, cls = "") => el("span", { class: `review-team ${cls}` }, [pill(slug), text]);
@@ -1791,9 +1823,14 @@
     const box = gamesState.container && gamesState.container.isConnected ? gamesState.container : $("#tab-games");
     box.innerHTML = "";
     if (w === 0) { box.append(el("p", { class: "muted", text: "Preseason. Advance a week to play games." })); return; }
-    let data;
-    try { data = await api(`/api/season/${s.id}/week/${w}`); } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
     const label = s.week_labels[w] || `Week ${w}`;
+    const token = gamesState.token = (gamesState.token || 0) + 1;   // a newer render wins if the weeks change mid-load
+    box.append(el("p", { class: "muted loading-note", text: `Loading ${label} games…` }));
+    let data;
+    try { data = await api(`/api/season/${s.id}/week/${w}`); }
+    catch (err) { if (token === gamesState.token) { box.innerHTML = ""; box.append(el("p", { class: "muted", text: `Could not load ${label}: ${errText(err)}` })); } return; }
+    if (token !== gamesState.token) return;
+    box.innerHTML = "";
     if (!data.games.length) { box.append(el("h3", { text: `${label} · 0 games` })); box.append(el("p", { class: "muted", text: w > s.current_week ? "Not played yet." : "No games this week." })); return; }
     // filters: conference chips, then a view chip (ranked, top-25 matchups, upsets, close games, overtime, conference games, my team)
     const gs = gamesState;
@@ -1883,7 +1920,7 @@
       head.querySelector(".small-text").textContent = holder.hidden ? "show" : "hide";
       if (!holder.hidden && !holder.children.length) {
         try { const j = await api(`/api/season/${s.id}/injuries`); holder.append(j.injuries.length ? injuryTable(j.injuries, true) : el("p", { class: "muted", text: "No injuries anywhere." })); }
-        catch (err) { holder.append(el("p", { class: "muted", text: err.message })); }
+        catch (err) { holder.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); }
       }
     });
     box.append(el("div", { class: "injury-league" }, [head, holder]));
@@ -1899,7 +1936,7 @@
     let data = thisWeekState.key === key ? thisWeekState.data : null;
     if (!data) {
       card.append(el("div", { class: "review-label", text: "This week" }), el("p", { class: "muted small-text", text: "Simulating the matchup…" }));
-      try { data = await api(`/api/season/${s.id}/preview?team=${d.team}`); } catch (err) { card.innerHTML = ""; card.append(el("div", { class: "review-label", text: "This week" }), el("p", { class: "muted small-text", text: err.message })); return; }
+      try { data = await api(`/api/season/${s.id}/preview?team=${d.team}`); } catch (err) { card.innerHTML = ""; card.append(el("div", { class: "review-label", text: "This week" }), el("p", { class: "muted small-text", text: `Could not load this: ${errText(err)}` })); return; }
       thisWeekState.key = key; thisWeekState.data = data;
     }
     if (!card.isConnected) return;
@@ -2009,7 +2046,7 @@
     box.append(controls);
     const key = `${s.id}|${s.current_week}|${(s.schedule || []).filter((g) => g.played).length}|${st.team}`;
     if (!st.data || st.key !== key) {
-      try { st.data = await api(`/api/season/${s.id}/schedule/${st.team}`); st.key = key; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+      try { st.data = await api(`/api/season/${s.id}/schedule/${st.team}`); st.key = key; } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
     }
     const d = st.data;
     const mine = !!s.team && st.team === s.team;
@@ -2106,7 +2143,7 @@
       try {
         const j = await api(`/api/season/${s.id}/stats/teams`);
         teamStatsState.rows = j.teams; teamStatsState.partial = j.partial; teamStatsState.seasonId = s.id; teamStatsState.week = s.current_week;
-      } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+      } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
     }
     const rows = teamStatsState.rows;
     if (!rows.length) { box.append(el("p", { class: "muted", text: "No games simulated yet. Advance a week to start collecting stats." })); return; }
@@ -2255,7 +2292,7 @@
       try {
         const j = await api(`/api/season/${s.id}/stats/leaders?n=5${ps.team ? `&team=${ps.team}` : ""}${!ps.team && ps.conf ? `&conference=${encodeURIComponent(ps.conf)}` : ""}`);
         ps.leaders = { key, ...j };
-      } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+      } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
     }
     const L = ps.leaders.leaders;
     if (!Object.values(L).some((rows) => rows.length)) { box.append(el("p", { class: "muted", text: "No stats yet." })); return; }
@@ -2290,7 +2327,7 @@
       try {
         const j = await api(`/api/season/${s.id}/stats/players?cat=${ps.view}${ps.team ? `&team=${ps.team}` : ""}${!ps.team && ps.conf ? `&conference=${encodeURIComponent(ps.conf)}` : ""}`);
         ps.data = { key, players: j.players, partial: j.partial };
-      } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+      } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
     }
     const cols = PLAYER_COLS[ps.view];
     const players = ps.data.players.slice();
@@ -2321,7 +2358,7 @@
   async function renderRoster(box, slug) {
     const ps = playerStatsState;
     if (!ps.roster || ps.roster.slug !== slug) {
-      try { ps.roster = { slug, ...(await api(`/api/teams/${slug}`)) }; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+      try { ps.roster = { slug, ...(await api(`/api/teams/${slug}`)) }; } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
     }
     const t = ps.roster;
     const r = t.ratings || {};
@@ -2362,14 +2399,14 @@
   async function renderDepthByPosition(box, ds, s) {
     const key = `${s.id}|${s.current_week}|${ds.team}|${ds.role}`;
     if (!ds.pos || ds.posKey !== key) {
-      try { ds.pos = await api(`/api/season/${s.id}/depth/${ds.team}/position/${ds.role}`); ds.posKey = key; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+      try { ds.pos = await api(`/api/season/${s.id}/depth/${ds.team}/position/${ds.role}`); ds.posKey = key; } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
     }
     const d = ds.pos;
     const change = async (body) => {
       try {
         await api(`/api/season/${s.id}/depth/${ds.team}`, postJSON(body));
         ds.pos = null; ds.data = null; renderDepthChart();
-      } catch (err) { toast(`Could not change the depth chart: ${err.message}`, 4000); }
+      } catch (err) { toast(`Could not change the depth chart: ${errText(err)}`, 4000); }
     };
     const label = { QB: "quarterback", HB: "running back", FB: "fullback", WR: "receiver", TE: "tight end", LT: "left tackle", LG: "left guard", C: "center", RG: "right guard", RT: "right tackle", LEDG: "left edge", DT: "defensive tackle", REDG: "right edge", SAM: "strongside linebacker", MIKE: "middle linebacker", WILL: "weakside linebacker", CB: "cornerback", FS: "free safety", SS: "strong safety", K: "kicker", P: "punter", KR: "kick returner", PR: "punt returner" }[ds.role] || ds.role;
     box.append(el("p", { class: "muted small-text", text: `Every ${d.name || ""}player rated as a ${label}. Rating is what he would be at this spot; Natural is his rating at his own position. ★ makes him the starter here${["KR", "PR"].includes(ds.role) ? "" : ", + adds him to the rotation at the bottom"}. Changes save with this season.` }));
@@ -2401,7 +2438,7 @@
     const box = $("#tab-standings");
     box.innerHTML = "";
     if (!state.standings) {
-      try { state.standings = (await api(`/api/season/${s.id}/standings`)).standings; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
+      try { state.standings = (await api(`/api/season/${s.id}/standings`)).standings; } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
     }
     const st = standingsState;
     if (st.conf === null) st.conf = state.standings[s.conference] ? s.conference : "";
@@ -2628,7 +2665,7 @@
       try {
         const views = await Promise.all(weeks.map((w) => api(`/api/season/${s.id}/week/${w}`)));
         for (const v of views) for (const g of v.games) if (g.kind === "playoff") bracketState.games[g.event_id] = g;
-      } catch (err) { box.append(el("p", { class: "muted", text: err.message })); }
+      } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); }
     }
     const seeds = {};
     for (const x of b.seeds) seeds[x.seed] = x;
@@ -2786,7 +2823,7 @@
       const title = el("span", {}, [teamPill(g.away_slug), `${g.away.name} ${g.away.score}`, el("span", { class: "muted", text: " at " }), teamPill(g.home_slug), `${g.home.name} ${g.home.score}`,
         el("span", { class: "muted small-text", text: g.overtime_periods ? ` · Final / ${g.overtime_periods}OT` : " · Final" })]);
       openModal(title, node);
-    } catch (err) { toast(`Could not load that game: ${err.message}`, 3000); }
+    } catch (err) { toast(`Could not load that game: ${errText(err)}`, 3000); }
   }
   function selectBoxTab(name) {
     for (const b of $("#sbox-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.btab === name);
@@ -2806,7 +2843,10 @@
     const s = state.season;
     if (!s) return;
     const node = el("div", { class: "settings" });
-    const row = (title, desc, control) => el("div", { class: "settings-row" }, [el("div", { class: "settings-text" }, [el("b", { text: title }), el("div", { class: "muted small-text", text: desc })]), control]);
+    const row = (title, desc, control) => {
+      if (control.getAttribute("role") === "switch") control.setAttribute("aria-label", title);   // the switch is named after its row
+      return el("div", { class: "settings-row" }, [el("div", { class: "settings-text" }, [el("b", { text: title }), el("div", { class: "muted small-text", text: desc })]), control]);
+    };
     const toggle = (on, onChange) => {
       const b = el("button", { type: "button", class: `switch ${on ? "on" : ""}`, role: "switch", "aria-checked": on ? "true" : "false" }, [el("span", { class: "knob" })]);
       b.addEventListener("click", async () => { const next = !b.classList.contains("on"); b.disabled = true; try { await onChange(next); b.classList.toggle("on", next); b.setAttribute("aria-checked", next ? "true" : "false"); } catch (err) { toast(err.message, 4000); } b.disabled = false; });
@@ -2941,7 +2981,7 @@
         const box = card.closest(".player-page");
         if (box && j.player) renderPlayer(j.player, box);
         if (state.tab === "depth") renderDepthChart();
-      } catch (err) { toast(`Could not save: ${err.message}`, 4000); save.disabled = false; }
+      } catch (err) { toast(`Could not save: ${errText(err)}`, 4000); save.disabled = false; }
     });
     actions.append(save, cancel);
     form.append(actions);
@@ -2984,7 +3024,7 @@
     box.append(note);
     let data = resumeState.cache[`${s.id}|${w}`];
     if (!data) {
-      try { data = await api(`/api/season/${s.id}/resume?week=${w}`); } catch (err) { note.textContent = `Could not load the resume: ${err.message}`; return; }
+      try { data = await api(`/api/season/${s.id}/resume?week=${w}`); } catch (err) { note.textContent = `Could not load the resume: ${errText(err)}`; return; }
       resumeState.cache[`${s.id}|${w}`] = data;
     }
     if (!box.isConnected) return;
@@ -3013,7 +3053,7 @@
   async function openResume(slug, w) {
     const s = state.season;
     let data;
-    try { data = await api(`/api/season/${s.id}/resume?week=${w}&team=${slug}`); } catch (err) { toast(`Could not load the resume: ${err.message}`, 3000); return; }
+    try { data = await api(`/api/season/${s.id}/resume?week=${w}&team=${slug}`); } catch (err) { toast(`Could not load the resume: ${errText(err)}`, 3000); return; }
     const r = data.rows[0];
     if (!r) return;
     const node = el("div", { class: "resume" });
@@ -3206,11 +3246,20 @@
     return `${r} · ${d.plays} play${d.plays === 1 ? "" : "s"}, ${d.end_yardline - d.start_yardline} yards, ${Math.floor(d.seconds / 60)}:${String(d.seconds % 60).padStart(2, "0")}`;
   }
 
+  // the season as it stands after the live game: shown once the game is over (see poll)
+  function showAfterGameday() {
+    const s = state.afterGameday;
+    if (!s) return;
+    state.afterGameday = null;
+    showSeason(s);
+    loadSeasons();
+  }
+
   async function openGameDay(eventId, info) {
     const s = state.season;
     let g;
-    try { g = await api(`/api/season/${s.id}/game/${eventId}`); } catch (err) { toast(`Could not load the game: ${err.message}`, 3000); return; }
-    if (!g.drives || !g.drives.some((d) => d.log && d.log.length)) { openBox(eventId); return; }
+    try { g = await api(`/api/season/${s.id}/game/${eventId}`); } catch (err) { showAfterGameday(); toast(`Could not load the game: ${errText(err)}`, 3000); return; }
+    if (!g.drives || !g.drives.some((d) => d.log && d.log.length)) { showAfterGameday(); openBox(eventId); return; }
     gameday.g = g; gameday.eventId = eventId; gameday.moments = gdMoments(g); gameday.i = 0; gameday.speed = gdSpeed();
     clearTimeout(gameday.timer);
     const node = el("div", { class: "gameday" });
@@ -3287,6 +3336,7 @@
     clearTimeout(gameday.timer);
     const { g, eventId, node } = gameday;
     if (!g) return;
+    showAfterGameday();
     if (skipped || !node || !node.isConnected) { closeAllModals(); openBox(eventId); gameday.g = null; return; }
     $("#gd-home").textContent = String(g.home.score); $("#gd-away").textContent = String(g.away.score);
     $("#gd-q").textContent = g.overtime_periods ? `Final / ${g.overtime_periods}OT` : "Final"; $("#gd-time").textContent = "";
@@ -3318,18 +3368,20 @@
   $("#sbox-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-btab]"); if (b) selectBoxTab(b.dataset.btab); });
 
   (async () => {
-    try { await loadTeams(); } catch (err) { toast(`Teams unavailable: ${err.message}`, 4000); }
-    await loadSeasons().catch(() => {});
     const id = REAL ? REAL_ID : new URLSearchParams(location.search).get("id");
     if (REAL) {
       document.body.classList.add("real-mode");
-      $("#season-empty").querySelector("p").textContent = "Loading the real 2026 season…";
+      document.title = "Real 2026 · CFP Coach Simulator";
       const tabs = $("#season-tabs");
       for (const t of ["games", "schedule", "rankings", "standings", "stats", "awards", "bracket", "bowls"]) tabs.append(tabs.querySelector(`button[data-tab=${t}]`));
       tabs.querySelector("button[data-tab=schedule]").textContent = "Schedules";
       state.tab = "games";
     }
+    // while the season loads, say so instead of showing the start-a-season instructions
+    if (id) $("#season-empty").querySelector("p").textContent = REAL ? "Loading the real 2026 season: results, polls and stats…" : "Loading the season…";
     for (const a of document.querySelectorAll(".site-nav a")) a.classList.toggle("active", a.dataset.nav === (REAL ? "real" : "season"));
-    if (id) openSeason(id);
+    loadSeasons().catch(() => {});   // the sidebar list loads alongside; the season needs only the teams
+    try { await loadTeams(); } catch (err) { toast(`Teams unavailable: ${errText(err)}`, 4000); }
+    if (id) openSeason(id);   // it reloads the season list too, marking the open season
   })();
 })();

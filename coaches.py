@@ -40,15 +40,15 @@ DEFENSE_SCHEMES = {
 }
 # rating presets for the archetypes (the sliders start here)
 ARCHETYPES = {
-    "Offensive Guru": {"about": "Built the offense himself. Elite play-caller on offense, less hands-on with the defense.",
+    "Offensive Guru": {"about": "Built the offense from the ground up. Elite play-caller on offense, less hands-on with the defense.",
                        "ratings": {"offense": 90, "defense": 60, "recruiting": 65, "player_development": 75, "game_management": 70, "motivation": 70, "discipline": 65}},
-    "Defensive Mastermind": {"about": "Came up as a defensive coordinator. His defenses are disciplined and hard to read.",
+    "Defensive Mastermind": {"about": "Came up as a defensive coordinator. The defenses are disciplined and hard to read.",
                              "ratings": {"offense": 60, "defense": 90, "recruiting": 65, "player_development": 75, "game_management": 70, "motivation": 70, "discipline": 80}},
     "Recruiting Ace": {"about": "Wins in living rooms. Brings in talent; leans on coordinators for the X's and O's.",
                        "ratings": {"offense": 68, "defense": 68, "recruiting": 92, "player_development": 70, "game_management": 65, "motivation": 78, "discipline": 62}},
     "Program Builder": {"about": "Turns programs around: develops players, runs a tight ship.",
                         "ratings": {"offense": 70, "defense": 70, "recruiting": 70, "player_development": 88, "game_management": 72, "motivation": 72, "discipline": 82}},
-    "Players' Coach": {"about": "His players run through walls for him. Loose on the details.",
+    "Players' Coach": {"about": "Players run through walls for this coach. Loose on the details.",
                        "ratings": {"offense": 70, "defense": 70, "recruiting": 78, "player_development": 75, "game_management": 62, "motivation": 92, "discipline": 55}},
     "Game-Day CEO": {"about": "Manages the clock, the fourth downs and the headset better than anyone.",
                      "ratings": {"offense": 72, "defense": 72, "recruiting": 70, "player_development": 70, "game_management": 92, "motivation": 70, "discipline": 75}},
@@ -57,22 +57,23 @@ RATING_KEYS = ("offense", "defense", "recruiting", "player_development", "game_m
 RATING_LABELS = {"offense": "Offense", "defense": "Defense", "recruiting": "Recruiting", "player_development": "Player development",
                  "game_management": "Game management", "motivation": "Motivation", "discipline": "Discipline"}
 RATING_ABOUT = {
-    "offense": "Play-calling when he calls his own offense: wins more of the guessing game.",
-    "defense": "Play-calling when he calls his own defense.",
+    "offense": "Play-calling on offense, when the coach calls it: wins more of the guessing game.",
+    "defense": "Play-calling on defense, when the coach calls it.",
     "recruiting": "Recruiting classes (coming with recruiting).",
     "player_development": "How fast players improve (coming with the offseason).",
     "game_management": "Clock and timeout decisions late in halves (coming with coach mode).",
-    "motivation": "How much a hot streak or a big win lifts his team (coming with coach mode).",
+    "motivation": "How much a hot streak or a big win lifts the team (coming with coach mode).",
     "discipline": "Fewer penalties.",
 }
 RATING_BUDGET = 525          # the seven ratings may add up to at most this
+RATING_LIVE = ("offense", "defense", "discipline")   # the ratings games use today; the rest come with later features
 # style sliders: key -> (label, side, what it does in the sim); 50 = the FBS average
 STYLE = {
-    "pass_rate": ("Pass rate", "offense", "How often he calls a pass instead of a run."),
+    "pass_rate": ("Pass rate", "offense", "How often the offense calls a pass instead of a run."),
     "tempo": ("Tempo", "offense", "How fast the offense snaps the ball: more plays a game."),
     "deep_shot_rate": ("Deep shots", "offense", "How often throws go 20+ yards downfield."),
     "play_action_rate": ("Play-action", "offense", "How often first- and second-down passes start with a run fake."),
-    "fourth_down_go_rate": ("Fourth-down aggressiveness", "head", "How often he goes for it instead of punting or kicking."),
+    "fourth_down_go_rate": ("Fourth-down aggressiveness", "head", "How often the team goes for it instead of punting or kicking."),
     "blitz_rate": ("Blitz", "defense", "How often the defense sends extra rushers: more sacks, more big plays allowed."),
     "man_coverage_rate": ("Man coverage", "defense", "How often the defense plays man instead of zone."),
     "press_rate": ("Press", "defense", "How often corners press receivers at the line in man coverage."),
@@ -82,7 +83,7 @@ STYLE = {
 # rating and a style on the league scale.
 OC_POOL = {
     "kessler": {"name": "Dale Kessler", "scheme": "Air Raid", "play_calling": 82,
-                "about": "Four wide on every snap. Throws it 50 times and takes his shots.",
+                "about": "Four wide on every snap. Throws it 50 times and takes its shots.",
                 "style": {"pass_rate": 78, "tempo": 80, "deep_shot_rate": 72, "play_action_rate": 22}},
     "whitfield": {"name": "Ron Whitfield", "scheme": "West Coast", "play_calling": 79,
                   "about": "Timing routes, ball out quick, chains moving. Rarely throws deep.",
@@ -103,7 +104,7 @@ OC_POOL = {
                "about": "Dive, keep, pitch. Throws ten times a game and makes them count.",
                "style": {"pass_rate": 10, "tempo": 40, "deep_shot_rate": 30, "play_action_rate": 60}},
     "navarro": {"name": "Eli Navarro", "scheme": "Multiple", "play_calling": 84,
-                "about": "No fixed system. Builds the game plan around whoever he has.",
+                "about": "No fixed system. Builds the game plan around the players on hand.",
                 "style": {"pass_rate": 52, "tempo": 50, "deep_shot_rate": 50, "play_action_rate": 50}},
 }
 DC_POOL = {
@@ -250,7 +251,7 @@ def options() -> dict:
     """Everything the page needs to build its form."""
     return {"offense_schemes": OFFENSE_SCHEMES, "defense_schemes": DEFENSE_SCHEMES,
             "archetypes": ARCHETYPES, "rating_keys": RATING_KEYS, "rating_labels": RATING_LABELS, "rating_about": RATING_ABOUT,
-            "rating_budget": RATING_BUDGET, "style": {k: {"label": v[0], "side": v[1], "about": v[2]} for k, v in STYLE.items()},
+            "rating_budget": RATING_BUDGET, "rating_live": RATING_LIVE, "style": {k: {"label": v[0], "side": v[1], "about": v[2]} for k, v in STYLE.items()},
             "positions_played": POSITIONS_PLAYED, "playing_levels": PLAYING_LEVELS, "look": LOOK, "blank": blank()}
 
 
@@ -274,7 +275,7 @@ def staff(coach: Optional[dict], team: dict) -> dict:
     out = {}
     for side, calls, scheme in (("offense", "calls_offense", "offense_scheme"), ("defense", "calls_defense", "defense_scheme")):
         if coach and coach.get(calls):
-            out[side] = f"calls the {coach[scheme]} {side} himself"
+            out[side] = f"calls the {coach[scheme]} {side} as head coach"
         else:
             out[side] = _coordinator(team, side)
     return out

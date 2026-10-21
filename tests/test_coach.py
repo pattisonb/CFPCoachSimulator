@@ -43,7 +43,7 @@ if __name__ == "__main__":
     want = max(0, min(100, team["tendencies"].get("discipline", 50) + c["ratings"]["discipline"] - old))
     assert t["tendencies"]["discipline"] == want, (t["tendencies"]["discipline"], want)
     staff = coaches.staff(c, team)
-    assert staff["offense"] == "calls the Air Raid offense himself" and staff["defense"].startswith(f"DC {dc['name']}"), staff
+    assert staff["offense"] == "calls the Air Raid offense as head coach" and staff["defense"].startswith(f"DC {dc['name']}"), staff
 
     # a season with him: he is in the summary, and the team the games use has his offense
     st = season.new_season("ohio-state", "full", seed=3, coach=c)

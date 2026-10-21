@@ -11,9 +11,11 @@
   const START_MODE = START_PARAMS.get("mode") === "remaining" ? "remaining" : "full";   // from the season page's start choice
 
   async function api(url, opts) {
-    const r = await fetch(url, opts);
+    let r;
+    try { r = await fetch(url, opts); }
+    catch (_) { throw new Error("could not reach the server. Check your connection and try again."); }
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(j.detail || r.statusText);
+    if (!r.ok) throw new Error(typeof j.detail === "string" && j.detail ? j.detail : r.status >= 500 ? "the server hit an error. Try again in a moment." : `the server said no (${r.status}).`);
     return j;
   }
   function toast(msg, ms = 2500) {
@@ -31,13 +33,15 @@
     const school = (TEAMS.find((t) => t.slug === c.alma_mater) || {}).name;
     const bits = [];
     bits.push(`${fullName(c)}${c.hometown ? `, from ${c.hometown},` : ""} is ${c.age}.`);
+    // written around the coach's last name, as a sportswriter would, so it fits any coach
+    const who = (c.last_name || "").trim() || "The coach";
     if (c.played && c.played !== "Did not play") {
-      bits.push(`He played ${c.played === "K/P" ? "kicker" : c.played}${school ? ` at ${school}` : ""}, ${({ "Walk-on": "walking on and earning his spot", "College starter": "as a multi-year starter", "All-conference": "earning all-conference honors", "All-American": "as an All-American", "NFL": "then spent time in the NFL" })[c.playing_level] || ""}.`);
+      bits.push(`${who} played ${c.played === "K/P" ? "kicker" : c.played}${school ? ` at ${school}` : ""}, ${({ "Walk-on": "walking on and earning a spot", "College starter": "as a multi-year starter", "All-conference": "earning all-conference honors", "All-American": "as an All-American", "NFL": "then spent time in the NFL" })[c.playing_level] || ""}.`);
     } else if (school) {
-      bits.push(`He studied at ${school} and started coaching as a student assistant.`);
+      bits.push(`${who} studied at ${school} and started coaching as a student assistant.`);
     }
     bits.push(((OPT.archetypes[c.archetype] || {}).about) || "");
-    bits.push(`His offenses run ${c.offense_scheme === "Multiple" ? "a multiple system" : `the ${c.offense_scheme}`}${c.calls_offense ? ", and he calls the plays himself" : ""}; his defenses line up in ${c.defense_scheme === "Multiple 4-2-5" ? "a multiple 4-2-5" : `a ${c.defense_scheme}`}${c.calls_defense ? ", which he runs himself" : ""}.`);
+    bits.push(`${who}'s offenses run ${c.offense_scheme === "Multiple" ? "a multiple system" : `the ${c.offense_scheme}`}${c.calls_offense ? `, with ${who} calling the plays` : ""}; the defenses line up in ${c.defense_scheme === "Multiple 4-2-5" ? "a multiple 4-2-5" : `a ${c.defense_scheme}`}${c.calls_defense ? `, with ${who} running them too` : ""}.`);
     return bits.filter(Boolean).join(" ");
   }
 
@@ -65,7 +69,7 @@
     const changed = () => renderPreview();
 
     // identity
-    const id = el("section", { class: "panel coach-section" }, [el("h3", { text: "Who he is" })]);
+    const id = el("section", { class: "panel coach-section" }, [el("h3", { text: "Identity" })]);
     const text = (key, ph, max = 30) => { const i = el("input", { type: "text", value: c[key] || "", placeholder: ph, maxlength: String(max) }); i.addEventListener("input", () => { c[key] = i.value; changed(); }); return i; };
     const age = el("input", { type: "number", min: "28", max: "75", value: String(c.age) });
     age.addEventListener("input", () => { c.age = Number(age.value) || 42; changed(); });
@@ -85,21 +89,33 @@
       c.archetype = v; c.ratings = clone(OPT.archetypes[v].ratings); renderForm();
     });
     arch.append(field("Archetype", archSel, (OPT.archetypes[c.archetype] || {}).about));
-    const budget = el("p", { class: "muted small-text coach-budget" });
+    // One budget covers all seven ratings, but only some change games today: they come first,
+    // and the rest sit under their own heading with the points they take, so the trade is visible.
+    const live = new Set(OPT.rating_live || OPT.rating_keys);
+    const liveKeys = OPT.rating_keys.filter((k) => live.has(k));
+    const laterKeys = OPT.rating_keys.filter((k) => !live.has(k));
+    const budget = el("p", { class: "muted small-text coach-budget", "aria-live": "polite" });
+    const sum = (keys) => keys.reduce((a, k) => a + c.ratings[k], 0);
     const showBudget = () => {
-      const total = OPT.rating_keys.reduce((a, k) => a + c.ratings[k], 0);
-      budget.textContent = `Ratings total ${total} of ${OPT.rating_budget}. Raise one and you may need to lower another.`;
+      const total = sum(OPT.rating_keys);
+      const split = laterKeys.length ? ` (${sum(liveKeys)} in the ratings games use now, ${sum(laterKeys)} in the ones still to come)` : "";
+      budget.textContent = `Ratings total ${total} of ${OPT.rating_budget}${split}. Raise one and you may need to lower another.`;
       budget.classList.toggle("over", total > OPT.rating_budget);
     };
-    const grid = el("div", { class: "coach-sliders" });
-    for (const k of OPT.rating_keys) grid.append(slider(k, OPT.rating_labels[k], c.ratings[k], OPT.rating_about[k], (v) => { c.ratings[k] = v; showBudget(); changed(); }, 40, 99));
-    arch.append(grid, budget);
+    const sliderFor = (k) => slider(k, OPT.rating_labels[k], c.ratings[k], OPT.rating_about[k], (v) => { c.ratings[k] = v; showBudget(); changed(); }, 40, 99);
+    arch.append(el("div", { class: "coach-sliders" }, liveKeys.map(sliderFor)));
+    if (laterKeys.length) {
+      arch.append(el("h4", { class: "coach-subhead", text: "Coming later: no effect on games yet" }),
+        el("p", { class: "muted small-text", text: "These count toward the same total and start to matter when recruiting, the offseason and coach mode arrive." }),
+        el("div", { class: "coach-sliders" }, laterKeys.map(sliderFor)));
+    }
+    arch.append(budget);
     showBudget();
     f.append(arch);
 
     // coaching style
     const sty = el("section", { class: "panel coach-section" }, [el("h3", { text: "Coaching style" }),
-      el("p", { class: "muted small-text", text: "50 is the FBS average. These change how his team plays when he calls that side of the ball. The team's coordinators stay for the season; staff changes come after it." })]);
+      el("p", { class: "muted small-text", text: "50 is the FBS average. These change how the team plays on a side of the ball the coach calls. The team's coordinators stay for the season; staff changes come after it." })]);
     const offSel = select(c.offense_scheme, Object.keys(OPT.offense_schemes).map((s) => [s, s]), (v) => { c.offense_scheme = v; renderForm(); });
     const defSel = select(c.defense_scheme, Object.keys(OPT.defense_schemes).map((s) => [s, s]), (v) => { c.defense_scheme = v; renderForm(); });
     const callO = el("input", { type: "checkbox" }); callO.checked = !!c.calls_offense;
@@ -108,14 +124,14 @@
     callD.addEventListener("change", () => { c.calls_defense = callD.checked; renderForm(); });
     sty.append(el("div", { class: "coach-grid two" }, [
       el("div", {}, [field("Offensive scheme", offSel, OPT.offense_schemes[c.offense_scheme]),
-        el("label", { class: "coach-check" }, [callO, " Calls his own offense (his scheme and style; otherwise the team's offensive coordinator calls it)"])]),
+        el("label", { class: "coach-check" }, [callO, " Calls the offense (the coach's own scheme and style; otherwise the team's offensive coordinator calls it)"])]),
       el("div", {}, [field("Defensive scheme", defSel, OPT.defense_schemes[c.defense_scheme]),
-        el("label", { class: "coach-check" }, [callD, " Calls his own defense (his scheme and style; otherwise the team's defensive coordinator calls it)"])]),
+        el("label", { class: "coach-check" }, [callD, " Calls the defense (the coach's own scheme and style; otherwise the team's defensive coordinator calls it)"])]),
     ]));
     const sliders = el("div", { class: "coach-sliders" });
     for (const [k, s] of Object.entries(OPT.style)) {
       const off = (s.side === "offense" && !c.calls_offense) || (s.side === "defense" && !c.calls_defense);
-      const sl = slider(k, s.label, c.style[k], off ? `${s.about} (used when he calls the ${s.side})` : s.about, (v) => { c.style[k] = v; changed(); });
+      const sl = slider(k, s.label, c.style[k], off ? `${s.about} (used when the coach calls the ${s.side})` : s.about, (v) => { c.style[k] = v; changed(); });
       if (off) sl.classList.add("dim");
       sliders.append(sl);
     }
@@ -123,9 +139,9 @@
     f.append(sty);
 
     // look
-    const look = el("section", { class: "panel coach-section" }, [el("h3", { text: "His look" })]);
+    const look = el("section", { class: "panel coach-section" }, [el("h3", { text: "Look" })]);
     const lg = el("div", { class: "coach-grid" });
-    const names = { skin: "Skin tone", hair: "Hair", hair_color: "Hair color", facial_hair: "Facial hair", glasses: "Glasses", headwear: "On his head", outfit: "Sideline outfit" };
+    const names = { skin: "Skin tone", hair: "Hair", hair_color: "Hair color", facial_hair: "Facial hair", glasses: "Glasses", headwear: "Headwear", outfit: "Sideline outfit" };
     for (const [k, opts] of Object.entries(OPT.look)) {
       if (k === "skin" || k === "hair_color") {
         const row = el("div", { class: "swatches", role: "radiogroup", "aria-label": names[k] });
@@ -144,7 +160,7 @@
 
     // background
     const bg = el("section", { class: "panel coach-section" }, [el("h3", { text: "Background" })]);
-    const ta = el("textarea", { rows: "5", maxlength: "1500", placeholder: "His story. Write your own, or fill it in from the choices above." });
+    const ta = el("textarea", { rows: "5", maxlength: "1500", placeholder: "The coach's story. Write your own, or fill it in from the choices above." });
     ta.value = c.background || "";
     ta.addEventListener("input", () => { c.background = ta.value; changed(); });
     const gen = el("button", { type: "button", class: "ghost small", text: "Write it from my choices" });
@@ -158,7 +174,7 @@
     save.addEventListener("click", saveCoach);
     const teamSel = el("select", { "aria-label": "Team to coach" }, fbs.map((t) => el("option", { value: t.slug, text: t.name })));
     teamSel.value = $("#preview-team").value || (fbs[0] || {}).slug;
-    const start = el("button", { type: "button", class: "accent", text: START_MODE === "remaining" ? "Start from today with him" : "Start a season with him" });
+    const start = el("button", { type: "button", class: "accent", text: START_MODE === "remaining" ? "Start from today with this coach" : "Start a season with this coach" });
     start.addEventListener("click", () => startSeason(teamSel.value));
     actions.append(el("div", { class: "coach-actions" }, [save, el("span", { class: "muted small-text", text: "then" }), teamSel, start]));
     f.append(actions);
@@ -215,7 +231,7 @@
     box.innerHTML = "";
     let list = [];
     try { list = (await api("/api/coaches")).coaches; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
-    if (!list.length) { box.append(el("p", { class: "muted small-text", text: "No coaches yet. Build one below and save him." })); return; }
+    if (!list.length) { box.append(el("p", { class: "muted small-text", text: "No coaches yet. Build one below and save it." })); return; }
     const preview = TEAMS.find((x) => x.slug === $("#preview-team").value) || {};
     for (const c of list) {
       const school = TEAMS.find((t) => t.slug === c.alma_mater) || preview;

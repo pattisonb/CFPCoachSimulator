@@ -114,7 +114,7 @@ window.CFP = (function () {
     const meta = $(ids.meta);
     meta.innerHTML = "";
     const signed = (x) => `${x > 0 ? "+" : ""}${Number(x).toFixed(1)}`;   // one decimal for both teams
-    const form = g.form && (g.form.home || g.form.away) ? `form on the day: ${g.home.name} ${signed(g.form.home)}, ${g.away.name} ${signed(g.form.away)}` : null;
+    const form = g.form && (g.form.home || g.form.away) ? `how each team played on the day, in rating points: ${g.home.name} ${signed(g.form.home)}, ${g.away.name} ${signed(g.form.away)}` : null;
     const bits = [
       `${g[g.received_first].name} received the opening kickoff`,
       `${g.drives.length} drives`,
@@ -371,6 +371,38 @@ window.CFP = (function () {
   function fieldPos(y) { return y <= 50 ? `Own ${y}` : `Opp ${100 - y}`; }
 
   function fmtTime(sec) { return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`; }
+
+  // ----- screen-reader state for tabs, chips and the site navigation -----------------
+  // The pages mark the chosen tab, chip or page with the "active" class. This keeps the
+  // matching ARIA state in step, so a screen reader hears which one is selected:
+  // aria-selected on tabs (buttons in a .tabs bar), aria-pressed on filter chips, and
+  // aria-current="page" on the site navigation.
+  function syncChoice(node) {
+    if (!(node instanceof Element)) return;
+    const on = node.classList.contains("active");
+    if (node.matches(".tabs > button")) {
+      node.setAttribute("role", "tab");
+      node.setAttribute("aria-selected", on ? "true" : "false");
+    } else if (node.matches("button.chip")) {
+      node.setAttribute("aria-pressed", on ? "true" : "false");
+    } else if (node.matches(".site-nav a")) {
+      if (on) node.setAttribute("aria-current", "page"); else node.removeAttribute("aria-current");
+    }
+  }
+  function syncTree(root) {
+    if (!(root instanceof Element)) return;
+    if (root.matches(".tabs")) root.setAttribute("role", "tablist");
+    syncChoice(root);
+    for (const bar of root.querySelectorAll(".tabs")) bar.setAttribute("role", "tablist");
+    for (const n of root.querySelectorAll(".tabs > button, button.chip, .site-nav a")) syncChoice(n);
+  }
+  new MutationObserver((records) => {
+    for (const r of records) {
+      if (r.type === "attributes") syncChoice(r.target);
+      else for (const n of r.addedNodes) syncTree(n);
+    }
+  }).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
+  syncTree(document.body);
 
   return { $, el, teamsBySlug, GAME_IDS, SBOX_IDS, teamColor, teamPill, applyTheme, renderScoreboard, renderScoring, renderTeamStats,
            renderPlayers, renderDrives, label, quarterName, kindLabel, resultLabel, fieldPos, fmtTime };

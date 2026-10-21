@@ -23,6 +23,8 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+  <!-- /real shares this page: mark it before anything draws, so the start-a-season controls never show there -->
+  <script>if (location.pathname === "/real") document.body.classList.add("real-mode");</script>
   <header class="topbar">
     <div class="brand">
       <a class="brand-link" href="/" aria-label="CFP Coach Simulator home">
@@ -48,14 +50,17 @@
 
   <main class="season-layout">
     <aside class="season-side" id="season-side">
-      <div class="section-head"><h2>Seasons</h2><span class="side-actions"><button id="btn-clear-seasons" class="ghost small" type="button">Clear all</button><button id="btn-hide-seasons" class="ghost small" type="button" title="Hide this list">Hide ‹</button></span></div>
-      <ul id="season-list" class="history-list"></ul>
+      <div class="section-head"><h2>Seasons</h2><span class="side-actions"><button id="btn-clear-seasons" class="ghost small" type="button" hidden>Clear all</button><button id="btn-hide-seasons" class="ghost small" type="button" title="Hide this list">Hide ‹</button></span></div>
+      <ul id="season-list" class="history-list"><li class="muted">Loading seasons…</li></ul>
     </aside>
 
     <section class="season-main">
       <div id="season-empty" class="empty">
-        <p>Pick your team and a mode, then start a season. You can play it a week at a time, or sim ahead to selection day or the title game.</p>
+        <p>Pick your team, then choose <b>New season</b> to play the 2026 season from week 1, or <b>Start from today</b> to take over the real 2026 season where it stands. You can play it a week at a time, or sim ahead to selection day or the title game.</p>
       </div>
+      <!-- a season is about to load (/real, or a link to a saved one): say so instead of the instructions -->
+      <script>(function () { var real = location.pathname === "/real", id = /[?&]id=/.test(location.search);
+        if (real || id) document.querySelector("#season-empty p").textContent = real ? "Loading the real 2026 season: results, polls and stats…" : "Loading the season…"; })();</script>
 
       <div id="season" hidden>
         <div class="panel season-head">

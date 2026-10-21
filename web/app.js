@@ -18,8 +18,16 @@
   // ----- API ---------------------------------------------------------------
 
   async function api(path, options) {
-    const res = await fetch(path, options);
-    if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+    let res;
+    try { res = await fetch(path, options); }
+    catch (_) { throw new Error("could not reach the server. Check your connection and try again."); }
+    if (!res.ok) {
+      const body = await res.text();
+      let detail = "";
+      try { detail = JSON.parse(body).detail; } catch (_) { /* not JSON */ }
+      if (typeof detail !== "string") detail = "";   // validation errors arrive as a list
+      throw new Error(detail || (res.status >= 500 ? "the server hit an error. Try again in a moment." : `the server said no (${res.status}).`));
+    }
     return res.json();
   }
 
@@ -73,7 +81,7 @@
       // FBS teams alphabetically, then the FCS stand-ins in their own group (the API sorts by name)
       let fcs = null;
       for (const t of data.teams) {
-        const opt = el("option", { value: t.slug, text: `${t.name} (${t.ratings.overall.toFixed(0)})${t.fictional ? "" : " · " + t.conference}` });
+        const opt = el("option", { value: t.slug, text: `${t.name} (${t.ratings.overall.toFixed(0)} OVR)${t.fictional ? "" : " · " + t.conference}` });
         if (t.fictional) { if (!fcs) { fcs = el("optgroup", { label: "FCS" }); sel.appendChild(fcs); } fcs.appendChild(opt); }
         else sel.appendChild(opt);
       }
@@ -104,19 +112,32 @@
         el("div", { class: "card-name", text: `${t.name} ${t.mascot}` }),
         el("div", { class: "card-sub muted", text: `${t.conference} · ${t.head_coach || "no head coach"}` }),
         el("div", { class: "card-ratings" }, [
-          tag("OVR", r.overall), tag("OFF", r.offense), tag("DEF", r.defense), tag("ST", r.special_teams),
+          tag("OVR", r.overall, "Overall rating"), tag("OFF", r.offense, "Offense rating"), tag("DEF", r.defense, "Defense rating"),
+          tag("ST", r.special_teams, "Special teams rating"),
         ]),
         el("div", { class: "card-sub muted", text: side === "home" && venue() === "home"
-          ? `${t.stadium.name} · ${Number(t.stadium.capacity).toLocaleString()} · home edge ${t.home_field_advantage}`
+          ? `${t.stadium.name} · ${Number(t.stadium.capacity).toLocaleString()} seats · home-field rating ${t.home_field_advantage}`
           : `${t.stadium.name}` }),
       );
     }
     persistMatchup();
     renderRosterPreview();
+    renderSeasonButton();
   }
 
-  function tag(label, value) {
-    return el("span", { class: "rating-tag" }, [el("b", { text: Math.round(value) }), ` ${label}`]);
+  function tag(label, value, title) {
+    return el("span", { class: "rating-tag", title }, [el("b", { text: Math.round(value) }), ` ${label}`]);
+  }
+
+  // The season button starts season mode with the Home team as your team: its label says
+  // which team, so the choice is visible before the click.
+  function renderSeasonButton() {
+    const t = state.teamsBySlug[$("#home-select").value];
+    const b = $("#btn-season");
+    if (!t) { b.textContent = "Play a season"; b.title = "Pick your team in the Home box first"; return; }
+    const name = t.name.length <= 14 ? t.name : (t.abbreviation || t.name);
+    b.textContent = `Season as ${name}`;
+    b.title = `Open season mode with ${t.name} (the Home team) as your team`;
   }
 
   async function renderRosterPreview() {
@@ -271,15 +292,16 @@
   }
 
   function revealResult(node) {
-    // On a phone the history sits above the result, so bring the result into view.
-    if (window.innerWidth < 900) {
-      requestAnimationFrame(() => {
-        const top = node.getBoundingClientRect().top + window.scrollY - 60;  // under the sticky header
-        window.scrollTo({ top: Math.max(0, top) });
-      });
-    } else {
-      window.scrollTo({ top: 0 });
-    }
+    // Bring the result into view: on a phone the history sits above it, and on a desktop the
+    // week's picks do, so a new result can land below the fold. A result already in the top
+    // half of the screen stays put; otherwise it scrolls up to just under the header.
+    requestAnimationFrame(() => {
+      const bar = document.querySelector(".topbar");
+      const header = bar && getComputedStyle(bar).position === "sticky" ? bar.getBoundingClientRect().height : 0;
+      const top = node.getBoundingClientRect().top;
+      if (top >= header && top < window.innerHeight / 2) return;
+      window.scrollTo({ top: Math.max(0, top + window.scrollY - header - 12) });
+    });
   }
 
   // ----- batch view --------------------------------------------------------
