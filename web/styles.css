@@ -882,3 +882,16 @@ body.real-mode #season-tabs button[data-tab="games"] { display: revert; }
   .this-week .review-tiles { display: grid; grid-template-columns: 1fr 1fr; }   /* four tiles in two even rows */
   .this-week .review-leader-big { font-size: 18px; }
 }
+
+/* ratings v2: attribute groups on the player card, play style and traits */
+.attr-group { margin: 10px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; color: var(--muted); }
+.attr-group:first-of-type { margin-top: 4px; }
+.player-traits { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tag.style { background: var(--panel-2); border: 1px solid var(--border); font-weight: 600; }
+.trait { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid transparent; }
+.trait.tier-1 { background: #f3e2d3; color: #7a4a20; border-color: #e3c4a6; }
+.trait.tier-2 { background: #eceff3; color: #4a5566; border-color: #cfd6df; }
+.trait.tier-3 { background: #fbf0c9; color: #7a5d00; border-color: #ecd685; }
+.trait.tier-4 { background: #e6eef9; color: #234a8a; border-color: #b9cbea; }
+.trait-line { margin: 4px 0; }
+.ratings-table .group-row td { padding-top: 10px; border-bottom: none; }

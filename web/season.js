@@ -927,6 +927,10 @@
             p.games ? el("span", { class: "tag", text: `${p.games} of ${p.team_games} games` }) : el("span", { class: "tag", text: "No games yet" }),
           ]),
           devTag ? el("div", { class: "player-dev" }, [devTag]) : null,
+          (p.archetype || (p.traits || []).length) ? el("div", { class: "player-traits" }, [
+            p.archetype ? el("span", { class: "tag style", text: p.archetype, title: "Play style" }) : null,
+            ...(p.traits || []).map((tr) => el("span", { class: `trait tier-${tr.tier}`, text: tr.name, title: `${tr.tier_name} trait: ${tr.about}` })),
+          ]) : null,
         ]),
       ]),
       el("div", { class: "player-ovr" }, [el("div", { class: "player-ovr-num", text: String(p.overall) }), el("div", { class: "review-label", text: "Overall" })]),
@@ -943,17 +947,36 @@
     const editBtn = godMode() && !s.done ? el("button", { type: "button", class: "ghost small player-edit-open", text: "Edit", title: "God mode: change the ratings and identity" }) : null;
     const keySet = new Set(p.key_ratings || []);
     const shown = keySet.size ? p.ratings.filter((r) => keySet.has(r.key)).sort((a, b) => p.key_ratings.indexOf(a.key) - p.key_ratings.indexOf(b.key)) : p.ratings;
-    const allBtn = el("button", { type: "button", class: "ghost small", text: `All ratings (${p.ratings.length})`, title: "Every rating he carries, and how he rates at other positions" });
+    const attrs = p.attributes || [];
+    const allBtn = el("button", { type: "button", class: "ghost small", text: attrs.length ? "What they do" : `All ratings (${p.ratings.length})`,
+      title: attrs.length ? "What each attribute does, his traits, and how he rates at other positions" : "Every rating he carries, and how he rates at other positions" });
     allBtn.addEventListener("click", () => openAllRatings(p));
-    const rat = el("div", { class: "leader-card player-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: `${p.position} ratings` }), el("span", { class: "muted small-text", text: edited.size ? `edited in god mode (${[...edited].length})` : "50 = average Power 4 starter" }), el("span", { class: "card-actions" }, [allBtn, editBtn])])]);
+    const editedAttrs = new Set(p.edited_attributes || []);
+    const nEdited = attrs.length ? editedAttrs.size : edited.size;
+    const rat = el("div", { class: "leader-card player-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: attrs.length ? `${p.position} attributes (${attrs.length})` : `${p.position} ratings` }), el("span", { class: "muted small-text", text: nEdited ? `edited in god mode (${nEdited})` : "50 = average Power 4 starter" }), el("span", { class: "card-actions" }, [allBtn, editBtn])])]);
     if (editBtn) editBtn.addEventListener("click", () => { editBtn.hidden = true; rat.append(playerEditForm(p, rat)); });
-    for (const r of shown) {
+    if (attrs.length) {
+      // ratings v2: grouped, physical first, each with what it does on hover
+      for (const g of [...new Set(attrs.map((a) => a.group))]) {
+        rat.append(el("div", { class: "attr-group", text: g }));
+        for (const a of attrs.filter((x) => x.group === g)) {
+          const pct = Math.max(2, Math.min(100, a.value));
+          const tone = a.value >= 75 ? "hi" : a.value >= 55 ? "mid" : "lo";
+          const boost = a.boost ? el("span", { class: `boost ${a.boost > 0 ? "up" : "down"}`, text: `${a.boost > 0 ? "▲" : "▼"}${Math.abs(a.boost)}` }) : null;
+          rat.append(el("div", { class: `rating-row ${editedAttrs.has(a.key) ? "edited" : ""} ${a.boost ? "boosted" : ""}` }, [
+            el("span", { class: "rating-label", text: a.label, title: `${a.about}${editedAttrs.has(a.key) ? " (edited in god mode)" : ""}` }),
+            el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]),
+            el("b", { class: "rating-num" }, [String(a.value), boost])]));
+        }
+      }
+    }
+    for (const r of attrs.length ? [] : shown) {
       const pct = Math.max(2, Math.min(100, r.value));
       const tone = r.value >= 75 ? "hi" : r.value >= 55 ? "mid" : "lo";
       const boost = r.boost ? el("span", { class: `boost ${r.boost > 0 ? "up" : "down"}`, text: `${r.boost > 0 ? "▲" : "▼"}${Math.abs(r.boost)}`, title: `${r.boost > 0 ? "+" : ""}${r.boost} from ${p.morale && p.morale.label !== "Steady" ? p.morale.label.toLowerCase() : "morale"}${p.morale && p.morale.team_label ? " and the team's mood" : ""}` }) : null;
       rat.append(el("div", { class: `rating-row ${edited.has(r.key) ? "edited" : ""} ${r.boost ? "boosted" : ""}` }, [el("span", { class: "rating-label", text: r.label, title: edited.has(r.key) ? "Edited in god mode" : "" }), el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]), el("b", { class: "rating-num" }, [String(r.value), boost])]));
     }
-    if (p.morale && p.morale.enabled && p.ratings.some((r) => r.boost)) rat.append(el("div", { class: "muted small-text", style: "margin-top:6px", text: `Arrows: how his ratings enter the next game (${p.morale.label.toLowerCase()}${p.morale.team_label ? ", " + p.morale.team_label.toLowerCase() : ""}).` }));
+    if (p.morale && p.morale.enabled && (attrs.length ? attrs : p.ratings).some((r) => r.boost)) rat.append(el("div", { class: "muted small-text", style: "margin-top:6px", text: `Arrows: how his ratings enter the next game (${p.morale.label.toLowerCase()}${p.morale.team_label ? ", " + p.morale.team_label.toLowerCase() : ""}).` }));
     const others = Object.entries(p.ratings_at || {}).filter(([pos]) => pos !== p.position && !(pos === "MLB" && /LB$/.test(p.position))).sort((a, b) => b[1] - a[1]).slice(0, 5);
     if (others.length) rat.append(el("div", { class: "muted small-text", style: "margin-top:8px", text: `Rated at other spots: ${others.map(([pos, v]) => `${pos} ${v}`).join(" · ")}` }));
     grid.append(rat);
@@ -2701,6 +2724,7 @@
 
   // every rating the player carries, with the boosts and the god-mode marks, and his rating at other positions
   function openAllRatings(p) {
+    if ((p.attributes || []).length) { openAttributes(p); return; }
     const edited = new Set(p.edited || []);
     const keySet = new Set(p.key_ratings || []);
     const node = el("div", { class: "all-ratings" });
@@ -2725,6 +2749,44 @@
     openModal(el("span", {}, [`${p.name} · all ratings`, el("span", { class: "muted small-text", text: ` · ${p.overall} overall at ${p.position}` })]), node);
   }
 
+  // ratings v2: every attribute with what it does, the traits, and the rating at every position
+  function openAttributes(p) {
+    const edited = new Set(p.edited_attributes || []);
+    const node = el("div", { class: "all-ratings" });
+    node.append(el("p", { class: "muted small-text", text: "1-99: 50 is an average Power 4 starter at the position, 65 a good one, 80 elite, 95 generational. The sim moves onto these attributes one part of the game at a time; until a part moves, it reads them through the blended ratings it has always used, so an edit here still changes how he plays." }));
+    const table = el("table", { class: "stats ratings-table" });
+    table.append(el("tr", {}, ["Attribute", "", "Value", "What it does"].map((h, i) => el("th", { class: i === 0 || i === 3 ? "left" : "", text: h }))));
+    let group = null;
+    for (const a of p.attributes) {
+      if (a.group !== group) {
+        group = a.group;
+        table.append(el("tr", { class: "group-row" }, [el("td", { class: "left", colspan: "4" }, [el("b", { text: group })])]));
+      }
+      const pct = Math.max(2, Math.min(100, a.value));
+      const tone = a.value >= 75 ? "hi" : a.value >= 55 ? "mid" : "lo";
+      table.append(el("tr", {}, [
+        el("td", { class: "left" }, [el("span", { class: `rating-label ${edited.has(a.key) ? "edited" : ""}`, text: a.label }), edited.has(a.key) ? el("span", { class: "pos", text: "edited" }) : null]),
+        el("td", {}, [el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })])]),
+        el("td", { class: "rating-num" }, [el("b", { text: String(a.value) })]),
+        el("td", { class: "left muted small-text", text: a.about }),
+      ]));
+    }
+    node.append(el("div", { class: "table-scroll" }, [table]));
+    if (p.height || p.weight) node.append(el("p", { class: "small-text" }, [el("b", { text: "Size: " }), `${p.height || ""}${p.height && p.weight ? ", " : ""}${p.weight ? p.weight + " lbs" : ""}`]));
+    if ((p.traits || []).length || p.archetype) {
+      node.append(el("h4", { text: "Play style and traits" }));
+      if (p.archetype) node.append(el("p", { class: "small-text" }, [el("b", { text: p.archetype }), el("span", { class: "muted", text: " · play style" })]));
+      for (const tr of p.traits || []) node.append(el("div", { class: "trait-line" }, [el("span", { class: `trait tier-${tr.tier}`, text: tr.name }), el("span", { class: "muted small-text", text: ` ${tr.tier_name} · ${tr.about}` })]));
+      node.append(el("p", { class: "muted small-text", text: "Traits are earned at four tiers: bronze, silver, gold and platinum. Their effects in games come in a later phase of the ratings revamp." }));
+    }
+    const others = Object.entries(p.ratings_at || {}).filter(([pos]) => !(pos === "MLB" && /LB$/.test(p.position))).sort((a, b) => b[1] - a[1]);
+    if (others.length) {
+      node.append(el("h4", { text: "Rated at every position" }), el("p", { class: "muted small-text", text: "On the same scale: 50 is an average Power 4 starter at that position. The depth chart's By position view uses these when you move someone." }));
+      node.append(el("div", { class: "ratings-at" }, others.map(([pos, v]) => el("div", { class: `review-tile ${pos === p.position ? "mine" : ""}` }, [el("div", { class: "review-leader-big", text: String(v) }), el("div", { class: "review-label", text: pos === p.position ? `${pos} (his spot)` : pos })]))));
+    }
+    openModal(el("span", {}, [`${p.name} · attributes`, el("span", { class: "muted small-text", text: ` · ${p.overall} overall at ${p.position}` })]), node);
+  }
+
   const CLASS_FULL = { FR: "Freshman", FRRS: "Redshirt freshman", SO: "Sophomore", SORS: "Redshirt sophomore", JR: "Junior", JRRS: "Redshirt junior", SR: "Senior", SRRS: "Redshirt senior" };
   // the player card's edit form (god mode): ratings as numbers, then the identity fields
   function playerEditForm(p, card) {
@@ -2732,7 +2794,12 @@
     const form = el("div", { class: "player-edit" });
     const inputs = {};
     const num = (key, value) => { const i = el("input", { type: "number", min: "0", max: "99", step: "1", value: String(value), "aria-label": key }); inputs[key] = i; return i; };
-    for (const r of p.ratings) form.append(el("div", { class: "rating-row edit" }, [el("span", { class: "rating-label", text: r.label }), el("div", {}), num(r.key, r.value)]));
+    const editable = (p.attributes || []).length ? p.attributes.map((a) => ({ ...a, key: `attr:${a.key}` })) : p.ratings;
+    let lastGroup = null;
+    for (const r of editable) {
+      if (r.group && r.group !== lastGroup) { lastGroup = r.group; form.append(el("div", { class: "attr-group", text: r.group })); }
+      form.append(el("div", { class: "rating-row edit" }, [el("span", { class: "rating-label", text: r.label, title: r.about || "" }), el("div", {}), num(r.key, r.value)]));
+    }
     const text = (key, value, attrs = {}) => { const i = el("input", { type: "text", value: value == null ? "" : String(value), "aria-label": key, ...attrs }); inputs[key] = i; return i; };
     const select = (key, value, options) => { const sel = el("select", { "aria-label": key }, options.map(([v, label]) => el("option", { value: v, text: label }))); sel.value = value || options[0][0]; inputs[key] = sel; return sel; };
     const grid = el("div", { class: "player-edit-grid" }, [
@@ -2749,7 +2816,12 @@
     cancel.addEventListener("click", () => { form.remove(); card.querySelector(".player-edit-open").hidden = false; });
     save.addEventListener("click", async () => {
       const changes = {};
-      for (const r of p.ratings) { const v = Number(inputs[r.key].value); if (Number.isFinite(v) && v !== r.value) changes[r.key] = Math.round(v); }
+      for (const r of editable) {
+        const v = Number(inputs[r.key].value);
+        if (!Number.isFinite(v) || v === r.value) continue;
+        if (r.key.startsWith("attr:")) (changes.attributes = changes.attributes || {})[r.key.slice(5)] = Math.round(v);
+        else changes[r.key] = Math.round(v);
+      }
       for (const k of ["jersey", "class", "height", "dev_trait"]) if (inputs[k].value !== String(p[k] == null ? "" : p[k])) changes[k] = inputs[k].value;
       if (inputs.weight.value && Number(inputs.weight.value) !== p.weight) changes.weight = Number(inputs.weight.value);
       if (!Object.keys(changes).length) { toast("Nothing changed.", 2000); return; }
