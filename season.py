@@ -273,6 +273,39 @@ def tier_of(team: dict) -> str:
 TEAM_REGION = {slug: region for region, slug in REGION_TEAM.items()}
 
 
+# How strong the real FCS school a stand-in replaces is, as a rating shift for that game
+# (form.with_form). The regional stand-ins are one team each; without this every FCS opponent
+# would play like the same average FCS team. Tiers by recent FCS results; schools not listed
+# play at the stand-in's own level. Matched on the start of the ESPN name.
+FCS_TIERS = {
+    "strong": ("South Dakota State", "North Dakota State", "Montana State", "Montana Grizzlies", "South Dakota Coyotes",
+               "Idaho Vandals", "UC Davis", "Villanova", "Incarnate Word", "Mercer", "Tarleton State",
+               "Illinois State", "North Dakota Fighting", "Southern Illinois", "Abilene Christian", "Rhode Island"),
+    "good": ("Youngstown State", "Northern Iowa", "Chattanooga", "Furman", "Richmond", "New Hampshire",
+             "Central Arkansas", "Austin Peay", "Lamar", "SE Louisiana", "Idaho State", "Eastern Washington",
+             "Weber State", "Northern Arizona", "Southern Utah", "UT Martin", "Tennessee Tech", "Western Carolina",
+             "William & Mary", "Monmouth", "Elon", "Holy Cross", "Lafayette", "Jackson State", "Southern Jaguars",
+             "Florida A&M", "North Carolina Central", "UT Rio Grande Valley", "Nicholls", "McNeese",
+             "East Tennessee State", "Eastern Kentucky", "Campbell", "Towson", "UAlbany", "Samford"),
+    "weak": ("Duquesne", "Robert Morris", "Wagner", "Stonehill", "Long Island", "Central Connecticut", "Mercyhurst",
+             "Merrimack", "Sacred Heart", "Mississippi Valley State", "Arkansas-Pine Bluff", "Delaware State",
+             "Norfolk State", "Morgan State", "Texas Southern", "Bethune-Cookman", "Houston Christian",
+             "Charleston Southern", "Gardner-Webb", "Western Illinois", "VMI", "Lindenwood", "Eastern Illinois",
+             "Indiana State", "Murray State", "Utah Tech", "Northern Colorado", "East Texas A&M", "Bucknell",
+             "Fordham", "Stony Brook", "Bryant", "Prairie View", "Alcorn State", "Grambling", "Alabama State",
+             "Hampton", "Howard", "Tennessee State", "Portland State", "Southeast Missouri", "Colgate"),
+}
+FCS_TIER_SHIFT = {"strong": 9.0, "good": 3.0, "weak": -7.0}
+
+
+def fcs_strength(name: str) -> float:
+    """Rating shift for the real FCS school `name` (ESPN display name); 0 when unlisted."""
+    for tier, schools in FCS_TIERS.items():
+        if any((name or "").startswith(school) for school in schools):
+            return FCS_TIER_SHIFT[tier]
+    return 0.0
+
+
 def fcs_label(slug: str) -> str:
     """How a fictional FCS stand-in is shown on a schedule: 'FCS Southeast', never the
     real school it replaces."""
@@ -470,6 +503,7 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
         raise ValueError(f"unknown team {team_slug}")
     schedules = json.loads(SCHEDULES_FILE.read_text(encoding="utf-8"))
     counterparts = fcs_map(schedules, teams)
+    fcs_names = {k: v["name"] for k, v in json.loads(FCS_MAP_FILE.read_text(encoding="utf-8")).items()}
     rng = random.Random(seed)
     games = {}
     for g in schedules["games"]:
@@ -482,6 +516,8 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
             week = SELECTION_WEEK  # games after championship week (Army-Navy) sit in selection week
         rec = {"event_id": g["event_id"], "week": week, "date": g["date"], "neutral": g["neutral"],
                "home": home, "away": away,
+               "fcs_shift": (fcs_strength(fcs_names.get(g["home_espn"], "")) if not g["home_slug"]
+                             else fcs_strength(fcs_names.get(g["away_espn"], "")) if not g["away_slug"] else 0.0),
                "home_display": teams[home]["name"] if g["home_slug"] else fcs_label(home),
                "away_display": teams[away]["name"] if g["away_slug"] else fcs_label(away),
                "conference_game": teams[home]["conference"] == teams[away]["conference"] and not teams[home]["fictional"],
@@ -967,6 +1003,11 @@ def _form_table(teams: dict, through_week: int) -> tuple[dict, dict]:
     return out
 
 
+def state_fictional(slug: str) -> bool:
+    """Is `slug` one of the fictional FCS stand-ins?"""
+    return bool(load_teams().get(slug, {}).get("fictional"))
+
+
 def team_form_shift(state: dict, slug: str) -> float:
     """The rating shift a team carries into its sims from its in-season form (remaining mode)."""
     f = (state.get("form") or {}).get(slug)
@@ -994,7 +1035,8 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
                      [(i["name"], i["position"]) for i in injuries.get(g["away"], {}).values()],
                      (team_edits(state, g["home"]), team_edits(state, g["away"])),
                      (morale_payload(state, g["home"]), morale_payload(state, g["away"]), morale_on(state)),
-                     (team_form_shift(state, g["home"]), team_form_shift(state, g["away"]),
+                     (team_form_shift(state, g["home"]) + (g.get("fcs_shift", 0.0) if state_fictional(g["home"]) else 0.0),
+                      team_form_shift(state, g["away"]) + (g.get("fcs_shift", 0.0) if state_fictional(g["away"]) else 0.0),
                       player_form_shifts(state, g["home"]), player_form_shifts(state, g["away"]))))
     before = rank_map(state, state["current_week"]) if morale_on(state) else {}
     if not jobs:

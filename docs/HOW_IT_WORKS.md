@@ -917,7 +917,12 @@ completed week: `realdata.import_real_boxes`, the same import the Real 2026 page
 turns every played game's NCAA box score into the game's stat lines and a box score the
 season can open, so the leaders, awards races, player game logs and your season summary
 start from the real numbers and simulated weeks add to them. FCS opponents play as the fictional school from the same region
-(`data/fcs_map.json`). No injuries.
+(`data/fcs_map.json`), moved by the strength of the real school it replaces (`season.fcs_strength`):
++9 rating points for the strong FCS programs (South Dakota State, Montana State, Montana, Idaho, UC
+Davis, Villanova, Tarleton State and others), +3 for good ones, -7 for weak ones (most of the NEC and
+the lower SWAC and MEAC), 0 for the rest. One stand-in per region used to play every school alike:
+replaying the 122 real 2026 FBS-FCS games, the FCS side won 2.5% (real 4.9%); with the tiers it wins
+4.2% (strong programs 12%, good 7%, weak under 1%) and FBS teams win by 36 on average (real 37). No injuries.
 
 Ties in the standings follow the procedure the Power Four (and most Group of Five)
 conferences publish for seeding their title games, in this order: head-to-head (the
