@@ -586,6 +586,39 @@ correlation 0.62 (0.62), MAE 12.6 (12.5), slope 0.87 (0.94). 20 seasons through 
 records spread more like real ones (win SD 1.05 against 0.97, real 1.50) and favourites in the
 6-10 rating gap win 87.6% (82.9%, real 92.5%).
 
+## Diminishing returns at the top (October 21)
+
+Ratings v2 took the forward test's slope (real margin on sim margin) from 0.92-0.97 to 0.81-0.86, and the
+miss was all at the top of the scale. Through week 8 of 2026, FBS against FBS, 20 seasons through
+`tools/team_reality.py`: real margin on sim margin ran 0.58 in Power 4 v Power 4 games, 0.73 across the
+tiers and 1.02 in Group of Five v Group of Five games. A point of source rating gap was worth 1.4 real
+points between Power 4 teams and 3.1 between Group of Five teams; the sim paid 2.0 in both. The source
+ratings spread the tiers unevenly (team overall SD 4.9 for Power 4 teams, 2.6 for Group of Five; the
+engine's starter composites 3.8 against 1.7) while real expected margins spread about 10 points in both.
+
+`build_teams.team_level` (`TEAM_LEVEL_TOP_SCALE` 0.70, `BUILD_TOP_SCALE=1` builds without it): a team's level
+is its starters' mean engine rating over NEUTRAL across the composites; above zero only 70% of it counts,
+and every player on the roster moves down by the rest, so depth charts and the house-scale cards do not
+change. 62 Power 4 teams move 0 to -3.9 engine points (Indiana, Oregon, Notre Dame, Ohio State the most);
+Group of Five teams and FCS stand-ins do not move. A per-player kink (a steeper `SPREAD_SCALE` below the
+position mean) widened both tiers, because Power 4 starters straddle the position means; a global shrink
+(`SPREAD_SCALE` 1.2) reached slope 0.99 but left Power 4 v Power 4 at 0.78 and took the cross-tier margins to
++19.5 against +24.1 real.
+
+Forward test (`calibrate_season.py 30`): slope 0.86 to 0.98, picks 72.2% to 72.7%, Brier 0.184 to 0.177, MAE
+12.7 to 12.6; Power 4 v Power 4 slope 0.70 to 0.82, Group of Five games unchanged. 20 seasons under the same
+tree: slope 0.82 to 0.90, Brier 0.186 to 0.179, MAE 13.0 to 12.7, wins correlation 0.65 to 0.66, favourite
+won 72.2% to 73.5%. The two confidence rates the report tracks fell 1-3 points (favourite at rating gap 6-10
+85.0% to 81.9%, Power 4 over Group of Five 93.1% to 92.3%; real 91.4% and 96.2%, n 70 and 78).
+
+Two findings from the same review. The report's "records bunch toward .500" (win SD across teams 1.03
+against 1.50 real) compared each team's 20-season mean wins with one real season; one season at a time the
+sim's win SD is 1.46. And two numbers from the source file (1.8 points per overall point plus 3.4 at home)
+predict real margins better than the sim does (R2 0.465 against 0.431): the sim's margin beyond the overall
+gap has an SD of 5.8 points that reality does not reward, mostly extra weight on the starters' composite
+average (+0.94 points per point in the sim, +0.16 real) and on the starting quarterback (+0.14 against
++0.03). That is the next gap to close.
+
 ## Coach styles
 
 Coaches now change how a team plays, so a new coach or coordinator plays differently:

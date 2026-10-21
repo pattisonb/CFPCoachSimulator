@@ -41,7 +41,7 @@ def check(g: dict) -> None:
         n_plays += len(snaps)
         for e in log:
             assert "quarter" in e and "clock" in e, e
-            if e["type"] in ("run", "pass"):
+            if e["type"] in ("run", "pass") and not e.get("hail_mary"):   # a hail mary logs no down (drive_functions._hail_mary)
                 assert e["down"] in (1, 2, 3, 4), e
     print(f"  {g['away']['name']} {g['away']['score']} at {g['home']['name']} {g['home']['score']}: {len(g['drives'])} drives, {n_plays} logged snaps")
 
