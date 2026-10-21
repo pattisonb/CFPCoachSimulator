@@ -230,7 +230,9 @@ POISE_EFFECT = 0.0015            # ... back by this per point of Pocket Poise ov
 SACK_YARDS = (7.5, 2.0)         # gauss mean, sd (loss)
 SACK_FUMBLE_CHANCE = 0.13
 COMPLETION_BASE = 0.652         # equal QB, receiver and coverage (0.641 before pressure cost completions)
-COMPLETION_PER_QB_POINT = 0.0026
+COMPLETION_PER_QB_POINT = 0.0013   # was 0.0026: per engine point of the starting QB, team completion % moved 0.20 in the
+                                   # sim against 0.095 real (2026 through week 8, all units in the fit), and the sim's margin
+                                   # paid the QB 0.155 points per point beyond the team overall against 0.05 real
 COMPLETION_PER_RECV_POINT = 0.0015
 COMPLETION_PER_COV_POINT = 0.0032   # was 0.0025: points allowed per defense-rating point -0.28 in the sim vs -0.50 real
 COMPLETION_GUESSED = -0.055
@@ -242,8 +244,9 @@ COMPLETION_MIN, COMPLETION_MAX = 0.25, 0.86
 RB_TARGET_SHARE = 0.16          # share of targets that go to running backs
 TE_TARGET_WEIGHT = 0.75         # tight ends targeted a bit less than their ratings imply
 INT_BASE = 0.045                # per incompletion (not throwaways); 0.055 gave 2.8 picks per 100 attempts (real 2.24)
-INT_PER_COV_POINT = 0.0013
-INT_PER_QB_POINT = 0.0013       # per point of decision making above neutral (fewer picks)
+INT_PER_COV_POINT = 0.0004       # was 0.0013: interception rate per point of the secondary moved +0.067 in the sim, -0.007 real
+INT_PER_QB_POINT = 0.0004        # per point of decision making above neutral (fewer picks); was 0.0013: interception
+                                 # rate per QB point moved -0.055 in the sim, -0.004 real
 INT_GUESSED_BONUS = 0.02
 INT_MIN, INT_MAX = 0.02, 0.22
 PICK_SIX_CHANCE = 0.09          # of interceptions
