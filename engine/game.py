@@ -73,6 +73,10 @@ class GameSim:
             self.home_advantage *= sliders.get_multiplier(sliders.home_field_advantage)
             self._shift_ratings(home_data, self.home_advantage / 2)
             self._shift_ratings(away_data, -self.home_advantage / 2)
+        # traits: a Crowd Favorite lifts at home; a Road Warrior shrugs off part of the road penalty
+        if self.venue == "home":
+            self._trait_shift(home_data, "crowd_favorite", lambda t: cfg.TRAIT_FX["crowd"] * t)
+            self._trait_shift(away_data, "road_warrior", lambda t: self.home_advantage / 2 * cfg.TRAIT_FX["road_warrior"] * t)
         # the day's form: each side a little above or below itself (see cfg.GAME_FORM_SD)
         self.form = {"home": 0.0, "away": 0.0}
         if cfg.GAME_FORM_SD:
@@ -106,6 +110,16 @@ class GameSim:
             for attr in cfg.HFA_ATTRS:
                 if isinstance(p.get(attr), (int, float)):
                     p[attr] = max(1, min(99, p[attr] + delta))
+
+    @staticmethod
+    def _trait_shift(data: dict, trait: str, amount) -> None:
+        """Move the ratings of the players holding `trait` by amount(tier)."""
+        for p in data["offense"] + data["defense"]:
+            tier = next((t["tier"] for t in p.get("traits") or [] if isinstance(t, dict) and t.get("key") == trait), 0)
+            if tier:
+                for attr in cfg.HFA_ATTRS:
+                    if isinstance(p.get(attr), (int, float)):
+                        p[attr] = max(1, min(99, p[attr] + amount(tier)))
 
     @staticmethod
     def _make_team(data: dict) -> Team:

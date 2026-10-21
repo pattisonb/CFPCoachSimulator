@@ -247,6 +247,8 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
 
     play_functions.last_play.clear()
     off_penalty_chance = sliders.get_inverse_percentage_adjustment(sliders.offensive_penalties, cfg.OFF_PENALTY_CHANCE)
+    # ratings v2: a smart unit commits fewer penalties
+    off_penalty_chance *= max(0.5, 1 - (_unit_iq(offense) - cfg.ATTR_LEAGUE_AVG) * cfg.PENALTY_IQ_EFFECT)
     if random.random() < off_penalty_chance:
         penalty_type = random.choices(
             ["false_start", "holding", "offensive_pass_interference", "delay_of_game"],
@@ -260,6 +262,7 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
         return "penalty", "offensive penalty", penalty_yards, *clock("offensive penalty")
 
     def_penalty_chance = sliders.get_inverse_percentage_adjustment(sliders.defensive_penalties, cfg.DEF_PENALTY_CHANCE)
+    def_penalty_chance *= max(0.5, 1 - (_unit_iq(defense) - cfg.ATTR_LEAGUE_AVG) * cfg.PENALTY_IQ_EFFECT)
     if random.random() < def_penalty_chance:
         penalty_type = random.choices(["offside", "pass_interference", "facemask"], weights=[0.4, 0.4, 0.2], k=1)[0]
         if penalty_type == "offside":
@@ -319,6 +322,12 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
     return play_ran, result, yards_gained, *clock(result, oob, first_down)
 
 
+def _unit_iq(players):
+    """The on-field unit's average Football IQ (ratings v2, house scale)."""
+    vals = [(p.attrs or {}).get("football_iq", 50) for p in players if getattr(p, "attrs", None) is not None]
+    return sum(vals) / len(vals) if vals else 50.0
+
+
 def roll_injuries(team, on_field):
     """Each player on the field can go down on a snap; most injuries end only his day,
     some cost weeks. Uses the injury RNG so results are unchanged when injuries are off."""
@@ -326,7 +335,8 @@ def roll_injuries(team, on_field):
     for p in on_field:
         if p.position in ("K", "P"):
             continue
-        if rng.random() < cfg.INJURY_PER_SNAP * cfg.INJURY_POSITION_MULT.get(p.position, 1.0):
+        durable = max(0.4, 1 - ((getattr(p, "attrs", None) or {}).get("durability", 50) - cfg.ATTR_LEAGUE_AVG) * cfg.INJURY_DURABILITY_EFFECT)
+        if rng.random() < cfg.INJURY_PER_SNAP * cfg.INJURY_POSITION_MULT.get(p.position, 1.0) * durable:
             r = rng.random()
             weeks = next(w for cum, w in cfg.INJURY_SEVERITY if r <= cum)
             team.injure(p, weeks, rng.choice(cfg.INJURY_TYPES))
@@ -415,6 +425,8 @@ def attempt_kick(yardline, kicker, defense_team=None) :
     make = next(prob for limit, prob in cfg.FG_MAKE if distance <= limit)
     make *= sliders.get_multiplier(sliders.kicking_accuracy)
     make += ((kicker.kick_accuracy or cfg.NEUTRAL) - cfg.NEUTRAL) * cfg.FG_PER_ACCURACY_POINT
+    if distance < 40:
+        make += (getattr(kicker, "traits", None) or {}).get("automatic", 0) * cfg.TRAIT_FX["automatic"]
     make = max(0.03, min(0.98, make))
     made = random.random() < make
     bucket = "fg_50" if distance >= 50 else "fg_40" if distance >= 40 else "fg_short"

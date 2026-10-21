@@ -51,6 +51,11 @@ class Player:
         # Power 4 starter) and the measurables. The engine reads them where a part of the game
         # has moved onto them (docs/RATINGS_V2.md); elsewhere it reads the composites above.
         self.attrs = dict(data.get("attributes") or {})
+        # traits (phase 6): key -> tier 1-4; an Iron Horse tires slower, a Quick Recovery rests faster
+        self.traits = {t["key"]: t["tier"] for t in data.get("traits") or [] if isinstance(t, dict)}
+        if self.traits.get("iron_horse"):
+            self.endurance = min(99, self.endurance + cfg.TRAIT_FX["iron_horse"] * self.traits["iron_horse"])
+        self.recovery_mult = 1 + cfg.TRAIT_FX["quick_recovery"] * self.traits.get("quick_recovery", 0)
         self.height_in = data.get("height_in") or 74
         self.weight = data.get("weight") or 220
 
@@ -222,7 +227,7 @@ class Team:
         # every player with fatigue is in _active (the penalty pass keeps it current)
         for p in self._active:
             if not p.in_game and p.fatigue:
-                rate = p.endurance / 10
+                rate = p.endurance / 10 * getattr(p, "recovery_mult", 1.0)
                 if p.position == 'RB':
                     rate *= cfg.RB_BENCH_RECOVERY
                 p.fatigue = max(0, p.fatigue - rate)

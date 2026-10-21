@@ -230,6 +230,25 @@ def _throw_depth(target, tendencies):
     return random.choices(DEPTHS, weights=[short * rest, mid * rest, deep], k=1)[0]
 
 
+def _tr(player, *keys):
+    """The player's tier (0-4) summed over the given traits."""
+    t = getattr(player, "traits", None) or {}
+    return sum(t.get(k, 0) for k in keys)
+
+
+def _tr_points(players, keys):
+    return sum(_tr(p, *keys) for p in players)
+
+
+def _fumble_mult(carrier, tacklers):
+    """Ball Security against the tacklers' Hit Power (ratings v2): about 1 on average."""
+    hit = sum(_attr(p, "hit_power") for p in tacklers) / len(tacklers) if tacklers else 50.0
+    return max(0.3, 1 - (_attr(carrier, "ball_security") - cfg.ATTR_LEAGUE_AVG) * cfg.FUMBLE_SECURITY_EFFECT) \
+        * max(0.5, 1 + (hit - cfg.ATTR_LEAGUE_AVG) * cfg.FUMBLE_HIT_EFFECT) \
+        * max(0.2, 1 - _tr(carrier, "ball_protector") * cfg.TRAIT_FX["ball_protector"]) \
+        * (1 + _tr_points(tacklers, cfg.HIT_TRAITS) * cfg.TRAIT_FX["hitter"])
+
+
 def _group_rating(players, positions, keys, default=cfg.NEUTRAL):
     """Average rating of the players at the given positions (on-field players only)."""
     group = [p for p in players if p.position in positions]
@@ -351,14 +370,43 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, offense_line
         carrier_rating = _rating(carrier, ('speed', 'strength'))
     carrier_rating += _slider_points(sliders.running_ability)
 
+    # ratings v2: inside or outside, and the attributes that read differently in each
+    power_style = (_attr(carrier, "power_running") + _attr(carrier, "tackle_breaking") + _attr(carrier, "strength")) / 3
+    speed_style = (_attr(carrier, "burst") + _attr(carrier, "agility") + _attr(carrier, "elusiveness")) / 3
+    outside_share = max(0.15, min(0.75, cfg.RUN_OUTSIDE_SHARE + (speed_style - power_style) * cfg.RUN_STYLE_TILT))
+    outside = random.random() < outside_share
+    last_play["direction"] = "outside" if outside else "inside"
+    line = [p for p in offense if p.position in ('OL', 'TE')]
+    front_players = [p for p in defense if p.position in front_positions]
+    line_lean = sum((_attr(p, "drive_block") - _attr(p, "reach_block")) / 2 for p in line) / len(line) if line else 0.0
+    front_lean = sum((_attr(p, "block_shedding") - _attr(p, "pursuit")) / 2 for p in front_players) / len(front_players) if front_players else 0.0
+    style = (power_style - speed_style) / 2               # + a power runner, - a speed runner
+    sign = -1 if outside else 1                           # inside rewards drive, shedding and power; outside the opposite
+    yards_style = sign * line_lean * cfg.RUN_LINE_STYLE_EFFECT - sign * front_lean * cfg.RUN_FRONT_STYLE_EFFECT \
+        + sign * style * cfg.RUN_CARRIER_STYLE_EFFECT
+    if not outside and line and front_players:
+        line_w = sum(p.weight for p in line) / len(line)
+        front_w = sum(p.weight for p in front_players) / len(front_players)
+        yards_style += (line_w - front_w - cfg.LINE_WEIGHT_GAP) * cfg.RUN_WEIGHT_EFFECT
+    fx = cfg.TRAIT_FX
+    if outside:
+        yards_style += _tr(carrier, "quick_feet", "slippery", "spin_artist", "stiff_arm_specialist") * fx["open_field"]
+    else:
+        yards_style += _tr(carrier, "tough_runner", "downhill_runner", "bulldozer", "balance") * fx["power_run"]
+    yards_style += _tr(carrier, "extra_effort") * fx["extra_effort"]
+    yards_style += _tr_points(line, cfg.LINE_RUN_TRAITS) * fx["line_run"] - _tr_points(front_players, cfg.TACKLE_TRAITS) * fx["tackle"]
+    carry_keys = ("run_vision", "elusiveness", "power_running", "tackle_breaking", "ball_security")
+    yards_style += (_attr(carrier, "run_vision") - _attr_mean(carrier, carry_keys)) * cfg.RUN_VISION_EFFECT
+
     yards = random.gauss(*cfg.RUSH_BASE_YARDS)
+    yards += yards_style
     yards += (blockers - front) * cfg.RUSH_PER_LINE_POINT
     # the carrier against the defenders who chase him, not against an average defense
     pursuit = _group_rating(defense, front_positions, ('speed', 'tackling'))
     yards += (carrier_rating - pursuit) * cfg.RUSH_PER_CARRIER_POINT
     yards += cfg.RUSH_GUESSED if guessed_play else cfg.RUSH_NOT_GUESSED
 
-    big_play_chance = cfg.RUSH_BIG_PLAY_CHANCE * (carrier.speed / cfg.NEUTRAL)
+    big_play_chance = cfg.RUSH_BIG_PLAY_CHANCE * (carrier.speed / cfg.NEUTRAL) * (1 + _tr(carrier, "breakaway_speed") * cfg.TRAIT_FX["breakaway"])
     if not guessed_play:
         big_play_chance *= 1.3
     if tendencies.get("conservative"):
@@ -368,7 +416,9 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, offense_line
         yards += random.randint(*cfg.RUSH_BIG_PLAY_YARDS)
 
     # Short yardage: a push for the line often gets there.
-    if first_down <= 2 and down >= 3 and yards < first_down and random.random() < cfg.RUSH_SHORT_YARDAGE_CONVERT:
+    push = (_attr(carrier, "power_running") - cfg.ATTR_LEAGUE_AVG + line_lean - front_lean) * cfg.SHORT_YARDAGE_STYLE_EFFECT \
+        + _tr(carrier, "bulldozer") * cfg.TRAIT_FX["bulldozer_push"]
+    if first_down <= 2 and down >= 3 and yards < first_down and random.random() < cfg.RUSH_SHORT_YARDAGE_CONVERT + push:
         yards = first_down + random.uniform(0, 1.5)
 
     yards = max(cfg.RUSH_MIN_YARDS, round(yards))
@@ -379,6 +429,7 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, offense_line
     # Fumble (checked before the touchdown is awarded)
     fumble_chance = sliders.get_inverse_percentage_adjustment(sliders.fumble_frequency, cfg.RUSH_FUMBLE_CHANCE)
     fumble_chance *= 1 + (cfg.NEUTRAL - carrier.strength) / 150 + (cfg.NEUTRAL - carrier.intelligence) / 150
+    fumble_chance *= _fumble_mult(carrier, front_players)
     if random.random() < max(0.002, fumble_chance):
         spot = max(1, min(99, yardline + max(0, yards)))
         carrier.stats["carries"] += 1
@@ -426,6 +477,7 @@ def _pick_target(offense):
         w = (max(1.0, _rating(p, ('route_running', 'hands')) + p.speed / 2) / 100) ** cfg.TARGET_WEIGHT_POWER
         if p.position == 'TE':
             w *= cfg.TE_TARGET_WEIGHT
+        w *= 1 + _tr(p, "qbs_favorite", "checkdown_target") * cfg.TRAIT_FX["target_pull"]
         weights.append(w * p.target_mult)
     total = sum(weights) or 1.0
     if backs and receivers:
@@ -463,6 +515,19 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     rush = (sum(_rating(p, ('strength', 'rushing')) for p in rushers) / len(rushers) if rushers else cfg.NEUTRAL) + _slider_points(sliders.pass_rush)
     sack_rate = cfg.SACK_BASE + (rush - protection) * cfg.SACK_PER_LINE_POINT
     sack_rate -= (qb_decisions - cfg.NEUTRAL) * cfg.SACK_PER_QB_POINT
+    # ratings v2: power rush against anchor or speed rush against footwork, then sack escape
+    linemen = [p for p in offense if p.position == 'OL']
+    if rushers and linemen:
+        rush_lean = sum((_attr(p, "power_rush") - _attr(p, "speed_rush")) / 2 for p in rushers) / len(rushers)
+        line_lean = sum((_attr(p, "pass_anchor") - _attr(p, "pass_footwork")) / 2 for p in linemen) / len(linemen)
+        power = random.random() < max(0.15, min(0.85, cfg.RUSH_POWER_SHARE + rush_lean * cfg.RUSH_STYLE_TILT))
+        sign = 1 if power else -1
+        sack_rate += sign * (rush_lean - line_lean) * cfg.RUSH_MATCHUP_EFFECT
+        last_play["rush"] = "power" if power else "speed"
+    sack_rate *= max(0.5, 1 - (_attr(qb, "sack_escape") - cfg.ATTR_LEAGUE_AVG) * cfg.SACK_ESCAPE_EFFECT)
+    sack_rate *= max(0.4, 1 - _tr(qb, "steps_up", "escape_artist", "play_extender") * cfg.TRAIT_FX["sack_avoid"])
+    sack_rate *= max(0.5, 1 - _tr_points(linemen, cfg.LINE_PASS_TRAITS) * cfg.TRAIT_FX["line_pass"])
+    sack_rate *= 1 + _tr_points(rushers, cfg.RUSH_TRAITS) * cfg.TRAIT_FX["rush"]
     if guessed_play:
         sack_rate += cfg.SACK_GUESSED_BONUS
     sack_rate = max(0.01, min(0.25, sack_rate))
@@ -486,8 +551,11 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
                 return result, new_spot
         return "sack", sack_yards
 
-    # A pressure that did not become a sack (stat only; the play goes on as before).
-    if cfg.stat_rng.random() < min(0.6, sack_rate * 2.5):
+    # A pressure that did not become a sack: the throw is hurried (completion falls, less for a
+    # poised quarterback) and a rusher gets the hurry.
+    pressured = random.random() < min(0.6, sack_rate * cfg.PRESSURE_PER_SACK_RATE)
+    if pressured:
+        last_play["pressured"] = True
         if rushers:
             _stat(cfg.stat_rng.choices(rushers, weights=[max(1, p.rushing or 1) for p in rushers], k=1)[0], 'hurries')
             _credit_lineman(offense, "pressures_allowed", "pass_blocking", worse=True)
@@ -537,6 +605,27 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
             + (target.height_in - defender.height_in) * cfg.CONTESTED_HEIGHT_POINTS
         completion += edge * cfg.CONTESTED_EFFECT
         last_play["contested"] = True
+    if pressured:
+        completion += cfg.PRESSURE_COMPLETION + (_attr(qb, "pocket_poise") - cfg.ATTR_LEAGUE_AVG) * cfg.POISE_EFFECT
+        completion += _tr(qb, "unflappable") * cfg.TRAIT_FX["unflappable"] \
+            + _tr(qb, "accurate_on_the_run", "poised_on_the_run", "off_platform") * cfg.TRAIT_FX["on_the_move"]
+    else:
+        completion += _tr(qb, "pinpoint") * cfg.TRAIT_FX["pinpoint"]
+    fx = cfg.TRAIT_FX
+    completion += _tr(target, "glue_hands") * fx["glue_hands"]
+    if depth == "short":
+        completion += _tr(qb, "timing_passer") * fx["timing_passer"]
+    if depth != "deep":
+        completion += _tr(target, "sharp_cutter") * fx["sharp_cutter"]
+    else:
+        completion += _tr(target, "double_move") * fx["double_move"]
+    if last_play.get("contested"):
+        completion += _tr(target, "jump_ball_winner") * fx["jump_ball"]
+    if man:
+        completion += _tr(target, "press_beater") * fx["press_beater"]
+        completion -= _tr_points(covers, ("shadow", "jam_artist")) * fx["cover"]
+    elif depth != "deep":
+        completion -= _tr_points(covers, ("route_jumper",)) * fx["cover"]
     completion += (qb_accuracy - cfg.NEUTRAL) * cfg.COMPLETION_PER_QB_POINT
     completion += (receiver_skill - cfg.NEUTRAL) * cfg.COMPLETION_PER_RECV_POINT
     completion -= (coverage - cfg.NEUTRAL) * cfg.COMPLETION_PER_COV_POINT
@@ -564,7 +653,8 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
             yards = random.gauss(*(cfg.PASS_YARDS_SHORT if depth == "short" else cfg.PASS_YARDS_MID))
         yards *= 1 + (target.speed - db_speed) * cfg.PASS_SPEED_EFFECT             - (_group_rating(defense, db_positions, ('tackling',)) - cfg.NEUTRAL) * cfg.PASS_TACKLE_EFFECT
         # a short or intermediate catch broken for a long gain (deep throws have their own yards)
-        big_play_chance = cfg.PASS_BREAKAWAY_CHANCE * (target.speed / cfg.NEUTRAL)
+        big_play_chance = cfg.PASS_BREAKAWAY_CHANCE * (target.speed / cfg.NEUTRAL) \
+            * (1 + _tr(target, "breakaway_speed") * cfg.TRAIT_FX["breakaway"])
         if tendencies.get("conservative"):
             big_play_chance *= cfg.GARBAGE_BIG_PLAY
         big_play_chance *= tendencies.get("big_play_mult", 1.0)
@@ -579,6 +669,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
 
         # Fumble after the catch
         fumble_chance = sliders.get_inverse_percentage_adjustment(sliders.fumble_frequency, cfg.RECEPTION_FUMBLE_CHANCE)
+        fumble_chance *= _fumble_mult(target, covers)
         if not is_touchdown and yards > 0 and random.random() < fumble_chance:
             qb.stats["completions"] += 1
             qb.stats["pass_yards"] += yards
@@ -622,6 +713,14 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     if guessed_play:
         int_chance += cfg.INT_GUESSED_BONUS
     int_chance = max(cfg.INT_MIN, min(cfg.INT_MAX, int_chance)) * int_mult
+    # ratings v2: deep and hurried throws are picked off more, ball-hawking defenders pick more
+    int_chance *= cfg.INT_DEPTH_MULT[depth]
+    if pressured:
+        int_chance *= max(1.0, cfg.INT_PRESSURE_MULT - (_attr(qb, "pocket_poise") - cfg.ATTR_LEAGUE_AVG) * cfg.INT_POISE_EFFECT)
+    int_chance *= 1 + _tr_points(covers, ("turnover_magnet", "pick_six")) * cfg.TRAIT_FX["ballhawk"]
+    if covers:
+        skills = sum(_attr(p, "ball_skills") for p in covers) / len(covers)
+        int_chance *= max(0.5, 1 + (skills - cfg.ATTR_LEAGUE_AVG) * cfg.INT_BALL_SKILLS_EFFECT)
     defenders = [p for p in defense if p.position in db_positions]
     if defenders and random.random() < int_chance:
         picker = random.choices(defenders, weights=[(max(1, p.coverage or 1) / cfg.NEUTRAL) ** cfg.INT_SKILL_POWER for p in defenders], k=1)[0]
