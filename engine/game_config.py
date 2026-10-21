@@ -161,6 +161,29 @@ INT_PER_QB_POINT = 0.0013       # per point of decision making above neutral (fe
 INT_GUESSED_BONUS = 0.02
 INT_MIN, INT_MAX = 0.02, 0.22
 PICK_SIX_CHANCE = 0.09          # of interceptions
+# ----- Passing by depth (ratings v2, phase 2) -----
+# Each throw to a receiver or tight end has a depth: short (under 10 yards), intermediate
+# (10-20) or deep (20+). The share of each, before the receiver's speed and Deep Routes tilt it:
+PASS_DEPTH_SHARE = {"WR": (0.50, 0.32, 0.18), "TE": (0.58, 0.35, 0.07)}
+PASS_DEEP_SPEED_TILT = 1.0       # deep share x (receiver speed / neutral) ** this
+PASS_DEEP_ROUTE_TILT = 0.006     # deep share x (1 + this per point of Deep Routes over his route average)
+DEPTH_COMPLETION = {"short": 0.08, "mid": -0.05, "deep": -0.24}   # added to the completion chance
+PASS_YARDS_SHORT = (7.0, 3.0)    # gauss mean, sd of the catch point plus run, before yards after the catch
+PASS_YARDS_MID = (15.5, 3.5)
+PASS_YARDS_DEEP = (22, 56)       # uniform
+PASS_BREAKAWAY_CHANCE = 0.05     # a short or intermediate catch broken for a long gain (x speed / neutral)
+# The attributes add how a player differs from his own average at each depth (the composites
+# above already set his level), in completion chance per house-scale point:
+DEPTH_ACCURACY_EFFECT = 0.0025   # QB accuracy at the throw's depth over his accuracy average
+ARM_DEEP_EFFECT = 0.0012         # deep throws: arm strength over his accuracy average
+ROUTE_DEPTH_EFFECT = 0.0020      # receiver's route skill at the depth over his route average
+# Man or zone, called each pass play; the coverage players' Man or Zone over their average of the two
+MAN_COVERAGE_SHARE = 0.45
+COVERAGE_TYPE_EFFECT = 0.0025
+# Contested catches: a defender on the receiver at the catch point, more often deeper
+CONTESTED_SHARE = {"short": 0.10, "mid": 0.25, "deep": 0.45}
+CONTESTED_EFFECT = 0.0035        # per point of (Contested Catches - defender's Ball Skills) / 2 + leaping and height edge
+CONTESTED_HEIGHT_POINTS = 2.0    # an inch of height is worth this many rating points at the catch point
 PASS_YARDS_WR = (12.3, 5.5)     # gauss mean, sd for WR completions (12.6 before the defense terms grew)
 PASS_YARDS_TE = (9.5, 4.5)
 PASS_YARDS_RB = (5.0, 4.0)

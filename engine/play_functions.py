@@ -189,6 +189,47 @@ def _rating(player, keys, default=cfg.NEUTRAL):
     return sum(vals) / len(vals) if vals else default
 
 
+def _attr(player, key, default=50.0):
+    """A ratings v2 attribute (house scale, 50 = an average Power 4 starter); 50 when he has none."""
+    return (getattr(player, "attrs", None) or {}).get(key, default)
+
+
+def _attr_mean(player, keys, weights=None):
+    w = weights or [1.0] * len(keys)
+    return sum(_attr(player, k) * x for k, x in zip(keys, w)) / sum(w)
+
+
+DEPTHS = ("short", "mid", "deep")
+QB_ACC = ("short_accuracy", "mid_accuracy", "deep_accuracy")
+QB_ACC_WEIGHTS = (0.3, 0.35, 0.2)          # the composite's own weights (build_teams.map_player)
+
+
+def _routes(player):
+    """A receiver's route skill at each depth (a tight end's deep is his intermediate)."""
+    short, mid = _attr(player, "short_routes"), _attr(player, "mid_routes")
+    deep = _attr(player, "deep_routes", mid)
+    return {"short": short, "mid": mid, "deep": deep}
+
+
+def _throw_depth(target, tendencies):
+    """short, mid or deep for a throw to this target (backs catch short)."""
+    shares = cfg.PASS_DEPTH_SHARE.get(target.position)
+    if not shares:
+        return "short"
+    r = _routes(target)
+    tilt = (target.speed / cfg.NEUTRAL) ** cfg.PASS_DEEP_SPEED_TILT \
+        * max(0.3, 1 + cfg.PASS_DEEP_ROUTE_TILT * (r["deep"] - sum(r.values()) / 3))
+    if tendencies.get("conservative"):
+        tilt *= cfg.GARBAGE_BIG_PLAY
+    if tendencies.get("prevent"):
+        tilt *= cfg.PREVENT_BIG_PLAY
+    tilt *= tendencies.get("big_play_mult", 1.0)
+    short, mid, deep = shares
+    deep *= tilt
+    rest = (1 - deep) / (short + mid)
+    return random.choices(DEPTHS, weights=[short * rest, mid * rest, deep], k=1)[0]
+
+
 def _group_rating(players, positions, keys, default=cfg.NEUTRAL):
     """Average rating of the players at the given positions (on-field players only)."""
     group = [p for p in players if p.position in positions]
@@ -468,7 +509,34 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
         receiver_skill = _rating(target, ('route_running', 'hands'))
     receiver_skill += _slider_points(sliders.wr_catching)
 
+    # ratings v2: the throw's depth, the coverage call, and the attributes for both
+    tendencies = tendencies or {}
+    depth = _throw_depth(target, tendencies) if target.position != 'RB' else "short"
+    last_play["depth"] = depth
+    man = random.random() < cfg.MAN_COVERAGE_SHARE
+    covers = [p for p in defense if p.position in db_positions]
+
     completion = cfg.COMPLETION_BASE
+    completion += cfg.DEPTH_COMPLETION[depth]
+    acc_mean = _attr_mean(qb, QB_ACC, QB_ACC_WEIGHTS)
+    completion += (_attr(qb, QB_ACC[DEPTHS.index(depth)]) - acc_mean) * cfg.DEPTH_ACCURACY_EFFECT
+    if depth == "deep":
+        completion += (_attr(qb, "arm_strength") - acc_mean) * cfg.ARM_DEEP_EFFECT
+    if target.position != 'RB':
+        r = _routes(target)
+        completion += (r[depth] - sum(r.values()) / 3) * cfg.ROUTE_DEPTH_EFFECT
+    if covers:
+        # the coverage players' strength in this call over their average of man and zone
+        lean = sum((_attr(p, "man_coverage") - _attr(p, "zone_coverage")) / 2 for p in covers) / len(covers)
+        completion -= (lean if man else -lean) * cfg.COVERAGE_TYPE_EFFECT
+    if covers and random.random() < cfg.CONTESTED_SHARE[depth]:
+        # a defender on him at the catch point: hands in traffic, leaping and height against his
+        defender = random.choices(covers, weights=[max(1, p.coverage or 1) for p in covers], k=1)[0]
+        edge = (_attr(target, "contested_catch") - _attr(defender, "ball_skills")) / 2 \
+            + (_attr(target, "leaping") - _attr(defender, "leaping")) / 2 \
+            + (target.height_in - defender.height_in) * cfg.CONTESTED_HEIGHT_POINTS
+        completion += edge * cfg.CONTESTED_EFFECT
+        last_play["contested"] = True
     completion += (qb_accuracy - cfg.NEUTRAL) * cfg.COMPLETION_PER_QB_POINT
     completion += (receiver_skill - cfg.NEUTRAL) * cfg.COMPLETION_PER_RECV_POINT
     completion -= (coverage - cfg.NEUTRAL) * cfg.COMPLETION_PER_COV_POINT
@@ -488,20 +556,21 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     target.stats["targets"] += 1
 
     if random.random() < completion:
-        if target.position == 'WR':
-            yards = random.gauss(*cfg.PASS_YARDS_WR)
-        elif target.position == 'TE':
-            yards = random.gauss(*cfg.PASS_YARDS_TE)
-        else:
+        if target.position == 'RB':
             yards = random.gauss(*cfg.PASS_YARDS_RB)
+        elif depth == "deep":
+            yards = random.randint(*cfg.PASS_YARDS_DEEP)
+        else:
+            yards = random.gauss(*(cfg.PASS_YARDS_SHORT if depth == "short" else cfg.PASS_YARDS_MID))
         yards *= 1 + (target.speed - db_speed) * cfg.PASS_SPEED_EFFECT             - (_group_rating(defense, db_positions, ('tackling',)) - cfg.NEUTRAL) * cfg.PASS_TACKLE_EFFECT
-        big_play_chance = cfg.PASS_BIG_PLAY_CHANCE * (target.speed / cfg.NEUTRAL)
-        if (tendencies or {}).get("conservative"):
+        # a short or intermediate catch broken for a long gain (deep throws have their own yards)
+        big_play_chance = cfg.PASS_BREAKAWAY_CHANCE * (target.speed / cfg.NEUTRAL)
+        if tendencies.get("conservative"):
             big_play_chance *= cfg.GARBAGE_BIG_PLAY
-        big_play_chance *= (tendencies or {}).get("big_play_mult", 1.0)
-        if (tendencies or {}).get("prevent"):
+        big_play_chance *= tendencies.get("big_play_mult", 1.0)
+        if tendencies.get("prevent"):
             big_play_chance *= cfg.PREVENT_BIG_PLAY
-        if target.position != 'RB' and random.random() < big_play_chance:
+        if target.position != 'RB' and depth != "deep" and random.random() < big_play_chance:
             yards = random.randint(*cfg.PASS_BIG_PLAY_YARDS)
         yards = max(cfg.PASS_MIN_YARDS, round(yards))
         is_touchdown = yardline + yards >= 100

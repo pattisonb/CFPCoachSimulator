@@ -514,6 +514,46 @@ that order, so the same seed gave a different champion on every run. Results are
 applied in schedule order (progress is still reported as games finish), and a seed gives
 the same 950 scores every time.
 
+## Passing by depth (ratings v2, phase 2)
+
+The pass game now reads the ratings v2 attributes (docs/RATINGS_V2.md):
+
+- **Every throw to a receiver or tight end has a depth.** Short (under 10 yards), intermediate
+  (10-20) or deep (20+), with shares of 50 / 32 / 18% for receivers and 58 / 35 / 7% for
+  tight ends. A receiver's speed and his Deep Routes over his route average tilt it deeper;
+  garbage time and prevent defenses tilt it shorter. Backs catch short.
+- **Depth sets the completion chance and the yards** (`DEPTH_COMPLETION`, `PASS_YARDS_SHORT`,
+  `PASS_YARDS_MID`, `PASS_YARDS_DEEP`), replacing the old flat big-play roll. A short or
+  intermediate catch can still break long (`PASS_BREAKAWAY_CHANCE`). Over 300 games: short
+  54% of throws, 72% complete, 8.4 yards a catch; intermediate 33%, 59%, 16.2; deep 13.5%,
+  40%, 35.
+- **The attributes add how a player differs from his own average at each depth.** The
+  composites still set his level, so league totals stay where they were:
+  - the QB's accuracy at the throw's depth over his accuracy average
+    (`DEPTH_ACCURACY_EFFECT`);
+  - arm strength on deep throws (`ARM_DEEP_EFFECT`);
+  - the receiver's route skill at the depth over his route average (`ROUTE_DEPTH_EFFECT`).
+- **Man or zone is called on every pass play** (`MAN_COVERAGE_SHARE` 45% man). The coverage
+  players' Man or Zone over their average of the two moves completion (`COVERAGE_TYPE_EFFECT`).
+- **Contested catches.** 10% of short, 25% of intermediate and 45% of deep throws have a
+  defender at the catch point. Completion then moves with the receiver's Contested Catches
+  against the defender's Ball Skills, Leaping against Leaping, and height (two rating points
+  an inch).
+
+Controlled test (Ohio State against Penn State, 150 games each, only attributes changed):
+
+| Change | Deep completion | Short completion | Contested completion |
+|---|---|---|---|
+| none | 57.6% | 83.5% | |
+| Julian Sayin deep accuracy 95, short 60 | 62.3% | 79.6% | |
+| Julian Sayin deep 50, short 99 | 54.3% | 85.5% | |
+| Jeremiah Smith contested catches and leaping 20 | 50.3% | | 73.1% to 64.6% |
+
+Against main before it (same checks): 20 seasons through week 8, favourite won 73.3% (70.6%),
+Brier 0.181 (0.179); forward test MAE 12.5 (12.6), correlation 0.62 (0.60), straight up
+71.6% (73.7%, eight games); full seasons, receiving leaders 7% over real (10%), receptions 2%
+(6%), passing leaders 4% (3%). Play-log fingerprint 2fe2a3cb1e3a5d74.
+
 ## Player stat lines against real box scores
 
 `tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed
