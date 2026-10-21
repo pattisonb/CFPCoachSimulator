@@ -38,6 +38,8 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+import ratings as rv2   # ratings v2: the player attributes (docs/RATINGS_V2.md)
+
 ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "cfb_sim_data"
 OUT = ROOT / "data" / "engine_teams.json"
@@ -195,6 +197,12 @@ def load_team(path: Path) -> dict:
         m["starter"] = p["slug"] in starters
         m["role"], m["depth"] = roles.get(p["slug"], (None, None))
         m["_src"] = p
+        # ratings v2: the attributes on the source scale (house_attributes puts them on ours),
+        # the measurables, the earned traits and the play style
+        m["_attr_raw"] = rv2.raw_attributes(p["ratings"], m["position"], roles.get(p["slug"], (None, None))[0])
+        m["height_in"] = rv2.height_inches(p.get("height"))
+        m["traits"] = rv2.traits_of(p.get("abilities") or [])
+        m["archetype"] = rv2.ARCHETYPES.get(p.get("archetype") or "", p.get("archetype"))
         # the engine finds K and P among in-game offense players
         if m["position"] == "K":
             m["starter"] = p["slug"] in st_special.get("K", [])
@@ -381,6 +389,7 @@ def add_real_player(t: dict, a: dict) -> None:
     # average FBS starter instead, the added quarterbacks lifted NIU from 1.5 to 2.1 sim
     # wins at week 8 against a real 0-6, and picks got worse.)
     attrs = {k: template[k] for k in ATTRS if template and isinstance(template.get(k), (int, float))} or {k: NEUTRAL for k in ATTRS}
+    attrs["attributes"] = dict((template or {}).get("attributes") or {})   # ratings v2, from the same template
     p = {"name": a["name"], "slug": slug, "position": a["position"], "source_position": a["position"],
          "ea_overall": None, "class": None, "height": None, "weight": None, "jersey": None, "dev_trait": "Normal",
          **attrs, RETURN_ATTR: 30, "role": a["role"],
@@ -418,6 +427,8 @@ def move_specialist(t: dict, p: dict, pos: str, means: dict) -> int:
         if a in ATTRS and isinstance(v, (int, float)):
             p[a] = int(round(max(1, min(99, NEUTRAL + (v - means.get(f"{pos}:{a}", 50.0)) * SPREAD_SCALE))))
     p["position"], p["role"] = pos, pos
+    p["_attr_raw"] = rv2.raw_attributes(p["_src"]["ratings"], pos, pos)
+    p["attributes"] = house_attributes_of(p)
     for role, first in ((pos, p), (old_role, None)):
         if role is None:
             continue
@@ -450,6 +461,55 @@ def clamp_extremes(p: dict) -> None:
                 p[a] = CORE_FLOOR
         else:
             p[a] = max(lo, min(hi, v))
+
+
+P4_CONFERENCES = {"ACC", "Big Ten", "Big 12", "SEC"}
+ATTR_BELOW = 0.6          # below the Power 4 starter mean a standard deviation is worth 60% as much (season.BELOW)
+ATTR_SCALE: dict[str, list[float]] = {}   # "group|attribute" -> [Power 4 starter mean, slope above, slope below]
+
+
+def _attr_group(p: dict) -> str:
+    """The scale group for a player's attributes (fullbacks are measured against the backs)."""
+    g = rv2.card_group(p["position"], p.get("role"))
+    return "RB" if g == "FB" else g
+
+
+def attribute_scale(teams: list[dict]) -> dict:
+    """Ratings v2: the house scale for every attribute at every position group, from the
+    Power 4 starters (50 at their mean, 15 a standard deviation above it, 9 below)."""
+    vals, p4 = defaultdict(list), defaultdict(list)
+    for t in teams:
+        if t["fictional"]:
+            continue
+        top = t["conference"] in P4_CONFERENCES or t["slug"] == "notre-dame"
+        for p in t["players"]:
+            for k, v in (p.get("_attr_raw") or {}).items():
+                key = f"{_attr_group(p)}|{k}"
+                vals[key].append(v)
+                if top and p["starter"]:
+                    p4[key].append(v)
+    ATTR_SCALE.clear()
+    for key, v in vals.items():
+        ref = p4.get(key) if len(p4.get(key, [])) >= 10 else v
+        sd = max(2.0, st.pstdev(ref)) if len(ref) > 1 else 6.0
+        ATTR_SCALE[key] = [round(st.mean(ref), 2), round(15 / sd, 4), round(15 / sd * ATTR_BELOW, 4)]
+    return ATTR_SCALE
+
+
+def house_attributes_of(p: dict) -> dict:
+    """One player's attributes on the house scale (1-99)."""
+    out = {}
+    for k, v in (p.get("_attr_raw") or {}).items():
+        m, hi, lo = ATTR_SCALE.get(f"{_attr_group(p)}|{k}", (v, 1.5, 0.9))
+        out[k] = int(round(max(1, min(99, 50 + (v - m) * (hi if v >= m else lo)))))
+    return out
+
+
+def house_attributes(teams: list[dict]) -> None:
+    attribute_scale(teams)
+    for t in teams:
+        for p in t["players"]:
+            p["attributes"] = house_attributes_of(p)
 
 
 def normalize(teams: list[dict]) -> dict:
@@ -554,7 +614,7 @@ def engine_roster(t: dict) -> tuple[list[dict], list[dict]]:
     """Split a converted team into the engine's offense and defense player lists."""
     offense, defense = [], []
     for p in t["players"]:
-        d = {k: v for k, v in p.items() if k not in ("starter", "overall", "source_position")}
+        d = {k: v for k, v in p.items() if k not in ("starter", "overall", "source_position", "_attr_raw")}
         d["in_game"] = p["starter"]
         d["fatigue"] = 0
         if p["position"] in OFFENSE:
@@ -570,6 +630,7 @@ def main() -> None:
     paths = sorted((SRC / "teams").glob("*.json"))
     teams = [load_team(p) for p in paths]
     means = normalize(teams)
+    house_attributes(teams)
     nudged, reordered = apply_real_adjustments(teams, means)
     for t in teams:
         depth_sort(t)
@@ -580,7 +641,8 @@ def main() -> None:
     print("league tendency means before centring:", tendency_means)
     print("teams with observed 2026 tendencies:", apply_observed_tendencies(teams))
     out = {"source": str(SRC), "neutral": NEUTRAL, "spread_scale": SPREAD_SCALE,
-           "starter_means_before_normalization": means, "tendency_means": tendency_means, "teams": {}}
+           "starter_means_before_normalization": means, "tendency_means": tendency_means,
+           "attribute_scale": ATTR_SCALE, "teams": {}}
     for t in teams:
         offense, defense = engine_roster(t)
         rec = {k: v for k, v in t.items() if k != "players"}

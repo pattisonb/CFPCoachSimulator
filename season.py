@@ -38,6 +38,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 import awards
+import ratings as ratings_v2
 import bowls
 import polls
 
@@ -131,8 +132,14 @@ _teams_cache: dict = {}
 def load_teams() -> dict:
     global _teams_cache
     if not _teams_cache:
-        _teams_cache = json.loads(TEAMS_FILE.read_text(encoding="utf-8"))["teams"]
+        data = json.loads(TEAMS_FILE.read_text(encoding="utf-8"))
+        _teams_cache = data["teams"]
+        _teams_meta.clear()
+        _teams_meta.update(attribute_scale=data.get("attribute_scale") or {}, spread_scale=data.get("spread_scale") or 1.5)
     return _teams_cache
+
+
+_teams_meta: dict = {}   # from the teams file: the attribute scale (ratings v2) and the engine's spread scale
 
 
 # ----- the house rating scale ------------------------------------------------------------
@@ -2679,7 +2686,7 @@ CLASS_NAMES = {"FR": "Freshman", "FRRS": "Redshirt freshman", "SO": "Sophomore",
 DEFAULT_SETTINGS = {"god_mode": False, "morale": False}   # new seasons turn morale on (see new_season)
 DEV_TRAITS = ("Normal", "Impact", "Star", "Elite")
 EDITABLE_RATINGS = tuple(k for k, _ in RATING_LABELS)
-EDITABLE_FIELDS = EDITABLE_RATINGS + ("jersey", "class", "height", "weight", "dev_trait")
+EDITABLE_FIELDS = EDITABLE_RATINGS + ("jersey", "class", "height", "weight", "dev_trait", "attributes")
 
 
 def settings(state: dict) -> dict:
@@ -2880,13 +2887,65 @@ def player_edits(state: dict, slug: str) -> dict:
 
 
 def with_edits(team: dict, edits: Optional[dict]) -> dict:
-    """A copy of the team with god-mode edits merged into its players."""
+    """A copy of the team with god-mode edits merged into its players (edited attributes
+    merge into the player's own; the engine composites they move are stored with them)."""
     if not edits:
         return team
     out = {**team}
+
+    def merged(p: dict) -> dict:
+        e = edits[p["slug"]]
+        q = dict(p, **e)
+        if "attributes" in e:
+            q["attributes"] = {**(p.get("attributes") or {}), **e["attributes"]}
+        return q
     for unit in ("offense", "defense"):
-        out[unit] = [dict(p, **edits[p["slug"]]) if p.get("slug") in edits else p for p in team[unit]]
+        out[unit] = [merged(p) if p.get("slug") in edits else p for p in team[unit]]
     return out
+
+
+def _attr_to_source(p: dict, key: str, v: float) -> float:
+    """A house-scale attribute value back on the source scale (build_teams.house_attributes_of
+    run backwards)."""
+    load_teams()
+    group = ratings_v2.card_group(p["position"], p.get("role"))
+    m, hi, lo = (_teams_meta.get("attribute_scale") or {}).get(f"{'RB' if group == 'FB' else group}|{key}", (50.0, 1.5, 0.9))
+    return m + (v - 50) / (hi if v >= 50 else lo)
+
+
+def _edit_attributes(base: dict, cur: dict, changes: dict) -> None:
+    """God mode: store edited attributes (house scale) in `cur`, and the engine composites
+    they feed moved to match (ratings.COMPOSITES), so the sim plays the edit. A composite the
+    player has no attribute edits for goes back to its base value."""
+    if not isinstance(changes, dict):
+        raise ValueError("attributes must be a mapping")
+    have = base.get("attributes") or {}
+    attrs = dict(cur.get("attributes") or {})
+    for key, v in changes.items():
+        if key not in have:
+            raise ValueError(f"{base['name']} has no {key} attribute")
+        try:
+            v = max(1, min(99, int(round(float(v)))))
+        except (TypeError, ValueError):
+            raise ValueError(f"{key} must be a number")
+        if v == have[key]:
+            attrs.pop(key, None)
+        else:
+            attrs[key] = v
+    spread = _teams_meta.get("spread_scale") or 1.5
+    for comp, weights in ratings_v2.composite_weights(base["position"], base.get("role")).items():
+        if not isinstance(base.get(comp), (int, float)) or not any(a in attrs for a in weights):
+            continue
+        delta = sum(w * (_attr_to_source(base, a, attrs[a]) - _attr_to_source(base, a, have[a]))
+                    for a, w in weights.items() if a in attrs and a in have)
+        cur[comp] = int(round(max(1, min(99, base[comp] + spread * delta))))
+    for comp, weights in ratings_v2.composite_weights(base["position"], base.get("role")).items():
+        if comp in cur and not any(a in attrs for a in weights) and comp in EDITABLE_RATINGS and "attributes" in cur:
+            cur.pop(comp, None)          # its attribute edits were undone
+    if attrs:
+        cur["attributes"] = attrs
+    else:
+        cur.pop("attributes", None)
 
 
 def team_data(state: dict, slug: str) -> dict:
@@ -2908,6 +2967,9 @@ def edit_player(state: dict, slug: str, player_slug: str, changes: dict) -> dict
     for k, v in changes.items():
         if k not in EDITABLE_FIELDS:
             raise ValueError(f"{k} cannot be edited")
+        if k == "attributes":
+            _edit_attributes(base, cur, v)
+            continue
         if k in EDITABLE_RATINGS:
             if not isinstance(base.get(k), (int, float)):
                 raise ValueError(f"{base['name']} has no {k} rating")
@@ -3165,6 +3227,16 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         "injured": injured, "overall": shown_overall(p, base_p), "stars": recruit_stars(base_p), "ratings": ratings,
         "edited": sorted(player_edits(state, team).get(p.get("slug"), {}).keys()), "editable_classes": list(CLASS_NAMES), "dev_traits": list(DEV_TRAITS),
         "key_ratings": key_ratings,
+        # ratings v2: the position's attributes, the measurables, play style and traits
+        "attributes": [{"key": k, "label": ratings_v2.ATTRIBUTES[k][0], "group": ratings_v2.ATTRIBUTES[k][1],
+                        "about": ratings_v2.ATTRIBUTES[k][2], "value": v,
+                        "boost": max(1, min(99, round(v * mf))) - v if mf != 1.0 else 0}
+                       for k, v in (p.get("attributes") or {}).items() if k in ratings_v2.ATTRIBUTES],
+        "height_in": p.get("height_in"), "archetype": p.get("archetype"),
+        "traits": [{"key": tr["key"], "name": ratings_v2.TRAIT_INFO.get(tr["key"], (tr["key"], ""))[0],
+                    "about": ratings_v2.TRAIT_INFO.get(tr["key"], ("", ""))[1], "tier": tr["tier"],
+                    "tier_name": ratings_v2.TIER_NAMES.get(tr["tier"], "")} for tr in (p.get("traits") or [])],
+        "edited_attributes": sorted((player_edits(state, team).get(p.get("slug"), {}).get("attributes") or {}).keys()),
         "morale": morale_view(state, team, name, position),
         "form": player_form_shifts(state, team).get(p.get("slug") or ""),
         # rated at every position; at his own position it is the card's overall
