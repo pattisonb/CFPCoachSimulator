@@ -68,13 +68,14 @@ def _sim_game(args: tuple) -> dict:
         m = r["home"]["score"] - r["away"]["score"]
         margins.append(m)
         totals.append(r["home"]["score"] + r["away"]["score"])
-        wins += 1 if m > 0 else 0
+        if m > 0:
+            wins += 1
     return {"idx": idx, "pred_margin": st.mean(margins), "pred_sd": st.pstdev(margins),
             "pred_total": st.mean(totals), "home_win_prob": wins / n}
 
 
 def main() -> None:
-    args = [a for a in sys.argv[1:]]
+    args = sys.argv[1:]
     n = 30
     if args and args[0].isdigit():
         n = int(args.pop(0))

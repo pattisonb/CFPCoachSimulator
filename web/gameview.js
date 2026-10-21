@@ -235,6 +235,13 @@ window.CFP = (function () {
     const P = team.players;
     const st = (p, k) => p.stats[k] || 0;
     const has = (p, ...keys) => keys.some((k) => st(p, k));
+    // on the season page (currentBoxSlugs set) a player's name opens his player page
+    const nameNode = (p) => {
+      const slugs = window.CFP.currentBoxSlugs || {};
+      const slug = slugs[box.id && box.id.endsWith("home") ? "home" : "away"];
+      if (!slug) return el("span", { text: p.name });
+      return el("span", { text: p.name, "data-player": `${slug}|${p.name}|${p.position}`, class: "plink", title: "Open player page" });
+    };
 
     const section = (title, rows, cols, sortKey) => {
       if (!rows.length) return;
@@ -244,7 +251,7 @@ window.CFP = (function () {
       table.appendChild(el("tr", {}, [el("th", { text: "Player" }), ...cols.map((c) => el("th", { text: c[0] }))]));
       for (const p of rows) {
         table.appendChild(el("tr", {}, [
-          el("td", { class: "name" }, [(() => { const slugs = window.CFP.currentBoxSlugs || {}; const slug = slugs[box.id && box.id.endsWith("home") ? "home" : "away"]; return el("span", slug ? { text: p.name, "data-player": `${slug}|${p.name}|${p.position}`, class: "plink", title: "Open player page" } : { text: p.name }); })(), el("span", { class: "pos", text: p.position }), p.injury ? el("span", { class: "pos injured", text: `injured (${p.injury.type})` }) : null]),
+          el("td", { class: "name" }, [nameNode(p), el("span", { class: "pos", text: p.position }), p.injury ? el("span", { class: "pos injured", text: `injured (${p.injury.type})` }) : null]),
           ...cols.map((c) => el("td", { text: String(c[1](p)) })),
         ]));
       }

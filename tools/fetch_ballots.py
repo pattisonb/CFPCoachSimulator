@@ -69,12 +69,25 @@ def site_weeks(season: int) -> list[str]:
     """The site's poll weeks for a season, in order: pre-season, week-1.., final-rankings."""
     page = fetch(f"/football/{season}/final-rankings") or fetch(f"/football/{season}/week-1") or ""
     opts = re.findall(r'<option[^>]*value="(pre-season|week-\d+|final-rankings)"', page)
-    order = lambda w: -1 if w == "pre-season" else 99 if w == "final-rankings" else int(w.split("-")[1])  # noqa: E731
-    return sorted(set(opts), key=order)
+    return sorted(set(opts), key=week_order)
+
+
+def week_order(site_week: str) -> int:
+    """Sort key for the site's weeks: pre-season first, final-rankings last."""
+    if site_week == "pre-season":
+        return -1
+    if site_week == "final-rankings":
+        return 99
+    return int(site_week.split("-")[1])
 
 
 def label(site_week: str) -> str:
-    return "preseason" if site_week == "pre-season" else "final" if site_week == "final-rankings" else site_week.split("-")[1]
+    """The site's week ('pre-season', 'week-5', 'final-rankings') as polls.json labels it."""
+    if site_week == "pre-season":
+        return "preseason"
+    if site_week == "final-rankings":
+        return "final"
+    return site_week.split("-")[1]
 
 
 def parse_grid(page: str) -> tuple[str, list[dict], dict[str, str]]:

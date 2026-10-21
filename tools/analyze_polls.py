@@ -50,11 +50,23 @@ def week_games(results: dict, season: str, week: int) -> list[dict]:
 
 
 def bucket_rank(r: int) -> str:
-    if r <= 5: return "1-5"
-    if r <= 10: return "6-10"
-    if r <= 15: return "11-15"
-    if r <= 20: return "16-20"
+    if r <= 5:
+        return "1-5"
+    if r <= 10:
+        return "6-10"
+    if r <= 15:
+        return "11-15"
+    if r <= 20:
+        return "16-20"
     return "21-25"
+
+
+def bucket_margin(m: int) -> str:
+    if m <= 7:
+        return "by 1-7"
+    if m <= 20:
+        return "by 8-20"
+    return "by 21+"
 
 
 def mean(xs):
@@ -99,11 +111,11 @@ def main() -> None:
                 key = (bucket_rank(r), "vs ranked" if opp_ranked else "vs unranked")
                 if p["won"]:
                     win_gain[key].append(-change)
-                    margin_effect[("win", "by 1-7" if p["margin"] <= 7 else "by 8-20" if p["margin"] <= 20 else "by 21+")].append(-change)
+                    margin_effect[("win", bucket_margin(p["margin"]))].append(-change)
                 else:
                     loss_drop[key].append(min(change, 26 - r))
                     loss_out[key].append(1 if new == 26 else 0)
-                    margin_effect[("loss", "by 1-7" if p["margin"] <= 7 else "by 8-20" if p["margin"] <= 20 else "by 21+")].append(change)
+                    margin_effect[("loss", bucket_margin(p["margin"]))].append(change)
                     loss_drop[(bucket_rank(r), "at home" if p["home"] else "away/neutral")].append(min(change, 26 - r))
             for tid, r in after.items():
                 if tid in before or tid not in played:

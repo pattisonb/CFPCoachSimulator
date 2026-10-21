@@ -110,7 +110,10 @@ def evaluate(p, r, seasons, ap_params, cfp_params, want_cfp=False):
     ap_e, ap_h, cfp_e, cfp_h = [], [], [], []
     for s in seasons:
         a, b, c, d = replay(p[s], r[s], ap_params, cfp_params, want_cfp)
-        ap_e += a; ap_h += b; cfp_e += c; cfp_h += d
+        ap_e += a
+        ap_h += b
+        cfp_e += c
+        cfp_h += d
     return (st.mean(ap_e) if ap_e else 99, st.mean(ap_h) if ap_h else 0,
             st.mean(cfp_e) if cfp_e else 99, st.mean(cfp_h) if cfp_h else 0)
 
@@ -130,7 +133,9 @@ CFP_GRID = {
 }
 
 
-def coordinate_descent(p, r, seasons, params, grid, score_fn, rounds=3):
+def coordinate_descent(params, grid, score_fn, rounds=3):
+    """Try each parameter at every grid value, keep any that lowers score_fn, and repeat
+    until a round brings no improvement."""
     best = score_fn(params)
     for _ in range(rounds):
         improved = False
@@ -149,23 +154,26 @@ def coordinate_descent(p, r, seasons, params, grid, score_fn, rounds=3):
     return params, best
 
 
+def print_scores(ae: float, ah: float, ce: float, ch: float) -> None:
+    print(f"AP: mean abs rank error {ae:.2f}, real top-25 teams the model ranks {100 * ah:.0f}%")
+    print(f"CFP: mean abs rank error {ce:.2f}, real top-25 teams the model ranks {100 * ch:.0f}%")
+
+
 def main() -> None:
     p, r, seasons = load()
     ap_params, cfp_params = polls.load_params()
     print(f"seasons: {seasons}")
     if "--eval" in sys.argv:
-        ae, ah, ce, ch = evaluate(p, r, seasons, ap_params, cfp_params, want_cfp=True)
-        print(f"AP: mean abs rank error {ae:.2f}, real top-25 teams the model ranks {100 * ah:.0f}%")
-        print(f"CFP: mean abs rank error {ce:.2f}, real top-25 teams the model ranks {100 * ch:.0f}%")
+        print_scores(*evaluate(p, r, seasons, ap_params, cfp_params, want_cfp=True))
         return
     print("\nfitting the AP model")
-    ap_params, ap_best = coordinate_descent(p, r, seasons, ap_params, GRID, lambda prm: evaluate(p, r, seasons, prm, cfp_params)[0])
+    ap_params, _ = coordinate_descent(ap_params, GRID, lambda prm: evaluate(p, r, seasons, prm, cfp_params)[0])
     print("\nfitting the committee model")
-    cfp_params, cfp_best = coordinate_descent(p, r, seasons, cfp_params, CFP_GRID,
-                                              lambda prm: evaluate(p, r, seasons, ap_params, prm, want_cfp=True)[2], rounds=2)
+    cfp_params, _ = coordinate_descent(cfp_params, CFP_GRID,
+                                       lambda prm: evaluate(p, r, seasons, ap_params, prm, want_cfp=True)[2], rounds=2)
     ae, ah, ce, ch = evaluate(p, r, seasons, ap_params, cfp_params, want_cfp=True)
-    print(f"\nAP: mean abs rank error {ae:.2f}, real top-25 teams the model ranks {100 * ah:.0f}%")
-    print(f"CFP: mean abs rank error {ce:.2f}, real top-25 teams the model ranks {100 * ch:.0f}%")
+    print()
+    print_scores(ae, ah, ce, ch)
     polls.PARAMS_FILE.write_text(json.dumps({"ap": ap_params, "cfp": cfp_params, "ap_error": ae, "cfp_error": ce,
                                              "seasons": seasons}, indent=1), encoding="utf-8")
     print(f"wrote {polls.PARAMS_FILE}")

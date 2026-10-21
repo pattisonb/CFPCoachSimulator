@@ -55,24 +55,21 @@ def score_week(order: list[str], real: dict[str, int]) -> tuple[float, int]:
     return st.mean(errs), sum(1 for t in real if t in mine)
 
 
+def mean_scores(frames: list[dict], orders: list[list[str]]) -> tuple[float, float]:
+    """(mean rank error, mean real top-25 teams ranked) of one forecast order per frame."""
+    scores = [score_week(order, f["real"]) for f, order in zip(frames, orders)]
+    return st.mean(m for m, _ in scores), st.mean(h for _, h in scores)
+
+
 def evaluate(frames: list[dict], params: dict) -> tuple[float, float]:
-    maes, hits = [], []
-    for f in frames:
-        order, _ = polls.next_poll(f["prev"], f["games"], f["records"], f["tiers"], params)
-        m, h = score_week(order, f["real"])
-        maes.append(m)
-        hits.append(h)
-    return st.mean(maes), st.mean(hits)
+    orders = [polls.next_poll(f["prev"], f["games"], f["records"], f["tiers"], params)[0] for f in frames]
+    return mean_scores(frames, orders)
 
 
 def baseline(frames: list[dict]) -> tuple[float, float]:
-    maes, hits = [], []
-    for f in frames:
-        order = [e["team"] for e in sorted(f["prev"], key=lambda e: e["rank"])]
-        m, h = score_week(order, f["real"])
-        maes.append(m)
-        hits.append(h)
-    return st.mean(maes), st.mean(hits)
+    """Last week's poll unchanged."""
+    orders = [[e["team"] for e in sorted(f["prev"], key=lambda e: e["rank"])] for f in frames]
+    return mean_scores(frames, orders)
 
 
 def fit(frames: list[dict], params: dict, rounds: int = 4) -> dict:
@@ -96,6 +93,14 @@ def fit(frames: list[dict], params: dict, rounds: int = 4) -> dict:
     return params
 
 
+def season_tag(season: str) -> str:
+    if season in TRAIN:
+        return " (fit)"
+    if season in VALID:
+        return " (held out)"
+    return " (live)"
+
+
 def report(p, r, params) -> None:
     rows = []
     for season in TRAIN + VALID + LIVE:
@@ -109,8 +114,7 @@ def report(p, r, params) -> None:
         rows.append((season, len(frames), m, h, bm, bh))
     print(f"\n{'season':<8}{'weeks':>6}{'model MAE':>11}{'in 25':>7}{'last-week MAE':>15}{'in 25':>7}")
     for season, n, m, h, bm, bh in rows:
-        tag = " (fit)" if season in TRAIN else " (held out)" if season in VALID else " (live)"
-        print(f"{season:<8}{n:>6}{m:>11.2f}{h:>7.1f}{bm:>15.2f}{bh:>7.1f}{tag}")
+        print(f"{season:<8}{n:>6}{m:>11.2f}{h:>7.1f}{bm:>15.2f}{bh:>7.1f}{season_tag(season)}")
     for label, group in (("fit 2014-2023", TRAIN), ("held out 2024-2025", VALID), ("2026", LIVE)):
         g = [x for x in rows if x[0] in group]
         if g:

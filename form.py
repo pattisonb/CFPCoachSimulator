@@ -17,6 +17,8 @@ takes the form as a shift of every player's ratings (points / PTS_PER_RATING).
 from __future__ import annotations
 
 import json
+import os
+import re
 import sys
 from pathlib import Path
 
@@ -88,6 +90,16 @@ def form_shift(team_form: dict | None) -> float:
     return float(team_form["rating"]) if team_form else 0.0
 
 
+def _moved(p: dict, keys, shift: float) -> dict:
+    """A copy of the player with the ratings in `keys` moved by `shift` (held to 1-99)."""
+    q = dict(p)
+    for k in keys:
+        v = p.get(k)
+        if isinstance(v, (int, float)):
+            q[k] = max(1, min(99, int(round(v + shift))))
+    return q
+
+
 def with_form(team: dict, shift: float) -> dict:
     """A copy of the team with every player's ratings moved by `shift` rating points
     (nothing when the shift rounds to zero)."""
@@ -95,15 +107,7 @@ def with_form(team: dict, shift: float) -> dict:
         return team
     out = {**team}
     for unit in ("offense", "defense"):
-        rows = []
-        for p in team[unit]:
-            q = dict(p)
-            for k in ATTRS:
-                v = p.get(k)
-                if isinstance(v, (int, float)):
-                    q[k] = max(1, min(99, int(round(v + shift))))
-            rows.append(q)
-        out[unit] = rows
+        out[unit] = [_moved(p, ATTRS, shift) for p in team[unit]]
     return out
 
 
@@ -141,9 +145,20 @@ MIN_GAMES = 3             # every line needs this many games as well
 # sims when FORM_PLAYERS=1 is set: on the week 7 back-test they made the picks worse (72.9% to
 # 66-70% straight up, margin MAE 10.9 to 11.1-11.3), because production percentiles punish
 # players on dominant teams, whose defenses sit and whose backs rest in blowouts.
-import os as _os
-PLAYER_FORM_APPLIED = (_os.environ.get("FORM_PLAYERS") or "") in ("1", "true", "yes")
-ENABLED_CATEGORIES = set((_os.environ.get("FORM_CATEGORIES") or "passing,rushing,receiving,kicking,punting,defense").split(","))
+PLAYER_FORM_APPLIED = (os.environ.get("FORM_PLAYERS") or "") in ("1", "true", "yes")
+ENABLED_CATEGORIES = set((os.environ.get("FORM_CATEGORIES") or "passing,rushing,receiving,kicking,punting,defense").split(","))
+# category -> {season total: box score field} for the totals that add up game by game
+# (a kicker's long field goal is the season's longest instead, in _real_players)
+BOX_FIELDS = {
+    "passing": {"att": "passingAttempts", "cmp": "passingCompletions", "yds": "passingYards", "td": "passingTDs",
+                "int": "passingInterceptions"},
+    "rushing": {"att": "rushingAttempts", "yds": "rushingYards", "td": "rushingTDs"},
+    "receiving": {"rec": "receivingReceptions", "yds": "receivingYards", "td": "receivingTDs"},
+    "kicking": {"fga": "fieldGoalsAttempted", "fgm": "fieldGoalsMade"},
+    "punting": {"punts": "puntingPunts", "yds": "puntingYards"},
+    "defense": {"tkl": "totalTackles", "tfl": "lossTackles", "sacks": "sacks", "int": "defenseInterceptions",
+                "ff": "fumblesForced"},
+}
 
 
 def _num(x) -> float:
@@ -154,7 +169,7 @@ def _num(x) -> float:
 
 
 def _last(name: str) -> str:
-    import re
+    """The last name for matching: upper case, punctuation and suffixes (Jr., III) dropped."""
     toks = [t for t in re.sub(r"[.,']", "", (name or "").upper()).split() if t not in ("JR", "SR", "II", "III", "IV", "V")]
     return toks[-1] if toks else ""
 
@@ -213,20 +228,10 @@ def _real_players(games: list[dict], teams: dict, through_week: int | None) -> d
                 if key not in seen:
                     t["games"] += 1
                     seen.add(key)
-                if cat == "passing":
-                    t["att"] += _num(p.get("passingAttempts")); t["cmp"] += _num(p.get("passingCompletions"))
-                    t["yds"] += _num(p.get("passingYards")); t["td"] += _num(p.get("passingTDs")); t["int"] += _num(p.get("passingInterceptions"))
-                elif cat == "rushing":
-                    t["att"] += _num(p.get("rushingAttempts")); t["yds"] += _num(p.get("rushingYards")); t["td"] += _num(p.get("rushingTDs"))
-                elif cat == "receiving":
-                    t["rec"] += _num(p.get("receivingReceptions")); t["yds"] += _num(p.get("receivingYards")); t["td"] += _num(p.get("receivingTDs"))
-                elif cat == "kicking":
-                    t["fga"] += _num(p.get("fieldGoalsAttempted")); t["fgm"] += _num(p.get("fieldGoalsMade")); t["long"] = max(t["long"], _num(p.get("fieldGoalsLong")))
-                elif cat == "punting":
-                    t["punts"] += _num(p.get("puntingPunts")); t["yds"] += _num(p.get("puntingYards"))
-                elif cat == "defense":
-                    t["tkl"] += _num(p.get("totalTackles")); t["tfl"] += _num(p.get("lossTackles")); t["sacks"] += _num(p.get("sacks"))
-                    t["int"] += _num(p.get("defenseInterceptions")); t["ff"] += _num(p.get("fumblesForced"))
+                for total, field in BOX_FIELDS[cat].items():
+                    t[total] += _num(p.get(field))
+                if cat == "kicking":
+                    t["long"] = max(t["long"], _num(p.get("fieldGoalsLong")))
     return out
 
 
@@ -235,6 +240,23 @@ def _overall(p: dict) -> float:
     keys = PLAYER_ATTRS.get(GROUP.get(p["position"], ""), ())
     vals = [p[k] for k in keys if isinstance(p.get(k), (int, float))]
     return sum(vals) / len(vals) if vals else 50.0
+
+
+def _note(cat: str, t: dict) -> str:
+    """A player's real season line in one category, for the player card."""
+    if cat == "passing":
+        return f"{t['cmp']:.0f}/{t['att']:.0f}, {t['yds']:.0f} yds, {t['td']:.0f} TD, {t['int']:.0f} INT"
+    if cat == "rushing":
+        return f"{t['att']:.0f} car, {t['yds']:.0f} yds ({t['yds'] / max(1, t['att']):.1f} a carry)"
+    if cat == "receiving":
+        return f"{t['rec']:.0f} rec, {t['yds']:.0f} yds"
+    if cat == "kicking":
+        return f"{t['fgm']:.0f}/{t['fga']:.0f} FG, long {t['long']:.0f}"
+    if cat == "punting":
+        return f"{t['punts']:.0f} punts, {t['yds'] / max(1, t['punts']):.1f} avg"
+    if cat == "defense":
+        return f"{t['tkl']:.0f} tkl, {t['tfl']:.0f} TFL, {t['sacks']:.0f} sacks, {t['int']:.0f} INT"
+    raise KeyError(cat)
 
 
 def fit_player_form(games: list[dict], teams: dict, through_week: int | None = None) -> dict[str, dict[str, dict]]:
@@ -292,13 +314,10 @@ def fit_player_form(games: list[dict], teams: dict, through_week: int | None = N
             prev = out.setdefault(slug, {}).get(p["slug"])
             if prev and abs(prev["shift"]) >= abs(shift):
                 continue
-            note = {"passing": f"{t['cmp']:.0f}/{t['att']:.0f}, {t['yds']:.0f} yds, {t['td']:.0f} TD, {t['int']:.0f} INT",
-                    "rushing": f"{t['att']:.0f} car, {t['yds']:.0f} yds ({t['yds'] / max(1, t['att']):.1f} a carry)",
-                    "receiving": f"{t['rec']:.0f} rec, {t['yds']:.0f} yds", "kicking": f"{t['fgm']:.0f}/{t['fga']:.0f} FG, long {t['long']:.0f}",
-                    "punting": f"{t['punts']:.0f} punts, {t['yds'] / max(1, t['punts']):.1f} avg",
-                    "defense": f"{t['tkl']:.0f} tkl, {t['tfl']:.0f} TFL, {t['sacks']:.0f} sacks, {t['int']:.0f} INT"}[cat]
+            rating_pct = int(100 * sum(1 for x in rungs if x < _overall(p)) / len(rungs))
             out[slug][p["slug"]] = {"shift": round(shift, 2), "games": t["games"], "category": cat, "real_pct": round(pct, 3),
-                                    "note": f"{note} in {t['games']} games: {int(pct * 100)}th percentile against a {int(100 * sum(1 for x in rungs if x < _overall(p)) / len(rungs))}th percentile rating"}
+                                    "note": f"{_note(cat, t)} in {t['games']} games: {int(pct * 100)}th percentile "
+                                            f"against a {rating_pct}th percentile rating"}
     return out
 
 
@@ -311,15 +330,7 @@ def with_player_form(team: dict, shifts: dict[str, dict] | None) -> dict:
         rows = []
         for p in team[unit]:
             f = shifts.get(p.get("slug") or "")
-            if not f:
-                rows.append(p)
-                continue
-            q = dict(p)
-            for k in PLAYER_ATTRS.get(GROUP.get(p["position"], ""), ()):
-                v = p.get(k)
-                if isinstance(v, (int, float)):
-                    q[k] = max(1, min(99, int(round(v + f["shift"]))))
-            rows.append(q)
+            rows.append(_moved(p, PLAYER_ATTRS.get(GROUP.get(p["position"], ""), ()), f["shift"]) if f else p)
         out[unit] = rows
     return out
 
@@ -375,7 +386,8 @@ if __name__ == "__main__":
     name_of = {p["slug"]: p for t in teams.values() for p in t["offense"] + t["defense"] if p.get("slug")}
     for item in sorted(flat, key=lambda x: -x[2]["shift"])[:12] + [None] + sorted(flat, key=lambda x: x[2]["shift"])[:12]:
         if item is None:
-            print("  ..."); continue
+            print("  ...")
+            continue
         s, ps, f = item
         p = name_of[ps]
         print(f"  {p['name']:<24}{p['position']:<4}{teams[s]['name']:<20}{f['shift']:>+6.1f}  {f['note']}")

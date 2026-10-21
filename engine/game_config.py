@@ -31,13 +31,6 @@ FLEXBONE_FB_CARRY_WEIGHT = 1.5  # ... in a Flexbone Triple Option, where the div
 
 # ----- injuries -----
 INJURIES = True
-
-# In-game momentum (off unless the season setting turns it on per game): big plays swing a
-# team's momentum between -1 and 1, which nudges its ratings by up to MOMENTUM_EFFECT.
-MOMENTUM = False
-MOMENTUM_EFFECT = 0.05
-MOMENTUM_DECAY = 0.93          # per snap, so a swing fades over a drive or two
-MOMENTUM_HALF = 0.5            # what is left at the start of the second half
 INJURY_PER_SNAP = 0.00085       # per player on the field per snap: about 1.3 injuries a game per team
 # Quarterbacks and backs take the most hits: real teams start more than one passer and lead back
 # over a season (tools/realism.py: the 100th passer's yards, the 1,000-yard rushers).
@@ -46,6 +39,14 @@ INJURY_POSITION_MULT = {"QB": 2.2, "RB": 1.7}
 INJURY_SEVERITY = [(0.55, 0), (0.72, 1), (0.84, 2), (0.91, 3), (0.95, 5), (0.98, 8), (1.0, 20)]
 INJURY_TYPES = ["ankle sprain", "hamstring strain", "knee sprain", "shoulder injury", "concussion", "groin strain",
                 "wrist injury", "hip pointer", "calf strain", "high ankle sprain", "foot injury", "back spasms"]
+
+# ----- momentum -----
+# In-game momentum (off unless the season setting turns it on per game): big plays swing a
+# team's momentum between -1 and 1, which nudges its ratings by up to MOMENTUM_EFFECT.
+MOMENTUM = False
+MOMENTUM_EFFECT = 0.05
+MOMENTUM_DECAY = 0.93          # per snap, so a swing fades over a drive or two
+MOMENTUM_HALF = 0.5            # what is left at the start of the second half
 
 class GameSliders:
     """Centralized slider configuration for game parameters"""
@@ -79,7 +80,7 @@ class GameSliders:
         # ========== GAME PLAY SLIDERS ==========
         self.game_speed = 50           # Overall game tempo (affects time per play)
         self.injury_frequency = 50     # Injury frequency (not yet implemented)
-        self.home_field_advantage = 50 # Home field advantage (not yet implemented)
+        self.home_field_advantage = 50 # Home field advantage (scales the home team's rating edge, engine/game.py)
 
     def get_multiplier(self, slider_value):
         """
@@ -97,8 +98,7 @@ class GameSliders:
         0 = base * 0.5
         100 = base * 1.5
         """
-        multiplier = self.get_multiplier(slider_value)
-        return base_percentage * multiplier
+        return base_percentage * self.get_multiplier(slider_value)
 
     def get_inverse_percentage_adjustment(self, slider_value, base_percentage):
         """
@@ -107,8 +107,7 @@ class GameSliders:
         0 = base * 1.5 (more frequent)
         100 = base * 0.5 (less frequent)
         """
-        multiplier = 1.5 - (slider_value / 100)
-        return base_percentage * multiplier
+        return base_percentage * (1.5 - (slider_value / 100))
 
 
 # Global slider instance - can be modified before running simulation
@@ -120,18 +119,15 @@ sliders = GameSliders()
 # Clock. Two 30-minute halves; the quarter mark splits each half for the box score.
 HALF_SECONDS = 1800
 QUARTER_SECONDS = 900
-HURRY_UP_SECONDS = 120          # offense hurries when the half has this much left
-# Seconds a play takes off the clock, before the game-speed slider and late-game drag.
-PLAY_SECONDS_RUN = (23, 36)     # runs and completed passes (clock keeps running)
-PLAY_SECONDS_STOP = (8, 16)     # incompletions, penalties, plays out of bounds
-PLAY_SECONDS_HURRY = (8, 16)
-PLAY_SECONDS_STOP_HURRY = (4, 8)
+# The seconds a play takes are set in the "Situational football" block below.
 LATE_GAME_DRAG = 0.10           # plays take up to this much longer at the end of a half
 
 # The rating that formulas treat as "average FBS starter".
 NEUTRAL = 55
 
 # Penalties per snap (before the sliders).
+OFF_PENALTY_CHANCE = 0.050
+DEF_PENALTY_CHANCE = 0.035
 # ----- Turnovers, injuries and penalties (ratings v2, phase 5) -----
 # Multipliers around 1 that average out over the league, per house-scale point over the FBS
 # starter average (ATTR_LEAGUE_AVG; 50 is the Power 4 starter average, FBS starters sit at 45-48).
@@ -211,8 +207,6 @@ BLITZ_SACK = (1.35, 0.883)       # sack rate x (blitz, no blitz): about 1 on ave
 BLITZ_BIG_PLAY = (1.35, 0.883)   # long-gain chance x (blitz, no blitz): fewer men in coverage
 DISCIPLINE_EFFECT = 0.006        # penalty chance x (1 - this per point of discipline over 50; discipline is the
                                  # head coach's rating beyond what the team's talent predicts, build_teams.decouple_discipline)
-OFF_PENALTY_CHANCE = 0.050
-DEF_PENALTY_CHANCE = 0.035
 
 # ----- Passing -----
 THROWAWAY_CHANCE = 0.03
@@ -276,13 +270,10 @@ COVERAGE_TYPE_EFFECT = 0.0025
 CONTESTED_SHARE = {"short": 0.10, "mid": 0.25, "deep": 0.45}
 CONTESTED_EFFECT = 0.0035        # per point of (Contested Catches - defender's Ball Skills) / 2 + leaping and height edge
 CONTESTED_HEIGHT_POINTS = 2.0    # an inch of height is worth this many rating points at the catch point
-PASS_YARDS_WR = (12.3, 5.5)     # gauss mean, sd for WR completions (12.6 before the defense terms grew)
-PASS_YARDS_TE = (9.5, 4.5)
-PASS_YARDS_RB = (5.0, 4.0)
+PASS_YARDS_RB = (5.0, 4.0)      # gauss mean, sd for completions to running backs (receivers and tight ends: by depth above)
 PASS_SPEED_EFFECT = 0.007       # yards multiplier per point of receiver speed minus DB speed
 PASS_TACKLE_EFFECT = 0.006      # yards multiplier per point of the coverage players' tackling below neutral (yards after the catch)
-PASS_BIG_PLAY_CHANCE = 0.08    # of WR/TE completions
-PASS_BIG_PLAY_YARDS = (22, 65)
+PASS_BIG_PLAY_YARDS = (22, 65)  # a short or intermediate catch broken for a long gain (PASS_BREAKAWAY_CHANCE)
 PASS_MIN_YARDS = -2
 SCRAMBLE_CHANCE = 0.13          # of plays with no completion and no pick
 RECEPTION_FUMBLE_CHANCE = 0.010
@@ -440,7 +431,6 @@ GARBAGE_CLOCK = 1.15        # plays take this much longer when the leader is mil
 GARBAGE_RUN_SHIFT = 0.25    # added to the leader's run chance
 GARBAGE_BIG_PLAY = 0.75      # big-play chance multiplier for a conservative offense
 COMEBACK_LEAD = 14          # trailing by this much in the 4th quarter: pass more, hurry
-KNEEL_SECONDS = 75          # leading inside this many seconds of the 2nd half: victory formation
 
 # ----- Situational football (engine/situation.py) -----
 # Clock: a snap takes PLAY_SECONDS_SNAP_RANGE off the clock; when the clock keeps running the

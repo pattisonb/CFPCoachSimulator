@@ -39,9 +39,10 @@
     if (h === "side part") parts.push(`<path d="M60 98 C56 58 84 48 104 50 C128 52 144 66 140 98 C136 78 126 66 112 64 L86 72 C74 76 64 84 60 98 Z" fill="${hair}"/><path d="M86 72 L112 64" stroke="${shade}" stroke-width="2"/>`);
     if (h === "curly") for (const [x, y] of [[66, 80], [76, 64], [92, 56], [108, 56], [124, 64], [134, 80], [84, 66], [116, 66], [100, 62]]) parts.push(`<circle cx="${x}" cy="${y}" r="11" fill="${hair}"/>`);
     if (h === "long") parts.push(`<path d="M58 120 C50 60 80 48 100 48 C122 48 150 60 142 120 C140 100 138 86 126 74 C110 66 90 66 74 74 C62 86 60 100 58 120 Z" fill="${hair}"/>`);
-    // face
-    parts.push(`<path d="M80 92 Q88 87 96 92" stroke="${h === "bald" ? "#3b2a20" : hair}" stroke-width="3" fill="none" stroke-linecap="round"/>`);
-    parts.push(`<path d="M104 92 Q112 87 120 92" stroke="${h === "bald" ? "#3b2a20" : hair}" stroke-width="3" fill="none" stroke-linecap="round"/>`);
+    // face (a bald coach's brows are dark brown, everyone else's match his hair)
+    const brow = h === "bald" ? "#3b2a20" : hair;
+    parts.push(`<path d="M80 92 Q88 87 96 92" stroke="${brow}" stroke-width="3" fill="none" stroke-linecap="round"/>`);
+    parts.push(`<path d="M104 92 Q112 87 120 92" stroke="${brow}" stroke-width="3" fill="none" stroke-linecap="round"/>`);
     parts.push(`<circle cx="88" cy="102" r="3.4" fill="#1d2433"/><circle cx="112" cy="102" r="3.4" fill="#1d2433"/>`);
     parts.push(`<path d="M100 104 Q96 116 101 118" stroke="${shade}" stroke-width="2.4" fill="none"/>`);
     parts.push(`<path d="M88 128 Q100 136 112 128" stroke="#8a4b3b" stroke-width="3" fill="none" stroke-linecap="round"/>`);

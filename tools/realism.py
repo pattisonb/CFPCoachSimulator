@@ -146,8 +146,9 @@ def report(ends: list[dict], snaps: list[dict], teams: dict, data: dict | None =
             if r <= 50:
                 errs.append(abs(gap))
             cells.append(f"#{r} {sim:.0f}/{real:.0f} {100 * gap:+.0f}%")
-            data["leaders"].setdefault(name, {"label": label, "sim": [], "real": []})
-            data["leaders"][name]["sim"].append(sim); data["leaders"][name]["real"].append(real)
+            leader = data["leaders"].setdefault(name, {"label": label, "sim": [], "real": []})
+            leader["sim"].append(sim)
+            leader["real"].append(real)
         area_err[name] = st.mean(errs)
         lines.append(f"  {label:<16} " + " | ".join(cells) + f"   [off {100 * area_err[name]:.0f}%]")
     lines.append("  Players over a mark (sim / real 2023, 2024, 2025):")

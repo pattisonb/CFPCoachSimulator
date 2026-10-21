@@ -130,6 +130,10 @@ class Team:
         self.grouping_snaps = {}      # snaps per grouping / front, for the box score
         self.injuries = []            # injuries suffered in this game
         self.lead, self.half, self.in_overtime = 0, 1, False
+        self._resting = {}            # unit -> True while its starters sit in a blowout (rest_starters)
+        self._starter_snapshot = {}   # unit -> who was in the game before the starters sat
+        self._rb_lead = None          # (lead back, his rotation profile), cached by _lead_profile
+        self._defense_positions = sorted(set(p.position for p in self.defense))
         # Team-level stats for special teams events
         self.team_stats = {
             "kickoff_return_touchdowns": 0,
@@ -149,17 +153,18 @@ class Team:
             "fourth_down_conversions": 0,
         }
 
-    def get_offense(self, side="offense"):
-        if side == "offense" and self._lineup["offense"] is not None:
-            return self._lineup["offense"]
-        players = [p for p in getattr(self, side) if p.in_game and not p.injured]
-        self._active.update(players)      # they are about to gain fatigue
-        return players
-    
-    def get_defense(self, side="defense"):
-        if side == "defense" and self._lineup["defense"] is not None:
-            return self._lineup["defense"]
-        players = [p for p in getattr(self, side) if p.in_game and not p.injured]
+    def get_offense(self):
+        return self._on_field("offense")
+
+    def get_defense(self):
+        return self._on_field("defense")
+
+    def _on_field(self, unit):
+        """The unit's eleven for this snap, or (before a lineup is set) every healthy player
+        the fatigue rotation has in the game."""
+        if self._lineup[unit] is not None:
+            return self._lineup[unit]
+        players = [p for p in getattr(self, unit) if p.in_game and not p.injured]
         self._active.update(players)      # they are about to gain fatigue
         return players
 
@@ -235,7 +240,7 @@ class Team:
         player.injury = {"weeks": weeks, "type": kind}
         self.injuries.append({"name": player.name, "position": player.position, "weeks": weeks, "type": kind})
         self.clear_lineups()
-        
+
     def recover_bench_players(self):
         # every player with fatigue is in _active (the penalty pass keeps it current)
         for p in self._active:
@@ -256,9 +261,8 @@ class Team:
         """(per-snap out chance, per-snap return chance) for the lead back, from the committee
         values to the workhorse values (cfg.RB_LEAD_*) by how much better he is than the next
         back. Uses the unpenalized ratings the run game uses; cached for the game."""
-        cache = getattr(self, "_rb_lead", None)
-        if cache is not None and cache[0] is lead:
-            return cache[1]
+        if self._rb_lead is not None and self._rb_lead[0] is lead:
+            return self._rb_lead[1]
 
         def rating(p):
             o = p._original_attrs
@@ -290,7 +294,7 @@ class Team:
         backs = [p for p in self.offense if p.position == 'RB' and not p.injured]
         if len(backs) < 2:
             return
-        lead = None if getattr(self, "_resting", {}).get("offense") else self.lead_back()
+        lead = None if self._resting.get("offense") else self.lead_back()
         out_chance, return_chance = self._lead_profile(lead, backs) if lead is not None else (0.0, 0.0)
         if lead is not None and not lead.in_game and lead.fatigue <= cfg.RB_LEAD_RETURN_FATIGUE \
                 and random.random() < return_chance:
@@ -311,10 +315,16 @@ class Team:
         # the next fresh halfback on the depth chart first (fullbacks last), the more productive
         # one on a tie; sometimes the next back down gets the series instead
         bench.sort(key=lambda p: (p.role == 'FB', p.order, -production(p), p.fatigue))
+        self._swap(tired, bench, rotate=True)
+
+    @staticmethod
+    def _swap(tired, bench, rotate=False):
+        """Sub the bench (best first) for the tired players one-for-one. With `rotate`, the
+        next player down sometimes gets the series instead (cfg.BACKUP_RB_ROTATION)."""
         for tired_player in tired:
             if not bench:
                 break
-            pick = 1 if len(bench) > 1 and random.random() < cfg.BACKUP_RB_ROTATION else 0
+            pick = 1 if rotate and len(bench) > 1 and random.random() < cfg.BACKUP_RB_ROTATION else 0
             sub = bench.pop(pick)
             tired_player.in_game = False
             sub.in_game = True
@@ -322,37 +332,23 @@ class Team:
     def sub_skill_position_players(self, fatigue_threshold=50):
         self.rotate_backs(fatigue_threshold)
 
-        skill_positions = ['WR', 'TE']
-
-        for pos in skill_positions:
-            # Get current in-game players of this position
+        for pos in ('WR', 'TE'):
+            # in-game players of this position who are too tired
             starters = [p for p in self.offense if p.position == pos and p.in_game and p.fatigue > fatigue_threshold]
             if not starters:
-                continue  # no one too tired
+                continue
 
-            # Get bench players of same position who are fresh enough
+            # bench players of the same position who are fresh enough
             bench = [p for p in self.offense if p.position == pos and not p.in_game and not p.injured and p.fatigue <= fatigue_threshold]
             if not bench:
-                continue  # no fresh players available
+                continue
 
             # the next fresh player on the depth chart first, the more productive one on a tie
             bench.sort(key=lambda p: (p.order, -production(p), p.fatigue))
-
-            # Sub one-for-one; sometimes the next player down gets the series instead
-            for tired_player in starters:
-                if not bench:
-                    break
-                pick = 1 if len(bench) > 1 and random.random() < cfg.BACKUP_RB_ROTATION else 0
-                sub = bench.pop(pick)
-                tired_player.in_game = False
-                sub.in_game = True
+            self._swap(starters, bench, rotate=True)
 
     def sub_defensive_players(self, fatigue_threshold=50):
-        positions = getattr(self, "_defense_positions", None)
-        if positions is None:
-            positions = self._defense_positions = sorted(set(p.position for p in self.defense))
-
-        for pos in positions:
+        for pos in self._defense_positions:
             threshold = cfg.DEF_SUB_FATIGUE.get(pos, fatigue_threshold)
             # Players currently in the game and too tired
             tired_players = [p for p in self.defense if p.position == pos and p.in_game and p.fatigue > threshold]
@@ -366,27 +362,16 @@ class Team:
 
             # the next fresh player on the depth chart first, then the freshest and most productive
             bench.sort(key=lambda p: (p.order, p.fatigue, -production(p)))
-
-            # Swap one-for-one
-            for tired in tired_players:
-                if not bench:
-                    break
-                fresh = bench.pop(0)
-                tired.in_game = False
-                fresh.in_game = True
-
+            self._swap(tired_players, bench)
 
     REST_POSITIONS = {"offense": ("QB", "RB", "WR", "TE", "OL"), "defense": ("DL", "MLB", "ROLB", "LOLB", "CB", "S")}
 
     def rest_starters(self, unit="offense"):
         """Blowout: sit the starters at the skill and front positions and play the next
         players on the depth chart (the roster lists are in depth order). No-op if already resting."""
-        if getattr(self, "_resting", {}).get(unit):
+        if self._resting.get(unit):
             return
         players = getattr(self, unit)
-        if not hasattr(self, "_resting"):
-            self._resting = {}
-            self._starter_snapshot = {}
         self._starter_snapshot[unit] = [p.in_game for p in players]
         for pos in self.REST_POSITIONS[unit]:
             group = [p for p in players if p.position == pos and not p.injured]
@@ -397,7 +382,7 @@ class Team:
         self._resting[unit] = True
 
     def restore_starters(self, unit="offense"):
-        if not getattr(self, "_resting", {}).get(unit):
+        if not self._resting.get(unit):
             return
         for p, was in zip(getattr(self, unit), self._starter_snapshot[unit]):
             p.in_game = was
@@ -420,7 +405,7 @@ class Team:
             if p.position == alt and not p.injured:
                 return p
         return self.offense[0] if self.offense else None
-    
+
     def _designated(self, slug):
         if not slug:
             return None
@@ -439,18 +424,12 @@ class Team:
 
     def get_kick_returner(self):
         """The designated kick returner, else the fastest skill position player."""
-        designated = self._designated(self.kick_returner)
-        if designated:
-            return designated
-        return self.best_returner()
-    
+        return self._designated(self.kick_returner) or self.best_returner()
+
     def get_punt_returner(self):
         """The designated punt returner, else the fastest skill position player."""
-        designated = self._designated(self.punt_returner)
-        if designated:
-            return designated
-        return self.best_returner()
-    
+        return self._designated(self.punt_returner) or self.best_returner()
+
     def swing(self, amount):
         """A momentum swing (positive is good for this team), clamped to [-1, 1]."""
         if cfg.MOMENTUM:

@@ -9,7 +9,7 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
@@ -32,14 +32,6 @@ def rot(p: tuple[float, float], cx: float = 32, cy: float = 32) -> tuple[float, 
     a = math.radians(TILT)
     x, y = p
     return cx + x * math.cos(a) - y * math.sin(a), cy + x * math.sin(a) + y * math.cos(a)
-
-
-def stripe(x: float) -> list[tuple[float, float]]:
-    """The band across the ball at x (ball coordinates), clipped to the outline."""
-    t = x / BALL_L
-    h = BALL_H * (1 - t * t) ** 0.8
-    w = 1.6
-    return [(x - w, -h), (x + w, -h), (x + w, h), (x - w, h)]
 
 
 LACES = [((-7.5, 0), (7.5, 0))] + [((x, -2.6), (x, 2.6)) for x in (-5, -1.7, 1.7, 5)]
@@ -66,7 +58,11 @@ def tile(size: int, rounded: bool = True) -> Image.Image:
         d.rounded_rectangle((0, 0, size * 4 - 1, size * 4 - 1), radius=14 * k, fill=NAVY)
     else:
         d.rectangle((0, 0, size * 4, size * 4), fill=NAVY)
-    s = lambda p: (rot(p)[0] * k, rot(p)[1] * k)   # noqa: E731
+
+    def s(p: tuple[float, float]) -> tuple[float, float]:   # ball coordinates -> pixels
+        x, y = rot(p)
+        return x * k, y * k
+
     d.polygon([s(p) for p in ball_outline()], fill=AMBER)
     # stripes: draw the band, then trim it back to the ball by redrawing outside in navy
     ball = Image.new("L", img.size, 0)
@@ -74,7 +70,6 @@ def tile(size: int, rounded: bool = True) -> Image.Image:
     bands = Image.new("L", img.size, 0)
     for x in (-17, 17):
         ImageDraw.Draw(bands).polygon([s(p) for p in [(x - 1.6, -16), (x + 1.6, -16), (x + 1.6, 16), (x - 1.6, 16)]], fill=255)
-    from PIL import ImageChops
     img.paste(Image.new("RGBA", img.size, NAVY), (0, 0), ImageChops.multiply(ball, bands))
     for a, b in LACES:
         d.line([s(a), s(b)], fill=WHITE, width=max(1, round(2.2 * k)))
@@ -90,7 +85,8 @@ def og_image() -> Image.Image:
     img = Image.new("RGB", (1200, 630), NAVY_DEEP)
     d = ImageDraw.Draw(img)
     d.rectangle((0, 600, 1200, 630), fill=AMBER)
-    img.paste(tile(260), (110, 170), tile(260))
+    icon = tile(260)
+    img.paste(icon, (110, 170), icon)
     fonts = Path("C:/Windows/Fonts")
     def font(name: str, size: int):
         try:

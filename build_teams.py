@@ -77,6 +77,26 @@ def avg(r: dict, *keys: str, default: float = 50.0) -> float:
     return sum(vals) / len(vals) if vals else default
 
 
+def clamp_rating(x: float) -> int:
+    """A rating held to 1-99 and rounded."""
+    return int(round(max(1, min(99, x))))
+
+
+def clamp_tendency(x: float) -> int:
+    """A coach tendency held to 0-100 and rounded."""
+    return int(round(max(0, min(100, x))))
+
+
+def to_engine(v: float, mean: float) -> float:
+    """A source value on the engine scale: `mean` lands on NEUTRAL, the spread is scaled by SPREAD_SCALE."""
+    return NEUTRAL + (v - mean) * SPREAD_SCALE
+
+
+def depth_key(p: dict) -> int:
+    """Sort key for depth-chart order (a player without a depth goes last)."""
+    return p.get("depth") or 99
+
+
 def map_player(p: dict, pos: str | None = None) -> dict:
     """Raw engine attributes (before normalization) for one source player, at his own
     position or, with `pos`, as if he played another engine position."""
@@ -205,15 +225,13 @@ def load_team(path: Path) -> dict:
         m["_src"] = p
         # ratings v2: the attributes on the source scale (house_attributes puts them on ours),
         # the measurables, the earned traits and the play style
-        m["_attr_raw"] = rv2.raw_attributes(p["ratings"], m["position"], roles.get(p["slug"], (None, None))[0])
+        m["_attr_raw"] = rv2.raw_attributes(p["ratings"], m["position"], m["role"])
         m["height_in"] = rv2.height_inches(p.get("height"))
         m["traits"] = rv2.traits_of(p.get("abilities") or [])
         m["archetype"] = rv2.ARCHETYPES.get(p.get("archetype") or "", p.get("archetype"))
         # the engine finds K and P among in-game offense players
-        if m["position"] == "K":
-            m["starter"] = p["slug"] in st_special.get("K", [])
-        if m["position"] == "P":
-            m["starter"] = p["slug"] in st_special.get("P", [])
+        if m["position"] in ("K", "P"):
+            m["starter"] = p["slug"] in st_special.get(m["position"], [])
         players.append(m)
     hc, oc, dc = t["coaches"]["head_coach"], t["coaches"]["offensive_coordinator"], t["coaches"]["defensive_coordinator"]
     fix = SCHEME_OVERRIDES.get(t["slug"]) or {}
@@ -279,7 +297,7 @@ def normalize_tendencies(teams: list[dict]) -> dict:
         vals = [t["tendencies"][key] for t in teams if not t["fictional"]]
         means[key] = st.mean(vals)
         for t in teams:
-            t["tendencies"][key] = int(round(max(0, min(100, 50 + t["tendencies"][key] - means[key]))))
+            t["tendencies"][key] = clamp_tendency(50 + t["tendencies"][key] - means[key])
     return {k: round(v, 1) for k, v in means.items()}
 
 
@@ -296,7 +314,7 @@ def decouple_discipline(teams: list[dict]) -> float:
     slope = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sum((x - mx) ** 2 for x in xs)
     for t in teams:
         fit = my + slope * (t["team_ratings"]["overall"] - mx)
-        t["tendencies"]["discipline"] = int(round(max(0, min(100, 50 + t["tendencies"]["discipline"] - fit))))
+        t["tendencies"]["discipline"] = clamp_tendency(50 + t["tendencies"]["discipline"] - fit)
     return round(slope, 3)
 
 
@@ -327,12 +345,12 @@ def apply_observed_tendencies(teams: list[dict]) -> int:
         # plays that out (it runs more when ahead), so the observed rate is credited back
         # GAME_SCRIPT_PASS points of pass share per point of average margin.
         margin = o.get("margin_per_game", 0.0)
-        td["pass_rate"] = int(round(max(0, min(100, 50 + 1.67 * (o["pass_rate"] - league["pass_rate"] + GAME_SCRIPT_PASS * margin)))))
-        td["tempo"] = int(round(max(0, min(100, 50 + 3.0 * (o["plays_per_game"] - league["plays_per_game"])))))
+        td["pass_rate"] = clamp_tendency(50 + 1.67 * (o["pass_rate"] - league["pass_rate"] + GAME_SCRIPT_PASS * margin))
+        td["tempo"] = clamp_tendency(50 + 3.0 * (o["plays_per_game"] - league["plays_per_game"]))
         # Fourth-down tries: a team that trails a lot tries more out of need, not choice
         # (Sac State 99, Texas A&M 100), so the attempts expected from its margin come off.
         ratio = (o["fourth_att_per_game"] + FOURTH_PER_MARGIN * margin) / max(0.1, league["fourth_att_per_game"])
-        td["fourth_down_go_rate"] = int(round(max(0, min(100, 50 + (ratio - 1) * 125))))
+        td["fourth_down_go_rate"] = clamp_tendency(50 + (ratio - 1) * 125)
         # Observed QB rushes include sacks (college convention) and scrambles; designed runs are the
         # rest: every quarterback's carries less the team's own sacks and about 4 points of scrambles
         # (the engine plays scrambles itself). A flat 10 points used to come off QB1's carries alone,
@@ -382,7 +400,7 @@ def apply_real_adjustments(teams: list[dict], means: dict) -> tuple[int, int]:
                 continue
             for attr, d in deltas.items():
                 if isinstance(p.get(attr), (int, float)):
-                    p[attr] = int(round(max(1, min(99, p[attr] + d))))
+                    p[attr] = clamp_rating(p[attr] + d)
             nudged += 1
         changes = (adj.get("depth") or {}).get(t["slug"], {})
         for role, order in changes.items():
@@ -392,9 +410,7 @@ def apply_real_adjustments(teams: list[dict], means: dict) -> tuple[int, int]:
             if not group:
                 continue
             n_start = sum(1 for p in group if p["starter"])
-            ranked = [by_slug[s] for s in order if s in by_slug and by_slug[s].get("role") == role]
-            ranked += [p for p in sorted(group, key=lambda p: p.get("depth") or 99) if p not in ranked]
-            for i, p in enumerate(ranked):
+            for i, p in enumerate(usage_ranked(group, order, by_slug, (role,))):
                 p["depth"] = i + 1
                 p["starter"] = i < n_start
             reordered += 1
@@ -406,13 +422,21 @@ def apply_real_adjustments(teams: list[dict], means: dict) -> tuple[int, int]:
     return nudged, reordered
 
 
+def usage_ranked(group: list[dict], order: list[str], by_slug: dict, roles: tuple[str, ...]) -> list[dict]:
+    """`group` in real-usage order: the players `order` names (at one of `roles`) first, then
+    the rest of the group in depth order."""
+    ranked = [by_slug[s] for s in order if s in by_slug and by_slug[s].get("role") in roles]
+    ranked += [p for p in sorted(group, key=depth_key) if p not in ranked]
+    return ranked
+
+
 def add_real_player(t: dict, a: dict) -> None:
     """A real 2026 player the source rosters lack (data/real_adjustments.json "added"), listed
     last at his role; the depth order by real usage then puts him where he plays."""
     slug = "real-" + "".join(ch if ch.isalnum() else "-" for ch in a["name"].lower()).strip("-")
     if any(p["slug"] == slug or (p["name"] == a["name"] and p["position"] == a["position"]) for p in t["players"]):
         return
-    group = sorted((p for p in t["players"] if p.get("role") == a["role"]), key=lambda p: p.get("depth") or 99)
+    group = sorted((p for p in t["players"] if p.get("role") == a["role"]), key=depth_key)
     template = group[0] if group else next((p for p in t["players"] if p["position"] == a["position"]), None)
     # His ratings are the ones of the player at the top of his role: the team plays as
     # strong as it did, and the real player's line goes to the right name. (Rated as an
@@ -436,9 +460,7 @@ def pool_linebackers(t: dict, order: list[str], by_slug: dict) -> int:
     if not lbs:
         return 0
     n_start = sum(1 for p in lbs if p["starter"])
-    ranked = [by_slug[s] for s in order if s in by_slug and by_slug[s].get("role") in LB_ROLES]
-    ranked += [p for p in sorted(lbs, key=lambda p: p.get("depth") or 99) if p not in ranked]
-    for i, p in enumerate(ranked):
+    for i, p in enumerate(usage_ranked(lbs, order, by_slug, LB_ROLES)):
         p["order"] = i + 1
         p["starter"] = i < n_start
     return 1
@@ -455,14 +477,14 @@ def move_specialist(t: dict, p: dict, pos: str, means: dict) -> int:
         p.pop(a, None)
     for a, v in raw.items():
         if a in ATTRS and isinstance(v, (int, float)):
-            p[a] = int(round(max(1, min(99, NEUTRAL + (v - means.get(f"{pos}:{a}", 50.0)) * SPREAD_SCALE))))
+            p[a] = clamp_rating(to_engine(v, means.get(f"{pos}:{a}", 50.0)))
     p["position"], p["role"] = pos, pos
     p["_attr_raw"] = rv2.raw_attributes(p["_src"]["ratings"], pos, pos)
     p["attributes"] = house_attributes_of(p)
     for role, first in ((pos, p), (old_role, None)):
         if role is None:
             continue
-        rest = sorted((q for q in t["players"] if q.get("role") == role and q is not first), key=lambda q: q.get("depth") or 99)
+        rest = sorted((q for q in t["players"] if q.get("role") == role and q is not first), key=depth_key)
         for i, q in enumerate(([first] if first else []) + rest):
             q["depth"] = i + 1
             q["starter"] = i == 0
@@ -531,7 +553,7 @@ def house_attributes_of(p: dict) -> dict:
     out = {}
     for k, v in (p.get("_attr_raw") or {}).items():
         m, hi, lo = ATTR_SCALE.get(f"{_attr_group(p)}|{k}", (v, 1.5, 0.9))
-        out[k] = int(round(max(1, min(99, 50 + (v - m) * (hi if v >= m else lo)))))
+        out[k] = clamp_rating(50 + (v - m) * (hi if v >= m else lo))
     return out
 
 
@@ -561,9 +583,8 @@ def normalize(teams: list[dict]) -> dict:
         for p in t["players"]:
             for a in ATTRS:
                 if a in p:
-                    m = means.get((p["position"], a), 50.0)
-                    p[a] = int(round(max(1, min(99, NEUTRAL + (p[a] - m) * SPREAD_SCALE))))
-            p[RETURN_ATTR] = int(round(max(1, min(99, NEUTRAL + (p[RETURN_ATTR] - return_mean) * SPREAD_SCALE))))
+                    p[a] = clamp_rating(to_engine(p[a], means.get((p["position"], a), 50.0)))
+            p[RETURN_ATTR] = clamp_rating(to_engine(p[RETURN_ATTR], return_mean))
             clamp_extremes(p)
     means[("returners", RETURN_ATTR)] = return_mean
     return {f"{pos}:{a}": round(m, 1) for (pos, a), m in sorted(means.items())}
@@ -585,7 +606,7 @@ def team_level(teams: list[dict]) -> dict:
             for p in t["players"]:
                 for a in ATTRS:
                     if isinstance(p.get(a), (int, float)):
-                        p[a] = int(round(max(1, min(99, p[a] + shift))))
+                        p[a] = clamp_rating(p[a] + shift)
     return shifts
 
 
@@ -647,7 +668,7 @@ def ratings_at_every_position(teams: list[dict], means: dict) -> None:
                 for a, v in raw.items():
                     if a in ATTRS and isinstance(v, (int, float)):
                         mean = means.get(f"{pos}:{a}", 50.0)
-                        attrs[a] = int(round(max(1, min(99, NEUTRAL + (v - mean) * SPREAD_SCALE + t.get("level_shift", 0.0)))))
+                        attrs[a] = clamp_rating(to_engine(v, mean) + t.get("level_shift", 0.0))
                 attrs["position"] = pos
                 rating = player_overall(attrs)
                 if pos != m["position"]:
@@ -681,8 +702,9 @@ def main() -> None:
     teams = [load_team(p) for p in paths]
     means = normalize(teams)
     shifts = team_level(teams)
-    print(f"team level: {sum(1 for v in shifts.values() if v)} teams above the FBS starter average shifted "
-          f"{min(shifts.values()):.1f} to {max(v for v in shifts.values() if v) if any(shifts.values()) else 0:.1f} engine points (top scale {TEAM_LEVEL_TOP_SCALE})")
+    moved = [v for v in shifts.values() if v]
+    print(f"team level: {len(moved)} teams above the FBS starter average shifted "
+          f"{min(shifts.values()):.1f} to {max(moved) if moved else 0:.1f} engine points (top scale {TEAM_LEVEL_TOP_SCALE})")
     house_attributes(teams)
     nudged, reordered = apply_real_adjustments(teams, means)
     for t in teams:

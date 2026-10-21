@@ -27,8 +27,17 @@ FBS_CONF_IDS = {"1", "4", "5", "8", "9", "151", "12", "15", "17", "37", "18"}
 
 
 def bucket(d: int) -> str:
+    """The score gap after three quarters, as a comeback bucket."""
     d = abs(d)
-    return "tied" if d == 0 else "1-3" if d <= 3 else "4-8" if d <= 8 else "9-16" if d <= 16 else "17+"
+    if d == 0:
+        return "tied"
+    if d <= 3:
+        return "1-3"
+    if d <= 8:
+        return "4-8"
+    if d <= 16:
+        return "9-16"
+    return "17+"
 
 
 def measure(games: list[dict]) -> dict:

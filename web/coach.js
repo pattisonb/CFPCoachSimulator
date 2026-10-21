@@ -242,12 +242,15 @@
     } catch (err) { $("#coach-form").append(el("p", { class: "muted", text: `Could not load: ${err.message}` })); return; }
     const sel = $("#preview-team");
     for (const t of TEAMS.filter((x) => !x.fictional)) sel.append(el("option", { value: t.slug, text: t.name }));
+    // the preview team: the one asked for in the URL, else Ohio State, else the first
     const wanted = START_PARAMS.get("team");
-    sel.value = TEAMS.some((t) => t.slug === wanted) ? wanted : TEAMS.some((t) => t.slug === "ohio-state") ? "ohio-state" : sel.options[0].value;
+    if (TEAMS.some((t) => t.slug === wanted)) sel.value = wanted;
+    else if (TEAMS.some((t) => t.slug === "ohio-state")) sel.value = "ohio-state";
+    else sel.value = sel.options[0].value;
     sel.addEventListener("change", () => { renderPreview(); renderList(); });
     coach = clone(OPT.blank);
-    const params = new URLSearchParams(location.search);
-    if (params.get("id")) { try { coach = await api(`/api/coaches/${encodeURIComponent(params.get("id"))}`); } catch (_) { /* a new coach */ } }
+    const id = START_PARAMS.get("id");
+    if (id) { try { coach = await api(`/api/coaches/${encodeURIComponent(id)}`); } catch (_) { /* a new coach */ } }
     $("#btn-new-coach").addEventListener("click", () => { coach = clone(OPT.blank); renderForm(); renderList(); });
     renderForm();
     renderList();

@@ -10,6 +10,10 @@
     if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
     return res.json();
   }
+  // fetch options for a POST with a JSON body
+  function postJSON(body) {
+    return { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+  }
   let toastTimer = null;
   function toast(msg, ms) {
     const t = $("#toast"); t.textContent = msg; t.hidden = false;
@@ -17,7 +21,6 @@
   }
   function when(iso) { return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
   function name(slug) { const t = window.CFP.teamsBySlug[slug]; return t ? t.name : slug; }
-  function color(slug) { const t = window.CFP.teamsBySlug[slug]; return t && t.colors && t.colors.primary ? t.colors.primary : "#888"; }
 
   // ----- setup -------------------------------------------------------------
 
@@ -178,7 +181,7 @@
     $("#btn-new").disabled = $("#btn-today").disabled = true;
     if (mode === "remaining") toast("Loading the real season so far: results, polls, stats and box scores…");
     try {
-      const s = await api("/api/season", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team, mode, coach: coach || null }) });
+      const s = await api("/api/season", postJSON({ team, mode, coach: coach || null }));
       history.replaceState(null, "", `/season?id=${s.id}`);
       showSeason(s);
       loadSeasons();
@@ -294,18 +297,24 @@
 
   // ----- advancing ---------------------------------------------------------
 
+  // A sim is starting: note the week it starts from and the week it runs to, whether game
+  // day follows it, and lock the page until it is done.
+  function beginSim(s, target, gamedayWanted) {
+    state.gamedayWanted = gamedayWanted;
+    state.advanceFrom = s.current_week;
+    state.simming = true;
+    state.simResults = [];
+    state.simTarget = target;
+    state.headWeek = s.current_week;
+    setBusy(true);
+  }
+
   // Game day: only your game is simulated, then it replays drive by drive. Advance then
   // plays the rest of the week (or the whole week, if you skipped game day).
   async function playGameDay() {
     const s = state.season;
     if (!s || s.done) return;
-    state.advanceFrom = s.current_week;
-    state.simming = true;
-    state.simResults = [];
-    state.simTarget = s.current_week + 1;
-    state.gamedayWanted = true;
-    state.headWeek = s.current_week;
-    setBusy(true);
+    beginSim(s, s.current_week + 1, true);
     showProgress({ status: "running", done: s.current_week, total: s.current_week + 1, stage: "Simming your game", week: s.current_week + 1 });
     try {
       await api(`/api/season/${s.id}/gameday`, { method: "POST" });
@@ -318,16 +327,10 @@
     if (!s || s.done) return;
     // the highlighted week is the one Advance plays: a week further ahead sims through to it
     if (!to && state.viewWeek > s.current_week + 1) to = state.viewWeek;
-    state.gamedayWanted = false;
-    state.advanceFrom = s.current_week;
-    state.simming = true;
-    state.simResults = [];
-    state.simTarget = to || s.current_week + 1;
-    state.headWeek = s.current_week;
-    setBusy(true);
+    beginSim(s, to || s.current_week + 1, false);
     showProgress({ status: "running", done: s.current_week, total: to || s.current_week + 1, stage: "Starting", week: s.current_week + 1 });
     try {
-      await api(`/api/season/${s.id}/advance`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(to ? { to } : {}) });
+      await api(`/api/season/${s.id}/advance`, postJSON(to ? { to } : {}));
       poll();
     } catch (err) { simFailed(err, "Could not advance"); }
   }
@@ -377,8 +380,13 @@
     if (!b) { $("#season-progress").hidden = true; $("#season-progress-text").hidden = true; $("#season-progress-bar").style.width = "0%"; }
   }
 
-  // Progress while simming: weeks completed plus the fraction of the current week's games,
-  // and a line saying what the sim is doing right now.
+  // Your team's rank in the season header ("#7", or "CFP #5" once the committee ranks), or null.
+  function headerRank(myRank) {
+    if (!myRank || !myRank.rank) return null;
+    const cfp = myRank.kind === "cfp";
+    return el("span", { class: "hdr-rank", text: cfp ? `CFP #${myRank.rank}` : `#${myRank.rank}`, title: cfp ? "College Football Playoff ranking" : "AP poll" });
+  }
+
   // While a sim runs the header follows it week by week: rank, record, and where the
   // season is; Game day waits until the sim is done.
   function liveHead(j) {
@@ -397,8 +405,7 @@
     if ("my_rank" in j) {
       s.my_rank = j.my_rank;
       const old = $("#season-title .hdr-rank");
-      const r = j.my_rank && j.my_rank.rank ? el("span", { class: "hdr-rank", text: j.my_rank.kind === "cfp" ? `CFP #${j.my_rank.rank}` : `#${j.my_rank.rank}`,
-                                                              title: j.my_rank.kind === "cfp" ? "College Football Playoff ranking" : "AP poll" }) : null;
+      const r = headerRank(j.my_rank);
       if (old && r) old.replaceWith(r);
       else if (old) old.remove();
       else if (r && $("#season-title .rec")) $("#season-title .rec").before(r);
@@ -407,6 +414,8 @@
     $("#season-meta").textContent = `Simming · through ${j.done === 0 ? "the preseason" : s.week_labels[j.done] || "week " + j.done}${simDate ? ` · ${simDate}` : ""}`;
   }
 
+  // Progress while simming: weeks completed plus the fraction of the current week's games,
+  // and a line saying what the sim is doing right now.
   function showProgress(j) {
     const s = state.season;
     liveHead(j);
@@ -458,7 +467,7 @@
       state.simShown.add(key);
       const vs = r.venue === "away" ? "at" : "vs";
       const row = el("div", { class: `sim-result new ${r.won ? "win" : "loss"}` }, [
-        el("span", { class: "muted", text: s.week_labels[r.week] && r.week > 14 ? (s.week_labels[r.week] || "").replace("Championship week", "CCG").replace(" & bowls", "").replace(" & New Year bowls", "") : `Week ${r.week}` }),
+        el("span", { class: "muted", text: s.week_labels[r.week] && r.week > 14 ? postseasonLabel(s, r.week) : `Week ${r.week}` }),
         el("span", { class: "wl", text: r.won ? "W" : "L" }),
         el("span", {}, [`${vs} `, teamPill(r.opponent), r.opponent_name, r.title ? el("span", { class: "muted small-text", text: ` · ${r.title}` }) : null]),
         el("span", { class: "score", text: `${r.points_for}–${r.points_against}${r.overtime ? " OT" : ""}` }),
@@ -570,10 +579,9 @@
     $("#season-tabs button[data-tab=games]").hidden = !!s.done;
     $("#season-tabs button[data-tab=summary]").hidden = !s.done;
     if (s.done && state.tab === "games") state.tab = "summary";
-    if (s.done && state.tab === "schedule" && !state.summaryShown && state.season && state.season.id === s.id) { state.tab = "summary"; state.summaryShown = true; }
+    if (s.done && state.tab === "schedule" && !state.summaryShown) { state.tab = "summary"; state.summaryShown = true; }
     if (!s.done && state.tab === "summary") state.tab = "schedule";
-    if (opening) { depthState.team = null; depthState.data = null; }
-    if (opening) applyTeamTheme(s.team);
+    if (opening) { depthState.team = null; depthState.data = null; applyTeamTheme(s.team); }
     // the team picker (for a new season) starts on the open season's team
     if (opening && s.mode !== "real" && $("#pick-team").querySelector(`option[value="${s.team}"]`)) $("#pick-team").value = s.team;
     state.standings = null;
@@ -590,7 +598,7 @@
     else $("#season-title").append(
       teamPill(s.team),
       s.team_name,
-      ...(s.my_rank && s.my_rank.rank ? [el("span", { class: "hdr-rank", text: s.my_rank.kind === "cfp" ? `CFP #${s.my_rank.rank}` : `#${s.my_rank.rank}`, title: s.my_rank.kind === "cfp" ? "College Football Playoff ranking" : "AP poll" })] : []),
+      ...[headerRank(s.my_rank)].filter(Boolean),   // append() would print a null as text
       el("span", { class: "rec", text: `${r.wins}-${r.losses}` }),
       el("span", { class: "muted conf-rec", style: "font-size:14px;margin-left:8px", text: `${r.conf_wins}-${r.conf_losses} ${s.conference}` }),
     );
@@ -634,7 +642,7 @@
     strip.innerHTML = "";
     const weeks = [0, ...s.weeks];
     for (const w of weeks) {
-      const label = w === 0 ? "Pre" : w <= 14 ? `W${w}` : (s.week_labels[w] || `W${w}`).replace("Championship week", "CCG").replace("National championship", "Title").replace("Quarterfinals", "QF").replace("Semifinals", "SF").replace("First round", "R1").replace("Selection", "Sel");
+      const label = weekChipLabel(s, w);
       const next = !s.done && w === s.current_week + 1;
       const b = el("button", { type: "button", class: `week-chip ${w === state.viewWeek ? "active" : ""} ${w > s.current_week ? "future" : ""} ${w === s.current_week ? "current" : ""} ${next ? "next" : ""}`, text: label, title: `${s.week_labels[w] || (w === 0 ? "Preseason" : "")} · ${weekDateText(s, w)}` });
       b.addEventListener("click", () => { if (state.simming) return; state.viewWeek = w; renderWeekStrip(); renderTab(); });
@@ -642,6 +650,18 @@
       strip.appendChild(b);
     }
     renderWeekDate();
+  }
+
+  // Short week names for the week chips: "Pre", "W5", "CCG", "Sel", "R1", "QF", "SF", "Title"
+  function weekChipLabel(s, w) {
+    if (w === 0) return "Pre";
+    if (w <= 14) return `W${w}`;
+    return (s.week_labels[w] || `W${w}`).replace("Championship week", "CCG").replace("National championship", "Title").replace("Quarterfinals", "QF").replace("Semifinals", "SF").replace("First round", "R1").replace("Selection", "Sel");
+  }
+
+  // A postseason week's label without the bowl wording, for narrow week columns ("CCG", "Quarterfinals")
+  function postseasonLabel(s, w) {
+    return (s.week_labels[w] || "").replace("Championship week", "CCG").replace(" & bowls", "").replace(" & New Year bowls", "");
   }
 
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -749,11 +769,17 @@
     catch (err) { box.append(el("p", { class: "muted", text: `Could not draw the depth chart: ${err.message}` })); console.error(err); }
   }
 
+  // A depth-chart control button (★ ▲ ▼ + or Reset); a title of null leaves the attribute off.
+  function controlButton(text, title, onClick, cls = "ghost tiny") {
+    const b = el("button", title == null ? { type: "button", class: cls, text } : { type: "button", class: cls, text, title });
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
   async function renderDepthChartBody(box, s) {
     const ds = depthState;
     if (ds.team === null) ds.team = s.team;
     const controls = el("div", { class: "stats-controls" });
-    const confs = [...new Set(state.teams.filter((t) => !t.fictional).map((t) => t.conference))].sort();
     const teamSel = el("select", { "aria-label": "Team" }, state.teams.filter((t) => !t.fictional).map((t) => el("option", { value: t.slug, text: `${t.name} (${CONF_SHORT[t.conference] || t.conference})` })));
     teamSel.value = ds.team;
     teamSel.addEventListener("change", () => { ds.team = teamSel.value; renderDepthChart(); });
@@ -785,13 +811,16 @@
     const d = ds.data;
     // moves are saved with the season and used by every game from then on
     const change = async (body) => {
-      try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); renderDepthChart(); }
+      try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`, postJSON(body)); renderDepthChart(); }
       catch (err) { toast(`Could not change the depth chart: ${err.message}`, 4000); }
     };
     const canEdit = !s.done && s.mode !== "real" && (ds.team === s.team || godMode());
+    const resetBtn = d.overridden && canEdit
+      ? controlButton("Reset to the original depth chart", null, () => { if (confirm(`Reset the ${d.name} depth chart to the original?`)) change({ reset: true }); }, "ghost small")
+      : null;
     const note = el("div", { class: "stats-controls depth-note" }, [
       el("span", { class: "muted small-text", text: s.mode === "real" ? "The real depth chart: who has actually played the most over the last three games (tools/tune_from_real.py)." : s.done ? "Season complete; the depth chart is read-only." : !canEdit ? "Another team's depth chart: turn on god mode in ⚙ Settings to edit it." : `▲ ▼ move a player one spot, ★ makes him the starter.${ds.team !== s.team ? " God mode: this is another team's chart." : ""} Changes are saved with this season and used by every game from the next sim on.` }),
-      d.overridden && canEdit ? (() => { const b = el("button", { type: "button", class: "ghost small", text: "Reset to the original depth chart" }); b.addEventListener("click", () => { if (confirm(`Reset the ${d.name} depth chart to the original?`)) change({ reset: true }); }); return b; })() : null,
+      resetBtn,
     ]);
     box.append(note);
     const r = d.ratings || {};
@@ -811,9 +840,9 @@
           const p = row.players[i];
           if (!p) { cells.push(el("td", { class: `left muted ${i >= 2 ? "ph" : ""}`, text: "" })); continue; }
           const ctl = !canEdit ? null : el("span", { class: "depth-ctl" }, [
-            i > 0 ? (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "★", title: "Make starter" }); b.addEventListener("click", () => change({ role: row.role, player: p.slug, move: "top" })); return b; })() : null,
-            i > 0 ? (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "▲", title: "Move up" }); b.addEventListener("click", () => change({ role: row.role, player: p.slug, move: "up" })); return b; })() : null,
-            i < row.players.length - 1 && !["KR", "PR"].includes(row.role) ? (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "▼", title: "Move down" }); b.addEventListener("click", () => change({ role: row.role, player: p.slug, move: "down" })); return b; })() : null,
+            i > 0 ? controlButton("★", "Make starter", () => change({ role: row.role, player: p.slug, move: "top" })) : null,
+            i > 0 ? controlButton("▲", "Move up", () => change({ role: row.role, player: p.slug, move: "up" })) : null,
+            i < row.players.length - 1 && !["KR", "PR"].includes(row.role) ? controlButton("▼", "Move down", () => change({ role: row.role, player: p.slug, move: "down" })) : null,
           ]);
           cells.push(el("td", { class: `left depth-cell ${i === 0 ? "starter" : ""} ${i >= 2 ? "ph" : ""}` }, [
             el("div", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, el("span", { text: p.name, ...playerAttrs(ds.team, p.name, p.position) }), el("span", { class: "pos", text: `${p.class || ""}${p.position !== row.role ? " · " + p.position : ""}` }),
@@ -827,10 +856,6 @@
       box.append(el("div", { class: "table-scroll" }, [table]));
     }
   }
-
-
-
-  // ----- season summary ------------------------------------------------------
 
   // ----- shared modal ----------------------------------------------------------
   // openModal(title, node): shows node in an overlay with a title and a close button.
@@ -967,9 +992,11 @@
     const devTag = devStars ? el("span", { class: `tag dev dev-${(p.dev_trait || "").toLowerCase()}`, title: "Development trait: how quickly the player improves (Normal, Impact, Star, Elite)." }, [el("b", { text: `${p.dev_trait} Development` })]) : null;
     // recruiting stars next to the name (estimated from the rating; the rosters carry no recruiting rankings)
     const recruit = p.stars ? el("span", { class: "recruit-stars", title: `${p.stars}-star recruit (estimated from the rating against the whole FBS pool)` }, [1, 2, 3, 4, 5].map((i) => el("span", { class: `rs ${i <= p.stars ? "on" : ""}`, text: "★" }))) : null;
+    const bigPill = teamPill(team.slug);
+    bigPill.classList.add("big");
     hero.append(
       el("div", { class: "player-hero-main" }, [
-        (() => { const pill = teamPill(team.slug); pill.classList.add("big"); return pill; })(),
+        bigPill,
         el("div", {}, [
           el("div", { class: "player-name" }, [p.jersey ? el("span", { class: "player-jersey", text: `#${p.jersey} ` }) : null, p.name, recruit]),
           el("div", { class: "muted player-facts", text: facts.join(" · ") }),
@@ -995,7 +1022,7 @@
 
     // headline tiles
     const tiles = headlineTiles(p);
-    if (tiles.length && p.games) box.append(el("div", { class: "review-tiles player-tiles" }, tiles.map(([k, v]) => el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: v }), el("div", { class: "review-label", text: k })]))));
+    if (tiles.length && p.games) box.append(el("div", { class: "review-tiles player-tiles" }, tiles.map(([k, v]) => bigTile(k, v))));
 
     const grid = el("div", { class: "player-grid" });
     // ratings
@@ -1016,21 +1043,17 @@
       for (const g of [...new Set(attrs.map((a) => a.group))]) {
         rat.append(el("div", { class: "attr-group", text: g }));
         for (const a of attrs.filter((x) => x.group === g)) {
-          const pct = Math.max(2, Math.min(100, a.value));
-          const tone = a.value >= 75 ? "hi" : a.value >= 55 ? "mid" : "lo";
           const boost = a.boost ? el("span", { class: `boost ${a.boost > 0 ? "up" : "down"}`, text: `${a.boost > 0 ? "▲" : "▼"}${Math.abs(a.boost)}` }) : null;
           rat.append(el("div", { class: `rating-row ${editedAttrs.has(a.key) ? "edited" : ""} ${a.boost ? "boosted" : ""}` }, [
             el("span", { class: "rating-label", text: a.label, title: `${a.about}${editedAttrs.has(a.key) ? " (edited in god mode)" : ""}` }),
-            el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]),
+            ratingBar(a.value),
             el("b", { class: "rating-num" }, [String(a.value), boost])]));
         }
       }
     }
     for (const r of attrs.length ? [] : shown) {
-      const pct = Math.max(2, Math.min(100, r.value));
-      const tone = r.value >= 75 ? "hi" : r.value >= 55 ? "mid" : "lo";
       const boost = r.boost ? el("span", { class: `boost ${r.boost > 0 ? "up" : "down"}`, text: `${r.boost > 0 ? "▲" : "▼"}${Math.abs(r.boost)}`, title: `${r.boost > 0 ? "+" : ""}${r.boost} from ${p.morale && p.morale.label !== "Steady" ? p.morale.label.toLowerCase() : "morale"}${p.morale && p.morale.team_label ? " and the team's mood" : ""}` }) : null;
-      rat.append(el("div", { class: `rating-row ${edited.has(r.key) ? "edited" : ""} ${r.boost ? "boosted" : ""}` }, [el("span", { class: "rating-label", text: r.label, title: edited.has(r.key) ? "Edited in god mode" : "" }), el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]), el("b", { class: "rating-num" }, [String(r.value), boost])]));
+      rat.append(el("div", { class: `rating-row ${edited.has(r.key) ? "edited" : ""} ${r.boost ? "boosted" : ""}` }, [el("span", { class: "rating-label", text: r.label, title: edited.has(r.key) ? "Edited in god mode" : "" }), ratingBar(r.value), el("b", { class: "rating-num" }, [String(r.value), boost])]));
     }
     if (p.morale && p.morale.enabled && (attrs.length ? attrs : p.ratings).some((r) => r.boost)) rat.append(el("div", { class: "muted small-text", style: "margin-top:6px", text: `Arrows: how his ratings enter the next game (${p.morale.label.toLowerCase()}${p.morale.team_label ? ", " + p.morale.team_label.toLowerCase() : ""}).` }));
     const others = Object.entries(p.ratings_at || {}).filter(([pos]) => pos !== p.position && !(pos === "MLB" && /LB$/.test(p.position))).sort((a, b) => b[1] - a[1]).slice(0, 5);
@@ -1041,10 +1064,9 @@
     const rk = el("div", { class: "leader-card player-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: "Where he ranks" }), el("span", { class: "muted small-text", text: p.ranks.length ? "FBS · conference" : "" })])]);
     if (!p.ranks.length) rk.append(el("p", { class: "muted small-text", text: p.games ? "Not enough games to rank yet." : "No games played yet." }));
     for (const r of p.ranks) {
-      const ord = ordinal;
       rk.append(el("div", { class: "leader-row" }, [
         el("span", { class: "rank", text: "" }),
-        el("span", { class: "who" }, [el("span", { class: "name", text: r.label }), el("span", { class: "muted small-text", text: `${ord(r.fbs_rank)} of ${r.fbs_n} in FBS · ${ord(r.conf_rank)} of ${r.conf_n} in the ${team.conference}` })]),
+        el("span", { class: "who" }, [el("span", { class: "name", text: r.label }), el("span", { class: "muted small-text", text: `${ordinal(r.fbs_rank)} of ${r.fbs_n} in FBS · ${ordinal(r.conf_rank)} of ${r.conf_n} in the ${team.conference}` })]),
         el("span", { class: `value ${r.fbs_rank <= 10 ? "top" : ""}`, text: String(r.value) }),
       ]));
     }
@@ -1083,6 +1105,20 @@
     }
   }
 
+  // A 1-99 rating as a bar: the fill is the value out of 100 (at least a sliver), coloured by tier.
+  function ratingBar(value) {
+    const pct = Math.max(2, Math.min(100, value));
+    let tone = "lo";
+    if (value >= 75) tone = "hi";
+    else if (value >= 55) tone = "mid";
+    return el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]);
+  }
+
+  // A headline number with its label underneath (and an optional note), for rows of review tiles.
+  function bigTile(label, value, sub) {
+    return el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: value }), el("div", { class: "review-label", text: label }), sub ? el("div", { class: "muted small-text", text: sub }) : null]);
+  }
+
   function fmtStatValue(v) { return typeof v === "number" && !Number.isInteger(v) ? v.toFixed(1) : String(v); }
 
   function gameLogTable(p) {
@@ -1102,7 +1138,7 @@
     table.append(el("tr", {}, [el("th", { text: "Wk" }), el("th", { class: "left", text: "Opponent" }), el("th", { text: "Result" }), ...cols.map(([lbl]) => el("th", { text: lbl }))]));
     for (const g of p.game_log) {
       const row = el("tr", { class: "clickable" }, [
-        el("td", { class: "muted", text: g.week > 14 ? (s.week_labels[g.week] || "").replace("Championship week", "CCG").replace(" & bowls", "").replace(" & New Year bowls", "") : String(g.week) }),
+        el("td", { class: "muted", text: g.week > 14 ? postseasonLabel(s, g.week) : String(g.week) }),
         el("td", { class: "left" }, [`${g.venue === "away" ? "at " : "vs "}`, teamPill(g.opponent), g.opponent_name, g.title ? el("span", { class: "muted small-text", text: ` · ${g.title}` }) : null]),
         el("td", { class: g.won ? "win" : "loss", text: `${g.won ? "W" : "L"} ${g.points_for}–${g.points_against}` }),
         ...cols.map(([, f]) => el("td", { text: String(f(g.stats)) })),
@@ -1151,10 +1187,12 @@
     for (const c of row.querySelectorAll(":scope > .chip")) c.classList.toggle("active", c === chip);
   }
 
+  // depth-chart roles worth showing after the position (an OT as LT, a linebacker as MIKE)
+  const ROLE_SHOWN = new Set(["LT", "LG", "C", "RG", "RT", "LEDG", "REDG", "DT", "SAM", "MIKE", "WILL", "FS", "SS"]);
+
   function who(c, withTeam = true) {
     // name, position/class, team pill
     const bits = [teamPill(c.team), el("b", { text: c.name || c.coach || c.team_name, ...(c.name ? playerAttrs(c.team, c.name, c.position) : {}) })];
-    const ROLE_SHOWN = new Set(["LT", "LG", "C", "RG", "RT", "LEDG", "REDG", "DT", "SAM", "MIKE", "WILL", "FS", "SS"]);
     const tag = c.position ? `${c.position}${c.role && ROLE_SHOWN.has(c.role) ? " · " + c.role : ""}${classLabel(c.class)}` : (c.role || (c.coach ? "Head coach" : ""));
     if (tag) bits.push(el("span", { class: "pos", text: tag }));
     if (withTeam && (c.name || c.coach)) bits.push(el("span", { class: "muted", text: ` ${c.team_name}` }));
@@ -1201,7 +1239,7 @@
       el("div", { class: "review-big" }, [teamPill(w.team), w.name, el("span", { class: "pos", text: `${w.position}${classLabel(w.class)} · ${w.team_name}` })]),
       el("div", { class: "muted small-text", text: live || !w.final_line ? w.line : `At the vote: ${w.line}` }),
       !live && w.final_line ? el("div", { class: "muted small-text", text: `Final season, with the bowls and playoff: ${w.final_line}` }) : null,
-      el("div", { class: "review-tiles" }, tiles.map(([k, v]) => el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: String(v) }), el("div", { class: "review-label", text: k })]))),
+      el("div", { class: "review-tiles" }, tiles.map(([k, v]) => bigTile(k, String(v)))),
       live ? null : el("div", { class: "muted small-text", text: `Finalists in New York: ${h.finalists.map((f) => `${f.name} (${f.team_name}, ${f.points})`).join(", ")}` }),
     ]);
   }
@@ -1322,7 +1360,7 @@
       const kindOf = (a) => (["mvp", "mvp_team", "freshman"].includes(a.kind) ? "poy" : OFFENSE_KINDS.has(a.kind) ? "offense" : DEFENSE_KINDS.has(a.kind) ? "defense" : ST_KINDS.has(a.kind) ? "special" : "poy");
       const items = st.filter && st.filter !== "table" ? all.filter((a) => kindOf(a) === st.filter) : all;
       if (st.filter === "table") box.append(awardSummaryTable(items, live, st));
-      else box.append(awardGrid(items, live, items.some((a) => a.kind === "ol_unit") ? null : null));
+      else box.append(awardGrid(items, live, null));
       return;
     }
 
@@ -1395,7 +1433,7 @@
     box.append(chipRow([["", "All"], ...stages.map((x) => [x, x])], st.mineFilter, (f) => { st.mineFilter = f; renderAwards(); }));
     const shown = st.mineFilter ? rows.filter((r) => r.stage === st.mineFilter) : rows;
     const wins = shown.filter((r) => r.rank === 0).length;
-    box.append(el("div", { class: "review-tiles" }, [[String(shown.length), "honors"], [String(wins), live ? "races led" : "awards won"], [String(new Set(shown.map((r) => r.who)).size), "players and coaches"]].map(([v, k]) => el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: v }), el("div", { class: "review-label", text: k })]))));
+    box.append(el("div", { class: "review-tiles" }, [[String(shown.length), "honors"], [String(wins), live ? "races led" : "awards won"], [String(new Set(shown.map((r) => r.who)).size), "players and coaches"]].map(([v, k]) => bigTile(k, v))));
     if (!st.sort) { st.sort = "result"; st.desc = false; }
     const cols = [
       { key: "stage", label: "Stage", left: true, ph: true, get: (r) => r.stage, sort: (r) => r.stage },
@@ -1528,7 +1566,11 @@
     const resultRow = (l, label, note) => {
       if (!l) return null;
       const vs = l.venue === "away" ? "at" : "vs";
-      if (note === undefined) note = l.title && l.title !== label ? l.title : l.title ? "" : weekName(l.week);
+      // by default the note names the game (a bowl, a title game) or else the week
+      if (note === undefined) {
+        if (!l.title) note = weekName(l.week);
+        else note = l.title !== label ? l.title : "";
+      }
       const row = el("div", { class: `review-result ${l.has_box ? "clickable" : ""}` }, [
         el("span", { class: "review-result-label muted", text: label }),
         el("span", { class: `review-result-score ${l.won ? "win" : "loss"}`, text: `${l.won ? "W" : "L"} ${l.points_for}-${l.points_against}${l.overtime ? " OT" : ""}` }),
@@ -1557,7 +1599,7 @@
     // ---- surprise and disappointment ----
     if (r.surprises.length || r.disappointments.length) {
       // one sentence on the team's AP path: where it started, its peak, where it ended
-      const wk = (w) => (w <= 14 ? `Week ${w}` : (s.week_labels[w] || `week ${w}`).toLowerCase().replace("championship week", "championship week").replace("selection", "selection day"));
+      const wk = (w) => (w <= 14 ? `Week ${w}` : (s.week_labels[w] || `week ${w}`).toLowerCase().replace("selection", "selection day"));
       const expl = (x, cls) => {
         const endWord = r.done ? "finished" : "sits";
         const start = x.preseason_rank ? `Started the season #${x.preseason_rank}` : "Started the season unranked";
@@ -1593,12 +1635,15 @@
     const L = m.leaders;
     const st = (p, k) => (p && p.stats[k]) || 0;
     const pct = (n, d) => (d ? `${Math.round((100 * n) / d)}%` : "–");
-    const leader = (title, p, big, line) => p ? el("div", { class: "review-leader" }, [
+    // one leader card; national leaders also name the player's team
+    const leaderCard = (withTeam) => (title, p, big, line) => p ? el("div", { class: "review-leader" }, [
       el("div", { class: "review-label", text: title }),
       el("div", { class: "review-leader-name" }, [p.name, el("span", { class: "pos", text: p.position })]),
+      withTeam ? el("div", { class: "small-text" }, [team(p.team, p.team_name)]) : null,
       el("div", { class: "review-leader-big", text: big(p) }),
       el("div", { class: "muted small-text", text: line(p) }),
     ]) : null;
+    const leader = leaderCard(false);
     const leaders = [
       leader("Passing", L.passer, (p) => `${st(p, "pass_yards").toLocaleString()} yds`, (p) => `${st(p, "completions")}/${st(p, "pass_attempts")} (${pct(st(p, "completions"), st(p, "pass_attempts"))}) · ${st(p, "passing_touchdowns")} TD · ${st(p, "interceptions_thrown")} INT`),
       leader("Rushing", L.rusher, (p) => `${st(p, "rush_yards").toLocaleString()} yds`, (p) => `${st(p, "carries")} carries · ${(st(p, "rush_yards") / Math.max(1, st(p, "carries"))).toFixed(1)} avg · ${st(p, "rushing_touchdowns")} TD`),
@@ -1616,13 +1661,7 @@
 
     // ---- national leaders ----
     const N = r.national_leaders || {};
-    const nat = (title, p, big, line) => p ? el("div", { class: "review-leader" }, [
-      el("div", { class: "review-label", text: title }),
-      el("div", { class: "review-leader-name" }, [p.name, el("span", { class: "pos", text: p.position })]),
-      el("div", { class: "small-text" }, [team(p.team, p.team_name)]),
-      el("div", { class: "review-leader-big", text: big(p) }),
-      el("div", { class: "muted small-text", text: line(p) }),
-    ]) : null;
+    const nat = leaderCard(true);
     const national = [
       nat("Passing yards", N.passing, (p) => `${st(p, "pass_yards").toLocaleString()} yds`, (p) => `${st(p, "completions")}/${st(p, "pass_attempts")} (${pct(st(p, "completions"), st(p, "pass_attempts"))}) · ${st(p, "passing_touchdowns")} TD · ${st(p, "interceptions_thrown")} INT · ${p.games} g`),
       nat("Rushing yards", N.rushing, (p) => `${st(p, "rush_yards").toLocaleString()} yds`, (p) => `${st(p, "carries")} carries · ${(st(p, "rush_yards") / Math.max(1, st(p, "carries"))).toFixed(1)} avg · ${st(p, "rushing_touchdowns")} TD · ${p.games} g`),
@@ -1896,7 +1935,7 @@
       // game day is done: the result, and the box score a click away
       card.append(el("div", { class: "review-tiles" }, [
         el("div", { class: "review-tile" }, [el("div", { class: `review-leader-big ${g.won ? "win" : "loss"}`, text: `${g.won ? "W" : "L"} ${g.points_for}–${g.points_against}${g.overtime ? " OT" : ""}` }), el("div", { class: "review-label", text: "Final" })]),
-        el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: g.my_record || "" }), el("div", { class: "review-label", text: "Record" })]),
+        bigTile("Record", g.my_record || ""),
       ]));
       if (g.has_box) { const b = el("button", { type: "button", class: "ghost small", text: "Box score" }); b.addEventListener("click", () => openBox(g.event_id)); card.append(b); }
       card.append(el("div", { class: "muted small-text", text: "Advance to Next Week plays the rest of the week." }));
@@ -1910,10 +1949,10 @@
     const fav = p.win_prob >= 0.5;
     const line = fav ? `${data.team_name} by ${Math.abs(p.margin).toFixed(1)}` : `${g.opponent_name} by ${Math.abs(p.margin).toFixed(1)}`;
     card.append(el("div", { class: "review-tiles" }, [
-      el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: `${pf}–${pa}` }), el("div", { class: "review-label", text: "Predicted score" })]),
+      bigTile("Predicted score", `${pf}–${pa}`),
       el("div", { class: "review-tile" }, [el("div", { class: `review-leader-big ${fav ? "win" : "loss"}`, text: `${Math.round(p.win_prob * 100)}%` }), el("div", { class: "review-label", text: "Win odds" })]),
-      el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: line }), el("div", { class: "review-label", text: "Line" })]),
-      el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: p.total.toFixed(1) }), el("div", { class: "review-label", text: "Total" })]),
+      bigTile("Line", line),
+      bigTile("Total", p.total.toFixed(1)),
     ]));
     const w = p.watch || {};
     const watchBits = [
@@ -1936,7 +1975,7 @@
     const label = state.viewWeek === 0 ? "Preseason" : (s.week_labels[state.viewWeek] || `Week ${state.viewWeek}`);
     const nav = el("div", { class: "stats-controls" });
     const weeks = [0, ...s.weeks].filter((w) => w <= Math.min(s.done ? s.current_week : s.current_week + 1, 20));
-    nav.append(chipRow(weeks.map((w) => [w, w === 0 ? "Pre" : w <= 14 ? `W${w}` : (s.week_labels[w] || `W${w}`).replace("Championship week", "CCG").replace("National championship", "Title").replace("Quarterfinals", "QF").replace("Semifinals", "SF").replace("First round", "R1").replace("Selection", "Sel")]),
+    nav.append(chipRow(weeks.map((w) => [w, weekChipLabel(s, w)]),
       state.viewWeek, (w) => { state.viewWeek = w; renderWeekStrip(); renderGames(body); $("#modal-title").textContent = `All games · ${w === 0 ? "Preseason" : (s.week_labels[w] || `Week ${w}`)}`; }));
     const body = el("div");
     node.append(nav, body);
@@ -1952,7 +1991,7 @@
     if (st.team === null || !window.CFP.teamsBySlug[st.team]) st.team = s.team || topTeam(s);
     // pick any team: conference chips narrow the team list; a button opens every game of the week
     const controls = el("div", { class: "stats-controls" });
-    const confs = [...new Set(state.teams.filter((t) => !t.fictional).map((t) => t.conference))].sort();
+    const confs = fbsConferences();
     controls.append(confChips(confs, st.conf, (v) => { st.conf = v; renderSchedule(); }));
     const row = el("div", { class: "schedule-pick" });
     const sel = el("select", { "aria-label": "Team" }, state.teams.filter((t) => !t.fictional && (!st.conf || t.conference === st.conf)).map((t) => el("option", { value: t.slug, text: t.slug === s.team ? `${t.name} (your team)` : t.name })));
@@ -2039,6 +2078,11 @@
 
   function statsNote(partial) {
     return partial ? "This season was started before season-long stats were kept, so only your own games are counted. " : "";
+  }
+
+  // every FBS conference, alphabetically (the FCS stand-in teams are left out)
+  function fbsConferences() {
+    return [...new Set(state.teams.filter((t) => !t.fictional).map((t) => t.conference))].sort();
   }
 
   // Conference picker as a row of chips (short names), shared by the stats tabs.
@@ -2169,7 +2213,7 @@
 
     const controls = el("div", { class: "stats-controls" });
     // conference picker narrows the team picker and the league views to that conference
-    const confs = [...new Set(state.teams.filter((t) => !t.fictional).map((t) => t.conference))].sort();
+    const confs = fbsConferences();
     const confRow = confChips(confs, ps.conf, (v) => {
       // picking a conference (or All) shows everyone in it, not a single team
       ps.conf = v;
@@ -2323,7 +2367,7 @@
     const d = ds.pos;
     const change = async (body) => {
       try {
-        await api(`/api/season/${s.id}/depth/${ds.team}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        await api(`/api/season/${s.id}/depth/${ds.team}`, postJSON(body));
         ds.pos = null; ds.data = null; renderDepthChart();
       } catch (err) { toast(`Could not change the depth chart: ${err.message}`, 4000); }
     };
@@ -2338,8 +2382,8 @@
       { key: "size", label: "Size", get: (p) => (p.height && p.weight ? `${p.height} ${p.weight}` : ""), sort: (p) => p.weight || 0 },
       { key: "line", label: "Season", left: true, get: (p) => el("span", { class: "muted small-text", text: p.headline || (p.games ? `${p.games} games` : "") }) },
       { key: "act", label: "", get: (p) => (s.done ? "" : el("span", { class: "depth-ctl" }, [
-          p.spot === 1 ? null : (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "★", title: "Make starter here" }); b.addEventListener("click", () => change({ role: ds.role, player: p.slug, move: "top" })); return b; })(),
-          p.in_role || ["KR", "PR"].includes(ds.role) ? null : (() => { const b = el("button", { type: "button", class: "ghost tiny", text: "+", title: "Add to this spot's rotation" }); b.addEventListener("click", () => change({ role: ds.role, player: p.slug, move: "add" })); return b; })(),
+          p.spot === 1 ? null : controlButton("★", "Make starter here", () => change({ role: ds.role, player: p.slug, move: "top" })),
+          p.in_role || ["KR", "PR"].includes(ds.role) ? null : controlButton("+", "Add to this spot's rotation", () => change({ role: ds.role, player: p.slug, move: "add" })),
         ])) },
     ];
     if (!ds.posSort) { ds.posSort = { sort: "rating", desc: true }; }
@@ -2428,6 +2472,11 @@
     }
   }
 
+  // The nodes with a separator between each pair ("A, B, C"), ready to spread into append().
+  function joinNodes(nodes, sep) {
+    return nodes.flatMap((n, i) => (i < nodes.length - 1 ? [n, sep] : [n]));
+  }
+
   // One Rankings tab; pills switch between the AP poll, the Coaches Poll and the CFP rankings.
   function renderRankings() {
     for (const b of $("#poll-pills").querySelectorAll("button[data-poll]")) b.classList.toggle("active", b.dataset.poll === state.poll);
@@ -2473,10 +2522,7 @@
     box.appendChild(table);
     const others = kind === "ap" || kind === "coaches" ? (entry[`${kind}_others`] || []).filter((e) => e.points == null || e.points > 0) : null;
     if (others && others.length) {
-      const parts = others.map((e, i) => {
-        const span = el("span", { class: e.team === s.team ? "win" : "" }, [e.points != null ? `${e.name} ${e.points}` : `${e.name} (${e.record})`]);
-        return i < others.length - 1 ? [span, ", "] : [span];
-      }).flat();
+      const parts = joinNodes(others.map((e) => el("span", { class: e.team === s.team ? "win" : "" }, [e.points != null ? `${e.name} ${e.points}` : `${e.name} (${e.record})`])), ", ");
       box.appendChild(el("div", { class: "others-votes" }, [el("b", { text: "Others receiving votes: " }), ...parts]));
     }
     // "Dropped from rankings": last poll's top 25 that are out this week, with the spot they held
@@ -2487,10 +2533,7 @@
       const now = new Set(list.map((e) => e.team));
       const dropped = prevList.filter((e) => !now.has(e.team));
       if (dropped.length) {
-        const parts = dropped.map((e, i) => {
-          const span = el("span", { class: e.team === s.team ? "loss" : "" }, [`${e.name} No. ${e.rank}`]);
-          return i < dropped.length - 1 ? [span, ", "] : [span];
-        }).flat();
+        const parts = joinNodes(dropped.map((e) => el("span", { class: e.team === s.team ? "loss" : "" }, [`${e.name} No. ${e.rank}`])), ", ");
         box.appendChild(el("div", { class: "others-votes" }, [el("b", { text: "Dropped from rankings: " }), ...parts]));
       }
     }
@@ -2516,21 +2559,19 @@
     try { data = await api(`/api/season/${s.id}/week/${week}`); } catch (err) { return; }
     // only games between two ranked teams
     const games = data.games.filter((g) => rankOf[g.home] && rankOf[g.away]);
-    const label0 = s.week_labels[week] || `Week ${week}`;
+    const label = s.week_labels[week] || `Week ${week}`;
     if (!games.length) {
-      box.appendChild(el("div", { class: "others-votes" }, [el("b", { text: `Ranked matchups in ${label0}: ` }), "none"]));
+      box.appendChild(el("div", { class: "others-votes" }, [el("b", { text: `Ranked matchups in ${label}: ` }), "none"]));
       return;
     }
     games.sort((a, b) => Math.min(rankOf[a.home] || 99, rankOf[a.away] || 99) - Math.min(rankOf[b.home] || 99, rankOf[b.away] || 99));
-    const label = s.week_labels[week] || `Week ${week}`;
     const nm = (slug) => `${rankOf[slug] ? `No. ${rankOf[slug]} ` : ""}${name(slug)}`;
-    const parts = games.map((g, i) => {
+    const parts = joinNodes(games.map((g) => {
       const text = g.played
-        ? `${nm(g.away)} ${g.away_score}${g.away_score > g.home_score ? "" : ""} at ${nm(g.home)} ${g.home_score}`
+        ? `${nm(g.away)} ${g.away_score} at ${nm(g.home)} ${g.home_score}`
         : `${nm(g.away)} ${g.neutral ? "vs" : "at"} ${nm(g.home)}`;
-      const span = el("span", { class: (g.home === s.team || g.away === s.team) ? "win" : "" }, [text]);
-      return i < games.length - 1 ? [span, "; "] : [span];
-    }).flat();
+      return el("span", { class: (g.home === s.team || g.away === s.team) ? "win" : "" }, [text]);
+    }), "; ");
     box.appendChild(el("div", { class: "others-votes" }, [el("b", { text: `Ranked matchups in ${label}: ` }), ...parts]));
   }
 
@@ -2752,7 +2793,7 @@
   const godMode = () => !!((state.season && state.season.settings) || {}).god_mode;
   async function saveSettings(changes) {
     const s = state.season;
-    const j = await api(`/api/season/${s.id}/settings`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) });
+    const j = await api(`/api/season/${s.id}/settings`, postJSON(changes));
     s.settings = j.settings;
     playerState.cache.clear();
     return j.settings;
@@ -2773,7 +2814,7 @@
       row("Momentum and morale", "Big plays swing momentum inside a game and nudge ratings play by play; wins, losses and each player's own games set a mood that carries into the next game and fades week by week. Player cards show the boosts as green and red arrows.",
         toggle(!!(s.settings || {}).morale, async (on) => { await saveSettings({ morale: on }); toast(on ? "Momentum and morale on from the next sim." : "Momentum and morale off.", 3000); })),
       row("Game day pace", "How fast the plays come during a game day replay.",
-        chipRow([["slow", "Slow"], ["normal", "Normal"], ["fast", "Fast"]], gdSpeed(), (v) => { try { localStorage.setItem("cfp.gameday.speed", v); } catch (e) {} })),
+        chipRow([["slow", "Slow"], ["normal", "Normal"], ["fast", "Fast"]], gdSpeed(), saveGdSpeed)),
     );
     openModal("Settings", node);
   }
@@ -2788,21 +2829,23 @@
     const table = el("table", { class: "stats ratings-table" });
     table.append(el("tr", {}, ["Rating", "", "Value"].map((h, i) => el("th", { class: i === 0 ? "left" : "", text: h }))));
     for (const r of p.ratings) {
-      const pct = Math.max(2, Math.min(100, r.value));
-      const tone = r.value >= 75 ? "hi" : r.value >= 55 ? "mid" : "lo";
       table.append(el("tr", { class: keySet.has(r.key) ? "key" : "" }, [
         el("td", { class: "left" }, [el("span", { class: `rating-label ${edited.has(r.key) ? "edited" : ""}`, text: r.label }), keySet.has(r.key) ? el("span", { class: "pos", text: p.position }) : null, edited.has(r.key) ? el("span", { class: "pos", text: "edited" }) : null]),
-        el("td", {}, [el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })])]),
+        el("td", {}, [ratingBar(r.value)]),
         el("td", { class: "rating-num" }, [el("b", { text: String(r.value) }), r.boost ? el("span", { class: `boost ${r.boost > 0 ? "up" : "down"}`, text: `${r.boost > 0 ? "▲" : "▼"}${Math.abs(r.boost)}` }) : null]),
       ]));
     }
     node.append(el("div", { class: "table-scroll" }, [table]));
-    const others = Object.entries(p.ratings_at || {}).filter(([pos]) => !(pos === "MLB" && /LB$/.test(p.position))).sort((a, b) => b[1] - a[1]);
-    if (others.length) {
-      node.append(el("h4", { text: "Rated at every position" }), el("p", { class: "muted small-text", text: "On the same scale: 50 is an average Power 4 starter at that position. The depth chart's By position view uses these when you move someone." }));
-      node.append(el("div", { class: "ratings-at" }, others.map(([pos, v]) => el("div", { class: `review-tile ${pos === p.position ? "mine" : ""}` }, [el("div", { class: "review-leader-big", text: String(v) }), el("div", { class: "review-label", text: pos === p.position ? `${pos} (his spot)` : pos })]))));
-    }
+    appendRatingsAt(node, p);
     openModal(el("span", {}, [`${p.name} · all ratings`, el("span", { class: "muted small-text", text: ` · ${p.overall} overall at ${p.position}` })]), node);
+  }
+
+  // his rating at every position (best first), shared by both rating modals
+  function appendRatingsAt(node, p) {
+    const others = Object.entries(p.ratings_at || {}).filter(([pos]) => !(pos === "MLB" && /LB$/.test(p.position))).sort((a, b) => b[1] - a[1]);
+    if (!others.length) return;
+    node.append(el("h4", { text: "Rated at every position" }), el("p", { class: "muted small-text", text: "On the same scale: 50 is an average Power 4 starter at that position. The depth chart's By position view uses these when you move someone." }));
+    node.append(el("div", { class: "ratings-at" }, others.map(([pos, v]) => el("div", { class: `review-tile ${pos === p.position ? "mine" : ""}` }, [el("div", { class: "review-leader-big", text: String(v) }), el("div", { class: "review-label", text: pos === p.position ? `${pos} (his spot)` : pos })]))));
   }
 
   // a trait badge's hover: what it does and the attributes it rests on, with his values
@@ -2828,11 +2871,9 @@
         group = a.group;
         table.append(el("tr", { class: "group-row" }, [el("td", { class: "left", colspan: "4" }, [el("b", { text: group })])]));
       }
-      const pct = Math.max(2, Math.min(100, a.value));
-      const tone = a.value >= 75 ? "hi" : a.value >= 55 ? "mid" : "lo";
       table.append(el("tr", {}, [
         el("td", { class: "left" }, [el("span", { class: `rating-label ${edited.has(a.key) ? "edited" : ""}`, text: a.label }), edited.has(a.key) ? el("span", { class: "pos", text: "edited" }) : null]),
-        el("td", {}, [el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })])]),
+        el("td", {}, [ratingBar(a.value)]),
         el("td", { class: "rating-num" }, [el("b", { text: String(a.value) })]),
         el("td", { class: "left muted small-text", text: a.about }),
       ]));
@@ -2845,11 +2886,7 @@
       for (const tr of p.traits || []) node.append(el("div", { class: "trait-line" }, [el("span", { class: `trait tier-${tr.tier}`, text: tr.name, title: traitHover(tr) }), el("span", { class: "muted small-text", text: ` ${tr.tier_name} · ${tr.about}. ${traitBasis(tr)}` })]));
       node.append(el("p", { class: "muted small-text", text: "Traits come at four tiers (bronze, silver, gold, platinum) and are carried over from the source rosters, which list each player's tiers but not the exact thresholds that earned them. Each one rests on the attributes shown. Their effects in games come in a later phase of the ratings revamp." }));
     }
-    const others = Object.entries(p.ratings_at || {}).filter(([pos]) => !(pos === "MLB" && /LB$/.test(p.position))).sort((a, b) => b[1] - a[1]);
-    if (others.length) {
-      node.append(el("h4", { text: "Rated at every position" }), el("p", { class: "muted small-text", text: "On the same scale: 50 is an average Power 4 starter at that position. The depth chart's By position view uses these when you move someone." }));
-      node.append(el("div", { class: "ratings-at" }, others.map(([pos, v]) => el("div", { class: `review-tile ${pos === p.position ? "mine" : ""}` }, [el("div", { class: "review-leader-big", text: String(v) }), el("div", { class: "review-label", text: pos === p.position ? `${pos} (his spot)` : pos })]))));
-    }
+    appendRatingsAt(node, p);
     openModal(el("span", {}, [`${p.name} · attributes`, el("span", { class: "muted small-text", text: ` · ${p.overall} overall at ${p.position}` })]), node);
   }
 
@@ -2868,11 +2905,12 @@
     }
     const text = (key, value, attrs = {}) => { const i = el("input", { type: "text", value: value == null ? "" : String(value), "aria-label": key, ...attrs }); inputs[key] = i; return i; };
     const select = (key, value, options) => { const sel = el("select", { "aria-label": key }, options.map(([v, label]) => el("option", { value: v, text: label }))); sel.value = value || options[0][0]; inputs[key] = sel; return sel; };
+    inputs.weight = el("input", { type: "number", min: "150", max: "400", value: String(p.weight || ""), "aria-label": "weight" });
     const grid = el("div", { class: "player-edit-grid" }, [
       el("label", {}, ["Jersey", text("jersey", p.jersey, { maxlength: "3" })]),
       el("label", {}, ["Class", select("class", p.class, (p.editable_classes || []).map((c) => [c, CLASS_FULL[c] || c]))]),
       el("label", {}, ["Height", text("height", p.height, { placeholder: "6'2\"" })]),
-      el("label", {}, ["Weight", (() => { const i = el("input", { type: "number", min: "150", max: "400", value: String(p.weight || ""), "aria-label": "weight" }); inputs.weight = i; return i; })()]),
+      el("label", {}, ["Weight", inputs.weight]),
       el("label", {}, ["Development", select("dev_trait", p.dev_trait, (p.dev_traits || ["Normal", "Impact", "Star", "Elite"]).map((d) => [d, d]))]),
     ]);
     form.append(el("h4", { text: "Identity" }), grid);
@@ -2893,7 +2931,7 @@
       if (!Object.keys(changes).length) { toast("Nothing changed.", 2000); return; }
       save.disabled = true;
       try {
-        const j = await api(`/api/season/${s.id}/player/edit`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team: p.team.slug, player: p.slug, changes }) });
+        const j = await api(`/api/season/${s.id}/player/edit`, postJSON({ team: p.team.slug, player: p.slug, changes }));
         playerState.cache.clear();
         toast(`${p.name} updated.`, 2500);
         const box = card.closest(".player-page");
@@ -2975,14 +3013,13 @@
     const r = data.rows[0];
     if (!r) return;
     const node = el("div", { class: "resume" });
-    const tile = (label, value, sub) => el("div", { class: "review-tile" }, [el("div", { class: "review-leader-big", text: value }), el("div", { class: "review-label", text: label }), sub ? el("div", { class: "muted small-text", text: sub }) : null]);
     node.append(
       el("div", { class: "muted small-text", text: `${r.conference} · ${w === 0 ? "preseason" : `through ${s.week_labels[w] || "week " + w}`} · ranks are today's ${data.kind === "cfp" ? "CFP ranking" : "AP poll"}` }),
       el("div", { class: "review-tiles" }, [
-        tile("Record", r.record, `${r.conf_record} ${r.conference}`),
-        tile("Strength of schedule", `#${r.sos_rank}`, `opponents ${(r.opp_pct * 100).toFixed(1)}% · theirs ${(r.oo_pct * 100).toFixed(1)}%`),
-        tile("vs Top 25", r.top25, `${r.road_wins} win${r.road_wins === 1 ? "" : "s"} away from home`),
-        tile("vs teams over .500", r.vs_winning, `${r.margin > 0 ? "+" : ""}${r.margin} points per game`),
+        bigTile("Record", r.record, `${r.conf_record} ${r.conference}`),
+        bigTile("Strength of schedule", `#${r.sos_rank}`, `opponents ${(r.opp_pct * 100).toFixed(1)}% · theirs ${(r.oo_pct * 100).toFixed(1)}%`),
+        bigTile("vs Top 25", r.top25, `${r.road_wins} win${r.road_wins === 1 ? "" : "s"} away from home`),
+        bigTile("vs teams over .500", r.vs_winning, `${r.margin > 0 ? "+" : ""}${r.margin} points per game`),
       ]),
     );
     const gameLine = (x) => el("span", {}, [x.venue === "away" ? "at " : x.venue === "neutral" ? "vs " : "vs ", x.rank_now ? el("span", { class: "rank", text: `#${x.rank_now} ` }) : null, teamPill(x.opp), x.opp_name, el("span", { class: "muted small-text", text: ` (${x.opp_record}) ${x.pf}–${x.pa}${x.rank_then && x.rank_then !== x.rank_now ? ` · #${x.rank_then} at the time` : ""}` })]);
@@ -2994,7 +3031,7 @@
     table.append(el("tr", {}, ["Wk", "Opponent", "Rank then", "Rank now", "Their record", "Result", ""].map((h, i) => el("th", { class: `${i === 1 ? "left" : ""} ${[2, 4].includes(i) ? "ph" : ""}`, text: h }))));
     for (const x of r.games || []) {
       const tr = el("tr", { class: `${x.event_id ? "clickable" : ""} ${x.won ? "won" : "lost"}` }, [
-        el("td", { class: "muted", text: x.week > 14 ? (s.week_labels[x.week] || "").replace("Championship week", "CCG").replace(" & bowls", "").replace(" & New Year bowls", "") : String(x.week) }),
+        el("td", { class: "muted", text: x.week > 14 ? postseasonLabel(s, x.week) : String(x.week) }),
         el("td", { class: "left name" }, [el("span", { class: "muted", text: `${x.venue === "away" ? "at" : "vs"} ` }), teamPill(x.opp), x.opp_name, x.fcs ? el("span", { class: "pos", text: "FCS" }) : null, x.title ? el("div", { class: "muted small-text", text: x.title }) : null]),
         el("td", { class: "muted ph", text: x.rank_then ? `#${x.rank_then}` : "–" }),
         el("td", { class: x.rank_now ? "win" : "muted", text: x.rank_now ? `#${x.rank_now}` : "–" }),
@@ -3017,6 +3054,7 @@
   const gameday = { timer: null, speed: "normal", moments: [], i: 0, g: null, eventId: null, node: null };
   const GD_PACE = { slow: 1600, normal: 900, fast: 320 };
   const gdSpeed = () => { try { return localStorage.getItem("cfp.gameday.speed") || "normal"; } catch (e) { return "normal"; } };
+  const saveGdSpeed = (v) => { try { localStorage.setItem("cfp.gameday.speed", v); } catch (e) { /* private mode */ } };
 
   const gdAbbr = (g, side) => { const t = window.CFP.teamsBySlug[g[`${side}_slug`]]; return (t && t.abbreviation) || g[side].name; };
   // a yardline is the offense's distance from its own goal line
@@ -3184,14 +3222,13 @@
       el("div", { id: "gd-situation", class: "gd-situation muted" }),
       gdFieldNode(g),
       el("div", { class: "gd-controls" }, [
-        chipRow([["slow", "Slow"], ["normal", "Normal"], ["fast", "Fast"]], gameday.speed, (v) => { gameday.speed = v; try { localStorage.setItem("cfp.gameday.speed", v); } catch (e) {} }),
-        (() => { const b = el("button", { type: "button", class: "ghost small", id: "gd-skip", text: "Skip to final" }); b.addEventListener("click", () => gdFinish(true)); return b; })(),
+        chipRow([["slow", "Slow"], ["normal", "Normal"], ["fast", "Fast"]], gameday.speed, (v) => { gameday.speed = v; saveGdSpeed(v); }),
+        el("button", { type: "button", class: "ghost small", id: "gd-skip", text: "Skip to final", onclick: () => gdFinish(true) }),
       ]),
       el("div", { class: "gd-current" }, [el("h4", { id: "gd-drive-title", text: "" }), el("ol", { id: "gd-plays", class: "gd-plays" })]),
       el("div", { class: "gd-scoring" }, [el("h4", { text: "Scoring" }), el("ul", { id: "gd-scores", class: "scoring-list" })]),
       el("div", { class: "gd-drives" }, [el("h4", { text: "Drives" }), el("ul", { id: "gd-drives", class: "gd-drive-list" })]),
     );
-    for (const c of node.querySelectorAll(".gd-controls .chip")) c.dataset.v = c.dataset.v || c.textContent.trim().toLowerCase();
     const title = el("span", {}, [el("span", { class: "gd-live", text: "LIVE" }), ` ${g.away.name} at ${g.home.name}`, info && info.title ? el("span", { class: "muted small-text", text: ` · ${info.title}` }) : null]);
     openModal(title, node);
     gameday.layerNode = node.closest(".modal");

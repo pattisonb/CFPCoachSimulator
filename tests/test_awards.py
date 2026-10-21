@@ -46,11 +46,16 @@ if __name__ == "__main__":
     teams = aw["conference"][conf]["teams"]["selectors"]
     first = next(iter(teams.values()))
     print(f"--- All-{conf} first team ({next(iter(teams))}):", ", ".join(f"{c['slot']} {c['name']} ({c['team_name']})" for c in first if c["level"] == 1))
-    print("--- postseason:", [(a["name"], (a["winner"] or {}).get("name") or (a["winner"] or {}).get("coach") or (a["winner"] or {}).get("team_name")) for a in aw["postseason"]["awards"]])
+    def winner_name(w: dict | None) -> str | None:
+        w = w or {}
+        return w.get("name") or w.get("coach") or w.get("team_name")
+
+    print("--- postseason:", [(a["name"], winner_name(a["winner"])) for a in aw["postseason"]["awards"]])
     mine = season.awards_view(st)["mine"]
     print(f"--- my team ({st['team_name']}): {len(mine)} entries")
     for m in mine[:12]:
         print(f"  {m['stage']:<22} {m['award']:<44} {m['who']:<22} {m['place']}")
     print("state size", round(len(json.dumps(st)) / 1e6, 2), "MB")
     if len(sys.argv) > 3:
-        json.dump(st, open(sys.argv[3], "w"))
+        with open(sys.argv[3], "w") as f:
+            json.dump(st, f)

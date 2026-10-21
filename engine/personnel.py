@@ -53,21 +53,25 @@ def offense_grouping(scheme: str, down: int, distance: int, yardline: int, conse
     goal_line = yardline >= 95
     short = distance <= 2 and down >= 3
     passing_down = (down >= 3 and distance >= 7) or hurrying
-    mix = SCHEME_MIX.get(scheme, DEFAULT_MIX)
+    flexbone = scheme == "Flexbone Triple Option"
     if goal_line or short:
-        if scheme == "Flexbone Triple Option":
+        if flexbone:
             return "option"
         r = random.random()
         if r < cfg.HEAVY_JUMBO_SHARE:
             return "jumbo"
-        return "13" if r < cfg.HEAVY_JUMBO_SHARE + cfg.HEAVY_13_SHARE else ("22" if r < 0.8 else "12")
-    if passing_down and scheme != "Flexbone Triple Option":
-        r = random.random()
-        if r < cfg.PASSING_DOWN_10_SHARE * (1.6 if scheme == "Air Raid" else 1.0):
+        if r < cfg.HEAVY_JUMBO_SHARE + cfg.HEAVY_13_SHARE:
+            return "13"
+        if r < 0.8:
+            return "22"
+        return "12"
+    if passing_down and not flexbone:
+        if random.random() < cfg.PASSING_DOWN_10_SHARE * (1.6 if scheme == "Air Raid" else 1.0):
             return "10"
         return "11"
-    if conservative and scheme != "Flexbone Triple Option" and random.random() < cfg.CONSERVATIVE_HEAVY_SHARE:
+    if conservative and not flexbone and random.random() < cfg.CONSERVATIVE_HEAVY_SHARE:
         return "12" if random.random() < 0.6 else "21"
+    mix = SCHEME_MIX.get(scheme, DEFAULT_MIX)
     names = list(mix)
     return random.choices(names, weights=[mix[n] for n in names], k=1)[0]
 

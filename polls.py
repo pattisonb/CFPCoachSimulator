@@ -66,27 +66,27 @@ CFP_PARAMS = {
 }
 
 
-def load_params() -> tuple[dict, dict]:
+def _saved_params() -> dict:
+    """data/poll_params.json ({} before the first calibration)."""
     if PARAMS_FILE.exists():
-        d = json.loads(PARAMS_FILE.read_text(encoding="utf-8"))
-        return {**AP_PARAMS, **d.get("ap", {})}, {**CFP_PARAMS, **d.get("cfp", {})}
-    return dict(AP_PARAMS), dict(CFP_PARAMS)
+        return json.loads(PARAMS_FILE.read_text(encoding="utf-8"))
+    return {}
+
+
+def load_params() -> tuple[dict, dict]:
+    saved = _saved_params()
+    return {**AP_PARAMS, **saved.get("ap", {})}, {**CFP_PARAMS, **saved.get("cfp", {})}
 
 
 def load_next_params() -> dict:
     """The week-to-week model's fitted parameters (tools/backtest_polls.py)."""
-    if PARAMS_FILE.exists():
-        return {**NEXT_PARAMS, **json.loads(PARAMS_FILE.read_text(encoding="utf-8")).get("next", {})}
-    return dict(NEXT_PARAMS)
+    return {**NEXT_PARAMS, **_saved_params().get("next", {})}
 
 
 def load_ballot_params() -> dict:
     """The ballot model's parameters: the week-to-week ones, with the ballot fit on top
     (tools/backtest_ballots.py fit)."""
-    base = load_next_params()
-    if PARAMS_FILE.exists():
-        base.update(json.loads(PARAMS_FILE.read_text(encoding="utf-8")).get("ballots", {}))
-    return base
+    return {**load_next_params(), **_saved_params().get("ballots", {})}
 
 
 # ----- AP model ------------------------------------------------------------
@@ -195,6 +195,37 @@ NEXT_PARAMS = {
 }
 
 
+def _new_entry_value(p: dict, record: tuple[int, int], tier: Optional[str]) -> float:
+    """What a team nobody voted for is worth: new_entry per win minus 2 x losses (scaled
+    down for a Group of Five team), less one new_entry."""
+    w, l = record
+    entry = p["new_entry"] * max(0, w - 2 * l)
+    return entry * (p["g5_entry"] if tier == "G5" else 1.0) - p["new_entry"]
+
+
+def _win_gain(p: dict, opp_value: float, margin: float, at_home: bool, neutral: bool, opp_tier: Optional[str]) -> float:
+    """A winner's gain: the base, the opponent's value, the margin (as a share of 21 points)
+    and the road, cut to fcs_win against an FCS team."""
+    gain = p["win_base"] + p["win_opp"] * opp_value + p["win_margin"] * margin + (0 if at_home or neutral else p["win_road"])
+    if opp_tier == "FCS":
+        gain *= p["fcs_win"]
+    return gain
+
+
+def _winners_over(games: list[dict]) -> list[tuple[str, str]]:
+    """(winner, loser) for every game of the week that was not a tie."""
+    return [(g["home"], g["away"]) if g["home_score"] > g["away_score"] else (g["away"], g["home"])
+            for g in games if g["home_score"] != g["away_score"]]
+
+
+def _head_to_head(order: list[str], key: dict[str, float], winners_over: list[tuple[str, str]], window: float) -> None:
+    """Put each winner just above a loser it trails by less than `window` (in place)."""
+    for w_, l_ in winners_over:
+        if w_ in key and l_ in key and key[l_] > key[w_] and key[l_] - key[w_] < window:
+            order.remove(w_)
+            order.insert(order.index(l_), w_)
+
+
 def _share_table(prev: list[dict]) -> tuple[dict[str, float], int]:
     """team -> share of the maximum points (0..1) from a published poll with its others."""
     voters = sum((e.get("first_place") or 0) for e in prev if (e.get("rank") or 99) <= 25) or AP_VOTERS
@@ -218,21 +249,17 @@ def next_poll(prev: list[dict], games: list[dict], records: dict[str, tuple[int,
             if tiers.get(t) == "FCS":
                 continue
             if t not in val:
-                w, l = records.get(t, (0, 0))
-                entry = p["new_entry"] * max(0, w - 2 * l)
-                val[t] = entry * (p["g5_entry"] if tiers.get(t) == "G5" else 1.0) - p["new_entry"]
+                val[t] = _new_entry_value(p, records.get(t, (0, 0)), tiers.get(t))
             ts, os_ = g[f"{side}_score"], g[f"{opp}_score"]
             m = min(abs(ts - os_), 21) / 21.0
             ov = share.get(o, 0.0)
             at_home = side == "home" and not g.get("neutral")
             if ts > os_:
-                gain = p["win_base"] + p["win_opp"] * ov + p["win_margin"] * m + (0 if at_home or g.get("neutral") else p["win_road"])
-                if tiers.get(o) == "FCS":
-                    gain *= p["fcs_win"]
-                val[t] += gain
+                val[t] += _win_gain(p, ov, m, at_home, bool(g.get("neutral")), tiers.get(o))
             else:
                 bad = 1.0 if tiers.get(o) == "FCS" else (1.0 - min(1.0, ov))
-                val[t] -= p["loss_base"] + p["loss_bad"] * bad + p["loss_margin"] * m + (p["loss_home"] if at_home else 0.0)                     + p["loss_own"] * share.get(t, 0.0)
+                val[t] -= (p["loss_base"] + p["loss_bad"] * bad + p["loss_margin"] * m + (p["loss_home"] if at_home else 0.0)
+                           + p["loss_own"] * share.get(t, 0.0))
     for t in val:
         if t not in played:
             val[t] += p["bye"]
@@ -244,13 +271,7 @@ def next_poll(prev: list[dict], games: list[dict], records: dict[str, tuple[int,
         key[t] = v + (p["unbeaten"] if l == 0 and w > 0 else 0.0) - p["loss_edge"] * l
     order = sorted(key, key=lambda t: -key[t])
     # head to head: this week's winner goes just above a loser it trails by less than h2h
-    for g in games:
-        if g["home_score"] == g["away_score"]:
-            continue
-        w_, l_ = (g["home"], g["away"]) if g["home_score"] > g["away_score"] else (g["away"], g["home"])
-        if w_ in key and l_ in key and key[l_] > key[w_] and key[l_] - key[w_] < p["h2h"]:
-            order.remove(w_)
-            order.insert(order.index(l_), w_)
+    _head_to_head(order, key, _winners_over(games), p["h2h"])
     return order[:n], key
 
 
@@ -269,19 +290,17 @@ def ballots(order: list[str], scores: dict[str, float], tiers: dict[str, str], p
     eff = {t: scores.get(t, 0.0) - (params["g5_discount"] if tiers.get(t) == "G5" else 0.0) for t in order}
     first: dict[str, int] = {}
     points: dict[str, int] = {}
+    sigma = VOTER_NOISE if noise is None else noise
     for _ in range(n_voters):
-        sigma = VOTER_NOISE if noise is None else noise
         ballot = sorted(order, key=lambda t: -(eff[t] + rng.gauss(0.0, sigma)))
         first[ballot[0]] = first.get(ballot[0], 0) + 1
         for i, t in enumerate(ballot[:25]):
             points[t] = points.get(t, 0) + 25 - i
     pts_sorted = sorted(points.values(), reverse=True)
     first_sorted = sorted(first.values(), reverse=True)
-    out = {}
-    for i, t in enumerate(order):
-        out[t] = {"first_place": first_sorted[i] if i < len(first_sorted) else 0,
-                  "points": pts_sorted[i] if i < len(pts_sorted) else 0}
-    return out
+    return {t: {"first_place": first_sorted[i] if i < len(first_sorted) else 0,
+                "points": pts_sorted[i] if i < len(pts_sorted) else 0}
+            for i, t in enumerate(order)}
 
 
 COACHES_VOTERS = 65        # AFCA panel (53-67 ballots a week in 2014-2025)
@@ -374,6 +393,7 @@ def build_bracket(ranking: list[str], champions: dict[str, str], conference_of: 
                   names: Optional[dict[str, str]] = None) -> dict:
     """12-team field and seeds under the 2026 rules. `ranking` is the final committee
     ranking (team keys, best first, at least 12 long); `champions` maps conference -> champion."""
+    names = names or {}
     pos = {t: i + 1 for i, t in enumerate(ranking)}
     autos = []
     for conf in ("ACC", "Big Ten", "Big 12", "SEC"):
@@ -402,19 +422,19 @@ def build_bracket(ranking: list[str], champions: dict[str, str], conference_of: 
     inside = sorted([t for t in field if pos.get(t, 99) <= 12], key=lambda t: pos[t])
     outside = sorted([t for t in field if pos.get(t, 99) > 12], key=lambda t: pos.get(t, 99))
     seeded = inside + outside
-    seeds = []
     reason = dict(autos)
-    for i, t in enumerate(seeded, 1):
-        seeds.append({"seed": i, "team": t, "name": (names or {}).get(t, t), "rank": pos.get(t),
-                      "conference": conference_of.get(t), "bid": reason.get(t, "at-large"), "bye": i <= 4})
+    seeds = [{"seed": i, "team": t, "name": names.get(t, t), "rank": pos.get(t),
+              "conference": conference_of.get(t), "bid": reason.get(t, "at-large"), "bye": i <= 4}
+             for i, t in enumerate(seeded, 1)]
+    full = len(seeds) == 12
     first_round = [{"home": seeds[4], "away": seeds[11]}, {"home": seeds[5], "away": seeds[10]},
-                   {"home": seeds[6], "away": seeds[9]}, {"home": seeds[7], "away": seeds[8]}] if len(seeds) == 12 else []
+                   {"home": seeds[6], "away": seeds[9]}, {"home": seeds[7], "away": seeds[8]}] if full else []
+    quarterfinals = [{"bye": seeds[0], "winner_of": "5 vs 12"}, {"bye": seeds[3], "winner_of": "8 vs 9"},
+                     {"bye": seeds[1], "winner_of": "7 vs 10"}, {"bye": seeds[2], "winner_of": "6 vs 11"}] if full else []
     first_four_out = [t for t in ranking if t not in auto_set and t not in field][:4]
-    return {"seeds": seeds, "first_round": first_round,
-            "quarterfinals": [{"bye": seeds[0], "winner_of": "5 vs 12"}, {"bye": seeds[3], "winner_of": "8 vs 9"},
-                              {"bye": seeds[1], "winner_of": "7 vs 10"}, {"bye": seeds[2], "winner_of": "6 vs 11"}] if len(seeds) == 12 else [],
-            "first_four_out": [{"team": t, "name": (names or {}).get(t, t), "rank": pos.get(t)} for t in first_four_out],
-            "autos": [{"team": t, "bid": b, "name": (names or {}).get(t, t)} for t, b in autos]}
+    return {"seeds": seeds, "first_round": first_round, "quarterfinals": quarterfinals,
+            "first_four_out": [{"team": t, "name": names.get(t, t), "rank": pos.get(t)} for t in first_four_out],
+            "autos": [{"team": t, "bid": b, "name": names.get(t, t)} for t, b in autos]}
 
 
 # ----- the AP poll from the voters' ballots ----------------------------------------------
@@ -451,10 +471,7 @@ def seed_ballots(prev: list[dict], n_voters: Optional[int] = None, seed: int = 0
     n = n_voters or voters or AP_VOTERS
     rng = random.Random(seed)
     teams = list(share)
-    out = []
-    for _ in range(n):
-        out.append(sorted(teams, key=lambda t: -(share[t] + rng.gauss(0.0, noise)))[:25])
-    return out
+    return [sorted(teams, key=lambda t: -(share[t] + rng.gauss(0.0, noise)))[:25] for _ in range(n)]
 
 
 def next_ballots(ballots: list[list[str]], prev: list[dict], games: list[dict], records: dict[str, tuple[int, int]],
@@ -479,11 +496,8 @@ def next_ballots(ballots: list[list[str]], prev: list[dict], games: list[dict], 
                 continue
             ts, os_ = g[f"{side}_score"], g[f"{opp}_score"]
             facts.append((t, o, ts > os_, min(abs(ts - os_), 21) / 21.0, side == "home" and not g.get("neutral"), bool(g.get("neutral"))))
-    winners_over = [(g["home"], g["away"]) if g["home_score"] > g["away_score"] else (g["away"], g["home"])
-                    for g in games if g["home_score"] != g["away_score"]]
+    winners_over = _winners_over(games)
     new: list[list[str]] = []
-    points: dict[str, int] = {}
-    first: dict[str, int] = {}
     for ballot in ballots:
         mine = {t: (25 - i) / 25.0 for i, t in enumerate(ballot[:25])}
         # off the ballot: the consensus share, scaled down (the voter left them off for a reason)
@@ -492,8 +506,7 @@ def next_ballots(ballots: list[list[str]], prev: list[dict], games: list[dict], 
             if t not in mine:
                 # a team the voter does not rank is worth at least what its record says
                 # (entry_all: also when others vote for it), so a 6-0 team can climb past a 3-3 one
-                w, l = records.get(t, (0, 0))
-                entry = p["new_entry"] * max(0, w - 2 * l) * (p["g5_entry"] if tiers.get(t) == "G5" else 1.0) - p["new_entry"]
+                entry = _new_entry_value(p, records.get(t, (0, 0)), tiers.get(t))
                 if t not in val:
                     val[t] = entry
                 elif p["entry_all"]:
@@ -502,9 +515,7 @@ def next_ballots(ballots: list[list[str]], prev: list[dict], games: list[dict], 
             own = mine.get(t, share.get(t, 0.0) * off)
             bad = 1.0 if tiers.get(o) == "FCS" else (1.0 - min(1.0, ov))
             if won:
-                gain = p["win_base"] + p["win_opp"] * ov + p["win_margin"] * m + (0 if at_home or neutral else p["win_road"])
-                if tiers.get(o) == "FCS":
-                    gain *= p["fcs_win"]
+                gain = _win_gain(p, ov, m, at_home, neutral, tiers.get(o))
                 # a narrow escape against a weak team costs the winner (m is the margin / 21)
                 gain -= p["close_win"] * bad * max(0.0, 1.0 - m * 21.0 / p["close_margin"]) * own ** p["close_own"]
                 val[t] += gain
@@ -525,16 +536,9 @@ def next_ballots(ballots: list[list[str]], prev: list[dict], games: list[dict], 
             if noise:
                 key[t] += rng.gauss(0.0, noise)
         order = sorted(key, key=lambda t: -key[t])
-        for w_, l_ in winners_over:            # a close call goes to the team that won the game
-            if w_ in key and l_ in key and key[l_] > key[w_] and key[l_] - key[w_] < p["h2h"]:
-                order.remove(w_)
-                order.insert(order.index(l_), w_)
+        _head_to_head(order, key, winners_over, p["h2h"])    # a close call goes to the team that won the game
         new.append(order[:25])
-    for b in new:
-        if b:
-            first[b[0]] = first.get(b[0], 0) + 1
-        for i, t in enumerate(b):
-            points[t] = points.get(t, 0) + 25 - i
+    points, first = tally(new)
     return new, points, first
 
 

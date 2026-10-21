@@ -9,21 +9,22 @@ _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project r
 import coaches
 import season
 
+
+def assert_refused(coach: dict, failure: str) -> None:
+    """coaches.clean must reject this coach with a ValueError; `failure` says what went wrong if not."""
+    try:
+        coaches.clean(coach)
+    except ValueError:
+        return
+    raise AssertionError(failure)
+
+
 if __name__ == "__main__":
     c = coaches.blank()
     # validation: a name is required and the ratings budget holds
-    try:
-        coaches.clean(c)
-        raise AssertionError("a coach without a name was accepted")
-    except ValueError:
-        pass
+    assert_refused(c, "a coach without a name was accepted")
     c.update(first_name="Test", last_name="Coach")
-    over = {**c, "ratings": {k: 99 for k in coaches.RATING_KEYS}}
-    try:
-        coaches.clean(over)
-        raise AssertionError("ratings over the budget were accepted")
-    except ValueError:
-        pass
+    assert_refused({**c, "ratings": {k: 99 for k in coaches.RATING_KEYS}}, "ratings over the budget were accepted")
     c = coaches.clean({**c, "calls_offense": True, "calls_defense": False, "offense_scheme": "Air Raid"})
     assert "oc" not in c and "dc" not in c   # no in-season hiring
 

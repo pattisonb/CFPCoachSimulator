@@ -13,15 +13,16 @@ if __name__ == "__main__":
     # a made-up slate: A beats everyone by 12 more than the ratings say, B loses by 12 more (under the 28-point cap)
     slugs = [s for s, t in teams.items() if not t["fictional"]][:12]
     a, b, rest = slugs[0], slugs[1], slugs[2:]
+    def home_win(home: str, away: str, cid: int) -> dict:
+        """A final the home team wins by 12 more points than the ratings say."""
+        base = (teams[home]["team_ratings"]["overall"] - teams[away]["team_ratings"]["overall"]) * form.PTS_PER_RATING + form.HFA
+        return {"week": 1, "final": True, "neutral": False, "home_name": teams[home]["name"], "away_name": teams[away]["name"],
+                "home_seo": home, "away_seo": away, "home_score": 40, "away_score": int(round(40 - base - 12)), "contest_id": cid}
+
     games = []
-    cid = 1
     for opp in rest[:5]:
-        base = (teams[a]["team_ratings"]["overall"] - teams[opp]["team_ratings"]["overall"]) * form.PTS_PER_RATING + form.HFA
-        games.append({"week": 1, "final": True, "neutral": False, "home_name": teams[a]["name"], "away_name": teams[opp]["name"],
-                      "home_seo": a, "away_seo": opp, "home_score": 40, "away_score": int(round(40 - base - 12)), "contest_id": cid}); cid += 1
-        base = (teams[opp]["team_ratings"]["overall"] - teams[b]["team_ratings"]["overall"]) * form.PTS_PER_RATING + form.HFA
-        games.append({"week": 1, "final": True, "neutral": False, "home_name": teams[opp]["name"], "away_name": teams[b]["name"],
-                      "home_seo": opp, "away_seo": b, "home_score": 40, "away_score": int(round(40 - base - 12)), "contest_id": cid}); cid += 1
+        games.append(home_win(a, opp, len(games) + 1))
+        games.append(home_win(opp, b, len(games) + 1))
     table = form.fit_form(games, teams)
     assert table[a]["points"] > 4 and table[b]["points"] < -4, (table[a], table[b])
     assert abs(table[a]["points"] - 12 * 5 / (5 + form.K)) < 3, table[a]   # ridge: 5 games keep 5/9 of the 12
@@ -65,7 +66,8 @@ if __name__ == "__main__":
             assert not any(name_of[ps]["position"] in ("CB", "S") for _, ps, _ in flat), "defensive backs are not moved on tackles"
             s0, ps0, f0 = flat[0]
             moved = form.with_player_form(teams[s0], {ps0: f0})
-            p0 = name_of[ps0]; p1 = next(p for p in moved["offense"] + moved["defense"] if p.get("slug") == ps0)
+            p0 = name_of[ps0]
+            p1 = next(p for p in moved["offense"] + moved["defense"] if p.get("slug") == ps0)
             key = form.PLAYER_ATTRS[form.GROUP[p0["position"]]][0]
             assert p1[key] == max(1, min(99, int(round(p0[key] + f0["shift"])))), (p0[key], p1[key], f0["shift"])
             print(f"player form: {len(flat)} players moved, e.g. {p0['name']} ({p0['position']}) {f0['shift']:+.1f}: {f0['note']}")

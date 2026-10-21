@@ -45,6 +45,8 @@ ARTICLES = {
     "Texas Bowl": "Texas Bowl", "Citrus Bowl": "Citrus Bowl", "First Responder Bowl": "First Responder Bowl", "Arizona Bowl": "Arizona Bowl",
     "Liberty Bowl": "Liberty Bowl",
 }
+
+
 def fetch(title: str) -> str:
     url = WIKI + urllib.parse.quote(title.replace(" ", "_"))
     req = urllib.request.Request(url, headers={"User-Agent": UA})
@@ -179,7 +181,12 @@ def parse_results_table(t) -> list[dict]:
         run = 1
         while i + run < len(hdr) and hdr[i + run] == h:
             run += 1
-        role = "winner" if h.startswith("winn") else "loser" if h.startswith("los") else ""
+        if h.startswith("winn"):
+            role = "winner"
+        elif h.startswith("los"):
+            role = "loser"
+        else:
+            role = ""
         if role or (run == 2 and not any(w in h for w in NON_TEAM_HEADERS)):
             groups.append((i, i + 1 if run >= 2 else None, role))
         i += run
@@ -324,7 +331,10 @@ def main() -> None:
         rec = {**entry, "bowl": base, "article": article, **hist}
         m = re.search(r"\((Quarterfinal|Semifinal)\)", entry["name"])
         if kind == "playoff":
-            rec["round"] = "championship" if "Championship" in base else (m.group(1).lower() if m else "")
+            if "Championship" in base:
+                rec["round"] = "championship"
+            else:
+                rec["round"] = m.group(1).lower() if m else ""
             out["playoff"].append(rec)
         else:
             out["bowls"].append(rec)

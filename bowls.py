@@ -76,6 +76,7 @@ def _payout(b: dict) -> float:
 
 
 def ordered_bowls(data: dict) -> list[dict]:
+    """The bowls in selection order: PRIORITY first, then by payout."""
     pri = {name: i for i, name in enumerate(PRIORITY)}
     return sorted(data["bowls"], key=lambda b: (pri.get(b["bowl"], 99), -_payout(b)))
 
@@ -94,7 +95,8 @@ def select_bowls(records: dict, teams: dict, playoff_field: set, order: list[str
     data = load_bowls()
     pos = {t: i for i, t in enumerate(order)}
 
-    def quality(slug: str):
+    def quality(slug: str) -> tuple:
+        """Sort key, best first: the committee's order, then win share, then rating."""
         r = records[slug]
         g = r["wins"] + r["losses"]
         return (pos.get(slug, 999), -(r["wins"] / g if g else 0), -ratings.get(slug, 0))
@@ -142,7 +144,8 @@ def select_bowls(records: dict, teams: dict, playoff_field: set, order: list[str
                 # a missing tie-in is filled from the same tier first (a Group of Five bowl takes
                 # another Group of Five team before a leftover power-conference team)
                 fallback = "Group of Five" if conf in G5 else "At-large"
-                s = best_from(conf, other_conf, min_wins) or best_from(fallback, other_conf, min_wins) or best_from("At-large", other_conf, min_wins)
+                s = (best_from(conf, other_conf, min_wins) or best_from(fallback, other_conf, min_wins)
+                     or best_from("At-large", other_conf, min_wins))
                 if s:
                     picks.append(s)
                     taken.add(s)
@@ -150,13 +153,10 @@ def select_bowls(records: dict, teams: dict, playoff_field: set, order: list[str
                 break
             for s in picks:
                 taken.discard(s)
-        if len(picks) < 2:
-            out.append({"bowl": b["bowl"], "name": b["name"], "date": b.get("date"), "time": b.get("time"), "site": b.get("site"),
-                        "week": bowl_week(b.get("date")), "home": None, "away": None, "tie_ins": ties, "unfilled": True})
-            continue
-        home, away = picks[0], picks[1]
+        filled = len(picks) == 2
         out.append({"bowl": b["bowl"], "name": b["name"], "date": b.get("date"), "time": b.get("time"), "site": b.get("site"),
-                    "week": bowl_week(b.get("date")), "home": home, "away": away, "tie_ins": ties, "unfilled": False})
+                    "week": bowl_week(b.get("date")), "home": picks[0] if filled else None, "away": picks[1] if filled else None,
+                    "tie_ins": ties, "unfilled": not filled})
     return out
 
 

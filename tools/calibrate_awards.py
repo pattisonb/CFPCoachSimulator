@@ -11,6 +11,9 @@ import time
 
 import season
 
+G5_CONFERENCES = {"American Athletic Conference", "Conference USA", "MAC", "Mountain West", "Pac-12", "Sun Belt"}
+DEFENSIVE_POSITIONS = ("DL", "MLB", "ROLB", "LOLB", "CB", "S")
+
 if __name__ == "__main__":
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 8
     seed0 = int(sys.argv[2]) if len(sys.argv) > 2 else 100
@@ -41,9 +44,9 @@ if __name__ == "__main__":
         shares.append(h["share"])
         for c in h["candidates"][:5]:
             top5_pos[c["position"]] += 1
-            if teams[c["team"]]["conference"] in {"American Athletic Conference", "Conference USA", "MAC", "Mountain West", "Pac-12", "Sun Belt"}:
+            if teams[c["team"]]["conference"] in G5_CONFERENCES:
                 g5_top5 += 1
-            if c["position"] in ("DL", "MLB", "ROLB", "LOLB", "CB", "S"):
+            if c["position"] in DEFENSIVE_POSITIONS:
                 def_top5 += 1
         aa = nat["all_america"]
         unanimous.append(len(aa["unanimous"]))
@@ -51,7 +54,7 @@ if __name__ == "__main__":
         for a in nat["awards"]:
             if a["winner"]:
                 award_pos[a["name"]][a["winner"]["position"]] += 1
-            if a["name"] == "Chuck Bednarik Award" and a["winner"] and (st and (a["winner"].get("rank") or 99) > 10):
+            if a["name"] == "Chuck Bednarik Award" and a["winner"] and (a["winner"].get("rank") or 99) > 10:
                 bednarik_outside10 += 1
         ap = next(a for a in nat["coach_awards"] if a["name"] == "AP Coach of the Year")["winner"]
         if ap["preseason_rank"] is None:

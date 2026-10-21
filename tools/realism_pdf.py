@@ -155,42 +155,53 @@ def records_and_games(pdf, teams):
     plt.close(fig)
 
 
+def average_lines(lines: list[dict]) -> dict:
+    """Key by key mean of per-game lines, over the lines where the value is a number (None if none is)."""
+    keys = set().union(*[line.keys() for line in lines]) if lines else set()
+    out = {}
+    for k in keys:
+        vals = [line[k] for line in lines if isinstance(line.get(k), (int, float))]
+        out[k] = st.mean(vals) if vals else None
+    return out
+
+
 def matched(t: dict, side: str) -> tuple[dict, dict]:
     """Per-game averages over the same games only: weeks where the real game has a box score
-    (real games against FCS teams usually do not) and the sims played it. Returns (real, sim)."""
-    rk, sk = ("line", "line") if side == "offense" else ("allowed", "allowed")
-    pairs = [(w["real"][rk], w["sim"][sk]) for w in t["weeks"]
-             if (w.get("real") or {}).get(rk) and (w.get("sim") or {}).get(sk)]
-    def avg(ls):
-        keys = set().union(*[l.keys() for l in ls]) if ls else set()
-        return {k: st.mean([l[k] for l in ls if isinstance(l.get(k), (int, float))]) if any(isinstance(l.get(k), (int, float)) for l in ls) else None for k in keys}
-    return avg([a for a, _ in pairs]), avg([b for _, b in pairs])
+    (real games against FCS teams usually do not) and the sims played it. Returns (real, sim).
+    `side` "offense" averages the team's own lines; anything else the lines it allowed."""
+    key = "line" if side == "offense" else "allowed"
+    pairs = [(w["real"][key], w["sim"][key]) for w in t["weeks"]
+             if (w.get("real") or {}).get(key) and (w.get("sim") or {}).get(key)]
+    return average_lines([a for a, _ in pairs]), average_lines([b for _, b in pairs])
+
+
+def pass_share(line: dict, sacks_in_carries: bool) -> float | None:
+    """Dropbacks (passes and sacks) as a percentage of plays. Official carries already
+    include the sacks; the sim's do not."""
+    a, c, sk = line.get("pass_att") or 0, line.get("carries") or 0, line.get("sacks_taken") or 0
+    plays = a + c + (0 if sacks_in_carries else sk)
+    return 100 * (a + sk) / plays if plays else None
 
 
 def team_stats(pdf, teams):
     fig, axes = plt.subplots(3, 2, figsize=PAGE)
+
     def pts(side, key):
-        side = "offense" if side == "offense" else "allowed"
         out = []
         for t in teams.values():
             r, s = matched(t, side)
             out.append((r.get(key), s.get(key), t["tier"], t["name"]))
         return out
+
     scatter(axes[0][0], pts("offense", "points"), "Points per game", "real", "simulated", 6)
-    scatter(axes[0][1], pts("defense_allowed", "points"), "Points allowed per game", "real", "simulated", 6)
+    scatter(axes[0][1], pts("allowed", "points"), "Points allowed per game", "real", "simulated", 6)
     scatter(axes[1][0], pts("offense", "pass_yds"), "Passing yards per game", "real", "simulated", 6)
     scatter(axes[1][1], pts("offense", "rush_yds"), "Rushing yards per game (sacks as rushes)", "real", "simulated", 6)
     scatter(axes[2][0], pts("offense", "plays"), "Offensive plays per game", "real", "simulated", 6)
     share = []
     for t in teams.values():
         r, s = matched(t, "offense")
-        def ps(d, sacks_in_carries):
-            a, c, sk = d.get("pass_att") or 0, d.get("carries") or 0, d.get("sacks_taken") or 0
-            plays = a + c + (0 if sacks_in_carries else sk)        # official carries already include the sacks
-            return 100 * (a + sk) / plays if plays else None
-        rs = ps(r, True)
-        ss = ps(s, False)
-        share.append((rs, ss, t["tier"], t["name"]))
+        share.append((pass_share(r, sacks_in_carries=True), pass_share(s, sacks_in_carries=False), t["tier"], t["name"]))
     scatter(axes[2][1], share, "Pass play share % (dropbacks / plays)", "real", "simulated", 6)
     fig.suptitle("Team offense and defense per game, same games only: real vs simulated", fontsize=13, fontweight="bold", color=INK)
     fig.tight_layout(pad=1.6, rect=(0, 0, 1, 0.97))
@@ -417,7 +428,7 @@ def text_pages(pdf, md: str, heading: str):
             text = re.sub(r"\*\*(.+?)\*\*", r"\1", line)
             text = re.sub(r"`(.+?)`", r"\1", text)
             indent = "    " if re.match(r"^\s*[-*\d]", text) else ""
-            for i, w in enumerate(textwrap.wrap(text, 98, subsequent_indent=indent) or [""]):
+            for w in textwrap.wrap(text, 98, subsequent_indent=indent) or [""]:
                 lines.append(("t", w))
     per_page = 62
     first = True

@@ -3,8 +3,7 @@
 (function () {
   "use strict";
 
-  const { $, el, GAME_IDS, SBOX_IDS, teamColor, renderScoreboard, renderScoring, renderTeamStats, renderPlayers, renderDrives,
-          label, quarterName, kindLabel, resultLabel, fieldPos, fmtTime } = window.CFP;
+  const { $, el, renderScoreboard, renderScoring, renderTeamStats, renderPlayers, renderDrives, label } = window.CFP;
 
   const state = {
     teams: [],
@@ -250,11 +249,14 @@
 
   // ----- game view ---------------------------------------------------------
 
+  // The result area shows one pane at a time: the empty note, one game, or a batch.
+  function showPane(name) {
+    for (const p of ["empty", "game", "batch"]) $(`#${p}`).hidden = p !== name;
+  }
+
   function showGame(g) {
     state.currentGame = g;
-    $("#empty").hidden = true;
-    $("#batch").hidden = true;
-    $("#game").hidden = false;
+    showPane("game");
     renderScoreboard(g);
     renderScoring(g);
     renderTeamStats(g);
@@ -280,22 +282,12 @@
     }
   }
 
-
-
-
-
-
-
-
-
   // ----- batch view --------------------------------------------------------
 
   function showBatch(data) {
     const s = data.summary;
-    $("#empty").hidden = true;
-    $("#game").hidden = true;
+    showPane("batch");
     const box = $("#batch");
-    box.hidden = false;
     box.innerHTML = "";
     const sep = s.venue === "neutral" ? "vs" : "at";
     box.append(el("h2", { text: `${s.games} games: ${s.away_name} ${sep} ${s.home_name}` }));
@@ -430,9 +422,7 @@
     if (!confirm("Delete all saved games?")) return;
     await api("/api/games", { method: "DELETE" });
     state.currentGame = null;
-    $("#game").hidden = true;
-    $("#batch").hidden = true;
-    $("#empty").hidden = false;
+    showPane("empty");
     await loadHistory();
   });
   $("#tabs").addEventListener("click", (e) => {
@@ -446,7 +436,6 @@
     renderSliders();
     persistSliders();
   });
-
 
   // ----- season mode lives on its own page -----------------------------------
   $("#btn-season").addEventListener("click", () => {

@@ -138,14 +138,18 @@ def _init(path: str) -> None:
     _TEAMS = json.loads(Path(path).read_text(encoding="utf-8"))["teams"]
 
 
+def _leader(players: list[dict], key: str, exclude_qb: bool = False) -> str:
+    """Name of the player with the most of `key` (first listed on a tie), or ""."""
+    pool = (p for p in players if p["stats"].get(key, 0) and not (exclude_qb and p["position"] == "QB"))
+    top = max(pool, key=lambda p: p["stats"].get(key, 0), default=None)
+    return top["name"] if top else ""
+
+
 def _role_players(team: dict) -> tuple[str, str, str]:
     """Names of this sim's QB1 (most attempts), RB1 (most non-QB carries), top receiver."""
-    P = team["players"]
-    g = lambda p, k: p["stats"].get(k, 0)
-    qb = max((p for p in P if g(p, "pass_attempts")), key=lambda p: g(p, "pass_attempts"), default=None)
-    rb = max((p for p in P if p["position"] != "QB" and g(p, "carries")), key=lambda p: g(p, "carries"), default=None)
-    wr = max((p for p in P if g(p, "receptions")), key=lambda p: g(p, "receptions"), default=None)
-    return (qb["name"] if qb else "", rb["name"] if rb else "", wr["name"] if wr else "")
+    players = team["players"]
+    return (_leader(players, "pass_attempts"), _leader(players, "carries", exclude_qb=True),
+            _leader(players, "receptions"))
 
 
 def _sim_game(args: tuple) -> dict:
@@ -161,13 +165,12 @@ def _sim_game(args: tuple) -> dict:
         m = r["home"]["score"] - r["away"]["score"]
         margins.append(m)
         totals.append(r["home"]["score"] + r["away"]["score"])
-        wins += 1 if m > 0 else 0
+        if m > 0:
+            wins += 1
         for side in ("home", "away"):
             pts[side].append(r[side]["score"])
-            qb, rb, wr = _role_players(r[side])
-            roles[side]["qb"].append(qb)
-            roles[side]["rb"].append(rb)
-            roles[side]["wr"].append(wr)
+            for role, name in zip(("qb", "rb", "wr"), _role_players(r[side])):
+                roles[side][role].append(name)
             for p in r[side]["players"]:
                 if p["stats"]:
                     sums[side][p["name"]].update(p["stats"])

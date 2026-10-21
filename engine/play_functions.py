@@ -1,10 +1,11 @@
 import random
+
+from . import game_config as cfg
+from .game_config import sliders
 from .game_functions import apply_pass_fatigue, apply_run_fatigue
 from .personnel import pass_rushers
-from .game_config import sliders
-from . import game_config as cfg
 
-# Debug tracking for touchdown stat assignments
+# Every touchdown's scorer(s), in order; game.py reads the newest to describe the score.
 debug_td_stats = []
 
 # Who was involved in the most recent snap (names only; read by the drive log, never by
@@ -16,9 +17,7 @@ def _note(**kw) -> None:
     last_play.clear()
     last_play.update(kw)
 
-#{'pass_attempts': 0, 'completions': 0, 'pass_yards': 0, 'interceptions_thrown': 0, 'sacks_taken': 0, 'carries': 0, 
-# 'rush_yards': 0, 'fumbles': 0, 'receptions': 0, 'receiving_yards': 0, 'targets': 0, 'passing_touchdowns': 0, 
-# 'receiving_touchdowns': 0, 'rushing_touchdowns': 0}
+
 def assign_forced_fumble(defense, base_yards, verbose=False):
     # Map yardage to positional group
     if base_yards <= 2:
@@ -38,38 +37,31 @@ def assign_forced_fumble(defense, base_yards, verbose=False):
 
     # Choose one
     forced_by = random.choices(candidates, weights=weights, k=1)[0]
-    forced_by.stats['forced_fumbles'] = forced_by.stats.get('forced_fumbles', 0) + 1
+    _stat(forced_by, 'forced_fumbles')
 
     if verbose:
         print(f"Fumble forced by {forced_by.name} ({forced_by.position})")
 
     return forced_by
 
-import random
 
 # Who makes the tackle, by how far the play went: per player on the field, by position
 # group (the middle linebacker is "lb", the outside linebackers "olb"). Calibrated so the
 # defensive line makes about a fifth of a team's tackles, linebackers about two fifths and
 # the secondary the rest, with the middle linebacker usually the team's leader.
 TACKLE_GROUP = {"DL": "dl", "MLB": "lb", "ROLB": "olb", "LOLB": "olb", "OLB": "olb", "CB": "cb", "S": "s"}
+TACKLE_WEIGHT_GROUPS = ("dl", "lb", "olb", "s", "cb")    # the order of cfg.TACKLE_WEIGHTS_*
 
 
 def assign_tackles(defense, base_yards, verbose=False):
     # per-player weights by position group (a group's share also grows with how many are on the field)
-    short_weights = {'dl': cfg.TACKLE_WEIGHTS_SHORT[0], 'lb': cfg.TACKLE_WEIGHTS_SHORT[1], 'olb': cfg.TACKLE_WEIGHTS_SHORT[2],
-                     's': cfg.TACKLE_WEIGHTS_SHORT[3], 'cb': cfg.TACKLE_WEIGHTS_SHORT[4]}
-    mid_weights = {'dl': cfg.TACKLE_WEIGHTS_MID[0], 'lb': cfg.TACKLE_WEIGHTS_MID[1], 'olb': cfg.TACKLE_WEIGHTS_MID[2],
-                   's': cfg.TACKLE_WEIGHTS_MID[3], 'cb': cfg.TACKLE_WEIGHTS_MID[4]}
-    long_weights = {'dl': cfg.TACKLE_WEIGHTS_LONG[0], 'lb': cfg.TACKLE_WEIGHTS_LONG[1], 'olb': cfg.TACKLE_WEIGHTS_LONG[2],
-                    's': cfg.TACKLE_WEIGHTS_LONG[3], 'cb': cfg.TACKLE_WEIGHTS_LONG[4]}
-
-    # Determine blend weights
     if base_yards <= 2:
-        weight_profile = short_weights
+        weight_table = cfg.TACKLE_WEIGHTS_SHORT
     elif base_yards <= 7:
-        weight_profile = mid_weights
+        weight_table = cfg.TACKLE_WEIGHTS_MID
     else:
-        weight_profile = long_weights
+        weight_table = cfg.TACKLE_WEIGHTS_LONG
+    weight_profile = dict(zip(TACKLE_WEIGHT_GROUPS, weight_table))
 
     # Build weighted candidate list
     candidates = []
@@ -99,21 +91,9 @@ def assign_tackles(defense, base_yards, verbose=False):
     # Solo vs assisted: about 30% of tackles are shared (real leaders split theirs near half solo, half assisted)
     is_assisted = random.random() < cfg.TACKLE_ASSIST_CHANCE
 
-    if is_assisted:
-        # Weighted sampling without replacement
-        if len(candidates) >= 2:
-            tacklers = random.choices(candidates, weights=weights, k=5)
-            seen = set()
-            unique = []
-            for t in tacklers:
-                if t not in seen:
-                    unique.append(t)
-                    seen.add(t)
-                if len(unique) == 2:
-                    break
-            tacklers = unique
-        else:
-            tacklers = random.choices(candidates, weights=weights, k=1)
+    if is_assisted and len(candidates) >= 2:
+        # Weighted sampling without replacement: the first two different players of five draws
+        tacklers = list(dict.fromkeys(random.choices(candidates, weights=weights, k=5)))[:2]
     else:
         tacklers = random.choices(candidates, weights=weights, k=1)
 
@@ -323,23 +303,36 @@ def _lose_fumble(offense, defense, fumbler, spot, forcer_positions, yards_for_fo
     candidates = [p for p in defense if p.position in forcer_positions] or defense
     weights = [(p.speed + p.intelligence) / 2 for p in candidates]
     recoverer = random.choices(candidates, weights=weights, k=1)[0]
-    recoverer.stats["fumble_recoveries"] = recoverer.stats.get("fumble_recoveries", 0) + 1
+    _stat(recoverer, "fumble_recoveries")
     last_play["recovered_by"] = recoverer.name
-    distance_to_goal = spot   # yards the defense must return it
     if spot < 60 and random.random() < cfg.FUMBLE_RETURN_TD_CHANCE:
-        recoverer.stats["defensive_touchdowns"] = recoverer.stats.get("defensive_touchdowns", 0) + 1
-        recoverer.stats["fumble_return_yards"] = recoverer.stats.get("fumble_return_yards", 0) + distance_to_goal
+        _stat(recoverer, "defensive_touchdowns")
+        _stat(recoverer, "fumble_return_yards", spot)    # the spot is the yards the defense must return it
         debug_td_stats.append({'type': 'defensive_fumble', 'player': recoverer.name, 'position': recoverer.position})
         return "defensive_touchdown", 100
     return_yards = random.randint(0, 8)
-    recoverer.stats["fumble_return_yards"] = recoverer.stats.get("fumble_return_yards", 0) + return_yards
+    _stat(recoverer, "fumble_return_yards", return_yards)
     # The defense runs toward the offense's goal line (yardline 0 in the offense's direction).
     return "fumble", max(1, min(99, spot - return_yards))
 
 
 # ===================== rushing =====================
 
-def get_run_yards(offense, defense, down, first_down, guessed_play, offense_line_advantage, yardline, verbose=False, tendencies=None):
+def _carry_weight(player, lead_depth, fb_weight):
+    """The lead back (the halfback highest on the depth chart) is the main carrier; a second
+    halfback on the field with him carries less, a fullback rarely, a receiver almost never."""
+    if player.position == 'RB':
+        if getattr(player, "role", None) == 'FB':
+            return fb_weight
+        if player.depth == lead_depth:
+            return 0.80
+        return cfg.RB_SECOND_BACK_CARRY_WEIGHT
+    if player.position == 'WR':
+        return 0.012
+    return 0.02
+
+
+def get_run_yards(offense, defense, down, first_down, guessed_play, yardline, verbose=False, tendencies=None):
     """One running play. Returns (result, yards) where result is 'run', 'fumble' or
     'defensive_touchdown'. On a fumble the second value is the new yardline."""
     tendencies = tendencies or {}
@@ -351,12 +344,9 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, offense_line
         candidates = [p for p in offense if p.position in ('RB', 'WR')]
         if not candidates:
             candidates = [p for p in offense if p.position in ('RB', 'WR', 'QB', 'TE')]
-        # The lead back (the halfback highest on the depth chart) is the main carrier; a second
-        # halfback on the field with him carries less, a fullback rarely, a receiver almost never.
         lead_depth = min((p.depth for p in candidates if p.position == 'RB' and getattr(p, "role", None) != 'FB'), default=None)
         fb_weight = tendencies.get("fb_carry_weight", cfg.FB_CARRY_WEIGHT)
-        weights = [((fb_weight if getattr(p, "role", None) == 'FB' else 0.80 if p.depth == lead_depth else cfg.RB_SECOND_BACK_CARRY_WEIGHT)
-                    if p.position == 'RB' else 0.012 if p.position == 'WR' else 0.02) for p in candidates]
+        weights = [_carry_weight(p, lead_depth, fb_weight) for p in candidates]
         carrier = random.choices(candidates, weights=weights, k=1)[0]
 
     _note(who=carrier.name, pos=carrier.position)
@@ -495,11 +485,20 @@ def _pick_target(offense):
     return random.choices(receivers + backs, weights=weights, k=1)[0]
 
 
-def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_line_advantage, yardline, verbose=False, tendencies=None,
+def _credit_completion(qb, target, yards):
+    qb.stats["completions"] += 1
+    qb.stats["pass_yards"] += yards
+    target.stats["receptions"] += 1
+    target.stats["receiving_yards"] += yards
+
+
+def get_pass_yards(offense, defense, down, first_down, guessed_play, yardline, verbose=False, tendencies=None,
                    blitz_rate=50, def_tendencies=None):
     """One dropback. Returns (result, yards or new yardline):
     'successful_pass' / 'checkdown_pass' (yards), 'incomplete' (0), 'sack' (negative yards),
     'interception' / 'fumble' (new yardline), 'defensive_touchdown' (100), 'run' (scramble yards)."""
+    tendencies = tendencies or {}
+    def_tendencies = def_tendencies or {}
     qb = next((p for p in offense if p.position == "QB"), None)
     if qb is None:
         _note()
@@ -507,7 +506,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     _note(qb=qb.name)
     qb_accuracy = 0.6 * (qb.passing or cfg.NEUTRAL) + 0.25 * (qb.decision_making or cfg.NEUTRAL) + 0.15 * qb.intelligence
     qb_accuracy += _slider_points(sliders.qb_accuracy)
-    qb_decisions = (qb.decision_making or cfg.NEUTRAL)
+    qb_decisions = qb.decision_making or cfg.NEUTRAL
 
     # --- Throwaway ---
     if random.random() < cfg.THROWAWAY_CHANCE:
@@ -534,13 +533,11 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     sack_rate *= max(0.5, 1 - (_attr(qb, "sack_escape") - cfg.ATTR_LEAGUE_AVG) * cfg.SACK_ESCAPE_EFFECT)
     sack_rate *= max(0.4, 1 - _tr(qb, "steps_up", "escape_artist", "play_extender") * cfg.TRAIT_FX["sack_avoid"])
     # coach styles: the DC's blitz (more sacks, more big plays behind it) and the OC's play-action
-    def_t = def_tendencies or {}
-    off_t = tendencies or {}
     blitz = random.random() < min(0.7, cfg.BLITZ_BASE * blitz_rate / 50)
     sack_rate *= cfg.BLITZ_SACK[0] if blitz else cfg.BLITZ_SACK[1]
     last_play["blitz"] = blitz
-    pa_share = cfg.PLAY_ACTION_BASE * cfg.SCHEME_STYLE.get(off_t.get("offense_scheme"), {}).get("pa", 1.0) \
-        * max(0.2, 1 + (off_t.get("play_action_rate", 50) - 50) * cfg.PLAY_ACTION_RATE_EFFECT)
+    pa_share = cfg.PLAY_ACTION_BASE * cfg.SCHEME_STYLE.get(tendencies.get("offense_scheme"), {}).get("pa", 1.0) \
+        * max(0.2, 1 + (tendencies.get("play_action_rate", 50) - 50) * cfg.PLAY_ACTION_RATE_EFFECT)
     play_action = down <= 2 and random.random() < min(0.6, pa_share)
     if play_action:
         sack_rate *= cfg.PLAY_ACTION_SACK
@@ -597,10 +594,9 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     receiver_skill += _slider_points(sliders.wr_catching)
 
     # ratings v2: the throw's depth, the coverage call, and the attributes for both
-    tendencies = tendencies or {}
     depth = _throw_depth(target, tendencies, play_action) if target.position != 'RB' else "short"
     last_play["depth"] = depth
-    man_share = cfg.MAN_COVERAGE_SHARE + ((def_tendencies or {}).get("man_coverage_rate", 50) - 50) * cfg.MAN_RATE_EFFECT
+    man_share = cfg.MAN_COVERAGE_SHARE + (def_tendencies.get("man_coverage_rate", 50) - 50) * cfg.MAN_RATE_EFFECT
     man = random.random() < max(0.1, min(0.85, man_share))
     covers = [p for p in defense if p.position in db_positions]
 
@@ -641,7 +637,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
         completion += _tr(target, "double_move") * fx["double_move"]
     if last_play.get("contested"):
         completion += _tr(target, "jump_ball_winner") * fx["jump_ball"]
-    if man and depth != "deep" and covers and random.random() < cfg.PRESS_RATE * (def_tendencies or {}).get("press_rate", 50) / 50:
+    if man and depth != "deep" and covers and random.random() < cfg.PRESS_RATE * def_tendencies.get("press_rate", 50) / 50:
         press = sum(_attr(p, "press") for p in covers) / len(covers)
         completion += (_attr(target, "release") - press) * cfg.PRESS_EFFECT
         last_play["press"] = True
@@ -662,7 +658,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
         completion += cfg.COMPLETION_LONG_3RD
     if target.position == 'RB':
         completion += cfg.COMPLETION_CHECKDOWN_BONUS
-    if (tendencies or {}).get("prevent"):
+    if tendencies.get("prevent"):
         completion += cfg.PREVENT_COMPLETION
     # red zone: a short field squeezes the coverage
     to_goal = 100 - yardline
@@ -679,7 +675,8 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
             yards = random.randint(*cfg.PASS_YARDS_DEEP)
         else:
             yards = random.gauss(*(cfg.PASS_YARDS_SHORT if depth == "short" else cfg.PASS_YARDS_MID))
-        yards *= 1 + (target.speed - db_speed) * cfg.PASS_SPEED_EFFECT             - (_group_rating(defense, db_positions, ('tackling',)) - cfg.NEUTRAL) * cfg.PASS_TACKLE_EFFECT
+        yards *= 1 + (target.speed - db_speed) * cfg.PASS_SPEED_EFFECT \
+            - (_group_rating(defense, db_positions, ('tackling',)) - cfg.NEUTRAL) * cfg.PASS_TACKLE_EFFECT
         # a short or intermediate catch broken for a long gain (deep throws have their own yards)
         big_play_chance = cfg.PASS_BREAKAWAY_CHANCE * (target.speed / cfg.NEUTRAL) \
             * (1 + _tr(target, "breakaway_speed") * cfg.TRAIT_FX["breakaway"]) \
@@ -700,10 +697,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
         fumble_chance = sliders.get_inverse_percentage_adjustment(sliders.fumble_frequency, cfg.RECEPTION_FUMBLE_CHANCE)
         fumble_chance *= _fumble_mult(target, covers)
         if not is_touchdown and yards > 0 and random.random() < fumble_chance:
-            qb.stats["completions"] += 1
-            qb.stats["pass_yards"] += yards
-            target.stats["receptions"] += 1
-            target.stats["receiving_yards"] += yards
+            _credit_completion(qb, target, yards)
             apply_pass_fatigue(offense, defense, target, yards)
             result, new_spot = _lose_fumble(offense, defense, target, yardline + yards, ('CB', 'S', 'MLB', 'ROLB', 'LOLB'), yards)
             if result is not None:
@@ -719,10 +713,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
             _credit_tackle(defense, yards)
         if verbose:
             print("Pass for", yards, "yards to", target.name)
-        qb.stats["completions"] += 1
-        qb.stats["pass_yards"] += yards
-        target.stats["receptions"] += 1
-        target.stats["receiving_yards"] += yards
+        _credit_completion(qb, target, yards)
         _stat_max(target, "long_reception", yards)
         _stat_max(qb, "long_pass", yards)
         if yards >= 25:
@@ -750,23 +741,21 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
     if covers:
         skills = sum(_attr(p, "ball_skills") for p in covers) / len(covers)
         int_chance *= max(0.5, 1 + (skills - cfg.ATTR_LEAGUE_AVG) * cfg.INT_BALL_SKILLS_EFFECT)
-    defenders = [p for p in defense if p.position in db_positions]
-    if defenders and random.random() < int_chance:
-        picker = random.choices(defenders, weights=[(max(1, p.coverage or 1) / cfg.NEUTRAL) ** cfg.INT_SKILL_POWER for p in defenders], k=1)[0]
+    if covers and random.random() < int_chance:
+        picker = random.choices(covers, weights=[(max(1, p.coverage or 1) / cfg.NEUTRAL) ** cfg.INT_SKILL_POWER for p in covers], k=1)[0]
         last_play["picked_by"] = picker.name
         qb.stats["interceptions_thrown"] += 1
         picker.stats["interceptions"] += 1
         _stat(picker, "passes_defended")
         apply_pass_fatigue(offense, defense)
         spot = max(1, min(99, yardline + random.randint(5, 25)))   # where the ball was caught
-        distance_to_goal = spot   # yards the defense must return it
         if spot < 60 and random.random() < cfg.PICK_SIX_CHANCE * (picker.speed / cfg.NEUTRAL):
-            picker.stats["defensive_touchdowns"] = picker.stats.get("defensive_touchdowns", 0) + 1
-            picker.stats["interception_return_yards"] = picker.stats.get("interception_return_yards", 0) + distance_to_goal
+            _stat(picker, "defensive_touchdowns")
+            _stat(picker, "interception_return_yards", spot)    # the spot is the yards the defense must return it
             debug_td_stats.append({'type': 'defensive_interception', 'player': picker.name, 'position': picker.position})
             return "defensive_touchdown", 100
         return_yards = random.randint(0, 15) + int(picker.speed / 10)
-        picker.stats["interception_return_yards"] = picker.stats.get("interception_return_yards", 0) + return_yards
+        _stat(picker, "interception_return_yards", return_yards)
         if verbose:
             print("Intercepted by", picker.name)
         # Spot in the old offense's direction; the drive loop flips it for the new offense.
@@ -791,6 +780,6 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, offense_lin
 
     apply_pass_fatigue(offense, defense)
     # About a third of incompletions are a defender's play on the ball (stat only).
-    if defenders and cfg.stat_rng.random() < 0.35:
-        _stat(cfg.stat_rng.choices(defenders, weights=[max(1, p.coverage or 1) for p in defenders], k=1)[0], "passes_defended")
+    if covers and cfg.stat_rng.random() < 0.35:
+        _stat(cfg.stat_rng.choices(covers, weights=[max(1, p.coverage or 1) for p in covers], k=1)[0], "passes_defended")
     return "incomplete", 0

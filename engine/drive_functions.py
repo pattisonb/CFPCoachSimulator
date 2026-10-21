@@ -1,12 +1,14 @@
 import random
-from . import play_functions
-from .play_functions import get_pass_yards, get_run_yards
-from .game_functions import get_punt_distance, apply_general_fatigue, fg_max_distance
-from .game_config import sliders
-from .roster import return_skill
+
 from . import game_config as cfg
 from . import personnel
+from . import play_functions
 from . import situation as sit
+from .game_config import sliders
+from .game_functions import apply_general_fatigue, fg_max_distance, get_punt_distance
+from .play_functions import get_pass_yards, get_run_yards
+from .roster import return_skill
+
 RUN_PASS_TABLE = {
     1: [
         (3,  0.80),
@@ -43,6 +45,7 @@ def run_probability(down, to_go):
             return prob
     return 0.25
 
+
 def determine_offense_play(down, first_down, last_play_type=None, last_gain=0, pass_rate=50, run_shift=0.0):
     """Run or pass from the down-and-distance table, shifted by the coordinator's pass-rate
     tendency (50 = the table as written; a flexbone team sits near 10)."""
@@ -57,59 +60,39 @@ def determine_offense_play(down, first_down, last_play_type=None, last_gain=0, p
     run_chance = max(cfg.RUN_CHANCE_MIN, min(cfg.RUN_CHANCE_MAX_OPTION if pass_rate <= 5 else cfg.RUN_CHANCE_MAX, run_chance))
     return "run" if random.random() < run_chance else "pass"
 
+
+# The defensive call by down: (yards to go or fewer, the call the defense leans to, how often).
+DEFENSE_CALL_TABLE = {
+    1: [
+        (3,  "defend_run", 0.75),
+        (6,  "defend_run", 0.60),
+        (10, "defend_pass", 0.55),
+        (float('inf'), "defend_pass", 0.70),
+    ],
+    2: [
+        (3,  "defend_run", 0.65),
+        (6,  "defend_pass", 0.60),
+        (10, "defend_pass", 0.70),
+        (float('inf'), "defend_pass", 0.80),
+    ],
+    3: [
+        (3,  "defend_run", 0.60),
+        (6,  "defend_pass", 0.70),
+        (10, "defend_pass", 0.85),
+        (float('inf'), "defend_pass", 0.90),
+    ],
+}
+
+
 def determine_defense_play(down, first_down):
-    if down == 1:
-        if first_down <= 3:
-            return "defend_run" if random.random() < 0.75 else "defend_pass"
-        elif first_down <= 6:
-            return "defend_run" if random.random() < 0.6 else "defend_pass"
-        elif first_down <= 10:
-            return "defend_pass" if random.random() < 0.55 else "defend_run"
-        else:
-            return "defend_pass" if random.random() < 0.7 else "defend_run"
+    """Run or pass defense from the down-and-distance table; fourth down defends the pass."""
+    for limit, lean, chance in DEFENSE_CALL_TABLE.get(down, []):
+        if first_down <= limit:
+            other = "defend_pass" if lean == "defend_run" else "defend_run"
+            return lean if random.random() < chance else other
+    return "defend_pass"
 
-    elif down == 2:
-        if first_down <= 3:
-            return "defend_run" if random.random() < 0.65 else "defend_pass"
-        elif first_down <= 6:
-            return "defend_pass" if random.random() < 0.6 else "defend_run"
-        elif first_down <= 10:
-            return "defend_pass" if random.random() < 0.7 else "defend_run"
-        else:
-            return "defend_pass" if random.random() < 0.8 else "defend_run"
 
-    elif down == 3:
-        if first_down <= 3:
-            return "defend_run" if random.random() < 0.6 else "defend_pass"
-        elif first_down <= 6:
-            return "defend_pass" if random.random() < 0.7 else "defend_run"
-        elif first_down <= 10:
-            return "defend_pass" if random.random() < 0.85 else "defend_run"
-        else:
-            return "defend_pass" if random.random() < 0.9 else "defend_run"
-
-    else:
-        return "defend_pass"
-    
-def determine_line_advantage(offense, defense, offense_play, defense_play) :
-    offense_blocking = 0
-    for player in offense :
-        if player.position == 'OL' or offense_play == "run" and player.position == 'TE':
-            offense_blocking += player.strength
-            if offense_play == "run" :
-                offense_blocking += player.run_blocking
-            elif offense_play == "pass" :
-                offense_blocking += player.pass_blocking
-    defense_rushing = 0
-    for player in defense :
-        if player.position == 'DL' or defense_play == "defend_run" and 'LB' in player.position:
-            defense_rushing += player.strength
-            if defense_play == "defend_run" :
-                defense_rushing += player.rushing
-            elif defense_play == "defend_pass" :
-                defense_rushing += player.rushing
-    return offense_blocking - defense_rushing
-    
 # Every snap, kick and punt of the game in order; game.py slices it into drives for the
 # box score's play-by-play. Names come from play_functions.last_play. Nothing here draws
 # a random number, so the log never changes a result.
@@ -117,7 +100,7 @@ play_log: list = []
 
 
 def _log(**entry) -> dict:
-    entry.update({k: v for k, v in play_functions.last_play.items()})
+    entry.update(play_functions.last_play)
     play_log.append(entry)
     return entry
 
@@ -175,7 +158,7 @@ def _momentum_kick(offense, defense, kind, result):
             offense.swing(-0.3); defense.swing(0.4)
 
 
-def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hurrying=False, last_play_type=None, last_gain=0, seconds_remaining=cfg.HALF_SECONDS, verbose=True, clock_stopped=True, situation=None, posture=None) :
+def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hurrying=False, last_play_type=None, last_gain=0, seconds_remaining=cfg.HALF_SECONDS, verbose=True, clock_stopped=True, situation=None, posture=None):
     """One snap: fatigue and substitutions, a possible penalty, then a run or a pass.
     Returns (play_ran, result, yards, seconds_used, info) where info says whether the clock is
     stopped until the next snap and whether the carrier went out of bounds."""
@@ -184,23 +167,26 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
     defense_team.sub_defensive_players(50)
     offense_team.recover_bench_players()
     defense_team.recover_bench_players()
+    # Score situation (set by the game loop): garbage time, comebacks, victory formation.
+    lead = getattr(offense_team, "lead", 0)
+    half = getattr(offense_team, "half", 1)
+    overtime = getattr(offense_team, "in_overtime", False)
+    blowout = (half == 2 and lead >= cfg.GARBAGE_LEAD) or lead >= cfg.GARBAGE_LEAD_ANY
     # Personnel for this snap: the offense's grouping from its scheme and the situation, the
     # defense's package in answer to it.
-    lead0 = getattr(offense_team, "lead", 0)
-    half0 = getattr(offense_team, "half", 1)
-    conservative0 = (half0 == 2 and lead0 >= cfg.GARBAGE_LEAD) or lead0 >= cfg.GARBAGE_LEAD_ANY
-    grouping = personnel.offense_grouping(getattr(offense_team, "offense_scheme", "Multiple"), down, first_down_yardage, yardline, conservative0, hurrying)
+    grouping = personnel.offense_grouping(getattr(offense_team, "offense_scheme", "Multiple"), down, first_down_yardage, yardline, blowout, hurrying)
     offense_team.set_grouping(grouping, personnel.GROUPINGS[grouping])
     defense_team.set_front(personnel.defense_package(getattr(defense_team, "defense_scheme", "4-2-5"), grouping, down, first_down_yardage))
     offense = offense_team.get_offense()
     defense = defense_team.get_defense()
-    for p in offense:
-        p.stats["snaps"] = p.stats.get("snaps", 0) + 1
-    for p in defense:
+    for p in offense + defense:
         p.stats["snaps"] = p.stats.get("snaps", 0) + 1
 
+    off_tendencies = getattr(offense_team, "tendencies", None) or {}
+    def_tendencies = getattr(defense_team, "tendencies", None) or {}
+    tendencies = off_tendencies      # this snap's copy gains the situation's keys below
+
     # Clock pace: higher game-speed slider means faster plays; plays drag late in a half.
-    tendencies = getattr(offense_team, "tendencies", {}) or {}
     game_speed_mult = 2.0 - sliders.get_multiplier(sliders.game_speed)
     game_speed_mult *= 1.0 - (tendencies.get("tempo", 50) - 50) / 100 * cfg.TEMPO_EFFECT
     progress = max(0.0, min(1.0, 1.0 - seconds_remaining / cfg.HALF_SECONDS))
@@ -208,13 +194,8 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
     situation = situation or sit.assess(offense_team, defense_team, seconds_remaining, down, first_down_yardage, yardline, clock_stopped)
     posture = posture or sit.defense_posture(offense_team, defense_team, seconds_remaining)
 
-    # Score situation (set by the game loop): garbage time, comebacks, victory formation.
-    lead = getattr(offense_team, "lead", 0)
-    half = getattr(offense_team, "half", 1)
-    overtime = getattr(offense_team, "in_overtime", False)
     run_shift = 0.0
     if not overtime:
-        blowout = (half == 2 and lead >= cfg.GARBAGE_LEAD) or lead >= cfg.GARBAGE_LEAD_ANY
         hopeless = (half == 2 and -lead >= cfg.GARBAGE_LEAD) or -lead >= cfg.GARBAGE_LEAD_ANY
         if blowout:
             game_speed_mult *= cfg.GARBAGE_CLOCK
@@ -249,7 +230,7 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
     off_penalty_chance = sliders.get_inverse_percentage_adjustment(sliders.offensive_penalties, cfg.OFF_PENALTY_CHANCE)
     # ratings v2: a smart unit commits fewer penalties
     off_penalty_chance *= max(0.5, 1 - (_unit_iq(offense) - cfg.ATTR_LEAGUE_AVG) * cfg.PENALTY_IQ_EFFECT)
-    off_penalty_chance *= max(0.5, 1 - ((getattr(offense_team, "tendencies", None) or {}).get("discipline", 50) - 50) * cfg.DISCIPLINE_EFFECT)
+    off_penalty_chance *= max(0.5, 1 - (off_tendencies.get("discipline", 50) - 50) * cfg.DISCIPLINE_EFFECT)
     if random.random() < off_penalty_chance:
         penalty_type = random.choices(
             ["false_start", "holding", "offensive_pass_interference", "delay_of_game"],
@@ -264,7 +245,7 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
 
     def_penalty_chance = sliders.get_inverse_percentage_adjustment(sliders.defensive_penalties, cfg.DEF_PENALTY_CHANCE)
     def_penalty_chance *= max(0.5, 1 - (_unit_iq(defense) - cfg.ATTR_LEAGUE_AVG) * cfg.PENALTY_IQ_EFFECT)
-    def_penalty_chance *= max(0.5, 1 - ((getattr(defense_team, "tendencies", None) or {}).get("discipline", 50) - 50) * cfg.DISCIPLINE_EFFECT)
+    def_penalty_chance *= max(0.5, 1 - (def_tendencies.get("discipline", 50) - 50) * cfg.DISCIPLINE_EFFECT)
     if random.random() < def_penalty_chance:
         penalty_type = random.choices(["offside", "pass_interference", "facemask"], weights=[0.4, 0.4, 0.2], k=1)[0]
         if penalty_type == "offside":
@@ -282,9 +263,11 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
 
     # Victory formation: kneel it out (the leader can burn the rest of the clock).
     if situation.get("kneel"):
-        secs = cfg.KNEEL_PLAY_SECONDS + (0 if getattr(defense_team, "timeouts", 0) > 0 else cfg.KNEEL_RUNOFF)
+        secs = cfg.KNEEL_PLAY_SECONDS
         if getattr(defense_team, "timeouts", 0) > 0:
-            defense_team.timeouts -= 1
+            defense_team.timeouts -= 1       # the defense stops the clock after the kneel
+        else:
+            secs += cfg.KNEEL_RUNOFF
         play_functions.last_play["kneel"] = True
         return "run", "run", -1, max(1, min(secs, max(1, seconds_remaining))), {"stopped": False, "oob": False, "kneel": True}
     # Spike: stop the clock at the cost of a down.
@@ -294,29 +277,25 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
             qb.stats["pass_attempts"] += 1
         play_functions.last_play["spike"] = True
         return "pass", "incomplete", 0, *clock("spike")
-    run_shift -= situation.get("pass_shift", 0.0) * -1 if False else 0.0
     run_shift += situation.get("pass_shift", 0.0)
     tendencies = {**tendencies, "big_play_mult": situation.get("big_play_mult", 1.0), "prevent": posture.get("prevent", False)}
     offense_play = determine_offense_play(down, first_down_yardage, last_play_type, last_gain,
                                           tendencies.get("pass_rate", 50), run_shift)
     defense_play = determine_defense_play(down, first_down_yardage)
     # The better play caller tilts the guessing game.
-    edge = (( (getattr(defense_team, "tendencies", {}) or {}).get("dc_play_calling", 50)
-              - tendencies.get("oc_play_calling", 50)) / 100) * cfg.PLAY_CALLING_EFFECT
+    edge = (def_tendencies.get("dc_play_calling", 50) - tendencies.get("oc_play_calling", 50)) / 100 * cfg.PLAY_CALLING_EFFECT
     if edge > 0 and random.random() < edge:
         defense_play = "defend_" + offense_play
     elif edge < 0 and random.random() < -edge:
         defense_play = "defend_pass" if offense_play == "run" else "defend_run"
-    offense_line_advantage = determine_line_advantage(offense, defense, offense_play, defense_play)
     guessed_play = offense_play in defense_play
     if offense_play == "run":
         play_ran = "run"
-        result, yards_gained = get_run_yards(offense, defense, down, first_down_yardage, guessed_play, offense_line_advantage, yardline, tendencies=tendencies)
+        result, yards_gained = get_run_yards(offense, defense, down, first_down_yardage, guessed_play, yardline, tendencies=tendencies)
     else:
         play_ran = "pass"
-        result, yards_gained = get_pass_yards(offense, defense, down, first_down_yardage, guessed_play, offense_line_advantage, yardline, tendencies=tendencies,
-                                              blitz_rate=(getattr(defense_team, "tendencies", None) or {}).get("blitz_rate", 50),
-                                              def_tendencies=getattr(defense_team, "tendencies", None) or {})
+        result, yards_gained = get_pass_yards(offense, defense, down, first_down_yardage, guessed_play, yardline, tendencies=tendencies,
+                                              blitz_rate=def_tendencies.get("blitz_rate", 50), def_tendencies=def_tendencies)
     oob = sit.out_of_bounds(result, situation, posture)
     first_down = result in ("run", "successful_pass", "checkdown_pass") and isinstance(yards_gained, (int, float)) and yards_gained >= first_down_yardage
     if cfg.INJURIES:
@@ -344,35 +323,33 @@ def roll_injuries(team, on_field):
             weeks = next(w for cum, w in cfg.INJURY_SEVERITY if r <= cum)
             team.injure(p, weeks, rng.choice(cfg.INJURY_TYPES))
 
-def process_play(result, play_type, yards, yardline, down, first_down_yardage) :
+
+def process_play(result, play_type, yards, yardline, down, first_down_yardage):
     """Apply a play result to down, distance and yardline. Returns
     (down, first_down_yardage, yardline, safety_occurred); down 5 = turnover, 6 = touchdown."""
     safety_occurred = False
     if result == "defensive_touchdown":
         return down, first_down_yardage, yardline, safety_occurred
-    if result == "fumble" or result == "interception" :
+    if result in ("fumble", "interception"):
         # `yards` is the spot where the defense ended up, in the offense's direction.
         return 5, first_down_yardage, yards, safety_occurred
     if result in ('run', 'successful_pass', 'checkdown_pass'):
         yardline += yards
         first_down_yardage -= yards
         down += 1
-    if result == 'offensive penalty':
+    elif result == 'offensive penalty':
         pre_penalty_yardline = yardline
         yardline = max(1, yardline + yards)
-        actual_penalty = pre_penalty_yardline - yardline
-        first_down_yardage += actual_penalty
-    if result == 'defensive penalty':
-        pre_penalty_yardline = yardline
-        new_yardline = yardline + yards
-        if new_yardline >= 100:
-            yardline = 99  # half the distance: never a touchdown by penalty
-            actual_penalty = 99 - pre_penalty_yardline
+        first_down_yardage += pre_penalty_yardline - yardline
+    elif result == 'defensive penalty':
+        if yardline + yards >= 100:
+            actual_penalty = 99 - yardline   # half the distance: never a touchdown by penalty
+            yardline = 99
         else:
-            yardline = new_yardline
+            yardline += yards
             actual_penalty = yards
         first_down_yardage = max(0, first_down_yardage - actual_penalty)
-    if result == 'sack' :
+    elif result == 'sack':
         if yardline + yards <= 0:
             safety_occurred = True
             yardline = 0
@@ -380,14 +357,15 @@ def process_play(result, play_type, yards, yardline, down, first_down_yardage) :
             down += 1
             yardline += yards
             first_down_yardage -= yards
-    if result == 'incomplete' :
+    elif result == 'incomplete':
         down += 1
-    if yardline >= 100 :
+    if yardline >= 100:
         down = 6
     if first_down_yardage <= 0 and down != 6:
         down = 1
         first_down_yardage = 10
     return down, first_down_yardage, yardline, safety_occurred
+
 
 def should_go_for_it(distance, yardline, seconds_remaining=cfg.HALF_SECONDS, trailing_late=False, go_rate=50, lead=0):
     """Fourth-down decision. FBS teams go for it about 2.1 times a game and convert
@@ -423,7 +401,8 @@ def should_go_for_it(distance, yardline, seconds_remaining=cfg.HALF_SECONDS, tra
         chance *= 0.25
     return random.random() < chance
 
-def attempt_kick(yardline, kicker, defense_team=None) :
+
+def attempt_kick(yardline, kicker, defense_team=None):
     """Field goal try. Returns (made, blocked)."""
     kicker.stats["fg_attempted"] += 1
     if random.random() < 0.01:
@@ -438,7 +417,12 @@ def attempt_kick(yardline, kicker, defense_team=None) :
         make += (getattr(kicker, "traits", None) or {}).get("automatic", 0) * cfg.TRAIT_FX["automatic"]
     make = max(0.03, min(0.98, make))
     made = random.random() < make
-    bucket = "fg_50" if distance >= 50 else "fg_40" if distance >= 40 else "fg_short"
+    if distance >= 50:
+        bucket = "fg_50"
+    elif distance >= 40:
+        bucket = "fg_40"
+    else:
+        bucket = "fg_short"
     kicker.stats[bucket + "_att"] = kicker.stats.get(bucket + "_att", 0) + 1
     if made:
         kicker.stats["fg_made"] += 1
@@ -446,6 +430,14 @@ def attempt_kick(yardline, kicker, defense_team=None) :
         if distance > kicker.stats.get("long_fg", 0):
             kicker.stats["long_fg"] = distance
     return made, False
+
+
+def _fg_result(made, blocked):
+    """The field goal as the play log and momentum name it."""
+    if blocked:
+        return "blocked"
+    return "good" if made else "missed"
+
 
 def attempt_punt(yardline, punter, defense_team=None, return_team=None):
     """Punt and return. Returns (final_yardline, punt_yards, is_blocked, returner, return_yards,
@@ -538,6 +530,7 @@ def _attempt_punt(yardline, punter, defense_team=None, return_team=None):
     spot = min(spot, 99)
     return spot, spot - yardline, False, None, 0, False, how
 
+
 def _clutch_kick(offense, defense, kicker, yardline, seconds_remaining, in_red_zone, play_ran):
     """Field goal with the clock about to run out, on any down."""
     seconds_remaining -= random.randint(4, 6)
@@ -545,10 +538,11 @@ def _clutch_kick(offense, defense, kicker, yardline, seconds_remaining, in_red_z
     result = "field goal" if kick_made and not kick_blocked else "missed kick"
     if in_red_zone and result == "field goal":
         offense.team_stats["red_zone_scores"] += 1
+    fg_result = _fg_result(kick_made, kick_blocked)
     play_functions.last_play.clear()
-    _log(type="field_goal", result="blocked" if kick_blocked else ("good" if kick_made else "missed"), distance=(100 - yardline) + 17,
+    _log(type="field_goal", result=fg_result, distance=(100 - yardline) + 17,
          down=None, dist=None, yl=yardline, kicker=kicker.name if kicker else None, left=seconds_remaining, clutch=True)
-    _momentum_kick(offense, defense, "field_goal", "blocked" if kick_blocked else ("good" if kick_made else "missed"))
+    _momentum_kick(offense, defense, "field_goal", fg_result)
     return play_ran, result, yardline, seconds_remaining
 
 
@@ -573,14 +567,23 @@ def _hail_mary(offense, defense, yardline, seconds_remaining):
         target.stats["receptions"] += 1
         target.stats["receiving_yards"] += yards
         target.stats["receiving_touchdowns"] += 1
-        from .play_functions import debug_td_stats
-        debug_td_stats.append({"type": "passing", "qb": qb.name, "receiver": target.name, "receiver_position": target.position})
+        play_functions.debug_td_stats.append({"type": "passing", "qb": qb.name, "receiver": target.name, "receiver_position": target.position})
         hm.update(result="successful_pass", yards=yards, to=100, after=6)
         return "pass", "touchdown", 100, seconds_remaining
     return "pass", "end_of_half", yardline, seconds_remaining
 
 
-def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_remaining, hurrying=False, verbose=True, _red_zone_counted=False, trailing_late=False) :
+def _count_progress(offense, result, down, yardline, in_red_zone):
+    """First downs and red-zone trips after a snap. Returns whether the drive is now in the red zone."""
+    if down == 1 and result in ("run", "successful_pass", "checkdown_pass", "defensive penalty"):
+        offense.team_stats["first_downs"] += 1
+    if not in_red_zone and yardline >= 80 and down < 5:
+        offense.team_stats["red_zone_trips"] += 1
+        return True
+    return in_red_zone
+
+
+def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_remaining, hurrying=False, verbose=True, _red_zone_counted=False, trailing_late=False):
     """Run one drive. Returns (last_play_type, result, yardline, seconds_remaining).
 
     Results: touchdown, field goal, missed kick, punt, turnover, safety,
@@ -588,7 +591,7 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
     """
     kicker = offense.get_kicker()
     punter = offense.get_punter()
-    last_play_type =  None
+    last_play_type = None
     last_gain = 0
     result = ""
     play_ran = ""  # Initialize play_ran to track the type of play
@@ -596,8 +599,8 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
     if in_red_zone and not _red_zone_counted:
         offense.team_stats["red_zone_trips"] += 1
     clock_stopped = True   # a drive starts after a change of possession: the clock starts on the snap
-    while down < 4 :
-        if verbose :
+    while down < 4:
+        if verbose:
             print(down, "and", first_down_yardage, "at the", yardline)
         was_third = down == 3
         situation = sit.assess(offense, defense, seconds_remaining, down, first_down_yardage, yardline, clock_stopped)
@@ -613,15 +616,11 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
         down, first_down_yardage, yardline, safety_occurred = process_play(result, play_ran, yards_gained, yardline, down, first_down_yardage)
         _log(type=play_ran, result=result, down=pre[0], dist=pre[1], yl=pre[2], yards=yards_gained, to=yardline, after=down, secs=time, left=seconds_remaining, safety=safety_occurred)
         _momentum_play(offense, defense, play_ran, result, yards_gained, down, pre[0], False, safety_occurred)
-        if down == 1 and result in ("run", "successful_pass", "checkdown_pass", "defensive penalty"):
-            offense.team_stats["first_downs"] += 1
-        if was_third and result != "offensive penalty" and result != "defensive penalty":
+        if was_third and result not in ("offensive penalty", "defensive penalty"):
             offense.team_stats["third_downs"] += 1
             if down in (1, 6):
                 offense.team_stats["third_down_conversions"] += 1
-        if not in_red_zone and yardline >= 80 and down < 5:
-            in_red_zone = True
-            offense.team_stats["red_zone_trips"] += 1
+        in_red_zone = _count_progress(offense, result, down, yardline, in_red_zone)
         if safety_occurred:
             return play_ran, "safety", yardline, seconds_remaining
         if result == "defensive_touchdown":
@@ -631,7 +630,7 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
             return play_ran, "end_of_half", yardline, seconds_remaining
     if down == 4 and seconds_remaining <= 0:
         return play_ran, "end_of_half", yardline, seconds_remaining
-    if down == 4 :
+    if down == 4:
         go_rate = (getattr(offense, "tendencies", {}) or {}).get("fourth_down_go_rate", 50)
         situation = sit.assess(offense, defense, seconds_remaining, down, first_down_yardage, yardline, clock_stopped)
         posture = sit.defense_posture(offense, defense, seconds_remaining)
@@ -644,7 +643,7 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
         # down 1-3 late with a makeable kick: take the points to tie or go ahead
         tying_kick = (trailing_late and -3 <= lead_now < 0
                       and (100 - yardline) + 17 <= min(fg_max_distance(kicker), cfg.TYING_KICK_MAX_DISTANCE))
-        if must_go or should_go_for_it(first_down_yardage, yardline, seconds_remaining, trailing_late and not tying_kick, go_rate, lead_now) :
+        if must_go or should_go_for_it(first_down_yardage, yardline, seconds_remaining, trailing_late and not tying_kick, go_rate, lead_now):
             pre = (down, first_down_yardage, yardline)
             play_ran, result, yards_gained, time, info = sim_play(offense, defense, down, first_down_yardage, yardline, hurrying, last_play_type, last_gain, seconds_remaining, False, clock_stopped, situation, posture)
             clock_stopped = info.get("stopped", False)
@@ -656,11 +655,7 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
                 offense.team_stats["fourth_down_attempts"] += 1
                 if down in (1, 6):
                     offense.team_stats["fourth_down_conversions"] += 1
-            if down == 1 and result in ("run", "successful_pass", "checkdown_pass", "defensive penalty"):
-                offense.team_stats["first_downs"] += 1
-            if not in_red_zone and yardline >= 80 and down < 5:
-                in_red_zone = True
-                offense.team_stats["red_zone_trips"] += 1
+            in_red_zone = _count_progress(offense, result, down, yardline, in_red_zone)
             if safety_occurred:
                 return play_ran, "safety", yardline, seconds_remaining
             if result == "defensive_touchdown":
@@ -668,7 +663,7 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
             if down in (1, 4):
                 # Converted (fresh set of downs) or a penalty kept it 4th down: keep driving.
                 return sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_remaining, hurrying, verbose, _red_zone_counted=in_red_zone, trailing_late=trailing_late)
-        else :
+        else:
             fg_distance = (100 - yardline) + 17
             in_range = fg_distance <= fg_max_distance(kicker)
             if in_range and fg_distance >= 50 and random.random() > cfg.FG_LONG_ATTEMPT_CHANCE:
@@ -685,12 +680,13 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
                     if verbose:
                         print((100 - yardline)+17, "yard kick is good!")
                     result = "field goal"
-                else :
+                else:
                     result = "missed kick"
+                fg_result = _fg_result(kick_made, kick_blocked)
                 play_functions.last_play.clear()
-                _log(type="field_goal", result="blocked" if kick_blocked else ("good" if kick_made else "missed"), distance=fg_distance,
+                _log(type="field_goal", result=fg_result, distance=fg_distance,
                      down=4, dist=first_down_yardage, yl=yardline, kicker=kicker.name if kicker else None, secs=kick_time, left=seconds_remaining)
-                _momentum_kick(offense, defense, "field_goal", "blocked" if kick_blocked else ("good" if kick_made else "missed"))
+                _momentum_kick(offense, defense, "field_goal", fg_result)
             else:
                 punt_from = yardline
                 yardline, punt_distance, punt_blocked, returner, return_yards, is_return_td, punt_how = attempt_punt(yardline, punter, defense, defense)  # the defense returns the punt
@@ -698,12 +694,18 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
                     play_functions.credit_coverage_tackle(offense)
                 punt_time = random.randint(6, 10)
                 seconds_remaining -= punt_time
+                if punt_blocked:
+                    punt_result = "blocked"
+                elif is_return_td:
+                    punt_result = "return_td"
+                else:
+                    punt_result = "punt"
                 play_functions.last_play.clear()
-                _log(type="punt", result="blocked" if punt_blocked else ("return_td" if is_return_td else "punt"), yards=punt_distance,
+                _log(type="punt", result=punt_result, yards=punt_distance,
                      down=4, dist=first_down_yardage, yl=punt_from, to=yardline, punter=punter.name if punter else None,
                      returner=returner.name if returner else None, return_yards=return_yards, how=punt_how,
                      secs=punt_time, left=seconds_remaining)
-                _momentum_kick(offense, defense, "punt", "blocked" if punt_blocked else ("return_td" if is_return_td else "punt"))
+                _momentum_kick(offense, defense, "punt", punt_result)
                 if punt_blocked:
                     if verbose:
                         print("Punt BLOCKED!")
@@ -721,9 +723,9 @@ def sim_drive(offense, defense, down, first_down_yardage, yardline, seconds_rema
     if in_red_zone and down == 6 and result in ['run', 'successful_pass', 'checkdown_pass']:
         offense.team_stats["red_zone_scores"] += 1
         offense.team_stats["red_zone_touchdowns"] += 1
-    if down == 5 :
+    if down == 5:
         result = "turnover"
-    if down == 6 :
+    if down == 6:
         if result in ['run', 'successful_pass', 'checkdown_pass']:
             result = "touchdown"
         else:

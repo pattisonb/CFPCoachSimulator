@@ -23,6 +23,7 @@ _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project r
 import json
 import sys
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -72,9 +73,6 @@ def rankings_for(season: int, stype: int, week: int, names: dict) -> dict:
     out = {}
     for item in (lst or {}).get("items", []):
         rid = ref_id(item["$ref"])
-        if rid not in ("1", "21") and rid not in ("20",):
-            # cheap first pass: AP is id 1; the CFP id varies, so read names for the rest
-            pass
         d = get(f"{CORE}/seasons/{season}/types/{stype}/weeks/{week}/rankings/{rid}")
         if not d:
             continue
@@ -118,22 +116,25 @@ def scoreboard(season: int, stype: int, week: int) -> list[dict]:
     return games
 
 
+def add_names(names: dict, games: list[dict]) -> None:
+    """Record each team's name by ESPN id from a list of games."""
+    for g in games:
+        for side in ("home", "away"):
+            names[g[side]["id"]] = g[side]["name"]
+
+
 def fetch_season(season: int) -> tuple[dict, dict]:
     results, names = {}, {}
     for week in range(1, MAX_WEEK + 1):
         games = scoreboard(season, 2, week)
         if games:
             results[str(week)] = games
-            for g in games:
-                for side in ("home", "away"):
-                    names[g[side]["id"]] = g[side]["name"]
+            add_names(names, games)
         time.sleep(0.15)
     post = scoreboard(season, 3, 1)
     if post:
         results["post"] = post
-        for g in post:
-            for side in ("home", "away"):
-                names[g[side]["id"]] = g[side]["name"]
+        add_names(names, post)
 
     polls = {"preseason": [], "weeks": {}, "final": []}
     pre = get(f"{CORE}/seasons/{season}/types/1/weeks/1/rankings/1")
@@ -163,9 +164,7 @@ def backfill_others(polls: dict, results: dict) -> None:
     for season in sorted(polls):
         names = {}
         for games in results.get(season, {}).values():
-            for g in games:
-                for side in ("home", "away"):
-                    names[g[side]["id"]] = g[side]["name"]
+            add_names(names, games)
         n = 0
         for week, entry in polls[season]["weeks"].items():
             if "ap" not in entry or entry.get("ap_others"):

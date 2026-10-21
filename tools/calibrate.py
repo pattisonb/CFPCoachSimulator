@@ -15,9 +15,11 @@ _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project r
 
 import copy
 import json
+import random
 import statistics as st
 import sys
 from collections import Counter
+from collections.abc import Iterable, Iterator
 
 from engine.game import simulate_game
 
@@ -25,7 +27,6 @@ ROSTERS = "engine/rosters.json"
 
 SACK_LOSS = 7.5      # yards lost on an average sack (engine/game_config.SACK_YARDS)
 
-# Per-team, per-game FBS averages (2022-2024 seasons, rounded) and an acceptable band.
 # Per-team, per-game FBS averages: the mean across all 137 FBS teams for the 2025 season,
 # read from teamrankings.com team stat tables on 2026-10-15, with an acceptable band of
 # roughly one tenth either side. Entries marked (est.) had no table and are estimates.
@@ -106,7 +107,7 @@ def team_line(r: dict, side: str) -> dict:
         punts=s["Punts"], punt_gross=s["Punt Yards"] / max(1, s["Punts"]),
         punt_net=s.get("Punt Net Yards", 0) / max(1, s["Punts"]),
         fga=s["Field Goals Attempted"], fg_pct=100 * s["Field Goals Made"] / max(1, s["Field Goals Attempted"]),
-        penalties=t["team_events"].get("penalties", 0),
+        penalties=ev.get("penalties", 0),
         first_downs=ev.get("first_downs", 0),
         third_downs=ev.get("third_downs", 0),
         third_pct=100 * ev.get("third_down_conversions", 0) / max(1, ev.get("third_downs", 0)),
@@ -121,16 +122,20 @@ def team_line(r: dict, side: str) -> dict:
     )
 
 
-def run_batch(home: dict, away: dict, n: int, seed: int = 10_000, sliders: dict | None = None) -> dict:
+def summarize(games: Iterable[dict]) -> dict:
+    """Batch averages over simulated games (taken one at a time, so a big batch is never
+    held in memory): per-team lines with ratio stats from batch totals, win rate, margin
+    and total spread, overtime rate and the team points distribution."""
     rows = {"home": [], "away": []}
     margins, totals, ot = [], [], 0
-    for i in range(n):
-        r = simulate_game(home, away, sliders, seed=seed + i)
-        ot += 1 if r["overtime_periods"] else 0
+    for r in games:
+        if r["overtime_periods"]:
+            ot += 1
         margins.append(r["home"]["score"] - r["away"]["score"])
         totals.append(r["home"]["score"] + r["away"]["score"])
         for side in ("home", "away"):
             rows[side].append(team_line(r, side))
+    n = len(margins)
     avg = {}
     for side in rows:
         avg[side] = {k: st.mean(x[k] for x in rows[side]) for k in BENCHMARKS}
@@ -146,6 +151,10 @@ def run_batch(home: dict, away: dict, n: int, seed: int = 10_000, sliders: dict 
         "ot_pct": 100 * ot / n,
         "pts_dist": Counter(min(x["pts"] // 10 * 10, 60) for s in rows for x in rows[s]),
     }
+
+
+def run_batch(home: dict, away: dict, n: int, seed: int = 10_000, sliders: dict | None = None) -> dict:
+    return summarize(simulate_game(home, away, sliders, seed=seed + i) for i in range(n))
 
 
 # League mode plays random FBS matchups, so its margins spread with the gap between the
@@ -167,7 +176,8 @@ def print_report(res: dict, home_name: str, away_name: str, league: bool = False
     for k, (target, lo, hi, label) in BENCHMARKS.items():
         h, a = res["avg"]["home"][k], res["avg"]["away"][k]
         ok = lo <= res["both"][k] <= hi
-        bad += 0 if ok else 1
+        if not ok:
+            bad += 1
         print(f"{label:<32}{h:>8.1f}{a:>8.1f}{target:>8.1f}{f'{lo}-{hi}':>14}  {'ok' if ok else 'OUT'}")
     total = sum(res["pts_dist"].values())
     dist = " ".join(f"{k}s:{100 * v / total:.0f}%" for k, v in sorted(res["pts_dist"].items()))
@@ -221,30 +231,17 @@ def absolute_sweep(base: dict, n: int) -> None:
 
 def league_report(n: int) -> None:
     """Random FBS matchups from data/engine_teams.json, home venue, benchmark report."""
-    import random
-    teams = json.load(open("data/engine_teams.json", encoding="utf-8"))["teams"]
+    with open("data/engine_teams.json", encoding="utf-8") as f:
+        teams = json.load(f)["teams"]
     fbs = [t for t in teams.values() if not t["fictional"]]
     rng = random.Random(99)
-    rows = {"home": [], "away": []}
-    margins, totals, ot = [], [], 0
-    for i in range(n):
-        h, a = rng.sample(fbs, 2)
-        r = simulate_game(h, a, None, seed=50_000 + i, venue="home")
-        ot += 1 if r["overtime_periods"] else 0
-        margins.append(r["home"]["score"] - r["away"]["score"])
-        totals.append(r["home"]["score"] + r["away"]["score"])
-        for side in ("home", "away"):
-            rows[side].append(team_line(r, side))
-    avg = {}
-    for side in rows:
-        avg[side] = {k: st.mean(x[k] for x in rows[side]) for k in BENCHMARKS}
-        for k, (num, den, scale) in RATIOS.items():
-            avg[side][k] = scale * sum(x[num] for x in rows[side]) / max(1, sum(x[den] for x in rows[side]))
-    res = {"n": n, "avg": avg, "both": {k: (avg["home"][k] + avg["away"][k]) / 2 for k in BENCHMARKS},
-           "home_win_pct": 100 * sum(m > 0 for m in margins) / n, "margin_mean": st.mean(margins),
-           "margin_sd": st.pstdev(margins), "total_mean": st.mean(totals), "total_sd": st.pstdev(totals),
-           "ot_pct": 100 * ot / n, "pts_dist": Counter(min(x["pts"] // 10 * 10, 60) for s in rows for x in rows[s])}
-    print_report(res, "random home team", "random away team", league=True)
+
+    def games() -> Iterator[dict]:
+        for i in range(n):
+            h, a = rng.sample(fbs, 2)
+            yield simulate_game(h, a, None, seed=50_000 + i, venue="home")
+
+    print_report(summarize(games()), "random home team", "random away team", league=True)
 
 
 def main() -> None:
@@ -252,7 +249,8 @@ def main() -> None:
     if args and args[0] == "league":
         league_report(int(args[1]) if len(args) > 1 else 300)
         return
-    data = json.load(open(ROSTERS, encoding="utf-8"))
+    with open(ROSTERS, encoding="utf-8") as f:
+        data = json.load(f)
     home, away = data["teams"][0], data["teams"][1]
     if args and args[0] == "gap":
         n = int(args[1]) if len(args) > 1 else 200

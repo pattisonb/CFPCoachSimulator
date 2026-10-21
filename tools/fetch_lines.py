@@ -35,11 +35,11 @@ def _num(text: str) -> float | None:
     t = text.strip().lower().replace("½", ".5")
     if t in ("pk", "pick", "even", "ev"):
         return 0.0
-    t = t.lstrip("ou")
     try:
-        return float(t) + 0.0 if float(t) != 0 else 0.0   # no -0.0 for a pick
+        value = float(t.lstrip("ou"))
     except ValueError:
         return None
+    return value if value != 0 else 0.0   # no -0.0 for a pick
 
 
 def parse_board(html: str) -> list[dict]:
@@ -69,7 +69,12 @@ def parse_board(html: str) -> list[dict]:
         if len(rows) < 2 or not rows["home"]["name"] or not rows["away"]["name"]:
             continue
         home, away = rows["home"], rows["away"]
-        spread_home = home["spread"] if home["spread"] is not None else (-away["spread"] if away["spread"] is not None else None)
+        if home["spread"] is not None:
+            spread_home = home["spread"]
+        elif away["spread"] is not None:
+            spread_home = -away["spread"]
+        else:
+            spread_home = None
         total = home["total"] if home["total"] is not None else away["total"]
         # the opening cells hold the spread on one row and the total (o/u) on the other, in either order
         open_spread_home = open_total = None

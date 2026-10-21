@@ -39,6 +39,16 @@ def num(x) -> float:
         return 0.0
 
 
+def full_name(p: dict) -> str:
+    """An NCAA box score player's name as 'FIRST LAST'."""
+    return f"{p.get('firstName', '')} {p.get('lastName', '')}".strip().upper()
+
+
+def stat(p: dict, key: str) -> float:
+    """One stat from a simulated player's line (0 when he has none)."""
+    return p["stats"].get(key, 0)
+
+
 def real_team_metrics(team_box: dict) -> dict:
     """Usage and stat lines for one team from an NCAA box score."""
     ps = team_box["playerStats"]
@@ -48,8 +58,8 @@ def real_team_metrics(team_box: dict) -> dict:
     receivers = sorted([p for p in ps if p.get("category") == "receiving"], key=lambda p: -num(p.get("receivingReceptions")))
     kickers = [p for p in ps if p.get("category") == "kicking"]
     qb = passers[0] if passers else {}
-    qb_name = f"{qb.get('firstName', '')} {qb.get('lastName', '')}".strip().upper()
-    backs = [r for r in rushers if f"{r.get('firstName', '')} {r.get('lastName', '')}".strip().upper() != qb_name]
+    qb_name = full_name(qb)
+    backs = [r for r in rushers if full_name(r) != qb_name]
     pass_att = num(ts["TeamPassingStats"]["passingAttempts"])
     rush_att = num(ts["TeamRushingStats"]["rushingAttempts"])
     rb_att = sum(num(r.get("rushingAttempts")) for r in backs) or 1.0
@@ -61,14 +71,13 @@ def real_team_metrics(team_box: dict) -> dict:
         "plays": num(ts.get("teamPlays")), "yards": num(ts.get("teamYards")),
         "qb_name": qb_name, "qb_att": num(qb.get("passingAttempts")), "qb_cmp": num(qb.get("passingCompletions")),
         "qb_yds": num(qb.get("passingYards")), "qb_td": num(qb.get("passingTDs")), "qb_int": num(qb.get("passingInterceptions")),
-        "qb_rush_att": num(next((r.get("rushingAttempts") for r in rushers
-                                 if f"{r.get('firstName', '')} {r.get('lastName', '')}".strip().upper() == qb_name), 0)),
-        "rb1_name": f"{backs[0].get('firstName', '')} {backs[0].get('lastName', '')}".strip().upper() if backs else "",
+        "qb_rush_att": num(next((r.get("rushingAttempts") for r in rushers if full_name(r) == qb_name), 0)),
+        "rb1_name": full_name(backs[0]) if backs else "",
         "rb1_att": num(backs[0].get("rushingAttempts")) if backs else 0.0,
         "rb1_yds": num(backs[0].get("rushingYards")) if backs else 0.0,
         "rb1_share": 100 * (num(backs[0].get("rushingAttempts")) if backs else 0.0) / rb_att,
         "rb2_share": 100 * (num(backs[1].get("rushingAttempts")) if len(backs) > 1 else 0.0) / rb_att,
-        "wr1_name": f"{receivers[0].get('firstName', '')} {receivers[0].get('lastName', '')}".strip().upper() if receivers else "",
+        "wr1_name": full_name(receivers[0]) if receivers else "",
         "wr1_rec": num(receivers[0].get("receivingReceptions")) if receivers else 0.0,
         "wr1_yds": num(receivers[0].get("receivingYards")) if receivers else 0.0,
         "wr1_share": 100 * (num(receivers[0].get("receivingReceptions")) if receivers else 0.0) / recs,
@@ -86,30 +95,29 @@ def sim_team_metrics(team: dict) -> dict:
     P = team["players"]
     s = team["team_stats"]
     ev = team["team_events"]
-    g = lambda p, k: p["stats"].get(k, 0)
-    qbs = sorted([p for p in P if g(p, "pass_attempts")], key=lambda p: -g(p, "pass_attempts"))
+    qbs = sorted([p for p in P if stat(p, "pass_attempts")], key=lambda p: -stat(p, "pass_attempts"))
     qb = qbs[0] if qbs else None
-    backs = sorted([p for p in P if p["position"] != "QB" and g(p, "carries")], key=lambda p: -g(p, "carries"))
-    receivers = sorted([p for p in P if g(p, "receptions")], key=lambda p: -g(p, "receptions"))
-    rb_att = sum(g(p, "carries") for p in backs) or 1
-    recs = sum(g(p, "receptions") for p in receivers) or 1
+    backs = sorted([p for p in P if p["position"] != "QB" and stat(p, "carries")], key=lambda p: -stat(p, "carries"))
+    receivers = sorted([p for p in P if stat(p, "receptions")], key=lambda p: -stat(p, "receptions"))
+    rb_att = sum(stat(p, "carries") for p in backs) or 1
+    recs = sum(stat(p, "receptions") for p in receivers) or 1
     # College stats count sacks as rushing attempts (negative yards) for the quarterback.
     pass_att, rush_att = s["Pass Attempts"], s["Carries"] + s["Sacks Taken"]
     return {
         "pass_att": pass_att, "rush_att": rush_att, "pass_rate": 100 * pass_att / max(1, pass_att + rush_att),
         "plays": pass_att + rush_att, "yards": s["Pass Yards"] + s["Rush Yards"],
-        "qb_name": qb["name"].upper() if qb else "", "qb_att": g(qb, "pass_attempts") if qb else 0,
-        "qb_cmp": g(qb, "completions") if qb else 0, "qb_yds": g(qb, "pass_yards") if qb else 0,
-        "qb_td": g(qb, "passing_touchdowns") if qb else 0, "qb_int": g(qb, "interceptions_thrown") if qb else 0,
-        "qb_rush_att": (g(qb, "carries") + g(qb, "sacks_taken")) if qb else 0,
-        "rb1_name": backs[0]["name"].upper() if backs else "", "rb1_att": g(backs[0], "carries") if backs else 0,
-        "rb1_yds": g(backs[0], "rush_yards") if backs else 0,
-        "rb1_share": 100 * (g(backs[0], "carries") if backs else 0) / rb_att,
-        "rb2_share": 100 * (g(backs[1], "carries") if len(backs) > 1 else 0) / rb_att,
-        "wr1_name": receivers[0]["name"].upper() if receivers else "", "wr1_rec": g(receivers[0], "receptions") if receivers else 0,
-        "wr1_yds": g(receivers[0], "receiving_yards") if receivers else 0,
-        "wr1_share": 100 * (g(receivers[0], "receptions") if receivers else 0) / recs,
-        "top3_share": 100 * sum(g(p, "receptions") for p in receivers[:3]) / recs,
+        "qb_name": qb["name"].upper() if qb else "", "qb_att": stat(qb, "pass_attempts") if qb else 0,
+        "qb_cmp": stat(qb, "completions") if qb else 0, "qb_yds": stat(qb, "pass_yards") if qb else 0,
+        "qb_td": stat(qb, "passing_touchdowns") if qb else 0, "qb_int": stat(qb, "interceptions_thrown") if qb else 0,
+        "qb_rush_att": (stat(qb, "carries") + stat(qb, "sacks_taken")) if qb else 0,
+        "rb1_name": backs[0]["name"].upper() if backs else "", "rb1_att": stat(backs[0], "carries") if backs else 0,
+        "rb1_yds": stat(backs[0], "rush_yards") if backs else 0,
+        "rb1_share": 100 * (stat(backs[0], "carries") if backs else 0) / rb_att,
+        "rb2_share": 100 * (stat(backs[1], "carries") if len(backs) > 1 else 0) / rb_att,
+        "wr1_name": receivers[0]["name"].upper() if receivers else "", "wr1_rec": stat(receivers[0], "receptions") if receivers else 0,
+        "wr1_yds": stat(receivers[0], "receiving_yards") if receivers else 0,
+        "wr1_share": 100 * (stat(receivers[0], "receptions") if receivers else 0) / recs,
+        "top3_share": 100 * sum(stat(p, "receptions") for p in receivers[:3]) / recs,
         "n_receivers": len(receivers), "n_rushers": len(backs),
         "fga": s["Field Goals Attempted"],
         "third_pct": 100 * ev.get("third_down_conversions", 0) / max(1, ev.get("third_downs", 0)),
@@ -141,7 +149,8 @@ def _sim_game(args: tuple) -> dict:
             m = sim_team_metrics(r[side])
             for k in NUMERIC:
                 acc[side][k].append(m[k])
-            names[side]["qb"].append(m["qb_name"]); names[side]["rb1"].append(m["rb1_name"]); names[side]["wr1"].append(m["wr1_name"])
+            for role in ("qb", "rb1", "wr1"):
+                names[side][role].append(m[role + "_name"])
     out = {"idx": idx}
     for side in ("home", "away"):
         out[side] = {k: st.mean(v) for k, v in acc[side].items()}

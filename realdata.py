@@ -64,6 +64,7 @@ def norm_name(name: str) -> str:
 
 
 def letters(s: str) -> str:
+    """Only the capital letters (and lost letters) of a normalized name."""
     return re.sub(rf"[^A-Z{LOST}]", "", s)
 
 
@@ -101,7 +102,18 @@ def same_first(box_first: str, roster_name: str) -> bool:
 
 
 def unit_of(position: str) -> str:
-    return "defense" if position in DEF_POSITIONS else "special" if position in ("K", "P") else "offense"
+    """The side of the ball an engine position plays on: offense, defense or special."""
+    if position in DEF_POSITIONS:
+        return "defense"
+    if position in ("K", "P"):
+        return "special"
+    return "offense"
+
+
+def team_stat(tb: dict, group: str, key: str) -> float:
+    """One number from a team box score's team stats (0 when missing), e.g.
+    team_stat(tb, "TeamPuntReturnsStats", "puntReturnYards")."""
+    return num(((tb.get("teamStats") or {}).get(group) or {}).get(key))
 
 
 # The side of the ball each box score category belongs to (a returner can be anyone).
@@ -183,7 +195,9 @@ def guess_position(stats: dict, number) -> str:
     quarterback if he threw 5 or more passes, then the bigger of his offensive and defensive
     work. Defenders go by jersey number: 60 and up a lineman, 40-59 a linebacker (a lineman
     if sacks and tackles for loss are half his tackles), under 40 a safety."""
-    g = lambda k: stats.get(k, 0)
+    def g(k: str) -> float:
+        return stats.get(k, 0)
+
     offense = g("pass_attempts") + g("carries") + g("receptions")
     tackles = g("solo_tackles") + g("assisted_tackles") + g("sacks") + g("interceptions")
     kicks, punts = g("fg_attempted") + g("pat_made"), g("punts")
@@ -206,7 +220,12 @@ def display_name(first: str, last: str) -> str:
     first = NICKNAME.sub(" ", first).strip()
     if first.upper().rstrip(".") in SUFFIX:
         first, last = "", f"{last} {first}"
-    word = lambda w: w.upper() if w.upper() in ("II", "III", "IV") else "-".join(x.capitalize() for x in w.split("-"))
+
+    def word(w: str) -> str:
+        if w.upper() in ("II", "III", "IV"):
+            return w.upper()
+        return "-".join(x.capitalize() for x in w.split("-"))
+
     return " ".join(word(w) for w in f"{first} {last}".split())
 
 
@@ -233,8 +252,11 @@ def player_lines(tb: dict, roster: Optional[RosterMatcher]) -> list[dict]:
         key = ("slug", found["slug"]) if found else ("name", compact(f"{first} {last}") or display_name(first, last))
         rec = players.get(key)
         if rec is None:
-            rec = {"name": found["name"] if found else display_name(first, last), "position": found["position"] if found else None,
-                   "matched": bool(found), "slug": found.get("slug") if found else None, "number": number, "key": key[1], "stats": {}}
+            if found:
+                name, position, slug = found["name"], found["position"], found.get("slug")
+            else:
+                name, position, slug = display_name(first, last), None, None
+            rec = {"name": name, "position": position, "matched": bool(found), "slug": slug, "number": number, "key": key[1], "stats": {}}
             players[key] = rec
         for src, dst in STAT_MAP[cat].items():
             v = num(r.get(src))
@@ -289,7 +311,7 @@ def fill_special_teams(players: list[dict], opp_tb: dict) -> None:
     total = sum(p["stats"]["punts"] for p in punters)
     if not total:
         return
-    returned = num(((opp_tb.get("teamStats") or {}).get("TeamPuntReturnsStats") or {}).get("puntReturnYards"))
+    returned = team_stat(opp_tb, "TeamPuntReturnsStats", "puntReturnYards")
     for p in punters:
         st = p["stats"]
         st["punt_net_yards"] = int(round(st.get("punt_yards", 0) - returned * st["punts"] / total - 20 * PUNT_TOUCHBACK_RATE * st["punts"]))
@@ -304,18 +326,24 @@ def compact_side(tb: dict, players: list[dict], score: int, opp_tb: dict) -> dic
     engine (which counts each one before the recovery); events["fumbles_lost"] is the ones
     the other team recovered, also as in the engine."""
     ts = tb["teamStats"]
-    sub = lambda k: ts.get(k) or {}
+
+    def sub(k: str) -> dict:
+        return ts.get(k) or {}
+
+    def psum(key: str) -> float:
+        """The players' total of one stat."""
+        return sum(p["stats"].get(key, 0) for p in players)
+
     pas, rush, rec = sub("TeamPassingStats"), sub("TeamRushingStats"), sub("TeamReceivingStats")
     dfn, kr, pr, pun = sub("TeamDefenseStats"), sub("TeamKickReturnsStats"), sub("TeamPuntReturnsStats"), sub("TeamPuntingStats")
-    psum = lambda key: sum(p["stats"].get(key, 0) for p in players)
     listed = kicking_listed(tb)
     pats_listed = listed or (score == 0 and not touchdowns(tb))
     punts, punt_yards = num(pun.get("puntingPunts")), num(pun.get("puntingYards"))
-    returned = num(((opp_tb.get("teamStats") or {}).get("TeamPuntReturnsStats") or {}).get("puntReturnYards"))
+    returned = team_stat(opp_tb, "TeamPuntReturnsStats", "puntReturnYards")
     team = {
         "Pass Attempts": num(pas.get("passingAttempts")), "Completions": num(pas.get("passingCompletions")),
         "Pass Yards": num(pas.get("passingYards")), "Interceptions Thrown": num(pas.get("passingInterceptions")),
-        "Sacks Taken": num(((opp_tb.get("teamStats") or {}).get("TeamDefenseStats") or {}).get("sacks")),
+        "Sacks Taken": team_stat(opp_tb, "TeamDefenseStats", "sacks"),
         "Carries": num(rush.get("rushingAttempts")), "Rush Yards": num(rush.get("rushingYards")), "Fumbles": num(ts.get("fumbles")),
         "Receptions": num(rec.get("receivingReceptions")), "Receiving Yards": num(rec.get("receivingYards")), "Targets": 0,
         "Passing Touchdowns": num(pas.get("passingTDs")), "Receiving Touchdowns": num(rec.get("receivingTDs")),

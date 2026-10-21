@@ -26,6 +26,8 @@ import random
 from . import game_config as cfg
 
 TWO_MINUTES = 120
+# Run it out: run the ball, stay in bounds, snap late (end of the half, or tied deep in own territory).
+RUN_OUT = {"mode": "run_out", "run_out": True, "pass_shift": 0.6, "oob_want": 0.02, "snap_late": True}
 
 
 def lead_of(team) -> int:
@@ -48,7 +50,7 @@ def assess(offense, defense, seconds: int, down: int, distance: int, yardline: i
     # --- End of the first half -------------------------------------------------
     if half == 1:
         if seconds <= cfg.H1_RUN_OUT_SECONDS and yardline < cfg.H1_RUN_OUT_YARDLINE and lead >= -cfg.H1_RUN_OUT_MAX_DEFICIT:
-            s.update(mode="run_out", run_out=True, pass_shift=0.6, oob_want=0.02, snap_late=True)
+            s.update(RUN_OUT)
             return s
         if seconds <= cfg.H1_HURRY_SECONDS and yardline >= cfg.H1_RUN_OUT_YARDLINE:
             s.update(mode="hurry", snap_fast=True, pass_shift=-cfg.HURRY_PASS_SHIFT, oob_want=cfg.OOB_HURRY)
@@ -56,15 +58,13 @@ def assess(offense, defense, seconds: int, down: int, distance: int, yardline: i
         return s
 
     # --- Second half --------------------------------------------------------------
-    close = abs(lead) <= cfg.CLOSE_GAME
     fourth_quarter = seconds <= cfg.QUARTER_SECONDS
     if lead > 0 and fourth_quarter:
         # How hard the leader runs clock grows with the lead and as time runs down.
         if seconds <= cfg.MILK_SECONDS or lead >= 17 or (lead >= 9 and seconds <= cfg.MILK_LIGHT_SECONDS):
             s.update(mode="milk", snap_late=True, pass_shift=cfg.MILK_RUN_SHIFT, oob_want=cfg.OOB_STAY_IN, big_play_mult=cfg.MILK_BIG_PLAY)
-            if close and seconds <= kneel_window(down, def_timeouts):
-                s["kneel"] = True
-            elif lead > cfg.CLOSE_GAME and seconds <= kneel_window(down, def_timeouts):
+            # victory formation once kneeling can burn the rest of the clock
+            if seconds <= kneel_window(down, def_timeouts):
                 s["kneel"] = True
             return s
         if lead >= 9:
@@ -72,7 +72,7 @@ def assess(offense, defense, seconds: int, down: int, distance: int, yardline: i
             return s
     if lead == 0 and seconds <= cfg.TIED_RUN_OUT_SECONDS and yardline < cfg.TIED_RUN_OUT_YARDLINE:
         # tied, deep in own territory with seconds left: run it out and take overtime
-        s.update(mode="run_out", run_out=True, pass_shift=0.6, oob_want=0.02, snap_late=True)
+        s.update(RUN_OUT)
         return s
     hurry_window = cfg.TIED_HURRY_SECONDS if lead == 0 else cfg.HURRY_SECONDS_TRAILING
     if lead <= 0 and (seconds <= hurry_window or (lead < 0 and -lead >= cfg.COMEBACK_LEAD and seconds <= cfg.QUARTER_SECONDS)):
@@ -85,7 +85,6 @@ def assess(offense, defense, seconds: int, down: int, distance: int, yardline: i
             s.update(mode="play_for_kick", snap_fast=False, pass_shift=cfg.PLAY_FOR_KICK_RUN_SHIFT,
                      oob_want=cfg.OOB_BASE, big_play_mult=cfg.PLAY_FOR_KICK_BIG_PLAY)
         _end_of_half_kicks(s, seconds, yardline, down, clock_stopped, off_timeouts, lead, half)
-        return s
     return s
 
 
@@ -99,7 +98,7 @@ def defense_posture(offense, defense, seconds: int) -> dict:
         if half == 1 and lead <= 0 and seconds <= cfg.H1_DEF_TIMEOUT_SECONDS:
             out["def_timeout"] = True
         return out
-    if lead > 0 and lead <= cfg.CLOSE_GAME and seconds <= cfg.PREVENT_SECONDS:
+    if 0 < lead <= cfg.CLOSE_GAME and seconds <= cfg.PREVENT_SECONDS:
         out.update(prevent=True, keep_in_bounds=True)
     if (lead < 0 and seconds <= cfg.DEF_TIMEOUT_SECONDS) or (lead == 0 and seconds <= cfg.TIED_HURRY_SECONDS):
         out["def_timeout"] = True

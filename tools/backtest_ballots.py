@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import polls  # noqa: E402
 from backtest_polls import TRAIN, VALID, score_week, weeks_of  # noqa: E402
-from calibrate_polls import load  # noqa: E402
+from calibrate_polls import load, season_frames  # noqa: E402
 
 BALLOTS = ROOT / "data" / "ballots"
 PARAMS_FILE = ROOT / "data" / "poll_params.json"
@@ -169,7 +169,6 @@ def forecast_order(season: str, week: int, n: int = 25) -> tuple[list[str], dict
     """The ballot model's next poll from the published poll for `week` (polls.json label),
     its voters' ballots and that week's results, for a week whose next poll is not out yet.
     Returns (order as ESPN ids, {ESPN id: name}), or None if the ballots are missing."""
-    from calibrate_polls import season_frames
     p, r, _ = load()
     by_week = ballots_by_week(season, p)
     if week not in by_week or str(week) not in p[season]["weeks"]:
@@ -225,7 +224,8 @@ def evaluate(frames: list[dict], params: dict, model: str) -> tuple[float, float
     return st.mean(maes), st.mean(hits)
 
 
-def saved_params() -> dict:
+def saved_params() -> tuple[dict, dict]:
+    """(the vote-share model's saved parameters, the ballot model's) from data/poll_params.json."""
     d = json.loads(PARAMS_FILE.read_text(encoding="utf-8")) if PARAMS_FILE.exists() else {}
     return d.get("next") or {}, d.get("ballots") or {}
 
@@ -308,6 +308,11 @@ def objective(week_frames: list[dict], seasons: list[str], params: dict, one_wee
     return score, one, roll, gap
 
 
+def fit_line(e: tuple[float, float, float, float]) -> str:
+    """One objective() result as text."""
+    return f"score {e[0]:.3f} (one week {e[1]:.3f}, season {e[2]:.3f}, behaviour gap {e[3]:.2f})"
+
+
 def fit() -> None:
     """Coordinate search on 2014-2023 over every ballot parameter. The score is the rank
     error of whole seasons rolled forward from seeded voters (the way season mode runs)
@@ -319,14 +324,13 @@ def fit() -> None:
     train, valid = frames_with_ballots(TRAIN), frames_with_ballots(VALID)
     saved = {**polls.NEXT_PARAMS, **polls.BALLOT_PARAMS, **nxt, **bal}
     one_cap, season_cap = BASE_ONE_WEEK + ONE_WEEK_SLACK, BASE_SEASON
-    line = lambda e: f"score {e[0]:.3f} (one week {e[1]:.3f}, season {e[2]:.3f}, behaviour gap {e[3]:.2f})"  # noqa: E731
     start = objective(train, TRAIN, saved, one_cap, season_cap)
-    print(f"saved params: {line(start)}")
+    print(f"saved params: {fit_line(start)}")
     best, params = start, saved
     for extra in FIT_STARTS:                 # the search starts from the best of these
         trial = {**saved, **extra}
         e = objective(train, TRAIN, trial, one_cap, season_cap)
-        print(f"  start {extra}: {line(e)}", flush=True)
+        print(f"  start {extra}: {fit_line(e)}", flush=True)
         if e[0] < best[0]:
             best, params = e, trial
     steps = {k: abs(v) * 0.25 + 0.005 for k, v in params.items()}
@@ -338,7 +342,7 @@ def fit() -> None:
                 e = objective(train, TRAIN, trial, one_cap, season_cap)
                 if e[0] < best[0] - 1e-4:
                     best, params = e, trial
-                    print(f"  round {rnd + 1}: {k} -> {params[k]:.4f}  {line(best)}  ({time.time() - t0:.0f}s)", flush=True)
+                    print(f"  round {rnd + 1}: {k} -> {params[k]:.4f}  {fit_line(best)}  ({time.time() - t0:.0f}s)", flush=True)
                     break
         steps = {k: v * 0.5 for k, v in steps.items()}
     v = evaluate(valid, params, "ballots")
@@ -413,6 +417,10 @@ def season_replay(seasons: list[str], params: dict, seed: int = 0) -> tuple[list
 OUT = 30             # a team that drops out counts as rank 30 (as in the realism review)
 
 
+def mean_or_nan(xs: list[float]) -> float:
+    return st.mean(xs) if xs else float("nan")
+
+
 def behaviour(seq: list[dict]) -> dict[str, float]:
     """The poll behaviours the 2026 realism review measured, over a run of weeks."""
     close, close_drop, win_drop, n_wins = [], 0, 0, 0
@@ -460,18 +468,28 @@ def behaviour(seq: list[dict]) -> dict[str, float]:
             n1_weeks += 1
             n1_share.append(fp.get(no1, 0) / total)
             n1_unanimous += fp.get(no1, 0) / total >= 0.97
-    m = lambda xs: st.mean(xs) if xs else float("nan")  # noqa: E731
     seasons = len({wk["season"] for wk in seq}) or 1
-    return {"close win: games": len(close), "close win: mean change": m(close),
+    return {"close win: games": len(close), "close win: mean change": mean_or_nan(close),
             "close win: share dropped": close_drop / max(1, len(close)),
             "ranked winners: share dropped": win_drop / max(1, n_wins),
-            "ranked loser: mean drop": m(ranked_loss), "top-10 loser: mean drop": m(top10_loss),
+            "ranked loser: mean drop": mean_or_nan(ranked_loss), "top-10 loser: mean drop": mean_or_nan(top10_loss),
             "16-25 lose to ranked: n": lr_16, "16-25 lose to ranked: share out": lr_16_out / max(1, lr_16),
             "16-25 lose to unranked: share out": lu_16_out / max(1, lu_16),
             "21-25 lose: n": l21, "21-25 lose: share out": l21_out / max(1, l21),
             "3+ losses ranked in week 8, per season": three_loss_w8 / seasons,
-            "3+ losses ranked, weeks 6-12 mean": m(three_loss_mid),
-            "No. 1 first-place share": m(n1_share), "No. 1 unanimous (97%+) weeks": n1_unanimous / max(1, n1_weeks)}
+            "3+ losses ranked, weeks 6-12 mean": mean_or_nan(three_loss_mid),
+            "No. 1 first-place share": mean_or_nan(n1_share), "No. 1 unanimous (97%+) weeks": n1_unanimous / max(1, n1_weeks)}
+
+
+def since_bucket(weeks: int) -> str:
+    """Weeks since the season replay started, as a reporting bucket."""
+    if weeks <= 4:
+        return "1-4"
+    if weeks <= 8:
+        return "5-8"
+    if weeks <= 12:
+        return "9-12"
+    return "13+"
 
 
 def rolling_error(real_seq: list[dict], model_seq: list[dict]) -> dict[str, float]:
@@ -480,8 +498,7 @@ def rolling_error(real_seq: list[dict], model_seq: list[dict]) -> dict[str, floa
     for rw, mw in zip(real_seq, model_seq):
         order = sorted(mw["after"], key=mw["after"].get)
         e, _ = score_week(order, rw["after"])
-        k = "1-4" if mw["since"] <= 4 else "5-8" if mw["since"] <= 8 else "9-12" if mw["since"] <= 12 else "13+"
-        buckets[k].append(e)
+        buckets[since_bucket(mw["since"])].append(e)
         buckets["all"].append(e)
     return {k: st.mean(v) for k, v in buckets.items()}
 

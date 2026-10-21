@@ -17,3 +17,6 @@ data/history/cfbstats_cache/
 # overnight comparison output (tools/team_reality.py)
 data/analysis/
 data/coaches/
+
+# taste-skill working files (screenshots, reviews)
+.taste-skill/

@@ -18,7 +18,7 @@ import statistics as st
 from pathlib import Path
 
 from teamnames import build_matcher, match
-from calibrate_players import real_team_metrics
+from calibrate_players import full_name, real_team_metrics
 
 ROOT = Path(__file__).resolve().parents[1]
 GAMES_FILE = ROOT / "data" / "season_games.json"
@@ -52,11 +52,11 @@ def main() -> None:
             # every quarterback's carries (a run-package QB2 too): anyone who threw a pass, or
             # who is on the roster as a QB; and the sacks the team took (the other side's
             # defense line), which college box scores count as QB rushes
-            qbs = {f"{p.get('firstName', '')} {p.get('lastName', '')}".strip().upper() for p in tb["playerStats"]
+            qbs = {full_name(p) for p in tb["playerStats"]
                    if p.get("category") == "passing" and float(p.get("passingAttempts") or 0) > 0}
             qbs |= roster_qbs.get(slug, set())
-            m["qb_all_rush_att"] = sum(float(p.get("rushingAttempts") or 0) for p in tb["playerStats"] if p.get("category") == "rushing"
-                                       and f"{p.get('firstName', '')} {p.get('lastName', '')}".strip().upper() in qbs)
+            m["qb_all_rush_att"] = sum(float(p.get("rushingAttempts") or 0) for p in tb["playerStats"]
+                                       if p.get("category") == "rushing" and full_name(p) in qbs)
             home = info.get("seoname") == g.get("home_seo")
             m["margin"] = (g["home_score"] - g["away_score"]) * (1 if home else -1) if g.get("home_score") is not None else 0.0
             opp = next((o for o in box["teamBoxscore"] if str(o["teamId"]) != str(tb["teamId"])), None)

@@ -8,10 +8,23 @@ import statistics as st
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 import season  # noqa: E402
 
-ROOT = Path(__file__).resolve().parents[1]
+
+def rank_band(rank: int) -> str:
+    """The AP rank band poll_stats.json groups losses by."""
+    if rank <= 5:
+        return "1-5"
+    if rank <= 10:
+        return "6-10"
+    if rank <= 15:
+        return "11-15"
+    if rank <= 20:
+        return "16-20"
+    return "21-25"
+
 
 if __name__ == "__main__":
     real = json.loads((ROOT / "data" / "history" / "poll_stats.json").read_text(encoding="utf-8"))["loss_drop"]
@@ -33,9 +46,8 @@ if __name__ == "__main__":
                 r = before.get(loser)
                 if not r:
                     continue
-                band = "1-5" if r <= 5 else "6-10" if r <= 10 else "11-15" if r <= 15 else "16-20" if r <= 20 else "21-25"
                 kind = "vs ranked" if before.get(winner) else "vs unranked"
-                drops.setdefault(f"{band}|{kind}", []).append(after.get(loser, 26) - r)
+                drops.setdefault(f"{rank_band(r)}|{kind}", []).append(after.get(loser, 26) - r)
     print(f"{'band':<22}{'sim drop':>10}{'n':>5}{'real drop':>11}")
     for k in sorted(drops, key=lambda k: (int(k.split('|')[0].split('-')[0]), k)):
         rv = real.get(k, {}).get("mean")

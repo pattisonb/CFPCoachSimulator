@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import shutil
 import statistics as st
 import sys
 import time
@@ -127,6 +128,23 @@ def ap_list(poll: dict, n: int = 40) -> list[dict]:
     return [{"rank": e["rank"], "team": e["team"], "points": e.get("points"), "first": e.get("first_place"), "record": e.get("record")} for e in rows[:n]]
 
 
+def notable(d: dict) -> bool:
+    """A season-to-date line worth listing: a real role on offense, defense or special teams."""
+    return (d["pass_attempts"] >= 20 or d["carries"] >= 15 or d["receptions"] >= 8 or d["solo_tackles"] + d["assisted_tackles"] >= 15
+            or d["sacks"] >= 1.5 or d["interceptions"] >= 1 or d["fg_attempted"] >= 3 or d["punts"] >= 5)
+
+
+def upset_rate(games: list[dict], rank: dict) -> float | None:
+    """Share of games with a ranked team that a lower-ranked or unranked team won."""
+    ranked = [g for g in games if rank.get(g["home"]) or rank.get(g["away"])]
+    ups = 0
+    for g in ranked:
+        hw = g["home_score"] > g["away_score"]
+        wr, lr = (rank.get(g["home"]), rank.get(g["away"])) if hw else (rank.get(g["away"]), rank.get(g["home"]))
+        ups += bool(lr) and (not wr or wr > lr)
+    return round(ups / len(ranked), 3) if ranked else None
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--seasons", type=int, default=10)
@@ -163,7 +181,6 @@ def main() -> None:
                        for k, p in v.get("players", {}).items()} for t, v in stt["season_stats"].items()}
         morale = copy.deepcopy(stt.get("morale") or {})
         sims.append({"weekly": weekly, "polls": polls, "games": games, "players": players, "morale": morale})
-        import shutil
         shutil.rmtree(season.SEASONS_DIR / stt["id"], ignore_errors=True)   # the sims' box scores; the seasons are never saved
         print(f"sim season {i + 1}/{a.seasons}: weeks 1-{W} in {time.perf_counter() - t0:.0f}s", flush=True)
     season.close_pool()
@@ -221,8 +238,6 @@ def main() -> None:
             sim_ps = [x for x in sim_ps if x]
             sim_mean = {s_: round(sum(x["stats"].get(s_, 0) for x in sim_ps) / len(sims), 1) for s_ in PLAYER_KEYS}
             real_stats = {s_: (real_p or {}).get("stats", {}).get(s_, 0) for s_ in PLAYER_KEYS}
-            notable = lambda d: (d["pass_attempts"] >= 20 or d["carries"] >= 15 or d["receptions"] >= 8 or d["solo_tackles"] + d["assisted_tackles"] >= 15
-                                 or d["sacks"] >= 1.5 or d["interceptions"] >= 1 or d["fg_attempted"] >= 3 or d["punts"] >= 5)
             if not (notable(real_stats) or notable(sim_mean)):
                 continue
             r_ = roster.get(k)
@@ -265,14 +280,6 @@ def main() -> None:
     league_weeks = []
     for w in range(1, W + 1):
         real_games = [g for g in real["games"].values() if g["week"] == w and g["played"] and g.get("real")]
-        def upset_rate(gs, rank):
-            ranked = [g for g in gs if rank.get(g["home"]) or rank.get(g["away"])]
-            ups = 0
-            for g in ranked:
-                hw = g["home_score"] > g["away_score"]
-                wr, lr = (rank.get(g["home"]), rank.get(g["away"])) if hw else (rank.get(g["away"]), rank.get(g["home"]))
-                ups += bool(lr) and (not wr or wr > lr)
-            return round(ups / len(ranked), 3) if ranked else None
         r_rank = {e["team"]: e["rank"] for e in real_polls[w - 1][:25]}
         sim_rates = []
         for s in sims:

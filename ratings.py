@@ -120,11 +120,15 @@ POSITION_ATTRIBUTES: dict[str, list[str]] = {
 }
 
 
+# the engine's three linebacker positions share one attribute set
+_CARD_GROUP = {"MLB": "LB", "ROLB": "LB", "LOLB": "LB"}
+
+
 def card_group(position: str, role: Optional[str] = None) -> str:
     """The POSITION_ATTRIBUTES key for an engine position (fullbacks have their own set)."""
     if role == "FB":
         return "FB"
-    return {"MLB": "LB", "ROLB": "LB", "LOLB": "LB"}.get(position, position)
+    return _CARD_GROUP.get(position, position)
 
 
 def raw_attributes(src: dict, position: str, role: Optional[str] = None) -> dict[str, float]:
@@ -262,7 +266,7 @@ TRAITS = {
     "Clutch Kicker": ("clutch_leg", "Clutch Leg", "Makes the big kick"),
 }
 TRAIT_TIERS = {"Bronze": 1, "Silver": 2, "Gold": 3, "Platinum": 4}
-TIER_NAMES = {1: "Bronze", 2: "Silver", 3: "Gold", 4: "Platinum"}
+TIER_NAMES = {n: name for name, n in TRAIT_TIERS.items()}
 
 
 def traits_of(abilities: list[dict]) -> list[dict]:

@@ -10,6 +10,15 @@ from engine import game_config as cfg
 from engine.game import simulate_game
 from test_play_log import fingerprint
 
+
+def record_trend(r: dict) -> str:
+    if r["wins"] > r["losses"]:
+        return "up"
+    if r["wins"] < r["losses"]:
+        return "down"
+    return "even"
+
+
 if __name__ == "__main__":
     base = fingerprint()
     print("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: 746522e97d4117fa)")
@@ -36,7 +45,7 @@ if __name__ == "__main__":
     by = {}
     for slug, r in recs.items():
         if r["wins"] + r["losses"]:
-            by.setdefault("up" if r["wins"] > r["losses"] else "down" if r["wins"] < r["losses"] else "even", []).append(m["teams"].get(slug, 0.0))
+            by.setdefault(record_trend(r), []).append(m["teams"].get(slug, 0.0))
     mean = {k: sum(v) / len(v) for k, v in by.items()}
     print("mean mood by record:", {k: round(v, 2) for k, v in mean.items()})
     assert mean["up"] > 0 > mean["down"]
@@ -54,7 +63,8 @@ if __name__ == "__main__":
     if f > 1.0:
         assert any(r["boost"] > 0 for r in prof["ratings"])
     data = season.with_morale(season.team_data(st, "ohio-state"), season.morale_payload(st, "ohio-state"))
-    raw = next(p for p in season.team_data(st, "ohio-state")["offense"] + season.team_data(st, "ohio-state")["defense"] if p["name"] == name)
+    raw_team = season.team_data(st, "ohio-state")
+    raw = next(p for p in raw_team["offense"] + raw_team["defense"] if p["name"] == name)
     adj = next(p for p in data["offense"] + data["defense"] if p["name"] == name)
     if f >= 1.01:
         assert adj["speed"] >= raw["speed"]

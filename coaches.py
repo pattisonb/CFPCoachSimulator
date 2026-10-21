@@ -164,19 +164,22 @@ def clean(data: dict) -> dict:
     except (TypeError, ValueError):
         raise ValueError("age must be a number")
     c["hometown"] = str(data.get("hometown") or "").strip()[:60]
-    c["alma_mater"] = (str(data["alma_mater"])[:60] if data.get("alma_mater") else None)
+    c["alma_mater"] = str(data["alma_mater"])[:60] if data.get("alma_mater") else None
     c["background"] = str(data.get("background") or "").strip()[:1500]
     if data.get("archetype") not in ARCHETYPES:
         raise ValueError("pick an archetype")
     c["archetype"] = data["archetype"]
+    given_ratings = data.get("ratings") or {}
+    preset = ARCHETYPES[c["archetype"]]["ratings"]
     ratings = {}
     for k in RATING_KEYS:
         try:
-            ratings[k] = max(40, min(99, int((data.get("ratings") or {}).get(k, ARCHETYPES[c["archetype"]]["ratings"][k]))))
+            ratings[k] = max(40, min(99, int(given_ratings.get(k, preset[k]))))
         except (TypeError, ValueError):
             raise ValueError(f"{RATING_LABELS[k]} must be a number")
-    if sum(ratings.values()) > RATING_BUDGET:
-        raise ValueError(f"the ratings add up to {sum(ratings.values())}; the most is {RATING_BUDGET}")
+    total = sum(ratings.values())
+    if total > RATING_BUDGET:
+        raise ValueError(f"the ratings add up to {total}; the most is {RATING_BUDGET}")
     c["ratings"] = ratings
     c["played"] = data.get("played") if data.get("played") in POSITIONS_PLAYED else "Did not play"
     c["playing_level"] = data.get("playing_level") if data.get("playing_level") in PLAYING_LEVELS else "Walk-on"
@@ -184,22 +187,25 @@ def clean(data: dict) -> dict:
         raise ValueError("pick an offensive and a defensive scheme")
     c["offense_scheme"], c["defense_scheme"] = data["offense_scheme"], data["defense_scheme"]
     c["calls_offense"], c["calls_defense"] = bool(data.get("calls_offense")), bool(data.get("calls_defense"))
+    given_style = data.get("style") or {}
     style = {}
     for k in STYLE:
         try:
-            style[k] = max(0, min(100, int((data.get("style") or {}).get(k, 50))))
+            style[k] = max(0, min(100, int(given_style.get(k, 50))))
         except (TypeError, ValueError):
             raise ValueError(f"{STYLE[k][0]} must be a number")
     c["style"] = style
+    given_look = data.get("look") or {}
     look = {}
     for k, opts in LOOK.items():
-        v = (data.get("look") or {}).get(k)
+        v = given_look.get(k)
         look[k] = v if v in opts else c["look"][k]
     c["look"] = look
     return c
 
 
 def _path(coach_id: str) -> Path:
+    """A saved coach's file; raises ValueError for an id that is not 12 hex characters."""
     if not re.fullmatch(r"[a-f0-9]{12}", coach_id or ""):
         raise ValueError("unknown coach")
     return COACHES_DIR / f"{coach_id}.json"
@@ -302,7 +308,8 @@ def apply_coach(team: dict, coach: Optional[dict]) -> dict:
         t["coaches"]["offensive_coordinator"] = {**oc, "scheme": {**(oc.get("scheme") or {}), "offensive_scheme": coach["offense_scheme"]}}
         tend.update(pass_rate=s["pass_rate"], tempo=s["tempo"], deep_shot_rate=s["deep_shot_rate"],
                     play_action_rate=s["play_action_rate"], oc_play_calling=r["offense"])
-        tend.pop("qb_run_share", None) if coach["offense_scheme"] != "Spread Option" else None
+        if coach["offense_scheme"] != "Spread Option":
+            tend.pop("qb_run_share", None)
     if coach.get("calls_defense"):
         dc = t["coaches"].get("defensive_coordinator") or {}
         t["coaches"]["defensive_coordinator"] = {**dc, "scheme": {**(dc.get("scheme") or {}), "defensive_scheme": coach["defense_scheme"]}}

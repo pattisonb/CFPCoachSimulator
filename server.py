@@ -8,11 +8,13 @@ Run:  python server.py        (then open http://127.0.0.1:8000)
 """
 from __future__ import annotations
 
+import contextlib
 import json
+import os
+import shutil
+import socket
 import subprocess
 import sys
-import contextlib
-import shutil
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -95,6 +97,15 @@ def _team(slug: str) -> dict:
     if t is None:
         raise HTTPException(404, f"unknown team {slug}")
     return t
+
+
+def _check_team(slug: str) -> None:
+    """404 for a slug that is not a team."""
+    if slug not in _teams:
+        raise HTTPException(404, "unknown team")
+
+
+_overall = season.player_overall   # the display rating (the engine uses the raw attributes)
 
 
 def _team_card(t: dict) -> dict:
@@ -333,6 +344,18 @@ class DepthRequest(BaseModel):
 _season_lock = threading.Lock()
 
 
+def _idle_job(season_id: str, state: dict) -> dict:
+    """A season's job record when nothing is simulating."""
+    return {"id": season_id, "status": "idle", "state": state, "done": state["current_week"], "total": state["current_week"]}
+
+
+def _check_not_running(season_id: str) -> None:
+    """409 while the season is simulating."""
+    job = _season_jobs.get(season_id)
+    if job and job.get("status") == "running":
+        raise HTTPException(409, "wait for the sim to finish")
+
+
 def _season_state(season_id: str) -> dict:
     if season_id == realdata.REAL_ID:
         _real_ready.wait(timeout=600)          # a rebuild started at launch: wait for it, do not start another
@@ -344,7 +367,7 @@ def _season_state(season_id: str) -> dict:
     state = season.load_season(season_id)
     if state is None:
         raise HTTPException(404, "season not found")
-    _season_jobs[season_id] = {"id": season_id, "status": "idle", "state": state, "done": state["current_week"], "total": state["current_week"]}
+    _season_jobs[season_id] = _idle_job(season_id, state)
     return state
 
 
@@ -353,7 +376,7 @@ def _refresh_real(follow: Optional[str] = None) -> dict:
     with _season_lock:
         old = _season_jobs.get(realdata.REAL_ID, {}).get("state")
         st = realdata.build(follow or (old or {}).get("team") or (season.load_season(realdata.REAL_ID) or {}).get("team") or realdata.DEFAULT_FOLLOW)
-        _season_jobs[realdata.REAL_ID] = {"id": realdata.REAL_ID, "status": "idle", "state": st, "done": st["current_week"], "total": st["current_week"]}
+        _season_jobs[realdata.REAL_ID] = _idle_job(realdata.REAL_ID, st)
     return st
 
 
@@ -377,10 +400,8 @@ def _warm_preview(state: dict) -> None:
     threading.Thread(target=run, daemon=True).start()
 
 
-def _run_advance(job: dict, target: int) -> None:
-    def progress(done: int, total: int) -> None:
-        job["done"], job["total"] = done, total
-
+def _reporter(job: dict):
+    """The callback a sim calls with its stage and game count, written onto the job for /status."""
     def report(stage: str, games_done: Optional[int], games_total: Optional[int]) -> None:
         job["stage"] = stage
         job["week"] = job["state"]["current_week"] + 1
@@ -388,7 +409,14 @@ def _run_advance(job: dict, target: int) -> None:
             job["games_done"], job["games_total"] = games_done, games_total
         else:
             job["games_done"] = job["games_total"] = None
+    return report
 
+
+def _run_advance(job: dict, target: int) -> None:
+    def progress(done: int, total: int) -> None:
+        job["done"], job["total"] = done, total
+
+    report = _reporter(job)
     try:
         with _season_lock:
             season.advance_to(job["state"], target, progress=progress, report=report, should_stop=lambda: job.get("stop", False))
@@ -405,17 +433,9 @@ def _run_advance(job: dict, target: int) -> None:
 
 
 def _run_gameday(job: dict) -> None:
-    def report(stage: str, games_done: Optional[int], games_total: Optional[int]) -> None:
-        job["stage"] = stage
-        job["week"] = job["state"]["current_week"] + 1
-        if games_total is not None:
-            job["games_done"], job["games_total"] = games_done, games_total
-        else:
-            job["games_done"] = job["games_total"] = None
-
     try:
         with _season_lock:
-            eid = season.play_my_game(job["state"], season.shared_pool(), report=report)
+            eid = season.play_my_game(job["state"], season.shared_pool(), report=_reporter(job))
             job["stage"] = "Saving"
             season.save_season(job["state"])
         job["gameday_event"] = eid
@@ -460,7 +480,7 @@ def create_season(req: SeasonRequest) -> dict:
         # started from today: the weeks already played carry their real stats and box scores
         state["real_import"] = realdata.import_real_boxes(state)
     season.save_season(state)
-    _season_jobs[state["id"]] = {"id": state["id"], "status": "idle", "state": state, "done": state["current_week"], "total": state["current_week"]}
+    _season_jobs[state["id"]] = _idle_job(state["id"], state)
     return season.summary(state)
 
 
@@ -604,8 +624,7 @@ def season_week(season_id: str, week: int) -> dict:
 def season_team_schedule(season_id: str, slug: str) -> dict:
     """Any team's schedule with results, byes, ranks and opponent records."""
     state = _season_state(season_id)
-    if slug not in _teams:
-        raise HTTPException(404, "unknown team")
+    _check_team(slug)
     return season.team_schedule_view(state, slug)
 
 
@@ -664,11 +683,8 @@ def season_player_edit(season_id: str, req: PlayerEditRequest) -> dict:
     _no_real(state)
     if not season.settings(state)["god_mode"]:
         raise HTTPException(403, "turn on god mode in Settings to edit players")
-    if req.team not in _teams:
-        raise HTTPException(404, "unknown team")
-    job = _season_jobs.get(season_id)
-    if job and job.get("status") == "running":
-        raise HTTPException(409, "wait for the sim to finish")
+    _check_team(req.team)
+    _check_not_running(season_id)
     with _season_lock:
         try:
             edits = season.edit_player(state, req.team, req.player, req.changes)
@@ -685,8 +701,7 @@ def season_preview(season_id: str, team: Optional[str] = None) -> dict:
     it, and the injury report."""
     state = _season_state(season_id)
     slug = team or state["team"]
-    if slug not in _teams:
-        raise HTTPException(404, "unknown team")
+    _check_team(slug)
     return season.game_preview(state, slug)
 
 
@@ -706,8 +721,7 @@ def season_team_stats(season_id: str) -> dict:
 def season_depth_chart(season_id: str, slug: str) -> dict:
     """One team's depth chart with each player's season headline."""
     state = _season_state(season_id)
-    if slug not in _teams:
-        raise HTTPException(404, "unknown team")
+    _check_team(slug)
     return season.depth_chart_view(state, slug)
 
 
@@ -715,8 +729,7 @@ def season_depth_chart(season_id: str, slug: str) -> dict:
 def season_depth_position(season_id: str, slug: str, role: str) -> dict:
     """Every player on the roster rated at one depth-chart role."""
     state = _season_state(season_id)
-    if slug not in _teams:
-        raise HTTPException(404, "unknown team")
+    _check_team(slug)
     if role not in season.ROLE_POSITION and role not in ("KR", "PR"):
         raise HTTPException(404, "unknown role")
     return season.position_candidates(state, slug, role)
@@ -728,13 +741,10 @@ def season_depth_change(season_id: str, slug: str, req: DepthRequest) -> dict:
     the season and used by every game from then on."""
     state = _season_state(season_id)
     _no_real(state)
-    if slug not in _teams:
-        raise HTTPException(404, "unknown team")
+    _check_team(slug)
     if slug != state["team"] and not season.settings(state)["god_mode"]:
         raise HTTPException(403, "turn on god mode in Settings to edit another team's depth chart")
-    job = _season_jobs.get(season_id)
-    if job and job.get("status") == "running":
-        raise HTTPException(409, "wait for the sim to finish")
+    _check_not_running(season_id)
     with _season_lock:
         if req.reset:
             season.reset_depth(state, slug)
@@ -766,8 +776,7 @@ def season_awards(season_id: str) -> dict:
 def season_player(season_id: str, team: str, name: Optional[str] = None, position: Optional[str] = None, slug: Optional[str] = None) -> dict:
     """One player's page: bio, ratings, season totals, ranks, game log, honors."""
     state = _season_state(season_id)
-    if team not in _teams:
-        raise HTTPException(404, "unknown team")
+    _check_team(team)
     prof = season.player_profile(state, team, name=name or None, position=position or None, slug=slug or None)
     if prof is None:
         raise HTTPException(404, "player not found")
@@ -777,8 +786,8 @@ def season_player(season_id: str, team: str, name: Optional[str] = None, positio
 @app.get("/api/season/{season_id}/stats/leaders")
 def season_player_leaders(season_id: str, team: Optional[str] = None, n: int = 5, conference: Optional[str] = None) -> dict:
     state = _season_state(season_id)
-    if team and team not in _teams:
-        raise HTTPException(404, "unknown team")
+    if team:
+        _check_team(team)
     return season.player_leaders_view(state, team or None, max(1, min(n, 25)), conference or None)
 
 
@@ -786,22 +795,12 @@ def season_player_leaders(season_id: str, team: Optional[str] = None, n: int = 5
 def season_player_stats(season_id: str, team: Optional[str] = None, cat: str = "passing", limit: int = 100,
                         conference: Optional[str] = None) -> dict:
     state = _season_state(season_id)
-    if team and team not in _teams:
-        raise HTTPException(404, "unknown team")
+    if team:
+        _check_team(team)
     try:
         return season.player_stats_view(state, team or None, cat, limit, conference or None)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
-
-
-# ----- ratings (display only; the engine uses the raw attributes) ----------
-
-_OFF_KEYS = ["speed", "strength", "intelligence", "passing", "decision_making", "hands",
-             "route_running", "run_blocking", "pass_blocking", "elusiveness", "vision"]
-_DEF_KEYS = ["speed", "strength", "intelligence", "tackling", "coverage", "rushing"]
-
-
-_overall = season.player_overall
 
 
 # ----- static site ---------------------------------------------------------
@@ -878,8 +877,7 @@ class FollowRequest(BaseModel):
 @app.post("/api/real/follow")
 def real_follow(req: FollowRequest) -> dict:
     """Which team the real season page centres on (header, schedule, awards)."""
-    if req.team not in _teams:
-        raise HTTPException(404, "unknown team")
+    _check_team(req.team)
     state = _season_state(realdata.REAL_ID)
     with _season_lock:
         teams = season.load_teams()
@@ -920,9 +918,9 @@ app.mount("/", StaticFiles(directory=WEB_DIR), name="web")
 _load_teams()
 _load_games()
 
+
 def _lan_ip() -> str:
     """The address other devices on the local network use to reach this PC."""
-    import socket
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(("8.8.8.8", 80))   # no traffic is sent; picks the outbound interface
@@ -934,7 +932,6 @@ def _lan_ip() -> str:
 if __name__ == "__main__":
     # `python server.py` serves on every interface so a phone on the same Wi-Fi can open
     # it at http://<this PC's address>:8000. `python server.py --local` keeps it to this PC.
-    import os
     local_only = "--local" in sys.argv
     host = "127.0.0.1" if local_only else "0.0.0.0"
     port = int(os.environ.get("PORT", "8000"))   # hosting platforms set PORT

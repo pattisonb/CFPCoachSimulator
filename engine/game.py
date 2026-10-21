@@ -6,7 +6,6 @@ original; the differences are listed in docs/HOW_IT_WORKS.md.
 """
 from __future__ import annotations
 
-import copy
 import random
 import time
 import uuid
@@ -73,8 +72,7 @@ class GameSim:
             self.home_advantage *= sliders.get_multiplier(sliders.home_field_advantage)
             self._shift_ratings(home_data, self.home_advantage / 2)
             self._shift_ratings(away_data, -self.home_advantage / 2)
-        # traits: a Crowd Favorite lifts at home; a Road Warrior shrugs off part of the road penalty
-        if self.venue == "home":
+            # traits: a Crowd Favorite lifts at home; a Road Warrior shrugs off part of the road penalty
             self._trait_shift(home_data, "crowd_favorite", lambda t: cfg.TRAIT_FX["crowd"] * t)
             self._trait_shift(away_data, "road_warrior", lambda t: self.home_advantage / 2 * cfg.TRAIT_FX["road_warrior"] * t)
         # the day's form: each side a little above or below itself (see cfg.GAME_FORM_SD)
@@ -96,6 +94,7 @@ class GameSim:
         self.in_overtime = False
         self.ot_number = 0
         self._td_stats_seen = 0
+        self._log_mark = None     # where the next drive's play log starts, when a kickoff came first
 
     @staticmethod
     def _copy_roster(data: dict) -> dict:
@@ -149,14 +148,26 @@ class GameSim:
     def quarter(self) -> int:
         if self.in_overtime:
             return 4 + self.ot_number
-        return (self.half - 1) * 2 + (1 if self.seconds > QUARTER_MARK else 2)
+        return self._quarter_at(self.seconds)
 
     def clock(self) -> str:
         if self.in_overtime:
             return f"OT{self.ot_number}"
-        secs = self.seconds - QUARTER_MARK if self.seconds > QUARTER_MARK else self.seconds
-        secs = max(0, secs)
+        return self._clock_at(self.seconds)
+
+    def _quarter_at(self, seconds_left: int) -> int:
+        """The quarter of this half with `seconds_left` on the half's clock."""
+        return (self.half - 1) * 2 + (1 if seconds_left > QUARTER_MARK else 2)
+
+    @staticmethod
+    def _clock_at(seconds_left: int) -> str:
+        """The quarter's game clock (m:ss) with `seconds_left` on the half's clock."""
+        secs = max(0, seconds_left - QUARTER_MARK if seconds_left > QUARTER_MARK else seconds_left)
         return f"{secs // 60}:{secs % 60:02d}"
+
+    @staticmethod
+    def _returner_label(returner) -> str:
+        return f"{returner.name} ({returner.position})" if returner else "Unknown"
 
     def _add_points(self, team: Team, points: int) -> None:
         side = self.side(team)
@@ -261,11 +272,11 @@ class GameSim:
             drive_functions._log(type="kickoff", result="onside_failed", kicking=kicking.name, to=spot, left=self.seconds)
             return receiving, spot        # the receiving team takes over in plus territory
         while True:
-            yardline, returner, _return_yards, is_td = sim_kickoff(kicking.get_kicker(), receiving)
+            yardline, returner, return_yards, is_td = sim_kickoff(kicking.get_kicker(), receiving)
             self.seconds -= random.randint(4, 12)
             play_functions.last_play.clear()
             drive_functions._log(type="kickoff", result="return_td" if is_td else "kickoff", kicking=kicking.name, to=yardline,
-                                 returner=returner.name if returner else None, return_yards=_return_yards, left=self.seconds)
+                                 returner=returner.name if returner else None, return_yards=return_yards, left=self.seconds)
             if not is_td:
                 if returner is not None:
                     play_functions.credit_coverage_tackle(kicking)
@@ -273,35 +284,30 @@ class GameSim:
             receiving.team_stats["kickoff_return_touchdowns"] += 1
             receiving.swing(0.4)
             kicking.swing(-0.3)
-            who = f"{returner.name} ({returner.position})" if returner else "Unknown"
-            self._touchdown(receiving, "kickoff_return", f"{who} kickoff return")
+            self._touchdown(receiving, "kickoff_return", f"{self._returner_label(returner)} kickoff return")
             kicking, receiving = receiving, kicking
 
     # ----- drives --------------------------------------------------------
 
     def _play_count(self, team: Team) -> int:
-        n = 0
-        for p in team.offense:
-            n += p.stats.get("pass_attempts", 0) + p.stats.get("carries", 0) + p.stats.get("sacks_taken", 0)
-        return n
+        return sum(p.stats.get("pass_attempts", 0) + p.stats.get("carries", 0) + p.stats.get("sacks_taken", 0)
+                   for p in team.offense)
 
     def _stamp(self, entry: dict) -> dict:
         """Quarter and clock for a log entry, from the seconds left in the half."""
         left = entry.get("left")
         if self.in_overtime or left is None:
-            entry["quarter"] = 4 + self.ot_number if self.in_overtime else self.quarter()
-            entry["clock"] = f"OT{self.ot_number}" if self.in_overtime else self.clock()
-            return entry
-        q = (self.half - 1) * 2 + (1 if left > QUARTER_MARK else 2)
-        secs = max(0, left - QUARTER_MARK if left > QUARTER_MARK else left)
-        entry["quarter"] = q
-        entry["clock"] = f"{secs // 60}:{secs % 60:02d}"
+            entry["quarter"] = self.quarter()
+            entry["clock"] = self.clock()
+        else:
+            entry["quarter"] = self._quarter_at(left)
+            entry["clock"] = self._clock_at(left)
         return entry
 
     def _run_drive(self, offense: Team, start_yardline: int, hurrying: bool, seconds: int):
         defense = self.other(offense)
         plays_before = self._play_count(offense)
-        log_from = self._log_mark if getattr(self, "_log_mark", None) is not None else len(drive_functions.play_log)
+        log_from = self._log_mark if self._log_mark is not None else len(drive_functions.play_log)
         self._log_mark = None
         trailing_late = (
             not self.in_overtime and self.half == 2 and seconds <= cfg.TRAILING_LATE_SECONDS
@@ -337,9 +343,9 @@ class GameSim:
 
         while self.seconds > 0:
             offense, defense = driving, self.other(driving)
-            hurrying = False   # pace is decided per snap by engine/situation.py
+            # no hurry flag: pace is decided per snap by engine/situation.py
             play_ran, result, yardline, self.seconds, drive = self._run_drive(
-                offense, start_yardline, hurrying, self.seconds
+                offense, start_yardline, False, self.seconds
             )
             drive["quarter"] = self.quarter()
             self.drives.append(drive)
@@ -352,9 +358,7 @@ class GameSim:
                 # The team that gave up the safety free-kicks; the defense takes over at its 20.
                 driving, start_yardline = defense, 20
             elif result == "punt_return_td":
-                returner = defense.get_punt_returner()
-                who = f"{returner.name} ({returner.position})" if returner else "Unknown"
-                self._touchdown(defense, "punt_return", f"{who} punt return")
+                self._punt_return_touchdown(defense)
                 driving, start_yardline = self._kickoff(defense)
             elif result == "touchdown":
                 self._touchdown(offense, play_ran or "run", self._td_scorer())
@@ -381,9 +385,11 @@ class GameSim:
         elif result == "safety":
             self._safety(defense)
         elif result == "punt_return_td":
-            returner = defense.get_punt_returner()
-            who = f"{returner.name} ({returner.position})" if returner else "Unknown"
-            self._touchdown(defense, "punt_return", f"{who} punt return")
+            self._punt_return_touchdown(defense)
+
+    def _punt_return_touchdown(self, team: Team) -> None:
+        """The receiving team's punt returner took it back for six."""
+        self._touchdown(team, "punt_return", f"{self._returner_label(team.get_punt_returner())} punt return")
 
     def _play_overtime(self) -> None:
         """College rules: alternating possessions from the 25; two-point tries from the
@@ -484,16 +490,14 @@ class GameSim:
         apply_baseline_fatigue(self.away)
         for team in (self.home, self.away):
             team._active.update(p for p in team.offense + team.defense if p.fatigue)   # they recover from kickoff
-        for team in (self.home, self.away):
             for p in team.offense + team.defense:
                 if p.in_game:
                     p.stats["games_started"] = p.stats.get("games_started", 0) + 1
 
+        # The toss winner receives the opening kickoff 80% of the time.
         toss_winner = random.choice(["home", "away"])
-        if random.random() < 0.8:
-            receives_first = toss_winner
-        else:
-            receives_first = "away" if toss_winner == "home" else "home"
+        toss_loser = "away" if toss_winner == "home" else "home"
+        receives_first = toss_winner if random.random() < 0.8 else toss_loser
         first = self.home if receives_first == "home" else self.away
 
         self.half = 1

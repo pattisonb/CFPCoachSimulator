@@ -41,6 +41,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import season  # noqa: E402
+from engine import game_config as cfg  # noqa: E402
 
 OUT = ROOT / "data" / "real_adjustments.json"
 RECENT = 3                      # games that decide the depth order
@@ -233,7 +234,6 @@ def invert(curve: list[tuple[float, float]], share: float) -> float:
 
 def target_weight(p: dict) -> float:
     """The engine's target weight for a receiver from his ratings (play_functions._pick_target)."""
-    from engine import game_config as cfg
     rr, hands, speed = p.get("route_running") or 50, p.get("hands") or 50, p.get("speed") or 50
     w = (max(1.0, (rr + hands) / 2 + speed / 2) / 100) ** cfg.TARGET_WEIGHT_POWER
     return w * (cfg.TE_TARGET_WEIGHT if p["position"] == "TE" else 1.0)
@@ -243,7 +243,6 @@ def usage(teams: dict, by_team: dict, games: list[dict], ratings: dict | None = 
     """team -> {"rb_lead_feature": f, "targets": {slug: multiplier}}. With `ratings`, receivers
     whose real usage needs more than the engine's target cap get the rest as a rating fix
     there: team -> {slug: {"route_running": d, "hands": d}}."""
-    from engine import game_config as cfg
     curve = feature_curve(teams, games)
     real_lead = {}
     for slug, t in teams.items():

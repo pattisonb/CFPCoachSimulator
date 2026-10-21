@@ -13,6 +13,11 @@ from engine.game import simulate_game  # noqa: E402
 MATCHUPS = [("niu", "notre-dame"), ("app-st", "michigan"), ("toledo", "alabama"), ("james-madison", "georgia"),
             ("memphis", "ohio-state"), ("boise-state", "oregon"), ("iowa", "ohio-state")]
 
+
+def overall(teams: dict, slug: str):
+    return teams[slug]["team_ratings"]["overall"] if "team_ratings" in teams[slug] else "?"
+
+
 if __name__ == "__main__":
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 200
     season._init(str(season.TEAMS_FILE))
@@ -25,7 +30,6 @@ if __name__ == "__main__":
             g = simulate_game(season._TEAMS[home], season._TEAMS[away], seed=i)
             margins.append(g["away"]["score"] - g["home"]["score"])
             wins += g["winner"] == "away"
-        ovr = lambda s: teams[s]["team_ratings"]["overall"] if "team_ratings" in teams[s] else "?"
-        print(f"{teams[away]['name']:<16} ({ovr(away)}) at {teams[home]['name']:<12} ({ovr(home)}): upset {100 * wins / n:4.1f}%  "
+        print(f"{teams[away]['name']:<16} ({overall(teams, away)}) at {teams[home]['name']:<12} ({overall(teams, home)}): upset {100 * wins / n:4.1f}%  "
               f"median margin {statistics.median(margins):+.0f}, closest {max(margins):+d}, worst {min(margins):+d}")
     print(f"{len(MATCHUPS) * n} games in {time.perf_counter() - t0:.0f}s")

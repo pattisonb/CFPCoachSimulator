@@ -144,6 +144,18 @@ def _z(values: list[float]) -> tuple[float, float]:
     return mean, sd
 
 
+def _ordinal(n: int) -> str:
+    """1 -> '1st', 2 -> '2nd', 11 -> '11th'."""
+    if 4 <= n <= 20:
+        return f"{n}th"
+    return f"{n}{ {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')}"
+
+
+def _podium(race: list[dict]) -> dict:
+    """An award's winner (None when nobody qualified) and its top three."""
+    return {"winner": race[0] if race else None, "finalists": race[:3]}
+
+
 def _rank_bonus(rank: Optional[int]) -> float:
     if rank is None:
         return -1.0
@@ -171,6 +183,7 @@ class Pool:
         self.week = through_week if through_week is not None else state["current_week"]
         self.ranks = self._ranks()
         self.players: list[dict] = []
+        self._eligible: dict[str, list[dict]] = {}    # by_group's cache: group -> players who played enough
         self._build()
         self._standardize()
 
@@ -196,8 +209,7 @@ class Pool:
     def team_term(self, slug: str) -> float:
         """How much a player's team helps him: wins, losses and the poll position."""
         r = self.records[slug]
-        rank = self.ranks["cfp"].get(slug) or self.ranks["ap"].get(slug)
-        t = 0.22 * r["wins"] - 0.55 * r["losses"] + _rank_bonus(rank)
+        t = 0.22 * r["wins"] - 0.55 * r["losses"] + _rank_bonus(self.rank_of(slug))
         if self.teams[slug]["conference"] in G5:
             t -= 0.6 if r["losses"] > 0 else 0.25
         return t
@@ -337,11 +349,10 @@ class Pool:
 
     def by_group(self, group: str, **cond) -> list[dict]:
         # the players with a score in the group who played enough, listed once per group
-        index = self.__dict__.setdefault("_eligible", {})
-        if group not in index:
-            index[group] = [p for p in self.players if group in p["z"] and self.played_enough(p)]
+        if group not in self._eligible:
+            self._eligible[group] = [p for p in self.players if group in p["z"] and self.played_enough(p)]
         out = []
-        for p in index[group]:
+        for p in self._eligible[group]:
             if cond.get("conference") and p["conference"] != cond["conference"]:
                 continue
             if cond.get("roles") and p["role"] not in cond["roles"]:
@@ -476,17 +487,20 @@ def award_race(pool: Pool, kind: str, team_weight: float, rng: random.Random, co
                      "interior", "front", "stpoy", "dl", "wr")
     rows = []
     for players, g in _candidates(pool, kind, conference):
-        prior = POSITION_PRIOR.get(g, 0.5) if cross and kind not in ("dl", "wr", "interior") else 1.0
         if kind in ("dpoy", "dpoy_alt", "def_freshman"):
             prior = {"EDGE": 1.3, "LB": 1.0, "DB": 0.78, "DT": 1.0}[g]   # history: LB and DE dominate, DTs win sometimes
-        if kind == "front":
+        elif kind == "front":
             prior = {"OL": 0.85, "EDGE": 1.05, "DT": 0.95, "LB": 0.8}[g]   # Lombardi: linemen first
-        if kind == "wr":
+        elif kind == "wr":
             prior = {"WR": 1.0, "TE": 0.7}[g]   # the Biletnikoff has always gone to a wide receiver
-        if kind == "interior":
+        elif kind == "interior":
             prior = {"OL": 1.0, "DT": 0.95}[g]
-        if kind == "versatile":
+        elif kind == "versatile":
             prior = 0.6
+        elif cross and kind != "dl":
+            prior = POSITION_PRIOR.get(g, 0.5)
+        else:
+            prior = 1.0
         for p in players:
             s = (p["zb"][g] if cross else p["z"][g]) * prior + team_weight * pool.team_term(p["team"])
             if kind == "versatile":
@@ -574,11 +588,11 @@ def coach_table(pool: Pool, include_playoff: bool = False) -> list[dict]:
     pre = {e["team"]: e["rank"] for e in pool.state.get("polls", {}).get("0", {}).get("ap", [])}
     champions = pool.state.get("champions", {})
     bracket = pool.state.get("bracket") or {}
+    seed_list = bracket.get("seeds") if isinstance(bracket, dict) else None
     seeds = {}
-    if isinstance(bracket, dict):
-        for s in bracket.get("seeds", []) if isinstance(bracket.get("seeds"), list) else []:
-            if isinstance(s, dict) and "team" in s:
-                seeds[s["team"]] = s.get("seed")
+    for s in seed_list if isinstance(seed_list, list) else []:
+        if isinstance(s, dict) and "team" in s:
+            seeds[s["team"]] = s.get("seed")
     rows = []
     for slug in fbs:
         r = pool.records[slug]
@@ -641,7 +655,13 @@ def broyles_table(pool: Pool) -> list[dict]:
             if not c.get("name"):
                 continue
             gain = (rrank[slug] - rank[slug]) / max(1, len(fbs)) * 6
-            s = gain + 0.6 * (wins - 8) + (2.0 if rank[slug] < 10 else 0.8 if rank[slug] < 25 else 0) + 0.8 * _rank_bonus(pool.rank_of(slug))
+            if rank[slug] < 10:
+                unit_bonus = 2.0
+            elif rank[slug] < 25:
+                unit_bonus = 0.8
+            else:
+                unit_bonus = 0
+            s = gain + 0.6 * (wins - 8) + unit_bonus + 0.8 * _rank_bonus(pool.rank_of(slug))
             rows.append({"coach": c["name"], "role": role, "team": slug, "team_name": teams[slug]["name"], "unit_rank": rank[slug] + 1,
                          "rating_rank": rrank[slug] + 1, "wins": wins, "score": round(s, 2)})
     rows.sort(key=lambda r: -r["score"])
@@ -710,7 +730,9 @@ def select_team(pool: Pool, slots: list[tuple[str, int]], team_weight: float, no
         if key not in utilities:
             gg = g or p["group"]
             u = p["z"][gg] + team_weight * pool.team_term(p["team"]) + rng.gauss(0, noise)
-            if g == "RS" or (g is None and gg == "RS"):
+            if gg == "RS":
+                # a return slot ignores the team; the first draw above is still taken so the
+                # random stream (and every later pick) stays the same
                 u = p["z"]["RS"] + rng.gauss(0, noise)
             utilities[key] = u
         return utilities[key]
@@ -721,16 +743,14 @@ def select_team(pool: Pool, slots: list[tuple[str, int]], team_weight: float, no
             players, g = _slot_pool(pool, slot, conference)
             if slot == "AP":
                 ranked = sorted(players, key=lambda p: -(p["z"][p["group"]] * 0.6 + p["z"]["RS"] * 0.6 + rng.gauss(0, noise)))
-                g_for = lambda p: p["group"]   # noqa: E731
             else:
                 ranked = sorted(players, key=lambda p: -utility(p, g))
-                g_for = (lambda p, g=g: g or p["group"])   # noqa: E731
             picked = 0
             for p in ranked:
                 if p["key"] in taken:
                     continue
                 taken.add(p["key"])
-                c = pool.card(p, g_for(p))
+                c = pool.card(p, g or p["group"])   # the all-purpose and generic DL slots score each player at his own group
                 out.append({"slot": slot, "level": level, **c})
                 picked += 1
                 if picked >= n:
@@ -741,9 +761,7 @@ def select_team(pool: Pool, slots: list[tuple[str, int]], team_weight: float, no
 def all_america(pool: Pool, rng: random.Random) -> dict:
     """Five selectors, each with first and second teams; consensus is first team on three of
     the five, unanimous on all five."""
-    teams = {}
-    for name, (tw, noise) in SELECTORS.items():
-        teams[name] = select_team(pool, AA_SLOTS, tw, noise, rng, levels=2)
+    teams = {name: select_team(pool, AA_SLOTS, tw, noise, rng, levels=2) for name, (tw, noise) in SELECTORS.items()}
     counts: dict[str, dict] = {}
     for name, picks in teams.items():
         for c in picks:
@@ -795,11 +813,10 @@ def conference_awards(pool: Pool, state: dict, final: bool = True) -> dict:
             if kind == "coach":
                 rows = [c for c in coaches if c["conference"] == conf]
                 race = coach_award(rows, 0.5, 1.0, rng)
-                entry["awards"].append({"name": name, "kind": kind, "winner": race[0] if race else None, "finalists": race[:3]})
-                continue
-            tw = {"mvp": 0.5, "opoy": 0.35, "dpoy": 0.2}.get(kind, 0.3)
-            race = award_race(pool, kind, tw, rng, conference=conf, n=5, noise=0.15 if final else 0.0)
-            entry["awards"].append({"name": name, "kind": kind, "winner": race[0] if race else None, "finalists": race[:3]})
+            else:
+                tw = {"mvp": 0.5, "opoy": 0.35, "dpoy": 0.2}.get(kind, 0.3)
+                race = award_race(pool, kind, tw, rng, conference=conf, n=5, noise=0.15 if final else 0.0)
+            entry["awards"].append({"name": name, "kind": kind, **_podium(race)})
         out[conf] = entry
     return out
 
@@ -808,21 +825,19 @@ def national_awards(pool: Pool, state: dict, final: bool = True) -> dict:
     """The Heisman vote, the national player awards, coach awards and All-America (week 15)."""
     rng = _rng(state, "national")
     heisman = heisman_vote(pool, rng, straw=not final)
+    noise = 0.2 if final else 0.0
     awards = []
     for name, kind, tw, honors in NATIONAL_AWARDS:
-        noise = 0.2 if final else 0.0
-        if kind == "mvp_team":
-            race = award_race(pool, "mvp", tw, rng, n=5, noise=noise)
-        else:
-            race = award_race(pool, kind, tw, rng, n=5, noise=noise)
-        awards.append({"name": name, "kind": kind, "honors": honors, "winner": race[0] if race else None, "finalists": race[:3], "race": race})
+        # the Walter Camp is scored like the other player of the year awards, with its own team weight
+        race = award_race(pool, "mvp" if kind == "mvp_team" else kind, tw, rng, n=5, noise=noise)
+        awards.append({"name": name, "kind": kind, "honors": honors, **_podium(race), "race": race})
     coaches = coach_table(pool)
     coach_awards = []
     for name, ww, sw in COACH_AWARDS:
         race = coach_award(coaches, ww, sw, rng)
-        coach_awards.append({"name": name, "winner": race[0] if race else None, "finalists": race[:3]})
+        coach_awards.append({"name": name, **_podium(race)})
     broyles = broyles_table(pool)
-    coach_awards.append({"name": "Broyles Award", "winner": broyles[0] if broyles else None, "finalists": broyles[:3], "assistant": True})
+    coach_awards.append({"name": "Broyles Award", **_podium(broyles), "assistant": True})
     out = {"heisman": heisman, "awards": awards, "coach_awards": coach_awards}
     if final:
         out["all_america"] = all_america(pool, rng)
@@ -834,11 +849,11 @@ def postseason_awards(pool: Pool, state: dict) -> dict:
     rng = _rng(state, "postseason")
     out = []
     manning = award_race(pool, "qb", 0.7, rng, n=5, noise=0.2)
-    out.append({"name": "Manning Award", "kind": "qb", "honors": "best quarterback, bowls and playoff included", "winner": manning[0] if manning else None, "finalists": manning[:3]})
+    out.append({"name": "Manning Award", "kind": "qb", "honors": "best quarterback, bowls and playoff included", **_podium(manning)})
     bryant = coach_award(coach_table(pool, include_playoff=True), 0.6, 0.6, rng, title=True)
-    out.append({"name": "Paul \"Bear\" Bryant Award", "kind": "coach", "honors": "coach of the year, after the playoff", "winner": bryant[0] if bryant else None, "finalists": bryant[:3]})
+    out.append({"name": "Paul \"Bear\" Bryant Award", "kind": "coach", "honors": "coach of the year, after the playoff", **_podium(bryant)})
     moore = ol_units(pool)
-    out.append({"name": "Joe Moore Award", "kind": "ol_unit", "honors": "best offensive line", "winner": moore[0] if moore else None, "finalists": moore[:3]})
+    out.append({"name": "Joe Moore Award", "kind": "ol_unit", "honors": "best offensive line", **_podium(moore)})
     return {"awards": out}
 
 
@@ -858,18 +873,24 @@ def my_awards(state: dict, awards: dict) -> list[dict]:
                         "who": c.get("name") or c.get("coach") or f"{c.get('team_name', 'Your')} offensive line",
                         "position": "OL" if unit else c.get("position"), "line": c.get("line", "")})
 
+    def add_award(stage: str, a: dict) -> None:
+        """The winner and the other finalists of one award."""
+        add(stage, a["name"], a.get("winner"), "winner")
+        for c in a.get("finalists", [])[1:]:
+            add(stage, a["name"], c, "finalist")
+
     nat = awards.get("national") or {}
     h = nat.get("heisman") or {}
     for i, c in enumerate(h.get("candidates", [])[:10]):
-        add("Heisman Trophy", "Heisman Trophy", c, "winner" if i == 0 else f"{i + 1}{'th' if 4 <= i + 1 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get((i + 1) % 10, 'th')} in the vote, {c['points']} points" + (" (finalist)" if c in h.get("finalists", []) else ""))
+        if i == 0:
+            place = "winner"
+        else:
+            place = f"{_ordinal(i + 1)} in the vote, {c['points']} points" + (" (finalist)" if c in h.get("finalists", []) else "")
+        add("Heisman Trophy", "Heisman Trophy", c, place)
     for a in nat.get("awards", []) + (awards.get("postseason") or {}).get("awards", []):
-        add("National awards", a["name"], a.get("winner"), "winner")
-        for c in a.get("finalists", [])[1:]:
-            add("National awards", a["name"], c, "finalist")
+        add_award("National awards", a)
     for a in nat.get("coach_awards", []):
-        add("Coach awards", a["name"], a.get("winner"), "winner")
-        for c in a.get("finalists", [])[1:]:
-            add("Coach awards", a["name"], c, "finalist")
+        add_award("Coach awards", a)
     aa = nat.get("all_america") or {}
     for c in aa.get("consensus", []):
         add("All-America", "Consensus All-American" + (" (unanimous)" if c.get("unanimous") else ""), c, c["slot"])
@@ -878,9 +899,7 @@ def my_awards(state: dict, awards: dict) -> list[dict]:
             add("All-America", f"{sel} All-America {'first' if c['level'] == 1 else 'second'} team", c, c["slot"])
     for conf, entry in (awards.get("conference") or {}).items():
         for a in entry.get("awards", []):
-            add(f"{conf} awards", a["name"], a.get("winner"), "winner")
-            for c in a.get("finalists", [])[1:]:
-                add(f"{conf} awards", a["name"], c, "finalist")
+            add_award(f"{conf} awards", a)
         for sel, picks in (entry.get("teams") or {}).get("selectors", {}).items():
             for c in picks:
                 add(f"All-{conf}", f"{sel} {['first', 'second', 'third'][c['level'] - 1]} team", c, c["slot"])

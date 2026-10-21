@@ -35,7 +35,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Iterator, Optional
 
 import awards
 import ratings as ratings_v2
@@ -56,17 +56,6 @@ SELECTION_WEEK = 16      # Dec 6 selection, Dec 12 Army-Navy
 FINAL_WEEK = 20          # Jan 25, 2027
 # Weeks run Tuesday to Monday (Labor Day games belong to that weekend); week 1 starts Aug 25.
 SEASON_EPOCH = datetime(2026, 8, 25)
-
-
-def week_of_date(date_iso: Optional[str]) -> Optional[int]:
-    """Calendar week of a game from its UTC kickoff (US evening games land on the next UTC day)."""
-    if not date_iso or len(date_iso) < 10:
-        return None
-    try:
-        local = datetime.fromisoformat(date_iso.replace("Z", "+00:00")).replace(tzinfo=None) - timedelta(hours=6)
-    except ValueError:
-        return None
-    return max(1, (local - SEASON_EPOCH).days // 7 + 1)
 AP_OTHERS = 15        # teams listed under "also receiving votes" below the top 25
 # Conferences that still play divisions: the title game is division winner vs division winner.
 DIVISIONS = {
@@ -84,6 +73,18 @@ CFP_WEEKS = {10, 11, 12, 13, 14, 15}   # committee rankings released after these
 POSTSEASON_DATES = {CCG_WEEK: ("2026-12-04", "2026-12-05"), SELECTION_WEEK: ("2026-12-06", "2026-12-12"),
                     17: ("2026-12-15", "2026-12-24"), 18: ("2026-12-26", "2027-01-01"), 19: ("2027-01-02", "2027-01-15"),
                     20: ("2027-01-25", "2027-01-25")}
+
+
+def week_of_date(date_iso: Optional[str]) -> Optional[int]:
+    """Calendar week of a game from its UTC kickoff (US evening games land on the next UTC day)."""
+    if not date_iso or len(date_iso) < 10:
+        return None
+    try:
+        local = datetime.fromisoformat(date_iso.replace("Z", "+00:00")).replace(tzinfo=None) - timedelta(hours=6)
+    except ValueError:
+        return None
+    return max(1, (local - SEASON_EPOCH).days // 7 + 1)
+
 
 REGION_TEAM = {
     "New England": "kestrel-bay", "Mid-Atlantic": "alder-ridge-state", "Southeast": "calder-springs",
@@ -126,8 +127,8 @@ FCS_STATES = {
     "Wofford": "SC", "Youngstown State": "OH",
 }
 
-# NCAA.com / ESPN short names used in the 2026 polls -> our slugs (beyond the generic matcher)
 _teams_cache: dict = {}
+_teams_meta: dict = {}   # from the teams file: the attribute scale (ratings v2) and the engine's spread scale
 
 
 def load_teams() -> dict:
@@ -140,7 +141,9 @@ def load_teams() -> dict:
     return _teams_cache
 
 
-_teams_meta: dict = {}   # from the teams file: the attribute scale (ratings v2) and the engine's spread scale
+def _is_p4(slug: str, team: dict) -> bool:
+    """A Power 4 school (Notre Dame counts as one)."""
+    return team["conference"] in polls.P4 or slug == "notre-dame"
 
 
 # ----- the house rating scale ------------------------------------------------------------
@@ -154,7 +157,9 @@ _teams_meta: dict = {}   # from the teams file: the attribute scale (ratings v2)
 # engine values on the same shape. One pair of slopes per position group, computed once.
 
 SCALE_GROUP = {"MLB": "LB", "ROLB": "LB", "LOLB": "LB"}    # linebackers share one group (the roles are small)
+BELOW = 0.6      # below the Power 4 starter average, a standard deviation is worth 60% as much
 _scale_cache: dict = {}
+_ea_cache: dict = {}
 
 
 def _house_scale() -> dict:
@@ -168,7 +173,7 @@ def _house_scale() -> dict:
     for slug, t in teams.items():
         if t["fictional"]:
             continue
-        p4 = t["conference"] in polls.P4 or slug == "notre-dame"
+        p4 = _is_p4(slug, t)
         for p in t["offense"] + t["defense"]:
             g = SCALE_GROUP.get(p["position"], p["position"])
             keys = [(k, p[k]) for k, _ in RATING_LABELS if isinstance(p.get(k), (int, float))] + [("overall", player_overall(p))]
@@ -216,10 +221,6 @@ def engine_rating(p: dict, key: str, ours: float) -> int:
     return house_to_engine(p["position"], key, ours)
 
 
-BELOW = 0.6      # below the Power 4 starter average, a standard deviation is worth 60% as much
-_ea_cache: dict = {}
-
-
 def _ea_scale() -> dict:
     """position group -> (mean, sd) of EA's overall for Power 4 starters."""
     if _ea_cache:
@@ -227,7 +228,7 @@ def _ea_scale() -> dict:
     import statistics as st
     vals: dict = {}
     for slug, t in load_teams().items():
-        if t["fictional"] or not (t["conference"] in polls.P4 or slug == "notre-dame"):
+        if t["fictional"] or not _is_p4(slug, t):
             continue
         for p in t["offense"] + t["defense"]:
             if p.get("in_game") and isinstance(p.get("ea_overall"), (int, float)):
@@ -265,9 +266,14 @@ def same_group(a: str, b: str) -> bool:
 def tier_of(team: dict) -> str:
     if team["fictional"]:
         return "FCS"
-    if team["conference"] in polls.P4 or team["slug"] == "notre-dame":
+    if _is_p4(team["slug"], team):
         return "P4"
     return "G5"
+
+
+def _tiers(teams: dict) -> dict[str, str]:
+    """slug -> tier ("P4", "G5" or "FCS") for every team."""
+    return {slug: tier_of(t) for slug, t in teams.items()}
 
 
 TEAM_REGION = {slug: region for region, slug in REGION_TEAM.items()}
@@ -380,6 +386,11 @@ def _real_ap_votes_2026(week: int, teams: dict) -> Optional[tuple[list[str], lis
     return order[:25], rest[:AP_OTHERS], votes
 
 
+def _poll_seed(state: dict, week: int) -> int:
+    """The random seed of the voters' ballots for a week of this season."""
+    return (state.get("seed") or 0) * 1000 + week
+
+
 def _ballot_poll(state: dict, prev_full: list[dict], games: list[dict], rec_t: dict, tiers: dict, week: int,
                  pinned: tuple = ()) -> tuple[list[str], list[str], dict[str, dict]]:
     """The AP poll from the voters' ballots (polls.next_ballots): each simulated voter moves
@@ -387,7 +398,7 @@ def _ballot_poll(state: dict, prev_full: list[dict], games: list[dict], rec_t: d
     points and first-place votes are the voters' own. The ballots are kept in the season;
     the first simulated week seeds them from the last poll's vote points. `pinned` (the
     champion, then the runner-up) go first and second on every ballot for the final poll."""
-    seed = (state.get("seed") or 0) * 1000 + week
+    seed = _poll_seed(state, week)
     ballots = state.get("ap_ballots") or polls.seed_ballots(prev_full, seed=seed)
     ballots, _, _ = polls.next_ballots(ballots, prev_full, games, rec_t, tiers, polls.load_ballot_params(), seed=seed)
     top = [t for t in pinned if t]
@@ -440,11 +451,10 @@ def _fill_open_dates(games: dict, teams: dict) -> int:
     to keep conference mates together) and play in the latest week both have open.
     Returns the number of games added."""
     count: dict[str, int] = {}
+    homes: dict[str, int] = {}
     for g in games.values():
         for t in (g["home"], g["away"]):
             count[t] = count.get(t, 0) + 1
-    homes: dict[str, int] = {}
-    for g in games.values():
         homes[g["home"]] = homes.get(g["home"], 0) + 1
     short = sorted(t for t, tm in teams.items() if not tm["fictional"] and count.get(t, 0) < 12)
 
@@ -469,7 +479,8 @@ def _fill_open_dates(games: dict, teams: dict) -> int:
         if len(pool) < 2:
             return (1000.0 * len(pool), [])
         a, rest = pool[0], pool[1:]
-        options = [(1000 + best(rest)[0], best(rest)[1])]
+        unpaired_cost, unpaired_pairs = best(rest)      # `a` sits out
+        options = [(1000 + unpaired_cost, unpaired_pairs)]
         for i, b in enumerate(rest):
             c = cost(a, b)
             if c is not None:
@@ -539,6 +550,8 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
             else:
                 break
 
+    # remaining mode: each team's in-season form from the real results so far (form.py), applied in every sim
+    form_teams, form_players = _form_table(teams, current) if mode == "remaining" else ({}, {})
     state = {
         "coach": coach,
         "id": uuid.uuid4().hex[:12], "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -546,17 +559,16 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
         "mode": mode, "seed": seed, "current_week": current, "phase": "regular", "done": False,
         "games": games, "polls": {}, "scores": {}, "champions": {}, "runners_up": {}, "bracket": None, "playoff": {}, "my_boxes": {},
         "settings": {"god_mode": False, "morale": True},
-        # remaining mode: each team's in-season form from the real results so far (form.py), applied in every sim
-        "form": _form_table(teams, current)[0] if mode == "remaining" else {},
-        "player_form": _form_table(teams, current)[1] if mode == "remaining" else {},
+        "form": form_teams, "player_form": form_players,
         "rng_state": rng.randrange(1 << 30),
     }
-    real = _real_polls_2026(teams) if mode == "remaining" else {}
-    preseason = real.get(0) or _real_polls_2026(teams).get(0) or _rating_poll(teams)
+    real_polls = _real_polls_2026(teams)
+    real = real_polls if mode == "remaining" else {}
+    preseason = real_polls.get(0) or _rating_poll(teams)
     ap_params, _ = polls.load_params()
     ratings = {slug: t["team_ratings"]["overall"] for slug, t in teams.items() if not t["fictional"]}
     state["scores"] = polls.preseason_scores(preseason[:25], ratings, ap_params)
-    tiers = {slug: tier_of(t) for slug, t in teams.items()}
+    tiers = _tiers(teams)
     pre_full = polls.rank(state["scores"], {}, tiers, ap_params, n=25 + AP_OTHERS)
     pre_others = [t for t in pre_full if t not in set(preseason[:25])][:AP_OTHERS]
     pre_votes = _ap_votes(state, preseason[:25] + pre_others, tiers, ap_params, 0)
@@ -576,6 +588,41 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
 
 def _rating_poll(teams: dict) -> list[str]:
     return [slug for slug, t in sorted(teams.items(), key=lambda kv: -kv[1]["team_ratings"]["overall"]) if not t["fictional"]][:25]
+
+
+# ----- small helpers on one game ----------------------------------------------------
+
+def _winner(g: dict) -> str:
+    """The winner of a played game (the away team when the scores are level)."""
+    return g["home"] if g["home_score"] > g["away_score"] else g["away"]
+
+
+def _scores_for(g: dict, home: bool) -> tuple:
+    """(points for, points against) from one side's point of view."""
+    return (g["home_score"], g["away_score"]) if home else (g["away_score"], g["home_score"])
+
+
+def _venue(g: dict, home: bool) -> str:
+    """Where a game is played for one side: "neutral", "home" or "away"."""
+    if g["neutral"]:
+        return "neutral"
+    return "home" if home else "away"
+
+
+def _record_str(r: dict) -> str:
+    """A won-lost record as text, e.g. "9-3"."""
+    return f"{r['wins']}-{r['losses']}"
+
+
+def _poll_game(g: dict) -> dict:
+    """The part of a played game the poll models read."""
+    return {"home": g["home"], "away": g["away"], "home_score": g["home_score"], "away_score": g["away_score"],
+            "neutral": g["neutral"]}
+
+
+def _ccg_event_id(conference: str) -> str:
+    """The event id of a conference's title game."""
+    return f"ccg-{conference.lower().replace(' ', '-')}"
 
 
 def _records(state: dict, through_week: Optional[int] = None, include_playoff: bool = False) -> dict[str, dict]:
@@ -802,7 +849,7 @@ def _poll_entries(order: list[str], prev_rank: dict[str, int], state: dict, team
     for i, slug in enumerate(order, start):
         r = rec.get(slug, {"wins": 0, "losses": 0})
         e = {"rank": i, "team": slug, "name": teams[slug]["name"], "previous": prev_rank.get(slug),
-             "record": f"{r['wins']}-{r['losses']}", "conference": teams[slug]["conference"]}
+             "record": _record_str(r), "conference": teams[slug]["conference"]}
         if votes is not None:
             v = votes.get(slug, {"first_place": 0, "points": 0})
             e["first_place"], e["points"] = v["first_place"], v["points"]
@@ -811,7 +858,7 @@ def _poll_entries(order: list[str], prev_rank: dict[str, int], state: dict, team
 
 
 def _ap_votes(state: dict, order: list[str], tiers: dict[str, str], params: dict, week: int) -> dict[str, dict]:
-    return polls.ballots(order, state["scores"], tiers, params, seed=(state.get("seed") or 0) * 1000 + week)
+    return polls.ballots(order, state["scores"], tiers, params, seed=_poll_seed(state, week))
 
 
 def _coaches_entries(state: dict, teams: dict, ap_order: list[str], others: list[str], rec_t: dict, tiers: dict,
@@ -827,7 +874,7 @@ def _coaches_entries(state: dict, teams: dict, ap_order: list[str], others: list
     order = [t for t in pinned if t] + [t for t in order if t not in pinned]
     top, rest = order[:25], order[25:25 + AP_OTHERS]
     votes = polls.ballots(top + rest, state["scores"], tiers, params, n_voters=polls.COACHES_VOTERS,
-                          seed=(state.get("seed") or 0) * 1000 + week + 500, noise=polls.COACHES_NOISE)
+                          seed=_poll_seed(state, week) + 500, noise=polls.COACHES_NOISE)
     return {"coaches": _poll_entries(top, prev_rank, state, teams, week, votes=votes, records=records),
             "coaches_others": _poll_entries(rest, prev_rank, state, teams, week, start=26, votes=votes, records=records)}
 
@@ -837,12 +884,11 @@ def _final_ap_poll(state: dict, teams: dict) -> None:
     playoff result counts, the champion is first and the runner-up second (true of every
     final poll of the playoff era), and the rest fall in by the model."""
     ap_params, _ = polls.load_params()
-    tiers = {slug: tier_of(t) for slug, t in teams.items()}
+    tiers = _tiers(teams)
     last_week = max((int(k) for k, v in state["polls"].items() if v.get("ap")), default=CCG_WEEK)
     prev = state["polls"][str(last_week)]["ap"]
     prev_rank = {e["team"]: e["rank"] for e in prev}
-    post_games = [{"home": g["home"], "away": g["away"], "home_score": g["home_score"], "away_score": g["away_score"],
-                   "neutral": g["neutral"]} for g in state["games"].values() if g["played"] and g["week"] > SELECTION_WEEK]
+    post_games = [_poll_game(g) for g in state["games"].values() if g["played"] and g["week"] > SELECTION_WEEK]
     rec = _records(state, include_playoff=True)
     rec_t = {s: (r["wins"], r["losses"]) for s, r in rec.items()}
     scores = polls.update_scores(state["scores"], post_games, prev_rank, rec_t, tiers, CCG_WEEK, CCG_WEEK, ap_params)
@@ -872,11 +918,11 @@ def _final_ap_poll(state: dict, teams: dict) -> None:
 
 def _update_polls_after_week(state: dict, teams: dict, week: int, real_ap: Optional[list[str]] = None) -> None:
     ap_params, cfp_params = polls.load_params()
-    tiers = {slug: tier_of(t) for slug, t in teams.items()}
+    tiers = _tiers(teams)
     prev = state["polls"].get(str(week - 1), {}).get("ap", [])
     prev_rank = {e["team"]: e["rank"] for e in prev}
-    week_games = [{"home": g["home"], "away": g["away"], "home_score": g["home_score"], "away_score": g["away_score"],
-                   "neutral": g["neutral"]} for g in state["games"].values() if g["played"] and g["week"] == week and g["kind"] != "playoff"]
+    week_games = [_poll_game(g) for g in state["games"].values()
+                  if g["played"] and g["week"] == week and g["kind"] != "playoff"]
     rec = _records(state, week)
     rec_t = {s: (r["wins"], r["losses"]) for s, r in rec.items()}
     # the season-long scores still move (the committee model reads them) ...
@@ -935,12 +981,26 @@ def _with_injuries(team: dict, injured: list) -> dict:
     return t
 
 
+def _injured(state: dict, slug: str) -> list[tuple[str, str]]:
+    """(name, position) of every player on slug's injury list."""
+    return [(i["name"], i["position"]) for i in (state.get("injuries") or {}).get(slug, {}).values()]
+
+
+def _game_team(slug: str, form_shift: float, player_shifts: dict, edits: dict, morale: Optional[dict],
+               depth: Optional[dict], injured: list) -> dict:
+    """One side of a game as the engine plays it (in a pool worker): the team's form, then
+    god-mode edits and your coach, morale, the depth chart and the injury list."""
+    from form import apply_form
+    team = apply_form(_TEAMS[slug], form_shift, player_shifts)
+    team = with_morale(with_edits(team, edits), morale)
+    return _with_injuries(apply_depth(team, depth), injured)
+
+
 def _sim_one(args: tuple) -> dict:
     from engine.game import simulate_game
     event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out, edits, morale, form = args
-    from form import apply_form
-    home_team = _with_injuries(apply_depth(with_morale(with_edits(apply_form(_TEAMS[home], form[0], form[2]), edits[0]), morale[0]), depth[0]), home_out)
-    away_team = _with_injuries(apply_depth(with_morale(with_edits(apply_form(_TEAMS[away], form[1], form[3]), edits[1]), morale[1]), depth[1]), away_out)
+    home_team = _game_team(home, form[0], form[2], edits[0], morale[0], depth[0], home_out)
+    away_team = _game_team(away, form[1], form[3], edits[1], morale[1], depth[1], away_out)
     r = simulate_game(home_team, away_team, None, seed, venue="neutral" if neutral else "home", momentum=morale[2])
     out = {"event_id": event_id, "home_score": r["home"]["score"], "away_score": r["away"]["score"], "overtime": r["overtime_periods"],
            "stats": {"home": _compact_side(r["home"], r["drives"], "home"), "away": _compact_side(r["away"], r["drives"], "away")},
@@ -1021,23 +1081,27 @@ def player_form_shifts(state: dict, slug: str) -> dict:
 
 def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, report: Optional[Reporter] = None,
                stage: str = "Simulating") -> None:
+    def form_shift(g: dict, slug: str) -> float:
+        # the team's in-season form, plus the real FCS school's strength for a stand-in
+        return team_form_shift(state, slug) + (g.get("fcs_shift", 0.0) if state_fictional(slug) else 0.0)
+
     jobs = []
     if game_ids:
         seeds = _week_seeds(state, state["games"][game_ids[0]]["week"])
         spare = random.Random(state["rng_state"])
+    keep = True   # every game's box score is kept (on disk; yours also in the state)
+    depth = state.get("depth") or {}
     for eid in game_ids:
         g = state["games"][eid]
-        keep = True   # every game's box score is kept (on disk; yours also in the state)
-        depth = state.get("depth") or {}
-        injuries = state.get("injuries") or {}
-        jobs.append((eid, g["home"], g["away"], g["neutral"], seeds.get(eid) if eid in seeds else spare.randrange(1 << 30), keep, (depth.get(g["home"]), depth.get(g["away"])),
-                     [(i["name"], i["position"]) for i in injuries.get(g["home"], {}).values()],
-                     [(i["name"], i["position"]) for i in injuries.get(g["away"], {}).values()],
-                     (team_edits(state, g["home"]), team_edits(state, g["away"])),
-                     (morale_payload(state, g["home"]), morale_payload(state, g["away"]), morale_on(state)),
-                     (team_form_shift(state, g["home"]) + (g.get("fcs_shift", 0.0) if state_fictional(g["home"]) else 0.0),
-                      team_form_shift(state, g["away"]) + (g.get("fcs_shift", 0.0) if state_fictional(g["away"]) else 0.0),
-                      player_form_shifts(state, g["home"]), player_form_shifts(state, g["away"]))))
+        home, away = g["home"], g["away"]
+        seed = seeds[eid] if eid in seeds else spare.randrange(1 << 30)
+        # the job is pickled to a pool worker: plain tuples, lists and dicts only
+        jobs.append((eid, home, away, g["neutral"], seed, keep, (depth.get(home), depth.get(away)),
+                     _injured(state, home), _injured(state, away),
+                     (team_edits(state, home), team_edits(state, away)),
+                     (morale_payload(state, home), morale_payload(state, away), morale_on(state)),
+                     (form_shift(g, home), form_shift(g, away),
+                      player_form_shifts(state, home), player_form_shifts(state, away))))
     before = rank_map(state, state["current_week"]) if morale_on(state) else {}
     if not jobs:
         return
@@ -1101,7 +1165,7 @@ def _ccg_matchups(state: dict, teams: dict) -> list[dict]:
             a, b = rows[0], rows[1]
         hosted = conf in HOSTED_CCG
         site = f"{teams[a['slug']]['stadium']['name']}, {a['name']}" if hosted else None
-        out.append({"event_id": f"ccg-{conf.lower().replace(' ', '-')}", "week": CCG_WEEK, "date": None, "neutral": not hosted,
+        out.append({"event_id": _ccg_event_id(conf), "week": CCG_WEEK, "date": None, "neutral": not hosted,
                     "home": a["slug"], "away": b["slug"], "home_display": a["name"], "away_display": b["name"],
                     "conference_game": False, "played": False, "home_score": None, "away_score": None, "overtime": 0,
                     "real": False, "kind": "ccg", "conference": conf, "title": f"{conf} Championship", "site": site,
@@ -1122,15 +1186,21 @@ def _playoff_round(state: dict, week: int, teams: dict) -> list[dict]:
     def mk(eid, home, away, neutral, title, home_seed, away_seed, site_key=None):
         site = sites.get(site_key) if site_key else None
         bowl_name = site["bowl"] if site else None
+        if not bowl_name:
+            shown_title = title
+        elif "Championship" in bowl_name:
+            shown_title = bowl_name
+        else:
+            shown_title = f"{bowl_name} ({title.split(':')[0]})"   # e.g. "Rose Bowl (Quarterfinal)"
         return {"event_id": eid, "week": week, "date": (site or {}).get("date"), "neutral": neutral, "home": home, "away": away,
                 "home_display": f"({home_seed}) {teams[home]['name']}", "away_display": f"({away_seed}) {teams[away]['name']}",
                 "conference_game": False, "played": False, "home_score": None, "away_score": None, "overtime": 0,
-                "real": False, "kind": "playoff",
-                "title": bowl_name if bowl_name and "Championship" in bowl_name else (f"{bowl_name} ({title.split(':')[0]})" if bowl_name else title),
+                "real": False, "kind": "playoff", "title": shown_title,
                 "bowl": bowl_name, "site": (site or {}).get("site") or (f"{teams[home]['stadium']['name']}, {teams[home]['name']}" if not neutral else None),
                 "home_seed": home_seed, "away_seed": away_seed}
 
     def winner(eid):
+        """(winner, his seed) of an earlier playoff game."""
         g = state["games"][eid]
         return (g["home"], g["home_seed"]) if g["home_score"] > g["away_score"] else (g["away"], g["away_seed"])
 
@@ -1237,18 +1307,21 @@ def my_game_id(state: dict, week: Optional[int] = None) -> Optional[str]:
     return next((eid for eid, g in state["games"].items() if g["week"] == week and not g["played"] and me in (g["home"], g["away"])), None)
 
 
+def _stage_reporter(report: Optional[Reporter]) -> Callable[[str], None]:
+    """`say(stage)`: report a stage of the week without a game count."""
+    def say(stage: str) -> None:
+        if report:
+            report(stage, None, None)
+    return say
+
+
 def play_my_game(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter] = None) -> Optional[str]:
     """Game day: set the week up if it is not yet, then simulate only your game. The rest
     of the week waits for `advance`. Returns the game's event id, or None on a bye."""
     if state["done"]:
         return None
-
-    def say(stage: str) -> None:
-        if report:
-            report(stage, None, None)
-
     week = state["current_week"] + 1
-    _setup_week(state, week, load_teams(), say)
+    _setup_week(state, week, load_teams(), _stage_reporter(report))
     eid = my_game_id(state, week)
     if eid is None:
         return None
@@ -1262,17 +1335,12 @@ def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter]
     progress display."""
     if state["done"]:
         return state
-
-    def say(stage: str) -> None:
-        if report:
-            report(stage, None, None)
-
+    say = _stage_reporter(report)
     teams = load_teams()
     week = state["current_week"] + 1
-    label = week_label(week)
     _setup_week(state, week, teams, say)
     ids = [eid for eid, g in state["games"].items() if g["week"] == week and not g["played"]]
-    _run_games(state, ids, pool, report, stage=f"Simming {label}")
+    _run_games(state, ids, pool, report, stage=f"Simming {week_label(week)}")
 
     if week == CCG_WEEK:
         for g in state["games"].values():
@@ -1293,16 +1361,14 @@ def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter]
     if week in PLAYOFF_WEEKS:
         state["playoff"][PLAYOFF_WEEKS[week]] = [eid for eid, g in state["games"].items() if g["week"] == week and g["kind"] == "playoff"]
         if week == FINAL_WEEK:
-            g = state["games"]["cfp-final"]
-            state["champion"] = g["home"] if g["home_score"] > g["away_score"] else g["away"]
+            state["champion"] = _winner(state["games"]["cfp-final"])
             say("Final AP poll")
             _final_ap_poll(state, teams)
             state["done"] = True
             state["phase"] = "done"
     state["current_week"] = week
-    if week in (CCG_WEEK, SELECTION_WEEK, FINAL_WEEK):
-        say({CCG_WEEK: "Handing out the conference awards", SELECTION_WEEK: "Counting the Heisman vote and the national awards",
-             FINAL_WEEK: "Handing out the postseason awards"}[week])
+    if week in _AWARD_STAGES:
+        say(_AWARD_STAGES[week])
         _award_step(state, teams, week)
     schedule_ahead(state, say)
     return state
@@ -1331,6 +1397,12 @@ def injury_report(state: dict, team: Optional[str] = None) -> list[dict]:
                         "returns_week": state["current_week"] + inj["weeks_left"]})
     out.sort(key=lambda i: (-i["weeks_left"], i["team_name"], i["name"]))
     return out
+
+
+# the weeks awards are given, with the progress line shown while they are worked out
+_AWARD_STAGES = {CCG_WEEK: "Handing out the conference awards",
+                 SELECTION_WEEK: "Counting the Heisman vote and the national awards",
+                 FINAL_WEEK: "Handing out the postseason awards"}
 
 
 def _award_step(state: dict, teams: dict, week: int) -> None:
@@ -1560,6 +1632,9 @@ def depth_chart_view(state: dict, slug: str) -> dict:
             "overridden": bool(overrides), "editable": True}
 
 
+_race_cache: dict = {}
+
+
 def awards_view(state: dict) -> dict:
     """The Awards tab: the live race until the awards are given, then the results."""
     teams = load_teams()
@@ -1583,8 +1658,6 @@ def awards_view(state: dict) -> dict:
         out["race"] = race
     return out
 
-
-_race_cache: dict = {}
 
 # the award-card stat line for a position (awards.stat_line groups)
 _LINE_GROUP = {"QB": "QB", "RB": "RB", "WR": "WR", "TE": "TE", "DL": "EDGE", "MLB": "LB", "ROLB": "LB", "LOLB": "LB",
@@ -1651,10 +1724,10 @@ def my_results(state: dict, since_week: int) -> list[dict]:
         if not g["played"] or g["week"] <= since_week or me not in (g["home"], g["away"]):
             continue
         home = g["home"] == me
-        pf, pa = (g["home_score"], g["away_score"]) if home else (g["away_score"], g["home_score"])
+        pf, pa = _scores_for(g, home)
         out.append({"week": g["week"], "title": g.get("title"), "kind": g["kind"], "won": pf > pa, "points_for": pf, "points_against": pa,
                     "opponent": g["away"] if home else g["home"], "opponent_name": g["away_display"] if home else g["home_display"],
-                    "venue": "neutral" if g["neutral"] else ("home" if home else "away"), "overtime": g.get("overtime") or 0,
+                    "venue": _venue(g, home), "overtime": g.get("overtime") or 0,
                     "event_id": eid, "has_box": eid in state.get("my_boxes", {}) or (box_dir(state) / f"{eid}.json").exists()})
     out.sort(key=lambda r: r["week"])
     return out
@@ -1746,26 +1819,27 @@ def resume(state: dict, after_week: Optional[int] = None, team: Optional[str] = 
         if not g["played"] or g["week"] > w or g["kind"] == "playoff":
             continue
         before = rank_map(state, g["week"] - 1)
-        for side, opp in (("home", "away"), (" away".strip(), "home")):
+        for side, opp in (("home", "away"), ("away", "home")):
             me, o = g[side], g[opp]
             pf, pa = g[f"{side}_score"], g[f"{opp}_score"]
             r = rec.get(o, {"wins": 0, "losses": 0})
             games[me].append({"opp": o, "opp_name": g[f"{opp}_display"], "won": pf > pa, "pf": pf, "pa": pa, "week": g["week"],
-                              "venue": "neutral" if g["neutral"] else ("home" if side == "home" else "away"),
-                              "rank_then": before.get(o), "rank_now": now.get(o), "opp_record": f"{r['wins']}-{r['losses']}",
+                              "venue": _venue(g, side == "home"),
+                              "rank_then": before.get(o), "rank_now": now.get(o), "opp_record": _record_str(r),
                               "opp_pct": _wl_pct(r["wins"], r["losses"]), "fcs": o not in real, "event_id": eid,
                               "title": g.get("title"), "conference_game": g["conference_game"]})
     # strength of schedule: two thirds the opponents' record, one third their opponents'
     # (FBS opponents only; the FCS stand-ins play too many schedules to have a record)
+    fbs_opps = {s: [x["opp"] for x in games[s] if not x["fcs"]] for s in real}
     opp_pct: dict[str, float] = {}
     for s in real:
-        opps = [x["opp"] for x in games[s] if not x["fcs"]]
+        opps = fbs_opps[s]
         ow, ol = sum(rec[o]["wins"] for o in opps), sum(rec[o]["losses"] for o in opps)
         opp_pct[s] = _wl_pct(ow, ol)
     sos: dict[str, float] = {}
     oo_pct: dict[str, float] = {}
     for s in real:
-        opps = [x["opp"] for x in games[s] if not x["fcs"]]
+        opps = fbs_opps[s]
         oo_pct[s] = sum(opp_pct[o] for o in opps) / len(opps) if opps else 0.0
         sos[s] = (2 * opp_pct[s] + oo_pct[s]) / 3
     order = sorted(real, key=lambda s: (-sos[s], s))
@@ -1790,7 +1864,7 @@ def resume(state: dict, after_week: Optional[int] = None, team: Optional[str] = 
         r = rec[s]
         conf = [x for x in gl if x["conference_game"]]
         row = {"team": s, "name": teams[s]["name"], "conference": teams[s]["conference"], "rank": now.get(s),
-               "record": f"{r['wins']}-{r['losses']}", "wins": r["wins"], "losses": r["losses"], "conf_record": wl(conf),
+               "record": _record_str(r), "wins": r["wins"], "losses": r["losses"], "conf_record": wl(conf),
                "sos_rank": sos_rank[s], "sos": round(sos[s], 3), "opp_pct": round(opp_pct[s], 3), "oo_pct": round(oo_pct[s], 3),
                "top25": wl([x for x in gl if x["rank_now"]]), "top25_wins": sum(1 for x in wins if x["rank_now"]),
                "vs_winning": wl([x for x in gl if not x["fcs"] and x["opp_pct"] > 0.5]),
@@ -1826,10 +1900,10 @@ def week_view(state: dict, week: int) -> list[dict]:
     for g in state["games"].values():
         if g["week"] != week:
             continue
-        out.append({**{k: v for k, v in g.items()}, "home_rank": ap.get(g["home"]), "away_rank": ap.get(g["away"]),
+        out.append({**g, "home_rank": ap.get(g["home"]), "away_rank": ap.get(g["away"]),
                     "mine": state["team"] in (g["home"], g["away"]), "has_box": has_box(state, g),
                     "home_name": teams[g["home"]]["name"], "away_name": teams[g["away"]]["name"],
-                    "home_record": f"{rec[g['home']]['wins']}-{rec[g['home']]['losses']}", "away_record": f"{rec[g['away']]['wins']}-{rec[g['away']]['losses']}"})
+                    "home_record": _record_str(rec[g["home"]]), "away_record": _record_str(rec[g["away"]])})
     out.sort(key=lambda g: (not g["mine"], {"playoff": 0, "bowl": 1}.get(g["kind"], 2), g["date"] or "", g["event_id"]))
     return out
 
@@ -1964,14 +2038,9 @@ def team_stats_view(state: dict) -> dict:
     return {"teams": rows, "partial": bool(state.get("season_stats_partial"))}
 
 
-def player_stats_view(state: dict, team: Optional[str] = None, category: str = "passing", limit: int = 100,
-                      conference: Optional[str] = None) -> dict:
-    teams = load_teams()
-    ss = _season_stats(state)
-    if category not in PLAYER_CATEGORIES:
-        raise ValueError(f"unknown category {category}")
-    gate, keys, sort_key = PLAYER_CATEGORIES[category]
-    out = []
+def _stat_teams(ss: dict, teams: dict, team: Optional[str], conference: Optional[str]) -> Iterator[tuple[str, dict, dict]]:
+    """(slug, season stats, team info) for the teams a stats table covers: one team, or the
+    league or one conference without the FCS stand-ins."""
     for slug, t in ss.items():
         if team and slug != team:
             continue
@@ -1980,6 +2049,18 @@ def player_stats_view(state: dict, team: Optional[str] = None, category: str = "
             continue
         if conference and not team and info["conference"] != conference:
             continue
+        yield slug, t, info
+
+
+def player_stats_view(state: dict, team: Optional[str] = None, category: str = "passing", limit: int = 100,
+                      conference: Optional[str] = None) -> dict:
+    teams = load_teams()
+    ss = _season_stats(state)
+    if category not in PLAYER_CATEGORIES:
+        raise ValueError(f"unknown category {category}")
+    gate, keys, sort_key = PLAYER_CATEGORIES[category]
+    out = []
+    for slug, t, info in _stat_teams(ss, teams, team, conference):
         for p in t["players"].values():
             st = p["stats"]
             if category == "blocking" and (p["position"] not in ("OL", "TE", "RB") or not st.get("snaps")):
@@ -2016,14 +2097,7 @@ def player_leaders_view(state: dict, team: Optional[str] = None, n: int = 5, con
     teams = load_teams()
     ss = _season_stats(state)
     rows: list[dict] = []
-    for slug, t in ss.items():
-        if team and slug != team:
-            continue
-        info = teams.get(slug)
-        if not info or (info["fictional"] and not team):
-            continue
-        if conference and not team and info["conference"] != conference:
-            continue
+    for slug, t, info in _stat_teams(ss, teams, team, conference):
         for pl in t["players"].values():
             rows.append({"name": pl["name"], "position": pl["position"], "unit": pl["unit"], "team": slug, "team_name": info["name"],
                          "games": pl["games"], "stats": pl["stats"]})
@@ -2100,11 +2174,16 @@ def rivalry_series(state: dict, riv: dict, before_week: Optional[int] = None, te
         if g["home_score"] == g["away_score"]:
             ties += 1
             continue
-        winner = g["home"] if g["home_score"] > g["away_score"] else g["away"]
+        winner = _winner(g)
         wins[winner] += 1
         last = {"winner": winner, "week": g["week"], "event_id": g["event_id"],
                 "score": f"{max(g['home_score'], g['away_score'])}–{min(g['home_score'], g['away_score'])}"}
-    lead = a if wins[a] > wins[b] else b if wins[b] > wins[a] else None
+    if wins[a] > wins[b]:
+        lead = a
+    elif wins[b] > wins[a]:
+        lead = b
+    else:
+        lead = None
     if lead is None:
         text = f"Series tied {wins[a]}-{wins[b]}" + (f"-{ties}" if ties else "")
     else:
@@ -2123,7 +2202,7 @@ def game_rivalry(state: dict, g: dict, after: bool = False) -> Optional[dict]:
     series = rivalry_series(state, riv, None if after else g["week"], teams)
     out = {"name": riv["name"], "trophy": riv.get("trophy") or "", "series": series["text"], "leader": series["leader"]}
     if after and g["played"] and g["home_score"] != g["away_score"]:
-        winner = g["home"] if g["home_score"] > g["away_score"] else g["away"]
+        winner = _winner(g)
         loser = g["away"] if winner == g["home"] else g["home"]
         before = rivalry_series(state, riv, g["week"], teams)
         kept = before["last"] and before["last"]["winner"] == winner
@@ -2147,10 +2226,10 @@ def rivalries_view(state: dict, slug: str) -> dict:
         this = None
         if game is not None:
             home = game["home"] == slug
-            this = {"week": game["week"], "played": game["played"], "event_id": game["event_id"], "venue": "neutral" if game["neutral"] else ("home" if home else "away"),
+            pf, pa = _scores_for(game, home) if game["played"] else (None, None)
+            this = {"week": game["week"], "played": game["played"], "event_id": game["event_id"], "venue": _venue(game, home),
                     "won": ((game["home_score"] > game["away_score"]) == home) if game["played"] else None,
-                    "points_for": (game["home_score"] if home else game["away_score"]) if game["played"] else None,
-                    "points_against": (game["away_score"] if home else game["home_score"]) if game["played"] else None, "has_box": has_box(state, game)}
+                    "points_for": pf, "points_against": pa, "has_box": has_box(state, game)}
         out.append({"name": riv["name"], "trophy": riv.get("trophy") or "", "opponent": opp, "opponent_name": teams[opp]["name"],
                     "series": series["text"], "leader": series["leader"], "my_wins": series["wins"][slug], "their_wins": series["wins"][opp], "ties": series["ties"],
                     "holder": series["last"]["winner"] if series["last"] else None, "game": this})
@@ -2175,15 +2254,15 @@ def team_schedule(state: dict, slug: str) -> list[dict]:
         home = g["home"] == slug
         opp = g["away"] if home else g["home"]
         ap = ap_before(g["week"])
+        pf, pa = _scores_for(g, home) if g["played"] else (None, None)
         schedule.append({"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "site": g.get("site"),
                          "opponent": opp, "opponent_name": g["away_display"] if home else g["home_display"],
                          "opponent_rank": ap.get(opp), "my_rank": ap.get(slug),
-                         "venue": "neutral" if g["neutral"] else ("home" if home else "away"), "played": g["played"],
+                         "venue": _venue(g, home), "played": g["played"],
                          "won": (g["home_score"] > g["away_score"]) == home if g["played"] else None,
-                         "points_for": (g["home_score"] if home else g["away_score"]) if g["played"] else None,
-                         "points_against": (g["away_score"] if home else g["home_score"]) if g["played"] else None,
+                         "points_for": pf, "points_against": pa,
                          "overtime": g["overtime"], "real": g["real"], "has_box": has_box(state, g),
-                         "opponent_record": f"{all_rec[opp]['wins']}-{all_rec[opp]['losses']}", "date": g.get("date"),
+                         "opponent_record": _record_str(all_rec[opp]), "date": g.get("date"),
                          "rivalry": game_rivalry(state, g)})
     played_weeks = {g["week"] for g in schedule}
     for w in range(1, LAST_REGULAR_WEEK + 1):
@@ -2205,10 +2284,8 @@ def _preview_team(state: dict, slug: str) -> dict:
     """The team as the next sim will see it: god-mode edits where that exists, the depth
     chart and the injury list."""
     from form import apply_form
-    td = globals().get("team_data")
-    base = apply_form(td(state, slug) if td else load_teams()[slug], team_form_shift(state, slug), player_form_shifts(state, slug))
-    out = [(i["name"], i["position"]) for i in (state.get("injuries") or {}).get(slug, {}).values()]
-    return _with_injuries(apply_depth(base, (state.get("depth") or {}).get(slug)), out)
+    base = apply_form(team_data(state, slug), team_form_shift(state, slug), player_form_shifts(state, slug))
+    return _with_injuries(apply_depth(base, (state.get("depth") or {}).get(slug)), _injured(state, slug))
 
 
 _PREVIEW_KEYS = ("completions", "pass_attempts", "pass_yards", "passing_touchdowns", "interceptions_thrown",
@@ -2286,23 +2363,19 @@ def game_preview(state: dict, slug: str, sims: int = 20) -> dict:
     opp = g["away"] if home else g["home"]
     ranks = rank_map(state, state["current_week"])
     rec = _records(state, include_playoff=True)
-    riv = globals().get("game_rivalry")
+    game = {"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "site": g.get("site"), "date": g.get("date")}
+    if not g["played"]:
+        game["bye_first"] = g["week"] > state["current_week"] + 1
+    game.update({"opponent": opp, "opponent_name": g["away_display"] if home else g["home_display"], "opponent_rank": ranks.get(opp),
+                 "opponent_record": _record_str(rec[opp]) if opp in rec and not teams.get(opp, {}).get("fictional") else "",
+                 "my_rank": ranks.get(slug), "my_record": _record_str(rec[slug]),
+                 "venue": _venue(g, home), "rivalry": game_rivalry(state, g, after=g["played"])})
     if g["played"]:
         # game day is done: the result, not a prediction
-        pf, pa = (g["home_score"], g["away_score"]) if home else (g["away_score"], g["home_score"])
-        game = {"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "site": g.get("site"), "date": g.get("date"),
-                "opponent": opp, "opponent_name": g["away_display"] if home else g["home_display"], "opponent_rank": ranks.get(opp),
-                "opponent_record": f"{rec[opp]['wins']}-{rec[opp]['losses']}" if opp in rec and not teams.get(opp, {}).get("fictional") else "",
-                "my_rank": ranks.get(slug), "my_record": f"{rec[slug]['wins']}-{rec[slug]['losses']}",
-                "venue": "neutral" if g["neutral"] else ("home" if home else "away"), "rivalry": riv(state, g, after=True) if riv else None,
-                "played": True, "won": pf > pa, "points_for": pf, "points_against": pa, "overtime": g.get("overtime") or 0, "has_box": has_box(state, g)}
+        pf, pa = _scores_for(g, home)
+        game.update({"played": True, "won": pf > pa, "points_for": pf, "points_against": pa, "overtime": g.get("overtime") or 0,
+                     "has_box": has_box(state, g)})
         return {"team": slug, "team_name": teams[slug]["name"], "game": game, "played": True, "prediction": None, "injuries": injury_report(state, slug)}
-    game = {"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "site": g.get("site"), "date": g.get("date"),
-            "bye_first": g["week"] > state["current_week"] + 1,
-            "opponent": opp, "opponent_name": g["away_display"] if home else g["home_display"], "opponent_rank": ranks.get(opp),
-            "opponent_record": f"{rec[opp]['wins']}-{rec[opp]['losses']}" if opp in rec and not teams.get(opp, {}).get("fictional") else "",
-            "my_rank": ranks.get(slug), "my_record": f"{rec[slug]['wins']}-{rec[slug]['losses']}",
-            "venue": "neutral" if g["neutral"] else ("home" if home else "away"), "rivalry": riv(state, g) if riv else None}
     key = (state["id"], state["current_week"], g["event_id"], json.dumps(state.get("player_edits") or {}, sort_keys=True)[:200],
            json.dumps(state.get("depth") or {}, sort_keys=True)[:200], len(json.dumps(state.get("injuries") or {})))
     # one computation per matchup: a second request (the page, while the server warms the
@@ -2340,8 +2413,7 @@ def team_schedule_view(state: dict, slug: str) -> dict:
     teams = load_teams()
     t = teams[slug]
     rec = _records(state, include_playoff=True)[slug]
-    ranks = rank_map(state, state["current_week"]) if state["current_week"] else {}
-    rk = None
+    rk = None   # the rank in the latest poll released
     for w in range(state["current_week"], -1, -1):
         if str(w) in state["polls"]:
             rk = rank_map(state, w).get(slug)
@@ -2443,8 +2515,8 @@ def bowl_projection(state: dict) -> Optional[dict]:
         meta = info.get(b["bowl"], {})
         entry = {**b, "projected": True, "played": False, "has_box": False, "mine": state["team"] in (b.get("home"), b.get("away")),
                  "home_name": teams[b["home"]]["name"] if b.get("home") else None, "away_name": teams[b["away"]]["name"] if b.get("away") else None,
-                 "home_record": f"{projected[b['home']]['wins']}-{projected[b['home']]['losses']}" if b.get("home") else None,
-                 "away_record": f"{projected[b['away']]['wins']}-{projected[b['away']]['losses']}" if b.get("away") else None,
+                 "home_record": _record_str(projected[b["home"]]) if b.get("home") else None,
+                 "away_record": _record_str(projected[b["away"]]) if b.get("away") else None,
                  "home_conference": conf_of.get(b.get("home")), "away_conference": conf_of.get(b.get("away")),
                  "games_played": meta.get("games_played"), "first_played": meta.get("first_played")}
         out.append(entry)
@@ -2469,8 +2541,8 @@ def bowl_view(state: dict) -> list[dict]:
                     "away_name": teams[b["away"]]["name"] if b.get("away") else None,
                     "home_conference": teams[b["home"]]["conference"] if b.get("home") else None,
                     "away_conference": teams[b["away"]]["conference"] if b.get("away") else None,
-                    "home_record": f"{rec[b['home']]['wins']}-{rec[b['home']]['losses']}" if b.get("home") else None,
-                    "away_record": f"{rec[b['away']]['wins']}-{rec[b['away']]['losses']}" if b.get("away") else None,
+                    "home_record": _record_str(rec[b["home"]]) if b.get("home") else None,
+                    "away_record": _record_str(rec[b["away"]]) if b.get("away") else None,
                     "played": bool(g and g["played"]), "home_score": g["home_score"] if g else None, "away_score": g["away_score"] if g else None,
                     "overtime": (g.get("overtime") or 0) if g else 0,
                     "mine": state["team"] in (b.get("home"), b.get("away")), "has_box": bool(g) and has_box(state, g),
@@ -2482,31 +2554,14 @@ def bowl_view(state: dict) -> list[dict]:
     return out
 
 
-if __name__ == "__main__":
-    import sys
-    slug = sys.argv[1] if len(sys.argv) > 1 else "ohio-state"
-    mode = sys.argv[2] if len(sys.argv) > 2 else "full"
-    t0 = time.perf_counter()
-    st = new_season(slug, mode)
-    advance_to(st, 19, progress=lambda w, t: print(f"  week {w}", end="\r"))
-    s = summary(st)
-    print(f"\n{s['team_name']} {s['record']['wins']}-{s['record']['losses']} in {time.perf_counter() - t0:.1f}s; champion: {s['champion_name']}")
-    for g in s["schedule"]:
-        print(f"  wk{g['week']:>2} {'W' if g['won'] else 'L'} {g['points_for']:>2}-{g['points_against']:<2} {g['opponent_name']} {g.get('title') or ''}")
-    print("\nFinal AP top 10:", [(e["rank"], e["name"], e["record"]) for e in st["polls"]["14"]["ap"][:10]])
-    print("Final CFP top 12:", [(e["rank"], e["name"], e["record"]) for e in st["polls"]["14"]["cfp"][:12]])
-    print("Champions:", st["champions"])
-    print("Bracket seeds:", [(x["seed"], x["name"], x["bid"]) for x in st["bracket"]["seeds"]])
-    print("saved", save_season(st))
-
-
 # ----- season summary ------------------------------------------------------
 
 def _game_line(g: dict, teams: dict, state: Optional[dict] = None) -> dict:
-    return {"has_box": has_box(state, g) if state else False,"event_id": g["event_id"], "week": g["week"], "title": g.get("title"), "site": g.get("site"), "played": g["played"],
+    return {"has_box": has_box(state, g) if state else False, "event_id": g["event_id"], "week": g["week"], "title": g.get("title"),
+            "site": g.get("site"), "played": g["played"],
             "home": g["home"], "away": g["away"], "home_name": g.get("home_display") or teams[g["home"]]["name"],
             "away_name": g.get("away_display") or teams[g["away"]]["name"], "home_score": g["home_score"], "away_score": g["away_score"],
-            "overtime": g.get("overtime", 0), "winner": (g["home"] if g["home_score"] > g["away_score"] else g["away"]) if g["played"] else None}
+            "overtime": g.get("overtime", 0), "winner": _winner(g) if g["played"] else None}
 
 
 def _player_leaders(boxes: list[dict], me: str) -> dict:
@@ -2638,10 +2693,11 @@ def season_review(state: dict) -> dict:
     ccgs = {g["event_id"]: g for g in games.values() if g["kind"] == "ccg"}
     champions = []
     for conf, slug in sorted(state["champions"].items()):
-        g = ccgs.get(f"ccg-{conf.lower().replace(' ', '-')}")
+        g = ccgs.get(_ccg_event_id(conf))
         champions.append({"conference": conf, "team": slug, "name": teams[slug]["name"], "game": _game_line(g, teams, state) if g else None})
 
-    rec = _records(state, include_playoff=True)[me]
+    all_rec = _records(state, include_playoff=True)
+    rec = all_rec[me]
     row = next((r for r in standings(state).get(state["conference"], []) if r["slug"] == me), None)
     my_games = sorted((g for g in games.values() if me in (g["home"], g["away"]) and g["played"]), key=lambda g: (g["week"], g["date"] or ""))
 
@@ -2649,18 +2705,17 @@ def season_review(state: dict) -> dict:
         return {e["team"]: e["rank"] for e in state["polls"].get(str(week - 1), {}).get("ap", [])}
 
     lines, wins, losses = [], [], []
-    streak, best_streak, cur = 0, 0, 0
+    best_streak, cur = 0, 0
     for g in my_games:
         home = g["home"] == me
         opp = g["away"] if home else g["home"]
-        pf = g["home_score"] if home else g["away_score"]
-        pa = g["away_score"] if home else g["home_score"]
+        pf, pa = _scores_for(g, home)
         won = pf > pa
         orank = ap_before(g["week"]).get(opp)
-        orec = _records(state, include_playoff=True)[opp] if opp in teams else None
+        orec = all_rec[opp] if opp in teams else None
         line = {"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "opponent": opp,
-                "opponent_name": teams[opp]["name"], "opponent_rank": orank, "opponent_record": f"{orec['wins']}-{orec['losses']}" if orec else None,
-                "venue": "neutral" if g["neutral"] else ("home" if home else "away"), "won": won, "points_for": pf, "points_against": pa,
+                "opponent_name": teams[opp]["name"], "opponent_rank": orank, "opponent_record": _record_str(orec) if orec else None,
+                "venue": _venue(g, home), "won": won, "points_for": pf, "points_against": pa,
                 "margin": pf - pa, "overtime": g.get("overtime", 0), "has_box": has_box(state, g)}
         lines.append(line)
         (wins if won else losses).append(line)
@@ -2668,7 +2723,7 @@ def season_review(state: dict) -> dict:
         best_streak = max(best_streak, cur)
 
     def opp_quality(line):   # ranked opponents first, then by their record
-        return (0 if line["opponent_rank"] else 1, line["opponent_rank"] or 99, -_records(state, include_playoff=True)[line["opponent"]]["wins"])
+        return (0 if line["opponent_rank"] else 1, line["opponent_rank"] or 99, -all_rec[line["opponent"]]["wins"])
 
     best_win = min(wins, key=opp_quality) if wins else None
     worst_loss = max(losses, key=opp_quality) if losses else None
@@ -2688,7 +2743,7 @@ def season_review(state: dict) -> dict:
         finish = "No bowl"
     else:
         finish = None
-    boxes = [b for b in state["my_boxes"].values()]
+    boxes = list(state["my_boxes"].values())
     boxes += [b for g in state["games"].values() if g.get("real") and g["played"] and me in (g["home"], g["away"])
               and g["event_id"] not in state["my_boxes"] for b in [load_box(state, g["event_id"])] if b]
     surprises, disappointments = _surprises(state, teams, ap)
@@ -2835,7 +2890,9 @@ def with_morale(team: dict, morale: Optional[dict]) -> dict:
 
 def _perf_score(position: str, st: dict) -> float:
     """One number for a game (or a per-game average) at a position, on a points-like scale."""
-    n = lambda k: st.get(k, 0) or 0
+    def n(k: str) -> float:
+        return st.get(k, 0) or 0
+
     if position == "QB":
         return n("pass_yards") * 0.04 + n("passing_touchdowns") * 4 - n("interceptions_thrown") * 4 + n("rush_yards") * 0.1 + n("rushing_touchdowns") * 6 - n("fumbles") * 3
     if position in ("RB", "WR", "TE"):
@@ -2933,8 +2990,18 @@ def morale_view(state: dict, slug: str, name: str, position: str) -> dict:
     on = morale_on(state)
     form = player_form(state, slug, name, position) if on else 0.0
     tm = team_morale(state, slug) if on else 0.0
-    label = "Hot streak" if form >= MORALE_HOT else "Cold streak" if form <= -MORALE_HOT else "Steady"
-    team_label = "Team riding high" if tm >= MORALE_HOT else "Team in a slump" if tm <= -MORALE_HOT else ""
+    if form >= MORALE_HOT:
+        label = "Hot streak"
+    elif form <= -MORALE_HOT:
+        label = "Cold streak"
+    else:
+        label = "Steady"
+    if tm >= MORALE_HOT:
+        team_label = "Team riding high"
+    elif tm <= -MORALE_HOT:
+        team_label = "Team in a slump"
+    else:
+        team_label = ""
     return {"enabled": on, "form": round(form, 2), "team": round(tm, 2), "factor": round(morale_factor(state, slug, name, position), 3),
             "label": label, "team_label": team_label}
 
@@ -3178,11 +3245,16 @@ def player_honors(state: dict, team: str, name: str) -> list[dict]:
     def hit(c: Optional[dict]) -> bool:
         return bool(c) and c.get("team") == team and c.get("name") == name
 
+    def ordinal(n: int) -> str:
+        """1st, 2nd, 3rd, 4th ... 11th ... 21st."""
+        suffix = "th" if 4 <= n <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+        return f"{n}{suffix}"
+
     nat = aw.get("national") or {}
     h = nat.get("heisman") or {}
     for i, c in enumerate(h.get("candidates", [])):
         if hit(c):
-            place = "Heisman Trophy winner" if i == 0 else f"{i + 1}{'th' if 4 <= i + 1 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get((i + 1) % 10, 'th')} in the Heisman vote"
+            place = "Heisman Trophy winner" if i == 0 else f"{ordinal(i + 1)} in the Heisman vote"
             out.append({"stage": "Heisman", "award": "Heisman Trophy", "place": place + (" (finalist)" if i and c in h.get("finalists", []) else ""), "detail": f"{c['points']} points"})
     for a in nat.get("awards", []) + (aw.get("postseason") or {}).get("awards", []):
         if hit(a.get("winner")):
@@ -3235,11 +3307,12 @@ def player_game_log(state: dict, team: str, name: str, position: str) -> Optiona
         p = next((x for x in box[side]["players"] if x["name"] == name and x["position"] == position), None)
         if not p:
             continue
-        opp = g["away"] if side == "home" else g["home"]
-        pf, pa = (g["home_score"], g["away_score"]) if side == "home" else (g["away_score"], g["home_score"])
+        home = side == "home"
+        opp = g["away"] if home else g["home"]
+        pf, pa = _scores_for(g, home)
         out.append({"event_id": eid, "week": g["week"], "title": g.get("title"), "opponent": opp,
-                    "opponent_name": g["away_display"] if side == "home" else g["home_display"],
-                    "venue": "neutral" if g["neutral"] else ("home" if side == "home" else "away"),
+                    "opponent_name": g["away_display"] if home else g["home_display"],
+                    "venue": _venue(g, home),
                     "won": pf > pa, "points_for": pf, "points_against": pa, "stats": p["stats"], "started": bool(p.get("starter"))})
     out.sort(key=lambda r: r["week"])
     return out
@@ -3258,7 +3331,14 @@ def recruit_stars(p: dict) -> int:
         n = max(1, len(vals))
         _STAR_CUTS = [vals[min(n - 1, int(n * q))] for q in (0.01, 0.13, 0.73)]
     o = shown_overall(p)
-    return 5 if o >= _STAR_CUTS[0] else 4 if o >= _STAR_CUTS[1] else 3 if o >= _STAR_CUTS[2] else 2
+    five, four, three = _STAR_CUTS
+    if o >= five:
+        return 5
+    if o >= four:
+        return 4
+    if o >= three:
+        return 3
+    return 2
 
 
 def player_profile(state: dict, team: str, name: Optional[str] = None, position: Optional[str] = None,
@@ -3280,7 +3360,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     base_p = next((x for x in teams[team]["offense"] + teams[team]["defense"] if x.get("slug") == p.get("slug")), p)
     ratings = [{"key": k, "label": lbl, "value": display_rating(p, k),
                 "boost": display_rating(p, k, max(1, min(99, round(p[k] * mf)))) - display_rating(p, k)}
-               for k, lbl in RATING_LABELS if isinstance(p.get(k), (int, float)) and p.get(k) is not None]
+               for k, lbl in RATING_LABELS if isinstance(p.get(k), (int, float))]
     have = {r["key"] for r in ratings}
     key_ratings = [k for k in POSITION_RATINGS.get(position, []) if k in have]
     if p.get("slug") and p["slug"] in (t.get("kick_returner"), t.get("punt_returner")) and "return_rating" in have:
@@ -3328,3 +3408,21 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         "game_log": player_game_log(state, team, name, position),
         "honors": player_honors(state, team, name),
     }
+
+
+if __name__ == "__main__":
+    import sys
+    slug = sys.argv[1] if len(sys.argv) > 1 else "ohio-state"
+    mode = sys.argv[2] if len(sys.argv) > 2 else "full"
+    t0 = time.perf_counter()
+    st = new_season(slug, mode)
+    advance_to(st, 19, progress=lambda w, t: print(f"  week {w}", end="\r"))
+    s = summary(st)
+    print(f"\n{s['team_name']} {s['record']['wins']}-{s['record']['losses']} in {time.perf_counter() - t0:.1f}s; champion: {s['champion_name']}")
+    for g in s["schedule"]:
+        print(f"  wk{g['week']:>2} {'W' if g['won'] else 'L'} {g['points_for']:>2}-{g['points_against']:<2} {g['opponent_name']} {g.get('title') or ''}")
+    print("\nFinal AP top 10:", [(e["rank"], e["name"], e["record"]) for e in st["polls"]["14"]["ap"][:10]])
+    print("Final CFP top 12:", [(e["rank"], e["name"], e["record"]) for e in st["polls"]["14"]["cfp"][:12]])
+    print("Champions:", st["champions"])
+    print("Bracket seeds:", [(x["seed"], x["name"], x["bid"]) for x in st["bracket"]["seeds"]])
+    print("saved", save_season(st))
