@@ -85,9 +85,15 @@ if __name__ == "__main__":
     st_ = server._season_state(sid)
     before = len(st_["recruiting"]["offers"].get("ohio-state", []))
     import recruiting as _rc
+    mine = next(r["id"] for r in server.prospect_search(sid, stars=4, state="OH", limit=5)["rows"])   # one you picked
+    server.board_change(sid, server.BoardRequest(pid=mine, on=True))
     _rc.weekly_step(st_, 1)
     assert server.recruiting_view(sid)["auto_recruit"] == "off"
     assert len(st_["recruiting"]["offers"].get("ohio-state", [])) > before, "Auto-recruit for the week did nothing"
+    # ... and it works from your board: your picks first, everyone it chases shows on it
+    board_ids = {b["id"] for b in server.recruiting_view(sid)["board"]}
+    assert mine in st_["recruiting"]["offers"]["ohio-state"], "Auto-recruit skipped a prospect on your board"
+    assert set(st_["recruiting"]["offers"]["ohio-state"]) <= board_ids, "Auto-recruit offered prospects you cannot see"
     # out of hours: 409
     while True:
         try:

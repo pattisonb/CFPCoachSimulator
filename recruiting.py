@@ -549,19 +549,38 @@ def _build_board(state: dict, slug: str, rng: random.Random) -> list[str]:
     return list(dict.fromkeys(national + sampled))
 
 
-def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None, commits: Optional[dict] = None) -> None:
+def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None, commits: Optional[dict] = None,
+                 yours: bool = False) -> None:
     """A school's week by the Auto-recruit rules: keep a board from its footprint and star level,
     offer its best fits as the fall goes, invite top targets to home games, and spend the rest of
-    its hours on calls and messages pitching the priorities it knows, NIL on its top offers."""
+    its hours on calls and messages pitching the priorities it knows, NIL on its top offers.
+    `yours`: your school on Auto-recruit works from your board (your picks first) and puts
+    everyone it recruits on your board, so you see what your staff are doing."""
     rc = state["recruiting"]
     rng = rng or random.Random(f"auto-{rc['seed']}-{slug}-{state['current_week']}")
     week = state["current_week"]
     spots_left = open_spots(state, slug) - (commits if commits is not None else _commits(state)).get(slug, 0)
-    board = [pid for pid in rc["boards"].get(slug, []) if not rc["status"][pid]["signed"]
-             and rc["status"][pid]["committed"] in (None, slug)]
+    live = lambda pid: not rc["status"][pid]["signed"] and rc["status"][pid]["committed"] in (None, slug)
+    picks = [pid for pid in rc["board"] if live(pid)] if yours else []
+    board = list(dict.fromkeys(picks + [pid for pid in rc["boards"].get(slug, []) if live(pid)]))
     if spots_left > 0 and len(board) < 2 * spots_left:
         board = list(dict.fromkeys(board + _build_board(state, slug, rng)))
     rc["boards"][slug] = board
+    if yours:
+        try:
+            _auto_week(state, slug, rng, board, spots_left, week)
+        finally:                                # everyone your staff recruited shows on your board
+            contacted = [pid for pid, by in rc["contacts"].items() if slug in by]
+            for pid in list(rc["offers"].get(slug, [])) + contacted:
+                if pid not in rc["board"] and not rc["status"][pid]["signed"]:
+                    rc["board"].append(pid)
+        return
+    _auto_week(state, slug, rng, board, spots_left, week)
+
+
+def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_left: int, week: int) -> None:
+    """Auto-recruit's offers, visits and contacts for one school's week, best of its board first."""
+    rc = state["recruiting"]
     if spots_left <= 0:
         return
     offers = rc["offers"].setdefault(slug, [])
@@ -764,7 +783,7 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     commits = _commits(state)          # AI weeks change offers and interest, not commitments
     for slug in fbs_schools(state):
         if slug != mine or auto_mine:
-            auto_recruit(state, slug, random.Random(f"auto-{rc['seed']}-{slug}-{week}"), commits)
+            auto_recruit(state, slug, random.Random(f"auto-{rc['seed']}-{slug}-{week}"), commits, yours=slug == mine)
     if week < season.FINAL_WEEK:
         _draws(state, week, rng)
     if week == season.SELECTION_WEEK:
