@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import random
 import statistics
-from typing import Callable, Optional
+from typing import Optional
 
 # ----- constants ---------------------------------------------------------------
 

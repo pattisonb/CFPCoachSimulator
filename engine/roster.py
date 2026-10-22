@@ -1,4 +1,3 @@
-import json
 import random
 
 from . import game_config as cfg

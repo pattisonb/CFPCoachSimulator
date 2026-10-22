@@ -94,6 +94,13 @@
     catch (e) { if (isGone(e)) seasonGone(); }
   }
 
+  // the empty state shows the start-a-season instructions, or a note in their place (loading, or why loading failed)
+  function startNote(text) {
+    $("#season-intro").hidden = !!text;
+    $("#season-loading").hidden = !text;
+    $("#season-loading").textContent = text || "";
+  }
+
   function closeSeason() {
     clearTimeout(state.timer);
     state.season = null;
@@ -101,6 +108,7 @@
     state.viewWeek = null;
     $("#season").hidden = true;
     $("#season-empty").hidden = false;
+    startNote(null);
     history.replaceState(null, "", "/season");
     setSidebar(true, false);
   }
@@ -205,7 +213,10 @@
       if (s.mode !== "real") loadSeasons();
     } catch (err) {
       if (isGone(err) && !REAL) { closeSeason(); loadSeasons().catch(() => {}); toast("That season is no longer on the server. It forgets saved seasons when it restarts.", 8000); }
-      else toast(`Could not open the season: ${errText(err)}`, 4000);
+      else {
+        toast(`Could not open the season: ${errText(err)}`, 4000);
+        if (!state.season) startNote(`Could not load the ${REAL ? "real 2026 " : ""}season: ${errText(err)}`);
+      }
     }
   }
 
@@ -363,8 +374,8 @@
             // the page behind the live game would give the score away (record, "your game is
             // played"), so it updates when the game is over, skipped or closed
             state.afterGameday = s;
-            setBusy(false);
-            openGameDay(gdEvent, mine);
+            // the buttons stay locked until the game is open: until then the page still shows the week before
+            openGameDay(gdEvent, mine).finally(() => setBusy(false));
           } else {
             showSeason(s);
             loadSeasons();
@@ -1822,9 +1833,9 @@
     if (container) gamesState.container = container;
     const box = gamesState.container && gamesState.container.isConnected ? gamesState.container : $("#tab-games");
     box.innerHTML = "";
+    const token = gamesState.token = (gamesState.token || 0) + 1;   // a newer render wins if the weeks change mid-load (Preseason too)
     if (w === 0) { box.append(el("p", { class: "muted", text: "Preseason. Advance a week to play games." })); return; }
     const label = s.week_labels[w] || `Week ${w}`;
-    const token = gamesState.token = (gamesState.token || 0) + 1;   // a newer render wins if the weeks change mid-load
     box.append(el("p", { class: "muted loading-note", text: `Loading ${label} games…` }));
     let data;
     try { data = await api(`/api/season/${s.id}/week/${w}`); }
@@ -2662,10 +2673,13 @@
       bracketState.games = {};
       bracketState.key = key;
       const weeks = BRACKET_ROUNDS.filter((r) => s.current_week >= r.week).map((r) => r.week);
+      const note = el("p", { class: "muted loading-note", text: "Loading the playoff games…" });
+      box.append(note);
       try {
         const views = await Promise.all(weeks.map((w) => api(`/api/season/${s.id}/week/${w}`)));
         for (const v of views) for (const g of v.games) if (g.kind === "playoff") bracketState.games[g.event_id] = g;
       } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); }
+      note.remove();
     }
     const seeds = {};
     for (const x of b.seeds) seeds[x.seed] = x;
@@ -3377,8 +3391,6 @@
       tabs.querySelector("button[data-tab=schedule]").textContent = "Schedules";
       state.tab = "games";
     }
-    // while the season loads, say so instead of showing the start-a-season instructions
-    if (id) $("#season-empty").querySelector("p").textContent = REAL ? "Loading the real 2026 season: results, polls and stats…" : "Loading the season…";
     for (const a of document.querySelectorAll(".site-nav a")) a.classList.toggle("active", a.dataset.nav === (REAL ? "real" : "season"));
     loadSeasons().catch(() => {});   // the sidebar list loads alongside; the season needs only the teams
     try { await loadTeams(); } catch (err) { toast(`Teams unavailable: ${errText(err)}`, 4000); }

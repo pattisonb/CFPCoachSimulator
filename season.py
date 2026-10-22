@@ -188,7 +188,6 @@ def _house_scale() -> dict:
         if k != "overall":
             continue
         p4 = p4_vals.get((g, k)) or vals
-        m4 = st.mean(p4)
         sd4 = st.pstdev(p4) if len(p4) > 1 else 0.0
         k_hi = max(0.5, min(4.0, 15 / sd4 if sd4 > 1.0 else 2.0))
         slopes[g] = (k_hi, k_hi * BELOW)
