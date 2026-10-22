@@ -37,6 +37,28 @@ POLL_BUMP = ((10, 0.15), (25, 0.07))       # (rank at or better, bump) on this s
 STARTERS = {"QB": 1, "RB": 1, "WR": 3, "TE": 1, "OL": 5, "DL": 4, "LB": 3, "CB": 2, "S": 2, "K": 1, "P": 1}
 LEAVING = {"SR", "SRRS"}                   # seniors: gone after the season (the open spots rule)
 # schools whose academics recruits weigh (a pull of 0.9); every other school 0.5
+# the nine recruiting areas staff are assigned to (spec section 6)
+AREAS = {
+    "Texas": ["TX"],
+    "Florida": ["FL"],
+    "Georgia-Carolinas": ["GA", "SC", "NC"],
+    "Deep South": ["AL", "MS", "LA", "TN", "AR"],
+    "Mid-Atlantic": ["VA", "MD", "DC", "DE", "PA", "NJ", "WV"],
+    "Northeast": ["NY", "CT", "MA", "RI", "VT", "NH", "ME"],
+    "Midwest": ["OH", "MI", "IN", "IL", "WI", "MN", "IA", "MO", "KY", "KS", "NE", "ND", "SD"],
+    "West Coast": ["CA", "OR", "WA", "HI", "AK"],
+    "Mountain-Southwest": ["AZ", "NV", "UT", "CO", "NM", "ID", "MT", "WY", "OK"],
+}
+HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0}
+BASE_POINTS = {"message": 1.0, "call": 2.5, "hc_visit": 6.0, "offer": 4.0, "official_visit": 8.0}   # *tune*
+PITCH_MATCH, PITCH_MISS = 2.0, 0.5         # a pitch on one of his three priorities, any other topic
+DIMINISH = 0.2                             # each earlier contact from the school cuts a new one's worth *tune*
+HC_VISIT_GAP = 4                           # weeks between head coach in-home visits to one prospect
+NIL_VALUE = {5: 0.04, 4: 0.07, 3: 0.12, 2: 0.15}   # interest per NIL point by stars: top prospects expect more *tune*
+NIL_FLOOR = 30
+ROSTER_LIMIT = 85                          # the game's rosters carry the 85 scholarship players
+MIN_OPEN = 12
+OFFER_FACTOR = 1.5
 ACADEMIC = {"stanford", "notre-dame", "northwestern", "duke", "vanderbilt", "rice", "california", "ucla", "michigan",
             "virginia", "georgia-tech", "wake-forest", "boston-college", "navy", "army", "air-force", "usc", "north-carolina"}
 
@@ -200,6 +222,126 @@ def interest(state: dict, slug: str, pid: str) -> float:
     w = weights(p)
     base = PULL_SCALE * sum(w[t] * v for t, v in pull(state, slug, pid).items())
     return base + state["recruiting"]["lists"][pid].get(slug, 0.0)
+
+
+# ----- your hours, points and actions -----------------------------------------------------------------
+
+class RecruitingError(Exception):
+    def __init__(self, code: int, message: str):
+        super().__init__(message)
+        self.code, self.message = code, message
+
+
+def _recruiting_rating(state: dict, slug: str) -> float:
+    if slug == state.get("team") and (state.get("coach") or {}).get("ratings"):
+        return state["coach"]["ratings"].get("recruiting", 50)
+    import season
+    hc = (season.load_teams()[slug].get("coaches") or {}).get("head_coach") or {}
+    return (hc.get("ratings") or {}).get("recruiting", 50)
+
+
+def weekly_hours(state: dict, slug: str) -> int:
+    return int(50 + max(0, _recruiting_rating(state, slug) - 50) // 4)
+
+
+def nil_budget(state: dict, slug: str) -> int:
+    return max(NIL_FLOOR, round(100 * (1 + _baseline(slug))))
+
+
+def open_spots(slug: str) -> int:
+    import season
+    t = season.load_teams()[slug]
+    returning = sum(1 for p in t["offense"] + t["defense"] if p.get("class") not in LEAVING)
+    return max(MIN_OPEN, ROSTER_LIMIT - returning)
+
+
+def offer_cap(state: dict, slug: str) -> int:
+    return math.ceil(OFFER_FACTOR * open_spots(slug))
+
+
+def _contact_points(p: dict, action: str, pitch: Optional[str]) -> float:
+    """What one action is worth to the prospect before diminishing returns."""
+    mult = 1.0 if pitch is None else (PITCH_MATCH if pitch in p["priorities"] else PITCH_MISS)
+    return BASE_POINTS[action] * mult
+
+
+def _hours(state: dict, slug: str) -> float:
+    return state["recruiting"]["hours"].setdefault(slug, weekly_hours(state, slug))
+
+
+def _nil(state: dict, slug: str) -> dict:
+    return state["recruiting"]["nil"].setdefault(slug, {"budget": nil_budget(state, slug), "held": {}})
+
+
+def nil_left(state: dict, slug: str) -> int:
+    n = _nil(state, slug)
+    return n["budget"] - sum(n["held"].values())
+
+
+def _home_game_left(state: dict, slug: str) -> Optional[int]:
+    weeks = [g["week"] for g in state["games"].values()
+             if g["home"] == slug and g["kind"] == "regular" and not g["played"] and g["week"] > state["current_week"]]
+    return min(weeks) if weeks else None
+
+
+def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0) -> dict:
+    """One recruiting action by `slug` on prospect `pid` this week. Raises RecruitingError."""
+    rc = state["recruiting"]
+    p = rc["prospects"].get(pid)
+    if p is None:
+        raise RecruitingError(400, "unknown prospect")
+    if action not in HOURS:
+        raise RecruitingError(400, "unknown action")
+    if pitch is not None and pitch not in PITCHES:
+        raise RecruitingError(400, "unknown pitch")
+    if nil < 0:
+        raise RecruitingError(400, "NIL points cannot be negative")
+    if rc["status"][pid]["signed"]:
+        raise RecruitingError(409, "he has already signed")
+    if _hours(state, slug) < HOURS[action]:
+        raise RecruitingError(409, "not enough hours left this week")
+    offers = rc["offers"].setdefault(slug, [])
+    contact = rc["contacts"].setdefault(pid, {}).setdefault(slug, {"n": 0, "hc_week": None})
+    week, revealed, points = state["current_week"], None, 0.0
+    if action == "pull_offer":
+        if pid not in offers:
+            raise RecruitingError(409, "no offer to pull")
+        offers.remove(pid)
+        _nil(state, slug)["held"].pop(pid, None)
+    elif action == "offer":
+        if nil > nil_left(state, slug):
+            raise RecruitingError(400, "not enough NIL points")
+        if pid in offers:
+            raise RecruitingError(409, "already offered")
+        if len(offers) >= offer_cap(state, slug):
+            raise RecruitingError(409, "offer limit reached")
+        offers.append(pid)
+        if nil:
+            _nil(state, slug)["held"][pid] = nil
+        points = _contact_points(p, "offer", None) + nil * NIL_VALUE.get(p["stars"], 0.1)
+    elif action == "official_visit":
+        if slug in rc["visits"].get(pid, {}):
+            raise RecruitingError(409, "one official visit per school")
+        game_week = _home_game_left(state, slug)
+        if game_week is None:
+            raise RecruitingError(409, "no home game left for a visit")
+        rc["visits"].setdefault(pid, {})[slug] = {"week": game_week, "done": False}
+    else:
+        if action == "hc_visit":
+            if contact["hc_week"] is not None and week - contact["hc_week"] < HC_VISIT_GAP:
+                raise RecruitingError(409, "one in-home visit a month")
+            contact["hc_week"] = week
+        if action == "call":
+            seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
+            revealed = next((t for t in p["priorities"] if t not in seen), None)
+            if revealed:
+                seen.append(revealed)
+        points = _contact_points(p, action, pitch) / (1 + DIMINISH * contact["n"])
+        contact["n"] += 1
+    rc["hours"][slug] = _hours(state, slug) - HOURS[action]
+    if points:
+        rc["lists"][pid][slug] = rc["lists"][pid].get(slug, 0.0) + points
+    return {"interest": interest(state, slug, pid), "hours_left": rc["hours"][slug], "revealed": revealed}
 
 
 def _set_record(state: dict, slug: str, wins: int, losses: int) -> None:
