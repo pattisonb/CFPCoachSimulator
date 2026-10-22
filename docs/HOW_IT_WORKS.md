@@ -619,6 +619,31 @@ gap has an SD of 5.8 points that reality does not reward, mostly extra weight on
 average (+0.94 points per point in the sim, +0.16 real) and on the starting quarterback (+0.14 against
 +0.03). That is the next gap to close.
 
+## Quarterback and interception slopes (October 21, branch margin-noise)
+
+Remeasured on the top-scale build (20 seasons through week 8 of 2026, FBS against FBS), the starters'
+composite average is no longer over-weighted (+1.13 points per point beyond the overall in the sim, +1.30
+real). The quarterback still is: the sim's margin paid +0.155 points per engine point of the starting QB
+beyond the team overall, real margins +0.05 (se 0.06). Team stats show the formulas responsible. Per QB
+engine point (all offensive units in the fit, same schedules), team completion % moved +0.20 in the sim
+against +0.095 real, interception rate -0.055 against -0.004; per point of the secondary, interception
+rate +0.067 against -0.007. Real interceptions barely follow the ratings.
+
+`COMPLETION_PER_QB_POINT` 0.0026 to 0.0013, `INT_PER_QB_POINT` and `INT_PER_COV_POINT` 0.0013 to 0.0004. QB
+margin weight beyond the overall 0.155 to 0.086; completion per QB point 0.20 to 0.12; interceptions per
+QB point -0.055 to -0.022; league completion 63.7% to 64.3% (real 62.9%), interceptions 2.37 to 2.34 per
+100 attempts (real 2.30). Forward test (`calibrate_season.py 30`): picks 72.7% to 73.2%, Brier 0.177 to
+0.174, MAE 12.6 to 12.5, slope 0.98 to 1.09. 20 seasons: favourite won 71.4% to 73.2%, slope 0.92 to 0.985,
+Brier 0.178 to 0.180, correlation 0.664 to 0.656, wins correlation 0.663 to 0.650. Game prediction is
+unchanged within the tests' noise; the gain is in the passing stats. The cost: completion % spreads less
+across teams (SD 4.3 to 3.1; real about 4.5 once a 7-game sample's noise is taken out).
+
+Tested and left out: flattening the generated head-coach discipline to 50 (picks 73.2% to 72.2%, wins
+correlation 0.650 to 0.621) and letting the secondary's speed and tackling cut long runs (defense's share
+of the margin 0.62 to 0.66 against 1.00 real, Brier 0.182 to 0.185). Play-calling ratings pay what reality
+pays (+0.01-0.03 points per point in both). Still open: the sim's margin pays offense more than defense
+(per point of gap, offense 0.83 and defense 0.63 in the sim, 0.81 and 1.00 real).
+
 ## Coach styles
 
 Coaches now change how a team plays, so a new coach or coordinator plays differently:
