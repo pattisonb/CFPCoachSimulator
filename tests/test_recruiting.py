@@ -6,6 +6,7 @@ from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
 import shutil
 
+import prospects
 import recruiting
 import season
 
@@ -69,6 +70,19 @@ if __name__ == "__main__":
     rc["status"][other]["committed"] = "texas"
     recruiting._sign(st, final=False)
     assert rc["status"][other]["signed"] == "texas" and other not in rc["offers"]["ohio-state"]
+    # the odds you see: each offering school's chance to land him plus the field's, a range that
+    # narrows as signing day nears, the schools he likes more ahead
+    target = next(q for q, p in rc["prospects"].items() if rc["status"][q]["committed"] is None and q not in (pid, other))
+    for school in ("ohio-state", "michigan", "kent-state"):
+        rc["offers"].setdefault(school, []).append(target)
+    rc["lists"][target]["ohio-state"] = rc["lists"][target].get("ohio-state", 0) + 8
+    early, late = prospects.odds(st, target, week=0), prospects.odds(st, target, week=13)
+    assert abs(sum(o["pct"] for o in early["schools"]) + early["field"] - 1) < 1e-6
+    assert early["schools"][0]["school"] == "ohio-state" and early["schools"][0]["pct"] > early["schools"][-1]["pct"]
+    assert all(o["lo"] <= o["pct"] <= o["hi"] for o in early["schools"])
+    width = lambda o: o["schools"][0]["hi"] - o["schools"][0]["lo"]
+    assert width(early) > width(late) and early["certainty"] == "Early read" and late["certainty"] == "Solid read"
+    assert late["field"] < early["field"]
     # offers are capped at 1.5x open spots
     cap = recruiting.offer_cap(st, "ohio-state")
     assert 15 <= cap <= 45, cap
@@ -98,6 +112,8 @@ if __name__ == "__main__":
     with_fcs = sum(1 for s in signed if s == "FCS") / len(signed)
     assert 0.25 < with_fcs < 0.45, with_fcs
     assert recruiting.signed_class(st, "georgia") and len(recruiting.signed_class(st, "georgia")) == per["georgia"]
+    ranks = {s: prospects.class_rank(st, s) for s in ("georgia", "kent-state")}
+    assert all(1 <= r <= len(recruiting.fbs_schools(st)) for r in ranks.values()) and ranks["georgia"] < ranks["kent-state"], ranks
     try:
         recruiting.act(st, "georgia", next(iter(rc["prospects"])), "message", pitch="nil"); raise AssertionError
     except recruiting.RecruitingError as e:

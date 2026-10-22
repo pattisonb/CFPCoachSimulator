@@ -53,6 +53,15 @@ if __name__ == "__main__":
     server.board_change(sid, server.BoardRequest(pid=pid, on=True))
     assert [b["id"] for b in server.recruiting_view(sid)["board"]] == [pid]
     assert server.prospect_profile(sid, pid)["public"]["on_board"] is True
+    server.recruit_action(sid, server.RecruitRequest(pid=pid, action="offer"))
+    v = server.recruiting_view(sid)
+    row = v["board"][0]
+    assert row["standing"]["place"] >= 1 and row["standing"]["of"] >= row["standing"]["place"]
+    assert 0 <= row["standing"]["lo"] <= row["standing"]["pct"] <= row["standing"]["hi"] <= 1 and row["standing"]["certainty"]
+    assert v["class_rank"] >= 1 and v["hours_used"] == v["hours"] - v["hours_left"] and v["targets"][0]["id"] == pid
+    prof = server.prospect_profile(sid, pid)
+    assert any(x["school"] == "ohio-state" and x["pct"] is not None for x in prof["public"]["schools"])
+    server.recruit_action(sid, server.RecruitRequest(pid=pid, action="pull_offer"))
     server.board_change(sid, server.BoardRequest(pid=pid, on=False))
     assert server.recruiting_view(sid)["board"] == []
     staff = server.staff_change(sid, server.StaffRequest(staff_id="r1", area="Texas"))

@@ -179,8 +179,9 @@ def _schools(state: dict, pid: str) -> list[dict]:
     schools = offers | set(rc["lists"][pid])
     rows = sorted(((recruiting.interest(state, s, pid), s) for s in schools), reverse=True)[:10]
     visits = rc["visits"].get(pid, {})
+    pct = {o["school"]: o for o in odds(state, pid)["schools"]}
     return [{"school": s, "name": teams[s]["name"], "interest": round(v, 1), "offered": s in offers,
-             "visit": visits.get(s)} for v, s in rows]
+             "visit": visits.get(s), "pct": round(pct[s]["pct"], 3) if s in pct else None} for v, s in rows]
 
 
 def _evaluation(p: dict, public: dict[str, float]) -> dict:
@@ -267,8 +268,25 @@ def board_row(state: dict, pid: str, viewer: str) -> dict:
                visit=(rc["visits"].get(pid) or {}).get(viewer),
                priorities_known=list((rc["revealed"].get(viewer) or {}).get(pid, [])),
                hc_week=((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("hc_week"),
-               nil=rc["nil"].get(viewer, {}).get("held", {}).get(pid, 0))
+               nil=rc["nil"].get(viewer, {}).get("held", {}).get(pid, 0),
+               standing=standing(state, pid, viewer))
     return out
+
+
+def standing(state: dict, pid: str, viewer: str) -> dict:
+    """Where you stand with him, as the board shows it: your place among the offering schools,
+    your chance as a range that narrows toward signing day, and the leader. `place` is None
+    until you offer."""
+    import season
+    o = odds(state, pid)
+    order = [r["school"] for r in o["schools"]]
+    mine = next((r for r in o["schools"] if r["school"] == viewer), None)
+    lead = o["schools"][0] if o["schools"] else None
+    rnd = lambda x: round(x, 3)
+    return {"place": order.index(viewer) + 1 if mine else None, "of": len(order),
+            "pct": rnd(mine["pct"]) if mine else None, "lo": rnd(mine["lo"]) if mine else None,
+            "hi": rnd(mine["hi"]) if mine else None, "certainty": o["certainty"], "field": rnd(o["field"]),
+            "leader": {"school": lead["school"], "name": season.load_teams()[lead["school"]]["name"], "pct": rnd(lead["pct"])} if lead else None}
 
 
 def search(state: dict, viewer: str, position: Optional[str] = None, stars: Optional[int] = None,
@@ -312,6 +330,7 @@ def recruiting_view(state: dict) -> dict:
     nil = recruiting._nil(state, me)
     week = state["current_week"]
     mine = set(rc["board"]) | set(offers)
+    board = [board_row(state, pid, me) for pid in rc["board"]]
     recap = [e for e in rc["log"] if e["week"] == week and (e.get("school") == me or e.get("from") == me or e["pid"] in mine)
              and e["kind"] != "leaning_fcs"]
     return {
@@ -319,9 +338,54 @@ def recruiting_view(state: dict) -> dict:
         "nil": {"budget": nil["budget"], "held": sum(nil["held"].values()), "left": recruiting.nil_left(state, me)},
         "open_spots": recruiting.open_spots(state, me), "committed": len([1 for s in rc["status"].values() if s["committed"] == me]),
         "offers": len(offers), "offers_left": recruiting.offer_cap(state, me) - len(offers),
-        "board": [board_row(state, pid, me) for pid in rc["board"]],
+        "board": board,
+        "targets": sorted((b for b in board if b["standing"]["pct"] is not None and not b["committed"]),
+                          key=lambda b: -b["standing"]["pct"])[:4],
+        "class_rank": class_rank(state, me),
+        "hours_used": recruiting.weekly_hours(state, me) - recruiting._hours(state, me),
         "recap": [dict(e, name=rc["prospects"][e["pid"]]["name"]) for e in recap[-60:]],
         "auto_recruit": bool(((state.get("career") or {}).get("settings") or {}).get("auto_recruit")),
         "staff": state["career"].get("staff", []), "areas": list(recruiting.AREAS),
         "pitches": list(recruiting.PITCHES), "hours_cost": recruiting.HOURS,
     }
+
+
+# ----- the odds you see ------------------------------------------------------------------------------
+
+ODDS_TEMPERATURE = 3.0             # interest points between two schools that make one e (2.7x) likelier *tune*
+FIELD = ((0, 14.0), (8, 10.0), (16, 4.0))   # interest of the schools not yet in it, fading toward signing day *tune*
+ODDS_BAND = ((0, 0.25), (8, 0.12), (13, 0.04))   # half-width of the range shown, by week *tune*
+CLASS_DECAY = 0.85
+CERTAINTY = ((0.18, "Early read"), (0.08, "Taking shape"), (0.0, "Solid read"))
+
+
+def odds(state: dict, pid: str, week: Optional[int] = None) -> dict:
+    """Each offering school's chance to land him, the field's (schools not yet in it), and the
+    range around each that narrows as signing day nears: {"schools": [{school, pct, lo, hi}],
+    "field", "band", "certainty"}, likeliest first."""
+    rc = state["recruiting"]
+    week = state["current_week"] if week is None else week
+    offered = [s for s, pids in rc["offers"].items() if pid in pids]
+    field = recruiting._interp(FIELD, week)
+    weights = {s: math.exp(recruiting.interest(state, s, pid) / ODDS_TEMPERATURE) for s in offered}
+    w_field = math.exp(field / ODDS_TEMPERATURE)
+    total = sum(weights.values()) + w_field
+    band = recruiting._interp(ODDS_BAND, week)
+    rows = sorted(({"school": s, "pct": w / total, "lo": max(0.0, w / total - band), "hi": min(1.0, w / total + band)}
+                   for s, w in weights.items()), key=lambda r: -r["pct"])
+    certainty = next(label for edge, label in CERTAINTY if band >= edge)
+    return {"schools": rows, "field": w_field / total, "band": band, "certainty": certainty}
+
+
+def class_rank(state: dict, slug: str) -> int:
+    """Where a school's class stands nationally: its commitments' composites, best first, each worth
+    CLASS_DECAY times the one before (the best recruits count most, as in the real rankings)."""
+    rc = state["recruiting"]
+    by_school: dict[str, list] = {}
+    for pid, st in rc["status"].items():
+        school = st["signed"] or st["committed"]
+        if school and school != "FCS":
+            by_school.setdefault(school, []).append(rc["prospects"][pid]["composite"])
+    points = {s: sum(c * CLASS_DECAY ** i for i, c in enumerate(sorted(v, reverse=True))) for s, v in by_school.items()}
+    mine = points.get(slug, 0.0)
+    return 1 + sum(1 for s in recruiting.fbs_schools(state) if points.get(s, 0.0) > mine)
