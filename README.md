@@ -28,10 +28,28 @@ Every game comes with:
 
 ### Coach Career
 
-Pick your team and start a season. **New season** plays the whole 2026 schedule from week 1.
-**Start from today** picks up the real season where it stands, with the real results, polls,
-player stats and box scores so far, and you play the rest. Then play a week at a time or
-jump ahead.
+Pick your team and start a season. **New season** starts a Coach Career: the whole 2026
+schedule from week 1, with you as the head coach recruiting the class of 2027 as the season
+goes. **Start from today** picks up the real season where it stands, with the real results,
+polls, player stats and box scores so far, and you play the rest (no recruiting). Then play a
+week at a time or jump ahead: each week is **Recruit → Your game → Advance**.
+
+- **Recruiting.** A fictional class of about 4,000 high school seniors, generated from how
+  real classes look, and nobody committed at the start. Each week you have hours (more with a
+  better recruiter as head coach) and a yearly budget of NIL points: message, call, send the
+  head coach on an in-home visit, invite a prospect to an official visit at a home game, and
+  offer. Pitch what he cares about (a call reveals it). Every other FBS school recruits too,
+  the way it really recruits: its states, its star level, its coach. This season's results
+  count more every week. Commitments come over the fall, top prospects can flip, the early
+  signing period is in December and the rest sign in January. Prospects without real FBS
+  options lean FCS. Turn on **Auto-recruit** to let your staff do it.
+- **Prospects and Prospect Profiles.** The whole class with filters, and a profile for each
+  prospect: his rankings, his list of schools, an evaluation for the top 300 and a comp to a
+  real starter when one is close.
+- **Staff.** Your coordinators and three recruiters each scout an area. Their letter grades
+  narrow with every look, but a read can be wrong, and a weak evaluator more often.
+- **Saves.** Your browser keeps a copy of the career after every week, so it survives the
+  server restarting. **Download career** saves it as a file; **Load career** opens it again.
 
 - **Game day.** Play your own game drive by drive, then advance the week to play
   everyone else's.

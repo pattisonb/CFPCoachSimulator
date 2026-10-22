@@ -4,6 +4,8 @@ import sys as _sys
 from pathlib import Path as _Path
 
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
+import shutil
+
 import recruiting
 import season
 
@@ -96,5 +98,7 @@ if __name__ == "__main__":
     kinds = Counter(e["kind"] for e in rc["log"])
     print(f"season: {t_plain:.1f}s plain, {t_career:.1f}s career (+{t_career - t_plain:.1f}s); FCS {with_fcs:.0%}; "
           f"Georgia signed {per['georgia']}/{recruiting.open_spots(st, 'georgia')}; events {dict(kinds)}")
+    for done in (plain, st):                               # the sims' box scores
+        shutil.rmtree(season.box_dir(done), ignore_errors=True)
     assert t_career - t_plain < 20, "recruiting adds more than 20 s to a season"
     print(f"recruiting ok: {len(rc['prospects'])} prospects; TX 3-star {tx['name']} priorities {tx['priorities']}")

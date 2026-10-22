@@ -11,6 +11,7 @@ from pathlib import Path as _Path
 
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
 
+import shutil
 import statistics as st
 import sys
 
@@ -35,6 +36,7 @@ TOLERANCES = (
 def play(seed: int, team: str = "georgia") -> dict:
     state = season.new_season(team, "full", seed=seed, career=True)
     season.advance_to(state, season.FINAL_WEEK)
+    shutil.rmtree(season.box_dir(state), ignore_errors=True)   # the sim's box scores: not needed here
     return state
 
 

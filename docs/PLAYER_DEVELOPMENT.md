@@ -1,8 +1,11 @@
 # Player development, potential and scouting (spec)
 
-Status: agreed design, October 22, 2026. Built so far: generated classes and development
-and the real players' potential and coachability (`recruits.py`, docs/HOW_IT_WORKS.md "Generated
-recruiting classes"); not yet staff reads, potential that moves, or god mode. Numbers marked *tune* are
+Status: agreed design, October 22, 2026. Built so far: generated classes and development,
+the real players' potential and coachability (`recruits.py`, docs/HOW_IT_WORKS.md "Generated
+recruiting classes"), and your staff's reads of recruits in Coach Career (letter-grade ranges
+that narrow with looks and can be wrong; docs/HOW_IT_WORKS.md "Coach Career"); not yet reads
+of your own roster, reads carried into a signee's player card, potential that moves, or god
+mode for potential. Numbers marked *tune* are
 starting values, to be set so the league's growth matches the real class-year gains below.
 
 Every player, real or generated, gets a current value and a potential value for each attribute,

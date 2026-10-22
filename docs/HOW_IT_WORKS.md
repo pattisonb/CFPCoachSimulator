@@ -94,6 +94,11 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `tools/calibrate_players.py` | Compares sim player lines and usage shares with the real box scores |
 | `tools/forward_test.py` | Freezes the sim's picks for the next week of real games, then scores them once played |
 | `data/predictions/` | The frozen weekly picks (`weekNN.json`) and their score reports (`weekNN_score.*`) |
+| `career.py` | Coach Career: the career block on a season, and its saves (export, import, keep the newer copy) |
+| `recruiting.py` | Coach Career recruiting: the class, schools' pulls, actions, AI schools, commitments, signing, scouting |
+| `prospects.py` | Prospect Profiles: evaluations, comps to real starters, list rows and the Recruiting tab's data |
+| `web/recruiting.js`, `web/careersave.js` | The Recruiting, Prospects and Staff tabs; the career kept in the browser |
+| `tools/check_recruiting.py` | Plays career seasons and holds their recruiting to the real classes |
 
 ## API
 
@@ -103,6 +108,13 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
   returns `{"games": [...], "summary": {...}}`. The first team hosts unless the venue is neutral.
 - `GET /api/games`, `GET /api/games/{id}`, `GET /api/history/summary`, `DELETE /api/games`.
 - `GET /api/sliders` returns slider defaults and groups.
+- Coach Career (404 `not a Coach Career` on any other season): `GET /api/season/{id}/recruiting`
+  (hours, NIL points, offers, your board and the week's news), `GET /api/season/{id}/prospects`
+  (`position`, `stars`, `state`, `status`, `q`, `offset`, `limit`), `GET /api/season/{id}/prospect/{pid}`
+  (the Prospect Profile), `POST /api/season/{id}/recruit` `{"pid", "action", "pitch"?, "nil"?}`,
+  `POST /api/season/{id}/board` `{"pid", "on"}`, `POST /api/season/{id}/staff` `{"staff_id", "area"}`,
+  `POST /api/season/{id}/settings` `{"auto_recruit"}`, `GET /api/season/{id}/export` (`?full=true` adds
+  every box score) and `POST /api/season/import`.
 - `GET /api/predictions` returns the latest frozen week of picks from `tools/forward_test.py`, with a `score`
   block once that week has been scored (`{"week": null, "games": []}` when there are none).
 
@@ -788,6 +800,91 @@ players' stars ship in the model), his trait (Elite 1.35 to Normal 0.9) and 2% p
 A fifth-year player has no room. One offseason over the whole league raises overall by 4.3
 (first-year players), 4.2, 3.8 and 3.3 (seniors), against real year-to-year steps of 2.2 to 5.8.
 The engine does not read any of it yet (fingerprint unchanged).
+
+## Coach Career (recruiting, scouting and saves)
+
+A **New season** on the season page is a Coach Career (`career.py`): the 2026 season played
+as the head coach, recruiting the class of 2027 as it goes (`recruiting.py`, spec in
+`docs/superpowers/specs/2026-10-22-coach-career-design.md`). Older saves, "from today" seasons
+and Real 2026 have no career block and play exactly as before; recruiting never changes how
+games play (the engine fingerprint is unchanged).
+
+**The class.** `recruits.generate_class(2027)` (above): 4,092 fictional seniors, nobody
+committed at the start. Each gets three priorities from seven topics (close to home, playing
+time, prestige, winning now, NIL, the coach, academics), drawn with fixed odds.
+
+**What pulls a prospect to a school** (each 0-1): distance from his home (`exp(-miles / 300)`),
+playing time (returning players at his position rated at least as high), prestige and NIL
+strength (the school's real class-strength baseline), the coach's measured recruiting edge,
+academics, and winning, which blends last season's real record and final rank with this
+season's: last season is 80% of it at week 0, 30% at week 7 and 5% from week 15. His
+interest in a school is his priorities' weights on those pulls plus what the school's
+actions have earned with him.
+
+**Your week.** Hours: `50 + (recruiting rating - 50) / 4`. A message costs 5, a call 15 (it
+reveals one of his priorities), a head coach in-home visit 30 (once a month), an official
+visit invite 10 (at your next home game; a win sells, a 21-point loss hurts, a big stadium
+helps) and an offer nothing. A pitch on one of his priorities is worth twice as much, any
+other topic half; each contact from a school is worth a little less than the last. NIL
+points are a yearly budget from the program's level, attached to offers. Offers are capped at
+1.5 times your open spots: 85 minus returning players, plus four early leavers, capped at
+the school's real class size plus two.
+
+**AI schools.** Every other FBS school runs Auto-recruit each week: a board sampled in
+proportion to its real recruiting (its states' real shares spread over each state's
+prospects, the rest leaning to nearby states, its star level against the national mix, its
+positions); blue-chip programs also chase the best four- and five-stars nationally. They
+offer more as the fall goes, invite top targets to home games and spend their hours on calls
+and messages. The real head coaches' recruiting ratings are rebuilt from their measured
+edge (`build_teams.measured_recruiting`).
+
+**Commitments and signing.** Each week a prospect may commit to the offering school he likes
+most (more likely with a bigger lead, later in the fall, and after an official visit there);
+recruits already committed at his position who are rated at least as high count against a
+school. AI schools keep chasing committed top-300 prospects, and a rival's lead can flip
+one. The early signing period (selection week) signs every commitment; national signing
+day signs the rest with their leader if it has room, or an FCS program. A prospect whose
+best FBS interest is low, or who has no FBS offer by week 8, shows "Leaning FCS".
+
+**Realism** (`tools/check_recruiting.py`, held by `tests/test_recruiting_realism.py` on two
+seeds):
+
+| Measure | Seed 1 | Seed 2 | Real | Held to |
+|---|---|---|---|---|
+| Power 4 class size | 21.5 | 21.5 | 21.7 | 19.5-24.5 |
+| Group of 5 class size | 20.0 | 20.0 | 18.9 | 16.5-21.5 |
+| Signees from the school's state | 0.35 | 0.35 | 0.36 | 0.30-0.42 |
+| Median miles from home | 304 | 302 | 280 | 220-340 |
+| Schools with half their class blue chips | 19 | 20 | 18 | 12-24 |
+| Most five-stars at one school | 5 | 5 | 6 | 6 or fewer |
+| Class strength vs the real baseline (rank r) | 0.86 | 0.82 | | 0.75 or more |
+| FBS signees committed before week 12 | 0.56 | 0.56 | | 0.50 or more |
+| FBS signees signed in the early period | 0.84 | 0.82 | | 0.80-0.90 |
+| Top-300 prospects who decommit | 0.13 | 0.17 | about 0.15 | 0.08-0.22 |
+| Prospects who sign with an FCS program | 0.30 | 0.30 | about a third | |
+
+**Scouting.** Your OC and DC (evaluation = their player development) and three generated
+recruiters each cover one of nine areas; every week each prospect in a covered area gets a
+look. A look sees each grade (athleticism, size and strength, technique, football IQ,
+potential, coachability; true grades are class percentiles) with error `16 * (1 - s) + 4`
+grade points, `s = rating / 99`, and its own confidence strays a little (more for a weak
+evaluator, who is sometimes sure and wrong). The read is the confidence-weighted mean, shown
+as a letter range that narrows with looks. Over 500 prospects after four looks the range
+holds the true letter 66% of the time for an evaluator rated 40, 78% at 60 and 89% at 95.
+About 15% of two-stars and low three-stars are hidden until a look.
+
+**Prospect Profiles** (`prospects.py`). The public block is the national rankings' read (it
+has its own error). The top 300 get a written evaluation (his three strongest and two weakest
+public grades) and a comp: the nearest real 2026 starter at his EA position, measuring his
+ceiling against the starter's ratings over the ten attributes most tied to overall there, and
+only when closer than 30% of starter pairs are to each other. "Our comp" appears after three
+looks, measured from your staff's read, so a wrong read can give a different comp.
+
+**Saves.** After every week the page keeps the career in the browser (IndexedDB): the season
+state, with your own games' box scores in it. When the server has forgotten the career (a
+restart), opening it uploads that copy and the server keeps whichever copy is newer.
+**Download career** saves the state with every box score as a `.ccsave` file. Prospects store
+their EA ratings as lists in one key order, so a new career's save is under 1.5 MB.
 
 ## Player stat lines against real box scores
 
