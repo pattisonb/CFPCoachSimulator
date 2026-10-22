@@ -776,6 +776,19 @@ for three- to five-stars (WR speed 93.2 / 89.7 / 87.0 against a real 92.4 / 90.0
 sizes match by position. Names recombine real recruits' first and last names (2,500 first,
 7,510 last); `taken` keeps real roster names and earlier classes out.
 
+**The real players** get the same two things (`recruits.seed_real_players`, written by
+build_teams.py to `data/player_potential.json`, git-ignored). Coachability: the league is ranked
+by EA development trait, then within a trait by how far ahead of the real norm for his stars and
+years he already is, and cut into the six shares exactly. Every Elite player is a Coach's Dream;
+Star players are Film Junkies (the furthest ahead 17% Coach's Dreams); Impact players 81% Quick
+Study, 11% Steady Grinder, 8% Film Junkie; Normal players 55% Steady Grinder, 30% Slow to Click,
+15% Set in His Ways. Potential: each attribute's career gain times the share of his career left,
+divided by what an average player realizes in that time, times a level from his stars (8,300
+players' stars ship in the model), his trait (Elite 1.35 to Normal 0.9) and 2% per point ahead.
+A fifth-year player has no room. One offseason over the whole league raises overall by 4.3
+(first-year players), 4.2, 3.8 and 3.3 (seniors), against real year-to-year steps of 2.2 to 5.8.
+The engine does not read any of it yet (fingerprint unchanged).
+
 ## Player stat lines against real box scores
 
 `tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed

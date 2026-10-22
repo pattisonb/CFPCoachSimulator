@@ -4,6 +4,7 @@ __pycache__/
 .claude/
 # generated or local-only data (rebuild with build_teams.py; history is per machine)
 data/engine_teams.json
+data/player_potential.json
 data/games.json
 data/season_results.json
 data/seasons/

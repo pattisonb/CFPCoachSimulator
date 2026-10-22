@@ -429,6 +429,9 @@ def players_section() -> dict:
     n = sum(suffix.values())
     return {
         "matched_players": len(rec),
+        # each matched real player's recruiting stars: the live game has no CFBD data, and real
+        # players' potential (recruits.seed_real_players) starts from them
+        "real_stars": {slug: min(max(r.get("stars") or 2, 2), 5) for slug, r in sorted(rec.items())},
         "position_map": position_map,
         "shapes": shapes,
         "career_gain": gain,

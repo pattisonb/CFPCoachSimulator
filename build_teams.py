@@ -728,6 +728,8 @@ def main() -> None:
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(out), encoding="utf-8")
     print(f"wrote {OUT} with {len(teams)} teams ({OUT.stat().st_size / 1e6:.1f} MB)")
+    import recruits                                  # potential and coachability (docs/PLAYER_DEVELOPMENT.md)
+    print(f"wrote {recruits.POTENTIAL_FILE.name}: potential and coachability for {recruits.write_player_potential()} players")
 
 
 if __name__ == "__main__":

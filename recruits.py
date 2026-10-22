@@ -228,6 +228,83 @@ def as_roster_player(p: dict, team: dict, slug: str, jersey: Optional[str] = Non
     }
 
 
+# ----- the real 2026 players: potential and coachability (docs/PLAYER_DEVELOPMENT.md, section 5) -----
+
+POTENTIAL_FILE = ROOT / "data" / "player_potential.json"
+YEARS_IN = {"Freshman": 0, "Freshman (RS)": 1, "Sophomore": 1, "Sophomore (RS)": 2, "Junior": 2,
+            "Junior (RS)": 3, "Senior": 3, "Senior (RS)": 4}
+TRAIT_ORDER = {"Elite": 3, "Star": 2, "Impact": 1, "Normal": 0}
+TRAIT_ROOM = {"Elite": 1.35, "Star": 1.2, "Impact": 1.05, "Normal": 0.9}   # *tune*
+UNKNOWN_STAR_ROOM = 1.4            # no recruiting record (walk-ons, older and fictional players): about a three-star's
+AHEAD_ROOM = 0.02                  # each point of overall above the norm for his stars and years: 2% more room *tune*
+LEVEL_RANGE = (0.2, 3.0)
+
+
+def _norms() -> tuple[dict, dict]:
+    """The real overall (source scale) by stars and years in college, and by years alone."""
+    t = model()["players"]["targets"]["overall_by_stars_and_years"]
+    by_stars = {int(s): {int(y): v[0] for y, v in ys.items()} for s, ys in t.items()}
+    by_years = {}
+    for y in range(5):
+        cells = [ys[str(y)] for ys in t.values() if str(y) in ys]
+        by_years[y] = sum(m * n for m, n in cells) / sum(n for _, n in cells)
+    return by_stars, by_years
+
+
+def seed_real_players(players: list[dict]) -> dict[str, dict]:
+    """slug -> {"coachability", "potential_ea", "stars"} for source roster players (cfb_sim_data).
+    Coachability: the league is ranked by EA development trait, then within a trait by how far
+    ahead of the norm for his stars and years a player already is, and cut into the six levels'
+    shares. Potential: each attribute's room is its real career gain at his position times the
+    share of his career still to come, divided by what an average player realizes in that time,
+    times a player level from his stars, trait and how far ahead he is. Same players, same answer."""
+    stars_of = model()["players"]["real_stars"]
+    gains = model()["players"]["career_gain"]
+    by_stars, by_years = _norms()
+    rows = []
+    for p in players:
+        if not p.get("ratings_ea") or p.get("class_year") not in YEARS_IN:
+            continue
+        y = YEARS_IN[p["class_year"]]
+        s = stars_of.get(p["slug"])
+        norm = by_stars.get(s, {}).get(y, by_years[y]) if s else by_years[y]
+        rows.append((p, y, s, (p.get("overall") or 0) - norm))
+    # coachability: best trait first, then furthest ahead, cut into the levels' shares
+    rows.sort(key=lambda r: (-TRAIT_ORDER.get(r[0].get("dev_trait"), 0), -r[3]))
+    cuts, acc = [], 0.0
+    for name, _, share in COACHABILITY:
+        acc += share
+        cuts.append((round(acc * len(rows)), name))
+    out = {}
+    for i, (p, y, s, ahead) in enumerate(rows):
+        level_name = next(name for cut, name in cuts if i < cut) if i < cuts[-1][0] else COACHABILITY[-1][0]
+        rng = random.Random(f"real-{p['slug']}")
+        left = max(0, CAREER_YEARS - y)
+        realized = sum(share * (1 - (1 - rate) ** left) for _, rate, share in COACHABILITY) if left else 1.0
+        level = math.exp(rng.gauss(-POTENTIAL_SD ** 2 / 2, POTENTIAL_SD))
+        level *= STAR_ROOM.get(s, UNKNOWN_STAR_ROOM) * TRAIT_ROOM.get(p.get("dev_trait"), 1.0) * math.exp(AHEAD_ROOM * ahead)
+        level = max(LEVEL_RANGE[0], min(LEVEL_RANGE[1], level))
+        gain = gains.get(p["position"], {})
+        pot = {}
+        for k, v in p["ratings_ea"].items():
+            room = max(0.0, gain.get(k, 0.0)) * SURVIVOR_TRIM * (left / CAREER_YEARS) / realized * level * rng.uniform(*ATTRIBUTE_SPREAD)
+            top = int(round(min(99, v + room)))
+            if top > v:
+                pot[k] = top               # attributes with no room are left out: potential = current
+        out[p["slug"]] = {"coachability": level_name, "potential_ea": pot, **({"stars": s} if s else {})}
+    return out
+
+
+def write_player_potential() -> int:
+    """Seed every source roster player and write data/player_potential.json (build_teams.py runs this)."""
+    players = []
+    for path in sorted((ROOT / "cfb_sim_data" / "teams").glob("*.json")):
+        players += json.loads(path.read_text(encoding="utf-8"))["roster"]
+    seeded = seed_real_players(players)
+    POTENTIAL_FILE.write_text(json.dumps(seeded, separators=(",", ":")), encoding="utf-8")
+    return len(seeded)
+
+
 def main() -> None:
     year = int(sys.argv[1]) if len(sys.argv) > 1 else 2027
     seed = int(sys.argv[2]) if len(sys.argv) > 2 else 0

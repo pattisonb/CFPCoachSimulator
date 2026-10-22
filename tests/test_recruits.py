@@ -63,6 +63,23 @@ if __name__ == "__main__":
     for i, p in enumerate(cls[:200]):
         m = build_teams.map_player(recruits.as_roster_player(p, team, f"gen-{i}"))
         assert m and isinstance(m.get("speed"), (int, float)), p["name"]
+    # the real players: every one seeded the same way twice, the coachability shares exact, the best
+    # development traits on top, and no room left for a fifth-year player
+    roster = []
+    for path in (_Path(recruits.ROOT) / "cfb_sim_data" / "teams").glob("*.json"):
+        roster += json.loads(path.read_text(encoding="utf-8"))["roster"]
+    seeded = recruits.seed_real_players(roster)
+    assert seeded == recruits.seed_real_players(roster), "seeding is not deterministic"
+    levels = Counter(v["coachability"] for v in seeded.values())
+    for name, _, share in recruits.COACHABILITY:
+        assert abs(levels[name] / len(seeded) - share) < 0.001, (name, levels[name])
+    by_slug = {p["slug"]: p for p in roster}
+    assert all(v["coachability"] == "Coach's Dream" for s, v in seeded.items() if by_slug[s].get("dev_trait") == "Elite")
+    fifth = [v for s, v in seeded.items() if by_slug[s].get("class_year") == "Senior (RS)"]
+    assert fifth and all(not v["potential_ea"] for v in fifth), "a fifth-year player has room to grow"
+    young = [v for s, v in seeded.items() if by_slug[s].get("class_year") == "Freshman"]
+    assert st.mean(len(v["potential_ea"]) for v in young) > 10
+
     top = cls[0]
     print(f"recruits ok: {len(cls)} prospects, #1 {top['name']} ({top['stars']}* {top['position']}, "
           f"{top['hometown']['city']}, {top['hometown']['state']}), freshman overall by stars {({s: round(v, 1) for s, v in by.items()})}")
