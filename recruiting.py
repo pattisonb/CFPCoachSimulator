@@ -116,6 +116,23 @@ def fbs_schools(state: dict) -> list[str]:
     return sorted(s for s, t in season.load_teams().items() if not t.get("fictional") and s in model()["teams"])
 
 
+# ----- scouting (spec section 6) *tune* -----
+GROUPS = ("athleticism", "size_strength", "technique", "football_iq", "potential", "coachability")
+LETTERS = ("A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F")
+LETTER_FLOORS = (97, 93, 90, 87, 83, 80, 77, 73, 70, 67, 63, 60, -1e9)
+GRADE_LOW, GRADE_SPAN = 55.0, 44.0         # a class's worst to best in grade points (percentile within the class)
+COACHABILITY_POINTS = {"Coach's Dream": 97, "Film Junkie": 91, "Quick Study": 85, "Steady Grinder": 78,
+                       "Slow to Click": 69, "Set in His Ways": 58}
+LOOK_SD = (16.0, 4.0)                      # a look's error sd in grade points: 16 * (1 - s) + 4, s = rating / 99
+LETTER_SLACK = 1.65                        # half a letter: a letter range already spans its end letters' width
+CONFIDENCE_NOISE = 0.5                     # how far a look's own confidence strays (log sd, times 1 - s)
+HIDDEN_RATE, HIDDEN_BELOW = 0.15, 0.82     # two-stars and three-stars under this composite, hidden until a look
+_ATHLETIC = ("speed", "acceleration", "agility", "change_of_direction", "jumping")
+_SIZE = ("strength", "toughness", "stamina")
+_IQ = ("awareness", "play_recognition")
+_NOT_TECHNIQUE = set(_ATHLETIC + _SIZE + _IQ) | {"injury", "kick_return", "long_snap"}
+_KICKING = {"kick_power", "kick_accuracy"}
+
 # ----- the class ---------------------------------------------------------------------------------
 
 def _home(p: dict) -> list[float]:
@@ -149,12 +166,15 @@ def start(state: dict, year: int = 2027) -> None:
     for p in cls:
         p["priorities"] = _priorities(p["id"])
         p["home"] = _home(p)
+        hideable = p["stars"] == 2 or (p["stars"] == 3 and p["composite"] < HIDDEN_BELOW)
+        p["hidden"] = hideable and random.Random(f"hidden-{year}-{state.get('rng_state', 0)}-{p['id']}").random() < HIDDEN_RATE
         prospects[p["id"]] = p
+    _truths(prospects)
     state["recruiting"] = {
         "year": year, "prospects": prospects, "lists": {pid: {} for pid in prospects},
         "status": {pid: {"committed": None, "signed": None, "fcs": False} for pid in prospects},
         "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
-        "boards": {}, "seed": state.get("rng_state", 0),
+        "boards": {}, "seed": state.get("rng_state", 0), "reads": {},
     }
 
 
@@ -660,6 +680,7 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     start_log = len(rc["log"])
     rng = random.Random(f"recruiting-{rc['seed']}-{week}")
     _visits(state, week)
+    scout_week(state)
     mine = state.get("team")
     auto_mine = auto_user or ((state.get("career") or {}).get("settings") or {}).get("auto_recruit")
     for slug in fbs_schools(state):
@@ -673,6 +694,133 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
         _sign(state, final=True)
     rc["hours"] = {}
     return rc["log"][start_log:]
+
+
+# ----- scouting: truths, looks, reads and grades -------------------------------------------------------
+
+def _raw(p: dict) -> dict[str, float]:
+    r, pot = p["ratings_ea"], p["potential_ea"]
+    kicker = p["ea_position"] in ("K", "P")
+    skills = sorted((v for k, v in r.items() if k not in _NOT_TECHNIQUE and (kicker or k not in _KICKING)), reverse=True)
+    return {
+        "athleticism": sum(r[k] for k in _ATHLETIC) / len(_ATHLETIC),
+        "size_strength": sum(r[k] for k in _SIZE) / len(_SIZE),
+        "technique": sum(skills[:5]) / 5,
+        "football_iq": sum(r[k] for k in _IQ) / len(_IQ),
+        "potential": sum(sorted(pot.values(), reverse=True)[:8]) / 8,
+    }
+
+
+def _truths(prospects: dict) -> None:
+    """Each prospect's true grade points per group: his percentile within the class (coachability
+    from his label). Hidden from the player; reads estimate them."""
+    raws = {pid: _raw(p) for pid, p in prospects.items()}
+    n = max(1, len(raws) - 1)
+    for g in GROUPS[:-1]:
+        order = sorted(raws, key=lambda pid: raws[pid][g])
+        for i, pid in enumerate(order):
+            prospects[pid].setdefault("truth", {})[g] = round(GRADE_LOW + GRADE_SPAN * i / n, 1)
+    for pid, p in prospects.items():
+        p["truth"]["coachability"] = COACHABILITY_POINTS.get(p.get("coachability"), 78)
+
+
+def letter(points: float) -> str:
+    return next(l for l, floor in zip(LETTERS, LETTER_FLOORS) if points >= floor)
+
+
+def look(state: dict, pid: str, evaluator_rating: int, rng: random.Random) -> None:
+    """One look at a prospect by an evaluator: every group's read moves toward what he saw. A look's
+    error shrinks with the rating; so does how far its confidence can stray (a weak evaluator is
+    sometimes sure and wrong)."""
+    p = state["recruiting"]["prospects"][pid]
+    s = evaluator_rating / 99
+    sd = LOOK_SD[0] * (1 - s) + LOOK_SD[1]
+    read = state["recruiting"]["reads"].setdefault(pid, {"looks": 0, "by": {}, "g": {}})
+    for g in GROUPS:
+        seen = p["truth"][g] + rng.gauss(0, sd)
+        felt = sd * math.exp(rng.gauss(0, CONFIDENCE_NOISE * (1 - s)))
+        add = 1 / felt ** 2
+        mean, prec = read["g"].get(g, (0.0, 0.0))
+        read["g"][g] = [round((mean * prec + seen * add) / (prec + add), 3), round(prec + add, 6)]
+    read["looks"] += 1
+    key = str(evaluator_rating)
+    read["by"][key] = read["by"].get(key, 0) + 1
+
+
+def read_interval(state: dict, pid: str, group: str) -> Optional[tuple[float, float]]:
+    """Your staff's read as a range of grade points, or None before any look."""
+    read = state["recruiting"]["reads"].get(pid)
+    if not read:
+        return None
+    s = int(max(read["by"].items(), key=lambda kv: (kv[1], int(kv[0])))[0]) / 99
+    mean, prec = read["g"][group]
+    half = max(0.0, (0.6 + 1.1 * s) / math.sqrt(prec) - LETTER_SLACK)
+    return mean - half, mean + half
+
+
+def grade_range(state: dict, pid: str, group: str) -> Optional[tuple[str, str]]:
+    """(low, high) letter grades, e.g. ("B-", "A-"); None before any look."""
+    iv = read_interval(state, pid, group)
+    return (letter(iv[0]), letter(iv[1])) if iv else None
+
+
+def make_staff(state: dict) -> list[dict]:
+    """Your OC and DC (evaluation = player development) and three generated recruiters, each on
+    one area: the school's own states first."""
+    import season
+    t = season.load_teams()[state["team"]]
+    rng = random.Random(f"staff-{state.get('rng_state', 0)}-{state['team']}")
+    taken = {p["name"].lower() for p in state["recruiting"]["prospects"].values()}
+    staff = []
+    for sid, role, key in (("oc", "OC", "offensive_coordinator"), ("dc", "DC", "defensive_coordinator")):
+        c = (t.get("coaches") or {}).get(key) or {}
+        r = c.get("ratings") or {}
+        staff.append({"id": sid, "role": role, "name": c.get("name") or role, "evaluation": int(r.get("player_development", 60)),
+                      "recruiting": int(r.get("recruiting", 60))})
+    for i in range(1, 4):
+        staff.append({"id": f"r{i}", "role": "Recruiter", "name": recruits._name(rng, taken),
+                      "evaluation": rng.randint(40, 80), "recruiting": rng.randint(40, 80)})
+    order = []
+    for st_code, _ in (_team_model(state["team"]).get("top_states") or []) + [([t.get("state")], 0)]:
+        codes = st_code if isinstance(st_code, list) else [st_code]
+        for code in codes:
+            area = next((a for a, states in AREAS.items() if code in states), None)
+            if area and area not in order:
+                order.append(area)
+    order += [a for a in AREAS if a not in order]
+    for member, area in zip(staff, order):
+        member["area"] = area
+    return staff
+
+
+def assign(state: dict, staff_id: str, area: str) -> None:
+    if area not in AREAS:
+        raise RecruitingError(400, "unknown area")
+    member = next((m for m in state["career"].get("staff", []) if m["id"] == staff_id), None)
+    if member is None:
+        raise RecruitingError(400, "unknown staff member")
+    member["area"] = area
+
+
+def scout_week(state: dict) -> None:
+    """Every prospect in each staffed area gets a look from the staff member there."""
+    staff = (state.get("career") or {}).get("staff") or []
+    rng = random.Random(f"scout-{state['recruiting']['seed']}-{state['current_week']}")
+    by_state: dict[str, list[str]] = {}
+    for pid, p in state["recruiting"]["prospects"].items():
+        if not state["recruiting"]["status"][pid]["signed"]:
+            by_state.setdefault(p["hometown"]["state"], []).append(pid)
+    for member in staff:
+        for code in AREAS.get(member.get("area"), []):
+            for pid in by_state.get(code, []):
+                look(state, pid, member["evaluation"], rng)
+
+
+def prospect_list(state: dict) -> list[str]:
+    """The class as you can see it: everyone but the hidden prospects your staff have not seen, by rank."""
+    rc = state["recruiting"]
+    return sorted((pid for pid, p in rc["prospects"].items() if not p.get("hidden") or pid in rc["reads"]),
+                  key=lambda pid: rc["prospects"][pid]["rank"])
 
 
 def _set_record(state: dict, slug: str, wins: int, losses: int) -> None:

@@ -28,6 +28,7 @@ def new_career(state: dict, coach: Optional[dict]) -> dict:
     }
     import recruiting
     recruiting.start(state)
+    state["career"]["staff"] = recruiting.make_staff(state)
     return state["career"]
 
 
