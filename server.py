@@ -591,6 +591,9 @@ def _delete_season_file(season_id: str) -> bool:
         return False
     _season_jobs.pop(season_id, None)
     _season_cards.pop(season_id, None)
+    pending = _pending_saves.pop(season_id, None)       # a recruiting save on its way would bring it back
+    if pending:
+        pending.cancel()
     folder = season.SEASONS_DIR / season_id
     if folder.exists():
         shutil.rmtree(folder, ignore_errors=True)
@@ -752,8 +755,30 @@ def season_settings_change(season_id: str, req: SettingsRequest) -> dict:
 
 
 # ----- Coach Career recruiting ------------------------------------------------------------------
-# Recruiting actions change the season in memory and are saved with the week (a save is a large
-# file); board, staff and settings changes are saved at once.
+# Recruiting actions are saved a moment after the last one (several clicks, one save); board,
+# staff and settings changes are saved at once.
+
+SAVE_DELAY = 2.0                     # seconds after the last recruiting action
+_pending_saves: dict[str, threading.Timer] = {}
+
+
+def _save_soon(season_id: str) -> None:
+    old = _pending_saves.pop(season_id, None)
+    if old:
+        old.cancel()
+    timer = threading.Timer(SAVE_DELAY, _save_now, args=(season_id,))
+    timer.daemon = True
+    _pending_saves[season_id] = timer
+    timer.start()
+
+
+def _save_now(season_id: str) -> None:
+    _pending_saves.pop(season_id, None)
+    job = _season_jobs.get(season_id)
+    if not job or job.get("state") is None or job.get("status") == "running":
+        return                               # a running week saves when it is done
+    with _season_lock:
+        season.save_season(job["state"])
 
 def _career_state(season_id: str, change: bool = False) -> dict:
     state = _season_state(season_id)
@@ -801,7 +826,9 @@ def recruit_action(season_id: str, req: RecruitRequest) -> dict:
     with _season_lock:
         if req.pid not in recruiting.visible(st):
             raise HTTPException(404, "unknown prospect")
-        return _recruiting_call(recruiting.act, st, st["team"], req.pid, req.action, req.pitch, req.nil)
+        out = _recruiting_call(recruiting.act, st, st["team"], req.pid, req.action, req.pitch, req.nil)
+    _save_soon(season_id)
+    return out
 
 
 @app.post("/api/season/{season_id}/board")

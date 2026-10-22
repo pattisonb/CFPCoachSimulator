@@ -1204,3 +1204,5 @@ body.career-mode #season-tabs button[data-tab=office] { font-weight: 800; }
   .go-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .go-chance { align-items: flex-start; }
 }
+body.career-mode.on-office .season-head { padding-bottom: 0; }
+.career-steps[hidden] { display: none; }

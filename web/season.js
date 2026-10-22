@@ -807,7 +807,17 @@
     if (b && !b.hidden && !b.disabled) b.click();
     else if (what === "gameday") toast("No game to play this week: a bye, or it is already played. Advance plays the rest of the week.", 4000);
   }
-  const recruitingHelpers = { api, postJSON, toast, openModal, errText, play, onChange: (tab) => { state.tab = tab; renderTab(); window.scrollTo({ top: 0 }); } };
+  // the browser's copy follows recruiting a few seconds after your last change (the server saves first)
+  let backupTimer = null;
+  function backupSoon() {
+    clearTimeout(backupTimer);
+    backupTimer = setTimeout(async () => {
+      const s = state.season;
+      if (!s || !s.career || state.simming) return;
+      try { window.CareerSave.backup(await api(`/api/season/${s.id}`)); } catch (e) { /* the next week's copy covers it */ }
+    }, 5000);
+  }
+  const recruitingHelpers = { api, postJSON, toast, openModal, errText, play, backupSoon, onChange: (tab) => { state.tab = tab; renderTab(); window.scrollTo({ top: 0 }); } };
   function renderCareerSteps(s) {
     const box = $("#career-steps");
     const career = !!s.career && s.mode !== "real";

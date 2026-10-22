@@ -75,6 +75,7 @@
     const names = { message: "Message", call: "Call", hc_visit: "Head coach visit", official_visit: "Official visit invite", offer: "Offer", pull_offer: "Offer pulled" };
     try {
       const r = await H.api(`/api/season/${s.id}/recruit`, H.postJSON(body));
+      H.backupSoon();
       H.toast(`${names[action]} done · ${r.hours_left} hours left${r.revealed ? ` · he cares about ${PITCH_NAMES[r.revealed].toLowerCase()}` : ""}`, 3000);
       return r;
     } catch (err) {
@@ -83,7 +84,7 @@
     }
   }
   async function setBoard(s, pid, on) {
-    try { await H.api(`/api/season/${s.id}/board`, H.postJSON({ pid, on })); return true; }
+    try { await H.api(`/api/season/${s.id}/board`, H.postJSON({ pid, on })); H.backupSoon(); return true; }
     catch (err) { H.toast(`Could not change your board: ${H.errText(err)}`, 4000); return false; }
   }
 

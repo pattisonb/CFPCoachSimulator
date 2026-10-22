@@ -896,7 +896,11 @@ chance as a range that narrows as signing day nears (plus or minus 25 points at 
 week 8, 4 from week 13), labelled Early read, Taking shape or Solid read. Class rank weighs each
 class's best commitments most (each counts 0.85 times the one before).
 
-**Saves.** After every week the page keeps the career in the browser (IndexedDB): the season
+**Auto-recruit** is off, this week (your staff spend your hours through the next advance, then
+it turns itself off) or all season.
+
+**Saves.** Recruiting actions are saved two seconds after the last one, and the browser's copy
+follows a few seconds later. After every week the page keeps the career in the browser (IndexedDB): the season
 state, with your own games' box scores in it. When the server has forgotten the career (a
 restart), opening it uploads that copy and the server keeps whichever copy is newer.
 **Download career** saves the state with every box score as a `.ccsave` file. Prospects store

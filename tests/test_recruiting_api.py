@@ -45,8 +45,14 @@ if __name__ == "__main__":
     refused(lambda: server.prospect_profile(sid, "r2027-9999"), 404)
     refused(lambda: server.prospect_profile(sid, hidden), 404)
     # actions, the board, staff and Auto-recruit
+    server.SAVE_DELAY = 0.2                                # recruiting actions are saved a moment after the last one
     r = server.recruit_action(sid, server.RecruitRequest(pid=pid, action="call", pitch="prestige"))
     assert r["hours_left"] == view["hours"] - 15
+    import time as _time
+    _time.sleep(1.0)
+    on_disk = season.load_season(sid)
+    assert on_disk["recruiting"]["hours"]["ohio-state"] == view["hours"] - 15, "the call was not saved"
+    assert on_disk["recruiting"]["contacts"][pid]["ohio-state"]["n"] == 1
     refused(lambda: server.recruit_action(sid, server.RecruitRequest(pid="r2027-9999", action="call")), 404)
     refused(lambda: server.recruit_action(sid, server.RecruitRequest(pid=pid, action="dance")), 400)
     assert server.prospect_profile(sid, pid)["public"]["on_board"] is False
