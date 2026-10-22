@@ -10,6 +10,8 @@ data/seasons/
 *.log
 # AP ballots from collegepolltracker.com (tools/fetch_ballots.py): their compilation, kept local
 data/ballots/
+# CollegeFootballData.com recruiting classes (tools/fetch_recruits.py): their compilation, kept local
+data/recruiting/
 
 # cfbstats pages cached by tools/fetch_leaders.py
 data/history/cfbstats_cache/
