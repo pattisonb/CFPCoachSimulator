@@ -62,4 +62,30 @@ if __name__ == "__main__":
     # offers are capped at 1.5x open spots
     cap = recruiting.offer_cap(st, "ohio-state")
     assert 15 <= cap <= 45, cap
+    # a whole season: everyone signs somewhere, nobody past their open spots, about a third to FCS
+    import time
+    from collections import Counter
+    t0 = time.time()
+    plain = season.new_season("georgia", "full", seed=5)
+    season.advance_to(plain, season.FINAL_WEEK)
+    t_plain = time.time() - t0
+    t0 = time.time()
+    st = season.new_season("georgia", "full", seed=5, career=True)
+    season.advance_to(st, season.FINAL_WEEK)
+    t_career = time.time() - t0
+    rc = st["recruiting"]; signed = [s["signed"] for s in rc["status"].values()]
+    assert all(signed), "a prospect never signed"
+    per = Counter(s for s in signed if s != "FCS")
+    assert all(per[t] <= recruiting.open_spots(st, t) for t in per), "a school signed past its open spots"
+    with_fcs = sum(1 for s in signed if s == "FCS") / len(signed)
+    assert 0.25 < with_fcs < 0.45, with_fcs
+    assert recruiting.signed_class(st, "georgia") and len(recruiting.signed_class(st, "georgia")) == per["georgia"]
+    try:
+        recruiting.act(st, "georgia", next(iter(rc["prospects"])), "message", pitch="nil"); raise AssertionError
+    except recruiting.RecruitingError as e:
+        assert e.code == 409                               # acting on a signed prospect
+    kinds = Counter(e["kind"] for e in rc["log"])
+    print(f"season: {t_plain:.1f}s plain, {t_career:.1f}s career (+{t_career - t_plain:.1f}s); FCS {with_fcs:.0%}; "
+          f"Georgia signed {per['georgia']}/{recruiting.open_spots(st, 'georgia')}; events {dict(kinds)}")
+    assert t_career - t_plain < 20, "recruiting adds more than 20 s to a season"
     print(f"recruiting ok: {len(rc['prospects'])} prospects; TX 3-star {tx['name']} priorities {tx['priorities']}")

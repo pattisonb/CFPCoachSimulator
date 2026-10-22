@@ -42,6 +42,7 @@ import ratings as ratings_v2
 import coaches
 import bowls
 import polls
+import recruiting
 
 ROOT = Path(__file__).resolve().parent
 TEAMS_FILE = ROOT / "data" / "engine_teams.json"
@@ -1335,10 +1336,12 @@ def play_my_game(state: dict, pool: Optional[Pool] = None, report: Optional[Repo
     return eid
 
 
-def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter] = None) -> dict:
+def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter] = None,
+            auto_recruit: bool = False) -> dict:
     """Play the next week (the rest of it, after a game day). Returns the state.
     `report(stage, games_done, games_total)` is called as the week goes, for a live
-    progress display."""
+    progress display. In a Coach Career the recruiting week follows the games
+    (`auto_recruit`: Auto-recruit runs your school's week too)."""
     if state["done"]:
         return state
     say = _stage_reporter(report)
@@ -1376,6 +1379,9 @@ def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter]
     if week in _AWARD_STAGES:
         say(_AWARD_STAGES[week])
         _award_step(state, teams, week)
+    if state.get("recruiting"):
+        say("Recruiting")
+        recruiting.weekly_step(state, week, auto_recruit)
     schedule_ahead(state, say)
     return state
 
@@ -1713,10 +1719,11 @@ def advance_to(state: dict, target_week: int, progress: Optional[Callable[[int, 
     """Play weeks up to target_week; `should_stop` is checked between weeks (the Pause button)."""
     target = min(target_week, FINAL_WEEK)
     pool = shared_pool()
+    first = state["current_week"]
     while state["current_week"] < target and not state["done"]:
         if should_stop and should_stop():
             break
-        advance(state, pool, report)
+        advance(state, pool, report, auto_recruit=state["current_week"] > first)
         if progress:
             progress(state["current_week"], target)
     return state
