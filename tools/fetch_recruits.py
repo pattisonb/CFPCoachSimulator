@@ -1,11 +1,12 @@
 """Download every recruiting class from CollegeFootballData.com (CFBD): each high school,
 JUCO and prep-school recruit with stars, composite rating, position, size, hometown
 (city, state, coordinates) and the school he committed to, plus each team's class ranking,
-every FBS team's location, and the transfer portal.
+every FBS team's location, the transfer portal, and every head coach's seasons (school, record,
+SP+), which show coaching changes and on-field success next to each school's classes.
 
 Needs a free CFBD API key (https://collegefootballdata.com/key) in the CFBD_API_KEY
 environment variable. The free tier allows 1,000 calls a month; a full run is about 125
-(28 classes x 4 calls, the portal, the teams) and years already saved are skipped.
+(28 classes x 4 calls, the portal, the teams, the coaches) and years already saved are skipped.
 
 Output: data/recruiting/  (git-ignored: CFBD's compilation, kept local like data/ballots/)
     players_<year>.json   [{"id", "athleteId", "recruitType" (HighSchool/JUCO/PrepSchool), "year",
@@ -16,6 +17,9 @@ Output: data/recruiting/  (git-ignored: CFBD's compilation, kept local like data
     portal_<year>.json    [{"season", "firstName", "lastName", "position", "origin", "destination",
                             "transferDate", "rating", "stars", "eligibility"}]
     fbs_teams.json        [{"school", "conference", "location": {"city", "state", "latitude", "longitude", ...}}]
+    coaches.json          [{"firstName", "lastName", "hireDate", "seasons": [{"school", "conference", "year",
+                            "games", "wins", "losses", "ties", "preseasonRank", "postseasonRank", "srs",
+                            "spOverall", "spOffense", "spDefense"}]}]
 
 Usage:  python tools/fetch_recruits.py              # 2000 to next year's class, skipping saved years
         python tools/fetch_recruits.py 2024 2025    # just these classes (re-fetched)
@@ -37,6 +41,7 @@ OUT_DIR = ROOT / "data" / "recruiting"
 API = "https://api.collegefootballdata.com"
 FIRST_CLASS = 2000        # CFBD's high school recruits start with the 2000 class
 FIRST_PORTAL = 2021       # the portal endpoint starts with the 2021 season
+FIRST_COACH_SEASON = 1995  # coaching records back far enough to see who signed the 2000 class
 TYPES = ("HighSchool", "JUCO", "PrepSchool")
 
 
@@ -97,6 +102,10 @@ def main() -> None:
         print(f"portal {y}: {len(portal)} transfers")
     if not (OUT_DIR / "fbs_teams.json").exists() or not asked:
         save("fbs_teams.json", get("/teams/fbs") or [])
+    if not (OUT_DIR / "coaches.json").exists() or not asked:
+        coaches = get("/coaches", minYear=FIRST_COACH_SEASON, maxYear=last - 1) or []
+        save("coaches.json", coaches)
+        print(f"coaches: {len(coaches)} head coaches, {sum(len(c.get('seasons') or []) for c in coaches)} seasons")
 
 
 if __name__ == "__main__":

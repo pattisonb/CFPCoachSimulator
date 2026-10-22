@@ -700,6 +700,37 @@ The season page shows the coach, with his portrait when he is yours, and who run
 under the title. `coaches.OC_POOL` and `DC_POOL` hold fictional coordinators for the
 offseason hiring to come.
 
+## Recruiting model (learned from real classes; the recruits are fictional)
+
+Recruiting will generate fictional classes every year, Dynasty style. The real classes only
+teach the model what a class looks like and how each school and coach recruits.
+`tools/fetch_recruits.py` downloads them from CollegeFootballData.com (a free key in
+`CFBD_API_KEY`; about 125 of the 1,000 free monthly calls) into `data/recruiting/`, which is
+git-ignored. `tools/recruiting_footprints.py` and `tools/recruiting_model.py` reduce them to
+`data/recruiting_model.json` (185 KB, committed: distributions only, no real recruit):
+
+- **Generation** (classes 2017-2026; counts from 2022-2026): 36 five-stars, 428 four-stars,
+  2,487 three-stars and 1,141 two-stars a class. It also holds the composite rating spread
+  inside each star band, the position mix by stars, height and weight by position (QB 74.0 in
+  and 195 lb; OT 77.5 in and 287 lb), and each state's share of every star band (four-stars:
+  TX 14%, FL 13%, GA 10%, CA 9%). Each state's 30 most productive towns, with coordinates, give
+  generated players their hometowns.
+- **Schools:** each school's class size, star mix, position mix, in-state share, home states
+  and distance from home (Texas 68% in-state, median 187 miles; Boise State 13% and 676 miles,
+  35% from California), and its class strength by year (a z-score of its class points among FBS
+  teams that year).
+- **Dynamics** (2,619 team-classes, 2005-2026): a school's level persists (a class correlates
+  0.87 with the one before it). Schools' baselines spread 0.95 standard deviations; a class
+  strays from its school's baseline by 0.36. Around the baseline, 0.28 of last year's deviation
+  carries over, a season 25 points of win percentage above the school's norm adds 0.08, a new
+  head coach's first class drops 0.13 and his second rises 0.16.
+- **Coaches:** a coach's classes against his school's baseline (444 coaches with 3+ classes)
+  spread 0.25. That edge barely travels: between a coach's consecutive jobs it correlates 0.07,
+  so recruiting is mostly the school. His old school's top states rise from 17% to 20% of his
+  new school's signees. The game's coach recruiting ratings (generated) do not match the
+  measured edge (correlation -0.02 across 78 current coaches); they will be rebuilt from it when
+  recruiting lands.
+
 ## Player stat lines against real box scores
 
 `tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed
