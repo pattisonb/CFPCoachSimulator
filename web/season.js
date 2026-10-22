@@ -187,7 +187,7 @@
     const teamName = (window.CFP.teamsBySlug[team] || {}).name || "your team";
     toast(mode === "remaining" ? "Loading the real season so far: results, polls, stats and box scores…" : `Setting up the ${teamName} season: schedule, rosters and preseason polls…`);
     try {
-      const s = await api("/api/season", postJSON({ team, mode, coach: coach || null }));
+      const s = await api("/api/season", postJSON({ team, mode, coach: coach || null, career: mode === "full" }));
       history.replaceState(null, "", `/season?id=${s.id}`);
       showSeason(s);
       loadSeasons();

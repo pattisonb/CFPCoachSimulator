@@ -313,6 +313,7 @@ class SeasonRequest(BaseModel):
     mode: str = "full"            # "full" or "remaining"
     seed: Optional[int] = None
     coach: Optional[str] = None   # a saved coach (the Your coach page) to put on the team
+    career: bool = False          # a Coach Career (career.py)
 
 
 class CoachRequest(BaseModel):
@@ -475,7 +476,9 @@ def create_season(req: SeasonRequest) -> dict:
         coach = coaches.load(req.coach)
         if coach is None:
             raise HTTPException(404, "unknown coach")
-    state = season.new_season(req.team, req.mode, req.seed, coach=coach)
+    if req.career and req.mode != "full":
+        raise HTTPException(400, "Coach Career starts from week 1")
+    state = season.new_season(req.team, req.mode, req.seed, coach=coach, career=req.career)
     if req.mode == "remaining":
         # started from today: the weeks already played carry their real stats and box scores
         state["real_import"] = realdata.import_real_boxes(state)

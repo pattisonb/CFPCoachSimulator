@@ -506,9 +506,12 @@ def _fill_open_dates(games: dict, teams: dict) -> int:
 
 
 def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, fill_open_dates: bool = True,
-               coach: Optional[dict] = None) -> dict:
+               coach: Optional[dict] = None, career: bool = False) -> dict:
     """A new season from the 2026 schedule. `fill_open_dates` adds a game for teams whose
-    schedule has an unannounced date (the real 2026 page turns it off: it shows only real games)."""
+    schedule has an unannounced date (the real 2026 page turns it off: it shows only real games).
+    `career`: a Coach Career (career.py), which starts from week 1."""
+    if career and mode != "full":
+        raise ValueError("Coach Career starts from week 1")
     teams = load_teams()
     if team_slug not in teams:
         raise ValueError(f"unknown team {team_slug}")
@@ -583,6 +586,9 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
     if mode == "remaining" and current > 0:
         for w in range(1, current + 1):
             _update_polls_after_week(state, teams, w, real_ap=real.get(w))
+    if career:
+        import career as career_mod
+        career_mod.new_career(state, coach)
     return state
 
 
