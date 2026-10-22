@@ -44,6 +44,8 @@
       <button id="btn-new" class="accent" type="button" title="Play the whole 2026 season from week 1">New season</button>
       <button id="btn-today" class="ghost" type="button" title="Start from today: the real results, polls and stats so far, then play the rest">Start from today</button>
       <button id="btn-seasons" class="ghost" type="button" aria-pressed="false" title="Show or hide the saved seasons">Seasons</button>
+      <button id="btn-load-career" class="ghost" type="button" title="Open a Coach Career saved as a file">Load career</button>
+      <input id="career-file" type="file" accept=".ccsave,application/gzip" hidden />
       <button class="ghost btn-theme" type="button" aria-label="Toggle light or dark mode"></button>
     </div>
   </header>
@@ -75,6 +77,7 @@
               <button id="btn-to-selection" class="ghost" type="button">Sim to selection</button>
               <button id="btn-to-end" class="ghost" type="button">Sim to the end</button>
               <button id="btn-settings" class="ghost" type="button" title="Season settings: god mode and more">⚙ Settings</button>
+              <button id="btn-download-career" class="ghost" type="button" hidden title="Save this career as a file to keep or open on another device">Download career</button>
               <button id="btn-real-refresh" class="ghost" type="button" hidden title="Download the latest real results, box scores and polls">Refresh real data</button>
             </div>
           </div>
@@ -168,6 +171,7 @@
   <div id="toast" class="toast" hidden></div>
   <script src="/gameview.js"></script>
   <script src="/coachsprite.js"></script>
+  <script src="/careersave.js"></script>
   <script src="/season.js"></script>
 </body>
 </html>

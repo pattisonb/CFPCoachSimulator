@@ -23,4 +23,32 @@ if __name__ == "__main__":
         raise AssertionError("a career started from today")
     except ValueError:
         pass
+    # saves: saving stamps the career with its week; a download round-trips with its box scores
+    season.advance(st)
+    season.save_season(st)
+    assert st["career"]["saved_week"] == 1
+    some_box = next(p.name for p in season.box_dir(st).glob("*.json"))
+    blob = career.export_save(st)
+    import shutil
+    shutil.rmtree(season.SEASONS_DIR / st["id"])
+    (season.SEASONS_DIR / f"{st['id']}.json").unlink()
+    back = career.import_save(blob)
+    assert back["id"] == st["id"] and back["career"] == st["career"] and back["current_week"] == 1
+    assert (season.box_dir(back) / some_box).exists(), "box scores did not come back"
+    try:
+        career.import_save(career.export_save(plain))
+        raise AssertionError("a plain season was imported as a career")
+    except ValueError:
+        pass
+    # the newer copy wins, whichever side it is on
+    older = dict(st, career=dict(st["career"], saved_week=2))
+    newer = dict(st, career=dict(st["career"], saved_week=5))
+    assert career.newer(older, newer) is newer and career.newer(newer, older) is newer
+    # a restore never replaces a newer server copy, and fills in a forgotten one
+    stale = career.export_save(older)
+    kept = career.restore(stale, current=newer)
+    assert kept is newer, "an older upload replaced the newer server copy"
+    (season.SEASONS_DIR / f"{st['id']}.json").unlink()
+    restored = career.restore(career.export_save(newer), current=None)
+    assert restored["career"]["saved_week"] == 5 and season.load_season(st["id"])["career"]["saved_week"] == 5
     print("career ok")

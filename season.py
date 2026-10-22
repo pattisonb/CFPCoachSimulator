@@ -1766,6 +1766,9 @@ def has_box(state: dict, g: dict) -> bool:
 
 
 def save_season(state: dict) -> Path:
+    if state.get("career"):                       # a career's copies are compared by these (career.newer)
+        state["career"]["saved_week"] = state["current_week"]
+        state["career"]["saved_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     SEASONS_DIR.mkdir(parents=True, exist_ok=True)
     path = SEASONS_DIR / f"{state['id']}.json"
     path.write_text(json.dumps(state), encoding="utf-8")
@@ -2464,6 +2467,7 @@ def summary(state: dict) -> dict:
         "injuries": injury_report(state, state["team"]),
         "injury_count": sum(len(v) for v in state.get("injuries", {}).values()),
         "my_awards": awards.my_awards(state, state["awards"]) if state.get("awards") else [],
+        "career": state.get("career"),
     }
 
 

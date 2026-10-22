@@ -22,11 +22,12 @@ from typing import Any, Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from engine.game import SLIDER_NAMES, default_sliders, simulate_game
+import career
 import realdata
 import season
 import coaches
@@ -485,6 +486,40 @@ def create_season(req: SeasonRequest) -> dict:
     season.save_season(state)
     _season_jobs[state["id"]] = _idle_job(state["id"], state)
     return season.summary(state)
+
+
+MAX_SAVE_BYTES = 40 * 1024 * 1024    # an uploaded career (gzip); a season is about 1-2 MB compressed
+
+
+@app.get("/api/season/{season_id}/export")
+def export_career(season_id: str) -> Response:
+    """The whole career as one gzip file: the browser keeps it (web/careersave.js) and the
+    Download career button saves it."""
+    state = _season_state(season_id)
+    if not career.is_career(state):
+        raise HTTPException(404, "not a Coach Career")
+    return Response(career.export_save(state), media_type="application/gzip",
+                    headers={"Content-Disposition": f'attachment; filename="coach-career-{season_id}.ccsave"'})
+
+
+@app.post("/api/season/import")
+async def import_career(request: Request) -> dict:
+    """A career from the browser or a file. The server keeps whichever copy is newer, so a stale
+    upload never replaces a career that has moved on."""
+    blob = await request.body()
+    if len(blob) > MAX_SAVE_BYTES:
+        raise HTTPException(413, "that file is too large to be a Coach Career save")
+    try:
+        sid = career.read_save(blob)[0]["id"]
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    job = _season_jobs.get(sid)
+    if job and job.get("status") == "running":
+        raise HTTPException(409, "that career is simulating; try again when the week is done")
+    current = job["state"] if job and job.get("state") is not None else season.load_season(sid)
+    state = career.restore(blob, current)
+    _season_jobs[sid] = _idle_job(sid, state if state is current else season.load_season(sid))
+    return season.summary(_season_jobs[sid]["state"])
 
 
 _season_cards: dict[str, tuple[float, dict]] = {}   # season id -> (file mtime, card)

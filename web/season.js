@@ -57,7 +57,20 @@
       if (state.season && state.season.id === s.id) li.classList.add("active");
       list.appendChild(li);
     }
-    $("#btn-seasons").textContent = data.seasons.length ? `Seasons (${data.seasons.length})` : "Seasons";
+    // careers kept in this browser that the server has forgotten (a restart): opening one restores it
+    let local = [];
+    try { local = (await window.CareerSave.list()).filter((c) => !data.seasons.some((s) => s.id === c.id)); } catch (e) { /* storage blocked */ }
+    if (local.length && !data.seasons.length) list.innerHTML = "";
+    for (const c of local) {
+      const r = c.record || {};
+      list.appendChild(el("li", { onclick: () => openSeason(c.id) }, [
+        el("span", { class: "teams", text: `${c.team_name} · Coach Career` }),
+        el("span", { class: "score", text: r.wins != null ? `${r.wins}-${r.losses}` : "" }),
+        el("span", { class: "when", text: `through week ${c.saved_week} · saved on this device` }),
+      ]));
+    }
+    const count = data.seasons.length + local.length;
+    $("#btn-seasons").textContent = count ? `Seasons (${count})` : "Seasons";
     $("#btn-clear-seasons").hidden = !data.seasons.length;
   }
 
@@ -75,7 +88,9 @@
 
   // The server no longer has this season: the free host forgets saved seasons when it
   // restarts. Close it and say so instead of leaving the page waiting.
-  function seasonGone() {
+  async function seasonGone() {
+    const id = state.season && state.season.id;
+    if (id && state.season.career && await restoreCareer(id)) return;
     closeSeason();
     loadSeasons().catch(() => {});
     toast("This season is no longer on the server. It forgets saved seasons when it restarts, so start a new one.", 9000);
@@ -204,9 +219,22 @@
       showSeason(s);
       if (s.mode !== "real") loadSeasons();
     } catch (err) {
+      if (isGone(err) && !REAL && await restoreCareer(id)) return;
       if (isGone(err) && !REAL) { closeSeason(); loadSeasons().catch(() => {}); toast("That season is no longer on the server. It forgets saved seasons when it restarts.", 8000); }
       else toast(`Could not open the season: ${errText(err)}`, 4000);
     }
+  }
+
+  // A Coach Career the server has forgotten, put back from this browser's copy. True when it opened.
+  async function restoreCareer(id) {
+    let s;
+    try { s = await window.CareerSave.restore(id); } catch (e) { return false; }
+    if (!s) return false;
+    history.replaceState(null, "", `/season?id=${s.id}`);
+    showSeason(s);
+    loadSeasons().catch(() => {});
+    toast("Your career was restored from this device: the server had forgotten it.", 5000);
+    return true;
   }
 
   // ----- the real 2026 season (/real) ------------------------------------------------
@@ -587,6 +615,8 @@
 
   function showSeason(s) {
     if (s.mode === "real") leagueWide(s);
+    $("#btn-download-career").hidden = !s.career;
+    if (s.career) window.CareerSave.backup(s);
     const opening = !state.season || state.season.id !== s.id;
     state.season = s;
     // no more games once the season is complete: the Summary tab takes the Games tab's place
@@ -3354,6 +3384,22 @@
   $("#btn-today").addEventListener("click", () => chooseCoach("remaining"));
   $("#btn-pause").addEventListener("click", pauseSim);
   $("#btn-seasons").addEventListener("click", () => setSidebar($("#btn-seasons").getAttribute("aria-pressed") !== "true"));
+  $("#btn-download-career").addEventListener("click", () => {
+    if (state.season) window.CareerSave.download(state.season.id).catch((err) => toast(`Could not download: ${errText(err)}`, 4000));
+  });
+  $("#btn-load-career").addEventListener("click", () => $("#career-file").click());
+  $("#career-file").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const s = await window.CareerSave.upload(file);
+      history.replaceState(null, "", `/season?id=${s.id}`);
+      showSeason(s);
+      loadSeasons().catch(() => {});
+      toast(`Loaded the ${s.team_name} career, through week ${s.current_week}.`, 4000);
+    } catch (err) { toast(`Could not load that file: ${errText(err)}`, 5000); }
+  });
   $("#btn-clear-seasons").addEventListener("click", clearSeasons);
   $("#btn-hide-seasons").addEventListener("click", () => setSidebar(false));
   setSidebar(true, false);
