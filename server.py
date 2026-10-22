@@ -60,6 +60,7 @@ def _startup_real() -> None:
 async def _lifespan(_app: FastAPI):
     # the real season is rebuilt in the background when its data changed, so /real opens at once
     threading.Thread(target=_startup_real, daemon=True).start()
+    threading.Thread(target=prospects.warm, daemon=True).start()   # the first Prospect Profile opens at once
     yield
     season.close_pool()   # stop the season workers so Ctrl-C exits at once
 

@@ -989,6 +989,8 @@ body.real-mode #season-tabs button[data-tab="games"] { display: revert; }
 .rc-row { cursor: pointer; }
 .rc-row:hover td { background: var(--panel-2); }
 .rc-pager { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 8px; }
+.rc-profile-name { font-size: 20px; text-transform: none; color: var(--text); letter-spacing: 0; margin: 0 0 10px; }
+.rc-loading { padding: 24px 0; text-align: center; }
 .rc-profile-head { display: grid; grid-template-columns: 84px 1fr; gap: 12px; align-items: center; }
 .rc-avatar { display: block; width: 84px; height: 84px; border-radius: 50%; overflow: hidden; background: var(--panel-2); }
 .rc-avatar svg { width: 100%; height: 115%; display: block; }
@@ -1001,7 +1003,9 @@ body.real-mode #season-tabs button[data-tab="games"] { display: revert; }
 .rc-staff-name { font-weight: 800; font-size: 16px; }
 .rc-staff-card select { max-width: 100%; }
 @media (max-width: 600px) {
-  .rc-profile-head { grid-template-columns: 64px 1fr; }
+  .rc-profile-name { font-size: 20px; text-transform: none; color: var(--text); letter-spacing: 0; margin: 0 0 10px; }
+.rc-loading { padding: 24px 0; text-align: center; }
+.rc-profile-head { grid-template-columns: 64px 1fr; }
   .rc-avatar { width: 64px; height: 64px; }
   .rc-actions { flex-wrap: wrap; }
 }

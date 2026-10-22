@@ -102,6 +102,12 @@ def comp_max_distance(position: str) -> float:
     return d[int(COMP_PERCENTILE * (len(d) - 1))] if d else 0.0
 
 
+def warm() -> None:
+    """Load the starters and each position's comp distance ahead of the first profile."""
+    for position in {s["position"] for s in starter_pool()}:
+        comp_max_distance(position)
+
+
 def ceiling(state: dict, p: dict) -> dict:
     """A prospect's projected ratings: what a comp is measured on."""
     return recruiting.attributes(state, p, "potential_ea")
@@ -205,6 +211,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "national_rank": p["rank"], "position_rank": pos_rank, "state_rank": state_rank,
         "schools": _schools(state, pid), "committed": status["committed"], "signed": status["signed"],
         "leaning_fcs": bool(status["fcs"]), "offered_by_you": pid in rc["offers"].get(viewer, []),
+        "on_board": pid in rc["board"],
         "priorities_known": list((rc["revealed"].get(viewer) or {}).get(pid, [])),
     }
     read = rc["reads"].get(pid)

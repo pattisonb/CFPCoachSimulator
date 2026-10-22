@@ -49,8 +49,10 @@ if __name__ == "__main__":
     assert r["hours_left"] == view["hours"] - 15
     refused(lambda: server.recruit_action(sid, server.RecruitRequest(pid="r2027-9999", action="call")), 404)
     refused(lambda: server.recruit_action(sid, server.RecruitRequest(pid=pid, action="dance")), 400)
+    assert server.prospect_profile(sid, pid)["public"]["on_board"] is False
     server.board_change(sid, server.BoardRequest(pid=pid, on=True))
     assert [b["id"] for b in server.recruiting_view(sid)["board"]] == [pid]
+    assert server.prospect_profile(sid, pid)["public"]["on_board"] is True
     server.board_change(sid, server.BoardRequest(pid=pid, on=False))
     assert server.recruiting_view(sid)["board"] == []
     staff = server.staff_change(sid, server.StaffRequest(staff_id="r1", area="Texas"))

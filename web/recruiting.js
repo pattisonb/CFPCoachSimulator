@@ -66,8 +66,8 @@
     }
   }
   async function setBoard(s, pid, on) {
-    try { await H.api(`/api/season/${s.id}/board`, H.postJSON({ pid, on })); }
-    catch (err) { H.toast(`Could not change your board: ${H.errText(err)}`, 4000); }
+    try { await H.api(`/api/season/${s.id}/board`, H.postJSON({ pid, on })); return true; }
+    catch (err) { H.toast(`Could not change your board: ${H.errText(err)}`, 4000); return false; }
   }
   const tableWrap = (table) => el("div", { class: "table-scroll" }, [table]);
 
@@ -212,11 +212,15 @@
   // ----- the Prospect Profile ---------------------------------------------------------------------
 
   async function openProfile(s, pid) {
+    // the window opens at once, saying it is loading, and fills in when his profile arrives
+    const node = el("div", { class: "rc-profile" }, [el("p", { class: "muted rc-loading", text: "Loading his profile…" })]);
+    H.openModal("Prospect Profile", node);
     let p;
     try { p = await H.api(`/api/season/${s.id}/prospect/${encodeURIComponent(pid)}`); }
-    catch (err) { H.toast(`Could not open his profile: ${H.errText(err)}`, 4000); return; }
+    catch (err) { node.innerHTML = ""; node.append(el("p", { class: "muted", text: `Could not open his profile: ${H.errText(err)}` })); return; }
     const pub = p.public;
-    const node = el("div", { class: "rc-profile" });
+    node.innerHTML = "";
+    node.append(el("h2", { class: "rc-profile-name", text: pub.name }));
     node.append(el("div", { class: "rc-profile-head" }, [avatar(pub.avatar_seed), el("div", {}, [
       el("div", { class: "rc-stars big", text: stars(pub.stars) }),
       el("div", { text: `${pub.position} (${pub.ea_position}) · ${pub.archetype} · ${height(pub.height)}, ${pub.weight} lb` }),
@@ -224,8 +228,15 @@
       el("div", { class: "muted", text: `National rankings: #${pub.national_rank} overall · #${pub.position_rank} ${pub.position} · #${pub.state_rank} in ${pub.hometown.state} · composite ${pub.composite.toFixed(4)}` }),
       el("div", { class: "rc-status", text: status({ ...pub, school_name: pub.signed || pub.committed ? ((window.CFP.teamsBySlug[pub.signed || pub.committed] || {}).name || pub.signed || pub.committed) : null }) }),
     ])]));
-    const onBoard = el("button", { type: "button", class: "ghost", text: "+ Add to your board" });
-    onBoard.addEventListener("click", async () => { await setBoard(s, pid, true); onBoard.textContent = "On your board"; onBoard.disabled = true; });
+    let on = !!pub.on_board;
+    const onBoard = el("button", { type: "button", class: "ghost" });
+    const label = () => { onBoard.textContent = on ? "✓ On your board · remove" : "+ Add to your board"; };
+    label();
+    onBoard.addEventListener("click", async () => {
+      onBoard.disabled = true;
+      if (await setBoard(s, pid, !on)) { on = !on; label(); H.toast(on ? `${pub.name} is on your board.` : `${pub.name} is off your board.`, 2500); }
+      onBoard.disabled = false;
+    });
     node.append(el("div", { class: "rc-profile-actions" }, [onBoard]));
     if (pub.schools.length) {
       const max = Math.max(...pub.schools.map((x) => x.interest), 1);
@@ -251,7 +262,6 @@
       node.append(p.our_comp ? el("p", {}, [el("b", { text: "Our comp: " }), comp(p.our_comp)])
         : el("p", { class: "muted", text: p.looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp after 3 looks (${p.looks} so far).` }));
     } else node.append(el("p", { class: "muted", text: "Not scouted yet: put a staff member on his area (Staff tab)." }));
-    H.openModal(pub.name, node);
   }
 
   // ----- the Staff tab --------------------------------------------------------------------------
