@@ -38,12 +38,13 @@ def is_career(state: dict) -> bool:
 
 # ----- saves: the browser keeps a copy and restores it when the server has forgotten the season -----
 
-def export_save(state: dict) -> bytes:
-    """The whole career as one gzip file: the season state and every saved box score."""
+def export_save(state: dict, boxes: bool = True) -> bytes:
+    """The career as one gzip file: the season state and every saved box score (`boxes=False`:
+    the state alone, your own games' box scores included, for the browser's weekly copy)."""
     import season
-    boxes = {p.name: p.read_text(encoding="utf-8") for p in sorted(season.box_dir(state).glob("*.json"))} \
-        if season.box_dir(state).exists() else {}
-    return gzip.compress(json.dumps({"state": state, "boxes": boxes}, separators=(",", ":")).encode("utf-8"))
+    files = {p.name: p.read_text(encoding="utf-8") for p in sorted(season.box_dir(state).glob("*.json"))} \
+        if boxes and season.box_dir(state).exists() else {}
+    return gzip.compress(json.dumps({"state": state, "boxes": files}, separators=(",", ":")).encode("utf-8"), compresslevel=6)
 
 
 def read_save(blob: bytes) -> tuple[dict, dict]:

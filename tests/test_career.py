@@ -11,6 +11,11 @@ import season
 if __name__ == "__main__":
     st = season.new_season("ohio-state", "full", seed=3, career=True)
     assert career.is_career(st) and st["career"]["year"] == 2026
+    # a career with its recruiting class stays small enough to keep in the browser every week
+    import json as _json
+    size = len(_json.dumps(st["recruiting"], separators=(",", ":")))
+    assert size < 4_000_000, f"the recruiting class is {size / 1e6:.1f} MB"
+    assert len(career.export_save(st)) < 1_500_000, "a new career's save is over 1.5 MB"
     assert st["career"]["settings"]["auto_recruit"] is False and st["career"]["saved_week"] == 0
 
     plain = season.new_season("ohio-state", "full", seed=3)
@@ -35,6 +40,10 @@ if __name__ == "__main__":
     back = career.import_save(blob)
     assert back["id"] == st["id"] and back["career"] == st["career"] and back["current_week"] == 1
     assert (season.box_dir(back) / some_box).exists(), "box scores did not come back"
+    # the browser's weekly copy leaves out other games' box scores (your games ride in the state)
+    light = career.export_save(st, boxes=False)
+    assert len(light) < len(blob) and career.read_save(light)[1] == {}
+    assert career.read_save(light)[0]["my_boxes"] == st["my_boxes"]
     try:
         career.import_save(career.export_save(plain))
         raise AssertionError("a plain season was imported as a career")

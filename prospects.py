@@ -102,9 +102,9 @@ def comp_max_distance(position: str) -> float:
     return d[int(COMP_PERCENTILE * (len(d) - 1))] if d else 0.0
 
 
-def ceiling(p: dict) -> dict:
+def ceiling(state: dict, p: dict) -> dict:
     """A prospect's projected ratings: what a comp is measured on."""
-    return p["potential_ea"]
+    return recruiting.attributes(state, p, "potential_ea")
 
 
 def comp(profile_vector: dict, position: str, pool) -> Optional[dict]:
@@ -119,12 +119,12 @@ def comp(profile_vector: dict, position: str, pool) -> Optional[dict]:
     return {k: best[k] for k in ("name", "slug", "school", "team", "position", "overall_ea")}
 
 
-def _shifted(p: dict, grades: dict[str, float]) -> dict:
+def _shifted(state: dict, p: dict, grades: dict[str, float]) -> dict:
     """His ceiling as a read sees it: each group's attributes moved by how far the read is off
     his true grade (grade points to rating points)."""
     groups = {"athleticism": recruiting._ATHLETIC, "size_strength": recruiting._SIZE, "football_iq": recruiting._IQ}
     out = {}
-    for k, v in ceiling(p).items():
+    for k, v in ceiling(state, p).items():
         g = next((g for g, keys in groups.items() if k in keys), "technique")
         off = READ_SHIFT * (grades[g] - p["truth"][g]) + READ_SHIFT / 2 * (grades["potential"] - p["truth"]["potential"])
         out[k] = max(0, min(99, v + off))
@@ -210,11 +210,11 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
     our_comp = None
     if read and read["looks"] >= OUR_COMP_LOOKS:
         ours = {g: read["g"][g][0] for g in recruiting.GROUPS}
-        our_comp = comp(_shifted(p, ours), p["ea_position"], starter_pool())
+        our_comp = comp(_shifted(state, p, ours), p["ea_position"], starter_pool())
     return {
         "public": public,
         "evaluation": _evaluation(p, public_grades) if top else None,
-        "public_comp": comp(_shifted(p, public_grades), p["ea_position"], starter_pool()) if top else None,
+        "public_comp": comp(_shifted(state, p, public_grades), p["ea_position"], starter_pool()) if top else None,
         "our_grades": our_grades,
         "looks": read["looks"] if read else 0,
         "our_comp": our_comp,

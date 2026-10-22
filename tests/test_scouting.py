@@ -88,7 +88,7 @@ if __name__ == "__main__":
     mid = prospects.profile(st, by_rank[900], "ohio-state")
     assert mid["evaluation"] is None and mid["public_comp"] is None
     two = next(pid for pid, p in rc["prospects"].items() if p["stars"] == 2 and not p.get("hidden")
-               and prospects.comp(prospects.ceiling(p), p["ea_position"], prospects.starter_pool()) is None)
+               and prospects.comp(prospects.ceiling(st, p), p["ea_position"], prospects.starter_pool()) is None)
     assert prospects.profile(st, two, "ohio-state")["public_comp"] is None
     fresh = by_rank[2]
     rc["reads"].pop(fresh, None)

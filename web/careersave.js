@@ -1,6 +1,7 @@
 /* Coach Career saves kept in this browser (IndexedDB), so a career survives the free server
-   forgetting it on a restart: after every save the page keeps the career's export, and when the
-   server no longer has it the page uploads it back (the server keeps whichever copy is newer).
+   forgetting it on a restart: after every save the page keeps the career's state (your games'
+   box scores ride in it; other games' do not), and when the server no longer has it the page
+   uploads it back (the server keeps whichever copy is newer). Download career saves everything.
    window.CareerSave: backup(summary), restore(id), list(), remove(id), download(id), upload(file). */
 (function () {
   const DB = "cfp-careers", STORE = "saves";
@@ -58,7 +59,7 @@
   }
 
   async function download(id) {
-    const res = await fetch(`/api/season/${id}/export`);
+    const res = await fetch(`/api/season/${id}/export?full=true`);
     if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
     const url = URL.createObjectURL(await res.blob());
     const a = Object.assign(document.createElement("a"), { href: url, download: `coach-career-${id}.ccsave` });

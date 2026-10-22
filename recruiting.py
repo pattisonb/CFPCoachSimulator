@@ -3,7 +3,7 @@
 (later sections of this file) the actions, the weekly step, signing and scouting.
 
 The recruiting state lives in `state["recruiting"]` (a Coach Career season only):
-    year, prospects {pid: prospect}, lists {pid: {slug: action points}}, status {pid: {committed,
+    year, prospects {pid: prospect; ratings_ea and potential_ea as lists in `attrs` order}, lists {pid: {slug: action points}}, status {pid: {committed,
     signed, fcs}}, offers {slug: [pid]}, visits {pid: {slug: week}}, contacts {pid: {slug:
     {hc_week}}}, hours {slug: hours left}, nil {slug: {budget, held {pid: points}}},
     revealed {slug: {pid: [topic]}}, board [pid], log [event]
@@ -114,6 +114,11 @@ def _baseline(slug: str) -> float:
     return ((_team_model(slug).get("strength") or {}).get("baseline")) or -1.0
 
 
+def attributes(state: dict, p: dict, field: str = "potential_ea") -> dict[str, int]:
+    """A prospect's EA ratings ("ratings_ea") or potential ("potential_ea") by attribute."""
+    return dict(zip(state["recruiting"]["attrs"], p[field]))
+
+
 def fbs_schools(state: dict) -> list[str]:
     import season
     return sorted(s for s, t in season.load_teams().items() if not t.get("fictional") and s in model()["teams"])
@@ -173,11 +178,18 @@ def start(state: dict, year: int = 2027) -> None:
         p["hidden"] = hideable and random.Random(f"hidden-{year}-{state.get('rng_state', 0)}-{p['id']}").random() < HIDDEN_RATE
         prospects[p["id"]] = p
     _truths(prospects)
+    # saved small: the EA ratings as lists in one key order (the house-scale copy is derived
+    # again from ratings_ea when a signee joins a roster)
+    attrs = sorted(next(iter(prospects.values()))["ratings_ea"]) if prospects else []
+    for p in prospects.values():
+        p["ratings_ea"] = [p["ratings_ea"][k] for k in attrs]
+        p["potential_ea"] = [p["potential_ea"][k] for k in attrs]
+        p.pop("ratings", None)
     state["recruiting"] = {
         "year": year, "prospects": prospects, "lists": {pid: {} for pid in prospects},
         "status": {pid: {"committed": None, "signed": None, "fcs": False} for pid in prospects},
         "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
-        "boards": {}, "seed": state.get("rng_state", 0), "reads": {},
+        "boards": {}, "seed": state.get("rng_state", 0), "reads": {}, "attrs": attrs,
     }
 
 
@@ -210,8 +222,9 @@ def _coach_edge(state: dict, slug: str) -> float:
     return cur.get("edge") or 0.0
 
 
-def pull(state: dict, slug: str, pid: str) -> dict[str, float]:
-    """The school's pull on the prospect by topic, each 0-1."""
+def pull(state: dict, slug: str, pid: str, winning: bool = True) -> dict[str, float]:
+    """The school's pull on the prospect by topic, each 0-1 (`winning=False`: all but this
+    season's standing, the part that holds all season)."""
     p = state["recruiting"]["prospects"][pid]
     loc = _team_model(slug).get("location")
     miles = _miles(tuple(p["home"]), tuple(loc)) if loc else 1500.0
@@ -222,7 +235,7 @@ def pull(state: dict, slug: str, pid: str) -> dict[str, float]:
         "proximity": max(PROXIMITY_FLOOR, math.exp(-miles / PROXIMITY_MILES)),
         "playing_time": max(0.1, 1 - _ahead(slug, group, p["overall_ea"]) / (2 * starters + 1)),
         "prestige": _logistic(1.2 * z),
-        "winning": min(1.0, on_field(state, slug, state["current_week"])),
+        **({"winning": min(1.0, on_field(state, slug, state["current_week"]))} if winning else {}),
         "nil": _logistic(1.4 * z),
         "coach": min(1.0, max(0.0, 0.5 + 1.5 * _coach_edge(state, slug))),
         "academics": 0.9 if slug in ACADEMIC else 0.5,
@@ -269,7 +282,7 @@ def interest(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> fl
         if len(_STATIC) > 2_000_000:
             _STATIC.clear()
         w = weights(p)
-        static = _STATIC[key] = sum(w[t] * v for t, v in pull(state, slug, pid).items() if t != "winning")
+        static = _STATIC[key] = sum(w[t] * v for t, v in pull(state, slug, pid, winning=False).items())
     win = min(1.0, (win if win is not None else _winning(state)).get(slug, 0.5))
     return PULL_SCALE * (static + weights(p)["winning"] * win) + state["recruiting"]["lists"][pid].get(slug, 0.0)
 
@@ -442,25 +455,37 @@ def _event(state: dict, kind: str, pid: str, school: Optional[str] = None, **ext
     return e
 
 
-def _fit(slug: str, p: dict, pool: dict) -> float:
-    """How well a prospect fits a school's usual recruiting: its states (each state's real share
-    of its signees spread over that state's prospects in this class, the rest over everyone
-    else), a blue-chip program's national reach, its star level and its positions."""
+def _fit_all(slug: str, prospects: dict, pool: dict) -> dict[str, float]:
+    """How well each prospect fits a school's usual recruiting: its states (each state's real share
+    of its signees spread over that state's prospects in this class; the rest over everyone else,
+    nearer first), a blue-chip program's national reach, its star level and its positions."""
     tm = _team_model(slug)
     shares = dict(tm.get("top_states") or [])
-    home = p["hometown"]["state"]
-    if home in shares:
-        w = shares[home] / pool["states"][home]
-    else:
-        rest = pool["total"] - sum(pool["states"].get(s, 0) for s in shares)
-        loc = tm.get("location")
-        near = REST_NEAR * math.exp(-_miles(tuple(p["home"]), tuple(loc)) / REST_MILES) if loc else 1.0
-        w = max(0.0, 1 - sum(shares.values())) / max(1, rest) * near
-    if p["stars"] >= 4:
-        w += NATIONAL_REACH * (tm.get("blue_chip_share") or 0.0) / pool["blue_chips"]
-    stars = (tm.get("star_share") or {}).get(STAR_KEY.get(p["stars"], "2*"), 0.0) / _national_share(p["stars"]) + 0.05
-    pos = (tm.get("positions_per_class") or {}).get(POS_247.get(p["position"], p["position"]), 1.0)
-    return w * stars * (0.7 + 0.3 * min(1.0, pos / 2))
+    rest = pool["total"] - sum(pool["states"].get(s, 0) for s in shares)
+    rest_w = max(0.0, 1 - sum(shares.values())) / max(1, rest)
+    reach = NATIONAL_REACH * (tm.get("blue_chip_share") or 0.0) / pool["blue_chips"]
+    star_share = tm.get("star_share") or {}
+    lift = {n: star_share.get(STAR_KEY.get(n, "2*"), 0.0) / _national_share(n) + 0.05 for n in (2, 3, 4, 5)}
+    per_class = tm.get("positions_per_class") or {}
+    loc = tm.get("location")
+    lat0, lon0 = (math.radians(loc[0]), math.radians(loc[1])) if loc else (None, None)
+    cos0 = math.cos(lat0) if loc else 0.0
+    out = {}
+    for pid, p in prospects.items():
+        home = p["hometown"]["state"]
+        if home in shares:
+            w = shares[home] / pool["states"][home]
+        elif loc:
+            lat, lon = math.radians(p["home"][0]), math.radians(p["home"][1])
+            h = math.sin((lat - lat0) / 2) ** 2 + cos0 * math.cos(lat) * math.sin((lon - lon0) / 2) ** 2
+            w = rest_w * REST_NEAR * math.exp(-3958.8 * 2 * math.asin(math.sqrt(h)) / REST_MILES)
+        else:
+            w = rest_w
+        if p["stars"] >= 4:
+            w += reach
+        pos = per_class.get(POS_247.get(p["position"], p["position"]), 1.0)
+        out[pid] = w * lift.get(p["stars"], lift[2]) * (0.7 + 0.3 * min(1.0, pos / 2))
+    return out
 
 
 def _pool(state: dict) -> dict:
@@ -479,14 +504,28 @@ def _national_share(stars: int) -> float:
     return int(counts.get(str(stars), 1)) / sum(int(v) for v in counts.values())
 
 
+_FITS: dict = {}         # each school's fit for every prospect in the class (fixed all season)
+
+
+def _fits(state: dict, slug: str) -> dict[str, float]:
+    rc = state["recruiting"]
+    if _FITS.get("key") != (state["id"], rc["year"]):
+        _FITS.clear()
+        _FITS["key"] = (state["id"], rc["year"])
+        _FITS["pool"] = _pool(state)
+    if slug not in _FITS:
+        _FITS[slug] = _fit_all(slug, rc["prospects"], _FITS["pool"])
+    return _FITS[slug]
+
+
 def _build_board(state: dict, slug: str, rng: random.Random) -> list[str]:
     rc = state["recruiting"]
     free = [pid for pid, st in rc["status"].items() if not st["signed"] and not st["committed"]]
     # weighted sampling without replacement (key u^(1/fit)): the board's mix of states and star
     # levels follows the school's real shares instead of always taking its home state first
-    keyed, pool = [], _pool(state)
+    keyed, fits = [], _fits(state, slug)
     for pid in free:
-        f = _fit(slug, rc["prospects"][pid], pool)
+        f = fits[pid]
         if f > 0:
             keyed.append((math.log(rng.random() or 1e-12) / f, pid))
     keyed.sort(reverse=True)
@@ -505,14 +544,14 @@ def _build_board(state: dict, slug: str, rng: random.Random) -> list[str]:
     return list(dict.fromkeys(national + sampled))
 
 
-def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None) -> None:
+def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None, commits: Optional[dict] = None) -> None:
     """A school's week by the Auto-recruit rules: keep a board from its footprint and star level,
     offer its best fits as the fall goes, invite top targets to home games, and spend the rest of
     its hours on calls and messages pitching the priorities it knows, NIL on its top offers."""
     rc = state["recruiting"]
     rng = rng or random.Random(f"auto-{rc['seed']}-{slug}-{state['current_week']}")
     week = state["current_week"]
-    spots_left = open_spots(state, slug) - _commits(state).get(slug, 0)
+    spots_left = open_spots(state, slug) - (commits if commits is not None else _commits(state)).get(slug, 0)
     board = [pid for pid in rc["boards"].get(slug, []) if not rc["status"][pid]["signed"]
              and rc["status"][pid]["committed"] in (None, slug)]
     if spots_left > 0 and len(board) < 2 * spots_left:
@@ -700,9 +739,10 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     scout_week(state)
     mine = state.get("team")
     auto_mine = auto_user or ((state.get("career") or {}).get("settings") or {}).get("auto_recruit")
+    commits = _commits(state)          # AI weeks change offers and interest, not commitments
     for slug in fbs_schools(state):
         if slug != mine or auto_mine:
-            auto_recruit(state, slug, random.Random(f"auto-{rc['seed']}-{slug}-{week}"))
+            auto_recruit(state, slug, random.Random(f"auto-{rc['seed']}-{slug}-{week}"), commits)
     if week < season.FINAL_WEEK:
         _draws(state, week, rng)
     if week == season.SELECTION_WEEK:

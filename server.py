@@ -512,13 +512,15 @@ MAX_SAVE_BYTES = 40 * 1024 * 1024    # an uploaded career (gzip); a career with 
 
 
 @app.get("/api/season/{season_id}/export")
-def export_career(season_id: str) -> Response:
-    """The whole career as one gzip file: the browser keeps it (web/careersave.js) and the
-    Download career button saves it."""
+def export_career(season_id: str, full: bool = False) -> Response:
+    """The career as one gzip file: the browser keeps the state each week (web/careersave.js);
+    `full` adds every game's box score, for the Download career button."""
     state = _season_state(season_id)
     if not career.is_career(state):
         raise HTTPException(404, "not a Coach Career")
-    return Response(career.export_save(state), media_type="application/gzip",
+    with _season_lock:                  # never a half-simmed week: a sim holds this lock
+        blob = career.export_save(state, boxes=full)
+    return Response(blob, media_type="application/gzip",
                     headers={"Content-Disposition": f'attachment; filename="coach-career-{season_id}.ccsave"'})
 
 
