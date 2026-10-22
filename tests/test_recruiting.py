@@ -24,7 +24,8 @@ if __name__ == "__main__":
     assert recruiting.interest(st, "texas", tx["id"]) > 0
     # actions: hours, a call reveals a priority, one in-home visit a month, pitches on his priorities count 4x
     pid = tx["id"]; h0 = recruiting.weekly_hours(st, "ohio-state")
-    assert h0 == 50 + (76 - 50) // 4                       # Ryan Day's recruiting 76
+    day = season.load_teams()["ohio-state"]["coaches"]["head_coach"]["ratings"]["recruiting"]
+    assert h0 == 50 + max(0, day - 50) // 4
     r = recruiting.act(st, "ohio-state", pid, "call", pitch=tx["priorities"][0])
     assert r["hours_left"] == h0 - 15 and r["revealed"] in tx["priorities"]
     recruiting.act(st, "ohio-state", pid, "hc_visit")
@@ -62,6 +63,14 @@ if __name__ == "__main__":
     # offers are capped at 1.5x open spots
     cap = recruiting.offer_cap(st, "ohio-state")
     assert 15 <= cap <= 45, cap
+    # real head coaches' recruiting ratings follow how they really recruit; your created coach keeps his
+    teams = season.load_teams()
+    rr = lambda slug: teams[slug]["coaches"]["head_coach"]["ratings"]["recruiting"]
+    assert rr("oregon") > rr("oklahoma"), (rr("oregon"), rr("oklahoma"))
+    mine = season.new_season("kent-state", "full", seed=6, career=True,
+                             coach={"id": "c1", "first_name": "Pat", "last_name": "Test",
+                                    "ratings": {"recruiting": 92, "offense": 70, "defense": 70}})
+    assert recruiting.weekly_hours(mine, "kent-state") == 50 + (92 - 50) // 4
     # a whole season: everyone signs somewhere, nobody past their open spots, about a third to FCS
     import time
     from collections import Counter

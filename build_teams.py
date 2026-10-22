@@ -681,6 +681,24 @@ def ratings_at_every_position(teams: list[dict], means: dict) -> None:
             m["ratings_at"] = out
 
 
+def measured_recruiting(teams: list[dict]) -> int:
+    """Rebuild each head coach's recruiting rating from how he has really recruited: his measured
+    edge (recruiting_model.json coaches.current), shrunk toward average for coaches with few
+    classes. The source ratings are generated and do not track it (r -0.02 across 78 coaches).
+    Coaches with no measured edge keep theirs. Returns how many were rebuilt."""
+    import recruits
+    current = recruits.model()["coaches"]["current"]
+    n = 0
+    for t in teams:
+        c = current.get(t["slug"])
+        if not c or c.get("edge") is None:
+            continue
+        shrunk = c["edge"] * c["classes"] / (c["classes"] + 3)
+        t["coaches"]["head_coach"]["ratings"]["recruiting"] = max(30, min(95, round(50 + 40 * shrunk / 0.25)))
+        n += 1
+    return n
+
+
 def engine_roster(t: dict) -> tuple[list[dict], list[dict]]:
     """Split a converted team into the engine's offense and defense player lists."""
     offense, defense = [], []
@@ -716,6 +734,7 @@ def main() -> None:
     decouple_discipline(teams)
     print("league tendency means before centring:", tendency_means)
     print("teams with observed 2026 tendencies:", apply_observed_tendencies(teams))
+    print("head coaches' recruiting ratings from their measured edge:", measured_recruiting(teams))
     out = {"source": str(SRC), "neutral": NEUTRAL, "spread_scale": SPREAD_SCALE, "team_level_top_scale": TEAM_LEVEL_TOP_SCALE,
            "starter_means_before_normalization": means, "tendency_means": tendency_means,
            "attribute_scale": ATTR_SCALE, "teams": {}}
