@@ -58,17 +58,20 @@ NIL_VALUE = {5: 0.04, 4: 0.07, 3: 0.12, 2: 0.15}   # interest per NIL point by s
 NIL_FLOOR = 30
 ROSTER_LIMIT = 85                          # the game's rosters carry the 85 scholarship players
 MIN_OPEN = 12
+EARLY_LEAVERS = 4                          # returning players expected to leave early (draft, transfers) *tune*
+CLASS_ROOM = 2                             # a class tops out this far over the school's real mean size *tune*
 OFFER_FACTOR = 1.5
 FCS_LINE = 4.0                             # best FBS interest under this: Leaning FCS *tune*
 FCS_NO_OFFER_WEEK = 8                      # from this week a prospect with no FBS offer leans FCS
-COMMIT_ODDS = ((0, 0.02), (6, 0.05), (12, 0.10), (16, 0.16), (20, 0.30))   # weekly base chance by week *tune*
+COMMIT_ODDS = ((0, 0.02), (6, 0.05), (12, 0.08), (16, 0.10), (20, 0.30))   # weekly base chance by week *tune*
 LEAD_SCALE = 3.0                           # interest lead worth a doubling of the base chance *tune*
 VISIT_BOOST = 1.6                          # after an official visit to the leader
-DECOMMIT_RATE = 0.04                       # weekly chance per FLIP_MARGIN of a rival's lead *tune*
-FLIP_MARGIN = 4.0
+DECOMMIT_RATE = 0.20                       # weekly chance of a decommitment at an even race *tune*
+FLIP_MARGIN = 4.0                          # a rival's lead that doubles-ish it (logistic) *tune*
+CROWD = 1.5                                # interest lost per committed recruit at his position rated at least as high *tune*
+RIVAL_RANK = 300                           # AI schools keep chasing committed prospects this highly ranked
 BOARD_FACTOR = 3                           # an AI school's board holds this many prospects per open spot
 NATIONAL_REACH = 0.08                      # a blue-chip program's pull on four- and five-stars anywhere *tune*
-STATE_SHARE_FLOOR = 0.004                  # a state outside a school's top states
 STAR_KEY = {5: "5*", 4: "4*", 3: "3*", 2: "2*"}
 AI_NIL = {5: 0.25, 4: 0.12, 3: 0.04, 2: 0.0}   # share of the budget an AI school puts on one offer by stars *tune*
 POS_247 = {"OT": "OL", "IOL": "OL"}
@@ -297,7 +300,8 @@ def _open_spots(slug: str) -> int:
     import season
     t = season.load_teams()[slug]
     returning = sum(1 for p in t["offense"] + t["defense"] if p.get("class") not in LEAVING)
-    return max(MIN_OPEN, ROSTER_LIMIT - returning)
+    usual = math.ceil(((_team_model(slug).get("class_size") or {}).get("mean")) or 20) + CLASS_ROOM
+    return max(MIN_OPEN, min(ROSTER_LIMIT - returning + EARLY_LEAVERS, usual))
 
 
 def offer_cap(state: dict, slug: str) -> int:
@@ -415,15 +419,32 @@ def _event(state: dict, kind: str, pid: str, school: Optional[str] = None, **ext
     return e
 
 
-def _fit(slug: str, p: dict) -> float:
-    """How well a prospect fits a school's usual recruiting: its states, its star level, its positions."""
+def _fit(slug: str, p: dict, pool: dict) -> float:
+    """How well a prospect fits a school's usual recruiting: its states (each state's real share
+    of its signees spread over that state's prospects in this class, the rest over everyone
+    else), a blue-chip program's national reach, its star level and its positions."""
     tm = _team_model(slug)
     shares = dict(tm.get("top_states") or [])
-    state_share = shares.get(p["hometown"]["state"], 0.0) + \
-        (NATIONAL_REACH * (tm.get("blue_chip_share") or 0.0) if p["stars"] >= 4 else STATE_SHARE_FLOOR)
+    home = p["hometown"]["state"]
+    if home in shares:
+        w = shares[home] / pool["states"][home]
+    else:
+        rest = pool["total"] - sum(pool["states"].get(s, 0) for s in shares)
+        w = max(0.0, 1 - sum(shares.values())) / max(1, rest)
+    if p["stars"] >= 4:
+        w += NATIONAL_REACH * (tm.get("blue_chip_share") or 0.0) / pool["blue_chips"]
     stars = (tm.get("star_share") or {}).get(STAR_KEY.get(p["stars"], "2*"), 0.0) / _national_share(p["stars"]) + 0.05
     pos = (tm.get("positions_per_class") or {}).get(POS_247.get(p["position"], p["position"]), 1.0)
-    return state_share * stars * (0.7 + 0.3 * min(1.0, pos / 2))
+    return w * stars * (0.7 + 0.3 * min(1.0, pos / 2))
+
+
+def _pool(state: dict) -> dict:
+    """The class's prospects by home state, for spreading schools' state shares."""
+    pros = state["recruiting"]["prospects"].values()
+    states: dict[str, int] = {}
+    for p in pros:
+        states[p["hometown"]["state"]] = states.get(p["hometown"]["state"], 0) + 1
+    return {"states": states, "total": len(pros), "blue_chips": max(1, sum(1 for p in pros if p["stars"] >= 4))}
 
 
 @lru_cache(maxsize=None)
@@ -436,8 +457,15 @@ def _national_share(stars: int) -> float:
 def _build_board(state: dict, slug: str, rng: random.Random) -> list[str]:
     rc = state["recruiting"]
     free = [pid for pid, st in rc["status"].items() if not st["signed"] and not st["committed"]]
-    scored = sorted(free, key=lambda pid: -_fit(slug, rc["prospects"][pid]) * rng.uniform(0.8, 1.2))
-    return scored[:BOARD_FACTOR * open_spots(state, slug)]
+    # weighted sampling without replacement (key u^(1/fit)): the board's mix of states and star
+    # levels follows the school's real shares instead of always taking its home state first
+    keyed, pool = [], _pool(state)
+    for pid in free:
+        f = _fit(slug, rc["prospects"][pid], pool)
+        if f > 0:
+            keyed.append((math.log(rng.random() or 1e-12) / f, pid))
+    keyed.sort(reverse=True)
+    return [pid for _, pid in keyed[:BOARD_FACTOR * open_spots(state, slug)]]
 
 
 def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None) -> None:
@@ -456,8 +484,9 @@ def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None) ->
     if spots_left <= 0:
         return
     offers = rc["offers"].setdefault(slug, [])
-    for pid in [q for q in offers if rc["status"][q]["committed"] not in (None, slug)]:
-        offers.remove(pid)                     # he went elsewhere: the offer frees up
+    for pid in [q for q in offers if rc["status"][q]["committed"] not in (None, slug)
+                and (rc["status"][q]["signed"] or rc["prospects"][q]["rank"] > RIVAL_RANK)]:
+        offers.remove(pid)                     # he went elsewhere: the offer frees up (a top prospect is still chased)
         _nil(state, slug)["held"].pop(pid, None)
     edge = 1 + _coach_edge(state, slug)
     allowed = math.ceil(offer_cap(state, slug) * min(1.0, 0.35 + 0.65 * week / 8))
@@ -473,6 +502,7 @@ def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None) ->
             except RecruitingError:
                 break
     targets = [pid for pid in offers if rc["status"][pid]["committed"] is None and not rc["status"][pid]["signed"]]
+    targets += [pid for pid in offers if rc["status"][pid]["committed"] not in (None, slug) and not rc["status"][pid]["signed"]]
     known = rc["revealed"].get(slug, {})
     for pid in targets[:2]:
         if slug not in rc["visits"].get(pid, {}):
@@ -534,25 +564,45 @@ def _commit(state: dict, pid: str, slug: str, kind: str = "commit") -> None:
     _event(state, kind, pid, slug, **({"from": old} if old else {}))
 
 
+def _class_by_position(state: dict) -> dict[tuple, list[float]]:
+    rc = state["recruiting"]
+    out: dict[tuple, list[float]] = {}
+    for pid, st in rc["status"].items():
+        if st["committed"] and st["committed"] != "FCS":
+            p = rc["prospects"][pid]
+            out.setdefault((st["committed"], p["position"]), []).append(p["composite"])
+    return out
+
+
 def _draws(state: dict, week: int, rng: random.Random) -> None:
     rc = state["recruiting"]
     commits = _commits(state)
     room = lambda slug: commits.get(slug, 0) < open_spots(state, slug)
     base = _interp(COMMIT_ODDS, week)
-    win, offered = _winning(state), _offers_by_prospect(state)
+    win, offered, by_pos = _winning(state), _offers_by_prospect(state), _class_by_position(state)
+
+    def score(slug: str, pid: str) -> float:
+        """His interest less the crowd: recruits already committed there at his position, rated at least as high."""
+        p = rc["prospects"][pid]
+        crowd = sum(1 for c in by_pos.get((slug, p["position"]), ()) if c >= p["composite"])
+        if rc["status"][pid]["committed"] == slug:
+            crowd -= 1                                 # not himself
+        return interest(state, slug, pid, win) - CROWD * crowd
+
     for pid in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"]):
         st = rc["status"][pid]
         if st["signed"]:
             continue
-        scores = sorted(((interest(state, s, pid, win), s) for s in offered.get(pid, [])), reverse=True)
+        scores = sorted(((score(s, pid), s) for s in offered.get(pid, [])), reverse=True)
         if st["committed"]:
-            mine = interest(state, st["committed"], pid, win)
+            mine = score(st["committed"], pid)
             rival = next(((v, s) for v, s in scores if s != st["committed"] and room(s)), None)
-            if rival and rival[0] - mine > FLIP_MARGIN and rng.random() < DECOMMIT_RATE * (rival[0] - mine) / FLIP_MARGIN:
+            if rival and rng.random() < 2 * DECOMMIT_RATE * _logistic((rival[0] - mine) / FLIP_MARGIN):
                 commits[st["committed"]] -= 1
                 _event(state, "decommit", pid, st["committed"])
                 _commit(state, pid, rival[1], "flip")
                 commits[rival[1]] = commits.get(rival[1], 0) + 1
+                by_pos.setdefault((rival[1], rc["prospects"][pid]["position"]), []).append(rc["prospects"][pid]["composite"])
             continue
         scores = [(v, s) for v, s in scores if room(s)]
         lean = (not scores and week >= FCS_NO_OFFER_WEEK) or (scores and scores[0][0] < FCS_LINE)
@@ -569,6 +619,7 @@ def _draws(state: dict, week: int, rng: random.Random) -> None:
         if rng.random() < odds:
             _commit(state, pid, leader)
             commits[leader] = commits.get(leader, 0) + 1
+            by_pos.setdefault((leader, rc["prospects"][pid]["position"]), []).append(rc["prospects"][pid]["composite"])
 
 
 def _sign(state: dict, final: bool) -> None:
