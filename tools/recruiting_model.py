@@ -449,6 +449,28 @@ def main() -> None:
     lookup = build_matcher(teams)
     power4 = {s for s, t in teams.items() if t.get("conference") in {"SEC", "Big Ten", "Big 12", "ACC"} or s == "notre-dame"}
     foot = load("footprints.json")
+    # what the live game needs from CFBD for each school: where it is (the distance pull) and how
+    # last season went (on-field standing at the start of the career)
+    locs = {}
+    for t in load("fbs_teams.json"):
+        slug = match(t["school"], lookup)
+        loc = t.get("location") or {}
+        if slug and loc.get("latitude") is not None:
+            locs[slug] = [round(loc["latitude"], 4), round(loc["longitude"], 4)]
+    last_year = max(DYN_YEARS) - 1
+    last = {}
+    for c in load("coaches.json"):
+        for s_ in c.get("seasons") or []:
+            slug = match(s_["school"], lookup)
+            if slug and s_["year"] == last_year and s_.get("games"):
+                cur = last.setdefault(slug, {"wins": 0, "losses": 0, "final_rank": None})
+                cur["wins"] += s_.get("wins") or 0
+                cur["losses"] += s_.get("losses") or 0
+                if s_.get("postseasonRank"):
+                    cur["final_rank"] = s_["postseasonRank"]
+    for slug, f in foot["teams"].items():
+        f["location"] = locs.get(slug)
+        f["last_season"] = {"year": last_year, **last[slug]} if slug in last else None
     dyn, coaches = dynamics_and_coaches(teams, lookup, power4)
     strength = dyn.pop("team_strength")
     out = {

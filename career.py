@@ -26,6 +26,8 @@ def new_career(state: dict, coach: Optional[dict]) -> dict:
         "saved_week": 0,
         "saved_at": _now(),
     }
+    import recruiting
+    recruiting.start(state)
     return state["career"]
 
 
