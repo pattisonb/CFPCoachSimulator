@@ -731,6 +731,51 @@ git-ignored. `tools/recruiting_footprints.py` and `tools/recruiting_model.py` re
   measured edge (correlation -0.02 across 78 current coaches); they will be rebuilt from it when
   recruiting lands.
 
+## Generated recruiting classes (`recruits.py`)
+
+`recruits.generate_class(year, seed)` builds a national class of fictional prospects (4,092:
+36 five-stars, 428 four-stars, 2,487 three-stars and 1,141 two-stars) from
+`data/recruiting_model.json`, following docs/PLAYER_DEVELOPMENT.md. The model's `players`
+section is learned from the 8,300 real 2026 roster players matched to their own recruiting
+record. A prospect is built in this order:
+
+- **Stars and composite rating** from the real spread inside each band; then a **recruiting
+  position**, then the **EA position** he plays (where real recruits at that position ended up:
+  DL plays DT 73%, edge 27%; ATH plays WR, CB, safety, back and TE), a **hometown** (state by star
+  band, then a real town) and **size** (within two standard deviations of real recruits).
+- **Attributes, athleticism first:** the EA position's expected attributes at his composite
+  rating (fit on 3,050 real first- and second-year players) plus the deviations of three real
+  young players there, blended and rescaled to keep a real player's spread, plus noise. The
+  main donor gives his archetype. Speed, burst, agility and jumping rise with stars and come
+  with the donors; below the three-star floor a two-star's expected attributes follow at 15% of
+  the slope (few two-stars are among the donors).
+- **Potential per attribute:** room = the attribute's real career gain at his position (a
+  fifth-year player against a true freshman), trimmed 15% for survivors, divided by the share
+  an average player realizes in four offseasons, times a player-level potential (log-normal,
+  spread 0.45) and a star factor (5* 1.0, 4* 0.75, 3* 1.6, 2* 1.8), with per-attribute spread.
+  A receiver's speed gets about 1 point of room, his awareness and release about 20.
+- **Coachability** from the six levels (2/8/20/40/20/10%), independent of stars.
+- **Overall:** EA's overall from a ridge fit on the EA attributes per position and archetype
+  (mean error about 1 point; QB 1.5), then the source curve, so `as_roster_player` hands
+  build_teams a player in the source format.
+
+`recruits.develop(p, rng, coach_factor)` is one offseason: each attribute closes
+`rate x coach factor x (potential - current) x U(0.8, 1.2)` of its gap. `tools/check_recruits.py`
+holds generated classes to the real players (four classes, source-scale overall, generated / real):
+
+| Stars | Year 0 | Year 1 | Year 2 | Year 3 | Year 4 |
+|---|---|---|---|---|---|
+| 5* | 64.3 / 65.0 | 68.3 / 68.1 | 71.0 / 72.8 | 72.9 / 73.1 | 74.0 / 64.6 (11 players) |
+| 4* | 53.7 / 53.0 | 56.6 / 55.2 | 58.8 / 57.5 | 60.2 / 61.0 | 61.1 / 60.4 |
+| 3* | 42.5 / 42.6 | 47.2 / 45.5 | 50.9 / 48.9 | 53.5 / 54.7 | 55.5 / 56.9 |
+| 2* | 37.0 / 39.2 | 42.0 / 42.9 | 45.7 / 46.9 | 48.5 / 51.2 | 50.6 / 52.9 |
+
+Two-stars run 1-2 points under: the real ones are the two-stars who made FBS rosters, the
+generated ones every two-star prospect. Young athleticism by stars matches within about 1 point
+for three- to five-stars (WR speed 93.2 / 89.7 / 87.0 against a real 92.4 / 90.0 / 87.7), and
+sizes match by position. Names recombine real recruits' first and last names (2,500 first,
+7,510 last); `taken` keeps real roster names and earlier classes out.
+
 ## Player stat lines against real box scores
 
 `tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed

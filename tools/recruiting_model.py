@@ -14,8 +14,15 @@ school's habits and the effects that move them.
     coaches     each head coach's classes against his school's baseline (recruiting over
                 expectation), whether that edge travels with him to a new school, whether his old
                 school's states come with him, and the edge of every current head coach
+    players     what a recruit becomes on the field, from the real 2026 roster players matched to
+                their own recruiting record (cfb_sim_data has their EA ratings): where each
+                recruiting position plays, each EA position's expected attributes by composite
+                rating with real young players' deviations around it (a recruit's shape), each
+                attribute's career gain by position (his room to grow), EA's overall as a fit on
+                the attributes (per position and archetype), and first and last names to recombine
 
-Input:  data/recruiting/players_<year>.json, teams_<year>.json, coaches.json, footprints.json
+Input:  data/recruiting/players_<year>.json, teams_<year>.json, coaches.json, footprints.json,
+        cfb_sim_data/teams/*.json (the 2026 rosters with EA ratings)
 Output: data/recruiting_model.json  (small; the game reads it at run time, so it is committed)
 
 Usage:  python tools/recruiting_model.py
@@ -28,6 +35,7 @@ _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project r
 
 import json
 import math
+import re
 import statistics as st
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -276,6 +284,163 @@ def dynamics_and_coaches(teams: dict, lookup: dict, power4: set[str]) -> tuple[d
     return dyn, coaches_out
 
 
+# ----- players: what a recruit becomes ----------------------------------------------------------
+
+YEARS_IN = {"Freshman": 0, "Freshman (RS)": 1, "Sophomore": 1, "Sophomore (RS)": 2, "Junior": 2,
+            "Junior (RS)": 3, "Senior": 3, "Senior (RS)": 4}
+SUFFIX = re.compile(r"\b(jr|sr|ii|iii|iv|v)\b\.?", re.I)
+NAME_YEARS = range(2002, 2028)
+MIN_DONORS = 12             # an EA position needs this many young matched players to shape recruits
+
+
+def name_key(n: str) -> str:
+    return re.sub(r"[^a-z]", "", SUFFIX.sub("", (n or "").lower()))
+
+
+def roster_players() -> list[dict]:
+    out = []
+    for path in sorted((ROOT / "cfb_sim_data" / "teams").glob("*.json")):
+        t = json.loads(path.read_text(encoding="utf-8"))
+        if not t.get("fictional"):
+            out += [p for p in t["roster"] if p.get("ratings_ea") and p.get("class_year") in YEARS_IN]
+    return out
+
+
+def match_recruits(players: list[dict]) -> dict[str, dict]:
+    """player slug -> his high school recruiting record, when the name is unique among recruits."""
+    by_name = defaultdict(list)
+    for y in range(2017, 2027):
+        for r in hs_class(y):
+            by_name[name_key(r["name"])].append(r)
+    return {p["slug"]: by_name[name_key(p["name"])][0] for p in players if len(by_name.get(name_key(p["name"]), [])) == 1}
+
+
+def ridge(rows: list[list[float]], ys: list[float], lam: float) -> list[float]:
+    """Least squares with a small ridge penalty (not on the intercept, the last column)."""
+    k = len(rows[0])
+    a = [[sum(r[i] * r[j] for r in rows) + (lam if i == j and i < k - 1 else 0.0) for j in range(k)]
+         + [sum(r[i] * y for r, y in zip(rows, ys))] for i in range(k)]
+    for c in range(k):
+        piv = max(range(c, k), key=lambda r: abs(a[r][c]))
+        a[c], a[piv] = a[piv], a[c]
+        for r in range(k):
+            if r != c and a[c][c]:
+                f = a[r][c] / a[c][c]
+                a[r] = [x - f * y for x, y in zip(a[r], a[c])]
+    return [a[i][k] / a[i][i] if a[i][i] else 0.0 for i in range(k)]
+
+
+def players_section() -> dict:
+    players = roster_players()
+    rec = match_recruits(players)
+    keys = sorted({k for p in players for k in p["ratings_ea"]})
+
+    # where each recruiting position plays (shares of 5% or more)
+    plays = defaultdict(Counter)
+    for p in players:
+        if p["slug"] in rec:
+            r = rec[p["slug"]]
+            plays[POSITION.get((r.get("position") or "ATH").upper(), (r.get("position") or "ATH").upper())][p["position"]] += 1
+    position_map = {}
+    for rp, c in plays.items():
+        n = sum(c.values())
+        kept = {k: v for k, v in c.items() if v / n >= 0.05}
+        if n >= 20:
+            position_map[rp] = {k: round(v / sum(kept.values()), 3) for k, v in sorted(kept.items(), key=lambda kv: -kv[1])}
+
+    # each EA position's expected attributes by composite rating, and real young players' deviations
+    by_pos = defaultdict(list)
+    for p in players:
+        if p["slug"] in rec and YEARS_IN[p["class_year"]] <= 1 and rec[p["slug"]].get("rating"):
+            by_pos[p["position"]].append(p)
+    shapes = {}
+    for pos, ps in sorted(by_pos.items()):
+        if len(ps) < MIN_DONORS:
+            continue
+        used = [k for k in keys if st.pstdev([p["ratings_ea"].get(k, 0) for p in ps]) > 0.5]
+        x = [[rec[p["slug"]]["rating"], 1.0 if p["class_year"] == "Freshman (RS)" else 0.0, 1.0] for p in ps]
+        coef, dev = {}, [[] for _ in ps]
+        for k in used:
+            ys = [p["ratings_ea"].get(k, 0) for p in ps]
+            b = ridge(x, ys, 1e-6)
+            coef[k] = [round(v, 3) for v in b]          # [per composite point, redshirt year, intercept]
+            for i, (row, yv) in enumerate(zip(x, ys)):
+                dev[i].append(round(yv - sum(c * v for c, v in zip(b, row))))
+        fixed = {k: round(st.mean(p["ratings_ea"].get(k, 0) for p in ps)) for k in keys if k not in used}
+        shapes[pos] = {"keys": used, "expected": coef, "fixed": fixed,
+                       "donors": [[min(max(rec[p["slug"]].get("stars") or 2, 2), 5), p.get("archetype") or ""] + d
+                                  for p, d in zip(ps, dev)]}
+
+    # each attribute's career gain by EA position: fifth-year mean minus true-freshman mean
+    years = defaultdict(lambda: defaultdict(list))
+    for p in players:
+        for k, v in p["ratings_ea"].items():
+            years[(p["position"], k)][YEARS_IN[p["class_year"]]].append(v)
+    gain = defaultdict(dict)
+    for (pos, k), by in years.items():
+        if len(by[0]) >= 10 and len(by[4]) >= 10:
+            gain[pos][k] = round(st.mean(by[4]) - st.mean(by[0]), 1)
+
+    # EA's overall as a fit on the EA attributes, per position and archetype (per position when thin)
+    fits = {}
+    groups = defaultdict(list)
+    for p in players:
+        groups[p["position"]].append(p)
+        groups[f"{p['position']}|{p.get('archetype')}"].append(p)
+    for g, ps in sorted(groups.items()):
+        if len(ps) < (60 if "|" in g else 15) or not all(isinstance(p.get("overall_ea"), (int, float)) for p in ps):
+            continue
+        used = [k for k in keys if st.pstdev([p["ratings_ea"].get(k, 0) for p in ps]) > 0.5]
+        rows = [[p["ratings_ea"].get(k, 0) for k in used] + [1.0] for p in ps]
+        ys = [p["overall_ea"] for p in ps]
+        b = ridge(rows, ys, 1.0)
+        pred = [sum(c * v for c, v in zip(b, r)) for r in rows]
+        err = st.mean(abs(a - c) for a, c in zip(ys, pred))
+        fits[g] = {"weights": {k: round(w, 4) for k, w in zip(used, b) if abs(w) >= 1e-4}, "const": round(b[-1], 3),
+                   "mean_abs_error": round(err, 2)}
+
+    # what generated classes are checked against: the real overall (source scale) by stars and
+    # years in college, and the athletic attributes of first- and second-year players by stars
+    targets = defaultdict(lambda: defaultdict(list))
+    athletic = defaultdict(lambda: defaultdict(list))
+    for p in players:
+        if p["slug"] not in rec:
+            continue
+        s_ = str(min(max(rec[p["slug"]].get("stars") or 2, 2), 5))
+        targets[s_][YEARS_IN[p["class_year"]]].append(p["overall"])
+        if YEARS_IN[p["class_year"]] <= 1:
+            for k in ("speed", "acceleration", "agility", "jumping"):
+                athletic[f"{p['position']}|{k}"][s_].append(p["ratings_ea"].get(k, 0))
+    target_out = {s_: {y: [round(st.mean(v), 1), len(v)] for y, v in sorted(by.items()) if len(v) >= 5} for s_, by in sorted(targets.items())}
+    athletic_out = {k: {s_: [round(st.mean(v), 1), len(v)] for s_, v in sorted(by.items()) if len(v) >= 5} for k, by in sorted(athletic.items())}
+
+    # names to recombine: first and last names across the real classes
+    first, last, suffix = Counter(), Counter(), Counter()
+    for y in NAME_YEARS:
+        for r in hs_class(y):
+            m = SUFFIX.search(r.get("name") or "")
+            parts = SUFFIX.sub("", r.get("name") or "").replace(".", "").split()
+            if len(parts) < 2:
+                continue
+            first[parts[0]] += 1
+            last[" ".join(parts[1:])] += 1
+            sfx = m.group(1).lower() if m else ""
+            suffix[sfx.capitalize() + "." if sfx in ("jr", "sr") else sfx.upper()] += 1
+    n = sum(suffix.values())
+    return {
+        "matched_players": len(rec),
+        "position_map": position_map,
+        "shapes": shapes,
+        "career_gain": gain,
+        "overall_fit": fits,
+        "targets": {"overall_by_stars_and_years": target_out, "young_athletic_by_stars": athletic_out},
+        "names": {"first": [[k, v] for k, v in first.most_common(2500) if v >= 3],
+                  "last": [[k, v] for k, v in last.most_common(8000) if v >= 2],
+                  "suffix": {k or "none": round(v / n, 4) for k, v in suffix.most_common() if v / n >= 0.002}},
+        "curve": json.loads((ROOT / "cfb_sim_data" / "league.json").read_text(encoding="utf-8"))["rating_scale"]["curve_anchors_ea_to_new"],
+    }
+
+
 def main() -> None:
     teams = season.load_teams()
     lookup = build_matcher(teams)
@@ -290,6 +455,7 @@ def main() -> None:
         "national": foot["national"],
         "dynamics": dyn,
         "coaches": coaches,
+        "players": players_section(),
     }
     OUT.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
     g = out["generation"]
@@ -304,6 +470,14 @@ def main() -> None:
     top = sorted(((v["edge"], s, v["coach"]) for s, v in coaches["current"].items() if v["edge"] is not None), reverse=True)
     print("current coaches, best edge:", top[:6])
     print("current coaches, worst edge:", top[-4:])
+    pl = out["players"]
+    print(f"players: {pl['matched_players']} roster players matched to a recruiting record; shapes for "
+          f"{len(pl['shapes'])} EA positions ({sum(len(v['donors']) for v in pl['shapes'].values())} young donors)")
+    print("DL plays:", pl["position_map"].get("DL"), "| ATH plays:", pl["position_map"].get("ATH"))
+    print("WR career gain:", {k: pl["career_gain"]["WR"].get(k) for k in ("speed", "release", "awareness", "catching")})
+    worst = sorted(((v["mean_abs_error"], g) for g, v in pl["overall_fit"].items()), reverse=True)[:5]
+    print(f"overall fits: {len(pl['overall_fit'])}, largest mean errors {worst}")
+    print(f"names: {len(pl['names']['first'])} first, {len(pl['names']['last'])} last, suffixes {pl['names']['suffix']}")
 
 
 if __name__ == "__main__":

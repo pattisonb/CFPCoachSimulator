@@ -1,6 +1,8 @@
 # Player development, potential and scouting (spec)
 
-Status: agreed design, October 22, 2026. Nothing here is built yet. Numbers marked *tune* are
+Status: agreed design, October 22, 2026. Built so far: generated classes and development
+(`recruits.py`, docs/HOW_IT_WORKS.md "Generated recruiting classes"); not yet staff reads, real
+players' potential and coachability, potential that moves, or god mode. Numbers marked *tune* are
 starting values, to be set so the league's growth matches the real class-year gains below.
 
 Every player, real or generated, gets a current value and a potential value for each attribute,
