@@ -675,6 +675,7 @@
     if (real) {
       $("#season-meta").textContent = `The real 2026 season through ${s.week_labels[s.current_week] || "week " + s.current_week}${simDate ? ` (${simDate})` : ""} · real results, real AP polls, real stats from the NCAA box scores · built ${when(s.real_built_at || s.created_at)}`;
     }
+    renderCareerSteps(s);
     setBusy(false);
     renderWeekStrip();
     renderTab();
@@ -762,7 +763,7 @@
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "recruiting", "prospects", "staff"]) $(`#tab-${t}`).hidden = t !== name;
   }
 
   function renderTab() {
@@ -778,6 +779,25 @@
     else if (t === "awards") renderAwards();
     else if (t === "stats") renderStats();
     else if (t === "depth") renderDepthChart();
+    else if (CAREER_TABS.includes(t) && window.Recruiting) window.Recruiting.render(t, state.season, recruitingHelpers);
+  }
+
+  // Coach Career: the recruiting tabs (recruiting.js) and the week's steps under the header
+  const CAREER_TABS = ["recruiting", "prospects", "staff"];
+  const recruitingHelpers = { api, postJSON, toast, openModal, errText, onChange: (tab) => { state.tab = tab; renderTab(); } };
+  function renderCareerSteps(s) {
+    const box = $("#career-steps");
+    const career = !!s.career && s.mode !== "real";
+    for (const t of CAREER_TABS) $(`#season-tabs button[data-tab=${t}]`).hidden = !career;
+    if (!career && CAREER_TABS.includes(state.tab)) state.tab = "schedule";
+    box.hidden = !career || !!s.done;
+    if (box.hidden) return;
+    box.innerHTML = "";
+    const step = (n, label, onclick) => el("button", { type: "button", class: "ghost career-step", onclick }, [el("b", { text: `${n}` }), ` ${label}`]);
+    box.append(step(1, "Recruit", () => { state.tab = "recruiting"; renderTab(); }), el("span", { class: "muted", text: "→" }),
+      step(2, "Your game", () => { const gd = $("#btn-gameday"); if (!gd.hidden && !gd.disabled) gd.click(); else { state.tab = "schedule"; renderTab(); } }),
+      el("span", { class: "muted", text: "→" }),
+      step(3, "Advance", () => { if (!$("#btn-advance").disabled) advance(); }));
   }
 
   // ----- stats tab: team stats, player stats and the depth chart under one tab --------

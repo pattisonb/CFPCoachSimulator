@@ -83,6 +83,7 @@
           </div>
           <div id="season-progress" class="progress" hidden><div id="season-progress-bar" class="progress-bar"></div></div>
           <div id="season-progress-text" class="progress-text muted" hidden></div>
+          <div id="career-steps" class="career-steps" hidden></div>
           <div id="week-strip" class="week-strip"></div>
           <div id="week-date" class="week-date muted"></div>
         </div>
@@ -98,6 +99,9 @@
           <button data-tab="bowls" type="button">Bowls</button>
           <button data-tab="awards" type="button">Awards</button>
           <button data-tab="stats" type="button">Stats</button>
+          <button data-tab="recruiting" type="button" hidden>Recruiting</button>
+          <button data-tab="prospects" type="button" hidden>Prospects</button>
+          <button data-tab="staff" type="button" hidden>Staff</button>
 
         </nav>
 
@@ -135,6 +139,9 @@
           <div id="tab-playerstats" hidden></div>
         </div>
         <div class="panel tab-body" id="tab-depth" hidden></div>
+        <div class="panel tab-body" id="tab-recruiting" hidden></div>
+        <div class="panel tab-body" id="tab-prospects" hidden></div>
+        <div class="panel tab-body" id="tab-staff" hidden></div>
         <div id="tab-box" hidden>
           <div class="scoreboard panel">
             <div class="score-row" id="sbox-score-row"></div>
@@ -172,6 +179,7 @@
   <script src="/gameview.js"></script>
   <script src="/coachsprite.js"></script>
   <script src="/careersave.js"></script>
+  <script src="/recruiting.js"></script>
   <script src="/season.js"></script>
 </body>
 </html>
