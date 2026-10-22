@@ -26,7 +26,7 @@ Every game comes with:
 **Sim batch** plays the same matchup up to 500 times and shows how often each team wins.
 **Sliders** let you change how the game plays, such as home-field advantage.
 
-### Sim a season
+### Coach Career
 
 Pick your team and start a season. **New season** plays the whole 2026 schedule from week 1.
 **Start from today** picks up the real season where it stands, with the real results, polls,

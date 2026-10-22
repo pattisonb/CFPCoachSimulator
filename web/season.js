@@ -640,7 +640,7 @@
     const real = s.mode === "real";
     document.body.classList.toggle("real-mode", real);
     $("#btn-real-refresh").hidden = !real;
-    document.title = `${real ? "Real 2026" : "Season"} · CFP Coach Simulator`;
+    document.title = `${real ? "Real 2026" : "Coach Career"} · CFP Coach Simulator`;
     for (const a of document.querySelectorAll(".site-nav a")) a.classList.toggle("active", a.dataset.nav === (real ? "real" : "season"));
     if (real) {
       $("#season-meta").textContent = `The real 2026 season through ${s.week_labels[s.current_week] || "week " + s.current_week}${simDate ? ` (${simDate})` : ""} · real results, real AP polls, real stats from the NCAA box scores · built ${when(s.real_built_at || s.created_at)}`;
