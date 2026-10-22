@@ -42,6 +42,8 @@ WEAKNESS_TEXT = {
     "football_iq": "Still learning the game; processing can be slow.",
     "potential": "Closer to his ceiling than most at this stage.",
 }
+STRENGTH_FROM, WEAKNESS_BELOW = 83, 73        # grade points: a B and up reads as a strength, below a C as a weakness
+SOLID_TEXT = "Solid for a {pos} at this level; not a concern."
 OUTLOOK = {
     5: "Day-one impact {pos} with early-round NFL upside.",
     4: "Projects as a multi-year starter at a Power 4 program.",
@@ -165,6 +167,44 @@ def _ranks(state: dict) -> dict[str, tuple[int, int]]:
 _RANKS: tuple = (None, {})
 
 
+DETAIL_PEERS = 8                   # prospects at his position needed to describe a grade from them alone
+
+
+def grade_detail(state: dict, p: dict, group: str, lo: float, hi: float) -> dict:
+    """What a grade range looks like in ratings: the middle half of the EA ratings of this class's
+    prospects whose true grade falls in the range (at his position when there are enough).
+    Coachability is described by its labels instead."""
+    rc = state["recruiting"]
+    lo, hi = max(recruiting.GRADE_LOW, lo), min(recruiting.GRADE_LOW + recruiting.GRADE_SPAN, hi)
+    if group == "coachability":
+        labels = [name for name, pts in recruiting.COACHABILITY_POINTS.items() if lo - 3 <= pts <= hi + 3]
+        return {"labels": labels or [min(recruiting.COACHABILITY_POINTS, key=lambda n: abs(recruiting.COACHABILITY_POINTS[n] - (lo + hi) / 2))],
+                "ratings": {}}
+    peers = [q for q in rc["prospects"].values() if lo <= q["truth"][group] <= hi]
+    same = [q for q in peers if q["ea_position"] == p["ea_position"]]
+    peers = same if len(same) >= DETAIL_PEERS else peers
+    if len(peers) < 4:                         # a narrow read: the nearest prospects instead
+        mid = (lo + hi) / 2
+        peers = sorted(rc["prospects"].values(), key=lambda q: abs(q["truth"][group] - mid))[:30]
+    if group == "potential":
+        import recruits
+        vals = [recruits.overall_ea(q["ea_position"], q["archetype"], recruiting.attributes(state, q, "potential_ea")) for q in peers]
+        return {"ratings": {"projected overall": _middle(vals)}, "peers": len(peers)}
+    keys = {"athleticism": recruiting._ATHLETIC, "size_strength": recruiting._SIZE, "football_iq": recruiting._IQ}.get(group)
+    if keys is None:                           # technique: the skills that matter most at his position
+        keys = tuple(k for k in _attributes(p["ea_position"]) if k not in recruiting._NOT_TECHNIQUE)[:4] or ("awareness",)
+    idx = {k: i for i, k in enumerate(rc["attrs"])}
+    return {"ratings": {k.replace("_", " "): _middle([q["ratings_ea"][idx[k]] for q in peers]) for k in keys if k in idx},
+            "peers": len(peers)}
+
+
+def _middle(vals: list) -> list[int]:
+    """The middle half of some ratings, as [low, high]."""
+    vals = sorted(vals)
+    pick = lambda f: vals[min(len(vals) - 1, int(f * (len(vals) - 1) + 0.5))]
+    return [int(round(max(0, min(99, pick(0.25))))), int(round(max(0, min(99, pick(0.75)))))]
+
+
 def _high_school(p: dict) -> str:
     kind = random.Random(f"school-{p['id']}").choice(SCHOOL_KINDS)
     return f"{p['hometown']['city']} {kind}"
@@ -185,14 +225,17 @@ def _schools(state: dict, pid: str) -> list[dict]:
 
 
 def _evaluation(p: dict, public: dict[str, float]) -> dict:
+    """His three best and two weakest groups, written up: a strength only from a B up, a weakness
+    only below a C; anything between is "solid" (a five-star's lowest grade is often still good)."""
     pos = p["ea_position"]
     order = sorted(EVAL_GROUPS, key=lambda g: -public[g])
-    strengths = [STRENGTH_TEXT[g].format(pos=pos) for g in order[:3]]
-    weaknesses = [WEAKNESS_TEXT[g].format(pos=pos) for g in order[-2:]]
     head = lambda g: GROUP_NAMES[g][0].upper() + GROUP_NAMES[g][1:]
-    strengths = [f"{head(g)}: {t}" for g, t in zip(order[:3], strengths)]
-    weaknesses = [f"{head(g)}: {t}" for g, t in zip(order[-2:], weaknesses)]
-    return {"strengths": strengths, "weaknesses": weaknesses, "outlook": OUTLOOK.get(p["stars"], OUTLOOK[2]).format(pos=pos)}
+    strengths, solid, weaknesses = [], [], []
+    for g in order[:3]:
+        (strengths if public[g] >= STRENGTH_FROM else solid).append(f"{head(g)}: " + (STRENGTH_TEXT[g] if public[g] >= STRENGTH_FROM else SOLID_TEXT).format(pos=pos))
+    for g in order[-2:]:
+        (weaknesses if public[g] < WEAKNESS_BELOW else solid).append(f"{head(g)}: " + (WEAKNESS_TEXT[g] if public[g] < WEAKNESS_BELOW else SOLID_TEXT).format(pos=pos))
+    return {"strengths": strengths, "solid": solid, "weaknesses": weaknesses, "outlook": OUTLOOK.get(p["stars"], OUTLOOK[2]).format(pos=pos)}
 
 
 def profile(state: dict, pid: str, viewer: str) -> dict:
@@ -221,8 +264,10 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
     if read and read["looks"] >= OUR_COMP_LOOKS:
         ours = {g: read["g"][g][0] for g in recruiting.GROUPS}
         our_comp = comp(_shifted(state, p, ours), p["ea_position"], starter_pool())
+    details = {g: grade_detail(state, p, g, *recruiting.read_interval(state, pid, g)) for g in recruiting.GROUPS} if read else None
     return {
         "public": public,
+        "grade_details": details,
         "evaluation": _evaluation(p, public_grades) if top else None,
         "public_comp": comp(_shifted(state, p, public_grades), p["ea_position"], starter_pool()) if top else None,
         "our_grades": our_grades,
@@ -367,7 +412,13 @@ def odds(state: dict, pid: str, week: Optional[int] = None) -> dict:
     "field", "band", "certainty"}, likeliest first."""
     rc = state["recruiting"]
     week = state["current_week"] if week is None else week
+    st = rc["status"][pid]
+    if st["signed"]:                           # final
+        rows = [] if st["signed"] == "FCS" else [{"school": st["signed"], "pct": 1.0, "lo": 1.0, "hi": 1.0}]
+        return {"schools": rows, "field": 0.0 if rows else 1.0, "band": 0.0, "certainty": "Signed", "committed": st["signed"]}
     offered = [s for s, pids in rc["offers"].items() if pid in pids]
+    if st["committed"] and st["committed"] != "FCS":
+        return _committed_odds(state, pid, st["committed"], offered, week)
     field = recruiting._interp(FIELD, week)
     weights = {s: math.exp(recruiting.interest(state, s, pid) / ODDS_TEMPERATURE) for s in offered}
     w_field = math.exp(field / ODDS_TEMPERATURE)
@@ -376,7 +427,32 @@ def odds(state: dict, pid: str, week: Optional[int] = None) -> dict:
     rows = sorted(({"school": s, "pct": w / total, "lo": max(0.0, w / total - band), "hi": min(1.0, w / total + band)}
                    for s, w in weights.items()), key=lambda r: -r["pct"])
     certainty = next(label for edge, label in CERTAINTY if band >= edge)
-    return {"schools": rows, "field": w_field / total, "band": band, "certainty": certainty}
+    return {"schools": rows, "field": w_field / total, "band": band, "certainty": certainty, "committed": None}
+
+
+def _committed_odds(state: dict, pid: str, school: str, offered: list, week: int) -> dict:
+    """A committed prospect: his school keeps him unless he flips before signing day. The weekly
+    flip chance follows the weekly draws (recruiting._draws): DECOMMIT_RATE scaled by the best
+    rival's lead in interest; the flip chance is shared among the rivals as their odds."""
+    import season
+    rivals = [s for s in offered if s != school]
+    mine = recruiting.interest(state, school, pid)
+    weeks_left = max(0, season.SELECTION_WEEK - week)          # the early signing period ends it for most
+    if rivals:
+        gap = max(recruiting.interest(state, s, pid) for s in rivals) - mine
+        weekly = 2 * recruiting.DECOMMIT_RATE * recruiting._logistic(gap / recruiting.FLIP_MARGIN)
+    else:
+        weekly = 0.0
+    flip = 1 - (1 - weekly) ** weeks_left
+    weights = {s: math.exp(recruiting.interest(state, s, pid) / ODDS_TEMPERATURE) for s in rivals}
+    total = sum(weights.values()) or 1.0
+    band = recruiting._interp(ODDS_BAND, week) / 2
+    rows = [{"school": school, "pct": 1 - flip}] + [{"school": s, "pct": flip * w / total} for s, w in weights.items()]
+    for r in rows:
+        r["lo"], r["hi"] = max(0.0, r["pct"] - band), min(1.0, r["pct"] + band)
+    rows.sort(key=lambda r: -r["pct"])
+    certainty = next(label for edge, label in CERTAINTY if band >= edge)
+    return {"schools": rows, "field": 0.0, "band": band, "certainty": certainty, "committed": school}
 
 
 def class_rank(state: dict, slug: str) -> int:

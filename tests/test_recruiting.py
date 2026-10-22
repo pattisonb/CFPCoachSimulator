@@ -83,6 +83,28 @@ if __name__ == "__main__":
     width = lambda o: o["schools"][0]["hi"] - o["schools"][0]["lo"]
     assert width(early) > width(late) and early["certainty"] == "Early read" and late["certainty"] == "Solid read"
     assert late["field"] < early["field"]
+    # a committed prospect: his school holds most of it, the rest is the chance he flips; signed is final
+    rc["status"][target]["committed"] = "ohio-state"            # the school he likes most
+    held = prospects.odds(st, target)
+    assert held["committed"] == "ohio-state" and held["schools"][0]["school"] == "ohio-state", held
+    late = prospects.odds(st, target, week=14)                 # fewer weeks to flip in
+    assert late["schools"][0]["pct"] > held["schools"][0]["pct"]
+    rc["status"][target]["committed"] = "kent-state"            # one he likes less: a real flip risk
+    shaky = prospects.odds(st, target)
+    assert shaky["schools"][0]["school"] != "kent-state" or shaky["schools"][0]["pct"] < held["schools"][0]["pct"]
+    rc["status"][target]["committed"] = "michigan"
+    held = prospects.odds(st, target)
+    assert abs(sum(o["pct"] for o in held["schools"]) + held["field"] - 1) < 1e-6 and held["field"] == 0
+    rc["status"][target]["signed"] = "michigan"
+    done = prospects.odds(st, target)
+    assert done["schools"][0]["pct"] == 1 and len(done["schools"]) == 1
+    rc["status"][target].update(committed=None, signed=None)
+    # evaluations: only a genuinely low grade reads as a weakness; a strong player's lowest is "solid"
+    star = {"ea_position": "WR", "stars": 5}
+    high = prospects._evaluation(star, {"athleticism": 96, "size_strength": 86, "technique": 94, "football_iq": 88, "potential": 95})
+    assert high["weaknesses"] == [] and len(high["solid"]) == 2, high
+    low = prospects._evaluation(star, {"athleticism": 96, "size_strength": 64, "technique": 94, "football_iq": 88, "potential": 95})
+    assert len(low["weaknesses"]) == 1 and "Size and strength" in low["weaknesses"][0], low
     # offers are capped at 1.5x open spots
     cap = recruiting.offer_cap(st, "ohio-state")
     assert 15 <= cap <= 45, cap

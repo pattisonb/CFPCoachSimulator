@@ -24,6 +24,17 @@
   const height = (inches) => `${Math.floor(inches / 12)}'${inches % 12}"`;
   const pct = (x) => `${Math.round(100 * x)}%`;
   const ordinal = (n) => { const t = n % 100, u = n % 10; return `${n}${t > 10 && t < 14 ? "th" : u === 1 ? "st" : u === 2 ? "nd" : u === 3 ? "rd" : "th"}`; };
+  // where he is from: "Washington, D.C." rather than "Washington, DC"
+  const place = (h) => (h.state === "DC" ? "Washington, D.C." : `${h.city}, ${h.state}`);
+  const ATTR_NAMES = { bc_vision: "ball carrier vision", "bc vision": "ball carrier vision" };
+  // readable ink on a team colour
+  function inkOn(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+    if (!m) return "#ffffff";
+    const n = parseInt(m[1], 16), lin = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+    const L = 0.2126 * lin(n >> 16) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+    return L > 0.4 ? "#111111" : "#ffffff";
+  }
   const teamName = (slug) => (slug === "FCS" ? "an FCS program" : (window.CFP.teamsBySlug[slug] || {}).name || slug);
   const loading = (text) => el("p", { class: "muted go-loading", text });
   const WORDS = { commit: "committed to", flip: "flipped to", decommit: "decommitted from", signed: "signed with" };
@@ -52,7 +63,9 @@
     const st = b.standing || {};
     const school = b.signed || b.committed;
     if (school === me) return { text: b.signed ? "Signed with you" : "Committed to you", tone: "good", fill: 1 };
-    if (school) return { text: `${b.signed ? "Signed" : "Committed"} · ${teamName(school)}`, tone: "bad", fill: 0 };
+    if (school && (b.signed || st.pct == null)) return { text: `${b.signed ? "Signed" : "Committed"} · ${teamName(school)}`, tone: "bad", fill: 0 };
+    if (school) return { text: `Committed · ${teamName(school)}`, odds: `${st.lo < 0.01 ? `under ${pct(st.hi)}` : `${pct(st.lo)}–${pct(st.hi)}`} to flip him to you`,
+                         certainty: st.certainty, tone: "warn", fill: st.pct, lo: st.lo, hi: st.hi };
     if (st.place == null) return { text: st.leader ? `Not offered · ${st.leader.name} leads` : "Not offered yet", tone: "muted", fill: 0 };
     const tone = st.place === 1 ? "good" : st.pct >= st.leader.pct - 0.1 ? "warn" : "muted";
     const text = st.of === 1 ? "Only offer so far" : st.place === 1 ? `Leading ${st.of} offers` : `${ordinal(st.place)} of ${st.of} · ${st.leader.name} leads`;
@@ -271,7 +284,7 @@
       const c = el("article", { class: `go-card go-pcard rc-card ${b.id === view.selected ? "selected" : ""}` });
       c.append(el("button", { type: "button", class: "go-pcard-top", "aria-label": `Select ${b.name}`, "aria-pressed": String(b.id === view.selected),
         onclick: () => { view.selected = b.id; renderRecruiting(s, box); } }, [avatar(b.id),
-        el("span", { class: "go-pcard-id" }, [el("b", { text: b.name }), el("span", { class: "muted small", text: `${b.position} · ${b.hometown.city}, ${b.hometown.state} · #${b.national_rank}` })]),
+        el("span", { class: "go-pcard-id" }, [el("b", { text: b.name }), el("span", { class: "muted small", text: `${b.position} · ${place(b.hometown)} · #${b.national_rank}` })]),
         el("span", { class: "go-stars", text: stars(b.stars) })]));
       c.append(el("div", { class: "go-standing" }, [el("span", { class: `go-standing-text ${sd.tone}`, text: sd.text }),
         sd.odds ? el("span", { class: "muted small", text: `${sd.odds} · ${sd.certainty}` }) : null]), bar(sd));
@@ -369,7 +382,7 @@
         });
         const open = el("button", { type: "button", class: "go-list-main", onclick: () => openProfile(s, r.id) }, [
           el("span", { class: "go-rank", text: `#${r.national_rank}` }), avatar(r.id, "sm"),
-          el("span", { class: "go-list-id" }, [el("b", { text: r.name }), el("span", { class: "muted small", text: `${r.position} · ${height(r.height)} ${r.weight} · ${r.hometown.city}, ${r.hometown.state}` })]),
+          el("span", { class: "go-list-id" }, [el("b", { text: r.name }), el("span", { class: "muted small", text: `${r.position} · ${height(r.height)} ${r.weight} · ${place(r.hometown)}` })]),
           el("span", { class: "go-stars", text: stars(r.stars) }),
           el("span", { class: `go-tag ${r.signed || r.committed ? "" : r.leaning_fcs ? "muted" : "good"}`, text: status(r) }),
           el("span", { class: "go-list-read muted small", title: "Your staff's read of his potential", text: r.our_potential ? `Potential ${r.our_potential[0]} to ${r.our_potential[1]}` : "Not scouted" }),
@@ -402,10 +415,26 @@
       el("h2", { class: "rc-profile-name go-display l", text: pub.name.toUpperCase() }),
       el("div", { class: "go-stars big", text: stars(pub.stars) }),
       el("div", { text: `${pub.position} (${pub.ea_position}) · ${pub.archetype} · ${height(pub.height)}, ${pub.weight} lb` }),
-      el("div", { class: "muted", text: `${pub.high_school} · ${pub.hometown.city}, ${pub.hometown.state}` }),
-      el("div", { class: "muted small", text: `National rankings: #${pub.national_rank} overall · #${pub.position_rank} ${pub.position} · #${pub.state_rank} in ${pub.hometown.state} · composite ${pub.composite.toFixed(4)}` }),
-      el("div", { class: "rc-status go-standing-text", text: status(pub) }),
+      el("div", { class: "muted", text: `${pub.high_school} · ${place(pub.hometown)}` }),
+      el("div", { class: "muted small", text: `National rankings: #${pub.national_rank} overall · #${pub.position_rank} ${pub.position} · #${pub.state_rank} in ${pub.hometown.state === "DC" ? "D.C." : pub.hometown.state} · composite ${pub.composite.toFixed(4)}` }),
+      pub.signed || pub.committed ? null : el("div", { class: "rc-status go-standing-text", text: status(pub) }),
     ])]));
+    const holder = pub.signed || pub.committed;
+    if (holder) {
+      const t = window.CFP.teamsBySlug[holder] || {};
+      const col = t.colors || {};
+      const bg = holder === "FCS" ? "var(--panel-2)" : col.primary || "var(--panel-2)";
+      const odds = pub.schools.find((x) => x.school === holder);
+      const others = pub.schools.filter((x) => x.school !== holder && x.pct != null);
+      const sub = pub.signed ? "Signed: his recruitment is over."
+        : others.length ? `Still considering offers · ${odds && odds.pct != null ? pct(1 - odds.pct) : "some"} chance he flips before signing day`
+        : "No other school is in it.";
+      const banner = el("div", { class: "go-commit rc-status", style: holder === "FCS" ? "" : `background:${bg};color:${inkOn(col.primary)};border-color:${col.secondary || bg}` }, [
+        el("div", { class: "go-display m", text: `${pub.signed ? "SIGNED WITH" : "COMMITTED TO"} ${teamName(holder).toUpperCase()}` }),
+        el("div", { class: "small", text: sub }),
+      ]);
+      node.append(banner);
+    }
     let on = !!pub.on_board;
     const onBoard = el("button", { type: "button", class: "go-btn" });
     const label = () => { onBoard.textContent = on ? "✓ On your board · remove" : "+ Add to your board"; onBoard.classList.toggle("primary", !on); };
@@ -417,25 +446,38 @@
     });
     node.append(el("div", { class: "rc-profile-actions go-row" }, [onBoard]));
     if (pub.schools.length) {
-      node.append(el("h3", { text: "His list" }), el("div", { class: "go-schools" }, pub.schools.map((x, i) => el("div", { class: "go-school" }, [
-        el("span", { class: "go-school-name" }, [el("b", { text: x.name }), x.school === s.team ? el("span", { class: "muted small", text: " (you)" }) : null, i === 0 ? el("span", { class: "go-tag good", text: "Leader" }) : null]),
-        el("span", { class: "go-school-odds", text: x.pct != null ? pct(x.pct) : "no offer" }),
+      const listed = holder ? pub.schools.filter((x) => x.school !== holder) : pub.schools;
+      const sorted = listed.slice().sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1));
+      if (sorted.length) node.append(el("h3", { text: holder ? (pub.signed ? "Who else offered" : "Still in it: his chance to flip to each") : "His list" }), el("div", { class: "go-schools" }, sorted.map((x, i) => el("div", { class: "go-school" }, [
+        el("span", { class: "go-school-name" }, [el("b", { text: x.name }), x.school === s.team ? el("span", { class: "muted small", text: " (you)" }) : null, i === 0 && !holder && x.pct != null ? el("span", { class: "go-tag good", text: "Leader" }) : null]),
+        el("span", { class: "go-school-odds", text: pub.signed ? "" : x.pct != null ? pct(x.pct) : "no offer" }),
         el("span", { class: "muted small", text: [x.offered ? "Offer" : "", x.visit ? (x.visit.done ? "Visited" : `Visit wk ${x.visit.week}`) : ""].filter(Boolean).join(" · ") }),
       ]))));
     } else node.append(el("p", { class: "muted", text: "No school is recruiting him yet." }));
     if (pub.priorities_known.length) node.append(el("p", {}, [el("b", { text: "What he cares about: " }), pub.priorities_known.map((t) => PITCH_NAMES[t]).join(", ")]));
     if (p.evaluation) {
       node.append(el("h3", { text: "Evaluation" }),
-        el("ul", { class: "rc-eval" }, [...p.evaluation.strengths.map((t) => el("li", { class: "rc-good", text: t })), ...p.evaluation.weaknesses.map((t) => el("li", { class: "rc-bad", text: t }))]),
+        el("ul", { class: "rc-eval" }, [...p.evaluation.strengths.map((t) => el("li", { class: "rc-good", text: t })), ...(p.evaluation.solid || []).map((t) => el("li", { class: "go-solid", text: t })), ...p.evaluation.weaknesses.map((t) => el("li", { class: "rc-bad", text: t }))]),
         el("p", { text: p.evaluation.outlook }));
     }
     const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall_ea ? `, ${c.overall_ea} OVR` : ""})`;
     if (p.public_comp) node.append(el("p", {}, [el("b", { text: "Comp: " }), comp(p.public_comp)]));
     node.append(el("h3", { text: "Our staff's grades" }));
     if (p.our_grades) {
-      node.append(el("div", { class: "go-grades" }, Object.entries(p.our_grades).map(([g, r]) =>
-        el("div", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: (GROUP_NAMES[g] || g).toUpperCase() }), el("div", { class: "go-stat-val", text: r[0] === r[1] ? r[0] : `${r[0]} to ${r[1]}` })]))),
-        el("p", { class: "muted small", text: `${p.looks} look${p.looks === 1 ? "" : "s"}. Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster.` }));
+      // hover (or tab to) a grade: what prospects in this class graded like that look like
+      node.append(el("div", { class: "go-grades" }, Object.entries(p.our_grades).map(([g, r]) => {
+        const d = (p.grade_details || {})[g] || {};
+        const grade = r[0] === r[1] ? r[0] : `${r[0]} to ${r[1]}`;
+        const lines = d.labels ? [`Coachability like: ${d.labels.join(", ")}`]
+          : Object.entries(d.ratings || {}).map(([k, v]) => `${(ATTR_NAMES[k] || k).replace(/^./, (c) => c.toUpperCase())}: ${v[0] === v[1] ? v[0] : `${v[0]}–${v[1]}`}`);
+        const tipId = `tip-${pid}-${g}`;
+        const tip = el("div", { class: "go-tip-box", role: "tooltip", id: tipId }, [el("b", { text: `${GROUP_NAMES[g] || g} ${grade} looks like` }),
+          ...lines.map((t) => el("div", { text: t })),
+          d.peers ? el("div", { class: "muted small", text: `Middle half of ${d.peers} prospects graded like this` }) : null]);
+        return el("div", { class: "go-stat go-tip", tabindex: "0", "aria-describedby": tipId }, [el("div", { class: "go-kicker muted", text: (GROUP_NAMES[g] || g).toUpperCase() }),
+          el("div", { class: "go-stat-val", text: grade }), tip]);
+      })),
+        el("p", { class: "muted small", text: `${p.looks} look${p.looks === 1 ? "" : "s"}. Hover a grade to see what it looks like in ratings. Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster.` }));
       node.append(p.our_comp ? el("p", {}, [el("b", { text: "Our comp: " }), comp(p.our_comp)])
         : el("p", { class: "muted", text: p.looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp after 3 looks (${p.looks} so far).` }));
     } else node.append(el("p", { class: "muted", text: "Not scouted yet: put a staff member on his area (Staff)." }));

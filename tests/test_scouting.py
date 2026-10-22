@@ -99,6 +99,11 @@ if __name__ == "__main__":
     ours = prospects.profile(st, fresh, "ohio-state")
     assert ours["our_comp"] is not None and set(ours["our_grades"]) == set(recruiting.GROUPS)
     assert "truth" not in ours["public"]
+    # hovering a grade: what prospects graded like that look like in ratings
+    det = ours["grade_details"]
+    assert set(det) == set(recruiting.GROUPS) and "speed" in det["athleticism"]["ratings"]
+    assert all(0 <= lo <= hi <= 99 for g in det.values() for lo, hi in g["ratings"].values())
+    assert det["coachability"]["labels"]
     hid = next(pid for pid, p in rc["prospects"].items() if p.get("hidden") and pid not in rc["reads"])
     try:
         prospects.profile(st, hid, "ohio-state"); raise AssertionError("a hidden prospect's profile was shown")
