@@ -739,6 +739,16 @@ def _sign(state: dict, final: bool) -> None:
                 rc["nil"].get(school, {}).get("held", {}).pop(pid, None)
 
 
+AUTO_MODES = ("off", "week", "season")
+
+
+def auto_mode(state: dict) -> str:
+    """Your Auto-recruit: "off", "week" (this coming week only) or "season" (saves from before the
+    one-week option stored true or false)."""
+    v = ((state.get("career") or {}).get("settings") or {}).get("auto_recruit")
+    return "season" if v is True else v if v in AUTO_MODES else "off"
+
+
 def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     """The recruiting week after `week`'s games: visits, every AI school (and yours on Auto),
     commitment draws, signing, then the hours reset. Returns the week's events."""
@@ -749,7 +759,8 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     _visits(state, week)
     scout_week(state)
     mine = state.get("team")
-    auto_mine = auto_user or ((state.get("career") or {}).get("settings") or {}).get("auto_recruit")
+    mode = auto_mode(state)
+    auto_mine = auto_user or mode != "off"
     commits = _commits(state)          # AI weeks change offers and interest, not commitments
     for slug in fbs_schools(state):
         if slug != mine or auto_mine:
@@ -761,6 +772,8 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     if week >= season.FINAL_WEEK:
         _sign(state, final=True)
     rc["hours"] = {}
+    if mode == "week":                       # Auto-recruit for one week: done, so off again
+        state["career"]["settings"]["auto_recruit"] = "off"
     return rc["log"][start_log:]
 
 

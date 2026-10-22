@@ -331,7 +331,7 @@ class AdvanceRequest(BaseModel):
 class SettingsRequest(BaseModel):
     god_mode: Optional[bool] = None
     morale: Optional[bool] = None
-    auto_recruit: Optional[bool] = None      # a Coach Career's Auto-recruit
+    auto_recruit: Optional[bool | str] = None   # a Coach Career's Auto-recruit: "off", "week" or "season" (true/false still read)
 
 
 class RecruitRequest(BaseModel):
@@ -735,16 +735,19 @@ def season_settings_change(season_id: str, req: SettingsRequest) -> dict:
     _no_real(state)
     changes = req.model_dump()
     auto = changes.pop("auto_recruit", None)
+    mode = {True: "season", False: "off"}.get(auto, auto) if isinstance(auto, bool) else auto
+    if auto is not None and mode not in recruiting.AUTO_MODES:
+        raise HTTPException(400, "Auto-recruit is off, week or season")
     if auto is not None and not state.get("recruiting"):
         raise HTTPException(404, "not a Coach Career")
     with _season_lock:
         out = season.update_settings(state, changes)
         if auto is not None:
-            state["career"]["settings"]["auto_recruit"] = bool(auto)
+            state["career"]["settings"]["auto_recruit"] = mode
         season.save_season(state)
     res = {"settings": out}
     if state.get("career"):
-        res["auto_recruit"] = bool(state["career"]["settings"].get("auto_recruit"))
+        res["auto_recruit"] = recruiting.auto_mode(state)
     return res
 
 

@@ -25,7 +25,7 @@ if __name__ == "__main__":
     out = server.create_season(server.SeasonRequest(team="ohio-state", mode="full", seed=11, career=True))
     sid = out["id"]
     view = server.recruiting_view(sid)
-    assert view["week"] == 0 and view["hours_left"] == view["hours"] and view["board"] == [] and view["auto_recruit"] is False
+    assert view["week"] == 0 and view["hours_left"] == view["hours"] and view["board"] == [] and view["auto_recruit"] == "off"
     assert view["open_spots"] > 0 and view["offers_left"] > 0 and view["nil"]["budget"] > 0
     # the class: filters, paging, hidden prospects left out
     page = server.prospect_search(sid, limit=25)
@@ -68,9 +68,20 @@ if __name__ == "__main__":
     staff = server.staff_change(sid, server.StaffRequest(staff_id="r1", area="Texas"))
     assert next(s for s in staff["staff"] if s["id"] == "r1")["area"] == "Texas"
     refused(lambda: server.staff_change(sid, server.StaffRequest(staff_id="r1", area="Atlantis")), 400)
-    assert server.season_settings_change(sid, server.SettingsRequest(auto_recruit=True))["auto_recruit"] is True
-    assert server.recruiting_view(sid)["auto_recruit"] is True
-    server.season_settings_change(sid, server.SettingsRequest(auto_recruit=False))
+    assert server.season_settings_change(sid, server.SettingsRequest(auto_recruit="season"))["auto_recruit"] == "season"
+    assert server.recruiting_view(sid)["auto_recruit"] == "season"
+    server.season_settings_change(sid, server.SettingsRequest(auto_recruit=True))      # older pages send a bool
+    assert server.recruiting_view(sid)["auto_recruit"] == "season"
+    server.season_settings_change(sid, server.SettingsRequest(auto_recruit="off"))
+    refused(lambda: server.season_settings_change(sid, server.SettingsRequest(auto_recruit="forever")), 400)
+    # Auto-recruit for one week: your staff recruit through the next advance, then it turns itself off
+    assert server.season_settings_change(sid, server.SettingsRequest(auto_recruit="week"))["auto_recruit"] == "week"
+    st_ = server._season_state(sid)
+    before = len(st_["recruiting"]["offers"].get("ohio-state", []))
+    import recruiting as _rc
+    _rc.weekly_step(st_, 1)
+    assert server.recruiting_view(sid)["auto_recruit"] == "off"
+    assert len(st_["recruiting"]["offers"].get("ohio-state", [])) > before, "Auto-recruit for the week did nothing"
     # out of hours: 409
     while True:
         try:

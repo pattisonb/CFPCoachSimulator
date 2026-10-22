@@ -344,7 +344,7 @@ def recruiting_view(state: dict) -> dict:
         "class_rank": class_rank(state, me),
         "hours_used": recruiting.weekly_hours(state, me) - recruiting._hours(state, me),
         "recap": [dict(e, name=rc["prospects"][e["pid"]]["name"]) for e in recap[-60:]],
-        "auto_recruit": bool(((state.get("career") or {}).get("settings") or {}).get("auto_recruit")),
+        "auto_recruit": recruiting.auto_mode(state),
         "staff": state["career"].get("staff", []), "areas": list(recruiting.AREAS),
         "area_counts": {a: sum(1 for pid in rc["prospects"] if rc["prospects"][pid]["hometown"]["state"] in states
                                and not rc["status"][pid]["signed"]) for a, states in recruiting.AREAS.items()},

@@ -155,11 +155,12 @@
     let v;
     try { v = await H.api(`/api/season/${s.id}/recruiting`); }
     catch (err) { rec.innerHTML = ""; rec.append(loading(`Could not load recruiting: ${H.errText(err)}`)); return; }
-    const recruitDone = v.auto_recruit || v.hours_left < 5;
+    const auto = v.auto_recruit !== "off";
+    const recruitDone = auto || v.hours_left < 5;
     const gameDone = !next || !next.opponent || !!next.played;
     if (!s.done) {
       steps.append(
-        step(recruitDone ? "✓" : "1", "Recruit", v.auto_recruit ? "Auto-recruit is on" : `${v.hours_used} of ${v.hours} hours used`, recruitDone ? "done" : "now", () => H.onChange("recruiting")),
+        step(recruitDone ? "✓" : "1", "Recruit", auto ? (v.auto_recruit === "week" ? "Auto-recruit this week" : "Auto-recruit all season") : `${v.hours_used} of ${v.hours} hours used`, recruitDone ? "done" : "now", () => H.onChange("recruiting")),
         step(gameDone ? "✓" : "2", "Game day", !next || !next.opponent ? "Bye week" : next.played ? "Played" : "Coach it drive by drive", gameDone ? "done" : recruitDone ? "now" : "", () => H.play("gameday")),
         step("3", "Advance", "Everyone else plays", recruitDone && gameDone ? "now" : "", () => H.play("advance")),
       );
@@ -213,17 +214,22 @@
     catch (err) { box.innerHTML = ""; box.append(loading(`Could not load recruiting: ${H.errText(err)}`)); return; }
     const me = s.team;
     box.innerHTML = "";
-    const auto = el("input", { type: "checkbox", id: "rc-auto" });
-    auto.checked = v.auto_recruit;
-    auto.addEventListener("change", async () => {
-      try { await H.api(`/api/season/${s.id}/settings`, H.postJSON({ auto_recruit: auto.checked })); H.toast(auto.checked ? "Auto-recruit on: your staff spend your hours each week." : "Auto-recruit off.", 3000); }
-      catch (err) { auto.checked = !auto.checked; H.toast(`Could not change Auto-recruit: ${H.errText(err)}`, 4000); }
-    });
+    // Auto-recruit: off, for the coming week only, or all season
+    const AUTO = [["off", "Off"], ["week", "This week"], ["season", "All season"]];
+    const AUTO_SAID = { off: "Auto-recruit off: you recruit.", week: "Auto-recruit for this week: your staff spend your hours, then it turns off.", season: "Auto-recruit all season: your staff spend your hours every week." };
+    const auto = el("div", { class: "go-seg", role: "group", "aria-label": "Auto-recruit" }, AUTO.map(([k, label]) => {
+      const b = el("button", { type: "button", class: `go-seg-btn ${v.auto_recruit === k ? "on" : ""}`, "aria-pressed": String(v.auto_recruit === k), text: label });
+      b.addEventListener("click", async () => {
+        try { await H.api(`/api/season/${s.id}/settings`, H.postJSON({ auto_recruit: k })); H.toast(AUTO_SAID[k], 3500); renderRecruiting(s, box); }
+        catch (err) { H.toast(`Could not change Auto-recruit: ${H.errText(err)}`, 4000); }
+      });
+      return b;
+    }));
     box.append(el("div", { class: "go-board-head rc-head" }, [
       el("div", { class: "go-display l", text: "RECRUITING BOARD" }),
       el("div", { class: "go-meters" }, [meter("Hours", v.hours_left, v.hours), meter("NIL points", v.nil.left, v.nil.budget),
         meter("Offers", v.offers, v.offers + v.offers_left, true), meter("Commits", v.committed, v.open_spots, true)]),
-      el("label", { class: "go-auto", for: "rc-auto" }, [auto, " Auto-recruit"]),
+      el("div", { class: "go-auto" }, [el("span", { class: "small muted", text: "Auto-recruit" }), auto]),
     ]));
     if (v.recap.length) box.append(el("ul", { class: "go-ticker rc-recap" }, [el("li", {}, [el("b", { text: "NEWS" })]), ...v.recap.slice(-4).reverse().map((e) => newsItem(s, e))]));
     const counts = { all: v.board.length };
