@@ -89,10 +89,23 @@ Scouting a recruit shows letter grades (designed later); what was learned carrie
 From `data/recruiting_model.json` (real classes, distributions only):
 - **Who he is:** star band and composite rating, position, height and weight, hometown (state by
   star band, then a real town), all drawn from the real distributions.
-- **Current ratings:** a true freshman overall from his stars and where he falls in his band
-  (real rosters, game scale: 5* about 65, 4* 53, 3* 43, 2* 39 as true freshmen), with spread.
-  The attribute profile comes from real players at his position and archetype, scaled to that
-  overall: no attribute is invented one by one.
+- **Current ratings, athleticism first:** a recruit's athleticism is what he will have for his
+  whole career, so it is drawn first, not scaled down from his overall. Real first- and second-
+  year players by recruiting stars (EA scale): WR speed 92.4 / 90.0 / 87.7 / 87.5 (5* to 2*),
+  WR jumping 93.2 / 89.6 / 84.9 / 84.1, CB agility 92.9 / 90.2 / 86.7 / 85.0; technique rises
+  with stars too (CB man coverage 84.0 / 76.9 / 70.9 / 68.4); football IQ does not (CB play
+  recognition 76.6 / 70.0 / 63.2 / 67.7). In order:
+  1. **Athleticism** (speed, acceleration, agility, jumping, throw power): drawn for his position,
+     tied to his stars, at or near its final value.
+  2. **Size and strength:** drawn for his position, with the modest room in section 1.
+  3. **Technique:** below its ceiling by the room in section 1, set so his true freshman overall
+     lands on the real one for his stars and place in the band (game scale: 5* about 65, 4* 53,
+     3* 43, 2* 39), with spread.
+  4. **Football IQ:** drawn independently of stars, with the most room.
+  The profile within each group follows real players at his position and archetype. This makes
+  the real archetypes on its own: the sleeper (a three-star with elite speed and raw technique,
+  a star if he is coachable), the polished bust (a five-star rated on high school technique,
+  ordinary athleticism, little room) and the athletic bust (a freak athlete who is Set in His Ways).
 - **Potential and coachability:** potential level correlates with stars but is noisy, tuned so
   outcomes match real life by star (about 62% of five-stars and 5.5% of three-stars drafted; 1 in
   4 five-stars and 1 in 56 three-stars All-Americans), so most stars still come from the three-
