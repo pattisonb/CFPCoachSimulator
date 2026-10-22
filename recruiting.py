@@ -30,7 +30,7 @@ PRIORITY_ODDS = {"proximity": 0.20, "playing_time": 0.18, "prestige": 0.16, "win
 PRIORITY_WEIGHTS = (0.35, 0.25, 0.15)      # his first, second and third priority; the rest share 0.25 *tune*
 OTHER_WEIGHT = 0.25
 PULL_SCALE = 10.0                          # interest points for a pull of 1.0 at full weight *tune*
-PROXIMITY_MILES = 350.0                    # distance pull exp(-miles / this) *tune*
+PROXIMITY_MILES = 300.0                    # distance pull exp(-miles / this) *tune*
 PROXIMITY_FLOOR = 0.05
 LAST_SEASON_WEIGHT = ((0, 0.8), (7, 0.3), (15, 0.05))   # (week, weight on last season), linear between
 POLL_BUMP = ((10, 0.15), (25, 0.07))       # (rank at or better, bump) on this season's standing
@@ -68,8 +68,11 @@ LEAD_SCALE = 3.0                           # interest lead worth a doubling of t
 VISIT_BOOST = 1.6                          # after an official visit to the leader
 DECOMMIT_RATE = 0.20                       # weekly chance of a decommitment at an even race *tune*
 FLIP_MARGIN = 4.0                          # a rival's lead that doubles-ish it (logistic) *tune*
-CROWD = 1.5                                # interest lost per committed recruit at his position rated at least as high *tune*
+CROWD = 2.0                                # interest lost per committed recruit at his position rated at least as high *tune*
 RIVAL_RANK = 300                           # AI schools keep chasing committed prospects this highly ranked
+REST_MILES, REST_NEAR = 700.0, 2.5         # outside its top states a school recruits near home first *tune*
+NATIONAL_TILT = 40                         # how hard national targets lean to the very best *tune*
+NATIONAL_TARGETS = 25                      # national targets on a board, times the school's blue-chip share *tune*
 BOARD_FACTOR = 3                           # an AI school's board holds this many prospects per open spot
 NATIONAL_REACH = 0.08                      # a blue-chip program's pull on four- and five-stars anywhere *tune*
 STAR_KEY = {5: "5*", 4: "4*", 3: "3*", 2: "2*"}
@@ -450,7 +453,9 @@ def _fit(slug: str, p: dict, pool: dict) -> float:
         w = shares[home] / pool["states"][home]
     else:
         rest = pool["total"] - sum(pool["states"].get(s, 0) for s in shares)
-        w = max(0.0, 1 - sum(shares.values())) / max(1, rest)
+        loc = tm.get("location")
+        near = REST_NEAR * math.exp(-_miles(tuple(p["home"]), tuple(loc)) / REST_MILES) if loc else 1.0
+        w = max(0.0, 1 - sum(shares.values())) / max(1, rest) * near
     if p["stars"] >= 4:
         w += NATIONAL_REACH * (tm.get("blue_chip_share") or 0.0) / pool["blue_chips"]
     stars = (tm.get("star_share") or {}).get(STAR_KEY.get(p["stars"], "2*"), 0.0) / _national_share(p["stars"]) + 0.05
@@ -485,7 +490,19 @@ def _build_board(state: dict, slug: str, rng: random.Random) -> list[str]:
         if f > 0:
             keyed.append((math.log(rng.random() or 1e-12) / f, pid))
     keyed.sort(reverse=True)
-    return [pid for _, pid in keyed[:BOARD_FACTOR * open_spots(state, slug)]]
+    sampled = [pid for _, pid in keyed[:BOARD_FACTOR * open_spots(state, slug)]]
+    # blue-chip programs chase the best four- and five-stars nationally, ahead of the rest
+    tm = _team_model(slug)
+    n = round(NATIONAL_TARGETS * (tm.get("blue_chip_share") or 0.0)) if (tm.get("blue_chip_share") or 0) >= 0.25 else 0
+    lift = lambda p: (tm.get("star_share") or {}).get(STAR_KEY.get(p["stars"], "2*"), 0.0) / _national_share(p["stars"])
+    keyed = []
+    for pid in free:
+        p = rc["prospects"][pid]
+        if p["stars"] >= 4 and lift(p) >= 1:
+            weight = lift(p) * math.exp(NATIONAL_TILT * (p["composite"] - 0.9))
+            keyed.append((math.log(rng.random() or 1e-12) / weight, pid))
+    national = [pid for _, pid in sorted(keyed, reverse=True)[:n]]
+    return list(dict.fromkeys(national + sampled))
 
 
 def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None) -> None:
