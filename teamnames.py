@@ -7,7 +7,8 @@ import re
 # names the automatic matcher cannot resolve on its own
 ALIASES = {
     "southern california": "usc", "miami (fl)": "miami", "army west point": "army",
-    "app state": "app-st", "middle tenn": "mtsu", "south fla": "usf", "massachusetts": "umass",
+    "app state": "app-st", "middle tenn": "mtsu", "south fla": "usf", "south florida": "usf",
+    "florida international": "fiu", "massachusetts": "umass",
     "kennesaw st": "kennesaw-st", "jacksonville st": "jax-state", "ulm": "ul-monroe",
     "western ky": "w-kentucky", "central mich": "c-michigan", "eastern mich": "e-michigan",
     "western mich": "w-michigan", "coastal carolina": "c-carolina", "ga southern": "ga-southern",
