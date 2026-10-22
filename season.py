@@ -26,6 +26,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import multiprocessing
 import os
 import random
 import signal
@@ -1034,7 +1035,10 @@ def _make_pool() -> Optional[Pool]:
     if n <= 1:
         _init(str(TEAMS_FILE))
         return None
-    return Pool(processes=n, initializer=_init, initargs=(str(TEAMS_FILE),))
+    # spawned, never forked: a forked worker inherits the server's open connections and keeps
+    # a browser's keep-alive socket alive after the server closes it, so the page's next
+    # request goes to a socket nobody reads (tests/test_pool.py)
+    return multiprocessing.get_context("spawn").Pool(processes=n, initializer=_init, initargs=(str(TEAMS_FILE),))
 
 
 Reporter = Callable[[str, Optional[int], Optional[int]], None]   # (stage text, games done, games total)
