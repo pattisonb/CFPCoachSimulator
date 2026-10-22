@@ -81,7 +81,8 @@ if __name__ == "__main__":
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.goto(f"{base}/season?id={sid}")
             page.wait_for_selector("#season:visible")
-            page.click("#btn-to-end")
+            page.wait_for_selector(".go-play")                 # a career opens on the Office
+            page.click(".go-play >> text=Sim to the end")
             page.wait_for_function("() => /Season complete|national champion/.test(document.querySelector('#season-meta').textContent)",
                                    timeout=900_000)
             summary = call(base, f"/api/season/{sid}")

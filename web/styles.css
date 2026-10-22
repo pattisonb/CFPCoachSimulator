@@ -1009,3 +1009,194 @@ body.real-mode #season-tabs button[data-tab="games"] { display: revert; }
   .rc-avatar { width: 64px; height: 64px; }
   .rc-actions { flex-wrap: wrap; }
 }
+
+/* Coach Career as a game (recruiting.js "go-" screens). Every colour is a theme variable, so the
+   screens read in the light and the dark theme; the team's own colours lead where it has them. */
+body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primary-ink: var(--team-primary-ink, var(--accent-ink)); }
+.go-display { font-family: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif; font-weight: 800; letter-spacing: 0.4px; line-height: 0.95; text-transform: uppercase; margin: 0; }
+.go-display.xl { font-size: clamp(36px, 6vw, 60px); }
+.go-display.l { font-size: clamp(26px, 3.4vw, 34px); }
+.go-display.m { font-size: 22px; }
+.go-kicker { font-size: 12px; font-weight: 700; letter-spacing: 1.4px; color: var(--accent-text); text-transform: uppercase; }
+.go-kicker.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.go-loading { padding: 18px 0; text-align: center; }
+.go-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+.go-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.go-pill { display: inline-block; padding: 6px 12px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--border); font-size: 13px; }
+.go-link { background: none; border: none; padding: 0; color: var(--accent-text); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; min-height: 0; }
+.go-btn { min-height: 44px; padding: 0 18px; border-radius: 12px; border: 2px solid var(--border); background: transparent; color: var(--text); font-weight: 600; font-size: 15px; cursor: pointer; }
+.go-btn:hover:not(:disabled) { border-color: var(--muted); }
+.go-btn.primary { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
+.go-btn.big { min-height: 60px; font-family: "Barlow Condensed", system-ui, sans-serif; font-weight: 800; font-size: 26px; letter-spacing: 1px; flex: 1 1 260px; }
+.go-btn.big2 { min-height: 60px; }
+.go-btn:disabled { opacity: 0.5; cursor: default; }
+.go-row { display: flex; align-items: center; gap: 8px; }
+.go-row.wrap { flex-wrap: wrap; }
+
+/* the Office */
+.go-tab { padding: 0; background: none; border: none; }
+.go-office { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 18px; }
+.go-week, .go-rec { display: flex; flex-direction: column; gap: 14px; }
+.go-week-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.go-matchup { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.go-chance { display: flex; flex-direction: column; align-items: flex-end; }
+.go-chance .good { color: var(--good-text); } .go-chance .bad { color: var(--bad-text); }
+.go-stats, .go-mini, .go-grades { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.go-stat { background: var(--panel-2); border-radius: 12px; padding: 12px 14px; }
+.go-stat-val { font-size: 19px; font-weight: 700; margin-top: 2px; }
+.go-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.go-step { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 12px; background: var(--panel-2); border: 2px solid transparent; color: var(--text); text-align: left; cursor: pointer; font: inherit; }
+.go-step.now { border-color: var(--go-primary, var(--accent)); }
+.go-step.done { border-color: var(--good); }
+.go-step-mark { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: var(--border); color: var(--text); }
+.go-step.now .go-step-mark { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); }
+.go-step.done .go-step-mark { background: var(--good); color: #0b1020; }
+.go-step-text { display: flex; flex-direction: column; }
+.go-play { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
+.go-big-line { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.go-targets { display: flex; flex-direction: column; gap: 6px; }
+.go-target { display: flex; align-items: center; gap: 10px; padding: 6px; border-radius: 10px; border: none; background: none; color: var(--text); text-align: left; cursor: pointer; font: inherit; }
+.go-target:hover { background: var(--panel-2); }
+.go-target-text { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.go-news { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.go-tiles { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.go-tile { min-height: 64px; border-radius: 14px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font-family: "Barlow Condensed", system-ui, sans-serif; font-weight: 800; font-size: 20px; letter-spacing: 0.6px; cursor: pointer; }
+.go-tile:hover { border-color: var(--go-primary, var(--accent)); }
+.go-tile.hot { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
+
+/* tags, stars, avatars, bars and meters */
+.go-stars { color: #f2b632; letter-spacing: 1px; white-space: nowrap; }
+:root[data-theme="light"] .go-stars { color: #9a6700; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .go-stars { color: #9a6700; } }
+.go-stars.big { font-size: 20px; }
+.go-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.go-tag { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--border); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.go-tag.good { color: var(--good-text); border-color: color-mix(in srgb, var(--good) 45%, var(--border)); }
+.go-tag.warn { color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.go-tag.bad { color: var(--bad-text); }
+.go-tag.muted { color: var(--muted); }
+.go-avatar { flex: none; display: block; width: 52px; height: 52px; border-radius: 50%; overflow: hidden; background: var(--panel-2); }
+.go-avatar.sm { width: 38px; height: 38px; }
+.go-avatar.lg { width: 92px; height: 92px; }
+.go-avatar svg { width: 100%; height: 115%; display: block; }
+.go-bar { position: relative; height: 10px; border-radius: 5px; background: var(--panel-2); overflow: hidden; }
+.go-bar-range { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--muted) 30%, transparent); }
+.go-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: var(--muted); }
+.go-bar-fill.good { background: var(--good); } .go-bar-fill.warn { background: var(--accent); } .go-bar-fill.bad { background: var(--bad); }
+.go-standing { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.go-standing-text { font-weight: 700; }
+.go-standing-text.good { color: var(--good-text); } .go-standing-text.warn { color: var(--accent-text); } .go-standing-text.bad { color: var(--bad-text); } .go-standing-text.muted { color: var(--muted); }
+.go-meter { min-width: 0; }
+.go-meter-top { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+.go-meter-track { height: 8px; border-radius: 4px; background: var(--panel-2); overflow: hidden; margin-top: 4px; }
+.go-meter-fill { display: block; height: 100%; background: var(--good); border-radius: 4px; }
+.go-meter-fill.alt { background: var(--go-primary, var(--accent)); }
+
+/* the Recruiting board */
+.career-mode #tab-recruiting, .career-mode #tab-prospects, .career-mode #tab-staff { display: flex; flex-direction: column; gap: 14px; }
+.career-mode #tab-recruiting[hidden], .career-mode #tab-prospects[hidden], .career-mode #tab-staff[hidden] { display: none; }
+.go-board-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 18px; }
+.go-meters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.go-auto { display: flex; align-items: center; gap: 6px; font-weight: 600; white-space: nowrap; min-height: 44px; }
+.go-ticker { list-style: none; margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--panel-2); display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; }
+.go-filterbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.go-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.go-chip { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text); font-weight: 600; cursor: pointer; }
+.go-chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.go-board { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.go-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+.go-pcard { display: flex; flex-direction: column; gap: 10px; padding: 16px; }
+.go-pcard.selected { border: 2px solid var(--go-primary, var(--accent)); padding: 15px; }
+.go-pcard-top { display: flex; align-items: center; gap: 12px; padding: 0; border: none; background: none; color: var(--text); text-align: left; cursor: pointer; font: inherit; }
+.go-pcard-id { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.go-pcard-id b { font-size: 17px; }
+.go-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: auto; }
+.go-act { min-height: 50px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 13px; cursor: pointer; }
+.go-act span { font-size: 11px; color: var(--muted); }
+.go-act:hover:not(:disabled) { border-color: var(--muted); }
+.go-act.go { background: var(--good); border-color: var(--good); color: #0b1020; }
+.go-act.go span { color: #0b1020; }
+.go-act.alt { background: var(--go-primary, var(--accent)); border-color: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); }
+.go-act.alt span { color: inherit; opacity: 0.85; }
+.go-act:disabled { opacity: 0.45; cursor: default; }
+.go-add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 180px; border-style: dashed; color: var(--text); cursor: pointer; font: inherit; }
+.go-panel { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.go-pitches { display: flex; flex-direction: column; gap: 6px; }
+.go-pitch { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; background: var(--panel-2); border: 2px solid transparent; cursor: pointer; }
+.go-pitch:has(input:checked) { border-color: var(--go-primary, var(--accent)); }
+.go-pitch.known b { color: var(--good-text); }
+.go-pitch span { display: flex; align-items: center; gap: 8px; }
+.go-nil { width: 80px; min-height: 40px; }
+.go-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+
+/* Prospects */
+.go-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.go-filters input[type=search] { flex: 1 1 200px; min-width: 0; min-height: 44px; }
+.go-filters select { min-height: 44px; }
+.go-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.go-list-row { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 8px 12px 8px 8px; }
+.go-list-main { flex: 1; min-width: 0; display: grid; grid-template-columns: 54px 38px minmax(0, 1fr) auto minmax(0, 180px) 150px; align-items: center; gap: 12px; padding: 4px; border: none; background: none; color: var(--text); text-align: left; cursor: pointer; font: inherit; border-radius: 10px; }
+.go-list-main:hover { background: var(--panel-2); }
+.go-rank { font-family: "Barlow Condensed", system-ui, sans-serif; font-weight: 800; font-size: 22px; color: var(--muted); text-align: right; }
+.go-list-id { display: flex; flex-direction: column; min-width: 0; }
+.go-list-id b, .go-list-id span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.go-list-main .go-tag { overflow: hidden; text-overflow: ellipsis; justify-self: start; max-width: 100%; }
+.go-pager { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 8px; }
+
+/* Staff */
+.go-staff { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.go-coach { display: flex; flex-direction: column; gap: 12px; }
+.go-coach-top { display: flex; align-items: center; gap: 12px; }
+.go-rating { display: grid; grid-template-columns: 80px minmax(0, 1fr) 30px; align-items: center; gap: 8px; }
+.go-rating .go-meter-track { margin: 0; }
+.go-area { display: flex; flex-direction: column; gap: 4px; }
+.go-area select { min-height: 44px; width: 100%; }
+
+/* the Prospect Profile */
+.go-profile-head { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 16px; align-items: center; }
+.go-profile h2.go-display { color: var(--text); }
+.go-schools { display: flex; flex-direction: column; gap: 6px; }
+.go-school { display: grid; grid-template-columns: minmax(0, 1fr) 64px minmax(0, 120px); gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--panel-2); }
+.go-school-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.go-school-odds { font-weight: 800; text-align: right; }
+
+/* inputs follow the theme */
+.go-filters input, .go-filters select, .go-filterbar select, .go-area select, .go-nil {
+  background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 0 12px; font: inherit; }
+.go-filterbar select { min-height: 40px; }
+
+/* the slim tab bar and banner in a career; on the Office the sim buttons and week strip step
+   aside (the Office has its own) */
+body.career-mode #season-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
+body.career-mode #season-tabs button { flex: none; }
+body.career-mode.on-office #btn-advance, body.career-mode.on-office #btn-to-selection, body.career-mode.on-office #btn-to-end,
+body.career-mode.on-office #btn-gameday, body.career-mode.on-office #week-strip, body.career-mode.on-office #week-date { display: none !important; }
+body.career-mode #season-tabs button { min-height: 38px; padding: 4px 12px; font-size: 14px; }
+body.career-mode #season-tabs button[data-tab=office] { font-weight: 800; }
+
+@media (max-width: 1100px) {
+  .go-board { grid-template-columns: minmax(0, 1fr); }
+  .go-panel { position: static; }
+  .go-list-main { grid-template-columns: 46px 38px minmax(0, 1fr) auto; }
+  .go-list-main .go-tag, .go-list-read { display: none; }
+}
+@media (max-width: 860px) {
+  .go-office { grid-template-columns: minmax(0, 1fr); }
+  .go-board-head { grid-template-columns: minmax(0, 1fr); }
+  .go-meters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .go-card { padding: 14px; border-radius: 14px; }
+  .go-cards { grid-template-columns: minmax(0, 1fr); }
+  .go-list-main { grid-template-columns: 38px minmax(0, 1fr) auto; gap: 8px; }
+  .go-list-main .go-rank { display: none; }
+  .go-list-row { flex-wrap: wrap; }
+  .go-list-row > .go-btn { width: 100%; }
+  .go-profile-head { grid-template-columns: 64px minmax(0, 1fr); }
+  .go-avatar.lg { width: 64px; height: 64px; }
+  .go-school { grid-template-columns: minmax(0, 1fr) 56px; }
+  .go-school > :last-child { grid-column: 1 / -1; }
+  .go-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .go-chance { align-items: flex-start; }
+}

@@ -346,6 +346,8 @@ def recruiting_view(state: dict) -> dict:
         "recap": [dict(e, name=rc["prospects"][e["pid"]]["name"]) for e in recap[-60:]],
         "auto_recruit": bool(((state.get("career") or {}).get("settings") or {}).get("auto_recruit")),
         "staff": state["career"].get("staff", []), "areas": list(recruiting.AREAS),
+        "area_counts": {a: sum(1 for pid in rc["prospects"] if rc["prospects"][pid]["hometown"]["state"] in states
+                               and not rc["status"][pid]["signed"]) for a, states in recruiting.AREAS.items()},
         "pitches": list(recruiting.PITCHES), "hours_cost": recruiting.HOURS,
     }
 

@@ -880,6 +880,22 @@ ceiling against the starter's ratings over the ten attributes most tied to overa
 only when closer than 30% of starter pairs are to each other. "Our comp" appears after three
 looks, measured from your staff's read, so a wrong read can give a different comp.
 
+**The screens** (`web/recruiting.js`). A career opens on the **Office**: this week's opponent
+with the win chance and projected score, your week's three steps (Recruit, Game day, Advance)
+and the play buttons, the recruiting summary (commitments, class rank, hours, NIL points, your
+hottest targets, the week's news) and tiles to every screen; the slim tab bar still reaches them
+all. The **Recruiting board** is a grid of prospect cards (your standing, his known priorities,
+one-tap actions with their hour costs) with a side panel for the selected prospect (the pitch,
+the offer with NIL points, his profile). Every colour is a theme variable, so the screens work
+in the light and the dark theme.
+
+**The odds you see** (`prospects.odds`). Each offering school's chance to land a prospect is a
+softmax of his interest in it (`exp(interest / 3)`), against the field: the schools not yet in
+it, worth 14 interest points at week 0, 10 at week 8 and 4 by signing day. The board shows your
+chance as a range that narrows as signing day nears (plus or minus 25 points at week 0, 12 at
+week 8, 4 from week 13), labelled Early read, Taking shape or Solid read. Class rank weighs each
+class's best commitments most (each counts 0.85 times the one before).
+
 **Saves.** After every week the page keeps the career in the browser (IndexedDB): the season
 state, with your own games' box scores in it. When the server has forgotten the career (a
 restart), opening it uploads that copy and the server keeps whichever copy is newer.

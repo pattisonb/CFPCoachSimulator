@@ -34,6 +34,8 @@ goes. **Start from today** picks up the real season where it stands, with the re
 polls, player stats and box scores so far, and you play the rest (no recruiting). Then play a
 week at a time or jump ahead: each week is **Recruit → Your game → Advance**.
 
+- **Your office.** A career opens on your office: this week's opponent and win chance, your
+  week's steps, the play buttons and your recruiting at a glance.
 - **Recruiting.** A fictional class of about 4,000 high school seniors, generated from how
   real classes look, and nobody committed at the start. Each week you have hours (more with a
   better recruiter as head coach) and a yearly budget of NIL points: message, call, send the
@@ -42,7 +44,8 @@ week at a time or jump ahead: each week is **Recruit → Your game → Advance**
   the way it really recruits: its states, its star level, its coach. This season's results
   count more every week. Commitments come over the fall, top prospects can flip, the early
   signing period is in December and the rest sign in January. Prospects without real FBS
-  options lean FCS. Turn on **Auto-recruit** to let your staff do it.
+  options lean FCS. The board shows each prospect as a card with your chance to land him, a range that narrows
+  as signing day nears. Turn on **Auto-recruit** to let your staff do it.
 - **Prospects and Prospect Profiles.** The whole class with filters, and a profile for each
   prospect: his rankings, his list of schools, an evaluation for the top 300 and a comp to a
   real starter when one is close.

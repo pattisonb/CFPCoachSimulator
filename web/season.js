@@ -778,7 +778,8 @@
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "recruiting", "prospects", "staff"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "office", "recruiting", "prospects", "staff"]) $(`#tab-${t}`).hidden = t !== name;
+    document.body.classList.toggle("on-office", name === "office");
   }
 
   function renderTab() {
@@ -798,14 +799,24 @@
   }
 
   // Coach Career: the recruiting tabs (recruiting.js) and the week's steps under the header
-  const CAREER_TABS = ["recruiting", "prospects", "staff"];
-  const recruitingHelpers = { api, postJSON, toast, openModal, errText, onChange: (tab) => { state.tab = tab; renderTab(); } };
+  const CAREER_TABS = ["office", "recruiting", "prospects", "staff"];
+  // what the Office's buttons do: the same as the header's
+  function play(what) {
+    const btn = { gameday: "#btn-gameday", advance: "#btn-advance", selection: "#btn-to-selection", end: "#btn-to-end" }[what];
+    const b = btn && $(btn);
+    if (b && !b.hidden && !b.disabled) b.click();
+    else if (what === "gameday") toast("No game to play this week: a bye, or it is already played. Advance plays the rest of the week.", 4000);
+  }
+  const recruitingHelpers = { api, postJSON, toast, openModal, errText, play, onChange: (tab) => { state.tab = tab; renderTab(); window.scrollTo({ top: 0 }); } };
   function renderCareerSteps(s) {
     const box = $("#career-steps");
     const career = !!s.career && s.mode !== "real";
+    document.body.classList.toggle("career-mode", career);
     for (const t of CAREER_TABS) $(`#season-tabs button[data-tab=${t}]`).hidden = !career;
     if (!career && CAREER_TABS.includes(state.tab)) state.tab = "schedule";
-    box.hidden = !career || !!s.done;
+    // a career opens on the Office
+    if (career && state.officeFor !== s.id) { state.officeFor = s.id; if (!s.done) state.tab = "office"; }
+    box.hidden = true;               // the Office shows the week's steps now
     if (box.hidden) return;
     box.innerHTML = "";
     const step = (n, label, onclick) => el("button", { type: "button", class: "ghost career-step", onclick }, [el("b", { text: `${n}` }), ` ${label}`]);
