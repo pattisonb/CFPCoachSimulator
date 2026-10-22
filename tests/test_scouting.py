@@ -7,6 +7,7 @@ _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project r
 import random
 import statistics
 
+import prospects
 import recruiting
 import season
 
@@ -72,5 +73,36 @@ if __name__ == "__main__":
     assert h not in recruiting.prospect_list(st)
     recruiting.look(st, h, 60, random.Random(1))
     assert h in recruiting.prospect_list(st)
+    # Prospect Profiles: the top 300 get an evaluation and a public comp (only to a real starter
+    # at his position, only when close); "our comp" once every group has three looks
+    by_rank = {p["rank"]: pid for pid, p in rc["prospects"].items()}
+    top = prospects.profile(st, by_rank[1], "ohio-state")
+    assert top["evaluation"] and top["public_comp"], top["public_comp"]
+    pool = {(c["name"], c["position"]) for c in prospects.starter_pool()}
+    assert (top["public_comp"]["name"], top["public_comp"]["position"]) in pool
+    assert top["public_comp"]["position"] == rc["prospects"][by_rank[1]]["ea_position"]
+    truth = rc["prospects"][by_rank[1]]["truth"]
+    best = max(prospects.EVAL_GROUPS, key=lambda g: truth[g])
+    assert prospects.GROUP_NAMES[best] in " ".join(top["evaluation"]["strengths"]), (best, top["evaluation"])
+    assert top["public"]["national_rank"] == 1 and top["public"]["position_rank"] == 1
+    mid = prospects.profile(st, by_rank[900], "ohio-state")
+    assert mid["evaluation"] is None and mid["public_comp"] is None
+    two = next(pid for pid, p in rc["prospects"].items() if p["stars"] == 2 and not p.get("hidden")
+               and prospects.comp(prospects.ceiling(p), p["ea_position"], prospects.starter_pool()) is None)
+    assert prospects.profile(st, two, "ohio-state")["public_comp"] is None
+    fresh = by_rank[2]
+    rc["reads"].pop(fresh, None)
+    assert prospects.profile(st, fresh, "ohio-state")["our_comp"] is None
+    assert prospects.profile(st, fresh, "ohio-state")["our_grades"] is None
+    for _ in range(3):
+        recruiting.look(st, fresh, 90, random.Random(_))
+    ours = prospects.profile(st, fresh, "ohio-state")
+    assert ours["our_comp"] is not None and set(ours["our_grades"]) == set(recruiting.GROUPS)
+    assert "truth" not in ours["public"]
+    hid = next(pid for pid, p in rc["prospects"].items() if p.get("hidden") and pid not in rc["reads"])
+    try:
+        prospects.profile(st, hid, "ohio-state"); raise AssertionError("a hidden prospect's profile was shown")
+    except recruiting.RecruitingError as e:
+        assert e.code == 404
     print(f"scouting ok: ranges hold the truth {weak:.0%} (40), {avg:.0%} (60), {elite:.0%} (95); "
           f"widths {weak_w:.1f} vs {avg_w:.1f}; hidden {share:.0%}")
