@@ -219,3 +219,100 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "looks": read["looks"] if read else 0,
         "our_comp": our_comp,
     }
+
+
+# ----- list rows and the Recruiting tab --------------------------------------------------------------
+
+STATUSES = ("open", "committed", "signed", "leaning_fcs", "offered", "board")
+
+
+def row(state: dict, pid: str, viewer: str) -> dict:
+    """A prospect as a line in a list: who he is, where he stands, what you know."""
+    import season
+    rc = state["recruiting"]
+    p, st = rc["prospects"][pid], rc["status"][pid]
+    school = st["signed"] or st["committed"]
+    teams = season.load_teams()
+    read = rc["reads"].get(pid)
+    return {
+        "id": pid, "name": p["name"], "stars": p["stars"], "composite": p["composite"], "national_rank": p["rank"],
+        "position": p["position"], "ea_position": p["ea_position"], "archetype": p["archetype"],
+        "height": p["height"], "weight": p["weight"],
+        "hometown": {"city": p["hometown"]["city"], "state": p["hometown"]["state"]},
+        "committed": st["committed"], "signed": st["signed"], "leaning_fcs": bool(st["fcs"]),
+        "school_name": "FCS" if school == "FCS" else (teams[school]["name"] if school else None),
+        "on_board": pid in rc["board"], "offered": pid in rc["offers"].get(viewer, []),
+        "looks": read["looks"] if read else 0,
+        "our_potential": list(recruiting.grade_range(state, pid, "potential")) if read else None,
+    }
+
+
+def board_row(state: dict, pid: str, viewer: str) -> dict:
+    """A board line adds your standing with him: your interest, the leader and his known priorities."""
+    rc = state["recruiting"]
+    out = row(state, pid, viewer)
+    schools = _schools(state, pid)
+    mine = next((s for s in schools if s["school"] == viewer), None)
+    out.update(interest=round(recruiting.interest(state, viewer, pid), 1) if mine is None else mine["interest"],
+               leader=schools[0] if schools else None, schools=len(schools),
+               visit=(rc["visits"].get(pid) or {}).get(viewer),
+               priorities_known=list((rc["revealed"].get(viewer) or {}).get(pid, [])),
+               hc_week=((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("hc_week"),
+               nil=rc["nil"].get(viewer, {}).get("held", {}).get(pid, 0))
+    return out
+
+
+def search(state: dict, viewer: str, position: Optional[str] = None, stars: Optional[int] = None,
+           home: Optional[str] = None, status: Optional[str] = None, q: Optional[str] = None,
+           offset: int = 0, limit: int = 50) -> dict:
+    """The class you can see, filtered and paged, by national rank."""
+    rc = state["recruiting"]
+    q = (q or "").strip().lower()
+    out = []
+    for pid in recruiting.prospect_list(state):
+        p, st = rc["prospects"][pid], rc["status"][pid]
+        if position and position not in (p["position"], p["ea_position"]):
+            continue
+        if stars and p["stars"] != stars:
+            continue
+        if home and p["hometown"]["state"] != home:
+            continue
+        if q and q not in p["name"].lower():
+            continue
+        if status == "open" and (st["committed"] or st["signed"]):
+            continue
+        if status == "committed" and not (st["committed"] and not st["signed"]):
+            continue
+        if status == "signed" and not st["signed"]:
+            continue
+        if status == "leaning_fcs" and not st["fcs"]:
+            continue
+        if status == "offered" and pid not in rc["offers"].get(viewer, []):
+            continue
+        if status == "board" and pid not in rc["board"]:
+            continue
+        out.append(pid)
+    limit = max(1, min(5000, limit))
+    return {"total": len(out), "rows": [row(state, pid, viewer) for pid in out[offset:offset + limit]]}
+
+
+def recruiting_view(state: dict) -> dict:
+    """The Recruiting tab: your week's hours and NIL points, your board and last week's news."""
+    rc, me = state["recruiting"], state["team"]
+    offers = rc["offers"].get(me, [])
+    nil = recruiting._nil(state, me)
+    week = state["current_week"]
+    mine = set(rc["board"]) | set(offers)
+    recap = [e for e in rc["log"] if e["week"] == week and (e.get("school") == me or e.get("from") == me or e["pid"] in mine)
+             and e["kind"] != "leaning_fcs"]
+    return {
+        "week": week, "hours": recruiting.weekly_hours(state, me), "hours_left": recruiting._hours(state, me),
+        "nil": {"budget": nil["budget"], "held": sum(nil["held"].values()), "left": recruiting.nil_left(state, me)},
+        "open_spots": recruiting.open_spots(state, me), "committed": len([1 for s in rc["status"].values() if s["committed"] == me]),
+        "offers": len(offers), "offers_left": recruiting.offer_cap(state, me) - len(offers),
+        "board": [board_row(state, pid, me) for pid in rc["board"]],
+        "recap": [dict(e, name=rc["prospects"][e["pid"]]["name"]) for e in recap[-60:]],
+        "auto_recruit": bool(((state.get("career") or {}).get("settings") or {}).get("auto_recruit")),
+        "staff": state["career"].get("staff", []), "areas": list(recruiting.AREAS),
+        "pitches": list(recruiting.PITCHES), "hours_cost": recruiting.HOURS,
+    }

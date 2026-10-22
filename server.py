@@ -28,7 +28,9 @@ from pydantic import BaseModel, Field
 
 from engine.game import SLIDER_NAMES, default_sliders, simulate_game
 import career
+import prospects
 import realdata
+import recruiting
 import season
 import coaches
 
@@ -328,6 +330,24 @@ class AdvanceRequest(BaseModel):
 class SettingsRequest(BaseModel):
     god_mode: Optional[bool] = None
     morale: Optional[bool] = None
+    auto_recruit: Optional[bool] = None      # a Coach Career's Auto-recruit
+
+
+class RecruitRequest(BaseModel):
+    pid: str
+    action: str                   # message, call, hc_visit, offer, official_visit, pull_offer
+    pitch: Optional[str] = None
+    nil: int = 0
+
+
+class BoardRequest(BaseModel):
+    pid: str
+    on: bool = True
+
+
+class StaffRequest(BaseModel):
+    staff_id: str
+    area: str
 
 
 class PlayerEditRequest(BaseModel):
@@ -488,7 +508,7 @@ def create_season(req: SeasonRequest) -> dict:
     return season.summary(state)
 
 
-MAX_SAVE_BYTES = 40 * 1024 * 1024    # an uploaded career (gzip); a season is about 1-2 MB compressed
+MAX_SAVE_BYTES = 40 * 1024 * 1024    # an uploaded career (gzip); a career with its recruiting class is about 5 MB compressed
 
 
 @app.get("/api/season/{season_id}/export")
@@ -704,13 +724,91 @@ def season_settings(season_id: str) -> dict:
 
 @app.post("/api/season/{season_id}/settings")
 def season_settings_change(season_id: str, req: SettingsRequest) -> dict:
-    """Change a season's settings (god mode and the rest); saved with the season."""
+    """Change a season's settings (god mode and the rest; a career's Auto-recruit); saved with the season."""
     state = _season_state(season_id)
     _no_real(state)
+    changes = req.model_dump()
+    auto = changes.pop("auto_recruit", None)
+    if auto is not None and not state.get("recruiting"):
+        raise HTTPException(404, "not a Coach Career")
     with _season_lock:
-        out = season.update_settings(state, req.model_dump())
+        out = season.update_settings(state, changes)
+        if auto is not None:
+            state["career"]["settings"]["auto_recruit"] = bool(auto)
         season.save_season(state)
-    return {"settings": out}
+    res = {"settings": out}
+    if state.get("career"):
+        res["auto_recruit"] = bool(state["career"]["settings"].get("auto_recruit"))
+    return res
+
+
+# ----- Coach Career recruiting ------------------------------------------------------------------
+# Recruiting actions change the season in memory and are saved with the week (a save is a large
+# file); board, staff and settings changes are saved at once.
+
+def _career_state(season_id: str, change: bool = False) -> dict:
+    state = _season_state(season_id)
+    if not state.get("recruiting"):
+        raise HTTPException(404, "not a Coach Career")
+    if change:
+        _check_not_running(season_id)
+    return state
+
+
+def _recruiting_call(fn, *args, **kwargs):
+    try:
+        return fn(*args, **kwargs)
+    except recruiting.RecruitingError as e:
+        raise HTTPException(404 if e.message in ("unknown prospect",) else e.code, e.message) from e
+
+
+@app.get("/api/season/{season_id}/recruiting")
+def recruiting_view(season_id: str) -> dict:
+    return prospects.recruiting_view(_career_state(season_id))
+
+
+@app.get("/api/season/{season_id}/prospects")
+def prospect_search(season_id: str, position: Optional[str] = None, stars: Optional[int] = None, state: Optional[str] = None,
+                    status: Optional[str] = None, q: Optional[str] = None, offset: int = 0, limit: int = 50) -> dict:
+    st = _career_state(season_id)
+    return prospects.search(st, st["team"], position, stars, state, status, q, max(0, offset), limit)
+
+
+@app.get("/api/season/{season_id}/prospect/{pid}")
+def prospect_profile(season_id: str, pid: str) -> dict:
+    st = _career_state(season_id)
+    return _recruiting_call(prospects.profile, st, pid, st["team"])
+
+
+@app.post("/api/season/{season_id}/recruit")
+def recruit_action(season_id: str, req: RecruitRequest) -> dict:
+    st = _career_state(season_id, change=True)
+    with _season_lock:
+        return _recruiting_call(recruiting.act, st, st["team"], req.pid, req.action, req.pitch, req.nil)
+
+
+@app.post("/api/season/{season_id}/board")
+def board_change(season_id: str, req: BoardRequest) -> dict:
+    st = _career_state(season_id, change=True)
+    rc = st["recruiting"]
+    if req.pid not in recruiting.prospect_list(st):
+        raise HTTPException(404, "unknown prospect")
+    with _season_lock:
+        if req.on and req.pid not in rc["board"]:
+            rc["board"].append(req.pid)
+        if not req.on and req.pid in rc["board"]:
+            rc["board"].remove(req.pid)
+        season.save_season(st)
+    return {"board": rc["board"]}
+
+
+@app.post("/api/season/{season_id}/staff")
+def staff_change(season_id: str, req: StaffRequest) -> dict:
+    st = _career_state(season_id, change=True)
+    with _season_lock:
+        _recruiting_call(recruiting.assign, st, req.staff_id, req.area)
+        season.save_season(st)
+    return {"staff": st["career"]["staff"]}
 
 
 @app.post("/api/season/{season_id}/player/edit")
