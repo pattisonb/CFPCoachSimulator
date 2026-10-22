@@ -58,11 +58,16 @@
 
     <section class="season-main">
       <div id="season-empty" class="empty">
-        <p>Pick your team, then choose <b>New season</b> to play the 2026 season from week 1, or <b>Start from today</b> to take over the real 2026 season where it stands. You can play it a week at a time, or sim ahead to selection day or the title game.</p>
+        <p id="season-intro">Pick your team, then choose <b>New season</b> to play the 2026 season from week 1, or <b>Start from today</b> to take over the real 2026 season where it stands. You can play it a week at a time, or sim ahead to selection day or the title game.</p>
+        <p id="season-loading" class="muted" hidden></p>
       </div>
       <!-- a season is about to load (/real, or a link to a saved one): say so instead of the instructions -->
       <script>(function () { var real = location.pathname === "/real", id = /[?&]id=/.test(location.search);
-        if (real || id) document.querySelector("#season-empty p").textContent = real ? "Loading the real 2026 season: results, polls and stats…" : "Loading the season…"; })();</script>
+        if (!real && !id) return;
+        document.getElementById("season-intro").hidden = true;
+        var note = document.getElementById("season-loading");
+        note.textContent = real ? "Loading the real 2026 season: results, polls and stats…" : "Loading the season…";
+        note.hidden = false; })();</script>
 
       <div id="season" hidden>
         <div class="panel season-head">

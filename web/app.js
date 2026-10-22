@@ -180,11 +180,17 @@
   // ----- history -----------------------------------------------------------
 
   async function loadHistory() {
-    const data = await api("/api/games?limit=150");
-    state.history = data.games;
-    renderHistory();
-    const s = await api("/api/history/summary");
     const box = $("#history-summary");
+    let s;
+    try {
+      const data = await api("/api/games?limit=150");
+      state.history = data.games;
+      renderHistory();
+      s = await api("/api/history/summary");
+    } catch (err) {
+      box.textContent = "Could not load past games.";   // not "Loading games…" for good
+      throw err;
+    }
     if (!s.games) { box.textContent = "No games yet."; return; }
     box.innerHTML = "";
     box.append(

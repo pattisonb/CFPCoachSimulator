@@ -124,11 +124,15 @@ You need Python 3.12.
 
 ```
 pip install -r requirements.txt
+python build_teams.py
 python server.py
 ```
 
 Then open <http://127.0.0.1:8000>. Phones on the same Wi-Fi can open the address the
 server prints when it starts.
+
+`build_teams.py` writes the game's team file (`data/engine_teams.json`). Run it once after
+cloning, and again after pulling new rosters or engine changes.
 
 To learn how it works, including the engine, the data, hosting, calibration and the test
 tools, read [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md).
