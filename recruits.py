@@ -23,6 +23,7 @@ from __future__ import annotations
 import json
 import math
 import random
+from itertools import accumulate
 import sys
 from bisect import bisect
 from functools import lru_cache
@@ -82,9 +83,18 @@ def curve(ea: float) -> float:
     return pts[-1][1]
 
 
+_CUMULATIVE: dict = {}   # id of a model list -> (its keys, cumulative weights): built once, not on every draw
+
+
 def weighted(rng: random.Random, pairs) -> str:
-    keys, weights = zip(*pairs)
-    return rng.choices(keys, weights=weights)[0]
+    """One key drawn by weight (the same draw as rng.choices with these weights)."""
+    cached = _CUMULATIVE.get(id(pairs)) if isinstance(pairs, list) else None
+    if cached is None or cached[0] is not pairs:
+        keys, weights = zip(*pairs)
+        cached = (pairs, keys, list(accumulate(weights)))
+        if isinstance(pairs, list):
+            _CUMULATIVE[id(pairs)] = cached
+    return rng.choices(cached[1], cum_weights=cached[2])[0]
 
 
 def from_quantiles(qs: list[float], u: float) -> float:

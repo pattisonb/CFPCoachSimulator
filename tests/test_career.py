@@ -9,7 +9,11 @@ import career
 import season
 
 if __name__ == "__main__":
+    import time as _time
+    t0 = _time.time()
     st = season.new_season("ohio-state", "full", seed=3, career=True)
+    took = _time.time() - t0
+    assert took < 4.5, f"a new career took {took:.1f} s to start"      # was about 9 s: the class's names
     assert career.is_career(st) and st["career"]["year"] == 2026
     # a career with its recruiting class stays small enough to keep in the browser every week
     import json as _json
