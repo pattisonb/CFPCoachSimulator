@@ -1094,8 +1094,8 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-meter-fill.alt { background: var(--go-primary, var(--accent)); }
 
 /* the Recruiting board */
-.career-mode #tab-recruiting, .career-mode #tab-prospects, .career-mode #tab-staff { display: flex; flex-direction: column; gap: 14px; }
-.career-mode #tab-recruiting[hidden], .career-mode #tab-prospects[hidden], .career-mode #tab-staff[hidden] { display: none; }
+.career-mode #tab-recruiting, .career-mode #tab-prospects, .career-mode #tab-staff, .career-mode #tab-classes { display: flex; flex-direction: column; gap: 14px; }
+.career-mode #tab-recruiting[hidden], .career-mode #tab-prospects[hidden], .career-mode #tab-staff[hidden], .career-mode #tab-classes[hidden] { display: none; }
 .go-board-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 18px; }
 .go-meters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .go-auto { display: flex; flex-direction: column; gap: 4px; }
@@ -1216,3 +1216,16 @@ body.career-mode.on-office .season-head { padding-bottom: 0; }
 .go-tip-box b { display: block; margin-bottom: 2px; }
 .go-tip:hover .go-tip-box, .go-tip:focus .go-tip-box, .go-tip:focus-within .go-tip-box { display: block; }
 .go-grades .go-tip:nth-child(3n) .go-tip-box { left: auto; right: 0; }
+
+.go-list-read { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+.go-signing { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; margin-bottom: 16px; padding: 16px 20px; border-radius: 16px; border: none;
+  background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); text-align: left; cursor: pointer; font: inherit; }
+.go-myclass { display: flex; flex-direction: column; gap: 6px; }
+.go-classes { list-style: none; }
+.go-class { flex-direction: column; align-items: stretch; }
+.go-class.yours { border-color: var(--go-primary, var(--accent)); border-width: 2px; }
+.go-class-main { grid-template-columns: 54px auto minmax(0, 1fr) 40px minmax(0, 200px) minmax(0, 1.4fr); }
+.go-class-count { font-family: "Barlow Condensed", system-ui, sans-serif; font-weight: 800; font-size: 24px; text-align: right; }
+.go-class-top { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.go-class-list { margin: 4px 0 6px 66px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+@media (max-width: 860px) { .go-class-main { grid-template-columns: 46px auto minmax(0, 1fr) 36px; } .go-class-stars, .go-class-top { display: none; } .go-class-list { margin-left: 8px; } }

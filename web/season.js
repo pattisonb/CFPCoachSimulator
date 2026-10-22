@@ -778,7 +778,7 @@
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "office", "recruiting", "prospects", "staff"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "office", "recruiting", "prospects", "staff", "classes"]) $(`#tab-${t}`).hidden = t !== name;
     document.body.classList.toggle("on-office", name === "office");
   }
 
@@ -799,7 +799,7 @@
   }
 
   // Coach Career: the recruiting tabs (recruiting.js) and the week's steps under the header
-  const CAREER_TABS = ["office", "recruiting", "prospects", "staff"];
+  const CAREER_TABS = ["office", "recruiting", "prospects", "staff", "classes"];
   // what the Office's buttons do: the same as the header's
   function play(what) {
     const btn = { gameday: "#btn-gameday", advance: "#btn-advance", selection: "#btn-to-selection", end: "#btn-to-end" }[what];

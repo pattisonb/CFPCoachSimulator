@@ -38,6 +38,17 @@ if __name__ == "__main__":
     assert hidden not in {r["id"] for r in everyone}
     named = server.prospect_search(sid, q=everyone[3]["name"].split()[-1].lower(), limit=200)["rows"]
     assert everyone[3]["id"] in {r["id"] for r in named}
+    # prospects already interested in your school, most interested first
+    keen = server.prospect_search(sid, status="interested", limit=50)
+    assert 200 < keen["total"] < 1200 and keen["rows"][0]["interest_level"] == "High"
+    vals = [r["interest_in_you"] for r in keen["rows"]]
+    assert vals == sorted(vals, reverse=True)
+    by_pull = server.prospect_search(sid, sort="interest", limit=20)["rows"]
+    assert [r["interest_in_you"] for r in by_pull] == sorted((r["interest_in_you"] for r in by_pull), reverse=True)
+    # every school's class, ranked
+    classes = server.national_classes(sid)
+    assert len(classes["schools"]) >= 130 and classes["schools"][0]["rank"] == 1 and classes["phase"] == "Recruiting"
+    assert next(c for c in classes["schools"] if c["school"] == "ohio-state")["yours"] is True
     # a profile; unknown and hidden prospects are 404
     pid = page["rows"][0]["id"]
     prof = server.prospect_profile(sid, pid)
@@ -123,7 +134,7 @@ if __name__ == "__main__":
         bad.unlink()
     # a season that is not a career has no recruiting
     plain = server.create_season(server.SeasonRequest(team="ohio-state", mode="full", seed=11))["id"]
-    for call in (lambda: server.recruiting_view(plain), lambda: server.prospect_search(plain),
+    for call in (lambda: server.recruiting_view(plain), lambda: server.prospect_search(plain), lambda: server.national_classes(plain),
                  lambda: server.prospect_profile(plain, pid),
                  lambda: server.recruit_action(plain, server.RecruitRequest(pid=pid, action="call")),
                  lambda: server.board_change(plain, server.BoardRequest(pid=pid, on=True)),

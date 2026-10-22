@@ -807,10 +807,23 @@ def recruiting_view(season_id: str) -> dict:
 
 @app.get("/api/season/{season_id}/prospects")
 def prospect_search(season_id: str, position: Optional[str] = None, stars: Optional[int] = None, state: Optional[str] = None,
-                    status: Optional[str] = None, q: Optional[str] = None, offset: int = 0, limit: int = 50) -> dict:
+                    status: Optional[str] = None, q: Optional[str] = None, offset: int = 0, limit: int = 50,
+                    sort: str = "rank") -> dict:
     st = _career_state(season_id, change=True)
     with _season_lock:
-        return prospects.search(st, st["team"], position, stars, state, status, q, max(0, offset), limit)
+        return prospects.search(st, st["team"], position, stars, state, status, q, max(0, offset), limit, sort)
+
+
+@app.get("/api/season/{season_id}/classes")
+def national_classes(season_id: str, school: Optional[str] = None) -> dict:
+    """Every FBS school's class ranked nationally; with `school`, that class's recruits too."""
+    st = _career_state(season_id, change=True)
+    with _season_lock:
+        out = prospects.national_classes(st, st["team"])
+        if school:
+            _check_team(school)
+            out["class"] = prospects.class_detail(st, school, st["team"])
+    return out
 
 
 @app.get("/api/season/{season_id}/prospect/{pid}")

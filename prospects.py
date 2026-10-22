@@ -334,14 +334,35 @@ def standing(state: dict, pid: str, viewer: str) -> dict:
             "leader": {"school": lead["school"], "name": season.load_teams()[lead["school"]]["name"], "pct": rnd(lead["pct"])} if lead else None}
 
 
+INTERESTED_TOP = 0.15             # "Interested in you": the prospects your school appeals to most, this share
+INTEREST_LEVELS = ((0.15, "High"), (0.5, "Medium"), (1.0, "Low"))
+
+
+def your_interest(state: dict, viewer: str, pids: list) -> tuple[dict, list]:
+    """Each prospect's interest in your school, and the cut-offs of the levels shown (High for the
+    top 15% of the class you can see, Medium for the next 35%, Low for the rest)."""
+    win = recruiting._winning(state)
+    vals = {pid: recruiting.interest(state, viewer, pid, win) for pid in pids}
+    ordered = sorted(vals.values(), reverse=True)
+    cuts = [ordered[min(len(ordered) - 1, int(share * len(ordered)))] if ordered else 0 for share, _ in INTEREST_LEVELS]
+    return vals, cuts
+
+
+def _level(value: float, cuts: list) -> str:
+    return next((name for (_, name), cut in zip(INTEREST_LEVELS, cuts) if value >= cut), "Low")
+
+
 def search(state: dict, viewer: str, position: Optional[str] = None, stars: Optional[int] = None,
            home: Optional[str] = None, status: Optional[str] = None, q: Optional[str] = None,
-           offset: int = 0, limit: int = 50) -> dict:
-    """The class you can see, filtered and paged, by national rank."""
+           offset: int = 0, limit: int = 50, sort: str = "rank") -> dict:
+    """The class you can see, filtered and paged, by national rank (or by interest in your school:
+    `sort="interest"`, or `status="interested"` for those your school appeals to most)."""
     rc = state["recruiting"]
     q = (q or "").strip().lower()
     out = []
-    for pid in recruiting.prospect_list(state):
+    visible = recruiting.prospect_list(state)
+    keen, cuts = your_interest(state, viewer, visible)
+    for pid in visible:
         p, st = rc["prospects"][pid], rc["status"][pid]
         if position and position not in (p["position"], p["ea_position"]):
             continue
@@ -363,9 +384,54 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
             continue
         if status == "board" and pid not in rc["board"]:
             continue
+        if status == "interested" and (keen[pid] < cuts[0] or st["signed"]):
+            continue
         out.append(pid)
+    if sort == "interest" or status == "interested":
+        out.sort(key=lambda pid: -keen[pid])
     limit = max(1, min(5000, limit))
-    return {"total": len(out), "rows": [row(state, pid, viewer) for pid in out[offset:offset + limit]]}
+    rows = []
+    for pid in out[offset:offset + limit]:
+        r = row(state, pid, viewer)
+        r.update(interest_in_you=round(keen[pid], 1), interest_level=_level(keen[pid], cuts))
+        rows.append(r)
+    return {"total": len(out), "rows": rows}
+
+
+def national_classes(state: dict, viewer: Optional[str] = None) -> dict:
+    """Every FBS school's class (its commitments, or signees once they sign), ranked as class_rank
+    ranks them: count, stars, its three best recruits; and where the calendar is."""
+    import season
+    rc = state["recruiting"]
+    teams = season.load_teams()
+    by_school: dict[str, list] = {}
+    for pid, st in rc["status"].items():
+        school = st["signed"] or st["committed"]
+        if school and school != "FCS":
+            by_school.setdefault(school, []).append(pid)
+    rows = []
+    for slug in recruiting.fbs_schools(state):
+        pids = sorted(by_school.get(slug, []), key=lambda q: -rc["prospects"][q]["composite"])
+        comps = [rc["prospects"][q]["composite"] for q in pids]
+        stars = {str(n): sum(1 for q in pids if rc["prospects"][q]["stars"] == n) for n in (5, 4, 3, 2)}
+        rows.append({"school": slug, "name": teams[slug]["name"], "conference": teams[slug]["conference"],
+                     "count": len(pids), "signed": sum(1 for q in pids if rc["status"][q]["signed"]), "stars": stars,
+                     "points": round(sum(c * CLASS_DECAY ** i for i, c in enumerate(comps)), 3), "yours": slug == viewer,
+                     "top": [{"id": q, "name": rc["prospects"][q]["name"], "stars": rc["prospects"][q]["stars"],
+                              "position": rc["prospects"][q]["position"], "rank": rc["prospects"][q]["rank"]} for q in pids[:3]]})
+    rows.sort(key=lambda r: (-r["points"], r["name"]))
+    for i, r in enumerate(rows):
+        r["rank"] = 1 + sum(1 for o in rows if o["points"] > r["points"])
+    signed = sum(1 for st in rc["status"].values() if st["signed"])
+    phase = "Signed" if signed == len(rc["status"]) else "Early signing period done" if signed else "Recruiting"
+    return {"schools": rows, "phase": phase, "fcs": sum(1 for st in rc["status"].values() if st["signed"] == "FCS")}
+
+
+def class_detail(state: dict, slug: str, viewer: str) -> list[dict]:
+    """One school's class, best first, as list rows."""
+    rc = state["recruiting"]
+    pids = [pid for pid, st in rc["status"].items() if (st["signed"] or st["committed"]) == slug]
+    return [row(state, pid, viewer) for pid in sorted(pids, key=lambda q: rc["prospects"][q]["rank"])]
 
 
 def recruiting_view(state: dict) -> dict:

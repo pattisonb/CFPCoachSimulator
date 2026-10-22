@@ -896,7 +896,15 @@ chance as a range that narrows as signing day nears (plus or minus 25 points at 
 week 8, 4 from week 13), labelled Early read, Taking shape or Solid read. Class rank weighs each
 class's best commitments most (each counts 0.85 times the one before).
 
-**Auto-recruit** is off, this week (your staff spend your hours through the next advance, then
+**Interested in you** (a Prospects filter and sort): the 15% of the class your school appeals
+to most right now (his interest in you: distance, playing time, prestige, winning, NIL, the coach,
+academics and what you have done), most interested first; every row shows High, Medium or Low.
+
+**Classes**: every FBS school's class ranked nationally (as class rank: best commitments count
+most), each opening to its recruits; the Office points to it after the early signing period
+and national signing day.
+
+**Auto-recruit** works from your board (your picks first) and puts everyone it recruits on it. It is off, this week (your staff spend your hours through the next advance, then
 it turns itself off) or all season.
 
 **Saves.** Recruiting actions are saved two seconds after the last one, and the browser's copy

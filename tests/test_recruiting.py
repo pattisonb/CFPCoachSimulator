@@ -134,6 +134,10 @@ if __name__ == "__main__":
     with_fcs = sum(1 for s in signed if s == "FCS") / len(signed)
     assert 0.25 < with_fcs < 0.45, with_fcs
     assert recruiting.signed_class(st, "georgia") and len(recruiting.signed_class(st, "georgia")) == per["georgia"]
+    nc = prospects.national_classes(st)
+    assert nc["phase"] == "Signed" and sum(c["count"] for c in nc["schools"]) == sum(per.values())
+    uga = next(c for c in nc["schools"] if c["school"] == "georgia")
+    assert uga["rank"] == prospects.class_rank(st, "georgia") and uga["count"] == per["georgia"] and len(uga["top"]) == min(3, per["georgia"])
     ranks = {s: prospects.class_rank(st, s) for s in ("georgia", "kent-state")}
     assert all(1 <= r <= len(recruiting.fbs_schools(st)) for r in ranks.values()) and ranks["georgia"] < ranks["kent-state"], ranks
     try:

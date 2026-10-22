@@ -11,13 +11,13 @@
                         nil: "NIL", coach: "The head coach", academics: "Academics" };
   const GROUP_NAMES = { athleticism: "Athleticism", size_strength: "Size & strength", technique: "Technique", football_iq: "Football IQ",
                         potential: "Potential", coachability: "Coachability" };
-  const STATUS = [["", "Any status"], ["open", "Uncommitted"], ["committed", "Committed"], ["signed", "Signed"], ["leaning_fcs", "Leaning FCS"],
+  const STATUS = [["", "Any status"], ["interested", "Interested in you"], ["open", "Uncommitted"], ["committed", "Committed"], ["signed", "Signed"], ["leaning_fcs", "Leaning FCS"],
                   ["offered", "Offered by you"], ["board", "On your board"]];
   const POSITIONS = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "ATH", "K", "P"];
   const STATES = ["AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME",
                   "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD",
                   "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY"];
-  const view = { filters: { q: "", position: "", stars: "", state: "", status: "" }, offset: 0, chip: "all", sort: "chance", selected: null, pitch: {} };
+  const view = { filters: { q: "", position: "", stars: "", state: "", status: "", sort: "rank" }, offset: 0, openClass: null, chip: "all", sort: "chance", selected: null, pitch: {} };
   let H = null;
 
   const stars = (n) => "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
@@ -37,6 +37,7 @@
   }
   const teamName = (slug) => (slug === "FCS" ? "an FCS program" : (window.CFP.teamsBySlug[slug] || {}).name || slug);
   const loading = (text) => el("p", { class: "muted go-loading", text });
+  const SIGNING_WEEK = 16, FINAL_WEEK = 20;       // the early signing period (selection week) and national signing day
   const WORDS = { commit: "committed to", flip: "flipped to", decommit: "decommitted from", signed: "signed with" };
 
   function avatar(seed, size) {
@@ -127,6 +128,12 @@
     week.append(el("div", { class: "go-kicker", text: s.done ? "SEASON COMPLETE" : `THIS WEEK · ${((s.week_labels && s.week_labels[s.current_week + 1]) || `Week ${s.current_week + 1}`).toUpperCase()}${when}` }));
     const head = el("div", { class: "go-week-head" });
     week.append(head);
+    if (s.current_week >= SIGNING_WEEK) {
+      const final = s.current_week >= FINAL_WEEK;
+      box.prepend(el("button", { type: "button", class: "go-signing", onclick: () => H.onChange("classes") }, [
+        el("span", { class: "go-display m", text: final ? "NATIONAL SIGNING DAY IS DONE" : "THE EARLY SIGNING PERIOD IS DONE" }),
+        el("span", { text: final ? "Every class is signed. See how yours ranks →" : "Commitments signed in December. See every school's class →" })]));
+    }
     const boxes = el("div", { class: "go-stats" });
     if (s.done) {
       head.append(el("div", { class: "go-display xl", text: s.champion_name ? `${s.champion_name.toUpperCase()} WON IT ALL` : "THAT'S A WRAP" }));
@@ -203,8 +210,8 @@
         el("span", { class: "go-step-text" }, [el("b", { text: title }), el("span", { class: "muted small", text: sub })])]);
     }
     function tiles() {
-      const t = [["recruiting", "Recruiting", true], ["prospects", "Prospects"], ["staff", "Staff"], ["depth", "Roster"], ["schedule", "Schedule"],
-                 ["rankings", "Polls & CFP"], ["stats", "Stats"], ["awards", "Awards"]];
+      const t = [["recruiting", "Recruiting", true], ["prospects", "Prospects"], ["staff", "Staff"], ["classes", "Classes"], ["depth", "Roster"],
+                 ["schedule", "Schedule"], ["rankings", "Polls & CFP"], ["stats", "Stats"], ["awards", "Awards"]];
       return el("nav", { class: "go-tiles", "aria-label": "Career screens" }, t.map(([tab, name, hot]) =>
         el("button", { type: "button", class: `go-tile ${hot ? "hot" : ""}`, text: name.toUpperCase(), onclick: () => H.onChange(tab) })));
     }
@@ -361,6 +368,7 @@
       mk("stars", [["", "Any stars"], ["5", "5 stars"], ["4", "4 stars"], ["3", "3 stars"], ["2", "2 stars"]], "Stars"),
       mk("state", [["", "Any state"], ...STATES.map((c) => [c, c])], "Home state"),
       mk("status", STATUS, "Status"),
+      mk("sort", [["rank", "Sort: national rank"], ["interest", "Sort: interest in you"]], "Sort"),
     ]));
     const body = el("div");
     box.append(body);
@@ -385,7 +393,9 @@
           el("span", { class: "go-list-id" }, [el("b", { text: r.name }), el("span", { class: "muted small", text: `${r.position} · ${height(r.height)} ${r.weight} · ${place(r.hometown)}` })]),
           el("span", { class: "go-stars", text: stars(r.stars) }),
           el("span", { class: `go-tag ${r.signed || r.committed ? "" : r.leaning_fcs ? "muted" : "good"}`, text: status(r) }),
-          el("span", { class: "go-list-read muted small", title: "Your staff's read of his potential", text: r.our_potential ? `Potential ${r.our_potential[0]} to ${r.our_potential[1]}` : "Not scouted" }),
+          el("span", { class: "go-list-read" }, [
+            el("span", { class: `go-tag ${r.interest_level === "High" ? "good" : r.interest_level === "Medium" ? "warn" : "muted"}`, title: "How much your school appeals to him now", text: `${r.interest_level} interest` }),
+            el("span", { class: "muted small", title: "Your staff's read of his potential", text: r.our_potential ? ` Potential ${r.our_potential[0]} to ${r.our_potential[1]}` : " Not scouted" })]),
         ]);
         return el("li", { class: "go-list-row rc-row" }, [open, add]);
       })));
@@ -517,6 +527,41 @@
     if (open.length) box.append(el("p", { class: "muted small", text: `Not covered: ${open.map((a) => `${a} (${v.area_counts[a]})`).join(", ")}. Prospects there show public information only.` }));
   }
 
+  // ----- every school's class ------------------------------------------------------------------------
+
+  async function renderClasses(s, box) {
+    if (!box.firstChild) box.append(loading("Loading every class…"));
+    let d;
+    try { d = await H.api(`/api/season/${s.id}/classes${view.openClass ? `?school=${view.openClass}` : ""}`); }
+    catch (err) { box.innerHTML = ""; box.append(loading(`Could not load the classes: ${H.errText(err)}`)); return; }
+    box.innerHTML = "";
+    const mine = d.schools.find((c) => c.yours);
+    box.append(el("div", { class: "go-filterbar" }, [el("div", { class: "go-display l", text: "CLASS RANKINGS · 2027" }),
+      el("span", { class: "go-pill", text: d.phase === "Signed" ? `Signed · ${d.fcs} went to FCS programs` : d.phase === "Recruiting" ? "Commitments so far" : "Early signing period done" })]));
+    if (mine) box.append(el("div", { class: "go-card go-myclass" }, [el("div", { class: "go-kicker", text: "YOUR CLASS" }),
+      el("div", { class: "go-big-line" }, [el("span", { class: "go-display xl", text: mine.count ? `#${mine.rank}` : "—" }),
+        el("span", { class: "muted", text: mine.count ? `${mine.count} ${d.phase === "Signed" ? "signed" : "committed"} · ${starLine(mine.stars)}` : "No commitments yet" })])]));
+    const list = el("ol", { class: "go-list go-classes" });
+    for (const c of d.schools.filter((x) => x.count || x.yours)) {
+      const open = view.openClass === c.school;
+      const head = el("button", { type: "button", class: "go-list-main go-class-main", "aria-expanded": String(open),
+        onclick: () => { view.openClass = open ? null : c.school; renderClasses(s, box); } }, [
+        el("span", { class: "go-rank", text: `#${c.rank}` }), window.CFP.teamPill(c.school),
+        el("span", { class: "go-list-id" }, [el("b", { text: `${c.name}${c.yours ? " (you)" : ""}` }), el("span", { class: "muted small", text: c.conference })]),
+        el("span", { class: "go-class-count", text: `${c.count}` }),
+        el("span", { class: "muted small go-class-stars", text: starLine(c.stars) }),
+        el("span", { class: "muted small go-class-top", text: c.top.map((t) => `${t.name} ${"★".repeat(t.stars)}`).join(" · ") }),
+      ]);
+      const li = el("li", { class: `go-list-row go-class ${c.yours ? "yours" : ""}` }, [head]);
+      if (open && d.class) li.append(el("ul", { class: "go-class-list" }, d.class.map((r) => el("li", {}, [
+        el("button", { type: "button", class: "go-link", text: r.name, onclick: () => openProfile(s, r.id) }),
+        el("span", { class: "muted small", text: ` ${"★".repeat(r.stars)} ${r.position} · #${r.national_rank} · ${place(r.hometown)}${r.signed ? " · signed" : ""}` })]))));
+      list.append(li);
+    }
+    box.append(list);
+    function starLine(st) { return ["5", "4", "3", "2"].filter((k) => st[k]).map((k) => `${st[k]}×${k}★`).join(" · ") || "—"; }
+  }
+
   function render(tab, season, helpers) {
     H = helpers;
     const box = document.getElementById(`tab-${tab}`);
@@ -524,6 +569,7 @@
     else if (tab === "recruiting") renderRecruiting(season, box);
     else if (tab === "prospects") renderProspects(season, box);
     else if (tab === "staff") renderStaff(season, box);
+    else if (tab === "classes") renderClasses(season, box);
   }
 
   window.Recruiting = { render, openProfile: (s, pid) => openProfile(s, pid) };
