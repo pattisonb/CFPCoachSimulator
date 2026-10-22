@@ -60,4 +60,22 @@ if __name__ == "__main__":
     (season.SEASONS_DIR / f"{st['id']}.json").unlink()
     restored = career.restore(career.export_save(newer), current=None)
     assert restored["career"]["saved_week"] == 5 and season.load_season(st["id"])["career"]["saved_week"] == 5
+    # uploads are checked before anything is written: a gzip bomb, a wrong shape, box names
+    # that leave the folder, an id that belongs to a season that is not a career
+    import gzip as _gz
+    bomb = _gz.compress(b"{" + b" " * (300 * 1024 * 1024) + b"}")
+    for bad in (bomb, _gz.compress(_json.dumps({"state": {"id": "abc123", "career": {"x": 1}}}).encode())):
+        try:
+            career.read_save(bad)
+            raise AssertionError("a bad upload was accepted")
+        except ValueError:
+            pass
+    sneaky = _gz.compress(_json.dumps({"state": newer, "boxes": {"D:evil.json": "{}", "ok-1.json": "{}", "a..json": "{}"}}).encode())
+    assert set(career.read_save(sneaky)[1]) == {"ok-1.json"}
+    plain_same_id = dict(plain, id=st["id"])
+    try:
+        career.restore(career.export_save(newer), current=plain_same_id)
+        raise AssertionError("a career replaced a plain season with the same id")
+    except ValueError:
+        pass
     print("career ok")

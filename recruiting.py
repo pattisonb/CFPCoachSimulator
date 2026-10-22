@@ -288,19 +288,21 @@ def interest(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> fl
 
 
 _STATIC: dict = {}       # a prospect's pulls that hold all season (everything but winning), per school
-_WINNING: dict = {}      # this week's on-field standing of every school
+_WINNING: tuple = (None, {})   # (career and week, this week's on-field standing of every school)
 
 
 def _winning(state: dict) -> dict[str, float]:
     import season
+    global _WINNING
     played = sum(1 for g in state["games"].values() if g["played"])
     key = (state["id"], state["current_week"], played)
-    if _WINNING.get("key") != key:
-        records, ranks = season._records(state), season.rank_map(state, state["current_week"])
-        _WINNING.clear()
-        _WINNING.update(key=key, value={slug: on_field(state, slug, state["current_week"], records, ranks)
-                                        for slug in fbs_schools(state)})
-    return _WINNING["value"]
+    cached = _WINNING                     # one read: another request may swap it in meanwhile
+    if cached[0] == key:
+        return cached[1]
+    records, ranks = season._records(state), season.rank_map(state, state["current_week"])
+    value = {slug: on_field(state, slug, state["current_week"], records, ranks) for slug in fbs_schools(state)}
+    _WINNING = (key, value)
+    return value
 
 
 # ----- your hours, points and actions -----------------------------------------------------------------
@@ -504,18 +506,21 @@ def _national_share(stars: int) -> float:
     return int(counts.get(str(stars), 1)) / sum(int(v) for v in counts.values())
 
 
-_FITS: dict = {}         # each school's fit for every prospect in the class (fixed all season)
+_FITS: tuple = (None, {}, None)   # (career and class, each school's fit for every prospect, the pool)
 
 
 def _fits(state: dict, slug: str) -> dict[str, float]:
+    """A school's fit for every prospect in the class (fixed all season), cached for one career."""
+    global _FITS
     rc = state["recruiting"]
-    if _FITS.get("key") != (state["id"], rc["year"]):
-        _FITS.clear()
-        _FITS["key"] = (state["id"], rc["year"])
-        _FITS["pool"] = _pool(state)
-    if slug not in _FITS:
-        _FITS[slug] = _fit_all(slug, rc["prospects"], _FITS["pool"])
-    return _FITS[slug]
+    key = (state["id"], rc["year"])
+    cached = _FITS
+    if cached[0] != key:
+        cached = _FITS = (key, {}, _pool(state))
+    fits = cached[1].get(slug)
+    if fits is None:
+        fits = cached[1][slug] = _fit_all(slug, rc["prospects"], cached[2])
+    return fits
 
 
 def _build_board(state: dict, slug: str, rng: random.Random) -> list[str]:
@@ -726,6 +731,12 @@ def _sign(state: dict, final: bool) -> None:
         elif final:
             st.update(signed="FCS", committed="FCS", fcs=True)
             _event(state, "signed", pid, "FCS")
+        else:
+            continue
+        for school, pids in rc["offers"].items():  # every other school's offer to him lapses
+            if school != st["signed"] and pid in pids:
+                pids.remove(pid)
+                rc["nil"].get(school, {}).get("held", {}).pop(pid, None)
 
 
 def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
@@ -873,11 +884,19 @@ def scout_week(state: dict) -> None:
                 look(state, pid, member["evaluation"], rng)
 
 
+def visible(state: dict) -> set[str]:
+    """The prospects you can see: everyone but the hidden ones your staff have not seen and your
+    school has not offered or landed (Auto-recruit can find them)."""
+    rc, me = state["recruiting"], state.get("team")
+    mine = set(rc["offers"].get(me, []))
+    return {pid for pid, p in rc["prospects"].items()
+            if not p.get("hidden") or pid in rc["reads"] or pid in mine or me in (rc["status"][pid]["committed"], rc["status"][pid]["signed"])}
+
+
 def prospect_list(state: dict) -> list[str]:
-    """The class as you can see it: everyone but the hidden prospects your staff have not seen, by rank."""
+    """The class as you can see it (`visible`), by rank."""
     rc = state["recruiting"]
-    return sorted((pid for pid, p in rc["prospects"].items() if not p.get("hidden") or pid in rc["reads"]),
-                  key=lambda pid: rc["prospects"][pid]["rank"])
+    return sorted(visible(state), key=lambda pid: rc["prospects"][pid]["rank"])
 
 
 def _set_record(state: dict, slug: str, wins: int, losses: int) -> None:

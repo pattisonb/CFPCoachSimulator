@@ -6,10 +6,15 @@ from __future__ import annotations
 
 import gzip
 import json
+import re
+import zlib
 from datetime import datetime, timezone
 from typing import Optional
 
 FIRST_YEAR = 2026
+MAX_UNPACKED = 200 * 1024 * 1024     # an uploaded save, unpacked (a full season of box scores is well under this)
+MAX_BOXES = 2000                     # box scores in one save (a season has about 900)
+BOX_NAME = re.compile(r"[A-Za-z0-9_-]+\.json")
 
 
 def _now() -> str:
@@ -51,15 +56,32 @@ def read_save(blob: bytes) -> tuple[dict, dict]:
     """A downloaded career's (state, box scores), without writing anything. Raises ValueError
     for anything that is not a career save."""
     try:
-        data = json.loads(gzip.decompress(blob).decode("utf-8"))
+        unpack = zlib.decompressobj(16 + zlib.MAX_WBITS)      # gzip, never unpacked past MAX_UNPACKED
+        raw = unpack.decompress(blob, MAX_UNPACKED)
+        if unpack.unconsumed_tail:
+            raise ValueError("too large")
+        data = json.loads(raw.decode("utf-8"))
         state = data["state"]
-    except (OSError, ValueError, KeyError, TypeError) as exc:
+    except (OSError, ValueError, KeyError, TypeError, zlib.error) as exc:
         raise ValueError("not a Coach Career save") from exc
-    if not isinstance(state, dict) or not is_career(state) or not str(state.get("id", "")).isalnum():
+    if not _looks_like_career(state):
         raise ValueError("not a Coach Career save")
-    boxes = {n: t for n, t in (data.get("boxes") or {}).items()
-             if isinstance(t, str) and n.endswith(".json") and "/" not in n and "\\" not in n and ".." not in n}
-    return state, boxes
+    boxes = data.get("boxes") or {}
+    if not isinstance(boxes, dict) or len(boxes) > MAX_BOXES:
+        raise ValueError("not a Coach Career save")
+    return state, {n: t for n, t in boxes.items() if isinstance(t, str) and BOX_NAME.fullmatch(n)}
+
+
+def _looks_like_career(state) -> bool:
+    """A career save's shape: what the server reads from it before trusting it."""
+    import season
+    if not isinstance(state, dict) or not str(state.get("id", "")).isalnum():
+        return False
+    c = state.get("career")
+    return (isinstance(c, dict) and {"year", "settings", "saved_week", "saved_at"} <= set(c)
+            and state.get("mode") == "full" and state.get("team") in season.load_teams()
+            and isinstance(state.get("games"), dict) and isinstance(state.get("recruiting"), dict)
+            and isinstance(state.get("current_week"), int))
 
 
 def write_save(state: dict, boxes: dict) -> None:
@@ -83,8 +105,11 @@ def restore(blob: bytes, current: Optional[dict]) -> dict:
     """An uploaded career against the server's copy of it (`current`, None when the server has
     forgotten it): the newer one is kept and returned; the upload is written only if it wins."""
     state, boxes = read_save(blob)
-    if current is not None and current.get("id") == state["id"] and newer(current, state) is current:
-        return current
+    if current is not None and current.get("id") == state["id"]:
+        if not is_career(current):
+            raise ValueError("a different season on this server has that id")
+        if newer(current, state) is current:
+            return current
     write_save(state, boxes)
     return state
 

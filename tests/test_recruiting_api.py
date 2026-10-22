@@ -72,6 +72,20 @@ if __name__ == "__main__":
     refused(lambda: server.board_change(sid, server.BoardRequest(pid=pid, on=True)), 409)
     refused(lambda: server.staff_change(sid, server.StaffRequest(staff_id="r1", area="Florida")), 409)
     server._season_jobs[sid]["status"] = "idle"
+    # hidden prospects cannot be recruited until seen; recruiting views wait for a running sim
+    refused(lambda: server.recruit_action(sid, server.RecruitRequest(pid=hidden, action="message")), 404)
+    server._season_jobs[sid]["status"] = "running"
+    refused(lambda: server.recruiting_view(sid), 409)
+    refused(lambda: server.prospect_search(sid), 409)
+    refused(lambda: server.prospect_profile(sid, pid), 409)
+    server._season_jobs[sid]["status"] = "idle"
+    # a malformed season file never breaks the season list
+    bad = season.SEASONS_DIR / "zzbadfile0001.json"
+    bad.write_text('{"current_week": 1, "id": "zzbadfile0001"}', encoding="utf-8")
+    try:
+        assert any(x["id"] == sid for x in server.list_seasons()["seasons"])
+    finally:
+        bad.unlink()
     # a season that is not a career has no recruiting
     plain = server.create_season(server.SeasonRequest(team="ohio-state", mode="full", seed=11))["id"]
     for call in (lambda: server.recruiting_view(plain), lambda: server.prospect_search(plain),

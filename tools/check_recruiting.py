@@ -36,7 +36,7 @@ TOLERANCES = (
 def play(seed: int, team: str = "georgia") -> dict:
     state = season.new_season(team, "full", seed=seed, career=True)
     season.advance_to(state, season.FINAL_WEEK)
-    shutil.rmtree(season.box_dir(state), ignore_errors=True)   # the sim's box scores: not needed here
+    shutil.rmtree(season.box_dir(state).parent, ignore_errors=True)   # the sim's box scores: not needed here
     return state
 
 

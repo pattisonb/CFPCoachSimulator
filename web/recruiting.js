@@ -15,7 +15,9 @@
   const STATUS = [["", "Any status"], ["open", "Uncommitted"], ["committed", "Committed"], ["signed", "Signed"], ["leaning_fcs", "Leaning FCS"],
                   ["offered", "Offered by you"], ["board", "On your board"]];
   const POSITIONS = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "ATH", "K", "P"];
-  const STATES = ["AL", "AZ", "CA", "CO", "FL", "GA", "IL", "IN", "KY", "LA", "MD", "MI", "MS", "NC", "NJ", "OH", "OK", "PA", "SC", "TN", "TX", "VA", "WA"];
+  const STATES = ["AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME",
+                  "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD",
+                  "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY"];
   const view = { filters: { q: "", position: "", stars: "", state: "", status: "" }, offset: 0, data: null };
   let H = null;
 

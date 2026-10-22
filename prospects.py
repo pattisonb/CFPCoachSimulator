@@ -140,21 +140,23 @@ def _public_grades(p: dict) -> dict[str, float]:
 
 def _ranks(state: dict) -> dict[str, tuple[int, int]]:
     """(position rank, state rank) for every prospect."""
+    global _RANKS
     rc = state["recruiting"]
     key = (state["id"], rc["year"])
-    if _RANKS.get("key") != key:
-        pos, home, out = {}, {}, {}
-        for pid in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"]):
-            p = rc["prospects"][pid]
-            pos[p["position"]] = pos.get(p["position"], 0) + 1
-            home[p["hometown"]["state"]] = home.get(p["hometown"]["state"], 0) + 1
-            out[pid] = (pos[p["position"]], home[p["hometown"]["state"]])
-        _RANKS.clear()
-        _RANKS.update(key=key, value=out)
-    return _RANKS["value"]
+    cached = _RANKS                       # one read: another request may swap it in meanwhile
+    if cached[0] == key:
+        return cached[1]
+    pos, home, out = {}, {}, {}
+    for pid in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"]):
+        p = rc["prospects"][pid]
+        pos[p["position"]] = pos.get(p["position"], 0) + 1
+        home[p["hometown"]["state"]] = home.get(p["hometown"]["state"], 0) + 1
+        out[pid] = (pos[p["position"]], home[p["hometown"]["state"]])
+    _RANKS = (key, out)
+    return out
 
 
-_RANKS: dict = {}
+_RANKS: tuple = (None, {})
 
 
 def _high_school(p: dict) -> str:
@@ -190,7 +192,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
     """The Prospect Profile as `viewer` (your school) sees it. Never carries the true grades."""
     rc = state["recruiting"]
     p = rc["prospects"].get(pid)
-    if p is None or (p.get("hidden") and pid not in rc["reads"]):
+    if p is None or pid not in recruiting.visible(state):
         raise recruiting.RecruitingError(404, "unknown prospect")
     pos_rank, state_rank = _ranks(state)[pid]
     status = rc["status"][pid]

@@ -539,7 +539,10 @@ async def import_career(request: Request) -> dict:
     if job and job.get("status") == "running":
         raise HTTPException(409, "that career is simulating; try again when the week is done")
     current = job["state"] if job and job.get("state") is not None else season.load_season(sid)
-    state = career.restore(blob, current)
+    try:
+        state = career.restore(blob, current)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
     _season_jobs[sid] = _idle_job(sid, state if state is current else season.load_season(sid))
     return season.summary(_season_jobs[sid]["state"])
 
@@ -562,14 +565,14 @@ def list_seasons() -> dict:
                 continue
             try:
                 st = json.loads(path.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
+                if "current_week" not in st:
+                    continue
+                rec = season._records(st, include_playoff=True)[st["team"]]
+                card = {"id": st["id"], "team": st["team"], "team_name": st["team_name"], "mode": st["mode"],
+                        "created_at": st["created_at"], "current_week": st["current_week"], "done": st["done"],
+                        "wins": rec["wins"], "losses": rec["losses"], "champion_name": _teams.get(st.get("champion") or "", {}).get("name")}
+            except Exception:  # noqa: BLE001 - one unreadable file must not break the list for everyone
                 continue
-            if "current_week" not in st:
-                continue
-            rec = season._records(st, include_playoff=True)[st["team"]]
-            card = {"id": st["id"], "team": st["team"], "team_name": st["team_name"], "mode": st["mode"],
-                    "created_at": st["created_at"], "current_week": st["current_week"], "done": st["done"],
-                    "wins": rec["wins"], "losses": rec["losses"], "champion_name": _teams.get(st.get("champion") or "", {}).get("name")}
             _season_cards[path.stem] = (mtime, card)
             out.append(card)
     return {"seasons": out}
@@ -764,28 +767,36 @@ def _recruiting_call(fn, *args, **kwargs):
         raise HTTPException(404 if e.message in ("unknown prospect",) else e.code, e.message) from e
 
 
+# Recruiting reads wait for a running sim too (409): the week's step changes what they read.
+
 @app.get("/api/season/{season_id}/recruiting")
 def recruiting_view(season_id: str) -> dict:
-    return prospects.recruiting_view(_career_state(season_id))
+    st = _career_state(season_id, change=True)
+    with _season_lock:
+        return prospects.recruiting_view(st)
 
 
 @app.get("/api/season/{season_id}/prospects")
 def prospect_search(season_id: str, position: Optional[str] = None, stars: Optional[int] = None, state: Optional[str] = None,
                     status: Optional[str] = None, q: Optional[str] = None, offset: int = 0, limit: int = 50) -> dict:
-    st = _career_state(season_id)
-    return prospects.search(st, st["team"], position, stars, state, status, q, max(0, offset), limit)
+    st = _career_state(season_id, change=True)
+    with _season_lock:
+        return prospects.search(st, st["team"], position, stars, state, status, q, max(0, offset), limit)
 
 
 @app.get("/api/season/{season_id}/prospect/{pid}")
 def prospect_profile(season_id: str, pid: str) -> dict:
-    st = _career_state(season_id)
-    return _recruiting_call(prospects.profile, st, pid, st["team"])
+    st = _career_state(season_id, change=True)
+    with _season_lock:
+        return _recruiting_call(prospects.profile, st, pid, st["team"])
 
 
 @app.post("/api/season/{season_id}/recruit")
 def recruit_action(season_id: str, req: RecruitRequest) -> dict:
     st = _career_state(season_id, change=True)
     with _season_lock:
+        if req.pid not in recruiting.visible(st):
+            raise HTTPException(404, "unknown prospect")
         return _recruiting_call(recruiting.act, st, st["team"], req.pid, req.action, req.pitch, req.nil)
 
 
@@ -793,7 +804,7 @@ def recruit_action(season_id: str, req: RecruitRequest) -> dict:
 def board_change(season_id: str, req: BoardRequest) -> dict:
     st = _career_state(season_id, change=True)
     rc = st["recruiting"]
-    if req.pid not in recruiting.prospect_list(st):
+    if req.pid not in recruiting.visible(st):
         raise HTTPException(404, "unknown prospect")
     with _season_lock:
         if req.on and req.pid not in rc["board"]:

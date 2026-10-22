@@ -125,6 +125,7 @@
     if (!confirm(`Delete the ${label} season? This cannot be undone.`)) return;
     try {
       await api(`/api/season/${s.id}`, { method: "DELETE" });
+      await window.CareerSave.remove(s.id).catch(() => {});   // or the device copy would bring it back
       if (state.season && state.season.id === s.id) closeSeason();
       await loadSeasons();
       toast("Season deleted");
@@ -135,6 +136,9 @@
     if (!confirm("Delete every saved season? This cannot be undone.")) return;
     try {
       const r = await api("/api/seasons", { method: "DELETE" });
+      // the device copies go too, except a career still simulating (the server kept it)
+      const kept = new Set((await api("/api/seasons")).seasons.map((x) => x.id));
+      for (const c of await window.CareerSave.list().catch(() => [])) if (!kept.has(c.id)) await window.CareerSave.remove(c.id).catch(() => {});
       closeSeason();
       await loadSeasons();
       toast(r.kept ? `Deleted ${r.removed} seasons; ${r.kept} still simulating` : `Deleted ${r.removed} seasons`);

@@ -62,6 +62,13 @@ if __name__ == "__main__":
         except recruiting.RecruitingError as e:
             assert e.code == 409 and st["recruiting"]["hours"]["ohio-state"] < 5
             break
+    # at signing, every school's offers to prospects who signed elsewhere are dropped: your
+    # offer cap is never held by them (you cannot pull an offer once he signs)
+    other = next(q for q, p in rc["prospects"].items() if q != pid and rc["status"][q]["committed"] is None)
+    recruiting.act(st, "ohio-state", other, "offer")
+    rc["status"][other]["committed"] = "texas"
+    recruiting._sign(st, final=False)
+    assert rc["status"][other]["signed"] == "texas" and other not in rc["offers"]["ohio-state"]
     # offers are capped at 1.5x open spots
     cap = recruiting.offer_cap(st, "ohio-state")
     assert 15 <= cap <= 45, cap
@@ -99,6 +106,6 @@ if __name__ == "__main__":
     print(f"season: {t_plain:.1f}s plain, {t_career:.1f}s career (+{t_career - t_plain:.1f}s); FCS {with_fcs:.0%}; "
           f"Georgia signed {per['georgia']}/{recruiting.open_spots(st, 'georgia')}; events {dict(kinds)}")
     for done in (plain, st):                               # the sims' box scores
-        shutil.rmtree(season.box_dir(done), ignore_errors=True)
+        shutil.rmtree(season.box_dir(done).parent, ignore_errors=True)
     assert t_career - t_plain < 20, "recruiting adds more than 20 s to a season"
     print(f"recruiting ok: {len(rc['prospects'])} prospects; TX 3-star {tx['name']} priorities {tx['priorities']}")
