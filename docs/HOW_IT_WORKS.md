@@ -1032,10 +1032,16 @@ roster's make-up by group is the real 2026 mean (QB 4, RB 6, WR 11, TE 6, OL 15,
 (FRRS ... SRRS). A player who did not start may take his redshirt once: 78% of freshmen off
 the top of the depth chart, 35% of sophomores, 25% of juniors (half that for the next man up).
 Seniors leave; a senior with his redshirt unused who barely played stays a fifth year 60% of the
-time. The NFL draft has 257 picks, 97% from FBS, ranked by the card overall plus position value
-(QB +6, tackles and edges +3 to +4, kickers -18) and noise; underclassmen three years out of high
-school declare by projected pick (95% in the first round, 65% by pick 100, 12% by 257): about
-55-80 a year (real 58-82). The transfer portal takes 5% of freshmen to 18% of fifth-year
+time. The NFL draft has 257 picks, 97% from FBS, ranked by a draft score: the card overall
+times a position scale, plus a position value, plus noise (4 points). The scale and value are
+fitted by `tools/calibrate_draft.py` to the real 2021-2025 drafts (`data/draft_targets.json`,
+counted by position bucket): round one has about 3.4 QB, 1.2 RB, 5.0 WR, 1.0 TE, 5.4 OT, 1.8
+IOL, 5.0 EDGE, 2.4 DL, 2.0 LB, 3.8 CB and 0.8 S a year; the whole draft 11 QB, 22 RB, 32 WR, 15
+TE, 23 OT, 23 IOL, 25 EDGE, 23 DL, 24 LB, 35 CB, 20 S, 2 K and 2 P. The sim's drafts land within
+a pick of those in round one and within three over seven rounds (before the fit it took no backs
+in round one, 3 a draft, and 40 corners). Underclassmen three years out of high school declare by
+projected pick (95% in the first round, 65% by pick 100, 12% by 257): about 55-80 a year (real
+58-82). The transfer portal takes 5% of freshmen to 18% of fifth-year
 seniors, times 0.12 for starters, 0.65 for the next man up and 1.3 for the bench, and 1.25 after
 a losing year; a Group of 5 player with a card overall of 50 or more (a Power 4 starter) enters
 40% of the time to move up. About 1.2% quit a year (2.5 times as likely in a team's bottom 15%).

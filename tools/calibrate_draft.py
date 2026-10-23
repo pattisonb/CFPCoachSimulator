@@ -157,7 +157,10 @@ def table(r1: dict, allp: dict, targets: dict) -> str:
 
 
 def main() -> None:
+    from coach_career import offseason
     targets = json.loads(TARGETS.read_text(encoding="utf-8"))
+    k = offseason.DRAFT_PICKS * offseason.DRAFT_FROM_FBS / targets.get("picks_a_draft", 257)   # the sim's FBS picks a draft
+    targets = {"round1": targets["round1"], "all": {b: v * k for b, v in targets["all"].items()}}
     leagues = pools()
     r1, allp = measure(leagues)
     print("before:\n" + table(r1, allp, targets))

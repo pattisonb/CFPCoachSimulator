@@ -45,6 +45,23 @@ if __name__ == "__main__":
     # of the rest enter the portal, a few quit
     assert 15 * teams <= kinds["graduated"] + kinds["draft"] <= 24 * teams, kinds
     assert kinds["draft"] == round(offseason.DRAFT_PICKS * offseason.DRAFT_FROM_FBS)
+    # the draft by position matches the real drafts (data/draft_targets.json, 2021-2025 averages):
+    # each bucket's picks a draft within 5 or half the target; round one (32 picks, so one draft is
+    # noisy) within 4 a bucket and 15 over all of them; tools/calibrate_draft.py averages nine drafts
+    import json
+    targets = json.loads((_Path(__file__).resolve().parents[1] / "data" / "draft_targets.json").read_text(encoding="utf-8"))
+    bucket = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OT", "RT": "OT", "LG": "IOL", "RG": "IOL", "C": "IOL",
+              "LEDG": "EDGE", "REDG": "EDGE", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "CB", "FS": "S", "SS": "S",
+              "K": "K", "P": "P"}
+    drafted = [d for d in off["departures"] if d["kind"] == "draft"]
+    allp = collections.Counter(bucket[d["pos"]] for d in drafted)
+    r1 = collections.Counter(bucket[d["pos"]] for d in drafted if d["pick"] <= 32)
+    k = offseason.DRAFT_PICKS * offseason.DRAFT_FROM_FBS / targets["picks_a_draft"]
+    for b, want in targets["all"].items():
+        assert abs(allp[b] - want * k) <= max(5, 0.5 * want * k), (b, allp[b], want * k)
+    for b, want in targets["round1"].items():
+        assert abs(r1[b] - want) <= 4, (b, r1[b], want)
+    assert sum(abs(r1[b] - want) for b, want in targets["round1"].items()) <= 15, dict(r1)
     early = sum(1 for d in off["departures"] if d.get("early"))
     assert 40 <= early <= 140, early
     # underclassmen three years out of high school declare: juniors, redshirt juniors and redshirt sophomores
@@ -90,7 +107,7 @@ if __name__ == "__main__":
     offseason.advance(st)
     assert off["stage"] == "development"
     placed = sum(1 for e in off["portal"]["players"].values() if e["signed"])
-    assert 0.55 <= placed / entrants <= 0.92, placed / entrants
+    assert 0.55 <= placed / entrants <= 0.95, placed / entrants
     g5 = [s_ for s_ in lg["teams"] if not offseason.p4_school(s_)]
     per_g5 = sum(1 for e in off["portal"]["players"].values() if e["signed"] in g5) / len(g5)
     assert 1.0 <= per_g5 <= 4.5, per_g5

@@ -44,11 +44,16 @@ REDSHIRT = {"FR": 0.78, "SO": 0.35, "JR": 0.25}   # chance a player off the dept
 FIFTH_YEAR = 0.60                                  # a senior with his redshirt unused who barely played comes back
 DRAFT_PICKS = 257
 DRAFT_FROM_FBS = 0.97                              # the share of picks from FBS (the rest from lower levels)
-# position value in the draft, in house-scale points over his card overall
-POSITION_VALUE = {"QB": 6, "LT": 4, "RT": 3, "LEDG": 4, "REDG": 4, "CB": 3, "WR": 2, "DT": 1, "LG": -1, "RG": -1, "C": -2,
-                  "TE": -1, "HB": -3, "FB": -12, "SAM": 0, "MIKE": -1, "WILL": -1, "FS": 0, "SS": -1, "K": -18, "P": -20}
+# the draft by position, fitted by tools/calibrate_draft.py to data/draft_targets.json (the 2021-2025 NFL
+# drafts' round-one and all-pick counts by position): his draft score is POSITION_SCALE[pos] * card overall
+# + POSITION_VALUE[pos] + noise, so quarterbacks and tackles go early and backs, tight ends and safeties late
+POSITION_VALUE = {"QB": -269.38, "HB": -28.91, "FB": -28.91, "WR": -193.15, "TE": -55.25, "LT": -73.69, "RT": -73.69, "LG": -73.1,
+                  "RG": -73.1, "C": -73.1, "LEDG": -84.02, "REDG": -84.02, "DT": -49.06, "SAM": -147.83, "MIKE": -147.83,
+                  "WILL": -147.83, "CB": -74.02, "FS": -52.39, "SS": -52.39, "K": -236.12, "P": -318.77}
+POSITION_SCALE = {"QB": 5.0, "HB": 1.607, "FB": 1.607, "WR": 3.871, "TE": 1.664, "LT": 2.105, "RT": 2.105, "LG": 1.932, "RG": 1.932,
+                  "C": 1.932, "LEDG": 2.127, "REDG": 2.127, "DT": 1.674, "SAM": 2.892, "MIKE": 2.892, "WILL": 2.892, "CB": 2.013,
+                  "FS": 1.579, "SS": 1.579, "K": 3.563, "P": 5.0}
 DRAFT_NOISE = 4.0
-POSITION_SCALE: dict = {}                          # a position's draft score per card-overall point (1.0 unless tools/calibrate_draft.py set it)
 DECLARE = ((32, 0.95), (64, 0.88), (100, 0.65), (160, 0.35), (257, 0.12), (10**9, 0.004))   # projected pick -> an underclassman declares
 UNDERCLASS_ELIGIBLE = {"JR", "JRRS", "SORS"}       # three years out of high school
 PORTAL_BASE = {"FR": 0.05, "FRRS": 0.09, "SO": 0.10, "SORS": 0.12, "JR": 0.10, "JRRS": 0.12, "SR": 0.18}
