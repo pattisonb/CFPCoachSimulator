@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import statistics as st
 from functools import lru_cache
 from pathlib import Path
@@ -32,6 +33,7 @@ ROOT = Path(__file__).resolve().parent
 SOURCE_DIR = ROOT / "cfb_sim_data" / "teams"
 CACHE_DIR = ROOT / "data" / "leagues"
 FIRST_YEAR = 2026
+TARGET_SD = 0.18          # receivers' target shares around 1.0 (the real 2026 spread by depth slot, 0.14-0.29)
 
 CLASSES = ("FR", "FRRS", "SO", "SORS", "JR", "JRRS", "SR", "SRRS")
 CLASS_YEAR = {"FR": "Freshman", "FRRS": "Freshman (RS)", "SO": "Sophomore", "SORS": "Sophomore (RS)",
@@ -44,7 +46,7 @@ FALLBACK = {"LT": ("RT", "LG", "RG", "C"), "RT": ("LT", "RG", "LG", "C"), "LG": 
 LB_ROLES = ("SAM", "MIKE", "WILL")
 OFFENSE_ROLES = {"QB", "HB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT"}
 # team ratings from the starters' EA overall, fit to EA's 2026 team ratings (r 0.99 offense, 0.999 defense)
-TEAM_FIT = {"offense": (1.875, -86.245), "defense": (1.799, -80.443), "special_teams": (1.469, -57.093)}
+TEAM_FIT = {"offense": (1.875, -85.245), "defense": (1.799, -79.443), "special_teams": (1.469, -56.093)}   # +1: our lineups ran 1 low
 GROUP_OF = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL", "LG": "OL", "C": "OL", "RG": "OL",
             "RT": "OL", "LEDG": "DL", "REDG": "DL", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "DB",
             "FS": "DB", "SS": "DB", "K": "K", "P": "P"}
@@ -89,6 +91,8 @@ def compact(p: dict, attrs: list[str], home: Optional[str] = None) -> dict:
            "home": (p.get("hometown") or {}).get("state") or home, "yrs": int(p.get("yrs") or 0)}
     if p.get("abilities"):
         out["ab"] = [f"{a.get('name')}|{a.get('tier')}" for a in p["abilities"]]
+    if p.get("position") in ("WR", "TE"):
+        out["tm"] = p.get("target_mult") or round(max(0.5, min(1.8, random.Random(f"tm-{p['slug']}").gauss(1.0, TARGET_SD))), 2)
     if out["o"] is None:
         out["o"] = int(round(recruits.overall_ea(out["pos"], out["a"], dict(zip(attrs, out["r"])))))
     return out
@@ -113,6 +117,7 @@ def expand(c: dict, attrs: list[str], team: dict) -> dict:
         "overall_ea": c["o"], "overall": int(round(recruits.curve(c["o"]))), "ratings_ea": ea,
         "ratings": {k: int(round(recruits.curve(v))) for k, v in ea.items()}, "abilities": [dict(zip(("name", "tier"), a.split("|"))) for a in c.get("ab") or []],
         "potential_ea": potential(c, attrs), "coachability": c.get("c"), "stars": c.get("s"),
+        **({"target_mult": c["tm"]} if c.get("tm") else {}),
     }
 
 
@@ -126,16 +131,25 @@ def from_base(year: int = FIRST_YEAR + 1) -> dict:
     offseason's departures). Head coaches keep the recruiting ratings the build measured."""
     import build_teams
     attrs = sorted(next(iter(base_team(base_slugs()[0])["roster"]))["ratings_ea"])
+    usage = _real_usage()
     teams = {}
     for slug in base_slugs():
         t = base_team(slug)
         if t["fictional"]:
             continue
         coaches = json.loads(json.dumps(t["coaches"]))
-        teams[slug] = {"roster": [compact(p, attrs, t.get("state")) for p in t["roster"] if p.get("ratings_ea")],
-                       "coaches": coaches, "formation": formation(t), "observed": True}
+        tm = (usage.get(slug) or {}).get("targets") or {}
+        teams[slug] = {"roster": [compact({**p, "target_mult": tm.get(p["slug"])}, attrs, t.get("state")) for p in t["roster"] if p.get("ratings_ea")],
+                       "coaches": coaches, "formation": formation(t), "observed": True,
+                       "rb_lead_feature": (usage.get(slug) or {}).get("rb_lead_feature")}
     build_teams.measured_recruiting([{"slug": s, "coaches": v["coaches"]} for s, v in teams.items()])
     return {"year": year, "attrs": attrs, "teams": teams}
+
+
+def _real_usage() -> dict:
+    """The real 2026 usage (data/real_adjustments.json): receivers' target shares, each team's lead-back use."""
+    f = ROOT / "data" / "real_adjustments.json"
+    return json.loads(f.read_text(encoding="utf-8")).get("usage", {}) if f.exists() else {}
 
 
 def _role_players(by_pos: dict, role: str, taken: set) -> list[dict]:
@@ -206,6 +220,8 @@ def source_team(league: dict, slug: str) -> dict:
     roster = [expand(c, league["attrs"], base) for c in entry["roster"]]
     starters, depth = lineup(roster, entry["formation"])
     out = {k: v for k, v in base.items() if k not in ("roster", "starters", "depth_chart", "coaches", "team_ratings", "verification")}
+    if entry.get("rb_lead_feature") is not None and entry.get("observed"):
+        out["rb_lead_feature"] = entry["rb_lead_feature"]          # the 2026 staff's lead-back use, while it stays
     out.update(roster=roster, starters=starters, depth_chart=depth, coaches=entry["coaches"],
                team_ratings=team_ratings(roster, starters), roster_size=len(roster))
     return out

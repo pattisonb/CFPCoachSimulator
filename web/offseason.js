@@ -74,7 +74,7 @@
     btn.disabled = true;
     btn.textContent = to ? "Working through the offseason…" : "Working…";
     try {
-      const r = await H.postJSON(`/api/season/${s.id}/offseason/advance`, to ? { to } : {});
+      const r = await H.api(`/api/season/${s.id}/offseason/advance`, H.postJSON(to ? { to } : {}));
       if (r.next_season) {
         H.toast(`On to ${r.year}: a new season and a new class of recruits.`, 3500);
         location.reload();
@@ -139,7 +139,7 @@
       btn.disabled = !!r.signed || (!r.offered && p.offers_left <= 0);
       btn.addEventListener("click", async () => {
         btn.disabled = true;
-        try { await H.postJSON(`/api/season/${s.id}/offseason/portal`, { pid: r.id, on: !r.offered }); render(s, box, H); }
+        try { await H.api(`/api/season/${s.id}/offseason/portal`, H.postJSON({ pid: r.id, on: !r.offered })); render(s, box, H); }
         catch (err) { btn.disabled = false; H.toast(H.errText(err)); }
       });
       body.append(el("tr", { class: r.offered ? "offered" : "" }, [
@@ -175,7 +175,7 @@
           el("b", { text: c.name }), el("span", { class: "muted small", text: `Evaluation ${c.evaluation} · Recruiting ${c.recruiting}` }),
           el("span", { class: "go-tag", text: picked ? "Hired" : "Hire" })]);
         b.addEventListener("click", async () => {
-          try { await H.postJSON(`/api/season/${s.id}/offseason/hire`, { staff_id: who.id, index: i }); render(s, document.getElementById("tab-offseason"), H); }
+          try { await H.api(`/api/season/${s.id}/offseason/hire`, H.postJSON({ staff_id: who.id, index: i })); render(s, document.getElementById("tab-offseason"), H); }
           catch (err) { H.toast(H.errText(err)); }
         });
         row.append(b);

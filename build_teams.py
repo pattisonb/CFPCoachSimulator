@@ -229,6 +229,8 @@ def team_from_source(t: dict) -> dict:
         m["starter"] = p["slug"] in starters
         m["role"], m["depth"] = roles.get(p["slug"], (None, None))
         m["_src"] = p
+        if p.get("target_mult") is not None:          # a career's league: his share of targets, kept with him
+            m["target_mult"] = p["target_mult"]
         # ratings v2: the attributes on the source scale (house_attributes puts them on ours),
         # the measurables, the earned traits and the play style
         m["_attr_raw"] = rv2.raw_attributes(p["ratings"], m["position"], m["role"])
@@ -266,6 +268,7 @@ def team_from_source(t: dict) -> dict:
             "man_coverage_rate": dc["tendencies"].get("man_coverage_rate", 50),
             "press_rate": dc["tendencies"].get("press_rate", 50),
             "discipline": hc["ratings"].get("discipline", 50),
+            **({"rb_lead_feature": t["rb_lead_feature"]} if t.get("rb_lead_feature") is not None else {}),
         },
         "slug": t["slug"],
         "name": t["short_name"],

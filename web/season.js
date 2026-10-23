@@ -776,7 +776,7 @@
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "office", "recruiting", "prospects", "staff", "classes"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "office", "offseason", "recruiting", "prospects", "staff", "classes"]) $(`#tab-${t}`).hidden = t !== name;
     document.body.classList.toggle("on-office", name === "office");
     document.body.classList.toggle("on-career-tab", CAREER_TABS.includes(name));
   }
@@ -794,11 +794,12 @@
     else if (t === "awards") renderAwards();
     else if (t === "stats") renderStats();
     else if (t === "depth") renderDepthChart();
+    else if (t === "offseason" && window.Offseason) window.Offseason.render(state.season, $("#tab-offseason"), recruitingHelpers);
     else if (CAREER_TABS.includes(t) && window.Recruiting) window.Recruiting.render(t, state.season, recruitingHelpers);
   }
 
   // Coach Career: the recruiting tabs (recruiting.js) and the week's steps under the header
-  const CAREER_TABS = ["office", "recruiting", "prospects", "staff", "classes"];
+  const CAREER_TABS = ["offseason", "office", "recruiting", "prospects", "staff", "classes"];
   // what sticks to the top of the screen (the top bar, and a career's tab bar on a wide
   // screen) as --sticky-top, so the board's side panel stops below it rather than under it
   function stickyTop() {
@@ -831,6 +832,7 @@
     const career = !!s.career && s.mode !== "real";
     document.body.classList.toggle("career-mode", career);
     for (const t of CAREER_TABS) $(`#season-tabs button[data-tab=${t}]`).hidden = !career;
+    $("#season-tabs button[data-tab=offseason]").hidden = !(career && s.done);   // the offseason opens after national signing day
     // a career's tabs sit above the header, in the same place on every screen (the header
     // changes with the tab); a plain season keeps them under the header
     const nav = $("#season-tabs");
@@ -839,7 +841,8 @@
     stickyTop();
     if (!career && CAREER_TABS.includes(state.tab)) state.tab = "schedule";
     // a career opens on the Office
-    if (career && state.officeFor !== s.id) { state.officeFor = s.id; if (!s.done) state.tab = "office"; }
+    if (career && state.officeFor !== `${s.id}-${s.year}`) { state.officeFor = `${s.id}-${s.year}`; state.tab = s.done ? "offseason" : "office"; }
+    if (state.tab === "offseason" && !(career && s.done)) state.tab = career ? "office" : "schedule";
     box.hidden = true;               // the Office shows the week's steps now
     if (box.hidden) return;
     box.innerHTML = "";

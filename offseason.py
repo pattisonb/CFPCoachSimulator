@@ -28,12 +28,13 @@ GROUP = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL",
          "K": "K", "P": "P"}
 # a healthy roster's players per group (the real 2026 FBS mean) and the floor walk-ons top up to
 TARGET = {"QB": 4, "RB": 6, "WR": 10, "TE": 6, "OL": 15, "DL": 15, "LB": 9, "CB": 8, "S": 8, "K": 2, "P": 2}
+LOWER_LEVEL = 0.5          # the share of roster top-ups who come from FCS or junior college (three-stars, a year or two in), not walk-ons
 FLOOR = {"QB": 3, "RB": 3, "WR": 6, "TE": 3, "OL": 10, "DL": 9, "LB": 5, "CB": 5, "S": 4, "K": 1, "P": 1}
 ENGINE_POS = {"QB": "QB", "RB": "RB", "WR": "WR", "TE": "TE", "OL": "OL", "DL": "DL", "LB": "MLB", "CB": "CB", "S": "S", "K": "K", "P": "P"}
 
 # ----- departures *tune* -----
 NEXT_CLASS = {"FR": "SO", "FRRS": "SORS", "SO": "JR", "SORS": "JRRS", "JR": "SR", "JRRS": "SRRS"}
-REDSHIRT = {"FR": 0.62, "SO": 0.22, "JR": 0.16}   # chance a player off the depth chart's top takes his redshirt year
+REDSHIRT = {"FR": 0.78, "SO": 0.35, "JR": 0.25}   # chance a player off the depth chart's top takes his redshirt year
 FIFTH_YEAR = 0.30                                  # a senior with his redshirt unused who barely played comes back
 DRAFT_PICKS = 257
 DRAFT_FROM_FBS = 0.97                              # the share of picks from FBS (the rest from lower levels)
@@ -41,17 +42,17 @@ DRAFT_FROM_FBS = 0.97                              # the share of picks from FBS
 POSITION_VALUE = {"QB": 6, "LT": 4, "RT": 3, "LEDG": 4, "REDG": 4, "CB": 3, "WR": 2, "DT": 1, "LG": -1, "RG": -1, "C": -2,
                   "TE": -1, "HB": -3, "FB": -12, "SAM": 0, "MIKE": -1, "WILL": -1, "FS": 0, "SS": -1, "K": -18, "P": -20}
 DRAFT_NOISE = 4.0
-DECLARE = ((32, 0.92), (64, 0.75), (100, 0.45), (160, 0.15), (257, 0.05), (10**9, 0.003))   # projected pick -> an underclassman declares
+DECLARE = ((32, 0.95), (64, 0.85), (100, 0.6), (160, 0.3), (257, 0.1), (10**9, 0.004))   # projected pick -> an underclassman declares
 UNDERCLASS_ELIGIBLE = {"JR", "JRRS", "SORS"}       # three years out of high school
-PORTAL_BASE = {"FR": 0.09, "FRRS": 0.17, "SO": 0.19, "SORS": 0.24, "JR": 0.18, "JRRS": 0.22, "SR": 0.33}
+PORTAL_BASE = {"FR": 0.07, "FRRS": 0.13, "SO": 0.15, "SORS": 0.18, "JR": 0.14, "JRRS": 0.17, "SR": 0.26}
 PORTAL_USAGE = {"starter": 0.12, "rotation": 0.65, "bench": 1.3}
 PORTAL_LOSING = 1.25                               # a losing season pushes players out
 QUIT = 0.012                                       # quitting or a medical retirement, a year
 QUIT_LOW = 2.5                                     # ... this much likelier in the team's bottom 15%
 
 # ----- the portal *tune* -----
-PORTAL_OFFER_FACTOR = 1.5                          # a school's offers a round, times its open spots
-OPEN_TAKE_ANY = 6                                  # with this many open spots a school takes good players at any position
+PORTAL_OFFER_FACTOR = 2.0                          # a school's offers a round, times its open spots
+OPEN_TAKE_ANY = 4                                  # with this many open spots a school takes good players at any position
 PT_WEIGHT, PRESTIGE_WEIGHT, WIN_WEIGHT, HOME_WEIGHT, PICK_NOISE = 2.0, 1.0, 0.6, 0.4, 0.5
 
 # ----- development and staff *tune* -----
@@ -196,7 +197,7 @@ def _next_class(p: dict, use: str, rng: random.Random) -> str:
     """Next year's class: a player who did not play much may take his redshirt (once)."""
     cls = p["cls"]
     if not cls.endswith("RS") and use != "starter":
-        chance = REDSHIRT.get(cls, 0.0) * (0.35 if use == "rotation" else 1.0)
+        chance = REDSHIRT.get(cls, 0.0) * (0.5 if use == "rotation" else 1.0)
         if rng.random() < chance:
             return cls + "RS"
     return NEXT_CLASS.get(cls, cls)
@@ -311,8 +312,8 @@ def ai_offers(state: dict, slug: str) -> list[str]:
         if need[g] <= 0 and spots < OPEN_TAKE_ANY:
             continue
         vals = depth[g]
-        bar = vals[min(len(vals) - 1, STARTERS[g] + 2)] if vals else 0      # about as good as his fourth-stringer
-        if p["o"] < bar - 3:
+        bar = vals[min(len(vals) - 1, STARTERS[g] + 3)] if vals else 0      # about as good as his depth there
+        if p["o"] < bar - 4:
             continue
         scored.append((need[g] * 2 + (p["o"] - bar) / 3, pid))
     scored.sort(reverse=True)
@@ -442,15 +443,23 @@ def _fill_rosters(state: dict) -> dict:
             short[g] += 1
             size += 1
         for g in wanted:
-            pool = walk_ons.setdefault(g, [])
+            band = "3" if rng.random() < LOWER_LEVEL else "2"
+            pool = walk_ons.setdefault((band, g), [])
             while not pool:
-                r = recruits.recruit(rng, state["offseason"]["year"], "2", taken)
-                walk_ons.setdefault(GROUP.get(r["ea_position"], "S"), []).append(r)
+                r = recruits.recruit(rng, state["offseason"]["year"], band, taken)
+                walk_ons.setdefault((band, GROUP.get(r["ea_position"], "S")), []).append(r)
             r = pool.pop()
             src = recruits.as_roster_player(r, lg.base_team(slug), f"w{state['offseason']['year']}-{slug}-{added}")
             c = lg.compact(src, attrs)
             c["j"] = _jersey(t["roster"], c["pos"], rng)
-            c["walk_on"] = True
+            if band == "3":                           # from FCS or junior college: a year or two of college behind him
+                years = rng.choice((1, 2))
+                for _ in range(years + 1):
+                    develop(c, attrs, 1.0, rng)
+                c["cls"] = rng.choice(("SO", "SORS") if years == 1 else ("JR", "JRRS"))
+                c["transfer"] = "FCS"
+            else:
+                c["walk_on"] = True
             t["roster"].append(c)
             added += 1
         if len(t["roster"]) > ROSTER_LIMIT:

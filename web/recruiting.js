@@ -138,6 +138,8 @@
     const boxes = el("div", { class: "go-stats" });
     if (s.done) {
       head.append(el("div", { class: "go-display xl", text: s.champion_name ? `${s.champion_name.toUpperCase()} WON IT ALL` : "THAT'S A WRAP" }));
+      week.append(el("div", { class: "go-play" }, [el("button", { type: "button", class: "go-btn primary big", text: "ON TO THE OFFSEASON →",
+        onclick: () => H.onChange("offseason") })]));
     } else if (!next || !next.opponent) {
       head.append(el("div", { class: "go-display xl", text: s.current_week + 1 > 14 ? "NO GAME THIS WEEK" : "BYE WEEK" }), el("span", { class: "go-pill", text: "Recruit, then advance" }));
     } else {
@@ -188,7 +190,7 @@
       );
     }
     rec.innerHTML = "";
-    rec.append(el("div", { class: "go-card-head" }, [el("div", { class: "go-kicker", text: "RECRUITING · CLASS OF 2027" }),
+    rec.append(el("div", { class: "go-card-head" }, [el("div", { class: "go-kicker", text: `RECRUITING · CLASS OF ${(s.year || 2026) + 1}` }),
       el("button", { type: "button", class: "go-link", text: "Board →", onclick: () => H.onChange("recruiting") })]),
       el("div", { class: "go-big-line" }, [el("span", { class: "go-display xl", text: String(v.committed) }),
         el("span", { class: "muted", text: `of ${v.open_spots} spots committed${v.committed ? ` · class rank #${v.class_rank}` : ""}` })]),
@@ -361,7 +363,7 @@
   async function renderProspects(s, box) {
     const f = view.filters;
     box.innerHTML = "";
-    box.append(el("div", { class: "go-display l", text: "PROSPECTS · CLASS OF 2027" }));
+    box.append(el("div", { class: "go-display l", text: `PROSPECTS · CLASS OF ${(s.year || 2026) + 1}` }));
     const q = el("input", { type: "search", placeholder: "Search by name", value: f.q, "aria-label": "Search by name" });
     const mk = (key, opts, label) => {
       const sel = el("select", { "aria-label": label }, opts.map(([v, t]) => el("option", { value: v, text: t })));
@@ -581,7 +583,7 @@
     catch (err) { box.innerHTML = ""; box.append(loading(`Could not load the classes: ${H.errText(err)}`)); return; }
     box.innerHTML = "";
     const mine = d.schools.find((c) => c.yours);
-    box.append(el("div", { class: "go-filterbar" }, [el("div", { class: "go-display l", text: "CLASS RANKINGS · 2027" }),
+    box.append(el("div", { class: "go-filterbar" }, [el("div", { class: "go-display l", text: `CLASS RANKINGS · ${(s.year || 2026) + 1}` }),
       el("span", { class: "go-pill", text: d.phase === "Signed" ? `Signed · ${d.fcs} went to FCS programs` : d.phase === "Recruiting" ? "Commitments so far" : "Early signing period done" })]));
     if (mine) box.append(el("div", { class: "go-card go-myclass" }, [el("div", { class: "go-kicker", text: "YOUR CLASS" }),
       el("div", { class: "go-big-line" }, [el("span", { class: "go-display xl", text: mine.count ? `#${mine.rank}` : "—" }),

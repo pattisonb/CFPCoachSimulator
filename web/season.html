@@ -24,6 +24,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;display=swap" />
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/offseason.css" />
 </head>
 <body>
   <!-- /real shares this page: mark it before anything draws, so the start-a-season controls never show there -->
@@ -97,6 +98,7 @@
         </div>
 
         <nav class="tabs" id="season-tabs">
+          <button data-tab="offseason" type="button" hidden>Offseason</button>
           <button data-tab="office" type="button" hidden>Office</button>
           <button data-tab="schedule" class="active" type="button">Team Schedule</button>
           <button data-tab="depth" type="button">Depth Chart</button>
@@ -150,6 +152,7 @@
         </div>
         <div class="panel tab-body" id="tab-depth" hidden></div>
         <div class="tab-body go-tab" id="tab-office" hidden></div>
+        <div class="tab-body go-tab" id="tab-offseason" hidden></div>
         <div class="panel tab-body" id="tab-recruiting" hidden></div>
         <div class="panel tab-body" id="tab-prospects" hidden></div>
         <div class="panel tab-body" id="tab-staff" hidden></div>
@@ -192,6 +195,7 @@
   <script src="/coachsprite.js"></script>
   <script src="/careersave.js"></script>
   <script src="/recruiting.js"></script>
+  <script src="/offseason.js"></script>
   <script src="/season.js"></script>
 </body>
 </html>

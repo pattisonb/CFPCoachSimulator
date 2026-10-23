@@ -2499,7 +2499,8 @@ def summary(state: dict) -> dict:
     return {
         "id": state["id"], "team": state["team"], "team_name": state["team_name"], "conference": state["conference"],
         "mode": state["mode"], "created_at": state["created_at"], "current_week": state["current_week"],
-        "phase": state["phase"], "done": state["done"], "champion": state.get("champion"),
+        "phase": state["phase"], "done": state["done"], "champion": state.get("champion"), "year": season_year(state),
+        "offseason_stage": (state.get("offseason") or {}).get("stage"),
         "champion_name": teams[state["champion"]]["name"] if state.get("champion") else None,
         "record": rec, "schedule": schedule, "weeks": weeks, "my_rank": current_rank(state),
         "coach": _coach_line(state, teams[state["team"]]),
