@@ -947,7 +947,8 @@ rating nudges). The engine's attributes go onto its scale through the real 2026 
 means, frozen in `data/game_scale.json` (`engine_means`): re-centring each season on its own
 starters moved every player's numbers whenever a league's talent or depth charts shifted (team
 rushing ran 12% low with the 2026 players themselves). Lineups take each role's best by our
-overall plus the coaches' own eye, one draw per player a year, sized by group so the 2026 rosters'
+overall, plus 5 points a year in college (real coaches start the veteran: with it a later
+season's starters are 30% freshmen and sophomores, 2026's real ones 28%), plus the coaches' own eye, one draw per player a year, sized by group so the 2026 rosters'
 starters picked this way have the real starters' overall: 1.5 points on the offensive line, 8 at
 quarterback, 12-16 elsewhere (real usage starts players well below the top overall at most
 positions: rotations, fits, what the ratings miss). A receiver without a real 2026 target weight
@@ -1005,8 +1006,8 @@ set so a career's starters settle, season after season, where the real 2026 star
 now runs a little above the real players by stars and years, `tools/check_development.py`, since
 the real ones are the survivors and a league's starters are younger than its best). The rate also takes a
 coach factor (the head coach's player development with the coordinator on his side of the ball,
-40%: 0.8 at 30, 1.0 at 50, 1.2 at 90) and the program's own (1 + 0.10 times its recruiting
-baseline). The signed class arrives as it is. Rosters are then topped up to 80, the thinnest
+40%: 0.8 at 30, 1.0 at 50, 1.2 at 90) and the program's own (1 + 0.25 times its recruiting
+baseline above the average program, 0.10 below). The signed class arrives as it is. Rosters are then topped up to 80, the thinnest
 groups first: walk-ons (generated two-star freshmen) and, 30% of the time at a Group of 5 school
 (15% in the Power 4), FCS and junior-college transfers (three-stars a year or two in, sophomores
 or juniors).
@@ -1047,13 +1048,12 @@ program hires them as its head coach; a recruiter moves on 12% of the time; each
 three candidates and Auto hires the best. The rest of your staff drift a point or two a year.
 
 **Many seasons** (`tools/long_run.py`, every step on Auto). Six 20-season careers on 85-man rosters
-(120 seasons, seeds 91-96): the league's mean team rating 59.0-60.0 every season (2026: 59.4),
-with no drop after the first offseason; stats against real seasons 6.3-7.8% off (the real 2026
-rosters: 5.6%), 26 points a game (2026: 26.9); every position group's starters within 2.5 points
-of 2026's; the top 25 settle 2 points below 2026 (57) and the Group of 5 1 above (41); 49 early
-entrants and 870 portal entrants a year (88% placed); 10 head coaches fired and 25 changes a year;
-27 different champions. Starters run younger than real (freshmen and sophomores 36-44% against
-27-31%).
+(120 seasons) held the league's mean team rating at 59.0-60.0 every season (2026: 59.4) with
+stats 6.3-7.8% off real (the 2026 rosters: 5.6%) and 26 points a game. Then depth charts favoring
+experience and stronger development at the better programs (three 12-season careers): from
+2031 the top 25's starters 58.6-59.8 (2026: 59.1), the Group of 5's 40.4-41.2 (40.0), starters
+26-32% freshmen and sophomores in the Power 4 (real 27-31%) and 32-39% in the Group of 5; the
+first year runs high at the top (64.4 in 2027) and settles by 2030.
 
 **The Offseason screen** walks the steps: Departures (your leavers by kind, the league's numbers,
 the first round), Transfer portal round 1 and 2 (entrants with position and status filters, your
