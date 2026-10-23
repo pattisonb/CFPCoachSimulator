@@ -21,8 +21,8 @@ def record_trend(r: dict) -> str:
 
 if __name__ == "__main__":
     base = fingerprint()
-    print("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: 8ae31e04cbaf29a5)")
-    assert base == "8ae31e04cbaf29a5"
+    print("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: 0a5e33926090effb)")
+    assert base == "0a5e33926090effb"
 
     # in-game momentum changes a game and leaves the flag off afterwards
     season._init(str(season.TEAMS_FILE))

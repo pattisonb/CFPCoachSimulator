@@ -111,9 +111,23 @@ if __name__ == "__main__":
     pot = det["potential"]["league"]["Projected overall"]
     assert 1 <= pot["rank"] <= pot["of"]
     assert "overall_ea" not in (ours["our_comp"] or {}) and (ours["our_comp"] or {}).get("overall") is not None
-    # grades rank a prospect against his own position: a typical lineman is not an F athlete
-    linemen = sorted(p["truth"]["athleticism"] for p in rc["prospects"].values() if p["ea_position"] in ("LT", "LG", "C", "RG", "RT"))
-    assert 70 <= linemen[len(linemen) // 2] <= 84, linemen[len(linemen) // 2]
+    # one scale for grades too: a grade is the average of the card numbers behind it (the potential
+    # grade his projected overall), and its letter is cut on the game's scale, where 50 is the middle
+    # Power 4 starter (C+), 60 a B and 78 an A: attributes in the 80s are an A, not a B
+    assert [recruiting.letter(v) for v in (85, 78, 72, 62, 50, 45, 24)] == ["A+", "A", "A-", "B", "C+", "C", "F"]
+    sample = list(rc["prospects"].values())[::40]
+    for q in sample:
+        cards = prospects.game_attributes(st, q)
+        for g in ("athleticism", "size_strength", "technique", "football_iq"):
+            keys = prospects.group_keys(q, g)
+            assert keys, (q["ea_position"], g)
+            assert abs(q["truth"][g] - sum(cards[k] for k in keys) / len(keys)) < 0.6, (q["ea_position"], g, q["truth"][g])
+    eighties = [q for q in rc["prospects"].values() if q["truth"]["athleticism"] >= 80]
+    assert eighties and all(recruiting.letter(q["truth"]["athleticism"]) in ("A+", "A") for q in eighties)
+    lb = next(pid for pid, q in rc["prospects"].items() if q["ea_position"] == "MIKE" and not q.get("hidden"))
+    for _ in range(3):
+        recruiting.look(st, lb, 90, random.Random(_))
+    assert prospects.profile(st, lb, "ohio-state")["grade_details"]["technique"]["ratings"], "a linebacker's technique showed no ratings"
     assert all(0 <= lo <= hi <= 99 for g in det.values() for lo, hi in g["ratings"].values())
     assert det["coachability"]["labels"]
     hid = next(pid for pid, p in rc["prospects"].items() if p.get("hidden") and pid not in rc["reads"])
@@ -121,5 +135,23 @@ if __name__ == "__main__":
         prospects.profile(st, hid, "ohio-state"); raise AssertionError("a hidden prospect's profile was shown")
     except recruiting.RecruitingError as e:
         assert e.code == 404
+    # a career saved before grades moved to the game's scale is converted on load: true grades
+    # recomputed, each read keeps how far off it was and how many looks it took
+    assert rc["grades"] == "game"
+    pid = fresh
+    now = dict(rc["prospects"][pid]["truth"])
+    off = {g: rc["reads"][pid]["g"][g][0] - now[g] for g in recruiting.GROUPS}
+    looks = rc["reads"][pid]["looks"]
+    for g in recruiting.GROUPS:                                         # as an old save held them
+        rc["prospects"][pid]["truth"][g] = 70.0
+        rc["reads"][pid]["g"][g][0] = 70.0 + off[g]
+    del rc["grades"]
+    season.save_season(st)
+    old = season.load_season(st["id"])
+    orc = old["recruiting"]
+    assert orc["grades"] == "game" and orc["prospects"][pid]["truth"] == now, orc["prospects"][pid]["truth"]
+    assert all(abs(orc["reads"][pid]["g"][g][0] - (now[g] + off[g])) < 0.01 for g in recruiting.GROUPS)
+    assert orc["reads"][pid]["looks"] == looks
+    (season.SEASONS_DIR / f"{st['id']}.json").unlink()
     print(f"scouting ok: ranges hold the truth {weak:.0%} (40), {avg:.0%} (60), {elite:.0%} (95); "
           f"widths {weak_w:.1f} vs {avg_w:.1f}; hidden {share:.0%}")

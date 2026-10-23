@@ -127,10 +127,12 @@ def fbs_schools(state: dict) -> list[str]:
 # ----- scouting (spec section 6) *tune* -----
 GROUPS = ("athleticism", "size_strength", "technique", "football_iq", "potential", "coachability")
 LETTERS = ("A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F")
-LETTER_FLOORS = (97, 93, 90, 87, 83, 80, 77, 73, 70, 67, 63, 60, -1e9)
-GRADE_LOW, GRADE_SPAN = 55.0, 44.0         # a class's worst to best in grade points (percentile within the class)
-COACHABILITY_POINTS = {"Coach's Dream": 97, "Film Junkie": 91, "Quick Study": 85, "Steady Grinder": 78,
-                       "Slow to Click": 69, "Set in His Ways": 58}
+# letters on the game's 1-99 scale (50 is the middle Power 4 starter at the position, 65 one standard
+# deviation better, 80 two): C+ is that starter, B a clearly better one, A an all-conference level
+LETTER_FLOORS = (85, 78, 72, 66, 60, 55, 50, 45, 40, 35, 30, 25, -1e9)
+GRADE_LOW, GRADE_SPAN = 1.0, 98.0          # grades run the whole scale
+COACHABILITY_POINTS = {"Coach's Dream": 90, "Film Junkie": 80, "Quick Study": 68, "Steady Grinder": 52,
+                       "Slow to Click": 37, "Set in His Ways": 20}
 LOOK_SD = (16.0, 4.0)                      # a look's error sd in grade points: 16 * (1 - s) + 4, s = rating / 99
 LETTER_SLACK = 1.65                        # half a letter: a letter range already spans its end letters' width
 CONFIDENCE_NOISE = 0.5                     # how far a look's own confidence strays (log sd, times 1 - s)
@@ -138,8 +140,6 @@ HIDDEN_RATE, HIDDEN_BELOW = 0.15, 0.82     # two-stars and three-stars under thi
 _ATHLETIC = ("speed", "acceleration", "agility", "change_of_direction", "jumping")
 _SIZE = ("strength", "toughness", "stamina")
 _IQ = ("awareness", "play_recognition")
-_NOT_TECHNIQUE = set(_ATHLETIC + _SIZE + _IQ) | {"injury", "kick_return", "long_snap"}
-_KICKING = {"kick_power", "kick_accuracy"}
 
 # ----- the class ---------------------------------------------------------------------------------
 
@@ -189,8 +189,27 @@ def start(state: dict, year: int = 2027) -> None:
         "year": year, "prospects": prospects, "lists": {pid: {} for pid in prospects},
         "status": {pid: {"committed": None, "signed": None, "fcs": False} for pid in prospects},
         "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
-        "boards": {}, "seed": state.get("rng_state", 0), "reads": {}, "attrs": attrs,
+        "boards": {}, "seed": state.get("rng_state", 0), "reads": {}, "attrs": attrs, "grades": "game",
     }
+
+
+def upgrade_grades(state: dict) -> None:
+    """A career saved when grades were class percentiles in school points: its true grades move
+    to the game's scale and each read keeps how far off it was (and its looks)."""
+    rc = state["recruiting"]
+    old = {pid: dict(p["truth"]) for pid, p in rc["prospects"].items()}
+    fresh = {pid: {**p, "ratings_ea": attributes(state, p, "ratings_ea"), "potential_ea": attributes(state, p)}
+             for pid, p in rc["prospects"].items()}
+    _truths(fresh)
+    for pid, p in rc["prospects"].items():
+        p["truth"] = fresh[pid]["truth"]
+    for pid, read in rc["reads"].items():
+        p = rc["prospects"].get(pid)
+        if p is None:
+            continue
+        for g, (mean, prec) in read["g"].items():
+            read["g"][g] = [round(p["truth"][g] + (mean - old[pid][g]), 3), prec]
+    rc["grades"] = "game"
 
 
 # ----- what pulls a prospect to a school -----------------------------------------------------------
@@ -809,34 +828,19 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
 
 # ----- scouting: truths, looks, reads and grades -------------------------------------------------------
 
-def _raw(p: dict) -> dict[str, float]:
-    r, pot = p["ratings_ea"], p["potential_ea"]
-    kicker = p["ea_position"] in ("K", "P")
-    skills = sorted((v for k, v in r.items() if k not in _NOT_TECHNIQUE and (kicker or k not in _KICKING)), reverse=True)
-    return {
-        "athleticism": sum(r[k] for k in _ATHLETIC) / len(_ATHLETIC),
-        "size_strength": sum(r[k] for k in _SIZE) / len(_SIZE),
-        "technique": sum(skills[:5]) / 5,
-        "football_iq": sum(r[k] for k in _IQ) / len(_IQ),
-        "potential": sum(sorted(pot.values(), reverse=True)[:8]) / 8,
-    }
-
-
 def _truths(prospects: dict) -> None:
-    """Each prospect's true grade points per group: his percentile among the class's prospects at
-    his position (a lineman's athleticism against linemen, not receivers; coachability from his
-    label). Hidden from the player; reads estimate them."""
-    raws = {pid: _raw(p) for pid, p in prospects.items()}
-    by_pos: dict[str, list] = {}
-    for pid, p in prospects.items():
-        by_pos.setdefault(p["ea_position"], []).append(pid)
-    for pids in by_pos.values():
-        n = max(1, len(pids) - 1)
-        for g in GROUPS[:-1]:
-            for i, pid in enumerate(sorted(pids, key=lambda q: raws[q][g])):
-                prospects[pid].setdefault("truth", {})[g] = round(GRADE_LOW + GRADE_SPAN * i / n, 1)
-    for pid, p in prospects.items():
-        p["truth"]["coachability"] = COACHABILITY_POINTS.get(p.get("coachability"), 78)
+    """Each prospect's true grade per group, on the game's own scale: the average of the player-card
+    attributes behind it (athleticism: Top Speed, Burst, Agility, Leaping; technique: his position's
+    skills), and for potential his projected overall. Coachability comes from his label. Hidden from
+    the player; reads estimate them."""
+    import prospects as pr
+    import season
+    for p in prospects.values():
+        cards = pr.card_attributes(p["ratings_ea"], p)
+        truth = {g: round(sum(cards[k] for k in pr.group_keys(p, g)) / len(pr.group_keys(p, g)), 1) for g in GROUPS[:-2]}
+        truth["potential"] = float(season.ea_house(pr.engine_position(p), recruits.overall_ea(p["ea_position"], p["archetype"], p["potential_ea"])))
+        truth["coachability"] = COACHABILITY_POINTS.get(p.get("coachability"), COACHABILITY_POINTS["Steady Grinder"])
+        p["truth"] = truth
 
 
 def letter(points: float) -> str:

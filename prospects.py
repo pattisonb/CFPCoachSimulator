@@ -42,7 +42,7 @@ WEAKNESS_TEXT = {
     "football_iq": "Still learning the game; processing can be slow.",
     "potential": "Closer to his ceiling than most at this stage.",
 }
-STRENGTH_FROM, WEAKNESS_BELOW = 83, 73        # grade points: a B and up reads as a strength, below a C as a weakness
+STRENGTH_FROM, WEAKNESS_BELOW = 60, 45        # the game's scale: a B and up reads as a strength, below a C as a weakness
 SOLID_TEXT = "Solid for a {pos} at this level; not a concern."
 OUTLOOK = {
     5: "Day-one impact {pos} with early-round NFL upside.",
@@ -183,7 +183,7 @@ def grade_detail(state: dict, p: dict, group: str, lo: float, hi: float) -> dict
     rc = state["recruiting"]
     lo, hi = max(recruiting.GRADE_LOW, lo), min(recruiting.GRADE_LOW + recruiting.GRADE_SPAN, hi)
     if group == "coachability":
-        labels = [name for name, pts in recruiting.COACHABILITY_POINTS.items() if lo - 3 <= pts <= hi + 3]
+        labels = [name for name, pts in recruiting.COACHABILITY_POINTS.items() if lo - 5 <= pts <= hi + 5]
         return {"labels": labels or [min(recruiting.COACHABILITY_POINTS, key=lambda n: abs(recruiting.COACHABILITY_POINTS[n] - (lo + hi) / 2))],
                 "ratings": {}}
     peers = [q for q in rc["prospects"].values() if lo <= q["truth"][group] <= hi]
@@ -202,10 +202,7 @@ def grade_detail(state: dict, p: dict, group: str, lo: float, hi: float) -> dict
         pos = engine_position(p)
         return {"ratings": {"Projected overall": mid}, "peers": len(peers),
                 "league": {"Projected overall": league_rank(pos, "overall", (mid[0] + mid[1]) / 2)}}
-    keys = GAME_GROUPS.get(group)
-    if keys is None:                           # technique: his position's skills on the player card
-        keys = tuple(k for k in rv2.POSITION_ATTRIBUTES.get(engine_position(p), []) if rv2.ATTRIBUTES[k][1] != "Physical"
-                     and k != "return_skill")[:4]
+    keys = group_keys(p, group)
     cards = [game_attributes(state, q) for q in peers]
     ratings = {k: _middle([c[k] for c in cards if k in c]) for k in keys if any(k in c for c in cards)}
     pos = engine_position(p)
@@ -256,15 +253,34 @@ def engine_position(p: dict) -> str:
     return build_teams.POSITION_MAP.get(p["ea_position"], p["position"])
 
 
+def group_keys(p: dict, group: str) -> tuple:
+    """The player-card attributes a grade is the average of: GAME_GROUPS, technique his
+    position's skills (a kicker's leg), athleticism a specialist's physical ones he has."""
+    import ratings as rv2
+    import season
+    pos = engine_position(p)
+    card = rv2.POSITION_ATTRIBUTES.get(season.SCALE_GROUP.get(pos, pos), [])
+    if group == "technique":
+        return tuple(k for k in card if rv2.ATTRIBUTES[k][1] != "Physical" and k != "return_skill")[:4]
+    keys = tuple(k for k in GAME_GROUPS[group] if k in card)
+    return keys or tuple(k for k in card if rv2.ATTRIBUTES[k][1] == "Physical" and k != "football_iq")
+
+
 def game_attributes(state: dict, p: dict, field: str = "ratings_ea") -> dict[str, int]:
-    """A prospect's attributes on the game's scale, exactly as a real player's card gets them
-    (build_teams): EA's ratings through the source curve, the card's composites, then the house
-    scale (50 at a Power 4 starter's average at his position). EA's numbers are only the input."""
+    """A prospect's attributes on the game's scale (his EA ratings, or potential with
+    field="potential_ea")."""
+    return card_attributes(recruiting.attributes(state, p, field), p)
+
+
+def card_attributes(ea: dict, p: dict) -> dict[str, int]:
+    """EA ratings as a player card gets them (build_teams): through the source curve, the card's
+    composites, then the house scale (50 at the middle Power 4 starter at his position). EA's
+    numbers are only the input."""
     import ratings as rv2
     import recruits
     import season
     pos = engine_position(p)
-    src = {k: recruits.curve(v) for k, v in recruiting.attributes(state, p, field).items()}
+    src = {k: recruits.curve(v) for k, v in ea.items()}
     raw = rv2.raw_attributes(src, pos, pos)
     group = rv2.card_group(pos, pos)
     group = "RB" if group == "FB" else group

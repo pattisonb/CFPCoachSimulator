@@ -124,8 +124,9 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 EA College Football ratings put through one curve that stretches the low end (EA 90
 becomes 82, EA 80 becomes 63, EA 72 becomes 49). The source keeps EA's own numbers too
 (`overall_ea`, `ratings_ea`); `build_teams.py` carries the EA overall as `ea_overall`.
-The pages show the house scale instead: 1-99 where 50 is an average Power 4 starter at
-the position, 65, 80 and 95 are a Power 4 starter one, two and three standard deviations
+The pages show the house scale instead: 1-99 where 50 is the middle Power 4 starter at
+the position (the median of today's starters, after the real depth charts: half are better,
+half worse; `tests/test_scale.py` holds every position and attribute to it), 65, 80 and 95 are a Power 4 starter one, two and three standard deviations
 better, and below the average a standard deviation is worth 60% as much (`BELOW` in
 season.py), so a typical Power 4 backup or Group of 5 starter reads about 40 and a
 walk-on in the 20s. A card's overall is EA's overall on that scale (`ea_house`; a
@@ -866,11 +867,17 @@ seeds):
 **Scouting.** Your OC and DC (evaluation = their player development) and three generated
 recruiters each cover one of nine areas; every week each prospect in a covered area gets a
 look. A look sees each grade (athleticism, size and strength, technique, football IQ,
-potential, coachability; true grades are class percentiles) with error `16 * (1 - s) + 4`
-grade points, `s = rating / 99`, and its own confidence strays a little (more for a weak
+potential, coachability) with error `16 * (1 - s) + 4` points, `s = rating / 99`, and its own confidence strays a little (more for a weak
 evaluator, who is sometimes sure and wrong). The read is the confidence-weighted mean, shown
 as a letter range that narrows with looks. Over 500 prospects after four looks the range
-holds the true letter 66% of the time for an evaluator rated 40, 78% at 60 and 89% at 95.
+holds the true letter 68% of the time for an evaluator rated 40, 81% at 60 and 92% at 95.
+Grades are on the game's scale, the same numbers as the player cards: a grade is the average
+of the card attributes behind it (athleticism: Top Speed, Burst, Agility, Leaping; size and
+strength: Strength, Stamina, Durability; football IQ; technique: the first four skills of his
+position's card), potential is his projected overall, and the letters are cut on that scale:
+A+ from 85, A 78, A- 72, B+ 66, B 60, B- 55, C+ 50 (the middle Power 4 starter), C 45, C- 40,
+D+ 35, D 30, D- 25, F below. A high schooler's football IQ and technique are mostly C to F
+next to college starters; his athleticism and potential are where five-stars stand out.
 About 15% of two-stars and low three-stars are hidden until a look.
 
 **Prospect Profiles** (`prospects.py`). The public block is the national rankings' read (it

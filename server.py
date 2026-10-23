@@ -77,7 +77,8 @@ _season_jobs: dict[str, dict] = {}   # season simulations, by job id
 
 def _load_teams() -> None:
     global _teams
-    if not TEAMS_FILE.exists():
+    builder = ROOT / "build_teams.py"
+    if not TEAMS_FILE.exists() or builder.stat().st_mtime > TEAMS_FILE.stat().st_mtime:   # missing, or built by an older builder
         subprocess.run([sys.executable, str(ROOT / "build_teams.py")], check=True)
     _teams = json.loads(TEAMS_FILE.read_text(encoding="utf-8"))["teams"]
 

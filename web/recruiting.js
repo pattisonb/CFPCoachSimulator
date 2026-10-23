@@ -511,7 +511,7 @@
         const tipId = `tip-${pid}-${g}`;
         const tip = el("div", { class: "go-tip-box", role: "tooltip", id: tipId }, [el("b", { text: `${GROUP_NAMES[g] || g} ${grade} looks like` }),
           ...lines.map((t) => el("div", { text: t })),
-          d.peers ? el("div", { class: "muted small", text: `Middle half of ${d.peers} prospects at his position graded like this, on the game's scale (50 is a Power 4 starter's average), ranked against today's players at his position.` }) : null]);
+          d.peers ? el("div", { class: "muted small", text: `Middle half of ${d.peers} prospects at his position graded like this, on the game's scale (50 is the middle Power 4 starter; C+ starts at 50, B at 60, A at 78), ranked against today's players at his position.` }) : null]);
         const cell = el("div", { class: "go-stat go-tip", tabindex: "0", "aria-describedby": tipId }, [el("div", { class: "go-kicker muted", text: (GROUP_NAMES[g] || g).toUpperCase() }),
           el("div", { class: "go-stat-val", text: grade }), tip]);
         const show = () => placeTip(cell, tip);

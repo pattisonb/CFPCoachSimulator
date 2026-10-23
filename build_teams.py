@@ -533,7 +533,7 @@ def _attr_group(p: dict) -> str:
 
 def attribute_scale(teams: list[dict]) -> dict:
     """Ratings v2: the house scale for every attribute at every position group, from the
-    Power 4 starters (50 at their mean, 15 a standard deviation above it, 9 below)."""
+    Power 4 starters (50 at the middle one, 15 a standard deviation above, 9 below)."""
     vals, p4 = defaultdict(list), defaultdict(list)
     for t in teams:
         if t["fictional"]:
@@ -549,7 +549,7 @@ def attribute_scale(teams: list[dict]) -> dict:
     for key, v in vals.items():
         ref = p4.get(key) if len(p4.get(key, [])) >= 10 else v
         sd = max(2.0, st.pstdev(ref)) if len(ref) > 1 else 6.0
-        ATTR_SCALE[key] = [round(st.mean(ref), 2), round(15 / sd, 4), round(15 / sd * ATTR_BELOW, 4)]
+        ATTR_SCALE[key] = [round(st.median(ref), 2), round(15 / sd, 4), round(15 / sd * ATTR_BELOW, 4)]
     return ATTR_SCALE
 
 
@@ -732,6 +732,7 @@ def main() -> None:
     nudged, reordered = apply_real_adjustments(teams, means)
     for t in teams:
         depth_sort(t)
+    house_attributes(teams)                     # again, from today's starters (the real depth charts moved some)
     if nudged or reordered:
         print(f"real 2026 adjustments: {reordered} depth-chart roles reordered" + (f", {nudged} players' ratings nudged" if nudged else ""))
     ratings_at_every_position(teams, means)

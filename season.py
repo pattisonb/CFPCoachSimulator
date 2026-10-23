@@ -150,8 +150,8 @@ def _is_p4(slug: str, team: dict) -> bool:
 
 # ----- the house rating scale ------------------------------------------------------------
 # What the pages show. The engine keeps position-relative values (a
-# typical FBS starter at the position is 55); the house scale puts an average Power 4
-# starter at 50, and a Power 4 starter one, two and three standard deviations better at 65,
+# typical FBS starter at the position is 55); the house scale puts the middle Power 4
+# starter (the median: half are better, half worse) at 50, and a Power 4 starter one, two and three standard deviations better at 65,
 # 80 and 95. Below the Power 4 starter average a standard deviation is worth 60% as much
 # (BELOW): a typical Power 4 backup or Group of 5 starter reads about 40, not the 20s.
 # A card's overall comes from EA's own overall (the source data keeps it beside its curved
@@ -196,7 +196,7 @@ def _house_scale() -> dict:
     for gk, vals in all_vals.items():
         p4 = p4_vals.get(gk) or vals
         k_hi, k_lo = slopes.get(gk[0], (1.5, 1.5))
-        _scale_cache[gk] = (st.mean(p4), k_hi, k_lo)
+        _scale_cache[gk] = (st.median(p4), k_hi, k_lo)
     return _scale_cache
 
 
@@ -223,7 +223,7 @@ def engine_rating(p: dict, key: str, ours: float) -> int:
 
 
 def _ea_scale() -> dict:
-    """position group -> (mean, sd) of EA's overall for Power 4 starters."""
+    """position group -> (median, sd) of EA's overall for Power 4 starters."""
     if _ea_cache:
         return _ea_cache
     import statistics as st
@@ -235,12 +235,12 @@ def _ea_scale() -> dict:
             if p.get("in_game") and isinstance(p.get("ea_overall"), (int, float)):
                 vals.setdefault(SCALE_GROUP.get(p["position"], p["position"]), []).append(p["ea_overall"])
     for g, v in vals.items():
-        _ea_cache[g] = (st.mean(v), max(2.0, st.pstdev(v)))
+        _ea_cache[g] = (st.median(v), max(2.0, st.pstdev(v)))
     return _ea_cache
 
 
 def ea_house(pos: str, ea: float) -> int:
-    """EA's overall on the house scale: 50 at the Power 4 starter average for the position,
+    """EA's overall on the house scale: 50 at the middle Power 4 starter for the position,
     15 per standard deviation above it, 9 per standard deviation below (BELOW)."""
     m4, sd4 = _ea_scale().get(SCALE_GROUP.get(pos, pos), (79.0, 6.0))
     k = 15 / sd4
@@ -1797,6 +1797,8 @@ def load_season(season_id: str) -> Optional[dict]:
                 g[f"{side}_display"] = fcs_label(g[side])
     if state.get("mode") != "real":
         schedule_ahead(state)         # seasons saved before the postseason was set a week early
+    if state.get("recruiting") and state["recruiting"].get("grades") != "game":
+        recruiting.upgrade_grades(state)   # careers saved when grades were class percentiles
     return state
 
 

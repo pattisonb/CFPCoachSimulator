@@ -101,9 +101,9 @@ if __name__ == "__main__":
     rc["status"][target].update(committed=None, signed=None)
     # evaluations: only a genuinely low grade reads as a weakness; a strong player's lowest is "solid"
     star = {"ea_position": "WR", "stars": 5}
-    high = prospects._evaluation(star, {"athleticism": 96, "size_strength": 86, "technique": 94, "football_iq": 88, "potential": 95})
+    high = prospects._evaluation(star, {"athleticism": 88, "size_strength": 66, "technique": 82, "football_iq": 70, "potential": 86})   # the game's scale
     assert high["weaknesses"] == [] and len(high["solid"]) == 2, high
-    low = prospects._evaluation(star, {"athleticism": 96, "size_strength": 64, "technique": 94, "football_iq": 88, "potential": 95})
+    low = prospects._evaluation(star, {"athleticism": 88, "size_strength": 40, "technique": 82, "football_iq": 70, "potential": 86})
     assert len(low["weaknesses"]) == 1 and "Size and strength" in low["weaknesses"][0], low
     # offers are capped at 1.5x open spots
     cap = recruiting.offer_cap(st, "ohio-state")
