@@ -267,3 +267,9 @@ commitment, a two-round portal finished the old way.
 - `tools/check_recruiting.py`: the action-effect table (section 6) printed for a season.
 - `tools/long_run.py`: 3 x 20 seasons after the change; the bounds of the 85-roster check
   (docs/HOW_IT_WORKS.md "Many seasons") must hold, with walk-ons down.
+
+Status (section 10): built. `tests/test_recruiting_realism.py` keeps its bounds and checks
+positions per class (mean absolute error under 0.5), schools without a QB under 10%, none with
+4+; `tests/test_recruiting.py` and `tests/test_offseason.py` check the behaviours listed
+(placement is 72-79% signed plus preferred walk-ons, so the bound allows 95%). Three 20-season
+careers held the "Many seasons" bounds (docs/HOW_IT_WORKS.md) with walk-ons 40-60 a year.

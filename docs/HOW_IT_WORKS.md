@@ -1128,7 +1128,14 @@ stats 6.3-7.8% off real (the 2026 rosters: 5.6%) and 26 points a game. Then dept
 experience and stronger development at the better programs (three 12-season careers): from
 2031 the top 25's starters 58.6-59.8 (2026: 59.1), the Group of 5's 40.4-41.2 (40.0), starters
 26-32% freshmen and sophomores in the Power 4 (real 27-31%) and 32-39% in the Group of 5; the
-first year runs high at the top (64.4 in 2027) and settles by 2030.
+first year runs high at the top (64.4 in 2027) and settles by 2030. After the recruiting
+overhaul (need, NIL asks, pitches, soft commits, the portal as recruiting; three 20-season
+careers to 2045): the mean team rating 59.4-60.8 every season, stats 6.4-8.1% off, 26-27 points
+a game, Power 4 starters 27-35% freshmen and sophomores, classes 18.5-21 a school, 44-65 early
+entrants, 72-79% of portal entrants signed (plus preferred walk-ons), walk-ons after the
+offseason 40-60 a year (281 before the overhaul). The top 25's starters settle at 56-57 from
+2032 (59.1 in 2026, 58-60 before the overhaul) while the rest of the Power 4 rise to 52 (48.8)
+and the Group of 5 to 42 (40.0): the ratings' spread narrows from 6.7 to 5.6.
 
 **The Offseason screen** walks the steps: Departures (your leavers by kind, the league's numbers,
 the first round), Transfer portal round 1 and 2 (entrants with position and status filters, your
