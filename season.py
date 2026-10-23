@@ -133,14 +133,45 @@ _teams_cache: dict = {}
 _teams_meta: dict = {}   # from the teams file: the attribute scale (ratings v2) and the engine's spread scale
 
 
+_league_path: Path = TEAMS_FILE   # the league every view and sim reads: the real 2026 one, or a career's later season
+
+
 def load_teams() -> dict:
     global _teams_cache
     if not _teams_cache:
-        data = json.loads(TEAMS_FILE.read_text(encoding="utf-8"))
+        data = json.loads(_league_path.read_text(encoding="utf-8"))
         _teams_cache = data["teams"]
         _teams_meta.clear()
         _teams_meta.update(attribute_scale=data.get("attribute_scale") or {}, spread_scale=data.get("spread_scale") or 1.5)
     return _teams_cache
+
+
+def use_league(path: Optional[Path]) -> None:
+    """Point every view and sim at a league's teams file (a career's later seasons, league.py);
+    None: the real 2026 league. Everything cached from the old league is dropped."""
+    global _league_path, _teams_cache, _TEAMS, _STAR_CUTS
+    path = Path(path) if path else TEAMS_FILE
+    if path == _league_path:
+        return
+    _league_path = path
+    _teams_cache, _TEAMS, _STAR_CUTS = {}, {}, None
+    for c in (_teams_meta, _scale_cache, _ea_cache, _form_cache, _race_cache, _preview_cache):
+        c.clear()
+    close_pool()                              # the workers hold the old league
+    import prospects
+    import recruiting
+    recruiting.reset_caches()
+    prospects.reset_caches()
+
+
+def activate(state: dict) -> None:
+    """Make `state`'s league the one in play (a career past its first season plays its own)."""
+    import league
+    use_league(league.ensure_built(state))
+
+
+def season_year(state: dict) -> int:
+    return state.get("year") or 2026
 
 
 def _is_p4(slug: str, team: dict) -> bool:
@@ -507,10 +538,12 @@ def _fill_open_dates(games: dict, teams: dict) -> int:
 
 
 def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, fill_open_dates: bool = True,
-               coach: Optional[dict] = None, career: bool = False) -> dict:
+               coach: Optional[dict] = None, career: bool = False, year: int = 2026) -> dict:
     """A new season from the 2026 schedule. `fill_open_dates` adds a game for teams whose
     schedule has an unannounced date (the real 2026 page turns it off: it shows only real games).
-    `career`: a Coach Career (career.py), which starts from week 1."""
+    `career`: a Coach Career (career.py), which starts from week 1. `year`: a career's later
+    season (the active league's rosters, offseason.py): the 2026 schedule's games again, home and
+    away swapped every other year, and no real polls."""
     if career and mode != "full":
         raise ValueError("Coach Career starts from week 1")
     teams = load_teams()
@@ -524,6 +557,9 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
     for g in schedules["games"]:
         home = g["home_slug"] or counterparts.get(g["home_espn"])
         away = g["away_slug"] or counterparts.get(g["away_espn"])
+        if (year - 2026) % 2 and not g["neutral"]:
+            home, away = away, home              # the return game
+            g = {**g, "home_slug": g["away_slug"], "away_slug": g["home_slug"], "home_espn": g["away_espn"], "away_espn": g["home_espn"]}
         if not home or not away or home == away or home not in teams or away not in teams:
             continue
         week = week_of_date(g["date"]) or SELECTION_WEEK
@@ -564,9 +600,9 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
         "games": games, "polls": {}, "scores": {}, "champions": {}, "runners_up": {}, "bracket": None, "playoff": {}, "my_boxes": {},
         "settings": {"god_mode": False, "morale": True},
         "form": form_teams, "player_form": form_players,
-        "rng_state": rng.randrange(1 << 30),
+        "rng_state": rng.randrange(1 << 30), "year": year,
     }
-    real_polls = _real_polls_2026(teams)
+    real_polls = _real_polls_2026(teams) if year == 2026 else {}
     real = real_polls if mode == "remaining" else {}
     preseason = real_polls.get(0) or _rating_poll(teams)
     ap_params, _ = polls.load_params()
@@ -576,7 +612,7 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
     pre_full = polls.rank(state["scores"], {}, tiers, ap_params, n=25 + AP_OTHERS)
     pre_others = [t for t in pre_full if t not in set(preseason[:25])][:AP_OTHERS]
     pre_votes = _ap_votes(state, preseason[:25] + pre_others, tiers, ap_params, 0)
-    real_pre = _real_ap_votes_2026(0, teams)
+    real_pre = _real_ap_votes_2026(0, teams) if year == 2026 else None
     if real_pre and real_pre[0][:25] == preseason[:25]:
         preseason, pre_others, pre_votes = real_pre[0], real_pre[1] or pre_others, {**pre_votes, **real_pre[2]}
     # week=0: the preseason poll shows 0-0 even in "remaining" mode, where games are already played
@@ -1032,12 +1068,12 @@ def _make_pool() -> Optional[Pool]:
     """A worker pool, or None to simulate in this process."""
     n = sim_workers()
     if n <= 1:
-        _init(str(TEAMS_FILE))
+        _init(str(_league_path))
         return None
     # spawned, never forked: a forked worker inherits the server's open connections and keeps
     # a browser's keep-alive socket alive after the server closes it, so the page's next
     # request goes to a socket nobody reads (tests/test_pool.py)
-    return multiprocessing.get_context("spawn").Pool(processes=n, initializer=_init, initargs=(str(TEAMS_FILE),))
+    return multiprocessing.get_context("spawn").Pool(processes=n, initializer=_init, initargs=(str(_league_path),))
 
 
 Reporter = Callable[[str, Optional[int], Optional[int]], None]   # (stage text, games done, games total)
@@ -1152,7 +1188,7 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
         collect(pool.imap_unordered(_sim_one, jobs, chunksize=2))
     elif sim_workers() <= 1:
         if not _TEAMS:
-            _init(str(TEAMS_FILE))
+            _init(str(_league_path))
         collect(_sim_one(job) for job in jobs)
     else:
         with _make_pool() as p:

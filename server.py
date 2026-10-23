@@ -28,6 +28,8 @@ from pydantic import BaseModel, Field
 
 from engine.game import SLIDER_NAMES, default_sliders, simulate_game
 import career
+import league
+import offseason
 import prospects
 import realdata
 import recruiting
@@ -387,12 +389,24 @@ def _season_state(season_id: str) -> dict:
             _refresh_real()
     job = _season_jobs.get(season_id)
     if job and job.get("state") is not None:
+        _activate(job["state"])
         return job["state"]
     state = season.load_season(season_id)
     if state is None:
         raise HTTPException(404, "season not found")
+    _activate(state)
     _season_jobs[season_id] = _idle_job(season_id, state)
     return state
+
+
+def _activate(state: dict) -> None:
+    """Put the season's league in play (a career's later seasons have their own, league.py).
+    Never while another league's sim is running: its games read the league in play."""
+    path = Path(league.ensure_built(state) or season.TEAMS_FILE)
+    if path != season._league_path:
+        if any(j.get("status") == "running" for j in _season_jobs.values()):
+            raise HTTPException(409, "another season is simulating; try again when it finishes")
+        season.use_league(path)
 
 
 def _refresh_real(follow: Optional[str] = None) -> dict:
@@ -608,6 +622,7 @@ def _delete_season_file(season_id: str) -> bool:
     path = season.SEASONS_DIR / f"{season_id}.json"
     if path.exists():
         path.unlink()
+    league.forget(season_id)
     return True
 
 
@@ -871,6 +886,87 @@ def staff_change(season_id: str, req: StaffRequest) -> dict:
         _recruiting_call(recruiting.assign, st, req.staff_id, req.area)
         season.save_season(st)
     return {"staff": st["career"]["staff"]}
+
+
+# ----- the offseason (offseason.py): departures, the transfer portal, development, staff -----
+
+class PortalRequest(BaseModel):
+    pid: str
+    on: bool = True
+
+
+class HireRequest(BaseModel):
+    staff_id: str
+    index: int
+
+
+class OffseasonRequest(BaseModel):
+    to: Optional[str] = None        # "next_season": every remaining stage on Auto, then the next season
+
+
+def _offseason_state(season_id: str) -> dict:
+    """A career whose season is over, with its offseason open (opened on first ask)."""
+    st = _career_state(season_id, change=True)
+    if not st.get("done"):
+        raise HTTPException(409, "the season is not over")
+    if not st.get("offseason"):
+        with _season_lock:
+            offseason.start(st)
+            season.save_season(st)
+    return st
+
+
+@app.get("/api/season/{season_id}/offseason")
+def offseason_view(season_id: str, position: Optional[str] = None, status: Optional[str] = None) -> dict:
+    st = _offseason_state(season_id)
+    with _season_lock:
+        return offseason.view(st, position, status)
+
+
+@app.post("/api/season/{season_id}/offseason/advance")
+def offseason_advance(season_id: str, req: OffseasonRequest) -> dict:
+    """The next offseason stage; past the last one (or with to="next_season"), the next season."""
+    st = _offseason_state(season_id)
+    with _season_lock:
+        if req.to == "next_season":
+            offseason.run_all(st)
+        elif st["offseason"]["stage"] != "ready":
+            offseason.advance(st)
+            season.save_season(st)
+            return offseason.view(st)
+        new = offseason.next_season(st)
+        season.save_season(new)
+        _season_jobs[season_id] = _idle_job(season_id, new)
+        _season_cards.pop(season_id, None)
+    return {"next_season": True, "year": new["year"], "summary": season.summary(new)}
+
+
+@app.post("/api/season/{season_id}/offseason/portal")
+def offseason_portal(season_id: str, req: PortalRequest) -> dict:
+    st = _offseason_state(season_id)
+    with _season_lock:
+        try:
+            offers = offseason.portal_offer(st, req.pid, req.on)
+        except KeyError:
+            raise HTTPException(404, "unknown portal player")
+        except OverflowError as e:
+            raise HTTPException(409, str(e))
+        except ValueError as e:
+            raise HTTPException(409, str(e))
+    _save_soon(season_id)
+    return {"offers": offers}
+
+
+@app.post("/api/season/{season_id}/offseason/hire")
+def offseason_hire(season_id: str, req: HireRequest) -> dict:
+    st = _offseason_state(season_id)
+    with _season_lock:
+        try:
+            staff = offseason.hire(st, req.staff_id, req.index)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+    _save_soon(season_id)
+    return {"hired": staff["hired"]}
 
 
 @app.post("/api/season/{season_id}/player/edit")

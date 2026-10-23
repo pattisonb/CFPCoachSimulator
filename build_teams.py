@@ -37,6 +37,7 @@ import statistics as st
 import sys
 from collections import defaultdict
 from pathlib import Path
+from typing import Optional
 
 import ratings as rv2   # ratings v2: the player attributes (docs/RATINGS_V2.md)
 
@@ -206,7 +207,12 @@ def starter_slugs(team: dict) -> set[str]:
 
 
 def load_team(path: Path) -> dict:
-    t = json.loads(path.read_text(encoding="utf-8"))
+    return team_from_source(json.loads(path.read_text(encoding="utf-8")))
+
+
+def team_from_source(t: dict) -> dict:
+    """One team in the source format (cfb_sim_data/teams/*.json, or a career's league.py
+    rebuild of it) converted for the build."""
     starters = starter_slugs(t)
     st_special = t["starters"]["special_teams"]
     # depth-chart role (LT, LG, C, RG, RT, LEDG, DT, REDG, SAM, MIKE, WILL, CB, FS, SS, HB, ...)
@@ -327,10 +333,10 @@ FOURTH_PER_MARGIN = 0.013 # fourth-down tries a game added back per point of ave
 SCRAMBLE_SHARE = 4.0      # points of a team's rushes that are QB scrambles (the engine adds its own)
 
 
-def apply_observed_tendencies(teams: list[dict]) -> int:
+def apply_observed_tendencies(teams: list[dict], only: Optional[set] = None) -> int:
     """Replace generated coach tendencies with what each team has actually done in 2026
     (derive_tendencies.py), scaled to the engine's tendency effects. Teams without box
-    scores keep the generated values."""
+    scores keep the generated values; so do teams not in `only` (when given)."""
     if not OBSERVED.exists():
         return 0
     obs = json.loads(OBSERVED.read_text(encoding="utf-8"))
@@ -338,7 +344,7 @@ def apply_observed_tendencies(teams: list[dict]) -> int:
     n = 0
     for t in teams:
         o = per_team.get(t["slug"])
-        if not o or o["games"] < 2:
+        if not o or o["games"] < 2 or (only is not None and t["slug"] not in only):
             continue
         td = t["tendencies"]
         # Game script: a team that leads a lot runs to protect leads, and the engine already
@@ -720,39 +726,50 @@ def engine_roster(t: dict) -> tuple[list[dict], list[dict]]:
     return offense, defense
 
 
-def main() -> None:
-    paths = sorted((SRC / "teams").glob("*.json"))
-    teams = [load_team(p) for p in paths]
+def build(sources: list[dict], real: bool = True, observed: Optional[set] = None, quiet: bool = False) -> dict:
+    """The engine's teams file from source-format teams. `real`: the real 2026 data's own
+    adjustments (depth by real usage, rating nudges, coaches' measured recruiting); a career's
+    later seasons build without them. `observed`: the teams whose observed 2026 tendencies still
+    apply (None: all of them; a career drops a team's when its head coach changes)."""
+    say = (lambda *a: None) if quiet else print
+    teams = [team_from_source(t) for t in sources]
     means = normalize(teams)
     shifts = team_level(teams)
     moved = [v for v in shifts.values() if v]
-    print(f"team level: {len(moved)} teams above the FBS starter average shifted "
-          f"{min(shifts.values()):.1f} to {max(moved) if moved else 0:.1f} engine points (top scale {TEAM_LEVEL_TOP_SCALE})")
+    say(f"team level: {len(moved)} teams above the FBS starter average shifted "
+        f"{min(shifts.values()):.1f} to {max(moved) if moved else 0:.1f} engine points (top scale {TEAM_LEVEL_TOP_SCALE})")
     house_attributes(teams)
-    nudged, reordered = apply_real_adjustments(teams, means)
+    nudged, reordered = apply_real_adjustments(teams, means) if real else (0, 0)
     for t in teams:
         depth_sort(t)
     house_attributes(teams)                     # again, from today's starters (the real depth charts moved some)
     if nudged or reordered:
-        print(f"real 2026 adjustments: {reordered} depth-chart roles reordered" + (f", {nudged} players' ratings nudged" if nudged else ""))
+        say(f"real 2026 adjustments: {reordered} depth-chart roles reordered" + (f", {nudged} players' ratings nudged" if nudged else ""))
     ratings_at_every_position(teams, means)
     tendency_means = normalize_tendencies(teams)
     decouple_discipline(teams)
-    print("league tendency means before centring:", tendency_means)
-    print("teams with observed 2026 tendencies:", apply_observed_tendencies(teams))
-    print("head coaches' recruiting ratings from their measured edge:", measured_recruiting(teams))
+    say("league tendency means before centring:", tendency_means)
+    say("teams with observed 2026 tendencies:", apply_observed_tendencies(teams, only=observed))
+    if real:
+        say("head coaches' recruiting ratings from their measured edge:", measured_recruiting(teams))
     out = {"source": str(SRC), "neutral": NEUTRAL, "spread_scale": SPREAD_SCALE, "team_level_top_scale": TEAM_LEVEL_TOP_SCALE,
            "starter_means_before_normalization": means, "tendency_means": tendency_means,
-           "attribute_scale": ATTR_SCALE, "teams": {}}
+           "attribute_scale": dict(ATTR_SCALE), "teams": {}}
     for t in teams:
         offense, defense = engine_roster(t)
         rec = {k: v for k, v in t.items() if k != "players"}
         rec["offense"] = offense
         rec["defense"] = defense
         out["teams"][t["slug"]] = rec
+    return out
+
+
+def main() -> None:
+    paths = sorted((SRC / "teams").glob("*.json"))
+    out = build([json.loads(p.read_text(encoding="utf-8")) for p in paths])
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(out), encoding="utf-8")
-    print(f"wrote {OUT} with {len(teams)} teams ({OUT.stat().st_size / 1e6:.1f} MB)")
+    print(f"wrote {OUT} with {len(out['teams'])} teams ({OUT.stat().st_size / 1e6:.1f} MB)")
     import recruits                                  # potential and coachability (docs/PLAYER_DEVELOPMENT.md)
     print(f"wrote {recruits.POTENTIAL_FILE.name}: potential and coachability for {recruits.write_player_potential()} players")
 

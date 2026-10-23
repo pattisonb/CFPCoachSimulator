@@ -213,6 +213,16 @@ def grade_detail(state: dict, p: dict, group: str, lo: float, hi: float) -> dict
 _LEAGUE: dict = {}
 
 
+def reset_caches() -> None:
+    """Forget everything worked out from the league's rosters (season.use_league switched it)."""
+    global _RANKS
+    _LEAGUE.clear()
+    _RANKS = (None, {})
+    starter_pool.cache_clear()
+    _attributes.cache_clear()
+    comp_max_distance.cache_clear()
+
+
 def league_values(pos: str, key: str) -> tuple[list, list]:
     """Today's FBS players at a position (linebackers together): their card values of `key`
     (an attribute, or 'overall'), all of them and the starters, highest first."""

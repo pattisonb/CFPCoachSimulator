@@ -1,0 +1,253 @@
+"""A Coach Career's own league, from its second season on
+(docs/superpowers/specs/2026-10-23-career-offseason-design.md, section 2).
+
+The first season of a career plays the real 2026 rosters (data/engine_teams.json). At its first
+offseason the career takes a copy of every FBS roster into `state["league"]`, and from then on
+players leave, transfer, sign and develop there. Each season the league is turned back into the
+source format (cfb_sim_data/teams/*.json) and built by the same pipeline as the real data
+(build_teams.build), cached per career and year in data/leagues/ and rebuilt from the state
+whenever the cache is missing (a save loaded on another machine).
+
+    state["league"] = {"year": 2027, "attrs": [EA rating keys],
+                       "teams": {slug: {"roster": [player], "coaches": {...}, "formation": {...}, "observed": bool}}}
+
+A player, compact (EA's scale throughout; the source scale is the curve of it):
+    {"id": slug, "n": name, "pos": EA position, "cls": FR..SRRS, "ht": inches, "wt": lbs, "j": jersey,
+     "a": archetype, "dev": trait, "ab": ["name|tier"], "r": [ratings], "g": [room to potential], "c": coachability,
+     "s": stars, "o": EA overall, "home": state, "yrs": seasons in the program}
+The FCS stand-ins (fictional teams) always play their base rosters.
+"""
+from __future__ import annotations
+
+import json
+import os
+import statistics as st
+from functools import lru_cache
+from pathlib import Path
+from typing import Optional
+
+import recruits
+
+ROOT = Path(__file__).resolve().parent
+SOURCE_DIR = ROOT / "cfb_sim_data" / "teams"
+CACHE_DIR = ROOT / "data" / "leagues"
+FIRST_YEAR = 2026
+
+CLASSES = ("FR", "FRRS", "SO", "SORS", "JR", "JRRS", "SR", "SRRS")
+CLASS_YEAR = {"FR": "Freshman", "FRRS": "Freshman (RS)", "SO": "Sophomore", "SORS": "Sophomore (RS)",
+              "JR": "Junior", "JRRS": "Junior (RS)", "SR": "Senior", "SRRS": "Senior (RS)"}
+# EA position groups a depth-chart role borrows from when its own position runs short
+FALLBACK = {"LT": ("RT", "LG", "RG", "C"), "RT": ("LT", "RG", "LG", "C"), "LG": ("RG", "C", "LT", "RT"),
+            "RG": ("LG", "C", "RT", "LT"), "C": ("LG", "RG", "LT", "RT"), "LEDG": ("REDG", "DT"), "REDG": ("LEDG", "DT"),
+            "DT": ("LEDG", "REDG"), "LB": ("MIKE", "WILL", "SAM"), "CB": ("FS", "SS"), "FS": ("SS", "CB"), "SS": ("FS", "CB"),
+            "HB": ("FB", "WR"), "FB": ("HB", "TE"), "WR": ("TE", "HB"), "TE": ("WR", "FB"), "QB": (), "K": ("P",), "P": ("K",)}
+LB_ROLES = ("SAM", "MIKE", "WILL")
+OFFENSE_ROLES = {"QB", "HB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT"}
+# team ratings from the starters' EA overall, fit to EA's 2026 team ratings (r 0.99 offense, 0.999 defense)
+TEAM_FIT = {"offense": (1.875, -86.245), "defense": (1.799, -80.443), "special_teams": (1.469, -57.093)}
+GROUP_OF = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL", "LG": "OL", "C": "OL", "RG": "OL",
+            "RT": "OL", "LEDG": "DL", "REDG": "DL", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "DB",
+            "FS": "DB", "SS": "DB", "K": "K", "P": "P"}
+
+
+@lru_cache(maxsize=None)
+def base_team(slug: str) -> dict:
+    """The real 2026 source team (read once; never changed)."""
+    return json.loads((SOURCE_DIR / f"{slug}.json").read_text(encoding="utf-8"))
+
+
+@lru_cache(maxsize=1)
+def base_slugs() -> tuple[str, ...]:
+    return tuple(sorted(p.stem for p in SOURCE_DIR.glob("*.json")))
+
+
+@lru_cache(maxsize=1)
+def _potentials() -> dict:
+    return json.loads(recruits.POTENTIAL_FILE.read_text(encoding="utf-8")) if recruits.POTENTIAL_FILE.exists() else {}
+
+
+def height_in(h) -> Optional[int]:
+    if isinstance(h, int):
+        return h
+    try:
+        ft, inch = str(h).replace('"', "").split("'")
+        return int(ft) * 12 + int(inch or 0)
+    except (ValueError, AttributeError):
+        return None
+
+
+def compact(p: dict, attrs: list[str], home: Optional[str] = None) -> dict:
+    """A source roster player (real, or a signee from recruits.as_roster_player) in the league's form."""
+    seeded = _potentials().get(p["slug"], {})
+    pot = {**p["ratings_ea"], **(p.get("potential_ea") or seeded.get("potential_ea") or {})}
+    out = {"id": p["slug"], "n": p["name"], "pos": p["position"], "cls": p.get("class") or "FR", "ht": height_in(p.get("height")),
+           "wt": p.get("weight_lbs"), "j": p.get("jersey"), "a": p.get("archetype"), "dev": p.get("dev_trait") or "Normal",
+           "r": [int(p["ratings_ea"].get(k, 50)) for k in attrs],
+           "g": [int(max(0, pot.get(k, 50) - p["ratings_ea"].get(k, 50))) for k in attrs],
+           "c": p.get("coachability") or seeded.get("coachability") or "Steady Grinder",
+           "s": p.get("stars") or seeded.get("stars"), "o": int(p.get("overall_ea") or 0) or None,
+           "home": (p.get("hometown") or {}).get("state") or home, "yrs": int(p.get("yrs") or 0)}
+    if p.get("abilities"):
+        out["ab"] = [f"{a.get('name')}|{a.get('tier')}" for a in p["abilities"]]
+    if out["o"] is None:
+        out["o"] = int(round(recruits.overall_ea(out["pos"], out["a"], dict(zip(attrs, out["r"])))))
+    return out
+
+
+def ratings(c: dict, attrs: list[str]) -> dict[str, int]:
+    return dict(zip(attrs, c["r"]))
+
+
+def potential(c: dict, attrs: list[str]) -> dict[str, int]:
+    return {k: v + g for k, v, g in zip(attrs, c["r"], c["g"])}
+
+
+def expand(c: dict, attrs: list[str], team: dict) -> dict:
+    """A league player back in the source roster format (what build_teams reads)."""
+    ea = ratings(c, attrs)
+    h = c.get("ht") or 72
+    return {
+        "slug": c["id"], "name": c["n"], "position": c["pos"], "class": c["cls"], "class_year": CLASS_YEAR.get(c["cls"], "Freshman"),
+        "team_slug": team["slug"], "team": team.get("short_name"), "jersey": c.get("j"),
+        "height": f"{h // 12}'{h % 12}\"", "weight_lbs": c.get("wt"), "archetype": c.get("a"), "dev_trait": c.get("dev") or "Normal",
+        "overall_ea": c["o"], "overall": int(round(recruits.curve(c["o"]))), "ratings_ea": ea,
+        "ratings": {k: int(round(recruits.curve(v))) for k, v in ea.items()}, "abilities": [dict(zip(("name", "tier"), a.split("|"))) for a in c.get("ab") or []],
+        "potential_ea": potential(c, attrs), "coachability": c.get("c"), "stars": c.get("s"),
+    }
+
+
+def formation(t: dict) -> dict:
+    """How many starters each role has in a source team's lineup (its scheme), e.g. WR 3, LB 2, CB 3."""
+    return {unit: {role: len(slugs or []) for role, slugs in roles.items()} for unit, roles in t["starters"].items()}
+
+
+def from_base(year: int = FIRST_YEAR + 1) -> dict:
+    """Every FBS team's real 2026 roster, coaches and lineup shape as a league (before the first
+    offseason's departures). Head coaches keep the recruiting ratings the build measured."""
+    import build_teams
+    attrs = sorted(next(iter(base_team(base_slugs()[0])["roster"]))["ratings_ea"])
+    teams = {}
+    for slug in base_slugs():
+        t = base_team(slug)
+        if t["fictional"]:
+            continue
+        coaches = json.loads(json.dumps(t["coaches"]))
+        teams[slug] = {"roster": [compact(p, attrs, t.get("state")) for p in t["roster"] if p.get("ratings_ea")],
+                       "coaches": coaches, "formation": formation(t), "observed": True}
+    build_teams.measured_recruiting([{"slug": s, "coaches": v["coaches"]} for s, v in teams.items()])
+    return {"year": year, "attrs": attrs, "teams": teams}
+
+
+def _role_players(by_pos: dict, role: str, taken: set) -> list[dict]:
+    pool = [p for r in ((LB_ROLES if role == "LB" else (role,)) + FALLBACK.get(role, ())) for p in by_pos.get(r, [])]
+    own = set(LB_ROLES) if role == "LB" else {role}
+    first = [p for p in pool if p["position"] in own]
+    return [p for p in first + [p for p in pool if p["position"] not in own] if p["slug"] not in taken]
+
+
+def lineup(roster: list[dict], shape: dict) -> tuple[dict, dict]:
+    """(starters, depth chart) in the source format: each role's best by EA overall (the
+    linebacker spots from SAM, MIKE and WILL together), borrowing a neighbouring position when
+    a role runs short; kick and punt returners by return ability."""
+    by_pos: dict[str, list] = {}
+    for p in sorted(roster, key=lambda q: -q["overall_ea"]):
+        by_pos.setdefault(p["position"], []).append(p)
+    depth = {role: [p["slug"] for p in by_pos.get(role, [])] for role in
+             ("QB", "HB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT", "LEDG", "DT", "REDG", "SAM", "MIKE", "WILL", "CB", "FS", "SS", "K", "P")}
+    starters, taken = {}, set()
+    for unit in ("offense", "defense"):
+        starters[unit] = {}
+        for role, n in shape.get(unit, {}).items():
+            picks = _role_players(by_pos, role, taken)[:n]
+            taken.update(p["slug"] for p in picks)
+            starters[unit][role] = [p["slug"] for p in picks]
+    special = {}
+    for role in ("K", "P"):
+        if shape.get("special_teams", {}).get(role):
+            pick = (by_pos.get(role) or by_pos.get("P" if role == "K" else "K") or [None])[0]
+            special[role] = [pick["slug"]] if pick else []
+    ret = sorted((p for p in roster if p["position"] in ("HB", "WR", "CB", "FS", "SS")),
+                 key=lambda p: -(0.5 * p["ratings_ea"].get("kick_return", 40) + 0.3 * p["ratings_ea"].get("speed", 60)
+                                 + 0.2 * p["ratings_ea"].get("agility", 60)))
+    special["KR"] = [ret[0]["slug"]] if ret else []
+    special["PR"] = [ret[1]["slug"] if len(ret) > 1 else ret[0]["slug"]] if ret else []
+    starters["special_teams"] = special
+    return starters, depth
+
+
+def team_ratings(roster: list[dict], starters: dict) -> dict:
+    """EA-style team ratings from the starters (TEAM_FIT), with the position groups' starters' mean overall."""
+    by = {p["slug"]: p for p in roster}
+    out = {}
+    for unit, key in (("offense", "offense"), ("defense", "defense"), ("special_teams", "special_teams")):
+        vals = [by[s]["overall_ea"] for role, slugs in starters[unit].items() if role not in ("KR", "PR") for s in slugs if s in by]
+        a, b = TEAM_FIT[key]
+        out[key] = round(max(1.0, min(99.0, a * st.mean(vals) + b)) if vals else 40.0, 1)
+    out["overall"] = round(0.45 * out["offense"] + 0.45 * out["defense"] + 0.1 * out["special_teams"], 1)
+    out["roster_avg"] = round(st.mean(p["overall_ea"] for p in roster), 1) if roster else 0.0
+    groups: dict[str, list] = {}
+    for unit in ("offense", "defense"):
+        for role, slugs in starters[unit].items():
+            for s in slugs:
+                if s in by:
+                    groups.setdefault(GROUP_OF.get(by[s]["position"], "DB"), []).append(by[s]["overall_ea"])
+    for role in ("K", "P"):
+        for s in starters["special_teams"].get(role, []):
+            groups.setdefault(role, []).append(by[s]["overall_ea"])
+    out["position_groups"] = {g: round(st.mean(v), 1) for g, v in groups.items()}
+    return out
+
+
+def source_team(league: dict, slug: str) -> dict:
+    """One league team in the source format: the base team's identity, the league's roster,
+    coaches and a lineup picked from the roster."""
+    base = base_team(slug)
+    entry = league["teams"][slug]
+    roster = [expand(c, league["attrs"], base) for c in entry["roster"]]
+    starters, depth = lineup(roster, entry["formation"])
+    out = {k: v for k, v in base.items() if k not in ("roster", "starters", "depth_chart", "coaches", "team_ratings", "verification")}
+    out.update(roster=roster, starters=starters, depth_chart=depth, coaches=entry["coaches"],
+               team_ratings=team_ratings(roster, starters), roster_size=len(roster))
+    return out
+
+
+def source_teams(league: dict) -> list[dict]:
+    return [source_team(league, s) if s in league["teams"] else base_team(s) for s in base_slugs()]
+
+
+def build(league: dict) -> dict:
+    """The league as the engine's teams file (build_teams.build, without the real 2026 adjustments)."""
+    import build_teams
+    observed = {s for s, t in league["teams"].items() if t.get("observed")}
+    observed |= {s for s in base_slugs() if s not in league["teams"]}
+    return build_teams.build(source_teams(league), real=False, observed=observed, quiet=True)
+
+
+def path(career_id: str, year: int) -> Path:
+    return CACHE_DIR / f"{career_id}-{year}.json"
+
+
+def ensure_built(state: dict) -> Optional[Path]:
+    """The teams file a career's current season plays (None: the real 2026 one), built if missing.
+    In the offseason the league already holds next year's rosters; a missing file for the season
+    just played is then rebuilt from them (only a save moved to another machine gets there)."""
+    lg = state.get("league")
+    year = state.get("year") or FIRST_YEAR
+    if not lg or year <= FIRST_YEAR:
+        return None
+    out = path(state["id"], year)
+    if not out.exists():
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        tmp = out.with_suffix(f".{os.getpid()}.tmp")
+        tmp.write_text(json.dumps(build(lg)), encoding="utf-8")
+        os.replace(tmp, out)
+    return out
+
+
+def forget(career_id: str) -> None:
+    """Remove a career's cached teams files (the career was deleted)."""
+    for f in CACHE_DIR.glob(f"{career_id}-*.json"):
+        try:
+            f.unlink()
+        except OSError:
+            pass

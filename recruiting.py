@@ -307,6 +307,15 @@ def interest(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> fl
 
 
 _STATIC: dict = {}       # a prospect's pulls that hold all season (everything but winning), per school
+
+
+def reset_caches() -> None:
+    """Forget everything worked out from the league's rosters (season.use_league switched it)."""
+    global _WINNING, _FITS
+    _STATIC.clear()
+    _WINNING, _FITS = (None, {}), (None, {}, None)
+    _returning.cache_clear()
+    _open_spots.cache_clear()
 _WINNING: tuple = (None, {})   # (career and week, this week's on-field standing of every school)
 
 
@@ -314,7 +323,7 @@ def _winning(state: dict) -> dict[str, float]:
     import season
     global _WINNING
     played = sum(1 for g in state["games"].values() if g["played"])
-    key = (state["id"], state["current_week"], played)
+    key = (state["id"], state.get("year"), state["current_week"], played)
     cached = _WINNING                     # one read: another request may swap it in meanwhile
     if cached[0] == key:
         return cached[1]

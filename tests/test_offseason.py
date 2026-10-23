@@ -1,0 +1,120 @@
+"""Coach Career's offseason (offseason.py, league.py): departures, the signed classes arriving,
+the transfer portal, development, staff, and the next season on the career's own league. A
+finished season is faked (scores and signed classes) so the test runs in seconds; the long-run
+check plays real ones (tools/long_run.py). (Run as a file: multiprocessing on Windows.)"""
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
+import collections
+import random
+
+import league
+import offseason
+import season
+
+
+def finished(st: dict) -> None:
+    """Every game played (the better team usually wins), every school's class signed, season over."""
+    rng = random.Random(1)
+    teams = season.load_teams()
+    for g in st["games"].values():
+        h, a = teams[g["home"]]["team_ratings"]["overall"], teams[g["away"]]["team_ratings"]["overall"]
+        hs = rng.randint(10, 45)
+        win = rng.random() < 1 / (1 + 10 ** ((a - h) / 12))
+        g.update(played=True, home_score=hs if win else max(0, hs - rng.randint(1, 20)), away_score=hs - rng.randint(1, 20) if win else hs)
+        if g["home_score"] == g["away_score"]:
+            g["home_score"] += 3
+    rc = st["recruiting"]
+    schools = [s for s, t in teams.items() if not t["fictional"]]
+    pids = sorted(rc["prospects"], key=lambda p: rc["prospects"][p]["rank"])
+    for i, pid in enumerate(pids[:len(schools) * 21]):
+        rc["status"][pid]["signed"] = schools[i % len(schools)]
+    st.update(done=True, current_week=season.FINAL_WEEK, champion="ohio-state")
+
+
+if __name__ == "__main__":
+    st = season.new_season("ohio-state", "full", seed=5, career=True)
+    finished(st)
+    before = {p["slug"]: p.get("class") for t in season.load_teams().values() for p in t["offense"] + t["defense"]}
+    off = offseason.start(st)
+    lg = st["league"]
+    kinds = collections.Counter(d["kind"] for d in off["departures"])
+    teams = len(lg["teams"])
+    # departures: seniors graduate, the draft takes its FBS share, some declare early, about 15%
+    # of the rest enter the portal, a few quit
+    assert 15 * teams <= kinds["graduated"] + kinds["draft"] <= 24 * teams, kinds
+    assert kinds["draft"] == round(offseason.DRAFT_PICKS * offseason.DRAFT_FROM_FBS)
+    early = sum(1 for d in off["departures"] if d.get("early"))
+    assert 50 <= early <= 140, early
+    returning = sum(len(t["roster"]) for t in lg["teams"].values()) + len(off["portal"]["players"])
+    share = len(off["portal"]["players"]) / returning
+    assert 0.08 <= share <= 0.22, share
+    assert kinds["quit"] < 0.03 * returning
+    # the classes arrived (21 a school here) and nobody is still a senior
+    assert sum(off["signed"].values()) == 21 * teams
+    for t in lg["teams"].values():                     # every returning player moved up a class or took his redshirt
+        for p in t["roster"]:
+            if p["id"] in before and not p.get("signed"):
+                was = before[p["id"]]
+                assert p["cls"] in (offseason.NEXT_CLASS.get(was), was + "RS") or (was, p["cls"]) == ("SR", "SRRS"), (was, p["cls"])
+    mine = offseason.view(st)
+    assert mine["departures"]["mine"] and all(d["team"] == "ohio-state" for d in mine["departures"]["mine"])
+    # the portal: your offer, round 1, round 2
+    offseason.advance(st)
+    assert off["stage"] == "portal_1"
+    rows = offseason.portal_rows(st, status="available")
+    pick = next(r for r in rows if r["from"] != "ohio-state")
+    offseason.portal_offer(st, pick["id"], True)
+    assert pick["id"] in offseason.view(st)["portal"]["offers"]
+    offseason.advance(st)
+    assert off["stage"] == "portal_2" and off["portal"]["moves"]
+    assert off["portal"]["players"][pick["id"]]["signed"] is not None, "a top entrant with offers stayed unsigned"
+    offseason.advance(st)
+    assert off["stage"] == "development"
+    sizes = [len(t["roster"]) for t in lg["teams"].values()]
+    assert min(sizes) >= 70 and max(sizes) <= offseason.ROSTER_LIMIT, (min(sizes), max(sizes))
+    for t in lg["teams"].values():
+        counts = offseason._group_counts(t["roster"])
+        assert all(counts[g] >= f for g, f in offseason.FLOOR.items()), counts
+    assert off["report"]["development"]["mean_gain_ea"] > 0
+    # staff: an opening gets three candidates; your pick is hired
+    offseason.advance(st)
+    assert off["stage"] == "staff"
+    staff = off["staff"]
+    if not staff["leaving"]:
+        sid = st["career"]["staff"][2]["id"]
+        staff["leaving"].append(sid)
+        staff["candidates"][sid] = [offseason._candidate(random.Random(i), st["career"]["staff"][2], set()) for i in range(3)]
+    sid = staff["leaving"][0]
+    offseason.hire(st, sid, 1)
+    offseason.advance(st)
+    assert off["stage"] == "ready"
+    hired = next(s for s in st["career"]["staff"] if s["id"] == sid)
+    assert hired["name"] == staff["candidates"][sid][1]["name"]
+    # the next season: same career, its own league, a new class of seniors, the 2026 schedule's
+    # games with home and away swapped
+    old_game = next(g for g in st["games"].values() if g["kind"] == "regular" and not g["neutral"] and g["home"] == "ohio-state")
+    new = offseason.next_season(st)
+    assert new["id"] == st["id"] and new["year"] == 2027 and new["recruiting"]["year"] == 2028
+    assert new["career"]["history"][0]["year"] == 2026 and new["career"]["history"][0]["won_title"]
+    assert league.path(new["id"], 2027).exists() and season._league_path == league.path(new["id"], 2027)
+    back = new["games"].get(old_game["event_id"])
+    assert back and back["home"] == old_game["away"] and back["away"] == "ohio-state", back
+    assert new["polls"]["0"]["ap"] and not new["done"] and new["current_week"] == 0
+    roster = season.load_teams()["ohio-state"]
+    names = {p["name"] for p in roster["offense"] + roster["defense"]}
+    assert len(names) >= 70 and any(p.get("class") == "FR" for p in roster["offense"] + roster["defense"])
+    season.advance_to(new, 1)
+    assert all(g["played"] for g in new["games"].values() if g["week"] == 1)
+    # a saved career comes back on its league; a missing league file is rebuilt from the save
+    season.save_season(new)
+    season.use_league(None)
+    league.path(new["id"], 2027).unlink()
+    back = season.load_season(new["id"])
+    season.activate(back)
+    assert league.path(new["id"], 2027).exists() and season.load_teams()["ohio-state"]["name"] == roster["name"]
+    (season.SEASONS_DIR / f"{new['id']}.json").unlink()
+    league.forget(new["id"])
+    season.use_league(None)
+    print(f"offseason ok: {dict(kinds)}, early entrants {early}, portal {share:.0%}, rosters {min(sizes)}-{max(sizes)}")
