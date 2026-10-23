@@ -37,7 +37,15 @@ ROOT = Path(__file__).resolve().parent
 SOURCE_DIR = ROOT / "cfb_sim_data" / "teams"
 CACHE_DIR = ROOT / "data" / "leagues"
 FIRST_YEAR = 2026
-DEPTH_EYE = 3.0           # overall points of the coaches' own judgment in a depth chart (real usage starts players below the top overall)
+# The coaches' own judgment in a depth chart, in overall points (one draw per player a year): real
+# 2026 usage starts players well below the top overall at most positions (rotations, fits, what
+# the ratings miss) but the best linemen up front. Set so that the real 2026 rosters' starters
+# picked this way have the overall the real starters had, group by group.
+DEPTH_EYE = {"QB": 8.0, "RB": 16.0, "WR": 13.0, "TE": 16.0, "OL": 1.5, "DL": 15.0, "LB": 12.0, "DB": 15.0, "K": 3.0, "P": 3.0}
+DEPTH_EXPERIENCE = 0.0    # overall points a year in college is worth in a depth chart (real coaches start the veteran)
+_EYE_GROUP = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL", "LG": "OL", "C": "OL", "RG": "OL", "RT": "OL",
+              "LEDG": "DL", "REDG": "DL", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "DB", "FS": "DB", "SS": "DB", "K": "K", "P": "P"}
+EXPERIENCE = {"FR": 0, "FRRS": 1, "SO": 1, "SORS": 2, "JR": 2, "JRRS": 3, "SR": 3, "SRRS": 4}
 
 CLASSES = ("FR", "FRRS", "SO", "SORS", "JR", "JRRS", "SR", "SRRS")
 CLASS_YEAR = {"FR": "Freshman", "FRRS": "Freshman (RS)", "SO": "Sophomore", "SORS": "Sophomore (RS)",
@@ -192,7 +200,8 @@ def lineup(roster: list[dict], shape: dict, year: int = FIRST_YEAR + 1) -> tuple
     a role runs short; kick and punt returners by return ability."""
     by_pos: dict[str, list] = {}
     for p in roster:            # the coaches' eye: overall plus a little of what the numbers miss, fixed for the year
-        p["_depth"] = p["ovr"] + random.Random(f"depth-{p['slug']}-{year}").gauss(0, DEPTH_EYE)
+        p["_depth"] = (p["ovr"] + DEPTH_EXPERIENCE * EXPERIENCE.get(p.get("class"), 0)
+                       + random.Random(f"depth-{p['slug']}-{year}").gauss(0, DEPTH_EYE.get(_EYE_GROUP.get(p["position"], "K"), 3.0)))
     for p in sorted(roster, key=lambda q: -q["_depth"]):
         by_pos.setdefault(p["position"], []).append(p)
     depth = {role: [p["slug"] for p in by_pos.get(role, [])] for role in

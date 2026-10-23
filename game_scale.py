@@ -82,6 +82,22 @@ def overall(ours: dict, pos: str) -> int:
 _FIRST = {"QB": "QB", "RB": "HB", "WR": "WR", "TE": "TE", "OL": "LG", "DL": "DT", "LB": "MIKE", "CB": "CB", "S": "FS", "K": "K", "P": "P"}
 
 
+def engine_means() -> Optional[dict]:
+    """The real 2026 build's FBS starter means of the engine's attributes ("POS:attr" -> mean),
+    frozen: a career's later seasons go onto the engine scale through them (build_teams.normalize)."""
+    return data().get("engine_means")
+
+
+def freeze_engine_means() -> int:
+    """Store the real 2026 build's starter means (data/engine_teams.json) in data/game_scale.json."""
+    built = json.loads((ROOT / "data" / "engine_teams.json").read_text(encoding="utf-8"))
+    d = json.loads(FILE.read_text(encoding="utf-8"))
+    d["engine_means"] = built["starter_means_before_normalization"]
+    FILE.write_text(json.dumps(d, indent=0), encoding="utf-8")
+    data.cache_clear()
+    return len(d["engine_means"])
+
+
 def card_scale() -> dict:
     """The player card attributes' scale ("group|attr" -> [middle, slope above, slope below]), frozen."""
     return data()["card_scale"]
@@ -216,6 +232,8 @@ def fit() -> dict:
     out["overall"] = fits
     FILE.write_text(json.dumps(out, indent=0), encoding="utf-8")
     data.cache_clear()
+    build_teams.OUT.write_text(json.dumps(build_teams.build(sources, quiet=True)), encoding="utf-8")
+    freeze_engine_means()
     return {pos: (f["r"], f["rmse"]) for pos, f in fits.items()}
 
 

@@ -588,8 +588,21 @@ def house_attributes(teams: list[dict]) -> None:
             p["attributes"] = house_attributes_of(p)
 
 
-def normalize(teams: list[dict]) -> dict:
-    """Re-centre every attribute per position group on the FBS starter mean."""
+def normalize(teams: list[dict], frozen: Optional[dict] = None) -> dict:
+    """Re-centre every attribute per position group on the FBS starter mean: this build's own
+    (the real 2026 rosters), or `frozen` ("POS:attr" -> mean; a career's later seasons read the
+    real 2026 build's, so a league's talent and its depth charts show in the engine as they are)."""
+    if frozen:
+        means = {tuple(k.split(":", 1)): v for k, v in frozen.items()}
+        return_mean = means.pop(("returners", RETURN_ATTR), 50.0)
+        for t in teams:
+            for p in t["players"]:
+                for a in ATTRS:
+                    if a in p:
+                        p[a] = clamp_rating(to_engine(p[a], means.get((p["position"], a), 50.0)))
+                p[RETURN_ATTR] = clamp_rating(to_engine(p[RETURN_ATTR], return_mean))
+                clamp_extremes(p)
+        return dict(frozen)
     groups = defaultdict(list)
     for t in teams:
         if t["fictional"]:
@@ -747,7 +760,7 @@ def build(sources: list[dict], real: bool = True, observed: Optional[set] = None
     apply (None: all of them; a career drops a team's when its head coach changes)."""
     say = (lambda *a: None) if quiet else print
     teams = [team_from_source(t) for t in sources]
-    means = normalize(teams)
+    means = normalize(teams, None if real else game_scale.engine_means())
     shifts = team_level(teams)
     moved = [v for v in shifts.values() if v]
     say(f"team level: {len(moved)} teams above the FBS starter average shifted "
