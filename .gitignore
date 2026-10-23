@@ -24,3 +24,4 @@ data/coaches/
 # taste-skill working files (screenshots, reviews)
 .taste-skill/
 data/leagues/
+data/long_run/check*.json
