@@ -943,9 +943,16 @@ stars, hometown and (real receivers) target share; each team's coaches and lineu
 7 MB in the state and under 2 MB in a downloaded save. Each season the league goes back into the
 source format (our ratings back through the frozen scale) and through the same build as the real
 data (`build_teams.build`, about 4 s), without the real 2026 adjustments (depth by real usage,
-rating nudges). Lineups take each role's best by our overall plus a little of the coaches' own
-eye (6 points of noise, fixed for the year): real depth charts start players below the top
-overall, and the engine was tuned on them. Linebacker spots take the best MIKE, WILL and SAM in
+rating nudges). The engine's attributes go onto its scale through the real 2026 build's starter
+means, frozen in `data/game_scale.json` (`engine_means`): re-centring each season on its own
+starters moved every player's numbers whenever a league's talent or depth charts shifted (team
+rushing ran 12% low with the 2026 players themselves). Lineups take each role's best by our
+overall plus the coaches' own eye, one draw per player a year, sized by group so the 2026 rosters'
+starters picked this way have the real starters' overall: 1.5 points on the offensive line, 8 at
+quarterback, 12-16 elsewhere (real usage starts players well below the top overall at most
+positions: rotations, fits, what the ratings miss). A receiver without a real 2026 target weight
+gets one from the same draw (log sd 0.32, as the real weights), so the receivers the coaches
+start also get the ball. Linebacker spots take the best MIKE, WILL and SAM in
 that order. A team keeps its observed 2026 tendencies until its head coach changes. Team ratings
 come from the starters' overall, fit once to the 2026 team ratings (r 0.98 offense, 0.997
 defense). The built file is cached in `data/leagues/` and rebuilt from the state when missing;
@@ -984,9 +991,12 @@ best Group of 5 players move up, as they do. Entrants unsigned after round 2 lea
 **Development.** Every returning player (transfers too) develops once a year on our scale: each
 skill closes part of its gap to potential at his coachability's rate times 0.75 (`DEV_RATE`)
 times a pace by seasons in the program (0.45, 0.7, 1.35, 1.35, then 1.0: real players gain
-little in their first offseasons and most in their third and fourth), so a class tracks the real
-players by stars and years (`tools/check_development.py`: four-stars 42, 43, 45, 48, 50 against
-41, 42, 43, 48.5, 47 real; three-stars 29, 31, 35, 40, 44 against 29, 32, 35, 41, 44), times a
+little in their first offseasons and most in their third and fourth). A generated player's room
+to potential is scaled by position group (`game_scale.ROOM`: 1.0 for backs to 1.63 for safeties),
+set so a career's starters settle, season after season, where the real 2026 starters were (two
+40-season runs had defenses 2.6-4.7 points low and receivers' yards 27% high before it; a class
+now runs a little above the real players by stars and years, `tools/check_development.py`, since
+the real ones are the survivors and a league's starters are younger than its best), times a
 coach factor (the head coach's player development with the coordinator on his side of the ball,
 40%: 0.8 at 30, 1.0 at 50, 1.2 at 90) and the program's own (1 + 0.10 times its recruiting
 baseline). The signed class arrives as it is. Rosters are then topped up to 100, the thinnest
