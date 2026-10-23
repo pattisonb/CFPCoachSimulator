@@ -593,7 +593,8 @@ def list_seasons() -> dict:
                 rec = season._records(st, include_playoff=True)[st["team"]]
                 card = {"id": st["id"], "team": st["team"], "team_name": st["team_name"], "mode": st["mode"],
                         "created_at": st["created_at"], "current_week": st["current_week"], "done": st["done"],
-                        "wins": rec["wins"], "losses": rec["losses"], "champion_name": _teams.get(st.get("champion") or "", {}).get("name")}
+                        "wins": rec["wins"], "losses": rec["losses"], "champion_name": _teams.get(st.get("champion") or "", {}).get("name"),
+                        "year": st.get("year") or 2026, "career": bool(st.get("career")), "offseason": (st.get("offseason") or {}).get("stage")}
             except Exception:  # noqa: BLE001 - one unreadable file must not break the list for everyone
                 continue
             _season_cards[path.stem] = (mtime, card)

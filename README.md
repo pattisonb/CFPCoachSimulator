@@ -51,6 +51,15 @@ week at a time or jump ahead: each week is **Recruit → Your game → Advance**
   real starter when one is close.
 - **Staff.** Your coordinators and three recruiters each scout an area. Their letter grades
   narrow with every look, but a read can be wrong, and a weak evaluator more often.
+- **The offseason and the next season.** After national signing day the career goes on.
+  Seniors graduate, the NFL draft takes its 257 (juniors declare early when they project high),
+  players enter the transfer portal (mostly backups) and a few quit. Then two portal rounds
+  where you offer transfers to fill your open spots, development (everyone grows toward his
+  potential at his coachability's pace, faster under good developers), staff changes (a
+  coordinator may be hired away after a big year; you hire from three candidates) and the
+  coaching carousel around the league. Then the next season: same schedule template with home
+  and away swapped, a new class of seniors to recruit, and your program's history kept. A
+  career plays as many seasons as you like.
 - **Saves.** Your browser keeps a copy of the career after every week, so it survives the
   server restarting. **Download career** saves it as a file; **Load career** opens it again.
 

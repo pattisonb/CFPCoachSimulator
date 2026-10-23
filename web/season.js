@@ -49,9 +49,9 @@
       const del = el("button", { class: "del", type: "button", title: "Delete this season", "aria-label": "Delete this season", text: "×" });
       del.addEventListener("click", (e) => { e.stopPropagation(); deleteSeason(s); });
       const li = el("li", { onclick: () => openSeason(s.id) }, [
-        el("span", { class: "teams", text: `${s.team_name} · ${s.mode === "full" ? "full" : "from today"}` }),
+        el("span", { class: "teams", text: `${s.team_name} · ${s.career ? `Coach Career · ${s.year}` : s.mode === "full" ? "full" : "from today"}` }),
         el("span", { class: "score", text: `${s.wins}-${s.losses}` }),
-        el("span", { class: "when", text: `${s.done ? `done · champion ${s.champion_name}` : `through week ${s.current_week}`} · ${when(s.created_at)}` }),
+        el("span", { class: "when", text: `${s.offseason ? "offseason" : s.done ? `done · champion ${s.champion_name}` : `through week ${s.current_week}`} · ${when(s.created_at)}` }),
         del,
       ]);
       if (state.season && state.season.id === s.id) li.classList.add("active");
@@ -726,7 +726,8 @@
   const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   function parseDay(iso) { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d); }
   function shortDay(iso) { const d = parseDay(iso); return `${MONTHS[d.getMonth()]} ${d.getDate()}`; }
-  function fmtDay(iso, withDay = true) { const d = parseDay(iso); return `${withDay ? DAYS[d.getDay()] + ", " : ""}${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; }
+  // a career's later seasons replay the 2026 calendar: shown a year on per season, 52 weeks to keep the weekdays
+  function fmtDay(iso, withDay = true) { const k = ((state.season && state.season.year) || 2026) - 2026; const d = new Date(parseDay(iso).getTime() + k * 364 * 86400000); return `${withDay ? DAYS[d.getDay()] + ", " : ""}${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; }
 
   function weekDateText(s, w) {
     const wd = s.week_dates && s.week_dates[w];

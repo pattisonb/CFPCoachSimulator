@@ -922,6 +922,70 @@ restart), opening it uploads that copy and the server keeps whichever copy is ne
 **Download career** saves the state with every box score as a `.ccsave` file. Prospects store
 their EA ratings as lists in one key order, so a new career's save is under 1.5 MB.
 
+## Coach Career: the offseason and many seasons (`league.py`, `offseason.py`)
+
+Design: docs/superpowers/specs/2026-10-23-career-offseason-design.md.
+
+**A league per career.** The first season plays the real 2026 rosters. At the first offseason
+the career copies every FBS roster into its state (`state["league"]`: EA ratings and the room to
+potential as lists in one key order, coachability, class, size, archetype, stars, hometown,
+target share; each team's coaches and lineup shape), about 7 MB in the state and under 2 MB in
+a downloaded save. Each season the league goes back into the source format and through the same
+build as the real data (`build_teams.build`, about 5 s), without the real 2026 adjustments
+(depth by real usage, rating nudges). Lineups take each role's best by EA overall plus a little
+of the coaches' own eye (3 EA points of noise, fixed for the year): real depth charts start
+players below the top overall, and the engine was tuned on them. Linebacker spots take the best
+MIKE, WILL and SAM in that order. Receivers keep their 2026 target share; new ones draw one
+around 1.0 (sd 0.18). A team keeps its observed 2026 tendencies until its head coach changes.
+Team ratings come from the starters' EA overall, fit to EA's 2026 team ratings (r 0.99
+offense, 0.999 defense). The built file is cached in `data/leagues/` and rebuilt from the state
+when missing; the server switches leagues when you open a career (never while another sims).
+Later seasons replay the 2026 schedule with home and away swapped every other year; the
+preseason poll comes from team ratings; dates show a year on.
+
+**Departures** (after national signing day). Class years FR, SO, JR, SR with a redshirt each
+(FRRS ... SRRS). A player who did not start may take his redshirt once: 78% of freshmen off
+the top of the depth chart, 35% of sophomores, 25% of juniors (half that for the next man up).
+Seniors leave; a senior with his redshirt unused who barely played stays a fifth year 30% of the
+time. The NFL draft has 257 picks, 97% from FBS, ranked by the card overall plus position value
+(QB +6, tackles and edges +3 to +4, kickers -18) and noise; underclassmen three years out of high
+school declare by projected pick (95% in the first round, 60% by pick 100, 10% by 257). The
+transfer portal takes 7% of freshmen to 26% of fifth-year seniors, times 0.12 for starters, 0.65
+for the next man up and 1.3 for the bench, and 1.25 after a losing year. About 1.2% quit a year
+(2.5 times as likely in a team's bottom 15%).
+
+**The portal.** Signed classes join first. Two rounds: you offer up to twice your open spots
+(85 minus your roster and the transfers you have); every AI school offers by need (groups short
+of a healthy roster's make-up, or anyone good with 4+ spots open) to entrants about as good as
+its depth there. At the end of a round each entrant with offers picks the school he likes best
+with a spot left, best players first: playing time (would he start, be next in line, or depth)
+counts 2, the program's team rating 1, winning 0.6, home state 0.4, plus noise. Entrants
+unsigned after round 2 leave FBS.
+
+**Development.** Every returning player (transfers too) develops once a year with
+`recruits.develop`: each attribute closes part of its gap to potential at his coachability's
+rate times a coach factor (the head coach's player development with the coordinator on his side
+of the ball, 40%: 0.8 at 30, 1.0 at 50, 1.2 at 90). The signed class arrives as it is. Rosters
+are then topped up to 85, the thinnest groups first: half walk-ons (generated two-star
+freshmen), half FCS and junior-college transfers (three-stars a year or two in, sophomores or
+juniors). The real portal and the lower levels feed FBS rosters the same way.
+
+**Staff and coaches.** After a winning year your coordinators may be hired away (35% at a 90
+evaluation and a perfect record, scaling down to nothing at .550); a recruiter moves on 12% of
+the time; each opening has three candidates and Auto hires the best. The rest drift a point or
+two. Around the league head coaches retire (4% a year, more after ten years) or are fired after a
+bad three-year run (under .400 in the Power 4, .300 elsewhere, 55%); a new coach is drawn like
+the league's coaches at that job, a little below, and keeps the program's scheme unless his
+predecessor was fired. Coordinators turn over 15% a year. A new head coach recruits on his
+rating (the measured edge of real coaches applies only to them).
+
+**The Offseason screen** walks the steps: Departures (your leavers by kind, the league's numbers,
+the first round), Transfer portal round 1 and 2 (entrants with position and status filters, your
+offers, who he would be with you, your moves), Development (who improved), Staff (hire
+replacements, the coaching carousel), then Start the next season. **Sim to next season** runs
+every step on Auto. Your program's history (record, final AP rank, titles, class rank, players
+drafted) grows a row a year.
+
 ## Player stat lines against real box scores
 
 `tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed

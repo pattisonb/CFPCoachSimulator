@@ -1,0 +1,294 @@
+{
+ "seed": 7,
+ "team": "ohio-state",
+ "seasons": [
+  {
+   "year": 2026,
+   "record": [
+    12,
+    2
+   ],
+   "champion": "notre-dame",
+   "top10": [],
+   "team_rating": {
+    "mean": 59.41,
+    "sd": 6.68,
+    "max": 75.7,
+    "min": 49.8,
+    "p4": 64.89,
+    "g5": 54.08
+   },
+   "starters_ea": {
+    "CB": 75.88,
+    "DL": 75.84,
+    "K": 74.35,
+    "LB": 74.86,
+    "OL": 76.56,
+    "P": 73,
+    "QB": 77.73,
+    "RB": 80.4,
+    "S": 74.85,
+    "TE": 73.97,
+    "WR": 77.71
+   },
+   "players_ea": 71.74,
+   "stats_off": {
+    "pass_yards": 0.0546,
+    "pass_att": 0.037,
+    "rush_yards": 0.0742,
+    "rush_att": 0.0447,
+    "rec_yards": 0.106,
+    "receptions": 0.0588,
+    "tackles": 0.0304,
+    "sacks": 0.0705,
+    "interceptions": 0.0917,
+    "team_ppg": 0.0681,
+    "team_ypg": 0.0518,
+    "team_plays": 0.0156,
+    "team_ypp": 0.056,
+    "team_pass_ypg": 0.0525,
+    "team_rush_ypg": 0.0844
+   },
+   "ppg": 26.51,
+   "ypg": 376.3,
+   "offseason": {
+    "departures": {
+     "graduated": 2701,
+     "portal": 1140,
+     "draft": 249,
+     "undrafted": 16,
+     "quit": 138
+    },
+    "early_entrants": 53,
+    "draft_p4_share": 0.904,
+    "portal_entrants": 1140,
+    "portal_signed": 531,
+    "walk_ons": 863,
+    "released": 10,
+    "dev_gain_ea": 2.58,
+    "class_sizes": {
+     "mean": 20.7,
+     "min": 12,
+     "max": 35
+    },
+    "roster": {
+     "min": 85,
+     "max": 85
+    },
+    "classes": {
+     "FR": 0.279,
+     "FRRS": 0.092,
+     "JR": 0.072,
+     "JRRS": 0.153,
+     "SO": 0.055,
+     "SORS": 0.137,
+     "SR": 0.069,
+     "SRRS": 0.144
+    },
+    "coaching_changes": {
+     "defensive_coordinator": 21,
+     "offensive_coordinator": 20,
+     "head_coach": 10
+    },
+    "staff_changes": 2
+   },
+   "seconds": {
+    "season": 16,
+    "offseason": 8,
+    "rollover": 6
+   }
+  },
+  {
+   "year": 2027,
+   "record": [
+    11,
+    3
+   ],
+   "champion": "notre-dame",
+   "top10": [],
+   "team_rating": {
+    "mean": 58.84,
+    "sd": 6.65,
+    "max": 75.1,
+    "min": 45.9,
+    "p4": 64.25,
+    "g5": 53.59
+   },
+   "starters_ea": {
+    "CB": 76.98,
+    "DL": 77.24,
+    "K": 76.58,
+    "LB": 74.34,
+    "OL": 75.38,
+    "P": 75.7,
+    "QB": 77.73,
+    "RB": 84.41,
+    "S": 75.33,
+    "TE": 75.13,
+    "WR": 80.39
+   },
+   "players_ea": 71.57,
+   "stats_off": {
+    "pass_yards": 0.0393,
+    "pass_att": 0.0411,
+    "rush_yards": 0.0658,
+    "rush_att": 0.0247,
+    "rec_yards": 0.2531,
+    "receptions": 0.1664,
+    "tackles": 0.0256,
+    "sacks": 0.0913,
+    "interceptions": 0.0709,
+    "team_ppg": 0.1216,
+    "team_ypg": 0.0652,
+    "team_plays": 0.0162,
+    "team_ypp": 0.0518,
+    "team_pass_ypg": 0.0468,
+    "team_rush_ypg": 0.1058
+   },
+   "ppg": 25.57,
+   "ypg": 367.5,
+   "offseason": {
+    "departures": {
+     "graduated": 2228,
+     "portal": 1104,
+     "quit": 133,
+     "draft": 249,
+     "undrafted": 12
+    },
+    "early_entrants": 48,
+    "draft_p4_share": 0.896,
+    "portal_entrants": 1104,
+    "portal_signed": 446,
+    "walk_ons": 574,
+    "released": 10,
+    "dev_gain_ea": 2.33,
+    "class_sizes": {
+     "mean": 19.7,
+     "min": 12,
+     "max": 30
+    },
+    "roster": {
+     "min": 85,
+     "max": 85
+    },
+    "classes": {
+     "FR": 0.255,
+     "FRRS": 0.16,
+     "JR": 0.047,
+     "JRRS": 0.137,
+     "SO": 0.101,
+     "SORS": 0.098,
+     "SR": 0.06,
+     "SRRS": 0.143
+    },
+    "coaching_changes": {
+     "offensive_coordinator": 18,
+     "defensive_coordinator": 19,
+     "head_coach": 5
+    },
+    "staff_changes": 1
+   },
+   "seconds": {
+    "season": 16,
+    "offseason": 6,
+    "rollover": 4
+   }
+  },
+  {
+   "year": 2028,
+   "record": [
+    11,
+    4
+   ],
+   "champion": "texas-a-m",
+   "top10": [],
+   "team_rating": {
+    "mean": 58.71,
+    "sd": 5.85,
+    "max": 74.9,
+    "min": 45.8,
+    "p4": 63.23,
+    "g5": 54.32
+   },
+   "starters_ea": {
+    "CB": 76.46,
+    "DL": 76.89,
+    "K": 77.83,
+    "LB": 73.64,
+    "OL": 75.72,
+    "P": 76.68,
+    "QB": 77.67,
+    "RB": 84.69,
+    "S": 74.92,
+    "TE": 75.28,
+    "WR": 80.09
+   },
+   "players_ea": 71.58,
+   "stats_off": {
+    "pass_yards": 0.0595,
+    "pass_att": 0.0539,
+    "rush_yards": 0.0534,
+    "rush_att": 0.0223,
+    "rec_yards": 0.163,
+    "receptions": 0.1258,
+    "tackles": 0.0207,
+    "sacks": 0.1087,
+    "interceptions": 0.0917,
+    "team_ppg": 0.0871,
+    "team_ypg": 0.071,
+    "team_plays": 0.0092,
+    "team_ypp": 0.0536,
+    "team_pass_ypg": 0.0582,
+    "team_rush_ypg": 0.1217
+   },
+   "ppg": 25.43,
+   "ypg": 364.4,
+   "offseason": {
+    "departures": {
+     "graduated": 2135,
+     "portal": 1085,
+     "quit": 155,
+     "draft": 249,
+     "undrafted": 14
+    },
+    "early_entrants": 69,
+    "draft_p4_share": 0.803,
+    "portal_entrants": 1085,
+    "portal_signed": 404,
+    "walk_ons": 551,
+    "released": 9,
+    "dev_gain_ea": 2.24,
+    "class_sizes": {
+     "mean": 19.5,
+     "min": 12,
+     "max": 28
+    },
+    "roster": {
+     "min": 85,
+     "max": 85
+    },
+    "classes": {
+     "FR": 0.253,
+     "FRRS": 0.143,
+     "JR": 0.082,
+     "JRRS": 0.095,
+     "SO": 0.096,
+     "SORS": 0.163,
+     "SR": 0.04,
+     "SRRS": 0.13
+    },
+    "coaching_changes": {
+     "offensive_coordinator": 28,
+     "head_coach": 10,
+     "defensive_coordinator": 28
+    },
+    "staff_changes": 1
+   },
+   "seconds": {
+    "season": 17,
+    "offseason": 5,
+    "rollover": 5
+   }
+  }
+ ]
+}
