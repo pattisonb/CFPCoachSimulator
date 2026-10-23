@@ -67,7 +67,7 @@ DEV_RATE = 0.75                                    # coachability's pace on our 
 # real players gain little in their first offseasons and most in their third and fourth (the real rosters
 # by years in college: four-stars +1, +1, +5.5): the pace by seasons already played in the program *tune*
 YEAR_CURVE = (0.45, 0.7, 1.35, 1.35, 1.0)
-PROGRAM_DEV = 0.10                                 # development rate per point of the program's recruiting baseline
+PROGRAM_DEV = 0.25                                 # development rate per point of the program's recruiting baseline
 COORD_SHARE = 0.4                                  # the coordinator's part of a player's coach factor
 RECRUITER_LEAVE = 0.12
 
