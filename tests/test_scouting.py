@@ -153,5 +153,22 @@ if __name__ == "__main__":
     assert all(abs(orc["reads"][pid]["g"][g][0] - (now[g] + off[g])) < 0.01 for g in recruiting.GROUPS)
     assert orc["reads"][pid]["looks"] == looks
     (season.SEASONS_DIR / f"{st['id']}.json").unlink()
+    # a career saved while recruits were kept in EA numbers converts on load: our ratings, overall
+    # and projected overall, true grades on our scale, each read still as far off as it was
+    import game_scale
+    import recruits
+    old = {"id": "old-save", "recruiting": {"attrs": sorted(recruits.generate_class(2027, 3)[0]["ratings_ea"]), "prospects": {}, "reads": {}}}
+    for q in recruits.generate_class(2027, 3)[:5]:
+        q["ratings_ea"] = [q["ratings_ea"][k] for k in old["recruiting"]["attrs"]]
+        q["potential_ea"] = [q["potential_ea"][k] for k in old["recruiting"]["attrs"]]
+        q["truth"] = {g: 70.0 for g in recruiting.GROUPS}
+        q["coachability"] = q.get("coachability") or "Steady Grinder"
+        old["recruiting"]["prospects"][q["id"]] = q
+    first = next(iter(old["recruiting"]["prospects"]))
+    old["recruiting"]["reads"][first] = {"looks": 2, "by": {"60": 2}, "g": {g: [73.0, 0.05] for g in recruiting.GROUPS}}
+    assert game_scale.upgrade(old) and old["recruiting"]["scale"] == "ours"
+    q = old["recruiting"]["prospects"][first]
+    assert "ratings_ea" not in q and len(q["ratings"]) == len(game_scale.keys()) and 1 <= q["ovr"] <= q["pot_ovr"] <= 99
+    assert all(abs(old["recruiting"]["reads"][first]["g"][g][0] - (q["truth"][g] + 3.0)) < 0.01 for g in recruiting.GROUPS)
     print(f"scouting ok: ranges hold the truth {weak:.0%} (40), {avg:.0%} (60), {elite:.0%} (95); "
           f"widths {weak_w:.1f} vs {avg_w:.1f}; hidden {share:.0%}")

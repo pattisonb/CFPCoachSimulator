@@ -20,7 +20,7 @@ import recruiting
 ROOT = Path(__file__).resolve().parent
 SOURCE_TEAMS = ROOT / "cfb_sim_data" / "teams"
 EVALUATED = 300                    # the top 300 get a written evaluation and a public comp
-COMP_PERCENTILE = 0.30             # COMP_MAX_DISTANCE: this percentile of starter-to-starter distances *tune*
+COMP_PERCENTILE = 0.50             # COMP_MAX_DISTANCE: this percentile of starter-to-starter distances *tune*
 COMP_ATTRIBUTES = 10               # the attributes compared: those that track a starter's overall most at the position
 OUR_COMP_LOOKS = 3                 # looks before your staff offer their own comp
 READ_SHIFT = 0.5                   # rating points an attribute moves per grade point a read is off *tune*
@@ -57,37 +57,35 @@ SCHOOL_KINDS = ("High School", "High School", "High School", "Central", "North",
 
 @lru_cache(maxsize=1)
 def starter_pool() -> tuple[dict, ...]:
-    """The real 2026 depth-chart starters, with their EA ratings."""
+    """Today's starters in the league in play, with their skills on our scale and our overall."""
+    import game_scale
+    import season
+    keys = game_scale.keys()
     out = []
-    for path in sorted(SOURCE_TEAMS.glob("*.json")):
-        t = json.loads(path.read_text(encoding="utf-8"))
+    for slug, t in season.load_teams().items():
         if t.get("fictional"):
             continue
-        roster = {p["slug"]: p for p in t["roster"]}
-        for side in (t.get("starters") or {}).values():
-            for slugs in side.values():
-                for slug in slugs:
-                    p = roster.get(slug)
-                    if p and isinstance(p.get("ratings_ea"), dict):
-                        out.append({"name": p["name"], "slug": slug, "school": t["school_name"], "team": t["slug"],
-                                    "position": p["position"], "ratings_ea": p["ratings_ea"],
-                                    "overall_ea": p.get("overall_ea")})
+        for p in t["offense"] + t["defense"]:
+            if p.get("in_game") and p.get("skills") and p.get("role"):
+                out.append({"name": p["name"], "slug": p["slug"], "school": t.get("school") or t["name"], "team": slug,
+                            "position": p["role"], "skills": dict(zip(keys, p["skills"])), "overall": p.get("ovr")})
     return tuple(out)
 
 
 @lru_cache(maxsize=None)
 def _attributes(position: str) -> tuple[str, ...]:
-    starters = [s for s in starter_pool() if s["position"] == position and s.get("overall_ea")]
+    """The skills compared at a position: those that track a starter's overall most there."""
+    starters = [s for s in starter_pool() if s["position"] == position and s.get("overall") is not None]
     if len(starters) < 3:
         return ()
-    overall = [s["overall_ea"] for s in starters]
+    overall = [s["overall"] for s in starters]
 
     def corr(k: str) -> float:
         try:
-            return statistics.correlation([s["ratings_ea"].get(k, 0) for s in starters], overall)
-        except statistics.StatisticsError:      # an attribute every starter shares
+            return statistics.correlation([s["skills"].get(k, 0) for s in starters], overall)
+        except statistics.StatisticsError:      # a skill every starter shares
             return 0.0
-    return tuple(sorted(starters[0]["ratings_ea"], key=lambda k: -corr(k))[:COMP_ATTRIBUTES])
+    return tuple(sorted(starters[0]["skills"], key=lambda k: -corr(k))[:COMP_ATTRIBUTES])
 
 
 def _distance(a: dict, b: dict, keys: tuple[str, ...]) -> float:
@@ -99,7 +97,7 @@ def comp_max_distance(position: str) -> float:
     """COMP_MAX_DISTANCE at a position: the 30th percentile of distances between its starters."""
     starters = [s for s in starter_pool() if s["position"] == position]
     keys = _attributes(position)
-    d = sorted(_distance(a["ratings_ea"], b["ratings_ea"], keys)
+    d = sorted(_distance(a["skills"], b["skills"], keys)
                for i, a in enumerate(starters) for b in starters[i + 1:])
     return d[int(COMP_PERCENTILE * (len(d) - 1))] if d else 0.0
 
@@ -111,25 +109,21 @@ def warm() -> None:
 
 
 def ceiling(state: dict, p: dict) -> dict:
-    """A prospect's projected ratings: what a comp is measured on."""
-    return recruiting.attributes(state, p, "potential_ea")
+    """A prospect's projected skills (his potential, our scale): what a comp is measured on."""
+    return recruiting.attributes(state, p, "potential")
 
 
 def comp(profile_vector: dict, position: str, pool) -> Optional[dict]:
-    """The nearest starter at the same EA position, or None when nobody is close enough."""
+    """The nearest starter at the same position, or None when nobody is close enough."""
     keys = _attributes(position)
     if not keys:
         return None
-    best = min((s for s in pool if s["position"] == position), key=lambda s: _distance(profile_vector, s["ratings_ea"], keys),
+    best = min((s for s in pool if s["position"] == position), key=lambda s: _distance(profile_vector, s["skills"], keys),
                default=None)
-    if best is None or _distance(profile_vector, best["ratings_ea"], keys) > comp_max_distance(position):
+    if best is None or _distance(profile_vector, best["skills"], keys) > comp_max_distance(position):
         return None
-    import build_teams
-    import season
     out = {k: best[k] for k in ("name", "slug", "school", "team", "position")}
-    # the starter's card overall: EA's only feeds it
-    out["overall"] = season.ea_house(build_teams.POSITION_MAP.get(best["position"], best["position"]), best["overall_ea"]) \
-        if best.get("overall_ea") else None
+    out["overall"] = best.get("overall")
     return out
 
 
@@ -196,8 +190,7 @@ def grade_detail(state: dict, p: dict, group: str, lo: float, hi: float) -> dict
     import season
     if group == "potential":
         import recruits
-        vals = [season.ea_house(engine_position(q), recruits.overall_ea(q["ea_position"], q["archetype"],
-                                                                         recruiting.attributes(state, q, "potential_ea"))) for q in peers]
+        vals = [q["pot_ovr"] for q in peers]
         mid = _middle(vals)
         pos = engine_position(p)
         return {"ratings": {"Projected overall": mid}, "peers": len(peers),
@@ -276,25 +269,23 @@ def group_keys(p: dict, group: str) -> tuple:
     return keys or tuple(k for k in card if rv2.ATTRIBUTES[k][1] == "Physical" and k != "football_iq")
 
 
-def game_attributes(state: dict, p: dict, field: str = "ratings_ea") -> dict[str, int]:
+def game_attributes(state: dict, p: dict, field: str = "ratings") -> dict[str, int]:
     """A prospect's attributes on the game's scale (his EA ratings, or potential with
-    field="potential_ea")."""
+    field="potential")."""
     return card_attributes(recruiting.attributes(state, p, field), p)
 
 
-def card_attributes(ea: dict, p: dict) -> dict[str, int]:
-    """EA ratings as a player card gets them (build_teams): through the source curve, the card's
-    composites, then the house scale (50 at the middle Power 4 starter at his position). EA's
-    numbers are only the input."""
+def card_attributes(ours: dict, p: dict) -> dict[str, int]:
+    """A prospect's player card attributes from his skills (our scale), exactly as a player's card
+    gets them (build_teams): the skills back through the frozen scale, the card's composites, then
+    the card scale (50 at the middle Power 4 starter at his position)."""
+    import game_scale
     import ratings as rv2
-    import recruits
-    import season
     pos = engine_position(p)
-    src = {k: recruits.curve(v) for k, v in ea.items()}
-    raw = rv2.raw_attributes(src, pos, pos)
+    raw = rv2.raw_attributes(game_scale.base_from_ours(ours, p.get("ea_position") or pos), pos, pos)
     group = rv2.card_group(pos, pos)
     group = "RB" if group == "FB" else group
-    scale = season._teams_meta.get("attribute_scale") or {}
+    scale = game_scale.card_scale()
     out = {}
     for k, v in raw.items():
         m, hi, lo = scale.get(f"{group}|{k}", (v, 1.5, 0.9))

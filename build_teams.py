@@ -39,6 +39,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Optional
 
+import game_scale
 import ratings as rv2   # ratings v2: the player attributes (docs/RATINGS_V2.md)
 
 ROOT = Path(__file__).resolve().parent
@@ -111,9 +112,10 @@ def map_player(p: dict, pos: str | None = None) -> dict:
         "position": pos,
         "source_position": p["position"],
         "overall": p["overall"],
-        # EA's own overall, before the source data's curve: the player card's overall comes
-        # from it (season.ea_house). The engine never reads it.
-        "ea_overall": p.get("overall_ea"),
+        # our overall (game_scale.py: the game's own 1-99 scale, 50 the middle Power 4 starter):
+        # the player card's overall. The engine never reads it.
+        "ovr": p["ovr"] if p.get("ovr") is not None else (game_scale.overall(game_scale.ours_from_base(r, p["position"]), p["position"])
+                                                          if game_scale.has_overall() else None),
         # identity for awards and the roster view: FR, FRRS, SO, SORS, JR, JRRS, SR, SRRS
         "class": p.get("class"),
         "height": p.get("height"),
@@ -190,11 +192,11 @@ RETURN_ATTR = "return_rating"
 # stretching by SPREAD_SCALE turns an ordinary raw value into an extreme one when the
 # position's starters bunch: linemen got coverage of 90-99 and a few starting receivers
 # route running of 1. A skill a position does not use is held to OFF_SKILL_RANGE; a core
-# skill (CORE_SKILLS, below) of an established player (EA overall CORE_FLOOR_EA or more)
+# skill (CORE_SKILLS, below) of an established player (our overall CORE_FLOOR_OVR or more)
 # keeps CORE_FLOOR. Speed, strength, intelligence and endurance are left alone.
 PHYSICAL = ("speed", "strength", "intelligence", "endurance")   # every position uses these
 OFF_SKILL_RANGE = (25, 85)
-CORE_FLOOR, CORE_FLOOR_EA = 20, 60
+CORE_FLOOR, CORE_FLOOR_OVR = 20, 19
 CLAMP_EXTREMES = not os.environ.get("BUILD_NO_CLAMP")   # BUILD_NO_CLAMP=1 builds without it (for before/after tests)
 
 
@@ -229,6 +231,8 @@ def team_from_source(t: dict) -> dict:
         m["starter"] = p["slug"] in starters
         m["role"], m["depth"] = roles.get(p["slug"], (None, None))
         m["_src"] = p
+        # his skills on our scale (game_scale.py), what comps and the card overall read
+        m["skills"] = p.get("skills") or [v for v in game_scale.ours_from_base(p["ratings"], p["position"]).values()]
         if p.get("target_mult") is not None:          # a career's league: his share of targets, kept with him
             m["target_mult"] = p["target_mult"]
         # ratings v2: the attributes on the source scale (house_attributes puts them on ours),
@@ -460,7 +464,7 @@ def add_real_player(t: dict, a: dict) -> None:
     attrs = {k: template[k] for k in ATTRS if template and isinstance(template.get(k), (int, float))} or {k: NEUTRAL for k in ATTRS}
     attrs["attributes"] = dict((template or {}).get("attributes") or {})   # ratings v2, from the same template
     p = {"name": a["name"], "slug": slug, "position": a["position"], "source_position": a["position"],
-         "ea_overall": None, "class": None, "height": None, "weight": None, "jersey": None, "dev_trait": "Normal",
+         "ovr": None, "class": None, "height": None, "weight": None, "jersey": None, "dev_trait": "Normal",
          **attrs, RETURN_ATTR: 30, "role": a["role"],
          "depth": max((q.get("depth") or 0 for q in group), default=0) + 1, "starter": False, "added": True}
     p["overall"] = player_overall(p)
@@ -524,7 +528,7 @@ def clamp_extremes(p: dict) -> None:
         if not isinstance(v, (int, float)) or a in PHYSICAL and a not in core:
             continue
         if a in core:
-            if (p.get("ea_overall") or 0) >= CORE_FLOOR_EA and v < CORE_FLOOR:
+            if (p.get("ovr") or 0) >= CORE_FLOOR_OVR and v < CORE_FLOOR:
                 p[a] = CORE_FLOOR
         else:
             p[a] = max(lo, min(hi, v))
@@ -532,6 +536,7 @@ def clamp_extremes(p: dict) -> None:
 
 P4_CONFERENCES = {"ACC", "Big Ten", "Big 12", "SEC"}
 ATTR_BELOW = 0.6          # below the Power 4 starter mean a standard deviation is worth 60% as much (season.BELOW)
+USE_FROZEN = True         # game_scale.fit() builds once without the frozen scale, to measure it
 ATTR_SCALE: dict[str, list[float]] = {}   # "group|attribute" -> [Power 4 starter mean, slope above, slope below]
 
 
@@ -556,6 +561,9 @@ def attribute_scale(teams: list[dict]) -> dict:
                 if top and p["starter"]:
                     p4[key].append(v)
     ATTR_SCALE.clear()
+    if USE_FROZEN and game_scale.FILE.exists():   # the game's scale is frozen (game_scale.py): every season reads it the same
+        ATTR_SCALE.update(game_scale.card_scale())
+        return ATTR_SCALE
     for key, v in vals.items():
         ref = p4.get(key) if len(p4.get(key, [])) >= 10 else v
         sd = max(2.0, st.pstdev(ref)) if len(ref) > 1 else 6.0

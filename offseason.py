@@ -73,10 +73,9 @@ def _attrs(lgd: dict) -> list[str]:
     return lgd["attrs"]
 
 
-def house(pos: str, ea_overall: float) -> int:
-    import season
-    import build_teams
-    return season.ea_house(build_teams.POSITION_MAP.get(pos, pos), ea_overall)
+def house(pos: str, ovr: float) -> int:
+    """A league player's overall as shown: ours already ("o", game_scale.overall of his ratings)."""
+    return int(ovr)
 
 
 def _record(state: dict, slug: str) -> tuple[int, int]:
@@ -325,7 +324,7 @@ def _sign_classes(state: dict, lgd: dict) -> dict[str, int]:
         team = lgd["teams"][slug]
         src = {"slug": pid, "name": p["name"], "position": p["ea_position"], "class": "FR", "height": p["height"],
                "weight_lbs": p["weight"], "archetype": p["archetype"], "dev_trait": "Normal",
-               "ratings_ea": recruiting.attributes(state, p, "ratings_ea"), "potential_ea": recruiting.attributes(state, p),
+               "ours": recruiting.attributes(state, p, "ratings"), "potential_ours": recruiting.attributes(state, p),
                "coachability": p["coachability"], "stars": p["stars"], "hometown": p["hometown"]}
         c = lg.compact(src, attrs)
         c["j"] = _jersey(team["roster"], c["pos"], rng)
@@ -501,20 +500,18 @@ def coach_factor(coaches: dict, pos: str) -> float:
 
 
 def develop(p: dict, attrs: list[str], factor: float, rng: random.Random) -> int:
-    """One offseason's growth (recruits.develop on the league's form); returns the EA overall gained."""
+    """One offseason's growth on our scale: each skill closes part of its gap to potential at his
+    coachability's rate times `factor`; his overall follows (our formula). Returns the overall gained."""
     rate = recruits.RATE.get(p.get("c"), 0.27) * factor
-    before = dict(zip(attrs, p["r"]))
     new_r, new_g = [], []
     for v, g in zip(p["r"], p["g"]):
         step = int(round(min(g, g * rate * rng.uniform(0.8, 1.2)))) if g > 0 else 0
         new_r.append(min(99, v + step))
         new_g.append(g - step)
-    fit0 = recruits.overall_ea(p["pos"], p["a"], before)
+    before = p["o"]
     p["r"], p["g"] = new_r, new_g
-    fit1 = recruits.overall_ea(p["pos"], p["a"], dict(zip(attrs, new_r)))
-    gain = int(round(fit1 - fit0))
-    p["o"] = int(max(1, min(99, p["o"] + gain)))
-    return gain
+    p["o"] = lg.overall(p, attrs)
+    return p["o"] - before
 
 
 def _develop_all(state: dict) -> dict:
@@ -541,10 +538,21 @@ def _develop_all(state: dict) -> dict:
             p["yrs"] = p.get("yrs", 0) + 1
             gains.append(g)
             if slug == state["team"]:
-                mine.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "gain": house(p["pos"], p["o"]) - house(p["pos"], p["o"] - g),
-                             "overall": house(p["pos"], p["o"]), "why": why})
+                mine.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "gain": g, "overall": p["o"], "why": why})
     mine.sort(key=lambda r: -r["gain"])
     return {"mean_gain_ea": round(st.mean(gains), 2) if gains else 0.0, "mine": mine, "raised_ceilings": breakouts}
+
+
+def _newcomer(r: dict, slug: str) -> dict:
+    """A generated player (recruits.recruit, drawn by the model learned from real players) on our
+    scale, in the form league.compact takes."""
+    import game_scale
+    ours = game_scale.from_ea(r["ratings_ea"], r["ea_position"])
+    pot = game_scale.from_ea(r["potential_ea"], r["ea_position"])
+    return {"slug": slug, "name": r["name"], "position": r["ea_position"], "class": "FR", "height": r["height"],
+            "weight_lbs": r["weight"], "archetype": r["archetype"], "dev_trait": "Normal", "ours": ours,
+            "potential_ours": {k: max(v, ours.get(k, v)) for k, v in pot.items()}, "coachability": r["coachability"],
+            "stars": r["stars"], "hometown": r["hometown"]}
 
 
 def _fill_rosters(state: dict) -> dict:
@@ -578,8 +586,7 @@ def _fill_rosters(state: dict) -> dict:
                 r = recruits.recruit(rng, state["offseason"]["year"], band, taken)
                 walk_ons.setdefault((band, GROUP.get(r["ea_position"], "S")), []).append(r)
             r = pool.pop()
-            src = recruits.as_roster_player(r, lg.base_team(slug), f"w{state['offseason']['year']}-{slug}-{added}")
-            c = lg.compact(src, attrs)
+            c = lg.compact(_newcomer(r, f"w{state['offseason']['year']}-{slug}-{added}"), attrs)
             c["j"] = _jersey(t["roster"], c["pos"], rng)
             if band == "3":                           # from FCS or junior college: a year or two of college behind him
                 years = rng.choice((1, 2))

@@ -3,7 +3,7 @@
 (later sections of this file) the actions, the weekly step, signing and scouting.
 
 The recruiting state lives in `state["recruiting"]` (a Coach Career season only):
-    year, prospects {pid: prospect; ratings_ea and potential_ea as lists in `attrs` order}, lists {pid: {slug: action points}}, status {pid: {committed,
+    year, prospects {pid: prospect; "ratings" and "potential" on our scale (game_scale.py) as lists in `attrs` order}, lists {pid: {slug: action points}}, status {pid: {committed,
     signed, fcs}}, offers {slug: [pid]}, visits {pid: {slug: week}}, contacts {pid: {slug:
     {hc_week}}}, hours {slug: hours left}, nil {slug: {budget, held {pid: points}}},
     revealed {slug: {pid: [topic]}}, board [pid], log [event]
@@ -20,6 +20,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
+import game_scale
 import recruits
 
 ROOT = Path(__file__).resolve().parent
@@ -58,7 +59,7 @@ NIL_VALUE = {5: 0.04, 4: 0.07, 3: 0.12, 2: 0.15}   # interest per NIL point by s
 NIL_FLOOR = 30
 ROSTER_LIMIT = 85                          # the game's rosters carry the 85 scholarship players
 MIN_OPEN = 12
-EARLY_LEAVERS = 8                          # returning players expected to leave early (draft, transfers, quitting; offseason.py) *tune*
+EARLY_LEAVERS = 6                          # returning players expected to leave early (draft, transfers, quitting; offseason.py) *tune*
 CLASS_ROOM = 2                             # a class tops out this far over the school's real mean size *tune*
 OFFER_FACTOR = 1.5
 FCS_LINE = 4.0                             # best FBS interest under this: Leaning FCS *tune*
@@ -114,8 +115,8 @@ def _baseline(slug: str) -> float:
     return ((_team_model(slug).get("strength") or {}).get("baseline")) or -1.0
 
 
-def attributes(state: dict, p: dict, field: str = "potential_ea") -> dict[str, int]:
-    """A prospect's EA ratings ("ratings_ea") or potential ("potential_ea") by attribute."""
+def attributes(state: dict, p: dict, field: str = "potential") -> dict[str, int]:
+    """A prospect's ratings ("ratings") or potential ("potential") by skill, on our scale."""
     return dict(zip(state["recruiting"]["attrs"], p[field]))
 
 
@@ -177,19 +178,24 @@ def start(state: dict, year: int = 2027) -> None:
         hideable = p["stars"] == 2 or (p["stars"] == 3 and p["composite"] < HIDDEN_BELOW)
         p["hidden"] = hideable and random.Random(f"hidden-{year}-{state.get('rng_state', 0)}-{p['id']}").random() < HIDDEN_RATE
         prospects[p["id"]] = p
-    _truths(prospects)
-    # saved small: the EA ratings as lists in one key order (the house-scale copy is derived
-    # again from ratings_ea when a signee joins a roster)
-    attrs = sorted(next(iter(prospects.values()))["ratings_ea"]) if prospects else []
+    # the class is drawn by a model learned from real players and converted to our scale at once:
+    # only our ratings are kept (as lists in one key order), with our overall now and projected
+    attrs = game_scale.keys()
     for p in prospects.values():
-        p["ratings_ea"] = [p["ratings_ea"][k] for k in attrs]
-        p["potential_ea"] = [p["potential_ea"][k] for k in attrs]
-        p.pop("ratings", None)
+        ours = game_scale.from_ea(p.pop("ratings_ea"), p["ea_position"])
+        pot = game_scale.from_ea(p.pop("potential_ea"), p["ea_position"])
+        pot = {k: max(v, ours.get(k, v)) for k, v in pot.items()}
+        p["ratings"] = [ours.get(k, 50) for k in attrs]
+        p["potential"] = [pot.get(k, 50) for k in attrs]
+        p["ovr"], p["pot_ovr"] = game_scale.overall(ours, p["ea_position"]), game_scale.overall(pot, p["ea_position"])
+        for k in ("overall_ea", "overall"):
+            p.pop(k, None)
+    _truths(prospects, attrs)
     state["recruiting"] = {
         "year": year, "prospects": prospects, "lists": {pid: {} for pid in prospects},
         "status": {pid: {"committed": None, "signed": None, "fcs": False} for pid in prospects},
         "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
-        "boards": {}, "seed": state.get("rng_state", 0), "reads": {}, "attrs": attrs, "grades": "game",
+        "boards": {}, "seed": state.get("rng_state", 0), "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
     }
 
 
@@ -198,9 +204,8 @@ def upgrade_grades(state: dict) -> None:
     to the game's scale and each read keeps how far off it was (and its looks)."""
     rc = state["recruiting"]
     old = {pid: dict(p["truth"]) for pid, p in rc["prospects"].items()}
-    fresh = {pid: {**p, "ratings_ea": attributes(state, p, "ratings_ea"), "potential_ea": attributes(state, p)}
-             for pid, p in rc["prospects"].items()}
-    _truths(fresh)
+    fresh = {pid: dict(p) for pid, p in rc["prospects"].items()}
+    _truths(fresh, rc["attrs"])
     for pid, p in rc["prospects"].items():
         p["truth"] = fresh[pid]["truth"]
     for pid, read in rc["reads"].items():
@@ -220,16 +225,16 @@ def _group(ea_position: str) -> str:
     return "LB" if pos in ("MLB", "ROLB", "LOLB") else pos
 
 
-def _ahead(slug: str, group: str, overall_ea: float) -> int:
+def _ahead(slug: str, group: str, ovr: float) -> int:
     """Returning players at his position group on that roster rated at least as high as him."""
-    return sum(1 for o in _returning(slug, group) if o >= overall_ea)
+    return sum(1 for o in _returning(slug, group) if o >= ovr)
 
 
 @lru_cache(maxsize=None)
 def _returning(slug: str, group: str) -> tuple:
     import season
     t = season.load_teams()[slug]
-    return tuple((p.get("ea_overall") or 0) for p in t["offense"] + t["defense"]
+    return tuple((p.get("ovr") or 0) for p in t["offense"] + t["defense"]
                  if ("LB" if p["position"] in ("MLB", "ROLB", "LOLB") else p["position"]) == group
                  and p.get("class") not in LEAVING)
 
@@ -256,7 +261,7 @@ def pull(state: dict, slug: str, pid: str, winning: bool = True) -> dict[str, fl
     z = _baseline(slug)
     return {
         "proximity": max(PROXIMITY_FLOOR, math.exp(-miles / PROXIMITY_MILES)),
-        "playing_time": max(0.1, 1 - _ahead(slug, group, p["overall_ea"]) / (2 * starters + 1)),
+        "playing_time": max(0.1, 1 - _ahead(slug, group, p["ovr"]) / (2 * starters + 1)),
         "prestige": _logistic(1.2 * z),
         **({"winning": min(1.0, on_field(state, slug, state["current_week"]))} if winning else {}),
         "nil": _logistic(1.4 * z),
@@ -841,17 +846,16 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
 
 # ----- scouting: truths, looks, reads and grades -------------------------------------------------------
 
-def _truths(prospects: dict) -> None:
+def _truths(prospects: dict, attrs: list[str]) -> None:
     """Each prospect's true grade per group, on the game's own scale: the average of the player-card
     attributes behind it (athleticism: Top Speed, Burst, Agility, Leaping; technique: his position's
     skills), and for potential his projected overall. Coachability comes from his label. Hidden from
     the player; reads estimate them."""
     import prospects as pr
-    import season
     for p in prospects.values():
-        cards = pr.card_attributes(p["ratings_ea"], p)
+        cards = pr.card_attributes(dict(zip(attrs, p["ratings"])), p)
         truth = {g: round(sum(cards[k] for k in pr.group_keys(p, g)) / len(pr.group_keys(p, g)), 1) for g in GROUPS[:-2]}
-        truth["potential"] = float(season.ea_house(pr.engine_position(p), recruits.overall_ea(p["ea_position"], p["archetype"], p["potential_ea"])))
+        truth["potential"] = float(p["pot_ovr"])
         truth["coachability"] = COACHABILITY_POINTS.get(p.get("coachability"), COACHABILITY_POINTS["Steady Grinder"])
         p["truth"] = truth
 

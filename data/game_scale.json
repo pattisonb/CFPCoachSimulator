@@ -1,0 +1,4566 @@
+{
+"keys": [
+"acceleration",
+"agility",
+"awareness",
+"bc_vision",
+"block_shedding",
+"break_sack",
+"break_tackle",
+"carrying",
+"catch_in_traffic",
+"catching",
+"change_of_direction",
+"deep_route_running",
+"finesse_moves",
+"hit_power",
+"impact_blocking",
+"injury",
+"juke_move",
+"jumping",
+"kick_accuracy",
+"kick_power",
+"kick_return",
+"lead_block",
+"long_snap",
+"man_coverage",
+"medium_route_running",
+"pass_block",
+"pass_block_finesse",
+"pass_block_power",
+"play_action",
+"play_recognition",
+"power_moves",
+"press",
+"pursuit",
+"release",
+"run_block",
+"run_block_finesse",
+"run_block_power",
+"short_route_running",
+"spectacular_catch",
+"speed",
+"spin_move",
+"stamina",
+"stiff_arm",
+"strength",
+"tackle",
+"throw_accuracy_deep",
+"throw_accuracy_mid",
+"throw_accuracy_short",
+"throw_on_the_run",
+"throw_power",
+"throw_under_pressure",
+"toughness",
+"trucking",
+"zone_coverage"
+],
+"skills": {
+"QB": {
+"acceleration": [
+76.0,
+8.153
+],
+"agility": [
+73.0,
+9.044
+],
+"awareness": [
+72.0,
+12.886
+],
+"bc_vision": [
+64.0,
+14.779
+],
+"block_shedding": [
+10.0,
+6.967
+],
+"break_sack": [
+65.0,
+14.34
+],
+"break_tackle": [
+54.0,
+10.296
+],
+"carrying": [
+48.0,
+9.442
+],
+"catch_in_traffic": [
+8.0,
+9.023
+],
+"catching": [
+20.5,
+11.371
+],
+"change_of_direction": [
+71.0,
+8.652
+],
+"deep_route_running": [
+6.0,
+5.989
+],
+"finesse_moves": [
+10.0,
+6.803
+],
+"hit_power": [
+19.5,
+12.149
+],
+"impact_blocking": [
+14.0,
+6.821
+],
+"injury": [
+82.0,
+7.222
+],
+"juke_move": [
+67.0,
+13.097
+],
+"jumping": [
+71.0,
+9.254
+],
+"kick_accuracy": [
+8.0,
+6.59
+],
+"kick_power": [
+8.0,
+8.287
+],
+"kick_return": [
+6.5,
+6.432
+],
+"lead_block": [
+13.0,
+6.145
+],
+"long_snap": [
+1.0,
+13.318
+],
+"man_coverage": [
+9.0,
+4.856
+],
+"medium_route_running": [
+6.0,
+6.569
+],
+"pass_block": [
+12.0,
+10.061
+],
+"pass_block_finesse": [
+9.0,
+3.873
+],
+"pass_block_power": [
+9.0,
+4.636
+],
+"play_action": [
+66.0,
+14.688
+],
+"play_recognition": [
+16.0,
+12.847
+],
+"power_moves": [
+10.5,
+8.219
+],
+"press": [
+9.0,
+4.618
+],
+"pursuit": [
+16.0,
+12.4
+],
+"release": [
+10.0,
+8.845
+],
+"run_block": [
+16.0,
+10.209
+],
+"run_block_finesse": [
+10.0,
+4.613
+],
+"run_block_power": [
+10.0,
+4.674
+],
+"short_route_running": [
+8.0,
+7.281
+],
+"spectacular_catch": [
+9.0,
+10.849
+],
+"speed": [
+71.0,
+7.992
+],
+"spin_move": [
+60.5,
+11.857
+],
+"stamina": [
+82.0,
+7.148
+],
+"stiff_arm": [
+38.5,
+11.681
+],
+"strength": [
+44.0,
+8.896
+],
+"tackle": [
+15.0,
+10.67
+],
+"throw_accuracy_deep": [
+71.0,
+9.859
+],
+"throw_accuracy_mid": [
+75.0,
+8.733
+],
+"throw_accuracy_short": [
+76.0,
+8.379
+],
+"throw_on_the_run": [
+72.0,
+11.41
+],
+"throw_power": [
+80.0,
+6.835
+],
+"throw_under_pressure": [
+58.0,
+12.509
+],
+"toughness": [
+82.0,
+7.372
+],
+"trucking": [
+40.0,
+11.126
+],
+"zone_coverage": [
+10.0,
+12.246
+]
+},
+"RB": {
+"acceleration": [
+88,
+4.234
+],
+"agility": [
+80,
+6.301
+],
+"awareness": [
+63,
+13.327
+],
+"bc_vision": [
+69,
+11.206
+],
+"block_shedding": [
+15,
+6.875
+],
+"break_sack": [
+10,
+7.992
+],
+"break_tackle": [
+67,
+10.445
+],
+"carrying": [
+69,
+12.35
+],
+"catch_in_traffic": [
+40,
+8.285
+],
+"catching": [
+46,
+7.806
+],
+"change_of_direction": [
+76,
+6.352
+],
+"deep_route_running": [
+28,
+9.209
+],
+"finesse_moves": [
+9,
+3.685
+],
+"hit_power": [
+22,
+13.837
+],
+"impact_blocking": [
+22,
+9.728
+],
+"injury": [
+80,
+7.235
+],
+"juke_move": [
+73,
+9.14
+],
+"jumping": [
+76,
+5.185
+],
+"kick_accuracy": [
+8,
+4.115
+],
+"kick_power": [
+8,
+3.771
+],
+"kick_return": [
+67,
+14.624
+],
+"lead_block": [
+12,
+8.948
+],
+"long_snap": [
+1,
+15.021
+],
+"man_coverage": [
+16,
+12.405
+],
+"medium_route_running": [
+37,
+8.452
+],
+"pass_block": [
+28,
+6.376
+],
+"pass_block_finesse": [
+26,
+7.52
+],
+"pass_block_power": [
+27,
+7.237
+],
+"play_action": [
+9,
+4.204
+],
+"play_recognition": [
+22,
+9.659
+],
+"power_moves": [
+9,
+3.279
+],
+"press": [
+9,
+2.918
+],
+"pursuit": [
+21,
+11.676
+],
+"release": [
+34,
+10.88
+],
+"run_block": [
+19,
+6.532
+],
+"run_block_finesse": [
+9,
+8.576
+],
+"run_block_power": [
+10,
+7.795
+],
+"short_route_running": [
+44,
+7.39
+],
+"spectacular_catch": [
+42,
+8.891
+],
+"speed": [
+82,
+3.994
+],
+"spin_move": [
+69,
+8.862
+],
+"stamina": [
+76,
+6.546
+],
+"stiff_arm": [
+50,
+18.404
+],
+"strength": [
+50,
+10.82
+],
+"tackle": [
+16,
+10.128
+],
+"throw_accuracy_deep": [
+6,
+3.029
+],
+"throw_accuracy_mid": [
+7,
+3.329
+],
+"throw_accuracy_short": [
+7,
+4.695
+],
+"throw_on_the_run": [
+8,
+5.841
+],
+"throw_power": [
+8,
+6.494
+],
+"throw_under_pressure": [
+8,
+3.647
+],
+"toughness": [
+78,
+8.784
+],
+"trucking": [
+54,
+18.592
+],
+"zone_coverage": [
+11,
+11.945
+]
+},
+"WR": {
+"acceleration": [
+86,
+4.626
+],
+"agility": [
+82,
+5.585
+],
+"awareness": [
+63,
+12.955
+],
+"bc_vision": [
+63,
+9.844
+],
+"block_shedding": [
+15,
+7.157
+],
+"break_sack": [
+10,
+7.408
+],
+"break_tackle": [
+54,
+8.616
+],
+"carrying": [
+45,
+7.122
+],
+"catch_in_traffic": [
+58,
+12.525
+],
+"catching": [
+69,
+9.811
+],
+"change_of_direction": [
+78,
+6.282
+],
+"deep_route_running": [
+60,
+11.215
+],
+"finesse_moves": [
+9,
+4.298
+],
+"hit_power": [
+25,
+14.01
+],
+"impact_blocking": [
+10,
+8.678
+],
+"injury": [
+78,
+11.666
+],
+"juke_move": [
+71,
+9.038
+],
+"jumping": [
+82,
+5.502
+],
+"kick_accuracy": [
+8,
+4.338
+],
+"kick_power": [
+8,
+5.542
+],
+"kick_return": [
+67,
+17.077
+],
+"lead_block": [
+8,
+5.916
+],
+"long_snap": [
+2,
+7.045
+],
+"man_coverage": [
+23,
+13.924
+],
+"medium_route_running": [
+65,
+12.044
+],
+"pass_block": [
+8,
+2.305
+],
+"pass_block_finesse": [
+6,
+2.0
+],
+"pass_block_power": [
+8,
+2.032
+],
+"play_action": [
+9,
+5.317
+],
+"play_recognition": [
+22,
+9.975
+],
+"power_moves": [
+9,
+4.349
+],
+"press": [
+9,
+8.926
+],
+"pursuit": [
+22,
+13.23
+],
+"release": [
+58,
+15.204
+],
+"run_block": [
+20,
+10.21
+],
+"run_block_finesse": [
+9,
+8.771
+],
+"run_block_power": [
+8,
+8.953
+],
+"short_route_running": [
+65,
+11.702
+],
+"spectacular_catch": [
+75,
+9.811
+],
+"speed": [
+84,
+4.439
+],
+"spin_move": [
+65,
+8.609
+],
+"stamina": [
+76,
+5.651
+],
+"stiff_arm": [
+20,
+16.73
+],
+"strength": [
+37,
+11.244
+],
+"tackle": [
+19,
+10.438
+],
+"throw_accuracy_deep": [
+6,
+4.651
+],
+"throw_accuracy_mid": [
+6,
+6.058
+],
+"throw_accuracy_short": [
+6,
+7.143
+],
+"throw_on_the_run": [
+7,
+8.322
+],
+"throw_power": [
+7,
+9.092
+],
+"throw_under_pressure": [
+9,
+4.809
+],
+"toughness": [
+73,
+9.133
+],
+"trucking": [
+26,
+13.999
+],
+"zone_coverage": [
+16,
+13.393
+]
+},
+"TE": {
+"acceleration": [
+76.0,
+5.694
+],
+"agility": [
+67.0,
+7.811
+],
+"awareness": [
+64.0,
+13.115
+],
+"bc_vision": [
+52.0,
+8.688
+],
+"block_shedding": [
+26.5,
+12.256
+],
+"break_sack": [
+9.0,
+10.413
+],
+"break_tackle": [
+48.0,
+6.059
+],
+"carrying": [
+52.0,
+6.074
+],
+"catch_in_traffic": [
+61.0,
+9.553
+],
+"catching": [
+71.0,
+7.784
+],
+"change_of_direction": [
+60.0,
+7.967
+],
+"deep_route_running": [
+43.0,
+6.158
+],
+"finesse_moves": [
+25.0,
+13.38
+],
+"hit_power": [
+30.0,
+17.956
+],
+"impact_blocking": [
+39.5,
+9.579
+],
+"injury": [
+78.0,
+7.45
+],
+"juke_move": [
+52.0,
+11.363
+],
+"jumping": [
+75.5,
+6.949
+],
+"kick_accuracy": [
+8.0,
+5.121
+],
+"kick_power": [
+8.5,
+5.925
+],
+"kick_return": [
+38.5,
+9.248
+],
+"lead_block": [
+38.0,
+8.994
+],
+"long_snap": [
+16.0,
+16.379
+],
+"man_coverage": [
+12.0,
+7.766
+],
+"medium_route_running": [
+50.0,
+7.858
+],
+"pass_block": [
+32.0,
+6.925
+],
+"pass_block_finesse": [
+28.5,
+7.714
+],
+"pass_block_power": [
+27.5,
+7.569
+],
+"play_action": [
+10.0,
+6.019
+],
+"play_recognition": [
+15.0,
+10.732
+],
+"power_moves": [
+22.0,
+12.858
+],
+"press": [
+6.0,
+4.509
+],
+"pursuit": [
+28.0,
+14.184
+],
+"release": [
+50.0,
+8.286
+],
+"run_block": [
+40.0,
+6.044
+],
+"run_block_finesse": [
+34.0,
+7.916
+],
+"run_block_power": [
+33.0,
+6.897
+],
+"short_route_running": [
+58.0,
+7.637
+],
+"spectacular_catch": [
+73.0,
+8.968
+],
+"speed": [
+67.0,
+6.674
+],
+"spin_move": [
+46.0,
+11.2
+],
+"stamina": [
+78.0,
+8.893
+],
+"stiff_arm": [
+50.0,
+8.303
+],
+"strength": [
+52.0,
+9.046
+],
+"tackle": [
+28.5,
+12.934
+],
+"throw_accuracy_deep": [
+6.0,
+7.458
+],
+"throw_accuracy_mid": [
+8.0,
+7.95
+],
+"throw_accuracy_short": [
+8.0,
+9.137
+],
+"throw_on_the_run": [
+10.0,
+9.561
+],
+"throw_power": [
+7.0,
+12.504
+],
+"throw_under_pressure": [
+8.0,
+5.809
+],
+"toughness": [
+78.0,
+7.241
+],
+"trucking": [
+50.0,
+8.462
+],
+"zone_coverage": [
+12.0,
+9.382
+]
+},
+"OL": {
+"acceleration": [
+50.0,
+8.566
+],
+"agility": [
+39.0,
+8.995
+],
+"awareness": [
+67.0,
+11.807
+],
+"bc_vision": [
+10.0,
+4.692
+],
+"block_shedding": [
+22.0,
+9.181
+],
+"break_sack": [
+8.0,
+3.984
+],
+"break_tackle": [
+10.0,
+4.027
+],
+"carrying": [
+27.0,
+4.826
+],
+"catch_in_traffic": [
+8.0,
+3.745
+],
+"catching": [
+8.0,
+4.169
+],
+"change_of_direction": [
+28.0,
+5.648
+],
+"deep_route_running": [
+8.0,
+3.396
+],
+"finesse_moves": [
+9.0,
+7.413
+],
+"hit_power": [
+27.0,
+12.901
+],
+"impact_blocking": [
+76.0,
+7.059
+],
+"injury": [
+80.0,
+9.304
+],
+"juke_move": [
+8.0,
+4.267
+],
+"jumping": [
+49.0,
+8.309
+],
+"kick_accuracy": [
+8.0,
+4.44
+],
+"kick_power": [
+8.0,
+4.342
+],
+"kick_return": [
+8.0,
+3.743
+],
+"lead_block": [
+67.0,
+8.333
+],
+"long_snap": [
+6.0,
+10.38
+],
+"man_coverage": [
+8.0,
+3.102
+],
+"medium_route_running": [
+8.0,
+3.387
+],
+"pass_block": [
+65.0,
+9.764
+],
+"pass_block_finesse": [
+61.0,
+10.715
+],
+"pass_block_power": [
+71.0,
+9.614
+],
+"play_action": [
+9.0,
+4.529
+],
+"play_recognition": [
+10.0,
+7.838
+],
+"power_moves": [
+25.0,
+12.106
+],
+"press": [
+8.0,
+3.023
+],
+"pursuit": [
+8.0,
+7.073
+],
+"release": [
+12.0,
+4.563
+],
+"run_block": [
+61.0,
+8.567
+],
+"run_block_finesse": [
+63.0,
+8.688
+],
+"run_block_power": [
+63.0,
+10.046
+],
+"short_route_running": [
+8.0,
+3.325
+],
+"spectacular_catch": [
+8.0,
+4.35
+],
+"speed": [
+39.0,
+7.009
+],
+"spin_move": [
+8.0,
+3.647
+],
+"stamina": [
+76.0,
+8.321
+],
+"stiff_arm": [
+10.0,
+4.748
+],
+"strength": [
+78.0,
+6.441
+],
+"tackle": [
+10.0,
+7.248
+],
+"throw_accuracy_deep": [
+6.0,
+2.053
+],
+"throw_accuracy_mid": [
+6.0,
+2.062
+],
+"throw_accuracy_short": [
+6.0,
+2.0
+],
+"throw_on_the_run": [
+6.0,
+2.143
+],
+"throw_power": [
+6.0,
+2.2
+],
+"throw_under_pressure": [
+8.0,
+4.329
+],
+"toughness": [
+78.0,
+6.864
+],
+"trucking": [
+10.0,
+4.658
+],
+"zone_coverage": [
+8.0,
+2.93
+]
+},
+"DL": {
+"acceleration": [
+69.0,
+12.278
+],
+"agility": [
+52.0,
+13.658
+],
+"awareness": [
+67.0,
+11.413
+],
+"bc_vision": [
+8.0,
+5.521
+],
+"block_shedding": [
+63.0,
+10.685
+],
+"break_sack": [
+9.0,
+3.721
+],
+"break_tackle": [
+10.0,
+5.078
+],
+"carrying": [
+27.5,
+5.074
+],
+"catch_in_traffic": [
+8.0,
+5.65
+],
+"catching": [
+9.0,
+9.329
+],
+"change_of_direction": [
+43.0,
+13.018
+],
+"deep_route_running": [
+8.0,
+3.65
+],
+"finesse_moves": [
+54.0,
+16.23
+],
+"hit_power": [
+71.0,
+7.264
+],
+"impact_blocking": [
+54.0,
+13.105
+],
+"injury": [
+82.0,
+8.748
+],
+"juke_move": [
+8.0,
+8.885
+],
+"jumping": [
+60.0,
+11.158
+],
+"kick_accuracy": [
+8.0,
+4.125
+],
+"kick_power": [
+8.0,
+3.852
+],
+"kick_return": [
+9.0,
+3.361
+],
+"lead_block": [
+27.0,
+11.238
+],
+"long_snap": [
+2.0,
+3.216
+],
+"man_coverage": [
+9.0,
+9.233
+],
+"medium_route_running": [
+8.0,
+4.09
+],
+"pass_block": [
+37.0,
+13.08
+],
+"pass_block_finesse": [
+28.0,
+11.533
+],
+"pass_block_power": [
+23.0,
+9.972
+],
+"play_action": [
+9.0,
+3.82
+],
+"play_recognition": [
+65.0,
+11.372
+],
+"power_moves": [
+69.0,
+10.417
+],
+"press": [
+8.0,
+5.458
+],
+"pursuit": [
+71.0,
+10.854
+],
+"release": [
+11.0,
+5.224
+],
+"run_block": [
+28.0,
+11.808
+],
+"run_block_finesse": [
+25.0,
+10.287
+],
+"run_block_power": [
+36.0,
+12.898
+],
+"short_route_running": [
+8.0,
+4.065
+],
+"spectacular_catch": [
+8.0,
+6.001
+],
+"speed": [
+53.0,
+12.878
+],
+"spin_move": [
+8.0,
+7.557
+],
+"stamina": [
+71.0,
+8.493
+],
+"stiff_arm": [
+10.0,
+7.339
+],
+"strength": [
+71.0,
+11.116
+],
+"tackle": [
+68.0,
+7.634
+],
+"throw_accuracy_deep": [
+6.0,
+2.08
+],
+"throw_accuracy_mid": [
+6.0,
+2.0
+],
+"throw_accuracy_short": [
+6.0,
+2.063
+],
+"throw_on_the_run": [
+6.0,
+2.004
+],
+"throw_power": [
+6.0,
+2.235
+],
+"throw_under_pressure": [
+9.0,
+3.746
+],
+"toughness": [
+80.0,
+9.168
+],
+"trucking": [
+10.5,
+7.673
+],
+"zone_coverage": [
+10.0,
+13.007
+]
+},
+"LB": {
+"acceleration": [
+78.0,
+5.09
+],
+"agility": [
+67.0,
+6.231
+],
+"awareness": [
+73.0,
+11.651
+],
+"bc_vision": [
+14.0,
+12.834
+],
+"block_shedding": [
+56.0,
+10.195
+],
+"break_sack": [
+9.0,
+4.723
+],
+"break_tackle": [
+10.0,
+8.646
+],
+"carrying": [
+29.0,
+9.722
+],
+"catch_in_traffic": [
+15.5,
+11.402
+],
+"catching": [
+38.0,
+10.18
+],
+"change_of_direction": [
+61.0,
+5.992
+],
+"deep_route_running": [
+9.0,
+4.029
+],
+"finesse_moves": [
+42.5,
+16.129
+],
+"hit_power": [
+73.0,
+8.338
+],
+"impact_blocking": [
+47.0,
+10.77
+],
+"injury": [
+82.0,
+7.909
+],
+"juke_move": [
+19.0,
+13.671
+],
+"jumping": [
+71.0,
+6.018
+],
+"kick_accuracy": [
+9.0,
+4.608
+],
+"kick_power": [
+8.0,
+6.062
+],
+"kick_return": [
+14.0,
+7.576
+],
+"lead_block": [
+25.5,
+6.884
+],
+"long_snap": [
+7.0,
+5.227
+],
+"man_coverage": [
+45.0,
+6.908
+],
+"medium_route_running": [
+9.0,
+4.55
+],
+"pass_block": [
+32.5,
+11.404
+],
+"pass_block_finesse": [
+28.0,
+9.935
+],
+"pass_block_power": [
+22.5,
+7.362
+],
+"play_action": [
+9.0,
+3.328
+],
+"play_recognition": [
+73.0,
+12.128
+],
+"power_moves": [
+43.0,
+12.938
+],
+"press": [
+16.5,
+12.56
+],
+"pursuit": [
+78.0,
+7.478
+],
+"release": [
+15.0,
+4.564
+],
+"run_block": [
+26.0,
+8.93
+],
+"run_block_finesse": [
+23.0,
+6.888
+],
+"run_block_power": [
+33.0,
+10.995
+],
+"short_route_running": [
+9.0,
+5.179
+],
+"spectacular_catch": [
+10.0,
+12.313
+],
+"speed": [
+69.0,
+5.734
+],
+"spin_move": [
+16.0,
+12.086
+],
+"stamina": [
+76.0,
+7.981
+],
+"stiff_arm": [
+12.0,
+11.089
+],
+"strength": [
+58.0,
+7.25
+],
+"tackle": [
+75.5,
+8.622
+],
+"throw_accuracy_deep": [
+6.0,
+2.484
+],
+"throw_accuracy_mid": [
+6.0,
+2.154
+],
+"throw_accuracy_short": [
+6.0,
+2.531
+],
+"throw_on_the_run": [
+6.0,
+2.21
+],
+"throw_power": [
+6.0,
+6.205
+],
+"throw_under_pressure": [
+9.0,
+3.431
+],
+"toughness": [
+82.0,
+6.856
+],
+"trucking": [
+15.0,
+11.729
+],
+"zone_coverage": [
+54.0,
+8.648
+]
+},
+"CB": {
+"acceleration": [
+88,
+3.596
+],
+"agility": [
+82,
+4.562
+],
+"awareness": [
+61,
+12.037
+],
+"bc_vision": [
+40,
+13.797
+],
+"block_shedding": [
+26,
+7.355
+],
+"break_sack": [
+9,
+6.399
+],
+"break_tackle": [
+19,
+17.529
+],
+"carrying": [
+32,
+8.398
+],
+"catch_in_traffic": [
+21,
+13.465
+],
+"catching": [
+46,
+7.762
+],
+"change_of_direction": [
+80,
+4.749
+],
+"deep_route_running": [
+10,
+11.82
+],
+"finesse_moves": [
+11,
+5.297
+],
+"hit_power": [
+46,
+10.309
+],
+"impact_blocking": [
+23,
+7.836
+],
+"injury": [
+78,
+9.784
+],
+"juke_move": [
+56,
+13.85
+],
+"jumping": [
+82,
+5.049
+],
+"kick_accuracy": [
+8,
+4.537
+],
+"kick_power": [
+8,
+4.503
+],
+"kick_return": [
+39,
+14.902
+],
+"lead_block": [
+28,
+7.77
+],
+"long_snap": [
+2,
+5.472
+],
+"man_coverage": [
+61,
+10.19
+],
+"medium_route_running": [
+10,
+11.9
+],
+"pass_block": [
+34,
+12.566
+],
+"pass_block_finesse": [
+32,
+10.608
+],
+"pass_block_power": [
+23,
+7.046
+],
+"play_action": [
+9,
+4.727
+],
+"play_recognition": [
+63,
+11.994
+],
+"power_moves": [
+10,
+4.688
+],
+"press": [
+61,
+11.904
+],
+"pursuit": [
+61,
+7.696
+],
+"release": [
+19,
+9.257
+],
+"run_block": [
+27,
+7.877
+],
+"run_block_finesse": [
+26,
+6.285
+],
+"run_block_power": [
+36,
+11.896
+],
+"short_route_running": [
+11,
+12.648
+],
+"spectacular_catch": [
+22,
+18.466
+],
+"speed": [
+84,
+4.3
+],
+"spin_move": [
+49,
+10.628
+],
+"stamina": [
+82,
+7.045
+],
+"stiff_arm": [
+16,
+9.074
+],
+"strength": [
+34,
+7.572
+],
+"tackle": [
+42,
+8.512
+],
+"throw_accuracy_deep": [
+6,
+4.076
+],
+"throw_accuracy_mid": [
+6,
+4.773
+],
+"throw_accuracy_short": [
+6,
+5.275
+],
+"throw_on_the_run": [
+6,
+6.47
+],
+"throw_power": [
+6,
+6.14
+],
+"throw_under_pressure": [
+8,
+4.615
+],
+"toughness": [
+75,
+8.63
+],
+"trucking": [
+10,
+6.842
+],
+"zone_coverage": [
+65,
+11.625
+]
+},
+"S": {
+"acceleration": [
+84,
+3.801
+],
+"agility": [
+78,
+4.358
+],
+"awareness": [
+71,
+13.57
+],
+"bc_vision": [
+37,
+15.406
+],
+"block_shedding": [
+38,
+7.524
+],
+"break_sack": [
+11,
+7.172
+],
+"break_tackle": [
+17,
+15.695
+],
+"carrying": [
+29,
+14.918
+],
+"catch_in_traffic": [
+23,
+14.523
+],
+"catching": [
+49,
+8.593
+],
+"change_of_direction": [
+75,
+4.438
+],
+"deep_route_running": [
+9,
+10.82
+],
+"finesse_moves": [
+10,
+8.184
+],
+"hit_power": [
+67,
+10.528
+],
+"impact_blocking": [
+34,
+8.351
+],
+"injury": [
+82,
+7.036
+],
+"juke_move": [
+43,
+15.437
+],
+"jumping": [
+78,
+5.18
+],
+"kick_accuracy": [
+8,
+4.411
+],
+"kick_power": [
+8,
+4.206
+],
+"kick_return": [
+33,
+14.904
+],
+"lead_block": [
+29,
+7.199
+],
+"long_snap": [
+2,
+5.5
+],
+"man_coverage": [
+54,
+9.697
+],
+"medium_route_running": [
+9,
+10.873
+],
+"pass_block": [
+29,
+11.16
+],
+"pass_block_finesse": [
+32,
+10.214
+],
+"pass_block_power": [
+25,
+6.99
+],
+"play_action": [
+8,
+5.581
+],
+"play_recognition": [
+71,
+13.037
+],
+"power_moves": [
+14,
+7.354
+],
+"press": [
+52,
+9.636
+],
+"pursuit": [
+73,
+7.411
+],
+"release": [
+19,
+8.14
+],
+"run_block": [
+22,
+5.986
+],
+"run_block_finesse": [
+26,
+5.958
+],
+"run_block_power": [
+38,
+11.78
+],
+"short_route_running": [
+9,
+11.925
+],
+"spectacular_catch": [
+27,
+18.524
+],
+"speed": [
+78,
+4.095
+],
+"spin_move": [
+40,
+13.342
+],
+"stamina": [
+84,
+6.482
+],
+"stiff_arm": [
+28,
+11.391
+],
+"strength": [
+44,
+8.032
+],
+"tackle": [
+54,
+9.725
+],
+"throw_accuracy_deep": [
+6,
+6.015
+],
+"throw_accuracy_mid": [
+6,
+6.131
+],
+"throw_accuracy_short": [
+7,
+6.681
+],
+"throw_on_the_run": [
+6,
+8.491
+],
+"throw_power": [
+7,
+7.935
+],
+"throw_under_pressure": [
+9,
+5.431
+],
+"toughness": [
+80,
+7.055
+],
+"trucking": [
+27,
+11.562
+],
+"zone_coverage": [
+61,
+11.666
+]
+},
+"K": {
+"acceleration": [
+43.0,
+6.656
+],
+"agility": [
+40.0,
+9.399
+],
+"awareness": [
+40.0,
+8.503
+],
+"bc_vision": [
+8.5,
+4.431
+],
+"block_shedding": [
+9.0,
+2.856
+],
+"break_sack": [
+8.0,
+4.118
+],
+"break_tackle": [
+8.0,
+4.473
+],
+"carrying": [
+28.0,
+5.95
+],
+"catch_in_traffic": [
+8.0,
+3.962
+],
+"catching": [
+8.0,
+4.85
+],
+"change_of_direction": [
+36.0,
+10.953
+],
+"deep_route_running": [
+9.0,
+4.331
+],
+"finesse_moves": [
+9.0,
+3.871
+],
+"hit_power": [
+8.5,
+4.506
+],
+"impact_blocking": [
+9.0,
+4.965
+],
+"injury": [
+73.0,
+7.256
+],
+"juke_move": [
+9.0,
+5.133
+],
+"jumping": [
+39.5,
+10.382
+],
+"kick_accuracy": [
+70.0,
+12.446
+],
+"kick_power": [
+84.0,
+6.538
+],
+"kick_return": [
+8.0,
+4.995
+],
+"lead_block": [
+9.0,
+5.077
+],
+"long_snap": [
+6.0,
+2.157
+],
+"man_coverage": [
+9.0,
+5.87
+],
+"medium_route_running": [
+8.5,
+3.66
+],
+"pass_block": [
+10.0,
+5.041
+],
+"pass_block_finesse": [
+9.0,
+5.055
+],
+"pass_block_power": [
+9.0,
+5.444
+],
+"play_action": [
+8.0,
+3.425
+],
+"play_recognition": [
+9.0,
+3.379
+],
+"power_moves": [
+9.0,
+4.474
+],
+"press": [
+10.0,
+5.593
+],
+"pursuit": [
+8.0,
+6.046
+],
+"release": [
+16.0,
+4.985
+],
+"run_block": [
+6.0,
+3.079
+],
+"run_block_finesse": [
+8.0,
+3.821
+],
+"run_block_power": [
+8.0,
+4.761
+],
+"short_route_running": [
+8.0,
+3.374
+],
+"spectacular_catch": [
+9.0,
+4.173
+],
+"speed": [
+44.0,
+6.653
+],
+"spin_move": [
+9.0,
+5.278
+],
+"stamina": [
+73.0,
+6.61
+],
+"stiff_arm": [
+9.0,
+3.737
+],
+"strength": [
+21.0,
+5.833
+],
+"tackle": [
+8.5,
+4.294
+],
+"throw_accuracy_deep": [
+6.0,
+2.408
+],
+"throw_accuracy_mid": [
+5.0,
+2.236
+],
+"throw_accuracy_short": [
+6.0,
+3.5
+],
+"throw_on_the_run": [
+6.0,
+2.0
+],
+"throw_power": [
+6.0,
+3.856
+],
+"throw_under_pressure": [
+8.0,
+4.475
+],
+"toughness": [
+71.0,
+12.655
+],
+"trucking": [
+8.0,
+3.8
+],
+"zone_coverage": [
+9.0,
+5.951
+]
+},
+"P": {
+"acceleration": [
+42.0,
+8.503
+],
+"agility": [
+33.5,
+10.924
+],
+"awareness": [
+42.0,
+8.959
+],
+"bc_vision": [
+8.0,
+6.357
+],
+"block_shedding": [
+9.0,
+3.354
+],
+"break_sack": [
+8.0,
+3.11
+],
+"break_tackle": [
+8.0,
+5.846
+],
+"carrying": [
+28.0,
+5.616
+],
+"catch_in_traffic": [
+9.0,
+4.777
+],
+"catching": [
+9.0,
+5.304
+],
+"change_of_direction": [
+28.0,
+11.835
+],
+"deep_route_running": [
+8.0,
+3.063
+],
+"finesse_moves": [
+9.0,
+4.367
+],
+"hit_power": [
+8.0,
+3.587
+],
+"impact_blocking": [
+9.0,
+4.88
+],
+"injury": [
+75.0,
+6.986
+],
+"juke_move": [
+10.0,
+7.719
+],
+"jumping": [
+42.5,
+10.651
+],
+"kick_accuracy": [
+61.5,
+15.028
+],
+"kick_power": [
+79.0,
+7.903
+],
+"kick_return": [
+8.0,
+4.194
+],
+"lead_block": [
+9.0,
+3.89
+],
+"long_snap": [
+6.0,
+2.134
+],
+"man_coverage": [
+8.0,
+3.903
+],
+"medium_route_running": [
+9.0,
+3.015
+],
+"pass_block": [
+9.0,
+4.349
+],
+"pass_block_finesse": [
+9.0,
+4.716
+],
+"pass_block_power": [
+8.5,
+5.596
+],
+"play_action": [
+8.0,
+4.222
+],
+"play_recognition": [
+10.0,
+7.005
+],
+"power_moves": [
+8.0,
+4.481
+],
+"press": [
+9.0,
+4.356
+],
+"pursuit": [
+8.0,
+3.857
+],
+"release": [
+12.0,
+4.748
+],
+"run_block": [
+6.5,
+2.0
+],
+"run_block_finesse": [
+8.0,
+4.285
+],
+"run_block_power": [
+8.0,
+3.293
+],
+"short_route_running": [
+8.0,
+4.333
+],
+"spectacular_catch": [
+9.0,
+4.71
+],
+"speed": [
+42.0,
+8.668
+],
+"spin_move": [
+9.0,
+5.085
+],
+"stamina": [
+73.0,
+5.569
+],
+"stiff_arm": [
+9.0,
+5.586
+],
+"strength": [
+27.5,
+9.688
+],
+"tackle": [
+9.0,
+4.007
+],
+"throw_accuracy_deep": [
+6.5,
+2.604
+],
+"throw_accuracy_mid": [
+7.0,
+3.812
+],
+"throw_accuracy_short": [
+7.0,
+4.72
+],
+"throw_on_the_run": [
+5.5,
+2.33
+],
+"throw_power": [
+6.0,
+6.545
+],
+"throw_under_pressure": [
+8.0,
+4.396
+],
+"toughness": [
+75.0,
+12.385
+],
+"trucking": [
+9.0,
+5.258
+],
+"zone_coverage": [
+7.0,
+4.327
+]
+}
+},
+"card_scale": {
+"LB|top_speed": [
+69.0,
+2.6027,
+1.5616
+],
+"LB|burst": [
+76.0,
+2.8475,
+1.7085
+],
+"LB|agility": [
+63.5,
+2.7221,
+1.6332
+],
+"LB|strength": [
+56.0,
+1.9788,
+1.1873
+],
+"LB|leaping": [
+71.0,
+2.7907,
+1.6744
+],
+"LB|stamina": [
+76.0,
+1.7434,
+1.0461
+],
+"LB|durability": [
+80.5,
+2.4988,
+1.4993
+],
+"LB|football_iq": [
+69.0,
+1.0702,
+0.6421
+],
+"LB|tackling": [
+73.0,
+1.4135,
+0.8481
+],
+"LB|hit_power": [
+71.0,
+1.6373,
+0.9824
+],
+"LB|pursuit": [
+75.0,
+1.6771,
+1.0063
+],
+"LB|diagnosis": [
+69.0,
+1.0621,
+0.6373
+],
+"LB|block_shedding": [
+54.0,
+1.4205,
+0.8523
+],
+"LB|power_rush": [
+42.0,
+1.2257,
+0.7354
+],
+"LB|speed_rush": [
+40.0,
+0.9448,
+0.5669
+],
+"LB|man_coverage": [
+44.0,
+2.0724,
+1.2434
+],
+"LB|zone_coverage": [
+54.0,
+1.7816,
+1.069
+],
+"LB|ball_skills": [
+38.0,
+1.5482,
+0.9289
+],
+"RB|top_speed": [
+82.0,
+3.5742,
+2.1445
+],
+"RB|burst": [
+86.0,
+3.5218,
+2.1131
+],
+"RB|agility": [
+77.0,
+2.4743,
+1.4846
+],
+"RB|strength": [
+48.0,
+1.3418,
+0.8051
+],
+"RB|leaping": [
+76.0,
+2.9519,
+1.7711
+],
+"RB|stamina": [
+76.0,
+2.323,
+1.3938
+],
+"RB|durability": [
+80.0,
+2.214,
+1.3284
+],
+"RB|football_iq": [
+63.0,
+0.9293,
+0.5576
+],
+"RB|run_vision": [
+67.0,
+1.4322,
+0.8593
+],
+"RB|ball_security": [
+67.0,
+1.2451,
+0.747
+],
+"RB|power_running": [
+50.0,
+0.8291,
+0.4974
+],
+"RB|tackle_breaking": [
+67.0,
+1.6681,
+1.0008
+],
+"RB|hands": [
+44.0,
+1.806,
+1.0836
+],
+"RB|short_routes": [
+45.0,
+1.5405,
+0.9243
+],
+"RB|lead_block": [
+48.0,
+1.0319,
+0.6191
+],
+"RB|drive_block": [
+33.0,
+1.8571,
+1.1143
+],
+"RB|pass_anchor": [
+28.0,
+1.8961,
+1.1377
+],
+"OL|top_speed": [
+39.0,
+2.1401,
+1.2841
+],
+"OL|burst": [
+50.0,
+1.751,
+1.0506
+],
+"OL|agility": [
+33.5,
+2.1783,
+1.307
+],
+"OL|strength": [
+78.0,
+2.3288,
+1.3973
+],
+"OL|leaping": [
+49.0,
+1.8053,
+1.0832
+],
+"OL|stamina": [
+76.0,
+1.8027,
+1.0816
+],
+"OL|durability": [
+79.5,
+2.1191,
+1.2715
+],
+"OL|football_iq": [
+67.0,
+1.2704,
+0.7623
+],
+"OL|drive_block": [
+63.0,
+1.4931,
+0.8959
+],
+"OL|reach_block": [
+63.0,
+1.7265,
+1.0359
+],
+"OL|pass_anchor": [
+71.0,
+1.5603,
+0.9362
+],
+"OL|pass_footwork": [
+61.0,
+1.3999,
+0.8399
+],
+"OL|lead_block": [
+67.0,
+1.8001,
+1.0801
+],
+"OL|finish_block": [
+76.0,
+2.1248,
+1.2749
+],
+"QB|top_speed": [
+71.0,
+1.7969,
+1.0781
+],
+"QB|burst": [
+76.0,
+1.8044,
+1.0827
+],
+"QB|agility": [
+72.0,
+1.6242,
+0.9745
+],
+"QB|strength": [
+44.5,
+1.7034,
+1.0221
+],
+"QB|leaping": [
+69.0,
+1.5939,
+0.9564
+],
+"QB|stamina": [
+82.0,
+2.1903,
+1.3142
+],
+"QB|durability": [
+82.0,
+2.2271,
+1.3362
+],
+"QB|football_iq": [
+69.0,
+1.0687,
+0.6412
+],
+"QB|arm_strength": [
+78.0,
+2.3305,
+1.3983
+],
+"QB|short_accuracy": [
+75.0,
+1.7321,
+1.0393
+],
+"QB|mid_accuracy": [
+74.0,
+1.7002,
+1.0201
+],
+"QB|deep_accuracy": [
+67.0,
+1.5248,
+0.9149
+],
+"QB|throw_on_move": [
+71.0,
+1.3088,
+0.7853
+],
+"QB|pocket_poise": [
+58.0,
+1.2027,
+0.7216
+],
+"QB|play_action": [
+64.0,
+0.9589,
+0.5754
+],
+"QB|sack_escape": [
+65.0,
+0.9861,
+0.5917
+],
+"QB|decision_making": [
+63.6,
+1.1699,
+0.702
+],
+"QB|run_vision": [
+62.0,
+0.9513,
+0.5708
+],
+"QB|ball_security": [
+47.0,
+1.4935,
+0.8961
+],
+"QB|elusiveness": [
+61.0,
+1.1258,
+0.6755
+],
+"S|top_speed": [
+78.0,
+3.9414,
+2.3648
+],
+"S|burst": [
+84.0,
+3.753,
+2.2518
+],
+"S|agility": [
+74.5,
+3.5299,
+2.118
+],
+"S|strength": [
+44.0,
+1.7362,
+1.0417
+],
+"S|leaping": [
+78.0,
+2.6515,
+1.5909
+],
+"S|stamina": [
+80.0,
+1.897,
+1.1382
+],
+"S|durability": [
+80.0,
+2.2512,
+1.3507
+],
+"S|football_iq": [
+60.5,
+0.9543,
+0.5726
+],
+"S|zone_coverage": [
+58.0,
+1.2896,
+0.7737
+],
+"S|man_coverage": [
+50.0,
+1.5862,
+0.9517
+],
+"S|diagnosis": [
+61.0,
+0.9881,
+0.5929
+],
+"S|tackling": [
+52.0,
+1.5898,
+0.9539
+],
+"S|hit_power": [
+66.0,
+1.2776,
+0.7665
+],
+"S|pursuit": [
+69.0,
+1.7334,
+1.04
+],
+"S|ball_skills": [
+48.0,
+1.7325,
+1.0395
+],
+"S|block_shedding": [
+37.0,
+1.9509,
+1.1705
+],
+"S|return_skill": [
+32.5,
+1.0809,
+0.6485
+],
+"CB|top_speed": [
+82.0,
+3.3703,
+2.0222
+],
+"CB|burst": [
+86.0,
+3.5433,
+2.126
+],
+"CB|agility": [
+81.0,
+2.9192,
+1.7515
+],
+"CB|strength": [
+33.0,
+1.8685,
+1.1211
+],
+"CB|leaping": [
+82.0,
+2.7811,
+1.6687
+],
+"CB|stamina": [
+80.0,
+1.8872,
+1.1323
+],
+"CB|durability": [
+74.0,
+2.0594,
+1.2357
+],
+"CB|football_iq": [
+60.0,
+1.1561,
+0.6937
+],
+"CB|man_coverage": [
+60.0,
+1.3764,
+0.8258
+],
+"CB|zone_coverage": [
+61.0,
+1.2194,
+0.7316
+],
+"CB|press": [
+60.0,
+1.1616,
+0.697
+],
+"CB|ball_skills": [
+45.0,
+1.8453,
+1.1072
+],
+"CB|diagnosis": [
+60.0,
+1.157,
+0.6942
+],
+"CB|tackling": [
+40.0,
+1.5937,
+0.9562
+],
+"CB|pursuit": [
+61.0,
+1.8229,
+1.0938
+],
+"CB|hit_power": [
+44.0,
+1.3825,
+0.8295
+],
+"CB|return_skill": [
+38.0,
+1.0097,
+0.6058
+],
+"DL|top_speed": [
+54.0,
+1.2503,
+0.7502
+],
+"DL|burst": [
+69.0,
+1.2571,
+0.7543
+],
+"DL|agility": [
+47.5,
+1.2331,
+0.7399
+],
+"DL|strength": [
+69.0,
+1.3426,
+0.8055
+],
+"DL|leaping": [
+60.0,
+1.3862,
+0.8317
+],
+"DL|stamina": [
+70.0,
+1.5902,
+0.9541
+],
+"DL|durability": [
+79.0,
+1.938,
+1.1628
+],
+"DL|football_iq": [
+61.0,
+1.083,
+0.6498
+],
+"DL|power_rush": [
+67.0,
+1.2567,
+0.754
+],
+"DL|speed_rush": [
+54.0,
+0.9554,
+0.5733
+],
+"DL|block_shedding": [
+60.0,
+1.3559,
+0.8136
+],
+"DL|tackling": [
+67.0,
+1.9005,
+1.1403
+],
+"DL|hit_power": [
+69.0,
+1.8471,
+1.1083
+],
+"DL|pursuit": [
+67.0,
+1.3444,
+0.8066
+],
+"DL|diagnosis": [
+61.0,
+1.1239,
+0.6743
+],
+"RB|elusiveness": [
+71.0,
+2.1379,
+1.2827
+],
+"RB|stiff_arm": [
+48.0,
+0.834,
+0.5004
+],
+"RB|pass_footwork": [
+25.0,
+1.7718,
+1.0631
+],
+"RB|return_skill": [
+60.0,
+1.0479,
+0.6287
+],
+"TE|top_speed": [
+67.0,
+1.9339,
+1.1603
+],
+"TE|burst": [
+73.0,
+2.2008,
+1.3205
+],
+"TE|agility": [
+59.5,
+2.0358,
+1.2215
+],
+"TE|strength": [
+50.0,
+1.7102,
+1.0261
+],
+"TE|leaping": [
+73.0,
+1.7431,
+1.0458
+],
+"TE|stamina": [
+76.0,
+1.4375,
+0.8625
+],
+"TE|durability": [
+77.5,
+2.3955,
+1.4373
+],
+"TE|football_iq": [
+56.0,
+1.0607,
+0.6364
+],
+"TE|hands": [
+65.0,
+1.5688,
+0.9413
+],
+"TE|contested_catch": [
+57.0,
+1.6008,
+0.9605
+],
+"TE|short_routes": [
+54.0,
+1.8843,
+1.1306
+],
+"TE|mid_routes": [
+48.5,
+2.1556,
+1.2934
+],
+"TE|release": [
+47.0,
+1.3912,
+0.8347
+],
+"TE|drive_block": [
+33.5,
+2.2902,
+1.3741
+],
+"TE|reach_block": [
+33.0,
+2.1725,
+1.3035
+],
+"TE|pass_anchor": [
+28.0,
+1.7903,
+1.0742
+],
+"TE|tackle_breaking": [
+48.0,
+2.2983,
+1.379
+],
+"WR|top_speed": [
+82.0,
+3.4228,
+2.0537
+],
+"WR|burst": [
+84.0,
+3.2729,
+1.9637
+],
+"WR|agility": [
+78.0,
+2.5274,
+1.5164
+],
+"WR|strength": [
+37.0,
+1.3155,
+0.7893
+],
+"WR|leaping": [
+82.0,
+2.3472,
+1.4083
+],
+"WR|stamina": [
+76.0,
+2.1533,
+1.292
+],
+"WR|durability": [
+75.5,
+1.7376,
+1.0426
+],
+"WR|football_iq": [
+63.0,
+1.0146,
+0.6088
+],
+"WR|hands": [
+67.0,
+1.5387,
+0.9232
+],
+"WR|contested_catch": [
+58.0,
+1.1847,
+0.7108
+],
+"WR|highlight_catch": [
+76.0,
+1.6294,
+0.9777
+],
+"WR|short_routes": [
+65.0,
+1.2642,
+0.7585
+],
+"WR|mid_routes": [
+65.0,
+1.2381,
+0.7428
+],
+"WR|deep_routes": [
+60.0,
+1.2661,
+0.7597
+],
+"WR|release": [
+58.0,
+0.9403,
+0.5642
+],
+"WR|elusiveness": [
+67.0,
+1.6964,
+1.0178
+],
+"WR|tackle_breaking": [
+54.0,
+1.9168,
+1.1501
+],
+"WR|reach_block": [
+10.0,
+1.6496,
+0.9897
+],
+"WR|return_skill": [
+61.0,
+0.9861,
+0.5916
+],
+"P|punt_power": [
+79.0,
+2.3029,
+1.3818
+],
+"P|punt_accuracy": [
+60.0,
+1.0092,
+0.6055
+],
+"P|football_iq": [
+38.5,
+1.4776,
+0.8866
+],
+"P|stamina": [
+73.0,
+2.5788,
+1.5473
+],
+"K|kick_power": [
+84.0,
+2.0676,
+1.2406
+],
+"K|kick_accuracy": [
+69.0,
+1.1574,
+0.6944
+],
+"K|football_iq": [
+39.0,
+1.6709,
+1.0025
+],
+"K|stamina": [
+73.0,
+3.0073,
+1.8044
+]
+},
+"overall": {
+"QB": {
+"const": -28.3576,
+"w": {
+"acceleration": 0.04279,
+"agility": 0.13366,
+"awareness": 0.36696,
+"bc_vision": 0.0247,
+"block_shedding": -0.00777,
+"break_sack": 0.05016,
+"break_tackle": 0.04705,
+"carrying": 0.08541,
+"catch_in_traffic": 0.00183,
+"catching": -0.00165,
+"change_of_direction": -0.06481,
+"deep_route_running": 0.04302,
+"finesse_moves": -0.01048,
+"hit_power": -0.02572,
+"impact_blocking": 0.01268,
+"injury": 0.0023,
+"juke_move": 0.00799,
+"jumping": -0.01441,
+"kick_accuracy": 0.00914,
+"kick_power": -0.02751,
+"kick_return": 0.04803,
+"lead_block": -0.00733,
+"long_snap": 0.02129,
+"man_coverage": -0.00871,
+"medium_route_running": 0.01989,
+"pass_block": 0.00249,
+"pass_block_finesse": -0.0048,
+"pass_block_power": 0.04001,
+"play_action": 0.05918,
+"play_recognition": -0.01783,
+"power_moves": 0.04434,
+"press": -0.03399,
+"pursuit": -0.01036,
+"release": 0.00012,
+"run_block": -0.0069,
+"run_block_finesse": -0.02284,
+"run_block_power": 0.03493,
+"short_route_running": -0.03236,
+"spectacular_catch": 0.00345,
+"speed": 0.12312,
+"spin_move": 0.09905,
+"stamina": -0.02868,
+"stiff_arm": -0.06256,
+"strength": 0.03442,
+"tackle": 0.00853,
+"throw_accuracy_deep": 0.1563,
+"throw_accuracy_mid": 0.13083,
+"throw_accuracy_short": 0.07074,
+"throw_on_the_run": 0.00262,
+"throw_power": 0.11527,
+"throw_under_pressure": 0.0863,
+"toughness": 0.05417,
+"trucking": -0.00605,
+"zone_coverage": 0.00366
+},
+"r": 0.9725,
+"rmse": 2.54
+},
+"HB": {
+"const": -23.2219,
+"w": {
+"acceleration": 0.07432,
+"agility": 0.06052,
+"awareness": 0.1773,
+"bc_vision": 0.16243,
+"block_shedding": -0.00349,
+"break_sack": -0.00383,
+"break_tackle": 0.14279,
+"carrying": 0.18293,
+"catch_in_traffic": -0.02379,
+"catching": 0.03932,
+"change_of_direction": 0.0682,
+"deep_route_running": 0.01641,
+"finesse_moves": 0.01463,
+"hit_power": -0.01216,
+"impact_blocking": 0.00656,
+"injury": -0.00373,
+"juke_move": 0.14636,
+"jumping": -0.00853,
+"kick_accuracy": 0.00197,
+"kick_power": -0.00566,
+"kick_return": 0.00786,
+"lead_block": -0.01074,
+"long_snap": 0.00099,
+"man_coverage": 0.00108,
+"medium_route_running": 0.00072,
+"pass_block": 0.0038,
+"pass_block_finesse": -0.03057,
+"pass_block_power": 0.02722,
+"play_action": 0.00425,
+"play_recognition": -0.00441,
+"power_moves": 0.00897,
+"press": -0.01061,
+"pursuit": 0.00612,
+"release": 0.00088,
+"run_block": -0.01215,
+"run_block_finesse": 0.02825,
+"run_block_power": -0.01723,
+"short_route_running": 0.01422,
+"spectacular_catch": 0.01751,
+"speed": 0.05522,
+"spin_move": 0.16192,
+"stamina": -0.01272,
+"stiff_arm": 0.05213,
+"strength": 0.03593,
+"tackle": 0.01214,
+"throw_accuracy_deep": 0.01196,
+"throw_accuracy_mid": 0.00217,
+"throw_accuracy_short": -0.00132,
+"throw_on_the_run": -0.00159,
+"throw_power": -0.01629,
+"throw_under_pressure": -0.00132,
+"toughness": 0.06149,
+"trucking": 0.03283,
+"zone_coverage": -0.00312
+},
+"r": 0.9902,
+"rmse": 1.43
+},
+"FB": {
+"const": -6.2293,
+"w": {
+"acceleration": 0.02071,
+"agility": 0.02722,
+"awareness": 0.12326,
+"bc_vision": 0.03586,
+"block_shedding": -0.02706,
+"break_sack": 0.0511,
+"break_tackle": 0.02001,
+"carrying": 0.07699,
+"catch_in_traffic": -0.0163,
+"catching": 0.01716,
+"change_of_direction": 0.00852,
+"deep_route_running": -0.03139,
+"finesse_moves": -0.015,
+"hit_power": -0.00053,
+"impact_blocking": 0.08392,
+"injury": 0.00755,
+"juke_move": 0.04532,
+"jumping": -0.00886,
+"kick_accuracy": 0.02195,
+"kick_power": -0.03977,
+"kick_return": 0.02142,
+"lead_block": 0.07805,
+"long_snap": -0.01869,
+"man_coverage": 0.01542,
+"medium_route_running": -0.00892,
+"pass_block": 0.0069,
+"pass_block_finesse": -0.02224,
+"pass_block_power": 0.01525,
+"play_action": -0.06967,
+"play_recognition": -0.01111,
+"power_moves": -0.02837,
+"press": -0.02979,
+"pursuit": -0.01164,
+"release": 0.0377,
+"run_block": 0.05369,
+"run_block_finesse": 0.02924,
+"run_block_power": 0.04624,
+"short_route_running": 0.03237,
+"spectacular_catch": -0.02522,
+"speed": 0.01439,
+"spin_move": 0.05549,
+"stiff_arm": 0.01292,
+"strength": 0.05094,
+"tackle": -0.01179,
+"throw_accuracy_deep": 0.00551,
+"throw_accuracy_mid": 0.01195,
+"throw_accuracy_short": 0.03063,
+"throw_on_the_run": 0.04118,
+"throw_power": 0.0025,
+"throw_under_pressure": -0.00396,
+"toughness": 0.03909,
+"trucking": 0.01667,
+"zone_coverage": -0.02319
+},
+"r": 0.9793,
+"rmse": 3.02
+},
+"WR": {
+"const": -25.5029,
+"w": {
+"acceleration": 0.03101,
+"agility": 0.08238,
+"awareness": 0.17139,
+"bc_vision": 0.05021,
+"block_shedding": 0.00105,
+"break_sack": -0.00352,
+"break_tackle": 0.07051,
+"carrying": 0.057,
+"catch_in_traffic": 0.06605,
+"catching": 0.1654,
+"change_of_direction": 0.06533,
+"deep_route_running": 0.05674,
+"finesse_moves": -0.00945,
+"hit_power": 0.00061,
+"impact_blocking": 0.02144,
+"injury": -0.00946,
+"juke_move": 0.1338,
+"jumping": -0.00628,
+"kick_accuracy": -0.00242,
+"kick_power": -0.00579,
+"kick_return": -0.01513,
+"lead_block": -0.00301,
+"long_snap": 0.00476,
+"man_coverage": -0.00603,
+"medium_route_running": 0.16043,
+"pass_block": 0.019,
+"pass_block_finesse": 0.00168,
+"pass_block_power": -0.00763,
+"play_action": -0.00479,
+"play_recognition": 0.00198,
+"power_moves": 0.01608,
+"press": -0.00091,
+"pursuit": 0.00704,
+"release": 0.04665,
+"run_block": 0.0252,
+"run_block_finesse": -0.03303,
+"run_block_power": 0.02072,
+"short_route_running": 0.04222,
+"spectacular_catch": 0.07439,
+"speed": 0.06455,
+"spin_move": 0.06522,
+"stamina": -0.00095,
+"stiff_arm": 0.00483,
+"strength": 0.0213,
+"tackle": -0.01951,
+"throw_accuracy_deep": 0.01372,
+"throw_accuracy_mid": -0.02937,
+"throw_accuracy_short": -0.01394,
+"throw_on_the_run": 0.02073,
+"throw_power": 0.03798,
+"throw_under_pressure": 0.00555,
+"toughness": 0.01261,
+"trucking": 0.01791,
+"zone_coverage": -0.00229
+},
+"r": 0.989,
+"rmse": 1.71
+},
+"TE": {
+"const": -35.1145,
+"w": {
+"acceleration": 0.08065,
+"agility": 0.06867,
+"awareness": 0.28341,
+"bc_vision": 0.03114,
+"block_shedding": 0.05109,
+"break_sack": 0.01362,
+"break_tackle": 0.04699,
+"carrying": -0.02102,
+"catch_in_traffic": 0.14614,
+"catching": 0.09703,
+"change_of_direction": -0.01762,
+"deep_route_running": 0.08851,
+"finesse_moves": -0.03159,
+"hit_power": -0.01832,
+"impact_blocking": 0.0528,
+"injury": 0.01797,
+"juke_move": 0.02427,
+"jumping": 0.03938,
+"kick_accuracy": 0.01213,
+"kick_power": 0.00141,
+"kick_return": -0.00096,
+"lead_block": -0.00259,
+"long_snap": 0.01893,
+"man_coverage": 0.01362,
+"medium_route_running": 0.10506,
+"pass_block": 0.01324,
+"pass_block_finesse": 0.03456,
+"pass_block_power": 0.04452,
+"play_action": 0.01085,
+"play_recognition": 0.01094,
+"power_moves": 0.03849,
+"press": -0.01009,
+"pursuit": 0.01241,
+"release": 0.12413,
+"run_block": 0.07257,
+"run_block_finesse": 0.03828,
+"run_block_power": 0.00896,
+"short_route_running": 0.09852,
+"spectacular_catch": 0.15824,
+"speed": 0.05872,
+"spin_move": 0.03341,
+"stamina": -0.00295,
+"stiff_arm": -0.03338,
+"strength": 0.05885,
+"tackle": -0.04415,
+"throw_accuracy_deep": 0.04027,
+"throw_accuracy_mid": -0.03683,
+"throw_accuracy_short": -0.03656,
+"throw_on_the_run": -0.0012,
+"throw_power": 0.00704,
+"throw_under_pressure": -0.01799,
+"toughness": 0.01599,
+"trucking": 0.03378,
+"zone_coverage": -0.0108
+},
+"r": 0.9818,
+"rmse": 2.36
+},
+"LT": {
+"const": -27.2641,
+"w": {
+"acceleration": 0.06157,
+"agility": 0.00618,
+"awareness": 0.33997,
+"bc_vision": 0.01276,
+"block_shedding": -0.00488,
+"break_sack": -0.01248,
+"break_tackle": 0.0001,
+"carrying": -0.00865,
+"catch_in_traffic": 0.00421,
+"catching": 0.00605,
+"change_of_direction": -0.02953,
+"deep_route_running": 0.00385,
+"finesse_moves": 0.02441,
+"hit_power": -0.00714,
+"impact_blocking": 0.16317,
+"injury": 0.01635,
+"juke_move": 0.01743,
+"jumping": 0.0152,
+"kick_accuracy": 0.00625,
+"kick_power": 0.00465,
+"kick_return": -0.00936,
+"lead_block": 0.08131,
+"long_snap": 0.0117,
+"man_coverage": -0.01198,
+"medium_route_running": 0.00487,
+"pass_block": 0.17592,
+"pass_block_finesse": 0.13966,
+"pass_block_power": 0.05689,
+"play_action": 0.00224,
+"play_recognition": 0.00569,
+"power_moves": -0.0199,
+"press": 0.01423,
+"pursuit": -0.02094,
+"release": -0.00129,
+"run_block": 0.08601,
+"run_block_finesse": 0.1422,
+"run_block_power": 0.01865,
+"short_route_running": 0.01086,
+"spectacular_catch": -0.02293,
+"speed": 0.02625,
+"spin_move": -0.02331,
+"stamina": -0.03003,
+"stiff_arm": 0.01566,
+"strength": 0.1221,
+"tackle": 0.02867,
+"throw_accuracy_deep": 0.0038,
+"throw_accuracy_mid": -0.0036,
+"throw_on_the_run": -0.00967,
+"throw_power": 0.00028,
+"throw_under_pressure": 0.0057,
+"toughness": 0.11947,
+"trucking": -0.02507,
+"zone_coverage": 0.00803
+},
+"r": 0.9923,
+"rmse": 1.58
+},
+"LG": {
+"const": -29.1717,
+"w": {
+"acceleration": 0.06526,
+"agility": 0.01035,
+"awareness": 0.32378,
+"bc_vision": 0.02592,
+"block_shedding": -0.02468,
+"break_sack": 0.00088,
+"break_tackle": -0.00128,
+"carrying": 0.02425,
+"catch_in_traffic": 0.03217,
+"catching": -0.01495,
+"change_of_direction": -0.01818,
+"deep_route_running": 0.06893,
+"finesse_moves": 0.0338,
+"hit_power": 0.02854,
+"impact_blocking": 0.179,
+"injury": 0.01752,
+"juke_move": -0.01681,
+"jumping": -0.00078,
+"kick_accuracy": -0.0051,
+"kick_power": 0.00132,
+"kick_return": -0.01775,
+"lead_block": 0.09535,
+"long_snap": 0.02111,
+"man_coverage": -0.00923,
+"medium_route_running": -0.02747,
+"pass_block": 0.16467,
+"pass_block_finesse": 0.15136,
+"pass_block_power": 0.02841,
+"play_action": -0.00446,
+"play_recognition": -0.00345,
+"power_moves": -0.01234,
+"press": 0.02735,
+"pursuit": 0.00266,
+"release": -0.0315,
+"run_block": 0.08798,
+"run_block_finesse": 0.10474,
+"run_block_power": 0.08453,
+"short_route_running": -0.04424,
+"spectacular_catch": -0.01401,
+"speed": 0.00754,
+"spin_move": -0.012,
+"stamina": 0.00307,
+"stiff_arm": -0.00792,
+"strength": 0.10667,
+"tackle": -0.02629,
+"throw_accuracy_deep": 0.00439,
+"throw_accuracy_mid": 0.01099,
+"throw_accuracy_short": 0.00574,
+"throw_on_the_run": 0.00153,
+"throw_power": -0.00488,
+"throw_under_pressure": 0.00136,
+"toughness": 0.12387,
+"trucking": 0.01376,
+"zone_coverage": -0.00173
+},
+"r": 0.9924,
+"rmse": 1.62
+},
+"C": {
+"const": -29.0495,
+"w": {
+"acceleration": 0.09329,
+"agility": 0.03202,
+"awareness": 0.2892,
+"bc_vision": -0.0053,
+"block_shedding": -0.02973,
+"break_sack": 0.0029,
+"break_tackle": 0.01768,
+"carrying": -0.01769,
+"catch_in_traffic": -0.0288,
+"catching": 0.00227,
+"change_of_direction": -0.00075,
+"deep_route_running": 0.03692,
+"finesse_moves": -0.013,
+"hit_power": 0.01198,
+"impact_blocking": 0.12389,
+"injury": 0.00701,
+"juke_move": 0.01837,
+"jumping": -0.0004,
+"kick_accuracy": 0.00768,
+"kick_power": 0.00849,
+"kick_return": -0.0107,
+"lead_block": 0.04504,
+"long_snap": -0.00374,
+"man_coverage": 0.01559,
+"medium_route_running": -0.01261,
+"pass_block": 0.14502,
+"pass_block_finesse": 0.18849,
+"pass_block_power": 0.12345,
+"play_action": -0.00571,
+"play_recognition": -0.0118,
+"power_moves": 0.04312,
+"press": -0.01359,
+"pursuit": -0.00682,
+"release": 0.01216,
+"run_block": 0.10055,
+"run_block_finesse": 0.02755,
+"run_block_power": 0.06669,
+"short_route_running": -0.01437,
+"spectacular_catch": 0.01218,
+"speed": -0.00061,
+"spin_move": -0.00366,
+"stamina": -0.00348,
+"stiff_arm": -0.04676,
+"strength": 0.1296,
+"tackle": 0.00382,
+"throw_accuracy_deep": 0.01513,
+"throw_accuracy_mid": -0.01089,
+"throw_accuracy_short": 0.01328,
+"throw_on_the_run": -0.00336,
+"throw_power": -0.00392,
+"throw_under_pressure": 0.00846,
+"toughness": 0.117,
+"trucking": 0.00132,
+"zone_coverage": 0.01821
+},
+"r": 0.9939,
+"rmse": 1.52
+},
+"RG": {
+"const": -28.4617,
+"w": {
+"acceleration": 0.05419,
+"agility": 0.01422,
+"awareness": 0.28359,
+"bc_vision": -0.01612,
+"block_shedding": 0.0406,
+"break_sack": -0.00201,
+"break_tackle": 0.02493,
+"carrying": -0.00319,
+"catch_in_traffic": 0.0015,
+"catching": -0.00967,
+"change_of_direction": -0.00799,
+"deep_route_running": 0.01863,
+"finesse_moves": -0.02142,
+"hit_power": -0.03226,
+"impact_blocking": 0.1913,
+"injury": -0.00467,
+"juke_move": 0.01556,
+"jumping": -0.00264,
+"kick_accuracy": 0.00978,
+"kick_power": 0.00249,
+"kick_return": -0.00482,
+"lead_block": 0.10671,
+"long_snap": -0.00118,
+"man_coverage": 0.01538,
+"medium_route_running": -0.01024,
+"pass_block": 0.17542,
+"pass_block_finesse": 0.10968,
+"pass_block_power": 0.06488,
+"play_action": 0.00515,
+"play_recognition": -0.00763,
+"press": -0.01394,
+"pursuit": -0.0101,
+"release": -0.00604,
+"run_block": 0.08883,
+"run_block_finesse": 0.0825,
+"run_block_power": 0.07992,
+"short_route_running": 0.00178,
+"spectacular_catch": 0.0068,
+"speed": 0.02725,
+"spin_move": 0.01524,
+"stamina": 0.02435,
+"stiff_arm": -0.00399,
+"strength": 0.11891,
+"tackle": 0.01047,
+"throw_accuracy_deep": -0.00326,
+"throw_accuracy_mid": 0.00156,
+"throw_accuracy_short": 0.00467,
+"throw_on_the_run": -0.00531,
+"throw_power": 0.00181,
+"throw_under_pressure": -0.0004,
+"toughness": 0.11825,
+"trucking": -0.01291,
+"zone_coverage": 0.00456
+},
+"r": 0.9914,
+"rmse": 1.49
+},
+"RT": {
+"const": -25.1974,
+"w": {
+"acceleration": 0.05785,
+"agility": 0.00474,
+"awareness": 0.31055,
+"bc_vision": 0.00695,
+"block_shedding": -0.00169,
+"break_sack": -0.00308,
+"break_tackle": 0.00081,
+"carrying": 0.00093,
+"catch_in_traffic": 0.0191,
+"catching": -0.01454,
+"change_of_direction": -0.00802,
+"deep_route_running": -0.0049,
+"finesse_moves": 0.01249,
+"hit_power": 0.00393,
+"impact_blocking": 0.16672,
+"injury": 0.02353,
+"juke_move": -0.00081,
+"jumping": -0.00496,
+"kick_accuracy": -0.00688,
+"kick_power": -0.00469,
+"kick_return": 0.00239,
+"lead_block": 0.07413,
+"long_snap": -0.00725,
+"man_coverage": -0.01786,
+"medium_route_running": 0.00059,
+"pass_block": 0.18945,
+"pass_block_finesse": 0.11525,
+"pass_block_power": 0.04263,
+"play_action": -0.00245,
+"play_recognition": 0.00061,
+"power_moves": 0.00231,
+"press": -0.00767,
+"pursuit": -0.00932,
+"release": -0.00637,
+"run_block": 0.093,
+"run_block_finesse": 0.15434,
+"run_block_power": 0.0505,
+"short_route_running": 0.02755,
+"spectacular_catch": -0.01978,
+"speed": 0.02192,
+"spin_move": -0.00096,
+"stamina": 0.00344,
+"stiff_arm": 0.00658,
+"strength": 0.10534,
+"tackle": -0.01479,
+"throw_accuracy_deep": 0.00079,
+"throw_accuracy_mid": -0.01574,
+"throw_accuracy_short": -0.00104,
+"throw_on_the_run": -0.0003,
+"throw_power": -0.00055,
+"throw_under_pressure": 0.00361,
+"toughness": 0.12616,
+"trucking": -0.01083,
+"zone_coverage": 0.02742
+},
+"r": 0.9931,
+"rmse": 1.3
+},
+"LEDG": {
+"const": -43.8141,
+"w": {
+"acceleration": 0.22218,
+"agility": 0.11455,
+"awareness": 0.22392,
+"bc_vision": -0.01369,
+"block_shedding": 0.18076,
+"break_sack": 0.00396,
+"break_tackle": 0.01996,
+"carrying": -0.01969,
+"catch_in_traffic": -0.03294,
+"catching": -0.0073,
+"change_of_direction": -0.04222,
+"deep_route_running": 0.00165,
+"finesse_moves": 0.15108,
+"hit_power": 0.10362,
+"impact_blocking": 0.03331,
+"injury": 0.03189,
+"juke_move": -0.02491,
+"jumping": 0.06193,
+"kick_accuracy": -0.00388,
+"kick_power": -0.00681,
+"kick_return": 0.01737,
+"lead_block": -0.07233,
+"long_snap": 0.00538,
+"man_coverage": 0.0067,
+"medium_route_running": 0.01017,
+"pass_block": 0.02814,
+"pass_block_finesse": -0.04748,
+"pass_block_power": 0.05515,
+"play_action": -0.00729,
+"play_recognition": 0.05622,
+"power_moves": 0.02936,
+"press": 0.0119,
+"pursuit": 0.11509,
+"release": -0.01319,
+"run_block": 0.06234,
+"run_block_finesse": 0.02137,
+"run_block_power": -0.04279,
+"short_route_running": 0.02939,
+"spectacular_catch": 0.00912,
+"speed": 0.1914,
+"spin_move": 0.01006,
+"stamina": 0.0074,
+"stiff_arm": -0.01245,
+"strength": 0.19178,
+"tackle": 0.18032,
+"throw_accuracy_deep": 0.01289,
+"throw_accuracy_mid": -0.00472,
+"throw_accuracy_short": -0.01294,
+"throw_on_the_run": 0.02028,
+"throw_power": 0.00667,
+"throw_under_pressure": 0.00094,
+"toughness": 0.06333,
+"trucking": 0.00153,
+"zone_coverage": -0.05018
+},
+"r": 0.9867,
+"rmse": 1.87
+},
+"DT": {
+"const": -36.1827,
+"w": {
+"acceleration": 0.11896,
+"agility": -0.03011,
+"awareness": 0.28455,
+"bc_vision": 0.00275,
+"block_shedding": 0.27184,
+"break_sack": -0.00036,
+"break_tackle": 0.00189,
+"carrying": 0.00544,
+"catch_in_traffic": 0.00766,
+"catching": 0.00752,
+"change_of_direction": -0.02231,
+"deep_route_running": 0.00738,
+"finesse_moves": 0.1272,
+"hit_power": 0.08927,
+"impact_blocking": 0.00716,
+"injury": 0.01014,
+"juke_move": -0.00705,
+"jumping": 0.01187,
+"kick_accuracy": -0.00183,
+"kick_power": 0.00355,
+"kick_return": -0.00278,
+"lead_block": -0.01268,
+"long_snap": 0.00634,
+"man_coverage": 0.01661,
+"medium_route_running": 0.00217,
+"pass_block": -0.01388,
+"pass_block_finesse": -0.03698,
+"pass_block_power": 0.02787,
+"play_action": -0.00685,
+"play_recognition": -0.02437,
+"power_moves": 0.28779,
+"press": 0.01615,
+"pursuit": 0.0438,
+"release": 0.00052,
+"run_block": -0.00044,
+"run_block_finesse": 0.00148,
+"run_block_power": 0.02657,
+"short_route_running": 0.01045,
+"spectacular_catch": -0.01971,
+"speed": 0.05388,
+"spin_move": -0.01214,
+"stamina": -0.01228,
+"stiff_arm": -0.00991,
+"strength": 0.27808,
+"tackle": 0.15621,
+"throw_accuracy_deep": 0.00222,
+"throw_accuracy_mid": 0.00264,
+"throw_accuracy_short": -0.01047,
+"throw_on_the_run": -0.0108,
+"throw_power": 0.00148,
+"throw_under_pressure": -0.00015,
+"toughness": 0.1491,
+"trucking": 0.01158,
+"zone_coverage": -0.03556
+},
+"r": 0.9936,
+"rmse": 1.36
+},
+"REDG": {
+"const": -42.3904,
+"w": {
+"acceleration": 0.23075,
+"agility": 0.17742,
+"awareness": 0.24049,
+"bc_vision": -0.02375,
+"block_shedding": 0.10726,
+"break_sack": 0.00284,
+"break_tackle": -0.00075,
+"carrying": 0.01545,
+"catch_in_traffic": -0.00715,
+"catching": 0.01751,
+"change_of_direction": -0.01793,
+"deep_route_running": 0.02728,
+"finesse_moves": 0.20299,
+"hit_power": 0.06051,
+"impact_blocking": -0.01636,
+"injury": 0.00699,
+"juke_move": 0.01252,
+"jumping": 0.02425,
+"kick_accuracy": 0.00518,
+"kick_power": 0.00021,
+"kick_return": -0.01539,
+"lead_block": -0.00466,
+"long_snap": 0.00559,
+"man_coverage": -0.02247,
+"medium_route_running": -0.01454,
+"pass_block": -0.04956,
+"pass_block_finesse": 0.07894,
+"pass_block_power": -0.00354,
+"play_action": 0.00202,
+"play_recognition": 0.06091,
+"power_moves": 0.06094,
+"press": 0.00907,
+"pursuit": 0.10669,
+"release": -0.01207,
+"run_block": -0.04394,
+"run_block_finesse": 0.03216,
+"run_block_power": 0.01941,
+"short_route_running": -0.00102,
+"spectacular_catch": 0.00319,
+"speed": 0.12481,
+"spin_move": -0.0145,
+"stamina": -0.03134,
+"stiff_arm": -0.01149,
+"strength": 0.20234,
+"tackle": 0.17548,
+"throw_accuracy_deep": 0.00203,
+"throw_accuracy_mid": 0.01185,
+"throw_accuracy_short": -0.00299,
+"throw_on_the_run": -0.00103,
+"throw_power": -0.00148,
+"throw_under_pressure": -0.009,
+"toughness": 0.10064,
+"trucking": 0.01228,
+"zone_coverage": -0.0177
+},
+"r": 0.9881,
+"rmse": 1.95
+},
+"SAM": {
+"const": -15.3033,
+"w": {
+"acceleration": 0.05695,
+"agility": 0.05744,
+"awareness": 0.19236,
+"bc_vision": -0.00993,
+"block_shedding": 0.07126,
+"break_sack": 0.01468,
+"break_tackle": -0.00236,
+"carrying": -0.00554,
+"catch_in_traffic": -0.02816,
+"catching": -0.01027,
+"change_of_direction": 0.04877,
+"deep_route_running": 0.00396,
+"finesse_moves": -0.02454,
+"hit_power": -0.04365,
+"impact_blocking": 0.03471,
+"injury": 0.01413,
+"juke_move": -0.00613,
+"jumping": 0.00526,
+"kick_accuracy": 0.01016,
+"kick_power": -0.01306,
+"kick_return": -0.00159,
+"lead_block": 0.02788,
+"long_snap": -0.00595,
+"man_coverage": 0.04905,
+"medium_route_running": 0.03822,
+"pass_block": -0.05898,
+"pass_block_finesse": 0.05105,
+"pass_block_power": -0.04474,
+"play_action": -0.00093,
+"play_recognition": 0.28223,
+"power_moves": 0.0535,
+"press": -0.00748,
+"pursuit": 0.13877,
+"release": -0.01709,
+"run_block": -0.04284,
+"run_block_finesse": -0.00085,
+"run_block_power": 0.05184,
+"short_route_running": -0.02033,
+"spectacular_catch": 0.00369,
+"speed": 0.06316,
+"spin_move": 0.02378,
+"stamina": -0.02792,
+"stiff_arm": 0.01034,
+"strength": 0.09425,
+"tackle": 0.29996,
+"throw_accuracy_deep": -0.01984,
+"throw_accuracy_mid": 0.02278,
+"throw_accuracy_short": 0.01454,
+"throw_on_the_run": -0.0338,
+"throw_power": 0.01607,
+"throw_under_pressure": -0.00092,
+"toughness": 0.03419,
+"trucking": -0.02775,
+"zone_coverage": 0.07177
+},
+"r": 0.994,
+"rmse": 1.1
+},
+"MIKE": {
+"const": -16.2498,
+"w": {
+"acceleration": 0.07239,
+"agility": 0.0439,
+"awareness": 0.26617,
+"bc_vision": 0.00221,
+"block_shedding": 0.10068,
+"break_sack": -0.00285,
+"break_tackle": -0.02146,
+"carrying": -0.00176,
+"catch_in_traffic": -0.0072,
+"change_of_direction": 0.02648,
+"deep_route_running": -0.00886,
+"finesse_moves": -0.00399,
+"hit_power": 0.01003,
+"impact_blocking": -0.00136,
+"injury": 0.00542,
+"juke_move": -0.01602,
+"jumping": 0.00121,
+"kick_accuracy": -0.00536,
+"kick_power": 0.00564,
+"kick_return": 0.01626,
+"lead_block": 0.0053,
+"long_snap": 0.01147,
+"man_coverage": 0.02175,
+"medium_route_running": 0.01594,
+"pass_block": -0.01355,
+"pass_block_finesse": 0.00275,
+"pass_block_power": -0.02139,
+"play_action": -0.00319,
+"play_recognition": 0.19185,
+"power_moves": 0.0125,
+"pursuit": 0.16503,
+"release": 0.00313,
+"run_block": -0.003,
+"run_block_finesse": 0.0239,
+"run_block_power": 0.01036,
+"short_route_running": -0.00469,
+"spectacular_catch": 0.00621,
+"speed": 0.05626,
+"spin_move": 0.00161,
+"stamina": -0.00129,
+"stiff_arm": 0.00068,
+"strength": 0.11329,
+"tackle": 0.23804,
+"throw_accuracy_deep": -0.00262,
+"throw_accuracy_mid": -0.00644,
+"throw_accuracy_short": 0.0245,
+"throw_on_the_run": -0.00506,
+"throw_power": 0.00335,
+"throw_under_pressure": -0.00526,
+"toughness": -0.00536,
+"trucking": 0.00735,
+"zone_coverage": 0.09024
+},
+"r": 0.9951,
+"rmse": 1.29
+},
+"WILL": {
+"const": -17.1842,
+"w": {
+"acceleration": 0.07729,
+"agility": 0.04253,
+"awareness": 0.26119,
+"bc_vision": -0.01089,
+"block_shedding": 0.1133,
+"break_sack": -0.00258,
+"break_tackle": 0.00191,
+"carrying": -0.00892,
+"catch_in_traffic": -0.00913,
+"catching": 0.01313,
+"change_of_direction": 0.03737,
+"deep_route_running": 0.01886,
+"finesse_moves": -0.00799,
+"hit_power": -0.02854,
+"impact_blocking": 0.00028,
+"injury": -0.00329,
+"juke_move": -0.0057,
+"jumping": -0.00399,
+"kick_accuracy": 0.00609,
+"kick_power": 0.00121,
+"kick_return": -0.00176,
+"lead_block": -0.0034,
+"long_snap": -0.00187,
+"man_coverage": 0.04071,
+"medium_route_running": -0.01018,
+"pass_block": 0.01104,
+"pass_block_finesse": 0.00181,
+"pass_block_power": -0.0038,
+"play_action": 0.00534,
+"play_recognition": 0.1873,
+"power_moves": 0.02394,
+"press": -0.00155,
+"pursuit": 0.16091,
+"release": -0.00713,
+"run_block": -0.0041,
+"run_block_finesse": 0.00085,
+"run_block_power": 0.00236,
+"short_route_running": -0.00031,
+"spectacular_catch": 0.0101,
+"speed": 0.05237,
+"spin_move": 0.02863,
+"stamina": 0.0015,
+"stiff_arm": -0.00107,
+"strength": 0.10949,
+"tackle": 0.24654,
+"throw_accuracy_deep": -0.00737,
+"throw_accuracy_mid": -0.00409,
+"throw_accuracy_short": -0.00097,
+"throw_on_the_run": -0.00593,
+"throw_power": 0.01315,
+"throw_under_pressure": 0.00369,
+"toughness": 0.01018,
+"trucking": -0.00164,
+"zone_coverage": 0.08001
+},
+"r": 0.9937,
+"rmse": 1.32
+},
+"CB": {
+"const": -25.5707,
+"w": {
+"acceleration": 0.11568,
+"agility": 0.03178,
+"awareness": 0.28793,
+"bc_vision": 0.01309,
+"block_shedding": 0.01466,
+"break_sack": 0.00543,
+"break_tackle": -0.00239,
+"carrying": -0.0031,
+"catch_in_traffic": -0.01372,
+"catching": 0.01682,
+"change_of_direction": 0.04879,
+"deep_route_running": -0.03721,
+"finesse_moves": 0.0089,
+"hit_power": -0.00586,
+"impact_blocking": 0.00855,
+"injury": -0.00389,
+"juke_move": -0.02597,
+"jumping": 0.01842,
+"kick_accuracy": 0.00278,
+"kick_power": -0.00046,
+"kick_return": 0.00317,
+"lead_block": -0.00164,
+"long_snap": 0.0026,
+"man_coverage": 0.30854,
+"medium_route_running": 0.04333,
+"pass_block": -0.00824,
+"pass_block_finesse": 0.01237,
+"pass_block_power": -0.00066,
+"play_action": -0.00217,
+"play_recognition": 0.21395,
+"power_moves": -0.00584,
+"press": 0.15884,
+"pursuit": 0.03523,
+"release": 0.00514,
+"run_block": -0.00141,
+"run_block_finesse": -0.0022,
+"run_block_power": 0.01443,
+"short_route_running": -0.00327,
+"spectacular_catch": 0.00035,
+"speed": 0.12243,
+"spin_move": 0.01464,
+"stamina": -0.00491,
+"stiff_arm": -0.00441,
+"strength": 0.00027,
+"tackle": 0.07446,
+"throw_accuracy_deep": 0.00157,
+"throw_accuracy_mid": -0.00873,
+"throw_accuracy_short": 0.00621,
+"throw_on_the_run": -0.00366,
+"throw_power": 0.00224,
+"throw_under_pressure": -0.00107,
+"toughness": -0.00956,
+"trucking": 0.00633,
+"zone_coverage": 0.10485
+},
+"r": 0.9946,
+"rmse": 1.32
+},
+"FS": {
+"const": -22.8161,
+"w": {
+"acceleration": 0.07467,
+"agility": 0.02477,
+"awareness": 0.24346,
+"bc_vision": 0.02018,
+"block_shedding": 0.07204,
+"break_sack": -0.00623,
+"break_tackle": -0.00881,
+"carrying": 0.00915,
+"catch_in_traffic": 0.00112,
+"catching": 0.01619,
+"change_of_direction": 0.01083,
+"deep_route_running": -0.05816,
+"finesse_moves": 0.00167,
+"hit_power": 0.06529,
+"impact_blocking": -0.01732,
+"injury": 0.0136,
+"juke_move": 0.01709,
+"jumping": 0.00605,
+"kick_accuracy": -0.00125,
+"kick_power": -0.00483,
+"kick_return": -0.00182,
+"lead_block": 0.03133,
+"long_snap": 0.00114,
+"man_coverage": 0.11326,
+"medium_route_running": -0.01647,
+"pass_block": 0.0005,
+"pass_block_finesse": 0.01455,
+"pass_block_power": -0.0151,
+"play_action": -0.00709,
+"play_recognition": 0.21091,
+"power_moves": -0.03723,
+"press": 0.12997,
+"pursuit": 0.20539,
+"release": 0.04018,
+"run_block": -0.00153,
+"run_block_finesse": -0.02103,
+"run_block_power": 0.06351,
+"short_route_running": 0.05652,
+"spectacular_catch": -0.00367,
+"speed": 0.07293,
+"spin_move": -0.00604,
+"stamina": -0.00015,
+"stiff_arm": 0.01453,
+"strength": 0.02543,
+"tackle": 0.26607,
+"throw_accuracy_deep": -0.04036,
+"throw_accuracy_mid": 0.05816,
+"throw_accuracy_short": -0.0181,
+"throw_on_the_run": 0.07631,
+"throw_power": -0.03632,
+"throw_under_pressure": -0.03473,
+"toughness": 0.00513,
+"trucking": -0.03647,
+"zone_coverage": -0.06916
+},
+"r": 0.9812,
+"rmse": 2.19
+},
+"SS": {
+"const": -20.5259,
+"w": {
+"acceleration": 0.06843,
+"agility": 0.03605,
+"awareness": 0.31922,
+"bc_vision": 0.01119,
+"block_shedding": 0.02963,
+"break_sack": 0.0027,
+"break_tackle": 0.01773,
+"carrying": -0.01757,
+"catch_in_traffic": 0.02373,
+"catching": 0.02161,
+"change_of_direction": 0.01603,
+"deep_route_running": 0.05824,
+"finesse_moves": 0.00826,
+"hit_power": 0.02079,
+"impact_blocking": -0.01242,
+"injury": 0.00513,
+"juke_move": -0.0296,
+"jumping": 0.03567,
+"kick_accuracy": -0.00477,
+"kick_power": -0.0032,
+"kick_return": 0.00294,
+"lead_block": 0.00559,
+"long_snap": -0.00173,
+"man_coverage": 0.10723,
+"medium_route_running": -0.0175,
+"pass_block": -0.00683,
+"pass_block_finesse": -0.01048,
+"pass_block_power": 0.01438,
+"play_action": -0.00231,
+"play_recognition": 0.26178,
+"power_moves": -0.01128,
+"press": 0.05664,
+"pursuit": 0.08867,
+"release": -0.00722,
+"run_block": 0.00876,
+"run_block_finesse": 0.00311,
+"run_block_power": 0.00455,
+"short_route_running": -0.02889,
+"spectacular_catch": -0.02809,
+"speed": 0.07354,
+"spin_move": -0.00322,
+"stamina": -0.00764,
+"stiff_arm": -0.01175,
+"strength": 0.00312,
+"tackle": 0.19396,
+"throw_accuracy_deep": 0.0431,
+"throw_accuracy_mid": -0.02681,
+"throw_accuracy_short": 0.01761,
+"throw_on_the_run": -0.00883,
+"throw_power": -0.02959,
+"throw_under_pressure": 0.00779,
+"toughness": 0.01648,
+"trucking": 0.00872,
+"zone_coverage": 0.19666
+},
+"r": 0.9943,
+"rmse": 1.33
+},
+"K": {
+"const": -16.4681,
+"w": {
+"acceleration": -0.00695,
+"agility": 0.01266,
+"awareness": 0.57278,
+"bc_vision": -0.01262,
+"block_shedding": -0.01423,
+"break_sack": -0.00615,
+"break_tackle": 0.00792,
+"carrying": -0.015,
+"catch_in_traffic": 0.00594,
+"catching": -0.00887,
+"change_of_direction": 0.00945,
+"deep_route_running": 0.00476,
+"finesse_moves": 0.00049,
+"hit_power": 0.0029,
+"impact_blocking": -0.00278,
+"injury": -0.00021,
+"juke_move": 0.00315,
+"jumping": 0.00636,
+"kick_accuracy": 0.33443,
+"kick_power": 0.40179,
+"kick_return": 0.01686,
+"lead_block": -0.00677,
+"long_snap": 0.00558,
+"man_coverage": 0.02272,
+"pass_block": 0.02193,
+"pass_block_finesse": 0.0076,
+"pass_block_power": -0.01047,
+"play_action": 0.01342,
+"play_recognition": 0.0048,
+"power_moves": 0.0061,
+"press": -0.01877,
+"pursuit": 0.01622,
+"release": -0.00663,
+"run_block": -0.00037,
+"run_block_finesse": -0.02696,
+"run_block_power": 0.00338,
+"short_route_running": 0.00306,
+"spectacular_catch": 0.00234,
+"speed": -0.00583,
+"spin_move": 0.00777,
+"stamina": 0.03439,
+"stiff_arm": 0.00447,
+"strength": -0.00812,
+"tackle": 0.00718,
+"throw_accuracy_deep": 0.01965,
+"throw_accuracy_mid": -0.01842,
+"throw_accuracy_short": -0.01506,
+"throw_on_the_run": 0.00125,
+"throw_power": 0.00423,
+"throw_under_pressure": 0.00388,
+"toughness": 0.00462,
+"trucking": -0.00882,
+"zone_coverage": -0.01142
+},
+"r": 0.9956,
+"rmse": 1.27
+},
+"P": {
+"const": -11.0164,
+"w": {
+"acceleration": 0.03416,
+"agility": 0.01011,
+"awareness": 0.50551,
+"bc_vision": -0.0128,
+"block_shedding": -0.00404,
+"break_sack": -0.00909,
+"break_tackle": 0.01845,
+"carrying": 0.00789,
+"catch_in_traffic": -0.00172,
+"catching": -0.00083,
+"change_of_direction": -0.0121,
+"deep_route_running": 0.00152,
+"finesse_moves": -0.00097,
+"hit_power": 0.00532,
+"impact_blocking": -0.01042,
+"injury": 0.00779,
+"juke_move": 0.01084,
+"kick_accuracy": 0.34231,
+"kick_power": 0.3979,
+"kick_return": -0.02256,
+"lead_block": 0.00176,
+"long_snap": -0.0165,
+"man_coverage": 0.00158,
+"medium_route_running": -0.00336,
+"pass_block": 0.01018,
+"pass_block_finesse": 0.0075,
+"pass_block_power": 0.00571,
+"play_action": 0.00181,
+"play_recognition": -0.00976,
+"power_moves": 0.01549,
+"press": 0.00813,
+"pursuit": -0.00571,
+"release": -0.00222,
+"run_block": -0.00881,
+"run_block_finesse": -0.00729,
+"run_block_power": -0.00591,
+"short_route_running": 0.00624,
+"spectacular_catch": 0.00813,
+"speed": -0.04725,
+"spin_move": -0.00902,
+"stamina": -0.00615,
+"stiff_arm": -0.00043,
+"strength": 0.01453,
+"tackle": 0.00849,
+"throw_accuracy_deep": 0.00406,
+"throw_accuracy_mid": -0.00516,
+"throw_accuracy_short": -0.00684,
+"throw_on_the_run": 0.01059,
+"throw_power": -0.0056,
+"throw_under_pressure": -0.00522,
+"toughness": 0.02059,
+"trucking": -0.01008,
+"zone_coverage": -0.00216
+},
+"r": 0.9965,
+"rmse": 0.89
+}
+}
+}

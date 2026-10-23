@@ -155,7 +155,7 @@ def use_league(path: Optional[Path]) -> None:
         return
     _league_path = path
     _teams_cache, _TEAMS, _STAR_CUTS = {}, {}, None
-    for c in (_teams_meta, _scale_cache, _ea_cache, _form_cache, _race_cache, _preview_cache):
+    for c in (_teams_meta, _scale_cache, _form_cache, _race_cache, _preview_cache):
         c.clear()
     close_pool()                              # the workers hold the old league
     import prospects
@@ -185,14 +185,13 @@ def _is_p4(slug: str, team: dict) -> bool:
 # starter (the median: half are better, half worse) at 50, and a Power 4 starter one, two and three standard deviations better at 65,
 # 80 and 95. Below the Power 4 starter average a standard deviation is worth 60% as much
 # (BELOW): a typical Power 4 backup or Group of 5 starter reads about 40, not the 20s.
-# A card's overall comes from EA's own overall (the source data keeps it beside its curved
-# ratings, which stretch the low end); attributes and "rated at" numbers come from the
-# engine values on the same shape. One pair of slopes per position group, computed once.
+# A card's overall is our overall (game_scale.py: a fixed formula on our ratings, frozen from the
+# 2026 rosters); "rated at" numbers come from the engine values on the same shape. One pair of
+# slopes per position group, computed once.
 
 SCALE_GROUP = {"MLB": "LB", "ROLB": "LB", "LOLB": "LB"}    # linebackers share one group (the roles are small)
 BELOW = 0.6      # below the Power 4 starter average, a standard deviation is worth 60% as much
 _scale_cache: dict = {}
-_ea_cache: dict = {}
 
 
 def _house_scale() -> dict:
@@ -253,39 +252,13 @@ def engine_rating(p: dict, key: str, ours: float) -> int:
     return house_to_engine(p["position"], key, ours)
 
 
-def _ea_scale() -> dict:
-    """position group -> (median, sd) of EA's overall for Power 4 starters."""
-    if _ea_cache:
-        return _ea_cache
-    import statistics as st
-    vals: dict = {}
-    for slug, t in load_teams().items():
-        if t["fictional"] or not _is_p4(slug, t):
-            continue
-        for p in t["offense"] + t["defense"]:
-            if p.get("in_game") and isinstance(p.get("ea_overall"), (int, float)):
-                vals.setdefault(SCALE_GROUP.get(p["position"], p["position"]), []).append(p["ea_overall"])
-    for g, v in vals.items():
-        _ea_cache[g] = (st.median(v), max(2.0, st.pstdev(v)))
-    return _ea_cache
-
-
-def ea_house(pos: str, ea: float) -> int:
-    """EA's overall on the house scale: 50 at the middle Power 4 starter for the position,
-    15 per standard deviation above it, 9 per standard deviation below (BELOW)."""
-    m4, sd4 = _ea_scale().get(SCALE_GROUP.get(pos, pos), (79.0, 6.0))
-    k = 15 / sd4
-    out = 50 + (ea - m4) * (k if ea >= m4 else k * BELOW)
-    return int(round(max(1, min(99, out))))
-
-
 def shown_overall(p: dict, base: Optional[dict] = None) -> int:
-    """The overall on the card: EA's overall on the house scale. A god-mode edit moves it by
-    what the edit does to the engine composite (`base` is the unedited player). Players
-    without an EA overall fall back to the engine composite."""
-    if not isinstance(p.get("ea_overall"), (int, float)):
+    """The overall on the card: our overall (game_scale.py, built onto every player as "ovr"). A
+    god-mode edit moves it by what the edit does to the engine composite (`base` is the unedited
+    player). A player without one (added from real box scores) shows the engine composite."""
+    if not isinstance(p.get("ovr"), (int, float)):
         return house_value(p["position"], "overall", player_overall(p))
-    out = ea_house(p["position"], p["ea_overall"])
+    out = p["ovr"]
     if base is not None and base is not p:
         out += house_value(p["position"], "overall", player_overall(p)) - house_value(base["position"], "overall", player_overall(base))
     return int(max(1, min(99, out)))
@@ -1833,7 +1806,10 @@ def load_season(season_id: str) -> Optional[dict]:
                 g[f"{side}_display"] = fcs_label(g[side])
     if state.get("mode") != "real":
         schedule_ahead(state)         # seasons saved before the postseason was set a week early
-    if state.get("recruiting") and state["recruiting"].get("grades") != "game":
+    import game_scale
+    if game_scale.upgrade(state):          # careers saved while their league and recruits were in EA numbers
+        pass
+    elif state.get("recruiting") and state["recruiting"].get("grades") != "game":
         recruiting.upgrade_grades(state)   # careers saved when grades were class percentiles
     return state
 

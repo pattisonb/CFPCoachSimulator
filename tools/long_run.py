@@ -50,15 +50,15 @@ def season_metrics(state: dict) -> dict:
     starters, everyone = collections.defaultdict(list), []
     for t in fbs.values():
         for p in t["offense"] + t["defense"]:
-            if p.get("ea_overall"):
-                everyone.append(p["ea_overall"])
+            if p.get("ovr") is not None:
+                everyone.append(p["ovr"])
                 if p.get("in_game"):
-                    starters[GROUP.get(p["position"], p["position"])].append(p["ea_overall"])
+                    starters[GROUP.get(p["position"], p["position"])].append(p["ovr"])
     # by tier: the 25 best programs by 2026 team rating, the rest of the Power 4, the Group of 5
     tiers = {}
     for s_, t in fbs.items():
         tier = "top25" if s_ in TOP25 else "p4" if season._is_p4(s_, t) else "g5"
-        st_ = [p["ea_overall"] for p in t["offense"] + t["defense"] if p.get("in_game") and p.get("ea_overall")]
+        st_ = [p["ovr"] for p in t["offense"] + t["defense"] if p.get("in_game") and p.get("ovr") is not None]
         tiers.setdefault(tier, {"starters": [], "rating": [], "recruits": []})
         tiers[tier]["starters"].append(st.mean(st_))
         tiers[tier]["rating"].append(t["team_ratings"]["overall"])
@@ -80,8 +80,8 @@ def season_metrics(state: dict) -> dict:
         "top10": [e["team"] for e in final.get("ap", [])[:10]],
         "team_rating": {"mean": round(st.mean(ovr), 2), "sd": round(st.pstdev(ovr), 2), "max": max(ovr), "min": min(ovr),
                         "p4": round(st.mean(p4), 2), "g5": round(st.mean(g5), 2)},
-        "starters_ea": {g: round(st.mean(v), 2) for g, v in sorted(starters.items())},
-        "players_ea": round(st.mean(everyone), 2),
+        "starters_ovr": {g: round(st.mean(v), 2) for g, v in sorted(starters.items())},
+        "players_ovr": round(st.mean(everyone), 2),
         "stats_off": {k: round(v, 4) for k, v in data["area_off"].items()}, "tiers": tier_out,
         "ppg": round(data["teams"]["ppg"]["sim_mean"], 2), "ypg": round(data["teams"]["ypg"]["sim_mean"], 1),
     }
@@ -143,8 +143,8 @@ def run(seasons: int, seed: int, team: str, out: Path) -> None:
         print(f"      carousel {dict(o.get('hc_departures', {}))}  you {o.get('you')}  moved {o.get('moved_to')}", flush=True)
         print("      tiers " + "  ".join(f"{k} st {v['starters']:.1f} rtg {v['rating']:.1f} rec {v['recruit_composite'] or 0:.3f} x{v['signed_per_team']}" for k, v in sorted(tr.items())), flush=True)
         print(f"{row['year']} champ {row['champion']:<14} {team} {row['record'][0]}-{row['record'][1]}  "
-              f"team rtg {row['team_rating']['mean']:.1f}±{row['team_rating']['sd']:.1f}  QB {row['starters_ea'].get('QB', 0):.1f} "
-              f"OL {row['starters_ea'].get('OL', 0):.1f}  ppg {row['ppg']:.1f}  stats off "
+              f"team rtg {row['team_rating']['mean']:.1f}±{row['team_rating']['sd']:.1f}  QB {row['starters_ovr'].get('QB', 0):.1f} "
+              f"OL {row['starters_ovr'].get('OL', 0):.1f}  ppg {row['ppg']:.1f}  stats off "
               f"{100 * st.mean(row['stats_off'].values()):.1f}%  draft early {o['early_entrants']}  portal {o['portal_entrants']}/"
               f"{o['portal_signed']}  walk-ons {o['walk_ons']}  ({row['seconds']['season']}s + {row['seconds']['offseason']}s)", flush=True)
     import league
@@ -173,9 +173,9 @@ def report(paths: list[str]) -> str:
     row("team rating mean", lambda s: s["team_rating"]["mean"])
     row("team rating sd", lambda s: s["team_rating"]["sd"])
     row("P4 - G5", lambda s: s["team_rating"]["p4"] - s["team_rating"]["g5"])
-    row("players EA", lambda s: s["players_ea"])
+    row("players overall", lambda s: s["players_ovr"])
     for g in ("QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P"):
-        row(f"starters EA {g}", lambda s, g=g: s["starters_ea"].get(g, float("nan")))
+        row(f"starters overall {g}", lambda s, g=g: s["starters_ovr"].get(g, float("nan")))
     row("points a game", lambda s: s["ppg"])
     row("yards a game", lambda s: s["ypg"], "{:.1f}")
     row("stats off (mean %)", lambda s: 100 * st.mean(s["stats_off"].values()), "{:.1f}")

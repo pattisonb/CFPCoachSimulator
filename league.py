@@ -8,13 +8,16 @@ source format (cfb_sim_data/teams/*.json) and built by the same pipeline as the 
 (build_teams.build), cached per career and year in data/leagues/ and rebuilt from the state
 whenever the cache is missing (a save loaded on another machine).
 
-    state["league"] = {"year": 2027, "attrs": [EA rating keys],
+    state["league"] = {"year": 2027, "attrs": [the game's 54 skills], "scale": "ours",
                        "teams": {slug: {"roster": [player], "coaches": {...}, "formation": {...}, "observed": bool}}}
 
-A player, compact (EA's scale throughout; the source scale is the curve of it):
-    {"id": slug, "n": name, "pos": EA position, "cls": FR..SRRS, "ht": inches, "wt": lbs, "j": jersey,
+A player, compact, on our scale only (game_scale.py: 1-99, 50 the middle Power 4 starter at the
+position; his overall is our formula on these):
+    {"id": slug, "n": name, "pos": position (LT, MIKE, ...), "cls": FR..SRRS, "ht": inches, "wt": lbs, "j": jersey,
      "a": archetype, "dev": trait, "ab": ["name|tier"], "r": [ratings], "g": [room to potential], "c": coachability,
-     "s": stars, "o": EA overall, "home": state, "yrs": seasons in the program}
+     "s": stars, "o": our overall (kept in step with the ratings), "home": state, "yrs": seasons in the program,
+     "tm": target share (real receivers)}
+The real 2026 players are converted once, when the career takes its league; nothing reads EA after that.
 The FCS stand-ins (fictional teams) always play their base rosters.
 """
 from __future__ import annotations
@@ -27,14 +30,14 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
+import game_scale
 import recruits
 
 ROOT = Path(__file__).resolve().parent
 SOURCE_DIR = ROOT / "cfb_sim_data" / "teams"
 CACHE_DIR = ROOT / "data" / "leagues"
 FIRST_YEAR = 2026
-DEPTH_EYE = 3.0           # EA points of the coaches' own judgment in a depth chart (real usage starts players below the top overall)
-TARGET_SD = 0.18          # receivers' target shares around 1.0 (the real 2026 spread by depth slot, 0.14-0.29)
+DEPTH_EYE = 4.0           # overall points of the coaches' own judgment in a depth chart (real usage starts players below the top overall)
 
 CLASSES = ("FR", "FRRS", "SO", "SORS", "JR", "JRRS", "SR", "SRRS")
 CLASS_YEAR = {"FR": "Freshman", "FRRS": "Freshman (RS)", "SO": "Sophomore", "SORS": "Sophomore (RS)",
@@ -46,8 +49,8 @@ FALLBACK = {"LT": ("RT", "LG", "RG", "C"), "RT": ("LT", "RG", "LG", "C"), "LG": 
             "HB": ("FB", "WR"), "FB": ("HB", "TE"), "WR": ("TE", "HB"), "TE": ("WR", "FB"), "QB": (), "K": ("P",), "P": ("K",)}
 LB_ROLES = ("SAM", "MIKE", "WILL")
 OFFENSE_ROLES = {"QB", "HB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT"}
-# team ratings from the starters' EA overall, fit to EA's 2026 team ratings (r 0.99 offense, 0.999 defense)
-TEAM_FIT = {"offense": (1.875, -85.245), "defense": (1.799, -79.443), "special_teams": (1.469, -56.093)}   # +1: our lineups ran 1 low
+# team ratings from the starters' overall (ours), fit once to the 2026 team ratings (r 0.98 offense, 0.997 defense)
+TEAM_FIT = {"offense": (0.8936, 16.227), "defense": (0.9095, 12.899), "special_teams": (0.8058, 15.1)}
 GROUP_OF = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL", "LG": "OL", "C": "OL", "RG": "OL",
             "RT": "OL", "LEDG": "DL", "REDG": "DL", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "DB",
             "FS": "DB", "SS": "DB", "K": "K", "P": "P"}
@@ -80,22 +83,28 @@ def height_in(h) -> Optional[int]:
 
 
 def compact(p: dict, attrs: list[str], home: Optional[str] = None) -> dict:
-    """A source roster player (real, or a signee from recruits.as_roster_player) in the league's form."""
+    """A player in the league's form. `p` is a real 2026 source player (his base ratings are
+    converted to ours once; his seeded potential likewise), or carries our ratings already as
+    "ours" and "potential_ours" (signees, walk-ons, transfers from lower levels)."""
+    pos = p["position"]
+    if p.get("ours") is not None:
+        ours, pot = p["ours"], p.get("potential_ours") or p["ours"]
+    else:
+        ours = game_scale.ours_from_base(p["ratings"], pos)
+        seeded = _potentials().get(p["slug"], {}).get("potential_ea") or {}
+        pot = game_scale.from_ea({**p["ratings_ea"], **seeded}, pos) if seeded else ours
     seeded = _potentials().get(p["slug"], {})
-    pot = {**p["ratings_ea"], **(p.get("potential_ea") or seeded.get("potential_ea") or {})}
-    out = {"id": p["slug"], "n": p["name"], "pos": p["position"], "cls": p.get("class") or "FR", "ht": height_in(p.get("height")),
+    out = {"id": p["slug"], "n": p["name"], "pos": pos, "cls": p.get("class") or "FR", "ht": height_in(p.get("height")),
            "wt": p.get("weight_lbs"), "j": p.get("jersey"), "a": p.get("archetype"), "dev": p.get("dev_trait") or "Normal",
-           "r": [int(p["ratings_ea"].get(k, 50)) for k in attrs],
-           "g": [int(max(0, pot.get(k, 50) - p["ratings_ea"].get(k, 50))) for k in attrs],
+           "r": [int(ours.get(k, 50)) for k in attrs],
+           "g": [int(max(0, pot.get(k, 50) - ours.get(k, 50))) for k in attrs],
            "c": p.get("coachability") or seeded.get("coachability") or "Steady Grinder",
-           "s": p.get("stars") or seeded.get("stars"), "o": int(p.get("overall_ea") or 0) or None,
+           "s": p.get("stars") or seeded.get("stars"), "o": game_scale.overall(ours, pos),
            "home": (p.get("hometown") or {}).get("state") or home, "yrs": int(p.get("yrs") or 0)}
     if p.get("abilities"):
         out["ab"] = [f"{a.get('name')}|{a.get('tier')}" for a in p["abilities"]]
-    if p.get("position") in ("WR", "TE"):
-        out["tm"] = p.get("target_mult") or round(max(0.5, min(1.8, random.Random(f"tm-{p['slug']}").gauss(1.0, TARGET_SD))), 2)
-    if out["o"] is None:
-        out["o"] = int(round(recruits.overall_ea(out["pos"], out["a"], dict(zip(attrs, out["r"])))))
+    if p.get("target_mult"):
+        out["tm"] = p["target_mult"]
     return out
 
 
@@ -107,17 +116,24 @@ def potential(c: dict, attrs: list[str]) -> dict[str, int]:
     return {k: v + g for k, v, g in zip(attrs, c["r"], c["g"])}
 
 
+def overall(c: dict, attrs: list[str]) -> int:
+    """His overall: our formula on his ratings (game_scale.overall)."""
+    return game_scale.overall(ratings(c, attrs), c["pos"])
+
+
 def expand(c: dict, attrs: list[str], team: dict) -> dict:
-    """A league player back in the source roster format (what build_teams reads)."""
-    ea = ratings(c, attrs)
+    """A league player in the source roster format build_teams reads: our ratings back through the
+    frozen scale into the base values the engine's formulas were tuned on, and our overall."""
+    ours = ratings(c, attrs)
     h = c.get("ht") or 72
+    ovr = game_scale.overall(ours, c["pos"])
     return {
         "slug": c["id"], "name": c["n"], "position": c["pos"], "class": c["cls"], "class_year": CLASS_YEAR.get(c["cls"], "Freshman"),
         "team_slug": team["slug"], "team": team.get("short_name"), "jersey": c.get("j"),
         "height": f"{h // 12}'{h % 12}\"", "weight_lbs": c.get("wt"), "archetype": c.get("a"), "dev_trait": c.get("dev") or "Normal",
-        "overall_ea": c["o"], "overall": int(round(recruits.curve(c["o"]))), "ratings_ea": ea,
-        "ratings": {k: int(round(recruits.curve(v))) for k, v in ea.items()}, "abilities": [dict(zip(("name", "tier"), a.split("|"))) for a in c.get("ab") or []],
-        "potential_ea": potential(c, attrs), "coachability": c.get("c"), "stars": c.get("s"),
+        "ovr": ovr, "overall": ovr, "ratings": game_scale.base_from_ours(ours, c["pos"]), "skills": list(c["r"]),
+        "abilities": [dict(zip(("name", "tier"), a.split("|"))) for a in c.get("ab") or []],
+        "coachability": c.get("c"), "stars": c.get("s"),
         **({"target_mult": c["tm"]} if c.get("tm") else {}),
     }
 
@@ -131,7 +147,7 @@ def from_base(year: int = FIRST_YEAR + 1) -> dict:
     """Every FBS team's real 2026 roster, coaches and lineup shape as a league (before the first
     offseason's departures). Head coaches keep the recruiting ratings the build measured."""
     import build_teams
-    attrs = sorted(next(iter(base_team(base_slugs()[0])["roster"]))["ratings_ea"])
+    attrs = game_scale.keys()
     usage = _real_usage()
     teams = {}
     for slug in base_slugs():
@@ -140,11 +156,11 @@ def from_base(year: int = FIRST_YEAR + 1) -> dict:
             continue
         coaches = json.loads(json.dumps(t["coaches"]))
         tm = (usage.get(slug) or {}).get("targets") or {}
-        teams[slug] = {"roster": [compact({**p, "target_mult": tm.get(p["slug"])}, attrs, t.get("state")) for p in t["roster"] if p.get("ratings_ea")],
+        teams[slug] = {"roster": [compact({**p, "target_mult": tm.get(p["slug"])}, attrs, t.get("state")) for p in t["roster"] if p.get("ratings")],
                        "coaches": coaches, "formation": formation(t), "observed": True,
                        "rb_lead_feature": (usage.get(slug) or {}).get("rb_lead_feature")}
     build_teams.measured_recruiting([{"slug": s, "coaches": v["coaches"]} for s, v in teams.items()])
-    return {"year": year, "attrs": attrs, "teams": teams}
+    return {"year": year, "attrs": attrs, "scale": "ours", "teams": teams}
 
 
 def _real_usage() -> dict:
@@ -177,7 +193,7 @@ def lineup(roster: list[dict], shape: dict, year: int = FIRST_YEAR + 1) -> tuple
     a role runs short; kick and punt returners by return ability."""
     by_pos: dict[str, list] = {}
     for p in roster:            # the coaches' eye: overall plus a little of what the numbers miss, fixed for the year
-        p["_depth"] = p["overall_ea"] + random.Random(f"depth-{p['slug']}-{year}").gauss(0, DEPTH_EYE)
+        p["_depth"] = p["ovr"] + random.Random(f"depth-{p['slug']}-{year}").gauss(0, DEPTH_EYE)
     for p in sorted(roster, key=lambda q: -q["_depth"]):
         by_pos.setdefault(p["position"], []).append(p)
     depth = {role: [p["slug"] for p in by_pos.get(role, [])] for role in
@@ -195,8 +211,8 @@ def lineup(roster: list[dict], shape: dict, year: int = FIRST_YEAR + 1) -> tuple
             pick = (by_pos.get(role) or by_pos.get("P" if role == "K" else "K") or [None])[0]
             special[role] = [pick["slug"]] if pick else []
     ret = sorted((p for p in roster if p["position"] in ("HB", "WR", "CB", "FS", "SS")),
-                 key=lambda p: -(0.5 * p["ratings_ea"].get("kick_return", 40) + 0.3 * p["ratings_ea"].get("speed", 60)
-                                 + 0.2 * p["ratings_ea"].get("agility", 60)))
+                 key=lambda p: -(0.5 * p["ratings"].get("kick_return", 40) + 0.3 * p["ratings"].get("speed", 60)
+                                 + 0.2 * p["ratings"].get("agility", 60)))
     special["KR"] = [ret[0]["slug"]] if ret else []
     special["PR"] = [ret[1]["slug"] if len(ret) > 1 else ret[0]["slug"]] if ret else []
     starters["special_teams"] = special
@@ -206,24 +222,24 @@ def lineup(roster: list[dict], shape: dict, year: int = FIRST_YEAR + 1) -> tuple
 
 
 def team_ratings(roster: list[dict], starters: dict) -> dict:
-    """EA-style team ratings from the starters (TEAM_FIT), with the position groups' starters' mean overall."""
+    """Team ratings from the starters' overall (TEAM_FIT), with the position groups' starters' mean overall."""
     by = {p["slug"]: p for p in roster}
     out = {}
     for unit, key in (("offense", "offense"), ("defense", "defense"), ("special_teams", "special_teams")):
-        vals = [by[s]["overall_ea"] for role, slugs in starters[unit].items() if role not in ("KR", "PR") for s in slugs if s in by]
+        vals = [by[s]["ovr"] for role, slugs in starters[unit].items() if role not in ("KR", "PR") for s in slugs if s in by]
         a, b = TEAM_FIT[key]
         out[key] = round(max(1.0, min(99.0, a * st.mean(vals) + b)) if vals else 40.0, 1)
     out["overall"] = round(0.45 * out["offense"] + 0.45 * out["defense"] + 0.1 * out["special_teams"], 1)
-    out["roster_avg"] = round(st.mean(p["overall_ea"] for p in roster), 1) if roster else 0.0
+    out["roster_avg"] = round(st.mean(p["ovr"] for p in roster), 1) if roster else 0.0
     groups: dict[str, list] = {}
     for unit in ("offense", "defense"):
         for role, slugs in starters[unit].items():
             for s in slugs:
                 if s in by:
-                    groups.setdefault(GROUP_OF.get(by[s]["position"], "DB"), []).append(by[s]["overall_ea"])
+                    groups.setdefault(GROUP_OF.get(by[s]["position"], "DB"), []).append(by[s]["ovr"])
     for role in ("K", "P"):
         for s in starters["special_teams"].get(role, []):
-            groups.setdefault(role, []).append(by[s]["overall_ea"])
+            groups.setdefault(role, []).append(by[s]["ovr"])
     out["position_groups"] = {g: round(st.mean(v), 1) for g, v in groups.items()}
     return out
 
