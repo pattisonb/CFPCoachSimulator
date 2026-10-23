@@ -47,6 +47,11 @@ if __name__ == "__main__":
     assert kinds["draft"] == round(offseason.DRAFT_PICKS * offseason.DRAFT_FROM_FBS)
     early = sum(1 for d in off["departures"] if d.get("early"))
     assert 40 <= early <= 140, early
+    # underclassmen three years out of high school declare: juniors, redshirt juniors and redshirt sophomores
+    early_cls = collections.Counter(d["cls"] for d in off["departures"] if d.get("early"))
+    assert set(early_cls) <= offseason.UNDERCLASS_ELIGIBLE, early_cls
+    assert early_cls["JR"] > 0 and early_cls["SORS"] > 0, early_cls
+    assert any(d["kind"] == "draft" and d["cls"] == "SORS" for d in off["departures"]), "no redshirt sophomore drafted"
     returning = sum(len(t["roster"]) for t in lg["teams"].values()) + len(off["portal"]["players"])
     share = len(off["portal"]["players"]) / returning
     assert 0.06 <= share <= 0.22, share
@@ -128,4 +133,4 @@ if __name__ == "__main__":
     (season.SEASONS_DIR / f"{new['id']}.json").unlink()
     league.forget(new["id"])
     season.use_league(None)
-    print(f"offseason ok: {dict(kinds)}, early entrants {early}, portal {share:.0%}, rosters {min(sizes)}-{max(sizes)}")
+    print(f"offseason ok: {dict(kinds)}, early entrants {early} {dict(early_cls)}, portal {share:.0%}, rosters {min(sizes)}-{max(sizes)}")
