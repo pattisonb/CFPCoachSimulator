@@ -48,6 +48,7 @@ DRAFT_FROM_FBS = 0.97                              # the share of picks from FBS
 POSITION_VALUE = {"QB": 6, "LT": 4, "RT": 3, "LEDG": 4, "REDG": 4, "CB": 3, "WR": 2, "DT": 1, "LG": -1, "RG": -1, "C": -2,
                   "TE": -1, "HB": -3, "FB": -12, "SAM": 0, "MIKE": -1, "WILL": -1, "FS": 0, "SS": -1, "K": -18, "P": -20}
 DRAFT_NOISE = 4.0
+POSITION_SCALE: dict = {}                          # a position's draft score per card-overall point (1.0 unless tools/calibrate_draft.py set it)
 DECLARE = ((32, 0.95), (64, 0.88), (100, 0.65), (160, 0.35), (257, 0.12), (10**9, 0.004))   # projected pick -> an underclassman declares
 UNDERCLASS_ELIGIBLE = {"JR", "JRRS", "SORS"}       # three years out of high school
 PORTAL_BASE = {"FR": 0.05, "FRRS": 0.09, "SO": 0.10, "SORS": 0.12, "JR": 0.10, "JRRS": 0.12, "SR": 0.18}
@@ -241,24 +242,7 @@ def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict]:
     events, entrants = [], {}
     records = {slug: _record(state, slug) for slug in lgd["teams"]}
     # the draft: seniors and the underclassmen who declare, ranked by draft score
-    pool = []
-    for slug, t in lgd["teams"].items():
-        for p in t["roster"]:
-            if p["cls"] in ("SR", "SRRS") or p["cls"] in UNDERCLASS_ELIGIBLE:
-                score = house(p["pos"], p["o"]) + POSITION_VALUE.get(p["pos"], 0) + rng.gauss(0, DRAFT_NOISE)
-                pool.append((score, slug, p))
-    pool.sort(key=lambda x: -x[0])
-    fbs_picks = round(DRAFT_PICKS * DRAFT_FROM_FBS)
-    declared = set()
-    for i, (score, slug, p) in enumerate(pool, 1):
-        if p["cls"] in UNDERCLASS_ELIGIBLE:
-            chance = next(c for cut, c in DECLARE if i <= cut)
-            if rng.random() < chance:
-                declared.add(p["id"])
-    board = [(score, slug, p) for score, slug, p in pool if p["cls"] in ("SR", "SRRS") or p["id"] in declared]
-    drafted = {}
-    for pick, (score, slug, p) in enumerate(board[:fbs_picks], 1):
-        drafted[p["id"]] = pick
+    declared, drafted = draft_board(lgd, rng)
     leaving: dict[str, set] = {slug: set() for slug in lgd["teams"]}
     from sim import season
     teams = season.load_teams()
@@ -302,6 +286,32 @@ def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict]:
     for slug, t in lgd["teams"].items():
         t["roster"] = [p for p in t["roster"] if p["id"] not in leaving[slug]]
     return events, entrants
+
+
+def draft_score(pos: str, overall: int, rng: random.Random) -> float:
+    """Where he projects: his card overall scaled by his position's draft value, plus noise."""
+    return POSITION_SCALE.get(pos, 1.0) * house(pos, overall) + POSITION_VALUE.get(pos, 0) + rng.gauss(0, DRAFT_NOISE)
+
+
+def draft_board(lgd: dict, rng: random.Random) -> tuple[set, dict]:
+    """The draft: every senior and draft-eligible underclassman scored, the underclassmen who
+    declare by their projected pick (DECLARE), the first DRAFT_PICKS * DRAFT_FROM_FBS picked.
+    Returns (the ids who declared early, {id: pick})."""
+    pool = []
+    for slug, t in lgd["teams"].items():
+        for p in t["roster"]:
+            if p["cls"] in ("SR", "SRRS") or p["cls"] in UNDERCLASS_ELIGIBLE:
+                pool.append((draft_score(p["pos"], p["o"], rng), slug, p))
+    pool.sort(key=lambda x: -x[0])
+    fbs_picks = round(DRAFT_PICKS * DRAFT_FROM_FBS)
+    declared = set()
+    for i, (score, slug, p) in enumerate(pool, 1):
+        if p["cls"] in UNDERCLASS_ELIGIBLE:
+            chance = next(c for cut, c in DECLARE if i <= cut)
+            if rng.random() < chance:
+                declared.add(p["id"])
+    board = [(score, slug, p) for score, slug, p in pool if p["cls"] in ("SR", "SRRS") or p["id"] in declared]
+    return declared, {p["id"]: pick for pick, (score, slug, p) in enumerate(board[:fbs_picks], 1)}
 
 
 def _next_class(p: dict, use: str, rng: random.Random) -> str:
