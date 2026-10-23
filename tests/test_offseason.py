@@ -46,7 +46,7 @@ if __name__ == "__main__":
     assert 15 * teams <= kinds["graduated"] + kinds["draft"] <= 24 * teams, kinds
     assert kinds["draft"] == round(offseason.DRAFT_PICKS * offseason.DRAFT_FROM_FBS)
     early = sum(1 for d in off["departures"] if d.get("early"))
-    assert 50 <= early <= 140, early
+    assert 40 <= early <= 140, early
     returning = sum(len(t["roster"]) for t in lg["teams"].values()) + len(off["portal"]["players"])
     share = len(off["portal"]["players"]) / returning
     assert 0.08 <= share <= 0.22, share

@@ -196,7 +196,7 @@ RETURN_ATTR = "return_rating"
 # keeps CORE_FLOOR. Speed, strength, intelligence and endurance are left alone.
 PHYSICAL = ("speed", "strength", "intelligence", "endurance")   # every position uses these
 OFF_SKILL_RANGE = (25, 85)
-CORE_FLOOR, CORE_FLOOR_OVR = 20, 19
+CORE_FLOOR, CORE_FLOOR_OVR = 20, 9    # 9: every player EA rated 60 or more (the rule as first set) is over it
 CLAMP_EXTREMES = not os.environ.get("BUILD_NO_CLAMP")   # BUILD_NO_CLAMP=1 builds without it (for before/after tests)
 
 

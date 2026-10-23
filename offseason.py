@@ -43,7 +43,7 @@ DRAFT_FROM_FBS = 0.97                              # the share of picks from FBS
 POSITION_VALUE = {"QB": 6, "LT": 4, "RT": 3, "LEDG": 4, "REDG": 4, "CB": 3, "WR": 2, "DT": 1, "LG": -1, "RG": -1, "C": -2,
                   "TE": -1, "HB": -3, "FB": -12, "SAM": 0, "MIKE": -1, "WILL": -1, "FS": 0, "SS": -1, "K": -18, "P": -20}
 DRAFT_NOISE = 4.0
-DECLARE = ((32, 0.95), (64, 0.85), (100, 0.6), (160, 0.3), (257, 0.1), (10**9, 0.004))   # projected pick -> an underclassman declares
+DECLARE = ((32, 0.95), (64, 0.88), (100, 0.65), (160, 0.35), (257, 0.12), (10**9, 0.004))   # projected pick -> an underclassman declares
 UNDERCLASS_ELIGIBLE = {"JR", "JRRS", "SORS"}       # three years out of high school
 PORTAL_BASE = {"FR": 0.07, "FRRS": 0.13, "SO": 0.15, "SORS": 0.18, "JR": 0.14, "JRRS": 0.17, "SR": 0.26}
 PORTAL_USAGE = {"starter": 0.12, "rotation": 0.65, "bench": 1.3}
@@ -60,6 +60,8 @@ OPEN_TAKE_ANY = 4                                  # with this many open spots a
 PT_WEIGHT, PRESTIGE_WEIGHT, RATING_WEIGHT, WIN_WEIGHT, HOME_WEIGHT, PICK_NOISE = 1.0, 0.8, 0.3, 0.6, 0.4, 0.5
 
 # ----- development and staff *tune* -----
+DEV_RATE = 0.6                                     # coachability's pace on our scale: a class tracks the real players by stars and
+                                                   # years (tools/check_development.py), three- and two-stars a little under the survivors
 PROGRAM_DEV = 0.10                                 # development rate per point of the program's recruiting baseline
 COORD_SHARE = 0.4                                  # the coordinator's part of a player's coach factor
 RECRUITER_LEAVE = 0.12
@@ -132,12 +134,12 @@ def start(state: dict) -> dict:
 PERF_RATE = 0.25                 # development rate change per standard deviation of production over the average starter's
 PERF_RANGE = (-1.0, 2.4)         # ... so a player develops 0.75 to 1.6 times as fast
 BREAKOUT_FROM = 1.0              # production this far over the average starter raises his ceiling ...
-BREAKOUT_ROOM = 1.5              # ... by this many EA points per standard deviation beyond half of one
-HONOR_ROOM = {"heisman": 5, "national": 4, "all_america_1": 3, "national_finalist": 2, "all_america_2": 2,
-              "conference_award": 2, "all_conference_1": 1, "all_conference_2": 1}
+BREAKOUT_ROOM = 2.5              # ... by this many points (our scale) per standard deviation beyond half of one
+HONOR_ROOM = {"heisman": 8, "national": 6, "all_america_1": 5, "national_finalist": 3, "all_america_2": 3,
+              "conference_award": 3, "all_conference_1": 2, "all_conference_2": 1}
 HONOR_NAMES = {"heisman": "Heisman Trophy", "all_america_1": "All-America first team", "all_america_2": "All-America second team",
                "all_conference_1": "All-conference first team", "all_conference_2": "All-conference second team"}
-ROOM_CAP = 7                     # the most a year's honors and production add to his ceiling
+ROOM_CAP = 10                     # the most a year's honors and production add to his ceiling
 LEVEL_UP = 0.4                   # a national award winner or All-American moves up a coachability level this often
 PHYSICAL = {"speed", "acceleration", "agility", "change_of_direction", "jumping", "stamina", "injury", "toughness", "strength",
             "kick_power", "throw_power"}   # gifts and body: production does not raise these ceilings
@@ -502,7 +504,7 @@ def coach_factor(coaches: dict, pos: str) -> float:
 def develop(p: dict, attrs: list[str], factor: float, rng: random.Random) -> int:
     """One offseason's growth on our scale: each skill closes part of its gap to potential at his
     coachability's rate times `factor`; his overall follows (our formula). Returns the overall gained."""
-    rate = recruits.RATE.get(p.get("c"), 0.27) * factor
+    rate = recruits.RATE.get(p.get("c"), 0.27) * factor * DEV_RATE
     new_r, new_g = [], []
     for v, g in zip(p["r"], p["g"]):
         step = int(round(min(g, g * rate * rng.uniform(0.8, 1.2)))) if g > 0 else 0

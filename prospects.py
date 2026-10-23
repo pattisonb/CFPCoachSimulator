@@ -511,12 +511,14 @@ def national_classes(state: dict, viewer: Optional[str] = None) -> dict:
         stars = {str(n): sum(1 for q in pids if rc["prospects"][q]["stars"] == n) for n in (5, 4, 3, 2)}
         rows.append({"school": slug, "name": teams[slug]["name"], "conference": teams[slug]["conference"],
                      "count": len(pids), "signed": sum(1 for q in pids if rc["status"][q]["signed"]), "stars": stars,
-                     "points": round(sum(c * CLASS_DECAY ** i for i, c in enumerate(comps)), 3), "yours": slug == viewer,
+                     "_points": sum(c * CLASS_DECAY ** i for i, c in enumerate(comps)), "yours": slug == viewer,
                      "top": [{"id": q, "name": rc["prospects"][q]["name"], "stars": rc["prospects"][q]["stars"],
                               "position": rc["prospects"][q]["position"], "rank": rc["prospects"][q]["rank"]} for q in pids[:3]]})
-    rows.sort(key=lambda r: (-r["points"], r["name"]))
-    for i, r in enumerate(rows):
-        r["rank"] = 1 + sum(1 for o in rows if o["points"] > r["points"])
+    rows.sort(key=lambda r: (-r["_points"], r["name"]))
+    for r in rows:                           # ranked on the exact points, as class_rank ranks them
+        r["rank"] = 1 + sum(1 for o in rows if o["_points"] > r["_points"])
+    for r in rows:
+        r["points"] = round(r.pop("_points"), 3)
     signed = sum(1 for st in rc["status"].values() if st["signed"])
     phase = "Signed" if signed == len(rc["status"]) else "Early signing period done" if signed else "Recruiting"
     return {"schools": rows, "phase": phase, "fcs": sum(1 for st in rc["status"].values() if st["signed"] == "FCS")}

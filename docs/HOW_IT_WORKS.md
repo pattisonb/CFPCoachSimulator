@@ -975,9 +975,9 @@ production is each player's standardized score at his position group against the
 (`awards.Pool`, the same numbers the awards use), for players who played at least half their
 team's games. It sets his pace: 1 + 0.25 per standard deviation (0.75 to 1.6 times). A breakout
 year (one standard deviation over the average starter) raises his ceiling in skill and football
-IQ by 1.5 EA points per deviation beyond half of one; so do honors: the Heisman 5, a national
-award 4, All-America first team 3, a finalist or second team 2, a conference award 2,
-all-conference 1 (the best counts in full, the next two at half, at most 7 in a year). Speed,
+IQ by 2.5 points (our scale) per deviation beyond half of one; so do honors: the Heisman 8, a
+national award 6, All-America first team 5, a finalist, second team or conference award 3,
+all-conference 2 or 1 (the best counts in full, the next two at half, at most 10 in a year). Speed,
 strength and the other gifts are not raised. A Heisman winner, national award winner or
 first-team All-American moves up a coachability level 40% of the time. The Development step
 lists your risers with the reasons. Programs develop at 1 + 0.10 times their recruiting baseline
