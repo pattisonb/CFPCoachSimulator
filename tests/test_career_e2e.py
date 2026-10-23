@@ -82,6 +82,17 @@ if __name__ == "__main__":
             page.goto(f"{base}/season?id={sid}")
             page.wait_for_selector("#season:visible")
             page.wait_for_selector(".go-play")                 # a career opens on the Office
+            # a week highlighted on the schedule is not the Office's Advance target: it plays one week
+            page.click("#season-tabs button[data-tab=schedule]")
+            page.click("#week-strip button.week-chip[aria-label='Week 4']")
+            page.click("#season-tabs button[data-tab=office]")
+            page.wait_for_selector(".go-play")
+            page.click(".go-play >> text=/Sim the week|ADVANCE THE WEEK/")
+            for _ in range(600):
+                if call(base, f"/api/season/{sid}/status?since=0")["status"] != "running" and call(base, f"/api/season/{sid}")["current_week"] >= 1:
+                    break
+                time.sleep(0.5)
+            assert call(base, f"/api/season/{sid}")["current_week"] == 1, call(base, f"/api/season/{sid}")["current_week"]
             page.click(".go-play >> text=Sim to the end")
             page.wait_for_function("() => /Season complete|national champion/.test(document.querySelector('#season-meta').textContent)",
                                    timeout=900_000)

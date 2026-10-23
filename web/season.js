@@ -810,12 +810,15 @@
     document.documentElement.style.setProperty("--sticky-top", `${Math.round(top + nav)}px`);
   }
   if (window.ResizeObserver) { const ro = new ResizeObserver(stickyTop); ro.observe($(".topbar")); ro.observe($("#season-tabs")); }
-  // what the Office's buttons do: the same as the header's
+  // what the Office's buttons do: the same as the header's, except that Advance there is always
+  // the next week (the schedule's highlighted week is not in view, so it cannot be the target)
   function play(what) {
     const btn = { gameday: "#btn-gameday", advance: "#btn-advance", selection: "#btn-to-selection", end: "#btn-to-end" }[what];
     const b = btn && $(btn);
-    if (b && !b.hidden && !b.disabled) b.click();
-    else if (what === "gameday") toast("No game to play this week: a bye, or it is already played. Advance plays the rest of the week.", 4000);
+    if (b && !b.hidden && !b.disabled) {
+      if (what === "advance") advance(state.season.current_week + 1);
+      else b.click();
+    } else if (what === "gameday") toast("No game to play this week: a bye, or it is already played. Advance plays the rest of the week.", 4000);
   }
   // the browser's copy follows recruiting a few seconds after your last change (the server saves first)
   let backupTimer = null;
