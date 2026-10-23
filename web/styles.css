@@ -1012,7 +1012,10 @@ body.real-mode #season-tabs button[data-tab="games"] { display: revert; }
 
 /* Coach Career as a game (recruiting.js "go-" screens). Every colour is a theme variable, so the
    screens read in the light and the dark theme; the team's own colours lead where it has them. */
-body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primary-ink: var(--team-primary-ink, var(--accent-ink)); }
+body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primary-ink: var(--team-primary-ink, var(--accent-ink));
+                   --go-warn: #f5b942; --go-warn-text: #f5b942; }
+:root[data-theme="light"] body.career-mode { --go-warn: #e39b14; --go-warn-text: #8a5d00; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) body.career-mode { --go-warn: #e39b14; --go-warn-text: #8a5d00; } }
 .go-display { font-family: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif; font-weight: 800; letter-spacing: 0.4px; line-height: 0.95; text-transform: uppercase; margin: 0; }
 .go-display.xl { font-size: clamp(36px, 6vw, 60px); }
 .go-display.l { font-size: clamp(26px, 3.4vw, 34px); }
@@ -1024,7 +1027,7 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
 .go-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .go-pill { display: inline-block; padding: 6px 12px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--border); font-size: 13px; }
-.go-link { background: none; border: none; padding: 0; color: var(--accent-text); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; min-height: 0; }
+.go-link { background: none; border: none; padding: 0; color: var(--text); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 2px; min-height: 0; }
 .go-btn { min-height: 44px; padding: 0 18px; border-radius: 12px; border: 2px solid var(--border); background: transparent; color: var(--text); font-weight: 600; font-size: 15px; cursor: pointer; }
 .go-btn:hover:not(:disabled) { border-color: var(--muted); }
 .go-btn.primary { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
@@ -1060,10 +1063,6 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-target:hover { background: var(--panel-2); }
 .go-target-text { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .go-news { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
-.go-tiles { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
-.go-tile { min-height: 64px; border-radius: 14px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font-family: "Barlow Condensed", system-ui, sans-serif; font-weight: 800; font-size: 20px; letter-spacing: 0.6px; cursor: pointer; }
-.go-tile:hover { border-color: var(--go-primary, var(--accent)); }
-.go-tile.hot { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
 
 /* tags, stars, avatars, bars and meters */
 .go-stars { color: #f2b632; letter-spacing: 1px; white-space: nowrap; }
@@ -1073,7 +1072,7 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .go-tag { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--border); font-size: 12px; font-weight: 600; white-space: nowrap; }
 .go-tag.good { color: var(--good-text); border-color: color-mix(in srgb, var(--good) 45%, var(--border)); }
-.go-tag.warn { color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.go-tag.warn { color: var(--go-warn-text); border-color: color-mix(in srgb, var(--go-warn) 45%, var(--border)); }
 .go-tag.bad { color: var(--bad-text); }
 .go-tag.muted { color: var(--muted); }
 .go-avatar { flex: none; display: block; width: 52px; height: 52px; border-radius: 50%; overflow: hidden; background: var(--panel-2); }
@@ -1083,10 +1082,10 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-bar { position: relative; height: 10px; border-radius: 5px; background: var(--panel-2); overflow: hidden; }
 .go-bar-range { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--muted) 30%, transparent); }
 .go-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: var(--muted); }
-.go-bar-fill.good { background: var(--good); } .go-bar-fill.warn { background: var(--accent); } .go-bar-fill.bad { background: var(--bad); }
+.go-bar-fill.good { background: var(--good); } .go-bar-fill.warn { background: var(--go-warn); } .go-bar-fill.bad { background: var(--bad); }
 .go-standing { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .go-standing-text { font-weight: 700; }
-.go-standing-text.good { color: var(--good-text); } .go-standing-text.warn { color: var(--accent-text); } .go-standing-text.bad { color: var(--bad-text); } .go-standing-text.muted { color: var(--muted); }
+.go-standing-text.good { color: var(--good-text); } .go-standing-text.warn { color: var(--go-warn-text); } .go-standing-text.bad { color: var(--bad-text); } .go-standing-text.muted { color: var(--muted); }
 .go-meter { min-width: 0; }
 .go-meter-top { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
 .go-meter-track { height: 8px; border-radius: 4px; background: var(--panel-2); overflow: hidden; margin-top: 4px; }
@@ -1114,9 +1113,11 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-pcard.selected { border: 2px solid var(--go-primary, var(--accent)); padding: 15px; }
 .go-pcard-top { display: flex; align-items: center; gap: 12px; padding: 0; border: none; background: none; color: var(--text); text-align: left; cursor: pointer; font: inherit; }
 .go-pcard-id { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.go-pcard-id b { font-size: 17px; }
+.go-pcard-id b { font-size: 17px; line-height: 1.2; }
+.go-pcard-id .go-stars { font-size: 13px; }
 .go-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: auto; }
-.go-act { min-height: 50px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 13px; cursor: pointer; }
+.go-act { min-width: 0; min-height: 50px; padding: 4px 2px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 12.5px; line-height: 1.15; text-align: center; cursor: pointer; }
+.go-act b { white-space: nowrap; }
 .go-act span { font-size: 11px; color: var(--muted); }
 .go-act:hover:not(:disabled) { border-color: var(--muted); }
 .go-act.go { background: var(--good); border-color: var(--good); color: #0b1020; }
@@ -1125,7 +1126,8 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-act.alt span { color: inherit; opacity: 0.85; }
 .go-act:disabled { opacity: 0.45; cursor: default; }
 .go-add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 180px; border-style: dashed; color: var(--text); cursor: pointer; font: inherit; }
-.go-panel { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.go-panel { position: sticky; top: calc(var(--sticky-top, 0px) + 12px); display: flex; flex-direction: column; gap: 10px; }
+.go-panel.inline { position: static; grid-column: 1 / -1; border: 2px solid var(--go-primary, var(--accent)); }
 .go-pitches { display: flex; flex-direction: column; gap: 6px; }
 .go-pitch { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; background: var(--panel-2); border: 2px solid transparent; cursor: pointer; }
 .go-pitch:has(input:checked) { border-color: var(--go-primary, var(--accent)); }
@@ -1146,6 +1148,7 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-list-id { display: flex; flex-direction: column; min-width: 0; }
 .go-list-id b, .go-list-id span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .go-list-main .go-tag { overflow: hidden; text-overflow: ellipsis; justify-self: start; max-width: 100%; }
+.go-list-tags { display: contents; }
 .go-pager { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 8px; }
 
 /* Staff */
@@ -1172,18 +1175,28 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 
 /* the slim tab bar and banner in a career; on the Office the sim buttons and week strip step
    aside (the Office has its own) */
-body.career-mode #season-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
-body.career-mode #season-tabs button { flex: none; }
+body.career-mode #season-tabs { display: flex; flex-wrap: wrap; overflow: visible; gap: 4px; margin-bottom: 14px; padding: 6px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px; }
+body.career-mode #season-tabs button { flex: none; min-height: 40px; padding: 0 12px; border-radius: 10px; color: var(--text);
+  font-family: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif; font-weight: 700; font-size: 17px; letter-spacing: 0.5px; text-transform: uppercase; order: 2; }
+@media (hover: hover) { body.career-mode #season-tabs button:hover:not(.active) { border-color: var(--border); background: var(--panel-2); } }
+body.career-mode #season-tabs button.active { background: var(--go-primary); color: var(--go-primary-ink); border-color: var(--go-primary); box-shadow: none; }
+body.career-mode #season-tabs button[data-tab=office], body.career-mode #season-tabs button[data-tab=recruiting], body.career-mode #season-tabs button[data-tab=prospects],
+body.career-mode #season-tabs button[data-tab=staff], body.career-mode #season-tabs button[data-tab=classes] { order: 1; font-weight: 800; }
+body.career-mode #season-tabs button[data-tab=classes] { margin-right: 10px; }
+@media (min-width: 861px) { body.career-mode #season-tabs { position: sticky; top: var(--topbar-h, 0px); z-index: 4; box-shadow: 0 6px 16px var(--shadow); } }
+@media (max-width: 600px) { body.career-mode #season-tabs button { min-height: 36px; padding: 0 9px; font-size: 15px; } body.career-mode #season-tabs button[data-tab=classes] { margin-right: 0; } }
+/* the header: on the Office its sim buttons step aside (the Office has its own); the week strip
+   is for the season's screens, so the career screens leave it out */
 body.career-mode.on-office #btn-advance, body.career-mode.on-office #btn-to-selection, body.career-mode.on-office #btn-to-end,
-body.career-mode.on-office #btn-gameday, body.career-mode.on-office #week-strip, body.career-mode.on-office #week-date { display: none !important; }
-body.career-mode #season-tabs button { min-height: 38px; padding: 4px 12px; font-size: 14px; }
-body.career-mode #season-tabs button[data-tab=office] { font-weight: 800; }
+body.career-mode.on-office #btn-gameday, body.career-mode.on-career-tab #week-strip, body.career-mode.on-career-tab #week-date { display: none !important; }
 
 @media (max-width: 1100px) {
   .go-board { grid-template-columns: minmax(0, 1fr); }
   .go-panel { position: static; }
-  .go-list-main { grid-template-columns: 46px 38px minmax(0, 1fr) auto; }
-  .go-list-main .go-tag, .go-list-read { display: none; }
+  .go-list-main { grid-template-columns: 46px 38px minmax(0, 1fr) auto; row-gap: 6px; }
+  .go-list-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; grid-column: 3 / -1; }
+  .go-list-tags .go-list-read { flex-direction: row; align-items: center; gap: 6px; }
 }
 @media (max-width: 860px) {
   .go-office { grid-template-columns: minmax(0, 1fr); }
@@ -1193,18 +1206,21 @@ body.career-mode #season-tabs button[data-tab=office] { font-weight: 800; }
 @media (max-width: 600px) {
   .go-card { padding: 14px; border-radius: 14px; }
   .go-cards { grid-template-columns: minmax(0, 1fr); }
-  .go-list-main { grid-template-columns: 38px minmax(0, 1fr) auto; gap: 8px; }
+  .go-list-main { grid-template-columns: 38px minmax(0, 1fr); gap: 4px 8px; }
   .go-list-main .go-rank { display: none; }
-  .go-list-row { flex-wrap: wrap; }
-  .go-list-row > .go-btn { width: 100%; }
+  .go-list-main > .go-stars, .go-list-tags { grid-column: 2; }
+  /* the board button drops under the tags, right-aligned, so the name and tags keep the width */
+  .go-list-row { flex-wrap: wrap; padding-right: 8px; row-gap: 0; }
+  .go-list-row > .go-list-main { flex: 1 1 100%; }
+  .go-list-row > .go-btn { min-height: 38px; padding: 0 12px; font-size: 14px; margin: 0 0 4px auto; }
+  .go-list-tags .go-list-read { flex-wrap: wrap; }
   .go-profile-head { grid-template-columns: 64px minmax(0, 1fr); }
   .go-avatar.lg { width: 64px; height: 64px; }
   .go-school { grid-template-columns: minmax(0, 1fr) 56px; }
   .go-school > :last-child { grid-column: 1 / -1; }
-  .go-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .go-chance { align-items: flex-start; }
 }
-body.career-mode.on-office .season-head { padding-bottom: 0; }
+body.career-mode.on-career-tab .season-head { padding-bottom: 0; }
 .career-steps[hidden] { display: none; }
 
 .go-commit { border: 3px solid var(--border); border-radius: 14px; padding: 14px 16px; margin: 12px 0 4px; background: var(--panel-2); display: flex; flex-direction: column; gap: 4px; }
