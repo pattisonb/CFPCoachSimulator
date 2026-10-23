@@ -41,9 +41,11 @@ FIRST_YEAR = 2026
 # The coaches' own judgment in a depth chart, in overall points (one draw per player a year): real
 # 2026 usage starts players well below the top overall at most positions (rotations, fits, what
 # the ratings miss) but the best linemen up front. Set so that the real 2026 rosters' starters
-# picked this way have the overall the real starters had, group by group.
-DEPTH_EYE = {"QB": 8.0, "RB": 16.0, "WR": 13.0, "TE": 16.0, "OL": 1.5, "DL": 15.0, "LB": 12.0, "DB": 15.0, "K": 3.0, "P": 3.0}
-DEPTH_EXPERIENCE = 0.0    # overall points a year in college is worth in a depth chart (real coaches start the veteran)
+# picked this way sit as far below the best available as the real starters did, group by group
+# (fit on a later season's league, with the experience below).
+DEPTH_EYE = {"QB": 7.7, "RB": 14.5, "WR": 14.1, "TE": 17.4, "OL": 0.0, "DL": 18.9, "LB": 20.0, "DB": 18.0, "K": 3.0, "P": 3.0}
+DEPTH_EXPERIENCE = 5.0    # overall points a year in college is worth in a depth chart (real coaches start the veteran:
+                          # with it a later season's starters are 30% freshmen and sophomores, 2026's real ones 28%)
 _EYE_GROUP = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL", "LG": "OL", "C": "OL", "RG": "OL", "RT": "OL",
               "LEDG": "DL", "REDG": "DL", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "DB", "FS": "DB", "SS": "DB", "K": "K", "P": "P"}
 REAL_ROOM = 1.2           # real 2026 underclassmen's room to potential, against a generated player's at the same class

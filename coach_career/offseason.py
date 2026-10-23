@@ -68,7 +68,8 @@ DEV_RATE = 0.75                                    # coachability's pace on our 
 # real players gain little in their first offseasons and most in their third and fourth (the real rosters
 # by years in college: four-stars +1, +1, +5.5): the pace by seasons already played in the program *tune*
 YEAR_CURVE = (0.45, 0.7, 1.35, 1.35, 1.0)
-PROGRAM_DEV = 0.10                                 # development rate per point of the program's recruiting baseline
+PROGRAM_DEV = 0.25                                 # development rate per point of the program's recruiting baseline
+PROGRAM_DEV_BELOW = 0.10                           # ... below the average program (the Group of 5 develops less, not half as much)
 COORD_SHARE = 0.4                                  # the coordinator's part of a player's coach factor
 RECRUITER_LEAVE = 0.12
 
@@ -509,7 +510,8 @@ def program_factor(slug: str) -> float:
     """A program's own pull on development (facilities, staff size, strength and conditioning): its
     recruiting baseline, about -2 to +2, at PROGRAM_DEV a point."""
     from coach_career import recruiting
-    return 1 + PROGRAM_DEV * recruiting._baseline(slug)
+    b = recruiting._baseline(slug)
+    return 1 + (PROGRAM_DEV if b > 0 else PROGRAM_DEV_BELOW) * b
 
 
 def coach_factor(coaches: dict, pos: str) -> float:
