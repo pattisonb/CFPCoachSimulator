@@ -167,8 +167,17 @@ by release).
 **Decisions.** At each week step every entrant with offers commits with probability
 `PORTAL_COMMIT = (0.25, 0.4, 0.6, 1.0)` by week *tune*, to the school he likes best (interest
 as in recruiting with the portal priorities, playing time from the role he would have), best
-players first, spots as now. Committed transfers are signed (no flips). Unsigned after week 4
-leave FBS. The weekly report covers the portal the same way.
+players first, spots as now. Committed transfers are signed (no flips). The weekly report covers
+the portal the same way.
+
+**Preferred walk-ons.** An entrant unsigned after week 4 may join a school from his top group
+that had contact with him, has a roster spot under 85 and where he would at least be depth, as a
+walk-on at 0 NIL (`walk_on: true`, the school's AI takes him when it has need at his group or he
+beats its worst player there; you get the option on the last portal week's report). He takes it
+`PORTAL_WALK_ON = 0.5` *tune* of the time; otherwise he leaves FBS. The same for high school: the
+offseason's walk-on fill (`_fill_rosters`) draws first from the class's unsigned prospects who
+had that school on their list (preferred walk-ons, named players you saw on the board), then
+generates two-stars as now.
 
 **Removed.** `PORTAL_TAKE`, `CHURN` passes, `ai_offers`'s need scoring and `resolve_round`'s
 pick: the portal uses recruiting's board, offers, interest and decisions, with the portal
