@@ -9,7 +9,7 @@ source format (cfb_sim_data/teams/*.json) and built by the same pipeline as the 
 whenever the cache is missing (a save loaded on another machine).
 
     state["league"] = {"year": 2027, "attrs": [the game's 54 skills], "scale": "ours",
-                       "teams": {slug: {"roster": [player], "coaches": {...}, "formation": {...}, "observed": bool}}}
+                       "teams": {slug: {"roster": [player], "coaches": {...}, "formation": {...}, "style": slug}}}
 
 A player, compact, on our scale only (game_scale.py: 1-99, 50 the middle Power 4 starter at the
 position; his overall is our formula on these):
@@ -148,7 +148,7 @@ def from_base(year: int = FIRST_YEAR + 1) -> dict:
     offseason's departures). Head coaches keep the recruiting ratings the build measured."""
     import build_teams
     attrs = game_scale.keys()
-    usage = _real_usage()
+    usage = _real_usage()            # receivers' real target shares (the lead-back use goes with the style, source_team)
     teams = {}
     for slug in base_slugs():
         t = base_team(slug)
@@ -157,8 +157,7 @@ def from_base(year: int = FIRST_YEAR + 1) -> dict:
         coaches = json.loads(json.dumps(t["coaches"]))
         tm = (usage.get(slug) or {}).get("targets") or {}
         teams[slug] = {"roster": [compact({**p, "target_mult": tm.get(p["slug"])}, attrs, t.get("state")) for p in t["roster"] if p.get("ratings")],
-                       "coaches": coaches, "formation": formation(t), "observed": True,
-                       "rb_lead_feature": (usage.get(slug) or {}).get("rb_lead_feature")}
+                       "coaches": coaches, "formation": formation(t)}
     build_teams.measured_recruiting([{"slug": s, "coaches": v["coaches"]} for s, v in teams.items()])
     return {"year": year, "attrs": attrs, "scale": "ours", "teams": teams}
 
@@ -252,8 +251,10 @@ def source_team(league: dict, slug: str) -> dict:
     roster = [expand(c, league["attrs"], base) for c in entry["roster"]]
     starters, depth = lineup(roster, entry["formation"], league["year"])
     out = {k: v for k, v in base.items() if k not in ("roster", "starters", "depth_chart", "coaches", "team_ratings", "verification")}
-    if entry.get("rb_lead_feature") is not None and entry.get("observed"):
-        out["rb_lead_feature"] = entry["rb_lead_feature"]          # the 2026 staff's lead-back use, while it stays
+    style = entry.get("style", slug)                                 # the real program whose 2026 style the staff plays
+    lead = (_real_usage().get(style) or {}).get("rb_lead_feature")
+    if lead is not None:
+        out["rb_lead_feature"] = lead
     out.update(roster=roster, starters=starters, depth_chart=depth, coaches=entry["coaches"],
                team_ratings=team_ratings(roster, starters), roster_size=len(roster))
     return out
@@ -266,9 +267,8 @@ def source_teams(league: dict) -> list[dict]:
 def build(league: dict) -> dict:
     """The league as the engine's teams file (build_teams.build, without the real 2026 adjustments)."""
     import build_teams
-    observed = {s for s, t in league["teams"].items() if t.get("observed")}
-    observed |= {s for s in base_slugs() if s not in league["teams"]}
-    return build_teams.build(source_teams(league), real=False, observed=observed, quiet=True)
+    styles = {s: t.get("style", s) for s, t in league["teams"].items()}
+    return build_teams.build(source_teams(league), real=False, quiet=True, styles=styles)
 
 
 def path(career_id: str, year: int) -> Path:

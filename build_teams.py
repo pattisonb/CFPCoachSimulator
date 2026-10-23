@@ -341,17 +341,18 @@ FOURTH_PER_MARGIN = 0.013 # fourth-down tries a game added back per point of ave
 SCRAMBLE_SHARE = 4.0      # points of a team's rushes that are QB scrambles (the engine adds its own)
 
 
-def apply_observed_tendencies(teams: list[dict], only: Optional[set] = None) -> int:
+def apply_observed_tendencies(teams: list[dict], only: Optional[set] = None, styles: Optional[dict] = None) -> int:
     """Replace generated coach tendencies with what each team has actually done in 2026
     (derive_tendencies.py), scaled to the engine's tendency effects. Teams without box
-    scores keep the generated values; so do teams not in `only` (when given)."""
+    scores keep the generated values; so do teams not in `only` (when given). `styles`: a
+    team plays another real team's observed style (a career's new head coach brings one)."""
     if not OBSERVED.exists():
         return 0
     obs = json.loads(OBSERVED.read_text(encoding="utf-8"))
     league, per_team = obs["league"], obs["teams"]
     n = 0
     for t in teams:
-        o = per_team.get(t["slug"])
+        o = per_team.get((styles or {}).get(t["slug"], t["slug"]))
         if not o or o["games"] < 2 or (only is not None and t["slug"] not in only):
             continue
         td = t["tendencies"]
@@ -738,7 +739,8 @@ def engine_roster(t: dict) -> tuple[list[dict], list[dict]]:
     return offense, defense
 
 
-def build(sources: list[dict], real: bool = True, observed: Optional[set] = None, quiet: bool = False) -> dict:
+def build(sources: list[dict], real: bool = True, observed: Optional[set] = None, quiet: bool = False,
+          styles: Optional[dict] = None) -> dict:
     """The engine's teams file from source-format teams. `real`: the real 2026 data's own
     adjustments (depth by real usage, rating nudges, coaches' measured recruiting); a career's
     later seasons build without them. `observed`: the teams whose observed 2026 tendencies still
@@ -761,7 +763,7 @@ def build(sources: list[dict], real: bool = True, observed: Optional[set] = None
     tendency_means = normalize_tendencies(teams)
     decouple_discipline(teams)
     say("league tendency means before centring:", tendency_means)
-    say("teams with observed 2026 tendencies:", apply_observed_tendencies(teams, only=observed))
+    say("teams with observed 2026 tendencies:", apply_observed_tendencies(teams, only=observed, styles=styles))
     if real:
         say("head coaches' recruiting ratings from their measured edge:", measured_recruiting(teams))
     out = {"source": str(SRC), "neutral": NEUTRAL, "spread_scale": SPREAD_SCALE, "team_level_top_scale": TEAM_LEVEL_TOP_SCALE,

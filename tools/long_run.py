@@ -62,6 +62,18 @@ def season_metrics(state: dict) -> dict:
         tiers.setdefault(tier, {"starters": [], "rating": [], "recruits": []})
         tiers[tier]["starters"].append(st.mean(st_))
         tiers[tier]["rating"].append(t["team_ratings"]["overall"])
+    # who starts, by tier: young players, transfers, players from FCS or junior college (the league's own records)
+    lg = state.get("league") or {}
+    info = {c["id"]: c for t in (lg.get("teams") or {}).values() for c in t["roster"]}
+    for s_, t in fbs.items():
+        tier = "top25" if s_ in TOP25 else "p4" if season._is_p4(s_, t) else "g5"
+        for p in t["offense"] + t["defense"]:
+            if p.get("in_game"):
+                c = info.get(p["slug"], {})
+                tiers[tier].setdefault("young", []).append(1 if (p.get("class") or "")[:2] in ("FR", "SO") else 0)
+                tiers[tier].setdefault("transfer", []).append(1 if c.get("transfer") and c.get("transfer") != "FCS" else 0)
+                tiers[tier].setdefault("lower", []).append(1 if c.get("transfer") == "FCS" else 0)
+                tiers[tier].setdefault("walkon", []).append(1 if c.get("walk_on") else 0)
     rc = state.get("recruiting") or {}
     for pid, s_ in (rc.get("status") or {}).items():
         school = s_.get("signed")
@@ -70,7 +82,8 @@ def season_metrics(state: dict) -> dict:
             tiers[tier]["recruits"].append(rc["prospects"][pid]["composite"])
     tier_out = {k: {"starters": round(st.mean(v["starters"]), 2), "rating": round(st.mean(v["rating"]), 2),
                     "recruit_composite": round(st.mean(v["recruits"]), 4) if v["recruits"] else None,
-                    "signed_per_team": round(len(v["recruits"]) / len(v["rating"]), 1)} for k, v in tiers.items()}
+                    "signed_per_team": round(len(v["recruits"]) / len(v["rating"]), 1),
+                    **{k2: round(st.mean(v[k2]), 3) for k2 in ("young", "transfer", "lower", "walkon") if v.get(k2)}} for k, v in tiers.items()}
     final = state["polls"].get(str(season.FINAL_WEEK)) or {}
     rec = season._records(state, include_playoff=True)[state["team"]]
     data: dict = {}
@@ -84,6 +97,8 @@ def season_metrics(state: dict) -> dict:
         "players_ovr": round(st.mean(everyone), 2),
         "stats_off": {k: round(v, 4) for k, v in data["area_off"].items()}, "tiers": tier_out,
         "ppg": round(data["teams"]["ppg"]["sim_mean"], 2), "ypg": round(data["teams"]["ypg"]["sim_mean"], 1),
+        "team_spots": {k: {"sim": [round(x, 1) for x in v["sim"]], "real": [round(x, 1) for x in v["real"]]} for k, v in data["teams"].items()},
+        "leaders": {k: {"sim": [round(x) for x in v["sim"]], "real": [round(x) for x in v["real"]]} for k, v in data["leaders"].items()},
     }
 
 
@@ -141,7 +156,9 @@ def run(seasons: int, seed: int, team: str, out: Path) -> None:
         o = row["offseason"]
         tr = row["tiers"]
         print(f"      carousel {dict(o.get('hc_departures', {}))}  you {o.get('you')}  moved {o.get('moved_to')}", flush=True)
-        print("      tiers " + "  ".join(f"{k} st {v['starters']:.1f} rtg {v['rating']:.1f} rec {v['recruit_composite'] or 0:.3f} x{v['signed_per_team']}" for k, v in sorted(tr.items())), flush=True)
+        print("      tiers " + "  ".join(f"{k} st {v['starters']:.1f} rtg {v['rating']:.1f} rec {v['recruit_composite'] or 0:.3f} x{v['signed_per_team']}"
+                                       f" young {v.get('young', 0):.2f} tr {v.get('transfer', 0):.2f} low {v.get('lower', 0):.2f} wo {v.get('walkon', 0):.2f}"
+                                       for k, v in sorted(tr.items())), flush=True)
         print(f"{row['year']} champ {row['champion']:<14} {team} {row['record'][0]}-{row['record'][1]}  "
               f"team rtg {row['team_rating']['mean']:.1f}±{row['team_rating']['sd']:.1f}  QB {row['starters_ovr'].get('QB', 0):.1f} "
               f"OL {row['starters_ovr'].get('OL', 0):.1f}  ppg {row['ppg']:.1f}  stats off "

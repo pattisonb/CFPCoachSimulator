@@ -100,6 +100,15 @@ def judge(team: dict, slug: str, res: dict, year: int) -> dict:
     return {"goal": g, "met": met, "security": a["security"], "delta": int(round(delta)), "tenure": tenure, "patience": a["patience"]}
 
 
+def new_style(rng: random.Random, lgd: dict, slug: str) -> str:
+    """A new head coach brings his own way of playing: the observed 2026 style of a real program
+    (data/observed_tendencies.json), so every team keeps playing like a real one does."""
+    import build_teams
+    obs = json.loads(build_teams.OBSERVED.read_text(encoding="utf-8"))["teams"] if build_teams.OBSERVED.exists() else {}
+    pool = sorted(s for s, o in obs.items() if o.get("games", 0) >= 2 and s != slug)
+    return rng.choice(pool) if pool else slug
+
+
 def _rating(c: dict) -> float:
     r = c.get("ratings") or {}
     return r.get("overall") or (r.get("play_calling", 60) + r.get("player_development", 60) + r.get("recruiting", 60)) / 3
@@ -169,7 +178,7 @@ def run(state: dict) -> dict:
         slug = queue.pop(0)
         hire, src = _pick_head_coach(state, slug, verdicts, res, filled, rng, year)
         lgd["teams"][slug]["coaches"]["head_coach"] = hire
-        lgd["teams"][slug]["observed"] = False
+        lgd["teams"][slug]["style"] = new_style(rng, lgd, slug)
         lgd["teams"][slug].setdefault("ad", ad(lgd["teams"][slug], slug))["security"] = START_SECURITY
         filled[slug] = hire
         changes.append({"team": slug, "role": "head_coach", "new": hire["name"], "reason": "hired", "from": src.get("text")})

@@ -720,8 +720,9 @@ def _take_job(state: dict, slug: str) -> None:
     mine = lgd["teams"][me]["coaches"]["head_coach"]
     lgd["teams"][slug]["coaches"]["head_coach"] = dict(mine, since=year)
     lgd["teams"][me]["coaches"]["head_coach"] = carousel.generated(rng, lgd, "head_coach", me, year, level=2 * carousel.baseline(me))
+    lgd["teams"][slug]["style"] = lgd["teams"][me].get("style", me)          # you bring your way of playing
+    lgd["teams"][me]["style"] = carousel.new_style(rng, lgd, me)
     for s in (slug, me):
-        lgd["teams"][s]["observed"] = False
         carousel.ad(lgd["teams"][s], s)["security"] = carousel.START_SECURITY
     state["offseason"]["move_to"] = slug
     state["offseason"]["coaching_changes"].append({"team": slug, "role": "head_coach", "new": "You", "reason": "hired",
