@@ -962,11 +962,10 @@ the server switches leagues when you open a career (never while another sims). L
 replay the 2026 schedule with home and away swapped every other year; the preseason poll comes
 from team ratings; dates show a year on.
 
-**Rosters of 105** (the NCAA's limit since 2025). The real 2026 rosters are EA's 85, each team's
-best; a career's league holds up to 105, and each team's best 85 then has the real class make-up
-(freshmen 15-19%, fifth-year seniors 15-21% against 15% and 18.5%; `tools/tune_rosters.py`).
-The first season recruits against the 85 (its classes are the calibrated real ones); later ones
-against 105, capped by the school's usual class size either way.
+**Rosters of 85** (EA's limit, and the real 2026 rosters'; the NCAA's has been 105 since 2025).
+Recruiting counts open spots against 85, capped by the school's usual class size. A healthy
+roster's make-up by group is the real 2026 mean (QB 4, RB 6, WR 11, TE 6, OL 15, DL 15, LB 9, CB
+8, S 8, K 2, P 1).
 
 **Departures** (after national signing day). Class years FR, SO, JR, SR with a redshirt each
 (FRRS ... SRRS). A player who did not start may take his redshirt once: 78% of freshmen off
@@ -980,28 +979,34 @@ seniors, times 0.12 for starters, 0.65 for the next man up and 1.3 for the bench
 a losing year; a Group of 5 player with a card overall of 50 or more (a Power 4 starter) enters
 40% of the time to move up. About 1.2% quit a year (2.5 times as likely in a team's bottom 15%).
 
-**The portal.** Signed classes join first. Two rounds: you offer up to twice your open spots
-(the roster limit minus your roster and the transfers you have); every AI school offers to anyone
+**The portal.** Signed classes join first. Two rounds: you offer up to twice your spots (the
+roster limit minus your roster and the transfers you have, plus up to 8 you make by releasing the
+end of your roster, as a Power 4 school can); every AI school offers to anyone
 who would start for it, and by need (groups short of a healthy roster's make-up, or anyone good
 with 4+ spots open) to entrants about as good as its depth there; a Power 4 school makes up to 8
 more spots by releasing the end of its roster. At the end of a round each entrant with offers
 picks the school he likes best with a spot left, best players first: playing time (would he
 start, be next in line, or depth) counts 1, the program's recruiting baseline 0.8 a point (about
 -2 to +2) and its team rating 0.3 per 10 points, winning 0.6, home state 0.4, plus noise: the
-best Group of 5 players move up, as they do. Entrants unsigned after round 2 leave FBS.
+best Group of 5 players move up, as they do. A round runs in three passes: schools with spots left
+offer again to who is still out there, so Group of 5 schools sign Power 4 backups and each other's
+players (about 2.5 a team a year). Entrants unsigned after round 2 leave FBS (about 1 a team).
 
 **Development.** Every returning player (transfers too) develops once a year on our scale: each
 skill closes part of its gap to potential at his coachability's rate times 0.75 (`DEV_RATE`)
-times a pace by seasons in the program (0.45, 0.7, 1.35, 1.35, then 1.0: real players gain
-little in their first offseasons and most in their third and fourth). A generated player's room
+times a pace by seasons in college (0.45, 0.7, 1.35, 1.35, then 1.0: real players gain little in
+their first offseasons and most in their third and fourth; a real 2026 player's seasons come from
+his class, and a transfer keeps his). A real 2026 underclassman's room to potential is 1.2 times
+his seeded one (it ran short of a generated player's at the same class, and the Group of 5 dipped
+as those players became its upperclassmen). A generated player's room
 to potential is scaled by position group (`game_scale.ROOM`: 1.0 for backs to 1.63 for safeties),
 set so a career's starters settle, season after season, where the real 2026 starters were (two
 40-season runs had defenses 2.6-4.7 points low and receivers' yards 27% high before it; a class
 now runs a little above the real players by stars and years, `tools/check_development.py`, since
 the real ones are the survivors and a league's starters are younger than its best). The rate also takes a
 coach factor (the head coach's player development with the coordinator on his side of the ball,
-40%: 0.8 at 30, 1.0 at 50, 1.2 at 90) and the program's own (1 + 0.25 times its recruiting
-baseline). The signed class arrives as it is. Rosters are then topped up to 100, the thinnest
+40%: 0.8 at 30, 1.0 at 50, 1.2 at 90) and the program's own (1 + 0.10 times its recruiting
+baseline). The signed class arrives as it is. Rosters are then topped up to 80, the thinnest
 groups first: walk-ons (generated two-star freshmen) and, 30% of the time at a Group of 5 school
 (15% in the Power 4), FCS and junior-college transfers (three-stars a year or two in, sophomores
 or juniors).
@@ -1041,14 +1046,14 @@ below your program's standing (Auto takes the best). Your coordinators leave whe
 program hires them as its head coach; a recruiter moves on 12% of the time; each opening has
 three candidates and Auto hires the best. The rest of your staff drift a point or two a year.
 
-**Many seasons** (`tools/long_run.py`, every step on Auto). Three 60-season careers (180 seasons,
-seeds 41-43) held: stats against real seasons 6.5-7.0% off in every 25-season stretch (the real
-2026 rosters: 6.4%), 26 points a game (2026: 26.8), team ratings flat after the first years (the
-real rosters' extra-experienced seniors leave first), every position group's starters within a
-point or two of 2026's, 57 early entrants and 1,150 portal entrants a year (about a third placed),
-10 head coaches fired and 32 changes a year, 26 different champions. Program development at 0.25
-a baseline point (0.10 left the top 25 3.7 points short and the Group of 5 2 over) keeps the Power
-4 / Group of 5 gap at 2026's 10.8.
+**Many seasons** (`tools/long_run.py`, every step on Auto). Six 20-season careers on 85-man rosters
+(120 seasons, seeds 91-96): the league's mean team rating 59.0-60.0 every season (2026: 59.4),
+with no drop after the first offseason; stats against real seasons 6.3-7.8% off (the real 2026
+rosters: 5.6%), 26 points a game (2026: 26.9); every position group's starters within 2.5 points
+of 2026's; the top 25 settle 2 points below 2026 (57) and the Group of 5 1 above (41); 49 early
+entrants and 870 portal entrants a year (88% placed); 10 head coaches fired and 25 changes a year;
+27 different champions. Starters run younger than real (freshmen and sophomores 36-44% against
+27-31%).
 
 **The Offseason screen** walks the steps: Departures (your leavers by kind, the league's numbers,
 the first round), Transfer portal round 1 and 2 (entrants with position and status filters, your
