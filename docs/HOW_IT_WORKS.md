@@ -120,23 +120,22 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 
 ## How the data feeds the engine
 
-**Players.** Each source player has 54 EA-style ratings (0-99, 50 = average FBS player):
-EA College Football ratings put through one curve that stretches the low end (EA 90
-becomes 82, EA 80 becomes 63, EA 72 becomes 49). The source keeps EA's own numbers too
-(`overall_ea`, `ratings_ea`); `build_teams.py` carries the EA overall as `ea_overall`.
-The pages show the house scale instead: 1-99 where 50 is the middle Power 4 starter at
-the position (the median of today's starters, after the real depth charts: half are better,
-half worse; `tests/test_scale.py` holds every position and attribute to it), 65, 80 and 95 are a Power 4 starter one, two and three standard deviations
-better, and below the average a standard deviation is worth 60% as much (`BELOW` in
-season.py), so a typical Power 4 backup or Group of 5 starter reads about 40 and a
-walk-on in the 20s. A card's overall is EA's overall on that scale (`ea_house`; a
-god-mode edit moves it by what the edit does to the engine composite); attributes and
-"rated at every position" put the engine values on the same shape (`_house_scale`, one
-pair of slopes per position group). Jeremiah Smith is a 98, a good Power 4 quarterback
-about 70, a former five-star rated EA 82 about 51 whether he starts or not.
+**Players: our ratings** (`game_scale.py`, `data/game_scale.json`). The source rosters came with
+EA College Football's ratings; they were only the jumping-off point. Once, from the 2026
+rosters, the game froze its own scale: each of 54 skills per position group on 1-99, where 50
+is the middle Power 4 starter at the position, 15 points a standard deviation above him and 9
+below (a typical Power 4 backup or Group of 5 starter reads about 40, a walk-on in the 20s); the
+player card attributes on the same shape (`tests/test_scale.py` holds every position and
+attribute to 50); and **our overall**, a formula per position on those skills, fit once to the
+card overall the game showed then (r 0.97-0.995, about 1.5 points off). Since then nothing reads
+EA: a career's league and its recruits store our ratings, develop in them, and every overall the
+game uses is ours (cards, depth charts, team ratings, the draft, the portal, recruiting's playing
+time, comps, projected overall). Generated recruits are drawn by a model learned from real
+players and converted the moment they are made; careers saved in EA numbers convert on load. A
+god-mode edit moves the card overall by what the edit does to the engine composite.
 The engine works on its own position-relative values underneath (an average FBS starter
-at the position is 55, scaled by `SPREAD_SCALE`) and never reads the EA overall;
-god-mode edits typed on the house scale are converted back.
+at the position is 55, scaled by `SPREAD_SCALE`): it reads our ratings back through the frozen
+scale into the formulas it was tuned on, so 2026 plays exactly as it did (the same fingerprint).
 `build_teams.py` maps them to the engine's attributes: throw accuracy and power to
 passing, awareness and throwing under pressure to decision making, agility, jukes and
 break tackle to elusiveness, man and zone coverage to coverage, power and finesse moves
@@ -927,21 +926,21 @@ their EA ratings as lists in one key order, so a new career's save is under 1.5 
 Design: docs/superpowers/specs/2026-10-23-career-offseason-design.md.
 
 **A league per career.** The first season plays the real 2026 rosters. At the first offseason
-the career copies every FBS roster into its state (`state["league"]`: EA ratings and the room to
-potential as lists in one key order, coachability, class, size, archetype, stars, hometown,
-target share; each team's coaches and lineup shape), about 7 MB in the state and under 2 MB in
-a downloaded save. Each season the league goes back into the source format and through the same
-build as the real data (`build_teams.build`, about 5 s), without the real 2026 adjustments
-(depth by real usage, rating nudges). Lineups take each role's best by EA overall plus a little
-of the coaches' own eye (3 EA points of noise, fixed for the year): real depth charts start
-players below the top overall, and the engine was tuned on them. Linebacker spots take the best
-MIKE, WILL and SAM in that order. Receivers keep their 2026 target share; new ones draw one
-around 1.0 (sd 0.18). A team keeps its observed 2026 tendencies until its head coach changes.
-Team ratings come from the starters' EA overall, fit to EA's 2026 team ratings (r 0.99
-offense, 0.999 defense). The built file is cached in `data/leagues/` and rebuilt from the state
-when missing; the server switches leagues when you open a career (never while another sims).
-Later seasons replay the 2026 schedule with home and away swapped every other year; the
-preseason poll comes from team ratings; dates show a year on.
+the career copies every FBS roster into its state (`state["league"]`): our ratings and the room
+to potential as lists in one key order, our overall, coachability, class, size, archetype,
+stars, hometown and (real receivers) target share; each team's coaches and lineup shape; about
+7 MB in the state and under 2 MB in a downloaded save. Each season the league goes back into the
+source format (our ratings back through the frozen scale) and through the same build as the real
+data (`build_teams.build`, about 4 s), without the real 2026 adjustments (depth by real usage,
+rating nudges). Lineups take each role's best by our overall plus a little of the coaches' own
+eye (6 points of noise, fixed for the year): real depth charts start players below the top
+overall, and the engine was tuned on them. Linebacker spots take the best MIKE, WILL and SAM in
+that order. A team keeps its observed 2026 tendencies until its head coach changes. Team ratings
+come from the starters' overall, fit once to the 2026 team ratings (r 0.98 offense, 0.997
+defense). The built file is cached in `data/leagues/` and rebuilt from the state when missing;
+the server switches leagues when you open a career (never while another sims). Later seasons
+replay the 2026 schedule with home and away swapped every other year; the preseason poll comes
+from team ratings; dates show a year on.
 
 **Departures** (after national signing day). Class years FR, SO, JR, SR with a redshirt each
 (FRRS ... SRRS). A player who did not start may take his redshirt once: 78% of freshmen off
@@ -962,9 +961,10 @@ with a spot left, best players first: playing time (would he start, be next in l
 counts 2, the program's team rating 1, winning 0.6, home state 0.4, plus noise. Entrants
 unsigned after round 2 leave FBS.
 
-**Development.** Every returning player (transfers too) develops once a year with
-`recruits.develop`: each attribute closes part of its gap to potential at his coachability's
-rate times a coach factor (the head coach's player development with the coordinator on his side
+**Development.** Every returning player (transfers too) develops once a year on our scale: each
+skill closes part of its gap to potential at his coachability's rate times 0.6 (`DEV_RATE`: a
+class then tracks the real players by stars and years, three- and two-stars a little under the
+survivors; `tools/check_development.py`) times a coach factor (the head coach's player development with the coordinator on his side
 of the ball, 40%: 0.8 at 30, 1.0 at 50, 1.2 at 90). The signed class arrives as it is. Rosters
 are then topped up to 85, the thinnest groups first: half walk-ons (generated two-star
 freshmen), half FCS and junior-college transfers (three-stars a year or two in, sophomores or
