@@ -87,7 +87,7 @@
     const body = { pid, action };
     if (pitch) body.pitch = pitch;
     if (nil) body.nil = nil;
-    const names = { message: "Message", call: "Call", hc_visit: "Head coach visit", official_visit: "Official visit invite", offer: "Offer", pull_offer: "Offer pulled" };
+    const names = { message: "Message", call: "Call", hc_visit: "Head coach visit", official_visit: "Official visit invite", offer: "Offer", pull_offer: "Offer pulled", raise_nil: "NIL raised" };
     try {
       const r = await H.api(`/api/season/${s.id}/recruit`, H.postJSON(body));
       H.backupSoon();
@@ -296,7 +296,9 @@
 
     function pitchFor(b) { return view.pitch[b.id] !== undefined ? view.pitch[b.id] : (b.priorities_known[0] || ""); }
     async function run(b, action, nil) {
-      const r = await act(s, b.id, action, ["message", "call", "hc_visit"].includes(action) ? pitchFor(b) || null : null, nil);
+      const pitch = ["message", "call", "hc_visit", "offer"].includes(action) ? pitchFor(b) || null : null;
+      if (action === "offer" && !pitch) { H.toast("Pick a pitch first: an offer tells him what you are selling.", 3500); return; }
+      const r = await act(s, b.id, action, pitch, nil);
       if (r) renderRecruiting(s, box);
     }
     function card(b) {
@@ -313,6 +315,7 @@
       if (b.priorities_known.length < 3) tags.append(el("span", { class: "go-tag muted", text: b.priorities_known.length ? `${3 - b.priorities_known.length} more to learn` : "Priorities: call or visit to learn" }));
       if (b.need != null && !b.signed && b.committed !== me) tags.append(el("span", { class: `go-tag ${b.need > 0 ? "good" : "muted"}`, text: b.need > 0 ? `Need ${b.need}` : "Full", title: b.need > 0 ? `Your roster needs ${b.need} at his position this class` : "Your roster is covered at his position this class" }));
       if (b.offered) tags.append(el("span", { class: "go-tag good", text: b.nil ? `Offered · ${b.nil} NIL` : "Offered" }));
+      if (b.cooled) tags.append(el("span", { class: "go-tag bad", text: "Cooled on you", title: "He read your offer as a lowball: contacts count half and he will not visit until you raise it to what he wants" }));
       if (b.visit) tags.append(el("span", { class: "go-tag", text: b.visit.done ? "Visited" : `Visit wk ${b.visit.week}` }));
       c.append(tags);
       if (!b.signed && b.committed !== me) {
@@ -357,11 +360,19 @@
         }
         p.append(pitches, el("p", { class: "muted small", text: "Message, Call and HC visit use this pitch. A pitch on one of his priorities counts double; anything else counts half. A call or an in-home visit reveals one; an official visit reveals them all." }));
       }
+      const askText = b.ask ? (b.ask.exact != null ? `wants ${b.ask.exact}` : `wants about ${b.ask.lo}–${b.ask.hi} (a call or visit tells you)`) : "";
       if (!b.offered && !b.committed && !b.signed) {
-        const nil = el("input", { type: "number", min: "0", step: "5", value: "0", class: "go-nil", id: `nil-${b.id}` });
+        const start = b.ask ? (b.ask.exact != null ? b.ask.exact : b.ask.lo) : 0;
+        const nil = el("input", { type: "number", min: "0", step: "5", value: String(start), class: "go-nil", id: `nil-${b.id}` });
         const offer = el("button", { type: "button", class: "go-btn primary", text: "Offer" });
         offer.addEventListener("click", () => run(b, "offer", Number(nil.value) || 0));
-        p.append(el("div", { class: "go-row" }, [el("label", { for: `nil-${b.id}`, class: "small", text: "NIL points" }), nil, offer]));
+        p.append(el("div", { class: "go-row" }, [el("label", { for: `nil-${b.id}`, class: "small", text: `NIL points · ${askText}` }), nil, offer]),
+          el("p", { class: "muted small", text: "Under half of what he wants reads as a lowball: he cools on you for three weeks. The offer goes out with the pitch above." }));
+      } else if (b.offered && !b.signed && b.committed !== me) {
+        const nil = el("input", { type: "number", min: String((b.nil || 0) + 5), step: "5", value: String(Math.max((b.nil || 0) + 5, b.ask && b.ask.exact != null ? b.ask.exact : 0)), class: "go-nil", id: `raise-${b.id}` });
+        const raise = el("button", { type: "button", class: "go-btn", text: "Raise NIL" });
+        raise.addEventListener("click", () => run(b, "raise_nil", Number(nil.value) || 0));
+        p.append(el("div", { class: "go-row" }, [el("label", { for: `raise-${b.id}`, class: "small", text: `Your offer: ${b.nil || 0} NIL · ${askText}` }), nil, raise]));
       }
       const tools = el("div", { class: "go-row wrap" }, [el("button", { type: "button", class: "go-btn", text: "Full profile", onclick: () => openProfile(s, b.id) })]);
       if (b.offered && !b.signed) tools.append(el("button", { type: "button", class: "go-btn", text: "Pull offer", onclick: () => run(b, "pull_offer") }));

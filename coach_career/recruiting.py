@@ -62,7 +62,7 @@ AREAS = {
     "West Coast": ["CA", "OR", "WA", "HI", "AK"],
     "Mountain-Southwest": ["AZ", "NV", "UT", "CO", "NM", "ID", "MT", "WY", "OK"],
 }
-HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0}
+HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0, "raise_nil": 0}
 BASE_POINTS = {"message": 1.0, "call": 2.5, "hc_visit": 6.0, "offer": 4.0, "official_visit": 8.0}   # *tune*
 PITCH_MATCH, PITCH_MISS = 2.0, 0.5         # a pitch on one of his three priorities, any other topic
 DIMINISH = 0.2                             # each earlier contact from the school cuts a new one's worth *tune*
@@ -70,6 +70,20 @@ WEEKLY_ONCE = ("message", "call")           # each of these once a week per pros
 HC_VISIT_GAP = 4                           # weeks between head coach in-home visits to one prospect
 NIL_VALUE = {5: 0.04, 4: 0.07, 3: 0.12, 2: 0.15}   # interest per NIL point by stars: top prospects expect more *tune*
 NIL_FLOOR = 30
+# what a prospect wants in NIL points (his ask): by stars, times his position, times a lognormal spread *tune*
+ASK = {5: 60, 4: 30, 3: 8, 2: 0}
+ASK_POS = {"QB": 1.5, "LEDG": 1.2, "REDG": 1.2, "LT": 1.2, "WR": 1.2, "CB": 1.2, "HB": 0.9, "TE": 0.9, "K": 0.3, "P": 0.3}
+ASK_SPREAD = 0.3
+ASK_TRAIL = 0.15                           # he wants this much more per place you trail on his list
+ASK_SHOWN = (0.7, 1.3)                     # the range shown before a call or visit tells you the number
+NIL_OVER = 0.3                             # NIL past his ask counts this much of the usual value
+LOWBALL = 0.5                              # an offer under this share of his ask from you is a lowball ...
+LOWBALL_MIN = 20                           # ... as is a 0-NIL offer when he asks for at least this
+COOL_WEEKS = 3                             # a lowball cools him on you for this long: contacts count half, no visit
+COOLED_CONTACT = 0.5
+ASK_MORE = (1.5, 1.25)                     # a rival's NIL this much over yours, with you in his top group: his ask from you rises this much
+TOP_GROUP = 8                              # the schools he is seriously considering: his top this many by interest
+AI_OVER_ASK = 1.1                          # an AI school offers up to this times his ask from it
 ROSTER_LIMIT = 85                          # EA's roster limit (offseason.ROSTER_LIMIT)
 MIN_OPEN = 12
 EARLY_LEAVERS = 6                          # returning players expected to leave early (draft, transfers, quitting; offseason.py) *tune*
@@ -190,6 +204,7 @@ def start(state: dict, year: int = 2027) -> None:
         p["home"] = _home(p)
         hideable = p["stars"] == 2 or (p["stars"] == 3 and p["composite"] < HIDDEN_BELOW)
         p["hidden"] = hideable and random.Random(f"hidden-{year}-{state.get('rng_state', 0)}-{p['id']}").random() < HIDDEN_RATE
+        p["nil_ask"] = nil_ask(p, year, state.get("rng_state", 0))
         prospects[p["id"]] = p
     # the class is drawn by a model learned from real players and converted to our scale at once:
     # only our ratings are kept (as lists in one key order), with our overall now and projected
@@ -209,6 +224,63 @@ def start(state: dict, year: int = 2027) -> None:
         "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
         "boards": {}, "seed": state.get("rng_state", 0), "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
     }
+
+
+def nil_ask(p: dict, year: int, seed) -> int:
+    """What he wants in NIL points: his stars and position, with a spread."""
+    rng = random.Random(f"ask-{year}-{seed}-{p['id']}")
+    return int(round(ASK.get(p["stars"], 0) * ASK_POS.get(p["ea_position"], 1.0) * math.exp(rng.gauss(0, ASK_SPREAD))))
+
+
+def upgrade_asks(state: dict) -> bool:
+    """A career saved before prospects had NIL asks: give them theirs. Returns whether any were added."""
+    rc = state.get("recruiting") or {}
+    added = False
+    for p in (rc.get("prospects") or {}).values():
+        if "nil_ask" not in p:
+            p["nil_ask"] = nil_ask(p, rc.get("year", 2027), rc.get("seed", 0))
+            added = True
+    return added
+
+
+def _contact(state: dict, slug: str, pid: str) -> dict:
+    return state["recruiting"]["contacts"].setdefault(pid, {}).setdefault(slug, {"n": 0, "hc_week": None})
+
+
+def ask_from(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> int:
+    """What he wants from `slug`: his ask, raised when a rival's number beat the school's, times
+    ASK_TRAIL per place the school trails on his list."""
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    base = p["nil_ask"] * _contact(state, slug, pid).get("ask_mult", 1.0)
+    if not base:
+        return 0
+    schools = set(rc["lists"][pid]) | {slug}
+    win = win if win is not None else _winning(state)
+    order = sorted(schools, key=lambda s: -interest(state, s, pid, win))
+    return int(round(base * (1 + ASK_TRAIL * max(0, order.index(slug)))))
+
+
+def ask_view(state: dict, slug: str, pid: str) -> dict:
+    """His ask from your school as you know it: the number after a call or visit, a range before."""
+    ask = ask_from(state, slug, pid)
+    if _contact(state, slug, pid).get("asked"):
+        return {"exact": ask}
+    return {"lo": int(5 * round(ask * ASK_SHOWN[0] / 5)), "hi": int(5 * round(ask * ASK_SHOWN[1] / 5))}
+
+
+def nil_value(p: dict, nil: int, ask: int) -> float:
+    """The interest NIL on an offer is worth: in full up to his ask, NIL_OVER past it."""
+    return NIL_VALUE.get(p["stars"], 0.1) * (min(nil, ask) + NIL_OVER * max(0, nil - ask))
+
+
+def is_lowball(nil: int, ask: int) -> bool:
+    return nil < LOWBALL * ask or (nil == 0 and ask >= LOWBALL_MIN)
+
+
+def cooled(state: dict, slug: str, pid: str) -> bool:
+    """Whether he is cooled on the school after a lowball (contacts count half, no visit)."""
+    return (_contact(state, slug, pid).get("cooled_until") or -1) > state["current_week"]
 
 
 def upgrade_grades(state: dict) -> None:
@@ -259,21 +331,39 @@ def _early_leaver_cut(state: dict) -> float:
     return _LEAVER_CUT[1]
 
 
+_GROUP: dict = {}        # EA position -> roster group (offseason.GROUP, read once)
+
+
 def _group_of(p: dict) -> str:
     """A prospect's roster group (QB, RB, ... K, P) from his EA position."""
-    from coach_career import offseason
-    return offseason.GROUP.get(p["ea_position"], "S")
+    g = p.get("group")
+    if g is None:
+        if not _GROUP:
+            from coach_career import offseason
+            _GROUP.update(offseason.GROUP)
+        g = p["group"] = _GROUP.get(p["ea_position"], "S")
+    return g
+
+
+_GROUP_COUNTS: tuple = (None, {})   # (career, class and events so far; every school's commits by group)
 
 
 def commits_by_group(state: dict, slug: str) -> dict[str, int]:
-    """The school's commits and signees this class, by roster group."""
+    """The school's commits and signees this class, by roster group (every school's are counted
+    in one pass and kept until the next commitment, signing or flip, which all log an event:
+    a commitment set any other way needs reset_caches())."""
+    global _GROUP_COUNTS
     from coach_career import offseason
     rc = state["recruiting"]
-    out = {g: 0 for g in offseason.TARGET}
-    for pid, st in rc["status"].items():
-        if st["signed"] == slug or (not st["signed"] and st["committed"] == slug):
-            out[_group_of(rc["prospects"][pid])] += 1
-    return out
+    key = (state["id"], rc["year"], len(rc["log"]))
+    if _GROUP_COUNTS[0] != key:
+        counts: dict[str, dict] = {}
+        for pid, st in rc["status"].items():
+            school = st["signed"] or st["committed"]
+            if school and school != "FCS":
+                counts.setdefault(school, {g: 0 for g in offseason.TARGET})[_group_of(rc["prospects"][pid])] += 1
+        _GROUP_COUNTS = (key, counts)
+    return dict(_GROUP_COUNTS[1].get(slug) or {g: 0 for g in offseason.TARGET})
 
 
 def needs(state: dict, slug: str) -> dict[str, int]:
@@ -426,9 +516,9 @@ _STATIC: dict = {}       # a prospect's pulls that hold all season (everything b
 
 def reset_caches() -> None:
     """Forget everything worked out from the league's rosters (season.use_league switched it)."""
-    global _WINNING, _FITS
+    global _WINNING, _FITS, _GROUP_COUNTS, _LEAVER_CUT
     _STATIC.clear()
-    _WINNING, _FITS = (None, {}), (None, {}, None)
+    _WINNING, _FITS, _GROUP_COUNTS, _LEAVER_CUT = (None, {}), (None, {}, None), (None, {}), (None, 0)
     _returning.cache_clear()
     _open_spots.cache_clear()
 _WINNING: tuple = (None, {})   # (career and week, this week's on-field standing of every school)
@@ -549,17 +639,41 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         offers.remove(pid)
         _nil(state, slug)["held"].pop(pid, None)
     elif action == "offer":
+        if pitch is None:
+            raise RecruitingError(400, "an offer needs a pitch: what you are selling him")
         if nil > nil_left(state, slug):
             raise RecruitingError(400, "not enough NIL points")
         if pid in offers:
             raise RecruitingError(409, "already offered")
         if len(offers) >= offer_cap(state, slug):
             raise RecruitingError(409, "offer limit reached")
+        ask = ask_from(state, slug, pid)
         offers.append(pid)
         if nil:
             _nil(state, slug)["held"][pid] = nil
-        points = _contact_points(p, "offer", None) + nil * NIL_VALUE.get(p["stars"], 0.1)
+        points = nil_value(p, nil, ask)
+        if is_lowball(nil, ask):                # he reads it as a lowball: no points for the offer, and he cools on the school
+            contact["cooled_until"] = week + COOL_WEEKS
+            contact["lowball"] = True
+        else:
+            points += _contact_points(p, "offer", pitch)
+    elif action == "raise_nil":
+        if pid not in offers:
+            raise RecruitingError(409, "no offer to raise")
+        held = _nil(state, slug)["held"].get(pid, 0)
+        if nil <= held:
+            raise RecruitingError(400, "raise it above what you offered")
+        if nil - held > nil_left(state, slug):
+            raise RecruitingError(400, "not enough NIL points")
+        ask = ask_from(state, slug, pid)
+        _nil(state, slug)["held"][pid] = nil
+        points = nil_value(p, nil, ask) - nil_value(p, held, ask)
+        if nil >= ask and contact.get("cooled_until"):     # meeting his ask ends the cooling
+            contact.pop("cooled_until", None)
+            points += _contact_points(p, "offer", None)      # and the offer itself counts now
     elif action == "official_visit":
+        if cooled(state, slug, pid):
+            raise RecruitingError(409, "he has cooled on you after that offer: raise it to what he wants")
         if slug in rc["visits"].get(pid, {}):
             raise RecruitingError(409, "one official visit per school")
         game_week = _home_game_left(state, slug)
@@ -573,9 +687,12 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             contact["hc_week"] = week
         if action in WEEKLY_ONCE:
             contact.setdefault("week", {})[action] = week
-        if action in ("call", "hc_visit"):           # a call or an in-home visit tells you one thing he cares about
+        if action in ("call", "hc_visit"):           # a call or an in-home visit tells you one thing he cares about, and his ask
             revealed = _reveal(state, slug, pid)
+            contact["asked"] = True
         points = _contact_points(p, action, pitch) / (1 + DIMINISH * contact["n"])
+        if cooled(state, slug, pid):
+            points *= COOLED_CONTACT
         contact["n"] += 1
     rc["hours"][slug] = _hours(state, slug) - HOURS[action]
     if points:
@@ -686,11 +803,13 @@ def _build_board(state: dict, slug: str, rng: random.Random) -> list[str]:
     # levels follows the school's real shares instead of always taking its home state first
     keyed, fits = [], _fits(state, slug)
     need = needs(state, slug)
+    factor_of = {g: need_factor(n) for g, n in need.items()}
     tm0 = _team_model(slug)
     takes_fives = ((tm0.get("star_share") or {}).get("5*", 0.0) / _national_share(5)) >= 1   # a blue blood takes a five-star anywhere
+    pros = rc["prospects"]
     for pid in free:
-        p = rc["prospects"][pid]
-        factor = need_factor(need[_group_of(p)])
+        p = pros[pid]
+        factor = factor_of[_group_of(p)]
         if takes_fives and p["stars"] == 5:
             factor = max(factor, FIVE_STAR_FLOOR)
         f = fits[pid] * factor
@@ -758,6 +877,8 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
     edge = 1 + _coach_edge(state, slug)
     allowed = math.ceil(offer_cap(state, slug) * min(1.0, 0.35 + 0.65 * week / 8) * (LATE_OFFERS if week >= LATE_MARKET else 1.0))
     budget = _nil(state, slug)["budget"]
+    known = rc["revealed"].get(slug, {})
+    win = _winning(state)
     need, commits = needs(state, slug), commits_by_group(state, slug)
     for pid in list(offers):                   # a group at its cap: the open offers there are pulled (no more chasing flips)
         if rc["status"][pid]["committed"] != slug and not rc["status"][pid]["signed"] \
@@ -774,14 +895,23 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
             if group_full(state, slug, g, need, commits, open_):
                 continue
             open_[g] += 1
-            nil = min(nil_left(state, slug), round(budget * AI_NIL.get(p["stars"], 0)))
+            nil = min(nil_left(state, slug), round(budget * AI_NIL.get(p["stars"], 0)), round(AI_OVER_ASK * ask_from(state, slug, pid, win)))
             try:
-                _act(state, slug, pid, "offer", nil=nil, scale=edge)
+                _act(state, slug, pid, "offer", pitch=(known.get(pid) or p["priorities"])[0], nil=nil, scale=edge)
             except RecruitingError:
                 break
+    for pid in offers:                          # asked for more: raise once to his ask, as the budget allows
+        c = _contact(state, slug, pid)
+        if c.get("asked_more") and not c.get("ai_raised") and rc["status"][pid]["committed"] in (None, slug):
+            want = min(ask_from(state, slug, pid, win), _nil(state, slug)["held"].get(pid, 0) + nil_left(state, slug))
+            c["ai_raised"] = True
+            if want > _nil(state, slug)["held"].get(pid, 0):
+                try:
+                    _act(state, slug, pid, "raise_nil", nil=want, scale=edge)
+                except RecruitingError:
+                    pass
     targets = [pid for pid in offers if rc["status"][pid]["committed"] is None and not rc["status"][pid]["signed"]]
     targets += [pid for pid in offers if rc["status"][pid]["committed"] not in (None, slug) and not rc["status"][pid]["signed"]]
-    known = rc["revealed"].get(slug, {})
     for pid in targets[:2]:
         if slug not in rc["visits"].get(pid, {}):
             try:
@@ -816,8 +946,9 @@ def _visits(state: dict, week: int) -> None:
             v["done"] = True
             if game is None:
                 continue
-            while _reveal(state, slug, pid):     # a weekend on campus: you learn everything he cares about
+            while _reveal(state, slug, pid):     # a weekend on campus: you learn everything he cares about, his ask too
                 pass
+            _contact(state, slug, pid)["asked"] = True
             margin = game["home_score"] - game["away_score"]
             mood = 1.2 if margin > 0 else (0.6 if margin <= -21 else 0.9)
             cap = ((season.load_teams()[slug].get("stadium") or {}).get("capacity") or 50000)
@@ -976,6 +1107,31 @@ def auto_mode(state: dict) -> str:
     return "season" if v is True else v if v in AUTO_MODES else "off"
 
 
+def _asks_for_more(state: dict, week: int) -> None:
+    """A prospect who has heard a bigger number: when a rival's NIL on him is ASK_MORE[0] times a
+    school's and that school is in his top group, his ask from it rises ASK_MORE[1], once per rival."""
+    rc = state["recruiting"]
+    win = _winning(state)
+    by_pid: dict[str, dict] = {}
+    for slug, n in rc["nil"].items():
+        for pid, held in n["held"].items():
+            if pid in rc["offers"].get(slug, []):
+                by_pid.setdefault(pid, {})[slug] = held
+    for pid, held in by_pid.items():
+        if len(held) < 2 or rc["status"][pid]["signed"] or not rc["prospects"][pid]["nil_ask"]:
+            continue
+        top = sorted(held, key=lambda s: -interest(state, s, pid, win))[:TOP_GROUP]
+        for slug in top:
+            c = _contact(state, slug, pid)
+            heard = c.setdefault("heard", [])
+            for rival, theirs in held.items():
+                if rival != slug and rival not in heard and theirs >= ASK_MORE[0] * max(1, held[slug]):
+                    heard.append(rival)
+                    c["ask_mult"] = round(c.get("ask_mult", 1.0) * ASK_MORE[1], 3)
+                    c["asked_more"] = True
+                    _event(state, "asked_more", pid, slug, rival=rival)
+
+
 def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     """The recruiting week after `week`'s games: visits, every AI school (and yours on Auto),
     commitment draws, signing, then the hours reset. Returns the week's events."""
@@ -988,6 +1144,7 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     mine = state.get("team")
     mode = auto_mode(state)
     auto_mine = auto_user or mode != "off"
+    _asks_for_more(state, week)
     commits = _commits(state)          # AI weeks change offers and interest, not commitments
     for slug in fbs_schools(state):
         if slug != mine or auto_mine:

@@ -78,6 +78,10 @@ the weekly report says so ("Jalen Reed has heard a bigger number").
 **AI schools** offer `min(their share of the budget by stars, ask_s * 1.1)`, and raise once when
 asked for more if the budget allows.
 
+Status: built (`nil_ask`, `ask_from`, `ask_view`, `nil_value`, `is_lowball`, `cooled`, the
+`raise_nil` action, `_asks_for_more` at the week step; prospects who ask nothing never ask for
+more). The offer's pitch uses the fixed match/miss multiplier until section 4 lands.
+
 ## 4. Offers with a pitch; pitches tied to your program
 
 **An offer needs a pitch.** The offer action takes `pitch` (a topic) and `nil`. The UI requires

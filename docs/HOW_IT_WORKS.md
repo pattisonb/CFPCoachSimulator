@@ -838,10 +838,22 @@ too), an official visit invite 10 (at your next home game; a win sells, a 21-poi
 a big stadium helps, and the weekend tells you all three of his priorities) and an offer nothing. A pitch on one of his priorities is worth twice as much, any
 other topic half; each contact from a school is worth a little less than the last, and a
 prospect takes one message and one call a week from a school (more contact is not more interest:
-the rest of your hours go to other prospects). NIL
-points are a yearly budget from the program's level, attached to offers. Offers are capped at
+the rest of your hours go to other prospects). Offers are capped at
 1.5 times your open spots: 85 minus returning players, plus four early leavers, capped at
 the school's real class size plus two.
+
+**NIL asks and offers.** Every prospect wants something: an ask in NIL points from his stars
+(five-stars about 60, four-stars 30, three-stars 8, two-stars nothing) times his position
+(quarterbacks 1.5, edges, tackles, receivers and corners 1.2, backs and tight ends 0.9,
+specialists 0.3) with a spread. What he wants *from you* rises 15% per place you trail on his
+list, and 25% each time a rival's NIL on him is half again yours while you are in his top eight.
+His card shows a range ("wants about 30-60") until a call, in-home visit or official visit tells
+you the number. NIL points are a yearly budget from the program's level, attached to offers. An
+offer goes out with a pitch (what you are selling him) and a number: the NIL counts in full up to
+his ask and 30% past it; under half his ask (or nothing when he asks 20 or more) is a lowball:
+the offer itself earns nothing and he cools on you for three weeks (contacts count half, he
+declines a visit) until you **Raise NIL** to what he wants. AI schools offer up to 110% of his ask
+within their budget share and raise once when he asks for more.
 
 **Recruiting by need.** Each school's need at each position group this class is a healthy
 85-man roster's make-up (`offseason.TARGET`: QB 4, RB 6, WR 11, TE 6, OL 15, DL 15, LB 9, CB 8,

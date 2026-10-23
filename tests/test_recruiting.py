@@ -45,12 +45,34 @@ if __name__ == "__main__":
     back = sum(1 for q in roster if q["position"] == "QB" and q.get("class") not in recruiting.LEAVING)
     assert abs(nd["QB"] - (offseason.TARGET["QB"] - back)) <= 1, (nd["QB"], back)     # expected early leavers may count
     qb = next(q for q, p in rc["prospects"].items() if p["ea_position"] == "QB" and not rc["status"][q]["committed"])
-    rc["status"][qb]["committed"] = "ohio-state"
+    recruiting._commit(st, qb, "ohio-state")              # the game's path (it logs the event the counts key on)
     assert recruiting.needs(st, "ohio-state")["QB"] == nd["QB"] - 1
-    rc["status"][qb]["committed"] = None
+    rc["status"][qb]["committed"] = None; recruiting.reset_caches()
     assert recruiting.need_factor(2) > recruiting.need_factor(1) > recruiting.need_factor(0) > recruiting.need_factor(-1)
     v = prospects.recruiting_view(st)
     assert v["needs"] == nd and all("need" in b for b in v["board"]), list(v)[:5]
+    # NIL asks: every prospect has one from his stars and position; what he wants from you grows when you trail him
+    five = next(p for p in rc["prospects"].values() if p["stars"] == 5 and p["ea_position"] == "QB")
+    assert five["nil_ask"] > 40 and tx["nil_ask"] <= 20 and all("nil_ask" in p for p in rc["prospects"].values()), (five["nil_ask"], tx["nil_ask"])
+    ask = recruiting.ask_from(st, "ohio-state", five["id"])
+    assert ask >= five["nil_ask"]
+    # an offer needs a pitch; a lowball cools him (no points for the offer, contacts count half, no visit) until it reaches his ask
+    try:
+        recruiting.act(st, "ohio-state", five["id"], "offer", nil=0); raise AssertionError("an offer without a pitch went through")
+    except recruiting.RecruitingError as e:
+        assert e.code == 400
+    before = rc["lists"][five["id"]].get("ohio-state", 0.0)
+    recruiting.act(st, "ohio-state", five["id"], "offer", pitch=five["priorities"][0], nil=0)
+    assert recruiting.cooled(st, "ohio-state", five["id"]) and rc["lists"][five["id"]].get("ohio-state", 0.0) == before
+    try:
+        recruiting.act(st, "ohio-state", five["id"], "official_visit"); raise AssertionError("a visit while he is cooled on you")
+    except recruiting.RecruitingError as e:
+        assert e.code == 409
+    recruiting.act(st, "ohio-state", five["id"], "raise_nil", nil=ask)
+    assert not recruiting.cooled(st, "ohio-state", five["id"]) and rc["nil"]["ohio-state"]["held"][five["id"]] == ask
+    assert rc["lists"][five["id"]]["ohio-state"] > before
+    row = next(b for b in prospects.recruiting_view(st)["board"] if b["id"] == five["id"]) if five["id"] in rc["board"] else None
+    assert row is None or ("ask" in row and "cooled" in row)
     # a call and a message once a week each: spamming him is refused, next week is fine
     hours = st["recruiting"]["hours"]["ohio-state"]
     for action in ("call", "message"):
@@ -69,11 +91,11 @@ if __name__ == "__main__":
     assert len(recruiting.AREAS) == 9 and "TX" in recruiting.AREAS["Texas"]
     # an offer with NIL points holds them; past the budget or a second official visit is refused
     before = recruiting.interest(st, "ohio-state", pid)
-    r = recruiting.act(st, "ohio-state", pid, "offer", nil=20)
+    r = recruiting.act(st, "ohio-state", pid, "offer", pitch=tx["priorities"][0], nil=20)
     assert r["interest"] > before and pid in st["recruiting"]["offers"]["ohio-state"]
     assert st["recruiting"]["nil"]["ohio-state"]["held"][pid] == 20
     try:
-        recruiting.act(st, "ohio-state", tx["id"], "offer", nil=10 ** 6); raise AssertionError("NIL past the budget")
+        recruiting.act(st, "ohio-state", tx["id"], "offer", pitch="winning", nil=10 ** 6); raise AssertionError("NIL past the budget")
     except recruiting.RecruitingError as e:
         assert e.code in (400, 409)
     recruiting.act(st, "ohio-state", pid, "official_visit")
@@ -93,7 +115,7 @@ if __name__ == "__main__":
     # at signing, every school's offers to prospects who signed elsewhere are dropped: your
     # offer cap is never held by them (you cannot pull an offer once he signs)
     other = next(q for q, p in rc["prospects"].items() if q != pid and rc["status"][q]["committed"] is None)
-    recruiting.act(st, "ohio-state", other, "offer")
+    recruiting.act(st, "ohio-state", other, "offer", pitch="winning")
     rc["status"][other]["committed"] = "texas"
     recruiting._sign(st, final=False)
     assert rc["status"][other]["signed"] == "texas" and other not in rc["offers"]["ohio-state"]

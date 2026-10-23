@@ -368,6 +368,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "our_grades": our_grades,
         "looks": read["looks"] if read else 0,
         "our_comp": our_comp,
+        "ask": recruiting.ask_view(state, viewer, pid), "cooled": recruiting.cooled(state, viewer, pid),
     }
 
 
@@ -412,6 +413,7 @@ def board_row(state: dict, pid: str, viewer: str) -> dict:
                                if w == state["current_week"]],
                nil=rc["nil"].get(viewer, {}).get("held", {}).get(pid, 0),
                need=recruiting.needs(state, viewer)[recruiting._group_of(rc["prospects"][pid])],
+               ask=recruiting.ask_view(state, viewer, pid), cooled=recruiting.cooled(state, viewer, pid),
                standing=standing(state, pid, viewer))
     return out
 

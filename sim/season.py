@@ -1811,6 +1811,8 @@ def load_season(season_id: str) -> Optional[dict]:
         pass
     elif state.get("recruiting") and state["recruiting"].get("grades") != "game":
         recruiting.upgrade_grades(state)   # careers saved when grades were class percentiles
+    if state.get("recruiting"):
+        recruiting.upgrade_asks(state)     # careers saved before prospects had NIL asks
     return state
 
 

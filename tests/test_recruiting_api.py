@@ -70,7 +70,7 @@ if __name__ == "__main__":
     server.board_change(sid, server.BoardRequest(pid=pid, on=True))
     assert [b["id"] for b in server.recruiting_view(sid)["board"]] == [pid]
     assert server.prospect_profile(sid, pid)["public"]["on_board"] is True
-    server.recruit_action(sid, server.RecruitRequest(pid=pid, action="offer"))
+    server.recruit_action(sid, server.RecruitRequest(pid=pid, action="offer", pitch="winning"))
     v = server.recruiting_view(sid)
     row = v["board"][0]
     assert row["standing"]["place"] >= 1 and row["standing"]["of"] >= row["standing"]["place"]
