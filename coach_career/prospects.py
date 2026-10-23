@@ -338,7 +338,7 @@ def _evaluation(p: dict, public: dict[str, float]) -> dict:
         (strengths if public[g] >= STRENGTH_FROM else solid).append(f"{head(g)}: " + (STRENGTH_TEXT[g] if public[g] >= STRENGTH_FROM else SOLID_TEXT).format(pos=pos))
     for g in order[-2:]:
         (weaknesses if public[g] < WEAKNESS_BELOW else solid).append(f"{head(g)}: " + (WEAKNESS_TEXT[g] if public[g] < WEAKNESS_BELOW else SOLID_TEXT).format(pos=pos))
-    return {"strengths": strengths, "solid": solid, "weaknesses": weaknesses, "outlook": OUTLOOK.get(p["stars"], OUTLOOK[2]).format(pos=pos)}
+    return {"strengths": strengths, "solid": solid, "weaknesses": weaknesses, "outlook": OUTLOOK.get(recruiting.tier_of(p), OUTLOOK[2]).format(pos=pos)}
 
 
 def profile(state: dict, pid: str, viewer: str) -> dict:
@@ -404,7 +404,13 @@ def row(state: dict, pid: str, viewer: str) -> dict:
         "on_board": pid in rc["board"], "offered": pid in rc["offers"].get(viewer, []),
         "looks": read["looks"] if read else 0,
         "our_potential": list(recruiting.grade_range(state, pid, "potential")) if read else None,
+        **({"portal": True, "from": p["from"], "from_name": p["from_name"], "cls": p["cls"], "usage": p.get("usage"),
+            "line": p.get("line"), "portal_rank": p.get("portal_rank")} if p.get("portal") else {}),
     }
+
+
+def _role(playing_time: float) -> str:
+    return "Would start" if playing_time >= 0.9 else "Next in line" if playing_time >= 0.5 else "Depth"
 
 
 def board_row(state: dict, pid: str, viewer: str) -> dict:
@@ -426,6 +432,7 @@ def board_row(state: dict, pid: str, viewer: str) -> dict:
                stage=recruiting.stage(state, viewer, pid), strength=recruiting.strengths(state, viewer, pid),
                list=[dict(x, you=x["school"] == viewer) for x in _schools(state, pid)[:5]],
                firmness=rc["status"][pid].get("firmness") if rc["status"][pid]["committed"] == viewer and not rc["status"][pid]["signed"] else None,
+               role=_role(recruiting.pull(state, viewer, pid)["playing_time"]),
                standing=standing(state, pid, viewer))
     return out
 
@@ -510,11 +517,36 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
     return {"total": len(out), "rows": rows}
 
 
+class class_block:
+    """`with class_block(state):` the high school class is the recruiting block for the calls inside
+    (during the portal weeks the transfer pool holds that place; the classes views need the class)."""
+
+    def __init__(self, state: dict):
+        self.state, self.swapped = state, False
+
+    def __enter__(self):
+        rc = self.state.get("recruiting") or {}
+        if rc.get("portal") and self.state.get("recruiting_last"):
+            self.state["recruiting"], self.state["recruiting_last"] = self.state["recruiting_last"], rc
+            self.swapped = True
+        return self.state
+
+    def __exit__(self, *exc):
+        if self.swapped:
+            self.state["recruiting"], self.state["recruiting_last"] = self.state["recruiting_last"], self.state["recruiting"]
+
+
+def class_rc(state: dict) -> dict:
+    """The high school class's recruiting block (during the portal weeks, the signed class kept aside)."""
+    rc = state["recruiting"]
+    return state.get("recruiting_last") or rc if rc.get("portal") else rc
+
+
 def national_classes(state: dict, viewer: Optional[str] = None) -> dict:
     """Every FBS school's class (its commitments, or signees once they sign), ranked as class_rank
     ranks them: count, stars, its three best recruits; and where the calendar is."""
     from sim import season
-    rc = state["recruiting"]
+    rc = class_rc(state)
     teams = season.load_teams()
     by_school: dict[str, list] = {}
     for pid, st in rc["status"].items():
@@ -543,7 +575,7 @@ def national_classes(state: dict, viewer: Optional[str] = None) -> dict:
 
 def class_detail(state: dict, slug: str, viewer: str) -> list[dict]:
     """One school's class, best first, as list rows."""
-    rc = state["recruiting"]
+    rc = class_rc(state)
     pids = [pid for pid, st in rc["status"].items() if (st["signed"] or st["committed"]) == slug]
     return [row(state, pid, viewer) for pid in sorted(pids, key=lambda q: rc["prospects"][q]["rank"])]
 
@@ -564,6 +596,8 @@ def recruiting_view(state: dict) -> dict:
         "open_spots": recruiting.open_spots(state, me), "committed": len([1 for s in rc["status"].values() if s["committed"] == me]),
         "needs": recruiting.needs(state, me),
         "report": recruiting.latest_report(state),
+        "portal": {"week": rc.get("week"), "weeks": rc.get("weeks", 4), "entrants": len(rc["prospects"]),
+                   "signed": sum(1 for s_ in rc["status"].values() if s_["signed"])} if rc.get("portal") else None,
         "offers": len(offers), "offers_left": recruiting.offer_cap(state, me) - len(offers),
         "board": board,
         "targets": sorted((b for b in board if b["standing"]["pct"] is not None and not b["committed"]),
@@ -639,7 +673,7 @@ def _committed_odds(state: dict, pid: str, school: str, offered: list, week: int
 def class_rank(state: dict, slug: str) -> int:
     """Where a school's class stands nationally: its commitments' composites, best first, each worth
     CLASS_DECAY times the one before (the best recruits count most, as in the real rankings)."""
-    rc = state["recruiting"]
+    rc = class_rc(state)
     by_school: dict[str, list] = {}
     for pid, st in rc["status"].items():
         school = st["signed"] or st["committed"]

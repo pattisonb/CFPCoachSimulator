@@ -19,8 +19,12 @@ from typing import Optional
 from coach_career import league as lg
 from coach_career import recruits
 
-STAGES = ("departures", "portal_1", "portal_2", "development", "staff", "ready")
-STAGE_NAMES = {"departures": "Departures", "portal_1": "Transfer portal, round 1", "portal_2": "Transfer portal, round 2",
+STAGES = ("departures", "portal_w1", "portal_w2", "portal_w3", "portal_w4", "development", "staff", "ready")
+PORTAL_STAGES = ("portal_w1", "portal_w2", "portal_w3", "portal_w4")
+OLD_PORTAL = {"portal_1": "portal_w1", "portal_2": "portal_w2"}     # saves from the two-round portal
+STAGE_NAMES = {"departures": "Departures", "portal_w1": "Transfer portal, week 1", "portal_w2": "Transfer portal, week 2",
+               "portal_w3": "Transfer portal, week 3", "portal_w4": "Transfer portal, week 4",
+               "portal_1": "Transfer portal, round 1", "portal_2": "Transfer portal, round 2",
                "development": "Development", "staff": "Staff", "ready": "Ready for next season"}
 ROSTER_LIMIT = 85          # EA's roster limit (the real 2026 rosters; the NCAA's has been 105 since 2025)
 FILL_TO = 80               # walk-ons and lower-level transfers top a roster up to this
@@ -134,6 +138,14 @@ def start(state: dict) -> dict:
     state["offseason"] = {"stage": "departures", "year": year, "departures": deps,
                           "portal": {"players": entrants, "round": 1, "offers": {}, "moves": []},
                           "signed": signed, "staff": None, "report": None, "performance": _performance(state)}
+    from coach_career import recruiting
+    if state.get("recruiting"):                # the portal is recruited like a class: the signed class is kept aside
+        state["recruiting_last"] = state["recruiting"]
+        state["recruiting"] = recruiting.portal_rc(state, entrants, year)
+        recruiting.reset_caches()
+        me = state.get("team")
+        if me in lgd["teams"]:                 # your staff's first look: the entrants who fit your needs, on your board
+            state["recruiting"]["board"] = recruiting._build_board(state, me, _rng(state, "portal-board"))[:PORTAL_BOARD]
     return state["offseason"]
 
 
@@ -329,18 +341,23 @@ def _sign_classes(state: dict, lgd: dict) -> dict[str, int]:
         slug = s.get("signed")
         if not slug or slug == "FCS" or slug not in lgd["teams"]:
             continue
-        p = rc["prospects"][pid]
         team = lgd["teams"][slug]
-        src = {"slug": pid, "name": p["name"], "position": p["ea_position"], "class": "FR", "height": p["height"],
-               "weight_lbs": p["weight"], "archetype": p["archetype"], "dev_trait": "Normal",
-               "ours": recruiting.attributes(state, p, "ratings"), "potential_ours": recruiting.attributes(state, p),
-               "coachability": p["coachability"], "stars": p["stars"], "hometown": p["hometown"]}
-        c = lg.compact(src, attrs)
+        c = _compact_prospect(state, rc["prospects"][pid], attrs)
         c["j"] = _jersey(team["roster"], c["pos"], rng)
         c["signed"] = True
         team["roster"].append(c)
         out[slug] = out.get(slug, 0) + 1
     return out
+
+
+def _compact_prospect(state: dict, p: dict, attrs: list[str]) -> dict:
+    """A high school prospect as a league player (a freshman)."""
+    from coach_career import recruiting
+    src = {"slug": p["id"], "name": p["name"], "position": p["ea_position"], "class": "FR", "height": p["height"],
+           "weight_lbs": p["weight"], "archetype": p["archetype"], "dev_trait": "Normal",
+           "ours": recruiting.attributes(state, p, "ratings"), "potential_ours": recruiting.attributes(state, p),
+           "coachability": p["coachability"], "stars": p["stars"], "hometown": p["hometown"]}
+    return lg.compact(src, attrs)
 
 
 # ----- the transfer portal ----------------------------------------------------------------------
@@ -491,8 +508,8 @@ def resolve_round(state: dict) -> list[dict]:
     return moves
 
 
-def _close_portal(state: dict) -> None:
-    """Signed transfers join their new rosters; the rest leave FBS."""
+def _close_portal_rounds(state: dict) -> None:
+    """The two-round portal of older saves: signed transfers join their new rosters; the rest leave FBS."""
     lgd, portal = state["league"], state["offseason"]["portal"]
     rng = _rng(state, "portal-jerseys")
     for pid, e in portal["players"].items():
@@ -502,6 +519,56 @@ def _close_portal(state: dict) -> None:
             p["j"] = _jersey(team["roster"], p["pos"], rng)
             p["transfer"] = e["from"]
             team["roster"].append(p)
+
+
+def _close_portal(state: dict) -> None:
+    """After the last portal week: signed transfers join their new rosters, an unsigned entrant may
+    walk on at a school from his top group (PORTAL_WALK_ON) or leaves FBS, and the recruiting
+    block goes back to the signed class."""
+    from coach_career import recruiting
+    lgd, off = state["league"], state["offseason"]
+    portal, rc = off["portal"], state["recruiting"]
+    rng = _rng(state, "portal-jerseys")
+    me, auto = state.get("team"), bool(off.get("auto")) or recruiting.auto_mode(state) != "off"
+    for pid, e in portal["players"].items():
+        st_ = rc["status"].get(pid) or {}
+        school = st_.get("signed")
+        if not school:                      # a preferred walk-on: a school he was considering that had spoken to him
+            if rng.random() < recruiting.PORTAL_WALK_ON:
+                p = rc["prospects"][pid]
+                for s_ in recruiting.top_group(state, pid):
+                    c = (rc["contacts"].get(pid) or {}).get(s_) or {}
+                    if not (c.get("n") or pid in rc["offers"].get(s_, [])) or (s_ == me and not auto):
+                        continue
+                    if recruiting.portal_spots(state, s_) <= 0:
+                        continue
+                    need = recruiting.needs(state, s_)[p["group"]]
+                    worst = min((q["o"] for q in lgd["teams"][s_]["roster"] if GROUP[q["pos"]] == p["group"]), default=0)
+                    if need > 0 or p["ovr"] > worst:
+                        school = s_
+                        break
+            if not school:
+                continue
+        p = dict(e["player"])
+        team = lgd["teams"][school]
+        p["j"] = _jersey(team["roster"], p["pos"], rng)
+        p["transfer"] = e["from"]
+        if not st_.get("signed"):
+            p["walk_on"] = p["preferred"] = True
+            st_["signed"] = school
+            recruiting._event(state, "signed", pid, school, walk_on=True)
+        team["roster"].append(p)
+        e["signed"] = school
+        portal["moves"].append({"id": pid, "name": p["n"], "pos": p["pos"], "from": e["from"], "to": school,
+                                "overall": house(p["pos"], p["o"]), "round": rc.get("week", PORTAL_WEEKS_DONE), "walk_on": bool(p.get("walk_on"))})
+    off["portal_recruiting"] = {"reports": rc.get("reports") or [], "log": rc.get("log") or []}
+    if state.get("recruiting_last"):
+        state["recruiting"] = state.pop("recruiting_last")
+        recruiting.reset_caches()
+
+
+PORTAL_WEEKS_DONE = 4
+PORTAL_BOARD = 20                 # entrants your staff puts on your board when the portal opens
 
 
 # ----- development ------------------------------------------------------------------------------
@@ -580,6 +647,28 @@ def _newcomer(r: dict, slug: str) -> dict:
             "stars": r["stars"], "hometown": r["hometown"]}
 
 
+def _preferred_walk_on(state: dict, slug: str, group: str, taken: set) -> Optional[dict]:
+    """An unsigned prospect from the class who had the school on his list, at this group: the one
+    it interested most (a named walk-on, not a generated one)."""
+    from coach_career import recruiting
+    rc = state.get("recruiting") or {}
+    if rc.get("portal") or not rc.get("prospects"):
+        return None
+    best, best_pts = None, -1.0
+    for pid, st_ in rc["status"].items():
+        if st_["signed"] != "FCS" or pid in taken or slug not in rc["lists"].get(pid, {}):
+            continue
+        p = rc["prospects"][pid]
+        if recruiting._group_of(p) != group:
+            continue
+        pts = rc["lists"][pid][slug]
+        if pts > best_pts:
+            best, best_pts = p, pts
+    if best is not None:
+        taken.add(best["id"])
+    return best
+
+
 def _fill_rosters(state: dict) -> dict:
     """Walk-ons where a group has fallen below its floor and then up to FILL_TO (the
     thinnest groups first, against a healthy roster's make-up); rosters over the limit release
@@ -605,6 +694,14 @@ def _fill_rosters(state: dict) -> dict:
             short[g] += 1
             size += 1
         for g in wanted:
+            pref = _preferred_walk_on(state, slug, g, taken)
+            if pref is not None:
+                c = _compact_prospect(state, pref, attrs)
+                c["j"] = _jersey(t["roster"], c["pos"], rng)
+                c["walk_on"] = c["preferred"] = True
+                t["roster"].append(c)
+                added += 1
+                continue
             band = "3" if rng.random() < (LOWER_LEVEL_P4 if p4 else LOWER_LEVEL) else "2"
             pool = walk_ons.setdefault((band, g), [])
             while not pool:
@@ -759,15 +856,26 @@ def advance(state: dict) -> dict:
     """Finish the current stage and open the next one."""
     off = state["offseason"]
     stage = off["stage"]
+    from coach_career import recruiting
     if stage == "departures":
-        off["stage"] = "portal_1"
+        off["stage"] = "portal_w1" if recruiting.is_portal(state) else "portal_1"
+    elif stage in PORTAL_STAGES:
+        week = PORTAL_STAGES.index(stage) + 1
+        recruiting.weekly_step(state, week, auto_user=bool(off.get("auto")))
+        if week < len(PORTAL_STAGES):
+            state["recruiting"]["week"] = week + 1
+            off["stage"] = PORTAL_STAGES[week]
+        else:
+            _close_portal(state)
+            off["report"] = {"development": _develop_all(state), **_fill_rosters(state)}
+            off["stage"] = "development"
     elif stage == "portal_1":
         resolve_round(state)
         off["portal"]["round"] = 2
         off["stage"] = "portal_2"
     elif stage == "portal_2":
         resolve_round(state)
-        _close_portal(state)
+        _close_portal_rounds(state)
         off["report"] = {"development": _develop_all(state), **_fill_rosters(state)}
         off["stage"] = "development"
     elif stage == "development":
@@ -788,8 +896,9 @@ def advance(state: dict) -> dict:
 
 
 def run_all(state: dict) -> None:
-    """Every remaining stage on Auto."""
+    """Every remaining stage on Auto (the portal weeks recruited by your staff)."""
     start(state)
+    state["offseason"]["auto"] = True
     while state["offseason"]["stage"] != "ready":
         advance(state)
 
@@ -861,6 +970,7 @@ def next_season(state: dict) -> dict:
                 s.update(name=c.get("name") or s["name"], evaluation=int(r.get("player_development", 60)), recruiting=int(r.get("recruiting", 60)))
         history[-1]["moved_to"] = team
         car.setdefault("schools", []).append({"team": team, "from": year})
+    new.pop("recruiting_last", None)
     recruiting.start(new, year=year + 1)
     from coach_career import prospects
     prospects.reset_caches()
@@ -883,6 +993,12 @@ PT_NAMES = {1.0: "Would start", 0.5: "Next in line", 0.15: "Depth"}
 def portal_offer(state: dict, pid: str, on: bool) -> list[str]:
     """Offer a portal player a spot (or take it back) for the round being played."""
     off = state.get("offseason") or {}
+    from coach_career import recruiting
+    if off.get("stage") in PORTAL_STAGES:            # the portal is recruited on the board: an offer with a pitch
+        p = state["recruiting"]["prospects"][pid]
+        recruiting.act(state, state["team"], pid, "offer" if on else "pull_offer", pitch=p["priorities"][0] if on else None,
+                       nil=recruiting.ask_from(state, state["team"], pid) if on else 0)
+        return list(state["recruiting"]["offers"].get(state["team"], []))
     if off.get("stage") not in ("portal_1", "portal_2"):
         raise ValueError("the portal is not open")
     e = off["portal"]["players"].get(pid)
@@ -900,6 +1016,16 @@ def portal_offer(state: dict, pid: str, on: bool) -> list[str]:
     elif pid in mine:
         mine.remove(pid)
     return mine
+
+
+def recruiting_spots(state: dict, slug: str) -> int:
+    from coach_career import recruiting
+    return recruiting.portal_spots(state, slug)
+
+
+def recruiting_offer_cap(state: dict, slug: str) -> int:
+    from coach_career import recruiting
+    return recruiting.offer_cap(state, slug)
 
 
 def portal_rows(state: dict, position: Optional[str] = None, status: Optional[str] = None, limit: int = 100) -> list[dict]:
@@ -937,24 +1063,38 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
     for d in deps:
         kinds[d["kind"]] = kinds.get(d["kind"], 0) + 1
     portal = off["portal"]
+    rc = state.get("recruiting") or {}
+    new_portal = bool(rc.get("portal"))
     my_moves = [m for m in portal["moves"] if m["to"] == me or m["from"] == me]
+    if new_portal:
+        for pid, st_ in rc["status"].items():
+            e = portal["players"][pid]
+            if st_["signed"] and (st_["signed"] == me or e["from"] == me):
+                p = e["player"]
+                my_moves.append({"id": pid, "name": p["n"], "pos": p["pos"], "from": e["from"], "to": st_["signed"],
+                                 "overall": house(p["pos"], p["o"]), "round": rc.get("week")})
     staff = off.get("staff")
+    cur = OLD_PORTAL.get(off["stage"], off["stage"])
     out = {
         "stage": off["stage"], "stage_name": STAGE_NAMES[off["stage"]], "year": off["year"],
-        "stages": [{"key": s, "name": STAGE_NAMES[s], "done": STAGES.index(s) < STAGES.index(off["stage"]),
-                    "current": s == off["stage"]} for s in STAGES],
+        "stages": [{"key": s, "name": STAGE_NAMES[s], "done": STAGES.index(s) < STAGES.index(cur),
+                    "current": s == cur} for s in STAGES],
         "departures": {"mine": [dict(d, kind_name=KIND_NAMES[d["kind"]]) for d in deps if d["team"] == me],
                        "league": kinds, "first_round": [d for d in sorted((d for d in deps if d["kind"] == "draft"), key=lambda d: d["pick"])][:32],
                        "early_entrants": sum(1 for d in deps if d.get("early"))},
         "signed": off.get("signed", {}).get(me, 0),
         "roster": len(lgd["teams"][me]["roster"]), "roster_limit": ROSTER_LIMIT,
-        "open_spots": open_spots(lgd, me, portal), "release_spots": churn_left(portal, me),
-        "portal": {"round": portal["round"], "entrants": len(portal["players"]),
-                   "signed": sum(1 for e in portal["players"].values() if e["signed"]),
-                   "offers": list(portal["offers"].get(me, [])),
-                   "offers_left": max(0, math.ceil(PORTAL_OFFER_FACTOR * my_spots(lgd, me, portal)) - len(portal["offers"].get(me, []))),
+        "open_spots": recruiting_spots(state, me) if new_portal else open_spots(lgd, me, portal),
+        "release_spots": 0 if new_portal else churn_left(portal, me),
+        "portal": {"round": rc.get("week") if new_portal else portal["round"], "week": rc.get("week") if new_portal else None,
+                   "weeks": len(PORTAL_STAGES), "entrants": len(portal["players"]),
+                   "signed": sum(1 for st_ in rc["status"].values() if st_["signed"]) if new_portal
+                   else sum(1 for e in portal["players"].values() if e["signed"]),
+                   "offers": list(rc["offers"].get(me, [])) if new_portal else list(portal["offers"].get(me, [])),
+                   "offers_left": (max(0, recruiting_offer_cap(state, me) - len(rc["offers"].get(me, []))) if new_portal
+                                   else max(0, math.ceil(PORTAL_OFFER_FACTOR * my_spots(lgd, me, portal)) - len(portal["offers"].get(me, [])))),
                    "moves_mine": my_moves,
-                   "rows": portal_rows(state, position, status) if off["stage"] in ("portal_1", "portal_2", "development") else []},
+                   "rows": portal_rows(state, position, status) if off["stage"] in ("portal_1", "portal_2") else []},
         "report": off.get("report") and {"mine": off["report"]["development"]["mine"][:25],
                                          "mean_gain_ea": off["report"]["development"]["mean_gain_ea"],
                                          "walk_ons": off["report"]["walk_ons"]},

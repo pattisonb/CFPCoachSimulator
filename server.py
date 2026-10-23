@@ -850,11 +850,13 @@ def prospect_search(season_id: str, position: Optional[str] = None, stars: Optio
 def national_classes(season_id: str, school: Optional[str] = None) -> dict:
     """Every FBS school's class ranked nationally; with `school`, that class's recruits too."""
     st = _career_state(season_id, change=True)
+    if school:
+        _check_team(school)
     with _season_lock:
-        out = prospects.national_classes(st, st["team"])
-        if school:
-            _check_team(school)
-            out["class"] = prospects.class_detail(st, school, st["team"])
+        with prospects.class_block(st):
+            out = prospects.national_classes(st, st["team"])
+            if school:
+                out["class"] = prospects.class_detail(st, school, st["team"])
     return out
 
 

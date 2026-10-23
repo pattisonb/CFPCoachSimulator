@@ -1040,18 +1040,27 @@ seniors, times 0.12 for starters, 0.65 for the next man up and 1.3 for the bench
 a losing year; a Group of 5 player with a card overall of 50 or more (a Power 4 starter) enters
 40% of the time to move up. About 1.2% quit a year (2.5 times as likely in a team's bottom 15%).
 
-**The portal.** Signed classes join first. Two rounds: you offer up to twice your spots (the
-roster limit minus your roster and the transfers you have, plus up to 8 you make by releasing the
-end of your roster, as a Power 4 school can); every AI school offers to anyone
-who would start for it, and by need (groups short of a healthy roster's make-up, or anyone good
-with 4+ spots open) to entrants about as good as its depth there; a Power 4 school makes up to 8
-more spots by releasing the end of its roster. At the end of a round each entrant with offers
-picks the school he likes best with a spot left, best players first: playing time (would he
-start, be next in line, or depth) counts 1, the program's recruiting baseline 0.8 a point (about
--2 to +2) and its team rating 0.3 per 10 points, winning 0.6, home state 0.4, plus noise: the
-best Group of 5 players move up, as they do. A round runs in three passes: schools with spots left
-offer again to who is still out there, so Group of 5 schools sign Power 4 backups and each other's
-players (about 2.5 a team a year). Entrants unsigned after round 2 leave FBS (about 1 a team).
+**The portal is recruited like a class**, condensed to four weeks after national signing day
+(the real window is a month). The entrants are the departures' portal players (section above),
+each shown as a transfer, not a prospect: no stars, his class next year, last school, last
+season's line (games, starts, his position's numbers), a public portal rank (his overall plus a
+little noise), your staff's grade read (half a high schooler's error: there is film), the role he
+would have with you next season (would start / next in line / depth, from your depth chart with
+your signees) and his ask (25 NIL plus 0.6 per overall point over 50, times his position). His
+priorities lean to playing time (45%), NIL (20%) and winning (15%). The actions are recruiting's
+with the same hours and weekly limits, a campus visit in place of the home-game visit (it happens
+that week and tells you everything), NIL from a portal pool of 35% of next year's budget, and the
+same asks, lowballs, raises, pitches and stages. Your spots are the roster limit plus up to 8 by
+releasing the end of your roster (a Power 4 school gets the same). When the portal opens your
+staff puts the twenty entrants who fit your needs on your board. At each week's step the
+entrants with offers decide, best players first, a quarter of them the first week, then 40%,
+60%, then everyone, for the school they like best with room at their position (crowded by the
+transfers it already took there); a decision is a signing. After the last week an unsigned
+entrant may walk on, half the time, at a school from his top group that had spoken to him and has
+a spot (an AI school takes him when it needs his group or he beats its worst player there; your
+staff takes him on Auto); the rest leave FBS. Transfers keep their years in college. **Preferred
+walk-ons** from the class too: when the offseason fills rosters, an unsigned high school prospect
+who had the school on his list comes first (a named walk-on), then generated ones.
 
 **Development.** Every returning player (transfers too) develops once a year on our scale: each
 skill closes part of its gap to potential at his coachability's rate times 0.75 (`DEV_RATE`)

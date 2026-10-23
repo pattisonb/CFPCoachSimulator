@@ -206,6 +206,13 @@ offseason's walk-on fill (`_fill_rosters`) draws first from the class's unsigned
 had that school on their list (preferred walk-ons, named players you saw on the board), then
 generates two-stars as now.
 
+Status: built (`recruiting.portal_rc`, `is_portal`, `portal_spots`, `_portal_draws`, campus
+visits, `offseason.PORTAL_STAGES` and `_close_portal` with preferred walk-ons, `_preferred_walk_on`
+for the class; the signed class is kept at `state["recruiting_last"]` during the portal weeks and
+the classes views read it; the Offseason screen renders the Board for the portal weeks; saves in
+the old two-round portal finish it the old way). The stat line comes from the box-score totals the
+awards use; you take an unsigned walk-on only on Auto (the option on the report is not built).
+
 **Removed.** `PORTAL_TAKE`, `CHURN` passes, `ai_offers`'s need scoring and `resolve_round`'s
 pick: the portal uses recruiting's board, offers, interest and decisions, with the portal
 priorities and the four-week clock.

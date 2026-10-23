@@ -31,8 +31,9 @@ def call(base: str, path: str, body=None, method=None):
 
 
 def signed_with(base: str, sid: str, team: str) -> list[str]:
-    rows = call(base, f"/api/season/{sid}/prospects?status=signed&limit=5000")["rows"]
-    return sorted(r["id"] for r in rows if r["signed"] == team)
+    """The school's signed class (the classes view: during the portal weeks the Prospects tab is the transfer pool)."""
+    rows = call(base, f"/api/season/{sid}/classes?school={team}")["class"]
+    return sorted(r["id"] for r in rows if r.get("signed") == team)
 
 
 def launch(p):

@@ -50,7 +50,8 @@
     box.append(head);
     const main = el("div", { class: "off-main" });
     box.append(main);
-    const next = { departures: "OPEN THE TRANSFER PORTAL", portal_1: "END ROUND 1", portal_2: "CLOSE THE PORTAL", development: "STAFF CHANGES",
+    const next = { departures: "OPEN THE TRANSFER PORTAL", portal_1: "END ROUND 1", portal_2: "CLOSE THE PORTAL", portal_w1: "END WEEK 1", portal_w2: "END WEEK 2",
+      portal_w3: "END WEEK 3", portal_w4: "CLOSE THE PORTAL", development: "STAFF CHANGES",
                    staff: "FINISH THE OFFSEASON", ready: `START THE ${v.year} SEASON` }[v.stage];
     const go = el("button", { type: "button", class: "go-btn primary big", text: next });
     go.addEventListener("click", () => advance(s, box, go, v.stage === "ready" ? "next_season" : null));
@@ -62,6 +63,7 @@
     }
     if (v.stage === "departures") renderDepartures(v, main);
     else if (v.stage === "portal_1" || v.stage === "portal_2") renderPortal(s, v, main, box);
+    else if (v.stage.startsWith("portal_w")) renderPortalWeeks(s, v, main, box);
     else if (v.stage === "development") renderDevelopment(v, main);
     else if (v.stage === "staff") renderStaff(s, v, main);
     else renderReady(v, main);
@@ -107,6 +109,26 @@
         el("span", { class: "muted", text: `${d.pick}. ` }), window.CFP.teamPill(d.team), el("b", { text: ` ${d.name}` }),
         el("span", { class: "muted", text: ` ${d.pos} · ${d.team_name}${d.early ? " · early" : ""}` })])))]);
     main.append(el("div", { class: "off-grid" }, [card, league]));
+  }
+
+  function renderPortalWeeks(s, v, main, box) {
+    const p = v.portal;
+    const head = el("section", { class: "go-card" }, [
+      el("div", { class: "go-kicker", text: `TRANSFER PORTAL · WEEK ${p.week} OF ${p.weeks}` }),
+      el("p", {}, [`You have ${v.open_spots} spots (the roster limit, plus up to 8 by releasing the end of your roster) and ${p.offers_left} offers left. `,
+        "Transfers are recruited like a class, condensed: message, call, a campus visit, an offer with a pitch and NIL from your portal pool. ",
+        "Entrants with offers decide at each week's end (a quarter of them, then 40%, 60%, then everyone), for the school they like best with room; what you do this week lands at the step. ",
+        `${p.signed} of ${p.entrants} have picked a school.`]),
+    ]);
+    const moves = p.moves_mine || [];
+    if (moves.length) {
+      head.append(el("div", { class: "go-kicker muted off-sub", text: "YOUR MOVES" }),
+        el("ul", { class: "off-list" }, moves.map((m) => el("li", {}, [el("b", { text: m.name }), el("span", { class: "muted", text: ` ${m.pos} · ${m.overall} OVR · ` }),
+          m.to === s.team ? el("span", { class: "go-tag good", text: `Joins you from ${teamName(m.from)}` }) : el("span", { class: "go-tag bad", text: `Left for ${teamName(m.to)}` })]))));
+    }
+    const board = el("div", { class: "off-board" });
+    main.append(head, board);
+    window.Recruiting.board(s, board, H);
   }
 
   function renderPortal(s, v, main, box) {

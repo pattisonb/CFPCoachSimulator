@@ -65,18 +65,36 @@ if __name__ == "__main__":
                 assert p["cls"] in (offseason.NEXT_CLASS.get(was), was + "RS") or (was, p["cls"]) == ("SR", "SRRS"), (was, p["cls"])
     mine = offseason.view(st)
     assert mine["departures"]["mine"] and all(d["team"] == "ohio-state" for d in mine["departures"]["mine"])
-    # the portal: your offer, round 1, round 2
+    # the portal as recruiting: four weeks, no stars, your offer with a pitch and a campus visit, entrants decide each week
+    from coach_career import prospects, recruiting
     offseason.advance(st)
-    assert off["stage"] == "portal_1"
-    rows = offseason.portal_rows(st, status="available")
-    pick = next(r for r in rows if r["from"] != "ohio-state")
-    offseason.portal_offer(st, pick["id"], True)
-    assert pick["id"] in offseason.view(st)["portal"]["offers"]
-    offseason.advance(st)
-    assert off["stage"] == "portal_2" and off["portal"]["moves"]
-    assert off["portal"]["players"][pick["id"]]["signed"] is not None, "a top entrant with offers stayed unsigned"
+    assert off["stage"] == "portal_w1" and st["recruiting"].get("portal") and st["recruiting"]["week"] == 1
+    assert st.get("recruiting_last") and not st["recruiting_last"].get("portal")      # the signed class is kept
+    rc = st["recruiting"]
+    entrants = len(rc["prospects"])
+    assert entrants == len(off["portal"]["players"])
+    assert all(p["stars"] is None and p.get("portal_rank") and p.get("from_name") and "line" in p and p.get("nil_ask") is not None
+               for p in rc["prospects"].values())
+    view = prospects.recruiting_view(st)
+    assert view["portal"]["week"] == 1 and view["open_spots"] >= 0 and 0 < len(view["board"]) <= offseason.PORTAL_BOARD   # your staff's first look
+    pick = next(q for q in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"]) if rc["prospects"][q]["from"] != "ohio-state")
+    rc["board"].append(pick)
+    recruiting.act(st, "ohio-state", pick, "offer", pitch=rc["prospects"][pick]["priorities"][0], nil=recruiting.ask_from(st, "ohio-state", pick))
+    recruiting.act(st, "ohio-state", pick, "official_visit")        # a campus visit: this week, no home game needed
+    assert (rc["visits"][pick].get("ohio-state") or {}).get("done")
+    for w in (2, 3, 4):
+        offseason.advance(st)
+        assert off["stage"] == f"portal_w{w}" and rc["week"] == w, (off["stage"], rc["week"])
+    signed_w3 = sum(1 for s_ in rc["status"].values() if s_["signed"])
+    assert 0 < signed_w3 < entrants, signed_w3
     offseason.advance(st)
     assert off["stage"] == "development"
+    placed = sum(1 for e in off["portal"]["players"].values() if e["signed"])
+    assert 0.55 <= placed / entrants <= 0.92, placed / entrants
+    g5 = [s_ for s_ in lg["teams"] if not offseason.p4_school(s_)]
+    per_g5 = sum(1 for e in off["portal"]["players"].values() if e["signed"] in g5) / len(g5)
+    assert 1.0 <= per_g5 <= 4.5, per_g5
+    assert any(p.get("walk_on") and p.get("preferred") for t in lg["teams"].values() for p in t["roster"]), "no preferred walk-ons"
     sizes = [len(t["roster"]) for t in lg["teams"].values()]
     assert min(sizes) >= 70 and max(sizes) <= offseason.ROSTER_LIMIT, (min(sizes), max(sizes))
     for t in lg["teams"].values():

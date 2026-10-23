@@ -89,6 +89,17 @@ COOLED_CONTACT = 0.5
 ASK_MORE = (1.5, 1.25)                     # a rival's NIL this much over yours, with you in his top group: his ask from you rises this much
 TOP_GROUP = 8                              # the schools he is seriously considering: his top this many by interest
 AI_OVER_ASK = 1.1                          # an AI school offers up to this times his ask from it
+# the transfer portal as recruiting (offseason.py runs it): four weeks after signing day *tune*
+PORTAL_WEEKS = 4
+PORTAL_PRIORITY_ODDS = {"playing_time": 0.45, "nil": 0.20, "winning": 0.15, "proximity": 0.10, "prestige": 0.07, "coach": 0.03}
+PORTAL_COMMIT = (0.25, 0.4, 0.6, 1.0)      # an entrant with offers decides at each week's step this often
+PORTAL_NIL_POOL = 0.35                     # the share of next year's NIL budget a school spends in the portal
+PORTAL_ASK = (25, 0.6)                     # an entrant's ask: this plus this per overall point over 50, times his position
+PORTAL_RANK_NOISE = 3.0                    # the public portal ranking: his overall plus this much noise (points)
+PORTAL_LOOK = 0.5                          # a staff's look at a transfer errs this much of a high schooler's: there is film
+PORTAL_WALK_ON = 0.5                       # an entrant unsigned after the last week takes a walk-on spot this often
+PORTAL_CHURN = 8                           # portal spots a Power 4 school (and you) make by releasing the end of the roster
+TIER_FROM_OVERALL = ((70, 5), (58, 4), (45, 3), (0, 2))   # a transfer's standing for the boards' star lifts, from his overall
 ROSTER_LIMIT = 85                          # EA's roster limit (offseason.ROSTER_LIMIT)
 MIN_OPEN = 12
 EARLY_LEAVERS = 6                          # returning players expected to leave early (draft, transfers, quitting; offseason.py) *tune*
@@ -189,9 +200,10 @@ def _home(p: dict) -> list[float]:
     return [towns[0][2], towns[0][3]] if towns and towns[0][2] is not None else [39.8, -98.6]
 
 
-def _priorities(pid: str) -> list[str]:
+def _priorities(pid: str, table: Optional[dict] = None) -> list[str]:
     rng = random.Random(f"priorities-{pid}")
-    topics, odds = list(PRIORITY_ODDS), list(PRIORITY_ODDS.values())
+    table = table or PRIORITY_ODDS
+    topics, odds = list(table), list(table.values())
     out = []
     for _ in range(3):
         t = rng.choices(topics, weights=odds)[0]
@@ -238,9 +250,26 @@ def start(state: dict, year: int = 2027) -> None:
 
 
 def nil_ask(p: dict, year: int, seed) -> int:
-    """What he wants in NIL points: his stars and position, with a spread."""
+    """What he wants in NIL points: his stars and position, with a spread (a transfer: his overall)."""
     rng = random.Random(f"ask-{year}-{seed}-{p['id']}")
-    return int(round(ASK.get(p["stars"], 0) * ASK_POS.get(p["ea_position"], 1.0) * math.exp(rng.gauss(0, ASK_SPREAD))))
+    base = max(0.0, PORTAL_ASK[0] + PORTAL_ASK[1] * (p["ovr"] - 50)) if p.get("portal") else ASK.get(p["stars"], 0)
+    return int(round(base * ASK_POS.get(p["ea_position"], 1.0) * math.exp(rng.gauss(0, ASK_SPREAD))))
+
+
+def tier_of(p: dict) -> int:
+    """His standing for the boards' star lifts and NIL values: his stars, or a transfer's from his overall."""
+    if p.get("stars") is not None:
+        return p["stars"]
+    return p.get("tier") or next(t for at, t in TIER_FROM_OVERALL if p["ovr"] >= at)
+
+
+def _ck(rc: dict):
+    """A recruiting block's cache key: its class year, or the portal's own (the two share a year)."""
+    return rc.get("cache_key") or rc["year"]
+
+
+def is_portal(state: dict) -> bool:
+    return bool((state.get("recruiting") or {}).get("portal"))
 
 
 def upgrade_asks(state: dict) -> bool:
@@ -270,7 +299,7 @@ def ask_from(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> in
     base = p["nil_ask"] * mult
     if not base:
         return 0
-    key = (state["id"], rc["year"], state["current_week"], pid, slug, mult)
+    key = (state["id"], _ck(rc), state["current_week"], rc.get("week"), pid, slug, mult)
     ask = _ASKS.get(key)
     if ask is None:
         if len(_ASKS) > 500_000:
@@ -292,7 +321,7 @@ def ask_view(state: dict, slug: str, pid: str) -> dict:
 
 def nil_value(p: dict, nil: int, ask: int) -> float:
     """The interest NIL on an offer is worth: in full up to his ask, NIL_OVER past it."""
-    return NIL_VALUE.get(p["stars"], 0.1) * (min(nil, ask) + NIL_OVER * max(0, nil - ask))
+    return NIL_VALUE.get(tier_of(p), 0.1) * (min(nil, ask) + NIL_OVER * max(0, nil - ask))
 
 
 def is_lowball(nil: int, ask: int) -> bool:
@@ -330,8 +359,12 @@ def _group(ea_position: str) -> str:
     return "LB" if pos in ("MLB", "ROLB", "LOLB") else pos
 
 
-def _ahead(slug: str, group: str, ovr: float) -> int:
-    """Returning players at his position group on that roster rated at least as high as him."""
+def _ahead(state: dict, slug: str, group: str, ovr: float) -> int:
+    """Returning players at his position group on that roster rated at least as high as him
+    (in the portal: next year's roster in the career's league, signees included)."""
+    if is_portal(state):
+        from coach_career import offseason
+        return sum(1 for c in state["league"]["teams"][slug]["roster"] if offseason.GROUP.get(c["pos"]) == group and c["o"] >= ovr)
     return sum(1 for o in _returning(slug, group) if o >= ovr)
 
 
@@ -342,7 +375,7 @@ def _early_leaver_cut(state: dict) -> float:
     """The overall from which a draft-eligible underclassman (three years out of high school)
     projects a top-100 pick this season, league-wide."""
     global _LEAVER_CUT
-    key = (state["id"], state["recruiting"]["year"])
+    key = (state["id"], _ck(state["recruiting"]))
     if _LEAVER_CUT[0] != key:
         from sim import season
         from coach_career import offseason
@@ -376,7 +409,7 @@ def commits_by_group(state: dict, slug: str) -> dict[str, int]:
     global _GROUP_COUNTS
     from coach_career import offseason
     rc = state["recruiting"]
-    key = (state["id"], rc["year"], rc.get("commits_v", 0))
+    key = (state["id"], _ck(rc), rc.get("commits_v", 0))
     if _GROUP_COUNTS[0] != key:
         counts: dict[str, dict] = {}
         for pid, st in rc["status"].items():
@@ -394,6 +427,12 @@ def needs(state: dict, slug: str) -> dict[str, int]:
     minus its commits and signees."""
     from sim import season
     from coach_career import offseason
+    if is_portal(state):                       # next year's roster is known: signees in, leavers gone
+        back = {g: 0.0 for g in offseason.TARGET}
+        for c in state["league"]["teams"][slug]["roster"]:
+            back[offseason.GROUP.get(c["pos"], "S")] += 1
+        commits = commits_by_group(state, slug)
+        return {g: int(round(offseason.TARGET[g] - back[g] - commits[g])) for g in offseason.TARGET}
     t = season.load_teams()[slug]
     cut = _early_leaver_cut(state)
     back = {g: 0.0 for g in offseason.TARGET}
@@ -478,7 +517,7 @@ def pull(state: dict, slug: str, pid: str, winning: bool = True) -> dict[str, fl
     z = _baseline(slug)
     return {
         "proximity": max(PROXIMITY_FLOOR, math.exp(-miles / PROXIMITY_MILES)),
-        "playing_time": max(0.1, 1 - _ahead(slug, group, p["ovr"]) / (2 * starters + 1)),
+        "playing_time": max(0.1, 1 - _ahead(state, slug, group, p["ovr"]) / (2 * starters + 1)),
         "prestige": _logistic(1.2 * z),
         **({"winning": min(1.0, on_field(state, slug, state["current_week"]))} if winning else {}),
         "nil": _logistic(1.4 * z),
@@ -497,7 +536,7 @@ def strengths(state: dict, slug: str, pid: str) -> dict[str, float]:
     """Your program's strength on each topic for this prospect, 0-1: the school's pull on him
     (playing time from his place on the depth chart, winning, prestige, proximity, coach,
     academics) with NIL read as your offer against his ask (the program's level before an offer)."""
-    key = (state["id"], state["recruiting"]["year"], pid, slug)
+    key = (state["id"], _ck(state["recruiting"]), pid, slug)
     static = _PULLS.get(key)
     if static is None:
         if len(_PULLS) > 2_000_000:
@@ -585,7 +624,7 @@ def weights(p: dict) -> dict[str, float]:
 
 def interest(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> float:
     p = state["recruiting"]["prospects"][pid]
-    key = (state["id"], state["recruiting"]["year"], pid, slug)
+    key = (state["id"], _ck(state["recruiting"]), pid, slug)
     static = _STATIC.get(key)
     if static is None:
         if len(_STATIC) > 2_000_000:
@@ -649,7 +688,22 @@ def nil_budget(state: dict, slug: str) -> int:
 
 
 def open_spots(state: dict, slug: str) -> int:
+    if is_portal(state):
+        return portal_spots(state, slug)
     return _open_spots(slug)
+
+
+def portal_spots(state: dict, slug: str) -> int:
+    """A school's portal spots: the roster limit (plus the end of the roster a Power 4 school or
+    you would release) minus next year's roster minus the transfers it has signed."""
+    taken = sum(1 for st_ in state["recruiting"]["status"].values() if st_["signed"] == slug)
+    extra = PORTAL_CHURN if slug == state.get("team") or _p4(slug) else 0
+    return max(0, ROSTER_LIMIT + extra - len(state["league"]["teams"][slug]["roster"]) - taken)
+
+
+def _p4(slug: str) -> bool:
+    from sim import season
+    return season._is_p4(slug, season.load_teams()[slug])
 
 
 @lru_cache(maxsize=None)
@@ -697,7 +751,8 @@ def _hours(state: dict, slug: str) -> float:
 
 
 def _nil(state: dict, slug: str) -> dict:
-    return state["recruiting"]["nil"].setdefault(slug, {"budget": nil_budget(state, slug), "held": {}})
+    budget = round(PORTAL_NIL_POOL * nil_budget(state, slug)) if is_portal(state) else nil_budget(state, slug)
+    return state["recruiting"]["nil"].setdefault(slug, {"budget": budget, "held": {}})
 
 
 def nil_left(state: dict, slug: str) -> int:
@@ -893,10 +948,17 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             raise RecruitingError(409, "he is not considering you yet: get into his top group first")
         if slug in rc["visits"].get(pid, {}):
             raise RecruitingError(409, "one official visit per school")
-        game_week = _home_game_left(state, slug)
-        if game_week is None:
-            raise RecruitingError(409, "no home game left for a visit")
-        rc["visits"].setdefault(pid, {})[slug] = {"week": game_week, "done": False}
+        if is_portal(state):                       # a campus visit: this week, no game; he sees it all
+            rc["visits"].setdefault(pid, {})[slug] = {"week": week, "done": True}
+            while _reveal(state, slug, pid):
+                pass
+            contact.update(asked=True, last_contact=week)
+            points = BASE_POINTS["official_visit"]
+        else:
+            game_week = _home_game_left(state, slug)
+            if game_week is None:
+                raise RecruitingError(409, "no home game left for a visit")
+            rc["visits"].setdefault(pid, {})[slug] = {"week": game_week, "done": False}
     else:
         if action == "hc_visit":
             if contact["hc_week"] is not None and week - contact["hc_week"] < HC_VISIT_GAP:
@@ -976,10 +1038,11 @@ def _fit_all(slug: str, prospects: dict, pool: dict) -> dict[str, float]:
             w = rest_w * REST_NEAR * math.exp(-3958.8 * 2 * math.asin(math.sqrt(h)) / REST_MILES)
         else:
             w = rest_w
-        if p["stars"] >= 4:
+        tier = tier_of(p)
+        if tier >= 4:
             w += reach
         pos = per_class.get(POS_247.get(p["position"], p["position"]), 1.0)
-        out[pid] = w * lift.get(p["stars"], lift[2]) * (0.9 + 0.2 * min(1.0, pos / 2))
+        out[pid] = w * lift.get(tier, lift[2]) * (0.9 + 0.2 * min(1.0, pos / 2))
     return out
 
 
@@ -989,7 +1052,7 @@ def _pool(state: dict) -> dict:
     states: dict[str, int] = {}
     for p in pros:
         states[p["hometown"]["state"]] = states.get(p["hometown"]["state"], 0) + 1
-    return {"states": states, "total": len(pros), "blue_chips": max(1, sum(1 for p in pros if p["stars"] >= 4))}
+    return {"states": states, "total": len(pros), "blue_chips": max(1, sum(1 for p in pros if tier_of(p) >= 4))}
 
 
 @lru_cache(maxsize=None)
@@ -1006,7 +1069,7 @@ def _fits(state: dict, slug: str) -> dict[str, float]:
     """A school's fit for every prospect in the class (fixed all season), cached for one career."""
     global _FITS
     rc = state["recruiting"]
-    key = (state["id"], rc["year"])
+    key = (state["id"], _ck(rc))
     cached = _FITS
     if cached[0] != key:
         cached = _FITS = (key, {}, _pool(state))
@@ -1030,7 +1093,7 @@ def _build_board(state: dict, slug: str, rng: random.Random) -> list[str]:
     for pid in free:
         p = pros[pid]
         factor = factor_of[p.get("group") or _group_of(p)]
-        if takes_fives and p["stars"] == 5:
+        if takes_fives and tier_of(p) == 5:
             factor = max(factor, FIVE_STAR_FLOOR)
         f = fits[pid] * factor
         if f > 0:
@@ -1040,11 +1103,11 @@ def _build_board(state: dict, slug: str, rng: random.Random) -> list[str]:
     # blue-chip programs chase the best four- and five-stars nationally, ahead of the rest
     tm = _team_model(slug)
     n = round(NATIONAL_TARGETS * (tm.get("blue_chip_share") or 0.0)) if (tm.get("blue_chip_share") or 0) >= 0.25 else 0
-    lift = lambda p: (tm.get("star_share") or {}).get(STAR_KEY.get(p["stars"], "2*"), 0.0) / _national_share(p["stars"])
+    lift = lambda p: (tm.get("star_share") or {}).get(STAR_KEY.get(tier_of(p), "2*"), 0.0) / _national_share(tier_of(p))
     keyed = []
     for pid in free:
         p = rc["prospects"][pid]
-        if p["stars"] >= 4 and lift(p) >= 1:
+        if tier_of(p) >= 4 and lift(p) >= 1:
             weight = lift(p) * math.exp(NATIONAL_TILT * (p["composite"] - 0.9))
             keyed.append((math.log(rng.random() or 1e-12) / weight, pid))
     national = [pid for _, pid in sorted(keyed, reverse=True)[:n]]
@@ -1074,7 +1137,7 @@ def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None, co
     board = list(dict.fromkeys(picks + [pid for pid in rc["boards"].get(slug, []) if live(pid) and pid not in dropped]))
     if spots_left > 0 and len(board) < 2 * spots_left:
         board = list(dict.fromkeys(board + [pid for pid in _build_board(state, slug, rng) if pid not in dropped]))
-    if week >= LATE_MARKET and spots_left > 0:        # the late market: whoever is still out there is worth a look
+    if (week >= LATE_MARKET or is_portal(state)) and spots_left > 0:        # the late market: whoever is still out there is worth a look
         board = list(dict.fromkeys(board + [pid for pid in _build_board(state, slug, rng) if pid not in dropped]))
     rc["boards"][slug] = board
     if yours:
@@ -1101,7 +1164,7 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
         offers.remove(pid)                     # he went elsewhere: the offer frees up (a top prospect is still chased)
         _nil(state, slug)["held"].pop(pid, None)
     edge = 1 + _coach_edge(state, slug)
-    allowed = math.ceil(offer_cap(state, slug) * min(1.0, 0.35 + 0.65 * week / 8) * (LATE_OFFERS if week >= LATE_MARKET else 1.0))
+    allowed = math.ceil(offer_cap(state, slug) * (1.0 if is_portal(state) else min(1.0, 0.35 + 0.65 * week / 8) * (LATE_OFFERS if week >= LATE_MARKET else 1.0)))
     budget = _nil(state, slug)["budget"]
     known = rc["revealed"].get(slug, {})
     win = _winning(state)
@@ -1121,7 +1184,7 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
             if group_full(state, slug, g, need, commits, open_):
                 continue
             open_[g] += 1
-            nil = min(nil_left(state, slug), round(budget * AI_NIL.get(p["stars"], 0)), round(AI_OVER_ASK * ask_from(state, slug, pid, win)))
+            nil = min(nil_left(state, slug), round(budget * AI_NIL.get(tier_of(p), 0)), round(AI_OVER_ASK * ask_from(state, slug, pid, win)))
             try:
                 _act(state, slug, pid, "offer", pitch=best_pitch(state, slug, pid, required=True), nil=nil, scale=edge)
             except RecruitingError:
@@ -1407,13 +1470,15 @@ def _asks_for_more(state: dict, week: int) -> None:
 
 def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     """The recruiting week after `week`'s games: visits, every AI school (and yours on Auto),
-    commitment draws, signing, then the hours reset. Returns the week's events."""
+    commitment draws, signing, then the hours reset. Returns the week's events. In the portal
+    `week` is the portal week (1-4) and entrants decide at each step instead of committing."""
     from sim import season
     rc = state["recruiting"]
     start_log = len(rc["log"])
-    rng = random.Random(f"recruiting-{rc['seed']}-{week}")
+    rng = random.Random(f"recruiting-{rc['seed']}-{'portal-' if rc.get('portal') else ''}{week}")
     _flush(state, week)                # your week's actions land
-    _visits(state, week)
+    if not rc.get("portal"):
+        _visits(state, week)
     scout_week(state)
     mine = state.get("team")
     mode = auto_mode(state)
@@ -1424,19 +1489,120 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
         if slug != mine or auto_mine:
             auto_recruit(state, slug, random.Random(f"auto-{rc['seed']}-{slug}-{week}"), commits, yours=slug == mine)
     _flush(state, week)                # the other schools' week lands with yours
-    _firm_up(state, week)
-    if week < season.FINAL_WEEK:
-        _draws(state, week, rng)
-    if week == season.SELECTION_WEEK:
-        _sign(state, final=False)
-    if week >= season.FINAL_WEEK:
-        _sign(state, final=True)
+    if rc.get("portal"):
+        _portal_draws(state, week, rng)
+    else:
+        _firm_up(state, week)
+        if week < season.FINAL_WEEK:
+            _draws(state, week, rng)
+        if week == season.SELECTION_WEEK:
+            _sign(state, final=False)
+        if week >= season.FINAL_WEEK:
+            _sign(state, final=True)
     _snapshot_ranks(state, week)
     _report(state, week)
     rc["hours"] = {}
     if mode == "week":                       # Auto-recruit for one week: done, so off again
         state["career"]["settings"]["auto_recruit"] = "off"
     return rc["log"][start_log:]
+
+
+def _portal_draws(state: dict, week: int, rng: random.Random) -> None:
+    """A portal week's decisions: each entrant with offers decides with PORTAL_COMMIT's chance for
+    the week, best players first, for the school he likes best with room (less the transfers it
+    already took at his position rated at least as high); a decision is a signing."""
+    rc = state["recruiting"]
+    room = _Room(state, flier=week >= PORTAL_WEEKS)
+    win, offered = _winning(state), _offers_by_prospect(state)
+    taken: dict[tuple, list[float]] = {}
+    for pid, st_ in rc["status"].items():
+        if st_["signed"]:
+            taken.setdefault((st_["signed"], rc["prospects"][pid]["position"]), []).append(rc["prospects"][pid]["composite"])
+    chance = PORTAL_COMMIT[min(len(PORTAL_COMMIT), max(1, week)) - 1]
+    for pid in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"]):
+        st_ = rc["status"][pid]
+        if st_["signed"] or not offered.get(pid) or rng.random() >= chance:
+            continue
+        p = rc["prospects"][pid]
+        scores = sorted(((interest(state, s, pid, win) - CROWD * sum(1 for c in taken.get((s, p["position"]), ()) if c >= p["composite"]), s)
+                         for s in offered[pid] if room(s, pid)), reverse=True)
+        if not scores:
+            continue
+        school = scores[0][1]
+        _commit(state, pid, school)
+        st_["signed"] = school
+        rc["commits_v"] = rc.get("commits_v", 0) + 1
+        room.took(school, pid)
+        taken.setdefault((school, p["position"]), []).append(p["composite"])
+        _event(state, "signed", pid, school)
+        for other, pids in rc["offers"].items():           # every other school's offer lapses
+            if other != school and pid in pids:
+                pids.remove(pid)
+                rc["nil"].get(other, {}).get("held", {}).pop(pid, None)
+        n = rc["nil"].get(school)
+        if n and pid in n["held"]:
+            n["budget"] -= n["held"].pop(pid)
+
+
+POS_247_OF = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OT", "RT": "OT", "LG": "IOL", "RG": "IOL", "C": "IOL",
+              "LEDG": "EDGE", "REDG": "EDGE", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "CB", "FS": "S", "SS": "S",
+              "K": "K", "P": "P"}
+LINE_KEYS = {"QB": ("pass_yards", "passing_touchdowns", "interceptions_thrown", "rush_yards"), "RB": ("carries", "rush_yards", "rushing_touchdowns"),
+             "WR": ("receptions", "receiving_yards", "receiving_touchdowns"), "TE": ("receptions", "receiving_yards", "receiving_touchdowns"),
+             "OL": ("snaps",), "DL": ("tackles", "sacks", "tackles_for_loss"), "LB": ("tackles", "sacks", "interceptions"),
+             "CB": ("tackles", "interceptions", "passes_defended"), "S": ("tackles", "interceptions", "passes_defended"),
+             "K": ("field_goals_made", "field_goals_attempted"), "P": ("punts", "punt_yards")}
+
+
+def _season_line(state: dict, slug: str, name: str, group: str) -> dict:
+    """What he did last season: games, starts and his position's numbers (the box scores' totals)."""
+    team = (state.get("season_stats") or {}).get(slug) or {}
+    rec = next((v for k, v in (team.get("players") or {}).items() if k.split("|")[0] == name), None)
+    if not rec:
+        return {"games": 0, "started": 0, "stats": {}}
+    stats = rec.get("stats") or {}
+    return {"games": rec.get("games", 0), "started": stats.get("games_started", 0),
+            "stats": {k: stats[k] for k in LINE_KEYS.get(group, ()) if stats.get(k)}}
+
+
+def portal_rc(state: dict, entrants: dict, year: int) -> dict:
+    """The transfer portal as a recruiting class: every entrant in a prospect's form (no stars: his
+    class, last school, last season's line, a public portal rank, his ask), empty boards, a
+    four-week clock. `entrants`: offseason._departures' {pid: {"player": compact, "from", ...}}."""
+    from coach_career import offseason
+    from teamdata import game_scale
+    attrs = game_scale.keys()
+    seed = state.get("rng_state", 0)
+    rng = random.Random(f"portal-rank-{year}-{seed}")
+    prospects = {}
+    for pid, e in entrants.items():
+        c = e["player"]
+        group = offseason.GROUP.get(c["pos"], "S")
+        ht = c.get("ht") or 72
+        ratings = list(c["r"])
+        potential = [min(99, r + g) for r, g in zip(c["r"], c["g"])]
+        p = {"id": pid, "name": c["n"], "position": POS_247_OF.get(c["pos"], c["pos"]), "ea_position": c["pos"], "archetype": c.get("a"),
+             "height": f"{ht // 12}'{ht % 12}\"", "weight": c.get("wt"), "hometown": {"city": "", "state": c.get("home") or ""},
+             "stars": None, "composite": round(c["o"] / 100, 4), "class_of": year, "portal": True,
+             "from": e["from"], "from_name": e.get("from_name") or e["from"], "cls": c["cls"], "usage": e.get("usage"),
+             "line": _season_line(state, e["from"], c["n"], group),
+             "coachability": c.get("c") or "Steady Grinder", "ratings": ratings, "potential": potential,
+             "ovr": c["o"], "pot_ovr": game_scale.overall(dict(zip(attrs, potential)), c["pos"]),
+             "priorities": _priorities(pid, PORTAL_PRIORITY_ODDS), "hidden": False, "group": group}
+        p["tier"] = tier_of(p)
+        p["home"] = _home(p)
+        p["nil_ask"] = nil_ask(p, year, seed)
+        p["_sort"] = c["o"] + rng.gauss(0, PORTAL_RANK_NOISE)
+        prospects[pid] = p
+    for i, pid in enumerate(sorted(prospects, key=lambda q: -prospects[q].pop("_sort")), 1):
+        prospects[pid]["rank"] = prospects[pid]["portal_rank"] = i
+    _truths(prospects, attrs)
+    return {"portal": True, "week": 1, "weeks": PORTAL_WEEKS, "year": year, "cache_key": f"{year}-portal", "prospects": prospects,
+            "lists": {pid: {} for pid in prospects},
+            "status": {pid: {"committed": None, "signed": None, "fcs": False} for pid in prospects},
+            "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
+            "boards": {}, "seed": seed, "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
+            "pending": {}, "why": {}, "ranks": {}, "reports": [], "action_points": {}, "leader_changes": {}}
 
 
 # ----- scouting: truths, looks, reads and grades -------------------------------------------------------
@@ -1465,7 +1631,7 @@ def look(state: dict, pid: str, evaluator_rating: int, rng: random.Random) -> No
     sometimes sure and wrong)."""
     p = state["recruiting"]["prospects"][pid]
     s = evaluator_rating / 99
-    sd = LOOK_SD[0] * (1 - s) + LOOK_SD[1]
+    sd = (LOOK_SD[0] * (1 - s) + LOOK_SD[1]) * (PORTAL_LOOK if is_portal(state) else 1.0)
     read = state["recruiting"]["reads"].setdefault(pid, {"looks": 0, "by": {}, "g": {}})
     for g in GROUPS:
         seen = p["truth"][g] + rng.gauss(0, sd)

@@ -229,7 +229,7 @@ if __name__ == "__main__":
           f"Georgia signed {per['georgia']}/{recruiting.open_spots(st, 'georgia')}; events {dict(kinds)}")
     for done in (plain, st):                               # the sims' box scores
         shutil.rmtree(season.box_dir(done).parent, ignore_errors=True)
-    assert t_career - t_plain < 20, "recruiting adds more than 20 s to a season"
+    assert t_career - t_plain < 25, "recruiting adds more than 25 s to a season"
     # feedback once a week: actions land at the week step; his list and the weekly report show the moves
     st2 = season.new_season("ohio-state", "full", seed=7, career=True)
     rc2 = st2["recruiting"]

@@ -55,11 +55,13 @@ if __name__ == "__main__":
             assert "DEPARTURES" in page.inner_text("#tab-offseason")
             assert "LEAVING YOUR PROGRAM" in page.inner_text("#tab-offseason")
             page.click("text=OPEN THE TRANSFER PORTAL")
-            page.wait_for_selector(".off-table tbody tr", timeout=60_000)
-            page.click(".off-table tbody tr button.primary >> nth=0")
-            page.wait_for_selector(".off-table tbody tr.offered", timeout=30_000)
-            page.click("text=END ROUND 1")
-            page.wait_for_selector("text=ROUND 2 OF 2", timeout=60_000)
+            page.wait_for_selector(".off-board .go-pcard", timeout=60_000)          # the portal is recruited on the board
+            assert "WEEK 1 OF 4" in page.inner_text("#tab-offseason")
+            page.click(".off-board .go-pcard >> nth=0 >> button.go-act.go")          # an offer, with the pitch and NIL the card knows
+            page.wait_for_selector(".off-board .go-pcard >> nth=0 >> text=Offered", timeout=30_000)
+            for w in (1, 2, 3):
+                page.click(f"text=END WEEK {w}")
+                page.wait_for_selector(f"text=WEEK {w + 1} OF 4", timeout=120_000)
             page.click("text=CLOSE THE PORTAL")
             page.wait_for_selector("text=WHO IMPROVED", timeout=120_000)
             page.click("text=STAFF CHANGES")
@@ -78,7 +80,7 @@ if __name__ == "__main__":
             assert not page.is_visible("#season-tabs button[data-tab=offseason]")
             assert not errors, errors
             browser.close()
-        print("offseason e2e ok: departures, portal offer, two rounds, development, staff, on to 2027")
+        print("offseason e2e ok: departures, a portal offer on the board, four weeks, development, staff, on to 2027")
     finally:
         try:
             call(base, f"/api/season/{sid}", method="DELETE")

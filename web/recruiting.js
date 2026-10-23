@@ -42,6 +42,14 @@
   const WORDS = { commit: "committed to", flip: "flipped to", decommit: "decommitted from", signed: "signed with", offer: "was offered by",
                   asked_more: "wants more from", not_buying: "isn't buying the pitch from" };
   const WHY = { message: "message", call: "call", hc_visit: "HC visit", official_visit: "official visit", offer: "offer", raise_nil: "NIL raised" };
+  const LINE_LABELS = { pass_yards: "pass yds", passing_touchdowns: "TD", interceptions_thrown: "INT", rush_yards: "rush yds", carries: "car", rushing_touchdowns: "TD",
+    receptions: "rec", receiving_yards: "rec yds", receiving_touchdowns: "TD", snaps: "snaps", tackles: "tkl", sacks: "sacks", tackles_for_loss: "TFL",
+    interceptions: "INT", passes_defended: "PD", field_goals_made: "FGM", field_goals_attempted: "FGA", punts: "punts", punt_yards: "punt yds" };
+  function lineText(line) {
+    const bits = [`${line.games} G`, line.started ? `${line.started} GS` : null];
+    for (const [k, v] of Object.entries(line.stats || {})) bits.push(`${Number(v).toLocaleString()} ${LINE_LABELS[k] || k}`);
+    return `Last season: ${bits.filter(Boolean).join(" · ")}`;
+  }
   // his list, as the week step left it: each school's share of the leader's interest, and its move since the week before
   function hisList(b, me) {
     const rows = (b.list || []).filter((x) => x.rank != null || x.bar != null);
@@ -285,7 +293,7 @@
       return b;
     }));
     box.append(el("div", { class: "go-board-head rc-head" }, [
-      el("div", { class: "go-display l", text: "RECRUITING BOARD" }),
+      el("div", { class: "go-display l", text: v.portal ? `TRANSFER PORTAL · WEEK ${v.portal.week} OF ${v.portal.weeks}` : "RECRUITING BOARD" }),
       el("div", { class: "go-meters" }, [meter("Hours", v.hours_left, v.hours), meter("NIL points", v.nil.left, v.nil.budget),
         meter("Offers", v.offers, v.offers + v.offers_left, true), meter("Commits", v.committed, v.open_spots, true)]),
       el("div", { class: "go-auto" }, [el("span", { class: "small muted", text: "Auto-recruit" }), auto]),
@@ -330,6 +338,7 @@
 
     function pitchFor(b) { return view.pitch[b.id] !== undefined ? view.pitch[b.id] : (b.priorities_known[0] || ""); }
     async function run(b, action, nil) {
+      if (action === "offer" && nil == null) nil = b.ask ? (b.ask.exact != null ? b.ask.exact : b.ask.lo) || 0 : 0;   // the card's quick offer meets what you know of his ask
       const pitch = ["message", "call", "hc_visit", "offer"].includes(action) ? pitchFor(b) || null : null;
       if (action === "offer" && !pitch) { H.toast("Pick a pitch first: an offer tells him what you are selling.", 3500); return; }
       const r = await act(s, b.id, action, pitch, nil);
@@ -341,7 +350,8 @@
       c.append(el("button", { type: "button", class: "go-pcard-top", "aria-label": `Select ${b.name}`, "aria-pressed": String(b.id === view.selected),
         onclick: () => { view.selected = b.id; renderRecruiting(s, box); } }, [avatar(b.id),
         el("span", { class: "go-pcard-id" }, [el("b", { text: b.name }), el("span", { class: "go-stars", text: stars(b.stars) }),
-          el("span", { class: "muted small", text: `${b.position} · ${place(b.hometown)} · #${b.national_rank}` })])]));
+          el("span", { class: "muted small", text: b.portal ? `${b.position} · ${b.cls} · from ${b.from_name} · #${b.portal_rank} in the portal` : `${b.position} · ${place(b.hometown)} · #${b.national_rank}` })])]));
+      if (b.portal && b.line) c.append(el("div", { class: "muted small", text: lineText(b.line) }));
       c.append(el("div", { class: "go-standing" }, [el("span", { class: `go-standing-text ${sd.tone}`, text: sd.text }),
         sd.odds ? el("span", { class: "muted small", text: `${sd.odds} · ${sd.certainty}` }) : null]), bar(sd));
       const tags = el("div", { class: "go-tags" });
@@ -349,6 +359,7 @@
       if (b.priorities_known.length < 3) tags.append(el("span", { class: "go-tag muted", text: b.priorities_known.length ? `${3 - b.priorities_known.length} more to learn` : "Priorities: call or visit to learn" }));
       if (b.need != null && !b.signed && b.committed !== me) tags.append(el("span", { class: `go-tag ${b.need > 0 ? "good" : "muted"}`, text: b.need > 0 ? `Need ${b.need}` : "Full", title: b.need > 0 ? `Your roster needs ${b.need} at his position this class` : "Your roster is covered at his position this class" }));
       if (b.offered) tags.append(el("span", { class: "go-tag good", text: b.nil ? `Offered · ${b.nil} NIL` : "Offered" }));
+      if (b.portal && b.role) tags.append(el("span", { class: `go-tag ${b.role === "Would start" ? "good" : b.role === "Next in line" ? "warn" : "muted"}`, text: b.role, title: "Where he would sit on your depth chart next season" }));
       if (b.firmness != null) tags.append(el("span", { class: `go-tag ${b.firmness >= 70 ? "good" : b.firmness < 40 ? "bad" : ""}`, text: `${b.firmness >= 70 ? "Solid" : b.firmness < 40 ? "Soft" : "Settling"} ${b.firmness}`, title: "How firm his commitment is (0-100): a message a week firms it up, silence softens it, rivals with more playing time to offer eat at it; a soft commit flips more easily" }));
       if (b.cooled) tags.append(el("span", { class: "go-tag bad", text: "Cooled on you", title: "He read your offer as a lowball: contacts count half and he will not visit until you raise it to what he wants" }));
       const STAGE = { cold: ["Cold", "No contact yet: an offer now counts half"], contact: ["In touch", "You have reached out; get into his top group for a visit"], top: ["In his top 8", "He is seriously considering you"], visited: ["Visited", "He has been on campus"] };
@@ -363,7 +374,7 @@
         const acts = [["message", "Message", 5, done.includes("message") && "week"], ["call", "Call", 15, done.includes("call") && "week"],
           ["hc_visit", "HC visit", 30, hcWait && "month"]];
         if (!b.offered) acts.push(["offer", "Offer", 0, false, "go"]);
-        else if (!b.visit) acts.push(["official_visit", "Visit", 10, !["top", "visited"].includes(b.stage) && "group", "alt"]);
+        else if (!b.visit) acts.push(["official_visit", v.portal ? "Campus visit" : "Visit", 10, !["top", "visited"].includes(b.stage) && "group", "alt"]);
         c.append(el("div", { class: "go-actions" }, acts.map(([a, label, cost, off, tone]) => {
           const short = cost > v.hours_left;
           const btn = el("button", { type: "button", class: `go-act ${tone || ""}`, "aria-label": `${label} ${b.name}`,
@@ -685,5 +696,5 @@
     else if (tab === "classes") renderClasses(season, box);
   }
 
-  window.Recruiting = { render, openProfile: (s, pid) => openProfile(s, pid) };
+  window.Recruiting = { render, openProfile: (s, pid) => openProfile(s, pid), board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
 })();
