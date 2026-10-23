@@ -37,7 +37,7 @@ ROOT = Path(__file__).resolve().parent
 SOURCE_DIR = ROOT / "cfb_sim_data" / "teams"
 CACHE_DIR = ROOT / "data" / "leagues"
 FIRST_YEAR = 2026
-DEPTH_EYE = 6.0           # overall points of the coaches' own judgment in a depth chart (real usage starts players below the top overall)
+DEPTH_EYE = 3.0           # overall points of the coaches' own judgment in a depth chart (real usage starts players below the top overall)
 
 CLASSES = ("FR", "FRRS", "SO", "SORS", "JR", "JRRS", "SR", "SRRS")
 CLASS_YEAR = {"FR": "Freshman", "FRRS": "Freshman (RS)", "SO": "Sophomore", "SORS": "Sophomore (RS)",

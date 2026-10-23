@@ -28,7 +28,7 @@ GROUP = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL",
          "K": "K", "P": "P"}
 # a healthy roster's players per group (the real 2026 FBS mean) and the floor walk-ons top up to
 TARGET = {"QB": 4, "RB": 6, "WR": 10, "TE": 6, "OL": 15, "DL": 15, "LB": 9, "CB": 8, "S": 8, "K": 2, "P": 2}
-LOWER_LEVEL = 0.4          # the share of roster top-ups who come from FCS or junior college (three-stars, a year or two in), not walk-ons
+LOWER_LEVEL = 0.3          # the share of roster top-ups who come from FCS or junior college (three-stars, a year or two in), not walk-ons
 LOWER_LEVEL_P4 = 0.15     # ... at a Power 4 school (mostly walk-ons there)
 FLOOR = {"QB": 3, "RB": 3, "WR": 6, "TE": 3, "OL": 10, "DL": 9, "LB": 5, "CB": 5, "S": 4, "K": 1, "P": 1}
 ENGINE_POS = {"QB": "QB", "RB": "RB", "WR": "WR", "TE": "TE", "OL": "OL", "DL": "DL", "LB": "MLB", "CB": "CB", "S": "S", "K": "K", "P": "P"}
