@@ -53,6 +53,7 @@ def generated_table(classes: int, factor: float = 1.0) -> dict:
             comp["o"] = game_scale.overall(ours, comp["pos"])
             for y in range(5):
                 out[(r["stars"], y)].append(comp["o"])
+                comp["yrs"] = y
                 offseason.develop(comp, keys, factor, rng)
     return out
 

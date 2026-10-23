@@ -22,13 +22,13 @@ import recruits
 STAGES = ("departures", "portal_1", "portal_2", "development", "staff", "ready")
 STAGE_NAMES = {"departures": "Departures", "portal_1": "Transfer portal, round 1", "portal_2": "Transfer portal, round 2",
                "development": "Development", "staff": "Staff", "ready": "Ready for next season"}
-ROSTER_LIMIT = 85
-FILL_TO = 80               # walk-ons and lower-level transfers top a roster up to this (a real roster's other players sit outside the 85)
+ROSTER_LIMIT = 105         # the NCAA's roster limit since 2025 (EA's rosters were each team's best 85)
+FILL_TO = 100              # walk-ons and lower-level transfers top a roster up to this
 GROUP = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL", "LG": "OL", "C": "OL", "RG": "OL", "RT": "OL",
          "LEDG": "DL", "REDG": "DL", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "CB", "FS": "S", "SS": "S",
          "K": "K", "P": "P"}
-# a healthy roster's players per group (the real 2026 FBS mean) and the floor walk-ons top up to
-TARGET = {"QB": 4, "RB": 6, "WR": 10, "TE": 6, "OL": 15, "DL": 15, "LB": 9, "CB": 8, "S": 8, "K": 2, "P": 2}
+# a healthy roster's players per group (the real 2026 FBS mean, scaled to 105) and the floor walk-ons top up to
+TARGET = {"QB": 5, "RB": 7, "WR": 13, "TE": 7, "OL": 19, "DL": 18, "LB": 11, "CB": 10, "S": 10, "K": 2, "P": 2}
 LOWER_LEVEL = 0.3          # the share of roster top-ups who come from FCS or junior college (three-stars, a year or two in), not walk-ons
 LOWER_LEVEL_P4 = 0.15     # ... at a Power 4 school (mostly walk-ons there)
 FLOOR = {"QB": 3, "RB": 3, "WR": 6, "TE": 3, "OL": 10, "DL": 9, "LB": 5, "CB": 5, "S": 4, "K": 1, "P": 1}
@@ -61,8 +61,11 @@ OPEN_TAKE_ANY = 4                                  # with this many open spots a
 PT_WEIGHT, PRESTIGE_WEIGHT, RATING_WEIGHT, WIN_WEIGHT, HOME_WEIGHT, PICK_NOISE = 1.0, 0.8, 0.3, 0.6, 0.4, 0.5
 
 # ----- development and staff *tune* -----
-DEV_RATE = 0.6                                     # coachability's pace on our scale: a class tracks the real players by stars and
+DEV_RATE = 0.75                                    # coachability's pace on our scale: a class tracks the real players by stars and
                                                    # years (tools/check_development.py), three- and two-stars a little under the survivors
+# real players gain little in their first offseasons and most in their third and fourth (the real rosters
+# by years in college: four-stars +1, +1, +5.5): the pace by seasons already played in the program *tune*
+YEAR_CURVE = (0.45, 0.7, 1.35, 1.35, 1.0)
 PROGRAM_DEV = 0.10                                 # development rate per point of the program's recruiting baseline
 COORD_SHARE = 0.4                                  # the coordinator's part of a player's coach factor
 RECRUITER_LEAVE = 0.12
@@ -460,7 +463,7 @@ def resolve_round(state: dict) -> list[dict]:
         e["signed"] = pick
         if spots.get(pick, 0) > 0:
             spots[pick] -= 1
-        else:                          # a spot made by releasing the end of the roster (over 85 after the portal)
+        else:                          # a spot made by releasing the end of the roster (over the limit after the portal)
             churn[pick] -= 1
             e["churn"] = True
         moves.append({"id": pid, "name": e["player"]["n"], "pos": e["player"]["pos"], "from": e["from"], "to": pick,
@@ -505,7 +508,7 @@ def coach_factor(coaches: dict, pos: str) -> float:
 def develop(p: dict, attrs: list[str], factor: float, rng: random.Random) -> int:
     """One offseason's growth on our scale: each skill closes part of its gap to potential at his
     coachability's rate times `factor`; his overall follows (our formula). Returns the overall gained."""
-    rate = recruits.RATE.get(p.get("c"), 0.27) * factor * DEV_RATE
+    rate = recruits.RATE.get(p.get("c"), 0.27) * factor * DEV_RATE * YEAR_CURVE[min(len(YEAR_CURVE) - 1, int(p.get("yrs") or 0))]
     new_r, new_g = [], []
     for v, g in zip(p["r"], p["g"]):
         step = int(round(min(g, g * rate * rng.uniform(0.8, 1.2)))) if g > 0 else 0
@@ -924,7 +927,7 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
                        "league": kinds, "first_round": [d for d in sorted((d for d in deps if d["kind"] == "draft"), key=lambda d: d["pick"])][:32],
                        "early_entrants": sum(1 for d in deps if d.get("early"))},
         "signed": off.get("signed", {}).get(me, 0),
-        "roster": len(lgd["teams"][me]["roster"]),
+        "roster": len(lgd["teams"][me]["roster"]), "roster_limit": ROSTER_LIMIT,
         "open_spots": open_spots(lgd, me, portal),
         "portal": {"round": portal["round"], "entrants": len(portal["players"]),
                    "signed": sum(1 for e in portal["players"].values() if e["signed"]),
