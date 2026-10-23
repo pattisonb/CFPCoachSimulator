@@ -1142,7 +1142,14 @@ a game, Power 4 starters 27-35% freshmen and sophomores, classes 18.5-21 a schoo
 entrants, 72-79% of portal entrants signed (plus preferred walk-ons), walk-ons after the
 offseason 40-60 a year (281 before the overhaul). The top 25's starters settle at 56-57 from
 2032 (59.1 in 2026, 58-60 before the overhaul) while the rest of the Power 4 rise to 52 (48.8)
-and the Group of 5 to 42 (40.0): the ratings' spread narrows from 6.7 to 5.6.
+and the Group of 5 to 42 (40.0): the ratings' spread narrows from 6.7 to 5.6. Sending the best
+transfers to the top programs (the portal paragraph above; three more 20-season careers) did not
+move that: the top 25's starters 56-57 from 2031, the rest of the Power 4 50, the Group of 5
+42-43, the spread 5.1-5.6, with 55-69% of portal entrants signed (real: about half land at an
+FBS school), walk-ons 31-60 a year and classes 18-21. The narrowing spread is the open item: the
+top programs reload at the real rate in the class (85% of the top 100 sign with the 25 strongest
+programs) and in the portal, so the next place to look is how much of the generated classes'
+talent develops at the top against the real 2026 rosters.
 
 **The Offseason screen** walks the steps: Departures (your leavers by kind, the league's numbers,
 the first round), Transfer portal round 1 and 2 (entrants with position and status filters, your
