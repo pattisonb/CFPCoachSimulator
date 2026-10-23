@@ -27,3 +27,4 @@ data/leagues/
 data/long_run/check*.json
 data/long_run/*.league.json
 data/long_run/final*.json
+data/long_run/*_[0-9]*.json
