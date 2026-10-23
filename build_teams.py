@@ -286,7 +286,8 @@ def team_from_source(t: dict) -> dict:
         "prestige": t["program"]["prestige"],
         "team_ratings": t["team_ratings"],
         "coaches": {
-            "head_coach": {"name": hc["name"], "ratings": hc["ratings"], "tendencies": hc["tendencies"], "scheme": hc["scheme"]},
+            "head_coach": {"name": hc["name"], "ratings": hc["ratings"], "tendencies": hc["tendencies"], "scheme": hc["scheme"],
+                           "since": hc.get("since")},
             "offensive_coordinator": {"name": oc.get("name"), "ratings": oc["ratings"], "tendencies": oc["tendencies"], "scheme": oc["scheme"]},
             "defensive_coordinator": {"name": dc.get("name"), "ratings": dc["ratings"], "tendencies": dc["tendencies"], "scheme": dc["scheme"]},
         },

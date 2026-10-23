@@ -237,6 +237,10 @@ def _returning(slug: str, group: str) -> tuple:
 def _coach_edge(state: dict, slug: str) -> float:
     if slug == state.get("team") and (state.get("coach") or {}).get("ratings"):
         return ((state["coach"]["ratings"].get("recruiting", 50)) - 50) / 160      # your created coach
+    import season
+    hc = ((season.load_teams().get(slug) or {}).get("coaches") or {}).get("head_coach") or {}
+    if (hc.get("since") or 0) > 2026:                 # a career's new hire: his rating is all there is to go on
+        return ((hc.get("ratings") or {}).get("recruiting", 50) - 50) / 160
     cur = (model()["coaches"]["current"].get(slug) or {})
     return cur.get("edge") or 0.0
 

@@ -33,6 +33,7 @@ ROOT = Path(__file__).resolve().parent
 SOURCE_DIR = ROOT / "cfb_sim_data" / "teams"
 CACHE_DIR = ROOT / "data" / "leagues"
 FIRST_YEAR = 2026
+DEPTH_EYE = 3.0           # EA points of the coaches' own judgment in a depth chart (real usage starts players below the top overall)
 TARGET_SD = 0.18          # receivers' target shares around 1.0 (the real 2026 spread by depth slot, 0.14-0.29)
 
 CLASSES = ("FR", "FRRS", "SO", "SORS", "JR", "JRRS", "SR", "SRRS")
@@ -152,19 +153,32 @@ def _real_usage() -> dict:
     return json.loads(f.read_text(encoding="utf-8")).get("usage", {}) if f.exists() else {}
 
 
-def _role_players(by_pos: dict, role: str, taken: set) -> list[dict]:
-    pool = [p for r in ((LB_ROLES if role == "LB" else (role,)) + FALLBACK.get(role, ())) for p in by_pos.get(r, [])]
-    own = set(LB_ROLES) if role == "LB" else {role}
-    first = [p for p in pool if p["position"] in own]
-    return [p for p in first + [p for p in pool if p["position"] not in own] if p["slug"] not in taken]
+def _role_players(by_pos: dict, role: str, taken: set, n: int) -> list[dict]:
+    """A role's starters: its own position's best first (linebackers: the best MIKE, WILL and SAM
+    in that order, then the best of the rest), then a neighbouring position's."""
+    if role == "LB":
+        picks = []
+        for r in ("MIKE", "WILL", "SAM")[:n]:
+            best = next((p for p in by_pos.get(r, []) if p["slug"] not in taken and p not in picks), None)
+            if best:
+                picks.append(best)
+        rest = sorted((p for r in LB_ROLES for p in by_pos.get(r, []) if p["slug"] not in taken and p not in picks), key=lambda p: -p["_depth"])
+        picks += rest
+    else:
+        picks = [p for p in by_pos.get(role, []) if p["slug"] not in taken]
+    for r in FALLBACK.get(role, ()):
+        picks += [p for p in by_pos.get(r, []) if p["slug"] not in taken and p not in picks]
+    return picks[:n]
 
 
-def lineup(roster: list[dict], shape: dict) -> tuple[dict, dict]:
+def lineup(roster: list[dict], shape: dict, year: int = FIRST_YEAR + 1) -> tuple[dict, dict]:
     """(starters, depth chart) in the source format: each role's best by EA overall (the
     linebacker spots from SAM, MIKE and WILL together), borrowing a neighbouring position when
     a role runs short; kick and punt returners by return ability."""
     by_pos: dict[str, list] = {}
-    for p in sorted(roster, key=lambda q: -q["overall_ea"]):
+    for p in roster:            # the coaches' eye: overall plus a little of what the numbers miss, fixed for the year
+        p["_depth"] = p["overall_ea"] + random.Random(f"depth-{p['slug']}-{year}").gauss(0, DEPTH_EYE)
+    for p in sorted(roster, key=lambda q: -q["_depth"]):
         by_pos.setdefault(p["position"], []).append(p)
     depth = {role: [p["slug"] for p in by_pos.get(role, [])] for role in
              ("QB", "HB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT", "LEDG", "DT", "REDG", "SAM", "MIKE", "WILL", "CB", "FS", "SS", "K", "P")}
@@ -172,7 +186,7 @@ def lineup(roster: list[dict], shape: dict) -> tuple[dict, dict]:
     for unit in ("offense", "defense"):
         starters[unit] = {}
         for role, n in shape.get(unit, {}).items():
-            picks = _role_players(by_pos, role, taken)[:n]
+            picks = _role_players(by_pos, role, taken, n)
             taken.update(p["slug"] for p in picks)
             starters[unit][role] = [p["slug"] for p in picks]
     special = {}
@@ -186,6 +200,8 @@ def lineup(roster: list[dict], shape: dict) -> tuple[dict, dict]:
     special["KR"] = [ret[0]["slug"]] if ret else []
     special["PR"] = [ret[1]["slug"] if len(ret) > 1 else ret[0]["slug"]] if ret else []
     starters["special_teams"] = special
+    for p in roster:
+        p.pop("_depth", None)
     return starters, depth
 
 
@@ -218,7 +234,7 @@ def source_team(league: dict, slug: str) -> dict:
     base = base_team(slug)
     entry = league["teams"][slug]
     roster = [expand(c, league["attrs"], base) for c in entry["roster"]]
-    starters, depth = lineup(roster, entry["formation"])
+    starters, depth = lineup(roster, entry["formation"], league["year"])
     out = {k: v for k, v in base.items() if k not in ("roster", "starters", "depth_chart", "coaches", "team_ratings", "verification")}
     if entry.get("rb_lead_feature") is not None and entry.get("observed"):
         out["rb_lead_feature"] = entry["rb_lead_feature"]          # the 2026 staff's lead-back use, while it stays
