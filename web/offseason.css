@@ -1,0 +1,33 @@
+/* Coach Career's offseason screen (web/offseason.js); theme variables only, light and dark. */
+.off-head { display: flex; flex-direction: column; gap: 10px; }
+.off-steps { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.off-step { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border);
+  font-size: 13px; color: var(--muted); }
+.off-step.done { color: var(--text); }
+.off-step.now { border-color: var(--accent); color: var(--text); font-weight: 600; }
+.off-step-mark { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--surface-2, var(--border));
+  font-size: 11px; }
+.off-step.now .off-step-mark { background: var(--accent); color: var(--accent-ink, #fff); }
+.off-numbers { display: flex; flex-wrap: wrap; gap: 12px; }
+.off-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.off-main { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; }
+.off-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.off-sub { margin-top: 10px; }
+.off-list { margin: 6px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.off-list li { line-height: 1.4; }
+.off-list .go-tag { margin-left: 6px; }
+.off-draft { padding-left: 0; list-style: none; }
+.off-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.off-scroll { overflow-x: auto; }
+.off-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.off-table th { text-align: left; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--border); padding: 6px 8px; white-space: nowrap; }
+.off-table td { border-bottom: 1px solid var(--border); padding: 6px 8px; vertical-align: middle; }
+.off-table td.num { font-variant-numeric: tabular-nums; }
+.off-table tr.offered td { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.off-cands { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin: 6px 0 12px; }
+.off-cand { display: flex; flex-direction: column; gap: 4px; text-align: left; cursor: pointer; }
+.off-cand.picked { outline: 2px solid var(--accent); }
+@media (max-width: 600px) {
+  .off-table { font-size: 13px; }
+  .off-table th, .off-table td { padding: 5px 6px; }
+}
