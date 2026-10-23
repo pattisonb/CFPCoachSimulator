@@ -55,6 +55,7 @@ QUIT_LOW = 2.5                                     # ... this much likelier in t
 
 # ----- the portal *tune* -----
 PORTAL_OFFER_FACTOR = 2.0                          # a school's offers a round, times its open spots
+PORTAL_PASSES = 3                                  # offer-and-sign passes in a portal round (schools with spots left offer again)
 PORTAL_TAKE = 4                                    # transfers an AI school takes in a round from its open spots (real: 5-15 a year with churn)
 CHURN = 8                                          # portal spots a Power 4 school makes by releasing its weakest players
 OPEN_TAKE_ANY = 4                                  # with this many open spots a school takes good players at any position
@@ -67,7 +68,7 @@ DEV_RATE = 0.75                                    # coachability's pace on our 
 # real players gain little in their first offseasons and most in their third and fourth (the real rosters
 # by years in college: four-stars +1, +1, +5.5): the pace by seasons already played in the program *tune*
 YEAR_CURVE = (0.45, 0.7, 1.35, 1.35, 1.0)
-PROGRAM_DEV = 0.25                                 # development rate per point of the program's recruiting baseline
+PROGRAM_DEV = 0.10                                 # development rate per point of the program's recruiting baseline
 COORD_SHARE = 0.4                                  # the coordinator's part of a player's coach factor
 RECRUITER_LEAVE = 0.12
 
@@ -277,7 +278,7 @@ def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict]:
                         chance = max(chance, TRANSFER_UP)            # a Group of 5 standout moves up
                     if rng.random() < chance:
                         ev.update(kind="portal")
-                        q = dict(p, cls=nxt, yrs=0)
+                        q = dict(p, cls=nxt)
                         entrants[p["id"]] = {"player": q, "from": slug, "from_name": team_name, "offers": [],
                                              "signed": None, "usage": use}
                     else:
@@ -353,6 +354,16 @@ def open_spots(lgd: dict, slug: str, portal: dict) -> int:
     return max(0, ROSTER_LIMIT - len(lgd["teams"][slug]["roster"]) - taken)
 
 
+def churn_left(portal: dict, slug: str) -> int:
+    """Spots a school can still make by releasing the end of its roster this portal (CHURN in all)."""
+    return max(0, CHURN - sum(1 for e in portal["players"].values() if e["signed"] == slug and e.get("churn")))
+
+
+def my_spots(lgd: dict, me: str, portal: dict) -> int:
+    """Your portal spots: open roster spots plus the ones releasing the end of your roster makes."""
+    return open_spots(lgd, me, portal) + churn_left(portal, me)
+
+
 def _group_counts(roster: list[dict]) -> dict[str, int]:
     out = {g: 0 for g in TARGET}
     for p in roster:
@@ -396,14 +407,18 @@ def entrant_interest(state: dict, lgd: dict, slug: str, e: dict, rng: Optional[r
             + WIN_WEIGHT * wins / max(1, wins + losses) + HOME_WEIGHT * home + noise)
 
 
-def ai_offers(state: dict, slug: str) -> list[str]:
+def ai_offers(state: dict, slug: str, left: Optional[int] = None) -> list[str]:
     """A school's portal offers this round: by need (groups short of a healthy depth first), the
-    best entrants who would play there, up to PORTAL_OFFER_FACTOR times its open spots."""
+    best entrants who would play there, up to PORTAL_OFFER_FACTOR times its open spots (`left`:
+    the spots it still has later in the round)."""
     off = state["offseason"]
     lgd, portal = state["league"], off["portal"]
-    spots = min(open_spots(lgd, slug, portal), PORTAL_TAKE)
-    if p4_school(slug):
-        spots += max(0, CHURN - sum(1 for e in portal["players"].values() if e["signed"] == slug and e.get("churn")))
+    if left is not None:
+        spots = left
+    else:
+        spots = min(open_spots(lgd, slug, portal), PORTAL_TAKE)
+        if p4_school(slug):
+            spots += max(0, CHURN - sum(1 for e in portal["players"].values() if e["signed"] == slug and e.get("churn")))
     if spots <= 0:
         return []
     roster = lgd["teams"][slug]["roster"]
@@ -437,39 +452,39 @@ def resolve_round(state: dict) -> list[dict]:
     lgd, portal = state["league"], off["portal"]
     rng = _rng(state, f"portal-{portal['round']}")
     me = state["team"]
-    offers: dict[str, list[str]] = {}
     mine = set(portal["offers"].get(me, []))
     if (state.get("career") or {}).get("settings", {}).get("auto_recruit") not in (None, False, "off") and not mine:
         mine = set(ai_offers(state, me))
-    for pid in mine:
-        offers.setdefault(pid, []).append(me)
-    for slug in lgd["teams"]:
-        if slug == me:
-            continue
-        for pid in ai_offers(state, slug):
-            offers.setdefault(pid, []).append(slug)
     moves = []
     spots = {slug: open_spots(lgd, slug, portal) if slug == me else min(open_spots(lgd, slug, portal), PORTAL_TAKE)
              for slug in lgd["teams"]}
-    churn = {slug: max(0, CHURN - sum(1 for e in portal["players"].values() if e["signed"] == slug and e.get("churn")))
-             if p4_school(slug) and slug != me else 0 for slug in lgd["teams"]}
-    for pid in sorted(offers, key=lambda q: -portal["players"][q]["player"]["o"]):
-        e = portal["players"][pid]
-        if e["signed"]:
-            continue
-        e["offers"] = sorted(set(e["offers"]) | set(offers[pid]))
-        choices = [s for s in offers[pid] if spots.get(s, 0) > 0 or churn.get(s, 0) > 0]
-        if not choices:
-            continue
-        pick = max(choices, key=lambda s: entrant_interest(state, lgd, s, e, rng))
-        e["signed"] = pick
-        if spots.get(pick, 0) > 0:
-            spots[pick] -= 1
-        else:                          # a spot made by releasing the end of the roster (over the limit after the portal)
-            churn[pick] -= 1
-            e["churn"] = True
-        moves.append({"id": pid, "name": e["player"]["n"], "pos": e["player"]["pos"], "from": e["from"], "to": pick,
-                      "overall": house(e["player"]["pos"], e["player"]["o"]), "round": portal["round"]})
+    churn = {slug: churn_left(portal, slug) if p4_school(slug) or slug == me else 0 for slug in lgd["teams"]}
+    for rolling in range(PORTAL_PASSES):    # schools with spots left keep offering to who is still out there
+        offers: dict[str, list[str]] = {}
+        for pid in (mine if rolling == 0 else ()):
+            offers.setdefault(pid, []).append(me)
+        for slug in lgd["teams"]:
+            if slug == me or (rolling and spots.get(slug, 0) <= 0 and churn.get(slug, 0) <= 0):
+                continue
+            for pid in ai_offers(state, slug, spots[slug] + churn[slug] if rolling else None):
+                offers.setdefault(pid, []).append(slug)
+        for pid in sorted(offers, key=lambda q: -portal["players"][q]["player"]["o"]):
+            e = portal["players"][pid]
+            if e["signed"]:
+                continue
+            e["offers"] = sorted(set(e["offers"]) | set(offers[pid]))
+            choices = [s for s in offers[pid] if spots.get(s, 0) > 0 or churn.get(s, 0) > 0]
+            if not choices:
+                continue
+            pick = max(choices, key=lambda s: entrant_interest(state, lgd, s, e, rng))
+            e["signed"] = pick
+            if spots.get(pick, 0) > 0:
+                spots[pick] -= 1
+            else:                          # a spot made by releasing the end of the roster (over the limit after the portal)
+                churn[pick] -= 1
+                e["churn"] = True
+            moves.append({"id": pid, "name": e["player"]["n"], "pos": e["player"]["pos"], "from": e["from"], "to": pick,
+                          "overall": house(e["player"]["pos"], e["player"]["o"]), "round": portal["round"]})
     portal["moves"] += moves
     portal["offers"] = {}
     return moves
@@ -601,6 +616,7 @@ def _fill_rosters(state: dict) -> dict:
                 for _ in range(years):
                     develop(c, attrs, 0.8, rng)
                 c["cls"] = rng.choice(("SO", "SORS") if years == 1 else ("JR", "JRRS"))
+                c["yrs"] = years
                 c["transfer"] = "FCS"
             else:
                 c["walk_on"] = True
@@ -876,7 +892,7 @@ def portal_offer(state: dict, pid: str, on: bool) -> list[str]:
         if e["signed"]:
             raise ValueError("he has already picked a school")
         if pid not in mine:
-            if len(mine) >= max(1, math.ceil(PORTAL_OFFER_FACTOR * open_spots(state["league"], me, off["portal"]))):
+            if len(mine) >= max(1, math.ceil(PORTAL_OFFER_FACTOR * my_spots(state["league"], me, off["portal"]))):
                 raise OverflowError("no offers left this round")
             mine.append(pid)
     elif pid in mine:
@@ -930,11 +946,11 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
                        "early_entrants": sum(1 for d in deps if d.get("early"))},
         "signed": off.get("signed", {}).get(me, 0),
         "roster": len(lgd["teams"][me]["roster"]), "roster_limit": ROSTER_LIMIT,
-        "open_spots": open_spots(lgd, me, portal),
+        "open_spots": open_spots(lgd, me, portal), "release_spots": churn_left(portal, me),
         "portal": {"round": portal["round"], "entrants": len(portal["players"]),
                    "signed": sum(1 for e in portal["players"].values() if e["signed"]),
                    "offers": list(portal["offers"].get(me, [])),
-                   "offers_left": max(0, math.ceil(PORTAL_OFFER_FACTOR * open_spots(lgd, me, portal)) - len(portal["offers"].get(me, []))),
+                   "offers_left": max(0, math.ceil(PORTAL_OFFER_FACTOR * my_spots(lgd, me, portal)) - len(portal["offers"].get(me, []))),
                    "moves_mine": my_moves,
                    "rows": portal_rows(state, position, status) if off["stage"] in ("portal_1", "portal_2", "development") else []},
         "report": off.get("report") and {"mine": off["report"]["development"]["mine"][:25],

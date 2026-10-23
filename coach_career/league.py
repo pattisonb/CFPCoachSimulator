@@ -60,8 +60,8 @@ FALLBACK = {"LT": ("RT", "LG", "RG", "C"), "RT": ("LT", "RG", "LG", "C"), "LG": 
             "HB": ("FB", "WR"), "FB": ("HB", "TE"), "WR": ("TE", "HB"), "TE": ("WR", "FB"), "QB": (), "K": ("P",), "P": ("K",)}
 LB_ROLES = ("SAM", "MIKE", "WILL")
 OFFENSE_ROLES = {"QB", "HB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT"}
-# team ratings from the starters' overall (ours), fit once to the 2026 team ratings (r 0.98 offense, 0.997 defense)
-TEAM_FIT = {"offense": (0.8936, 16.227), "defense": (0.9095, 12.899), "special_teams": (0.8058, 15.1)}
+# team ratings from the starters' overall (ours), fit to the real 2026 team ratings on the starters real usage played (r 0.95 offense, 0.96 defense)
+TEAM_FIT = {"offense": (0.8745, 20.143), "defense": (0.7531, 24.734), "special_teams": (0.8058, 15.1)}
 GROUP_OF = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL", "LG": "OL", "C": "OL", "RG": "OL",
             "RT": "OL", "LEDG": "DL", "REDG": "DL", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "DB",
             "FS": "DB", "SS": "DB", "K": "K", "P": "P"}
@@ -103,7 +103,7 @@ def compact(p: dict, attrs: list[str], home: Optional[str] = None) -> dict:
     else:
         ours = game_scale.ours_from_base(p["ratings"], pos)
         seeded = _potentials().get(p["slug"], {}).get("potential_ea") or {}
-        pot = game_scale.from_ea({**p["ratings_ea"], **seeded}, pos) if seeded else ours
+        pot = game_scale.potential_from_ea({**p["ratings_ea"], **seeded}, ours, pos) if seeded else ours
     seeded = _potentials().get(p["slug"], {})
     out = {"id": p["slug"], "n": p["name"], "pos": pos, "cls": p.get("class") or "FR", "ht": height_in(p.get("height")),
            "wt": p.get("weight_lbs"), "j": p.get("jersey"), "a": p.get("archetype"), "dev": p.get("dev_trait") or "Normal",
@@ -111,7 +111,7 @@ def compact(p: dict, attrs: list[str], home: Optional[str] = None) -> dict:
            "g": [int(max(0, pot.get(k, 50) - ours.get(k, 50))) for k in attrs],
            "c": p.get("coachability") or seeded.get("coachability") or "Steady Grinder",
            "s": p.get("stars") or seeded.get("stars"), "o": game_scale.overall(ours, pos),
-           "home": (p.get("hometown") or {}).get("state") or home, "yrs": int(p.get("yrs") or 0)}
+           "home": (p.get("hometown") or {}).get("state") or home, "yrs": int(p["yrs"]) if p.get("yrs") is not None else EXPERIENCE.get(p.get("class") or "FR", 0)}
     if p.get("abilities"):
         out["ab"] = [f"{a.get('name')}|{a.get('tier')}" for a in p["abilities"]]
     if p.get("target_mult"):

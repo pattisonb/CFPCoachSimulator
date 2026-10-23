@@ -113,7 +113,7 @@
     const p = v.portal;
     const head = el("section", { class: "go-card" }, [
       el("div", { class: "go-kicker", text: `TRANSFER PORTAL · ROUND ${p.round} OF 2` }),
-      el("p", {}, [`You have ${v.open_spots} open spots and ${p.offers_left} offers left this round. Entrants with offers pick a school when the round ends: `,
+      el("p", {}, [`You have ${v.open_spots} open spots${v.release_spots ? ` (and ${v.release_spots} more by releasing the end of your roster)` : ""} and ${p.offers_left} offers left this round. Entrants with offers pick a school when the round ends: `,
         "playing time first, then the program, winning and home."]),
     ]);
     const filters = el("div", { class: "off-filters" });
