@@ -184,8 +184,7 @@ def start(state: dict, year: int = 2027) -> None:
     attrs = game_scale.keys()
     for p in prospects.values():
         ours = game_scale.from_ea(p.pop("ratings_ea"), p["ea_position"])
-        pot = game_scale.from_ea(p.pop("potential_ea"), p["ea_position"])
-        pot = {k: max(v, ours.get(k, v)) for k, v in pot.items()}
+        pot = game_scale.potential_from_ea(p.pop("potential_ea"), ours, p["ea_position"])
         p["ratings"] = [ours.get(k, 50) for k in attrs]
         p["potential"] = [pot.get(k, 50) for k in attrs]
         p["ovr"], p["pot_ovr"] = game_scale.overall(ours, p["ea_position"]), game_scale.overall(pot, p["ea_position"])

@@ -90,7 +90,9 @@ if __name__ == "__main__":
     two = next(pid for pid, p in rc["prospects"].items() if p["stars"] == 2 and not p.get("hidden")
                and prospects.comp(prospects.ceiling(st, p), p["ea_position"], prospects.starter_pool()) is None)
     assert prospects.profile(st, two, "ohio-state")["public_comp"] is None
-    fresh = by_rank[2]
+    fresh = next(by_rank[r] for r in range(2, 60)       # a top prospect a starter compares to (an elite ceiling can have none)
+                 if prospects.comp(prospects.ceiling(st, rc["prospects"][by_rank[r]]), rc["prospects"][by_rank[r]]["ea_position"],
+                                   prospects.starter_pool()) is not None)
     rc["reads"].pop(fresh, None)
     assert prospects.profile(st, fresh, "ohio-state")["our_comp"] is None
     assert prospects.profile(st, fresh, "ohio-state")["our_grades"] is None

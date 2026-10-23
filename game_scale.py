@@ -69,6 +69,18 @@ def from_ea(ratings_ea: dict, pos: str) -> dict[str, int]:
     return ours_from_base({k: recruits.curve(v) for k, v in ratings_ea.items()}, pos)
 
 
+# How far a generated player grows, by position group: his drawn room to potential times this. Set
+# so a career's starters settle, season after season, where the real 2026 starters were (tools/long_run.py).
+ROOM = {"QB": 1.33, "RB": 1.0, "WR": 1.11, "TE": 1.21, "OL": 1.24, "DL": 1.35, "LB": 1.45, "CB": 1.48, "S": 1.63, "K": 1.25, "P": 0.85}
+
+
+def potential_from_ea(potential_ea: dict, ours: dict, pos: str) -> dict[str, int]:
+    """A generated player's potential on our scale: his room above his ratings scaled by ROOM."""
+    m = ROOM.get(group(pos), 1.0)
+    pot = from_ea(potential_ea, pos)
+    return {k: int(round(min(99, ours.get(k, v) + m * max(0, v - ours.get(k, v))))) for k, v in pot.items()}
+
+
 def has_overall() -> bool:
     return bool(FILE.exists() and data().get("overall"))
 

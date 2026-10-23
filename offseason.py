@@ -556,7 +556,7 @@ def _newcomer(r: dict, slug: str) -> dict:
     scale, in the form league.compact takes."""
     import game_scale
     ours = game_scale.from_ea(r["ratings_ea"], r["ea_position"])
-    pot = game_scale.from_ea(r["potential_ea"], r["ea_position"])
+    pot = game_scale.potential_from_ea(r["potential_ea"], ours, r["ea_position"])
     return {"slug": slug, "name": r["name"], "position": r["ea_position"], "class": "FR", "height": r["height"],
             "weight_lbs": r["weight"], "archetype": r["archetype"], "dev_trait": "Normal", "ours": ours,
             "potential_ours": {k: max(v, ours.get(k, v)) for k, v in pot.items()}, "coachability": r["coachability"],
