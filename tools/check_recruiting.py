@@ -34,6 +34,7 @@ TOLERANCES = (
     ("over_need", 0, 2, None),            # the most one school signs at a group past its room there (target minus returning)
     ("no_qb_share", 0.0, 0.10, None),     # schools signing no quarterback
     ("max_qb", 0, 3, None),               # the most quarterbacks one school signs
+    ("top100_top25", 0.65, 0.95, 0.80),   # the top 100 prospects signing with the 25 strongest programs (real: about 80%)
 )
 GROUP_247 = {"OT": "OL", "IOL": "OL", "EDGE": "DL"}   # the real classes' positions to roster groups (ATH and LS are left out)
 GROUPS = ("QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S")
@@ -98,6 +99,8 @@ def measure(state: dict) -> dict:
             got_sum[g] += got[g]
         qbs.append(got["QB"])
         over = max(over, max(got[g] - max(0, room[g]) for g in GROUPS))
+    top25 = set(sorted(model, key=lambda s_: -model[s_]["strength"]["baseline"])[:25])
+    top100 = [(pid, s_) for pid, s_ in fbs if pros[pid]["rank"] <= 100]
     actions = {a: round(v[1] / v[0], 2) for a, v in (rc.get("action_points") or {}).items() if v[0]}
     leader_changes = list((rc.get("leader_changes") or {}).values())
     return {
@@ -114,6 +117,7 @@ def measure(state: dict) -> dict:
         "committed_by_12": sum(1 for pid, _ in fbs if first_commit.get(pid, 99) < 12) / len(fbs),
         "signed_early": len(early) / len(fbs),
         "top300_decommits": sum(1 for pid in top300 if pid in decommitted) / len(top300),
+        "top100_top25": sum(1 for pid, s_ in top100 if s_ in top25) / max(1, len(top100)),
         "fcs_share": sum(1 for s in rc["status"].values() if s["signed"] == "FCS") / len(rc["status"]),
     }
 

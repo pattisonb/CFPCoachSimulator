@@ -92,8 +92,12 @@ AI_OVER_ASK = 1.1                          # an AI school offers up to this time
 # the transfer portal as recruiting (offseason.py runs it): four weeks after signing day *tune*
 PORTAL_WEEKS = 4
 PORTAL_PRIORITY_ODDS = {"playing_time": 0.45, "nil": 0.20, "winning": 0.15, "proximity": 0.10, "prestige": 0.07, "coach": 0.03}
+PORTAL_TOP_PRIORITY_ODDS = {"nil": 0.35, "winning": 0.25, "playing_time": 0.18, "prestige": 0.12, "proximity": 0.06, "coach": 0.04}
+PORTAL_TOP_TIER = 4                        # an entrant rated a four-star or better draws his priorities from PORTAL_TOP_PRIORITY_ODDS: the best transfers chase NIL and a contender
+PORTAL_NATIONAL = 40                       # the best entrants by portal rank are on every Power 4 board (the whole country chases them)
+PORTAL_STARTERS = {"QB": 1, "RB": 1, "WR": 3, "TE": 1, "OL": 5, "DL": 4, "LB": 3, "CB": 2, "S": 2, "K": 1, "P": 1}   # a group's starters: an entrant better than the last of them is an upgrade, taken past the group's cap
 PORTAL_COMMIT = (0.25, 0.4, 0.6, 1.0)      # an entrant with offers decides at each week's step this often
-PORTAL_NIL_POOL = 0.35                     # the share of next year's NIL budget a school spends in the portal
+PORTAL_NIL_POOL = 0.7                      # the share of next year's NIL budget a school spends in the portal (the portal now takes the bigger share)
 PORTAL_ASK = (25, 0.6)                     # an entrant's ask: this plus this per overall point over 50, times his position
 PORTAL_RANK_NOISE = 3.0                    # the public portal ranking: his overall plus this much noise (points)
 PORTAL_LOOK = 0.5                          # a staff's look at a transfer errs this much of a high schooler's: there is film
@@ -701,6 +705,18 @@ def portal_spots(state: dict, slug: str) -> int:
     return max(0, ROSTER_LIMIT + extra - len(state["league"]["teams"][slug]["roster"]) - taken)
 
 
+def portal_upgrade(state: dict, slug: str, p: dict) -> bool:
+    """Whether a transfer would start for the school: his overall beats the last starter at his
+    group on next year's roster. A school takes an upgrade past its group's cap, as a real one does."""
+    if not is_portal(state):
+        return False
+    from coach_career import offseason
+    g = p.get("group") or _group_of(p)
+    ovrs = sorted((q["o"] for q in state["league"]["teams"][slug]["roster"] if offseason.GROUP.get(q["pos"]) == g), reverse=True)
+    n = PORTAL_STARTERS.get(g, 1)
+    return p["ovr"] > (ovrs[n - 1] if len(ovrs) >= n else 0)
+
+
 def _p4(slug: str) -> bool:
     from sim import season
     return season._is_p4(slug, season.load_teams()[slug])
@@ -1111,6 +1127,8 @@ def _build_board(state: dict, slug: str, rng: random.Random) -> list[str]:
             weight = lift(p) * math.exp(NATIONAL_TILT * (p["composite"] - 0.9))
             keyed.append((math.log(rng.random() or 1e-12) / weight, pid))
     national = [pid for _, pid in sorted(keyed, reverse=True)[:n]]
+    if is_portal(state) and _p4(slug):     # the portal: the best entrants hear from every Power 4 program
+        national = sorted((pid for pid in free if pros[pid]["rank"] <= PORTAL_NATIONAL), key=lambda q: pros[q]["rank"]) + national
     board = list(dict.fromkeys(national + sampled))
     for pid in board:                  # a board is prospects the staff has evaluated and spoken to: not cold, one priority known
         c = _contact(state, slug, pid)
@@ -1181,7 +1199,7 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
         if pid not in offers and rc["status"][pid]["committed"] is None:
             p = rc["prospects"][pid]
             g = _group_of(p)
-            if group_full(state, slug, g, need, commits, open_):
+            if group_full(state, slug, g, need, commits, open_) and not portal_upgrade(state, slug, p):
                 continue
             open_[g] += 1
             nil = min(nil_left(state, slug), round(budget * AI_NIL.get(tier_of(p), 0)), round(AI_OVER_ASK * ask_from(state, slug, pid, win)))
@@ -1341,8 +1359,9 @@ class _Room:
         if slug == self.yours and pid in self.state["recruiting"]["offers"].get(slug, []):
             return True                                 # you offered him: your call to oversign
         need, com = self._at(slug)
-        g = _group_of(self.state["recruiting"]["prospects"][pid])
-        return com[g] < group_cap(need, g) + self.slack
+        p = self.state["recruiting"]["prospects"][pid]
+        g = _group_of(p)
+        return com[g] < group_cap(need, g) + self.slack or portal_upgrade(self.state, slug, p)
 
     def took(self, slug: str, pid: str, n: int = 1) -> None:
         self.commits[slug] = self.commits.get(slug, 0) + n
@@ -1588,8 +1607,9 @@ def portal_rc(state: dict, entrants: dict, year: int) -> dict:
              "line": _season_line(state, e["from"], c["n"], group),
              "coachability": c.get("c") or "Steady Grinder", "ratings": ratings, "potential": potential,
              "ovr": c["o"], "pot_ovr": game_scale.overall(dict(zip(attrs, potential)), c["pos"]),
-             "priorities": _priorities(pid, PORTAL_PRIORITY_ODDS), "hidden": False, "group": group}
+             "hidden": False, "group": group}
         p["tier"] = tier_of(p)
+        p["priorities"] = _priorities(pid, PORTAL_TOP_PRIORITY_ODDS if p["tier"] >= PORTAL_TOP_TIER else PORTAL_PRIORITY_ODDS)
         p["home"] = _home(p)
         p["nil_ask"] = nil_ask(p, year, seed)
         p["_sort"] = c["o"] + rng.gauss(0, PORTAL_RANK_NOISE)

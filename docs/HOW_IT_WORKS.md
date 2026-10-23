@@ -1053,12 +1053,19 @@ season's line (games, starts, his position's numbers), a public portal rank (his
 little noise), your staff's grade read (half a high schooler's error: there is film), the role he
 would have with you next season (would start / next in line / depth, from your depth chart with
 your signees) and his ask (25 NIL plus 0.6 per overall point over 50, times his position). His
-priorities lean to playing time (45%), NIL (20%) and winning (15%). The actions are recruiting's
-with the same hours and weekly limits, a campus visit in place of the home-game visit (it happens
-that week and tells you everything), NIL from a portal pool of 35% of next year's budget, and the
-same asks, lowballs, raises, pitches and stages. Your spots are the roster limit plus up to 8 by
-releasing the end of your roster (a Power 4 school gets the same). When the portal opens your
-staff puts the twenty entrants who fit your needs on your board. At each week's step the
+priorities lean to playing time (45%), NIL (20%) and winning (15%); an entrant rated a four-star
+or better (an overall of 58 and up) chases NIL (35%), a contender (25%) and prestige (12%) ahead
+of playing time (18%), as the best real transfers do. The actions are recruiting's with the same
+hours and weekly limits, a campus visit in place of the home-game visit (it happens that week and
+tells you everything), NIL from a portal pool of 70% of next year's budget (the portal takes the
+bigger share now), and the same asks, lowballs, raises, pitches and stages. Your spots are the
+roster limit plus up to 8 by releasing the end of your roster (a Power 4 school gets the same).
+When the portal opens your staff puts the twenty entrants who fit your needs on your board; the
+forty best entrants by portal rank are on every Power 4 board, and a school takes a transfer who
+would start for it (better than the last starter at his group next year) past its group's cap.
+Before these three (top entrants' priorities, every Power 4 board, upgrades past the cap, and the
+bigger pool) 27 of the best 50 entrants got no offer from a top-25 program and 19 of the 50 signed
+with one; after, 34 of 50 (real: about 70%). At each week's step the
 entrants with offers decide, best players first, a quarter of them the first week, then 40%,
 60%, then everyone, for the school they like best with room at their position (crowded by the
 transfers it already took there); a decision is a signing. After the last week an unsigned

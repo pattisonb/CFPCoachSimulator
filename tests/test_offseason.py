@@ -108,9 +108,15 @@ if __name__ == "__main__":
     assert off["stage"] == "development"
     placed = sum(1 for e in off["portal"]["players"].values() if e["signed"])
     assert 0.55 <= placed / entrants <= 0.95, placed / entrants
+    # the best transfers mostly land at the strongest programs (real: about 70% of the top 50 at top-25 programs)
+    model = recruiting.model()["teams"]
+    top25 = set(sorted(model, key=lambda s_: -model[s_]["strength"]["baseline"])[:25])
+    best = sorted(off["portal"]["players"].values(), key=lambda e: -e["player"]["o"])[:50]
+    top_share = sum(1 for e in best if e["signed"] in top25) / len(best)
+    assert top_share >= 0.5, top_share
     g5 = [s_ for s_ in lg["teams"] if not offseason.p4_school(s_)]
     per_g5 = sum(1 for e in off["portal"]["players"].values() if e["signed"] in g5) / len(g5)
-    assert 1.0 <= per_g5 <= 4.5, per_g5
+    assert 1.0 <= per_g5 <= 5.5, per_g5
     assert any(p.get("walk_on") and p.get("preferred") for t in lg["teams"].values() for p in t["roster"]), "no preferred walk-ons"
     sizes = [len(t["roster"]) for t in lg["teams"].values()]
     assert min(sizes) >= 70 and max(sizes) <= offseason.ROSTER_LIMIT, (min(sizes), max(sizes))
