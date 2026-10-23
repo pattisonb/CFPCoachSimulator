@@ -23,6 +23,7 @@ STAGES = ("departures", "portal_1", "portal_2", "development", "staff", "ready")
 STAGE_NAMES = {"departures": "Departures", "portal_1": "Transfer portal, round 1", "portal_2": "Transfer portal, round 2",
                "development": "Development", "staff": "Staff", "ready": "Ready for next season"}
 ROSTER_LIMIT = 85
+FILL_TO = 80               # walk-ons and lower-level transfers top a roster up to this (a real roster's other players sit outside the 85)
 GROUP = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL", "LG": "OL", "C": "OL", "RG": "OL", "RT": "OL",
          "LEDG": "DL", "REDG": "DL", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "CB", "FS": "S", "SS": "S",
          "K": "K", "P": "P"}
@@ -36,7 +37,7 @@ ENGINE_POS = {"QB": "QB", "RB": "RB", "WR": "WR", "TE": "TE", "OL": "OL", "DL": 
 # ----- departures *tune* -----
 NEXT_CLASS = {"FR": "SO", "FRRS": "SORS", "SO": "JR", "SORS": "JRRS", "JR": "SR", "JRRS": "SRRS"}
 REDSHIRT = {"FR": 0.78, "SO": 0.35, "JR": 0.25}   # chance a player off the depth chart's top takes his redshirt year
-FIFTH_YEAR = 0.30                                  # a senior with his redshirt unused who barely played comes back
+FIFTH_YEAR = 0.60                                  # a senior with his redshirt unused who barely played comes back
 DRAFT_PICKS = 257
 DRAFT_FROM_FBS = 0.97                              # the share of picks from FBS (the rest from lower levels)
 # position value in the draft, in house-scale points over his card overall
@@ -45,7 +46,7 @@ POSITION_VALUE = {"QB": 6, "LT": 4, "RT": 3, "LEDG": 4, "REDG": 4, "CB": 3, "WR"
 DRAFT_NOISE = 4.0
 DECLARE = ((32, 0.95), (64, 0.88), (100, 0.65), (160, 0.35), (257, 0.12), (10**9, 0.004))   # projected pick -> an underclassman declares
 UNDERCLASS_ELIGIBLE = {"JR", "JRRS", "SORS"}       # three years out of high school
-PORTAL_BASE = {"FR": 0.07, "FRRS": 0.13, "SO": 0.15, "SORS": 0.18, "JR": 0.14, "JRRS": 0.17, "SR": 0.26}
+PORTAL_BASE = {"FR": 0.05, "FRRS": 0.09, "SO": 0.10, "SORS": 0.12, "JR": 0.10, "JRRS": 0.12, "SR": 0.18}
 PORTAL_USAGE = {"starter": 0.12, "rotation": 0.65, "bench": 1.3}
 PORTAL_LOSING = 1.25                               # a losing season pushes players out
 TRANSFER_UP_FROM, TRANSFER_UP = 50, 0.40              # a Group of 5 player this good (card overall) enters this often
@@ -558,7 +559,7 @@ def _newcomer(r: dict, slug: str) -> dict:
 
 
 def _fill_rosters(state: dict) -> dict:
-    """Walk-ons where a group has fallen below its floor and then up to the roster limit (the
+    """Walk-ons where a group has fallen below its floor and then up to FILL_TO (the
     thinnest groups first, against a healthy roster's make-up); rosters over the limit release
     their lowest-rated non-seniors (counted as quitting)."""
     lgd = state["league"]
@@ -576,7 +577,7 @@ def _fill_rosters(state: dict) -> dict:
         short = dict(counts)
         for g in wanted:
             short[g] += 1
-        while size < ROSTER_LIMIT:
+        while size < FILL_TO:
             g = max(TARGET, key=lambda k: (TARGET[k] - short[k]) / TARGET[k])
             wanted.append(g)
             short[g] += 1

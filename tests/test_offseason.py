@@ -49,7 +49,7 @@ if __name__ == "__main__":
     assert 40 <= early <= 140, early
     returning = sum(len(t["roster"]) for t in lg["teams"].values()) + len(off["portal"]["players"])
     share = len(off["portal"]["players"]) / returning
-    assert 0.08 <= share <= 0.22, share
+    assert 0.06 <= share <= 0.22, share
     assert kinds["quit"] < 0.03 * returning
     # the classes arrived (21 a school here) and nobody is still a senior
     assert sum(off["signed"].values()) == 21 * teams
