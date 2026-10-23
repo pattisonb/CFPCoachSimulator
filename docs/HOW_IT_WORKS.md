@@ -942,33 +942,46 @@ the server switches leagues when you open a career (never while another sims). L
 replay the 2026 schedule with home and away swapped every other year; the preseason poll comes
 from team ratings; dates show a year on.
 
+**Rosters of 105** (the NCAA's limit since 2025). The real 2026 rosters are EA's 85, each team's
+best; a career's league holds up to 105, and each team's best 85 then has the real class make-up
+(freshmen 15-19%, fifth-year seniors 15-21% against 15% and 18.5%; `tools/tune_rosters.py`).
+The first season recruits against the 85 (its classes are the calibrated real ones); later ones
+against 105, capped by the school's usual class size either way.
+
 **Departures** (after national signing day). Class years FR, SO, JR, SR with a redshirt each
 (FRRS ... SRRS). A player who did not start may take his redshirt once: 78% of freshmen off
 the top of the depth chart, 35% of sophomores, 25% of juniors (half that for the next man up).
-Seniors leave; a senior with his redshirt unused who barely played stays a fifth year 30% of the
+Seniors leave; a senior with his redshirt unused who barely played stays a fifth year 60% of the
 time. The NFL draft has 257 picks, 97% from FBS, ranked by the card overall plus position value
 (QB +6, tackles and edges +3 to +4, kickers -18) and noise; underclassmen three years out of high
-school declare by projected pick (95% in the first round, 60% by pick 100, 10% by 257). The
-transfer portal takes 7% of freshmen to 26% of fifth-year seniors, times 0.12 for starters, 0.65
-for the next man up and 1.3 for the bench, and 1.25 after a losing year. About 1.2% quit a year
-(2.5 times as likely in a team's bottom 15%).
+school declare by projected pick (95% in the first round, 65% by pick 100, 12% by 257): about
+55-80 a year (real 58-82). The transfer portal takes 5% of freshmen to 18% of fifth-year
+seniors, times 0.12 for starters, 0.65 for the next man up and 1.3 for the bench, and 1.25 after
+a losing year; a Group of 5 player with a card overall of 50 or more (a Power 4 starter) enters
+40% of the time to move up. About 1.2% quit a year (2.5 times as likely in a team's bottom 15%).
 
 **The portal.** Signed classes join first. Two rounds: you offer up to twice your open spots
-(85 minus your roster and the transfers you have); every AI school offers by need (groups short
-of a healthy roster's make-up, or anyone good with 4+ spots open) to entrants about as good as
-its depth there. At the end of a round each entrant with offers picks the school he likes best
-with a spot left, best players first: playing time (would he start, be next in line, or depth)
-counts 2, the program's team rating 1, winning 0.6, home state 0.4, plus noise. Entrants
-unsigned after round 2 leave FBS.
+(the roster limit minus your roster and the transfers you have); every AI school offers to anyone
+who would start for it, and by need (groups short of a healthy roster's make-up, or anyone good
+with 4+ spots open) to entrants about as good as its depth there; a Power 4 school makes up to 8
+more spots by releasing the end of its roster. At the end of a round each entrant with offers
+picks the school he likes best with a spot left, best players first: playing time (would he
+start, be next in line, or depth) counts 1, the program's recruiting baseline 0.8 a point (about
+-2 to +2) and its team rating 0.3 per 10 points, winning 0.6, home state 0.4, plus noise: the
+best Group of 5 players move up, as they do. Entrants unsigned after round 2 leave FBS.
 
 **Development.** Every returning player (transfers too) develops once a year on our scale: each
-skill closes part of its gap to potential at his coachability's rate times 0.6 (`DEV_RATE`: a
-class then tracks the real players by stars and years, three- and two-stars a little under the
-survivors; `tools/check_development.py`) times a coach factor (the head coach's player development with the coordinator on his side
-of the ball, 40%: 0.8 at 30, 1.0 at 50, 1.2 at 90). The signed class arrives as it is. Rosters
-are then topped up to 85, the thinnest groups first: half walk-ons (generated two-star
-freshmen), half FCS and junior-college transfers (three-stars a year or two in, sophomores or
-juniors). The real portal and the lower levels feed FBS rosters the same way.
+skill closes part of its gap to potential at his coachability's rate times 0.75 (`DEV_RATE`)
+times a pace by seasons in the program (0.45, 0.7, 1.35, 1.35, then 1.0: real players gain
+little in their first offseasons and most in their third and fourth), so a class tracks the real
+players by stars and years (`tools/check_development.py`: four-stars 42, 43, 45, 48, 50 against
+41, 42, 43, 48.5, 47 real; three-stars 29, 31, 35, 40, 44 against 29, 32, 35, 41, 44), times a
+coach factor (the head coach's player development with the coordinator on his side of the ball,
+40%: 0.8 at 30, 1.0 at 50, 1.2 at 90) and the program's own (1 + 0.10 times its recruiting
+baseline). The signed class arrives as it is. Rosters are then topped up to 100, the thinnest
+groups first: walk-ons (generated two-star freshmen) and, 30% of the time at a Group of 5 school
+(15% in the Power 4), FCS and junior-college transfers (three-stars a year or two in, sophomores
+or juniors).
 
 **Development from production and honors** (more than EA's development trait). The season's
 production is each player's standardized score at his position group against the average starter
@@ -980,8 +993,7 @@ national award 6, All-America first team 5, a finalist, second team or conferenc
 all-conference 2 or 1 (the best counts in full, the next two at half, at most 10 in a year). Speed,
 strength and the other gifts are not raised. A Heisman winner, national award winner or
 first-team All-American moves up a coachability level 40% of the time. The Development step
-lists your risers with the reasons. Programs develop at 1 + 0.10 times their recruiting baseline
-(about -2 to +2: facilities and staff), on top of the coaches' factor.
+lists your risers with the reasons.
 
 **The coaching carousel** (`carousel.py`). Each program's AD sets a goal from its recruiting
 baseline: make the playoff (+1.2 and up), win nine (+0.5), win seven and go bowling (-0.3), reach
