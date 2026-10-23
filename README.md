@@ -40,7 +40,7 @@ week at a time or jump ahead: each week is **Recruit → Your game → Advance**
   real classes look, and nobody committed at the start. Each week you have hours (more with a
   better recruiter as head coach) and a yearly budget of NIL points: message, call, send the
   head coach on an in-home visit, invite a prospect to an official visit at a home game, and
-  offer. Pitch what he cares about (a call reveals it). Every other FBS school recruits too,
+  offer. Pitch what he cares about (a call or a visit reveals it). Every other FBS school recruits too,
   the way it really recruits: its states, its star level, its coach. This season's results
   count more every week. Commitments come over the fall, top prospects can flip, the early
   signing period is in December and the rest sign in January. Prospects without real FBS

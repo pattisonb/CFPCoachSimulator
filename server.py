@@ -427,11 +427,18 @@ def _reporter(job: dict):
     """The callback a sim calls with its stage and game count, written onto the job for /status."""
     def report(stage: str, games_done: Optional[int], games_total: Optional[int]) -> None:
         job["stage"] = stage
-        job["week"] = job["state"]["current_week"] + 1
+        week = job["done"] + 1                     # the week being simmed (`done` moves once all of it is over)
+        if job.get("week") != week:
+            job["week"], job["_played"] = week, False
         if games_total is not None:
             job["games_done"], job["games_total"] = games_done, games_total
+            job["_played"] = job["_played"] or games_done >= games_total
+            job["week_frac"] = 0.05 + 0.75 * games_done / max(1, games_total)
         else:
             job["games_done"] = job["games_total"] = None
+            # before the games a sliver; after them (polls, awards, recruiting) the last part of the week
+            played = job["_played"] or job["state"]["current_week"] >= week
+            job["week_frac"] = max(job.get("week_frac", 0), 0.85) if played else 0.02
     return report
 
 
@@ -634,7 +641,7 @@ def season_status(season_id: str, since: Optional[int] = None) -> dict:
     """Job progress plus, while simming, your record and the results since week `since`."""
     state = _season_state(season_id)
     job = _season_jobs[season_id]
-    out = {k: job.get(k) for k in ("id", "status", "done", "total", "error", "stage", "week", "games_done", "games_total", "paused", "gameday_event")}
+    out = {k: job.get(k) for k in ("id", "status", "done", "total", "error", "stage", "week", "games_done", "games_total", "week_frac", "paused", "gameday_event")}
     out["current_week"] = state["current_week"]
     # The sim thread adds games and results to this state while we read it; if the read
     # collides with a change, answer with the last good record and results instead of failing.
@@ -851,10 +858,7 @@ def board_change(season_id: str, req: BoardRequest) -> dict:
     if req.pid not in recruiting.visible(st):
         raise HTTPException(404, "unknown prospect")
     with _season_lock:
-        if req.on and req.pid not in rc["board"]:
-            rc["board"].append(req.pid)
-        if not req.on and req.pid in rc["board"]:
-            rc["board"].remove(req.pid)
+        recruiting.set_board(st, req.pid, req.on)
         season.save_season(st)
     return {"board": rc["board"]}
 

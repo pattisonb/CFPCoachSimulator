@@ -298,7 +298,7 @@
         sd.odds ? el("span", { class: "muted small", text: `${sd.odds} · ${sd.certainty}` }) : null]), bar(sd));
       const tags = el("div", { class: "go-tags" });
       for (const t of b.priorities_known) tags.append(el("span", { class: "go-tag", text: `★ ${PITCH_NAMES[t]}` }));
-      if (b.priorities_known.length < 3) tags.append(el("span", { class: "go-tag muted", text: `${3 - b.priorities_known.length} priorities unknown` }));
+      if (b.priorities_known.length < 3) tags.append(el("span", { class: "go-tag muted", text: b.priorities_known.length ? `${3 - b.priorities_known.length} more to learn` : "Priorities: call or visit to learn" }));
       if (b.offered) tags.append(el("span", { class: "go-tag good", text: b.nil ? `Offered · ${b.nil} NIL` : "Offered" }));
       if (b.visit) tags.append(el("span", { class: "go-tag", text: b.visit.done ? "Visited" : `Visit wk ${b.visit.week}` }));
       c.append(tags);
@@ -334,7 +334,7 @@
         pitches.append(el("label", { class: `go-pitch ${known ? "known" : ""}`, for: id }, [r,
           el("span", {}, [el("b", { text: PITCH_NAMES[t] }), known ? el("span", { class: "go-tag good", text: "2×" }) : null])]));
       }
-      p.append(pitches, el("p", { class: "muted small", text: "A pitch on one of his priorities counts double; anything else counts half. A call reveals one." }));
+      p.append(pitches, el("p", { class: "muted small", text: "A pitch on one of his priorities counts double; anything else counts half. A call or an in-home visit reveals one; an official visit reveals them all." }));
       if (!b.offered && !b.committed && !b.signed) {
         const nil = el("input", { type: "number", min: "0", step: "5", value: "0", class: "go-nil", id: `nil-${b.id}` });
         const offer = el("button", { type: "button", class: "go-btn primary", text: "Offer" });

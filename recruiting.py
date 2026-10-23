@@ -424,11 +424,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             if contact["hc_week"] is not None and week - contact["hc_week"] < HC_VISIT_GAP:
                 raise RecruitingError(409, "one in-home visit a month")
             contact["hc_week"] = week
-        if action == "call":
-            seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
-            revealed = next((t for t in p["priorities"] if t not in seen), None)
-            if revealed:
-                seen.append(revealed)
+        if action in ("call", "hc_visit"):           # a call or an in-home visit tells you one thing he cares about
+            revealed = _reveal(state, slug, pid)
         points = _contact_points(p, action, pitch) / (1 + DIMINISH * contact["n"])
         contact["n"] += 1
     rc["hours"][slug] = _hours(state, slug) - HOURS[action]
@@ -438,6 +435,16 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
 
 
 # ----- the week: AI schools, visits, commitments, flips and signing ----------------------------------
+
+def _reveal(state: dict, slug: str, pid: str) -> Optional[str]:
+    """The next of his priorities this school learns, if any are left."""
+    rc = state["recruiting"]
+    seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
+    revealed = next((t for t in rc["prospects"][pid]["priorities"] if t not in seen), None)
+    if revealed:
+        seen.append(revealed)
+    return revealed
+
 
 def _commits(state: dict) -> dict[str, int]:
     out: dict[str, int] = {}
@@ -561,18 +568,20 @@ def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None, co
     week = state["current_week"]
     spots_left = open_spots(state, slug) - (commits if commits is not None else _commits(state)).get(slug, 0)
     live = lambda pid: not rc["status"][pid]["signed"] and rc["status"][pid]["committed"] in (None, slug)
+    dropped = set(rc.get("dropped", [])) if yours else set()      # ones you took off your board stay off
     picks = [pid for pid in rc["board"] if live(pid)] if yours else []
-    board = list(dict.fromkeys(picks + [pid for pid in rc["boards"].get(slug, []) if live(pid)]))
+    board = list(dict.fromkeys(picks + [pid for pid in rc["boards"].get(slug, []) if live(pid) and pid not in dropped]))
     if spots_left > 0 and len(board) < 2 * spots_left:
-        board = list(dict.fromkeys(board + _build_board(state, slug, rng)))
+        board = list(dict.fromkeys(board + [pid for pid in _build_board(state, slug, rng) if pid not in dropped]))
     rc["boards"][slug] = board
     if yours:
+        before = {pid: by[slug]["n"] for pid, by in rc["contacts"].items() if slug in by}
         try:
             _auto_week(state, slug, rng, board, spots_left, week)
-        finally:                                # everyone your staff recruited shows on your board
-            contacted = [pid for pid, by in rc["contacts"].items() if slug in by]
-            for pid in list(rc["offers"].get(slug, [])) + contacted:
-                if pid not in rc["board"] and not rc["status"][pid]["signed"]:
+        finally:                                # everyone your staff recruited this week shows on your board
+            worked = [pid for pid, by in rc["contacts"].items() if slug in by and by[slug]["n"] != before.get(pid)]
+            for pid in list(rc["offers"].get(slug, [])) + worked:
+                if pid not in rc["board"] and pid not in dropped and not rc["status"][pid]["signed"]:
                     rc["board"].append(pid)
         return
     _auto_week(state, slug, rng, board, spots_left, week)
@@ -619,7 +628,7 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
     while targets and _hours(state, slug) >= HOURS["message"] and i < 4 * len(targets):
         pid = targets[i % len(targets)]
         pitch = (known.get(pid) or [None])[0]
-        action = "call" if pitch is None and _hours(state, slug) >= HOURS["call"] else "message"
+        action = "call" if len(known.get(pid) or []) < 3 and _hours(state, slug) >= HOURS["call"] else "message"
         try:
             _act(state, slug, pid, action, pitch=pitch, scale=edge)
         except RecruitingError:
@@ -639,6 +648,8 @@ def _visits(state: dict, week: int) -> None:
             v["done"] = True
             if game is None:
                 continue
+            while _reveal(state, slug, pid):     # a weekend on campus: you learn everything he cares about
+                pass
             margin = game["home_score"] - game["away_score"]
             mood = 1.2 if margin > 0 else (0.6 if margin <= -21 else 0.9)
             cap = ((season.load_teams()[slug].get("stadium") or {}).get("capacity") or 50000)
@@ -895,6 +906,26 @@ def make_staff(state: dict) -> list[dict]:
     for member, area in zip(staff, order):
         member["area"] = area
     return staff
+
+
+def set_board(state: dict, pid: str, on: bool) -> None:
+    """Put a prospect on your board or take him off; one you take off stays off, Auto-recruit
+    included, until you put him back."""
+    rc = state["recruiting"]
+    dropped = rc.setdefault("dropped", [])
+    if on:
+        if pid not in rc["board"]:
+            rc["board"].append(pid)
+        if pid in dropped:
+            dropped.remove(pid)
+    else:
+        if pid in rc["board"]:
+            rc["board"].remove(pid)
+        if pid not in dropped:
+            dropped.append(pid)
+        mine = rc["boards"].get(state["team"])
+        if mine and pid in mine:
+            mine.remove(pid)
 
 
 def assign(state: dict, staff_id: str, area: str) -> None:

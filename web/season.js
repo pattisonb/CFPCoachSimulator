@@ -478,19 +478,15 @@
     liveHead(j);
     const from = state.advanceFrom != null ? state.advanceFrom : Math.max(0, j.done - 1);
     const span = Math.max(1, j.total - from);
-    const frac = j.games_total ? j.games_done / j.games_total : 0;
+    const frac = j.week_frac != null ? j.week_frac : (j.games_total ? j.games_done / j.games_total : 0);
     const pct = Math.min(100, Math.round((100 * (j.done - from + frac)) / span));
     $("#season-progress").hidden = false;
     $("#season-progress-bar").style.width = `${pct}%`;
     const label = j.week ? (s.week_labels[j.week] || `Week ${j.week}`) : "";
     const text = $("#season-progress-text");
     text.innerHTML = "";
-    const stage = j.stage || "Simming";
-    const simming = /^Simming/.test(stage);
-    text.append(el("b", { text: simming ? stage : `${label ? label + " · " : ""}${stage}` }));
-    if (simming && j.games_total) text.append(` · ${j.games_done} of ${j.games_total} games`);
-    if (span > 1) text.append(` · ${Math.max(0, j.done - from)} of ${span} weeks done`);
-    text.append(` · ${pct}%`);
+    // one line for the whole week: its games, the polls and recruiting all count toward the bar
+    text.append(el("b", { text: label ? `Simming ${label}` : (j.stage || "Simming") }), ` · ${pct}%`);
     text.hidden = false;
     $("#btn-advance").textContent = "Simming…";
     if (span > 1) showSimOverlay(j, pct, span, from);
@@ -511,10 +507,9 @@
       $("#btn-pause").textContent = "Pause after this week";
     }
     const label = j.week ? (s.week_labels[j.week] || `Week ${j.week}`) : "";
-    const stage = j.stage || "Simming";
-    $("#sim-stage").textContent = /^Simming/.test(stage) ? stage : `${label} · ${stage}`;
+    $("#sim-stage").textContent = label ? `Simming ${label}` : (j.stage || "Simming");
     $("#sim-overlay .review-label").textContent = `Simming through ${s.week_labels[j.total] || "week " + j.total}`;
-    $("#sim-sub").textContent = `${Math.max(0, j.done - from)} of ${span} weeks done${j.games_total ? ` · ${j.games_done} of ${j.games_total} games this week` : ""} · ${pct}%`;
+    $("#sim-sub").textContent = `${pct}%`;
     $("#sim-bar").style.width = `${pct}%`;
     // the week strip follows the sim
     if (j.done !== state.simLastDone) { state.simLastDone = j.done; state.viewWeek = j.done; state.season.current_week = j.done; renderWeekStrip(); $("#btn-advance").textContent = "Simming…"; }

@@ -105,6 +105,26 @@ if __name__ == "__main__":
     board_ids = {b["id"] for b in server.recruiting_view(sid)["board"]}
     assert mine in st_["recruiting"]["offers"]["ohio-state"], "Auto-recruit skipped a prospect on your board"
     assert set(st_["recruiting"]["offers"]["ohio-state"]) <= board_ids, "Auto-recruit offered prospects you cannot see"
+    # a prospect you take off your board stays off, even one your staff have already contacted
+    gone = next(iter(st_["recruiting"]["offers"]["ohio-state"]))
+    server.board_change(sid, server.BoardRequest(pid=gone, on=False))
+    server.season_settings_change(sid, server.SettingsRequest(auto_recruit="week"))
+    _rc.weekly_step(st_, 2)
+    assert gone not in {b["id"] for b in server.recruiting_view(sid)["board"]}, "a removed prospect came back to the board"
+    server.board_change(sid, server.BoardRequest(pid=gone, on=True))
+    assert gone in {b["id"] for b in server.recruiting_view(sid)["board"]}
+    # what he cares about: an in-home visit tells you one priority, an official visit all of them
+    known = lambda q: st_["recruiting"]["revealed"].get("ohio-state", {}).get(q, [])
+    fresh = next(r["id"] for r in server.prospect_search(sid, stars=3, state="CA", limit=50)["rows"] if not known(r["id"]))
+    _rc._act(st_, "ohio-state", fresh, "hc_visit")
+    assert len(known(fresh)) == 1, known(fresh)
+    _rc._act(st_, "ohio-state", fresh, "official_visit")
+    vw = st_["recruiting"]["visits"][fresh]["ohio-state"]["week"]
+    game = next(g for g in st_["games"].values() if g["week"] == vw and g["home"] == "ohio-state")
+    game.update(played=True, home_score=31, away_score=10)          # the visit's home game, as if just played
+    _rc._visits(st_, vw)
+    game.update(played=False)
+    assert len(known(fresh)) == 3, known(fresh)
     # out of hours: 409
     while True:
         try:
@@ -143,4 +163,15 @@ if __name__ == "__main__":
         refused(call, 404)
     for s in (sid, plain):
         server.delete_season(s)
+    # sim progress: one week number and one share of that week, games then recruiting, never jumping ahead
+    job = {"state": {"current_week": 4}, "done": 4}
+    rep = server._reporter(job)
+    rep("Setting the matchups", None, None)
+    assert job["week"] == 5 and job["week_frac"] < 0.1
+    rep("Simming Week 5", 35, 70)
+    first = job["week_frac"]
+    assert job["week"] == 5 and 0.1 < first < 0.85
+    job["state"]["current_week"] = 5                                    # the games are in; the poll and recruiting follow
+    rep("Recruiting", None, None)
+    assert job["week"] == 5 and job["week_frac"] >= 0.85 > first, job
     print("recruiting api ok")

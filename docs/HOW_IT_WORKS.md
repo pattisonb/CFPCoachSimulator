@@ -822,9 +822,9 @@ interest in a school is his priorities' weights on those pulls plus what the sch
 actions have earned with him.
 
 **Your week.** Hours: `50 + (recruiting rating - 50) / 4`. A message costs 5, a call 15 (it
-reveals one of his priorities), a head coach in-home visit 30 (once a month), an official
-visit invite 10 (at your next home game; a win sells, a 21-point loss hurts, a big stadium
-helps) and an offer nothing. A pitch on one of his priorities is worth twice as much, any
+reveals one of his priorities), a head coach in-home visit 30 (once a month; it reveals one
+too), an official visit invite 10 (at your next home game; a win sells, a 21-point loss hurts,
+a big stadium helps, and the weekend tells you all three of his priorities) and an offer nothing. A pitch on one of his priorities is worth twice as much, any
 other topic half; each contact from a school is worth a little less than the last. NIL
 points are a yearly budget from the program's level, attached to offers. Offers are capped at
 1.5 times your open spots: 85 minus returning players, plus four early leavers, capped at
@@ -884,7 +884,8 @@ looks, measured from your staff's read, so a wrong read can give a different com
 with the win chance and projected score, your week's three steps (Recruit, Game day, Advance)
 and the play buttons, the recruiting summary (commitments, class rank, hours, NIL points, your
 hottest targets, the week's news) and tiles to every screen; the slim tab bar still reaches them
-all. The **Recruiting board** is a grid of prospect cards (your standing, his known priorities,
+all. The **Recruiting board** (a prospect you take off it stays off, Auto-recruit included, until
+you put him back) is a grid of prospect cards (your standing, his known priorities,
 one-tap actions with their hour costs) with a side panel for the selected prospect (the pitch,
 the offer with NIL points, his profile). Every colour is a theme variable, so the screens work
 in the light and the dark theme.
