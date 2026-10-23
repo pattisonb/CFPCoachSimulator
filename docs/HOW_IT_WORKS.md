@@ -851,6 +851,16 @@ the rest of your hours go to other prospects). Offers are capped at
 1.5 times your open spots: 85 minus returning players, plus four early leavers, capped at
 the school's real class size plus two.
 
+**Feedback once a week.** Your actions spend hours and are logged at once, but what they earn
+lands at the week step: the board shows his list as the last step left it (each school's share
+of the leader's interest as a bar, your place, each school's move since the week before and the
+action behind the biggest ones), and after Advance the Office's "What changed" names, for every
+prospect on your board, your new place, the leader, the movers and the week's events (a rival's
+offer and its NIL, a commitment, a flip, "wants more", "isn't buying the pitch"). The last four
+reports are kept (`GET /api/season/{id}/recruiting/report`). `tools/check_recruiting.py` prints
+what each action earns on average over a season and how many prospects change leader a week, so
+an action's weight is read off a season instead of guessed.
+
 **NIL asks and offers.** Every prospect wants something: an ask in NIL points from his stars
 (five-stars about 60, four-stars 30, three-stars 8, two-stars nothing) times his position
 (quarterbacks 1.5, edges, tackles, receivers and corners 1.2, backs and tight ends 0.9,

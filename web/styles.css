@@ -1167,6 +1167,16 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-school { display: grid; grid-template-columns: minmax(0, 1fr) 64px minmax(0, 120px); gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--panel-2); }
 .go-school-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .go-school-odds { font-weight: 800; text-align: right; }
+.go-list { display: flex; flex-direction: column; gap: 3px; margin: 6px 0 2px; }
+.go-list-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12px; }
+.go-list-row.you .go-list-name { font-weight: 800; }
+.go-list-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.go-bar { display: block; height: 6px; border-radius: 3px; background: var(--panel-2); overflow: hidden; }
+.go-bar-fill { display: block; height: 100%; background: var(--accent); }
+.go-list-move { color: var(--muted); white-space: nowrap; }
+.go-list-move.up { color: var(--good, #2e7d32); }
+.go-list-move.down { color: var(--bad, #c62828); }
+.go-report-rows li { line-height: 1.45; }
 
 /* inputs follow the theme */
 .go-filters input, .go-filters select, .go-filterbar select, .go-area select, .go-nil {

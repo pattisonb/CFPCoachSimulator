@@ -39,7 +39,37 @@
   const teamName = (slug) => (slug === "FCS" ? "an FCS program" : (window.CFP.teamsBySlug[slug] || {}).name || slug);
   const loading = (text) => el("p", { class: "muted go-loading", text });
   const SIGNING_WEEK = 16, FINAL_WEEK = 20;       // the early signing period (selection week) and national signing day
-  const WORDS = { commit: "committed to", flip: "flipped to", decommit: "decommitted from", signed: "signed with" };
+  const WORDS = { commit: "committed to", flip: "flipped to", decommit: "decommitted from", signed: "signed with", offer: "was offered by",
+                  asked_more: "wants more from", not_buying: "isn't buying the pitch from" };
+  const WHY = { message: "message", call: "call", hc_visit: "HC visit", official_visit: "official visit", offer: "offer", raise_nil: "NIL raised" };
+  // his list, as the week step left it: each school's share of the leader's interest, and its move since the week before
+  function hisList(b, me) {
+    const rows = (b.list || []).filter((x) => x.rank != null || x.bar != null);
+    if (!rows.length) return null;
+    return el("div", { class: "go-list", "aria-label": "His list" }, rows.map((x) => {
+      const move = x.new ? "new" : x.move > 0 ? `▲${x.move}` : x.move < 0 ? `▼${-x.move}` : "–";
+      return el("div", { class: `go-list-row ${x.you || x.school === me ? "you" : ""}` }, [
+        el("span", { class: "go-list-name", text: `${x.rank != null ? `#${x.rank} ` : ""}${x.name}${x.you || x.school === me ? " (you)" : ""}` }),
+        el("span", { class: "go-bar" }, [el("span", { class: "go-bar-fill", style: `width:${Math.round((x.bar || 0) * 100)}%` })]),
+        el("span", { class: `go-list-move ${x.move > 0 || x.new ? "up" : x.move < 0 ? "down" : ""}`, text: move + (x.why ? ` · ${WHY[x.why] || x.why}` : ""), title: "Since last week's step" }),
+      ]);
+    }));
+  }
+  function reportCard(s, report) {
+    if (!report || !report.rows.length) return null;
+    const card = el("section", { class: "go-card go-report", "aria-label": "What changed" });
+    card.append(el("div", { class: "go-kicker", text: `WHAT CHANGED · AFTER ${report.week === 0 ? "THE PRESEASON" : `WEEK ${report.week}`}` }));
+    const rows = report.rows.slice().sort((a, b) => (b.moves.length + b.events.length) - (a.moves.length + a.events.length));
+    card.append(el("ul", { class: "go-news go-report-rows" }, rows.slice(0, 12).map((r) => {
+      const rank = r.rank == null ? "not on his list" : r.prev_rank == null ? `#${r.rank} of ${r.of} for you` : r.prev_rank === r.rank ? `still #${r.rank} of ${r.of}` : `#${r.prev_rank} → #${r.rank} for you`;
+      const bits = [`${rank}${r.leader ? ` · ${r.leader.name} leads` : ""}`];
+      for (const m of r.moves) bits.push(`${m.name} ${m.from == null ? "new" : m.from > m.to ? `▲${m.from - m.to}` : `▼${m.to - m.from}`}${m.why ? ` (${WHY[m.why] || m.why})` : ""}`);
+      for (const e of r.events) bits.push(`${WORDS[e.kind] || e.kind} ${e.school_name || ""}${e.kind === "offer" && e.nil ? ` · ${e.nil} NIL` : ""}${e.kind === "asked_more" && e.rival_name ? ` (heard ${e.rival_name}'s number)` : ""}`.trim());
+      return el("li", {}, [el("button", { type: "button", class: "go-link", text: r.name, onclick: () => openProfile(s, r.pid) }), el("span", { class: "muted small", text: ` ${r.position} ${stars(r.stars)} · ` }), el("span", { text: bits.join(" · ") })]);
+    })));
+    card.append(el("p", { class: "muted small", text: "Your actions land at the week step: what you do this week shows here, and on his list, after Advance." }));
+    return card;
+  }
 
   function avatar(seed, size) {
     // a portrait from the coach sprite system, its look picked from his id
@@ -91,7 +121,7 @@
     try {
       const r = await H.api(`/api/season/${s.id}/recruit`, H.postJSON(body));
       H.backupSoon();
-      H.toast(`${names[action]} done · ${r.hours_left} hours left${r.revealed ? ` · he cares about ${PITCH_NAMES[r.revealed].toLowerCase()}` : ""}`, 3000);
+      H.toast(`${names[action]} done · ${r.hours_left} hours left${r.revealed ? ` · he cares about ${PITCH_NAMES[r.revealed].toLowerCase()}` : ""} · it lands at the week step`, 3000);
       return r;
     } catch (err) {
       H.toast(`Could not do that: ${H.errText(err)}`, 4000);
@@ -168,6 +198,8 @@
     week.append(boxes);
     const steps = el("div", { class: "go-steps" });
     week.append(el("div", { class: "go-kicker muted", text: "YOUR WEEK" }), steps);
+    let reportBox = el("div");
+    week.append(reportBox);
     if (!s.done) {
       const gameReady = !!(next && next.opponent && !next.played);
       const main = el("button", { type: "button", class: "go-btn primary big", text: gameReady ? "PLAY GAME DAY" : "ADVANCE THE WEEK" });
@@ -183,6 +215,8 @@
     try { v = await H.api(`/api/season/${s.id}/recruiting`); }
     catch (err) { rec.innerHTML = ""; rec.append(loading(`Could not load recruiting: ${H.errText(err)}`)); return; }
     const auto = v.auto_recruit !== "off";
+    const report = reportCard(s, v.report);
+    if (report) reportBox.replaceWith(report);
     const recruitDone = auto || v.hours_left < 5;
     const gameDone = !next || !next.opponent || !!next.played;
     if (!s.done) {
@@ -320,6 +354,8 @@
       if (b.stage && STAGE[b.stage] && !b.committed && !b.signed) tags.append(el("span", { class: `go-tag ${b.stage === "cold" ? "muted" : ""}`, text: STAGE[b.stage][0], title: STAGE[b.stage][1] }));
       if (b.visit) tags.append(el("span", { class: "go-tag", text: b.visit.done ? "Visited" : `Visit wk ${b.visit.week}` }));
       c.append(tags);
+      const lst = hisList(b, me);
+      if (lst) c.append(lst);
       if (!b.signed && b.committed !== me) {
         const hcWait = b.hc_week != null && s.current_week - b.hc_week < 4;
         const done = b.done_this_week || [];

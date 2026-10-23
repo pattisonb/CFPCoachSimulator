@@ -315,8 +315,16 @@ def _schools(state: dict, pid: str) -> list[dict]:
     rows = sorted(((recruiting.interest(state, s, pid), s) for s in schools), reverse=True)[:10]
     visits = rc["visits"].get(pid, {})
     pct = {o["school"]: o for o in odds(state, pid)["schools"]}
+    ranks = rc.get("ranks", {}).get(pid) or {}
+    now, prev = ranks.get("now") or {}, ranks.get("prev") or {}
+    why = rc.get("why", {}).get(pid) or {}
+    top = rows[0][0] if rows and rows[0][0] > 0 else 1.0
     return [{"school": s, "name": teams[s]["name"], "interest": round(v, 1), "offered": s in offers,
-             "visit": visits.get(s), "pct": round(pct[s]["pct"], 3) if s in pct else None} for v, s in rows]
+             "visit": visits.get(s), "pct": round(pct[s]["pct"], 3) if s in pct else None,
+             "bar": round(max(0.0, min(1.0, v / top)), 3), "rank": now.get(s),
+             "move": (prev[s] - now[s]) if s in prev and s in now else (None if s in now else None),
+             "new": bool(now) and s in now and s not in prev,
+             "why": (why.get(s) or {}).get("action")} for v, s in rows]
 
 
 def _evaluation(p: dict, public: dict[str, float]) -> dict:
@@ -416,6 +424,7 @@ def board_row(state: dict, pid: str, viewer: str) -> dict:
                need=recruiting.needs(state, viewer)[recruiting._group_of(rc["prospects"][pid])],
                ask=recruiting.ask_view(state, viewer, pid), cooled=recruiting.cooled(state, viewer, pid),
                stage=recruiting.stage(state, viewer, pid), strength=recruiting.strengths(state, viewer, pid),
+               list=[dict(x, you=x["school"] == viewer) for x in _schools(state, pid)[:5]],
                standing=standing(state, pid, viewer))
     return out
 
@@ -553,6 +562,7 @@ def recruiting_view(state: dict) -> dict:
         "nil": {"budget": nil["budget"], "held": sum(nil["held"].values()), "left": recruiting.nil_left(state, me)},
         "open_spots": recruiting.open_spots(state, me), "committed": len([1 for s in rc["status"].values() if s["committed"] == me]),
         "needs": recruiting.needs(state, me),
+        "report": recruiting.latest_report(state),
         "offers": len(offers), "offers_left": recruiting.offer_cap(state, me) - len(offers),
         "board": board,
         "targets": sorted((b for b in board if b["standing"]["pct"] is not None and not b["committed"]),

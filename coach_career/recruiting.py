@@ -99,7 +99,7 @@ FCS_NO_OFFER_WEEK = 8                      # from this week a prospect with no F
 COMMIT_ODDS = ((0, 0.02), (6, 0.05), (12, 0.08), (16, 0.10), (20, 0.30))   # weekly base chance by week *tune*
 LEAD_SCALE = 3.0                           # interest lead worth a doubling of the base chance *tune*
 VISIT_BOOST = 1.6                          # after an official visit to the leader
-DECOMMIT_RATE = 0.26                       # weekly chance of a decommitment at an even race *tune*
+DECOMMIT_RATE = 0.30                       # weekly chance of a decommitment at an even race *tune*
 FLIP_MARGIN = 4.0                          # a rival's lead that doubles-ish it (logistic) *tune*
 CROWD = 2.0                                # interest lost per committed recruit at his position rated at least as high *tune*
 RIVAL_RANK = 300                           # AI schools keep chasing committed prospects this highly ranked
@@ -228,6 +228,7 @@ def start(state: dict, year: int = 2027) -> None:
         "status": {pid: {"committed": None, "signed": None, "fcs": False} for pid in prospects},
         "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
         "boards": {}, "seed": state.get("rng_state", 0), "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
+        "pending": {}, "why": {}, "ranks": {}, "reports": [], "action_points": {}, "leader_changes": {},
     }
 
 
@@ -516,9 +517,9 @@ def top_group(state: dict, pid: str, win: Optional[dict] = None) -> list[str]:
     """The schools he is seriously considering: his top TOP_GROUP by interest among those that
     have offered or worked him."""
     rc = state["recruiting"]
-    schools = set(rc["lists"][pid]) | {s for s, pids in rc["offers"].items() if pid in pids}
+    schools = set(rc["lists"][pid]) | {s for s, pids in rc["offers"].items() if pid in pids} | set((rc.get("pending") or {}).get(pid, {}))
     win = win if win is not None else _winning(state)
-    return sorted(schools, key=lambda s: -interest(state, s, pid, win))[:TOP_GROUP]
+    return sorted(schools, key=lambda s: -(interest(state, s, pid, win) + pending(state, s, pid)))[:TOP_GROUP]
 
 
 def stage(state: dict, slug: str, pid: str) -> str:
@@ -696,9 +697,112 @@ def _home_game_left(state: dict, slug: str) -> Optional[int]:
 
 
 def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0) -> dict:
-    """One recruiting action by `slug` on prospect `pid` this week. Raises RecruitingError."""
+    """One recruiting action by `slug` on prospect `pid` this week. Its interest lands at the week
+    step (you see his list move next week), so this returns no interest. Raises RecruitingError."""
     revealed = _act(state, slug, pid, action, pitch, nil)
-    return {"interest": interest(state, slug, pid), "hours_left": state["recruiting"]["hours"][slug], "revealed": revealed}
+    return {"hours_left": state["recruiting"]["hours"][slug], "revealed": revealed}
+
+
+REPORTS_KEPT = 4           # weekly reports kept (the Office shows the latest)
+MOVES_SHOWN = 3            # the biggest movers on his list a report names
+
+
+def _add_points(state: dict, slug: str, pid: str, points: float, action: str) -> None:
+    """Interest from an action this week: pending until the week step, with what earned it."""
+    rc = state["recruiting"]
+    rc.setdefault("pending", {}).setdefault(pid, {})[slug] = rc["pending"].get(pid, {}).get(slug, 0.0) + points
+    why = rc.setdefault("why_week", {}).setdefault(pid, {}).setdefault(slug, {})
+    why[action] = why.get(action, 0.0) + points
+    tally = rc.setdefault("action_points", {}).setdefault(action, [0, 0.0])
+    tally[0] += 1
+    tally[1] += points
+
+
+def pending(state: dict, slug: str, pid: str) -> float:
+    return (state["recruiting"].get("pending") or {}).get(pid, {}).get(slug, 0.0)
+
+
+def points_now(state: dict, slug: str, pid: str) -> float:
+    """His list points for the school as they stand: landed plus this week's pending."""
+    return state["recruiting"]["lists"][pid].get(slug, 0.0) + pending(state, slug, pid)
+
+
+def _flush(state: dict, week: int) -> None:
+    """The week's pending interest lands on the lists; each school's top reason is kept for the moves."""
+    rc = state["recruiting"]
+    for pid, by in (rc.get("pending") or {}).items():
+        for slug, pts in by.items():
+            rc["lists"][pid][slug] = rc["lists"][pid].get(slug, 0.0) + pts
+    for pid, by in (rc.get("why_week") or {}).items():
+        for slug, acts in by.items():
+            top = max(acts.items(), key=lambda kv: abs(kv[1]))
+            rc.setdefault("why", {}).setdefault(pid, {})[slug] = {"week": week, "action": top[0], "points": round(top[1], 2)}
+    rc["pending"], rc["why_week"] = {}, {}
+
+
+def _snapshot_ranks(state: dict, week: int) -> None:
+    """Every prospect's list as of this week step: each school's rank (the week before kept for the moves)."""
+    rc = state["recruiting"]
+    win = _winning(state)
+    ranks = rc.setdefault("ranks", {})
+    changed = 0
+    for pid, lst in rc["lists"].items():
+        schools = set(lst) | {s for s, pids in rc["offers"].items() if pid in pids}
+        if not schools:
+            continue
+        order = sorted(schools, key=lambda s: -interest(state, s, pid, win))
+        now = {s: i + 1 for i, s in enumerate(order)}
+        prev = (ranks.get(pid) or {}).get("now")
+        if prev and next(iter(prev)) != order[0] and min(prev.values()) == 1 and prev.get(order[0]) != 1:
+            changed += 1
+        ranks[pid] = {"week": week, "now": now, "prev": prev}
+    rc.setdefault("leader_changes", {})[str(week)] = changed
+
+
+def _report(state: dict, week: int) -> dict:
+    """What changed this week for the prospects on your board: your rank on his list, the leader,
+    the biggest movers and why, and the events (offers, commitments, flips, asks)."""
+    from sim import season
+    rc = state["recruiting"]
+    me = state.get("team")
+    teams = season.load_teams()
+    name = lambda s: teams[s]["name"] if s in teams else s
+    pids = list(dict.fromkeys(list(rc["board"]) + list(rc["offers"].get(me, []))))
+    events = [e for e in rc["log"] if e["week"] == week and e["kind"] in REPORT_KINDS]
+    rows = []
+    for pid in pids:
+        r = rc.get("ranks", {}).get(pid) or {}
+        now, prev = r.get("now") or {}, r.get("prev") or {}
+        moves = []
+        for s_, rk in now.items():
+            before = prev.get(s_)
+            why = (rc.get("why", {}).get(pid) or {}).get(s_)
+            moves.append({"school": s_, "name": name(s_), "from": before, "to": rk,
+                          "why": why["action"] if why and why["week"] == week else None,
+                          "you": s_ == me})
+        moves.sort(key=lambda m: (-(abs((m["from"] or len(now) + 1) - m["to"])), m["to"]))
+        leader = next((s_ for s_, rk in now.items() if rk == 1), None)
+        p = rc["prospects"][pid]
+        rows.append({"pid": pid, "name": p["name"], "position": p["position"], "stars": p["stars"],
+                     "rank": now.get(me), "prev_rank": prev.get(me) if prev else None, "of": len(now),
+                     "leader": {"school": leader, "name": name(leader)} if leader else None,
+                     "moves": [m for m in moves if m["from"] != m["to"]][:MOVES_SHOWN],
+                     "events": [dict(e, school_name=name(e["school"]) if e.get("school") else None,
+                                     rival_name=name(e["rival"]) if e.get("rival") else None)
+                                for e in events if e["pid"] == pid]})
+    report = {"week": week, "rows": rows}
+    reports = rc.setdefault("reports", [])
+    reports.append(report)
+    del reports[:-REPORTS_KEPT]
+    return report
+
+
+REPORT_KINDS = ("offer", "commit", "flip", "decommit", "signed", "asked_more", "not_buying")
+
+
+def latest_report(state: dict) -> Optional[dict]:
+    reports = state["recruiting"].get("reports") or []
+    return reports[-1] if reports else None
 
 
 def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
@@ -740,6 +844,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         offers.append(pid)
         if nil:
             _nil(state, slug)["held"][pid] = nil
+        _event(state, "offer", pid, slug, nil=nil)
         points = nil_value(p, nil, ask)
         if is_lowball(nil, ask):                # he reads it as a lowball: no points for the offer, and he cools on the school
             contact["cooled_until"] = week + COOL_WEEKS
@@ -791,7 +896,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         contact["n"] += 1
     rc["hours"][slug] = _hours(state, slug) - HOURS[action]
     if points:
-        rc["lists"][pid][slug] = rc["lists"][pid].get(slug, 0.0) + points * scale
+        _add_points(state, slug, pid, points * scale, action)
     return revealed
 
 
@@ -1053,7 +1158,7 @@ def _visits(state: dict, week: int) -> None:
             mood = 1.2 if margin > 0 else (0.6 if margin <= -21 else 0.9)
             cap = ((season.load_teams()[slug].get("stadium") or {}).get("capacity") or 50000)
             crowd = min(1.15, max(0.85, cap / 80000))
-            rc["lists"][pid][slug] = rc["lists"][pid].get(slug, 0.0) + BASE_POINTS["official_visit"] * mood * crowd
+            _add_points(state, slug, pid, BASE_POINTS["official_visit"] * mood * crowd, "official_visit")
 
 
 def _offers_by_prospect(state: dict) -> dict[str, list[str]]:
@@ -1239,6 +1344,7 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     rc = state["recruiting"]
     start_log = len(rc["log"])
     rng = random.Random(f"recruiting-{rc['seed']}-{week}")
+    _flush(state, week)                # your week's actions land
     _visits(state, week)
     scout_week(state)
     mine = state.get("team")
@@ -1249,12 +1355,15 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     for slug in fbs_schools(state):
         if slug != mine or auto_mine:
             auto_recruit(state, slug, random.Random(f"auto-{rc['seed']}-{slug}-{week}"), commits, yours=slug == mine)
+    _flush(state, week)                # the other schools' week lands with yours
     if week < season.FINAL_WEEK:
         _draws(state, week, rng)
     if week == season.SELECTION_WEEK:
         _sign(state, final=False)
     if week >= season.FINAL_WEEK:
         _sign(state, final=True)
+    _snapshot_ranks(state, week)
+    _report(state, week)
     rc["hours"] = {}
     if mode == "week":                       # Auto-recruit for one week: done, so off again
         state["career"]["settings"]["auto_recruit"] = "off"

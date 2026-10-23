@@ -829,6 +829,14 @@ def recruiting_view(season_id: str) -> dict:
         return prospects.recruiting_view(st)
 
 
+@app.get("/api/season/{season_id}/recruiting/report")
+def recruiting_reports(season_id: str) -> dict:
+    """The weekly reports kept (what changed for the prospects on your board), latest last."""
+    st = _career_state(season_id, change=True)
+    with _season_lock:
+        return {"reports": st["recruiting"].get("reports") or []}
+
+
 @app.get("/api/season/{season_id}/prospects")
 def prospect_search(season_id: str, position: Optional[str] = None, stars: Optional[int] = None, state: Optional[str] = None,
                     status: Optional[str] = None, q: Optional[str] = None, offset: int = 0, limit: int = 50,

@@ -119,6 +119,8 @@ committed`:
 - **visited**: an official visit happened.
 - **committed**.
 
+Status: built (`stage`, `top_group`; the Visit button reads "not yet" until his top group).
+
 An offer while `cold` (no contact first) is a cold offer: its base points count half. The card
 shows the stage ("In his top 8", "Visited").
 
@@ -141,6 +143,12 @@ on you", "isn't buying the pitch"). Kept for the last four weeks.
 **Tuning hook.** `tools/check_recruiting.py` gains a table of the mean interest change per
 action type per week and the share of weekly rank changes attributable to each action type, so
 the weight of each action can be read off a season instead of guessed.
+
+Status: built (`_add_points` and `pending`, `_flush` at the week step before and after the AI
+schools' week, `_snapshot_ranks`, `_report`, `latest_report`; `act()` returns no interest; his
+list carries `bar`, `rank`, `move`, `new`, `why`; the tuning line prints mean points by action
+and leader changes a week). The top group counts this week's pending points, so an offer and a
+visit invite can go in the same week.
 
 ## 7. Commits that have to be kept
 

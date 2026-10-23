@@ -98,7 +98,10 @@ def measure(state: dict) -> dict:
             got_sum[g] += got[g]
         qbs.append(got["QB"])
         over = max(over, max(got[g] - max(0, room[g]) for g in GROUPS))
+    actions = {a: round(v[1] / v[0], 2) for a, v in (rc.get("action_points") or {}).items() if v[0]}
+    leader_changes = list((rc.get("leader_changes") or {}).values())
     return {
+        "actions": actions, "leader_changes_per_week": round(st.mean(leader_changes), 1) if leader_changes else 0.0,
         "pos_mae": st.mean(abs(got_sum[g] - real_sum[g]) / len(schools) for g in GROUPS),
         "no_qb_share": sum(1 for q in qbs if q == 0) / len(qbs), "max_qb": max(qbs), "over_need": over,
         "p4_class": st.mean(tier("Power 4")),
@@ -122,6 +125,9 @@ def report(m: dict) -> list[str]:
         ok = lo <= m[key] <= hi
         out.append(f"{'  ' if ok else '! '}{key:18s} {m[key]:8.3f}   want {lo}-{hi}" + (f" (real {real})" if real is not None else ""))
     out.append(f"  {'fcs_share':18s} {m['fcs_share']:8.3f}")
+    # the weight of each action: mean interest points one earns (pitches, strengths, cooling and diminishing returns in)
+    out.append("  interest a go by action: " + ", ".join(f"{a} {v}" for a, v in sorted((m.get("actions") or {}).items(), key=lambda kv: -kv[1]))
+               + f"; a week's leader changes {m.get('leader_changes_per_week', 0)} prospects")
     return out
 
 

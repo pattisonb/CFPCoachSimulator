@@ -61,16 +61,16 @@ if __name__ == "__main__":
         recruiting.act(st, "ohio-state", five["id"], "offer", nil=0); raise AssertionError("an offer without a pitch went through")
     except recruiting.RecruitingError as e:
         assert e.code == 400
-    before = rc["lists"][five["id"]].get("ohio-state", 0.0)
+    before = recruiting.points_now(st, "ohio-state", five["id"])
     recruiting.act(st, "ohio-state", five["id"], "offer", pitch=five["priorities"][0], nil=0)
-    assert recruiting.cooled(st, "ohio-state", five["id"]) and rc["lists"][five["id"]].get("ohio-state", 0.0) == before
+    assert recruiting.cooled(st, "ohio-state", five["id"]) and recruiting.points_now(st, "ohio-state", five["id"]) == before
     try:
         recruiting.act(st, "ohio-state", five["id"], "official_visit"); raise AssertionError("a visit while he is cooled on you")
     except recruiting.RecruitingError as e:
         assert e.code == 409
     recruiting.act(st, "ohio-state", five["id"], "raise_nil", nil=ask)
     assert not recruiting.cooled(st, "ohio-state", five["id"]) and rc["nil"]["ohio-state"]["held"][five["id"]] == ask
-    assert rc["lists"][five["id"]]["ohio-state"] > before
+    assert recruiting.points_now(st, "ohio-state", five["id"]) > before
     row = next(b for b in prospects.recruiting_view(st)["board"] if b["id"] == five["id"]) if five["id"] in rc["board"] else None
     assert row is None or ("ask" in row and "cooled" in row)
     # a call and a message once a week each: spamming him is refused, next week is fine
@@ -116,14 +116,14 @@ if __name__ == "__main__":
     warm_pts = recruiting._contact_points(st, "ohio-state", rc["prospects"][cold], "offer", rc["prospects"][cold]["priorities"][0])
     recruiting.act(st, "ohio-state", cold, "offer", pitch=rc["prospects"][cold]["priorities"][0], nil=0)
     assert rc["status"][cold]["committed"] is None
-    assert abs(rc["lists"][cold]["ohio-state"] - warm_pts / 2) < 1e-6, (rc["lists"][cold]["ohio-state"], warm_pts)
+    assert abs(recruiting.points_now(st, "ohio-state", cold) - warm_pts / 2) < 1e-6, (recruiting.points_now(st, "ohio-state", cold), warm_pts)
     st["recruiting"]["hours"]["ohio-state"] = hours_before
     assert sorted(s for v in recruiting.AREAS.values() for s in v) == sorted(set(s for v in recruiting.AREAS.values() for s in v))
     assert len(recruiting.AREAS) == 9 and "TX" in recruiting.AREAS["Texas"]
     # an offer with NIL points holds them; past the budget or a second official visit is refused
     before = recruiting.interest(st, "ohio-state", pid)
     r = recruiting.act(st, "ohio-state", pid, "offer", pitch=tx["priorities"][0], nil=20)
-    assert r["interest"] > before and pid in st["recruiting"]["offers"]["ohio-state"]
+    assert recruiting.points_now(st, "ohio-state", pid) > before and pid in st["recruiting"]["offers"]["ohio-state"]
     assert st["recruiting"]["nil"]["ohio-state"]["held"][pid] == 20
     try:
         recruiting.act(st, "ohio-state", tx["id"], "offer", pitch="winning", nil=10 ** 6); raise AssertionError("NIL past the budget")
@@ -230,4 +230,21 @@ if __name__ == "__main__":
     for done in (plain, st):                               # the sims' box scores
         shutil.rmtree(season.box_dir(done).parent, ignore_errors=True)
     assert t_career - t_plain < 20, "recruiting adds more than 20 s to a season"
+    # feedback once a week: actions land at the week step; his list and the weekly report show the moves
+    st2 = season.new_season("ohio-state", "full", seed=7, career=True)
+    rc2 = st2["recruiting"]
+    fresh = next(q for q, p in rc2["prospects"].items() if p["stars"] == 3 and q not in rc2["contacts"] and not rc2["status"][q]["committed"])
+    rc2["board"].append(fresh)
+    recruiting.act(st2, "ohio-state", fresh, "call")
+    assert rc2["lists"][fresh].get("ohio-state", 0.0) == 0.0 and recruiting.pending(st2, "ohio-state", fresh) > 0
+    assert recruiting.points_now(st2, "ohio-state", fresh) == recruiting.pending(st2, "ohio-state", fresh)
+    assert "interest" not in recruiting.act(st2, "ohio-state", fresh, "message")
+    recruiting.weekly_step(st2, 0)
+    assert rc2["lists"][fresh]["ohio-state"] > 0 and recruiting.pending(st2, "ohio-state", fresh) == 0
+    report = recruiting.latest_report(st2)
+    row = next(r for r in report["rows"] if r["pid"] == fresh)
+    assert report["week"] == 0 and {"rank", "prev_rank", "leader", "moves", "events"} <= set(row), row
+    assert row["rank"] is not None and row["prev_rank"] is None          # his first list
+    listed = prospects.profile(st2, fresh, "ohio-state")["public"]["schools"]
+    assert listed and all({"move", "bar", "why"} <= set(x) for x in listed), listed[0]
     print(f"recruiting ok: {len(rc['prospects'])} prospects; TX 3-star {tx['name']} priorities {tx['priorities']}")
