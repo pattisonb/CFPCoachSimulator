@@ -243,6 +243,15 @@ offer form (pitch picker with your strength per topic, NIL slider with the ask m
 Office: the weekly report ("What changed") above the steps. The Offseason: the four portal weeks
 reuse the Board (portal flag: no stars, the production line, portal rank, role, campus visit).
 
+Status (section 9): built as described, with these differences. The portal block replaces
+`state["recruiting"]` for the four weeks and the class waits at `state["recruiting_last"]`
+(`prospects.class_block` swaps them for the classes views); the portal's prospects carry
+`portal`, `from`, `from_name`, `cls`, `usage`, `line`, `portal_rank`, `tier`; `POST
+…/offseason/portal` still toggles an offer (with his first priority and his ask) for old clients,
+the Board uses `…/recruiting/act`. The report's rows carry `rank`, `prev_rank`, `of`, `leader`,
+`moves` and `events` with school names. Old saves: asks on load, firmness at the next
+commitment, a two-round portal finished the old way.
+
 ## 10. Realism checks and tests
 
 - `tests/test_recruiting_realism.py` keeps its bounds (in-state share, distance, class rank

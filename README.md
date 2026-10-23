@@ -40,7 +40,12 @@ week at a time or jump ahead: each week is **Recruit → Your game → Advance**
   real classes look, and nobody committed at the start. Each week you have hours (more with a
   better recruiter as head coach) and a yearly budget of NIL points: message, call, send the
   head coach on an in-home visit, invite a prospect to an official visit at a home game, and
-  offer. Pitch what he cares about (a call or a visit reveals it). Every other FBS school recruits too,
+  offer, with a pitch and NIL. Every prospect wants something (his ask shows as a range until a
+  call or visit tells you the number; a lowball cools him on you), a pitch counts by how strong
+  your program really is on it (and backfires where you are weak), and what you do lands at the
+  week step: his list shows where you stand and the Office's "What changed" tells you what moved.
+  Commitments start soft and firm up only if you keep in touch; schools recruit to their roster
+  needs by position, and so does your Auto-recruit. Every other FBS school recruits too,
   the way it really recruits: its states, its star level, its coach. This season's results
   count more every week. Commitments come over the fall, top prospects can flip, the early
   signing period is in December and the rest sign in January. Prospects without real FBS
@@ -53,8 +58,9 @@ week at a time or jump ahead: each week is **Recruit → Your game → Advance**
   narrow with every look, but a read can be wrong, and a weak evaluator more often.
 - **The offseason and the next season.** After national signing day the career goes on.
   Seniors graduate, the NFL draft takes its 257 (juniors declare early when they project high),
-  players enter the transfer portal (mostly backups) and a few quit. Then two portal rounds
-  where you offer transfers to fill your open spots, development (everyone grows toward his
+  players enter the transfer portal (mostly backups) and a few quit. Then four portal weeks
+  recruited like a class (no stars: his last season, a portal rank, the role he would have with
+  you, a campus visit, your portal NIL pool) where entrants decide week by week, development (everyone grows toward his
   potential at his coachability's pace, faster under good developers), staff changes (a
   coordinator may be hired away after a big year; you hire from three candidates) and the
   coaching carousel around the league. Then the next season: same schedule template with home
