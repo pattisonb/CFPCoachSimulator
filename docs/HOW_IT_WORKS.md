@@ -1000,7 +1000,7 @@ set so a career's starters settle, season after season, where the real 2026 star
 now runs a little above the real players by stars and years, `tools/check_development.py`, since
 the real ones are the survivors and a league's starters are younger than its best). The rate also takes a
 coach factor (the head coach's player development with the coordinator on his side of the ball,
-40%: 0.8 at 30, 1.0 at 50, 1.2 at 90) and the program's own (1 + 0.10 times its recruiting
+40%: 0.8 at 30, 1.0 at 50, 1.2 at 90) and the program's own (1 + 0.25 times its recruiting
 baseline). The signed class arrives as it is. Rosters are then topped up to 100, the thinnest
 groups first: walk-ons (generated two-star freshmen) and, 30% of the time at a Group of 5 school
 (15% in the Power 4), FCS and junior-college transfers (three-stars a year or two in, sophomores
@@ -1040,6 +1040,15 @@ recruiters come along). If your AD fires you, you pick your next job from the op
 below your program's standing (Auto takes the best). Your coordinators leave when another
 program hires them as its head coach; a recruiter moves on 12% of the time; each opening has
 three candidates and Auto hires the best. The rest of your staff drift a point or two a year.
+
+**Many seasons** (`tools/long_run.py`, every step on Auto). Three 60-season careers (180 seasons,
+seeds 41-43) held: stats against real seasons 6.5-7.0% off in every 25-season stretch (the real
+2026 rosters: 6.4%), 26 points a game (2026: 26.8), team ratings flat after the first years (the
+real rosters' extra-experienced seniors leave first), every position group's starters within a
+point or two of 2026's, 57 early entrants and 1,150 portal entrants a year (about a third placed),
+10 head coaches fired and 32 changes a year, 26 different champions. Program development at 0.25
+a baseline point (0.10 left the top 25 3.7 points short and the Group of 5 2 over) keeps the Power
+4 / Group of 5 gap at 2026's 10.8.
 
 **The Offseason screen** walks the steps: Departures (your leavers by kind, the league's numbers,
 the first round), Transfer portal round 1 and 2 (entrants with position and status filters, your
