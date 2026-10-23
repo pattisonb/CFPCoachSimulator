@@ -64,7 +64,12 @@ AREAS = {
 }
 HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0, "raise_nil": 0}
 BASE_POINTS = {"message": 1.0, "call": 2.5, "hc_visit": 6.0, "offer": 4.0, "official_visit": 8.0}   # *tune*
-PITCH_MATCH, PITCH_MISS = 2.0, 0.5         # a pitch on one of his three priorities, any other topic
+PITCH_PRIORITY = (1.0, 3.0)                # a pitch on one of his three priorities: 1 + 3 * your strength on it (1x weak, 4x strong) *tune*
+PITCH_OTHER = (0.3, 0.4)                   # any other topic: 0.3 + 0.4 * strength
+BACKFIRE = 0.25                            # a priority pitched at a strength under this backfires (he isn't buying it) ...
+BACKFIRE_COST = 0.5                        # ... and costs this much of the action's base points
+COLD_OFFER = 0.5                           # an offer before any contact counts this much
+STAGES = ("cold", "contact", "top", "visited", "committed")
 DIMINISH = 0.2                             # each earlier contact from the school cuts a new one's worth *tune*
 WEEKLY_ONCE = ("message", "call")           # each of these once a week per prospect: more contact is not more interest
 HC_VISIT_GAP = 4                           # weeks between head coach in-home visits to one prospect
@@ -94,7 +99,7 @@ FCS_NO_OFFER_WEEK = 8                      # from this week a prospect with no F
 COMMIT_ODDS = ((0, 0.02), (6, 0.05), (12, 0.08), (16, 0.10), (20, 0.30))   # weekly base chance by week *tune*
 LEAD_SCALE = 3.0                           # interest lead worth a doubling of the base chance *tune*
 VISIT_BOOST = 1.6                          # after an official visit to the leader
-DECOMMIT_RATE = 0.20                       # weekly chance of a decommitment at an even race *tune*
+DECOMMIT_RATE = 0.26                       # weekly chance of a decommitment at an even race *tune*
 FLIP_MARGIN = 4.0                          # a rival's lead that doubles-ish it (logistic) *tune*
 CROWD = 2.0                                # interest lost per committed recruit at his position rated at least as high *tune*
 RIVAL_RANK = 300                           # AI schools keep chasing committed prospects this highly ranked
@@ -466,6 +471,70 @@ def pull(state: dict, slug: str, pid: str, winning: bool = True) -> dict[str, fl
     }
 
 
+_FORCED: dict = {}        # tests: (career, school, prospect, topic) -> strength
+
+
+_PULLS: dict = {}         # (career, class, prospect, school) -> the school's pulls that hold all season
+
+
+def strengths(state: dict, slug: str, pid: str) -> dict[str, float]:
+    """Your program's strength on each topic for this prospect, 0-1: the school's pull on him
+    (playing time from his place on the depth chart, winning, prestige, proximity, coach,
+    academics) with NIL read as your offer against his ask (the program's level before an offer)."""
+    key = (state["id"], state["recruiting"]["year"], pid, slug)
+    static = _PULLS.get(key)
+    if static is None:
+        if len(_PULLS) > 2_000_000:
+            _PULLS.clear()
+        static = _PULLS[key] = pull(state, slug, pid, winning=False)
+    out = dict(static)
+    out["winning"] = min(1.0, _winning(state).get(slug, 0.5))
+    held = state["recruiting"]["nil"].get(slug, {}).get("held", {}).get(pid)
+    if pid in state["recruiting"]["offers"].get(slug, []):
+        ask = ask_from(state, slug, pid)
+        out["nil"] = 1.0 if not ask else min(1.0, (held or 0) / ask)
+    for (sid, s_, p_, topic), v in _FORCED.items():
+        if sid == state["id"] and s_ == slug and p_ == pid:
+            out[topic] = v
+    return {t: round(max(0.0, min(1.0, v)), 3) for t, v in out.items()}
+
+
+class forced_strength:
+    """A test's lever: `with forced_strength(state, slug, pid, topic, value): ...`."""
+
+    def __init__(self, state: dict, slug: str, pid: str, topic: str, value: float):
+        self.key, self.value = (state["id"], slug, pid, topic), value
+
+    def __enter__(self):
+        _FORCED[self.key] = self.value
+
+    def __exit__(self, *exc):
+        _FORCED.pop(self.key, None)
+
+
+def top_group(state: dict, pid: str, win: Optional[dict] = None) -> list[str]:
+    """The schools he is seriously considering: his top TOP_GROUP by interest among those that
+    have offered or worked him."""
+    rc = state["recruiting"]
+    schools = set(rc["lists"][pid]) | {s for s, pids in rc["offers"].items() if pid in pids}
+    win = win if win is not None else _winning(state)
+    return sorted(schools, key=lambda s: -interest(state, s, pid, win))[:TOP_GROUP]
+
+
+def stage(state: dict, slug: str, pid: str) -> str:
+    """Where the school stands with him: cold, contact, top (his top group, offer in hand),
+    visited (an official visit happened) or committed."""
+    rc = state["recruiting"]
+    if rc["status"][pid]["committed"] == slug or rc["status"][pid]["signed"] == slug:
+        return "committed"
+    if (rc["visits"].get(pid, {}).get(slug) or {}).get("done"):
+        return "visited"
+    if pid in rc["offers"].get(slug, []) and slug in top_group(state, pid):
+        return "top"
+    c = (rc["contacts"].get(pid) or {}).get(slug) or {}
+    return "contact" if c.get("n") or pid in rc["offers"].get(slug, []) else "cold"
+
+
 def on_field(state: dict, slug: str, week: int, records: Optional[dict] = None, ranks: Optional[dict] = None) -> float:
     """Last season blended with this one, this season counting more every week (spec section 3)."""
     from sim import season
@@ -518,6 +587,7 @@ def reset_caches() -> None:
     """Forget everything worked out from the league's rosters (season.use_league switched it)."""
     global _WINNING, _FITS, _GROUP_COUNTS, _LEAVER_CUT
     _STATIC.clear()
+    _PULLS.clear()
     _WINNING, _FITS, _GROUP_COUNTS, _LEAVER_CUT = (None, {}), (None, {}, None), (None, {}), (None, 0)
     _returning.cache_clear()
     _open_spots.cache_clear()
@@ -581,10 +651,29 @@ def offer_cap(state: dict, slug: str) -> int:
     return math.ceil(OFFER_FACTOR * open_spots(state, slug))
 
 
-def _contact_points(p: dict, action: str, pitch: Optional[str]) -> float:
-    """What one action is worth to the prospect before diminishing returns."""
-    mult = 1.0 if pitch is None else (PITCH_MATCH if pitch in p["priorities"] else PITCH_MISS)
-    return BASE_POINTS[action] * mult
+def _contact_points(state: dict, slug: str, p: dict, action: str, pitch: Optional[str]) -> float:
+    """What one action is worth to the prospect before diminishing returns: the pitch on one of
+    his priorities counts by your strength there (and backfires where you are weak); any other
+    topic counts a little."""
+    if pitch is None:
+        return BASE_POINTS[action]
+    strength = strengths(state, slug, p["id"])[pitch]
+    if pitch in p["priorities"]:
+        if strength < BACKFIRE:
+            return -BACKFIRE_COST * BASE_POINTS[action]
+        return BASE_POINTS[action] * (PITCH_PRIORITY[0] + PITCH_PRIORITY[1] * strength)
+    return BASE_POINTS[action] * (PITCH_OTHER[0] + PITCH_OTHER[1] * strength)
+
+
+def best_pitch(state: dict, slug: str, pid: str, required: bool = False) -> Optional[str]:
+    """The topic a staff pitches: the strongest of the priorities it knows that will not backfire;
+    nothing in particular when it knows none (`required`, an offer: its strongest topic)."""
+    known = (state["recruiting"]["revealed"].get(slug) or {}).get(pid) or []
+    st_ = strengths(state, slug, pid)
+    pool = [t for t in known if st_[t] >= BACKFIRE]
+    if not pool:
+        return max(PITCHES, key=lambda t: st_[t]) if required else None
+    return max(pool, key=lambda t: st_[t])
 
 
 def _hours(state: dict, slug: str) -> float:
@@ -656,7 +745,9 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             contact["cooled_until"] = week + COOL_WEEKS
             contact["lowball"] = True
         else:
-            points += _contact_points(p, "offer", pitch)
+            cold = not contact["n"] and not (rc["visits"].get(pid, {}).get(slug) or {}).get("done")
+            contact["cold_offer"] = cold
+            points += _contact_points(state, slug, p, "offer", pitch) * (COLD_OFFER if cold else 1.0)
     elif action == "raise_nil":
         if pid not in offers:
             raise RecruitingError(409, "no offer to raise")
@@ -670,10 +761,12 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         points = nil_value(p, nil, ask) - nil_value(p, held, ask)
         if nil >= ask and contact.get("cooled_until"):     # meeting his ask ends the cooling
             contact.pop("cooled_until", None)
-            points += _contact_points(p, "offer", None)      # and the offer itself counts now
+            points += _contact_points(state, slug, p, "offer", None)      # and the offer itself counts now
     elif action == "official_visit":
         if cooled(state, slug, pid):
             raise RecruitingError(409, "he has cooled on you after that offer: raise it to what he wants")
+        if slug not in top_group(state, pid):
+            raise RecruitingError(409, "he is not considering you yet: get into his top group first")
         if slug in rc["visits"].get(pid, {}):
             raise RecruitingError(409, "one official visit per school")
         game_week = _home_game_left(state, slug)
@@ -690,7 +783,9 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         if action in ("call", "hc_visit"):           # a call or an in-home visit tells you one thing he cares about, and his ask
             revealed = _reveal(state, slug, pid)
             contact["asked"] = True
-        points = _contact_points(p, action, pitch) / (1 + DIMINISH * contact["n"])
+        points = _contact_points(state, slug, p, action, pitch) / (1 + DIMINISH * contact["n"])
+        if points < 0:
+            _event(state, "not_buying", pid, slug, topic=pitch)
         if cooled(state, slug, pid):
             points *= COOLED_CONTACT
         contact["n"] += 1
@@ -828,7 +923,13 @@ def _build_board(state: dict, slug: str, rng: random.Random) -> list[str]:
             weight = lift(p) * math.exp(NATIONAL_TILT * (p["composite"] - 0.9))
             keyed.append((math.log(rng.random() or 1e-12) / weight, pid))
     national = [pid for _, pid in sorted(keyed, reverse=True)[:n]]
-    return list(dict.fromkeys(national + sampled))
+    board = list(dict.fromkeys(national + sampled))
+    for pid in board:                  # a board is prospects the staff has evaluated and spoken to: not cold, one priority known
+        c = _contact(state, slug, pid)
+        if not c["n"]:
+            c["n"] = 1
+            _reveal(state, slug, pid)
+    return board
 
 
 def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None, commits: Optional[dict] = None,
@@ -897,7 +998,7 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
             open_[g] += 1
             nil = min(nil_left(state, slug), round(budget * AI_NIL.get(p["stars"], 0)), round(AI_OVER_ASK * ask_from(state, slug, pid, win)))
             try:
-                _act(state, slug, pid, "offer", pitch=(known.get(pid) or p["priorities"])[0], nil=nil, scale=edge)
+                _act(state, slug, pid, "offer", pitch=best_pitch(state, slug, pid, required=True), nil=nil, scale=edge)
             except RecruitingError:
                 break
     for pid in offers:                          # asked for more: raise once to his ask, as the budget allows
@@ -920,16 +1021,15 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
                 pass
     if targets:
         try:
-            _act(state, slug, targets[0], "hc_visit", pitch=(known.get(targets[0]) or [None])[0], scale=edge)
+            _act(state, slug, targets[0], "hc_visit", pitch=best_pitch(state, slug, targets[0]), scale=edge)
         except RecruitingError:
             pass
     for action in ("call", "message"):          # each target a call and a message a week, as the hours allow
         for pid in targets:
             if _hours(state, slug) < HOURS[action]:
                 break
-            pitch = (known.get(pid) or [None])[0]
             try:
-                _act(state, slug, pid, action, pitch=pitch, scale=edge)
+                _act(state, slug, pid, action, pitch=best_pitch(state, slug, pid), scale=edge)
             except RecruitingError:
                 pass
 

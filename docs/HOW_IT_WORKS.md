@@ -835,8 +835,17 @@ actions have earned with him.
 **Your week.** Hours: `50 + (recruiting rating - 50) / 4`. A message costs 5, a call 15 (it
 reveals one of his priorities), a head coach in-home visit 30 (once a month; it reveals one
 too), an official visit invite 10 (at your next home game; a win sells, a 21-point loss hurts,
-a big stadium helps, and the weekend tells you all three of his priorities) and an offer nothing. A pitch on one of his priorities is worth twice as much, any
-other topic half; each contact from a school is worth a little less than the last, and a
+a big stadium helps, and the weekend tells you all three of his priorities) and an offer nothing.
+**Pitches are tied to your program.** Each topic has your strength for this prospect, 0-1 (the
+pitch picker shows it): playing time from where he would sit on your depth chart, winning from
+your record and poll, prestige, proximity, coach, academics, and NIL as your offer against his
+ask. A pitch on one of his priorities counts 1x to 4x by that strength (1 + 3 x strength); under
+25% it backfires (he isn't buying it: minus half the action's worth); any other topic counts
+0.3x to 0.7x. **Stages:** cold until a contact, in touch, his top group (his top eight schools by
+interest, your offer in hand), visited, committed. An official visit needs his top group; an
+offer before any contact counts half. AI boards start warm (the staff has evaluated and spoken to
+everyone on them, one priority known) and pitch the strongest priority they know. Each contact
+from a school is worth a little less than the last, and a
 prospect takes one message and one call a week from a school (more contact is not more interest:
 the rest of your hours go to other prospects). Offers are capped at
 1.5 times your open spots: 85 minus returning players, plus four early leavers, capped at

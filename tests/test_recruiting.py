@@ -85,8 +85,39 @@ if __name__ == "__main__":
     st["current_week"] += 1; st["recruiting"]["hours"]["ohio-state"] = 50
     recruiting.act(st, "ohio-state", pid, "message")
     st["current_week"] -= 1; st["recruiting"]["hours"]["ohio-state"] = hours
+    hours_before = st["recruiting"]["hours"]["ohio-state"]
+    st["recruiting"]["hours"]["ohio-state"] = 100       # fresh hours for what follows
+    # pitches are tied to your program: a priority where you are strong lands big, where you are weak it backfires
     off = next(t for t in recruiting.PITCHES if t not in tx["priorities"])
-    assert recruiting._contact_points(tx, "call", tx["priorities"][0]) == 4 * recruiting._contact_points(tx, "call", off)
+    strength = recruiting.strengths(st, "ohio-state", pid)
+    assert set(strength) == set(recruiting.PITCHES) and all(0 <= v <= 1 for v in strength.values())
+    strong = max(tx["priorities"], key=lambda t: strength[t])
+    assert recruiting._contact_points(st, "ohio-state", tx, "call", strong) > recruiting._contact_points(st, "ohio-state", tx, "call", off)
+    weak_t = next(t for t in tx["priorities"] if t != strong)
+    saved = strength[weak_t]
+    with recruiting.forced_strength(st, "ohio-state", pid, weak_t, 0.1):
+        assert recruiting._contact_points(st, "ohio-state", tx, "message", weak_t) < 0        # he isn't buying it
+    # stages: cold until a contact; an official visit needs his top group; a cold offer counts half
+    rc = st["recruiting"]
+    two = next(q for q, p in rc["prospects"].items() if p["stars"] == 2 and q != pid and not rc["status"][q]["committed"] and q not in rc["contacts"])
+    assert recruiting.stage(st, "ohio-state", two) == "cold"
+    recruiting.act(st, "ohio-state", two, "message")
+    assert recruiting.stage(st, "ohio-state", two) == "contact"
+    crowd = [x for x in recruiting.fbs_schools(st) if x != "ohio-state"][:8]
+    for x in crowd:
+        rc["lists"][two][x] = 10_000.0
+    try:
+        recruiting.act(st, "ohio-state", two, "official_visit"); raise AssertionError("a visit without his top group")
+    except recruiting.RecruitingError as e:
+        assert e.code == 409
+    for x in crowd:
+        rc["lists"][two].pop(x)
+    cold = next(q for q, p in rc["prospects"].items() if p["stars"] == 2 and q not in (pid, two) and not rc["status"][q]["committed"] and q not in rc["contacts"])
+    warm_pts = recruiting._contact_points(st, "ohio-state", rc["prospects"][cold], "offer", rc["prospects"][cold]["priorities"][0])
+    recruiting.act(st, "ohio-state", cold, "offer", pitch=rc["prospects"][cold]["priorities"][0], nil=0)
+    assert rc["status"][cold]["committed"] is None
+    assert abs(rc["lists"][cold]["ohio-state"] - warm_pts / 2) < 1e-6, (rc["lists"][cold]["ohio-state"], warm_pts)
+    st["recruiting"]["hours"]["ohio-state"] = hours_before
     assert sorted(s for v in recruiting.AREAS.values() for s in v) == sorted(set(s for v in recruiting.AREAS.values() for s in v))
     assert len(recruiting.AREAS) == 9 and "TX" in recruiting.AREAS["Texas"]
     # an offer with NIL points holds them; past the budget or a second official visit is refused

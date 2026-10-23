@@ -316,6 +316,8 @@
       if (b.need != null && !b.signed && b.committed !== me) tags.append(el("span", { class: `go-tag ${b.need > 0 ? "good" : "muted"}`, text: b.need > 0 ? `Need ${b.need}` : "Full", title: b.need > 0 ? `Your roster needs ${b.need} at his position this class` : "Your roster is covered at his position this class" }));
       if (b.offered) tags.append(el("span", { class: "go-tag good", text: b.nil ? `Offered · ${b.nil} NIL` : "Offered" }));
       if (b.cooled) tags.append(el("span", { class: "go-tag bad", text: "Cooled on you", title: "He read your offer as a lowball: contacts count half and he will not visit until you raise it to what he wants" }));
+      const STAGE = { cold: ["Cold", "No contact yet: an offer now counts half"], contact: ["In touch", "You have reached out; get into his top group for a visit"], top: ["In his top 8", "He is seriously considering you"], visited: ["Visited", "He has been on campus"] };
+      if (b.stage && STAGE[b.stage] && !b.committed && !b.signed) tags.append(el("span", { class: `go-tag ${b.stage === "cold" ? "muted" : ""}`, text: STAGE[b.stage][0], title: STAGE[b.stage][1] }));
       if (b.visit) tags.append(el("span", { class: "go-tag", text: b.visit.done ? "Visited" : `Visit wk ${b.visit.week}` }));
       c.append(tags);
       if (!b.signed && b.committed !== me) {
@@ -324,13 +326,13 @@
         const acts = [["message", "Message", 5, done.includes("message") && "week"], ["call", "Call", 15, done.includes("call") && "week"],
           ["hc_visit", "HC visit", 30, hcWait && "month"]];
         if (!b.offered) acts.push(["offer", "Offer", 0, false, "go"]);
-        else if (!b.visit) acts.push(["official_visit", "Visit", 10, false, "alt"]);
+        else if (!b.visit) acts.push(["official_visit", "Visit", 10, !["top", "visited"].includes(b.stage) && "group", "alt"]);
         c.append(el("div", { class: "go-actions" }, acts.map(([a, label, cost, off, tone]) => {
           const short = cost > v.hours_left;
           const btn = el("button", { type: "button", class: `go-act ${tone || ""}`, "aria-label": `${label} ${b.name}`,
             title: off === "month" ? "The head coach visits once every 4 weeks" : off === "week" ? "Once a week: more contact is not more interest"
-              : short ? `Needs ${cost} hours; ${v.hours_left} left this week` : ACT_TIPS[a] },
-            [el("b", { text: label }), el("span", { text: off === "month" ? "monthly" : off === "week" ? "done" : `${cost}h` })]);
+              : off === "group" ? "He is not considering you yet: get into his top group first" : short ? `Needs ${cost} hours; ${v.hours_left} left this week` : ACT_TIPS[a] },
+            [el("b", { text: label }), el("span", { text: off === "month" ? "monthly" : off === "week" ? "done" : off === "group" ? "not yet" : `${cost}h` })]);
           if (off || short) btn.disabled = true;
           btn.addEventListener("click", () => run(b, a));
           return btn;
@@ -355,10 +357,12 @@
           const r = el("input", { type: "radio", name: `pitch-${b.id}`, id, value: t });
           r.checked = current === t;
           r.addEventListener("change", () => { view.pitch[b.id] = t; });
-          pitches.append(el("label", { class: `go-pitch ${known ? "known" : ""}`, for: id }, [r,
-            el("span", {}, [el("b", { text: PITCH_NAMES[t] }), known ? el("span", { class: "go-tag good", text: "2×" }) : null])]));
+          const sv = b.strength ? b.strength[t] : null, pctText = sv == null ? "" : `${Math.round(sv * 100)}%`;
+          const tone = sv == null ? "" : sv >= 0.6 ? "good" : sv < 0.25 ? "bad" : "";
+          pitches.append(el("label", { class: `go-pitch ${known ? "known" : ""}`, for: id, title: sv == null ? "" : known && sv < 0.25 ? "He cares about this and you are weak here: pitching it backfires" : `Your strength on ${PITCH_NAMES[t].toLowerCase()}: ${pctText}` }, [r,
+            el("span", {}, [el("b", { text: PITCH_NAMES[t] }), el("span", { class: `go-tag ${tone}`, text: known ? `priority · ${pctText}` : pctText })])]));
         }
-        p.append(pitches, el("p", { class: "muted small", text: "Message, Call and HC visit use this pitch. A pitch on one of his priorities counts double; anything else counts half. A call or an in-home visit reveals one; an official visit reveals them all." }));
+        p.append(pitches, el("p", { class: "muted small", text: "Message, Call, HC visit and the offer use this pitch. One of his priorities counts 1× to 4× by how strong you are on it; where you are weak (under 25%) it backfires. Anything else counts a little. A call or an in-home visit reveals a priority; an official visit reveals them all." }));
       }
       const askText = b.ask ? (b.ask.exact != null ? `wants ${b.ask.exact}` : `wants about ${b.ask.lo}–${b.ask.hi} (a call or visit tells you)`) : "";
       if (!b.offered && !b.committed && !b.signed) {
