@@ -55,6 +55,7 @@ QUIT_LOW = 2.5                                     # ... this much likelier in t
 
 # ----- the portal *tune* -----
 PORTAL_OFFER_FACTOR = 2.0                          # a school's offers a round, times its open spots
+PORTAL_TAKE = 4                                    # transfers an AI school takes in a round from its open spots (real: 5-15 a year with churn)
 CHURN = 8                                          # portal spots a Power 4 school makes by releasing its weakest players
 OPEN_TAKE_ANY = 4                                  # with this many open spots a school takes good players at any position
 # an entrant's choice: playing time, the program (its recruiting pull and team rating), winning, home
@@ -400,7 +401,7 @@ def ai_offers(state: dict, slug: str) -> list[str]:
     best entrants who would play there, up to PORTAL_OFFER_FACTOR times its open spots."""
     off = state["offseason"]
     lgd, portal = state["league"], off["portal"]
-    spots = open_spots(lgd, slug, portal)
+    spots = min(open_spots(lgd, slug, portal), PORTAL_TAKE)
     if p4_school(slug):
         spots += max(0, CHURN - sum(1 for e in portal["players"].values() if e["signed"] == slug and e.get("churn")))
     if spots <= 0:
@@ -448,7 +449,8 @@ def resolve_round(state: dict) -> list[dict]:
         for pid in ai_offers(state, slug):
             offers.setdefault(pid, []).append(slug)
     moves = []
-    spots = {slug: open_spots(lgd, slug, portal) for slug in lgd["teams"]}
+    spots = {slug: open_spots(lgd, slug, portal) if slug == me else min(open_spots(lgd, slug, portal), PORTAL_TAKE)
+             for slug in lgd["teams"]}
     churn = {slug: max(0, CHURN - sum(1 for e in portal["players"].values() if e["signed"] == slug and e.get("churn")))
              if p4_school(slug) and slug != me else 0 for slug in lgd["teams"]}
     for pid in sorted(offers, key=lambda q: -portal["players"][q]["player"]["o"]):

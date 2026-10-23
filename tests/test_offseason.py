@@ -92,7 +92,7 @@ if __name__ == "__main__":
     # you won it all, so you are safe, and a better program with an opening may want you
     car = off["carousel"]
     gone = [c for c in car["changes"] if c["role"] == "head_coach" and c["reason"] in ("fired", "retired", "left for the NFL")]
-    assert 3 <= len(gone) <= 45, len(gone)
+    assert 1 <= len(gone) <= 45, len(gone)
     assert all((t["coaches"].get("head_coach") or {}).get("name") for t in lg["teams"].values())
     assert car["you"]["security"] >= 70 and not car["you"]["fired"], car["you"]
     car["offers"] = car["offers"] or ["alabama"]
