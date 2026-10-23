@@ -952,7 +952,9 @@ starters picked this way have the real starters' overall: 1.5 points on the offe
 quarterback, 12-16 elsewhere (real usage starts players well below the top overall at most
 positions: rotations, fits, what the ratings miss). A receiver without a real 2026 target weight
 gets one from the same draw (log sd 0.32, as the real weights), so the receivers the coaches
-start also get the ball. Linebacker spots take the best MIKE, WILL and SAM in
+start also get the ball, less 0.4 in log per 10 overall points above his team's receivers on the
+field (the engine's pull toward the best-rated receiver is steep; with it a later season's
+number-one receivers take 27% of their team's yards, as the 2026 season's do). Linebacker spots take the best MIKE, WILL and SAM in
 that order. A team keeps its observed 2026 tendencies until its head coach changes. Team ratings
 come from the starters' overall, fit once to the 2026 team ratings (r 0.98 offense, 0.997
 defense). The built file is cached in `data/leagues/` and rebuilt from the state when missing;
