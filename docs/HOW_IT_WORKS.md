@@ -996,7 +996,7 @@ to potential is scaled by position group (`game_scale.ROOM`: 1.0 for backs to 1.
 set so a career's starters settle, season after season, where the real 2026 starters were (two
 40-season runs had defenses 2.6-4.7 points low and receivers' yards 27% high before it; a class
 now runs a little above the real players by stars and years, `tools/check_development.py`, since
-the real ones are the survivors and a league's starters are younger than its best), times a
+the real ones are the survivors and a league's starters are younger than its best). The rate also takes a
 coach factor (the head coach's player development with the coordinator on his side of the ball,
 40%: 0.8 at 30, 1.0 at 50, 1.2 at 90) and the program's own (1 + 0.10 times its recruiting
 baseline). The signed class arrives as it is. Rosters are then topped up to 100, the thinnest
