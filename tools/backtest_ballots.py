@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import polls  # noqa: E402
+from sim import polls  # noqa: E402
 from backtest_polls import TRAIN, VALID, score_week, weeks_of  # noqa: E402
 from calibrate_polls import load, season_frames  # noqa: E402
 

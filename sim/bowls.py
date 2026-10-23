@@ -16,7 +16,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]   # the project root
 BOWLS_FILE = ROOT / "data" / "bowls.json"
 
 # Selection order when the article's payout is missing (roughly by payout and prestige).

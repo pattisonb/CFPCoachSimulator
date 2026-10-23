@@ -17,7 +17,7 @@ import uuid
 from pathlib import Path
 from typing import Optional
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]   # the project root
 COACHES_DIR = ROOT / "data" / "coaches"
 
 OFFENSE_SCHEMES = {

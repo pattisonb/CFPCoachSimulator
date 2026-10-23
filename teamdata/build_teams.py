@@ -28,6 +28,8 @@ Every mapped attribute is then re-centred so that the league-average FBS starter
 position group sits at NEUTRAL (the engine's reference point), with the spread scaled by
 SPREAD_SCALE. The engine was calibrated on rating differences, so this keeps a league
 of these teams playing like FBS football while preserving who is better than whom.
+
+Usage:  python -m teamdata.build_teams [spread_scale]      # from the project root
 """
 from __future__ import annotations
 
@@ -39,10 +41,10 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Optional
 
-import game_scale
-import ratings as rv2   # ratings v2: the player attributes (docs/RATINGS_V2.md)
+from teamdata import game_scale
+from teamdata import ratings as rv2   # ratings v2: the player attributes (docs/RATINGS_V2.md)
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]   # the project root
 SRC = ROOT / "cfb_sim_data"
 OUT = ROOT / "data" / "engine_teams.json"
 
@@ -710,7 +712,7 @@ def measured_recruiting(teams: list[dict]) -> int:
     edge (recruiting_model.json coaches.current), shrunk toward average for coaches with few
     classes. The source ratings are generated and do not track it (r -0.02 across 78 coaches).
     Coaches with no measured edge keep theirs. Returns how many were rebuilt."""
-    import recruits
+    from coach_career import recruits
     current = recruits.model()["coaches"]["current"]
     n = 0
     for t in teams:
@@ -784,7 +786,7 @@ def main() -> None:
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(out), encoding="utf-8")
     print(f"wrote {OUT} with {len(out['teams'])} teams ({OUT.stat().st_size / 1e6:.1f} MB)")
-    import recruits                                  # potential and coachability (docs/PLAYER_DEVELOPMENT.md)
+    from coach_career import recruits                                  # potential and coachability (docs/PLAYER_DEVELOPMENT.md)
     print(f"wrote {recruits.POTENTIAL_FILE.name}: potential and coachability for {recruits.write_player_potential()} players")
 
 

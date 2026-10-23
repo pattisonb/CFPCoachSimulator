@@ -10,14 +10,14 @@ from __future__ import annotations
 import sys as _sys
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import recruits` works from here
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from coach_career import recruits` works from here
 
 import random
 import statistics as st
 import sys
 from collections import Counter, defaultdict
 
-import recruits
+from coach_career import recruits
 
 YEARS = 4
 

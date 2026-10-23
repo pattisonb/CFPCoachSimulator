@@ -15,9 +15,9 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
-import recruiting
+from coach_career import recruiting
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]   # the project root
 SOURCE_TEAMS = ROOT / "cfb_sim_data" / "teams"
 EVALUATED = 300                    # the top 300 get a written evaluation and a public comp
 COMP_PERCENTILE = 0.50             # COMP_MAX_DISTANCE: this percentile of starter-to-starter distances *tune*
@@ -58,8 +58,8 @@ SCHOOL_KINDS = ("High School", "High School", "High School", "Central", "North",
 @lru_cache(maxsize=1)
 def starter_pool() -> tuple[dict, ...]:
     """Today's starters in the league in play, with their skills on our scale and our overall."""
-    import game_scale
-    import season
+    from teamdata import game_scale
+    from sim import season
     keys = game_scale.keys()
     out = []
     for slug, t in season.load_teams().items():
@@ -186,10 +186,10 @@ def grade_detail(state: dict, p: dict, group: str, lo: float, hi: float) -> dict
     if len(peers) < 4:                         # a narrow read: the nearest prospects instead
         mid = (lo + hi) / 2
         peers = sorted(rc["prospects"].values(), key=lambda q: abs(q["truth"][group] - mid))[:30]
-    import ratings as rv2
-    import season
+    from teamdata import ratings as rv2
+    from sim import season
     if group == "potential":
-        import recruits
+        from coach_career import recruits
         vals = [q["pot_ovr"] for q in peers]
         mid = _middle(vals)
         pos = engine_position(p)
@@ -219,7 +219,7 @@ def reset_caches() -> None:
 def league_values(pos: str, key: str) -> tuple[list, list]:
     """Today's FBS players at a position (linebackers together): their card values of `key`
     (an attribute, or 'overall'), all of them and the starters, highest first."""
-    import season
+    from sim import season
     group = season.SCALE_GROUP.get(pos, pos)
     if (group, key) not in _LEAGUE:
         allv, starters = [], []
@@ -252,15 +252,15 @@ GAME_GROUPS = {"athleticism": ("top_speed", "burst", "agility", "leaping"), "siz
 
 
 def engine_position(p: dict) -> str:
-    import build_teams
+    from teamdata import build_teams
     return build_teams.POSITION_MAP.get(p["ea_position"], p["position"])
 
 
 def group_keys(p: dict, group: str) -> tuple:
     """The player-card attributes a grade is the average of: GAME_GROUPS, technique his
     position's skills (a kicker's leg), athleticism a specialist's physical ones he has."""
-    import ratings as rv2
-    import season
+    from teamdata import ratings as rv2
+    from sim import season
     pos = engine_position(p)
     card = rv2.POSITION_ATTRIBUTES.get(season.SCALE_GROUP.get(pos, pos), [])
     if group == "technique":
@@ -279,8 +279,8 @@ def card_attributes(ours: dict, p: dict) -> dict[str, int]:
     """A prospect's player card attributes from his skills (our scale), exactly as a player's card
     gets them (build_teams): the skills back through the frozen scale, the card's composites, then
     the card scale (50 at the middle Power 4 starter at his position)."""
-    import game_scale
-    import ratings as rv2
+    from teamdata import game_scale
+    from teamdata import ratings as rv2
     pos = engine_position(p)
     raw = rv2.raw_attributes(game_scale.base_from_ours(ours, p.get("ea_position") or pos), pos, pos)
     group = rv2.card_group(pos, pos)
@@ -307,7 +307,7 @@ def _high_school(p: dict) -> str:
 
 def _schools(state: dict, pid: str) -> list[dict]:
     """His list: the ten schools he likes most among those recruiting him, the leader first."""
-    import season
+    from sim import season
     rc = state["recruiting"]
     teams = season.load_teams()
     offers = {s for s, pids in rc["offers"].items() if pid in pids}
@@ -378,7 +378,7 @@ STATUSES = ("open", "committed", "signed", "leaning_fcs", "offered", "board")
 
 def row(state: dict, pid: str, viewer: str) -> dict:
     """A prospect as a line in a list: who he is, where he stands, what you know."""
-    import season
+    from sim import season
     rc = state["recruiting"]
     p, st = rc["prospects"][pid], rc["status"][pid]
     school = st["signed"] or st["committed"]
@@ -417,7 +417,7 @@ def standing(state: dict, pid: str, viewer: str) -> dict:
     """Where you stand with him, as the board shows it: your place among the offering schools,
     your chance as a range that narrows toward signing day, and the leader. `place` is None
     until you offer."""
-    import season
+    from sim import season
     o = odds(state, pid)
     order = [r["school"] for r in o["schools"]]
     mine = next((r for r in o["schools"] if r["school"] == viewer), None)
@@ -496,7 +496,7 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
 def national_classes(state: dict, viewer: Optional[str] = None) -> dict:
     """Every FBS school's class (its commitments, or signees once they sign), ranked as class_rank
     ranks them: count, stars, its three best recruits; and where the calendar is."""
-    import season
+    from sim import season
     rc = state["recruiting"]
     teams = season.load_teams()
     by_school: dict[str, list] = {}
@@ -597,7 +597,7 @@ def _committed_odds(state: dict, pid: str, school: str, offered: list, week: int
     """A committed prospect: his school keeps him unless he flips before signing day. The weekly
     flip chance follows the weekly draws (recruiting._draws): DECOMMIT_RATE scaled by the best
     rival's lead in interest; the flip chance is shared among the rivals as their odds."""
-    import season
+    from sim import season
     rivals = [s for s in offered if s != school]
     mine = recruiting.interest(state, school, pid)
     weeks_left = max(0, season.SELECTION_WEEK - week)          # the early signing period ends it for most

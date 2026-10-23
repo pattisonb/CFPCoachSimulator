@@ -106,7 +106,7 @@ def avg_lines(lines: list[dict]) -> dict:
 
 def real_week_lines(real: dict, teams: dict) -> dict:
     """{team: {week: {game, line, opp_line}}} from the real season and its box scores."""
-    import season
+    from sim import season
     out: dict = defaultdict(dict)
     for g in real["games"].values():
         if not (g["played"] and g.get("real")):
@@ -150,11 +150,11 @@ def main() -> None:
     ap.add_argument("--seasons", type=int, default=10)
     ap.add_argument("--out", default="data/analysis/overnight")
     a = ap.parse_args()
-    import season
+    from sim import season
     teams = season.load_teams()
     real = season.load_season("real-2026")
     if real is None:
-        raise SystemExit("build the real season first: python realdata.py")
+        raise SystemExit("build the real season first: python -m sim.realdata")
     W = real["current_week"]
     out = ROOT / a.out
     (out / "teams").mkdir(parents=True, exist_ok=True)

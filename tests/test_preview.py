@@ -4,10 +4,10 @@ has no game. (Run as a file: multiprocessing on Windows.)"""
 import sys as _sys
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 import time
 
-import season
+from sim import season
 
 if __name__ == "__main__":
     st = season.new_season("ohio-state", "full", seed=5)

@@ -20,7 +20,7 @@ python server.py
 
 Then open <http://127.0.0.1:8000>. On Windows, `run.bat` does the same. The first start
 builds `data/engine_teams.json` from `cfb_sim_data/` (about 20 seconds); run
-`python build_teams.py` again whenever the source data changes.
+`python -m teamdata.build_teams` again whenever the source data changes.
 
 ### On a phone
 
@@ -48,7 +48,7 @@ serverless functions time out on long batches and cannot keep a running process)
 
 1. Sign in at <https://render.com> with GitHub and choose New > Blueprint.
 2. Pick the `CFPCoachSimulator` repo. Render reads `render.yaml`, installs the
-   requirements, runs `build_teams.py`, and starts the server on its port.
+   requirements, runs `teamdata/build_teams.py`, and starts the server on its port.
 3. The site comes up at `https://cfp-coach-simulator.onrender.com` (or whatever name
    Render assigns). Every push to `main` redeploys.
 
@@ -68,35 +68,46 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | Path | What it is |
 |---|---|
 | `cfb_sim_data/` | Source data: rosters with EA-derived ratings, coaches, stadiums, colors (see its README) |
-| `build_teams.py` | Converts the source into the engine's roster format (rating map and normalization below) |
+| `teamdata/` | Team data: the build step, the player attributes and our rating scale (`python -m teamdata.build_teams`) |
+| `teamdata/build_teams.py` | Converts the source into the engine's roster format (rating map and normalization below) |
+| `teamdata/ratings.py` | The player card attributes and traits (docs/RATINGS_V2.md) |
+| `teamdata/game_scale.py` | Our 1-99 rating scale and overall, frozen in `data/game_scale.json` |
 | `data/engine_teams.json` | The converted league the server loads (10 MB, generated) |
 | `engine/` | The simulation engine; `engine/game.py` plays a full game and returns a result dict |
 | `engine/game_config.py` | Sliders and every calibration constant |
 | `server.py` | FastAPI server: team list, sim, history; serves `web/` |
+| `sim/` | The season simulation: the season engine, polls, bowls, awards, in-season form, head coaches, the real season import |
 | `web/` | The site: plain HTML, CSS and JavaScript, no build step |
 | `tools/fetch_results.py` | Downloads the 2026 FBS results played so far from NCAA.com into `data/season_games.json` |
 | `tools/fetch_schedules.py` | Downloads every FBS team's 2026 schedule from ESPN into `data/schedules.json` |
-| `season.py` | Week-by-week season engine: polls, title games, bracket, playoff (`python season.py ohio-state full`) |
-| `polls.py` | AP poll model, committee model and the 2026 bracket rules |
-| `awards.py` | The awards: Heisman vote, national awards, All-America and all-conference teams, coaches |
-| `teamnames.py` | Matches real-world team names (NCAA.com, ESPN, poll archives) to the engine's slugs |
+| `sim/season.py` | Week-by-week season engine: polls, title games, bracket, playoff (`python -m sim.season ohio-state full`) |
+| `sim/polls.py` | AP poll model, committee model and the 2026 bracket rules |
+| `sim/awards.py` | The awards: Heisman vote, national awards, All-America and all-conference teams, coaches |
+| `sim/teamnames.py` | Matches real-world team names (NCAA.com, ESPN, poll archives) to the engine's slugs |
+| `sim/form.py` | In-season form from the real results and box scores |
+| `sim/coaches.py` | Head coaches: ratings, the coach page and how a coach changes his team's play |
+| `sim/realdata.py` | The real 2026 season from the real results and box scores (`python -m sim.realdata`) |
 | `data/rivalries.json` | Rivalry games, trophies and the all-time series entering 2025 |
 | `tests/` | The checks, one script each, run as files: `python tests/run_all.py` runs them all and reports pass/fail |
 | `tools/` | Data downloads, calibration and research scripts, run from the project root (`python tools/fetch_polls.py`) |
-| `bowls.py` | The 2026-27 bowl lineup, selection by conference tie-ins, and which bowls host the playoff rounds |
+| `sim/bowls.py` | The 2026-27 bowl lineup, selection by conference tie-ins, and which bowls host the playoff rounds |
 | `tools/fetch_bowls.py` | Downloads the bowl schedule and every bowl's tie-ins and history from Wikipedia into `data/bowls.json` |
 | `tools/fetch_polls.py`, `tools/analyze_polls.py`, `tools/calibrate_polls.py` | 2014-2025 poll archive, the behaviour study, and the model fit |
 | `tools/calibrate_season.py` | Replays every real 2026 game N times and compares predicted and actual margins |
 | `tools/calibrate.py` | Per-team stat benchmarks against FBS 2025 averages (`league` mode uses the real rosters) |
 | `tools/fetch_linescores.py`, `tools/calibrate_late.py` | Quarter scores 2014-2025 and the late-game comparison (close games, comebacks, overtime) |
 | `tools/fetch_boxscores.py` | Downloads every played game's player box score into `data/boxscores/` |
-| `tools/derive_tendencies.py` | Each team's real 2026 pass rate, pace and usage shares, used by `build_teams.py` |
+| `tools/derive_tendencies.py` | Each team's real 2026 pass rate, pace and usage shares, used by `teamdata/build_teams.py` |
 | `tools/calibrate_players.py` | Compares sim player lines and usage shares with the real box scores |
 | `tools/forward_test.py` | Freezes the sim's picks for the next week of real games, then scores them once played |
 | `data/predictions/` | The frozen weekly picks (`weekNN.json`) and their score reports (`weekNN_score.*`) |
-| `career.py` | Coach Career: the career block on a season, and its saves (export, import, keep the newer copy) |
-| `recruiting.py` | Coach Career recruiting: the class, schools' pulls, actions, AI schools, commitments, signing, scouting |
-| `prospects.py` | Prospect Profiles: evaluations, comps to real starters, list rows and the Recruiting tab's data |
+| `coach_career/` | Coach Career: the career, recruiting, prospects, a career's league, the offseason, the carousel |
+| `coach_career/career.py` | Coach Career: the career block on a season, and its saves (export, import, keep the newer copy) |
+| `coach_career/recruiting.py` | Coach Career recruiting: the class, schools' pulls, actions, AI schools, commitments, signing, scouting |
+| `coach_career/prospects.py` | Prospect Profiles: evaluations, comps to real starters, list rows and the Recruiting tab's data |
+| `coach_career/recruits.py` | Generated recruiting classes, and every player's potential and coachability |
+| `coach_career/league.py`, `coach_career/offseason.py` | A career's own league and the offseason between seasons |
+| `coach_career/carousel.py` | The coaching carousel: AD goals, firings, hires |
 | `web/recruiting.js`, `web/careersave.js` | The Recruiting, Prospects and Staff tabs; the career kept in the browser |
 | `tools/check_recruiting.py` | Plays career seasons and holds their recruiting to the real classes |
 
@@ -120,7 +131,7 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 
 ## How the data feeds the engine
 
-**Players: our ratings** (`game_scale.py`, `data/game_scale.json`). The source rosters came with
+**Players: our ratings** (`teamdata/game_scale.py`, `data/game_scale.json`). The source rosters came with
 EA College Football's ratings; they were only the jumping-off point. Once, from the 2026
 rosters, the game froze its own scale: each of 54 skills per position group on 1-99, where 50
 is the middle Power 4 starter at the position, 15 points a standard deviation above him and 9
@@ -136,7 +147,7 @@ god-mode edit moves the card overall by what the edit does to the engine composi
 The engine works on its own position-relative values underneath (an average FBS starter
 at the position is 55, scaled by `SPREAD_SCALE`): it reads our ratings back through the frozen
 scale into the formulas it was tuned on, so 2026 plays exactly as it did (the same fingerprint).
-`build_teams.py` maps them to the engine's attributes: throw accuracy and power to
+`teamdata/build_teams.py` maps them to the engine's attributes: throw accuracy and power to
 passing, awareness and throwing under pressure to decision making, agility, jukes and
 break tackle to elusiveness, man and zone coverage to coverage, power and finesse moves
 plus block shedding to pass rush, and so on (the full map is in the file's docstring).
@@ -456,7 +467,7 @@ sacks, which college box scores count as rushes, and 4 for scrambles). Low-sack 
 teams with a run-package second quarterback lost most of their designed runs: James Madison
 3.7% (real 15-18%), Texas Tech 0.5, Notre Dame 0, NDSU 1.2. Now `tools/derive_tendencies.py`
 counts every quarterback's carries (anyone who threw a pass, or is on the roster as a QB) and
-the sacks the team took (the opponent's defensive line), and `build_teams.py` takes the
+the sacks the team took (the opponent's defensive line), and `teamdata/build_teams.py` takes the
 team's own sack share and 4 points of scrambles off (`SCRAMBLE_SHARE`). Navy 34 to 44,
 Army 29 to 39, Air Force 22 to 36, James Madison 4 to 15, Texas Tech 0.5 to 11, NDSU 1 to 7,
 Kansas State 12 to 19. (The two new fields in `data/observed_tendencies.json`, `qb_all_rush_share`
@@ -472,7 +483,7 @@ Brier score is the best of this round (20 seasons through week 8: 0.182 to 0.181
 margin error held (`calibrate_season.py 30`: MAE 12.4, slope 1.00), but the favourite won
 less often (73.9% to 71.1%; `calibrate_season` 74.5% to 72.2%; the October 20 baseline before
 this round was 72.7% in both). The share fix alone was worse on every measure (Brier 0.185),
-so the two go together. Rebuild the teams after pulling this (`python build_teams.py`).
+so the two go together. Rebuild the teams after pulling this (`python -m teamdata.build_teams`).
 Play-log fingerprint 098527ba508d3a73.
 
 **Flexbone fullbacks.** Air Force, Army and Navy's dive fullbacks carry 30-44% of the time
@@ -685,7 +696,7 @@ plays of 25+; Pro Style 34% play-action and 72% inside runs; Spread Option 47% o
 
 Starting a season asks who coaches your team: **take over as the team's own head coach**
 (his scheme and tendencies, as built) or **your own coach**, one you created on the Your
-coach page (`/coach`, `web/coach.js`, `coaches.py`; saved in `data/coaches/`, git-ignored).
+coach page (`/coach`, `web/coach.js`, `sim/coaches.py`; saved in `data/coaches/`, git-ignored).
 Either way the team's coordinators stay for the season; staff changes come after it
 (the offseason, with coach mode).
 
@@ -743,7 +754,7 @@ git-ignored. `tools/recruiting_footprints.py` and `tools/recruiting_model.py` re
   measured edge (correlation -0.02 across 78 current coaches); they will be rebuilt from it when
   recruiting lands.
 
-## Generated recruiting classes (`recruits.py`)
+## Generated recruiting classes (`coach_career/recruits.py`)
 
 `recruits.generate_class(year, seed)` builds a national class of fictional prospects (4,092:
 36 five-stars, 428 four-stars, 2,487 three-stars and 1,141 two-stars) from
@@ -789,7 +800,7 @@ sizes match by position. Names recombine real recruits' first and last names (2,
 7,510 last); `taken` keeps real roster names and earlier classes out.
 
 **The real players** get the same two things (`recruits.seed_real_players`, written by
-build_teams.py to `data/player_potential.json`, git-ignored). Coachability: the league is ranked
+teamdata/build_teams.py to `data/player_potential.json`, git-ignored). Coachability: the league is ranked
 by EA development trait, then within a trait by how far ahead of the real norm for his stars and
 years he already is, and cut into the six shares exactly. Every Elite player is a Coach's Dream;
 Star players are Film Junkies (the furthest ahead 17% Coach's Dreams); Impact players 81% Quick
@@ -803,8 +814,8 @@ The engine does not read any of it yet (fingerprint unchanged).
 
 ## Coach Career (recruiting, scouting and saves)
 
-A **New season** on the season page is a Coach Career (`career.py`): the 2026 season played
-as the head coach, recruiting the class of 2027 as it goes (`recruiting.py`, spec in
+A **New season** on the season page is a Coach Career (`coach_career/career.py`): the 2026 season played
+as the head coach, recruiting the class of 2027 as it goes (`coach_career/recruiting.py`, spec in
 `docs/superpowers/specs/2026-10-22-coach-career-design.md`). Older saves, "from today" seasons
 and Real 2026 have no career block and play exactly as before; recruiting never changes how
 games play (the engine fingerprint is unchanged).
@@ -879,7 +890,7 @@ D+ 35, D 30, D- 25, F below. A high schooler's football IQ and technique are mos
 next to college starters; his athleticism and potential are where five-stars stand out.
 About 15% of two-stars and low three-stars are hidden until a look.
 
-**Prospect Profiles** (`prospects.py`). The public block is the national rankings' read (it
+**Prospect Profiles** (`coach_career/prospects.py`). The public block is the national rankings' read (it
 has its own error). The top 300 get a written evaluation (his three strongest and two weakest
 public grades) and a comp: the nearest real 2026 starter at his EA position, measuring his
 ceiling against the starter's ratings over the ten attributes most tied to overall there, and
@@ -921,7 +932,7 @@ restart), opening it uploads that copy and the server keeps whichever copy is ne
 **Download career** saves the state with every box score as a `.ccsave` file. Prospects store
 their EA ratings as lists in one key order, so a new career's save is under 1.5 MB.
 
-## Coach Career: the offseason and many seasons (`league.py`, `offseason.py`)
+## Coach Career: the offseason and many seasons (`coach_career/league.py`, `coach_career/offseason.py`)
 
 Design: docs/superpowers/specs/2026-10-23-career-offseason-design.md.
 
@@ -995,7 +1006,7 @@ strength and the other gifts are not raised. A Heisman winner, national award wi
 first-team All-American moves up a coachability level 40% of the time. The Development step
 lists your risers with the reasons.
 
-**The coaching carousel** (`carousel.py`). Each program's AD sets a goal from its recruiting
+**The coaching carousel** (`coach_career/carousel.py`). Each program's AD sets a goal from its recruiting
 baseline: make the playoff (+1.2 and up), win nine (+0.5), win seven and go bowling (-0.3), reach
 a bowl (below); a Group of 5 program at 0 or above expects its conference title. His patience is
 2 to 5 years (the blue bloods least). A head coach's job security (0-100, a new hire starts at
@@ -1032,7 +1043,7 @@ drafted) grows a row a year.
 plays, third and fourth downs, penalties and fumbles) into `data/boxscores/`.
 `tools/derive_tendencies.py` turns those into each team's real 2026 pass rate, pace, QB run
 share, back and receiver shares and fourth-down rate (`data/observed_tendencies.json`),
-and `build_teams.py` uses them in place of the generated coach tendencies for every team
+and `teamdata/build_teams.py` uses them in place of the generated coach tendencies for every team
 with two or more box scores. `tools/calibrate_players.py` replays each game and compares the
 sim's player lines with the real ones. Rerun all three after each week.
 
@@ -1057,8 +1068,8 @@ starters sit in blowouts.
 
 ## Tuned to how teams really play in 2026
 
-`python tools/tune_from_real.py` reads the real season (`realdata.py`) and writes
-`data/real_adjustments.json`, which `build_teams.py` applies on top of the source rosters
+`python tools/tune_from_real.py` reads the real season (`sim/realdata.py`) and writes
+`data/real_adjustments.json`, which `teamdata/build_teams.py` applies on top of the source rosters
 (the source data is never edited; delete the file and rebuild to go back):
 
 - **Depth charts from who plays.** Within each depth-chart role, players are reordered by
@@ -1073,7 +1084,7 @@ starters sit in blowouts.
   2-linebacker front plays the two most-used. A real kicker listed as a punter (or the other
   way round) is moved to that spot with his attributes rebuilt for it (Liberty, Missouri,
   Navy, North Carolina after week 8).
-- **The engine plays the depth chart.** `build_teams.py` writes each roster in depth order
+- **The engine plays the depth chart.** `teamdata/build_teams.py` writes each roster in depth order
   (the source lists are not), and bench players come in by depth: the next halfback, receiver
   or defender down, with production only breaking ties. Before, every backup tied at zero at
   kickoff, so the first player in the file came in and then kept winning on production, and
@@ -1136,7 +1147,7 @@ Umari Hatcher, Eastern Michigan WR Joshua Long and Akron S Donelius Johnson.
 scoring `MISSING_MIN_SCORE` 100: pass attempts + 2 x carries + 3 x catches + 2 x tackles +
 5 x field-goal tries) and `build_teams.add_real_player` puts each on his roster with the
 ratings of the player at the top of his role, so the team plays as strong as it did and the
-real line goes to the right name; then `realdata.py` matches his box scores and the depth
+real line goes to the right name; then `sim/realdata.py` matches his box scores and the depth
 order by real usage starts him. Rated as an average FBS starter instead, the added
 quarterbacks lifted NIU from 1.5 to 2.1 sim wins at week 8 (real 0-6) and picks fell, so
 that was not kept. Real lines matched to a roster player: 92.8% to 93.0%.
@@ -1170,7 +1181,7 @@ little from team to team (`TEMPO_EFFECT` 0.60 to 0.80). Over 40 seasons: pass-sh
 MAE 12.7, slope 0.94 (0.99 before: faster teams run up wider margins). Play-log fingerprint
 276d229ae94c1256.
 
-**Schemes the source codes wrong.** `data/scheme_overrides.json` (applied by `build_teams.py`,
+**Schemes the source codes wrong.** `data/scheme_overrides.json` (applied by `teamdata/build_teams.py`,
 the source data untouched) plays Oklahoma's defense as a 4-2-5 (coded 3-4), Wisconsin's as a
 3-4 (coded 4-3) and New Mexico's offense as a Spread Option (coded Air Raid, four receivers,
 for a team that passes about 27% of the time). Their 15 games through week 8 over 40 seasons:
@@ -1181,12 +1192,12 @@ Brier 0.234 to 0.213.
 `/real` (the "Real 2026" tab in the top nav) shows the actual 2026 season with the season
 page's tabs, read-only: every real result, the real AP polls with their vote points, the
 standings, the bracket and bowl projections from them, and real stats from the NCAA.com
-box scores (`realdata.py` turns each one into the game's stat lines and matches 93% of
+box scores (`sim/realdata.py` turns each one into the game's stat lines and matches 93% of
 player lines to a roster player by name and jersey number). Every FBS game opens its real
 box score; player pages show the real season, a real game-by-game log and FBS ranks; the
 Awards tab runs a real Heisman straw poll and award races on the real numbers. Pick any
 team in the header to follow it. "Refresh real data" downloads the latest results, box
-scores and polls (a few minutes) and rebuilds; `python realdata.py --fetch` does the same
+scores and polls (a few minutes) and rebuilds; `python -m sim.realdata --fetch` does the same
 from the command line. The page never simulates anything; the sim sections are "Sim a
 game" and "Sim a season".
 
@@ -1630,7 +1641,7 @@ Famous Idaho Potato, New Orleans, 68 Ventures, Poinsettia, Puerto Rico, Frisco F
 Classic, Salute to Veterans). Each bowl fills its two slots from its contracted
 conferences, taking the best remaining team there by the committee's final order, then
 record, then rating. Wikipedia's infobox mixes historical and current partners, so the
-slots used for selection are a curated 2026 table in `bowls.py` (for example Citrus: SEC
+slots used for selection are a curated 2026 table in `sim/bowls.py` (for example Citrus: SEC
 vs Big Ten; Alamo: Big 12 vs Pac-12; Gator: ACC vs SEC; Hawaii: Mountain West vs
 American). When a conference has no eligible team left, a Group of Five bowl takes the
 best remaining Group of Five team and a power-conference bowl takes the best remaining
@@ -1687,7 +1698,7 @@ Attribution choices use a separate random source, so game results for a given se
 unchanged. Rosters now carry class, height, weight, jersey and the depth-chart role (LT,
 LG, C, RG, RT, edge, DT, SAM/MIKE/WILL, CB, FS, SS).
 
-`awards.py` scores every player from the season stats: a production score per position
+`sim/awards.py` scores every player from the season stats: a production score per position
 (for example a quarterback's yards, touchdowns, interceptions and passer rating), then
 standardized against the league's starters at that position so a cross-position vote can
 compare a quarterback with a back. Each award is a pool (position, class, role), a
@@ -1738,7 +1749,7 @@ the year profile against the research targets.
 ### Player cards: the ratings that matter
 
 A player card shows the ratings that matter at his position, most important first
-(`POSITION_RATINGS` in season.py: passing, decisions and awareness for a quarterback;
+(`POSITION_RATINGS` in sim/season.py: passing, decisions and awareness for a quarterback;
 coverage, speed and tackling for a corner; kick power and accuracy for a kicker, and so
 on; a returner gets his return rating too). "All ratings" opens a modal with every
 rating he carries, the position ratings marked, morale arrows and god-mode edits
@@ -1873,7 +1884,7 @@ band.
 `tools/fetch_boxscores.py` pulls the full player box score for every final game from NCAA.com
 (the same feed its game pages use), `tools/derive_tendencies.py` turns them into each team's
 observed 2026 pass rate, pace, quarterback run share, fourth-down rate and backfield split
-(which `build_teams.py` feeds into the sim in place of the generated coach tendencies), and
+(which `teamdata/build_teams.py` feeds into the sim in place of the generated coach tendencies), and
 `tools/calibrate_players.py` replays every game 8 times and compares the sim's player lines
 with the real ones. Per team-game, 333 games (bias is sim minus real; "corr" is whether
 the sim knows which teams or players get more):
@@ -1938,7 +1949,7 @@ teams do.
 
 The sim now knows which real teams ride one back. `tools/derive_tendencies.py` computes
 each team's observed split (the top back's share of running back carries in an average
-game, `rb1_share`, and the second back's), `build_teams.py` passes it into the team's
+game, `rb1_share`, and the second back's), `teamdata/build_teams.py` passes it into the team's
 tendencies for every team with two or more box scores, and `roster.Team._lead_profile`
 reads the feature score off `RB_LEAD_SHARE_CURVE` in `engine/game_config.py`, the share
 each feature produces in the sim (measured by forcing a feature over 120 real games),
@@ -1970,7 +1981,7 @@ to 74.0%, Brier 0.182 both; real-versus-sim wins correlation 0.62 to 0.66;
 `calibrate_season.py 30` 74.5%, MAE 12.4, slope 1.02).
 
 Weekly refresh, in order: `python tools/fetch_results.py`, `python tools/fetch_boxscores.py`,
-`python tools/derive_tendencies.py`, `python build_teams.py`, then the three calibration scripts.
+`python tools/derive_tendencies.py`, `python -m teamdata.build_teams`, then the three calibration scripts.
 footballdb.com (season team stat tables, past seasons) is reachable from Python as well
 and is a good cross-check for the team-level numbers; NCAA.com stays the primary source.
 
@@ -1980,13 +1991,13 @@ The preseason ratings never moved during a season, so by midseason the sim was s
 rating teams the way the rosters looked in August while the market had six weeks of
 results priced in. On the week 7 forward test the market beat the sim 12-5 when the two
 disagreed on a winner, and the gap sat in G5 games, where the roster ratings are
-thinnest. `form.py` fits one number per team, in points of margin, by ridge least
+thinnest. `sim/form.py` fits one number per team, in points of margin, by ridge least
 squares on the real 2026 margins (`data/season_games.json`): margin = home field +
 preseason gap + form of the home team minus form of the away team. Margins are capped at
 28 so a blowout does not swing a team, and the ridge pulls toward zero, so after n games
 a team keeps n / (n + 4) of what the results say. The sim carries the form as a shift of
 every player's ratings (points divided by 1.36, the sim's margin per rating point, capped
-at 12). `python form.py [through_week]` prints the table.
+at 12). `python -m sim.form [through_week]` prints the table.
 
 The forward test fits the form from every result before the predicted week and sims with
 the shifted ratings (`--no-form` for preseason ratings only; the frozen file records each
@@ -2012,7 +2023,7 @@ week 7 back-test reads 72.9% straight up, 38-19-2 against the closing spread, ma
 
 ### Player form (fitted, shown, not applied)
 
-`form.py` also fits every matched player from the real box scores: his production
+`sim/form.py` also fits every matched player from the real box scores: his production
 (passer rating, yards a carry with volume, receiving yards a game, field goal rate, punt
 average, tackles with loss tackles, sacks and interceptions weighted) placed on the
 league's distribution for his position, against where his rating sits among the league's

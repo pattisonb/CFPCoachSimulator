@@ -30,10 +30,10 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
-import game_scale
-import recruits
+from teamdata import game_scale
+from coach_career import recruits
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]   # the project root
 SOURCE_DIR = ROOT / "cfb_sim_data" / "teams"
 CACHE_DIR = ROOT / "data" / "leagues"
 FIRST_YEAR = 2026
@@ -146,7 +146,7 @@ def formation(t: dict) -> dict:
 def from_base(year: int = FIRST_YEAR + 1) -> dict:
     """Every FBS team's real 2026 roster, coaches and lineup shape as a league (before the first
     offseason's departures). Head coaches keep the recruiting ratings the build measured."""
-    import build_teams
+    from teamdata import build_teams
     attrs = game_scale.keys()
     usage = _real_usage()            # receivers' real target shares (the lead-back use goes with the style, source_team)
     teams = {}
@@ -266,7 +266,7 @@ def source_teams(league: dict) -> list[dict]:
 
 def build(league: dict) -> dict:
     """The league as the engine's teams file (build_teams.build, without the real 2026 adjustments)."""
-    import build_teams
+    from teamdata import build_teams
     styles = {s: t.get("style", s) for s, t in league["teams"].items()}
     return build_teams.build(source_teams(league), real=False, quiet=True, styles=styles)
 

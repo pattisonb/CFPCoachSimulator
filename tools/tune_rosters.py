@@ -21,8 +21,8 @@ REAL = {"FR": .151, "FRRS": .122, "SO": .086, "SORS": .149, "JR": .086, "JRRS": 
 
 
 def fake_season(s: dict) -> None:
-    import recruiting
-    import season
+    from coach_career import recruiting
+    from sim import season
     from test_offseason import finished
     rc = s["recruiting"]
     teams = season.load_teams()
@@ -47,7 +47,7 @@ def fake_season(s: dict) -> None:
 
 
 def report(label: str) -> None:
-    import season
+    from sim import season
     cls, young, n = collections.Counter(), 0, 0
     sizes = []
     for t in season.load_teams().values():
@@ -66,9 +66,9 @@ def report(label: str) -> None:
 
 
 def main() -> None:
-    import league
-    import offseason
-    import season
+    from coach_career import league
+    from coach_career import offseason
+    from sim import season
     n = int(sys.argv[1]) if len(sys.argv) > 1 and "=" not in sys.argv[1] else 4
     for arg in sys.argv[1:]:
         if "=" in arg:

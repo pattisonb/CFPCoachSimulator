@@ -1,6 +1,6 @@
 /* Your coach: create a head coach (identity, background, ratings, coaching style, look), save
    him, and start a season with him. The style sliders are on the league scale (50 = the FBS
-   average) and change how his team plays (coaches.py, apply_coach). */
+   average) and change how his team plays (sim/coaches.py, apply_coach). */
 (function () {
   const { el } = window.CFP;
   const $ = (s) => document.querySelector(s);

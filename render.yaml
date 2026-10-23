@@ -6,7 +6,7 @@ services:
     name: cfp-coach-simulator
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt && python build_teams.py
+    buildCommand: pip install -r requirements.txt && python -m teamdata.build_teams
     startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION

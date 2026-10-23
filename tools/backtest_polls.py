@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import polls  # noqa: E402
+from sim import polls  # noqa: E402
 from calibrate_polls import load, season_frames  # noqa: E402
 
 TRAIN = [str(y) for y in range(2014, 2024)]

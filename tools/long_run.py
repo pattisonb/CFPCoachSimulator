@@ -41,7 +41,7 @@ GROUP = {"QB": "QB", "RB": "RB", "WR": "WR", "TE": "TE", "OL": "OL", "DL": "DL",
 
 def season_metrics(state: dict) -> dict:
     import realism
-    import season
+    from sim import season
     teams = season.load_teams()
     fbs = {s: t for s, t in teams.items() if not t["fictional"]}
     ovr = [t["team_ratings"]["overall"] for t in fbs.values()]
@@ -110,7 +110,7 @@ def offseason_metrics(state: dict) -> dict:
     sizes = [len(t["roster"]) for t in lg["teams"].values()]
     classes = collections.Counter(p["cls"] for t in lg["teams"].values() for p in t["roster"])
     total = sum(classes.values())
-    import season
+    from sim import season
     teams = season.load_teams()
     draft = [d for d in off["departures"] if d["kind"] == "draft"]
     p4_picks = sum(1 for d in draft if season._is_p4(d["team"], teams[d["team"]]))
@@ -135,8 +135,8 @@ def offseason_metrics(state: dict) -> dict:
 
 
 def run(seasons: int, seed: int, team: str, out: Path) -> None:
-    import offseason
-    import season
+    from coach_career import offseason
+    from sim import season
     rows = []
     st_ = season.new_season(team, "full", seed=seed, career=True)
     st_["career"]["settings"]["auto_recruit"] = "season"
@@ -164,7 +164,7 @@ def run(seasons: int, seed: int, team: str, out: Path) -> None:
               f"OL {row['starters_ovr'].get('OL', 0):.1f}  ppg {row['ppg']:.1f}  stats off "
               f"{100 * st.mean(row['stats_off'].values()):.1f}%  draft early {o['early_entrants']}  portal {o['portal_entrants']}/"
               f"{o['portal_signed']}  walk-ons {o['walk_ons']}  ({row['seconds']['season']}s + {row['seconds']['offseason']}s)", flush=True)
-    import league
+    from coach_career import league
     league.forget(st_["id"])
     season.close_pool()
 

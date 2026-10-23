@@ -1,7 +1,7 @@
 # Ratings v2: proposal
 
 Status (October 20, 2026): agreed. Brian's answers to the open questions: keep the house scale,
-roll out phase by phase, build traits in this revamp. Phase 1 is built: `ratings.py` holds the
+roll out phase by phase, build traits in this revamp. Phase 1 is built: `teamdata/ratings.py` holds the
 catalogue; build_teams writes each player's attributes (house scale), height in inches,
 play style and traits; the player card, its details view and god mode use them; edits move
 the engine composites through `ratings.COMPOSITES`. The sim is unchanged (same play-log

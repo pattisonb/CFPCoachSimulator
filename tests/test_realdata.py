@@ -4,9 +4,9 @@ an unmatched player's position comes from his whole line; net punting sits under
 import sys as _sys
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 
-import realdata as rd  # noqa: E402
+from sim import realdata as rd  # noqa: E402
 
 ROSTER = {"offense": [{"name": "Zacharyus Williams", "position": "WR", "jersey": "0", "slug": "zw"},
                       {"name": "Theo Melin Öhrström", "position": "TE", "jersey": "18", "slug": "tmo"},

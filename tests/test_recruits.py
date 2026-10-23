@@ -5,14 +5,14 @@ in the source format build_teams reads. (Run as a file: multiprocessing on Windo
 import sys as _sys
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 import json
 import random
 import statistics as st
 from collections import Counter
 
-import build_teams
-import recruits
+from teamdata import build_teams
+from coach_career import recruits
 
 if __name__ == "__main__":
     real = set()

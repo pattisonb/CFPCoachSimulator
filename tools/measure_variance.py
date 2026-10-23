@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import season  # noqa: E402
+from sim import season  # noqa: E402
 
 MATCHUPS = [("ohio-state", "michigan"), ("alabama", "auburn"), ("texas", "oklahoma"), ("boise-state", "fresno-state"),
             ("mtsu", "delaware"), ("georgia", "vanderbilt"), ("iowa", "minnesota"), ("ucf", "usf"), ("notre-dame", "usc"), ("akron", "kent-state")]

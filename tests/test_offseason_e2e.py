@@ -22,8 +22,8 @@ if __name__ == "__main__":
     except ImportError:
         print("offseason e2e skipped: Playwright is not installed")
         raise SystemExit(0)
-    import league
-    import season
+    from coach_career import league
+    from sim import season
     from test_offseason import finished
     st = season.new_season("georgia", "full", seed=8, career=True)
     finished(st)

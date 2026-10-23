@@ -34,9 +34,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-import polls  # noqa: E402
-import season  # noqa: E402
-from teamnames import build_matcher, match  # noqa: E402
+from sim import polls  # noqa: E402
+from sim import season  # noqa: E402
+from sim.teamnames import build_matcher, match  # noqa: E402
 
 PRED_DIR = ROOT / "data" / "predictions"
 HISTORY_POLLS = ROOT / "data" / "history" / "polls.json"

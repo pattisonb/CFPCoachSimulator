@@ -6,8 +6,8 @@ from the real NCAA.com box scores (data/boxscores, tools/fetch_boxscores.py) so 
 Awards and player pages show real numbers. Every real box score is saved with the season
 so any game opens. Players are matched to the rosters by name and jersey number.
 
-    python realdata.py                 # rebuild data/seasons/real-2026.json from the data on disk
-    python realdata.py --fetch         # download the latest results, box scores and polls first
+    python -m sim.realdata             # rebuild data/seasons/real-2026.json from the data on disk
+    python -m sim.realdata --fetch     # download the latest results, box scores and polls first
 
 The server rebuilds it on demand when the data on disk is newer than the saved season.
 """
@@ -22,10 +22,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-import season
-from teamnames import build_matcher, match
+from sim import season
+from sim.teamnames import build_matcher, match
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]   # the project root
 REAL_ID = "real-2026"
 GAMES_FILE = ROOT / "data" / "season_games.json"
 BOX_DIR = ROOT / "data" / "boxscores"

@@ -2,7 +2,7 @@ __pycache__/
 *.pyc
 .venv/
 .claude/
-# generated or local-only data (rebuild with build_teams.py; history is per machine)
+# generated or local-only data (rebuild with python -m teamdata.build_teams; history is per machine)
 data/engine_teams.json
 data/player_potential.json
 data/games.json

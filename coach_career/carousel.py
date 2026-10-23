@@ -17,7 +17,7 @@ import math
 import random
 from typing import Optional
 
-import recruits
+from coach_career import recruits
 
 # goals, by the program's recruiting baseline (about -2 to +2): (from, kind, wins, words) *tune*
 GOALS = ((1.2, "playoff", 10, "Make the College Football Playoff"), (0.5, "wins", 9, "Win nine games"),
@@ -40,13 +40,13 @@ def _rng(state: dict, what: str) -> random.Random:
 
 
 def baseline(slug: str) -> float:
-    import recruiting
+    from coach_career import recruiting
     return recruiting._baseline(slug)
 
 
 def goal(slug: str) -> dict:
     """What the AD expects every year."""
-    import season
+    from sim import season
     b = baseline(slug)
     p4 = season._is_p4(slug, season.load_teams()[slug])
     if not p4 and b >= G5_TITLE_FROM:
@@ -69,7 +69,7 @@ def ad(team: dict, slug: str) -> dict:
 
 def _results(state: dict) -> dict[str, dict]:
     """Each program's season: wins, losses, conference title, playoff, national title."""
-    import season
+    from sim import season
     recs = season._records(state, include_playoff=True)
     playoff = {g[s] for g in state["games"].values() if g.get("kind") == "playoff" for s in ("home", "away")}
     champs = set((state.get("champions") or {}).values())
@@ -103,7 +103,7 @@ def judge(team: dict, slug: str, res: dict, year: int) -> dict:
 def new_style(rng: random.Random, lgd: dict, slug: str) -> str:
     """A new head coach brings his own way of playing: the observed 2026 style of a real program
     (data/observed_tendencies.json), so every team keeps playing like a real one does."""
-    import build_teams
+    from teamdata import build_teams
     obs = json.loads(build_teams.OBSERVED.read_text(encoding="utf-8"))["teams"] if build_teams.OBSERVED.exists() else {}
     pool = sorted(s for s, o in obs.items() if o.get("games", 0) >= 2 and s != slug)
     return rng.choice(pool) if pool else slug
@@ -138,7 +138,7 @@ def generated(rng: random.Random, lgd: dict, role: str, slug: str, year: int, li
 def run(state: dict) -> dict:
     """The whole carousel for the offseason: verdicts, departures, the hiring chain, coordinators,
     your staff and your job. Returns the record shown on the Offseason screen."""
-    import season
+    from sim import season
     lgd = state["league"]
     year = state["offseason"]["year"]
     rng = _rng(state, "run")
@@ -256,7 +256,7 @@ def _pick_head_coach(state: dict, slug: str, verdicts: dict, res: dict, filled: 
 
 
 def _name(slug: str) -> str:
-    import season
+    from sim import season
     return season.load_teams()[slug]["name"]
 
 
@@ -273,7 +273,7 @@ def status(state: dict) -> dict:
 
 
 def job_rows(state: dict, slugs: list[str]) -> list[dict]:
-    import season
+    from sim import season
     teams = season.load_teams()
     return [{"team": s, "name": teams[s]["name"], "conference": teams[s]["conference"], "goal": goal(s)["text"],
              "rating": teams[s]["team_ratings"]["overall"]} for s in slugs]

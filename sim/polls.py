@@ -27,7 +27,7 @@ import random
 from pathlib import Path
 from typing import Optional
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]   # the project root
 PARAMS_FILE = ROOT / "data" / "poll_params.json"
 
 P4 = {"ACC", "Big Ten", "Big 12", "SEC"}

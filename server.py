@@ -1,7 +1,7 @@
 """CFP Coach Simulator web server.
 
 Serves the single-page site in `web/` and a JSON API that runs games between any two
-teams in `data/engine_teams.json` (built from `cfb_sim_data/` by `build_teams.py`) and
+teams in `data/engine_teams.json` (built from `cfb_sim_data/` by `teamdata/build_teams.py`) and
 keeps a history of results in `data/games.json`.
 
 Run:  python server.py        (then open http://127.0.0.1:8000)
@@ -27,14 +27,14 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from engine.game import SLIDER_NAMES, default_sliders, simulate_game
-import career
-import league
-import offseason
-import prospects
-import realdata
-import recruiting
-import season
-import coaches
+from coach_career import career
+from coach_career import league
+from coach_career import offseason
+from coach_career import prospects
+from sim import realdata
+from coach_career import recruiting
+from sim import season
+from sim import coaches
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
@@ -79,9 +79,9 @@ _season_jobs: dict[str, dict] = {}   # season simulations, by job id
 
 def _load_teams() -> None:
     global _teams
-    builder = ROOT / "build_teams.py"
+    builder = ROOT / "teamdata" / "build_teams.py"
     if not TEAMS_FILE.exists() or builder.stat().st_mtime > TEAMS_FILE.stat().st_mtime:   # missing, or built by an older builder
-        subprocess.run([sys.executable, str(ROOT / "build_teams.py")], check=True)
+        subprocess.run([sys.executable, "-m", "teamdata.build_teams"], cwd=ROOT, check=True)
     _teams = json.loads(TEAMS_FILE.read_text(encoding="utf-8"))["teams"]
 
 
