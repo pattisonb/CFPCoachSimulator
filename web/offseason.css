@@ -31,3 +31,5 @@
   .off-table { font-size: 13px; }
   .off-table th, .off-table td { padding: 5px 6px; }
 }
+.go-job { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0 10px; }
+.go-job .go-tag { margin-left: auto; }

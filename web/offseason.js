@@ -157,17 +157,46 @@
     const r = v.report || { mine: [] };
     main.append(el("section", { class: "go-card" }, [
       el("div", { class: "go-kicker", text: "WHO IMPROVED" }),
-      el("p", { class: "muted", text: `Every returning player grows toward his potential at his coachability's pace, faster under good developers. ${r.walk_ons} walk-ons joined around the league to fill out rosters.` }),
+      el("p", { class: "muted", text: `Every returning player grows toward his potential at his coachability's pace, faster under good developers and faster still after a big year: production and honors raise a player's ceiling and his pace. ${r.walk_ons} walk-ons and lower-level transfers joined around the league to fill out rosters.` }),
       el("ul", { class: "off-list" }, r.mine.map((d) => el("li", {}, [el("b", { text: d.name }), el("span", { class: "muted", text: ` ${d.pos} · ${d.cls} · now ${d.overall} OVR ` }),
-        el("span", { class: `go-tag ${d.gain > 0 ? "good" : "muted"}`, text: d.gain > 0 ? `+${d.gain}` : "no change" })])))]));
+        el("span", { class: `go-tag ${d.gain > 0 ? "good" : "muted"}`, text: d.gain > 0 ? `+${d.gain}` : "no change" }),
+        ...(d.why || []).map((w) => el("span", { class: `go-tag ${/Struggled/.test(w) ? "bad" : "warn"}`, text: w }))])))]));
+  }
+
+  function renderJob(s, v) {
+    const j = v.job;
+    if (!j) return null;
+    const you = j.you || {};
+    const card = el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: "YOUR JOB" })]);
+    if (you.goal) card.append(el("p", {}, [`Your AD's goal: ${you.goal.text}. `, you.met ? "You met it." : "You fell short.",
+      ` Job security ${you.security} of 100 (patience: ${you.patience} years).`]));
+    const list = you.fired ? j.openings : j.offers;
+    if (you.fired) card.append(el("p", {}, [el("b", { text: "You have been fired. " }), "Pick your next job from the openings (Auto takes the best one)."]));
+    else if (list.length) card.append(el("p", { text: "After the year you had, these programs want you as their head coach:" }));
+    else card.append(el("p", { class: "muted", text: "No offers this year. Win big and better programs with an opening will call." }));
+    for (const o of list) {
+      const picked = j.choice === o.team;
+      const b = el("button", { type: "button", class: `go-card off-cand ${picked ? "picked" : ""}`, "aria-pressed": String(picked) }, [
+        el("span", {}, [window.CFP.teamPill(o.team), el("b", { text: ` ${o.name}` })]),
+        el("span", { class: "muted small", text: `${o.conference} · team rating ${Math.round(o.rating)} · goal: ${o.goal}` }),
+        el("span", { class: "go-tag", text: picked ? "Taking it" : "Take this job" })]);
+      b.addEventListener("click", async () => {
+        try { await H.api(`/api/season/${s.id}/offseason/job`, H.postJSON({ team: picked ? null : o.team })); render(s, document.getElementById("tab-offseason"), H); }
+        catch (err) { H.toast(H.errText(err)); }
+      });
+      card.append(b);
+    }
+    return card;
   }
 
   function renderStaff(s, v, main) {
+    const job = renderJob(s, v);
+    if (job) main.append(job);
     const st = v.staff || { leaving: [], candidates: {}, hired: {} };
     const card = el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: "YOUR STAFF" })]);
     if (!st.leaving.length) card.append(el("p", { text: "Your whole staff is back. Everyone grew a little." }));
     for (const who of st.leaving) {
-      card.append(el("p", {}, [el("b", { text: `${who.role} ${who.name}` }), who.role === "Recruiter" ? " is moving on." : " was hired away after your season."]));
+      card.append(el("p", {}, [el("b", { text: `${who.role} ${who.name}` }), who.role === "Recruiter" ? " is moving on." : " was hired away as a head coach."]));
       const row = el("div", { class: "off-cands" });
       (st.candidates[who.id] || []).forEach((c, i) => {
         const picked = st.hired[who.id] === i;
@@ -184,14 +213,16 @@
     }
     const coaches = el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: "COACHING CAROUSEL" }),
       v.coaching_changes.length ? el("ul", { class: "off-list" }, v.coaching_changes.map((c) => el("li", {}, [window.CFP.teamPill(c.team),
-        ` ${teamName(c.team)}: ${c.old} ${c.reason}; ${c.new} takes over.`])))
+        c.reason === "hired" ? ` ${teamName(c.team)} hires ${c.new}${c.from ? ` (${c.from})` : ""}.` : ` ${teamName(c.team)}: ${c.old} ${c.reason}.`])))
         : el("p", { class: "muted", text: "No head coaching changes this year." })]);
     main.append(el("div", { class: "off-grid" }, [card, coaches]));
   }
 
   function renderReady(v, main) {
+    const moving = v.job && v.job.moving_to;
     main.append(el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: "READY" }),
-      el("p", { text: `Your roster is set at ${v.roster}. A new class of high school seniors is waiting, and the ${v.year} schedule is out.` })]));
+      el("p", { text: moving ? `You are the new head coach at ${teamName(moving)}. A new class of high school seniors is waiting, and the ${v.year} schedule is out.`
+        : `Your roster is set at ${v.roster}. A new class of high school seniors is waiting, and the ${v.year} schedule is out.` })]));
   }
 
   function renderHistory(v) {

@@ -27,6 +27,14 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 
+# the 25 best programs by the real 2026 team ratings (fixed: the tiers the long run follows)
+def _top25() -> set:
+    import json as _json
+    d = _json.loads((ROOT / "data" / "engine_teams.json").read_text(encoding="utf-8"))["teams"]
+    return set([s for s, t in sorted(d.items(), key=lambda kv: -kv[1]["team_ratings"]["overall"]) if not t["fictional"]][:25])
+
+
+TOP25 = _top25()
 GROUP = {"QB": "QB", "RB": "RB", "WR": "WR", "TE": "TE", "OL": "OL", "DL": "DL", "MLB": "LB", "ROLB": "LB", "LOLB": "LB",
          "CB": "CB", "S": "S", "K": "K", "P": "P"}
 
@@ -46,6 +54,23 @@ def season_metrics(state: dict) -> dict:
                 everyone.append(p["ea_overall"])
                 if p.get("in_game"):
                     starters[GROUP.get(p["position"], p["position"])].append(p["ea_overall"])
+    # by tier: the 25 best programs by 2026 team rating, the rest of the Power 4, the Group of 5
+    tiers = {}
+    for s_, t in fbs.items():
+        tier = "top25" if s_ in TOP25 else "p4" if season._is_p4(s_, t) else "g5"
+        st_ = [p["ea_overall"] for p in t["offense"] + t["defense"] if p.get("in_game") and p.get("ea_overall")]
+        tiers.setdefault(tier, {"starters": [], "rating": [], "recruits": []})
+        tiers[tier]["starters"].append(st.mean(st_))
+        tiers[tier]["rating"].append(t["team_ratings"]["overall"])
+    rc = state.get("recruiting") or {}
+    for pid, s_ in (rc.get("status") or {}).items():
+        school = s_.get("signed")
+        if school in fbs:
+            tier = "top25" if school in TOP25 else "p4" if season._is_p4(school, fbs[school]) else "g5"
+            tiers[tier]["recruits"].append(rc["prospects"][pid]["composite"])
+    tier_out = {k: {"starters": round(st.mean(v["starters"]), 2), "rating": round(st.mean(v["rating"]), 2),
+                    "recruit_composite": round(st.mean(v["recruits"]), 4) if v["recruits"] else None,
+                    "signed_per_team": round(len(v["recruits"]) / len(v["rating"]), 1)} for k, v in tiers.items()}
     final = state["polls"].get(str(season.FINAL_WEEK)) or {}
     rec = season._records(state, include_playoff=True)[state["team"]]
     data: dict = {}
@@ -57,7 +82,7 @@ def season_metrics(state: dict) -> dict:
                         "p4": round(st.mean(p4), 2), "g5": round(st.mean(g5), 2)},
         "starters_ea": {g: round(st.mean(v), 2) for g, v in sorted(starters.items())},
         "players_ea": round(st.mean(everyone), 2),
-        "stats_off": {k: round(v, 4) for k, v in data["area_off"].items()},
+        "stats_off": {k: round(v, 4) for k, v in data["area_off"].items()}, "tiers": tier_out,
         "ppg": round(data["teams"]["ppg"]["sim_mean"], 2), "ypg": round(data["teams"]["ypg"]["sim_mean"], 1),
     }
 
@@ -110,6 +135,8 @@ def run(seasons: int, seed: int, team: str, out: Path) -> None:
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps({"seed": seed, "team": team, "seasons": rows}, indent=1), encoding="utf-8")
         o = row["offseason"]
+        tr = row["tiers"]
+        print("      tiers " + "  ".join(f"{k} st {v['starters']:.1f} rtg {v['rating']:.1f} rec {v['recruit_composite'] or 0:.3f} x{v['signed_per_team']}" for k, v in sorted(tr.items())), flush=True)
         print(f"{row['year']} champ {row['champion']:<14} {team} {row['record'][0]}-{row['record'][1]}  "
               f"team rtg {row['team_rating']['mean']:.1f}±{row['team_rating']['sd']:.1f}  QB {row['starters_ea'].get('QB', 0):.1f} "
               f"OL {row['starters_ea'].get('OL', 0):.1f}  ppg {row['ppg']:.1f}  stats off "

@@ -28,7 +28,8 @@ GROUP = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL",
          "K": "K", "P": "P"}
 # a healthy roster's players per group (the real 2026 FBS mean) and the floor walk-ons top up to
 TARGET = {"QB": 4, "RB": 6, "WR": 10, "TE": 6, "OL": 15, "DL": 15, "LB": 9, "CB": 8, "S": 8, "K": 2, "P": 2}
-LOWER_LEVEL = 0.5          # the share of roster top-ups who come from FCS or junior college (three-stars, a year or two in), not walk-ons
+LOWER_LEVEL = 0.4          # the share of roster top-ups who come from FCS or junior college (three-stars, a year or two in), not walk-ons
+LOWER_LEVEL_P4 = 0.15     # ... at a Power 4 school (mostly walk-ons there)
 FLOOR = {"QB": 3, "RB": 3, "WR": 6, "TE": 3, "OL": 10, "DL": 9, "LB": 5, "CB": 5, "S": 4, "K": 1, "P": 1}
 ENGINE_POS = {"QB": "QB", "RB": "RB", "WR": "WR", "TE": "TE", "OL": "OL", "DL": "DL", "LB": "MLB", "CB": "CB", "S": "S", "K": "K", "P": "P"}
 
@@ -47,21 +48,20 @@ UNDERCLASS_ELIGIBLE = {"JR", "JRRS", "SORS"}       # three years out of high sch
 PORTAL_BASE = {"FR": 0.07, "FRRS": 0.13, "SO": 0.15, "SORS": 0.18, "JR": 0.14, "JRRS": 0.17, "SR": 0.26}
 PORTAL_USAGE = {"starter": 0.12, "rotation": 0.65, "bench": 1.3}
 PORTAL_LOSING = 1.25                               # a losing season pushes players out
+TRANSFER_UP_FROM, TRANSFER_UP = 50, 0.40              # a Group of 5 player this good (card overall) enters this often
 QUIT = 0.012                                       # quitting or a medical retirement, a year
 QUIT_LOW = 2.5                                     # ... this much likelier in the team's bottom 15%
 
 # ----- the portal *tune* -----
 PORTAL_OFFER_FACTOR = 2.0                          # a school's offers a round, times its open spots
+CHURN = 8                                          # portal spots a Power 4 school makes by releasing its weakest players
 OPEN_TAKE_ANY = 4                                  # with this many open spots a school takes good players at any position
-PT_WEIGHT, PRESTIGE_WEIGHT, WIN_WEIGHT, HOME_WEIGHT, PICK_NOISE = 2.0, 1.0, 0.6, 0.4, 0.5
+# an entrant's choice: playing time, the program (its recruiting pull and team rating), winning, home
+PT_WEIGHT, PRESTIGE_WEIGHT, RATING_WEIGHT, WIN_WEIGHT, HOME_WEIGHT, PICK_NOISE = 1.0, 0.8, 0.3, 0.6, 0.4, 0.5
 
 # ----- development and staff *tune* -----
+PROGRAM_DEV = 0.10                                 # development rate per point of the program's recruiting baseline
 COORD_SHARE = 0.4                                  # the coordinator's part of a player's coach factor
-HC_RETIRE = 0.04                                   # a head coach retires, a year (more after a long tenure)
-HC_FIRE_BELOW = 0.40                               # a Power 4 coach under this over three years may be fired
-HC_FIRE = 0.55
-COORD_TURNOVER = 0.15
-STAFF_POACH = 0.35                                 # your coordinator hired away after a big year, at 90
 RECRUITER_LEAVE = 0.12
 
 
@@ -125,8 +125,94 @@ def start(state: dict) -> dict:
     signed = _sign_classes(state, lgd)
     state["offseason"] = {"stage": "departures", "year": year, "departures": deps,
                           "portal": {"players": entrants, "round": 1, "offers": {}, "moves": []},
-                          "signed": signed, "staff": None, "report": None}
+                          "signed": signed, "staff": None, "report": None, "performance": _performance(state)}
     return state["offseason"]
+
+
+# ----- the season's production and honors, for development *tune* -----
+PERF_RATE = 0.25                 # development rate change per standard deviation of production over the average starter's
+PERF_RANGE = (-1.0, 2.4)         # ... so a player develops 0.75 to 1.6 times as fast
+BREAKOUT_FROM = 1.0              # production this far over the average starter raises his ceiling ...
+BREAKOUT_ROOM = 1.5              # ... by this many EA points per standard deviation beyond half of one
+HONOR_ROOM = {"heisman": 5, "national": 4, "all_america_1": 3, "national_finalist": 2, "all_america_2": 2,
+              "conference_award": 2, "all_conference_1": 1, "all_conference_2": 1}
+HONOR_NAMES = {"heisman": "Heisman Trophy", "all_america_1": "All-America first team", "all_america_2": "All-America second team",
+               "all_conference_1": "All-conference first team", "all_conference_2": "All-conference second team"}
+ROOM_CAP = 7                     # the most a year's honors and production add to his ceiling
+LEVEL_UP = 0.4                   # a national award winner or All-American moves up a coachability level this often
+PHYSICAL = {"speed", "acceleration", "agility", "change_of_direction", "jumping", "stamina", "injury", "toughness", "strength",
+            "kick_power", "throw_power"}   # gifts and body: production does not raise these ceilings
+
+
+def _performance(state: dict) -> dict[str, dict]:
+    """player id -> {"z": production against the average starter at his group, "honors": [(kind, name)]}
+    from the season's stats (awards.Pool, the same scores the awards use) and its honors."""
+    import awards
+    import season
+    teams = season.load_teams()
+    ids = {(slug, p["name"], p["position"]): p["slug"] for slug, t in teams.items() for p in t["offense"] + t["defense"]}
+    out: dict[str, dict] = {}
+    if state.get("season_stats"):
+        pool = awards.Pool(state, teams, season._records(state, include_playoff=True))
+        for p in pool.players:
+            sid = ids.get((p["team"], p["name"], p["position"]))
+            z = p["zb"].get(p["group"])
+            if sid and z is not None and pool.played_enough(p):
+                out[sid] = {"z": round(z, 2), "honors": []}
+
+    def honor(c: Optional[dict], kind: str, name: str) -> None:
+        sid = c and ids.get((c.get("team"), c.get("name"), c.get("position")))
+        if sid:
+            out.setdefault(sid, {"z": None, "honors": []})["honors"].append((kind, name))
+
+    aw = state.get("awards") or {}
+    nat = aw.get("national") or {}
+    h = nat.get("heisman") or {}
+    for i, c in enumerate((h.get("finalists") or [])[:4]):
+        honor(c, "heisman" if i == 0 else "national_finalist", "Heisman Trophy" if i == 0 else "Heisman finalist")
+    for a in (nat.get("awards") or []) + ((aw.get("postseason") or {}).get("awards") or []):
+        honor(a.get("winner"), "national", a["name"])
+        for c in (a.get("finalists") or [])[1:]:
+            honor(c, "national_finalist", f"{a['name']} finalist")
+    for row in ((nat.get("all_america") or {}).get("consensus") or []):
+        honor(row, f"all_america_{min(2, row.get('level', 1))}", HONOR_NAMES[f"all_america_{min(2, row.get('level', 1))}"])
+    for conf in (aw.get("conference") or {}).values():
+        for a in conf.get("awards") or []:
+            honor(a.get("winner"), "conference_award", a["name"])
+        seen = set()
+        for rows in ((conf.get("teams") or {}).get("selectors") or {}).values():
+            for row in rows:
+                key = (row.get("team"), row.get("name"))
+                if key in seen:
+                    continue
+                seen.add(key)
+                kind = f"all_conference_{min(2, row.get('level', 1))}"
+                honor(row, kind, HONOR_NAMES[kind])
+    return out
+
+
+def growth_terms(perf: Optional[dict]) -> tuple[float, int, list[str], bool]:
+    """(development rate multiplier, EA points added to his room in skill and football IQ, the
+    reasons, whether he may move up a coachability level) from a season's production and honors."""
+    if not perf:
+        return 1.0, 0, [], False
+    mult, room, why = 1.0, 0.0, []
+    z = perf.get("z")
+    if z is not None:
+        mult = 1 + PERF_RATE * max(PERF_RANGE[0], min(PERF_RANGE[1], z))
+        if z >= BREAKOUT_FROM:
+            room += BREAKOUT_ROOM * (z - 0.5)
+            why.append("Breakout season")
+        elif z <= -0.75:
+            why.append("Struggled as a starter")
+    kinds = [k for k, _ in perf.get("honors", [])]
+    pts = sorted((HONOR_ROOM.get(k, 0) for k in kinds), reverse=True)
+    if pts:
+        room += pts[0] + 0.5 * sum(pts[1:3])
+    names = list(dict.fromkeys(n for _, n in perf.get("honors", [])))
+    why += names[:3]
+    level_up = any(k in ("heisman", "national", "all_america_1") for k in kinds)
+    return mult, int(round(min(ROOM_CAP, room))), why, level_up
 
 
 def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict]:
@@ -154,6 +240,9 @@ def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict]:
     for pick, (score, slug, p) in enumerate(board[:fbs_picks], 1):
         drafted[p["id"]] = pick
     leaving: dict[str, set] = {slug: set() for slug in lgd["teams"]}
+    import season
+    teams = season.load_teams()
+    p4 = {slug: season._is_p4(slug, teams[slug]) for slug in lgd["teams"]}
     for slug, t in lgd["teams"].items():
         u = usage.get(slug, {})
         wins, losses = records[slug]
@@ -178,6 +267,8 @@ def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict]:
                     ev.update(kind="quit")
                 else:
                     chance = PORTAL_BASE.get(p["cls"], 0.15) * PORTAL_USAGE[use] * (PORTAL_LOSING if losing else 1.0)
+                    if not p4[slug] and house(p["pos"], p["o"]) >= TRANSFER_UP_FROM:
+                        chance = max(chance, TRANSFER_UP)            # a Group of 5 standout moves up
                     if rng.random() < chance:
                         ev.update(kind="portal")
                         q = dict(p, cls=nxt, yrs=0)
@@ -246,6 +337,11 @@ def _sign_classes(state: dict, lgd: dict) -> dict[str, int]:
 
 # ----- the transfer portal ----------------------------------------------------------------------
 
+def p4_school(slug: str) -> bool:
+    import season
+    return season._is_p4(slug, season.load_teams()[slug])
+
+
 def open_spots(lgd: dict, slug: str, portal: dict) -> int:
     taken = sum(1 for e in portal["players"].values() if e["signed"] == slug)
     return max(0, ROSTER_LIMIT - len(lgd["teams"][slug]["roster"]) - taken)
@@ -278,9 +374,11 @@ def playing_time(lgd: dict, slug: str, p: dict) -> float:
 
 
 def _prestige(slug: str) -> float:
+    """The program's pull on a transfer: its recruiting baseline (NIL, brand; about -2 to +2) and its team now."""
+    import recruiting
     import season
     t = season.load_teams().get(slug) or {}
-    return ((t.get("team_ratings") or {}).get("overall", 70) - 70) / 15
+    return PRESTIGE_WEIGHT * recruiting._baseline(slug) + RATING_WEIGHT * ((t.get("team_ratings") or {}).get("overall", 60) - 60) / 10
 
 
 def entrant_interest(state: dict, lgd: dict, slug: str, e: dict, rng: Optional[random.Random] = None) -> float:
@@ -288,7 +386,7 @@ def entrant_interest(state: dict, lgd: dict, slug: str, e: dict, rng: Optional[r
     wins, losses = _record(state, slug)
     home = 1.0 if lg.base_team(slug).get("state") == p.get("home") else 0.0
     noise = rng.gauss(0, PICK_NOISE) if rng else 0.0
-    return (PT_WEIGHT * playing_time(lgd, slug, p) + PRESTIGE_WEIGHT * _prestige(slug)
+    return (PT_WEIGHT * playing_time(lgd, slug, p) + _prestige(slug)
             + WIN_WEIGHT * wins / max(1, wins + losses) + HOME_WEIGHT * home + noise)
 
 
@@ -298,6 +396,8 @@ def ai_offers(state: dict, slug: str) -> list[str]:
     off = state["offseason"]
     lgd, portal = state["league"], off["portal"]
     spots = open_spots(lgd, slug, portal)
+    if p4_school(slug):
+        spots += max(0, CHURN - sum(1 for e in portal["players"].values() if e["signed"] == slug and e.get("churn")))
     if spots <= 0:
         return []
     roster = lgd["teams"][slug]["roster"]
@@ -309,9 +409,13 @@ def ai_offers(state: dict, slug: str) -> list[str]:
     for pid, e in free:
         p = e["player"]
         g = GROUP[p["pos"]]
+        vals = depth[g]
+        starter_bar = vals[min(len(vals) - 1, STARTERS[g] - 1)] if vals else 0
+        if p["o"] > starter_bar:                                         # he would start here: worth a spot, need or not
+            scored.append((10 + (p["o"] - starter_bar) / 2, pid))
+            continue
         if need[g] <= 0 and spots < OPEN_TAKE_ANY:
             continue
-        vals = depth[g]
         bar = vals[min(len(vals) - 1, STARTERS[g] + 3)] if vals else 0      # about as good as his depth there
         if p["o"] < bar - 4:
             continue
@@ -340,17 +444,23 @@ def resolve_round(state: dict) -> list[dict]:
             offers.setdefault(pid, []).append(slug)
     moves = []
     spots = {slug: open_spots(lgd, slug, portal) for slug in lgd["teams"]}
+    churn = {slug: max(0, CHURN - sum(1 for e in portal["players"].values() if e["signed"] == slug and e.get("churn")))
+             if p4_school(slug) and slug != me else 0 for slug in lgd["teams"]}
     for pid in sorted(offers, key=lambda q: -portal["players"][q]["player"]["o"]):
         e = portal["players"][pid]
         if e["signed"]:
             continue
         e["offers"] = sorted(set(e["offers"]) | set(offers[pid]))
-        choices = [s for s in offers[pid] if spots.get(s, 0) > 0]
+        choices = [s for s in offers[pid] if spots.get(s, 0) > 0 or churn.get(s, 0) > 0]
         if not choices:
             continue
         pick = max(choices, key=lambda s: entrant_interest(state, lgd, s, e, rng))
         e["signed"] = pick
-        spots[pick] -= 1
+        if spots.get(pick, 0) > 0:
+            spots[pick] -= 1
+        else:                          # a spot made by releasing the end of the roster (over 85 after the portal)
+            churn[pick] -= 1
+            e["churn"] = True
         moves.append({"id": pid, "name": e["player"]["n"], "pos": e["player"]["pos"], "from": e["from"], "to": pick,
                       "overall": house(e["player"]["pos"], e["player"]["o"]), "round": portal["round"]})
     portal["moves"] += moves
@@ -372,6 +482,13 @@ def _close_portal(state: dict) -> None:
 
 
 # ----- development ------------------------------------------------------------------------------
+
+def program_factor(slug: str) -> float:
+    """A program's own pull on development (facilities, staff size, strength and conditioning): its
+    recruiting baseline, about -2 to +2, at PROGRAM_DEV a point."""
+    import recruiting
+    return 1 + PROGRAM_DEV * recruiting._baseline(slug)
+
 
 def coach_factor(coaches: dict, pos: str) -> float:
     """His coaches' factor on development: the head coach's player development with the
@@ -405,19 +522,29 @@ def _develop_all(state: dict) -> dict:
     lgd = state["league"]
     rng = _rng(state, "develop")
     attrs = _attrs(lgd)
-    gains, mine = [], []
+    perf = state["offseason"].get("performance") or {}
+    levels = [name for name, _, _ in recruits.COACHABILITY]
+    gains, mine, breakouts = [], [], 0
     for slug, t in lgd["teams"].items():
         for p in t["roster"]:
             if p.pop("signed", False):
                 continue
-            g = develop(p, attrs, coach_factor(t["coaches"], p["pos"]), rng)
+            mult, room, why, level_up = growth_terms(perf.get(p["id"]))
+            if room:                       # a big year raises his ceiling where it shows: skill and football IQ
+                p["g"] = [g + room if k not in PHYSICAL else g for k, g in zip(attrs, p["g"])]
+                p["g"] = [min(g, 99 - v) for g, v in zip(p["g"], p["r"])]
+                breakouts += 1
+            if level_up and rng.random() < LEVEL_UP and p.get("c") in levels[1:]:
+                p["c"] = levels[levels.index(p["c"]) - 1]
+                why.append(f"Now a {p['c']}")
+            g = develop(p, attrs, coach_factor(t["coaches"], p["pos"]) * mult * program_factor(slug), rng)
             p["yrs"] = p.get("yrs", 0) + 1
             gains.append(g)
             if slug == state["team"]:
                 mine.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "gain": house(p["pos"], p["o"]) - house(p["pos"], p["o"] - g),
-                             "overall": house(p["pos"], p["o"])})
+                             "overall": house(p["pos"], p["o"]), "why": why})
     mine.sort(key=lambda r: -r["gain"])
-    return {"mean_gain_ea": round(st.mean(gains), 2) if gains else 0.0, "mine": mine}
+    return {"mean_gain_ea": round(st.mean(gains), 2) if gains else 0.0, "mine": mine, "raised_ceilings": breakouts}
 
 
 def _fill_rosters(state: dict) -> dict:
@@ -430,7 +557,9 @@ def _fill_rosters(state: dict) -> dict:
     added = released = 0
     walk_ons: dict[str, list] = {}
     taken: set = set()
+    import season
     for slug, t in lgd["teams"].items():
+        p4 = season._is_p4(slug, season.load_teams()[slug])
         counts = _group_counts(t["roster"])
         wanted = [g for g, floor in FLOOR.items() for _ in range(max(0, floor - counts[g]))]
         size = len(t["roster"]) + len(wanted)
@@ -443,7 +572,7 @@ def _fill_rosters(state: dict) -> dict:
             short[g] += 1
             size += 1
         for g in wanted:
-            band = "3" if rng.random() < LOWER_LEVEL else "2"
+            band = "3" if rng.random() < (LOWER_LEVEL_P4 if p4 else LOWER_LEVEL) else "2"
             pool = walk_ons.setdefault((band, g), [])
             while not pool:
                 r = recruits.recruit(rng, state["offseason"]["year"], band, taken)
@@ -454,8 +583,8 @@ def _fill_rosters(state: dict) -> dict:
             c["j"] = _jersey(t["roster"], c["pos"], rng)
             if band == "3":                           # from FCS or junior college: a year or two of college behind him
                 years = rng.choice((1, 2))
-                for _ in range(years + 1):
-                    develop(c, attrs, 1.0, rng)
+                for _ in range(years):
+                    develop(c, attrs, 0.8, rng)
                 c["cls"] = rng.choice(("SO", "SORS") if years == 1 else ("JR", "JRRS"))
                 c["transfer"] = "FCS"
             else:
@@ -497,57 +626,17 @@ def _new_coach(lgd: dict, role: str, slug: str, year: int, rng: random.Random, l
     return base
 
 
-def _carousel(state: dict) -> list[dict]:
-    """AI programs: head coaches retire or are fired after a bad run; coordinators turn over."""
-    import season
-    lgd = state["league"]
-    rng = _rng(state, "carousel")
-    year = state["offseason"]["year"]
-    hist = (state.get("career") or {}).get("league_records", {})
-    changes = []
-    me = state["team"]
-    for slug, t in lgd["teams"].items():
-        if slug == me:
-            continue
-        hc = t["coaches"]["head_coach"]
-        tenure = year - (hc.get("since") or 2020)
-        recs = hist.get(slug, [])[-3:]
-        pct = sum(w for w, l in recs) / max(1, sum(w + l for w, l in recs)) if recs else 0.5
-        p4 = season._is_p4(slug, season.load_teams()[slug])
-        reason = None
-        if len(recs) >= 3 and pct < (HC_FIRE_BELOW if p4 else HC_FIRE_BELOW - 0.1) and rng.random() < HC_FIRE:
-            reason = "fired"
-        elif rng.random() < HC_RETIRE * (1 + max(0, tenure - 10) / 10):
-            reason = "retired"
-        if reason:
-            old = hc["name"]
-            t["coaches"]["head_coach"] = _new_coach(lgd, "head_coach", slug, year, rng, like=None if reason == "fired" else hc)
-            t["observed"] = False
-            changes.append({"team": slug, "role": "head_coach", "old": old, "new": t["coaches"]["head_coach"]["name"], "reason": reason})
-        for role in ("offensive_coordinator", "defensive_coordinator"):
-            if rng.random() < COORD_TURNOVER:
-                old = (t["coaches"].get(role) or {}).get("name")
-                t["coaches"][role] = _new_coach(lgd, role, slug, year, rng, like=t["coaches"].get(role))
-                changes.append({"team": slug, "role": role, "old": old, "new": t["coaches"][role]["name"], "reason": "moved on"})
-    return changes
-
-
-def _staff_changes(state: dict) -> dict:
-    """Your staff: a coordinator may be hired away after a winning year (likelier the better he
-    is), a recruiter moves on now and then; each opening gets three candidates."""
-    import recruiting
+def _staff_changes(state: dict, poached: list[str]) -> dict:
+    """Your staff: a coordinator another program hired as its head coach (the carousel), a
+    recruiter who moves on now and then; each opening gets three candidates."""
     rng = _rng(state, "staff")
     staff = state["career"]["staff"]
-    wins, losses = _record(state, state["team"])
-    pct = wins / max(1, wins + losses)
     leaving, candidates = [], {}
     taken = {s["name"] for s in staff}
+    roles = {"OC": "offensive_coordinator", "DC": "defensive_coordinator"}
     for s in staff:
-        if s["role"] in ("OC", "DC"):
-            chance = STAFF_POACH * max(0.0, (pct - 0.55) / 0.45) * (s["evaluation"] / 90) ** 2
-        else:
-            chance = RECRUITER_LEAVE
-        if rng.random() < chance:
+        gone = roles[s["role"]] in poached if s["role"] in roles else rng.random() < RECRUITER_LEAVE
+        if gone:
             leaving.append(s["id"])
             candidates[s["id"]] = [_candidate(rng, s, taken) for _ in range(3)]
     for s in staff:                       # the rest grow a little (or slip)
@@ -599,6 +688,37 @@ def _apply_staff(state: dict) -> list[dict]:
     return out
 
 
+def choose_job(state: dict, slug: Optional[str]) -> dict:
+    """Take a job offer (or, fired, an opening); None stays (or lets Auto pick the best opening)."""
+    off = state.get("offseason") or {}
+    car = off.get("carousel")
+    if off.get("stage") != "staff" or not car:
+        raise ValueError("no jobs to decide on now")
+    if slug is not None and slug not in car["offers"] + car["openings"]:
+        raise ValueError("that job is not open to you")
+    car["choice"] = slug
+    return car
+
+
+def _take_job(state: dict, slug: str) -> None:
+    """You leave for `slug` next season: you take its head coaching job (your coordinators and
+    recruiters follow only as far as your recruiters do); your old program hires a new coach."""
+    import carousel
+    lgd = state["league"]
+    me = state["team"]
+    year = state["offseason"]["year"]
+    rng = _rng(state, "move")
+    mine = lgd["teams"][me]["coaches"]["head_coach"]
+    lgd["teams"][slug]["coaches"]["head_coach"] = dict(mine, since=year)
+    lgd["teams"][me]["coaches"]["head_coach"] = carousel.generated(rng, lgd, "head_coach", me, year, level=2 * carousel.baseline(me))
+    for s in (slug, me):
+        lgd["teams"][s]["observed"] = False
+        carousel.ad(lgd["teams"][s], s)["security"] = carousel.START_SECURITY
+    state["offseason"]["move_to"] = slug
+    state["offseason"]["coaching_changes"].append({"team": slug, "role": "head_coach", "new": "You", "reason": "hired",
+                                                   "from": f"head coach at {lg.base_team(me)['short_name']}"})
+
+
 # ----- walking the stages -----------------------------------------------------------------------
 
 def advance(state: dict) -> dict:
@@ -617,11 +737,18 @@ def advance(state: dict) -> dict:
         off["report"] = {"development": _develop_all(state), **_fill_rosters(state)}
         off["stage"] = "development"
     elif stage == "development":
-        off["staff"] = _staff_changes(state)
-        off["coaching_changes"] = _carousel(state)
+        import carousel
+        car = carousel.run(state)
+        off["carousel"] = car
+        off["coaching_changes"] = car["changes"]
+        off["staff"] = _staff_changes(state, car["poached"])
         off["stage"] = "staff"
     elif stage == "staff":
         off["staff"]["changes"] = _apply_staff(state)
+        car = off.get("carousel") or {}
+        choice = car.get("choice") or ((car.get("openings") or [None])[0] if (car.get("you") or {}).get("fired") else None)
+        if choice:
+            _take_job(state, choice)
         off["stage"] = "ready"
     return off
 
@@ -679,7 +806,8 @@ def next_season(state: dict) -> dict:
         records[slug] = records[slug][-3:]
     history = state["career"].setdefault("history", [])
     history.append(summary(state))
-    new = season.new_season(state["team"], "full", seed=_rng(state, "seed").randrange(1 << 30), coach=state.get("coach"), year=year)
+    team = off.get("move_to") or state["team"]
+    new = season.new_season(team, "full", seed=_rng(state, "seed").randrange(1 << 30), coach=state.get("coach"), year=year)
     new.update(id=state["id"], created_at=state["created_at"], league=lgd, settings=state.get("settings", new["settings"]))
     car = state["career"]
     car["year"] = year
@@ -689,6 +817,16 @@ def next_season(state: dict) -> dict:
     if settings.get("auto_recruit") == "week":
         settings["auto_recruit"] = "off"
     new["career"] = car
+    if off.get("move_to"):                 # a new school: its coordinators join your staff, your recruiters come along
+        coaches = lgd["teams"][team]["coaches"]
+        for s in car["staff"]:
+            key = {"OC": "offensive_coordinator", "DC": "defensive_coordinator"}.get(s["role"])
+            c = coaches.get(key) if key else None
+            if c:
+                r = c.get("ratings") or {}
+                s.update(name=c.get("name") or s["name"], evaluation=int(r.get("player_development", 60)), recruiting=int(r.get("recruiting", 60)))
+        history[-1]["moved_to"] = team
+        car.setdefault("schools", []).append({"team": team, "from": year})
     recruiting.start(new, year=year + 1)
     import prospects
     prospects.reset_caches()
@@ -787,9 +925,15 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
                                          "mean_gain_ea": off["report"]["development"]["mean_gain_ea"],
                                          "walk_ons": off["report"]["walk_ons"]},
         "staff": None,
-        "coaching_changes": [c for c in off.get("coaching_changes", []) if c["role"] == "head_coach"],
+        "coaching_changes": [c for c in off.get("coaching_changes", []) if c["role"] == "head_coach"][:60],
         "history": (state.get("career") or {}).get("history", []),
     }
+    car = off.get("carousel")
+    if car:
+        import carousel
+        out["job"] = {"you": car.get("you") or {}, "offers": carousel.job_rows(state, car["offers"]),
+                      "openings": carousel.job_rows(state, car["openings"]), "choice": car.get("choice"),
+                      "moving_to": off.get("move_to")}
     if staff:
         by_id = {s["id"]: s for s in state["career"]["staff"]}
         out["staff"] = {"leaving": [by_id[i] for i in staff["leaving"] if i in by_id], "candidates": staff["candidates"],

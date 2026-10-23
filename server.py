@@ -958,6 +958,23 @@ def offseason_portal(season_id: str, req: PortalRequest) -> dict:
     return {"offers": offers}
 
 
+class JobRequest(BaseModel):
+    team: Optional[str] = None
+
+
+@app.post("/api/season/{season_id}/offseason/job")
+def offseason_job(season_id: str, req: JobRequest) -> dict:
+    """Take a job offer (or, fired, an opening); team null stays put."""
+    st = _offseason_state(season_id)
+    with _season_lock:
+        try:
+            car = offseason.choose_job(st, req.team)
+        except ValueError as e:
+            raise HTTPException(409, str(e))
+    _save_soon(season_id)
+    return {"choice": car["choice"]}
+
+
 @app.post("/api/season/{season_id}/offseason/hire")
 def offseason_hire(season_id: str, req: HireRequest) -> dict:
     st = _offseason_state(season_id)

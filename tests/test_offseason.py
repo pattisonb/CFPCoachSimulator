@@ -88,6 +88,16 @@ if __name__ == "__main__":
         staff["candidates"][sid] = [offseason._candidate(random.Random(i), st["career"]["staff"][2], set()) for i in range(3)]
     sid = staff["leaving"][0]
     offseason.hire(st, sid, 1)
+    # the carousel: ADs judge their coaches, some are fired, retire or leave, every opening is filled;
+    # you won it all, so you are safe, and a better program with an opening may want you
+    car = off["carousel"]
+    gone = [c for c in car["changes"] if c["role"] == "head_coach" and c["reason"] in ("fired", "retired", "left for the NFL")]
+    assert 3 <= len(gone) <= 45, len(gone)
+    assert all((t["coaches"].get("head_coach") or {}).get("name") for t in lg["teams"].values())
+    assert car["you"]["security"] >= 70 and not car["you"]["fired"], car["you"]
+    car["offers"] = car["offers"] or ["alabama"]
+    target = car["offers"][0]
+    offseason.choose_job(st, target)
     offseason.advance(st)
     assert off["stage"] == "ready"
     hired = next(s for s in st["career"]["staff"] if s["id"] == sid)
@@ -97,6 +107,7 @@ if __name__ == "__main__":
     old_game = next(g for g in st["games"].values() if g["kind"] == "regular" and not g["neutral"] and g["home"] == "ohio-state")
     new = offseason.next_season(st)
     assert new["id"] == st["id"] and new["year"] == 2027 and new["recruiting"]["year"] == 2028
+    assert new["team"] == target and new["career"]["history"][-1]["moved_to"] == target, "taking the job did not move you"
     assert new["career"]["history"][0]["year"] == 2026 and new["career"]["history"][0]["won_title"]
     assert league.path(new["id"], 2027).exists() and season._league_path == league.path(new["id"], 2027)
     back = new["games"].get(old_game["event_id"])

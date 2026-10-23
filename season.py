@@ -2491,6 +2491,14 @@ def _coach_line(state: dict, team: dict) -> dict:
     return {"existing": True, "name": hc.get("name") or "the head coach", "staff": coaches.staff(None, team)}
 
 
+def _job(state: dict) -> Optional[dict]:
+    import carousel
+    try:
+        return carousel.status(state)
+    except Exception:  # noqa: BLE001 - a program the recruiting model lacks: no job card
+        return None
+
+
 def summary(state: dict) -> dict:
     teams = load_teams()
     rec = _records(state, include_playoff=True)[state["team"]]
@@ -2501,6 +2509,7 @@ def summary(state: dict) -> dict:
         "mode": state["mode"], "created_at": state["created_at"], "current_week": state["current_week"],
         "phase": state["phase"], "done": state["done"], "champion": state.get("champion"), "year": season_year(state),
         "offseason_stage": (state.get("offseason") or {}).get("stage"),
+        "job": _job(state) if state.get("career") else None,
         "champion_name": teams[state["champion"]]["name"] if state.get("champion") else None,
         "record": rec, "schedule": schedule, "weeks": weeks, "my_rank": current_rank(state),
         "coach": _coach_line(state, teams[state["team"]]),
