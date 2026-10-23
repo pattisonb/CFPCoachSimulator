@@ -98,6 +98,11 @@ if __name__ == "__main__":
                                    timeout=900_000)
             summary = call(base, f"/api/season/{sid}")
             assert summary["done"] and summary["current_week"] == 20
+            # the committee's final ranking leads the Rankings tab after the season (it does not vanish)
+            page.click("#season-tabs button[data-tab=rankings]")
+            page.wait_for_selector("#poll-body table")
+            assert page.eval_on_selector("#poll-pills button.active", "b => b.dataset.poll") == "cfp"
+            assert "Final ranking" in page.inner_text("#poll-body")
             signed = signed_with(base, sid, team)
             spots = call(base, f"/api/season/{sid}/recruiting")["open_spots"]
             assert 0 < len(signed) <= spots, (len(signed), spots)

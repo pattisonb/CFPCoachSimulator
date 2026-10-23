@@ -121,6 +121,7 @@
     state.season = null;
     applyTeamTheme(null);
     state.viewWeek = null;
+    state.poll = "ap"; state.pollChosen = false;
     $("#season").hidden = true;
     $("#season-empty").hidden = false;
     startNote(null);
@@ -1914,11 +1915,13 @@
     }
   }
 
-  function pollWeekFor(view) {
-    // the poll shown for a week is the one released after that week's games
+  function pollWeekFor(view, kind) {
+    // the poll shown for a week is the one released after that week's games: the latest of that
+    // kind (the committee's last ranking is selection day's; it stays through the bowls and the offseason)
     const s = state.season;
+    const has = (w) => s.polls[String(w)] && (!kind || kind === "resume" || s.polls[String(w)][kind]);
     let w = Math.min(view, s.current_week);
-    while (w > 0 && !s.polls[String(w)]) w--;
+    while (w > 0 && !has(w)) w--;
     return w;
   }
 
@@ -2623,7 +2626,14 @@
 
   // One Rankings tab; pills switch between the AP poll, the Coaches Poll and the CFP rankings.
   function renderRankings() {
-    for (const b of $("#poll-pills").querySelectorAll("button[data-poll]")) b.classList.toggle("active", b.dataset.poll === state.poll);
+    // once the committee's first ranking is out it leads: the first pill, and the one shown unless you picked another
+    const s = state.season, pills = $("#poll-pills");
+    const cfpOut = !!(s.polls[String(pollWeekFor(state.viewWeek, "cfp"))] || {}).cfp;
+    const cfpPill = pills.querySelector("button[data-poll=cfp]");
+    if (cfpOut && pills.firstElementChild !== cfpPill) pills.prepend(cfpPill);
+    else if (!cfpOut && pills.firstElementChild === cfpPill) pills.insertBefore(cfpPill, pills.querySelector("button[data-poll=resume]"));
+    if (!state.pollChosen) state.poll = cfpOut ? "cfp" : "ap";
+    for (const b of pills.querySelectorAll("button[data-poll]")) b.classList.toggle("active", b.dataset.poll === state.poll);
     renderPoll(state.poll);
   }
 
@@ -2631,7 +2641,7 @@
     const s = state.season;
     const box = $("#poll-body");
     box.innerHTML = "";
-    const w = pollWeekFor(state.viewWeek);
+    const w = pollWeekFor(state.viewWeek, kind);
     if (kind === "resume") { renderResume(box, w); return; }
     const entry = s.polls[String(w)] || {};
     const list = entry[kind];
@@ -2752,7 +2762,7 @@
     box.innerHTML = "";
     if (!s.bracket) {
       box.append(el("h3", { text: "Projected bracket" }));
-      const w = pollWeekFor(state.viewWeek);
+      const w = pollWeekFor(state.viewWeek, "cfp");
       const cfp = (s.polls[String(w)] || {}).cfp;
       if (!cfp) { box.append(el("p", { class: "muted", text: "The projection starts with the committee's first ranking after week 9. Until then, the AP poll is the only ranking." })); return; }
       const proj = projectField(cfp);
@@ -3490,7 +3500,7 @@
   $("#btn-to-selection").addEventListener("click", () => advance(15));
   $("#btn-to-end").addEventListener("click", () => advance(20));
   $("#season-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) { state.tab = b.dataset.tab; renderTab(); } });
-  $("#poll-pills").addEventListener("click", (e) => { const b = e.target.closest("button[data-poll]"); if (b) { state.poll = b.dataset.poll; renderRankings(); } });
+  $("#poll-pills").addEventListener("click", (e) => { const b = e.target.closest("button[data-poll]"); if (b) { state.poll = b.dataset.poll; state.pollChosen = true; renderRankings(); } });
   $("#sbox-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-btab]"); if (b) selectBoxTab(b.dataset.btab); });
 
   (async () => {
