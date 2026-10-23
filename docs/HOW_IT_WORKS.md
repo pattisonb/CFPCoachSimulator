@@ -861,6 +861,15 @@ reports are kept (`GET /api/season/{id}/recruiting/report`). `tools/check_recrui
 what each action earns on average over a season and how many prospects change leader a week, so
 an action's weight is read off a season instead of guessed.
 
+**Commits have to be kept.** A commitment has a firmness, 0-100: 40 at the commitment (60 after an
+official visit there), then each week +6 if the school messaged, called or hosted him, -8 if it
+went quiet, +3 while the NIL it promised is still held, and -6 per rival in his top three with
+more playing time to offer. The weekly flip chance is the usual one (the best rival's lead in
+interest) times (100 - firmness) / 100: at 100 he cannot flip. The board tags your commits Solid
+(70+), Settling or Soft (under 40). AI staffs and your Auto-recruit send each commit a message a
+week with whatever hours are left after the week's targets, so a staff stretched thin lets its
+class soften. Pulling your offer from your own commit releases him. Signing day ends it.
+
 **NIL asks and offers.** Every prospect wants something: an ask in NIL points from his stars
 (five-stars about 60, four-stars 30, three-stars 8, two-stars nothing) times his position
 (quarterbacks 1.5, edges, tackles, receivers and corners 1.2, backs and tight ends 0.9,

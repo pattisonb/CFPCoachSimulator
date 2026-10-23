@@ -161,6 +161,11 @@ flips as today. Firm commits read "Solid", soft ones "Soft" on the board, with t
 Your Auto-recruit and the AI schools keep in touch with their commits (one message a week each,
 from the same hours). Signing day ends it.
 
+Status: built (`firmness` on the status, `_firm_up` at the week step, `flip_weekly` and
+`flip_by_signing` for the draws and the odds shown; +6 / -8 / +3 / -6 a week, so a commitment
+takes two months to become unflippable; the staff's weekly message to each commit comes after
+the week's targets, from the hours left; DECOMMIT_RATE 0.45 keeps top-300 decommits in range).
+
 ## 8. The transfer portal as recruiting
 
 **Period.** The offseason's `portal_1` and `portal_2` become `portal_w1 … portal_w4`: four

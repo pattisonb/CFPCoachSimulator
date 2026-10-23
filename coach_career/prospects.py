@@ -425,6 +425,7 @@ def board_row(state: dict, pid: str, viewer: str) -> dict:
                ask=recruiting.ask_view(state, viewer, pid), cooled=recruiting.cooled(state, viewer, pid),
                stage=recruiting.stage(state, viewer, pid), strength=recruiting.strengths(state, viewer, pid),
                list=[dict(x, you=x["school"] == viewer) for x in _schools(state, pid)[:5]],
+               firmness=rc["status"][pid].get("firmness") if rc["status"][pid]["committed"] == viewer and not rc["status"][pid]["signed"] else None,
                standing=standing(state, pid, viewer))
     return out
 
@@ -621,10 +622,9 @@ def _committed_odds(state: dict, pid: str, school: str, offered: list, week: int
     weeks_left = max(0, season.SELECTION_WEEK - week)          # the early signing period ends it for most
     if rivals:
         gap = max(recruiting.interest(state, s, pid) for s in rivals) - mine
-        weekly = 2 * recruiting.DECOMMIT_RATE * recruiting._logistic(gap / recruiting.FLIP_MARGIN)
+        flip = recruiting.flip_by_signing(state, pid, gap, weeks_left)
     else:
-        weekly = 0.0
-    flip = 1 - (1 - weekly) ** weeks_left
+        flip = 0.0
     weights = {s: math.exp(recruiting.interest(state, s, pid) / ODDS_TEMPERATURE) for s in rivals}
     total = sum(weights.values()) or 1.0
     band = recruiting._interp(ODDS_BAND, week) / 2

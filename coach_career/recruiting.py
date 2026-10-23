@@ -99,7 +99,12 @@ FCS_NO_OFFER_WEEK = 8                      # from this week a prospect with no F
 COMMIT_ODDS = ((0, 0.02), (6, 0.05), (12, 0.08), (16, 0.10), (20, 0.30))   # weekly base chance by week *tune*
 LEAD_SCALE = 3.0                           # interest lead worth a doubling of the base chance *tune*
 VISIT_BOOST = 1.6                          # after an official visit to the leader
-DECOMMIT_RATE = 0.30                       # weekly chance of a decommitment at an even race *tune*
+DECOMMIT_RATE = 0.45                       # weekly chance of a decommitment at an even race *tune*
+# a commitment's firmness, 0-100: it starts soft and firms up only if the school keeps in touch *tune*
+FIRM_START, FIRM_VISIT = 40, 60            # at commitment (after an official visit there)
+FIRM_TOUCH, FIRM_QUIET = 6, -8             # a week with a message, call or visit from the school / a week without
+FIRM_NIL = 3                               # the NIL promised is still held
+FIRM_RIVAL, FIRM_RIVALS = -6, 3            # per rival in his top three offering more playing time
 FLIP_MARGIN = 4.0                          # a rival's lead that doubles-ish it (logistic) *tune*
 CROWD = 2.0                                # interest lost per committed recruit at his position rated at least as high *tune*
 RIVAL_RANK = 300                           # AI schools keep chasing committed prospects this highly ranked
@@ -253,18 +258,28 @@ def _contact(state: dict, slug: str, pid: str) -> dict:
     return state["recruiting"]["contacts"].setdefault(pid, {}).setdefault(slug, {"n": 0, "hc_week": None})
 
 
+_ASKS: dict = {}          # (career, class, week, prospect, school, his ask multiplier) -> his ask from the school this week
+
+
 def ask_from(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> int:
     """What he wants from `slug`: his ask, raised when a rival's number beat the school's, times
-    ASK_TRAIL per place the school trails on his list."""
+    ASK_TRAIL per place the school trails on his list (as the week's step left it)."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
-    base = p["nil_ask"] * _contact(state, slug, pid).get("ask_mult", 1.0)
+    mult = _contact(state, slug, pid).get("ask_mult", 1.0)
+    base = p["nil_ask"] * mult
     if not base:
         return 0
-    schools = set(rc["lists"][pid]) | {slug}
-    win = win if win is not None else _winning(state)
-    order = sorted(schools, key=lambda s: -interest(state, s, pid, win))
-    return int(round(base * (1 + ASK_TRAIL * max(0, order.index(slug)))))
+    key = (state["id"], rc["year"], state["current_week"], pid, slug, mult)
+    ask = _ASKS.get(key)
+    if ask is None:
+        if len(_ASKS) > 500_000:
+            _ASKS.clear()
+        schools = set(rc["lists"][pid]) | {slug}
+        win = win if win is not None else _winning(state)
+        order = sorted(schools, key=lambda s: -interest(state, s, pid, win))
+        ask = _ASKS[key] = int(round(base * (1 + ASK_TRAIL * max(0, order.index(slug)))))
+    return ask
 
 
 def ask_view(state: dict, slug: str, pid: str) -> dict:
@@ -356,12 +371,12 @@ _GROUP_COUNTS: tuple = (None, {})   # (career, class and events so far; every sc
 
 def commits_by_group(state: dict, slug: str) -> dict[str, int]:
     """The school's commits and signees this class, by roster group (every school's are counted
-    in one pass and kept until the next commitment, signing or flip, which all log an event:
-    a commitment set any other way needs reset_caches())."""
+    in one pass and kept until the next commitment, signing or flip (`_commit` and `_sign` bump
+    `commits_v`; a commitment set any other way needs reset_caches())."""
     global _GROUP_COUNTS
     from coach_career import offseason
     rc = state["recruiting"]
-    key = (state["id"], rc["year"], len(rc["log"]))
+    key = (state["id"], rc["year"], rc.get("commits_v", 0))
     if _GROUP_COUNTS[0] != key:
         counts: dict[str, dict] = {}
         for pid, st in rc["status"].items():
@@ -589,6 +604,7 @@ def reset_caches() -> None:
     global _WINNING, _FITS, _GROUP_COUNTS, _LEAVER_CUT
     _STATIC.clear()
     _PULLS.clear()
+    _ASKS.clear()
     _WINNING, _FITS, _GROUP_COUNTS, _LEAVER_CUT = (None, {}), (None, {}, None), (None, {}), (None, 0)
     _returning.cache_clear()
     _open_spots.cache_clear()
@@ -598,8 +614,7 @@ _WINNING: tuple = (None, {})   # (career and week, this week's on-field standing
 def _winning(state: dict) -> dict[str, float]:
     from sim import season
     global _WINNING
-    played = sum(1 for g in state["games"].values() if g["played"])
-    key = (state["id"], state.get("year"), state["current_week"], played)
+    key = (state["id"], state.get("year"), state["current_week"], bool(state.get("done")))
     cached = _WINNING                     # one read: another request may swap it in meanwhile
     if cached[0] == key:
         return cached[1]
@@ -831,6 +846,10 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             raise RecruitingError(409, "no offer to pull")
         offers.remove(pid)
         _nil(state, slug)["held"].pop(pid, None)
+        if rc["status"][pid]["committed"] == slug and not rc["status"][pid]["signed"]:   # you let your own commit go
+            rc["status"][pid].update(committed=None, firmness=None)
+            rc["commits_v"] = rc.get("commits_v", 0) + 1
+            _event(state, "decommit", pid, slug)
     elif action == "offer":
         if pitch is None:
             raise RecruitingError(400, "an offer needs a pitch: what you are selling him")
@@ -888,6 +907,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         if action in ("call", "hc_visit"):           # a call or an in-home visit tells you one thing he cares about, and his ask
             revealed = _reveal(state, slug, pid)
             contact["asked"] = True
+        contact["last_contact"] = week
         points = _contact_points(state, slug, p, action, pitch) / (1 + DIMINISH * contact["n"])
         if points < 0:
             _event(state, "not_buying", pid, slug, topic=pitch)
@@ -1009,7 +1029,7 @@ def _build_board(state: dict, slug: str, rng: random.Random) -> list[str]:
     pros = rc["prospects"]
     for pid in free:
         p = pros[pid]
-        factor = factor_of[_group_of(p)]
+        factor = factor_of[p.get("group") or _group_of(p)]
         if takes_fives and p["stars"] == 5:
             factor = max(factor, FIVE_STAR_FLOOR)
         f = fits[pid] * factor
@@ -1137,6 +1157,13 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
                 _act(state, slug, pid, action, pitch=best_pitch(state, slug, pid), scale=edge)
             except RecruitingError:
                 pass
+    for pid in [q for q in offers if rc["status"][q]["committed"] == slug and not rc["status"][q]["signed"]]:
+        if _hours(state, slug) < HOURS["message"]:
+            break                              # out of hours: the commits go quiet this week and soften
+        try:                                   # a message a week keeps a commitment firm
+            _act(state, slug, pid, "message", pitch=best_pitch(state, slug, pid), scale=edge)
+        except RecruitingError:
+            pass
 
 
 def _visits(state: dict, week: int) -> None:
@@ -1153,7 +1180,7 @@ def _visits(state: dict, week: int) -> None:
                 continue
             while _reveal(state, slug, pid):     # a weekend on campus: you learn everything he cares about, his ask too
                 pass
-            _contact(state, slug, pid)["asked"] = True
+            _contact(state, slug, pid).update(asked=True, last_contact=week)
             margin = game["home_score"] - game["away_score"]
             mood = 1.2 if margin > 0 else (0.6 if margin <= -21 else 0.9)
             cap = ((season.load_teams()[slug].get("stadium") or {}).get("capacity") or 50000)
@@ -1172,11 +1199,51 @@ def _offers_by_prospect(state: dict) -> dict[str, list[str]]:
 def _commit(state: dict, pid: str, slug: str, kind: str = "commit") -> None:
     rc = state["recruiting"]
     old = rc["status"][pid]["committed"]
-    rc["status"][pid].update(committed=slug, fcs=False)
+    visited = bool((rc["visits"].get(pid, {}).get(slug) or {}).get("done"))
+    rc["status"][pid].update(committed=slug, fcs=False, firmness=FIRM_VISIT if visited else FIRM_START)
+    rc["commits_v"] = rc.get("commits_v", 0) + 1
     for school, n in rc["nil"].items():           # rivals' NIL packages for him are released
         if school != slug:
             n["held"].pop(pid, None)
     _event(state, kind, pid, slug, **({"from": old} if old else {}))
+
+
+def flip_weekly(state: dict, pid: str, gap: float, firmness: Optional[float] = None) -> float:
+    """This week's chance a commit flips, from the best rival's lead in interest and how firm he is."""
+    if firmness is None:
+        firmness = state["recruiting"]["status"][pid].get("firmness") or FIRM_START
+    return 2 * DECOMMIT_RATE * _logistic(gap / FLIP_MARGIN) * (100 - firmness) / 100
+
+
+def flip_by_signing(state: dict, pid: str, gap: float, weeks_left: int) -> float:
+    """His chance to flip before signing day, his commitment firming up FIRM_TOUCH + FIRM_NIL a week
+    as a school that keeps in touch would see it."""
+    f = state["recruiting"]["status"][pid].get("firmness") or FIRM_START
+    keep = 1.0
+    for _ in range(max(0, weeks_left)):
+        keep *= 1 - flip_weekly(state, pid, gap, f)
+        f = min(100, f + FIRM_TOUCH + FIRM_NIL)
+    return 1 - keep
+
+
+def _firm_up(state: dict, week: int) -> None:
+    """Every commitment firms up or softens with the week: contact from the school, the NIL
+    still held, and rivals in his top three offering more playing time."""
+    rc = state["recruiting"]
+    win = _winning(state)
+    for pid, st_ in rc["status"].items():
+        school = st_["committed"]
+        if st_["signed"] or not school or school == "FCS":
+            continue
+        c = (rc["contacts"].get(pid) or {}).get(school) or {}
+        delta = FIRM_TOUCH if c.get("last_contact") == week else FIRM_QUIET
+        if rc["nil"].get(school, {}).get("held", {}).get(pid, 0) > 0 and pid in rc["offers"].get(school, []):
+            delta += FIRM_NIL
+        rivals = [s for s in top_group(state, pid, win) if s != school and pid in rc["offers"].get(s, [])][:FIRM_RIVALS]
+        if rivals:
+            mine = strengths(state, school, pid)["playing_time"]
+            delta += FIRM_RIVAL * sum(1 for r in rivals if strengths(state, r, pid)["playing_time"] > mine)
+        st_["firmness"] = int(max(0, min(100, st_.get("firmness", FIRM_START) + delta)))
 
 
 def _class_by_position(state: dict) -> dict[tuple, list[float]]:
@@ -1242,7 +1309,7 @@ def _draws(state: dict, week: int, rng: random.Random) -> None:
         if st["committed"]:
             mine = score(st["committed"], pid)
             rival = next(((v, s) for v, s in scores if s != st["committed"] and room(s, pid)), None)
-            if rival and rng.random() < 2 * DECOMMIT_RATE * _logistic((rival[0] - mine) / FLIP_MARGIN):
+            if rival and rng.random() < flip_weekly(state, pid, rival[0] - mine):
                 room.took(st["committed"], pid, -1)
                 _event(state, "decommit", pid, st["committed"])
                 _commit(state, pid, rival[1], "flip")
@@ -1282,6 +1349,7 @@ def _sign(state: dict, final: bool) -> None:
             if scores and scores[0][0] >= FCS_LINE:
                 _commit(state, pid, scores[0][1])
                 room.took(scores[0][1], pid)
+    rc["commits_v"] = rc.get("commits_v", 0) + 1
     for pid, st in rc["status"].items():
         if st["signed"]:
             continue
@@ -1356,6 +1424,7 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
         if slug != mine or auto_mine:
             auto_recruit(state, slug, random.Random(f"auto-{rc['seed']}-{slug}-{week}"), commits, yours=slug == mine)
     _flush(state, week)                # the other schools' week lands with yours
+    _firm_up(state, week)
     if week < season.FINAL_WEEK:
         _draws(state, week, rng)
     if week == season.SELECTION_WEEK:
