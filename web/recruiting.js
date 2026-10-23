@@ -410,6 +410,21 @@
     load();
   }
 
+  // A grade's tooltip floats over the page (fixed to the screen), below the grade when there is
+  // room and above it when not, kept inside the screen, so the profile window never clips or scrolls it.
+  function placeTip(cell, tip) {
+    tip.classList.add("show");
+    const r = cell.getBoundingClientRect(), t = tip.getBoundingClientRect(), gap = 6, pad = 8;
+    const below = r.bottom + gap + t.height <= window.innerHeight - pad;
+    const top = below ? r.bottom + gap : Math.max(pad, r.top - gap - t.height);
+    const left = Math.min(Math.max(pad, r.left), window.innerWidth - t.width - pad);
+    tip.style.top = `${top}px`;
+    tip.style.left = `${left}px`;
+  }
+
+  // a floating tooltip would hang in place while its grade scrolls away: scrolling closes it
+  window.addEventListener("scroll", () => { for (const t of document.querySelectorAll(".go-tip-box.show")) t.classList.remove("show"); }, true);
+
   // ----- the Prospect Profile ----------------------------------------------------------------------
 
   async function openProfile(s, pid) {
@@ -484,8 +499,13 @@
         const tip = el("div", { class: "go-tip-box", role: "tooltip", id: tipId }, [el("b", { text: `${GROUP_NAMES[g] || g} ${grade} looks like` }),
           ...lines.map((t) => el("div", { text: t })),
           d.peers ? el("div", { class: "muted small", text: `Middle half of ${d.peers} prospects graded like this` }) : null]);
-        return el("div", { class: "go-stat go-tip", tabindex: "0", "aria-describedby": tipId }, [el("div", { class: "go-kicker muted", text: (GROUP_NAMES[g] || g).toUpperCase() }),
+        const cell = el("div", { class: "go-stat go-tip", tabindex: "0", "aria-describedby": tipId }, [el("div", { class: "go-kicker muted", text: (GROUP_NAMES[g] || g).toUpperCase() }),
           el("div", { class: "go-stat-val", text: grade }), tip]);
+        const show = () => placeTip(cell, tip);
+        const hide = () => tip.classList.remove("show");
+        cell.addEventListener("mouseenter", show); cell.addEventListener("focus", show);
+        cell.addEventListener("mouseleave", hide); cell.addEventListener("blur", hide);
+        return cell;
       })),
         el("p", { class: "muted small", text: `${p.looks} look${p.looks === 1 ? "" : "s"}. Hover a grade to see what it looks like in ratings. Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster.` }));
       node.append(p.our_comp ? el("p", {}, [el("b", { text: "Our comp: " }), comp(p.our_comp)])
