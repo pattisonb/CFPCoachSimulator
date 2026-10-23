@@ -22,13 +22,13 @@ from coach_career import recruits
 STAGES = ("departures", "portal_1", "portal_2", "development", "staff", "ready")
 STAGE_NAMES = {"departures": "Departures", "portal_1": "Transfer portal, round 1", "portal_2": "Transfer portal, round 2",
                "development": "Development", "staff": "Staff", "ready": "Ready for next season"}
-ROSTER_LIMIT = 105         # the NCAA's roster limit since 2025 (EA's rosters were each team's best 85)
-FILL_TO = 100              # walk-ons and lower-level transfers top a roster up to this
+ROSTER_LIMIT = 85          # EA's roster limit (the real 2026 rosters; the NCAA's has been 105 since 2025)
+FILL_TO = 80               # walk-ons and lower-level transfers top a roster up to this
 GROUP = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL", "LG": "OL", "C": "OL", "RG": "OL", "RT": "OL",
          "LEDG": "DL", "REDG": "DL", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "CB", "FS": "S", "SS": "S",
          "K": "K", "P": "P"}
-# a healthy roster's players per group (the real 2026 FBS mean, scaled to 105) and the floor walk-ons top up to
-TARGET = {"QB": 5, "RB": 7, "WR": 13, "TE": 7, "OL": 19, "DL": 18, "LB": 11, "CB": 10, "S": 10, "K": 2, "P": 2}
+# a healthy roster's players per group (the real 2026 FBS mean) and the floor walk-ons top up to
+TARGET = {"QB": 4, "RB": 6, "WR": 11, "TE": 6, "OL": 15, "DL": 15, "LB": 9, "CB": 8, "S": 8, "K": 2, "P": 1}
 LOWER_LEVEL = 0.3          # the share of roster top-ups who come from FCS or junior college (three-stars, a year or two in), not walk-ons
 LOWER_LEVEL_P4 = 0.15     # ... at a Power 4 school (mostly walk-ons there)
 FLOOR = {"QB": 3, "RB": 3, "WR": 6, "TE": 3, "OL": 10, "DL": 9, "LB": 5, "CB": 5, "S": 4, "K": 1, "P": 1}

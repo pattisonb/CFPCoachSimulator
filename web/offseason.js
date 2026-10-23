@@ -42,7 +42,7 @@
       el("div", { class: "go-kicker", text: `OFFSEASON · ON TO ${v.year}` }),
       el("div", { class: "go-display xl", text: v.stage_name.toUpperCase() }),
       stepper(v),
-      el("div", { class: "go-mini off-numbers" }, [stat("ROSTER", `${v.roster} / ${v.roster_limit || 105}`), stat("CLASS SIGNED", String(v.signed)),
+      el("div", { class: "go-mini off-numbers" }, [stat("ROSTER", `${v.roster} / ${v.roster_limit || 85}`), stat("CLASS SIGNED", String(v.signed)),
         stat("OPEN SPOTS", String(v.open_spots)), stat("PORTAL", `${v.portal.signed} of ${v.portal.entrants} placed`)]),
     ]);
     const actions = el("div", { class: "go-play off-actions" });

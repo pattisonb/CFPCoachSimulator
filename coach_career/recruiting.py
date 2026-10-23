@@ -57,8 +57,7 @@ DIMINISH = 0.2                             # each earlier contact from the schoo
 HC_VISIT_GAP = 4                           # weeks between head coach in-home visits to one prospect
 NIL_VALUE = {5: 0.04, 4: 0.07, 3: 0.12, 2: 0.15}   # interest per NIL point by stars: top prospects expect more *tune*
 NIL_FLOOR = 30
-ROSTER_LIMIT = 105                         # the NCAA's roster limit since 2025 (a career's own league, offseason.py)
-EA_ROSTER = 85                             # the real 2026 rosters are EA's 85 (each team's best): the first season counts against that
+ROSTER_LIMIT = 85                          # EA's roster limit (offseason.ROSTER_LIMIT)
 MIN_OPEN = 12
 EARLY_LEAVERS = 6                          # returning players expected to leave early (draft, transfers, quitting; offseason.py) *tune*
 CLASS_ROOM = 2                             # a class tops out this far over the school's real mean size *tune*
@@ -376,7 +375,7 @@ def _open_spots(slug: str) -> int:
     t = season.load_teams()[slug]
     players = t["offense"] + t["defense"]
     returning = sum(1 for p in players if p.get("class") not in LEAVING)
-    limit = ROSTER_LIMIT if len(players) > EA_ROSTER + 5 else EA_ROSTER
+    limit = ROSTER_LIMIT
     usual = math.ceil(((_team_model(slug).get("class_size") or {}).get("mean")) or 20) + CLASS_ROOM
     return max(MIN_OPEN, min(limit - returning + EARLY_LEAVERS, usual))
 
