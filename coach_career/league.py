@@ -46,6 +46,8 @@ DEPTH_EYE = {"QB": 8.0, "RB": 16.0, "WR": 13.0, "TE": 16.0, "OL": 1.5, "DL": 15.
 DEPTH_EXPERIENCE = 0.0    # overall points a year in college is worth in a depth chart (real coaches start the veteran)
 _EYE_GROUP = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL", "LG": "OL", "C": "OL", "RG": "OL", "RT": "OL",
               "LEDG": "DL", "REDG": "DL", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "DB", "FS": "DB", "SS": "DB", "K": "K", "P": "P"}
+REAL_ROOM = 1.2           # real 2026 underclassmen's room to potential, against a generated player's at the same class
+REAL_ROOM_CLASSES = ("FR", "FRRS", "SO", "SORS", "JR")
 TARGET_EYE = 0.32         # log target weight per standard deviation of the coaches' eye (real 2026 target weights: sd 0.32)
 TARGET_SPREAD = 0.4       # log target weight off per 10 overall points above the team's receivers (the ratings' pull on targets is steep)
 EXPERIENCE = {"FR": 0, "FRRS": 1, "SO": 1, "SORS": 2, "JR": 2, "JRRS": 3, "SR": 3, "SRRS": 4}
@@ -104,6 +106,8 @@ def compact(p: dict, attrs: list[str], home: Optional[str] = None) -> dict:
         ours = game_scale.ours_from_base(p["ratings"], pos)
         seeded = _potentials().get(p["slug"], {}).get("potential_ea") or {}
         pot = game_scale.potential_from_ea({**p["ratings_ea"], **seeded}, ours, pos) if seeded else ours
+        if (p.get("class") or "FR") in REAL_ROOM_CLASSES:   # seeded room runs short of a generated player's at the same stage
+            pot = {k: int(round(min(99, ours.get(k, v) + REAL_ROOM * (v - ours.get(k, v))))) for k, v in pot.items()}
     seeded = _potentials().get(p["slug"], {})
     out = {"id": p["slug"], "n": p["name"], "pos": pos, "cls": p.get("class") or "FR", "ht": height_in(p.get("height")),
            "wt": p.get("weight_lbs"), "j": p.get("jersey"), "a": p.get("archetype"), "dev": p.get("dev_trait") or "Normal",
