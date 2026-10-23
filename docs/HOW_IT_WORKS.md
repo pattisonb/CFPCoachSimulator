@@ -970,14 +970,41 @@ are then topped up to 85, the thinnest groups first: half walk-ons (generated tw
 freshmen), half FCS and junior-college transfers (three-stars a year or two in, sophomores or
 juniors). The real portal and the lower levels feed FBS rosters the same way.
 
-**Staff and coaches.** After a winning year your coordinators may be hired away (35% at a 90
-evaluation and a perfect record, scaling down to nothing at .550); a recruiter moves on 12% of
-the time; each opening has three candidates and Auto hires the best. The rest drift a point or
-two. Around the league head coaches retire (4% a year, more after ten years) or are fired after a
-bad three-year run (under .400 in the Power 4, .300 elsewhere, 55%); a new coach is drawn like
-the league's coaches at that job, a little below, and keeps the program's scheme unless his
-predecessor was fired. Coordinators turn over 15% a year. A new head coach recruits on his
-rating (the measured edge of real coaches applies only to them).
+**Development from production and honors** (more than EA's development trait). The season's
+production is each player's standardized score at his position group against the average starter
+(`awards.Pool`, the same numbers the awards use), for players who played at least half their
+team's games. It sets his pace: 1 + 0.25 per standard deviation (0.75 to 1.6 times). A breakout
+year (one standard deviation over the average starter) raises his ceiling in skill and football
+IQ by 1.5 EA points per deviation beyond half of one; so do honors: the Heisman 5, a national
+award 4, All-America first team 3, a finalist or second team 2, a conference award 2,
+all-conference 1 (the best counts in full, the next two at half, at most 7 in a year). Speed,
+strength and the other gifts are not raised. A Heisman winner, national award winner or
+first-team All-American moves up a coachability level 40% of the time. The Development step
+lists your risers with the reasons. Programs develop at 1 + 0.10 times their recruiting baseline
+(about -2 to +2: facilities and staff), on top of the coaches' factor.
+
+**The coaching carousel** (`carousel.py`). Each program's AD sets a goal from its recruiting
+baseline: make the playoff (+1.2 and up), win nine (+0.5), win seven and go bowling (-0.3), reach
+a bowl (below); a Group of 5 program at 0 or above expects its conference title. His patience is
+2 to 5 years (the blue bloods least). A head coach's job security (0-100, a new hire starts at
+70) moves 8 points per win over or under the goal, plus 10 for a conference title, 12 for the
+playoff, 25 for the national title, minus 6 when a playoff or conference goal is missed; a bad
+year counts 3/patience as much, and half in a coach's first two years. Under 25 after two years
+he is fired 75% of the time (always under 8). Coaches retire (3% a year, more after 12 years in
+the job and past 60) and an 85+ coach after 11 wins leaves for the NFL 10% of the time. Openings
+are filled in order of prestige: the best of the head coaches at smaller programs with a
+two-year .650 run, the coordinators at nine-win programs of about the same standing, and three
+generated candidates (drawn like the league's coaches, better for better jobs). A head coach
+hired away opens his job, which joins the queue; a coordinator hired away is replaced; half of
+new head coaches bring their own coordinators; 10% of coordinators move on each year.
+
+**You** get the same goal and security (on the Office). After a year that puts your security at 80
+or more, up to three better programs with an opening offer you their job; take one on the
+Offseason screen and you move there for the next season (its coordinators join your staff, your
+recruiters come along). If your AD fires you, you pick your next job from the openings at or
+below your program's standing (Auto takes the best). Your coordinators leave when another
+program hires them as its head coach; a recruiter moves on 12% of the time; each opening has
+three candidates and Auto hires the best. The rest of your staff drift a point or two a year.
 
 **The Offseason screen** walks the steps: Departures (your leavers by kind, the league's numbers,
 the first round), Transfer portal round 1 and 2 (entrants with position and status filters, your

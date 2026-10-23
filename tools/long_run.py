@@ -110,7 +110,11 @@ def offseason_metrics(state: dict) -> dict:
                         "max": max(signed.values(), default=0)},
         "roster": {"min": min(sizes), "max": max(sizes)},
         "classes": {k: round(v / total, 3) for k, v in sorted(classes.items())},
-        "coaching_changes": collections.Counter(c["role"] for c in off.get("coaching_changes", [])),
+        "coaching_changes": collections.Counter(c["role"] for c in off.get("coaching_changes", []) if c.get("reason") != "hired"),
+        "hc_departures": collections.Counter(c["reason"] if not c["reason"].startswith("left for ") or "NFL" in c["reason"] else "left for another job"
+                                             for c in off.get("coaching_changes", []) if c["role"] == "head_coach" and c.get("reason") != "hired"),
+        "you": {k: v for k, v in ((off.get("carousel") or {}).get("you") or {}).items() if k in ("security", "met", "fired")},
+        "moved_to": off.get("move_to"),
         "staff_changes": len((off.get("staff") or {}).get("changes", [])),
     }
 
@@ -136,6 +140,7 @@ def run(seasons: int, seed: int, team: str, out: Path) -> None:
         out.write_text(json.dumps({"seed": seed, "team": team, "seasons": rows}, indent=1), encoding="utf-8")
         o = row["offseason"]
         tr = row["tiers"]
+        print(f"      carousel {dict(o.get('hc_departures', {}))}  you {o.get('you')}  moved {o.get('moved_to')}", flush=True)
         print("      tiers " + "  ".join(f"{k} st {v['starters']:.1f} rtg {v['rating']:.1f} rec {v['recruit_composite'] or 0:.3f} x{v['signed_per_team']}" for k, v in sorted(tr.items())), flush=True)
         print(f"{row['year']} champ {row['champion']:<14} {team} {row['record'][0]}-{row['record'][1]}  "
               f"team rtg {row['team_rating']['mean']:.1f}±{row['team_rating']['sd']:.1f}  QB {row['starters_ea'].get('QB', 0):.1f} "
@@ -183,7 +188,11 @@ def report(paths: list[str]) -> str:
                      ("portal entrants", lambda o: o["portal_entrants"]), ("portal signed", lambda o: o["portal_signed"]),
                      ("quit", lambda o: o["departures"].get("quit", 0)), ("walk-ons", lambda o: o["walk_ons"]),
                      ("class size mean", lambda o: o["class_sizes"]["mean"]), ("dev gain EA", lambda o: o["dev_gain_ea"]),
-                     ("HC changes", lambda o: o["coaching_changes"].get("head_coach", 0))):
+                     ("HC changes", lambda o: o["coaching_changes"].get("head_coach", 0)),
+                     ("HC fired", lambda o: o.get("hc_departures", {}).get("fired", 0)),
+                     ("HC retired", lambda o: o.get("hc_departures", {}).get("retired", 0)),
+                     ("HC to NFL", lambda o: o.get("hc_departures", {}).get("left for the NFL", 0)),
+                     ("HC to other jobs", lambda o: o.get("hc_departures", {}).get("left for another job", 0))):
         vals = [f(o) for o in off]
         lines.append(f"    {label:<20} mean {st.mean(vals):8.2f}  min {min(vals):8.2f}  max {max(vals):8.2f}")
     # balance of power: champions and top-ten turnover
