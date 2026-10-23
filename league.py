@@ -23,6 +23,7 @@ The FCS stand-ins (fictional teams) always play their base rosters.
 from __future__ import annotations
 
 import json
+import math
 import os
 import random
 import statistics as st
@@ -45,6 +46,7 @@ DEPTH_EYE = {"QB": 8.0, "RB": 16.0, "WR": 13.0, "TE": 16.0, "OL": 1.5, "DL": 15.
 DEPTH_EXPERIENCE = 0.0    # overall points a year in college is worth in a depth chart (real coaches start the veteran)
 _EYE_GROUP = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL", "LG": "OL", "C": "OL", "RG": "OL", "RT": "OL",
               "LEDG": "DL", "REDG": "DL", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "DB", "FS": "DB", "SS": "DB", "K": "K", "P": "P"}
+TARGET_EYE = 0.32         # log target weight per standard deviation of the coaches' eye (real 2026 target weights: sd 0.32)
 EXPERIENCE = {"FR": 0, "FRRS": 1, "SO": 1, "SORS": 2, "JR": 2, "JRRS": 3, "SR": 3, "SRRS": 4}
 
 CLASSES = ("FR", "FRRS", "SO", "SORS", "JR", "JRRS", "SR", "SRRS")
@@ -259,6 +261,10 @@ def source_team(league: dict, slug: str) -> dict:
     entry = league["teams"][slug]
     roster = [expand(c, league["attrs"], base) for c in entry["roster"]]
     starters, depth = lineup(roster, entry["formation"], league["year"])
+    for p in roster:            # what the coaches see in a receiver they also throw him the ball for (real 2026 usage's spread)
+        if p["position"] in ("WR", "TE") and "target_mult" not in p:
+            z = random.Random(f"depth-{p['slug']}-{league['year']}").gauss(0, 1)
+            p["target_mult"] = round(min(2.0, max(0.5, math.exp(TARGET_EYE * z))), 3)
     out = {k: v for k, v in base.items() if k not in ("roster", "starters", "depth_chart", "coaches", "team_ratings", "verification")}
     style = entry.get("style", slug)                                 # the real program whose 2026 style the staff plays
     lead = (_real_usage().get(style) or {}).get("rb_lead_feature")

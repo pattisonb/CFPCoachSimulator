@@ -153,6 +153,7 @@ def run(seasons: int, seed: int, team: str, out: Path) -> None:
         rows.append(row)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps({"seed": seed, "team": team, "seasons": rows}, indent=1), encoding="utf-8")
+        out.with_suffix(".league.json").write_text(json.dumps(st_["league"]), encoding="utf-8")   # the latest league, to study
         o = row["offseason"]
         tr = row["tiers"]
         print(f"      carousel {dict(o.get('hc_departures', {}))}  you {o.get('you')}  moved {o.get('moved_to')}", flush=True)
