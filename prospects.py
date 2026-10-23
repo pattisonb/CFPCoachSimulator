@@ -124,7 +124,13 @@ def comp(profile_vector: dict, position: str, pool) -> Optional[dict]:
                default=None)
     if best is None or _distance(profile_vector, best["ratings_ea"], keys) > comp_max_distance(position):
         return None
-    return {k: best[k] for k in ("name", "slug", "school", "team", "position", "overall_ea")}
+    import build_teams
+    import season
+    out = {k: best[k] for k in ("name", "slug", "school", "team", "position")}
+    # the starter's card overall: EA's only feeds it
+    out["overall"] = season.ea_house(build_teams.POSITION_MAP.get(best["position"], best["position"]), best["overall_ea"]) \
+        if best.get("overall_ea") else None
+    return out
 
 
 def _shifted(state: dict, p: dict, grades: dict[str, float]) -> dict:
@@ -186,16 +192,88 @@ def grade_detail(state: dict, p: dict, group: str, lo: float, hi: float) -> dict
     if len(peers) < 4:                         # a narrow read: the nearest prospects instead
         mid = (lo + hi) / 2
         peers = sorted(rc["prospects"].values(), key=lambda q: abs(q["truth"][group] - mid))[:30]
+    import ratings as rv2
+    import season
     if group == "potential":
         import recruits
-        vals = [recruits.overall_ea(q["ea_position"], q["archetype"], recruiting.attributes(state, q, "potential_ea")) for q in peers]
-        return {"ratings": {"projected overall": _middle(vals)}, "peers": len(peers)}
-    keys = {"athleticism": recruiting._ATHLETIC, "size_strength": recruiting._SIZE, "football_iq": recruiting._IQ}.get(group)
-    if keys is None:                           # technique: the skills that matter most at his position
-        keys = tuple(k for k in _attributes(p["ea_position"]) if k not in recruiting._NOT_TECHNIQUE)[:4] or ("awareness",)
-    idx = {k: i for i, k in enumerate(rc["attrs"])}
-    return {"ratings": {k.replace("_", " "): _middle([q["ratings_ea"][idx[k]] for q in peers]) for k in keys if k in idx},
-            "peers": len(peers)}
+        vals = [season.ea_house(engine_position(q), recruits.overall_ea(q["ea_position"], q["archetype"],
+                                                                         recruiting.attributes(state, q, "potential_ea"))) for q in peers]
+        mid = _middle(vals)
+        pos = engine_position(p)
+        return {"ratings": {"Projected overall": mid}, "peers": len(peers),
+                "league": {"Projected overall": league_rank(pos, "overall", (mid[0] + mid[1]) / 2)}}
+    keys = GAME_GROUPS.get(group)
+    if keys is None:                           # technique: his position's skills on the player card
+        keys = tuple(k for k in rv2.POSITION_ATTRIBUTES.get(engine_position(p), []) if rv2.ATTRIBUTES[k][1] != "Physical"
+                     and k != "return_skill")[:4]
+    cards = [game_attributes(state, q) for q in peers]
+    ratings = {k: _middle([c[k] for c in cards if k in c]) for k in keys if any(k in c for c in cards)}
+    pos = engine_position(p)
+    return {"ratings": {rv2.ATTRIBUTES[k][0]: v for k, v in ratings.items()}, "peers": len(peers),
+            "league": {rv2.ATTRIBUTES[k][0]: league_rank(pos, k, (v[0] + v[1]) / 2) for k, v in ratings.items()}}
+
+
+_LEAGUE: dict = {}
+
+
+def league_values(pos: str, key: str) -> tuple[list, list]:
+    """Today's FBS players at a position (linebackers together): their card values of `key`
+    (an attribute, or 'overall'), all of them and the starters, highest first."""
+    import season
+    group = season.SCALE_GROUP.get(pos, pos)
+    if (group, key) not in _LEAGUE:
+        allv, starters = [], []
+        for slug, t in season.load_teams().items():
+            if t.get("fictional") or t.get("subdivision") == "FCS":
+                continue
+            for q in t["offense"] + t["defense"]:
+                if season.SCALE_GROUP.get(q["position"], q["position"]) != group:
+                    continue
+                v = season.shown_overall(q) if key == "overall" else (q.get("attributes") or {}).get(key)
+                if v is None:
+                    continue
+                allv.append(v)
+                if q.get("in_game"):
+                    starters.append(v)
+        _LEAGUE[(group, key)] = (sorted(allv, reverse=True), sorted(starters, reverse=True))
+    return _LEAGUE[(group, key)]
+
+
+def league_rank(pos: str, key: str, value: float) -> dict:
+    """Where a value would rank among today's players at the position: {rank, of, starter_rank, starters}."""
+    allv, starters = league_values(pos, key)
+    return {"rank": 1 + sum(1 for v in allv if v > value), "of": len(allv),
+            "starter_rank": 1 + sum(1 for v in starters if v > value), "starters": len(starters), "group": pos}
+
+
+# the player card's attributes each grade is read from (technique: the position's skills)
+GAME_GROUPS = {"athleticism": ("top_speed", "burst", "agility", "leaping"), "size_strength": ("strength", "stamina", "durability"),
+               "football_iq": ("football_iq",)}
+
+
+def engine_position(p: dict) -> str:
+    import build_teams
+    return build_teams.POSITION_MAP.get(p["ea_position"], p["position"])
+
+
+def game_attributes(state: dict, p: dict, field: str = "ratings_ea") -> dict[str, int]:
+    """A prospect's attributes on the game's scale, exactly as a real player's card gets them
+    (build_teams): EA's ratings through the source curve, the card's composites, then the house
+    scale (50 at a Power 4 starter's average at his position). EA's numbers are only the input."""
+    import ratings as rv2
+    import recruits
+    import season
+    pos = engine_position(p)
+    src = {k: recruits.curve(v) for k, v in recruiting.attributes(state, p, field).items()}
+    raw = rv2.raw_attributes(src, pos, pos)
+    group = rv2.card_group(pos, pos)
+    group = "RB" if group == "FB" else group
+    scale = season._teams_meta.get("attribute_scale") or {}
+    out = {}
+    for k, v in raw.items():
+        m, hi, lo = scale.get(f"{group}|{k}", (v, 1.5, 0.9))
+        out[k] = int(round(max(1, min(99, 50 + (v - m) * (hi if v >= m else lo)))))
+    return out
 
 
 def _middle(vals: list) -> list[int]:

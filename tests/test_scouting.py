@@ -101,7 +101,19 @@ if __name__ == "__main__":
     assert "truth" not in ours["public"]
     # hovering a grade: what prospects graded like that look like in ratings
     det = ours["grade_details"]
-    assert set(det) == set(recruiting.GROUPS) and "speed" in det["athleticism"]["ratings"]
+    assert set(det) == set(recruiting.GROUPS) and "Top Speed" in det["athleticism"]["ratings"], det["athleticism"]
+    # one scale: the game's (player cards'), never EA's: no EA attribute names, comps by the card overall
+    assert not any(k in det[g]["ratings"] for g in det for k in ("speed", "acceleration", "change of direction"))
+    assert "Projected overall" in det["potential"]["ratings"]
+    # each number placed among today's players at his position (from the read's middle value)
+    lg = det["athleticism"]["league"]["Top Speed"]
+    assert 1 <= lg["rank"] <= lg["of"] and 1 <= lg["starter_rank"] <= lg["starters"] + 1 and lg["of"] > lg["starters"] > 20
+    pot = det["potential"]["league"]["Projected overall"]
+    assert 1 <= pot["rank"] <= pot["of"]
+    assert "overall_ea" not in (ours["our_comp"] or {}) and (ours["our_comp"] or {}).get("overall") is not None
+    # grades rank a prospect against his own position: a typical lineman is not an F athlete
+    linemen = sorted(p["truth"]["athleticism"] for p in rc["prospects"].values() if p["ea_position"] in ("LT", "LG", "C", "RG", "RT"))
+    assert 70 <= linemen[len(linemen) // 2] <= 84, linemen[len(linemen) // 2]
     assert all(0 <= lo <= hi <= 99 for g in det.values() for lo, hi in g["ratings"].values())
     assert det["coachability"]["labels"]
     hid = next(pid for pid, p in rc["prospects"].items() if p.get("hidden") and pid not in rc["reads"])

@@ -812,14 +812,18 @@ def _raw(p: dict) -> dict[str, float]:
 
 
 def _truths(prospects: dict) -> None:
-    """Each prospect's true grade points per group: his percentile within the class (coachability
-    from his label). Hidden from the player; reads estimate them."""
+    """Each prospect's true grade points per group: his percentile among the class's prospects at
+    his position (a lineman's athleticism against linemen, not receivers; coachability from his
+    label). Hidden from the player; reads estimate them."""
     raws = {pid: _raw(p) for pid, p in prospects.items()}
-    n = max(1, len(raws) - 1)
-    for g in GROUPS[:-1]:
-        order = sorted(raws, key=lambda pid: raws[pid][g])
-        for i, pid in enumerate(order):
-            prospects[pid].setdefault("truth", {})[g] = round(GRADE_LOW + GRADE_SPAN * i / n, 1)
+    by_pos: dict[str, list] = {}
+    for pid, p in prospects.items():
+        by_pos.setdefault(p["ea_position"], []).append(pid)
+    for pids in by_pos.values():
+        n = max(1, len(pids) - 1)
+        for g in GROUPS[:-1]:
+            for i, pid in enumerate(sorted(pids, key=lambda q: raws[q][g])):
+                prospects[pid].setdefault("truth", {})[g] = round(GRADE_LOW + GRADE_SPAN * i / n, 1)
     for pid, p in prospects.items():
         p["truth"]["coachability"] = COACHABILITY_POINTS.get(p.get("coachability"), 78)
 

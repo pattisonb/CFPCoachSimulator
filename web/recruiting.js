@@ -35,6 +35,7 @@
     const L = 0.2126 * lin(n >> 16) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
     return L > 0.4 ? "#111111" : "#ffffff";
   }
+  const plural = (pos) => ({ OL: "OL", DL: "DL", MLB: "LBs", ROLB: "LBs", LOLB: "LBs", LB: "LBs" }[pos] || `${pos}s`);
   const teamName = (slug) => (slug === "FCS" ? "an FCS program" : (window.CFP.teamsBySlug[slug] || {}).name || slug);
   const loading = (text) => el("p", { class: "muted go-loading", text });
   const SIGNING_WEEK = 16, FINAL_WEEK = 20;       // the early signing period (selection week) and national signing day
@@ -422,8 +423,16 @@
     tip.style.left = `${left}px`;
   }
 
-  // a floating tooltip would hang in place while its grade scrolls away: scrolling closes it
-  window.addEventListener("scroll", () => { for (const t of document.querySelectorAll(".go-tip-box.show")) t.classList.remove("show"); }, true);
+  // a floating tooltip follows its grade while the page or the profile scrolls, and closes once
+  // the grade has scrolled out of sight
+  window.addEventListener("scroll", () => {
+    for (const t of document.querySelectorAll(".go-tip-box.show")) {
+      const cell = t.closest(".go-tip");
+      const r = cell && cell.getBoundingClientRect();
+      if (!r || r.bottom < 0 || r.top > window.innerHeight) t.classList.remove("show");
+      else placeTip(cell, t);
+    }
+  }, true);
 
   // ----- the Prospect Profile ----------------------------------------------------------------------
 
@@ -485,7 +494,7 @@
         el("ul", { class: "rc-eval" }, [...p.evaluation.strengths.map((t) => el("li", { class: "rc-good", text: t })), ...(p.evaluation.solid || []).map((t) => el("li", { class: "go-solid", text: t })), ...p.evaluation.weaknesses.map((t) => el("li", { class: "rc-bad", text: t }))]),
         el("p", { text: p.evaluation.outlook }));
     }
-    const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall_ea ? `, ${c.overall_ea} OVR` : ""})`;
+    const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall ? `, ${c.overall} OVR` : ""})`;
     if (p.public_comp) node.append(el("p", {}, [el("b", { text: "Comp: " }), comp(p.public_comp)]));
     node.append(el("h3", { text: "Our staff's grades" }));
     if (p.our_grades) {
@@ -494,11 +503,15 @@
         const d = (p.grade_details || {})[g] || {};
         const grade = r[0] === r[1] ? r[0] : `${r[0]} to ${r[1]}`;
         const lines = d.labels ? [`Coachability like: ${d.labels.join(", ")}`]
-          : Object.entries(d.ratings || {}).map(([k, v]) => `${(ATTR_NAMES[k] || k).replace(/^./, (c) => c.toUpperCase())}: ${v[0] === v[1] ? v[0] : `${v[0]}–${v[1]}`}`);
+          : Object.entries(d.ratings || {}).map(([k, v]) => {
+              const lg = (d.league || {})[k];
+              const where = lg ? ` · about #${lg.rank} of ${lg.of} ${plural(lg.group)} today (#${lg.starter_rank} of ${lg.starters} starters)` : "";
+              return `${(ATTR_NAMES[k] || k).replace(/^./, (c) => c.toUpperCase())}: ${v[0] === v[1] ? v[0] : `${v[0]}–${v[1]}`}${where}`;
+            });
         const tipId = `tip-${pid}-${g}`;
         const tip = el("div", { class: "go-tip-box", role: "tooltip", id: tipId }, [el("b", { text: `${GROUP_NAMES[g] || g} ${grade} looks like` }),
           ...lines.map((t) => el("div", { text: t })),
-          d.peers ? el("div", { class: "muted small", text: `Middle half of ${d.peers} prospects graded like this` }) : null]);
+          d.peers ? el("div", { class: "muted small", text: `Middle half of ${d.peers} prospects at his position graded like this, on the game's scale (50 is a Power 4 starter's average), ranked against today's players at his position.` }) : null]);
         const cell = el("div", { class: "go-stat go-tip", tabindex: "0", "aria-describedby": tipId }, [el("div", { class: "go-kicker muted", text: (GROUP_NAMES[g] || g).toUpperCase() }),
           el("div", { class: "go-stat-val", text: grade }), tip]);
         const show = () => placeTip(cell, tip);
