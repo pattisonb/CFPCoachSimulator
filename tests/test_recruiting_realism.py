@@ -4,7 +4,7 @@ prospects commit, sign and decommit, on two seeds. (Run as a file: multiprocessi
 import sys as _sys
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1] / "tools"))
 import check_recruiting
 

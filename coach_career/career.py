@@ -31,7 +31,7 @@ def new_career(state: dict, coach: Optional[dict]) -> dict:
         "saved_week": 0,
         "saved_at": _now(),
     }
-    import recruiting
+    from coach_career import recruiting
     recruiting.start(state)
     state["career"]["staff"] = recruiting.make_staff(state)
     return state["career"]
@@ -46,7 +46,7 @@ def is_career(state: dict) -> bool:
 def export_save(state: dict, boxes: bool = True) -> bytes:
     """The career as one gzip file: the season state and every saved box score (`boxes=False`:
     the state alone, your own games' box scores included, for the browser's weekly copy)."""
-    import season
+    from sim import season
     files = {p.name: p.read_text(encoding="utf-8") for p in sorted(season.box_dir(state).glob("*.json"))} \
         if boxes and season.box_dir(state).exists() else {}
     return gzip.compress(json.dumps({"state": state, "boxes": files}, separators=(",", ":")).encode("utf-8"), compresslevel=6)
@@ -74,7 +74,7 @@ def read_save(blob: bytes) -> tuple[dict, dict]:
 
 def _looks_like_career(state) -> bool:
     """A career save's shape: what the server reads from it before trusting it."""
-    import season
+    from sim import season
     if not isinstance(state, dict) or not str(state.get("id", "")).isalnum():
         return False
     c = state.get("career")
@@ -86,7 +86,7 @@ def _looks_like_career(state) -> bool:
 
 def write_save(state: dict, boxes: dict) -> None:
     """Put a career on the server's disk as it was saved (its stamp unchanged)."""
-    import season
+    from sim import season
     d = season.box_dir(state)
     d.mkdir(parents=True, exist_ok=True)
     for name, text in boxes.items():

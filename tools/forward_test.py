@@ -34,7 +34,7 @@ from __future__ import annotations
 import sys as _sys
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 
 import argparse
 import json
@@ -50,9 +50,9 @@ from datetime import datetime, timezone
 from multiprocessing import Pool
 from pathlib import Path
 
-from teamnames import build_matcher, match
+from sim.teamnames import build_matcher, match
 from fetch_lines import lines_for_dates   # the betting board (scoresandodds.com)
-from form import PLAYER_FORM_APPLIED, apply_form, form_shift, load_all_form   # in-season form from the real results and box scores
+from sim.form import PLAYER_FORM_APPLIED, apply_form, form_shift, load_all_form   # in-season form from the real results and box scores
 
 ROOT = Path(__file__).resolve().parents[1]
 GAMES_FILE = ROOT / "data" / "season_games.json"
@@ -97,7 +97,7 @@ def load_season() -> list[dict]:
 
 def load_teams() -> dict:
     if not TEAMS_FILE.exists():
-        subprocess.run([sys.executable, str(ROOT / "build_teams.py")], check=True, cwd=ROOT)
+        subprocess.run([sys.executable, "-m", "teamdata.build_teams"], check=True, cwd=ROOT)
     return json.loads(TEAMS_FILE.read_text(encoding="utf-8"))["teams"]
 
 

@@ -59,7 +59,7 @@ class Player:
         self.injury = None
         self.stats = dict(data.get("stats") or {})   # own copy: the source roster is shared between games
         self.target_mult = min(cfg.TARGET_MULT_MAX, data.get("target_mult", 1.0))  # real 2026 share of his team's catches against his ratings' share
-        # ratings v2 (ratings.py): the position's attributes on the house scale (50 = an average
+        # ratings v2 (teamdata/ratings.py): the position's attributes on the house scale (50 = an average
         # Power 4 starter) and the measurables. The engine reads them where a part of the game
         # has moved onto them (docs/RATINGS_V2.md); elsewhere it reads the composites above.
         self.attrs = dict(data.get("attributes") or {})

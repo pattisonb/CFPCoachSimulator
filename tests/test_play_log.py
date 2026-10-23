@@ -4,12 +4,12 @@ five games (compare it before and after an engine change) and checks the log."""
 import sys as _sys
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 import hashlib
 import json
 import sys
 
-import season
+from sim import season
 
 
 def fingerprint(n: int = 5) -> str:

@@ -16,8 +16,8 @@ import random
 import statistics as st
 from typing import Optional
 
-import league as lg
-import recruits
+from coach_career import league as lg
+from coach_career import recruits
 
 STAGES = ("departures", "portal_1", "portal_2", "development", "staff", "ready")
 STAGE_NAMES = {"departures": "Departures", "portal_1": "Transfer portal, round 1", "portal_2": "Transfer portal, round 2",
@@ -86,14 +86,14 @@ def house(pos: str, ovr: float) -> int:
 
 
 def _record(state: dict, slug: str) -> tuple[int, int]:
-    import season
+    from sim import season
     r = season._records(state, include_playoff=True).get(slug) or {}
     return r.get("wins", 0), r.get("losses", 0)
 
 
 def _usage() -> dict[str, dict[str, str]]:
     """team -> player slug -> starter / rotation (next on his role's depth) / bench, from the season's teams."""
-    import season
+    from sim import season
     out = {}
     for slug, t in season.load_teams().items():
         if t.get("fictional"):
@@ -119,7 +119,7 @@ def _usage() -> dict[str, dict[str, str]]:
 def start(state: dict) -> dict:
     """Open the offseason after national signing day: next year's league, every program's
     departures and the signed classes on the rosters, the portal open for round 1."""
-    import season
+    from sim import season
     if state.get("offseason"):
         return state["offseason"]
     year = season.season_year(state) + 1
@@ -153,8 +153,8 @@ PHYSICAL = {"speed", "acceleration", "agility", "change_of_direction", "jumping"
 def _performance(state: dict) -> dict[str, dict]:
     """player id -> {"z": production against the average starter at his group, "honors": [(kind, name)]}
     from the season's stats (awards.Pool, the same scores the awards use) and its honors."""
-    import awards
-    import season
+    from sim import awards
+    from sim import season
     teams = season.load_teams()
     ids = {(slug, p["name"], p["position"]): p["slug"] for slug, t in teams.items() for p in t["offense"] + t["defense"]}
     out: dict[str, dict] = {}
@@ -246,7 +246,7 @@ def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict]:
     for pick, (score, slug, p) in enumerate(board[:fbs_picks], 1):
         drafted[p["id"]] = pick
     leaving: dict[str, set] = {slug: set() for slug in lgd["teams"]}
-    import season
+    from sim import season
     teams = season.load_teams()
     p4 = {slug: season._is_p4(slug, teams[slug]) for slug in lgd["teams"]}
     for slug, t in lgd["teams"].items():
@@ -316,7 +316,7 @@ def _jersey(roster: list[dict], pos: str, rng: random.Random) -> Optional[str]:
 
 def _sign_classes(state: dict, lgd: dict) -> dict[str, int]:
     """Every school's signed high school class joins its roster as freshmen."""
-    import recruiting
+    from coach_career import recruiting
     rc = state.get("recruiting")
     if not rc:
         return {}
@@ -344,7 +344,7 @@ def _sign_classes(state: dict, lgd: dict) -> dict[str, int]:
 # ----- the transfer portal ----------------------------------------------------------------------
 
 def p4_school(slug: str) -> bool:
-    import season
+    from sim import season
     return season._is_p4(slug, season.load_teams()[slug])
 
 
@@ -381,8 +381,8 @@ def playing_time(lgd: dict, slug: str, p: dict) -> float:
 
 def _prestige(slug: str) -> float:
     """The program's pull on a transfer: its recruiting baseline (NIL, brand; about -2 to +2) and its team now."""
-    import recruiting
-    import season
+    from coach_career import recruiting
+    from sim import season
     t = season.load_teams().get(slug) or {}
     return PRESTIGE_WEIGHT * recruiting._baseline(slug) + RATING_WEIGHT * ((t.get("team_ratings") or {}).get("overall", 60) - 60) / 10
 
@@ -493,7 +493,7 @@ def _close_portal(state: dict) -> None:
 def program_factor(slug: str) -> float:
     """A program's own pull on development (facilities, staff size, strength and conditioning): its
     recruiting baseline, about -2 to +2, at PROGRAM_DEV a point."""
-    import recruiting
+    from coach_career import recruiting
     return 1 + PROGRAM_DEV * recruiting._baseline(slug)
 
 
@@ -554,7 +554,7 @@ def _develop_all(state: dict) -> dict:
 def _newcomer(r: dict, slug: str) -> dict:
     """A generated player (recruits.recruit, drawn by the model learned from real players) on our
     scale, in the form league.compact takes."""
-    import game_scale
+    from teamdata import game_scale
     ours = game_scale.from_ea(r["ratings_ea"], r["ea_position"])
     pot = game_scale.potential_from_ea(r["potential_ea"], ours, r["ea_position"])
     return {"slug": slug, "name": r["name"], "position": r["ea_position"], "class": "FR", "height": r["height"],
@@ -573,7 +573,7 @@ def _fill_rosters(state: dict) -> dict:
     added = released = 0
     walk_ons: dict[str, list] = {}
     taken: set = set()
-    import season
+    from sim import season
     for slug, t in lgd["teams"].items():
         p4 = season._is_p4(slug, season.load_teams()[slug])
         counts = _group_counts(t["roster"])
@@ -718,7 +718,7 @@ def choose_job(state: dict, slug: Optional[str]) -> dict:
 def _take_job(state: dict, slug: str) -> None:
     """You leave for `slug` next season: you take its head coaching job (your coordinators and
     recruiters follow only as far as your recruiters do); your old program hires a new coach."""
-    import carousel
+    from coach_career import carousel
     lgd = state["league"]
     me = state["team"]
     year = state["offseason"]["year"]
@@ -753,7 +753,7 @@ def advance(state: dict) -> dict:
         off["report"] = {"development": _develop_all(state), **_fill_rosters(state)}
         off["stage"] = "development"
     elif stage == "development":
-        import carousel
+        from coach_career import carousel
         car = carousel.run(state)
         off["carousel"] = car
         off["coaching_changes"] = car["changes"]
@@ -780,7 +780,7 @@ def run_all(state: dict) -> None:
 
 def summary(state: dict) -> dict:
     """The season just finished, for the career's history."""
-    import season
+    from sim import season
     me = state["team"]
     wins, losses = _record(state, me)
     final = state["polls"].get(str(season.FINAL_WEEK)) or state["polls"].get(str(max(int(w) for w in state["polls"])), {})
@@ -793,7 +793,7 @@ def summary(state: dict) -> dict:
            "heisman": {"name": top.get("name"), "team": top.get("team")} if top.get("name") else None}
     rc = state.get("recruiting")
     if rc:
-        import prospects
+        from coach_career import prospects
         out["class_rank"] = prospects.class_rank(state, me)
         out["signed"] = sum(1 for s in rc["status"].values() if s.get("signed") == me)
     off = state.get("offseason") or {}
@@ -804,9 +804,9 @@ def summary(state: dict) -> dict:
 def next_season(state: dict) -> dict:
     """The next season's state for this career: same id, the league as the offseason left it,
     the career (staff, settings, history) carried over, a new class of high school seniors."""
-    import career as career_mod
-    import recruiting
-    import season
+    from coach_career import career as career_mod
+    from coach_career import recruiting
+    from sim import season
     off = state["offseason"]
     if off["stage"] != "ready":
         raise ValueError("the offseason is not finished")
@@ -844,7 +844,7 @@ def next_season(state: dict) -> dict:
         history[-1]["moved_to"] = team
         car.setdefault("schools", []).append({"team": team, "from": year})
     recruiting.start(new, year=year + 1)
-    import prospects
+    from coach_career import prospects
     prospects.reset_caches()
     old = lg.path(state["id"], year - 1)
     if old.exists():
@@ -946,7 +946,7 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
     }
     car = off.get("carousel")
     if car:
-        import carousel
+        from coach_career import carousel
         out["job"] = {"you": car.get("you") or {}, "offers": carousel.job_rows(state, car["offers"]),
                       "openings": carousel.job_rows(state, car["openings"]), "choice": car.get("choice"),
                       "moving_to": off.get("move_to")}

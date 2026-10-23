@@ -110,7 +110,7 @@ def spots(vals: list[float]) -> dict[str, float]:
 
 
 def simulate(seeds: list[int], snapshot_week: int | None) -> tuple[list[dict], list[dict]]:
-    import season
+    from sim import season
     ends, snaps = [], []
     for seed in seeds:
         t0 = time.perf_counter()
@@ -223,7 +223,7 @@ if __name__ == "__main__":
     ap.add_argument("--no-2026", action="store_true")
     ap.add_argument("--json", default=None, help="also write the numbers to this file (tools/realism_pdf.py --fullseason charts them)")
     a = ap.parse_args()
-    import season
+    from sim import season
     teams = season.load_teams()
     ends, snaps = simulate([101 + 101 * i for i in range(a.seeds)], None if a.no_2026 else 8)
     data: dict = {}

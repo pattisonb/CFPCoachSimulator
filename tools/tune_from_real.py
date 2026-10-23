@@ -40,7 +40,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-import season  # noqa: E402
+from sim import season  # noqa: E402
 from engine import game_config as cfg  # noqa: E402
 
 OUT = ROOT / "data" / "real_adjustments.json"
@@ -298,7 +298,7 @@ def usage(teams: dict, by_team: dict, games: list[dict], ratings: dict | None = 
 
 
 def build() -> None:
-    subprocess.run([sys.executable, str(ROOT / "build_teams.py")], cwd=ROOT, check=True, capture_output=True)
+    subprocess.run([sys.executable, "-m", "teamdata.build_teams"], cwd=ROOT, check=True, capture_output=True)
     season._teams_cache.clear()
 
 
@@ -312,7 +312,7 @@ def main() -> None:
     mode = args[0] if args else "all"
     st_real = season.load_season("real-2026")
     if st_real is None:
-        raise SystemExit("build the real season first: python realdata.py")
+        raise SystemExit("build the real season first: python -m sim.realdata")
     # depth mode keeps the usage already on file (lead-back splits and target weights)
     old = json.loads(OUT.read_text(encoding="utf-8")) if mode == "depth" and OUT.exists() else {}
     old_usage, old_ratings = old.get("usage", {}), old.get("ratings", {})
@@ -341,7 +341,7 @@ def main() -> None:
         print(f"usage: real lead-back split for {n_lead} teams, target weights for {n_tgt} receivers; "
               f"route running and hands raised for {n_fix} receivers the target cap could not cover")
         OUT.write_text(json.dumps(data, indent=1), encoding="utf-8")
-    subprocess.run([sys.executable, str(ROOT / "build_teams.py")], cwd=ROOT, check=True)
+    subprocess.run([sys.executable, "-m", "teamdata.build_teams"], cwd=ROOT, check=True)
     print(f"written to {OUT}; build_teams.py applied it")
 
 

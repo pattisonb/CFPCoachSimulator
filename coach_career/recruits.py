@@ -16,7 +16,7 @@ A recruit, in order (athleticism first):
 Ratings are on EA's scale (ratings_ea, overall_ea) like the source rosters, plus the source
 curve's scale (`ratings`, `overall`) that build_teams.py reads.
 
-Usage:  python recruits.py [year] [seed]     # print a generated class's top 25 and its make-up
+Usage:  python -m coach_career.recruits [year] [seed]     # print a generated class's top 25 and its make-up
 """
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]   # the project root
 MODEL_FILE = ROOT / "data" / "recruiting_model.json"
 
 STAR_BANDS = ("5", "4", "3", "2")

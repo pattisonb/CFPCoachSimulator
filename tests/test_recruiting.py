@@ -3,12 +3,12 @@ then actions, hours and points, then the weekly step. (Run as a file: multiproce
 import sys as _sys
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 import shutil
 
-import prospects
-import recruiting
-import season
+from coach_career import prospects
+from coach_career import recruiting
+from sim import season
 
 if __name__ == "__main__":
     # the class, nobody committed, and the pulls

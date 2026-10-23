@@ -3,13 +3,13 @@ looks but can be wrong. (Run as a file: multiprocessing on Windows.)"""
 import sys as _sys
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 import random
 import statistics
 
-import prospects
-import recruiting
-import season
+from coach_career import prospects
+from coach_career import recruiting
+from sim import season
 
 
 def coverage(st: dict, rating: int, pids: list[str]) -> tuple[float, float, list[tuple[float, bool]]]:
@@ -157,8 +157,8 @@ if __name__ == "__main__":
     (season.SEASONS_DIR / f"{st['id']}.json").unlink()
     # a career saved while recruits were kept in EA numbers converts on load: our ratings, overall
     # and projected overall, true grades on our scale, each read still as far off as it was
-    import game_scale
-    import recruits
+    from teamdata import game_scale
+    from coach_career import recruits
     old = {"id": "old-save", "recruiting": {"attrs": sorted(recruits.generate_class(2027, 3)[0]["ratings_ea"]), "prospects": {}, "reads": {}}}
     for q in recruits.generate_class(2027, 3)[:5]:
         q["ratings_ea"] = [q["ratings_ea"][k] for k in old["recruiting"]["attrs"]]

@@ -1,7 +1,7 @@
 # Player development, potential and scouting (spec)
 
 Status: agreed design, October 22, 2026. Built so far: generated classes and development,
-the real players' potential and coachability (`recruits.py`, docs/HOW_IT_WORKS.md "Generated
+the real players' potential and coachability (`coach_career/recruits.py`, docs/HOW_IT_WORKS.md "Generated
 recruiting classes"), and your staff's reads of recruits in Coach Career (letter-grade ranges
 that narrow with looks and can be wrong; docs/HOW_IT_WORKS.md "Coach Career"); not yet reads
 of your own roster, reads carried into a signee's player card, potential that moves, or god

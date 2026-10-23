@@ -5,10 +5,10 @@ multiprocessing on Windows.)"""
 import sys as _sys
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 from fastapi import HTTPException
 
-import season
+from sim import season
 import server
 
 
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     assert server.season_settings_change(sid, server.SettingsRequest(auto_recruit="week"))["auto_recruit"] == "week"
     st_ = server._season_state(sid)
     before = len(st_["recruiting"]["offers"].get("ohio-state", []))
-    import recruiting as _rc
+    from coach_career import recruiting as _rc
     mine = next(r["id"] for r in server.prospect_search(sid, stars=4, state="OH", limit=5)["rows"])   # one you picked
     server.board_change(sid, server.BoardRequest(pid=mine, on=True))
     _rc.weekly_step(st_, 1)

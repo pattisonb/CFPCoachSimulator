@@ -4,8 +4,8 @@ runs. (Run as a file: multiprocessing on Windows cannot spawn workers from a pip
 import sys as _sys
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
-import season
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
+from sim import season
 from engine import game_config as cfg
 from engine.game import simulate_game
 from test_play_log import fingerprint

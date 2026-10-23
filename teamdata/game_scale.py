@@ -11,7 +11,7 @@ them, and the engine reads them back through `to_base` (the frozen inverse) into
 was tuned on. Generated recruits are drawn by a model learned from real players and converted
 with `from_ea` the moment they are made.
 
-Usage:  python game_scale.py      # refit data/game_scale.json from the source rosters (rarely: it is frozen)
+Usage:  python -m teamdata.game_scale      # refit data/game_scale.json from the source rosters (rarely: it is frozen)
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]   # the project root
 FILE = ROOT / "data" / "game_scale.json"
 ABOVE, BELOW = 15.0, 9.0         # scale points per standard deviation above and below the middle starter
 GROUP_OF = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL", "LG": "OL", "C": "OL", "RG": "OL", "RT": "OL",
@@ -65,7 +65,7 @@ def base_from_ours(ours: dict, pos: str) -> dict[str, float]:
 
 def from_ea(ratings_ea: dict, pos: str) -> dict[str, int]:
     """A generated recruit's EA-scale draw, converted once (the source curve, then our scale)."""
-    import recruits
+    from coach_career import recruits
     return ours_from_base({k: recruits.curve(v) for k, v in ratings_ea.items()}, pos)
 
 
@@ -137,12 +137,12 @@ def upgrade(state: dict) -> bool:
         for c in players:
             c["r"], c["g"], c["o"] = _convert(c["r"], c["g"], attrs, c["pos"])
         lg["attrs"], lg["scale"] = keys(), "ours"
-        import league
+        from coach_career import league
         league.forget(state["id"])
         changed = True
     rc = state.get("recruiting")
     if rc and rc.get("scale") != "ours" and rc.get("prospects"):
-        import recruiting
+        from coach_career import recruiting
         attrs = rc["attrs"]
         old = {pid: dict(p["truth"]) for pid, p in rc["prospects"].items()}
         for p in rc["prospects"].values():
@@ -173,8 +173,8 @@ def fit() -> dict:
     the card overall the game showed from EA's (its own scale: 50 the middle Power 4 starter)."""
     import statistics as st
     import numpy as np
-    import build_teams
-    import polls
+    from teamdata import build_teams
+    from sim import polls
     src_dir = ROOT / "cfb_sim_data" / "teams"
     sources = [json.loads(path.read_text(encoding="utf-8")) for path in sorted(src_dir.glob("*.json"))]
     p4 = {t["slug"] for t in sources if not t["fictional"] and (t["conference"] in polls.P4 or t["slug"] == "notre-dame")}

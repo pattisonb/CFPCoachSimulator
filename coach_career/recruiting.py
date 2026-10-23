@@ -20,10 +20,10 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
-import game_scale
-import recruits
+from teamdata import game_scale
+from coach_career import recruits
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]   # the project root
 PITCHES = ("proximity", "playing_time", "prestige", "winning", "nil", "coach", "academics")
 # how often each topic is a prospect's priority (drawn without replacement for his top three) *tune*
 PRIORITY_ODDS = {"proximity": 0.20, "playing_time": 0.18, "prestige": 0.16, "winning": 0.14, "nil": 0.14,
@@ -122,7 +122,7 @@ def attributes(state: dict, p: dict, field: str = "potential") -> dict[str, int]
 
 
 def fbs_schools(state: dict) -> list[str]:
-    import season
+    from sim import season
     return sorted(s for s, t in season.load_teams().items() if not t.get("fictional") and s in model()["teams"])
 
 
@@ -169,7 +169,7 @@ def _priorities(pid: str) -> list[str]:
 def start(state: dict, year: int = 2027) -> None:
     """Give a Coach Career its class of high school seniors (recruits.generate_class) and an empty
     recruiting board. Nobody is committed at the start."""
-    import season
+    from sim import season
     taken = {p["name"].lower() for t in season.load_teams().values() for p in t["offense"] + t["defense"]}
     cls = recruits.generate_class(year, seed=state.get("rng_state", 0), taken=taken)
     prospects = {}
@@ -220,7 +220,7 @@ def upgrade_grades(state: dict) -> None:
 # ----- what pulls a prospect to a school -----------------------------------------------------------
 
 def _group(ea_position: str) -> str:
-    import build_teams
+    from teamdata import build_teams
     pos = build_teams.POSITION_MAP.get(ea_position, ea_position)
     return "LB" if pos in ("MLB", "ROLB", "LOLB") else pos
 
@@ -232,7 +232,7 @@ def _ahead(slug: str, group: str, ovr: float) -> int:
 
 @lru_cache(maxsize=None)
 def _returning(slug: str, group: str) -> tuple:
-    import season
+    from sim import season
     t = season.load_teams()[slug]
     return tuple((p.get("ovr") or 0) for p in t["offense"] + t["defense"]
                  if ("LB" if p["position"] in ("MLB", "ROLB", "LOLB") else p["position"]) == group
@@ -242,7 +242,7 @@ def _returning(slug: str, group: str) -> tuple:
 def _coach_edge(state: dict, slug: str) -> float:
     if slug == state.get("team") and (state.get("coach") or {}).get("ratings"):
         return ((state["coach"]["ratings"].get("recruiting", 50)) - 50) / 160      # your created coach
-    import season
+    from sim import season
     hc = ((season.load_teams().get(slug) or {}).get("coaches") or {}).get("head_coach") or {}
     if (hc.get("since") or 0) > 2026:                 # a career's new hire: his rating is all there is to go on
         return ((hc.get("ratings") or {}).get("recruiting", 50) - 50) / 160
@@ -272,7 +272,7 @@ def pull(state: dict, slug: str, pid: str, winning: bool = True) -> dict[str, fl
 
 def on_field(state: dict, slug: str, week: int, records: Optional[dict] = None, ranks: Optional[dict] = None) -> float:
     """Last season blended with this one, this season counting more every week (spec section 3)."""
-    import season
+    from sim import season
     records = records if records is not None else season._records(state)
     ranks = ranks if ranks is not None else season.rank_map(state, state["current_week"])
     ls = _team_model(slug).get("last_season")
@@ -329,7 +329,7 @@ _WINNING: tuple = (None, {})   # (career and week, this week's on-field standing
 
 
 def _winning(state: dict) -> dict[str, float]:
-    import season
+    from sim import season
     global _WINNING
     played = sum(1 for g in state["games"].values() if g["played"])
     key = (state["id"], state.get("year"), state["current_week"], played)
@@ -353,7 +353,7 @@ class RecruitingError(Exception):
 def _recruiting_rating(state: dict, slug: str) -> float:
     if slug == state.get("team") and (state.get("coach") or {}).get("ratings"):
         return state["coach"]["ratings"].get("recruiting", 50)
-    import season
+    from sim import season
     hc = (season.load_teams()[slug].get("coaches") or {}).get("head_coach") or {}
     return (hc.get("ratings") or {}).get("recruiting", 50)
 
@@ -372,7 +372,7 @@ def open_spots(state: dict, slug: str) -> int:
 
 @lru_cache(maxsize=None)
 def _open_spots(slug: str) -> int:
-    import season
+    from sim import season
     t = season.load_teams()[slug]
     players = t["offense"] + t["defense"]
     returning = sum(1 for p in players if p.get("class") not in LEAVING)
@@ -678,7 +678,7 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
 def _visits(state: dict, week: int) -> None:
     """Official visits at this week's home games: a win sells, a blowout loss hurts, a big crowd helps."""
     rc = state["recruiting"]
-    import season
+    from sim import season
     for pid, by_school in rc["visits"].items():
         for slug, v in by_school.items():
             if v["done"] or v["week"] != week:
@@ -821,7 +821,7 @@ def auto_mode(state: dict) -> str:
 def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     """The recruiting week after `week`'s games: visits, every AI school (and yours on Auto),
     commitment draws, signing, then the hours reset. Returns the week's events."""
-    import season
+    from sim import season
     rc = state["recruiting"]
     start_log = len(rc["log"])
     rng = random.Random(f"recruiting-{rc['seed']}-{week}")
@@ -853,7 +853,7 @@ def _truths(prospects: dict, attrs: list[str]) -> None:
     attributes behind it (athleticism: Top Speed, Burst, Agility, Leaping; technique: his position's
     skills), and for potential his projected overall. Coachability comes from his label. Hidden from
     the player; reads estimate them."""
-    import prospects as pr
+    from coach_career import prospects as pr
     for p in prospects.values():
         cards = pr.card_attributes(dict(zip(attrs, p["ratings"])), p)
         truth = {g: round(sum(cards[k] for k in pr.group_keys(p, g)) / len(pr.group_keys(p, g)), 1) for g in GROUPS[:-2]}
@@ -905,7 +905,7 @@ def grade_range(state: dict, pid: str, group: str) -> Optional[tuple[str, str]]:
 def make_staff(state: dict) -> list[dict]:
     """Your OC and DC (evaluation = player development) and three generated recruiters, each on
     one area: the school's own states first."""
-    import season
+    from sim import season
     t = season.load_teams()[state["team"]]
     rng = random.Random(f"staff-{state.get('rng_state', 0)}-{state['team']}")
     taken = {p["name"].lower() for p in state["recruiting"]["prospects"].values()}

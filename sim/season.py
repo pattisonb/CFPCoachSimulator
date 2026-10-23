@@ -19,7 +19,7 @@ Modes:
 Games against FCS schools are played against the fictional FCS school from the same
 region (data/fcs_map.json).
 
-Usage:  python season.py ohio-state [full|remaining]      # simulate to the end and print
+Usage:  python -m sim.season ohio-state [full|remaining]      # simulate to the end and print
 """
 from __future__ import annotations
 
@@ -38,14 +38,14 @@ from multiprocessing import Pool
 from pathlib import Path
 from typing import Callable, Iterator, Optional
 
-import awards
-import ratings as ratings_v2
-import coaches
-import bowls
-import polls
-import recruiting
+from sim import awards
+from teamdata import ratings as ratings_v2
+from sim import coaches
+from sim import bowls
+from sim import polls
+from coach_career import recruiting
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]   # the project root
 TEAMS_FILE = ROOT / "data" / "engine_teams.json"
 SCHEDULES_FILE = ROOT / "data" / "schedules.json"
 FCS_MAP_FILE = ROOT / "data" / "fcs_map.json"
@@ -158,15 +158,15 @@ def use_league(path: Optional[Path]) -> None:
     for c in (_teams_meta, _scale_cache, _form_cache, _race_cache, _preview_cache):
         c.clear()
     close_pool()                              # the workers hold the old league
-    import prospects
-    import recruiting
+    from coach_career import prospects
+    from coach_career import recruiting
     recruiting.reset_caches()
     prospects.reset_caches()
 
 
 def activate(state: dict) -> None:
     """Make `state`'s league the one in play (a career past its first season plays its own)."""
-    import league
+    from coach_career import league
     use_league(league.ensure_built(state))
 
 
@@ -352,7 +352,7 @@ def _real_polls_2026(teams: dict) -> dict:
     hist = json.loads(HISTORY_POLLS.read_text(encoding="utf-8")).get("2026")
     if not hist:
         return {}
-    from teamnames import build_matcher, match
+    from sim.teamnames import build_matcher, match
     lookup = build_matcher(teams)
     out = {}
     pre = hist.get("preseason") or []
@@ -379,7 +379,7 @@ def _real_ap_votes_2026(week: int, teams: dict) -> Optional[tuple[list[str], lis
         top, others = entry.get("ap") or [], entry.get("ap_others") or []
     if not top:
         return None
-    from teamnames import build_matcher, match
+    from sim.teamnames import build_matcher, match
     lookup = build_matcher(teams)
     votes, order, rest = {}, [], []
     for rows, dest in ((sorted(top, key=lambda r: r["rank"]), order), (sorted(others, key=lambda r: r["rank"]), rest)):
@@ -597,7 +597,7 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
         for w in range(1, current + 1):
             _update_polls_after_week(state, teams, w, real_ap=real.get(w))
     if career:
-        import career as career_mod
+        from coach_career import career as career_mod
         career_mod.new_career(state, coach)
     return state
 
@@ -1006,7 +1006,7 @@ def _game_team(slug: str, form_shift: float, player_shifts: dict, edits: dict, m
                depth: Optional[dict], injured: list) -> dict:
     """One side of a game as the engine plays it (in a pool worker): the team's form, then
     god-mode edits and your coach, morale, the depth chart and the injury list."""
-    from form import apply_form
+    from sim.form import apply_form
     team = apply_form(_TEAMS[slug], form_shift, player_shifts)
     team = with_morale(with_edits(team, edits), morale)
     return _with_injuries(apply_depth(team, depth), injured)
@@ -1073,7 +1073,7 @@ def _form_table(teams: dict, through_week: int) -> tuple[dict, dict]:
     if through_week in _form_cache:
         return _form_cache[through_week]
     try:
-        from form import load_all_form
+        from sim.form import load_all_form
         out = load_all_form(teams, through_week)
     except Exception as exc:  # noqa: BLE001
         print(f"form: skipped ({exc})")
@@ -1806,7 +1806,7 @@ def load_season(season_id: str) -> Optional[dict]:
                 g[f"{side}_display"] = fcs_label(g[side])
     if state.get("mode") != "real":
         schedule_ahead(state)         # seasons saved before the postseason was set a week early
-    import game_scale
+    from teamdata import game_scale
     if game_scale.upgrade(state):          # careers saved while their league and recruits were in EA numbers
         pass
     elif state.get("recruiting") and state["recruiting"].get("grades") != "game":
@@ -2316,7 +2316,7 @@ _preview_cache: dict = {}
 def _preview_team(state: dict, slug: str) -> dict:
     """The team as the next sim will see it: god-mode edits where that exists, the depth
     chart and the injury list."""
-    from form import apply_form
+    from sim.form import apply_form
     base = apply_form(team_data(state, slug), team_form_shift(state, slug), player_form_shifts(state, slug))
     return _with_injuries(apply_depth(base, (state.get("depth") or {}).get(slug)), _injured(state, slug))
 
@@ -2468,7 +2468,7 @@ def _coach_line(state: dict, team: dict) -> dict:
 
 
 def _job(state: dict) -> Optional[dict]:
-    import carousel
+    from coach_career import carousel
     try:
         return carousel.status(state)
     except Exception:  # noqa: BLE001 - a program the recruiting model lacks: no job card

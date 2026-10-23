@@ -13,7 +13,7 @@ Margins are capped at ±28 so blowouts do not swing a team, and the ridge pulls 
 toward zero, so after n games a team keeps n / (n + K) of what the results say. The sim
 takes the form as a shift of every player's ratings (points / PTS_PER_RATING).
 
-`python form.py [through_week]` prints the table."""
+`python -m sim.form [through_week]` prints the table."""
 from __future__ import annotations
 
 import json
@@ -22,7 +22,7 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]   # the project root
 GAMES_FILE = ROOT / "data" / "season_games.json"
 
 HFA = 2.5                 # home field, in points, for the fit
@@ -38,7 +38,7 @@ ATTRS = ("speed", "strength", "intelligence", "passing", "decision_making", "elu
 def _matched(games: list[dict], teams: dict, through_week: int | None) -> list[tuple[str, str, int, bool]]:
     """(home slug, away slug, capped home margin, neutral) for every final game between two
     engine teams through `through_week`."""
-    from teamnames import build_matcher, match
+    from sim.teamnames import build_matcher, match
     lookup = build_matcher(teams)
     out = []
     for g in games:
@@ -196,7 +196,7 @@ def _player_score(cat: str, t: dict) -> float | None:
 
 def _real_players(games: list[dict], teams: dict, through_week: int | None) -> dict[str, dict[str, dict]]:
     """slug -> (category|LASTNAME|first initial) -> season totals from the box scores."""
-    from teamnames import build_matcher, match
+    from sim.teamnames import build_matcher, match
     lookup = build_matcher(teams)
     out: dict[str, dict[str, dict]] = {}
     for g in games:
@@ -377,7 +377,7 @@ if __name__ == "__main__":
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
     sys.path.insert(0, str(ROOT))
-    import season
+    from sim import season
     teams = season.load_teams()
     through = int(sys.argv[1]) if len(sys.argv) > 1 else None
     table, players = load_all_form(teams, through)

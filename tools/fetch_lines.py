@@ -11,9 +11,9 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))   # the project root, so `import teamnames` works from here
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))   # the project root, so `from sim import teamnames` works from here
 
-import teamnames  # noqa: E402
+from sim import teamnames  # noqa: E402
 
 URL = "https://www.scoresandodds.com/ncaaf"
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) CFPCoachSimulator forward test"}

@@ -19,9 +19,9 @@ import statistics as st
 import sys
 from collections import defaultdict
 
-import game_scale
-import offseason
-import recruits
+from teamdata import game_scale
+from coach_career import offseason
+from coach_career import recruits
 
 YEARS = {"FR": 0, "FRRS": 1, "SO": 1, "SORS": 2, "JR": 2, "JRRS": 3, "SR": 3, "SRRS": 4}
 

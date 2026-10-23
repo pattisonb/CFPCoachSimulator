@@ -5,9 +5,9 @@ a season started with him or with the team's own coach says who is coaching.
 import sys as _sys
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
-import coaches
-import season
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
+from sim import coaches
+from sim import season
 
 
 def assert_refused(coach: dict, failure: str) -> None:

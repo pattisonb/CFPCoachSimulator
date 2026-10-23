@@ -3,8 +3,8 @@ played; Army-Navy (selection week) counts. (Run as a file: multiprocessing on Wi
 import sys as _sys
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
-import season
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
+from sim import season
 
 if __name__ == "__main__":
     teams = season.load_teams()

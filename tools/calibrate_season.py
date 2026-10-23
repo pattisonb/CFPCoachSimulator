@@ -18,7 +18,7 @@ from __future__ import annotations
 import sys as _sys
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 
 import json
 import re
@@ -33,7 +33,7 @@ GAMES_FILE = ROOT / "data" / "season_games.json"
 TEAMS_FILE = ROOT / "data" / "engine_teams.json"
 RESULTS_FILE = ROOT / "data" / "season_results.json"
 
-from teamnames import build_matcher, match  # noqa: E402  (shared with the season engine)
+from sim.teamnames import build_matcher, match  # noqa: E402  (shared with the season engine)
 
 
 def load_games() -> list[dict]:
@@ -81,7 +81,7 @@ def main() -> None:
         n = int(args.pop(0))
     if "--spread" in args:
         scale = args[args.index("--spread") + 1]
-        subprocess.run([sys.executable, str(ROOT / "build_teams.py"), scale], check=True)
+        subprocess.run([sys.executable, "-m", "teamdata.build_teams", scale], cwd=ROOT, check=True)
     teams = json.loads(TEAMS_FILE.read_text(encoding="utf-8"))["teams"]
     lookup = build_matcher(teams)
     games = load_games()

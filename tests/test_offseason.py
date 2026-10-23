@@ -5,13 +5,13 @@ check plays real ones (tools/long_run.py). (Run as a file: multiprocessing on Wi
 import sys as _sys
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `import season` works from here
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 import collections
 import random
 
-import league
-import offseason
-import season
+from coach_career import league
+from coach_career import offseason
+from sim import season
 
 
 def finished(st: dict) -> None:

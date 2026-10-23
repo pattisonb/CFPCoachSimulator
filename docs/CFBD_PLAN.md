@@ -10,7 +10,7 @@ elsewhere and are left out.
 
 | Area | Current source | Known gap (docs/HOW_IT_WORKS.md) |
 |---|---|---|
-| Player ratings, rosters, class years | EA College Football via `cfb_sim_data/` and `build_teams.py` | 7-8% of real stat lines match no roster player; 13 real players added by hand-tuned rules (`tune_from_real.py`, `MISSING_MIN_SCORE` 100) |
+| Player ratings, rosters, class years | EA College Football via `cfb_sim_data/` and `teamdata/build_teams.py` | 7-8% of real stat lines match no roster player; 13 real players added by hand-tuned rules (`tune_from_real.py`, `MISSING_MIN_SCORE` 100) |
 | Results, box scores | NCAA GraphQL (`fetch_results.py`, `fetch_boxscores.py`) | No play-by-play, no down and distance, no pass depth. The GraphQL hash is hard-coded and breaks if NCAA changes it |
 | League benchmarks | Typed in by hand from TeamRankings 2025 (`tools/calibrate.py` `BENCHMARKS`) | Drives and tackles are estimates. No success rate or explosive-play targets |
 | Situational play | `tools/calibrate.py`, `tools/calibrate_late.py` (ESPN line scores) | Third down 42.9% in the sim vs 39.0% real; fourth-down tries 1.5 vs 2.1; best offenses about 6.7 yards a play vs 7.8 real; too few one-score games |
@@ -110,18 +110,18 @@ attempts) is a check on the QB accuracy ratings, as an evaluation and not a nudg
 ### 3. Fix jerseys and add the real players who are missing (`/roster`, `/player/usage`)
 
 See the sampled mismatches below. CFBD jerseys beat the EA ones where NCAA box scores
-decide (342 to 5), and `realdata.py` matches box-score lines by jersey after name.
+decide (342 to 5), and `sim/realdata.py` matches box-score lines by jersey after name.
 Players who play but have no EA card can come in with real jersey, height and weight
 instead of a copy of the role's top player. Do **not** take class years (all 1) or
 starters (season usage lags injuries) from CFBD.
 
 - **Files:** `tools/tune_from_real.py` (read a cached CFBD roster, write a `"jerseys"`
   section and richer `"added"` entries to `data/real_adjustments.json`, and consider a
-  usage-based add rule beside `MISSING_MIN_SCORE`), `build_teams.py` (apply jerseys;
-  `add_real_player` takes bio fields), `realdata.py` (optional: CFBD athlete ID as the
+  usage-based add rule beside `MISSING_MIN_SCORE`), `teamdata/build_teams.py` (apply jerseys;
+  `add_real_player` takes bio fields), `sim/realdata.py` (optional: CFBD athlete ID as the
   cross-source key). The source data in `cfb_sim_data/` stays untouched, as now.
 - **Calls:** 2 per refresh (roster, usage).
-- **Validate:** the matched share of real player lines reported by `realdata.py` (92.2% at
+- **Validate:** the matched share of real player lines reported by `sim/realdata.py` (92.2% at
   week 8; the target is fewer of the 138 notable unmatched lines), `python tests/run_all.py`
   (`tests/test_realdata.py`), `tools/calibrate_players.py --from-week 6` (real starter in
   the sim's QB1/RB1/WR1 slot), and the 40-season check through week 8 (Brier, favourite
@@ -162,7 +162,7 @@ FBS offense means (sd across teams) from the samples:
   UL Monroe, Akron and Vanderbilt, and well below it for NDSU (-1.36), James Madison
   (-1.35), New Mexico, Louisiana, Utah, Wake Forest, Oregon State and Toledo. These teams
   are the first to check in the season replay's worst misses before touching
-  `build_teams.py`'s team level. Do not blend outside ratings into the sim. That would make
+  `teamdata/build_teams.py`'s team level. Do not blend outside ratings into the sim. That would make
   the picks copy the market instead of testing the engine.
 - **Files:** `tools/calibrate_season.py`, `tools/forward_test.py`, `tools/fetch_lines.py`
   (fallback), `tools/fetch_cfbd.py`.
@@ -177,7 +177,7 @@ so far, well inside the monthly budget.
 ## Roster refinement: sampled mismatches against `data/engine_teams.json`
 
 This compares the CFBD 2026 FBS roster (1 call, all 138 teams) and season usage with
-`data/engine_teams.json` built today (`python build_teams.py`, 11,742 players on the 138 FBS
+`data/engine_teams.json` built today (`python -m teamdata.build_teams`, 11,742 players on the 138 FBS
 teams). Players were matched by name, then jersey and last name, then a last name unique on
 the team.
 
