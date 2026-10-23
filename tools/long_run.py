@@ -84,7 +84,7 @@ def season_metrics(state: dict) -> dict:
                     "recruit_composite": round(st.mean(v["recruits"]), 4) if v["recruits"] else None,
                     "signed_per_team": round(len(v["recruits"]) / len(v["rating"]), 1),
                     **{k2: round(st.mean(v[k2]), 3) for k2 in ("young", "transfer", "lower", "walkon") if v.get(k2)}} for k, v in tiers.items()}
-    final = state["polls"].get(str(season.FINAL_WEEK)) or {}
+    final = state["polls"][str(max(int(w) for w, v in state["polls"].items() if v.get("ap")))]   # the final poll
     rec = season._records(state, include_playoff=True)[state["team"]]
     data: dict = {}
     realism.report([state["season_stats"]], [], teams, data)
