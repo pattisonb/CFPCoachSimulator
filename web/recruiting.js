@@ -310,14 +310,17 @@
       c.append(tags);
       if (!b.signed && b.committed !== me) {
         const hcWait = b.hc_week != null && s.current_week - b.hc_week < 4;
-        const acts = [["message", "Message", 5], ["call", "Call", 15], ["hc_visit", "HC visit", 30, hcWait]];
+        const done = b.done_this_week || [];
+        const acts = [["message", "Message", 5, done.includes("message") && "week"], ["call", "Call", 15, done.includes("call") && "week"],
+          ["hc_visit", "HC visit", 30, hcWait && "month"]];
         if (!b.offered) acts.push(["offer", "Offer", 0, false, "go"]);
         else if (!b.visit) acts.push(["official_visit", "Visit", 10, false, "alt"]);
         c.append(el("div", { class: "go-actions" }, acts.map(([a, label, cost, off, tone]) => {
           const short = cost > v.hours_left;
           const btn = el("button", { type: "button", class: `go-act ${tone || ""}`, "aria-label": `${label} ${b.name}`,
-            title: off ? "The head coach visits once every 4 weeks" : short ? `Needs ${cost} hours; ${v.hours_left} left this week` : ACT_TIPS[a] },
-            [el("b", { text: label }), el("span", { text: off ? "monthly" : `${cost}h` })]);
+            title: off === "month" ? "The head coach visits once every 4 weeks" : off === "week" ? "Once a week: more contact is not more interest"
+              : short ? `Needs ${cost} hours; ${v.hours_left} left this week` : ACT_TIPS[a] },
+            [el("b", { text: label }), el("span", { text: off === "month" ? "monthly" : off === "week" ? "done" : `${cost}h` })]);
           if (off || short) btn.disabled = true;
           btn.addEventListener("click", () => run(b, a));
           return btn;

@@ -36,6 +36,18 @@ if __name__ == "__main__":
         recruiting.act(st, "ohio-state", pid, "hc_visit"); raise AssertionError("second in-home visit inside 4 weeks allowed")
     except recruiting.RecruitingError as e:
         assert e.code == 409
+    # a call and a message once a week each: spamming him is refused, next week is fine
+    hours = st["recruiting"]["hours"]["ohio-state"]
+    for action in ("call", "message"):
+        if action == "message":
+            recruiting.act(st, "ohio-state", pid, "message")
+        try:
+            recruiting.act(st, "ohio-state", pid, action); raise AssertionError(f"second {action} in a week allowed")
+        except recruiting.RecruitingError as e:
+            assert e.code == 409
+    st["current_week"] += 1; st["recruiting"]["hours"]["ohio-state"] = 50
+    recruiting.act(st, "ohio-state", pid, "message")
+    st["current_week"] -= 1; st["recruiting"]["hours"]["ohio-state"] = hours
     off = next(t for t in recruiting.PITCHES if t not in tx["priorities"])
     assert recruiting._contact_points(tx, "call", tx["priorities"][0]) == 4 * recruiting._contact_points(tx, "call", off)
     assert sorted(s for v in recruiting.AREAS.values() for s in v) == sorted(set(s for v in recruiting.AREAS.values() for s in v))

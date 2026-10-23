@@ -836,7 +836,9 @@ actions have earned with him.
 reveals one of his priorities), a head coach in-home visit 30 (once a month; it reveals one
 too), an official visit invite 10 (at your next home game; a win sells, a 21-point loss hurts,
 a big stadium helps, and the weekend tells you all three of his priorities) and an offer nothing. A pitch on one of his priorities is worth twice as much, any
-other topic half; each contact from a school is worth a little less than the last. NIL
+other topic half; each contact from a school is worth a little less than the last, and a
+prospect takes one message and one call a week from a school (more contact is not more interest:
+the rest of your hours go to other prospects). NIL
 points are a yearly budget from the program's level, attached to offers. Offers are capped at
 1.5 times your open spots: 85 minus returning players, plus four early leavers, capped at
 the school's real class size plus two.
@@ -845,8 +847,8 @@ the school's real class size plus two.
 proportion to its real recruiting (its states' real shares spread over each state's
 prospects, the rest leaning to nearby states, its star level against the national mix, its
 positions); blue-chip programs also chase the best four- and five-stars nationally. They
-offer more as the fall goes, invite top targets to home games and spend their hours on calls
-and messages. The real head coaches' recruiting ratings are rebuilt from their measured
+offer more as the fall goes, invite top targets to home games and spend their hours on a call
+and a message a week to each target, under the same rule. The real head coaches' recruiting ratings are rebuilt from their measured
 edge (`build_teams.measured_recruiting`).
 
 **Commitments and signing.** Each week a prospect may commit to the offering school he likes

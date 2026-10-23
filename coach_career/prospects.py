@@ -408,6 +408,8 @@ def board_row(state: dict, pid: str, viewer: str) -> dict:
                visit=(rc["visits"].get(pid) or {}).get(viewer),
                priorities_known=list((rc["revealed"].get(viewer) or {}).get(pid, [])),
                hc_week=((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("hc_week"),
+               done_this_week=[k for k, w in (((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("week") or {}).items()
+                               if w == state["current_week"]],
                nil=rc["nil"].get(viewer, {}).get("held", {}).get(pid, 0),
                standing=standing(state, pid, viewer))
     return out

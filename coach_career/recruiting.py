@@ -54,6 +54,7 @@ HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit":
 BASE_POINTS = {"message": 1.0, "call": 2.5, "hc_visit": 6.0, "offer": 4.0, "official_visit": 8.0}   # *tune*
 PITCH_MATCH, PITCH_MISS = 2.0, 0.5         # a pitch on one of his three priorities, any other topic
 DIMINISH = 0.2                             # each earlier contact from the school cuts a new one's worth *tune*
+WEEKLY_ONCE = ("message", "call")           # each of these once a week per prospect: more contact is not more interest
 HC_VISIT_GAP = 4                           # weeks between head coach in-home visits to one prospect
 NIL_VALUE = {5: 0.04, 4: 0.07, 3: 0.12, 2: 0.15}   # interest per NIL point by stars: top prospects expect more *tune*
 NIL_FLOOR = 30
@@ -429,11 +430,13 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         raise RecruitingError(400, "NIL points cannot be negative")
     if rc["status"][pid]["signed"]:
         raise RecruitingError(409, "he has already signed")
+    contact = rc["contacts"].setdefault(pid, {}).setdefault(slug, {"n": 0, "hc_week": None})
+    week, revealed, points = state["current_week"], None, 0.0
+    if action in WEEKLY_ONCE and (contact.get("week") or {}).get(action) == week:
+        raise RecruitingError(409, f"you already {'messaged' if action == 'message' else 'called'} him this week")
     if _hours(state, slug) < HOURS[action]:
         raise RecruitingError(409, "not enough hours left this week")
     offers = rc["offers"].setdefault(slug, [])
-    contact = rc["contacts"].setdefault(pid, {}).setdefault(slug, {"n": 0, "hc_week": None})
-    week, revealed, points = state["current_week"], None, 0.0
     if action == "pull_offer":
         if pid not in offers:
             raise RecruitingError(409, "no offer to pull")
@@ -462,6 +465,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             if contact["hc_week"] is not None and week - contact["hc_week"] < HC_VISIT_GAP:
                 raise RecruitingError(409, "one in-home visit a month")
             contact["hc_week"] = week
+        if action in WEEKLY_ONCE:
+            contact.setdefault("week", {})[action] = week
         if action in ("call", "hc_visit"):           # a call or an in-home visit tells you one thing he cares about
             revealed = _reveal(state, slug, pid)
         points = _contact_points(p, action, pitch) / (1 + DIMINISH * contact["n"])
@@ -662,16 +667,15 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
             _act(state, slug, targets[0], "hc_visit", pitch=(known.get(targets[0]) or [None])[0], scale=edge)
         except RecruitingError:
             pass
-    i = 0
-    while targets and _hours(state, slug) >= HOURS["message"] and i < 4 * len(targets):
-        pid = targets[i % len(targets)]
-        pitch = (known.get(pid) or [None])[0]
-        action = "call" if len(known.get(pid) or []) < 3 and _hours(state, slug) >= HOURS["call"] else "message"
-        try:
-            _act(state, slug, pid, action, pitch=pitch, scale=edge)
-        except RecruitingError:
-            pass
-        i += 1
+    for action in ("call", "message"):          # each target a call and a message a week, as the hours allow
+        for pid in targets:
+            if _hours(state, slug) < HOURS[action]:
+                break
+            pitch = (known.get(pid) or [None])[0]
+            try:
+                _act(state, slug, pid, action, pitch=pitch, scale=edge)
+            except RecruitingError:
+                pass
 
 
 def _visits(state: dict, week: int) -> None:
