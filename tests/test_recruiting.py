@@ -36,6 +36,21 @@ if __name__ == "__main__":
         recruiting.act(st, "ohio-state", pid, "hc_visit"); raise AssertionError("second in-home visit inside 4 weeks allowed")
     except recruiting.RecruitingError as e:
         assert e.code == 409
+    # needs by group: a healthy 85-man make-up minus who comes back minus commits; a commit fills one
+    from coach_career import offseason
+    rc = st["recruiting"]
+    nd = recruiting.needs(st, "ohio-state")
+    assert set(nd) == set(offseason.TARGET) and all(isinstance(v, int) for v in nd.values()), nd
+    roster = season.load_teams()["ohio-state"]["offense"] + season.load_teams()["ohio-state"]["defense"]
+    back = sum(1 for q in roster if q["position"] == "QB" and q.get("class") not in recruiting.LEAVING)
+    assert abs(nd["QB"] - (offseason.TARGET["QB"] - back)) <= 1, (nd["QB"], back)     # expected early leavers may count
+    qb = next(q for q, p in rc["prospects"].items() if p["ea_position"] == "QB" and not rc["status"][q]["committed"])
+    rc["status"][qb]["committed"] = "ohio-state"
+    assert recruiting.needs(st, "ohio-state")["QB"] == nd["QB"] - 1
+    rc["status"][qb]["committed"] = None
+    assert recruiting.need_factor(2) > recruiting.need_factor(1) > recruiting.need_factor(0) > recruiting.need_factor(-1)
+    v = prospects.recruiting_view(st)
+    assert v["needs"] == nd and all("need" in b for b in v["board"]), list(v)[:5]
     # a call and a message once a week each: spamming him is refused, next week is fine
     hours = st["recruiting"]["hours"]["ohio-state"]
     for action in ("call", "message"):

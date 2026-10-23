@@ -843,10 +843,28 @@ points are a yearly budget from the program's level, attached to offers. Offers 
 1.5 times your open spots: 85 minus returning players, plus four early leavers, capped at
 the school's real class size plus two.
 
+**Recruiting by need.** Each school's need at each position group this class is a healthy
+85-man roster's make-up (`offseason.TARGET`: QB 4, RB 6, WR 11, TE 6, OL 15, DL 15, LB 9, CB 8,
+S 8, K 2, P 1) minus the players coming back (seniors gone, draft-eligible underclassmen who
+project a top-100 pick counted 35%, 10% attrition off the rest) minus its commits; a class takes
+a quarterback whatever the room. A school takes its need plus one at a group (quarterbacks and
+specialists: one, unless the need is higher), keeps offers out up to twice that, pulls its open
+offers at a group once it is full, and a prospect cannot commit to a school full at his group
+(recruiting by hand, you may oversign a group you offered). From week 12, the late market: every
+school refreshes its board weekly from whoever is still out there, offers 25% more, and takes one
+flier past a cap. The Board shows your needs ("NEED OL 4 · DL 3 · QB 1 · full: WR, TE") and a
+Need / Full tag on each prospect. Checked against the real classes (`tools/check_recruiting.py`):
+the league's signed positions a class within 0.3 a group of the real mix, 6-8% of schools without
+a quarterback, at most 3, nobody more than 2 past his room at a group. (Before: 25 schools signed
+3+ quarterbacks, 34 none, one signed ten receivers, and the offseason patched the holes with 281
+walk-ons.)
+
 **AI schools.** Every other FBS school runs Auto-recruit each week: a board sampled in
 proportion to its real recruiting (its states' real shares spread over each state's
 prospects, the rest leaning to nearby states, its star level against the national mix, its
-positions); blue-chip programs also chase the best four- and five-stars nationally. They
+usual position mix as a tilt) and weighted by its needs (1.6 for a group short two or more, 1.2
+short one, 0.6 covered, 0.25 over; a blue blood's five-stars never under 0.6); blue-chip programs
+also chase the best four- and five-stars nationally. They
 offer more as the fall goes, invite top targets to home games and spend their hours on a call
 and a message a week to each target, under the same rule. The real head coaches' recruiting ratings are rebuilt from their measured
 edge (`build_teams.measured_recruiting`).

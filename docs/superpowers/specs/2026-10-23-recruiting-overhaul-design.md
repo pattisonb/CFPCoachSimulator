@@ -21,21 +21,31 @@ starting points for the realism checks in section 10.
     need[g] = TARGET[g] - returning[g] - commits[g]
 
 `TARGET` is the healthy 85-man make-up (offseason.TARGET). `returning[g]` is the roster at `g`
-minus seniors (SR, SRRS) minus the expected early leavers at `g` (the roster's players at `g`
-whose card overall projects a top-100 pick, times 0.65; others 0). `commits[g]` counts his
-commits and signees at `g` this class. A prospect's group is `offseason.GROUP[ea_position]`.
+minus seniors (SR, SRRS), with the draft-eligible underclassmen projecting a top-100 pick
+(league-wide cut) counted at 0.35 and the usual attrition (10%: the portal, quitting) off the
+rest. `commits[g]` counts commits and signees at `g` this class. A class takes a quarterback
+whatever the room (`need[QB] >= 1 - commits[QB]`). A prospect's group is
+`offseason.GROUP[ea_position]`.
 
-**Boards.** `_fit_all`'s position factor (today 0.7-1.0 from the school's historical mix) becomes
-a need factor: `1.6` when `need[g] >= 2`, `1.2` when `need[g] == 1`, `0.6` at `0`, `0.25` below
-*tune*. The historical mix stays as a 0.9-1.1 tilt. Five-stars at a program whose star share
-lifts five-stars keep a floor factor of 1.0 (the blue bloods take a five-star anywhere).
+**Boards.** `_fit_all`'s position factor (the school's historical mix) is a 0.9-1.1 tilt; at
+board time the fit is multiplied by a need factor: `1.6` when `need[g] >= 2`, `1.2` at 1, `0.6`
+at 0, `0.25` below. A five-star at a program whose star share lifts five-stars keeps a floor of
+0.6.
 
-**Offers.** An AI school does not offer at a group once `commits[g] >= need[g] + 1`; QB, K and P
-cap at `max(1, need)`. Its weekly offers go to the highest need first, then the board order.
+**Caps.** A school takes `cap[g] = need[g] + 1` at a group (QB, K, P: `max(1, need)`). It keeps
+offers out up to `2 * cap + 1` there (it offers more than it takes), pulls its open offers at a
+group once its commits reach the cap, and a prospect cannot commit to (or flip to, or be placed
+with on signing day) a school full at his group. Recruiting by hand, you may oversign a group you
+offered. From `LATE_MARKET = 12`: every school refreshes its board weekly from the free
+prospects, offers 25% more, and takes one flier past a cap (also on signing day).
 
 **Yours.** Auto-recruit uses the same rule. The Board header shows your needs by group
-("Need: OL 4 · DL 3 · QB 1 · WR full") and each prospect card a Need / Full tag; nothing stops
-you offering a full group (you can oversign; the roster limit and the portal sort it out).
+("NEED OL 4 · DL 3 · QB 1 · full: WR, TE") and each prospect card a Need / Full tag.
+
+**Realism** (`tools/check_recruiting.py`, both seeds): the league's signed positions a class
+within 0.5 a group of the real mix (0.25-0.31), schools without a quarterback under 10%, at most
+3 quarterbacks, nobody more than 2 past his room at a group; the old bounds hold (early
+signing 0.80-0.90, class sizes, rank r). Status: built.
 
 ## 3. NIL asks and negotiation
 

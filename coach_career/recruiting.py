@@ -36,6 +36,18 @@ PROXIMITY_FLOOR = 0.05
 LAST_SEASON_WEIGHT = ((0, 0.8), (7, 0.3), (15, 0.05))   # (week, weight on last season), linear between
 POLL_BUMP = ((10, 0.15), (25, 0.07))       # (rank at or better, bump) on this season's standing
 STARTERS = {"QB": 1, "RB": 1, "WR": 3, "TE": 1, "OL": 5, "DL": 4, "LB": 3, "CB": 2, "S": 2, "K": 1, "P": 1}
+ENGINE_GROUP = {"MLB": "LB", "ROLB": "LB", "LOLB": "LB"}   # engine positions to roster groups (the rest are their own)
+EARLY_LEAVER_POOL = 100                    # the underclassmen projecting a top-100 pick leave early ... *tune*
+ATTRITION = 0.10                           # the share of returning players who leave anyway (the portal, quitting) *tune*
+LATE_MARKET = 12                           # from this week the late market: a school refreshes its board every week, offers
+LATE_OFFERS = 1.25                         # ... this much more, and takes one flier past a group's cap *tune*
+EARLY_LEAVER_RATE = 0.65                   # ... this often (offseason.DECLARE's middle), so they only part-count as returning
+NEED_FACTOR = ((2, 1.6), (1, 1.2), (0, 0.6))   # a board's pull toward a group by its need (need, factor); below 0: NEED_FLOOR *tune*
+NEED_FLOOR = 0.25
+ONE_A_CLASS = ("QB", "K", "P")              # groups a class takes one of unless the need is higher
+OFFER_ROOM = 2.0                            # open offers a school keeps out at a group: this times its cap there (it offers more than it takes)
+QB_EVERY_CLASS = True                       # a class takes a quarterback whatever the room (the one-starter spot turns over)
+FIVE_STAR_FLOOR = 0.6                       # a blue blood's board pull on a five-star never drops below this for need
 LEAVING = {"SR", "SRRS"}                   # seniors: gone after the season (the open spots rule)
 # schools whose academics recruits weigh (a pull of 0.9); every other school 0.5
 # the nine recruiting areas staff are assigned to (spec section 6)
@@ -228,6 +240,100 @@ def _group(ea_position: str) -> str:
 def _ahead(slug: str, group: str, ovr: float) -> int:
     """Returning players at his position group on that roster rated at least as high as him."""
     return sum(1 for o in _returning(slug, group) if o >= ovr)
+
+
+_LEAVER_CUT: tuple = (None, 0)   # (career and year, the overall at the EARLY_LEAVER_POOL-th best draft-eligible underclassman)
+
+
+def _early_leaver_cut(state: dict) -> float:
+    """The overall from which a draft-eligible underclassman (three years out of high school)
+    projects a top-100 pick this season, league-wide."""
+    global _LEAVER_CUT
+    key = (state["id"], state["recruiting"]["year"])
+    if _LEAVER_CUT[0] != key:
+        from sim import season
+        from coach_career import offseason
+        pool = sorted((p.get("ovr") or 0 for t in season.load_teams().values() if not t["fictional"]
+                       for p in t["offense"] + t["defense"] if p.get("class") in offseason.UNDERCLASS_ELIGIBLE), reverse=True)
+        _LEAVER_CUT = (key, pool[EARLY_LEAVER_POOL - 1] if len(pool) >= EARLY_LEAVER_POOL else 99)
+    return _LEAVER_CUT[1]
+
+
+def _group_of(p: dict) -> str:
+    """A prospect's roster group (QB, RB, ... K, P) from his EA position."""
+    from coach_career import offseason
+    return offseason.GROUP.get(p["ea_position"], "S")
+
+
+def commits_by_group(state: dict, slug: str) -> dict[str, int]:
+    """The school's commits and signees this class, by roster group."""
+    from coach_career import offseason
+    rc = state["recruiting"]
+    out = {g: 0 for g in offseason.TARGET}
+    for pid, st in rc["status"].items():
+        if st["signed"] == slug or (not st["signed"] and st["committed"] == slug):
+            out[_group_of(rc["prospects"][pid])] += 1
+    return out
+
+
+def needs(state: dict, slug: str) -> dict[str, int]:
+    """What the school still needs at each group this class: a healthy 85-man make-up
+    (offseason.TARGET) minus the players coming back (seniors gone, the draft-eligible
+    underclassmen projecting a top-100 pick part-counted, the usual attrition off the rest)
+    minus its commits and signees."""
+    from sim import season
+    from coach_career import offseason
+    t = season.load_teams()[slug]
+    cut = _early_leaver_cut(state)
+    back = {g: 0.0 for g in offseason.TARGET}
+    for p in t["offense"] + t["defense"]:
+        g = ENGINE_GROUP.get(p["position"], p["position"])
+        if g not in back or p.get("class") in LEAVING:
+            continue
+        early = p.get("class") in offseason.UNDERCLASS_ELIGIBLE and (p.get("ovr") or 0) >= cut
+        back[g] += (1 - EARLY_LEAVER_RATE if early else 1) * (1 - ATTRITION)
+    commits = commits_by_group(state, slug)
+    out = {g: int(round(offseason.TARGET[g] - back[g] - commits[g])) for g in offseason.TARGET}
+    if QB_EVERY_CLASS:
+        out["QB"] = max(out["QB"], 1 - commits["QB"])
+    return out
+
+
+def need_factor(need: int) -> float:
+    for at, factor in NEED_FACTOR:
+        if need >= at:
+            return factor
+    return NEED_FLOOR
+
+
+def offers_by_group(state: dict, slug: str) -> dict[str, int]:
+    """The school's open offers by group: to prospects not committed elsewhere (an offer chasing a
+    flip does not hold a spot)."""
+    from coach_career import offseason
+    rc = state["recruiting"]
+    out = {g: 0 for g in offseason.TARGET}
+    for pid in rc["offers"].get(slug, []):
+        st = rc["status"][pid]
+        if not st["signed"] and st["committed"] is None:
+            out[_group_of(rc["prospects"][pid])] += 1
+    return out
+
+
+def group_cap(need: dict, group: str) -> int:
+    """How many a school takes at a group this class: its need plus one (quarterbacks and
+    specialists: one unless the need is higher)."""
+    return max(1, need[group]) if group in ONE_A_CLASS else need[group] + 1
+
+
+def group_full(state: dict, slug: str, group: str, need: Optional[dict] = None, commits: Optional[dict] = None,
+               offers: Optional[dict] = None) -> bool:
+    """Whether a school stops offering at a group: its commits there reach the cap, or its commits
+    and open offers reach OFFER_ROOM times the cap (it offers more than it takes) plus one."""
+    need = need if need is not None else needs(state, slug)
+    commits = commits if commits is not None else commits_by_group(state, slug)
+    offers = offers if offers is not None else offers_by_group(state, slug)
+    cap = group_cap(need, group)
+    return commits[group] >= cap or commits[group] + offers[group] >= math.ceil(OFFER_ROOM * cap) + 1
 
 
 @lru_cache(maxsize=None)
@@ -536,7 +642,7 @@ def _fit_all(slug: str, prospects: dict, pool: dict) -> dict[str, float]:
         if p["stars"] >= 4:
             w += reach
         pos = per_class.get(POS_247.get(p["position"], p["position"]), 1.0)
-        out[pid] = w * lift.get(p["stars"], lift[2]) * (0.7 + 0.3 * min(1.0, pos / 2))
+        out[pid] = w * lift.get(p["stars"], lift[2]) * (0.9 + 0.2 * min(1.0, pos / 2))
     return out
 
 
@@ -579,8 +685,15 @@ def _build_board(state: dict, slug: str, rng: random.Random) -> list[str]:
     # weighted sampling without replacement (key u^(1/fit)): the board's mix of states and star
     # levels follows the school's real shares instead of always taking its home state first
     keyed, fits = [], _fits(state, slug)
+    need = needs(state, slug)
+    tm0 = _team_model(slug)
+    takes_fives = ((tm0.get("star_share") or {}).get("5*", 0.0) / _national_share(5)) >= 1   # a blue blood takes a five-star anywhere
     for pid in free:
-        f = fits[pid]
+        p = rc["prospects"][pid]
+        factor = need_factor(need[_group_of(p)])
+        if takes_fives and p["stars"] == 5:
+            factor = max(factor, FIVE_STAR_FLOOR)
+        f = fits[pid] * factor
         if f > 0:
             keyed.append((math.log(rng.random() or 1e-12) / f, pid))
     keyed.sort(reverse=True)
@@ -616,6 +729,8 @@ def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None, co
     board = list(dict.fromkeys(picks + [pid for pid in rc["boards"].get(slug, []) if live(pid) and pid not in dropped]))
     if spots_left > 0 and len(board) < 2 * spots_left:
         board = list(dict.fromkeys(board + [pid for pid in _build_board(state, slug, rng) if pid not in dropped]))
+    if week >= LATE_MARKET and spots_left > 0:        # the late market: whoever is still out there is worth a look
+        board = list(dict.fromkeys(board + [pid for pid in _build_board(state, slug, rng) if pid not in dropped]))
     rc["boards"][slug] = board
     if yours:
         before = {pid: by[slug]["n"] for pid, by in rc["contacts"].items() if slug in by}
@@ -641,13 +756,24 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
         offers.remove(pid)                     # he went elsewhere: the offer frees up (a top prospect is still chased)
         _nil(state, slug)["held"].pop(pid, None)
     edge = 1 + _coach_edge(state, slug)
-    allowed = math.ceil(offer_cap(state, slug) * min(1.0, 0.35 + 0.65 * week / 8))
+    allowed = math.ceil(offer_cap(state, slug) * min(1.0, 0.35 + 0.65 * week / 8) * (LATE_OFFERS if week >= LATE_MARKET else 1.0))
     budget = _nil(state, slug)["budget"]
-    for pid in board:
+    need, commits = needs(state, slug), commits_by_group(state, slug)
+    for pid in list(offers):                   # a group at its cap: the open offers there are pulled (no more chasing flips)
+        if rc["status"][pid]["committed"] != slug and not rc["status"][pid]["signed"] \
+                and commits[_group_of(rc["prospects"][pid])] >= group_cap(need, _group_of(rc["prospects"][pid])):
+            offers.remove(pid)
+            _nil(state, slug)["held"].pop(pid, None)
+    open_ = offers_by_group(state, slug)
+    for pid in board:                          # its board's order (the board already leans to the thin groups); the caps hold
         if len(offers) >= allowed:
             break
         if pid not in offers and rc["status"][pid]["committed"] is None:
             p = rc["prospects"][pid]
+            g = _group_of(p)
+            if group_full(state, slug, g, need, commits, open_):
+                continue
+            open_[g] += 1
             nil = min(nil_left(state, slug), round(budget * AI_NIL.get(p["stars"], 0)))
             try:
                 _act(state, slug, pid, "offer", nil=nil, scale=edge)
@@ -727,10 +853,40 @@ def _class_by_position(state: dict) -> dict[tuple, list[float]]:
     return out
 
 
+class _Room:
+    """Where a school can still take a prospect: a spot in the class and room at his group (its
+    commits under the group's cap). Recruiting by hand, you may oversign a group you offered; in
+    the late market (`flier`: from LATE_MARKET and on signing day) every school takes one past a cap."""
+
+    def __init__(self, state: dict, flier: bool = False):
+        self.state, self.commits = state, _commits(state)
+        self.groups: dict[str, tuple[dict, dict]] = {}
+        self.slack = 1 if flier else 0
+        self.yours = state.get("team") if auto_mode(state) == "off" else None
+
+    def _at(self, slug: str) -> tuple[dict, dict]:
+        if slug not in self.groups:
+            self.groups[slug] = (needs(self.state, slug), commits_by_group(self.state, slug))
+        return self.groups[slug]
+
+    def __call__(self, slug: str, pid: str) -> bool:
+        if self.commits.get(slug, 0) >= open_spots(self.state, slug):
+            return False
+        if slug == self.yours and pid in self.state["recruiting"]["offers"].get(slug, []):
+            return True                                 # you offered him: your call to oversign
+        need, com = self._at(slug)
+        g = _group_of(self.state["recruiting"]["prospects"][pid])
+        return com[g] < group_cap(need, g) + self.slack
+
+    def took(self, slug: str, pid: str, n: int = 1) -> None:
+        self.commits[slug] = self.commits.get(slug, 0) + n
+        self._at(slug)[1][_group_of(self.state["recruiting"]["prospects"][pid])] += n
+
+
 def _draws(state: dict, week: int, rng: random.Random) -> None:
     rc = state["recruiting"]
-    commits = _commits(state)
-    room = lambda slug: commits.get(slug, 0) < open_spots(state, slug)
+    room = _Room(state, flier=week >= LATE_MARKET)
+    commits = room.commits
     base = _interp(COMMIT_ODDS, week)
     win, offered, by_pos = _winning(state), _offers_by_prospect(state), _class_by_position(state)
 
@@ -749,15 +905,15 @@ def _draws(state: dict, week: int, rng: random.Random) -> None:
         scores = sorted(((score(s, pid), s) for s in offered.get(pid, [])), reverse=True)
         if st["committed"]:
             mine = score(st["committed"], pid)
-            rival = next(((v, s) for v, s in scores if s != st["committed"] and room(s)), None)
+            rival = next(((v, s) for v, s in scores if s != st["committed"] and room(s, pid)), None)
             if rival and rng.random() < 2 * DECOMMIT_RATE * _logistic((rival[0] - mine) / FLIP_MARGIN):
-                commits[st["committed"]] -= 1
+                room.took(st["committed"], pid, -1)
                 _event(state, "decommit", pid, st["committed"])
                 _commit(state, pid, rival[1], "flip")
-                commits[rival[1]] = commits.get(rival[1], 0) + 1
+                room.took(rival[1], pid)
                 by_pos.setdefault((rival[1], rc["prospects"][pid]["position"]), []).append(rc["prospects"][pid]["composite"])
             continue
-        scores = [(v, s) for v, s in scores if room(s)]
+        scores = [(v, s) for v, s in scores if room(s, pid)]
         lean = (not scores and week >= FCS_NO_OFFER_WEEK) or (scores and scores[0][0] < FCS_LINE)
         if lean != st["fcs"]:
             st["fcs"] = bool(lean)
@@ -771,7 +927,7 @@ def _draws(state: dict, week: int, rng: random.Random) -> None:
         odds = min(0.9, base * (0.5 + lead / LEAD_SCALE) * (VISIT_BOOST if visited else 1.0))
         if rng.random() < odds:
             _commit(state, pid, leader)
-            commits[leader] = commits.get(leader, 0) + 1
+            room.took(leader, pid)
             by_pos.setdefault((leader, rc["prospects"][pid]["position"]), []).append(rc["prospects"][pid]["composite"])
 
 
@@ -780,17 +936,16 @@ def _sign(state: dict, final: bool) -> None:
     their leader with room, or to an FCS program."""
     rc = state["recruiting"]
     if final:
-        commits, win, offered = _commits(state), _winning(state), _offers_by_prospect(state)
+        room, win, offered = _Room(state, flier=True), _winning(state), _offers_by_prospect(state)
         for pid in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"]):
             st = rc["status"][pid]
             if st["committed"]:
                 continue
             schools = set(offered.get(pid, [])) | set(rc["lists"][pid])
-            scores = sorted(((interest(state, s, pid, win), s) for s in schools
-                             if commits.get(s, 0) < open_spots(state, s)), reverse=True)
+            scores = sorted(((interest(state, s, pid, win), s) for s in schools if room(s, pid)), reverse=True)
             if scores and scores[0][0] >= FCS_LINE:
                 _commit(state, pid, scores[0][1])
-                commits[scores[0][1]] = commits.get(scores[0][1], 0) + 1
+                room.took(scores[0][1], pid)
     for pid, st in rc["status"].items():
         if st["signed"]:
             continue

@@ -256,6 +256,12 @@
         meter("Offers", v.offers, v.offers + v.offers_left, true), meter("Commits", v.committed, v.open_spots, true)]),
       el("div", { class: "go-auto" }, [el("span", { class: "small muted", text: "Auto-recruit" }), auto]),
     ]));
+    // what the roster needs this class: the healthy make-up minus who comes back minus your commits
+    const needOrder = Object.entries(v.needs || {}).sort((a, b) => b[1] - a[1]);
+    const short = needOrder.filter(([, n]) => n > 0).map(([g, n]) => `${g} ${n}`), full = needOrder.filter(([, n]) => n <= 0).map(([g]) => g);
+    box.append(el("div", { class: "go-needs small", title: "A healthy 85-man roster's make-up minus the players coming back minus your commits" },
+      [el("b", { text: "NEED " }), el("span", { text: short.length ? short.join(" · ") : "nothing: every group is covered" }),
+        full.length ? el("span", { class: "muted", text: ` · full: ${full.join(", ")}` }) : null]));
     if (v.recap.length) box.append(el("ul", { class: "go-ticker rc-recap" }, [el("li", {}, [el("b", { text: "NEWS" })]), ...v.recap.slice(-4).reverse().map((e) => newsItem(s, e))]));
     const counts = { all: v.board.length };
     for (const b of v.board) counts[chipOf(b)] = (counts[chipOf(b)] || 0) + 1;
@@ -305,6 +311,7 @@
       const tags = el("div", { class: "go-tags" });
       for (const t of b.priorities_known) tags.append(el("span", { class: "go-tag", text: `★ ${PITCH_NAMES[t]}` }));
       if (b.priorities_known.length < 3) tags.append(el("span", { class: "go-tag muted", text: b.priorities_known.length ? `${3 - b.priorities_known.length} more to learn` : "Priorities: call or visit to learn" }));
+      if (b.need != null && !b.signed && b.committed !== me) tags.append(el("span", { class: `go-tag ${b.need > 0 ? "good" : "muted"}`, text: b.need > 0 ? `Need ${b.need}` : "Full", title: b.need > 0 ? `Your roster needs ${b.need} at his position this class` : "Your roster is covered at his position this class" }));
       if (b.offered) tags.append(el("span", { class: "go-tag good", text: b.nil ? `Offered · ${b.nil} NIL` : "Offered" }));
       if (b.visit) tags.append(el("span", { class: "go-tag", text: b.visit.done ? "Visited" : `Visit wk ${b.visit.week}` }));
       c.append(tags);

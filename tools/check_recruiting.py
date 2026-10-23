@@ -30,7 +30,13 @@ TOLERANCES = (
     ("committed_by_12", 0.50, 1.0, None),
     ("signed_early", 0.80, 0.90, None),
     ("top300_decommits", 0.08, 0.22, None),
+    ("pos_mae", 0.0, 0.5, None),          # the league's signed positions a class against the real mix, mean absolute error a group
+    ("over_need", 0, 2, None),            # the most one school signs at a group past its room there (target minus returning)
+    ("no_qb_share", 0.0, 0.10, None),     # schools signing no quarterback
+    ("max_qb", 0, 3, None),               # the most quarterbacks one school signs
 )
+GROUP_247 = {"OT": "OL", "IOL": "OL", "EDGE": "DL"}   # the real classes' positions to roster groups (ATH and LS are left out)
+GROUPS = ("QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S")
 
 
 def play(seed: int, team: str = "georgia") -> dict:
@@ -73,7 +79,28 @@ def measure(state: dict) -> dict:
         if e["kind"] == "decommit":
             decommitted.add(e["pid"])
     top300 = [pid for pid, p in pros.items() if p["rank"] <= 300]
+    real_sum, got_sum = {g: 0.0 for g in GROUPS}, {g: 0 for g in GROUPS}
+    qbs, over = [], 0
+    for s_ in schools:
+        room = recruiting.needs(state, s_)
+        for g, n in recruiting.commits_by_group(state, s_).items():
+            room[g] += n
+        for pos, n in (model[s_].get("positions_per_class") or {}).items():
+            g = GROUP_247.get(pos, pos)
+            if g in real_sum:
+                real_sum[g] += n
+        got = {g: 0 for g in GROUPS}
+        for pid in classes[s_]:
+            g = recruiting._group_of(pros[pid])
+            if g in got:
+                got[g] += 1
+        for g in GROUPS:
+            got_sum[g] += got[g]
+        qbs.append(got["QB"])
+        over = max(over, max(got[g] - max(0, room[g]) for g in GROUPS))
     return {
+        "pos_mae": st.mean(abs(got_sum[g] - real_sum[g]) / len(schools) for g in GROUPS),
+        "no_qb_share": sum(1 for q in qbs if q == 0) / len(qbs), "max_qb": max(qbs), "over_need": over,
         "p4_class": st.mean(tier("Power 4")),
         "g5_class": st.mean(tier("Group of 5")),
         "in_state": sum(1 for pid, s in fbs if pros[pid]["hometown"]["state"] == teams[s]["state"]) / len(fbs),

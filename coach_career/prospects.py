@@ -411,6 +411,7 @@ def board_row(state: dict, pid: str, viewer: str) -> dict:
                done_this_week=[k for k, w in (((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("week") or {}).items()
                                if w == state["current_week"]],
                nil=rc["nil"].get(viewer, {}).get("held", {}).get(pid, 0),
+               need=recruiting.needs(state, viewer)[recruiting._group_of(rc["prospects"][pid])],
                standing=standing(state, pid, viewer))
     return out
 
@@ -547,6 +548,7 @@ def recruiting_view(state: dict) -> dict:
         "week": week, "hours": recruiting.weekly_hours(state, me), "hours_left": recruiting._hours(state, me),
         "nil": {"budget": nil["budget"], "held": sum(nil["held"].values()), "left": recruiting.nil_left(state, me)},
         "open_spots": recruiting.open_spots(state, me), "committed": len([1 for s in rc["status"].values() if s["committed"] == me]),
+        "needs": recruiting.needs(state, me),
         "offers": len(offers), "offers_left": recruiting.offer_cap(state, me) - len(offers),
         "board": board,
         "targets": sorted((b for b in board if b["standing"]["pct"] is not None and not b["committed"]),
