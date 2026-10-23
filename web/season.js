@@ -480,26 +480,26 @@
     const span = Math.max(1, j.total - from);
     const frac = j.week_frac != null ? j.week_frac : (j.games_total ? j.games_done / j.games_total : 0);
     const pct = Math.min(100, Math.round((100 * (j.done - from + frac)) / span));
-    $("#season-progress").hidden = false;
+    // one bar at a time: the header's for a single week, the overlay's for a longer sim
+    $("#season-progress").hidden = span > 1;
     $("#season-progress-bar").style.width = `${pct}%`;
     const label = j.week ? (s.week_labels[j.week] || `Week ${j.week}`) : "";
     const text = $("#season-progress-text");
     text.innerHTML = "";
     // one line for the whole week: its games, the polls and recruiting all count toward the bar
     text.append(el("b", { text: label ? `Simming ${label}` : (j.stage || "Simming") }), ` · ${pct}%`);
-    text.hidden = false;
+    text.hidden = span > 1;
     $("#btn-advance").textContent = "Simming…";
     if (span > 1) showSimOverlay(j, pct, span, from);
   }
 
-  // A multi-week sim hides the tabs and shows what is happening: the stage, the bar, your
+  // A multi-week sim covers the tab (the tabs stay, dimmed) and shows what is happening: the stage, the bar, your
   // record ticking up in the header, each of your results as it lands, and a Pause button.
   function showSimOverlay(j, pct, span, from) {
     const s = state.season;
     const ov = $("#sim-overlay");
     if (ov.hidden) {
       ov.hidden = false;
-      $("#season-tabs").hidden = true;
       for (const t of document.querySelectorAll(".season-main .tab-body, #tab-box")) t.hidden = true;
       $("#sim-results").innerHTML = "";
       state.simShown = new Set();
@@ -512,7 +512,7 @@
     $("#sim-sub").textContent = `${pct}%`;
     $("#sim-bar").style.width = `${pct}%`;
     // the week strip follows the sim
-    if (j.done !== state.simLastDone) { state.simLastDone = j.done; state.viewWeek = j.done; state.season.current_week = j.done; renderWeekStrip(); $("#btn-advance").textContent = "Simming…"; }
+    if (j.done !== state.simLastDone) { state.simLastDone = j.done; state.viewWeek = j.done; state.season.current_week = j.done; renderWeekStrip(); $("#btn-advance").textContent = "Simming…"; $("#btn-gameday").hidden = true; }
     for (const r of j.results || []) {
       const key = `${r.week}|${r.opponent}`;
       if (state.simShown.has(key)) continue;
@@ -532,7 +532,6 @@
     const ov = $("#sim-overlay");
     if (ov.hidden) return;
     ov.hidden = true;
-    $("#season-tabs").hidden = false;
     selectTab(state.tab === "box" ? "games" : state.tab);
   }
 
@@ -588,13 +587,16 @@
       }
       if (!accent) accent = mix(candidates[0], target, 0.9);
     }
+    // the accent as text (kickers, links, headings) needs 4.5:1, more than a fill does
+    let accentText = accent;
+    for (let t = 0.1; t <= 1 && Math.min(contrast(accentText, bg), contrast(accentText, panel)) < 4.5; t += 0.1) accentText = mix(accent, light ? [0, 0, 0] : [255, 255, 255], t);
     const inkFor = (rgb) => (contrast(rgb, [0, 0, 0]) >= contrast(rgb, [255, 255, 255]) ? "#1a1200" : "#ffffff");
     const primary = candidates[0];
     const secondary = candidates[1] || accent;
     // the colour for buttons that sit on the primary band: the first other team colour that
     // reads against the primary, else white or black
     const onPrimary = candidates.slice(1).find((c) => contrast(c, primary) >= 3) || hexToRgb(inkFor(primary) === "#ffffff" ? "#ffffff" : "#1a1200");
-    return { accent: rgbToHex(accent), ink: inkFor(accent), primary: rgbToHex(primary), primaryInk: inkFor(primary),
+    return { accent: rgbToHex(accent), accentText: rgbToHex(accentText), ink: inkFor(accent), primary: rgbToHex(primary), primaryInk: inkFor(primary),
              secondary: rgbToHex(secondary), onPrimary: rgbToHex(onPrimary), onPrimaryInk: inkFor(onPrimary) };
   }
 
@@ -604,12 +606,13 @@
     const t = slug && window.CFP.teamsBySlug[slug];
     const theme = t && t.colors ? teamTheme(t.colors) : null;
     if (!theme) {
-      for (const v of ["--accent", "--accent-ink", "--team-primary", "--team-primary-ink", "--team-secondary", "--team-on-primary", "--team-on-primary-ink"]) root.removeProperty(v);
+      for (const v of ["--accent", "--accent-text", "--accent-ink", "--team-primary", "--team-primary-ink", "--team-secondary", "--team-on-primary", "--team-on-primary-ink"]) root.removeProperty(v);
       document.body.classList.remove("team-theme");
       if (meta) meta.content = document.documentElement.dataset.theme === "light" ? "#ffffff" : "#131a2e";
       return;
     }
     root.setProperty("--accent", theme.accent);
+    root.setProperty("--accent-text", theme.accentText);
     root.setProperty("--accent-ink", theme.ink);
     root.setProperty("--team-primary", theme.primary);
     root.setProperty("--team-primary-ink", theme.primaryInk);
@@ -775,6 +778,7 @@
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
     for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "office", "recruiting", "prospects", "staff", "classes"]) $(`#tab-${t}`).hidden = t !== name;
     document.body.classList.toggle("on-office", name === "office");
+    document.body.classList.toggle("on-career-tab", CAREER_TABS.includes(name));
   }
 
   function renderTab() {
@@ -795,6 +799,15 @@
 
   // Coach Career: the recruiting tabs (recruiting.js) and the week's steps under the header
   const CAREER_TABS = ["office", "recruiting", "prospects", "staff", "classes"];
+  // what sticks to the top of the screen (the top bar, and a career's tab bar on a wide
+  // screen) as --sticky-top, so the board's side panel stops below it rather than under it
+  function stickyTop() {
+    const h = (n) => (n && getComputedStyle(n).position === "sticky" ? n.getBoundingClientRect().height : 0);
+    const top = h($(".topbar")), nav = document.body.classList.contains("career-mode") ? h($("#season-tabs")) : 0;
+    document.documentElement.style.setProperty("--topbar-h", `${Math.round(top)}px`);
+    document.documentElement.style.setProperty("--sticky-top", `${Math.round(top + nav)}px`);
+  }
+  if (window.ResizeObserver) { const ro = new ResizeObserver(stickyTop); ro.observe($(".topbar")); ro.observe($("#season-tabs")); }
   // what the Office's buttons do: the same as the header's
   function play(what) {
     const btn = { gameday: "#btn-gameday", advance: "#btn-advance", selection: "#btn-to-selection", end: "#btn-to-end" }[what];
@@ -812,12 +825,18 @@
       try { window.CareerSave.backup(await api(`/api/season/${s.id}`)); } catch (e) { /* the next week's copy covers it */ }
     }, 5000);
   }
-  const recruitingHelpers = { api, postJSON, toast, openModal, errText, play, backupSoon, onChange: (tab) => { state.tab = tab; renderTab(); window.scrollTo({ top: 0 }); } };
+  const recruitingHelpers = { api, postJSON, toast, openModal, closeModal: closeAllModals, errText, play, backupSoon, onChange: (tab) => { state.tab = tab; renderTab(); window.scrollTo({ top: 0 }); } };
   function renderCareerSteps(s) {
     const box = $("#career-steps");
     const career = !!s.career && s.mode !== "real";
     document.body.classList.toggle("career-mode", career);
     for (const t of CAREER_TABS) $(`#season-tabs button[data-tab=${t}]`).hidden = !career;
+    // a career's tabs sit above the header, in the same place on every screen (the header
+    // changes with the tab); a plain season keeps them under the header
+    const nav = $("#season-tabs");
+    if (career && nav.previousElementSibling) $("#season").prepend(nav);
+    else if (!career && !nav.previousElementSibling) $(".season-head").after(nav);
+    stickyTop();
     if (!career && CAREER_TABS.includes(state.tab)) state.tab = "schedule";
     // a career opens on the Office
     if (career && state.officeFor !== s.id) { state.officeFor = s.id; if (!s.done) state.tab = "office"; }
