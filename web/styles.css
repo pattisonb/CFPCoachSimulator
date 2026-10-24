@@ -1142,7 +1142,7 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-filters select { min-height: 44px; }
 .go-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .go-list-row { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 8px 12px 8px 8px; }
-.go-list-main { flex: 1; min-width: 0; display: grid; grid-template-columns: 54px 38px minmax(0, 1fr) auto minmax(0, 180px) 150px; align-items: center; gap: 12px; padding: 4px; border: none; background: none; color: var(--text); text-align: left; cursor: pointer; font: inherit; border-radius: 10px; }
+.go-list-main { flex: 1; min-width: 0; display: grid; grid-template-columns: 54px 38px minmax(0, 1fr) auto minmax(0, 230px) 150px; align-items: center; gap: 12px; padding: 4px; border: none; background: none; color: var(--text); text-align: left; cursor: pointer; font: inherit; border-radius: 10px; }
 .go-list-main:hover { background: var(--panel-2); }
 .go-rank { font-family: "Barlow Condensed", system-ui, sans-serif; font-weight: 800; font-size: 22px; color: var(--muted); text-align: right; }
 .go-list-id { display: flex; flex-direction: column; min-width: 0; }
@@ -1167,15 +1167,16 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-school { display: grid; grid-template-columns: minmax(0, 1fr) 64px minmax(0, 120px); gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--panel-2); }
 .go-school-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .go-school-odds { font-weight: 800; text-align: right; }
-.go-list { display: flex; flex-direction: column; gap: 3px; margin: 6px 0 2px; }
-.go-list-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12px; }
-.go-list-row.you .go-list-name { font-weight: 800; }
-.go-list-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* his list on a board card: school, bar, move (its own names: .go-list is the prospects list) */
+.go-his { display: flex; flex-direction: column; gap: 3px; margin: 6px 0 2px; }
+.go-his-row { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12px; }
+.go-his-row.you .go-his-name { font-weight: 800; }
+.go-his-name { overflow-wrap: anywhere; line-height: 1.2; }
 .go-bar { display: block; height: 6px; border-radius: 3px; background: var(--panel-2); overflow: hidden; }
 .go-bar-fill { display: block; height: 100%; background: var(--accent); }
-.go-list-move { color: var(--muted); white-space: nowrap; }
-.go-list-move.up { color: var(--good, #2e7d32); }
-.go-list-move.down { color: var(--bad, #c62828); }
+.go-his-move { color: var(--muted); white-space: nowrap; }
+.go-his-move.up { color: var(--good, #2e7d32); }
+.go-his-move.down { color: var(--bad, #c62828); }
 .go-report-rows li { line-height: 1.45; }
 
 /* inputs follow the theme */
@@ -1252,8 +1253,8 @@ body.career-mode.on-career-tab .season-head { padding-bottom: 0; }
 .go-classes { list-style: none; }
 .go-class { flex-direction: column; align-items: stretch; }
 .go-class.yours { border-color: var(--go-primary, var(--accent)); border-width: 2px; }
-.go-class-main { grid-template-columns: 54px auto minmax(0, 1fr) 40px minmax(0, 200px) minmax(0, 1.4fr); }
+.go-class-main { grid-template-columns: 54px auto minmax(0, 1fr) 40px minmax(0, 200px) minmax(0, 1.6fr); }
 .go-class-count { font-family: "Barlow Condensed", system-ui, sans-serif; font-weight: 800; font-size: 24px; text-align: right; }
-.go-class-top { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.go-class-top { line-height: 1.25; overflow-wrap: anywhere; }      /* the three best signees wrap rather than clip */
 .go-class-list { margin: 4px 0 6px 66px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
 @media (max-width: 860px) { .go-class-main { grid-template-columns: 46px auto minmax(0, 1fr) 36px; } .go-class-stars, .go-class-top { display: none; } .go-class-list { margin-left: 8px; } }

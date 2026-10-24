@@ -54,12 +54,12 @@
   function hisList(b, me) {
     const rows = (b.list || []).filter((x) => x.rank != null || x.bar != null);
     if (!rows.length) return null;
-    return el("div", { class: "go-list", "aria-label": "His list" }, rows.map((x) => {
+    return el("div", { class: "go-his", "aria-label": "His list" }, rows.map((x) => {
       const move = x.new ? "new" : x.move > 0 ? `▲${x.move}` : x.move < 0 ? `▼${-x.move}` : "–";
-      return el("div", { class: `go-list-row ${x.you || x.school === me ? "you" : ""}` }, [
-        el("span", { class: "go-list-name", text: `${x.rank != null ? `#${x.rank} ` : ""}${x.name}${x.you || x.school === me ? " (you)" : ""}` }),
+      return el("div", { class: `go-his-row ${x.you || x.school === me ? "you" : ""}` }, [
+        el("span", { class: "go-his-name", text: `${x.rank != null ? `#${x.rank} ` : ""}${x.name}${x.you || x.school === me ? " (you)" : ""}` }),
         el("span", { class: "go-bar" }, [el("span", { class: "go-bar-fill", style: `width:${Math.round((x.bar || 0) * 100)}%` })]),
-        el("span", { class: `go-list-move ${x.move > 0 || x.new ? "up" : x.move < 0 ? "down" : ""}`, text: move + (x.why ? ` · ${WHY[x.why] || x.why}` : ""), title: "Since last week's step" }),
+        el("span", { class: `go-his-move ${x.move > 0 || x.new ? "up" : x.move < 0 ? "down" : ""}`, text: move + (x.why ? ` · ${WHY[x.why] || x.why}` : ""), title: "Since last week's step" }),
       ]);
     }));
   }
