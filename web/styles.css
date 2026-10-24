@@ -1070,7 +1070,7 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .go-stars { color: #9a6700; } }
 .go-stars.big { font-size: 20px; }
 .go-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-.go-tag { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--border); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.go-tag { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--border); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
 .go-tag.good { color: var(--good-text); border-color: color-mix(in srgb, var(--good) 45%, var(--border)); }
 .go-tag.warn { color: var(--go-warn-text); border-color: color-mix(in srgb, var(--go-warn) 45%, var(--border)); }
 .go-tag.bad { color: var(--bad-text); }
@@ -1199,7 +1199,10 @@ body.career-mode #season-tabs button[data-tab=classes] { margin-right: 10px; }
 /* the header: on the Office its sim buttons step aside (the Office has its own); the week strip
    is for the season's screens, so the career screens leave it out */
 body.career-mode.on-office #btn-advance, body.career-mode.on-office #btn-to-selection, body.career-mode.on-office #btn-to-end,
-body.career-mode.on-office #btn-gameday, body.career-mode.on-career-tab #week-strip, body.career-mode.on-career-tab #week-date { display: none !important; }
+body.career-mode.on-office #btn-gameday, body.career-mode.on-office .advance-to, body.career-mode.on-career-tab #week-strip, body.career-mode.on-career-tab #week-date { display: none !important; }
+.advance-to { display: inline-flex; gap: 6px; align-items: center; }
+.advance-to select { max-width: 190px; }
+.go-sel { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); color: var(--ink); font: inherit; font-weight: 600; }
 
 @media (max-width: 1100px) {
   .go-board { grid-template-columns: minmax(0, 1fr); }

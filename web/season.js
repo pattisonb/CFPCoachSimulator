@@ -376,8 +376,8 @@
   async function advance(to) {
     const s = state.season;
     if (!s || s.done) return;
-    // the highlighted week is the one Advance plays: a week further ahead sims through to it
-    if (!to && state.viewWeek > s.current_week + 1) to = state.viewWeek;
+    // the Advance dropdown picks the week to sim through (the next one unless you chose further)
+    if (!to) { const pick = Number(($("#advance-to") || {}).value); if (pick > s.current_week + 1) to = pick; }
     beginSim(s, to || s.current_week + 1, false);
     showProgress({ status: "running", done: s.current_week, total: to || s.current_week + 1, stage: "Starting", week: s.current_week + 1 });
     try {
@@ -665,21 +665,10 @@
     const phase = s.done ? `Season complete · national champion: ${s.champion_name}` : s.current_week === 0 ? `Preseason · ${s.week_labels[1] || "Week 1"} up next${played}` : `${s.week_labels[s.current_week + 1] || "Week " + (s.current_week + 1)} up next · through ${s.week_labels[s.current_week] || "week " + s.current_week}${played}`;
     const simDate = simDateText(s);
     $("#season-meta").textContent = `${phase}${simDate ? ` · ${simDate}` : ""} · ${s.mode === "full" ? "full season from week 1" : "started from today: real results, polls and stats through then"} · created ${when(s.created_at)}`;
-    // your coach (the Your coach page): his name and style under the title
-    if (s.coach) {
-      const c = s.coach;
-      const st = c.staff || {};
-      const calls = [st.offense, st.defense].filter(Boolean).join(" · ");
-      if (c.existing) {
-        $("#season-meta").prepend(el("span", { class: "coach-line" }, [el("b", { text: `Coach ${c.name}` }), `${calls ? ` · ${calls}` : ""} · `]));
-      } else {
-        const pic = el("span", { class: "coach-line-pic", "aria-hidden": "true" });
-        const myTeam = window.CFP.teamsBySlug[s.team] || {};
-        if (window.CoachSprite) pic.innerHTML = window.CoachSprite(c.look, myTeam.colors);
-        $("#season-meta").prepend(el("span", { class: "coach-line" }, [pic,
-          el("a", { href: `/coach?id=${encodeURIComponent(c.id)}`, text: `Coach ${c.first_name} ${c.last_name}` }),
-          ` · ${c.archetype}${calls ? ` · ${calls}` : ""} · `]));
-      }
+    // the next game leads the line (the staff live on the Office and the coach page)
+    if (myNext && !s.done && !myNext.played) {
+      const where = myNext.venue === "away" ? "at" : "vs";
+      $("#season-meta").prepend(el("span", { class: "coach-line" }, [el("b", { text: `${where} ${myNext.opponent_name}${myNext.opponent_rank ? ` (#${myNext.opponent_rank})` : ""}` }), " · "]));
     }
     const real = s.mode === "real";
     document.body.classList.toggle("real-mode", real);
@@ -755,16 +744,22 @@
     if (s.done && w >= s.current_week) status = "season complete";
     else if (w <= s.current_week) status = w === 0 ? "" : "played";
     else if (w === s.current_week + 1) status = "up next";
-    else status = `Advance sims through ${label}`;
+    else status = "ahead";
     box.append(el("b", { text: label }), el("span", { text: ` · ${weekDateText(s, w)}` }));
     if (status) box.append(el("span", { text: ` · ${status}` }));
     const btn = $("#btn-advance");
     const next = (s.schedule || []).find((g) => g.week === s.current_week + 1 && g.opponent);
     const mineDone = !!(next && next.played);
+    // the dropdown: every week left, the next one picked; Advance sims through the pick
+    const sel = $("#advance-to");
+    const last = s.mode === "real" ? Math.max(s.current_week, 1) : 20;
+    sel.innerHTML = "";
+    for (let k = s.current_week + 1; k <= last; k++) sel.append(el("option", { value: String(k), text: k === s.current_week + 1 ? `Next: ${s.week_labels[k] || `Week ${k}`}` : `Through ${s.week_labels[k] || `Week ${k}`}` }));
+    sel.hidden = !!s.done || sel.options.length <= 1;
+    sel.onchange = () => { btn.textContent = Number(sel.value) > s.current_week + 1 ? `Sim to ${s.week_labels[Number(sel.value)] || `Week ${sel.value}`}` : "Advance to Next Week"; };
     if (s.done) btn.textContent = "Season complete";
-    else if (w > s.current_week + 1) btn.textContent = `Sim to ${label}`;
     else btn.textContent = "Advance to Next Week";
-    btn.title = mineDone ? "Your game is in the books: this plays the rest of the week" : "Plays every game this week";
+    btn.title = mineDone ? "Your game is in the books: this plays the rest of the week" : "Plays every game this week, or through the week picked in the dropdown";
     // Game day plays only your game this week (hidden on a bye, once it is played, and after the season)
     // after the title game there is nothing left to sim; past selection, "Sim to selection" is moot
     btn.hidden = !!s.done;
@@ -813,7 +808,8 @@
   if (window.ResizeObserver) { const ro = new ResizeObserver(stickyTop); ro.observe($(".topbar")); ro.observe($("#season-tabs")); }
   // what the Office's buttons do: the same as the header's, except that Advance there is always
   // the next week (the schedule's highlighted week is not in view, so it cannot be the target)
-  function play(what) {
+  function play(what, to) {
+    if (what === "advance_to") { if (!$("#btn-advance").disabled && to > state.season.current_week) advance(to); return; }
     const btn = { gameday: "#btn-gameday", advance: "#btn-advance", selection: "#btn-to-selection", end: "#btn-to-end" }[what];
     const b = btn && $(btn);
     if (b && !b.hidden && !b.disabled) {

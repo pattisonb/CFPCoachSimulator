@@ -62,7 +62,10 @@ AREAS = {
     "West Coast": ["CA", "OR", "WA", "HI", "AK"],
     "Mountain-Southwest": ["AZ", "NV", "UT", "CO", "NM", "ID", "MT", "WY", "OK"],
 }
-HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0, "raise_nil": 0}
+HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0, "raise_nil": 0, "scout": 20}
+SCOUT_LOOKS = 3                            # a scouting trip: your best evaluator's looks at one prospect (20 hours, once a week)
+CALL_REVEAL = 0.5                          # a call tells you one of his priorities this often; an in-home visit always does
+ASK_NARROW = (0.85, 1.15)                  # the ask range after a call; the number itself takes a visit
 BASE_POINTS = {"message": 1.0, "call": 2.5, "hc_visit": 6.0, "offer": 4.0, "official_visit": 8.0}   # *tune*
 PITCH_PRIORITY = (1.0, 3.0)                # a pitch on one of his three priorities: 1 + 3 * your strength on it (1x weak, 4x strong) *tune*
 PITCH_OTHER = (0.3, 0.4)                   # any other topic: 0.3 + 0.4 * strength
@@ -71,7 +74,7 @@ BACKFIRE_COST = 0.5                        # ... and costs this much of the acti
 COLD_OFFER = 0.5                           # an offer before any contact counts this much
 STAGES = ("cold", "contact", "top", "visited", "committed")
 DIMINISH = 0.2                             # each earlier contact from the school cuts a new one's worth *tune*
-WEEKLY_ONCE = ("message", "call")           # each of these once a week per prospect: more contact is not more interest
+WEEKLY_ONCE = ("message", "call", "scout")  # each of these once a week per prospect: more contact is not more interest
 HC_VISIT_GAP = 4                           # weeks between head coach in-home visits to one prospect
 NIL_VALUE = {5: 0.04, 4: 0.07, 3: 0.12, 2: 0.15}   # interest per NIL point by stars: top prospects expect more *tune*
 NIL_FLOOR = 30
@@ -318,9 +321,11 @@ def ask_from(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> in
 def ask_view(state: dict, slug: str, pid: str) -> dict:
     """His ask from your school as you know it: the number after a call or visit, a range before."""
     ask = ask_from(state, slug, pid)
-    if _contact(state, slug, pid).get("asked"):
+    asked = _contact(state, slug, pid).get("asked")
+    if asked is True:
         return {"exact": ask}
-    return {"lo": int(5 * round(ask * ASK_SHOWN[0] / 5)), "hi": int(5 * round(ask * ASK_SHOWN[1] / 5))}
+    lo, hi = ASK_NARROW if asked == "range" else ASK_SHOWN
+    return {"lo": int(5 * round(ask * lo / 5)), "hi": int(5 * round(ask * hi / 5))}
 
 
 def nil_value(p: dict, nil: int, ask: int) -> float:
@@ -975,6 +980,13 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             if game_week is None:
                 raise RecruitingError(409, "no home game left for a visit")
             rc["visits"].setdefault(pid, {})[slug] = {"week": game_week, "done": False}
+    elif action == "scout":                        # a scouting trip: your best evaluator's looks, no contact with him
+        contact.setdefault("week", {})[action] = week
+        staff = (state.get("career") or {}).get("staff") or []
+        rating = max([m.get("evaluation", 50) for m in staff] + [((state.get("coach") or {}).get("ratings") or {}).get("evaluation", 60)])
+        rng = random.Random(f"scout-{rc['seed']}-{slug}-{pid}-{week}")
+        for _ in range(SCOUT_LOOKS):
+            look(state, pid, rating, rng)
     else:
         if action == "hc_visit":
             if contact["hc_week"] is not None and week - contact["hc_week"] < HC_VISIT_GAP:
@@ -982,9 +994,14 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             contact["hc_week"] = week
         if action in WEEKLY_ONCE:
             contact.setdefault("week", {})[action] = week
-        if action in ("call", "hc_visit"):           # a call or an in-home visit tells you one thing he cares about, and his ask
+        if action == "hc_visit":                      # an in-home visit tells you one thing he cares about, and his number
             revealed = _reveal(state, slug, pid)
             contact["asked"] = True
+        elif action == "call":                        # a call: sometimes a priority, and about what he wants
+            if random.Random(f"call-{rc['seed']}-{slug}-{pid}-{week}").random() < CALL_REVEAL:
+                revealed = _reveal(state, slug, pid)
+            if contact.get("asked") is not True:
+                contact["asked"] = "range"
         contact["last_contact"] = week
         points = _contact_points(state, slug, p, action, pitch) / (1 + DIMINISH * contact["n"])
         if points < 0:

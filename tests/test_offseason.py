@@ -104,8 +104,16 @@ if __name__ == "__main__":
         assert off["stage"] == f"portal_w{w}" and rc["week"] == w, (off["stage"], rc["week"])
     signed_w3 = sum(1 for s_ in rc["status"].values() if s_["signed"])
     assert 0 < signed_w3 < entrants, signed_w3
+    before_dev = {p["id"]: p["o"] for t in lg["teams"].values() for p in t["roster"]}
     offseason.advance(st)
     assert off["stage"] == "development"
+    # development is not cookie-cutter: teams have good and bad years (a team-year shock on top of
+    # the program and the coaches), players boom and bust
+    import statistics
+    team_gain = [statistics.mean(p["o"] - before_dev[p["id"]] for p in t["roster"] if p["id"] in before_dev) for t in lg["teams"].values()]
+    assert statistics.pstdev(team_gain) >= 0.6, statistics.pstdev(team_gain)
+    gains = [p["o"] - before_dev[p["id"]] for t in lg["teams"].values() for p in t["roster"] if p["id"] in before_dev and p["cls"] in ("SO", "SORS")]
+    assert statistics.pstdev(gains) >= 2.5, statistics.pstdev(gains)
     placed = sum(1 for e in off["portal"]["players"].values() if e["signed"])
     assert 0.55 <= placed / entrants <= 0.95, placed / entrants
     # the best transfers mostly land at the strongest programs (real: about 70% of the top 50 at top-25 programs)

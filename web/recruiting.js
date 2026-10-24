@@ -41,7 +41,7 @@
   const SIGNING_WEEK = 16, FINAL_WEEK = 20;       // the early signing period (selection week) and national signing day
   const WORDS = { commit: "committed to", flip: "flipped to", decommit: "decommitted from", signed: "signed with", offer: "was offered by",
                   asked_more: "wants more from", not_buying: "isn't buying the pitch from" };
-  const WHY = { message: "message", call: "call", hc_visit: "HC visit", official_visit: "official visit", offer: "offer", raise_nil: "NIL raised" };
+  const WHY = { message: "Message", call: "Call", hc_visit: "HC visit", official_visit: "Official visit", offer: "Offer", raise_nil: "NIL raised" };
   const LINE_LABELS = { pass_yards: "pass yds", passing_touchdowns: "TD", interceptions_thrown: "INT", rush_yards: "rush yds", carries: "car", rushing_touchdowns: "TD",
     receptions: "rec", receiving_yards: "rec yds", receiving_touchdowns: "TD", snaps: "snaps", tackles: "tkl", sacks: "sacks", tackles_for_loss: "TFL",
     interceptions: "INT", passes_defended: "PD", field_goals_made: "FGM", field_goals_attempted: "FGA", punts: "punts", punt_yards: "punt yds" };
@@ -67,15 +67,21 @@
     if (!report || !report.rows.length) return null;
     const card = el("section", { class: "go-card go-report", "aria-label": "What changed" });
     card.append(el("div", { class: "go-kicker", text: `WHAT CHANGED · AFTER ${report.week === 0 ? "THE PRESEASON" : `WEEK ${report.week}`}` }));
-    const rows = report.rows.slice().sort((a, b) => (b.moves.length + b.events.length) - (a.moves.length + a.events.length));
-    card.append(el("ul", { class: "go-news go-report-rows" }, rows.slice(0, 12).map((r) => {
-      const rank = r.rank == null ? "not on his list" : r.prev_rank == null ? `#${r.rank} of ${r.of} for you` : r.prev_rank === r.rank ? `still #${r.rank} of ${r.of}` : `#${r.prev_rank} → #${r.rank} for you`;
-      const bits = [`${rank}${r.leader ? ` · ${r.leader.name} leads` : ""}`];
-      for (const m of r.moves) bits.push(`${m.name} ${m.from == null ? "new" : m.from > m.to ? `▲${m.from - m.to}` : `▼${m.to - m.from}`}${m.why ? ` (${WHY[m.why] || m.why})` : ""}`);
-      for (const e of r.events) bits.push(`${WORDS[e.kind] || e.kind} ${e.school_name || ""}${e.kind === "offer" && e.nil ? ` · ${e.nil} NIL` : ""}${e.kind === "asked_more" && e.rival_name ? ` (heard ${e.rival_name}'s number)` : ""}`.trim());
+    // the week in a glance: only prospects where something happened to you (your place moved, a
+    // decision, an ask), the biggest first, one line each; his list on the card has the rest
+    const BIG = new Set(["commit", "flip", "decommit", "signed", "asked_more", "not_buying"]);
+    const weight = (r) => (r.rank !== r.prev_rank ? 2 : 0) + r.events.filter((e) => BIG.has(e.kind)).length * 3 + (r.moves.some((m) => m.you) ? 1 : 0);
+    const rows = report.rows.filter((r) => weight(r) > 0).sort((a, b) => weight(b) - weight(a));
+    if (!rows.length) return null;
+    card.append(el("ul", { class: "go-news go-report-rows" }, rows.slice(0, 6).map((r) => {
+      const bits = [];
+      if (r.rank == null) bits.push("Not on his list");
+      else if (r.prev_rank != null && r.prev_rank !== r.rank) bits.push(`${r.prev_rank > r.rank ? "Up" : "Down"} to #${r.rank} of ${r.of}${r.rank === 1 ? "" : r.leader ? ` · ${r.leader.name} leads` : ""}`);
+      else bits.push(r.rank === 1 ? "You lead" : `#${r.rank} of ${r.of}${r.leader ? ` · ${r.leader.name} leads` : ""}`);
+      for (const e of r.events.filter((e) => BIG.has(e.kind)).slice(0, 2)) bits.push(`${WORDS[e.kind] || e.kind} ${e.school_name || ""}`.trim());
       return el("li", {}, [el("button", { type: "button", class: "go-link", text: r.name, onclick: () => openProfile(s, r.pid) }), el("span", { class: "muted small", text: ` ${r.position} ${stars(r.stars)} · ` }), el("span", { text: bits.join(" · ") })]);
     })));
-    card.append(el("p", { class: "muted small", text: "Your actions land at the week step: what you do this week shows here, and on his list, after Advance." }));
+    if (rows.length > 6) card.append(el("p", { class: "muted small", text: `${rows.length - 6} more moved: see his list on each card.` }));
     return card;
   }
 
@@ -104,14 +110,15 @@
     const school = b.signed || b.committed;
     if (school === me) return { text: b.signed ? "Signed with you" : "Committed to you", tone: "good", fill: 1 };
     if (school && (b.signed || st.pct == null)) return { text: `${b.signed ? "Signed" : "Committed"} · ${teamName(school)}`, tone: "bad", fill: 0 };
-    if (school) return { text: `Committed · ${teamName(school)}`, odds: `${st.lo < 0.01 ? `under ${pct(st.hi)}` : `${pct(st.lo)}–${pct(st.hi)}`} to flip him to you`,
+    if (school) return { text: `Committed · ${teamName(school)}`, odds: st.hi < 0.1 ? "A flip looks unlikely" : st.pct >= 0.3 ? "He could still flip to you" : "A flip is a long shot",
                          certainty: st.certainty, tone: "warn", fill: st.pct, lo: st.lo, hi: st.hi };
     if (st.place == null) return { text: st.leader ? `Not offered · ${st.leader.name} leads` : "Not offered yet", tone: "muted", fill: 0 };
     const tone = st.place === 1 ? "good" : st.pct >= st.leader.pct - 0.1 ? "warn" : "muted";
     const text = st.of === 1 ? "Only offer so far" : st.place === 1 ? `Leading ${st.of} offers` : `${ordinal(st.place)} of ${st.of} · ${st.leader.name} leads`;
-    const range = st.lo < 0.01 ? `under ${pct(st.hi)}` : `${pct(st.lo)}–${pct(st.hi)}`;
-    return { text, odds: `${range} to land`, certainty: st.certainty,
-             tone, fill: st.pct, lo: st.lo, hi: st.hi };
+    // his lean in words, never a number: a recruitment is read, not computed
+    const odds = st.of === 1 ? "Yours to lose" : st.place === 1 ? (st.pct >= st.leader.pct + 0.25 || st.of === 1 ? "Clear favorite" : "Narrow favorite")
+      : st.pct >= st.leader.pct - 0.1 ? "Close race" : st.pct >= 0.15 ? "Behind, in the picture" : "Long shot";
+    return { text, odds, certainty: st.certainty, tone, fill: st.pct, lo: st.lo, hi: st.hi };
   }
 
   function bar(sd) {
@@ -125,11 +132,12 @@
     const body = { pid, action };
     if (pitch) body.pitch = pitch;
     if (nil) body.nil = nil;
-    const names = { message: "Message", call: "Call", hc_visit: "Head coach visit", official_visit: "Official visit invite", offer: "Offer", pull_offer: "Offer pulled", raise_nil: "NIL raised" };
+    const names = { message: "Message", call: "Call", hc_visit: "Head coach visit", official_visit: "Official visit invite", offer: "Offer", pull_offer: "Offer pulled", raise_nil: "NIL raised", scout: "Scouting trip" };
     try {
       const r = await H.api(`/api/season/${s.id}/recruit`, H.postJSON(body));
       H.backupSoon();
-      H.toast(`${names[action]} done · ${r.hours_left} hours left${r.revealed ? ` · he cares about ${PITCH_NAMES[r.revealed].toLowerCase()}` : ""} · it lands at the week step`, 3000);
+      if (action === "scout") H.toast(`Scouting trip done · ${r.hours_left} hours left · his grades are updated`, 3000);
+      else H.toast(`${names[action]} done · ${r.hours_left} hours left${r.revealed ? ` · he cares about ${PITCH_NAMES[r.revealed].toLowerCase()}` : action === "call" ? " · he kept his cards close" : ""} · it lands at the week step`, 3000);
       return r;
     } catch (err) {
       H.toast(`Could not do that: ${H.errText(err)}`, 4000);
@@ -216,7 +224,11 @@
       sim.addEventListener("click", () => H.play(gameReady ? "advance" : "selection"));
       const end = el("button", { type: "button", class: "go-btn big2", text: "Sim to the end" });
       end.addEventListener("click", () => H.play("end"));
-      week.append(el("div", { class: "go-play" }, [main, sim, end]));
+      // sim through a week of your choosing (the recruiting weeks in between run on Auto)
+      const to = el("select", { class: "go-sel", "aria-label": "Sim to a week" }, [el("option", { value: "", text: "Sim to week…" })]);
+      for (let k = s.current_week + 2; k <= 20; k++) to.append(el("option", { value: String(k), text: `Through ${s.week_labels[k] || `Week ${k}`}` }));
+      to.addEventListener("change", () => { if (to.value) H.play("advance_to", Number(to.value)); });
+      week.append(el("div", { class: "go-play" }, [main, sim, end, to.options.length > 1 ? to : null]));
     }
 
     let v;
@@ -262,9 +274,10 @@
   // ----- the Recruiting board ----------------------------------------------------------------------
 
   const ACT_TIPS = { message: "Send a message with your pitch: 5 hours", call: "Call him with your pitch: 15 hours; can reveal one of his priorities",
-                    hc_visit: "Head coach in-home visit with your pitch: 30 hours, once every 4 weeks; can reveal a priority",
+                    hc_visit: "Head coach in-home visit with your pitch: 30 hours, once every 4 weeks; you learn a priority and his number",
                     offer: "Offer a scholarship, no NIL (set NIL points in the side panel). Only an offer lets him commit to you",
-                    official_visit: "Invite him on an official visit: 10 hours; the visit reveals all his priorities" };
+                    official_visit: "Invite him on an official visit: 10 hours; the visit reveals all his priorities",
+                    scout: "Send your best evaluator to see him: 20 hours, once a week; three looks that tighten his grades without waiting on the area scout" };
   const CHIPS = [["all", "All"], ["lead", "You lead"], ["close", "Close race"], ["behind", "Behind"], ["offer", "Not offered"], ["committed", "Committed"]];
   function chipOf(b) {
     if (b.signed || b.committed) return "committed";
@@ -372,7 +385,7 @@
         const hcWait = b.hc_week != null && s.current_week - b.hc_week < 4;
         const done = b.done_this_week || [];
         const acts = [["message", "Message", 5, done.includes("message") && "week"], ["call", "Call", 15, done.includes("call") && "week"],
-          ["hc_visit", "HC visit", 30, hcWait && "month"]];
+          ["hc_visit", "HC visit", 30, hcWait && "month"], ["scout", "Scout", 20, done.includes("scout") && "week"]];
         if (!b.offered) acts.push(["offer", "Offer", 0, false, "go"]);
         else if (!b.visit) acts.push(["official_visit", v.portal ? "Campus visit" : "Visit", 10, !["top", "visited"].includes(b.stage) && "group", "alt"]);
         c.append(el("div", { class: "go-actions" }, acts.map(([a, label, cost, off, tone]) => {
@@ -405,14 +418,14 @@
           const r = el("input", { type: "radio", name: `pitch-${b.id}`, id, value: t });
           r.checked = current === t;
           r.addEventListener("change", () => { view.pitch[b.id] = t; });
-          const sv = b.strength ? b.strength[t] : null, pctText = sv == null ? "" : `${Math.round(sv * 100)}%`;
+          const sv = b.strength ? b.strength[t] : null, word = sv == null ? "" : sv >= 0.6 ? "Strong" : sv < 0.25 ? "Weak" : "Fair";
           const tone = sv == null ? "" : sv >= 0.6 ? "good" : sv < 0.25 ? "bad" : "";
-          pitches.append(el("label", { class: `go-pitch ${known ? "known" : ""}`, for: id, title: sv == null ? "" : known && sv < 0.25 ? "He cares about this and you are weak here: pitching it backfires" : `Your strength on ${PITCH_NAMES[t].toLowerCase()}: ${pctText}` }, [r,
-            el("span", {}, [el("b", { text: PITCH_NAMES[t] }), el("span", { class: `go-tag ${tone}`, text: known ? `priority · ${pctText}` : pctText })])]));
+          pitches.append(el("label", { class: `go-pitch ${known ? "known" : ""}`, for: id, title: sv == null ? "" : known && sv < 0.25 ? "He cares about this and you are weak here: pitching it backfires" : `Your program's case on ${PITCH_NAMES[t].toLowerCase()}: ${word.toLowerCase()}` }, [r,
+            el("span", {}, [el("b", { text: PITCH_NAMES[t] }), el("span", { class: `go-tag ${tone}`, text: known ? `Priority · ${word}` : word })])]));
         }
-        p.append(pitches, el("p", { class: "muted small", text: "Message, Call, HC visit and the offer use this pitch. One of his priorities counts 1× to 4× by how strong you are on it; where you are weak (under 25%) it backfires. Anything else counts a little. A call or an in-home visit reveals a priority; an official visit reveals them all." }));
+        p.append(pitches, el("p", { class: "muted small", text: "Message, Call, HC visit and the offer use this pitch. Sell what he cares about where your program is strong; a weak case on one of his priorities backfires. A call sometimes tells you a priority; the in-home visit tells you one and his number; an official visit tells you everything." }));
       }
-      const askText = b.ask ? (b.ask.exact != null ? `wants ${b.ask.exact}` : `wants about ${b.ask.lo}–${b.ask.hi} (a call or visit tells you)`) : "";
+      const askText = b.ask ? (b.ask.exact != null ? `wants ${b.ask.exact}` : `wants about ${b.ask.lo}–${b.ask.hi} (a visit gets his number)`) : "";
       if (!b.offered && !b.committed && !b.signed) {
         const start = b.ask ? (b.ask.exact != null ? b.ask.exact : b.ask.lo) : 0;
         const nil = el("input", { type: "number", min: "0", step: "5", value: String(start), class: "go-nil", id: `nil-${b.id}` });
@@ -573,7 +586,7 @@
       const sorted = listed.slice().sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1));
       if (sorted.length) node.append(el("h3", { text: holder ? (pub.signed ? "Who else offered" : "Still in it: his chance to flip to each") : "His list" }), el("div", { class: "go-schools" }, sorted.map((x, i) => el("div", { class: "go-school" }, [
         el("span", { class: "go-school-name" }, [el("b", { text: x.name }), x.school === s.team ? el("span", { class: "muted small", text: " (you)" }) : null, i === 0 && !holder && x.pct != null ? el("span", { class: "go-tag good", text: "Leader" }) : null]),
-        el("span", { class: "go-school-odds", text: pub.signed ? "" : x.pct != null ? pct(x.pct) : "no offer" }),
+        el("span", { class: "go-school-odds", text: pub.signed ? "" : x.pct == null ? "no offer" : i === 0 ? "leads" : x.pct >= (sorted[0].pct || 0) - 0.1 ? "close" : x.pct >= 0.15 ? "in it" : "long shot" }),
         el("span", { class: "muted small", text: [x.offered ? "Offer" : "", x.visit ? (x.visit.done ? "Visited" : `Visit wk ${x.visit.week}`) : ""].filter(Boolean).join(" · ") }),
       ]))));
     } else node.append(el("p", { class: "muted", text: "No school is recruiting him yet." }));
@@ -585,6 +598,8 @@
     }
     const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall ? `, ${c.overall} OVR` : ""})`;
     if (p.public_comp) node.append(el("p", {}, [el("b", { text: "Comp: " }), comp(p.public_comp)]));
+    const scoutBtn = el("button", { type: "button", class: "go-link", text: "Send a scout (20 hours) →", title: ACT_TIPS.scout });
+    scoutBtn.addEventListener("click", async () => { scoutBtn.disabled = true; if (await act(s, pid, "scout")) { H.closeModal(); openProfile(s, pid); } else scoutBtn.disabled = false; });
     node.append(el("h3", { text: "Our staff's grades" }));
     if (p.our_grades) {
       // hover (or tab to) a grade: what prospects in this class graded like that look like
@@ -609,10 +624,10 @@
         cell.addEventListener("mouseleave", hide); cell.addEventListener("blur", hide);
         return cell;
       })),
-        el("p", { class: "muted small", text: `${p.looks} look${p.looks === 1 ? "" : "s"}. Hover a grade to see what it looks like in ratings. Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster.` }));
+        el("p", { class: "muted small" }, [`${p.looks} look${p.looks === 1 ? "" : "s"}. Hover a grade to see what it looks like in ratings. Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster. `, scoutBtn]));
       node.append(p.our_comp ? el("p", {}, [el("b", { text: "Our comp: " }), comp(p.our_comp)])
         : el("p", { class: "muted", text: p.looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp after 3 looks (${p.looks} so far).` }));
-    } else node.append(el("p", { class: "muted" }, ["Not scouted yet: put a staff member on his area. ",
+    } else node.append(el("p", { class: "muted" }, ["Not scouted yet: send a scout, or put a staff member on his area. ", scoutBtn, " ",
       el("button", { type: "button", class: "go-link", text: "Assign your staff →", onclick: () => { H.closeModal(); H.onChange("staff"); } })]));
   }
 

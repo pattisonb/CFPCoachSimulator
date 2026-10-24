@@ -832,12 +832,18 @@ season's: last season is 80% of it at week 0, 30% at week 7 and 5% from week 15.
 interest in a school is his priorities' weights on those pulls plus what the school's
 actions have earned with him.
 
-**Your week.** Hours: `50 + (recruiting rating - 50) / 4`. A message costs 5, a call 15 (it
-reveals one of his priorities), a head coach in-home visit 30 (once a month; it reveals one
-too), an official visit invite 10 (at your next home game; a win sells, a 21-point loss hurts,
-a big stadium helps, and the weekend tells you all three of his priorities) and an offer nothing.
+**Your week.** Hours: `50 + (recruiting rating - 50) / 4`. A message costs 5, a call 15 (half
+the time he lets slip one of his priorities, `CALL_REVEAL`, and you come away with his ask as a
+range of about 15% either side, not the number), a head coach in-home visit 30 (once a month; it
+tells you one priority for sure and his number), an official visit invite 10 (at your next home
+game; a win sells, a 21-point loss hurts, a big stadium helps, and the weekend tells you all
+three of his priorities), a scouting trip 20 (once a week per prospect: your best evaluator takes
+three looks at him, `SCOUT_LOOKS`, so you need not wait for the area scout's weekly look) and an
+offer nothing. Nothing about a recruitment is shown as a number you could not know: your
+standing with him reads as words (clear favorite, narrow favorite, close race, behind but in
+the picture, long shot) over a bar, and so does his list on the profile.
 **Pitches are tied to your program.** Each topic has your strength for this prospect, 0-1 (the
-pitch picker shows it): playing time from where he would sit on your depth chart, winning from
+pitch picker shows it as strong, fair or weak): playing time from where he would sit on your depth chart, winning from
 your record and poll, prestige, proximity, coach, academics, and NIL as your offer against his
 ask. A pitch on one of his priorities counts 1x to 4x by that strength (1 + 3 x strength); under
 25% it backfires (he isn't buying it: minus half the action's worth); any other topic counts
@@ -854,10 +860,11 @@ the school's real class size plus two.
 **Feedback once a week.** Your actions spend hours and are logged at once, but what they earn
 lands at the week step: the board shows his list as the last step left it (each school's share
 of the leader's interest as a bar, your place, each school's move since the week before and the
-action behind the biggest ones), and after Advance the Office's "What changed" names, for every
-prospect on your board, your new place, the leader, the movers and the week's events (a rival's
-offer and its NIL, a commitment, a flip, "wants more", "isn't buying the pitch"). The last four
-reports are kept (`GET /api/season/{id}/recruiting/report`). `tools/check_recruiting.py` prints
+action behind the biggest ones), and after Advance the Office's "What changed" is a glance, not
+a ledger: the six prospects on your board where something happened to you (your place moved, a
+commitment, a flip, a decommitment, a signing, "wants more", "isn't buying the pitch"), the
+biggest first, one line each; rivals' offers and the rest of the movement stay on each card's
+list. The report holds everything (`GET /api/season/{id}/recruiting/report`, the last four kept). `tools/check_recruiting.py` prints
 what each action earns on average over a season and how many prospects change leader a week, so
 an action's weight is read off a season instead of guessed.
 
@@ -1076,7 +1083,11 @@ walk-ons** from the class too: when the offseason fills rosters, an unsigned hig
 who had the school on his list comes first (a named walk-on), then generated ones.
 
 **Development.** Every returning player (transfers too) develops once a year on our scale: each
-skill closes part of its gap to potential at his coachability's rate times 0.75 (`DEV_RATE`)
+skill closes part of its gap to potential at his coachability's rate times 0.75 (`DEV_RATE`),
+times his year (booms and busts: a lognormal factor with a spread of 0.35, `PLAYER_YEAR_SD`)
+times his team's year (its strength program, culture and luck: one lognormal factor on the whole
+roster, spread 0.15, `TEAM_YEAR_SD`; both mean-preserving, so the league's pace does not change
+but teams have good and bad years and programs' paths part),
 times a pace by seasons in college (0.45, 0.7, 1.35, 1.35, then 1.0: real players gain little in
 their first offseasons and most in their third and fourth; a real 2026 player's seasons come from
 his class, and a transfer keeps his). A real 2026 underclassman's room to potential is 1.2 times
@@ -1150,6 +1161,11 @@ FBS school), walk-ons 31-60 a year and classes 18-21. The narrowing spread is th
 top programs reload at the real rate in the class (85% of the top 100 sign with the 25 strongest
 programs) and in the portal, so the next place to look is how much of the generated classes'
 talent develops at the top against the real 2026 rosters.
+
+**Advance.** The header's Advance plays the next week; its dropdown (and the Office's "Sim to
+week…") sims through a later week, the recruiting weeks between on Auto. Clicking a week on the
+schedule or standings only looks at it. The header line leads with your next game (opponent and
+rank); the staff live on the Office and the coach page.
 
 **The Offseason screen** walks the steps: Departures (your leavers by kind, the league's numbers,
 the first round), Transfer portal round 1 and 2 (entrants with position and status filters, your

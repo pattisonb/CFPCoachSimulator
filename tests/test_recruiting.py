@@ -30,8 +30,29 @@ if __name__ == "__main__":
     day = season.load_teams()["ohio-state"]["coaches"]["head_coach"]["ratings"]["recruiting"]
     assert h0 == 50 + max(0, day - 50) // 4
     r = recruiting.act(st, "ohio-state", pid, "call", pitch=tx["priorities"][0])
-    assert r["hours_left"] == h0 - 15 and r["revealed"] in tx["priorities"]
-    recruiting.act(st, "ohio-state", pid, "hc_visit")
+    assert r["hours_left"] == h0 - 15 and (r["revealed"] is None or r["revealed"] in tx["priorities"])
+    # a call is not a confession: it reveals a priority only CALL_REVEAL of the time (over the class, not
+    # always and not never), and narrows his ask to a range; the in-home visit tells you one for sure and the number
+    rc["hours"]["texas"] = 10 ** 6
+    calls = [recruiting._act(st, "texas", q, "call", None, 0) for q in list(rc["prospects"])[:60]]
+    assert 0.25 <= sum(1 for c in calls if c) / len(calls) <= 0.75, sum(1 for c in calls if c) / len(calls)
+    av = recruiting.ask_view(st, "ohio-state", pid)
+    ask_ = recruiting.ask_from(st, "ohio-state", pid)
+    assert av.get("exact") is None and av["lo"] < ask_ < av["hi"] and av["hi"] - av["lo"] <= max(5, 0.6 * ask_), av
+    r = recruiting.act(st, "ohio-state", pid, "hc_visit")
+    assert r["revealed"] in tx["priorities"] and recruiting.ask_view(st, "ohio-state", pid).get("exact") == recruiting.ask_from(st, "ohio-state", pid)
+    # scouting by hand: 20 hours buys your best evaluator's looks at one prospect, once a week
+    unseen = next(q for q in list(rc["prospects"]) if q not in rc["reads"] and q != pid)
+    rc["hours"]["ohio-state"] = 100
+    r = recruiting.act(st, "ohio-state", unseen, "scout")
+    assert rc["reads"][unseen]["looks"] == recruiting.SCOUT_LOOKS and r["hours_left"] == 100 - recruiting.HOURS["scout"]
+    lo, hi = recruiting.read_interval(st, unseen, "athleticism")
+    assert hi - lo < 25, (lo, hi)
+    try:
+        recruiting.act(st, "ohio-state", unseen, "scout"); raise AssertionError("second scouting trip in a week allowed")
+    except recruiting.RecruitingError as e:
+        assert e.code == 409
+    rc["hours"]["ohio-state"] = h0 - 15 - 30                 # back to the week as it was before the trip
     try:
         recruiting.act(st, "ohio-state", pid, "hc_visit"); raise AssertionError("second in-home visit inside 4 weeks allowed")
     except recruiting.RecruitingError as e:
