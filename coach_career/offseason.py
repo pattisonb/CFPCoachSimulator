@@ -78,8 +78,8 @@ DEV_RATE = 0.75                                    # coachability's pace on our 
 # real players gain little in their first offseasons and most in their third and fourth (the real rosters
 # by years in college: four-stars +1, +1, +5.5): the pace by seasons already played in the program *tune*
 YEAR_CURVE = (0.45, 0.7, 1.35, 1.35, 1.0)
-PROGRAM_DEV = 0.25                                 # development rate per point of the program's recruiting baseline
-PROGRAM_DEV_BELOW = 0.10                           # ... below the average program (the Group of 5 develops less, not half as much)
+PROGRAM_DEV = 0.35                                 # development rate per point of the program's recruiting baseline (the blue bloods' facilities and staffs: the top stays the top)
+PROGRAM_DEV_BELOW = 0.15                           # ... below the average program (the Group of 5 develops less, not half as much)
 TEAM_YEAR_SD = 0.15                                # a team's year: its strength program, culture and luck, one lognormal factor on everyone's growth
 ERA_SD = 0.30                                      # a program's era: a slow-moving factor on its development (a staff that develops, or does not),
 ERA_PERSIST = 0.75                                 # ... carried year to year at this rate (stationary spread ERA_SD); programs' paths part and cross
