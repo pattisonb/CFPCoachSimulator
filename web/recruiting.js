@@ -547,7 +547,7 @@
     node.append(el("div", { class: "rc-profile-head go-profile-head" }, [avatar(pub.avatar_seed, "lg"), el("div", {}, [
       el("h2", { class: "rc-profile-name go-display l", text: pub.name.toUpperCase() }),
       el("div", { class: "go-stars big", text: stars(pub.stars) }),
-      el("div", { text: `${pub.position} (${pub.ea_position}) · ${pub.archetype} · ${height(pub.height)}, ${pub.weight} lb` }),
+      el("div", { text: `${pub.position}${pub.ea_position && pub.ea_position !== pub.position ? ` · projects at ${pub.ea_position} in the game` : ""} · ${pub.archetype} · ${height(pub.height)}, ${pub.weight} lb` }),
       el("div", { class: "muted", text: `${pub.high_school} · ${place(pub.hometown)}` }),
       el("div", { class: "muted small", text: `National rankings: #${pub.national_rank} overall · #${pub.position_rank} ${pub.position} · #${pub.state_rank} in ${pub.hometown.state === "DC" ? "D.C." : pub.hometown.state} · composite ${pub.composite.toFixed(4)}` }),
       pub.signed || pub.committed ? null : el("div", { class: "rc-status go-standing-text", text: status(pub) }),

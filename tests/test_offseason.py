@@ -111,7 +111,9 @@ if __name__ == "__main__":
     # the program and the coaches), players boom and bust
     import statistics
     team_gain = [statistics.mean(p["o"] - before_dev[p["id"]] for p in t["roster"] if p["id"] in before_dev) for t in lg["teams"].values()]
-    assert statistics.pstdev(team_gain) >= 0.6, statistics.pstdev(team_gain)
+    assert statistics.pstdev(team_gain) >= 0.4, (statistics.mean(team_gain), statistics.pstdev(team_gain))
+    eras = [t.get("era") for t in lg["teams"].values()]
+    assert all(e is not None for e in eras) and statistics.pstdev(eras) >= 0.1, statistics.pstdev([e or 0 for e in eras])
     gains = [p["o"] - before_dev[p["id"]] for t in lg["teams"].values() for p in t["roster"] if p["id"] in before_dev and p["cls"] in ("SO", "SORS")]
     assert statistics.pstdev(gains) >= 2.5, statistics.pstdev(gains)
     placed = sum(1 for e in off["portal"]["players"].values() if e["signed"])

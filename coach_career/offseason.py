@@ -81,6 +81,8 @@ YEAR_CURVE = (0.45, 0.7, 1.35, 1.35, 1.0)
 PROGRAM_DEV = 0.25                                 # development rate per point of the program's recruiting baseline
 PROGRAM_DEV_BELOW = 0.10                           # ... below the average program (the Group of 5 develops less, not half as much)
 TEAM_YEAR_SD = 0.15                                # a team's year: its strength program, culture and luck, one lognormal factor on everyone's growth
+ERA_SD = 0.30                                      # a program's era: a slow-moving factor on its development (a staff that develops, or does not),
+ERA_PERSIST = 0.75                                 # ... carried year to year at this rate (stationary spread ERA_SD); programs' paths part and cross
 PLAYER_YEAR_SD = 0.35                              # a player's year: booms and busts, a lognormal factor on his growth (mean-preserving)
 COORD_SHARE = 0.4                                  # the coordinator's part of a player's coach factor
 RECRUITER_LEAVE = 0.12
@@ -632,7 +634,8 @@ def _develop_all(state: dict) -> dict:
     levels = [name for name, _, _ in recruits.COACHABILITY]
     gains, mine, breakouts = [], [], 0
     for slug, t in lgd["teams"].items():
-        team_year = math.exp(rng.gauss(-TEAM_YEAR_SD ** 2 / 2, TEAM_YEAR_SD))
+        era = t["era"] = ERA_PERSIST * t.get("era", 0.0) + rng.gauss(0, ERA_SD * math.sqrt(1 - ERA_PERSIST ** 2))
+        team_year = math.exp(era - ERA_SD ** 2 / 2) * math.exp(rng.gauss(-TEAM_YEAR_SD ** 2 / 2, TEAM_YEAR_SD))
         for p in t["roster"]:
             if p.pop("signed", False):
                 continue
