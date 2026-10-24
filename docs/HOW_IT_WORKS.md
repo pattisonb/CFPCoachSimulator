@@ -1157,10 +1157,21 @@ and the Group of 5 to 42 (40.0): the ratings' spread narrows from 6.7 to 5.6. Se
 transfers to the top programs (the portal paragraph above; three more 20-season careers) did not
 move that: the top 25's starters 56-57 from 2031, the rest of the Power 4 50, the Group of 5
 42-43, the spread 5.1-5.6, with 55-69% of portal entrants signed (real: about half land at an
-FBS school), walk-ons 31-60 a year and classes 18-21. The narrowing spread is the open item: the
-top programs reload at the real rate in the class (85% of the top 100 sign with the 25 strongest
-programs) and in the portal, so the next place to look is how much of the generated classes'
-talent develops at the top against the real 2026 rosters.
+FBS school), walk-ons 31-60 a year and classes 18-21.
+
+**Were the top teams getting weaker?** No: the tier followed the 2026 top 25 by team rating, and a
+team at its peak in 2026 (Indiana at 75.7) regresses to its program over the years, which is
+right. Built from a 2046 league, the top looks like 2026's: the top five 74-79 (2026: 74-76), #10
+at 69-72 (72.5), #25 at 66 (65.4), the 25 strongest programs by recruiting baseline at 68-70
+(68.6), the floor 50 (49.8). What had narrowed was the spread between teams (6.7 to 5.5):
+development followed each program's baseline in lockstep. Now a program has an era (a
+slow-moving factor on its development, spread 0.3, carried at 0.75 a year), every team a year
+(spread 0.15) and every player a year (spread 0.35), all mean-preserving, and the strongest
+programs develop faster (0.35 a baseline point above average, 0.15 below): the spread holds at
+6.0-6.4 over 20 seasons, and the top ten changes hands (Clemson, Oklahoma, South Carolina,
+Georgia Tech have had their years). `tools/long_run.py`'s tiers now follow the 25 strongest
+programs. Still open: the first offseason runs hot at the top (the real rosters' seeded
+potential: the top tier's starters 63-64 in 2027 before settling), so year two looks like a leap.
 
 **Advance.** The header's Advance plays the next week; its dropdown (and the Office's "Sim to
 week…") sims through a later week, the recruiting weeks between on Auto. Clicking a week on the

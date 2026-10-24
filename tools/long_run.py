@@ -27,11 +27,13 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 
-# the 25 best programs by the real 2026 team ratings (fixed: the tiers the long run follows)
+# the 25 strongest programs by recruiting baseline (fixed: the tiers the long run follows). Not the
+# 2026 top 25 by team rating: a team at its peak in 2026 (Indiana) regresses to its program over
+# the years, which read as "the top getting weaker" when the tier followed the 2026 teams.
 def _top25() -> set:
-    import json as _json
-    d = _json.loads((ROOT / "data" / "engine_teams.json").read_text(encoding="utf-8"))["teams"]
-    return set([s for s, t in sorted(d.items(), key=lambda kv: -kv[1]["team_ratings"]["overall"]) if not t["fictional"]][:25])
+    from coach_career import recruiting
+    model = recruiting.model()["teams"]
+    return set(sorted(model, key=lambda s: -model[s]["strength"]["baseline"])[:25])
 
 
 TOP25 = _top25()
