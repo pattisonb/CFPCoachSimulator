@@ -1,0 +1,186 @@
+dry run: predicting week 8 into /tmp/forward_test_dhejp03a/week08.json
+week 8: 56 games listed, 56 already final, 56 to predict between two known teams, 50 sims each
+  in-season form through week 7: 138 teams fitted, 104 of 112 sides shifted, 1883 players with a box-score form (not applied; FORM_PLAYERS=1 to apply)
+  10/56 games simulated
+  20/56 games simulated
+  30/56 games simulated
+  40/56 games simulated
+  50/56 games simulated
+  56/56 games simulated
+  betting lines found for 56 of 56 games
+
+Week 8 picks (50 sims per game)
+date       away                  home                  pick                           sd  home win  total     form a/h  QB1 (pass yds) away / home
+10/20/2026 Missouri State        at Delaware           Delaware by 1                15.9       54%   49.1        -3/-3  Henry Belin IV 237 / Tyler Bell 248
+10/20/2026 Middle Tennessee      at FIU                FIU by 11                    14.6       80%   49.1        -2/+2  Roman Gagliano 238 / JJ Kohl 246
+10/20/2026 South Alabama         at Marshall           South Alabama by 6           14.4       38%   60.9        +3/-5  Jared Hollins 193 / Carlos Del Rio-Wilson 270
+10/21/2026 New Mexico State      at Sam Houston        New Mexico State by 3        14.2       36%   50.9        -2/-1  Adam Damante 266 / Landyn Locke 255
+10/22/2026 Liberty               at Kennesaw State     Liberty by 11                13.5       18%   47.7        +7/-3  Deshawn Purdie 164 / Rickie Collins 198
+10/22/2026 James Madison         at App State          James Madison by 14          14.7       14%   50.6        +9/-1  Camden Coleman 215 / Malachi Singleton 207
+10/22/2026 East Carolina         at Memphis            Memphis by 13                15.2       82%   44.5        -2/+3  Emory Williams 172 / Marcus Stokes 207
+10/23/2026 Duke                  at Virginia           Duke by 2                    17.1       40%   56.6        +3/-5  Walker Eget 227 / Beau Pribula 217
+10/23/2026 UMass                 at UConn              UConn by 6                   11.7       74%   43.4        +3/+2  Logan Inagawa 198 / Kalieb Osborne 204
+10/23/2026 Army                  at Tulsa              Tulsa by 7                   17.0       62%   48.4        +2/+2  Cale Hellums 103 / Baylor Hayes 218
+10/23/2026 Air Force             at Wyoming            Air Force by 19              12.0        2%   49.7        +3/-2  Liam Szarka 73 / Tyler Hughes 157
+10/23/2026 NC State              at Stanford           NC State by 3                20.4       48%   51.7        -4/-4  CJ Bailey 232 / Davis Warren 235
+10/24/2026 Rice                  at Florida Atlantic   Florida Atlantic by 11       15.5       72%   54.5        -2/-2  Jacurri Brown 131 / Caden Veltkamp 274
+10/24/2026 Indiana               at Michigan           Indiana by 3                 15.7       44%   43.5        -2/-4  Josh Hoover 185 / Bryce Underwood 177
+10/24/2026 California            at SMU                SMU by 20                    14.4       92%   61.1        -7/-2  Jackson Brousseau 276 / Kevin Jennings 289
+10/24/2026 Western Michigan      at Toledo             Western Michigan by 6        15.0       30%   52.6        +3/+4  Broc Lowry 176 / John Alan Richter 217
+10/24/2026 LSU                   at Auburn             LSU by 1                     17.7       48%   58.4        +4/-0  Sam Leavitt 280 / Byrum Brown 220
+10/24/2026 Texas Tech            at Cincinnati         Texas Tech by 6              17.2       28%   46.2        +1/-1  Will Hammond 204 / JC French IV 184
+10/24/2026 Pittsburgh            at Miami              Miami by 23                  13.4       96%   49.8        +1/+2  Holden Geriner 206 / Darian Mensah 272
+10/24/2026 West Virginia         at TCU                TCU by 7                     14.3       72%   58.1        -2/+2  Michael Hawkins Jr. 153 / Jaden Craig 250
+10/24/2026 Rutgers               at Northwestern       Northwestern by 19           14.0       92%   49.8        -4/+8  Dylan Lonergan 175 / Aidan Chiles 185
+10/24/2026 Miami (OH)            at Central Michigan   Central Michigan by 5        14.0       64%   41.4        -2/+1  Caleb Heavner 175 / Angel Flores 132
+10/24/2026 Akron                 at Kent State         Kent State by 4              15.5       60%   47.2        -9/-2  Brayden Roggow 196 / Dru DeShields 196
+10/24/2026 Baylor                at Kansas             Baylor by 10                 16.6       32%   60.7        +4/-0  DJ Lagway 275 / Isaiah Marshall 259
+10/24/2026 Oregon                at Illinois           Oregon by 12                 18.6       34%   50.4        -4/-0  Dylan Raiola 236 / Katin Houser 215
+10/24/2026 BYU                   at UCF                BYU by 8                     15.7       36%   43.8        +1/+0  Bear Bachmeier 162 / Keyone Jenkins 157
+10/24/2026 Sacramento State      at Ball State         Ball State by 10             13.2       78%   47.3       -12/-3  Jackson Sharman 227 / Keldric Luster 208
+10/24/2026 Bowling Green         at Buffalo            Buffalo by 4                 14.6       58%   39.5        +1/+2  Jay Kastantin 173 / Jason Wright 179
+10/24/2026 Boston College        at Georgia Tech       Georgia Tech by 7            15.1       68%   46.5        -0/-3  Mason McKenzie 184 / Alberto Mendoza 212
+10/24/2026 Tennessee             at South Carolina     Tennessee by 12              15.2       22%   55.0        +5/+0  George MacIntyre 208 / LaNorris Sellers 230
+10/24/2026 Michigan State        at UCLA               UCLA by 27                   15.0       94%   46.8        -2/+7  Alessio Milivojevic 168 / Nico Iamaleava 194
+10/24/2026 Iowa                  at Minnesota          Iowa by 1                    13.0       54%   46.4        +3/-4  Hank Brown 208 / Drake Lindsey 235
+10/24/2026 Oklahoma              at Mississippi State  Mississippi State by 9       16.5       72%   49.7        -8/+2  John Mateer 217 / KaMario Taylor 219
+10/24/2026 Texas A&M             at Alabama            Alabama by 18                17.7       82%   52.7        -5/+6  Marcel Reed 156 / Keelon Russell 224
+10/24/2026 Hawaiʻi               at Northern Illinois  Hawaiʻi by 3                 14.7       46%   55.3        -6/-5  Micah Alejado 306 / Taron Dickens 248
+10/24/2026 North Texas           at Navy               North Texas by 4             13.3       44%   55.7        +4/+1  Tayven Jackson 240 / Jackson Gutierrez 111
+10/24/2026 Kansas State          at Arizona State      Kansas State by 8            16.7       34%   49.1        -1/-7  Avery Johnson 222 / Cutter Boley 228
+10/24/2026 Eastern Michigan      at Ohio               Ohio by 8                    14.8       72%   47.6        -3/+3  Noah Kim 234 / Nick Poulos 184
+10/24/2026 UL Monroe             at Troy               Troy by 21                   15.0       94%   48.7        -6/-1  Aidan Armenta 200 / Goose Crowder 224
+10/24/2026 Louisiana             at Southern Miss      Louisiana by 17              15.1       10%   51.0        +7/-5  Lunch Winfield 185 / Landry Lyddy 176
+10/24/2026 Old Dominion          at Louisiana Tech     Louisiana Tech by 18         12.4       92%   47.1        -5/+4  Quinn Henicle 150 / Blake Baker 241
+10/24/2026 San José State        at Nevada             Nevada by 14                 13.9       80%   50.1        +1/+3  Luke Weaver 205 / Carter Jones 221
+10/24/2026 Boise State           at Washington State   Boise State by 21            13.6        6%   52.9        +6/-4  Maddux Madsen 194 / Caden Pinnick 183
+10/24/2026 San Diego State       at Colorado State     Colorado State by 1          12.0       54%   55.8        -5/-3  Jayden Denegal 228 / K'saan Farrar 257
+10/24/2026 Virginia Tech         at Clemson            Clemson by 15                14.6       88%   56.6        -0/-2  Ethan Grunkemeyer 216 / Tait Reynolds 240
+10/24/2026 Georgia State         at Arkansas State     Georgia State by 11          14.0       22%   54.9        +5/-3  Cameran Brown 217 / Trey Owens 240
+10/24/2026 Colorado              at Oklahoma State     Oklahoma State by 19         17.0       90%   57.2        -4/+3  Isaac Wilson 214 / Drew Mestemaker 236
+10/24/2026 Utah State            at Texas State        Texas State by 13            15.7       78%   54.7        -2/+2  Grady Brosterhous 227 / Brad Jackson 222
+10/24/2026 Syracuse              at North Carolina     North Carolina by 14         16.4       76%   53.7        -1/+5  Malachi Nelson 210 / Billy Edwards Jr. 245
+10/24/2026 USC                   at Wisconsin          Wisconsin by 1               15.1       52%   49.6        -1/+6  Jayden Maiava 231 / Colton Joseph 208
+10/24/2026 Iowa State            at Arizona            Arizona by 13                15.5       82%   51.2        +3/+4  Jaylen Raynor 181 / Noah Fifita 254
+10/24/2026 Vanderbilt            at Kentucky           Kentucky by 19               15.3       88%   50.6        -7/+6  Jared Curtis 207 / Kenny Minchey 217
+10/24/2026 Ole Miss              at Texas              Texas by 11                  15.6       72%   53.3        -1/-3  Trinidad Chambliss 232 / Arch Manning 253
+10/24/2026 UTSA                  at Tulane             UTSA by 4                    12.5       40%   53.8        +2/+1  Owen McCown 222 / Kadin Semonza 226
+10/24/2026 North Dakota State    at New Mexico         New Mexico by 3              14.9       62%   47.4        +8/+7  Nathan Hayes 154 / Toa Fa'avae 148
+10/24/2026 Houston               at Utah               Utah by 11                   15.7       72%   61.2        +5/+8  Conner Weigman 229 / Devon Dampier 232
+
+56 predictions written to /tmp/forward_test_dhejp03a/week08.json (commit 73123cc, 2026-10-25T14:12:45+00:00)
+
+dry run: scoring
+Week 8 forward test: predictions made 2026-10-25T14:12:45+00:00 at commit 73123cc, 50 sims per game
+56 predicted games, 56 final, 0 not yet played
+
+56 games (0 neutral site)
+straight-up picks correct:      58.9%   (Vegas favorites win about 75-78%)
+against the closing spread:     31-25 (55.4%)   sim margin vs the line: MAE 4.8 points over 56 games with a line
+margin MAE / RMSE:              12.4 / 14.8 points   (closing spreads: MAE about 12-13)
+actual-on-predicted slope:      0.55   (1.0 = rating gaps worth exactly what the sim says)
+correlation:                    0.42
+home bias (actual - predicted): +1.5 points
+mean home margin actual/pred:   +5.0 / +3.5
+total points actual/pred:       54.6 / 51.1   (bias -3.5)
+
+Win-probability calibration (home win probability from the sim):
+      bucket  games  sim prob  home won
+       0-20%      5       10%       60%
+      20-40%     10       31%       90%
+      40-60%     12       48%       50%
+      60-80%     15       70%       60%
+     80-100%     14       88%       79%
+
+By predicted margin bucket (home favored by...):
+      bucket  games    pred  actual  home win%  sim prob
+  -21 to -14      3   -19.0    -1.0        67%        6%
+   -14 to -7      8   -10.8     1.9        88%       26%
+    -7 to -3      5    -5.2    -1.2        60%       36%
+     -3 to 3     10    -1.3    -1.9        50%       48%
+      3 to 7      5     4.4     9.0        80%       64%
+     7 to 14     13    10.1     3.4        62%       74%
+    14 to 21      9    17.3    18.2        78%       87%
+    21 to 99      3    23.7    13.3        67%       95%
+
+Player lines against the real box scores (56 of 56 games have one; sim player matched to the real one by last name):
+line                   team-games  matched is real #1   pred   real   bias    MAE   | same role regardless of name: pred / real / bias / MAE
+QB1 pass yards                112       93         85  213.3  204.9   +8.5   68.6   | 210.5 / 208.6 / +1.9 / 59.8
+RB1 rush yards                112      106         57   62.1   62.4   -0.3   38.1   | 62.0 / 76.9 / -14.9 / 40.4
+Top receiver yards            112      100         45   62.9   58.6   +4.4   32.9   | 62.4 / 76.7 / -14.3 / 36.0
+bias = predicted minus real. 'matched' = the sim's player appears in the real box score; 'is real #1' = that player was also the real leader in the role.
+
+Worst misses (actual margin vs predicted):
+  Air Force 14 at Wyoming 28: actual +14, predicted -19
+  Hawaiʻi 56 at Northern Illinois 21: actual -35, predicted -3
+  Boston College 49 at Georgia Tech 27: actual -22, predicted +7
+  UL Monroe 21 at Troy 14: actual -7, predicted +21
+  Oregon 10 at Illinois 21: actual +11, predicted -12
+  Iowa State 3 at Arizona 39: actual +36, predicted +13
+  Missouri State 38 at Delaware 61: actual +23, predicted +1
+  Louisiana 31 at Southern Miss 35: actual +4, predicted -17
+  LSU 38 at Auburn 17: actual -21, predicted -1
+  California 20 at SMU 59: actual +39, predicted +20
+
+Every game (actual margin vs predicted, home perspective):
+  ok  Missouri State 38 at Delaware 61: actual +23, predicted +1 (54% home), line Delaware -3.0 -> ATS loss
+  MISS Middle Tennessee 26 at FIU 23: actual -3, predicted +11 (80% home), line FIU -10.5 -> ATS loss
+  MISS South Alabama 13 at Marshall 20: actual +7, predicted -6 (38% home), line Marshall +1.5 -> ATS loss
+  ok  New Mexico State 30 at Sam Houston 24: actual -6, predicted -3 (36% home), line Sam Houston +3.0 -> ATS win
+  ok  Liberty 34 at Kennesaw State 6: actual -28, predicted -11 (18% home), line Kennesaw State +8.5 -> ATS win
+  MISS James Madison 31 at App State 34: actual +3, predicted -14 (14% home), line App State +12.5 -> ATS loss
+  ok  East Carolina 34 at Memphis 41: actual +7, predicted +13 (82% home), line Memphis -10.5 -> ATS loss
+  ok  Duke 19 at Virginia 16: actual -3, predicted -2 (40% home), line Virginia -2.5 -> ATS win
+  ok  UMass 16 at UConn 35: actual +19, predicted +6 (74% home), line UConn -12.5 -> ATS loss
+  MISS Army 38 at Tulsa 35: actual -3, predicted +7 (62% home), line Tulsa +1.5 -> ATS loss
+  MISS Air Force 14 at Wyoming 28: actual +14, predicted -19 (2% home), line Wyoming +7.0 -> ATS loss
+  MISS NC State 28 at Stanford 31: actual +3, predicted -3 (48% home), line Stanford +7.5 -> ATS win
+  ok  Rice 49 at Florida Atlantic 51: actual +2, predicted +11 (72% home), line Florida Atlantic -9.5 -> ATS loss
+  ok  Indiana 13 at Michigan 6: actual -7, predicted -3 (44% home), line Michigan +7.5 -> ATS win
+  ok  California 20 at SMU 59: actual +39, predicted +20 (92% home), line SMU -18.5 -> ATS win
+  MISS Western Michigan 38 at Toledo 45: actual +7, predicted -6 (30% home), line Toledo -2.5 -> ATS loss
+  ok  LSU 38 at Auburn 17: actual -21, predicted -1 (48% home), line Auburn +7.0 -> ATS loss
+  MISS Texas Tech 24 at Cincinnati 37: actual +13, predicted -6 (28% home), line Cincinnati +10.5 -> ATS win
+  ok  Pittsburgh 23 at Miami 52: actual +29, predicted +23 (96% home), line Miami -20.5 -> ATS win
+  MISS West Virginia 24 at TCU 20: actual -4, predicted +7 (72% home), line TCU -10.0 -> ATS win
+  ok  Rutgers 14 at Northwestern 42: actual +28, predicted +19 (92% home), line Northwestern -15.5 -> ATS win
+  MISS Miami (OH) 28 at Central Michigan 27: actual -1, predicted +5 (64% home), line Central Michigan +3.5 -> ATS win
+  ok  Akron 20 at Kent State 35: actual +15, predicted +4 (60% home), line Kent State -3.0 -> ATS win
+  MISS Baylor 24 at Kansas 25: actual +1, predicted -10 (32% home), line Kansas -1.5 -> ATS win
+  MISS Oregon 10 at Illinois 21: actual +11, predicted -12 (34% home), line Illinois +10.5 -> ATS loss
+  MISS BYU 31 at UCF 39: actual +8, predicted -8 (36% home), line UCF +7.5 -> ATS loss
+  ok  Sacramento State 17 at Ball State 34: actual +17, predicted +10 (78% home), line Ball State -14.5 -> ATS loss
+  ok  Bowling Green 24 at Buffalo 31: actual +7, predicted +4 (58% home), line Buffalo -3.0 -> ATS win
+  MISS Boston College 49 at Georgia Tech 27: actual -22, predicted +7 (68% home), line Georgia Tech -6.5 -> ATS loss
+  MISS Tennessee 24 at South Carolina 27: actual +3, predicted -12 (22% home), line South Carolina -2.5 -> ATS loss
+  ok  Michigan State 10 at UCLA 28: actual +18, predicted +27 (94% home), line UCLA -16.5 -> ATS win
+  MISS Iowa 10 at Minnesota 13: actual +3, predicted -1 (54% home), line Minnesota +7.5 -> ATS win
+  MISS Oklahoma 23 at Mississippi State 15: actual -8, predicted +9 (72% home), line Mississippi State +1.5 -> ATS loss
+  ok  Texas A&M 20 at Alabama 31: actual +11, predicted +18 (82% home), line Alabama -13.5 -> ATS loss
+  ok  Hawaiʻi 56 at Northern Illinois 21: actual -35, predicted -3 (46% home), line Northern Illinois +3.0 -> ATS win
+  ok  North Texas 49 at Navy 39: actual -10, predicted -4 (44% home), line Navy +3.0 -> ATS win
+  MISS Kansas State 17 at Arizona State 28: actual +11, predicted -8 (34% home), line Arizona State +1.5 -> ATS loss
+  ok  Eastern Michigan 20 at Ohio 24: actual +4, predicted +8 (72% home), line Ohio -11.5 -> ATS win
+  MISS UL Monroe 21 at Troy 14: actual -7, predicted +21 (94% home), line Troy -13.5 -> ATS loss
+  MISS Louisiana 31 at Southern Miss 35: actual +4, predicted -17 (10% home), line Southern Miss +11.5 -> ATS loss
+  ok  Old Dominion 0 at Louisiana Tech 26: actual +26, predicted +18 (92% home), line Louisiana Tech -13.5 -> ATS win
+  ok  San José State 13 at Nevada 28: actual +15, predicted +14 (80% home), line Nevada -6.0 -> ATS win
+  ok  Boise State 31 at Washington State 10: actual -21, predicted -21 (6% home), line Washington State +14.5 -> ATS win
+  ok  San Diego State 49 at Colorado State 56: actual +7, predicted +1 (54% home), line Colorado State +1.5 -> ATS win
+  MISS Virginia Tech 20 at Clemson 16: actual -4, predicted +15 (88% home), line Clemson -3.0 -> ATS loss
+  MISS Georgia State 32 at Arkansas State 38: actual +6, predicted -11 (22% home), line Arkansas State +2.5 -> ATS loss
+  ok  Colorado 24 at Oklahoma State 57: actual +33, predicted +19 (90% home), line Oklahoma State -12.5 -> ATS win
+  ok  Utah State 17 at Texas State 20: actual +3, predicted +13 (78% home), line Texas State -14.5 -> ATS win
+  MISS Syracuse 31 at North Carolina 30: actual -1, predicted +14 (76% home), line North Carolina -7.5 -> ATS loss
+  ok  USC 7 at Wisconsin 24: actual +17, predicted +1 (52% home), line Wisconsin +1.5 -> ATS win
+  ok  Iowa State 3 at Arizona 39: actual +36, predicted +13 (82% home), line Arizona -11.5 -> ATS win
+  ok  Vanderbilt 17 at Kentucky 34: actual +17, predicted +19 (88% home), line Kentucky -9.5 -> ATS win
+  ok  Ole Miss 27 at Texas 34: actual +7, predicted +11 (72% home), line Texas -3.0 -> ATS win
+  ok  UTSA 42 at Tulane 19: actual -23, predicted -4 (40% home), line Tulane +3.0 -> ATS win
+  ok  North Dakota State 16 at New Mexico 21: actual +5, predicted +3 (62% home), line New Mexico -4.5 -> ATS loss
+  ok  Houston 13 at Utah 21: actual +8, predicted +11 (72% home), line Utah -6.5 -> ATS win
+
+report written to /tmp/forward_test_dhejp03a/week08_score.json and /tmp/forward_test_dhejp03a/week08_score.txt
+
+dry run: temporary folder /tmp/forward_test_dhejp03a deleted
+exit 0
