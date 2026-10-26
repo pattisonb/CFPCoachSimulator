@@ -1,0 +1,34 @@
+{
+ "note": "Hand edits in engine points (applied by build_teams.apply_manual_ratings after data/real_adjustments.json, on the normalized scale: 50 is the FBS starter mean). Each from the real 2026 player form after week 8: production percentile against the rating's, six games or more. Approved October 26, 2026.",
+ "ratings": {
+  "mississippi-st": {"kamario-taylor": {"passing": 10, "decision_making": 6}},
+  "west-virginia": {"michael-hawkins-jr": {"passing": 8, "decision_making": 4}},
+  "wake-forest": {"gio-lopez": {"passing": 5, "decision_making": 3}},
+  "northwestern": {"aidan-chiles": {"passing": 5, "decision_making": 3}},
+  "texas-tech": {"j-koby-williams": {"elusiveness": 6, "vision": 6}},
+  "iowa-state": {"aiden-flora": {"elusiveness": 8, "vision": 8}},
+  "syracuse": {"real-umari-hatcher": {"hands": 5, "route_running": 5}},
+  "oklahoma-state": {"justin-bowick": {"hands": 3, "route_running": 3}},
+  "minnesota": {"darius-taylor": {"elusiveness": -8, "vision": -8}},
+  "michigan": {"jordan-marshall": {"elusiveness": -8, "vision": -8}},
+  "auburn": {"byrum-brown": {"passing": -8, "decision_making": -5}},
+  "kansas-state": {"avery-johnson": {"passing": -6, "decision_making": -4}},
+  "clemson": {"t-j-moore": {"hands": -8, "route_running": -8}, "bryant-wesco-jr": {"hands": -4, "route_running": -4}}
+ },
+ "why": {
+  "kamario-taylor": "17 TD, 4 INT in 6 games: 91st percentile against a 5th percentile rating",
+  "michael-hawkins-jr": "1,598 yds, 11 TD, 2 INT in 8 games: 83rd against 13th",
+  "gio-lopez": "17 TD, 1 INT in 7 games: 90th against 63rd",
+  "aidan-chiles": "12 TD, 1 INT in 7 games: 94th against 68th",
+  "j-koby-williams": "7.2 a carry over 86 carries: 95th against 42nd",
+  "aiden-flora": "716 yds, 7.0 a carry: 96th against 34th",
+  "real-umari-hatcher": "54 rec, 887 yds in 7 games: 99th against 66th",
+  "justin-bowick": "607 yds: 94th against 67th",
+  "darius-taylor": "2.3 a carry over 76 carries: 0th against 86th",
+  "jordan-marshall": "3.9 a carry: 21st against 94th",
+  "byrum-brown": "8 TD, 7 INT: 25th against 80th",
+  "avery-johnson": "10 TD in 6 games: 48th against 89th",
+  "t-j-moore": "269 yds in 7 games: 39th against 99th",
+  "bryant-wesco-jr": "378 yds in 7 games: 70th against 95th"
+ }
+}

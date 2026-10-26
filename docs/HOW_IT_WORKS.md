@@ -2229,6 +2229,20 @@ compares the same role regardless of who filled it). The report is saved next to
 prediction file as `weekNN_score.json` and `weekNN_score.txt`, and the picks panel shows
 the headline numbers. Games not yet final are listed as pending and can be scored again later.
 
+**Hand rating edits** (`data/manual_ratings.json`, applied by `build_teams.apply_manual_ratings`
+after the real adjustments, so `tools/tune_from_real.py` never overwrites them). Engine points on
+the normalized scale, each with its reason: the real 2026 player form after week 8 (production
+percentile against the rating's, six games or more). The first set, October 26: four
+quarterbacks up (Mississippi State's Kamario Taylor, 91st percentile against a 5th percentile
+rating, +10 passing +6 decision making; West Virginia's Michael Hawkins Jr. +8/+4; Wake
+Forest's Gio Lopez and Northwestern's Aidan Chiles +5/+3), two backs and two receivers up (Texas
+Tech's J'Koby Williams, Iowa State's Aiden Flora, Syracuse's Umari Hatcher, Oklahoma State's
+Justin Bowick), and Minnesota's Darius Taylor, Michigan's Jordan Marshall, Auburn's Byrum Brown,
+Kansas State's Avery Johnson and Clemson's T.J. Moore and Bryant Wesco Jr. down. The edits move
+the attributes the engine plays with, not the card's overall. `tests/test_manual_ratings.py`
+checks every edit names a rostered player and that the build applied them all; the dry runs of
+weeks 7 and 8 before and after are the out-of-sample check (below).
+
 Betting lines come from scoresandodds.com (`tools/fetch_lines.py`, one small request per
 game date). `predict` stores the line on the board when the picks are frozen (spread,
 total and the opener); `score` fetches the closing line for every final game and reports

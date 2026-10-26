@@ -396,6 +396,35 @@ LB_POOL = "LB_POOL"             # tools/tune_from_real.py: every linebacker by r
 SPECIALISTS = "SPECIALISTS"     # tools/tune_from_real.py: {"K" or "P": slug} for a specialist listed at the other spot
 
 
+MANUAL_RATINGS = ROOT / "data" / "manual_ratings.json"
+
+
+def apply_manual_ratings(teams: list[dict], manual: Optional[dict] = None) -> int:
+    """Hand edits from data/manual_ratings.json ({"ratings": {team: {player: {attr: delta}}}}), in
+    engine points on the normalized scale, applied after the real adjustments so the tuning tool
+    never overwrites them. A player or attribute that is not there is skipped. Returns the
+    number of attribute edits applied."""
+    if manual is None:
+        if not MANUAL_RATINGS.exists():
+            return 0
+        manual = json.loads(MANUAL_RATINGS.read_text(encoding="utf-8"))
+    applied = 0
+    for t in teams:
+        edits = (manual.get("ratings") or {}).get(t["slug"]) or {}
+        if not edits:
+            continue
+        by_slug = {p["slug"]: p for p in t["players"]}
+        for ps, deltas in edits.items():
+            p = by_slug.get(ps)
+            if not p:
+                continue
+            for attr, d in deltas.items():
+                if attr in ATTRS and isinstance(p.get(attr), (int, float)):
+                    p[attr] = clamp_rating(p[attr] + d)
+                    applied += 1
+    return applied
+
+
 def apply_real_adjustments(teams: list[dict], means: dict) -> tuple[int, int]:
     """Apply data/real_adjustments.json (tools/tune_from_real.py): rating nudges in engine
     points, then depth orders by real usage, keeping each role's number of starters.
@@ -769,6 +798,7 @@ def build(sources: list[dict], real: bool = True, observed: Optional[set] = None
         f"{min(shifts.values()):.1f} to {max(moved) if moved else 0:.1f} engine points (top scale {TEAM_LEVEL_TOP_SCALE})")
     house_attributes(teams)
     nudged, reordered = apply_real_adjustments(teams, means) if real else (0, 0)
+    manual_applied = apply_manual_ratings(teams) if real else 0
     for t in teams:
         depth_sort(t)
     house_attributes(teams)                     # again, from today's starters (the real depth charts moved some)
@@ -782,6 +812,7 @@ def build(sources: list[dict], real: bool = True, observed: Optional[set] = None
     if real:
         say("head coaches' recruiting ratings from their measured edge:", measured_recruiting(teams))
     out = {"source": str(SRC), "neutral": NEUTRAL, "spread_scale": SPREAD_SCALE, "team_level_top_scale": TEAM_LEVEL_TOP_SCALE,
+           "manual_ratings_applied": manual_applied,
            "starter_means_before_normalization": means, "tendency_means": tendency_means,
            "attribute_scale": dict(ATTR_SCALE), "teams": {}}
     for t in teams:
