@@ -108,7 +108,8 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `coach_career/recruits.py` | Generated recruiting classes, and every player's potential and coachability |
 | `coach_career/league.py`, `coach_career/offseason.py` | A career's own league and the offseason between seasons |
 | `coach_career/carousel.py` | The coaching carousel: AD goals, firings, hires, the coaching market |
-| `coach_career/programs.py`, `tools/build_program_market.py` | Program ratings: the market (real crowds and TV audiences) in `data/program_market.json` |
+| `coach_career/programs.py` | Program ratings: every program's living rating (prestige, winning, NIL, market, conference, coach), its tier and the AD's goal |
+| `tools/build_program_history.py`, `tools/build_program_market.py`, `tools/check_programs.py` | The starting values (thirty seasons of results; real crowds and TV) in `data/program_history.json` and `data/program_market.json`; the drift check |
 | `tools/check_carousel.py` | Plays quick offseasons and counts the carousel's churn against real years |
 | `web/recruiting.js`, `web/careersave.js` | The Recruiting, Prospects and Staff tabs; the career kept in the browser |
 | `tools/check_recruiting.py` | Plays career seasons and holds their recruiting to the real classes |
@@ -1141,15 +1142,15 @@ strength and the other gifts are not raised. A Heisman winner, national award wi
 first-team All-American moves up a coachability level 40% of the time. The Development step
 lists your risers with the reasons.
 
-**The coaching carousel** (`coach_career/carousel.py`). Each program's AD sets a goal from its recruiting
-baseline: make the playoff (+1.2 and up), win nine (+0.5), win seven and go bowling (-0.3), reach
-a bowl (below); a Group of 5 program at 0 or above expects its conference title. His patience is
-2 to 5 years (the blue bloods least). A head coach's job security (0-100, a new hire starts at
+**The coaching carousel** (`coach_career/carousel.py`). Each program's AD sets a goal from its tier
+(program ratings, below): make the playoff, win nine, win eight, win seven and go bowling, reach a
+bowl; a strong Group of 5 program expects its conference title. His patience is 2 to 5 years (the
+blue bloods least). A head coach's job security (0-100, a new hire starts at
 70; a real coach already in his third season or later starts somewhere between 35 and 85, his
 standing before the career began) moves 8 points per win over or under the goal, plus 10 for a
 conference title, 12 for the playoff, 25 for the national title, minus 6 when a playoff or
 conference goal is missed; a bad year counts 3/patience as much, and half in a coach's first two
-years. Under 25 after two years he is fired 65% of the time (always under 8). Coaches retire
+years. Under 25 after two years he is fired 70% of the time (always under 8). Coaches retire
 (3% a year, more after 12 years in the job and past 60) and an 80+ coach after 10 wins leaves
 for the NFL 12% of the time.
 
@@ -1160,9 +1161,9 @@ staff", "Left Oregon State after 4 seasons to look for a bigger job") and their 
 the rest is a generated supply (FCS and Division II head coaches, NFL assistants, coordinators
 and position coaches from lower levels), each with the roles he would take. A coach fired this
 offseason sits out the cycle; after three years in the pool, or at 66, a coach leaves it.
-Openings are filled in order of prestige: the best of the head coaches at smaller programs with
-a three-year .600 run (a proven head coach gets 6 points), the coordinators at nine-win programs
-of about the same standing, and the market's best three for the job (a coach who has not held
+Openings are filled in order of attractiveness: the best of the head coaches at programs at
+least 3 less attractive with a three-year .550 run (a proven head coach gets 8 points), the
+coordinators at nine-win programs within 15, and the market's best three for the job (a coach who has not held
 the role gets ratings drawn for it, shifted by the program's level). A head coach hired away
 opens his job, which joins the queue; nobody is hired twice. A coordinator hired away, let go
 by a new head coach (half of new head coaches bring their own coordinator) or moving on (13% a
@@ -1170,6 +1171,46 @@ year) is replaced from the market; every change records where the new coach came
 (`from`, `from_market`). `tools/check_carousel.py` plays quick offseasons and counts the churn:
 six seasons gave 25 head coaching changes a year (15 fired, 5 retired, 5 hired away, a few to
 the NFL; real FBS years run 25-30) and 63 coordinator changes (real: 60-80).
+
+**Program ratings** (`coach_career/programs.py`, spec `docs/superpowers/specs/2026-10-26-program-ratings-design.md`).
+Every program in a career's league carries a living rating, six metrics on 0-100 kept in
+`lgd["teams"][slug]["program"]` and moved every offseason by `programs.update` (run by the carousel):
+
+| metric | what | moves |
+|---|---|---|
+| prestige | the program's name: history plus a decade of results | at most 3 a year toward history + 0.3 × (the ten-season mean of its season scores − its real 2023-25 winning): results like the real ones move nothing |
+| winning | the last three seasons, 3-2-1 | every offseason: a season scores win share plus AP finishes (top 25 and top 10 0.35 each, top 5 0.5, number one 0.8; max 3.0), on a fixed curve where a 2-10 season is about 18 and a 12-0 number one 100 |
+| NIL | the collective's tier | settles at its start plus 0.55 × the prestige change, 0.30 × the winning change and 0.15 × the market change, pushed 6 above that by the AD after a year that met his goal and 6 below after a losing year, at most 4 up or 3 down a year, 10-100; the NIL budget is 4 × tier - 100 points (the scale the recruiting baseline gave: Ohio State 267, Akron the floor of 30) |
+| market | crowds and TV | a fixed base (below) plus a live part that steps at most 3 a year toward 0.3 × (winning − its real 2023-25 winning), capped at ±8 where the building is full (base 85+) and ±18 elsewhere; a new head coach's first year adds 1.5 |
+| conference | the conference's strength | the mean engine rating of its members, on the 2026 scale |
+| coach | the head coach's appeal | his overall plus 3 a year of tenure up to five, minus 5 |
+
+The rating is 0.35 prestige + 0.20 winning + 0.15 NIL + 0.10 market + 0.10 conference + 0.10
+coach; tiers are 1 at 76 and up (blue blood), 2 at 65, 3 at 50, 4 at 35, 5 below (at the start 7,
+13, 34, 25 and 59 programs). **History** (`tools/build_program_history.py`, from the coaching
+records in `data/recruiting/coaches.json`: every FBS head coach's seasons since 1995 with wins,
+games and the final AP rank) is the recency-weighted mean season score 1995-2025 (half-life 12
+years), blended 65/35 with the recruiting baseline (class strength 2005-2026) and scaled so the
+best program is 100 and the median 39: Alabama 100, Ohio State 98, Georgia 93, Oklahoma 82,
+Oregon 80, Texas 80, LSU 79, Clemson and Michigan 78. The starting top 25 by rating holds 21 of a
+reasonable 2026 top 25 (Indiana, Missouri, Nebraska and South Carolina in for Utah, Wisconsin,
+Oklahoma State and Kansas State). Ten straight 12-0 seasons lift a mid Power 4 program about 20
+rating points (tier 3 to tier 1, prestige +11, market +14, NIL to the cap); ten 2-10 seasons at
+Alabama take about 17 (tier 1 to 2, prestige 97 to 76): a decade moves a program about a tier.
+
+**What reads it.** The AD's goal follows the tier (1: the playoff; 2: nine wins; 3: eight; 4: seven and a
+bowl; 5: a bowl; a Group of 5 program rated 42 or more: its conference) and his
+patience the tier at the start. A job's attractiveness is the rating plus 5 under a patient AD:
+a sitting head coach takes an opening at least 3 more attractive than his own job, a coordinator
+a head coaching job at any program within 15 of his own, your offers after a big year are
+openings at least 3 above you, and a fired coach's openings are at or below. The market's
+candidates and generated coaches are drawn against the rating on the baseline's scale (`z_of`,
+fitted so the ratings line up with the recruiting baseline). Recruiting's prestige pull reads
+0.6 × prestige + 0.4 × rating and the NIL pull the NIL tier; the portal's prestige and the
+program's share of development read the rating. The Office shows your program's card (the six
+metrics as bars, the tier, the rank) and opens every program in a table. `tools/check_programs.py`
+checks the starting top 25 and, over a run, that the top 25 keeps at least 18 of its starting
+members; `tools/long_run.py` prints the same each season.
 
 **A program's market** (`coach_career/programs.py`, `data/program_market.json`, built by
 `tools/build_program_market.py` from CFBD's game list in the git-ignored `data/market/`). The first

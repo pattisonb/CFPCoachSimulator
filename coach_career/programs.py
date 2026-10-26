@@ -23,12 +23,14 @@ MARKET_LIVE = 0.3                # the live part's target: this much of (winning
 MARKET_FULL = 85                 # a base market this big has a full building: the crowd side is capped
 MARKET_CAP_FULL, MARKET_CAP = 8.0, 18.0
 NEW_COACH_LIFT = 1.5             # a new head coach's first year
-NIL_UP, NIL_DOWN = 4.0, 2.0      # the AD after a year that met the goal / a losing year
+NIL_UP, NIL_DOWN = 4.0, 3.0      # the AD's biggest move a year: up after a year that met the goal, down after a losing year
+NIL_TARGET = {"prestige": 0.55, "winning": 0.30, "market": 0.15}   # the collective follows these from where the program started
+NIL_PUSH = 6.0                   # the AD's push above (goal met) or below (losing year) that target
 NIL_FLOOR_TIER = 10.0
 COACH_TENURE = 3.0               # coach appeal: overall + this a year of tenure (up to five) - 5
 GOALS = {1: ("playoff", 10, "Make the College Football Playoff"), 2: ("wins", 9, "Win nine games"),
-         3: ("wins", 7, "Win seven games and go bowling"), 4: ("wins", 6, "Reach a bowl game"), 5: ("wins", 6, "Win six games")}
-G5_TITLE_FROM = 45.0             # a Group of 5 program rated this high expects to win its conference
+         3: ("wins", 8, "Win eight games"), 4: ("wins", 7, "Win seven games and go bowling"), 5: ("wins", 6, "Reach a bowl game")}
+G5_TITLE_FROM = 42.0             # a Group of 5 program rated this high expects to win its conference
 MARKET_DEFAULT = 25              # a program without three seasons of FBS crowds (new to FBS)
 P4 = {"SEC", "Big Ten", "Big 12", "ACC"}
 _cache: dict = {}
@@ -106,7 +108,8 @@ def init(lgd: dict) -> None:
     for slug, t in lgd["teams"].items():
         if "program" not in t:
             p = base(slug)
-            t["program"] = dict(p, market_base=p["market"], live=0.0, seasons=[], year=lgd.get("year", 2026) - 1)
+            t["program"] = dict(p, market_base=p["market"], nil_base=p["nil"], winning_base=p["winning"], live=0.0, seasons=[],
+                                year=lgd.get("year", 2026) - 1)
 
 
 def get(state: dict, slug: str) -> dict:
@@ -174,10 +177,11 @@ def update(state: dict, results: dict, ranks: dict, year: Optional[int] = None, 
         ws = WINNING_WEIGHTS[:len(recent)]
         p["winning"] = round(sum(w * v for w, v in zip(ws, recent)) / sum(ws), 1)
         ten = [v for _, v in p["seasons"]]
-        target = PRESTIGE_HISTORY * p["history"] + (1 - PRESTIGE_HISTORY) * (sum(ten) / len(ten))
+        wb = p.get("winning_base", 40.0)                                    # the start is the fixed point: results like the real ones move nothing
+        target = p["history"] + (1 - PRESTIGE_HISTORY) * (sum(ten) / len(ten) - wb)
         p["prestige"] = round(p["prestige"] + max(-PRESTIGE_STEP, min(PRESTIGE_STEP, target - p["prestige"])), 1)
         cap = MARKET_CAP_FULL if p["market_base"] >= MARKET_FULL else MARKET_CAP
-        live_target = max(-cap, min(cap, MARKET_LIVE * (p["winning"] - 40)))
+        live_target = max(-cap, min(cap, MARKET_LIVE * (p["winning"] - wb)))
         live = p.get("live", 0.0) + max(-MARKET_STEP, min(MARKET_STEP, live_target - p.get("live", 0.0)))
         hc = (t.get("coaches") or {}).get("head_coach") or {}
         if hc.get("since") == year:
@@ -195,9 +199,14 @@ def update(state: dict, results: dict, ranks: dict, year: Optional[int] = None, 
 
 
 def nil_move(team: dict, met: bool, losing: bool) -> None:
-    """The AD raises the NIL tier after a year that met his goal, trims it after a losing year."""
+    """The collective settles where the program's prestige, winning and market put it; the AD
+    pushes it above that after a year that met his goal and it sinks below after a losing year,
+    at most NIL_UP up or NIL_DOWN down a year."""
     p = team["program"]
-    p["nil"] = round(max(NIL_FLOOR_TIER, min(100.0, p["nil"] + (NIL_UP if met else 0.0) - (NIL_DOWN if losing else 0.0))), 1)
+    bases = {"prestige": p["history"], "winning": p.get("winning_base", 40.0), "market": p.get("market_base", p["market"])}
+    target = p.get("nil_base", p["nil"]) + sum(w * (float(p[k]) - bases[k]) for k, w in NIL_TARGET.items()) + (NIL_PUSH if met else -NIL_PUSH if losing else 0.0)
+    step = max(-NIL_DOWN, min(NIL_UP, target - p["nil"]))
+    p["nil"] = round(max(NIL_FLOOR_TIER, min(100.0, p["nil"] + step)), 1)
     p["rating"] = round(mix(p), 1)
     p["tier"] = tier_of(p["rating"])
 

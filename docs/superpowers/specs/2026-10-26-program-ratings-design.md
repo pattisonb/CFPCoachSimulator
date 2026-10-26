@@ -43,9 +43,11 @@ final AP rank, SP+) and the recruiting model:
   markets; 70 solid Power 4; 55 small Power 4 / top Group of 5; 40 Group of 5; 25 the smallest).
   **NIL** from the market tier and the recruiting baseline at the start (the same number the
   current `nil_budget` gives, in tiers). **Conference** from 2025 results.
-- `prestige` starts at the history score; its target each offseason is 0.7 × history + 0.3 ×
-  a ten-season running mean of `winning`, so a decade of winning lifts a program and a decade
-  of losing sinks one, by about a tier at most.
+- `prestige` starts at the history score; its target each offseason is history + 0.3 × (a
+  ten-season running mean of the season scores − the program's real 2023-25 winning), so the
+  real start is a fixed point: a decade of winning beyond the real level lifts a program and a
+  decade of losing sinks one, by about a tier at most. NIL and the market's live part are
+  anchored the same way (`winning_base`, `nil_base`, `market_base`).
 
 ### Who reads it
 

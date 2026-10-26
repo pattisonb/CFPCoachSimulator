@@ -29,7 +29,7 @@ if __name__ == "__main__":
     lgd = st["league"]
     # the goal and the budget read the league's living values once it exists
     lgd["teams"]["ohio-state"]["program"].update(tier=3, rating=55.0, nil=40.0)
-    assert carousel.goal("ohio-state", st)["wins"] == 7 and recruiting.nil_budget(st, "ohio-state") == 60
+    assert carousel.goal("ohio-state", st)["wins"] == 8 and recruiting.nil_budget(st, "ohio-state") == 60
     lgd["teams"]["ohio-state"]["program"].update(tier=1, rating=89.0, nil=92.0)
     # job attractiveness and the move rule: a sitting coach moves up, never sideways or down
     st["offseason"]["auto"] = True

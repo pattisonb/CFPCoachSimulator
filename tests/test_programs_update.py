@@ -47,11 +47,13 @@ if __name__ == "__main__":
     assert len(lgd["teams"][champ]["program"]["seasons"]) == 1
     # NIL moves by the AD's hand: up after a goal met, down after a losing year
     t = lgd["teams"]["ohio-state"]["program"]
-    n0 = t["nil"]
+    t["nil"] = 60.0
     programs.nil_move(lgd["teams"]["ohio-state"], met=True, losing=False)
-    assert t["nil"] == min(100, n0 + programs.NIL_UP)
+    assert t["nil"] == 60.0 + programs.NIL_UP, t["nil"]
+    t["nil"] = 95.0
     programs.nil_move(lgd["teams"]["ohio-state"], met=False, losing=True)
-    assert t["nil"] == min(100, n0 + programs.NIL_UP) - programs.NIL_DOWN
+    assert t["nil"] == 95.0 - programs.NIL_DOWN, t["nil"]
+    t["nil"] = 90.0
     # ten winning years at a mid program, ten losing years at a blue blood: about a tier each way, no more
     riser = min(("kansas-state", "iowa", "utah", "missouri", "tcu", "wisconsin"), key=lambda s: lgd["teams"][s]["program"]["winning"])
     faller = "alabama"

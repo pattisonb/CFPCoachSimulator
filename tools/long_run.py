@@ -104,6 +104,18 @@ def season_metrics(state: dict) -> dict:
     }
 
 
+def _program_drift(state: dict) -> dict:
+    """The living ratings against the start: how many of the starting top 25 are still there, the tiers."""
+    import json
+    from coach_career import programs
+    d = json.loads(programs.HISTORY.read_text(encoding="utf-8"))["teams"]
+    start_top = set(sorted(d, key=lambda s: -d[s]["rating"])[:25])
+    now = {s: t["program"] for s, t in state["league"]["teams"].items() if t.get("program")}
+    top = sorted(now, key=lambda s: -now[s]["rating"])[:25]
+    return {"top25_kept": len(start_top & set(top)), "tiers": {k: sum(1 for p in now.values() if p["tier"] == k) for k in range(1, 6)},
+            "top5": top[:5]}
+
+
 def offseason_metrics(state: dict) -> dict:
     off = state["offseason"]
     lg = state["league"]
@@ -128,6 +140,7 @@ def offseason_metrics(state: dict) -> dict:
         "roster": {"min": min(sizes), "max": max(sizes)},
         "classes": {k: round(v / total, 3) for k, v in sorted(classes.items())},
         "coaching_changes": collections.Counter(c["role"] for c in off.get("coaching_changes", []) if c.get("reason") != "hired"),
+        "programs": _program_drift(state),
         "hc_departures": collections.Counter(c["reason"] if not c["reason"].startswith("left for ") or "NFL" in c["reason"] else "left for another job"
                                              for c in off.get("coaching_changes", []) if c["role"] == "head_coach" and c.get("reason") != "hired"),
         "you": {k: v for k, v in ((off.get("carousel") or {}).get("you") or {}).items() if k in ("security", "met", "fired")},
@@ -158,7 +171,7 @@ def run(seasons: int, seed: int, team: str, out: Path) -> None:
         out.with_suffix(".league.json").write_text(json.dumps(st_["league"]), encoding="utf-8")   # the latest league, to study
         o = row["offseason"]
         tr = row["tiers"]
-        print(f"      carousel {dict(o.get('hc_departures', {}))}  you {o.get('you')}  moved {o.get('moved_to')}", flush=True)
+        print(f"      carousel {dict(o.get('hc_departures', {}))}  you {o.get('you')}  moved {o.get('moved_to')}  programs {o.get('programs')}", flush=True)
         print("      tiers " + "  ".join(f"{k} st {v['starters']:.1f} rtg {v['rating']:.1f} rec {v['recruit_composite'] or 0:.3f} x{v['signed_per_team']}"
                                        f" young {v.get('young', 0):.2f} tr {v.get('transfer', 0):.2f} low {v.get('lower', 0):.2f} wo {v.get('walkon', 0):.2f}"
                                        for k, v in sorted(tr.items())), flush=True)
