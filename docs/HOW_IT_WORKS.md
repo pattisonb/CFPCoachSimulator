@@ -138,7 +138,9 @@ is the middle Power 4 starter at the position, 15 points a standard deviation ab
 below (a typical Power 4 backup or Group of 5 starter reads about 40, a walk-on in the 20s); the
 player card attributes on the same shape (`tests/test_scale.py` holds every position and
 attribute to 50); and **our overall**, a formula per position on those skills, fit once to the
-card overall the game showed then (r 0.97-0.995, about 1.5 points off). Since then nothing reads
+card overall the game showed then (r 0.97-0.995, about 1.5 points off); the card shape is re-centred
+when the real depth charts are re-tuned (`python -m teamdata.game_scale`, October 26 after the week 8
+re-tune: the skills' middles and the frozen engine means did not move). Since then nothing reads
 EA: a career's league and its recruits store our ratings, develop in them, and every overall the
 game uses is ours (cards, depth charts, team ratings, the draft, the portal, recruiting's playing
 time, comps, projected overall). Generated recruits are drawn by a model learned from real
