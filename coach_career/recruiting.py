@@ -79,6 +79,7 @@ WEEKLY_ONCE = ("message", "call")           # each of these once a week per pros
 HC_VISIT_GAP = 4                           # weeks between head coach in-home visits to one prospect
 NIL_VALUE = {5: 0.04, 4: 0.07, 3: 0.12, 2: 0.15}   # interest per NIL point by stars: top prospects expect more *tune*
 NIL_FLOOR = 30
+NIL_PER_TIER = 3.0                         # NIL points a year per point of the program's NIL tier *tune*
 # what a prospect wants in NIL points (his ask): by stars, times his position, times a lognormal spread *tune*
 ASK = {5: 60, 4: 30, 3: 8, 2: 0}
 ASK_POS = {"QB": 1.5, "LEDG": 1.2, "REDG": 1.2, "LT": 1.2, "WR": 1.2, "CB": 1.2, "HB": 0.9, "TE": 0.9, "K": 0.3, "P": 0.3}
@@ -766,10 +767,11 @@ def weekly_hours(state: dict, slug: str) -> int:
 
 
 def nil_budget(state: dict, slug: str) -> int:
-    """A school's NIL points for the year (its NIL tier, 10-100, as 4 × tier - 100: the same scale the
-    recruiting baseline gave), less what it spent keeping its own players home."""
+    """A school's NIL points for the year: 3 × its NIL tier (10-100), so the top programs keep the
+    budget the recruiting baseline gave (Ohio State about 275) and the middle has room for a few
+    blue-chip asks (SMU about 135, Tulane 110), less what it spent keeping its own players home."""
     from coach_career import programs
-    return max(NIL_FLOOR, round(4 * programs.get(state, slug)["nil"] - 100) - int((state.get("nil_retained") or {}).get(slug, 0)))
+    return max(NIL_FLOOR, round(NIL_PER_TIER * programs.get(state, slug)["nil"]) - int((state.get("nil_retained") or {}).get(slug, 0)))
 
 
 def open_spots(state: dict, slug: str) -> int:

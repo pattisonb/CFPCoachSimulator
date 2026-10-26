@@ -19,7 +19,7 @@ if __name__ == "__main__":
     assert carousel.goal("boise-state", st)["kind"] == "conference", carousel.goal("boise-state", st)
     # the NIL budget and the pulls follow the program's NIL tier and prestige
     b_osu, b_akr = recruiting.nil_budget(st, "ohio-state"), recruiting.nil_budget(st, "akron")
-    assert b_osu == max(recruiting.NIL_FLOOR, round(4 * programs.get(st, "ohio-state")["nil"] - 100)) and b_osu > 2 * b_akr, (b_osu, b_akr)
+    assert b_osu == max(recruiting.NIL_FLOOR, round(recruiting.NIL_PER_TIER * programs.get(st, "ohio-state")["nil"])) and b_osu > 2 * b_akr, (b_osu, b_akr)
     pid = next(iter(st["recruiting"]["prospects"]))
     pull = recruiting.pull(st, "ohio-state", pid)
     assert pull["prestige"] > 0.85 and recruiting.pull(st, "akron", pid)["prestige"] < 0.35
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     lgd = st["league"]
     # the goal and the budget read the league's living values once it exists
     lgd["teams"]["ohio-state"]["program"].update(tier=3, rating=55.0, nil=40.0)
-    assert carousel.goal("ohio-state", st)["wins"] == 8 and recruiting.nil_budget(st, "ohio-state") == 60
+    assert carousel.goal("ohio-state", st)["wins"] == 8 and recruiting.nil_budget(st, "ohio-state") == 120
     lgd["teams"]["ohio-state"]["program"].update(tier=1, rating=89.0, nil=92.0)
     # job attractiveness and the move rule: a sitting coach moves up, never sideways or down
     st["offseason"]["auto"] = True
