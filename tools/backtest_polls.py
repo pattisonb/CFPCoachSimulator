@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from sim import polls  # noqa: E402
-from calibrate_polls import load, season_frames  # noqa: E402
+from calibrate_polls import early_records, load, season_frames  # noqa: E402
 
 TRAIN = [str(y) for y in range(2014, 2024)]
 VALID = ["2024", "2025"]
@@ -31,7 +31,7 @@ LIVE = ["2026"]
 def weeks_of(p: dict, r: dict, season: str) -> list[dict]:
     """Per week: last week's poll with its others, the week's games, records after them, the next poll."""
     frames, tiers, _ = season_frames(p[season], r[season])
-    records: dict[str, list[int]] = {}
+    records: dict[str, list[int]] = early_records(frames, r[season])
     out = []
     for f in frames:
         for g in f["games"]:

@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from sim import polls  # noqa: E402
 from backtest_polls import TRAIN, VALID, score_week, weeks_of  # noqa: E402
-from calibrate_polls import load, season_frames  # noqa: E402
+from calibrate_polls import early_records, load, season_frames  # noqa: E402
 
 BALLOTS = ROOT / "data" / "ballots"
 PARAMS_FILE = ROOT / "data" / "poll_params.json"
@@ -174,7 +174,7 @@ def forecast_order(season: str, week: int, n: int = 25) -> tuple[list[str], dict
     if week not in by_week or str(week) not in p[season]["weeks"]:
         return None
     frames, tiers, _ = season_frames(p[season], r[season])
-    records: dict[str, list[int]] = {}
+    records: dict[str, list[int]] = early_records(frames, r[season])
     for f in frames:
         for g in f["games"]:
             if g["home_score"] is None or g["away_score"] is None or g["home_score"] == g["away_score"]:

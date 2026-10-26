@@ -1644,6 +1644,15 @@ The season-long scores still run underneath for the committee model.
 the others receiving votes to an older archive.
 
 
+**Who gets in from outside.** Voters rank a resume, not a result: of 456 teams that entered the
+Top 25 from unranked since 2014, 89% already had votes the week before and only 3 had three or
+more losses with no votes. On a voter's ballot a win over No. 2 is worth more than the 25th
+spot, so the simulated voters once let a 4-3 team nobody voted for (UCF, after beating No. 2
+BYU in October 2026) in at No. 25. Now a team with no votes has its win counted at
+`1 - entry_losses x (losses beyond two)` (0.5 a loss: a three-loss resume gets half, four
+nothing), so it takes an unbeaten or a one- or two-loss team to jump in on one upset
+(`tests/test_poll_entries.py`).
+
 #### The voters' own ballots
 
 `tools/fetch_ballots.py` downloads every AP voter's ballot from collegepolltracker.com,

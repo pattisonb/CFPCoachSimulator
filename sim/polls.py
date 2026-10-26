@@ -458,6 +458,9 @@ BALLOT_PARAMS = {
     "loss_ranked_cap": 1.0,    # most a loss can cost when the winner is on the voter's ballot
     "loss_edge_extra": 0.0,    # extra ranking drag per loss beyond the second
     "voter_noise": 0.0,        # each voter's own week-to-week wobble (sd, share of the maximum)
+    "entry_losses": 0.5,       # a team nobody voted for: its win counts (1 - this x its losses beyond two), so a resume
+                               # with three losses does not jump in on one upset (3 of 456 real entries since 2014 did;
+                               # two-loss entries are a quarter of them)
     "entry_all": 0.0,          # an off-ballot team with votes elsewhere is worth at least this x its record value
 }
 
@@ -518,6 +521,8 @@ def next_ballots(ballots: list[list[str]], prev: list[dict], games: list[dict], 
                 gain = _win_gain(p, ov, m, at_home, neutral, tiers.get(o))
                 # a narrow escape against a weak team costs the winner (m is the margin / 21)
                 gain -= p["close_win"] * bad * max(0.0, 1.0 - m * 21.0 / p["close_margin"]) * own ** p["close_own"]
+                if t not in mine and not share.get(t):     # nobody's team: voters weigh the whole resume
+                    gain *= max(0.0, 1.0 - p["entry_losses"] * max(0, records.get(t, (0, 0))[1] - 2))
                 val[t] += gain
             else:
                 loss = p["loss_base"] + p["loss_bad"] * bad ** p["loss_bad_pow"] + p["loss_margin"] * m \

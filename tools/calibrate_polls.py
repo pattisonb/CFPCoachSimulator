@@ -67,6 +67,23 @@ def season_frames(polls_s: dict, results_s: dict):
     return frames, tiers, weeks
 
 
+def early_records(frames: list[dict], results_s: dict) -> dict[str, list[int]]:
+    """Wins and losses from the weeks before the first poll frame (2026's archive labels its
+    first poll "2", so week 1's games are played before any frame): the records the frames build on."""
+    first = frames[0]["week"] if frames else 0
+    rec: dict[str, list[int]] = {}
+    for w, games in results_s.items():
+        if not w.isdigit() or int(w) >= first:
+            continue
+        for g in games:
+            hs, as_ = g["home"]["score"], g["away"]["score"]
+            if hs is None or as_ is None or hs == as_:
+                continue
+            rec.setdefault(g["home"]["id"], [0, 0])[0 if hs > as_ else 1] += 1
+            rec.setdefault(g["away"]["id"], [0, 0])[0 if as_ > hs else 1] += 1
+    return rec
+
+
 def replay(polls_s, results_s, ap_params, cfp_params, want_cfp=False):
     frames, tiers, weeks = season_frames(polls_s, results_s)
     pre = [r["team"] for r in sorted(polls_s["weeks"]["1"]["ap"], key=lambda r: r["rank"])]
