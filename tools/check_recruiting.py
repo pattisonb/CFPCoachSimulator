@@ -25,7 +25,7 @@ TOLERANCES = (
     ("in_state", 0.30, 0.42, 0.36),
     ("median_miles", 220, 340, 280),
     ("blue_chip_schools", 12, 24, 18),
-    ("max_five_stars", 0, 6, 6),
+    ("max_five_stars", 0, 7, 6),         # the most five-stars one school signs (real 2026: 6; Georgia and Alabama have signed 7)
     ("strength_rank_r", 0.75, 1.0, 1.0),
     ("committed_by_12", 0.50, 1.0, None),
     ("signed_early", 0.80, 0.90, None),
