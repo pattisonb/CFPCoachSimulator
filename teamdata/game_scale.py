@@ -34,6 +34,20 @@ def data() -> dict:
     return json.loads(FILE.read_text(encoding="utf-8"))
 
 
+def write_scale(out: dict) -> None:
+    """Write the scale file and drop every cached copy: `python -m teamdata.game_scale` loads this
+    module twice (as __main__, where fit() writes, and as teamdata.game_scale, the copy build_teams
+    reads), and the builder once kept reading an empty-formula scale from its own cache, so the
+    fit's final build had no card overalls."""
+    import sys
+    FILE.write_text(json.dumps(out, indent=0), encoding="utf-8")
+    data.cache_clear()
+    for name in ("teamdata.game_scale", "game_scale", "__main__"):
+        mod = sys.modules.get(name)
+        if mod is not None and getattr(mod, "FILE", None) == FILE and hasattr(getattr(mod, "data", None), "cache_clear"):
+            mod.data.cache_clear()
+
+
 def keys() -> list[str]:
     return data()["keys"]
 
@@ -105,8 +119,7 @@ def freeze_engine_means() -> int:
     built = json.loads((ROOT / "data" / "engine_teams.json").read_text(encoding="utf-8"))
     d = json.loads(FILE.read_text(encoding="utf-8"))
     d["engine_means"] = built["starter_means_before_normalization"]
-    FILE.write_text(json.dumps(d, indent=0), encoding="utf-8")
-    data.cache_clear()
+    write_scale(d)
     return len(d["engine_means"])
 
 
@@ -212,8 +225,7 @@ def fit() -> dict:
     skills = {g: {k: [round(st.median(v.get(k, [50])), 2), round(max(2.0, st.pstdev(v.get(k, [50]))), 3)] for k in ks}
               for g, v in vals.items()}
     out = {"keys": ks, "skills": skills, "card_scale": {}, "overall": {}}
-    FILE.write_text(json.dumps(out), encoding="utf-8")
-    data.cache_clear()
+    write_scale(out)
     build_teams.USE_FROZEN = False          # the card scale, measured by one build without a frozen one
     try:
         built = build_teams.build(sources, quiet=True)
@@ -234,16 +246,14 @@ def fit() -> dict:
         fits[pos] = {"const": round(float(const), 4), "w": {k: round(float(x), 5) for k, x in zip(ks, w) if abs(x) >= 1e-4},
                      "r": round(float(np.corrcoef(pred, y)[0, 1]), 4), "rmse": round(float(np.sqrt(np.mean((pred - y) ** 2))), 2)}
     out["overall"] = fits
-    FILE.write_text(json.dumps(out, indent=0), encoding="utf-8")
-    data.cache_clear()
+    write_scale(out)
     # the middle Power 4 starter of each group reads 50 exactly (the fit's error is not centred there)
     for g, players in mid.items():               # ... the starters the game plays (real usage), not EA's depth chart
         shift = 50 - st.median(overall(ours_from_base(r, pos), pos) for team, slug, pos, r in players if (team, slug) in playing)
         for pos in {pos for pos, _ in rows.items() if group(pos) == g}:
             fits[pos]["const"] = round(fits[pos]["const"] + shift, 4)
     out["overall"] = fits
-    FILE.write_text(json.dumps(out, indent=0), encoding="utf-8")
-    data.cache_clear()
+    write_scale(out)
     build_teams.OUT.write_text(json.dumps(build_teams.build(sources, quiet=True)), encoding="utf-8")
     freeze_engine_means()
     return {pos: (f["r"], f["rmse"]) for pos, f in fits.items()}
