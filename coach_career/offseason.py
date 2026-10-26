@@ -1180,6 +1180,7 @@ def open_role(state: dict, staff_id: str) -> dict:
     if key and coaches.get(key) and coaches[key].get("name") == s["name"]:
         carousel.market_add(state, coaches[key], key, me, f"Let go by {carousel._name(me)} after the season", year)
     off.setdefault("coaching_changes", []).append({"team": me, "role": key or "recruiter", "old": s["name"], "reason": "let go"})
+    off.setdefault("staff_open", {})[s["id"]] = "was let go"
     staff_off["leaving"].append(s["id"])
     staff_off["candidates"][s["id"]] = _candidates(state, s, _rng(state, f"open-{s['id']}"), {x["name"] for x in state["career"]["staff"]})
     return staff_off
@@ -1531,6 +1532,7 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
         "staff": None,
         "review": {k: v for k, v in (off.get("review") or {}).items() if k != "verdict"} or None,
         "fired": bool(off.get("fired")),
+        "your_staff": [{"id": x["id"], "role": x["role"], "name": x["name"]} for x in (state.get("career") or {}).get("staff", [])],
         "coaching_changes": [c for c in off.get("coaching_changes", []) if c["role"] == "head_coach"][:60],
         "history": (state.get("career") or {}).get("history", []),
     }
@@ -1541,7 +1543,12 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
                       "openings": carousel.job_rows(state, car["openings"]), "choice": car.get("choice"),
                       "moving_to": off.get("move_to")}
     if staff:
+        from coach_career import carousel
         by_id = {s["id"]: s for s in state["career"]["staff"]}
+        opened = off.get("staff_open") or {}
+        reasons = {i: opened.get(i) or ("is moving on" if by_id[i]["role"] == "Recruiter" else "was hired away as a head coach")
+                   for i in staff["leaving"] if i in by_id}
         out["staff"] = {"leaving": [by_id[i] for i in staff["leaving"] if i in by_id], "candidates": staff["candidates"],
-                        "hired": staff["hired"], "changes": staff.get("changes", [])}
+                        "hired": staff["hired"], "changes": staff.get("changes", []), "reasons": reasons,
+                        "market": carousel.market_rows(state)[:40] if off["stage"] == "staff" else []}
     return out

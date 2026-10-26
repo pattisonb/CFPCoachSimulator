@@ -62,6 +62,8 @@
       all.addEventListener("click", () => advance(s, box, all, "next_season"));
       actions.append(all);
     }
+    if (v.review) main.append(renderReview(s, v, box));
+    if (v.fired && v.stage !== "departures" && v.stage !== "staff" && v.stage !== "ready") main.append(firedNote(v));
     if (v.stage === "departures") renderDepartures(v, main);
     else if (v.stage === "retention") renderRetention(s, v, main, box);
     else if (v.stage === "portal_1" || v.stage === "portal_2") renderPortal(s, v, main, box);
@@ -70,6 +72,58 @@
     else if (v.stage === "staff") renderStaff(s, v, main);
     else renderReady(v, main);
     if (v.history.length) main.append(renderHistory(v));
+  }
+
+  function firedNote(v) {
+    return el("section", { class: "go-card off-fired" }, [el("div", { class: "go-kicker", text: "YOU HAVE BEEN LET GO" }),
+      el("p", { text: `The program's next coach runs the rest of the ${v.year} offseason. Walk the steps and pick your next job at the Staff step.` })]);
+  }
+
+  function meter(sec) {
+    const cls = sec < 25 ? "bad" : sec < 40 ? "warn" : "good";
+    return el("div", { class: `off-meter ${cls}` }, [el("div", { class: "off-meter-fill", style: `width:${Math.max(2, Math.min(100, sec))}%` })]);
+  }
+
+  function renderReview(s, v, box) {
+    const r = v.review;
+    const card = el("section", { class: "go-card off-review" }, [el("div", { class: "go-kicker", text: "YOUR MEETING WITH THE AD" }),
+      el("div", { class: "go-mini off-numbers" }, [stat("THE GOAL", r.goal), stat("YOUR RECORD", `${r.record[0]}-${r.record[1]}`),
+        stat("JOB SECURITY", `${r.security} / 100`), stat("HIS PATIENCE", `${r.patience} years`), stat("YEAR", `${r.tenure} in the job`)]),
+      meter(r.security),
+      el("p", { class: "off-why", text: r.words })]);
+    if (r.decided) {
+      if (r.outcome && r.outcome !== r.words) card.append(el("p", {}, [el("b", { text: r.outcome })]));
+      if (r.fired) card.append(el("p", { class: "bad-text", text: "Firing happens only at the end of a season; you will pick your next job at the Staff step." }));
+      return card;
+    }
+    if (v.stage !== "departures") return card;
+    card.append(el("p", { class: "muted", text: r.risk === "fire" ? "He is deciding whether to make a change. What do you say?"
+      : "A warning. What do you say?" }));
+    const acts = el("div", { class: "off-review-acts" });
+    const send = async (action, staffId) => {
+      try { await H.api(`/api/season/${s.id}/offseason/review`, H.postJSON({ action, staff_id: staffId || null })); render(s, box, H); }
+      catch (err) { H.toast(H.errText(err)); }
+    };
+    const tips = { case: "Point to the class you signed and the players you developed; a little goodwill.",
+      change: "Let a coordinator go; the AD sees a coach who will not stand pat.",
+      year: "He always says yes, but the goal must be met next season or you are gone.",
+      nothing: "Leave it to him." };
+    for (const o of r.options) {
+      if (o === "change") {
+        const coords = (v.your_staff || []).filter((x) => x.role === "OC" || x.role === "DC");
+        for (const c of coords) {
+          const b = el("button", { type: "button", class: "go-act" }, [`Let ${c.role} ${c.name} go`, el("span", { text: tips.change })]);
+          b.addEventListener("click", () => send("change", c.id));
+          acts.append(b);
+        }
+        continue;
+      }
+      const b = el("button", { type: "button", class: "go-act" }, [r.option_names[o], el("span", { text: tips[o] })]);
+      b.addEventListener("click", () => send(o));
+      acts.append(b);
+    }
+    card.append(acts);
+    return card;
   }
 
   function stat(k, val) { return el("div", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: k }), el("div", { class: "go-stat-val", text: val })]); }
@@ -268,26 +322,50 @@
     return card;
   }
 
+  function candidateCard(c, picked, onClick) {
+    const stops = (c.history || []).slice(-3).map((h) => `${h.team_name || h.team}${h.year ? ` ${h.year}–${h.to || ""}` : ""}`).join(" · ");
+    const b = el("button", { type: "button", class: `go-card off-cand ${picked ? "picked" : ""}`, "aria-pressed": String(picked) }, [
+      el("b", { text: `${c.name}${c.age ? `, ${c.age}` : ""}` }),
+      el("span", { class: "muted small", text: `Evaluation ${c.evaluation} · Recruiting ${c.recruiting}${c.play_calling ? ` · Play calling ${c.play_calling}` : ""}` }),
+      c.previous_job ? el("span", { class: "small", text: c.previous_job }) : null,
+      c.why ? el("span", { class: "muted small off-cand-why", text: c.why }) : null,
+      stops ? el("span", { class: "muted small", text: stops }) : null,
+      el("span", { class: "go-tag", text: picked ? "Hired" : "Hire" })]);
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
   function renderStaff(s, v, main) {
     const job = renderJob(s, v);
     if (job) main.append(job);
-    const st = v.staff || { leaving: [], candidates: {}, hired: {} };
+    const st = v.staff || { leaving: [], candidates: {}, hired: {}, reasons: {}, market: [] };
     const card = el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: "YOUR STAFF" })]);
     if (!st.leaving.length) card.append(el("p", { text: "Your whole staff is back. Everyone grew a little." }));
     for (const who of st.leaving) {
-      card.append(el("p", {}, [el("b", { text: `${who.role} ${who.name}` }), who.role === "Recruiter" ? " is moving on." : " was hired away as a head coach."]));
+      card.append(el("p", {}, [el("b", { text: `${who.role} ${who.name}` }), ` ${(st.reasons || {})[who.id] || "is moving on"}.`]));
       const row = el("div", { class: "off-cands" });
       (st.candidates[who.id] || []).forEach((c, i) => {
-        const picked = st.hired[who.id] === i;
-        const b = el("button", { type: "button", class: `go-card off-cand ${picked ? "picked" : ""}`, "aria-pressed": String(picked) }, [
-          el("b", { text: c.name }), el("span", { class: "muted small", text: `Evaluation ${c.evaluation} · Recruiting ${c.recruiting}` }),
-          el("span", { class: "go-tag", text: picked ? "Hired" : "Hire" })]);
-        b.addEventListener("click", async () => {
+        row.append(candidateCard(c, st.hired[who.id] === i, async () => {
           try { await H.api(`/api/season/${s.id}/offseason/hire`, H.postJSON({ staff_id: who.id, index: i })); render(s, document.getElementById("tab-offseason"), H); }
+          catch (err) { H.toast(H.errText(err)); }
+        }));
+      });
+      card.append(row);
+    }
+    const leaving = new Set(st.leaving.map((w) => w.id));
+    const staying = (v.your_staff || []).filter((x) => !leaving.has(x.id));
+    if (staying.length && !v.fired) {
+      card.append(el("div", { class: "go-kicker muted off-sub", text: "STAYING · LET ONE GO AND HIRE FROM THE MARKET" }));
+      const row = el("div", { class: "off-letgo" });
+      for (const x of staying) {
+        const b = el("button", { type: "button", class: "go-act" }, [`${x.role} ${x.name}`, el("span", { text: "Let him go" })]);
+        b.addEventListener("click", async () => {
+          if (!window.confirm(`Let ${x.role} ${x.name} go? He joins the coaching market and you hire his replacement now.`)) return;
+          try { await H.api(`/api/season/${s.id}/offseason/open_role`, H.postJSON({ staff_id: x.id })); render(s, document.getElementById("tab-offseason"), H); }
           catch (err) { H.toast(H.errText(err)); }
         });
         row.append(b);
-      });
+      }
       card.append(row);
     }
     const coaches = el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: "COACHING CAROUSEL" }),
@@ -295,6 +373,17 @@
         c.reason === "hired" ? ` ${teamName(c.team)} hires ${c.new}${c.from ? ` (${c.from})` : ""}.` : ` ${teamName(c.team)}: ${c.old} ${c.reason}.`])))
         : el("p", { class: "muted", text: "No head coaching changes this year." })]);
     main.append(el("div", { class: "off-grid" }, [card, coaches]));
+    if ((st.market || []).length) {
+      const t = el("table", { class: "off-table" }, [el("thead", {}, [el("tr", {}, ["Coach", "Would take", "Rating", "Why he is available", "Last job"].map((h) => el("th", { text: h })))])]);
+      const body = el("tbody");
+      for (const m of st.market) {
+        body.append(el("tr", {}, [el("td", { text: `${m.name}, ${m.age}` }), el("td", { text: m.roles.join(", ") }), el("td", { class: "num", text: String(m.rating) }),
+          el("td", { text: `${m.why}${m.sits_out ? " · sitting out this cycle" : ""}` }), el("td", { text: m.previous_job })]));
+      }
+      t.append(body);
+      main.append(el("section", { class: "go-card off-scroll" }, [el("div", { class: "go-kicker", text: `COACHES FOR HIRE · THE TOP ${st.market.length}` }),
+        el("p", { class: "muted small", text: "The coaching market: fired and let-go coaches, head coaches from the FCS and lower divisions, NFL assistants and position coaches. Open a job on your staff to hire from it." }), t]));
+    }
   }
 
   function renderReady(v, main) {

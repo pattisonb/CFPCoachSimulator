@@ -39,7 +39,8 @@ if __name__ == "__main__":
     coord_let_go = [c["old"] for c in changes if c["role"] != "head_coach" and c["reason"] in ("fired", "moved on", "let go")]
     names_in_market = {c["name"] for c in market["coaches"]}
     assert fired and all(n in names_in_market for n in fired), [n for n in fired if n not in names_in_market]
-    assert all(n in names_in_market for n in coord_let_go if n), [n for n in coord_let_go if n and n not in names_in_market]
+    placed = {c["new"] for c in changes if c["reason"] == "hired"}          # a let-go coordinator can land at once
+    assert all(n in names_in_market or n in placed for n in coord_let_go if n), [n for n in coord_let_go if n and n not in names_in_market | placed]
     # nobody is on two staffs (a head coach calling his own plays is one job); a coach hired this
     # offseason is out of the pool
     jobs = teams_of()

@@ -207,6 +207,12 @@ SUPPLY = (
 )
 
 
+WHY_GENERATED = {"head_coach": ("Ready for a bigger job", "Wants back into college football", "Looking for his first FBS job",
+                                "A winner at a lower level, ready to move up"),
+                 "coordinator": ("Ready to call his own plays", "Wants a coordinator's job", "Looking for a step up",
+                                 "Interviewing for coordinator jobs")}
+
+
 def market_refresh(state: dict) -> None:
     """Each offseason: coaches too long in the market retire from it, and the supply is topped up
     with generated coaches (FCS and lower-division head coaches, NFL assistants, position coaches)."""
@@ -224,7 +230,8 @@ def market_refresh(state: dict) -> None:
         coach = {"name": name, "role": main, "previous_job": prev, "ratings_generated": True,
                  "age_at": [year, rng.randint(*ages)], "since": year - rng.randint(1, 4)}
         coach["ratings"] = _ratings_for(lgd, main, coach, rng, level)
-        mk["coaches"].append(_entry(coach, main, None, prev, year, roles, rng))
+        why = rng.choice(WHY_GENERATED["head_coach" if "head_coach" in roles else "coordinator"])
+        mk["coaches"].append(_entry(coach, main, None, why, year, roles, rng))
     mk["year"] = year
 
 
@@ -252,8 +259,8 @@ def market_candidates(state: dict, slug: str, role: str, n: int, rng: Optional[r
     b = baseline(slug)
     out = []
     for e in mk["coaches"]:
-        if role not in e["roles"] or e.get("sits_out") == year:
-            continue
+        if role not in e["roles"] or (e.get("sits_out") == year and (role == "head_coach" or e["last_role"] == "head_coach")):
+            continue                                        # a fired head coach sits out the cycle; a let-go coordinator can land at once
         r = e["ratings_by_role"].get(role)
         if r is None:
             r = e["ratings_by_role"][role] = _ratings_for(lgd, role, {"ratings": e["ratings"], "role": e["last_role"]},
@@ -298,7 +305,8 @@ def market_rows(state: dict, role: Optional[str] = None) -> list[dict]:
             continue
         rows.append({"id": e["id"], "name": e["name"], "roles": [ROLE_WORDS[r] for r in e["roles"]], "age": e["age"] + (mk["year"] - e["year"]),
                      "why": e["why"], "previous_job": _previous_job(e), "rating": int(_rating({"ratings": e["ratings"]})),
-                     "history": [dict(h, team_name=_name(h["team"])) for h in e["history"]], "sits_out": e.get("sits_out") == mk["year"]})
+                     "history": [dict(h, team_name=_name(h["team"])) for h in e["history"]],
+                     "sits_out": e.get("sits_out") == mk["year"] and e["last_role"] == "head_coach"})
     rows.sort(key=lambda r: -r["rating"])
     return rows
 

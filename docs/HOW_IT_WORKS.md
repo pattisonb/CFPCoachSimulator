@@ -1143,24 +1143,52 @@ lists your risers with the reasons.
 baseline: make the playoff (+1.2 and up), win nine (+0.5), win seven and go bowling (-0.3), reach
 a bowl (below); a Group of 5 program at 0 or above expects its conference title. His patience is
 2 to 5 years (the blue bloods least). A head coach's job security (0-100, a new hire starts at
-70) moves 8 points per win over or under the goal, plus 10 for a conference title, 12 for the
-playoff, 25 for the national title, minus 6 when a playoff or conference goal is missed; a bad
-year counts 3/patience as much, and half in a coach's first two years. Under 25 after two years
-he is fired 75% of the time (always under 8). Coaches retire (3% a year, more after 12 years in
-the job and past 60) and an 85+ coach after 11 wins leaves for the NFL 10% of the time. Openings
-are filled in order of prestige: the best of the head coaches at smaller programs with a
-two-year .650 run, the coordinators at nine-win programs of about the same standing, and three
-generated candidates (drawn like the league's coaches, better for better jobs). A head coach
-hired away opens his job, which joins the queue; a coordinator hired away is replaced; half of
-new head coaches bring their own coordinators; 10% of coordinators move on each year.
+70; a real coach already in his third season or later starts somewhere between 35 and 85, his
+standing before the career began) moves 8 points per win over or under the goal, plus 10 for a
+conference title, 12 for the playoff, 25 for the national title, minus 6 when a playoff or
+conference goal is missed; a bad year counts 3/patience as much, and half in a coach's first two
+years. Under 25 after two years he is fired 75% of the time (always under 8). Coaches retire
+(3% a year, more after 12 years in the job and past 60) and an 80+ coach after 10 wins leaves
+for the NFL 12% of the time.
+
+**The coaching market** (`carousel.market`, `lgd["market"]`). The league keeps a pool of about
+150 coaches for hire. Fired head coaches and let-go coordinators join it with why they are
+available ("Fired by Purdue after a 3-9 season", "Let go at Baylor when X brought his own
+staff", "Left Oregon State after 4 seasons to look for a bigger job") and their job history;
+the rest is a generated supply (FCS and Division II head coaches, NFL assistants, coordinators
+and position coaches from lower levels), each with the roles he would take. A coach fired this
+offseason sits out the cycle; after three years in the pool, or at 66, a coach leaves it.
+Openings are filled in order of prestige: the best of the head coaches at smaller programs with
+a three-year .600 run (a proven head coach gets 4 points), the coordinators at nine-win programs
+of about the same standing, and the market's best three for the job (a coach who has not held
+the role gets ratings drawn for it, shifted by the program's level). A head coach hired away
+opens his job, which joins the queue; nobody is hired twice. A coordinator hired away, let go
+by a new head coach (half of new head coaches bring their own coordinator) or moving on (13% a
+year) is replaced from the market; every change records where the new coach came from
+(`from`, `from_market`). `tools/check_carousel.py` plays quick offseasons and counts the churn:
+six seasons gave 25 head coaching changes a year (15 fired, 5 retired, 5 hired away, a few to
+the NFL; real FBS years run 25-30) and 63 coordinator changes (real: 60-80).
+
+**Your meeting with the AD** (`offseason.review`, the Departures step). Every offseason opens with his
+verdict: the goal, your record, your security and his patience. Under 40 he warns you; under
+25 (after two years, always under 8) he is deciding whether to make a change, and the firing is
+decided there, only at the end of a season. You can make your case (2-10 points of goodwill),
+offer a change on your staff (let a coordinator go: he joins the market, his job gets
+candidates at the Staff step, +10), ask for one more year (he always says yes, with an
+ultimatum: miss the goal next season and you are gone; the Office shows "ultimatum year") or
+say nothing (he decides). Auto says nothing. Fired, you walk the rest of the offseason on Auto
+(the program's next coach runs it) and pick your next job from the openings at or below your
+program's standing at the Staff step (Auto takes the best).
 
 **You** get the same goal and security (on the Office). After a year that puts your security at 80
 or more, up to three better programs with an opening offer you their job; take one on the
 Offseason screen and you move there for the next season (its coordinators join your staff, your
-recruiters come along). If your AD fires you, you pick your next job from the openings at or
-below your program's standing (Auto takes the best). Your coordinators leave when another
-program hires them as its head coach; a recruiter moves on 12% of the time; each opening has
-three candidates and Auto hires the best. The rest of your staff drift a point or two a year.
+recruiters come along). Your coordinators leave when another program hires them as its head
+coach; a recruiter moves on 12% of the time. Each coordinator opening offers the market's best
+five (why each is available, his last job, his stops and age); a recruiter's opening five
+position coaches. At the Staff step you can also let any of your own coaches go and hire from
+the market, and the screen lists the market's top 40. Auto hires the best. The rest of your
+staff drift a point or two a year.
 
 **Many seasons** (`tools/long_run.py`, every step on Auto). Six 20-season careers on 85-man rosters
 (120 seasons) held the league's mean team rating at 59.0-60.0 every season (2026: 59.4) with

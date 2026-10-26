@@ -1034,6 +1034,23 @@ def offseason_hire(season_id: str, req: HireRequest) -> dict:
     return {"hired": staff["hired"]}
 
 
+class OpenRoleRequest(BaseModel):
+    staff_id: str
+
+
+@app.post("/api/season/{season_id}/offseason/open_role")
+def offseason_open_role(season_id: str, req: OpenRoleRequest) -> dict:
+    """Let one of your own coaches go at the Staff step: he joins the market, his job gets candidates."""
+    st = _offseason_state(season_id)
+    with _season_lock:
+        try:
+            offseason.open_role(st, req.staff_id)
+        except ValueError as e:
+            raise HTTPException(409, str(e))
+        season.save_season(st)
+    return offseason.view(st)
+
+
 @app.post("/api/season/{season_id}/player/edit")
 def season_player_edit(season_id: str, req: PlayerEditRequest) -> dict:
     """God mode: change a player's ratings, class, size, jersey or development trait. The
