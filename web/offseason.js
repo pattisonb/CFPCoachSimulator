@@ -146,14 +146,15 @@
       if (e.offers.nil) offers.push(`${e.offers.nil} NIL on the table`);
       if (e.offers.released) offers.push("Letting him go");
       if (offers.length) c.append(el("p", { class: "small" }, [el("b", { text: "Your offer: " }), offers.join(" · ")]));
-      const row = el("div", { class: "go-actions" });
       const btn = (label, sub, onclick, tone, off) => { const b = el("button", { type: "button", class: `go-act ${tone || ""}` }, [el("b", { text: label }), el("span", { text: sub })]); if (off) b.disabled = true; b.addEventListener("click", onclick); return b; };
-      row.append(btn("Meet", e.met ? "done" : "free", () => act(e.id, "meet"), "", e.met));
-      row.append(btn("Promise start", e.role_next === "starter" ? "he would" : "he would not", () => act(e.id, "promise"), e.role_next === "starter" ? "go" : "", e.offers.promise));
-      const nil = el("input", { type: "number", min: "0", step: "5", value: String(e.offers.nil || e.ask.nil || 0), class: "go-nil", "aria-label": `NIL for ${e.name}` });
-      row.append(nil, btn("Offer NIL", "next year's", () => act(e.id, "nil", Number(nil.value) || 0), "alt"));
-      row.append(btn("Let him go", "", () => act(e.id, "release"), "", e.offers.released));
-      c.append(row);
+      const row = el("div", { class: "go-actions off-keep-acts" }, [
+        btn("Meet", e.met ? "done" : "free", () => act(e.id, "meet"), "", e.met),
+        btn("Promise a start", e.role_next === "starter" ? "he would start" : "he would not", () => act(e.id, "promise"), e.role_next === "starter" ? "go" : "", e.offers.promise),
+        btn("Let him go", e.offers.released ? "letting go" : "", () => act(e.id, "release"), "", e.offers.released)]);
+      const nil = el("input", { type: "number", min: "0", step: "5", value: String(e.offers.nil || e.ask.nil || 0), class: "go-nil", id: `keep-nil-${e.id}` });
+      const nilRow = el("div", { class: "go-row off-keep-nil" }, [el("label", { for: `keep-nil-${e.id}`, class: "muted small", text: "NIL" }), nil,
+        btn("Offer NIL", "from next year's", () => act(e.id, "nil", Number(nil.value) || 0), "alt")]);
+      c.append(row, nilRow);
       cards.append(c);
     }
     if (!r.players.length) head.append(el("p", { class: "muted", text: "Nobody with eligibility left wants out. Open the portal." }));
