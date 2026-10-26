@@ -488,7 +488,8 @@ body.team-theme .panel { border-color: color-mix(in srgb, var(--team-primary) 30
 @media (max-width: 700px) { .leaders-grid, .roster-grid { grid-template-columns: 1fr; } }
 
 /* pickers: selects styled like buttons, with a chevron; conference chips */
-.stats-controls select, #season-toolbar select, .season-controls select, .pick select {
+.stats-controls select, #season-toolbar select, .season-controls select, .pick select, .advance-to select, .go-sel, .go-filters select,
+.go-filterbar select, .off-filters select, .rc-staff-card select, .coach-colors select, .schedule-pick select, .games-modal select {
   appearance: none; -webkit-appearance: none; font: inherit; font-weight: 600; color: var(--text);
   background-color: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
   padding: 8px 34px 8px 12px; cursor: pointer; line-height: 1.2;
@@ -1211,8 +1212,13 @@ body.career-mode #season-tabs button.active { background: var(--go-primary); col
 body.career-mode.on-office #btn-advance, body.career-mode.on-office #btn-to-selection, body.career-mode.on-office #btn-to-end,
 body.career-mode.on-office #btn-gameday, body.career-mode.on-office .advance-to, body.career-mode.on-career-tab #week-strip, body.career-mode.on-career-tab #week-date { display: none !important; }
 .advance-to { display: inline-flex; gap: 6px; align-items: center; }
-.advance-to select { max-width: 190px; }
-.go-sel { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); color: var(--ink); font: inherit; font-weight: 600; }
+.advance-to select { max-width: 190px; min-height: 38px; }
+/* the header's picker wears the team colours like the ghost buttons beside it */
+body.team-theme .season-head-row select { color: var(--team-primary-ink); border-color: color-mix(in srgb, var(--team-primary-ink) 45%, transparent);
+  background-color: color-mix(in srgb, var(--team-primary-ink) 10%, transparent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+body.team-theme .season-head-row select option { color: var(--text); background: var(--panel); }
+.go-sel { min-height: 44px; border-radius: 12px; }
 
 @media (max-width: 1100px) {
   .go-board { grid-template-columns: minmax(0, 1fr); }
