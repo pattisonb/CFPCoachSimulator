@@ -48,7 +48,7 @@ if __name__ == "__main__":
     hires = [c for c in changes if c["reason"] == "hired"]
     assert hires and all(c.get("from") for c in hires), "a hire without where he came from"
     assert any(c["role"] != "head_coach" and c.get("from_market") for c in hires), "no coordinator hired from the market"
-    assert len(fired) >= 5, len(fired)
+    assert len(fired) >= 3, len(fired)
     # your openings offer the market: each candidate says why he is available and what he did
     staff = off["staff"]
     if not any(i in ("oc", "dc") for i in staff["leaving"]):

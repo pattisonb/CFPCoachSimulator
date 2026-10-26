@@ -156,7 +156,102 @@ def start(state: dict) -> dict:
                           "portal": {"players": entrants, "round": 1, "offers": {}, "moves": []},
                           "signed": signed, "staff": None, "report": None, "performance": _performance(state),
                           "retention": {"players": _retention_entries(state, lgd, pending), "results": None, "spent": 0}}
+    state["offseason"]["review"] = _review(state, lgd)
     return state["offseason"]
+
+
+# ----- the yearly meeting with your athletic director -------------------------------------------
+
+class ReviewError(Exception):
+    def __init__(self, code: int, message: str):
+        super().__init__(message)
+        self.code = code
+
+
+WARNING_BELOW = 40               # security under this: a warning from the AD
+CASE_GAIN = (2, 10)              # security a good case earns *tune*
+CHANGE_GAIN = 10                 # security for letting a coordinator go *tune*
+REVIEW_OPTIONS = {"case": "Make your case", "change": "Offer a change on your staff", "year": "Ask for one more year",
+                  "nothing": "Say nothing"}
+
+
+def _review(state: dict, lgd: dict) -> dict:
+    """The AD's verdict on your season, decided here (the carousel reads it): the goal, your
+    record against it, where your security stands and what you can do about it."""
+    from coach_career import carousel
+    me = state["team"]
+    year = state["offseason"]["year"]
+    t = lgd["teams"][me]
+    carousel.ad(t, me)                                   # you start on solid ground
+    res = carousel._results(state).get(me, {"wins": 0, "losses": 0})
+    v = carousel.judge(t, me, res, year)
+    a = t["ad"]
+    sec = v["security"]
+    must = sec < carousel.MUST_FIRE or (a.get("ultimatum") == year and not v["met"])
+    at_risk = must or (sec < carousel.FIRE_BELOW and v["tenure"] >= 2)
+    risk = "fire" if at_risk else "warning" if sec < WARNING_BELOW else "none"
+    options = ["case", "change", "year", "nothing"] if risk != "none" else []
+    if must or not any(x["role"] in STAFF_ROLES for x in state["career"]["staff"]):
+        options = [o for o in options if o != ("year" if must else "change")]
+    if must and "year" in options:
+        options.remove("year")
+    words = (f"You went {res['wins']}-{res['losses']}. " + ("You met the goal. " if v["met"] else "You fell short of the goal. ")
+             + {"fire": "The AD is deciding whether to make a change.", "warning": "The AD wants to see more next year.",
+                "none": "The AD is pleased." if v["met"] else "The AD is patient."}[risk])
+    if a.get("ultimatum") == year:
+        words += " This was the year he gave you." if not v["met"] else " You answered his ultimatum."
+    return {"verdict": v, "goal": v["goal"]["text"], "met": v["met"], "record": [res["wins"], res["losses"]], "security": sec,
+            "delta": v["delta"], "patience": v["patience"], "tenure": v["tenure"], "mood": carousel.mood(sec), "risk": risk,
+            "must": must, "options": options, "option_names": {o: REVIEW_OPTIONS[o] for o in options},
+            "decided": risk == "none", "fired": False, "action": None, "outcome": None if risk != "none" else words, "words": words}
+
+
+def review_decide(state: dict, action: str, staff_id: Optional[str] = None) -> dict:
+    """What you say in the meeting; then the AD decides. Making your case earns a little; offering
+    a change lets a coordinator go (he joins the market, his job opens at the Staff step) and earns
+    more; asking for one more year always survives, with an ultimatum for next season; saying
+    nothing leaves it to him. Firing happens only here, at the end of a season."""
+    from coach_career import carousel
+    off = state.get("offseason") or {}
+    rv = off.get("review")
+    if off.get("stage") != "departures" or not rv:
+        raise ReviewError(409, "the review is at the Departures step")
+    if rv["decided"]:
+        raise ReviewError(409, "the AD has already decided")
+    if action not in rv["options"]:
+        raise ReviewError(400, "that is not on the table")
+    me, year = state["team"], off["year"]
+    t = state["league"]["teams"][me]
+    a = t["ad"]
+    rng = random.Random(f"review-{state['id']}-{year}-{action}")
+    fired = rv["must"]
+    if action == "case":
+        gain = rng.randint(*CASE_GAIN)
+        a["security"] = min(100, a["security"] + gain)
+        said = f"You made your case for {gain} points of goodwill."
+    elif action == "change":
+        s = next((x for x in state["career"]["staff"] if x["id"] == staff_id and x["role"] in STAFF_ROLES), None)
+        if s is None:
+            raise ReviewError(400, "pick the coordinator you would let go")
+        key = STAFF_ROLES[s["role"]]
+        if t["coaches"].get(key) and t["coaches"][key].get("name") == s["name"]:
+            carousel.market_add(state, t["coaches"][key], key, me, f"Let go by {carousel._name(me)} after the season", year)
+        off.setdefault("staff_open", {})[s["id"]] = "let go after the season"
+        a["security"] = min(100, a["security"] + CHANGE_GAIN)
+        said = f"You let {s['role']} {s['name']} go."
+    elif action == "year":
+        a["ultimatum"] = year + 1
+        said = "He gives you one more year: an ultimatum, the goal must be met next season."
+    else:
+        said = "You said nothing."
+    if not fired and action != "year" and a["security"] < carousel.FIRE_BELOW and rv["verdict"]["tenure"] >= 2:
+        fired = rng.random() < carousel.FIRE_CHANCE
+    rv.update(decided=True, fired=bool(fired), action=action, security=a["security"], mood=carousel.mood(a["security"]),
+              outcome=said + (" The AD lets you go." if fired else " You keep your job." if rv["risk"] == "fire" else ""))
+    if fired:
+        off["fired"] = True
+        off["auto"] = True
+    return rv
 
 
 def _open_portal(state: dict) -> None:
@@ -297,6 +392,8 @@ def retain(state: dict, pid: str, action: str, nil: int = 0) -> dict:
     off = state.get("offseason") or {}
     if off.get("stage") != "retention":
         raise RetentionError(409, "this is not the retention step")
+    if off.get("fired"):
+        raise RetentionError(409, "you have been let go: the program's new coach decides")
     e = next((x for x in off["retention"]["players"] if x["id"] == pid), None)
     if e is None:
         raise RetentionError(404, "he is not on your leavers")
@@ -1174,6 +1271,11 @@ def advance(state: dict) -> dict:
     stage = off["stage"]
     from coach_career import recruiting
     if stage == "departures":
+        rv = off.get("review")
+        if rv and not rv["decided"]:
+            if not off.get("auto"):
+                raise ReviewError(409, "the AD is waiting for your answer")
+            review_decide(state, "nothing")
         if off.get("retention") is None:            # a save from before the retention step
             _open_portal(state)
             off["stage"] = "portal_w1" if recruiting.is_portal(state) else "portal_1"
@@ -1207,7 +1309,8 @@ def advance(state: dict) -> dict:
         car = carousel.run(state)
         off["carousel"] = car
         off["coaching_changes"] = car["changes"]
-        off["staff"] = _staff_changes(state, car["poached"])
+        off["staff"] = _staff_changes(state, car["poached"] + [STAFF_ROLES[x["role"]] for x in state["career"]["staff"]
+                                                              if x["id"] in (off.get("staff_open") or {}) and x["role"] in STAFF_ROLES])
         off["stage"] = "staff"
     elif stage == "staff":
         off["staff"]["changes"] = _apply_staff(state)
@@ -1426,6 +1529,8 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
                                          "mean_gain_ea": off["report"]["development"]["mean_gain_ea"],
                                          "walk_ons": off["report"]["walk_ons"]},
         "staff": None,
+        "review": {k: v for k, v in (off.get("review") or {}).items() if k != "verdict"} or None,
+        "fired": bool(off.get("fired")),
         "coaching_changes": [c for c in off.get("coaching_changes", []) if c["role"] == "head_coach"][:60],
         "history": (state.get("career") or {}).get("history", []),
     }

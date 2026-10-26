@@ -991,6 +991,24 @@ def offseason_retain(season_id: str, req: RetainRequest) -> dict:
     return offseason.view(st)
 
 
+class ReviewRequest(BaseModel):
+    action: str                   # case, change, year, nothing
+    staff_id: Optional[str] = None
+
+
+@app.post("/api/season/{season_id}/offseason/review")
+def offseason_review(season_id: str, req: ReviewRequest) -> dict:
+    """Your meeting with the AD: what you say, then his decision (firing happens only here)."""
+    st = _offseason_state(season_id)
+    with _season_lock:
+        try:
+            offseason.review_decide(st, req.action, staff_id=req.staff_id)
+        except offseason.ReviewError as e:
+            raise HTTPException(e.code, str(e))
+        season.save_season(st)
+    return offseason.view(st)
+
+
 @app.post("/api/season/{season_id}/offseason/job")
 def offseason_job(season_id: str, req: JobRequest) -> dict:
     """Take a job offer (or, fired, an opening); team null stays put."""

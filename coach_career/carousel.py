@@ -30,8 +30,10 @@ WIN_STEP = 8                     # security per win over or under the goal
 BONUS = {"conference": 10, "playoff": 12, "title": 25}
 FIRE_BELOW, FIRE_CHANCE, MUST_FIRE = 25, 0.75, 8
 RETIRE = 0.03                    # a year, more after 12 seasons in the job and past 60 (an age drawn when unknown)
-NFL_CHANCE = 0.10                # a 85+ head coach after 11 wins; coordinators 0.06 after a top-10 unit
-COORD_MOVE = 0.10                # coordinators leaving for other jobs on their own
+NFL_CHANCE = 0.12                # a 80+ head coach after 10 wins
+COORD_MOVE = 0.13                # coordinators leaving for other jobs on their own
+HC_MOVE_PCT = 0.60               # a sitting head coach with this winning share over three years is a candidate elsewhere
+HC_PROVEN = 4                    # a sitting head coach's edge over a coordinator or a market coach
 OFFER_FROM = 80                  # your security this high, and better programs with an opening call
 FIRED_PICKS = 6                  # openings offered to you after you are fired (the lower ones)
 MARKET_SIZE = 150                # coaches for hire the market is topped up to each offseason *tune*
@@ -318,7 +320,9 @@ def run(state: dict) -> dict:
     market(state)
     market_refresh(state)
     ad(lgd["teams"][me], me)                                    # you start on solid ground
-    verdicts = {slug: judge(t, slug, res.get(slug, {"wins": 0, "losses": 0}), year) for slug, t in lgd["teams"].items()}
+    rv = state["offseason"].get("review")
+    verdicts = {slug: (rv["verdict"] if rv and slug == me else judge(t, slug, res.get(slug, {"wins": 0, "losses": 0}), year))
+                for slug, t in lgd["teams"].items()}
     changes, open_hc, left_hc = [], [], {}
 
     def leave(slug: str, reason: str, why: Optional[str] = None) -> None:
@@ -339,12 +343,18 @@ def run(state: dict) -> dict:
         r = res.get(slug, {})
         if (sec < FIRE_BELOW and v["tenure"] >= 2 and rng.random() < FIRE_CHANCE) or sec < MUST_FIRE:
             leave(slug, "fired", _fired_why(slug, r))
-        elif _rating(hc) >= 85 and r.get("wins", 0) >= 11 and rng.random() < NFL_CHANCE:
+        elif _rating(hc) >= 80 and r.get("wins", 0) >= 10 and rng.random() < NFL_CHANCE:
             leave(slug, "left for the NFL")
         elif rng.random() < RETIRE * (1 + max(0, v["tenure"] - 12) / 8) * (1 + max(0, _age(hc, year) - 60) / 5):
             leave(slug, "retired")
     you = verdicts.get(me, {})
-    fired_you = you and ((you["security"] < FIRE_BELOW and you["tenure"] >= 2 and rng.random() < FIRE_CHANCE) or you["security"] < MUST_FIRE)
+    if rv:                                                       # decided in your meeting with the AD
+        fired_you = bool(rv.get("fired"))
+        you = dict(you, security=rv["security"])
+    else:
+        fired_you = you and ((you["security"] < FIRE_BELOW and you["tenure"] >= 2 and rng.random() < FIRE_CHANCE) or you["security"] < MUST_FIRE)
+    if fired_you:
+        changes.append({"team": me, "role": "head_coach", "old": lgd["teams"][me]["coaches"]["head_coach"]["name"], "reason": "fired"})
     # 2. fill the openings, best programs first; a hire can open another job
     filled: dict[str, dict] = {}
     queue = sorted(open_hc, key=lambda s: -baseline(s))
@@ -440,8 +450,8 @@ def _pick_head_coach(state: dict, slug: str, verdicts: dict, res: dict, filled: 
         recs = hist.get(s, [])[-2:] + [[res.get(s, {}).get("wins", 0), res.get(s, {}).get("losses", 0)]]
         w = sum(r[0] for r in recs)
         pct = w / max(1, sum(r[0] + r[1] for r in recs))
-        if hc["name"] not in taken and baseline(s) < b - 0.3 and pct >= 0.65 and verdicts[s]["tenure"] >= 2:
-            cands.append((_rating(hc) + 20 * (pct - 0.65) + rng.gauss(0, 3), hc, {"kind": "head_coach", "team": s,
+        if hc["name"] not in taken and baseline(s) < b - 0.3 and pct >= HC_MOVE_PCT and verdicts[s]["tenure"] >= 2:
+            cands.append((_rating(hc) + HC_PROVEN + 20 * (pct - HC_MOVE_PCT) + rng.gauss(0, 3), hc, {"kind": "head_coach", "team": s,
                           "text": f"head coach at {_name(s)}"}))
         for role in COORD_ROLES:
             c = t["coaches"].get(role)
@@ -475,16 +485,21 @@ def _name(slug: str) -> str:
     return season.load_teams()[slug]["name"]
 
 
+def mood(sec: int) -> str:
+    return "Untouchable" if sec >= 90 else "Secure" if sec >= 65 else "Warm seat" if sec >= 40 else "Hot seat"
+
+
 def status(state: dict) -> dict:
-    """Your job for the page: the AD's goal, your security and his patience."""
+    """Your job for the page: the AD's goal, your security, his patience and any ultimatum."""
     me = state["team"]
     lgd = state.get("league") or {}
     t = (lgd.get("teams") or {}).get(me)
     a = ad(t, me) if t else {"patience": None, "security": START_SECURITY}
     g = goal(me)
     sec = a["security"]
-    return {"goal": g["text"], "security": sec, "patience": a.get("patience"),
-            "mood": "Untouchable" if sec >= 90 else "Secure" if sec >= 65 else "Warm seat" if sec >= 40 else "Hot seat"}
+    year = state.get("year", 2026)
+    return {"goal": g["text"], "security": sec, "patience": a.get("patience"), "mood": mood(sec),
+            "ultimatum": (a.get("ultimatum") or 0) >= year}
 
 
 def job_rows(state: dict, slugs: list[str]) -> list[dict]:
