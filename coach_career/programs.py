@@ -28,7 +28,7 @@ NIL_FLOOR_TIER = 10.0
 COACH_TENURE = 3.0               # coach appeal: overall + this a year of tenure (up to five) - 5
 GOALS = {1: ("playoff", 10, "Make the College Football Playoff"), 2: ("wins", 9, "Win nine games"),
          3: ("wins", 7, "Win seven games and go bowling"), 4: ("wins", 6, "Reach a bowl game"), 5: ("wins", 6, "Win six games")}
-G5_TITLE_TIERS = (1, 2, 3)       # a Group of 5 program this strong expects to win its conference
+G5_TITLE_FROM = 45.0             # a Group of 5 program rated this high expects to win its conference
 MARKET_DEFAULT = 25              # a program without three seasons of FBS crowds (new to FBS)
 P4 = {"SEC", "Big Ten", "Big 12", "ACC"}
 _cache: dict = {}
@@ -124,9 +124,9 @@ def z(state: dict, slug: str) -> float:
     return z_of(get(state, slug)["rating"])
 
 
-def goal_for(tier: int, p4: bool) -> dict:
-    """What the AD expects of a program of this tier (a Group of 5 program of the top tiers: its conference)."""
-    if not p4 and tier in G5_TITLE_TIERS:
+def goal_for(tier: int, p4: bool, rating: Optional[float] = None) -> dict:
+    """What the AD expects of a program of this tier (a strong Group of 5 program: its conference)."""
+    if not p4 and (rating if rating is not None else 100 if tier <= 3 else 0) >= G5_TITLE_FROM:
         return {"kind": "conference", "wins": 10, "text": "Win the conference"}
     kind, wins, text = GOALS[tier]
     return {"kind": kind, "wins": wins, "text": text}
@@ -213,9 +213,17 @@ def rows(state: dict) -> list[dict]:
         p = get(state, s)
         p4 = season._is_p4(s, bt)
         out.append({"team": s, "name": bt["name"], "conference": bt["conference"], "tier": p["tier"], "tier_name": TIER_NAMES[p["tier"]],
-                    "rating": p["rating"], "goal": goal_for(p["tier"], p4)["text"],
+                    "rating": p["rating"], "goal": goal_for(p["tier"], p4, p["rating"])["text"],
                     **{k: p[k] for k in ("prestige", "winning", "nil", "market", "conference", "coach", "history")}})
     out.sort(key=lambda r: -r["rating"])
     for i, r in enumerate(out, 1):
         r["rank"] = i
     return out
+
+
+def attract(state: dict, slug: str) -> float:
+    """How attractive the job is to a coach: the rating, a little more where the AD is patient."""
+    p = get(state, slug)
+    t = ((state.get("league") or {}).get("teams") or {}).get(slug) or {}
+    patience = (t.get("ad") or {}).get("patience") or 3
+    return p["rating"] + (5 if patience >= 4 else 0)

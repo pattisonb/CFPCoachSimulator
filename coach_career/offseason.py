@@ -756,12 +756,12 @@ def playing_time(lgd: dict, slug: str, p: dict) -> float:
     return 1.0 if ahead < STARTERS[g] else 0.5 if ahead < STARTERS[g] + 2 else 0.15
 
 
-def _prestige(slug: str) -> float:
-    """The program's pull on a transfer: its recruiting baseline (NIL, brand; about -2 to +2) and its team now."""
-    from coach_career import recruiting
+def _prestige(state: dict, slug: str) -> float:
+    """The program's pull on a transfer: its living rating (NIL, brand; about -2 to +2) and its team now."""
+    from coach_career import programs
     from sim import season
     t = season.load_teams().get(slug) or {}
-    return PRESTIGE_WEIGHT * recruiting._baseline(slug) + RATING_WEIGHT * ((t.get("team_ratings") or {}).get("overall", 60) - 60) / 10
+    return PRESTIGE_WEIGHT * programs.z(state, slug) + RATING_WEIGHT * ((t.get("team_ratings") or {}).get("overall", 60) - 60) / 10
 
 
 def entrant_interest(state: dict, lgd: dict, slug: str, e: dict, rng: Optional[random.Random] = None) -> float:
@@ -769,7 +769,7 @@ def entrant_interest(state: dict, lgd: dict, slug: str, e: dict, rng: Optional[r
     wins, losses = _record(state, slug)
     home = 1.0 if lg.base_team(slug).get("state") == p.get("home") else 0.0
     noise = rng.gauss(0, PICK_NOISE) if rng else 0.0
-    return (PT_WEIGHT * playing_time(lgd, slug, p) + _prestige(slug)
+    return (PT_WEIGHT * playing_time(lgd, slug, p) + _prestige(state, slug)
             + WIN_WEIGHT * wins / max(1, wins + losses) + HOME_WEIGHT * home + noise)
 
 
@@ -921,11 +921,11 @@ PORTAL_BOARD = 20                 # entrants your staff puts on your board when 
 
 # ----- development ------------------------------------------------------------------------------
 
-def program_factor(slug: str) -> float:
+def program_factor(state: dict, slug: str) -> float:
     """A program's own pull on development (facilities, staff size, strength and conditioning): its
-    recruiting baseline, about -2 to +2, at PROGRAM_DEV a point."""
-    from coach_career import recruiting
-    b = recruiting._baseline(slug)
+    living rating on the baseline's scale, about -2 to +2, at PROGRAM_DEV a point."""
+    from coach_career import programs
+    b = programs.z(state, slug)
     return 1 + (PROGRAM_DEV if b > 0 else PROGRAM_DEV_BELOW) * b
 
 
@@ -977,7 +977,7 @@ def _develop_all(state: dict) -> dict:
             if level_up and rng.random() < LEVEL_UP and p.get("c") in levels[1:]:
                 p["c"] = levels[levels.index(p["c"]) - 1]
                 why.append(f"Now a {p['c']}")
-            g = develop(p, attrs, coach_factor(t["coaches"], p["pos"]) * mult * program_factor(slug), rng)
+            g = develop(p, attrs, coach_factor(t["coaches"], p["pos"]) * mult * program_factor(state, slug), rng)
             p["yrs"] = p.get("yrs", 0) + 1
             gains.append(g)
             if slug == state["team"]:

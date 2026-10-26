@@ -523,13 +523,16 @@ def pull(state: dict, slug: str, pid: str, winning: bool = True) -> dict[str, fl
     miles = _miles(tuple(p["home"]), tuple(loc)) if loc else 1500.0
     group = _group(p["ea_position"])
     starters = STARTERS.get(group, 2)
-    z = _baseline(slug)
+    from coach_career import programs
+    pr = programs.get(state, slug)
+    z = programs.z_of(pr["prestige"] * 0.6 + pr["rating"] * 0.4)       # the brand, with the program's standing today
+    zn = programs.z_of(pr["nil"])
     return {
         "proximity": max(PROXIMITY_FLOOR, math.exp(-miles / PROXIMITY_MILES)),
         "playing_time": max(0.1, 1 - _ahead(state, slug, group, p["ovr"]) / (2 * starters + 1)),
         "prestige": _logistic(1.2 * z),
         **({"winning": min(1.0, on_field(state, slug, state["current_week"]))} if winning else {}),
-        "nil": _logistic(1.4 * z),
+        "nil": _logistic(1.4 * zn),
         "coach": min(1.0, max(0.0, 0.5 + 1.5 * _coach_edge(state, slug))),
         "academics": 0.9 if slug in ACADEMIC else 0.5,
     }
@@ -693,8 +696,10 @@ def weekly_hours(state: dict, slug: str) -> int:
 
 
 def nil_budget(state: dict, slug: str) -> int:
-    """A school's NIL points for the year, less what it spent keeping its own players home."""
-    return max(NIL_FLOOR, round(100 * (1 + _baseline(slug))) - int((state.get("nil_retained") or {}).get(slug, 0)))
+    """A school's NIL points for the year (its NIL tier, 10-100, as 4 × tier - 100: the same scale the
+    recruiting baseline gave), less what it spent keeping its own players home."""
+    from coach_career import programs
+    return max(NIL_FLOOR, round(4 * programs.get(state, slug)["nil"] - 100) - int((state.get("nil_retained") or {}).get(slug, 0)))
 
 
 def open_spots(state: dict, slug: str) -> int:
