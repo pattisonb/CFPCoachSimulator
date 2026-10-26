@@ -107,7 +107,9 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `coach_career/prospects.py` | Prospect Profiles: evaluations, comps to real starters, list rows and the Recruiting tab's data |
 | `coach_career/recruits.py` | Generated recruiting classes, and every player's potential and coachability |
 | `coach_career/league.py`, `coach_career/offseason.py` | A career's own league and the offseason between seasons |
-| `coach_career/carousel.py` | The coaching carousel: AD goals, firings, hires |
+| `coach_career/carousel.py` | The coaching carousel: AD goals, firings, hires, the coaching market |
+| `coach_career/programs.py`, `tools/build_program_market.py` | Program ratings: the market (real crowds and TV audiences) in `data/program_market.json` |
+| `tools/check_carousel.py` | Plays quick offseasons and counts the carousel's churn against real years |
 | `web/recruiting.js`, `web/careersave.js` | The Recruiting, Prospects and Staff tabs; the career kept in the browser |
 | `tools/check_recruiting.py` | Plays career seasons and holds their recruiting to the real classes |
 
@@ -1168,6 +1170,18 @@ year) is replaced from the market; every change records where the new coach came
 (`from`, `from_market`). `tools/check_carousel.py` plays quick offseasons and counts the churn:
 six seasons gave 25 head coaching changes a year (15 fired, 5 retired, 5 hired away, a few to
 the NFL; real FBS years run 25-30) and 63 coordinator changes (real: 60-80).
+
+**A program's market** (`coach_career/programs.py`, `data/program_market.json`, built by
+`tools/build_program_market.py` from CFBD's game list in the git-ignored `data/market/`). The first
+piece of the living program rating (spec: `docs/superpowers/specs/2026-10-26-program-ratings-design.md`):
+60% the mean home crowd over 2023-2025 against the biggest (Michigan's 110,000; a square-root
+curve) and 40% the TV audience against 8 million a game. Nielsen publishes per-team averages
+only for the most-watched teams (14 known: Alabama 7.9 million a game, Georgia 7.6, Tennessee
+7.0, Texas 6.5, Ohio State 6.3, LSU 6.2, Oklahoma 6.1, Florida 5.7, Texas A&M 5.0, Florida State
+4.9, Ole Miss 4.7, Michigan 5.2 and Kentucky 4.5 from 2024, Miami 3.6); the rest are fitted on
+those from the crowd (1.9 + 0.044 million per thousand in the stands), a Group of 5 crowd at 35%
+of a Power 4 crowd's audience. Alabama 97, Georgia and Penn State 93, the Power 4 median 62, the
+Group of 5 median 30, Akron 19; a program new to FBS gets 25.
 
 **Your meeting with the AD** (`offseason.review`, the Departures step). Every offseason opens with his
 verdict: the goal, your record, your security and his patience. Under 40 he warns you; under

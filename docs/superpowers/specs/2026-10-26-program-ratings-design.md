@@ -22,7 +22,7 @@ updated every offseason; everything that asks "how good a program is this?" read
 | `prestige` | the program's name: history plus recent results | slowly: at most 3 points a year toward a target |
 | `winning` | the last three seasons, the latest weighted 3-2-1, in wins against 12 and AP finishes | every offseason |
 | `nil` | the NIL budget tier | by the AD: up to 4 points a year after a year that met the goal, down 2 after a losing year; floor from market size |
-| `market` | TV market, fan base, facilities: fixed per school | never |
+| `market` | fans in the stands and on TV: real home crowds (CFBD, 2023-2025) and Nielsen per-team TV averages (estimated from the crowd where Nielsen publishes none), `data/program_market.json` | never (rebuilt from data) |
 | `conference` | the conference's strength from the league's results (mean SP-like rating of its teams) | every offseason |
 | `coach` | the head coach's rating and tenure (ratings overall, +3 a year of tenure up to 5) | every offseason |
 | `rating` | the mix: 0.35 prestige + 0.20 winning + 0.15 nil + 0.10 market + 0.10 conference + 0.10 coach | derived |

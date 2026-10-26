@@ -1,0 +1,961 @@
+{
+ "fit": {
+  "a": 1.875,
+  "b_per_thousand": 0.0443
+ },
+ "source": "CFBD games 2023-2025 (home crowds); Nielsen per-team averages as published by SI/On3 for 14 teams, the rest fitted on them from attendance (Group of 5 at 35%)",
+ "teams": {
+  "air-force": {
+   "attendance": 26038,
+   "attendance_games": 17,
+   "market": 34,
+   "tv_known": false,
+   "tv_millions": 1.06
+  },
+  "akron": {
+   "attendance": 7152,
+   "attendance_games": 16,
+   "market": 19,
+   "tv_known": false,
+   "tv_millions": 0.77
+  },
+  "alabama": {
+   "attendance": 100077,
+   "attendance_games": 21,
+   "market": 97,
+   "tv_known": true,
+   "tv_millions": 7.91
+  },
+  "app-st": {
+   "attendance": 33670,
+   "attendance_games": 17,
+   "market": 39,
+   "tv_known": false,
+   "tv_millions": 1.18
+  },
+  "arizona": {
+   "attendance": 45181,
+   "attendance_games": 20,
+   "market": 58,
+   "tv_known": false,
+   "tv_millions": 3.88
+  },
+  "arizona-state": {
+   "attendance": 50751,
+   "attendance_games": 21,
+   "market": 61,
+   "tv_known": false,
+   "tv_millions": 4.12
+  },
+  "arkansas": {
+   "attendance": 70652,
+   "attendance_games": 18,
+   "market": 73,
+   "tv_known": false,
+   "tv_millions": 5.01
+  },
+  "arkansas-state": {
+   "attendance": 17194,
+   "attendance_games": 18,
+   "market": 28,
+   "tv_known": false,
+   "tv_millions": 0.92
+  },
+  "army": {
+   "attendance": 26927,
+   "attendance_games": 18,
+   "market": 35,
+   "tv_known": false,
+   "tv_millions": 1.07
+  },
+  "auburn": {
+   "attendance": 86928,
+   "attendance_games": 22,
+   "market": 82,
+   "tv_known": false,
+   "tv_millions": 5.73
+  },
+  "ball-state": {
+   "attendance": 9917,
+   "attendance_games": 16,
+   "market": 22,
+   "tv_known": false,
+   "tv_millions": 0.81
+  },
+  "baylor": {
+   "attendance": 41764,
+   "attendance_games": 21,
+   "market": 56,
+   "tv_known": false,
+   "tv_millions": 3.73
+  },
+  "boise-state": {
+   "attendance": 34975,
+   "attendance_games": 20,
+   "market": 40,
+   "tv_known": false,
+   "tv_millions": 1.2
+  },
+  "boston-college": {
+   "attendance": 39119,
+   "attendance_games": 21,
+   "market": 54,
+   "tv_known": false,
+   "tv_millions": 3.61
+  },
+  "bowling-green": {
+   "attendance": 14793,
+   "attendance_games": 17,
+   "market": 26,
+   "tv_known": false,
+   "tv_millions": 0.89
+  },
+  "buffalo": {
+   "attendance": 13906,
+   "attendance_games": 19,
+   "market": 26,
+   "tv_known": false,
+   "tv_millions": 0.87
+  },
+  "byu": {
+   "attendance": 62860,
+   "attendance_games": 18,
+   "market": 69,
+   "tv_known": false,
+   "tv_millions": 4.66
+  },
+  "c-carolina": {
+   "attendance": 18031,
+   "attendance_games": 18,
+   "market": 29,
+   "tv_known": false,
+   "tv_millions": 0.94
+  },
+  "c-michigan": {
+   "attendance": 16853,
+   "attendance_games": 16,
+   "market": 28,
+   "tv_known": false,
+   "tv_millions": 0.92
+  },
+  "california": {
+   "attendance": 37698,
+   "attendance_games": 19,
+   "market": 53,
+   "tv_known": false,
+   "tv_millions": 3.55
+  },
+  "charlotte": {
+   "attendance": 13195,
+   "attendance_games": 17,
+   "market": 25,
+   "tv_known": false,
+   "tv_millions": 0.86
+  },
+  "cincinnati": {
+   "attendance": 36970,
+   "attendance_games": 20,
+   "market": 52,
+   "tv_known": false,
+   "tv_millions": 3.51
+  },
+  "clemson": {
+   "attendance": 80427,
+   "attendance_games": 21,
+   "market": 78,
+   "tv_known": false,
+   "tv_millions": 5.44
+  },
+  "colorado": {
+   "attendance": 51971,
+   "attendance_games": 19,
+   "market": 62,
+   "tv_known": false,
+   "tv_millions": 4.18
+  },
+  "colorado-state": {
+   "attendance": 30697,
+   "attendance_games": 20,
+   "market": 37,
+   "tv_known": false,
+   "tv_millions": 1.13
+  },
+  "delaware": {
+   "attendance": 16751,
+   "attendance_games": 6,
+   "market": 28,
+   "tv_known": false,
+   "tv_millions": 0.92
+  },
+  "duke": {
+   "attendance": 25188,
+   "attendance_games": 19,
+   "market": 44,
+   "tv_known": false,
+   "tv_millions": 2.99
+  },
+  "e-michigan": {
+   "attendance": 16011,
+   "attendance_games": 19,
+   "market": 27,
+   "tv_known": false,
+   "tv_millions": 0.9
+  },
+  "east-carolina": {
+   "attendance": 36801,
+   "attendance_games": 18,
+   "market": 41,
+   "tv_known": false,
+   "tv_millions": 1.23
+  },
+  "fiu": {
+   "attendance": 14577,
+   "attendance_games": 12,
+   "market": 26,
+   "tv_known": false,
+   "tv_millions": 0.88
+  },
+  "fla-atlantic": {
+   "attendance": 18589,
+   "attendance_games": 17,
+   "market": 29,
+   "tv_known": false,
+   "tv_millions": 0.94
+  },
+  "florida": {
+   "attendance": 89916,
+   "attendance_games": 18,
+   "market": 82,
+   "tv_known": true,
+   "tv_millions": 5.67
+  },
+  "florida-state": {
+   "attendance": 65218,
+   "attendance_games": 20,
+   "market": 71,
+   "tv_known": true,
+   "tv_millions": 4.92
+  },
+  "fresno-state": {
+   "attendance": 39523,
+   "attendance_games": 18,
+   "market": 42,
+   "tv_known": false,
+   "tv_millions": 1.27
+  },
+  "ga-southern": {
+   "attendance": 22179,
+   "attendance_games": 18,
+   "market": 32,
+   "tv_known": false,
+   "tv_millions": 1.0
+  },
+  "georgia": {
+   "attendance": 92933,
+   "attendance_games": 20,
+   "market": 93,
+   "tv_known": true,
+   "tv_millions": 7.63
+  },
+  "georgia-state": {
+   "attendance": 15125,
+   "attendance_games": 16,
+   "market": 27,
+   "tv_known": false,
+   "tv_millions": 0.89
+  },
+  "georgia-tech": {
+   "attendance": 40892,
+   "attendance_games": 17,
+   "market": 55,
+   "tv_known": false,
+   "tv_millions": 3.69
+  },
+  "hawai-i": {
+   "attendance": 12757,
+   "attendance_games": 22,
+   "market": 25,
+   "tv_known": false,
+   "tv_millions": 0.85
+  },
+  "houston": {
+   "attendance": 32103,
+   "attendance_games": 19,
+   "market": 49,
+   "tv_known": false,
+   "tv_millions": 3.3
+  },
+  "illinois": {
+   "attendance": 54462,
+   "attendance_games": 19,
+   "market": 64,
+   "tv_known": false,
+   "tv_millions": 4.29
+  },
+  "indiana": {
+   "attendance": 48460,
+   "attendance_games": 20,
+   "market": 60,
+   "tv_known": false,
+   "tv_millions": 4.02
+  },
+  "iowa": {
+   "attendance": 69250,
+   "attendance_games": 21,
+   "market": 72,
+   "tv_known": false,
+   "tv_millions": 4.94
+  },
+  "iowa-state": {
+   "attendance": 59073,
+   "attendance_games": 20,
+   "market": 66,
+   "tv_known": false,
+   "tv_millions": 4.49
+  },
+  "james-madison": {
+   "attendance": 24899,
+   "attendance_games": 18,
+   "market": 34,
+   "tv_known": false,
+   "tv_millions": 1.04
+  },
+  "jax-state": {
+   "attendance": 19118,
+   "attendance_games": 19,
+   "market": 30,
+   "tv_known": false,
+   "tv_millions": 0.95
+  },
+  "kansas": {
+   "attendance": 42828,
+   "attendance_games": 13,
+   "market": 56,
+   "tv_known": false,
+   "tv_millions": 3.77
+  },
+  "kansas-state": {
+   "attendance": 51767,
+   "attendance_games": 18,
+   "market": 62,
+   "tv_known": false,
+   "tv_millions": 4.17
+  },
+  "kennesaw-st": {
+   "attendance": 9789,
+   "attendance_games": 11,
+   "market": 22,
+   "tv_known": false,
+   "tv_millions": 0.81
+  },
+  "kent-state": {
+   "attendance": 9553,
+   "attendance_games": 14,
+   "market": 22,
+   "tv_known": false,
+   "tv_millions": 0.8
+  },
+  "kentucky": {
+   "attendance": 59416,
+   "attendance_games": 22,
+   "market": 67,
+   "tv_known": true,
+   "tv_millions": 4.5
+  },
+  "liberty": {
+   "attendance": 19124,
+   "attendance_games": 20,
+   "market": 30,
+   "tv_known": false,
+   "tv_millions": 0.95
+  },
+  "louisiana": {
+   "attendance": 18298,
+   "attendance_games": 19,
+   "market": 29,
+   "tv_known": false,
+   "tv_millions": 0.94
+  },
+  "louisiana-tech": {
+   "attendance": 17770,
+   "attendance_games": 18,
+   "market": 29,
+   "tv_known": false,
+   "tv_millions": 0.93
+  },
+  "louisville": {
+   "attendance": 50775,
+   "attendance_games": 21,
+   "market": 61,
+   "tv_known": false,
+   "tv_millions": 4.13
+  },
+  "lsu": {
+   "attendance": 101184,
+   "attendance_games": 21,
+   "market": 89,
+   "tv_known": true,
+   "tv_millions": 6.24
+  },
+  "marshall": {
+   "attendance": 23839,
+   "attendance_games": 18,
+   "market": 33,
+   "tv_known": false,
+   "tv_millions": 1.03
+  },
+  "maryland": {
+   "attendance": 39039,
+   "attendance_games": 21,
+   "market": 54,
+   "tv_known": false,
+   "tv_millions": 3.61
+  },
+  "memphis": {
+   "attendance": 27955,
+   "attendance_games": 19,
+   "market": 36,
+   "tv_known": false,
+   "tv_millions": 1.09
+  },
+  "miami": {
+   "attendance": 58012,
+   "attendance_games": 21,
+   "market": 61,
+   "tv_known": true,
+   "tv_millions": 3.56
+  },
+  "miami-oh": {
+   "attendance": 12358,
+   "attendance_games": 17,
+   "market": 24,
+   "tv_known": false,
+   "tv_millions": 0.85
+  },
+  "michigan": {
+   "attendance": 110439,
+   "attendance_games": 21,
+   "market": 86,
+   "tv_known": true,
+   "tv_millions": 5.2
+  },
+  "michigan-state": {
+   "attendance": 68087,
+   "attendance_games": 17,
+   "market": 72,
+   "tv_known": false,
+   "tv_millions": 4.89
+  },
+  "minnesota": {
+   "attendance": 47480,
+   "attendance_games": 21,
+   "market": 59,
+   "tv_known": false,
+   "tv_millions": 3.98
+  },
+  "mississippi-st": {
+   "attendance": 52178,
+   "attendance_games": 21,
+   "market": 62,
+   "tv_known": false,
+   "tv_millions": 4.19
+  },
+  "missouri": {
+   "attendance": 59914,
+   "attendance_games": 22,
+   "market": 67,
+   "tv_known": false,
+   "tv_millions": 4.53
+  },
+  "missouri-state": {
+   "attendance": 11546,
+   "attendance_games": 6,
+   "market": 24,
+   "tv_known": false,
+   "tv_millions": 0.84
+  },
+  "mtsu": {
+   "attendance": 12782,
+   "attendance_games": 18,
+   "market": 25,
+   "tv_known": false,
+   "tv_millions": 0.85
+  },
+  "navy": {
+   "attendance": 31735,
+   "attendance_games": 17,
+   "market": 38,
+   "tv_known": false,
+   "tv_millions": 1.15
+  },
+  "nc-state": {
+   "attendance": 56919,
+   "attendance_games": 20,
+   "market": 65,
+   "tv_known": false,
+   "tv_millions": 4.4
+  },
+  "nebraska": {
+   "attendance": 86750,
+   "attendance_games": 21,
+   "market": 82,
+   "tv_known": false,
+   "tv_millions": 5.72
+  },
+  "nevada": {
+   "attendance": 18868,
+   "attendance_games": 18,
+   "market": 30,
+   "tv_known": false,
+   "tv_millions": 0.95
+  },
+  "new-mexico": {
+   "attendance": 19259,
+   "attendance_games": 17,
+   "market": 30,
+   "tv_known": false,
+   "tv_millions": 0.96
+  },
+  "new-mexico-st": {
+   "attendance": 12734,
+   "attendance_games": 17,
+   "market": 25,
+   "tv_known": false,
+   "tv_millions": 0.85
+  },
+  "niu": {
+   "attendance": 10309,
+   "attendance_games": 18,
+   "market": 22,
+   "tv_known": false,
+   "tv_millions": 0.82
+  },
+  "north-carolina": {
+   "attendance": 49106,
+   "attendance_games": 20,
+   "market": 60,
+   "tv_known": false,
+   "tv_millions": 4.05
+  },
+  "north-texas": {
+   "attendance": 21903,
+   "attendance_games": 19,
+   "market": 32,
+   "tv_known": false,
+   "tv_millions": 1.0
+  },
+  "northwestern": {
+   "attendance": 16594,
+   "attendance_games": 11,
+   "market": 36,
+   "tv_known": false,
+   "tv_millions": 2.61
+  },
+  "notre-dame": {
+   "attendance": 77622,
+   "attendance_games": 20,
+   "market": 77,
+   "tv_known": false,
+   "tv_millions": 5.32
+  },
+  "ohio": {
+   "attendance": 19217,
+   "attendance_games": 18,
+   "market": 30,
+   "tv_known": false,
+   "tv_millions": 0.95
+  },
+  "ohio-state": {
+   "attendance": 104191,
+   "attendance_games": 21,
+   "market": 90,
+   "tv_known": true,
+   "tv_millions": 6.26
+  },
+  "oklahoma": {
+   "attendance": 83616,
+   "attendance_games": 21,
+   "market": 83,
+   "tv_known": true,
+   "tv_millions": 6.07
+  },
+  "oklahoma-state": {
+   "attendance": 50155,
+   "attendance_games": 20,
+   "market": 61,
+   "tv_known": false,
+   "tv_millions": 4.1
+  },
+  "old-dominion": {
+   "attendance": 18900,
+   "attendance_games": 18,
+   "market": 30,
+   "tv_known": false,
+   "tv_millions": 0.95
+  },
+  "ole-miss": {
+   "attendance": 66021,
+   "attendance_games": 22,
+   "market": 70,
+   "tv_known": true,
+   "tv_millions": 4.65
+  },
+  "oregon": {
+   "attendance": 57757,
+   "attendance_games": 22,
+   "market": 66,
+   "tv_known": false,
+   "tv_millions": 4.44
+  },
+  "oregon-state": {
+   "attendance": 34671,
+   "attendance_games": 20,
+   "market": 40,
+   "tv_known": false,
+   "tv_millions": 1.19
+  },
+  "penn-state": {
+   "attendance": 107872,
+   "attendance_games": 22,
+   "market": 93,
+   "tv_known": false,
+   "tv_millions": 6.66
+  },
+  "pittsburgh": {
+   "attendance": 51159,
+   "attendance_games": 20,
+   "market": 62,
+   "tv_known": false,
+   "tv_millions": 4.14
+  },
+  "purdue": {
+   "attendance": 58156,
+   "attendance_games": 20,
+   "market": 66,
+   "tv_known": false,
+   "tv_millions": 4.45
+  },
+  "rice": {
+   "attendance": 20831,
+   "attendance_games": 20,
+   "market": 31,
+   "tv_known": false,
+   "tv_millions": 0.98
+  },
+  "rutgers": {
+   "attendance": 48767,
+   "attendance_games": 20,
+   "market": 60,
+   "tv_known": false,
+   "tv_millions": 4.04
+  },
+  "sam-houston": {
+   "attendance": 9257,
+   "attendance_games": 9,
+   "market": 21,
+   "tv_known": false,
+   "tv_millions": 0.8
+  },
+  "san-diego-st": {
+   "attendance": 25241,
+   "attendance_games": 19,
+   "market": 34,
+   "tv_known": false,
+   "tv_millions": 1.05
+  },
+  "san-jose-state": {
+   "attendance": 15643,
+   "attendance_games": 19,
+   "market": 27,
+   "tv_known": false,
+   "tv_millions": 0.9
+  },
+  "smu": {
+   "attendance": 29760,
+   "attendance_games": 19,
+   "market": 47,
+   "tv_known": false,
+   "tv_millions": 3.19
+  },
+  "south-alabama": {
+   "attendance": 17633,
+   "attendance_games": 17,
+   "market": 29,
+   "tv_known": false,
+   "tv_millions": 0.93
+  },
+  "south-carolina": {
+   "attendance": 78832,
+   "attendance_games": 21,
+   "market": 78,
+   "tv_known": false,
+   "tv_millions": 5.37
+  },
+  "southern-miss": {
+   "attendance": 24725,
+   "attendance_games": 19,
+   "market": 34,
+   "tv_known": false,
+   "tv_millions": 1.04
+  },
+  "stanford": {
+   "attendance": 29308,
+   "attendance_games": 18,
+   "market": 47,
+   "tv_known": false,
+   "tv_millions": 3.17
+  },
+  "syracuse": {
+   "attendance": 38250,
+   "attendance_games": 19,
+   "market": 53,
+   "tv_known": false,
+   "tv_millions": 3.57
+  },
+  "tcu": {
+   "attendance": 45203,
+   "attendance_games": 19,
+   "market": 58,
+   "tv_known": false,
+   "tv_millions": 3.88
+  },
+  "temple": {
+   "attendance": 14951,
+   "attendance_games": 18,
+   "market": 27,
+   "tv_known": false,
+   "tv_millions": 0.89
+  },
+  "tennessee": {
+   "attendance": 101915,
+   "attendance_games": 21,
+   "market": 93,
+   "tv_known": true,
+   "tv_millions": 7.03
+  },
+  "texas": {
+   "attendance": 102090,
+   "attendance_games": 20,
+   "market": 90,
+   "tv_known": true,
+   "tv_millions": 6.48
+  },
+  "texas-a-m": {
+   "attendance": 102595,
+   "attendance_games": 21,
+   "market": 83,
+   "tv_known": true,
+   "tv_millions": 4.99
+  },
+  "texas-state": {
+   "attendance": 21748,
+   "attendance_games": 19,
+   "market": 32,
+   "tv_known": false,
+   "tv_millions": 0.99
+  },
+  "texas-tech": {
+   "attendance": 57793,
+   "attendance_games": 19,
+   "market": 66,
+   "tv_known": false,
+   "tv_millions": 4.44
+  },
+  "toledo": {
+   "attendance": 20797,
+   "attendance_games": 18,
+   "market": 31,
+   "tv_known": false,
+   "tv_millions": 0.98
+  },
+  "troy": {
+   "attendance": 24685,
+   "attendance_games": 19,
+   "market": 34,
+   "tv_known": false,
+   "tv_millions": 1.04
+  },
+  "tulane": {
+   "attendance": 24411,
+   "attendance_games": 21,
+   "market": 33,
+   "tv_known": false,
+   "tv_millions": 1.03
+  },
+  "tulsa": {
+   "attendance": 18670,
+   "attendance_games": 17,
+   "market": 29,
+   "tv_known": false,
+   "tv_millions": 0.95
+  },
+  "uab": {
+   "attendance": 20137,
+   "attendance_games": 18,
+   "market": 30,
+   "tv_known": false,
+   "tv_millions": 0.97
+  },
+  "ucf": {
+   "attendance": 43464,
+   "attendance_games": 20,
+   "market": 57,
+   "tv_known": false,
+   "tv_millions": 3.8
+  },
+  "ucla": {
+   "attendance": 44013,
+   "attendance_games": 18,
+   "market": 57,
+   "tv_known": false,
+   "tv_millions": 3.83
+  },
+  "uconn": {
+   "attendance": 26749,
+   "attendance_games": 19,
+   "market": 35,
+   "tv_known": false,
+   "tv_millions": 1.07
+  },
+  "ul-monroe": {
+   "attendance": 15766,
+   "attendance_games": 17,
+   "market": 27,
+   "tv_known": false,
+   "tv_millions": 0.9
+  },
+  "umass": {
+   "attendance": 10552,
+   "attendance_games": 18,
+   "market": 23,
+   "tv_known": false,
+   "tv_millions": 0.82
+  },
+  "unlv": {
+   "attendance": 29273,
+   "attendance_games": 19,
+   "market": 36,
+   "tv_known": false,
+   "tv_millions": 1.11
+  },
+  "usc": {
+   "attendance": 68415,
+   "attendance_games": 19,
+   "market": 72,
+   "tv_known": false,
+   "tv_millions": 4.91
+  },
+  "usf": {
+   "attendance": 35909,
+   "attendance_games": 15,
+   "market": 40,
+   "tv_known": false,
+   "tv_millions": 1.21
+  },
+  "utah": {
+   "attendance": 52393,
+   "attendance_games": 19,
+   "market": 62,
+   "tv_known": false,
+   "tv_millions": 4.2
+  },
+  "utah-state": {
+   "attendance": 18330,
+   "attendance_games": 16,
+   "market": 29,
+   "tv_known": false,
+   "tv_millions": 0.94
+  },
+  "utep": {
+   "attendance": 17694,
+   "attendance_games": 17,
+   "market": 29,
+   "tv_known": false,
+   "tv_millions": 0.93
+  },
+  "utsa": {
+   "attendance": 23892,
+   "attendance_games": 19,
+   "market": 33,
+   "tv_known": false,
+   "tv_millions": 1.03
+  },
+  "vanderbilt": {
+   "attendance": 29707,
+   "attendance_games": 19,
+   "market": 47,
+   "tv_known": false,
+   "tv_millions": 3.19
+  },
+  "virginia": {
+   "attendance": 44102,
+   "attendance_games": 18,
+   "market": 57,
+   "tv_known": false,
+   "tv_millions": 3.83
+  },
+  "virginia-tech": {
+   "attendance": 63253,
+   "attendance_games": 19,
+   "market": 69,
+   "tv_known": false,
+   "tv_millions": 4.68
+  },
+  "w-kentucky": {
+   "attendance": 14770,
+   "attendance_games": 18,
+   "market": 26,
+   "tv_known": false,
+   "tv_millions": 0.89
+  },
+  "w-michigan": {
+   "attendance": 19163,
+   "attendance_games": 14,
+   "market": 30,
+   "tv_known": false,
+   "tv_millions": 0.95
+  },
+  "wake-forest": {
+   "attendance": 29859,
+   "attendance_games": 20,
+   "market": 47,
+   "tv_known": false,
+   "tv_millions": 3.2
+  },
+  "washington": {
+   "attendance": 68627,
+   "attendance_games": 20,
+   "market": 72,
+   "tv_known": false,
+   "tv_millions": 4.92
+  },
+  "washington-st": {
+   "attendance": 25655,
+   "attendance_games": 18,
+   "market": 34,
+   "tv_known": false,
+   "tv_millions": 1.05
+  },
+  "west-virginia": {
+   "attendance": 52694,
+   "attendance_games": 19,
+   "market": 62,
+   "tv_known": false,
+   "tv_millions": 4.21
+  },
+  "wisconsin": {
+   "attendance": 74254,
+   "attendance_games": 20,
+   "market": 75,
+   "tv_known": false,
+   "tv_millions": 5.17
+  },
+  "wyoming": {
+   "attendance": 22861,
+   "attendance_games": 19,
+   "market": 32,
+   "tv_known": false,
+   "tv_millions": 1.01
+  }
+ }
+}

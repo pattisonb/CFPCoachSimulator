@@ -29,3 +29,6 @@ data/long_run/*.league.json
 data/long_run/final*.json
 data/long_run/*_[0-9]*.json
 data/long_run/draft_pools.json
+
+# CFBD game attendance (tools/build_program_market.py builds data/program_market.json from it)
+data/market/
