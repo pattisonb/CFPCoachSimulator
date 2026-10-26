@@ -1147,7 +1147,7 @@ a bowl (below); a Group of 5 program at 0 or above expects its conference title.
 standing before the career began) moves 8 points per win over or under the goal, plus 10 for a
 conference title, 12 for the playoff, 25 for the national title, minus 6 when a playoff or
 conference goal is missed; a bad year counts 3/patience as much, and half in a coach's first two
-years. Under 25 after two years he is fired 75% of the time (always under 8). Coaches retire
+years. Under 25 after two years he is fired 65% of the time (always under 8). Coaches retire
 (3% a year, more after 12 years in the job and past 60) and an 80+ coach after 10 wins leaves
 for the NFL 12% of the time.
 
@@ -1159,7 +1159,7 @@ the rest is a generated supply (FCS and Division II head coaches, NFL assistants
 and position coaches from lower levels), each with the roles he would take. A coach fired this
 offseason sits out the cycle; after three years in the pool, or at 66, a coach leaves it.
 Openings are filled in order of prestige: the best of the head coaches at smaller programs with
-a three-year .600 run (a proven head coach gets 4 points), the coordinators at nine-win programs
+a three-year .600 run (a proven head coach gets 6 points), the coordinators at nine-win programs
 of about the same standing, and the market's best three for the job (a coach who has not held
 the role gets ratings drawn for it, shifted by the program's level). A head coach hired away
 opens his job, which joins the queue; nobody is hired twice. A coordinator hired away, let go
