@@ -6,13 +6,29 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Optional
 
 MARKET = Path(__file__).resolve().parents[1] / "data" / "program_market.json"
 HISTORY = Path(__file__).resolve().parents[1] / "data" / "program_history.json"
 WEIGHTS = {"prestige": 0.35, "winning": 0.20, "nil": 0.15, "market": 0.10, "conference": 0.10, "coach": 0.10}
-TIERS = ((80, 1), (65, 2), (50, 3), (35, 4))         # rating floors; below the last is tier 5
+TIERS = ((76, 1), (65, 2), (50, 3), (35, 4))         # rating floors; below the last is tier 5
 TIER_NAMES = {1: "Blue blood", 2: "Power", 3: "Solid", 4: "Group of 5", 5: "Bottom"}
 BASE_DEFAULT = {"history": 15.0, "prestige": 15.0, "winning": 20.0, "market": 25, "nil": 15.0, "conference": 10.0, "coach": 55.0}
+RANK_BONUS = ((1, 0.8), (5, 0.5), (10, 0.35), (25, 0.35))     # a season's score: win share plus these (cumulative), max 3.0
+PRESTIGE_STEP = 3.0              # prestige moves at most this much a year toward its target *tune*
+PRESTIGE_HISTORY = 0.7           # the target: history's share (the rest a ten-season mean of winning)
+WINNING_WEIGHTS = (3, 2, 1)      # the last three seasons
+MARKET_STEP = 3.0                # the market's live part moves at most this much a year
+MARKET_LIVE = 0.3                # the live part's target: this much of (winning - 40); a decade of 100-winning +18
+MARKET_FULL = 85                 # a base market this big has a full building: the crowd side is capped
+MARKET_CAP_FULL, MARKET_CAP = 8.0, 18.0
+NEW_COACH_LIFT = 1.5             # a new head coach's first year
+NIL_UP, NIL_DOWN = 4.0, 2.0      # the AD after a year that met the goal / a losing year
+NIL_FLOOR_TIER = 10.0
+COACH_TENURE = 3.0               # coach appeal: overall + this a year of tenure (up to five) - 5
+GOALS = {1: ("playoff", 10, "Make the College Football Playoff"), 2: ("wins", 9, "Win nine games"),
+         3: ("wins", 7, "Win seven games and go bowling"), 4: ("wins", 6, "Reach a bowl game"), 5: ("wins", 6, "Win six games")}
+G5_TITLE_TIERS = (1, 2, 3)       # a Group of 5 program this strong expects to win its conference
 MARKET_DEFAULT = 25              # a program without three seasons of FBS crowds (new to FBS)
 P4 = {"SEC", "Big Ten", "Big 12", "ACC"}
 _cache: dict = {}
@@ -70,3 +86,136 @@ def z_of(rating: float) -> float:
     """The rating on the recruiting baseline's scale (about -2 to +2), for the readers that grew up on it."""
     f = _history()["z_fit"]
     return f["a"] + f["b"] * float(rating)
+
+
+def scaled(v: float, sc: dict) -> float:
+    share = max(0.0, min(1.0, (v - sc["lo"]) / (sc["hi"] - sc["lo"]))) if sc["hi"] > sc["lo"] else 0.0
+    return 100 * share ** sc.get("k", 1.0)
+
+
+def season_score(wins: int, games: int, rank=None) -> float:
+    """A season's score: win share plus the AP finish (top 25 and top 10 0.35 each, top 5 0.5, number one 0.8)."""
+    s = wins / games if games else 0.0
+    if rank:
+        s += sum(b for top, b in RANK_BONUS if rank <= top)
+    return s
+
+
+def init(lgd: dict) -> None:
+    """Every team in a league carries its program (from the base values) the first time it is asked."""
+    for slug, t in lgd["teams"].items():
+        if "program" not in t:
+            p = base(slug)
+            t["program"] = dict(p, market_base=p["market"], live=0.0, seasons=[], year=lgd.get("year", 2026) - 1)
+
+
+def get(state: dict, slug: str) -> dict:
+    """The program's metrics: from the career's league when it exists, else the base values."""
+    lgd = state.get("league") if isinstance(state, dict) else None
+    t = (lgd or {}).get("teams", {}).get(slug)
+    if t:
+        if "program" not in t:
+            init(lgd)
+        return t["program"]
+    return base(slug)
+
+
+def z(state: dict, slug: str) -> float:
+    return z_of(get(state, slug)["rating"])
+
+
+def goal_for(tier: int, p4: bool) -> dict:
+    """What the AD expects of a program of this tier (a Group of 5 program of the top tiers: its conference)."""
+    if not p4 and tier in G5_TITLE_TIERS:
+        return {"kind": "conference", "wins": 10, "text": "Win the conference"}
+    kind, wins, text = GOALS[tier]
+    return {"kind": kind, "wins": wins, "text": text}
+
+
+def final_ranks(state: dict) -> dict[str, int]:
+    """The season's final AP ranks (the last poll with an AP top 25)."""
+    polls = state.get("polls") or {}
+    weeks = sorted((int(w) for w, v in polls.items() if v.get("ap")), reverse=True)
+    if not weeks:
+        return {}
+    return {e["team"]: e["rank"] for e in polls[str(weeks[0])]["ap"]}
+
+
+def update(state: dict, results: dict, ranks: dict, year: Optional[int] = None, only=None) -> None:
+    """The offseason's move of every program's metrics (once a year): the season joins the last
+    ten, winning is the last three (3-2-1), prestige and the market's live part step toward their
+    targets, conference strength and the coach's appeal are read again, the rating and tier follow.
+    NIL moves separately by the AD's hand (nil_move)."""
+    from sim import season
+    lgd = state["league"]
+    init(lgd)
+    year = year or (state.get("offseason") or {}).get("year") or lgd.get("year", 2026)
+    sc = _history().get("scales") or {}
+    wsc = sc.get("winning") or {"lo": 0.0, "hi": 3.0, "k": 1.0}
+    csc = sc.get("conference") or {"lo": 40.0, "hi": 70.0, "k": 1.0}
+    teams = season.load_teams()
+    conf_members: dict[str, list[float]] = {}
+    for s, t in lgd["teams"].items():
+        bt = teams.get(s)
+        if bt:
+            conf_members.setdefault(bt["conference"], []).append(bt["team_ratings"]["overall"])
+    conf_score = {c: scaled(sum(v) / len(v), csc) for c, v in conf_members.items()}
+    for s, t in lgd["teams"].items():
+        if only and s not in only:
+            continue
+        p = t["program"]
+        if p.get("year") == year:
+            continue
+        r = results.get(s) or {"wins": 0, "losses": 12}
+        games = r["wins"] + r["losses"]
+        value = scaled(season_score(r["wins"], games, ranks.get(s)), wsc)
+        p["seasons"] = (p.get("seasons") or [])[-9:] + [[year - 1, round(value, 1)]]
+        recent = [v for _, v in p["seasons"][-3:]][::-1]                     # latest first
+        ws = WINNING_WEIGHTS[:len(recent)]
+        p["winning"] = round(sum(w * v for w, v in zip(ws, recent)) / sum(ws), 1)
+        ten = [v for _, v in p["seasons"]]
+        target = PRESTIGE_HISTORY * p["history"] + (1 - PRESTIGE_HISTORY) * (sum(ten) / len(ten))
+        p["prestige"] = round(p["prestige"] + max(-PRESTIGE_STEP, min(PRESTIGE_STEP, target - p["prestige"])), 1)
+        cap = MARKET_CAP_FULL if p["market_base"] >= MARKET_FULL else MARKET_CAP
+        live_target = max(-cap, min(cap, MARKET_LIVE * (p["winning"] - 40)))
+        live = p.get("live", 0.0) + max(-MARKET_STEP, min(MARKET_STEP, live_target - p.get("live", 0.0)))
+        hc = (t.get("coaches") or {}).get("head_coach") or {}
+        if hc.get("since") == year:
+            live += NEW_COACH_LIFT
+        p["live"] = round(max(-cap, min(cap, live)), 1)
+        p["market"] = int(round(max(0, min(100, p["market_base"] + p["live"]))))
+        tenure = max(0, year - (hc.get("since") or year))
+        p["coach"] = round(max(0.0, min(100.0, (hc.get("ratings") or {}).get("overall", 60) + COACH_TENURE * min(5, tenure) - 5)), 1)
+        bt = teams.get(s)
+        if bt and bt["conference"] in conf_score:
+            p["conference"] = round(conf_score[bt["conference"]], 1)
+        p["rating"] = round(mix(p), 1)
+        p["tier"] = tier_of(p["rating"])
+        p["year"] = year
+
+
+def nil_move(team: dict, met: bool, losing: bool) -> None:
+    """The AD raises the NIL tier after a year that met his goal, trims it after a losing year."""
+    p = team["program"]
+    p["nil"] = round(max(NIL_FLOOR_TIER, min(100.0, p["nil"] + (NIL_UP if met else 0.0) - (NIL_DOWN if losing else 0.0))), 1)
+    p["rating"] = round(mix(p), 1)
+    p["tier"] = tier_of(p["rating"])
+
+
+def rows(state: dict) -> list[dict]:
+    """Every program for the page, by rating: the metrics, the tier and the AD's goal."""
+    from sim import season
+    teams = season.load_teams()
+    out = []
+    for s, bt in teams.items():
+        if bt.get("fictional"):
+            continue
+        p = get(state, s)
+        p4 = season._is_p4(s, bt)
+        out.append({"team": s, "name": bt["name"], "conference": bt["conference"], "tier": p["tier"], "tier_name": TIER_NAMES[p["tier"]],
+                    "rating": p["rating"], "goal": goal_for(p["tier"], p4)["text"],
+                    **{k: p[k] for k in ("prestige", "winning", "nil", "market", "conference", "coach", "history")}})
+    out.sort(key=lambda r: -r["rating"])
+    for i, r in enumerate(out, 1):
+        r["rank"] = i
+    return out

@@ -22,6 +22,7 @@ import statistics as st
 import sys
 from collections import defaultdict
 from pathlib import Path
+from typing import Optional
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -55,20 +56,31 @@ def seasons_by_school() -> dict[str, dict[int, dict]]:
 
 
 def season_score(d: dict) -> float:
-    s = d["w"] / d["g"]
-    r = d.get("rank")
-    if r:
-        s += sum(b for top, b in RANK_BONUS if r <= top)
-    return s
+    return programs.season_score(d["w"], d["g"], d.get("rank"))
 
 
-def scale(values: dict[str, float], median: float = MEDIAN_TARGET) -> dict[str, float]:
-    """0-100 with the best at 100 and the median near `median` (a power curve on the share of the best)."""
+SCALES: dict[str, dict] = {}
+
+
+def scale_fixed(values: dict[str, float], lo: float, hi: float, median: float, name: str) -> dict[str, float]:
+    """0-100 on a fixed range (so a season scores the same in any year), the power set for the median."""
+    share = {s: max(0.0, min(1.0, (v - lo) / (hi - lo))) for s, v in values.items()}
+    med = st.median(share.values())
+    k = math.log(median / 100) / math.log(med) if 0 < med < 1 else 1.0
+    SCALES[name] = {"lo": lo, "hi": hi, "k": k}
+    return {s: programs.scaled(v, SCALES[name]) for s, v in values.items()}
+
+
+def scale(values: dict[str, float], median: float = MEDIAN_TARGET, name: Optional[str] = None) -> dict[str, float]:
+    """0-100 with the best at 100 and the median near `median` (a power curve on the share of the
+    best); the scale is kept under `name` so the sim can put a new season on the same footing."""
     hi, lo = max(values.values()), min(values.values())
     share = {s: (v - lo) / (hi - lo) for s, v in values.items()}
     med = st.median(share.values())
     k = math.log(median / 100) / math.log(med) if 0 < med < 1 else 1.0
-    return {s: 100 * v ** k for s, v in share.items()}
+    if name:
+        SCALES[name] = {"lo": lo, "hi": hi, "k": k}
+    return {s: programs.scaled(v, {"lo": lo, "hi": hi, "k": k}) for s, v in values.items()}
 
 
 def build() -> dict:
@@ -92,16 +104,17 @@ def build() -> dict:
     winning = {}
     for s in fbs:
         ys = by.get(s, {})
-        parts = [(w, season_score(ys[y]) / 3.0) for y, w in ((2025, 3), (2024, 2), (2023, 1)) if y in ys]
+        parts = [(w, season_score(ys[y])) for y, w in ((2025, 3), (2024, 2), (2023, 1)) if y in ys]
         winning[s] = sum(w * v for w, v in parts) / sum(w for w, _ in parts) if parts else 0.1
-    winning = scale(winning, 40.0)
+    winning = scale_fixed(winning, 0.0, 3.0, 40.0, "winning")       # a 2-10 season near 18, a 12-0 number one 100
     # conference strength: the mean engine rating of its members
     conf_members = defaultdict(list)
     for s in fbs:
         conf_members[teams[s]["conference"]].append(teams[s]["team_ratings"]["overall"])
     conf_raw = {c: st.mean(v) for c, v in conf_members.items()}
     hi, lo = max(conf_raw.values()), min(conf_raw.values())
-    conference = {c: 100 * (v - lo) / (hi - lo) for c, v in conf_raw.items()}
+    SCALES["conference"] = {"lo": lo, "hi": hi, "k": 1.0}
+    conference = {c: programs.scaled(v, SCALES["conference"]) for c, v in conf_raw.items()}
     out = {}
     for s in fbs:
         hc = (teams[s].get("coaches") or {}).get("head_coach") or {}
@@ -118,7 +131,8 @@ def build() -> dict:
     mx, my = st.mean(r for r, _ in zs), st.mean(z for _, z in zs)
     b = sum((r - mx) * (z - my) for r, z in zs) / sum((r - mx) ** 2 for r, _ in zs)
     return {"source": f"coaches.json seasons {FIRST}-{LAST}, recruiting baseline, program_market.json, engine ratings",
-            "z_fit": {"a": round(my - b * mx, 4), "b": round(b, 5)}, "teams": out}
+            "z_fit": {"a": round(my - b * mx, 4), "b": round(b, 5)}, "scales": SCALES,
+            "season_score": {"rank_bonus": RANK_BONUS, "max": 3.0}, "teams": out}
 
 
 if __name__ == "__main__":

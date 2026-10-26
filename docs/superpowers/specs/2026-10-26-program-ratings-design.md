@@ -26,7 +26,7 @@ updated every offseason; everything that asks "how good a program is this?" read
 | `conference` | the conference's strength from the league's results (mean SP-like rating of its teams) | every offseason |
 | `coach` | the head coach's rating and tenure (ratings overall, +3 a year of tenure up to 5) | every offseason |
 | `rating` | the mix: 0.35 prestige + 0.20 winning + 0.15 nil + 0.10 market + 0.10 conference + 0.10 coach | derived |
-| `tier` | 1 (blue blood, rating ≥ 80) · 2 (power, ≥ 65) · 3 (solid Power 4 / top Group of 5, ≥ 50) · 4 (Group of 5, ≥ 35) · 5 (bottom) | derived |
+| `tier` | 1 (blue blood, rating ≥ 76) · 2 (power, ≥ 65) · 3 (solid Power 4 / top Group of 5, ≥ 50) · 4 (Group of 5, ≥ 35) · 5 (bottom) | derived |
 
 ### Where the starting values come from (`data/program_history.json`, built by `tools/build_program_history.py`)
 

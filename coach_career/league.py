@@ -176,7 +176,10 @@ def from_base(year: int = FIRST_YEAR + 1) -> dict:
         teams[slug] = {"roster": [compact({**p, "target_mult": tm.get(p["slug"])}, attrs, t.get("state")) for p in t["roster"] if p.get("ratings")],
                        "coaches": coaches, "formation": formation(t)}
     build_teams.measured_recruiting([{"slug": s, "coaches": v["coaches"]} for s, v in teams.items()])
-    return {"year": year, "attrs": attrs, "scale": "ours", "teams": teams}
+    lgd = {"year": year, "attrs": attrs, "scale": "ours", "teams": teams}
+    from coach_career import programs
+    programs.init(lgd)
+    return lgd
 
 
 def _real_usage() -> dict:

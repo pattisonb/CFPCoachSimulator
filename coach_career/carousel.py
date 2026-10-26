@@ -331,6 +331,11 @@ def run(state: dict) -> dict:
     rv = state["offseason"].get("review")
     verdicts = {slug: (rv["verdict"] if rv and slug == me else judge(t, slug, res.get(slug, {"wins": 0, "losses": 0}), year))
                 for slug, t in lgd["teams"].items()}
+    from coach_career import programs
+    programs.update(state, res, programs.final_ranks(state))
+    for slug, t in lgd["teams"].items():                          # the AD's hand on the NIL tier
+        r = res.get(slug, {"wins": 0, "losses": 0})
+        programs.nil_move(t, met=verdicts[slug]["met"], losing=r["wins"] < r["losses"])
     changes, open_hc, left_hc = [], [], {}
 
     def leave(slug: str, reason: str, why: Optional[str] = None) -> None:

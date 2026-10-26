@@ -1,4 +1,37 @@
 {
+ "scales": {
+  "conference": {
+   "hi": 68.45,
+   "k": 1.0,
+   "lo": 52.284615384615385
+  },
+  "winning": {
+   "hi": 3.0,
+   "k": 0.5340718707951553,
+   "lo": 0.0
+  }
+ },
+ "season_score": {
+  "max": 3.0,
+  "rank_bonus": [
+   [
+    1,
+    0.8
+   ],
+   [
+    5,
+    0.5
+   ],
+   [
+    10,
+    0.35
+   ],
+   [
+    25,
+    0.35
+   ]
+  ]
+ },
  "source": "coaches.json seasons 1995-2025, recruiting baseline, program_market.json, engine ratings",
  "teams": {
   "air-force": {
@@ -8,9 +41,9 @@
    "market": 34,
    "nil": 23.2,
    "prestige": 30.1,
-   "rating": 31.3,
+   "rating": 31.6,
    "tier": 5,
-   "winning": 33.4
+   "winning": 35.0
   },
   "akron": {
    "coach": 48,
@@ -19,9 +52,9 @@
    "market": 19,
    "nil": 23.6,
    "prestige": 18.3,
-   "rating": 22.4,
+   "rating": 23.0,
    "tier": 5,
-   "winning": 28.7
+   "winning": 31.6
   },
   "alabama": {
    "coach": 62,
@@ -30,9 +63,9 @@
    "market": 97,
    "nil": 100.0,
    "prestige": 100.0,
-   "rating": 90.9,
+   "rating": 89.2,
    "tier": 1,
-   "winning": 75.1
+   "winning": 66.7
   },
   "app-st": {
    "coach": 42,
@@ -41,9 +74,9 @@
    "market": 39,
    "nil": 34.4,
    "prestige": 39.1,
-   "rating": 34.5,
+   "rating": 34.7,
    "tier": 5,
-   "winning": 35.1
+   "winning": 36.3
   },
   "arizona": {
    "coach": 48,
@@ -52,9 +85,9 @@
    "market": 58,
    "nil": 58.8,
    "prestige": 42.4,
-   "rating": 49.9,
+   "rating": 49.6,
    "tier": 4,
-   "winning": 45.2
+   "winning": 44.0
   },
   "arizona-state": {
    "coach": 55,
@@ -63,9 +96,9 @@
    "market": 61,
    "nil": 63.1,
    "prestige": 50.5,
-   "rating": 56.1,
+   "rating": 55.5,
    "tier": 3,
-   "winning": 54.2
+   "winning": 50.8
   },
   "arkansas": {
    "coach": 41,
@@ -74,9 +107,9 @@
    "market": 73,
    "nil": 70.5,
    "prestige": 48.6,
-   "rating": 54.3,
+   "rating": 55.0,
    "tier": 3,
-   "winning": 26.8
+   "winning": 30.2
   },
   "arkansas-state": {
    "coach": 43,
@@ -87,7 +120,7 @@
    "prestige": 30.6,
    "rating": 31.2,
    "tier": 5,
-   "winning": 40.6
+   "winning": 40.5
   },
   "army": {
    "coach": 47,
@@ -96,9 +129,9 @@
    "market": 35,
    "nil": 19.7,
    "prestige": 23.6,
-   "rating": 31.3,
+   "rating": 30.9,
    "tier": 5,
-   "winning": 50.3
+   "winning": 47.9
   },
   "auburn": {
    "coach": 50,
@@ -107,9 +140,9 @@
    "market": 82,
    "nil": 84.6,
    "prestige": 66.3,
-   "rating": 65.8,
+   "rating": 66.1,
    "tier": 2,
-   "winning": 33.6
+   "winning": 35.2
   },
   "ball-state": {
    "coach": 40,
@@ -118,9 +151,9 @@
    "market": 22,
    "nil": 27.7,
    "prestige": 27.2,
-   "rating": 25.0,
+   "rating": 25.8,
    "tier": 5,
-   "winning": 25.8
+   "winning": 29.5
   },
   "baylor": {
    "coach": 67,
@@ -129,9 +162,9 @@
    "market": 56,
    "nil": 58.1,
    "prestige": 47.4,
-   "rating": 51.3,
+   "rating": 51.5,
    "tier": 3,
-   "winning": 35.4
+   "winning": 36.5
   },
   "boise-state": {
    "coach": 51,
@@ -140,9 +173,9 @@
    "market": 40,
    "nil": 45.9,
    "prestige": 56.5,
-   "rating": 50.5,
-   "tier": 3,
-   "winning": 58.0
+   "rating": 49.6,
+   "tier": 4,
+   "winning": 53.7
   },
   "boston-college": {
    "coach": 54,
@@ -151,9 +184,9 @@
    "market": 54,
    "nil": 53.3,
    "prestige": 41.4,
-   "rating": 45.4,
+   "rating": 46.0,
    "tier": 4,
-   "winning": 29.1
+   "winning": 31.9
   },
   "bowling-green": {
    "coach": 28,
@@ -162,9 +195,9 @@
    "market": 26,
    "nil": 29.9,
    "prestige": 28.0,
-   "rating": 26.5,
+   "rating": 26.8,
    "tier": 5,
-   "winning": 34.3
+   "winning": 35.7
   },
   "buffalo": {
    "coach": 37,
@@ -173,9 +206,9 @@
    "market": 26,
    "nil": 27.0,
    "prestige": 26.3,
-   "rating": 26.9,
+   "rating": 27.1,
    "tier": 5,
-   "winning": 36.8
+   "winning": 37.6
   },
   "byu": {
    "coach": 75,
@@ -184,9 +217,9 @@
    "market": 69,
    "nil": 57.2,
    "prestige": 51.4,
-   "rating": 60.2,
+   "rating": 59.1,
    "tier": 3,
-   "winning": 63.2
+   "winning": 57.7
   },
   "c-carolina": {
    "coach": 24,
@@ -195,9 +228,9 @@
    "market": 29,
    "nil": 25.9,
    "prestige": 32.9,
-   "rating": 28.6,
+   "rating": 28.8,
    "tier": 5,
-   "winning": 37.2
+   "winning": 37.9
   },
   "c-michigan": {
    "coach": 44,
@@ -206,9 +239,9 @@
    "market": 28,
    "nil": 30.3,
    "prestige": 29.2,
-   "rating": 29.0,
+   "rating": 29.2,
    "tier": 5,
-   "winning": 35.1
+   "winning": 36.3
   },
   "california": {
    "coach": 56,
@@ -217,9 +250,9 @@
    "market": 53,
    "nil": 60.5,
    "prestige": 43.7,
-   "rating": 49.1,
+   "rating": 49.2,
    "tier": 4,
-   "winning": 37.9
+   "winning": 38.4
   },
   "charlotte": {
    "coach": 38,
@@ -228,9 +261,9 @@
    "market": 25,
    "nil": 25.0,
    "prestige": 17.2,
-   "rating": 21.8,
+   "rating": 22.9,
    "tier": 5,
-   "winning": 19.2
+   "winning": 24.9
   },
   "cincinnati": {
    "coach": 49,
@@ -239,9 +272,9 @@
    "market": 52,
    "nil": 49.5,
    "prestige": 48.8,
-   "rating": 48.2,
+   "rating": 48.4,
    "tier": 4,
-   "winning": 35.1
+   "winning": 36.3
   },
   "clemson": {
    "coach": 64,
@@ -250,9 +283,9 @@
    "market": 78,
    "nil": 83.4,
    "prestige": 78.2,
-   "rating": 70.8,
+   "rating": 70.2,
    "tier": 2,
-   "winning": 52.2
+   "winning": 49.3
   },
   "colorado": {
    "coach": 71,
@@ -263,7 +296,7 @@
    "prestige": 40.8,
    "rating": 50.8,
    "tier": 3,
-   "winning": 39.4
+   "winning": 39.5
   },
   "colorado-state": {
    "coach": 43,
@@ -272,9 +305,9 @@
    "market": 37,
    "nil": 38.2,
    "prestige": 30.8,
-   "rating": 33.5,
+   "rating": 34.0,
    "tier": 5,
-   "winning": 29.4
+   "winning": 32.1
   },
   "delaware": {
    "coach": 69,
@@ -285,7 +318,7 @@
    "prestige": 15.0,
    "rating": 25.2,
    "tier": 5,
-   "winning": 39.9
+   "winning": 40.0
   },
   "duke": {
    "coach": 58,
@@ -294,9 +327,9 @@
    "market": 44,
    "nil": 50.1,
    "prestige": 36.5,
-   "rating": 45.9,
+   "rating": 45.7,
    "tier": 4,
-   "winning": 45.7
+   "winning": 44.4
   },
   "e-michigan": {
    "coach": 48,
@@ -305,9 +338,9 @@
    "market": 27,
    "nil": 26.1,
    "prestige": 21.3,
-   "rating": 25.1,
+   "rating": 25.5,
    "tier": 5,
-   "winning": 31.0
+   "winning": 33.3
   },
   "east-carolina": {
    "coach": 51,
@@ -316,9 +349,9 @@
    "market": 41,
    "nil": 40.2,
    "prestige": 33.3,
-   "rating": 37.2,
+   "rating": 37.1,
    "tier": 4,
-   "winning": 42.0
+   "winning": 41.5
   },
   "fiu": {
    "coach": 42,
@@ -327,9 +360,9 @@
    "market": 26,
    "nil": 32.2,
    "prestige": 23.5,
-   "rating": 27.5,
+   "rating": 27.8,
    "tier": 5,
-   "winning": 34.3
+   "winning": 35.7
   },
   "fla-atlantic": {
    "coach": 39,
@@ -338,9 +371,9 @@
    "market": 29,
    "nil": 32.6,
    "prestige": 27.6,
-   "rating": 28.4,
+   "rating": 29.1,
    "tier": 5,
-   "winning": 25.8
+   "winning": 29.5
   },
   "florida": {
    "coach": 60,
@@ -349,9 +382,9 @@
    "market": 82,
    "nil": 89.2,
    "prestige": 74.3,
-   "rating": 70.5,
+   "rating": 70.8,
    "tier": 2,
-   "winning": 34.6
+   "winning": 35.9
   },
   "florida-state": {
    "coach": 77,
@@ -371,9 +404,9 @@
    "market": 42,
    "nil": 40.0,
    "prestige": 38.5,
-   "rating": 39.5,
+   "rating": 39.4,
    "tier": 4,
-   "winning": 43.8
+   "winning": 42.9
   },
   "ga-southern": {
    "coach": 42,
@@ -384,7 +417,7 @@
    "prestige": 30.8,
    "rating": 31.3,
    "tier": 5,
-   "winning": 40.6
+   "winning": 40.5
   },
   "georgia": {
    "coach": 87,
@@ -393,9 +426,9 @@
    "market": 93,
    "nil": 98.0,
    "prestige": 93.2,
-   "rating": 91.8,
+   "rating": 89.8,
    "tier": 1,
-   "winning": 82.2
+   "winning": 72.2
   },
   "georgia-state": {
    "coach": 33,
@@ -404,9 +437,9 @@
    "market": 27,
    "nil": 29.7,
    "prestige": 22.8,
-   "rating": 22.6,
+   "rating": 23.8,
    "tier": 5,
-   "winning": 18.5
+   "winning": 24.5
   },
   "georgia-tech": {
    "coach": 57,
@@ -415,9 +448,9 @@
    "market": 55,
    "nil": 57.5,
    "prestige": 46.4,
-   "rating": 51.1,
+   "rating": 50.9,
    "tier": 3,
-   "winning": 43.8
+   "winning": 42.9
   },
   "hawai-i": {
    "coach": 55,
@@ -428,7 +461,7 @@
    "prestige": 29.3,
    "rating": 31.8,
    "tier": 5,
-   "winning": 40.5
+   "winning": 40.4
   },
   "houston": {
    "coach": 45,
@@ -437,9 +470,9 @@
    "market": 49,
    "nil": 48.7,
    "prestige": 43.5,
-   "rating": 48.3,
+   "rating": 47.9,
    "tier": 4,
-   "winning": 49.1
+   "winning": 46.9
   },
   "illinois": {
    "coach": 75,
@@ -448,9 +481,9 @@
    "market": 64,
    "nil": 59.9,
    "prestige": 40.2,
-   "rating": 55.4,
+   "rating": 54.8,
    "tier": 3,
-   "winning": 51.8
+   "winning": 49.0
   },
   "indiana": {
    "coach": 74,
@@ -459,9 +492,9 @@
    "market": 60,
    "nil": 55.0,
    "prestige": 45.7,
-   "rating": 64.6,
+   "rating": 62.0,
    "tier": 3,
-   "winning": 94.8
+   "winning": 81.7
   },
   "iowa": {
    "coach": 65,
@@ -470,9 +503,9 @@
    "market": 72,
    "nil": 65.6,
    "prestige": 57.3,
-   "rating": 63.0,
+   "rating": 62.2,
    "tier": 3,
-   "winning": 56.7
+   "winning": 52.7
   },
   "iowa-state": {
    "coach": 66,
@@ -481,9 +514,9 @@
    "market": 66,
    "nil": 57.5,
    "prestige": 41.7,
-   "rating": 53.5,
+   "rating": 52.9,
    "tier": 3,
-   "winning": 52.4
+   "winning": 49.4
   },
   "james-madison": {
    "coach": 59,
@@ -492,9 +525,9 @@
    "market": 34,
    "nil": 15.3,
    "prestige": 15.0,
-   "rating": 29.2,
+   "rating": 28.3,
    "tier": 5,
-   "winning": 59.5
+   "winning": 54.9
   },
   "jax-state": {
    "coach": 48,
@@ -503,9 +536,9 @@
    "market": 30,
    "nil": 14.3,
    "prestige": 15.0,
-   "rating": 25.1,
+   "rating": 24.8,
    "tier": 5,
-   "winning": 45.6
+   "winning": 44.2
   },
   "kansas": {
    "coach": 53,
@@ -514,9 +547,9 @@
    "market": 56,
    "nil": 53.1,
    "prestige": 33.6,
-   "rating": 45.0,
+   "rating": 45.1,
    "tier": 4,
-   "winning": 39.0
+   "winning": 39.3
   },
   "kansas-state": {
    "coach": 49,
@@ -525,9 +558,9 @@
    "market": 62,
    "nil": 56.8,
    "prestige": 51.1,
-   "rating": 53.2,
+   "rating": 52.9,
    "tier": 3,
-   "winning": 45.7
+   "winning": 44.3
   },
   "kennesaw-st": {
    "coach": 49,
@@ -536,9 +569,9 @@
    "market": 22,
    "nil": 10.0,
    "prestige": 15.0,
-   "rating": 22.2,
+   "rating": 22.3,
    "tier": 5,
-   "winning": 37.6
+   "winning": 38.2
   },
   "kent-state": {
    "coach": 27,
@@ -547,9 +580,9 @@
    "market": 22,
    "nil": 26.0,
    "prestige": 20.3,
-   "rating": 19.7,
+   "rating": 20.9,
    "tier": 5,
-   "winning": 19.2
+   "winning": 24.9
   },
   "kentucky": {
    "coach": 50,
@@ -558,9 +591,9 @@
    "market": 67,
    "nil": 62.3,
    "prestige": 42.3,
-   "rating": 52.4,
+   "rating": 52.8,
    "tier": 3,
-   "winning": 32.7
+   "winning": 34.5
   },
   "liberty": {
    "coach": 36,
@@ -569,9 +602,9 @@
    "market": 30,
    "nil": 22.3,
    "prestige": 35.8,
-   "rating": 31.9,
+   "rating": 31.7,
    "tier": 5,
-   "winning": 43.2
+   "winning": 42.4
   },
   "louisiana": {
    "coach": 37,
@@ -582,7 +615,7 @@
    "prestige": 33.9,
    "rating": 31.6,
    "tier": 5,
-   "winning": 40.3
+   "winning": 40.2
   },
   "louisiana-tech": {
    "coach": 56,
@@ -591,9 +624,9 @@
    "market": 29,
    "nil": 34.1,
    "prestige": 32.5,
-   "rating": 32.8,
+   "rating": 33.0,
    "tier": 5,
-   "winning": 36.6
+   "winning": 37.5
   },
   "louisville": {
    "coach": 55,
@@ -602,9 +635,9 @@
    "market": 61,
    "nil": 60.5,
    "prestige": 51.9,
-   "rating": 55.2,
+   "rating": 54.7,
    "tier": 3,
-   "winning": 50.3
+   "winning": 47.8
   },
   "lsu": {
    "coach": 61,
@@ -613,9 +646,9 @@
    "market": 89,
    "nil": 92.9,
    "prestige": 79.3,
-   "rating": 76.1,
+   "rating": 75.8,
    "tier": 2,
-   "winning": 47.2
+   "winning": 45.5
   },
   "marshall": {
    "coach": 28,
@@ -635,9 +668,9 @@
    "market": 54,
    "nil": 62.0,
    "prestige": 44.1,
-   "rating": 51.3,
+   "rating": 51.7,
    "tier": 3,
-   "winning": 30.9
+   "winning": 33.2
   },
   "memphis": {
    "coach": 34,
@@ -646,9 +679,9 @@
    "market": 36,
    "nil": 41.9,
    "prestige": 41.4,
-   "rating": 40.4,
+   "rating": 39.7,
    "tier": 4,
-   "winning": 53.8
+   "winning": 50.5
   },
   "miami": {
    "coach": 82,
@@ -657,9 +690,9 @@
    "market": 61,
    "nil": 78.2,
    "prestige": 69.6,
-   "rating": 72.1,
+   "rating": 70.3,
    "tier": 2,
-   "winning": 77.1
+   "winning": 68.3
   },
   "miami-oh": {
    "coach": 63,
@@ -668,9 +701,9 @@
    "market": 24,
    "nil": 31.2,
    "prestige": 32.3,
-   "rating": 33.2,
+   "rating": 33.1,
    "tier": 5,
-   "winning": 42.8
+   "winning": 42.2
   },
   "michigan": {
    "coach": 56,
@@ -679,9 +712,9 @@
    "market": 86,
    "nil": 87.0,
    "prestige": 78.2,
-   "rating": 76.4,
+   "rating": 75.1,
    "tier": 2,
-   "winning": 68.9
+   "winning": 62.0
   },
   "michigan-state": {
    "coach": 56,
@@ -690,9 +723,9 @@
    "market": 72,
    "nil": 67.4,
    "prestige": 55.0,
-   "rating": 56.1,
+   "rating": 56.7,
    "tier": 3,
-   "winning": 29.6
+   "winning": 32.3
   },
   "minnesota": {
    "coach": 58,
@@ -701,9 +734,9 @@
    "market": 59,
    "nil": 58.2,
    "prestige": 45.3,
-   "rating": 52.8,
+   "rating": 52.7,
    "tier": 3,
-   "winning": 42.6
+   "winning": 41.9
   },
   "mississippi-st": {
    "coach": 63,
@@ -712,9 +745,9 @@
    "market": 62,
    "nil": 66.7,
    "prestige": 48.6,
-   "rating": 54.9,
+   "rating": 55.5,
    "tier": 3,
-   "winning": 26.7
+   "winning": 30.1
   },
   "missouri": {
    "coach": 58,
@@ -723,9 +756,9 @@
    "market": 67,
    "nil": 65.8,
    "prestige": 55.3,
-   "rating": 63.3,
+   "rating": 62.5,
    "tier": 3,
-   "winning": 58.1
+   "winning": 53.8
   },
   "missouri-state": {
    "coach": 30,
@@ -736,7 +769,7 @@
    "prestige": 15.0,
    "rating": 20.9,
    "tier": 5,
-   "winning": 39.9
+   "winning": 40.0
   },
   "mtsu": {
    "coach": 57,
@@ -745,9 +778,9 @@
    "market": 25,
    "nil": 29.2,
    "prestige": 28.3,
-   "rating": 27.8,
+   "rating": 28.7,
    "tier": 5,
-   "winning": 22.7
+   "winning": 27.3
   },
   "navy": {
    "coach": 46,
@@ -756,9 +789,9 @@
    "market": 38,
    "nil": 22.4,
    "prestige": 29.9,
-   "rating": 35.6,
-   "tier": 4,
-   "winning": 57.5
+   "rating": 34.8,
+   "tier": 5,
+   "winning": 53.3
   },
   "nc-state": {
    "coach": 68,
@@ -767,9 +800,9 @@
    "market": 65,
    "nil": 62.3,
    "prestige": 48.8,
-   "rating": 55.0,
+   "rating": 54.7,
    "tier": 3,
-   "winning": 44.8
+   "winning": 43.6
   },
   "ndsu": {
    "coach": 46,
@@ -778,9 +811,9 @@
    "market": 25,
    "nil": 13.7,
    "prestige": 15.0,
-   "rating": 20.6,
+   "rating": 18.8,
    "tier": 5,
-   "winning": 25.4
+   "winning": 16.3
   },
   "nebraska": {
    "coach": 77,
@@ -791,7 +824,7 @@
    "prestige": 55.8,
    "rating": 62.5,
    "tier": 3,
-   "winning": 38.9
+   "winning": 39.1
   },
   "nevada": {
    "coach": 49,
@@ -800,9 +833,9 @@
    "market": 30,
    "nil": 31.9,
    "prestige": 29.7,
-   "rating": 28.2,
+   "rating": 29.3,
    "tier": 5,
-   "winning": 19.9
+   "winning": 25.4
   },
   "new-mexico": {
    "coach": 35,
@@ -813,7 +846,7 @@
    "prestige": 22.2,
    "rating": 27.5,
    "tier": 5,
-   "winning": 40.1
+   "winning": 40.0
   },
   "new-mexico-st": {
    "coach": 46,
@@ -822,9 +855,9 @@
    "market": 25,
    "nil": 22.2,
    "prestige": 16.7,
-   "rating": 23.0,
+   "rating": 23.5,
    "tier": 5,
-   "winning": 29.6
+   "winning": 32.3
   },
   "niu": {
    "coach": 15,
@@ -833,9 +866,9 @@
    "market": 22,
    "nil": 29.9,
    "prestige": 32.4,
-   "rating": 27.3,
+   "rating": 27.6,
    "tier": 5,
-   "winning": 33.3
+   "winning": 35.0
   },
   "north-carolina": {
    "coach": 55,
@@ -844,9 +877,9 @@
    "market": 60,
    "nil": 68.9,
    "prestige": 50.4,
-   "rating": 52.5,
+   "rating": 52.8,
    "tier": 3,
-   "winning": 33.5
+   "winning": 35.1
   },
   "north-texas": {
    "coach": 33,
@@ -855,9 +888,9 @@
    "market": 32,
    "nil": 30.9,
    "prestige": 28.1,
-   "rating": 33.5,
+   "rating": 32.9,
    "tier": 5,
-   "winning": 53.5
+   "winning": 50.2
   },
   "northwestern": {
    "coach": 43,
@@ -866,9 +899,9 @@
    "market": 36,
    "nil": 48.0,
    "prestige": 43.5,
-   "rating": 45.7,
+   "rating": 45.9,
    "tier": 4,
-   "winning": 36.9
+   "winning": 37.7
   },
   "notre-dame": {
    "coach": 90,
@@ -877,9 +910,9 @@
    "market": 77,
    "nil": 85.8,
    "prestige": 77.3,
-   "rating": 80.3,
+   "rating": 78.3,
    "tier": 1,
-   "winning": 82.7
+   "winning": 72.5
   },
   "ohio": {
    "coach": 27,
@@ -888,9 +921,9 @@
    "market": 30,
    "nil": 28.4,
    "prestige": 32.9,
-   "rating": 31.4,
+   "rating": 30.9,
    "tier": 5,
-   "winning": 49.5
+   "winning": 47.2
   },
   "ohio-state": {
    "coach": 90,
@@ -899,9 +932,9 @@
    "market": 90,
    "nil": 91.7,
    "prestige": 98.0,
-   "rating": 94.1,
+   "rating": 91.2,
    "tier": 1,
-   "winning": 100.0
+   "winning": 85.6
   },
   "oklahoma": {
    "coach": 88,
@@ -910,9 +943,9 @@
    "market": 83,
    "nil": 87.3,
    "prestige": 81.7,
-   "rating": 80.1,
+   "rating": 79.3,
    "tier": 1,
-   "winning": 56.5
+   "winning": 52.6
   },
   "oklahoma-state": {
    "coach": 53,
@@ -921,9 +954,9 @@
    "market": 61,
    "nil": 62.7,
    "prestige": 55.3,
-   "rating": 51.9,
+   "rating": 52.6,
    "tier": 3,
-   "winning": 25.6
+   "winning": 29.4
   },
   "old-dominion": {
    "coach": 51,
@@ -932,9 +965,9 @@
    "market": 30,
    "nil": 28.3,
    "prestige": 26.8,
-   "rating": 30.8,
+   "rating": 30.7,
    "tier": 5,
-   "winning": 43.1
+   "winning": 42.4
   },
   "ole-miss": {
    "coach": 61,
@@ -943,9 +976,9 @@
    "market": 70,
    "nil": 73.9,
    "prestige": 61.9,
-   "rating": 72.5,
+   "rating": 70.5,
    "tier": 2,
-   "winning": 83.3
+   "winning": 73.0
   },
   "oregon": {
    "coach": 75,
@@ -954,9 +987,9 @@
    "market": 66,
    "nil": 77.6,
    "prestige": 80.1,
-   "rating": 80.5,
+   "rating": 77.9,
    "tier": 1,
-   "winning": 93.3
+   "winning": 80.6
   },
   "oregon-state": {
    "coach": 52,
@@ -965,9 +998,9 @@
    "market": 40,
    "nil": 49.2,
    "prestige": 40.6,
-   "rating": 39.3,
+   "rating": 40.0,
    "tier": 4,
-   "winning": 27.2
+   "winning": 30.5
   },
   "penn-state": {
    "coach": 55,
@@ -976,9 +1009,9 @@
    "market": 93,
    "nil": 82.2,
    "prestige": 69.1,
-   "rating": 72.4,
+   "rating": 71.2,
    "tier": 2,
-   "winning": 65.3
+   "winning": 59.3
   },
   "pittsburgh": {
    "coach": 63,
@@ -989,7 +1022,7 @@
    "prestige": 48.3,
    "rating": 52.9,
    "tier": 3,
-   "winning": 39.4
+   "winning": 39.6
   },
   "purdue": {
    "coach": 45,
@@ -998,9 +1031,9 @@
    "market": 66,
    "nil": 57.4,
    "prestige": 36.0,
-   "rating": 43.1,
+   "rating": 44.6,
    "tier": 4,
-   "winning": 13.7
+   "winning": 21.4
   },
   "rice": {
    "coach": 35,
@@ -1009,9 +1042,9 @@
    "market": 31,
    "nil": 31.7,
    "prestige": 24.9,
-   "rating": 28.1,
+   "rating": 28.6,
    "tier": 5,
-   "winning": 30.9
+   "winning": 33.2
   },
   "rutgers": {
    "coach": 54,
@@ -1020,9 +1053,9 @@
    "market": 60,
    "nil": 59.5,
    "prestige": 38.1,
-   "rating": 49.0,
+   "rating": 49.2,
    "tier": 4,
-   "winning": 36.6
+   "winning": 37.5
   },
   "sac-state": {
    "coach": 32,
@@ -1031,9 +1064,9 @@
    "market": 25,
    "nil": 10.0,
    "prestige": 15.0,
-   "rating": 17.5,
+   "rating": 15.7,
    "tier": 5,
-   "winning": 25.4
+   "winning": 16.3
   },
   "sam-houston": {
    "coach": 30,
@@ -1042,9 +1075,9 @@
    "market": 21,
    "nil": 11.7,
    "prestige": 15.0,
-   "rating": 19.1,
+   "rating": 19.5,
    "tier": 5,
-   "winning": 30.9
+   "winning": 33.2
   },
   "san-diego-st": {
    "coach": 45,
@@ -1053,9 +1086,9 @@
    "market": 34,
    "nil": 40.9,
    "prestige": 39.4,
-   "rating": 38.4,
+   "rating": 38.5,
    "tier": 4,
-   "winning": 37.1
+   "winning": 37.8
   },
   "san-jose-state": {
    "coach": 31,
@@ -1064,9 +1097,9 @@
    "market": 27,
    "nil": 29.6,
    "prestige": 27.6,
-   "rating": 27.4,
+   "rating": 27.8,
    "tier": 5,
-   "winning": 31.8
+   "winning": 33.8
   },
   "smu": {
    "coach": 64,
@@ -1075,9 +1108,9 @@
    "market": 47,
    "nil": 45.3,
    "prestige": 38.1,
-   "rating": 48.9,
+   "rating": 48.1,
    "tier": 4,
-   "winning": 57.1
+   "winning": 53.0
   },
   "south-alabama": {
    "coach": 51,
@@ -1086,9 +1119,9 @@
    "market": 29,
    "nil": 31.8,
    "prestige": 27.6,
-   "rating": 29.8,
+   "rating": 30.1,
    "tier": 5,
-   "winning": 34.3
+   "winning": 35.7
   },
   "south-carolina": {
    "coach": 81,
@@ -1097,9 +1130,9 @@
    "market": 78,
    "nil": 76.8,
    "prestige": 56.3,
-   "rating": 65.6,
+   "rating": 65.5,
    "tier": 2,
-   "winning": 42.3
+   "winning": 41.7
   },
   "southern-miss": {
    "coach": 30,
@@ -1108,9 +1141,9 @@
    "market": 34,
    "nil": 40.2,
    "prestige": 34.7,
-   "rating": 30.7,
+   "rating": 31.3,
    "tier": 5,
-   "winning": 28.2
+   "winning": 31.2
   },
   "stanford": {
    "coach": 55,
@@ -1119,9 +1152,9 @@
    "market": 47,
    "nil": 62.5,
    "prestige": 53.5,
-   "rating": 49.5,
-   "tier": 4,
-   "winning": 24.8
+   "rating": 50.4,
+   "tier": 3,
+   "winning": 28.8
   },
   "syracuse": {
    "coach": 44,
@@ -1132,7 +1165,7 @@
    "prestige": 38.9,
    "rating": 45.8,
    "tier": 4,
-   "winning": 41.8
+   "winning": 41.4
   },
   "tcu": {
    "coach": 79,
@@ -1141,9 +1174,9 @@
    "market": 58,
    "nil": 61.0,
    "prestige": 61.1,
-   "rating": 61.4,
+   "rating": 60.8,
    "tier": 3,
-   "winning": 53.2
+   "winning": 50.1
   },
   "temple": {
    "coach": 45,
@@ -1152,9 +1185,9 @@
    "market": 27,
    "nil": 32.8,
    "prestige": 26.4,
-   "rating": 28.8,
+   "rating": 29.4,
    "tier": 5,
-   "winning": 27.8
+   "winning": 30.9
   },
   "tennessee": {
    "coach": 81,
@@ -1163,9 +1196,9 @@
    "market": 93,
    "nil": 88.3,
    "prestige": 67.5,
-   "rating": 76.2,
+   "rating": 75.2,
    "tier": 2,
-   "winning": 59.4
+   "winning": 54.8
   },
   "texas": {
    "coach": 100.0,
@@ -1174,9 +1207,9 @@
    "market": 90,
    "nil": 93.3,
    "prestige": 79.7,
-   "rating": 87.0,
+   "rating": 85.0,
    "tier": 1,
-   "winning": 80.5
+   "winning": 70.8
   },
   "texas-a-m": {
    "coach": 74,
@@ -1185,9 +1218,9 @@
    "market": 83,
    "nil": 85.0,
    "prestige": 65.8,
-   "rating": 74.1,
+   "rating": 73.0,
    "tier": 2,
-   "winning": 63.1
+   "winning": 57.6
   },
   "texas-state": {
    "coach": 47,
@@ -1196,9 +1229,9 @@
    "market": 32,
    "nil": 28.8,
    "prestige": 23.1,
-   "rating": 31.8,
+   "rating": 31.7,
    "tier": 5,
-   "winning": 41.9
+   "winning": 41.5
   },
   "texas-tech": {
    "coach": 87,
@@ -1207,9 +1240,9 @@
    "market": 66,
    "nil": 62.9,
    "prestige": 50.0,
-   "rating": 61.5,
+   "rating": 60.4,
    "tier": 3,
-   "winning": 63.3
+   "winning": 57.8
   },
   "toledo": {
    "coach": 15,
@@ -1218,9 +1251,9 @@
    "market": 31,
    "nil": 37.1,
    "prestige": 41.0,
-   "rating": 33.6,
+   "rating": 33.3,
    "tier": 5,
-   "winning": 45.2
+   "winning": 44.0
   },
   "troy": {
    "coach": 45,
@@ -1231,7 +1264,7 @@
    "prestige": 35.4,
    "rating": 33.8,
    "tier": 5,
-   "winning": 39.4
+   "winning": 39.5
   },
   "tulane": {
    "coach": 39,
@@ -1240,9 +1273,9 @@
    "market": 33,
    "nil": 37.2,
    "prestige": 35.7,
-   "rating": 38.6,
+   "rating": 37.7,
    "tier": 4,
-   "winning": 57.1
+   "winning": 53.0
   },
   "tulsa": {
    "coach": 31,
@@ -1251,9 +1284,9 @@
    "market": 29,
    "nil": 34.7,
    "prestige": 30.3,
-   "rating": 28.8,
+   "rating": 29.6,
    "tier": 5,
-   "winning": 25.8
+   "winning": 29.5
   },
   "uab": {
    "coach": 24,
@@ -1262,9 +1295,9 @@
    "market": 30,
    "nil": 32.2,
    "prestige": 29.2,
-   "rating": 27.5,
+   "rating": 28.2,
    "tier": 5,
-   "winning": 25.8
+   "winning": 29.5
   },
   "ucf": {
    "coach": 53,
@@ -1273,9 +1306,9 @@
    "market": 57,
    "nil": 51.9,
    "prestige": 44.6,
-   "rating": 47.3,
+   "rating": 47.7,
    "tier": 4,
-   "winning": 31.9
+   "winning": 33.9
   },
   "ucla": {
    "coach": 49,
@@ -1284,9 +1317,9 @@
    "market": 57,
    "nil": 65.7,
    "prestige": 50.9,
-   "rating": 52.3,
+   "rating": 52.8,
    "tier": 3,
-   "winning": 30.0
+   "winning": 32.5
   },
   "uconn": {
    "coach": 30,
@@ -1295,9 +1328,9 @@
    "market": 35,
    "nil": 34.5,
    "prestige": 26.6,
-   "rating": 36.9,
+   "rating": 36.7,
    "tier": 4,
-   "winning": 44.0
+   "winning": 43.0
   },
   "ul-monroe": {
    "coach": 33,
@@ -1306,9 +1339,9 @@
    "market": 27,
    "nil": 24.6,
    "prestige": 18.9,
-   "rating": 21.8,
+   "rating": 22.6,
    "tier": 5,
-   "winning": 24.8
+   "winning": 28.8
   },
   "umass": {
    "coach": 28,
@@ -1317,9 +1350,9 @@
    "market": 23,
    "nil": 23.6,
    "prestige": 0.0,
-   "rating": 8.6,
+   "rating": 11.8,
    "tier": 5,
-   "winning": 0.0
+   "winning": 16.0
   },
   "unlv": {
    "coach": 45,
@@ -1328,9 +1361,9 @@
    "market": 36,
    "nil": 34.0,
    "prestige": 25.6,
-   "rating": 34.1,
+   "rating": 33.4,
    "tier": 5,
-   "winning": 54.1
+   "winning": 50.8
   },
   "usc": {
    "coach": 68,
@@ -1339,9 +1372,9 @@
    "market": 72,
    "nil": 87.0,
    "prestige": 77.2,
-   "rating": 72.6,
+   "rating": 72.0,
    "tier": 2,
-   "winning": 52.5
+   "winning": 49.5
   },
   "usf": {
    "coach": 34,
@@ -1350,9 +1383,9 @@
    "market": 40,
    "nil": 46.8,
    "prestige": 39.0,
-   "rating": 38.7,
+   "rating": 38.5,
    "tier": 4,
-   "winning": 43.8
+   "winning": 42.9
   },
   "utah": {
    "coach": 56,
@@ -1361,9 +1394,9 @@
    "market": 62,
    "nil": 60.5,
    "prestige": 57.1,
-   "rating": 58.2,
+   "rating": 57.6,
    "tier": 3,
-   "winning": 54.0
+   "winning": 50.7
   },
   "utah-state": {
    "coach": 36,
@@ -1372,9 +1405,9 @@
    "market": 29,
    "nil": 27.6,
    "prestige": 28.2,
-   "rating": 30.3,
+   "rating": 30.6,
    "tier": 5,
-   "winning": 33.2
+   "winning": 34.9
   },
   "utep": {
    "coach": 43,
@@ -1383,9 +1416,9 @@
    "market": 29,
    "nil": 27.9,
    "prestige": 19.1,
-   "rating": 22.8,
+   "rating": 24.0,
    "tier": 5,
-   "winning": 18.0
+   "winning": 24.1
   },
   "utsa": {
    "coach": 65,
@@ -1394,9 +1427,9 @@
    "market": 33,
    "nil": 34.0,
    "prestige": 34.2,
-   "rating": 37.0,
+   "rating": 36.9,
    "tier": 4,
-   "winning": 41.3
+   "winning": 41.0
   },
   "vanderbilt": {
    "coach": 76,
@@ -1405,9 +1438,9 @@
    "market": 47,
    "nil": 52.3,
    "prestige": 36.0,
-   "rating": 52.9,
+   "rating": 52.4,
    "tier": 3,
-   "winning": 50.9
+   "winning": 48.3
   },
   "virginia": {
    "coach": 71,
@@ -1416,9 +1449,9 @@
    "market": 57,
    "nil": 57.2,
    "prestige": 42.2,
-   "rating": 52.5,
+   "rating": 52.0,
    "tier": 3,
-   "winning": 50.1
+   "winning": 47.6
   },
   "virginia-tech": {
    "coach": 65,
@@ -1427,9 +1460,9 @@
    "market": 69,
    "nil": 67.9,
    "prestige": 56.8,
-   "rating": 55.8,
+   "rating": 56.3,
    "tier": 3,
-   "winning": 30.1
+   "winning": 32.6
   },
   "w-kentucky": {
    "coach": 55,
@@ -1438,9 +1471,9 @@
    "market": 26,
    "nil": 30.6,
    "prestige": 34.5,
-   "rating": 34.6,
+   "rating": 34.3,
    "tier": 5,
-   "winning": 45.0
+   "winning": 43.8
   },
   "w-michigan": {
    "coach": 40,
@@ -1449,9 +1482,9 @@
    "market": 30,
    "nil": 34.5,
    "prestige": 34.6,
-   "rating": 32.6,
+   "rating": 32.5,
    "tier": 5,
-   "winning": 41.4
+   "winning": 41.1
   },
   "wake-forest": {
    "coach": 60,
@@ -1462,7 +1495,7 @@
    "prestige": 39.0,
    "rating": 45.8,
    "tier": 4,
-   "winning": 38.6
+   "winning": 38.9
   },
   "washington": {
    "coach": 62,
@@ -1471,9 +1504,9 @@
    "market": 72,
    "nil": 69.7,
    "prestige": 58.9,
-   "rating": 63.5,
+   "rating": 62.8,
    "tier": 3,
-   "winning": 54.7
+   "winning": 51.2
   },
   "washington-st": {
    "coach": 32,
@@ -1493,9 +1526,9 @@
    "market": 62,
    "nil": 62.1,
    "prestige": 51.0,
-   "rating": 52.4,
+   "rating": 52.7,
    "tier": 3,
-   "winning": 34.3
+   "winning": 35.7
   },
   "wisconsin": {
    "coach": 57,
@@ -1504,9 +1537,9 @@
    "market": 75,
    "nil": 66.9,
    "prestige": 58.8,
-   "rating": 58.2,
+   "rating": 58.6,
    "tier": 3,
-   "winning": 31.8
+   "winning": 33.9
   },
   "wyoming": {
    "coach": 27,
@@ -1515,13 +1548,13 @@
    "market": 32,
    "nil": 30.9,
    "prestige": 28.1,
-   "rating": 27.5,
+   "rating": 28.0,
    "tier": 5,
-   "winning": 29.9
+   "winning": 32.5
   }
  },
  "z_fit": {
-  "a": -2.2598,
-  "b": 0.04894
+  "a": -2.3375,
+  "b": 0.05082
  }
 }
