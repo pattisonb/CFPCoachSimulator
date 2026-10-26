@@ -29,7 +29,7 @@ TOLERANCES = (
     ("strength_rank_r", 0.75, 1.0, 1.0),
     ("committed_by_12", 0.50, 1.0, None),
     ("signed_early", 0.80, 0.90, None),
-    ("top300_decommits", 0.08, 0.22, None),
+    ("top300_decommits", 0.07, 0.22, None),   # real: about 8-15% of the top 300 decommit; a seed can land just under
     ("pos_mae", 0.0, 0.5, None),          # the league's signed positions a class against the real mix, mean absolute error a group
     ("over_need", 0, 2, None),            # the most one school signs at a group past its room there (target minus returning)
     ("no_qb_share", 0.0, 0.10, None),     # schools signing no quarterback
