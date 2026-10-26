@@ -44,7 +44,8 @@ if __name__ == "__main__":
     # departures: seniors graduate, the draft takes its FBS share, some declare early, about 15%
     # of the rest enter the portal, a few quit
     assert 15 * teams <= kinds["graduated"] + kinds["draft"] <= 24 * teams, kinds
-    assert kinds["draft"] == round(offseason.DRAFT_PICKS * offseason.DRAFT_FROM_FBS)
+    pending_draft = sum(1 for e in off["retention"]["players"] if e["intent"] == "draft")     # your early entrants wait on the retention step
+    assert kinds["draft"] + pending_draft == round(offseason.DRAFT_PICKS * offseason.DRAFT_FROM_FBS), (kinds["draft"], pending_draft)
     # the draft by position matches the real drafts (data/draft_targets.json, 2021-2025 averages):
     # each bucket's picks a draft within 5 or half the target; round one (32 picks, so one draft is
     # noisy) within 4 a bucket and 15 over all of them; tools/calibrate_draft.py averages nine drafts
