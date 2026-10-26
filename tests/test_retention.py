@@ -76,7 +76,9 @@ if __name__ == "__main__":
             else:
                 assert any(d["id"] == e["id"] and d["kind"] in ("draft", "undrafted") for d in off["departures"])
     assert all(e["id"] in roster_ids for e in players if results[e["id"]]["status"] == "stayed")
-    # next year's budget carries the NIL you spent; the portal pool reads the same budget
+    # next year's budget carries the NIL you spent (a deal he turned down costs nothing); the
+    # portal pool reads the same budget
+    spent = spent if results[p0["id"]]["status"] == "stayed" else 0
     assert st["nil_retained"][me] == spent and recruiting.nil_budget(st, me) == budget - spent
     assert recruiting._nil(st, me)["budget"] == round(recruiting.PORTAL_NIL_POOL * (budget - spent))
     # on Auto nobody is talked to: every pending leaver goes

@@ -24,6 +24,7 @@ GOALS = ((1.2, "playoff", 10, "Make the College Football Playoff"), (0.5, "wins"
          (-0.3, "wins", 7, "Win seven games and go bowling"), (-10, "wins", 6, "Reach a bowl game"))
 G5_TITLE_FROM = 0.0              # a Group of 5 program this strong expects to win its conference
 START_SECURITY = 70
+STANDING = (35, 85)              # a sitting coach's unknown standing when the career starts (third season on) *tune*
 HONEYMOON = 2                    # a new coach's first seasons count half against him
 WIN_STEP = 8                     # security per win over or under the goal
 BONUS = {"conference": 10, "playoff": 12, "title": 25}
@@ -33,6 +34,12 @@ NFL_CHANCE = 0.10                # a 85+ head coach after 11 wins; coordinators 
 COORD_MOVE = 0.10                # coordinators leaving for other jobs on their own
 OFFER_FROM = 80                  # your security this high, and better programs with an opening call
 FIRED_PICKS = 6                  # openings offered to you after you are fired (the lower ones)
+MARKET_SIZE = 150                # coaches for hire the market is topped up to each offseason *tune*
+MARKET_STALE = 3                 # years in the market before a coach retires from it
+OWN_STAFF = 0.5                  # a new head coach brings his own coordinator this often
+COORD_ROLES = ("offensive_coordinator", "defensive_coordinator")
+ROLE_WORDS = {"head_coach": "head coach", "offensive_coordinator": "offensive coordinator",
+              "defensive_coordinator": "defensive coordinator"}
 
 
 def _rng(state: dict, what: str) -> random.Random:
@@ -57,13 +64,18 @@ def goal(slug: str) -> dict:
     return {"kind": "wins", "wins": 6, "text": "Reach a bowl game"}
 
 
-def ad(team: dict, slug: str) -> dict:
-    """The program's AD (patience fixed per program, drawn once) and the head coach's security."""
+def ad(team: dict, slug: str, year: Optional[int] = None) -> dict:
+    """The program's AD (patience fixed per program, drawn once) and the head coach's security. A
+    coach already in his third season or later starts with a standing we do not know: drawn
+    between STANDING (some sit on hot seats); a newer coach starts at START_SECURITY."""
     if "ad" not in team:
         r = random.Random(f"ad-{slug}")
         b = baseline(slug)
         base = 2 if b >= 1.2 else 3 if b >= 0.3 else 4
-        team["ad"] = {"patience": max(2, min(5, base + r.choice((-1, 0, 0, 1)))), "security": START_SECURITY}
+        hc = (team.get("coaches") or {}).get("head_coach") or {}
+        tenure = (year - (hc.get("since") or year)) if year else 0
+        sec = START_SECURITY if tenure < 2 else random.Random(f"standing-{slug}-{hc.get('name')}").randint(*STANDING)
+        team["ad"] = {"patience": max(2, min(5, base + r.choice((-1, 0, 0, 1)))), "security": sec}
     return team["ad"]
 
 
@@ -79,7 +91,7 @@ def _results(state: dict) -> dict[str, dict]:
 
 def judge(team: dict, slug: str, res: dict, year: int) -> dict:
     """The AD's verdict on a season: security moves with wins against the goal and the honours."""
-    a = ad(team, slug)
+    a = ad(team, slug, year)
     g = goal(slug)
     hc = team["coaches"]["head_coach"]
     tenure = year - (hc.get("since") or 2020)
@@ -135,6 +147,164 @@ def generated(rng: random.Random, lgd: dict, role: str, slug: str, year: int, li
     return base
 
 
+# ----- the coaching market ----------------------------------------------------------------------
+
+def _taken_names(lgd: dict) -> set[str]:
+    names = {c["name"].lower() for t in lgd["teams"].values() for c in t["coaches"].values() if c and c.get("name")}
+    names |= {c["name"].lower() for c in (lgd.get("market") or {}).get("coaches", [])}
+    return names
+
+
+def _ratings_for(lgd: dict, role: str, coach: dict, rng: random.Random, level: float = 0.0) -> dict:
+    """A coach's ratings in `role`: his own when he has held it, else drawn like a coach at that
+    role and shifted by `level`, keeping the shared ratings he already has."""
+    own = (coach.get("ratings_by_role") or {}).get(role) or (coach.get("ratings") if coach.get("role") == role else None)
+    if own:
+        return dict(own)
+    model = rng.choice([t["coaches"][role] for t in lgd["teams"].values() if t["coaches"].get(role)])
+    ratings = {k: int(max(30, min(95, v + rng.gauss(level - 2, 6)))) for k, v in model["ratings"].items()}
+    ratings.update({k: v for k, v in (coach.get("ratings") or {}).items() if k in ratings and k != "overall"})
+    return ratings
+
+
+def _entry(coach: dict, role: str, team: Optional[str], why: str, year: int, roles: list[str], rng: random.Random) -> dict:
+    """A market entry for a coach who just left `role` at `team`."""
+    hist = list(coach.get("history") or [])
+    if team:
+        hist.append({"year": coach.get("since") or year, "to": year, "team": team, "role": role})
+    return {"id": f"m-{year}-{coach.get('name', 'x').lower().replace(' ', '-')}-{rng.randint(0, 9999)}",
+            "name": coach["name"], "roles": roles, "last_role": role, "last_team": team, "why": why, "year": year,
+            "age": _age(coach, year), "history": hist, "ratings": dict(coach.get("ratings") or {}),
+            "ratings_by_role": dict(coach.get("ratings_by_role") or {}, **({role: dict(coach["ratings"])} if coach.get("ratings") else {})),
+            "coach": {k: v for k, v in coach.items() if k not in ("ratings", "history", "ratings_by_role")}}
+
+
+def market(state: dict) -> dict:
+    """The coaches for hire: lgd["market"] = {"coaches": [entry], "year"}; built when first asked."""
+    lgd = state["league"]
+    if "market" not in lgd:
+        lgd["market"] = {"coaches": [], "year": state.get("year", 2026)}
+        market_refresh(state)
+    return lgd["market"]
+
+
+# where a generated coach for hire comes from: (roles he would take, previous job words, level shift, age range)
+SUPPLY = (
+    (["head_coach", "offensive_coordinator", "defensive_coordinator"], "Head coach at an FCS program", 0, (38, 58), 2),
+    (["head_coach", "offensive_coordinator", "defensive_coordinator"], "Head coach at a Division II program", -4, (36, 56), 1),
+    (["head_coach", "offensive_coordinator"], "NFL offensive assistant", 2, (34, 52), 2),
+    (["head_coach", "defensive_coordinator"], "NFL defensive assistant", 2, (34, 52), 2),
+    (["offensive_coordinator"], "Offensive coordinator at an FCS program", -2, (32, 50), 3),
+    (["defensive_coordinator"], "Defensive coordinator at an FCS program", -2, (32, 50), 3),
+    (["offensive_coordinator"], "Quarterbacks coach at a Power 4 program", 0, (32, 48), 3),
+    (["offensive_coordinator"], "Offensive line coach", -1, (34, 54), 2),
+    (["defensive_coordinator"], "Linebackers coach at a Power 4 program", 0, (32, 48), 3),
+    (["defensive_coordinator"], "Secondary coach", -1, (33, 52), 2),
+    (["offensive_coordinator", "defensive_coordinator"], "Assistant head coach at a Group of 5 program", 1, (38, 56), 2),
+    (["head_coach"], "Former head coach, out of the game a year", -3, (48, 64), 1),
+)
+
+
+def market_refresh(state: dict) -> None:
+    """Each offseason: coaches too long in the market retire from it, and the supply is topped up
+    with generated coaches (FCS and lower-division head coaches, NFL assistants, position coaches)."""
+    lgd = state["league"]
+    year = state["offseason"]["year"] if state.get("offseason") else state.get("year", 2026)
+    mk = lgd.setdefault("market", {"coaches": [], "year": year})
+    rng = random.Random(f"market-{state['id']}-{year}")
+    mk["coaches"] = [c for c in mk["coaches"] if year - c["year"] < MARKET_STALE and c["age"] + (year - c["year"]) < 66]
+    weights = [w for *_, w in SUPPLY]
+    taken = _taken_names(lgd)
+    while len(mk["coaches"]) < MARKET_SIZE:
+        roles, prev, level, ages, _ = rng.choices(SUPPLY, weights)[0]
+        name = recruits._name(rng, taken)
+        main = roles[0] if roles[0] != "head_coach" or len(roles) == 1 else rng.choice(roles)
+        coach = {"name": name, "role": main, "previous_job": prev, "ratings_generated": True,
+                 "age_at": [year, rng.randint(*ages)], "since": year - rng.randint(1, 4)}
+        coach["ratings"] = _ratings_for(lgd, main, coach, rng, level)
+        mk["coaches"].append(_entry(coach, main, None, prev, year, roles, rng))
+    mk["year"] = year
+
+
+def market_add(state: dict, coach: dict, role: str, team: Optional[str], why: str, year: int,
+               roles: Optional[list[str]] = None) -> dict:
+    """A coach who lost or left his job joins the market (fired coaches sit out this offseason)."""
+    mk = market(state)
+    rng = random.Random(f"mk-{coach.get('name')}-{year}")
+    if roles is None:
+        roles = ["head_coach"] + list(COORD_ROLES) if role == "head_coach" else [role]
+    e = _entry(coach, role, team, why, year, roles, rng)
+    e["sits_out"] = year
+    mk["coaches"].append(e)
+    return e
+
+
+def market_candidates(state: dict, slug: str, role: str, n: int, rng: Optional[random.Random] = None,
+                      year: Optional[int] = None) -> list[tuple[float, dict]]:
+    """The market's best `n` coaches for `role` at `slug`, (score, entry): his ratings for the role
+    (drawn when he has not held it) against the program's level, a little noise."""
+    mk = market(state)
+    lgd = state["league"]
+    year = year or mk["year"]
+    rng = rng or random.Random(f"cands-{state['id']}-{slug}-{role}-{year}")
+    b = baseline(slug)
+    out = []
+    for e in mk["coaches"]:
+        if role not in e["roles"] or e.get("sits_out") == year:
+            continue
+        r = e["ratings_by_role"].get(role)
+        if r is None:
+            r = e["ratings_by_role"][role] = _ratings_for(lgd, role, {"ratings": e["ratings"], "role": e["last_role"]},
+                                                          random.Random(f"rf-{e['id']}-{role}"), 2 * b)
+        score = _rating({"ratings": r}) - (3 if e["last_role"] != role and role == "head_coach" else 0) + rng.gauss(0, 3)
+        out.append((score, e))
+    out.sort(key=lambda x: -x[0])
+    return out[:n]
+
+
+def market_take(state: dict, entry_id: str, role: str, slug: str, year: int) -> dict:
+    """A market coach takes `role` at `slug`: out of the pool, a coach dict for the job."""
+    mk = market(state)
+    e = next((c for c in mk["coaches"] if c["id"] == entry_id), None)
+    if e is None:
+        raise ValueError("that coach is no longer available")
+    mk["coaches"].remove(e)
+    lgd = state["league"]
+    ratings = e["ratings_by_role"].get(role) or _ratings_for(lgd, role, {"ratings": e["ratings"], "role": e["last_role"]},
+                                                              random.Random(f"rf-{e['id']}-{role}"), 2 * baseline(slug))
+    like = lgd["teams"][slug]["coaches"].get(role) or next(t["coaches"][role] for t in lgd["teams"].values() if t["coaches"].get(role))
+    coach = json.loads(json.dumps(like))
+    coach.update(e["coach"], ratings=dict(ratings), role=role, team_slug=slug, since=year, coach_id=f"{slug}:{role}:{year}",
+                 history=e["history"], ratings_by_role={k: v for k, v in e["ratings_by_role"].items() if k != role},
+                 previous_job=_previous_job(e), is_interim=False)
+    coach.pop("ratings_generated", None) if not e["coach"].get("ratings_generated") else None
+    return coach
+
+
+def _previous_job(e: dict) -> str:
+    if e["last_team"]:
+        return f"{ROLE_WORDS.get(e['last_role'], e['last_role'])} at {_name(e['last_team'])}"
+    return e["why"]
+
+
+def market_rows(state: dict, role: Optional[str] = None) -> list[dict]:
+    """The market for the page: every coach for hire with why he is available and where he has been."""
+    mk = market(state)
+    rows = []
+    for e in mk["coaches"]:
+        if role and role not in e["roles"]:
+            continue
+        rows.append({"id": e["id"], "name": e["name"], "roles": [ROLE_WORDS[r] for r in e["roles"]], "age": e["age"] + (mk["year"] - e["year"]),
+                     "why": e["why"], "previous_job": _previous_job(e), "rating": int(_rating({"ratings": e["ratings"]})),
+                     "history": [dict(h, team_name=_name(h["team"])) for h in e["history"]], "sits_out": e.get("sits_out") == mk["year"]})
+    rows.sort(key=lambda r: -r["rating"])
+    return rows
+
+
+def _fired_why(slug: str, res: dict) -> str:
+    return f"Fired by {_name(slug)} after a {res.get('wins', 0)}-{res.get('losses', 0)} season"
+
+
 def run(state: dict) -> dict:
     """The whole carousel for the offseason: verdicts, departures, the hiring chain, coordinators,
     your staff and your job. Returns the record shown on the Offseason screen."""
@@ -145,13 +315,20 @@ def run(state: dict) -> dict:
     me = state["team"]
     res = _results(state)
     teams = season.load_teams()
+    market(state)
+    market_refresh(state)
+    ad(lgd["teams"][me], me)                                    # you start on solid ground
     verdicts = {slug: judge(t, slug, res.get(slug, {"wins": 0, "losses": 0}), year) for slug, t in lgd["teams"].items()}
-    changes, open_hc = [], []
+    changes, open_hc, left_hc = [], [], {}
 
-    def leave(slug: str, reason: str) -> None:
+    def leave(slug: str, reason: str, why: Optional[str] = None) -> None:
         t = lgd["teams"][slug]
-        changes.append({"team": slug, "role": "head_coach", "old": t["coaches"]["head_coach"]["name"], "reason": reason})
+        hc = t["coaches"]["head_coach"]
+        changes.append({"team": slug, "role": "head_coach", "old": hc["name"], "reason": reason})
         open_hc.append(slug)
+        left_hc[slug] = hc["name"]
+        if why:
+            market_add(state, hc, "head_coach", slug, why, year)
 
     # 1. who goes: fired, retired, NFL
     for slug, t in lgd["teams"].items():
@@ -161,7 +338,7 @@ def run(state: dict) -> dict:
         sec = v["security"]
         r = res.get(slug, {})
         if (sec < FIRE_BELOW and v["tenure"] >= 2 and rng.random() < FIRE_CHANCE) or sec < MUST_FIRE:
-            leave(slug, "fired")
+            leave(slug, "fired", _fired_why(slug, r))
         elif _rating(hc) >= 85 and r.get("wins", 0) >= 11 and rng.random() < NFL_CHANCE:
             leave(slug, "left for the NFL")
         elif rng.random() < RETIRE * (1 + max(0, v["tenure"] - 12) / 8) * (1 + max(0, _age(hc, year) - 60) / 5):
@@ -171,38 +348,55 @@ def run(state: dict) -> dict:
     # 2. fill the openings, best programs first; a hire can open another job
     filled: dict[str, dict] = {}
     queue = sorted(open_hc, key=lambda s: -baseline(s))
-    poached_coords: list[tuple[str, str]] = []
+    open_coords: list[tuple[str, str, str]] = []            # (team, role, reason) coordinator jobs to fill
+    taken: set[str] = set(left_hc.values())                  # coaches gone or hired away this offseason
     guard = 0
     while queue and guard < 400:
         guard += 1
         slug = queue.pop(0)
-        hire, src = _pick_head_coach(state, slug, verdicts, res, filled, rng, year)
+        hire, src = _pick_head_coach(state, slug, verdicts, res, filled, rng, year, taken)
+        taken.add(hire["name"])
         lgd["teams"][slug]["coaches"]["head_coach"] = hire
         lgd["teams"][slug]["style"] = new_style(rng, lgd, slug)
         lgd["teams"][slug].setdefault("ad", ad(lgd["teams"][slug], slug))["security"] = START_SECURITY
         filled[slug] = hire
-        changes.append({"team": slug, "role": "head_coach", "new": hire["name"], "reason": "hired", "from": src.get("text")})
+        changes.append({"team": slug, "role": "head_coach", "new": hire["name"], "reason": "hired", "from": src.get("text"),
+                        "from_market": src.get("kind") == "market"})
         if src.get("kind") == "head_coach":
             changes.append({"team": src["team"], "role": "head_coach", "old": hire["name"], "reason": f"left for {teams[slug]['name']}"})
             queue.append(src["team"])
             queue.sort(key=lambda s: -baseline(s))
         elif src.get("kind") == "coordinator":
-            poached_coords.append((src["team"], src["role"]))
-    # 3. coordinators: the ones hired away, a few leaving on their own; generated replacements
+            changes.append({"team": src["team"], "role": src["role"], "old": hire["name"], "reason": f"left for {teams[slug]['name']}"})
+            open_coords.append((src["team"], src["role"], "poached"))
+    # 3. coordinators: hired away, let go by a new head coach, leaving on their own; filled from the market
     for slug, t in lgd["teams"].items():
-        for role in ("offensive_coordinator", "defensive_coordinator"):
-            gone = (slug, role) in poached_coords
-            if not gone and slug != me and slug not in filled and rng.random() < COORD_MOVE:
-                gone = True
-                changes.append({"team": slug, "role": role, "old": (t["coaches"].get(role) or {}).get("name"), "reason": "moved on"})
-            if gone and slug != me:
-                level = 3 * baseline(slug)
-                t["coaches"][role] = generated(rng, lgd, role, slug, year, like=t["coaches"].get(role), level=level)
-                changes.append({"team": slug, "role": role, "new": t["coaches"][role]["name"], "reason": "hired"})
-            elif slug in filled and rng.random() < 0.5 and slug != me:
-                # a new head coach brings his own coordinator half the time
-                t["coaches"][role] = generated(rng, lgd, role, slug, year, like=t["coaches"].get(role), level=2 * baseline(slug))
-    your_poached = [role for s, role in poached_coords if s == me]
+        for role in COORD_ROLES:
+            if any(s == slug and r == role for s, r, _ in open_coords):
+                continue
+            c = t["coaches"].get(role)
+            if not (c and c.get("name")):
+                continue
+            if c["name"] == left_hc.get(slug):                   # the head coach called his own plays
+                open_coords.append((slug, role, "left"))
+            elif c["name"] == t["coaches"]["head_coach"].get("name"):
+                continue
+            elif slug in filled and slug != me and rng.random() < OWN_STAFF:
+                changes.append({"team": slug, "role": role, "old": c["name"], "reason": "let go"})
+                market_add(state, c, role, slug, f"Let go at {_name(slug)} when {filled[slug]['name']} brought his own staff", year)
+                open_coords.append((slug, role, "let go"))
+            elif slug != me and rng.random() < COORD_MOVE:
+                changes.append({"team": slug, "role": role, "old": c["name"], "reason": "moved on"})
+                market_add(state, c, role, slug, f"Left {_name(slug)} after {year - (c.get('since') or year)} seasons to look for a bigger job", year)
+                open_coords.append((slug, role, "moved on"))
+    your_poached = []
+    for slug, role, reason in sorted(open_coords, key=lambda x: -baseline(x[0])):
+        if slug == me:
+            your_poached.append(role)
+            continue
+        hire, src = _pick_coordinator(state, slug, role, rng, year)
+        lgd["teams"][slug]["coaches"][role] = hire
+        changes.append({"team": slug, "role": role, "new": hire["name"], "reason": "hired", "from": src, "from_market": True})
     # 4. your job: offers after a great year; a pick of openings if fired
     offers = []
     my_b = baseline(me)
@@ -218,14 +412,27 @@ def run(state: dict) -> dict:
                                                                 for s, v in verdicts.items()}}
 
 
-def _pick_head_coach(state: dict, slug: str, verdicts: dict, res: dict, filled: dict, rng: random.Random, year: int) -> tuple[dict, dict]:
+def _pick_coordinator(state: dict, slug: str, role: str, rng: random.Random, year: int) -> tuple[dict, str]:
+    """The market's best coordinator for the job (one is generated when the market has none)."""
+    cands = market_candidates(state, slug, role, 3, rng, year)
+    if not cands:
+        lgd = state["league"]
+        g = generated(rng, lgd, role, slug, year, like=lgd["teams"][slug]["coaches"].get(role), level=3 * baseline(slug))
+        return g, g["previous_job"]
+    e = cands[0][1]
+    return market_take(state, e["id"], role, slug, year), _previous_job(e)
+
+
+def _pick_head_coach(state: dict, slug: str, verdicts: dict, res: dict, filled: dict, rng: random.Random, year: int,
+                     taken: Optional[set] = None) -> tuple[dict, dict]:
     """The best candidate who would take the job: a sitting head coach at a smaller program with a
-    winning run, a coordinator at a strong program, or one of three generated candidates."""
+    winning run, a coordinator at a strong program, or one of the market's best three."""
     lgd = state["league"]
     me = state["team"]
     b = baseline(slug)
     hist = (state.get("career") or {}).get("league_records", {})
     cands = []
+    taken = taken or set()
     for s, t in lgd["teams"].items():
         if s in (slug, me) or s in filled:
             continue
@@ -233,25 +440,33 @@ def _pick_head_coach(state: dict, slug: str, verdicts: dict, res: dict, filled: 
         recs = hist.get(s, [])[-2:] + [[res.get(s, {}).get("wins", 0), res.get(s, {}).get("losses", 0)]]
         w = sum(r[0] for r in recs)
         pct = w / max(1, sum(r[0] + r[1] for r in recs))
-        if baseline(s) < b - 0.3 and pct >= 0.65 and verdicts[s]["tenure"] >= 2:
+        if hc["name"] not in taken and baseline(s) < b - 0.3 and pct >= 0.65 and verdicts[s]["tenure"] >= 2:
             cands.append((_rating(hc) + 20 * (pct - 0.65) + rng.gauss(0, 3), hc, {"kind": "head_coach", "team": s,
                           "text": f"head coach at {_name(s)}"}))
-        for role in ("offensive_coordinator", "defensive_coordinator"):
+        for role in COORD_ROLES:
             c = t["coaches"].get(role)
-            if c and baseline(s) >= b - 0.5 and res.get(s, {}).get("wins", 0) >= 9:
+            if c and c.get("name") and c["name"] not in taken and c["name"] != hc["name"] and baseline(s) >= b - 0.5 and res.get(s, {}).get("wins", 0) >= 9:
                 cands.append((_rating(c) - 4 + rng.gauss(0, 3), c, {"kind": "coordinator", "team": s, "role": role,
-                              "text": f"{'offensive' if role.startswith('off') else 'defensive'} coordinator at {_name(s)}"}))
-    for _ in range(3):
+                              "text": f"{ROLE_WORDS[role]} at {_name(s)}"}))
+    for score, e in market_candidates(state, slug, "head_coach", 3, rng, year):
+        cands.append((score - 2, e, {"kind": "market", "text": _previous_job(e), "id": e["id"]}))
+    if not cands:
         g = generated(rng, lgd, "head_coach", slug, year, level=2 * b)
-        cands.append((_rating(g) - 2 + rng.gauss(0, 3), g, {"kind": "generated", "text": g["previous_job"]}))
+        cands.append((0, g, {"kind": "generated", "text": g["previous_job"]}))
     score, pick, src = max(cands, key=lambda x: x[0])
+    if src["kind"] == "market":
+        return market_take(state, src["id"], "head_coach", slug, year), src
     hire = json.loads(json.dumps(pick))
     if src["kind"] == "coordinator":                    # a coordinator becomes a head coach: head coach ratings
         g = generated(random.Random(f"{slug}-{pick.get('name')}"), lgd, "head_coach", slug, year, level=2 * b)
         g["ratings"].update({k: v for k, v in pick.get("ratings", {}).items() if k in g["ratings"]})
         g["name"] = pick["name"]
+        g["age_at"] = pick.get("age_at")
+        g["ratings_by_role"] = {src["role"]: dict(pick["ratings"])}
         hire = g
-    hire.update(since=year, previous_job=src["text"])
+    hist = list(pick.get("history") or []) + [{"year": pick.get("since") or year, "to": year, "team": src["team"],
+                                               "role": src.get("role", "head_coach")}]
+    hire.update(since=year, previous_job=src["text"], history=hist, team_slug=slug, coach_id=f"{slug}:head_coach:{year}")
     return hire, src
 
 

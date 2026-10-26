@@ -1010,19 +1010,23 @@ def _new_coach(lgd: dict, role: str, slug: str, year: int, rng: random.Random, l
     return base
 
 
+STAFF_ROLES = {"OC": "offensive_coordinator", "DC": "defensive_coordinator"}
+STAFF_CANDIDATES = 5             # coaches offered for each opening on your staff
+
+
 def _staff_changes(state: dict, poached: list[str]) -> dict:
     """Your staff: a coordinator another program hired as its head coach (the carousel), a
-    recruiter who moves on now and then; each opening gets three candidates."""
+    recruiter who moves on now and then; each opening gets candidates (coordinators from the
+    coaching market, recruiters from position coaches around the country)."""
     rng = _rng(state, "staff")
     staff = state["career"]["staff"]
     leaving, candidates = [], {}
     taken = {s["name"] for s in staff}
-    roles = {"OC": "offensive_coordinator", "DC": "defensive_coordinator"}
     for s in staff:
-        gone = roles[s["role"]] in poached if s["role"] in roles else rng.random() < RECRUITER_LEAVE
+        gone = STAFF_ROLES[s["role"]] in poached if s["role"] in STAFF_ROLES else rng.random() < RECRUITER_LEAVE
         if gone:
             leaving.append(s["id"])
-            candidates[s["id"]] = [_candidate(rng, s, taken) for _ in range(3)]
+            candidates[s["id"]] = _candidates(state, s, rng, taken)
     for s in staff:                       # the rest grow a little (or slip)
         if s["id"] not in leaving:
             s["evaluation"] = int(max(35, min(99, s["evaluation"] + rng.choice((-1, 0, 1, 1, 2)))))
@@ -1030,11 +1034,58 @@ def _staff_changes(state: dict, poached: list[str]) -> dict:
     return {"leaving": leaving, "candidates": candidates, "hired": {}}
 
 
+def _candidates(state: dict, s: dict, rng: random.Random, taken: set) -> list[dict]:
+    """The coaches offered for an opening: the market's best for a coordinator's job (with why each
+    is available and where he has been), generated position coaches for a recruiter's."""
+    from coach_career import carousel
+    if s["role"] not in STAFF_ROLES:
+        return [_candidate(rng, s, taken) for _ in range(STAFF_CANDIDATES)]
+    role = STAFF_ROLES[s["role"]]
+    year = state["offseason"]["year"]
+    out = []
+    for score, e in carousel.market_candidates(state, state["team"], role, STAFF_CANDIDATES, rng, year):
+        r = e["ratings_by_role"][role]
+        out.append({"name": e["name"], "role": s["role"], "evaluation": int(r.get("player_development", 60)),
+                    "recruiting": int(r.get("recruiting", 60)), "play_calling": int(r.get("play_calling", 60)),
+                    "why": e["why"], "previous_job": carousel._previous_job(e), "from_market": True, "market_id": e["id"],
+                    "age": e["age"] + (year - e["year"]), "history": [dict(h, team_name=carousel._name(h["team"])) for h in e["history"]]})
+    while len(out) < STAFF_CANDIDATES:
+        out.append(_candidate(rng, s, taken))
+    return out
+
+
 def _candidate(rng: random.Random, s: dict, taken: set) -> dict:
     name = recruits._name(rng, taken)
     taken.add(name)
+    prev = rng.choice(("Position coach at a Group of 5 program", "Recruiting coordinator at an FCS program",
+                       "High school head coach", "Position coach at a Power 4 program", "Graduate assistant turned recruiter"))
     return {"name": name, "role": s["role"], "evaluation": int(max(40, min(92, rng.gauss(64, 10)))),
-            "recruiting": int(max(40, min(92, rng.gauss(64, 10))))}
+            "recruiting": int(max(40, min(92, rng.gauss(64, 10)))), "why": "Looking for a step up", "previous_job": prev,
+            "from_market": False}
+
+
+def open_role(state: dict, staff_id: str) -> dict:
+    """You let a coordinator or recruiter go at the Staff step: he joins the coaching market and
+    his job gets candidates."""
+    from coach_career import carousel
+    off = state.get("offseason") or {}
+    staff_off = off.get("staff")
+    if off.get("stage") != "staff" or not staff_off:
+        raise ValueError("staff changes are made at the Staff step")
+    s = next((x for x in state["career"]["staff"] if x["id"] == staff_id), None)
+    if s is None:
+        raise ValueError("no such staff member")
+    if s["id"] in staff_off["leaving"]:
+        raise ValueError("that job is already open")
+    me, year = state["team"], off["year"]
+    key = STAFF_ROLES.get(s["role"])
+    coaches = state["league"]["teams"][me]["coaches"]
+    if key and coaches.get(key) and coaches[key].get("name") == s["name"]:
+        carousel.market_add(state, coaches[key], key, me, f"Let go by {carousel._name(me)} after the season", year)
+    off.setdefault("coaching_changes", []).append({"team": me, "role": key or "recruiter", "old": s["name"], "reason": "let go"})
+    staff_off["leaving"].append(s["id"])
+    staff_off["candidates"][s["id"]] = _candidates(state, s, _rng(state, f"open-{s['id']}"), {x["name"] for x in state["career"]["staff"]})
+    return staff_off
 
 
 def hire(state: dict, staff_id: str, index: int) -> dict:
@@ -1050,10 +1101,13 @@ def hire(state: dict, staff_id: str, index: int) -> dict:
 
 
 def _apply_staff(state: dict) -> list[dict]:
-    """Openings are filled: your pick, else the best candidate (Auto)."""
+    """Openings are filled: your pick, else the best candidate (Auto). A coordinator hired from
+    the market takes the job with his own ratings and leaves the pool."""
+    from coach_career import carousel
     staff, off = state["career"]["staff"], state["offseason"]["staff"]
     out = []
-    coaches = state["league"]["teams"][state["team"]]["coaches"]
+    me, year = state["team"], state["offseason"]["year"]
+    coaches = state["league"]["teams"][me]["coaches"]
     for s in staff:
         if s["id"] not in off["leaving"]:
             continue
@@ -1062,13 +1116,21 @@ def _apply_staff(state: dict) -> list[dict]:
         if i is None:
             i = max(range(len(cands)), key=lambda j: cands[j]["evaluation"] + cands[j]["recruiting"])
         c = cands[i]
-        out.append({"role": s["role"], "old": s["name"], "new": c["name"]})
+        out.append({"role": s["role"], "old": s["name"], "new": c["name"], "previous_job": c.get("previous_job")})
         s.update(name=c["name"], evaluation=c["evaluation"], recruiting=c["recruiting"])
-        key = {"OC": "offensive_coordinator", "DC": "defensive_coordinator"}.get(s["role"])
+        key = STAFF_ROLES.get(s["role"])
+        if key and c.get("market_id"):
+            try:
+                coaches[key] = carousel.market_take(state, c["market_id"], key, me, year)
+                continue
+            except ValueError:
+                pass
         if key and coaches.get(key):
             coaches[key]["name"] = c["name"]
             coaches[key]["ratings"]["player_development"] = c["evaluation"]
             coaches[key]["ratings"]["recruiting"] = c["recruiting"]
+            coaches[key]["since"] = year
+            coaches[key]["previous_job"] = c.get("previous_job", "")
     return out
 
 
