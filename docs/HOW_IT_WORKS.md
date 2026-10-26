@@ -842,8 +842,10 @@ the time he lets slip one of his priorities, `CALL_REVEAL`, and you come away wi
 range of about 15% either side, not the number), a head coach in-home visit 30 (once a month; it
 tells you one priority for sure and his number), an official visit invite 10 (at your next home
 game; a win sells, a 21-point loss hurts, a big stadium helps, and the weekend tells you all
-three of his priorities), a scouting trip 20 (once a week per prospect: your best evaluator takes
-three looks at him, `SCOUT_LOOKS`, so you need not wait for the area scout's weekly look) and an
+three of his priorities), a scouting trip 5 (one look by your best evaluator, up to three trips per
+prospect in any week, `SCOUT_MAX`, so you need not wait for the area scout's weekly look; a
+prospect scouted three times shows his grades in one line on his card and at the top of his
+profile) and an
 offer nothing. Nothing about a recruitment is shown as a number you could not know: your
 standing with him reads as words (clear favorite, narrow favorite, close race, behind but in
 the picture, long shot) over a bar, and so does his list on the profile.
@@ -968,6 +970,17 @@ public grades) and a comp: the nearest real 2026 starter at his EA position, mea
 ceiling against the starter's ratings over the ten attributes most tied to overall there, and
 only when closer than 30% of starter pairs are to each other. "Our comp" appears after three
 looks, measured from your staff's read, so a wrong read can give a different comp.
+
+**Needs, recommendations and the first weeks.** Both the board and the class open with a needs
+strip by position (`recruiting.needs_detail`: a healthy roster's make-up minus who comes back
+minus your commits), counted the way you pick (what's left; committed, firm commits, your
+board or your offers against the spots to fill; only what's short); a position picked there
+filters the board or the class to it. The class's **Recommended for you** view
+(`recruiting.recommended`) lists the prospects the Auto-recruit rules would put on your board
+this week, best fit first, each with why (your states, your star level, a position you need),
+with one button to add them all: a base to build a board from. Nobody commits anywhere in the
+first three weeks (`COMMIT_FREEZE_WEEKS`), so there is time to scout and build a board before
+the class moves. A school's weekly hours are a multiple of 5.
 
 **The screens** (`web/recruiting.js`). A career opens on the **Office**: this week's opponent
 with the win chance and projected score, your week's three steps (Recruit, Game day, Advance)

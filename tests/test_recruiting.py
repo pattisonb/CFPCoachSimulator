@@ -28,7 +28,7 @@ if __name__ == "__main__":
     # actions: hours, a call reveals a priority, one in-home visit a month, pitches on his priorities count 4x
     pid = tx["id"]; h0 = recruiting.weekly_hours(st, "ohio-state")
     day = season.load_teams()["ohio-state"]["coaches"]["head_coach"]["ratings"]["recruiting"]
-    assert h0 == 50 + max(0, day - 50) // 4
+    assert h0 == 5 * round((50 + max(0, day - 50) / 4) / 5) and h0 % 5 == 0
     r = recruiting.act(st, "ohio-state", pid, "call", pitch=tx["priorities"][0])
     assert r["hours_left"] == h0 - 15 and (r["revealed"] is None or r["revealed"] in tx["priorities"])
     # a call is not a confession: it reveals a priority only CALL_REVEAL of the time (over the class, not
@@ -41,17 +41,26 @@ if __name__ == "__main__":
     assert av.get("exact") is None and av["lo"] < ask_ < av["hi"] and av["hi"] - av["lo"] <= max(5, 0.6 * ask_), av
     r = recruiting.act(st, "ohio-state", pid, "hc_visit")
     assert r["revealed"] in tx["priorities"] and recruiting.ask_view(st, "ohio-state", pid).get("exact") == recruiting.ask_from(st, "ohio-state", pid)
-    # scouting by hand: 20 hours buys your best evaluator's looks at one prospect, once a week
+    # scouting by hand: 5 hours a look by your best evaluator at one prospect, up to three looks, any week
     unseen = next(q for q in list(rc["prospects"]) if q not in rc["reads"] and q != pid)
     rc["hours"]["ohio-state"] = 100
     r = recruiting.act(st, "ohio-state", unseen, "scout")
     assert rc["reads"][unseen]["looks"] == recruiting.SCOUT_LOOKS and r["hours_left"] == 100 - recruiting.HOURS["scout"]
+    for _ in range(recruiting.SCOUT_MAX - 1):
+        recruiting.act(st, "ohio-state", unseen, "scout")
+    assert rc["reads"][unseen]["looks"] == recruiting.SCOUT_MAX and rc["hours"]["ohio-state"] == 100 - recruiting.SCOUT_MAX * recruiting.HOURS["scout"]
     lo, hi = recruiting.read_interval(st, unseen, "athleticism")
     assert hi - lo < 25, (lo, hi)
     try:
-        recruiting.act(st, "ohio-state", unseen, "scout"); raise AssertionError("second scouting trip in a week allowed")
+        recruiting.act(st, "ohio-state", unseen, "scout"); raise AssertionError("a fourth scouting trip allowed")
     except recruiting.RecruitingError as e:
         assert e.code == 409
+    st["current_week"] += 1
+    try:
+        recruiting.act(st, "ohio-state", unseen, "scout"); raise AssertionError("a scouted prospect can be scouted again next week")
+    except recruiting.RecruitingError as e:
+        assert e.code == 409
+    st["current_week"] -= 1
     rc["hours"]["ohio-state"] = h0 - 15 - 30                 # back to the week as it was before the trip
     try:
         recruiting.act(st, "ohio-state", pid, "hc_visit"); raise AssertionError("second in-home visit inside 4 weeks allowed")
@@ -216,7 +225,7 @@ if __name__ == "__main__":
     mine = season.new_season("kent-state", "full", seed=6, career=True,
                              coach={"id": "c1", "first_name": "Pat", "last_name": "Test",
                                     "ratings": {"recruiting": 92, "offense": 70, "defense": 70}})
-    assert recruiting.weekly_hours(mine, "kent-state") == 50 + (92 - 50) // 4
+    assert recruiting.weekly_hours(mine, "kent-state") == 60 and recruiting.weekly_hours(mine, "kent-state") % 5 == 0
     # a whole season: everyone signs somewhere, nobody past their open spots, about a third to FCS
     import time
     from collections import Counter

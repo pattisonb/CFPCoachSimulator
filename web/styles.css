@@ -1287,3 +1287,19 @@ body.career-mode.on-career-tab .season-head { padding-bottom: 0; }
 .go-programs td { text-align: left; } .go-programs td.num { text-align: right; } .go-programs .team-pill { vertical-align: middle; }
 .go-programs tr.mine td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .go-scroll { overflow-x: auto; }
+
+/* needs by position (the board and the class): chips, a way of counting */
+.go-needs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0 10px; }
+.go-needs-label { font-size: 12px; letter-spacing: 0.08em; color: var(--muted); margin-right: 2px; }
+.go-chip.small { min-height: 32px; padding: 0 10px; font-size: 13px; }
+.go-chip.short:not(.on) { border-color: color-mix(in srgb, var(--good) 60%, var(--border)); color: var(--good-text, var(--good)); }
+.go-chip.full:not(.on) { color: var(--muted); }
+.go-needs .go-needs-mode { min-height: 32px; padding-top: 0; padding-bottom: 0; font-size: 13px; margin-left: auto; }
+.go-pcard-top { width: 100%; }
+.go-pcard-name { font-size: 17px; font-weight: 700; line-height: 1.2; text-align: left; padding: 0; background: none; border: none; color: var(--text); cursor: pointer; font-family: inherit; }
+.go-pcard-name:hover { text-decoration: underline; }
+.go-scouted { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; padding: 6px 10px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.go-scouted > b:first-child { font-size: 11px; letter-spacing: 0.08em; color: var(--accent-text, var(--accent)); align-self: center; }
+.go-list-row { flex-wrap: wrap; }
+.go-why { flex-basis: 100%; padding-left: 8px; }
+.go-list-head { align-items: center; justify-content: space-between; margin-bottom: 6px; }

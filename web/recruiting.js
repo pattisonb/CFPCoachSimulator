@@ -17,7 +17,7 @@
   const STATES = ["AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME",
                   "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD",
                   "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY"];
-  const view = { filters: { q: "", position: "", stars: "", state: "", status: "", sort: "rank" }, offset: 0, openClass: null, chip: "all", sort: "chance", selected: null, pitch: {} };
+  const view = { filters: { q: "", position: "", stars: "", state: "", status: "", sort: "rank", group: "" }, offset: 0, openClass: null, chip: "all", sort: "chance", selected: null, pitch: {}, group: null };
   let H = null;
 
   const stars = (n) => "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
@@ -321,8 +321,57 @@
                     hc_visit: "Head coach in-home visit with your pitch: 30 hours, once every 4 weeks; you learn a priority and his number",
                     offer: "Offer a scholarship, no NIL (set NIL points in the side panel). Only an offer lets him commit to you",
                     official_visit: "Invite him on an official visit: 10 hours; the visit reveals all his priorities",
-                    scout: "Send your best evaluator to see him: 20 hours, once a week; three looks that tighten his grades without waiting on the area scout" };
+                    scout: "Send your best evaluator to see him: 5 hours a look, up to three looks, any week; each look tightens his grades without waiting on the area scout" };
   const CHIPS = [["all", "All"], ["lead", "You lead"], ["close", "Close race"], ["behind", "Behind"], ["offer", "Not offered"], ["committed", "Committed"]];
+
+  // ----- what the roster needs, by group: one strip on the board and the class, with a way of counting -----
+  const NEED_MODES = [["need", "What's left", "A healthy 85-man roster's make-up minus the players coming back minus your commits"],
+    ["commits", "Committed / need", "Your commits at each position against the spots this class needs to fill"],
+    ["firm", "Firm commits / need", "Commits that have settled (an official visit or weeks of contact) against the spots to fill"],
+    ["board", "On board / need", "Uncommitted prospects on your board at each position against the spots to fill"],
+    ["offers", "Offers out / need", "Your open offers at each position against the spots to fill"],
+    ["left", "Only what's short", "Just the positions still short, by how many"]];
+  const GROUP_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P"];
+  const GRADE_NAMES = { athleticism: "Athleticism", size_strength: "Size", technique: "Technique", football_iq: "IQ", potential: "Potential", coachability: "Coachability" };
+  // a scouted prospect's grades in one line (his card and the top of his profile)
+  function scoutLine(grades, looks) {
+    const g = (r) => (r[0] === r[1] ? r[0] : `${r[1]}–${r[0]}`);
+    return el("div", { class: "go-scouted", title: `Your staff's read after ${looks} looks: the range each grade could still fall in` }, [el("b", { text: "SCOUTED" }),
+      ...["potential", "athleticism", "technique", "football_iq", "size_strength", "coachability"].filter((k) => grades[k]).map((k) => el("span", {}, [el("span", { class: "muted", text: `${GRADE_NAMES[k]} ` }), el("b", { text: g(grades[k]) })]))]);
+  }
+  function needsMode() { try { return localStorage.getItem("cfp-needs-mode") || "need"; } catch (e) { return "need"; } }
+  function needText(mode, g, r) {
+    const spots = r.need + r.commits;                       // the spots this class fills at the position
+    if (mode === "commits") return `${g} ${r.commits}/${spots}`;
+    if (mode === "firm") return `${g} ${r.firm}/${spots}`;
+    if (mode === "board") return `${g} ${r.board}/${Math.max(0, r.need)}`;
+    if (mode === "offers") return `${g} ${r.offers}/${Math.max(0, r.need)}`;
+    return r.need > 0 ? `${g} ${r.need}` : g;
+  }
+  function needsStrip(detail, picked, onPick, onMode) {
+    if (!detail) return el("div");
+    const mode = needsMode();
+    const wrap = el("div", { class: "go-needs", role: "group", "aria-label": "What your roster needs" });
+    const sel = el("select", { class: "go-sel go-needs-mode", "aria-label": "How to count needs" }, NEED_MODES.map(([k, label, tip]) => el("option", { value: k, text: label, title: tip })));
+    sel.value = mode;
+    sel.addEventListener("change", () => { try { localStorage.setItem("cfp-needs-mode", sel.value); } catch (e) { /* no storage */ } onMode(); });
+    wrap.append(el("b", { class: "go-needs-label", text: "NEED" }));
+    let any = false;
+    for (const g of GROUP_ORDER) {
+      const r = detail[g];
+      if (!r) continue;
+      if (mode === "left" && r.need <= 0) continue;
+      any = true;
+      const short = r.need > 0, covered = mode === "board" || mode === "offers" ? (short && (mode === "board" ? r.board : r.offers) >= r.need) : mode !== "need" && mode !== "left" && !short;
+      const b = el("button", { type: "button", class: `go-chip small ${picked === g ? "on" : ""} ${short && !covered ? "short" : "full"}`, "aria-pressed": String(picked === g),
+        text: needText(mode, g, r), title: `${g}: ${r.target} on a healthy roster · ${r.back} coming back · ${r.commits} committed (${r.firm} firm) · ${r.board} on your board · ${r.offers} offers out · ${r.need > 0 ? `${r.need} still to fill` : "covered"}` });
+      b.addEventListener("click", () => onPick(picked === g ? null : g));
+      wrap.append(b);
+    }
+    if (!any) wrap.append(el("span", { class: "muted small", text: "every position is covered" }));
+    wrap.append(sel);
+    return wrap;
+  }
   function chipOf(b) {
     if (b.signed || b.committed) return "committed";
     const st = b.standing;
@@ -355,12 +404,8 @@
         meter("Offers", v.offers, v.offers + v.offers_left, true), meter("Commits", v.committed, v.open_spots, true)]),
       el("div", { class: "go-auto" }, [el("span", { class: "small muted", text: "Auto-recruit" }), auto]),
     ]));
-    // what the roster needs this class: the healthy make-up minus who comes back minus your commits
-    const needOrder = Object.entries(v.needs || {}).sort((a, b) => b[1] - a[1]);
-    const short = needOrder.filter(([, n]) => n > 0).map(([g, n]) => `${g} ${n}`), full = needOrder.filter(([, n]) => n <= 0).map(([g]) => g);
-    box.append(el("div", { class: "go-needs small", title: "A healthy 85-man roster's make-up minus the players coming back minus your commits" },
-      [el("b", { text: "NEED " }), el("span", { text: short.length ? short.join(" · ") : "nothing: every group is covered" }),
-        full.length ? el("span", { class: "muted", text: ` · full: ${full.join(", ")}` }) : null]));
+    // what the roster needs this class, by position; a position picked here filters the board to it
+    box.append(needsStrip(v.needs_detail, view.group, (g) => { view.group = g; renderRecruiting(s, box); }, () => renderRecruiting(s, box)));
     if (v.recap.length) box.append(el("ul", { class: "go-ticker rc-recap" }, [el("li", {}, [el("b", { text: "NEWS" })]), ...v.recap.slice(-4).reverse().map((e) => newsItem(s, e))]));
     const counts = { all: v.board.length };
     for (const b of v.board) counts[chipOf(b)] = (counts[chipOf(b)] || 0) + 1;
@@ -383,7 +428,8 @@
     }
     if (view.chip !== "all" && !counts[view.chip]) view.chip = "all";
     const key = { chance: (b) => (b.committed === me || b.signed === me ? -2 : 0) - ((b.standing && b.standing.pct) || 0), rank: (b) => b.national_rank, stars: (b) => -b.stars * 10000 + b.national_rank };
-    const rows = v.board.filter((b) => view.chip === "all" || chipOf(b) === view.chip).sort((a, b) => key[view.sort](a) - key[view.sort](b));
+    const rows = v.board.filter((b) => (view.chip === "all" || chipOf(b) === view.chip) && (!view.group || b.group === view.group)).sort((a, b) => key[view.sort](a) - key[view.sort](b));
+    if (!rows.length && view.group) { view.group = null; renderRecruiting(s, box); return; }
     if (!view.selected || !rows.some((b) => b.id === view.selected)) view.selected = (rows[0] || v.board[0]).id;
     const sel = v.board.find((b) => b.id === view.selected);
     const cards = el("div", { class: "go-cards" }, rows.map((b) => card(b)));
@@ -404,11 +450,14 @@
     function card(b) {
       const sd = standing(b, me);
       const c = el("article", { class: `go-card go-pcard rc-card ${b.id === view.selected ? "selected" : ""}` });
-      c.append(el("button", { type: "button", class: "go-pcard-top", "aria-label": `Select ${b.name}`, "aria-pressed": String(b.id === view.selected),
-        onclick: () => { view.selected = b.id; renderRecruiting(s, box); } }, [avatar(b.id),
-        el("span", { class: "go-pcard-id" }, [el("b", { text: b.name }), el("span", { class: "go-stars", text: stars(b.stars) }),
+      // the card selects on a click; his name opens the full profile
+      const nameBtn = el("button", { type: "button", class: "go-link go-pcard-name", text: b.name, title: "Open his profile", onclick: (e) => { e.stopPropagation(); openProfile(s, b.id); } });
+      c.append(el("div", { class: "go-pcard-top", role: "button", tabindex: "0", "aria-label": `Select ${b.name}`, "aria-pressed": String(b.id === view.selected),
+        onclick: () => { view.selected = b.id; renderRecruiting(s, box); }, onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); view.selected = b.id; renderRecruiting(s, box); } } }, [avatar(b.id),
+        el("span", { class: "go-pcard-id" }, [nameBtn, el("span", { class: "go-stars", text: stars(b.stars) }),
           el("span", { class: "muted small", text: b.portal ? `${b.position} · ${b.cls} · from ${b.from_name} · #${b.portal_rank} in the portal` : `${b.position} · ${place(b.hometown)} · #${b.national_rank}` })])]));
       if (b.portal && b.line) c.append(el("div", { class: "muted small", text: lineText(b.line) }));
+      if (b.scouted && b.our_grades) c.append(scoutLine(b.our_grades, b.looks));
       c.append(el("div", { class: "go-standing" }, [el("span", { class: `go-standing-text ${sd.tone}`, text: sd.text }),
         sd.odds ? el("span", { class: "muted small", text: `${sd.odds} · ${sd.certainty}` }) : null]), bar(sd));
       const tags = el("div", { class: "go-tags" });
@@ -428,16 +477,18 @@
       if (!b.signed && b.committed !== me) {
         const hcWait = b.hc_week != null && s.current_week - b.hc_week < 4;
         const done = b.done_this_week || [];
+        const trips = b.trips || 0;
         const acts = [["message", "Message", 5, done.includes("message") && "week"], ["call", "Call", 15, done.includes("call") && "week"],
-          ["hc_visit", "HC visit", 30, hcWait && "month"], ["scout", "Scout", 20, done.includes("scout") && "week"]];
+          ["hc_visit", "HC visit", 30, hcWait && "month"], ["scout", trips ? `Scout ${trips}/3` : "Scout", 5, trips >= 3 && "scouted"]];
         if (!b.offered) acts.push(["offer", "Offer", 0, false, "go"]);
         else if (!b.visit) acts.push(["official_visit", v.portal ? "Campus visit" : "Visit", 10, !["top", "visited"].includes(b.stage) && "group", "alt"]);
         c.append(el("div", { class: "go-actions" }, acts.map(([a, label, cost, off, tone]) => {
           const short = cost > v.hours_left;
           const btn = el("button", { type: "button", class: `go-act ${tone || ""}`, "aria-label": `${label} ${b.name}`,
             title: off === "month" ? "The head coach visits once every 4 weeks" : off === "week" ? "Once a week: more contact is not more interest"
+              : off === "scouted" ? "Your staff have scouted him three times; his area scout keeps looking"
               : off === "group" ? "He is not considering you yet: get into his top group first" : short ? `Needs ${cost} hours; ${v.hours_left} left this week` : ACT_TIPS[a] },
-            [el("b", { text: label }), el("span", { text: off === "month" ? "monthly" : off === "week" ? "done" : off === "group" ? "not yet" : `${cost}h` })]);
+            [el("b", { text: label }), el("span", { text: off === "month" ? "monthly" : off === "week" ? "done" : off === "scouted" ? "done" : off === "group" ? "not yet" : `${cost}h` })]);
           if (off || short) btn.disabled = true;
           btn.addEventListener("click", () => run(b, a));
           return btn;
@@ -508,7 +559,13 @@
     };
     let qTimer = null;
     q.addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(() => { f.q = q.value; view.offset = 0; load(); }, 250); });
-    box.append(el("div", { class: "go-filters rc-filters" }, [q,
+    const needsBox = el("div");
+    box.append(needsBox);
+    const recBtn = el("button", { type: "button", class: `go-chip ${f.status === "recommended" ? "on" : ""}`, text: "Recommended for you", "aria-pressed": String(f.status === "recommended"),
+      title: "The prospects the Auto-recruit rules would put on your board this week: your states, your star level, the positions you need. A base to build a board from." });
+    recBtn.addEventListener("click", () => { f.status = f.status === "recommended" ? "" : "recommended"; view.offset = 0; render(); });
+    const render = () => renderProspects(s, box);
+    box.append(el("div", { class: "go-filters rc-filters" }, [q, recBtn,
       mk("position", [["", "Any position"], ...POSITIONS.map((p) => [p, p])], "Position"),
       mk("stars", [["", "Any stars"], ["5", "5 stars"], ["4", "4 stars"], ["3", "3 stars"], ["2", "2 stars"]], "Stars"),
       mk("state", [["", "Any state"], ...STATES.map((c) => [c, c])], "Home state"),
@@ -529,8 +586,21 @@
       const portalRows = d.rows.some((r) => r.portal);
       view.portal = portalRows;
       if (portalRows) title.textContent = `TRANSFER PORTAL · ${(s.year || 2026) + 1}`;      // the summary may predate the portal
-      body.append(el("p", { class: "muted small", text: portalRows ? `${d.total} entrants · portal rankings · no stars on a transfer: his film is his rating`
-        : `${d.total} prospects · national rankings · hidden prospects appear once your staff scout their area` }));
+      needsBox.replaceChildren(needsStrip(d.needs, f.group || null, (g) => { f.group = g || ""; view.offset = 0; load(); }, load));
+      const rec = f.status === "recommended";
+      const head = el("div", { class: "go-row wrap go-list-head" }, [el("p", { class: "muted small", text: rec ? `${d.total} recommended · the prospects the Auto-recruit rules would chase for a program like yours, best fit first`
+        : portalRows ? `${d.total} entrants · portal rankings · no stars on a transfer: his film is his rating`
+        : `${d.total} prospects · national rankings · hidden prospects appear once your staff scout their area` })]);
+      if (rec && d.rows.some((r) => !r.on_board)) {
+        const all = el("button", { type: "button", class: "go-btn", text: `Add these ${d.rows.filter((r) => !r.on_board).length} to your board` });
+        all.addEventListener("click", async () => {
+          all.disabled = true; all.textContent = "Adding…";
+          for (const r of d.rows.filter((r) => !r.on_board)) { if (await setBoard(s, r.id, true)) r.on_board = true; }
+          H.toast("They are on your board.", 2500); load();
+        });
+        head.append(all);
+      }
+      body.append(head);
       body.append(el("ul", { class: "go-list rc-list" }, d.rows.map((r) => {
         const add = el("button", { type: "button", class: `go-btn ${r.on_board ? "" : "primary"}`, text: r.on_board ? "✓ On board" : "+ Board", "aria-label": `${r.on_board ? "Remove" : "Add"} ${r.name} ${r.on_board ? "from" : "to"} your board` });
         add.addEventListener("click", async (e) => {
@@ -549,7 +619,9 @@
               el("span", { class: `go-tag ${r.interest_level === "High" ? "good" : r.interest_level === "Medium" ? "warn" : "muted"}`, title: "How much your school appeals to him now", text: `${r.interest_level} interest` }),
               el("span", { class: "muted small", title: "Your staff's read of his potential", text: r.our_potential ? ` Potential ${r.our_potential[0]} to ${r.our_potential[1]}` : " Not scouted" })])]),
         ]);
-        return el("li", { class: "go-list-row rc-row" }, [open, add]);
+        const li = el("li", { class: "go-list-row rc-row" }, [open, add]);
+        if (r.why && r.why.length) li.append(el("div", { class: "go-why muted small", text: r.why.join(" · ") }));
+        return li;
       })));
       const prev = el("button", { type: "button", class: "go-btn", text: "← Previous" });
       const next = el("button", { type: "button", class: "go-btn", text: "Next →" });
@@ -587,10 +659,12 @@
 
   // ----- the Prospect Profile ----------------------------------------------------------------------
 
-  async function openProfile(s, pid) {
-    // the window opens at once, saying it is loading, and fills in when his profile arrives
-    const node = el("div", { class: "rc-profile go-profile" }, [el("p", { class: "muted rc-loading go-loading", text: "Loading his profile…" })]);
-    H.openModal("Prospect Profile", node);
+  async function openProfile(s, pid, into) {
+    // the window opens at once, saying it is loading, and fills in when his profile arrives; with
+    // `into` (a profile already open) it refreshes in place instead of closing and reopening
+    const node = into || el("div", { class: "rc-profile go-profile" }, [el("p", { class: "muted rc-loading go-loading", text: "Loading his profile…" })]);
+    if (into) { node.innerHTML = ""; node.append(el("p", { class: "muted rc-loading go-loading", text: "Updating his profile…" })); }
+    else H.openModal("Prospect Profile", node);
     let p;
     try { p = await H.api(`/api/season/${s.id}/prospect/${encodeURIComponent(pid)}`); }
     catch (err) { node.innerHTML = ""; node.append(el("p", { class: "muted", text: `Could not open his profile: ${H.errText(err)}` })); return; }
@@ -633,6 +707,8 @@
       onBoard.disabled = false;
     });
     node.append(el("div", { class: "rc-profile-actions go-row wrap" }, [onBoard, toBoard]));
+    if (p.looks >= 3 && p.our_grades) node.append(scoutLine(p.our_grades, p.looks),
+      p.our_comp && !(p.public_comp && p.public_comp.name === p.our_comp.name) ? el("p", { class: "small" }, [el("b", { text: "Our comp: " }), `${p.our_comp.name}, ${p.our_comp.school} (${p.our_comp.position}${p.our_comp.overall ? `, ${p.our_comp.overall} OVR` : ""})`]) : null);
     if (pub.schools.length) {
       const listed = holder ? pub.schools.filter((x) => x.school !== holder) : pub.schools;
       const sorted = listed.slice().sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1));
@@ -650,8 +726,10 @@
     }
     const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall ? `, ${c.overall} OVR` : ""})`;
     if (p.public_comp) node.append(el("p", {}, [el("b", { text: "Comp: " }), comp(p.public_comp)]));
-    const scoutBtn = el("button", { type: "button", class: "go-link", text: "Send a scout (20 hours) →", title: ACT_TIPS.scout });
-    scoutBtn.addEventListener("click", async () => { scoutBtn.disabled = true; if (await act(s, pid, "scout")) { H.closeModal(); openProfile(s, pid); } else scoutBtn.disabled = false; });
+    const trips = pub.trips || 0;
+    const scoutBtn = el("button", { type: "button", class: "go-link", text: trips >= 3 ? "Scouted three times: his area scout keeps looking" : `Send a scout (5 hours, look ${trips + 1} of 3) →`, title: ACT_TIPS.scout });
+    if (trips >= 3) scoutBtn.disabled = true;
+    scoutBtn.addEventListener("click", async () => { scoutBtn.disabled = true; if (await act(s, pid, "scout")) openProfile(s, pid, node); else scoutBtn.disabled = false; });
     node.append(el("h3", { text: "Our staff's grades" }));
     if (p.our_grades) {
       // hover (or tab to) a grade: what prospects in this class graded like that look like

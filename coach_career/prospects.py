@@ -359,6 +359,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "schools": _schools(state, pid), "committed": status["committed"], "signed": status["signed"],
         "leaning_fcs": bool(status["fcs"]), "offered_by_you": pid in rc["offers"].get(viewer, []),
         "on_board": pid in rc["board"],
+        "trips": ((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("scouted", 0),
         "priorities_known": list((rc["revealed"].get(viewer) or {}).get(pid, [])),
     }
     read = rc["reads"].get(pid)
@@ -402,8 +403,11 @@ def row(state: dict, pid: str, viewer: str) -> dict:
         "committed": st["committed"], "signed": st["signed"], "leaning_fcs": bool(st["fcs"]),
         "school_name": "FCS" if school == "FCS" else (teams[school]["name"] if school else None),
         "on_board": pid in rc["board"], "offered": pid in rc["offers"].get(viewer, []),
-        "looks": read["looks"] if read else 0,
+        "group": recruiting._group_of(p),
+        "looks": read["looks"] if read else 0, "scouted": bool(read) and read["looks"] >= recruiting.SCOUT_MAX,
+        "trips": ((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("scouted", 0),
         "our_potential": list(recruiting.grade_range(state, pid, "potential")) if read else None,
+        "our_grades": {g: list(recruiting.grade_range(state, pid, g)) for g in recruiting.GROUPS} if read else None,
         **({"portal": True, "from": p["from"], "from_name": p["from_name"], "cls": p["cls"], "usage": p.get("usage"),
             "line": p.get("line"), "portal_rank": p.get("portal_rank")} if p.get("portal") else {}),
     }
@@ -473,7 +477,7 @@ def _level(value: float, cuts: list) -> str:
 
 def search(state: dict, viewer: str, position: Optional[str] = None, stars: Optional[int] = None,
            home: Optional[str] = None, status: Optional[str] = None, q: Optional[str] = None,
-           offset: int = 0, limit: int = 50, sort: str = "rank") -> dict:
+           offset: int = 0, limit: int = 50, sort: str = "rank", group: Optional[str] = None) -> dict:
     """The class you can see, filtered and paged, by national rank (or by interest in your school:
     `sort="interest"`, or `status="interested"` for those your school appeals to most)."""
     rc = state["recruiting"]
@@ -481,9 +485,14 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
     out = []
     visible = recruiting.prospect_list(state)
     keen, cuts = your_interest(state, viewer, visible)
+    recs = {r["pid"]: r for r in recruiting.recommended(state, viewer)} if status == "recommended" else {}
     for pid in visible:
         p, st = rc["prospects"][pid], rc["status"][pid]
         if position and position not in (p["position"], p["ea_position"]):
+            continue
+        if group and recruiting._group_of(p) != group:
+            continue
+        if status == "recommended" and pid not in recs:
             continue
         if stars and p["stars"] != stars:
             continue
@@ -508,13 +517,17 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
         out.append(pid)
     if sort == "interest" or status == "interested":
         out.sort(key=lambda pid: -keen[pid])
+    elif status == "recommended":
+        out.sort(key=lambda pid: -recs[pid]["fit"])
     limit = max(1, min(5000, limit))
     rows = []
     for pid in out[offset:offset + limit]:
         r = row(state, pid, viewer)
         r.update(interest_in_you=round(keen[pid], 1), interest_level=_level(keen[pid], cuts))
+        if pid in recs:
+            r["why"] = recs[pid]["why"]
         rows.append(r)
-    return {"total": len(out), "rows": rows}
+    return {"total": len(out), "rows": rows, "needs": recruiting.needs_detail(state, viewer), "recommended_ids": list(recs)}
 
 
 class class_block:
@@ -595,6 +608,7 @@ def recruiting_view(state: dict) -> dict:
         "nil": {"budget": nil["budget"], "held": sum(nil["held"].values()), "left": recruiting.nil_left(state, me)},
         "open_spots": recruiting.open_spots(state, me), "committed": len([1 for s in rc["status"].values() if s["committed"] == me]),
         "needs": recruiting.needs(state, me),
+        "needs_detail": recruiting.needs_detail(state, me),
         "report": recruiting.latest_report(state),
         "portal": {"week": rc.get("week"), "weeks": rc.get("weeks", 4), "entrants": len(rc["prospects"]),
                    "signed": sum(1 for s_ in rc["status"].values() if s_["signed"])} if rc.get("portal") else None,

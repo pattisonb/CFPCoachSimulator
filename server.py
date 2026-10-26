@@ -851,10 +851,10 @@ def recruiting_reports(season_id: str) -> dict:
 @app.get("/api/season/{season_id}/prospects")
 def prospect_search(season_id: str, position: Optional[str] = None, stars: Optional[int] = None, state: Optional[str] = None,
                     status: Optional[str] = None, q: Optional[str] = None, offset: int = 0, limit: int = 50,
-                    sort: str = "rank") -> dict:
+                    sort: str = "rank", group: Optional[str] = None) -> dict:
     st = _career_state(season_id, change=True)
     with _season_lock:
-        return prospects.search(st, st["team"], position, stars, state, status, q, max(0, offset), limit, sort)
+        return prospects.search(st, st["team"], position, stars, state, status, q, max(0, offset), limit, sort, group)
 
 
 @app.get("/api/season/{season_id}/classes")

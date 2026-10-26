@@ -62,8 +62,9 @@ AREAS = {
     "West Coast": ["CA", "OR", "WA", "HI", "AK"],
     "Mountain-Southwest": ["AZ", "NV", "UT", "CO", "NM", "ID", "MT", "WY", "OK"],
 }
-HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0, "raise_nil": 0, "scout": 20}
-SCOUT_LOOKS = 3                            # a scouting trip: your best evaluator's looks at one prospect (20 hours, once a week)
+HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0, "raise_nil": 0, "scout": 5}
+SCOUT_LOOKS = 1                            # a scouting trip: one look by your best evaluator at one prospect (5 hours) ...
+SCOUT_MAX = 3                              # ... up to this many trips per prospect, any week (after that his area scout keeps looking)
 CALL_REVEAL = 0.5                          # a call tells you one of his priorities this often; an in-home visit always does
 ASK_NARROW = (0.85, 1.15)                  # the ask range after a call; the number itself takes a visit
 BASE_POINTS = {"message": 1.0, "call": 2.5, "hc_visit": 6.0, "offer": 4.0, "official_visit": 8.0}   # *tune*
@@ -74,7 +75,7 @@ BACKFIRE_COST = 0.5                        # ... and costs this much of the acti
 COLD_OFFER = 0.5                           # an offer before any contact counts this much
 STAGES = ("cold", "contact", "top", "visited", "committed")
 DIMINISH = 0.2                             # each earlier contact from the school cuts a new one's worth *tune*
-WEEKLY_ONCE = ("message", "call", "scout")  # each of these once a week per prospect: more contact is not more interest
+WEEKLY_ONCE = ("message", "call")           # each of these once a week per prospect: more contact is not more interest
 HC_VISIT_GAP = 4                           # weeks between head coach in-home visits to one prospect
 NIL_VALUE = {5: 0.04, 4: 0.07, 3: 0.12, 2: 0.15}   # interest per NIL point by stars: top prospects expect more *tune*
 NIL_FLOOR = 30
@@ -115,6 +116,7 @@ OFFER_FACTOR = 1.5
 FCS_LINE = 4.0                             # best FBS interest under this: Leaning FCS *tune*
 FCS_NO_OFFER_WEEK = 8                      # from this week a prospect with no FBS offer leans FCS
 COMMIT_ODDS = ((0, 0.02), (6, 0.05), (12, 0.08), (16, 0.10), (20, 0.30))   # weekly base chance by week *tune*
+COMMIT_FREEZE_WEEKS = 3                     # nobody commits anywhere in the first weeks: time to scout and build a board before the class moves
 LEAD_SCALE = 3.0                           # interest lead worth a doubling of the base chance *tune*
 VISIT_BOOST = 1.6                          # after an official visit to the leader
 DECOMMIT_RATE = 0.45                       # weekly chance of a decommitment at an even race *tune*
@@ -458,6 +460,73 @@ def needs(state: dict, slug: str) -> dict[str, int]:
     return out
 
 
+def needs_detail(state: dict, slug: str) -> dict[str, dict]:
+    """Needs for the page, per roster group: the healthy make-up (target), who comes back, the
+    school's commits (firm: FIRM_VISIT and up; soft below), its board and open offers there, and
+    what is left (`need`, as needs())."""
+    from coach_career import offseason
+    rc = state["recruiting"]
+    need = needs(state, slug)
+    commits = commits_by_group(state, slug)
+    offers = offers_by_group(state, slug)
+    firm = {g: 0 for g in offseason.TARGET}
+    board = {g: 0 for g in offseason.TARGET}
+    for pid, st in rc["status"].items():
+        if (st["signed"] or st["committed"]) == slug and (st["signed"] or (st.get("firmness") or FIRM_START) >= FIRM_VISIT):
+            firm[_group_of(rc["prospects"][pid])] += 1
+    for pid in rc["board"] if slug == state["team"] else []:
+        st = rc["status"][pid]
+        if not st["signed"] and st["committed"] in (None, slug):
+            board[_group_of(rc["prospects"][pid])] += 1
+    out = {}
+    for g, target in offseason.TARGET.items():
+        c = commits[g]
+        out[g] = {"target": target, "back": max(0, target - need[g] - c), "commits": c, "firm": min(c, firm[g]), "soft": c - min(c, firm[g]),
+                  "board": board[g], "offers": offers[g], "need": need[g]}
+    return out
+
+
+RECOMMENDED_WHY = {"home": "from a state you sign from", "near": "close to campus", "national": "a national target for a program like yours",
+                   "stars": "the star level you usually sign", "need": "a position you need", "position": "a position you sign every class"}
+
+
+def recommended(state: dict, slug: str) -> list[dict]:
+    """The prospects the Auto-recruit rules would put on your board this week (the same draw the AI
+    schools make: fit by state, star level and position, need), not already on it, best fit first,
+    each with why he fits. The same list all week."""
+    rc = state["recruiting"]
+    rng = random.Random(f"recs-{state['id']}-{rc.get('year')}-{state.get('current_week')}")
+    board = set(rc["board"]) if slug == state["team"] else set()
+    seen = set(prospect_list(state)) if slug == state["team"] else set(rc["prospects"])     # only prospects you can see
+    picks = [pid for pid in _build_board(state, slug, rng, touch=False) if pid not in board and pid in seen]
+    fits = _fits(state, slug)
+    need = needs(state, slug)
+    tm = _team_model(slug)
+    shares = dict(tm.get("top_states") or [])
+    per_class = tm.get("positions_per_class") or {}
+    star_share = tm.get("star_share") or {}
+    out = []
+    for pid in picks:
+        p = rc["prospects"][pid]
+        g = _group_of(p)
+        why = []
+        if p["hometown"]["state"] in shares:
+            why.append(RECOMMENDED_WHY["home"])
+        elif fits[pid] > 0 and tier_of(p) < 4:
+            why.append(RECOMMENDED_WHY["near"])
+        if tier_of(p) >= 4 and (tm.get("blue_chip_share") or 0) >= 0.25:
+            why.append(RECOMMENDED_WHY["national"])
+        if star_share.get(STAR_KEY.get(tier_of(p), "2*"), 0.0) / _national_share(tier_of(p)) >= 1:
+            why.append(RECOMMENDED_WHY["stars"])
+        if need.get(g, 0) >= 1:
+            why.append(f"{RECOMMENDED_WHY['need']}: {g} {need[g]} left")
+        if per_class.get(POS_247.get(p["position"], p["position"]), 0) >= 1.5:
+            why.append(RECOMMENDED_WHY["position"])
+        out.append({"pid": pid, "fit": round(fits[pid] * need_factor(need.get(g, 0)), 4), "why": why[:3] or ["fits your usual class"]})
+    out.sort(key=lambda r: (-r["fit"], -rc["prospects"][r["pid"]]["composite"], r["pid"]))
+    return out
+
+
 def need_factor(need: int) -> float:
     for at, factor in NEED_FACTOR:
         if need >= at:
@@ -692,7 +761,8 @@ def _recruiting_rating(state: dict, slug: str) -> float:
 
 
 def weekly_hours(state: dict, slug: str) -> int:
-    return int(50 + max(0, _recruiting_rating(state, slug) - 50) // 4)
+    """A school's recruiting hours a week, a multiple of 5: 50 plus a quarter of its recruiting rating over 50."""
+    return 5 * int(round((50 + max(0, _recruiting_rating(state, slug) - 50) / 4) / 5))
 
 
 def nil_budget(state: dict, slug: str) -> int:
@@ -920,6 +990,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
     week, revealed, points = state["current_week"], None, 0.0
     if action in WEEKLY_ONCE and (contact.get("week") or {}).get(action) == week:
         raise RecruitingError(409, f"you already {'messaged' if action == 'message' else 'called'} him this week")
+    if action == "scout" and contact.get("scouted", 0) >= SCOUT_MAX:
+        raise RecruitingError(409, f"your staff have scouted him {SCOUT_MAX} times: his area scout keeps looking")
     if _hours(state, slug) < HOURS[action]:
         raise RecruitingError(409, "not enough hours left this week")
     offers = rc["offers"].setdefault(slug, [])
@@ -986,11 +1058,11 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             if game_week is None:
                 raise RecruitingError(409, "no home game left for a visit")
             rc["visits"].setdefault(pid, {})[slug] = {"week": game_week, "done": False}
-    elif action == "scout":                        # a scouting trip: your best evaluator's looks, no contact with him
-        contact.setdefault("week", {})[action] = week
+    elif action == "scout":                        # a scouting trip: your best evaluator's look, no contact with him
+        contact["scouted"] = contact.get("scouted", 0) + 1
         staff = (state.get("career") or {}).get("staff") or []
         rating = max([m.get("evaluation", 50) for m in staff] + [((state.get("coach") or {}).get("ratings") or {}).get("evaluation", 60)])
-        rng = random.Random(f"scout-{rc['seed']}-{slug}-{pid}-{week}")
+        rng = random.Random(f"scout-{rc['seed']}-{slug}-{pid}-{week}-{contact['scouted']}")
         for _ in range(SCOUT_LOOKS):
             look(state, pid, rating, rng)
     else:
@@ -1118,7 +1190,7 @@ def _fits(state: dict, slug: str) -> dict[str, float]:
     return fits
 
 
-def _build_board(state: dict, slug: str, rng: random.Random) -> list[str]:
+def _build_board(state: dict, slug: str, rng: random.Random, touch: bool = True) -> list[str]:
     rc = state["recruiting"]
     free = [pid for pid, st in rc["status"].items() if not st["signed"] and not st["committed"]]
     # weighted sampling without replacement (key u^(1/fit)): the board's mix of states and star
@@ -1153,7 +1225,7 @@ def _build_board(state: dict, slug: str, rng: random.Random) -> list[str]:
     if is_portal(state) and _p4(slug):     # the portal: the best entrants hear from every Power 4 program
         national = sorted((pid for pid in free if pros[pid]["rank"] <= PORTAL_NATIONAL), key=lambda q: pros[q]["rank"]) + national
     board = list(dict.fromkeys(national + sampled))
-    for pid in board:                  # a board is prospects the staff has evaluated and spoken to: not cold, one priority known
+    for pid in board if touch else []:   # a board is prospects the staff has evaluated and spoken to: not cold, one priority known
         c = _contact(state, slug, pid)
         if not c["n"]:
             c["n"] = 1
@@ -1395,7 +1467,7 @@ def _draws(state: dict, week: int, rng: random.Random) -> None:
     rc = state["recruiting"]
     room = _Room(state, flier=week >= LATE_MARKET)
     commits = room.commits
-    base = _interp(COMMIT_ODDS, week)
+    base = 0.0 if week < COMMIT_FREEZE_WEEKS else _interp(COMMIT_ODDS, week)
     win, offered, by_pos = _winning(state), _offers_by_prospect(state), _class_by_position(state)
 
     def score(slug: str, pid: str) -> float:
