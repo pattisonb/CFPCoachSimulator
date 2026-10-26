@@ -54,8 +54,8 @@ if __name__ == "__main__":
             assert page.is_visible("#season-tabs button[data-tab=offseason]")
             assert "DEPARTURES" in page.inner_text("#tab-offseason")
             assert "LEAVING YOUR PROGRAM" in page.inner_text("#tab-offseason")
-            if page.query_selector("text=KEEP THEM HOME"):               # your leavers with eligibility left wait on you
-                page.click("text=KEEP THEM HOME")
+            if "KEEP THEM HOME" in page.inner_text("#tab-offseason .go-btn.primary.big"):   # your leavers with eligibility left wait on you
+                page.click("#tab-offseason .go-btn.primary.big")                           # (the stages strip says it too: click the button)
                 page.wait_for_selector("text=WANT OUT", timeout=60_000)
                 first = page.query_selector("button.go-act:has-text('Meet')")
                 if first:
