@@ -121,7 +121,10 @@ input[type="number"] {
 .score-meta .warn { color: var(--bad-text); }
 
 /* tabs */
-.tabs { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.tabs { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.tab-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; min-width: 0; }
+.tab-row-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 0 4px 0 6px; }
+.tab-secondary button { font-size: 13px; padding: 5px 10px; }
 .tabs button { background: transparent; border-color: transparent; color: var(--muted); }
 .tabs button.active { background: var(--panel-2); color: var(--text); border-color: var(--border); }
 
@@ -258,7 +261,7 @@ table.compare td.better { font-weight: 800; }
   .drawer { width: 100%; top: 57px; }
   .history { max-height: 220px; }
   .history-list li { padding: 6px 8px; }
-  .tabs { overflow-x: auto; flex-wrap: nowrap; }
+  .tab-row { overflow-x: auto; flex-wrap: nowrap; }
   .tabs button { white-space: nowrap; padding: 7px 10px; }
   .scoring-list li { grid-template-columns: 44px 48px 1fr; gap: 6px; font-size: 13px; }
   .scoring-list .running { grid-column: 2 / 4; text-align: right; }
@@ -434,7 +437,7 @@ table.review-table th, table.review-table td { white-space: normal; }
 
 /* phones: every season tab visible (wrapped), game titles wrap instead of forcing a scroll */
 @media (max-width: 700px) {
-  #season-tabs { flex-wrap: wrap; overflow: visible; }
+  #season-tabs .tab-row { flex-wrap: wrap; overflow: visible; }
   .games-table td:first-child { white-space: normal; min-width: 120px; }
   .tab-body { overflow-x: auto; }
   .season-actions button { flex: 1 1 auto; }
@@ -1191,15 +1194,16 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 
 /* the slim tab bar and banner in a career; on the Office the sim buttons and week strip step
    aside (the Office has its own) */
-body.career-mode #season-tabs { display: flex; flex-wrap: wrap; overflow: visible; gap: 4px; margin-bottom: 14px; padding: 6px;
+body.career-mode #season-tabs { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; padding: 6px 6px 8px;
   background: var(--panel); border: 1px solid var(--border); border-radius: 14px; }
+body.career-mode #season-tabs .tab-row { gap: 4px; }
 body.career-mode #season-tabs button { flex: none; min-height: 40px; padding: 0 12px; border-radius: 10px; color: var(--text);
-  font-family: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif; font-weight: 700; font-size: 17px; letter-spacing: 0.5px; text-transform: uppercase; order: 2; }
+  font-family: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif; font-weight: 800; font-size: 17px; letter-spacing: 0.5px; text-transform: uppercase; }
+body.career-mode #season-tabs .tab-secondary { padding-top: 6px; border-top: 1px solid var(--border); }
+body.career-mode #season-tabs .tab-secondary button { min-height: 32px; padding: 0 10px; font-size: 14px; font-weight: 700; color: var(--muted); }
+body.career-mode #season-tabs .tab-secondary button.active { color: var(--go-primary-ink); }
 @media (hover: hover) { body.career-mode #season-tabs button:hover:not(.active) { border-color: var(--border); background: var(--panel-2); } }
 body.career-mode #season-tabs button.active { background: var(--go-primary); color: var(--go-primary-ink); border-color: var(--go-primary); box-shadow: none; }
-body.career-mode #season-tabs button[data-tab=office], body.career-mode #season-tabs button[data-tab=recruiting], body.career-mode #season-tabs button[data-tab=prospects],
-body.career-mode #season-tabs button[data-tab=staff], body.career-mode #season-tabs button[data-tab=classes] { order: 1; font-weight: 800; }
-body.career-mode #season-tabs button[data-tab=classes] { margin-right: 10px; }
 @media (min-width: 861px) { body.career-mode #season-tabs { position: sticky; top: var(--topbar-h, 0px); z-index: 4; box-shadow: 0 6px 16px var(--shadow); } }
 @media (max-width: 600px) { body.career-mode #season-tabs button { min-height: 36px; padding: 0 9px; font-size: 15px; } body.career-mode #season-tabs button[data-tab=classes] { margin-right: 0; } }
 /* the header: on the Office its sim buttons step aside (the Office has its own); the week strip

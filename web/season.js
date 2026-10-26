@@ -797,6 +797,21 @@
 
   // Coach Career: the recruiting tabs (recruiting.js) and the week's steps under the header
   const CAREER_TABS = ["offseason", "office", "recruiting", "prospects", "staff", "classes"];
+  // the League row follows the calendar in a career: the bracket and bowls once the field is set
+  // (selection week), the awards once the races have a shape, the classes once signing opens,
+  // the summary when the season is done; a plain season keeps every tab
+  const SELECTION_WEEK = 16, AWARDS_FROM = 4;
+  function tabsForTheCalendar(s, career) {
+    const show = { bracket: true, bowls: true, awards: true, classes: career };
+    if (career) {
+      const w = s.current_week || 0;
+      show.bracket = show.bowls = s.done || w >= SELECTION_WEEK;
+      show.awards = s.done || w >= AWARDS_FROM;
+      show.classes = s.done || w >= SELECTION_WEEK;
+    }
+    for (const [t, on] of Object.entries(show)) $(`#season-tabs button[data-tab=${t}]`).hidden = !on;
+    if (state.tab in show && !show[state.tab]) state.tab = career ? "office" : "schedule";
+  }
   // what sticks to the top of the screen (the top bar, and a career's tab bar on a wide
   // screen) as --sticky-top, so the board's side panel stops below it rather than under it
   function stickyTop() {
@@ -844,6 +859,7 @@
     // a career opens on the Office
     if (career && state.officeFor !== `${s.id}-${s.year}`) { state.officeFor = `${s.id}-${s.year}`; state.tab = s.done ? "offseason" : "office"; }
     if (state.tab === "offseason" && !(career && s.done)) state.tab = career ? "office" : "schedule";
+    tabsForTheCalendar(s, career);
     box.hidden = true;               // the Office shows the week's steps now
     if (box.hidden) return;
     box.innerHTML = "";

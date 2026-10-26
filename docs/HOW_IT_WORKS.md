@@ -972,8 +972,11 @@ looks, measured from your staff's read, so a wrong read can give a different com
 **The screens** (`web/recruiting.js`). A career opens on the **Office**: this week's opponent
 with the win chance and projected score, your week's three steps (Recruit, Game day, Advance)
 and the play buttons, the recruiting summary (commitments, class rank, hours, NIL points, your
-hottest targets, the week's news) and tiles to every screen; the slim tab bar still reaches them
-all. The **Recruiting board** (a prospect you take off it stays off, Auto-recruit included, until
+hottest targets, the week's news) and tiles to every screen. The tab bar is two rows: the
+screens you act on (Office, Offseason once the season is over, Recruiting, Prospects, Staff,
+Schedule, Depth Chart) and a League row that follows the calendar (Standings, Rankings and Stats
+all year; Awards from week 4; Classes, Bracket and Bowls from selection week; Summary when the
+season is done). A plain season keeps every League tab. The **Recruiting board** (a prospect you take off it stays off, Auto-recruit included, until
 you put him back) is a grid of prospect cards (your standing, his known priorities,
 one-tap actions with their hour costs) with a side panel for the selected prospect (the pitch,
 the offer with NIL points, his profile). Every colour is a theme variable, so the screens work

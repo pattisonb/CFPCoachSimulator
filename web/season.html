@@ -97,24 +97,28 @@
           <div id="week-date" class="week-date muted"></div>
         </div>
 
-        <nav class="tabs" id="season-tabs">
-          <button data-tab="offseason" type="button" hidden>Offseason</button>
-          <button data-tab="office" type="button" hidden>Office</button>
-          <button data-tab="schedule" class="active" type="button">Team Schedule</button>
-          <button data-tab="depth" type="button">Depth Chart</button>
-          <button data-tab="summary" type="button" hidden>Summary</button>
-          <button data-tab="games" type="button" hidden>Games</button>
-          <button data-tab="standings" type="button">Standings</button>
-          <button data-tab="rankings" type="button">Rankings</button>
-          <button data-tab="bracket" type="button">Bracket</button>
-          <button data-tab="bowls" type="button">Bowls</button>
-          <button data-tab="awards" type="button">Awards</button>
-          <button data-tab="stats" type="button">Stats</button>
-          <button data-tab="recruiting" type="button" hidden>Recruiting</button>
-          <button data-tab="prospects" type="button" hidden>Prospects</button>
-          <button data-tab="staff" type="button" hidden>Staff</button>
-          <button data-tab="classes" type="button" hidden>Classes</button>
-
+        <nav class="tabs" id="season-tabs" aria-label="Season sections">
+          <div class="tab-row tab-primary">
+            <button data-tab="office" type="button" hidden>Office</button>
+            <button data-tab="offseason" type="button" hidden>Offseason</button>
+            <button data-tab="recruiting" type="button" hidden>Recruiting</button>
+            <button data-tab="prospects" type="button" hidden>Prospects</button>
+            <button data-tab="staff" type="button" hidden>Staff</button>
+            <button data-tab="schedule" class="active" type="button">Schedule</button>
+            <button data-tab="depth" type="button">Depth Chart</button>
+            <button data-tab="games" type="button" hidden>Games</button>
+          </div>
+          <div class="tab-row tab-secondary">
+            <span class="tab-row-label" aria-hidden="true">League</span>
+            <button data-tab="standings" type="button">Standings</button>
+            <button data-tab="rankings" type="button">Rankings</button>
+            <button data-tab="stats" type="button">Stats</button>
+            <button data-tab="classes" type="button" hidden>Classes</button>
+            <button data-tab="bracket" type="button">Bracket</button>
+            <button data-tab="bowls" type="button">Bowls</button>
+            <button data-tab="awards" type="button">Awards</button>
+            <button data-tab="summary" type="button" hidden>Summary</button>
+          </div>
         </nav>
 
         <div class="panel" id="sim-overlay" hidden>
