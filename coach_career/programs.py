@@ -179,7 +179,7 @@ def update(state: dict, results: dict, ranks: dict, year: Optional[int] = None, 
         ten = [v for _, v in p["seasons"]]
         wb = p.get("winning_base", 40.0)                                    # the start is the fixed point: results like the real ones move nothing
         target = p["history"] + (1 - PRESTIGE_HISTORY) * (sum(ten) / len(ten) - wb)
-        p["prestige"] = round(p["prestige"] + max(-PRESTIGE_STEP, min(PRESTIGE_STEP, target - p["prestige"])), 1)
+        p["prestige"] = round(max(0.0, min(100.0, p["prestige"] + max(-PRESTIGE_STEP, min(PRESTIGE_STEP, target - p["prestige"])))), 1)
         cap = MARKET_CAP_FULL if p["market_base"] >= MARKET_FULL else MARKET_CAP
         live_target = max(-cap, min(cap, MARKET_LIVE * (p["winning"] - wb)))
         live = p.get("live", 0.0) + max(-MARKET_STEP, min(MARKET_STEP, live_target - p.get("live", 0.0)))
