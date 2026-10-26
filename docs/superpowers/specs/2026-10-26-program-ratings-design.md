@@ -22,7 +22,7 @@ updated every offseason; everything that asks "how good a program is this?" read
 | `prestige` | the program's name: history plus recent results | slowly: at most 3 points a year toward a target |
 | `winning` | the last three seasons, the latest weighted 3-2-1, in wins against 12 and AP finishes | every offseason |
 | `nil` | the NIL budget tier | by the AD: up to 4 points a year after a year that met the goal, down 2 after a losing year; floor from market size |
-| `market` | fans in the stands and on TV: real home crowds (CFBD, 2023-2025) and Nielsen per-team TV averages (estimated from the crowd where Nielsen publishes none), `data/program_market.json` | never (rebuilt from data) |
+| `market` | fans in the stands and on TV: a fixed base from real home crowds (CFBD, 2023-2025) and Nielsen per-team TV averages (estimated from the crowd where Nielsen publishes none), `data/program_market.json`, plus a live part | the live part moves each offseason by a third of the three-year winning change (last season weighted 2:1 over the two before), capped by capacity on the crowd side, open on the TV side; about +15 over a decade of winning, -10 over a decade of losing; a new head coach adds a point or two in his first year. Fitted on 2012-2025 crowds (`docs/attendance_study.html`): +8.5% crowd for three more wins a year held three seasons, Power 4 median fill 95%, Group of 5 60% |
 | `conference` | the conference's strength from the league's results (mean SP-like rating of its teams) | every offseason |
 | `coach` | the head coach's rating and tenure (ratings overall, +3 a year of tenure up to 5) | every offseason |
 | `rating` | the mix: 0.35 prestige + 0.20 winning + 0.15 nil + 0.10 market + 0.10 conference + 0.10 coach | derived |
