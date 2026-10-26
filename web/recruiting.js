@@ -163,6 +163,45 @@
 
   // ----- the Office ------------------------------------------------------------------------------
 
+  const PROGRAM_METRICS = [["prestige", "Prestige", "History and a decade of results"], ["winning", "Winning", "The last three seasons"],
+    ["nil", "NIL", "The collective's tier, set by your AD"], ["market", "Market", "Crowds and TV"], ["conference", "Conference", "Your league's strength"],
+    ["coach", "Coach", "Your rating and tenure"]];
+
+  // your program's living rating: the six metrics as bars, the tier and rank, and every program on request
+  function programCard(pv) {
+    const you = pv.you;
+    if (!you) return el("div");
+    const card = el("div", { class: "go-program" }, [
+      el("div", { class: "go-program-head" }, [el("span", { class: "go-kicker muted", text: "YOUR PROGRAM" }),
+        el("b", { text: `${you.tier_name} · tier ${you.tier}` }), el("span", { class: "go-tag", text: `Rating ${Math.round(you.rating)} · #${you.rank} of ${pv.rows.length}` })]),
+      el("div", { class: "go-program-bars" }, PROGRAM_METRICS.map(([k, label, tip]) => el("div", { class: "go-program-bar", title: tip }, [
+        el("span", { class: "go-program-label", text: label }), el("i", {}, [el("b", { style: `width:${Math.max(2, Math.min(100, you[k]))}%` })]),
+        el("span", { class: "go-program-val", text: String(Math.round(you[k])) })]))),
+    ]);
+    const more = el("button", { type: "button", class: "go-btn", text: "Every program" });
+    const tableBox = el("div", { hidden: true });
+    more.addEventListener("click", () => {
+      tableBox.hidden = !tableBox.hidden;
+      more.textContent = tableBox.hidden ? "Every program" : "Hide the programs";
+      if (!tableBox.hidden && !tableBox.childElementCount) tableBox.append(programsTable(pv));
+    });
+    card.append(el("div", { class: "go-program-foot" }, [el("span", { class: "muted small", text: "Prestige and the market move slowly with results; your AD raises NIL after a year that meets his goal." }), more]), tableBox);
+    return card;
+  }
+
+  function programsTable(pv) {
+    const t = el("table", { class: "stats go-programs" }, [el("thead", {}, [el("tr", {}, ["#", "Program", "Tier", "Rating", "Prestige", "Winning", "NIL", "Market", "Conf", "Coach", "The AD expects"].map((h) => el("th", { text: h })))])]);
+    const body = el("tbody");
+    for (const r of pv.rows) {
+      body.append(el("tr", { class: r.team === pv.you.team ? "mine" : "" }, [el("td", { class: "num", text: String(r.rank) }),
+        el("td", {}, [window.CFP.teamPill(r.team), ` ${r.name}`]), el("td", { text: `${r.tier} · ${r.tier_name}` }),
+        ...["rating", "prestige", "winning", "nil", "market", "conference", "coach"].map((k) => el("td", { class: "num", text: String(Math.round(r[k])) })),
+        el("td", { class: "small", text: r.goal })]));
+    }
+    t.append(body);
+    return el("div", { class: "go-scroll" }, [t]);
+  }
+
   async function renderOffice(s, box) {
     box.innerHTML = "";
     const me = s.team;
@@ -185,6 +224,11 @@
     if (s.job) week.append(el("div", { class: `go-job ${s.job.security < 40 ? "bad" : s.job.security < 65 ? "warn" : "good"}` }, [
       el("span", { class: "go-kicker muted", text: "YOUR AD'S GOAL" }), el("b", { text: ` ${s.job.goal}` }),
       el("span", { class: "go-tag", text: `${s.job.mood} · ${s.job.security}/100${s.job.ultimatum ? " · ultimatum year" : ""}` })]));
+    if (s.job) {
+      const progBox = el("div");
+      week.append(progBox);
+      H.api(`/api/season/${s.id}/programs`).then((pv) => progBox.replaceWith(programCard(pv))).catch(() => progBox.remove());
+    }
     if (s.done) {
       head.append(el("div", { class: "go-display xl", text: s.champion_name ? `${s.champion_name.toUpperCase()} WON IT ALL` : "THAT'S A WRAP" }));
       week.append(el("div", { class: "go-play" }, [el("button", { type: "button", class: "go-btn primary big", text: "ON TO THE OFFSEASON →",

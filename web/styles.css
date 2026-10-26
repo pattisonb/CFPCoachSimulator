@@ -130,6 +130,7 @@ table.stats { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
 table.stats th, table.stats td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
 table.stats th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
 table.stats th:first-child, table.stats td:first-child { text-align: left; }
+.go-programs th, .go-programs td { text-align: left; } .go-programs th.num, .go-programs td.num { text-align: right; }
 table.stats td.name { font-weight: 600; }
 table.stats td .pos { color: var(--muted); font-weight: 400; font-size: 11px; margin-left: 6px; }
 table.stats tr.total td { font-weight: 700; border-top: 1px solid var(--muted); }
@@ -1262,3 +1263,17 @@ body.career-mode.on-career-tab .season-head { padding-bottom: 0; }
 .go-class-top { line-height: 1.25; overflow-wrap: anywhere; }      /* the three best signees wrap rather than clip */
 .go-class-list { margin: 4px 0 6px 66px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
 @media (max-width: 860px) { .go-class-main { grid-template-columns: 46px auto minmax(0, 1fr) 36px; } .go-class-stars, .go-class-top { display: none; } .go-class-list { margin-left: 8px; } }
+
+/* your program's living rating on the Office */
+.go-program { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; }
+.go-program-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.go-program-head .go-tag { margin-left: auto; }
+.go-program-bars { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 4px 16px; }
+.go-program-bar { display: grid; grid-template-columns: 78px minmax(0, 1fr) 30px; align-items: center; gap: 8px; font-size: 13px; }
+.go-program-bar i { display: block; height: 8px; border-radius: 999px; background: var(--surface-2, var(--border)); overflow: hidden; }
+.go-program-bar i b { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.go-program-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+.go-program-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.go-programs td { text-align: left; } .go-programs td.num { text-align: right; } .go-programs .team-pill { vertical-align: middle; }
+.go-programs tr.mine td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.go-scroll { overflow-x: auto; }

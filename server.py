@@ -829,6 +829,17 @@ def recruiting_view(season_id: str) -> dict:
         return prospects.recruiting_view(st)
 
 
+@app.get("/api/season/{season_id}/programs")
+def programs_view(season_id: str) -> dict:
+    """Every program's living rating (prestige, winning, NIL, market, conference, coach; tier and goal), yours first."""
+    from coach_career import programs
+    st = _career_state(season_id)
+    with _season_lock:
+        rows = programs.rows(st)
+        me = next((r for r in rows if r["team"] == st["team"]), None)
+        return {"you": me, "rows": rows, "tiers": programs.TIER_NAMES, "weights": programs.WEIGHTS}
+
+
 @app.get("/api/season/{season_id}/recruiting/report")
 def recruiting_reports(season_id: str) -> dict:
     """The weekly reports kept (what changed for the prospects on your board), latest last."""
