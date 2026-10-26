@@ -11,9 +11,13 @@ from sim import season
 if __name__ == "__main__":
     import time as _time
     t0 = _time.time()
+    plain = season.new_season("ohio-state", "full", seed=3)
+    t1 = _time.time()
     st = season.new_season("ohio-state", "full", seed=3, career=True)
-    took = _time.time() - t0
-    assert took < 4.5, f"a new career took {took:.1f} s to start"      # was about 9 s: the class's names
+    took = _time.time() - t1
+    # the career's extra (the class, its names, the staff) over a plain season: under 4 s here,
+    # scaled by the machine (a plain season takes about 0.4 s on a fast box, 1 s on a slow one)
+    assert took - (t1 - t0) < max(4.0, 8.0 * (t1 - t0)), f"a new career took {took:.1f} s to start against {t1 - t0:.1f} s for a plain season"
     assert career.is_career(st) and st["career"]["year"] == 2026
     # a career with its recruiting class stays small enough to keep in the browser every week
     import json as _json
