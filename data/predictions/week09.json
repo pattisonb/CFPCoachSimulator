@@ -1,0 +1,5162 @@
+{
+ "week": 9,
+ "created_at": "2026-10-26T14:08:21+00:00",
+ "commit": "c1b9b9b (uncommitted changes)",
+ "sims_per_game": 50,
+ "form_through": 8,
+ "players_moved": 0,
+ "games": [
+  {
+   "contest_id": 6604079,
+   "date": "10/27/2026",
+   "neutral": false,
+   "home": {
+    "slug": "w-kentucky",
+    "name": "Western Kentucky",
+    "ncaa_name": "Western Ky.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -0.11,
+     "rating": -0.08
+    },
+    "expected_points": 28.26,
+    "qb1": {
+     "name": "Brock Glenn",
+     "position": "QB",
+     "share": 1.0,
+     "attempts": 32.9,
+     "completions": 20.3,
+     "yards": 249.8,
+     "td": 2.1,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Ajay Allen",
+     "position": "RB",
+     "share": 0.8,
+     "carries": 10.8,
+     "yards": 51.4,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Quincy Burroughs",
+     "position": "WR",
+     "share": 0.32,
+     "catches": 3.1,
+     "yards": 49.0,
+     "td": 0.4
+    }
+   },
+   "away": {
+    "slug": "delaware",
+    "name": "Delaware",
+    "ncaa_name": "Delaware",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -1.53,
+     "rating": -1.13
+    },
+    "expected_points": 24.1,
+    "qb1": {
+     "name": "Tyler Bell",
+     "position": "QB",
+     "share": 1.0,
+     "attempts": 35.5,
+     "completions": 21.6,
+     "yards": 264.6,
+     "td": 1.9,
+     "interceptions": 1.1
+    },
+    "rb1": {
+     "name": "Jo Silver",
+     "position": "RB",
+     "share": 0.52,
+     "carries": 7.5,
+     "yards": 36.0,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Sean Wilson",
+     "position": "WR",
+     "share": 0.84,
+     "catches": 7.1,
+     "yards": 108.0,
+     "td": 0.6
+    }
+   },
+   "pred_margin": 4,
+   "pred_sd": 13.97,
+   "home_win_prob": 0.66,
+   "pred_total": 52.36,
+   "line": {
+    "spread_home": -1.5,
+    "total": 56.5,
+    "open_spread_home": 2.5,
+    "open_total": 58.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603884,
+   "date": "10/27/2026",
+   "neutral": false,
+   "home": {
+    "slug": "missouri-state",
+    "name": "Missouri State",
+    "ncaa_name": "Missouri St.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -4.55,
+     "rating": -3.35
+    },
+    "expected_points": 24.8,
+    "qb1": {
+     "name": "Henry Belin IV",
+     "position": "QB",
+     "share": 0.92,
+     "attempts": 29.9,
+     "completions": 19.2,
+     "yards": 232.1,
+     "td": 2.0,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Connor Lair",
+     "position": "RB",
+     "share": 0.66,
+     "carries": 11.7,
+     "yards": 48.5,
+     "td": 0.2
+    },
+    "wr1": {
+     "name": "Jmariyae Robinson",
+     "position": "WR",
+     "share": 0.54,
+     "catches": 4.9,
+     "yards": 74.6,
+     "td": 0.6
+    }
+   },
+   "away": {
+    "slug": "sam-houston",
+    "name": "Sam Houston",
+    "ncaa_name": "Sam Houston",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -2.28,
+     "rating": -1.68
+    },
+    "expected_points": 25.68,
+    "qb1": {
+     "name": "Landyn Locke",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 32.9,
+     "completions": 21.1,
+     "yards": 265.3,
+     "td": 2.1,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Alton McCaskill",
+     "position": "RB",
+     "share": 0.7,
+     "carries": 8.8,
+     "yards": 43.1,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Chris Reed",
+     "position": "WR",
+     "share": 0.64,
+     "catches": 6.4,
+     "yards": 94.1,
+     "td": 0.8
+    }
+   },
+   "pred_margin": -1,
+   "pred_sd": 13.91,
+   "home_win_prob": 0.5,
+   "pred_total": 50.48,
+   "line": {
+    "spread_home": -5.5,
+    "total": 49.5,
+    "open_spread_home": -6.0,
+    "open_total": 51.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6640613,
+   "date": "10/28/2026",
+   "neutral": false,
+   "home": {
+    "slug": "mtsu",
+    "name": "Middle Tennessee",
+    "ncaa_name": "Middle Tenn.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -0.67,
+     "rating": -0.49
+    },
+    "expected_points": 28.8,
+    "qb1": {
+     "name": "Roman Gagliano",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 29.4,
+     "completions": 18.3,
+     "yards": 245.8,
+     "td": 2.2,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Terrence Brown",
+     "position": "RB",
+     "share": 0.96,
+     "carries": 15.4,
+     "yards": 83.1,
+     "td": 0.7
+    },
+    "wr1": {
+     "name": "Cam'ron Lacy",
+     "position": "WR",
+     "share": 0.82,
+     "catches": 6.1,
+     "yards": 94.5,
+     "td": 0.9
+    }
+   },
+   "away": {
+    "slug": "kennesaw-st",
+    "name": "Kennesaw State",
+    "ncaa_name": "Kennesaw St.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -5.15,
+     "rating": -3.78
+    },
+    "expected_points": 18.56,
+    "qb1": {
+     "name": "Rickie Collins",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 29.7,
+     "completions": 18.6,
+     "yards": 208.1,
+     "td": 1.2,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Boogie Woods III",
+     "position": "RB",
+     "share": 0.78,
+     "carries": 8.0,
+     "yards": 32.6,
+     "td": 0.1
+    },
+    "wr1": {
+     "name": "Dylan Gary",
+     "position": "WR",
+     "share": 0.38,
+     "catches": 3.3,
+     "yards": 42.6,
+     "td": 0.3
+    }
+   },
+   "pred_margin": 10,
+   "pred_sd": 14.89,
+   "home_win_prob": 0.76,
+   "pred_total": 47.36,
+   "line": {
+    "spread_home": -3.0,
+    "total": 51.5,
+    "open_spread_home": -2.5,
+    "open_total": 49.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604178,
+   "date": "10/28/2026",
+   "neutral": false,
+   "home": {
+    "slug": "new-mexico-st",
+    "name": "New Mexico State",
+    "ncaa_name": "New Mexico St.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -0.93,
+     "rating": -0.69
+    },
+    "expected_points": 24.16,
+    "qb1": {
+     "name": "Adam Damante",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 30.0,
+     "completions": 18.0,
+     "yards": 222.0,
+     "td": 1.8,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "James Jones",
+     "position": "RB",
+     "share": 0.86,
+     "carries": 13.0,
+     "yards": 65.2,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Brodie Malone-Bradford",
+     "position": "WR",
+     "share": 0.38,
+     "catches": 3.3,
+     "yards": 41.8,
+     "td": 0.4
+    }
+   },
+   "away": {
+    "slug": "jax-state",
+    "name": "Jacksonville State",
+    "ncaa_name": "Jacksonville St.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -2.25,
+     "rating": -1.66
+    },
+    "expected_points": 22.42,
+    "qb1": {
+     "name": "Caden Creel",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 27.0,
+     "completions": 17.4,
+     "yards": 204.0,
+     "td": 1.5,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Jalen Likely",
+     "position": "RB",
+     "share": 0.82,
+     "carries": 9.1,
+     "yards": 33.4,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Deondre Johnson",
+     "position": "WR",
+     "share": 0.82,
+     "catches": 5.7,
+     "yards": 74.4,
+     "td": 0.6
+    }
+   },
+   "pred_margin": 2,
+   "pred_sd": 14.25,
+   "home_win_prob": 0.46,
+   "pred_total": 46.58,
+   "line": {
+    "spread_home": 3.0,
+    "total": 49.5,
+    "open_spread_home": 3.0,
+    "open_total": 50.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603940,
+   "date": "10/29/2026",
+   "neutral": false,
+   "home": {
+    "slug": "james-madison",
+    "name": "James Madison",
+    "ncaa_name": "James Madison",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": 7.52,
+     "rating": 5.53
+    },
+    "expected_points": 38.02,
+    "qb1": {
+     "name": "Camden Coleman",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 27.3,
+     "completions": 18.2,
+     "yards": 234.4,
+     "td": 2.2,
+     "interceptions": 0.4
+    },
+    "rb1": {
+     "name": "George Pettaway",
+     "position": "RB",
+     "share": 0.68,
+     "carries": 14.7,
+     "yards": 83.2,
+     "td": 0.8
+    },
+    "wr1": {
+     "name": "Braeden Wisloski",
+     "position": "WR",
+     "share": 0.38,
+     "catches": 3.4,
+     "yards": 50.4,
+     "td": 0.4
+    }
+   },
+   "away": {
+    "slug": "troy",
+    "name": "Troy",
+    "ncaa_name": "Troy",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -3.27,
+     "rating": -2.4
+    },
+    "expected_points": 13.24,
+    "qb1": {
+     "name": "Goose Crowder",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 30.0,
+     "completions": 17.8,
+     "yards": 180.9,
+     "td": 1.0,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Jordan Lovett",
+     "position": "RB",
+     "share": 0.5,
+     "carries": 8.1,
+     "yards": 26.5,
+     "td": 0.1
+    },
+    "wr1": {
+     "name": "TJ Lott",
+     "position": "WR",
+     "share": 0.42,
+     "catches": 3.7,
+     "yards": 42.6,
+     "td": 0.2
+    }
+   },
+   "pred_margin": 25,
+   "pred_sd": 14.25,
+   "home_win_prob": 0.96,
+   "pred_total": 51.26,
+   "line": {
+    "spread_home": -21.0,
+    "total": 52.5,
+    "open_spread_home": -17.5,
+    "open_total": 52.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604136,
+   "date": "10/29/2026",
+   "neutral": false,
+   "home": {
+    "slug": "north-texas",
+    "name": "North Texas",
+    "ncaa_name": "North Texas",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 4.18,
+     "rating": 3.07
+    },
+    "expected_points": 39.94,
+    "qb1": {
+     "name": "Tayven Jackson",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 33.8,
+     "completions": 23.1,
+     "yards": 281.7,
+     "td": 2.9,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Jahiem White",
+     "position": "RB",
+     "share": 0.86,
+     "carries": 15.6,
+     "yards": 100.1,
+     "td": 0.7
+    },
+    "wr1": {
+     "name": "Justin Stevenson",
+     "position": "WR",
+     "share": 0.38,
+     "catches": 4.9,
+     "yards": 68.1,
+     "td": 0.8
+    }
+   },
+   "away": {
+    "slug": "fla-atlantic",
+    "name": "Florida Atlantic",
+    "ncaa_name": "Fla. Atlantic",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -2.53,
+     "rating": -1.86
+    },
+    "expected_points": 25.68,
+    "qb1": {
+     "name": "Caden Veltkamp",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 40.1,
+     "completions": 26.5,
+     "yards": 295.5,
+     "td": 2.3,
+     "interceptions": 0.9
+    },
+    "rb1": {
+     "name": "Leonard Farrow",
+     "position": "RB",
+     "share": 0.6,
+     "carries": 10.3,
+     "yards": 42.6,
+     "td": 0.2
+    },
+    "wr1": {
+     "name": "Easton Messer",
+     "position": "WR",
+     "share": 0.86,
+     "catches": 9.4,
+     "yards": 120.1,
+     "td": 1.1
+    }
+   },
+   "pred_margin": 14,
+   "pred_sd": 16.58,
+   "home_win_prob": 0.78,
+   "pred_total": 65.62,
+   "line": {
+    "spread_home": -13.5,
+    "total": 76.5,
+    "open_spread_home": -12.5,
+    "open_total": 69.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603730,
+   "date": "10/30/2026",
+   "neutral": false,
+   "home": {
+    "slug": "charlotte",
+    "name": "Charlotte",
+    "ncaa_name": "Charlotte",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -3.05,
+     "rating": -2.25
+    },
+    "expected_points": 18.64,
+    "qb1": {
+     "name": "Conner Harrell",
+     "position": "QB",
+     "share": 0.92,
+     "attempts": 27.0,
+     "completions": 16.4,
+     "yards": 198.8,
+     "td": 1.4,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Henry Rutledge",
+     "position": "RB",
+     "share": 0.58,
+     "carries": 8.1,
+     "yards": 35.3,
+     "td": 0.2
+    },
+    "wr1": {
+     "name": "Jaden Barnes",
+     "position": "WR",
+     "share": 0.9,
+     "catches": 6.6,
+     "yards": 97.4,
+     "td": 0.6
+    }
+   },
+   "away": {
+    "slug": "tulane",
+    "name": "Tulane",
+    "ncaa_name": "Tulane",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": -1.39,
+     "rating": -1.02
+    },
+    "expected_points": 24.96,
+    "qb1": {
+     "name": "Trace Johnson",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 24.1,
+     "completions": 15.8,
+     "yards": 180.7,
+     "td": 1.6,
+     "interceptions": 0.4
+    },
+    "rb1": {
+     "name": "Jamauri McClure",
+     "position": "RB",
+     "share": 0.38,
+     "carries": 8.9,
+     "yards": 50.2,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Anthony Brown-Stephens",
+     "position": "WR",
+     "share": 0.68,
+     "catches": 5.0,
+     "yards": 62.8,
+     "td": 0.6
+    }
+   },
+   "pred_margin": -6,
+   "pred_sd": 12.23,
+   "home_win_prob": 0.36,
+   "pred_total": 43.6,
+   "line": {
+    "spread_home": 10.0,
+    "total": 46.5,
+    "open_spread_home": 13.5,
+    "open_total": 45.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603631,
+   "date": "10/30/2026",
+   "neutral": false,
+   "home": {
+    "slug": "ucf",
+    "name": "UCF",
+    "ncaa_name": "UCF",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 1.24,
+     "rating": 0.91
+    },
+    "expected_points": 25.72,
+    "qb1": {
+     "name": "Keyone Jenkins",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 35.4,
+     "completions": 22.3,
+     "yards": 264.8,
+     "td": 2.0,
+     "interceptions": 0.9
+    },
+    "rb1": {
+     "name": "Duke Watson",
+     "position": "RB",
+     "share": 0.72,
+     "carries": 11.9,
+     "yards": 58.7,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Dylan Wade",
+     "position": "TE",
+     "share": 0.3,
+     "catches": 3.8,
+     "yards": 56.6,
+     "td": 0.5
+    }
+   },
+   "away": {
+    "slug": "baylor",
+    "name": "Baylor",
+    "ncaa_name": "Baylor",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 3.16,
+     "rating": 2.33
+    },
+    "expected_points": 28.14,
+    "qb1": {
+     "name": "DJ Lagway",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 36.6,
+     "completions": 22.5,
+     "yards": 268.9,
+     "td": 2.2,
+     "interceptions": 1.2
+    },
+    "rb1": {
+     "name": "Dawson Pendergrass",
+     "position": "RB",
+     "share": 0.5,
+     "carries": 10.3,
+     "yards": 52.0,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Gavin Freeman",
+     "position": "WR",
+     "share": 0.58,
+     "catches": 5.2,
+     "yards": 69.7,
+     "td": 0.6
+    }
+   },
+   "pred_margin": -2,
+   "pred_sd": 14.36,
+   "home_win_prob": 0.42,
+   "pred_total": 53.86,
+   "line": {
+    "spread_home": 1.5,
+    "total": 47.5,
+    "open_spread_home": -1.5,
+    "open_total": 49.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603978,
+   "date": "10/30/2026",
+   "neutral": false,
+   "home": {
+    "slug": "sac-state",
+    "name": "Sacramento State",
+    "ncaa_name": "Sacramento St.",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": -12.6,
+     "rating": -9.26
+    },
+    "expected_points": 20.34,
+    "qb1": {
+     "name": "Jackson Sharman",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 32.0,
+     "completions": 19.3,
+     "yards": 216.8,
+     "td": 1.4,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Isaiah Ene",
+     "position": "RB",
+     "share": 0.72,
+     "carries": 9.6,
+     "yards": 31.4,
+     "td": 0.2
+    },
+    "wr1": {
+     "name": "Matthew Coleman",
+     "position": "WR",
+     "share": 0.56,
+     "catches": 4.6,
+     "yards": 61.7,
+     "td": 0.4
+    }
+   },
+   "away": {
+    "slug": "kent-state",
+    "name": "Kent State",
+    "ncaa_name": "Kent St.",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": -0.82,
+     "rating": -0.6
+    },
+    "expected_points": 29.82,
+    "qb1": {
+     "name": "Dru DeShields",
+     "position": "QB",
+     "share": 1.0,
+     "attempts": 27.9,
+     "completions": 18.3,
+     "yards": 221.9,
+     "td": 2.0,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Brandon White",
+     "position": "RB",
+     "share": 0.42,
+     "carries": 9.7,
+     "yards": 41.9,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Wayne Harris",
+     "position": "WR",
+     "share": 0.88,
+     "catches": 5.6,
+     "yards": 77.1,
+     "td": 0.8
+    }
+   },
+   "pred_margin": -9,
+   "pred_sd": 14.91,
+   "home_win_prob": 0.22,
+   "pred_total": 50.16,
+   "line": {
+    "spread_home": 10.0,
+    "total": 46.5,
+    "open_spread_home": 9.5,
+    "open_total": 45.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604315,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "north-carolina",
+    "name": "North Carolina",
+    "ncaa_name": "North Carolina",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 3.49,
+     "rating": 2.57
+    },
+    "expected_points": 19.82,
+    "qb1": {
+     "name": "Billy Edwards Jr.",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 28.5,
+     "completions": 17.4,
+     "yards": 205.7,
+     "td": 1.5,
+     "interceptions": 1.0
+    },
+    "rb1": {
+     "name": "Demon June",
+     "position": "RB",
+     "share": 0.74,
+     "carries": 10.7,
+     "yards": 57.3,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Jelani Thurman",
+     "position": "TE",
+     "share": 0.42,
+     "catches": 3.8,
+     "yards": 52.1,
+     "td": 0.4
+    }
+   },
+   "away": {
+    "slug": "miami",
+    "name": "Miami",
+    "ncaa_name": "Miami (FL)",
+    "rank": 1,
+    "form": {
+     "games": 6,
+     "points": 3.02,
+     "rating": 2.22
+    },
+    "expected_points": 29.04,
+    "qb1": {
+     "name": "Darian Mensah",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 28.5,
+     "completions": 20.7,
+     "yards": 229.2,
+     "td": 2.1,
+     "interceptions": 0.3
+    },
+    "rb1": {
+     "name": "Mark Fletcher Jr.",
+     "position": "RB",
+     "share": 0.56,
+     "carries": 11.1,
+     "yards": 70.1,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Malachi Toney",
+     "position": "WR",
+     "share": 0.74,
+     "catches": 6.0,
+     "yards": 83.7,
+     "td": 0.8
+    }
+   },
+   "pred_margin": -9,
+   "pred_sd": 14.51,
+   "home_win_prob": 0.26,
+   "pred_total": 48.86,
+   "line": {
+    "spread_home": 14.5,
+    "total": 52.5,
+    "open_spread_home": 14.5,
+    "open_total": 50.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603763,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "penn-state",
+    "name": "Penn State",
+    "ncaa_name": "Penn St.",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": -1.81,
+     "rating": -1.33
+    },
+    "expected_points": 33.7,
+    "qb1": {
+     "name": "Rocco Becht",
+     "position": "QB",
+     "share": 1.0,
+     "attempts": 32.9,
+     "completions": 23.3,
+     "yards": 259.6,
+     "td": 2.0,
+     "interceptions": 0.4
+    },
+    "rb1": {
+     "name": "Carson Hansen",
+     "position": "RB",
+     "share": 0.7,
+     "carries": 13.5,
+     "yards": 77.7,
+     "td": 0.8
+    },
+    "wr1": {
+     "name": "Chase Sowell",
+     "position": "WR",
+     "share": 0.62,
+     "catches": 5.3,
+     "yards": 69.5,
+     "td": 0.5
+    }
+   },
+   "away": {
+    "slug": "purdue",
+    "name": "Purdue",
+    "ncaa_name": "Purdue",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 3.38,
+     "rating": 2.48
+    },
+    "expected_points": 23.02,
+    "qb1": {
+     "name": "Ryan Browne",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 31.8,
+     "completions": 19.6,
+     "yards": 236.9,
+     "td": 1.7,
+     "interceptions": 1.1
+    },
+    "rb1": {
+     "name": "Fame Ijeboi",
+     "position": "RB",
+     "share": 0.96,
+     "carries": 13.2,
+     "yards": 64.1,
+     "td": 0.5
+    },
+    "wr1": {
+     "name": "Asaad Waseem",
+     "position": "WR",
+     "share": 0.64,
+     "catches": 5.2,
+     "yards": 69.8,
+     "td": 0.4
+    }
+   },
+   "pred_margin": 11,
+   "pred_sd": 16.01,
+   "home_win_prob": 0.76,
+   "pred_total": 56.72,
+   "line": {
+    "spread_home": -7.5,
+    "total": 53.5,
+    "open_spread_home": -8.5,
+    "open_total": 52.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604101,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "cincinnati",
+    "name": "Cincinnati",
+    "ncaa_name": "Cincinnati",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 1.61,
+     "rating": 1.18
+    },
+    "expected_points": 24.18,
+    "qb1": {
+     "name": "JC French IV",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 30.7,
+     "completions": 19.6,
+     "yards": 212.4,
+     "td": 1.7,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Cole Tabb",
+     "position": "RB",
+     "share": 0.64,
+     "carries": 9.6,
+     "yards": 50.5,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "JV Gibson",
+     "position": "WR",
+     "share": 0.8,
+     "catches": 5.9,
+     "yards": 78.4,
+     "td": 0.6
+    }
+   },
+   "away": {
+    "slug": "utah",
+    "name": "Utah",
+    "ncaa_name": "Utah",
+    "rank": 6,
+    "form": {
+     "games": 6,
+     "points": 7.85,
+     "rating": 5.77
+    },
+    "expected_points": 32.28,
+    "qb1": {
+     "name": "Devon Dampier",
+     "position": "QB",
+     "share": 1.0,
+     "attempts": 28.5,
+     "completions": 18.9,
+     "yards": 225.7,
+     "td": 1.9,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Wayshawn Parker",
+     "position": "RB",
+     "share": 0.9,
+     "carries": 13.8,
+     "yards": 86.2,
+     "td": 0.7
+    },
+    "wr1": {
+     "name": "Braden Pegan",
+     "position": "WR",
+     "share": 0.74,
+     "catches": 5.5,
+     "yards": 73.1,
+     "td": 0.8
+    }
+   },
+   "pred_margin": -8,
+   "pred_sd": 16.33,
+   "home_win_prob": 0.3,
+   "pred_total": 56.46,
+   "line": {
+    "spread_home": 6.5,
+    "total": 58.5,
+    "open_spread_home": 9.5,
+    "open_total": 56.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603997,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "wake-forest",
+    "name": "Wake Forest",
+    "ncaa_name": "Wake Forest",
+    "rank": 14,
+    "form": {
+     "games": 7,
+     "points": 9.63,
+     "rating": 7.08
+    },
+    "expected_points": 33.36,
+    "qb1": {
+     "name": "Gio Lopez",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 27.3,
+     "completions": 18.7,
+     "yards": 251.2,
+     "td": 2.3,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Ty Clark III",
+     "position": "RB",
+     "share": 0.72,
+     "carries": 10.6,
+     "yards": 49.9,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Carlos Hernandez",
+     "position": "WR",
+     "share": 0.86,
+     "catches": 5.8,
+     "yards": 99.4,
+     "td": 0.9
+    }
+   },
+   "away": {
+    "slug": "virginia",
+    "name": "Virginia",
+    "ncaa_name": "Virginia",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": -5.24,
+     "rating": -3.85
+    },
+    "expected_points": 18.08,
+    "qb1": {
+     "name": "Beau Pribula",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 30.9,
+     "completions": 18.8,
+     "yards": 178.5,
+     "td": 1.1,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Jekail Middlebrook",
+     "position": "RB",
+     "share": 0.64,
+     "carries": 10.5,
+     "yards": 46.0,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Da'Shawn Martin",
+     "position": "WR",
+     "share": 0.4,
+     "catches": 3.3,
+     "yards": 34.7,
+     "td": 0.3
+    }
+   },
+   "pred_margin": 15,
+   "pred_sd": 16.51,
+   "home_win_prob": 0.82,
+   "pred_total": 51.44,
+   "line": {
+    "spread_home": -14.0,
+    "total": 49.5,
+    "open_spread_home": -13.5,
+    "open_total": 49.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604340,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "texas",
+    "name": "Texas",
+    "ncaa_name": "Texas",
+    "rank": 11,
+    "form": {
+     "games": 7,
+     "points": -2.06,
+     "rating": -1.51
+    },
+    "expected_points": 31.92,
+    "qb1": {
+     "name": "Arch Manning",
+     "position": "QB",
+     "share": 1.0,
+     "attempts": 27.1,
+     "completions": 19.0,
+     "yards": 237.0,
+     "td": 2.1,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Raleek Brown",
+     "position": "RB",
+     "share": 0.62,
+     "carries": 13.7,
+     "yards": 75.5,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Ryan Wingo",
+     "position": "WR",
+     "share": 0.6,
+     "catches": 5.4,
+     "yards": 87.6,
+     "td": 0.9
+    }
+   },
+   "away": {
+    "slug": "mississippi-st",
+    "name": "Mississippi State",
+    "ncaa_name": "Mississippi St.",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": 1.76,
+     "rating": 1.29
+    },
+    "expected_points": 18,
+    "qb1": {
+     "name": "KaMario Taylor",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 28.8,
+     "completions": 16.5,
+     "yards": 193.0,
+     "td": 1.2,
+     "interceptions": 1.0
+    },
+    "rb1": {
+     "name": "Kolin Wilson",
+     "position": "RB",
+     "share": 0.84,
+     "carries": 11.5,
+     "yards": 39.7,
+     "td": 0.2
+    },
+    "wr1": {
+     "name": "Anthony Evans III",
+     "position": "WR",
+     "share": 0.7,
+     "catches": 4.2,
+     "yards": 66.0,
+     "td": 0.4
+    }
+   },
+   "pred_margin": 14,
+   "pred_sd": 15.21,
+   "home_win_prob": 0.82,
+   "pred_total": 49.92,
+   "line": {
+    "spread_home": -21.0,
+    "total": 51.5,
+    "open_spread_home": -18.5,
+    "open_total": 52.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6640762,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "texas-tech",
+    "name": "Texas Tech",
+    "ncaa_name": "Texas Tech",
+    "rank": 13,
+    "form": {
+     "games": 6,
+     "points": -1.46,
+     "rating": -1.07
+    },
+    "expected_points": 25.22,
+    "qb1": {
+     "name": "Will Hammond",
+     "position": "QB",
+     "share": 0.9,
+     "attempts": 28.0,
+     "completions": 17.8,
+     "yards": 205.7,
+     "td": 1.6,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "J'koby Williams",
+     "position": "RB",
+     "share": 0.7,
+     "carries": 12.3,
+     "yards": 61.3,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Kenny Johnson",
+     "position": "WR",
+     "share": 0.38,
+     "catches": 4.0,
+     "yards": 56.7,
+     "td": 0.4
+    }
+   },
+   "away": {
+    "slug": "arizona",
+    "name": "Arizona",
+    "ncaa_name": "Arizona",
+    "rank": 22,
+    "form": {
+     "games": 6,
+     "points": 5.02,
+     "rating": 3.69
+    },
+    "expected_points": 19.78,
+    "qb1": {
+     "name": "Noah Fifita",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 34.1,
+     "completions": 22.7,
+     "yards": 238.9,
+     "td": 1.3,
+     "interceptions": 0.4
+    },
+    "rb1": {
+     "name": "Kedrick Reescano",
+     "position": "RB",
+     "share": 0.8,
+     "carries": 10.4,
+     "yards": 41.1,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Isaiah Mizell",
+     "position": "WR",
+     "share": 0.26,
+     "catches": 3.6,
+     "yards": 43.5,
+     "td": 0.2
+    }
+   },
+   "pred_margin": 5,
+   "pred_sd": 14.95,
+   "home_win_prob": 0.66,
+   "pred_total": 45,
+   "line": {
+    "spread_home": -3.5,
+    "total": 54.5,
+    "open_spread_home": -7.5,
+    "open_total": 52.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604123,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "ucla",
+    "name": "UCLA",
+    "ncaa_name": "UCLA",
+    "rank": 7,
+    "form": {
+     "games": 7,
+     "points": 6.66,
+     "rating": 4.9
+    },
+    "expected_points": 35.84,
+    "qb1": {
+     "name": "Ty Dieffenbach",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 23.9,
+     "completions": 15.7,
+     "yards": 195.6,
+     "td": 1.8,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Wayne Knight",
+     "position": "RB",
+     "share": 0.5,
+     "carries": 12.7,
+     "yards": 81.2,
+     "td": 0.8
+    },
+    "wr1": {
+     "name": "Brayden Loftin",
+     "position": "TE",
+     "share": 0.32,
+     "catches": 2.8,
+     "yards": 32.3,
+     "td": 0.4
+    }
+   },
+   "away": {
+    "slug": "nevada",
+    "name": "Nevada",
+    "ncaa_name": "Nevada",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 3.48,
+     "rating": 2.56
+    },
+    "expected_points": 11.08,
+    "qb1": {
+     "name": "AJ Bianco",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 26.8,
+     "completions": 15.3,
+     "yards": 156.9,
+     "td": 0.7,
+     "interceptions": 1.0
+    },
+    "rb1": {
+     "name": "Dominic Kelley",
+     "position": "RB",
+     "share": 0.8,
+     "carries": 9.9,
+     "yards": 30.6,
+     "td": 0.1
+    },
+    "wr1": {
+     "name": "Gary Givens III",
+     "position": "WR",
+     "share": 0.38,
+     "catches": 3.0,
+     "yards": 36.3,
+     "td": 0.1
+    }
+   },
+   "pred_margin": 25,
+   "pred_sd": 17.23,
+   "home_win_prob": 0.94,
+   "pred_total": 46.92,
+   "line": {
+    "spread_home": -22.5,
+    "total": 44.5,
+    "open_spread_home": -23.5,
+    "open_total": 48.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6640754,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "oregon",
+    "name": "Oregon",
+    "ncaa_name": "Oregon",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -6.61,
+     "rating": -4.86
+    },
+    "expected_points": 24.3,
+    "qb1": {
+     "name": "Dylan Raiola",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 33.7,
+     "completions": 20.9,
+     "yards": 231.6,
+     "td": 1.8,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Dierre Hill Jr.",
+     "position": "RB",
+     "share": 0.64,
+     "carries": 11.0,
+     "yards": 52.4,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Jamari Johnson",
+     "position": "TE",
+     "share": 0.46,
+     "catches": 4.8,
+     "yards": 61.2,
+     "td": 0.7
+    }
+   },
+   "away": {
+    "slug": "northwestern",
+    "name": "Northwestern",
+    "ncaa_name": "Northwestern",
+    "rank": 20,
+    "form": {
+     "games": 6,
+     "points": 9.27,
+     "rating": 6.82
+    },
+    "expected_points": 23.32,
+    "qb1": {
+     "name": "Aidan Chiles",
+     "position": "QB",
+     "share": 1.0,
+     "attempts": 27.0,
+     "completions": 17.4,
+     "yards": 178.2,
+     "td": 1.5,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Caleb Komolafe",
+     "position": "RB",
+     "share": 0.68,
+     "carries": 12.5,
+     "yards": 66.2,
+     "td": 0.5
+    },
+    "wr1": {
+     "name": "Griffin Wilde",
+     "position": "WR",
+     "share": 0.76,
+     "catches": 5.2,
+     "yards": 61.9,
+     "td": 0.6
+    }
+   },
+   "pred_margin": 1,
+   "pred_sd": 16.12,
+   "home_win_prob": 0.52,
+   "pred_total": 47.62,
+   "line": {
+    "spread_home": -3.5,
+    "total": 49.5,
+    "open_spread_home": -7.5,
+    "open_total": 50.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604158,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "syracuse",
+    "name": "Syracuse",
+    "ncaa_name": "Syracuse",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -0.3,
+     "rating": -0.22
+    },
+    "expected_points": 28.14,
+    "qb1": {
+     "name": "Malachi Nelson",
+     "position": "QB",
+     "share": 0.92,
+     "attempts": 33.9,
+     "completions": 20.7,
+     "yards": 255.3,
+     "td": 1.9,
+     "interceptions": 1.3
+    },
+    "rb1": {
+     "name": "Ahmad Miller",
+     "position": "RB",
+     "share": 0.72,
+     "carries": 13.0,
+     "yards": 67.1,
+     "td": 0.5
+    },
+    "wr1": {
+     "name": "Umari Hatcher",
+     "position": "WR",
+     "share": 0.88,
+     "catches": 7.8,
+     "yards": 109.9,
+     "td": 0.8
+    }
+   },
+   "away": {
+    "slug": "smu",
+    "name": "SMU",
+    "ncaa_name": "SMU",
+    "rank": 19,
+    "form": {
+     "games": 6,
+     "points": 0.2,
+     "rating": 0.15
+    },
+    "expected_points": 40.28,
+    "qb1": {
+     "name": "Kevin Jennings",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 37.4,
+     "completions": 25.4,
+     "yards": 292.4,
+     "td": 3.0,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Kendrick Raphael",
+     "position": "RB",
+     "share": 0.96,
+     "carries": 20.2,
+     "yards": 110.5,
+     "td": 1.1
+    },
+    "wr1": {
+     "name": "Yannick Smith",
+     "position": "WR",
+     "share": 0.38,
+     "catches": 4.8,
+     "yards": 63.3,
+     "td": 0.7
+    }
+   },
+   "pred_margin": -12,
+   "pred_sd": 14.76,
+   "home_win_prob": 0.24,
+   "pred_total": 68.42,
+   "line": {
+    "spread_home": 9.5,
+    "total": 58.5,
+    "open_spread_home": 12.5,
+    "open_total": 55.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604116,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "navy",
+    "name": "Navy",
+    "ncaa_name": "Navy",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 0.06,
+     "rating": 0.04
+    },
+    "expected_points": 9.82,
+    "qb1": {
+     "name": "Jackson Gutierrez",
+     "position": "QB",
+     "share": 0.92,
+     "attempts": 15.8,
+     "completions": 7.7,
+     "yards": 81.4,
+     "td": 0.3,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Vic Listorti",
+     "position": "RB",
+     "share": 0.84,
+     "carries": 9.4,
+     "yards": 27.1,
+     "td": 0.2
+    },
+    "wr1": {
+     "name": "Luke Hutchison",
+     "position": "WR",
+     "share": 0.76,
+     "catches": 3.2,
+     "yards": 45.6,
+     "td": 0.2
+    }
+   },
+   "away": {
+    "slug": "notre-dame",
+    "name": "Notre Dame",
+    "ncaa_name": "Notre Dame",
+    "rank": 5,
+    "form": {
+     "games": 7,
+     "points": 0.19,
+     "rating": 0.14
+    },
+    "expected_points": 38.6,
+    "qb1": {
+     "name": "CJ Carr",
+     "position": "QB",
+     "share": 0.92,
+     "attempts": 25.9,
+     "completions": 19.1,
+     "yards": 219.2,
+     "td": 2.2,
+     "interceptions": 0.2
+    },
+    "rb1": {
+     "name": "Jonaz Walton",
+     "position": "RB",
+     "share": 0.86,
+     "carries": 18.3,
+     "yards": 106.8,
+     "td": 1.2
+    },
+    "wr1": {
+     "name": "Jordan Faison",
+     "position": "WR",
+     "share": 0.68,
+     "catches": 5.6,
+     "yards": 75.0,
+     "td": 0.8
+    }
+   },
+   "pred_margin": -29,
+   "pred_sd": 13.15,
+   "home_win_prob": 0.02,
+   "pred_total": 48.42,
+   "line": {
+    "spread_home": 29.5,
+    "total": 54.5,
+    "open_spread_home": 28.5,
+    "open_total": 53.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6640447,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "nc-state",
+    "name": "NC State",
+    "ncaa_name": "NC State",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -4.22,
+     "rating": -3.11
+    },
+    "expected_points": 29.94,
+    "qb1": {
+     "name": "CJ Bailey",
+     "position": "QB",
+     "share": 0.9,
+     "attempts": 31.5,
+     "completions": 20.9,
+     "yards": 239.3,
+     "td": 1.7,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Davion Gause",
+     "position": "RB",
+     "share": 0.84,
+     "carries": 13.0,
+     "yards": 61.8,
+     "td": 0.5
+    },
+    "wr1": {
+     "name": "Victor Snow",
+     "position": "WR",
+     "share": 0.48,
+     "catches": 5.2,
+     "yards": 69.7,
+     "td": 0.5
+    }
+   },
+   "away": {
+    "slug": "california",
+    "name": "California",
+    "ncaa_name": "California",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": -8.88,
+     "rating": -6.53
+    },
+    "expected_points": 24.46,
+    "qb1": {
+     "name": "Jackson Brousseau",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 39.1,
+     "completions": 25.9,
+     "yards": 264.4,
+     "td": 1.9,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Ashten Emory",
+     "position": "RB",
+     "share": 0.94,
+     "carries": 13.6,
+     "yards": 62.8,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Chase Hendricks",
+     "position": "WR",
+     "share": 0.66,
+     "catches": 7.4,
+     "yards": 90.3,
+     "td": 0.6
+    }
+   },
+   "pred_margin": 5,
+   "pred_sd": 15.86,
+   "home_win_prob": 0.64,
+   "pred_total": 54.4,
+   "line": {
+    "spread_home": -8.5,
+    "total": 57.5,
+    "open_spread_home": -8.5,
+    "open_total": 56.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603609,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "iowa",
+    "name": "Iowa",
+    "ncaa_name": "Iowa",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 2.27,
+     "rating": 1.67
+    },
+    "expected_points": 17.96,
+    "qb1": {
+     "name": "Hank Brown",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 27.9,
+     "completions": 17.4,
+     "yards": 190.5,
+     "td": 1.3,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Kamari Moulton",
+     "position": "RB",
+     "share": 0.74,
+     "carries": 11.0,
+     "yards": 60.9,
+     "td": 0.5
+    },
+    "wr1": {
+     "name": "DJ Vonnahme",
+     "position": "TE",
+     "share": 0.62,
+     "catches": 4.9,
+     "yards": 64.9,
+     "td": 0.6
+    }
+   },
+   "away": {
+    "slug": "wisconsin",
+    "name": "Wisconsin",
+    "ncaa_name": "Wisconsin",
+    "rank": 25,
+    "form": {
+     "games": 6,
+     "points": 7.74,
+     "rating": 5.69
+    },
+    "expected_points": 28.1,
+    "qb1": {
+     "name": "Colton Joseph",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 23.9,
+     "completions": 16.4,
+     "yards": 181.8,
+     "td": 1.7,
+     "interceptions": 0.4
+    },
+    "rb1": {
+     "name": "Darrion Dupree",
+     "position": "RB",
+     "share": 0.84,
+     "carries": 12.3,
+     "yards": 67.6,
+     "td": 0.5
+    },
+    "wr1": {
+     "name": "Jacob Harris",
+     "position": "TE",
+     "share": 0.5,
+     "catches": 3.4,
+     "yards": 34.3,
+     "td": 0.6
+    }
+   },
+   "pred_margin": -10,
+   "pred_sd": 15.61,
+   "home_win_prob": 0.28,
+   "pred_total": 46.06,
+   "line": {
+    "spread_home": -3.5,
+    "total": 36.5,
+    "open_spread_home": -4.5,
+    "open_total": 39.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604088,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "maryland",
+    "name": "Maryland",
+    "ncaa_name": "Maryland",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -5.82,
+     "rating": -4.28
+    },
+    "expected_points": 24.52,
+    "qb1": {
+     "name": "Malik Washington",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 33.1,
+     "completions": 21.8,
+     "yards": 247.8,
+     "td": 1.8,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "DeJuan Williams",
+     "position": "RB",
+     "share": 0.84,
+     "carries": 9.8,
+     "yards": 49.8,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Dorian Fleming",
+     "position": "TE",
+     "share": 0.78,
+     "catches": 6.3,
+     "yards": 85.4,
+     "td": 0.7
+    }
+   },
+   "away": {
+    "slug": "illinois",
+    "name": "Illinois",
+    "ncaa_name": "Illinois",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 1.97,
+     "rating": 1.45
+    },
+    "expected_points": 27.4,
+    "qb1": {
+     "name": "Katin Houser",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 31.9,
+     "completions": 22.0,
+     "yards": 263.9,
+     "td": 2.2,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Aidan Laughery",
+     "position": "RB",
+     "share": 0.78,
+     "carries": 12.4,
+     "yards": 65.0,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Collin Dixon",
+     "position": "WR",
+     "share": 0.64,
+     "catches": 5.8,
+     "yards": 84.9,
+     "td": 0.6
+    }
+   },
+   "pred_margin": -3,
+   "pred_sd": 14.56,
+   "home_win_prob": 0.46,
+   "pred_total": 51.92,
+   "line": {
+    "spread_home": 2.5,
+    "total": 52.5,
+    "open_spread_home": 3.0,
+    "open_total": 52.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603673,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "duke",
+    "name": "Duke",
+    "ncaa_name": "Duke",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 3.28,
+     "rating": 2.41
+    },
+    "expected_points": 31.08,
+    "qb1": {
+     "name": "Walker Eget",
+     "position": "QB",
+     "share": 0.86,
+     "attempts": 27.5,
+     "completions": 18.0,
+     "yards": 206.6,
+     "td": 1.8,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Nate Sheppard",
+     "position": "RB",
+     "share": 0.9,
+     "carries": 19.0,
+     "yards": 110.6,
+     "td": 1.2
+    },
+    "wr1": {
+     "name": "Jeremiah Hasley",
+     "position": "TE",
+     "share": 0.56,
+     "catches": 4.7,
+     "yards": 58.5,
+     "td": 0.5
+    }
+   },
+   "away": {
+    "slug": "boston-college",
+    "name": "Boston College",
+    "ncaa_name": "Boston College",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 2.06,
+     "rating": 1.51
+    },
+    "expected_points": 22.06,
+    "qb1": {
+     "name": "Mason McKenzie",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 30.1,
+     "completions": 19.4,
+     "yards": 205.5,
+     "td": 1.2,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Bo MacCormack III",
+     "position": "RB",
+     "share": 0.84,
+     "carries": 11.4,
+     "yards": 46.7,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Javarius Green",
+     "position": "WR",
+     "share": 0.34,
+     "catches": 3.4,
+     "yards": 42.7,
+     "td": 0.1
+    }
+   },
+   "pred_margin": 9,
+   "pred_sd": 16.07,
+   "home_win_prob": 0.72,
+   "pred_total": 53.14,
+   "line": {
+    "spread_home": -7.5,
+    "total": 48.5,
+    "open_spread_home": -7.0,
+    "open_total": 47.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603739,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "usf",
+    "name": "USF",
+    "ncaa_name": "South Fla.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 0.84,
+     "rating": 0.62
+    },
+    "expected_points": 29.74,
+    "qb1": {
+     "name": "Michael Van Buren Jr.",
+     "position": "QB",
+     "share": 1.0,
+     "attempts": 25.6,
+     "completions": 17.6,
+     "yards": 221.1,
+     "td": 2.2,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "D.J. Crowther",
+     "position": "RB",
+     "share": 1.0,
+     "carries": 16.6,
+     "yards": 78.1,
+     "td": 0.8
+    },
+    "wr1": {
+     "name": "Bryson Rodgers",
+     "position": "WR",
+     "share": 0.4,
+     "catches": 3.2,
+     "yards": 47.3,
+     "td": 0.5
+    }
+   },
+   "away": {
+    "slug": "uab",
+    "name": "UAB",
+    "ncaa_name": "UAB",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -1.44,
+     "rating": -1.06
+    },
+    "expected_points": 19.84,
+    "qb1": {
+     "name": "Ryder Burton",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 25.5,
+     "completions": 15.6,
+     "yards": 183.4,
+     "td": 1.1,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Roderick Robinson II",
+     "position": "RB",
+     "share": 0.48,
+     "carries": 9.7,
+     "yards": 43.3,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "CJ Smith",
+     "position": "WR",
+     "share": 0.4,
+     "catches": 3.2,
+     "yards": 48.6,
+     "td": 0.3
+    }
+   },
+   "pred_margin": 10,
+   "pred_sd": 14.17,
+   "home_win_prob": 0.8,
+   "pred_total": 49.58,
+   "line": {
+    "spread_home": -7.5,
+    "total": 42.5,
+    "open_spread_home": -9.5,
+    "open_total": 46.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603831,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "w-michigan",
+    "name": "Western Michigan",
+    "ncaa_name": "Western Mich.",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": 2.42,
+     "rating": 1.78
+    },
+    "expected_points": 30.12,
+    "qb1": {
+     "name": "Broc Lowry",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 20.2,
+     "completions": 12.9,
+     "yards": 157.7,
+     "td": 1.6,
+     "interceptions": 0.3
+    },
+    "rb1": {
+     "name": "Jalen Buckley",
+     "position": "RB",
+     "share": 0.64,
+     "carries": 12.9,
+     "yards": 77.1,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Aveion Chenault",
+     "position": "WR",
+     "share": 0.38,
+     "catches": 2.8,
+     "yards": 41.4,
+     "td": 0.4
+    }
+   },
+   "away": {
+    "slug": "bowling-green",
+    "name": "Bowling Green",
+    "ncaa_name": "Bowling Green",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": 0.81,
+     "rating": 0.6
+    },
+    "expected_points": 10.84,
+    "qb1": {
+     "name": "Jay Kastantin",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 24.3,
+     "completions": 14.5,
+     "yards": 140.8,
+     "td": 0.7,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Austyn Dendy",
+     "position": "RB",
+     "share": 0.8,
+     "carries": 11.0,
+     "yards": 45.8,
+     "td": 0.2
+    },
+    "wr1": {
+     "name": "Winn Sharp",
+     "position": "WR",
+     "share": 0.38,
+     "catches": 2.7,
+     "yards": 28.0,
+     "td": 0.1
+    }
+   },
+   "pred_margin": 19,
+   "pred_sd": 13.81,
+   "home_win_prob": 0.94,
+   "pred_total": 40.96,
+   "line": {
+    "spread_home": -14.0,
+    "total": 43.5,
+    "open_spread_home": -15.5,
+    "open_total": 43.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604034,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "rutgers",
+    "name": "Rutgers",
+    "ncaa_name": "Rutgers",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -5.53,
+     "rating": -4.07
+    },
+    "expected_points": 18.86,
+    "qb1": {
+     "name": "Dylan Lonergan",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 25.1,
+     "completions": 15.6,
+     "yards": 176.7,
+     "td": 1.0,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Antwan Raymond",
+     "position": "RB",
+     "share": 0.92,
+     "carries": 16.5,
+     "yards": 88.2,
+     "td": 0.7
+    },
+    "wr1": {
+     "name": "KJ Duff",
+     "position": "WR",
+     "share": 0.96,
+     "catches": 8.0,
+     "yards": 106.2,
+     "td": 0.6
+    }
+   },
+   "away": {
+    "slug": "michigan",
+    "name": "Michigan",
+    "ncaa_name": "Michigan",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": -3.48,
+     "rating": -2.56
+    },
+    "expected_points": 24.88,
+    "qb1": {
+     "name": "Tommy Carr",
+     "position": "QB",
+     "share": 0.88,
+     "attempts": 21.5,
+     "completions": 14.4,
+     "yards": 173.9,
+     "td": 1.6,
+     "interceptions": 0.4
+    },
+    "rb1": {
+     "name": "Jordan Marshall",
+     "position": "RB",
+     "share": 0.8,
+     "carries": 12.8,
+     "yards": 68.5,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Andrew Marsh",
+     "position": "WR",
+     "share": 0.6,
+     "catches": 4.4,
+     "yards": 63.2,
+     "td": 0.5
+    }
+   },
+   "pred_margin": -6,
+   "pred_sd": 15.51,
+   "home_win_prob": 0.32,
+   "pred_total": 43.74,
+   "line": {
+    "spread_home": 14.0,
+    "total": 46.5,
+    "open_spread_home": 14.0,
+    "open_total": 47.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6640729,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "ole-miss",
+    "name": "Ole Miss",
+    "ncaa_name": "Ole Miss",
+    "rank": 12,
+    "form": {
+     "games": 7,
+     "points": -1.01,
+     "rating": -0.74
+    },
+    "expected_points": 34.14,
+    "qb1": {
+     "name": "Trinidad Chambliss",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 32.0,
+     "completions": 21.9,
+     "yards": 268.7,
+     "td": 2.4,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Kewan Lacy",
+     "position": "RB",
+     "share": 0.84,
+     "carries": 12.4,
+     "yards": 80.6,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Deuce Alexander",
+     "position": "WR",
+     "share": 0.58,
+     "catches": 5.1,
+     "yards": 74.4,
+     "td": 0.7
+    }
+   },
+   "away": {
+    "slug": "auburn",
+    "name": "Auburn",
+    "ncaa_name": "Auburn",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": -1.51,
+     "rating": -1.11
+    },
+    "expected_points": 21.5,
+    "qb1": {
+     "name": "Byrum Brown",
+     "position": "QB",
+     "share": 0.88,
+     "attempts": 30.9,
+     "completions": 19.6,
+     "yards": 214.0,
+     "td": 1.5,
+     "interceptions": 1.0
+    },
+    "rb1": {
+     "name": "Jeremiah Cobb",
+     "position": "RB",
+     "share": 0.96,
+     "carries": 12.0,
+     "yards": 54.4,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Keshaun Singleton",
+     "position": "WR",
+     "share": 0.64,
+     "catches": 5.0,
+     "yards": 59.6,
+     "td": 0.4
+    }
+   },
+   "pred_margin": 13,
+   "pred_sd": 13.91,
+   "home_win_prob": 0.82,
+   "pred_total": 55.64,
+   "line": {
+    "spread_home": -13.5,
+    "total": 57.5,
+    "open_spread_home": -10.5,
+    "open_total": 53.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604215,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "old-dominion",
+    "name": "Old Dominion",
+    "ncaa_name": "Old Dominion",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": -6.16,
+     "rating": -4.53
+    },
+    "expected_points": 21.86,
+    "qb1": {
+     "name": "Quinn Henicle",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 25.2,
+     "completions": 15.2,
+     "yards": 179.7,
+     "td": 1.2,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Devin Roche",
+     "position": "RB",
+     "share": 0.84,
+     "carries": 14.3,
+     "yards": 69.8,
+     "td": 0.5
+    },
+    "wr1": {
+     "name": "Leon Haughton Jr.",
+     "position": "TE",
+     "share": 0.66,
+     "catches": 4.2,
+     "yards": 58.0,
+     "td": 0.4
+    }
+   },
+   "away": {
+    "slug": "marshall",
+    "name": "Marshall",
+    "ncaa_name": "Marshall",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -3.96,
+     "rating": -2.91
+    },
+    "expected_points": 26.26,
+    "qb1": {
+     "name": "Zion Turner",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 27.4,
+     "completions": 17.4,
+     "yards": 216.0,
+     "td": 1.7,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Jo'shon Barbie",
+     "position": "RB",
+     "share": 0.38,
+     "carries": 5.6,
+     "yards": 28.5,
+     "td": 0.2
+    },
+    "wr1": {
+     "name": "Adrian Norton",
+     "position": "WR",
+     "share": 0.48,
+     "catches": 3.8,
+     "yards": 58.8,
+     "td": 0.5
+    }
+   },
+   "pred_margin": -4,
+   "pred_sd": 17.24,
+   "home_win_prob": 0.42,
+   "pred_total": 48.12,
+   "line": {
+    "spread_home": 3.0,
+    "total": 45.5,
+    "open_spread_home": 2.5,
+    "open_total": 46.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604006,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "georgia-state",
+    "name": "Georgia State",
+    "ncaa_name": "Georgia St.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 3.52,
+     "rating": 2.59
+    },
+    "expected_points": 31.08,
+    "qb1": {
+     "name": "Cameran Brown",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 28.9,
+     "completions": 19.1,
+     "yards": 245.0,
+     "td": 2.1,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Dennis Murray Jr.",
+     "position": "RB",
+     "share": 0.44,
+     "carries": 10.0,
+     "yards": 46.9,
+     "td": 0.5
+    },
+    "wr1": {
+     "name": "Grant Hollier",
+     "position": "TE",
+     "share": 0.56,
+     "catches": 4.2,
+     "yards": 55.3,
+     "td": 0.6
+    }
+   },
+   "away": {
+    "slug": "c-carolina",
+    "name": "Coastal Carolina",
+    "ncaa_name": "Coastal Carolina",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 0.55,
+     "rating": 0.4
+    },
+    "expected_points": 20.96,
+    "qb1": {
+     "name": "Deuce Bailey",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 30.6,
+     "completions": 19.1,
+     "yards": 215.4,
+     "td": 1.5,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Dominic Knicely",
+     "position": "RB",
+     "share": 0.9,
+     "carries": 13.5,
+     "yards": 55.7,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Robby Washington",
+     "position": "WR",
+     "share": 0.58,
+     "catches": 5.1,
+     "yards": 66.4,
+     "td": 0.5
+    }
+   },
+   "pred_margin": 10,
+   "pred_sd": 11.66,
+   "home_win_prob": 0.8,
+   "pred_total": 52.04,
+   "line": {
+    "spread_home": -6.5,
+    "total": 59.5,
+    "open_spread_home": -6.5,
+    "open_total": 57.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604232,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "colorado",
+    "name": "Colorado",
+    "ncaa_name": "Colorado",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -6.44,
+     "rating": -4.73
+    },
+    "expected_points": 21.48,
+    "qb1": {
+     "name": "Isaac Wilson",
+     "position": "QB",
+     "share": 0.9,
+     "attempts": 32.7,
+     "completions": 19.4,
+     "yards": 241.9,
+     "td": 1.6,
+     "interceptions": 1.0
+    },
+    "rb1": {
+     "name": "JaQuail Smith",
+     "position": "RB",
+     "share": 0.4,
+     "carries": 8.2,
+     "yards": 34.8,
+     "td": 0.2
+    },
+    "wr1": {
+     "name": "Joseph Williams",
+     "position": "WR",
+     "share": 0.66,
+     "catches": 6.9,
+     "yards": 99.1,
+     "td": 0.8
+    }
+   },
+   "away": {
+    "slug": "kansas-state",
+    "name": "Kansas State",
+    "ncaa_name": "Kansas St.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -2.22,
+     "rating": -1.63
+    },
+    "expected_points": 30.78,
+    "qb1": {
+     "name": "Avery Johnson",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 32.4,
+     "completions": 20.8,
+     "yards": 229.6,
+     "td": 1.9,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Joe Jackson",
+     "position": "RB",
+     "share": 0.72,
+     "carries": 13.6,
+     "yards": 69.2,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Jaron Tibbs",
+     "position": "WR",
+     "share": 0.74,
+     "catches": 5.6,
+     "yards": 66.1,
+     "td": 0.5
+    }
+   },
+   "pred_margin": -9,
+   "pred_sd": 13.89,
+   "home_win_prob": 0.26,
+   "pred_total": 52.26,
+   "line": {
+    "spread_home": 2.5,
+    "total": 47.5,
+    "open_spread_home": 3.5,
+    "open_total": 48.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604053,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "air-force",
+    "name": "Air Force",
+    "ncaa_name": "Air Force",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 1.36,
+     "rating": 1.0
+    },
+    "expected_points": 26.6,
+    "qb1": {
+     "name": "Evan Medders",
+     "position": "QB",
+     "share": 0.9,
+     "attempts": 12.3,
+     "completions": 7.7,
+     "yards": 92.1,
+     "td": 0.8,
+     "interceptions": 0.4
+    },
+    "rb1": {
+     "name": "Owen Allen",
+     "position": "RB",
+     "share": 0.9,
+     "carries": 17.4,
+     "yards": 104.3,
+     "td": 0.9
+    },
+    "wr1": {
+     "name": "Simon Kibbee",
+     "position": "TE",
+     "share": 0.52,
+     "catches": 2.0,
+     "yards": 26.0,
+     "td": 0.2
+    }
+   },
+   "away": {
+    "slug": "uconn",
+    "name": "UConn",
+    "ncaa_name": "UConn",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 3.72,
+     "rating": 2.73
+    },
+    "expected_points": 19.48,
+    "qb1": {
+     "name": "Kalieb Osborne",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 27.8,
+     "completions": 16.3,
+     "yards": 193.8,
+     "td": 1.6,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Cyncir Bowers",
+     "position": "RB",
+     "share": 0.68,
+     "carries": 9.6,
+     "yards": 43.1,
+     "td": 0.2
+    },
+    "wr1": {
+     "name": "Shamar Porter",
+     "position": "WR",
+     "share": 0.42,
+     "catches": 3.8,
+     "yards": 59.3,
+     "td": 0.5
+    }
+   },
+   "pred_margin": 7,
+   "pred_sd": 16.25,
+   "home_win_prob": 0.72,
+   "pred_total": 46.08,
+   "line": {
+    "spread_home": -3.0,
+    "total": 54.5,
+    "open_spread_home": -3.0,
+    "open_total": 55.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604347,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "south-alabama",
+    "name": "South Alabama",
+    "ncaa_name": "South Alabama",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 2.46,
+     "rating": 1.81
+    },
+    "expected_points": 28.68,
+    "qb1": {
+     "name": "Jared Hollins",
+     "position": "QB",
+     "share": 0.88,
+     "attempts": 23.2,
+     "completions": 14.1,
+     "yards": 170.4,
+     "td": 1.7,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Keenan Phillips",
+     "position": "RB",
+     "share": 0.46,
+     "carries": 12.9,
+     "yards": 65.0,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Anthony Eager",
+     "position": "WR",
+     "share": 0.68,
+     "catches": 4.2,
+     "yards": 63.0,
+     "td": 0.7
+    }
+   },
+   "away": {
+    "slug": "louisiana-tech",
+    "name": "Louisiana Tech",
+    "ncaa_name": "Louisiana Tech",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 5.31,
+     "rating": 3.9
+    },
+    "expected_points": 28.08,
+    "qb1": {
+     "name": "Blake Baker",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 29.0,
+     "completions": 18.9,
+     "yards": 241.9,
+     "td": 1.9,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Andrew Burnette",
+     "position": "RB",
+     "share": 0.66,
+     "carries": 9.3,
+     "yards": 42.2,
+     "td": 0.5
+    },
+    "wr1": {
+     "name": "Eli Finley",
+     "position": "TE",
+     "share": 0.52,
+     "catches": 3.6,
+     "yards": 48.9,
+     "td": 0.5
+    }
+   },
+   "pred_margin": 1,
+   "pred_sd": 13.25,
+   "home_win_prob": 0.5,
+   "pred_total": 56.76,
+   "line": {
+    "spread_home": 5.5,
+    "total": 57.5,
+    "open_spread_home": 3.5,
+    "open_total": 56.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604250,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "east-carolina",
+    "name": "East Carolina",
+    "ncaa_name": "East Carolina",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -1.19,
+     "rating": -0.87
+    },
+    "expected_points": 25.42,
+    "qb1": {
+     "name": "Emory Williams",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 25.8,
+     "completions": 16.4,
+     "yards": 209.9,
+     "td": 1.6,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "TJ Engleman Jr.",
+     "position": "RB",
+     "share": 0.64,
+     "carries": 10.8,
+     "yards": 55.3,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Landon Sides",
+     "position": "WR",
+     "share": 0.58,
+     "catches": 4.2,
+     "yards": 58.0,
+     "td": 0.5
+    }
+   },
+   "away": {
+    "slug": "temple",
+    "name": "Temple",
+    "ncaa_name": "Temple",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -2.73,
+     "rating": -2.01
+    },
+    "expected_points": 22.96,
+    "qb1": {
+     "name": "Ajani Sheppard",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 22.2,
+     "completions": 14.7,
+     "yards": 176.8,
+     "td": 1.4,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Keveun Mason",
+     "position": "RB",
+     "share": 0.78,
+     "carries": 12.9,
+     "yards": 57.7,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Colin Chase",
+     "position": "WR",
+     "share": 0.48,
+     "catches": 3.7,
+     "yards": 47.0,
+     "td": 0.5
+    }
+   },
+   "pred_margin": 2,
+   "pred_sd": 13.87,
+   "home_win_prob": 0.54,
+   "pred_total": 48.38,
+   "line": {
+    "spread_home": -6.0,
+    "total": 49.5,
+    "open_spread_home": -4.5,
+    "open_total": 49.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604112,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "louisville",
+    "name": "Louisville",
+    "ncaa_name": "Louisville",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 2.6,
+     "rating": 1.91
+    },
+    "expected_points": 32.66,
+    "qb1": {
+     "name": "Lincoln Kienholz",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 26.3,
+     "completions": 18.2,
+     "yards": 205.8,
+     "td": 1.7,
+     "interceptions": 0.4
+    },
+    "rb1": {
+     "name": "Isaac Brown",
+     "position": "RB",
+     "share": 0.86,
+     "carries": 16.1,
+     "yards": 101.4,
+     "td": 1.1
+    },
+    "wr1": {
+     "name": "Lawayne McCoy",
+     "position": "WR",
+     "share": 0.36,
+     "catches": 3.3,
+     "yards": 44.6,
+     "td": 0.3
+    }
+   },
+   "away": {
+    "slug": "stanford",
+    "name": "Stanford",
+    "ncaa_name": "Stanford",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": -3.36,
+     "rating": -2.47
+    },
+    "expected_points": 13.48,
+    "qb1": {
+     "name": "Davis Warren",
+     "position": "QB",
+     "share": 0.9,
+     "attempts": 28.9,
+     "completions": 17.3,
+     "yards": 173.4,
+     "td": 0.9,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Micah Ford",
+     "position": "RB",
+     "share": 0.94,
+     "carries": 12.1,
+     "yards": 45.4,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Caden High",
+     "position": "WR",
+     "share": 0.32,
+     "catches": 2.9,
+     "yards": 33.9,
+     "td": 0.2
+    }
+   },
+   "pred_margin": 19,
+   "pred_sd": 15.11,
+   "home_win_prob": 0.88,
+   "pred_total": 46.14,
+   "line": {
+    "spread_home": -22.5,
+    "total": 61.5,
+    "open_spread_home": -21.0,
+    "open_total": 61.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604062,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "tcu",
+    "name": "TCU",
+    "ncaa_name": "TCU",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 0.61,
+     "rating": 0.45
+    },
+    "expected_points": 27.98,
+    "qb1": {
+     "name": "Jaden Craig",
+     "position": "QB",
+     "share": 0.9,
+     "attempts": 30.0,
+     "completions": 20.3,
+     "yards": 234.0,
+     "td": 1.8,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Jon Denman",
+     "position": "RB",
+     "share": 0.8,
+     "carries": 13.2,
+     "yards": 59.6,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Jordan Dwyer",
+     "position": "WR",
+     "share": 0.82,
+     "catches": 7.3,
+     "yards": 97.2,
+     "td": 1.0
+    }
+   },
+   "away": {
+    "slug": "kansas",
+    "name": "Kansas",
+    "ncaa_name": "Kansas",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 0.77,
+     "rating": 0.57
+    },
+    "expected_points": 26.02,
+    "qb1": {
+     "name": "Isaiah Marshall",
+     "position": "QB",
+     "share": 0.92,
+     "attempts": 27.4,
+     "completions": 16.9,
+     "yards": 198.9,
+     "td": 1.5,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Dylan Edwards",
+     "position": "RB",
+     "share": 0.9,
+     "carries": 13.5,
+     "yards": 81.4,
+     "td": 0.7
+    },
+    "wr1": {
+     "name": "Nik McMillan",
+     "position": "WR",
+     "share": 0.72,
+     "catches": 5.5,
+     "yards": 77.2,
+     "td": 0.8
+    }
+   },
+   "pred_margin": 2,
+   "pred_sd": 13.51,
+   "home_win_prob": 0.66,
+   "pred_total": 54,
+   "line": {
+    "spread_home": -5.5,
+    "total": 47.5,
+    "open_spread_home": -4.5,
+    "open_total": 48.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603688,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "indiana",
+    "name": "Indiana",
+    "ncaa_name": "Indiana",
+    "rank": 4,
+    "form": {
+     "games": 7,
+     "points": -1.87,
+     "rating": -1.38
+    },
+    "expected_points": 31.46,
+    "qb1": {
+     "name": "Josh Hoover",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 25.1,
+     "completions": 17.7,
+     "yards": 199.1,
+     "td": 2.0,
+     "interceptions": 0.4
+    },
+    "rb1": {
+     "name": "Turbo Richard",
+     "position": "RB",
+     "share": 0.76,
+     "carries": 16.3,
+     "yards": 90.7,
+     "td": 0.8
+    },
+    "wr1": {
+     "name": "Charlie Becker",
+     "position": "WR",
+     "share": 0.66,
+     "catches": 5.0,
+     "yards": 72.1,
+     "td": 0.8
+    }
+   },
+   "away": {
+    "slug": "minnesota",
+    "name": "Minnesota",
+    "ncaa_name": "Minnesota",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -3.45,
+     "rating": -2.53
+    },
+    "expected_points": 14.68,
+    "qb1": {
+     "name": "Drake Lindsey",
+     "position": "QB",
+     "share": 0.9,
+     "attempts": 31.6,
+     "completions": 19.5,
+     "yards": 198.7,
+     "td": 1.1,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Darius Taylor",
+     "position": "RB",
+     "share": 0.82,
+     "carries": 9.4,
+     "yards": 37.0,
+     "td": 0.2
+    },
+    "wr1": {
+     "name": "Javon Tracy",
+     "position": "WR",
+     "share": 0.84,
+     "catches": 6.1,
+     "yards": 69.3,
+     "td": 0.3
+    }
+   },
+   "pred_margin": 17,
+   "pred_sd": 12.91,
+   "home_win_prob": 0.88,
+   "pred_total": 46.14,
+   "line": {
+    "spread_home": -19.5,
+    "total": 42.5,
+    "open_spread_home": -22.5,
+    "open_total": 45.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603706,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "ul-monroe",
+    "name": "UL Monroe",
+    "ncaa_name": "ULM",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -4.68,
+     "rating": -3.44
+    },
+    "expected_points": 26.52,
+    "qb1": {
+     "name": "Aidan Armenta",
+     "position": "QB",
+     "share": 0.92,
+     "attempts": 29.0,
+     "completions": 19.1,
+     "yards": 225.6,
+     "td": 1.8,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Bryson Roland",
+     "position": "RB",
+     "share": 0.52,
+     "carries": 8.8,
+     "yards": 39.8,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "JP Coulter",
+     "position": "WR",
+     "share": 0.26,
+     "catches": 3.4,
+     "yards": 46.1,
+     "td": 0.3
+    }
+   },
+   "away": {
+    "slug": "southern-miss",
+    "name": "Southern Miss",
+    "ncaa_name": "Southern Miss.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -4.43,
+     "rating": -3.25
+    },
+    "expected_points": 23.34,
+    "qb1": {
+     "name": "Landry Lyddy",
+     "position": "QB",
+     "share": 0.86,
+     "attempts": 33.0,
+     "completions": 21.6,
+     "yards": 236.5,
+     "td": 1.5,
+     "interceptions": 0.4
+    },
+    "rb1": {
+     "name": "Steven Robinson",
+     "position": "RB",
+     "share": 0.96,
+     "carries": 15.8,
+     "yards": 68.0,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Mario Sanders II",
+     "position": "WR",
+     "share": 0.54,
+     "catches": 5.5,
+     "yards": 70.4,
+     "td": 0.5
+    }
+   },
+   "pred_margin": 3,
+   "pred_sd": 16.37,
+   "home_win_prob": 0.62,
+   "pred_total": 49.86,
+   "line": {
+    "spread_home": 3.0,
+    "total": 53.5,
+    "open_spread_home": 3.0,
+    "open_total": 52.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603650,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "georgia",
+    "name": "Georgia",
+    "ncaa_name": "Georgia",
+    "rank": 3,
+    "form": {
+     "games": 6,
+     "points": 2.66,
+     "rating": 1.95
+    },
+    "expected_points": 34.4,
+    "qb1": {
+     "name": "Gunner Stockton",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 30.7,
+     "completions": 21.1,
+     "yards": 254.0,
+     "td": 2.2,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Dwight Phillips Jr.",
+     "position": "RB",
+     "share": 0.5,
+     "carries": 11.3,
+     "yards": 63.1,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Lawson Luckie",
+     "position": "TE",
+     "share": 0.28,
+     "catches": 3.3,
+     "yards": 42.5,
+     "td": 0.5
+    }
+   },
+   "away": {
+    "slug": "florida",
+    "name": "Florida",
+    "ncaa_name": "Florida",
+    "rank": 17,
+    "form": {
+     "games": 6,
+     "points": 1.35,
+     "rating": 0.99
+    },
+    "expected_points": 18.34,
+    "qb1": {
+     "name": "Aaron Philo",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 27.1,
+     "completions": 15.4,
+     "yards": 191.1,
+     "td": 1.2,
+     "interceptions": 1.0
+    },
+    "rb1": {
+     "name": "Jadan Baugh",
+     "position": "RB",
+     "share": 0.96,
+     "carries": 13.0,
+     "yards": 59.0,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Dallas Wilson",
+     "position": "WR",
+     "share": 0.36,
+     "catches": 3.3,
+     "yards": 44.7,
+     "td": 0.3
+    }
+   },
+   "pred_margin": 16,
+   "pred_sd": 15.18,
+   "home_win_prob": 0.82,
+   "pred_total": 52.74,
+   "line": {
+    "spread_home": -10.5,
+    "total": 56.5,
+    "open_spread_home": -12.5,
+    "open_total": 53.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604202,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "utah-state",
+    "name": "Utah State",
+    "ncaa_name": "Utah St.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -1.76,
+     "rating": -1.29
+    },
+    "expected_points": 25.5,
+    "qb1": {
+     "name": "Grady Brosterhous",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 30.2,
+     "completions": 19.5,
+     "yards": 231.8,
+     "td": 1.8,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Javen Jacobs",
+     "position": "RB",
+     "share": 0.96,
+     "carries": 12.1,
+     "yards": 57.9,
+     "td": 0.5
+    },
+    "wr1": {
+     "name": "Eli Wood",
+     "position": "WR",
+     "share": 0.46,
+     "catches": 4.6,
+     "yards": 52.0,
+     "td": 0.5
+    }
+   },
+   "away": {
+    "slug": "colorado-state",
+    "name": "Colorado State",
+    "ncaa_name": "Colorado St.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -2.41,
+     "rating": -1.77
+    },
+    "expected_points": 21.28,
+    "qb1": {
+     "name": "K'saan Farrar",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 34.7,
+     "completions": 22.4,
+     "yards": 246.3,
+     "td": 1.9,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Durell Robinson",
+     "position": "RB",
+     "share": 0.7,
+     "carries": 9.5,
+     "yards": 47.3,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Tommy Maher",
+     "position": "WR",
+     "share": 0.54,
+     "catches": 5.6,
+     "yards": 70.2,
+     "td": 0.4
+    }
+   },
+   "pred_margin": 4,
+   "pred_sd": 14.96,
+   "home_win_prob": 0.68,
+   "pred_total": 46.78,
+   "line": {
+    "spread_home": -6.5,
+    "total": 63.5,
+    "open_spread_home": -3.5,
+    "open_total": 64.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6640764,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "byu",
+    "name": "BYU",
+    "ncaa_name": "BYU",
+    "rank": 8,
+    "form": {
+     "games": 6,
+     "points": -0.12,
+     "rating": -0.09
+    },
+    "expected_points": 27.52,
+    "qb1": {
+     "name": "Bear Bachmeier",
+     "position": "QB",
+     "share": 0.9,
+     "attempts": 23.9,
+     "completions": 16.5,
+     "yards": 177.9,
+     "td": 1.4,
+     "interceptions": 0.4
+    },
+    "rb1": {
+     "name": "Preston Rex",
+     "position": "RB",
+     "share": 0.66,
+     "carries": 13.5,
+     "yards": 62.5,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Kyler Kasper",
+     "position": "WR",
+     "share": 0.5,
+     "catches": 3.6,
+     "yards": 46.0,
+     "td": 0.3
+    }
+   },
+   "away": {
+    "slug": "arizona-state",
+    "name": "Arizona State",
+    "ncaa_name": "Arizona St.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -5.29,
+     "rating": -3.89
+    },
+    "expected_points": 14.56,
+    "qb1": {
+     "name": "Mikey Keene",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 30.1,
+     "completions": 18.6,
+     "yards": 187.4,
+     "td": 1.1,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Cardae Mack",
+     "position": "RB",
+     "share": 0.64,
+     "carries": 8.5,
+     "yards": 27.6,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Reed Harris",
+     "position": "WR",
+     "share": 0.72,
+     "catches": 6.5,
+     "yards": 75.2,
+     "td": 0.4
+    }
+   },
+   "pred_margin": 13,
+   "pred_sd": 11.81,
+   "home_win_prob": 0.88,
+   "pred_total": 42.08,
+   "line": {
+    "spread_home": -14.5,
+    "total": 49.5,
+    "open_spread_home": -17.5,
+    "open_total": 51.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603909,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "ndsu",
+    "name": "North Dakota State",
+    "ncaa_name": "North Dakota St.",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": 7.47,
+     "rating": 5.49
+    },
+    "expected_points": 34.6,
+    "qb1": {
+     "name": "Nathan Hayes",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 20.0,
+     "completions": 14.0,
+     "yards": 179.9,
+     "td": 1.6,
+     "interceptions": 0.4
+    },
+    "rb1": {
+     "name": "Myles Mitchell",
+     "position": "RB",
+     "share": 0.56,
+     "carries": 15.1,
+     "yards": 89.9,
+     "td": 1.0
+    },
+    "wr1": {
+     "name": "Jackson Williams",
+     "position": "WR",
+     "share": 0.58,
+     "catches": 3.5,
+     "yards": 57.9,
+     "td": 0.6
+    }
+   },
+   "away": {
+    "slug": "utep",
+    "name": "UTEP",
+    "ncaa_name": "UTEP",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -6.05,
+     "rating": -4.45
+    },
+    "expected_points": 11.46,
+    "qb1": {
+     "name": "Raymond Moore III",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 23.2,
+     "completions": 13.2,
+     "yards": 157.0,
+     "td": 0.8,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Tavorus Jones",
+     "position": "RB",
+     "share": 0.68,
+     "carries": 6.9,
+     "yards": 24.7,
+     "td": 0.1
+    },
+    "wr1": {
+     "name": "Jaden Smith",
+     "position": "WR",
+     "share": 0.7,
+     "catches": 4.1,
+     "yards": 52.6,
+     "td": 0.2
+    }
+   },
+   "pred_margin": 23,
+   "pred_sd": 11.5,
+   "home_win_prob": 0.96,
+   "pred_total": 46.06,
+   "line": {
+    "spread_home": -25.5,
+    "total": 43.5,
+    "open_spread_home": -27.5,
+    "open_total": 49.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603851,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "liberty",
+    "name": "Liberty",
+    "ncaa_name": "Liberty",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 8.54,
+     "rating": 6.28
+    },
+    "expected_points": 32.5,
+    "qb1": {
+     "name": "Deshawn Purdie",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 22.4,
+     "completions": 14.4,
+     "yards": 171.3,
+     "td": 1.7,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Kam Davis",
+     "position": "RB",
+     "share": 0.5,
+     "carries": 12.7,
+     "yards": 77.5,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Makai Jackson",
+     "position": "WR",
+     "share": 0.66,
+     "catches": 3.9,
+     "yards": 53.5,
+     "td": 0.5
+    }
+   },
+   "away": {
+    "slug": "fiu",
+    "name": "FIU",
+    "ncaa_name": "FIU",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 1.37,
+     "rating": 1.0
+    },
+    "expected_points": 20.26,
+    "qb1": {
+     "name": "JJ Kohl",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 32.2,
+     "completions": 20.2,
+     "yards": 239.7,
+     "td": 1.9,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Devonte Lyons",
+     "position": "RB",
+     "share": 0.74,
+     "carries": 9.6,
+     "yards": 38.7,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Maguire Anderson",
+     "position": "WR",
+     "share": 0.32,
+     "catches": 2.9,
+     "yards": 39.4,
+     "td": 0.4
+    }
+   },
+   "pred_margin": 12,
+   "pred_sd": 14.63,
+   "home_win_prob": 0.82,
+   "pred_total": 52.76,
+   "line": {
+    "spread_home": -14.5,
+    "total": 45.5,
+    "open_spread_home": -11.5,
+    "open_total": 44.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603639,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "san-jose-state",
+    "name": "San Jos\u00e9 State",
+    "ncaa_name": "San Jose St.",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": 0.31,
+     "rating": 0.23
+    },
+    "expected_points": 15.46,
+    "qb1": {
+     "name": "Luke Weaver",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 25.9,
+     "completions": 14.9,
+     "yards": 190.7,
+     "td": 1.2,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Viliami Teu",
+     "position": "RB",
+     "share": 0.96,
+     "carries": 13.2,
+     "yards": 49.7,
+     "td": 0.2
+    },
+    "wr1": {
+     "name": "Jerry McClure",
+     "position": "WR",
+     "share": 0.32,
+     "catches": 3.4,
+     "yards": 48.6,
+     "td": 0.3
+    }
+   },
+   "away": {
+    "slug": "new-mexico",
+    "name": "New Mexico",
+    "ncaa_name": "New Mexico",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 7.8,
+     "rating": 5.74
+    },
+    "expected_points": 30.06,
+    "qb1": {
+     "name": "Toa Fa'avae",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 19.8,
+     "completions": 13.2,
+     "yards": 155.0,
+     "td": 1.4,
+     "interceptions": 0.4
+    },
+    "rb1": {
+     "name": "Scottre Humphrey",
+     "position": "RB",
+     "share": 0.58,
+     "carries": 15.1,
+     "yards": 92.7,
+     "td": 0.8
+    },
+    "wr1": {
+     "name": "Cade Keith",
+     "position": "TE",
+     "share": 0.4,
+     "catches": 2.6,
+     "yards": 27.2,
+     "td": 0.3
+    }
+   },
+   "pred_margin": -15,
+   "pred_sd": 13.17,
+   "home_win_prob": 0.14,
+   "pred_total": 45.52,
+   "line": {
+    "spread_home": 14.5,
+    "total": 41.5,
+    "open_spread_home": 14.5,
+    "open_total": 42.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603929,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "oklahoma",
+    "name": "Oklahoma",
+    "ncaa_name": "Oklahoma",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": -7.1,
+     "rating": -5.22
+    },
+    "expected_points": 25.32,
+    "qb1": {
+     "name": "John Mateer",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 31.1,
+     "completions": 20.1,
+     "yards": 224.0,
+     "td": 1.5,
+     "interceptions": 0.4
+    },
+    "rb1": {
+     "name": "Lloyd Avant",
+     "position": "RB",
+     "share": 0.64,
+     "carries": 10.0,
+     "yards": 41.5,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Isaiah Sategna III",
+     "position": "WR",
+     "share": 0.58,
+     "catches": 5.0,
+     "yards": 74.1,
+     "td": 0.5
+    }
+   },
+   "away": {
+    "slug": "south-carolina",
+    "name": "South Carolina",
+    "ncaa_name": "South Carolina",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 1.18,
+     "rating": 0.87
+    },
+    "expected_points": 25.3,
+    "qb1": {
+     "name": "LaNorris Sellers",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 30.1,
+     "completions": 19.7,
+     "yards": 233.9,
+     "td": 2.0,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Matt Fuller",
+     "position": "RB",
+     "share": 0.76,
+     "carries": 10.2,
+     "yards": 47.6,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Mazeo Bennett Jr.",
+     "position": "WR",
+     "share": 0.54,
+     "catches": 4.6,
+     "yards": 59.3,
+     "td": 0.4
+    }
+   },
+   "pred_margin": 1,
+   "pred_sd": 13.91,
+   "home_win_prob": 0.54,
+   "pred_total": 50.62,
+   "line": {
+    "spread_home": -5.5,
+    "total": 44.5,
+    "open_spread_home": -5.5,
+    "open_total": 43.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603785,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "ga-southern",
+    "name": "Georgia Southern",
+    "ncaa_name": "Ga. Southern",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 0.22,
+     "rating": 0.16
+    },
+    "expected_points": 27.32,
+    "qb1": {
+     "name": "Max Johnson",
+     "position": "QB",
+     "share": 0.84,
+     "attempts": 34.6,
+     "completions": 22.7,
+     "yards": 270.7,
+     "td": 1.8,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Tyrese Woodgett",
+     "position": "RB",
+     "share": 0.46,
+     "carries": 6.5,
+     "yards": 30.8,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Josh Dallas",
+     "position": "WR",
+     "share": 0.7,
+     "catches": 6.8,
+     "yards": 91.2,
+     "td": 0.7
+    }
+   },
+   "away": {
+    "slug": "app-st",
+    "name": "App State",
+    "ncaa_name": "App State",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -0.03,
+     "rating": -0.02
+    },
+    "expected_points": 22.42,
+    "qb1": {
+     "name": "Malachi Singleton",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 33.0,
+     "completions": 19.8,
+     "yards": 220.6,
+     "td": 1.5,
+     "interceptions": 0.9
+    },
+    "rb1": {
+     "name": "Jaquari Lewis",
+     "position": "RB",
+     "share": 0.52,
+     "carries": 8.0,
+     "yards": 39.3,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Nate Branch",
+     "position": "WR",
+     "share": 0.4,
+     "catches": 3.6,
+     "yards": 48.0,
+     "td": 0.2
+    }
+   },
+   "pred_margin": 5,
+   "pred_sd": 17.01,
+   "home_win_prob": 0.66,
+   "pred_total": 49.74,
+   "line": {
+    "spread_home": -5.5,
+    "total": 54.5,
+    "open_spread_home": -3.5,
+    "open_total": 54.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6640771,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "san-diego-st",
+    "name": "San Diego State",
+    "ncaa_name": "San Diego St.",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": -5.55,
+     "rating": -4.08
+    },
+    "expected_points": 28.64,
+    "qb1": {
+     "name": "Stone Saunders",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 25.2,
+     "completions": 15.7,
+     "yards": 186.0,
+     "td": 1.6,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Lucky Sutton",
+     "position": "RB",
+     "share": 0.88,
+     "carries": 17.5,
+     "yards": 110.0,
+     "td": 0.7
+    },
+    "wr1": {
+     "name": "Jordan Napier",
+     "position": "WR",
+     "share": 0.72,
+     "catches": 4.9,
+     "yards": 66.2,
+     "td": 0.6
+    }
+   },
+   "away": {
+    "slug": "washington-st",
+    "name": "Washington State",
+    "ncaa_name": "Washington St.",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": -4.0,
+     "rating": -2.94
+    },
+    "expected_points": 20.48,
+    "qb1": {
+     "name": "Owen Eshelman",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 27.0,
+     "completions": 15.9,
+     "yards": 206.2,
+     "td": 1.4,
+     "interceptions": 0.9
+    },
+    "rb1": {
+     "name": "Kirby Vorhees",
+     "position": "RB",
+     "share": 0.54,
+     "carries": 6.1,
+     "yards": 25.3,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Trey Leckner",
+     "position": "TE",
+     "share": 0.4,
+     "catches": 3.1,
+     "yards": 45.8,
+     "td": 0.3
+    }
+   },
+   "pred_margin": 8,
+   "pred_sd": 14.58,
+   "home_win_prob": 0.72,
+   "pred_total": 49.12,
+   "line": {
+    "spread_home": -2.5,
+    "total": 48.5,
+    "open_spread_home": -2.5,
+    "open_total": 48.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603968,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "florida-state",
+    "name": "Florida State",
+    "ncaa_name": "Florida St.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 1.66,
+     "rating": 1.22
+    },
+    "expected_points": 29.12,
+    "qb1": {
+     "name": "Ashton Daniels",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 25.9,
+     "completions": 16.8,
+     "yards": 185.6,
+     "td": 1.5,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Ousmane Kromah",
+     "position": "RB",
+     "share": 0.94,
+     "carries": 18.1,
+     "yards": 88.4,
+     "td": 0.8
+    },
+    "wr1": {
+     "name": "Duce Robinson",
+     "position": "WR",
+     "share": 0.72,
+     "catches": 5.2,
+     "yards": 66.3,
+     "td": 0.5
+    }
+   },
+   "away": {
+    "slug": "clemson",
+    "name": "Clemson",
+    "ncaa_name": "Clemson",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -2.55,
+     "rating": -1.87
+    },
+    "expected_points": 21.36,
+    "qb1": {
+     "name": "Tait Reynolds",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 29.4,
+     "completions": 18.0,
+     "yards": 222.9,
+     "td": 1.4,
+     "interceptions": 1.1
+    },
+    "rb1": {
+     "name": "Gideon Davidson",
+     "position": "RB",
+     "share": 0.84,
+     "carries": 10.0,
+     "yards": 44.5,
+     "td": 0.4
+    },
+    "wr1": {
+     "name": "Bryant Wesco Jr.",
+     "position": "WR",
+     "share": 0.4,
+     "catches": 3.9,
+     "yards": 53.7,
+     "td": 0.2
+    }
+   },
+   "pred_margin": 8,
+   "pred_sd": 15.89,
+   "home_win_prob": 0.74,
+   "pred_total": 50.48,
+   "line": {
+    "spread_home": -6.0,
+    "total": 49.5,
+    "open_spread_home": 1.5,
+    "open_total": 51.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603662,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "iowa-state",
+    "name": "Iowa State",
+    "ncaa_name": "Iowa St.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 1.57,
+     "rating": 1.16
+    },
+    "expected_points": 22.54,
+    "qb1": {
+     "name": "Jaylen Raynor",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 30.4,
+     "completions": 19.4,
+     "yards": 207.6,
+     "td": 1.8,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Aiden Flora",
+     "position": "RB",
+     "share": 0.98,
+     "carries": 11.9,
+     "yards": 52.7,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Omari Hayes",
+     "position": "WR",
+     "share": 0.46,
+     "catches": 4.9,
+     "yards": 63.6,
+     "td": 0.5
+    }
+   },
+   "away": {
+    "slug": "oklahoma-state",
+    "name": "Oklahoma State",
+    "ncaa_name": "Oklahoma St.",
+    "rank": 24,
+    "form": {
+     "games": 6,
+     "points": 4.13,
+     "rating": 3.04
+    },
+    "expected_points": 35.88,
+    "qb1": {
+     "name": "Drew Mestemaker",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 29.5,
+     "completions": 21.7,
+     "yards": 252.3,
+     "td": 2.4,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Caleb Hawkins",
+     "position": "RB",
+     "share": 1.0,
+     "carries": 21.6,
+     "yards": 126.1,
+     "td": 1.3
+    },
+    "wr1": {
+     "name": "Wyatt Young",
+     "position": "WR",
+     "share": 0.64,
+     "catches": 6.7,
+     "yards": 88.7,
+     "td": 0.9
+    }
+   },
+   "pred_margin": -13,
+   "pred_sd": 15.11,
+   "home_win_prob": 0.12,
+   "pred_total": 58.42,
+   "line": {
+    "spread_home": 10.0,
+    "total": 56.5,
+    "open_spread_home": 9.5,
+    "open_total": 56.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6640445,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "usc",
+    "name": "USC",
+    "ncaa_name": "Southern California",
+    "rank": null,
+    "form": {
+     "games": 8,
+     "points": -2.81,
+     "rating": -2.07
+    },
+    "expected_points": 18.08,
+    "qb1": {
+     "name": "Jayden Maiava",
+     "position": "QB",
+     "share": 1.0,
+     "attempts": 36.0,
+     "completions": 22.3,
+     "yards": 224.4,
+     "td": 1.5,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "King Miller",
+     "position": "RB",
+     "share": 0.72,
+     "carries": 12.0,
+     "yards": 48.4,
+     "td": 0.2
+    },
+    "wr1": {
+     "name": "Zacharyus Williams",
+     "position": "WR",
+     "share": 0.3,
+     "catches": 3.4,
+     "yards": 35.7,
+     "td": 0.3
+    }
+   },
+   "away": {
+    "slug": "ohio-state",
+    "name": "Ohio State",
+    "ncaa_name": "Ohio St.",
+    "rank": 2,
+    "form": {
+     "games": 7,
+     "points": -0.61,
+     "rating": -0.45
+    },
+    "expected_points": 36.28,
+    "qb1": {
+     "name": "Julian Sayin",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 28.6,
+     "completions": 20.6,
+     "yards": 260.2,
+     "td": 2.7,
+     "interceptions": 0.3
+    },
+    "rb1": {
+     "name": "Bo Jackson",
+     "position": "RB",
+     "share": 0.74,
+     "carries": 15.5,
+     "yards": 87.6,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Jeremiah Smith",
+     "position": "WR",
+     "share": 0.92,
+     "catches": 8.4,
+     "yards": 126.8,
+     "td": 1.4
+    }
+   },
+   "pred_margin": -18,
+   "pred_sd": 13.59,
+   "home_win_prob": 0.06,
+   "pred_total": 54.36,
+   "line": {
+    "spread_home": 7.0,
+    "total": 51.5,
+    "open_spread_home": 7.5,
+    "open_total": 55.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6640619,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "pittsburgh",
+    "name": "Pittsburgh",
+    "ncaa_name": "Pittsburgh",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": 0.84,
+     "rating": 0.62
+    },
+    "expected_points": 32.12,
+    "qb1": {
+     "name": "Holden Geriner",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 32.2,
+     "completions": 20.4,
+     "yards": 249.3,
+     "td": 2.3,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Damon Ferguson",
+     "position": "RB",
+     "share": 0.72,
+     "carries": 12.4,
+     "yards": 65.3,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Cataurus Hicks",
+     "position": "WR",
+     "share": 0.66,
+     "catches": 5.9,
+     "yards": 94.4,
+     "td": 0.8
+    }
+   },
+   "away": {
+    "slug": "georgia-tech",
+    "name": "Georgia Tech",
+    "ncaa_name": "Georgia Tech",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -5.59,
+     "rating": -4.11
+    },
+    "expected_points": 16.8,
+    "qb1": {
+     "name": "Alberto Mendoza",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 32.3,
+     "completions": 18.2,
+     "yards": 195.6,
+     "td": 1.2,
+     "interceptions": 1.0
+    },
+    "rb1": {
+     "name": "Trelain Maddox",
+     "position": "RB",
+     "share": 0.9,
+     "carries": 14.3,
+     "yards": 59.0,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Jordan Allen",
+     "position": "WR",
+     "share": 0.56,
+     "catches": 4.0,
+     "yards": 55.6,
+     "td": 0.4
+    }
+   },
+   "pred_margin": 15,
+   "pred_sd": 15.79,
+   "home_win_prob": 0.82,
+   "pred_total": 48.92,
+   "line": {
+    "spread_home": -7.5,
+    "total": 53.5,
+    "open_spread_home": -7.0,
+    "open_total": 52.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603773,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "arkansas",
+    "name": "Arkansas",
+    "ncaa_name": "Arkansas",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -2.32,
+     "rating": -1.71
+    },
+    "expected_points": 28.62,
+    "qb1": {
+     "name": "KJ Jackson",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 31.9,
+     "completions": 19.5,
+     "yards": 240.1,
+     "td": 1.9,
+     "interceptions": 1.2
+    },
+    "rb1": {
+     "name": "Braylen Russell",
+     "position": "RB",
+     "share": 0.52,
+     "carries": 8.6,
+     "yards": 48.5,
+     "td": 0.5
+    },
+    "wr1": {
+     "name": "Chris Marshall",
+     "position": "WR",
+     "share": 0.72,
+     "catches": 5.0,
+     "yards": 72.0,
+     "td": 0.7
+    }
+   },
+   "away": {
+    "slug": "missouri",
+    "name": "Missouri",
+    "ncaa_name": "Missouri",
+    "rank": 23,
+    "form": {
+     "games": 6,
+     "points": 1.37,
+     "rating": 1.0
+    },
+    "expected_points": 31.68,
+    "qb1": {
+     "name": "Austin Simmons",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 32.9,
+     "completions": 21.5,
+     "yards": 262.5,
+     "td": 1.9,
+     "interceptions": 0.7
+    },
+    "rb1": {
+     "name": "Jamal Roberts",
+     "position": "RB",
+     "share": 0.98,
+     "carries": 22.4,
+     "yards": 118.3,
+     "td": 1.1
+    },
+    "wr1": {
+     "name": "Cayden Lee",
+     "position": "WR",
+     "share": 0.84,
+     "catches": 6.6,
+     "yards": 101.9,
+     "td": 0.8
+    }
+   },
+   "pred_margin": -3,
+   "pred_sd": 17.19,
+   "home_win_prob": 0.42,
+   "pred_total": 60.3,
+   "line": {
+    "spread_home": 10.0,
+    "total": 49.5,
+    "open_spread_home": 10.5,
+    "open_total": 48.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604336,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "nebraska",
+    "name": "Nebraska",
+    "ncaa_name": "Nebraska",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 4.15,
+     "rating": 3.05
+    },
+    "expected_points": 37.68,
+    "qb1": {
+     "name": "Anthony Colandrea",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 29.4,
+     "completions": 19.2,
+     "yards": 241.8,
+     "td": 2.2,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Mekhi Nelson",
+     "position": "RB",
+     "share": 0.68,
+     "carries": 13.7,
+     "yards": 68.4,
+     "td": 0.8
+    },
+    "wr1": {
+     "name": "Kwazi Gilmer",
+     "position": "WR",
+     "share": 0.52,
+     "catches": 4.5,
+     "yards": 69.6,
+     "td": 0.4
+    }
+   },
+   "away": {
+    "slug": "washington",
+    "name": "Washington",
+    "ncaa_name": "Washington",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -5.43,
+     "rating": -3.99
+    },
+    "expected_points": 17.66,
+    "qb1": {
+     "name": "Elijah Brown",
+     "position": "QB",
+     "share": 0.92,
+     "attempts": 35.0,
+     "completions": 21.4,
+     "yards": 226.1,
+     "td": 1.3,
+     "interceptions": 0.9
+    },
+    "rb1": {
+     "name": "Brian Bonner Jr.",
+     "position": "RB",
+     "share": 0.86,
+     "carries": 8.6,
+     "yards": 34.0,
+     "td": 0.2
+    },
+    "wr1": {
+     "name": "Dezmen Roebuck",
+     "position": "WR",
+     "share": 0.64,
+     "catches": 6.3,
+     "yards": 77.2,
+     "td": 0.3
+    }
+   },
+   "pred_margin": 20,
+   "pred_sd": 14.07,
+   "home_win_prob": 0.94,
+   "pred_total": 55.34,
+   "line": {
+    "spread_home": -8.5,
+    "total": 49.5,
+    "open_spread_home": -9.5,
+    "open_total": 49.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6603721,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "memphis",
+    "name": "Memphis",
+    "ncaa_name": "Memphis",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": 2.86,
+     "rating": 2.1
+    },
+    "expected_points": 24.3,
+    "qb1": {
+     "name": "Marcus Stokes",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 24.6,
+     "completions": 16.2,
+     "yards": 199.5,
+     "td": 1.5,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Jaylin Carter",
+     "position": "RB",
+     "share": 0.74,
+     "carries": 13.0,
+     "yards": 64.1,
+     "td": 0.6
+    },
+    "wr1": {
+     "name": "Hunter Tipton",
+     "position": "TE",
+     "share": 0.32,
+     "catches": 2.8,
+     "yards": 34.8,
+     "td": 0.4
+    }
+   },
+   "away": {
+    "slug": "army",
+    "name": "Army",
+    "ncaa_name": "Army West Point",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 2.53,
+     "rating": 1.86
+    },
+    "expected_points": 23.54,
+    "qb1": {
+     "name": "Cale Hellums",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 14.6,
+     "completions": 7.9,
+     "yards": 92.2,
+     "td": 0.7,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Carson Smith",
+     "position": "RB",
+     "share": 0.72,
+     "carries": 12.3,
+     "yards": 45.3,
+     "td": 0.5
+    },
+    "wr1": {
+     "name": "Brady Anderson",
+     "position": "WR",
+     "share": 0.5,
+     "catches": 2.3,
+     "yards": 32.6,
+     "td": 0.3
+    }
+   },
+   "pred_margin": 1,
+   "pred_sd": 15.57,
+   "home_win_prob": 0.4,
+   "pred_total": 47.84,
+   "line": {
+    "spread_home": -6.5,
+    "total": 58.5,
+    "open_spread_home": -6.0,
+    "open_total": 56.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604223,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "boise-state",
+    "name": "Boise State",
+    "ncaa_name": "Boise St.",
+    "rank": 20,
+    "form": {
+     "games": 6,
+     "points": 6.28,
+     "rating": 4.62
+    },
+    "expected_points": 39.62,
+    "qb1": {
+     "name": "Maddux Madsen",
+     "position": "QB",
+     "share": 0.9,
+     "attempts": 24.7,
+     "completions": 16.5,
+     "yards": 211.9,
+     "td": 2.2,
+     "interceptions": 0.5
+    },
+    "rb1": {
+     "name": "Dylan Riley",
+     "position": "RB",
+     "share": 0.94,
+     "carries": 25.2,
+     "yards": 140.3,
+     "td": 1.3
+    },
+    "wr1": {
+     "name": "Ben Ford",
+     "position": "WR",
+     "share": 0.52,
+     "catches": 3.8,
+     "yards": 57.3,
+     "td": 0.5
+    }
+   },
+   "away": {
+    "slug": "texas-state",
+    "name": "Texas State",
+    "ncaa_name": "Texas St.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 2.24,
+     "rating": 1.65
+    },
+    "expected_points": 23.16,
+    "qb1": {
+     "name": "Brad Jackson",
+     "position": "QB",
+     "share": 0.94,
+     "attempts": 27.2,
+     "completions": 17.5,
+     "yards": 211.9,
+     "td": 1.6,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "Torrance Burgess Jr.",
+     "position": "RB",
+     "share": 0.76,
+     "carries": 13.6,
+     "yards": 52.7,
+     "td": 0.5
+    },
+    "wr1": {
+     "name": "Beau Sparks",
+     "position": "WR",
+     "share": 0.66,
+     "catches": 6.0,
+     "yards": 85.8,
+     "td": 0.6
+    }
+   },
+   "pred_margin": 16,
+   "pred_sd": 13.03,
+   "home_win_prob": 0.92,
+   "pred_total": 62.78,
+   "line": {
+    "spread_home": -11.5,
+    "total": 63.5,
+    "open_spread_home": -12.5,
+    "open_total": 65.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604329,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "unlv",
+    "name": "UNLV",
+    "ncaa_name": "UNLV",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": -1.16,
+     "rating": -0.85
+    },
+    "expected_points": 42.32,
+    "qb1": {
+     "name": "Jackson Arnold",
+     "position": "QB",
+     "share": 0.9,
+     "attempts": 22.1,
+     "completions": 15.3,
+     "yards": 188.2,
+     "td": 2.0,
+     "interceptions": 0.6
+    },
+    "rb1": {
+     "name": "Jai'Den Thomas",
+     "position": "RB",
+     "share": 0.96,
+     "carries": 21.0,
+     "yards": 136.9,
+     "td": 1.5
+    },
+    "wr1": {
+     "name": "Taz Reddicks",
+     "position": "WR",
+     "share": 0.28,
+     "catches": 3.1,
+     "yards": 43.8,
+     "td": 0.5
+    }
+   },
+   "away": {
+    "slug": "niu",
+    "name": "Northern Illinois",
+    "ncaa_name": "NIU",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": -7.13,
+     "rating": -5.24
+    },
+    "expected_points": 13.24,
+    "qb1": {
+     "name": "Taron Dickens",
+     "position": "QB",
+     "share": 0.92,
+     "attempts": 27.1,
+     "completions": 16.2,
+     "yards": 172.3,
+     "td": 1.1,
+     "interceptions": 1.0
+    },
+    "rb1": {
+     "name": "Telly Johnson Jr.",
+     "position": "RB",
+     "share": 0.88,
+     "carries": 9.9,
+     "yards": 40.1,
+     "td": 0.2
+    },
+    "wr1": {
+     "name": "DeAree Rogers",
+     "position": "WR",
+     "share": 0.8,
+     "catches": 5.9,
+     "yards": 72.4,
+     "td": 0.5
+    }
+   },
+   "pred_margin": 29,
+   "pred_sd": 15.58,
+   "home_win_prob": 0.96,
+   "pred_total": 55.56,
+   "line": {
+    "spread_home": -24.5,
+    "total": 53.5,
+    "open_spread_home": -24.5,
+    "open_total": 52.5,
+    "source": "scoresandodds.com"
+   }
+  },
+  {
+   "contest_id": 6604304,
+   "date": "10/31/2026",
+   "neutral": false,
+   "home": {
+    "slug": "fresno-state",
+    "name": "Fresno State",
+    "ncaa_name": "Fresno St.",
+    "rank": null,
+    "form": {
+     "games": 7,
+     "points": 2.26,
+     "rating": 1.66
+    },
+    "expected_points": 21.98,
+    "qb1": {
+     "name": "Jayden Mandal",
+     "position": "QB",
+     "share": 0.96,
+     "attempts": 33.8,
+     "completions": 21.6,
+     "yards": 238.3,
+     "td": 1.5,
+     "interceptions": 1.0
+    },
+    "rb1": {
+     "name": "Rayshon Luke",
+     "position": "RB",
+     "share": 0.5,
+     "carries": 9.1,
+     "yards": 47.1,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Josiah Freeman",
+     "position": "WR",
+     "share": 0.66,
+     "catches": 5.8,
+     "yards": 69.2,
+     "td": 0.4
+    }
+   },
+   "away": {
+    "slug": "oregon-state",
+    "name": "Oregon State",
+    "ncaa_name": "Oregon St.",
+    "rank": null,
+    "form": {
+     "games": 6,
+     "points": 8.03,
+     "rating": 5.9
+    },
+    "expected_points": 27.94,
+    "qb1": {
+     "name": "Braden Atkinson",
+     "position": "QB",
+     "share": 0.98,
+     "attempts": 35.9,
+     "completions": 23.0,
+     "yards": 277.5,
+     "td": 2.4,
+     "interceptions": 0.8
+    },
+    "rb1": {
+     "name": "AJ Newberry",
+     "position": "RB",
+     "share": 0.44,
+     "carries": 7.8,
+     "yards": 38.5,
+     "td": 0.3
+    },
+    "wr1": {
+     "name": "Eric Olsen",
+     "position": "TE",
+     "share": 0.62,
+     "catches": 4.6,
+     "yards": 65.7,
+     "td": 0.9
+    }
+   },
+   "pred_margin": -6,
+   "pred_sd": 14.53,
+   "home_win_prob": 0.28,
+   "pred_total": 49.92,
+   "line": {
+    "spread_home": 5.5,
+    "total": 56.5,
+    "open_spread_home": 7.0,
+    "open_total": 56.5,
+    "source": "scoresandodds.com"
+   }
+  }
+ ]
+}

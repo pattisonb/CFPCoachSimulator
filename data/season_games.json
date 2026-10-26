@@ -9822,7 +9822,7 @@
   "away_seo": "utah",
   "away_name": "Utah",
   "away_score": 0,
-  "away_rank": 10,
+  "away_rank": 6,
   "away_conf": "big-12"
  },
  {
@@ -9834,7 +9834,7 @@
   "home_seo": "wake-forest",
   "home_name": "Wake Forest",
   "home_score": 0,
-  "home_rank": 17,
+  "home_rank": 14,
   "home_conf": "acc",
   "away_seo": "virginia",
   "away_name": "Virginia",
@@ -9851,7 +9851,7 @@
   "home_seo": "texas",
   "home_name": "Texas",
   "home_score": 0,
-  "home_rank": 19,
+  "home_rank": 11,
   "home_conf": "sec",
   "away_seo": "mississippi-st",
   "away_name": "Mississippi St.",
@@ -9868,12 +9868,12 @@
   "home_seo": "texas-tech",
   "home_name": "Texas Tech",
   "home_score": 0,
-  "home_rank": 8,
+  "home_rank": 13,
   "home_conf": "big-12",
   "away_seo": "arizona",
   "away_name": "Arizona",
   "away_score": 0,
-  "away_rank": 25,
+  "away_rank": 22,
   "away_conf": "big-12"
  },
  {
@@ -9885,7 +9885,7 @@
   "home_seo": "ucla",
   "home_name": "UCLA",
   "home_score": 0,
-  "home_rank": 9,
+  "home_rank": 7,
   "home_conf": "big-ten",
   "away_seo": "nevada",
   "away_name": "Nevada",
@@ -9907,7 +9907,7 @@
   "away_seo": "northwestern",
   "away_name": "Northwestern",
   "away_score": 0,
-  "away_rank": 24,
+  "away_rank": 20,
   "away_conf": "big-ten"
  },
  {
@@ -9924,7 +9924,7 @@
   "away_seo": "smu",
   "away_name": "SMU",
   "away_score": 0,
-  "away_rank": 23,
+  "away_rank": 19,
   "away_conf": "acc"
  },
  {
@@ -9941,7 +9941,7 @@
   "away_seo": "notre-dame",
   "away_name": "Notre Dame",
   "away_score": 0,
-  "away_rank": 4,
+  "away_rank": 5,
   "away_conf": "fbs-independent"
  },
  {
@@ -9970,12 +9970,12 @@
   "home_seo": "iowa",
   "home_name": "Iowa",
   "home_score": 0,
-  "home_rank": 15,
+  "home_rank": null,
   "home_conf": "big-ten",
   "away_seo": "wisconsin",
   "away_name": "Wisconsin",
   "away_score": 0,
-  "away_rank": null,
+  "away_rank": 25,
   "away_conf": "big-ten"
  },
  {
@@ -10072,7 +10072,7 @@
   "home_seo": "ole-miss",
   "home_name": "Ole Miss",
   "home_score": 0,
-  "home_rank": 7,
+  "home_rank": 12,
   "home_conf": "sec",
   "away_seo": "auburn",
   "away_name": "Auburn",
@@ -10225,7 +10225,7 @@
   "home_seo": "indiana",
   "home_name": "Indiana",
   "home_score": 0,
-  "home_rank": 6,
+  "home_rank": 4,
   "home_conf": "big-ten",
   "away_seo": "minnesota",
   "away_name": "Minnesota",
@@ -10259,12 +10259,12 @@
   "home_seo": "georgia",
   "home_name": "Georgia",
   "home_score": 0,
-  "home_rank": 5,
+  "home_rank": 3,
   "home_conf": "sec",
   "away_seo": "florida",
   "away_name": "Florida",
   "away_score": 0,
-  "away_rank": 20,
+  "away_rank": 17,
   "away_conf": "sec"
  },
  {
@@ -10293,7 +10293,7 @@
   "home_seo": "byu",
   "home_name": "BYU",
   "home_score": 0,
-  "home_rank": 2,
+  "home_rank": 8,
   "home_conf": "big-12",
   "away_seo": "arizona-st",
   "away_name": "Arizona St.",
@@ -10434,7 +10434,7 @@
   "away_seo": "oklahoma-st",
   "away_name": "Oklahoma St.",
   "away_score": 0,
-  "away_rank": null,
+  "away_rank": 24,
   "away_conf": "big-12"
  },
  {
@@ -10446,12 +10446,12 @@
   "home_seo": "southern-california",
   "home_name": "Southern California",
   "home_score": 0,
-  "home_rank": 16,
+  "home_rank": null,
   "home_conf": "big-ten",
   "away_seo": "ohio-st",
   "away_name": "Ohio St.",
   "away_score": 0,
-  "away_rank": 3,
+  "away_rank": 2,
   "away_conf": "big-ten"
  },
  {
@@ -10485,7 +10485,7 @@
   "away_seo": "missouri",
   "away_name": "Missouri",
   "away_score": 0,
-  "away_rank": 22,
+  "away_rank": 23,
   "away_conf": "sec"
  },
  {
@@ -10531,7 +10531,7 @@
   "home_seo": "boise-st",
   "home_name": "Boise St.",
   "home_score": 0,
-  "home_rank": 21,
+  "home_rank": 20,
   "home_conf": "pac-12",
   "away_seo": "texas-st",
   "away_name": "Texas St.",
