@@ -453,7 +453,8 @@
     const f = view.filters;
     box.innerHTML = "";
     const inPortal = !!(s.offseason_stage && /^portal/.test(s.offseason_stage)) || !!view.portal;
-    box.append(el("div", { class: "go-display l", text: inPortal ? `TRANSFER PORTAL · ${(s.year || 2026) + 1}` : `PROSPECTS · CLASS OF ${(s.year || 2026) + 1}` }));
+    const title = el("div", { class: "go-display l", text: inPortal ? `TRANSFER PORTAL · ${(s.year || 2026) + 1}` : `PROSPECTS · CLASS OF ${(s.year || 2026) + 1}` });
+    box.append(title);
     const q = el("input", { type: "search", placeholder: "Search by name", value: f.q, "aria-label": "Search by name" });
     const mk = (key, opts, label) => {
       const sel = el("select", { "aria-label": label }, opts.map(([v, t]) => el("option", { value: v, text: t })));
@@ -483,6 +484,7 @@
       body.innerHTML = "";
       const portalRows = d.rows.some((r) => r.portal);
       view.portal = portalRows;
+      if (portalRows) title.textContent = `TRANSFER PORTAL · ${(s.year || 2026) + 1}`;      // the summary may predate the portal
       body.append(el("p", { class: "muted small", text: portalRows ? `${d.total} entrants · portal rankings · no stars on a transfer: his film is his rating`
         : `${d.total} prospects · national rankings · hidden prospects appear once your staff scout their area` }));
       body.append(el("ul", { class: "go-list rc-list" }, d.rows.map((r) => {
