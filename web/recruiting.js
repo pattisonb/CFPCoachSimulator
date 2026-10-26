@@ -452,7 +452,8 @@
   async function renderProspects(s, box) {
     const f = view.filters;
     box.innerHTML = "";
-    box.append(el("div", { class: "go-display l", text: `PROSPECTS · CLASS OF ${(s.year || 2026) + 1}` }));
+    const inPortal = !!(s.offseason_stage && /^portal/.test(s.offseason_stage)) || !!view.portal;
+    box.append(el("div", { class: "go-display l", text: inPortal ? `TRANSFER PORTAL · ${(s.year || 2026) + 1}` : `PROSPECTS · CLASS OF ${(s.year || 2026) + 1}` }));
     const q = el("input", { type: "search", placeholder: "Search by name", value: f.q, "aria-label": "Search by name" });
     const mk = (key, opts, label) => {
       const sel = el("select", { "aria-label": label }, opts.map(([v, t]) => el("option", { value: v, text: t })));
@@ -480,7 +481,10 @@
       try { d = await H.api(`/api/season/${s.id}/prospects?${params}`); }
       catch (err) { body.innerHTML = ""; body.append(loading(`Could not load the class: ${H.errText(err)}`)); return; }
       body.innerHTML = "";
-      body.append(el("p", { class: "muted small", text: `${d.total} prospects · national rankings · hidden prospects appear once your staff scout their area` }));
+      const portalRows = d.rows.some((r) => r.portal);
+      view.portal = portalRows;
+      body.append(el("p", { class: "muted small", text: portalRows ? `${d.total} entrants · portal rankings · no stars on a transfer: his film is his rating`
+        : `${d.total} prospects · national rankings · hidden prospects appear once your staff scout their area` }));
       body.append(el("ul", { class: "go-list rc-list" }, d.rows.map((r) => {
         const add = el("button", { type: "button", class: `go-btn ${r.on_board ? "" : "primary"}`, text: r.on_board ? "✓ On board" : "+ Board", "aria-label": `${r.on_board ? "Remove" : "Add"} ${r.name} ${r.on_board ? "from" : "to"} your board` });
         add.addEventListener("click", async (e) => {
@@ -489,8 +493,10 @@
         });
         const open = el("button", { type: "button", class: "go-list-main", onclick: () => openProfile(s, r.id) }, [
           el("span", { class: "go-rank", text: `#${r.national_rank}` }), avatar(r.id, "sm"),
-          el("span", { class: "go-list-id" }, [el("b", { text: r.name }), el("span", { class: "muted small", text: `${r.position} · ${height(r.height)} ${r.weight} · ${place(r.hometown)}` })]),
-          el("span", { class: "go-stars", text: stars(r.stars) }),
+          el("span", { class: "go-list-id" }, [el("b", { text: r.name }), el("span", { class: "muted small", text: r.portal
+            ? `${r.position} · ${r.cls} · from ${r.from_name}${r.usage ? ` · ${r.usage}` : ""}`
+            : `${r.position} · ${typeof r.height === "number" ? height(r.height) : (r.height || "")} ${r.weight} · ${place(r.hometown)}` })]),
+          r.portal ? el("span", { class: "go-tag muted", text: "Transfer" }) : el("span", { class: "go-stars", text: stars(r.stars) }),
           el("span", { class: "go-list-tags" }, [
             el("span", { class: `go-tag ${r.signed || r.committed ? "" : r.leaning_fcs ? "muted" : "good"}`, text: status(r) }),
             el("span", { class: "go-list-read" }, [

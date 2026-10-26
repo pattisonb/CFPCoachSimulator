@@ -1055,9 +1055,29 @@ seniors, times 0.12 for starters, 0.65 for the next man up and 1.3 for the bench
 a losing year; a Group of 5 player with a card overall of 50 or more (a Power 4 starter) enters
 40% of the time to move up. About 1.2% quit a year (2.5 times as likely in a team's bottom 15%).
 
+**Keep them home** (the step after Departures). Your players who mean to leave with eligibility
+left wait on you: transfers and early draft entrants (graduating seniors and quitters are gone
+either way). Each card says why he is going, from the factors that decided it: buried behind a
+named teammate, a rotation role, a losing year, a Power 4 program calling a Group of 5 standout,
+or a draft projection with his pick; his role now and next year (where he would sit on your depth
+chart after the departures); and, once you meet him (free), his ask: a starting role, or NIL
+(`RETAIN_ASK`: 25 plus 0.8 a card-overall point over 50, times his position; 1.5 times that when
+what he really wants is snaps; 2.5 times for a draft entrant, 1.5 more for a top-100 projection).
+A promised starting role counts only if your depth chart would really start him (a hollow
+promise is worth a few points, and he knows); NIL comes off next year's budget, so it is money
+your recruits and your portal pool will not have, and the portal pool reads the smaller budget
+at once. When you advance each one stays or goes (`stay_chance`: 10% for nothing, about 75% at
+his ask, about 70% for a real starting role, 92% at most; a draft entrant projected in the first
+round stays at most 8%, a day-three projection about 20% plus what the NIL buys). A player you
+keep carries `kept` (his portal chance the next year is 0.7 times) and a promise `promised` (3
+times if the snaps do not come). The leavers join the portal class or the draft as they would
+have; the week 1 portal screen lists the answers. On Auto nobody is talked to. AI schools keep a
+would-be portal entrant who would start for them a third of the time (`AI_KEEP`).
+
 **The portal is recruited like a class**, condensed to four weeks after national signing day
 (the real window is a month). The entrants are the departures' portal players (section above),
-each shown as a transfer, not a prospect: no stars, his class next year, last school, last
+each shown as a transfer, not a prospect (the Prospects tab lists them as the portal during those
+weeks: class, last school and role, no stars): no stars, his class next year, last school, last
 season's line (games, starts, his position's numbers), a public portal rank (his overall plus a
 little noise), your staff's grade read (half a high schooler's error: there is film), the role he
 would have with you next season (would start / next in line / depth, from your depth chart with

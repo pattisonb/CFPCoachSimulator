@@ -972,6 +972,25 @@ class JobRequest(BaseModel):
     team: Optional[str] = None
 
 
+class RetainRequest(BaseModel):
+    pid: str
+    action: str                   # meet, promise, nil, release
+    nil: int = 0
+
+
+@app.post("/api/season/{season_id}/offseason/retain")
+def offseason_retain(season_id: str, req: RetainRequest) -> dict:
+    """Keep them home: one move with a leaver (meet, promise a starting role, NIL from next year's budget, let him go)."""
+    st = _offseason_state(season_id)
+    with _season_lock:
+        try:
+            offseason.retain(st, req.pid, req.action, nil=req.nil)
+        except offseason.RetentionError as e:
+            raise HTTPException(e.code, str(e))
+        season.save_season(st)
+    return offseason.view(st)
+
+
 @app.post("/api/season/{season_id}/offseason/job")
 def offseason_job(season_id: str, req: JobRequest) -> dict:
     """Take a job offer (or, fired, an opening); team null stays put."""

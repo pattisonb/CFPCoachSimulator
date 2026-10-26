@@ -19,10 +19,10 @@ from typing import Optional
 from coach_career import league as lg
 from coach_career import recruits
 
-STAGES = ("departures", "portal_w1", "portal_w2", "portal_w3", "portal_w4", "development", "staff", "ready")
+STAGES = ("departures", "retention", "portal_w1", "portal_w2", "portal_w3", "portal_w4", "development", "staff", "ready")
 PORTAL_STAGES = ("portal_w1", "portal_w2", "portal_w3", "portal_w4")
 OLD_PORTAL = {"portal_1": "portal_w1", "portal_2": "portal_w2"}     # saves from the two-round portal
-STAGE_NAMES = {"departures": "Departures", "portal_w1": "Transfer portal, week 1", "portal_w2": "Transfer portal, week 2",
+STAGE_NAMES = {"departures": "Departures", "retention": "Keep them home", "portal_w1": "Transfer portal, week 1", "portal_w2": "Transfer portal, week 2",
                "portal_w3": "Transfer portal, week 3", "portal_w4": "Transfer portal, week 4",
                "portal_1": "Transfer portal, round 1", "portal_2": "Transfer portal, round 2",
                "development": "Development", "staff": "Staff", "ready": "Ready for next season"}
@@ -61,6 +61,13 @@ PORTAL_USAGE = {"starter": 0.12, "rotation": 0.65, "bench": 1.3}
 PORTAL_LOSING = 1.25                               # a losing season pushes players out
 TRANSFER_UP_FROM, TRANSFER_UP = 50, 0.40              # a Group of 5 player this good (card overall) enters this often
 QUIT = 0.012                                       # quitting or a medical retirement, a year
+PROMISE_BROKEN = 3.0                               # a player promised a starting role who did not get it: his portal chance next year
+KEPT_STAY = 0.7                                    # a player you kept home: his portal chance the year after
+AI_KEEP = 0.33                                     # an AI school keeps a would-be portal entrant who would start for it this often
+RETAIN_ASK = (25, 0.8)                             # what a leaver wants to stay: this plus this per card-overall point over 50, times his position
+RETAIN_PLAYING_TIME = 1.5                          # ... times this when what he really wants is snaps (NIL can still buy him)
+RETAIN_DRAFT = 2.5                                 # ... times this for a draft entrant (and 1.5 more for a top-100 projection)
+RETAIN_LOWBALL = 0.5                               # under this share of his ask an offer is worth nothing
 QUIT_LOW = 2.5                                     # ... this much likelier in the team's bottom 15%
 
 # ----- the portal *tune* -----
@@ -143,20 +150,218 @@ def start(state: dict) -> dict:
     lgd["year"] = year
     state["league"] = lgd
     usage = _usage()
-    deps, entrants = _departures(state, lgd, usage)
+    deps, entrants, pending = _departures(state, lgd, usage)
     signed = _sign_classes(state, lgd)
     state["offseason"] = {"stage": "departures", "year": year, "departures": deps,
                           "portal": {"players": entrants, "round": 1, "offers": {}, "moves": []},
-                          "signed": signed, "staff": None, "report": None, "performance": _performance(state)}
+                          "signed": signed, "staff": None, "report": None, "performance": _performance(state),
+                          "retention": {"players": _retention_entries(state, lgd, pending), "results": None, "spent": 0}}
+    return state["offseason"]
+
+
+def _open_portal(state: dict) -> None:
+    """The portal is recruited like a class: the signed class is kept aside, the entrants become the
+    class, your staff's first look goes on your board."""
     from coach_career import recruiting
-    if state.get("recruiting"):                # the portal is recruited like a class: the signed class is kept aside
+    lgd, off = state["league"], state["offseason"]
+    if state.get("recruiting") and not recruiting.is_portal(state):
         state["recruiting_last"] = state["recruiting"]
-        state["recruiting"] = recruiting.portal_rc(state, entrants, year)
+        state["recruiting"] = recruiting.portal_rc(state, off["portal"]["players"], off["year"])
         recruiting.reset_caches()
         me = state.get("team")
-        if me in lgd["teams"]:                 # your staff's first look: the entrants who fit your needs, on your board
+        if me in lgd["teams"]:
             state["recruiting"]["board"] = recruiting._build_board(state, me, _rng(state, "portal-board"))[:PORTAL_BOARD]
-    return state["offseason"]
+
+
+# ----- keep them home: your leavers with eligibility left ------------------------------------------
+
+class RetentionError(Exception):
+    def __init__(self, code: int, message: str):
+        super().__init__(message)
+        self.code = code
+
+
+REASONS = {"buried": "Buried on the depth chart behind {ahead}", "snaps": "Wants more than a rotation role",
+           "losing": "A losing year", "move_up": "A Power 4 program is calling", "restless": "Restless: no starting role in sight",
+           "draft": "Projects as a round {round} pick", "declared": "Believes he is ready for the NFL"}
+
+
+def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict]:
+    """Each of your pending leavers: why he is going, his role now and next year, and what it would
+    take (his ask stays hidden until you meet him)."""
+    from coach_career import recruiting
+    me = state.get("team")
+    if not pending or me not in lgd["teams"]:
+        return []
+    roster = lgd["teams"][me]["roster"]
+    by_id = {p["id"]: p for p in roster}
+    would_start = _would_start(roster, recruiting.PORTAL_STARTERS)
+    out = []
+    for item in pending:
+        ev, use = item["ev"], item["use"]
+        p = by_id.get(ev["id"])
+        if not p:
+            continue
+        g = GROUP.get(p["pos"], "S")
+        peers = sorted((q for q in roster if GROUP.get(q["pos"], "S") == g), key=lambda q: -q["o"])
+        n = recruiting.PORTAL_STARTERS.get(g, 1)
+        role_next = "starter" if p["id"] in would_start else "rotation" if p in peers[:n + 2] else "bench"
+        intent = "draft" if ev["kind"] in ("draft", "undrafted") else "portal"
+        if intent == "draft":
+            key = "draft" if ev["kind"] == "draft" else "declared"
+            ahead = None
+        elif use == "bench" and peers and peers[0]["id"] != p["id"]:
+            key, ahead = "buried", peers[0]["n"]
+        elif use == "rotation":
+            key, ahead = "snaps", None
+        elif item["losing"]:
+            key, ahead = "losing", None
+        elif not item["p4"] and house(p["pos"], p["o"]) >= TRANSFER_UP_FROM:
+            key, ahead = "move_up", None
+        else:
+            key, ahead = "restless", None
+        ovr = house(p["pos"], p["o"])
+        base = max(10, RETAIN_ASK[0] + RETAIN_ASK[1] * (ovr - 50)) * recruiting.ASK_POS.get(p["pos"], 1.0)
+        if intent == "draft":
+            kind = "nil"
+            ask = base * RETAIN_DRAFT * (1.5 if (ev.get("pick") or 10 ** 6) <= 100 else 1.0)
+        elif role_next == "starter":
+            kind, ask = "nil", base
+        else:
+            kind, ask = "playing_time", base * RETAIN_PLAYING_TIME
+        out.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "overall": ovr, "stars": p.get("s"),
+                    "role_now": use, "role_next": role_next, "intent": intent, "reason_key": key,
+                    "reason": REASONS[key].format(ahead=ahead, round=ev.get("round")),
+                    "draft_pick": ev.get("pick"), "draft_kind": ev["kind"] if intent == "draft" else None,
+                    "ask": {"kind": kind, "nil": int(5 * round(ask / 5)), "known": False},
+                    "offers": {"nil": 0, "promise": False, "released": False}, "met": False})
+    return out
+
+
+def _retention_view(state: dict) -> Optional[dict]:
+    from coach_career import recruiting
+    off = state.get("offseason") or {}
+    ret = off.get("retention")
+    if ret is None:
+        return None
+    me = state["team"]
+    budget = recruiting.nil_budget(state, me)
+    players = []
+    for e in ret["players"]:
+        row = {k: v for k, v in e.items() if k != "ask"}
+        row["ask"] = dict(e["ask"]) if e["ask"]["known"] else {"kind": None, "nil": None, "known": False}
+        row["chance"] = round(stay_chance(e), 2) if e["ask"]["known"] else None
+        row["chance_word"] = _chance_word(stay_chance(e)) if (e["met"] or e["offers"].get("nil") or e["offers"].get("promise")) else None
+        row["role_now_name"], row["role_next_name"] = ROLE_NAMES[e["role_now"]], ROLE_NAMES[e["role_next"]]
+        players.append(row)
+    return {"players": players, "results": ret.get("results"), "spent": ret.get("spent", 0), "budget": budget,
+            "left": budget - ret.get("spent", 0)}
+
+
+ROLE_NAMES = {"starter": "Starter", "rotation": "Rotation", "bench": "Bench"}
+
+
+def _chance_word(c: float) -> str:
+    return "Likely to stay" if c >= 0.65 else "Could go either way" if c >= 0.4 else "Leaning out" if c >= 0.2 else "As good as gone"
+
+
+def stay_chance(e: dict) -> float:
+    """His chance to stay from what you offered against what he wants: NIL at his ask, or a starting
+    role he would actually get; a draft entrant projected in the first round is gone whatever you say."""
+    ask, offers = e["ask"], e["offers"]
+    nil_share = min(1.0, offers.get("nil", 0) / ask["nil"]) if ask["nil"] else (1.0 if offers.get("nil", 0) else 0.0)
+    if nil_share < RETAIN_LOWBALL:
+        nil_share = 0.0
+    honored = bool(offers.get("promise")) and e["role_next"] == "starter"
+    hollow = bool(offers.get("promise")) and not honored
+    if e["intent"] == "draft":
+        pick = e.get("draft_pick") or 10 ** 6
+        if pick <= 32:
+            return min(0.08, 0.03 + 0.05 * nil_share)
+        base = 0.08 if pick <= 100 else 0.2
+        return min(0.9, base + (0.5 if pick <= 100 else 0.6) * nil_share + (0.1 if honored else 0.0))
+    chance = 0.1
+    chance += (0.65 if ask["kind"] == "nil" else 0.52) * nil_share
+    chance += 0.6 if honored else 0.05 if hollow else 0.0
+    return min(0.92, chance)
+
+
+def _retention_spent(off: dict) -> int:
+    return sum(e["offers"].get("nil", 0) for e in (off.get("retention") or {}).get("players", []))
+
+
+def retain(state: dict, pid: str, action: str, nil: int = 0) -> dict:
+    """One move with a leaver: meet (his ask), promise (a starting role), nil (points from next year's
+    budget, replacing any earlier number), release (let him go). Returns the retention block."""
+    from coach_career import recruiting
+    off = state.get("offseason") or {}
+    if off.get("stage") != "retention":
+        raise RetentionError(409, "this is not the retention step")
+    e = next((x for x in off["retention"]["players"] if x["id"] == pid), None)
+    if e is None:
+        raise RetentionError(404, "he is not on your leavers")
+    if action == "meet":
+        e["met"] = True
+        e["ask"]["known"] = True
+    elif action == "promise":
+        e["offers"]["promise"] = True
+        e["offers"]["released"] = False
+    elif action == "nil":
+        if nil < 0:
+            raise RetentionError(400, "NIL points cannot be negative")
+        others = _retention_spent(off) - e["offers"].get("nil", 0)
+        if others + nil > recruiting.nil_budget(state, state["team"]):
+            raise RetentionError(400, "not enough NIL in next year's budget")
+        e["offers"]["nil"] = int(nil)
+        e["offers"]["released"] = False
+    elif action == "release":
+        e["offers"].update(nil=0, promise=False, released=True)
+    else:
+        raise RetentionError(400, "unknown action")
+    off["retention"]["spent"] = _retention_spent(off)
+    return off["retention"]
+
+
+def _resolve_retention(state: dict) -> None:
+    """When you advance: each leaver stays or goes; the leavers join the portal or the draft, the
+    NIL you spent comes off next year's budget (the portal pool reads it too)."""
+    from coach_career import recruiting
+    lgd, off = state["league"], state["offseason"]
+    ret = off["retention"]
+    me, year = state["team"], off["year"]
+    rng = _rng(state, "retention")
+    auto = bool(off.get("auto"))
+    team = lgd["teams"][me]
+    by_id = {p["id"]: p for p in team["roster"]}
+    results, leaving, spent = [], set(), 0
+    for e in ret["players"]:
+        p = by_id.get(e["id"])
+        chance = 0.0 if auto or e["offers"].get("released") or p is None else stay_chance(e)
+        stayed = rng.random() < chance
+        if stayed:
+            p["kept"] = year
+            if e["offers"].get("promise"):
+                p["promised"] = year
+            spent += e["offers"].get("nil", 0)
+        elif p is not None:
+            leaving.add(p["id"])
+            ev = {"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": e["cls"], "team": me, "team_name": lg.base_team(me)["short_name"],
+                  "overall": e["overall"], "stars": p.get("s")}
+            if e["intent"] == "draft":
+                ev.update(kind=e["draft_kind"], early=True)
+                if e["draft_kind"] == "draft":
+                    ev.update(pick=e["draft_pick"], round=min(7, (e["draft_pick"] - 1) // 32 + 1))
+            else:
+                ev["kind"] = "portal"
+                off["portal"]["players"][p["id"]] = {"player": dict(p), "from": me, "from_name": ev["team_name"],
+                                                     "offers": [], "signed": None, "usage": e["role_now"]}
+            off["departures"].append(ev)
+        results.append({"id": e["id"], "name": e["name"], "pos": e["pos"], "intent": e["intent"], "status": "stayed" if stayed else "left",
+                        "chance": round(chance, 2), "nil": e["offers"].get("nil", 0) if stayed else 0, "promise": bool(e["offers"].get("promise")) and stayed})
+    team["roster"] = [p for p in team["roster"] if p["id"] not in leaving]
+    ret["results"], ret["spent"] = results, spent
+    state.setdefault("nil_retained", {})[me] = spent
+    recruiting.reset_caches()
 
 
 # ----- the season's production and honors, for development *tune* -----
@@ -245,7 +450,7 @@ def growth_terms(perf: Optional[dict]) -> tuple[float, int, list[str], bool]:
     return mult, int(round(min(ROOM_CAP, room))), why, level_up
 
 
-def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict]:
+def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict, list[dict]]:
     rng = _rng(state, "departures")
     attrs = _attrs(lgd)
     events, entrants = [], {}
@@ -254,12 +459,16 @@ def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict]:
     declared, drafted = draft_board(lgd, rng)
     leaving: dict[str, set] = {slug: set() for slug in lgd["teams"]}
     from sim import season
+    from coach_career import recruiting
     teams = season.load_teams()
     p4 = {slug: season._is_p4(slug, teams[slug]) for slug in lgd["teams"]}
+    me = state.get("team")
+    pending: list[dict] = []                 # your leavers with eligibility left: they wait on the retention step
     for slug, t in lgd["teams"].items():
         u = usage.get(slug, {})
         wins, losses = records[slug]
         losing = wins < losses
+        would_start = _would_start(t["roster"], recruiting.PORTAL_STARTERS)
         os_ = sorted(q["o"] for q in t["roster"])
         low = os_[max(0, int(len(os_) * 0.15) - 1)] if os_ else 0
         team_name = lg.base_team(slug)["short_name"]
@@ -282,7 +491,11 @@ def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict]:
                     chance = PORTAL_BASE.get(p["cls"], 0.15) * PORTAL_USAGE[use] * (PORTAL_LOSING if losing else 1.0)
                     if not p4[slug] and house(p["pos"], p["o"]) >= TRANSFER_UP_FROM:
                         chance = max(chance, TRANSFER_UP)            # a Group of 5 standout moves up
-                    if rng.random() < chance:
+                    if p.get("promised") == lgd["year"] - 1 and use != "starter":
+                        chance *= PROMISE_BROKEN                     # promised a starting role and did not get it
+                    elif p.get("kept") == lgd["year"] - 1:
+                        chance *= KEPT_STAY
+                    if rng.random() < chance and (slug == me or not (p["id"] in would_start and rng.random() < AI_KEEP)):
                         ev.update(kind="portal")
                         q = dict(p, cls=nxt)
                         entrants[p["id"]] = {"player": q, "from": slug, "from_name": team_name, "offers": [],
@@ -290,11 +503,30 @@ def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict]:
                     else:
                         p["cls"] = nxt
                         continue
+            if slug == me and (ev["kind"] == "portal" or (ev["kind"] in ("draft", "undrafted") and ev.get("early"))):
+                # your leaver with eligibility left: he waits on the retention step, on the roster (a class
+                # up, as if he stays), out of the portal and the draft until you advance
+                entrants.pop(p["id"], None)
+                p["cls"] = "SRRS" if p["cls"] == "SR" else NEXT_CLASS.get(p["cls"], p["cls"])
+                pending.append({"ev": ev, "use": use, "losing": losing, "p4": p4[slug]})
+                continue
             events.append(ev)
             leaving[slug].add(p["id"])
     for slug, t in lgd["teams"].items():
         t["roster"] = [p for p in t["roster"] if p["id"] not in leaving[slug]]
-    return events, entrants
+    return events, entrants, pending
+
+
+def _would_start(roster: list[dict], starters: dict) -> set:
+    """The ids who would start by overall at their group on this roster (the group's number of starters)."""
+    by_group: dict[str, list] = {}
+    for p in roster:
+        by_group.setdefault(GROUP.get(p["pos"], "S"), []).append(p)
+    out = set()
+    for g, ps in by_group.items():
+        for p in sorted(ps, key=lambda q: -q["o"])[:starters.get(g, 1)]:
+            out.add(p["id"])
+    return out
 
 
 def draft_score(pos: str, overall: int, rng: random.Random) -> float:
@@ -880,6 +1112,14 @@ def advance(state: dict) -> dict:
     stage = off["stage"]
     from coach_career import recruiting
     if stage == "departures":
+        if off.get("retention") is None:            # a save from before the retention step
+            _open_portal(state)
+            off["stage"] = "portal_w1" if recruiting.is_portal(state) else "portal_1"
+        else:
+            off["stage"] = "retention"
+    elif stage == "retention":
+        _resolve_retention(state)
+        _open_portal(state)
         off["stage"] = "portal_w1" if recruiting.is_portal(state) else "portal_1"
     elif stage in PORTAL_STAGES:
         week = PORTAL_STAGES.index(stage) + 1
@@ -993,6 +1233,8 @@ def next_season(state: dict) -> dict:
         history[-1]["moved_to"] = team
         car.setdefault("schools", []).append({"team": team, "from": year})
     new.pop("recruiting_last", None)
+    if state.get("nil_retained"):              # the NIL you spent keeping players home comes off next year's budget
+        new["nil_retained"] = dict(state["nil_retained"])
     recruiting.start(new, year=year + 1)
     from coach_career import prospects
     prospects.reset_caches()
@@ -1105,6 +1347,7 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
                        "league": kinds, "first_round": [d for d in sorted((d for d in deps if d["kind"] == "draft"), key=lambda d: d["pick"])][:32],
                        "early_entrants": sum(1 for d in deps if d.get("early"))},
         "signed": off.get("signed", {}).get(me, 0),
+        "retention": _retention_view(state),
         "roster": len(lgd["teams"][me]["roster"]), "roster_limit": ROSTER_LIMIT,
         "open_spots": recruiting_spots(state, me) if new_portal else open_spots(lgd, me, portal),
         "release_spots": 0 if new_portal else churn_left(portal, me),

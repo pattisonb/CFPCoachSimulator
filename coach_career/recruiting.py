@@ -693,7 +693,8 @@ def weekly_hours(state: dict, slug: str) -> int:
 
 
 def nil_budget(state: dict, slug: str) -> int:
-    return max(NIL_FLOOR, round(100 * (1 + _baseline(slug))))
+    """A school's NIL points for the year, less what it spent keeping its own players home."""
+    return max(NIL_FLOOR, round(100 * (1 + _baseline(slug))) - int((state.get("nil_retained") or {}).get(slug, 0)))
 
 
 def open_spots(state: dict, slug: str) -> int:

@@ -54,6 +54,12 @@ if __name__ == "__main__":
             assert page.is_visible("#season-tabs button[data-tab=offseason]")
             assert "DEPARTURES" in page.inner_text("#tab-offseason")
             assert "LEAVING YOUR PROGRAM" in page.inner_text("#tab-offseason")
+            if page.query_selector("text=KEEP THEM HOME"):               # your leavers with eligibility left wait on you
+                page.click("text=KEEP THEM HOME")
+                page.wait_for_selector("text=WANT OUT", timeout=60_000)
+                first = page.query_selector("button.go-act:has-text('Meet')")
+                if first:
+                    first.click(); page.wait_for_selector("text=He wants", timeout=30_000)
             page.click("text=OPEN THE TRANSFER PORTAL")
             page.wait_for_selector(".off-board .go-pcard", timeout=60_000)          # the portal is recruited on the board
             assert "WEEK 1 OF 4" in page.inner_text("#tab-offseason")

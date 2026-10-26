@@ -85,6 +85,8 @@ if __name__ == "__main__":
     # the portal as recruiting: four weeks, no stars, your offer with a pitch and a campus visit, entrants decide each week
     from coach_career import prospects, recruiting
     offseason.advance(st)
+    assert off["stage"] == "retention", off["stage"]           # your leavers with eligibility left wait on you (tests/test_retention.py)
+    offseason.advance(st)
     assert off["stage"] == "portal_w1" and st["recruiting"].get("portal") and st["recruiting"]["week"] == 1
     assert st.get("recruiting_last") and not st["recruiting_last"].get("portal")      # the signed class is kept
     rc = st["recruiting"]

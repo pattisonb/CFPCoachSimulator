@@ -50,7 +50,8 @@
     box.append(head);
     const main = el("div", { class: "off-main" });
     box.append(main);
-    const next = { departures: "OPEN THE TRANSFER PORTAL", portal_1: "END ROUND 1", portal_2: "CLOSE THE PORTAL", portal_w1: "END WEEK 1", portal_w2: "END WEEK 2",
+    const next = { departures: v.retention && v.retention.players.length ? "KEEP THEM HOME" : "OPEN THE TRANSFER PORTAL", retention: "OPEN THE TRANSFER PORTAL",
+                   portal_1: "END ROUND 1", portal_2: "CLOSE THE PORTAL", portal_w1: "END WEEK 1", portal_w2: "END WEEK 2",
       portal_w3: "END WEEK 3", portal_w4: "CLOSE THE PORTAL", development: "STAFF CHANGES",
                    staff: "FINISH THE OFFSEASON", ready: `START THE ${v.year} SEASON` }[v.stage];
     const go = el("button", { type: "button", class: "go-btn primary big", text: next });
@@ -62,6 +63,7 @@
       actions.append(all);
     }
     if (v.stage === "departures") renderDepartures(v, main);
+    else if (v.stage === "retention") renderRetention(s, v, main, box);
     else if (v.stage === "portal_1" || v.stage === "portal_2") renderPortal(s, v, main, box);
     else if (v.stage.startsWith("portal_w")) renderPortalWeeks(s, v, main, box);
     else if (v.stage === "development") renderDevelopment(v, main);
@@ -111,6 +113,53 @@
     main.append(el("div", { class: "off-grid" }, [card, league]));
   }
 
+  // Keep them home: your leavers with eligibility left, what each wants, and your moves (API: offseason/retain)
+  function renderRetention(s, v, main, box) {
+    const r = v.retention;
+    const act = async (pid, action, nil) => {
+      try { await H.api(`/api/season/${s.id}/offseason/retain`, H.postJSON({ pid, action, nil: nil || 0 })); render(s, box, H); }
+      catch (err) { H.toast(`Could not do that: ${H.errText(err)}`, 4000); }
+    };
+    const head = el("section", { class: "go-card" }, [
+      el("div", { class: "go-kicker", text: `KEEP THEM HOME · ${r.players.length} WANT OUT` }),
+      el("p", {}, [`${r.players.length} of your players with eligibility left mean to leave: transfers and early draft entrants. Meet each one to hear what it would take. `,
+        "A promised starting role only counts if your depth chart would really start him; NIL comes out of next year's budget, so it is money you will not have for recruits or the portal. ",
+        "Nobody decides until you advance; graduating seniors are gone either way."]),
+      el("div", { class: "go-row wrap" }, [el("span", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: "NEXT YEAR'S NIL" }), el("div", { class: "go-stat-val", text: `${r.left} / ${r.budget}` })]),
+        el("span", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: "COMMITTED TO KEEP THEM" }), el("div", { class: "go-stat-val", text: `${r.spent}` })])]),
+    ]);
+    const cards = el("div", { class: "go-cards off-keep" });
+    for (const e of r.players) {
+      const c = el("article", { class: `go-card go-pcard ${e.offers.released ? "muted" : ""}` });
+      c.append(el("div", { class: "go-card-head" }, [el("div", {}, [el("b", { class: "go-name", text: e.name }),
+        el("div", { class: "muted small", text: `${e.pos} · ${e.cls} next year · ${e.overall} OVR${e.stars ? ` · ${"★".repeat(e.stars)}` : ""}` })]),
+        el("span", { class: `go-tag ${e.intent === "draft" ? "warn" : "bad"}`, text: e.intent === "draft" ? "NFL draft" : "Transfer portal" })]));
+      c.append(el("p", { class: "off-why" }, [el("b", { text: "Why: " }), e.reason, e.draft_pick ? ` (projected pick ${e.draft_pick})` : ""]));
+      c.append(el("div", { class: "go-tags" }, [el("span", { class: "go-tag muted", text: `Now: ${e.role_now_name}` }), el("span", { class: `go-tag ${e.role_next === "starter" ? "good" : "muted"}`, text: `Next year: ${e.role_next_name}`, title: "Where he would sit on your depth chart next season" }),
+        e.chance_word ? el("span", { class: `go-tag ${e.chance >= 0.65 ? "good" : e.chance >= 0.4 ? "warn" : "bad"}`, text: e.chance_word }) : null]));
+      const askText = !e.ask.known ? "Meet with him to hear what it would take."
+        : e.ask.kind === "playing_time" ? `He wants a starting role${e.ask.nil ? `; short of that, about ${e.ask.nil} NIL would do it` : ""}.`
+        : `He wants about ${e.ask.nil} NIL to stay.`;
+      c.append(el("p", { class: "muted small", text: askText }));
+      const offers = [];
+      if (e.offers.promise) offers.push(e.role_next === "starter" ? "Promised a starting role" : "Promised a starting role he would not get");
+      if (e.offers.nil) offers.push(`${e.offers.nil} NIL on the table`);
+      if (e.offers.released) offers.push("Letting him go");
+      if (offers.length) c.append(el("p", { class: "small" }, [el("b", { text: "Your offer: " }), offers.join(" · ")]));
+      const row = el("div", { class: "go-actions" });
+      const btn = (label, sub, onclick, tone, off) => { const b = el("button", { type: "button", class: `go-act ${tone || ""}` }, [el("b", { text: label }), el("span", { text: sub })]); if (off) b.disabled = true; b.addEventListener("click", onclick); return b; };
+      row.append(btn("Meet", e.met ? "done" : "free", () => act(e.id, "meet"), "", e.met));
+      row.append(btn("Promise start", e.role_next === "starter" ? "he would" : "he would not", () => act(e.id, "promise"), e.role_next === "starter" ? "go" : "", e.offers.promise));
+      const nil = el("input", { type: "number", min: "0", step: "5", value: String(e.offers.nil || e.ask.nil || 0), class: "go-nil", "aria-label": `NIL for ${e.name}` });
+      row.append(nil, btn("Offer NIL", "next year's", () => act(e.id, "nil", Number(nil.value) || 0), "alt"));
+      row.append(btn("Let him go", "", () => act(e.id, "release"), "", e.offers.released));
+      c.append(row);
+      cards.append(c);
+    }
+    if (!r.players.length) head.append(el("p", { class: "muted", text: "Nobody with eligibility left wants out. Open the portal." }));
+    main.append(head, cards);
+  }
+
   function renderPortalWeeks(s, v, main, box) {
     const p = v.portal;
     const head = el("section", { class: "go-card" }, [
@@ -120,6 +169,13 @@
         "Entrants with offers decide at each week's end (a quarter of them, then 40%, 60%, then everyone), for the school they like best with room; what you do this week lands at the step. ",
         `${p.signed} of ${p.entrants} have picked a school.`]),
     ]);
+    const kept = (v.retention && v.retention.results) || [];
+    if (kept.length && p.week === 1) {
+      head.append(el("div", { class: "go-kicker muted off-sub", text: "KEEP THEM HOME · THE ANSWERS" }),
+        el("ul", { class: "off-list" }, kept.map((k) => el("li", {}, [el("b", { text: k.name }), el("span", { class: "muted", text: ` ${k.pos} · ` }),
+          k.status === "stayed" ? el("span", { class: "go-tag good", text: `Stays${k.nil ? ` · ${k.nil} NIL` : ""}${k.promise ? " · promised a start" : ""}` })
+            : el("span", { class: "go-tag bad", text: k.intent === "draft" ? "Off to the draft" : "Into the portal" })]))));
+    }
     const moves = p.moves_mine || [];
     if (moves.length) {
       head.append(el("div", { class: "go-kicker muted off-sub", text: "YOUR MOVES" }),
