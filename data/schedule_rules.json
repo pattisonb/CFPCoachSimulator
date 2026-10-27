@@ -1,0 +1,87 @@
+{
+  "note": "How each conference schedules league play and what its members must do outside it, as of the 2026 season and announced changes (docs/schedules_research.md). Slugs are the league's team slugs.",
+  "power": ["SEC", "Big Ten", "ACC", "Big 12"],
+  "power_independents": ["notre-dame"],
+  "conferences": {
+    "SEC": {
+      "games": 9, "cycle": 4, "home_split": "alternate",
+      "protected": [["alabama", "auburn"], ["alabama", "tennessee"], ["alabama", "mississippi-st"],
+                    ["arkansas", "missouri"], ["arkansas", "texas"], ["arkansas", "lsu"],
+                    ["auburn", "georgia"], ["auburn", "vanderbilt"],
+                    ["florida", "georgia"], ["florida", "south-carolina"], ["florida", "kentucky"],
+                    ["georgia", "south-carolina"],
+                    ["kentucky", "south-carolina"], ["kentucky", "tennessee"],
+                    ["lsu", "ole-miss"], ["lsu", "texas-a-m"],
+                    ["mississippi-st", "ole-miss"], ["mississippi-st", "vanderbilt"],
+                    ["missouri", "texas-a-m"], ["missouri", "oklahoma"],
+                    ["oklahoma", "texas"], ["oklahoma", "ole-miss"],
+                    ["tennessee", "vanderbilt"],
+                    ["texas", "texas-a-m"]],
+      "neutral": [["florida", "georgia"], ["oklahoma", "texas"]],
+      "finales": [["alabama", "auburn"], ["texas", "texas-a-m"], ["mississippi-st", "ole-miss"], ["florida", "florida-state"]],
+      "non_conference": {"games": 3, "power_min": 1, "fcs_max": 1}
+    },
+    "Big Ten": {
+      "games": 9, "cycle": 5, "home_split": "alternate",
+      "protected": [["illinois", "northwestern"], ["illinois", "purdue"], ["indiana", "purdue"], ["iowa", "minnesota"],
+                    ["iowa", "wisconsin"], ["iowa", "nebraska"], ["maryland", "rutgers"], ["michigan", "michigan-state"],
+                    ["michigan", "ohio-state"], ["minnesota", "wisconsin"], ["oregon", "washington"], ["ucla", "usc"]],
+      "finales": [["michigan", "ohio-state"], ["iowa", "nebraska"], ["minnesota", "wisconsin"], ["ucla", "usc"], ["oregon", "washington"]],
+      "non_conference": {"games": 3, "power_min": 1, "fcs_max": 0}
+    },
+    "ACC": {
+      "games": 9, "cycle": 7, "home_split": "alternate",
+      "eight_game_team": {"2027": "clemson", "2028": "clemson", "2029": "georgia-tech", "2030": "syracuse", "2031": "georgia-tech", "2032": "florida-state"},
+      "protected": [["boston-college", "miami"], ["boston-college", "pittsburgh"], ["boston-college", "syracuse"], ["miami", "pittsburgh"], ["miami", "syracuse"], ["pittsburgh", "syracuse"],
+                    ["california", "louisville"], ["california", "smu"], ["california", "stanford"], ["louisville", "smu"], ["louisville", "stanford"], ["smu", "stanford"],
+                    ["duke", "nc-state"], ["duke", "north-carolina"], ["duke", "wake-forest"], ["nc-state", "north-carolina"], ["nc-state", "wake-forest"], ["north-carolina", "wake-forest"],
+                    ["clemson", "florida-state"], ["clemson", "georgia-tech"], ["florida-state", "georgia-tech"],
+                    ["florida-state", "virginia"], ["virginia-tech", "wake-forest"], ["virginia", "virginia-tech"]],
+      "finales": [["virginia", "virginia-tech"], ["nc-state", "north-carolina"], ["clemson", "south-carolina"]],
+      "non_conference": {"games": 3, "power_min": 1, "power_min_eight_game": 2, "fcs_max": 1}
+    },
+    "Big 12": {
+      "games": 9, "cycle": 4, "home_split": "alternate",
+      "protected": [["baylor", "tcu"], ["arizona", "arizona-state"], ["byu", "utah"], ["kansas", "kansas-state"]],
+      "finales": [["arizona", "arizona-state"], ["kansas", "kansas-state"], ["byu", "utah"], ["baylor", "tcu"]],
+      "non_conference": {"games": 3, "power_min": 0, "fcs_max": 1}
+    },
+    "Pac-12": {
+      "games": 7, "cycle": 1, "round_robin": true, "home_split": "alternate",
+      "protected": [], "finales": [],
+      "non_conference": {"games": 5, "power_road": [1, 2], "fcs_max": 1}
+    },
+    "American Athletic Conference": {
+      "games": 8, "cycle": 2, "home_split": "even",
+      "protected": [], "finales": [],
+      "non_conference": {"games": 4, "power_road": [1, 2], "fcs_max": 1}
+    },
+    "Mountain West": {
+      "games": 8, "cycle": 2, "home_split": "even",
+      "protected": [], "finales": [],
+      "non_conference": {"games": 4, "power_road": [1, 2], "fcs_max": 1}
+    },
+    "Sun Belt": {
+      "games": 8, "cycle": 4, "home_split": "even",
+      "divisions": {"East": ["app-st", "c-carolina", "ga-southern", "georgia-state", "james-madison", "marshall", "old-dominion"],
+                    "West": ["arkansas-state", "louisiana", "louisiana-tech", "south-alabama", "southern-miss", "troy", "ul-monroe"]},
+      "cross_division": 2,
+      "protected": [["app-st", "ga-southern"], ["louisiana", "ul-monroe"]], "finales": [["louisiana", "ul-monroe"], ["app-st", "ga-southern"]],
+      "non_conference": {"games": 4, "power_road": [1, 2], "fcs_max": 1}
+    },
+    "MAC": {
+      "games": 8, "games_from": {"2028": 9}, "cycle": 2, "home_split": "even",
+      "protected": [["toledo", "bowling-green"], ["c-michigan", "w-michigan"], ["miami-oh", "ohio"]], "finales": [["toledo", "bowling-green"], ["c-michigan", "w-michigan"]],
+      "non_conference": {"games": 4, "power_road": [1, 2], "fcs_max": 1}
+    },
+    "Conference USA": {
+      "games": 8, "cycle": 2, "home_split": "even",
+      "protected": [], "finales": [],
+      "non_conference": {"games": 4, "power_road": [1, 2], "fcs_max": 1}
+    }
+  },
+  "independents": {
+    "notre-dame": {"acc_games": 5, "fcs_max": 0, "power_min": 3},
+    "uconn": {"fcs_max": 1, "power_road": [2, 3]}
+  }
+}

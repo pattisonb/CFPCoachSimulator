@@ -511,12 +511,14 @@ def _fill_open_dates(games: dict, teams: dict) -> int:
 
 
 def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, fill_open_dates: bool = True,
-               coach: Optional[dict] = None, career: bool = False, year: int = 2026) -> dict:
-    """A new season from the 2026 schedule. `fill_open_dates` adds a game for teams whose
+               coach: Optional[dict] = None, career: bool = False, year: int = 2026,
+               schedule: Optional[dict] = None) -> dict:
+    """A new season from the 2026 schedule, or from `schedule` (a generated later year's games,
+    sim/schedule_gen.py, keyed by event id). `fill_open_dates` adds a game for teams whose
     schedule has an unannounced date (the real 2026 page turns it off: it shows only real games).
     `career`: a Coach Career (career.py), which starts from week 1. `year`: a career's later
-    season (the active league's rosters, offseason.py): the 2026 schedule's games again, home and
-    away swapped every other year, and no real polls."""
+    season (the active league's rosters, offseason.py), which gets no real polls; without a
+    generated `schedule` it replays the 2026 games with home and away swapped every other year."""
     if career and mode != "full":
         raise ValueError("Coach Career starts from week 1")
     teams = load_teams()
@@ -527,7 +529,10 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
     fcs_names = {k: v["name"] for k, v in json.loads(FCS_MAP_FILE.read_text(encoding="utf-8")).items()}
     rng = random.Random(seed)
     games = {}
-    for g in schedules["games"]:
+    if schedule is not None:
+        games = {eid: dict(g) for eid, g in schedule.items()}
+        fill_open_dates = False                      # a generated schedule is complete
+    for g in schedules["games"] if schedule is None else []:
         home = g["home_slug"] or counterparts.get(g["home_espn"])
         away = g["away_slug"] or counterparts.get(g["away_espn"])
         if (year - 2026) % 2 and not g["neutral"]:

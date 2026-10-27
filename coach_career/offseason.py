@@ -1589,7 +1589,11 @@ def next_season(state: dict) -> dict:
     history = state["career"].setdefault("history", [])
     history.append(summary(state))
     team = off.get("move_to") or state["team"]
-    new = season.new_season(team, "full", seed=_rng(state, "seed").randrange(1 << 30), coach=state.get("coach"), year=year)
+    # the year's schedule, built the way the conferences build theirs; the league carries the history it needs
+    from sim import schedule_gen
+    teams = season.load_teams()
+    games, lgd["schedule_history"] = schedule_gen.generate(year, teams, lgd.get("schedule_history"), _rng(state, "schedule"))
+    new = season.new_season(team, "full", seed=_rng(state, "seed").randrange(1 << 30), coach=state.get("coach"), year=year, schedule=games)
     new.update(id=state["id"], created_at=state["created_at"], league=lgd, settings=state.get("settings", new["settings"]))
     car = state["career"]
     car["year"] = year

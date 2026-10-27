@@ -1719,6 +1719,30 @@ and panel headings and the active tab take the accent. Michigan is maize on dark
 navy on light and white on dark, Oregon is green on light and yellow on dark, and so on;
 the accent is re-picked when the theme toggle flips.
 
+### Later seasons: a schedule of their own (`sim/schedule_gen.py`)
+
+A career's seasons after 2026 no longer replay the 2026 slate. Each new year is built the way
+the conferences build theirs, from two data files. `data/schedule_rules.json` holds every
+conference's league games by year (nine in the SEC, Big Ten and Big 12; nine in the ACC with
+one rotating eight-game team; eight elsewhere, the MAC's ninth from 2028; the Pac-12's round
+robin), its protected pairs (the SEC's trios, the Big Ten's twelve, the Big 12's four, the ACC's
+pods, Sun Belt divisions with two cross-division games), its rotation cycle, and what its members
+must do outside the league: a Power team's required Power opponent and single FCS game (none in
+the Big Ten), a Group of Five team's Power pay games and FCS game. `data/series.json` holds the
+annual non-conference rivalries with the years they run and the home-and-homes and neutral
+kickoffs schools have announced through 2032.
+
+The generator seeds the annual series (their finales on Thanksgiving weekend, Army-Navy on
+selection weekend), the returns owed from last year's home-and-homes and the announced games;
+builds each league slate so every pair meets within its cycle, never at the same site two years
+running, with league home games alternating 5/4; fills the non-conference dates by tier, Power
+pay games at the Power team's place and never returned, FCS games against the regional stand-in;
+and lays the weeks out with non-conference games early, league games from week 3, nobody twice
+in a week. The career's league carries the history (`schedule_history`: every meeting and host,
+home-game counts, returns owed), seeded from the 2026 schedule so 2027 returns the 2026 sites.
+Conference membership stays as in 2026. `tests/test_schedule_gen.py` generates 2027-2032 and
+checks every rule.
+
 ### The polls: built from twelve seasons of real polls
 
 `tools/fetch_polls.py` downloads every weekly AP Top 25 and CFP committee ranking from 2014

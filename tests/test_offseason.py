@@ -162,16 +162,17 @@ if __name__ == "__main__":
     assert off["stage"] == "ready"
     hired = next(s for s in st["career"]["staff"] if s["id"] == sid)
     assert hired["name"] == staff["candidates"][sid][1]["name"]
-    # the next season: same career, its own league, a new class of seniors, the 2026 schedule's
-    # games with home and away swapped
-    old_game = next(g for g in st["games"].values() if g["kind"] == "regular" and not g["neutral"] and g["home"] == "ohio-state")
+    # the next season: same career, its own league, a new class of seniors, and a 2027 schedule of its
+    # own (sim/schedule_gen.py): twelve games, nine in the Big Ten, Michigan among them
     new = offseason.next_season(st)
     assert new["id"] == st["id"] and new["year"] == 2027 and new["recruiting"]["year"] == 2028
     assert new["team"] == target and new["career"]["history"][-1]["moved_to"] == target, "taking the job did not move you"
     assert new["career"]["history"][0]["year"] == 2026 and new["career"]["history"][0]["won_title"]
     assert league.path(new["id"], 2027).exists() and season._league_path == league.path(new["id"], 2027)
-    back = new["games"].get(old_game["event_id"])
-    assert back and back["home"] == old_game["away"] and back["away"] == "ohio-state", back
+    mine = [g for g in new["games"].values() if g["kind"] == "regular" and "ohio-state" in (g["home"], g["away"])]
+    assert len(mine) == 12 and sum(1 for g in mine if g["conference_game"]) == 9 and all(g["event_id"].startswith("2027-") for g in mine), len(mine)
+    assert any({g["home"], g["away"]} == {"ohio-state", "michigan"} for g in mine), "the protected rival is on the slate"
+    assert new["league"]["schedule_history"]["years"][-1] == 2027
     assert new["polls"]["0"]["ap"] and not new["done"] and new["current_week"] == 0
     roster = season.load_teams()["ohio-state"]
     names = {p["name"] for p in roster["offense"] + roster["defense"]}
