@@ -3419,7 +3419,12 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
             injured = True
     hc = (t.get("coaches") or {}).get("head_coach") or {}
     rec = _records(state, include_playoff=True)[team]
+    history = []
+    entry = next((c for c in (((state.get("league") or {}).get("teams") or {}).get(team) or {}).get("roster", []) if c.get("id") == p.get("slug")), None)
+    for h in (entry or {}).get("hist") or []:
+        history.append(dict(h, team_name=(teams.get(h["team"]) or {}).get("name") or h["team"]))
     return {
+        "history": history,
         "name": name, "slug": p.get("slug"), "position": position, "role": p.get("role"), "depth": p.get("depth"),
         "class": p.get("class"), "class_name": CLASS_NAMES.get(p.get("class") or "", p.get("class")), "height": p.get("height"),
         "weight": p.get("weight"), "jersey": p.get("jersey"), "dev_trait": p.get("dev_trait"), "starter": bool(p.get("in_game")),

@@ -149,6 +149,7 @@ def start(state: dict) -> dict:
     lgd = state.get("league") or lg.from_base(year)
     lgd["year"] = year
     state["league"] = lgd
+    record_seasons(state, lgd)
     usage = _usage()
     deps, entrants, pending = _departures(state, lgd, usage)
     signed = _sign_classes(state, lgd)
@@ -474,6 +475,39 @@ ROOM_CAP = 10                     # the most a year's honors and production add 
 LEVEL_UP = 0.4                   # a national award winner or All-American moves up a coachability level this often
 PHYSICAL = {"speed", "acceleration", "agility", "change_of_direction", "jumping", "stamina", "injury", "toughness", "strength",
             "kick_power", "throw_power"}   # gifts and body: production does not raise these ceilings
+
+
+HIST_KEEP = 8                    # seasons kept on a player (a career is at most six)
+
+
+def record_seasons(state: dict, lgd: dict) -> int:
+    """Every player's season (his line from the season's stats, his honors) goes onto his entry in
+    the league, `c["hist"]`, so his page keeps it through the rollover and a transfer. Returns how
+    many players got a line."""
+    from sim import season
+    year = season.season_year(state)
+    teams = season.load_teams()
+    ss = state.get("season_stats") or {}
+    perf = _performance(state) if state.get("season_stats") else {}
+    n = 0
+    for slug, t in lgd["teams"].items():
+        lines = ((ss.get(slug) or {}).get("players") or {})
+        base = teams.get(slug) or {}
+        by_id = {p.get("slug"): p for p in (base.get("offense") or []) + (base.get("defense") or [])}
+        for c in t["roster"]:
+            hist = c.setdefault("hist", [])
+            if any(h["year"] == year for h in hist):
+                continue
+            bp = by_id.get(c["id"])
+            line = lines.get(f"{c['n']}|{bp['position']}") if bp else None
+            if not line or not line.get("games"):
+                continue
+            honors = [{"kind": k, "name": nm} for k, nm in (perf.get(c["id"]) or {}).get("honors", [])]
+            hist.append({"year": year, "team": slug, "class": c.get("cls"), "position": bp["position"], "games": line["games"],
+                         "stats": {k: v for k, v in (line.get("stats") or {}).items() if v}, "honors": honors})
+            del hist[:-HIST_KEEP]
+            n += 1
+    return n
 
 
 def _performance(state: dict) -> dict[str, dict]:

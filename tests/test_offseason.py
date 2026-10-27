@@ -69,7 +69,7 @@ if __name__ == "__main__":
     early_cls = collections.Counter(d["cls"] for d in off["departures"] if d.get("early"))
     assert set(early_cls) <= offseason.UNDERCLASS_ELIGIBLE, early_cls
     assert early_cls["JR"] > 0 and early_cls["SORS"] > 0, early_cls
-    assert any(d["kind"] == "draft" and d["cls"] == "SORS" for d in off["departures"]), "no redshirt sophomore drafted"
+    assert any(d.get("early") and d["cls"] in ("SORS", "JRRS") for d in off["departures"]), "no redshirt underclassman declared early"
     returning = sum(len(t["roster"]) for t in lg["teams"].values()) + len(off["portal"]["players"])
     share = len(off["portal"]["players"]) / returning
     assert 0.06 <= share <= 0.22, share

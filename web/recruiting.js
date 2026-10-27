@@ -173,7 +173,7 @@
     if (!you) return el("div");
     const card = el("div", { class: "go-program" }, [
       el("div", { class: "go-program-head" }, [el("span", { class: "go-kicker muted", text: "YOUR PROGRAM" }),
-        el("b", { text: `${you.tier_name} · tier ${you.tier}` }), el("span", { class: "go-tag", text: `Rating ${Math.round(you.rating)} · #${you.rank} of ${pv.rows.length}` })]),
+        el("span", { class: "go-tag", text: you.tier_name, title: "Where your program stands: its name, results, NIL, market, league and coach, moving slowly with what you do" })]),
       el("div", { class: "go-program-bars" }, PROGRAM_METRICS.map(([k, label, tip]) => el("div", { class: "go-program-bar", title: tip }, [
         el("span", { class: "go-program-label", text: label }), el("i", {}, [el("b", { style: `width:${Math.max(2, Math.min(100, you[k]))}%` })]),
         el("span", { class: "go-program-val", text: String(Math.round(you[k])) })]))),
@@ -190,12 +190,12 @@
   }
 
   function programsTable(pv) {
-    const t = el("table", { class: "stats go-programs" }, [el("thead", {}, [el("tr", {}, ["#", "Program", "Tier", "Rating", "Prestige", "Winning", "NIL", "Market", "Conf", "Coach", "The AD expects"].map((h) => el("th", { text: h })))])]);
+    const t = el("table", { class: "stats go-programs" }, [el("thead", {}, [el("tr", {}, ["Program", "Standing", "Prestige", "Winning", "NIL", "Market", "Conf", "Coach", "The AD expects"].map((h) => el("th", { text: h })))])]);
     const body = el("tbody");
     for (const r of pv.rows) {
-      body.append(el("tr", { class: r.team === pv.you.team ? "mine" : "" }, [el("td", { class: "num", text: String(r.rank) }),
-        el("td", {}, [window.CFP.teamPill(r.team), ` ${r.name}`]), el("td", { text: `${r.tier} · ${r.tier_name}` }),
-        ...["rating", "prestige", "winning", "nil", "market", "conference", "coach"].map((k) => el("td", { class: "num", text: String(Math.round(r[k])) })),
+      body.append(el("tr", { class: r.team === pv.you.team ? "mine" : "" }, [
+        el("td", {}, [window.CFP.teamPill(r.team), ` ${r.name}`]), el("td", {}, [el("span", { class: "go-tag", text: r.tier_name })]),
+        ...["prestige", "winning", "nil", "market", "conference", "coach"].map((k) => el("td", { class: "num", text: String(Math.round(r[k])) })),
         el("td", { class: "small", text: r.goal })]));
     }
     t.append(body);

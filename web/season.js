@@ -1241,6 +1241,29 @@
       box.append(wrap);
     }
 
+    // past seasons (a career keeps every player's lines on his league entry)
+    const hist = p.history || [];
+    if (hist.length) {
+      box.append(el("h3", { text: "Season by season" }));
+      const wrap = el("div", { class: "player-grid" });
+      const rows = [...hist.map((h) => ({ label: `${h.year} · ${h.team_name}${h.class ? ` · ${h.class}` : ""}`, games: h.games, stats: h.stats, past: true })),
+                    { label: `${s.year} · ${(p.team && p.team.name) || ""} · now`, games: p.games, stats: p.stats, past: false }];
+      for (const [title, cols] of STAT_GROUPS) {
+        const shown = cols.filter(([k]) => rows.some((r) => r.stats && r.stats[k]));
+        if (!shown.length) continue;
+        const table = el("table", { class: "stats" });
+        table.append(el("tr", {}, [el("th", { class: "left", text: title === "Blocking" && p.position !== "OL" ? "Playing time" : title }), el("th", { text: "G" }), ...shown.map(([, lbl]) => el("th", { text: lbl }))]));
+        for (const r of rows) {
+          if (!shown.some(([k]) => r.stats && r.stats[k])) continue;
+          table.append(el("tr", { class: r.past ? "" : "now" }, [el("td", { class: `left ${r.past ? "muted" : ""}`, text: r.label }), el("td", { text: String(r.games || 0) }), ...shown.map(([k]) => el("td", { text: r.stats && r.stats[k] != null ? fmtStatValue(r.stats[k]) : "" }))]));
+        }
+        wrap.append(el("div", { class: "table-scroll" }, [table]));
+      }
+      box.append(wrap);
+      const past = hist.filter((h) => h.honors && h.honors.length);
+      if (past.length) box.append(el("p", { class: "small-text" }, [el("b", { text: "Past honors: " }), past.map((h) => `${h.year}: ${h.honors.map((x) => x.name).join(", ")}`).join(" · ")]));
+    }
+
     // game log
     box.append(el("h3", { text: "Game log" }));
     if (p.game_log === null) box.append(el("p", { class: "muted small-text", text: "Game-by-game lines are kept for your own team's games; other teams carry season totals." }));
