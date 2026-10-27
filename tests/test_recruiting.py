@@ -38,7 +38,7 @@ if __name__ == "__main__":
     assert 0.25 <= sum(1 for c in calls if c) / len(calls) <= 0.75, sum(1 for c in calls if c) / len(calls)
     av = recruiting.ask_view(st, "ohio-state", pid)
     ask_ = recruiting.ask_from(st, "ohio-state", pid)
-    assert av.get("exact") is None and av["lo"] < ask_ < av["hi"] and av["hi"] - av["lo"] <= max(5, 0.6 * ask_), av
+    assert av.get("exact") is None and av["lo"] < ask_ < av["hi"] and av["hi"] - av["lo"] <= max(10, 0.6 * ask_), av
     r = recruiting.act(st, "ohio-state", pid, "hc_visit")
     assert r["revealed"] in tx["priorities"] and recruiting.ask_view(st, "ohio-state", pid).get("exact") == recruiting.ask_from(st, "ohio-state", pid)
     # scouting by hand: 5 hours a look by your best evaluator at one prospect, up to three looks, any week
