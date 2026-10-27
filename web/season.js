@@ -1154,7 +1154,8 @@
           el("div", { class: "muted player-facts", text: facts.join(" · ") }),
           el("div", { class: "player-tags" }, [
             p.starter ? el("span", { class: "tag good", text: "Starter" }) : el("span", { class: "tag", text: p.depth ? `${p.role || p.position} #${p.depth}` : "Reserve" }),
-            p.injured ? el("span", { class: "tag bad", text: "Injured" }) : null,
+            p.injured && !(p.redshirt && p.redshirt.on) ? el("span", { class: "tag bad", text: "Injured" }) : null,
+            p.redshirt && p.redshirt.on ? el("span", { class: "tag", text: "Redshirting", title: "Sitting out the rest of the season; keeps his year" }) : null,
             p.morale && p.morale.enabled && p.morale.label !== "Steady" ? el("span", { class: `tag ${p.morale.label === "Hot streak" ? "good hot" : "bad cold"}`, text: `${p.morale.label === "Hot streak" ? "🔥" : "❄"} ${p.morale.label}`, title: `Form ${p.morale.form > 0 ? "+" : ""}${p.morale.form}: his recent games against his season so far` }) : null,
             p.morale && p.morale.enabled && p.morale.team_label ? el("span", { class: `tag ${p.morale.team > 0 ? "good" : "bad"}`, text: p.morale.team_label, title: `Team mood ${p.morale.team > 0 ? "+" : ""}${p.morale.team}` }) : null,
             // rest-of-season seasons: what the real 2026 box scores say about him against his rating
@@ -1239,6 +1240,21 @@
         wrap.append(el("div", { class: "table-scroll" }, [table]));
       }
       box.append(wrap);
+    }
+
+    // a career: redshirt him for the rest of the season (four games or fewer), or take him off it
+    if (p.redshirt && (p.redshirt.on || p.redshirt.can)) {
+      const rsBtn = el("button", { type: "button", class: "ghost small", text: p.redshirt.on ? "Take him off the redshirt" : `Redshirt him (${p.redshirt.games} of ${p.redshirt.limit} games played)`,
+        title: p.redshirt.on ? "He plays again; the year is still his if he stays at four games or fewer" : "He sits out every remaining game and keeps his year of eligibility" });
+      rsBtn.addEventListener("click", async () => {
+        rsBtn.disabled = true;
+        try {
+          await api(`/api/season/${s.id}/redshirt`, postJSON({ team: p.team.slug, player: p.slug, on: !p.redshirt.on }));
+          toast(p.redshirt.on ? `${p.name} is back in the lineup.` : `${p.name} is redshirting.`, 3000);
+          playerState.cache.clear(); depthState.data = null; closeAllModals(); openPlayer(p.team.slug, p.name, p.position);
+        } catch (err) { toast(`Could not do that: ${errText(err)}`, 4000); rsBtn.disabled = false; }
+      });
+      box.append(el("div", { class: "player-redshirt" }, [rsBtn, p.redshirt.on ? null : el("span", { class: "muted small-text", text: " Four games or fewer keeps the year." })]));
     }
 
     // past seasons (a career keeps every player's lines on his league entry)
@@ -2170,6 +2186,40 @@
     await renderGames(body);
   }
 
+  // before week 1 of a career: trade a non-conference game for another school's the same week
+  async function openScheduleEditor() {
+    const s = state.season;
+    const teamName = (slug) => (window.CFP.teamsBySlug[slug] || {}).name || slug;
+    const node = el("div", { class: "sched-edit" }, [el("p", { class: "muted small-text", text: "Loading your non-conference games…" })]);
+    openModal("Your non-conference games", node);
+    let d;
+    try { d = await api(`/api/season/${s.id}/schedule_edit`); } catch (err) { node.innerHTML = ""; node.append(el("p", { class: "muted", text: errText(err) })); return; }
+    node.innerHTML = "";
+    node.append(el("p", { class: "muted small-text", text: "Before week 1 you can trade a non-conference date for another school's game that week: the two displaced opponents play each other. A school agrees when it gets the home game or you are the bigger draw. An FCS date can go to another FCS team." }));
+    if (!d.games.length) node.append(el("p", { class: "muted", text: "Nothing to trade: the season has begun or you have no non-conference games." }));
+    for (const g of d.games) {
+      const opp = g.home === s.team ? g.away : g.home;
+      const venue = g.neutral ? "neutral site" : g.home === s.team ? "home" : "away";
+      const row = el("div", { class: "sched-edit-row" }, [
+        el("div", {}, [el("b", { text: `${s.week_labels[g.week] || `Week ${g.week}`}: ${venue === "away" ? "at " : "vs "}${teamName(opp)}` }), el("span", { class: "muted small-text", text: ` · ${venue}` })])]);
+      const sel = el("select", { "aria-label": `Trade the week ${g.week} game` }, [el("option", { value: "", text: "Trade for…" }),
+        ...g.options.map((o) => el("option", { value: o.slug, text: `${o.name} · ${o.standing} · ${o.venue === "home" ? "you host" : o.venue === "away" ? "you travel" : "neutral"} · ${o.accepts ? o.why : `no: ${o.why}`}`, ...(o.accepts ? {} : { disabled: "true" }) }))]);
+      const go = el("button", { type: "button", class: "ghost small", text: "Trade" });
+      go.addEventListener("click", async () => {
+        if (!sel.value) return;
+        go.disabled = true;
+        try {
+          await api(`/api/season/${s.id}/schedule_edit`, postJSON({ event_id: g.event_id, slug: sel.value }));
+          toast(`Done: you play ${teamName(sel.value)} in week ${g.week}.`, 3000);
+          scheduleState.data = null; state.season = await api(`/api/season/${s.id}`); closeAllModals(); renderSchedule();
+        } catch (err) { toast(`Could not trade: ${errText(err)}`, 4000); go.disabled = false; }
+      });
+      row.append(el("div", { class: "go-row wrap" }, [sel, go]));
+      node.append(row);
+    }
+    if (d.changes.length) node.append(el("p", { class: "small-text" }, [el("b", { text: "Traded: " }), d.changes.map((c) => `week ${c.week} ${teamName(c.from)} → ${teamName(c.to)}`).join(" · ")]));
+  }
+
   async function renderSchedule() {
     const s = state.season;
     const box = $("#tab-schedule");
@@ -2192,6 +2242,11 @@
     row.append(sel);
     if (s.team && st.team !== s.team) row.append(mineBtn);
     if (s.mode !== "real") row.append(allBtn);       // the real page has its own Games tab
+    if (s.career && st.team === s.team && s.current_week === 0 && !s.done) {
+      const tradeBtn = el("button", { type: "button", class: "ghost small", text: "Trade a non-conference game" });
+      tradeBtn.addEventListener("click", openScheduleEditor);
+      row.append(tradeBtn);
+    }
     controls.append(row);
     box.append(controls);
     const key = `${s.id}|${s.current_week}|${(s.schedule || []).filter((g) => g.played).length}|${st.team}`;

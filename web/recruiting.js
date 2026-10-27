@@ -163,6 +163,7 @@
 
   // ----- the Office ------------------------------------------------------------------------------
 
+  const METRIC_WORDS = (v) => (v >= 80 ? "Elite" : v >= 65 ? "Strong" : v >= 50 ? "Solid" : v >= 35 ? "Fair" : "Weak");
   const PROGRAM_METRICS = [["prestige", "Prestige", "History and a decade of results"], ["winning", "Winning", "The last three seasons"],
     ["nil", "NIL", "The collective's tier, set by your AD"], ["market", "Market", "Crowds and TV"], ["conference", "Conference", "Your league's strength"],
     ["coach", "Coach", "Your rating and tenure"]];
@@ -176,7 +177,7 @@
         el("span", { class: "go-tag", text: you.tier_name, title: "Where your program stands: its name, results, NIL, market, league and coach, moving slowly with what you do" })]),
       el("div", { class: "go-program-bars" }, PROGRAM_METRICS.map(([k, label, tip]) => el("div", { class: "go-program-bar", title: tip }, [
         el("span", { class: "go-program-label", text: label }), el("i", {}, [el("b", { style: `width:${Math.max(2, Math.min(100, you[k]))}%` })]),
-        el("span", { class: "go-program-val", text: String(Math.round(you[k])) })]))),
+        el("span", { class: "go-program-val", text: METRIC_WORDS(you[k]) })]))),
     ]);
     const more = el("button", { type: "button", class: "go-btn", text: "Every program" });
     const tableBox = el("div", { hidden: true });
@@ -195,7 +196,7 @@
     for (const r of pv.rows) {
       body.append(el("tr", { class: r.team === pv.you.team ? "mine" : "" }, [
         el("td", {}, [window.CFP.teamPill(r.team), ` ${r.name}`]), el("td", {}, [el("span", { class: "go-tag", text: r.tier_name })]),
-        ...["prestige", "winning", "nil", "market", "conference", "coach"].map((k) => el("td", { class: "num", text: String(Math.round(r[k])) })),
+        ...["prestige", "winning", "nil", "market", "conference", "coach"].map((k) => el("td", { class: `word ${METRIC_WORDS(r[k]).toLowerCase()}`, text: METRIC_WORDS(r[k]) })),
         el("td", { class: "small", text: r.goal })]));
     }
     t.append(body);

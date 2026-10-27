@@ -998,8 +998,55 @@ def _with_injuries(team: dict, injured: list) -> dict:
 
 
 def _injured(state: dict, slug: str) -> list[tuple[str, str]]:
-    """(name, position) of every player on slug's injury list."""
-    return [(i["name"], i["position"]) for i in (state.get("injuries") or {}).get(slug, {}).values()]
+    """(name, position) of every player on slug's injury list, and of every player redshirting
+    this season (he is kept out of games the same way)."""
+    out = [(i["name"], i["position"]) for i in (state.get("injuries") or {}).get(slug, {}).values()]
+    rs = (state.get("redshirting") or {}).get(slug) or {}
+    out += [(v["name"], v["position"]) for v in rs.values()]
+    return out
+
+
+# ----- redshirts during the season --------------------------------------------------------------
+
+REDSHIRT_GAMES = 4                                  # the four-game rule
+REDSHIRT_CLASSES = ("FR", "SO", "JR")
+
+
+class RedshirtError(Exception):
+    def __init__(self, code: int, message: str):
+        super().__init__(message)
+        self.code = code
+
+
+def redshirt_status(state: dict, slug: str, p: dict) -> dict:
+    """Where one player stands with a redshirt this season: on it now, whether he still can, his games."""
+    rs = ((state.get("redshirting") or {}).get(slug) or {})
+    line = ((state.get("season_stats") or {}).get(slug, {}).get("players") or {}).get(f"{p['name']}|{p['position']}")
+    games = line["games"] if line else 0
+    cls = p.get("class") or ""
+    can = bool(state.get("career")) and state.get("mode") != "real" and slug == state.get("team") and not state.get("done") \
+        and cls in REDSHIRT_CLASSES and games <= REDSHIRT_GAMES
+    return {"on": p.get("slug") in rs, "can": can, "games": games, "limit": REDSHIRT_GAMES,
+            "why": None if can else ("his redshirt year is used" if cls.endswith("RS") or cls in ("SR", "SRRS") else
+                                     f"he has played {games} games: more than the rule allows" if games > REDSHIRT_GAMES else "not your player")}
+
+
+def redshirt_toggle(state: dict, slug: str, player_slug: str, on: bool) -> dict:
+    """Redshirt one of your players for the rest of the season (he sits out every game, keeps his
+    year), or take him off it while he has played four games or fewer."""
+    t = load_teams().get(slug)
+    p = next((x for x in (t["offense"] + t["defense"]) if x.get("slug") == player_slug), None) if t else None
+    if p is None:
+        raise RedshirtError(404, "player not found")
+    st = redshirt_status(state, slug, p)
+    if on and not st["can"]:
+        raise RedshirtError(409, st["why"] or "he cannot redshirt")
+    rs = state.setdefault("redshirting", {}).setdefault(slug, {})
+    if on:
+        rs[player_slug] = {"name": p["name"], "position": p["position"], "week": state.get("current_week", 0)}
+    else:
+        rs.pop(player_slug, None)
+    return redshirt_status(state, slug, p)
 
 
 def _game_team(slug: str, form_shift: float, player_shifts: dict, edits: dict, morale: Optional[dict],
@@ -2173,6 +2220,100 @@ def week_dates(state: dict) -> dict[int, dict]:
         eve = (datetime.fromisoformat(first) - timedelta(days=1)).strftime("%Y-%m-%d")
         out[0] = {"start": None, "end": eve, "main": eve}
     return out
+
+
+# ----- your schedule: trading non-conference games before the season ----------------------------
+
+class ScheduleError(Exception):
+    def __init__(self, code: int, message: str):
+        super().__init__(message)
+        self.code = code
+
+
+SCHEDULE_DRAW = 8                 # the other school says yes when it gets the home game, or you rate within this of it (attractiveness)
+
+
+def schedule_editable(state: dict) -> list[dict]:
+    """Your non-conference regular-season games you can still trade: before week 1 of a career."""
+    me = state.get("team")
+    if not state.get("career") or state.get("mode") == "real" or state.get("current_week", 0) > 0 or not me:
+        return []
+    return sorted((g for g in state["games"].values() if g["kind"] == "regular" and not g["conference_game"] and not g["played"]
+                   and me in (g["home"], g["away"])), key=lambda g: g["week"])
+
+
+def _other_game(state: dict, slug: str, week: int, skip: str) -> Optional[dict]:
+    return next((g for g in state["games"].values() if g["kind"] == "regular" and g["week"] == week and g["event_id"] != skip
+                 and slug in (g["home"], g["away"])), None)
+
+
+def schedule_options(state: dict, event_id: str) -> list[dict]:
+    """Who could take the other side of one of your non-conference games: FBS teams with a
+    non-conference game that week (the two displaced opponents would play each other), each
+    with whether the school agrees and why; for an FCS date, the FCS teams (they always come)."""
+    from coach_career import programs
+    g = state["games"].get(event_id)
+    mine = {x["event_id"] for x in schedule_editable(state)}
+    if not g or event_id not in mine:
+        raise ScheduleError(409, "that game cannot be traded now")
+    me = state["team"]
+    teams = load_teams()
+    opp = g["home"] if g["away"] == me else g["away"]
+    venue = "neutral" if g["neutral"] else "home" if g["home"] == me else "away"
+    fcs = bool(teams[opp].get("fictional"))
+    rivals = load_rivalries()
+    out = []
+    for slug, t in teams.items():
+        if slug in (me, opp) or bool(t.get("fictional")) != fcs:
+            continue
+        if fcs:
+            out.append({"slug": slug, "name": t["name"], "conference": t["conference"], "standing": "FCS", "accepts": True,
+                        "venue": "home", "why": "an FCS team comes to you"})
+            continue
+        other = _other_game(state, slug, g["week"], event_id)
+        if not other or other["conference_game"] or other["played"] or teams[other["home"] if other["away"] == slug else other["away"]].get("fictional"):
+            continue                                   # busy with a conference game, a bye, or hosting an FCS team that week
+        if frozenset((slug, other["home"] if other["away"] == slug else other["away"])) in rivals or frozenset((me, slug)) in rivals:
+            continue
+        theirs = "home" if venue == "away" else "away" if venue == "home" else "neutral"
+        gap = programs.attract(state, me) - programs.attract(state, slug)
+        accepts = theirs == "home" or gap >= -SCHEDULE_DRAW
+        why = ("they get the home game" if theirs == "home" else "a bigger draw than them" if gap > SCHEDULE_DRAW
+               else "a fair trade" if accepts else "they want the home game")
+        out.append({"slug": slug, "name": t["name"], "conference": t["conference"], "standing": programs.TIER_NAMES[programs.get(state, slug)["tier"]],
+                    "accepts": accepts, "venue": venue, "why": why, "displaced": other["home"] if other["away"] == slug else other["away"]})
+    out.sort(key=lambda o: (not o["accepts"], -programs.get(state, o["slug"])["rating"] if not fcs else 0, o["name"]))
+    return out
+
+
+def schedule_swap(state: dict, event_id: str, slug: str) -> dict:
+    """Trade one of your non-conference games for `slug`'s that week: you play them at your old
+    venue, your old opponent plays theirs in their old game."""
+    opts = {o["slug"]: o for o in schedule_options(state, event_id)}
+    o = opts.get(slug)
+    if o is None:
+        raise ScheduleError(409, "that school is not available that week")
+    if not o["accepts"]:
+        raise ScheduleError(409, f"{o['name']} said no: {o['why']}")
+    g = state["games"][event_id]
+    me = state["team"]
+    teams = load_teams()
+    old = g["home"] if g["away"] == me else g["away"]
+    if o["venue"] == "home" or g["neutral"] and g["home"] == me:
+        g["home"], g["away"] = me, slug
+    else:
+        g["home"], g["away"] = slug, me
+    g["home_display"], g["away_display"] = teams[g["home"]]["name"], teams[g["away"]]["name"]
+    if not teams[slug].get("fictional"):                 # their old game: your old opponent takes their place
+        other = _other_game(state, slug, g["week"], event_id)
+        if other["home"] == slug:
+            other["home"] = old
+        else:
+            other["away"] = old
+        other["home_display"], other["away_display"] = teams[other["home"]]["name"], teams[other["away"]]["name"]
+        other["conference_game"] = teams[other["home"]]["conference"] == teams[other["away"]]["conference"] and not teams[other["home"]].get("fictional")
+    state.setdefault("schedule_changes", []).append({"week": g["week"], "from": old, "to": slug, "venue": o["venue"], "event_id": event_id})
+    return g
 
 
 # ----- rivalries: trophies and the all-time series -----------------------------------
@@ -3424,7 +3565,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     for h in (entry or {}).get("hist") or []:
         history.append(dict(h, team_name=(teams.get(h["team"]) or {}).get("name") or h["team"]))
     return {
-        "history": history,
+        "history": history, "redshirt": redshirt_status(state, team, p),
         "name": name, "slug": p.get("slug"), "position": position, "role": p.get("role"), "depth": p.get("depth"),
         "class": p.get("class"), "class_name": CLASS_NAMES.get(p.get("class") or "", p.get("class")), "height": p.get("height"),
         "weight": p.get("weight"), "jersey": p.get("jersey"), "dev_trait": p.get("dev_trait"), "starter": bool(p.get("in_game")),

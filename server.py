@@ -719,6 +719,60 @@ def season_team_schedule(season_id: str, slug: str) -> dict:
     return season.team_schedule_view(state, slug)
 
 
+@app.get("/api/season/{season_id}/schedule_edit")
+def schedule_edit_view(season_id: str) -> dict:
+    """Your non-conference games you can still trade (a career, before week 1), with the options for each."""
+    state = _season_state(season_id)
+    with _season_lock:
+        games = season.schedule_editable(state)
+        return {"games": [dict(g, options=season.schedule_options(state, g["event_id"])) for g in games],
+                "changes": state.get("schedule_changes") or []}
+
+
+class RedshirtSeasonRequest(BaseModel):
+    team: str
+    player: str
+    on: bool = True
+
+
+@app.post("/api/season/{season_id}/redshirt")
+def season_redshirt(season_id: str, req: RedshirtSeasonRequest) -> dict:
+    """Redshirt one of your players for the rest of the season, or take him off it (four games or fewer)."""
+    state = _career_state(season_id)
+    _check_team(req.team)
+    if req.team != state["team"]:
+        raise HTTPException(403, "only your own players")
+    _check_not_running(season_id)
+    with _season_lock:
+        try:
+            out = season.redshirt_toggle(state, req.team, req.player, req.on)
+        except season.RedshirtError as e:
+            raise HTTPException(e.code, str(e))
+        season.save_season(state)
+        _season_cards.pop(season_id, None)
+    return out
+
+
+class ScheduleSwapRequest(BaseModel):
+    event_id: str
+    slug: str
+
+
+@app.post("/api/season/{season_id}/schedule_edit")
+def schedule_edit_swap(season_id: str, req: ScheduleSwapRequest) -> dict:
+    """Trade one of your non-conference games for another school's that week."""
+    state = _season_state(season_id)
+    _check_not_running(season_id)
+    with _season_lock:
+        try:
+            season.schedule_swap(state, req.event_id, req.slug)
+        except season.ScheduleError as e:
+            raise HTTPException(e.code, str(e))
+        season.save_season(state)
+        _season_cards.pop(season_id, None)
+    return {"changes": state.get("schedule_changes") or []}
+
+
 @app.get("/api/season/{season_id}/standings")
 def season_standings(season_id: str) -> dict:
     return {"standings": season.standings(_season_state(season_id))}

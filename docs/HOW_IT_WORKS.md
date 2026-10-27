@@ -971,15 +971,27 @@ ceiling against the starter's ratings over the ten attributes most tied to overa
 only when closer than 30% of starter pairs are to each other. "Our comp" appears after three
 looks, measured from your staff's read, so a wrong read can give a different comp.
 
-**Redshirts and position changes** (`offseason.redshirt`, `offseason.change_position`, the Your
-Roster card at the Departures step). A player who played four games or fewer (`REDSHIRT_GAMES`)
-with his redshirt year unused (FR, SO, JR) can take it: his class stays for next season and he
-still develops. Your candidates wait on you at the Departures step (a freshman off the depth
-chart's top takes it unless you say otherwise; an older player only if he never played); the
-AI programs draw as before but only within the four-game rule. A position change moves one of
+**Redshirts and position changes** (`season.redshirt_toggle` during the season; `offseason.redshirt`,
+`offseason.change_position` and the Your Roster card at the Departures step). A player who has
+played four games or fewer (`REDSHIRT_GAMES`) with his redshirt year unused (FR, SO, JR) can take
+it: his class stays for next season and he still develops. During the season his page has a
+"Redshirt him" button: he sits out every remaining game (kept out like an injury, `_injured`)
+and can come back off it while he is still at four games or fewer. At the Departures step every
+candidate waits on you, the ones you sat down already marked (a freshman off the depth chart's
+top takes it unless you say otherwise; an older player only if he never played); the AI programs
+draw as before but only within the four-game rule. A position change moves one of
 your players for next season to any spot (kickers and punters among themselves), his overall
 recomputed by our formula there; the card shows what he would be everywhere before you choose,
 and a change can be undone until the season starts.
+
+**Your schedule** (`season.schedule_options`, `season.schedule_swap`; the Schedule tab's "Trade a
+non-conference game" before week 1 of a career). Each of your non-conference dates can be traded
+for another FBS school's non-conference game the same week: you play them at your old venue and
+the two displaced opponents play each other, so every team keeps its game count. The school
+agrees when it gets the home game or you rate within 8 of it in attractiveness (`SCHEDULE_DRAW`);
+rivalry games and schools busy with a conference game, a bye or an FCS date that week are not
+offered. An FCS date can go to any other FCS team (they always come to you). Trades are kept in
+`state["schedule_changes"]`.
 
 **A player keeps his seasons** (`offseason.record_seasons`, run when the offseason opens): every
 player's season line and honours go onto his entry in the career's league (`c["hist"]`, the last
@@ -1246,7 +1258,8 @@ candidates and generated coaches are drawn against the rating on the baseline's 
 fitted so the ratings line up with the recruiting baseline). Recruiting's prestige pull reads
 0.6 × prestige + 0.4 × rating and the NIL pull the NIL tier; the portal's prestige and the
 program's share of development read the rating. The Office shows your program's card (the six
-metrics as bars, the tier, the rank) and opens every program in a table. `tools/check_programs.py`
+metrics as bars read in words: elite 80 and up, strong 65, solid 50, fair 35, weak below; the
+standing as a tag) and opens every program in a table of the same words. `tools/check_programs.py`
 checks the starting top 25 and, over a run, that the top 25 keeps at least 18 of its starting
 members; `tools/long_run.py` prints the same each season.
 

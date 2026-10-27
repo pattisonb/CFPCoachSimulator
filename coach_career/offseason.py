@@ -751,6 +751,7 @@ def _redshirt_block(state: dict, lgd: dict, usage: dict) -> dict:
     games = _games_played(state).get(me, {})
     u = usage.get(me, {})
     team_games = ((state.get("season_stats") or {}).get(me) or {}).get("games", 0)
+    chosen = set(((state.get("redshirting") or {}).get(me) or {}).keys())      # the ones you sat down during the season
     players = []
     for p in lgd["teams"][me]["roster"]:
         n = games.get(p["id"], 0)
@@ -759,7 +760,7 @@ def _redshirt_block(state: dict, lgd: dict, usage: dict) -> dict:
         if _redshirt_candidate(p, n):
             players.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "games": n, "team_games": team_games,
                             "overall": house(p["pos"], p["o"]), "use": u.get(p["id"], "bench"),
-                            "redshirt": u.get(p["id"], "bench") == "bench" and (p["cls"] == "FR" or n == 0)})
+                            "redshirt": p["id"] in chosen or (u.get(p["id"], "bench") == "bench" and (p["cls"] == "FR" or n == 0))})
     players.sort(key=lambda x: (GROUP.get(x["pos"], "Z"), -x["overall"]))
     return {"players": players, "decided": False}
 
