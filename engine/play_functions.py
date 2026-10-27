@@ -3,7 +3,7 @@ import random
 from . import game_config as cfg
 from .game_config import sliders
 from .game_functions import apply_pass_fatigue, apply_run_fatigue
-from .personnel import pass_rushers
+from .personnel import pass_rushers as _pass_rushers
 
 # Every touchdown's scorer(s), in order; game.py reads the newest to describe the score.
 debug_td_stats = []
@@ -53,14 +53,7 @@ TACKLE_GROUP = {"DL": "dl", "MLB": "lb", "ROLB": "olb", "LOLB": "olb", "OLB": "o
 TACKLE_WEIGHT_GROUPS = ("dl", "lb", "olb", "s", "cb")    # the order of cfg.TACKLE_WEIGHTS_*
 
 
-def assign_tackles(defense, base_yards, verbose=False):
-    # per-player weights by position group (a group's share also grows with how many are on the field)
-    if base_yards <= 2:
-        weight_table = cfg.TACKLE_WEIGHTS_SHORT
-    elif base_yards <= 7:
-        weight_table = cfg.TACKLE_WEIGHTS_MID
-    else:
-        weight_table = cfg.TACKLE_WEIGHTS_LONG
+def _tackle_pool(defense, weight_table):
     weight_profile = dict(zip(TACKLE_WEIGHT_GROUPS, weight_table))
 
     # Build weighted candidate list
@@ -87,6 +80,19 @@ def assign_tackles(defense, base_yards, verbose=False):
     if not candidates:
         candidates = defense
         weights = [(p.tackling + p.intelligence) / 2 for p in defense]
+    return candidates, weights
+
+
+def assign_tackles(defense, base_yards, verbose=False):
+    # per-player weights by position group (a group's share also grows with how many are on the field)
+    if base_yards <= 2:
+        weight_table = cfg.TACKLE_WEIGHTS_SHORT
+    elif base_yards <= 7:
+        weight_table = cfg.TACKLE_WEIGHTS_MID
+    else:
+        weight_table = cfg.TACKLE_WEIGHTS_LONG
+    # the candidates and their weights read `tackling`, so they hold for one ratings version
+    candidates, weights = _dyn(defense, ("tackle", id(weight_table)), lambda d: _tackle_pool(d, weight_table))
 
     # Solo vs assisted: about 30% of tackles are shared (real leaders split theirs near half solo, half assisted)
     is_assisted = random.random() < cfg.TACKLE_ASSIST_CHANCE
@@ -233,7 +239,7 @@ def _tr(player, *keys):
 
 
 def _tr_points(players, keys):
-    return sum(_tr(p, *keys) for p in players)
+    return _static(players, ("trp", keys), lambda ps: sum(_tr(p, *keys) for p in ps))
 
 
 def _fumble_mult(carrier, tacklers):
@@ -245,12 +251,69 @@ def _fumble_mult(carrier, tacklers):
         * (1 + _tr_points(tacklers, cfg.HIT_TRAITS) * cfg.TRAIT_FX["hitter"])
 
 
+# ----- per-lineup memo: the same eleven give the same numbers until someone's ratings move -----
+# A Lineup (roster.Lineup) carries two dicts: `static` for values that depend only on who is in
+# it, `dyn` for values that read fatigue-penalised ratings, cleared when the team's ratings
+# version moves. A plain list (candidates, a returner) is computed every time, as before.
+# Every memoised value is built by the same expression on the same players in the same order,
+# so it is the number the direct computation would give.
+_MISSING = object()
+
+
+def _static(players, tag, fn):
+    st = getattr(players, "static", None)
+    if st is None:
+        return fn(players)
+    v = st.get(tag, _MISSING)
+    if v is _MISSING:
+        v = st[tag] = fn(players)
+    return v
+
+
+def _dyn(players, tag, fn):
+    dyn = getattr(players, "dyn", None)
+    if dyn is None:
+        return fn(players)
+    rv = players.team._ratings_version
+    if players.dyn_v != rv:
+        players.dyn, players.dyn_v = dyn, rv = {}, rv
+    v = dyn.get(tag, _MISSING)
+    if v is _MISSING:
+        v = dyn[tag] = fn(players)
+    return v
+
+
+def _members(players, positions):
+    """The lineup's players at these positions, in lineup order (memoised per lineup)."""
+    st = getattr(players, "static", None)
+    if st is None:
+        return [p for p in players if p.position in positions]
+    sub = st.get(("members", positions), _MISSING)
+    if sub is _MISSING:
+        from .roster import Lineup
+        sub = st[("members", positions)] = Lineup([p for p in players if p.position in positions], players.team)
+    return sub
+
+
+def pass_rushers(defense):
+    """personnel.pass_rushers, memoised per lineup and ratings version (it sorts by `rushing`)."""
+    return _dyn(defense, "rushers", _rushers)
+
+
+def _rushers(defense):
+    r = _pass_rushers(defense)
+    if getattr(defense, "team", None) is None:
+        return r
+    from .roster import Lineup
+    return Lineup(r, defense.team)
+
+
 def _group_rating(players, positions, keys, default=cfg.NEUTRAL):
     """Average rating of the players at the given positions (on-field players only)."""
-    group = [p for p in players if p.position in positions]
+    group = _members(players, positions)
     if not group:
         return default
-    return sum(_rating(p, keys) for p in group) / len(group)
+    return _dyn(group, ("gr", keys), lambda g: sum(_rating(p, keys) for p in g) / len(g))
 
 
 def _slider_points(slider_value, scale=20.0):
@@ -383,17 +446,17 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, yardline, ve
                                   + cfg.SCHEME_STYLE.get(tendencies.get("offense_scheme"), {}).get("outside", 0.0)))
     outside = random.random() < outside_share
     last_play["direction"] = "outside" if outside else "inside"
-    line = [p for p in offense if p.position in ('OL', 'TE')]
-    front_players = [p for p in defense if p.position in front_positions]
-    line_lean = sum((_attr(p, "drive_block") - _attr(p, "reach_block")) / 2 for p in line) / len(line) if line else 0.0
-    front_lean = sum((_attr(p, "block_shedding") - _attr(p, "pursuit")) / 2 for p in front_players) / len(front_players) if front_players else 0.0
+    line = _members(offense, ('OL', 'TE'))
+    front_players = _members(defense, front_positions)
+    line_lean = _static(line, "line_lean", lambda ps: sum((_attr(p, "drive_block") - _attr(p, "reach_block")) / 2 for p in ps) / len(ps) if ps else 0.0)
+    front_lean = _static(front_players, "front_lean", lambda ps: sum((_attr(p, "block_shedding") - _attr(p, "pursuit")) / 2 for p in ps) / len(ps) if ps else 0.0)
     style = (power_style - speed_style) / 2               # + a power runner, - a speed runner
     sign = -1 if outside else 1                           # inside rewards drive, shedding and power; outside the opposite
     yards_style = sign * line_lean * cfg.RUN_LINE_STYLE_EFFECT - sign * front_lean * cfg.RUN_FRONT_STYLE_EFFECT \
         + sign * style * cfg.RUN_CARRIER_STYLE_EFFECT
     if not outside and line and front_players:
-        line_w = sum(p.weight for p in line) / len(line)
-        front_w = sum(p.weight for p in front_players) / len(front_players)
+        line_w = _static(line, "weight", lambda ps: sum(p.weight for p in ps) / len(ps))
+        front_w = _static(front_players, "weight", lambda ps: sum(p.weight for p in ps) / len(ps))
         yards_style += (line_w - front_w - cfg.LINE_WEIGHT_GAP) * cfg.RUN_WEIGHT_EFFECT
     fx = cfg.TRAIT_FX
     if outside:
@@ -474,10 +537,19 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, yardline, ve
 # ===================== passing =====================
 
 def _pick_target(offense):
+    pool, weights = _dyn(offense, "targets", _target_pool)
+    if pool is None:
+        return None
+    return random.choices(pool, weights=weights, k=1)[0]
+
+
+def _target_pool(offense):
+    """(the receivers and backs, their target weights) for this lineup; the weights read
+    route running and hands, so they hold for one ratings version."""
     receivers = [p for p in offense if p.position in ('WR', 'TE')]
     backs = [p for p in offense if p.position == 'RB']
     if not receivers and not backs:
-        return None
+        return None, None
     weights = []
     for p in receivers:
         # Steep in rating so a real number-one receiver gets a number-one share of targets.
@@ -492,7 +564,7 @@ def _pick_target(offense):
         weights.extend([rb_each] * len(backs))
     elif backs:
         weights = [1.0] * len(backs)
-    return random.choices(receivers + backs, weights=weights, k=1)[0]
+    return receivers + backs, weights
 
 
 def _credit_completion(qb, target, yards):
@@ -532,10 +604,10 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, yardline, v
     sack_rate = cfg.SACK_BASE + (rush - protection) * cfg.SACK_PER_LINE_POINT
     sack_rate -= (qb_decisions - cfg.NEUTRAL) * cfg.SACK_PER_QB_POINT
     # ratings v2: power rush against anchor or speed rush against footwork, then sack escape
-    linemen = [p for p in offense if p.position == 'OL']
+    linemen = _members(offense, ('OL',))
     if rushers and linemen:
-        rush_lean = sum((_attr(p, "power_rush") - _attr(p, "speed_rush")) / 2 for p in rushers) / len(rushers)
-        line_lean = sum((_attr(p, "pass_anchor") - _attr(p, "pass_footwork")) / 2 for p in linemen) / len(linemen)
+        rush_lean = _static(rushers, "rush_lean", lambda ps: sum((_attr(p, "power_rush") - _attr(p, "speed_rush")) / 2 for p in ps) / len(ps))
+        line_lean = _static(linemen, "pass_lean", lambda ps: sum((_attr(p, "pass_anchor") - _attr(p, "pass_footwork")) / 2 for p in ps) / len(ps))
         power = random.random() < max(0.15, min(0.85, cfg.RUSH_POWER_SHARE + rush_lean * cfg.RUSH_STYLE_TILT))
         sign = 1 if power else -1
         sack_rate += sign * (rush_lean - line_lean) * cfg.RUSH_MATCHUP_EFFECT
@@ -608,7 +680,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, yardline, v
     last_play["depth"] = depth
     man_share = cfg.MAN_COVERAGE_SHARE + (def_tendencies.get("man_coverage_rate", 50) - 50) * cfg.MAN_RATE_EFFECT
     man = random.random() < max(0.1, min(0.85, man_share))
-    covers = [p for p in defense if p.position in db_positions]
+    covers = _members(defense, db_positions)
 
     completion = cfg.COMPLETION_BASE
     completion += cfg.DEPTH_COMPLETION[depth]
@@ -621,7 +693,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, yardline, v
         completion += (r[depth] - sum(r.values()) / 3) * cfg.ROUTE_DEPTH_EFFECT
     if covers:
         # the coverage players' strength in this call over their average of man and zone
-        lean = sum((_attr(p, "man_coverage") - _attr(p, "zone_coverage")) / 2 for p in covers) / len(covers)
+        lean = _static(covers, "cover_lean", lambda ps: sum((_attr(p, "man_coverage") - _attr(p, "zone_coverage")) / 2 for p in ps) / len(ps))
         completion -= (lean if man else -lean) * cfg.COVERAGE_TYPE_EFFECT
     if covers and random.random() < cfg.CONTESTED_SHARE[depth]:
         # a defender on him at the catch point: hands in traffic, leaping and height against his
@@ -648,12 +720,12 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, yardline, v
     if last_play.get("contested"):
         completion += _tr(target, "jump_ball_winner") * fx["jump_ball"]
     if man and depth != "deep" and covers and random.random() < cfg.PRESS_RATE * def_tendencies.get("press_rate", 50) / 50:
-        press = sum(_attr(p, "press") for p in covers) / len(covers)
+        press = _static(covers, "press", lambda ps: sum(_attr(p, "press") for p in ps) / len(ps))
         completion += (_attr(target, "release") - press) * cfg.PRESS_EFFECT
         last_play["press"] = True
     if play_action and depth != "short":
-        front_iq = [p for p in defense if p.position in ('MLB', 'ROLB', 'LOLB', 'S')]
-        diag = sum(_attr(p, "diagnosis") for p in front_iq) / len(front_iq) if front_iq else cfg.ATTR_LEAGUE_AVG
+        front_iq = _members(defense, ('MLB', 'ROLB', 'LOLB', 'S'))
+        diag = _static(front_iq, "diag", lambda ps: sum(_attr(p, "diagnosis") for p in ps) / len(ps) if ps else cfg.ATTR_LEAGUE_AVG)
         completion += cfg.PLAY_ACTION_COMPLETION + (_attr(qb, "play_action") - diag) * cfg.PLAY_ACTION_SKILL
     if man:
         completion += _tr(target, "press_beater") * fx["press_beater"]

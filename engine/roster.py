@@ -112,6 +112,18 @@ class Player:
         self._iq = self.attrs.get("football_iq", 50)
 
 
+class Lineup(list):
+    """The eleven on the field for a snap, kept from snap to snap while nothing changes, with
+    room for what the play functions derive from it: `static` holds values that depend only on
+    who is in it (traits, ratings v2 attributes, weights), `dyn` the ones that read fatigue-
+    penalised ratings, valid for one `team._ratings_version`."""
+    __slots__ = ("team", "static", "dyn", "dyn_v")
+
+    def __init__(self, players, team):
+        super().__init__(players)
+        self.team, self.static, self.dyn, self.dyn_v = team, {}, {}, -1
+
+
 class Team:
     def __init__(self, name, offense, defense, kick_returner=None, punt_returner=None):
         self.name = name
@@ -133,6 +145,8 @@ class Team:
         self._groups = {}             # position groups in depth order, built once (depth never changes in a game)
         self._lineup_version = 0      # bumped whenever someone's in_game or injured flag changes (see _take)
         self._take_cache = {}         # group key -> (version, the group sorted for _take)
+        self._lineup_key = {}         # unit -> (what was asked for, _lineup_version) the current Lineup answers
+        self._ratings_version = 0     # bumped whenever refresh_ratings rewrites someone's ratings
         self.grouping_snaps = {}      # snaps per grouping / front, for the box score
         self.injuries = []            # injuries suffered in this game
         self.lead, self.half, self.in_overtime = 0, 1, False
@@ -221,12 +235,17 @@ class Team:
         """Offensive grouping for this snap: counts of RB, TE, WR, OL (plus the quarterback)."""
         self.grouping = name
         self.grouping_snaps[name] = self.grouping_snaps.get(name, 0) + 1
+        key = (name, self._lineup_version)
+        if self._lineup["offense"] is not None and self._lineup_key.get("offense") == key:
+            self.refresh_ratings(self._lineup["offense"])      # the same eleven: only their fatigue moved
+            return
         lineup = self._take(self._group("offense", "QB"), 1, ("offense", "QB"))
         for pos in ("RB", "TE", "WR", "OL"):
             lineup += self._take(self._group("offense", pos), counts[pos], ("offense", pos))
         # the specialists ride along so the drive code can find the kicker and punter
         lineup += [p for p in self._group("offense", "KP") if p.in_game and not p.injured]
-        self._lineup["offense"] = lineup
+        lineup = self._lineup["offense"] = Lineup(lineup, self)
+        self._lineup_key["offense"] = key
         self._active.update(lineup)
         self.refresh_ratings(lineup)
 
@@ -235,6 +254,10 @@ class Team:
         self.front = counts
         key = f"{counts['EDGE'] + counts['DT']}-{counts['LB']}-{counts['CB'] + counts['S']}"
         self.grouping_snaps[key] = self.grouping_snaps.get(key, 0) + 1
+        want = (counts["EDGE"], counts["DT"], counts["LB"], counts["CB"], counts["S"], self._lineup_version)
+        if self._lineup["defense"] is not None and self._lineup_key.get("defense") == want:
+            self.refresh_ratings(self._lineup["defense"])
+            return
         edges, tackles = self._group("defense", "EDGE"), self._group("defense", "DT")
         edge_key = ("defense", "EDGE")
         if not edges or not tackles:          # rosters without roles: split the line by depth
@@ -248,7 +271,8 @@ class Team:
         lineup += self._take(self._group("defense", "LB"), counts["LB"], ("defense", "LB"))
         lineup += self._take(self._group("defense", "CB"), counts["CB"], ("defense", "CB"))
         lineup += self._take(self._group("defense", "S"), counts["S"], ("defense", "S"))
-        self._lineup["defense"] = lineup
+        lineup = self._lineup["defense"] = Lineup(lineup, self)
+        self._lineup_key["defense"] = want
         self._active.update(lineup)
         self.refresh_ratings(lineup)
 
@@ -474,6 +498,7 @@ class Team:
         factor = self.momentum_factor()
         _round, _max, _min = round, max, min
         eps = 1e-9
+        changed = False
         for player in players:
             scale = (1 - player.fatigue / 100 * 0.15) * factor
             # Every penalised attribute is a rounded, clamped multiple of the scale, so each one
@@ -484,6 +509,7 @@ class Team:
             lo, hi = player._penalty_fatigue
             if lo <= scale < hi:
                 continue
+            changed = True
             values = player.__dict__      # plain attributes: writing the dict is setattr without the lookup
             lo, hi = -1e9, 1e9
             for attr, original_value, min_allowed in player._penalty_attrs:
@@ -499,3 +525,5 @@ class Team:
                     lo = _max(lo, (r - 0.5) / original_value + eps)
                     hi = _min(hi, (r + 0.5) / original_value - eps)
             player._penalty_fatigue = (lo, hi)
+        if changed:
+            self._ratings_version += 1    # the lineups' derived numbers (play_functions) are stale
