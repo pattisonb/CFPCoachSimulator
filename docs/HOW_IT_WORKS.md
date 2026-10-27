@@ -971,6 +971,13 @@ ceiling against the starter's ratings over the ten attributes most tied to overa
 only when closer than 30% of starter pairs are to each other. "Our comp" appears after three
 looks, measured from your staff's read, so a wrong read can give a different comp.
 
+**A player keeps his seasons** (`offseason.record_seasons`, run when the offseason opens): every
+player's season line and honours go onto his entry in the career's league (`c["hist"]`, the last
+eight), follow him through the rollover and a transfer, and his page lists them under "Season by
+season" with the current season as the last row. The Office's program card and the programs table
+show a standing in words (a tag: blue blood, power, solid, Group of 5, bottom), with no rating
+number or rank.
+
 **Needs, recommendations and the first weeks.** Both the board and the class open with a needs
 strip by position (`recruiting.needs_detail`: a healthy roster's make-up minus who comes back
 minus your commits), counted the way you pick (what's left; committed, firm commits, your
