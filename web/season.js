@@ -943,6 +943,13 @@
       try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`); ds.key = key; } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
     }
     const d = ds.data;
+    const redshirt = async (p, on) => {                      // your roster: redshirt him in place
+      try {
+        await api(`/api/season/${s.id}/redshirt`, postJSON({ team: ds.team, player: p.slug, on }));
+        toast(on ? `${p.name} is redshirting: he keeps his year.` : `${p.name} is back in the lineup.`, 3000);
+        playerState.cache.clear(); ds.data = null; renderDepthChart();
+      } catch (err) { toast(`Could not do that: ${errText(err)}`, 4000); }
+    };
     // moves are saved with the season and used by every game from then on
     const change = async (body) => {
       try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`, postJSON(body)); renderDepthChart(); }
@@ -973,10 +980,15 @@
         for (let i = 0; i < width; i++) {
           const p = row.players[i];
           if (!p) { cells.push(el("td", { class: `left muted ${i >= 2 ? "ph" : ""}`, text: "" })); continue; }
+          const rs = p.redshirt;                                   // your own roster in a career: redshirt him here
+          const rsCtl = !canEdit || !rs || !(rs.can || rs.on) || ["KR", "PR"].includes(row.role) ? null
+            : controlButton(rs.on ? "Off redshirt" : "Redshirt", rs.on ? "He plays again; the year is still his if he stays at four games or fewer"
+                : `Sit him out the rest of the season and keep his year (${rs.games} of ${rs.limit} games played)`, () => redshirt(p, !rs.on), `ghost tiny depth-rs ${rs.on ? "on" : ""}`);
           const ctl = !canEdit ? null : el("span", { class: "depth-ctl" }, [
             i > 0 ? controlButton("★", "Make starter", () => change({ role: row.role, player: p.slug, move: "top" })) : null,
             i > 0 ? controlButton("▲", "Move up", () => change({ role: row.role, player: p.slug, move: "up" })) : null,
             i < row.players.length - 1 && !["KR", "PR"].includes(row.role) ? controlButton("▼", "Move down", () => change({ role: row.role, player: p.slug, move: "down" })) : null,
+            rsCtl,
           ]);
           cells.push(el("td", { class: `left depth-cell ${i === 0 ? "starter" : ""} ${i >= 2 ? "ph" : ""}` }, [
             el("div", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, el("span", { text: p.name, ...playerAttrs(ds.team, p.name, p.position) }), el("span", { class: "pos", text: `${CLASS_LABEL[p.class] || p.class || ""}${p.position !== row.role ? " · " + p.position : ""}` }),

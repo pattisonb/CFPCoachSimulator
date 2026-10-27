@@ -150,6 +150,12 @@ if __name__ == "__main__":
                 assert not small, f"{width}px: depth controls under 24px: {small[:3]}"
                 assert all(c["op"] == "1" for c in ctl), f"{width}px: depth controls are faint without hover"
                 assert all(c["label"] for c in ctl), "depth controls carry an aria-label"
+                # your roster redshirts in place: an eligible player's row has the control, and it works both ways
+                rsb = page.query_selector(".depth-rs:not(.on)")
+                assert rsb, "no Redshirt control on an eligible player's row"
+                if width == 1280:
+                    rsb.click(); page.wait_for_selector(".depth-rs.on", timeout=30_000)
+                    page.click(".depth-rs.on"); page.wait_for_function("() => !document.querySelector('.depth-rs.on')", timeout=30_000)
                 depth = page.inner_text("#tab-depth")
                 assert not CLASS_CODE.search(depth), CLASS_CODE.search(depth).group(0)
                 # a player page: attribute labels do not clip; the bar colours are explained

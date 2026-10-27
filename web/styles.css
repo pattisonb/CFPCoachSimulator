@@ -556,7 +556,9 @@ body.team-theme .panel { border-color: color-mix(in srgb, var(--team-primary) 30
 
 /* editable depth chart */
 .depth-note { margin: 6px 0 2px; flex-direction: row; align-items: center; justify-content: space-between; }
-.depth-ctl { display: inline-flex; gap: 2px; margin-left: 6px; vertical-align: middle; }
+.depth-ctl { display: inline-flex; gap: 2px; margin-left: 6px; vertical-align: middle; flex-wrap: wrap; }
+.depth-rs { font-size: 11px; letter-spacing: 0.02em; text-transform: uppercase; }
+.depth-rs.on { border-color: var(--good); color: var(--good-text); }
 button.tiny { padding: 0 6px; font-size: 12px; line-height: 26px; min-height: 28px; min-width: 28px; border-radius: 6px; }   /* a tap target: 28px, WCAG 2.5.8 */
 
 .champ-banner.team-colors { display: flex; align-items: center; justify-content: center; gap: 12px; border: 1px solid rgba(255,255,255,0.25); }

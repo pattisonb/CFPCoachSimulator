@@ -1678,6 +1678,7 @@ def depth_chart_view(state: dict, slug: str) -> dict:
                  "PR": [p for p in players if p.get("slug") == t.get("punt_returner")]}
 
     injured = (state.get("injuries") or {}).get(slug, {})
+    yours = bool(state.get("career")) and slug == state.get("team") and not state.get("done")   # your roster: redshirt in place
 
     def card(p: dict, role: str) -> dict:
         inj = injured.get(f"{p['name']}|{p['position']}")
@@ -1691,7 +1692,8 @@ def depth_chart_view(state: dict, slug: str) -> dict:
                 "starter": bool(p.get("in_game")), "games": rec["games"] if rec else 0,
                 "form": round(player_form(state, slug, p["name"], p["position"]), 2) if morale_on(state) else 0.0,
                 "headline": awards.headline({"stats": st}, group) if st else "",
-                "injury": {"type": inj["type"], "weeks_left": inj["weeks_left"], "returns_week": state["current_week"] + inj["weeks_left"]} if inj else None}
+                "injury": {"type": inj["type"], "weeks_left": inj["weeks_left"], "returns_week": state["current_week"] + inj["weeks_left"]} if inj else None,
+                **({"redshirt": redshirt_status(state, slug, p)} if yours else {})}
 
     units = []
     for unit, rows in DEPTH_ROWS:

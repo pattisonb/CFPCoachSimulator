@@ -38,6 +38,14 @@ if __name__ == "__main__":
             season.redshirt_toggle(st, me, starter["slug"], True); raise AssertionError("five games and still redshirted")
         except season.RedshirtError:
             pass
+    # the depth chart carries each of your players' redshirt standing, so the roster can redshirt him in place
+    rows = [c for u in season.depth_chart_view(st, me)["units"] for r in u["rows"] for c in r["players"]]
+    mine = next(c for c in rows if c["slug"] == bench["slug"])
+    assert mine["redshirt"]["on"] is True and mine["redshirt"]["games"] == games_before and mine["redshirt"]["limit"] == 4
+    assert all("redshirt" in c and set(c["redshirt"]) >= {"on", "can", "games", "limit"} for c in rows)
+    assert any(c["redshirt"]["can"] and not c["redshirt"]["on"] for c in rows), "someone else is still eligible"
+    other = next(iter(season.depth_chart_view(st, "georgia")["units"]))["rows"][0]["players"][0]
+    assert "redshirt" not in other, "another team's chart has no redshirt control"
     # off the redshirt and back on, then the offseason takes it as the default
     season.redshirt_toggle(st, me, bench["slug"], False)
     assert bench["slug"] not in st["redshirting"][me]
