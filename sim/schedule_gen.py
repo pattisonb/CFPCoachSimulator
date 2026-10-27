@@ -187,7 +187,7 @@ def generate(year: int, teams: dict, history: Optional[dict], rng: random.Random
         for s in members:
             league_k[s] = _league_games(rule, year) if rule else 0
     room = lambda s: count[s] < GAMES - league_k.get(s, 0)       # non-conference room left before the league slate
-    _fixed_games(year, fbs, hist, rng, add, is_power, booked, room)
+    _fixed_games(year, fbs, hist, rng, add, is_power, booked, room, lambda: games)
     # 2. every conference's league slate
     for conf, members in _by_conference(fbs).items():
         rule = R["conferences"].get(conf)
@@ -208,7 +208,7 @@ def generate(year: int, teams: dict, history: Optional[dict], rng: random.Random
         out[rec["event_id"]] = rec
         _record(hist, year, g["home"], g["away"], g["neutral"])
     hist["home_conf"] = {s: {**hist["home_conf"].get(s, {}), str(year): n} for s, n in _home_conf_counts(games, conf_of).items()}
-    hist["pending"] = pending_next
+    hist["pending"] = [g for g in (hist.get("pending") or []) if g["year"] > year] + pending_next
     hist["home_total"] = {s: {**(hist.get("home_total") or {}).get(s, {}), str(year): n} for s, n in home_total.items()}
     hist["years"] = (hist.get("years") or []) + [year]
     return out, hist
@@ -223,7 +223,7 @@ def _by_conference(fbs: dict) -> dict[str, list[str]]:
 
 # ----- fixed games ---------------------------------------------------------------------------------
 
-def _fixed_games(year: int, fbs: dict, hist: dict, rng: random.Random, add, is_power, booked: set, room) -> None:
+def _fixed_games(year: int, fbs: dict, hist: dict, rng: random.Random, add, is_power, booked: set, room, games_so_far) -> None:
     S = series()
     for s in S["annual"]:                                 # annual series first: they outrank a new series
         a, b = s["teams"]
@@ -258,10 +258,17 @@ def _fixed_games(year: int, fbs: dict, hist: dict, rng: random.Random, add, is_p
             if s in fbs and s not in have and room(s) and room(nd):
                 home, away = _site_from_history(hist, nd, s, rng)
                 add(home, away, False, None, "", "fixed"); have.add(s)
+        acc_home = lambda: sum(1 for g in games_so_far() if g["home"] == nd and not g["neutral"] and g["away"] in acc)
+        have = {s for s in acc if pair_key(s, nd) in booked}        # Stanford's annual game and Clemson's count among the five
+        host_target = 3 - (year % 2)                                   # two or three of the five at home, alternating
         for s in [q for q in pool if room(q)][:max(0, want - len(have))]:
             if not room(nd):
                 break
-            home, away = _site_from_history(hist, nd, s, rng)
+            m = last_meeting(hist, nd, s)
+            if m and not m.get("neutral") and m["year"] == year - 1:
+                home, away = (s, nd) if m["home"] == nd else (nd, s)
+            else:
+                home, away = (nd, s) if acc_home() < host_target else (s, nd)
             add(home, away, False, None, "", "fixed")
 
 
@@ -464,11 +471,25 @@ def _nonconference(year: int, fbs: dict, fcs: list[str], hist: dict, rng: random
     nc = lambda s: (rule_of(s).get("non_conference") or R["independents"].get(s) or {})
     slots = lambda s: GAMES - count[s]
     recent = lambda a, b: _last_year(hist, a, b) >= year - 1
+    nd_acc = {"notre-dame", "ACC"}
+    # two teams the fill may pair: not league-mates, and not Notre Dame with an ACC team (its five ACC games are set above)
+    may_pair = lambda a, b: conf_of[a] != conf_of[b] and not ({a, conf_of[b]} == nd_acc or {b, conf_of[a]} == nd_acc)
     # every year a Power team wants seven home games and a Group of Five team six: the non-conference sites
     # lean against the league's 5/4 alternation rather than with it
     last_home = hist.get("home_total") or {}
     target = {s: (7 if is_power(s) else 6) for s in fbs}
     deficit = lambda s: target[s] - home_total[s]
+    # a home-and-home's return flips next year, so the side that already owes more road returns next year hosts now
+    def balance(s: str) -> float:
+        owed_away = sum(1 for g in pending_next if g["away"] == s) - sum(1 for g in pending_next if g["home"] == s)
+        return deficit(s) - owed_away
+
+    def return_year(a: str, b: str) -> int:
+        """When a home-and-home comes back: next year, or the year after for an independent's games
+        (half of them), so its slate does not flip home to road as one block."""
+        if conf_of[a] == "FBS Independent" or conf_of[b] == "FBS Independent":
+            return year + 1 + (len(pending_next) % 2)
+        return year + 1
 
     def power_need(s: str) -> int:
         r = nc(s)
@@ -483,26 +504,27 @@ def _nonconference(year: int, fbs: dict, fcs: list[str], hist: dict, rng: random
     needing = sorted((s for s in powers if power_need(s) > 0 and slots(s) > 0), key=lambda s: rng.random())
     while len(needing) >= 2:
         a = needing.pop()
-        partners = [b for b in needing if conf_of[b] != conf_of[a] and pair_key(a, b) not in booked and not recent(a, b)]
+        partners = [b for b in needing if may_pair(a, b) and pair_key(a, b) not in booked and not recent(a, b)]
         if not partners:
-            partners = [b for b in needing if conf_of[b] != conf_of[a]]
+            partners = [b for b in needing if may_pair(a, b)]
         if not partners:
             continue
         b = min(partners, key=lambda s: (_last_year(hist, a, s), rng.random()))
         needing.remove(b)
-        home, away = _site_from_history(hist, a, b, rng, deficit, year)
-        add(home, away, False, None, "", "nonconf")
-        pending_next.append({"year": year + 1, "home": away, "away": home})
+        home, away = _site_from_history(hist, a, b, rng, balance, year)
+        add(home, away, False, None, "", "nonconf")["flex"] = _last_year(hist, a, b) < year - 1
+        pending_next.append({"year": return_year(home, away), "home": away, "away": home})
     # whoever is still owed a Power opponent books a home-and-home with any Power team that has room
     for a in [s for s in powers if power_need(s) > 0 and slots(s) > 0]:
-        partners = [b for b in powers if b != a and slots(b) > 0 and conf_of[b] != conf_of[a] and pair_key(a, b) not in booked]
+        partners = [b for b in powers if b != a and slots(b) > 0 and may_pair(a, b) and pair_key(a, b) not in booked]
         if not partners:
             continue
         b = min(partners, key=lambda s: (recent(a, s), -slots(s), _last_year(hist, a, s), rng.random()))
-        home, away = _site_from_history(hist, a, b, rng, deficit, year)
-        add(home, away, False, None, "", "nonconf")
-        pending_next.append({"year": year + 1, "home": away, "away": home})
-    # b. Group of Five teams' Power pay games (one, sometimes two), at the Power team's place
+        home, away = _site_from_history(hist, a, b, rng, balance, year)
+        add(home, away, False, None, "", "nonconf")["flex"] = _last_year(hist, a, b) < year - 1
+        pending_next.append({"year": return_year(home, away), "home": away, "away": home})
+    # b. Group of Five teams' Power pay games (one, sometimes two), at the Power team's place; a Power team hosts at most two
+    pay_hosted = {p: 0 for p in powers}
     for s in sorted(g5, key=lambda s: (-slots(s), rng.random())):
         lo, hi = nc(s).get("power_road", [1, 2])
         # a second pay game only after a year with six home dates or more (two trips plus a road league year is thin)
@@ -510,12 +532,13 @@ def _nonconference(year: int, fbs: dict, fcs: list[str], hist: dict, rng: random
         for i in range(want):
             if slots(s) <= 0 or (i and slots(s) <= 2 - (1 if fcs_games[s] else 0)):   # a second only with room for the FCS game and a home-and-home
                 break
-            hosts = [p for p in powers if slots(p) > 0 and not recent(s, p) and pair_key(s, p) not in booked]
+            hosts = [p for p in powers if slots(p) > 0 and pay_hosted[p] < 2 and may_pair(s, p) and not recent(s, p) and pair_key(s, p) not in booked]
             if not hosts:
                 break
-            # the Power teams with the most room first, among them the closest in the alphabet of history (least recently met)
+            # the Power team most short of home dates first, then the one with the most room, least recently met
             p = min(hosts, key=lambda h: (-deficit(h), -slots(h), _last_year(hist, s, h), rng.random()))
             add(p, s, False, None, "", "nonconf")
+            pay_hosted[p] += 1
     # c. FCS games: a home game against the region's stand-in. Every other game fills two slots, so the
     # number of FCS games must have the parity of the slots still open, or one team ends up alone.
     planned = []
@@ -543,7 +566,7 @@ def _nonconference(year: int, fbs: dict, fcs: list[str], hist: dict, rng: random
         before = sum(count.values())
         for a in open_:
             while slots(a) > 0:
-                partners = [b for b in open_ if b != a and slots(b) > 0 and conf_of[b] != conf_of[a] and pair_key(a, b) not in booked]
+                partners = [b for b in open_ if b != a and slots(b) > 0 and may_pair(a, b) and pair_key(a, b) not in booked]
                 if not partners:
                     break
                 # spread the games: the partner with the most room, least recently met
@@ -552,16 +575,16 @@ def _nonconference(year: int, fbs: dict, fcs: list[str], hist: dict, rng: random
                     host, guest = (a, b) if is_power(a) else (b, a)
                     add(host, guest, False, None, "", "nonconf")             # a pay game, not returned
                 else:
-                    home, away = _site_from_history(hist, a, b, rng, deficit, year)
-                    add(home, away, False, None, "", "nonconf")
-                    pending_next.append({"year": year + 1, "home": away, "away": home})
+                    home, away = _site_from_history(hist, a, b, rng, balance, year)
+                    add(home, away, False, None, "", "nonconf")["flex"] = _last_year(hist, a, b) < year - 1
+                    pending_next.append({"year": return_year(home, away), "home": away, "away": home})
         if sum(count.values()) == before:
             break
     # e. a team still short (the pool ran dry on it) takes over another team's FCS date: that team plays it
     # instead of the stand-in (a pay game at the Power side, else a home-and-home); failing that, an FCS game of its own
     for s in sorted(fbs, key=lambda s: -slots(s)):
         while slots(s) > 0:
-            donors = [g for g in games if g["kind"] == "fcs" and g["home"] != s and conf_of[g["home"]] != conf_of[s]
+            donors = [g for g in games if g["kind"] == "fcs" and g["home"] != s and may_pair(s, g["home"])
                       and pair_key(s, g["home"]) not in booked]
             if donors:
                 g = min(donors, key=lambda g: (-fcs_games[g["home"]], _last_year(hist, s, g["home"]), rng.random()))
@@ -571,14 +594,35 @@ def _nonconference(year: int, fbs: dict, fcs: list[str], hist: dict, rng: random
                     host, guest = (s, y) if is_power(s) else (y, s)
                     add(host, guest, False, None, "", "nonconf")
                 else:
-                    home, away = _site_from_history(hist, s, y, rng, deficit, year)
+                    home, away = _site_from_history(hist, s, y, rng, balance, year)
                     add(home, away, False, None, "", "nonconf")
-                    pending_next.append({"year": year + 1, "home": away, "away": home})
+                    pending_next.append({"year": return_year(home, away), "home": away, "away": home})
                 continue
             if fcs_games[s] < max(1, nc(s).get("fcs_max", 1)):
                 add(s, _stand_in(s, teams, fcs, rng, exclude={g["away"] for g in games if g["home"] == s}), False, None, "", "fcs")
                 continue
             raise ScheduleError(f"{s} cannot fill its {year} schedule")
+    # f. home dates: a team over eight or under five flips a home-and-home it is free to flip (the pair has not met
+    # in two years), taking the game from a team that can spare it; the owed return flips with it
+    def flip(g: dict) -> None:
+        g["home"], g["away"] = g["away"], g["home"]
+        home_total[g["home"]] += 1; home_total[g["away"]] -= 1
+        for r in pending_next:
+            if {r["home"], r["away"]} == {g["home"], g["away"]}:
+                r["home"], r["away"] = g["away"], g["home"]
+    for _ in range(40):
+        over = [s for s in fbs if home_total[s] > 8 or (home_total[s] > target[s] and is_power(s))]
+        under = [s for s in fbs if home_total[s] < 5 or (home_total[s] < target[s] - 1)]
+        moved = False
+        for g in games:
+            if not g.get("flex"):
+                continue
+            if g["home"] in over and home_total[g["away"]] < target[g["away"]]:
+                flip(g); moved = True
+            elif g["away"] in under and home_total[g["home"]] > target[g["home"]] - 1:
+                flip(g); moved = True
+        if not moved:
+            break
 
 
 def _stand_in(s: str, teams: dict, fcs: list[str], rng: random.Random, exclude: Optional[set] = None) -> str:
@@ -679,11 +723,52 @@ def _assign_weeks(games: list[dict], fbs: dict, rng: random.Random) -> None:
             w = free[0] if g["kind"] != "conf" else min(free[:6], key=lambda w: (_gap_cost(busy[home], w) + _gap_cost(busy[away], w), rng.random()))
             place(g, w)
         if ok:
+            fixed_weeks = {id(g) for g in fixed}
             for g in games:
                 g["week"] = g["_w"]
                 del g["_w"]
+            _tidy_byes(games, fbs, fixed_weeks, rng)
             return
     raise ScheduleError("no week grid fits this schedule")
+
+
+def _tidy_byes(games: list[dict], fbs: dict, fixed_weeks: set, rng: random.Random) -> None:
+    """Nobody sits out the opening week or rivalry week when a game of theirs can move there: a
+    team with week 14 free pulls a league game whose opponent is also free into it, a team with
+    week 1 free pulls a non-conference game. Byes end up between."""
+    by_week: dict = {}
+    for g in games:
+        for s in (g["home"], g["away"]):
+            if s in fbs:
+                by_week.setdefault(s, {})[g["week"]] = g
+    def pull(s: str, week: int, kinds: tuple, keep: tuple) -> bool:
+        """Move one of s's games into `week` (its opponent free there), from a week not in `keep`."""
+        movable = [g for g in by_week.get(s, {}).values() if id(g) not in fixed_weeks and g["week"] not in keep
+                   and g["kind"] in kinds and week not in by_week.get(g["away"] if g["home"] == s else g["home"], {})]
+        if not movable:
+            return False
+        # take the game from a week where leaving a bye costs least: one whose neighbours are both games
+        g = min(movable, key=lambda g: (kinds.index(g["kind"]), -_gap_cost(set(by_week[s]) - {g["week"]}, g["week"]), rng.random()))
+        old = g["week"]
+        for t in (g["home"], g["away"]):
+            if t in fbs:
+                by_week[t].pop(old, None); by_week[t][week] = g
+        g["week"] = week
+        return True
+
+    ends = (1, FINALE_WEEK, ARMY_NAVY_WEEK)
+    for week, kinds in ((FINALE_WEEK, ("conf", "nonconf", "fcs")), (1, ("nonconf", "fcs", "conf"))):
+        for s in sorted(fbs, key=lambda s: rng.random()):
+            if week not in by_week.get(s, {}):
+                pull(s, week, kinds, ends)
+    # two byes in a row: fill one of them from a week whose neighbours are games
+    for _ in range(2):
+        for s in sorted(fbs, key=lambda s: rng.random()):
+            weeks = set(by_week.get(s, {}))
+            for w in range(2, LAST_WEEK):
+                if w not in weeks and w + 1 not in weeks:
+                    if pull(s, w, ("conf", "nonconf", "fcs"), ends + (w - 1, w + 2)):
+                        weeks = set(by_week.get(s, {}))
 
 
 def _prefs(g: dict) -> list:
