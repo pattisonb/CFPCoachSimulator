@@ -22,7 +22,11 @@ def digest(state: dict) -> dict:
     scores = {e: [g["home_score"], g["away_score"], g.get("overtime") or 0] for e, g in sorted(state["games"].items()) if g.get("played")}
     stats = state.get("season_stats") or {}
     blob = json.dumps(stats, sort_keys=True, default=str)
-    return {"games": len(scores), "scores": scores, "stats_sha256": hashlib.sha256(blob.encode()).hexdigest()}
+    rec = state.get("recruiting") or {}
+    # the recruiting week's outcome: every school's board, offers, visits, contacts and each prospect's status
+    rec_blob = json.dumps({k: rec.get(k) for k in ("status", "lists", "offers", "visits", "contacts", "hours", "nil")}, sort_keys=True, default=str)
+    return {"games": len(scores), "scores": scores, "stats_sha256": hashlib.sha256(blob.encode()).hexdigest(),
+            "recruiting_sha256": hashlib.sha256(rec_blob.encode()).hexdigest()}
 
 
 if __name__ == "__main__":
@@ -40,4 +44,5 @@ if __name__ == "__main__":
     assert not moved, f"{len(moved)} of {want['games']} games changed score, e.g. {moved[:3]}: {[(want['scores'][e], now['scores'].get(e)) for e in moved[:3]]}"
     assert now["games"] == want["games"], (now["games"], want["games"])
     assert now["stats_sha256"] == want["stats_sha256"], "every score matches but the season stats differ: a stat line or a rounding moved"
-    print(f"sim golden ok: {now['games']} games and every stat line identical to the golden file")
+    assert now["recruiting_sha256"] == want.get("recruiting_sha256"), "the games match but the recruiting week came out differently: a board, offer, visit or status moved"
+    print(f"sim golden ok: {now['games']} games, every stat line and the recruiting week identical to the golden file")
