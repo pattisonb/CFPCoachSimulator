@@ -317,7 +317,7 @@ def ask_from(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> in
         schools = set(rc["lists"][pid]) | {slug}
         win = win if win is not None else _winning(state)
         order = sorted(schools, key=lambda s: -interest(state, s, pid, win))
-        ask = _ASKS[key] = int(round(base * (1 + ASK_TRAIL * max(0, order.index(slug)))))
+        ask = _ASKS[key] = max(5, _five(base * (1 + ASK_TRAIL * max(0, order.index(slug)))))
     return ask
 
 
@@ -328,7 +328,7 @@ def ask_view(state: dict, slug: str, pid: str) -> dict:
     if asked is True:
         return {"exact": ask}
     lo, hi = ASK_NARROW if asked == "range" else ASK_SHOWN
-    return {"lo": int(5 * round(ask * lo / 5)), "hi": int(5 * round(ask * hi / 5))}
+    return {"lo": max(0, min(ask - 5, _five(ask * lo))), "hi": max(ask + 5, _five(ask * hi))}     # a range in fives that straddles the number
 
 
 def nil_value(p: dict, nil: int, ask: int) -> float:
@@ -771,7 +771,12 @@ def nil_budget(state: dict, slug: str) -> int:
     budget the recruiting baseline gave (Ohio State about 275) and the middle has room for a few
     blue-chip asks (SMU about 135, Tulane 110), less what it spent keeping its own players home."""
     from coach_career import programs
-    return max(NIL_FLOOR, round(NIL_PER_TIER * programs.get(state, slug)["nil"]) - int((state.get("nil_retained") or {}).get(slug, 0)))
+    return max(NIL_FLOOR, _five(NIL_PER_TIER * programs.get(state, slug)["nil"]) - int((state.get("nil_retained") or {}).get(slug, 0)))
+
+
+def _five(x: float) -> int:
+    """NIL numbers come in fives: budgets, pools and asks."""
+    return int(5 * round(x / 5))
 
 
 def open_spots(state: dict, slug: str) -> int:
@@ -850,7 +855,7 @@ def _hours(state: dict, slug: str) -> float:
 
 
 def _nil(state: dict, slug: str) -> dict:
-    budget = round(PORTAL_NIL_POOL * nil_budget(state, slug)) if is_portal(state) else nil_budget(state, slug)
+    budget = _five(PORTAL_NIL_POOL * nil_budget(state, slug)) if is_portal(state) else nil_budget(state, slug)
     return state["recruiting"]["nil"].setdefault(slug, {"budget": budget, "held": {}})
 
 

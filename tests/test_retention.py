@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # portal pool reads the same budget
     spent = spent if results[p0["id"]]["status"] == "stayed" else 0
     assert st["nil_retained"][me] == spent and recruiting.nil_budget(st, me) == budget - spent
-    assert recruiting._nil(st, me)["budget"] == round(recruiting.PORTAL_NIL_POOL * (budget - spent))
+    assert recruiting._nil(st, me)["budget"] == recruiting._five(recruiting.PORTAL_NIL_POOL * (budget - spent))
     # on Auto nobody is talked to: every pending leaver goes
     st2 = season.new_season("ohio-state", "full", seed=6, career=True)
     finished(st2)
