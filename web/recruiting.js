@@ -622,7 +622,6 @@
               el("span", { class: "muted small", title: "Your staff's read of his potential", text: r.our_potential ? ` Potential ${r.our_potential[0]} to ${r.our_potential[1]}` : " Not scouted" })])]),
         ]);
         const li = el("li", { class: "go-list-row rc-row" }, [open, add]);
-        if (r.why && r.why.length) li.append(el("div", { class: "go-why muted small", text: r.why.join(" · ") }));
         return li;
       })));
       const prev = el("button", { type: "button", class: "go-btn", text: "← Previous" });

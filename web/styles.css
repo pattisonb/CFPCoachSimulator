@@ -1303,7 +1303,6 @@ body.career-mode.on-career-tab .season-head { padding-bottom: 0; }
 .go-scouted { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; padding: 6px 10px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 10%, transparent); }
 .go-scouted > b:first-child { font-size: 11px; letter-spacing: 0.08em; color: var(--accent-text, var(--accent)); align-self: center; }
 .go-list-row { flex-wrap: wrap; }
-.go-why { flex-basis: 100%; padding-left: 8px; }
 .go-list-head { align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .sched-edit { display: flex; flex-direction: column; gap: 12px; }
 .sched-edit-row { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; }

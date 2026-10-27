@@ -82,7 +82,7 @@ if __name__ == "__main__":
             # --- Prospects: profile with three looks prints no "null", grades read "D to C-", scouting is a button
             open_tab(page, base, A, "prospects", ".go-list-row")
             page.click("button.go-chip:has-text('Recommended for you')")
-            page.wait_for_selector(".go-why", timeout=120_000)
+            page.wait_for_selector("button.go-btn:has-text('Add these')", timeout=120_000)
             page.click("button.go-btn:has-text('Add these')")
             time.sleep(4)
             page.click(".go-list-row .go-list-id >> nth=0")
