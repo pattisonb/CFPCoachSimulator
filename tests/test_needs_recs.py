@@ -26,7 +26,7 @@ if __name__ == "__main__":
     recruiting._GROUP_COUNTS = (None, {})
     d2 = recruiting.needs_detail(st, me)
     assert d2["WR"]["board"] == d["WR"]["board"] + 1 and d2["WR"]["soft"] == d["WR"]["soft"] + 1 and d2["WR"]["need"] == d["WR"]["need"] - 1
-    rc["status"][pid]["firmness"] = recruiting.FIRM_VISIT
+    rc["status"][pid].update(firmness=recruiting.HARD_AT, hard=True)      # a hard commit counts as firm
     d3 = recruiting.needs_detail(st, me)
     assert d3["WR"]["firm"] == d["WR"]["firm"] + 1 and d3["WR"]["soft"] == d["WR"]["soft"]
     # recommended: the AI's board for you, not already on your board, each with why
