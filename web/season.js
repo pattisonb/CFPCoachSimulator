@@ -969,6 +969,27 @@
       teamPill(ds.team), el("b", { text: d.name }),
       el("span", { class: "muted", text: ` · ${d.conference} · ${d.head_coach || ""} · overall ${Math.round(r.overall)} (off ${Math.round(r.offense)}, def ${Math.round(r.defense)}, ST ${Math.round(r.special_teams)}) · ${d.roster_size} players` }),
     ]));
+    // your redshirts in one place: who is sitting out, his games, and the way back; or who is still eligible
+    const seen = new Set();
+    const cards = d.units.flatMap((u) => u.rows.flatMap((row) => row.players)).filter((p) => p.redshirt && !seen.has(p.slug) && seen.add(p.slug));
+    if (cards.length) {
+      const sitting = cards.filter((p) => p.redshirt.on);
+      const eligible = cards.filter((p) => p.redshirt.can && !p.redshirt.on);
+      const panel = el("div", { class: "depth-redshirts" }, [el("div", { class: "go-kicker", text: `REDSHIRTING · ${sitting.length}` })]);
+      if (sitting.length) {
+        panel.append(el("div", { class: "depth-redshirt-list" }, sitting.map((p) => el("div", { class: "depth-redshirt" }, [
+          el("span", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, el("span", { text: p.name, ...playerAttrs(ds.team, p.name, p.position) }),
+            el("span", { class: "pos", text: `${CLASS_LABEL[p.class] || p.class || ""} · ${p.position}` })]),
+          el("span", { class: "muted small-text", text: `${p.redshirt.games} of ${p.redshirt.limit} games played · ${p.overall} ovr` }),
+          canEdit ? controlButton("Off redshirt", "He plays again; the year is still his if he stays at four games or fewer", () => redshirt(p, false), "ghost tiny depth-rs on") : null]))));
+      } else {
+        panel.append(el("p", { class: "muted small-text", text: "Nobody is redshirting." }));
+      }
+      panel.append(el("p", { class: "muted small-text", text: eligible.length
+        ? `${eligible.length} ${eligible.length === 1 ? "player is" : "players are"} still eligible (four games or fewer, year unused): the Redshirt control sits on their rows below.`
+        : "Nobody else is eligible this season: everyone with a year to keep has played more than four games." }));
+      box.append(panel);
+    }
     for (const unit of d.units) {
       if (ds.unit && unit.name !== ds.unit) continue;
       box.append(el("h3", { text: unit.name }));

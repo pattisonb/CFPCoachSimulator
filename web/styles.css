@@ -485,6 +485,10 @@ body.team-theme .panel { border-color: color-mix(in srgb, var(--team-primary) 30
 .leader-row.top .value { color: var(--accent-text); font-size: 15px; }
 .leader-row .small-text { margin: 0; line-height: 1.3; overflow-wrap: anywhere; }      /* the stat line wraps rather than clips */
 .roster-head { margin: 4px 0 2px; }
+.depth-redshirts { margin: 10px 0 6px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel-2); }
+.depth-redshirt-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.depth-redshirt { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.depth-redshirt .name { font-weight: 600; }
 @media (max-width: 700px) { .leaders-grid, .roster-grid { grid-template-columns: 1fr; } }
 
 /* pickers: selects styled like buttons, with a chevron; conference chips */

@@ -979,7 +979,9 @@ played four games or fewer (`REDSHIRT_GAMES`) with his redshirt year unused (FR,
 it: his class stays for next season and he still develops. During the season his page has a
 "Redshirt him" button and every eligible row of your Depth Chart a "Redshirt" control (the
 chart's cards carry his standing: `redshirt_status`): he sits out every remaining game (kept
-out like an injury, `_injured`) and can come back off it while he is still at four games or fewer. At the Departures step every
+out like an injury, `_injured`) and can come back off it while he is still at four games or fewer.
+A Redshirting panel above your chart lists everyone sitting out, his games and the way back,
+and how many others are still eligible. At the Departures step every
 candidate waits on you, the ones you sat down already marked (a freshman off the depth chart's
 top takes it unless you say otherwise; an older player only if he never played); the AI programs
 draw as before but only within the four-game rule. A position change moves one of

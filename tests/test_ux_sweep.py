@@ -154,8 +154,11 @@ if __name__ == "__main__":
                 rsb = page.query_selector(".depth-rs:not(.on)")
                 assert rsb, "no Redshirt control on an eligible player's row"
                 if width == 1280:
-                    rsb.click(); page.wait_for_selector(".depth-rs.on", timeout=30_000)
-                    page.click(".depth-rs.on"); page.wait_for_function("() => !document.querySelector('.depth-rs.on')", timeout=30_000)
+                    assert "REDSHIRTING · 0" in page.inner_text(".depth-redshirts") and "Nobody is redshirting" in page.inner_text(".depth-redshirts")
+                    rsb.click(); page.wait_for_selector(".depth-redshirt", timeout=30_000)
+                    assert "REDSHIRTING · 1" in page.inner_text(".depth-redshirts"), "the redshirt list shows him"
+                    page.click(".depth-redshirt .depth-rs.on"); page.wait_for_function("() => !document.querySelector('.depth-rs.on')", timeout=30_000)
+                    assert "Nobody is redshirting" in page.inner_text(".depth-redshirts")
                 depth = page.inner_text("#tab-depth")
                 assert not CLASS_CODE.search(depth), CLASS_CODE.search(depth).group(0)
                 # a player page: attribute labels do not clip; the bar colours are explained
