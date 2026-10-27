@@ -59,7 +59,7 @@
     actions.append(go);
     if (v.stage !== "ready") {
       const all = el("button", { type: "button", class: "go-btn big2", text: "Sim to next season" });
-      all.addEventListener("click", () => advance(s, box, all, "next_season"));
+      all.addEventListener("click", () => { if (window.confirm("Sim the rest of the offseason? Every decision still open (players deciding, the portal, your staff) is made for you.")) advance(s, box, all, "next_season"); });
       actions.append(all);
     }
     if (v.review) main.append(renderReview(s, v, box));
@@ -80,6 +80,7 @@
       el("p", { text: `The program's next coach runs the rest of the ${v.year} offseason. Walk the steps and pick your next job at the Staff step.` })]);
   }
 
+  const clsWord = (c) => (c && c.endsWith("RS") ? `RS ${c.slice(0, -2)}` : c);   // FRRS -> "RS FR"
   function meter(sec) {
     const cls = sec < 25 ? "bad" : sec < 40 ? "warn" : "good";
     return el("div", { class: `off-meter ${cls}` }, [el("div", { class: "off-meter-fill", style: `width:${Math.max(2, Math.min(100, sec))}%` })]);
@@ -89,7 +90,7 @@
     const r = v.review;
     const card = el("section", { class: "go-card off-review" }, [el("div", { class: "go-kicker", text: "YOUR MEETING WITH THE AD" }),
       el("div", { class: "go-mini off-numbers" }, [stat("THE GOAL", r.goal), stat("YOUR RECORD", `${r.record[0]}-${r.record[1]}`),
-        stat("JOB SECURITY", `${r.security} / 100`), stat("HIS PATIENCE", `${r.patience} years`), stat("YEAR", `${r.tenure} in the job`)]),
+        stat("JOB SECURITY", r.mood || ""), stat("HIS PATIENCE", `${r.patience} years`), stat("YEAR", `${r.tenure} in the job`)]),
       meter(r.security),
       el("p", { class: "off-why", text: r.words })]);
     if (r.decided) {
@@ -163,8 +164,8 @@
       for (const p of rs.players) {
         const b = el("button", { type: "button", class: `go-act ${p.redshirt ? "on" : ""}`, "aria-pressed": String(p.redshirt), ...(rs.decided ? { disabled: "true" } : {}),
           title: `${p.name}: played ${p.games} of ${p.team_games} games · ${p.use === "starter" ? "a starter" : p.use === "rotation" ? "in the rotation" : "off the depth chart"}` },
-          [el("b", { text: p.name }), el("span", { text: `${p.pos} · ${p.cls} · ${p.overall} OVR · ${p.games} of ${p.team_games} games` }),
-           el("span", { class: `go-tag ${p.redshirt ? "good" : "muted"}`, text: p.redshirt ? `Redshirt → ${p.cls}RS` : `Plays on → ${NEXT_CLASS[p.cls] || p.cls}` })]);
+          [el("b", { text: p.name }), el("span", { text: `${p.pos} · ${clsWord(p.cls)} · ${p.overall} OVR · ${p.games} of ${p.team_games} games` }),
+           el("span", { class: `go-tag ${p.redshirt ? "good" : "muted"}`, text: p.redshirt ? `Redshirt → ${clsWord(`${p.cls}RS`)}` : `Plays on → ${clsWord(NEXT_CLASS[p.cls] || p.cls)}` })]);
         if (!rs.decided) b.addEventListener("click", async () => {
           try { await H.api(`/api/season/${s.id}/offseason/redshirt`, H.postJSON({ pid: p.id, on: !p.redshirt })); render(s, box, H); }
           catch (err) { H.toast(H.errText(err)); }
@@ -177,7 +178,7 @@
     card.append(el("div", { class: "go-kicker muted off-sub", text: `POSITION CHANGES · ${(v.position_changes || []).length}` }),
       el("p", { class: "muted small", text: "Move a player for next season; his overall follows our formula at the new spot. Changes take effect when the season starts." }));
     const pick = el("select", { class: "go-sel", "aria-label": "Player to move" }, [el("option", { value: "", text: "Pick a player…" }),
-      ...(v.my_roster || []).map((r) => el("option", { value: r.id, text: `${r.pos} · ${r.name} · ${r.cls} · ${r.overall} OVR${r.moved_from ? ` (was ${r.moved_from})` : ""}` }))]);
+      ...(v.my_roster || []).map((r) => el("option", { value: r.id, text: `${r.pos} · ${r.name} · ${clsWord(r.cls)} · ${r.overall} OVR${r.moved_from ? ` (was ${r.moved_from})` : ""}` }))]);
     const opts = el("div", { class: "off-pos-opts" });
     pick.addEventListener("change", async () => {
       opts.innerHTML = "";
@@ -213,7 +214,7 @@
       if (!rows.length) continue;
       card.append(el("div", { class: "go-kicker muted off-sub", text: `${rows[0].kind_name.toUpperCase()} · ${rows.length}` }),
         el("ul", { class: "off-list" }, rows.sort((a, b) => (a.pick || 999) - (b.pick || 999) || b.overall - a.overall).map((d) => el("li", {}, [
-          el("b", { text: d.name }), el("span", { class: "muted", text: ` ${d.pos} · ${d.cls} · ${d.overall} OVR` }),
+          el("b", { text: d.name }), el("span", { class: "muted", text: ` ${d.pos} · ${clsWord(d.cls)} · ${d.overall} OVR` }),
           d.kind === "draft" ? el("span", { class: "go-tag good", text: `Round ${d.round}, pick ${d.pick}${d.early ? " · early" : ""}` }) : null]))));
     }
     if (!mine.length) card.append(el("p", { class: "muted", text: "Nobody leaves." }));
@@ -246,7 +247,7 @@
     for (const e of r.players) {
       const c = el("article", { class: `go-card go-pcard ${e.offers.released ? "muted" : ""}` });
       c.append(el("div", { class: "go-card-head" }, [el("div", {}, [el("b", { class: "go-name", text: e.name }),
-        el("div", { class: "muted small", text: `${e.pos} · ${e.cls} next year · ${e.overall} OVR${e.stars ? ` · ${"★".repeat(e.stars)}` : ""}` })]),
+        el("div", { class: "muted small", text: `${e.pos} · ${clsWord(e.cls)} next year · ${e.overall} OVR${e.stars ? ` · ${"★".repeat(e.stars)}` : ""}` })]),
         el("span", { class: `go-tag ${e.intent === "draft" ? "warn" : "bad"}`, text: e.intent === "draft" ? "NFL draft" : "Transfer portal" })]));
       c.append(el("p", { class: "off-why" }, [el("b", { text: "Why: " }), e.reason, e.draft_pick ? ` (projected pick ${e.draft_pick})` : ""]));
       c.append(el("div", { class: "go-tags" }, [el("span", { class: "go-tag muted", text: `Now: ${e.role_now_name}` }), el("span", { class: `go-tag ${e.role_next === "starter" ? "good" : "muted"}`, text: `Next year: ${e.role_next_name}`, title: "Where he would sit on your depth chart next season" }),
@@ -264,7 +265,7 @@
       const row = el("div", { class: "go-actions off-keep-acts" }, [
         btn("Meet", e.met ? "done" : "free", () => act(e.id, "meet"), "", e.met),
         btn("Promise a start", e.role_next === "starter" ? "he would start" : "he would not", () => act(e.id, "promise"), e.role_next === "starter" ? "go" : "", e.offers.promise),
-        btn("Let him go", e.offers.released ? "letting go" : "", () => act(e.id, "release"), "", e.offers.released)]);
+        btn("Let him go", e.offers.released ? "letting go" : "", () => { if (window.confirm(`Let ${e.name} go? He leaves when you advance; no NIL, no promise.`)) act(e.id, "release"); }, "", e.offers.released)]);
       const nil = el("input", { type: "number", min: "0", step: "5", value: String(e.offers.nil || e.ask.nil || 0), class: "go-nil", id: `keep-nil-${e.id}` });
       const nilRow = el("div", { class: "go-row off-keep-nil" }, [el("label", { for: `keep-nil-${e.id}`, class: "muted small", text: "NIL" }), nil,
         btn("Offer NIL", "from next year's", () => act(e.id, "nil", Number(nil.value) || 0), "alt")]);
@@ -337,7 +338,7 @@
       });
       body.append(el("tr", { class: r.offered ? "offered" : "" }, [
         el("td", {}, [el("b", { text: r.name }), r.stars ? el("span", { class: "muted small", text: ` ${stars(r.stars)}` }) : null]),
-        el("td", { text: r.pos }), el("td", { text: r.cls }), el("td", { class: "num", text: String(r.overall) }),
+        el("td", { text: r.pos }), el("td", { text: clsWord(r.cls) }), el("td", { class: "num", text: String(r.overall) }),
         el("td", {}, [window.CFP.teamPill(r.from), ` ${r.from_name}`]), el("td", { text: USAGE[r.last_year] || "" }),
         el("td", {}, [el("span", { class: `go-tag ${r.fit === "Would start" ? "good" : r.fit === "Next in line" ? "warn" : "muted"}`, text: r.fit })]),
         el("td", { class: "num", text: r.signed ? r.signed_name : String(r.offers) }), el("td", {}, [btn])]));
@@ -351,7 +352,7 @@
     main.append(el("section", { class: "go-card" }, [
       el("div", { class: "go-kicker", text: "WHO IMPROVED" }),
       el("p", { class: "muted", text: `Every returning player grows toward his potential at his coachability's pace, faster under good developers and faster still after a big year: production and honors raise a player's ceiling and his pace. ${r.walk_ons} walk-ons and lower-level transfers joined around the league to fill out rosters.` }),
-      el("ul", { class: "off-list" }, r.mine.map((d) => el("li", {}, [el("b", { text: d.name }), el("span", { class: "muted", text: ` ${d.pos} · ${d.cls} · now ${d.overall} OVR ` }),
+      el("ul", { class: "off-list" }, r.mine.map((d) => el("li", {}, [el("b", { text: d.name }), el("span", { class: "muted", text: ` ${d.pos} · ${clsWord(d.cls)} · now ${d.overall} OVR ` }),
         el("span", { class: `go-tag ${d.gain > 0 ? "good" : "muted"}`, text: d.gain > 0 ? `+${d.gain}` : "no change" }),
         ...(d.why || []).map((w) => el("span", { class: `go-tag ${/Struggled/.test(w) ? "bad" : "warn"}`, text: w }))])))]));
   }
@@ -362,7 +363,7 @@
     const you = j.you || {};
     const card = el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: "YOUR JOB" })]);
     if (you.goal) card.append(el("p", {}, [`Your AD's goal: ${you.goal.text}. `, you.met ? "You met it." : "You fell short.",
-      ` Job security ${you.security} of 100 (patience: ${you.patience} years).`]));
+      ` Job security: ${(you.mood || "").toLowerCase()} (patience: ${you.patience} years).`]));
     const list = you.fired ? j.openings : j.offers;
     if (you.fired) card.append(el("p", {}, [el("b", { text: "You have been fired. " }), "Pick your next job from the openings (Auto takes the best one)."]));
     else if (list.length) card.append(el("p", { text: "After the year you had, these programs want you as their head coach:" }));
@@ -390,7 +391,7 @@
       c.previous_job ? el("span", { class: "small", text: c.previous_job }) : null,
       c.why ? el("span", { class: "muted small off-cand-why", text: c.why }) : null,
       stops ? el("span", { class: "muted small", text: stops }) : null,
-      el("span", { class: "go-tag", text: picked ? "Hired" : "Hire" })]);
+      el("span", { class: `go-btn off-cand-hire ${picked ? "" : "primary"}`, text: picked ? "Hired" : `Hire ${c.name.split(" ").slice(-1)[0]}` })]);
     b.addEventListener("click", onClick);
     return b;
   }
@@ -438,7 +439,7 @@
       const body = el("tbody");
       for (const m of st.market) {
         body.append(el("tr", {}, [el("td", { text: `${m.name}, ${m.age}` }), el("td", { text: m.roles.join(", ") }), el("td", { class: "num", text: String(m.rating) }),
-          el("td", { text: `${m.why}${m.sits_out ? " · sitting out this cycle" : ""}` }), el("td", { text: m.previous_job })]));
+          el("td", { text: `${m.why}${m.sits_out ? " · sitting out this cycle" : ""}` }), el("td", { text: m.previous_job && m.previous_job !== m.why ? m.previous_job : "—" })]));
       }
       t.append(body);
       main.append(el("section", { class: "go-card off-scroll" }, [el("div", { class: "go-kicker", text: `COACHES FOR HIRE · THE TOP ${st.market.length}` }),

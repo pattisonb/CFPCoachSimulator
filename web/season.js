@@ -905,7 +905,7 @@
 
   // A depth-chart control button (★ ▲ ▼ + or Reset); a title of null leaves the attribute off.
   function controlButton(text, title, onClick, cls = "ghost tiny") {
-    const b = el("button", title == null ? { type: "button", class: cls, text } : { type: "button", class: cls, text, title });
+    const b = el("button", title == null ? { type: "button", class: cls, text } : { type: "button", class: cls, text, title, "aria-label": title });
     b.addEventListener("click", onClick);
     return b;
   }
@@ -979,7 +979,7 @@
             i < row.players.length - 1 && !["KR", "PR"].includes(row.role) ? controlButton("▼", "Move down", () => change({ role: row.role, player: p.slug, move: "down" })) : null,
           ]);
           cells.push(el("td", { class: `left depth-cell ${i === 0 ? "starter" : ""} ${i >= 2 ? "ph" : ""}` }, [
-            el("div", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, el("span", { text: p.name, ...playerAttrs(ds.team, p.name, p.position) }), el("span", { class: "pos", text: `${p.class || ""}${p.position !== row.role ? " · " + p.position : ""}` }),
+            el("div", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, el("span", { text: p.name, ...playerAttrs(ds.team, p.name, p.position) }), el("span", { class: "pos", text: `${CLASS_LABEL[p.class] || p.class || ""}${p.position !== row.role ? " · " + p.position : ""}` }),
               p.form >= 0.35 ? el("span", { class: "form hot", text: "🔥", title: `Hot streak (form +${p.form})` }) : p.form <= -0.35 ? el("span", { class: "form cold", text: "❄", title: `Cold streak (form ${p.form})` }) : null,
               p.injury ? el("span", { class: "injury-tag", title: `${p.injury.type}, back ${s.week_labels[p.injury.returns_week] || "week " + p.injury.returns_week}`, text: `OUT ${p.injury.weeks_left}w` }) : null, ctl]),
             el("div", { class: "muted small-text", text: [`${p.overall} ovr`, p.height && p.weight ? `${p.height} ${p.weight}` : "", p.headline || (p.games ? `${p.games} games` : "")].filter(Boolean).join(" · ") }),
@@ -1189,7 +1189,7 @@
     allBtn.addEventListener("click", () => openAllRatings(p));
     const editedAttrs = new Set(p.edited_attributes || []);
     const nEdited = attrs.length ? editedAttrs.size : edited.size;
-    const rat = el("div", { class: "leader-card player-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: attrs.length ? `${p.position} attributes (${attrs.length})` : `${p.position} ratings` }), el("span", { class: "muted small-text", text: nEdited ? `edited in god mode (${nEdited})` : "50 = average Power 4 starter" }), el("span", { class: "card-actions" }, [allBtn, editBtn])])]);
+    const rat = el("div", { class: "leader-card player-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: attrs.length ? `${p.position} attributes (${attrs.length})` : `${p.position} ratings` }), el("span", { class: "muted small-text", text: nEdited ? `edited in god mode (${nEdited})` : "50 = average Power 4 starter · green 75+, red under 55" }), el("span", { class: "card-actions" }, [allBtn, editBtn])])]);
     if (editBtn) editBtn.addEventListener("click", () => { editBtn.hidden = true; rat.append(playerEditForm(p, rat)); });
     if (attrs.length) {
       // ratings v2: grouped, physical first, each with what it does on hover
@@ -1262,7 +1262,7 @@
     if (hist.length) {
       box.append(el("h3", { text: "Season by season" }));
       const wrap = el("div", { class: "player-grid" });
-      const rows = [...hist.map((h) => ({ label: `${h.year} · ${h.team_name}${h.class ? ` · ${h.class}` : ""}`, games: h.games, stats: h.stats, past: true })),
+      const rows = [...hist.map((h) => ({ label: `${h.year} · ${h.team_name}${h.class ? ` · ${CLASS_LABEL[h.class] || h.class}` : ""}`, games: h.games, stats: h.stats, past: true })),
                     { label: `${(state.season && state.season.year) || ""} · ${(p.team && p.team.name) || ""} · now`, games: p.games, stats: p.stats, past: false }];
       for (const [title, cols] of STAT_GROUPS) {
         const shown = cols.filter(([k]) => rows.some((r) => r.stats && r.stats[k]));
@@ -2191,7 +2191,7 @@
     const s = state.season;
     const teamName = (slug) => (window.CFP.teamsBySlug[slug] || {}).name || slug;
     const node = el("div", { class: "sched-edit" }, [el("p", { class: "muted small-text", text: "Loading your non-conference games…" })]);
-    openModal("Your non-conference games", node);
+    openModal("Trade a non-conference game", node);
     let d;
     try { d = await api(`/api/season/${s.id}/schedule_edit`); } catch (err) { node.innerHTML = ""; node.append(el("p", { class: "muted", text: errText(err) })); return; }
     node.innerHTML = "";
@@ -2204,7 +2204,7 @@
         el("div", {}, [el("b", { text: `${s.week_labels[g.week] || `Week ${g.week}`}: ${venue === "away" ? "at " : "vs "}${oppName}` }), el("span", { class: "muted small-text", text: ` · ${venue}` })])]);
       const sel = el("select", { "aria-label": `Trade the week ${g.week} game` }, [el("option", { value: "", text: "Trade for…" }),
         ...g.options.map((o) => el("option", { value: o.slug, text: `${o.name} · ${o.standing} · ${o.venue === "home" ? "you host" : o.venue === "away" ? "you travel" : "neutral"} · ${o.accepts ? o.why : `no: ${o.why}`}`, ...(o.accepts ? {} : { disabled: "true" }) }))]);
-      const go = el("button", { type: "button", class: "ghost small", text: "Trade" });
+      const go = el("button", { type: "button", class: "ghost small", text: `Trade the week ${g.week} game` });
       go.addEventListener("click", async () => {
         if (!sel.value) return;
         go.disabled = true;
@@ -2588,7 +2588,7 @@
         card.append(el("div", { class: `leader-row ${p.starter ? "top" : ""}` }, [
           el("span", { class: "rank", text: p.starter ? "★" : String(i + 1) }),
           el("span", { class: "who" }, [
-            el("span", { class: "name" }, [el("span", { text: p.name, ...playerAttrs(slug, p.name, p.position) }), p.class ? el("span", { class: "pos", text: p.class }) : null]),
+            el("span", { class: "name" }, [el("span", { text: p.name, ...playerAttrs(slug, p.name, p.position) }), p.class ? el("span", { class: "pos", text: CLASS_LABEL[p.class] || p.class }) : null]),
             el("span", { class: "muted small-text", text: [p.starter ? (p.role && p.role !== p.position ? `starter · ${p.role}` : "starter") : (p.role && p.role !== p.position ? p.role : ""), p.height && p.weight ? `${p.height} ${p.weight}` : ""].filter(Boolean).join(" · ") }),
           ]),
           el("span", { class: "value", text: String(p.overall) }),
@@ -2617,7 +2617,7 @@
     box.append(el("p", { class: "muted small-text", text: `Every ${d.name || ""}player rated as a ${label}. Rating is what he would be at this spot; Natural is his rating at his own position. ★ makes him the starter here${["KR", "PR"].includes(ds.role) ? "" : ", + adds him to the rotation at the bottom"}. Changes save with this season.` }));
     const cols = [
       { key: "rank", label: "#", get: (p) => String(p.i + 1), sort: (p) => p.i },
-      { key: "player", label: "Player", left: true, get: (p) => el("span", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, p.name, el("span", { class: "pos", text: `${p.class || ""}` })]), sort: (p) => p.name },
+      { key: "player", label: "Player", left: true, get: (p) => el("span", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, p.name, el("span", { class: "pos", text: CLASS_LABEL[p.class] || p.class || "" })]), sort: (p) => p.name },
       { key: "rating", label: "Rating here", get: (p) => el("b", { text: String(p.rating) }), sort: (p) => p.rating },
       { key: "natural", label: "Natural", get: (p) => `${p.natural} ${p.role || p.position}`, sort: (p) => p.natural },
       { key: "now", label: "Now", left: true, get: (p) => (p.in_role ? el("span", { class: p.spot === 1 ? "win" : "", text: p.spot === 1 ? "Starter here" : `${ORD(p.spot - 1)} here` }) : `${p.role || p.position}${p.depth ? " " + p.depth : ""}${p.starter ? " (starter)" : ""}`), sort: (p) => (p.in_role ? p.spot : 99) },
