@@ -163,15 +163,20 @@ def _credit_lineman(offense, key, attr, worse=False, run=False):
 
 # ===================== rating helpers =====================
 
+_NUM = (int, float)
+
+
 def _rating(player, keys, default=cfg.NEUTRAL):
     """Average of the given attributes that the player actually has."""
-    vals = [v for k in keys if isinstance((v := getattr(player, k, None)), (int, float))]
+    d = player.__dict__                      # a Player's ratings are plain instance attributes
+    vals = [v for k in keys if isinstance((v := d.get(k)), _NUM)]
     return sum(vals) / len(vals) if vals else default
 
 
 def _attr(player, key, default=50.0):
     """A ratings v2 attribute (house scale, 50 = an average Power 4 starter); 50 when he has none."""
-    return (getattr(player, "attrs", None) or {}).get(key, default)
+    a = player.attrs
+    return a.get(key, default) if a else default
 
 
 def _attr_mean(player, keys, weights=None):
@@ -217,9 +222,14 @@ def _throw_depth(target, tendencies, play_action=False):
 
 
 def _tr(player, *keys):
-    """The player's tier (0-4) summed over the given traits."""
-    t = getattr(player, "traits", None) or {}
-    return sum(t.get(k, 0) for k in keys)
+    """The player's tier (0-4) summed over the given traits (traits never change in a game:
+    each key tuple is summed once per player)."""
+    cache = player._tr_cache
+    v = cache.get(keys)
+    if v is None:
+        t = player.traits
+        v = cache[keys] = sum(t.get(k, 0) for k in keys) if t else 0
+    return v
 
 
 def _tr_points(players, keys):

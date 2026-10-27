@@ -306,7 +306,7 @@ def sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hur
 
 def _unit_iq(players):
     """The on-field unit's average Football IQ (ratings v2, house scale)."""
-    vals = [(p.attrs or {}).get("football_iq", 50) for p in players if getattr(p, "attrs", None) is not None]
+    vals = [p._iq for p in players]
     return sum(vals) / len(vals) if vals else 50.0
 
 
@@ -317,8 +317,7 @@ def roll_injuries(team, on_field):
     for p in on_field:
         if p.position in ("K", "P"):
             continue
-        durable = max(0.4, 1 - ((getattr(p, "attrs", None) or {}).get("durability", 50) - cfg.ATTR_LEAGUE_AVG) * cfg.INJURY_DURABILITY_EFFECT)
-        if rng.random() < cfg.INJURY_PER_SNAP * cfg.INJURY_POSITION_MULT.get(p.position, 1.0) * durable:
+        if rng.random() < cfg.INJURY_PER_SNAP * cfg.INJURY_POSITION_MULT.get(p.position, 1.0) * p._durable:
             r = rng.random()
             weeks = next(w for cum, w in cfg.INJURY_SEVERITY if r <= cum)
             team.injure(p, weeks, rng.choice(cfg.INJURY_TYPES))
