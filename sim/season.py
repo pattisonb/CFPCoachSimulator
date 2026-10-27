@@ -2267,7 +2267,7 @@ def schedule_options(state: dict, event_id: str) -> list[dict]:
         if slug in (me, opp) or bool(t.get("fictional")) != fcs:
             continue
         if fcs:
-            out.append({"slug": slug, "name": t["name"], "conference": t["conference"], "standing": "FCS", "accepts": True,
+            out.append({"slug": slug, "name": f"{fcs_label(slug)} ({t['name']})", "conference": t["conference"], "standing": "FCS", "accepts": True,
                         "venue": "home", "why": "an FCS team comes to you"})
             continue
         other = _other_game(state, slug, g["week"], event_id)

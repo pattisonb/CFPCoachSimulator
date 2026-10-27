@@ -2198,10 +2198,10 @@
     node.append(el("p", { class: "muted small-text", text: "Before week 1 you can trade a non-conference date for another school's game that week: the two displaced opponents play each other. A school agrees when it gets the home game or you are the bigger draw. An FCS date can go to another FCS team." }));
     if (!d.games.length) node.append(el("p", { class: "muted", text: "Nothing to trade: the season has begun or you have no non-conference games." }));
     for (const g of d.games) {
-      const opp = g.home === s.team ? g.away : g.home;
+      const oppName = g.home === s.team ? g.away_display : g.home_display;        // the schedule's own label (an FCS date reads "FCS <region>")
       const venue = g.neutral ? "neutral site" : g.home === s.team ? "home" : "away";
       const row = el("div", { class: "sched-edit-row" }, [
-        el("div", {}, [el("b", { text: `${s.week_labels[g.week] || `Week ${g.week}`}: ${venue === "away" ? "at " : "vs "}${teamName(opp)}` }), el("span", { class: "muted small-text", text: ` · ${venue}` })])]);
+        el("div", {}, [el("b", { text: `${s.week_labels[g.week] || `Week ${g.week}`}: ${venue === "away" ? "at " : "vs "}${oppName}` }), el("span", { class: "muted small-text", text: ` · ${venue}` })])]);
       const sel = el("select", { "aria-label": `Trade the week ${g.week} game` }, [el("option", { value: "", text: "Trade for…" }),
         ...g.options.map((o) => el("option", { value: o.slug, text: `${o.name} · ${o.standing} · ${o.venue === "home" ? "you host" : o.venue === "away" ? "you travel" : "neutral"} · ${o.accepts ? o.why : `no: ${o.why}`}`, ...(o.accepts ? {} : { disabled: "true" }) }))]);
       const go = el("button", { type: "button", class: "ghost small", text: "Trade" });
@@ -2210,7 +2210,7 @@
         go.disabled = true;
         try {
           await api(`/api/season/${s.id}/schedule_edit`, postJSON({ event_id: g.event_id, slug: sel.value }));
-          toast(`Done: you play ${teamName(sel.value)} in week ${g.week}.`, 3000);
+          toast(`Done: you play ${(g.options.find((o) => o.slug === sel.value) || {}).name || sel.value} in week ${g.week}.`, 3000);
           scheduleState.data = null; state.season = await api(`/api/season/${s.id}`); closeAllModals(); renderSchedule();
         } catch (err) { toast(`Could not trade: ${errText(err)}`, 4000); go.disabled = false; }
       });
