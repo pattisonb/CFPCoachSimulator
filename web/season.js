@@ -1247,7 +1247,7 @@
       box.append(el("h3", { text: "Season by season" }));
       const wrap = el("div", { class: "player-grid" });
       const rows = [...hist.map((h) => ({ label: `${h.year} · ${h.team_name}${h.class ? ` · ${h.class}` : ""}`, games: h.games, stats: h.stats, past: true })),
-                    { label: `${s.year} · ${(p.team && p.team.name) || ""} · now`, games: p.games, stats: p.stats, past: false }];
+                    { label: `${(state.season && state.season.year) || ""} · ${(p.team && p.team.name) || ""} · now`, games: p.games, stats: p.stats, past: false }];
       for (const [title, cols] of STAT_GROUPS) {
         const shown = cols.filter(([k]) => rows.some((r) => r.stats && r.stats[k]));
         if (!shown.length) continue;
