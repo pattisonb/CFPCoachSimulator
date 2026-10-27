@@ -11,10 +11,18 @@ HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
 SLOW = {"test_bowls.py", "test_awards.py", "test_review.py"}   # full seasons: a few minutes each
 
+SEASONS = ROOT / "data" / "seasons"
+
+
+def _saves() -> set:
+    return set(os.listdir(SEASONS)) if SEASONS.is_dir() else set()
+
+
 if __name__ == "__main__":
     wanted = set(sys.argv[1:])
     tests = sorted(p for p in HERE.glob("test_*.py") if not wanted or p.stem in wanted or p.name in wanted)
     failed = []
+    before = _saves()        # the saves the tests write (every one a new uuid) are removed at the end: a run was 26 GB once
     for t in tests:
         t0 = time.perf_counter()
         # UTF-8 output: team and player names such as Hawaiʻi do not fit the Windows console code page
@@ -26,5 +34,9 @@ if __name__ == "__main__":
         if not ok:
             failed.append(t.name)
             print(r.stdout[-1500:], r.stderr[-1500:], sep="\n")
+    import shutil
+    for name in _saves() - before:
+        path = SEASONS / name
+        shutil.rmtree(path, ignore_errors=True) if path.is_dir() else path.unlink(missing_ok=True)
     print(f"\n{len(tests) - len(failed)} of {len(tests)} passed")
     sys.exit(1 if failed else 0)
