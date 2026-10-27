@@ -983,6 +983,53 @@ class JobRequest(BaseModel):
     team: Optional[str] = None
 
 
+class RedshirtRequest(BaseModel):
+    pid: str
+    on: bool = True
+
+
+class PositionRequest(BaseModel):
+    pid: str
+    pos: str
+
+
+@app.post("/api/season/{season_id}/offseason/redshirt")
+def offseason_redshirt(season_id: str, req: RedshirtRequest) -> dict:
+    """Your call on one player's redshirt (the Departures step)."""
+    st = _offseason_state(season_id)
+    with _season_lock:
+        try:
+            offseason.redshirt(st, req.pid, req.on)
+        except offseason.RosterError as e:
+            raise HTTPException(e.code, str(e))
+        season.save_season(st)
+    return offseason.view(st)
+
+
+@app.get("/api/season/{season_id}/offseason/position_options")
+def offseason_position_options(season_id: str, pid: str) -> dict:
+    """What one of your players would be at every position."""
+    st = _offseason_state(season_id)
+    with _season_lock:
+        try:
+            return {"options": offseason.position_options(st, pid)}
+        except offseason.RosterError as e:
+            raise HTTPException(e.code, str(e))
+
+
+@app.post("/api/season/{season_id}/offseason/position")
+def offseason_position(season_id: str, req: PositionRequest) -> dict:
+    """Move one of your players to another position for next season."""
+    st = _offseason_state(season_id)
+    with _season_lock:
+        try:
+            offseason.change_position(st, req.pid, req.pos)
+        except offseason.RosterError as e:
+            raise HTTPException(e.code, str(e))
+        season.save_season(st)
+    return offseason.view(st)
+
+
 class RetainRequest(BaseModel):
     pid: str
     action: str                   # meet, promise, nil, release

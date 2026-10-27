@@ -76,9 +76,10 @@ if __name__ == "__main__":
     assert kinds["quit"] < 0.03 * returning
     # the classes arrived (21 a school here) and nobody is still a senior
     assert sum(off["signed"].values()) == 21 * teams
+    waiting = {p["id"] for p in off["redshirts"]["players"]}      # your redshirt calls wait on the Departures step
     for t in lg["teams"].values():                     # every returning player moved up a class or took his redshirt
         for p in t["roster"]:
-            if p["id"] in before and not p.get("signed"):
+            if p["id"] in before and not p.get("signed") and p["id"] not in waiting:
                 was = before[p["id"]]
                 assert p["cls"] in (offseason.NEXT_CLASS.get(was), was + "RS") or (was, p["cls"]) == ("SR", "SRRS"), (was, p["cls"])
     mine = offseason.view(st)

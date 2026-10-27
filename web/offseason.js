@@ -64,6 +64,7 @@
     }
     if (v.review) main.append(renderReview(s, v, box));
     if (v.fired && v.stage !== "departures" && v.stage !== "staff" && v.stage !== "ready") main.append(firedNote(v));
+    if (v.stage === "departures" || v.stage === "development") main.append(renderRosterMoves(s, v, box));
     if (v.stage === "departures") renderDepartures(v, main);
     else if (v.stage === "retention") renderRetention(s, v, main, box);
     else if (v.stage === "portal_1" || v.stage === "portal_2") renderPortal(s, v, main, box);
@@ -143,6 +144,65 @@
       btn.disabled = false;
       H.toast(`Could not continue: ${H.errText(err)}`);
     }
+  }
+
+  // your roster at the Departures step: who takes a redshirt, who changes position
+  const POS_NAMES = { QB: "QB", HB: "HB", FB: "FB", WR: "WR", TE: "TE", LT: "LT", LG: "LG", C: "C", RG: "RG", RT: "RT", LEDG: "LEDG", REDG: "REDG", DT: "DT",
+    SAM: "SAM", MIKE: "MIKE", WILL: "WILL", CB: "CB", FS: "FS", SS: "SS", K: "K", P: "P" };
+  const NEXT_CLASS = { FR: "SO", FRRS: "SORS", SO: "JR", SORS: "JRRS", JR: "SR", JRRS: "SRRS" };
+  function renderRosterMoves(s, v, box) {
+    const card = el("section", { class: "go-card off-roster" }, [el("div", { class: "go-kicker", text: "YOUR ROSTER" })]);
+    const rs = v.redshirts;
+    if (rs && v.stage === "departures") {
+      const picked = rs.players.filter((p) => p.redshirt).length;
+      card.append(el("div", { class: "go-kicker muted off-sub", text: `REDSHIRTS · ${picked} OF ${rs.players.length}` }),
+        el("p", { class: "muted small", text: rs.decided ? "Decided: the classes below are set for next season."
+          : "Four games or fewer and the year unused: a redshirt keeps his class for next season (he still develops). Freshmen off the depth chart's top take it unless you say otherwise." }));
+      if (!rs.players.length) card.append(el("p", { class: "muted", text: "Nobody on your roster can take a redshirt this year." }));
+      const list = el("div", { class: "off-rs" });
+      for (const p of rs.players) {
+        const b = el("button", { type: "button", class: `go-act ${p.redshirt ? "on" : ""}`, "aria-pressed": String(p.redshirt), ...(rs.decided ? { disabled: "true" } : {}),
+          title: `${p.name}: played ${p.games} of ${p.team_games} games · ${p.use === "starter" ? "a starter" : p.use === "rotation" ? "in the rotation" : "off the depth chart"}` },
+          [el("b", { text: p.name }), el("span", { text: `${p.pos} · ${p.cls} · ${p.overall} OVR · ${p.games} of ${p.team_games} games` }),
+           el("span", { class: `go-tag ${p.redshirt ? "good" : "muted"}`, text: p.redshirt ? `Redshirt → ${p.cls}RS` : `Plays on → ${NEXT_CLASS[p.cls] || p.cls}` })]);
+        if (!rs.decided) b.addEventListener("click", async () => {
+          try { await H.api(`/api/season/${s.id}/offseason/redshirt`, H.postJSON({ pid: p.id, on: !p.redshirt })); render(s, box, H); }
+          catch (err) { H.toast(H.errText(err)); }
+        });
+        list.append(b);
+      }
+      card.append(list);
+    }
+    // position changes: pick a player, see what he would be everywhere, move him
+    card.append(el("div", { class: "go-kicker muted off-sub", text: `POSITION CHANGES · ${(v.position_changes || []).length}` }),
+      el("p", { class: "muted small", text: "Move a player for next season; his overall follows our formula at the new spot. Changes take effect when the season starts." }));
+    const pick = el("select", { class: "go-sel", "aria-label": "Player to move" }, [el("option", { value: "", text: "Pick a player…" }),
+      ...(v.my_roster || []).map((r) => el("option", { value: r.id, text: `${r.pos} · ${r.name} · ${r.cls} · ${r.overall} OVR${r.moved_from ? ` (was ${r.moved_from})` : ""}` }))]);
+    const opts = el("div", { class: "off-pos-opts" });
+    pick.addEventListener("change", async () => {
+      opts.innerHTML = "";
+      if (!pick.value) return;
+      try {
+        const d = await H.api(`/api/season/${s.id}/offseason/position_options?pid=${encodeURIComponent(pick.value)}`);
+        for (const o of d.options) {
+          const b = el("button", { type: "button", class: `go-chip small ${o.current ? "on" : ""}`, text: `${POS_NAMES[o.pos] || o.pos} ${o.overall}`, ...(o.current ? { disabled: "true" } : {}), title: o.current ? "His position now" : `Move him to ${o.pos}: ${o.overall} OVR there` });
+          if (!o.current) b.addEventListener("click", async () => {
+            try { await H.api(`/api/season/${s.id}/offseason/position`, H.postJSON({ pid: pick.value, pos: o.pos })); H.toast(`Moved to ${o.pos}.`, 2500); render(s, box, H); }
+            catch (err) { H.toast(H.errText(err)); }
+          });
+          opts.append(b);
+        }
+      } catch (err) { H.toast(H.errText(err)); }
+    });
+    card.append(el("div", { class: "go-row wrap" }, [pick]), opts);
+    if ((v.position_changes || []).length) card.append(el("ul", { class: "off-list" }, v.position_changes.map((m) => {
+      const undo = el("button", { type: "button", class: "go-link", text: "undo" });
+      undo.addEventListener("click", async () => {
+        try { await H.api(`/api/season/${s.id}/offseason/position`, H.postJSON({ pid: m.id, pos: m.from })); render(s, box, H); } catch (err) { H.toast(H.errText(err)); }
+      });
+      return el("li", {}, [el("b", { text: m.name }), ` ${m.from} → ${m.to} · ${m.overall} OVR `, undo]);
+    })));
+    return card;
   }
 
   function renderDepartures(v, main) {

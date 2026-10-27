@@ -971,6 +971,16 @@ ceiling against the starter's ratings over the ten attributes most tied to overa
 only when closer than 30% of starter pairs are to each other. "Our comp" appears after three
 looks, measured from your staff's read, so a wrong read can give a different comp.
 
+**Redshirts and position changes** (`offseason.redshirt`, `offseason.change_position`, the Your
+Roster card at the Departures step). A player who played four games or fewer (`REDSHIRT_GAMES`)
+with his redshirt year unused (FR, SO, JR) can take it: his class stays for next season and he
+still develops. Your candidates wait on you at the Departures step (a freshman off the depth
+chart's top takes it unless you say otherwise; an older player only if he never played); the
+AI programs draw as before but only within the four-game rule. A position change moves one of
+your players for next season to any spot (kickers and punters among themselves), his overall
+recomputed by our formula there; the card shows what he would be everywhere before you choose,
+and a change can be undone until the season starts.
+
 **A player keeps his seasons** (`offseason.record_seasons`, run when the offseason opens): every
 player's season line and honours go onto his entry in the career's league (`c["hist"]`, the last
 eight), follow him through the rollover and a transfer, and his page lists them under "Season by

@@ -18,6 +18,7 @@ from typing import Optional
 
 from coach_career import league as lg
 from coach_career import recruits
+from teamdata import game_scale
 
 STAGES = ("departures", "retention", "portal_w1", "portal_w2", "portal_w3", "portal_w4", "development", "staff", "ready")
 PORTAL_STAGES = ("portal_w1", "portal_w2", "portal_w3", "portal_w4")
@@ -41,6 +42,8 @@ ENGINE_POS = {"QB": "QB", "RB": "RB", "WR": "WR", "TE": "TE", "OL": "OL", "DL": 
 # ----- departures *tune* -----
 NEXT_CLASS = {"FR": "SO", "FRRS": "SORS", "SO": "JR", "SORS": "JRRS", "JR": "SR", "JRRS": "SRRS"}
 REDSHIRT = {"FR": 0.78, "SO": 0.35, "JR": 0.25}   # chance a player off the depth chart's top takes his redshirt year
+REDSHIRT_GAMES = 4                                 # the four-game rule: more games than this and the year is used
+REDSHIRT_CLASSES = ("FR", "SO", "JR")              # classes with a redshirt year still to take
 FIFTH_YEAR = 0.60                                  # a senior with his redshirt unused who barely played comes back
 DRAFT_PICKS = 257
 DRAFT_FROM_FBS = 0.97                              # the share of picks from FBS (the rest from lower levels)
@@ -158,6 +161,8 @@ def start(state: dict) -> dict:
                           "signed": signed, "staff": None, "report": None, "performance": _performance(state),
                           "retention": {"players": _retention_entries(state, lgd, pending), "results": None, "spent": 0}}
     state["offseason"]["review"] = _review(state, lgd)
+    state["offseason"]["redshirts"] = _redshirt_block(state, lgd, usage)
+    state["offseason"]["position_changes"] = []
     return state["offseason"]
 
 
@@ -595,8 +600,10 @@ def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict, 
     p4 = {slug: season._is_p4(slug, teams[slug]) for slug in lgd["teams"]}
     me = state.get("team")
     pending: list[dict] = []                 # your leavers with eligibility left: they wait on the retention step
+    games = _games_played(state)
     for slug, t in lgd["teams"].items():
         u = usage.get(slug, {})
+        gp = games.get(slug, {})
         wins, losses = records[slug]
         losing = wins < losses
         would_start = _would_start(t["roster"], recruiting.PORTAL_STARTERS)
@@ -615,7 +622,12 @@ def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict, 
             elif p["cls"] == "SRRS" or (p["cls"] == "SR" and not (use == "bench" and rng.random() < FIFTH_YEAR)):
                 ev.update(kind="graduated")
             else:
-                nxt = "SRRS" if p["cls"] == "SR" else _next_class(p, use, rng)
+                n_games = gp.get(p["id"], 0)
+                nxt = "SRRS" if p["cls"] == "SR" else _next_class(p, use, rng, n_games)
+                if nxt.endswith("RS") and not p["cls"].endswith("RS"):
+                    p["rs_year"], p["rs_games"] = lgd["year"] - 1, n_games
+                if slug == me and _redshirt_candidate(p, n_games):
+                    nxt = p["cls"]                                   # your call, at the Departures step
                 if rng.random() < QUIT * (QUIT_LOW if p["o"] <= low else 1.0):
                     ev.update(kind="quit")
                 else:
@@ -686,14 +698,130 @@ def draft_board(lgd: dict, rng: random.Random) -> tuple[set, dict]:
     return declared, {p["id"]: pick for pick, (score, slug, p) in enumerate(board[:fbs_picks], 1)}
 
 
-def _next_class(p: dict, use: str, rng: random.Random) -> str:
-    """Next year's class: a player who did not play much may take his redshirt (once)."""
+def _next_class(p: dict, use: str, rng: random.Random, games: int = 0) -> str:
+    """Next year's class: a player who did not play much (four games or fewer: the rule) may take
+    his redshirt (once)."""
     cls = p["cls"]
-    if not cls.endswith("RS") and use != "starter":
+    if _redshirt_candidate(p, games) and use != "starter":
         chance = REDSHIRT.get(cls, 0.0) * (0.5 if use == "rotation" else 1.0)
         if rng.random() < chance:
             return cls + "RS"
     return NEXT_CLASS.get(cls, cls)
+
+
+def _redshirt_candidate(p: dict, games: int) -> bool:
+    return p["cls"] in REDSHIRT_CLASSES and games <= REDSHIRT_GAMES
+
+
+def _games_played(state: dict) -> dict[str, dict[str, int]]:
+    """team -> league player id -> games played this season (the season's stats, by name and position)."""
+    from sim import season
+    out: dict[str, dict[str, int]] = {}
+    ss = state.get("season_stats") or {}
+    for slug, t in season.load_teams().items():
+        lines = ((ss.get(slug) or {}).get("players") or {})
+        if not lines:
+            continue
+        out[slug] = {p["slug"]: (lines.get(f"{p['name']}|{p['position']}") or {}).get("games", 0)
+                     for p in t["offense"] + t["defense"] if p.get("slug")}
+    return out
+
+
+# ----- your roster at the Departures step: redshirts and position changes ------------------------
+
+class RosterError(Exception):
+    def __init__(self, code: int, message: str):
+        super().__init__(message)
+        self.code = code
+
+
+def _redshirt_block(state: dict, lgd: dict, usage: dict) -> dict:
+    """Your players who can take a redshirt this year (four games or fewer, the year unused), with
+    a default: a freshman off the depth chart's top takes it, an older player only if he never played."""
+    me = state["team"]
+    games = _games_played(state).get(me, {})
+    u = usage.get(me, {})
+    team_games = ((state.get("season_stats") or {}).get(me) or {}).get("games", 0)
+    players = []
+    for p in lgd["teams"][me]["roster"]:
+        n = games.get(p["id"], 0)
+        if p.get("signed") or p.get("walk_on_year") == lgd["year"]:            # this year's class has not played a season
+            continue
+        if _redshirt_candidate(p, n):
+            players.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "games": n, "team_games": team_games,
+                            "overall": house(p["pos"], p["o"]), "use": u.get(p["id"], "bench"),
+                            "redshirt": u.get(p["id"], "bench") == "bench" and (p["cls"] == "FR" or n == 0)})
+    players.sort(key=lambda x: (GROUP.get(x["pos"], "Z"), -x["overall"]))
+    return {"players": players, "decided": False}
+
+
+def redshirt(state: dict, pid: str, on: bool) -> dict:
+    """Your call on one player's redshirt, at the Departures step."""
+    off = state.get("offseason") or {}
+    rs = off.get("redshirts")
+    if off.get("stage") != "departures" or not rs or rs.get("decided"):
+        raise RosterError(409, "redshirts are decided at the Departures step")
+    p = next((x for x in rs["players"] if x["id"] == pid), None)
+    if p is None:
+        raise RosterError(404, "he cannot take a redshirt this year")
+    p["redshirt"] = bool(on)
+    return rs
+
+
+def _apply_redshirts(state: dict) -> None:
+    off = state["offseason"]
+    rs = off.get("redshirts")
+    if not rs or rs.get("decided"):
+        return
+    roster = {c["id"]: c for c in state["league"]["teams"][state["team"]]["roster"]}
+    for p in rs["players"]:
+        c = roster.get(p["id"])
+        if not c or c["cls"] != p["cls"]:
+            continue
+        c["cls"] = p["cls"] + "RS" if p["redshirt"] else NEXT_CLASS.get(p["cls"], p["cls"])
+        if p["redshirt"]:
+            c["rs_year"], c["rs_games"] = off["year"] - 1, p["games"]
+    rs["decided"] = True
+
+
+def position_options(state: dict, pid: str) -> list[dict]:
+    """What he would be at every position: his overall by our formula there, best first."""
+    lgd = state["league"]
+    c = next((x for x in lgd["teams"][state["team"]]["roster"] if x["id"] == pid), None)
+    if c is None:
+        raise RosterError(404, "not on your roster")
+    ours = lg.ratings(c, lgd["attrs"])
+    special = c["pos"] in ("K", "P")
+    out = [{"pos": pos, "group": GROUP[pos], "overall": game_scale.overall(ours, pos), "current": pos == c["pos"]}
+           for pos in GROUP if (pos in ("K", "P")) == special]
+    out.sort(key=lambda o: (-o["current"], -o["overall"]))
+    return out
+
+
+def change_position(state: dict, pid: str, pos: str) -> dict:
+    """Move one of your players to another position for next season (his overall follows)."""
+    off = state.get("offseason") or {}
+    if off.get("stage") in (None, "ready"):
+        raise RosterError(409, "position changes are made during the offseason")
+    if pos not in GROUP:
+        raise RosterError(400, "no such position")
+    lgd = state["league"]
+    c = next((x for x in lgd["teams"][state["team"]]["roster"] if x["id"] == pid), None)
+    if c is None:
+        raise RosterError(404, "not on your roster")
+    if c["pos"] == pos:
+        raise RosterError(409, "he plays there already")
+    was = c["pos"]
+    c.setdefault("moved_from", was)
+    c["pos"] = pos
+    c["o"] = game_scale.overall(lg.ratings(c, lgd["attrs"]), pos)
+    moves = off.setdefault("position_changes", [])
+    moves[:] = [m for m in moves if m["id"] != pid]
+    if pos != c["moved_from"]:
+        moves.append({"id": pid, "name": c["n"], "from": c["moved_from"], "to": pos, "overall": house(pos, c["o"])})
+    else:
+        c.pop("moved_from", None)
+    return {"id": pid, "pos": pos, "overall": house(pos, c["o"])}
 
 
 def _jersey(roster: list[dict], pos: str, rng: random.Random) -> Optional[str]:
@@ -1311,6 +1439,7 @@ def advance(state: dict) -> dict:
             if not off.get("auto"):
                 raise ReviewError(409, "the AD is waiting for your answer")
             review_decide(state, "nothing")
+        _apply_redshirts(state)
         if off.get("retention") is None:            # a save from before the retention step
             _open_portal(state)
             off["stage"] = "portal_w1" if recruiting.is_portal(state) else "portal_1"
@@ -1548,6 +1677,10 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
                        "early_entrants": sum(1 for d in deps if d.get("early"))},
         "signed": off.get("signed", {}).get(me, 0),
         "retention": _retention_view(state),
+        "redshirts": off.get("redshirts"),
+        "position_changes": off.get("position_changes") or [],
+        "my_roster": sorted(({"id": c["id"], "name": c["n"], "pos": c["pos"], "cls": c["cls"], "overall": house(c["pos"], c["o"]),
+                              "moved_from": c.get("moved_from")} for c in lgd["teams"][me]["roster"]), key=lambda r: (GROUP.get(r["pos"], "Z"), -r["overall"])),
         "roster": len(lgd["teams"][me]["roster"]), "roster_limit": ROSTER_LIMIT,
         "open_spots": recruiting_spots(state, me) if new_portal else open_spots(lgd, me, portal),
         "release_spots": 0 if new_portal else churn_left(portal, me),
