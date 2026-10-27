@@ -172,5 +172,50 @@ if __name__ == "__main__":
     q = old["recruiting"]["prospects"][first]
     assert "ratings_ea" not in q and len(q["ratings"]) == len(game_scale.keys()) and 1 <= q["ovr"] <= q["pot_ovr"] <= 99
     assert all(abs(old["recruiting"]["reads"][first]["g"][g][0] - (q["truth"][g] + 3.0)) < 0.01 for g in recruiting.GROUPS)
+    # ----- scouting stops once he is yours -----------------------------------------------------
+    me = "ohio-state"
+    st["current_week"] = 1
+    st["recruiting"]["hours"][me] = 55
+    for p_ in st["recruiting"]["prospects"].values():
+        p_["hidden"] = False
+    scouted, unscouted, open_ = by_rank[20], by_rank[21], by_rank[22]
+    for _ in range(3):
+        recruiting.act(st, me, scouted, "scout")
+    assert prospects.profile(st, scouted, me)["public"]["trips"] == 3 and prospects.profile(st, scouted, me)["our_grades"] is not None
+    recruiting._commit(st, scouted, me)
+    try:
+        recruiting.act(st, me, scouted, "scout")
+        raise AssertionError("a scout was sent to your own commit")
+    except recruiting.RecruitingError as e:
+        assert "committed to you" in str(e), str(e)
+    prof = prospects.profile(st, scouted, me)
+    assert prof["can_scout"] is False and prof["our_grades"] is not None and prof["public"]["trips"] == 3, (prof["can_scout"], prof["public"]["trips"])
+    assert "coachability" in prof["our_grades"]
+    # an unscouted commit stays unscouted: his area scout spends no look on him
+    rc["reads"].pop(unscouted, None)
+    recruiting._commit(st, unscouted, me)
+    home = rc["prospects"][unscouted]["hometown"]["state"]
+    area = next(a for a, codes in recruiting.AREAS.items() if home in codes)
+    staff[2]["area"] = area
+    before = {pid: r["looks"] for pid, r in rc["reads"].items()}
+    recruiting.scout_week(st)
+    assert unscouted not in rc["reads"], "your area scout looked at your own commit"
+    prof = prospects.profile(st, unscouted, me)
+    assert prof["can_scout"] is False and prof["our_grades"] is None and prof["looks"] == 0
+    neighbour = next(pid for pid, p_ in rc["prospects"].items() if p_["hometown"]["state"] == home and rc["status"][pid]["committed"] is None)
+    assert rc["reads"][neighbour]["looks"] == before.get(neighbour, 0) + 1, "an uncommitted prospect in the area still gets his look"
+    # an uncommitted prospect still gets his three looks from you, and no more
+    assert prospects.profile(st, open_, me)["can_scout"] is True
+    for _ in range(3):
+        recruiting.act(st, me, open_, "scout")
+    assert prospects.profile(st, open_, me)["public"]["trips"] == 3 and prospects.profile(st, open_, me)["can_scout"] is False
+    try:
+        recruiting.act(st, me, open_, "scout")
+        raise AssertionError("a fourth look")
+    except recruiting.RecruitingError as e:
+        assert "3 times" in str(e), str(e)
+    rows = {r["id"]: r for r in prospects.search(st, me)["rows"]} if isinstance(prospects.search(st, me), dict) else {}
+    if rows:
+        assert rows[scouted]["can_scout"] is False and rows[open_]["can_scout"] is False
     print(f"scouting ok: ranges hold the truth {weak:.0%} (40), {avg:.0%} (60), {elite:.0%} (95); "
           f"widths {weak_w:.1f} vs {avg_w:.1f}; hidden {share:.0%}")

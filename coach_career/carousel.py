@@ -49,7 +49,8 @@ ROLE_WORDS = {"head_coach": "head coach", "offensive_coordinator": "offensive co
 
 
 def _rng(state: dict, what: str) -> random.Random:
-    return random.Random(f"carousel-{state['id']}-{state.get('year', 2026)}-{what}")
+    from coach_career.offseason import seed_key
+    return random.Random(f"carousel-{seed_key(state)}-{state.get('year', 2026)}-{what}")
 
 
 def baseline(slug: str) -> float:
@@ -237,7 +238,8 @@ def market_refresh(state: dict) -> None:
     lgd = state["league"]
     year = state["offseason"]["year"] if state.get("offseason") else state.get("year", 2026)
     mk = lgd.setdefault("market", {"coaches": [], "year": year})
-    rng = random.Random(f"market-{state['id']}-{year}")
+    from coach_career.offseason import seed_key
+    rng = random.Random(f"market-{seed_key(state)}-{year}")
     mk["coaches"] = [c for c in mk["coaches"] if year - c["year"] < MARKET_STALE and c["age"] + (year - c["year"]) < 66]
     weights = [w for *_, w in SUPPLY]
     taken = _taken_names(lgd)
@@ -273,7 +275,8 @@ def market_candidates(state: dict, slug: str, role: str, n: int, rng: Optional[r
     mk = market(state)
     lgd = state["league"]
     year = year or mk["year"]
-    rng = rng or random.Random(f"cands-{state['id']}-{slug}-{role}-{year}")
+    from coach_career.offseason import seed_key
+    rng = rng or random.Random(f"cands-{seed_key(state)}-{slug}-{role}-{year}")
     b = programs.z(state, slug)
     out = []
     level, ceiling = programs.coach_level(state, slug), programs.coach_ceiling(state, slug)

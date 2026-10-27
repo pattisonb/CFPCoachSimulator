@@ -39,7 +39,7 @@
   const teamName = (slug) => (slug === "FCS" ? "an FCS program" : (window.CFP.teamsBySlug[slug] || {}).name || slug);
   const loading = (text) => el("p", { class: "muted go-loading", text });
   const SIGNING_WEEK = 16, FINAL_WEEK = 20;       // the early signing period (selection week) and national signing day
-  const WORDS = { commit: "committed to", flip: "flipped to", decommit: "decommitted from", signed: "signed with", offer: "was offered by",
+  const WORDS = { commit: "verbally committed to", hard: "is now a hard commit to", flip: "flipped to", decommit: "decommitted from", signed: "signed with", offer: "was offered by",
                   asked_more: "wants more from", not_buying: "isn't buying the pitch from" };
   const WHY = { message: "Message", call: "Call", hc_visit: "HC visit", official_visit: "Official visit", offer: "Offer", raise_nil: "NIL raised" };
   const LINE_LABELS = { pass_yards: "pass yds", passing_touchdowns: "TD", interceptions_thrown: "INT", rush_yards: "rush yds", carries: "car", rushing_touchdowns: "TD",
@@ -99,7 +99,7 @@
 
   function status(r) {
     if (r.signed) return r.signed === "FCS" ? "Signed with an FCS program" : `Signed · ${teamName(r.signed)}`;
-    if (r.committed) return `Committed · ${teamName(r.committed)}`;
+    if (r.committed) return `${r.hard ? "Hard commit" : "Verbal commit"} · ${teamName(r.committed)}`;
     if (r.leaning_fcs) return "Leaning FCS";
     return "Uncommitted";
   }
@@ -108,9 +108,9 @@
   function standing(b, me) {
     const st = b.standing || {};
     const school = b.signed || b.committed;
-    if (school === me) return { text: b.signed ? "Signed with you" : "Committed to you", tone: "good", fill: 1 };
-    if (school && (b.signed || st.pct == null)) return { text: `${b.signed ? "Signed" : "Committed"} · ${teamName(school)}`, tone: "bad", fill: 0 };
-    if (school) return { text: `Committed · ${teamName(school)}`, odds: st.hi < 0.1 ? "A flip looks unlikely" : st.pct >= 0.3 ? "He could still flip to you" : "A flip is a long shot",
+    if (school === me) return { text: b.signed ? "Signed with you" : b.hard ? "Hard commit to you" : "Verbal commit to you", tone: "good", fill: 1 };
+    if (school && (b.signed || b.hard || st.pct == null)) return { text: `${b.signed ? "Signed" : b.hard ? "Hard commit" : "Verbal commit"} · ${teamName(school)}`, tone: "bad", fill: 0, odds: b.hard && !b.signed ? "Locked in: he will not flip" : undefined };
+    if (school) return { text: `Verbal commit · ${teamName(school)}`, odds: st.hi < 0.1 ? "A flip looks unlikely" : st.pct >= 0.3 ? "He could still flip to you" : "A flip is a long shot",
                          certainty: st.certainty, tone: "warn", fill: st.pct, lo: st.lo, hi: st.hi };
     if (st.place == null) return { text: st.leader ? `Not offered · ${st.leader.name} leads` : "Not offered yet", tone: "muted", fill: 0 };
     const tone = st.place === 1 ? "good" : st.pct >= st.leader.pct - 0.1 ? "warn" : "muted";
@@ -328,7 +328,7 @@
   // ----- what the roster needs, by group: one strip on the board and the class, with a way of counting -----
   const NEED_MODES = [["need", "What's left", "A healthy 85-man roster's make-up minus the players coming back minus your commits"],
     ["commits", "Committed / need", "Your commits at each position against the spots this class needs to fill"],
-    ["firm", "Firm commits / need", "Commits that have settled (an official visit or weeks of contact) against the spots to fill"],
+    ["firm", "Hard commits / need", "Hard commits (locked in, cannot flip) against the spots to fill"],
     ["board", "On board / need", "Uncommitted prospects on your board at each position against the spots to fill"],
     ["offers", "Offers out / need", "Your open offers at each position against the spots to fill"],
     ["left", "Only what's short", "Just the positions still short, by how many"]];
@@ -366,7 +366,7 @@
       any = true;
       const short = r.need > 0, covered = mode === "board" || mode === "offers" ? (short && (mode === "board" ? r.board : r.offers) >= r.need) : mode !== "need" && mode !== "left" && !short;
       const b = el("button", { type: "button", class: `go-chip small ${picked === g ? "on" : ""} ${short && !covered ? "short" : "full"}`, "aria-pressed": String(picked === g),
-        text: needText(mode, g, r), title: `${g}: ${r.target} on a healthy roster · ${r.back} coming back · ${r.commits} committed (${r.firm} firm) · ${r.board} on your board · ${r.offers} offers out · ${r.need > 0 ? `${r.need} still to fill` : "covered"}` });
+        text: needText(mode, g, r), title: `${g}: ${r.target} on a healthy roster · ${r.back} coming back · ${r.commits} committed (${r.firm} hard) · ${r.board} on your board · ${r.offers} offers out · ${r.need > 0 ? `${r.need} still to fill` : "covered"}` });
       b.addEventListener("click", () => onPick(picked === g ? null : g));
       wrap.append(b);
     }
@@ -468,7 +468,8 @@
       if (b.need != null && !b.signed && b.committed !== me) tags.append(el("span", { class: `go-tag ${b.need > 0 ? "good" : "muted"}`, text: b.need > 0 ? `Need ${b.need}` : "Full", title: b.need > 0 ? `Your roster needs ${b.need} at his position this class` : "Your roster is covered at his position this class" }));
       if (b.offered) tags.append(el("span", { class: "go-tag good", text: b.nil ? `Offered · ${b.nil} NIL` : "Offered" }));
       if (b.portal && b.role) tags.append(el("span", { class: `go-tag ${b.role === "Would start" ? "good" : b.role === "Next in line" ? "warn" : "muted"}`, text: b.role, title: "Where he would sit on your depth chart next season" }));
-      if (b.firmness != null) tags.append(el("span", { class: `go-tag ${b.firmness >= 70 ? "good" : b.firmness < 40 ? "bad" : ""}`, text: `${b.firmness >= 70 ? "Solid" : b.firmness < 40 ? "Soft" : "Settling"} ${b.firmness}`, title: "How firm his commitment is (0-100): a message a week firms it up, silence softens it, rivals with more playing time to offer eat at it; a soft commit flips more easily" }));
+      if (b.committed === me && !b.signed) tags.append(b.hard ? el("span", { class: "go-tag good", text: "Hard commit", title: "Locked in: he cannot flip and his offer stands until he signs" })
+        : el("span", { class: `go-tag ${b.firmness >= 70 ? "good" : b.firmness < 40 ? "warn" : ""}`, text: `Verbal · ${b.firmness}`, title: "A verbal commit (0-100): he warms to you on his own each week, faster with a message, call or visit; rivals offering more playing time cool him. At 85 he is a hard commit and cannot flip." }));
       if (b.cooled) tags.append(el("span", { class: "go-tag bad", text: "Cooled on you", title: "He read your offer as a lowball: contacts count half and he will not visit until you raise it to what he wants" }));
       const STAGE = { cold: ["Cold", "No contact yet: an offer now counts half"], contact: ["In touch", "You have reached out; get into his top group for a visit"], top: ["In his top 8", "He is seriously considering you"], visited: ["Visited", "He has been on campus"] };
       if (b.stage && STAGE[b.stage] && !b.committed && !b.signed) tags.append(el("span", { class: `go-tag ${b.stage === "cold" ? "muted" : ""}`, text: STAGE[b.stage][0], title: STAGE[b.stage][1] }));
@@ -671,6 +672,7 @@
     try { p = await H.api(`/api/season/${s.id}/prospect/${encodeURIComponent(pid)}`); }
     catch (err) { node.innerHTML = ""; node.append(el("p", { class: "muted", text: `Could not open his profile: ${H.errText(err)}` })); return; }
     const pub = p.public;
+    const me = s.team;
     node.innerHTML = "";
     node.append(el("div", { class: "rc-profile-head go-profile-head" }, [avatar(pub.avatar_seed, "lg"), el("div", {}, [
       el("h2", { class: "rc-profile-name go-display l", text: pub.name.toUpperCase() }),
@@ -688,10 +690,11 @@
       const odds = pub.schools.find((x) => x.school === holder);
       const others = pub.schools.filter((x) => x.school !== holder && x.pct != null);
       const sub = pub.signed ? "Signed: his recruitment is over."
+        : pub.hard ? "Hard commit: he cannot flip and signs on signing day."
         : others.length ? `Still considering offers · ${odds && odds.pct != null ? pct(1 - odds.pct) : "some"} chance he flips before signing day`
         : "No other school is in it.";
       const banner = el("div", { class: "go-commit rc-status", style: holder === "FCS" ? "" : `background:${bg};color:${inkOn(col.primary)};border-color:${col.secondary || bg}` }, [
-        el("div", { class: "go-display m", text: `${pub.signed ? "SIGNED WITH" : "COMMITTED TO"} ${teamName(holder).toUpperCase()}` }),
+        el("div", { class: "go-display m", text: `${pub.signed ? "SIGNED WITH" : pub.hard ? "HARD COMMIT TO" : "VERBAL COMMIT TO"} ${teamName(holder).toUpperCase()}` }),
         el("div", { class: "small", text: sub }),
       ]);
       node.append(banner);
@@ -731,9 +734,20 @@
     const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall ? `, ${c.overall} OVR` : ""})`;
     if (p.public_comp) node.append(el("p", {}, [el("b", { text: "Comp: " }), comp(p.public_comp)]));
     const trips = pub.trips || 0;
-    const scoutBtn = el("button", { type: "button", class: "go-btn", text: trips >= 3 ? "Scouted three times: his area scout keeps looking" : `Send a scout (5 hours, look ${trips + 1} of 3) →`, title: ACT_TIPS.scout });
-    if (trips >= 3) scoutBtn.disabled = true;
-    scoutBtn.addEventListener("click", async () => { scoutBtn.disabled = true; if (await act(s, pid, "scout")) openProfile(s, pid, node); else scoutBtn.disabled = false; });
+    if (p.ratings) {                           // signed with you: what you got, every attribute
+      node.append(el("h3", { text: "His ratings" }),
+        el("p", { class: "muted small", text: `${p.ratings.overall} overall now, ${p.ratings.potential_overall} at his potential · 50 is an average Power 4 starter.` }),
+        el("div", { class: "rc-ratings" }, p.ratings.attributes.map((a) => el("div", { class: "rating-row" }, [
+          el("span", { class: "rating-label", text: a.label }),
+          el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${a.value >= 75 ? "hi" : a.value >= 55 ? "mid" : ""}`, style: `width:${Math.max(2, Math.min(100, a.value))}%` })]),
+          el("b", { class: "rating-num", text: String(a.value), title: `${a.potential} at his potential` })]))));
+      return;
+    }
+    const mine = pub.committed === me && !pub.signed;
+    const scoutBtn = mine ? el("span", { class: "muted small rc-no-scout", text: "Committed to you: no more looks" })
+      : el("button", { type: "button", class: "go-btn", text: trips >= 3 ? "Scouted three times: his area scout keeps looking" : `Send a scout (5 hours, look ${trips + 1} of 3) →`, title: ACT_TIPS.scout });
+    if (!mine && trips >= 3) scoutBtn.disabled = true;
+    if (!mine) scoutBtn.addEventListener("click", async () => { scoutBtn.disabled = true; if (await act(s, pid, "scout")) openProfile(s, pid, node); else scoutBtn.disabled = false; });
     node.append(el("h3", { text: "Our staff's grades" }));
     if (p.our_grades) {
       // hover (or tab to) a grade: what prospects in this class graded like that look like

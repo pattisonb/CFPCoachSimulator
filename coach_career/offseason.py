@@ -98,8 +98,14 @@ COORD_SHARE = 0.4                                  # the coordinator's part of a
 RECRUITER_LEAVE = 0.12
 
 
+def seed_key(state: dict):
+    """What a career's random streams are seeded from: its seed when it has one (the same seed
+    gives the same offseason, so tests repeat), else its id."""
+    return state["seed"] if state.get("seed") is not None else state["id"]
+
+
 def _rng(state: dict, what: str) -> random.Random:
-    return random.Random(f"offseason-{state['id']}-{state.get('year', 2026)}-{what}")
+    return random.Random(f"offseason-{seed_key(state)}-{state.get('year', 2026)}-{what}")
 
 
 def _attrs(lgd: dict) -> list[str]:
@@ -238,7 +244,7 @@ def review_decide(state: dict, action: str, staff_id: Optional[str] = None) -> d
     me, year = state["team"], off["year"]
     t = state["league"]["teams"][me]
     a = t["ad"]
-    rng = random.Random(f"review-{state['id']}-{year}-{action}")
+    rng = random.Random(f"review-{seed_key(state)}-{year}-{action}")
     fired = rv["must"]
     if action == "case":
         gain = rng.randint(*CASE_GAIN)
@@ -278,9 +284,7 @@ def _open_portal(state: dict) -> None:
         state["recruiting_last"] = state["recruiting"]
         state["recruiting"] = recruiting.portal_rc(state, off["portal"]["players"], off["year"])
         recruiting.reset_caches()
-        me = state.get("team")
-        if me in lgd["teams"]:
-            state["recruiting"]["board"] = recruiting._build_board(state, me, _rng(state, "portal-board"))[:PORTAL_BOARD]
+        state["recruiting"]["board"] = []       # your board starts empty: you pick from the entrants (Auto-recruit's staff add theirs week by week)
 
 
 # ----- keep them home: your leavers with eligibility left ------------------------------------------
@@ -1088,7 +1092,6 @@ def _close_portal(state: dict) -> None:
 
 
 PORTAL_WEEKS_DONE = 4
-PORTAL_BOARD = 20                 # entrants your staff puts on your board when the portal opens
 
 
 # ----- development ------------------------------------------------------------------------------

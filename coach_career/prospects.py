@@ -357,6 +357,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "ea_position": p["ea_position"], "archetype": p["archetype"], "stars": p["stars"], "composite": p["composite"],
         "national_rank": p["rank"], "position_rank": pos_rank, "state_rank": state_rank,
         "schools": _schools(state, pid), "committed": status["committed"], "signed": status["signed"],
+        "hard": bool(status.get("hard")) and not status["signed"],
         "leaning_fcs": bool(status["fcs"]), "offered_by_you": pid in rc["offers"].get(viewer, []),
         "on_board": pid in rc["board"],
         "trips": ((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("scouted", 0),
@@ -377,6 +378,8 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "our_grades": our_grades,
         "looks": read["looks"] if read else 0,
         "our_comp": our_comp,
+        "can_scout": can_scout(state, viewer, pid),
+        "ratings": signed_ratings(state, p) if status["signed"] == viewer else None,     # signing day shows what you got
         "ask": recruiting.ask_view(state, viewer, pid), "cooled": recruiting.cooled(state, viewer, pid),
         "stage": recruiting.stage(state, viewer, pid), "strength": recruiting.strengths(state, viewer, pid),
     }
@@ -436,9 +439,30 @@ def board_row(state: dict, pid: str, viewer: str) -> dict:
                stage=recruiting.stage(state, viewer, pid), strength=recruiting.strengths(state, viewer, pid),
                list=[dict(x, you=x["school"] == viewer) for x in _schools(state, pid)[:5]],
                firmness=rc["status"][pid].get("firmness") if rc["status"][pid]["committed"] == viewer and not rc["status"][pid]["signed"] else None,
+               hard=bool(rc["status"][pid].get("hard")) and not rc["status"][pid]["signed"],
+               can_scout=can_scout(state, viewer, pid),
                role=_role(recruiting.pull(state, viewer, pid)["playing_time"]),
                standing=standing(state, pid, viewer))
     return out
+
+
+def can_scout(state: dict, viewer: str, pid: str) -> bool:
+    """Whether you can still send a scout: not once he has signed or committed to you, nor past SCOUT_MAX looks."""
+    rc = state["recruiting"]
+    st = rc["status"][pid]
+    trips = ((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("scouted", 0)
+    return not st["signed"] and st["committed"] != viewer and trips < recruiting.SCOUT_MAX
+
+
+def signed_ratings(state: dict, p: dict) -> dict:
+    """A signee's full ratings, as his roster card will show them: every attribute now and at his
+    potential, with his overall and projected overall."""
+    from teamdata import game_scale
+    from teamdata import ratings as rv2
+    keys = list(game_scale.keys())
+    rows = [{"key": k, "label": rv2.ATTRIBUTES[k][0] if k in rv2.ATTRIBUTES else k.replace("_", " ").title(),
+             "value": v, "potential": q} for k, v, q in zip(keys, p["ratings"], p["potential"])]
+    return {"overall": p["ovr"], "potential_overall": p["pot_ovr"], "attributes": rows}
 
 
 def standing(state: dict, pid: str, viewer: str) -> dict:
@@ -523,7 +547,8 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
     rows = []
     for pid in out[offset:offset + limit]:
         r = row(state, pid, viewer)
-        r.update(interest_in_you=round(keen[pid], 1), interest_level=_level(keen[pid], cuts))
+        r.update(interest_in_you=round(keen[pid], 1), interest_level=_level(keen[pid], cuts),
+                 can_scout=can_scout(state, viewer, pid), hard=bool(rc["status"][pid].get("hard")) and not rc["status"][pid]["signed"])
         if pid in recs:
             r["why"] = recs[pid]["why"]
         rows.append(r)

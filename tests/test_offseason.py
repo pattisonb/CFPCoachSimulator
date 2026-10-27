@@ -97,7 +97,7 @@ if __name__ == "__main__":
     assert all(p["stars"] is None and p.get("portal_rank") and p.get("from_name") and "line" in p and p.get("nil_ask") is not None
                for p in rc["prospects"].values())
     view = prospects.recruiting_view(st)
-    assert view["portal"]["week"] == 1 and view["open_spots"] >= 0 and 0 < len(view["board"]) <= offseason.PORTAL_BOARD   # your staff's first look
+    assert view["portal"]["week"] == 1 and view["open_spots"] >= 0 and view["board"] == []   # the portal opens with an empty board: you pick
     pick = next(q for q in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"]) if rc["prospects"][q]["from"] != "ohio-state")
     rc["board"].append(pick)
     recruiting.act(st, "ohio-state", pick, "offer", pitch=rc["prospects"][pick]["priorities"][0], nil=recruiting.ask_from(st, "ohio-state", pick))

@@ -123,7 +123,8 @@ VISIT_BOOST = 1.6                          # after an official visit to the lead
 DECOMMIT_RATE = 0.45                       # weekly chance of a decommitment at an even race *tune*
 # a commitment's firmness, 0-100: it starts soft and firms up only if the school keeps in touch *tune*
 FIRM_START, FIRM_VISIT = 40, 60            # at commitment (after an official visit there)
-FIRM_TOUCH, FIRM_QUIET = 6, -8             # a week with a message, call or visit from the school / a week without
+FIRM_TOUCH, FIRM_DRIFT = 8, 4              # a week with a message, call or visit from the school / a quiet week (he still warms to you)
+HARD_AT = 85                               # a verbal commit this firm is a hard commit: no flip, no pulled offer, he signs
 FIRM_NIL = 3                               # the NIL promised is still held
 FIRM_RIVAL, FIRM_RIVALS = -6, 3            # per rival in his top three offering more playing time
 FLIP_MARGIN = 4.0                          # a rival's lead that doubles-ish it (logistic) *tune*
@@ -485,7 +486,7 @@ def needs_detail(state: dict, slug: str) -> dict[str, dict]:
     firm = {g: 0 for g in offseason.TARGET}
     board = {g: 0 for g in offseason.TARGET}
     for pid, st in rc["status"].items():
-        if (st["signed"] or st["committed"]) == slug and (st["signed"] or (st.get("firmness") or FIRM_START) >= FIRM_VISIT):
+        if (st["signed"] or st["committed"]) == slug and (st["signed"] or st.get("hard")):
             firm[_group_of(rc["prospects"][pid])] += 1
     for pid in rc["board"] if slug == state["team"] else []:
         st = rc["status"][pid]
@@ -983,7 +984,7 @@ def _report(state: dict, week: int) -> dict:
     return report
 
 
-REPORT_KINDS = ("offer", "commit", "flip", "decommit", "signed", "asked_more", "not_buying")
+REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying")
 
 
 def latest_report(state: dict) -> Optional[dict]:
@@ -1005,6 +1006,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         raise RecruitingError(400, "NIL points cannot be negative")
     if rc["status"][pid]["signed"]:
         raise RecruitingError(409, "he has already signed")
+    if action == "scout" and rc["status"][pid]["committed"] == slug:
+        raise RecruitingError(409, "he has committed to you: no more looks")
     contact = rc["contacts"].setdefault(pid, {}).setdefault(slug, {"n": 0, "hc_week": None})
     week, revealed, points = state["current_week"], None, 0.0
     if action in WEEKLY_ONCE and (contact.get("week") or {}).get(action) == week:
@@ -1017,10 +1020,12 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
     if action == "pull_offer":
         if pid not in offers:
             raise RecruitingError(409, "no offer to pull")
+        if rc["status"][pid]["committed"] == slug and rc["status"][pid].get("hard"):
+            raise RecruitingError(409, "he is a hard commit: his offer stands until he signs")
         offers.remove(pid)
         _nil(state, slug)["held"].pop(pid, None)
-        if rc["status"][pid]["committed"] == slug and not rc["status"][pid]["signed"]:   # you let your own commit go
-            rc["status"][pid].update(committed=None, firmness=None)
+        if rc["status"][pid]["committed"] == slug and not rc["status"][pid]["signed"]:   # you let your own verbal commit go
+            rc["status"][pid].update(committed=None, firmness=None, hard=False)
             rc["commits_v"] = rc.get("commits_v", 0) + 1
             _event(state, "decommit", pid, slug)
     elif action == "offer":
@@ -1399,7 +1404,7 @@ def _commit(state: dict, pid: str, slug: str, kind: str = "commit") -> None:
     rc = state["recruiting"]
     old = rc["status"][pid]["committed"]
     visited = bool((rc["visits"].get(pid, {}).get(slug) or {}).get("done"))
-    rc["status"][pid].update(committed=slug, fcs=False, firmness=FIRM_VISIT if visited else FIRM_START)
+    rc["status"][pid].update(committed=slug, fcs=False, firmness=FIRM_VISIT if visited else FIRM_START, hard=False)
     rc["commits_v"] = rc.get("commits_v", 0) + 1
     for school, n in rc["nil"].items():           # rivals' NIL packages for him are released
         if school != slug:
@@ -1408,34 +1413,47 @@ def _commit(state: dict, pid: str, slug: str, kind: str = "commit") -> None:
 
 
 def flip_weekly(state: dict, pid: str, gap: float, firmness: Optional[float] = None) -> float:
-    """This week's chance a commit flips, from the best rival's lead in interest and how firm he is."""
+    """This week's chance a commit flips, from the best rival's lead in interest and how firm he is.
+    A hard commit never flips."""
+    st = state["recruiting"]["status"][pid]
+    if st.get("hard"):
+        return 0.0
     if firmness is None:
-        firmness = state["recruiting"]["status"][pid].get("firmness") or FIRM_START
+        firmness = st.get("firmness") or FIRM_START
+    if firmness >= HARD_AT:
+        return 0.0
     return 2 * DECOMMIT_RATE * _logistic(gap / FLIP_MARGIN) * (100 - firmness) / 100
 
 
 def flip_by_signing(state: dict, pid: str, gap: float, weeks_left: int) -> float:
     """His chance to flip before signing day, his commitment firming up FIRM_TOUCH + FIRM_NIL a week
-    as a school that keeps in touch would see it."""
-    f = state["recruiting"]["status"][pid].get("firmness") or FIRM_START
+    as a school that keeps in touch would see it, and locking hard at HARD_AT."""
+    st = state["recruiting"]["status"][pid]
+    if st.get("hard"):
+        return 0.0
+    f = st.get("firmness") or FIRM_START
     keep = 1.0
     for _ in range(max(0, weeks_left)):
+        if f >= HARD_AT:
+            break
         keep *= 1 - flip_weekly(state, pid, gap, f)
         f = min(100, f + FIRM_TOUCH + FIRM_NIL)
     return 1 - keep
 
 
 def _firm_up(state: dict, week: int) -> None:
-    """Every commitment firms up or softens with the week: contact from the school, the NIL
-    still held, and rivals in his top three offering more playing time."""
+    """Every verbal commitment firms up with the week: he warms to his school on his own
+    (FIRM_DRIFT), faster with contact from it (FIRM_TOUCH) and the NIL still held, and cools
+    when rivals in his top three offer more playing time. At HARD_AT he is a hard commit and
+    nothing moves him again."""
     rc = state["recruiting"]
     win = _winning(state)
     for pid, st_ in rc["status"].items():
         school = st_["committed"]
-        if st_["signed"] or not school or school == "FCS":
+        if st_["signed"] or not school or school == "FCS" or st_.get("hard"):
             continue
         c = (rc["contacts"].get(pid) or {}).get(school) or {}
-        delta = FIRM_TOUCH if c.get("last_contact") == week else FIRM_QUIET
+        delta = FIRM_TOUCH if c.get("last_contact") == week else FIRM_DRIFT
         if rc["nil"].get(school, {}).get("held", {}).get(pid, 0) > 0 and pid in rc["offers"].get(school, []):
             delta += FIRM_NIL
         rivals = [s for s in top_group(state, pid, win) if s != school and pid in rc["offers"].get(s, [])][:FIRM_RIVALS]
@@ -1443,6 +1461,9 @@ def _firm_up(state: dict, week: int) -> None:
             mine = strengths(state, school, pid)["playing_time"]
             delta += FIRM_RIVAL * sum(1 for r in rivals if strengths(state, r, pid)["playing_time"] > mine)
         st_["firmness"] = int(max(0, min(100, st_.get("firmness", FIRM_START) + delta)))
+        if st_["firmness"] >= HARD_AT:
+            st_["hard"] = True
+            _event(state, "hard", pid, school)
 
 
 def _class_by_position(state: dict) -> dict[tuple, list[float]]:
@@ -1506,7 +1527,7 @@ def _draws(state: dict, week: int, rng: random.Random) -> None:
         if st["signed"]:
             continue
         scores = sorted(((score(s, pid), s) for s in offered.get(pid, [])), reverse=True)
-        if st["committed"]:
+        if st["committed"] and not st.get("hard"):
             mine = score(st["committed"], pid)
             rival = next(((v, s) for v, s in scores if s != st["committed"] and room(s, pid)), None)
             if rival and rng.random() < flip_weekly(state, pid, rival[0] - mine):
@@ -1862,8 +1883,10 @@ def scout_week(state: dict) -> None:
     staff = (state.get("career") or {}).get("staff") or []
     rng = random.Random(f"scout-{state['recruiting']['seed']}-{state['current_week']}")
     by_state: dict[str, list[str]] = {}
+    me = state.get("team")
     for pid, p in state["recruiting"]["prospects"].items():
-        if not state["recruiting"]["status"][pid]["signed"]:
+        st = state["recruiting"]["status"][pid]
+        if not st["signed"] and st["committed"] != me:        # a commit of yours: his file is what it was
             by_state.setdefault(p["hometown"]["state"], []).append(pid)
     for member in staff:
         for code in AREAS.get(member.get("area"), []):
