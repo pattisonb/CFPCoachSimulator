@@ -984,7 +984,7 @@ and a change can be undone until the season starts.
 **A player keeps his seasons** (`offseason.record_seasons`, run when the offseason opens): every
 player's season line and honours go onto his entry in the career's league (`c["hist"]`, the last
 eight), follow him through the rollover and a transfer, and his page lists them under "Season by
-season" with the current season as the last row. The Office's program card and the programs table
+season" with the current season as the last row and a career line (totals, longs as the best). The Office's program card and the programs table
 show a standing in words (a tag: blue blood, power, solid, Group of 5, bottom), with no rating
 number or rank.
 
@@ -1184,8 +1184,9 @@ standing before the career began) moves 8 points per win over or under the goal,
 conference title, 12 for the playoff, 25 for the national title, minus 6 when a playoff or
 conference goal is missed; a bad year counts 3/patience as much, and half in a coach's first two
 years. Under 25 after two years he is fired 70% of the time (always under 8). Coaches retire
-(3% a year, more after 12 years in the job and past 60) and an 80+ coach after 10 wins leaves
-for the NFL 12% of the time.
+(3% a year, more after 12 years in the job and past 60; the 2026 head coaches' ages are real,
+from their birth years in `data/coach_birth_years.json`, generated coaches draw theirs) and an
+80+ coach after 10 wins leaves for the NFL 12% of the time.
 
 **The coaching market** (`carousel.market`, `lgd["market"]`). The league keeps a pool of about
 150 coaches for hire. Fired head coaches and let-go coordinators join it with why they are
@@ -1194,6 +1195,10 @@ staff", "Left Oregon State after 4 seasons to look for a bigger job") and their 
 the rest is a generated supply (FCS and Division II head coaches, NFL assistants, coordinators
 and position coaches from lower levels), each with the roles he would take. A coach fired this
 offseason sits out the cycle; after three years in the pool, or at 66, a coach leaves it.
+A coach the market or the generator produces is drawn to the program's tier (the real 2026
+head coaches' overall by tier: 77, 65, 60, 48, 40; the generated supply runs mostly below the
+league's mean), and a coach rated 12 or more above a program's tier is not interested in its
+head coaching job, so a bottom program hires a bottom-tier coach and the bottom stays the bottom.
 Openings are filled in order of attractiveness: the best of the head coaches at programs at
 least 3 less attractive with a three-year .550 run (a proven head coach gets 8 points), the
 coordinators at nine-win programs within 15, and the market's best three for the job (a coach who has not held
@@ -1215,7 +1220,7 @@ Every program in a career's league carries a living rating, six metrics on 0-100
 | winning | the last three seasons, 3-2-1 | every offseason: a season scores win share plus AP finishes (top 25 and top 10 0.35 each, top 5 0.5, number one 0.8; max 3.0), on a fixed curve where a 2-10 season is about 18 and a 12-0 number one 100 |
 | NIL | the collective's tier | settles at its start plus 0.55 × the prestige change, 0.30 × the winning change and 0.15 × the market change, pushed 6 above that by the AD after a year that met his goal and 6 below after a losing year, at most 4 up or 3 down a year, 10-100; the NIL budget is 3 × tier points (Ohio State 275, Texas Tech 189, SMU 136, Tulane 112, Akron 71: the top as the recruiting baseline gave it, the middle with room for a few blue-chip asks) |
 | market | crowds and TV | a fixed base (below) plus a live part that steps at most 3 a year toward 0.3 × (winning − its real 2023-25 winning), capped at ±8 where the building is full (base 85+) and ±18 elsewhere; a new head coach's first year adds 1.5 |
-| conference | the conference's strength | the mean engine rating of its members, on the 2026 scale |
+| conference | the conference's strength | the mean engine rating of its members, on the 2026 scale, anchored to its start (half of any change counts) |
 | coach | the head coach's appeal | his overall plus 3 a year of tenure up to five, minus 5 |
 
 The rating is 0.35 prestige + 0.20 winning + 0.15 NIL + 0.10 market + 0.10 conference + 0.10
@@ -1264,7 +1269,8 @@ decided there, only at the end of a season. You can make your case (2-10 points 
 offer a change on your staff (let a coordinator go: he joins the market, his job gets
 candidates at the Staff step, +10), ask for one more year (he always says yes, with an
 ultimatum: miss the goal next season and you are gone; the Office shows "ultimatum year") or
-say nothing (he decides). Auto says nothing. Fired, you walk the rest of the offseason on Auto
+say nothing (he decides). The meeting also says where the collective goes: next year's NIL points, up after a year that
+met the goal and down after a losing one. Auto says nothing. Fired, you walk the rest of the offseason on Auto
 (the program's next coach runs it) and pick your next job from the openings at or below your
 program's standing at the Staff step (Auto takes the best).
 
@@ -1275,8 +1281,10 @@ recruiters come along). Your coordinators leave when another program hires them 
 coach; a recruiter moves on 12% of the time. Each coordinator opening offers the market's best
 five (why each is available, his last job, his stops and age); a recruiter's opening five
 position coaches. At the Staff step you can also let any of your own coaches go and hire from
-the market, and the screen lists the market's top 40. Auto hires the best. The rest of your
-staff drift a point or two a year.
+the market, and the screen lists the market's top 40. Auto hires the best. Your coordinators' evaluation
+moves with their unit's year (a top-third offence or defence by points +2, a bottom third −2)
+and every recruiter's recruiting with the class you signed (top 25 +2, outside the top 70 −1),
+plus a point of noise.
 
 **Many seasons** (`tools/long_run.py`, every step on Auto). Six 20-season careers on 85-man rosters
 (120 seasons) held the league's mean team rating at 59.0-60.0 every season (2026: 59.4) with

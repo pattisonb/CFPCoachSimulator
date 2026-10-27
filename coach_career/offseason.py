@@ -204,6 +204,15 @@ def _review(state: dict, lgd: dict) -> dict:
     words = (f"You went {res['wins']}-{res['losses']}. " + ("You met the goal. " if v["met"] else "You fell short of the goal. ")
              + {"fire": "The AD is deciding whether to make a change.", "warning": "The AD wants to see more next year.",
                 "none": "The AD is pleased." if v["met"] else "The AD is patient."}[risk])
+    nil_now = t["program"]["nil"] if t.get("program") else None
+    if nil_now is not None:                               # the collective: where the AD's hand takes it (programs.nil_move, at the carousel)
+        from coach_career import programs, recruiting
+        probe = {"program": dict(t["program"])}
+        programs.nil_move(probe, met=v["met"], losing=res["wins"] < res["losses"])
+        nil_next = probe["program"]["nil"]
+        budget_next = max(recruiting.NIL_FLOOR, recruiting._five(recruiting.NIL_PER_TIER * nil_next))
+        words += (f" The collective {'grows' if nil_next > nil_now + 0.5 else 'shrinks' if nil_next < nil_now - 0.5 else 'holds'}: "
+                  f"about {budget_next} NIL points next year" + (f" ({'up' if nil_next > nil_now else 'down'} from {max(recruiting.NIL_FLOOR, recruiting._five(recruiting.NIL_PER_TIER * nil_now))})." if abs(nil_next - nil_now) > 0.5 else "."))
     if a.get("ultimatum") == year:
         words += " This was the year he gave you." if not v["met"] else " You answered his ultimatum."
     return {"verdict": v, "goal": v["goal"]["text"], "met": v["met"], "record": [res["wins"], res["losses"]], "security": sec,
@@ -1286,11 +1295,46 @@ def _staff_changes(state: dict, poached: list[str]) -> dict:
         if gone:
             leaving.append(s["id"])
             candidates[s["id"]] = _candidates(state, s, rng, taken)
-    for s in staff:                       # the rest grow a little (or slip)
+    marks = _staff_marks(state)
+    for s in staff:                       # the rest move with their unit's year and the class they signed
         if s["id"] not in leaving:
-            s["evaluation"] = int(max(35, min(99, s["evaluation"] + rng.choice((-1, 0, 1, 1, 2)))))
-            s["recruiting"] = int(max(35, min(99, s["recruiting"] + rng.choice((-1, 0, 1, 1, 2)))))
+            m = marks.get(s["role"], 0)
+            s["evaluation"] = int(max(35, min(99, s["evaluation"] + m + rng.choice((-1, 0, 0, 1)))))
+            s["recruiting"] = int(max(35, min(99, s["recruiting"] + marks.get("class", 0) + rng.choice((-1, 0, 0, 1)))))
     return {"leaving": leaving, "candidates": candidates, "hired": {}}
+
+
+STAFF_MARK = 2                   # a top-third offense or defence lifts its coordinator this much a year; a bottom third costs it
+
+
+def _staff_marks(state: dict) -> dict[str, int]:
+    """What the year says about your staff: the offence's scoring and the defence's against the FBS
+    (top third +STAFF_MARK, bottom third -STAFF_MARK), the class rank for every recruiter."""
+    from coach_career import prospects
+    ss = state.get("season_stats") or {}
+    me = state["team"]
+    pts, allowed = [], []
+    for slug, t in ss.items():
+        if slug == "__meta__" or not isinstance(t, dict) or not t.get("games"):
+            continue
+        pts.append((t["points"] / t["games"], slug))
+        allowed.append((t["opp_points"] / t["games"], slug))
+    out = {}
+    if pts:
+        pts.sort(reverse=True)
+        allowed.sort()
+        n = len(pts)
+        rank_o = next((i for i, (_, s) in enumerate(pts) if s == me), None)
+        rank_d = next((i for i, (_, s) in enumerate(allowed) if s == me), None)
+        for role, rank in (("OC", rank_o), ("DC", rank_d)):
+            if rank is not None:
+                out[role] = STAFF_MARK if rank < n / 3 else -STAFF_MARK if rank >= 2 * n / 3 else 0
+    try:
+        cr = prospects.class_rank(state, me)
+        out["class"] = STAFF_MARK if cr and cr <= 25 else -1 if cr and cr > 70 else 0
+    except Exception:  # noqa: BLE001
+        out["class"] = 0
+    return out
 
 
 def _candidates(state: dict, s: dict, rng: random.Random, taken: set) -> list[dict]:

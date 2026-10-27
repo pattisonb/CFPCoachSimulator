@@ -1253,9 +1253,14 @@
         if (!shown.length) continue;
         const table = el("table", { class: "stats" });
         table.append(el("tr", {}, [el("th", { class: "left", text: title === "Blocking" && p.position !== "OL" ? "Playing time" : title }), el("th", { text: "G" }), ...shown.map(([, lbl]) => el("th", { text: lbl }))]));
-        for (const r of rows) {
-          if (!shown.some(([k]) => r.stats && r.stats[k])) continue;
+        const used = rows.filter((r) => shown.some(([k]) => r.stats && r.stats[k]));
+        for (const r of used) {
           table.append(el("tr", { class: r.past ? "" : "now" }, [el("td", { class: `left ${r.past ? "muted" : ""}`, text: r.label }), el("td", { text: String(r.games || 0) }), ...shown.map(([k]) => el("td", { text: r.stats && r.stats[k] != null ? fmtStatValue(r.stats[k]) : "" }))]));
+        }
+        if (used.length > 1) {                              // career: totals, longs as the best
+          const tot = {};
+          for (const r of used) for (const [k] of shown) { const v = (r.stats || {})[k] || 0; tot[k] = /^long_/.test(k) ? Math.max(tot[k] || 0, v) : (tot[k] || 0) + v; }
+          table.append(el("tr", { class: "career" }, [el("td", { class: "left", text: "Career" }), el("td", { text: String(used.reduce((a, r) => a + (r.games || 0), 0)) }), ...shown.map(([k]) => el("td", { text: fmtStatValue(tot[k]) }))]));
         }
         wrap.append(el("div", { class: "table-scroll" }, [table]));
       }

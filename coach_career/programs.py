@@ -28,6 +28,8 @@ NIL_TARGET = {"prestige": 0.55, "winning": 0.30, "market": 0.15}   # the collect
 NIL_PUSH = 6.0                   # the AD's push above (goal met) or below (losing year) that target
 NIL_FLOOR_TIER = 10.0
 COACH_TENURE = 3.0               # coach appeal: overall + this a year of tenure (up to five) - 5
+COACH_TIER_MEAN = {1: 77, 2: 65, 3: 60, 4: 48, 5: 40}   # real 2026 head coaches' overall by tier: what a program of that tier can hire
+COACH_LEAGUE_MEAN = 52           # the real 2026 head coaches' mean overall
 GOALS = {1: ("playoff", 10, "Make the College Football Playoff"), 2: ("wins", 9, "Win nine games"),
          3: ("wins", 8, "Win eight games"), 4: ("wins", 7, "Win seven games and go bowling"), 5: ("wins", 6, "Reach a bowl game")}
 G5_TITLE_FROM = 42.0             # a Group of 5 program rated this high expects to win its conference
@@ -108,8 +110,8 @@ def init(lgd: dict) -> None:
     for slug, t in lgd["teams"].items():
         if "program" not in t:
             p = base(slug)
-            t["program"] = dict(p, market_base=p["market"], nil_base=p["nil"], winning_base=p["winning"], live=0.0, seasons=[],
-                                year=lgd.get("year", 2026) - 1)
+            t["program"] = dict(p, market_base=p["market"], nil_base=p["nil"], winning_base=p["winning"], conference_base=p["conference"],
+                                live=0.0, seasons=[], year=lgd.get("year", 2026) - 1)
 
 
 def get(state: dict, slug: str) -> dict:
@@ -163,6 +165,15 @@ def update(state: dict, results: dict, ranks: dict, year: Optional[int] = None, 
         if bt:
             conf_members.setdefault(bt["conference"], []).append(bt["team_ratings"]["overall"])
     conf_score = {c: scaled(sum(v) / len(v), csc) for c, v in conf_members.items()}
+    conf_start = {}                                                     # the start is the fixed point: a league that plays like 2026 keeps its score
+    for s, t in lgd["teams"].items():
+        bt = teams.get(s)
+        if bt and "conference_base" in t["program"]:
+            conf_start.setdefault(bt["conference"], []).append(t["program"]["conference_base"])
+    if "conference_start" not in lgd:
+        lgd["conference_start"] = {c: round(v, 2) for c, v in conf_score.items()}
+    conf_score = {c: (sum(conf_start[c]) / len(conf_start[c]) if conf_start.get(c) else v) + (v - lgd["conference_start"].get(c, v)) * 0.5
+                  for c, v in conf_score.items()}
     for s, t in lgd["teams"].items():
         if only and s not in only:
             continue
@@ -236,3 +247,13 @@ def attract(state: dict, slug: str) -> float:
     t = ((state.get("league") or {}).get("teams") or {}).get(slug) or {}
     patience = (t.get("ad") or {}).get("patience") or 3
     return p["rating"] + (5 if patience >= 4 else 0)
+
+
+def coach_level(state: dict, slug: str) -> float:
+    """How far above or below the league's mean a coach this program can hire sits (the tier's real mean)."""
+    return COACH_TIER_MEAN[get(state, slug)["tier"]] - COACH_LEAGUE_MEAN
+
+
+def coach_ceiling(state: dict, slug: str) -> float:
+    """A coach rated this far above the program's tier is not interested in the job."""
+    return COACH_TIER_MEAN[get(state, slug)["tier"]] + 12
