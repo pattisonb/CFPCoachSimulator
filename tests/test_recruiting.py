@@ -278,7 +278,7 @@ if __name__ == "__main__":
     assert row["rank"] is not None and row["prev_rank"] is None          # his first list
     listed = prospects.profile(st2, fresh, "ohio-state")["public"]["schools"]
     assert listed and all({"move", "bar", "why"} <= set(x) for x in listed), listed[0]
-    # soft commits: a commitment starts at 40 (60 after a visit), firms up with weekly contact and softens without
+    # verbal commits: a commitment starts at 40 (60 after a visit) and firms up every week, faster with contact
     st3 = season.new_season("ohio-state", "full", seed=8, career=True)
     rc3 = st3["recruiting"]
     a, b = [q for q, p in rc3["prospects"].items() if p["stars"] == 3 and not rc3["status"][q]["committed"]][:2]
@@ -292,7 +292,8 @@ if __name__ == "__main__":
     st3["career"]["settings"]["auto_recruit"] = "off"
     recruiting.weekly_step(st3, 0)
     fa, fb = rc3["status"][a]["firmness"], rc3["status"][b]["firmness"]
-    assert fa >= 40 + 10 - 6 * 3 and fa > 40 - 8 and fb < 60, (fa, fb)       # +10 and +5 (NIL honored) less rivals; -8 without contact
+    # a: +8 for the message and +3 for the NIL held, less rivals; b: the quiet drift (+3) and the NIL, less rivals; neither softens
+    assert 40 + 11 - 6 * 3 <= fa <= 40 + 11 and 60 + 3 - 6 * 3 <= fb <= 60 + 11 and fb > 60 - 18, (fa, fb)
     assert all("firmness" in r for r in prospects.recruiting_view(st3)["board"] if r["committed"] == "ohio-state")
     rc3["status"][a]["firmness"] = 100
     assert recruiting.flip_weekly(st3, a, 50.0) == 0.0 and recruiting.flip_weekly(st3, b, 50.0) > 0.0

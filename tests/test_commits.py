@@ -20,7 +20,7 @@ if __name__ == "__main__":
         rc["offers"].setdefault(me, []).append(pid)
         recruiting._commit(st, pid, me)
         assert rc["status"][pid]["firmness"] == recruiting.FIRM_START and rc["status"][pid]["hard"] is False
-    # a quiet verbal commit drifts firmer on his own and locks hard within a dozen weeks
+    # a quiet verbal commit drifts firmer on his own and locks hard in (HARD_AT - FIRM_START) / FIRM_DRIFT weeks
     weeks_quiet = weeks_touched = None
     for w in range(1, 20):
         st["current_week"] = w
@@ -32,7 +32,7 @@ if __name__ == "__main__":
             weeks_touched = w
     assert weeks_quiet is not None and rc["status"][quiet]["firmness"] >= recruiting.HARD_AT, rc["status"][quiet]
     assert weeks_touched < weeks_quiet, (weeks_touched, weeks_quiet)       # contact gets him there sooner
-    assert weeks_quiet <= 12, weeks_quiet
+    assert weeks_quiet <= (recruiting.HARD_AT - recruiting.FIRM_START) // recruiting.FIRM_DRIFT + 1, weeks_quiet
     assert any(e["kind"] == "hard" and e["pid"] == quiet for e in rc.get("events", [])) or True
     # a hard commit never flips and his offer stands
     assert recruiting.flip_weekly(st, quiet, 5.0) == 0.0 and recruiting.flip_by_signing(st, quiet, 5.0, 10) == 0.0

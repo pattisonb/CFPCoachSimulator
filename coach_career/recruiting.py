@@ -123,8 +123,8 @@ VISIT_BOOST = 1.6                          # after an official visit to the lead
 DECOMMIT_RATE = 0.45                       # weekly chance of a decommitment at an even race *tune*
 # a commitment's firmness, 0-100: it starts soft and firms up only if the school keeps in touch *tune*
 FIRM_START, FIRM_VISIT = 40, 60            # at commitment (after an official visit there)
-FIRM_TOUCH, FIRM_DRIFT = 8, 4              # a week with a message, call or visit from the school / a quiet week (he still warms to you)
-HARD_AT = 85                               # a verbal commit this firm is a hard commit: no flip, no pulled offer, he signs
+FIRM_TOUCH, FIRM_DRIFT = 8, 3              # a week with a message, call or visit from the school / a quiet week (he still warms to you)
+HARD_AT = 90                               # a verbal commit this firm is a hard commit: no flip, no pulled offer, he signs
 FIRM_NIL = 3                               # the NIL promised is still held
 FIRM_RIVAL, FIRM_RIVALS = -6, 3            # per rival in his top three offering more playing time
 FLIP_MARGIN = 4.0                          # a rival's lead that doubles-ish it (logistic) *tune*

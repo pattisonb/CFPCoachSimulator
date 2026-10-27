@@ -877,10 +877,10 @@ an action's weight is read off a season instead of guessed.
 
 **Verbal commits lock into hard commits.** A commitment is verbal at first, with a firmness
 of 0-100: 40 at the commitment (60 after an official visit there). He warms to his school on his
-own, +4 a quiet week, +8 in a week the school messaged, called or hosted him, +3 while the NIL
+own, +3 a quiet week, +8 in a week the school messaged, called or hosted him, +3 while the NIL
 it promised is still held, and -6 per rival in his top three with more playing time to offer (a
 big push from a rival outruns the drift). The weekly flip chance is the usual one (the best
-rival's lead in interest) times (100 - firmness) / 100. At 85 he is a hard commit: he cannot flip,
+rival's lead in interest) times (100 - firmness) / 100. At 90 he is a hard commit: he cannot flip,
 his offer cannot be pulled, and he signs on signing day. The board tags your commits Verbal (with
 the number) or Hard; the needs' firm count is hard commits. You can still let a verbal commit go
 by pulling his offer. Once he commits to you, scouting him stops: his file stays what it was.
