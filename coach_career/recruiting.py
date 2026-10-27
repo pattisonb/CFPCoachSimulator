@@ -273,6 +273,18 @@ def tier_of(p: dict) -> int:
     return p.get("tier") or next(t for at, t in TIER_FROM_OVERALL if p["ovr"] >= at)
 
 
+def _tiers(rc: dict) -> dict[str, int]:
+    """Every prospect's tier, once per class (stars and a transfer's overall are fixed all season)."""
+    key = _ck(rc)
+    cached = _TIERS
+    if cached[0] != key or len(cached[1]) != len(rc["prospects"]):
+        cached = globals()["_TIERS"] = (key, {pid: tier_of(p) for pid, p in rc["prospects"].items()})
+    return cached[1]
+
+
+_TIERS: tuple = (None, {})
+
+
 def _ck(rc: dict):
     """A recruiting block's cache key: its class year, or the portal's own (the two share a year)."""
     return rc.get("cache_key") or rc["year"]
@@ -1146,6 +1158,7 @@ def _fit_all(slug: str, prospects: dict, pool: dict) -> dict[str, float]:
     lat0, lon0 = (math.radians(loc[0]), math.radians(loc[1])) if loc else (None, None)
     cos0 = math.cos(lat0) if loc else 0.0
     out = {}
+    tiers = {pid: tier_of(p) for pid, p in prospects.items()}
     for pid, p in prospects.items():
         home = p["hometown"]["state"]
         if home in shares:
@@ -1156,7 +1169,7 @@ def _fit_all(slug: str, prospects: dict, pool: dict) -> dict[str, float]:
             w = rest_w * REST_NEAR * math.exp(-3958.8 * 2 * math.asin(math.sqrt(h)) / REST_MILES)
         else:
             w = rest_w
-        tier = tier_of(p)
+        tier = tiers[pid]
         if tier >= 4:
             w += reach
         pos = per_class.get(POS_247.get(p["position"], p["position"]), 1.0)
@@ -1208,10 +1221,11 @@ def _build_board(state: dict, slug: str, rng: random.Random, touch: bool = True)
     tm0 = _team_model(slug)
     takes_fives = ((tm0.get("star_share") or {}).get("5*", 0.0) / _national_share(5)) >= 1   # a blue blood takes a five-star anywhere
     pros = rc["prospects"]
+    tiers = _tiers(rc)
     for pid in free:
         p = pros[pid]
         factor = factor_of[p.get("group") or _group_of(p)]
-        if takes_fives and tier_of(p) == 5:
+        if takes_fives and tiers[pid] == 5:
             factor = max(factor, FIVE_STAR_FLOOR)
         f = fits[pid] * factor
         if f > 0:
@@ -1221,12 +1235,14 @@ def _build_board(state: dict, slug: str, rng: random.Random, touch: bool = True)
     # blue-chip programs chase the best four- and five-stars nationally, ahead of the rest
     tm = _team_model(slug)
     n = round(NATIONAL_TARGETS * (tm.get("blue_chip_share") or 0.0)) if (tm.get("blue_chip_share") or 0) >= 0.25 else 0
-    lift = lambda p: (tm.get("star_share") or {}).get(STAR_KEY.get(tier_of(p), "2*"), 0.0) / _national_share(tier_of(p))
+    # the school's star lift at each tier, once (the same expression the per-prospect lambda evaluated)
+    lift_at = {t: (tm.get("star_share") or {}).get(STAR_KEY.get(t, "2*"), 0.0) / _national_share(t) for t in (4, 5)}
     keyed = []
     for pid in free:
-        p = rc["prospects"][pid]
-        if tier_of(p) >= 4 and lift(p) >= 1:
-            weight = lift(p) * math.exp(NATIONAL_TILT * (p["composite"] - 0.9))
+        tier = tiers[pid]
+        if tier >= 4 and lift_at[tier] >= 1:
+            p = pros[pid]
+            weight = lift_at[tier] * math.exp(NATIONAL_TILT * (p["composite"] - 0.9))
             keyed.append((math.log(rng.random() or 1e-12) / weight, pid))
     national = [pid for _, pid in sorted(keyed, reverse=True)[:n]]
     if is_portal(state) and _p4(slug):     # the portal: the best entrants hear from every Power 4 program
