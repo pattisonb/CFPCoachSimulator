@@ -798,7 +798,7 @@
     const covered = new Set(v.staff.map((m) => m.area));
     const grid = el("div", { class: "go-staff rc-staff" });
     for (const m of v.staff) {
-      const sel = el("select", { id: `area-${m.id}`, class: "go-sel" }, v.areas.map((a) => el("option", { value: a, text: `${a} (${v.area_counts[a]})` })));
+      const sel = el("select", { id: `area-${m.id}`, class: "go-sel" }, Object.keys(v.areas).map((a) => el("option", { value: a, text: `${a} (${v.area_counts[a]})` })));
       sel.value = m.area;
       sel.addEventListener("change", async () => {
         try { await H.api(`/api/season/${s.id}/staff`, H.postJSON({ staff_id: m.id, area: sel.value })); H.toast(`${m.name} now scouts ${sel.value}.`, 2500); renderStaff(s, box); }
@@ -815,7 +815,7 @@
       ]));
     }
     box.append(grid);
-    const open = v.areas.filter((a) => !covered.has(a));
+    const open = Object.keys(v.areas).filter((a) => !covered.has(a));
     if (open.length) box.append(el("p", { class: "muted small", text: `Not covered: ${open.map((a) => `${a} (${v.area_counts[a]})`).join(", ")}. Prospects there show public information only.` }));
   }
 

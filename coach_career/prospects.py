@@ -419,7 +419,7 @@ def row(state: dict, pid: str, viewer: str) -> dict:
         "id": pid, "name": p["name"], "stars": p["stars"], "composite": p["composite"], "national_rank": p["rank"],
         "generational": recruiting.is_generational(state, pid), "find": find(state, pid),
         "position": p["position"], "ea_position": p["ea_position"], "archetype": p["archetype"],
-        "height": p["height"], "weight": p["weight"],
+        "height": p["height"], "weight": p["weight"], "home": p["home"],
         "hometown": {"city": p["hometown"]["city"], "state": p["hometown"]["state"]},
         "committed": st["committed"], "signed": st["signed"], "leaning_fcs": bool(st["fcs"]),
         "school_name": "FCS" if school == "FCS" else (teams[school]["name"] if school else None),
@@ -436,6 +436,18 @@ def row(state: dict, pid: str, viewer: str) -> dict:
 
 def _role(playing_time: float) -> str:
     return "Would start" if playing_time >= 0.9 else "Next in line" if playing_time >= 0.5 else "Depth"
+
+
+def _stage_move(state: dict, pid: str, viewer: str) -> Optional[str]:
+    """Which way he moved across the board's columns at the last week step (None: no snapshot, no change)."""
+    snap = (state["recruiting"].get("stages") or {}).get(pid)
+    st = state["recruiting"]["status"][pid]
+    if not snap or snap["week"] < state["current_week"] - 1 or (st["committed"] or st["signed"]) not in (None, viewer):
+        return None
+    if snap["now"] not in recruiting.STAGES or snap["prev"] not in recruiting.STAGES:
+        return None
+    d = recruiting.STAGES.index(snap["now"]) - recruiting.STAGES.index(snap["prev"])
+    return "up" if d > 0 else "down" if d < 0 else None
 
 
 def board_row(state: dict, pid: str, viewer: str) -> dict:
@@ -455,6 +467,7 @@ def board_row(state: dict, pid: str, viewer: str) -> dict:
                need=recruiting.needs(state, viewer)[recruiting._group_of(rc["prospects"][pid])],
                ask=recruiting.ask_view(state, viewer, pid), cooled=recruiting.cooled(state, viewer, pid),
                stage=recruiting.stage(state, viewer, pid), strength=recruiting.strengths(state, viewer, pid),
+               stage_move=_stage_move(state, pid, viewer),
                list=[dict(x, you=x["school"] == viewer) for x in _schools(state, pid)[:5]],
                firmness=rc["status"][pid].get("firmness") if rc["status"][pid]["committed"] == viewer and not rc["status"][pid]["signed"] else None,
                hard=bool(rc["status"][pid].get("hard")) and not rc["status"][pid]["signed"],
@@ -669,7 +682,7 @@ def recruiting_view(state: dict) -> dict:
         "hours_used": recruiting.weekly_hours(state, me) - recruiting._hours(state, me),
         "recap": [dict(e, name=rc["prospects"][e["pid"]]["name"]) for e in recap[-60:]],
         "auto_recruit": recruiting.auto_mode(state),
-        "staff": state["career"].get("staff", []), "areas": list(recruiting.AREAS),
+        "staff": state["career"].get("staff", []), "areas": {a: list(states) for a, states in recruiting.AREAS.items()},
         "area_counts": {a: sum(1 for pid in rc["prospects"] if rc["prospects"][pid]["hometown"]["state"] in states
                                and not rc["status"][pid]["signed"]) for a, states in recruiting.AREAS.items()},
         "pitches": list(recruiting.PITCHES), "hours_cost": recruiting.HOURS,

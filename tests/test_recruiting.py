@@ -298,6 +298,16 @@ if __name__ == "__main__":
     assert row["rank"] is not None and row["prev_rank"] is None          # his first list
     listed = prospects.profile(st2, fresh, "ohio-state")["public"]["schools"]
     assert listed and all({"move", "bar", "why"} <= set(x) for x in listed), listed[0]
+    # the stage snapshot: a prospect who was cold and was called this week moved up at the week step
+    assert recruiting.stage(st2, "ohio-state", fresh) in ("contact", "top", "visited")
+    assert rc2["stages"][fresh]["now"] == recruiting.stage(st2, "ohio-state", fresh)
+    b = prospects.board_row(st2, fresh, "ohio-state")
+    assert b["stage_move"] in ("up", None) and b["home"] == rc2["prospects"][fresh]["home"]
+    v = prospects.recruiting_view(st2)
+    assert v["areas"]["Texas"] == ["TX"] and set(v["areas"]) == set(recruiting.AREAS)
+    # an old save without the snapshot shows no move
+    rc2.pop("stages")
+    assert prospects.board_row(st2, fresh, "ohio-state")["stage_move"] is None
     # verbal commits: a commitment starts at 40 (60 after a visit) and firms up every week, faster with contact
     st3 = season.new_season("ohio-state", "full", seed=8, career=True)
     rc3 = st3["recruiting"]

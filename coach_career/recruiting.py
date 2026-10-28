@@ -977,6 +977,10 @@ def _snapshot_ranks(state: dict, week: int) -> None:
             changed += 1
         ranks[pid] = {"week": week, "now": now, "prev": prev}
     rc.setdefault("leader_changes", {})[str(week)] = changed
+    stages = rc.setdefault("stages", {})          # the viewer's board and offers: which column each prospect sits in
+    me = state["team"]
+    for pid in set(rc["board"]) | set(rc["offers"].get(me, [])):
+        stages[pid] = {"week": week, "now": stage(state, me, pid), "prev": (stages.get(pid) or {}).get("now")}
 
 
 def _report(state: dict, week: int) -> dict:
