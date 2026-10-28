@@ -235,5 +235,12 @@ if __name__ == "__main__":
     rc["status"][two].update(signed="ohio-state", committed="ohio-state")
     held = next(r for r in prospects.class_detail(st, "ohio-state", "ohio-state") if r["id"] == two)["find_held"]
     assert held == (rc["prospects"][two]["truth"]["potential"] >= 80)
+    # a bust call is judged the same way: force a tight low read on a four-star and sign him with you
+    four = next(pid for pid, q in rc["prospects"].items() if q["stars"] == 4 and not q.get("hidden") and pid != two)
+    rc["reads"][four] = {"looks": 3, "by": {"95": 3}, "g": {g: [40.0, 100.0] for g in recruiting.GROUPS}}
+    assert prospects.find(st, four) == "bust"
+    rc["status"][four].update(signed="ohio-state", committed="ohio-state")
+    row4 = next(r for r in prospects.class_detail(st, "ohio-state", "ohio-state") if r["id"] == four)
+    assert row4["find"] == "bust" and row4["find_held"] == (rc["prospects"][four]["truth"]["potential"] < 50)
     print(f"scouting ok: ranges hold the truth {weak:.0%} (40), {avg:.0%} (60), {elite:.0%} (95); "
           f"widths {weak_w:.1f} vs {avg_w:.1f}; hidden {share:.0%}")

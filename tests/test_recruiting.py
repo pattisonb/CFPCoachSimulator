@@ -171,12 +171,14 @@ if __name__ == "__main__":
         r = recruiting.act(st, "ohio-state", q, "pitch", pitch=pri, scene=sc["id"])
         want = recruiting._contact_points(st, "ohio-state", rc["prospects"][q], "call", pri)
     assert r["reaction"]["kind"] == "hit" and pri in rc["revealed"]["ohio-state"][q]
+    assert r["reaction"]["revealed"] == pri, "the reaction names the priority he just told you"
     assert abs(recruiting.pending(st, "ohio-state", q) - want) < 1e-6 and q not in rc["scenes"]["ohio-state"]
     # quiet: a priority where you are weak backfires and logs not_buying; polite: not a priority
     st["current_week"] += 1
     sc = recruiting.act(st, "ohio-state", q, "call")["scene"]
     other = next(t for t in recruiting.PITCHES if t not in rc["prospects"][q]["priorities"])
-    assert recruiting.act(st, "ohio-state", q, "pitch", pitch=other, scene=sc["id"])["reaction"]["kind"] == "polite"
+    r = recruiting.act(st, "ohio-state", q, "pitch", pitch=other, scene=sc["id"])
+    assert r["reaction"]["kind"] == "polite" and r["reaction"]["revealed"] is None
     st["current_week"] += 1
     sc = recruiting.act(st, "ohio-state", q, "call")["scene"]
     pri2 = rc["prospects"][q]["priorities"][-1]
@@ -194,7 +196,7 @@ if __name__ == "__main__":
     recruiting._flush(st, st["current_week"])
     assert not rc["scenes"].get("ohio-state"), "the week step clears open scenes"
     assert abs(rc["lists"][q].get("ohio-state", 0.0) - landed) < 1e-6, "an abandoned scene added no points"
-    assert any(e["kind"] == "hung_up" and e["pid"] == q for e in rc["log"]), "the report notes the call you never finished"
+    assert any(e["kind"] == "hung_up" and e["pid"] == q and e["action"] == "call" for e in rc["log"]), "the report notes the call you never finished"
     # Auto-recruit on clears scenes; the one-shot call with a pitch still works and the CPU coin flip stands
     st["current_week"] += 1
     recruiting.act(st, "ohio-state", q, "call")

@@ -41,7 +41,8 @@
   const loading = (text) => el("p", { class: "muted go-loading", text });
   const SIGNING_WEEK = 16, FINAL_WEEK = 20;       // the early signing period (selection week) and national signing day
   const WORDS = { commit: "verbally committed to", hard: "is now a hard commit to", flip: "flipped to", decommit: "decommitted from", signed: "signed with", offer: "was offered by",
-                  asked_more: "wants more from", not_buying: "isn't buying the pitch from", hung_up: "left a call unfinished with" };
+                  asked_more: "wants more from", not_buying: "isn't buying the pitch from", hung_up: "has an unfinished call from" };
+  const eventWord = (e) => (e.kind === "hung_up" && e.action === "hc_visit" ? "has an unfinished visit from" : WORDS[e.kind] || e.kind);
   const WHY = { message: "Message", call: "Call", hc_visit: "HC visit", official_visit: "Official visit", offer: "Offer", raise_nil: "NIL raised" };
   const LINE_LABELS = { pass_yards: "pass yds", passing_touchdowns: "TD", interceptions_thrown: "INT", rush_yards: "rush yds", carries: "car", rushing_touchdowns: "TD",
     receptions: "rec", receiving_yards: "rec yds", receiving_touchdowns: "TD", snaps: "snaps", tackles: "tkl", sacks: "sacks", tackles_for_loss: "TFL",
@@ -66,7 +67,7 @@
       if (r.rank == null) bits.push("Not on his list");
       else if (r.prev_rank != null && r.prev_rank !== r.rank) bits.push(`${r.prev_rank > r.rank ? "Up" : "Down"} to #${r.rank} of ${r.of}${r.rank === 1 ? "" : r.leader ? ` · ${r.leader.name} leads` : ""}`);
       else bits.push(r.rank === 1 ? "You lead" : `#${r.rank} of ${r.of}${r.leader ? ` · ${r.leader.name} leads` : ""}`);
-      for (const e of r.events.filter((e) => BIG.has(e.kind)).slice(0, 2)) bits.push(`${WORDS[e.kind] || e.kind} ${e.school_name || ""}`.trim());
+      for (const e of r.events.filter((e) => BIG.has(e.kind)).slice(0, 2)) bits.push(`${eventWord(e)} ${e.school_name || ""}`.trim());
       return el("li", {}, [el("button", { type: "button", class: "go-link", text: r.name, onclick: () => openProfile(s, r.pid) }), el("span", { class: "muted small", text: ` ${r.position} ${stars(r.stars)} · ` }), el("span", { text: bits.join(" · ") })]);
     })));
     if (rows.length > 6) card.append(el("p", { class: "muted small", text: `${rows.length - 6} more moved: see his list on the board.` }));
@@ -164,7 +165,7 @@
   }
   function stat(k, val) { return el("div", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: k }), el("div", { class: "go-stat-val", text: val })]); }
   function newsItem(s, e) {
-    return el("li", {}, [el("button", { type: "button", class: "go-link", text: e.name, onclick: () => openProfile(s, e.pid) }), ` ${WORDS[e.kind] || e.kind} ${teamName(e.school)}`]);
+    return el("li", {}, [el("button", { type: "button", class: "go-link", text: e.name, onclick: () => openProfile(s, e.pid) }), ` ${eventWord(e)} ${teamName(e.school)}`]);
   }
 
   // ----- the Office ------------------------------------------------------------------------------
@@ -663,6 +664,7 @@
           b.scene = null;
           view.scene = null;
           view.reaction = { pid: b.id, r: re };
+          if (re.revealed && !b.priorities_known.includes(re.revealed)) b.priorities_known.push(re.revealed);   // he told you: known now, not at the re-fetch
           repaint(b);
           const rv = box.querySelector(".go-pane .go-reaction");
           if (rv) rv.focus({ preventScroll: true });
@@ -797,7 +799,7 @@
         }
       }
       const askText = b.ask ? (b.ask.exact != null ? `wants ${b.ask.exact}` : `wants about ${b.ask.lo}–${b.ask.hi} (a visit gets his number)`) : "";
-      if (!b.offered && !b.committed && !b.signed) {
+      if (!b.offered && !b.signed && !b.hard) {      // a verbal commit elsewhere can still be offered to try for a flip
         const start = b.ask ? (b.ask.exact != null ? b.ask.exact : b.ask.lo) : 0;
         const nil = el("input", { type: "number", min: "0", step: "5", value: String(start), class: "go-nil", id: `nil-${b.id}` });
         const offer = el("button", { type: "button", class: "go-btn primary", text: "Offer", title: ACT_TIPS.offer });
@@ -1131,7 +1133,8 @@
         el("button", { type: "button", class: "go-link", text: r.name, onclick: () => openProfile(s, r.id) }),
         el("span", { class: "muted small", text: ` ${"★".repeat(r.stars)} ${r.position} · #${r.national_rank} · ${place(r.hometown)}${r.signed ? " · signed" : ""}` }),
         r.generational ? genBadge() : null,
-        r.find_held === true ? el("span", { class: "go-badge gem-held", text: "Gem: the read held", title: "Your staff called him a gem and he is one" })
+        r.find_held === true && r.find === "bust" ? el("span", { class: "go-badge bust-held", text: "Bust risk: the read held", title: "Your staff called him a bust risk and he is one" })
+          : r.find_held === true ? el("span", { class: "go-badge gem-held", text: "Gem: the read held", title: "Your staff called him a gem and he is one" })
           : r.find_held === false ? el("span", { class: "go-badge gem-missed", text: "The read was off", title: "Your staff's read on him did not hold up" }) : null]))));
       list.append(li);
     }

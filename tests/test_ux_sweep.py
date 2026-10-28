@@ -48,8 +48,9 @@ if __name__ == "__main__":
     finished(done)
     # one prospect past the signed classes holds a verbal commit elsewhere, so the board can show a lost card's flip odds
     rc = done["recruiting"]
-    verbal_pid = next(q for q in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"]) if not rc["status"][q]["signed"])
-    rc["status"][verbal_pid]["committed"] = "georgia"
+    verbal_pid = next(q for q in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"])
+                      if not rc["status"][q]["signed"] and q not in rc["offers"].get("ohio-state", []))
+    rc["status"][verbal_pid].update(committed="georgia", hard=False)
     season.save_season(done)
     port = free_port()
     base = f"http://127.0.0.1:{port}"
@@ -237,6 +238,11 @@ if __name__ == "__main__":
             assert lost and re.search(r"flip|Signed|commit", lost.inner_text()), "a prospect lost to another school sits in Committed and says so"
             verbal = page.evaluate("() => [...document.querySelectorAll('.go-col.committed .go-pcard.lost')].map(c => c.innerText).filter(t => /Verbal commit/.test(t))")
             assert verbal and all("flip" in t for t in verbal), f"a verbal commit elsewhere shows his flip odds: {verbal}"
+            # picking him puts an Offer in the pane: a verbal commit elsewhere can still be offered to try for a flip
+            page.click(f".go-pcard[data-pid='{verbal_pid}'] .go-pcard-top")
+            page.wait_for_selector(".go-pane .go-btn.primary:text-is('Offer')", timeout=10_000)
+            assert page.is_enabled(".go-pane .go-btn.primary:text-is('Offer')"), "the Offer for a verbal commit elsewhere is live"
+            assert page.query_selector(".go-pane input.go-nil"), "the offer carries its NIL input"
             mine = last.query_selector(".go-pcard.mine")
             assert mine and not mine.query_selector(".go-act"), "a prospect committed to you has no recruiting actions"
 
@@ -245,9 +251,10 @@ if __name__ == "__main__":
             page.click(".go-class.yours .go-class-main")
             page.wait_for_selector(".go-class-list li", timeout=60_000)
             odd = page.evaluate("""() => [...document.querySelectorAll('.go-class-list li')].filter(li => {
-                const b = li.querySelector('.go-badge'); return b && !b.matches('.generational, .gem-held, .gem-missed'); }).length""")
+                const b = li.querySelector('.go-badge'); return b && !b.matches('.generational, .gem-held, .bust-held, .gem-missed'); }).length""")
             assert odd == 0, f"{odd} class rows carry a badge that is not generational, held or missed"
-            for sel, txt in ((".go-class-list .go-badge.gem-held", "Gem: the read held"), (".go-class-list .go-badge.gem-missed", "The read was off")):
+            for sel, txt in ((".go-class-list .go-badge.gem-held", "Gem: the read held"), (".go-class-list .go-badge.bust-held", "Bust risk: the read held"),
+                             (".go-class-list .go-badge.gem-missed", "The read was off")):
                 for t in page.eval_on_selector_all(sel, "els => els.map(e => e.textContent.trim())"):
                     assert t == txt, f"{sel} reads {t!r}"
             gen = None
@@ -265,13 +272,11 @@ if __name__ == "__main__":
                 page.fill("input[aria-label='Search by name']", gen["name"])
                 page.wait_for_selector(".go-list-row .go-badge.generational", timeout=60_000)
                 assert page.text_content(".go-list-row .go-badge.generational >> nth=0").strip() == "Generational"
-                print("ux sweep: generational branch ran on", gen["name"])
             else:
                 open_tab(page, base, A, "prospects", ".go-list-row")
                 page.select_option("select[aria-label=Stars]", "5")
                 time.sleep(1.5)
                 assert page.query_selector(".go-list-row .go-badge.generational") is None, "no generational prospect exists, so no badge"
-                print("ux sweep: no generational prospect in either career; asserted no badge")
 
             # --- Staff: the area picker looks like a picker
             open_tab(page, base, A, "staff", ".rc-staff-card select")

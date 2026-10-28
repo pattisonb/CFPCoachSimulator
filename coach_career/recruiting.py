@@ -927,10 +927,10 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
     rc = state["recruiting"]
     if action == "pitch":
         sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
-        _act(state, slug, pid, action, pitch, nil, scene=scene)
+        revealed = _act(state, slug, pid, action, pitch, nil, scene=scene)
         from coach_career import scenes
         return {"hours_left": rc["hours"][slug],
-                "reaction": scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid])}
+                "reaction": {**scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid]), "revealed": revealed}}
     opens = slug == state.get("team") and action in SCENES and pitch is None
     revealed = _act(state, slug, pid, action, pitch, nil, opens=opens)
     out = {"hours_left": rc["hours"][slug], "revealed": revealed}
@@ -981,8 +981,8 @@ def _flush(state: dict, week: int) -> None:
     rc["pending"], rc["why_week"] = {}, {}
     if rc.get("scenes"):                       # a call or visit you never finished: no points, a line in the report
         me = state.get("team")
-        for pid in (rc["scenes"].get(me) or {}):
-            _event(state, "hung_up", pid, me)
+        for pid, sc in (rc["scenes"].get(me) or {}).items():
+            _event(state, "hung_up", pid, me, action=sc["action"])
         rc["scenes"] = {}
 
 
@@ -1154,7 +1154,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
     elif action == "pitch":                        # your scene's pitch: the stored call or visit's points, as the one-shot rule
         sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
         if sc is None or scene is None or sc["id"] != scene:
-            raise RecruitingError(409, "no open call with him")
+            raise RecruitingError(409, "no open call or visit with him")
         if pitch is None:
             raise RecruitingError(400, "a pitch: what you are selling him")
         if pitch in p["priorities"]:                  # he tells you plainly when it is one of his
@@ -1165,7 +1165,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         del rc["scenes"][slug][pid]
         if points:                                    # the points are the call's or the visit's; its hours went when it opened
             _add_points(state, slug, pid, points * scale, sc["action"])
-        return None
+        return pitch if pitch in p["priorities"] else None      # a hit or a quiet one tells you his priority
     elif action == "scout":                        # a scouting trip: your best evaluator's look, no contact with him
         contact["scouted"] = contact.get("scouted", 0) + 1
         staff = (state.get("career") or {}).get("staff") or []
