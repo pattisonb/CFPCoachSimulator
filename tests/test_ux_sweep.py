@@ -198,15 +198,32 @@ if __name__ == "__main__":
             kind = page.get_attribute(".go-pane .go-reaction", "data-kind")
             assert kind in ("hit", "polite", "quiet"), kind
             assert page.query_selector(".go-pcard.selected .go-tag:has-text('Heard')"), "the card keeps what you heard this week"
-            # an abandoned scene resumes from the card
-            page.click(".go-col[data-col='cold'] .go-pcard .go-pcard-top >> nth=0")
+            toast = page.inner_text("#toast")
+            assert toast.startswith(("He lit up:", "He was polite and moved on", "He went quiet:")), toast
+            time.sleep(5)   # the reaction stays four seconds, then the board re-fetches
+            assert not page.query_selector(".go-pane .go-reaction"), "the board re-renders after his reaction"
+            assert page.query_selector(".go-pcard.selected .go-tag:has-text('Heard')"), "the Heard tag survives the re-render"
+            # an abandoned scene resumes from the card: the second Cold card, a fresh call
+            second = page.get_attribute(".go-col[data-col='cold'] .go-pcard >> nth=1", "data-pid")
+            page.click(f".go-pcard[data-pid='{second}'] .go-pcard-top")
             time.sleep(0.6)
-            if page.query_selector(".go-pane .go-act:has-text('Call'):not(:disabled)"):
-                page.click(".go-pane .go-act:has-text('Call')")
-                page.wait_for_selector(".go-pane .go-scene", timeout=30_000)
-                page.click(".go-pane .go-scene a:has-text('Hang up')")
-                time.sleep(0.5)
-                assert page.query_selector(".go-pcard.selected button:has-text('Finish the call')")
+            page.click(".go-pane .go-act:has-text('Call')")
+            page.wait_for_selector(".go-pane .go-scene .go-scene-line.cue", timeout=30_000)
+            assert page.query_selector(".go-pane .go-act:disabled[title*='Finish']"), "the other actions wait, and say why"
+            offer = page.query_selector(".go-pane button.go-btn:text-is('Offer')")
+            assert offer is None or offer.is_disabled(), "no offer goes out mid-call"
+            page.click(".go-pane .go-scene button:has-text('Hang up')")
+            time.sleep(0.5)
+            assert not page.query_selector(".go-pane .go-scene"), "hanging up closes the scene view"
+            assert page.query_selector(f".go-pcard.selected[data-pid='{second}'] button:has-text('Finish the call')"), "the card resumes the call"
+            assert page.query_selector(f".go-pcard.selected[data-pid='{second}'] .go-tag:has-text('Heard')"), "the card shows what he said"
+            page.click(f".go-pcard[data-pid='{second}'] button:has-text('Finish the call')")
+            page.wait_for_selector(".go-pane .go-scene .go-scene-line.cue", timeout=10_000)
+            page.click(".go-pane button:has-text('Pitch')")
+            page.wait_for_selector(".go-pane .go-reaction", timeout=30_000)
+            assert not page.query_selector(f".go-pcard[data-pid='{second}'] button:has-text('Finish the call')"), "a finished call leaves the card"
+            time.sleep(4.5)
+            assert not errors, errors
 
             # --- The finished career's board: the Committed column holds yours (no actions) and the ones you lost
             signed = call(base, f"/api/season/{B}/prospects?status=signed&limit=200")["rows"]

@@ -1198,7 +1198,7 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-scene-line.cue { border: 2px solid var(--go-primary, var(--accent)); font-weight: 600; }
 .go-scene .go-pitch { background: var(--panel); }
 .go-scene-acts { align-items: center; gap: 14px; }
-.go-hangup { font-weight: 500; color: var(--muted); }
+.go-hangup { font-weight: 500; color: var(--muted); min-height: 44px; padding: 0 4px; }
 .go-reaction { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--border); background: var(--panel-2); }
 .go-reaction p { margin: 0; }
 .go-reaction-line { color: var(--text); line-height: 1.35; }

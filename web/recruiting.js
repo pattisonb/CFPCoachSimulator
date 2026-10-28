@@ -129,22 +129,23 @@
     if (nil) body.nil = nil;
     if (opts.scene) body.scene = opts.scene;
     const names = { message: "Message", call: "Call", hc_visit: "Head coach visit", official_visit: "Official visit invite", offer: "Offer", pull_offer: "Offer pulled", raise_nil: "NIL raised", scout: "Scouting trip" };
-    try {
-      const r = await H.api(`/api/season/${s.id}/recruit`, H.postJSON(body));
-      H.backupSoon();
-      if (r.scene) { if (opts.onScene) opts.onScene(r.scene); else H.toast(`${names[action]} open · finish it from his card on the board`, 3000); }
-      else if (r.reaction) { H.toast(REACTION_TOAST[r.reaction.kind](pitch), 4000); if (opts.onReaction) opts.onReaction(r.reaction); }
-      else if (action === "scout") H.toast(`Scouting trip done · ${r.hours_left} hours left · his grades are updated`, 3000);
-      else H.toast(`${names[action]} done · ${r.hours_left} hours left${r.revealed ? ` · he cares about ${PITCH_NAMES[r.revealed].toLowerCase()}` : action === "call" ? " · he kept his cards close" : ""} · it lands at the week step`, 3000);
-      return r;
-    } catch (err) {
+    let r;
+    try { r = await H.api(`/api/season/${s.id}/recruit`, H.postJSON(body)); }
+    catch (err) {
       H.toast(`Could not do that: ${H.errText(err)}`, 4000);
       return null;
     }
+    // the action went through: what the page does with it is not a failed action
+    H.backupSoon();
+    if (r.scene) { if (opts.onScene) opts.onScene(r.scene); else H.toast(`${names[action]} open · finish it from his card on the board`, 3000); }
+    else if (r.reaction) { H.toast((REACTION_TOAST[r.reaction.kind] || REACTION_TOAST.polite)(pitch), 4000); if (opts.onReaction) opts.onReaction(r.reaction); }
+    else if (action === "scout") H.toast(`Scouting trip done · ${r.hours_left} hours left · his grades are updated`, 3000);
+    else H.toast(`${names[action]} done · ${r.hours_left} hours left${r.revealed ? ` · he cares about ${PITCH_NAMES[r.revealed].toLowerCase()}` : action === "call" ? " · he kept his cards close" : ""} · it lands at the week step`, 3000);
+    return r;
   }
   // his reaction to your pitch, in his words, in the tone of how it landed
   function reactionView(r) {
-    return el("div", { class: `go-reaction ${r.kind}`, "data-kind": r.kind, role: "status" }, [
+    return el("div", { class: `go-reaction ${r.kind}`, "data-kind": r.kind, role: "status", tabindex: "-1" }, [
       el("div", { class: "go-kicker", text: (REACTION_WORDS[r.kind] || r.kind).toUpperCase() }),
       el("p", { class: "go-reaction-line", text: r.text }),
       el("p", { class: "muted small", text: "It counts at the week step." })]);
@@ -657,19 +658,23 @@
         if (!chosen) { H.toast("Pick a pitch first: what you are selling him.", 3000); return; }
         go.disabled = true;
         const r = await act(s, b.id, "pitch", chosen, null, { scene: scene.id, onReaction: (re) => {
-          view.heard[b.id] = { week: s.current_week, topics: scene.cue.topics };
+          view.heard[`${s.id}:${b.id}`] = { week: s.current_week, topics: scene.cue.topics };
           b.scene = null;
           view.scene = null;
           view.reaction = { pid: b.id, r: re };
           repaint(b);
-          // his reaction stays a moment, then the board catches up
-          setTimeout(() => { if (view.reaction && view.reaction.r === re) view.reaction = null; if (box.isConnected) renderRecruiting(s, box); }, 4000);
+          const rv = box.querySelector(".go-pane .go-reaction");
+          if (rv) rv.focus({ preventScroll: true });
+          // his reaction stays a moment, then the board catches up (unless the board has moved on: another career, a new week, another tab)
+          setTimeout(() => {
+            if (view.reaction && view.reaction.r === re) view.reaction = null;
+            if (boardAt && boardAt.box === box && boardAt.s.id === s.id && boardAt.s.current_week === s.current_week && box.offsetParent) renderRecruiting(s, box);
+          }, 4000);
         } });
         if (!r) { view.scene = null; renderRecruiting(s, box); }     // a stale call (the week moved on): the board shows where things stand
       });
-      const hang = el("a", { href: "#", class: "go-link go-hangup", role: "button", text: "Hang up",
-        onclick: (e) => {
-          e.preventDefault();
+      const hang = el("button", { type: "button", class: "go-link go-hangup", text: "Hang up",
+        onclick: () => {
           view.scene = null;
           repaint(b);
           const f = box.querySelector(".go-pane .go-scene-open button");
@@ -718,7 +723,7 @@
       c.append(el("div", { class: "go-pcard-read small" }, b.our_grades && b.our_grades.potential
         ? [el("span", { class: "muted", text: "Potential " }), ...wordRange(b.our_grades.potential)] : [el("span", { class: "muted", text: "Not scouted" })]));
       const tags = badges(b, me);
-      const hw = view.heard[b.id];
+      const hw = view.heard[`${s.id}:${b.id}`];
       const heard = b.scene ? b.scene.cue.topics : hw && hw.week === s.current_week ? hw.topics : null;
       if (heard && heard.length) {
         const box2 = tags || el("div", { class: "go-tags go-badges" });
@@ -759,6 +764,10 @@
       if (b.portal && b.line) p.append(el("div", { class: "muted small", text: lineText(b.line) }));
       if (b.our_grades) p.append(scoutLine(b.our_grades, b.looks));
       p.append(el("div", { class: "go-kicker muted", text: "HIS LIST" }), race(b, me));
+      // a call or visit still open: it comes first, every other move waits
+      const busy = open && b.scene ? (b.scene.action === "hc_visit" ? "visit" : "call") : null;
+      const waitTip = busy ? `Finish your ${busy} with him first: pick a pitch` : null;
+      const hold = (btn) => { if (busy) { btn.disabled = true; btn.title = waitTip; } return btn; };
       if (open) {
         const hcWait = b.hc_week != null && s.current_week - b.hc_week < 4;
         const done = b.done_this_week || [];
@@ -766,15 +775,13 @@
         const acts = [["message", "Message", 5, done.includes("message") && "week"], ["call", "Call", 15, done.includes("call") && "week"],
           ["hc_visit", "HC visit", 30, hcWait && "month"], ["scout", trips ? `Scout ${trips}/3` : "Scout", 5, trips >= 3 && "scouted"]];
         if (b.offered && !b.visit) acts.push(["official_visit", v.portal ? "Campus visit" : "Visit", 10, !["top", "visited"].includes(b.stage) && "group", "alt"]);
-        // a call or visit still open: it comes first, the rest waits
-        const busy = b.scene ? (b.scene.action === "hc_visit" ? "visit" : "call") : null;
         if (busy && !shown) p.append(el("div", { class: "go-row wrap go-scene-open" }, [el("span", { class: "small", text: `Your ${busy} with him is still open: he is waiting on your pitch.` }),
           el("button", { type: "button", class: "go-btn primary", text: busy === "visit" ? "Finish the visit" : "Finish the call", onclick: () => openScene(s, b, b.scene) })]));
         p.append(el("div", { class: "go-actions" }, acts.map(([a, name, cost, off0, tone]) => {
           const off = busy ? "scene" : off0;
           const short = cost > v.hours_left;
           const btn = el("button", { type: "button", class: `go-act ${tone || ""}`, "aria-label": `${name} ${b.name}`,
-            title: off === "scene" ? `Finish your ${busy} with him first: pick a pitch` : off === "month" ? "The head coach visits once every 4 weeks" : off === "week" ? "Once a week: more contact is not more interest"
+            title: off === "scene" ? waitTip : off === "month" ? "The head coach visits once every 4 weeks" : off === "week" ? "Once a week: more contact is not more interest"
               : off === "scouted" ? "Your staff have scouted him three times; his area scout keeps looking"
               : off === "group" ? "He is not considering you yet: get into his top group first" : short ? `Needs ${cost} hours; ${v.hours_left} left this week` : ACT_TIPS[a] },
             [el("b", { text: name }), el("span", { text: off === "scene" ? `in a ${busy}` : off === "month" ? "monthly" : off === "week" ? "done" : off === "scouted" ? "done" : off === "group" ? "not yet" : `${cost}h` })]);
@@ -794,16 +801,18 @@
         const nil = el("input", { type: "number", min: "0", step: "5", value: String(start), class: "go-nil", id: `nil-${b.id}` });
         const offer = el("button", { type: "button", class: "go-btn primary", text: "Offer", title: ACT_TIPS.offer });
         offer.addEventListener("click", () => run(b, "offer", Number(nil.value) || 0));
+        hold(offer);
         p.append(el("div", { class: "go-row wrap" }, [el("label", { for: `nil-${b.id}`, class: "small", text: `NIL points · ${askText || "no ask known"}` }), nil, offer]),
-          el("p", { class: "muted small", text: "An offer costs no hours. Under half of what he wants reads as a lowball: he cools on you for three weeks. The offer goes out with the pitch above." }));
+          el("p", { class: "muted small", text: `An offer costs no hours. Under half of what he wants reads as a lowball: he cools on you for three weeks. ${busy ? `Finish your ${busy} first; then the offer goes out with the pitch you pick on the pane.` : "The offer goes out with the pitch above."}` }));
       } else if (b.offered && open) {
         const nil = el("input", { type: "number", min: String((b.nil || 0) + 5), step: "5", value: String(Math.max((b.nil || 0) + 5, b.ask && b.ask.exact != null ? b.ask.exact : 0)), class: "go-nil", id: `raise-${b.id}` });
         const raise = el("button", { type: "button", class: "go-btn", text: "Raise NIL", title: "Raising costs no hours, only NIL points" });
         raise.addEventListener("click", () => run(b, "raise_nil", Number(nil.value) || 0));
+        hold(raise);
         p.append(el("div", { class: "go-row wrap" }, [el("label", { for: `raise-${b.id}`, class: "small", text: `Your offer: ${b.nil || 0} NIL · ${askText}` }), nil, raise]));
       }
       const tools = el("div", { class: "go-row wrap" }, [el("button", { type: "button", class: "go-btn", text: "Full profile", onclick: () => openProfile(s, b.id) })]);
-      if (b.offered && !b.signed) tools.append(el("button", { type: "button", class: "go-btn", text: "Pull offer", onclick: () => run(b, "pull_offer") }));
+      if (b.offered && !b.signed) tools.append(hold(el("button", { type: "button", class: "go-btn", text: "Pull offer", onclick: () => run(b, "pull_offer") })));
       tools.append(el("button", { type: "button", class: "go-btn", text: "Off the board", onclick: async () => { if (await setBoard(s, b.id, false)) { view.selected = null; view.sheet = false; renderRecruiting(s, box); } } }));
       p.append(tools);
       return p;
