@@ -955,8 +955,8 @@ recruiters each cover one of nine areas; every week each prospect in a covered a
 look. A look sees each grade (athleticism, size and strength, technique, football IQ,
 potential, coachability) with error `16 * (1 - s) + 4` points, `s = rating / 99`, and its own confidence strays a little (more for a weak
 evaluator, who is sometimes sure and wrong). The read is the confidence-weighted mean, shown
-as a range of words that narrows with looks. Over 500 prospects after four looks the range
-holds the true word 68% of the time for an evaluator rated 40, 81% at 60 and 92% at 95.
+as a range of words that narrows with looks. Over 500 prospects after four looks the word range
+holds the true word 74% of the time for an evaluator rated 40, 83% at 60 and 86% at 95.
 Grades are on the game's scale, the same numbers as the player cards: a grade is the average
 of the card attributes behind it (athleticism: Top Speed, Burst, Agility, Leaping; size and
 strength: Strength, Stamina, Durability; football IQ; technique: the first four skills of his

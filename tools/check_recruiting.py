@@ -119,6 +119,8 @@ def measure(state: dict) -> dict:
         "top300_decommits": sum(1 for pid in top300 if pid in decommitted) / len(top300),
         "top100_top25": sum(1 for pid, s_ in top100 if s_ in top25) / max(1, len(top100)),
         "fcs_share": sum(1 for s in rc["status"].values() if s["signed"] == "FCS") / len(rc["status"]),
+        "generational": len(rc.get("generational") or []),
+        "generational_top25": sum(1 for pid in (rc.get("generational") or []) if rc["status"][pid]["signed"] in top25),
     }
 
 
@@ -129,6 +131,7 @@ def report(m: dict) -> list[str]:
         ok = lo <= m[key] <= hi
         out.append(f"{'  ' if ok else '! '}{key:18s} {m[key]:8.3f}   want {lo}-{hi}" + (f" (real {real})" if real is not None else ""))
     out.append(f"  {'fcs_share':18s} {m['fcs_share']:8.3f}")
+    out.append(f"  generational {m['generational']} (signed with top-25 classes: {m['generational_top25']} of {m['generational']})")
     # the weight of each action: mean interest points one earns (pitches, strengths, cooling and diminishing returns in)
     out.append("  interest a go by action: " + ", ".join(f"{a} {v}" for a, v in sorted((m.get("actions") or {}).items(), key=lambda kv: -kv[1]))
                + f"; a week's leader changes {m.get('leader_changes_per_week', 0)} prospects")

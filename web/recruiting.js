@@ -393,9 +393,10 @@
   const columnOf = (b) => (b.committed || b.signed ? "committed" : COLUMN_TIPS[b.stage] ? b.stage : "cold");
 
   // what stands out about him, as small tags: the staff's finds, then today's need, offer, mood and commitment
+  const genBadge = () => el("span", { class: "go-badge generational", text: "Generational", title: "A once-in-a-generation talent: every program in the country wants him" });
   function badges(b, me) {
     const out = el("div", { class: "go-tags go-badges" });
-    if (b.generational) out.append(el("span", { class: "go-badge generational", text: "Generational", title: "A once-in-a-generation talent: every program in the country wants him" }));
+    if (b.generational) out.append(genBadge());
     if (b.find === "gem") out.append(el("span", { class: "go-badge gem", text: "Gem", title: "Your staff's find: his potential reads Elite even at the low end, and few programs rate him that high" }));
     if (b.find === "bust") out.append(el("span", { class: "go-badge bust", text: "Bust risk", title: "Your staff's find: his ranking is high but even the top of their read is below Solid" }));
     if (b.need != null && !b.signed && b.committed !== me) out.append(el("span", { class: `go-tag ${b.need > 0 ? "good" : "muted"}`, text: b.need > 0 ? `Need ${b.need}` : "Full",
@@ -1123,13 +1124,13 @@
         el("span", { class: "go-class-count", text: `${c.count}` }),
         el("span", { class: "muted small go-class-stars", text: starLine(c.stars) }),
         el("span", { class: "muted small go-class-top" }, c.top.flatMap((t, i) => [i ? " · " : "", `${t.name} ${"★".repeat(t.stars)}`,
-          t.generational ? el("span", { class: "go-badge generational", text: "Generational", title: "A once-in-a-generation talent" }) : null])),
+          t.generational ? genBadge() : null])),
       ]);
       const li = el("li", { class: `go-list-row go-class ${c.yours ? "yours" : ""}` }, [head]);
       if (open && d.class) li.append(el("ul", { class: "go-class-list" }, d.class.map((r) => el("li", {}, [
         el("button", { type: "button", class: "go-link", text: r.name, onclick: () => openProfile(s, r.id) }),
         el("span", { class: "muted small", text: ` ${"★".repeat(r.stars)} ${r.position} · #${r.national_rank} · ${place(r.hometown)}${r.signed ? " · signed" : ""}` }),
-        r.generational ? el("span", { class: "go-badge generational", text: "Generational", title: "A once-in-a-generation talent" }) : null,
+        r.generational ? genBadge() : null,
         r.find_held === true ? el("span", { class: "go-badge gem-held", text: "Gem: the read held", title: "Your staff called him a gem and he is one" })
           : r.find_held === false ? el("span", { class: "go-badge gem-missed", text: "The read was off", title: "Your staff's read on him did not hold up" }) : null]))));
       list.append(li);

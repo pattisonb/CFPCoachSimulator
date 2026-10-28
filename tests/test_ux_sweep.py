@@ -247,12 +247,31 @@ if __name__ == "__main__":
             odd = page.evaluate("""() => [...document.querySelectorAll('.go-class-list li')].filter(li => {
                 const b = li.querySelector('.go-badge'); return b && !b.matches('.generational, .gem-held, .gem-missed'); }).length""")
             assert odd == 0, f"{odd} class rows carry a badge that is not generational, held or missed"
-            five = call(base, f"/api/season/{A}/prospects?stars=5&limit=50")["rows"]
-            if any(r.get("generational") for r in five):
-                open_tab(page, base, A, "prospects", ".go-list-row")
-                page.select_option("select[aria-label=Stars]", "5")
+            for sel, txt in ((".go-class-list .go-badge.gem-held", "Gem: the read held"), (".go-class-list .go-badge.gem-missed", "The read was off")):
+                for t in page.eval_on_selector_all(sel, "els => els.map(e => e.textContent.trim())"):
+                    assert t == txt, f"{sel} reads {t!r}"
+            gen = None
+            for sid in (A, B):
+                for stars_, size in ((5, 200), (4, 500)):
+                    rows = call(base, f"/api/season/{sid}/prospects?stars={stars_}&limit={size}")["rows"]
+                    gen = next((r for r in rows if r.get("generational")), None)
+                    if gen:
+                        break
+                if gen:
+                    break
+            if gen:
+                open_tab(page, base, sid, "prospects", ".go-list-row")
+                page.select_option("select[aria-label=Stars]", str(gen["stars"]))
+                page.fill("input[aria-label='Search by name']", gen["name"])
                 page.wait_for_selector(".go-list-row .go-badge.generational", timeout=60_000)
                 assert page.text_content(".go-list-row .go-badge.generational >> nth=0").strip() == "Generational"
+                print("ux sweep: generational branch ran on", gen["name"])
+            else:
+                open_tab(page, base, A, "prospects", ".go-list-row")
+                page.select_option("select[aria-label=Stars]", "5")
+                time.sleep(1.5)
+                assert page.query_selector(".go-list-row .go-badge.generational") is None, "no generational prospect exists, so no badge"
+                print("ux sweep: no generational prospect in either career; asserted no badge")
 
             # --- Staff: the area picker looks like a picker
             open_tab(page, base, A, "staff", ".rc-staff-card select")
