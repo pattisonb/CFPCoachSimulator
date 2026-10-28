@@ -153,6 +153,12 @@ if __name__ == "__main__":
 
             # --- The footprint map: a dot per board prospect, 51 states, a state tap filters, a table alternative, hidden on a tiny screen
             open_tab(page, base, A, "recruiting", ".go-col")
+            # the map is closed until you open it: one slim row with a toggle that says what it does
+            assert page.evaluate("() => document.querySelector('.go-map-body').hidden"), "the map starts closed"
+            assert "Show" in page.inner_text(".go-map .go-map-toggle") and page.get_attribute(".go-map .go-map-toggle", "aria-expanded") == "false"
+            assert page.evaluate("() => document.querySelector('.go-map').getBoundingClientRect().height") < 90, "closed, the map card is one slim row"
+            page.click(".go-map .go-map-toggle")
+            assert not page.evaluate("() => document.querySelector('.go-map-body').hidden") and "Hide" in page.inner_text(".go-map .go-map-toggle")
             dots = page.evaluate("() => document.querySelectorAll('.go-map .us-dot').length")
             board = page.evaluate("() => document.querySelectorAll('.go-pcard').length")
             assert dots == board, (dots, board)
@@ -172,10 +178,12 @@ if __name__ == "__main__":
             page.click(f".go-map .us-state[data-state='{st}']")
             time.sleep(0.6)
             assert page.evaluate("() => document.querySelectorAll('.go-pcard').length") == board, "tapping again clears the filter"
-            # the collapse is remembered across a reload
+            # your choice is remembered across a reload, both ways
+            open_tab(page, base, A, "recruiting", ".go-col")
+            assert not page.evaluate("() => document.querySelector('.go-map-body').hidden"), "an opened map stays open"
             page.click(".go-map .go-map-toggle")
             open_tab(page, base, A, "recruiting", ".go-col")
-            assert page.evaluate("() => document.querySelector('.go-map-body').hidden") and page.inner_text(".go-map .go-map-toggle") == "Show", "a collapsed map stays collapsed"
+            assert page.evaluate("() => document.querySelector('.go-map-body').hidden") and "Show" in page.inner_text(".go-map .go-map-toggle"), "a closed map stays closed"
             page.click(".go-map .go-map-toggle")
             assert not page.evaluate("() => document.querySelector('.go-map-body').hidden")
             page.set_viewport_size({"width": 340, "height": 700})

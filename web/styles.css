@@ -1389,6 +1389,9 @@ body.career-mode { --us-staffed: color-mix(in srgb, var(--go-primary, var(--acce
 .go-map { margin: 0 0 14px; padding: 14px 16px; }
 .go-map-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .go-map-head .small { flex: 1; min-width: 160px; }
+.go-map.closed { padding: 8px 16px; }                                     /* closed, the card is one slim row: the title and the toggle */
+.go-map.closed .go-display { font-size: 18px; }
+.go-map-toggle { margin-left: auto; }
 .go-map-body[hidden] { display: none; }
 .go-map-svg { margin: 8px auto 6px; max-width: 760px; }
 .go-map.small .go-map-svg { max-width: 456px; }

@@ -435,7 +435,9 @@
 
   // ----- The footprint map -------------------------------------------------------------------------
 
-  function mapOpen() { try { return localStorage.getItem("cfp-map-open") !== "0"; } catch (e) { return true; } }
+  // the map is a disclosure: closed unless you opened it, and your choice is kept on this device
+  function mapOpen() { try { return localStorage.getItem("cfp-map-open") === "1"; } catch (e) { return false; } }
+  const MAP_TOGGLE = (open, small) => (open ? "▾ Hide the map" : `▸ Show ${small ? "the map" : "your footprint map"}`);
   const TONE_RANK = { good: 0, warn: 1, muted: 2, bad: 3 };
   // The map card: your nine areas (shaded when staffed), every board prospect as a dot by your standing,
   // a tap on a dot or a state, and a table of the states for anyone who cannot use the picture.
@@ -467,14 +469,18 @@
     const open = mapOpen();
     const body = el("div", { class: "go-map-body" });
     body.hidden = !open;
-    const toggle = el("button", { type: "button", class: "go-btn go-map-toggle", "aria-expanded": String(open), "aria-controls": "go-map-body", "aria-label": open ? "Hide the map" : "Show the map", text: open ? "Hide" : "Show" });
+    const toggle = el("button", { type: "button", class: "go-btn go-map-toggle", "aria-expanded": String(open), "aria-controls": "go-map-body", text: MAP_TOGGLE(open, opts.small) });
     body.id = "go-map-body";
+    card.classList.toggle("closed", !open);
+    const hint = el("span", { class: "muted small go-map-hint", text: opts.selectedState ? `Showing ${opts.selectedState} · tap it again to clear` : "Tap a state to filter, a dot to pick him" });
+    hint.hidden = !open;
     toggle.addEventListener("click", () => {
       const now = body.hidden;
       body.hidden = !now;
+      hint.hidden = !now;
+      card.classList.toggle("closed", !now);
       toggle.setAttribute("aria-expanded", String(now));
-      toggle.textContent = now ? "Hide" : "Show";
-      toggle.setAttribute("aria-label", now ? "Hide the map" : "Show the map");
+      toggle.textContent = MAP_TOGGLE(now, opts.small);
       try { localStorage.setItem("cfp-map-open", now ? "1" : "0"); } catch (e) { /* no storage */ }
     });
     const svg = window.USMap.render({ areas: v.areas || {}, staffed, dots, selectedState: opts.selectedState || null, teamColor: color,
@@ -504,8 +510,7 @@
     // under 360px the picture is left out (CSS hides it too; the table below says the same in words)
     body.append(window.matchMedia("(max-width: 359px)").matches ? "" : el("div", { class: "go-map-svg" }, [svg]), legend, key,
       dots.length ? "" : el("p", { class: "muted small", text: "Nobody on your board yet: add prospects and they appear here." }), el("div", { class: "go-row" }, [tBtn]), table);
-    card.append(el("div", { class: "go-map-head" }, [el("div", { class: "go-display l", text: "YOUR FOOTPRINT" }),
-      el("span", { class: "muted small", text: opts.selectedState ? `Showing ${opts.selectedState} · tap it again to clear` : "Tap a state to filter, a dot to pick him" }), toggle]), body);
+    card.append(el("div", { class: "go-map-head" }, [el("div", { class: "go-display l", text: "YOUR FOOTPRINT" }), hint, toggle]), body);
     return card;
   }
 
