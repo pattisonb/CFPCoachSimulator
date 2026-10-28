@@ -210,8 +210,8 @@ if __name__ == "__main__":
             page.click(".go-pane .go-act:has-text('Call')")
             page.wait_for_selector(".go-pane .go-scene .go-scene-line.cue", timeout=30_000)
             assert page.query_selector(".go-pane .go-act:disabled[title*='Finish']"), "the other actions wait, and say why"
-            offer = page.query_selector(".go-pane button.go-btn:text-is('Offer')")
-            assert offer is None or offer.is_disabled(), "no offer goes out mid-call"
+            live = page.evaluate("() => [...document.querySelectorAll('.go-pane button.go-btn')].filter(b => b.textContent.trim() === 'Offer' && !b.disabled).length")
+            assert live == 0, "no offer goes out mid-call"
             page.click(".go-pane .go-scene button:has-text('Hang up')")
             time.sleep(0.5)
             assert not page.query_selector(".go-pane .go-scene"), "hanging up closes the scene view"
@@ -239,6 +239,20 @@ if __name__ == "__main__":
             assert verbal and all("flip" in t for t in verbal), f"a verbal commit elsewhere shows his flip odds: {verbal}"
             mine = last.query_selector(".go-pcard.mine")
             assert mine and not mine.query_selector(".go-act"), "a prospect committed to you has no recruiting actions"
+
+            # --- Badges: a generational prospect wears the tag on the list; your class rows wear a badge or none
+            open_tab(page, base, B, "classes", ".go-class")
+            page.click(".go-class.yours .go-class-main")
+            page.wait_for_selector(".go-class-list li", timeout=60_000)
+            odd = page.evaluate("""() => [...document.querySelectorAll('.go-class-list li')].filter(li => {
+                const b = li.querySelector('.go-badge'); return b && !b.matches('.generational, .gem-held, .gem-missed'); }).length""")
+            assert odd == 0, f"{odd} class rows carry a badge that is not generational, held or missed"
+            five = call(base, f"/api/season/{A}/prospects?stars=5&limit=50")["rows"]
+            if any(r.get("generational") for r in five):
+                open_tab(page, base, A, "prospects", ".go-list-row")
+                page.select_option("select[aria-label=Stars]", "5")
+                page.wait_for_selector(".go-list-row .go-badge.generational", timeout=60_000)
+                assert page.text_content(".go-list-row .go-badge.generational >> nth=0").strip() == "Generational"
 
             # --- Staff: the area picker looks like a picker
             open_tab(page, base, A, "staff", ".rc-staff-card select")

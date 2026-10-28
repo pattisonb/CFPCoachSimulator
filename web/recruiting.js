@@ -896,7 +896,8 @@
           el("span", { class: "go-rank", text: `#${r.national_rank}` }), avatar(r.id, "sm"),
           el("span", { class: "go-list-id" }, [el("b", { text: r.name }), el("span", { class: "muted small", text: r.portal
             ? `${r.position} · ${clsWord(r.cls)} · from ${r.from_name}${r.usage ? ` · ${r.usage}` : ""}`
-            : `${r.position} · ${typeof r.height === "number" ? height(r.height) : (r.height || "")} ${r.weight} · ${place(r.hometown)}` })]),
+            : `${r.position} · ${typeof r.height === "number" ? height(r.height) : (r.height || "")} ${r.weight} · ${place(r.hometown)}` }),
+            badges({ generational: r.generational, find: r.find }, s.team)]),
           r.portal ? null : el("span", { class: "go-stars", text: stars(r.stars) }),
           el("span", { class: "go-list-tags" }, [
             el("span", { class: `go-tag ${r.signed || r.committed ? "" : r.leaning_fcs ? "muted" : "good"}`, text: status(r) }),
@@ -962,6 +963,7 @@
       el("div", { text: `${pub.position}${pub.ea_position && pub.ea_position !== pub.position ? ` · projects at ${pub.ea_position} in the game` : ""} · ${pub.archetype} · ${height(pub.height)}, ${pub.weight} lb` }),
       el("div", { class: "muted", text: `${pub.high_school} · ${place(pub.hometown)}` }),
       el("div", { class: "muted small", text: `National rankings: #${pub.national_rank} overall · #${pub.position_rank} ${pub.position} · #${pub.state_rank} in ${pub.hometown.state === "DC" ? "D.C." : pub.hometown.state} · composite ${pub.composite.toFixed(4)}` }),
+      badges({ generational: pub.generational, find: p.find }, me),
       pub.signed || pub.committed ? null : el("div", { class: "rc-status go-standing-text", text: status(pub) }),
     ])]));
     const holder = pub.signed || pub.committed;
@@ -1120,12 +1122,16 @@
         el("span", { class: "go-list-id" }, [el("b", { text: `${c.name}${c.yours ? " (you)" : ""}` }), el("span", { class: "muted small", text: c.conference })]),
         el("span", { class: "go-class-count", text: `${c.count}` }),
         el("span", { class: "muted small go-class-stars", text: starLine(c.stars) }),
-        el("span", { class: "muted small go-class-top", text: c.top.map((t) => `${t.name} ${"★".repeat(t.stars)}`).join(" · ") }),
+        el("span", { class: "muted small go-class-top" }, c.top.flatMap((t, i) => [i ? " · " : "", `${t.name} ${"★".repeat(t.stars)}`,
+          t.generational ? el("span", { class: "go-badge generational", text: "Generational", title: "A once-in-a-generation talent" }) : null])),
       ]);
       const li = el("li", { class: `go-list-row go-class ${c.yours ? "yours" : ""}` }, [head]);
       if (open && d.class) li.append(el("ul", { class: "go-class-list" }, d.class.map((r) => el("li", {}, [
         el("button", { type: "button", class: "go-link", text: r.name, onclick: () => openProfile(s, r.id) }),
-        el("span", { class: "muted small", text: ` ${"★".repeat(r.stars)} ${r.position} · #${r.national_rank} · ${place(r.hometown)}${r.signed ? " · signed" : ""}` })]))));
+        el("span", { class: "muted small", text: ` ${"★".repeat(r.stars)} ${r.position} · #${r.national_rank} · ${place(r.hometown)}${r.signed ? " · signed" : ""}` }),
+        r.generational ? el("span", { class: "go-badge generational", text: "Generational", title: "A once-in-a-generation talent" }) : null,
+        r.find_held === true ? el("span", { class: "go-badge gem-held", text: "Gem: the read held", title: "Your staff called him a gem and he is one" })
+          : r.find_held === false ? el("span", { class: "go-badge gem-missed", text: "The read was off", title: "Your staff's read on him did not hold up" }) : null]))));
       list.append(li);
     }
     box.append(list);

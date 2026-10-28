@@ -1145,6 +1145,8 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-badge.generational { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
 .go-badge.gem { color: var(--good-text, var(--good)); border-color: var(--good); }
 .go-badge.bust { color: var(--bad-text, var(--bad)); border-color: var(--bad); }
+.go-badge.gem-held { color: var(--good-text, var(--good)); border-color: var(--good); }
+.go-badge.gem-missed { color: var(--bad-text, var(--bad)); border-color: var(--bad); }
 .go-pane { position: sticky; top: calc(var(--sticky-top, 0px) + 12px); max-height: calc(100vh - var(--sticky-top, 0px) - 24px); overflow-y: auto; overscroll-behavior: contain;
   display: flex; flex-direction: column; gap: 10px; border: 2px solid var(--go-primary, var(--accent)); }
 .go-pane-head { display: flex; align-items: center; gap: 10px; }

@@ -955,16 +955,35 @@ recruiters each cover one of nine areas; every week each prospect in a covered a
 look. A look sees each grade (athleticism, size and strength, technique, football IQ,
 potential, coachability) with error `16 * (1 - s) + 4` points, `s = rating / 99`, and its own confidence strays a little (more for a weak
 evaluator, who is sometimes sure and wrong). The read is the confidence-weighted mean, shown
-as a letter range that narrows with looks. Over 500 prospects after four looks the range
-holds the true letter 68% of the time for an evaluator rated 40, 81% at 60 and 92% at 95.
+as a range of words that narrows with looks. Over 500 prospects after four looks the range
+holds the true word 68% of the time for an evaluator rated 40, 81% at 60 and 92% at 95.
 Grades are on the game's scale, the same numbers as the player cards: a grade is the average
 of the card attributes behind it (athleticism: Top Speed, Burst, Agility, Leaping; size and
 strength: Strength, Stamina, Durability; football IQ; technique: the first four skills of his
-position's card), potential is his projected overall, and the letters are cut on that scale:
-A+ from 85, A 78, A- 72, B+ 66, B 60, B- 55, C+ 50 (the middle Power 4 starter), C 45, C- 40,
-D+ 35, D 30, D- 25, F below. A high schooler's football IQ and technique are mostly C to F
-next to college starters; his athleticism and potential are where five-stars stand out.
+position's card), potential is his projected overall, and the grades are words, not letters,
+cut on that scale: All-American from 90, Elite 80, Strong 65, Solid 50 (the middle Power 4
+starter), Fair 40, Weak below. A high schooler's football IQ and technique mostly read Fair or
+Weak next to college starters; his athleticism and potential are where five-stars stand out.
 About 15% of two-stars and low three-stars are hidden until a look.
+
+**Generational prospects.** A few a class (at most four, some years none) are generational: a
+seeded draw among the four- and five-stars whose true potential is 95 or better, with odds of 40%
+for a five-star and 10% for a four-star. The tag is public, on the class list, his profile and the
+Classes view, and his NIL ask is 1.5 times larger. Every program wants him.
+
+**Gems and bust risks** are your staff's finds, read from the scouting, never the truth. After two
+looks, a prospect whose potential read is Elite or better even at its low end is a gem if he is a
+three-star or lower, or ranked past 300; a four- or five-star whose read is below Solid even at
+its high end is a bust risk. The read can be wrong. When he signs with you, the Classes view
+judges the call: "Gem: the read held" or "The read was off".
+
+**Calls and in-home visits are scenes** (`coach_career/scenes.py`). For you, a call or an in-home
+visit without a pitch opens a two-step scene: he says his lines, with a cue that hints at what he
+cares about (one topic, or two when he is torn); then you choose your pitch and he answers with a
+hit, a polite answer or a quiet one. The hours are spent when the scene opens and the points land
+when you pitch. A scene you leave open is dropped at the week step: no points, the hours stay
+spent. The CPU schools keep the one-shot path. A player's call reveals one of his priorities about
+0.69 of the time against the CPU's 0.5.
 
 **Prospect Profiles** (`coach_career/prospects.py`). The public block is the national rankings' read (it
 has its own error). The top 300 get a written evaluation (his three strongest and two weakest
@@ -1024,9 +1043,11 @@ screens you act on (Office, Offseason once the season is over, Recruiting, Prosp
 Schedule, Depth Chart) and a League row that follows the calendar (Standings, Rankings and Stats
 all year; Awards from week 4; Classes, Bracket and Bowls from selection week; Summary when the
 season is done). A plain season keeps every League tab. The **Recruiting board** (a prospect you take off it stays off, Auto-recruit included, until
-you put him back) is a grid of prospect cards (your standing, his known priorities,
-one-tap actions with their hour costs) with a side panel for the selected prospect (the pitch,
-the offer with NIL points, his profile). Every colour is a theme variable, so the screens work
+you put him back) is a five-column pipeline by stage (Cold, In touch, Top 8, Visited, Committed)
+of compact prospect cards (your standing, his known priorities, one-tap actions with their hour
+costs) with a sticky pane for the selected prospect (the pitch, the offer with NIL points, his
+profile), a bottom sheet on a phone. His list is drawn as a race, one lane a school, and a map of
+the US shows your nine areas and where the board's prospects live. Every colour is a theme variable, so the screens work
 in the light and the dark theme.
 
 **The odds you see** (`prospects.odds`). Each offering school's chance to land a prospect is a
