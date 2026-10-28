@@ -186,15 +186,15 @@ def fbs_schools(state: dict) -> list[str]:
 
 # ----- scouting (spec section 6) *tune* -----
 GROUPS = ("athleticism", "size_strength", "technique", "football_iq", "potential", "coachability")
-LETTERS = ("A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F")
-# letters on the game's 1-99 scale (50 is the middle Power 4 starter at the position, 65 one standard
-# deviation better, 80 two): C+ is that starter, B a clearly better one, A an all-conference level
-LETTER_FLOORS = (85, 78, 72, 66, 60, 55, 50, 45, 40, 35, 30, 25, -1e9)
+WORDS = ("All-American", "Elite", "Strong", "Solid", "Fair", "Weak")
+# words on the game's 1-99 scale (50 is the middle Power 4 starter at the position, 65 one standard
+# deviation better, 80 two): Solid is that starter, Strong a clearly better one, Elite an all-conference level
+WORD_FLOORS = (90, 80, 65, 50, 40, -1e9)
 GRADE_LOW, GRADE_SPAN = 1.0, 98.0          # grades run the whole scale
 COACHABILITY_POINTS = {"Coach's Dream": 90, "Film Junkie": 80, "Quick Study": 68, "Steady Grinder": 52,
                        "Slow to Click": 37, "Set in His Ways": 20}
 LOOK_SD = (16.0, 4.0)                      # a look's error sd in grade points: 16 * (1 - s) + 4, s = rating / 99
-LETTER_SLACK = 1.65                        # half a letter: a letter range already spans its end letters' width
+WORD_SLACK = 4.0                           # a word range already spans its end words' width, so the read narrows by this much
 CONFIDENCE_NOISE = 0.5                     # how far a look's own confidence strays (log sd, times 1 - s)
 HIDDEN_RATE, HIDDEN_BELOW = 0.15, 0.82     # two-stars and three-stars under this composite, hidden until a look
 _ATHLETIC = ("speed", "acceleration", "agility", "change_of_direction", "jumping")
@@ -1780,8 +1780,8 @@ def _truths(prospects: dict, attrs: list[str]) -> None:
         p["truth"] = truth
 
 
-def letter(points: float) -> str:
-    return next(l for l, floor in zip(LETTERS, LETTER_FLOORS) if points >= floor)
+def word(points: float) -> str:
+    return next(w for w, floor in zip(WORDS, WORD_FLOORS) if points >= floor)
 
 
 def look(state: dict, pid: str, evaluator_rating: int, rng: random.Random) -> None:
@@ -1810,14 +1810,14 @@ def read_interval(state: dict, pid: str, group: str) -> Optional[tuple[float, fl
         return None
     s = int(max(read["by"].items(), key=lambda kv: (kv[1], int(kv[0])))[0]) / 99
     mean, prec = read["g"][group]
-    half = max(0.0, (0.6 + 1.1 * s) / math.sqrt(prec) - LETTER_SLACK)
+    half = max(0.0, (0.6 + 1.1 * s) / math.sqrt(prec) - WORD_SLACK)
     return mean - half, mean + half
 
 
 def grade_range(state: dict, pid: str, group: str) -> Optional[tuple[str, str]]:
-    """(low, high) letter grades, e.g. ("B-", "A-"); None before any look."""
+    """(low, high) grade words, e.g. ("Solid", "Strong"); None before any look."""
     iv = read_interval(state, pid, group)
-    return (letter(iv[0]), letter(iv[1])) if iv else None
+    return (word(iv[0]), word(iv[1])) if iv else None
 
 
 def make_staff(state: dict) -> list[dict]:

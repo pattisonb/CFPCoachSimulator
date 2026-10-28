@@ -26,8 +26,8 @@ def coverage(st: dict, rating: int, pids: list[str]) -> tuple[float, float, list
         for g in recruiting.GROUPS:
             lo, hi = recruiting.read_interval(st, pid, g)
             lo_l, hi_l = recruiting.grade_range(st, pid, g)
-            truth = recruiting.LETTERS.index(recruiting.letter(p["truth"][g]))
-            held = recruiting.LETTERS.index(hi_l) <= truth <= recruiting.LETTERS.index(lo_l)
+            truth = recruiting.WORDS.index(recruiting.word(p["truth"][g]))
+            held = recruiting.WORDS.index(hi_l) <= truth <= recruiting.WORDS.index(lo_l)
             rows.append((hi - lo, held))
     return sum(h for _, h in rows) / len(rows), statistics.mean(w for w, _ in rows), rows
 
@@ -114,9 +114,11 @@ if __name__ == "__main__":
     assert 1 <= pot["rank"] <= pot["of"]
     assert "overall_ea" not in (ours["our_comp"] or {}) and (ours["our_comp"] or {}).get("overall") is not None
     # one scale for grades too: a grade is the average of the card numbers behind it (the potential
-    # grade his projected overall), and its letter is cut on the game's scale, where 50 is the middle
-    # Power 4 starter (C+), 60 a B and 78 an A: attributes in the 80s are an A, not a B
-    assert [recruiting.letter(v) for v in (85, 78, 72, 62, 50, 45, 24)] == ["A+", "A", "A-", "B", "C+", "C", "F"]
+    # grade his projected overall), and its word is cut on the game's scale, where 50 is the middle
+    # Power 4 starter (Solid), 65 Strong and 80 Elite: attributes in the 80s are Elite, not Strong
+    assert [recruiting.word(v) for v in (95, 90, 85, 80, 70, 65, 55, 50, 45, 40, 30)] == \
+        ["All-American", "All-American", "Elite", "Elite", "Strong", "Strong", "Solid", "Solid", "Fair", "Fair", "Weak"]
+    assert "Generational" not in recruiting.WORDS
     sample = list(rc["prospects"].values())[::40]
     for q in sample:
         cards = prospects.game_attributes(st, q)
@@ -125,7 +127,7 @@ if __name__ == "__main__":
             assert keys, (q["ea_position"], g)
             assert abs(q["truth"][g] - sum(cards[k] for k in keys) / len(keys)) < 0.6, (q["ea_position"], g, q["truth"][g])
     eighties = [q for q in rc["prospects"].values() if q["truth"]["athleticism"] >= 80]
-    assert eighties and all(recruiting.letter(q["truth"]["athleticism"]) in ("A+", "A") for q in eighties)
+    assert eighties and all(recruiting.word(q["truth"]["athleticism"]) in ("All-American", "Elite") for q in eighties)
     lb = next(pid for pid, q in rc["prospects"].items() if q["ea_position"] == "MIKE" and not q.get("hidden"))
     for _ in range(3):
         recruiting.look(st, lb, 90, random.Random(_))

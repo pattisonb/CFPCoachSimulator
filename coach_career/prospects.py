@@ -42,7 +42,7 @@ WEAKNESS_TEXT = {
     "football_iq": "Still learning the game; processing can be slow.",
     "potential": "Closer to his ceiling than most at this stage.",
 }
-STRENGTH_FROM, WEAKNESS_BELOW = 60, 45        # the game's scale: a B and up reads as a strength, below a C as a weakness
+STRENGTH_FROM, WEAKNESS_BELOW = 60, 45        # the game's scale: a Solid-and-up read is a strength (60), below 45 a weakness
 SOLID_TEXT = "Solid for a {pos} at this level; not a concern."
 OUTLOOK = {
     5: "Day-one impact {pos} with early-round NFL upside.",
@@ -328,8 +328,8 @@ def _schools(state: dict, pid: str) -> list[dict]:
 
 
 def _evaluation(p: dict, public: dict[str, float]) -> dict:
-    """His three best and two weakest groups, written up: a strength only from a B up, a weakness
-    only below a C; anything between is "solid" (a five-star's lowest grade is often still good)."""
+    """His three best and two weakest groups, written up: a strength only from Strong/Solid up (60), a weakness
+    only below Fair (45); anything between is "solid" (a five-star's lowest grade is often still good)."""
     pos = p["ea_position"]
     order = sorted(EVAL_GROUPS, key=lambda g: -public[g])
     head = lambda g: GROUP_NAMES[g][0].upper() + GROUP_NAMES[g][1:]
