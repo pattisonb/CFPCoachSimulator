@@ -968,10 +968,11 @@ About 15% of two-stars and low three-stars are hidden until a look.
 
 **Generational prospects.** A few a class (at most four, some years none) are generational: a
 seeded draw among the four- and five-stars whose true potential is 95 or better, with odds of 40%
-for a five-star and 10% for a four-star. The tag is public, on the class list, his profile and the
-Classes view, and his NIL ask is 1.5 times larger. Every program wants him.
+for a five-star and 10% for a four-star. The tag is your staff's to find: it shows on his row, his
+profile and the Classes view once your staff have looked at him three times (or once he signs with
+you), and his NIL ask is 1.5 times larger whether you know it or not. Every program wants him.
 
-**Gems and bust risks** are your staff's finds, read from the scouting, never the truth. After two
+**Gems and bust risks** are your staff's finds, read from the scouting, never the truth. After three
 looks, a prospect whose potential read is Elite or better even at its low end is a gem if he is a
 three-star or lower, or ranked past 300; a four- or five-star whose read is below Solid even at
 its high end is a bust risk. The read can be wrong. When he signs with you, the Classes view

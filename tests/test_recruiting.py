@@ -31,7 +31,16 @@ if __name__ == "__main__":
     if gen:
         g = gen[0]
         assert recruiting.ask_from(st, "ohio-state", g) == int(round(recruiting.GENERATIONAL_ASK * recruiting.ask_from(dict(st, recruiting=dict(rc, generational=[])), "ohio-state", g)))
+        # the tag is your staff's to find: hidden until three looks at him, then on his row and his profile
+        kept = rc["reads"].pop(g, None)
+        assert not prospects.row(st, g, "ohio-state")["generational"] and not prospects.profile(st, g, "ohio-state")["public"]["generational"]
+        rc["reads"][g] = {"looks": recruiting.FIND_LOOKS - 1, "by": {"95": 2}, "g": {grp: [90.0, 100.0] for grp in recruiting.GROUPS}}
+        assert not prospects.row(st, g, "ohio-state")["generational"], "two looks are not enough"
+        rc["reads"][g]["looks"] = recruiting.FIND_LOOKS
         assert prospects.row(st, g, "ohio-state")["generational"] and prospects.profile(st, g, "ohio-state")["public"]["generational"]
+        rc["reads"].pop(g)
+        if kept:
+            rc["reads"][g] = kept
     # an old save draws on load
     rc.pop("generational")
     assert recruiting.upgrade_generational(st) and rc["generational"] == gen and not recruiting.upgrade_generational(st)

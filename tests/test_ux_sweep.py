@@ -257,26 +257,28 @@ if __name__ == "__main__":
                              (".go-class-list .go-badge.gem-missed", "The read was off")):
                 for t in page.eval_on_selector_all(sel, "els => els.map(e => e.textContent.trim())"):
                     assert t == txt, f"{sel} reads {t!r}"
-            gen = None
-            for sid in (A, B):
-                for stars_, size in ((5, 200), (4, 500)):
-                    rows = call(base, f"/api/season/{sid}/prospects?stars={stars_}&limit={size}")["rows"]
-                    gen = next((r for r in rows if r.get("generational")), None)
-                    if gen:
-                        break
-                if gen:
-                    break
-            if gen:
-                open_tab(page, base, sid, "prospects", ".go-list-row")
-                page.select_option("select[aria-label=Stars]", str(gen["stars"]))
-                page.fill("input[aria-label='Search by name']", gen["name"])
-                page.wait_for_selector(".go-list-row .go-badge.generational", timeout=60_000)
-                assert page.text_content(".go-list-row .go-badge.generational >> nth=0").strip() == "Generational"
-            else:
-                open_tab(page, base, A, "prospects", ".go-list-row")
-                page.select_option("select[aria-label=Stars]", "5")
+            # the Generational tag is your staff's to find: nobody wears it before three looks
+            fives = call(base, f"/api/season/{A}/prospects?stars=5&limit=200")["rows"]
+            unscouted = [r for r in fives if r["looks"] < 3]
+            assert unscouted and not any(r.get("generational") for r in unscouted), "an unscouted prospect must not show the tag"
+            open_tab(page, base, A, "prospects", ".go-list-row")
+            page.select_option("select[aria-label=Stars]", "5")
+            time.sleep(1.5)
+            shown = page.eval_on_selector_all(".go-list-row", "rows => rows.filter(r => r.querySelector('.go-badge.generational')).map(r => r.querySelector('.go-list-id b').textContent)")
+            assert all(any(r["name"] == n and r["looks"] >= 3 for r in fives) for n in shown), f"a badge on an unscouted five-star: {shown}"
+            # three scouting trips at the best unscouted five-star, then the list agrees with the API either way
+            pick = min((r for r in unscouted if r.get("can_scout")), key=lambda r: r["national_rank"], default=None)
+            if pick and call(base, f"/api/season/{A}/recruiting")["hours_left"] >= 15:
+                for _ in range(3):
+                    call(base, f"/api/season/{A}/recruit", {"pid": pick["id"], "action": "scout"})
+                after = next(r for r in call(base, f"/api/season/{A}/prospects?stars=5&limit=200&q={pick['name']}")["rows"] if r["id"] == pick["id"])
+                assert after["looks"] >= 3
+                page.fill("input[aria-label='Search by name']", pick["name"])
                 time.sleep(1.5)
-                assert page.query_selector(".go-list-row .go-badge.generational") is None, "no generational prospect exists, so no badge"
+                badge = page.query_selector(".go-list-row .go-badge.generational")
+                assert bool(badge) == bool(after.get("generational")), "after three looks the list shows the tag exactly when the API does"
+                if badge:
+                    assert badge.text_content().strip() == "Generational"
 
             # --- Staff: the area picker looks like a picker
             open_tab(page, base, A, "staff", ".rc-staff-card select")

@@ -341,6 +341,16 @@ def _evaluation(p: dict, public: dict[str, float]) -> dict:
     return {"strengths": strengths, "solid": solid, "weaknesses": weaknesses, "outlook": OUTLOOK.get(recruiting.tier_of(p), OUTLOOK[2]).format(pos=pos)}
 
 
+def generational_seen(rc: dict, pid: str, viewer: str) -> bool:
+    """The Generational tag as `viewer` sees it: drawn for him (recruiting.draw_generational) and
+    found by your staff after FIND_LOOKS looks, or shown once he has signed with you. The CPU
+    never reads this; it recruits him as the top prospect he is either way."""
+    if rc.get("portal") or pid not in (rc.get("generational") or ()):
+        return False
+    read = rc["reads"].get(pid)
+    return bool(read and read["looks"] >= recruiting.FIND_LOOKS) or (viewer is not None and rc["status"][pid]["signed"] == viewer)
+
+
 def find(state: dict, pid: str) -> Optional[str]:
     """Your staff's finding from the read, never the truth: "gem" (his low end reads Elite on
     potential and he is a three-star or less, or ranked past GEM_RANK), "bust" (a four- or five-star
@@ -371,7 +381,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "id": pid, "name": p["name"], "avatar_seed": pid, "hometown": {"city": p["hometown"]["city"], "state": p["hometown"]["state"]},
         "high_school": _high_school(p), "height": p["height"], "weight": p["weight"], "position": p["position"],
         "ea_position": p["ea_position"], "archetype": p["archetype"], "stars": p["stars"], "composite": p["composite"],
-        "generational": recruiting.is_generational(state, pid), "find": find(state, pid),
+        "generational": generational_seen(rc, pid, viewer), "find": find(state, pid),
         "national_rank": p["rank"], "position_rank": pos_rank, "state_rank": state_rank,
         "schools": _schools(state, pid), "committed": status["committed"], "signed": status["signed"],
         "hard": bool(status.get("hard")) and not status["signed"],
@@ -417,7 +427,7 @@ def row(state: dict, pid: str, viewer: str) -> dict:
     read = rc["reads"].get(pid)
     return {
         "id": pid, "name": p["name"], "stars": p["stars"], "composite": p["composite"], "national_rank": p["rank"],
-        "generational": recruiting.is_generational(state, pid), "find": find(state, pid),
+        "generational": generational_seen(rc, pid, viewer), "find": find(state, pid),
         "position": p["position"], "ea_position": p["ea_position"], "archetype": p["archetype"],
         "height": p["height"], "weight": p["weight"], "home": p["home"],
         "hometown": {"city": p["hometown"]["city"], "state": p["hometown"]["state"]},
@@ -633,7 +643,7 @@ def national_classes(state: dict, viewer: Optional[str] = None) -> dict:
                      "_points": sum(c * CLASS_DECAY ** i for i, c in enumerate(comps)), "yours": slug == viewer,
                      "top": [{"id": q, "name": rc["prospects"][q]["name"], "stars": rc["prospects"][q]["stars"],
                               "position": rc["prospects"][q]["position"], "rank": rc["prospects"][q]["rank"],
-                              "generational": q in (rc.get("generational") or ())} for q in pids[:3]]})
+                              "generational": generational_seen(rc, q, viewer)} for q in pids[:3]]})
     rows.sort(key=lambda r: (-r["_points"], r["name"]))
     for r in rows:                           # ranked on the exact points, as class_rank ranks them
         r["rank"] = 1 + sum(1 for o in rows if o["_points"] > r["_points"])

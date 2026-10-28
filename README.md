@@ -52,7 +52,7 @@ week at a time or jump ahead: each week is **Recruit → Your game → Advance**
   options lean FCS. The board is a five-column pipeline by stage, a card for each prospect with your chance to land him,
   a range that narrows as signing day nears, his list drawn as a race and a map of the US with
   your areas. Grades are words (All-American to Weak), not letters. A few prospects a class are
-  generational, public to every school, and your staff flags gems and bust risks from the read.
+  generational; three looks by your staff reveal the tag, a gem or a bust risk.
   A call or an in-home visit is a short scene: he talks, you pitch, he answers (the CPU schools
   recruit as before). Turn on **Auto-recruit** to let your staff do it.
 - **Prospects and Prospect Profiles.** The whole class with filters, and a profile for each

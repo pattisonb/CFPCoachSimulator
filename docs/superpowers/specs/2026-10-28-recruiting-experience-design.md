@@ -70,6 +70,8 @@ qualify, so the expectation is about four), and a cap of `GENERATIONAL_MAX = 4` 
 the tail off: past the cap the highest true potentials keep the tag. The draw is seeded from
 the class seed so the golden test can pin it.
 
+Amended after build (owner's note): the tag is not public. It is your staff's find, shown to a school only after `FIND_LOOKS = 3` looks at him (a full scouting set, the same threshold as a gem or a bust risk) or once he signs with you; the draw, the ask and the CPU's recruiting are unchanged. The original text follows.
+
 A generational prospect is **public**: a badge on every list, card, profile and class view, and
 in the national news ("the class's generational quarterback"). His NIL ask runs
 `GENERATIONAL_ASK = 1.5` *tune* times the usual. Nothing else about him changes: AI boards

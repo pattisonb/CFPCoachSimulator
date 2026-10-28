@@ -394,7 +394,7 @@
   const columnOf = (b) => (b.committed || b.signed ? "committed" : COLUMN_TIPS[b.stage] ? b.stage : "cold");
 
   // what stands out about him, as small tags: the staff's finds, then today's need, offer, mood and commitment
-  const genBadge = () => el("span", { class: "go-badge generational", text: "Generational", title: "A once-in-a-generation talent: every program in the country wants him" });
+  const genBadge = () => el("span", { class: "go-badge generational", text: "Generational", title: "Your staff's find after three looks: a once-in-a-generation talent every program in the country wants" });
   function badges(b, me) {
     const out = el("div", { class: "go-tags go-badges" });
     if (b.generational) out.append(genBadge());

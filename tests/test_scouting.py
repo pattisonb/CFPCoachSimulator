@@ -225,6 +225,8 @@ if __name__ == "__main__":
     assert prospects.find(st, two) == "gem" and prospects.row(st, two, "ohio-state")["find"] == "gem"
     rc["reads"][two]["looks"] = 1
     assert prospects.find(st, two) is None, "a find needs FIND_LOOKS looks"
+    rc["reads"][two]["looks"] = 2
+    assert prospects.find(st, two) is None and recruiting.FIND_LOOKS == recruiting.SCOUT_MAX == 3, "every scouting badge waits for a full set of three looks"
     rc["reads"][two]["looks"] = 3
     five = next(pid for pid, q in rc["prospects"].items() if q["stars"] == 5)
     rc["reads"][five] = {"looks": 3, "by": {"95": 3}, "g": {g: [40.0, 100.0] for g in recruiting.GROUPS}}
