@@ -355,6 +355,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "id": pid, "name": p["name"], "avatar_seed": pid, "hometown": {"city": p["hometown"]["city"], "state": p["hometown"]["state"]},
         "high_school": _high_school(p), "height": p["height"], "weight": p["weight"], "position": p["position"],
         "ea_position": p["ea_position"], "archetype": p["archetype"], "stars": p["stars"], "composite": p["composite"],
+        "generational": recruiting.is_generational(state, pid),
         "national_rank": p["rank"], "position_rank": pos_rank, "state_rank": state_rank,
         "schools": _schools(state, pid), "committed": status["committed"], "signed": status["signed"],
         "hard": bool(status.get("hard")) and not status["signed"],
@@ -400,6 +401,7 @@ def row(state: dict, pid: str, viewer: str) -> dict:
     read = rc["reads"].get(pid)
     return {
         "id": pid, "name": p["name"], "stars": p["stars"], "composite": p["composite"], "national_rank": p["rank"],
+        "generational": recruiting.is_generational(state, pid),
         "position": p["position"], "ea_position": p["ea_position"], "archetype": p["archetype"],
         "height": p["height"], "weight": p["weight"],
         "hometown": {"city": p["hometown"]["city"], "state": p["hometown"]["state"]},
@@ -600,7 +602,8 @@ def national_classes(state: dict, viewer: Optional[str] = None) -> dict:
                      "count": len(pids), "signed": sum(1 for q in pids if rc["status"][q]["signed"]), "stars": stars,
                      "_points": sum(c * CLASS_DECAY ** i for i, c in enumerate(comps)), "yours": slug == viewer,
                      "top": [{"id": q, "name": rc["prospects"][q]["name"], "stars": rc["prospects"][q]["stars"],
-                              "position": rc["prospects"][q]["position"], "rank": rc["prospects"][q]["rank"]} for q in pids[:3]]})
+                              "position": rc["prospects"][q]["position"], "rank": rc["prospects"][q]["rank"],
+                              "generational": q in (rc.get("generational") or ())} for q in pids[:3]]})
     rows.sort(key=lambda r: (-r["_points"], r["name"]))
     for r in rows:                           # ranked on the exact points, as class_rank ranks them
         r["rank"] = 1 + sum(1 for o in rows if o["_points"] > r["_points"])

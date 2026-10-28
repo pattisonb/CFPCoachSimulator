@@ -94,6 +94,11 @@ COOLED_CONTACT = 0.5
 ASK_MORE = (1.5, 1.25)                     # a rival's NIL this much over yours, with you in his top group: his ask from you rises this much
 TOP_GROUP = 8                              # the schools he is seriously considering: his top this many by interest
 AI_OVER_ASK = 1.1                          # an AI school offers up to this times his ask from it
+# generational prospects: a public tag on a few top four- and five-stars, drawn once per class *tune*
+GENERATIONAL_FROM = 95                     # true projected overall at least this
+GENERATIONAL_ODDS = {5: 0.4, 4: 0.1}       # a qualifying prospect is drawn this often, by stars
+GENERATIONAL_MAX = 4                       # at most this many a class (some years none)
+GENERATIONAL_ASK = 1.5                     # his NIL ask is this times larger
 # the transfer portal as recruiting (offseason.py runs it): four weeks after signing day *tune*
 PORTAL_WEEKS = 4
 PORTAL_PRIORITY_ODDS = {"playing_time": 0.45, "nil": 0.20, "winning": 0.15, "proximity": 0.10, "prestige": 0.07, "coach": 0.03}
@@ -258,6 +263,7 @@ def start(state: dict, year: int = 2027) -> None:
         "boards": {}, "seed": state.get("rng_state", 0), "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
         "pending": {}, "why": {}, "ranks": {}, "reports": [], "action_points": {}, "leader_changes": {},
     }
+    state["recruiting"]["generational"] = draw_generational(state["recruiting"])
 
 
 def nil_ask(p: dict, year: int, seed) -> int:
@@ -265,6 +271,31 @@ def nil_ask(p: dict, year: int, seed) -> int:
     rng = random.Random(f"ask-{year}-{seed}-{p['id']}")
     base = max(0.0, PORTAL_ASK[0] + PORTAL_ASK[1] * (p["ovr"] - 50)) if p.get("portal") else ASK.get(p["stars"], 0)
     return int(round(base * ASK_POS.get(p["ea_position"], 1.0) * math.exp(rng.gauss(0, ASK_SPREAD))))
+
+
+def draw_generational(rc: dict) -> list[str]:
+    """The class's generational prospects, highest true potential first: each four- or five-star whose
+    true potential is at the top of the scale is drawn on his own seeded odds, the first few kept."""
+    cands = sorted((pid for pid, p in rc["prospects"].items()
+                    if p["stars"] is not None and p["stars"] >= 4 and p["truth"]["potential"] >= GENERATIONAL_FROM),
+                   key=lambda pid: (-rc["prospects"][pid]["truth"]["potential"], pid))
+    drawn = [pid for pid in cands
+             if random.Random(f"generational-{rc['seed']}-{pid}").random() < GENERATIONAL_ODDS[rc["prospects"][pid]["stars"]]]
+    return drawn[:GENERATIONAL_MAX]
+
+
+def is_generational(state: dict, pid: str) -> bool:
+    rc = state.get("recruiting") or {}
+    return not rc.get("portal") and pid in (rc.get("generational") or ())
+
+
+def upgrade_generational(state: dict) -> bool:
+    """A career saved before generational prospects: draw its class's. Returns whether it did."""
+    rc = state.get("recruiting") or {}
+    if not rc.get("prospects") or rc.get("portal") or "generational" in rc:
+        return False
+    rc["generational"] = draw_generational(rc)
+    return True
 
 
 def tier_of(p: dict) -> int:
@@ -331,7 +362,7 @@ def ask_from(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> in
         win = win if win is not None else _winning(state)
         order = sorted(schools, key=lambda s: -interest(state, s, pid, win))
         ask = _ASKS[key] = max(5, _five(base * (1 + ASK_TRAIL * max(0, order.index(slug)))))
-    return ask
+    return int(round(ask * GENERATIONAL_ASK)) if is_generational(state, pid) else ask
 
 
 def ask_view(state: dict, slug: str, pid: str) -> dict:
@@ -1730,7 +1761,6 @@ def portal_rc(state: dict, entrants: dict, year: int) -> dict:
     from coach_career import offseason
     from teamdata import game_scale
     attrs = game_scale.keys()
-    seed = state.get("rng_state", 0)
     rng = random.Random(f"portal-rank-{year}-{seed}")
     prospects = {}
     for pid, e in entrants.items():

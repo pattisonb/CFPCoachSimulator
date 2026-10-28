@@ -15,6 +15,27 @@ if __name__ == "__main__":
     st = season.new_season("ohio-state", "full", seed=4, career=True)
     rc = st["recruiting"]
     assert len(rc["prospects"]) == 4092 and all(s["committed"] is None for s in rc["status"].values())
+    gen = rc["generational"]
+    assert gen == recruiting.draw_generational(rc), "the draw is seeded: drawing again gives the same list"
+    assert len(gen) <= recruiting.GENERATIONAL_MAX
+    assert all(rc["prospects"][q]["stars"] >= 4 and rc["prospects"][q]["truth"]["potential"] >= recruiting.GENERATIONAL_FROM for q in gen)
+    assert all(rc["prospects"][gen[i]]["truth"]["potential"] >= rc["prospects"][gen[i + 1]]["truth"]["potential"] for i in range(len(gen) - 1))
+    # a class with no qualifier has none; a class of only qualifiers stays under the cap
+    fake = {"seed": 1, "prospects": {q: dict(p, truth=dict(p["truth"], potential=50.0)) for q, p in list(rc["prospects"].items())[:200]}}
+    assert recruiting.draw_generational(fake) == []
+    fake = {"seed": 1, "prospects": {q: dict(p, stars=5, truth=dict(p["truth"], potential=99.0)) for q, p in list(rc["prospects"].items())[:200]}}
+    assert len(recruiting.draw_generational(fake)) == recruiting.GENERATIONAL_MAX
+    # over many seeds the count is a few, often none: never a guaranteed number
+    counts = [len(recruiting.draw_generational(dict(rc, seed=s))) for s in range(40)]
+    assert min(counts) <= 1 and 1.0 <= sum(counts) / len(counts) <= 5.0, counts
+    print("generational draws over 40 seeds:", counts, "; this class:", len(gen))
+    if gen:
+        g = gen[0]
+        assert recruiting.ask_from(st, "ohio-state", g) == int(round(recruiting.GENERATIONAL_ASK * recruiting.ask_from(dict(st, recruiting=dict(rc, generational=[])), "ohio-state", g)))
+        assert prospects.row(st, g, "ohio-state")["generational"] and prospects.profile(st, g, "ohio-state")["public"]["generational"]
+    # an old save draws on load
+    rc.pop("generational")
+    assert recruiting.upgrade_generational(st) and rc["generational"] == gen and not recruiting.upgrade_generational(st)
     tx = next(p for p in rc["prospects"].values() if p["hometown"]["state"] == "TX" and p["stars"] == 3)
     assert len(tx["priorities"]) == 3 and set(tx["priorities"]) <= set(recruiting.PITCHES)
     assert recruiting.pull(st, "texas", tx["id"])["proximity"] > recruiting.pull(st, "oregon", tx["id"])["proximity"]
