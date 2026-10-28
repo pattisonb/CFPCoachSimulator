@@ -219,5 +219,21 @@ if __name__ == "__main__":
     rows = {r["id"]: r for r in prospects.search(st, me)["rows"]} if isinstance(prospects.search(st, me), dict) else {}
     if rows:
         assert rows[scouted]["can_scout"] is False and rows[open_]["can_scout"] is False
+    # a gem is your staff's read, never the truth: force a tight high read on a two-star and he reads as a gem
+    two = next(pid for pid, q in rc["prospects"].items() if q["stars"] == 2 and not q.get("hidden"))
+    rc["reads"][two] = {"looks": 3, "by": {"95": 3}, "g": {g: [88.0, 100.0] for g in recruiting.GROUPS}}
+    assert prospects.find(st, two) == "gem" and prospects.row(st, two, "ohio-state")["find"] == "gem"
+    rc["reads"][two]["looks"] = 1
+    assert prospects.find(st, two) is None, "a find needs FIND_LOOKS looks"
+    rc["reads"][two]["looks"] = 3
+    five = next(pid for pid, q in rc["prospects"].items() if q["stars"] == 5)
+    rc["reads"][five] = {"looks": 3, "by": {"95": 3}, "g": {g: [40.0, 100.0] for g in recruiting.GROUPS}}
+    assert prospects.find(st, five) == "bust"
+    rc["reads"][five]["g"]["potential"] = [88.0, 100.0]
+    assert prospects.find(st, five) is None, "a five-star reading Elite is just a five-star"
+    # the find is judged when he signs with you
+    rc["status"][two].update(signed="ohio-state", committed="ohio-state")
+    held = next(r for r in prospects.class_detail(st, "ohio-state", "ohio-state") if r["id"] == two)["find_held"]
+    assert held == (rc["prospects"][two]["truth"]["potential"] >= 80)
     print(f"scouting ok: ranges hold the truth {weak:.0%} (40), {avg:.0%} (60), {elite:.0%} (95); "
           f"widths {weak_w:.1f} vs {avg_w:.1f}; hidden {share:.0%}")

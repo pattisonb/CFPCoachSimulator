@@ -99,6 +99,8 @@ GENERATIONAL_FROM = 95                     # true projected overall at least thi
 GENERATIONAL_ODDS = {5: 0.4, 4: 0.1}       # a qualifying prospect is drawn this often, by stars
 GENERATIONAL_MAX = 4                       # at most this many a class (some years none)
 GENERATIONAL_ASK = 1.5                     # his NIL ask is this times larger
+GEM_RANK = 300                             # a gem is a three-star or less, or ranked below this
+FIND_LOOKS = 2                             # looks before your staff names a gem or a bust risk
 # the transfer portal as recruiting (offseason.py runs it): four weeks after signing day *tune*
 PORTAL_WEEKS = 4
 PORTAL_PRIORITY_ODDS = {"playing_time": 0.45, "nil": 0.20, "winning": 0.15, "proximity": 0.10, "prestige": 0.07, "coach": 0.03}

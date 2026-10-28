@@ -341,6 +341,22 @@ def _evaluation(p: dict, public: dict[str, float]) -> dict:
     return {"strengths": strengths, "solid": solid, "weaknesses": weaknesses, "outlook": OUTLOOK.get(recruiting.tier_of(p), OUTLOOK[2]).format(pos=pos)}
 
 
+def find(state: dict, pid: str) -> Optional[str]:
+    """Your staff's finding from the read, never the truth: "gem" (his low end reads Elite on
+    potential and he is a three-star or less, or ranked past GEM_RANK), "bust" (a four- or five-star
+    whose high end reads below Solid), or None. Needs FIND_LOOKS looks; portal prospects get none."""
+    rc = state["recruiting"]
+    p, read = rc["prospects"][pid], rc["reads"].get(pid)
+    if p.get("portal") or p["stars"] is None or not read or read["looks"] < recruiting.FIND_LOOKS:
+        return None
+    lo, hi = recruiting.read_interval(state, pid, "potential")
+    if lo >= 80 and (p["stars"] <= 3 or p["rank"] > recruiting.GEM_RANK):
+        return "gem"
+    if hi < 50 and p["stars"] >= 4:
+        return "bust"
+    return None
+
+
 def profile(state: dict, pid: str, viewer: str) -> dict:
     """The Prospect Profile as `viewer` (your school) sees it. Never carries the true grades."""
     rc = state["recruiting"]
@@ -355,7 +371,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "id": pid, "name": p["name"], "avatar_seed": pid, "hometown": {"city": p["hometown"]["city"], "state": p["hometown"]["state"]},
         "high_school": _high_school(p), "height": p["height"], "weight": p["weight"], "position": p["position"],
         "ea_position": p["ea_position"], "archetype": p["archetype"], "stars": p["stars"], "composite": p["composite"],
-        "generational": recruiting.is_generational(state, pid),
+        "generational": recruiting.is_generational(state, pid), "find": find(state, pid),
         "national_rank": p["rank"], "position_rank": pos_rank, "state_rank": state_rank,
         "schools": _schools(state, pid), "committed": status["committed"], "signed": status["signed"],
         "hard": bool(status.get("hard")) and not status["signed"],
@@ -401,7 +417,7 @@ def row(state: dict, pid: str, viewer: str) -> dict:
     read = rc["reads"].get(pid)
     return {
         "id": pid, "name": p["name"], "stars": p["stars"], "composite": p["composite"], "national_rank": p["rank"],
-        "generational": recruiting.is_generational(state, pid),
+        "generational": recruiting.is_generational(state, pid), "find": find(state, pid),
         "position": p["position"], "ea_position": p["ea_position"], "archetype": p["archetype"],
         "height": p["height"], "weight": p["weight"],
         "hometown": {"city": p["hometown"]["city"], "state": p["hometown"]["state"]},
@@ -618,7 +634,12 @@ def class_detail(state: dict, slug: str, viewer: str) -> list[dict]:
     """One school's class, best first, as list rows."""
     rc = class_rc(state)
     pids = [pid for pid, st in rc["status"].items() if (st["signed"] or st["committed"]) == slug]
-    return [row(state, pid, viewer) for pid in sorted(pids, key=lambda q: rc["prospects"][q]["rank"])]
+    rows = [row(state, pid, viewer) for pid in sorted(pids, key=lambda q: rc["prospects"][q]["rank"])]
+    for r in rows:                           # his real ratings show once he signs with you: did the find hold?
+        if r["signed"] == viewer:
+            truth = rc["prospects"][r["id"]]["truth"]["potential"]
+            r["find_held"] = None if r["find"] is None else (truth >= 80 if r["find"] == "gem" else truth < 50)
+    return rows
 
 
 def recruiting_view(state: dict) -> dict:
