@@ -1315,3 +1315,8 @@ body.career-mode.on-career-tab .season-head { padding-bottom: 0; }
 .sched-edit-row { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; }
 .sched-edit-row select { max-width: 100%; min-width: 0; }
 .player-redshirt { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+
+/* scouting words (All-American .. Weak): a pill, coloured by tier through theme tokens */
+.go-word { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.92em; font-weight: 600; white-space: nowrap; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); }
+.go-word.all-american, .go-word.elite { color: var(--good); border-color: var(--good); }
+.go-word.fair, .go-word.weak { color: var(--muted); }

@@ -101,6 +101,13 @@ if __name__ == "__main__":
             prof = page.inner_text(".go-profile")
             assert not re.search(r"^null$", prof, re.M), "a null reached the profile"
             assert "–" not in page.inner_text(".go-profile .go-scouted"), "grade ranges read 'D to C-', not 'C-–D'"
+            LETTER = re.compile(r"(^|\s)[A-D][+-]?(\s|$)|(^|\s)F(\s|$)")
+            grades = page.inner_text(".go-profile .go-grades") + " " + page.inner_text(".go-profile .go-scouted")
+            assert not LETTER.search(grades), f"a letter grade on the profile: {LETTER.search(grades).group(0)!r}"
+            assert any(w in grades for w in ("All-American", "Elite", "Strong", "Solid", "Fair", "Weak")), grades
+            assert "Generational" not in grades, "the grade tier must never read as the generational tag"
+            assert "C+ starts at 50" not in page.inner_text(".go-profile"), "the letter legend is gone"
+            assert page.query_selector(".go-profile .go-scouted .go-word") and page.query_selector(".go-profile .go-grades .go-word"), "grades render as .go-word tags"
             # a grade's "looks like" box opens on tap, not only on hover
             page.click(".go-profile .go-grades .go-tip >> nth=0")
             time.sleep(0.3)

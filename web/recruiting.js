@@ -336,10 +336,14 @@
   const GRADE_NAMES = { athleticism: "Athleticism", size_strength: "Size", technique: "Technique", football_iq: "IQ", potential: "Potential", coachability: "Coachability" };
   // a scouted prospect's grades in one line (his card and the top of his profile)
   const clsWord = (c) => (c && c.endsWith("RS") ? `RS ${c.slice(0, -2)}` : c);   // FRRS -> "RS FR"
+  // a scouting word as a coloured pill; the class is the word lower-cased ("All-American" -> all-american)
+  const wordTag = (word) => el("span", { class: `go-word ${String(word).toLowerCase()}`, text: word });
+  // a [low, high] pair of words: one tag when both ends match, else "low to high"
+  const wordRange = (r) => (r[0] === r[1] ? [wordTag(r[0])] : [wordTag(r[0]), " to ", wordTag(r[1])]);
+  const wordText = (r) => (r[0] === r[1] ? r[0] : `${r[0]} to ${r[1]}`);
   function scoutLine(grades, looks) {
-    const g = (r) => (r[0] === r[1] ? r[0] : `${r[1]} to ${r[0]}`);
     return el("div", { class: "go-scouted", title: `Your staff's read after ${looks} looks: the range each grade could still fall in` }, [el("b", { text: "SCOUTED" }),
-      ...["potential", "athleticism", "technique", "football_iq", "size_strength", "coachability"].filter((k) => grades[k]).map((k) => el("span", {}, [el("span", { class: "muted", text: `${GRADE_NAMES[k]} ` }), el("b", { text: g(grades[k]) })]))]);
+      ...["potential", "athleticism", "technique", "football_iq", "size_strength", "coachability"].filter((k) => grades[k]).map((k) => el("span", {}, [el("span", { class: "muted", text: `${GRADE_NAMES[k]} ` }), el("b", {}, wordRange(grades[k]))]))]);
   }
   function needsMode() { try { return localStorage.getItem("cfp-needs-mode") || "need"; } catch (e) { return "need"; } }
   function needText(mode, g, r) {
@@ -620,7 +624,7 @@
             el("span", { class: `go-tag ${r.signed || r.committed ? "" : r.leaning_fcs ? "muted" : "good"}`, text: status(r) }),
             el("span", { class: "go-list-read" }, [
               el("span", { class: `go-tag ${r.interest_level === "High" ? "good" : r.interest_level === "Medium" ? "warn" : "muted"}`, title: "How much your school appeals to him now", text: `${r.interest_level} interest` }),
-              el("span", { class: "muted small", title: "Your staff's read of his potential", text: r.our_potential ? ` Potential ${r.our_potential[0]} to ${r.our_potential[1]}` : " Not scouted" })])]),
+              el("span", { class: "muted small", title: "Your staff's read of his potential", ...(r.our_potential ? { text: " Potential " } : { text: " Not scouted" }) }, r.our_potential ? wordRange(r.our_potential) : [])])]),
         ]);
         const li = el("li", { class: "go-list-row rc-row" }, [open, add]);
         return li;
@@ -753,7 +757,7 @@
       // hover (or tab to) a grade: what prospects in this class graded like that look like
       node.append(el("div", { class: "go-grades" }, Object.entries(p.our_grades).map(([g, r]) => {
         const d = (p.grade_details || {})[g] || {};
-        const grade = r[0] === r[1] ? r[0] : `${r[0]} to ${r[1]}`;
+        const grade = wordText(r);
         const lines = d.labels ? [`Coachability like: ${d.labels.join(", ")}`]
           : Object.entries(d.ratings || {}).map(([k, v]) => {
               const lg = (d.league || {})[k];
@@ -763,9 +767,9 @@
         const tipId = `tip-${pid}-${g}`;
         const tip = el("div", { class: "go-tip-box", role: "tooltip", id: tipId }, [el("b", { text: `${GROUP_NAMES[g] || g} ${grade} looks like` }),
           ...lines.map((t) => el("div", { text: t })),
-          d.peers ? el("div", { class: "muted small", text: `Middle half of ${d.peers} prospects at his position graded like this, on the game's scale (50 is the middle Power 4 starter; C+ starts at 50, B at 60, A at 78), ranked against today's players at his position.` }) : null]);
+          d.peers ? el("div", { class: "muted small", text: `Middle half of ${d.peers} prospects at his position graded like this, on the game's scale (50 is the middle Power 4 starter: Solid from 50, Strong from 65, Elite from 80, All-American from 90), ranked against today's players at his position.` }) : null]);
         const cell = el("div", { class: "go-stat go-tip", tabindex: "0", "aria-describedby": tipId }, [el("div", { class: "go-kicker muted", text: (GROUP_NAMES[g] || g).toUpperCase() }),
-          el("div", { class: "go-stat-val", text: grade }), tip]);
+          el("div", { class: "go-stat-val" }, wordRange(r)), tip]);
         const show = () => placeTip(cell, tip);
         const hide = () => tip.classList.remove("show");
         cell.addEventListener("mouseenter", show); cell.addEventListener("focus", show); cell.addEventListener("click", show);
@@ -861,5 +865,5 @@
     else if (tab === "classes") renderClasses(season, box);
   }
 
-  window.Recruiting = { render, openProfile: (s, pid) => openProfile(s, pid), board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
+  window.Recruiting = { wordTag, render, openProfile: (s, pid) => openProfile(s, pid), board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
 })();
