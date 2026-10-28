@@ -305,6 +305,24 @@ if __name__ == "__main__":
     assert b["stage_move"] in ("up", None) and b["home"] == rc2["prospects"][fresh]["home"]
     v = prospects.recruiting_view(st2)
     assert v["areas"]["Texas"] == ["TX"] and set(v["areas"]) == set(recruiting.AREAS)
+    # the move derivation on hand-built snapshots
+    wk = st2["current_week"]
+    def move(snap, pid=fresh):
+        rc2["stages"][pid] = snap
+        return prospects.board_row(st2, pid, "ohio-state")["stage_move"]
+    assert move({"week": wk, "now": "top", "prev": "contact"}) == "up"
+    assert move({"week": wk, "now": "contact", "prev": "top"}) == "down"
+    assert move({"week": wk, "now": "top", "prev": "top"}) is None
+    assert move({"week": wk - 2, "now": "top", "prev": "contact"}) is None
+    rc2["status"][fresh]["committed"] = "georgia"
+    assert move({"week": wk, "now": "top", "prev": "contact"}) is None            # committed elsewhere: no move
+    rc2["status"][fresh]["committed"] = "ohio-state"
+    assert move({"week": wk, "now": "committed", "prev": "visited"}) == "up"
+    rc2["status"][fresh]["committed"] = None
+    # a stale entry (dropped from the board, re-added later) gives no prev
+    rc2["stages"][fresh] = {"week": wk - 3, "now": "visited", "prev": None}
+    recruiting._snapshot_ranks(st2, wk)
+    assert rc2["stages"][fresh]["prev"] is None and rc2["stages"][fresh]["week"] == wk
     # an old save without the snapshot shows no move
     rc2.pop("stages")
     assert prospects.board_row(st2, fresh, "ohio-state")["stage_move"] is None

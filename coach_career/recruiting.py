@@ -980,7 +980,8 @@ def _snapshot_ranks(state: dict, week: int) -> None:
     stages = rc.setdefault("stages", {})          # the viewer's board and offers: which column each prospect sits in
     me = state["team"]
     for pid in set(rc["board"]) | set(rc["offers"].get(me, [])):
-        stages[pid] = {"week": week, "now": stage(state, me, pid), "prev": (stages.get(pid) or {}).get("now")}
+        old = stages.get(pid) or {}               # an entry older than last week's step is stale: no move from it
+        stages[pid] = {"week": week, "now": stage(state, me, pid), "prev": old.get("now") if old.get("week", -99) >= week - 1 else None}
 
 
 def _report(state: dict, week: int) -> dict:
