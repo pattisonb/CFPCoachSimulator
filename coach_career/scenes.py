@@ -5,7 +5,7 @@ and reaction; recruiting.py owns the scene's lifecycle and its points (the one `
 
 Lines are in his voice, present tense, short, no numbers (an in-home visit's ask is in words). They
 take {name}, {first}, {town}, {state}, {school}, {position}, {role} ("start", "compete" or "wait"),
-{record} (the school's won-lost in words); two-sided cues take {a} and {b}, two topics' phrases."""
+{record} (the school's won-lost in words). Lines fit a high schooler and a transfer alike; two-sided cues take {a} and {b}, two topics' phrases."""
 from __future__ import annotations
 
 import random
@@ -38,14 +38,14 @@ LINES: dict[str, dict[str, list[str]]] = {
         "cue": ["I want to play {position} on Saturdays, not hold a clipboard.",
                 "Everybody says I'll play early. I want to see it.",
                 "I'm not sitting for three years. I want snaps."],
-        "hit": ["You're telling me I'd {role} as a freshman? I'm all in on that.",
+        "hit": ["A real shot at the field next year? I'm all in on that.",
                 "That depth chart looks good to me, Coach. Real good.",
-                "Snaps as a freshman. That's what I needed to hear."],
+                "Snaps next year. That's what I needed to hear."],
         "polite": ["I'll earn whatever I get. That's fine.",
                    "Yeah, the depth chart's cool. Not my biggest thing.",
                    "I figure I'll compete wherever I go."],
         "quiet": ["You've got a lot of guys at {position} already.",
-                  "So I'd {role} as a freshman. Okay.",
+                  "So I'd {role} next year. Okay.",
                   "...I've seen that depth chart, Coach."],
     },
     "prestige": {
@@ -64,9 +64,9 @@ LINES: dict[str, dict[str, list[str]]] = {
     },
     "winning": {
         "cue": ["I want to win. Rings, conference titles, all of it.",
-                "I'm not going somewhere to lose. I did that in middle school.",
+                "I'm not going somewhere to lose. Not again.",
                 "I want to play in the big games in December."],
-        "hit": ["{record}. I notice that, Coach. You guys win.",
+        "hit": ["You guys win. I notice that, Coach.",
                 "That's the thing. {school} wins. I want in.",
                 "Playing for a title every year? Yes sir."],
         "polite": ["Winning's nice. It's not the only thing.",
@@ -102,7 +102,7 @@ LINES: dict[str, dict[str, list[str]]] = {
                    "I hear you. Coaches move around, though."],
         "quiet": ["...Everybody says that, Coach.",
                   "I don't really know you yet.",
-                  "My high school coach had some questions about your staff."],
+                  "People back home have some questions about your staff."],
     },
     "academics": {
         "cue": ["My mom says the degree is the whole point.",
@@ -137,7 +137,7 @@ FAMILY = ["His mom has the table set and the good plates out.",
           "His dad shakes your hand and doesn't let go for a while.",
           "His little brother asks if you know anybody in the NFL.",
           "His grandmother wants to know if there's a church near {school}.",
-          "The whole family is on the couch in {town}, {state}. {first} sits closest to the door."]
+          "The whole family is on the couch in {town}. {first} sits closest to the door."]
 
 _ONES = ("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen "
          "sixteen seventeen eighteen nineteen").split()
@@ -168,13 +168,15 @@ def _record(state: dict, slug: str) -> str:
     if not w + l:
         ls = recruiting._team_model(slug).get("last_season") or {}
         w, l = ls.get("wins", 0), ls.get("losses", 0)
+    if not w + l:
+        return "No record yet"
     return f"{words(w)} and {words(l)}".capitalize()
 
 
 def _fields(state: dict, slug: str, p: dict) -> dict:
     from sim import season
     team = season.load_teams().get(slug) or {}
-    return {"name": p["name"], "first": p["name"].split()[0], "town": p["hometown"]["city"],
+    return {"name": p["name"], "first": p["name"].split()[0], "town": p["hometown"]["city"] or p["hometown"]["state"],   # a transfer has no town on file
             "state": p["hometown"]["state"], "school": team.get("name", slug), "position": p["position"],
             "role": _role(state, slug, p["id"]), "record": _record(state, slug)}
 

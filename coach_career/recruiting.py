@@ -1081,6 +1081,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         raise RecruitingError(409, f"you already {'messaged' if action == 'message' else 'called'} him this week")
     if action == "scout" and contact.get("scouted", 0) >= SCOUT_MAX:
         raise RecruitingError(409, f"your staff have scouted him {SCOUT_MAX} times: his area scout keeps looking")
+    if opens and pid in ((rc.get("scenes") or {}).get(slug) or {}):
+        raise RecruitingError(409, "finish your call with him first")
     if _hours(state, slug) < HOURS[action]:
         raise RecruitingError(409, "not enough hours left this week")
     offers = rc["offers"].setdefault(slug, [])

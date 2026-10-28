@@ -148,7 +148,6 @@ if __name__ == "__main__":
     with recruiting.forced_strength(st, "ohio-state", pid, weak_t, 0.1):
         assert recruiting._contact_points(st, "ohio-state", tx, "message", weak_t) < 0        # he isn't buying it
     # a call without a pitch opens a scene: hours spent, the week marked, no points yet
-    from coach_career import scenes
     week0 = st["current_week"]
     q = next(x for x in rc["prospects"] if x not in rc["contacts"] and not rc["prospects"][x].get("hidden"))
     rc["hours"]["ohio-state"] = 100
@@ -161,6 +160,11 @@ if __name__ == "__main__":
         recruiting.act(st, "ohio-state", q, "call"); raise AssertionError("a second call this week")
     except recruiting.RecruitingError as e:
         assert e.code == 409
+    try:                                                       # a visit the same week cannot replace the open call
+        recruiting.act(st, "ohio-state", q, "hc_visit"); raise AssertionError("a second scene over an open one")
+    except recruiting.RecruitingError as e:
+        assert e.code == 409 and rc["hours"]["ohio-state"] == 85 and rc["scenes"]["ohio-state"][q]["id"] == sc["id"]
+        assert ((rc["contacts"][q]["ohio-state"]).get("hc_week")) is None
     # the pitch finishes it: a priority at strength lights him up and is revealed; points are today's
     pri = next(t for t in sc["cue"]["topics"] if t in rc["prospects"][q]["priorities"])
     with recruiting.forced_strength(st, "ohio-state", q, pri, 0.9):
@@ -200,6 +204,12 @@ if __name__ == "__main__":
     assert "scene" not in recruiting.act(st, "ohio-state", q, "call", pitch=pri)
     calls = [recruiting._act(st, "texas", x, "call", None, 0) for x in list(rc["prospects"])[:60]]
     assert 0.25 <= sum(1 for c in calls if c) / len(calls) <= 0.75
+    assert not rc.get("scenes", {}).get("texas"), "a CPU school's call opens no scene"
+    # CPU parity: your own school through `_act` (Auto-recruit's path) with no pitch is the one-shot call
+    cpu = next(x for x in rc["prospects"] if x not in rc["contacts"] and not rc["status"][x]["signed"])
+    rc["hours"]["ohio-state"] = 100
+    recruiting._act(st, "ohio-state", cpu, "call", None, 0)
+    assert cpu not in rc["scenes"].get("ohio-state", {}) and recruiting.pending(st, "ohio-state", cpu) == recruiting.BASE_POINTS["call"]
     # an in-home visit scene carries his number
     st["current_week"] += 4; rc["hours"]["ohio-state"] = 100     # a new week's hours (the calls above spent 90)
     sc = recruiting.act(st, "ohio-state", q, "hc_visit")["scene"]
