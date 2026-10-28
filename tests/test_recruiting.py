@@ -28,7 +28,6 @@ if __name__ == "__main__":
     # over many seeds the count is a few, often none: never a guaranteed number
     counts = [len(recruiting.draw_generational(dict(rc, seed=s))) for s in range(40)]
     assert min(counts) <= 1 and 1.0 <= sum(counts) / len(counts) <= 5.0, counts
-    print("generational draws over 40 seeds:", counts, "; this class:", len(gen))
     if gen:
         g = gen[0]
         assert recruiting.ask_from(st, "ohio-state", g) == int(round(recruiting.GENERATIONAL_ASK * recruiting.ask_from(dict(st, recruiting=dict(rc, generational=[])), "ohio-state", g)))

@@ -1761,6 +1761,7 @@ def portal_rc(state: dict, entrants: dict, year: int) -> dict:
     from coach_career import offseason
     from teamdata import game_scale
     attrs = game_scale.keys()
+    seed = state.get("rng_state", 0)
     rng = random.Random(f"portal-rank-{year}-{seed}")
     prospects = {}
     for pid, e in entrants.items():

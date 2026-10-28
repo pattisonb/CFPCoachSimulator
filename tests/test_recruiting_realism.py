@@ -21,7 +21,6 @@ if __name__ == "__main__":
         lines = check_recruiting.report(m)
         bad += [f"seed {seed}: {line.strip()}" for line in lines if line.startswith("!")]
     assert not bad, "\n" + "\n".join(bad)
-    print("generational prospects across both seeds:", len(gen_signed), sorted(r for _, r in gen_signed))
     if gen_signed:                     # a generational prospect signs with a top-25 class
         top = sum(1 for _, r in gen_signed if r <= 25)
         assert top >= 0.8 * len(gen_signed), f"generational prospects signing with a top-25 class: {top}/{len(gen_signed)}: {gen_signed}"
