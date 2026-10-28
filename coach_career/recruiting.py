@@ -62,7 +62,9 @@ AREAS = {
     "West Coast": ["CA", "OR", "WA", "HI", "AK"],
     "Mountain-Southwest": ["AZ", "NV", "UT", "CO", "NM", "ID", "MT", "WY", "OK"],
 }
-HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0, "raise_nil": 0, "scout": 5}
+HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0, "raise_nil": 0, "scout": 5,
+         "pitch": 0}                               # a pitch finishes your call or visit scene: its hours went on the call
+SCENES = ("call", "hc_visit")              # your calls and in-home visits without a pitch open a scene (scenes.py)
 SCOUT_LOOKS = 1                            # a scouting trip: one look by your best evaluator at one prospect (5 hours) ...
 SCOUT_MAX = 3                              # ... up to this many trips per prospect, any week (after that his area scout keeps looking)
 CALL_REVEAL = 0.5                          # a call tells you one of his priorities this often; an in-home visit always does
@@ -916,11 +918,30 @@ def _home_game_left(state: dict, slug: str) -> Optional[int]:
     return min(weeks) if weeks else None
 
 
-def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0) -> dict:
+def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
+        scene: Optional[str] = None) -> dict:
     """One recruiting action by `slug` on prospect `pid` this week. Its interest lands at the week
-    step (you see his list move next week), so this returns no interest. Raises RecruitingError."""
-    revealed = _act(state, slug, pid, action, pitch, nil)
-    return {"hours_left": state["recruiting"]["hours"][slug], "revealed": revealed}
+    step (you see his list move next week), so this returns no interest. Your call or in-home visit
+    without a pitch opens a scene (returned); `pitch` with the scene's id finishes it and returns
+    his reaction. Raises RecruitingError."""
+    rc = state["recruiting"]
+    if action == "pitch":
+        sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
+        _act(state, slug, pid, action, pitch, nil, scene=scene)
+        from coach_career import scenes
+        return {"hours_left": rc["hours"][slug],
+                "reaction": scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid])}
+    opens = slug == state.get("team") and action in SCENES and pitch is None
+    revealed = _act(state, slug, pid, action, pitch, nil, opens=opens)
+    out = {"hours_left": rc["hours"][slug], "revealed": revealed}
+    if opens:
+        out["scene"] = rc["scenes"][slug][pid]
+    return out
+
+
+def clear_scenes(state: dict, slug: str) -> None:
+    """Drop the school's open scenes (Auto-recruit took over): no points, the hours stay spent."""
+    (state["recruiting"].get("scenes") or {}).pop(slug, None)
 
 
 REPORTS_KEPT = 4           # weekly reports kept (the Office shows the latest)
@@ -958,6 +979,11 @@ def _flush(state: dict, week: int) -> None:
             top = max(acts.items(), key=lambda kv: abs(kv[1]))
             rc.setdefault("why", {}).setdefault(pid, {})[slug] = {"week": week, "action": top[0], "points": round(top[1], 2)}
     rc["pending"], rc["why_week"] = {}, {}
+    if rc.get("scenes"):                       # a call or visit you never finished: no points, a line in the report
+        me = state.get("team")
+        for pid in (rc["scenes"].get(me) or {}):
+            _event(state, "hung_up", pid, me)
+        rc["scenes"] = {}
 
 
 def _snapshot_ranks(state: dict, week: int) -> None:
@@ -1022,7 +1048,7 @@ def _report(state: dict, week: int) -> dict:
     return report
 
 
-REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying")
+REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up")
 
 
 def latest_report(state: dict) -> Optional[dict]:
@@ -1031,7 +1057,10 @@ def latest_report(state: dict) -> Optional[dict]:
 
 
 def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
-         scale: float = 1.0) -> Optional[str]:
+         scale: float = 1.0, scene: Optional[str] = None, opens: bool = False) -> Optional[str]:
+    """The one action path every school takes (yours, the AI's, Auto-recruit's). Only `act` passes
+    `opens` (your call or visit with no pitch: a scene, no points yet) and `scene` (the pitch that
+    finishes it); every other caller keeps the one-shot path."""
     rc = state["recruiting"]
     p = rc["prospects"].get(pid)
     if p is None:
@@ -1120,6 +1149,21 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             if game_week is None:
                 raise RecruitingError(409, "no home game left for a visit")
             rc["visits"].setdefault(pid, {})[slug] = {"week": game_week, "done": False}
+    elif action == "pitch":                        # your scene's pitch: the stored call or visit's points, as the one-shot rule
+        sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
+        if sc is None or scene is None or sc["id"] != scene:
+            raise RecruitingError(409, "no open call with him")
+        if pitch is None:
+            raise RecruitingError(400, "a pitch: what you are selling him")
+        if pitch in p["priorities"]:                  # he tells you plainly when it is one of his
+            seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
+            if pitch not in seen:
+                seen.append(pitch)
+        points = _contact_land(state, slug, p, contact, sc["action"], pitch)
+        del rc["scenes"][slug][pid]
+        if points:                                    # the points are the call's or the visit's; its hours went when it opened
+            _add_points(state, slug, pid, points * scale, sc["action"])
+        return None
     elif action == "scout":                        # a scouting trip: your best evaluator's look, no contact with him
         contact["scouted"] = contact.get("scouted", 0) + 1
         staff = (state.get("career") or {}).get("staff") or []
@@ -1134,7 +1178,12 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             contact["hc_week"] = week
         if action in WEEKLY_ONCE:
             contact.setdefault("week", {})[action] = week
-        if action == "hc_visit":                      # an in-home visit tells you one thing he cares about, and his number
+        if opens:                                     # your scene: the contact is marked, his lines and cue stored; no points until the pitch
+            contact["asked"] = True if action == "hc_visit" or contact.get("asked") is True else "range"
+            contact["last_contact"] = week
+            from coach_career import scenes
+            rc.setdefault("scenes", {}).setdefault(slug, {})[pid] = scenes.open_scene(state, slug, pid, action, week)
+        elif action == "hc_visit":                    # an in-home visit tells you one thing he cares about, and his number
             revealed = _reveal(state, slug, pid)
             contact["asked"] = True
         elif action == "call":                        # a call: sometimes a priority, and about what he wants
@@ -1142,17 +1191,25 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
                 revealed = _reveal(state, slug, pid)
             if contact.get("asked") is not True:
                 contact["asked"] = "range"
-        contact["last_contact"] = week
-        points = _contact_points(state, slug, p, action, pitch) / (1 + DIMINISH * contact["n"])
-        if points < 0:
-            _event(state, "not_buying", pid, slug, topic=pitch)
-        if cooled(state, slug, pid):
-            points *= COOLED_CONTACT
-        contact["n"] += 1
+        if not opens:
+            contact["last_contact"] = week
+            points = _contact_land(state, slug, p, contact, action, pitch)
     rc["hours"][slug] = _hours(state, slug) - HOURS[action]
     if points:
         _add_points(state, slug, pid, points * scale, action)
     return revealed
+
+
+def _contact_land(state: dict, slug: str, p: dict, contact: dict, action: str, pitch: Optional[str]) -> float:
+    """A contact's points (a message, call or visit, one-shot or a scene's pitch): the pitch's worth
+    cut by earlier contacts, halved while he is cooled; a backfire is logged."""
+    points = _contact_points(state, slug, p, action, pitch) / (1 + DIMINISH * contact["n"])
+    if points < 0:
+        _event(state, "not_buying", p["id"], slug, topic=pitch)
+    if cooled(state, slug, p["id"]):
+        points *= COOLED_CONTACT
+    contact["n"] += 1
+    return points
 
 
 # ----- the week: AI schools, visits, commitments, flips and signing ----------------------------------

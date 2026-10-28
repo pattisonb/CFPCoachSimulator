@@ -59,7 +59,7 @@ if __name__ == "__main__":
     av = recruiting.ask_view(st, "ohio-state", pid)
     ask_ = recruiting.ask_from(st, "ohio-state", pid)
     assert av.get("exact") is None and av["lo"] < ask_ < av["hi"] and av["hi"] - av["lo"] <= max(10, 0.6 * ask_), av
-    r = recruiting.act(st, "ohio-state", pid, "hc_visit")
+    r = recruiting.act(st, "ohio-state", pid, "hc_visit", pitch=next(t for t in recruiting.PITCHES if t not in tx["priorities"]))   # the one-shot form
     assert r["revealed"] in tx["priorities"] and recruiting.ask_view(st, "ohio-state", pid).get("exact") == recruiting.ask_from(st, "ohio-state", pid)
     # scouting by hand: 5 hours a look by your best evaluator at one prospect, up to three looks, any week
     unseen = next(q for q in list(rc["prospects"]) if q not in rc["reads"] and q != pid)
@@ -147,6 +147,66 @@ if __name__ == "__main__":
     saved = strength[weak_t]
     with recruiting.forced_strength(st, "ohio-state", pid, weak_t, 0.1):
         assert recruiting._contact_points(st, "ohio-state", tx, "message", weak_t) < 0        # he isn't buying it
+    # a call without a pitch opens a scene: hours spent, the week marked, no points yet
+    from coach_career import scenes
+    week0 = st["current_week"]
+    q = next(x for x in rc["prospects"] if x not in rc["contacts"] and not rc["prospects"][x].get("hidden"))
+    rc["hours"]["ohio-state"] = 100
+    r = recruiting.act(st, "ohio-state", q, "call")
+    sc = r["scene"]
+    assert r["hours_left"] == 85 and sc["action"] == "call" and 2 <= len(sc["lines"]) <= 4
+    assert set(sc["cue"]["topics"]) & set(rc["prospects"][q]["priorities"]) and len(sc["cue"]["topics"]) in (1, 2)
+    assert recruiting.pending(st, "ohio-state", q) == 0.0 and rc["scenes"]["ohio-state"][q]["id"] == sc["id"]
+    try:
+        recruiting.act(st, "ohio-state", q, "call"); raise AssertionError("a second call this week")
+    except recruiting.RecruitingError as e:
+        assert e.code == 409
+    # the pitch finishes it: a priority at strength lights him up and is revealed; points are today's
+    pri = next(t for t in sc["cue"]["topics"] if t in rc["prospects"][q]["priorities"])
+    with recruiting.forced_strength(st, "ohio-state", q, pri, 0.9):
+        r = recruiting.act(st, "ohio-state", q, "pitch", pitch=pri, scene=sc["id"])
+        want = recruiting._contact_points(st, "ohio-state", rc["prospects"][q], "call", pri)
+    assert r["reaction"]["kind"] == "hit" and pri in rc["revealed"]["ohio-state"][q]
+    assert abs(recruiting.pending(st, "ohio-state", q) - want) < 1e-6 and q not in rc["scenes"]["ohio-state"]
+    # quiet: a priority where you are weak backfires and logs not_buying; polite: not a priority
+    st["current_week"] += 1
+    sc = recruiting.act(st, "ohio-state", q, "call")["scene"]
+    other = next(t for t in recruiting.PITCHES if t not in rc["prospects"][q]["priorities"])
+    assert recruiting.act(st, "ohio-state", q, "pitch", pitch=other, scene=sc["id"])["reaction"]["kind"] == "polite"
+    st["current_week"] += 1
+    sc = recruiting.act(st, "ohio-state", q, "call")["scene"]
+    pri2 = rc["prospects"][q]["priorities"][-1]
+    with recruiting.forced_strength(st, "ohio-state", q, pri2, 0.1):
+        r = recruiting.act(st, "ohio-state", q, "pitch", pitch=pri2, scene=sc["id"])
+    assert r["reaction"]["kind"] == "quiet" and any(e["kind"] == "not_buying" and e["pid"] == q for e in rc["log"])
+    # a wrong scene id is refused; an abandoned scene adds nothing and clears at the week step
+    st["current_week"] += 1
+    sc = recruiting.act(st, "ohio-state", q, "call")["scene"]
+    try:
+        recruiting.act(st, "ohio-state", q, "pitch", pitch=pri, scene="nope"); raise AssertionError("a stale scene id")
+    except recruiting.RecruitingError as e:
+        assert e.code == 409
+    landed = rc["lists"][q].get("ohio-state", 0.0) + recruiting.pending(st, "ohio-state", q)
+    recruiting._flush(st, st["current_week"])
+    assert not rc["scenes"].get("ohio-state"), "the week step clears open scenes"
+    assert abs(rc["lists"][q].get("ohio-state", 0.0) - landed) < 1e-6, "an abandoned scene added no points"
+    assert any(e["kind"] == "hung_up" and e["pid"] == q for e in rc["log"]), "the report notes the call you never finished"
+    # Auto-recruit on clears scenes; the one-shot call with a pitch still works and the CPU coin flip stands
+    st["current_week"] += 1
+    recruiting.act(st, "ohio-state", q, "call")
+    recruiting.clear_scenes(st, "ohio-state")
+    assert not rc["scenes"].get("ohio-state")
+    st["current_week"] += 1
+    assert "scene" not in recruiting.act(st, "ohio-state", q, "call", pitch=pri)
+    calls = [recruiting._act(st, "texas", x, "call", None, 0) for x in list(rc["prospects"])[:60]]
+    assert 0.25 <= sum(1 for c in calls if c) / len(calls) <= 0.75
+    # an in-home visit scene carries his number
+    st["current_week"] += 4; rc["hours"]["ohio-state"] = 100     # a new week's hours (the calls above spent 90)
+    sc = recruiting.act(st, "ohio-state", q, "hc_visit")["scene"]
+    assert sc["ask"].get("exact") == recruiting.ask_from(st, "ohio-state", q)
+    recruiting.clear_scenes(st, "ohio-state")
+    st["current_week"] = week0                                 # back to the week the checks below expect
+    rc["hours"]["ohio-state"] = 100
     # stages: cold until a contact; an official visit needs his top group; a cold offer counts half
     rc = st["recruiting"]
     two = next(q for q, p in rc["prospects"].items() if p["stars"] == 2 and q != pid and not rc["status"][q]["committed"] and q not in rc["contacts"])
@@ -286,7 +346,7 @@ if __name__ == "__main__":
     rc2 = st2["recruiting"]
     fresh = next(q for q, p in rc2["prospects"].items() if p["stars"] == 3 and q not in rc2["contacts"] and not rc2["status"][q]["committed"])
     rc2["board"].append(fresh)
-    recruiting.act(st2, "ohio-state", fresh, "call")
+    recruiting.act(st2, "ohio-state", fresh, "call", pitch=next(t for t in recruiting.PITCHES if t not in rc2["prospects"][fresh]["priorities"]))
     assert rc2["lists"][fresh].get("ohio-state", 0.0) == 0.0 and recruiting.pending(st2, "ohio-state", fresh) > 0
     assert recruiting.points_now(st2, "ohio-state", fresh) == recruiting.pending(st2, "ohio-state", fresh)
     assert "interest" not in recruiting.act(st2, "ohio-state", fresh, "message")

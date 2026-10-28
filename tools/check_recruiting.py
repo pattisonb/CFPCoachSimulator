@@ -135,8 +135,25 @@ def report(m: dict) -> list[str]:
     return out
 
 
+def reveal_rate(seed: int, team: str = "georgia") -> float:
+    """How often your call scene's cue leads you to one of his priorities: a fresh career, the first
+    100 prospects you can see, each a call, pitching the first topic the cue names (the band: 0.55-0.75,
+    set by scenes.CUE_TWO_SIDED)."""
+    state = season.new_season(team, "full", seed=seed, career=True)
+    rc = state["recruiting"]
+    pids = [q for q in recruiting.prospect_list(state) if not rc["prospects"][q].get("hidden")][:100]
+    found = 0
+    for pid in pids:
+        rc["hours"][team] = 100
+        sc = recruiting.act(state, team, pid, "call")["scene"]
+        r = recruiting.act(state, team, pid, "pitch", pitch=sc["cue"]["topics"][0], scene=sc["id"])
+        found += r["reaction"]["kind"] in ("hit", "quiet")
+    return found / len(pids)
+
+
 def main() -> None:
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+    print(f"  player reveal rate {reveal_rate(1):.3f}   want 0.55-0.75")
     for seed in range(1, n + 1):
         print(f"season seed {seed}")
         print("\n".join(report(measure(play(seed)))))

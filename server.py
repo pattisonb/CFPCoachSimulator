@@ -339,9 +339,10 @@ class SettingsRequest(BaseModel):
 
 class RecruitRequest(BaseModel):
     pid: str
-    action: str                   # message, call, hc_visit, offer, official_visit, pull_offer
+    action: str                   # message, call, hc_visit, offer, official_visit, pull_offer, pitch (finishes a scene)
     pitch: Optional[str] = None
     nil: int = 0
+    scene: Optional[str] = None   # the open call or visit scene a pitch finishes
 
 
 class BoardRequest(BaseModel):
@@ -825,6 +826,8 @@ def season_settings_change(season_id: str, req: SettingsRequest) -> dict:
         out = season.update_settings(state, changes)
         if auto is not None:
             state["career"]["settings"]["auto_recruit"] = mode
+            if mode != "off":                  # your staff take over: an open call or visit scene is dropped
+                recruiting.clear_scenes(state, state["team"])
         season.save_season(state)
     res = {"settings": out}
     if state.get("career"):
@@ -938,7 +941,7 @@ def recruit_action(season_id: str, req: RecruitRequest) -> dict:
     with _season_lock:
         if req.pid not in recruiting.visible(st):
             raise HTTPException(404, "unknown prospect")
-        out = _recruiting_call(recruiting.act, st, st["team"], req.pid, req.action, req.pitch, req.nil)
+        out = _recruiting_call(recruiting.act, st, st["team"], req.pid, req.action, req.pitch, req.nil, req.scene)
     _save_soon(season_id)
     return out
 

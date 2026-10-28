@@ -85,6 +85,20 @@ if __name__ == "__main__":
     staff = server.staff_change(sid, server.StaffRequest(staff_id="r1", area="Texas"))
     assert next(s for s in staff["staff"] if s["id"] == "r1")["area"] == "Texas"
     refused(lambda: server.staff_change(sid, server.StaffRequest(staff_id="r1", area="Atlantis")), 400)
+    # a call without a pitch opens a scene; the pitch finishes it with his reaction; Auto-recruit on drops an open one
+    talk, held = (r["id"] for r in everyone[5:7])
+    sc = server.recruit_action(sid, server.RecruitRequest(pid=talk, action="call"))["scene"]
+    assert sc["id"] and sc["action"] == "call"
+    r = server.recruit_action(sid, server.RecruitRequest(pid=talk, action="pitch", scene=sc["id"], pitch=sc["cue"]["topics"][0]))
+    assert r["reaction"]["kind"] in ("hit", "polite", "quiet") and r["reaction"]["text"]
+    refused(lambda: server.recruit_action(sid, server.RecruitRequest(pid=talk, action="pitch", scene=sc["id"], pitch="nil")), 409)
+    server.board_change(sid, server.BoardRequest(pid=held, on=True))
+    sc = server.recruit_action(sid, server.RecruitRequest(pid=held, action="call"))["scene"]
+    assert next(b for b in server.recruiting_view(sid)["board"] if b["id"] == held)["scene"]["id"] == sc["id"]
+    server.season_settings_change(sid, server.SettingsRequest(auto_recruit="week"))
+    assert all(b["scene"] is None for b in server.recruiting_view(sid)["board"])
+    server.season_settings_change(sid, server.SettingsRequest(auto_recruit="off"))
+    server.board_change(sid, server.BoardRequest(pid=held, on=False))
     assert server.season_settings_change(sid, server.SettingsRequest(auto_recruit="season"))["auto_recruit"] == "season"
     assert server.recruiting_view(sid)["auto_recruit"] == "season"
     server.season_settings_change(sid, server.SettingsRequest(auto_recruit=True))      # older pages send a bool

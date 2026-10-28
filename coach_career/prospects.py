@@ -468,6 +468,7 @@ def board_row(state: dict, pid: str, viewer: str) -> dict:
                ask=recruiting.ask_view(state, viewer, pid), cooled=recruiting.cooled(state, viewer, pid),
                stage=recruiting.stage(state, viewer, pid), strength=recruiting.strengths(state, viewer, pid),
                stage_move=_stage_move(state, pid, viewer),
+               scene=((rc.get("scenes") or {}).get(viewer) or {}).get(pid),
                list=[dict(x, you=x["school"] == viewer) for x in _schools(state, pid)[:5]],
                firmness=rc["status"][pid].get("firmness") if rc["status"][pid]["committed"] == viewer and not rc["status"][pid]["signed"] else None,
                hard=bool(rc["status"][pid].get("hard")) and not rc["status"][pid]["signed"],
