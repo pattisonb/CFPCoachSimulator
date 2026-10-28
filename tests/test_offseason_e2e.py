@@ -70,7 +70,8 @@ if __name__ == "__main__":
             page.reload(); page.wait_for_selector("#season:visible")
             page.wait_for_selector(".off-board .go-pcard", timeout=60_000)          # the portal is recruited on the board
             assert "WEEK 1 OF 4" in page.inner_text("#tab-offseason")
-            page.click(".off-board .go-pcard >> nth=0 >> button.go-act.go")          # an offer, with the pitch and NIL the card knows
+            page.click(".off-board .go-pcard .go-pcard-top >> nth=0")                # he opens in the pane beside the columns
+            page.click(".off-board .go-pane button.go-btn.primary:has-text('Offer')")   # an offer, with the pitch and the NIL his ask suggests
             page.wait_for_selector(".off-board .go-pcard >> nth=0 >> text=Offered", timeout=30_000)
             for w in (1, 2, 3):
                 page.click(f"text=END WEEK {w}")

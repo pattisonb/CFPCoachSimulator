@@ -124,19 +124,40 @@ if __name__ == "__main__":
             cur = page.evaluate("() => { const b = document.querySelector('button:disabled'); return b ? getComputedStyle(b).cursor : 'none'; }")
             assert cur != "wait", cur
 
-            # --- Recruiting board: tap a card on a phone and the pitch panel is right under it; the board's body holds the panel
-            page.set_viewport_size({"width": 400, "height": 860})
-            open_tab(page, base, A, "recruiting", ".go-pcard")
-            page.click(".go-pcard .go-pcard-top >> nth=1")
-            time.sleep(1)
-            assert page.evaluate("() => { const c = document.querySelector('.go-pcard.selected'); return !!c && c.nextElementSibling && c.nextElementSibling.classList.contains('go-panel'); }"), \
-                "on a phone the pitch panel sits right under the tapped card"
+            # --- Recruiting board: five columns with counts; a tap opens the pane; nothing scrolls sideways
             page.set_viewport_size({"width": 1280, "height": 1000})
-            open_tab(page, base, A, "recruiting", ".go-pcard")
+            open_tab(page, base, A, "recruiting", ".go-col")
+            cols = page.evaluate("() => [...document.querySelectorAll('.go-col')].map(c => c.querySelector('.go-col-head').textContent.trim())")
+            assert [c.split()[0] for c in cols] == ["Cold", "In", "Top", "Visited", "Committed"], cols
+            assert not page.query_selector(".go-chip:has-text('You lead')"), "the lead/close/behind chips are gone"
             page.click(".go-pcard .go-pcard-top >> nth=0")
-            time.sleep(1)
-            over = page.evaluate("() => { const p = document.querySelector('.go-panel'), b = p && p.closest('.tab-body, #tab-recruiting'); if (!p || !b) return 0; return Math.round(p.getBoundingClientRect().bottom - b.getBoundingClientRect().bottom); }")
-            assert over <= 0, f"the pitch panel hangs {over}px below the board"
+            time.sleep(0.8)
+            box = page.evaluate("() => { const p = document.querySelector('.go-pane'); const r = p.getBoundingClientRect(); return [r.top, r.bottom, getComputedStyle(p).position]; }")
+            assert box[2] == "sticky" and 0 <= box[0] < 400, box
+            assert page.query_selector(".go-pane .go-race"), "his list draws as a race"
+            page.set_viewport_size({"width": 400, "height": 860})
+            open_tab(page, base, A, "recruiting", ".go-col")
+            assert page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth + 1"), "no sideways page scroll on a phone"
+            page.click(".go-pcard .go-pcard-top >> nth=0")
+            time.sleep(0.8)
+            sheet = page.evaluate("() => { const p = document.querySelector('.go-pane.sheet'); if (!p) return null; const r = p.getBoundingClientRect(); return [r.top, r.bottom, window.innerHeight]; }")
+            assert sheet and sheet[0] >= 0 and sheet[1] <= sheet[2] + 1, f"the pane is a bottom sheet inside the viewport: {sheet}"
+            page.click(".go-pane .go-pane-close")
+            assert not page.query_selector(".go-pane.sheet")
+            page.set_viewport_size({"width": 1280, "height": 1000})
+
+            # --- The finished career's board: the Committed column holds yours (no actions) and the ones you lost
+            signed = call(base, f"/api/season/{B}/prospects?status=signed&limit=200")["rows"]
+            lost_pid = next(r["id"] for r in signed if r["signed"] != "ohio-state")
+            mine_pid = next(r["id"] for r in signed if r["signed"] == "ohio-state")
+            for pid in (lost_pid, mine_pid):
+                call(base, f"/api/season/{B}/board", {"pid": pid, "on": True})
+            open_tab(page, base, B, "recruiting", ".go-col")
+            last = page.query_selector(".go-col >> nth=4")
+            lost = last.query_selector(".go-pcard.lost")
+            assert lost and re.search(r"flip|Signed|commit", lost.inner_text()), "a prospect lost to another school sits in Committed and says so"
+            mine = last.query_selector(".go-pcard.mine")
+            assert mine and not mine.query_selector(".go-act"), "a prospect committed to you has no recruiting actions"
 
             # --- Staff: the area picker looks like a picker
             open_tab(page, base, A, "staff", ".rc-staff-card select")
