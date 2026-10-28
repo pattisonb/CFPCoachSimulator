@@ -446,12 +446,14 @@
     const open = mapOpen();
     const body = el("div", { class: "go-map-body" });
     body.hidden = !open;
-    const toggle = el("button", { type: "button", class: "go-btn go-map-toggle", "aria-expanded": String(open), "aria-label": "Show or hide the map", text: open ? "Hide" : "Show" });
+    const toggle = el("button", { type: "button", class: "go-btn go-map-toggle", "aria-expanded": String(open), "aria-controls": "go-map-body", "aria-label": open ? "Hide the map" : "Show the map", text: open ? "Hide" : "Show" });
+    body.id = "go-map-body";
     toggle.addEventListener("click", () => {
       const now = body.hidden;
       body.hidden = !now;
       toggle.setAttribute("aria-expanded", String(now));
       toggle.textContent = now ? "Hide" : "Show";
+      toggle.setAttribute("aria-label", now ? "Hide the map" : "Show the map");
       try { localStorage.setItem("cfp-map-open", now ? "1" : "0"); } catch (e) { /* no storage */ }
     });
     const svg = window.USMap.render({ areas: v.areas || {}, staffed, dots, selectedState: opts.selectedState || null, teamColor: color,
@@ -479,7 +481,8 @@
           : [el("tr", {}, [el("td", { colspan: "3", text: "Nobody on your board yet." })])])]));
     });
     // under 360px the picture is left out (CSS hides it too; the table below says the same in words)
-    body.append(window.matchMedia("(max-width: 359px)").matches ? "" : el("div", { class: "go-map-svg" }, [svg]), legend, key, el("div", { class: "go-row" }, [tBtn]), table);
+    body.append(window.matchMedia("(max-width: 359px)").matches ? "" : el("div", { class: "go-map-svg" }, [svg]), legend, key,
+      dots.length ? "" : el("p", { class: "muted small", text: "Nobody on your board yet: add prospects and they appear here." }), el("div", { class: "go-row" }, [tBtn]), table);
     card.append(el("div", { class: "go-map-head" }, [el("div", { class: "go-display l", text: "YOUR FOOTPRINT" }),
       el("span", { class: "muted small", text: opts.selectedState ? `Showing ${opts.selectedState} · tap it again to clear` : "Tap a state to filter, a dot to pick him" }), toggle]), body);
     return card;

@@ -158,14 +158,31 @@ if __name__ == "__main__":
             assert page.evaluate("() => document.querySelectorAll('.go-map .us-state').length") == 51
             # every dot sits on the canvas (a hometown without coordinates falls back to its state's centre)
             assert page.evaluate("() => [...document.querySelectorAll('.go-map .us-dot')].every(c => { const x = +c.getAttribute('cx'), y = +c.getAttribute('cy'); return x > 0 && y > 0 && x < 975 && y < 610; })")
-            page.click(".go-map .us-state[data-state='TX']")
-            time.sleep(0.6)
-            assert page.evaluate("() => [...document.querySelectorAll('.go-pcard .muted')].every(m => !/, [A-Z]{2}/.test(m.textContent) || /, TX|D\\.C\\./.test(m.textContent))"), "a state tap filters the columns to it"
+            # the table tells us which state holds the most of his board; tap that one
             page.click(".go-map button:has-text('List the states')")
             assert page.query_selector(".go-map-table tr"), "an accessible table alternative"
+            top = page.evaluate("() => { const rows = [...document.querySelectorAll('.go-map-table tbody tr')].map(r => [r.querySelector('th').textContent, +r.querySelector('td').textContent]); rows.sort((a, b) => b[1] - a[1]); return rows[0]; }")
+            st, n = top
+            assert n >= 1 and n < board or n == board, top
+            page.click(f".go-map .us-state[data-state='{st}']")
+            time.sleep(0.6)
+            assert page.evaluate("() => document.querySelectorAll('.go-pcard').length") == n, "a state tap filters the columns to that state's prospects"
+            assert page.query_selector(f".go-map .us-state.selected[data-state='{st}']"), "the tapped state is outlined"
+            page.click(f".go-map .us-state[data-state='{st}']")
+            time.sleep(0.6)
+            assert page.evaluate("() => document.querySelectorAll('.go-pcard').length") == board, "tapping again clears the filter"
+            # the collapse is remembered across a reload
+            page.click(".go-map .go-map-toggle")
+            open_tab(page, base, A, "recruiting", ".go-col")
+            assert page.evaluate("() => document.querySelector('.go-map-body').hidden") and page.inner_text(".go-map .go-map-toggle") == "Show", "a collapsed map stays collapsed"
+            page.click(".go-map .go-map-toggle")
+            assert not page.evaluate("() => document.querySelector('.go-map-body').hidden")
             page.set_viewport_size({"width": 340, "height": 700})
             open_tab(page, base, A, "recruiting", ".go-col")
-            assert page.evaluate("() => { const m = document.querySelector('.go-map svg'); return !m || m.offsetParent === null; }"), "the map hides under 360px"
+            assert not page.query_selector(".go-map svg"), "the map's picture is left out under 360px"
+            assert page.evaluate("() => document.querySelectorAll('.go-col').length") == 5, "the board still renders its five columns"
+            page.click(".go-map button:has-text('List the states')")
+            assert page.query_selector(".go-map-table tr"), "the table is still reachable on a tiny screen"
             page.set_viewport_size({"width": 1280, "height": 1000})
 
             # --- The finished career's board: the Committed column holds yours (no actions) and the ones you lost
