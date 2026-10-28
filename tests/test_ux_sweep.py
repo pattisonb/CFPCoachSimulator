@@ -185,6 +185,29 @@ if __name__ == "__main__":
             assert page.query_selector(".go-map-table tr"), "the table is still reachable on a tiny screen"
             page.set_viewport_size({"width": 1280, "height": 1000})
 
+            # --- A call plays on the pane: his lines, the cue you heard, your pitch, his reaction; an abandoned one resumes from the card
+            open_tab(page, base, A, "recruiting", ".go-col")
+            page.click(".go-col[data-col='cold'] .go-pcard .go-pcard-top >> nth=0")
+            time.sleep(0.6)
+            page.click(".go-pane .go-act:has-text('Call')")
+            page.wait_for_selector(".go-pane .go-scene .go-scene-line.cue", timeout=30_000)
+            assert page.query_selector(".go-pane .go-pitch .go-tag:has-text('Heard')"), "the cue marks a pitch"
+            page.click(".go-pane .go-pitch:has(.go-tag:has-text('Heard')) >> nth=0")
+            page.click(".go-pane button:has-text('Pitch')")
+            page.wait_for_selector(".go-pane .go-reaction", timeout=30_000)
+            kind = page.get_attribute(".go-pane .go-reaction", "data-kind")
+            assert kind in ("hit", "polite", "quiet"), kind
+            assert page.query_selector(".go-pcard.selected .go-tag:has-text('Heard')"), "the card keeps what you heard this week"
+            # an abandoned scene resumes from the card
+            page.click(".go-col[data-col='cold'] .go-pcard .go-pcard-top >> nth=0")
+            time.sleep(0.6)
+            if page.query_selector(".go-pane .go-act:has-text('Call'):not(:disabled)"):
+                page.click(".go-pane .go-act:has-text('Call')")
+                page.wait_for_selector(".go-pane .go-scene", timeout=30_000)
+                page.click(".go-pane .go-scene a:has-text('Hang up')")
+                time.sleep(0.5)
+                assert page.query_selector(".go-pcard.selected button:has-text('Finish the call')")
+
             # --- The finished career's board: the Committed column holds yours (no actions) and the ones you lost
             signed = call(base, f"/api/season/{B}/prospects?status=signed&limit=200")["rows"]
             lost_pid = next(r["id"] for r in signed if r["signed"] != "ohio-state")

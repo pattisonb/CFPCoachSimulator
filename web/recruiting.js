@@ -17,7 +17,8 @@
   const STATES = ["AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME",
                   "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD",
                   "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY"];
-  const view = { filters: { q: "", position: "", stars: "", state: "", status: "", sort: "rank", group: "" }, offset: 0, openClass: null, sort: "chance", selected: null, sheet: false, pitch: {}, group: null, state: null };
+  const view = { filters: { q: "", position: "", stars: "", state: "", status: "", sort: "rank", group: "" }, offset: 0, openClass: null, sort: "chance", selected: null, sheet: false, pitch: {}, group: null, state: null,
+                heard: {}, scene: null, reaction: null, focusScene: false };
   let H = null;
 
   const stars = (n) => "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
@@ -40,7 +41,7 @@
   const loading = (text) => el("p", { class: "muted go-loading", text });
   const SIGNING_WEEK = 16, FINAL_WEEK = 20;       // the early signing period (selection week) and national signing day
   const WORDS = { commit: "verbally committed to", hard: "is now a hard commit to", flip: "flipped to", decommit: "decommitted from", signed: "signed with", offer: "was offered by",
-                  asked_more: "wants more from", not_buying: "isn't buying the pitch from" };
+                  asked_more: "wants more from", not_buying: "isn't buying the pitch from", hung_up: "left a call unfinished with" };
   const WHY = { message: "Message", call: "Call", hc_visit: "HC visit", official_visit: "Official visit", offer: "Offer", raise_nil: "NIL raised" };
   const LINE_LABELS = { pass_yards: "pass yds", passing_touchdowns: "TD", interceptions_thrown: "INT", rush_yards: "rush yds", carries: "car", rushing_touchdowns: "TD",
     receptions: "rec", receiving_yards: "rec yds", receiving_touchdowns: "TD", snaps: "snaps", tackles: "tkl", sacks: "sacks", tackles_for_loss: "TFL",
@@ -56,7 +57,7 @@
     card.append(el("div", { class: "go-kicker", text: `WHAT CHANGED · AFTER ${report.week === 0 ? "THE PRESEASON" : `WEEK ${report.week}`}` }));
     // the week in a glance: only prospects where something happened to you (your place moved, a
     // decision, an ask), the biggest first, one line each; his list on the card has the rest
-    const BIG = new Set(["commit", "flip", "decommit", "signed", "asked_more", "not_buying"]);
+    const BIG = new Set(["commit", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up"]);
     const weight = (r) => (r.rank !== r.prev_rank ? 2 : 0) + r.events.filter((e) => BIG.has(e.kind)).length * 3 + (r.moves.some((m) => m.you) ? 1 : 0);
     const rows = report.rows.filter((r) => weight(r) > 0).sort((a, b) => weight(b) - weight(a));
     if (!rows.length) return null;
@@ -115,21 +116,38 @@
     return wrap;
   }
 
-  async function act(s, pid, action, pitch, nil) {
+  // a topic in a sentence: "playing time", "NIL"
+  const topicWord = (t) => (t === "nil" ? "NIL" : (PITCH_NAMES[t] || t).toLowerCase());
+  const REACTION_TOAST = { hit: (t) => `He lit up: ${topicWord(t)} matters to him`, polite: () => "He was polite and moved on",
+                           quiet: (t) => `He went quiet: he isn't buying ${topicWord(t)} from you` };
+  const REACTION_WORDS = { hit: "He lit up", polite: "Polite", quiet: "He went quiet" };
+  // the one network path for an action. A call or in-home visit without a pitch opens a scene (handed to
+  // opts.onScene); a pitch with opts.scene (its id) finishes it, and his reaction goes to opts.onReaction.
+  async function act(s, pid, action, pitch, nil, opts = {}) {
     const body = { pid, action };
     if (pitch) body.pitch = pitch;
     if (nil) body.nil = nil;
+    if (opts.scene) body.scene = opts.scene;
     const names = { message: "Message", call: "Call", hc_visit: "Head coach visit", official_visit: "Official visit invite", offer: "Offer", pull_offer: "Offer pulled", raise_nil: "NIL raised", scout: "Scouting trip" };
     try {
       const r = await H.api(`/api/season/${s.id}/recruit`, H.postJSON(body));
       H.backupSoon();
-      if (action === "scout") H.toast(`Scouting trip done · ${r.hours_left} hours left · his grades are updated`, 3000);
+      if (r.scene) { if (opts.onScene) opts.onScene(r.scene); else H.toast(`${names[action]} open · finish it from his card on the board`, 3000); }
+      else if (r.reaction) { H.toast(REACTION_TOAST[r.reaction.kind](pitch), 4000); if (opts.onReaction) opts.onReaction(r.reaction); }
+      else if (action === "scout") H.toast(`Scouting trip done · ${r.hours_left} hours left · his grades are updated`, 3000);
       else H.toast(`${names[action]} done · ${r.hours_left} hours left${r.revealed ? ` · he cares about ${PITCH_NAMES[r.revealed].toLowerCase()}` : action === "call" ? " · he kept his cards close" : ""} · it lands at the week step`, 3000);
       return r;
     } catch (err) {
       H.toast(`Could not do that: ${H.errText(err)}`, 4000);
       return null;
     }
+  }
+  // his reaction to your pitch, in his words, in the tone of how it landed
+  function reactionView(r) {
+    return el("div", { class: `go-reaction ${r.kind}`, "data-kind": r.kind, role: "status" }, [
+      el("div", { class: "go-kicker", text: (REACTION_WORDS[r.kind] || r.kind).toUpperCase() }),
+      el("p", { class: "go-reaction-line", text: r.text }),
+      el("p", { class: "muted small", text: "It counts at the week step." })]);
   }
   async function setBoard(s, pid, on) {
     try { await H.api(`/api/season/${s.id}/board`, H.postJSON({ pid, on })); H.backupSoon(); return true; }
@@ -305,8 +323,8 @@
 
   // ----- the Recruiting board ----------------------------------------------------------------------
 
-  const ACT_TIPS = { message: "Send a message with your pitch: 5 hours", call: "Call him with your pitch: 15 hours; can reveal one of his priorities",
-                    hc_visit: "Head coach in-home visit with your pitch: 30 hours, once every 4 weeks; you learn a priority and his number",
+  const ACT_TIPS = { message: "Send a message with your pitch: 5 hours", call: "Call him: 15 hours; hear him out, then make your pitch",
+                    hc_visit: "Head coach in-home visit: 30 hours, once every 4 weeks; hear him and his family out, learn his number, then make your pitch",
                     offer: "Offer a scholarship with the NIL points set here: no hours. Only an offer lets him commit to you",
                     official_visit: "Invite him on an official visit: 10 hours; the visit reveals all his priorities",
                     scout: "Send your best evaluator to see him: 5 hours a look, up to three looks, any week; each look tightens his grades without waiting on the area scout" };
@@ -564,6 +582,8 @@
     box.append(boardEl);
     if (keepScroll) pipeline.scrollLeft = keepScroll;
     if (phone() && view.sheet) openSheet(sel);
+    focusScene();
+    view.focusScene = false;
 
     // picking a card: the pane changes in place (desktop) or the sheet opens (phone); nothing reloads
     function choose(b) {
@@ -598,10 +618,89 @@
 
     function pitchFor(b) { return view.pitch[b.id] !== undefined ? view.pitch[b.id] : (b.priorities_known[0] || ""); }
     async function run(b, action, nil) {
-      const pitch = ["message", "call", "hc_visit", "offer"].includes(action) ? pitchFor(b) || null : null;
+      // a call or in-home visit goes out without a pitch: it plays as a scene, and you pitch once you have heard him
+      const pitch = ["message", "offer"].includes(action) ? pitchFor(b) || null : null;
       if (action === "offer" && !pitch) { H.toast("Pick a pitch first: an offer tells him what you are selling.", 3500); return; }
-      const r = await act(s, b.id, action, pitch, nil);
+      const r = await act(s, b.id, action, pitch, nil, { onScene: (sc) => openScene(s, b, sc) });
       if (r) renderRecruiting(s, box);
+    }
+    // a call or in-home visit as a scene on the pane (the sheet on a phone): his lines, the cue, your pitch.
+    // The other actions wait until you pitch; hanging up only closes the view (the card resumes it).
+    function openScene(s, b, scene) {
+      b.scene = scene;
+      view.scene = b.id;
+      view.reaction = null;
+      view.focusScene = true;
+      repaint(b);
+    }
+    // redraw his card and the pane in place (nothing reloads)
+    function repaint(b) {
+      const old = pipeline.querySelector(`.go-pcard[data-pid="${CSS.escape(b.id)}"]`);
+      if (old) old.replaceWith(card(b));
+      choose(b);
+      focusScene();
+    }
+    function sceneView(b) {
+      const scene = b.scene, visit = scene.action === "hc_visit", what = visit ? "visit" : "call";
+      let chosen = scene.cue.topics[0] || "";
+      const sc = el("section", { class: "go-scene", tabindex: "-1", "aria-label": `${visit ? "In-home visit" : "Call"} with ${b.name}` });
+      sc.append(el("div", { class: "go-scene-head" }, [avatar(b.id), el("div", {}, [el("div", { class: "go-kicker", text: visit ? "IN HIS HOME" : "ON THE PHONE" }), el("b", { text: b.name })])]));
+      // his lines; on a visit the first line and the last are the room, not him
+      sc.append(el("div", { class: "go-scene-lines" }, scene.lines.map((t, i) => {
+        const cue = t === scene.cue.text, room = visit && !cue && (i === 0 || i === scene.lines.length - 1);
+        return el("p", { class: `go-scene-line ${cue ? "cue" : ""} ${room ? "room" : ""}`, text: t, ...(cue ? { title: "The cue: what he is telling you he cares about" } : {}) });
+      })));
+      sc.append(el("div", { class: "go-kicker muted", text: "YOUR PITCH" }),
+        pitchPicker(b, chosen, (t) => { chosen = t; view.pitch[b.id] = t; }, scene.cue.topics));
+      const go = el("button", { type: "button", class: "go-btn primary", text: "Pitch", title: "Sell him on this: it costs nothing more, the hours went when you picked up" });
+      go.addEventListener("click", async () => {
+        if (!chosen) { H.toast("Pick a pitch first: what you are selling him.", 3000); return; }
+        go.disabled = true;
+        const r = await act(s, b.id, "pitch", chosen, null, { scene: scene.id, onReaction: (re) => {
+          view.heard[b.id] = { week: s.current_week, topics: scene.cue.topics };
+          b.scene = null;
+          view.scene = null;
+          view.reaction = { pid: b.id, r: re };
+          repaint(b);
+          // his reaction stays a moment, then the board catches up
+          setTimeout(() => { if (view.reaction && view.reaction.r === re) view.reaction = null; if (box.isConnected) renderRecruiting(s, box); }, 4000);
+        } });
+        if (!r) { view.scene = null; renderRecruiting(s, box); }     // a stale call (the week moved on): the board shows where things stand
+      });
+      const hang = el("a", { href: "#", class: "go-link go-hangup", role: "button", text: "Hang up",
+        onclick: (e) => {
+          e.preventDefault();
+          view.scene = null;
+          repaint(b);
+          const f = box.querySelector(".go-pane .go-scene-open button");
+          if (f && !phone()) f.focus({ preventScroll: true });
+        } });
+      sc.append(el("div", { class: "go-row wrap go-scene-acts" }, [go, hang]),
+        el("p", { class: "muted small", text: `Hanging up keeps the ${what} open: finish it from his card this week. One you never finish counts for nothing.` }));
+      return sc;
+    }
+    function focusScene() {
+      if (!view.focusScene) return;
+      const sc = box.querySelector(".go-pane .go-scene");
+      if (sc) sc.focus({ preventScroll: true });
+    }
+    // the topics as radios, each with your program's case; `heard` (a scene's cue) tags what he just told you
+    function pitchPicker(b, current, onPick, heard) {
+      heard = heard || [];
+      const pitches = el("div", { class: "go-pitches", role: "radiogroup", "aria-label": `Pitch to ${b.name}` });
+      for (const t of Object.keys(PITCH_NAMES)) {
+        const known = b.priorities_known.includes(t), cue = heard.includes(t);
+        const id = `pitch-${b.id}-${t}`;
+        const r = el("input", { type: "radio", name: `pitch-${b.id}`, id, value: t });
+        r.checked = current === t;
+        r.addEventListener("change", () => onPick(t));
+        const sv = b.strength ? b.strength[t] : null, word = sv == null ? "" : sv >= 0.6 ? "Strong" : sv < 0.25 ? "Weak" : "Fair";
+        const tone = sv == null ? "" : sv >= 0.6 ? "good" : sv < 0.25 ? "bad" : "";
+        const tag = cue ? (word ? `Heard · ${word}` : "Heard") : known ? `Priority · ${word}` : word;
+        pitches.append(el("label", { class: `go-pitch ${known ? "known" : ""} ${cue ? "heard" : ""}`, for: id, title: sv == null ? "" : known && sv < 0.25 ? "He cares about this and you are weak here: pitching it backfires" : `Your program's case on ${PITCH_NAMES[t].toLowerCase()}: ${word.toLowerCase()}` }, [r,
+          el("span", {}, [el("b", { text: PITCH_NAMES[t] }), el("span", { class: `go-tag ${tone}`, text: tag })])]));
+      }
+      return pitches;
     }
     // a compact card: who he is, what your staff read, what stands out, where you stand
     function card(b) {
@@ -618,10 +717,19 @@
           el("span", { class: "muted small" }, [b.portal ? `${b.position} · from ${b.from_name}` : `${b.position} `, b.portal ? null : el("span", { class: "go-stars", text: stars(b.stars) })])])]));
       c.append(el("div", { class: "go-pcard-read small" }, b.our_grades && b.our_grades.potential
         ? [el("span", { class: "muted", text: "Potential " }), ...wordRange(b.our_grades.potential)] : [el("span", { class: "muted", text: "Not scouted" })]));
-      c.append(badges(b, me) || "");
+      const tags = badges(b, me);
+      const hw = view.heard[b.id];
+      const heard = b.scene ? b.scene.cue.topics : hw && hw.week === s.current_week ? hw.topics : null;
+      if (heard && heard.length) {
+        const box2 = tags || el("div", { class: "go-tags go-badges" });
+        box2.append(el("span", { class: "go-tag heard", text: `Heard: ${heard.map((t) => PITCH_NAMES[t] || t).join(" or ")}`, title: "What he told you this week he cares about" }));
+        c.append(box2);
+      } else c.append(tags || "");
       if (moved) c.append(el("div", { class: `go-pcard-move ${b.stage_move}`, text: b.stage_move === "up" ? "▲ Moved up this week" : "▼ Slipped back this week" }));
       // one line of standing; a prospect lost to another school says whether he could still flip
       c.append(bar(sd), el("div", { class: `go-standing-text small ${sd.tone}`, text: lost && !b.signed ? `${sd.text} · ${sd.odds || "Offer him to try for a flip"}` : sd.text }));
+      if (b.scene) c.append(el("button", { type: "button", class: "go-btn primary go-finish", text: b.scene.action === "hc_visit" ? "Finish the visit" : "Finish the call",
+        "aria-label": `Finish your ${b.scene.action === "hc_visit" ? "visit" : "call"} with ${b.name}`, onclick: () => openScene(s, b, b.scene) }));
       return c;
     }
     // the pane: everything for the one you picked; sticky beside the columns, or a bottom sheet on a phone
@@ -635,6 +743,10 @@
         el("button", { type: "button", class: "go-link go-pcard-name", text: b.name, title: "Open his profile", onclick: () => openProfile(s, b.id) }),
         el("span", { class: "muted small", text: b.portal ? `${b.position} · ${clsWord(b.cls)} · from ${b.from_name} · #${b.portal_rank} in the portal` : `${stars(b.stars)} ${b.position} · ${place(b.hometown)} · #${b.national_rank}` })]),
         sheet ? el("button", { type: "button", class: "go-btn go-pane-close", "aria-label": "Close", text: "✕", onclick: closeSheet }) : null]));
+      const shown = open && b.scene && view.scene === b.id;
+      const reacted = view.reaction && view.reaction.pid === b.id ? view.reaction.r : null;
+      if (shown) p.append(sceneView(b));
+      else if (reacted) p.append(reactionView(reacted));
       p.append(el("div", { class: `go-standing-text ${sd.tone}`, text: sd.text }));
       if (sd.odds) p.append(el("div", { class: "muted small", text: `${sd.odds}${sd.certainty ? ` · ${sd.certainty}${sd.certainty !== "Solid read" ? ": the range narrows as signing day nears" : ""}` : ""}` }));
       p.append(bar(sd));
@@ -654,33 +766,27 @@
         const acts = [["message", "Message", 5, done.includes("message") && "week"], ["call", "Call", 15, done.includes("call") && "week"],
           ["hc_visit", "HC visit", 30, hcWait && "month"], ["scout", trips ? `Scout ${trips}/3` : "Scout", 5, trips >= 3 && "scouted"]];
         if (b.offered && !b.visit) acts.push(["official_visit", v.portal ? "Campus visit" : "Visit", 10, !["top", "visited"].includes(b.stage) && "group", "alt"]);
-        p.append(el("div", { class: "go-actions" }, acts.map(([a, name, cost, off, tone]) => {
+        // a call or visit still open: it comes first, the rest waits
+        const busy = b.scene ? (b.scene.action === "hc_visit" ? "visit" : "call") : null;
+        if (busy && !shown) p.append(el("div", { class: "go-row wrap go-scene-open" }, [el("span", { class: "small", text: `Your ${busy} with him is still open: he is waiting on your pitch.` }),
+          el("button", { type: "button", class: "go-btn primary", text: busy === "visit" ? "Finish the visit" : "Finish the call", onclick: () => openScene(s, b, b.scene) })]));
+        p.append(el("div", { class: "go-actions" }, acts.map(([a, name, cost, off0, tone]) => {
+          const off = busy ? "scene" : off0;
           const short = cost > v.hours_left;
           const btn = el("button", { type: "button", class: `go-act ${tone || ""}`, "aria-label": `${name} ${b.name}`,
-            title: off === "month" ? "The head coach visits once every 4 weeks" : off === "week" ? "Once a week: more contact is not more interest"
+            title: off === "scene" ? `Finish your ${busy} with him first: pick a pitch` : off === "month" ? "The head coach visits once every 4 weeks" : off === "week" ? "Once a week: more contact is not more interest"
               : off === "scouted" ? "Your staff have scouted him three times; his area scout keeps looking"
               : off === "group" ? "He is not considering you yet: get into his top group first" : short ? `Needs ${cost} hours; ${v.hours_left} left this week` : ACT_TIPS[a] },
-            [el("b", { text: name }), el("span", { text: off === "month" ? "monthly" : off === "week" ? "done" : off === "scouted" ? "done" : off === "group" ? "not yet" : `${cost}h` })]);
+            [el("b", { text: name }), el("span", { text: off === "scene" ? `in a ${busy}` : off === "month" ? "monthly" : off === "week" ? "done" : off === "scouted" ? "done" : off === "group" ? "not yet" : `${cost}h` })]);
           if (off || short) btn.disabled = true;
           btn.addEventListener("click", () => run(b, a));
           return btn;
         })));
-        // the pitch goes with Message, Call, HC visit and the offer
-        p.append(el("div", { class: "go-display m", text: "PITCH" }));
-        const current = pitchFor(b);
-        const pitches = el("div", { class: "go-pitches", role: "radiogroup", "aria-label": `Pitch to ${b.name}` });
-        for (const t of Object.keys(PITCH_NAMES)) {
-          const known = b.priorities_known.includes(t);
-          const id = `pitch-${b.id}-${t}`;
-          const r = el("input", { type: "radio", name: `pitch-${b.id}`, id, value: t });
-          r.checked = current === t;
-          r.addEventListener("change", () => { view.pitch[b.id] = t; });
-          const sv = b.strength ? b.strength[t] : null, word = sv == null ? "" : sv >= 0.6 ? "Strong" : sv < 0.25 ? "Weak" : "Fair";
-          const tone = sv == null ? "" : sv >= 0.6 ? "good" : sv < 0.25 ? "bad" : "";
-          pitches.append(el("label", { class: `go-pitch ${known ? "known" : ""}`, for: id, title: sv == null ? "" : known && sv < 0.25 ? "He cares about this and you are weak here: pitching it backfires" : `Your program's case on ${PITCH_NAMES[t].toLowerCase()}: ${word.toLowerCase()}` }, [r,
-            el("span", {}, [el("b", { text: PITCH_NAMES[t] }), el("span", { class: `go-tag ${tone}`, text: known ? `Priority · ${word}` : word })])]));
+        // the pitch goes with Message and the offer; a call or visit asks for its own once you have heard him (the scene holds it)
+        if (!shown) {
+          p.append(el("div", { class: "go-display m", text: "PITCH" }));
+          p.append(pitchPicker(b, pitchFor(b), (t) => { view.pitch[b.id] = t; }), el("p", { class: "muted small", text: "Message and the offer use this pitch; a call or an in-home visit plays out first and you pitch once you have heard him. Sell what he cares about where your program is strong; a weak case on one of his priorities backfires. The in-home visit tells you his number; an official visit tells you everything." }));
         }
-        p.append(pitches, el("p", { class: "muted small", text: "Message, Call, HC visit and the offer use this pitch. Sell what he cares about where your program is strong; a weak case on one of his priorities backfires. A call sometimes tells you a priority; the in-home visit tells you one and his number; an official visit tells you everything." }));
       }
       const askText = b.ask ? (b.ask.exact != null ? `wants ${b.ask.exact}` : `wants about ${b.ask.lo}–${b.ask.hi} (a visit gets his number)`) : "";
       if (!b.offered && !b.committed && !b.signed) {

@@ -1187,6 +1187,27 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-pitch:has(input:checked) { border-color: var(--go-primary, var(--accent)); }
 .go-pitch.known b { color: var(--good-text); }
 .go-pitch span { display: flex; align-items: center; gap: 8px; }
+.go-pitch.heard .go-tag { border-color: var(--go-primary, var(--accent)); color: var(--text); font-weight: 700; }
+/* a call or in-home visit on the pane: his lines, the cue marked, your pitch, his reaction in its tone */
+.go-scene { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--border); outline: none; }
+.go-scene:focus-visible { border-color: var(--go-primary, var(--accent)); }
+.go-scene-head { display: flex; align-items: center; gap: 10px; }
+.go-scene-lines { display: flex; flex-direction: column; gap: 6px; }
+.go-scene-line { margin: 0; padding: 7px 10px; border-radius: 10px; background: var(--panel); border: 1px solid var(--border); color: var(--text); line-height: 1.35; }
+.go-scene-line.room { background: none; border-color: transparent; padding: 0 2px; color: var(--muted); font-style: italic; }
+.go-scene-line.cue { border: 2px solid var(--go-primary, var(--accent)); font-weight: 600; }
+.go-scene .go-pitch { background: var(--panel); }
+.go-scene-acts { align-items: center; gap: 14px; }
+.go-hangup { font-weight: 500; color: var(--muted); }
+.go-reaction { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--border); background: var(--panel-2); }
+.go-reaction p { margin: 0; }
+.go-reaction-line { color: var(--text); line-height: 1.35; }
+.go-reaction.hit { border-color: var(--good); } .go-reaction.hit .go-kicker { color: var(--good-text, var(--good)); }
+.go-reaction.quiet { border-color: var(--bad); } .go-reaction.quiet .go-kicker { color: var(--bad-text, var(--bad)); }
+.go-reaction.polite .go-kicker { color: var(--muted); }
+.go-scene-open { align-items: center; padding: 8px 10px; border-radius: 10px; border: 1px dashed var(--go-primary, var(--accent)); }
+.go-tag.heard { border-color: var(--go-primary, var(--accent)); color: var(--text); white-space: normal; }
+.go-finish { margin-top: 6px; width: 100%; }
 .go-nil { width: 80px; min-height: 40px; }
 .go-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
 
