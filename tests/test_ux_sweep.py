@@ -234,6 +234,23 @@ if __name__ == "__main__":
                 page.wait_for_selector(".off-cand", timeout=60_000)
                 hire = page.get_attribute(".off-cand > :last-child", "class") or ""
                 assert "go-btn" in hire, f"the hire control reads as a button, not a tag ({hire})"
+            # the server forgets a career (a deploy, a restart) but this device kept it: the list still offers
+            # "Clear all" and a delete on the device-saved row, so seasons can always be cleared
+            page.goto(f"{base}/season?id={A}")
+            page.wait_for_selector("#season:visible")
+            page.wait_for_function("() => window.CareerSave && window.CareerSave.list().then(l => window.__kept = l.length) && window.__kept > 0", timeout=60_000)
+            call(base, f"/api/season/{A}", method="DELETE")
+            page.goto(f"{base}/season")
+            page.wait_for_selector("#season-list li", timeout=60_000)
+            page.wait_for_function("() => /saved on this device/.test(document.querySelector('#season-list').innerText)", timeout=60_000)
+            assert page.is_visible("#btn-clear-seasons"), "Clear all is offered for device-saved careers"
+            try:
+                page.remove_listener("dialog", dismiss)
+            except Exception:  # noqa: BLE001 - already removed by the staff step
+                pass
+            page.on("dialog", lambda d: d.accept())
+            page.click("#season-list li:has-text('saved on this device') button.del")
+            page.wait_for_function("() => !/saved on this device/.test(document.querySelector('#season-list').innerText)", timeout=30_000)
             browser.close()
         assert not errors, errors
         print("ux sweep ok: office, prospects, board, staff, schedule, depth, player page and every offseason stage at 1280 and 400")

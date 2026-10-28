@@ -63,15 +63,18 @@
     if (local.length && !data.seasons.length) list.innerHTML = "";
     for (const c of local) {
       const r = c.record || {};
+      const del = el("button", { class: "del", type: "button", title: "Delete this career from this device", "aria-label": "Delete this career from this device", text: "×" });
+      del.addEventListener("click", (e) => { e.stopPropagation(); deleteLocalCareer(c); });
       list.appendChild(el("li", { onclick: () => openSeason(c.id) }, [
         el("span", { class: "teams", text: `${c.team_name} · Coach Career` }),
         el("span", { class: "score", text: r.wins != null ? `${r.wins}-${r.losses}` : "" }),
         el("span", { class: "when", text: `through week ${c.saved_week} · saved on this device` }),
+        del,
       ]));
     }
     const count = data.seasons.length + local.length;
     $("#btn-seasons").textContent = count ? `Seasons (${count})` : "Seasons";
-    $("#btn-clear-seasons").hidden = !data.seasons.length;
+    $("#btn-clear-seasons").hidden = !count;                 // server seasons or device-saved careers: either can be cleared
   }
 
   // An API error as a sentence: FastAPI sends {"detail": "..."} after the status code.
@@ -141,8 +144,18 @@
     } catch (err) { toast(`Could not delete: ${errText(err)}`, 4000); }
   }
 
+  async function deleteLocalCareer(c) {
+    if (!confirm(`Delete the ${c.team_name} career saved on this device? This cannot be undone.`)) return;
+    try {
+      await window.CareerSave.remove(c.id);
+      if (state.season && state.season.id === c.id) closeSeason();
+      await loadSeasons();
+      toast("Career deleted from this device");
+    } catch (err) { toast(`Could not delete: ${errText(err)}`, 4000); }
+  }
+
   async function clearSeasons() {
-    if (!confirm("Delete every saved season? This cannot be undone.")) return;
+    if (!confirm("Delete every saved season, on the server and on this device? This cannot be undone.")) return;
     try {
       const r = await api("/api/seasons", { method: "DELETE" });
       // the device copies go too, except a career still simulating (the server kept it)
