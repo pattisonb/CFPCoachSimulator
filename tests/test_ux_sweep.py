@@ -79,6 +79,13 @@ if __name__ == "__main__":
             assert not OUT_OF_100.search(office), OUT_OF_100.search(office).group(0)
             assert "SECURE" in office.upper() or "SEAT" in office.upper(), "the AD's mood word is missing"
 
+            # --- The US map: five cities project inside their own state outlines (Albers USA, with the AK and HI insets)
+            hits = page.evaluate("""() => { const svg = document.createElementNS('http://www.w3.org/2000/svg','svg'); svg.setAttribute('viewBox', US_STATES.viewBox); document.body.append(svg);
+              const inside = (code, ll) => { const p = document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d', US_STATES.paths[code]); svg.append(p);
+                const [x, y] = USMap.project(ll); const pt = svg.createSVGPoint(); pt.x = x; pt.y = y; return p.isPointInFill(pt); };
+              const r = [inside('TX', [29.76, -95.37]), inside('CA', [34.05, -118.24]), inside('AK', [61.22, -149.9]), inside('HI', [21.31, -157.86]), inside('FL', [25.76, -80.19])]; svg.remove(); return r; }""")
+            assert all(hits), f"Houston, Los Angeles, Anchorage, Honolulu, Miami inside their states: {hits}"
+
             # --- Prospects: profile with three looks prints no "null", grades read "D to C-", scouting is a button
             open_tab(page, base, A, "prospects", ".go-list-row")
             page.click("button.go-chip:has-text('Recommended for you')")
