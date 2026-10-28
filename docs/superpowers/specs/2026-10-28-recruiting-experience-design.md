@@ -35,7 +35,7 @@ the same vocabulary the Office uses for program metrics:
 
 | Word | From | Meaning on the game's scale |
 |---|---|---|
-| Generational | 90 | A once-a-decade talent |
+| All-American | 90 | An All-American at his position |
 | Elite | 80 | Two steps above a Power 4 starter |
 | Strong | 65 | One step above |
 | Solid | 50 | An average Power 4 starter |
@@ -46,7 +46,11 @@ the same vocabulary the Office uses for program metrics:
 `word()`; `grade_range` returns words. `LETTER_SLACK` (half a letter of slack on a read's
 interval) becomes `WORD_SLACK` and is retuned so the share of four-look ranges that hold the
 truth stays in today's band (68% at evaluator 40, 81% at 60, 92% at 95: docs/HOW_IT_WORKS.md
-"Scouting"). A range reads "Solid to Strong"; a settled read is one word.
+"Scouting"). A range reads "Solid to Strong"; a settled read is one word. The top tier is All-American, not
+Generational: "Generational" is the public tag in section 3, and a grade must never read as the
+tag. A three-star gem whose potential reads All-American is not a generational prospect. Potential
+is his ceiling, so a recruit who grows to 90+ on your roster had an All-American potential all
+along; the tag caps nobody.
 
 Every place a letter appears reads the word: the card's SCOUTED strip, the profile's grade
 cells and their tooltips (the "C+ starts at 50, B at 60, A at 78" legend becomes the table
@@ -231,7 +235,7 @@ regenerated once with the change and the regeneration is called out in the commi
 
 ## 9. Tests and checks
 
-- `tests/test_scouting.py`: the word cuts (`word(95) == "Generational"`, 85 Elite, 70 Strong,
+- `tests/test_scouting.py`: the word cuts (`word(95) == "All-American"`, 85 Elite, 70 Strong,
   55 Solid, 45 Fair, 30 Weak); the four-look coverage band holds with `WORD_SLACK`.
 - `tests/test_recruiting.py`: generational is drawn only from four- and five-stars at or above
   the cut, never more than the cap, seeded; a class with no qualifier has none; the ask
