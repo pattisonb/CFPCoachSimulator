@@ -58,7 +58,7 @@
     return e;
   }
 
-  // opts: {areas: {name: [states]}, staffed: {name: staff_name}, dots: [{id, home, tone, ring, big, label}],
+  // opts: {areas: {name: [states]}, staffed: {name: staff_name}, dots: [{id, home, xy (a ready [x, y], wins over home), tone, ring, big, label}],
   //        selectedState, onDot(id), onState(code), teamColor}
   function render(opts) {
     opts = opts || {};
@@ -75,7 +75,7 @@
         if (!S.paths[code] || drawn.has(code)) continue;
         drawn.add(code);
         areaOf[code] = name;
-        const p = el("path", { d: S.paths[code], "data-state": code, fill, stroke: "var(--us-line, #fff)", "stroke-width": 0.8 }, g);
+        const p = el("path", { d: S.paths[code], "data-state": code, class: "us-state", fill, stroke: "var(--us-line, #fff)", "stroke-width": 0.8 }, g);
         if (staffed[name]) el("title", {}, p).textContent = name + " (" + staffed[name] + ")";
         else el("title", {}, p).textContent = name;
       }
@@ -83,7 +83,7 @@
     const gRest = el("g", { class: "us-rest" }, svg);
     for (const code of Object.keys(S.paths)) {
       if (drawn.has(code)) continue;
-      el("path", { d: S.paths[code], "data-state": code, fill: "var(--us-none, #f3f2ee)", stroke: "var(--us-line, #fff)", "stroke-width": 0.8 }, gRest);
+      el("path", { d: S.paths[code], "data-state": code, class: "us-state", fill: "var(--us-none, #f3f2ee)", stroke: "var(--us-line, #fff)", "stroke-width": 0.8 }, gRest);
     }
     svg.querySelectorAll("path[data-state]").forEach((p) => {
       const code = p.getAttribute("data-state");
@@ -97,9 +97,12 @@
         p.addEventListener("click", () => opts.onState(code));
       }
     });
+    // the selected state's thick outline is painted last among the states, so its neighbours never cover it
+    const picked = svg.querySelector("path.selected");
+    if (picked) el("g", { class: "us-selected" }, svg).appendChild(picked);
     const gDots = el("g", { class: "us-dots" }, svg);
     for (const d of opts.dots || []) {
-      const pt = project(d.home);
+      const pt = d.xy || project(d.home);
       if (!pt) continue;
       const r = d.big ? 6 : 4;
       if (d.ring) el("circle", { cx: pt[0], cy: pt[1], r: r + 3, fill: "none", stroke: opts.teamColor || "#333", "stroke-width": 2, class: "us-ring" }, gDots);

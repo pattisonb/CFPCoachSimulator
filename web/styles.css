@@ -1360,3 +1360,32 @@ button.go-pcard-name:hover { text-decoration: underline; }
 .go-word { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.92em; font-weight: 600; white-space: nowrap; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); }
 .go-word.all-american, .go-word.elite { color: var(--good); border-color: var(--good); }
 .go-word.fair, .go-word.weak { color: var(--muted); }
+
+/* The footprint map (recruiting.js mapCard + us-map.js). Fills are theme-derived so both themes read. */
+body.career-mode { --us-staffed: color-mix(in srgb, var(--go-primary, var(--accent)) 28%, var(--panel)); --us-open: var(--panel-2); --us-none: color-mix(in srgb, var(--panel-2) 55%, var(--panel)); --us-line: var(--border); }
+.go-map { margin: 0 0 14px; padding: 14px 16px; }
+.go-map-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.go-map-head .small { flex: 1; min-width: 160px; }
+.go-map-body[hidden] { display: none; }
+.go-map-svg { margin: 8px auto 6px; max-width: 760px; }
+.go-map.small .go-map-svg { max-width: 456px; }
+.go-map svg.us-map { display: block; width: 100%; height: auto; }
+.us-state { transition: opacity 0.15s; }
+.us-state:hover { opacity: 0.8; }
+.us-state.selected { stroke: var(--go-primary, var(--accent)); }
+.us-selected path { fill-opacity: 0.65; }
+.us-area.staffed .us-state { stroke-width: 1; }
+.us-dot { stroke: var(--panel); stroke-width: 1; }
+.us-dot.good { fill: var(--good); } .us-dot.warn { fill: var(--go-warn, #e39b14); } .us-dot.bad { fill: var(--bad); } .us-dot.muted { fill: var(--muted); }
+.us-dot.sel { stroke: var(--text); stroke-width: 2.5; }
+.go-map-legend { list-style: none; margin: 4px 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 4px 14px; }
+.go-map-legend li { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.go-map-swatch { width: 12px; height: 12px; border-radius: 3px; background: var(--us-open); border: 1px solid var(--border); flex: none; }
+.go-map-legend li.staffed .go-map-swatch { background: var(--us-staffed); border-color: var(--go-primary, var(--accent)); }
+.go-map-key { margin: 6px 0; }
+.go-map-chip { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; }
+.go-map-chip.good { background: var(--good); } .go-map-chip.warn { background: var(--go-warn, #e39b14); } .go-map-chip.bad { background: var(--bad); } .go-map-chip.muted { background: var(--muted); }
+.go-map-table-wrap { margin-top: 8px; overflow-x: auto; }
+.go-map-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.go-map-table th, .go-map-table td { text-align: left; padding: 4px 10px; border-bottom: 1px solid var(--border); }
+@media (max-width: 359px) { .go-map svg.us-map { display: none; } }

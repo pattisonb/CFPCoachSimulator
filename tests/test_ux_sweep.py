@@ -150,6 +150,24 @@ if __name__ == "__main__":
             assert not page.query_selector(".go-pane.sheet")
             page.set_viewport_size({"width": 1280, "height": 1000})
 
+            # --- The footprint map: a dot per board prospect, 51 states, a state tap filters, a table alternative, hidden on a tiny screen
+            open_tab(page, base, A, "recruiting", ".go-col")
+            dots = page.evaluate("() => document.querySelectorAll('.go-map .us-dot').length")
+            board = page.evaluate("() => document.querySelectorAll('.go-pcard').length")
+            assert dots == board, (dots, board)
+            assert page.evaluate("() => document.querySelectorAll('.go-map .us-state').length") == 51
+            # every dot sits on the canvas (a hometown without coordinates falls back to its state's centre)
+            assert page.evaluate("() => [...document.querySelectorAll('.go-map .us-dot')].every(c => { const x = +c.getAttribute('cx'), y = +c.getAttribute('cy'); return x > 0 && y > 0 && x < 975 && y < 610; })")
+            page.click(".go-map .us-state[data-state='TX']")
+            time.sleep(0.6)
+            assert page.evaluate("() => [...document.querySelectorAll('.go-pcard .muted')].every(m => !/, [A-Z]{2}/.test(m.textContent) || /, TX|D\\.C\\./.test(m.textContent))"), "a state tap filters the columns to it"
+            page.click(".go-map button:has-text('List the states')")
+            assert page.query_selector(".go-map-table tr"), "an accessible table alternative"
+            page.set_viewport_size({"width": 340, "height": 700})
+            open_tab(page, base, A, "recruiting", ".go-col")
+            assert page.evaluate("() => { const m = document.querySelector('.go-map svg'); return !m || m.offsetParent === null; }"), "the map hides under 360px"
+            page.set_viewport_size({"width": 1280, "height": 1000})
+
             # --- The finished career's board: the Committed column holds yours (no actions) and the ones you lost
             signed = call(base, f"/api/season/{B}/prospects?status=signed&limit=200")["rows"]
             lost_pid = next(r["id"] for r in signed if r["signed"] != "ohio-state")

@@ -409,7 +409,81 @@
 
   // a re-render of the board keeps the columns where they were scrolled (a phone shows one at a time)
   let boardAt = null;
+  window.matchMedia("(max-width: 359px)").addEventListener("change", () => { if (boardAt && boardAt.box.isConnected && boardAt.box.offsetParent) renderRecruiting(boardAt.s, boardAt.box); });
   window.matchMedia(PHONE).addEventListener("change", () => { if (boardAt && boardAt.box.isConnected && boardAt.box.offsetParent) renderRecruiting(boardAt.s, boardAt.box); });
+
+  // ----- The footprint map -------------------------------------------------------------------------
+
+  function mapOpen() { try { return localStorage.getItem("cfp-map-open") !== "0"; } catch (e) { return true; } }
+  const TONE_RANK = { good: 0, warn: 1, muted: 2, bad: 3 };
+  // The map card: your nine areas (shaded when staffed), every board prospect as a dot by your standing,
+  // a tap on a dot or a state, and a table of the states for anyone who cannot use the picture.
+  // opts: {small, selectedState, onState(code), onDot(id)}
+  function mapCard(v, s, me, opts) {
+    opts = opts || {};
+    const card = el("div", { class: `go-card go-map ${opts.small ? "small" : ""}` });
+    if (!window.USMap || !window.US_STATES) return card;
+    const team = (window.CFP.teamsBySlug[s.team] || {}).colors;
+    const color = (team && team.primary) || "#888";
+    const staffed = {};
+    for (const m of v.staff || []) if (m.area) staffed[m.area] = staffed[m.area] ? `${staffed[m.area]}, ${m.name}` : m.name;
+    const rows = v.board || [];
+    const dots = [];
+    const byState = {};
+    for (const b of rows) {
+      const sd = standing(b, me);
+      const code = b.hometown && b.hometown.state;
+      let xy = window.USMap.project(b.home);
+      if (!xy && code) xy = window.USMap.centroid(code);
+      if (code) {
+        const e = byState[code] || (byState[code] = { n: 0, best: null });
+        e.n++;
+        if (!e.best || (TONE_RANK[sd.tone] ?? 9) < (TONE_RANK[e.best.tone] ?? 9) || ((TONE_RANK[sd.tone] ?? 9) === (TONE_RANK[e.best.tone] ?? 9) && (sd.fill || 0) > (e.best.fill || 0))) e.best = sd;
+      }
+      if (!xy) continue;
+      dots.push({ id: b.id, xy, tone: sd.tone, ring: b.committed === me || b.signed === me, big: !!b.generational, label: `${b.name} · ${b.position} · ${sd.text}` });
+    }
+    const open = mapOpen();
+    const body = el("div", { class: "go-map-body" });
+    body.hidden = !open;
+    const toggle = el("button", { type: "button", class: "go-btn go-map-toggle", "aria-expanded": String(open), "aria-label": "Show or hide the map", text: open ? "Hide" : "Show" });
+    toggle.addEventListener("click", () => {
+      const now = body.hidden;
+      body.hidden = !now;
+      toggle.setAttribute("aria-expanded", String(now));
+      toggle.textContent = now ? "Hide" : "Show";
+      try { localStorage.setItem("cfp-map-open", now ? "1" : "0"); } catch (e) { /* no storage */ }
+    });
+    const svg = window.USMap.render({ areas: v.areas || {}, staffed, dots, selectedState: opts.selectedState || null, teamColor: color,
+      onDot: (id) => { if (opts.onDot) opts.onDot(id); else { view.selected = id; if (phone()) view.sheet = true; if (boardAt) renderRecruiting(boardAt.s, boardAt.box); } },
+      onState: opts.onState });
+    if (view.selected) { const d = svg.querySelector(`circle.us-dot[data-id="${view.selected}"]`); if (d) d.classList.add("sel"); }
+    svg.style.setProperty("--us-team", color);
+    const legend = el("ul", { class: "go-map-legend" }, Object.keys(v.areas || {}).map((a) => el("li", { class: staffed[a] ? "staffed" : "" }, [
+      el("span", { class: "go-map-swatch" }), el("b", { text: a }), el("span", { class: "muted small", text: staffed[a] ? ` ${staffed[a]}` : " no one yet" })])));
+    const key = el("p", { class: "muted small go-map-key" }, [
+      el("span", { class: "go-map-chip good" }), " leading or yours  ", el("span", { class: "go-map-chip warn" }), " in the race  ",
+      el("span", { class: "go-map-chip muted" }), " not offered or behind  ", el("span", { class: "go-map-chip bad" }), " signed elsewhere. A ring is committed to you; a big dot is generational."]);
+    const table = el("div", { class: "go-map-table-wrap" });
+    const tBtn = el("button", { type: "button", class: "go-btn", "aria-expanded": "false", text: "List the states" });
+    tBtn.addEventListener("click", () => {
+      const showing = table.firstChild;
+      table.innerHTML = "";
+      tBtn.setAttribute("aria-expanded", String(!showing));
+      tBtn.textContent = showing ? "List the states" : "Hide the list";
+      if (showing) return;
+      const codes = Object.keys(byState).sort();
+      table.append(el("table", { class: "go-map-table" }, [
+        el("thead", {}, [el("tr", {}, ["State", "Prospects on your board", "Your best standing"].map((h) => el("th", { scope: "col", text: h })))]),
+        el("tbody", {}, codes.length ? codes.map((c) => el("tr", {}, [el("th", { scope: "row", text: c }), el("td", { text: String(byState[c].n) }), el("td", { text: byState[c].best.text })]))
+          : [el("tr", {}, [el("td", { colspan: "3", text: "Nobody on your board yet." })])])]));
+    });
+    // under 360px the picture is left out (CSS hides it too; the table below says the same in words)
+    body.append(window.matchMedia("(max-width: 359px)").matches ? "" : el("div", { class: "go-map-svg" }, [svg]), legend, key, el("div", { class: "go-row" }, [tBtn]), table);
+    card.append(el("div", { class: "go-map-head" }, [el("div", { class: "go-display l", text: "YOUR FOOTPRINT" }),
+      el("span", { class: "muted small", text: opts.selectedState ? `Showing ${opts.selectedState} · tap it again to clear` : "Tap a state to filter, a dot to pick him" }), toggle]), body);
+    return card;
+  }
 
   async function renderRecruiting(s, box) {
     if (!box.firstChild) box.append(loading("Loading your board…"));
@@ -482,6 +556,7 @@
     }, { passive: true });
     const sel = v.board.find((b) => b.id === view.selected);
     let side = phone() ? null : pane(sel);
+    box.append(mapCard(v, s, me, { selectedState: view.state, onState: (c) => { view.state = view.state === c ? null : c; renderRecruiting(s, box); } }));
     const boardEl = el("div", { class: "go-board" }, [el("div", { class: "go-pipe" }, [seg, pipeline]), side]);
     box.append(boardEl);
     if (keepScroll) pipeline.scrollLeft = keepScroll;
@@ -643,12 +718,20 @@
     };
     let qTimer = null;
     q.addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(() => { f.q = q.value; view.offset = 0; load(); }, 250); });
+    const mapBox = el("div");
+    box.append(mapBox);
     const needsBox = el("div");
     box.append(needsBox);
     const recBtn = el("button", { type: "button", class: `go-chip ${f.status === "recommended" ? "on" : ""}`, text: "Recommended for you", "aria-pressed": String(f.status === "recommended"),
       title: "The prospects the Auto-recruit rules would put on your board this week: your states, your star level, the positions you need. A base to build a board from." });
     recBtn.addEventListener("click", () => { f.status = f.status === "recommended" ? "" : "recommended"; view.offset = 0; render(); });
     const render = () => renderProspects(s, box);
+    H.api(`/api/season/${s.id}/recruiting`).then((v) => {
+      if (!mapBox.isConnected) return;
+      mapBox.replaceChildren(mapCard(v, s, s.team, { small: true, selectedState: f.state || null,
+        onState: (c) => { f.state = f.state === c ? "" : c; view.offset = 0; renderProspects(s, box); },
+        onDot: (id) => openProfile(s, id) }));
+    }).catch(() => { /* the list works without the map */ });
     box.append(el("div", { class: "go-filters rc-filters" }, [q, recBtn,
       mk("position", [["", "Any position"], ...POSITIONS.map((p) => [p, p])], "Position"),
       mk("stars", [["", "Any stars"], ["5", "5 stars"], ["4", "4 stars"], ["3", "3 stars"], ["2", "2 stars"]], "Stars"),
