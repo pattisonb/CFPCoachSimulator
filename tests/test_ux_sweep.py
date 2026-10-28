@@ -46,6 +46,10 @@ if __name__ == "__main__":
     season.save_season(fresh)
     done = season.new_season("ohio-state", "full", seed=8, career=True)
     finished(done)
+    # one prospect past the signed classes holds a verbal commit elsewhere, so the board can show a lost card's flip odds
+    rc = done["recruiting"]
+    verbal_pid = next(q for q in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"]) if not rc["status"][q]["signed"])
+    rc["status"][verbal_pid]["committed"] = "georgia"
     season.save_season(done)
     port = free_port()
     base = f"http://127.0.0.1:{port}"
@@ -150,12 +154,14 @@ if __name__ == "__main__":
             signed = call(base, f"/api/season/{B}/prospects?status=signed&limit=200")["rows"]
             lost_pid = next(r["id"] for r in signed if r["signed"] != "ohio-state")
             mine_pid = next(r["id"] for r in signed if r["signed"] == "ohio-state")
-            for pid in (lost_pid, mine_pid):
+            for pid in (lost_pid, mine_pid, verbal_pid):
                 call(base, f"/api/season/{B}/board", {"pid": pid, "on": True})
             open_tab(page, base, B, "recruiting", ".go-col")
             last = page.query_selector(".go-col >> nth=4")
             lost = last.query_selector(".go-pcard.lost")
             assert lost and re.search(r"flip|Signed|commit", lost.inner_text()), "a prospect lost to another school sits in Committed and says so"
+            verbal = page.evaluate("() => [...document.querySelectorAll('.go-col.committed .go-pcard.lost')].map(c => c.innerText).filter(t => /Verbal commit/.test(t))")
+            assert verbal and all("flip" in t for t in verbal), f"a verbal commit elsewhere shows his flip odds: {verbal}"
             mine = last.query_selector(".go-pcard.mine")
             assert mine and not mine.query_selector(".go-act"), "a prospect committed to you has no recruiting actions"
 

@@ -454,7 +454,7 @@
         el("button", { type: "button", class: "go-btn primary", text: "Find prospects", onclick: () => H.onChange("prospects") })]));
       return;
     }
-    const key = { chance: (b) => (b.committed === me || b.signed === me ? -2 : 0) - ((b.standing && b.standing.pct) || 0), rank: (b) => b.national_rank };
+    const key = { chance: (b) => (b.committed === me || b.signed === me ? -2 : 0) - ((b.standing && b.standing.pct) || 0), rank: (b) => b.national_rank ?? Infinity };
     const rows = v.board.filter((b) => (!view.group || b.group === view.group) && (!view.state || (b.hometown && b.hometown.state) === view.state))
       .sort((a, b) => key[view.sort](a) - key[view.sort](b));
     if (!rows.length && (view.group || view.state)) { view.group = null; view.state = null; renderRecruiting(s, box); return; }
@@ -472,13 +472,13 @@
         k === "cold" ? el("button", { type: "button", class: "go-card go-add", onclick: () => H.onChange("prospects") }, [el("b", { text: "+ Add a prospect" }), el("span", { class: "muted small", text: "From the class, or one your staff scouted" })]) : null]),
     ])));
     // on a phone the columns sit side by side, one a screen: a strip above them jumps to each
-    const segBtns = COLUMNS.map(([k, name], i) => el("button", { type: "button", class: `go-seg-btn ${i === 0 ? "on" : ""}`, "aria-label": `Show ${label(k, name)}`,
-      onclick: () => { const c = pipeline.children[i]; pipeline.scrollTo({ left: c.offsetLeft - pipeline.offsetLeft, behavior: "smooth" }); } },
+    const segBtns = COLUMNS.map(([k, name], i) => el("button", { type: "button", class: `go-seg-btn ${i === 0 ? "on" : ""}`, "aria-pressed": String(i === 0), "aria-label": `Show ${label(k, name)}`,
+      onclick: () => { const c = pipeline.children[i]; pipeline.scrollTo({ left: c.offsetLeft, behavior: "smooth" }); } },
       [el("span", { text: label(k, name) }), el("b", { text: String(byCol[k].length) })]));
     const seg = el("div", { class: "go-seg go-col-seg", role: "group", "aria-label": "Columns" }, segBtns);
     pipeline.addEventListener("scroll", () => {
       const i = Math.round(pipeline.scrollLeft / Math.max(1, pipeline.clientWidth));
-      segBtns.forEach((btn, j) => btn.classList.toggle("on", i === j));
+      segBtns.forEach((btn, j) => { btn.classList.toggle("on", i === j); btn.setAttribute("aria-pressed", String(i === j)); });
     }, { passive: true });
     const sel = v.board.find((b) => b.id === view.selected);
     let side = phone() ? null : pane(sel);
@@ -542,13 +542,14 @@
         ? [el("span", { class: "muted", text: "Potential " }), ...wordRange(b.our_grades.potential)] : [el("span", { class: "muted", text: "Not scouted" })]));
       c.append(badges(b, me) || "");
       if (moved) c.append(el("div", { class: `go-pcard-move ${b.stage_move}`, text: b.stage_move === "up" ? "▲ Moved up this week" : "▼ Slipped back this week" }));
-      c.append(bar(sd), el("div", { class: `go-standing-text small ${sd.tone}`, text: sd.text }));
+      // one line of standing; a prospect lost to another school says whether he could still flip
+      c.append(bar(sd), el("div", { class: `go-standing-text small ${sd.tone}`, text: lost && !b.signed ? `${sd.text} · ${sd.odds || "Offer him to try for a flip"}` : sd.text }));
       return c;
     }
     // the pane: everything for the one you picked; sticky beside the columns, or a bottom sheet on a phone
     function pane(b) {
       const sheet = phone();
-      const p = el("aside", { class: `go-card go-pane ${sheet ? "sheet" : ""}`, "aria-label": `${b.name}: recruit him`, ...(sheet ? { role: "dialog" } : {}) });
+      const p = el("aside", { class: `go-card go-pane ${sheet ? "sheet" : ""}`, "aria-label": `${b.name}: recruit him`, ...(sheet ? { role: "dialog", "aria-modal": "true" } : {}) });
       const sd = standing(b, me);
       const open = !b.signed && b.committed !== me;
       if (sheet) p.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
