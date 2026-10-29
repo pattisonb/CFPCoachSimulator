@@ -1,6 +1,6 @@
 # Recruiting board redesign: a list, one pane, one menu
 
-Status: design, for review. A front-end change to the Recruiting tab (`web/recruiting.js`, its
+Status: approved 2026-10-29 (sections 1-8 by the player; section 9 added at the player's request). A front-end change to the Recruiting tab (`web/recruiting.js`, its
 rules in `web/styles.css`); no API or game-logic change. Follows the recruiting experience spec
 (`2026-10-28-recruiting-experience-design.md`), which this replaces for the board's layout; the
 Prospects, Staff and Classes tabs, the scenes, the map and the word grades stay as they are.
@@ -170,7 +170,32 @@ the profile modal (the profile is a sub-tab). `COLUMNS` stays as the stage defin
   (one per row of the table in section 5), asserting the list word, the sentence and the tone.
 - Screenshots of the new board at 1280 and 400 px, light and dark, into the UX sweep's folder.
 
-## 9. Out of scope
+## 9. Spacing pass: buttons and tags everywhere
+
+Buttons and tags sit too close together on several screens (the player's words: "random buttons
+and tags that don't have enough spacing"). One pass over every Coach Career screen fixes the
+rules, not individual spots:
+
+- **Rules in `web/styles.css` and `web/offseason.css`**: every container of inline buttons
+  (`.go-row`, `.go-actions`, `.go-scene-acts`, `.off-cands`, `.go-filterbar .go-row`, the Office
+  cards' action rows, the offseason stage cards' button rows) lays out with `display: flex; flex-
+  wrap: wrap; gap: 8px 10px`, never margins on the buttons; every tag container (`.go-tags`,
+  `.go-badges`, the depth chart's and profile's tag rows) uses `gap: 6px`; a tag row that follows
+  text or precedes a button row has 10 px above and below (`margin-block`); a button or tag never
+  touches a card edge (cards keep at least 12 px padding); buttons keep a 36 px minimum height on
+  desktop and 44 px on a phone; a segment control's buttons touch each other by design and are the
+  one exception.
+- **Audit**: screenshots at 1280 and 400 px, light and dark, of the Office, Recruiting (new
+  board, pane, menu open, pitch step, scene), Prospects, Staff, Classes, each offseason stage
+  (departures, portal, development, staff, review, carousel, ready), Depth chart, Schedule,
+  Summary, the Seasons list and Your coach, saved under the UX sweep's folder; each screen is
+  checked against the rules above and any stray margin or missing gap fixed in the stylesheet.
+- **Test**: `tests/test_spacing.py` (Playwright, dev server) walks the same screens and, for every
+  container holding two or more buttons or two or more tags, asserts the computed gap between
+  adjacent children is at least 6 px for tags and 8 px for buttons, and that no button or tag
+  overlaps another (bounding boxes). Failures name the screen and the container.
+
+## 10. Out of scope
 
 A light theme; changes to recruiting rules, costs or the API beyond the `offered` flag on list
 rows; the Prospects, Staff and Classes tabs; the Office.
