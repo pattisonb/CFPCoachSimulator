@@ -17,7 +17,7 @@
   async function api(path, options) {
     options = options || {};
     options.headers = { ...(options.headers || {}), "X-CFP-Browser": browserId() };
-    const res = await fetch(path, options);
+    const res = await window.CFP.game.fetch(path, options);
     if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
     return res.json();
   }

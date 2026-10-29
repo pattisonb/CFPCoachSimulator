@@ -148,6 +148,32 @@ def call(method: str, path: str, body: dict | bytes | None = None) -> dict | byt
     raise ApiError(404, "not found")
 
 
+def call_js(method: str, path: str, body_json: str | None, body_bytes=None) -> str | bytes:
+    """The browser worker's entry point (web/worker.js): `call()` with the body as the page sent
+    it, a JSON string or a `Uint8Array` (a Pyodide JsProxy, which wins when both are given), and
+    the answer as JSON for the worker to parse: `{"ok": true, "result", "changed"}`, an ApiError
+    as `{"ok": false, "status", "message", "changed"}` (another exception: status 500); a bytes
+    result (a save file) comes back as the bytes themselves."""
+    try:
+        if body_bytes is not None:
+            body = body_bytes.to_bytes() if hasattr(body_bytes, "to_bytes") else bytes(body_bytes)
+        elif body_json is not None:
+            try:
+                body = json.loads(body_json)
+            except ValueError as exc:
+                raise ApiError(400, "invalid JSON") from exc
+        else:
+            body = None
+        out = call(method, path, body)
+    except ApiError as exc:
+        return json.dumps({"ok": False, "status": exc.status, "message": exc.message, "changed": changed()})
+    except Exception as exc:  # noqa: BLE001 - the page shows the error; the worker stays up
+        return json.dumps({"ok": False, "status": 500, "message": str(exc), "changed": changed()})
+    if isinstance(out, (bytes, bytearray)):
+        return bytes(out)
+    return json.dumps({"ok": True, "result": out, "changed": changed()})
+
+
 # ----- season state ------------------------------------------------------------
 
 _loaded: dict | None = None          # the one season in memory
@@ -208,13 +234,14 @@ def _drop(season_id: str) -> None:
         _loaded, _job = None, {}
 
 
-def _running() -> bool:
+def running() -> bool:
+    """True while an advance or game day is in progress: the caller then calls step()."""
     return _job.get("status") == "running"
 
 
 def _check_not_running() -> None:
     """409 while the season in memory is simulating: nothing may change or replace it then."""
-    if _running():
+    if running():
         raise ApiError(409, "wait for the sim to finish")
 
 
@@ -273,7 +300,7 @@ def step(report: Callable[[str], None] | None = None) -> dict | None:
     and returns the status with your results since the week the run started from. `report`,
     when given, gets that status as JSON after every progress callback and once at the end.
     None when nothing is running. A failure sets the job to "error" instead of raising."""
-    if _loaded is None or not _running():
+    if _loaded is None or not running():
         return None
     state = _loaded
     on_progress = _reporter(state, report)
@@ -406,7 +433,7 @@ def import_career(p: Params) -> dict:
         sid = career.read_save(blob)[0]["id"]
     except ValueError as exc:
         raise ApiError(400, str(exc)) from exc
-    if _running() and _loaded["id"] == sid:
+    if running() and _loaded["id"] == sid:
         raise ApiError(409, "that career is simulating; try again when the week is done")
     _check_not_running()
     current = _loaded if _loaded is not None and _loaded["id"] == sid else season.load_season(sid)
@@ -432,7 +459,7 @@ def season_status(p: Params) -> dict:
 def pause_season(p: Params) -> dict:
     """Stop a running advance once the week in progress is over."""
     _season_state(p.path["season_id"])
-    if not _running():
+    if not running():
         return {"status": _job.get("status"), "stopping": False}
     _job["stop"] = True
     return {"status": "running", "stopping": True}
@@ -443,7 +470,7 @@ def advance_season(p: Params) -> dict:
     """Set an advance running to week `to` (default: the next week); step() plays it."""
     state = _season_state(p.path["season_id"])
     to = _field(p, "to", int, None)
-    if _running():
+    if running():
         raise ApiError(409, "already simulating")
     week = state["current_week"]
     if state["done"]:
@@ -459,7 +486,7 @@ def gameday_season(p: Params) -> dict:
     """Game day: set only your game this week running (the week's matchups are set first if
     they are not yet); step() plays it. Advance then plays the rest of the week."""
     state = _season_state(p.path["season_id"])
-    if _running():
+    if running():
         raise ApiError(409, "already simulating")
     week = state["current_week"]
     if state["done"]:

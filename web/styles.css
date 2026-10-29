@@ -214,6 +214,11 @@ table.compare td.better { font-weight: 800; }
 .slider-row .val { text-align: right; font-size: 12px; }
 .slider-row.changed label { color: var(--accent-text); }
 
+/* the game loading in the worker (web/game-client.js): a full-page panel until it is ready */
+.loading { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; padding: 20px; background: var(--bg); color: var(--text); }
+.loading[hidden] { display: none; }
+.loading-box { max-width: 420px; text-align: center; }
+.loading-box progress { width: 100%; }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--panel-2); border: 1px solid var(--border); padding: 10px 16px; border-radius: 8px; z-index: 10; }
 
 @media (max-width: 900px) {

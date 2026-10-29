@@ -12,7 +12,7 @@
 
   async function api(url, opts) {
     let r;
-    try { r = await fetch(url, opts); }
+    try { r = await window.CFP.game.fetch(url, opts); }
     catch (_) { throw new Error("could not reach the server. Check your connection and try again."); }
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(typeof j.detail === "string" && j.detail ? j.detail : r.status >= 500 ? "the server hit an error. Try again in a moment." : `the server said no (${r.status}).`);

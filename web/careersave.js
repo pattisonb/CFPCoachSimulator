@@ -37,7 +37,7 @@
     try {
       const have = await get(summary.id);
       if (have && have.saved_at === c.saved_at && have.saved_week === c.saved_week) return;
-      const res = await fetch(`/api/season/${summary.id}/export`);
+      const res = await window.CFP.game.fetch(`/api/season/${summary.id}/export`);
       if (!res.ok) return;
       const blob = await res.blob();
       await tx("readwrite", (s) => s.put({ id: summary.id, blob, team_name: summary.team_name, saved_week: c.saved_week,
@@ -46,7 +46,7 @@
   }
 
   async function sendBlob(blob) {
-    const res = await fetch("/api/season/import", { method: "POST", headers: { "Content-Type": "application/gzip", "X-CFP-Browser": (window.CFP && window.CFP.browserId) ? window.CFP.browserId() : "" }, body: blob });
+    const res = await window.CFP.game.fetch("/api/season/import", { method: "POST", headers: { "Content-Type": "application/gzip", "X-CFP-Browser": (window.CFP && window.CFP.browserId) ? window.CFP.browserId() : "" }, body: blob });
     if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
     return res.json();
   }
@@ -59,7 +59,7 @@
   }
 
   async function download(id) {
-    const res = await fetch(`/api/season/${id}/export?full=true`);
+    const res = await window.CFP.game.fetch(`/api/season/${id}/export?full=true`);
     if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
     const url = URL.createObjectURL(await res.blob());
     const a = Object.assign(document.createElement("a"), { href: url, download: `coach-career-${id}.ccsave` });

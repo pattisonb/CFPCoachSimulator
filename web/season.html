@@ -194,9 +194,26 @@
       <div class="modal-body" id="modal-body"></div>
     </div>
   </div>
+  <div id="loading" class="loading" role="status" aria-live="polite" hidden>
+    <div class="loading-box">
+      <p id="loading-text">Loading the game, about 20 MB the first time; it is kept for next time</p>
+      <progress id="loading-bar" max="100"></progress>
+    </div>
+  </div>
   <div id="toast" class="toast" hidden></div>
   <script src="/gameview.js"></script>
   <script src="/coachsprite.js"></script>
+  <script src="/game-client.js"></script>
+  <script>(function () {
+    var game = window.CFP.game, box = document.getElementById("loading"), text = document.getElementById("loading-text"), bar = document.getElementById("loading-bar");
+    game.onLoading(function (p) { box.hidden = false; if (p.total) bar.value = Math.round(100 * p.loaded / p.total); else bar.removeAttribute("value"); });
+    game.ready.then(function () { box.hidden = true; }, function (err) { box.hidden = false; bar.hidden = true; text.textContent = err.message; });
+    game.onStorageError(function () {      // a second later: the page hides its own toast right after the reply the save followed
+      var t = document.getElementById("toast"), msg = "Your browser could not save the career: free some space or download it";
+      setTimeout(function () { t.textContent = msg; t.hidden = false; }, 1000);
+      setTimeout(function () { if (t.textContent === msg) t.hidden = true; }, 7000);
+    });
+  })();</script>
   <script src="/careersave.js"></script>
   <script src="/us-states.js"></script>
   <script src="/us-map.js"></script>
