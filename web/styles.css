@@ -876,7 +876,8 @@ table.stats tr.mine td.name { font-weight: 800; }
   /* all four links fit beside the logo on a 375px phone; narrower screens wrap them instead of hiding one */
   .site-nav a { padding: 9px 5px; font-size: 12px; }
   /* bigger touch targets for the small controls */
-  button.small, .btn-link.small { min-height: 44px; }
+  button.small { min-height: 44px; }
+  .btn-link.small { min-height: 36px; }   /* a text link: words, not a tap target of the button kind */
   input[type="radio"], input[type="checkbox"] { width: 18px; height: 18px; }
 }
 
@@ -1023,7 +1024,7 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
 .go-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .go-pill { display: inline-block; padding: 6px 12px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--border); font-size: 13px; }
-.go-link { background: none; border: none; padding: 0; color: var(--text); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 2px; }
+.go-link { background: none; border: none; padding: 0; color: var(--text); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 2px; min-height: 0; }
 .go-btn { min-height: 44px; padding: 0 18px; border-radius: 12px; border: 2px solid var(--border); background: transparent; color: var(--text); font-weight: 600; font-size: 15px; cursor: pointer; }
 .go-btn:hover:not(:disabled) { border-color: var(--muted); }
 .go-btn.primary { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
@@ -1411,10 +1412,11 @@ body.career-mode { --us-staffed: color-mix(in srgb, var(--go-primary, var(--acce
 .go-tags:last-child, .go-badges:last-child { margin-bottom: 0; }
 /* tap targets: every button is 36 px on a desktop, 44 px on a phone; zero specificity, so a control that is already taller
    keeps its height. Left out: the depth chart's compact .tiny controls (their own 28 px floor), the coach's 28 px colour
-   swatches, and segment controls, whose own rules set their height. */
-:where(button:not(.tiny):not(.swatch), .go-btn, .go-act) { min-height: 36px; }
+   swatches, the week strip (navigation, like the segment controls, whose own rules set their height), and text links
+   (.go-link, .btn-link), which are words in running text rather than buttons. */
+:where(button:not(.tiny, .swatch, .week-chip, .go-link, .btn-link), .go-btn, .go-act) { min-height: 36px; }
 @media (max-width: 759px) {
-  :where(button:not(.tiny):not(.swatch), .go-btn, .go-act) { min-height: 44px; }
+  :where(button:not(.tiny, .swatch, .week-chip, .go-link, .btn-link), .go-btn, .go-act) { min-height: 44px; }
   .go-chip, .go-chip.small { min-height: 44px; }   /* chips set their own desktop height; a chip row wraps rather than shrink them */
   .history-list .del { width: 44px; height: 44px; line-height: 42px; }
   .history-list li .score { margin-right: 44px; }

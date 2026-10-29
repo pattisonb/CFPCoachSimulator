@@ -26,8 +26,12 @@ WIDTHS = (1280, 400)
 EXCLUDED = ".go-seg, .go-stages, .go-subtabs, nav.tabs"
 ITEM = "button, .go-tag, .go-badge, .go-word, .go-chip"
 # every button is a tap target, except the depth chart's compact .tiny controls (28 px by their own rule, a recorded
-# exception) and the coach's colour swatches (28 px circles); segments are left out through EXCLUDED
-ACTION = "button:not(.tiny):not(.swatch)"
+# exception), the coach's colour swatches (28 px circles), the week strip (navigation, like a segment control) and text
+# links (.go-link, .btn-link, or any button inside running text); segments are left out through EXCLUDED
+ACTION = "button:not(.tiny, .swatch, .week-chip, .go-link, .btn-link)"
+# a button inside running text: its parent holds words of its own, or it is a text link laid out inline
+IN_TEXT = """(e) => (e.matches('button') && [...e.parentElement.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()))
+  || (e.matches('.go-link, .btn-link') && getComputedStyle(e).display.startsWith('inline'))"""
 # card-like containers keep at least 12 px of padding on every side (the old board's .go-col cards are left out:
 # they are deleted with the old board)
 CARDS = ".go-card, .coach-item, .leader-card, .start-card, .team-card, .bowl-card, .review-card, .rc-staff-card, .history-list li"
@@ -36,13 +40,14 @@ CARD_EXCLUDED = ".go-col .go-pcard, .go-col .go-add"
 # every container with two or more visible buttons or tags as direct children: the gap between each pair
 # (8 px for buttons, 6 px for tags; within 0.5 px counts as touching) and no overlap
 GAPS_JS = """([SCREEN, ITEM, EXCLUDED]) => {
+  const inText = """ + IN_TEXT + """;
   const bad = [];
   const shown = (e) => e.offsetParent !== null || getComputedStyle(e).position === 'fixed';
   const name = (e) => { const one = (x) => x.tagName.toLowerCase() + (x.id ? '#' + x.id : '') + [...x.classList].map(c => '.' + c).join('');
     const p = e.parentElement; return (p && p !== document.body ? one(p) + ' > ' : '') + one(e); };
   for (const g of document.querySelectorAll('*')) {
     if (g.closest(EXCLUDED) || !shown(g)) continue;
-    const kids = [...g.children].filter(c => c.matches(ITEM) && shown(c) && c.getClientRects().length && !c.matches(EXCLUDED));
+    const kids = [...g.children].filter(c => c.matches(ITEM) && shown(c) && c.getClientRects().length && !c.matches(EXCLUDED) && !inText(c));
     if (kids.length < 2) continue;
     const isTag = kids.every(k => !k.matches('button')); const need = isTag ? 6 : 8;
     const rects = kids.map(k => k.getBoundingClientRect());
@@ -67,9 +72,10 @@ GAPS_JS = """([SCREEN, ITEM, EXCLUDED]) => {
 # height) keep 6 px apart and nothing overlaps; one inside the other is not a pair, and neither is a pair on different
 # layers (a sticky topbar or pane, a fixed sheet or dialog, over the page it scrolls past)
 PAIRS_JS = """([SCREEN, ITEM, EXCLUDED]) => {
+  const inText = """ + IN_TEXT + """;
   const shown = (e) => e.offsetParent !== null || getComputedStyle(e).position === 'fixed';
   const one = (x) => x.tagName.toLowerCase() + [...x.classList].map(c => '.' + c).join('') + ` "${x.textContent.trim().replace(/\\s+/g, ' ').slice(0, 20)}"`;
-  const els = [...document.querySelectorAll(ITEM)].filter(e => shown(e) && !e.closest(EXCLUDED) && e.getClientRects().length);
+  const els = [...document.querySelectorAll(ITEM)].filter(e => shown(e) && !e.closest(EXCLUDED) && e.getClientRects().length && !inText(e));
   const boxes = els.map(e => [e, e.getBoundingClientRect()]).filter(([, r]) => r.width && r.height).sort((x, y) => x[1].left - y[1].left);
   const layers = new Map();
   const layer = (e) => { if (!layers.has(e)) { let l = null; for (let x = e; x; x = x.parentElement) { const p = getComputedStyle(x).position;
@@ -97,11 +103,11 @@ CARDS_JS = """([SCREEN, CARDS, CARD_EXCLUDED]) => [...document.querySelectorAll(
   .filter(c => c.padding < 11.5)"""
 
 # every visible button is a tap target: 44 px on a phone, 36 px on a desktop (segments excepted)
-TOUCH_JS = """([SCREEN, ACTION, EXCLUDED, MIN]) => [...document.querySelectorAll(ACTION)]
-  .filter(b => b.offsetParent !== null && !b.closest(EXCLUDED) && b.getBoundingClientRect().height < MIN - 0.5)
+TOUCH_JS = """([SCREEN, ACTION, EXCLUDED, MIN]) => { const inText = """ + IN_TEXT + """; return [...document.querySelectorAll(ACTION)]
+  .filter(b => b.offsetParent !== null && !b.closest(EXCLUDED) && !inText(b) && b.getBoundingClientRect().height < MIN - 0.5)
   .map(b => { const text = b.textContent.trim().replace(/\\s+/g, ' ').slice(0, 30);
     return {screen: SCREEN, button: b.tagName.toLowerCase() + [...b.classList].filter(c => !/^(on|active|current|future|next|short|full|selected)$/.test(c)).map(c => '.' + c).join(''),
-            text, height: Math.round(b.getBoundingClientRect().height)}; })"""
+            text, height: Math.round(b.getBoundingClientRect().height)}; }); }"""
 
 
 class Walk:
