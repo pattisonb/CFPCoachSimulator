@@ -33,3 +33,8 @@ data/long_run/draft_pools.json
 
 # CFBD game attendance (tools/build_program_market.py builds data/program_market.json from it)
 data/market/
+
+# the browser site (python tools/build_site.py) and the precomputed base league it writes
+dist/
+data/base_league.json
+data/base_meta.json

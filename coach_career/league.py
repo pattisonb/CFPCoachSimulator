@@ -37,6 +37,10 @@ from coach_career import recruits
 ROOT = Path(__file__).resolve().parents[1]   # the project root
 SOURCE_DIR = ROOT / "cfb_sim_data" / "teams"
 CACHE_DIR = ROOT / "data" / "leagues"
+# from_base()'s league and every team's identity, precomputed (write_base_files) so the browser
+# bundle never reads the 146 source rosters; without them both are computed from the source files
+BASE_LEAGUE_FILE = ROOT / "data" / "base_league.json"
+BASE_META_FILE = ROOT / "data" / "base_meta.json"
 FIRST_YEAR = 2026
 # The coaches' own judgment in a depth chart, in overall points (one draw per player a year): real
 # 2026 usage starts players well below the top overall at most positions (rotations, fits, what
@@ -84,14 +88,43 @@ def base_team(slug: str) -> dict:
 @lru_cache(maxsize=None)
 def base_meta(slug: str) -> dict:
     """A source team's identity (slug, names, state, conference, colors, program, ...): everything
-    but the roster and lineup, cached since every name lookup and every league team starts from it."""
-    t = base_team(slug)
-    return {k: v for k, v in t.items() if k not in BULK}
+    but the roster and lineup, cached since every name lookup and every league team starts from it.
+    From BASE_META_FILE when it exists."""
+    if BASE_META_FILE.exists():
+        return _meta_file(str(BASE_META_FILE))[slug]
+    return _meta_of(base_team(slug))
 
 
 @lru_cache(maxsize=1)
 def base_slugs() -> tuple[str, ...]:
+    if BASE_META_FILE.exists():
+        return tuple(sorted(_meta_file(str(BASE_META_FILE))))
+    return _source_slugs()
+
+
+def _meta_of(t: dict) -> dict:
+    return {k: v for k, v in t.items() if k not in BULK}
+
+
+def _source_slugs() -> tuple[str, ...]:
     return tuple(sorted(p.stem for p in SOURCE_DIR.glob("*.json")))
+
+
+@lru_cache(maxsize=2)
+def _meta_file(path: str) -> dict:
+    """BASE_META_FILE's slug -> identity, read once per path."""
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def write_base_files() -> None:
+    """Compute from_base()'s league and every team's identity from the source files (never from
+    files already written) and write them to BASE_LEAGUE_FILE and BASE_META_FILE."""
+    lgd = _compute_base(FIRST_YEAR + 1)
+    meta = {slug: _meta_of(base_team(slug)) for slug in _source_slugs()}
+    BASE_LEAGUE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    BASE_LEAGUE_FILE.write_text(json.dumps(lgd, separators=(",", ":")), encoding="utf-8")
+    BASE_META_FILE.write_text(json.dumps(meta, separators=(",", ":")), encoding="utf-8")
+    _meta_file.cache_clear()
 
 
 @lru_cache(maxsize=1)
@@ -174,12 +207,23 @@ def formation(t: dict) -> dict:
 
 def from_base(year: int = FIRST_YEAR + 1) -> dict:
     """Every FBS team's real 2026 roster, coaches and lineup shape as a league (before the first
-    offseason's departures). Head coaches keep the recruiting ratings the build measured."""
+    offseason's departures). Head coaches keep the recruiting ratings the build measured. From
+    BASE_LEAGUE_FILE (a fresh copy each call) when it exists, else computed from the source files."""
+    if BASE_LEAGUE_FILE.exists():
+        lgd = json.loads(BASE_LEAGUE_FILE.read_text(encoding="utf-8"))
+        lgd["year"] = year
+        for t in lgd["teams"].values():   # as programs.init sets it for this year
+            t["program"]["year"] = year - 1
+        return lgd
+    return _compute_base(year)
+
+
+def _compute_base(year: int) -> dict:
     from teamdata import build_teams
     attrs = game_scale.keys()
     usage = _real_usage()            # receivers' real target shares (the lead-back use goes with the style, source_team)
     teams = {}
-    for slug in base_slugs():
+    for slug in _source_slugs():
         t = base_team(slug)
         if t["fictional"]:
             continue

@@ -9,7 +9,7 @@ import time
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
-SLOW = {"test_bowls.py", "test_awards.py", "test_review.py"}   # full seasons: a few minutes each
+SLOW = {"test_bowls.py", "test_awards.py", "test_review.py", "test_site_bundle.py"}   # full seasons (the bundle: a week, an offseason, a week): a few minutes each
 
 SEASONS = ROOT / "data" / "seasons"
 
