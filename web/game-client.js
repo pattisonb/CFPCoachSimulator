@@ -55,8 +55,8 @@
     return new Promise((resolve, reject) => {
       const worker = new Worker("./worker.js");
       // the worker failed: before ready, `ready` rejects; after, every call in flight or to come rejects
-      const die = (reason) => {
-        dead = new Error(`The game could not load: ${reason}`);
+      const die = (reason, plain) => {
+        dead = new Error(plain ? reason : `The game could not load: ${reason}`);
         snapshot = null;
         for (const p of pending.values()) p.reject(dead);
         pending.clear();
@@ -68,7 +68,7 @@
         const m = e.data;
         if (m.kind === "loading") emit(loadingCbs, m);
         else if (m.kind === "ready") resolve();
-        else if (m.kind === "fatal") die(m.message);
+        else if (m.kind === "fatal") die(m.message, m.plain);
         else if (m.kind === "status") snapshot = m.busy ? m.status : null;
         else if (m.kind === "storage-error") emit(storageCbs, m);
         else if (pending.has(m.id)) { const p = pending.get(m.id); pending.delete(m.id); p.resolve(m); }

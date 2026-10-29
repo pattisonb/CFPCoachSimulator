@@ -31,7 +31,8 @@ The worker takes the `cfp-game` Web Lock for its life before it mounts the store
 `BroadcastChannel` ping where a browser has no Web Locks); a second tab's worker does not
 start, and its overlay says the game is already open in another tab. When the store cannot be
 read at start (IndexedDB blocked by a setting or a private window) the game still loads, plays
-from memory and a toast says saves will not be kept in this browser.
+from memory and a toast says saves will not be kept in this browser; that session never writes
+back to the store (a write-back of its empty mirror would delete the careers kept there).
 
 On your own computer, with Python 3.12 and nothing else installed:
 

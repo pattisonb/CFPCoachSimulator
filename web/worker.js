@@ -30,6 +30,9 @@ const OTHER_TAB = "The game is already open in another tab. Close it and reload 
 const NO_SAVES = "Your browser's storage could not be read: saves will not be kept in this browser. Download a career you want to keep.";
 const LOCK = "cfp-game";
 
+// The other-tab refusal: `plain` tells the page to show the message as it is, with no "could not load" prefix.
+function otherTab() { const err = new Error(OTHER_TAB); err.plain = true; return err; }
+
 self.onmessage = (e) => { queue.push(e.data); if (wake) { const w = wake; wake = null; w(); } };
 
 function untilMessage() { return queue.length ? Promise.resolve() : new Promise((r) => { wake = r; }); }
@@ -46,6 +49,7 @@ function syncfs(populate) {
 
 // Persist the IDBFS mounts; a failure is reported once, the game keeps playing from memory.
 async function persist() {
+  if (restoreError !== null) return;        // the saves could not be read: memory-only session (a write-back would wipe the store)
   try { await syncfs(false); }
   catch (err) { postMessage({ kind: "storage-error", message: String((err && err.message) || err) }); }
 }
@@ -61,18 +65,23 @@ async function claimStore() {
         return lock ? new Promise(() => {}) : null;     // never settles: the lock is held until the worker ends
       }).catch(() => resolve(false));
     });
-    if (!granted) throw new Error(OTHER_TAB);
+    if (!granted) throw otherTab();
     return;
   }
   if (typeof BroadcastChannel === "undefined") return;   // nothing to coordinate with
   const channel = new BroadcastChannel(LOCK);
+  const token = Math.random().toString(36).slice(2) + Date.now().toString(36);   // the tie-break between tabs starting together
   const taken = await new Promise((resolve) => {
     const timer = setTimeout(() => resolve(false), 300);
-    channel.onmessage = (e) => { if (e.data === "here") { clearTimeout(timer); resolve(true); } };
-    channel.postMessage("who");
+    channel.onmessage = (e) => {
+      const m = e.data || {};
+      if (m.kind === "here") { clearTimeout(timer); resolve(true); }                  // a running tab, or a waiting one that wins
+      else if (m.kind === "who" && token < m.token) channel.postMessage({ kind: "here", token });   // the lower token wins the tie
+    };
+    channel.postMessage({ kind: "who", token });
   });
-  if (taken) { channel.close(); throw new Error(OTHER_TAB); }
-  channel.onmessage = (e) => { if (e.data === "who") channel.postMessage("here"); };
+  if (taken) { channel.close(); throw otherTab(); }
+  channel.onmessage = (e) => { if ((e.data || {}).kind === "who") channel.postMessage({ kind: "here", token }); };
 }
 
 async function fetchZip(version) {
@@ -158,7 +167,7 @@ async function step() {
 async function main() {
   await untilMessage();
   try { await start(queue.shift()); }
-  catch (err) { postMessage({ kind: "fatal", message: String((err && err.message) || err) }); return; }
+  catch (err) { postMessage({ kind: "fatal", message: String((err && err.message) || err), plain: !!(err && err.plain) }); return; }
   postMessage({ kind: "ready" });
   if (restoreError !== null) postMessage({ kind: "storage-error", message: restoreError, copy: NO_SAVES });
   try {

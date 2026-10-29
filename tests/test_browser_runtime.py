@@ -33,7 +33,7 @@ LOAD_TIMEOUT = 180_000       # Pyodide and game.zip from a cold cache
 SIM_TIMEOUT = 120_000        # one week, or a new career
 STORAGE_TOAST = "Your browser could not save the career"
 NO_SAVES_TOAST = "saves will not be kept in this browser"
-OTHER_TAB = "The game is already open in another tab"
+OTHER_TAB = "The game is already open in another tab. Close it and reload this one."
 POST = "{method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(%s)}"
 
 
@@ -197,9 +197,16 @@ def test_syncfs_failure_toasts(browser, base: str):
 
 def test_blocked_storage_at_start_toasts_and_plays(browser, base: str):
     """IndexedDB cannot be read when the worker starts: the game loads anyway, the toast says
-    saves will not be kept, and a career can be created and read back from memory."""
+    saves will not be kept, and a career can be created, advanced and read back from memory. The
+    session is memory-only: a write never writes back to IndexedDB (a write-back of an empty
+    mirror would wipe the stored careers), so the start-up toast is the only one."""
     ctx = browser.new_context()
-    ctx.add_init_script("window.__cfpBreakRestore = true")
+    ctx.add_init_script("""window.__cfpBreakRestore = true;
+        window.__toastShows = [];       // the text of every toast as it comes on screen
+        document.addEventListener('DOMContentLoaded', () => {
+          const t = document.getElementById('toast'); let wasHidden = t.hidden;
+          new MutationObserver(() => { if (wasHidden && !t.hidden) window.__toastShows.push(t.textContent); wasHidden = t.hidden; })
+            .observe(t, {attributes: true, childList: true, characterData: true, subtree: true}); });""")
     page = ctx.new_page()
     errors, console = [], []
     watch(page, errors, console)
@@ -212,6 +219,15 @@ def test_blocked_storage_at_start_toasts_and_plays(browser, base: str):
         sid = r["json"]["id"]
         r = shim(page, f"/api/season/{sid}")
         assert r["status"] == 200 and r["json"]["id"] == sid, r
+        assert shim(page, f"/api/season/{sid}/advance", POST % '{}')["json"]["status"] == "running"   # a week: several writes
+        t0 = time.perf_counter()
+        while shim(page, f"/api/season/{sid}/status")["json"]["status"] == "running":
+            assert time.perf_counter() - t0 < SIM_TIMEOUT / 1000, "the week did not finish"
+            time.sleep(0.5)
+        assert shim(page, f"/api/season/{sid}")["json"]["current_week"] == 1
+        time.sleep(8)                                        # past the toast's 1 s delay and 6 s on screen
+        shows = page.evaluate("window.__toastShows")
+        assert len(shows) == 1 and NO_SAVES_TOAST in shows[0], shows
         assert not errors, errors
     finally:
         if console:
@@ -231,7 +247,8 @@ def test_second_tab_is_refused_and_the_first_keeps_working(browser, base: str):
         second.goto(f"{base}/index.html")
         second.wait_for_function(f"() => document.querySelector('#loading-text').textContent.includes({OTHER_TAB!r})", timeout=LOAD_TIMEOUT)
         assert not second.is_hidden("#loading")
-        assert second.evaluate("CFP.game.fetch('/api/teams').then(() => 'ok', (e) => e.message)") != "ok"
+        assert second.inner_text("#loading-text").strip() == OTHER_TAB, second.inner_text("#loading-text")   # the copy as it is, no "could not load" prefix
+        assert second.evaluate("CFP.game.fetch('/api/teams').then(() => 'ok', (e) => e.message)") == OTHER_TAB
         r = shim(first, "/api/teams")
         assert r["status"] == 200 and r["json"]["teams"], r
         r = shim(first, "/api/season", POST % '{team: "smu", seed: 11}')
