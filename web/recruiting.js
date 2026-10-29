@@ -159,7 +159,7 @@
       H.toast(`Could not do that: ${H.errText(err)}`, 4000);
       return null;
     }
-    if (r.scene) { if (opts.onScene) opts.onScene(r.scene); else H.toast(`${names[action]} open · finish it from his card on the board`, 3000); }
+    if (r.scene) { if (opts.onScene) opts.onScene(r.scene); else H.toast(`${names[action]} open · finish it from his pane`, 3000); }
     else if (r.reaction) { H.toast((REACTION_TOAST[r.reaction.kind] || REACTION_TOAST.polite)(pitch), 4000); if (opts.onReaction) opts.onReaction(r.reaction); }
     else if (action === "scout") H.toast(`Scouting trip done · ${r.hours_left} hours left · his grades are updated`, 3000);
     else H.toast(`${names[action]} done · ${r.hours_left} hours left${r.revealed ? ` · he cares about ${PITCH_NAMES[r.revealed].toLowerCase()}` : action === "call" ? " · he kept his cards close" : ""} · it lands at the week step`, 3000);
@@ -582,6 +582,9 @@
   function drawBoard(s, box, v) {
     const me = s.team;
     const searchHadFocus = document.activeElement && document.activeElement.id === "rc-search";
+    // a stage tab or the sort that redrew the board keeps the focus, as the search does
+    const stageHadFocus = document.activeElement && box.contains(document.activeElement) && document.activeElement.dataset.stage;
+    const sortHadFocus = document.activeElement && box.contains(document.activeElement) && document.activeElement.id === "rc-sort";
     closeMenu();
     box.innerHTML = "";
     box.dataset.draw = String((Number(box.dataset.draw) || 0) + 1);      // a redraw counter: tests wait on it after an action lands
@@ -628,7 +631,7 @@
     let qTimer = null;
     search.addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(() => { view.search = search.value; drawBoard(s, box, v); }, 150); });
     if (!["chance", "rank"].includes(view.sort)) view.sort = "chance";
-    const sort = el("select", { class: "go-sel", "aria-label": "Sort" }, [["chance", "Sort: your chance"], ["rank", "Sort: national rank"]].map(([k, t]) => el("option", { value: k, text: t })));
+    const sort = el("select", { id: "rc-sort", class: "go-sel", "aria-label": "Sort" }, [["chance", "Sort: your chance"], ["rank", "Sort: national rank"]].map(([k, t]) => el("option", { value: k, text: t })));
     sort.value = view.sort;
     sort.addEventListener("change", () => { view.sort = sort.value; drawBoard(s, box, v); });
     box.append(el("div", { class: "go-stagebar" }, [stages, el("div", { class: "go-tools" }, [search, sort])]));
@@ -695,6 +698,8 @@
     focusScene();
     view.focusScene = false;
     if (searchHadFocus) { search.focus({ preventScroll: true }); const n = search.value.length; search.setSelectionRange(n, n); }
+    else if (stageHadFocus) { const t = stages.querySelector(`button[data-stage="${stageHadFocus}"]`); if (t) t.focus({ preventScroll: true }); }
+    else if (sortHadFocus) sort.focus({ preventScroll: true });
 
     function row(b) {
       const sd = standingOf(b, me);
@@ -819,16 +824,16 @@
         const item = el("button", { type: "button", class: "go-menu-item", role: "menuitem", "data-action": it.action, tabindex: "-1" }, [
           el("span", { class: "go-menu-main" }, [el("b", { text: it.name }), it.cost ? el("span", { class: "muted small go-menu-cost", text: it.cost }) : null]),
           it.why ? el("span", { class: "go-menu-why", text: it.why }) : null]);
-        if (it.why) item.disabled = true;
-        item.addEventListener("click", () => { closeMenu(); pick(b, it.action); });
+        if (it.why) item.setAttribute("aria-disabled", "true");     // greyed, but reachable: the reason is read out
+        item.addEventListener("click", () => { if (it.why) return; closeMenu(); pick(b, it.action); });
         return item;
       }));
       menu.addEventListener("keydown", (e) => {
         if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeMenu(true); return; }
-        if (e.key === "Tab") { closeMenu(); return; }
+        if (e.key === "Tab") { e.preventDefault(); closeMenu(true); return; }
         if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
         e.preventDefault();
-        const live = [...menu.querySelectorAll(".go-menu-item:not(:disabled)")];
+        const live = [...menu.querySelectorAll(".go-menu-item")];
         if (!live.length) return;
         const i = live.indexOf(document.activeElement);
         const j = e.key === "ArrowDown" ? (i + 1) % live.length : e.key === "ArrowUp" ? (i - 1 + live.length) % live.length : e.key === "Home" ? 0 : live.length - 1;
@@ -855,8 +860,8 @@
       window.addEventListener("resize", onMove);
       btn.setAttribute("aria-expanded", "true");
       menuState = { el: menu, backdrop, btn, onDoc, onMove };
-      // focus goes to the first live item, or to the menu itself when every item waits (so Escape still closes it)
-      const first = menu.querySelector(".go-menu-item:not(:disabled)");
+      // focus goes to the first live item, or to the first item when every item waits (its reason is read out)
+      const first = menu.querySelector(".go-menu-item:not([aria-disabled=\"true\"])") || menu.querySelector(".go-menu-item");
       (first || menu).focus();
     }
 
@@ -902,7 +907,7 @@
       const ask = askWord(b);
       p.append(el("div", { class: "go-strip" }, [
         stat("YOUR CHANCE", sd.odds || "—"),
-        stat("HIS LIST", at ? `#${at} of ${Math.max(b.schools || 0, rowsOf.length)}` : "Not on it"),
+        stat("HIS LIST", at ? `#${at} of ${Math.max(b.schools || 0, rowsOf.length)}` : b.offered && !(b.signed || b.committed) ? "Outside his top 5" : "Not on it"),
         stat("NIL", b.offered ? `your ${b.nil || 0}${ask ? ` · wants ${ask}` : ""}` : ask ? `wants ${ask}` : "—"),
         stat("SCOUTED", b.trips ? `${b.trips} of 3 looks` : "Not yet")]));
       // the tags: only what is known
@@ -938,7 +943,7 @@
           if (sd.odds) body.append(el("div", { class: "muted small", text: `${sd.odds}${sd.certainty ? ` · ${sd.certainty}${sd.certainty !== "Solid read" ? ": the range narrows as signing day nears" : ""}` : ""}` }));
           body.append(bar(sd), el("div", { class: "go-kicker muted", text: "HIS LIST" }), race(b, me));
         } else if (k === "scouting") body.append(scoutingView(b));
-        else if (k === "profile") openProfile(s, b.id, body);
+        else if (k === "profile") openProfile(s, b.id, body, { pane: true });
         else body.append(historyView(b));
       }
     }
@@ -1207,9 +1212,12 @@
 
   // ----- the Prospect Profile ----------------------------------------------------------------------
 
-  async function openProfile(s, pid, into) {
+  async function openProfile(s, pid, into, opts = {}) {
     // the window opens at once, saying it is loading, and fills in when his profile arrives; with
-    // `into` (a profile already open) it refreshes in place instead of closing and reopening
+    // `into` (a profile already open) it refreshes in place instead of closing and reopening. With
+    // opts.pane it is the board pane's Profile sub-tab: the Recruit menu there holds Scout and Off the
+    // board, so the profile draws no buttons of its own for them
+    const inPane = !!opts.pane;
     const node = into || el("div", { class: "rc-profile go-profile" }, [el("p", { class: "muted rc-loading go-loading", text: "Loading his profile…" })]);
     if (into) { node.innerHTML = ""; node.append(el("p", { class: "muted rc-loading go-loading", text: "Updating his profile…" })); }
     else H.openModal("Prospect Profile", node);
@@ -1250,14 +1258,14 @@
     // recruiting him happens on the board: once he is on it, a button goes straight there
     const toBoard = el("button", { type: "button", class: "go-btn primary", text: "Recruit him on your board →",
       onclick: () => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; H.closeModal(); H.onChange("recruiting"); } });
-    const label = () => { onBoard.textContent = on ? "✓ On your board · remove" : "+ Add to your board"; onBoard.classList.toggle("primary", !on); toBoard.hidden = !on || !!pub.signed || !!into; };
+    const label = () => { onBoard.textContent = on ? "✓ On your board · remove" : "+ Add to your board"; onBoard.classList.toggle("primary", !on); toBoard.hidden = !on || !!pub.signed || inPane; };
     label();
     onBoard.addEventListener("click", async () => {
       onBoard.disabled = true;
       if (await setBoard(s, pid, !on)) { on = !on; label(); H.toast(on ? `${pub.name} is on your board.` : `${pub.name} is off your board.`, 2500); }
       onBoard.disabled = false;
     });
-    node.append(el("div", { class: "rc-profile-actions go-row wrap" }, [onBoard, toBoard]));
+    if (!inPane) node.append(el("div", { class: "rc-profile-actions go-row wrap" }, [onBoard, toBoard]));
     if (p.looks >= 3 && p.our_grades) {
       node.append(scoutLine(p.our_grades, p.looks));
       if (p.our_comp && !(p.public_comp && p.public_comp.name === p.our_comp.name)) node.append(el("p", { class: "small" }, [el("b", { text: "Our comp: " }), `${p.our_comp.name}, ${p.our_comp.school} (${p.our_comp.position}${p.our_comp.overall ? `, ${p.our_comp.overall} OVR` : ""})`]));
@@ -1320,11 +1328,11 @@
         return cell;
       })),
         el("p", { class: "muted small", text: `${p.looks} look${p.looks === 1 ? "" : "s"}. Tap or hover a grade to see what it looks like in ratings. Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster.` }),
-        el("div", { class: "go-row wrap rc-profile-actions" }, [scoutBtn]));
+        inPane ? null : el("div", { class: "go-row wrap rc-profile-actions" }, [scoutBtn]));
       node.append(p.our_comp ? el("p", {}, [el("b", { text: "Our comp: " }), comp(p.our_comp)])
         : el("p", { class: "muted", text: p.looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp after 3 looks (${p.looks} so far).` }));
-    } else node.append(el("p", { class: "muted", text: "Not scouted yet: send a scout, or put a staff member on his area." }),
-      el("div", { class: "go-row wrap rc-profile-actions" }, [scoutBtn, el("button", { type: "button", class: "go-btn", text: "Assign your staff →", onclick: () => { H.closeModal(); H.onChange("staff"); } })]));
+    } else node.append(el("p", { class: "muted", text: inPane ? "Not scouted yet: Scout from the Recruit menu, or put a staff member on his area." : "Not scouted yet: send a scout, or put a staff member on his area." }),
+      el("div", { class: "go-row wrap rc-profile-actions" }, [inPane ? null : scoutBtn, el("button", { type: "button", class: "go-btn", text: "Assign your staff →", onclick: () => { H.closeModal(); H.onChange("staff"); } })]));
   }
 
   // ----- Staff -------------------------------------------------------------------------------------

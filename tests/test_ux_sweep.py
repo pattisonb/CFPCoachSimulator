@@ -206,6 +206,19 @@ if __name__ == "__main__":
                 assert page.get_attribute(f".go-stages button[data-stage='{stage}']", "aria-pressed") == "true"
                 page.click(".go-stages button[data-stage='all']")
                 time.sleep(0.4)
+            # a stage tab and the sort keep the focus through the redraw they cause, as the search does
+            page.click(".go-stages button[data-stage='contact']")
+            time.sleep(0.3)
+            assert page.evaluate("() => document.activeElement.dataset.stage") == "contact", "a stage tab keeps the focus after the redraw"
+            page.click(".go-stages button[data-stage='all']")
+            time.sleep(0.3)
+            assert page.evaluate("() => document.activeElement.dataset.stage") == "all"
+            page.focus(".go-tools select.go-sel")
+            page.select_option(".go-tools select.go-sel", "rank")
+            time.sleep(0.3)
+            assert page.evaluate("() => document.activeElement.matches('.go-tools select.go-sel') && document.activeElement.value === 'rank'"), "the sort keeps the focus after the redraw"
+            page.select_option(".go-tools select.go-sel", "chance")
+            time.sleep(0.3)
             # the search narrows the list live (name, position or state)
             token = v["board"][0]["name"].split()[-1]
             page.fill("#rc-search", token)
@@ -227,6 +240,15 @@ if __name__ == "__main__":
             assert page.text_content(".go-pane .go-chip").strip() == STAGE_WORD.get(b["stage"], "Cold"), page.text_content(".go-pane .go-chip")
             box = page.evaluate("() => { const p = document.querySelector('.go-pane'); const r = p.getBoundingClientRect(); return [r.top, r.bottom, getComputedStyle(p).position]; }")
             assert box[2] == "sticky" and 0 <= box[0] < 400, box
+            # the pane sticks: scrolled down a long board, it is still on screen beside the list
+            assert board_n >= 20, f"the sticky check needs a long board: {board_n} rows"
+            page.evaluate("() => window.scrollTo(0, 1500)")
+            time.sleep(0.3)
+            top = page.evaluate("() => [window.scrollY, document.querySelector('.go-pane').getBoundingClientRect().top]")
+            assert top[0] >= 1000 and 0 <= top[1] <= 200, f"the pane stays in view while the board scrolls: scrollY, pane top = {top}"
+            shot(page, "pane-sticky-1280-dark")
+            page.evaluate("() => window.scrollTo(0, 0)")
+            time.sleep(0.2)
             assert page.evaluate("() => document.querySelectorAll('.go-pane .go-strip .go-stat').length") == 4, "four stat cells"
             assert page.eval_on_selector_all(".go-pane .go-subtabs button[data-sub]", "els => els.map(e => e.dataset.sub)") == ["overview", "scouting", "profile", "history"]
             assert page.query_selector(".go-pane .go-sub-body .go-race"), "Overview draws his list as a race"
@@ -244,6 +266,9 @@ if __name__ == "__main__":
             page.click(".go-subtabs button[data-sub=profile]")
             page.wait_for_selector(".go-pane .go-sub-body .go-profile-head", timeout=60_000)
             assert not page.query_selector(".modal:not([hidden])"), "the profile draws inline, not in a modal"
+            # the menu holds every action: the inline profile carries no scout button and no on-board toggle
+            prof_btns = page.eval_on_selector_all(".go-pane .go-sub-body button", "els => els.map(e => e.textContent)")
+            assert not [x for x in prof_btns if "scout" in x.lower() or "board" in x.lower()], f"the inline profile acts outside the menu: {prof_btns}"
             page.click(".go-subtabs button[data-sub=history]")
             time.sleep(0.3)
             assert "Contacts this week" in page.inner_text(".go-pane .go-sub-body")
@@ -252,7 +277,7 @@ if __name__ == "__main__":
             page.click("#rc-recruit")
             page.wait_for_selector(".go-menu[role=menu]")
             assert page.get_attribute("#rc-recruit", "aria-expanded") == "true"
-            items = page.eval_on_selector_all(".go-menu .go-menu-item", "els => els.map(e => [e.dataset.action, e.disabled, (e.querySelector('.go-menu-why') || {}).textContent || ''])")
+            items = page.eval_on_selector_all(".go-menu .go-menu-item", "els => els.map(e => [e.dataset.action, e.getAttribute('aria-disabled') === 'true', (e.querySelector('.go-menu-why') || {}).textContent || ''])")
             assert [i[0] for i in items] == ["message", "call", "hc_visit", "scout", "official_visit", "offer", "raise_nil", "pull_offer", "off_board"], items
             assert all(bool(i[2]) == i[1] for i in items), f"a disabled item says why, an enabled one does not: {items}"
             by = {i[0]: i for i in items}
@@ -263,6 +288,18 @@ if __name__ == "__main__":
             page.keyboard.press("Escape")
             assert not page.query_selector(".go-menu"), "Escape closes the menu"
             assert page.evaluate("() => document.activeElement.id") == "rc-recruit", "focus returns to the button"
+            page.click("#rc-recruit")
+            page.wait_for_selector(".go-menu[role=menu]")
+            assert page.evaluate("() => [...document.querySelectorAll('.go-menu .go-menu-item')].every(e => !e.disabled)"), "a greyed item is aria-disabled, not disabled"
+            page.keyboard.press("End")
+            assert page.evaluate("() => document.activeElement.dataset.action") == "off_board"
+            page.keyboard.press("ArrowUp")
+            assert page.evaluate("() => document.activeElement.dataset.action") == "pull_offer", "the arrow keys reach a greyed item and its reason"
+            page.keyboard.press("Enter")
+            assert page.query_selector(".go-menu"), "a greyed item ignores activation"
+            page.keyboard.press("Tab")
+            assert not page.query_selector(".go-menu"), "Tab closes the menu"
+            assert page.evaluate("() => document.activeElement.id") == "rc-recruit", "Tab returns focus to the button"
             # Message opens the step: the pitch dropdown with his known priorities first; Send posts and the step closes
             page.click("#rc-recruit")
             page.click(".go-menu .go-menu-item[data-action=message]")
@@ -305,7 +342,7 @@ if __name__ == "__main__":
             assert "primary" not in (page.get_attribute("#rc-recruit", "class") or ""), "Recruit steps back while the call plays"
             page.click("#rc-recruit")
             page.wait_for_selector(".go-menu")
-            whys = page.eval_on_selector_all(".go-menu .go-menu-item", "els => els.map(e => [e.disabled, (e.querySelector('.go-menu-why') || {}).textContent || ''])")
+            whys = page.eval_on_selector_all(".go-menu .go-menu-item", "els => els.map(e => [e.getAttribute('aria-disabled') === 'true', (e.querySelector('.go-menu-why') || {}).textContent || ''])")
             assert len(whys) == 9 and all(d and w == "Finish your call first" for d, w in whys), whys
             page.keyboard.press("Escape")
             shot(page, "scene-1280-dark")
@@ -335,7 +372,7 @@ if __name__ == "__main__":
             settle(page, n)
             page.click("#rc-recruit")
             page.wait_for_selector(".go-menu")
-            assert page.eval_on_selector_all(".go-menu .go-menu-item", "els => els.every(e => e.disabled && e.querySelector('.go-menu-why').textContent === 'Finish your call first')")
+            assert page.eval_on_selector_all(".go-menu .go-menu-item", "els => els.every(e => e.getAttribute('aria-disabled') === 'true' && e.querySelector('.go-menu-why').textContent === 'Finish your call first')")
             page.keyboard.press("Escape")
             page.click(".go-pane .go-scene button:has-text('Hang up')")
             time.sleep(0.5)
@@ -482,7 +519,7 @@ if __name__ == "__main__":
             assert "flip" in page.inner_text(".go-pane .go-sub-body"), page.inner_text(".go-pane .go-sub-body")
             page.click("#rc-recruit")
             page.wait_for_selector(".go-menu")
-            assert not page.eval_on_selector(".go-menu-item[data-action=offer]", "e => e.disabled"), "the Offer for a verbal commit elsewhere is live"
+            assert not page.eval_on_selector(".go-menu-item[data-action=offer]", "e => e.getAttribute('aria-disabled') === 'true'"), "the Offer for a verbal commit elsewhere is live"
             page.click(".go-menu .go-menu-item[data-action=offer]")
             page.wait_for_selector(".go-pane .go-step input#rc-nil")
             page.click(".go-pane .go-step button.go-step-cancel")
@@ -492,7 +529,7 @@ if __name__ == "__main__":
             assert page.text_content(".go-pane .go-chip").startswith("Hard commit · ")
             page.click("#rc-recruit")
             page.wait_for_selector(".go-menu")
-            assert not page.eval_on_selector(".go-menu-item[data-action=pull_offer]", "e => e.disabled"), "Pull offer is live for a hard commit elsewhere"
+            assert not page.eval_on_selector(".go-menu-item[data-action=pull_offer]", "e => e.getAttribute('aria-disabled') === 'true'"), "Pull offer is live for a hard commit elsewhere"
             assert page.inner_text(".go-menu-item[data-action=offer] .go-menu-why").strip() == "Already offered"
             page.keyboard.press("Escape")
             # the same without your offer: Offer… is greyed for the hard commit, and there is nothing to pull
@@ -501,7 +538,7 @@ if __name__ == "__main__":
             assert page.text_content(".go-pane .go-chip").startswith("Hard commit · ")
             page.click("#rc-recruit")
             page.wait_for_selector(".go-menu")
-            assert page.eval_on_selector(".go-menu-item[data-action=offer]", "e => e.disabled")
+            assert page.eval_on_selector(".go-menu-item[data-action=offer]", "e => e.getAttribute('aria-disabled') === 'true'")
             assert page.inner_text(".go-menu-item[data-action=offer] .go-menu-why").strip() == "Hard commit elsewhere"
             assert page.inner_text(".go-menu-item[data-action=pull_offer] .go-menu-why").strip() == "Not offered"
             page.keyboard.press("Escape")
