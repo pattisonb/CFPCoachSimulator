@@ -54,7 +54,7 @@ if __name__ == "__main__":
     season.save_season(done)
     port = free_port()
     base = f"http://127.0.0.1:{port}"
-    server = subprocess.Popen([sys.executable, "server.py", "--local"], cwd=ROOT, env={**os.environ, "PORT": str(port)},
+    server = subprocess.Popen([sys.executable, "server.py", "--local"], cwd=ROOT, env={**os.environ, "PORT": str(port), "CFP_MAX_CAREERS": "0"},
                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         for _ in range(120):

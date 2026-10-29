@@ -22,8 +22,21 @@ def refused(fn, code: int) -> None:
 
 
 if __name__ == "__main__":
+    import tempfile
+    season.SEASONS_DIR = _Path(tempfile.mkdtemp(prefix="cfp-api-test-"))   # an empty saves folder: the career limit counts what is saved
     out = server.create_season(server.SeasonRequest(team="ohio-state", mode="full", seed=11, career=True))
     sid = out["id"]
+    # testing mode: one career on the server at a time (a plain season is not a career), and a career
+    # plays five seasons: the rollover out of its fifth is refused
+    server.MAX_CAREERS = 1
+    refused(lambda: server.create_season(server.SeasonRequest(team="smu", mode="full", seed=12, career=True)), 409)
+    refused(lambda: server._check_career_room(None), 409)
+    server._check_career_room(sid)                          # the career already on the server may come back (an import of itself)
+    assert server.create_season(server.SeasonRequest(team="smu", mode="full", seed=12, career=False))["id"]
+    server.MAX_CAREERS = 0
+    assert server.MAX_SEASONS == 5
+    server._check_seasons_left({"year": 2029})
+    refused(lambda: server._check_seasons_left({"year": 2030}), 409)
     view = server.recruiting_view(sid)
     assert view["week"] == 0 and view["hours_left"] == view["hours"] and view["board"] == [] and view["auto_recruit"] == "off"
     assert view["open_spots"] > 0 and view["offers_left"] > 0 and view["nil"]["budget"] > 0

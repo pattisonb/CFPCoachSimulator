@@ -511,11 +511,34 @@ def gameday_season(season_id: str) -> dict:
     return {"status": "running", "done": state["current_week"], "total": state["current_week"] + 1}
 
 
+# Testing mode, while the game runs on a small shared instance: one career on the server at a time, and a
+# career plays five seasons. CFP_MAX_CAREERS=0 lifts the career limit (the tests set it; nothing else does).
+MAX_CAREERS = int(os.environ.get("CFP_MAX_CAREERS", "1"))
+MAX_SEASONS = 5
+
+
+def _check_career_room(season_id: Optional[str]) -> None:
+    """409 when another career is already on the server (the one named may come back: an import of itself)."""
+    if MAX_CAREERS <= 0:
+        return
+    others = [c for c in list_seasons()["seasons"] if c["career"] and c["id"] != season_id]
+    if len(others) >= MAX_CAREERS:
+        raise HTTPException(409, "one career at a time for now: delete the career on the server before starting another")
+
+
+def _check_seasons_left(state: dict) -> None:
+    """409 when the career has played its last season: no rollover out of it."""
+    if season.season_year(state) - league.FIRST_YEAR + 1 >= MAX_SEASONS:
+        raise HTTPException(409, f"this career has played its {MAX_SEASONS} seasons: that is the limit for now")
+
+
 @app.post("/api/season")
 def create_season(req: SeasonRequest) -> dict:
     _team(req.team)
     if req.mode not in ("full", "remaining"):
         raise HTTPException(400, "mode must be full or remaining")
+    if req.career:
+        _check_career_room(None)
     coach = None
     if req.coach:
         coach = coaches.load(req.coach)
@@ -562,6 +585,7 @@ async def import_career(request: Request) -> dict:
     job = _season_jobs.get(sid)
     if job and job.get("status") == "running":
         raise HTTPException(409, "that career is simulating; try again when the week is done")
+    _check_career_room(sid)
     current = job["state"] if job and job.get("state") is not None else season.load_season(sid)
     try:
         state = career.restore(blob, current)
@@ -1007,6 +1031,8 @@ def offseason_advance(season_id: str, req: OffseasonRequest) -> dict:
     """The next offseason stage; past the last one (or with to="next_season"), the next season."""
     st = _offseason_state(season_id)
     with _season_lock:
+        if req.to == "next_season" or st["offseason"]["stage"] == "ready":
+            _check_seasons_left(st)
         if req.to == "next_season":
             offseason.run_all(st)
         elif st["offseason"]["stage"] != "ready":

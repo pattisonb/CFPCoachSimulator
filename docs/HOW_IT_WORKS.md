@@ -1073,6 +1073,10 @@ it turns itself off) or all season.
 follows a few seconds later. After every week the page keeps the career in the browser (IndexedDB): the season
 state, with your own games' box scores in it. When the server has forgotten the career (a
 restart), opening it uploads that copy and the server keeps whichever copy is newer.
+Testing-mode limits for the small shared instance (`server.MAX_CAREERS`, `MAX_SEASONS`): one
+career on the server at a time (a second career, or an import of a different one, is refused with
+a 409 until the first is deleted; a plain season is not a career) and five seasons a career (the
+rollover out of the fifth is refused). `CFP_MAX_CAREERS=0` lifts the career limit; the tests set it.
 **Download career** saves the state with every box score as a `.ccsave` file. Prospects store
 their EA ratings as lists in one key order, so a new career's save is under 1.5 MB.
 

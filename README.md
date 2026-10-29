@@ -72,6 +72,7 @@ week at a time or jump ahead: each week is **Recruit → Your game → Advance**
   career plays as many seasons as you like.
 - **Saves.** Your browser keeps a copy of the career after every week, so it survives the
   server restarting. **Download career** saves it as a file; **Load career** opens it again.
+  For now the shared server holds one career at a time, and a career plays five seasons.
 
 - **Game day.** Play your own game drive by drive, then advance the week to play
   everyone else's.
