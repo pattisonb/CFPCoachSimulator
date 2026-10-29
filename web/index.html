@@ -3,147 +3,217 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CFP Coach Simulator</title>
+  <title>Coach Career · CFP Coach Simulator</title>
   <meta name="theme-color" content="#131a2e" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="description" content="Simulate any college football game or a full season with real 2026 schedules, rosters, polls, the playoff and bowls, or follow the real 2026 season with live stats." />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="icon" href="/favicon.ico" sizes="any" />
-  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <meta name="description" content="Coach a college football program through a career: recruit, set the depth chart, play the 2026 season week by week with real schedules, rosters, polls, the playoff and bowls, then the offseason and the seasons after." />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="./favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="CFP Coach Simulator" />
-  <meta property="og:title" content="CFP Coach Simulator" />
-  <meta property="og:description" content="Simulate any college football game or a full season with real 2026 schedules, rosters, polls, the playoff and bowls, or follow the real 2026 season with live stats." />
-  <meta property="og:url" content="https://cfp-coach-simulator.onrender.com/" />
-  <meta property="og:image" content="https://cfp-coach-simulator.onrender.com/icons/og-image.png" />
+  <meta property="og:title" content="Coach Career · CFP Coach Simulator" />
+  <meta property="og:description" content="Coach a college football program through a career: recruit, set the depth chart, play the 2026 season week by week with real schedules, rosters, polls, the playoff and bowls, then the offseason and the seasons after." />
+  <meta property="og:image" content="./icons/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="manifest" href="/manifest.json" />
+  <link rel="manifest" href="./manifest.json" />
   <script>try{var t=localStorage.getItem("cfp.theme");if(!t&&window.matchMedia("(prefers-color-scheme: light)").matches)t="light";if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;display=swap" />
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./offseason.css" />
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <a class="brand-link" href="/" aria-label="CFP Coach Simulator home">
-        <img class="brand-icon" src="/favicon.svg" alt="" width="28" height="28" />
+      <a class="brand-link" href="./index.html" aria-label="CFP Coach Simulator home">
+        <img class="brand-icon" src="./favicon.svg" alt="" width="28" height="28" />
         <span class="brand-name">CFP Coach Simulator</span>
       </a>
     </div>
     <nav class="site-nav" aria-label="Sections">
-      <a href="/" data-nav="game" class="active">Sim a game</a>
-      <a href="/season" data-nav="season">Coach Career</a>
-      <a href="/real" data-nav="real">Real 2026</a>
-      <a href="/coach" data-nav="coach">Your coach</a>
+      <a href="./index.html" data-nav="season">Coach Career</a>
+      <a href="./coach.html" data-nav="coach">Your coach</a>
     </nav>
 
-    <div class="toolbar">
+    <div class="toolbar" id="season-toolbar">
+      <select id="pick-team" aria-label="Your team"></select>
+      <button id="btn-new" class="accent" type="button" title="Play the whole 2026 season from week 1">New season</button>
+      <button id="btn-seasons" class="ghost" type="button" aria-pressed="false" title="Show or hide the saved seasons">Seasons</button>
+      <button id="btn-load-career" class="ghost" type="button" title="Open a Coach Career saved as a file">Load career</button>
+      <input id="career-file" type="file" accept=".ccsave,application/gzip" hidden />
       <button class="ghost btn-theme" type="button" aria-label="Toggle light or dark mode"></button>
-      <button id="btn-sliders" class="ghost" type="button">Sliders</button>
-      <div class="batch">
-        <input id="sim-count" type="number" min="1" max="500" value="25" aria-label="Number of games" />
-        <button id="btn-sim-batch" class="ghost" type="button">Sim batch</button>
-      </div>
-      <button id="btn-sim" class="primary" type="button">Sim Game</button>
-      <div class="batch season-controls">
-        <select id="season-mode" aria-label="Season mode">
-          <option value="full">Full season</option>
-          <option value="remaining">Rest of season</option>
-        </select>
-        <button id="btn-season" class="accent" type="button" title="Open season mode with the Home team as your team">Play a season</button>
-      </div>
     </div>
   </header>
 
-  <section class="matchup">
-    <div class="pick">
-      <label for="away-select">Away</label>
-      <select id="away-select" aria-label="Away team"></select>
-      <div id="away-card" class="team-card"></div>
-    </div>
-    <div class="venue">
-      <div class="at">at</div>
-      <label class="radio"><input type="radio" name="venue" value="home" checked /> Home field</label>
-      <label class="radio"><input type="radio" name="venue" value="neutral" /> Neutral site</label>
-      <button id="btn-swap" class="ghost small" type="button">Swap sides</button>
-    </div>
-    <div class="pick">
-      <label for="home-select">Home</label>
-      <select id="home-select" aria-label="Home team"></select>
-      <div id="home-card" class="team-card"></div>
-    </div>
-  </section>
+  <main class="season-layout">
+    <aside class="season-side" id="season-side">
+      <div class="section-head"><h2>Seasons</h2><span class="side-actions"><button id="btn-clear-seasons" class="ghost small" type="button" hidden>Clear all</button><button id="btn-hide-seasons" class="ghost small" type="button" title="Hide this list">Hide ‹</button></span></div>
+      <ul id="season-list" class="history-list"><li class="muted">Loading seasons…</li></ul>
+    </aside>
 
-  <aside id="sliders-panel" class="drawer" hidden>
-    <div class="drawer-head">
-      <h2>Sliders</h2>
-      <div>
-        <button id="btn-sliders-reset" class="ghost small" type="button">Reset</button>
-        <button id="btn-sliders-close" class="ghost small" type="button">Close</button>
+    <section class="season-main">
+      <div id="season-empty" class="empty">
+        <p id="season-intro">Pick your team, then choose <b>New season</b> to play the 2026 season from week 1. You can play it a week at a time, or sim ahead to selection day or the title game.</p>
+        <p id="season-loading" class="muted" hidden></p>
       </div>
-    </div>
-    <p class="muted">50 is the calibrated default. Lower penalty and fumble sliders mean more of them.</p>
-    <div id="sliders-body"></div>
-  </aside>
+      <!-- a season is about to load (a link to a saved one): say so instead of the instructions -->
+      <script>(function () { if (!/[?&]id=/.test(location.search)) return;
+        document.getElementById("season-intro").hidden = true;
+        var note = document.getElementById("season-loading");
+        note.textContent = "Loading the season…";
+        note.hidden = false; })();</script>
 
-  <main class="layout">
-    <section class="history">
-      <div class="section-head">
-        <h2>History</h2>
-        <button id="btn-clear" class="ghost small" type="button">Clear</button>
-      </div>
-      <div id="history-summary" class="history-summary muted">Loading games…</div>
-      <ul id="history-list" class="history-list"></ul>
-      <div class="section-head" style="margin-top:12px"><h2>Seasons</h2><a class="ghost small btn-link" href="/season">Open</a></div>
-      <ul id="season-list" class="history-list"></ul>
-    </section>
-
-    <section class="content">
-      <details id="picks" class="panel picks" hidden>
-        <summary>
-          <span id="picks-title">This week's picks</span>
-          <span id="picks-sub" class="muted"></span>
-        </summary>
-        <ul id="picks-list" class="picks-list"></ul>
-        <p id="picks-note" class="muted small-text"></p>
-      </details>
-
-      <div id="empty" class="empty">
-        <p>Pick two teams, choose the venue, then hit <strong>Sim Game</strong> for one game or <strong>Sim batch</strong> for a series.</p>
-        <div id="rosters" class="rosters"></div>
-      </div>
-
-      <div id="batch" class="panel" hidden></div>
-
-      <div id="game" hidden>
-        <div class="scoreboard panel">
-          <div class="score-row" id="score-row"></div>
-          <table class="quarters" id="quarters"></table>
-          <div class="score-meta muted" id="score-meta"></div>
+      <div id="season" hidden>
+        <div class="panel season-head">
+          <div class="season-head-row">
+            <div>
+              <div id="season-title"></div>
+              <div id="season-meta" class="muted"></div>
+            </div>
+            <div class="season-actions">
+              <button id="btn-gameday" class="primary" type="button" title="Play your game this week, drive by drive; Advance then plays the rest of the week">Game day</button>
+              <span class="advance-to"><select id="advance-to" aria-label="Advance to which week"></select><button id="btn-advance" class="ghost" type="button">Advance to Next Week</button></span>
+              <button id="btn-to-selection" class="ghost" type="button">Sim to selection</button>
+              <button id="btn-to-end" class="ghost" type="button">Sim to the end</button>
+              <button id="btn-settings" class="ghost" type="button" title="Season settings: god mode and more">⚙ Settings</button>
+              <button id="btn-download-career" class="ghost" type="button" hidden title="Save this career as a file to keep or open on another device">Download career</button>
+              <button id="btn-real-refresh" class="ghost" type="button" hidden title="Download the latest real results, box scores and polls">Refresh real data</button>
+            </div>
+          </div>
+          <div id="season-progress" class="progress" hidden><div id="season-progress-bar" class="progress-bar"></div></div>
+          <div id="season-progress-text" class="progress-text muted" hidden></div>
+          <div id="career-steps" class="career-steps" hidden></div>
+          <div id="week-strip" class="week-strip"></div>
+          <div id="week-date" class="week-date muted"></div>
         </div>
 
-        <nav class="tabs" id="tabs">
-          <button data-tab="scoring" class="active" type="button">Scoring</button>
-          <button data-tab="team" type="button">Team Stats</button>
-          <button data-tab="home" type="button">Home Players</button>
-          <button data-tab="away" type="button">Away Players</button>
-          <button data-tab="drives" type="button">Drives</button>
+        <nav class="tabs" id="season-tabs" aria-label="Season sections">
+          <div class="tab-row tab-primary">
+            <button data-tab="office" type="button" hidden>Office</button>
+            <button data-tab="offseason" type="button" hidden>Offseason</button>
+            <button data-tab="recruiting" type="button" hidden>Recruiting</button>
+            <button data-tab="prospects" type="button" hidden>Prospects</button>
+            <button data-tab="staff" type="button" hidden>Staff</button>
+            <button data-tab="schedule" class="active" type="button">Schedule</button>
+            <button data-tab="depth" type="button">Depth Chart</button>
+            <button data-tab="games" type="button" hidden>Games</button>
+          </div>
+          <div class="tab-row tab-secondary">
+            <span class="tab-row-label" aria-hidden="true">League</span>
+            <button data-tab="standings" type="button">Standings</button>
+            <button data-tab="rankings" type="button">Rankings</button>
+            <button data-tab="stats" type="button">Stats</button>
+            <button data-tab="classes" type="button" hidden>Classes</button>
+            <button data-tab="bracket" type="button">Bracket</button>
+            <button data-tab="bowls" type="button">Bowls</button>
+            <button data-tab="awards" type="button">Awards</button>
+            <button data-tab="summary" type="button" hidden>Summary</button>
+          </div>
         </nav>
 
-        <div class="panel tab-body" id="tab-scoring"></div>
-        <div class="panel tab-body" id="tab-team" hidden></div>
-        <div class="panel tab-body" id="tab-home" hidden></div>
-        <div class="panel tab-body" id="tab-away" hidden></div>
-        <div class="panel tab-body" id="tab-drives" hidden></div>
+        <div class="panel" id="sim-overlay" hidden>
+          <div class="sim-head">
+            <div>
+              <div class="review-label">Simming</div>
+              <div id="sim-stage" class="sim-stage"></div>
+              <div id="sim-sub" class="muted small-text"></div>
+            </div>
+            <button id="btn-pause" class="ghost" type="button">Pause after this week</button>
+          </div>
+          <div class="progress"><div id="sim-bar" class="progress-bar"></div></div>
+          <div id="sim-results" class="sim-results"></div>
+        </div>
+        <div class="panel tab-body" id="tab-games"></div>
+        <div class="panel tab-body" id="tab-schedule" hidden></div>
+        <div class="panel tab-body" id="tab-standings" hidden></div>
+        <div class="panel tab-body" id="tab-rankings" hidden>
+          <div class="view-chips" id="poll-pills">
+            <button class="chip active" data-poll="ap" type="button">AP Poll</button>
+            <button class="chip" data-poll="coaches" type="button">Coaches Poll</button>
+            <button class="chip" data-poll="cfp" type="button">CFP Rankings</button>
+            <button class="chip" data-poll="resume" type="button" title="Record, ranked wins, strength of schedule, best win and worst loss">Resume</button>
+          </div>
+          <div id="poll-body"></div>
+        </div>
+        <div class="panel tab-body" id="tab-bracket" hidden></div>
+        <div class="panel tab-body" id="tab-bowls" hidden></div>
+        <div class="panel tab-body" id="tab-summary" hidden></div>
+        <div class="panel tab-body" id="tab-awards" hidden></div>
+        <div class="panel tab-body" id="tab-stats" hidden>
+          <div class="view-chips stats-chips" id="stats-chips"></div>
+          <div id="tab-teamstats" hidden></div>
+          <div id="tab-playerstats" hidden></div>
+        </div>
+        <div class="panel tab-body" id="tab-depth" hidden></div>
+        <div class="tab-body go-tab" id="tab-office" hidden></div>
+        <div class="tab-body go-tab" id="tab-offseason" hidden></div>
+        <div class="panel tab-body" id="tab-recruiting" hidden></div>
+        <div class="panel tab-body" id="tab-prospects" hidden></div>
+        <div class="panel tab-body" id="tab-staff" hidden></div>
+        <div class="panel tab-body" id="tab-classes" hidden></div>
+        <div id="tab-box" hidden>
+          <div class="scoreboard panel">
+            <div class="score-row" id="sbox-score-row"></div>
+            <table class="quarters" id="sbox-quarters"></table>
+            <div class="score-meta muted" id="sbox-meta"></div>
+          </div>
+          <nav class="tabs" id="sbox-tabs">
+            <button data-btab="scoring" class="active" type="button">Scoring</button>
+            <button data-btab="team" type="button">Team Stats</button>
+            <button data-btab="home" type="button">Home Players</button>
+            <button data-btab="away" type="button">Away Players</button>
+            <button data-btab="drives" type="button">Drives</button>
+          </nav>
+          <div class="panel tab-body" id="sbox-scoring"></div>
+          <div class="panel tab-body" id="sbox-team" hidden></div>
+          <div class="panel tab-body" id="sbox-home" hidden></div>
+          <div class="panel tab-body" id="sbox-away" hidden></div>
+          <div class="panel tab-body" id="sbox-drives" hidden></div>
+        </div>
       </div>
-
     </section>
   </main>
 
+  <div id="modal" class="modal" hidden>
+    <div class="modal-backdrop" id="modal-backdrop"></div>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-head">
+        <div id="modal-title" class="modal-title"></div>
+        <button class="ghost modal-close" id="modal-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+  <div id="loading" class="loading" role="status" aria-live="polite" hidden>
+    <div class="loading-box">
+      <p id="loading-text">Loading the game, about 20 MB the first time; it is kept for next time</p>
+      <progress id="loading-bar" max="100"></progress>
+    </div>
+  </div>
   <div id="toast" class="toast" hidden></div>
-  <script src="/gameview.js"></script>
-  <script src="/app.js"></script>
+  <script src="./gameview.js"></script>
+  <script src="./coachsprite.js"></script>
+  <script src="./game-client.js"></script>
+  <script>(function () {
+    var game = window.CFP.game, box = document.getElementById("loading"), text = document.getElementById("loading-text"), bar = document.getElementById("loading-bar");
+    game.onLoading(function (p) { box.hidden = false; if (p.total) bar.value = Math.round(100 * p.loaded / p.total); else bar.removeAttribute("value"); });
+    function failed(err) { box.hidden = false; bar.hidden = true; text.textContent = err.message; }
+    game.ready.then(function () { box.hidden = true; }, failed);
+    game.onFatal(failed);
+    game.onStorageError(function () {      // a second later: the page hides its own toast right after the reply the save followed
+      var t = document.getElementById("toast"), msg = "Your browser could not save the career: free some space or download it";
+      setTimeout(function () { t.textContent = msg; t.hidden = false; }, 1000);
+      setTimeout(function () { if (t.textContent === msg) t.hidden = true; }, 7000);
+    });
+  })();</script>
+  <script src="./careersave.js"></script>
+  <script src="./us-states.js"></script>
+  <script src="./us-map.js"></script>
+  <script src="./recruiting.js"></script>
+  <script src="./offseason.js"></script>
+  <script src="./season.js"></script>
 </body>
 </html>

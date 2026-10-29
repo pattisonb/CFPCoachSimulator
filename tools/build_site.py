@@ -1,5 +1,5 @@
 """Build the static site for the browser (docs/superpowers/specs/2026-10-29-client-side-runtime-design.md,
-sections 7 and 8): `dist/` holds the page (`web/` without the old `app.js`), `game.zip` (the Python
+sections 7 and 8): `dist/` holds the page (`web/`), `game.zip` (the Python
 game and the data a career reads, unpacked by Pyodide into its in-memory filesystem), `version.json`
 (the commit) and `.nojekyll`.
 
@@ -34,7 +34,6 @@ DATA_FILES = (
     "data/base_league.json", "data/base_meta.json",
     "cfb_sim_data/coaches.json", "cfb_sim_data/teams_index.json", "cfb_sim_data/league.json",
 )
-WEB_SKIP = {"app.js"}       # the old page script; the new page does not load it
 
 
 def _game_files() -> list[str]:
@@ -69,7 +68,7 @@ def build(out: Path = ROOT / "dist") -> dict:
     out.mkdir(parents=True)
     web = ROOT / "web"
     for p in sorted(web.rglob("*")):
-        if p.is_file() and p.relative_to(web).as_posix() not in WEB_SKIP and "__pycache__" not in p.parts:
+        if p.is_file() and "__pycache__" not in p.parts:
             dest = out / p.relative_to(web)
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(p, dest)

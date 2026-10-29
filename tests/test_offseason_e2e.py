@@ -49,7 +49,7 @@ if __name__ == "__main__":
             page = browser.new_page(viewport={"width": 1280, "height": 900})
             errors = []
             page.on("pageerror", lambda e: errors.append(str(e)))
-            page.goto(f"{base}/season?id={sid}")
+            page.goto(f"{base}/index.html?id={sid}")
             page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)   # a finished career opens on the offseason
             assert page.is_visible("#season-tabs button[data-tab=offseason]")
             assert "DEPARTURES" in page.inner_text("#tab-offseason")

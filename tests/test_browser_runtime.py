@@ -1,7 +1,8 @@
-"""The game in the browser: the built site (tools/build_site.py) served as static files, Pyodide
-in the Web Worker (web/worker.js) behind the page's fetch shim (web/game-client.js). A seed-11
-SMU career advanced two weeks through the real page gives the scores the native sim gives, the
-career comes back from IndexedDB on a fresh page load, and a browser that cannot persist the
+"""The game in the browser: the built site (tools/build_site.py) served as static files under a
+/sub/ prefix, as GitHub Pages serves a project site (a root-absolute URL would 404), Pyodide in
+the Web Worker (web/worker.js) behind the page's fetch shim (web/game-client.js). A seed-11 SMU
+career advanced two weeks through the real page gives the scores the native sim gives, the
+career comes back from IndexedDB when the page reloads, and a browser that cannot persist the
 save says so with a toast while the career keeps playing from memory, and a worker that fails
 after it was ready tells the page instead of leaving it waiting. Needs Playwright with a
 Chromium and the Pyodide CDN; without Playwright it is skipped with the reason. (Run as a file.)"""
@@ -46,15 +47,34 @@ def native_digest() -> str:
     return digest(st)
 
 
+PREFIX = "/sub/"
+
+
 def serve(folder: _Path) -> tuple[http.server.ThreadingHTTPServer, str]:
-    """The built site as plain static files on a free port, the way GitHub Pages serves it."""
-    class Quiet(http.server.SimpleHTTPRequestHandler):
+    """The built site as plain static files under PREFIX on a free port, the way GitHub Pages
+    serves a project site; anything outside PREFIX is a 404."""
+    class Prefixed(http.server.SimpleHTTPRequestHandler):
+        def _strip(self) -> bool:
+            if not self.path.startswith(PREFIX):
+                self.send_error(404)
+                return False
+            self.path = self.path[len(PREFIX) - 1:]
+            return True
+
+        def do_GET(self):
+            if self._strip():
+                super().do_GET()
+
+        def do_HEAD(self):
+            if self._strip():
+                super().do_HEAD()
+
         def log_message(self, *args):
             pass
-    handler = functools.partial(Quiet, directory=str(folder))
+    handler = functools.partial(Prefixed, directory=str(folder))
     httpd = http.server.ThreadingHTTPServer(("127.0.0.1", free_port()), handler)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
-    return httpd, f"http://127.0.0.1:{httpd.server_address[1]}"
+    return httpd, f"http://127.0.0.1:{httpd.server_address[1]}{PREFIX.rstrip('/')}"
 
 
 def shim(page, path: str, options: str = "{}"):
@@ -64,13 +84,17 @@ def shim(page, path: str, options: str = "{}"):
 
 def watch(page, errors: list, console: list):
     page.on("pageerror", lambda e: errors.append(str(e)))
+    page.on("response", lambda r: errors.append(f"HTTP {r.status} {r.url}") if r.status >= 400 else None)   # a link outside the site
     page.on("console", lambda m: console.append(f"[{m.type}] {m.text}") if m.type in ("error", "warning") else None)
 
 
-def load(page, url: str) -> float:
-    """Open the page and wait for the game to be ready; the seconds it took."""
+def load(page, url: str | None) -> float:
+    """Open the page (reload it when url is None) and wait for the game to be ready; the seconds it took."""
     t0 = time.perf_counter()
-    page.goto(url)
+    if url is None:
+        page.reload()
+    else:
+        page.goto(url)
     page.wait_for_selector("#loading", state="visible", timeout=15_000)     # worker mode shows the overlay at once
     page.wait_for_selector("#loading", state="hidden", timeout=LOAD_TIMEOUT)
     return time.perf_counter() - t0
@@ -101,14 +125,14 @@ def test_two_weeks_match_native_and_reload_restores(browser, base: str, timings:
     errors, console = [], []
     watch(page, errors, console)
     try:
-        timings["load"] = load(page, f"{base}/season.html")
+        timings["load"] = load(page, f"{base}/index.html")
         t0 = time.perf_counter()
         r = shim(page, "/api/season", POST % '{team: "smu", seed: 11}')
         assert r["status"] == 200, r
         sid = r["json"]["id"]
         timings["new career"] = time.perf_counter() - t0
         assert shim(page, f"/api/season/{sid}")["status"] == 200     # answered after the save reached IndexedDB
-        timings["load again"] = load(page, f"{base}/season.html?id={sid}")   # the page opens it from the store
+        timings["load again"] = load(page, f"{base}/index.html?id={sid}")   # the page opens it from the store
         page.wait_for_selector("#season:visible")
         for week in (1, 2):
             timings[f"week {week}"], widths = sim_week(page)
@@ -121,13 +145,10 @@ def test_two_weeks_match_native_and_reload_restores(browser, base: str, timings:
         state = career.read_save(base64.b64decode(b64))[0]
         assert state["current_week"] == 2
         assert digest(state) == native_digest(), "the browser's scores differ from the native sim's"
-        # the page's own copy (careersave.js) goes first, so only the worker's IndexedDB can bring the career back
-        page.evaluate(f"window.CareerSave.remove({sid!r})")
-        assert page.evaluate("window.CareerSave.list().then((l) => l.length)") == 0
-        timings["reload"] = load(page, f"{base}/season.html?id={sid}")     # a fresh worker: the career comes back from IndexedDB
+        assert page.url == f"{base}/index.html?id={sid}", page.url     # the page keeps its own address
+        timings["reload"] = load(page, None)     # a fresh worker: the career comes back from IndexedDB
         page.wait_for_selector("#season:visible")
         assert shim(page, f"/api/season/{sid}")["json"]["current_week"] == 2
-        assert "restored from this device" not in page.inner_text("#toast")
         assert not errors, errors
     finally:
         if console:
@@ -142,7 +163,7 @@ def test_syncfs_failure_toasts(browser, base: str):
     errors, console = [], []
     watch(page, errors, console)
     try:
-        load(page, f"{base}/season.html")
+        load(page, f"{base}/index.html")
         page.select_option("#pick-team", "smu")
         page.click("#btn-new")
         page.click(".start-card button.accent")          # take over as the team's own head coach
@@ -169,7 +190,7 @@ def test_worker_failure_after_ready_reaches_the_page(browser, base: str):
     errors, console = [], []
     watch(page, errors, console)
     try:
-        load(page, f"{base}/season.html")
+        load(page, f"{base}/index.html")
         sid = shim(page, "/api/season", POST % '{team: "smu", seed: 11}')["json"]["id"]
         outcomes = page.evaluate(f"""async () => {{
             await CFP.game.fetch('/api/season/{sid}/advance', {POST % '{}'});

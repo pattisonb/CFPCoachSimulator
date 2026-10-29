@@ -136,8 +136,6 @@
       H.toast(`Could not do that: ${H.errText(err)}`, 4000);
       return null;
     }
-    // the action went through: what the page does with it is not a failed action
-    H.backupSoon();
     if (r.scene) { if (opts.onScene) opts.onScene(r.scene); else H.toast(`${names[action]} open · finish it from his card on the board`, 3000); }
     else if (r.reaction) { H.toast((REACTION_TOAST[r.reaction.kind] || REACTION_TOAST.polite)(pitch), 4000); if (opts.onReaction) opts.onReaction(r.reaction); }
     else if (action === "scout") H.toast(`Scouting trip done · ${r.hours_left} hours left · his grades are updated`, 3000);
@@ -152,7 +150,7 @@
       el("p", { class: "muted small", text: "It counts at the week step." })]);
   }
   async function setBoard(s, pid, on) {
-    try { await H.api(`/api/season/${s.id}/board`, H.postJSON({ pid, on })); H.backupSoon(); return true; }
+    try { await H.api(`/api/season/${s.id}/board`, H.postJSON({ pid, on })); return true; }
     catch (err) { H.toast(`Could not change your board: ${H.errText(err)}`, 4000); return false; }
   }
 

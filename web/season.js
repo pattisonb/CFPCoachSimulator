@@ -5,18 +5,7 @@
 
   const state = { teams: [], season: null, viewWeek: null, tab: "schedule", poll: "ap", timer: null, standings: null };
 
-  // this browser's id: a career belongs to the browser that started it (one career per browser for now)
-  function browserId() {
-    try {
-      let id = localStorage.getItem("cfp-browser");
-      if (!id) { id = Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, "0")).join(""); localStorage.setItem("cfp-browser", id); }
-      return id;
-    } catch (e) { return ""; }
-  }
-  window.CFP.browserId = browserId;
   async function api(path, options) {
-    options = options || {};
-    options.headers = { ...(options.headers || {}), "X-CFP-Browser": browserId() };
     const res = await window.CFP.game.fetch(path, options);
     if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
     return res.json();
@@ -47,8 +36,6 @@
     const params = new URLSearchParams(location.search);
     if (params.get("team") && window.CFP.teamsBySlug[params.get("team")]) sel.value = params.get("team");
     else sel.value = "ohio-state";
-    // from the Sim a game page: the button for the mode picked there is the highlighted one
-    if (params.get("mode") === "remaining") { $("#btn-today").classList.replace("ghost", "accent"); $("#btn-new").classList.replace("accent", "ghost"); }
   }
 
   async function loadSeasons() {
@@ -68,24 +55,9 @@
       if (state.season && state.season.id === s.id) li.classList.add("active");
       list.appendChild(li);
     }
-    // careers kept in this browser that the server has forgotten (a restart): opening one restores it
-    let local = [];
-    try { local = (await window.CareerSave.list()).filter((c) => !data.seasons.some((s) => s.id === c.id)); } catch (e) { /* storage blocked */ }
-    if (local.length && !data.seasons.length) list.innerHTML = "";
-    for (const c of local) {
-      const r = c.record || {};
-      const del = el("button", { class: "del", type: "button", title: "Delete this career from this device", "aria-label": "Delete this career from this device", text: "×" });
-      del.addEventListener("click", (e) => { e.stopPropagation(); deleteLocalCareer(c); });
-      list.appendChild(el("li", { onclick: () => openSeason(c.id) }, [
-        el("span", { class: "teams", text: `${c.team_name} · Coach Career` }),
-        el("span", { class: "score", text: r.wins != null ? `${r.wins}-${r.losses}` : "" }),
-        el("span", { class: "when", text: `through week ${c.saved_week} · saved on this device` }),
-        del,
-      ]));
-    }
-    const count = data.seasons.length + local.length;
+    const count = data.seasons.length;
     $("#btn-seasons").textContent = count ? `Seasons (${count})` : "Seasons";
-    $("#btn-clear-seasons").hidden = !count;                 // server seasons or device-saved careers: either can be cleared
+    $("#btn-clear-seasons").hidden = !count;
   }
 
   // An API error as a sentence: FastAPI sends {"detail": "..."} after the status code.
@@ -100,14 +72,12 @@
   }
   const isGone = (err) => /^404\b/.test(err.message || "");
 
-  // The server no longer has this season: the free host forgets saved seasons when it
-  // restarts. Close it and say so instead of leaving the page waiting.
+  // The game no longer has this season (deleted from another tab): close it and say so
+  // instead of leaving the page waiting.
   async function seasonGone() {
-    const id = state.season && state.season.id;
-    if (id && state.season.career && await restoreCareer(id)) return;
     closeSeason();
     loadSeasons().catch(() => {});
-    toast("This season is no longer on the server. It forgets saved seasons when it restarts, so start a new one.", 9000);
+    toast("This season is no longer saved, so start a new one.", 9000);
   }
 
   // A sim request failed: put the page back the way it was, with the season reloaded so the
@@ -139,7 +109,7 @@
     $("#season").hidden = true;
     $("#season-empty").hidden = false;
     startNote(null);
-    history.replaceState(null, "", "/season");
+    history.replaceState(null, "", location.pathname);
     setSidebar(true, false);
   }
 
@@ -148,30 +118,16 @@
     if (!confirm(`Delete the ${label} season? This cannot be undone.`)) return;
     try {
       await api(`/api/season/${s.id}`, { method: "DELETE" });
-      await window.CareerSave.remove(s.id).catch(() => {});   // or the device copy would bring it back
       if (state.season && state.season.id === s.id) closeSeason();
       await loadSeasons();
       toast("Season deleted");
     } catch (err) { toast(`Could not delete: ${errText(err)}`, 4000); }
   }
 
-  async function deleteLocalCareer(c) {
-    if (!confirm(`Delete the ${c.team_name} career saved on this device? This cannot be undone.`)) return;
-    try {
-      await window.CareerSave.remove(c.id);
-      if (state.season && state.season.id === c.id) closeSeason();
-      await loadSeasons();
-      toast("Career deleted from this device");
-    } catch (err) { toast(`Could not delete: ${errText(err)}`, 4000); }
-  }
-
   async function clearSeasons() {
-    if (!confirm("Delete every saved season, on the server and on this device? This cannot be undone.")) return;
+    if (!confirm("Delete every saved season? This cannot be undone.")) return;
     try {
       const r = await api("/api/seasons", { method: "DELETE" });
-      // the device copies go too, except a career still simulating (the server kept it)
-      const kept = new Set((await api("/api/seasons")).seasons.map((x) => x.id));
-      for (const c of await window.CareerSave.list().catch(() => [])) if (!kept.has(c.id)) await window.CareerSave.remove(c.id).catch(() => {});
       closeSeason();
       await loadSeasons();
       toast(r.kept ? `Deleted ${r.removed} seasons; ${r.kept} still simulating` : `Deleted ${r.removed} seasons`);
@@ -190,8 +146,6 @@
     try { return localStorage.getItem("cfp.seasonSide"); } catch (e) { return null; }
   }
 
-  // mode "full" plays 2026 from week 1; "remaining" starts from today with the real results,
-  // polls, stats and box scores so far (loading those takes a few seconds)
   // Who coaches: take over the team's own head coach, or one of your created coaches (the Your
   // coach page). The team's coordinators stay for the season either way.
   async function chooseCoach(mode) {
@@ -203,7 +157,7 @@
       el("div", { class: "start-card-head" }, [el("b", { text: `Take over as ${t.head_coach || "the head coach"}` })]),
       el("p", { class: "muted small-text", text: `${t.name}'s own head coach, with his scheme and tendencies.` }),
     ]);
-    const go = el("button", { type: "button", class: "accent", text: mode === "remaining" ? `Start from today as ${t.head_coach || "him"}` : `Start as ${t.head_coach || "him"}` });
+    const go = el("button", { type: "button", class: "accent", text: `Start as ${t.head_coach || "him"}` });
     go.addEventListener("click", () => { closeModal(); newSeason(mode, null); });
     own.append(go);
     const mine = el("div", { class: "start-card" }, [
@@ -212,7 +166,7 @@
     ]);
     const list = el("div", { class: "start-coaches" }, [el("span", { class: "muted small-text", text: "Loading your coaches…" })]);
     mine.append(list);
-    const create = el("a", { class: "ghost small", href: `/coach?team=${encodeURIComponent(slug)}&mode=${mode}`, text: "Create a new coach" });
+    const create = el("a", { class: "ghost small", href: `./coach.html?team=${encodeURIComponent(slug)}`, text: "Create a new coach" });
     mine.append(el("div", { class: "coach-actions" }, [create]));
     box.append(own, mine,
       el("p", { class: "muted small-text", text: `Either way the staff stays for the season: ${staff.offense || "the offensive coordinator"} and ${staff.defense || "the defensive coordinator"}. Staff changes come after the season.` }));
@@ -234,51 +188,33 @@
 
   async function newSeason(mode, coach) {
     const team = $("#pick-team").value;
-    $("#btn-new").disabled = $("#btn-today").disabled = true;
+    $("#btn-new").disabled = true;
     // building a season takes a few seconds (schedules, rosters, preseason polls): say so
     const teamName = (window.CFP.teamsBySlug[team] || {}).name || "your team";
-    toast(mode === "remaining" ? "Loading the real season so far: results, polls, stats and box scores…" : `Setting up the ${teamName} season: schedule, rosters and preseason polls…`);
+    toast(`Setting up the ${teamName} season: schedule, rosters and preseason polls…`);
     try {
       const s = await api("/api/season", postJSON({ team, mode, coach: coach || null, career: mode === "full" }));
-      history.replaceState(null, "", `/season?id=${s.id}`);
+      history.replaceState(null, "", `?id=${s.id}`);
       showSeason(s);
       loadSeasons();
-      if (mode !== "remaining") { clearTimeout(toastTimer); $("#toast").hidden = true; }
-      if (mode === "remaining") toast(`Started from today: ${s.week_labels[s.current_week] || "week " + s.current_week} is in with the real results and stats.`, 3500);
+      clearTimeout(toastTimer); $("#toast").hidden = true;
     } catch (err) { toast(`Could not start the season: ${errText(err)}`, 4000); }
-    finally { $("#btn-new").disabled = $("#btn-today").disabled = false; }
+    finally { $("#btn-new").disabled = false; }
   }
 
   async function openSeason(id) {
     try {
       const s = await api(`/api/season/${id}`);
-      if (s.mode !== "real") history.replaceState(null, "", `/season?id=${s.id}`);
+      if (s.mode !== "real") history.replaceState(null, "", `?id=${s.id}`);
       showSeason(s);
       if (s.mode !== "real") loadSeasons();
     } catch (err) {
-      if (isGone(err) && !REAL && await restoreCareer(id)) return;
-      if (isGone(err) && !REAL) { closeSeason(); loadSeasons().catch(() => {}); toast("That season is no longer on the server. It forgets saved seasons when it restarts.", 8000); }
-      else {
-        toast(`Could not open the season: ${errText(err)}`, 4000);
-        if (!state.season) startNote(`Could not load the ${REAL ? "real 2026 " : ""}season: ${errText(err)}`);
-      }
+      toast(`Could not open the season: ${errText(err)}`, 4000);
+      if (!state.season) startNote(`Could not load the season: ${errText(err)}`);
     }
   }
 
-  // A Coach Career the server has forgotten, put back from this browser's copy. True when it opened.
-  async function restoreCareer(id) {
-    let s;
-    try { s = await window.CareerSave.restore(id); } catch (e) { return false; }
-    if (!s) return false;
-    history.replaceState(null, "", `/season?id=${s.id}`);
-    showSeason(s);
-    loadSeasons().catch(() => {});
-    toast("Your career was restored from this device: the server had forgotten it.", 5000);
-    return true;
-  }
-
-  // ----- the real 2026 season (/real) ------------------------------------------------
-  const REAL = location.pathname === "/real";
+  // ----- the real 2026 season (a season with mode "real") ------------------------------
   const REAL_ID = "real-2026";
 
   // The real page follows no team: the season is shown league-wide (Games first), and the
@@ -456,7 +392,7 @@
     for (const id of ["btn-advance", "btn-to-selection", "btn-to-end", "btn-gameday"]) $(`#${id}`).disabled = b || (state.season && state.season.done);
     $("#btn-settings").disabled = b;
     for (const chip of document.querySelectorAll("#week-strip .week-chip")) chip.disabled = b;
-    $("#btn-new").disabled = $("#btn-today").disabled = b;
+    $("#btn-new").disabled = b;
     $("#season-list").classList.toggle("locked", b);
     document.body.classList.toggle("simming", b);   // tabs, chips, pills and the toolbar ignore clicks
     if (!b) { $("#season-progress").hidden = true; $("#season-progress-text").hidden = true; $("#season-progress-bar").style.width = "0%"; }
@@ -654,7 +590,6 @@
   function showSeason(s) {
     if (s.mode === "real") leagueWide(s);
     $("#btn-download-career").hidden = !s.career;
-    if (s.career) window.CareerSave.backup(s);
     const opening = !state.season || state.season.id !== s.id;
     state.season = s;
     // no more games once the season is complete: the Summary tab takes the Games tab's place
@@ -856,17 +791,7 @@
       else b.click();
     } else if (what === "gameday") toast("No game to play this week: a bye, or it is already played. Advance plays the rest of the week.", 4000);
   }
-  // the browser's copy follows recruiting a few seconds after your last change (the server saves first)
-  let backupTimer = null;
-  function backupSoon() {
-    clearTimeout(backupTimer);
-    backupTimer = setTimeout(async () => {
-      const s = state.season;
-      if (!s || !s.career || state.simming) return;
-      try { window.CareerSave.backup(await api(`/api/season/${s.id}`)); } catch (e) { /* the next week's copy covers it */ }
-    }, 5000);
-  }
-  const recruitingHelpers = { api, postJSON, toast, openModal, closeModal: closeAllModals, errText, play, backupSoon, onChange: (tab) => { state.tab = tab; renderTab(); window.scrollTo({ top: 0 }); } };
+  const recruitingHelpers = { api, postJSON, toast, openModal, closeModal: closeAllModals, errText, play, onChange: (tab) => { state.tab = tab; renderTab(); window.scrollTo({ top: 0 }); } };
   function renderCareerSteps(s) {
     const box = $("#career-steps");
     const career = !!s.career && s.mode !== "real";
@@ -3623,7 +3548,6 @@
   // ----- wiring ------------------------------------------------------------
 
   $("#btn-new").addEventListener("click", () => chooseCoach("full"));
-  $("#btn-today").addEventListener("click", () => chooseCoach("remaining"));
   $("#btn-pause").addEventListener("click", pauseSim);
   $("#btn-seasons").addEventListener("click", () => setSidebar($("#btn-seasons").getAttribute("aria-pressed") !== "true"));
   $("#btn-download-career").addEventListener("click", () => {
@@ -3636,7 +3560,7 @@
     if (!file) return;
     try {
       const s = await window.CareerSave.upload(file);
-      history.replaceState(null, "", `/season?id=${s.id}`);
+      history.replaceState(null, "", `?id=${s.id}`);
       showSeason(s);
       loadSeasons().catch(() => {});
       toast(`Loaded the ${s.team_name} career, through week ${s.current_week}.`, 4000);
@@ -3656,16 +3580,8 @@
   $("#sbox-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-btab]"); if (b) selectBoxTab(b.dataset.btab); });
 
   (async () => {
-    const id = REAL ? REAL_ID : new URLSearchParams(location.search).get("id");
-    if (REAL) {
-      document.body.classList.add("real-mode");
-      document.title = "Real 2026 · CFP Coach Simulator";
-      const tabs = $("#season-tabs");
-      for (const t of ["games", "schedule", "rankings", "standings", "stats", "awards", "bracket", "bowls"]) tabs.append(tabs.querySelector(`button[data-tab=${t}]`));
-      tabs.querySelector("button[data-tab=schedule]").textContent = "Schedules";
-      state.tab = "games";
-    }
-    for (const a of document.querySelectorAll(".site-nav a")) a.classList.toggle("active", a.dataset.nav === (REAL ? "real" : "season"));
+    const id = new URLSearchParams(location.search).get("id");
+    for (const a of document.querySelectorAll(".site-nav a")) a.classList.toggle("active", a.dataset.nav === "season");
     loadSeasons().catch(() => {});   // the sidebar list loads alongside; the season needs only the teams
     try { await loadTeams(); } catch (err) { toast(`Teams unavailable: ${errText(err)}`, 4000); }
     if (id) openSeason(id);   // it reloads the season list too, marking the open season

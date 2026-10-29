@@ -80,7 +80,7 @@ if __name__ == "__main__":
             page = browser.new_page(accept_downloads=True)
             errors = []
             page.on("pageerror", lambda e: errors.append(str(e)))
-            page.goto(f"{base}/season?id={sid}")
+            page.goto(f"{base}/index.html?id={sid}")
             page.wait_for_selector("#season:visible")
             page.wait_for_selector(".go-play")                 # a career opens on the Office
             # a week highlighted on the schedule is not the Office's Advance target: it plays one week
@@ -118,7 +118,7 @@ if __name__ == "__main__":
                 raise AssertionError("the server still had the career")
             except urllib.error.HTTPError as e:
                 assert e.code == 404
-            page.goto(f"{base}/season")
+            page.goto(f"{base}/index.html")
             page.set_input_files("#career-file", str(path))
             page.wait_for_function("() => /Loaded the/.test(document.querySelector('#toast').textContent)", timeout=120_000)
             assert signed_with(base, sid, team) == signed, "the signed class changed on the way back"

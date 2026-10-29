@@ -27,7 +27,7 @@ def not_clipped(page, selector: str) -> list:
 
 
 def open_tab(page, base, sid, tab, wait):
-    page.goto(f"{base}/season?id={sid}")
+    page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#season:visible")
     page.click(f"#season-tabs button[data-tab={tab}]")
     page.wait_for_selector(wait, timeout=120_000)
@@ -339,7 +339,7 @@ if __name__ == "__main__":
             page.set_viewport_size({"width": 1280, "height": 1000})
 
             # --- Offseason, every stage: no number out of 100, no run-together class codes
-            page.goto(f"{base}/season?id={B}")
+            page.goto(f"{base}/index.html?id={B}")
             page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)
             off = page.inner_text("#tab-offseason")
             assert not OUT_OF_100.search(off), OUT_OF_100.search(off).group(0)
@@ -353,7 +353,7 @@ if __name__ == "__main__":
             call(base, f"/api/season/{B}/offseason/advance", {})
             v = call(base, f"/api/season/{B}/offseason")
             if v["stage"] == "retention":
-                page.goto(f"{base}/season?id={B}")
+                page.goto(f"{base}/index.html?id={B}")
                 page.wait_for_selector("text=WANT OUT", timeout=120_000)
                 time.sleep(0.8)
                 clipped = not_clipped(page, ".off-keep-acts button b")
@@ -368,7 +368,7 @@ if __name__ == "__main__":
                 assert "letting go" not in page.inner_text(".off-keep .go-pcard >> nth=0")
                 call(base, f"/api/season/{B}/offseason/advance", {})
             # the portal board: a transfer has no star row
-            page.goto(f"{base}/season?id={B}")
+            page.goto(f"{base}/index.html?id={B}")
             page.wait_for_selector("text=WEEK 1 OF 4", timeout=120_000)
             time.sleep(0.8)
             hollow = page.evaluate("() => [...document.querySelectorAll('.go-pcard .go-stars')].filter(e => /^☆+$/.test(e.textContent.trim())).length")
@@ -383,7 +383,7 @@ if __name__ == "__main__":
             for _ in range(5):
                 call(base, f"/api/season/{B}/offseason/advance", {})
             assert call(base, f"/api/season/{B}/offseason")["stage"] == "staff"
-            page.goto(f"{base}/season?id={B}")
+            page.goto(f"{base}/index.html?id={B}")
             page.wait_for_selector("text=COACHES FOR HIRE", timeout=120_000)
             time.sleep(0.8)
             staff = page.inner_text("#tab-offseason")

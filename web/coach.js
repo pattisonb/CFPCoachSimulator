@@ -8,7 +8,6 @@
   let TEAMS = [];          // FBS teams for the alma mater, colors and the season picker
   let coach = null;        // the coach being edited
   const START_PARAMS = new URLSearchParams(location.search);
-  const START_MODE = START_PARAMS.get("mode") === "remaining" ? "remaining" : "full";   // from the season page's start choice
 
   async function api(url, opts) {
     let r;
@@ -174,7 +173,7 @@
     save.addEventListener("click", saveCoach);
     const teamSel = el("select", { "aria-label": "Team to coach" }, fbs.map((t) => el("option", { value: t.slug, text: t.name })));
     teamSel.value = $("#preview-team").value || (fbs[0] || {}).slug;
-    const start = el("button", { type: "button", class: "accent", text: START_MODE === "remaining" ? "Start from today with this coach" : "Start a season with this coach" });
+    const start = el("button", { type: "button", class: "accent", text: "Start a season with this coach" });
     start.addEventListener("click", () => startSeason(teamSel.value));
     actions.append(el("div", { class: "coach-actions" }, [save, el("span", { class: "muted small-text", text: "then" }), teamSel, start]));
     f.append(actions);
@@ -220,9 +219,8 @@
     const saved = await saveCoach();
     if (!saved) return;
     try {
-      if (START_MODE === "remaining") toast("Loading the real season so far…");
-      const s = await api("/api/season", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team, mode: START_MODE, coach: saved.id }) });
-      location.href = `/season?id=${encodeURIComponent(s.id)}`;
+      const s = await api("/api/season", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team, mode: "full", coach: saved.id }) });
+      location.href = `./index.html?id=${encodeURIComponent(s.id)}`;
     } catch (err) { toast(`Could not start the season: ${err.message}`, 4000); }
   }
 

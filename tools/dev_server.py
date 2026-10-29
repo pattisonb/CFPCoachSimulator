@@ -28,7 +28,7 @@ sys.path.insert(0, str(ROOT))
 from app import api  # noqa: E402
 
 WEB_DIR = (ROOT / "web").resolve()
-PAGES = {"/": "season.html", "/season": "season.html", "/coach": "coach.html"}
+PAGES = {"/": "index.html", "/season": "index.html", "/coach": "coach.html"}
 STATUS = re.compile(r"^/api/season/([^/]+)/status$")
 SEASON_ID = re.compile(r"^/api/season/([^/]+)/")
 

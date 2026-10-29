@@ -6,26 +6,24 @@
   <title>Your coach · CFP Coach Simulator</title>
   <meta name="theme-color" content="#131a2e" />
   <meta name="description" content="Create your head coach: background, coaching style and look. Start a season and the team plays the way your coach coaches." />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="icon" href="/favicon.ico" sizes="any" />
-  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="./favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <link rel="manifest" href="./manifest.json" />
   <script>try{var t=localStorage.getItem("cfp.theme");if(!t&&window.matchMedia("(prefers-color-scheme: light)").matches)t="light";if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <a class="brand-link" href="/" aria-label="CFP Coach Simulator home">
-        <img class="brand-icon" src="/favicon.svg" alt="" width="28" height="28" />
+      <a class="brand-link" href="./index.html" aria-label="CFP Coach Simulator home">
+        <img class="brand-icon" src="./favicon.svg" alt="" width="28" height="28" />
         <span class="brand-name">CFP Coach Simulator</span>
       </a>
     </div>
     <nav class="site-nav" aria-label="Sections">
-      <a href="/" data-nav="game">Sim a game</a>
-      <a href="/season" data-nav="season">Coach Career</a>
-      <a href="/real" data-nav="real">Real 2026</a>
-      <a href="/coach" data-nav="coach" class="active" aria-current="page">Your coach</a>
+      <a href="./index.html" data-nav="season">Coach Career</a>
+      <a href="./coach.html" data-nav="coach" class="active" aria-current="page">Your coach</a>
     </nav>
     <div class="toolbar">
       <button class="ghost btn-theme" type="button" aria-label="Toggle light or dark mode"></button>
@@ -56,9 +54,9 @@
     </div>
   </div>
   <div id="toast" class="toast" hidden></div>
-  <script src="/gameview.js"></script>
-  <script src="/coachsprite.js"></script>
-  <script src="/game-client.js"></script>
+  <script src="./gameview.js"></script>
+  <script src="./coachsprite.js"></script>
+  <script src="./game-client.js"></script>
   <script>(function () {
     var game = window.CFP.game, box = document.getElementById("loading"), text = document.getElementById("loading-text"), bar = document.getElementById("loading-bar");
     game.onLoading(function (p) { box.hidden = false; if (p.total) bar.value = Math.round(100 * p.loaded / p.total); else bar.removeAttribute("value"); });
@@ -71,6 +69,6 @@
       setTimeout(function () { if (t.textContent === msg) t.hidden = true; }, 7000);
     });
   })();</script>
-  <script src="/coach.js"></script>
+  <script src="./coach.js"></script>
 </body>
 </html>
