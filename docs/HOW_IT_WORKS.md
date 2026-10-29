@@ -113,6 +113,7 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `tools/check_carousel.py` | Plays quick offseasons and counts the carousel's churn against real years |
 | `web/recruiting.js`, `web/careersave.js` | The Recruiting, Prospects and Staff tabs; the career kept in the browser |
 | `tools/check_recruiting.py` | Plays career seasons and holds their recruiting to the real classes |
+| `tools/clean_data.py` | Clears the generated data that piles up under `data/` (orphan league files, box scores without a season, long-run output); dry run by default |
 | `tools/export_ratings.py` | Every real player's ratings and potential on the game's scale as one JSON file (`data/player_ratings.json`, generated) |
 
 ## API

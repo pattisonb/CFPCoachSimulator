@@ -38,5 +38,7 @@ if __name__ == "__main__":
     for name in _saves() - before:
         path = SEASONS / name
         shutil.rmtree(path, ignore_errors=True) if path.is_dir() else path.unlink(missing_ok=True)
+        for league_file in (ROOT / "data" / "leagues").glob(f"{path.stem}-*.json"):   # its league teams files too: these were 2.6 GB of leftovers once
+            league_file.unlink(missing_ok=True)
     print(f"\n{len(tests) - len(failed)} of {len(tests)} passed")
     sys.exit(1 if failed else 0)
