@@ -82,7 +82,7 @@ input[type="number"] {
 .history-list { list-style: none; margin: 0; padding: 0; overflow: auto; }
 .history-list li {
   display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: center;
-  padding: 8px 10px; border: 1px solid transparent; border-radius: 8px; cursor: pointer;
+  border: 1px solid transparent; border-radius: 8px; cursor: pointer;
 }
 .history-list li:hover { background: var(--panel); }
 .history-list li.active { border-color: var(--accent); background: var(--panel); }
@@ -233,7 +233,7 @@ table.compare td.better { font-weight: 800; }
 .matchup { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: start; padding: 16px 20px 0; max-width: 1500px; margin: 0 auto; }
 .pick label { display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
 .pick select { width: 100%; font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
-.team-card { margin-top: 8px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--border); border-left: 6px solid #888; border-radius: 8px; min-height: 86px; }
+.team-card { margin-top: 8px; background: var(--panel); border: 1px solid var(--border); border-left: 6px solid #888; border-radius: 8px; min-height: 86px; }
 .team-card .card-name { font-weight: 700; font-size: 15px; }
 .team-card .card-sub { font-size: 12px; }
 .card-ratings { display: flex; gap: 8px; margin: 6px 0; flex-wrap: wrap; }
@@ -264,7 +264,6 @@ table.compare td.better { font-weight: 800; }
   table.stats th, table.stats td { padding: 5px 6px; }
   .drawer { width: 100%; top: 57px; }
   .history { max-height: 220px; }
-  .history-list li { padding: 6px 8px; }
   .tab-row { overflow-x: auto; flex-wrap: nowrap; }
   .tabs button { white-space: nowrap; padding: 7px 10px; }
   .scoring-list li { grid-template-columns: 44px 48px 1fr; gap: 6px; font-size: 13px; }
@@ -323,10 +322,10 @@ table.stats tr.clickable:hover td { background: var(--panel-2); }
 #btn-seasons[aria-pressed="true"] { background: var(--panel-2); border-color: var(--border); color: var(--text); }
 button.small { padding: 4px 8px; font-size: 12px; }
 .history-list li { position: relative; }
-.history-list .del { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; padding: 0; line-height: 20px; font-size: 14px; border-radius: 6px; background: transparent; border-color: transparent; color: var(--muted); }
+.history-list .del { position: absolute; top: 4px; right: 4px; width: 36px; height: 36px; padding: 0; line-height: 34px; font-size: 14px; border-radius: 6px; background: transparent; border-color: transparent; color: var(--muted); }
 .history-list li:hover .del { color: var(--text); }
 .history-list .del:hover { background: var(--panel-2); color: var(--bad-text); }
-.history-list li .score { margin-right: 26px; }
+.history-list li .score { margin-right: 36px; }   /* clear of the delete button */
 .season-layout > * { min-width: 0; }
 .season-side { position: sticky; top: 68px; align-self: start; max-height: calc(100vh - 90px); overflow: auto; }
 #season-toolbar select { font: inherit; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); max-width: 220px; }
@@ -353,7 +352,7 @@ button.small { padding: 4px 8px; font-size: 12px; }
 @media (max-width: 900px) { .season-layout { grid-template-columns: 1fr; } .season-side { position: static; max-height: 200px; } }
 
 /* bowls */
-.bowl-card { background: var(--panel-2); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; border: 1px solid transparent; }
+.bowl-card { background: var(--panel-2); border-radius: 8px; margin-bottom: 8px; border: 1px solid transparent; }
 .bowl-card.mine { border-color: var(--accent); }
 .bowl-card.clickable { cursor: pointer; }
 .bowl-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
@@ -475,7 +474,7 @@ body.team-theme .panel { border-color: color-mix(in srgb, var(--team-primary) 30
 .view-chips .chip { padding: 5px 10px; font-size: 12px; border-radius: 999px; background: transparent; color: var(--muted); }
 .view-chips .chip.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .leaders-grid, .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 10px; }
-.leader-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; background: var(--panel-2); }
+.leader-card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel-2); }
 .leader-head { display: flex; justify-content: space-between; align-items: baseline; cursor: pointer; margin-bottom: 6px; }
 .leader-head h4 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.3px; color: var(--accent-text); }
 .leader-head:hover .small-text { color: var(--text); }
@@ -940,7 +939,7 @@ table.stats tr.mine td.name { font-weight: 800; }
 .swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); padding: 0; cursor: pointer; }
 .swatch.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
 .coach-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
-.coach-item { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center; border: 1px solid var(--border); border-radius: 10px; padding: 8px; background: var(--panel-2); }
+.coach-item { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-2); }
 .coach-item.on { border-color: var(--accent); }
 .coach-item-pic svg { width: 56px; height: auto; display: block; }
 .coach-item-text { display: flex; flex-direction: column; min-width: 0; }
@@ -1024,7 +1023,7 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
 .go-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .go-pill { display: inline-block; padding: 6px 12px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--border); font-size: 13px; }
-.go-link { background: none; border: none; padding: 0; color: var(--text); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 2px; min-height: 0; }
+.go-link { background: none; border: none; padding: 0; color: var(--text); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 2px; }
 .go-btn { min-height: 44px; padding: 0 18px; border-radius: 12px; border: 2px solid var(--border); background: transparent; color: var(--text); font-weight: 600; font-size: 15px; cursor: pointer; }
 .go-btn:hover:not(:disabled) { border-color: var(--muted); }
 .go-btn.primary { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
@@ -1346,7 +1345,7 @@ body.career-mode.on-career-tab .season-head { padding-bottom: 0; }
 /* needs by position (the board and the class): chips, a way of counting */
 .go-needs { margin: 6px 0 10px; }
 .go-needs-label { font-size: 12px; letter-spacing: 0.08em; color: var(--muted); margin-right: 2px; }
-.go-chip.small { min-height: 32px; padding: 0 10px; font-size: 13px; }
+.go-chip.small { min-height: 36px; padding: 0 10px; font-size: 13px; }
 .go-chip.short:not(.on) { border-color: color-mix(in srgb, var(--good) 60%, var(--border)); color: var(--good-text, var(--good)); }
 .go-chip.full:not(.on) { color: var(--muted); }
 .go-needs .go-needs-mode { min-height: 32px; padding-top: 0; padding-bottom: 0; font-size: 13px; margin-left: auto; }
@@ -1372,7 +1371,7 @@ body.career-mode { --us-staffed: color-mix(in srgb, var(--go-primary, var(--acce
 .go-map { margin: 0 0 14px; padding: 14px 16px; }
 .go-map-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .go-map-head .small { flex: 1; min-width: 160px; }
-.go-map.closed { padding: 8px 16px; }                                     /* closed, the card is one slim row: the title and the toggle */
+.go-map.closed { padding: 12px 16px; }                                     /* closed, the card is one slim row: the title and the toggle */
 .go-map.closed .go-display { font-size: 18px; }
 .go-map-toggle { margin-left: auto; }
 .go-map-body[hidden] { display: none; }
@@ -1410,9 +1409,15 @@ body.career-mode { --us-staffed: color-mix(in srgb, var(--go-primary, var(--acce
 .go-tags, .go-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-block: 10px; }
 .go-tags:first-child, .go-badges:first-child { margin-top: 0; }
 .go-tags:last-child, .go-badges:last-child { margin-bottom: 0; }
-/* tap targets: 36 px on a desktop, 44 px on a phone; zero specificity, so a control that is already taller keeps its height
-   (the depth chart's compact .tiny controls keep their own 28 px floor) */
-:where(.go-btn, .go-act, button.accent, button.ghost:not(.tiny)) { min-height: 36px; }
+/* tap targets: every button is 36 px on a desktop, 44 px on a phone; zero specificity, so a control that is already taller
+   keeps its height. Left out: the depth chart's compact .tiny controls (their own 28 px floor), the coach's 28 px colour
+   swatches, and segment controls, whose own rules set their height. */
+:where(button:not(.tiny):not(.swatch), .go-btn, .go-act) { min-height: 36px; }
 @media (max-width: 759px) {
-  :where(.go-btn, .go-act, button.accent, button.ghost:not(.tiny)) { min-height: 44px; }
+  :where(button:not(.tiny):not(.swatch), .go-btn, .go-act) { min-height: 44px; }
+  .go-chip, .go-chip.small { min-height: 44px; }   /* chips set their own desktop height; a chip row wraps rather than shrink them */
+  .history-list .del { width: 44px; height: 44px; line-height: 42px; }
+  .history-list li .score { margin-right: 44px; }
 }
+/* every card keeps 12 px of padding on every side: the cards that had less take the minimum */
+.coach-item, .leader-card, .team-card, .bowl-card, .history-list li { padding: 12px; }

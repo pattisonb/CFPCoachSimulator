@@ -1,6 +1,7 @@
 """The spacing pass (spec section 9): on every Coach Career screen, at 1280 and 400 px, a container
 holding two or more buttons keeps at least 8 px between them and one holding two or more tags at
-least 6 px, nothing overlaps, and every action button is at least 36 px tall (44 px on a phone). Segment
+least 6 px, no button or tag sits closer than 6 px to another on its row whatever their parents, nothing
+overlaps, every card keeps 12 px of padding, and every button is at least 36 px tall (44 px on a phone). Segment
 controls (.go-seg, .go-stages, .go-subtabs, nav.tabs) touch by design and are left out.
 
 Walks a mid-season career (Office, Recruiting board, pane and call, Prospects and a profile, Staff,
@@ -24,7 +25,13 @@ from test_career_e2e import call, free_port, launch   # noqa: E402
 WIDTHS = (1280, 400)
 EXCLUDED = ".go-seg, .go-stages, .go-subtabs, nav.tabs"
 ITEM = "button, .go-tag, .go-badge, .go-word, .go-chip"
-ACTION = ".go-btn, .go-act, button.accent, button.ghost:not(.tiny)"   # .tiny: the depth chart's compact controls, 28 px by their own rule
+# every button is a tap target, except the depth chart's compact .tiny controls (28 px by their own rule, a recorded
+# exception) and the coach's colour swatches (28 px circles); segments are left out through EXCLUDED
+ACTION = "button:not(.tiny):not(.swatch)"
+# card-like containers keep at least 12 px of padding on every side (the old board's .go-col cards are left out:
+# they are deleted with the old board)
+CARDS = ".go-card, .coach-item, .leader-card, .start-card, .team-card, .bowl-card, .review-card, .rc-staff-card, .history-list li"
+CARD_EXCLUDED = ".go-col .go-pcard, .go-col .go-add"
 
 # every container with two or more visible buttons or tags as direct children: the gap between each pair
 # (8 px for buttons, 6 px for tags; within 0.5 px counts as touching) and no overlap
@@ -56,23 +63,59 @@ GAPS_JS = """([SCREEN, ITEM, EXCLUDED]) => {
   return bad;
 }"""
 
-# every visible action button is a tap target: 44 px on a phone, 36 px on a desktop (segments excepted)
+# every button and tag on the page, whatever its parent: two on the same row (vertical overlap at least half the smaller
+# height) keep 6 px apart and nothing overlaps; one inside the other is not a pair, and neither is a pair on different
+# layers (a sticky topbar or pane, a fixed sheet or dialog, over the page it scrolls past)
+PAIRS_JS = """([SCREEN, ITEM, EXCLUDED]) => {
+  const shown = (e) => e.offsetParent !== null || getComputedStyle(e).position === 'fixed';
+  const one = (x) => x.tagName.toLowerCase() + [...x.classList].map(c => '.' + c).join('') + ` "${x.textContent.trim().replace(/\\s+/g, ' ').slice(0, 20)}"`;
+  const els = [...document.querySelectorAll(ITEM)].filter(e => shown(e) && !e.closest(EXCLUDED) && e.getClientRects().length);
+  const boxes = els.map(e => [e, e.getBoundingClientRect()]).filter(([, r]) => r.width && r.height).sort((x, y) => x[1].left - y[1].left);
+  const layers = new Map();
+  const layer = (e) => { if (!layers.has(e)) { let l = null; for (let x = e; x; x = x.parentElement) { const p = getComputedStyle(x).position;
+    if (p === 'fixed' || p === 'sticky' || x.tagName === 'DIALOG') { l = x; break; } } layers.set(e, l); } return layers.get(e); };
+  const bad = [];
+  for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+    const [ea, a] = boxes[i], [eb, b] = boxes[j];
+    if (b.left - a.right >= 6) continue;   // sorted by left: b is far enough right of a (later boxes may still be closer)
+    if (layer(ea) !== layer(eb)) continue;
+    if (ea.contains(eb) || eb.contains(ea)) continue;
+    const vOverlap = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+    if (vOverlap < Math.min(a.height, b.height) / 2) continue;
+    const gap = Math.max(b.left - a.right, a.left - b.right);
+    const overlap = gap < -0.5;
+    if (overlap || gap < 5.5) bad.push({screen: SCREEN, pair: one(ea) + ' | ' + one(eb), gap: Math.round(gap * 10) / 10, overlap});
+  }
+  return bad;
+}"""
+
+# every card-like container keeps 12 px of padding on every side
+CARDS_JS = """([SCREEN, CARDS, CARD_EXCLUDED]) => [...document.querySelectorAll(CARDS)]
+  .filter(c => (c.offsetParent !== null || getComputedStyle(c).position === 'fixed') && !c.matches(CARD_EXCLUDED))
+  .map(c => { const st = getComputedStyle(c); const pad = Math.min(...['Top', 'Right', 'Bottom', 'Left'].map(k => parseFloat(st['padding' + k])));
+    return {screen: SCREEN, card: c.tagName.toLowerCase() + [...c.classList].map(k => '.' + k).join(''), padding: pad}; })
+  .filter(c => c.padding < 11.5)"""
+
+# every visible button is a tap target: 44 px on a phone, 36 px on a desktop (segments excepted)
 TOUCH_JS = """([SCREEN, ACTION, EXCLUDED, MIN]) => [...document.querySelectorAll(ACTION)]
   .filter(b => b.offsetParent !== null && !b.closest(EXCLUDED) && b.getBoundingClientRect().height < MIN - 0.5)
   .map(b => { const text = b.textContent.trim().replace(/\\s+/g, ' ').slice(0, 30);
-    return {screen: SCREEN, button: b.tagName.toLowerCase() + [...b.classList].map(c => '.' + c).join('') + ` "${text}"`, height: Math.round(b.getBoundingClientRect().height)}; })"""
+    return {screen: SCREEN, button: b.tagName.toLowerCase() + [...b.classList].filter(c => !/^(on|active|current|future|next|short|full|selected)$/.test(c)).map(c => '.' + c).join(''),
+            text, height: Math.round(b.getBoundingClientRect().height)}; })"""
 
 
 class Walk:
     def __init__(self, page, shots):
         self.page, self.shots = page, shots
-        self.gaps, self.touch, self.seen = [], [], []
+        self.gaps, self.touch, self.pairs, self.cards, self.seen = [], [], [], [], []
 
     def measure(self, screen: str, width: int) -> None:
         label = f"{screen}@{width}"
         self.seen.append(label)
         time.sleep(0.4)
         self.gaps += self.page.evaluate(GAPS_JS, [label, ITEM, EXCLUDED])
+        self.pairs += self.page.evaluate(PAIRS_JS, [label, ITEM, EXCLUDED])
+        self.cards += self.page.evaluate(CARDS_JS, [label, CARDS, CARD_EXCLUDED])
         self.touch += self.page.evaluate(TOUCH_JS, [label, ACTION, EXCLUDED, 44 if width < 760 else 36])
         if self.shots:
             self.page.evaluate("() => window.scrollTo(0, 0)")
@@ -222,10 +265,14 @@ if __name__ == "__main__":
         problems = []
         if w.gaps:
             problems.append(f"{len(w.gaps)} cramped or overlapping containers, by kind:\n" + report(grouped(w.gaps, "container", "gap"), ("container", "gap", "need", "overlap", "items")))
+        if w.pairs:
+            problems.append(f"{len(w.pairs)} buttons or tags closer than 6 px on a row, any parent:\n" + report(grouped(w.pairs, "pair", "gap"), ("pair", "gap", "overlap")))
+        if w.cards:
+            problems.append(f"{len(w.cards)} cards with under 12 px padding:\n" + report(grouped(w.cards, "card", "padding"), ("card", "padding")))
         if w.touch:
-            problems.append(f"{len(w.touch)} buttons under 44 px on a phone or 36 px on a desktop, by kind:\n" + report(grouped(w.touch, "button", "height"), ("button", "height")))
+            problems.append(f"{len(w.touch)} buttons under 44 px on a phone or 36 px on a desktop, by kind:\n" + report(grouped(w.touch, "button", "height"), ("button", "height", "text")))
         assert not problems, "\n".join(problems)
-        print("spacing ok: every button row keeps 8 px, every tag row 6 px, nothing overlaps, buttons are 36 px (44 px on a phone)")
+        print("spacing ok: every button row keeps 8 px, every tag row 6 px, no two on a row closer than 6 px, nothing overlaps, cards pad 12 px, buttons are 36 px (44 px on a phone)")
     finally:
         for sid in (fresh["id"], done["id"]):
             try:
