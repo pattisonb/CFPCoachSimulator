@@ -130,26 +130,29 @@ async function start(init) {
 
 // One dispatcher call; the answer goes back and what it wrote is persisted. A failure answers
 // this one message with a 500 (a reply that could not be parsed, say); the worker stays up.
+// The save reaches IndexedDB before the page hears the answer: the page may reload on it (the
+// offseason's last step), and a reload ends this worker mid-write.
 async function handle(msg) {
-  let changed = false;
+  let reply, transfer = [];
   try {
     const out = api.call_js(msg.method, msg.path, msg.bodyJson == null ? null : msg.bodyJson, msg.bodyBytes == null ? null : msg.bodyBytes);
     if (typeof out === "string") {
       const r = JSON.parse(out);
-      changed = r.changed;
-      postMessage(r.ok ? { id: msg.id, ok: true, status: 200, result: r.result } : { id: msg.id, ok: false, status: r.status, message: r.message });
+      reply = r.ok ? { id: msg.id, ok: true, status: 200, result: r.result } : { id: msg.id, ok: false, status: r.status, message: r.message };
+      if (r.changed) await persist();
     } else {
       const bytes = new Uint8Array(out.toJs());
       out.destroy();
-      changed = api.changed();
-      postMessage({ id: msg.id, ok: true, status: 200, bytes }, [bytes.buffer]);
+      reply = { id: msg.id, ok: true, status: 200, bytes };
+      transfer = [bytes.buffer];
+      if (api.changed()) await persist();
     }
   } catch (err) {
     console.error(err);
-    changed = changed || api.changed();
-    postMessage({ id: msg.id, ok: false, status: 500, message: String((err && err.message) || err) });
+    reply = { id: msg.id, ok: false, status: 500, message: String((err && err.message) || err) };
+    try { if (api.changed()) await persist(); } catch (e) { console.error(e); }
   }
-  if (changed) await persist();
+  postMessage(reply, transfer);
 }
 
 // One step of the running job (a week, or your game): the page sees every progress callback.
@@ -159,8 +162,8 @@ async function step() {
   if (breakStep) { await new Promise((r) => setTimeout(r, 300)); throw new Error("the sim step is switched off"); }   // calls sent meanwhile are in flight
   const out = api.step(report);
   if (out && out.destroy) out.destroy();
+  if (api.changed()) await persist();            // the week is in the store before the page is told it is over
   if (last !== null) postMessage({ kind: "status", status: JSON.parse(last), busy: false });
-  if (api.changed()) await persist();
   await new Promise((r) => setTimeout(r, 0));      // a macrotask: messages sent meanwhile (pause, status) are served next
 }
 

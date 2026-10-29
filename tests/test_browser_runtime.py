@@ -27,6 +27,7 @@ os.environ["SIM_WORKERS"] = "1"    # the browser plays games in-process; the nat
 from coach_career import career, league   # noqa: E402
 from sim import coaches, season           # noqa: E402
 from test_career_e2e import free_port, launch   # noqa: E402
+from test_offseason import finished            # noqa: E402
 from tools import build_site              # noqa: E402
 
 LOAD_TIMEOUT = 180_000       # Pyodide and game.zip from a cold cache
@@ -163,6 +164,42 @@ def test_two_weeks_match_native_and_reload_restores(browser, base: str, timings:
         timings["reload"] = load(page, None)     # a fresh worker: the career comes back from IndexedDB
         page.wait_for_selector("#season:visible")
         assert shim(page, f"/api/season/{sid}")["json"]["current_week"] == 2
+        assert not errors, errors
+    finally:
+        if console:
+            print("console:", *console, sep="\n  ")
+        page.context.close()
+
+
+def test_next_season_survives_the_page_reload(browser, base: str):
+    """The offseason's last step answers and the page reloads at once (offseason.js). The new
+    season must already be in IndexedDB when that reply arrives, or the reload brings back the
+    old one: the save is written before the worker answers."""
+    st = season.new_season("smu", "full", seed=11, career=True)
+    finished(st)
+    blob = base64.b64encode(career.export_save(st, boxes=False)).decode()
+    page = browser.new_context().new_page()
+    errors, console = [], []
+    watch(page, errors, console)
+    try:
+        load(page, f"{base}/index.html")
+        r = page.evaluate(f"""async () => {{
+            const raw = atob({blob!r}); const bytes = new Uint8Array(raw.length);
+            for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+            const r = await CFP.game.fetch('/api/season/import', {{method: 'POST', headers: {{'Content-Type': 'application/gzip'}},
+                                                                body: new Blob([bytes], {{type: 'application/gzip'}})}});
+            return {{status: r.status, json: await r.json().catch(() => null)}}; }}""")
+        assert r["status"] == 200, r
+        sid = r["json"]["id"]
+        assert shim(page, f"/api/season/{sid}/offseason")["status"] == 200
+        # exactly what the page does: reload the moment the next-season reply arrives
+        page.evaluate(f"""() => {{ CFP.game.fetch('/api/season/{sid}/offseason/advance', {POST % '{to: "next_season"}'})
+            .then((r) => r.json()).then((j) => {{ if (j.next_season) location.reload(); else document.title = 'no next season ' + JSON.stringify(j); }}); }}""")
+        page.wait_for_selector("#loading", state="visible", timeout=SIM_TIMEOUT)
+        page.wait_for_selector("#loading", state="hidden", timeout=LOAD_TIMEOUT)
+        assert not page.title().startswith("no next season"), page.title()
+        after = shim(page, f"/api/season/{sid}")["json"]
+        assert after["year"] == 2027 and after["current_week"] == 0, {k: after.get(k) for k in ("year", "current_week", "done")}
         assert not errors, errors
     finally:
         if console:
@@ -312,6 +349,7 @@ if __name__ == "__main__":
                 raise SystemExit(0)
             try:
                 test_two_weeks_match_native_and_reload_restores(browser, base, timings)
+                test_next_season_survives_the_page_reload(browser, base)
                 test_syncfs_failure_toasts(browser, base)
                 test_blocked_storage_at_start_toasts_and_plays(browser, base)
                 test_second_tab_is_refused_and_the_first_keeps_working(browser, base)
