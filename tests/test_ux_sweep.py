@@ -530,6 +530,15 @@ if __name__ == "__main__":
             page.click("#rc-recruit")
             page.wait_for_selector(".go-menu")
             assert not page.eval_on_selector(".go-menu-item[data-action=pull_offer]", "e => e.getAttribute('aria-disabled') === 'true'"), "Pull offer is live for a hard commit elsewhere"
+            # pulling asks first: the page's dialog handler dismisses it, so the offer stays
+            n_dialogs = len(dialogs)
+            page.click(".go-menu-item[data-action=pull_offer]")
+            time.sleep(0.4)
+            assert len(dialogs) == n_dialogs + 1 and dialogs[-1].startswith("Pull your offer to "), dialogs[-1:]
+            assert any(b["id"] == hard_pid and b["offered"] for b in call(base, f"/api/season/{A}/recruiting")["board"]), "a dismissed confirm keeps the offer"
+            if page.query_selector(".go-menu"): page.keyboard.press("Escape")
+            page.click("#rc-recruit")
+            page.wait_for_selector(".go-menu")
             assert page.inner_text(".go-menu-item[data-action=offer] .go-menu-why").strip() == "Already offered"
             page.keyboard.press("Escape")
             # the same without your offer: Offer… is greyed for the hard commit, and there is nothing to pull

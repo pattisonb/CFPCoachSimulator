@@ -795,6 +795,8 @@
         if (f) f.focus({ preventScroll: true });
       } else if (action === "off_board") {
         setBoard(s, b.id, false).then((ok) => { if (ok) { view.selected = null; view.sheet = false; renderRecruiting(s, box); } });
+      } else if (action === "pull_offer") {       // one misclick in a menu should not cost you a recruit
+        if (window.confirm(`Pull your offer to ${b.name}? The NIL points come back to you${b.committed === me && !b.signed ? ", and he decommits from you" : ""}.`)) run(b, action);
       } else run(b, action);
     }
     // the Recruit menu's items for him: every action with its cost, or the reason it waits
