@@ -143,15 +143,14 @@ menu. It opens full screen with its own icon.
 
 ## Run it on your own computer
 
-You need Python 3.12.
+You need Python 3.12. The game needs nothing else installed.
 
 ```
-pip install -r requirements.txt
-python server.py
+python tools/dev_server.py
 ```
 
-Then open <http://127.0.0.1:8000>. Phones on the same Wi-Fi can open the address the
-server prints when it starts.
+Then open <http://127.0.0.1:8000> (`--port N` picks another port; `--host 0.0.0.0` lets
+phones on the same Wi-Fi open it at this computer's address).
 
 `teamdata/build_teams.py` writes the game's team file (`data/engine_teams.json`). Run it once after
 cloning, and again after pulling new rosters or engine changes.

@@ -1,3 +1,3 @@
 @echo off
 cd /d "%~dp0"
-python server.py
+python tools/dev_server.py
