@@ -1084,7 +1084,11 @@ Design: docs/superpowers/specs/2026-10-23-career-offseason-design.md.
 the career copies every FBS roster into its state (`state["league"]`): our ratings and the room
 to potential as lists in one key order, our overall, coachability, class, size, archetype,
 stars, hometown and (real receivers) target share; each team's coaches and lineup shape; about
-7 MB in the state and under 2 MB in a downloaded save. Each season the league goes back into the
+7 MB in the state and under 2 MB in a downloaded save. The 146 source files (68 MB of JSON) are
+read one at a time and dropped: only each team's identity (`league.base_meta`: names, state,
+conference, colors, program) stays cached, since keeping the decoded files pushed the server past
+a 512 MB instance's limit the first time a played career opened its offseason (peak 530 MB, now
+under 470). Each season the league goes back into the
 source format (our ratings back through the frozen scale) and through the same build as the real
 data (`build_teams.build`, about 4 s), without the real 2026 adjustments (depth by real usage,
 rating nudges). The engine's attributes go onto its scale through the real 2026 build's starter

@@ -71,10 +71,22 @@ GROUP_OF = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "O
             "FS": "DB", "SS": "DB", "K": "K", "P": "P"}
 
 
-@lru_cache(maxsize=None)
+BULK = ("roster", "starters", "depth_chart", "coaches", "team_ratings", "verification")   # the parts of a source file the league replaces
+
+
 def base_team(slug: str) -> dict:
-    """The real 2026 source team (read once; never changed)."""
+    """The real 2026 source team, read from its file each time: the roster and lineup are only
+    needed to build a league (once) or for a fictional stand-in, so the 146 files (68 MB of JSON,
+    about 200 MB decoded) are never kept in memory. For a team's identity use base_meta."""
     return json.loads((SOURCE_DIR / f"{slug}.json").read_text(encoding="utf-8"))
+
+
+@lru_cache(maxsize=None)
+def base_meta(slug: str) -> dict:
+    """A source team's identity (slug, names, state, conference, colors, program, ...): everything
+    but the roster and lineup, cached since every name lookup and every league team starts from it."""
+    t = base_team(slug)
+    return {k: v for k, v in t.items() if k not in BULK}
 
 
 @lru_cache(maxsize=1)
@@ -267,7 +279,7 @@ def team_ratings(roster: list[dict], starters: dict) -> dict:
 def source_team(league: dict, slug: str) -> dict:
     """One league team in the source format: the base team's identity, the league's roster,
     coaches and a lineup picked from the roster."""
-    base = base_team(slug)
+    base = base_meta(slug)
     entry = league["teams"][slug]
     roster = [expand(c, league["attrs"], base) for c in entry["roster"]]
     starters, depth = lineup(roster, entry["formation"], league["year"])
@@ -277,7 +289,7 @@ def source_team(league: dict, slug: str) -> dict:
         if p["position"] in ("WR", "TE") and "target_mult" not in p:     # and the ball spread around (TARGET_SPREAD)
             z = random.Random(f"depth-{p['slug']}-{league['year']}").gauss(0, 1)
             p["target_mult"] = round(min(2.0, max(0.5, math.exp(TARGET_EYE * z - TARGET_SPREAD * (p["ovr"] - mean) / 10))), 3)
-    out = {k: v for k, v in base.items() if k not in ("roster", "starters", "depth_chart", "coaches", "team_ratings", "verification")}
+    out = dict(base)
     style = entry.get("style", slug)                                 # the real program whose 2026 style the staff plays
     lead = (_real_usage().get(style) or {}).get("rb_lead_feature")
     if lead is not None:

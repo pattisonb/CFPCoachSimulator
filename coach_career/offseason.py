@@ -461,7 +461,7 @@ def _resolve_retention(state: dict) -> None:
             spent += e["offers"].get("nil", 0)
         elif p is not None:
             leaving.add(p["id"])
-            ev = {"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": e["cls"], "team": me, "team_name": lg.base_team(me)["short_name"],
+            ev = {"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": e["cls"], "team": me, "team_name": lg.base_meta(me)["short_name"],
                   "overall": e["overall"], "stars": p.get("s")}
             if e["intent"] == "draft":
                 ev.update(kind=e["draft_kind"], early=True)
@@ -622,7 +622,7 @@ def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict, 
         would_start = _would_start(t["roster"], recruiting.PORTAL_STARTERS)
         os_ = sorted(q["o"] for q in t["roster"])
         low = os_[max(0, int(len(os_) * 0.15) - 1)] if os_ else 0
-        team_name = lg.base_team(slug)["short_name"]
+        team_name = lg.base_meta(slug)["short_name"]
         for p in t["roster"]:
             ev = {"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "team": slug, "team_name": team_name,
                   "overall": house(p["pos"], p["o"]), "stars": p.get("s")}
@@ -943,7 +943,7 @@ def _prestige(state: dict, slug: str) -> float:
 def entrant_interest(state: dict, lgd: dict, slug: str, e: dict, rng: Optional[random.Random] = None) -> float:
     p = e["player"]
     wins, losses = _record(state, slug)
-    home = 1.0 if lg.base_team(slug).get("state") == p.get("home") else 0.0
+    home = 1.0 if lg.base_meta(slug).get("state") == p.get("home") else 0.0
     noise = rng.gauss(0, PICK_NOISE) if rng else 0.0
     return (PT_WEIGHT * playing_time(lgd, slug, p) + _prestige(state, slug)
             + WIN_WEIGHT * wins / max(1, wins + losses) + HOME_WEIGHT * home + noise)
@@ -1471,7 +1471,7 @@ def _take_job(state: dict, slug: str) -> None:
         carousel.ad(lgd["teams"][s], s)["security"] = carousel.START_SECURITY
     state["offseason"]["move_to"] = slug
     state["offseason"]["coaching_changes"].append({"team": slug, "role": "head_coach", "new": "You", "reason": "hired",
-                                                   "from": f"head coach at {lg.base_team(me)['short_name']}"})
+                                                   "from": f"head coach at {lg.base_meta(me)['short_name']}"})
 
 
 # ----- walking the stages -----------------------------------------------------------------------
@@ -1692,7 +1692,7 @@ def portal_rows(state: dict, position: Optional[str] = None, status: Optional[st
         rows.append({"id": pid, "name": p["n"], "pos": p["pos"], "group": GROUP[p["pos"]], "cls": p["cls"],
                      "overall": house(p["pos"], p["o"]), "stars": p.get("s"), "from": e["from"], "from_name": e["from_name"],
                      "last_year": e.get("usage"), "home": p.get("home"), "fit": PT_NAMES[pt], "offered": pid in mine,
-                     "signed": e["signed"], "signed_name": lg.base_team(e["signed"])["short_name"] if e["signed"] else None,
+                     "signed": e["signed"], "signed_name": lg.base_meta(e["signed"])["short_name"] if e["signed"] else None,
                      "offers": len(e["offers"])})
     rows.sort(key=lambda r: (bool(r["signed"]), -r["overall"]))
     return rows[:limit]
