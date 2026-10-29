@@ -929,8 +929,10 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
         sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
         revealed = _act(state, slug, pid, action, pitch, nil, scene=scene)
         from coach_career import scenes
-        return {"hours_left": rc["hours"][slug],
-                "reaction": {**scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid]), "revealed": revealed}}
+        said = scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid])
+        if slug == state.get("team"):                 # your History: the pitch and how he took it
+            _event(state, "pitch", pid, slug, action=sc["action"], pitch=pitch, reaction=said["kind"])
+        return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed}}
     opens = slug == state.get("team") and action in SCENES and pitch is None
     revealed = _act(state, slug, pid, action, pitch, nil, opens=opens)
     out = {"hours_left": rc["hours"][slug], "revealed": revealed}
@@ -1049,6 +1051,7 @@ def _report(state: dict, week: int) -> dict:
 
 
 REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up")
+CONTACT_KINDS = ("contact", "pitch", "raise_nil", "pull_offer")   # your actions, logged for his History (not news)
 
 
 def latest_report(state: dict) -> Optional[dict]:
@@ -1077,6 +1080,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         raise RecruitingError(409, "he has committed to you: no more looks")
     contact = rc["contacts"].setdefault(pid, {}).setdefault(slug, {"n": 0, "hc_week": None})
     week, revealed, points = state["current_week"], None, 0.0
+    you = slug == state.get("team")                   # your actions go in the log for his History (the AI's are not kept)
     if action in WEEKLY_ONCE and (contact.get("week") or {}).get(action) == week:
         raise RecruitingError(409, f"you already {'messaged' if action == 'message' else 'called'} him this week")
     if action == "scout" and contact.get("scouted", 0) >= SCOUT_MAX:
@@ -1092,7 +1096,9 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         if rc["status"][pid]["committed"] == slug and rc["status"][pid].get("hard"):
             raise RecruitingError(409, "he is a hard commit: his offer stands until he signs")
         offers.remove(pid)
-        _nil(state, slug)["held"].pop(pid, None)
+        held = _nil(state, slug)["held"].pop(pid, None)
+        if you:
+            _event(state, "pull_offer", pid, slug, nil=held or 0)
         if rc["status"][pid]["committed"] == slug and not rc["status"][pid]["signed"]:   # you let your own verbal commit go
             rc["status"][pid].update(committed=None, firmness=None, hard=False)
             rc["commits_v"] = rc.get("commits_v", 0) + 1
@@ -1129,6 +1135,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             raise RecruitingError(400, "not enough NIL points")
         ask = ask_from(state, slug, pid)
         _nil(state, slug)["held"][pid] = nil
+        if you:
+            _event(state, "raise_nil", pid, slug, nil=nil)
         points = nil_value(p, nil, ask) - nil_value(p, held, ask)
         if nil >= ask and contact.get("cooled_until"):     # meeting his ask ends the cooling
             contact.pop("cooled_until", None)
@@ -1151,6 +1159,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             if game_week is None:
                 raise RecruitingError(409, "no home game left for a visit")
             rc["visits"].setdefault(pid, {})[slug] = {"week": game_week, "done": False}
+        if you:
+            _event(state, "contact", pid, slug, action=action)
     elif action == "pitch":                        # your scene's pitch: the stored call or visit's points, as the one-shot rule
         sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
         if sc is None or scene is None or sc["id"] != scene:
@@ -1168,6 +1178,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         return pitch if pitch in p["priorities"] else None      # a hit or a quiet one tells you his priority
     elif action == "scout":                        # a scouting trip: your best evaluator's look, no contact with him
         contact["scouted"] = contact.get("scouted", 0) + 1
+        if you:
+            _event(state, "contact", pid, slug, action=action)
         staff = (state.get("career") or {}).get("staff") or []
         rating = max([m.get("evaluation", 50) for m in staff] + [((state.get("coach") or {}).get("ratings") or {}).get("evaluation", 60)])
         rng = random.Random(f"scout-{rc['seed']}-{slug}-{pid}-{week}-{contact['scouted']}")
@@ -1178,6 +1190,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             if contact["hc_week"] is not None and week - contact["hc_week"] < HC_VISIT_GAP:
                 raise RecruitingError(409, "one in-home visit a month")
             contact["hc_week"] = week
+        if you:                                       # a message, call or in-home visit (a scene's pitch is logged when it lands)
+            _event(state, "contact", pid, slug, action=action, **({"pitch": pitch} if pitch else {}))
         if action in WEEKLY_ONCE:
             contact.setdefault("week", {})[action] = week
         if opens:                                     # your scene: the contact is marked, his lines and cue stored; no points until the pitch
