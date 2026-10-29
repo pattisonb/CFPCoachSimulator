@@ -1,0 +1,111 @@
+"""The Coach Career dispatcher (app/api.py): routing, the season routes (create, get, list,
+delete, export, import), the teams and the coach routes. Saves go to temporary folders, so
+nothing is left in data/seasons or data/coaches. (Run as a file: multiprocessing on Windows.)"""
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from app import api` works from here
+
+from app import api
+from sim import coaches
+from sim import season
+
+
+def refused(fn, code: int) -> None:
+    try:
+        fn()
+    except api.ApiError as e:
+        assert e.status == code, (e.status, e.message)
+        return
+    raise AssertionError(f"expected {code}")
+
+
+def test_unknown_route():
+    refused(lambda: api.call("GET", "/api/nothing"), 404)
+    refused(lambda: api.call("DELETE", "/api/teams"), 405)
+
+
+def test_teams_and_coach_options():
+    assert any(t["slug"] == "smu" for t in api.call("GET", "/api/teams")["teams"])
+    assert api.call("GET", "/api/teams/smu")["slug"] == "smu"
+    refused(lambda: api.call("GET", "/api/teams/nope"), 404)
+    opts = api.call("GET", "/api/coach-options")          # the coach page's option lists
+    assert opts["archetypes"] and opts["offense_schemes"] and opts["defense_schemes"] and opts["blank"]
+
+
+def test_create_get_list_delete_career():
+    s = api.call("POST", "/api/season", {"team": "smu", "seed": 11, "career": True})
+    assert s["career"] and api.changed() and not api.changed()
+    assert api.loaded_state()["id"] == s["id"] and api.job()["status"] == "idle"
+    assert api.call("GET", f"/api/season/{s['id']}")["id"] == s["id"]
+    cards = api.call("GET", "/api/seasons")["seasons"]
+    assert [c["id"] for c in cards] == [s["id"]] and "browser" not in cards[0]
+    assert api.call("DELETE", f"/api/season/{s['id']}")["deleted"]
+    assert api.changed() and api.call("GET", "/api/seasons")["seasons"] == []
+    assert api.loaded_state() is None
+    refused(lambda: api.call("GET", f"/api/season/{s['id']}"), 404)
+    refused(lambda: api.call("DELETE", f"/api/season/{s['id']}"), 404)
+
+
+def test_create_refusals():
+    refused(lambda: api.call("POST", "/api/season", {"team": "nope", "career": True}), 404)
+    refused(lambda: api.call("POST", "/api/season", {"career": True}), 422)
+    refused(lambda: api.call("POST", "/api/season", {"team": "smu", "mode": "remaining", "career": True}), 400)
+    refused(lambda: api.call("POST", "/api/season", {"team": "smu", "seed": "eleven"}), 422)
+    refused(lambda: api.call("POST", "/api/season", {"team": "smu", "coach": "000000000000"}), 404)
+    assert not api.changed()
+
+
+def test_create_ignores_career_flag():
+    s = api.call("POST", "/api/season", {"team": "smu", "seed": 11, "career": False})
+    assert s["career"]
+    assert api.call("DELETE", "/api/seasons")["removed"] == 1 and api.changed()
+    assert api.call("GET", "/api/seasons")["seasons"] == []
+
+
+def test_export_import_roundtrip():
+    s = api.call("POST", "/api/season", {"team": "smu", "seed": 11, "career": True})
+    blob = api.call("GET", f"/api/season/{s['id']}/export?full=true")
+    assert isinstance(blob, bytes) and blob[:2] == b"\x1f\x8b"
+    refused(lambda: api.call("GET", f"/api/season/{s['id']}/export?full=maybe"), 422)
+    api.call("DELETE", f"/api/season/{s['id']}")
+    api.changed()
+    back = api.call("POST", "/api/season/import", blob)
+    assert back["id"] == s["id"] and api.changed()
+    assert api.loaded_state()["id"] == s["id"]
+    refused(lambda: api.call("POST", "/api/season/import", b"not a save"), 400)
+    refused(lambda: api.call("POST", "/api/season/import", b"x" * (api.MAX_SAVE_BYTES + 1)), 413)
+    api.call("DELETE", f"/api/season/{s['id']}")
+
+
+def test_coaches_crud():
+    c = api.call("POST", "/api/coaches", {"coach": {**coaches.blank(), "first_name": "Pat", "last_name": "Day"}})
+    assert api.changed() and api.call("GET", f"/api/coaches/{c['id']}")["last_name"] == "Day"
+    assert c["id"] in [x["id"] for x in api.call("GET", "/api/coaches")["coaches"]]
+    refused(lambda: api.call("POST", "/api/coaches", {"coach": {"first_name": "Pat"}}), 400)
+    refused(lambda: api.call("POST", "/api/coaches", {}), 422)
+    assert api.call("DELETE", f"/api/coaches/{c['id']}")["deleted"]
+    assert api.changed()
+    refused(lambda: api.call("GET", f"/api/coaches/{c['id']}"), 404)
+    refused(lambda: api.call("DELETE", "/api/coaches/not-an-id"), 404)
+
+
+if __name__ == "__main__":
+    import shutil
+    import tempfile
+    seasons_dir = _Path(tempfile.mkdtemp(prefix="cfp-api-seasons-"))
+    coaches_dir = _Path(tempfile.mkdtemp(prefix="cfp-api-coaches-"))
+    season.SEASONS_DIR, coaches.COACHES_DIR = seasons_dir, coaches_dir
+    try:
+        test_unknown_route()
+        test_teams_and_coach_options()
+        test_create_get_list_delete_career()
+        test_create_refusals()
+        test_create_ignores_career_flag()
+        test_export_import_roundtrip()
+        test_coaches_crud()
+    finally:
+        season.close_pool()
+        shutil.rmtree(seasons_dir, ignore_errors=True)
+        shutil.rmtree(coaches_dir, ignore_errors=True)
+    print("ok")
