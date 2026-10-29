@@ -62,17 +62,20 @@ if __name__ == "__main__":
                     first.click(); page.wait_for_selector("text=He wants", timeout=30_000)
             page.click("text=OPEN THE TRANSFER PORTAL")
             page.wait_for_selector("text=WEEK 1 OF 4", timeout=120_000)
-            assert not page.query_selector(".off-board .go-pcard"), "the portal opens with an empty board"
+            assert not page.query_selector(".off-board .go-row-recruit"), "the portal opens with an empty board"
             # you pick an entrant from the pool (the best one not leaving your own program) and recruit him on the board
             pool = call(base, f"/api/season/{sid}/prospects?limit=20")["rows"]
             pick = next(r for r in pool if r.get("from") != "georgia" and not r.get("committed"))
             call(base, f"/api/season/{sid}/board", {"pid": pick["id"], "on": True})
             page.reload(); page.wait_for_selector("#season:visible")
-            page.wait_for_selector(".off-board .go-pcard", timeout=60_000)          # the portal is recruited on the board
+            page.wait_for_selector(".off-board .go-row-recruit", timeout=60_000)    # the portal is recruited on the board
             assert "WEEK 1 OF 4" in page.inner_text("#tab-offseason")
-            page.click(".off-board .go-pcard .go-pcard-top >> nth=0")                # he opens in the pane beside the columns
-            page.click(".off-board .go-pane button.go-btn.primary:has-text('Offer')")   # an offer, with the pitch and the NIL his ask suggests
-            page.wait_for_selector(".off-board .go-pcard >> nth=0 >> text=Offered", timeout=30_000)
+            page.click(".off-board .go-row-recruit >> nth=0")                         # he opens in the pane beside the list
+            page.click(".off-board .go-pane #rc-recruit")                             # the Recruit menu: Offer… opens the step in the pane
+            page.click(".go-menu .go-menu-item[data-action=offer]")
+            page.wait_for_selector(".off-board .go-pane .go-step #rc-nil", timeout=30_000)   # the pitch and the NIL his ask suggests
+            page.click(".off-board .go-pane .go-step button.go-step-go")
+            page.wait_for_selector(".off-board .go-pane .go-tag:has-text('Offered')", timeout=30_000)
             for w in (1, 2, 3):
                 page.click(f"text=END WEEK {w}")
                 page.wait_for_selector(f"text=WEEK {w + 1} OF 4", timeout=120_000)

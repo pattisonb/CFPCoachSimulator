@@ -25,7 +25,7 @@
 
 /* ----- the two panels: the list and the pane ----- */
 .go-board { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 16px; align-items: start; }
-.go-board .go-list-recruits { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.go-board .go-list-recruits { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .go-list-empty { margin: 12px 8px; }
 .go-list-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; flex-wrap: wrap; padding: 10px 8px 0; }
 .go-list-foot .go-link { min-height: 36px; }
@@ -49,7 +49,11 @@
 .go-standing-word.bad { color: var(--bad-text); }
 
 /* ----- the pane: head, step, strip, tags, sub-tabs ----- */
-.go-pane-head { align-items: flex-start; }
+.go-pane { position: sticky; top: calc(var(--sticky-top, 0px) + 12px); max-height: calc(100vh - var(--sticky-top, 0px) - 24px); overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; gap: 10px; border: 2px solid var(--go-primary, var(--accent)); }
+.go-pane-head { display: flex; align-items: flex-start; gap: 10px; }
+/* the pane's column gap already spaces the tag row: no extra margin above or below it */
+.go-pane > .go-tags { margin-block: 0; }
 .go-pane-id { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 .go-pane-name { font-size: 18px; line-height: 1.2; text-align: left; overflow-wrap: anywhere; }
 .go-pane .go-chip { min-height: 0; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-2); font-size: 11px; font-weight: 700;
@@ -63,11 +67,11 @@
 
 /* the inline step: Message, Offer…, Raise NIL… (scoped to the pane: the Office's week steps share the class name) */
 .go-pane .go-step { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 12px; border-radius: 12px; background: var(--panel-2); border: 1px dashed var(--go-primary, var(--accent)); cursor: default; }
-.go-step label { display: flex; flex-direction: column; gap: 4px; }
-.go-step .go-sel, .go-step .go-nil { width: 100%; max-width: 420px; min-height: 40px; }
-.go-step .go-nil { max-width: 140px; }
-.go-step p { margin: 0; }
-.go-step-acts { display: flex; flex-wrap: wrap; gap: 8px 10px; }
+.go-pane .go-step label { display: flex; flex-direction: column; gap: 4px; }
+.go-pane .go-step .go-sel, .go-pane .go-step .go-nil { width: 100%; max-width: 420px; min-height: 40px; }
+.go-pane .go-step .go-nil { max-width: 140px; }
+.go-pane .go-step p { margin: 0; }
+.go-pane .go-step-acts { display: flex; flex-wrap: wrap; gap: 8px 10px; }
 
 /* the stat strip: four cells */
 .go-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
@@ -93,7 +97,7 @@
 
 /* ----- the Recruit menu: a popover under the button; a bottom sheet on a phone ----- */
 .go-menu { position: fixed; z-index: 70; min-width: 270px; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow-y: auto; padding: 6px; border-radius: 14px;
-  background: var(--panel); border: 1px solid var(--border); box-shadow: 0 14px 44px var(--shadow, rgba(0, 0, 0, 0.45)); display: flex; flex-direction: column; gap: 2px; }
+  background: var(--panel); border: 1px solid var(--border); box-shadow: 0 14px 44px var(--shadow, rgba(0, 0, 0, 0.45)); display: flex; flex-direction: column; gap: 8px; }
 .go-menu-item { display: flex; flex-direction: column; align-items: stretch; gap: 1px; width: 100%; min-height: 40px; padding: 7px 12px; border-radius: 10px; border: none;
   background: none; color: var(--text); text-align: left; font: inherit; cursor: pointer; }
 .go-menu-item:hover:not(:disabled), .go-menu-item:focus-visible { background: var(--panel-2); outline: none; }
@@ -123,5 +127,6 @@
   .go-pane.sheet .go-pane-act .go-btn { flex: 1 1 0; }
   body.go-sheet-open { overflow: hidden; }
   .go-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .go-step .go-sel { max-width: none; }
+  .go-pane .go-step .go-sel { max-width: none; }
+  .go-needs-toggle { min-height: 44px; }
 }

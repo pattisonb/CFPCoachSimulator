@@ -1082,12 +1082,25 @@ screens you act on (Office, Offseason once the season is over, Recruiting, Prosp
 Schedule, Depth Chart) and a League row that follows the calendar (Standings, Rankings and Stats
 all year; Awards from week 4; Classes, Bracket and Bowls from selection week; Summary when the
 season is done). A plain season keeps every League tab. The **Recruiting board** (a prospect you take off it stays off, Auto-recruit included, until
-you put him back) is a five-column pipeline by stage (Cold, In touch, Top 8, Visited, Committed)
-of compact prospect cards (your staff's read, his badges, what he told you this week, your
-standing) with a sticky pane for the selected prospect (his known priorities, the actions with
-their hour costs, the pitch, the offer with NIL points, his profile), a bottom sheet on a phone. His list is drawn as a race, one lane a school, and a map of
+you put him back) is stage tabs with counts (All, Cold, In touch, Top 8, Visited, Committed),
+a search and a sort, then a plain list beside one sticky pane. A list row is his avatar, name, one
+line (stars, position, state) and one word of standing; a dot marks a move up or down this week.
+The pane is the only place anything happens to him: a head with his status chip and one **Recruit
+▾** button, whose menu lists every action with its hour cost or the reason it waits (Once a
+week, Monthly, Offer him first, Finish your call first). Message and Offer… open a step in the
+pane: the pitch as a dropdown (his known priorities first, each with your program's case), the
+NIL points with his ask for an offer; a call or in-home visit plays as a scene in the pane. Under
+the head, a strip of four cells (your chance, his list, NIL, scouted), the tags you know, and
+sub-tabs: Overview, Scouting, Profile, History. On a phone the pane is a full-screen dialog and
+the menu a bottom sheet. Every standing word (Yours, Lost, Favourite, In it, Long shot, Not
+offered) is one ladder read from his list, with your offer as the qualifier
+(`standingOf` in `web/recruiting.js`), so the list, the pane and the Office agree. His list is
+drawn as a race, one lane a school, a school without an offer in as a hollow pill, and a map of
 the US shows your nine areas and where the board's prospects live. Every colour is a theme variable, so the screens work
-in the light and the dark theme.
+in the light and the dark theme. One set of spacing rules holds on every Coach Career screen:
+button rows keep 8 px between buttons, tag rows 6 px, cards 12 px of padding, and buttons stand
+36 px tall (44 px on a phone), segment controls and the depth chart's compact controls aside
+(`tests/test_spacing.py`).
 
 **The odds you see** (`prospects.odds`). Each offering school's chance to land a prospect is a
 softmax of his interest in it (`exp(interest / 3)`), against the field: the schools not yet in

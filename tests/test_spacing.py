@@ -4,7 +4,8 @@ least 6 px, no button or tag sits closer than 6 px to another on its row whateve
 overlaps, every card keeps 12 px of padding, and every button is at least 36 px tall (44 px on a phone). Segment
 controls (.go-seg, .go-stages, .go-subtabs, nav.tabs) touch by design and are left out.
 
-Walks a mid-season career (Office, Recruiting board, pane and call, Prospects and a profile, Staff,
+Walks a mid-season career (Office, Recruiting board, the pane with a recruit selected, the Recruit menu open,
+the pitch step open and a call scene, Prospects and a profile, Staff,
 Depth chart, Schedule) and a finished one (Classes, Summary, then every offseason stage reached
 through /offseason/advance), plus the Seasons list and Your coach. Set SPACING_SHOTS=<folder> to
 also save a screenshot of every screen at both widths in light and dark. Needs Playwright with a
@@ -32,10 +33,8 @@ ACTION = "button:not(.tiny, .swatch, .week-chip, .go-link, .btn-link)"
 # a button inside running text: its parent holds words of its own, or it is a text link laid out inline
 IN_TEXT = """(e) => (e.matches('button') && [...e.parentElement.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()))
   || (e.matches('.go-link, .btn-link') && getComputedStyle(e).display.startsWith('inline'))"""
-# card-like containers keep at least 12 px of padding on every side (the old board's .go-col cards are left out:
-# they are deleted with the old board)
+# card-like containers keep at least 12 px of padding on every side
 CARDS = ".go-card, .coach-item, .leader-card, .start-card, .team-card, .bowl-card, .review-card, .rc-staff-card, .history-list li"
-CARD_EXCLUDED = ".go-col .go-pcard, .go-col .go-add"
 
 # every container with two or more visible buttons or tags as direct children: the gap between each pair
 # (8 px for buttons, 6 px for tags; within 0.5 px counts as touching) and no overlap
@@ -96,8 +95,8 @@ PAIRS_JS = """([SCREEN, ITEM, EXCLUDED]) => {
 }"""
 
 # every card-like container keeps 12 px of padding on every side
-CARDS_JS = """([SCREEN, CARDS, CARD_EXCLUDED]) => [...document.querySelectorAll(CARDS)]
-  .filter(c => (c.offsetParent !== null || getComputedStyle(c).position === 'fixed') && !c.matches(CARD_EXCLUDED))
+CARDS_JS = """([SCREEN, CARDS]) => [...document.querySelectorAll(CARDS)]
+  .filter(c => c.offsetParent !== null || getComputedStyle(c).position === 'fixed')
   .map(c => { const st = getComputedStyle(c); const pad = Math.min(...['Top', 'Right', 'Bottom', 'Left'].map(k => parseFloat(st['padding' + k])));
     return {screen: SCREEN, card: c.tagName.toLowerCase() + [...c.classList].map(k => '.' + k).join(''), padding: pad}; })
   .filter(c => c.padding < 11.5)"""
@@ -121,7 +120,7 @@ class Walk:
         time.sleep(0.4)
         self.gaps += self.page.evaluate(GAPS_JS, [label, ITEM, EXCLUDED])
         self.pairs += self.page.evaluate(PAIRS_JS, [label, ITEM, EXCLUDED])
-        self.cards += self.page.evaluate(CARDS_JS, [label, CARDS, CARD_EXCLUDED])
+        self.cards += self.page.evaluate(CARDS_JS, [label, CARDS])
         self.touch += self.page.evaluate(TOUCH_JS, [label, ACTION, EXCLUDED, 44 if width < 760 else 36])
         if self.shots:
             self.page.evaluate("() => window.scrollTo(0, 0)")
@@ -225,23 +224,38 @@ if __name__ == "__main__":
             page.wait_for_selector("button.go-btn:has-text('Add these')", timeout=120_000)
             page.click("button.go-btn:has-text('Add these')")
             time.sleep(4)
-            for tab, wait in (("office", ".go-program"), ("recruiting", ".go-col"), ("prospects", ".go-list-row"),
+            for tab, wait in (("office", ".go-program"), ("recruiting", ".go-row-recruit"), ("prospects", ".go-list-row"),
                               ("staff", ".rc-staff-card"), ("depth", "[data-player]"), ("schedule", ".schedule-pick")):
                 w.both(tab, lambda _w, tab=tab, wait=wait: open_tab(page, base, A, tab, wait))
 
+            # the new board: a recruit selected (a full-screen pane on a phone), the Recruit menu open (a bottom sheet on a
+            # phone), the pitch step open, then a call scene (last: an open call makes every menu item wait)
             def pane(_):
-                open_tab(page, base, A, "recruiting", ".go-col")
-                page.click(".go-pcard .go-pcard-top >> nth=0")
-                page.wait_for_selector(".go-pane .go-actions", timeout=30_000)
+                open_tab(page, base, A, "recruiting", ".go-row-recruit")
+                page.click(".go-row-recruit >> nth=0")
+                page.wait_for_selector(".go-pane .go-subtabs", timeout=30_000)
             w.both("recruiting-pane", pane)
+
+            def menu(_):
+                pane(_)
+                page.click(".go-pane #rc-recruit")
+                page.wait_for_selector(".go-menu .go-menu-item", timeout=30_000)
+            w.both("recruiting-menu", menu)
+
+            def step(_):
+                menu(_)
+                page.click(".go-menu .go-menu-item[data-action=offer]")
+                page.wait_for_selector(".go-pane .go-step #rc-pitch", timeout=30_000)
+            w.both("recruiting-step", step)
 
             def scene(_):
                 pane(_)
-                fin = page.query_selector(".go-pcard.selected button:has-text('Finish the call')")
+                fin = page.query_selector(".go-pane #rc-finish")
                 if fin:
                     fin.click()
                 else:
-                    page.click(".go-pane .go-act:has-text('Call')")
+                    page.click(".go-pane #rc-recruit")
+                    page.click(".go-menu .go-menu-item[data-action=call]")
                 page.wait_for_selector(".go-pane .go-scene .go-scene-line.cue", timeout=30_000)
             w.both("recruiting-scene", scene)
 

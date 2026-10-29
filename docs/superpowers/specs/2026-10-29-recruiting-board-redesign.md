@@ -185,6 +185,10 @@ rules, not individual spots:
   touches a card edge (cards keep at least 12 px padding); buttons keep a 36 px minimum height on
   desktop and 44 px on a phone; a segment control's buttons touch each other by design and are the
   one exception.
+- **Recorded exceptions**: the depth chart's small ★ ▲ ▼ and Redshirt controls stay 28 px tall,
+  since 44 px controls would double the width of the depth cells and wrap them. The week strip and
+  inline text links keep their own heights: the strip is navigation, like a segment control, and a
+  link inside running text sizes with the text.
 - **Audit**: screenshots at 1280 and 400 px, light and dark, of the Office, Recruiting (new
   board, pane, menu open, pitch step, scene), Prospects, Staff, Classes, each offseason stage
   (departures, portal, development, staff, review, carousel, ready), Depth chart, Schedule,

@@ -1095,48 +1095,15 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-seg-btn { min-height: 40px; padding: 0 12px; border: none; border-right: 1px solid var(--border); background: transparent; color: var(--text); font-weight: 600; font-size: 13px; cursor: pointer; white-space: nowrap; }
 .go-seg-btn:last-child { border-right: none; }
 .go-seg-btn.on { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); }
-.go-ticker { list-style: none; margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--panel-2); display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; }
 .go-filterbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .go-chip { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text); font-weight: 600; cursor: pointer; }
 .go-chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
-/* the pipeline: five stage columns beside a sticky pane (a bottom sheet on a phone) */
-.go-board { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
-.go-pipe { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
-.go-col-seg { display: none; }
-.go-pipeline { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(150px, 1fr); gap: 10px; overflow-x: auto; align-items: start; }
-.go-col { min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 8px; border-radius: 14px; background: var(--panel-2); border: 1px solid var(--border); }
-.go-col-head { font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 4px; }
-.go-col.committed .go-col-head b { color: var(--good-text, var(--good)); }
-.go-col-body { display: flex; flex-direction: column; gap: 8px; }
-.go-col-empty { margin: 2px 4px; }
-.go-col .go-pcard { gap: 6px; padding: 10px; border-radius: 12px; background: var(--panel); }
-.go-col .go-pcard.selected { padding: 9px; }
-.go-col .go-pcard-top { gap: 8px; }
-.go-col .go-pcard-name { font-size: 14.5px; overflow-wrap: anywhere; }
-.go-col .go-pcard-id .muted { line-height: 1.3; }
-.go-col .go-stars { font-size: 11px; letter-spacing: 0; }
-.go-col .go-tag { padding: 2px 7px; font-size: 10px; }
-.go-col .go-add { min-height: 72px; padding: 10px; font-size: 13px; }
-.go-pcard-read { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-.go-pcard.mine { border-color: color-mix(in srgb, var(--good) 55%, var(--border)); }
-.go-pcard.lost { opacity: 0.72; }
-.go-pcard.lost.selected { opacity: 1; }
-.go-pcard.moved-up { box-shadow: 0 0 0 2px color-mix(in srgb, var(--good) 55%, transparent), 0 0 16px color-mix(in srgb, var(--good) 40%, transparent); }
-.go-pcard.moved-down { box-shadow: 0 0 0 2px color-mix(in srgb, var(--bad) 50%, transparent), 0 0 16px color-mix(in srgb, var(--bad) 35%, transparent); }
-.go-pcard-move { font-size: 11px; font-weight: 700; }
-.go-pcard-move.up { color: var(--good-text, var(--good)); } .go-pcard-move.down { color: var(--bad-text, var(--bad)); }
 .go-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; border: 1px solid var(--border); }
 .go-badge.generational { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
 .go-badge.gem { color: var(--good-text, var(--good)); border-color: var(--good); }
 .go-badge.bust { color: var(--bad-text, var(--bad)); border-color: var(--bad); }
 .go-badge.gem-held, .go-badge.bust-held { color: var(--good-text, var(--good)); border-color: var(--good); }
 .go-badge.gem-missed { color: var(--bad-text, var(--bad)); border-color: var(--bad); }
-.go-pane { position: sticky; top: calc(var(--sticky-top, 0px) + 12px); max-height: calc(100vh - var(--sticky-top, 0px) - 24px); overflow-y: auto; overscroll-behavior: contain;
-  display: flex; flex-direction: column; gap: 10px; border: 2px solid var(--go-primary, var(--accent)); }
-.go-pane-head { display: flex; align-items: center; gap: 10px; }
-.go-pane-head .go-pcard-id { flex: 1; }
-.go-pane-close { flex: none; min-width: 44px; min-height: 44px; padding: 0; font-size: 18px; }
-.go-pane .go-actions { margin-top: 0; }
 .go-race { display: flex; flex-direction: column; gap: 4px; padding: 6px; border-radius: 10px; background: var(--panel-2);
   background-image: linear-gradient(to right, transparent calc(100% - 1px), var(--border) calc(100% - 1px)); }
 .go-race-lane { position: relative; height: 24px; border-bottom: 1px dashed var(--border); }
@@ -1146,11 +1113,6 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-race-pill.you { outline: 2px solid var(--text); outline-offset: 1px; }
 .go-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
 .go-pcard { display: flex; flex-direction: column; gap: 10px; padding: 16px; }
-.go-pcard.selected { border: 2px solid var(--go-primary, var(--accent)); padding: 15px; }
-.go-pcard-top { display: flex; align-items: center; gap: 12px; padding: 0; border: none; background: none; color: var(--text); text-align: left; cursor: pointer; font: inherit; }
-.go-pcard-id { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.go-pcard-id b { font-size: 17px; line-height: 1.2; }
-.go-pcard-id .go-stars { font-size: 13px; }
 .go-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: auto; }
 .go-act { min-width: 0; min-height: 50px; padding: 4px 2px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 12.5px; line-height: 1.15; text-align: center; cursor: pointer; }
 .go-act b { white-space: nowrap; }
@@ -1167,7 +1129,6 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-act.alt { background: var(--go-primary, var(--accent)); border-color: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); }
 .go-act.alt span { color: inherit; opacity: 0.85; }
 .go-act:disabled { opacity: 0.45; cursor: default; }
-.go-add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 180px; border-style: dashed; color: var(--text); cursor: pointer; font: inherit; }
 .go-pitches { display: flex; flex-direction: column; gap: 6px; }
 .go-pitch { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; background: var(--panel-2); border: 2px solid transparent; cursor: pointer; }
 .go-pitch:has(input:checked) { border-color: var(--go-primary, var(--accent)); }
@@ -1264,7 +1225,6 @@ body.team-theme .season-head-row select option { color: var(--text); background:
 .go-sel { min-height: 44px; border-radius: 12px; }
 
 @media (max-width: 1100px) {
-  .go-board { grid-template-columns: minmax(0, 1fr) 300px; }
   .go-list-main { grid-template-columns: 46px 38px minmax(0, 1fr) auto; row-gap: 6px; }
   .go-list-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; grid-column: 3 / -1; }
   .go-list-tags .go-list-read { flex-direction: row; align-items: center; gap: 6px; }
@@ -1273,17 +1233,6 @@ body.team-theme .season-head-row select option { color: var(--text); background:
   .go-office { grid-template-columns: minmax(0, 1fr); }
   .go-board-head { grid-template-columns: minmax(0, 1fr); }
   .go-meters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-/* a phone: one column a screen, swiped or picked from the strip; the pane is a bottom sheet */
-@media (max-width: 759px) {
-  .go-board { grid-template-columns: minmax(0, 1fr); }
-  .go-col-seg { display: flex; width: 100%; }
-  .go-col-seg .go-seg-btn { flex: 1 1 0; min-width: 0; padding: 0 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; font-size: 11.5px; white-space: normal; }
-  .go-pipeline { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 0; }
-  .go-col { flex: 0 0 100%; scroll-snap-align: start; }
-  .go-pane.sheet { position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 7; max-height: 78vh; margin: 0; border-radius: 16px 16px 0 0;
-    border-width: 2px 0 0; box-shadow: 0 -10px 30px var(--shadow); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
-  .go-pane.sheet .go-pane-head { position: sticky; top: -14px; z-index: 1; margin: -14px -14px 0; padding: 10px 14px; background: var(--panel); border-bottom: 1px solid var(--border); }
 }
 @media (max-width: 600px) {
   .go-card { padding: 14px; border-radius: 14px; }
@@ -1350,9 +1299,6 @@ body.career-mode.on-career-tab .season-head { padding-bottom: 0; }
 .go-chip.short:not(.on) { border-color: color-mix(in srgb, var(--good) 60%, var(--border)); color: var(--good-text, var(--good)); }
 .go-chip.full:not(.on) { color: var(--muted); }
 .go-needs .go-needs-mode { min-height: 32px; padding-top: 0; padding-bottom: 0; font-size: 13px; margin-left: auto; }
-.go-pcard-top { width: 100%; }
-.go-pcard-name { font-size: 17px; font-weight: 700; line-height: 1.2; text-align: left; padding: 0; background: none; border: none; color: var(--text); cursor: pointer; font-family: inherit; }
-button.go-pcard-name:hover { text-decoration: underline; }
 .go-scouted { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; padding: 6px 10px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 10%, transparent); }
 .go-scouted > b:first-child { font-size: 11px; letter-spacing: 0.08em; color: var(--accent-text, var(--accent)); align-self: center; }
 .go-list-row { flex-wrap: wrap; }
