@@ -2,37 +2,21 @@
 
 ![CFP Coach Simulator](web/icons/og-image.png)
 
-**Play it now: <https://cfp-coach-simulator.onrender.com/>**
+**Play it now: <https://pattisonb.github.io/CFPCoachSimulator/>**
 
-A college football simulator built on the real 2026 season. Pick any two of 138 FBS
-teams and play a game, take one school through a full season to the playoff and the bowls,
-or follow the real 2026 season as it happens. It is free and runs in any browser, phones
-included. There is nothing to install and no account to make.
+A college football coaching career built on the real 2026 season. Take one of 138 FBS
+schools through the season to the playoff and the bowls, recruit your classes, and keep
+going season after season. It is free and runs in any browser, phones included. There is
+nothing to install and no account to make.
 
-> The free server goes to sleep when nobody is using it. If the page is slow the first
-> time, give it up to a minute to wake up.
+> The whole game runs in your browser. The first visit downloads it (about 20 MB, Python
+> included) and takes a little while; after that your browser keeps it, so later visits start faster.
 
-## Three ways to play
-
-### Sim a game
-
-Pick a home team and an away team, or put them on a neutral field, and press **Sim Game**.
-Every game comes with:
-
-- the score by quarter and every scoring play;
-- team stats and player stats for both sides;
-- a drive chart.
-
-**Sim batch** plays the same matchup up to 500 times and shows how often each team wins.
-**Sliders** let you change how the game plays, such as home-field advantage.
-
-### Coach Career
+## Coach Career
 
 Pick your team and start a season. **New season** starts a Coach Career: the whole 2026
 schedule from week 1, with you as the head coach recruiting the class of 2027 as the season
-goes. **Start from today** picks up the real season where it stands, with the real results,
-polls, player stats and box scores so far, and you play the rest (no recruiting). Then play a
-week at a time or jump ahead: each week is **Recruit → Your game → Advance**.
+goes. Then play a week at a time or jump ahead: each week is **Recruit → Your game → Advance**.
 
 - **Your office.** A career opens on your office: this week's opponent and win chance, your
   week's steps, the play buttons and your recruiting at a glance.
@@ -70,9 +54,9 @@ week at a time or jump ahead: each week is **Recruit → Your game → Advance**
   coaching carousel around the league. Then the next season: same schedule template with home
   and away swapped, a new class of seniors to recruit, and your program's history kept. A
   career plays as many seasons as you like.
-- **Saves.** Your browser keeps a copy of the career after every week, so it survives the
-  server restarting. **Download career** saves it as a file; **Load career** opens it again.
-  For now each browser has one career at a time, and a career plays five seasons.
+- **Saves.** Your careers are saved in your browser's storage after every week, so they are
+  there when you come back on the same device. **Download career** saves one as a `.ccsave`
+  file to keep or move to another device; **Load career** opens it again.
 
 - **Game day.** Play your own game drive by drive, then advance the week to play
   everyone else's.
@@ -94,13 +78,6 @@ week at a time or jump ahead: each week is **Recruit → Your game → Advance**
   green or red arrows.
 - **God mode.** Turn it on in Settings to edit any player and any depth chart in the
   country.
-
-### Real 2026
-
-The actual 2026 season, read-only. It has every real result and box score, the real AP
-polls with their vote points, standings, and projected bracket and bowls. It also has real
-player stats with game-by-game logs and a Heisman race on the real numbers. Pick any team
-to follow it.
 
 ## Player ratings
 
@@ -135,8 +112,8 @@ menu. It opens full screen with its own icon.
 
 ## Good to know
 
-- **Saved seasons can reset.** The free server forgets saved seasons when it restarts or
-  goes to sleep. Finish a season in one sitting if you want to keep it.
+- **Saves stay on the device.** Clearing this site's data in your browser deletes its saved
+  careers. Download a career you want to keep.
 - **This is a fan project.** It is not affiliated with the College Football Playoff, the
   NCAA, any conference or any school. Schedules, results and stats come from public
   sources.
@@ -153,7 +130,18 @@ Then open <http://127.0.0.1:8000> (`--port N` picks another port; `--host 0.0.0.
 phones on the same Wi-Fi open it at this computer's address).
 
 `teamdata/build_teams.py` writes the game's team file (`data/engine_teams.json`). Run it once after
-cloning, and again after pulling new rosters or engine changes.
+cloning (`python -m teamdata.build_teams`), and again after pulling new rosters or engine changes.
+Saves made this way live on disk under `data/`.
+
+The tests run on your computer too: `python tests/run_all.py`.
+
+## Publishing
+
+The site is static: every push to `main` runs `.github/workflows/pages.yml`, which builds the
+team data and the site (`python tools/build_site.py` writes `dist/`) and publishes it to
+GitHub Pages. One setting is needed once, in the repository's Settings → Pages: Source:
+**GitHub Actions**. The data refresh tools (real results, rosters, polls) stay on the owner's
+computer; their output is committed and goes out with the next push.
 
 To learn how it works, including the engine, the data, hosting, calibration and the test
 tools, read [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md).

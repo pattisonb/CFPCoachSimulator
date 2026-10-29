@@ -1,60 +1,83 @@
 # CFP Coach Simulator: how it works
 
-The technical guide: running and hosting the server, the engine, the data, the
-calibration and the test tools. File paths are relative to the project root. The
-player-facing overview is the [README](../README.md).
+The technical guide: running the game in the browser and on your own computer, publishing
+it, the engine, the data, the calibration and the test tools. File paths are relative to
+the project root. The player-facing overview is the [README](../README.md).
 
-Pick any two of the 146 teams in `cfb_sim_data/` (138 real 2026 FBS programs plus 8
-fictional FCS schools), choose a home field or a neutral site, and hit **Sim Game** for
-one game or **Sim batch** for a series. Every game shows the scoreboard by quarter, the
-scoring summary, team stats, player stats and a drive chart, and is saved to the history
-column. The engine is calibrated against FBS season averages and against the real 2026
-results played so far.
+The game is Coach Career: take one of the 138 real 2026 FBS programs in `cfb_sim_data/`
+(146 teams with the 8 fictional FCS schools) through the 2026 season as its head coach,
+recruiting as you go, then the offseason and the seasons after. The engine is calibrated
+against FBS season averages and against the real 2026 results played so far.
 
 ## Run it
 
+The published site is <https://pattisonb.github.io/CFPCoachSimulator/>. It is static: the
+whole game runs in the browser. `web/worker.js` starts Pyodide (CPython on WebAssembly, from
+the jsDelivr CDN) in a Web Worker, unpacks `game.zip` (the Python packages and the data a
+career reads) into its in-memory filesystem and calls the dispatcher, `app/api.py`, with the
+same `/api/...` paths a server would answer; `web/game-client.js` is the page's side of it
+(`window.CFP.game.fetch`). The first visit downloads about 20 MB, Pyodide included; the
+browser keeps it after that. Sims run one week (or your game) per step in the worker, so the
+page stays responsive and shows progress.
+
+**Saves.** The worker's `data/seasons` and `data/coaches` folders are IndexedDB mounts
+(IDBFS), written back after every call that changed a file, so a career is in the browser's
+storage after every week and every recruiting action. They stay on that device and that
+browser; clearing the site's data deletes them. **Download career** saves a career as a
+`.ccsave` file and **Load career** opens one, which is how a career moves to another device.
+
+On your own computer, with Python 3.12 and nothing else installed:
+
 ```
-pip install -r requirements.txt
-python server.py
+python -m teamdata.build_teams
+python tools/dev_server.py
 ```
 
-Then open <http://127.0.0.1:8000>. On Windows, `run.bat` does the same. The first start
-builds `data/engine_teams.json` from `cfb_sim_data/` (about 20 seconds); run
-`python -m teamdata.build_teams` again whenever the source data changes.
+Then open <http://127.0.0.1:8000>. On Windows, `run.bat` starts the dev server.
+`python -m teamdata.build_teams` builds `data/engine_teams.json` and
+`data/player_potential.json` from `cfb_sim_data/` (about 20 seconds); run it again whenever
+the source data changes. `tools/dev_server.py` serves `web/` and answers `/api/...` from the
+same dispatcher in this Python (one lock around the dispatcher, a background thread playing
+a running sim a step at a time); its saves live on disk under `data/seasons` and
+`data/coaches`.
+
+The tests run natively: `python tests/run_all.py` (each `tests/test_*.py` as its own
+process). The browser tests (`test_career_e2e.py`, `test_offseason_e2e.py`, `test_ux_sweep.py`,
+`test_browser_runtime.py`) need Playwright (`pip install -r requirements.txt`, then
+`playwright install chromium`); `test_browser_runtime.py` also needs network access to the
+Pyodide CDN and takes a few minutes.
 
 ### On a phone
 
-The server listens on every network interface, so a phone on the same Wi-Fi opens the
-site at `http://<this PC's address>:8000` (the server prints the address when it starts;
-`ipconfig` shows it as the Wi-Fi IPv4 address). The page is laid out for phones, and on
-iPhone "Add to Home Screen" installs it as an app icon. Two things can block it:
+`python tools/dev_server.py --host 0.0.0.0` lets a phone on the same Wi-Fi open the site at
+`http://<this PC's address>:8000` (`ipconfig` shows it as the Wi-Fi IPv4 address). The
+page is laid out for phones, and on iPhone "Add to Home Screen" installs it as an app icon.
+Two things can block it:
 
 - **Windows Firewall.** Windows blocks Python on networks marked Public. Either mark your
   home Wi-Fi as Private (Settings > Network & internet > Wi-Fi > your network > Private),
   or allow Python through the firewall for Private and Public networks.
 - **Address changes.** Home routers can hand the PC a different address after a restart;
-  check the server's startup line again if the phone stops connecting.
+  check it again if the phone stops connecting.
 
-`python server.py --local` keeps the server reachable from this PC only.
-
-## GitHub and hosting
+## GitHub and publishing
 
 The code lives at <https://github.com/pattisonb/CFPCoachSimulator>. Generated files
-(`data/engine_teams.json`, `data/games.json`, `data/season_results.json`) are ignored
-and rebuilt on the server; the source data, box scores and season results are committed.
+(`data/engine_teams.json`, `data/player_potential.json`, `dist/`, `data/base_league.json`,
+`data/base_meta.json`) are ignored and rebuilt; the source data, box scores and season
+results are committed.
 
-**Free hosting on Render** (fits a Python server that runs CPU-bound sims; Vercel's
-serverless functions time out on long batches and cannot keep a running process):
+Every push to `main` (or a manual run) starts `.github/workflows/pages.yml` on GitHub
+Actions: Python 3.12, `python -m teamdata.build_teams`, then `python tools/build_site.py`,
+which writes `dist/` (the `web/` files, `game.zip`, `version.json` and `.nojekyll`; the first
+offseason's league is precomputed into `data/base_league.json` and `data/base_meta.json`
+first), and `dist/` is published to GitHub Pages. No pip install step: the game and the
+build use the standard library only. The one-time setting is in the repository's Settings →
+Pages: Source: **GitHub Actions**; the site's URL shows there after the first deploy.
 
-1. Sign in at <https://render.com> with GitHub and choose New > Blueprint.
-2. Pick the `CFPCoachSimulator` repo. Render reads `render.yaml`, installs the
-   requirements, runs `teamdata/build_teams.py`, and starts the server on its port.
-3. The site comes up at `https://cfp-coach-simulator.onrender.com` (or whatever name
-   Render assigns). Every push to `main` redeploys.
-
-Free-tier limits: the service sleeps after 15 minutes without traffic and takes up to a
-minute to wake; game history is kept in memory and resets on each deploy or wake. A
-batch of 100 games takes about 5 seconds on Render's free CPU.
+The data refresh tools (`tools/fetch_*.py`, `tools/forward_test.py`, the realism and
+calibration tools) stay on the owner's computer; what they write under `data/` is
+committed and goes out with the next push.
 
 ## House style for team marks
 
@@ -72,11 +95,15 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `teamdata/build_teams.py` | Converts the source into the engine's roster format (rating map and normalization below) |
 | `teamdata/ratings.py` | The player card attributes and traits (docs/RATINGS_V2.md) |
 | `teamdata/game_scale.py` | Our 1-99 rating scale and overall, frozen in `data/game_scale.json` |
-| `data/engine_teams.json` | The converted league the server loads (10 MB, generated) |
+| `data/engine_teams.json` | The converted league the game loads (10 MB, generated) |
 | `engine/` | The simulation engine; `engine/game.py` plays a full game and returns a result dict |
 | `engine/game_config.py` | Sliders and every calibration constant |
-| `server.py` | FastAPI server: team list, sim, history; serves `web/` |
-| `sim/` | The season simulation: the season engine, polls, bowls, awards, in-season form, head coaches, the real season import |
+| `app/api.py` | The dispatcher: every `/api/...` route as a plain function, called by the browser worker and the dev server |
+| `tools/dev_server.py` | Serves `web/` and the dispatcher on this computer (`python tools/dev_server.py`) |
+| `tools/build_site.py` | Builds the static site into `dist/` (`web/`, `game.zip`, `version.json`) |
+| `web/worker.js`, `web/game-client.js` | The game in the browser: Pyodide in a Web Worker, saves in IndexedDB; the page's client for it |
+| `.github/workflows/pages.yml` | Builds `dist/` and publishes it to GitHub Pages on every push to `main` |
+| `sim/` | The season simulation: the season engine, polls, bowls, awards, in-season form, head coaches, the real box score import |
 | `web/` | The site: plain HTML, CSS and JavaScript, no build step |
 | `tools/fetch_results.py` | Downloads the 2026 FBS results played so far from NCAA.com into `data/season_games.json` |
 | `tools/fetch_schedules.py` | Downloads every FBS team's 2026 schedule from ESPN into `data/schedules.json` |
@@ -86,7 +113,7 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `sim/teamnames.py` | Matches real-world team names (NCAA.com, ESPN, poll archives) to the engine's slugs |
 | `sim/form.py` | In-season form from the real results and box scores |
 | `sim/coaches.py` | Head coaches: ratings, the coach page and how a coach changes his team's play |
-| `sim/realdata.py` | The real 2026 season from the real results and box scores (`python -m sim.realdata`) |
+| `sim/realdata.py` | The real box score import (`python -m sim.realdata`), for the owner's tuning and research tools |
 | `data/rivalries.json` | Rivalry games, trophies and the all-time series entering 2025 |
 | `tests/` | The checks, one script each, run as files: `python tests/run_all.py` runs them all and reports pass/fail |
 | `tools/` | Data downloads, calibration and research scripts, run from the project root (`python tools/fetch_polls.py`) |
@@ -111,19 +138,21 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `coach_career/programs.py` | Program ratings: every program's living rating (prestige, winning, NIL, market, conference, coach), its tier and the AD's goal |
 | `tools/build_program_history.py`, `tools/build_program_market.py`, `tools/check_programs.py` | The starting values (thirty seasons of results; real crowds and TV) in `data/program_history.json` and `data/program_market.json`; the drift check |
 | `tools/check_carousel.py` | Plays quick offseasons and counts the carousel's churn against real years |
-| `web/recruiting.js`, `web/careersave.js` | The Recruiting, Prospects and Staff tabs; the career kept in the browser |
+| `web/recruiting.js`, `web/careersave.js` | The Recruiting, Prospects and Staff tabs; Download career and Load career (`.ccsave` files) |
 | `tools/check_recruiting.py` | Plays career seasons and holds their recruiting to the real classes |
-| `tools/clean_data.py` | Clears the generated data that piles up under `data/` (orphan league files, box scores without a season, long-run output); dry run by default |
+| `tools/clean_data.py` | Clears the generated data that piles up under `data/` (orphan league files, box scores without a season, long-run output) and the site build (`dist/`, `data/base_*.json`); dry run by default |
 | `tools/export_ratings.py` | Every real player's ratings and potential on the game's scale as one JSON file (`data/player_ratings.json`, generated) |
 
 ## API
 
+The dispatcher (`app/api.py`) answers these paths; `api.call(method, path, body)` returns a
+dict (or bytes, for a save file) or raises `ApiError(status, message)`.
+
 - `GET /api/teams` lists every team with ratings, colors, stadium and head coach.
 - `GET /api/teams/{slug}` adds the roster with starters, returners and display ratings.
-- `POST /api/sim` with `{"home": "ohio-state", "away": "texas", "venue": "home" | "neutral", "count": 1, "sliders": {}}`
-  returns `{"games": [...], "summary": {...}}`. The first team hosts unless the venue is neutral.
-- `GET /api/games`, `GET /api/games/{id}`, `GET /api/history/summary`, `DELETE /api/games`.
-- `GET /api/sliders` returns slider defaults and groups.
+- Seasons: `POST /api/season`, `GET /api/seasons`, `GET` and `DELETE /api/season/{id}`, `DELETE /api/seasons`;
+  `POST /api/season/{id}/advance` and `/gameday` start a sim that `api.step()` plays a week (or your game) at a
+  time, `GET /api/season/{id}/status` reports it and `POST /api/season/{id}/pause` stops it.
 - Coach Career (404 `not a Coach Career` on any other season): `GET /api/season/{id}/recruiting`
   (hours, NIL points, offers, your board and the week's news), `GET /api/season/{id}/prospects`
   (`position`, `stars`, `state`, `status`, `q`, `offset`, `limit`), `GET /api/season/{id}/prospect/{pid}`
@@ -131,8 +160,7 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
   `POST /api/season/{id}/board` `{"pid", "on"}`, `POST /api/season/{id}/staff` `{"staff_id", "area"}`,
   `POST /api/season/{id}/settings` `{"auto_recruit"}`, `GET /api/season/{id}/export` (`?full=true` adds
   every box score) and `POST /api/season/import`.
-- `GET /api/predictions` returns the latest frozen week of picks from `tools/forward_test.py`, with a `score`
-  block once that week has been scored (`{"week": null, "games": []}` when there are none).
+- `api.routes()` lists the rest (the week, schedules, standings, stats, depth charts, the offseason, coaches).
 
 ## How the data feeds the engine
 
@@ -823,9 +851,9 @@ The engine does not read any of it yet (fingerprint unchanged).
 
 A **New season** on the season page is a Coach Career (`coach_career/career.py`): the 2026 season played
 as the head coach, recruiting the class of 2027 as it goes (`coach_career/recruiting.py`, spec in
-`docs/superpowers/specs/2026-10-22-coach-career-design.md`). Older saves, "from today" seasons
-and Real 2026 have no career block and play exactly as before; recruiting never changes how
-games play (the engine fingerprint is unchanged).
+`docs/superpowers/specs/2026-10-22-coach-career-design.md`). A season without a career block
+plays exactly as before; recruiting never changes how games play (the engine fingerprint is
+unchanged).
 
 **The class.** `recruits.generate_class(2027)` (above): 4,092 fictional seniors, nobody
 committed at the start. Each gets three priorities from seven topics (close to home, playing
@@ -1071,20 +1099,10 @@ and national signing day.
 **Auto-recruit** works from your board (your picks first) and puts everyone it recruits on it. It is off, this week (your staff spend your hours through the next advance, then
 it turns itself off) or all season.
 
-**Saves.** Recruiting actions are saved two seconds after the last one, and the browser's copy
-follows a few seconds later. After every week the page keeps the career in the browser (IndexedDB): the season
-state, with your own games' box scores in it. When the server has forgotten the career (a
-restart), opening it uploads that copy and the server keeps whichever copy is newer.
-Testing-mode limits for the small shared instance (`server.MAX_CAREERS`, `MAX_SEASONS`): one
-career per browser (the page sends a random id it keeps in `localStorage` as `X-CFP-Browser`; a
-career records the browser that started it, and a second career or an import of a different one
-from the same browser is refused with a 409 until the first is deleted; a plain season is not a
-career, and a request without the id is not limited) and five seasons a career (the rollover out
-of the fifth is refused). `CFP_MAX_CAREERS=0` lifts the career limit; the tests set it. The server
-also keeps one season in memory at a time (`_evict_others`): touching a season drops every other
-idle season's state after writing any save still on its way, and it comes back from its file on
-the next ask; the real season and a season mid-sim stay. A career is 100-300 MB in memory, so two
-at once would pass a 512 MB instance.
+**Saves.** Every action and every week writes the season file (the state, with your own games'
+box scores in it), and the browser worker writes it to IndexedDB right after the call (see
+"Run it"). The dispatcher keeps one season in memory at a time: opening another one replaces
+it, except while a sim runs. A career is 100-300 MB in memory.
 **Download career** saves the state with every box score as a `.ccsave` file. Prospects store
 their EA ratings as lists in one key order, so a new career's save is under 1.5 MB.
 
@@ -1098,7 +1116,7 @@ to potential as lists in one key order, our overall, coachability, class, size, 
 stars, hometown and (real receivers) target share; each team's coaches and lineup shape; about
 7 MB in the state and under 2 MB in a downloaded save. The 146 source files (68 MB of JSON) are
 read one at a time and dropped: only each team's identity (`league.base_meta`: names, state,
-conference, colors, program) stays cached, since keeping the decoded files pushed the server past
+conference, colors, program) stays cached, since keeping the decoded files pushed the old server past
 a 512 MB instance's limit the first time a played career opened its offseason (peak 530 MB, now
 under 470). Each season the league goes back into the
 source format (our ratings back through the frozen scale) and through the same build as the real
@@ -1119,7 +1137,7 @@ number-one receivers take 27% of their team's yards, as the 2026 season's do). L
 that order. A team keeps its observed 2026 tendencies until its head coach changes. Team ratings
 come from the starters' overall, fit once to the 2026 team ratings (r 0.98 offense, 0.997
 defense). The built file is cached in `data/leagues/` and rebuilt from the state when missing;
-the server switches leagues when you open a career (never while another sims). Later seasons
+the dispatcher switches leagues when you open a career (never while another sims). Later seasons
 replay the 2026 schedule with home and away swapped every other year; the preseason poll comes
 from team ratings; dates show a year on.
 
@@ -1538,19 +1556,12 @@ the source data untouched) plays Oklahoma's defense as a 4-2-5 (coded 3-4), Wisc
 for a team that passes about 27% of the time). Their 15 games through week 8 over 40 seasons:
 Brier 0.234 to 0.213.
 
-## Real 2026 (its own page)
+## The real box scores (`sim/realdata.py`)
 
-`/real` (the "Real 2026" tab in the top nav) shows the actual 2026 season with the season
-page's tabs, read-only: every real result, the real AP polls with their vote points, the
-standings, the bracket and bowl projections from them, and real stats from the NCAA.com
-box scores (`sim/realdata.py` turns each one into the game's stat lines and matches 93% of
-player lines to a roster player by name and jersey number). Every FBS game opens its real
-box score; player pages show the real season, a real game-by-game log and FBS ranks; the
-Awards tab runs a real Heisman straw poll and award races on the real numbers. Pick any
-team in the header to follow it. "Refresh real data" downloads the latest results, box
-scores and polls (a few minutes) and rebuilds; `python -m sim.realdata --fetch` does the same
-from the command line. The page never simulates anything; the sim sections are "Sim a
-game" and "Sim a season".
+`sim/realdata.py` turns each NCAA.com box score into the game's stat lines and matches 93% of
+player lines to a roster player by name and jersey number (`python -m sim.realdata --fetch`
+downloads the latest results, box scores and polls and rebuilds). It is an owner-side import
+for the tuning and research tools; the site has no page of its own for the real season.
 
 ### How the real box scores are read
 
@@ -1623,10 +1634,10 @@ on the rosters). Real FBS teams average 28.9 points and 393.5 yards a team-game,
 220; the FCS games add 87 team-games that scored without trying a field goal). Re-tuned: depth
 charts changed at 13 teams and target weights at 127. Play-log fingerprint 9e2043dd737958e7.
 
-## Season mode (its own page)
+## The season page
 
-Open **/season** (or hit **Sim Season** on the matchup page). Pick your team and a mode,
-start a season, and play it a week at a time with **Advance week**, or jump with **Sim to
+The site opens on the season page (`web/index.html`). Pick your team, start a season, and
+play it a week at a time with **Advance week**, or jump with **Sim to
 selection** or **Sim to the end**. The week strip lets you look back at any week. Tabs:
 
 - **Games**: every game that week, your game first, with the AP ranks the teams carried
@@ -1658,13 +1669,10 @@ selection** or **Sim to the end**. The week strip lets you look back at any week
 The calendar: weeks 1-13 are the regular season (the 2026 schedule ends Nov 28), week 14
 is championship week (the top two in every conference's standings meet, on a neutral
 field for the Power Four and at the higher seed's stadium in the Group of Five), week 15 holds Army-Navy and the selection, weeks 16-19
-are the playoff. **Full season** starts from the real 2026 preseason AP poll and
-simulates everything (the **New season** button); **Start from today** (the "remaining"
-mode) keeps the real results, real polls, real stats and real box scores through the last
-completed week: `realdata.import_real_boxes`, the same import the Real 2026 page runs,
-turns every played game's NCAA box score into the game's stat lines and a box score the
-season can open, so the leaders, awards races, player game logs and your season summary
-start from the real numbers and simulated weeks add to them. FCS opponents play as the fictional school from the same region
+are the playoff. A season starts from the real 2026 preseason AP poll and simulates
+everything (the **New season** button). `sim/season.py` also keeps a "remaining" mode for
+the command line and the tools (`python -m sim.season ohio-state remaining`): the real
+results and real polls through the last completed week, then the rest simulated. FCS opponents play as the fictional school from the same region
 (`data/fcs_map.json`), moved by the strength of the real school it replaces (`season.fcs_strength`):
 +9 rating points for the strong FCS programs (South Dakota State, Montana State, Montana, Idaho, UC
 Davis, Villanova, Tarleton State and others), +3 for good ones, -7 for weak ones (most of the NEC and
@@ -1699,7 +1707,7 @@ real data need help, and `season.new_season` handles both:
   State had 11 games. `_fill_open_dates` pairs every FBS team with fewer than 12 games,
   trying every pairing and keeping the one with the oldest rematches (then conference
   mates together), in the latest week both teams have open. The game is titled
-  "Pac-12 flex game". The real 2026 page skips this step and shows only real games.
+  "Pac-12 flex game".
 
 Records shown anywhere on the page (header, standings, schedules, summary, the saved
 season list) count playoff games. Bowl selection, the committee and the weekly polls
@@ -1727,24 +1735,18 @@ counting weeks done plus the fraction of the current week's games (the status en
 carries `stage`, `week`, `games_done` and `games_total`).
 
 `SIM_WORKERS` sets how many processes simulate games: unset uses the machine's cores
-(capped at 8); `1` simulates in-process, which `render.yaml` sets because the free tier
-has a fraction of one shared CPU and 512 MB, where a pool only adds memory and spawn
-cost. On that tier a week still takes 10 to 20 seconds and the service sleeps after 15
-idle minutes, so a full season is a few minutes there; the fix for that is a paid Render
-instance with a dedicated CPU or running the server locally (`python server.py`, LAN
-access from a phone as described above).
+(capped at 8); `1` simulates in-process, which the browser always does (Pyodide has no
+worker processes), so a week there takes longer than under the dev server on a desktop.
 
 The This week card simulates your next game 20 times. Those sims run in parallel on the
-worker pool (about 1 second instead of 4 on a desktop), and the server starts them in
-the background the moment a week finishes, so the card is ready or nearly ready when the
-page asks; a second request for the same game waits for the first instead of simulating
+worker pool when there is one (about 1 second instead of 4 on a desktop) and are
+cached for the week; a second request for the same game waits for the first instead of simulating
 it again. The Awards tab's live race is cached until more games are played (or god mode
 edits a player), and the award pools list each position group's eligible players once
 instead of scanning the whole league for every award (2.5 seconds to 1 on first load).
 If a progress check collides with the sim thread changing the season, it answers with
 the last good record; the page retries a missed check up to five times, and if the
-server no longer has the season (the free host forgets saved seasons when it restarts)
-it closes the season and says so instead of waiting forever.
+season is gone it closes the season and says so instead of waiting forever.
 
 ### Team colours
 
@@ -2067,9 +2069,8 @@ interceptions, touchdowns, kicking points, top five each, from `/stats/leaders`)
 "All teams" for the national leaders, a chip for the full category table (passing,
 rushing, receiving, defense, kicking, punting, returns; top 100 or one team's full list,
 sortable), or Roster for the team's players by position with ratings and starters marked,
-which is also what shows before the first game is played. A season started from today counts the real games already played (from their NCAA
-box scores) and adds every simulated game; a season saved before season-long stats
-existed shows only your own games.
+which is also what shows before the first game is played. A season saved before season-long
+stats existed shows only your own games.
 
 ### Awards: the Heisman, every national award, All-America and all-conference teams
 

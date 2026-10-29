@@ -1,6 +1,7 @@
 /* A Coach Career as a file: Download career saves everything (every game's box score) as a
    .ccsave to keep or open on another device, and Load career opens one again. The game keeps
-   its own saves (in the browser's storage on the site); these are the copies you hold.
+   its own saves (in the browser's storage when the site runs there, on disk under data/ with
+   tools/dev_server.py); these are the copies you hold.
    window.CareerSave: download(id), upload(file), both through window.CFP.game.fetch. */
 (function () {
   async function download(id) {

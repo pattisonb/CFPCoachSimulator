@@ -722,7 +722,6 @@ body:not(.team-theme) .hdr-rank { background: var(--panel-2); border-color: var(
   table.team-season td.name .pos, table.player-season td.name .pos { display: none; }
   .topbar { padding: 8px 10px; }
   #season-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; width: 100%; }
-  body.real-mode #season-toolbar { display: flex; justify-content: flex-end; width: auto; }
   /* row 1: team picker and the theme button; row 2: mode, New season, Seasons */
   #season-toolbar #pick-team { grid-column: 1 / 3; grid-row: 1; width: 100%; max-width: none; }
   #season-toolbar .btn-theme { grid-column: 3; grid-row: 1; }
@@ -882,22 +881,6 @@ table.stats tr.mine td.name { font-weight: 800; }
   button.small, .btn-link.small { min-height: 36px; }
   input[type="radio"], input[type="checkbox"] { width: 18px; height: 18px; }
 }
-
-/* the real season: read-only, no sim controls */
-body.real-mode #btn-gameday, body.real-mode #btn-advance, body.real-mode #btn-to-selection, body.real-mode #btn-to-end,
-body.real-mode #btn-settings, body.real-mode #btn-today, body.real-mode #btn-new, body.real-mode #btn-seasons,
-body.real-mode #season-side { display: none !important; }
-body.real-mode .season-layout { grid-template-columns: 1fr; }
-.real-box { display: flex; flex-direction: column; gap: 10px; }
-.real-box-score { display: flex; justify-content: space-around; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel-2); flex-wrap: wrap; }
-.real-box-team { display: flex; align-items: center; gap: 8px; font-weight: 700; opacity: 0.75; }
-.real-box-team.win { opacity: 1; }
-.real-box-team .pts { font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; margin-left: 6px; }
-.real-box h4 { margin: 6px 0 0; }
-
-/* the real page is league-wide: no team picker in the header, no depth chart tab */
-body.real-mode #pick-team, body.real-mode #season-tabs button[data-tab=depth] { display: none !important; }
-body.real-mode #season-tabs button[data-tab="games"] { display: revert; }
 
 /* AP and CFP ranks beside a team's name (standings, schedules): a small tag, not run-on text */
 .rank-badge { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 4px; font-size: 10px; font-weight: 700;
