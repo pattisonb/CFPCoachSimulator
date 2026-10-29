@@ -20,7 +20,7 @@
   const view = { filters: { q: "", position: "", stars: "", state: "", status: "", sort: "rank", group: "" }, offset: 0, openClass: null, sort: "chance", selected: null, sheet: false, pitch: {}, group: null, state: null,
                 heard: {}, scene: null, reaction: null, focusScene: false,
                 // the board: the stage tab (per career), the search, the pane's sub-tab, the inline step, the needs disclosure, a Finish awaiting the re-fetch
-                stage: null, search: "", sub: "overview", step: null, needsOpen: false, expectScene: null };
+                stage: null, search: "", sub: "overview", step: null, needsOpen: false, expectScene: null, reveal: null };
   let H = null;
 
   const stars = (n) => "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
@@ -503,7 +503,7 @@
       try { localStorage.setItem("cfp-map-open", now ? "1" : "0"); } catch (e) { /* no storage */ }
     });
     const svg = window.USMap.render({ areas: v.areas || {}, staffed, dots, selectedState: opts.selectedState || null, teamColor: color,
-      onDot: (id) => { if (opts.onDot) opts.onDot(id); else { view.selected = id; if (phone()) view.sheet = true; if (boardAt) renderRecruiting(boardAt.s, boardAt.box); } },
+      onDot: (id) => { if (opts.onDot) opts.onDot(id); else { view.selected = id; view.reveal = id; if (phone()) view.sheet = true; if (boardAt) renderRecruiting(boardAt.s, boardAt.box); } },
       onState: opts.onState });
     if (view.selected) { const d = svg.querySelector(`circle.us-dot[data-id="${view.selected}"]`); if (d) d.classList.add("sel"); }
     svg.style.setProperty("--us-team", color);
@@ -652,11 +652,13 @@
     // ----- the list: one row a recruit in the chosen tab, in sort order -----
     const key = { chance: (b) => (b.committed === me || b.signed === me ? -2 : 0) - ((b.standing && b.standing.pct) || 0), rank: (b) => b.national_rank ?? Infinity };
     const inTab = (b) => view.stage.key === "all" || columnOf(b) === view.stage.key;
-    const want = v.board.find((b) => b.id === view.selected);
+    // picked from the map's dot or his profile (view.reveal) while a tab, the search or a filter hides him: show everyone and him
+    const want = view.reveal ? v.board.find((b) => b.id === view.reveal) : null;
+    view.reveal = null;
     if (want && !(pool.includes(want) && inTab(want))) {
-      // picked from the map or his profile while a tab, the search or a filter hides him: show everyone and him
       view.stage.key = "all"; view.search = ""; view.group = null; view.state = null;
-      box.replaceChildren(); drawBoard(s, box, v); return;
+      view.selected = want.id;
+      drawBoard(s, box, v); return;
     }
     const rows = pool.filter(inTab).sort((a, b) => key[view.sort](a) - key[view.sort](b));
     if (rows.length && !rows.some((b) => b.id === view.selected)) { view.selected = rows[0].id; view.step = null; }
@@ -1247,7 +1249,7 @@
     const onBoard = el("button", { type: "button", class: "go-btn" });
     // recruiting him happens on the board: once he is on it, a button goes straight there
     const toBoard = el("button", { type: "button", class: "go-btn primary", text: "Recruit him on your board →",
-      onclick: () => { view.selected = pid; view.sheet = true; view.group = null; view.state = null; H.closeModal(); H.onChange("recruiting"); } });
+      onclick: () => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; H.closeModal(); H.onChange("recruiting"); } });
     const label = () => { onBoard.textContent = on ? "✓ On your board · remove" : "+ Add to your board"; onBoard.classList.toggle("primary", !on); toBoard.hidden = !on || !!pub.signed || !!into; };
     label();
     onBoard.addEventListener("click", async () => {

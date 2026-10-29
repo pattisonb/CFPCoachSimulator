@@ -97,6 +97,11 @@ if __name__ == "__main__":
                     if not rc["status"][q]["signed"] and q != verbal_pid and q not in rc["offers"].get("ohio-state", []))
     rc["status"][hard_pid].update(committed="georgia", hard=True)
     rc["offers"].setdefault("ohio-state", []).append(hard_pid)
+    # and one hard-committed elsewhere without your offer: no offer can go out to him
+    hard_noffer_pid = next(q for q in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"])
+                           if not rc["status"][q]["signed"] and q not in (verbal_pid, hard_pid) and q not in rc["offers"].get("ohio-state", [])
+                           and not rc["prospects"][q].get("hidden"))     # a hidden prospect cannot go on the board
+    rc["status"][hard_noffer_pid].update(committed="georgia", hard=True)
     season.save_season(done)
     port = free_port()
     base = f"http://127.0.0.1:{port}"
@@ -296,7 +301,8 @@ if __name__ == "__main__":
             page.wait_for_selector(".go-pane .go-scene .go-scene-line.cue", timeout=30_000)
             settle(page, n)
             assert page.query_selector(".go-pane .go-pitch .go-tag:has-text('Heard')"), "the cue marks a pitch"
-            assert page.query_selector("#rc-finish"), "the head offers to finish the open call"
+            assert not page.query_selector("#rc-finish"), "Finish stays out of the head while the scene is on screen"
+            assert "primary" not in (page.get_attribute("#rc-recruit", "class") or ""), "Recruit steps back while the call plays"
             page.click("#rc-recruit")
             page.wait_for_selector(".go-menu")
             whys = page.eval_on_selector_all(".go-menu .go-menu-item", "els => els.map(e => [e.disabled, (e.querySelector('.go-menu-why') || {}).textContent || ''])")
@@ -456,13 +462,13 @@ if __name__ == "__main__":
             signed = call(base, f"/api/season/{B}/prospects?status=signed&limit=200")["rows"]
             lost_pid = next(r["id"] for r in signed if r["signed"] != "ohio-state")
             mine_pid = next(r["id"] for r in signed if r["signed"] == "ohio-state")
-            for pid in (lost_pid, mine_pid, verbal_pid, hard_pid):
+            for pid in (lost_pid, mine_pid, verbal_pid, hard_pid, hard_noffer_pid):
                 call(base, f"/api/season/{B}/board", {"pid": pid, "on": True})
             open_tab(page, base, B, "recruiting", ".go-stages")
             page.click(".go-stages button[data-stage=committed]")
             time.sleep(0.5)
             words = dict(page.eval_on_selector_all(".go-row-recruit", "els => els.map(e => [e.dataset.pid, e.querySelector('.go-standing-word').textContent.trim()])"))
-            assert words[mine_pid] == "Yours" and words[lost_pid] == "Lost" and words[hard_pid] == "Lost" and words[verbal_pid] in ("In it", "Long shot"), words
+            assert words[mine_pid] == "Yours" and words[lost_pid] == "Lost" and words[hard_pid] == "Lost" and words[hard_noffer_pid] == "Lost" and words[verbal_pid] in ("In it", "Long shot"), words
             page.click(f".go-row-recruit[data-pid='{lost_pid}']")
             time.sleep(0.5)
             assert page.text_content(".go-pane .go-chip").startswith("Signed · ") and not page.query_selector("#rc-recruit"), "a prospect signed elsewhere has no Recruit menu"
@@ -487,7 +493,17 @@ if __name__ == "__main__":
             page.click("#rc-recruit")
             page.wait_for_selector(".go-menu")
             assert not page.eval_on_selector(".go-menu-item[data-action=pull_offer]", "e => e.disabled"), "Pull offer is live for a hard commit elsewhere"
+            assert page.inner_text(".go-menu-item[data-action=offer] .go-menu-why").strip() == "Already offered"
+            page.keyboard.press("Escape")
+            # the same without your offer: Offer… is greyed for the hard commit, and there is nothing to pull
+            page.click(f".go-row-recruit[data-pid='{hard_noffer_pid}']")
+            time.sleep(0.5)
+            assert page.text_content(".go-pane .go-chip").startswith("Hard commit · ")
+            page.click("#rc-recruit")
+            page.wait_for_selector(".go-menu")
+            assert page.eval_on_selector(".go-menu-item[data-action=offer]", "e => e.disabled")
             assert page.inner_text(".go-menu-item[data-action=offer] .go-menu-why").strip() == "Hard commit elsewhere"
+            assert page.inner_text(".go-menu-item[data-action=pull_offer] .go-menu-why").strip() == "Not offered"
             page.keyboard.press("Escape")
 
             # --- Badges: a generational prospect wears the tag on the list; your class rows wear a badge or none
