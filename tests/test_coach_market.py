@@ -20,6 +20,54 @@ def to_stage(st, stage):
         offseason.advance(st)
 
 
+def test_your_coordinators_can_leave():
+    """Your staff is in the carousel like everyone else's: a coordinator can move on for a bigger
+    job (COORD_MOVE), and a strong program can hire him as its head coach; either way his job
+    opens at your Staff step with the reason and five candidates."""
+    import random
+    # 1. moving on: with the roll certain, both your coordinators leave and the Staff step says why
+    saved = carousel.COORD_MOVE
+    carousel.COORD_MOVE = 1.0
+    try:
+        st = season.new_season("ohio-state", "full", seed=5, career=True)
+        finished(st)
+        offseason.start(st)
+        to_stage(st, "staff")
+        car = st["offseason"]["carousel"]
+        assert sorted(car["poached"]) == ["defensive_coordinator", "offensive_coordinator"], car["poached"]
+        mine = [c for c in car["changes"] if c["team"] == "ohio-state" and c["role"] != "head_coach"]
+        assert mine and all(c["reason"] == "moved on" or c["reason"].startswith("left for") for c in mine), mine
+        view = offseason.view(st)["staff"]
+        left = {w["role"] for w in view["leaving"]}
+        assert {"OC", "DC"} <= left, left
+        for w in view["leaving"]:
+            if w["role"] in ("OC", "DC"):
+                assert "bigger job" in view["reasons"][w["id"]] or "hired away as the head coach at" in view["reasons"][w["id"]], view["reasons"]
+                assert len(view["candidates"][w["id"]]) == offseason.STAFF_CANDIDATES
+    finally:
+        carousel.COORD_MOVE = saved
+    # 2. hired away: your coordinator is in the candidate pool for another program's head coaching job
+    st = season.new_season("ohio-state", "full", seed=5, career=True)
+    finished(st)
+    offseason.start(st)
+    lg = st["league"]
+    me, year = st["team"], st["offseason"]["year"]
+    res = carousel._results(st)
+    res[me].update(wins=13, losses=1)
+    verdicts = {slug: carousel.judge(t, slug, res.get(slug, {"wins": 0, "losses": 0}), year, st) for slug, t in lg["teams"].items()}
+    oc = lg["teams"][me]["coaches"]["offensive_coordinator"]
+    oc["ratings"] = {k: 99 for k in oc["ratings"]}
+    saved = carousel.HC_MOVE_PCT, carousel.COORD_UP
+    carousel.HC_MOVE_PCT, carousel.COORD_UP = 2.0, -999          # no sitting head coach qualifies; any program may call
+    try:
+        hire, src = carousel._pick_head_coach(st, "akron", verdicts, res, {}, random.Random(1), year, set())
+    finally:
+        carousel.HC_MOVE_PCT, carousel.COORD_UP = saved
+    assert src.get("kind") == "coordinator" and src.get("team") == me and hire["name"] == oc["name"], (hire["name"], src)
+    assert not lg["teams"][me]["coaches"]["offensive_coordinator"].get("vacant")      # the pool check mutates nothing
+    print("your coordinators can leave: gone at the Staff step with the reason; a 99 coordinator of yours is hired away")
+
+
 if __name__ == "__main__":
     st = season.new_season("ohio-state", "full", seed=5, career=True)
     finished(st)
@@ -69,3 +117,4 @@ if __name__ == "__main__":
     assert cands[pick]["name"] not in {c["name"] for c in carousel.market(st)["coaches"]}, "hired, still for hire"
     season.close_pool()
     print(f"coach market ok: {len(market['coaches'])} coaches for hire, {len(fired)} head coaches fired, {len(hires)} hires")
+    test_your_coordinators_can_leave()

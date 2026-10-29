@@ -432,14 +432,20 @@ def run(state: dict) -> dict:
                 changes.append({"team": slug, "role": role, "old": c["name"], "reason": "let go"})
                 market_add(state, c, role, slug, f"Let go at {_name(slug)} when {filled[slug]['name']} brought his own staff", year)
                 open_coords.append((slug, role, "let go"))
-            elif slug != me and rng.random() < COORD_MOVE:
+            elif rng.random() < COORD_MOVE:                      # yours too: a coordinator looks for a bigger job
                 changes.append({"team": slug, "role": role, "old": c["name"], "reason": "moved on"})
                 market_add(state, c, role, slug, f"Left {_name(slug)} after {year - (c.get('since') or year)} seasons to look for a bigger job", year)
                 open_coords.append((slug, role, "moved on"))
-    your_poached = []
+    your_poached, your_poached_why = [], {}
     for slug, role, reason in sorted(open_coords, key=lambda x: -attract(state, x[0])):
-        if slug == me:
+        if slug == me:                                            # your opening waits for you at the Staff step
             your_poached.append(role)
+            c = lgd["teams"][me]["coaches"].get(role)
+            if c:                                                 # he is gone: the slot is vacant until you fill it (a new dict: his record may now be another team's head coach)
+                lgd["teams"][me]["coaches"][role] = {**c, "name": "", "vacant": True}
+            went = next((c for c in changes if c["team"] == me and c["role"] == role and c.get("old") and c["reason"].startswith("left for")), None)
+            your_poached_why[role] = (f"was hired away as the head coach at {went['reason'][len('left for '):]}" if went
+                                      else "left to look for a bigger job" if reason == "moved on" else "is moving on")
             continue
         hire, src = _pick_coordinator(state, slug, role, rng, year)
         lgd["teams"][slug]["coaches"][role] = hire
@@ -455,7 +461,7 @@ def run(state: dict) -> dict:
         lower = sorted({s for s in open_hc + list(filled) if s != me}, key=lambda s: -attract(state, s))
         openings = [s for s in lower if attract(state, s) <= my_a][:FIRED_PICKS] or lower[-FIRED_PICKS:]
     return {"changes": changes, "you": dict(you, fired=bool(fired_you)) if you else {}, "offers": offers, "openings": openings,
-            "choice": None, "poached": your_poached, "verdicts": {s: {"security": v["security"], "met": v["met"], "goal": v["goal"]["text"]}
+            "choice": None, "poached": your_poached, "poached_why": your_poached_why, "verdicts": {s: {"security": v["security"], "met": v["met"], "goal": v["goal"]["text"]}
                                                                 for s, v in verdicts.items()}}
 
 
@@ -482,13 +488,14 @@ def _pick_head_coach(state: dict, slug: str, verdicts: dict, res: dict, filled: 
     cands = []
     taken = taken or set()
     for s, t in lgd["teams"].items():
-        if s in (slug, me) or s in filled:
+        if s == slug or s in filled:
             continue
         hc = t["coaches"]["head_coach"]
         recs = hist.get(s, [])[-2:] + [[res.get(s, {}).get("wins", 0), res.get(s, {}).get("losses", 0)]]
         w = sum(r[0] for r in recs)
         pct = w / max(1, sum(r[0] + r[1] for r in recs))
-        if hc["name"] not in taken and attract(state, s) + MOVE_UP <= a and pct >= HC_MOVE_PCT and verdicts[s]["tenure"] >= 2:
+        # you are never hired away behind your back (your offers come in step 4); your coordinators are fair game
+        if s != me and hc["name"] not in taken and attract(state, s) + MOVE_UP <= a and pct >= HC_MOVE_PCT and verdicts[s]["tenure"] >= 2:
             cands.append((_rating(hc) + HC_PROVEN + 20 * (pct - HC_MOVE_PCT) + rng.gauss(0, 3), hc, {"kind": "head_coach", "team": s,
                           "text": f"head coach at {_name(s)}"}))
         for role in COORD_ROLES:

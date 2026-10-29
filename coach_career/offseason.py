@@ -1286,26 +1286,29 @@ STAFF_ROLES = {"OC": "offensive_coordinator", "DC": "defensive_coordinator"}
 STAFF_CANDIDATES = 5             # coaches offered for each opening on your staff
 
 
-def _staff_changes(state: dict, poached: list[str]) -> dict:
-    """Your staff: a coordinator another program hired as its head coach (the carousel), a
-    recruiter who moves on now and then; each opening gets candidates (coordinators from the
-    coaching market, recruiters from position coaches around the country)."""
+def _staff_changes(state: dict, poached: list[str], why: Optional[dict] = None) -> dict:
+    """Your staff: a coordinator another program hired as its head coach or who left for a bigger
+    job (the carousel), a recruiter who moves on now and then; each opening gets candidates
+    (coordinators from the coaching market, recruiters from position coaches around the country).
+    `why` says, per coordinator role, how he came to leave."""
     rng = _rng(state, "staff")
     staff = state["career"]["staff"]
-    leaving, candidates = [], {}
+    leaving, candidates, reasons = [], {}, {}
     taken = {s["name"] for s in staff}
     for s in staff:
         gone = STAFF_ROLES[s["role"]] in poached if s["role"] in STAFF_ROLES else rng.random() < RECRUITER_LEAVE
         if gone:
             leaving.append(s["id"])
             candidates[s["id"]] = _candidates(state, s, rng, taken)
+            if s["role"] in STAFF_ROLES and (why or {}).get(STAFF_ROLES[s["role"]]):
+                reasons[s["id"]] = why[STAFF_ROLES[s["role"]]]
     marks = _staff_marks(state)
     for s in staff:                       # the rest move with their unit's year and the class they signed
         if s["id"] not in leaving:
             m = marks.get(s["role"], 0)
             s["evaluation"] = int(max(35, min(99, s["evaluation"] + m + rng.choice((-1, 0, 0, 1)))))
             s["recruiting"] = int(max(35, min(99, s["recruiting"] + marks.get("class", 0) + rng.choice((-1, 0, 0, 1)))))
-    return {"leaving": leaving, "candidates": candidates, "hired": {}}
+    return {"leaving": leaving, "candidates": candidates, "hired": {}, "reasons": reasons}
 
 
 STAFF_MARK = 2                   # a top-third offense or defence lifts its coordinator this much a year; a bottom third costs it
@@ -1434,6 +1437,7 @@ def _apply_staff(state: dict) -> list[dict]:
             except ValueError:
                 pass
         if key and coaches.get(key):
+            coaches[key].pop("vacant", None)
             coaches[key]["name"] = c["name"]
             coaches[key]["ratings"]["player_development"] = c["evaluation"]
             coaches[key]["ratings"]["recruiting"] = c["recruiting"]
@@ -1522,7 +1526,8 @@ def advance(state: dict) -> dict:
         off["carousel"] = car
         off["coaching_changes"] = car["changes"]
         off["staff"] = _staff_changes(state, car["poached"] + [STAFF_ROLES[x["role"]] for x in state["career"]["staff"]
-                                                              if x["id"] in (off.get("staff_open") or {}) and x["role"] in STAFF_ROLES])
+                                                              if x["id"] in (off.get("staff_open") or {}) and x["role"] in STAFF_ROLES],
+                                      car.get("poached_why"))
         off["stage"] = "staff"
     elif stage == "staff":
         off["staff"]["changes"] = _apply_staff(state)
@@ -1765,7 +1770,7 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
         from coach_career import carousel
         by_id = {s["id"]: s for s in state["career"]["staff"]}
         opened = off.get("staff_open") or {}
-        reasons = {i: opened.get(i) or ("is moving on" if by_id[i]["role"] == "Recruiter" else "was hired away as a head coach")
+        reasons = {i: opened.get(i) or staff.get("reasons", {}).get(i) or ("is moving on" if by_id[i]["role"] == "Recruiter" else "was hired away as a head coach")
                    for i in staff["leaving"] if i in by_id}
         out["staff"] = {"leaving": [by_id[i] for i in staff["leaving"] if i in by_id], "candidates": staff["candidates"],
                         "hired": staff["hired"], "changes": staff.get("changes", []), "reasons": reasons,
