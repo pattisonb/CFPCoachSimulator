@@ -1,0 +1,127 @@
+/* The Recruiting board: stage tabs with counts, a plain list, one pane where every action lives behind
+   the Recruit menu. Colours come from the site's theme variables (styles.css), so it reads in the light
+   and the dark theme. Every rule for the board is here and only here. */
+
+/* ----- the stage row: tabs with counts, the search and the sort ----- */
+.go-stagebar { display: flex; justify-content: space-between; align-items: center; gap: 10px 16px; flex-wrap: wrap; }
+.go-stages { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.go-stages button { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border);
+  background: transparent; color: var(--text); font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; white-space: nowrap; }
+.go-stages button b { font-size: 12px; line-height: 18px; min-width: 18px; padding: 0 6px; border-radius: 999px; text-align: center; background: var(--panel-2); color: var(--muted); }
+.go-stages button:hover { border-color: var(--muted); }
+.go-stages button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.go-stages button[aria-pressed="true"] b { background: color-mix(in srgb, var(--bg) 22%, transparent); color: var(--bg); }
+.go-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+#rc-search { min-height: 40px; min-width: 220px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; font-size: 14px; }
+#rc-search:focus { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: 1px; }
+.go-tools .go-sel { min-height: 40px; }
+
+/* the needs strip behind a disclosure */
+.go-needs-disclosure { display: flex; flex-direction: column; gap: 4px; }
+.go-needs-toggle { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 4px; border: none; background: none; color: var(--text);
+  font: inherit; font-weight: 700; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
+.go-needs-toggle .go-tag { text-transform: none; letter-spacing: 0; }
+.go-needs-box .go-needs { margin: 0 0 4px; }
+
+/* ----- the two panels: the list and the pane ----- */
+.go-board { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 16px; align-items: start; }
+.go-board .go-list-recruits { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.go-list-empty { margin: 12px 8px; }
+.go-list-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; flex-wrap: wrap; padding: 10px 8px 0; }
+.go-list-foot .go-link { min-height: 36px; }
+
+/* a row: the dot, the avatar, the name and one line, the word of standing; nothing else */
+.go-row-recruit { display: grid; grid-template-columns: 10px 38px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 8px 12px 8px 8px;
+  border-radius: 12px; border: 1px solid transparent; background: transparent; color: var(--text); text-align: left; font: inherit; cursor: pointer; }
+.go-row-recruit:hover { background: var(--panel-2); border-color: var(--border); }
+.go-row-recruit[aria-pressed="true"] { background: var(--panel); border-color: var(--go-primary, var(--accent)); }
+.go-row-recruit:focus-visible { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: 1px; }
+.go-row-dot { width: 8px; height: 8px; border-radius: 50%; justify-self: center; background: transparent; }
+.go-row-dot.up { background: var(--good); }
+.go-row-dot.down { background: var(--bad); }
+.go-row-id { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.go-row-id b { font-size: 15px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.go-row-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.go-row-line .go-stars { font-size: 11px; letter-spacing: 0; }
+.go-standing-word { font-size: 12px; font-weight: 700; white-space: nowrap; color: var(--muted); }
+.go-standing-word.good { color: var(--good-text); }
+.go-standing-word.warn { color: var(--go-warn-text); }
+.go-standing-word.bad { color: var(--bad-text); }
+
+/* ----- the pane: head, step, strip, tags, sub-tabs ----- */
+.go-pane-head { align-items: flex-start; }
+.go-pane-id { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.go-pane-name { font-size: 18px; line-height: 1.2; text-align: left; overflow-wrap: anywhere; }
+.go-pane .go-chip { min-height: 0; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-2); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; cursor: default; margin-top: 2px; }
+.go-pane .go-chip.good { color: var(--good-text); border-color: color-mix(in srgb, var(--good) 45%, var(--border)); }
+.go-pane .go-chip.warn { color: var(--go-warn-text); border-color: color-mix(in srgb, var(--go-warn) 45%, var(--border)); }
+.go-pane .go-chip.bad { color: var(--bad-text); border-color: color-mix(in srgb, var(--bad) 45%, var(--border)); }
+.go-pane-act { flex: none; display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+.go-pane-act .go-btn { white-space: nowrap; }
+.go-pane-back { flex: none; min-width: 44px; min-height: 44px; padding: 0 12px; }
+
+/* the inline step: Message, Offer…, Raise NIL… (scoped to the pane: the Office's week steps share the class name) */
+.go-pane .go-step { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 12px; border-radius: 12px; background: var(--panel-2); border: 1px dashed var(--go-primary, var(--accent)); cursor: default; }
+.go-step label { display: flex; flex-direction: column; gap: 4px; }
+.go-step .go-sel, .go-step .go-nil { width: 100%; max-width: 420px; min-height: 40px; }
+.go-step .go-nil { max-width: 140px; }
+.go-step p { margin: 0; }
+.go-step-acts { display: flex; flex-wrap: wrap; gap: 8px 10px; }
+
+/* the stat strip: four cells */
+.go-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.go-strip .go-stat { padding: 8px 10px; min-width: 0; }
+.go-strip .go-stat-val { font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; }
+
+/* the sub-tabs */
+.go-subtabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.go-subtabs button { flex: none; min-height: 40px; padding: 0 12px; margin-bottom: -1px; border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none;
+  color: var(--muted); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+.go-subtabs button:hover { color: var(--text); }
+.go-subtabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--go-primary, var(--accent)); }
+.go-subtabs button:focus-visible { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: -2px; }
+.go-sub-body { display: flex; flex-direction: column; gap: 10px; min-height: 80px; }
+.go-sub-body h3 { margin: 10px 0 4px; }
+.go-sub-body .go-grades { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+.go-scouting, .go-history { display: flex; flex-direction: column; gap: 10px; }
+.go-scouting p, .go-history p { margin: 0; }
+.go-comps:empty { display: none; }
+
+/* his list as a race: a school without an offer in is hollow */
+.go-race-pill.unoffered { background: transparent; border-width: 2px; padding: 0 7px; }
+
+/* ----- the Recruit menu: a popover under the button; a bottom sheet on a phone ----- */
+.go-menu { position: fixed; z-index: 70; min-width: 270px; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow-y: auto; padding: 6px; border-radius: 14px;
+  background: var(--panel); border: 1px solid var(--border); box-shadow: 0 14px 44px var(--shadow, rgba(0, 0, 0, 0.45)); display: flex; flex-direction: column; gap: 2px; }
+.go-menu-item { display: flex; flex-direction: column; align-items: stretch; gap: 1px; width: 100%; min-height: 40px; padding: 7px 12px; border-radius: 10px; border: none;
+  background: none; color: var(--text); text-align: left; font: inherit; cursor: pointer; }
+.go-menu-item:hover:not(:disabled), .go-menu-item:focus-visible { background: var(--panel-2); outline: none; }
+.go-menu-item:focus-visible { box-shadow: inset 0 0 0 2px var(--go-primary, var(--accent)); }
+.go-menu-item:disabled { cursor: default; opacity: 1; }
+.go-menu-item:disabled b, .go-menu-item:disabled .go-menu-cost { color: var(--muted); }
+.go-menu-main { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.go-menu-main b { font-size: 15px; }
+.go-menu-why { font-size: 12px; color: var(--muted); }
+.go-menu-backdrop { position: fixed; inset: 0; z-index: 69; background: rgba(5, 8, 18, 0.45); }
+.go-menu.sheet { left: 0; right: 0; bottom: 0; top: auto; max-width: none; max-height: 82vh; border-radius: 16px 16px 0 0; border-width: 1px 0 0;
+  padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px)); }
+.go-menu.sheet .go-menu-item { min-height: 48px; }
+
+/* ----- a phone: the list fills the width, the pane is a full-screen dialog, the stage row scrolls ----- */
+@media (max-width: 759px) {
+  .go-board { grid-template-columns: minmax(0, 1fr); }
+  .go-stagebar { flex-direction: column; align-items: stretch; }
+  .go-stages { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; padding-bottom: 2px; scrollbar-width: thin; }
+  .go-tools { width: 100%; }
+  .go-tools #rc-search { flex: 1 1 160px; min-width: 0; }
+  .go-row-recruit { min-height: 60px; }
+  .go-pane.sheet { position: fixed; inset: 0; top: 0; bottom: 0; z-index: 8; width: auto; height: 100dvh; max-height: none; margin: 0; border-radius: 0; border-width: 0;
+    box-shadow: none; padding: 12px 14px calc(16px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
+  .go-pane.sheet .go-pane-head { position: sticky; top: -12px; z-index: 1; margin: -12px -14px 0; padding: 10px 14px; background: var(--panel); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .go-pane.sheet .go-pane-act { flex: 1 1 100%; flex-direction: row; justify-content: flex-end; }
+  .go-pane.sheet .go-pane-act .go-btn { flex: 1 1 0; }
+  body.go-sheet-open { overflow: hidden; }
+  .go-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .go-step .go-sel { max-width: none; }
+}
