@@ -1074,9 +1074,15 @@ follows a few seconds later. After every week the page keeps the career in the b
 state, with your own games' box scores in it. When the server has forgotten the career (a
 restart), opening it uploads that copy and the server keeps whichever copy is newer.
 Testing-mode limits for the small shared instance (`server.MAX_CAREERS`, `MAX_SEASONS`): one
-career on the server at a time (a second career, or an import of a different one, is refused with
-a 409 until the first is deleted; a plain season is not a career) and five seasons a career (the
-rollover out of the fifth is refused). `CFP_MAX_CAREERS=0` lifts the career limit; the tests set it.
+career per browser (the page sends a random id it keeps in `localStorage` as `X-CFP-Browser`; a
+career records the browser that started it, and a second career or an import of a different one
+from the same browser is refused with a 409 until the first is deleted; a plain season is not a
+career, and a request without the id is not limited) and five seasons a career (the rollover out
+of the fifth is refused). `CFP_MAX_CAREERS=0` lifts the career limit; the tests set it. The server
+also keeps one season in memory at a time (`_evict_others`): touching a season drops every other
+idle season's state after writing any save still on its way, and it comes back from its file on
+the next ask; the real season and a season mid-sim stay. A career is 100-300 MB in memory, so two
+at once would pass a 512 MB instance.
 **Download career** saves the state with every box score as a `.ccsave` file. Prospects store
 their EA ratings as lists in one key order, so a new career's save is under 1.5 MB.
 

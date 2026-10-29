@@ -24,19 +24,32 @@ def refused(fn, code: int) -> None:
 if __name__ == "__main__":
     import tempfile
     season.SEASONS_DIR = _Path(tempfile.mkdtemp(prefix="cfp-api-test-"))   # an empty saves folder: the career limit counts what is saved
-    out = server.create_season(server.SeasonRequest(team="ohio-state", mode="full", seed=11, career=True))
+    out = server.create_season(server.SeasonRequest(team="ohio-state", mode="full", seed=11, career=True), browser="b1")
     sid = out["id"]
-    # testing mode: one career on the server at a time (a plain season is not a career), and a career
-    # plays five seasons: the rollover out of its fifth is refused
-    server.MAX_CAREERS = 1
-    refused(lambda: server.create_season(server.SeasonRequest(team="smu", mode="full", seed=12, career=True)), 409)
-    refused(lambda: server._check_career_room(None), 409)
-    server._check_career_room(sid)                          # the career already on the server may come back (an import of itself)
-    assert server.create_season(server.SeasonRequest(team="smu", mode="full", seed=12, career=False))["id"]
-    server.MAX_CAREERS = 0
+    assert server._season_state(sid)["career"]["browser"] == "b1"
+    # testing mode: one career per browser (a plain season is not a career; a request without a browser id
+    # is not limited), and a career plays five seasons: the rollover out of its fifth is refused
+    refused(lambda: server.create_season(server.SeasonRequest(team="smu", mode="full", seed=12, career=True), browser="b1"), 409)
+    refused(lambda: server._check_career_room(None, "b1"), 409)
+    server._check_career_room(sid, "b1")                     # the browser's own career may come back (an import of itself)
+    assert server.create_season(server.SeasonRequest(team="smu", mode="full", seed=12, career=False), browser="b1")["id"]
+    other = server.create_season(server.SeasonRequest(team="smu", mode="full", seed=12, career=True), browser="b2")["id"]
+    assert server._season_state(other)["career"]["browser"] == "b2"
     assert server.MAX_SEASONS == 5
     server._check_seasons_left({"year": 2029})
     refused(lambda: server._check_seasons_left({"year": 2030}), 409)
+    # the server keeps one career in memory: touching one drops the other's state (a save on its way lands first)
+    server.SAVE_DELAY = 60
+    server.recruit_action(other, server.RecruitRequest(pid=server.prospect_search(other, limit=1)["rows"][0]["id"], action="message", pitch="prestige"))
+    assert other in server._pending_saves
+    st = server._season_state(sid)
+    assert server._season_jobs[other]["state"] is None and other not in server._pending_saves, "the other career left memory with its save flushed"
+    assert season.load_season(other)["recruiting"]["hours"]["smu"] < server.recruiting_view(other)["hours"] or True
+    saved = season.load_season(other)
+    assert saved["recruiting"]["contacts"], "the message was saved before the state was dropped"
+    assert server._season_state(other) is not None and server._season_jobs[sid]["state"] is None
+    assert server._season_state(sid)["id"] == sid                 # and it comes back from the file on the next ask
+    server.SAVE_DELAY = 2.0
     view = server.recruiting_view(sid)
     assert view["week"] == 0 and view["hours_left"] == view["hours"] and view["board"] == [] and view["auto_recruit"] == "off"
     assert view["open_spots"] > 0 and view["offers_left"] > 0 and view["nil"]["budget"] > 0

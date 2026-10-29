@@ -5,7 +5,18 @@
 
   const state = { teams: [], season: null, viewWeek: null, tab: "schedule", poll: "ap", timer: null, standings: null };
 
+  // this browser's id: a career belongs to the browser that started it (one career per browser for now)
+  function browserId() {
+    try {
+      let id = localStorage.getItem("cfp-browser");
+      if (!id) { id = Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, "0")).join(""); localStorage.setItem("cfp-browser", id); }
+      return id;
+    } catch (e) { return ""; }
+  }
+  window.CFP.browserId = browserId;
   async function api(path, options) {
+    options = options || {};
+    options.headers = { ...(options.headers || {}), "X-CFP-Browser": browserId() };
     const res = await fetch(path, options);
     if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
     return res.json();

@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -391,13 +391,29 @@ def _season_state(season_id: str) -> dict:
     job = _season_jobs.get(season_id)
     if job and job.get("state") is not None:
         _activate(job["state"])
+        _evict_others(season_id)
         return job["state"]
     state = season.load_season(season_id)
     if state is None:
         raise HTTPException(404, "season not found")
     _activate(state)
     _season_jobs[season_id] = _idle_job(season_id, state)
+    _evict_others(season_id)
     return state
+
+
+def _evict_others(season_id: str) -> None:
+    """One season in memory at a time (a career is 100-300 MB on a small instance): every other idle
+    season's state is dropped, a save still on its way written first; it comes back from its file on
+    the next ask. The real season and a season mid-sim stay."""
+    for jid, job in list(_season_jobs.items()):
+        if jid in (season_id, realdata.REAL_ID) or job.get("status") == "running" or job.get("state") is None:
+            continue
+        timer = _pending_saves.pop(jid, None)
+        if timer:
+            timer.cancel()
+            season.save_season(job["state"])
+        job["state"] = None
 
 
 def _activate(state: dict) -> None:
@@ -513,17 +529,18 @@ def gameday_season(season_id: str) -> dict:
 
 # Testing mode, while the game runs on a small shared instance: one career on the server at a time, and a
 # career plays five seasons. CFP_MAX_CAREERS=0 lifts the career limit (the tests set it; nothing else does).
-MAX_CAREERS = int(os.environ.get("CFP_MAX_CAREERS", "1"))
+MAX_CAREERS = int(os.environ.get("CFP_MAX_CAREERS", "1"))      # careers per browser
 MAX_SEASONS = 5
 
 
-def _check_career_room(season_id: Optional[str]) -> None:
-    """409 when another career is already on the server (the one named may come back: an import of itself)."""
-    if MAX_CAREERS <= 0:
+def _check_career_room(season_id: Optional[str], browser: Optional[str]) -> None:
+    """409 when this browser already has a career on the server (its own may come back: an import of
+    itself). A request without a browser id is not limited."""
+    if MAX_CAREERS <= 0 or not browser:
         return
-    others = [c for c in list_seasons()["seasons"] if c["career"] and c["id"] != season_id]
+    others = [c for c in list_seasons()["seasons"] if c["career"] and c.get("browser") == browser and c["id"] != season_id]
     if len(others) >= MAX_CAREERS:
-        raise HTTPException(409, "one career at a time for now: delete the career on the server before starting another")
+        raise HTTPException(409, "one career at a time for now: delete your career before starting another")
 
 
 def _check_seasons_left(state: dict) -> None:
@@ -533,12 +550,12 @@ def _check_seasons_left(state: dict) -> None:
 
 
 @app.post("/api/season")
-def create_season(req: SeasonRequest) -> dict:
+def create_season(req: SeasonRequest, browser: Optional[str] = Header(None, alias="X-CFP-Browser")) -> dict:
     _team(req.team)
     if req.mode not in ("full", "remaining"):
         raise HTTPException(400, "mode must be full or remaining")
     if req.career:
-        _check_career_room(None)
+        _check_career_room(None, browser or None)
     coach = None
     if req.coach:
         coach = coaches.load(req.coach)
@@ -547,6 +564,8 @@ def create_season(req: SeasonRequest) -> dict:
     if req.career and req.mode != "full":
         raise HTTPException(400, "Coach Career starts from week 1")
     state = season.new_season(req.team, req.mode, req.seed, coach=coach, career=req.career)
+    if req.career and browser:
+        state["career"]["browser"] = browser
     if req.mode == "remaining":
         # started from today: the weeks already played carry their real stats and box scores
         state["real_import"] = realdata.import_real_boxes(state)
@@ -585,12 +604,16 @@ async def import_career(request: Request) -> dict:
     job = _season_jobs.get(sid)
     if job and job.get("status") == "running":
         raise HTTPException(409, "that career is simulating; try again when the week is done")
-    _check_career_room(sid)
+    browser = request.headers.get("x-cfp-browser") or None
+    _check_career_room(sid, browser)
     current = job["state"] if job and job.get("state") is not None else season.load_season(sid)
     try:
         state = career.restore(blob, current)
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
+    if browser and state.get("career") and not state["career"].get("browser"):   # a career from before browsers owned them
+        state["career"]["browser"] = browser
+        season.save_season(state)
     _season_jobs[sid] = _idle_job(sid, state if state is current else season.load_season(sid))
     return season.summary(_season_jobs[sid]["state"])
 
@@ -619,7 +642,8 @@ def list_seasons() -> dict:
                 card = {"id": st["id"], "team": st["team"], "team_name": st["team_name"], "mode": st["mode"],
                         "created_at": st["created_at"], "current_week": st["current_week"], "done": st["done"],
                         "wins": rec["wins"], "losses": rec["losses"], "champion_name": _teams.get(st.get("champion") or "", {}).get("name"),
-                        "year": st.get("year") or 2026, "career": bool(st.get("career")), "offseason": (st.get("offseason") or {}).get("stage")}
+                        "year": st.get("year") or 2026, "career": bool(st.get("career")), "offseason": (st.get("offseason") or {}).get("stage"),
+                        "browser": (st.get("career") or {}).get("browser")}
             except Exception:  # noqa: BLE001 - one unreadable file must not break the list for everyone
                 continue
             _season_cards[path.stem] = (mtime, card)

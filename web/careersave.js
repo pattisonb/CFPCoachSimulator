@@ -46,7 +46,7 @@
   }
 
   async function sendBlob(blob) {
-    const res = await fetch("/api/season/import", { method: "POST", headers: { "Content-Type": "application/gzip" }, body: blob });
+    const res = await fetch("/api/season/import", { method: "POST", headers: { "Content-Type": "application/gzip", "X-CFP-Browser": (window.CFP && window.CFP.browserId) ? window.CFP.browserId() : "" }, body: blob });
     if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
     return res.json();
   }
