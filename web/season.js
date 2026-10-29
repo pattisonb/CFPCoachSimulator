@@ -214,6 +214,16 @@
     }
   }
 
+  // The next season of a career opens in place (the save keeps its id): everything the page
+  // remembered about the season just played is dropped first, as a fresh open would.
+  async function reopenSeason(id) {
+    clearTimeout(state.timer);
+    state.season = null;
+    state.viewWeek = null; state.standings = null; state.summaryShown = false; state.simLastDone = null;
+    depthState.team = null; depthState.data = null;
+    await openSeason(id);
+  }
+
   // ----- advancing ---------------------------------------------------------
 
   // A sim is starting: note the week it starts from and the week it runs to, whether game
@@ -691,7 +701,7 @@
       else b.click();
     } else if (what === "gameday") toast("No game to play this week: a bye, or it is already played. Advance plays the rest of the week.", 4000);
   }
-  const recruitingHelpers = { api, postJSON, toast, openModal, closeModal: closeAllModals, errText, play, onChange: (tab) => { state.tab = tab; renderTab(); window.scrollTo({ top: 0 }); } };
+  const recruitingHelpers = { api, postJSON, toast, openModal, closeModal: closeAllModals, errText, play, openSeason: reopenSeason, onChange: (tab) => { state.tab = tab; renderTab(); window.scrollTo({ top: 0 }); } };
   function renderCareerSteps(s) {
     const box = $("#career-steps");
     const career = !!s.career;

@@ -137,7 +137,7 @@
       const r = await H.api(`/api/season/${s.id}/offseason/advance`, H.postJSON(to ? { to } : {}));
       if (r.next_season) {
         H.toast(`On to ${r.year}: a new season and a new class of recruits.`, 3500);
-        location.reload();
+        await H.openSeason(s.id);          // in place: no reload, no loading screen
         return;
       }
       render(s, box, H);
