@@ -92,6 +92,11 @@ if __name__ == "__main__":
     verbal_pid = next(q for q in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"])
                       if not rc["status"][q]["signed"] and q not in rc["offers"].get("ohio-state", []))
     rc["status"][verbal_pid].update(committed="georgia", hard=False)
+    # and one hard-committed elsewhere with your offer out: the board lets you pull that offer back
+    hard_pid = next(q for q in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"])
+                    if not rc["status"][q]["signed"] and q != verbal_pid and q not in rc["offers"].get("ohio-state", []))
+    rc["status"][hard_pid].update(committed="georgia", hard=True)
+    rc["offers"].setdefault("ohio-state", []).append(hard_pid)
     season.save_season(done)
     port = free_port()
     base = f"http://127.0.0.1:{port}"
@@ -358,6 +363,17 @@ if __name__ == "__main__":
             assert page.evaluate("() => document.querySelectorAll('.go-map .us-state').length") == 51
             # every dot sits on the canvas (a hometown without coordinates falls back to its state's centre)
             assert page.evaluate("() => [...document.querySelectorAll('.go-map .us-dot')].every(c => { const x = +c.getAttribute('cx'), y = +c.getAttribute('cy'); return x > 0 && y > 0 && x < 975 && y < 610; })")
+            # a dot picks him even when the stage tab hides him: the board goes back to All with him selected
+            vb = call(base, f"/api/season/{A}/recruiting")["board"]
+            cold = next((b for b in vb if b["stage"] == "cold" and not b["committed"] and not b["signed"]), None)
+            if cold and any(b["stage"] == "contact" for b in vb):
+                page.click(".go-stages button[data-stage=contact]")
+                time.sleep(0.4)
+                assert not page.query_selector(f".go-row-recruit[data-pid='{cold['id']}']"), "the In touch tab hides a cold recruit"
+                page.eval_on_selector(f".go-map .us-dot[data-id='{cold['id']}']", "e => e.dispatchEvent(new MouseEvent('click', { bubbles: true }))")
+                time.sleep(0.8)
+                assert page.eval_on_selector_all(".go-row-recruit[aria-pressed=true]", "els => els.map(e => e.dataset.pid)") == [cold["id"]], "the dot's recruit is selected"
+                assert page.get_attribute(".go-stages button[data-stage=all]", "aria-pressed") == "true", "the tab that hid him gives way to All"
             # the table tells us which state holds the most of his board; tap that one
             page.click(".go-map button:has-text('List the states')")
             assert page.query_selector(".go-map-table tr"), "an accessible table alternative"
@@ -440,13 +456,13 @@ if __name__ == "__main__":
             signed = call(base, f"/api/season/{B}/prospects?status=signed&limit=200")["rows"]
             lost_pid = next(r["id"] for r in signed if r["signed"] != "ohio-state")
             mine_pid = next(r["id"] for r in signed if r["signed"] == "ohio-state")
-            for pid in (lost_pid, mine_pid, verbal_pid):
+            for pid in (lost_pid, mine_pid, verbal_pid, hard_pid):
                 call(base, f"/api/season/{B}/board", {"pid": pid, "on": True})
             open_tab(page, base, B, "recruiting", ".go-stages")
             page.click(".go-stages button[data-stage=committed]")
             time.sleep(0.5)
             words = dict(page.eval_on_selector_all(".go-row-recruit", "els => els.map(e => [e.dataset.pid, e.querySelector('.go-standing-word').textContent.trim()])"))
-            assert words[mine_pid] == "Yours" and words[lost_pid] == "Lost" and words[verbal_pid] in ("In it", "Long shot"), words
+            assert words[mine_pid] == "Yours" and words[lost_pid] == "Lost" and words[hard_pid] == "Lost" and words[verbal_pid] in ("In it", "Long shot"), words
             page.click(f".go-row-recruit[data-pid='{lost_pid}']")
             time.sleep(0.5)
             assert page.text_content(".go-pane .go-chip").startswith("Signed · ") and not page.query_selector("#rc-recruit"), "a prospect signed elsewhere has no Recruit menu"
@@ -464,6 +480,15 @@ if __name__ == "__main__":
             page.click(".go-menu .go-menu-item[data-action=offer]")
             page.wait_for_selector(".go-pane .go-step input#rc-nil")
             page.click(".go-pane .go-step button.go-step-cancel")
+            # a hard commit elsewhere with your offer out: no new offer, but you can pull yours back
+            page.click(f".go-row-recruit[data-pid='{hard_pid}']")
+            time.sleep(0.5)
+            assert page.text_content(".go-pane .go-chip").startswith("Hard commit · ")
+            page.click("#rc-recruit")
+            page.wait_for_selector(".go-menu")
+            assert not page.eval_on_selector(".go-menu-item[data-action=pull_offer]", "e => e.disabled"), "Pull offer is live for a hard commit elsewhere"
+            assert page.inner_text(".go-menu-item[data-action=offer] .go-menu-why").strip() == "Hard commit elsewhere"
+            page.keyboard.press("Escape")
 
             # --- Badges: a generational prospect wears the tag on the list; your class rows wear a badge or none
             open_tab(page, base, B, "classes", ".go-class")

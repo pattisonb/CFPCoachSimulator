@@ -331,7 +331,7 @@
           const sd = standing(b, me);
           return el("button", { type: "button", class: "go-target", onclick: () => openProfile(s, b.id) }, [avatar(b.id, "sm"),
             el("span", { class: "go-target-text" }, [el("b", { text: b.name }), el("span", { class: "muted small", text: `${stars(b.stars)} ${b.position} · #${b.national_rank} · ${sd.odds || ""}` })]),
-            el("span", { class: `go-tag ${sd.tone}`, text: ordinal(b.standing.place) })]);
+            el("span", { class: `go-tag ${sd.tone}`, text: sd.word })]);
         }))
       : el("p", { class: "muted", text: "Offer prospects on your board and your hottest targets show here." }));
     rec.append(el("div", { class: "go-kicker muted", text: s.current_week ? "THIS WEEK'S NEWS" : "NEWS" }));
@@ -651,14 +651,22 @@
 
     // ----- the list: one row a recruit in the chosen tab, in sort order -----
     const key = { chance: (b) => (b.committed === me || b.signed === me ? -2 : 0) - ((b.standing && b.standing.pct) || 0), rank: (b) => b.national_rank ?? Infinity };
-    const rows = pool.filter((b) => view.stage.key === "all" || columnOf(b) === view.stage.key).sort((a, b) => key[view.sort](a) - key[view.sort](b));
+    const inTab = (b) => view.stage.key === "all" || columnOf(b) === view.stage.key;
+    const want = v.board.find((b) => b.id === view.selected);
+    if (want && !(pool.includes(want) && inTab(want))) {
+      // picked from the map or his profile while a tab, the search or a filter hides him: show everyone and him
+      view.stage.key = "all"; view.search = ""; view.group = null; view.state = null;
+      box.replaceChildren(); drawBoard(s, box, v); return;
+    }
+    const rows = pool.filter(inTab).sort((a, b) => key[view.sort](a) - key[view.sort](b));
     if (rows.length && !rows.some((b) => b.id === view.selected)) { view.selected = rows[0].id; view.step = null; }
     let sel = rows.find((b) => b.id === view.selected) || null;
     // a Finish pressed on a call the week step has closed: the board says so and the menu works again
     if (view.expectScene) {
-      const b = v.board.find((x) => x.id === view.expectScene);
+      const { pid: waited, what } = view.expectScene;
+      const b = v.board.find((x) => x.id === waited);
       view.expectScene = null;
-      if (!(b && b.scene)) { view.scene = null; H.toast("That call lapsed: the week moved on. The hours stayed spent.", 4000); }
+      if (!(b && b.scene)) { view.scene = null; H.toast(`That ${what} lapsed: the week moved on. The hours stayed spent.`, 4000); }
     }
     const list = el("div", { class: "go-list go-list-recruits", role: "group", "aria-label": "Your board" });
     if (!rows.length) list.append(el("p", { class: "muted go-list-empty", text: q ? "Nobody matches that search." : "Nobody here yet." }));
@@ -797,7 +805,7 @@
           : !["top", "visited"].includes(b.stage) ? "Not yet: get into his top group" : b.cooled ? "Cooled: raise your offer first" : short(10)],
         ["offer", "Offer…", "No hours", b.signed ? "Signed" : b.offered ? "Already offered" : b.hard ? "Hard commit elsewhere" : v.offers_left <= 0 ? "Offer limit reached" : null],
         ["raise_nil", "Raise NIL…", "No hours", !b.offered ? "Not offered" : null],
-        ["pull_offer", "Pull offer", "", !b.offered ? "Not offered" : b.hard ? "Hard commit: his offer stands" : null],
+        ["pull_offer", "Pull offer", "", !b.offered ? "Not offered" : null],
         ["off_board", "Off the board", "", null],
       ];
       return items.map(([action, name, cost, why]) => ({ action, name, cost, why: busy ? `Finish your ${busy} first` : why }));
@@ -856,13 +864,15 @@
       const sd = standingOf(b, me);
       const open = !b.signed && b.committed !== me;           // the race is still on for you
       const busy = open && b.scene ? (b.scene.action === "hc_visit" ? "visit" : "call") : null;
+      const shown = !!(open && b.scene && view.scene === b.id);
       const p = el("aside", { class: `go-card go-pane ${sheet ? "sheet" : ""}`, "aria-label": `${b.name}: recruit him`, ...(sheet ? { role: "dialog", "aria-modal": "true" } : {}) });
       if (sheet) p.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (menuState) closeMenu(true); else closeSheet(); } });
       // the head: who he is, his status chip, and the one primary button
       const chip = chipOf(b, me, v.portal);
       const acts = el("div", { class: "go-pane-act" });
-      if (busy) acts.append(el("button", { type: "button", id: "rc-finish", class: "go-btn primary", text: busy === "visit" ? "Finish the visit" : "Finish the call",
-        "aria-label": `Finish your ${busy} with ${b.name}`, onclick: () => { view.scene = b.id; view.focusScene = true; view.expectScene = b.id; renderRecruiting(s, box); } }));
+      // his call or visit is open but not on screen: Finish brings it back (it re-reads the board first: the week may have moved on)
+      if (busy && !shown) acts.append(el("button", { type: "button", id: "rc-finish", class: "go-btn primary", text: busy === "visit" ? "Finish the visit" : "Finish the call",
+        "aria-label": `Finish your ${busy} with ${b.name}`, onclick: () => { view.scene = b.id; view.focusScene = true; view.expectScene = { pid: b.id, what: busy }; renderRecruiting(s, box); } }));
       if (open) {
         const btn = el("button", { type: "button", id: "rc-recruit", class: `go-btn ${busy ? "" : "primary"}`, "aria-haspopup": "menu", "aria-expanded": "false", text: "Recruit ▾" });
         btn.addEventListener("click", () => openMenu(b, btn));
@@ -880,7 +890,6 @@
         acts]));
       // the inline step (Message, Offer…, Raise NIL…), the scene or his reaction
       if (open && !busy && view.step && view.step.pid === b.id) p.append(stepView(b, view.step.kind));
-      const shown = open && b.scene && view.scene === b.id;
       const reacted = view.reaction && view.reaction.pid === b.id ? view.reaction.r : null;
       if (shown) p.append(sceneView(b));
       else if (reacted) p.append(reactionView(reacted));
