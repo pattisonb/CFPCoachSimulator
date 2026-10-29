@@ -5,8 +5,11 @@ would answer with an error. No web framework: the browser worker (Pyodide) and t
 both call this module.
 
 One season is held in memory at a time (`_loaded`, with its job record `_job`); asking for
-another one replaces it. `changed()` tells the caller that a season or coach file was written
-or deleted since it last asked (the browser then persists its files).
+another one replaces it, except while its job runs. An advance or a game day only sets the job
+running; the caller then calls `step()` until it returns None, one week (or your game) a call,
+since in the browser there is one thread and no sim can run in the background. `changed()`
+tells the caller that a season or coach file was written or deleted since it last asked (the
+browser then persists its files).
 """
 from __future__ import annotations
 
@@ -197,16 +200,99 @@ def _drop(season_id: str) -> None:
         _loaded, _job = None, {}
 
 
+def _running() -> bool:
+    return _job.get("status") == "running"
+
+
+def _check_not_running() -> None:
+    """409 while the season in memory is simulating: nothing may change or replace it then."""
+    if _running():
+        raise ApiError(409, "wait for the sim to finish")
+
+
 def _season_state(season_id: str) -> dict:
-    """The season, from memory or its file (which then replaces the one in memory)."""
+    """The season, from memory or its file (which then replaces the one in memory; refused
+    while the one in memory is simulating)."""
     if _loaded is not None and _loaded["id"] == season_id:
         _activate(_loaded)
         return _loaded
+    _check_not_running()
     state = season.load_season(season_id)
     if state is None:
         raise ApiError(404, "season not found")
     _hold(state)
     return state
+
+
+def _reporter(state: dict, report: Callable[[str], None] | None):
+    """The callback a sim calls with its stage and game count: written onto the job for the
+    status, then, when `report` is given, the status passed on as JSON (in-week progress)."""
+    def on_progress(stage: str, games_done: Optional[int], games_total: Optional[int]) -> None:
+        _job["stage"] = stage
+        week = _job["done"] + 1                    # the week being simmed (`done` moves once all of it is over)
+        if _job.get("week") != week:
+            _job["week"], _job["_played"] = week, False
+        if games_total is not None:
+            _job["games_done"], _job["games_total"] = games_done, games_total
+            _job["_played"] = _job.get("_played") or games_done >= games_total
+            _job["week_frac"] = 0.05 + 0.75 * games_done / max(1, games_total)
+        else:
+            _job["games_done"] = _job["games_total"] = None
+            # before the games a sliver; after them (polls, awards, recruiting) the last part of the week
+            played = _job.get("_played") or state["current_week"] >= week
+            _job["week_frac"] = max(_job.get("week_frac") or 0, 0.85) if played else 0.02
+        if report is not None:
+            report(json.dumps(_status(state, _job.get("since"))))
+    return on_progress
+
+
+def _status(state: dict, since: Optional[int]) -> dict:
+    """Job progress plus your record and rank, and your results after week `since` when given."""
+    out = {k: _job.get(k) for k in ("id", "status", "done", "total", "error", "stage", "week", "games_done",
+                                    "games_total", "week_frac", "paused", "gameday_event")}
+    out["current_week"] = state["current_week"]
+    rec = season._records(state, include_playoff=True)[state["team"]]
+    out["record"] = {"wins": rec["wins"], "losses": rec["losses"], "conf_wins": rec["conf_wins"], "conf_losses": rec["conf_losses"]}
+    out["my_rank"] = season.current_rank(state)      # the header's rank follows the sim week by week
+    if since is not None:
+        out["results"] = season.my_results(state, since)
+    return out
+
+
+def step(report: Callable[[str], None] | None = None) -> dict | None:
+    """Play the running job's next unit: one week of an advance, or your game on game day.
+    Saves the season, moves the job on (back to idle when the run is over, paused or done)
+    and returns the status with your results since the week the run started from. `report`,
+    when given, gets that status as JSON after every progress callback and once at the end.
+    None when nothing is running. A failure sets the job to "error" instead of raising."""
+    if _loaded is None or not _running():
+        return None
+    state = _loaded
+    on_progress = _reporter(state, report)
+    try:
+        if _job["kind"] == "gameday":
+            _job["gameday_event"] = season.play_my_game(state, None, report=on_progress)
+            season.save_season(state)
+            _mark_changed()
+            over = True
+        else:
+            before = state["current_week"]
+            season.advance_to(state, _job["done"] + 1, report=on_progress, should_stop=lambda: _job["stop"])
+            if state["current_week"] != before:
+                season.save_season(state)
+                _mark_changed()
+            _job["done"] = state["current_week"]
+            over = _job["done"] >= _job["target"] or state["done"] or _job["stop"]
+            if over:
+                _job["paused"] = _job["stop"] and _job["done"] < _job["target"] and not state["done"]
+        if over:
+            _job.update(status="idle", stage=None, stop=False)
+    except Exception as exc:  # noqa: BLE001 - the page shows the error; the dispatcher stays up
+        _job.update(status="error", error=str(exc), stop=False)
+    out = _status(state, _job.get("since"))
+    if report is not None:
+        report(json.dumps(out))
+    return out
 
 
 def _all_teams() -> dict[str, dict]:
@@ -281,6 +367,7 @@ def create_season(p: Params) -> dict:
             raise ApiError(404, "unknown coach")
     if mode != "full":
         raise ApiError(400, "Coach Career starts from week 1")
+    _check_not_running()
     season.use_league(season.TEAMS_FILE)          # a new career starts in the 2026 league
     state = season.new_season(team, mode, seed, coach=coach, career=True)
     season.save_season(state)
@@ -311,6 +398,9 @@ def import_career(p: Params) -> dict:
         sid = career.read_save(blob)[0]["id"]
     except ValueError as exc:
         raise ApiError(400, str(exc)) from exc
+    if _running() and _loaded["id"] == sid:
+        raise ApiError(409, "that career is simulating; try again when the week is done")
+    _check_not_running()
     current = _loaded if _loaded is not None and _loaded["id"] == sid else season.load_season(sid)
     try:
         state = career.restore(blob, current)
@@ -322,6 +412,55 @@ def import_career(p: Params) -> dict:
         state = season.load_season(sid)
     _hold(state)
     return season.summary(state)
+
+
+@route("GET", "/api/season/{season_id}/status")
+def season_status(p: Params) -> dict:
+    """Job progress plus your record and, with `since`, your results after that week."""
+    return _status(_season_state(p.path["season_id"]), p.q("since", int, None))
+
+
+@route("POST", "/api/season/{season_id}/pause")
+def pause_season(p: Params) -> dict:
+    """Stop a running advance once the week in progress is over."""
+    _season_state(p.path["season_id"])
+    if not _running():
+        return {"status": _job.get("status"), "stopping": False}
+    _job["stop"] = True
+    return {"status": "running", "stopping": True}
+
+
+@route("POST", "/api/season/{season_id}/advance")
+def advance_season(p: Params) -> dict:
+    """Set an advance running to week `to` (default: the next week); step() plays it."""
+    state = _season_state(p.path["season_id"])
+    to = _field(p, "to", int, None)
+    if _running():
+        raise ApiError(409, "already simulating")
+    week = state["current_week"]
+    if state["done"]:
+        return {"status": "idle", "done": week, "total": week}
+    target = max(week + 1, min(season.FINAL_WEEK, to if to is not None else week + 1))
+    _job.update(status="running", kind="advance", target=target, done=week, total=target, since=week,
+                stop=False, paused=False, gameday_event=None, error=None)
+    return {"status": "running", "done": week, "total": target}
+
+
+@route("POST", "/api/season/{season_id}/gameday")
+def gameday_season(p: Params) -> dict:
+    """Game day: set only your game this week running (the week's matchups are set first if
+    they are not yet); step() plays it. Advance then plays the rest of the week."""
+    state = _season_state(p.path["season_id"])
+    if _running():
+        raise ApiError(409, "already simulating")
+    week = state["current_week"]
+    if state["done"]:
+        return {"status": "idle", "done": week, "total": week}
+    if season.my_game_id(state) is None:
+        raise ApiError(409, "no game this week: a bye, or your game is already played")
+    _job.update(status="running", kind="gameday", target=week + 1, done=week, total=week + 1, since=week,
+                stop=False, paused=False, gameday_event=None, error=None, stage="Simming your game", week=week + 1)
+    return {"status": "running", "done": week, "total": week + 1}
 
 
 @route("GET", "/api/seasons")
@@ -420,6 +559,7 @@ def coach_get(p: Params) -> dict:
 
 @route("POST", "/api/coaches")
 def coach_save(p: Params) -> dict:
+    _check_not_running()
     try:
         c = coaches.save(_field(p, "coach", dict))
     except ValueError as exc:
@@ -430,6 +570,7 @@ def coach_save(p: Params) -> dict:
 
 @route("DELETE", "/api/coaches/{coach_id}")
 def coach_delete(p: Params) -> dict:
+    _check_not_running()
     try:
         deleted = coaches.delete(p.path["coach_id"])
     except ValueError as exc:

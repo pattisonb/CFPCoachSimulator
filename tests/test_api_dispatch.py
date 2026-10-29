@@ -1,5 +1,5 @@
 """The Coach Career dispatcher (app/api.py): routing, the season routes (create, get, list,
-delete, export, import), the teams and the coach routes. Saves go to temporary folders, so
+delete, export, import), the teams and the coach routes, and advance / game day run as steps. Saves go to temporary folders, so
 nothing is left in data/seasons or data/coaches. (Run as a file: multiprocessing on Windows.)"""
 import sys as _sys
 from pathlib import Path as _Path
@@ -109,6 +109,66 @@ def test_coaches_crud():
     refused(lambda: api.call("DELETE", "/api/coaches/not-an-id"), 404)
 
 
+def test_advance_runs_in_steps():
+    s = api.call("POST", "/api/season", {"team": "smu", "seed": 11, "career": True})
+    r = api.call("POST", f"/api/season/{s['id']}/advance", {"to": 2})
+    assert r == {"status": "running", "done": 0, "total": 2}
+    refused(lambda: api.call("POST", f"/api/season/{s['id']}/advance", {}), 409)   # test_advance_while_running_refused
+    seen = []
+    st = api.step(seen.append)
+    assert st["status"] == "running" and st["done"] == 1 and api.changed()
+    assert any('"stage"' in m for m in seen)
+    st = api.step()
+    assert st["status"] == "idle" and st["done"] == 2 and api.loaded_state()["current_week"] == 2
+    assert api.step() is None
+    assert api.call("GET", f"/api/season/{s['id']}/status?since=0")["results"]
+
+
+def test_pause_between_weeks():
+    # Pause lands between steps: week 1 is over, so week 2 never starts (advance_to checks
+    # should_stop before each week) and the run ends at done == 1.
+    s = api.call("POST", "/api/season", {"team": "smu", "seed": 11, "career": True})
+    api.call("POST", f"/api/season/{s['id']}/advance", {"to": 4})
+    api.step()
+    assert api.call("POST", f"/api/season/{s['id']}/pause")["stopping"]
+    st = api.step()
+    assert st["status"] == "idle" and st["paused"] and st["done"] == 1
+    assert api.loaded_state()["current_week"] == 1
+    assert api.call("POST", f"/api/season/{s['id']}/pause") == {"status": "idle", "stopping": False}
+
+
+def test_import_refused_while_running():
+    s = api.call("POST", "/api/season", {"team": "smu", "seed": 11, "career": True})
+    blob = api.call("GET", f"/api/season/{s['id']}/export")
+    api.call("POST", f"/api/season/{s['id']}/advance", {})
+    refused(lambda: api.call("POST", "/api/season/import", blob), 409)
+    api.step()
+
+
+def test_other_season_refused_while_running():
+    other = api.call("POST", "/api/season", {"team": "smu", "seed": 12, "career": True})
+    s = api.call("POST", "/api/season", {"team": "smu", "seed": 11, "career": True})
+    api.call("POST", f"/api/season/{s['id']}/advance", {})
+    refused(lambda: api.call("GET", f"/api/season/{other['id']}"), 409)
+    refused(lambda: api.call("POST", "/api/season", {"team": "smu", "seed": 13}), 409)
+    assert api.call("GET", f"/api/season/{s['id']}/status")["status"] == "running"   # the page polls while running
+    assert api.loaded_state()["id"] == s["id"]
+    api.step()
+    assert api.call("GET", f"/api/season/{other['id']}")["id"] == other["id"]
+
+
+def test_gameday_step():
+    s = api.call("POST", "/api/season", {"team": "smu", "seed": 11, "career": True})
+    refused(lambda: api.call("POST", f"/api/season/{s['id']}/gameday"), 409)   # SMU has a bye in week 1
+    api.call("POST", f"/api/season/{s['id']}/advance", {})
+    api.step()
+    r = api.call("POST", f"/api/season/{s['id']}/gameday")
+    assert r == {"status": "running", "done": 1, "total": 2}
+    st = api.step()
+    assert st["status"] == "idle" and st["gameday_event"] and st["current_week"] == 1
+    assert api.loaded_state()["games"][st["gameday_event"]]["played"] and api.step() is None
+
+
 if __name__ == "__main__":
     import shutil
     import tempfile
@@ -124,6 +184,11 @@ if __name__ == "__main__":
         test_export_import_roundtrip()
         test_path_traversal_refused()
         test_coaches_crud()
+        test_advance_runs_in_steps()
+        test_pause_between_weeks()
+        test_import_refused_while_running()
+        test_other_season_refused_while_running()
+        test_gameday_step()
     finally:
         season.close_pool()
         shutil.rmtree(seasons_dir, ignore_errors=True)
