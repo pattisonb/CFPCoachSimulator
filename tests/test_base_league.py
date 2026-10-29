@@ -14,15 +14,20 @@ from coach_career import league
 
 
 def test_precomputed_league_matches_live(tmp_dir):
-    live = league.from_base(2027)
-    league.BASE_LEAGUE_FILE, league.BASE_META_FILE = tmp_dir / "bl.json", tmp_dir / "bm.json"
-    league.write_base_files()
-    league.base_meta.cache_clear(); league.base_slugs.cache_clear()
-    assert league.from_base(2028)["year"] == 2028
-    assert {t["program"]["year"] for t in league.from_base(2028)["teams"].values()} == {2027}   # as programs.init sets it
-    assert json.dumps(league.from_base(2027), sort_keys=True) == json.dumps(live, sort_keys=True)
-    assert league.base_slugs() == tuple(sorted(json.loads(league.BASE_META_FILE.read_text())))
-    assert league.base_meta("smu")["conference"] and "roster" not in league.base_meta("smu")
+    files = league.BASE_LEAGUE_FILE, league.BASE_META_FILE
+    try:
+        live = league._compute_base(2027)            # the source path, whatever data/ holds
+        league.BASE_LEAGUE_FILE, league.BASE_META_FILE = tmp_dir / "bl.json", tmp_dir / "bm.json"
+        league.write_base_files()
+        league.base_meta.cache_clear(); league.base_slugs.cache_clear()
+        assert league.from_base(2028)["year"] == 2028
+        assert {t["program"]["year"] for t in league.from_base(2028)["teams"].values()} == {2027}   # as programs.init sets it
+        assert json.dumps(league.from_base(2027), sort_keys=True) == json.dumps(live, sort_keys=True)
+        assert league.base_slugs() == tuple(sorted(json.loads(league.BASE_META_FILE.read_text())))
+        assert league.base_meta("smu")["conference"] and "roster" not in league.base_meta("smu")
+    finally:
+        league.BASE_LEAGUE_FILE, league.BASE_META_FILE = files
+        league.base_meta.cache_clear(); league.base_slugs.cache_clear()
 
 
 if __name__ == "__main__":

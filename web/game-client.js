@@ -4,7 +4,8 @@
    version.json) the calls are plain fetches. window.CFP.game: ready (resolves once the game
    can answer, rejects with the message to show when the browser cannot run it), fetch,
    onLoading(cb) for {stage, loaded, total} while it starts, onStorageError(cb) when a save
-   could not be kept, onFatal(cb) when the worker fails after it was ready (every call then
+   could not be kept ({message, copy}: `copy` is the line to show when the worker has one),
+   onFatal(cb) when the worker fails after it was ready (every call then
    rejects with that error), mode ("worker" | "passthrough") and version. */
 (function () {
   "use strict";
@@ -72,7 +73,7 @@
         else if (m.kind === "storage-error") emit(storageCbs, m);
         else if (pending.has(m.id)) { const p = pending.get(m.id); pending.delete(m.id); p.resolve(m); }
       };
-      worker.postMessage({ kind: "init", version, breakStorage: !!window.__cfpBreakStorage, breakStep: !!window.__cfpBreakStep });
+      worker.postMessage({ kind: "init", version, breakStorage: !!window.__cfpBreakStorage, breakRestore: !!window.__cfpBreakRestore, breakStep: !!window.__cfpBreakStep });
       impl = async (path, options) => {
         options = options || {};
         const method = (options.method || "GET").toUpperCase();

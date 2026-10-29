@@ -32,6 +32,8 @@ from tools import build_site              # noqa: E402
 LOAD_TIMEOUT = 180_000       # Pyodide and game.zip from a cold cache
 SIM_TIMEOUT = 120_000        # one week, or a new career
 STORAGE_TOAST = "Your browser could not save the career"
+NO_SAVES_TOAST = "saves will not be kept in this browser"
+OTHER_TAB = "The game is already open in another tab"
 POST = "{method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(%s)}"
 
 
@@ -145,6 +147,18 @@ def test_two_weeks_match_native_and_reload_restores(browser, base: str, timings:
         state = career.read_save(base64.b64decode(b64))[0]
         assert state["current_week"] == 2
         assert digest(state) == native_digest(), "the browser's scores differ from the native sim's"
+        # Load career is the one call whose body crosses to the worker as bytes (a Blob): export,
+        # delete, import the same save and the career is back with its week
+        back = page.evaluate(f"""async () => {{
+            const bytes = new Uint8Array(await (await CFP.game.fetch('/api/season/{sid}/export?full=true')).arrayBuffer());
+            const gone = await CFP.game.fetch('/api/season/{sid}', {{method: 'DELETE'}});
+            const missing = (await CFP.game.fetch('/api/season/{sid}')).status;
+            const r = await CFP.game.fetch('/api/season/import', {{method: 'POST', headers: {{'Content-Type': 'application/gzip'}},
+                                                                body: new Blob([bytes], {{type: 'application/gzip'}})}});
+            return {{size: bytes.length, deleted: gone.status, missing, status: r.status, json: await r.json().catch(() => null)}}; }}""")
+        assert back["size"] > 1000 and back["deleted"] == 200 and back["missing"] == 404, back
+        assert back["status"] == 200 and back["json"]["id"] == sid, back
+        assert shim(page, f"/api/season/{sid}")["json"]["current_week"] == 2
         assert page.url == f"{base}/index.html?id={sid}", page.url     # the page keeps its own address
         timings["reload"] = load(page, None)     # a fresh worker: the career comes back from IndexedDB
         page.wait_for_selector("#season:visible")
@@ -174,6 +188,55 @@ def test_syncfs_failure_toasts(browser, base: str):
         assert sid, "the page did not open the career"
         r = shim(page, f"/api/season/{sid}")
         assert r["status"] == 200 and r["json"]["id"] == sid, r
+        assert not errors, errors
+    finally:
+        if console:
+            print("console:", *console, sep="\n  ")
+        ctx.close()
+
+
+def test_blocked_storage_at_start_toasts_and_plays(browser, base: str):
+    """IndexedDB cannot be read when the worker starts: the game loads anyway, the toast says
+    saves will not be kept, and a career can be created and read back from memory."""
+    ctx = browser.new_context()
+    ctx.add_init_script("window.__cfpBreakRestore = true")
+    page = ctx.new_page()
+    errors, console = [], []
+    watch(page, errors, console)
+    try:
+        load(page, f"{base}/index.html")
+        page.wait_for_function(f"() => document.querySelector('#toast').textContent.includes({NO_SAVES_TOAST!r}) && !document.querySelector('#toast').hidden",
+                               timeout=10_000)
+        r = shim(page, "/api/season", POST % '{team: "smu", seed: 11}')
+        assert r["status"] == 200, r
+        sid = r["json"]["id"]
+        r = shim(page, f"/api/season/{sid}")
+        assert r["status"] == 200 and r["json"]["id"] == sid, r
+        assert not errors, errors
+    finally:
+        if console:
+            print("console:", *console, sep="\n  ")
+        ctx.close()
+
+
+def test_second_tab_is_refused_and_the_first_keeps_working(browser, base: str):
+    """Two tabs of the game in one browser: the second's worker cannot take the store's lock, so
+    its overlay says the game is open in another tab, while the first still answers."""
+    ctx = browser.new_context()
+    first, second = ctx.new_page(), ctx.new_page()
+    errors, console = [], []
+    watch(first, errors, console)
+    try:
+        load(first, f"{base}/index.html")
+        second.goto(f"{base}/index.html")
+        second.wait_for_function(f"() => document.querySelector('#loading-text').textContent.includes({OTHER_TAB!r})", timeout=LOAD_TIMEOUT)
+        assert not second.is_hidden("#loading")
+        assert second.evaluate("CFP.game.fetch('/api/teams').then(() => 'ok', (e) => e.message)") != "ok"
+        r = shim(first, "/api/teams")
+        assert r["status"] == 200 and r["json"]["teams"], r
+        r = shim(first, "/api/season", POST % '{team: "smu", seed: 11}')
+        assert r["status"] == 200, r
+        assert shim(first, f"/api/season/{r['json']['id']}")["status"] == 200
         assert not errors, errors
     finally:
         if console:
@@ -233,6 +296,8 @@ if __name__ == "__main__":
             try:
                 test_two_weeks_match_native_and_reload_restores(browser, base, timings)
                 test_syncfs_failure_toasts(browser, base)
+                test_blocked_storage_at_start_toasts_and_plays(browser, base)
+                test_second_tab_is_refused_and_the_first_keeps_working(browser, base)
                 test_worker_failure_after_ready_reaches_the_page(browser, base)
             finally:
                 browser.close()

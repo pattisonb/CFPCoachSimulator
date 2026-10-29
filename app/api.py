@@ -171,7 +171,11 @@ def call_js(method: str, path: str, body_json: str | None, body_bytes=None) -> s
         return json.dumps({"ok": False, "status": 500, "message": str(exc), "changed": changed()})
     if isinstance(out, (bytes, bytearray)):
         return bytes(out)
-    return json.dumps({"ok": True, "result": out, "changed": changed()})
+    did_change = changed()
+    try:
+        return json.dumps({"ok": True, "result": out, "changed": did_change}, allow_nan=False)
+    except ValueError as exc:   # a NaN or infinity in the result: JSON.parse would reject the whole reply
+        return json.dumps({"ok": False, "status": 500, "message": f"the reply is not valid JSON: {exc}", "changed": did_change})
 
 
 # ----- season state ------------------------------------------------------------
@@ -300,7 +304,8 @@ def step(report: Callable[[str], None] | None = None) -> dict | None:
     and returns the status with your results since the week the run started from. `report`,
     when given, gets that status as JSON once before the sim starts (the page sees the run at
     once), after every progress callback and once at the end. None when nothing is running. A
-    failure sets the job to "error" instead of raising."""
+    failure sets the job to "error" instead of raising and reloads the season from its last
+    save, so nothing half-played stays in memory."""
     if _loaded is None or not running():
         return None
     state = _loaded
@@ -326,7 +331,14 @@ def step(report: Callable[[str], None] | None = None) -> dict | None:
         if over:
             _job.update(status="idle", stage=None, stop=False)
     except Exception as exc:  # noqa: BLE001 - the page shows the error; the dispatcher stays up
-        _job.update(status="error", error=str(exc), stop=False)
+        # the half-played week is dropped: the season in memory is the last save again, so the
+        # next handler that saves cannot write it
+        since = _job.get("since")
+        saved = season.load_season(state["id"])
+        if saved is not None:
+            _hold(saved)
+            state = _loaded
+        _job.update(status="error", error=str(exc), stage=None, stop=False, since=since)
     out = _status(state, _job.get("since"))
     if report is not None:
         report(json.dumps(out))

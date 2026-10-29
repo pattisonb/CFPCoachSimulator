@@ -63,8 +63,8 @@
     function failed(err) { box.hidden = false; bar.hidden = true; text.textContent = err.message; }
     game.ready.then(function () { box.hidden = true; }, failed);
     game.onFatal(failed);
-    game.onStorageError(function () {      // a second later: the page hides its own toast right after the reply the save followed
-      var t = document.getElementById("toast"), msg = "Your browser could not save the career: free some space or download it";
+    game.onStorageError(function (m) {     // a second later: the page hides its own toast right after the reply the save followed
+      var t = document.getElementById("toast"), msg = (m && m.copy) || "Your browser could not save the career: free some space or download it";
       setTimeout(function () { t.textContent = msg; t.hidden = false; }, 1000);
       setTimeout(function () { if (t.textContent === msg) t.hidden = true; }, 7000);
     });

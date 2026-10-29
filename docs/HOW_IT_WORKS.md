@@ -25,6 +25,13 @@ page stays responsive and shows progress.
 storage after every week and every recruiting action. They stay on that device and that
 browser; clearing the site's data deletes them. **Download career** saves a career as a
 `.ccsave` file and **Load career** opens one, which is how a career moves to another device.
+**One tab at a time.** Each worker keeps its own in-memory mirror of the store and a write-back
+replaces the whole store with that mirror, so two tabs would roll each other's saves back.
+The worker takes the `cfp-game` Web Lock for its life before it mounts the store (a
+`BroadcastChannel` ping where a browser has no Web Locks); a second tab's worker does not
+start, and its overlay says the game is already open in another tab. When the store cannot be
+read at start (IndexedDB blocked by a setting or a private window) the game still loads, plays
+from memory and a toast says saves will not be kept in this browser.
 
 On your own computer, with Python 3.12 and nothing else installed:
 

@@ -114,6 +114,9 @@ menu. It opens full screen with its own icon.
 
 - **Saves stay on the device.** Clearing this site's data in your browser deletes its saved
   careers. Download a career you want to keep.
+- **One tab at a time.** Open the game in one tab only; a second tab says the game is already
+  open and does not start, which keeps the two from overwriting each other's saves. Close the
+  first tab (or just reload the other one once it is closed) to play there.
 - **This is a fan project.** It is not affiliated with the College Football Playoff, the
   NCAA, any conference or any school. Schedules, results and stats come from public
   sources.

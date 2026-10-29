@@ -8,6 +8,8 @@ from pathlib import Path as _Path
 
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from app import api` works from here
 
+import json
+
 from app import api
 from sim import coaches
 from sim import season
@@ -173,6 +175,42 @@ def test_other_season_refused_while_running():
     assert api.call("GET", f"/api/season/{other['id']}")["id"] == other["id"]
 
 
+def test_call_js_nan_result_is_a_500_reply():
+    # json.dumps writes NaN, which JSON.parse in the worker rejects; the reply says so instead
+    api.ROUTES.append(("GET", "/api/test-nan", lambda p: {"x": float("nan")}))
+    try:
+        r = json.loads(api.call_js("GET", "/api/test-nan", None))
+        assert r["ok"] is False and r["status"] == 500 and "JSON" in r["message"], r
+        assert json.loads(api.call_js("GET", "/api/teams/smu", None))["ok"]      # the dispatcher is fine afterwards
+    finally:
+        api.ROUTES.pop()
+
+
+def test_step_failure_drops_the_half_played_week():
+    # advance raises mid-week: the job says "error" with no stage, the season in memory is the last
+    # save again (nothing half-advanced can be written by the next handler) and reads still answer
+    s = api.call("POST", "/api/season", {"team": "smu", "seed": 11, "career": True})
+    api.call("POST", f"/api/season/{s['id']}/advance", {"to": 2})
+    real = season.advance
+
+    def broken(state, *args, **kwargs):
+        state["current_week"] = 7            # half of a week, then the crash
+        raise RuntimeError("the sim broke")
+    season.advance = broken
+    try:
+        st = api.step()
+    finally:
+        season.advance = real
+    assert st["status"] == "error" and st["error"] == "the sim broke" and st["stage"] is None, st
+    assert st["current_week"] == 0 and st["done"] == 0
+    assert api.loaded_state()["current_week"] == 0 and api.job()["status"] == "error"
+    assert api.step() is None and not api.running()
+    assert api.call("GET", f"/api/season/{s['id']}")["current_week"] == 0
+    assert api.call("GET", f"/api/season/{s['id']}/status")["status"] == "error"
+    api.call("POST", f"/api/season/{s['id']}/settings", {"god_mode": True})     # a handler that saves writes the last save, not the broken week
+    assert season.load_season(s["id"])["current_week"] == 0
+
+
 def test_gameday_step():
     s = api.call("POST", "/api/season", {"team": "smu", "seed": 11, "career": True})
     refused(lambda: api.call("POST", f"/api/season/{s['id']}/gameday"), 409)   # SMU has a bye in week 1
@@ -278,6 +316,8 @@ if __name__ == "__main__":
         test_stepped_advance_auto_recruits_after_first_week()
         test_import_refused_while_running()
         test_other_season_refused_while_running()
+        test_call_js_nan_result_is_a_500_reply()
+        test_step_failure_drops_the_half_played_week()
         test_gameday_step()
         test_every_career_route_registered()
         test_view_routes_answer()
