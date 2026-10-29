@@ -1,6 +1,8 @@
 """The Coach Career dispatcher (app/api.py): routing, the season routes (create, get, list,
-delete, export, import), the teams and the coach routes, and advance / game day run as steps. Saves go to temporary folders, so
-nothing is left in data/seasons or data/coaches. (Run as a file: multiprocessing on Windows.)"""
+delete, export, import), the teams and the coach routes, advance / game day run as steps, every
+other Coach Career route registered, and the offseason rolling over past five seasons. Saves go to
+temporary folders, so nothing is left in data/seasons or data/coaches. (Run as a file:
+multiprocessing on Windows.)"""
 import sys as _sys
 from pathlib import Path as _Path
 
@@ -183,6 +185,79 @@ def test_gameday_step():
     assert api.loaded_state()["games"][st["gameday_event"]]["played"] and api.step() is None
 
 
+EXPECTED = {("GET", "/api/season/{season_id}/week/{week}"), ("GET", "/api/season/{season_id}/schedule/{slug}"),
+            ("GET", "/api/season/{season_id}/schedule_edit"), ("POST", "/api/season/{season_id}/schedule_edit"),
+            ("POST", "/api/season/{season_id}/redshirt"), ("GET", "/api/season/{season_id}/standings"),
+            ("GET", "/api/season/{season_id}/review"), ("GET", "/api/season/{season_id}/resume"),
+            ("GET", "/api/season/{season_id}/game/{event_id}"), ("GET", "/api/season/{season_id}/settings"),
+            ("POST", "/api/season/{season_id}/settings"), ("GET", "/api/season/{season_id}/recruiting"),
+            ("GET", "/api/season/{season_id}/programs"), ("GET", "/api/season/{season_id}/recruiting/report"),
+            ("GET", "/api/season/{season_id}/prospects"), ("GET", "/api/season/{season_id}/classes"),
+            ("GET", "/api/season/{season_id}/prospect/{pid}"), ("POST", "/api/season/{season_id}/recruit"),
+            ("POST", "/api/season/{season_id}/board"), ("POST", "/api/season/{season_id}/staff"),
+            ("GET", "/api/season/{season_id}/offseason"), ("POST", "/api/season/{season_id}/offseason/advance"),
+            ("POST", "/api/season/{season_id}/offseason/portal"), ("POST", "/api/season/{season_id}/offseason/redshirt"),
+            ("GET", "/api/season/{season_id}/offseason/position_options"), ("POST", "/api/season/{season_id}/offseason/position"),
+            ("POST", "/api/season/{season_id}/offseason/retain"), ("POST", "/api/season/{season_id}/offseason/review"),
+            ("POST", "/api/season/{season_id}/offseason/job"), ("POST", "/api/season/{season_id}/offseason/hire"),
+            ("POST", "/api/season/{season_id}/offseason/open_role"), ("POST", "/api/season/{season_id}/player/edit"),
+            ("GET", "/api/season/{season_id}/preview"), ("GET", "/api/season/{season_id}/rivalries"),
+            ("GET", "/api/season/{season_id}/stats/teams"), ("GET", "/api/season/{season_id}/stats/leaders"),
+            ("GET", "/api/season/{season_id}/stats/players"), ("GET", "/api/season/{season_id}/depth/{slug}"),
+            ("POST", "/api/season/{season_id}/depth/{slug}"), ("GET", "/api/season/{season_id}/depth/{slug}/position/{role}"),
+            ("GET", "/api/season/{season_id}/injuries"), ("GET", "/api/season/{season_id}/awards"),
+            ("GET", "/api/season/{season_id}/player")}
+
+
+def test_every_career_route_registered():
+    assert EXPECTED <= api.routes(), sorted(EXPECTED - api.routes())
+    assert not {r for r in api.routes() if "/api/real" in r[1] or r[1] in ("/api/sim", "/api/games", "/api/ingest", "/api/sliders", "/api/predictions")}
+
+
+def test_view_routes_answer():
+    # every read the season page makes answers on a new career; bad parameters are refused as the server did
+    s = api.call("POST", "/api/season", {"team": "smu", "seed": 11, "career": True})
+    base = f"/api/season/{s['id']}"
+    assert api.call("GET", f"{base}/week/1")["week"] == 1
+    refused(lambda: api.call("GET", f"{base}/week/one"), 422)
+    assert api.call("GET", f"{base}/schedule/smu")
+    refused(lambda: api.call("GET", f"{base}/schedule/nope"), 404)
+    assert "games" in api.call("GET", f"{base}/schedule_edit")
+    assert api.call("GET", f"{base}/standings")["standings"]
+    for path in ("review", "resume", "resume?team=smu", "programs", "recruiting/report", "classes?school=smu", "preview",
+                 "rivalries", "stats/teams", "stats/leaders?n=99", "stats/players?cat=rushing&limit=10", "depth/smu",
+                 "depth/smu/position/QB", "injuries", "awards"):
+        assert isinstance(api.call("GET", f"{base}/{path}"), dict), path
+    refused(lambda: api.call("GET", f"{base}/stats/players?cat=nothing"), 400)
+    refused(lambda: api.call("GET", f"{base}/depth/smu/position/XX"), 404)
+    refused(lambda: api.call("GET", f"{base}/game/nope"), 404)
+    refused(lambda: api.call("GET", f"{base}/player"), 422)
+    refused(lambda: api.call("GET", f"{base}/offseason"), 409)         # the season is not over
+    # god mode: off refuses a player edit; on, the edit is saved
+    slug = next(pl["slug"] for pl in api.call("GET", "/api/teams/smu")["players"] if pl["slug"])
+    assert api.call("GET", f"{base}/player?team=smu&slug={slug}")
+    refused(lambda: api.call("POST", f"{base}/player/edit", {"team": "smu", "player": slug, "changes": {"jersey": 99}}), 403)
+    api.changed()
+    assert api.call("POST", f"{base}/settings", {"god_mode": True})["settings"]["god_mode"] and api.changed()
+    refused(lambda: api.call("POST", f"{base}/player/edit", {"team": "smu", "player": slug}), 422)
+    api.call("POST", f"{base}/player/edit", {"team": "smu", "player": slug, "changes": {"jersey": 99}})
+    assert api.changed() and season.load_season(s["id"])["settings"]["god_mode"]
+    refused(lambda: api.call("POST", f"{base}/depth/smu", {"move": "up"}), 400)
+    assert api.call("POST", f"{base}/depth/smu", {"reset": True}) and api.changed()
+    api.call("DELETE", base)
+
+
+def test_offseason_rollover_no_season_limit():
+    from tests.test_offseason import finished    # the helper that marks a season done
+    s = api.call("POST", "/api/season", {"team": "smu", "seed": 11, "career": True})
+    finished(api.loaded_state()); api._save_loaded()
+    for _ in range(5):
+        r = api.call("POST", f"/api/season/{s['id']}/offseason/advance", {"to": "next_season"})
+        assert r["next_season"]
+        finished(api.loaded_state()); api._save_loaded()
+    assert api.loaded_state()["year"] == 2031
+
+
 if __name__ == "__main__":
     import shutil
     import tempfile
@@ -204,6 +279,9 @@ if __name__ == "__main__":
         test_import_refused_while_running()
         test_other_season_refused_while_running()
         test_gameday_step()
+        test_every_career_route_registered()
+        test_view_routes_answer()
+        test_offseason_rollover_no_season_limit()
     finally:
         season.close_pool()
         shutil.rmtree(seasons_dir, ignore_errors=True)

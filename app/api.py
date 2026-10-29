@@ -26,6 +26,9 @@ if sys.platform == "emscripten":                 # in the browser: no worker pro
 
 from coach_career import career
 from coach_career import league
+from coach_career import offseason
+from coach_career import prospects
+from coach_career import recruiting
 from sim import coaches
 from sim import season
 
@@ -102,6 +105,11 @@ def route(method: str, pattern: str):
         ROUTES.append((method.upper(), pattern, fn))
         return fn
     return add
+
+
+def routes() -> set[tuple[str, str]]:
+    """Every registered `(method, pattern)`."""
+    return {(m, pattern) for m, pattern, _ in ROUTES}
 
 
 def _match(pattern: str, parts: list[str]) -> Optional[dict[str, str]]:
@@ -578,3 +586,533 @@ def coach_delete(p: Params) -> dict:
     if deleted:
         _mark_changed()
     return {"deleted": deleted}
+
+
+# ----- helpers for the season routes -------------------------------------------
+
+def _save_loaded() -> None:
+    """Write the season in memory to its file (a handler that changed it calls this before returning)."""
+    season.save_season(_loaded)
+    _cards.pop(_loaded["id"], None)
+    _mark_changed()
+
+
+def _check_team(slug: str) -> None:
+    """404 for a slug that is not a team."""
+    if slug not in _all_teams():
+        raise ApiError(404, "unknown team")
+
+
+def _need(p: Params, name: str) -> str:
+    """A required query parameter: 422 when it is missing."""
+    value = p.q(name)
+    if value is None:
+        raise ApiError(422, f"{name} is required")
+    return value
+
+
+def _career_state(season_id: str, change: bool = False) -> dict:
+    """The season, which must be a Coach Career; with `change`, refused while it simulates."""
+    state = _season_state(season_id)
+    if not state.get("recruiting"):
+        raise ApiError(404, "not a Coach Career")
+    if change:
+        _check_not_running()
+    return state
+
+
+def _recruiting_call(fn, *args, **kwargs):
+    try:
+        return fn(*args, **kwargs)
+    except recruiting.RecruitingError as e:
+        raise ApiError(404 if e.message in ("unknown prospect",) else e.code, e.message) from e
+
+
+def _offseason_state(season_id: str) -> dict:
+    """A career whose season is over, with its offseason open (opened on first ask)."""
+    st = _career_state(season_id, change=True)
+    if not st.get("done"):
+        raise ApiError(409, "the season is not over")
+    if not st.get("offseason"):
+        offseason.start(st)
+        _save_loaded()
+    return st
+
+
+# ----- schedule, views and settings --------------------------------------------
+
+@route("GET", "/api/season/{season_id}/week/{week}")
+def season_week(p: Params) -> dict:
+    try:
+        week = int(p.path["week"])
+    except ValueError:
+        raise ApiError(422, "week must be an int") from None
+    state = _season_state(p.path["season_id"])
+    table = season.standings(state) if week >= state["current_week"] else None
+    return {"week": week, "games": season.week_view(state, week), "standings": table}
+
+
+@route("GET", "/api/season/{season_id}/schedule/{slug}")
+def season_team_schedule(p: Params) -> dict:
+    """Any team's schedule with results, byes, ranks and opponent records."""
+    state = _season_state(p.path["season_id"])
+    _check_team(p.path["slug"])
+    return season.team_schedule_view(state, p.path["slug"])
+
+
+@route("GET", "/api/season/{season_id}/schedule_edit")
+def schedule_edit_view(p: Params) -> dict:
+    """Your non-conference games you can still trade (a career, before week 1), with the options for each."""
+    state = _season_state(p.path["season_id"])
+    games = season.schedule_editable(state)
+    return {"games": [dict(g, options=season.schedule_options(state, g["event_id"])) for g in games],
+            "changes": state.get("schedule_changes") or []}
+
+
+@route("POST", "/api/season/{season_id}/schedule_edit")
+def schedule_edit_swap(p: Params) -> dict:
+    """Trade one of your non-conference games for another school's that week."""
+    state = _season_state(p.path["season_id"])
+    event_id, slug = _field(p, "event_id", str), _field(p, "slug", str)
+    _check_not_running()
+    try:
+        season.schedule_swap(state, event_id, slug)
+    except season.ScheduleError as e:
+        raise ApiError(e.code, str(e)) from e
+    _save_loaded()
+    return {"changes": state.get("schedule_changes") or []}
+
+
+@route("POST", "/api/season/{season_id}/redshirt")
+def season_redshirt(p: Params) -> dict:
+    """Redshirt one of your players for the rest of the season, or take him off it (four games or fewer)."""
+    state = _career_state(p.path["season_id"])
+    team, player, on = _field(p, "team", str), _field(p, "player", str), _field(p, "on", bool, True)
+    _check_team(team)
+    if team != state["team"]:
+        raise ApiError(403, "only your own players")
+    _check_not_running()
+    try:
+        out = season.redshirt_toggle(state, team, player, on)
+    except season.RedshirtError as e:
+        raise ApiError(e.code, str(e)) from e
+    _save_loaded()
+    return out
+
+
+@route("GET", "/api/season/{season_id}/standings")
+def season_standings(p: Params) -> dict:
+    return {"standings": season.standings(_season_state(p.path["season_id"]))}
+
+
+@route("GET", "/api/season/{season_id}/review")
+def season_review(p: Params) -> dict:
+    return season.season_review(_season_state(p.path["season_id"]))
+
+
+@route("GET", "/api/season/{season_id}/resume")
+def season_resume(p: Params) -> dict:
+    """The committee's resume for every FBS team through `week` (default: now); with
+    `team`, that one team with its full game list."""
+    return season.resume(_season_state(p.path["season_id"]), p.q("week", int), p.q("team"))
+
+
+@route("GET", "/api/season/{season_id}/game/{event_id}")
+def season_game(p: Params) -> dict:
+    state = _season_state(p.path["season_id"])
+    event_id = p.path["event_id"]
+    box = season.load_box(state, event_id)
+    if box is None:
+        raise ApiError(404, "no box score for that game")
+    g = state["games"].get(event_id)
+    if g is not None:
+        riv = season.game_rivalry(state, g, after=True)
+        if riv is not None:
+            box = dict(box, rivalry=riv)
+    return box
+
+
+@route("GET", "/api/season/{season_id}/settings")
+def season_settings(p: Params) -> dict:
+    return {"settings": season.settings(_season_state(p.path["season_id"]))}
+
+
+@route("POST", "/api/season/{season_id}/settings")
+def season_settings_change(p: Params) -> dict:
+    """Change a season's settings (god mode and the rest; a career's Auto-recruit); saved with the season."""
+    state = _season_state(p.path["season_id"])
+    changes = {"god_mode": _field(p, "god_mode", bool, None), "morale": _field(p, "morale", bool, None)}
+    auto = (p.body if isinstance(p.body, dict) else {}).get("auto_recruit")   # "off", "week" or "season" (true/false still read)
+    if auto is not None and not isinstance(auto, (bool, str)):
+        raise ApiError(422, "auto_recruit must be a bool or a str")
+    mode = {True: "season", False: "off"}.get(auto, auto) if isinstance(auto, bool) else auto
+    if auto is not None and mode not in recruiting.AUTO_MODES:
+        raise ApiError(400, "Auto-recruit is off, week or season")
+    if auto is not None and not state.get("recruiting"):
+        raise ApiError(404, "not a Coach Career")
+    out = season.update_settings(state, changes)
+    if auto is not None:
+        state["career"]["settings"]["auto_recruit"] = mode
+        if mode != "off":                  # your staff take over: an open call or visit scene is dropped
+            recruiting.clear_scenes(state, state["team"])
+    _save_loaded()
+    res = {"settings": out}
+    if state.get("career"):
+        res["auto_recruit"] = recruiting.auto_mode(state)
+    return res
+
+
+# ----- recruiting (reads wait for a running sim too: the week's step changes what they read) -----
+
+@route("GET", "/api/season/{season_id}/recruiting")
+def recruiting_view(p: Params) -> dict:
+    return prospects.recruiting_view(_career_state(p.path["season_id"], change=True))
+
+
+@route("GET", "/api/season/{season_id}/programs")
+def programs_view(p: Params) -> dict:
+    """Every program's living rating (prestige, winning, NIL, market, conference, coach; tier and goal), yours first."""
+    from coach_career import programs
+    st = _career_state(p.path["season_id"])
+    rows = programs.rows(st)
+    me = next((r for r in rows if r["team"] == st["team"]), None)
+    return {"you": me, "rows": rows, "tiers": programs.TIER_NAMES, "weights": programs.WEIGHTS}
+
+
+@route("GET", "/api/season/{season_id}/recruiting/report")
+def recruiting_reports(p: Params) -> dict:
+    """The weekly reports kept (what changed for the prospects on your board), latest last."""
+    st = _career_state(p.path["season_id"], change=True)
+    return {"reports": st["recruiting"].get("reports") or []}
+
+
+@route("GET", "/api/season/{season_id}/prospects")
+def prospect_search(p: Params) -> dict:
+    st = _career_state(p.path["season_id"], change=True)
+    return prospects.search(st, st["team"], p.q("position"), p.q("stars", int), p.q("state"), p.q("status"), p.q("q"),
+                            max(0, p.q("offset", int, 0)), p.q("limit", int, 50), p.q("sort", str, "rank"), p.q("group"))
+
+
+@route("GET", "/api/season/{season_id}/classes")
+def national_classes(p: Params) -> dict:
+    """Every FBS school's class ranked nationally; with `school`, that class's recruits too."""
+    st = _career_state(p.path["season_id"], change=True)
+    school = p.q("school")
+    if school:
+        _check_team(school)
+    with prospects.class_block(st):
+        out = prospects.national_classes(st, st["team"])
+        if school:
+            out["class"] = prospects.class_detail(st, school, st["team"])
+    return out
+
+
+@route("GET", "/api/season/{season_id}/prospect/{pid}")
+def prospect_profile(p: Params) -> dict:
+    st = _career_state(p.path["season_id"], change=True)
+    return _recruiting_call(prospects.profile, st, p.path["pid"], st["team"])
+
+
+@route("POST", "/api/season/{season_id}/recruit")
+def recruit_action(p: Params) -> dict:
+    st = _career_state(p.path["season_id"], change=True)
+    pid, action = _field(p, "pid", str), _field(p, "action", str)
+    pitch, nil, scene = _field(p, "pitch", str, None), _field(p, "nil", int, 0), _field(p, "scene", str, None)
+    if pid not in recruiting.visible(st):
+        raise ApiError(404, "unknown prospect")
+    out = _recruiting_call(recruiting.act, st, st["team"], pid, action, pitch, nil, scene)
+    _save_loaded()
+    return out
+
+
+@route("POST", "/api/season/{season_id}/board")
+def board_change(p: Params) -> dict:
+    st = _career_state(p.path["season_id"], change=True)
+    pid, on = _field(p, "pid", str), _field(p, "on", bool, True)
+    if pid not in recruiting.visible(st):
+        raise ApiError(404, "unknown prospect")
+    recruiting.set_board(st, pid, on)
+    _save_loaded()
+    return {"board": st["recruiting"]["board"]}
+
+
+@route("POST", "/api/season/{season_id}/staff")
+def staff_change(p: Params) -> dict:
+    st = _career_state(p.path["season_id"], change=True)
+    _recruiting_call(recruiting.assign, st, _field(p, "staff_id", str), _field(p, "area", str))
+    _save_loaded()
+    return {"staff": st["career"]["staff"]}
+
+
+# ----- the offseason (offseason.py): departures, the transfer portal, development, staff -----
+
+@route("GET", "/api/season/{season_id}/offseason")
+def offseason_view(p: Params) -> dict:
+    st = _offseason_state(p.path["season_id"])
+    return offseason.view(st, p.q("position"), p.q("status"))
+
+
+@route("POST", "/api/season/{season_id}/offseason/advance")
+def offseason_advance(p: Params) -> dict:
+    """The next offseason stage; past the last one (or with to="next_season"), the next season."""
+    st = _offseason_state(p.path["season_id"])
+    to = _field(p, "to", str, None)
+    if to == "next_season":
+        offseason.run_all(st)
+    elif st["offseason"]["stage"] != "ready":
+        offseason.advance(st)
+        _save_loaded()
+        return offseason.view(st)
+    new = offseason.next_season(st)
+    _hold(new)
+    _save_loaded()
+    return {"next_season": True, "year": new["year"], "summary": season.summary(new)}
+
+
+@route("POST", "/api/season/{season_id}/offseason/portal")
+def offseason_portal(p: Params) -> dict:
+    st = _offseason_state(p.path["season_id"])
+    pid, on = _field(p, "pid", str), _field(p, "on", bool, True)
+    try:
+        offers = offseason.portal_offer(st, pid, on)
+    except KeyError:
+        raise ApiError(404, "unknown portal player") from None
+    except (OverflowError, ValueError) as e:
+        raise ApiError(409, str(e)) from e
+    _save_loaded()
+    return {"offers": offers}
+
+
+@route("POST", "/api/season/{season_id}/offseason/redshirt")
+def offseason_redshirt(p: Params) -> dict:
+    """Your call on one player's redshirt (the Departures step)."""
+    st = _offseason_state(p.path["season_id"])
+    pid, on = _field(p, "pid", str), _field(p, "on", bool, True)
+    try:
+        offseason.redshirt(st, pid, on)
+    except offseason.RosterError as e:
+        raise ApiError(e.code, str(e)) from e
+    _save_loaded()
+    return offseason.view(st)
+
+
+@route("GET", "/api/season/{season_id}/offseason/position_options")
+def offseason_position_options(p: Params) -> dict:
+    """What one of your players would be at every position."""
+    st = _offseason_state(p.path["season_id"])
+    pid = _need(p, "pid")
+    try:
+        return {"options": offseason.position_options(st, pid)}
+    except offseason.RosterError as e:
+        raise ApiError(e.code, str(e)) from e
+
+
+@route("POST", "/api/season/{season_id}/offseason/position")
+def offseason_position(p: Params) -> dict:
+    """Move one of your players to another position for next season."""
+    st = _offseason_state(p.path["season_id"])
+    pid, pos = _field(p, "pid", str), _field(p, "pos", str)
+    try:
+        offseason.change_position(st, pid, pos)
+    except offseason.RosterError as e:
+        raise ApiError(e.code, str(e)) from e
+    _save_loaded()
+    return offseason.view(st)
+
+
+@route("POST", "/api/season/{season_id}/offseason/retain")
+def offseason_retain(p: Params) -> dict:
+    """Keep them home: one move with a leaver (meet, promise a starting role, NIL from next year's budget, let him go)."""
+    st = _offseason_state(p.path["season_id"])
+    pid, action, nil = _field(p, "pid", str), _field(p, "action", str), _field(p, "nil", int, 0)
+    try:
+        offseason.retain(st, pid, action, nil=nil)
+    except offseason.RetentionError as e:
+        raise ApiError(e.code, str(e)) from e
+    _save_loaded()
+    return offseason.view(st)
+
+
+@route("POST", "/api/season/{season_id}/offseason/review")
+def offseason_review(p: Params) -> dict:
+    """Your meeting with the AD: what you say, then his decision (firing happens only here)."""
+    st = _offseason_state(p.path["season_id"])
+    action, staff_id = _field(p, "action", str), _field(p, "staff_id", str, None)
+    try:
+        offseason.review_decide(st, action, staff_id=staff_id)
+    except offseason.ReviewError as e:
+        raise ApiError(e.code, str(e)) from e
+    _save_loaded()
+    return offseason.view(st)
+
+
+@route("POST", "/api/season/{season_id}/offseason/job")
+def offseason_job(p: Params) -> dict:
+    """Take a job offer (or, fired, an opening); team null stays put."""
+    st = _offseason_state(p.path["season_id"])
+    team = _field(p, "team", str, None)
+    try:
+        car = offseason.choose_job(st, team)
+    except ValueError as e:
+        raise ApiError(409, str(e)) from e
+    _save_loaded()
+    return {"choice": car["choice"]}
+
+
+@route("POST", "/api/season/{season_id}/offseason/hire")
+def offseason_hire(p: Params) -> dict:
+    st = _offseason_state(p.path["season_id"])
+    staff_id, index = _field(p, "staff_id", str), _field(p, "index", int)
+    try:
+        staff = offseason.hire(st, staff_id, index)
+    except ValueError as e:
+        raise ApiError(400, str(e)) from e
+    _save_loaded()
+    return {"hired": staff["hired"]}
+
+
+@route("POST", "/api/season/{season_id}/offseason/open_role")
+def offseason_open_role(p: Params) -> dict:
+    """Let one of your own coaches go at the Staff step: he joins the market, his job gets candidates."""
+    st = _offseason_state(p.path["season_id"])
+    staff_id = _field(p, "staff_id", str)
+    try:
+        offseason.open_role(st, staff_id)
+    except ValueError as e:
+        raise ApiError(409, str(e)) from e
+    _save_loaded()
+    return offseason.view(st)
+
+
+# ----- roster and stats: god-mode edits, preview, depth charts, injuries, awards, players, leaders -----
+
+@route("POST", "/api/season/{season_id}/player/edit")
+def season_player_edit(p: Params) -> dict:
+    """God mode: change a player's ratings, class, size, jersey or development trait. The
+    edit is saved with the season and used by every game from the next sim on."""
+    state = _season_state(p.path["season_id"])
+    team, player, changes = _field(p, "team", str), _field(p, "player", str), _field(p, "changes", dict)
+    if not season.settings(state)["god_mode"]:
+        raise ApiError(403, "turn on god mode in Settings to edit players")
+    _check_team(team)
+    _check_not_running()
+    try:
+        edits = season.edit_player(state, team, player, changes)
+    except ValueError as exc:
+        raise ApiError(400, str(exc)) from exc
+    _save_loaded()
+    return {"edits": edits, "player": season.player_profile(state, team, slug=player)}
+
+
+@route("GET", "/api/season/{season_id}/preview")
+def season_preview(p: Params) -> dict:
+    """This week for a team (default: yours): the next game, a prediction from simulating
+    it, and the injury report."""
+    state = _season_state(p.path["season_id"])
+    slug = p.q("team") or state["team"]
+    _check_team(slug)
+    return season.game_preview(state, slug)
+
+
+@route("GET", "/api/season/{season_id}/rivalries")
+def season_rivalries(p: Params) -> dict:
+    """A team's rivalries (default: yours): trophy, series today and this season's meeting."""
+    state = _season_state(p.path["season_id"])
+    return season.rivalries_view(state, p.q("team") or state["team"])
+
+
+@route("GET", "/api/season/{season_id}/stats/teams")
+def season_team_stats(p: Params) -> dict:
+    return season.team_stats_view(_season_state(p.path["season_id"]))
+
+
+@route("GET", "/api/season/{season_id}/depth/{slug}")
+def season_depth_chart(p: Params) -> dict:
+    """One team's depth chart with each player's season headline."""
+    state = _season_state(p.path["season_id"])
+    _check_team(p.path["slug"])
+    return season.depth_chart_view(state, p.path["slug"])
+
+
+@route("GET", "/api/season/{season_id}/depth/{slug}/position/{role}")
+def season_depth_position(p: Params) -> dict:
+    """Every player on the roster rated at one depth-chart role."""
+    state = _season_state(p.path["season_id"])
+    slug, role = p.path["slug"], p.path["role"]
+    _check_team(slug)
+    if role not in season.ROLE_POSITION and role not in ("KR", "PR"):
+        raise ApiError(404, "unknown role")
+    return season.position_candidates(state, slug, role)
+
+
+@route("POST", "/api/season/{season_id}/depth/{slug}")
+def season_depth_change(p: Params) -> dict:
+    """Move a player on a team's depth chart (or reset the team). The change is saved with
+    the season and used by every game from then on."""
+    state = _season_state(p.path["season_id"])
+    slug = p.path["slug"]
+    role, player = _field(p, "role", str, None), _field(p, "player", str, None)
+    move, reset = _field(p, "move", str, "up"), _field(p, "reset", bool, False)
+    _check_team(slug)
+    if slug != state["team"] and not season.settings(state)["god_mode"]:
+        raise ApiError(403, "turn on god mode in Settings to edit another team's depth chart")
+    _check_not_running()
+    if reset:
+        season.reset_depth(state, slug)
+    else:
+        if not role or not player:
+            raise ApiError(400, "role and player are required")
+        try:
+            season.move_depth(state, slug, role, player, move)
+        except ValueError as exc:
+            raise ApiError(400, str(exc)) from exc
+    _save_loaded()
+    return season.depth_chart_view(state, slug)
+
+
+@route("GET", "/api/season/{season_id}/injuries")
+def season_injuries(p: Params) -> dict:
+    """The injury list: one team or the whole league, with weeks left and the return week."""
+    state = _season_state(p.path["season_id"])
+    return {"injuries": season.injury_report(state, p.q("team") or None), "week": state["current_week"]}
+
+
+@route("GET", "/api/season/{season_id}/awards")
+def season_awards(p: Params) -> dict:
+    """Every award: the live race until they are given, then the results."""
+    return season.awards_view(_season_state(p.path["season_id"]))
+
+
+@route("GET", "/api/season/{season_id}/player")
+def season_player(p: Params) -> dict:
+    """One player's page: bio, ratings, season totals, ranks, game log, honors."""
+    state = _season_state(p.path["season_id"])
+    team = _need(p, "team")
+    _check_team(team)
+    prof = season.player_profile(state, team, name=p.q("name") or None, position=p.q("position") or None,
+                                 slug=p.q("slug") or None)
+    if prof is None:
+        raise ApiError(404, "player not found")
+    return prof
+
+
+@route("GET", "/api/season/{season_id}/stats/leaders")
+def season_player_leaders(p: Params) -> dict:
+    state = _season_state(p.path["season_id"])
+    team = p.q("team")
+    if team:
+        _check_team(team)
+    return season.player_leaders_view(state, team or None, max(1, min(p.q("n", int, 5), 25)), p.q("conference") or None)
+
+
+@route("GET", "/api/season/{season_id}/stats/players")
+def season_player_stats(p: Params) -> dict:
+    state = _season_state(p.path["season_id"])
+    team = p.q("team")
+    if team:
+        _check_team(team)
+    try:
+        return season.player_stats_view(state, team or None, p.q("cat", str, "passing"), p.q("limit", int, 100),
+                                        p.q("conference") or None)
+    except ValueError as exc:
+        raise ApiError(400, str(exc)) from exc
