@@ -276,9 +276,9 @@ def step(report: Callable[[str], None] | None = None) -> dict | None:
             _mark_changed()
             over = True
         else:
-            before = state["current_week"]
-            season.advance_to(state, _job["done"] + 1, report=on_progress, should_stop=lambda: _job["stop"])
-            if state["current_week"] != before:
+            if not _job["stop"] and not state["done"]:   # a pause lands between weeks, as advance_to checked it
+                # every week after the run's first runs your recruiting week too, as one advance_to call did
+                season.advance(state, season.shared_pool(), on_progress, auto_recruit=state["current_week"] > _job["since"])
                 season.save_season(state)
                 _mark_changed()
             _job["done"] = state["current_week"]

@@ -137,6 +137,20 @@ def test_pause_between_weeks():
     assert api.call("POST", f"/api/season/{s['id']}/pause") == {"status": "idle", "stopping": False}
 
 
+def test_stepped_advance_auto_recruits_after_first_week():
+    # As one advance_to call did: your staff run your recruiting week for every week after the
+    # first of a multi-week advance (with Auto-recruit off), never for the first.
+    s = api.call("POST", "/api/season", {"team": "smu", "seed": 11, "career": True})
+    rc = api.loaded_state()["recruiting"]
+    assert api.loaded_state()["career"]["settings"]["auto_recruit"] is False and not rc["board"]
+    api.call("POST", f"/api/season/{s['id']}/advance", {"to": 3})
+    api.step()
+    assert not rc["board"] and not rc["offers"].get("smu"), "week 1 ran your recruiting"
+    api.step()
+    assert rc["board"], "week 2 of the advance did not run your recruiting"
+    api.step()
+
+
 def test_import_refused_while_running():
     s = api.call("POST", "/api/season", {"team": "smu", "seed": 11, "career": True})
     blob = api.call("GET", f"/api/season/{s['id']}/export")
@@ -186,6 +200,7 @@ if __name__ == "__main__":
         test_coaches_crud()
         test_advance_runs_in_steps()
         test_pause_between_weeks()
+        test_stepped_advance_auto_recruits_after_first_week()
         test_import_refused_while_running()
         test_other_season_refused_while_running()
         test_gameday_step()
