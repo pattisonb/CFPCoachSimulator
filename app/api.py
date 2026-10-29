@@ -109,9 +109,10 @@ def _match(pattern: str, parts: list[str]) -> Optional[dict[str, str]]:
     out = {}
     for w, part in zip(want, parts):
         if w.startswith("{") and w.endswith("}"):
-            if not part:
+            value = urllib.parse.unquote(part)
+            if value in ("", ".", "..") or "/" in value or "\\" in value:   # an id never names a path outside its folder
                 return None
-            out[w[1:-1]] = urllib.parse.unquote(part)
+            out[w[1:-1]] = value
         elif w != part:
             return None
     return out

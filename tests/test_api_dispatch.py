@@ -78,6 +78,25 @@ def test_export_import_roundtrip():
     api.call("DELETE", f"/api/season/{s['id']}")
 
 
+def test_path_traversal_refused():
+    # an id with an encoded slash must not reach a file outside the seasons folder
+    outside = season.SEASONS_DIR.parent / f"{season.SEASONS_DIR.name}-outside"
+    (outside / "victim").mkdir(parents=True, exist_ok=True)
+    victim = outside / "victim.json"
+    victim.write_text("{}", encoding="utf-8")
+    api.changed()                                   # clear what earlier tests left
+    try:
+        sneaky = f"..%2F{outside.name}%2Fvictim"
+        for method, path in (("GET", f"/api/season/{sneaky}"), ("DELETE", f"/api/season/{sneaky}"),
+                             ("GET", f"/api/season/{sneaky}/export"), ("GET", "/api/season/.."),
+                             ("DELETE", "/api/season/%2E%2E"), ("GET", "/api/coaches/..%5Cx")):
+            refused(lambda: api.call(method, path), 404)
+        assert victim.exists() and (outside / "victim").is_dir() and not api.changed()
+    finally:
+        import shutil
+        shutil.rmtree(outside, ignore_errors=True)
+
+
 def test_coaches_crud():
     c = api.call("POST", "/api/coaches", {"coach": {**coaches.blank(), "first_name": "Pat", "last_name": "Day"}})
     assert api.changed() and api.call("GET", f"/api/coaches/{c['id']}")["last_name"] == "Day"
@@ -103,6 +122,7 @@ if __name__ == "__main__":
         test_create_refusals()
         test_create_ignores_career_flag()
         test_export_import_roundtrip()
+        test_path_traversal_refused()
         test_coaches_crud()
     finally:
         season.close_pool()
