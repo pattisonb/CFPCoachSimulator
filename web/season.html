@@ -207,7 +207,9 @@
   <script>(function () {
     var game = window.CFP.game, box = document.getElementById("loading"), text = document.getElementById("loading-text"), bar = document.getElementById("loading-bar");
     game.onLoading(function (p) { box.hidden = false; if (p.total) bar.value = Math.round(100 * p.loaded / p.total); else bar.removeAttribute("value"); });
-    game.ready.then(function () { box.hidden = true; }, function (err) { box.hidden = false; bar.hidden = true; text.textContent = err.message; });
+    function failed(err) { box.hidden = false; bar.hidden = true; text.textContent = err.message; }
+    game.ready.then(function () { box.hidden = true; }, failed);
+    game.onFatal(failed);
     game.onStorageError(function () {      // a second later: the page hides its own toast right after the reply the save followed
       var t = document.getElementById("toast"), msg = "Your browser could not save the career: free some space or download it";
       setTimeout(function () { t.textContent = msg; t.hidden = false; }, 1000);

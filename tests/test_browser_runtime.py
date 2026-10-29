@@ -2,7 +2,8 @@
 in the Web Worker (web/worker.js) behind the page's fetch shim (web/game-client.js). A seed-11
 SMU career advanced two weeks through the real page gives the scores the native sim gives, the
 career comes back from IndexedDB on a fresh page load, and a browser that cannot persist the
-save says so with a toast while the career keeps playing from memory. Needs Playwright with a
+save says so with a toast while the career keeps playing from memory, and a worker that fails
+after it was ready tells the page instead of leaving it waiting. Needs Playwright with a
 Chromium and the Pyodide CDN; without Playwright it is skipped with the reason. (Run as a file.)"""
 import sys as _sys
 from pathlib import Path as _Path
@@ -112,7 +113,7 @@ def test_two_weeks_match_native_and_reload_restores(browser, base: str, timings:
         for week in (1, 2):
             timings[f"week {week}"], widths = sim_week(page)
             assert shim(page, f"/api/season/{sid}")["json"]["current_week"] == week
-            assert len(widths) >= 2, f"no in-week progress reached the page: {widths}"
+            assert len(widths) >= 2, f"no in-week progress reached the page: {widths} (week {week} took {timings[f'week {week}']:.1f}s)"
         b64 = page.evaluate(f"""CFP.game.fetch('/api/season/{sid}/export').then(async (r) => {{
             const b = new Uint8Array(await r.arrayBuffer()); let s = "";
             for (let i = 0; i < b.length; i += 8192) s += String.fromCharCode.apply(null, b.subarray(i, i + 8192));
@@ -120,9 +121,13 @@ def test_two_weeks_match_native_and_reload_restores(browser, base: str, timings:
         state = career.read_save(base64.b64decode(b64))[0]
         assert state["current_week"] == 2
         assert digest(state) == native_digest(), "the browser's scores differ from the native sim's"
+        # the page's own copy (careersave.js) goes first, so only the worker's IndexedDB can bring the career back
+        page.evaluate(f"window.CareerSave.remove({sid!r})")
+        assert page.evaluate("window.CareerSave.list().then((l) => l.length)") == 0
         timings["reload"] = load(page, f"{base}/season.html?id={sid}")     # a fresh worker: the career comes back from IndexedDB
         page.wait_for_selector("#season:visible")
         assert shim(page, f"/api/season/{sid}")["json"]["current_week"] == 2
+        assert "restored from this device" not in page.inner_text("#toast")
         assert not errors, errors
     finally:
         if console:
@@ -155,6 +160,36 @@ def test_syncfs_failure_toasts(browser, base: str):
         ctx.close()
 
 
+def test_worker_failure_after_ready_reaches_the_page(browser, base: str):
+    """The sim step crashes in the worker: every call in flight or after rejects with the reason
+    (nothing hangs on a stale "running" snapshot) and the overlay says the game could not load."""
+    ctx = browser.new_context()
+    ctx.add_init_script("window.__cfpBreakStep = true")
+    page = ctx.new_page()
+    errors, console = [], []
+    watch(page, errors, console)
+    try:
+        load(page, f"{base}/season.html")
+        sid = shim(page, "/api/season", POST % '{team: "smu", seed: 11}')["json"]["id"]
+        outcomes = page.evaluate(f"""async () => {{
+            await CFP.game.fetch('/api/season/{sid}/advance', {POST % '{}'});
+            const calls = [];
+            for (let i = 0; i < 50; i++) {{ calls.push(CFP.game.fetch('/api/teams').then(() => "ok", (e) => e.message)); await new Promise((r) => setTimeout(r, 20)); }}
+            return Promise.all(calls); }}""")
+        failed = [o for o in outcomes if o != "ok"]
+        assert failed and all("The game could not load" in o for o in failed), outcomes
+        assert outcomes[-1] != "ok", outcomes
+        page.wait_for_selector("#loading", state="visible", timeout=10_000)
+        assert "The game could not load" in page.inner_text("#loading")
+        assert page.evaluate(f"CFP.game.fetch('/api/season/{sid}/status').then(() => 'ok', (e) => e.message)") != "ok"
+        assert not errors, errors
+    finally:
+        console = [c for c in console if "the sim step is switched off" not in c]   # the injected crash, logged by the worker
+        if console:
+            print("console:", *console, sep="\n  ")
+        ctx.close()
+
+
 if __name__ == "__main__":
     try:
         from playwright.sync_api import sync_playwright
@@ -177,6 +212,7 @@ if __name__ == "__main__":
             try:
                 test_two_weeks_match_native_and_reload_restores(browser, base, timings)
                 test_syncfs_failure_toasts(browser, base)
+                test_worker_failure_after_ready_reaches_the_page(browser, base)
             finally:
                 browser.close()
         httpd.shutdown()

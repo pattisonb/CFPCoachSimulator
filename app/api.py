@@ -298,12 +298,15 @@ def step(report: Callable[[str], None] | None = None) -> dict | None:
     """Play the running job's next unit: one week of an advance, or your game on game day.
     Saves the season, moves the job on (back to idle when the run is over, paused or done)
     and returns the status with your results since the week the run started from. `report`,
-    when given, gets that status as JSON after every progress callback and once at the end.
-    None when nothing is running. A failure sets the job to "error" instead of raising."""
+    when given, gets that status as JSON once before the sim starts (the page sees the run at
+    once), after every progress callback and once at the end. None when nothing is running. A
+    failure sets the job to "error" instead of raising."""
     if _loaded is None or not running():
         return None
     state = _loaded
     on_progress = _reporter(state, report)
+    if report is not None:
+        report(json.dumps(_status(state, _job.get("since"))))
     try:
         if _job["kind"] == "gameday":
             _job["gameday_event"] = season.play_my_game(state, None, report=on_progress)

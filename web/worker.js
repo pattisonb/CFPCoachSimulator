@@ -17,6 +17,7 @@ let wake = null;           // resolves the pump's wait for a message
 let pyodide = null;
 let api = null;            // the app.api module
 let breakStorage = false;  // a test hook: every persist fails
+let breakStep = false;     // a test hook: the next sim step throws (a failure after ready)
 
 self.onmessage = (e) => { queue.push(e.data); if (wake) { const w = wake; wake = null; w(); } };
 
@@ -60,6 +61,7 @@ async function fetchZip(version) {
 
 async function start(init) {
   breakStorage = !!init.breakStorage;
+  breakStep = !!init.breakStep;
   loading("Loading Python");
   importScripts(PYODIDE_URL + "pyodide.js");
   pyodide = await loadPyodide({ indexURL: PYODIDE_URL });
@@ -98,6 +100,7 @@ async function handle(msg) {
 async function step() {
   let last = null;
   const report = (s) => { last = s; postMessage({ kind: "status", status: JSON.parse(s), busy: true }); };
+  if (breakStep) { await new Promise((r) => setTimeout(r, 300)); throw new Error("the sim step is switched off"); }   // calls sent meanwhile are in flight
   const out = api.step(report);
   if (out && out.destroy) out.destroy();
   if (last !== null) postMessage({ kind: "status", status: JSON.parse(last), busy: false });
@@ -116,7 +119,7 @@ async function main() {
       else if (api.running()) await step();
       else await untilMessage();
     }
-  } catch (err) {
+  } catch (err) {                 // a crash in the pump: the page hears it instead of hanging
     console.error(err);
     postMessage({ kind: "fatal", message: String((err && err.message) || err) });
   }
