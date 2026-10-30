@@ -1104,8 +1104,14 @@ The pane is the only place anything happens to him: a head with his status chip 
 ▾** button, whose menu lists every action with its hour cost or the reason it waits (Once a
 week, Monthly, Offer him first, Finish your call first). Message and Offer… open a step in the
 pane: the pitch as a dropdown (his known priorities first, each with your program's case), the
-NIL points with his ask for an offer; a call or in-home visit plays as a scene in the pane. Under
-the head, a strip of four cells (your chance, his list, NIL, scouted), the tags you know, and
+NIL points with his ask for an offer; a call or in-home visit plays as a scene in the pane. When
+he asks about a named player on that call (the starter ahead of him, or another recruit you
+offered), the scene shows his line with three answers (straight, a promise, a sidestep) and
+locks the pitch until you pick one; his reply comes back in place (no toast) and History keeps
+the answer (`Told him straight about …`, `Promised him the job over …`). Under
+the head, a strip of four cells (your chance, his list, NIL, scouted), the tags you know (a
+prospect who is tuning you out carries a `Tuning you out` tag, a warning above the Recruit button
+says another contact costs you interest, and History lists each tuned-out contact), and
 sub-tabs: Overview, Scouting, Profile, History. A ★ tag is a priority he has confirmed to you and a ☆
 tag a topic he brought up on this week's call or visit (a topic that is both shows once, as ★). History lists every contact you have had with
 him from the contact log, newest first, one line each (`Week 4 · Call · Program prestige · He lit

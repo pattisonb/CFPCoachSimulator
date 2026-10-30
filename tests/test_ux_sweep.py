@@ -199,6 +199,164 @@ def check_pane_profile(page, base, sid) -> None:
             page.click(".go-pane .go-pane-back")
     page.set_viewport_size({"width": 1280, "height": 1000})
 
+# ----- the Recruiting page batch (pg-recruiting): pester tags, the recruit question block, the portal NIL title -----
+
+def wait_server(base: str) -> None:
+    for _ in range(120):
+        try:
+            urllib.request.urlopen(base + "/api/teams", timeout=2)
+            return
+        except OSError:
+            time.sleep(0.5)
+
+
+def test_pester_tags(page, base) -> None:
+    """A prospect you have pestered (three contacts landed while he is not considering you): the pane tags him
+    "Tuning you out", a warning sits above the Recruit button, the menu's Message, Call and HC visit stay enabled with
+    the cost in their titles, and a message to him still patches the pane in place with its toast and a History line."""
+    from coach_career import recruiting
+    from sim import season
+    from test_pester import far_prospect
+    me = "ohio-state"
+    st = season.new_season(me, "full", seed=11, career=True)
+    rc = st["recruiting"]
+    recruiting.weekly_step(st, 0)                       # the AI schools' first week fills his list
+    pid = far_prospect(st)
+    name = rc["prospects"][pid]["name"]
+    rc["contacts"].setdefault(pid, {})[me] = {"n": recruiting.PESTER_FREE, "hc_week": None}   # the free contacts are spent
+    st["current_week"] = 1
+    season.save_season(st)
+    sid = st["id"]
+    errs = []
+    page.on("pageerror", lambda e: errs.append(str(e)))
+    try:
+        call(base, f"/api/season/{sid}/board", {"pid": pid, "on": True})
+        b = next(x for x in call(base, f"/api/season/{sid}/recruiting")["board"] if x["id"] == pid)
+        assert b["pestering"] is True and b["pesters"] == 0, b
+        open_tab(page, base, sid, "recruiting", ".go-stages")
+        page.click(f".go-row-recruit[data-pid='{pid}']")
+        page.wait_for_selector(".go-pane .go-tags .go-tag:has-text('Tuning you out')", timeout=30_000)
+        tag = page.query_selector(".go-pane .go-tags .go-tag:has-text('Tuning you out')")
+        assert "bad" in (tag.get_attribute("class") or ""), tag.get_attribute("class")
+        assert tag.get_attribute("title") == "He is not considering you; more contact pushes him away"
+        warn = page.query_selector(".go-pane .go-warn[role=note]")
+        assert warn and warn.inner_text().strip() == "He is tuning you out: another contact costs you interest.", warn and warn.inner_text()
+        assert page.evaluate("() => { const w = document.querySelector('.go-pane .go-warn'), r = document.querySelector('#rc-recruit'); return w.getBoundingClientRect().bottom <= r.getBoundingClientRect().top + 1; }"), "the warning sits above the Recruit button"
+        page.click("#rc-recruit")
+        page.wait_for_selector(".go-menu")
+        items = page.evaluate("() => Object.fromEntries([...document.querySelectorAll('.go-menu .go-menu-item')].map(e => [e.dataset.action, [e.getAttribute('title'), e.getAttribute('aria-disabled')]]))")
+        for a in ("message", "call", "hc_visit"):
+            assert items[a] == ["Costs you interest while he is tuning you out", None], (a, items[a])
+        for a in ("scout", "offer", "off_board"):
+            assert items[a][0] is None, (a, items[a])
+        page.click(".go-menu .go-menu-item[data-action=message]")
+        page.wait_for_selector(".go-pane .go-step select#rc-pitch")
+        h = watch(page, ".go-pane", ".go-pane .go-step button.go-step-go", scrolled=False)
+        n = draws(page)
+        page.click(".go-pane .go-step button.go-step-go")
+        toasted(page, f"Message sent to {name} · 5 hours")
+        settle(page, n)
+        smooth(page, h, "Message to a prospect who is tuning you out")
+        assert page.query_selector(".go-pane .go-tags .go-tag:has-text('Tuning you out')"), "the tag stays after the pester"
+        assert page.query_selector(".go-pane .go-warn[role=note]"), "the warning stays after the pester"
+        page.click(".go-subtabs button[data-sub=history]")
+        time.sleep(0.4)
+        hist = page.inner_text(".go-pane .go-sub-body")
+        assert "Week 1 · He tuned out your message" in hist, hist
+        assert not errs, errs
+    finally:
+        call(base, f"/api/season/{sid}", method="DELETE")
+
+
+def test_recruit_question(page) -> None:
+    """A call on which he asks about a named player (its own dev server, CFP_QUESTION_RATE=1): the question block
+    with his line and three answers, the pitch locked until you answer, a straight answer's reply unlocking it in
+    place with no toast, the answered question kept through Hang up and Finish, and the History line."""
+    from coach_career import scenes
+    from sim import season
+    st = season.new_season("smu", "full", seed=62, career=True)
+    me, rc, week = st["team"], st["recruiting"], st["current_week"]
+    rate = scenes.QUESTION_RATE
+    scenes.QUESTION_RATE = 1.0
+    try:
+        pid = next(q for q in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"])
+                   if not rc["prospects"][q].get("hidden") and rc["status"][q]["committed"] is None
+                   and "playing_time" in rc["prospects"][q]["priorities"] and scenes.question(st, me, q, week))
+    finally:
+        scenes.QUESTION_RATE = rate
+    season.save_season(st)
+    sid = st["id"]
+    port = free_port()
+    base = f"http://127.0.0.1:{port}"
+    server = subprocess.Popen([sys.executable, "tools/dev_server.py"], cwd=ROOT, env={**os.environ, "PORT": str(port), "CFP_QUESTION_RATE": "1"},
+                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    errs = []
+    page.on("pageerror", lambda e: errs.append(str(e)))
+    try:
+        wait_server(base)
+        call(base, f"/api/season/{sid}/board", {"pid": pid, "on": True})
+        open_tab(page, base, sid, "recruiting", ".go-stages")
+        page.click(f".go-row-recruit[data-pid='{pid}']")
+        time.sleep(0.4)
+        page.click("#rc-recruit")
+        page.wait_for_selector(".go-menu")
+        page.click(".go-menu .go-menu-item[data-action=call]")
+        page.wait_for_selector(".go-pane .go-scene .go-question", timeout=30_000)
+        b = next(x for x in call(base, f"/api/season/{sid}/recruiting")["board"] if x["id"] == pid)
+        q = b["scene"]["question"]
+        assert q and q["answer"] is None, q
+        block = page.inner_text(".go-pane .go-scene .go-question")
+        assert q["text"] in block and b["name"] in block, (block, q)
+        answers = page.evaluate("() => [...document.querySelectorAll('.go-pane .go-scene .go-answer')].map(e => [e.dataset.answer, e.textContent.trim()])")
+        assert answers == [[k, scenes.ANSWER_COPY[q["kind"]][k]] for k in ("straight", "promise", "deflect")], answers
+        pitch = ".go-pane .go-scene .go-scene-acts button:has-text('Pitch')"
+        assert page.is_disabled(pitch) and page.get_attribute(pitch, "title") == "Answer him first"
+        assert page.evaluate("() => [...document.querySelectorAll('.go-pane .go-scene .go-pitches input')].every(r => r.disabled)"), "the pitch radios wait on the answer"
+        h = watch(page, ".go-pane .go-scene", ".go-pane .go-scene .go-answer[data-answer=straight]", scrolled=False)
+        toasts = page.evaluate("() => document.querySelectorAll('#toasts .toast-item').length")
+        page.click(".go-pane .go-scene .go-answer[data-answer=straight]")
+        page.wait_for_selector(".go-pane .go-scene .go-question-reply", timeout=30_000)
+        page.wait_for_selector(".go-pane .go-scene .go-answer", state="detached", timeout=10_000)
+        reply = page.query_selector(".go-pane .go-scene .go-question-reply")
+        assert reply.inner_text().strip() == scenes.REPLY_LINES["straight"], reply.inner_text()
+        assert "good" in (reply.get_attribute("class") or ""), reply.get_attribute("class")
+        smooth(page, h, "Answering his question")
+        assert not page.is_disabled(pitch) and not page.get_attribute(pitch, "title") == "Answer him first", "the pitch unlocks"
+        assert page.evaluate("() => [...document.querySelectorAll('.go-pane .go-scene .go-pitches input')].every(r => !r.disabled)")
+        assert page.evaluate("() => document.querySelectorAll('#toasts .toast-item').length") == toasts, "the reply is the feedback: no toast"
+        # Hang up, then Finish: the answered question comes back without its buttons
+        page.click(".go-pane .go-scene button:has-text('Hang up')")
+        page.wait_for_selector("#rc-finish")
+        n = draws(page)
+        page.click("#rc-finish")
+        settle(page, n)
+        page.wait_for_selector(".go-pane .go-scene .go-question-reply", timeout=30_000)
+        assert not page.query_selector(".go-pane .go-scene .go-answer"), "an answered question offers no answers"
+        assert q["text"] in page.inner_text(".go-pane .go-scene .go-question")
+        assert not page.is_disabled(pitch)
+        page.click(pitch)
+        page.wait_for_selector(".go-pane .go-reaction", timeout=30_000)
+        page.click(".go-subtabs button[data-sub=history]")
+        page.wait_for_function("(t) => (document.querySelector('.go-pane .go-sub-body') || {}).textContent.includes(t)",
+                               arg=f"Told him straight about {q['about']['name']}", timeout=30_000)
+        assert not errs, errs
+    finally:
+        try:
+            call(base, f"/api/season/{sid}", method="DELETE")
+        except Exception:  # noqa: BLE001
+            pass
+        server.terminate()
+
+
+def test_portal_nil_title(page, base, sid) -> None:
+    """The portal board's title carries the NIL pool (the API's nil.pool), and its meter reads against the pool."""
+    v = call(base, f"/api/season/{sid}/recruiting")
+    assert v["portal"] and v["nil"]["pool"] is not None, v["nil"]
+    page.wait_for_selector("#tab-offseason .rc-head .go-display", timeout=30_000)
+    title = page.inner_text("#tab-offseason .rc-head .go-display").strip()
+    assert title == f"TRANSFER PORTAL · WEEK {v['portal']['week']} OF {v['portal']['weeks']} · {v['nil']['pool']} NIL", title
+    assert f"{v['nil']['left']} / {v['nil']['pool']}" in page.inner_text("#tab-offseason .rc-head .go-meters")
+
 
 if __name__ == "__main__":
     try:
@@ -1279,6 +1437,7 @@ if __name__ == "__main__":
             time.sleep(0.8)
             hollow = page.evaluate("() => [...document.querySelectorAll('.go-row-recruit .go-stars, .go-pane .go-stars')].filter(e => /^☆+$/.test(e.textContent.trim())).length")
             assert hollow == 0, f"{hollow} transfer rows show an empty star row"
+            test_portal_nil_title(page, base, B)
             page.set_viewport_size({"width": 400, "height": 860})
             page.click("#season-tabs button[data-tab=prospects]")
             page.wait_for_selector(".go-list-row", timeout=60_000)
@@ -1304,6 +1463,8 @@ if __name__ == "__main__":
                 page.wait_for_selector(".off-cand", timeout=60_000)
                 hire = page.get_attribute(".off-cand > :last-child", "class") or ""
                 assert "go-btn" in hire, f"the hire control reads as a button, not a tag ({hire})"
+            test_pester_tags(page, base)
+            test_recruit_question(page)
             browser.close()
         assert not errors, errors
         print("ux sweep ok: office, prospects, board (tabs, list, pane, menu, step, scene, phone, every action patching in place with its toast), staff, schedule, depth, player page, an FCS box score and every offseason stage at 1280 and 400")
