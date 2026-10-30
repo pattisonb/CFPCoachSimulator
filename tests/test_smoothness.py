@@ -275,7 +275,7 @@ def coach_case(page, base: str) -> str:
     page.fill(".coach-grid input[placeholder=First]", "Smooth")
     page.fill(".coach-grid input[placeholder=Last]", "Saver")
     save = ready(page, ".coach-final button.primary")
-    assert_smooth(page, "#coach-form", lambda: save.click(), "Smooth Saver saved.", "Your coach: save")
+    assert_smooth(page, "#coach-form > section.coach-final", lambda: save.click(), "Smooth Saver saved.", "Your coach: save")
     assert page.inner_text(".coach-final button.primary") == "Save changes"
     page.wait_for_selector(".coach-item:has-text('Smooth Saver')")
     return page.evaluate("() => new URLSearchParams(location.search).get('id')") or ""
