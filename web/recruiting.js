@@ -1719,12 +1719,15 @@
     const r = cell.getBoundingClientRect(), t = tip.getBoundingClientRect(), gap = 6, pad = 8;
     const below = r.bottom + gap + t.height <= document.documentElement.clientHeight - pad;
     const top = below ? r.bottom + gap : Math.max(pad, r.top - gap - t.height);
-    // the right edge it may reach: the page's usable width, or the inner edge of any box around it that scrolls
-    // (a phone's pane sheet and the Prospects window keep their scrollbar there)
+    // the right edge it may reach: the page's usable width, the inner edge of any box around it that scrolls, and the
+    // edge of the pane or window it opens in (with the page's scrollbar gutter, a phone's sheet and the Prospects window
+    // stop short of the window's width, and a tip past them sits under the gutter)
     let edge = document.documentElement.clientWidth;
     for (let n = cell.parentElement; n && n !== document.body; n = n.parentElement) {
       if (n.clientWidth && n.offsetWidth - n.clientWidth > 2) edge = Math.min(edge, n.getBoundingClientRect().left + n.clientLeft + n.clientWidth);
     }
+    const host = cell.closest(".go-pane") || cell.closest(".modal-body");
+    if (host) edge = Math.min(edge, host.getBoundingClientRect().right);
     const left = Math.min(Math.max(pad, r.left), edge - t.width - pad);
     tip.style.top = `${top}px`;
     tip.style.left = `${left}px`;
