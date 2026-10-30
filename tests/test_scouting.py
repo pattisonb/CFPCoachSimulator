@@ -219,17 +219,21 @@ if __name__ == "__main__":
     rows = {r["id"]: r for r in prospects.search(st, me)["rows"]} if isinstance(prospects.search(st, me), dict) else {}
     if rows:
         assert rows[scouted]["can_scout"] is False and rows[open_]["can_scout"] is False
-    # a gem is your staff's read, never the truth: force a tight high read on a two-star and he reads as a gem
+    # a gem is your staff's read, never the truth: force a tight read above his tier's gem cut on a two-star and he reads as a gem
+    cuts = recruiting.flag_cuts(rc)
     two = next(pid for pid, q in rc["prospects"].items() if q["stars"] == 2 and not q.get("hidden"))
-    rc["reads"][two] = {"looks": 3, "by": {"95": 3}, "g": {g: [88.0, 100.0] for g in recruiting.GROUPS}}
+    rc["reads"][two] = {"looks": 3, "by": {"95": 3}, "g": {g: [cuts[2][0] + 1.0, 100.0] for g in recruiting.GROUPS}}
     assert prospects.find(st, two) == "gem" and prospects.row(st, two, "ohio-state")["find"] == "gem"
+    rc["reads"][two]["g"]["potential"] = [88.0, 100.0]
+    assert prospects.find(st, two) is None, "an Elite read is not a gem: the cut is relative to his star tier (about the 95th percentile)"
+    rc["reads"][two]["g"]["potential"] = [cuts[2][0] + 1.0, 100.0]
     rc["reads"][two]["looks"] = 1
     assert prospects.find(st, two) is None, "a find needs FIND_LOOKS looks"
     rc["reads"][two]["looks"] = 2
     assert prospects.find(st, two) is None and recruiting.FIND_LOOKS == recruiting.SCOUT_MAX == 3, "every scouting badge waits for a full set of three looks"
     rc["reads"][two]["looks"] = 3
     five = next(pid for pid, q in rc["prospects"].items() if q["stars"] == 5)
-    rc["reads"][five] = {"looks": 3, "by": {"95": 3}, "g": {g: [40.0, 100.0] for g in recruiting.GROUPS}}
+    rc["reads"][five] = {"looks": 3, "by": {"95": 3}, "g": {g: [cuts[5][1] - 1.0, 100.0] for g in recruiting.GROUPS}}
     assert prospects.find(st, five) == "bust"
     rc["reads"][five]["g"]["potential"] = [88.0, 100.0]
     assert prospects.find(st, five) is None, "a five-star reading Elite is just a five-star"
@@ -239,7 +243,7 @@ if __name__ == "__main__":
     assert held == (rc["prospects"][two]["truth"]["potential"] >= 80)
     # a bust call is judged the same way: force a tight low read on a four-star and sign him with you
     four = next(pid for pid, q in rc["prospects"].items() if q["stars"] == 4 and not q.get("hidden") and pid != two)
-    rc["reads"][four] = {"looks": 3, "by": {"95": 3}, "g": {g: [40.0, 100.0] for g in recruiting.GROUPS}}
+    rc["reads"][four] = {"looks": 3, "by": {"95": 3}, "g": {g: [cuts[4][1] - 1.0, 100.0] for g in recruiting.GROUPS}}
     assert prospects.find(st, four) == "bust"
     rc["status"][four].update(signed="ohio-state", committed="ohio-state")
     row4 = next(r for r in prospects.class_detail(st, "ohio-state", "ohio-state") if r["id"] == four)

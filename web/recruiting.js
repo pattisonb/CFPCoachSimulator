@@ -481,8 +481,8 @@
   function badges(b, me) {
     const out = el("div", { class: "go-tags go-badges" });
     if (b.generational) out.append(genBadge());
-    if (b.find === "gem") out.append(el("span", { class: "go-badge gem", text: "Gem", title: "Your staff's find: his potential reads Elite even at the low end, and few programs rate him that high" }));
-    if (b.find === "bust") out.append(el("span", { class: "go-badge bust", text: "Bust risk", title: "Your staff's find: his ranking is high but even the top of their read is below Solid" }));
+    if (b.find === "gem") out.append(el("span", { class: "go-badge gem", text: "Gem", title: "Your staff's find: even the low end of his potential read beats all but a few prospects at his star level, and few programs rate him that high" }));
+    if (b.find === "bust") out.append(el("span", { class: "go-badge bust", text: "Bust risk", title: "Your staff's find: his ranking is high but even the top of their read sits under nearly every prospect at his star level" }));
     if (b.need != null && !b.signed && b.committed !== me) out.append(el("span", { class: `go-tag ${b.need > 0 ? "good" : "muted"}`, text: b.need > 0 ? `Need ${b.need}` : "Full",
       title: b.need > 0 ? `Your roster needs ${b.need} at his position this class` : "Your roster is covered at his position this class" }));
     if (b.offered && !b.signed && b.committed !== me) out.append(el("span", { class: "go-tag good", text: b.nil ? `Offered · ${b.nil} NIL` : "Offered" }));

@@ -220,7 +220,8 @@ if __name__ == "__main__":
         threes = [pid for pid, p in rc["prospects"].items() if p["stars"] == 3 and scoutable(st, pid)
                   and rc["reads"].get(pid, {}).get("looks", 0) >= recruiting.FIND_LOOKS]
         gem = threes[0]
-        rc["reads"][gem]["g"]["potential"] = [95.0, 1000.0]
+        gem_cut = recruiting.flag_cuts(rc)[3][0]                     # the gem cut is relative to his star tier
+        rc["reads"][gem]["g"]["potential"] = [gem_cut + 1.0, 1000.0]
         v = G(sid, "scouting")
         assert all(set(f) == FLAG_KEYS and f["flag"] in FLAGS for f in v["flags"])
         found = next(f for f in v["flags"] if f["pid"] == gem)
@@ -230,7 +231,7 @@ if __name__ == "__main__":
         assert "gem" not in out["look"]["flags"], "a flag already found is not gained again"
         rc["reads"][gem]["g"]["potential"] = [70.0, 1000.0]
         before_flag = threes[1]
-        rc["reads"][before_flag]["g"]["potential"] = [95.0, 1000.0]
+        rc["reads"][before_flag]["g"]["potential"] = [gem_cut + 1.0, 1000.0]
         rc["reads"][before_flag]["looks"] = recruiting.FIND_LOOKS - 1       # the trip's look completes the set
         out = R(sid, "recruit", {"pid": before_flag, "action": "scout"})
         assert out["look"]["flags"] == ["gem"], out["look"]
