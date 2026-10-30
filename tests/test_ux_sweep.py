@@ -197,7 +197,8 @@ def check_pane_profile(page, base, sid) -> None:
             assert t0 - tabs["scrolled"] < tabs["visTop"] - 4, f"the check scrolls the strip's place out of view at {width}: {t0}, {tabs}"
             assert tabs["top"] <= tabs["visTop"] + 4, f"the sub-tab strip pins to the top of the pane's scroll box at {width}: {tabs}"
         else:               # a short profile (no evaluation, one-line grades) has less than that to scroll: the strip rides at its place, still in view
-            assert abs(tabs["top"] - (t0 - tabs["scrolled"])) <= 4, f"the sub-tab strip sits at its place in a short profile at {width}: {t0}, {tabs}"
+            # its place, or the top of the scroll box once its place has reached it (a profile that scrolls right up to the pin line)
+            assert abs(tabs["top"] - max(t0 - tabs["scrolled"], tabs["visTop"])) <= 4, f"the sub-tab strip sits at its place in a short profile at {width}: {t0}, {tabs}"
         shot(page, f"pane-profile-scrolled-{width}-dark")
         if width <= 700:
             page.click(".go-pane .go-pane-back")
