@@ -312,7 +312,7 @@
     if (desk.board !== "all") load();
     return el("section", { class: "go-card sc-panel sc-block sc-queue-panel", "aria-label": "Scouting queue" }, [
       el("div", { class: "sc-panel-head sc-queue-head" }, [el("div", { class: "sc-queue-title" }, [el("div", { class: "go-kicker", text: "SCOUTING QUEUE" }), hours]),
-        el("p", { class: "muted small sc-queue-note", text: `A trip costs ${SCOUT_HOURS} hours: one look by your best evaluator; a report is complete at ${REPORT_LOOKS}. Your board first, those one trip from complete at the top, then the class by your need and his rank.` })]),
+        el("p", { class: "muted small sc-queue-note", text: `A trip costs ${SCOUT_HOURS} hours: one look by your best evaluator; a report is complete at ${REPORT_LOOKS}. Your board first, those one trip from complete at the top and its complete reports last, then the class by your need and his rank.` })]),
       el("div", { class: "go-filterbar sc-toolbar" }, [chips, el("div", { class: "go-tools sc-tools" }, [search, pos, grp])]),
       wrap, empty,
       el("div", { class: "sc-foot" }, [showing, pager])]);

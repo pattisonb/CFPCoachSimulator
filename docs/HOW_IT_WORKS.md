@@ -883,6 +883,32 @@ game; a win sells, a 21-point loss hurts, a big stadium helps, and the weekend t
 three of his priorities), a scouting trip 5 (one look by your best evaluator, any week, allowed
 while his report is short of complete; a prospect with a complete report shows his grades in one
 line on his card and at the top of his profile) and an offer nothing.
+**A commitment in words.** A committed recruit's profile (`prospects.flip_view`, the profile's
+`flip`) says his chance to flip before signing day as a word, never a number: the rivals' shares
+of his flip chance (`_committed_odds`) together and each on its own, "None" at 0, "Slim" under 5%,
+"Real" under 15%, "Likely" from there, "Locked In" on a hard commit. The banner's second line
+follows the total ("Solid: nobody is close to pulling him away", "Hearing out Georgia: a slim
+chance he flips before signing day", "Georgia is working him hard: a real chance he flips",
+"Georgia is close to flipping him", "Hard commit: he is not taking calls"); the table under it,
+"Who else is calling" for a commit to you (one line, "Nobody is close to pulling him away.", when
+every rival reads None) or "His chance to flip to each" for a commit elsewhere (your row marked),
+carries the word per rival with the muted Offer marker, sorted by his chance.
+**One final grade at a complete report.** While his report is short of complete, each group's read
+is a range of grade words ("Solid to Strong": `recruiting.read_interval` is the read's mean plus
+and minus a half-width that shrinks with the looks' precision and the best evaluator's rating,
+less `WORD_SLACK`). Once it is complete (`report_complete`, 3 looks) the read collapses to one
+point per group, the mean, and `grade_range` gives the same word twice: the profile and the pane's
+Scouting sub-tab show one word per card under "3 of 3 looks: his report is complete: these are your
+staff's final grades. A read can still be wrong; the truth shows once he is on your roster.", the
+queue's POTENTIAL cell and the report items say "potential narrowed to Elite". The read itself
+(`recruiting.read_spread`: mean and half-width, whatever the looks) is unchanged: the flags
+(`prospects.find`, their cuts and `FLAG_HOLD`) judge the read's own low and high end, and
+"OC likes him" its mean, so neither moves at the collapse. The "looks like" tooltip of a final
+grade describes the prospects whose true grade carries that word (`recruiting.word_band`), the
+ranges inside it still their middle half. Hover, focus or tap a grade card for the tooltip, on the
+profile and on the pane's Scouting sub-tab alike (`gradeGrid`/`gradeTips` in web/recruiting.js: the
+listeners sit on the grid, so redrawn cells keep working; the tip floats fixed over the page and
+takes no pointer events, so a tall tip never blocks the card under it).
 **Looks come in trip units** (`REPORT_LOOKS = 3`, `SEND_LOOK = 1.0`, `AREA_LOOK = 0.5`,
 `AREA_CAP = 2.0`). A full report is three looks and nothing goes past it (`read["looks"]` is never
 over 3). A Send adds one look (or what is left: at 2.5 one Send finishes him). An area scout's
@@ -1051,12 +1077,12 @@ or DC (defense) vouches for him ("Your defensive coordinator thinks he starts fo
 a kicker or punter gets one of the two, fixed by the seed. The truth never enters it: a recruit who
 would start by his real rating is not liked while the read sits under your starter, and the read
 can be wrong the other way. Never in the portal, never once he has signed elsewhere. The tag
-(`go-tag good`, "OC likes him", the sentence as its title) sits among the board pane's tags after
-the ★/☆ priorities and beside the status chip on the pane's head; the profile says it in a line
+(`go-tag good`, "OC likes him", the sentence as its title) sits once on the board's pane, among its
+tags after the ★/☆ priorities (the head keeps to his status chip); the profile says it in a line
 ("Your DC, Matt Patricia, thinks he starts for you next year."); on the Scouting tab the report
 items and the Flags rows carry it, the Flags list has every liked recruit as a fourth kind (after
 the gems), and the queue's NAME cell shows a small "OC ♥" pill when the Send that completed his
-report won him over (a complete report leaves the queue otherwise). The weekly report says nothing.
+report won him over (a complete report stays in the queue while he is on your board). The weekly report says nothing.
 
 **Calls and in-home visits are scenes** (`coach_career/scenes.py`). For you, a call or an in-home
 visit without a pitch opens a two-step scene: he says his lines, with a cue that hints at what he
@@ -1145,7 +1171,9 @@ he asks about a named player on that call (the starter ahead of him, or another 
 offered), the scene shows his line with three answers (straight, a promise, a sidestep) and
 locks the pitch until you pick one; his reply comes back in place (no toast) and History keeps
 the answer (`Told him straight about …`, `Promised him the job over …`). Under
-the head, a strip of four cells (your chance, his list, NIL, scouted), the tags you know (a
+the head, a strip of four cells (YOUR CHANCE, HIS LIST, YOUR OFFER: "135 NIL · He wants 105" once
+you have offered, "He wants about 75–135" or the number before, "—" when nothing is known; SCOUTED;
+no value starts lowercase), the tags you know (a
 prospect who is tuning you out carries a `Tuning you out` tag, a warning above the Recruit button
 says another contact costs you interest, and History lists each tuned-out contact), and
 sub-tabs: Overview, Scouting, Profile, History. A ★ tag is a priority he has confirmed to you and a ☆
@@ -1178,15 +1206,18 @@ behind "Show all n"; Flags lists your staff's gems, bust risks and generational 
 and the recruits a coordinator likes ("OC likes him", after the gems), with his looks and where he
 stands with you. A name anywhere opens him in the board's pane (he goes
 on your board if he was not); the pane's Scouting sub-tab links back to the reports. Under them the
-Scouting queue, a table of the recruits worth a trip (your board first, then the class by your need
-and his rank), 25 to a page on the API's `offset`/`limit`/`queue_total` with "Showing 1 to 25 of
+Scouting queue, a table of the recruits worth a trip (your board first, its complete reports last
+among them, then the class by your need and his rank), 25 to a page on the API's `offset`/`limit`/`queue_total` with "Showing 1 to 25 of
 1,204" and Previous · 1 2 … 49 · Next: columns BOARD (a "★ On board" pill and a left accent in the
 team color on your board's rows), NAME (avatar, name, "pos · stars · state"), NEED ("Need 2", or a
 muted "Set"), RANK, POTENTIAL (the word range, or "Not read"), LOOKS (three segments filled in
 halves, "1.5 of 3"; no separate trips count) and `Send (5h)`, which reads `Send (5h) · finishes his
 report` when one look is left, is grayed with the reason (Not enough hours) and gives way to a
-"Complete" tag on a complete report; the queue lists only reports short of complete, your board's
-one Send from complete at the top. The help line under SCOUTING: "A full report is three looks. A
+"Complete" tag (title "His report is complete: 3 of 3 looks") on a complete report; the queue lists
+the reports short of complete, your board's one Send from complete at the top, and keeps a
+complete report only while he is on your board (after the board's open reports: his LOOKS bar
+full, POTENTIAL one final word, the "OC ♥" pill when liked, `can_send` false with the tag's text
+as `why`); a complete report off your board is out of the queue. The help line under SCOUTING: "A full report is three looks. A
 trip is one look; a week in a scout's area is half a look, up to two. After four weeks in an area
 one trip finishes him." Above it the chips All ·
 On my board · Not on my board (the board ones client-side on one ask of the whole board, which the

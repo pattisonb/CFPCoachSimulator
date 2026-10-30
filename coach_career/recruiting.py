@@ -2297,6 +2297,15 @@ def word(points: float) -> str:
     return next(w for w, floor in zip(WORDS, WORD_FLOORS) if points >= floor)
 
 
+def word_band(points: float) -> tuple[float, float]:
+    """The grade points that carry the same word as `points`: [its floor, the next word's floor), on
+    the grade scale (Weak from GRADE_LOW, All-American to its top)."""
+    i = WORDS.index(word(points))
+    lo = WORD_FLOORS[i] if i < len(WORDS) - 1 else GRADE_LOW
+    hi = WORD_FLOORS[i - 1] - 1e-9 if i > 0 else GRADE_LOW + GRADE_SPAN
+    return float(lo), float(hi)
+
+
 def look_week(state: dict) -> int:
     """The week a look belongs to: the season's week, or the portal's own."""
     rc = state["recruiting"]
@@ -2426,19 +2435,36 @@ def look_notability(e: dict) -> int:
     return 0 if e["flags"] else 1 if "potential" in e["after"] else 2
 
 
-def read_interval(state: dict, pid: str, group: str) -> Optional[tuple[float, float]]:
-    """Your staff's read as a range of grade points, or None before any look."""
+def read_spread(state: dict, pid: str, group: str) -> Optional[tuple[float, float]]:
+    """The read itself: (mean, half-width) in grade points, however many looks it holds, or None before
+    any look. The half-width shrinks with the precision the looks gained and with the best evaluator's
+    rating, less WORD_SLACK. The flags (prospects.find) and the tests of a read's accuracy use this;
+    what the player sees goes through read_interval."""
     read = state["recruiting"]["reads"].get(pid)
     if not read:
         return None
     s = int(max(read["by"].items(), key=lambda kv: (kv[1], int(kv[0])))[0]) / 99
     mean, prec = read["g"][group]
     half = max(0.0, (0.6 + 1.1 * s) / math.sqrt(prec) - WORD_SLACK)
+    return mean, half
+
+
+def read_interval(state: dict, pid: str, group: str) -> Optional[tuple[float, float]]:
+    """Your staff's read as the player sees it: a range of grade points while his report is short of
+    complete, and one point (the read's mean, twice) once it is complete (report_complete: 3 looks),
+    the staff's final grade; None before any look."""
+    spread = read_spread(state, pid, group)
+    if spread is None:
+        return None
+    mean, half = spread
+    if report_complete(state["recruiting"]["reads"].get(pid)):
+        return mean, mean
     return mean - half, mean + half
 
 
 def grade_range(state: dict, pid: str, group: str) -> Optional[tuple[str, str]]:
-    """(low, high) grade words, e.g. ("Solid", "Strong"); None before any look."""
+    """(low, high) grade words, e.g. ("Solid", "Strong"); the same word twice once his report is
+    complete (one final grade); None before any look."""
     iv = read_interval(state, pid, group)
     return (word(iv[0]), word(iv[1])) if iv else None
 
