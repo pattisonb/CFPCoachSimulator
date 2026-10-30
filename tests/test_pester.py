@@ -1,7 +1,8 @@
 """Pestering an uninterested recruit costs you (recruiting.py PESTER_*): after PESTER_FREE contacts
-to a prospect who is not considering your school, each further message, call or in-home visit
-lands negative on his list, costs more than the last and raises his ask; a prospect with you in
-his top group never pesters, and Auto-recruit for your school never does it. Native, through the
+to a prospect who is not considering your school (you outside his top PESTER_TOP, or under
+PESTER_SHARE of his leader's interest), each further message, call or in-home visit lands negative
+on his list, costs more than the last and raises his ask; a prospect who is considering you never
+pesters, and Auto-recruit for your school never does it. Native, through the
 API as tests/test_recruiting_api.py. (Run as a file: multiprocessing on Windows.)"""
 import sys as _sys
 from pathlib import Path as _Path
@@ -29,36 +30,32 @@ def board_of(sid: str, pid: str) -> dict:
 
 
 def far_prospect(st: dict) -> str:
-    """A four-star far from Ohio, uncommitted, whom your school has not touched, with eight other
-    schools' points on his list so that your school sits well outside his top group (early in a
-    season few prospects have eight suitors, so the test crowds his list itself)."""
+    """A four-star far from Ohio, uncommitted, whom your school has not touched, whose leader's interest
+    is far enough ahead of yours that three contacts' worth of points leave him not considering you."""
     rc = st["recruiting"]
     for pid in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"]):
         p = rc["prospects"][pid]
         if p["stars"] != 4 or p["hometown"]["state"] not in ("CA", "WA", "OR", "AZ") or p.get("hidden"):
             continue
-        if ME in rc["lists"][pid] or pid in rc["offers"].get(ME, []) or rc["status"][pid]["committed"] is not None:
+        if ME in rc["lists"][pid] or pid in rc["offers"].get(ME, []) or rc["status"][pid]["committed"] is not None or not rc["lists"][pid]:
             continue
         if recruiting.ask_from(st, ME, pid) < 30:
             continue
-        others = sorted((s for s in recruiting.fbs_schools(st) if s != ME), key=lambda s: -recruiting.interest(st, s, pid))
-        for s in others[:recruiting.TOP_GROUP]:
-            rc["lists"][pid][s] = rc["lists"][pid].get(s, 0.0) + 40.0
-        recruiting.reset_caches()
-        top = recruiting.top_group(st, pid)
-        assert ME not in top and recruiting.interest(st, top[-1], pid) - recruiting.interest(st, ME, pid) > 15
-        return pid
+        lead = max(recruiting.interest(st, s, pid) for s in rc["lists"][pid])
+        if recruiting.interest(st, ME, pid) + 12 < recruiting.PESTER_SHARE * lead and recruiting.not_considering(st, ME, pid):
+            return pid
     raise AssertionError("no far prospect fits the test")
 
 
 def near_prospect(st: dict) -> str:
-    """An uncommitted Ohio four-star your school has not touched: once you contact him you are in
-    his (small) top group."""
+    """An uncommitted Ohio four-star your school has not touched and who is considering it (your
+    school leads his list, or sits in his top three near the leader)."""
     rc = st["recruiting"]
     for pid in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"]):
         p = rc["prospects"][pid]
         if p["hometown"]["state"] == "OH" and p["stars"] == 4 and not p.get("hidden") \
-                and rc["status"][pid]["committed"] is None and ME not in rc["lists"][pid] and pid not in rc["offers"].get(ME, []):
+                and rc["status"][pid]["committed"] is None and ME not in rc["lists"][pid] and pid not in rc["offers"].get(ME, []) \
+                and not recruiting.not_considering(st, ME, pid):
             return pid
     raise AssertionError("no Ohio prospect fits the test")
 
@@ -75,15 +72,16 @@ if __name__ == "__main__":
         pid = far_prospect(st)
         name = rc["prospects"][pid]["name"]
         R(sid, "board", {"pid": pid, "on": True})
+        weak = next(t for t in recruiting.PITCHES if t not in rc["prospects"][pid]["priorities"])   # a pitch off his priorities: small points
         # week 1: three contacts are free; the board says the next one would pester
         st["current_week"] = 1
-        R(sid, "recruit", {"pid": pid, "action": "message", "pitch": "prestige"})
-        R(sid, "recruit", {"pid": pid, "action": "call", "pitch": "prestige"})
+        R(sid, "recruit", {"pid": pid, "action": "message", "pitch": weak})
+        R(sid, "recruit", {"pid": pid, "action": "call", "pitch": weak})
         assert board_of(sid, pid)["pestering"] is False, "two contacts are not pestering yet"
-        R(sid, "recruit", {"pid": pid, "action": "hc_visit", "pitch": "prestige"})
+        R(sid, "recruit", {"pid": pid, "action": "hc_visit", "pitch": weak})
         assert rc["contacts"][pid][ME]["n"] == recruiting.PESTER_FREE
         assert recruiting.pending(st, ME, pid) > 0, "the free contacts still count for you"
-        assert ME not in recruiting.top_group(st, pid), "the test needs a prospect who is not considering you"
+        assert recruiting.not_considering(st, ME, pid), "the test needs a prospect who is not considering you"
         b = board_of(sid, pid)
         assert b["pestering"] is True and b["pesters"] == 0, b
         assert not any(e["kind"] == "pester" for e in rc["log"]), "the free contacts logged a pester"
@@ -123,17 +121,17 @@ if __name__ == "__main__":
         assert r["reaction"]["kind"] == "tired" and r["reaction"]["text"], r["reaction"]
         assert recruiting.pending(st, ME, pid) < pester2, "the pestering call cost nothing"
         assert rc["contacts"][pid][ME]["pester"] == 3
-        # a prospect who has you in his top group never pesters, however often you contact him
+        # a prospect who is considering you never pesters, however often you contact him
         near = near_prospect(st)
         R(sid, "board", {"pid": near, "on": True})
         rc["contacts"].setdefault(near, {}).setdefault(ME, {"n": 0, "hc_week": None})["n"] = recruiting.PESTER_FREE + 2
         rc["lists"][near][ME] = 5.0                     # as five landed contacts would have left him
         R(sid, "recruit", {"pid": near, "action": "message", "pitch": "prestige"})
-        assert ME in recruiting.top_group(st, near)
+        assert not recruiting.not_considering(st, ME, near)
         assert board_of(sid, near)["pestering"] is False
         assert recruiting.pending(st, ME, near) > 0, recruiting.pending(st, ME, near)
         assert not any(e["kind"] == "pester" and e["pid"] == near for e in rc["log"])
-        # in his top group the count of pesters resets: a later slide does not carry the old ones
+        # while he considers you the count of pesters resets: a later slide does not carry the old ones
         rc["contacts"][near][ME]["pester"] = 2
         recruiting.weekly_step(st, 3)
         assert rc["contacts"][near][ME].get("pester", 0) == 0, rc["contacts"][near][ME]

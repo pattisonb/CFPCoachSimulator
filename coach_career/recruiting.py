@@ -97,8 +97,10 @@ ASK_MORE = (1.5, 1.25)                     # a rival's NIL this much over yours,
 TOP_GROUP = 8                              # the schools he is seriously considering: his top this many by interest
 # pestering: contacts past his patience from a school he is not considering cost it *tune*
 PESTER_FREE = 3                            # contacts (message, call, in-home visit; a scene's pitch is the contact it finishes) a school gets
-#                                            before more count as pestering while it is outside his top group (an offer in hand does not
+#                                            before more count as pestering while he is not considering it (an offer in hand does not
 #                                            exempt it; an official visit or his commitment does)
+PESTER_TOP = 3                             # he is not considering a school outside his top this many (by interest plus pending, among the
+PESTER_SHARE = 0.6                         # schools that worked or offered him) or under this share of his leader's; his leader never
 PESTER_COST = 1.5                          # a pestering contact costs this times the action's base points (no pitch bonus) ...
 PESTER_RAMP = 0.5                          # ... and each pester costs this much more than the one before
 PESTER_ASK = 1.1                           # his ask from the school rises this much per pester (ask_mult, capped at ASK_MULT_MAX overall)
@@ -412,19 +414,33 @@ def _pester_exempt(state: dict, slug: str, pid: str) -> bool:
     return slug in (st["committed"], st["signed"]) or bool((rc["visits"].get(pid, {}).get(slug) or {}).get("done"))
 
 
+def not_considering(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> bool:
+    """He is not considering the school: among the schools that have worked or offered him (the set
+    `top_group` reads), ordered by interest plus this week's pending, it sits outside his top
+    PESTER_TOP or under PESTER_SHARE of his leader's. His leader never is."""
+    rc = state["recruiting"]
+    schools = set(rc["lists"][pid]) | {s for s, pids in rc["offers"].items() if pid in pids} | set((rc.get("pending") or {}).get(pid, {})) | {slug}
+    win = win if win is not None else _winning(state)
+    score = {s: interest(state, s, pid, win) + pending(state, s, pid) for s in schools}
+    order = sorted(schools, key=lambda s: -score[s])
+    if order[0] == slug:
+        return False
+    return order.index(slug) >= PESTER_TOP or score[slug] < PESTER_SHARE * score[order[0]]
+
+
 def would_pester(state: dict, slug: str, pid: str) -> bool:
-    """Whether the school's next contact would pester him: PESTER_FREE contacts landed, the school
-    outside his top group, no official visit or commitment. Only your school (by hand) ever does."""
+    """Whether the school's next contact would pester him: PESTER_FREE contacts landed, he is not
+    considering the school, no official visit or commitment. Only your school (by hand) ever does."""
     if slug != state.get("team"):
         return False
     c = (state["recruiting"]["contacts"].get(pid) or {}).get(slug) or {}
     if c.get("n", 0) < PESTER_FREE or _pester_exempt(state, slug, pid):
         return False
-    return slug not in top_group(state, pid)
+    return not_considering(state, slug, pid)
 
 
 def pesters(state: dict, slug: str, pid: str) -> int:
-    """How many times the school has pestered him (reset when it makes his top group)."""
+    """How many times the school has pestered him (reset once he is considering it)."""
     return ((state["recruiting"]["contacts"].get(pid) or {}).get(slug) or {}).get("pester", 0)
 
 
@@ -1293,12 +1309,12 @@ def _contact_land(state: dict, slug: str, p: dict, contact: dict, action: str, p
                   auto: bool = False) -> float:
     """A contact's points (a message, call or visit, one-shot or a scene's pitch): the pitch's worth
     cut by earlier contacts, halved while he is cooled; a backfire is logged. Past PESTER_FREE
-    contacts from your hand while he is not considering you, the contact pesters him instead: negative
+    contacts from your hand while he is not considering you (`not_considering`), the contact pesters him instead: negative
     points that grow with each pester, the pitch ignored, his ask from you up (not Auto-recruit's,
     never an AI school's)."""
     pid = p["id"]
     if not auto and slug == state.get("team") and contact["n"] >= PESTER_FREE and not _pester_exempt(state, slug, pid):
-        if slug in top_group(state, pid):
+        if not not_considering(state, slug, pid):
             contact.pop("pester", None)           # he is considering you: the old pesters are forgotten
         else:
             k = contact.get("pester", 0)
@@ -1320,12 +1336,12 @@ def _contact_land(state: dict, slug: str, p: dict, contact: dict, action: str, p
 
 
 def _forgive_pesters(state: dict) -> None:
-    """A school that made his top group (or hosted or landed him) starts clean: a later slide does
-    not carry the old pesters. Only your school ever has any."""
+    """A school he has come to consider (or that hosted or landed him) starts clean: a later slide
+    does not carry the old pesters. Only your school ever has any."""
     rc, me = state["recruiting"], state.get("team")
     for pid, by in rc["contacts"].items():
         c = by.get(me)
-        if c and c.get("pester") and (_pester_exempt(state, me, pid) or me in top_group(state, pid)):
+        if c and c.get("pester") and (_pester_exempt(state, me, pid) or not not_considering(state, me, pid)):
             c.pop("pester")
 
 
