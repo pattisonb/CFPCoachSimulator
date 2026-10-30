@@ -1129,21 +1129,30 @@ button rows keep 8 px between buttons, tag rows 6 px, cards 12 px of padding, an
 36 px tall (44 px on a phone), segment controls and the depth chart's compact controls aside
 (`tests/test_spacing.py`).
 
-**The Scouting tab** (`web/scouting.js`, `GET /api/season/{id}/scouting`) replaces Staff: four
-blocks. Your scouts, a card each with his role, evaluation word, the area dropdown (posts to
-`POST .../staff`; "Marcus Reed now scouts Texas"), how many prospects he is looking at and this
-week's yield from the look log (looks, narrowed, flags); a coordinator without an area reads "No
-area: assign one". Send a scout: the hours left this week, a search (name or home state) with
-position and roster-group filters, and the queue of recruits worth a trip (your board first, then
-the class by your need and his rank; one page of 120 with Show more), each row his trips of three,
-his looks, the potential range and `Send (5h)`, grayed with the reason (Not enough hours, Scouted
-3 of 3). Send posts the `scout` action and patches the row in place: the look's before and after
-in word ranges, the flags gained, a toast "Scouted Wesley Adams · look 2 of 3", and once the hours
-run short every Send grays. Reports: this week's (or last week's) looks grouped by scout, only the
-looks that changed a grade word or found a flag ("nothing new" otherwise); a name opens him in the
-board's pane (he goes on your board if he was not). Flags: your staff's gems, bust risks and
-generational prospects this class with his looks and where he stands with you. The pane's Scouting
-sub-tab links to the tab's reports.
+**The Scouting tab** (`web/scouting.js`, `GET /api/season/{id}/scouting`) replaces Staff: a
+dashboard in three regions. My scouts, a compact row per staff member (every one of them, the DC
+included): avatar, name, role word (OC, DC, Recruiter), his evaluation word, the area dropdown
+(posts to `POST .../staff`; "Marcus Reed now scouts Texas") and a thin bar of this week's yield from
+the look log, "478 of 510 narrowed", with a flags count when there are any; "Not covered: …" is one
+muted line under the list. Reports beside it, with tabs This week · Last week · Flags: the looks
+grouped by scout (scout · area, "364 looks, 299 changed"), only the looks that changed a grade word
+or found a flag, in compact rows (stars, position, name, what changed, flag tags), past eight folded
+behind "Show all n"; Flags lists your staff's gems, bust risks and generational prospects this class
+with his looks and where he stands with you. A name anywhere opens him in the board's pane (he goes
+on your board if he was not); the pane's Scouting sub-tab links back to the reports. Under them the
+Scouting queue, a table of the recruits worth a trip (your board first, then the class by your need
+and his rank), 25 to a page on the API's `offset`/`limit`/`queue_total` with "Showing 1 to 25 of
+1,204" and Previous · 1 2 … 49 · Next: columns BOARD (a "★ On board" pill and a left accent in the
+team color on your board's rows), NAME (avatar, name, "pos · stars · state"), NEED ("Need 2", or a
+muted "Set"), RANK, POTENTIAL (the word range, or "Not read"), LOOKS (three segments, "trips 1/3")
+and `Send (5h)`, grayed with the reason (Not enough hours, Scouted 3 of 3). Above it the chips All ·
+On my board · Not on my board (the board ones client-side on one ask of the whole board, which the
+API lists first), the search (name or home state), position and roster-group filters and the hours
+pill; NEED, RANK, POTENTIAL and LOOKS sort the page shown (`aria-sort`). Send posts the `scout`
+action and patches the row in place: the LOOKS bar and POTENTIAL cell pulse, the look's before and
+after reads on a line under his row, a toast "Scouted Wesley Adams · look 2 of 3", the hours pill
+patches, and the page refetches so every other Send follows `can_send`; a click on the row itself
+opens him on the board.
 
 **The odds you see** (`prospects.odds`). Each offering school's chance to land a prospect is a
 softmax of his interest in it (`exp(interest / 3)`), against the field: the schools not yet in
