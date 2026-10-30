@@ -76,6 +76,29 @@ SHARED_STATS = ["kickoff_returns", "kickoff_return_yards", "kickoff_return_touch
                 "fumble_return_yards", "interception_return_yards", "punts", "punt_yards"]
 
 
+# the school's name as people say it, not its legal name ("University of Notre Dame du Lac", "The
+# Ohio State University", "Virginia Polytechnic Institute and State University")
+SCHOOL_DISPLAY = {
+    "University of Notre Dame du Lac": "University of Notre Dame",
+    "Rutgers, The State University of New Jersey": "Rutgers University",
+    "Virginia Polytechnic Institute and State University": "Virginia Tech",
+    "University of Illinois Urbana-Champaign": "University of Illinois",
+    "The University of Tennessee, Knoxville": "University of Tennessee",
+    "University of Maryland, College Park": "University of Maryland",
+    "University of Massachusetts Amherst": "University of Massachusetts",
+    "University of North Carolina at Chapel Hill": "University of North Carolina",
+    "The University of Texas at Austin": "University of Texas",
+    "California State University, Fresno": "Fresno State University",
+    "California State University, Sacramento": "Sacramento State University",
+}
+
+
+def display_school(name: str) -> str:
+    """A school's everyday name: the override table, else the legal name without a leading "The"."""
+    out = SCHOOL_DISPLAY.get(name, name)
+    return out[4:] if out.startswith("The ") else out
+
+
 def avg(r: dict, *keys: str, default: float = 50.0) -> float:
     vals = [r[k] for k in keys if isinstance(r.get(k), (int, float))]
     return sum(vals) / len(vals) if vals else default
@@ -278,7 +301,7 @@ def team_from_source(t: dict) -> dict:
         },
         "slug": t["slug"],
         "name": t["short_name"],
-        "school": t["school_name"],
+        "school": display_school(t["school_name"]),
         "abbreviation": t["abbreviation"],
         "mascot": t["mascot"],
         "conference": t["conference"],
