@@ -125,6 +125,11 @@ LINES: dict[str, dict[str, list[str]]] = {
     },
 }
 
+# a pestering call or visit (recruiting.PESTER_FREE): he is not weighing you, and the pitch falls flat
+TIRED = ["He is polite but short. He is not weighing you right now, and the calls are wearing thin.",
+         "He lets it ring a while before he picks up. {school} is not on his mind, and he does not hide it.",
+         "He hears you out and says nothing about {school}. His mind is on other schools, and he wants the calls to stop."]
+
 # the opening of a call (and the middle of a visit): small talk
 COLOR = ["Hey Coach. Just got back from practice.",
           "Yes sir, I've got a few minutes.",
@@ -208,12 +213,14 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
             "cue": {"topics": topics, "text": text}, "ask": ask}
 
 
-def reaction(state: dict, slug: str, pid: str, action: str, pitch: str, p: dict) -> dict:
+def reaction(state: dict, slug: str, pid: str, action: str, pitch: str, p: dict, tired: bool = False) -> dict:
     """How he takes your pitch: a priority where you are strong lights him up (hit), one where you are
-    weak goes quiet, anything else is polite."""
+    weak goes quiet, anything else is polite; `tired` (the call pestered him) and the pitch falls flat."""
+    rng = random.Random(f"react-{state['recruiting']['seed']}-{slug}-{pid}-{state['current_week']}-{action}")
+    if tired:
+        return {"kind": "tired", "text": rng.choice(TIRED).format(**_fields(state, slug, p))}
     if pitch in p["priorities"]:
         kind = "hit" if recruiting.strengths(state, slug, pid)[pitch] >= recruiting.BACKFIRE else "quiet"
     else:
         kind = "polite"
-    rng = random.Random(f"react-{state['recruiting']['seed']}-{slug}-{pid}-{state['current_week']}-{action}")
     return {"kind": kind, "text": rng.choice(LINES[pitch][kind]).format(**_fields(state, slug, p))}
