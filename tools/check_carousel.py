@@ -1,5 +1,5 @@
 """Is the coaching carousel realistic? Plays N offseasons (the games decided quickly from team
-ratings, every stage on Auto) and counts the year's head coach and coordinator changes against
+ratings, the points kept so the coaches' offense and defense verdicts exist, every stage on Auto) and counts the year's head coach and coordinator changes against
 the real FBS numbers: about 25-30 head coaching changes a year (12 or so fired, a few retired, 8-10
 hired away by a better program, one or two to the NFL) and 60-80 coordinator changes.
 
@@ -23,6 +23,7 @@ def quick_season(state: dict, rng: random.Random) -> None:
     """Every game decided from the team ratings, the class signed, the season over."""
     from sim import season
     teams = season.load_teams()
+    ss = state.setdefault("season_stats", {})          # the totals coach development reads (points for and against: the offense and defense thirds)
     for g in state["games"].values():
         h, a = teams[g["home"]]["team_ratings"]["overall"], teams[g["away"]]["team_ratings"]["overall"]
         hs = rng.randint(10, 45)
@@ -30,6 +31,13 @@ def quick_season(state: dict, rng: random.Random) -> None:
         g.update(played=True, home_score=hs if win else max(0, hs - rng.randint(1, 20)), away_score=hs - rng.randint(1, 20) if win else hs)
         if g["home_score"] == g["away_score"]:
             g["home_score"] += 3
+        for side, opp in (("home", "away"), ("away", "home")):
+            t = ss.setdefault(g[side], {"games": 0, "wins": 0, "points": 0, "opp_points": 0, "plays": 0, "top": 0, "opp_plays": 0,
+                                        "team": {}, "events": {}, "opp": {}, "opp_events": {}, "players": {}})
+            t["games"] += 1
+            t["wins"] += g[f"{side}_score"] > g[f"{opp}_score"]
+            t["points"] += g[f"{side}_score"]
+            t["opp_points"] += g[f"{opp}_score"]
     state["current_week"] = season.FINAL_WEEK
     state["done"] = True
     rc = state.get("recruiting")

@@ -104,14 +104,19 @@ SHOP_CAP = 0.9                                     # ... capped here
 COORD_SHOP = 0.25                                  # a coordinator whose contract is up and whom no program wanted still leaves this often
 TERM = {"coordinator": (2, 4), "recruiter": (1, 3)}   # the years a new contract runs (candidates ask the same ranges)
 # ----- coach development *tune*: every coach in the league (head coaches, coordinators, your recruiters, the market) -----
-COACH_RATE = 0.18                                  # the share of the gap to his hidden level a rating closes in a year
-COACH_POT = (-4.0, 8.0)                            # his level against his rating when first seen: N(mean, sd), capped at COACH_CAP (a ceiling-only
-                                                   # draw, max(0, N(10, 6)), inflated the league's head coaches 9-14 points in ten seasons)
-COACH_POT_MIN = None                               # the draw's floor (None: a coach rated over his level settles back down to it)
+COACH_RATE = 0.33                                  # the share of the gap to his hidden level a rating closes in a year
+COACH_POT = ((40, 7.0), (55, 1.0), (63, -5.0), (None, -8.0))   # his level against his rating when first seen: N(mean by age, COACH_POT_SD):
+                                                   # the young have room, the old are rated over where they are heading (a mean-zero or
+                                                   # ceiling-only draw inflated the league's head coaches 4-14 points in ten seasons, and
+                                                   # +2 at 40-54 with sd 8 still +5: the carousel's hiring harvests the spread)
+COACH_POT_SD = 6.0
+COACH_CLIMB = 12                                   # a rating never climbs more than this over where he was first seen (the level is capped there too)
 COACH_AGE = ((40, 1.3), (55, 1.0), (63, 0.6))      # the pace under 40, 40-54 and 55-62; from 63 he gains nothing ...
-COACH_DECLINE = 0.5                                # ... and each rating drifts a point down a year this often
-COACH_PERF = {2: 1.3, 0: 1.0, -1: 0.8, -2: 0.7}    # his year's verdict on his pace, on the _staff_marks scale (+2 top third, -2 bottom third, -1 a weak class)
-COACH_IDLE = 0.5                                   # a coach for hire (the market) develops at this pace
+COACH_DECLINE = 0.5                                # ... each rating drops a point a year, and a second one this often
+COACH_PERF = {2: 2.0, 0: 0.0, -1: -1.0, -2: -2.0}  # the points his year's verdict adds to each rating, on the _staff_marks scale (+2 top third,
+COACH_PERF_OLD = 0.5                               # -2 bottom third, -1 a weak class); from 63 it counts this much
+COACH_IDLE = 0.5                                   # a coach for hire (the market) develops at this pace, his year neither good nor bad
+CLASS_MARK_MIN = 70                                # the class verdict needs this many schools with a class (none: no school ranked "first" on nothing)
 COACH_FLOOR, COACH_CAP = 35, 99
 COACH_AGE_UNKNOWN = (32, 58)                       # a recruiter's age when first seen (the league's coaches: carousel._age)
 RATING_WORDS = {"player_development": "Evaluation", "recruiting": "Recruiting", "play_calling": "Play calling", "offense": "Offense",
@@ -1234,33 +1239,46 @@ def age_factor(age: int) -> float:
     return 0.0
 
 
-def grow_coach(ratings: dict, pot: dict, age: int, perf, rng: random.Random) -> dict[str, int]:
+def pot_mean(age: int) -> float:
+    """Where his hidden level sits against his rating, on average, at his age (COACH_POT)."""
+    for upto, m in COACH_POT:
+        if upto is None or age < upto:
+            return m
+    return COACH_POT[-1][1]
+
+
+def _round(x: float, rng: random.Random) -> int:
+    """x to a whole number, the fraction decided by a draw (1.3 is 1 seven times in ten, 2 the rest)."""
+    whole = int(x)
+    return whole + (1 if x > 0 else -1 if x < 0 else 0) * (1 if rng.random() < abs(x - whole) else 0)
+
+
+def grow_coach(ratings: dict, pot: dict, age: int, perf, rng: random.Random, base: Optional[dict] = None, pace: float = 1.0) -> dict[str, int]:
     """One offseason for a coach's ratings, in place: each closes COACH_RATE of its gap to his hidden
-    level (up, or down when he is rated over it) at his age's pace times his year's (`perf`: one
-    factor, or one per rating; a good year speeds a climb and slows a fall), with a point of noise;
-    from 63 he gains nothing and each rating drifts down a point COACH_DECLINE of the time. His
-    overall follows. Floors COACH_FLOOR, caps COACH_CAP; the noise never carries him past his level.
-    Returns {rating: change}."""
+    level (up, or down when he is rated over it) at his age's pace times `pace`, never past the level,
+    plus a point of noise, plus his year's verdict (`perf`: the points a top- or bottom-third year adds,
+    one number or one per rating); from 63 he gains nothing toward his level, each rating drops a
+    point (a second one COACH_DECLINE of the time) and his year counts COACH_PERF_OLD. A rating never
+    climbs more than COACH_CLIMB over `base` (where he was first seen; without it, over his level).
+    His overall follows. Floors COACH_FLOOR (a rating already under it is held, not lifted), caps
+    COACH_CAP. Returns {rating: change}."""
     f = age_factor(age)
     out = {}
     for k in sorted(ratings):
         if k == "overall":
             continue
         v = ratings[k]
-        gap = pot.get(k, v) - v
+        level = pot.get(k, v)
+        pf = perf.get(k, 0.0) if isinstance(perf, dict) else perf
         if f == 0:
-            d = -1 if rng.random() < COACH_DECLINE else 0
-        else:                                    # toward his level, at his age's pace times his year's: a good year speeds the climb
-            pf = perf.get(k, 1.0) if isinstance(perf, dict) else perf    # and slows the fall of a coach rated over his level, a bad year the reverse
-            x = COACH_RATE * gap * f * (pf if gap > 0 else 2.0 - pf)
-            whole = int(x)
-            d = whole + (1 if x > 0 else -1 if x < 0 else 0) * (1 if rng.random() < abs(x - whole) else 0)
-            d += rng.choice((-1, 0, 0, 1)) if v >= COACH_FLOOR else 0   # under the floor the noise would only ever lift him
-        new = int(max(min(COACH_FLOOR, v), min(COACH_CAP, v + d)))     # a rating already under the floor is not lifted, only held
-        if d > 0:
-            new = min(new, max(v, pot.get(k, COACH_CAP)))              # the noise never carries him past his level ...
-        elif d < 0 and f > 0:
-            new = max(new, min(v, pot.get(k, COACH_FLOOR)))            # ... nor under it
+            d = -1 - (1 if rng.random() < COACH_DECLINE else 0) + _round(pf * COACH_PERF_OLD * pace, rng)
+        else:
+            gap = level - v
+            d = _round(COACH_RATE * gap * f * pace, rng)
+            d = min(d, gap) if gap > 0 else max(d, gap)                 # toward his level, never past it ...
+            d += _round(pf * pace, rng) + (rng.choice((-1, 0, 0, 1)) if v >= COACH_FLOOR else 0)   # ... then his year and a point of noise
+        top = min(COACH_CAP, (base or {}).get(k, max(v, level) - COACH_CLIMB) + COACH_CLIMB)
+        new = int(max(min(COACH_FLOOR, v), min(max(top, v), v + d)))   # under the floor he is only held; the climb cap never cuts him
         if new != v:
             out[k] = new - v
             ratings[k] = new
@@ -1270,14 +1288,18 @@ def grow_coach(ratings: dict, pot: dict, age: int, perf, rng: random.Random) -> 
     return out
 
 
-def _pot(c: dict, ratings: dict, rng: random.Random) -> dict:
-    """His hidden levels, drawn once per rating when first seen (COACH_POT against the rating; never under a
-    rating already below the floor) and kept on him."""
+def _pot(c: dict, ratings: dict, rng: random.Random, age: int) -> dict:
+    """His hidden levels, drawn once per rating when first seen (COACH_POT at his age against the rating,
+    never under a rating already below the floor nor over COACH_CLIMB above it) and kept on him with
+    `base`, the ratings he was first seen at."""
     pot = c.setdefault("pot", {})
+    base = c.setdefault("base", {})
     for k in sorted(ratings):
         if k != "overall" and k not in pot:
-            d = rng.gauss(*COACH_POT)
-            pot[k] = int(max(min(COACH_FLOOR, ratings[k]), min(COACH_CAP, ratings[k] + (d if COACH_POT_MIN is None else max(COACH_POT_MIN, d)))))
+            d = rng.gauss(pot_mean(age), COACH_POT_SD)
+            pot[k] = int(max(min(COACH_FLOOR, ratings[k]), min(COACH_CAP, ratings[k] + COACH_CLIMB, ratings[k] + d)))
+        if k != "overall" and k not in base:
+            base[k] = ratings[k]
     return pot
 
 
@@ -1315,9 +1337,10 @@ def _league_marks(state: dict) -> dict[str, dict[str, int]]:
                 by_school.setdefault(school, []).append(rc["prospects"][pid]["composite"])
         points = {s: sum(c * prospects.CLASS_DECAY ** i for i, c in enumerate(sorted(v, reverse=True))) for s, v in by_school.items()}
         fbs = list(recruiting.fbs_schools(state))
-        for slug in out:
-            cr = 1 + sum(1 for s in fbs if points.get(s, 0.0) > points.get(slug, 0.0))
-            out[slug]["class"] = STAFF_MARK if cr <= 25 else -1 if cr > 70 else 0
+        if len(points) >= CLASS_MARK_MIN:              # a season without recruiting (a tool's quick loop) is nobody's verdict
+            for slug in out:
+                cr = 1 + sum(1 for s in fbs if points.get(s, 0.0) > points.get(slug, 0.0))
+                out[slug]["class"] = STAFF_MARK if cr <= 25 and points.get(slug) else -1 if cr > 70 or not points.get(slug) else 0
     except Exception:  # noqa: BLE001
         pass
     return out
@@ -1373,8 +1396,8 @@ def _develop_coaches(state: dict) -> dict:
                 continue
             age = carousel._age(c, year)
             before = dict(c["ratings"])
-            perf = {k: COACH_PERF.get(m.get("class" if k == "recruiting" else unit, 0), 1.0) for k in c["ratings"]}
-            changes = grow_coach(c["ratings"], _pot(c, c["ratings"], rng), age, perf, rng)
+            perf = {k: COACH_PERF.get(m.get("class" if k == "recruiting" else unit, 0), 0.0) for k in c["ratings"]}
+            changes = grow_coach(c["ratings"], _pot(c, c["ratings"], rng, age), age, perf, rng, c["base"])
             moved += len(changes)
             if slug == me:
                 you = (state.get("career") or {}).get("coach")
@@ -1394,9 +1417,9 @@ def _develop_coaches(state: dict) -> dict:
         age = carousel._age(s, year)
         ratings = {"evaluation": s["evaluation"], "recruiting": s["recruiting"]}
         before = dict(ratings)
-        perf = COACH_PERF.get(marks[me].get("class", 0), 1.0) if s["role"] == "Recruiter" else \
-            {"evaluation": COACH_PERF.get(marks[me].get(units.get(key, "W"), 0), 1.0), "recruiting": COACH_PERF.get(marks[me].get("class", 0), 1.0)}
-        changes = grow_coach(ratings, _pot(s, ratings, rng), age, perf, rng)
+        perf = COACH_PERF.get(marks[me].get("class", 0), 0.0) if s["role"] == "Recruiter" else \
+            {"evaluation": COACH_PERF.get(marks[me].get(units.get(key, "W"), 0), 0.0), "recruiting": COACH_PERF.get(marks[me].get("class", 0), 0.0)}
+        changes = grow_coach(ratings, _pot(s, ratings, rng, age), age, perf, rng, s["base"])
         s["evaluation"], s["recruiting"] = ratings["evaluation"], ratings["recruiting"]
         moved += len(changes)
         rows.append(row(s["id"], s["name"], s["role"], age, units.get(key, "class"), marks[me], changes, before))
@@ -1404,7 +1427,7 @@ def _develop_coaches(state: dict) -> dict:
         if not e.get("ratings"):
             continue
         age = e["age"] + (year - e["year"])
-        changes = grow_coach(e["ratings"], _pot(e, e["ratings"], rng), age, COACH_IDLE, rng)
+        changes = grow_coach(e["ratings"], _pot(e, e["ratings"], rng, age), age, 0.0, rng, e["base"], COACH_IDLE)
         moved += len(changes)
         for r in (e.get("ratings_by_role") or {}).values():
             for k, d in changes.items():
