@@ -1779,14 +1779,59 @@ def apply_depth(team: dict, overrides: Optional[dict]) -> dict:
     return out
 
 
+# the attributes the depth chart's list view shows for each role, most telling first
+_OL_COLUMNS = ["strength", "drive_block", "reach_block", "pass_anchor", "pass_footwork", "football_iq"]
+_DL_COLUMNS = ["strength", "burst", "power_rush", "speed_rush", "block_shedding", "tackling", "pursuit"]
+_LB_COLUMNS = ["top_speed", "tackling", "pursuit", "diagnosis", "block_shedding", "zone_coverage", "man_coverage"]
+_S_COLUMNS = ["top_speed", "zone_coverage", "man_coverage", "diagnosis", "tackling", "hit_power", "ball_skills"]
+_RET_COLUMNS = ["return_skill", "top_speed", "burst", "agility", "elusiveness"]
+DEPTH_COLUMNS = {
+    "QB": ["arm_strength", "short_accuracy", "mid_accuracy", "deep_accuracy", "pocket_poise", "decision_making", "top_speed"],
+    "HB": ["top_speed", "burst", "agility", "run_vision", "elusiveness", "power_running", "ball_security"],
+    "FB": ["lead_block", "drive_block", "power_running", "strength", "hands", "ball_security"],
+    "WR": ["top_speed", "burst", "hands", "contested_catch", "short_routes", "mid_routes", "deep_routes", "release"],
+    "TE": ["hands", "contested_catch", "short_routes", "release", "drive_block", "reach_block", "top_speed"],
+    "LT": _OL_COLUMNS, "LG": _OL_COLUMNS, "C": _OL_COLUMNS, "RG": _OL_COLUMNS, "RT": _OL_COLUMNS,
+    "LEDG": _DL_COLUMNS, "DT": _DL_COLUMNS, "REDG": _DL_COLUMNS,
+    "SAM": _LB_COLUMNS, "MIKE": _LB_COLUMNS, "WILL": _LB_COLUMNS,
+    "CB": ["top_speed", "burst", "man_coverage", "zone_coverage", "press", "ball_skills", "tackling"],
+    "FS": _S_COLUMNS, "SS": _S_COLUMNS,
+    "K": ["kick_power", "kick_accuracy", "football_iq"], "P": ["punt_power", "punt_accuracy", "football_iq"],
+    "KR": _RET_COLUMNS, "PR": _RET_COLUMNS,
+}
+COLUMN_SHORT = {"top_speed": "SPD", "burst": "ACC", "agility": "AGI", "strength": "STR", "football_iq": "IQ",
+                "arm_strength": "THP", "short_accuracy": "SAC", "mid_accuracy": "MAC", "deep_accuracy": "DAC",
+                "pocket_poise": "POI", "decision_making": "DEC", "run_vision": "VIS", "elusiveness": "ELU",
+                "power_running": "POW", "ball_security": "CAR", "hands": "CTH", "contested_catch": "CIT",
+                "short_routes": "SRR", "mid_routes": "MRR", "deep_routes": "DRR", "release": "REL",
+                "drive_block": "RBP", "reach_block": "RBF", "pass_anchor": "PBP", "pass_footwork": "PBF",
+                "lead_block": "LBK", "power_rush": "PMV", "speed_rush": "FMV", "block_shedding": "BSH",
+                "tackling": "TAK", "pursuit": "PUR", "diagnosis": "PRC", "man_coverage": "MCV",
+                "zone_coverage": "ZCV", "press": "PRS", "ball_skills": "BSK", "hit_power": "POW",
+                "kick_power": "KPW", "kick_accuracy": "KAC", "punt_power": "KPW", "punt_accuracy": "KAC",
+                "return_skill": "RET"}
+
+
+def role_starters(team: dict, role: str) -> int:
+    """How many players start at a role in the team's base formation (three receivers, two
+    tackles, none at a linebacker spot the scheme leaves out). Kickers and returners: one."""
+    if role in ("K", "P", "KR", "PR"):
+        return 1
+    return sum(1 for p in team["offense"] + team["defense"] if p.get("role") == role and p.get("in_game"))
+
+
 def position_candidates(state: dict, slug: str, role: str) -> dict:
     """Every player on the roster rated at one depth-chart role, best first, with where he
     sits now, so anyone can be moved into that spot."""
     check_fbs(slug)
     team = apply_depth(team_data(state, slug), (state.get("depth") or {}).get(slug))
     ss = (state.get("season_stats") or {}).get(slug, {}).get("players", {})
+    injured = (state.get("injuries") or {}).get(slug, {})
+    yours = bool(state.get("career")) and slug == state.get("team") and not state.get("done")
     pos = "KR" if role in ("KR", "PR") else ROLE_POSITION.get(role, role)
     current = depth_order(state, slug, role)
+    columns = DEPTH_COLUMNS.get(role, [])
+    moves = position_changes(state, slug)
     rows = []
     for p in team["offense"] + team["defense"]:
         rating = (house_value(p["position"], "return_rating", int(p.get("return_rating") or 0)) if pos == "KR"
@@ -1798,9 +1843,15 @@ def position_candidates(state: dict, slug: str, role: str) -> dict:
                      "class": p.get("class"), "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"),
                      "rating": rating, "natural": shown_overall(p), "starter": bool(p.get("in_game")),
                      "in_role": p["slug"] in current, "spot": (current.index(p["slug"]) + 1) if p["slug"] in current else None,
-                     "games": rec["games"] if rec else 0, "headline": awards.headline({"stats": st}, group) if st else ""})
+                     "games": rec["games"] if rec else 0, "headline": awards.headline({"stats": st}, group) if st else "",
+                     "dev_trait": p.get("dev_trait"), "archetype": p.get("archetype"),
+                     "moved_from": (moves.get(p.get("slug")) or {}).get("from"),
+                     "attrs": {k: (p.get("attributes") or {}).get(k) for k in columns},
+                     "injury": {"type": inj["type"], "weeks_left": inj["weeks_left"]} if (inj := injured.get(f"{p['name']}|{p['position']}")) else None,
+                     **({"redshirt": redshirt_status(state, slug, p)} if yours else {})})
     rows.sort(key=lambda r: (-r["rating"], r["name"]))
-    return {"role": role, "position": pos, "players": rows, "current": current}
+    return {"role": role, "position": pos, "players": rows, "current": current, "starters": role_starters(team, role),
+            "columns": [{"key": k, "short": COLUMN_SHORT.get(k, k[:3].upper()), "label": ratings_v2.ATTRIBUTES[k][0]} for k in columns]}
 
 
 def depth_order(state: dict, slug: str, role: str) -> list[str]:
@@ -1810,6 +1861,15 @@ def depth_order(state: dict, slug: str, role: str) -> list[str]:
         pick = team.get("kick_returner" if role == "KR" else "punt_returner")
         return [pick] if pick else []
     return [p["slug"] for p in sorted((p for p in team["offense"] + team["defense"] if p.get("role") == role), key=lambda p: p.get("depth") or 99)]
+
+
+def set_depth_order(state: dict, slug: str, role: str, order: list) -> None:
+    """Put a role's players in a new order (an auto reorder, or a swap of two spots): the
+    same players the role has now, nobody added or dropped."""
+    current = depth_order(state, slug, role)
+    if role in ("KR", "PR") or sorted(order) != sorted(current):
+        raise ValueError("the order must hold exactly the players at this role")
+    state.setdefault("depth", {}).setdefault(slug, {})[role] = list(order)
 
 
 def move_depth(state: dict, slug: str, role: str, player: str, move: str) -> None:
@@ -1846,25 +1906,14 @@ def reset_depth(state: dict, slug: str) -> None:
     (state.get("depth") or {}).pop(slug, None)
 
 
-def depth_chart_view(state: dict, slug: str) -> dict:
-    """A team's depth chart: every role in formation order, players in depth order, with
-    class, size, rating and the player's season headline."""
+def _depth_card(state: dict, slug: str):
+    """The depth chart's player card for one team: card(player, role) -> his class, size,
+    rating, season headline, form, injury, where he moved from this season and (your own
+    roster in a career) redshirt."""
     check_fbs(slug)
     teams = load_teams()
-    overrides = (state.get("depth") or {}).get(slug)
-    t = apply_depth(team_data(state, slug), overrides)
     ss = (state.get("season_stats") or {}).get(slug, {}).get("players", {})
-    players = t["offense"] + t["defense"]
     base_by_slug = {x.get("slug"): x for x in teams[slug]["offense"] + teams[slug]["defense"]}
-    by_role: dict[str, list[dict]] = {}
-    for p in players:
-        if p.get("role"):
-            by_role.setdefault(p["role"], []).append(p)
-    for role in by_role:
-        by_role[role].sort(key=lambda p: (p.get("depth") or 99, -player_overall(p)))
-    returners = {"KR": [p for p in players if p.get("slug") == t.get("kick_returner")],
-                 "PR": [p for p in players if p.get("slug") == t.get("punt_returner")]}
-
     injured = (state.get("injuries") or {}).get(slug, {})
     yours = bool(state.get("career")) and slug == state.get("team") and not state.get("done")   # your roster: redshirt in place
     moves = position_changes(state, slug)
@@ -1879,11 +1928,31 @@ def depth_chart_view(state: dict, slug: str) -> dict:
         return {"name": p["name"], "slug": p.get("slug"), "position": p["position"], "role": p.get("role"), "depth": p.get("depth"), "class": p.get("class"),
                 "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"), "overall": shown_overall(p, base_by_slug.get(p.get("slug"))),
                 "starter": bool(p.get("in_game")), "games": rec["games"] if rec else 0,
+                "dev_trait": p.get("dev_trait"), "archetype": p.get("archetype"),
                 "form": round(player_form(state, slug, p["name"], p["position"]), 2) if morale_on(state) else 0.0,
                 "headline": awards.headline({"stats": st}, group) if st else "",
                 "injury": {"type": inj["type"], "weeks_left": inj["weeks_left"], "returns_week": state["current_week"] + inj["weeks_left"]} if inj else None,
                 "moved_from": (moves.get(p.get("slug")) or {}).get("from"),
                 **({"redshirt": redshirt_status(state, slug, p)} if yours else {})}
+    return card
+
+
+def depth_chart_view(state: dict, slug: str) -> dict:
+    """A team's depth chart: every role in formation order, players in depth order, with
+    class, size, rating and the player's season headline."""
+    check_fbs(slug)
+    overrides = (state.get("depth") or {}).get(slug)
+    t = apply_depth(team_data(state, slug), overrides)
+    players = t["offense"] + t["defense"]
+    card = _depth_card(state, slug)
+    by_role: dict[str, list[dict]] = {}
+    for p in players:
+        if p.get("role"):
+            by_role.setdefault(p["role"], []).append(p)
+    for role in by_role:
+        by_role[role].sort(key=lambda p: (p.get("depth") or 99, -player_overall(p)))
+    returners = {"KR": [p for p in players if p.get("slug") == t.get("kick_returner")],
+                 "PR": [p for p in players if p.get("slug") == t.get("punt_returner")]}
 
     units = []
     for unit, rows in DEPTH_ROWS:
@@ -1892,12 +1961,139 @@ def depth_chart_view(state: dict, slug: str) -> dict:
             group = returners.get(role) if role in returners else by_role.get(role, [])
             if not group:
                 continue
-            out_rows.append({"role": role, "label": label, "players": [card(p, role) for p in group[:6]]})
+            out_rows.append({"role": role, "label": label, "starters": role_starters(t, role), "players": [card(p, role) for p in group[:6]]})
         units.append({"name": unit, "rows": out_rows})
     hc = (t.get("coaches") or {}).get("head_coach") or {}
     return {"team": slug, "name": t["name"], "conference": t["conference"], "head_coach": hc.get("name"),
             "ratings": t.get("team_ratings", {}), "roster_size": len(players), "units": units,
             "overridden": bool(overrides), "editable": True}
+
+
+def depth_roster_view(state: dict, slug: str) -> dict:
+    """Every player on a team's roster as a depth-chart card (the chart itself shows six a role):
+    the redshirt and availability screens read it."""
+    t = apply_depth(team_data(state, slug), (state.get("depth") or {}).get(slug))
+    card = _depth_card(state, slug)
+    return {"team": slug, "players": [card(p, p.get("role") or p["position"]) for p in t["offense"] + t["defense"]]}
+
+
+# the offensive groupings by name, and the line of how many backs, tight ends and receivers
+GROUPING_NAMES = {"10": "Four Wide", "11": "Spread", "12": "Two Tight Ends", "21": "I-Formation", "13": "Three Tight Ends",
+                  "22": "Heavy I", "jumbo": "Jumbo", "option": "Flexbone"}
+
+
+def _number_labels(slots: list) -> list:
+    """Two at one spot read DT1 and DT2 (MIKE1, MIKE2...); a spot held once keeps its plain label."""
+    counts: dict = {}
+    for s in slots:
+        counts[s["label"]] = counts.get(s["label"], 0) + 1
+    seen: dict = {}
+    for s in slots:
+        if counts[s["label"]] > 1:
+            seen[s["label"]] = seen.get(s["label"], 0) + 1
+            s["label"] = f"{s['label']}{seen[s['label']]}"
+    return slots
+
+
+def formations_view(state: dict, slug: str) -> dict:
+    """The formations a team lines up in most, each filled the way the next game fills it (the
+    engine's own lineup from the depth chart, the injured and redshirting left out): the three
+    groupings its offensive scheme uses most, its defense's base front and the two packages it
+    turns to, and the special teams' kicking and return units."""
+    from engine import personnel
+    from engine.game import GameSim
+    t = apply_depth(team_data(state, slug), (state.get("depth") or {}).get(slug))
+    by_slug = {p["slug"]: p for p in t["offense"] + t["defense"]}
+    card = _depth_card(state, slug)
+    team = GameSim._make_team(_preview_team(state, slug))
+
+    def slot(sid: str, label: str, p) -> dict:
+        src = by_slug.get(p.slug) if p is not None else None
+        return {"slot": sid, "label": label, "player": card(src, src.get("role") or label) if src else None}
+
+    def offense(name: str) -> list:
+        team.set_grouping(name, personnel.GROUPINGS[name])
+        lineup = list(team._lineup["offense"])
+        of = lambda pos: [p for p in lineup if p.position == pos]
+        line = of("OL")
+        roles = ["LT", "LG", "C", "RG", "RT"]
+        placed = {}
+        for p in line:                              # each lineman at his own spot where it is free
+            if p.role in roles and p.role not in placed:
+                placed[p.role] = p
+        rest = [p for p in line if p not in placed.values()]
+        for r in roles:
+            if r not in placed and rest:
+                placed[r] = rest.pop(0)
+        out = [slot(r, r, placed.get(r)) for r in roles if r in placed] + [slot("OL6", "OL", p) for p in rest[:1]]
+        out += [slot("QB", "QB", p) for p in of("QB")[:1]]
+        backs = ["FB", "SB", "SB"] if name == "option" else ["HB", "FB", "HB"]
+        out += [slot(f"RB{i + 1}", backs[i], p) for i, p in enumerate(of("RB")[:3])]
+        tes = of("TE")
+        out += [slot(f"TE{i + 1}", "TE" if len(tes) == 1 else f"TE{i + 1}", p) for i, p in enumerate(tes[:3])]
+        out += [slot(f"WR{i + 1}", f"WR{i + 1}", p) for i, p in enumerate(of("WR")[:4])]
+        return out
+
+    def defense(counts: dict) -> list:
+        team.set_front(counts)
+        lineup = list(team._lineup["defense"])
+        n_edge, n_dt, n_lb, n_cb = counts["EDGE"], counts["DT"], counts["LB"], counts["CB"]
+        edges, tackles = lineup[:n_edge], lineup[n_edge:n_edge + n_dt]
+        backers = lineup[n_edge + n_dt:n_edge + n_dt + n_lb]
+        corners = lineup[n_edge + n_dt + n_lb:n_edge + n_dt + n_lb + n_cb]
+        safeties = lineup[n_edge + n_dt + n_lb + n_cb:]
+        edges = sorted(edges, key=lambda p: 0 if p.role == "LEDG" else 1 if p.role == "REDG" else 2)
+        out = [slot("LE" if i == 0 else "RE", "LE" if i == 0 else "RE", p) for i, p in enumerate(edges[:2])]
+        out += [slot(f"DT{i + 1}", "NT" if len(tackles) == 1 else "DT", p) for i, p in enumerate(tackles)]
+        out += [slot(f"LB{i + 1}", p.role if p.role in ("SAM", "MIKE", "WILL") else "LB", p) for i, p in enumerate(backers)]
+        out += [slot(f"CB{i + 1}", "CB" if i < 2 else "NB", p) for i, p in enumerate(corners)]
+        out += [slot(f"S{i + 1}", p.role if p.role in ("FS", "SS") else "S", p) for i, p in enumerate(safeties)]
+        return _number_labels(out)
+
+    mix = personnel.SCHEME_MIX.get(team.offense_scheme, personnel.DEFAULT_MIX)
+    top = sorted(mix, key=lambda g: -mix[g])[:3]
+    off = []
+    for g in top:
+        c = personnel.GROUPINGS[g]
+        off.append({"id": g, "name": GROUPING_NAMES.get(g, g), "personnel": "Flexbone" if g == "option" else f"{g} personnel",
+                    "note": f"{c['RB']} RB · {c['TE']} TE · {c['WR']} WR" + (" · 6 OL" if c["OL"] > 5 else ""),
+                    "usage": round(mix[g], 2), "slots": offense(g)})
+
+    scheme = team.defense_scheme
+    packages = [
+        ("base", "Base", "Against two backs or two tight ends", personnel.defense_package(scheme, "12", 1, 10)),
+        ("nickel", "Nickel", "Against three receivers", personnel.defense_package(scheme, "11", 1, 10, rnd=lambda: 0.0)),
+        ("dime", "Dime", "Against four receivers and on third and long", personnel.defense_package(scheme, "10", 3, 10)),
+        ("heavy", "Heavy", "Against three tight ends and at the goal line", personnel.defense_package(scheme, "13", 1, 10)),
+    ]
+    seen, dfn = set(), []
+    for pid, name, when, counts in packages:
+        shape = tuple(counts[k] for k in ("EDGE", "DT", "LB", "CB", "S"))
+        if shape in seen or len(dfn) == 3:
+            continue
+        seen.add(shape)
+        front = f"{counts['EDGE'] + counts['DT']}-{counts['LB']}-{counts['CB'] + counts['S']}"
+        dfn.append({"id": pid, "name": name, "personnel": front, "note": when, "slots": defense(counts)})
+
+    def specialist(sid: str, label: str, pos: str) -> dict:
+        p = next((x for x in team.offense if x.position == pos and x.in_game and not x.injured), None) \
+            or next((x for x in sorted(team.offense, key=lambda x: x.depth) if x.position == pos and not x.injured), None)
+        return slot(sid, label, p)
+
+    def returner(sid: str, label: str, who) -> dict:
+        p = next((x for x in team.offense + team.defense if x.slug == who), None)
+        return slot(sid, label, p)
+
+    st = [
+        {"id": "fg", "name": "Field goal", "personnel": "Field goal & PAT", "note": "The kicker; the rest of the unit is not on the depth chart",
+         "slots": [specialist("K", "K", "K")]},
+        {"id": "punt", "name": "Punt", "personnel": "Punt", "note": "The punter; the rest of the unit is not on the depth chart",
+         "slots": [specialist("P", "P", "P")]},
+        {"id": "return", "name": "Returns", "personnel": "Kick & punt return", "note": "Who fields kickoffs and punts",
+         "slots": [returner("KR", "KR", team.kick_returner), returner("PR", "PR", team.punt_returner)]},
+    ]
+    return {"team": slug, "offense": {"scheme": team.offense_scheme, "formations": off},
+            "defense": {"scheme": scheme, "formations": dfn}, "special": {"scheme": None, "formations": st}}
 
 
 _race_cache: dict = {}

@@ -27,6 +27,8 @@
   <link rel="stylesheet" href="./offseason.css" />
   <link rel="stylesheet" href="./recruiting.css" />
   <link rel="stylesheet" href="./scouting.css" />
+  <link rel="stylesheet" href="./depth/depth-globals.css" />
+  <link rel="stylesheet" href="./depth/depth.css" />
 </head>
 <body>
   <header class="topbar">
@@ -161,7 +163,6 @@
           <div id="tab-teamstats" hidden></div>
           <div id="tab-playerstats" hidden></div>
         </div>
-        <div class="panel tab-body" id="tab-depth" hidden></div>
         <div class="tab-body go-tab" id="tab-office" hidden></div>
         <div class="tab-body go-tab" id="tab-offseason" hidden></div>
         <div class="panel tab-body" id="tab-recruiting" hidden></div>
@@ -190,6 +191,9 @@
       </div>
     </section>
   </main>
+
+  <!-- the depth chart: its own screen (web/depth/), at ?id=…&screen=depth -->
+  <div id="depth-screen" class="dc" hidden></div>
 
   <div id="modal" class="modal" hidden>
     <div class="modal-backdrop" id="modal-backdrop"></div>
@@ -229,6 +233,8 @@
   <script src="./recruiting.js"></script>
   <script src="./scouting.js"></script>
   <script src="./offseason.js"></script>
+  <script src="./depth/portraits.js"></script>
+  <script src="./depth/depth.js"></script>
   <script src="./season.js"></script>
 </body>
 </html>

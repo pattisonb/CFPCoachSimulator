@@ -145,13 +145,12 @@ def season_cases(page, base: str, sid: str) -> None:
     more = ready(page, ".go-program-foot button")
     assert_smooth(page, ".go-office", lambda: more.click(), None, "Office: every program")
 
-    # --- Settings over the depth chart: god mode does not redraw the chart behind the dialog
-    open_tab(page, base, sid, "depth", ".depth-table [data-player]")
-    page.evaluate("() => window.scrollTo(0, 400)")
-    page.click("#btn-settings")
+    # --- Settings over the depth chart screen: god mode does not redraw the field behind the dialog
+    open_tab(page, base, sid, "depth", ".dc-card")
+    page.click(".dc-side .dc-btn-settings")        # the season's Settings, from the screen's own sidebar
     page.wait_for_selector(".modal-body .settings")
     god = ready(page, ".settings-row:has-text('God mode') .switch")
-    assert_smooth(page, ".depth-table", lambda: god.click(),
+    assert_smooth(page, ".dc-field", lambda: god.click(),
                   re.compile(r"^God mode (on: open any player or depth chart to edit it|off)\.$"), "Settings: god mode")
     morale = ready(page, ".settings-row:has-text('Momentum and morale') .switch")
     assert_smooth(page, ".modal-body .settings", lambda: morale.click(),
@@ -159,32 +158,46 @@ def season_cases(page, base: str, sid: str) -> None:
     page.keyboard.press("Escape")
     page.wait_for_selector("#modal", state="hidden")
 
-    # --- depth chart: a move by keyboard; focus comes back to the same control
-    sel = ".depth-table td.depth-cell:nth-child(4) button[aria-label='Move up']"
-    btn = page.wait_for_selector(sel)
-    name = btn.evaluate("b => b.closest('.depth-cell').querySelector('[data-player]').textContent")
-    role = btn.evaluate("b => b.closest('tr').querySelector('.depth-role b').textContent")
-    center(btn)
+    # --- depth chart: a card opens the drawer; a move up by keyboard patches the field and the drawer; focus comes back to the same control
+    page.click(".dc-card >> nth=0")
+    btn = page.wait_for_selector(".dc-drawer .dc-depth-acts button[aria-label^='Move'][aria-label$=' up']")
+    name = btn.evaluate("b => b.closest('li').querySelector('.dc-depth-name').textContent.replace(/^\\d+\\. /, '')")
+    full = btn.evaluate("b => b.getAttribute('aria-label').replace(/^Move /, '').replace(/ up$/, '')")
+    role = page.inner_text(".dc-drawer .dc-kicker")
     btn.focus()
-    r = assert_smooth(page, ".depth-table", lambda: page.keyboard.press("Enter"), f"{name} moves up at {role}", "Depth chart: move up")
+    r = assert_smooth(page, ".dc-field", lambda: page.keyboard.press("Enter"), re.compile(rf"^{re.escape(full)} moves up at [A-Z]+$"), "Depth chart: move up")
     assert btn.evaluate("b => b.isConnected && document.activeElement === b"), "focus returns to the same Move up button"
-    assert r["pulses"] > 0, "the moved players' cells pulse"
+    assert r["pulses"] > 0, f"the moved players' cells pulse ({name} at {role})"
+    page.keyboard.press("Escape")
 
-    # --- depth chart: a redshirt
-    rs = page.wait_for_selector(".depth-table .depth-rs:not(.on)")
-    name = rs.evaluate("b => b.closest('.depth-cell').querySelector('[data-player]').textContent")
+    # --- depth chart: a redshirt from the Redshirts board, both ways; the board patches
+    page.click(".dc-nav-item:has-text('Redshirts')")
+    rs = page.wait_for_selector(".dc-person button:has-text('Redshirt'):not(.dc-on)")
+    name = rs.evaluate("b => b.closest('.dc-person').querySelector('strong').textContent")
     center(rs)
-    assert_smooth(page, ".depth-redshirts", lambda: rs.click(), f"Redshirt: {name}", "Depth chart: redshirt")
-    assert name in page.inner_text(".depth-redshirts"), "the redshirt list shows him"
-    back = page.wait_for_selector(".depth-redshirt .depth-rs.on")
-    assert_smooth(page, ".depth-redshirts", lambda: back.click(), f"Off redshirt: {name}", "Depth chart: off redshirt")
+    assert_smooth(page, ".dc-people", lambda: rs.click(), f"{name} is redshirting: he keeps his year.", "Depth chart: redshirt")
+    assert name in page.inner_text(".dc-people"), "the board shows him"
+    back = page.wait_for_selector(".dc-person button:has-text('Off Redshirt')")
+    assert_smooth(page, ".dc-people", lambda: back.click(), f"{name} is back in the lineup.", "Depth chart: off redshirt")
 
-    # --- depth chart, by position: a position change (into the QB rotation)
-    page.click("#tab-depth .view-chips button:has-text('By position')")
-    add = page.wait_for_selector("#tab-depth button[aria-label=\"Add to this spot's rotation\"]", timeout=60_000)
-    name = add.evaluate("b => [...b.closest('tr').cells[1].querySelector('.name').childNodes].find((n) => n.nodeType === 3).textContent")
-    center(add)
-    assert_smooth(page, "#tab-depth table.stats", lambda: add.click(), f"{name} joins the QB rotation", "Depth chart: position change")
+    # --- depth chart, the List view: a player from Others joins the QB rotation; the table patches
+    page.goto(f"{base}/index.html?id={sid}&screen=depth&view=list&role=QB")
+    page.wait_for_selector(".dc-table tbody tr", timeout=60_000)
+    time.sleep(0.8)
+    page.click(".dc-table tbody tr.off >> nth=0")
+    add = page.wait_for_selector(".dc-rail button:has-text('+ Add to QB')", timeout=60_000)
+    name = page.inner_text(".dc-rail .dc-panel-name")
+    assert_smooth(page, ".dc-table", lambda: add.click(), f"{name} joins the QB rotation", "Depth chart: position change")
+
+    # --- depth chart, the List view: the Position box moves him to another position; the table patches
+    page.goto(f"{base}/index.html?id={sid}&screen=depth&view=list&role=WR")
+    page.wait_for_selector(".dc-table tbody tr", timeout=60_000)
+    time.sleep(0.8)
+    sel = ready(page, ".dc-rail select.depth-pos")
+    name = page.inner_text(".dc-rail .dc-panel-name")
+    sel.hover()
+    page.wait_for_function("() => document.querySelector('.dc-rail select.depth-pos').options.length > 5", timeout=30_000)
+    assert_smooth(page, ".dc-table", lambda: page.select_option(".dc-rail select.depth-pos", "TE"), f"{name} moves to TE (was WR)", "Depth chart: position box")
 
 
 def board_cases(page, base: str, sid: str) -> None:
@@ -323,12 +336,11 @@ def reduced_motion(browser, base: str, sid: str) -> None:
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
     try:
-        open_tab(page, base, sid, "depth", ".depth-table [data-player]")
-        btn = page.wait_for_selector(".depth-table td.depth-cell:nth-child(4) button[aria-label='Move up']")
-        name = btn.evaluate("b => b.closest('.depth-cell').querySelector('[data-player]').textContent")
-        role = btn.evaluate("b => b.closest('tr').querySelector('.depth-role b').textContent")
-        center(btn)
-        r = assert_smooth(page, ".depth-table", lambda: btn.click(), f"{name} moves up at {role}", "Reduced motion: move up")
+        open_tab(page, base, sid, "depth", ".dc-card")
+        page.click(".dc-card >> nth=0")
+        btn = page.wait_for_selector(".dc-drawer .dc-depth-acts button[aria-label^='Move'][aria-label$=' up']")
+        full = btn.evaluate("b => b.getAttribute('aria-label').replace(/^Move /, '').replace(/ up$/, '')")
+        r = assert_smooth(page, ".dc-field", lambda: btn.click(), re.compile(rf"^{re.escape(full)} moves up at [A-Z]+$"), "Reduced motion: move up")
         assert r["pulses"] == 0, "no pulse under reduced motion"
         probe = page.evaluate("""() => { const d = document.createElement('div'); d.className = 'go-changed go-fade-in'; document.body.append(d);
           const c = getComputedStyle(d), t = getComputedStyle(document.querySelector('#toasts > *') || d); const out = [c.transitionDuration, c.animationName, t.animationName]; d.remove(); return out; }""")

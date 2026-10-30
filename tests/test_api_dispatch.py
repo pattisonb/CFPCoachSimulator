@@ -245,6 +245,7 @@ EXPECTED = {("GET", "/api/season/{season_id}/week/{week}"), ("GET", "/api/season
             ("GET", "/api/season/{season_id}/stats/teams"), ("GET", "/api/season/{season_id}/stats/leaders"),
             ("GET", "/api/season/{season_id}/stats/players"), ("GET", "/api/season/{season_id}/depth/{slug}"),
             ("POST", "/api/season/{season_id}/depth/{slug}"), ("GET", "/api/season/{season_id}/depth/{slug}/position/{role}"),
+            ("GET", "/api/season/{season_id}/depth/{slug}/formations"), ("GET", "/api/season/{season_id}/depth/{slug}/roster"),
             ("GET", "/api/season/{season_id}/injuries"), ("GET", "/api/season/{season_id}/awards"),
             ("GET", "/api/season/{season_id}/player")}
 
@@ -266,7 +267,7 @@ def test_view_routes_answer():
     assert api.call("GET", f"{base}/standings")["standings"]
     for path in ("review", "resume", "resume?team=smu", "programs", "recruiting/report", "scouting", "classes?school=smu", "preview",
                  "rivalries", "stats/teams", "stats/leaders?n=99", "stats/players?cat=rushing&limit=10", "depth/smu",
-                 "depth/smu/position/QB", "injuries", "awards"):
+                 "depth/smu/position/QB", "depth/smu/formations", "depth/smu/roster", "injuries", "awards"):
         assert isinstance(api.call("GET", f"{base}/{path}"), dict), path
     refused(lambda: api.call("GET", f"{base}/stats/players?cat=nothing"), 400)
     refused(lambda: api.call("GET", f"{base}/depth/smu/position/XX"), 404)
@@ -283,6 +284,10 @@ def test_view_routes_answer():
     api.call("POST", f"{base}/player/edit", {"team": "smu", "player": slug, "changes": {"jersey": 99}})
     assert api.changed() and season.load_season(s["id"])["settings"]["god_mode"]
     refused(lambda: api.call("POST", f"{base}/depth/smu", {"move": "up"}), 400)
+    wr = api.call("GET", f"{base}/depth/smu/position/WR")["current"]
+    refused(lambda: api.call("POST", f"{base}/depth/smu", {"order": wr}), 400)                     # no role
+    refused(lambda: api.call("POST", f"{base}/depth/smu", {"role": "WR", "order": wr[:-1]}), 400)  # a player missing
+    assert api.call("POST", f"{base}/depth/smu", {"role": "WR", "order": wr[::-1]})["overridden"] and api.changed()
     assert api.call("POST", f"{base}/depth/smu", {"reset": True}) and api.changed()
     api.call("DELETE", base)
 
