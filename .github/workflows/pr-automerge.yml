@@ -1,0 +1,95 @@
+# After PR Tests finishes: merge the pull request when it passed and nothing has moved since, then
+# deploy. This workflow never checks out or runs the pull request's code; it reads what PR Tests
+# recorded (pr, head, base) and checks every number against GitHub before acting.
+#
+# Merged only when all of these hold:
+#   - PR Tests passed for that run
+#   - the PR is open, targets main, is not a draft, has no "hold" label, and comes from this
+#     repository (a fork's PR is tested but a maintainer merges it)
+#   - the PR's head is the commit that was tested (a newer push gets its own run)
+#   - main is the commit it was tested against; if main moved (another PR merged first), the PR is
+#     sent back to PR Tests against the new main instead of being merged
+# A merge made here does not fire the push trigger of the Pages workflow (GitHub does not start
+# workflows from this token's pushes), so the deploy is started by name.
+name: PR Auto-merge
+
+on:
+  workflow_run:
+    workflows: ["PR Tests"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: pr-automerge
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    if: github.event.workflow_run.conclusion != 'cancelled' && github.event.workflow_run.conclusion != 'skipped'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: tested
+          path: tested
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+        continue-on-error: true
+
+      - name: Merge, re-test or report
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_EVENT: ${{ github.event.workflow_run.event }}
+          RUN_HEAD: ${{ github.event.workflow_run.head_sha }}
+          EVENT_PR: ${{ github.event.workflow_run.pull_requests[0].number }}
+        run: |
+          set -euo pipefail
+          comment() { gh pr comment "$PR" --repo "$REPO" --body "$1"$'\n\n'"[PR Tests run]($RUN_URL)"; }
+
+          if [ ! -f tested/tested.json ]; then
+            echo "No record of what was tested (the run stopped before recording it)."
+            [ -n "$EVENT_PR" ] && [ "$CONCLUSION" != "success" ] && PR="$EVENT_PR" && comment "PR Tests failed before testing anything (often a merge conflict with main): not merged."
+            exit 0
+          fi
+          PR=$(jq -r '.pr' tested/tested.json); HEAD_SHA=$(jq -r '.head' tested/tested.json); BASE_SHA=$(jq -r '.base' tested/tested.json)
+          case "$PR" in ''|*[!0-9]*) echo "::error::bad PR number in the record"; exit 1;; esac
+          echo "$HEAD_SHA$BASE_SHA" | grep -Eq '^[0-9a-f]{80}$' || { echo "::error::bad commit ids in the record"; exit 1; }
+          # a pull_request run's own head must be the head it recorded, and its PR the PR it recorded
+          if [ "$RUN_EVENT" = "pull_request" ]; then
+            [ "$RUN_HEAD" = "$HEAD_SHA" ] || { echo "::error::the record does not match the run's commit"; exit 1; }
+            [ -z "$EVENT_PR" ] || [ "$EVENT_PR" = "$PR" ] || { echo "::error::the record does not match the run's pull request"; exit 1; }
+          fi
+
+          if [ "$CONCLUSION" != "success" ]; then
+            comment "PR Tests failed: not merged. Fix the failing tests (the run's summary lists them) and push; this PR is tested again on every push."
+            exit 0
+          fi
+
+          info=$(gh pr view "$PR" --repo "$REPO" --json state,isDraft,baseRefName,headRefOid,labels,headRepositoryOwner,headRepository,mergeable)
+          state=$(jq -r .state <<<"$info"); draft=$(jq -r .isDraft <<<"$info"); base_ref=$(jq -r .baseRefName <<<"$info")
+          head_now=$(jq -r .headRefOid <<<"$info"); hold=$(jq -r '[.labels[].name] | index("hold") != null' <<<"$info")
+          from="$(jq -r .headRepositoryOwner.login <<<"$info")/$(jq -r .headRepository.name <<<"$info")"
+          [ "$state" = "OPEN" ] || { echo "PR #$PR is $state: nothing to do."; exit 0; }
+          [ "$base_ref" = "main" ] || { echo "PR #$PR targets $base_ref: not merged."; exit 0; }
+          [ "$draft" = "false" ] || { echo "PR #$PR is a draft: not merged."; exit 0; }
+          [ "$hold" = "false" ] || { comment "Tests passed. Not merged: the PR has the \`hold\` label (remove it to merge on the next run)."; exit 0; }
+          [ "$from" = "$REPO" ] || { comment "Tests passed. Pull requests from forks are merged by a maintainer."; exit 0; }
+          [ "$head_now" = "$HEAD_SHA" ] || { echo "PR #$PR has new commits since this run; their own run decides."; exit 0; }
+
+          main_now=$(gh api "repos/$REPO/commits/main" -q .sha)
+          if [ "$main_now" != "$BASE_SHA" ]; then
+            gh workflow run pr-tests.yml --repo "$REPO" --ref main -f pr="$PR"
+            comment "Tests passed, but main has moved since (another change landed first). Testing again against the new main before merging."
+            exit 0
+          fi
+
+          gh pr merge "$PR" --repo "$REPO" --merge --match-head-commit "$HEAD_SHA"
+          gh workflow run pages.yml --repo "$REPO" --ref main
+          comment "Every test passed against the current main: merged, and the site is deploying."

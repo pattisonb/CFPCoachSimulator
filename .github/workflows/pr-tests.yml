@@ -1,0 +1,124 @@
+# Every pull request to main is tested as it would land: the current main is merged into the PR
+# first and that merged tree is what gets built and tested. The full suite runs with a real
+# Chromium (a browser test that skips fails here). PR Auto-merge (pr-automerge.yml) merges the PR
+# when this passes, and asks for a fresh run (workflow_dispatch) when main moved in between.
+name: PR Tests
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Pull request number to test against the current main"
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: pr-tests-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Which pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          INPUT_PR: ${{ inputs.pr }}
+          EVENT_PR: ${{ github.event.pull_request.number }}
+          EVENT_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            case "$INPUT_PR" in ''|*[!0-9]*) echo "::error::pr must be a number"; exit 1;; esac
+            number="$INPUT_PR"
+            head=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json headRefOid -q .headRefOid)
+          else
+            number="$EVENT_PR"
+            head="$EVENT_HEAD"
+          fi
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+          echo "Testing PR #$number at $head" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ steps.pr.outputs.number }}/head
+          fetch-depth: 0
+
+      - name: Merge the current main into it
+        id: merge
+        env:
+          HEAD_SHA: ${{ steps.pr.outputs.head }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$HEAD_SHA" || { echo "::error::the PR moved while this run started; a newer run tests it"; exit 1; }
+          git fetch --no-tags origin main
+          base=$(git rev-parse origin/main)
+          git -c user.name="PR Tests" -c user.email="pr-tests@users.noreply.github.com" merge --no-edit origin/main \
+            || { echo "::error::This pull request conflicts with main: merge main into it and push."; exit 1; }
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "Merged with main at $base" >> "$GITHUB_STEP_SUMMARY"
+
+      # What this run tests, recorded and uploaded before any of the PR's code runs (an artifact
+      # cannot change once uploaded): PR Auto-merge trusts these numbers only as far as it checks them.
+      - name: Record what is tested
+        env:
+          NUMBER: ${{ steps.pr.outputs.number }}
+          HEAD_SHA: ${{ steps.pr.outputs.head }}
+          BASE_SHA: ${{ steps.merge.outputs.base }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/tested"
+          printf '{"pr": %s, "head": "%s", "base": "%s"}\n' "$NUMBER" "$HEAD_SHA" "$BASE_SHA" > "$RUNNER_TEMP/tested/tested.json"
+          cat "$RUNNER_TEMP/tested/tested.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tested
+          path: ${{ runner.temp }}/tested/tested.json
+          retention-days: 7
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright and Chromium (the browser tests run, never skip)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Every Python file compiles, every script parses
+        run: |
+          python -m compileall -q app coach_career engine sim teamdata tools tests
+          for f in web/*.js web/depth/*.js; do node --check "$f"; done
+
+      - name: Build the team data
+        run: python -m teamdata.build_teams
+
+      - name: Build the site (what Pages will publish)
+        run: python tools/build_site.py
+
+      - name: Full test suite (strict, one retry for a flaky test)
+        env:
+          SIM_WORKERS: "4"
+          CFP_STRICT: "1"
+        run: python tests/run_all.py --strict --retry 1 2>&1 | tee "$RUNNER_TEMP/tests.log"; exit "${PIPESTATUS[0]}"
+
+      - name: Keep the test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-log
+          path: ${{ runner.temp }}/tests.log
+          if-no-files-found: ignore
+          retention-days: 14
