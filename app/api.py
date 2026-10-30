@@ -751,6 +751,37 @@ def season_redshirt(p: Params) -> dict:
     return out
 
 
+@route("GET", "/api/season/{season_id}/position_options/{slug}/{player}")
+def season_position_options(p: Params) -> dict:
+    """What one of your players would be at every position, where he is now first."""
+    state = _career_state(p.path["season_id"])
+    team, player = p.path["slug"], p.path["player"]
+    _check_team(team)
+    if team != state["team"]:
+        raise ApiError(403, "only your own players")
+    try:
+        return {"options": season.position_options(state, team, player)}
+    except season.PositionError as e:
+        raise ApiError(e.code, str(e)) from e
+
+
+@route("POST", "/api/season/{season_id}/position")
+def season_position(p: Params) -> dict:
+    """Move one of your players to another position now: he plays and shows there from the next game."""
+    state = _career_state(p.path["season_id"])
+    team, player, pos = _field(p, "team", str), _field(p, "player", str), _field(p, "pos", str)
+    _check_team(team)
+    if team != state["team"]:
+        raise ApiError(403, "only your own players")
+    _check_not_running()
+    try:
+        out = season.change_position(state, team, player, pos)
+    except season.PositionError as e:
+        raise ApiError(e.code, str(e)) from e
+    _save_loaded()
+    return out
+
+
 @route("GET", "/api/season/{season_id}/standings")
 def season_standings(p: Params) -> dict:
     return {"standings": season.standings(_season_state(p.path["season_id"]))}

@@ -158,6 +158,7 @@ def start(state: dict) -> dict:
     lgd = state.get("league") or lg.from_base(year)
     lgd["year"] = year
     state["league"] = lgd
+    _season_moves(state, lgd)
     record_seasons(state, lgd)
     usage = _usage()
     deps, entrants, pending = _departures(state, lgd, usage)
@@ -819,11 +820,30 @@ def position_options(state: dict, pid: str) -> list[dict]:
     return out
 
 
+def move_row(c: dict, pos: str, attrs: list[str]) -> None:
+    """A league roster row at another position: "moved_from" keeps where he came from (cleared
+    when he goes back), his overall is our formula there."""
+    c.setdefault("moved_from", c["pos"])
+    c["pos"] = pos
+    c["o"] = game_scale.overall(lg.ratings(c, attrs), pos)
+    if pos == c["moved_from"]:
+        c.pop("moved_from", None)
+
+
+def _season_moves(state: dict, lgd: dict) -> None:
+    """Position changes made during the season (season.change_position) go onto the league's
+    rows (a career's first season plays the real league, so its rows are made only now)."""
+    for slug, moves in (state.get("position_changes") or {}).items():
+        rows = (lgd["teams"].get(slug) or {}).get("roster") or []
+        for pid, m in moves.items():
+            c = next((x for x in rows if x["id"] == pid), None)
+            if c is not None and c["pos"] != m["to"]:
+                move_row(c, m["to"], lgd["attrs"])
+
+
 def change_position(state: dict, pid: str, pos: str) -> dict:
-    """Move one of your players to another position for next season (his overall follows)."""
+    """Move one of your players to another position, at any offseason stage (his overall follows)."""
     off = state.get("offseason") or {}
-    if off.get("stage") in (None, "ready"):
-        raise RosterError(409, "position changes are made during the offseason")
     if pos not in GROUP:
         raise RosterError(400, "no such position")
     lgd = state["league"]
@@ -832,16 +852,11 @@ def change_position(state: dict, pid: str, pos: str) -> dict:
         raise RosterError(404, "not on your roster")
     if c["pos"] == pos:
         raise RosterError(409, "he plays there already")
-    was = c["pos"]
-    c.setdefault("moved_from", was)
-    c["pos"] = pos
-    c["o"] = game_scale.overall(lg.ratings(c, lgd["attrs"]), pos)
+    move_row(c, pos, lgd["attrs"])
     moves = off.setdefault("position_changes", [])
     moves[:] = [m for m in moves if m["id"] != pid]
-    if pos != c["moved_from"]:
+    if c.get("moved_from"):
         moves.append({"id": pid, "name": c["n"], "from": c["moved_from"], "to": pos, "overall": house(pos, c["o"])})
-    else:
-        c.pop("moved_from", None)
     return {"id": pid, "pos": pos, "overall": house(pos, c["o"])}
 
 

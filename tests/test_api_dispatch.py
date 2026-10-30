@@ -226,6 +226,7 @@ def test_gameday_step():
 EXPECTED = {("GET", "/api/season/{season_id}/week/{week}"), ("GET", "/api/season/{season_id}/schedule/{slug}"),
             ("GET", "/api/season/{season_id}/schedule_edit"), ("POST", "/api/season/{season_id}/schedule_edit"),
             ("POST", "/api/season/{season_id}/redshirt"), ("GET", "/api/season/{season_id}/standings"),
+            ("GET", "/api/season/{season_id}/position_options/{slug}/{player}"), ("POST", "/api/season/{season_id}/position"),
             ("GET", "/api/season/{season_id}/review"), ("GET", "/api/season/{season_id}/resume"),
             ("GET", "/api/season/{season_id}/game/{event_id}"), ("GET", "/api/season/{season_id}/settings"),
             ("POST", "/api/season/{season_id}/settings"), ("GET", "/api/season/{season_id}/recruiting"),

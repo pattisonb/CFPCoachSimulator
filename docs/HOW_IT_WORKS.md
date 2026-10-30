@@ -1031,8 +1031,9 @@ ceiling against the starter's ratings over the ten attributes most tied to overa
 only when closer than 30% of starter pairs are to each other. "Our comp" appears after three
 looks, measured from your staff's read, so a wrong read can give a different comp.
 
-**Redshirts and position changes** (`season.redshirt_toggle` during the season; `offseason.redshirt`,
-`offseason.change_position` and the Your Roster card at the Departures step). A player who has
+**Redshirts and position changes** (`season.redshirt_toggle` and `season.change_position` during
+the season; `offseason.redshirt`, `offseason.change_position` and the Your Roster card in the
+offseason). A player who has
 played four games or fewer (`REDSHIRT_GAMES`) with his redshirt year unused (FR, SO, JR) can take
 it: his class stays for next season and he still develops. During the season his page has a
 "Redshirt him" button and every eligible row of your Depth Chart a "Redshirt" control (the
@@ -1042,10 +1043,18 @@ A Redshirting panel above your chart lists everyone sitting out, his games and t
 and how many others are still eligible. At the Departures step every
 candidate waits on you, the ones you sat down already marked (a freshman off the depth chart's
 top takes it unless you say otherwise; an older player only if he never played); the AI programs
-draw as before but only within the four-game rule. A position change moves one of
-your players for next season to any spot (kickers and punters among themselves), his overall
-recomputed by our formula there; the card shows what he would be everywhere before you choose,
-and a change can be undone until the season starts.
+draw as before but only within the four-game rule. A position change can be made any time, from
+the Depth Chart during the season or the offseason's Your roster card at any stage: it moves one
+of your players to any spot (kickers and punters among themselves), his overall recomputed by our
+formula there (`position_options` shows what he would be everywhere before you choose). During the
+season (`GET .../position_options/{team}/{player}`, `POST .../position` with `team`, `player`,
+`pos`) the change applies at once: `state["position_changes"]` rides along with every game's
+edits (`team_edits` → `with_edits` → `with_positions`), so the next game, the Depth Chart, his
+profile and the stat views all have him at the new spot, placed in the new role's order by his
+overall there and out of every slot of his old one (his season stat line, injury and redshirt
+follow him; the chart's rows carry `moved_from`); the career's league roster row follows (at
+once in a later season, at the offseason's start in the first). Moving him back to the position
+the league file has clears the change. An injured or redshirting player may change too.
 
 **Your schedule** (`season.schedule_options`, `season.schedule_swap`; the Schedule tab's "Trade a
 non-conference game" before week 1 of a career). Each of your non-conference dates can be traded
