@@ -1,5 +1,5 @@
 /* The Scouting tab (replaces Staff): a dashboard in three regions. My scouts (a compact list: avatar, name, role,
-   the area dropdown, a "narrowed this week" bar), Reports (This week · Last week · Flags), and the Scouting queue:
+   the area dropdown, a "narrowed this week" bar), Reports (This Week · Last Week · Flags), and the Scouting queue:
    a table of recruits worth a trip, 25 to a page (BOARD, NAME, NEED, RANK, POTENTIAL, LOOKS in halves of three, Send), with a board
    filter, a search, sortable headers and Previous · 1 2 … n · Next pagination on the API's offset/limit.
    window.CFP.scouting.render(season, box, helpers); helpers are season.js's recruitingHelpers, the same
@@ -19,11 +19,11 @@
   const POSITIONS = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "ATH", "K", "P"];
   const GROUPS = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P"];     // offseason.GROUP's roster groups
   const WORDS = ["Weak", "Fair", "Solid", "Strong", "Elite", "All-American"];         // recruiting.WORDS, low to high
-  const GRADE_NAMES = { potential: "Potential", athleticism: "Athleticism", size_strength: "Size & strength", technique: "Technique", football_iq: "Football IQ", coachability: "Coachability" };
+  const GRADE_NAMES = { potential: "Potential", athleticism: "Athleticism", size_strength: "Size & Strength", technique: "Technique", football_iq: "Football IQ", coachability: "Coachability" };
   const FLAGS = { generational: ["Generational", "Your staff's find after three looks: a once-in-a-generation talent every program in the country wants"],
                   gem: ["Gem", "Your staff's find: even the low end of his potential read beats all but a few prospects at his star level, and few programs rate him that high"],
-                  bust: ["Bust risk", "Your staff's find: his ranking is high but even the top of their read sits under nearly every prospect at his star level"] };
-  const ROLE_SHORT = { "Offensive coordinator": "OC", "Defensive coordinator": "DC", Recruiter: "Recruiter" };
+                  bust: ["Bust Risk", "Your staff's find: his ranking is high but even the top of their read sits under nearly every prospect at his star level"] };
+  const ROLE_SHORT = { "Offensive Coordinator": "OC", "Defensive Coordinator": "DC", Recruiter: "Recruiter" };
   const SORTS = { need: (r) => r.need || 0, rank: (r) => r.national_rank || 1e9, looks: (r) => r.looks || 0,
                   potential: (r) => (r.potential ? WORDS.indexOf(r.potential[1]) * 10 + WORDS.indexOf(r.potential[0]) : -1) };
   const SORT_DEFAULT = { need: -1, rank: 1, looks: -1, potential: -1 };     // the first click: the most need, the best rank, the most looks, the best read
@@ -41,7 +41,7 @@
   const flagBadge = (f) => el("span", { class: `go-badge ${f}`, text: (FLAGS[f] || [f])[0], title: (FLAGS[f] || [])[1] || "" });
   // "OC likes him" (the API's `likes`: {who, name, text}): his report is complete and the read says he would start for you.
   // The tag on report items and Flags rows; a small "OC ♥" pill in the queue's NAME cell
-  const likesTag = (l) => el("span", { class: "go-tag good go-likes", text: `${l.who} likes him`, title: l.text });
+  const likesTag = (l) => el("span", { class: "go-tag good go-likes", text: `${l.who} Likes Him`, title: l.text });
   const likesPill = (l) => el("span", { class: "go-tag good sc-likes", text: `${l.who} ♥`, title: l.text });
   function avatar(seed, cls) {
     // a portrait from the coach sprite system, its look picked from the id (as the board's rows)
@@ -79,17 +79,17 @@
     ui().on(b, "click", () => openOnBoard(s, pid, b));
     return b;
   }
-  // a list longer than n folds past n with "Show all n" (a toggle)
+  // a list longer than n folds past n with "Show All n" (a toggle)
   const SHOWN = 8;
   function foldable(items, n = SHOWN) {
     const lis = items;
     lis.forEach((li, i) => { if (i >= n) li.hidden = true; });
     if (items.length <= n) return null;
-    const more = el("button", { type: "button", class: "go-link small sc-report-more", text: `Show all ${items.length}`, "aria-expanded": "false" });
+    const more = el("button", { type: "button", class: "go-link small sc-report-more", text: `Show All ${items.length}`, "aria-expanded": "false" });
     more.addEventListener("click", () => {
       const open = more.getAttribute("aria-expanded") !== "true";
       more.setAttribute("aria-expanded", String(open));
-      more.textContent = open ? "Show fewer" : `Show all ${items.length}`;
+      more.textContent = open ? "Show Fewer" : `Show All ${items.length}`;
       lis.forEach((li, i) => { if (i >= n) li.hidden = !open; });
     });
     return more;
@@ -106,7 +106,7 @@
     catch (err) { box.innerHTML = ""; box.append(loading(`Could not load the scouting desk: ${H.errText(err)}`)); return; }
     boardSet = new Set((rv.board || []).map((b) => b.id));
     box.innerHTML = "";
-    box.append(el("div", { class: "sc-head" }, [el("div", { class: "go-display l", text: "SCOUTING" }),
+    box.append(el("div", { class: "sc-head" }, [el("div", { class: "go-display l", text: "Scouting" }),
       el("p", { class: "muted", text: "A full report is three looks. A trip is one look; a week in a scout's area is half a look, up to two. After four weeks in an area one trip finishes him." })]));
     box.append(el("div", { class: "sc-top" }, [scoutsPanel(s, v, rv), reportsPanel(s, v)]), queuePanel(s, v));
   }
@@ -124,14 +124,14 @@
     const covered = new Set(v.scouts.map((m) => m.area).filter(Boolean));
     const open = Object.keys(rv.areas || {}).filter((a) => !covered.has(a));
     return el("section", { class: "go-card sc-panel sc-block sc-block-scouts", "aria-label": "My scouts" }, [
-      el("div", { class: "go-kicker", text: "MY SCOUTS" }), list,
+      el("div", { class: "go-kicker", text: "My Scouts" }), list,
       open.length ? el("p", { class: "muted small sc-open", text: `Not covered: ${open.map((a) => `${a} (${rv.area_counts[a]})`).join(", ")}. Prospects there show public information only.` }) : null]);
   }
   function scoutRow(s, m, rv, list) {
     const sel = el("select", { id: `area-${m.id}`, class: "go-sel sc-area", "aria-label": `${m.name}'s scouting area` },
       Object.keys(rv.areas || {}).map((a) => el("option", { value: a, text: `${a} (${rv.area_counts[a]})` })));
     if (m.area) sel.value = m.area;
-    else { sel.prepend(el("option", { value: "", text: "No area: assign one" })); sel.value = ""; }
+    else { sel.prepend(el("option", { value: "", text: "No Area: Assign One" })); sel.value = ""; }
     ui().on(sel, "change", async () => {
       const area = sel.value;
       if (!area) return;
@@ -169,13 +169,13 @@
       if (!groups.length) body.append(el("p", { class: "muted sc-reports-empty", text: desk.week === "this_week" ? "No looks yet this week: your scouts' looks land at the week step; a trip from the queue adds one now." : "No looks last week." }));
       for (const g of groups) body.append(reportGroup(s, g));
     };
-    for (const [k, t] of [["this_week", "This week"], ["last_week", "Last week"], ["flags", "Flags"]]) {
+    for (const [k, t] of [["this_week", "This Week"], ["last_week", "Last Week"], ["flags", "Flags"]]) {
       strip.append(el("button", { type: "button", role: "tab", "data-week": k, "aria-selected": "false", text: k === "flags" && v.flags && v.flags.length ? `Flags (${v.flags.length})` : t,
         onclick: () => { desk.week = k; draw(); } }));
     }
     draw();
     return el("section", { class: "go-card sc-panel sc-block sc-reports", "aria-label": "Reports" }, [
-      el("div", { class: "sc-panel-head" }, [el("div", { class: "go-kicker", text: "REPORTS" }), strip]), body]);
+      el("div", { class: "sc-panel-head" }, [el("div", { class: "go-kicker", text: "Reports" }), strip]), body]);
   }
   function reportGroup(s, g) {
     const items = g.items || [];
@@ -208,7 +208,7 @@
     const results = new Map();                       // pid -> the last trip's look, shown as a row under him
     const hoursText = () => `${st.left} of ${plural(st.hours, "hour")} left this week`;
     const hours = el("div", { id: "sc-hours", class: "go-pill sc-hours", role: "status", text: hoursText() });
-    const chips = el("div", { class: "sc-chips", role: "group", "aria-label": "Whose rows" }, [["all", "All"], ["on", "On my board"], ["off", "Not on my board"]].map(([k, t]) =>
+    const chips = el("div", { class: "sc-chips", role: "group", "aria-label": "Whose rows" }, [["all", "All"], ["on", "On My Board"], ["off", "Not On My Board"]].map(([k, t]) =>
       el("button", { type: "button", class: `go-chip small${desk.board === k ? " on" : ""}`, "data-board": k, "aria-pressed": String(desk.board === k), text: t,
         onclick: () => { if (desk.board === k) return; desk.board = k; desk.page = 0; for (const c of chips.children) { c.classList.toggle("on", c.dataset.board === k); c.setAttribute("aria-pressed", String(c.dataset.board === k)); } load(); } })));
     const search = el("input", { type: "search", id: "sc-search", value: desk.q, placeholder: "Search name or state", "aria-label": "Search the queue" });
@@ -217,8 +217,8 @@
       node.value = value;
       return node;
     };
-    const pos = sel("sc-position", "Position", [["", "Any position"], ...POSITIONS.map((p) => [p, p])], desk.position);
-    const grp = sel("sc-group", "Roster group", [["", "Any group"], ...GROUPS.map((g) => [g, `${g} group`])], desk.group);
+    const pos = sel("sc-position", "Position", [["", "Any Position"], ...POSITIONS.map((p) => [p, p])], desk.position);
+    const grp = sel("sc-group", "Roster group", [["", "Any Group"], ...GROUPS.map((g) => [g, `${g} Group`])], desk.group);
     // the table: a sticky header with sortable columns, the body a keyed list
     const sortBtn = (key, label) => el("button", { type: "button", class: "sc-sort", "data-sort": key, text: label, title: `Sort by ${label.toLowerCase()}`,
       onclick: () => { if (desk.sort === key) desk.dir = -desk.dir; else { desk.sort = key; desk.dir = SORT_DEFAULT[key]; } paint(); } });
@@ -226,7 +226,7 @@
     const heads = { need: th("need", "Need", "need"), rank: th("rank", "Rank", "rank"), potential: th("pot", "Potential", "potential"), looks: th("looks", "Looks", "looks") };
     const tbody = el("tbody", { class: "sc-tbody" });
     const table = el("table", { class: "sc-table" }, [el("thead", {}, [el("tr", {}, [th("board", "Board"), th("name", "Name"), heads.need, heads.rank, heads.potential, heads.looks,
-      el("th", { scope: "col", class: "sc-c-act" }, [el("span", { class: "sc-sr", text: "Send a scout" })])])]), tbody]);
+      el("th", { scope: "col", class: "sc-c-act" }, [el("span", { class: "sc-sr", text: "Send a Scout" })])])]), tbody]);
     const wrap = el("div", { class: "sc-table-wrap" }, [table]);
     const empty = el("p", { class: "muted sc-queue-empty", text: "Nobody matches: clear the search or a filter.", hidden: "" });
     const showing = el("span", { class: "muted small sc-showing", role: "status" });
@@ -311,7 +311,7 @@
     paint();
     if (desk.board !== "all") load();
     return el("section", { class: "go-card sc-panel sc-block sc-queue-panel", "aria-label": "Scouting queue" }, [
-      el("div", { class: "sc-panel-head sc-queue-head" }, [el("div", { class: "sc-queue-title" }, [el("div", { class: "go-kicker", text: "SCOUTING QUEUE" }), hours]),
+      el("div", { class: "sc-panel-head sc-queue-head" }, [el("div", { class: "sc-queue-title" }, [el("div", { class: "go-kicker", text: "Scouting Queue" }), hours]),
         el("p", { class: "muted small sc-queue-note", text: `A trip costs ${SCOUT_HOURS} hours: one look by your best evaluator; a report is complete at ${REPORT_LOOKS}. Your board first, those one trip from complete at the top and its complete reports last, then the class by your need and his rank.` })]),
       el("div", { class: "go-filterbar sc-toolbar" }, [chips, el("div", { class: "go-tools sc-tools" }, [search, pos, grp])]),
       wrap, empty,
@@ -363,7 +363,7 @@
     const on = boardSet && boardSet.has(r.pid);
     node.classList.toggle("on-board", !!on);
     const board = node.querySelector(".sc-board-cell");
-    if (on && !board.firstChild) board.append(el("span", { class: "go-tag sc-board-mark", title: "On your board" }, [el("span", { "aria-hidden": "true", text: "★ " }), "On board"]));
+    if (on && !board.firstChild) board.append(el("span", { class: "go-tag sc-board-mark", title: "On your board" }, [el("span", { "aria-hidden": "true", text: "★ " }), "On Board"]));
     else if (!on && board.firstChild) board.innerHTML = "";
     node.querySelector(".sc-line").textContent = `${r.position} · ${stars(r.stars)} · ${r.state}`;
     const lineRow = node.querySelector(".sc-line-row"), pill = lineRow.querySelector(".sc-likes");
@@ -389,7 +389,7 @@
     const send = node.querySelector(".sc-send"), tag = node.querySelector(".sc-complete");
     send.hidden = complete;                           // a complete report shows the tag where Send was
     tag.hidden = !complete;
-    const label = `Send (${SCOUT_HOURS}h)${!complete && left <= SEND_LOOK ? " · finishes his report" : ""}`;
+    const label = `Send (${SCOUT_HOURS}h)${!complete && left <= SEND_LOOK ? " · Finishes His Report" : ""}`;
     if (send.textContent !== label) send.textContent = label;
     const reason = complete ? `His report is complete: ${REPORT_LOOKS} of ${REPORT_LOOKS} looks` : st.left < SCOUT_HOURS ? "Not enough hours" : r.can_send === false ? (r.why || "Not now") : null;
     send.disabled = !!reason || send.classList.contains("go-busy");

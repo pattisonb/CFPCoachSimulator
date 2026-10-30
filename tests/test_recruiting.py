@@ -296,7 +296,7 @@ if __name__ == "__main__":
     assert early["schools"][0]["school"] == "ohio-state" and early["schools"][0]["pct"] > early["schools"][-1]["pct"]
     assert all(o["lo"] <= o["pct"] <= o["hi"] for o in early["schools"])
     width = lambda o: o["schools"][0]["hi"] - o["schools"][0]["lo"]
-    assert width(early) > width(late) and early["certainty"] == "Early read" and late["certainty"] == "Solid read"
+    assert width(early) > width(late) and early["certainty"] == "Early Read" and late["certainty"] == "Solid Read"
     assert late["field"] < early["field"]
     # a committed prospect: his school holds most of it, the rest is the chance he flips; signed is final
     rc["status"][target]["committed"] = "ohio-state"            # the school he likes most

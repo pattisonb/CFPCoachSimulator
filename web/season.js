@@ -1082,7 +1082,7 @@
     const teamSel = el("select", { "aria-label": "Team" }, state.teams.filter((t) => !t.fictional).map((t) => el("option", { value: t.slug, text: `${t.name} (${CONF_SHORT[t.conference] || t.conference})` })));
     teamSel.value = ds.team;
     teamSel.addEventListener("change", () => { ds.team = teamSel.value; renderDepthChart(); });
-    const viewChips = el("div", { class: "view-chips" }, [["chart", "Depth chart"], ["position", "By position"]].map(([v, label]) => {
+    const viewChips = el("div", { class: "view-chips" }, [["chart", "Depth Chart"], ["position", "By Position"]].map(([v, label]) => {
       const b = el("button", { type: "button", class: `chip ${ds.view === v ? "active" : ""}`, text: label });
       b.addEventListener("click", () => { ds.view = v; renderDepthChart(); });
       return b;

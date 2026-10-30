@@ -180,7 +180,7 @@ def season_cases(page, base: str, sid: str) -> None:
     assert_smooth(page, ".depth-redshirts", lambda: back.click(), f"Off redshirt: {name}", "Depth chart: off redshirt")
 
     # --- depth chart, by position: a position change (into the QB rotation)
-    page.click("#tab-depth .view-chips button:has-text('By position')")
+    page.click("#tab-depth .view-chips button:has-text('By Position')")
     add = page.wait_for_selector("#tab-depth button[aria-label=\"Add to this spot's rotation\"]", timeout=60_000)
     name = add.evaluate("b => [...b.closest('tr').cells[1].querySelector('.name').childNodes].find((n) => n.nodeType === 3).textContent")
     center(add)

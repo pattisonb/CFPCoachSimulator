@@ -404,7 +404,7 @@
         el("ul", { class: "off-list" }, moves.map((m) => el("li", {}, [el("b", { text: m.name }), el("span", { class: "muted", text: ` ${m.pos} · ${m.overall} OVR · ` }),
           m.to === s.team ? el("span", { class: "go-tag good", text: `Joins You From ${teamName(m.from)}` }) : el("span", { class: "go-tag bad", text: `Left for ${teamName(m.to)}` })]))));
     }
-    const table = el("table", { class: "off-table" }, [el("thead", {}, [el("tr", {}, ["Player", "Pos", "Year", "OVR", "From", "Last year", "With you", "Offers", ""].map((h) => el("th", { text: h })))])]);
+    const table = el("table", { class: "off-table" }, [el("thead", {}, [el("tr", {}, ["Player", "Pos", "Year", "OVR", "From", "Last Year", "With You", "Offers", ""].map((h) => el("th", { text: h })))])]);
     const body = el("tbody");
     for (const r of p.rows) {
       const btn = el("button", { type: "button", class: `go-btn small ${r.offered ? "" : "primary"}`, text: r.signed ? "Signed" : r.offered ? "Withdraw" : "Offer" });
@@ -415,7 +415,7 @@
         el("td", {}, [el("b", { text: r.name }), r.stars ? el("span", { class: "muted small", text: ` ${stars(r.stars)}` }) : null]),
         el("td", { text: r.pos }), el("td", { text: clsWord(r.cls) }), el("td", { class: "num", text: String(r.overall) }),
         el("td", {}, [window.CFP.teamPill(r.from), ` ${r.from_name}`]), el("td", { text: USAGE[r.last_year] || "" }),
-        el("td", {}, [el("span", { class: `go-tag ${r.fit === "Would start" ? "good" : r.fit === "Next in line" ? "warn" : "muted"}`, text: r.fit })]),
+        el("td", {}, [el("span", { class: `go-tag ${r.fit === "Would Start" ? "good" : r.fit === "Next in Line" ? "warn" : "muted"}`, text: r.fit })]),
         el("td", { class: "num", text: r.signed ? r.signed_name : String(r.offers) }), el("td", {}, [btn])]));
     }
     table.append(body);
@@ -566,7 +566,7 @@
         : el("p", { class: "muted", text: "No head coaching changes this year." })]);
     main.append(el("div", { class: "off-grid", "data-key": "staff-grid" }, [card, coaches]));
     if ((st.market || []).length) {
-      const t = el("table", { class: "off-table" }, [el("thead", {}, [el("tr", {}, ["Coach", "Would take", "Rating", "Why he is available", "Last job"].map((h) => el("th", { text: h })))])]);
+      const t = el("table", { class: "off-table" }, [el("thead", {}, [el("tr", {}, ["Coach", "Would Take", "Rating", "Why He Is Available", "Last Job"].map((h) => el("th", { text: h })))])]);
       const body = el("tbody");
       for (const m of st.market) {
         body.append(el("tr", {}, [el("td", { text: `${m.name}, ${m.age}` }), el("td", { text: m.roles.join(", ") }), el("td", { class: "num", text: String(m.rating) }),

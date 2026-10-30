@@ -243,9 +243,9 @@ if __name__ == "__main__":
 
             # --- the mid-season career: fill the board with the recommended prospects first, as the sweep does
             open_tab(page, base, A, "prospects", ".go-list-row")
-            page.click("button.go-chip:has-text('Recommended for you')")
-            page.wait_for_selector("button.go-btn:has-text('Add these')", timeout=120_000)
-            page.click("button.go-btn:has-text('Add these')")
+            page.click("button.go-chip:has-text('Recommended for You')")
+            page.wait_for_selector("button.go-btn:has-text('Add These')", timeout=120_000)
+            page.click("button.go-btn:has-text('Add These')")
             time.sleep(4)
             for tab, wait in (("office", ".go-program"), ("recruiting", ".go-row-recruit"), ("prospects", ".go-list-row"),
                               ("scouting", ".sc-scout"), ("depth", "[data-player]"), ("schedule", ".schedule-pick")):

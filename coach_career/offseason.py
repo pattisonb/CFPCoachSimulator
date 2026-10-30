@@ -2074,7 +2074,7 @@ def next_season(state: dict) -> dict:
 
 KIND_NAMES = {"draft": "Drafted", "undrafted": "Declared, Undrafted", "graduated": "Graduated", "portal": "Transfer Portal",
               "quit": "Left the Team"}
-PT_NAMES = {1.0: "Would start", 0.5: "Next in line", 0.15: "Depth"}
+PT_NAMES = {1.0: "Would Start", 0.5: "Next in Line", 0.15: "Depth"}
 
 
 def portal_offer(state: dict, pid: str, on: bool) -> list[str]:

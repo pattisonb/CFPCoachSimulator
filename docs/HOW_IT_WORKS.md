@@ -23,8 +23,8 @@ page stays responsive and shows progress.
 **Saves.** The worker's `data/seasons` and `data/coaches` folders are IndexedDB mounts
 (IDBFS), written back after every call that changed a file, so a career is in the browser's
 storage after every week and every recruiting action. They stay on that device and that
-browser; clearing the site's data deletes them. **Download career** saves a career as a
-`.ccsave` file and **Load career** opens one, which is how a career moves to another device.
+browser; clearing the site's data deletes them. **Download Career** saves a career as a
+`.ccsave` file and **Load Career** opens one, which is how a career moves to another device.
 **One tab at a time.** Each worker keeps its own in-memory mirror of the store and a write-back
 replaces the whole store with that mirror, so two tabs would roll each other's saves back.
 The worker takes the `cfp-game` Web Lock for its life before it mounts the store (a
@@ -857,7 +857,7 @@ The engine does not read any of it yet (fingerprint unchanged).
 
 ## Coach Career (recruiting, scouting and saves)
 
-A **New season** on the season page is a Coach Career (`coach_career/career.py`): the 2026 season played
+A **New Season** on the season page is a Coach Career (`coach_career/career.py`): the 2026 season played
 as the head coach, recruiting the class of 2027 as it goes (`coach_career/recruiting.py`, spec in
 `docs/superpowers/specs/2026-10-22-coach-career-design.md`). A season without a career block
 plays exactly as before; recruiting never changes how games play (the engine fingerprint is
@@ -903,7 +903,7 @@ staff's final grades. A read can still be wrong; the truth shows once he is on y
 queue's POTENTIAL cell and the report items say "potential narrowed to Elite". The read itself
 (`recruiting.read_spread`: mean and half-width, whatever the looks) is unchanged: the flags
 (`prospects.find`, their cuts and `FLAG_HOLD`) judge the read's own low and high end, and
-"OC likes him" its mean, so neither moves at the collapse. The "looks like" tooltip of a final
+"OC Likes Him" its mean, so neither moves at the collapse. The "looks like" tooltip of a final
 grade describes the prospects whose true grade carries that word (`recruiting.word_band`), the
 ranges inside it still their middle half. Hover, focus or tap a grade card for the tooltip, on the
 profile and on the pane's Scouting sub-tab alike (`gradeGrid`/`gradeTips` in web/recruiting.js: the
@@ -1066,7 +1066,7 @@ carries), so one look that widens the read a little does not flicker it off and 
 When he signs with you, the Classes view judges the call: "Gem: the read held" (his potential is
 Elite) or "The read was off".
 
-**"OC likes him" / "DC likes him"** (`prospects.staff_likes`) is a coordinator's word on a recruit
+**"OC Likes Him" / "DC Likes Him"** (`prospects.staff_likes`) is a coordinator's word on a recruit
 you may not know how to read at his position: once his report is complete (the flags' gate, three
 looks), his overall now as the READ sees it (`prospects.read_overall`: the midpoint of each group's
 read moved onto his current attributes, scored at his position on the roster's scale) is set
@@ -1077,7 +1077,7 @@ or DC (defense) vouches for him ("Your defensive coordinator thinks he starts fo
 a kicker or punter gets one of the two, fixed by the seed. The truth never enters it: a recruit who
 would start by his real rating is not liked while the read sits under your starter, and the read
 can be wrong the other way. Never in the portal, never once he has signed elsewhere. The tag
-(`go-tag good`, "OC likes him", the sentence as its title) sits once on the board's pane, among its
+(`go-tag good`, "OC Likes Him", the sentence as its title) sits once on the board's pane, among its
 tags after the ★/☆ priorities (the head keeps to his status chip); the profile says it in a line
 ("Your DC, Matt Patricia, thinks he starts for you next year."); on the Scouting tab the report
 items and the Flags rows carry it, the Flags list has every liked recruit as a fourth kind (after
@@ -1178,7 +1178,7 @@ number or rank.
 strip by position (`recruiting.needs_detail`: a healthy roster's make-up minus who comes back
 minus your commits), counted the way you pick (what's left; committed, firm commits, your
 board or your offers against the spots to fill; only what's short); a position picked there
-filters the board or the class to it. The class's **Recommended for you** view
+filters the board or the class to it. The class's **Recommended for You** view
 (`recruiting.recommended`) lists the prospects the Auto-recruit rules would put on your board
 this week, best fit first, each with why (your states, your star level, a position you need),
 with one button to add them all: a base to build a board from. Nobody commits anywhere in the
@@ -1193,7 +1193,7 @@ screens you act on (Office, Offseason once the season is over, Recruiting, Prosp
 Schedule, Depth Chart) and a League row that follows the calendar (Standings, Rankings and Stats
 all year; Awards from week 4; Classes, Bracket and Bowls from selection week; Summary when the
 season is done). A plain season keeps every League tab. The **Recruiting board** (a prospect you take off it stays off, Auto-recruit included, until
-you put him back) is stage tabs with counts (All, Cold, In touch, Top 8, Visited, Committed),
+you put him back) is stage tabs with counts (All, Cold, In Touch, Top 8, Visited, Committed),
 a search and a sort, then a plain list beside one sticky pane. A list row is his avatar, name, one
 line (stars, position, state) and one word of standing; a dot marks a move up or down this week.
 The pane is the only place anything happens to him: a head with his status chip and one **Recruit
@@ -1211,23 +1211,24 @@ height, and the finished conversation stays on screen through the board's catch-
 removing it would pull the pane under the player's scroll) until the pane next changes what it
 shows: another recruit, a new call, the week step. When
 he asks about a named player on that call (the starter ahead of him, or another recruit you
-offered), the scene shows his line with three answers (straight, a promise, a sidestep) and
+offered), the scene shows his line with three answers (straight, a promise, a sidestep; each button a Title Case
+label, Tell Him Straight, Make Him a Promise or Sidestep It, over the line you say) and
 locks the pitch until you pick one; his reply comes back in place (no toast) and History keeps
 the answer (`Told him straight about …`, `Promised him the job over …`). Under
-the head, a strip of four cells (YOUR CHANCE, HIS LIST, YOUR OFFER: "135 NIL · He wants 105" once
-you have offered, "He wants about 75–135" or the number before, "—" when nothing is known; SCOUTED;
+the head, a strip of four cells (Your Chance, His List, Your Offer: "135 NIL · He wants 105" once
+you have offered, "He wants about 75–135" or the number before, "—" when nothing is known; Scouted;
 no value starts lowercase), the tags you know (a
-prospect who is tuning you out carries a `Tuning you out` tag, a warning above the Recruit button
+prospect who is tuning you out carries a `Tuning You Out` tag, a warning above the Recruit button
 says another contact costs you interest, and History lists each tuned-out contact), and
 sub-tabs: Overview, Scouting, Profile, History. A ★ tag is a priority he has confirmed to you and a ☆
 tag a topic he brought up on this week's call or visit (a topic that is both shows once, as ★). History lists every contact you have had with
-him from the contact log, newest first, one line each (`Week 4 · Call · Program prestige · He lit
+him from the contact log, newest first, one line each (`Week 4 · Call · Program Prestige · He lit
 up`, `Week 5 · Offer · 120 NIL`, his commitments too). The sub-tab strip stays pinned at the top of
 the pane while its body scrolls, and the Profile sub-tab starts below the pane's head instead of
-repeating it. Sort: your chance climbs the ladder (yours, favorite, not offered while you lead
+repeating it. Sort: Your Chance climbs the ladder (yours, favorite, not offered while you lead
 his list, in it, long shot, not offered elsewhere, lost). On a phone the pane is a full-screen dialog and
-the menu a bottom sheet. Every standing word (Yours, Lost, Favorite, In it, Long shot, Not
-offered) is one ladder read from his list, with your offer as the qualifier
+the menu a bottom sheet. Every standing word (Yours, Lost, Favorite, In It, Long Shot, Not
+Offered) is one ladder read from his list, with your offer as the qualifier
 (`standingOf` in `web/recruiting.js`), so the list, the pane and the Office agree. His list is
 drawn as a race, one lane a school, a school without an offer in as a hollow pill, and a map of
 the US shows your nine areas and where the board's prospects live. Every color is a theme variable, so the screens work
@@ -1245,8 +1246,8 @@ flags count when there are any; "Not covered: …" is one
 muted line under the list. Reports beside it, with tabs This week · Last week · Flags: the looks
 grouped by scout (scout · area, "364 looks, 299 changed"), only the looks that changed a grade word
 or found a flag, in compact rows (stars, position, name, what changed, flag tags), past eight folded
-behind "Show all n"; Flags lists your staff's gems, bust risks and generational prospects this class,
-and the recruits a coordinator likes ("OC likes him", after the gems), with his looks and where he
+behind "Show All n"; Flags lists your staff's gems, bust risks and generational prospects this class,
+and the recruits a coordinator likes ("OC Likes Him", after the gems), with his looks and where he
 stands with you. A name anywhere opens him in the board's pane (he goes
 on your board if he was not); the pane's Scouting sub-tab links back to the reports. Under them the
 Scouting queue, a table of the recruits worth a trip (your board first, its complete reports last
@@ -1263,7 +1264,7 @@ full, POTENTIAL one final word, the "OC ♥" pill when liked, `can_send` false w
 as `why`); a complete report off your board is out of the queue. The help line under SCOUTING: "A full report is three looks. A
 trip is one look; a week in a scout's area is half a look, up to two. After four weeks in an area
 one trip finishes him." Above it the chips All ·
-On my board · Not on my board (the board ones client-side on one ask of the whole board, which the
+On My Board · Not On My Board (the board ones client-side on one ask of the whole board, which the
 API lists first), the search (name or home state), position and roster-group filters and the hours
 pill; NEED, RANK, POTENTIAL and LOOKS sort the page shown (`aria-sort`). Send posts the `scout`
 action and patches the row in place: the LOOKS bar and POTENTIAL cell pulse, the look's before and
@@ -1277,7 +1278,7 @@ finishes his report", and its Recruit menu grays Scout with the 409 text once he
 softmax of his interest in it (`exp(interest / 3)`), against the field: the schools not yet in
 it, worth 14 interest points at week 0, 10 at week 8 and 4 by signing day. The board shows your
 chance as a range that narrows as signing day nears (plus or minus 25 points at week 0, 12 at
-week 8, 4 from week 13), labeled Early read, Taking shape or Solid read. Class rank weighs each
+week 8, 4 from week 13), labeled Early Read, Taking Shape or Solid Read. Class rank weighs each
 class's best commitments most (each counts 0.85 times the one before).
 
 **Interested in you** (a Prospects filter and sort): the 15% of the class your school appeals
@@ -1295,7 +1296,7 @@ it turns itself off) or all season.
 box scores in it), and the browser worker writes it to IndexedDB right after the call (see
 "Run it"). The dispatcher keeps one season in memory at a time: opening another one replaces
 it, except while a sim runs. A career is 100-300 MB in memory.
-**Download career** saves the state with every box score as a `.ccsave` file. Prospects store
+**Download Career** saves the state with every box score as a `.ccsave` file. Prospects store
 their EA ratings as lists in one key order, so a new career's save is under 1.5 MB.
 
 ## Coach Career: the offseason and many seasons (`coach_career/league.py`, `coach_career/offseason.py`)
@@ -1664,7 +1665,7 @@ potential: the top tier's starters 63-64 in 2027 before settling), so year two l
 
 **Advancing, only from the Office.** The Office's play card is the one place time moves: **Sim
 the week** plays every game this week (yours included, unless you played it on **Game day**, drive
-by drive), **Sim to selection day** and **Sim to signing day** jump ahead, and the ▾ beside them
+by drive), **Sim to Selection Day** and **Sim to Signing Day** jump ahead, and the ▾ beside them
 picks any week to sim through; the recruiting weeks between run on Auto. The season header keeps
 no time-moving control, only Settings and Download career; its line leads with your next game
 (opponent and rank). Clicking a week on the schedule or standings only looks at it. The staff
@@ -1709,7 +1710,7 @@ season's first Office card says "NIL carried over: 25 (of 135 this year)".
 **The Offseason screen** walks the steps: Departures (your leavers by kind, the league's numbers,
 the first round), Transfer portal round 1 and 2 (entrants with position and status filters, your
 offers, who he would be with you, your moves), Development (who improved), Staff (hire
-replacements, the coaching carousel), then Start the next season. **Sim to next season** runs
+replacements, the coaching carousel), then Start the next season. **Sim to Next Season** runs
 every step on Auto. Your program's history (record, final AP rank, titles, class rank, players
 drafted) grows a row a year.
 
@@ -1945,8 +1946,8 @@ charts changed at 13 teams and target weights at 127. Play-log fingerprint 9e204
 ## The season page
 
 The site opens on the season page (`web/index.html`). Pick your team, start a season, and
-play it a week at a time with **Sim the week**, or jump with **Sim to
-selection day** or **Sim to signing day** (a career moves time from the Office's play card). The
+play it a week at a time with **Sim the Week**, or jump with **Sim to
+selection day** or **Sim to Signing Day** (a career moves time from the Office's play card). The
 week strip lets you look back at any week. Tabs:
 
 - **Games**: every game that week, your game first, with the AP ranks the teams carried
@@ -1979,7 +1980,7 @@ The calendar: weeks 1-13 are the regular season (the 2026 schedule ends Nov 28),
 is championship week (the top two in every conference's standings meet, on a neutral
 field for the Power Four and at the higher seed's stadium in the Group of Five), week 15 holds Army-Navy and the selection, weeks 16-19
 are the playoff. A season starts from the real 2026 preseason AP poll and simulates
-everything (the **New season** button). `sim/season.py` also keeps a "remaining" mode for
+everything (the **New Season** button). `sim/season.py` also keeps a "remaining" mode for
 the command line and the tools (`python -m sim.season ohio-state remaining`): the real
 results and real polls through the last completed week, then the rest simulated. FCS opponents play as the fictional school from the same region
 (`data/fcs_map.json`), moved by the strength of the real school it replaces (`season.fcs_strength`):
@@ -2466,7 +2467,7 @@ A player card shows the ratings that matter at his position, most important firs
 coverage, speed and tackling for a corner; kick power and accuracy for a kicker, and so
 on; a returner gets his return rating too). "All ratings" opens a modal with every
 rating he carries, the position ratings marked, morale arrows and god-mode edits
-shown, and his rating at every position (what the depth chart's "By position" view
+shown, and his rating at every position (what the depth chart's "By Position" view
 uses when you move him).
 
 ### Momentum and morale
@@ -2508,7 +2509,7 @@ and used by every game from the next sim on; an edited rating is marked on the c
 
 ### This week
 
-Your Team Schedule opens with a "This week" card: the next game with both teams' rank
+Your Team Schedule opens with a "This Week" card: the next game with both teams' rank
 and record, the venue, the date and the trophy on the line, then a prediction from 20
 simulations of the matchup with the current depth charts, injuries and edits (the likely
 score, your win odds, the line and the total, the passer, rusher and receiver to watch),

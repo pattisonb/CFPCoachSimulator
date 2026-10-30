@@ -26,23 +26,23 @@ CASES = [
     ({"committed": ME, "hard": False, "list": []}, "Yours", "Verbal commit to you", "good", None),
     ({"committed": ME, "hard": True, "list": []}, "Yours", "Hard commit to you", "good", None),
     ({"signed": ME, "committed": ME, "list": []}, "Yours", "Signed with you", "good", None),
-    ({"signed": "georgia", "list": []}, "Lost", "Signed · Georgia", "bad", "Locked in"),
-    ({"committed": "georgia", "hard": True, "list": []}, "Lost", "Hard commit · Georgia", "bad", "Locked in"),
-    ({"committed": "georgia", "list": []}, "Long shot", "Verbal commit · Georgia", "warn", "Offer him to try for a flip"),
-    ({"committed": "georgia", "standing": {"pct": 0.35, "lo": 0.2, "hi": 0.5}, "list": []}, "In it", "Verbal commit · Georgia", "warn", "He could still flip to you"),
-    ({"committed": "georgia", "standing": {"pct": 0.1, "lo": 0.0, "hi": 0.2}, "list": []}, "Long shot", "Verbal commit · Georgia", "warn", "A flip is a long shot"),
-    ({"committed": "georgia", "standing": {"pct": 0.02, "lo": 0.0, "hi": 0.05}, "list": []}, "Long shot", "Verbal commit · Georgia", "warn", "A flip looks unlikely"),
-    ({"offered": True, "standing": {"pct": 0.6}, "list": [row(ME, 1.0, True, 1), row("georgia", 0.5, True, 2)]}, "Favorite", "Leading his list", "good", "Clear favorite"),
-    ({"offered": True, "standing": {"pct": 0.5}, "list": [row(ME, 1.0, True, 1), row("georgia", 0.9, True, 2)]}, "Favorite", "Leading his list", "good", "Narrow favorite"),
-    ({"offered": True, "standing": {"pct": 0.7}, "list": [row(ME, 1.0, True, 1)]}, "Favorite", "Leading his list", "good", "Clear favorite"),
-    ({"offered": False, "list": [row(ME, 1.0, False, 1), row("georgia", 0.7, True, 2)]}, "Not offered", "He would pick you today", "warn", "Offer him"),
-    ({"offered": True, "standing": {"pct": 0.3}, "list": [row("georgia", 1.0, True, 1), row(ME, 0.95, True, 2)]}, "In it", "2nd on his list · Georgia leads", "warn", "Close race"),
-    ({"offered": True, "standing": {"pct": 0.2}, "list": [row("georgia", 1.0, True, 1), row(ME, 0.3, True, 2)]}, "In it", "2nd on his list", "muted", "Behind, in the picture"),
-    ({"offered": True, "standing": {"pct": 0.05}, "list": [row("georgia", 1.0, True, 1), row(ME, 0.1, True, 2)]}, "Long shot", "2nd on his list", "muted", "Long shot"),
-    ({"offered": False, "list": [row("georgia", 1.0, True, 1), row(ME, 0.4, False, 3)]}, "Not offered", "3rd on his list · not offered", "muted", "Offer to be in it"),
-    ({"offered": False, "list": [row("georgia", 1.0, True, 1)]}, "Not offered", "Not on his list yet", "muted", None),
+    ({"signed": "georgia", "list": []}, "Lost", "Signed · Georgia", "bad", "Locked In"),
+    ({"committed": "georgia", "hard": True, "list": []}, "Lost", "Hard commit · Georgia", "bad", "Locked In"),
+    ({"committed": "georgia", "list": []}, "Long Shot", "Verbal commit · Georgia", "warn", "Offer him to try for a flip"),
+    ({"committed": "georgia", "standing": {"pct": 0.35, "lo": 0.2, "hi": 0.5}, "list": []}, "In It", "Verbal commit · Georgia", "warn", "He could still flip to you"),
+    ({"committed": "georgia", "standing": {"pct": 0.1, "lo": 0.0, "hi": 0.2}, "list": []}, "Long Shot", "Verbal commit · Georgia", "warn", "A flip is a long shot"),
+    ({"committed": "georgia", "standing": {"pct": 0.02, "lo": 0.0, "hi": 0.05}, "list": []}, "Long Shot", "Verbal commit · Georgia", "warn", "A flip looks unlikely"),
+    ({"offered": True, "standing": {"pct": 0.6}, "list": [row(ME, 1.0, True, 1), row("georgia", 0.5, True, 2)]}, "Favorite", "Leading his list", "good", "Clear Favorite"),
+    ({"offered": True, "standing": {"pct": 0.5}, "list": [row(ME, 1.0, True, 1), row("georgia", 0.9, True, 2)]}, "Favorite", "Leading his list", "good", "Narrow Favorite"),
+    ({"offered": True, "standing": {"pct": 0.7}, "list": [row(ME, 1.0, True, 1)]}, "Favorite", "Leading his list", "good", "Clear Favorite"),
+    ({"offered": False, "list": [row(ME, 1.0, False, 1), row("georgia", 0.7, True, 2)]}, "Not Offered", "He would pick you today", "warn", "Offer him"),
+    ({"offered": True, "standing": {"pct": 0.3}, "list": [row("georgia", 1.0, True, 1), row(ME, 0.95, True, 2)]}, "In It", "2nd on his list · Georgia leads", "warn", "Close Race"),
+    ({"offered": True, "standing": {"pct": 0.2}, "list": [row("georgia", 1.0, True, 1), row(ME, 0.3, True, 2)]}, "In It", "2nd on his list", "muted", "Behind, in the picture"),
+    ({"offered": True, "standing": {"pct": 0.05}, "list": [row("georgia", 1.0, True, 1), row(ME, 0.1, True, 2)]}, "Long Shot", "2nd on his list", "muted", "Long Shot"),
+    ({"offered": False, "list": [row("georgia", 1.0, True, 1), row(ME, 0.4, False, 3)]}, "Not Offered", "3rd on his list · not offered", "muted", "Offer to be in it"),
+    ({"offered": False, "list": [row("georgia", 1.0, True, 1)]}, "Not Offered", "Not on his list yet", "muted", None),
 ]
-WORDS = {"Yours", "Lost", "Favorite", "In it", "Long shot", "Not offered"}
+WORDS = {"Yours", "Lost", "Favorite", "In It", "Long Shot", "Not Offered"}
 TONES = {"good", "warn", "muted", "bad"}
 
 
@@ -83,10 +83,10 @@ if __name__ == "__main__":
                 assert sd["word"] in WORDS and sd["tone"] in TONES, sd
                 assert 0 <= (sd.get("fill") or 0) <= 1, sd
             # the words never come from the offer race: offered but outside the five schools his list shows
-            # (the board sends his top five), the word is a long shot, never "Not offered" and never the race's place
+            # (the board sends his top five), the word is a long shot, never "Not Offered" and never the race's place
             sd = page.evaluate("([b, me]) => window.CFP.recruiting.standingOf(b, me)",
                                [{"offered": True, "standing": {"pct": 0.9, "place": 1, "of": 1, "leader": {"name": "SMU"}}, "list": [row("georgia", 1.0, True, 1)]}, ME])
-            assert sd["word"] == "Long shot" and sd["text"] == "Outside his top 5" and sd["tone"] == "muted", sd
+            assert sd["word"] == "Long Shot" and sd["text"] == "Outside his top 5" and sd["tone"] == "muted", sd
             browser.close()
         print("ok")
     finally:

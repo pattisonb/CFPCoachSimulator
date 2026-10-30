@@ -126,11 +126,11 @@ def open_tab(page, base, sid, tab, wait):
 
 # the ladder "Sort: your chance" follows: yours, favorite, not offered while leading his list, in it, long shot,
 # not offered elsewhere on (or off) his list, lost
-LADDER = {"Yours": 0, "Favorite": 1, ("Not offered", "warn"): 2, "In it": 3, "Long shot": 4, ("Not offered", "muted"): 5, "Lost": 6}
+LADDER = {"Yours": 0, "Favorite": 1, ("Not Offered", "warn"): 2, "In It": 3, "Long Shot": 4, ("Not Offered", "muted"): 5, "Lost": 6}
 
 
 def ladder_of(sd: dict) -> int:
-    return LADDER[(sd["word"], sd["tone"])] if sd["word"] == "Not offered" else LADDER[sd["word"]]
+    return LADDER[(sd["word"], sd["tone"])] if sd["word"] == "Not Offered" else LADDER[sd["word"]]
 
 
 def assert_chance_order(page, board: list, me: str) -> None:
@@ -142,8 +142,8 @@ def assert_chance_order(page, board: list, me: str) -> None:
     assert keys == sorted(keys), f"the board sorted by your chance breaks the ladder: {list(zip(shown, [sd['word'] for sd in sds]))}"
 
 
-PITCH = {"proximity": "Close to home", "playing_time": "Playing time", "prestige": "Program prestige", "winning": "Winning now",
-         "nil": "NIL", "coach": "The head coach", "academics": "Academics"}
+PITCH = {"proximity": "Close to Home", "playing_time": "Playing Time", "prestige": "Program Prestige", "winning": "Winning Now",
+         "nil": "NIL", "coach": "The Head Coach", "academics": "Academics"}
 REACTION = {"hit": "He lit up", "polite": "Polite", "quiet": "He went quiet"}
 GONE = "heard".title()     # the word the cue tag used to print: the page never shows it now
 HISTORY_EMPTY = "Nothing with him yet: no contact, no offer."
@@ -239,8 +239,8 @@ def test_pester_tags(page, base) -> None:
         assert b["pestering"] is True and b["pesters"] == 0, b
         open_tab(page, base, sid, "recruiting", ".go-stages")
         page.click(f".go-row-recruit[data-pid='{pid}']")
-        page.wait_for_selector(".go-pane .go-tags .go-tag:has-text('Tuning you out')", timeout=30_000)
-        tag = page.query_selector(".go-pane .go-tags .go-tag:has-text('Tuning you out')")
+        page.wait_for_selector(".go-pane .go-tags .go-tag:has-text('Tuning You Out')", timeout=30_000)
+        tag = page.query_selector(".go-pane .go-tags .go-tag:has-text('Tuning You Out')")
         assert "bad" in (tag.get_attribute("class") or ""), tag.get_attribute("class")
         assert tag.get_attribute("title") == "He is not considering you; more contact pushes him away"
         warn = page.query_selector(".go-pane .go-warn[role=note]")
@@ -261,7 +261,7 @@ def test_pester_tags(page, base) -> None:
         toasted(page, f"Message sent to {name} · 5 hours")
         settle(page, n)
         smooth(page, h, "Message to a prospect who is tuning you out")
-        assert page.query_selector(".go-pane .go-tags .go-tag:has-text('Tuning you out')"), "the tag stays after the pester"
+        assert page.query_selector(".go-pane .go-tags .go-tag:has-text('Tuning You Out')"), "the tag stays after the pester"
         assert page.query_selector(".go-pane .go-warn[role=note]"), "the warning stays after the pester"
         page.click(".go-subtabs button[data-sub=history]")
         time.sleep(0.4)
@@ -312,8 +312,9 @@ def test_recruit_question(page) -> None:
         assert q and q["answer"] is None, q
         block = page.inner_text(".go-pane .go-scene .go-question")
         assert q["text"] in block and b["name"] in block, (block, q)
-        answers = page.evaluate("() => [...document.querySelectorAll('.go-pane .go-scene .go-answer')].map(e => [e.dataset.answer, e.textContent.trim()])")
-        assert answers == [[k, scenes.ANSWER_COPY[q["kind"]][k]] for k in ("straight", "promise", "deflect")], answers
+        # each answer button: a Title Case label over the line you say (the line kept word for word)
+        answers = page.evaluate("() => [...document.querySelectorAll('.go-pane .go-scene .go-answer')].map(e => [e.dataset.answer, e.querySelector('.go-answer-label').textContent.trim(), e.querySelector('.go-answer-line').textContent.trim()])")
+        assert answers == [[k, scenes.ANSWER_LABELS[k], scenes.ANSWER_COPY[q["kind"]][k]] for k in ("straight", "promise", "deflect")], answers
         pitch = ".go-pane .go-scene .go-scene-acts button:has-text('Pitch')"
         assert page.is_disabled(pitch) and page.get_attribute(pitch, "title") == "Answer him first"
         assert page.evaluate("() => [...document.querySelectorAll('.go-pane .go-scene .go-pitches input')].every(r => r.disabled)"), "the pitch radios wait on the answer"
@@ -330,7 +331,7 @@ def test_recruit_question(page) -> None:
         assert page.evaluate("() => [...document.querySelectorAll('.go-pane .go-scene .go-pitches input')].every(r => !r.disabled)")
         assert page.evaluate("() => document.querySelectorAll('#toasts .toast-item').length") == toasts, "the reply is the feedback: no toast"
         # Hang up, then Finish: the answered question comes back without its buttons
-        page.click(".go-pane .go-scene button:has-text('Hang up')")
+        page.click(".go-pane .go-scene button:has-text('Hang Up')")
         page.wait_for_selector("#rc-finish")
         n = draws(page)
         page.click("#rc-finish")
@@ -388,7 +389,7 @@ def test_scouting_tab(page, base, sid) -> None:
     v = call(base, f"/api/season/{sid}/scouting")
     rows = page.eval_on_selector_all(".sc-block-scouts .sc-scout", "els => els.map(e => e.textContent)")
     assert len(rows) == len(v["scouts"]) == 5, (len(rows), len(v["scouts"]))
-    dc = next(m for m in v["scouts"] if m["role"] == "Defensive coordinator")
+    dc = next(m for m in v["scouts"] if m["role"] == "Defensive Coordinator")
     assert any(dc["name"] in r and "DC" in r for r in rows), f"the Defensive coordinator {dc['name']} is listed with his role word"
     assert all(page.query_selector(f".sc-scout[data-key='{m['id']}'] .sc-bar") for m in v["scouts"]), "each scout carries his narrowed-this-week bar"
     # the area dropdown: posts to /staff and toasts
@@ -428,7 +429,7 @@ def test_scouting_tab(page, base, sid) -> None:
     assert segments() == [min(1, max(0, before - i)) for i in range(3)], (before, segments())
     assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-looks-text") == f"{fmt(before)} of 3"
     assert "trips" not in page.inner_text(f".sc-row[data-pid='{pid}'] .sc-c-looks"), "no separate trips count"
-    assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-send") == ("Send (5h) · finishes his report" if 3 - before <= 1 else "Send (5h)")
+    assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-send") == ("Send (5h) · Finishes His Report" if 3 - before <= 1 else "Send (5h)")
     after = min(3, before + 1)
     h = watch(page, ".sc-table tbody", control=f".sc-row[data-pid='{pid}'] .sc-send", scrolled=False)
     page.click(f".sc-row[data-pid='{pid}'] .sc-send")
@@ -441,7 +442,7 @@ def test_scouting_tab(page, base, sid) -> None:
     # a report one Send from complete says so on its button; the Send that completes it leaves a Complete tag where Send was
     while after < 3 and call(base, f"/api/season/{sid}/scouting")["hours_left"] >= SCOUT_HOURS:
         page.wait_for_function("(pid) => { const b = document.querySelector(`.sc-row[data-pid='${pid}'] .sc-send`); return b && !b.disabled && !b.classList.contains('go-busy'); }", arg=pid, timeout=15_000)
-        assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-send") == ("Send (5h) · finishes his report" if 3 - after <= 1 else "Send (5h)"), page.inner_text(f".sc-row[data-pid='{pid}'] .sc-send")
+        assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-send") == ("Send (5h) · Finishes His Report" if 3 - after <= 1 else "Send (5h)"), page.inner_text(f".sc-row[data-pid='{pid}'] .sc-send")
         page.click(f".sc-row[data-pid='{pid}'] .sc-send")
         after = min(3, after + 1)
         toasted(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
@@ -511,7 +512,7 @@ def test_scouting_tab(page, base, sid) -> None:
     # the pane's Scouting sub-tab links back to the tab, on the Reports panel's This week
     page.click(".go-pane .go-subtabs button[data-sub=scouting]")
     page.wait_for_selector(".go-pane .go-sub-body .sc-reports-link", timeout=30_000)
-    assert page.inner_text(".go-pane .go-sub-body .sc-reports-link").strip() == "Reports on the Scouting tab"
+    assert page.inner_text(".go-pane .go-sub-body .sc-reports-link").strip() == "Reports on the Scouting Tab"
     page.click(".go-pane .go-sub-body .sc-reports-link")
     page.wait_for_selector("#tab-scouting:visible .sc-table", timeout=60_000)
     assert page.get_attribute(".sc-reports .go-subtabs button[data-week=this_week]", "aria-selected") == "true"
@@ -895,7 +896,7 @@ def test_staff_likes_tags(page, base) -> None:
         # the board's pane: the tag among the tags and on the head, the profile's line
         open_tab(page, base, sid, "recruiting", ".go-stages")
         page.click(f".go-row-recruit[data-pid='{liked}']")
-        page.wait_for_selector(".go-pane .go-tags .go-tag.go-likes:has-text('OC likes him')", timeout=30_000)
+        page.wait_for_selector(".go-pane .go-tags .go-tag.go-likes:has-text('OC Likes Him')", timeout=30_000)
         tag = page.query_selector(".go-pane .go-tags .go-tag.go-likes")
         assert "good" in (tag.get_attribute("class") or "") and tag.get_attribute("title") == "Your offensive coordinator thinks he starts for you next year", (tag.get_attribute("class"), tag.get_attribute("title"))
         assert not page.query_selector(".go-pane .go-pane-head .go-likes"), "the head does not repeat the tag"
@@ -1286,7 +1287,7 @@ def test_conversation(page, base) -> None:
         assert not page.query_selector(".go-pane .go-scene button:has-text('Pitch')"), "the buttons gave way"
         settle(page, n)
         assert page.query_selector(".go-pane .go-scene .go-reaction"), "the finished conversation stays until the pane moves on"
-        assert "Hang up" not in page.inner_text(".go-pane .go-scene"), "a finished conversation has nothing left to do"
+        assert "Hang Up" not in page.inner_text(".go-pane .go-scene"), "a finished conversation has nothing left to do"
         # History: the opening's line
         page.click(".go-subtabs button[data-sub=history]")
         time.sleep(0.3)
@@ -1383,14 +1384,14 @@ if __name__ == "__main__":
 
             # --- Prospects: profile with three looks prints no "null", grades read "D to C-", scouting is a button
             open_tab(page, base, A, "prospects", ".go-list-row")
-            page.click("button.go-chip:has-text('Recommended for you')")
-            page.wait_for_selector("button.go-btn:has-text('Add these')", timeout=120_000)
-            page.click("button.go-btn:has-text('Add these')")
+            page.click("button.go-chip:has-text('Recommended for You')")
+            page.wait_for_selector("button.go-btn:has-text('Add These')", timeout=120_000)
+            page.click("button.go-btn:has-text('Add These')")
             time.sleep(4)
             page.click(".go-list-row .go-list-id >> nth=0")
             page.wait_for_selector(".go-profile .go-display", timeout=60_000)
             for _ in range(3):
-                sc = page.query_selector(".go-profile button:has-text('Send a scout')")
+                sc = page.query_selector(".go-profile button:has-text('Send a Scout')")
                 if not sc:
                     break
                 assert "go-link" not in (sc.get_attribute("class") or ""), "scouting costs hours: a button, not an inline link"
@@ -1434,7 +1435,7 @@ if __name__ == "__main__":
             assert page.evaluate("""() => [...document.querySelectorAll('.go-row-recruit')].every(r => r.tagName === 'BUTTON' && r.hasAttribute('aria-pressed')
                 && r.querySelector('.go-standing-word') && !r.querySelector('.go-tag, .go-bar, button, .go-badge'))"""), "a row is a button with one word of standing"
             words = page.eval_on_selector_all(".go-row-recruit .go-standing-word", "els => els.map(e => e.textContent.trim())")
-            assert words and set(words) <= {"Favorite", "In it", "Long shot", "Yours", "Lost", "Not offered"}, words
+            assert words and set(words) <= {"Favorite", "In It", "Long Shot", "Yours", "Lost", "Not Offered"}, words
             shot(page, "board-1280-dark")
             # a tab filters the list and shows as pressed
             stage, n = next(((c[0], c[1]) for c in counts[1:] if 0 < c[1] < board_n), (None, None))
@@ -1477,7 +1478,7 @@ if __name__ == "__main__":
               const R = window.CFP.recruiting;
               return [rows.slice().sort(R.byChance("smu")).map((b) => b.id), Object.fromEntries(rows.map((b) => [b.id, R.standingOf(b, "smu").word]))];
             }""")
-            assert ladder[1] == {"lost": "Lost", "trail": "Long shot", "lead": "Not offered", "cold": "Not offered", "init": "In it", "fav2": "Favorite",
+            assert ladder[1] == {"lost": "Lost", "trail": "Long Shot", "lead": "Not Offered", "cold": "Not Offered", "init": "In It", "fav2": "Favorite",
                                  "fav1": "Favorite", "favtie": "Favorite", "yours": "Yours"}, ladder[1]
             assert ladder[0] == ["yours", "favtie", "fav1", "fav2", "lead", "init", "trail", "cold", "lost"], ladder[0]
             assert_chance_order(page, v["board"], "smu")
@@ -1498,7 +1499,7 @@ if __name__ == "__main__":
             time.sleep(0.6)
             assert page.get_attribute(f".go-row-recruit[data-pid='{pid}']", "aria-pressed") == "true"
             assert b["name"] in page.inner_text(".go-pane .go-pane-head")
-            STAGE_WORD = {"cold": "Cold", "contact": "In touch", "top": "Top 8", "visited": "Visited"}
+            STAGE_WORD = {"cold": "Cold", "contact": "In Touch", "top": "Top 8", "visited": "Visited"}
             assert page.text_content(".go-pane .go-chip").strip() == STAGE_WORD.get(b["stage"], "Cold"), page.text_content(".go-pane .go-chip")
             box = page.evaluate("() => { const p = document.querySelector('.go-pane'); const r = p.getBoundingClientRect(); return [r.top, r.bottom, getComputedStyle(p).position]; }")
             assert box[2] == "sticky" and 0 <= box[0] < 400, box
@@ -1548,8 +1549,8 @@ if __name__ == "__main__":
               { week: 3, kind: "contact", action: "message", pitch: "playing_time" },
               { week: 2, kind: "offer", school: "georgia" },
             ], "smu")""")
-            assert lines == ["Week 6 · Committed to Georgia", "Week 5 · Offer · 120 NIL", "Week 4 · Call · Program prestige · He lit up",
-                             "Week 3 · Message · Playing time", "Week 2 · Offered by Georgia"], lines
+            assert lines == ["Week 6 · Committed to Georgia", "Week 5 · Offer · 120 NIL", "Week 4 · Call · Program Prestige · He lit up",
+                             "Week 3 · Message · Playing Time", "Week 2 · Offered by Georgia"], lines
             page.click(".go-subtabs button[data-sub=overview]")
             # the Recruit menu: nine items, the unavailable ones grayed with the reason as a second line
             page.click("#rc-recruit")
@@ -1695,7 +1696,7 @@ if __name__ == "__main__":
             page.wait_for_selector(".go-menu")
             assert page.eval_on_selector_all(".go-menu .go-menu-item", "els => els.every(e => e.getAttribute('aria-disabled') === 'true' && e.querySelector('.go-menu-why').textContent === 'Finish your call first')")
             page.keyboard.press("Escape")
-            page.click(".go-pane .go-scene button:has-text('Hang up')")
+            page.click(".go-pane .go-scene button:has-text('Hang Up')")
             time.sleep(0.5)
             assert not page.query_selector(".go-pane .go-scene"), "hanging up closes the scene view"
             assert page.query_selector("#rc-finish"), "the call stays open: Finish stays in the head"
@@ -1743,7 +1744,7 @@ if __name__ == "__main__":
                 assert page.eval_on_selector_all(".go-row-recruit[aria-pressed=true]", "els => els.map(e => e.dataset.pid)") == [cold["id"]], "the dot's recruit is selected"
                 assert page.get_attribute(".go-stages button[data-stage=all]", "aria-pressed") == "true", "the tab that hid him gives way to All"
             # the table tells us which state holds the most of his board; tap that one
-            page.click(".go-map button:has-text('List the states')")
+            page.click(".go-map button:has-text('List the States')")
             assert page.query_selector(".go-map-table tr"), "an accessible table alternative"
             top = page.evaluate("() => { const rows = [...document.querySelectorAll('.go-map-table tbody tr')].map(r => [r.querySelector('th').textContent, +r.querySelector('td').textContent]); rows.sort((a, b) => b[1] - a[1]); return rows[0]; }")
             st, n = top
@@ -1878,7 +1879,7 @@ if __name__ == "__main__":
             open_tab(page, base, A, "recruiting", ".go-stages")
             assert not page.query_selector(".go-map svg"), "the map's picture is left out under 360px"
             assert page.evaluate("() => document.querySelectorAll('.go-stages button[data-stage]').length") == 6, "the board still renders its stage tabs"
-            page.click(".go-map button:has-text('List the states')")
+            page.click(".go-map button:has-text('List the States')")
             assert page.query_selector(".go-map-table tr"), "the table is still reachable on a tiny screen"
             page.click(".go-map .go-map-toggle")
             # a phone: the region row scrolls sideways inside itself (the page does not), and a region button still zooms
@@ -1929,7 +1930,7 @@ if __name__ == "__main__":
             shot(page, "scene-400-dark")
             page.set_viewport_size({"width": 1280, "height": 1000})
             page.wait_for_selector(".go-pane:not(.sheet) .go-scene", timeout=10_000)
-            page.click(".go-pane .go-scene button:has-text('Hang up')")
+            page.click(".go-pane .go-scene button:has-text('Hang Up')")
             time.sleep(0.4)
             # the light theme, for the screenshots
             page.evaluate("() => { document.documentElement.dataset.theme = 'light'; try { localStorage.setItem('cfp.theme', 'light'); } catch (e) {} }")
@@ -1986,17 +1987,17 @@ if __name__ == "__main__":
             page.click(".go-stages button[data-stage=committed]")
             time.sleep(0.5)
             words = dict(page.eval_on_selector_all(".go-row-recruit", "els => els.map(e => [e.dataset.pid, e.querySelector('.go-standing-word').textContent.trim()])"))
-            assert words[mine_pid] == "Yours" and words[lost_pid] == "Lost" and words[hard_pid] == "Lost" and words[hard_noffer_pid] == "Lost" and words[verbal_pid] in ("In it", "Long shot"), words
+            assert words[mine_pid] == "Yours" and words[lost_pid] == "Lost" and words[hard_pid] == "Lost" and words[hard_noffer_pid] == "Lost" and words[verbal_pid] in ("In It", "Long Shot"), words
             page.click(f".go-row-recruit[data-pid='{lost_pid}']")
             time.sleep(0.5)
             assert page.text_content(".go-pane .go-chip").startswith("Signed · ") and not page.query_selector("#rc-recruit"), "a prospect signed elsewhere has no Recruit menu"
             page.click(f".go-row-recruit[data-pid='{mine_pid}']")
             time.sleep(0.5)
-            assert page.text_content(".go-pane .go-chip").strip() == "Signed with you" and not page.query_selector("#rc-recruit"), "a prospect who signed with you has no Recruit menu"
+            assert page.text_content(".go-pane .go-chip").strip() == "Signed With You" and not page.query_selector("#rc-recruit"), "a prospect who signed with you has no Recruit menu"
             # a verbal commit elsewhere can still be offered to try for a flip: the chip says so, the Overview talks of the flip, Offer is live
             page.click(f".go-row-recruit[data-pid='{verbal_pid}']")
             time.sleep(0.5)
-            assert page.text_content(".go-pane .go-chip").startswith("Verbal commit · ")
+            assert page.text_content(".go-pane .go-chip").startswith("Verbal Commit · ")
             assert "flip" in page.inner_text(".go-pane .go-sub-body"), page.inner_text(".go-pane .go-sub-body")
             page.click("#rc-recruit")
             page.wait_for_selector(".go-menu")
@@ -2007,7 +2008,7 @@ if __name__ == "__main__":
             # a hard commit elsewhere with your offer out: no new offer, but you can pull yours back
             page.click(f".go-row-recruit[data-pid='{hard_pid}']")
             time.sleep(0.5)
-            assert page.text_content(".go-pane .go-chip").startswith("Hard commit · ")
+            assert page.text_content(".go-pane .go-chip").startswith("Hard Commit · ")
             page.click("#rc-recruit")
             page.wait_for_selector(".go-menu")
             assert not page.eval_on_selector(".go-menu-item[data-action=pull_offer]", "e => e.getAttribute('aria-disabled') === 'true'"), "Pull offer is live for a hard commit elsewhere"
@@ -2025,7 +2026,7 @@ if __name__ == "__main__":
             # the same without your offer: Offer… is grayed for the hard commit, and there is nothing to pull
             page.click(f".go-row-recruit[data-pid='{hard_noffer_pid}']")
             time.sleep(0.5)
-            assert page.text_content(".go-pane .go-chip").startswith("Hard commit · ")
+            assert page.text_content(".go-pane .go-chip").startswith("Hard Commit · ")
             page.click("#rc-recruit")
             page.wait_for_selector(".go-menu")
             assert page.eval_on_selector(".go-menu-item[data-action=offer]", "e => e.getAttribute('aria-disabled') === 'true'")
@@ -2040,8 +2041,8 @@ if __name__ == "__main__":
             odd = page.evaluate("""() => [...document.querySelectorAll('.go-class-list li')].filter(li => {
                 const b = li.querySelector('.go-badge'); return b && !b.matches('.generational, .gem-held, .bust-held, .gem-missed'); }).length""")
             assert odd == 0, f"{odd} class rows carry a badge that is not generational, held or missed"
-            for sel, txt in ((".go-class-list .go-badge.gem-held", "Gem: the read held"), (".go-class-list .go-badge.bust-held", "Bust risk: the read held"),
-                             (".go-class-list .go-badge.gem-missed", "The read was off")):
+            for sel, txt in ((".go-class-list .go-badge.gem-held", "Gem: The Read Held"), (".go-class-list .go-badge.bust-held", "Bust Risk: The Read Held"),
+                             (".go-class-list .go-badge.gem-missed", "The Read Was Off")):
                 for t in page.eval_on_selector_all(sel, "els => els.map(e => e.textContent.trim())"):
                     assert t == txt, f"{sel} reads {t!r}"
             # the Generational tag is your staff's to find: nobody wears it before three looks
@@ -2307,7 +2308,7 @@ if __name__ == "__main__":
             assert draws(page) == n + 1, "the superseded re-fetch is dropped, the later one patches once"
             assert f"{hours - 20} / " in page.inner_text(".go-meters"), page.inner_text(".go-meters")
             assert page.query_selector(".go-pane .go-scene"), "the call's scene stays on screen"
-            page.click(".go-pane .go-scene button:has-text('Hang up')")
+            page.click(".go-pane .go-scene button:has-text('Hang Up')")
             time.sleep(0.3)
             # Review Focus 2: an action moves him out of the open tab: the row leaves, the counts update, the pane stays on him
             page.click(".go-stages button[data-stage=cold]")
