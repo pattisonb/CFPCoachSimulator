@@ -60,7 +60,15 @@ def trips_of(rc: dict, pid: str) -> int:
 def scoutable(st: dict, pid: str) -> bool:
     rc = st["recruiting"]
     s = rc["status"][pid]
-    return not s["signed"] and s["committed"] != ME and trips_of(rc, pid) < recruiting.SCOUT_MAX and pid in recruiting.visible(st)
+    return not s["signed"] and s["committed"] != ME and not recruiting.report_complete(rc["reads"].get(pid)) and pid in recruiting.visible(st)
+
+
+def watching(st: dict, member: dict) -> set[str]:
+    """The prospects in his area his weekly look still adds to (under AREA_CAP from the area, report not complete)."""
+    return {pid for pid in area_pids(st, member) if recruiting.area_open(st["recruiting"]["reads"].get(pid))}
+
+
+HALF = recruiting.AREA_LOOK          # an area scout's week is half a look: the tallies count looks in trip units
 
 
 if __name__ == "__main__":
@@ -91,12 +99,13 @@ if __name__ == "__main__":
         assert all(r["can_send"] and r["why"] is None and r["looks"] == 0 and r["potential"] is None for r in v["queue"])
         assert "looks" not in rc and "look_counts" not in rc and "look_changes" not in rc, "a read of the desk does not create the log"
 
-        # a week of scouting: every look counted; a first look changes his words, so every one is a change
-        # and the log keeps each scout's LOOK_LOG_KEEP most notable (every look is a first read here)
+        # a week of scouting: every look counted (half a look each, in trip units); a first look changes his words, so
+        # every one is a change and the log keeps each scout's LOOK_LOG_KEEP most notable (every look is a first read here)
         recruiting.scout_week(st)
         looks, counts, changes = rc["looks"], rc["look_counts"], rc["look_changes"]
-        assert set(counts) == set(changes) == {"0"} and counts["0"] == {m["id"]: len(area_pids(st, m)) for m in staff}
-        assert changes["0"] == {m["id"]: {"changed": counts["0"][m["id"]], "flags": 0} for m in staff}
+        assert set(counts) == set(changes) == {"0"} and counts["0"] == {m["id"]: HALF * len(area_pids(st, m)) for m in staff}
+        assert all(r["looks"] == r["area"] == HALF for r in rc["reads"].values())
+        assert changes["0"] == {m["id"]: {"changed": len(area_pids(st, m)), "flags": 0} for m in staff}
         assert len(looks) == len(staff) * recruiting.LOOK_LOG_KEEP
         for e in looks:
             check_entry(e, rc)
@@ -114,14 +123,14 @@ if __name__ == "__main__":
         third = [e for e in rc["looks"] if e["week"] == 2]
         tally, moved = rc["look_counts"]["2"], rc["look_changes"]["2"]
         assert all(set(e["before"]) == set(e["after"]) and (e["after"] or e["flags"]) for e in third)
-        quiet = sum(tally.values()) - sum(c["changed"] for c in moved.values())
+        quiet = sum(tally.values()) / HALF - sum(c["changed"] for c in moved.values())    # the tally is in looks, a week's look is half
         assert quiet > 0 and third, (quiet, len(third))
         for by, c in moved.items():       # the kept looks: flags first, so a scout's flagged looks are all there up to the cap
             kept = [e for e in third if e["by"] == by]
             assert len(kept) == min(recruiting.LOOK_LOG_KEEP, c["changed"])
             assert len([e for e in kept if e["flags"]]) == min(recruiting.LOOK_LOG_KEEP, c["flags"])
 
-        # the view: this week's reports group by scout and list only the changed looks; yields count every look
+        # the view: this week's reports group by scout and list only the changed looks; yields count every look, in trip units
         v = G(sid, "scouting")
         this_week, last_week = v["reports"]["this_week"], v["reports"]["last_week"]
         assert this_week and last_week
@@ -145,10 +154,11 @@ if __name__ == "__main__":
             assert card["yield"]["looks"] == tally.get(card["id"], 0)
             assert card["yield"]["narrowed"] == moved.get(card["id"], {}).get("changed", 0)
             assert card["yield"]["flags"] == moved.get(card["id"], {}).get("flags", 0)
-        assert any(c["yield"]["looks"] > c["yield"]["narrowed"] for c in v["scouts"])
-        quiet_scout = next(c for c in v["scouts"] if c["yield"]["looks"] > c["yield"]["narrowed"])
+        assert any(c["yield"]["looks"] / HALF > c["yield"]["narrowed"] for c in v["scouts"])
+        quiet_scout = next(c for c in v["scouts"] if c["yield"]["looks"] / HALF > c["yield"]["narrowed"])
         group = next(g for g in this_week if g["scout_id"] == quiet_scout["id"])
-        assert group["looks"] > group["changed"] >= len(group["items"])
+        assert group["looks"] / HALF > group["changed"] >= len(group["items"])
+        assert all(r["looks"] == 1.5 and r["area"] == 1.5 for r in rc["reads"].values()), "three weeks in an area: 1.5 of 3"
 
         # the queue: a page of your board first, then the class by need then rank; looks and potential from the reads
         queue, total = v["queue"], v["queue_total"]
@@ -196,10 +206,16 @@ if __name__ == "__main__":
         assert trips["looks"] == 1 and trips["area"] is None and trips["scout"] == "Your trips"
         assert trips["changed"] == len(trips["items"]) == (1 if look["after"] or look["flags"] else 0)
         row = next(r for r in v["queue"] if r["pid"] == target["pid"])
-        assert row["trips"] == 1 and row["can_send"]
-        # three trips and a commitment to you leave the queue; short hours gray every row with the reason
-        R(sid, "recruit", {"pid": target["pid"], "action": "scout"})
-        R(sid, "recruit", {"pid": target["pid"], "action": "scout"})
+        assert row["trips"] == 1 and row["can_send"] and row["looks"] == rc["reads"][target["pid"]]["looks"] in (1, 2.5)
+        # a complete report (a Send adds a look, or the half that is left) and a commitment to you leave the queue; short
+        # hours gray every row with the reason
+        while not recruiting.report_complete(rc["reads"][target["pid"]]):
+            R(sid, "recruit", {"pid": target["pid"], "action": "scout"})
+        assert rc["reads"][target["pid"]]["looks"] == 3 and trips_of(rc, target["pid"]) in (2, 3)
+        try:
+            R(sid, "recruit", {"pid": target["pid"], "action": "scout"}); raise AssertionError("a Send on a complete report")
+        except Exception as e:  # noqa: BLE001
+            assert "his report is complete: 3 of 3 looks" in str(e), str(e)
         yours = rest[1]["pid"]
         recruiting._commit(st, yours, ME)
         v = G(sid, "scouting?limit=400")
@@ -214,24 +230,24 @@ if __name__ == "__main__":
         area = next(a for a, codes in recruiting.AREAS.items() if home in codes)
         for s in v["scouts"]:
             if s["area"] == area:
-                assert s["looking_at"] == len(area_pids(st, {"area": area}))
+                assert s["looking_at"] == len(watching(st, {"area": area})) < len(area_pids(st, {"area": area}))
 
-        # flags: your staff's finds this class, with his looks and where he stands with you
-        threes = [pid for pid, p in rc["prospects"].items() if p["stars"] == 3 and scoutable(st, pid)
-                  and rc["reads"].get(pid, {}).get("looks", 0) >= recruiting.FIND_LOOKS]
+        # flags: your staff's finds this class, with his looks and where he stands with you; a flag waits for a complete report
+        threes = [pid for pid, p in rc["prospects"].items() if p["stars"] == 3 and scoutable(st, pid) and pid in rc["reads"]]
         gem = threes[0]
         rc["reads"][gem]["g"]["potential"] = [95.0, 1000.0]
+        assert rc["reads"][gem]["looks"] == 1.5 and gem not in {f["pid"] for f in G(sid, "scouting")["flags"]}, "no flag before the report is complete"
+        rc["reads"][gem]["looks"] = recruiting.FIND_LOOKS
         v = G(sid, "scouting")
         assert all(set(f) == FLAG_KEYS and f["flag"] in FLAGS for f in v["flags"])
         found = next(f for f in v["flags"] if f["pid"] == gem)
-        assert found["flag"] == "gem" and found["looks"] == rc["reads"][gem]["looks"] and found["standing_word"]
+        assert found["flag"] == "gem" and found["looks"] == rc["reads"][gem]["looks"] == 3 and found["standing_word"]
+        assert gem not in {r["pid"] for r in G(sid, "scouting?limit=400")["queue"]}, "a complete report is out of the queue"
         rc["hours"][ME] = 50
-        out = R(sid, "recruit", {"pid": gem, "action": "scout"})
-        assert "gem" not in out["look"]["flags"], "a flag already found is not gained again"
         rc["reads"][gem]["g"]["potential"] = [70.0, 1000.0]
         before_flag = threes[1]
         rc["reads"][before_flag]["g"]["potential"] = [95.0, 1000.0]
-        rc["reads"][before_flag]["looks"] = recruiting.FIND_LOOKS - 1       # the trip's look completes the set
+        rc["reads"][before_flag]["looks"] = recruiting.FIND_LOOKS - 1       # the trip's look completes the report
         out = R(sid, "recruit", {"pid": before_flag, "action": "scout"})
         assert out["look"]["flags"] == ["gem"], out["look"]
         item = next(it for g in G(sid, "scouting")["reports"]["this_week"] if g["scout_id"] == "trip" for it in g["items"] if it["pid"] == before_flag)

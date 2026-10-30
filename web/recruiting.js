@@ -412,7 +412,9 @@
 
   // ----- the Recruiting board ----------------------------------------------------------------------
 
-  const ACT_TIPS = { scout: "Send your best evaluator to see him: 5 hours a look, up to three looks, any week; each look tightens his grades without waiting on the area scout" };
+  const ACT_TIPS = { scout: "Send your best evaluator to see him: 5 hours a look, any week, until his report is complete at three looks; a week in a scout's area is half a look, up to two" };
+  // looks come in trip units (a Send one, an area week half, a full report three): a count shows its half only when it has one
+  const fmtLooks = (n) => (Number.isInteger(Number(n)) ? String(Number(n)) : Number(n).toFixed(1));
 
   // ----- what the roster needs, by group: one strip on the board and the class, with a way of counting -----
   const NEED_MODES = [["need", "What's left", "A healthy 85-man roster's make-up minus the players coming back minus your commits"],
@@ -431,7 +433,7 @@
   const wordRange = (r) => (r[0] === r[1] ? [wordTag(r[0])] : [wordTag(r[0]), " to ", wordTag(r[1])]);
   const wordText = (r) => (r[0] === r[1] ? r[0] : `${r[0]} to ${r[1]}`);
   function scoutLine(grades, looks) {
-    return el("div", { class: "go-scouted", title: `Your staff's read after ${looks} looks: the range each grade could still fall in` }, [el("b", { text: "SCOUTED" }),
+    return el("div", { class: "go-scouted", title: `Your staff's read after ${fmtLooks(looks)} looks: the range each grade could still fall in` }, [el("b", { text: "SCOUTED" }),
       ...["potential", "athleticism", "technique", "football_iq", "size_strength", "coachability"].filter((k) => grades[k]).map((k) => el("span", {}, [el("span", { class: "muted", text: `${GRADE_NAMES[k]} ` }), el("b", {}, wordRange(grades[k]))]))]);
   }
   function needsMode() { try { return localStorage.getItem("cfp-needs-mode") || "need"; } catch (e) { return "need"; } }
@@ -965,7 +967,7 @@
       call: (b) => `Called ${b.name} · 15 hours`,
       hc_visit: (b) => `Head coach visit to ${b.name} · 30 hours`,
       official_visit: (b) => `${v.portal ? "Campus" : "Official"} visit invite to ${b.name} · 10 hours`,
-      scout: (b) => `Scouted ${b.name} · look ${Math.min(3, (b.trips || 0) + 1)} of 3`,
+      scout: (b) => `Scouted ${b.name} · ${fmtLooks(Math.min(3, (b.looks || 0) + 1))} of 3 looks`,
       offer: (b, nil) => `Offer sent to ${b.name} · ${nil} NIL`,
       raise_nil: (b, nil) => `Offer raised to ${nil} NIL`,
       pull_offer: (b) => `Offer to ${b.name} pulled`,
@@ -1025,14 +1027,14 @@
     // the Recruit menu's items for him: every action with its cost, or the reason it waits
     function menuItems(b) {
       const busy = b.scene ? (b.scene.action === "hc_visit" ? "visit" : "call") : null;
-      const done = b.done_this_week || [], trips = b.trips || 0, hours = v.hours_left;
+      const done = b.done_this_week || [], looks = Math.min(3, b.looks || 0), hours = v.hours_left;
       const hcWait = b.hc_week != null && s.current_week - b.hc_week < 4;
       const short = (cost) => (cost > hours ? `Not enough hours: ${hours} left` : null);
       const items = [
         ["message", "Message", "5h", done.includes("message") ? "Once a week" : short(5)],
         ["call", "Call", "15h", done.includes("call") ? "Once a week" : short(15)],
         ["hc_visit", "HC visit", "30h", hcWait ? "Monthly" : short(30)],
-        ["scout", "Scout", `5h · ${trips}/3`, trips >= 3 ? "Scouted" : short(5)],
+        ["scout", "Scout", `5h · ${fmtLooks(looks)} of 3 looks${looks < 3 && 3 - looks <= 1 ? " · finishes his report" : ""}`, looks >= 3 ? "His report is complete: 3 of 3 looks" : short(5)],
         ["official_visit", v.portal ? "Campus visit" : "Official visit", "10h", !b.offered ? "Offer him first" : b.visit ? (b.visit.done ? "Visited" : `Booked for week ${b.visit.week}`)
           : !["top", "visited"].includes(b.stage) ? "Not yet: get into his top group" : b.cooled ? "Cooled: raise your offer first" : short(10)],
         ["offer", "Offer…", "No hours", b.signed ? "Signed" : b.offered ? "Already offered" : b.hard ? "Hard commit elsewhere" : v.offers_left <= 0 ? "Offer limit reached" : null],
@@ -1189,7 +1191,7 @@
         const vals = [sd.odds || "—",
           at ? `#${at} of ${Math.max(b.schools || 0, rowsOf.length)}` : b.offered && !(b.signed || b.committed) ? "Outside his top 5" : "Not on it",
           b.offered ? `your ${b.nil || 0}${ask ? ` · wants ${ask}` : ""}` : ask ? `wants ${ask}` : "—",
-          b.trips ? `${b.trips} of 3 looks` : "Not yet"];
+          b.looks ? `${fmtLooks(Math.min(3, b.looks))} of 3 looks` : "Not yet"];
         vals.forEach((t, i) => { const c = cells[i].querySelector(".go-stat-val"); if (c.textContent !== t) { c.textContent = t; if (!first) ui().pulse(cells[i]); } });
         // the tags: only what is known; a new one fades in and pulses, a gone one fades out, a changed one pulses
         const wanted = tagNodes(b);
@@ -1303,7 +1305,8 @@
       if (b.our_grades) {
         out.append(scoutLine(b.our_grades, b.looks));
         out.append(el("div", { class: "go-grades" }, Object.entries(b.our_grades).map(([g, r]) => el("div", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: (GROUP_NAMES[g] || g).toUpperCase() }), el("div", { class: "go-stat-val" }, wordRange(r))]))));
-        out.append(el("p", { class: "muted small", text: `${b.looks} look${b.looks === 1 ? "" : "s"} by your staff · ${b.trips || 0} of 3 scouting trips. Ranges narrow with every look, but a read can be wrong.` }));
+        const looks = Math.min(3, b.looks || 0), left = 3 - looks;
+        out.append(el("p", { class: "muted small", text: `${fmtLooks(looks)} of 3 looks${left <= 0 ? " · his report is complete" : left <= 1 ? " · one trip finishes his report" : ""}. A trip is one look, a week in a scout's area half; ranges narrow with every look, but a read can be wrong.` }));
       } else out.append(el("p", { class: "muted", text: "Not scouted yet: send a scout from the Recruit menu, or put a staff member on his area." }));
       out.append(el("p", { class: "small" }, [el("button", { type: "button", class: "go-link sc-reports-link", text: "Reports on the Scouting tab", onclick: () => H.onChange("scouting") })]));
       const comps = el("div", { class: "go-comps" });
@@ -1314,6 +1317,7 @@
         if (pr.public_comp) comps.append(el("p", { class: "small" }, [el("b", { text: "Comp: " }), comp(pr.public_comp)]));
         if (pr.our_comp) comps.append(el("p", { class: "small" }, [el("b", { text: "Our comp: " }), comp(pr.our_comp)]));
         else if (pr.looks >= 3) comps.append(el("p", { class: "muted small", text: "Our comp: nobody close enough among the starters." }));
+        else comps.append(el("p", { class: "muted small", text: `Our comp once his report is complete (${fmtLooks(pr.looks)} of 3 looks).` }));
       }).catch(() => { /* the grades stand without the comps */ });
       return out;
     }
@@ -1653,7 +1657,7 @@
     }
     const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall ? `, ${c.overall} OVR` : ""})`;
     if (p.public_comp) node.append(el("p", {}, [el("b", { text: "Comp: " }), comp(p.public_comp)]));
-    const trips = pub.trips || 0;
+    const looks = Math.min(3, p.looks || 0), left = 3 - looks;
     if (p.ratings) {                           // signed with you: what you got, every attribute
       node.append(el("h3", { text: "His ratings" }),
         el("p", { class: "muted small", text: `${p.ratings.overall} overall now, ${p.ratings.potential_overall} at his potential · 50 is an average Power 4 starter.` }),
@@ -1665,8 +1669,8 @@
     }
     const mine = pub.committed === me && !pub.signed;
     const scoutBtn = mine ? el("span", { class: "muted small rc-no-scout", text: "Committed to you: no more looks" })
-      : el("button", { type: "button", class: "go-btn", text: trips >= 3 ? "Scouted three times: his area scout keeps looking" : `Send a scout (5 hours, look ${trips + 1} of 3) →`, title: ACT_TIPS.scout });
-    if (!mine && trips >= 3) scoutBtn.disabled = true;
+      : el("button", { type: "button", class: "go-btn", text: left <= 0 ? "His report is complete: 3 of 3 looks" : `Send a scout (5 hours${left <= 1 ? ", finishes his report" : ""}) →`, title: ACT_TIPS.scout });
+    if (!mine && left <= 0) scoutBtn.disabled = true;
     if (!mine) scoutBtn.addEventListener("click", async () => { scoutBtn.disabled = true; if (await act(s, pid, "scout")) openProfile(s, pid, node); else scoutBtn.disabled = false; });
     node.append(el("h3", { text: "Our staff's grades" }));
     if (p.our_grades) {
@@ -1693,10 +1697,10 @@
         cell.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(); });
         return cell;
       })),
-        el("p", { class: "muted small", text: `${p.looks} look${p.looks === 1 ? "" : "s"}. Tap or hover a grade to see what it looks like in ratings. Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster.` }),
+        el("p", { class: "muted small", text: `${fmtLooks(looks)} of 3 looks${left <= 0 ? ": his report is complete" : left <= 1 ? ": one trip finishes his report" : ""}. Tap or hover a grade to see what it looks like in ratings. Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster.` }),
         ...(inPane ? [] : [el("div", { class: "go-row wrap rc-profile-actions" }, [scoutBtn])]));
       node.append(p.our_comp ? el("p", {}, [el("b", { text: "Our comp: " }), comp(p.our_comp)])
-        : el("p", { class: "muted", text: p.looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp after 3 looks (${p.looks} so far).` }));
+        : el("p", { class: "muted", text: looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp once his report is complete (${fmtLooks(looks)} of 3 looks).` }));
     } else node.append(el("p", { class: "muted", text: inPane ? "Not scouted yet: Scout from the Recruit menu, or put a staff member on his area." : "Not scouted yet: send a scout, or put a staff member on his area." }),
       el("div", { class: "go-row wrap rc-profile-actions" }, [inPane ? null : scoutBtn, el("button", { type: "button", class: "go-btn", text: "Assign your staff →", onclick: () => { H.closeModal(); H.onChange("scouting"); } })]));
   }

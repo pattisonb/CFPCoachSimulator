@@ -1,6 +1,6 @@
 /* The Scouting tab (replaces Staff): a dashboard in three regions. My scouts (a compact list: avatar, name, role,
    the area dropdown, a "narrowed this week" bar), Reports (This week · Last week · Flags), and the Scouting queue:
-   a table of recruits worth a trip, 25 to a page (BOARD, NAME, NEED, RANK, POTENTIAL, LOOKS, Send), with a board
+   a table of recruits worth a trip, 25 to a page (BOARD, NAME, NEED, RANK, POTENTIAL, LOOKS in halves of three, Send), with a board
    filter, a search, sortable headers and Previous · 1 2 … n · Next pagination on the API's offset/limit.
    window.CFP.scouting.render(season, box, helpers); helpers are season.js's recruitingHelpers, the same
    H as web/recruiting.js: { api, postJSON, toast, errText, onChange(tab), ... }. Smoothness through
@@ -10,7 +10,11 @@
   const { el } = window.CFP;
   const ui = () => window.CFP.ui;
   const R = () => window.Recruiting;                 // wordTag, reveal (the board's pane on him), openProfile
-  const SCOUT_HOURS = 5, TRIPS = 3, LOOKS_PER_TRIP = 1;   // recruiting.HOURS["scout"], SCOUT_MAX, SCOUT_LOOKS
+  const SCOUT_HOURS = 5, REPORT_LOOKS = 3, SEND_LOOK = 1, AREA_LOOK = 0.5;   // recruiting.HOURS["scout"], REPORT_LOOKS, SEND_LOOK, AREA_LOOK
+  // looks come in trip units: a Send is one, a week in a scout's area half, a full report three; a count shows its half only when it has one
+  const fmtLooks = (n) => (Number.isInteger(Number(n)) ? String(Number(n)) : Number(n).toFixed(1));
+  const looksText = (n) => `${fmtLooks(n)} look${Number(n) === 1 ? "" : "s"}`;
+  const leftOf = (looks) => Math.max(0, REPORT_LOOKS - (looks || 0));
   const PAGE = 25, WHOLE = 400;                      // rows a page; the most one ask returns (prospects.QUEUE_MAX)
   const POSITIONS = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "ATH", "K", "P"];
   const GROUPS = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P"];     // offseason.GROUP's roster groups
@@ -99,7 +103,7 @@
     boardSet = new Set((rv.board || []).map((b) => b.id));
     box.innerHTML = "";
     box.append(el("div", { class: "sc-head" }, [el("div", { class: "go-display l", text: "SCOUTING" }),
-      el("p", { class: "muted", text: "Every week each prospect in a scout's area gets a look; a trip from the queue buys one more. Looks narrow the read and never reset." })]));
+      el("p", { class: "muted", text: "A full report is three looks. A trip is one look; a week in a scout's area is half a look, up to two. After four weeks in an area one trip finishes him." })]));
     box.append(el("div", { class: "sc-top" }, [scoutsPanel(s, v, rv), reportsPanel(s, v)]), queuePanel(s, v));
   }
 
@@ -133,7 +137,8 @@
       list.__redraw();
     });
     const y = m.yield || { looks: 0, narrowed: 0, flags: 0 };
-    const pct = y.looks ? Math.round(100 * Math.min(y.looks, y.narrowed) / y.looks) : 0;
+    const taken = y.looks / AREA_LOOK;                // his yield is in look units; each of his looks is half a look
+    const pct = taken ? Math.round(100 * Math.min(taken, y.narrowed) / taken) : 0;
     const role = String(m.role);
     return el("li", { class: "sc-scout", "data-key": m.id }, [
       avatar(`staff-${m.id}-${m.name}`, "sm"),
@@ -141,10 +146,10 @@
         el("div", { class: "sc-scout-line" }, [el("b", { class: "sc-scout-name", text: m.name }),
           el("span", { class: "muted small sc-role", text: ROLE_SHORT[role] || role, title: role }), R().wordTag(m.evaluation_word)]),
         sel,
-        el("div", { class: "sc-scout-yield", title: m.area ? `${plural(y.looks, "look")} this week in ${m.area}: ${y.narrowed} narrowed a read` : "No area: assign one" }, [
+        el("div", { class: "sc-scout-yield", title: m.area ? `${looksText(y.looks)} this week in ${m.area} (half a look a prospect): ${y.narrowed} narrowed a read` : "No area: assign one" }, [
           el("div", { class: "sc-bar", role: "progressbar", "aria-label": "Narrowed this week", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(pct) },
             [el("i", { class: "sc-bar-fill", style: `width:${pct}%` })]),
-          el("span", { class: "muted small sc-yield-text", text: m.area ? `${num(y.narrowed)} of ${num(y.looks)} narrowed` : "No area: assign one" }),
+          el("span", { class: "muted small sc-yield-text", text: m.area ? `${looksText(y.looks)} this week · ${num(y.narrowed)} narrowed` : "No area: assign one" }),
           y.flags > 0 ? el("span", { class: "go-tag warn sc-flags-n", text: plural(y.flags, "flag") }) : null])])]);
   }
 
@@ -177,7 +182,7 @@
     const more = foldable(lis);
     return el("div", { class: "sc-report", "data-key": g.scout_id }, [
       el("div", { class: "sc-report-head" }, [el("b", { text: [g.scout, g.area].filter(Boolean).join(" · ") }),
-        el("span", { class: "muted small", text: items.length ? `${plural(g.looks, "look")}, ${g.changed} changed` : `${plural(g.looks, "look")}, nothing new` })]),
+        el("span", { class: "muted small", text: items.length ? `${looksText(g.looks)}, ${g.changed} changed` : `${looksText(g.looks)}, nothing new` })]),
       items.length ? el("ul", { class: "sc-report-items" }, lis) : null, more]);
   }
   // the flags: gems, bust risks and generational prospects your staff found this class
@@ -185,7 +190,7 @@
     const rows = v.flags || [];
     if (!rows.length) return el("p", { class: "muted sc-flags-empty", text: "No finds yet: as the looks add up your scouts flag gems, bust risks and generational prospects here." });
     const lis = rows.map((f) => el("li", { class: "sc-flag", "data-pid": f.pid }, [flagBadge(f.flag),
-      el("span", { class: "sc-flag-id" }, [nameLink(s, f.pid, f.name), el("span", { class: "muted small", text: `${f.position} · ${stars(f.stars)} · ${plural(f.looks, "look")}` })]),
+      el("span", { class: "sc-flag-id" }, [nameLink(s, f.pid, f.name), el("span", { class: "muted small", text: `${f.position} · ${stars(f.stars)} · ${looksText(f.looks)}` })]),
       el("span", { class: "muted small sc-standing", text: f.standing_word })]));
     const more = foldable(lis);
     return el("div", { class: "sc-flags" }, [el("ul", { class: "sc-flag-list" }, lis), more]);
@@ -301,7 +306,7 @@
     if (desk.board !== "all") load();
     return el("section", { class: "go-card sc-panel sc-block sc-queue-panel", "aria-label": "Scouting queue" }, [
       el("div", { class: "sc-panel-head sc-queue-head" }, [el("div", { class: "sc-queue-title" }, [el("div", { class: "go-kicker", text: "SCOUTING QUEUE" }), hours]),
-        el("p", { class: "muted small sc-queue-note", text: `A trip costs ${SCOUT_HOURS} hours: one more look by your best evaluator, up to ${TRIPS} a prospect. Your board first, then the class by your need and his rank.` })]),
+        el("p", { class: "muted small sc-queue-note", text: `A trip costs ${SCOUT_HOURS} hours: one look by your best evaluator; a report is complete at ${REPORT_LOOKS}. Your board first, those one trip from complete at the top, then the class by your need and his rank.` })]),
       el("div", { class: "go-filterbar sc-toolbar" }, [chips, el("div", { class: "go-tools sc-tools" }, [search, pos, grp])]),
       wrap, empty,
       el("div", { class: "sc-foot" }, [showing, pager])]);
@@ -316,7 +321,7 @@
       try { res = await ui().busy(send, api(s, "recruit", { pid: row.pid, action: "scout" })); }
       catch (err) { ui().toast(`Could not send a scout: ${H.errText(err)}`, { ms: 4000, kind: "error" }); return; }
       row.trips = (row.trips || 0) + 1;
-      row.looks = (row.looks || 0) + LOOKS_PER_TRIP;
+      row.looks = Math.min(REPORT_LOOKS, (row.looks || 0) + SEND_LOOK);
       const look = res.look || null;
       if (look && look.after && look.after.potential) row.potential = look.after.potential;
       st.left = res.hours_left;
@@ -326,7 +331,7 @@
       ctx.paint();                                    // his row patches (fill), the result row fades in under him
       ui().pulse(node.querySelector(".sc-c-looks"));
       ui().pulse(node.querySelector(".sc-c-pot"));
-      ui().toast(`Scouted ${row.name} · look ${row.trips} of ${TRIPS}`, { ms: 3000 });
+      ui().toast(`Scouted ${row.name} · ${fmtLooks(row.looks)} of ${REPORT_LOOKS} looks${row.looks >= REPORT_LOOKS ? " · his report is complete" : ""}`, { ms: 3000 });
       ctx.reload(row.pid);                            // the other rows' Send follows can_send, reconciled by pid
     });
     // a click on the row itself (not on a control) opens him on the board
@@ -340,9 +345,9 @@
       el("td", { class: "sc-c-need" }, [el("span", { class: "sc-need-cell" })]),
       el("td", { class: "sc-c-rank" }, [el("span", { class: "sc-rank" })]),
       el("td", { class: "sc-c-pot" }, [el("span", { class: "sc-pot" })]),
-      el("td", { class: "sc-c-looks" }, [el("div", { class: "sc-looks", title: `Looks so far; a trip adds one, up to ${TRIPS} trips` }, [
-        el("span", { class: "sc-trips", role: "img" }, Array.from({ length: TRIPS }, () => el("i", { class: "sc-trip" }))), el("span", { class: "muted small sc-looks-text" })])]),
-      el("td", { class: "sc-c-act" }, [send]));
+      el("td", { class: "sc-c-looks" }, [el("div", { class: "sc-looks", title: `Looks so far of the ${REPORT_LOOKS} a full report takes: a trip adds one, a week in a scout's area half` }, [
+        el("span", { class: "sc-trips", role: "img" }, Array.from({ length: REPORT_LOOKS }, () => el("i", { class: "sc-trip" }))), el("span", { class: "muted small sc-looks-text" })])]),
+      el("td", { class: "sc-c-act" }, [send, el("span", { class: "go-tag sc-complete", text: "Complete", title: `His report is complete: ${REPORT_LOOKS} of ${REPORT_LOOKS} looks`, hidden: "" })]));
     fill(node, r, st);
     return node;
   }
@@ -359,10 +364,10 @@
     if (!need.firstChild) need.append(el("span", { class: needCls, text: needText, title: r.need > 0 ? `${r.group}: ${plural(r.need, "spot")} to fill` : `${r.group}: your class is set there` }));
     else { const t = need.firstChild; if (t.textContent !== needText) { t.textContent = needText; t.className = needCls; } }
     node.querySelector(".sc-rank").textContent = r.national_rank ? `#${r.national_rank}` : "—";
-    const trips = r.trips || 0, looks = r.looks || 0;
-    [...node.querySelectorAll(".sc-trip")].forEach((t, i) => t.classList.toggle("on", i < Math.min(looks, TRIPS)));
-    node.querySelector(".sc-trips").setAttribute("aria-label", `${plural(looks, "look")}`);
-    node.querySelector(".sc-looks-text").textContent = `trips ${trips}/${TRIPS}`;
+    const looks = Math.min(REPORT_LOOKS, r.looks || 0), left = leftOf(looks), complete = left <= 0;
+    [...node.querySelectorAll(".sc-trip")].forEach((t, i) => { t.classList.toggle("on", looks >= i + 1); t.classList.toggle("half", looks < i + 1 && looks > i); });   // filled in halves
+    node.querySelector(".sc-trips").setAttribute("aria-label", `${looksText(looks)} of ${REPORT_LOOKS}`);
+    node.querySelector(".sc-looks-text").textContent = `${fmtLooks(looks)} of ${REPORT_LOOKS}`;
     const pot = node.querySelector(".sc-pot");
     const potKey = r.potential ? r.potential.join("|") : "";
     if (pot.dataset.v !== potKey) {
@@ -370,11 +375,15 @@
       pot.innerHTML = "";
       pot.append(...(r.potential ? wordRange(r.potential) : [el("span", { class: "muted small", text: "Not read" })]));
     }
-    const send = node.querySelector(".sc-send");
-    const reason = trips >= TRIPS ? `Scouted ${TRIPS} of ${TRIPS}` : st.left < SCOUT_HOURS ? "Not enough hours" : r.can_send === false ? (r.why || "Not now") : null;
+    const send = node.querySelector(".sc-send"), tag = node.querySelector(".sc-complete");
+    send.hidden = complete;                           // a complete report shows the tag where Send was
+    tag.hidden = !complete;
+    const label = `Send (${SCOUT_HOURS}h)${!complete && left <= SEND_LOOK ? " · finishes his report" : ""}`;
+    if (send.textContent !== label) send.textContent = label;
+    const reason = complete ? `His report is complete: ${REPORT_LOOKS} of ${REPORT_LOOKS} looks` : st.left < SCOUT_HOURS ? "Not enough hours" : r.can_send === false ? (r.why || "Not now") : null;
     send.disabled = !!reason || send.classList.contains("go-busy");
     if (send.classList.contains("go-busy")) send.__busyWant = !!reason;
-    send.title = reason || `Spend ${SCOUT_HOURS} hours on one more look at ${r.name}`;
+    send.title = reason || `Spend ${SCOUT_HOURS} hours on one more look at ${r.name}${left <= SEND_LOOK ? ": it finishes his report" : ""}`;
   }
   // the one-line result of the trip's look under his row: each grade that moved, the flags gained, or that nothing changed
   function resultRow(look) {

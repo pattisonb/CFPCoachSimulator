@@ -13,12 +13,12 @@ from sim import season
 
 
 def coverage(st: dict, rating: int, pids: list[str]) -> tuple[float, float, list[tuple[float, bool]]]:
-    """Four looks at each prospect by one evaluator: the share of ranges holding the true grade,
-    the mean range width (grade points) and each (width, held) pair."""
+    """A complete report (REPORT_LOOKS looks) on each prospect by one evaluator: the share of ranges
+    holding the true grade, the mean range width (grade points) and each (width, held) pair."""
     st["recruiting"]["reads"] = {}
     rng = random.Random(f"cov-{rating}")
     for pid in pids:
-        for _ in range(4):
+        for _ in range(recruiting.REPORT_LOOKS):
             recruiting.look(st, pid, rating, rng)
     rows = []
     for pid in pids:
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     assert weak < avg and weak_w > avg_w, (weak, avg, weak_w, avg_w)
     median_avg = statistics.median(w for w, _ in avg_rows)
     assert any(w < median_avg and not held for w, held in weak_rows), "a weak evaluator is never tight and wrong"
-    # looks never reset when an area is reassigned; a week of scouting adds a look in every staffed area
+    # looks never reset when an area is reassigned; a week of scouting adds half a look (AREA_LOOK) in every staffed area
     rc["reads"] = {}
     tx = next(pid for pid, p in rc["prospects"].items() if p["hometown"]["state"] == "TX")
     recruiter = next(s for s in staff if s["role"] == "Recruiter")
@@ -58,9 +58,9 @@ if __name__ == "__main__":
     texan = next(s for s in staff if s["area"] == "Texas")
     recruiting.scout_week(st)
     looks = rc["reads"][tx]["looks"]
-    assert looks == 1, looks
+    assert looks == recruiting.AREA_LOOK == 0.5, looks
     recruiting.assign(st, texan["id"], "Florida")
-    assert rc["reads"][tx]["looks"] == 1 and texan["area"] == "Florida"
+    assert rc["reads"][tx]["looks"] == 0.5 and texan["area"] == "Florida"
     try:
         recruiting.assign(st, texan["id"], "Atlantis"); raise AssertionError("an unknown area was assigned")
     except recruiting.RecruitingError as e:
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     recruiting.look(st, h, 60, random.Random(1))
     assert h in recruiting.prospect_list(st)
     # Prospect Profiles: the top 300 get an evaluation and a public comp (only to a real starter
-    # at his position, only when close); "our comp" once every group has three looks
+    # at his position, only when close); "our comp" once his report is complete (three looks)
     by_rank = {p["rank"]: pid for pid, p in rc["prospects"].items()}
     top = prospects.profile(st, by_rank[1], "ohio-state")
     assert top["evaluation"] and top["public_comp"], top["public_comp"]
@@ -183,7 +183,8 @@ if __name__ == "__main__":
     scouted, unscouted, open_ = by_rank[20], by_rank[21], by_rank[22]
     for _ in range(3):
         recruiting.act(st, me, scouted, "scout")
-    assert prospects.profile(st, scouted, me)["public"]["trips"] == 3 and prospects.profile(st, scouted, me)["our_grades"] is not None
+    assert rc["reads"][scouted]["looks"] == 3.0 and prospects.profile(st, scouted, me)["our_grades"] is not None
+    assert prospects.profile(st, scouted, me)["public"]["trips"] == 3 and prospects.profile(st, scouted, me)["looks"] == 3
     recruiting._commit(st, scouted, me)
     try:
         recruiting.act(st, me, scouted, "scout")
@@ -191,7 +192,7 @@ if __name__ == "__main__":
     except recruiting.RecruitingError as e:
         assert "committed to you" in str(e), str(e)
     prof = prospects.profile(st, scouted, me)
-    assert prof["can_scout"] is False and prof["our_grades"] is not None and prof["public"]["trips"] == 3, (prof["can_scout"], prof["public"]["trips"])
+    assert prof["can_scout"] is False and prof["our_grades"] is not None and prof["looks"] == 3, (prof["can_scout"], prof["looks"])
     assert "coachability" in prof["our_grades"]
     # an unscouted commit stays unscouted: his area scout spends no look on him
     rc["reads"].pop(unscouted, None)
@@ -205,17 +206,20 @@ if __name__ == "__main__":
     prof = prospects.profile(st, unscouted, me)
     assert prof["can_scout"] is False and prof["our_grades"] is None and prof["looks"] == 0
     neighbor = next(pid for pid, p_ in rc["prospects"].items() if p_["hometown"]["state"] == home and rc["status"][pid]["committed"] is None)
-    assert rc["reads"][neighbor]["looks"] == before.get(neighbor, 0) + 1, "an uncommitted prospect in the area still gets his look"
-    # an uncommitted prospect still gets his three looks from you, and no more
+    assert rc["reads"][neighbor]["looks"] == before.get(neighbor, 0) + recruiting.AREA_LOOK, "an uncommitted prospect in the area still gets his half look"
+    # an uncommitted prospect still gets his three looks from you, and no more: a Send adds a look, or what his report still needs
     assert prospects.profile(st, open_, me)["can_scout"] is True
-    for _ in range(3):
+    sends = 0
+    while prospects.can_scout(st, me, open_):
         recruiting.act(st, me, open_, "scout")
-    assert prospects.profile(st, open_, me)["public"]["trips"] == 3 and prospects.profile(st, open_, me)["can_scout"] is False
+        sends += 1
+    assert rc["reads"][open_]["looks"] == 3.0 and 1 <= sends <= 3 and prospects.profile(st, open_, me)["public"]["trips"] == sends
+    assert prospects.profile(st, open_, me)["looks"] == 3 and prospects.profile(st, open_, me)["can_scout"] is False
     try:
         recruiting.act(st, me, open_, "scout")
         raise AssertionError("a fourth look")
     except recruiting.RecruitingError as e:
-        assert "3 times" in str(e), str(e)
+        assert str(e) == "his report is complete: 3 of 3 looks", str(e)
     rows = {r["id"]: r for r in prospects.search(st, me)["rows"]} if isinstance(prospects.search(st, me), dict) else {}
     if rows:
         assert rows[scouted]["can_scout"] is False and rows[open_]["can_scout"] is False
@@ -226,7 +230,8 @@ if __name__ == "__main__":
     rc["reads"][two]["looks"] = 1
     assert prospects.find(st, two) is None, "a find needs FIND_LOOKS looks"
     rc["reads"][two]["looks"] = 2
-    assert prospects.find(st, two) is None and recruiting.FIND_LOOKS == recruiting.SCOUT_MAX == 3, "every scouting badge waits for a full set of three looks"
+    rc["reads"][two]["looks"] = 2.5
+    assert prospects.find(st, two) is None and recruiting.FIND_LOOKS == recruiting.REPORT_LOOKS == 3, "every scouting badge waits for a complete report of three looks"
     rc["reads"][two]["looks"] = 3
     five = next(pid for pid, q in rc["prospects"].items() if q["stars"] == 5)
     rc["reads"][five] = {"looks": 3, "by": {"95": 3}, "g": {g: [40.0, 100.0] for g in recruiting.GROUPS}}

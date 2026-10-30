@@ -880,11 +880,21 @@ the time he lets slip one of his priorities, `CALL_REVEAL`, and you come away wi
 range of about 15% either side, not the number), a head coach in-home visit 30 (once a month; it
 tells you one priority for sure and his number), an official visit invite 10 (at your next home
 game; a win sells, a 21-point loss hurts, a big stadium helps, and the weekend tells you all
-three of his priorities), a scouting trip 5 (one look by your best evaluator, up to three trips per
-prospect in any week, `SCOUT_MAX`, so you need not wait for the area scout's weekly look; a
-prospect scouted three times shows his grades in one line on his card and at the top of his
-profile) and an
-offer nothing. Nothing about a recruitment is shown as a number you could not know: your
+three of his priorities), a scouting trip 5 (one look by your best evaluator, any week, allowed
+while his report is short of complete; a prospect with a complete report shows his grades in one
+line on his card and at the top of his profile) and an offer nothing.
+**Looks come in trip units** (`REPORT_LOOKS = 3`, `SEND_LOOK = 1.0`, `AREA_LOOK = 0.5`,
+`AREA_CAP = 2.0`). A full report is three looks and nothing goes past it (`read["looks"]` is never
+over 3). A Send adds one look (or what is left: at 2.5 one Send finishes him). An area scout's
+weekly look adds half a look, the read moving half as far (`look(weight=)` scales the step toward
+what he saw and the confidence gained alike), and stops once his area has put in two
+(`read["area"]`) or his report is complete: four weeks in an area make 2 of 3, then one trip (5
+hours) finalizes the report. Flags, "our comp" and the SCOUTED line wait for a complete report
+(`FIND_LOOKS`, `OUR_COMP_LOOKS`, `scouted` all compare against 3). A Send on a complete report is a
+409, "his report is complete: 3 of 3 looks". The look log and the tallies keep their shape; the
+tallies count looks in units (an area look 0.5), so a scout's yield reads "151.5 looks this week".
+An old save's read may hold more than 3 looks and no `area`: it reads as complete (`min(3, looks)`,
+area `min(2, looks)`) without a re-look. Nothing about a recruitment is shown as a number you could not know: your
 standing with him reads as words (clear favorite, narrow favorite, close race, behind but in
 the picture, long shot) over a bar, and so does his list on the profile.
 **Pitches are tied to your program.** Each topic has your strength for this prospect, 0-1 (the
@@ -1016,8 +1026,8 @@ for a five-star and 10% for a four-star. The tag is your staff's to find: it sho
 profile and the Classes view once your staff have looked at him three times (or once he signs with
 you), and his NIL ask is 1.5 times larger whether you know it or not. Every program wants him.
 
-**Gems and bust risks** are your staff's finds, read from the scouting, never the truth. After three
-looks, a prospect whose potential read is Elite or better even at its low end is a gem if he is a
+**Gems and bust risks** are your staff's finds, read from the scouting, never the truth. Once his
+report is complete (three looks), a prospect whose potential read is Elite or better even at its low end is a gem if he is a
 three-star or lower, or ranked past 300; a four- or five-star whose read is below Solid even at
 its high end is a bust risk. The read can be wrong. When he signs with you, the Classes view
 judges the call: "Gem: the read held" or "The read was off".
@@ -1133,7 +1143,8 @@ button rows keep 8 px between buttons, tag rows 6 px, cards 12 px of padding, an
 dashboard in three regions. My scouts, a compact row per staff member (every one of them, the DC
 included): avatar, name, role word (OC, DC, Recruiter), his evaluation word, the area dropdown
 (posts to `POST .../staff`; "Marcus Reed now scouts Texas") and a thin bar of this week's yield from
-the look log, "478 of 510 narrowed", with a flags count when there are any; "Not covered: …" is one
+the look log, "255 looks this week · 478 narrowed" (looks in trip units: each of his is half), with a
+flags count when there are any; "Not covered: …" is one
 muted line under the list. Reports beside it, with tabs This week · Last week · Flags: the looks
 grouped by scout (scout · area, "364 looks, 299 changed"), only the looks that changed a grade word
 or found a flag, in compact rows (stars, position, name, what changed, flag tags), past eight folded
@@ -1144,15 +1155,22 @@ Scouting queue, a table of the recruits worth a trip (your board first, then the
 and his rank), 25 to a page on the API's `offset`/`limit`/`queue_total` with "Showing 1 to 25 of
 1,204" and Previous · 1 2 … 49 · Next: columns BOARD (a "★ On board" pill and a left accent in the
 team color on your board's rows), NAME (avatar, name, "pos · stars · state"), NEED ("Need 2", or a
-muted "Set"), RANK, POTENTIAL (the word range, or "Not read"), LOOKS (three segments, "trips 1/3")
-and `Send (5h)`, grayed with the reason (Not enough hours, Scouted 3 of 3). Above it the chips All ·
+muted "Set"), RANK, POTENTIAL (the word range, or "Not read"), LOOKS (three segments filled in
+halves, "1.5 of 3"; no separate trips count) and `Send (5h)`, which reads `Send (5h) · finishes his
+report` when one look is left, is grayed with the reason (Not enough hours) and gives way to a
+"Complete" tag on a complete report; the queue lists only reports short of complete, your board's
+one Send from complete at the top. The help line under SCOUTING: "A full report is three looks. A
+trip is one look; a week in a scout's area is half a look, up to two. After four weeks in an area
+one trip finishes him." Above it the chips All ·
 On my board · Not on my board (the board ones client-side on one ask of the whole board, which the
 API lists first), the search (name or home state), position and roster-group filters and the hours
 pill; NEED, RANK, POTENTIAL and LOOKS sort the page shown (`aria-sort`). Send posts the `scout`
 action and patches the row in place: the LOOKS bar and POTENTIAL cell pulse, the look's before and
-after reads on a line under his row, a toast "Scouted Wesley Adams · look 2 of 3", the hours pill
-patches, and the page refetches so every other Send follows `can_send`; a click on the row itself
-opens him on the board.
+after reads on a line under his row, a toast "Scouted Wesley Adams · 2.5 of 3 looks" ("· his
+report is complete" at 3), the hours pill patches, and the page refetches so every other Send
+follows `can_send` (a row whose report the Send just completed stays, with its tag); a click on the
+row itself opens him on the board. The pane's Scouting sub-tab reads "2 of 3 looks · one trip
+finishes his report", and its Recruit menu grays Scout with the 409 text once he is complete.
 
 **The odds you see** (`prospects.odds`). Each offering school's chance to land a prospect is a
 softmax of his interest in it (`exp(interest / 3)`), against the field: the schools not yet in

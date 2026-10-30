@@ -121,7 +121,19 @@ def measure(state: dict) -> dict:
         "fcs_share": sum(1 for s in rc["status"].values() if s["signed"] == "FCS") / len(rc["status"]),
         "generational": len(rc.get("generational") or []),
         "generational_top25": sum(1 for pid in (rc.get("generational") or []) if rc["status"][pid]["signed"] in top25),
+        "looks": looks_distribution(state),
     }
+
+
+LOOK_BINS = (("0", lambda n: n == 0), ("0.5-1.5", lambda n: 0 < n < 2), ("2", lambda n: n == 2), ("2.5", lambda n: n == 2.5), ("3", lambda n: n >= 3))
+
+
+def looks_distribution(state: dict) -> dict:
+    """The share of the class at each look count on signing day (looks in trip units: an area week is half a
+    look up to two, a Send one, a report complete at three): the bins 0 / 0.5-1.5 / 2 / 2.5 / 3."""
+    rc = state["recruiting"]
+    looks = [recruiting.report_looks(rc["reads"].get(pid)) for pid in rc["prospects"]]
+    return {name: sum(1 for n in looks if test(n)) / max(1, len(looks)) for name, test in LOOK_BINS}
 
 
 def report(m: dict) -> list[str]:
@@ -132,6 +144,8 @@ def report(m: dict) -> list[str]:
         out.append(f"{'  ' if ok else '! '}{key:18s} {m[key]:8.3f}   want {lo}-{hi}" + (f" (real {real})" if real is not None else ""))
     out.append(f"  {'fcs_share':18s} {m['fcs_share']:8.3f}")
     out.append(f"  generational {m['generational']} (signed with top-25 classes: {m['generational_top25']} of {m['generational']})")
+    out.append("  looks at signing day (share of the class): " + ", ".join(f"{k} looks {v:.0%}" for k, v in m["looks"].items())
+               + "  (an area week is half a look up to two; your Sends finish the reports)")
     # the weight of each action: mean interest points one earns (pitches, strengths, cooling and diminishing returns in)
     out.append("  interest a go by action: " + ", ".join(f"{a} {v}" for a, v in sorted((m.get("actions") or {}).items(), key=lambda kv: -kv[1]))
                + f"; a week's leader changes {m.get('leader_changes_per_week', 0)} prospects")

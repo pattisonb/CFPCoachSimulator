@@ -65,8 +65,11 @@ AREAS = {
 HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0, "raise_nil": 0, "scout": 5,
          "pitch": 0}                               # a pitch finishes your call or visit scene: its hours went on the call
 SCENES = ("call", "hc_visit")              # your calls and in-home visits without a pitch open a scene (scenes.py)
-SCOUT_LOOKS = 1                            # a scouting trip: one look by your best evaluator at one prospect (5 hours) ...
-SCOUT_MAX = 3                              # ... up to this many trips per prospect, any week (after that his area scout keeps looking)
+# looks come in trip units: a full report is REPORT_LOOKS looks and nothing goes past it (read["looks"] <= 3 always)
+REPORT_LOOKS = 3                           # a complete scouting report: three looks (flags, "our comp" and the SCOUTED line wait for it)
+SEND_LOOK = 1.0                            # a scouting trip (a Send, 5 hours): one look by your best evaluator, allowed while his report is short
+AREA_LOOK = 0.5                            # an area scout's weekly look: half a look (the read moves half as far) ...
+AREA_CAP = 2.0                             # ... up to this many looks from his area (read["area"]), so four weeks there leave one trip to finish him
 CALL_REVEAL = 0.5                          # a call tells you one of his priorities this often; an in-home visit always does
 ASK_NARROW = (0.85, 1.15)                  # the ask range after a call; the number itself takes a visit
 BASE_POINTS = {"message": 1.0, "call": 2.5, "hc_visit": 6.0, "offer": 4.0, "official_visit": 8.0}   # *tune*
@@ -122,7 +125,7 @@ GENERATIONAL_ODDS = {5: 0.4, 4: 0.1}       # a qualifying prospect is drawn this
 GENERATIONAL_MAX = 4                       # at most this many a class (some years none)
 GENERATIONAL_ASK = 1.5                     # his NIL ask is this times larger
 GEM_RANK = 300                             # a gem is a three-star or less, or ranked below this
-FIND_LOOKS = SCOUT_MAX                     # looks before your staff names a gem, a bust risk or a generational talent: a full set
+FIND_LOOKS = REPORT_LOOKS                  # looks before your staff names a gem, a bust risk or a generational talent: a complete report
 LOOK_LOG_KEEP = 30                         # the look log keeps this many of a scout's looks a week (flags, then potential, then the rest)
 # the transfer portal as recruiting (offseason.py runs it): four weeks after signing day *tune*
 PORTAL_WEEKS = 4
@@ -1379,8 +1382,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
     you = slug == state.get("team")                   # your actions go in the log for his History (the AI's are not kept)
     if action in WEEKLY_ONCE and (contact.get("week") or {}).get(action) == week:
         raise RecruitingError(409, f"you already {'messaged' if action == 'message' else 'called'} him this week")
-    if action == "scout" and contact.get("scouted", 0) >= SCOUT_MAX:
-        raise RecruitingError(409, f"your staff have scouted him {SCOUT_MAX} times: his area scout keeps looking")
+    if action == "scout" and report_complete(rc["reads"].get(pid)):
+        raise RecruitingError(409, f"his report is complete: {REPORT_LOOKS} of {REPORT_LOOKS} looks")
     if opens and pid in ((rc.get("scenes") or {}).get(slug) or {}):
         raise RecruitingError(409, "finish your call with him first")
     if _hours(state, slug) < HOURS[action]:
@@ -1477,14 +1480,13 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             _add_points(state, slug, pid, points * scale, sc["action"])
         return pitch if pitch in p["priorities"] else None      # a hit or a quiet one tells you his priority
     elif action == "scout":                        # a scouting trip: your best evaluator's look, no contact with him
-        contact["scouted"] = contact.get("scouted", 0) + 1
+        contact["scouted"] = contact.get("scouted", 0) + 1       # trips sent, a tally; the gate is his report's looks
         if you:
             _event(state, "contact", pid, slug, action=action)
         staff = (state.get("career") or {}).get("staff") or []
         rating = max([m.get("evaluation", 50) for m in staff] + [((state.get("coach") or {}).get("ratings") or {}).get("evaluation", 60)])
         rng = random.Random(f"scout-{rc['seed']}-{slug}-{pid}-{week}-{contact['scouted']}")
-        for _ in range(SCOUT_LOOKS):
-            _LAST_LOOK[0] = look(state, pid, rating, rng)
+        _LAST_LOOK[0] = look(state, pid, rating, rng)          # one look, SEND_LOOK, or what is left of his report
     else:
         if action == "hc_visit":
             if contact["hc_week"] is not None and week - contact["hc_week"] < HC_VISIT_GAP:
@@ -2284,40 +2286,88 @@ def _flags(state: dict, pid: str) -> list[str]:
     return out
 
 
+def report_looks(read: Optional[dict]) -> float:
+    """A read's looks in trip units, never past REPORT_LOOKS (an old save may hold more); 0 before any look."""
+    if not read:
+        return 0.0
+    return min(float(REPORT_LOOKS), float(read.get("looks") or 0))
+
+
+def area_looks(read: Optional[dict]) -> float:
+    """The looks his area scouts have put in, up to AREA_CAP; an old save without the tally counts its looks, capped."""
+    if not read:
+        return 0.0
+    if read.get("area") is None:
+        return min(float(AREA_CAP), float(read.get("looks") or 0))
+    return min(float(AREA_CAP), float(read["area"]))
+
+
+def report_complete(read: Optional[dict]) -> bool:
+    """Whether his report is complete: REPORT_LOOKS looks, so no Send and no area look adds anything."""
+    return report_looks(read) >= REPORT_LOOKS
+
+
+def looks_left(read: Optional[dict]) -> float:
+    """What a complete report still needs, in looks: the trips open on him (2.5 -> one Send finishes him)."""
+    return max(0.0, REPORT_LOOKS - report_looks(read))
+
+
+def _normalize_read(read: dict) -> None:
+    """A read as this code keeps it: `looks` and `area` floats within their caps (old saves hold ints past 3 and no area)."""
+    read["looks"] = report_looks(read)
+    read["area"] = area_looks(read)
+
+
 def look(state: dict, pid: str, evaluator_rating: int, rng: random.Random, by: Optional[str] = None,
-         week: Optional[int] = None) -> dict:
-    """One look at a prospect by an evaluator: every group's read moves toward what he saw. A look's
-    error shrinks with the rating; so does how far its confidence can stray (a weak evaluator is
-    sometimes sure and wrong). Counted in `rc["look_counts"][week][by]` and, when it changed a grade
-    word or gained a flag, in `rc["look_changes"][week][by]` ({changed, flags}) and logged in
-    `rc["looks"]` (the scouting desk's reports) as `by` (a staff id, or "trip" for your scouting
-    trip) at `week` (default: look_week): the words before and after of the groups that changed, and
-    the flags gained. The log keeps a scout's LOOK_LOG_KEEP most notable looks a week (the save is
-    written after every action). Returns the entry, logged or not."""
+         week: Optional[int] = None, weight: float = SEND_LOOK) -> dict:
+    """One look at a prospect by an evaluator, worth `weight` looks (SEND_LOOK for a trip, AREA_LOOK
+    for an area scout's week): every group's read moves toward what he saw, the step and the
+    confidence gained scaled by the weight, and `read["looks"]` grows by it. Nothing goes past
+    REPORT_LOOKS: the weight is cut to what his report still needs, and an area look (`by` a staff
+    id) also to what AREA_CAP leaves his area (`read["area"]`); a look with nothing left is not
+    counted or logged and returns an entry that changed nothing. A look's error shrinks with the
+    rating; so does how far its confidence can stray (a weak evaluator is sometimes sure and wrong).
+    Counted in looks in `rc["look_counts"][week][by]` and, when it changed a grade word or gained a
+    flag, in `rc["look_changes"][week][by]` ({changed, flags}) and logged in `rc["looks"]` (the
+    scouting desk's reports) as `by` (a staff id, or "trip" for your scouting trip) at `week`
+    (default: look_week): the words before and after of the groups that changed, and the flags
+    gained. The log keeps a scout's LOOK_LOG_KEEP most notable looks a week (the save is written
+    after every action). Returns the entry, logged or not."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
-    before, flags_before = _read_words(state, pid), _flags(state, pid)
+    week = look_week(state) if week is None else week
+    by = by or "trip"
+    read = rc["reads"].get(pid)
+    if read is not None:
+        _normalize_read(read)
+    w = min(float(weight), looks_left(read))
+    if by != "trip":
+        w = min(w, AREA_CAP - area_looks(read))
+    w = round(w, 3)
+    if w <= 0:
+        return {"week": week, "pid": pid, "by": by, "before": {}, "after": {}, "flags": []}
+    before, flags_before = _read_words(state, pid), _flags(state, pid)     # before his first look: no words, no flags
+    read = rc["reads"].setdefault(pid, {"looks": 0.0, "area": 0.0, "by": {}, "g": {}})
     s = evaluator_rating / 99
     sd = (LOOK_SD[0] * (1 - s) + LOOK_SD[1]) * (PORTAL_LOOK if is_portal(state) else 1.0)
-    read = rc["reads"].setdefault(pid, {"looks": 0, "by": {}, "g": {}})
     for g in GROUPS:
         seen = p["truth"][g] + rng.gauss(0, sd)
         felt = sd * math.exp(rng.gauss(0, CONFIDENCE_NOISE * (1 - s)))
-        add = 1 / felt ** 2
+        add = w / felt ** 2
         mean, prec = read["g"].get(g, (0.0, 0.0))
         read["g"][g] = [round((mean * prec + seen * add) / (prec + add), 3), round(prec + add, 6)]
-    read["looks"] += 1
+    read["looks"] = round(read["looks"] + w, 3)
+    if by != "trip":
+        read["area"] = round(read["area"] + w, 3)
     key = str(evaluator_rating)
-    read["by"][key] = read["by"].get(key, 0) + 1
-    week = look_week(state) if week is None else week
-    by = by or "trip"
+    read["by"][key] = round(read["by"].get(key, 0) + w, 3)
     after = _read_words(state, pid)
     moved = [g for g in GROUPS if before.get(g) != after.get(g)]
     entry = {"week": week, "pid": pid, "by": by,
              "before": {g: before[g] for g in moved if g in before}, "after": {g: after[g] for g in moved},
              "flags": [f for f in _flags(state, pid) if f not in flags_before]}
     counts = rc.setdefault("look_counts", {}).setdefault(str(week), {})
-    counts[by] = counts.get(by, 0) + 1
+    counts[by] = round(counts.get(by, 0) + w, 3)
     if moved or entry["flags"]:                      # a look that changed nothing is only counted
         tally = rc.setdefault("look_changes", {}).setdefault(str(week), {}).setdefault(by, {"changed": 0, "flags": 0})
         tally["changed"] += 1
@@ -2411,9 +2461,11 @@ def assign(state: dict, staff_id: str, area: str) -> None:
 
 
 def scout_week(state: dict, week: Optional[int] = None) -> None:
-    """Every prospect in each staffed area gets a look from the staff member there, logged at `week`
-    (default: look_week; the portal's step passes the week it opens). Looks older than the week
-    before are dropped from the log and the counts first: the desk keeps this week's and last week's."""
+    """Every prospect in each staffed area gets half a look (AREA_LOOK) from the staff member there,
+    logged at `week` (default: look_week; the portal's step passes the week it opens), until his
+    area has put in AREA_CAP looks or his report is complete: then the scout passes him by. Looks
+    older than the week before are dropped from the log and the counts first: the desk keeps this
+    week's and last week's."""
     staff = (state.get("career") or {}).get("staff") or []
     rc = state["recruiting"]
     if week is None:
@@ -2431,7 +2483,13 @@ def scout_week(state: dict, week: Optional[int] = None) -> None:
     for member in staff:
         for code in AREAS.get(member.get("area"), []):
             for pid in by_state.get(code, []):
-                look(state, pid, member["evaluation"], rng, by=member["id"], week=week)
+                if area_open(rc["reads"].get(pid)):
+                    look(state, pid, member["evaluation"], rng, by=member["id"], week=week, weight=AREA_LOOK)
+
+
+def area_open(read: Optional[dict]) -> bool:
+    """Whether an area scout's look still adds to his report: under AREA_CAP from his area and not complete."""
+    return not report_complete(read) and area_looks(read) < AREA_CAP
 
 
 def visible(state: dict) -> set[str]:

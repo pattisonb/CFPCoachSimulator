@@ -99,6 +99,8 @@ th[aria-sort="ascending"] .sc-sort, th[aria-sort="descending"] .sc-sort { color:
 .sc-trips { display: inline-flex; gap: 3px; }
 .sc-trip { display: inline-block; width: 16px; height: 6px; border-radius: 3px; background: var(--panel-2); border: 1px solid var(--border); }
 .sc-trip.on { background: var(--go-primary, var(--accent)); border-color: var(--go-primary, var(--accent)); }
+.sc-trip.half { background: linear-gradient(to right, var(--go-primary, var(--accent)) 50%, var(--panel-2) 50%); border-color: var(--go-primary, var(--accent)); }   /* half a look: an area scout's week */
+.sc-complete[hidden], .sc-send[hidden] { display: none; }
 .sc-send { min-height: 36px; padding: 0 12px; font-size: 13px; white-space: nowrap; }
 .sc-result-row td { padding: 0 8px 8px 11px; border-bottom: 1px solid var(--border); }
 .sc-result { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 6px 10px; border-radius: 10px; background: var(--panel-2); font-size: 13px; }

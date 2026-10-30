@@ -70,14 +70,14 @@ if __name__ == "__main__":
     assert av.get("exact") is None and av["lo"] < ask_ < av["hi"] and av["hi"] - av["lo"] <= max(10, 0.6 * ask_), av
     r = recruiting.act(st, "ohio-state", pid, "hc_visit", pitch=next(t for t in recruiting.PITCHES if t not in tx["priorities"]))   # the one-shot form
     assert r["revealed"] in tx["priorities"] and recruiting.ask_view(st, "ohio-state", pid).get("exact") == recruiting.ask_from(st, "ohio-state", pid)
-    # scouting by hand: 5 hours a look by your best evaluator at one prospect, up to three looks, any week
+    # scouting by hand: 5 hours a look by your best evaluator at one prospect, until his report is complete (three looks), any week
     unseen = next(q for q in list(rc["prospects"]) if q not in rc["reads"] and q != pid)
     rc["hours"]["ohio-state"] = 100
     r = recruiting.act(st, "ohio-state", unseen, "scout")
-    assert rc["reads"][unseen]["looks"] == recruiting.SCOUT_LOOKS and r["hours_left"] == 100 - recruiting.HOURS["scout"]
-    for _ in range(recruiting.SCOUT_MAX - 1):
+    assert rc["reads"][unseen]["looks"] == recruiting.SEND_LOOK == 1.0 and r["hours_left"] == 100 - recruiting.HOURS["scout"]
+    for _ in range(recruiting.REPORT_LOOKS - 1):
         recruiting.act(st, "ohio-state", unseen, "scout")
-    assert rc["reads"][unseen]["looks"] == recruiting.SCOUT_MAX and rc["hours"]["ohio-state"] == 100 - recruiting.SCOUT_MAX * recruiting.HOURS["scout"]
+    assert rc["reads"][unseen]["looks"] == recruiting.REPORT_LOOKS and rc["hours"]["ohio-state"] == 100 - recruiting.REPORT_LOOKS * recruiting.HOURS["scout"]
     lo, hi = recruiting.read_interval(st, unseen, "athleticism")
     assert hi - lo < 25, (lo, hi)
     try:

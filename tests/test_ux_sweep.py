@@ -416,16 +416,43 @@ def test_scouting_tab(page, base, sid) -> None:
     assert v["hours_left"] >= SCOUT_HOURS, "a new week has hours for a trip"
     row = next(r for r in v["queue"] if r["can_send"])
     pid = row["pid"]
+    # looks come in trip units: the LOOKS bar is three segments filled in halves ("1.5 of 3"), a Send adds one
+    fmt = lambda n: str(int(n)) if float(n) == int(n) else f"{n:.1f}"
+    segments = lambda: page.evaluate("(pid) => [...document.querySelectorAll(`.sc-row[data-pid='${pid}'] .sc-trip`)].map(t => t.classList.contains('on') ? 1 : t.classList.contains('half') ? 0.5 : 0)", pid)
+    before = row["looks"] or 0
+    assert segments() == [min(1, max(0, before - i)) for i in range(3)], (before, segments())
+    assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-looks-text") == f"{fmt(before)} of 3"
+    assert "trips" not in page.inner_text(f".sc-row[data-pid='{pid}'] .sc-c-looks"), "no separate trips count"
+    assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-send") == ("Send (5h) · finishes his report" if 3 - before <= 1 else "Send (5h)")
+    after = min(3, before + 1)
     h = watch(page, ".sc-table tbody", control=f".sc-row[data-pid='{pid}'] .sc-send", scrolled=False)
     page.click(f".sc-row[data-pid='{pid}'] .sc-send")
-    toasted(page, f"Scouted {row['name']} · look {row['trips'] + 1} of 3")
+    toasted(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
     smooth(page, h, "Send")
     page.wait_for_selector(f".sc-result-row[data-key='{pid}:result'] .sc-result", timeout=10_000)
     assert page.evaluate("(pid) => { const r = document.querySelector(`.sc-row[data-pid='${pid}']`); return r && r.nextElementSibling && r.nextElementSibling.classList.contains('sc-result-row'); }", pid), "the result sits right under his row"
-    assert page.evaluate("(pid) => document.querySelectorAll(`.sc-row[data-pid='${pid}'] .sc-trip.on`).length", pid) >= 1, "his LOOKS bar fills a segment"
+    assert segments() == [min(1, max(0, after - i)) for i in range(3)], "his LOOKS bar fills one more segment, in halves"
+    assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-looks-text") == f"{fmt(after)} of 3"
+    # a report one Send from complete says so on its button; the Send that completes it leaves a Complete tag where Send was
+    while after < 3 and call(base, f"/api/season/{sid}/scouting")["hours_left"] >= SCOUT_HOURS:
+        page.wait_for_function("(pid) => { const b = document.querySelector(`.sc-row[data-pid='${pid}'] .sc-send`); return b && !b.disabled && !b.classList.contains('go-busy'); }", arg=pid, timeout=15_000)
+        assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-send") == ("Send (5h) · finishes his report" if 3 - after <= 1 else "Send (5h)"), page.inner_text(f".sc-row[data-pid='{pid}'] .sc-send")
+        page.click(f".sc-row[data-pid='{pid}'] .sc-send")
+        after = min(3, after + 1)
+        toasted(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
+    if after >= 3:
+        page.wait_for_function("(pid) => { const r = document.querySelector(`.sc-row[data-pid='${pid}']`); return r && !r.querySelector('.sc-complete').hidden && r.querySelector('.sc-send').hidden; }", arg=pid, timeout=15_000)
+        assert page.eval_on_selector(f".sc-row[data-pid='{pid}'] .sc-complete", "e => e.textContent") == "Complete", "the tag reads Complete (the tag style sets it in capitals)"
+        assert segments() == [1, 1, 1], segments()
+        assert not page.is_visible(f".sc-row[data-pid='{pid}'] .sc-send"), "a complete report shows the tag instead of Send"
+        assert pid not in {r["pid"] for r in call(base, f"/api/season/{sid}/scouting?limit=400")["queue"]}, "a complete report is out of the queue"
+        assert page.evaluate("(el) => el.isConnected", h), "the table body was never rebuilt by the completing Send"
     left = call(base, f"/api/season/{sid}/scouting")["hours_left"]
     assert f"{left} of" in page.inner_text("#sc-hours"), (left, page.inner_text("#sc-hours"))
     assert page.evaluate("(el) => el.isConnected", h), "the table body was never rebuilt"
+    if after >= 3:      # his kept row makes 26 on the page: reopen the tab (a render on tab open draws in full) before paging
+        open_tab(page, base, sid, "scouting", ".sc-table .sc-row")
+        h = watch(page, ".sc-table tbody", scrolled=False)
     # pagination: page 2 and back
     total = call(base, f"/api/season/{sid}/scouting")["queue_total"]
     assert total > 50, total
@@ -772,6 +799,57 @@ def check_topbar_hide(page, base, sid) -> None:
     time.sleep(0.4)
     assert not page.evaluate(hidden) and page.evaluate("() => document.querySelector('.topbar').getBoundingClientRect().bottom") > 40, "Your coach: the bar stays"
     page.evaluate("() => window.scrollTo(0, 0)")
+
+
+def test_look_units_pane(page, base, sid) -> None:
+    """Looks in trip units on the board's pane: a complete report reads "3 of 3 looks · his report is complete" on the
+    Scouting sub-tab, the strip's SCOUTED cell counts looks in halves, and the Recruit menu's Scout item is grayed with the
+    409 text; a report short of complete says what is left ("one trip finishes his report")."""
+    fmt = lambda n: str(int(n)) if float(n) == int(n) else f"{n:.1f}"
+    v = call(base, f"/api/season/{sid}/recruiting")
+    rows = [b for b in v["board"] if not b["committed"] and not b["signed"]]
+    done = next((b for b in rows if (b.get("looks") or 0) >= 3), None)
+    if done is None:                 # complete one through the API: Sends until his report is complete
+        done = next(b for b in rows if (b.get("looks") or 0) < 3)
+        for _ in range(3):
+            if call(base, f"/api/season/{sid}/prospect/{done['id']}")["looks"] >= 3:
+                break
+            call(base, f"/api/season/{sid}/recruit", {"pid": done["id"], "action": "scout"})
+    prof = call(base, f"/api/season/{sid}/prospect/{done['id']}")
+    assert prof["looks"] == 3 and prof["can_scout"] is False, (prof["looks"], prof["can_scout"])
+    try:
+        call(base, f"/api/season/{sid}/recruit", {"pid": done["id"], "action": "scout"})
+        raise AssertionError("a Send on a complete report")
+    except Exception as e:  # noqa: BLE001
+        assert "his report is complete: 3 of 3 looks" in str(e), str(e)
+    open_tab(page, base, sid, "recruiting", ".go-stages")
+    page.click(".go-stages button[data-stage=all]")
+    page.click(f".go-row-recruit[data-pid='{done['id']}']")
+    page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n) && document.querySelector('.go-pane .go-strip'); }", arg=done["name"], timeout=15_000)
+    assert "3 of 3 looks" in page.inner_text(".go-pane .go-strip"), page.inner_text(".go-pane .go-strip")
+    page.click(".go-pane .go-subtabs button[data-sub=scouting]")
+    page.wait_for_selector(".go-pane .go-scouting", timeout=15_000)
+    text = page.inner_text(".go-pane .go-scouting")
+    assert "3 of 3 looks · his report is complete" in text, text
+    assert "scouting trips" not in text, "no separate trips count"
+    page.click("#rc-recruit")
+    page.wait_for_selector(".go-menu[role=menu]")
+    item = page.query_selector(".go-menu .go-menu-item[data-action=scout]")
+    assert item.get_attribute("aria-disabled") == "true", "the Scout item is grayed on a complete report"
+    assert "His report is complete: 3 of 3 looks" in item.inner_text(), item.inner_text()
+    page.keyboard.press("Escape")
+    # one short of complete: the sub-tab says one trip finishes him (an area week is half a look, so 2 or 2.5 both qualify)
+    v = call(base, f"/api/season/{sid}/recruiting")
+    near = next((b for b in v["board"] if not b["committed"] and not b["signed"] and 0 < 3 - (b.get("looks") or 0) <= 1), None)
+    if near is not None:
+        page.click(f".go-row-recruit[data-pid='{near['id']}']")
+        page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n); }", arg=near["name"], timeout=15_000)
+        page.click(".go-pane .go-subtabs button[data-sub=scouting]")
+        page.wait_for_function("(t) => { const b = document.querySelector('.go-pane .go-scouting'); return b && b.innerText.includes(t); }", arg=f"{fmt(near['looks'])} of 3 looks · one trip finishes his report", timeout=15_000)
+        page.click("#rc-recruit")
+        page.wait_for_selector(".go-menu[role=menu]")
+        assert "finishes his report" in page.inner_text(".go-menu .go-menu-item[data-action=scout]")
+        page.keyboard.press("Escape")
 
 
 if __name__ == "__main__":
@@ -1512,10 +1590,13 @@ if __name__ == "__main__":
             time.sleep(1.5)
             shown = page.eval_on_selector_all(".go-list-row", "rows => rows.filter(r => r.querySelector('.go-badge.generational')).map(r => r.querySelector('.go-list-id b').textContent)")
             assert all(any(r["name"] == n and r["looks"] >= 3 for r in fives) for n in shown), f"a badge on an unscouted five-star: {shown}"
-            # three scouting trips at the best unscouted five-star, then the list agrees with the API either way
+            # scouting trips at the best unscouted five-star until his report is complete (a Send adds a look, or what is
+            # left of the three), then the list agrees with the API either way
             pick = min((r for r in unscouted if r.get("can_scout")), key=lambda r: r["national_rank"], default=None)
             if pick and call(base, f"/api/season/{A}/recruiting")["hours_left"] >= 15:
                 for _ in range(3):
+                    if call(base, f"/api/season/{A}/prospect/{pick['id']}")["looks"] >= 3:
+                        break
                     call(base, f"/api/season/{A}/recruit", {"pid": pick["id"], "action": "scout"})
                 after = next(r for r in call(base, f"/api/season/{A}/prospects?stars=5&limit=200&q={urllib.parse.quote(pick['name'])}")["rows"] if r["id"] == pick["id"])
                 assert after["looks"] >= 3
@@ -1626,7 +1707,7 @@ if __name__ == "__main__":
             vb = call(base, f"/api/season/{A}/recruiting")
             assert vb["hours_left"] >= 50, vb["hours_left"]
             fresh_rows = [b for b in vb["board"] if not b["offered"] and not b["committed"] and not b["signed"] and not b.get("scene")
-                          and (b.get("trips") or 0) < 3 and b["id"] not in (pid, second, third)]
+                          and (b.get("looks") or 0) < 3 and b["id"] not in (pid, second, third)]
             x, y = fresh_rows[0], fresh_rows[1]
             cold = next(b for b in fresh_rows[2:] if b["stage"] == "cold")
             assert page.get_attribute("#toasts", "role") == "status" and page.get_attribute("#toasts", "aria-live") == "polite", "the toast stack is announced"
@@ -1679,15 +1760,15 @@ if __name__ == "__main__":
             smooth(page, h, "Raise NIL")
             assert f"your {nil2}" in page.inner_text(".go-pane .go-strip")
             # Scout: from the menu, the Recruit button is the busy control and gets the focus back
-            trips = x.get("trips") or 0
+            looks = min(3, (x.get("looks") or 0) + 1)          # looks in trip units: a Send adds one (an area week added halves)
             h = watch(page, ".go-pane", "#rc-recruit")
             n = draws(page)
             menu("scout")
-            toasted(page, f"Scouted {x['name']} · look {trips + 1} of 3")
+            toasted(page, f"Scouted {x['name']} · {str(int(looks)) if looks == int(looks) else f'{looks:.1f}'} of 3 looks")
             settle(page, n)
             smooth(page, h, "Scout")
             assert page.evaluate("() => document.activeElement.id") == "rc-recruit"
-            assert f"{trips + 1} of 3 looks" in page.inner_text(".go-pane .go-strip")
+            assert f"{str(int(looks)) if looks == int(looks) else f'{looks:.1f}'} of 3 looks" in page.inner_text(".go-pane .go-strip")
             # Call: the scene opens inside the same pane; the pitch's toast sits clear of his reply
             h = watch(page, ".go-pane", "#rc-recruit")
             n = draws(page)
@@ -1889,6 +1970,7 @@ if __name__ == "__main__":
                 assert "go-btn" in hire, f"the hire control reads as a button, not a tag ({hire})"
             test_pester_tags(page, base)
             test_recruit_question(page)
+            test_look_units_pane(page, base, A)
             browser.close()
         assert not errors, errors
         print("ux sweep ok: office, prospects, board (tabs, list, pane, menu, step, scene, phone, every action patching in place with its toast), scouting, schedule, depth, player page, an FCS box score and every offseason stage at 1280 and 400")
