@@ -115,7 +115,10 @@ if __name__ == "__main__":
         # a call without a pitch opens a scene; the pitch finishes it with his reaction; Auto-recruit on drops an open one
         talk, held = (r["id"] for r in everyone[5:7])
         sc = R(sid, "recruit", {"pid": talk, "action": "call"})["scene"]
-        assert sc["id"] and sc["action"] == "call"
+        assert sc["id"] and sc["action"] == "call" and "question" in sc
+        if sc["question"]:                                   # he asked about a named player: the pitch waits on an answer
+            refused(lambda: R(sid, "recruit", {"pid": talk, "action": "pitch", "scene": sc["id"], "pitch": sc["cue"]["topics"][0]}), 409)
+            assert R(sid, "recruit", {"pid": talk, "action": "answer", "scene": sc["id"], "answer": "deflect"})["points"] == 0.0
         r = R(sid, "recruit", {"pid": talk, "action": "pitch", "scene": sc["id"], "pitch": sc["cue"]["topics"][0]})
         assert r["reaction"]["kind"] in ("hit", "polite", "quiet") and r["reaction"]["text"]
         refused(lambda: R(sid, "recruit", {"pid": talk, "action": "pitch", "scene": sc["id"], "pitch": "nil"}), 409)
@@ -209,10 +212,12 @@ if __name__ == "__main__":
         R(logc, "recruit", {"pid": a, "action": "message", "pitch": "prestige"})
         sc = R(logc, "recruit", {"pid": a, "action": "call"})["scene"]
         topic = sc["cue"]["topics"][0]
+        if sc["question"]:
+            R(logc, "recruit", {"pid": a, "action": "answer", "scene": sc["id"], "answer": "deflect"})
         said = R(logc, "recruit", {"pid": a, "action": "pitch", "scene": sc["id"], "pitch": topic})["reaction"]["kind"]
         R(logc, "recruit", {"pid": a, "action": "offer", "pitch": "winning", "nil": 120})
         R(logc, "recruit", {"pid": a, "action": "raise_nil", "nil": 150})
-        h = [x for x in hist(a) if x["kind"] != "not_buying"]       # a backfiring pitch may add a not_buying line
+        h = [x for x in hist(a) if x["kind"] not in ("not_buying", "answer")]   # a backfiring pitch may add a not_buying line; his question an answer
         got = [(x["kind"], x.get("action"), x.get("pitch"), x.get("reaction"), x.get("nil")) for x in h]
         assert got == [("raise_nil", None, None, None, 150), ("offer", None, None, None, 120),
                        ("pitch", "call", topic, said, None), ("contact", "call", None, None, None),
