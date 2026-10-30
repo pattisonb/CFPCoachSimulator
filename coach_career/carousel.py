@@ -428,6 +428,7 @@ def run(state: dict) -> dict:
                         "from_market": src.get("kind") == "market", "tier": programs.get(state, slug)["tier"]})
         if src.get("kind") == "head_coach":
             changes.append({"team": src["team"], "role": "head_coach", "old": hire["name"], "reason": f"left for {teams[slug]['name']}"})
+            left_hc[src["team"]] = hire["name"]                  # so a coordinator slot he held himself opens as "left", not "let go" into the market
             queue.append(src["team"])
             queue.sort(key=lambda s: -attract(state, s))
         elif src.get("kind") == "coordinator":

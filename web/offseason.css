@@ -60,3 +60,6 @@ details.off-recap[open] > summary::after { content: "▾"; }
 .off-contract { vertical-align: middle; }
 p .off-contract { margin-left: 6px; }
 .off-cand-years { color: var(--text); }
+/* the Staff step's "Your staff developed" rows: the rating tags wrap, text case kept ("Evaluation 61 → 64 (+3)") */
+.off-dev li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.off-dev .go-tag { text-transform: none; letter-spacing: 0; }

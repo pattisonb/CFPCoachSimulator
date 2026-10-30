@@ -549,6 +549,17 @@
       }
       card.append(row);
     }
+    // your staff developed like the players did: one row per coach with each rating that moved and why
+    const dev = st.developed || [];
+    if (dev.length) {
+      card.append(el("div", { class: "go-kicker muted off-sub", "data-key": "developed", text: "YOUR STAFF DEVELOPED" }));
+      card.append(el("ul", { class: "off-list off-dev", "data-key": "developed-list" }, dev.map((d) => el("li", { "data-key": `dev-${d.id}` }, [
+        el("b", { text: `${d.role} ${d.name}` }), d.age ? el("span", { class: "muted small", text: ` · ${d.age}` }) : null, " ",
+        ...(d.changes.length ? d.changes.map((c) => { const n = c.to - c.from;
+          return el("span", { class: `go-tag ${n > 0 ? "good" : "bad"} off-dev-change`, text: `${c.rating} ${c.from} → ${c.to} (${n > 0 ? "+" : ""}${n})` }); })
+          : [el("span", { class: "go-tag muted", text: "no change" })]),
+        ...(d.why || []).map((w) => el("span", { class: `go-tag ${/Bottom|outside|^Age$/.test(w) ? "warn" : ""}`, text: w }))]))));
+    }
     const coaches = el("section", { class: "go-card", "data-key": "carousel" }, [el("div", { class: "go-kicker", text: "COACHING CAROUSEL" }),
       v.coaching_changes.length ? el("ul", { class: "off-list" }, v.coaching_changes.map((c) => el("li", {}, [window.CFP.teamPill(c.team),
         c.reason === "hired" ? ` ${teamName(c.team)} hires ${c.new}${c.from ? ` (${c.from})` : ""}.` : ` ${teamName(c.team)}: ${c.old} ${c.reason}.`])))

@@ -1456,6 +1456,29 @@ Staff step, `renewed` in the view); the Scouting tab's scout rows read "Recruite
 A save from before contracts treats everyone as expiring once. Pay and the NIL cost of a
 higher-level coordinator come later (`ask` on the member is the hook, None for now).
 
+**Coaches develop like players** (`offseason._develop_coaches`, once a year at the Development
+stage, its own random stream; *tune* constants `COACH_*`). Every coach in the league, head
+coaches, coordinators, your recruiters and the coaches for hire, carries a hidden level per
+rating (`pot`, drawn when he is first seen: the rating plus N(−4, 8), capped at 99; most coaches
+are rated a little over their level and settle back, the rest have room) and each rating closes
+18% of its gap a year, up or down, times an age curve (under 40 ×1.3, 40-54 ×1.0, 55-62 ×0.6;
+from 63 he gains nothing and each rating drifts a point down half the years), times his year (a
+top-third offense or defense for a coordinator's ratings, a top-third record for a head coach's,
+a top-25 class for everyone's recruiting ×1.3 on a climb and ×0.7 on a fall; a bottom third the
+reverse; a class outside the top 70 ×0.8; the market ×0.5), plus a point of noise that never
+carries him past his level; floors 35 (a rating already under it is held, not lifted), caps 99;
+his overall follows. Ages: the real birth years where known, else `carousel._age`'s draw, a
+recruiter's 32-58. The Staff step's "Your staff developed" lists you (the head coach's ratings),
+your coordinators and recruiters with each rating that moved ("Evaluation 61 → 64 (+3)") and why
+(Young and improving, Top-third offense, Top-25 class, Age); the rest of the league develops
+silently and the Programs and coach pages read the live ratings. Over ten quick seasons (the
+`tools/check_carousel.py` loop, seeds 1 and 2) the league's mean head-coach ratings end within 4
+of where they ended without the pass (on average +0.7 defense, +3.0 discipline, +2.7 game
+management, +2.2 motivation, +1.9 offense, −1.4 player development, +0.3 recruiting) and their
+spreads within a quarter (player development and recruiting −24%, the rest −3% to −10%): a
+ceiling-only draw, max(0, N(10, 6)), inflated them 9-14 points, so the level can sit under the
+rating.
+
 **Many seasons** (`tools/long_run.py`, every step on Auto). Six 20-season careers on 85-man rosters
 (120 seasons) held the league's mean team rating at 59.0-60.0 every season (2026: 59.4) with
 stats 6.3-7.8% off real (the 2026 rosters: 5.6%) and 26 points a game. Then depth charts favoring

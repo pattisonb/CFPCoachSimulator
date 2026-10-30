@@ -799,6 +799,25 @@ def check_staff_contracts(page, base, sid) -> None:
             break
 
 
+def check_staff_developed(page, base, sid) -> None:
+    """The Staff step's "Your staff developed": a row per staff member (and you) with each rating that
+    moved as "Evaluation 61 → 64 (+3)" and a why tag, like Development's Who improved."""
+    v = call(base, f"/api/season/{sid}/offseason")
+    rows = v["staff"]["developed"]
+    assert {r["id"] for r in rows} >= {m["id"] for m in v["your_staff"]}, [r["id"] for r in rows]
+    text = page.inner_text("#tab-offseason .off-dev")
+    assert "YOUR STAFF DEVELOPED" in page.inner_text("#tab-offseason .off-staff")
+    for r in rows:
+        li = page.query_selector(f"#tab-offseason .off-dev li[data-key=dev-{r['id']}]")
+        assert li, r["id"]
+        for c in r["changes"]:
+            n = c["to"] - c["from"]
+            assert f"{c['rating']} {c['from']} → {c['to']} ({'+' if n > 0 else ''}{n})" in li.inner_text(), (c, li.inner_text())
+        if not r["changes"]:
+            assert "no change" in li.inner_text()
+    assert not re.search(r"\bundefined\b|\bnull\b|NaN", text), text[:200]
+
+
 if __name__ == "__main__":
     try:
         from playwright.sync_api import sync_playwright
@@ -1913,6 +1932,7 @@ if __name__ == "__main__":
                 hire = page.get_attribute(".off-cand > :last-child", "class") or ""
                 assert "go-btn" in hire, f"the hire control reads as a button, not a tag ({hire})"
             check_staff_contracts(page, base, B)
+            check_staff_developed(page, base, B)
             test_pester_tags(page, base)
             test_recruit_question(page)
             browser.close()
