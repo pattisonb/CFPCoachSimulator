@@ -19,7 +19,7 @@ ME = "ohio-state"
 ENTRY_KEYS = {"week", "pid", "by", "before", "after", "flags"}
 FLAGS = {"gem", "bust", "generational", "likes"}      # "likes": prospects.staff_likes, the Flags list's fourth kind
 VIEW_KEYS = {"hours", "hours_left", "scouts", "queue", "queue_total", "reports", "flags"}
-SCOUT_KEYS = {"id", "name", "role", "evaluation_word", "area", "looking_at", "yield"}
+SCOUT_KEYS = {"id", "name", "role", "evaluation_word", "area", "looking_at", "yield", "contract_until"}
 QUEUE_KEYS = {"pid", "name", "position", "stars", "group", "need", "national_rank", "looks", "trips", "potential",
               "can_send", "why", "state", "likes"}
 GROUP_KEYS = {"scout_id", "scout", "area", "looks", "changed", "items"}
