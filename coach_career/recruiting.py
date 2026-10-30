@@ -337,6 +337,14 @@ def upgrade_generational(state: dict) -> bool:
     return True
 
 
+def market_value(pos: str, ovr: int) -> float:
+    """A roster player's NIL market in points: the recruit ask of the star tier his overall reads as
+    (TIER_FROM_OVERALL), times his position (ASK, ASK_POS): a starter rated like a four-star asks
+    like one, a bench-level player has none. The offseason's NIL transfer driver reads it."""
+    stars = next(t for at, t in TIER_FROM_OVERALL if ovr >= at)
+    return ASK.get(stars, 0) * ASK_POS.get(pos, 1.0)
+
+
 def tier_of(p: dict) -> int:
     """His standing for the boards' star lifts and NIL values: his stars, or a transfer's from his overall."""
     if p.get("stars") is not None:
@@ -1695,7 +1703,8 @@ def _fits(state: dict, slug: str) -> dict[str, float]:
 
 def _build_board(state: dict, slug: str, rng: random.Random, touch: bool = True) -> list[str]:
     rc = state["recruiting"]
-    free = [pid for pid, st in rc["status"].items() if not st["signed"] and not st["committed"]]
+    free = [pid for pid, st in rc["status"].items() if not st["signed"] and not st["committed"]
+            and rc["prospects"][pid].get("from") != slug]            # the portal: never a school's own leaver
     # weighted sampling without replacement (key u^(1/fit)): the board's mix of states and star
     # levels follows the school's real shares instead of always taking its home state first
     keyed, fits = [], _fits(state, slug)

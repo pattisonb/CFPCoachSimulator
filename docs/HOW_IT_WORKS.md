@@ -1287,6 +1287,29 @@ seniors, times 0.12 for starters, 0.65 for the next man up and 1.3 for the bench
 a losing year; a Group of 5 player with a card overall of 50 or more (a Power 4 starter) enters
 40% of the time to move up. About 1.2% quit a year (2.5 times as likely in a team's bottom 15%).
 
+**Why players leave** (`portal_odds`, every school). A player's portal chance is the sum of
+segments, each with its driver, and one draw against the sum: the segment it lands in is why he
+goes, stored on the entrant (`driver`) and on your leaver's Keep Them Home card, so the reason is
+the real cause, not a guess after the fact. The first segment is the role chance above (his
+class and role, a losing year, a Group of 5 standout moving up, a broken promise, a keep last
+year). The second is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
+the recruit ask of the star tier his overall reads as, 60 for a five-star-equivalent, 30 a
+four, 8 a three, times his position), and his program's tier pays a starter `NIL_TIER_PAY` (60
+at tier 1, 40, 20, 8, 2 at tier 5); when his market is over that, his chance adds `NIL_PULL`
+(0.25) times the shortfall's share of his market, at most 0.30, and he leaves "Chasing a bigger
+NIL deal" with the shortfall as the floor of his retention ask. A player you kept with NIL last
+offseason was paid: no NIL pull that year. The third is the program: it is slipping when this
+year's results take a tier off its rating (a probe of `programs.update`, which runs for real at
+the Staff step), when a new head coach has just had his first year, or after a losing year
+under a head coach whose player development is under 50; its starters and rotation players
+rated 45 or better add `PROGRAM_PULL` (0.10) and leave because "The program is slipping" or
+they "Want a better coach". A program that rose a tier this year halves its starters' chances
+(`RISING_STAY`). The league's portal share stays about 8% (7% before the drivers; about 865
+entrants a year over a ten-season run, 820 before, with 5% of them chasing NIL and 2.5% leaving
+a slipping program or a weak coach), and the bottom tier loses about one starter a school a
+year to the portal where the top tier loses a seventh of one (tiers 1 to 5: 0.14, 0.44, 0.41,
+0.78, 1.02).
+
 **Keep them home** (the step after Departures). Your players who mean to leave with eligibility
 left wait on you: transfers and early draft entrants (graduating seniors and quitters are gone
 either way). Each card says why he is going, from the factors that decided it: buried behind a
