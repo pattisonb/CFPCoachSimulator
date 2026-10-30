@@ -1,6 +1,6 @@
 /* Coach Career on the season page, styled as a game: the Office (your week at a glance), the
    Recruiting board (stage tabs, a list, one pane with the Recruit menu), Prospects (the
-   class, filtered), Staff (who scouts where) and the Prospect Profile.
+   class, filtered) and the Prospect Profile; the Scouting tab is web/scouting.js.
    window.Recruiting.render(tab, season, helpers); helpers from season.js: { api, postJSON, toast,
    openModal, closeModal, errText, onChange(tab), play(what) }. Colors come from the site's theme variables,
    so the screens read in the light and the dark theme. */
@@ -1289,6 +1289,7 @@
         out.append(el("div", { class: "go-grades" }, Object.entries(b.our_grades).map(([g, r]) => el("div", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: (GROUP_NAMES[g] || g).toUpperCase() }), el("div", { class: "go-stat-val" }, wordRange(r))]))));
         out.append(el("p", { class: "muted small", text: `${b.looks} look${b.looks === 1 ? "" : "s"} by your staff · ${b.trips || 0} of 3 scouting trips. Ranges narrow with every look, but a read can be wrong.` }));
       } else out.append(el("p", { class: "muted", text: "Not scouted yet: send a scout from the Recruit menu, or put a staff member on his area." }));
+      out.append(el("p", { class: "small" }, [el("button", { type: "button", class: "go-link sc-reports-link", text: "Reports on the Scouting tab", onclick: () => H.onChange("scouting") })]));
       const comps = el("div", { class: "go-comps" });
       out.append(comps);
       const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall ? `, ${c.overall} OVR` : ""})`;
@@ -1633,41 +1634,7 @@
       node.append(p.our_comp ? el("p", {}, [el("b", { text: "Our comp: " }), comp(p.our_comp)])
         : el("p", { class: "muted", text: p.looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp after 3 looks (${p.looks} so far).` }));
     } else node.append(el("p", { class: "muted", text: inPane ? "Not scouted yet: Scout from the Recruit menu, or put a staff member on his area." : "Not scouted yet: send a scout, or put a staff member on his area." }),
-      el("div", { class: "go-row wrap rc-profile-actions" }, [inPane ? null : scoutBtn, el("button", { type: "button", class: "go-btn", text: "Assign your staff →", onclick: () => { H.closeModal(); H.onChange("staff"); } })]));
-  }
-
-  // ----- Staff -------------------------------------------------------------------------------------
-
-  async function renderStaff(s, box) {
-    if (!box.firstChild) box.append(loading("Loading your staff…"));
-    let v;
-    try { v = await H.api(`/api/season/${s.id}/recruiting`); }
-    catch (err) { box.innerHTML = ""; box.append(loading(`Could not load your staff: ${H.errText(err)}`)); return; }
-    box.innerHTML = "";
-    box.append(el("div", { class: "go-display l", text: "STAFF" }),
-      el("p", { class: "muted", text: "Every week each prospect in a staff member's area gets a look. Looks add up and never reset; better evaluators read closer to the truth." }));
-    const covered = new Set(v.staff.map((m) => m.area));
-    const grid = el("div", { class: "go-staff rc-staff" });
-    for (const m of v.staff) {
-      const sel = el("select", { id: `area-${m.id}`, class: "go-sel" }, Object.keys(v.areas).map((a) => el("option", { value: a, text: `${a} (${v.area_counts[a]})` })));
-      sel.value = m.area;
-      sel.addEventListener("change", async () => {
-        try { await H.api(`/api/season/${s.id}/staff`, H.postJSON({ staff_id: m.id, area: sel.value })); H.toast(`${m.name} now scouts ${sel.value}.`, 2500); renderStaff(s, box); }
-        catch (err) { sel.value = m.area; H.toast(`Could not reassign: ${H.errText(err)}`, 4000); }
-      });
-      const rating = (label, n) => el("div", { class: "go-rating" }, [el("span", { class: "muted small", text: label }),
-        el("div", { class: "go-meter-track" }, [el("span", { class: "go-meter-fill", style: `width:${n}%` })]), el("b", { text: String(n) })]);
-      grid.append(el("div", { class: "go-card go-coach rc-staff-card" }, [
-        el("div", { class: "go-coach-top" }, [avatar(`staff-${m.id}-${m.name}`), el("div", {}, [
-          el("div", { class: "go-kicker muted", text: m.role === "Recruiter" ? "RECRUITER" : m.role === "OC" ? "OFFENSIVE COORDINATOR" : "DEFENSIVE COORDINATOR" }),
-          el("div", { class: "go-display m", text: m.name.toUpperCase() })])]),
-        rating("Evaluation", m.evaluation), rating("Recruiting", m.recruiting),
-        el("label", { class: "go-area", for: `area-${m.id}` }, [el("span", { class: "muted small", text: "Scouting area (prospects there)" }), sel]),
-      ]));
-    }
-    box.append(grid);
-    const open = Object.keys(v.areas).filter((a) => !covered.has(a));
-    if (open.length) box.append(el("p", { class: "muted small", text: `Not covered: ${open.map((a) => `${a} (${v.area_counts[a]})`).join(", ")}. Prospects there show public information only.` }));
+      el("div", { class: "go-row wrap rc-profile-actions" }, [inPane ? null : scoutBtn, el("button", { type: "button", class: "go-btn", text: "Assign your staff →", onclick: () => { H.closeModal(); H.onChange("scouting"); } })]));
   }
 
   // ----- every school's class ------------------------------------------------------------------------
@@ -1717,9 +1684,9 @@
     if (tab === "office") renderOffice(season, box);
     else if (tab === "recruiting") renderRecruiting(season, box);
     else if (tab === "prospects") renderProspects(season, box);
-    else if (tab === "staff") renderStaff(season, box);
+    else if (tab === "scouting") window.CFP.scouting.render(season, box, H);
     else if (tab === "classes") renderClasses(season, box);
   }
 
-  window.Recruiting = { wordTag, render, openProfile: (s, pid) => openProfile(s, pid), board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
+  window.Recruiting = { wordTag, render, openProfile: (s, pid) => openProfile(s, pid), reveal: (pid) => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; }, board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
 })();
