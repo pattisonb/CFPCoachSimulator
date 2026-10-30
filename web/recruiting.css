@@ -149,3 +149,20 @@
 /* ☆: a topic he brought up on this week's call or visit (★, a confirmed priority, keeps the plain tag) */
 .go-tag.cue { border-color: var(--go-primary, var(--accent)); border-style: dashed; color: var(--text); white-space: normal; }
 .go-pitch.cue .go-tag { border-color: var(--go-primary, var(--accent)); border-style: dashed; color: var(--text); font-weight: 700; }
+
+/* The footprint map's zoom (us-map.js zoomer, recruiting.js mapCard): the region row, the dot labels, the cursor */
+.go-map-regions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
+@media (max-width: 759px) { .go-map-regions { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; } }   /* a phone: one row that scrolls */
+.go-map-regions .go-btn { flex: none; white-space: nowrap; }
+.go-map-regions .go-btn[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.go-map svg.us-map { touch-action: pan-x pan-y; aspect-ratio: 975 / 610; }                   /* one finger scrolls the page, two pinch the map */
+.go-map svg.us-map.zoomed { touch-action: none; cursor: grab; }       /* zoomed in, one finger (or the mouse) pans */
+.go-map svg.us-map.dragging, .go-map svg.us-map.dragging * { cursor: grabbing !important; }
+.go-map svg.us-map:focus { outline: none; }
+.go-map svg.us-map:focus-visible { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: 2px; }
+.us-state:focus { outline: none; }
+.us-state:focus-visible { stroke: var(--text); stroke-width: 2px; vector-effect: non-scaling-stroke; }
+.us-map.zoomed .us-state, .us-map.zoomed .us-dot { vector-effect: non-scaling-stroke; }
+.us-label { fill: var(--text); stroke: var(--panel); paint-order: stroke; stroke-linejoin: round; font-weight: 600; pointer-events: none; }
+.us-leader { stroke: var(--muted); pointer-events: none; }
+.us-label.crowded { visibility: hidden; }

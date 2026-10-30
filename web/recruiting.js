@@ -534,7 +534,7 @@
         if (!e.best || (TONE_RANK[sd.tone] ?? 9) < (TONE_RANK[e.best.tone] ?? 9) || ((TONE_RANK[sd.tone] ?? 9) === (TONE_RANK[e.best.tone] ?? 9) && (sd.fill || 0) > (e.best.fill || 0))) e.best = sd;
       }
       if (!xy) continue;
-      dots.push({ id: b.id, xy, tone: sd.tone, ring: b.committed === me || b.signed === me, big: !!b.generational, label: `${b.name} · ${b.position} · ${sd.text}` });
+      dots.push({ id: b.id, xy, tone: sd.tone, ring: b.committed === me || b.signed === me, big: !!b.generational, label: `${b.name} · ${b.position} · ${sd.text}`, name: b.name });
     }
     const open = mapOpen();
     const body = el("div", { class: "go-map-body" });
@@ -542,7 +542,7 @@
     const toggle = el("button", { type: "button", class: "go-btn go-map-toggle", "aria-expanded": String(open), "aria-controls": "go-map-body", text: MAP_TOGGLE(open, opts.small) });
     body.id = "go-map-body";
     card.classList.toggle("closed", !open);
-    const hint = el("span", { class: "muted small go-map-hint", text: opts.selectedState ? `Showing ${opts.selectedState} · tap it again to clear` : "Tap a state to filter, a dot to pick him" });
+    const hint = el("span", { class: "muted small go-map-hint", text: opts.selectedState ? `Showing ${opts.selectedState} · tap it again to clear` : "Tap a state to zoom in and filter, a dot to pick him" });
     hint.hidden = !open;
     toggle.addEventListener("click", () => {
       const now = body.hidden;
@@ -553,9 +553,23 @@
       toggle.textContent = MAP_TOGGLE(now, opts.small);
       try { localStorage.setItem("cfp-map-open", now ? "1" : "0"); } catch (e) { /* no storage */ }
     });
+    // the zoom: a state tap zooms and filters (the redrawn map picks up where this one was), a region button only zooms
+    const areaNames = Object.keys(v.areas || {});
+    const regionBtns = areaNames.map((a) => el("button", { type: "button", class: "go-btn", "data-area": a, "aria-pressed": "false", text: staffed[a] ? `${a} · ${staffed[a]}` : a }));
+    const pressRegion = (r) => regionBtns.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.area === r)));
+    const home = () => { if (opts.selectedState && opts.onState) opts.onState(opts.selectedState); else svg.zoom.reset(); };
     const svg = window.USMap.render({ areas: v.areas || {}, staffed, dots, selectedState: opts.selectedState || null, teamColor: color,
+      counts: Object.fromEntries(Object.entries(byState).map(([c, e]) => [c, e.n])), zoomKey: `${opts.small ? "prospects" : "board"}:${s.id}`,
       onDot: (id) => { if (opts.onDot) opts.onDot(id); else { view.selected = id; view.reveal = id; if (phone()) view.sheet = true; if (boardAt) renderRecruiting(boardAt.s, boardAt.box); } },
-      onState: opts.onState });
+      onState: opts.onState, onReset: home, onZoom: (z) => pressRegion(z.region) });
+    pressRegion(svg.zoom.region());
+    regionBtns.forEach((b) => b.addEventListener("click", () => {
+      if (b.getAttribute("aria-pressed") === "true") svg.zoom.reset();
+      else svg.zoom.zoomToStates(v.areas[b.dataset.area], b.dataset.area);
+    }));
+    const wholeBtn = el("button", { type: "button", class: "go-btn go-map-reset", text: "Whole country" });
+    wholeBtn.addEventListener("click", home);
+    const regions = el("div", { class: "go-map-regions", role: "group", "aria-label": "Zoom to a region" }, [wholeBtn, ...regionBtns]);
     if (view.selected) { const d = svg.querySelector(`circle.us-dot[data-id="${view.selected}"]`); if (d) d.classList.add("sel"); }
     svg.style.setProperty("--us-team", color);
     const legend = el("ul", { class: "go-map-legend" }, Object.keys(v.areas || {}).map((a) => el("li", { class: staffed[a] ? "staffed" : "" }, [
@@ -578,7 +592,8 @@
           : [el("tr", {}, [el("td", { colspan: "3", text: "Nobody on your board yet." })])])]));
     });
     // under 360px the picture is left out (CSS hides it too; the table below says the same in words)
-    body.append(window.matchMedia("(max-width: 359px)").matches ? "" : el("div", { class: "go-map-svg" }, [svg]), legend, key,
+    const tiny = window.matchMedia("(max-width: 359px)").matches;
+    body.append(tiny ? "" : regions, tiny ? "" : el("div", { class: "go-map-svg" }, [svg]), legend, key,
       dots.length ? "" : el("p", { class: "muted small", text: "Nobody on your board yet: add prospects and they appear here." }), el("div", { class: "go-row" }, [tBtn]), table);
     card.append(el("div", { class: "go-map-head" }, [el("div", { class: "go-display l", text: "YOUR FOOTPRINT" }), hint, toggle]), body);
     return card;

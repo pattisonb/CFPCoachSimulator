@@ -51,6 +51,35 @@
     return (centroids[code] = [(x0 + x1) / 2, (y0 + y1) / 2]);
   }
 
+  const NAMES = { AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado", CT: "Connecticut", DE: "Delaware",
+    DC: "District of Columbia", FL: "Florida", GA: "Georgia", HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas",
+    KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi",
+    MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey", NM: "New Mexico", NY: "New York",
+    NC: "North Carolina", ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina",
+    SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington", WV: "West Virginia",
+    WI: "Wisconsin", WY: "Wyoming" };
+
+  // a state's bounding box [x, y, w, h] in canvas units (the outline's own points)
+  const boxes = {};
+  function stateBox(code) {
+    if (boxes[code]) return boxes[code];
+    const d = window.US_STATES && window.US_STATES.paths[code];
+    if (!d) return null;
+    const n = d.match(/-?\d+\.?\d*/g).map(Number);
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (let i = 0; i + 1 < n.length; i += 2) {
+      x0 = Math.min(x0, n[i]); x1 = Math.max(x1, n[i]);
+      y0 = Math.min(y0, n[i + 1]); y1 = Math.max(y1, n[i + 1]);
+    }
+    return (boxes[code] = [x0, y0, x1 - x0, y1 - y0]);
+  }
+
+  // ----- zoom: the svg's viewBox is the camera. A box is [x, y, w, h] in canvas units. -----
+  const MAX_ZOOM = 8, PAD = 0.08, ANIM_MS = 200, LABEL_AT = 0.4;
+  // what a map remembers between redraws (the board redraws itself on every state tap), by opts.zoomKey
+  const memory = {};
+  const reduced = () => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
+
   function el(tag, attrs, parent) {
     const e = document.createElementNS(SVGNS, tag);
     for (const k in attrs || {}) e.setAttribute(k, attrs[k]);
@@ -63,7 +92,9 @@
   function render(opts) {
     opts = opts || {};
     const S = window.US_STATES;
-    const svg = el("svg", { viewBox: S.viewBox, class: "us-map", role: "img", "aria-label": "Map of recruiting areas" });
+    const svg = el("svg", { viewBox: S.viewBox, class: "us-map", role: "group", tabindex: "0",
+      "aria-label": "Map of recruiting areas. Plus and minus zoom, arrows pan, Escape shows the whole country" });
+    const counts = opts.counts || {};
     const areaOf = {};
     const areas = opts.areas || {}, staffed = opts.staffed || {};
     const gAreas = el("g", { class: "us-areas" }, svg);
@@ -94,7 +125,19 @@
       }
       if (opts.onState) {
         p.style.cursor = "pointer";
-        p.addEventListener("click", () => opts.onState(code));
+        const n = counts[code] || 0;
+        p.setAttribute("tabindex", "0");
+        p.setAttribute("role", "button");
+        p.setAttribute("aria-label", `${NAMES[code] || code}: ${n} ${n === 1 ? "prospect" : "prospects"}`);
+        // the second click of a double-click is the zoom's, not a second toggle of the filter
+        p.addEventListener("click", (e) => { if (e.detail > 1 || zoom.swallow()) return; zoom.pick(code); });
+        p.addEventListener("dblclick", () => zoom.zoomToState(code));
+        p.addEventListener("keydown", (e) => {
+          if (e.key !== "Enter" && e.key !== " ") return;
+          e.preventDefault();
+          e.stopPropagation();
+          zoom.pick(code);
+        });
       }
     });
     // the selected state's thick outline is painted last among the states, so its neighbors never cover it
@@ -105,16 +148,242 @@
       const pt = d.xy || project(d.home);
       if (!pt) continue;
       const r = d.big ? 6 : 4;
-      if (d.ring) el("circle", { cx: pt[0], cy: pt[1], r: r + 3, fill: "none", stroke: opts.teamColor || "#333", "stroke-width": 2, class: "us-ring" }, gDots);
-      const c = el("circle", { cx: pt[0], cy: pt[1], r, class: "us-dot " + (d.tone || ""), "data-id": d.id }, gDots);
+      if (d.ring) el("circle", { cx: pt[0], cy: pt[1], r: r + 3, fill: "none", stroke: opts.teamColor || "#333", "stroke-width": 2, class: "us-ring", "data-r": r + 3 }, gDots);
+      const c = el("circle", { cx: pt[0], cy: pt[1], r, class: "us-dot " + (d.tone || ""), "data-id": d.id, "data-r": r }, gDots);
+      if (d.name) c.dataset.name = d.name;
       if (d.label) el("title", {}, c).textContent = d.label;
       if (opts.onDot) {
         c.style.cursor = "pointer";
         c.addEventListener("click", (e) => { e.stopPropagation(); opts.onDot(d.id); });
       }
     }
+    const zoom = zoomer(svg, gDots, opts);
+    svg.zoom = zoom;
     return svg;
   }
 
-  window.USMap = { project, centroid, render };
+  // The camera: zoomTo(box), zoomToState(code), zoomToStates(codes), reset(); the wheel, pinch, drag and keys.
+  // Dots and rings keep their screen size at any zoom; past LABEL_AT of the full width every dot in view shows its name.
+  function zoomer(svg, gDots, opts) {
+    const S = window.US_STATES;
+    const FULL = S.viewBox.split(/[\s,]+/).map(Number);
+    const [FX, FY, FW, FH] = FULL;
+    const mem = opts.zoomKey ? (memory[opts.zoomKey] || (memory[opts.zoomKey] = { box: FULL, state: null, region: null, focus: null })) : { box: FULL, state: null, region: null, focus: null };
+    let cur = FULL, anim = 0, swallowClick = false;
+
+    // the box as the element shows it (the frame's aspect, centered: preserveAspectRatio meet)
+    function shown(b) {
+      const [x, y, w, h] = b;
+      const s = Math.max(w / FW, h / FH);
+      return [x + w / 2 - (s * FW) / 2, y + h / 2 - (s * FH) / 2, s * FW, s * FH];
+    }
+    // keep the shown frame between 1x and MAX_ZOOM and inside the canvas; the box moves with it
+    function clamp(b) {
+      let [x, y, w, h] = b;
+      let v = shown(b);
+      const grow = Math.min(Math.max(v[2], FW / MAX_ZOOM), FW) / v[2];
+      if (grow !== 1) { const cx = x + w / 2, cy = y + h / 2; w *= grow; h *= grow; x = cx - w / 2; y = cy - h / 2; v = shown([x, y, w, h]); }
+      const dx = Math.min(Math.max(v[0], FX), FX + FW - v[2]) - v[0];
+      const dy = Math.min(Math.max(v[1], FY), FY + FH - v[3]) - v[1];
+      return [x + dx, y + dy, w, h];
+    }
+    const isFull = (b) => b.every((n, i) => Math.abs(n - FULL[i]) < 0.01);
+    const scaleOf = (b) => Math.min(FW / b[2], FH / b[3]);      // 1 at the whole map
+    // screen pixels per canvas unit at 1x (a fallback while the map is not on the page)
+    const basePx = () => (svg.clientWidth || 760) / FW;
+
+    function set(b) {
+      cur = isFull(b) ? FULL : b;
+      mem.box = cur;
+      svg.setAttribute("viewBox", cur === FULL ? S.viewBox : cur.map((n) => +n.toFixed(2)).join(" "));
+      paint();
+    }
+    function paint() {
+      const k = scaleOf(cur);
+      svg.classList.toggle("zoomed", k > 1.001);
+      for (const c of gDots.querySelectorAll("circle[data-r]")) {
+        c.setAttribute("r", +(c.dataset.r / k).toFixed(3));
+        if (c.classList.contains("us-ring")) c.setAttribute("stroke-width", +(2 / k).toFixed(3));
+      }
+      for (const t of gDots.querySelectorAll(".us-label, .us-leader")) t.remove();
+      if (cur[2] >= LABEL_AT * FW) return;
+      const px = basePx() * k;              // screen pixels per canvas unit now
+      const [vx, vy, vw, vh] = shown(cur);
+      const size = 11 / px, gap = 3 / px, lh = size * 1.3;
+      const inView = [...gDots.querySelectorAll("circle.us-dot")].filter((c) => {
+        const x = +c.getAttribute("cx"), y = +c.getAttribute("cy");
+        return c.dataset.name && x >= vx && x <= vx + vw && y >= vy && y <= vy + vh;
+      }).sort((a, b) => a.getAttribute("cy") - b.getAttribute("cy") || a.getAttribute("cx") - b.getAttribute("cx"));
+      // a city's cluster of dots would print its names on top of each other: a label that would cover another
+      // tries a line or a few above or below, on the right then the left, with a thin leader back to its dot;
+      // one with no room left stays hidden (its dot keeps the hover title) until a closer zoom spreads them out
+      const placed = [];
+      const free = (x, y, w) => placed.every((q) => x + w <= q[0] || q[0] + q[2] <= x || y + lh <= q[1] || q[1] + lh <= y);
+      const SLOTS = [0, 1, -1, 2, -2, 3, -3, 4, -4];
+      for (const c of inView) {
+        const cx = +c.getAttribute("cx"), cy = +c.getAttribute("cy"), r = +c.getAttribute("r");
+        const w = c.dataset.name.length * size * 0.6;
+        let at = null;
+        for (const side of [1, -1]) {
+          for (const n of SLOTS) {
+            const x = side > 0 ? cx + r + gap : cx - r - gap - w, y = cy + n * lh;
+            if (x >= vx && x + w <= vx + vw && y - lh / 2 >= vy && y + lh / 2 <= vy + vh && free(x, y - lh / 2, w)) { at = [x, y, side]; break; }
+          }
+          if (at) break;
+        }
+        const [x, y, side] = at || [cx + r + gap, cy, 1];
+        if (at) placed.push([x, y - lh / 2, w]);
+        if (at && y !== cy) el("line", { x1: cx, y1: cy, x2: side > 0 ? x - gap / 2 : x + w + gap / 2, y2: y, class: "us-leader", "stroke-width": +(1 / px).toFixed(3) }, gDots);
+        const t = el("text", { x, y, class: "us-label" + (at ? "" : " crowded"), "data-id": c.dataset.id, "font-size": +size.toFixed(3),
+          "stroke-width": +(3 / px).toFixed(3), "dominant-baseline": "central" }, gDots);
+        t.textContent = c.dataset.name;
+      }
+    }
+    function animateTo(b) {
+      cancelAnimationFrame(anim);
+      const from = cur, to = isFull(b) ? FULL : b;
+      if (reduced() || typeof requestAnimationFrame !== "function") return set(to);
+      const t0 = performance.now();
+      const step = (now) => {
+        const t = Math.min(1, (now - t0) / ANIM_MS), e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        if (t >= 1) return set(to);
+        set(from.map((n, i) => n + (to[i] - n) * e));
+        anim = requestAnimationFrame(step);
+      };
+      anim = requestAnimationFrame(step);
+    }
+    const padded = (b) => { const [x, y, w, h] = b, p = Math.max(w, h) * PAD; return [x - p, y - p, w + 2 * p, h + 2 * p]; };
+    function union(codes) {
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (const c of codes) {
+        const b = stateBox(c);
+        if (!b) continue;
+        x0 = Math.min(x0, b[0]); y0 = Math.min(y0, b[1]); x1 = Math.max(x1, b[0] + b[2]); y1 = Math.max(y1, b[1] + b[3]);
+      }
+      return x0 === Infinity ? null : [x0, y0, x1 - x0, y1 - y0];
+    }
+    const changed = () => { if (opts.onZoom) opts.onZoom({ region: mem.region, zoomed: cur !== FULL }); };
+
+    function zoomTo(box) { if (box) animateTo(clamp(box)); }
+    function zoomToState(code) { const b = stateBox(code); if (b) { mem.region = null; zoomTo(padded(b)); changed(); } }
+    function zoomToStates(codes, region) { const b = union(codes || []); if (b) { mem.region = region || null; zoomTo(padded(b)); changed(); } }
+    function reset() { mem.region = null; animateTo(FULL); changed(); }
+    // zoom by a factor around a canvas point (the center by default); instant, for the wheel, pinch and keys
+    function zoomBy(f, at) {
+      const v = shown(cur);
+      const [ux, uy] = at || [v[0] + v[2] / 2, v[1] + v[3] / 2];
+      const w = Math.min(Math.max(v[2] / f, FW / MAX_ZOOM), FW), r = w / v[2];
+      cancelAnimationFrame(anim);
+      set(clamp([ux - (ux - v[0]) * r, uy - (uy - v[1]) * r, w, v[3] * r]));
+    }
+    function panBy(dx, dy) { const v = shown(cur); cancelAnimationFrame(anim); set(clamp([v[0] + dx, v[1] + dy, v[2], v[3]])); }
+    // a screen point to canvas units
+    function toCanvas(cx, cy) {
+      const m = svg.getScreenCTM();
+      if (!m) return null;
+      const p = new DOMPoint(cx, cy).matrixTransform(m.inverse());
+      return [p.x, p.y];
+    }
+    const unitPx = () => { const m = svg.getScreenCTM(); return (m && m.a) || basePx(); };
+
+    // a state picked (click, Enter): the caller's filter toggles and the map follows it; without one, just zoom
+    function pick(code) {
+      mem.focus = code;
+      if (opts.onState) opts.onState(code);
+      else if (mem.state === code) { mem.state = null; reset(); }
+      else { mem.state = code; zoomToState(code); }
+    }
+    // Escape, "Whole country": clear the state filter (if any) and show the whole map
+    function home() {
+      if (opts.onReset) opts.onReset();
+      else reset();
+    }
+
+    svg.addEventListener("wheel", (e) => {
+      const f = Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0015));
+      if (f < 1 && cur === FULL) return;         // nothing to zoom out of: the page scrolls
+      e.preventDefault();
+      zoomBy(f, toCanvas(e.clientX, e.clientY));
+      mem.region = null; changed();
+    }, { passive: false });
+
+    // drag pans, two pointers pinch; a drag that moved is not a click
+    const ptrs = new Map();
+    let last = null, moved = 0;
+    svg.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+      last = null; moved = 0;
+    });
+    svg.addEventListener("pointermove", (e) => {
+      if (!ptrs.has(e.pointerId)) return;
+      const prev = ptrs.get(e.pointerId);
+      ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+      const ps = [...ptrs.values()];
+      if (ps.length >= 2) {
+        const [a, b] = ps, d = Math.hypot(a[0] - b[0], a[1] - b[1]), mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+        if (last && last.d) {
+          const at = toCanvas(mid[0], mid[1]);
+          if (at) zoomBy(d / last.d, at);
+          const u = unitPx();
+          panBy(-(mid[0] - last.mid[0]) / u, -(mid[1] - last.mid[1]) / u);
+          moved = 99;
+        }
+        last = { d, mid };
+        return;
+      }
+      moved += Math.abs(e.clientX - prev[0]) + Math.abs(e.clientY - prev[1]);
+      if (moved < 5 || cur === FULL) return;
+      if (!svg.classList.contains("dragging")) { svg.classList.add("dragging"); try { svg.setPointerCapture(e.pointerId); } catch (x) { /* gone */ } }
+      const u = unitPx();
+      panBy(-(e.clientX - prev[0]) / u, -(e.clientY - prev[1]) / u);
+    });
+    const up = (e) => {
+      ptrs.delete(e.pointerId);
+      last = null;
+      if (svg.classList.contains("dragging") || moved >= 5) { swallowClick = moved >= 5; svg.classList.remove("dragging"); if (swallowClick) changed(); }
+      if (!ptrs.size) setTimeout(() => { swallowClick = false; }, 0);
+    };
+    svg.addEventListener("pointerup", up);
+    svg.addEventListener("pointercancel", up);
+    // a click that ends a drag picks nothing
+    svg.addEventListener("click", (e) => { if (swallowClick) { e.stopPropagation(); e.preventDefault(); } }, true);
+
+    svg.addEventListener("keydown", (e) => {
+      const v = shown(cur);
+      if (e.key === "+" || e.key === "=") zoomBy(1.5);
+      else if (e.key === "-" || e.key === "_") zoomBy(1 / 1.5);
+      else if (e.key === "ArrowLeft") panBy(-v[2] * 0.1, 0);
+      else if (e.key === "ArrowRight") panBy(v[2] * 0.1, 0);
+      else if (e.key === "ArrowUp") panBy(0, -v[3] * 0.1);
+      else if (e.key === "ArrowDown") panBy(0, v[3] * 0.1);
+      else if (e.key === "Escape") {
+        if (cur === FULL && !mem.state && !opts.selectedState) return;      // nothing to undo: let Escape reach the page
+        home();
+      } else return;
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    // where this map starts: where the last one was, then toward the state filter it now shows (or away from the one it lost)
+    const sel = opts.selectedState || null;
+    set(clamp(mem.box || FULL));
+    if (sel && mem.state !== sel) { mem.region = null; const b = stateBox(sel); if (b) animateTo(clamp(padded(b))); }
+    else if (!sel && mem.state) { mem.region = null; animateTo(FULL); }
+    mem.state = sel;
+    // the state picked last gets the focus back once the redrawn map is on the page
+    if (mem.focus) {
+      const code = mem.focus;
+      mem.focus = null;
+      requestAnimationFrame(() => {
+        const p = svg.isConnected && svg.querySelector(`path[data-state="${code}"]`);
+        if (p) p.focus({ preventScroll: true });
+      });
+    }
+    if (typeof ResizeObserver === "function") new ResizeObserver(() => { if (cur !== FULL) paint(); }).observe(svg);
+
+    return { zoomTo, zoomToState, zoomToStates, reset, home, pick, region: () => mem.region, swallow: () => swallowClick };
+  }
+
+  window.USMap = { project, centroid, stateBox, render };
 })();
