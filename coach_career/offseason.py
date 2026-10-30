@@ -297,6 +297,7 @@ class RetentionError(Exception):
 
 REASONS = {"buried": "Buried on the depth chart behind {ahead}", "snaps": "Wants more than a rotation role",
            "losing": "A losing year", "move_up": "A Power 4 program is calling", "restless": "Restless: no starting role in sight",
+           "deal": "Chasing a bigger NIL deal", "last_year": "One year left and he wants a bigger stage", "fresh_start": "Wants a fresh start",
            "draft": "Projects as a round {round} pick", "declared": "Believes he is ready for the NFL"}
 
 
@@ -332,8 +333,14 @@ def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict
             key, ahead = "losing", None
         elif not item["p4"] and house(p["pos"], p["o"]) >= TRANSFER_UP_FROM:
             key, ahead = "move_up", None
-        else:
+        elif use != "starter":
             key, ahead = "restless", None
+        elif p["cls"] in ("SR", "SRRS"):                     # p["cls"] is already next year's class
+            key, ahead = "last_year", None
+        elif item.get("winning"):
+            key, ahead = "deal", None
+        else:
+            key, ahead = "fresh_start", None
         ovr = house(p["pos"], p["o"])
         base = max(10, RETAIN_ASK[0] + RETAIN_ASK[1] * (ovr - 50)) * recruiting.ASK_POS.get(p["pos"], 1.0)
         if intent == "draft":
@@ -664,7 +671,7 @@ def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict, 
                 # up, as if he stays), out of the portal and the draft until you advance
                 entrants.pop(p["id"], None)
                 p["cls"] = "SRRS" if p["cls"] == "SR" else NEXT_CLASS.get(p["cls"], p["cls"])
-                pending.append({"ev": ev, "use": use, "losing": losing, "p4": p4[slug]})
+                pending.append({"ev": ev, "use": use, "losing": losing, "winning": wins > losses, "p4": p4[slug]})
                 continue
             events.append(ev)
             leaving[slug].add(p["id"])
