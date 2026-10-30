@@ -1,71 +1,135 @@
-/* The Scouting tab (web/scouting.js): the scouts, the queue, the reports and the flags. Colors come from the
-   site's theme variables (styles.css), so it reads in the light and the dark theme. Buttons stand 44 px tall
-   (the house .go-btn), cards keep 12 px of padding, tag rows 6 px, button rows 8 px (tests/test_spacing.py). */
-#tab-scouting { display: flex; flex-direction: column; gap: 20px; }
+/* The Scouting tab (web/scouting.js): My scouts and Reports side by side, the Scouting queue table under them.
+   Colors come from the site's theme variables (styles.css), so it reads in the light and the dark theme; the board
+   accent is the team color (--go-primary). Buttons stand 36 px tall (44 on a phone), cards keep 12 px of padding,
+   tag rows 6 px, button rows 8 px (tests/test_spacing.py). */
+#tab-scouting { display: flex; flex-direction: column; gap: 16px; }
 #tab-scouting.tab-body { overflow: visible; }
 .sc-head p { margin: 6px 0 0; }
-.sc-block { display: flex; flex-direction: column; gap: 10px; }
+.sc-block { display: flex; flex-direction: column; gap: 12px; }
+.sc-panel { padding: 16px 18px; min-width: 0; }
+.sc-panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
+.sc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* your scouts */
-.sc-scout .go-coach-top { align-items: center; }
-.sc-scout-id { min-width: 0; }
-.sc-scout .go-display.m { overflow-wrap: anywhere; }
-.sc-eval { display: flex; align-items: center; gap: 6px; }
+/* the top row: My scouts (two fifths), Reports (three fifths) */
+.sc-top { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 16px; align-items: start; }
 
-/* send a scout: the hours beside the title, the tools to the right */
-.sc-sendbar { align-items: flex-end; }
-.sc-send-title { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
-.sc-hours { font-weight: 700; }
-.sc-tools { display: flex; gap: 8px; flex-wrap: wrap; }
-#sc-search { min-height: 44px; min-width: 200px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; font-size: 14px; }
-#sc-search:focus { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: 1px; }
-.sc-send > p { margin: 0; }
-/* the queue scrolls inside itself; a row's patch (the result, a grayed Send) must not drag the scroll */
-.sc-queue { display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow-y: auto; overscroll-behavior: contain; overflow-anchor: none; padding: 2px; }
-.sc-row { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto minmax(0, 220px) auto; grid-template-areas: "av id looks pot act" "av result result result result";
-  align-items: center; gap: 6px 12px; padding: 8px 12px 8px 8px; border-radius: 14px; border: 1px solid var(--border); background: var(--panel); }
-.sc-row > .go-avatar { grid-area: av; }
-.sc-id { grid-area: id; display: flex; flex-direction: column; min-width: 0; gap: 1px; }
-.sc-name { align-self: flex-start; font-size: 15px; line-height: 1.3; text-align: left; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
-.sc-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sc-looks { grid-area: looks; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
-.sc-trips { display: inline-flex; gap: 3px; }
-.sc-trip { display: inline-block; width: 14px; height: 6px; border-radius: 3px; background: var(--panel-2); border: 1px solid var(--border); }
-.sc-trip.on { background: var(--go-primary, var(--accent)); border-color: var(--go-primary, var(--accent)); }
-.sc-pot { grid-area: pot; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; min-width: 0; }
-.sc-act { grid-area: act; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-.sc-why { text-align: right; }
-.sc-result { grid-area: result; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--panel-2); }
-.sc-result[hidden], .sc-why[hidden], .sc-more[hidden], .sc-queue-empty[hidden] { display: none; }
-.sc-report-items li[hidden] { display: none; }
+/* My scouts: a compact row each */
+.sc-scout-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.sc-scout { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 0; border-top: 1px solid var(--border); }
+.sc-scout:first-child { border-top: none; padding-top: 0; }
+.sc-scout:last-child { padding-bottom: 0; }
+.sc-scout-main { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.sc-scout-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 24px; }
+.sc-scout-name { font-size: 15px; overflow-wrap: anywhere; }
+.sc-role { font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.sc-area.go-sel { min-height: 36px; max-width: 100%; font-size: 13px; }
+.sc-scout-yield { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sc-bar { flex: 1 1 90px; height: 6px; border-radius: 3px; background: var(--panel-2); border: 1px solid var(--border); overflow: hidden; min-width: 60px; }
+.sc-bar-fill { display: block; height: 100%; background: var(--go-primary, var(--accent)); border-radius: 3px; transition: width 300ms ease-out; }
+.sc-yield-text { white-space: nowrap; }
+.sc-open { margin: 0; }
+
+/* Reports: the tab strip in the head, groups of compact rows */
+.sc-tabs { border-bottom: none; }
+.sc-report-list { display: flex; flex-direction: column; gap: 12px; }
+.sc-report { display: flex; flex-direction: column; gap: 6px; }
+.sc-report + .sc-report { padding-top: 10px; border-top: 1px solid var(--border); }
+.sc-report-head { display: flex; justify-content: space-between; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
+.sc-report-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.sc-report-item { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; line-height: 1.4; min-height: 24px; }
+.sc-report-item[hidden], .sc-flag[hidden] { display: none; }
+.sc-item-stars { font-size: 11px; }
+.sc-item-pos { min-width: 30px; }
+.sc-item-change { flex: 1 1 auto; }
+.sc-item-flags, .sc-flags-gained { display: inline-flex; gap: 6px; margin: 0; vertical-align: middle; }
+.sc-item-flags { margin-left: auto; }
 .sc-report-more { align-self: flex-start; }
-.sc-change { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-.sc-queue-empty { margin: 8px; }
-.sc-more { min-height: 44px; }
-
-/* the reports */
-.sc-report-list { display: flex; flex-direction: column; gap: 10px; }
-.sc-report { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
-.sc-report-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 12px; flex-wrap: wrap; }
-.sc-report-items { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
-.sc-report-items li { line-height: 1.4; }
-.sc-item-flags, .sc-flags-gained { display: inline-flex; gap: 6px; margin-left: 8px; vertical-align: middle; }
-
-/* the flags */
-.sc-flag-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.sc-flag { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.sc-reports-empty, .sc-flags-empty { margin: 0; }
+.sc-flags { display: flex; flex-direction: column; gap: 8px; }
+.sc-flag-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.sc-flag { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 4px 0; }
 .sc-flag-id { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
-.sc-flag-id .go-link { align-self: flex-start; text-align: left; }
+.sc-flag-id .go-link, .sc-report-item .go-link { text-align: left; }
 .sc-standing { white-space: nowrap; }
 
+/* the Scouting queue: the hours beside the title, the chips and the tools, then the table */
+.sc-queue-head { align-items: flex-start; }
+.sc-queue-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sc-hours { font-weight: 700; }
+.sc-queue-note { margin: 0; flex: 1 1 320px; }
+.sc-toolbar { align-items: center; }
+.sc-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.sc-tools { display: flex; gap: 8px; flex-wrap: wrap; }
+#sc-search { min-height: 40px; min-width: 200px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; font-size: 14px; }
+#sc-search:focus { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: 1px; }
+.sc-tools .go-sel { min-height: 40px; }
+
+.sc-table-wrap { min-width: 0; transition: opacity 150ms ease-out; }
+.sc-table-wrap[aria-busy="true"] { opacity: 0.6; }
+.sc-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }
+.sc-table thead th { position: sticky; top: 64px; z-index: 2; background: var(--panel); text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border);
+  color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+.sc-table thead th span { display: inline-block; min-height: 36px; line-height: 36px; }
+.sc-sort { min-height: 36px; padding: 0 4px; margin: 0 -4px; border: none; border-radius: 8px; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.sc-sort:hover { color: var(--text); background: var(--panel-2); }
+.sc-sort::after { content: "↕"; margin-left: 4px; opacity: 0.5; }
+th[aria-sort="ascending"] .sc-sort::after { content: "↑"; opacity: 1; }
+th[aria-sort="descending"] .sc-sort::after { content: "↓"; opacity: 1; }
+th[aria-sort="ascending"] .sc-sort, th[aria-sort="descending"] .sc-sort { color: var(--text); }
+.sc-table td { padding: 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.sc-row td:first-child { border-left: 3px solid transparent; }
+.sc-row.on-board td:first-child { border-left-color: var(--go-primary, var(--accent)); }
+.sc-row.on-board td { background: color-mix(in srgb, var(--go-primary, var(--accent)) 6%, transparent); }
+.sc-row { cursor: pointer; }
+.sc-row:hover td { background: var(--panel-2); }
+.sc-c-board { width: 112px; }
+.sc-board-mark { color: var(--go-primary-text, var(--text)); border-color: color-mix(in srgb, var(--go-primary, var(--accent)) 60%, var(--border)); }
+.sc-c-need { width: 86px; }
+.sc-c-rank { width: 70px; font-variant-numeric: tabular-nums; }
+.sc-c-pot { width: 190px; }
+.sc-c-looks { width: 120px; }
+.sc-c-act { width: 112px; text-align: right; }
+.sc-who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.sc-who .go-avatar.sm { width: 32px; height: 32px; }
+.sc-id { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.sc-name { align-self: flex-start; font-size: 15px; line-height: 1.3; text-align: left; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.sc-line { white-space: nowrap; }
+.sc-pot { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.sc-looks { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.sc-trips { display: inline-flex; gap: 3px; }
+.sc-trip { display: inline-block; width: 16px; height: 6px; border-radius: 3px; background: var(--panel-2); border: 1px solid var(--border); }
+.sc-trip.on { background: var(--go-primary, var(--accent)); border-color: var(--go-primary, var(--accent)); }
+.sc-send { min-height: 36px; padding: 0 12px; font-size: 13px; white-space: nowrap; }
+.sc-result-row td { padding: 0 8px 8px 11px; border-bottom: 1px solid var(--border); }
+.sc-result { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 6px 10px; border-radius: 10px; background: var(--panel-2); font-size: 13px; }
+.sc-change { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.sc-queue-empty { margin: 0; padding: 12px 8px; }
+.sc-queue-empty[hidden] { display: none; }
+
+/* the foot: Showing 1 to 25 of 1,204 · Previous · 1 2 … 49 · Next */
+.sc-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
+.sc-pager { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sc-pager .go-btn { min-height: 36px; padding: 0 12px; font-size: 13px; }
+.sc-pager .sc-page { min-width: 36px; padding: 0 8px; }
+.sc-gap { padding: 0 2px; }
+
+@media (max-width: 899px) {
+  .sc-table-wrap { overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+  .sc-table { min-width: 820px; }
+  .sc-table thead th { position: relative; top: auto; }   /* the header scrolls with the table; relative so the hidden label stays inside its cell */
+}
 @media (max-width: 759px) {
-  .sc-sendbar, .sc-send-title { align-items: stretch; }
-  #sc-search { min-width: 0; width: 100%; }
+  .sc-top { grid-template-columns: minmax(0, 1fr); }
+  .sc-panel { padding: 14px; }
+  .sc-toolbar, .sc-queue-head { align-items: stretch; }
+  #sc-search { min-width: 0; width: 100%; min-height: 44px; }
   .sc-tools { width: 100%; }
-  .sc-tools .go-sel { flex: 1; min-width: 0; }
-  .sc-queue { max-height: 60vh; }
-  .sc-row { grid-template-columns: 38px minmax(0, 1fr) auto; grid-template-areas: "av id act" "looks looks looks" "pot pot pot" "result result result"; gap: 8px 10px; }
+  .sc-tools .go-sel { flex: 1; min-width: 0; min-height: 44px; }
+  .sc-area.go-sel { min-height: 44px; }
+  .sc-send, .sc-pager .go-btn, .sc-sort { min-height: 44px; }
+  .sc-table thead th span { min-height: 44px; line-height: 44px; }
   .sc-flag { grid-template-columns: auto minmax(0, 1fr); }
   .sc-standing { grid-column: 1 / -1; white-space: normal; }
+  .sc-foot { justify-content: center; }
 }
-@media (prefers-reduced-motion: reduce) { .sc-row, .sc-result { transition: none; animation: none; } }
+@media (prefers-reduced-motion: reduce) { .sc-row, .sc-result, .sc-bar-fill, .sc-table-wrap { transition: none; animation: none; } }
