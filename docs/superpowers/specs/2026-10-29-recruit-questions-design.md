@@ -52,7 +52,7 @@ comes from `scenes.answer_reply(state, slug, pid, question, answer, truthful)`.
 | Answer | Button copy (roster / recruit) | Effect | His reply |
 |---|---|---|---|
 | straight | "He's the starter today. You'd compete, and the best man plays." / "I offered him too. One of you starts; I want it to be you." | `+ANSWER_STRAIGHT` (1.0 base points on this scene's contact); reveals `playing_time` as a known priority if not yet | "Fair. At least you're not blowing smoke." |
-| promise | "The job's yours." / "You're the one I want." | truthful when his projected role is `start` (`scenes._role == "start"`) for roster, or his `ovr` ≥ the other recruit's for recruit: `+ANSWER_PROMISE` (3.0); untruthful: `-ANSWER_HOLLOW` (2.0), an `asked_more`-style event `not_buying` and `cooled_until = week + 1` | truthful: "That's what I needed to hear, Coach." / untruthful: "I've heard that one before." |
+| promise | "The job's yours." / "You're the one I want." | truthful for roster when the player ahead is in his last year or the recruit's `ovr` is within `PROMISE_MARGIN` (5) of his (`recruiting.promise_holds`; amended 2026-10-30 from the `_role == "start"` rule, which made nearly every promise hollow), or his `ovr` ≥ the other recruit's for recruit: `+ANSWER_PROMISE` (3.0); untruthful: `-ANSWER_HOLLOW` (2.0), an `asked_more`-style event `not_buying` and `cooled_until = week + 1` | truthful: "That's what I needed to hear, Coach." / untruthful: "I've heard that one before." |
 | deflect | "Let's talk about what you'd bring." | nothing | "...Okay." |
 
 Points go through the existing `_add_points(state, slug, pid, points, action)` on the scene's
