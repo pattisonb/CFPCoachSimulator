@@ -14,7 +14,7 @@
 
 - No change under `sim/`, `engine/`, `coach_career/`, `teamdata/`, `app/`; `python tests/test_sim_golden.py` passes at every commit.
 - Every `/api/...` call the board makes today keeps its path and body (`/recruiting`, `/recruit` with `{pid, action, pitch, nil, scene}`, `/board`, `/prospect/{pid}`, `/settings`).
-- Six list words exactly: `Yours`, `Lost`, `Favourite`, `In it`, `Long shot`, `Not offered` (spec section 5 table, with its thresholds: Close race when your bar is within 0.1 of the leader's; Behind, in the picture when bar ≥ 0.15; a flip "could still" when chance ≥ 0.3, "looks unlikely" when the high end < 0.1).
+- Six list words exactly: `Yours`, `Lost`, `Favorite`, `In it`, `Long shot`, `Not offered` (spec section 5 table, with its thresholds: Close race when your bar is within 0.1 of the leader's; Behind, in the picture when bar ≥ 0.15; a flip "could still" when chance ≥ 0.3, "looks unlikely" when the high end < 0.1).
 - Recruit menu items and reasons exactly as the spec's table in section 4; Message and Offer open the inline pitch step; calls and visits play as scenes with the pitch inside the scene.
 - Spacing rules (spec section 9): button containers `display: flex; flex-wrap: wrap; gap: 8px 10px` with no margins on buttons; tag containers `gap: 6px`; a tag row has `margin-block: 10px` when it follows text or precedes buttons; cards keep ≥ 12 px padding; buttons ≥ 36 px tall on desktop, ≥ 44 px on a phone (≤ 759 px); segment controls are the one exception.
 - Every URL in `web/` stays relative (`tests/test_web_urls.py`); the dark look stays; no new dependencies.
@@ -57,7 +57,7 @@ CASES = [  # (b, expected word, text contains, tone)
     ({"committed": "georgia", "hard": True, "list": []}, "Lost", "Hard commit · Georgia", "bad"),
     ({"committed": "georgia", "standing": {"pct": 0.35, "lo": 0.2, "hi": 0.5}, "list": []}, "In it", "Verbal commit · Georgia", "warn"),
     ({"committed": "georgia", "standing": {"pct": 0.1, "lo": 0.0, "hi": 0.2}, "list": []}, "Long shot", "Verbal commit · Georgia", "warn"),
-    ({"offered": True, "standing": {"pct": 0.6}, "list": [row(ME, 1.0, True, 1), row("georgia", 0.5, True, 2)]}, "Favourite", "Leading his list", "good"),
+    ({"offered": True, "standing": {"pct": 0.6}, "list": [row(ME, 1.0, True, 1), row("georgia", 0.5, True, 2)]}, "Favorite", "Leading his list", "good"),
     ({"offered": False, "list": [row(ME, 1.0, False, 1), row("georgia", 0.7, True, 2)]}, "Not offered", "He would pick you today", "warn"),
     ({"offered": True, "standing": {"pct": 0.3}, "list": [row("georgia", 1.0, True, 1), row(ME, 0.95, True, 2)]}, "In it", "2nd on his list · Georgia leads", "warn"),
     ({"offered": True, "standing": {"pct": 0.2}, "list": [row("georgia", 1.0, True, 1), row(ME, 0.3, True, 2)]}, "In it", "2nd on his list", "muted"),
@@ -65,7 +65,7 @@ CASES = [  # (b, expected word, text contains, tone)
     ({"offered": False, "list": [row("georgia", 1.0, True, 1), row(ME, 0.4, False, 3)]}, "Not offered", "3rd on his list · not offered", "muted"),
     ({"offered": False, "list": [row("georgia", 1.0, True, 1)]}, "Not offered", "Not on his list yet", "muted"),
 ]
-# the odds words: Favourite → "Clear favorite"/"Narrow favorite"; you lead unoffered → "Offer him"; unoffered on list → "Offer to be in it"
+# the odds words: Favorite → "Clear favorite"/"Narrow favorite"; you lead unoffered → "Offer him"; unoffered on list → "Offer to be in it"
 ```
 
 Team names come from `window.CFP.teamsBySlug` (the page loads them); use real slugs (`georgia`, `smu`).

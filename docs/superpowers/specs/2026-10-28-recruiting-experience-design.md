@@ -105,7 +105,7 @@ The CPU is not touched: AI schools board by fit from true grades and stars as to
 | In touch | `contact` | Messaged, called or offered |
 | Top 8 | `top` | Offer in hand and in his top group |
 | Visited | `visited` | An official (or campus) visit happened |
-| Committed | `committed` and committed or signed elsewhere | Yours in team colour; lost ones greyed with their flip odds |
+| Committed | `committed` and committed or signed elsewhere | Yours in team color; lost ones grayed with their flip odds |
 
 **Cards** are compact: avatar, name (opens the profile), position and stars, potential in one
 word (or "Not scouted"), badges (Generational, Gem, Bust risk, Need, Offered, Cooled,
@@ -119,7 +119,7 @@ viewer only), so the move costs the CPU nothing.
 (`position: sticky`), a bottom sheet on phone that slides over the columns and closes with a
 swipe or a button. The pane holds:
 
-- his list as a **race**: one track, every school a team-colour pill placed by its bar share of
+- his list as a **race**: one track, every school a team-color pill placed by its bar share of
   the leader, you outlined, each pill's move since last week as a small arrow, a tap on a pill
   naming the school and its reason for the week;
 - grades in words with the tooltips from the profile;
@@ -147,9 +147,9 @@ A map card above the columns, collapsible (its state kept in `localStorage`):
 - a US map from one static asset, `web/us-states.js`: a public-domain simplified outline, one
   SVG path per state plus D.C., about 60 KB, with a `viewBox` and the state code on each path;
 - your staff's nine areas (`recruiting.AREAS`) shaded: staffed areas in your team's primary
-  colour at low alpha, unstaffed in the panel colour; a legend names the staff member on each;
+  color at low alpha, unstaffed in the panel color; a legend names the staff member on each;
 - every prospect on your board as a dot at his coordinates (`p["home"]`, already carried),
-  coloured by standing tone (good, warn, muted, bad) and ringed when committed to you; a
+  colored by standing tone (good, warn, muted, bad) and ringed when committed to you; a
   generational prospect's dot is larger;
 - tap a dot to select him (the pane opens); tap a state to filter the columns to that state
   (the need strip and the state filter compose); a selected state is outlined;
@@ -175,11 +175,11 @@ returns `{scene: {id, action, lines, cue, ask}}`:
 - `lines`: two or three lines in his voice from a template bank (`coach_career/scenes.py`),
   keyed by topic and filled with his name, hometown, position, high school, your school, your
   depth chart at his position (`strengths` already computes where he projects), your record
-  and his family for a visit. One line carries the **cue**, one is colour (his season, his
+  and his family for a visit. One line carries the **cue**, one is color (his season, his
   team, a joke), and a visit adds his mother or father asking the question a parent asks.
 - `cue`: an oblique pointer at one of his true priorities, chosen as the first not yet revealed.
   With probability `CUE_TWO_SIDED = 0.5` *tune* the cue names two topics, one true and one
-  drawn from the rest, so reading him takes judgement.
+  drawn from the rest, so reading him takes judgment.
 - `ask`: an in-home visit returns his exact number as today (`contact["asked"] = True`); a call
   narrows the range (`"range"`).
 

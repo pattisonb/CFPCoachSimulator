@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Game logic under `engine/`, `sim/`, `coach_career/`, `teamdata/` does not change behaviour: `python tests/test_sim_golden.py` passes without `--record` at every commit.
+- Game logic under `engine/`, `sim/`, `coach_career/`, `teamdata/` does not change behavior: `python tests/test_sim_golden.py` passes without `--record` at every commit.
 - The browser runs the Python with `SIM_WORKERS=1` set before `sim.season` is imported (the dispatcher sets it when `app.api` is imported; the dev server and native tests may use the pool).
 - Every `/api/...` path the page calls today keeps its method, path, query parameters, body and response shape (section 5 of the spec). Status codes keep their numbers (400, 404, 409, 413, 422).
 - Pyodide version is pinned in one place, `web/worker.js`: `const PYODIDE_URL = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/"`.
@@ -294,7 +294,7 @@ git commit -m "Dispatcher: every Coach Career route; recruiting API test ported"
 - Modify: `run.bat`, `requirements.txt`, `.gitignore` (nothing new), `README.md` (the "Run" lines)
 
 **Interfaces:**
-- Produces: `python tools/dev_server.py [--port N]` serving `http://127.0.0.1:N` (`PORT` env honoured, default 8000): static files from `web/` (`/` and `/season` → `season.html` until Task 7 renames it, then `index.html`; `/coach` → `coach.html`), `/api/*` → `app.api.call`. JSON responses `application/json`; `bytes` → `application/gzip` with the `Content-Disposition` the server used; `ApiError` → status code with body `{"detail": message}`; any other exception → 500 `{"detail": str(exc)}`. Request bodies: `application/json` parsed to a dict, anything else passed as bytes. One `threading.Lock` serialises dispatcher calls; a daemon thread runs `api.step()` in a loop while `api.job()["status"] == "running"`, holding the lock per step. `GET .../status` is served without the lock (as the FastAPI server did) so the page's progress poll sees in-week `week_frac`. `Cache-Control: no-store` on everything.
+- Produces: `python tools/dev_server.py [--port N]` serving `http://127.0.0.1:N` (`PORT` env honored, default 8000): static files from `web/` (`/` and `/season` → `season.html` until Task 7 renames it, then `index.html`; `/coach` → `coach.html`), `/api/*` → `app.api.call`. JSON responses `application/json`; `bytes` → `application/gzip` with the `Content-Disposition` the server used; `ApiError` → status code with body `{"detail": message}`; any other exception → 500 `{"detail": str(exc)}`. Request bodies: `application/json` parsed to a dict, anything else passed as bytes. One `threading.Lock` serializes dispatcher calls; a daemon thread runs `api.step()` in a loop while `api.job()["status"] == "running"`, holding the lock per step. `GET .../status` is served without the lock (as the FastAPI server did) so the page's progress poll sees in-week `week_frac`. `Cache-Control: no-store` on everything.
 - Consumes: `app.api.call`, `app.api.step`, `app.api.job`, `app.api.ApiError`.
 
 - [ ] **Step 1: Point the Playwright tests at the dev server**

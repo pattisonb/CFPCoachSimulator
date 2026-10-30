@@ -126,7 +126,7 @@ LINES: dict[str, dict[str, list[str]]] = {
 }
 
 # the opening of a call (and the middle of a visit): small talk
-COLOUR = ["Hey Coach. Just got back from practice.",
+COLOR = ["Hey Coach. Just got back from practice.",
           "Yes sir, I've got a few minutes.",
           "This is {first}. My phone's been going all week.",
           "Hey Coach. Everybody in {town} is talking about {school}.",
@@ -198,7 +198,7 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
         topics = [true]
         text = rng.choice(LINES[true]["cue"]).format(**f)
     ask = recruiting.ask_view(state, slug, pid)
-    lines = [rng.choice(COLOUR).format(**f), text]
+    lines = [rng.choice(COLOR).format(**f), text]
     if action == "hc_visit":
         lines.insert(0, rng.choice(FAMILY).format(**f))
         n = ask.get("exact", 0)

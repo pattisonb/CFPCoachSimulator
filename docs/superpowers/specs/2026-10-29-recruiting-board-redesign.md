@@ -50,7 +50,7 @@ One row per recruit in the chosen tab, in sort order:
 
 - avatar (small), name; under the name one muted line: `★★★★ WR · TX` (portal: `WR · JR · from
   Baylor`);
-- on the right, one word of standing in its tone: `Favourite`, `In it`, `Long shot`, `Yours`,
+- on the right, one word of standing in its tone: `Favorite`, `In it`, `Long shot`, `Yours`,
   `Lost`, `Not offered` (section 5 defines these);
 - a small green or red dot before the name when `stage_move` is up or down this week (title:
   "Moved up this week" / "Slipped back this week");
@@ -72,7 +72,7 @@ Georgia`, `Committed to you`, `Signed with you`. Right of the head, the primary 
 **Recruit ▾**.
 
 **Recruit menu** (a popover under the button; Escape or a click outside closes it): every action
-with its cost or the reason it is unavailable, disabled items greyed with the reason as their
+with its cost or the reason it is unavailable, disabled items grayed with the reason as their
 second line:
 
 | Item | Cost line | Unavailable when (reason text) |
@@ -92,9 +92,9 @@ first"; the head shows one button, `Finish the call` / `Finish the visit`, in th
 button's place.
 
 **Message** and **Offer…** open a step inline under the head (the menu closes): a pitch dropdown
-(`<select>`): his known priorities first, each labelled `Playing time · Priority · Strong`, then
-the rest labelled with your program's case (`Prestige · Weak`), with the cue from a scene this
-week labelled `Heard`; the default is his first known priority. Offer adds the NIL points field
+(`<select>`): his known priorities first, each labeled `Playing time · Priority · Strong`, then
+the rest labeled with your program's case (`Prestige · Weak`), with the cue from a scene this
+week labeled `Heard`; the default is his first known priority. Offer adds the NIL points field
 with his ask (`wants 120` / `wants about 90–150`) and one line: "Under half of what he wants reads
 as a lowball." A confirm button (`Send`, `Offer`) and Cancel. Raise NIL… opens the same step
 without the pitch. A call or in-home visit plays as a scene in the pane as today, with the pitch
@@ -122,7 +122,7 @@ Prestige` this week, `Visit wk 9` / `Visited`, `Offered · 120 NIL`, `Cooled`, `
 ## 5. One ladder: standing read from his list
 
 The standing shown anywhere (list word, stat strip, Overview sentence) is read from his list
-rank, with the offer as the qualifier. The list words are exactly six: Yours, Lost, Favourite,
+rank, with the offer as the qualifier. The list words are exactly six: Yours, Lost, Favorite,
 In it, Long shot, Not offered. `st.place`/`st.of`/`st.leader` (the offer race) are no
 longer used for the words; `b.list` (rank, bar, you) and `b.offered` are.
 
@@ -131,14 +131,14 @@ longer used for the words; `b.list` (rank, bar, you) and `b.offered` are.
 | committed or signed to you | Yours | Verbal commit to you / Hard commit to you / Signed with you | | good |
 | committed or signed elsewhere, cannot flip | Lost | Signed · Georgia / Hard commit · Georgia | Locked in | bad |
 | verbal elsewhere, could flip | In it (chance ≥ 0.3) or Long shot | Verbal commit · Georgia | He could still flip to you / A flip is a long shot / A flip looks unlikely (high end under 0.1) | warn |
-| you lead his list, offered | Favourite | Leading his list, offered | Clear favorite / Narrow favorite (as today's thresholds) | good |
+| you lead his list, offered | Favorite | Leading his list, offered | Clear favorite / Narrow favorite (as today's thresholds) | good |
 | you lead his list, not offered | Not offered | He would pick you today: he has no offer from you | Offer him | warn |
 | on his list, not first, offered | In it or Long shot | 2nd on his list · Georgia leads | Close race (your bar within 0.1 of the leader's) / Behind, in the picture (bar ≥ 0.15) / Long shot (below) | warn for Close race, else muted |
 | on his list, not offered | Not offered | 3rd on his list · not offered | Offer to be in it | muted |
 | not on his list | Not offered | Not on his list yet | | muted |
 
 The race marks the offer state so the two agree: a lane whose school has not offered draws its
-pill hollow (outline in the school's colour, no fill) with "no offer" in its title; yours is
+pill hollow (outline in the school's color, no fill) with "no offer" in its title; yours is
 ringed as today. `b.list` rows need an `offered` flag: the view already knows every school's
 offers (`rc["offers"]`); `prospects.py` adds `offered: bool` to each list row. This is the one
 Python change, additive, in the board view only.
@@ -159,7 +159,7 @@ the profile modal (the profile is a sub-tab). `COLUMNS` stays as the stage defin
 
 - `tests/test_ux_sweep.py`'s recruiting section is rewritten for the new structure: the stage
   tabs and their counts sum to the board; picking a row fills the pane; the Recruit menu lists the
-  items and greys the right ones; Message opens the pitch step and sends; Call plays the scene,
+  items and grays the right ones; Message opens the pitch step and sends; Call plays the scene,
   its cue marks a pitch, the reaction shows, the list row keeps nothing but the word; a second
   recruit's open call disables the menu; the phone sheet opens and closes; the state filter from
   the map filters the list.

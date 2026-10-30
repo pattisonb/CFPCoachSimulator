@@ -30,7 +30,7 @@ not a set of patches.
    highlight (a 600 ms background pulse, `.go-changed`): the standing word, a strip cell, a tag
    that appeared, the hours and NIL meters. New rows or tags fade in (150 ms); removed ones fade
    out before leaving. Switching the recruit cross-fades the pane (120 ms). Switching sub-tabs
-   fades the body. All of it honours `prefers-reduced-motion: reduce` (no motion, instant
+   fades the body. All of it honors `prefers-reduced-motion: reduce` (no motion, instant
    changes).
 3. **Every action gets a toast.** One short sentence, present tense, with the recruit's name and
    the cost or the result: "Message sent to Wesley Adams · 5 hours", "Offer sent to Wesley Adams

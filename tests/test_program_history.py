@@ -1,6 +1,6 @@
 """Program ratings' starting values (tools/build_program_history.py -> data/program_history.json,
 read by coach_career/programs.py): every FBS program's history, winning, market, NIL, conference
-and coach scores (0-100), the mixed rating and its tier, with the top of the list recognisable."""
+and coach scores (0-100), the mixed rating and its tier, with the top of the list recognizable."""
 import sys as _sys
 from pathlib import Path as _Path
 

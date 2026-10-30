@@ -25,4 +25,4 @@ if __name__ == "__main__":
     assert not off, f"the middle Power 4 starter's overall is not 50: {off}"
     off = {f"{g} {k}": statistics.median(v) for (g, k), v in attrs.items() if len(v) >= 20 and abs(statistics.median(v) - 50) > 1.5}
     assert not off, f"the middle Power 4 starter's attribute is not 50: {off}"
-    print(f"scale ok: {len(overall)} positions, {sum(len(v) >= 20 for v in attrs.values())} attributes centred on 50")
+    print(f"scale ok: {len(overall)} positions, {sum(len(v) >= 20 for v in attrs.values())} attributes centered on 50")

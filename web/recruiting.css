@@ -1,5 +1,5 @@
 /* The Recruiting board: stage tabs with counts, a plain list, one pane where every action lives behind
-   the Recruit menu. Colours come from the site's theme variables (styles.css), so it reads in the light
+   the Recruit menu. Colors come from the site's theme variables (styles.css), so it reads in the light
    and the dark theme. Every rule for the board is here and only here. */
 
 /* ----- the stage row: tabs with counts, the search and the sort ----- */

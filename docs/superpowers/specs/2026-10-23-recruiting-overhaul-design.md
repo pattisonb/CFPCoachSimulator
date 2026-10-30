@@ -270,6 +270,6 @@ commitment, a two-round portal finished the old way.
 
 Status (section 10): built. `tests/test_recruiting_realism.py` keeps its bounds and checks
 positions per class (mean absolute error under 0.5), schools without a QB under 10%, none with
-4+; `tests/test_recruiting.py` and `tests/test_offseason.py` check the behaviours listed
+4+; `tests/test_recruiting.py` and `tests/test_offseason.py` check the behaviors listed
 (placement is 72-79% signed plus preferred walk-ons, so the bound allows 95%). Three 20-season
 careers held the "Many seasons" bounds (docs/HOW_IT_WORKS.md) with walk-ons 40-60 a year.

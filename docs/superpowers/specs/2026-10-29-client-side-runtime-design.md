@@ -88,7 +88,7 @@ IndexedDB     ◀── Emscripten IDBFS mounted at /home/pyodide/data/seasons a
 
 ## 5. The dispatcher's routes
 
-Kept, moved to `app/api.py` with their behaviour (the handler bodies move; the `_season_jobs`,
+Kept, moved to `app/api.py` with their behavior (the handler bodies move; the `_season_jobs`,
 `_season_lock`, `_pending_saves` machinery shrinks to one loaded season and an explicit flush):
 
 `POST /api/season` (career only; `mode` is always `full`), `GET/DELETE /api/season/{id}`,

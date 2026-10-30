@@ -5,7 +5,7 @@ result: a win adds points scaled by the opponent's standing, the venue and the m
 loss subtracts points, more for losing to an unranked team or at home and less for losing
 to a top team. The 25 highest scores are the poll. The parameters in AP_PARAMS were fit
 to every weekly AP poll from 2014 to 2025 (calibrate_polls.py replays those seasons with
-the real results and minimises the rank error against the real polls).
+the real results and minimizes the rank error against the real polls).
 
 The committee model re-ranks the AP-style scores with the things the committee is known
 to weigh differently: strength of schedule, wins over ranked teams, a discount for Group

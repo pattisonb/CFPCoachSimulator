@@ -127,7 +127,7 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `tools/` | Data downloads, calibration and research scripts, run from the project root (`python tools/fetch_polls.py`) |
 | `sim/bowls.py` | The 2026-27 bowl lineup, selection by conference tie-ins, and which bowls host the playoff rounds |
 | `tools/fetch_bowls.py` | Downloads the bowl schedule and every bowl's tie-ins and history from Wikipedia into `data/bowls.json` |
-| `tools/fetch_polls.py`, `tools/analyze_polls.py`, `tools/calibrate_polls.py` | 2014-2025 poll archive, the behaviour study, and the model fit |
+| `tools/fetch_polls.py`, `tools/analyze_polls.py`, `tools/calibrate_polls.py` | 2014-2025 poll archive, the behavior study, and the model fit |
 | `tools/calibrate_season.py` | Replays every real 2026 game N times and compares predicted and actual margins |
 | `tools/calibrate.py` | Per-team stat benchmarks against FBS 2025 averages (`league` mode uses the real rosters) |
 | `tools/fetch_linescores.py`, `tools/calibrate_late.py` | Quarter scores 2014-2025 and the late-game comparison (close games, comebacks, overtime) |
@@ -179,7 +179,7 @@ is the middle Power 4 starter at the position, 15 points a standard deviation ab
 below (a typical Power 4 backup or Group of 5 starter reads about 40, a walk-on in the 20s); the
 player card attributes on the same shape (`tests/test_scale.py` holds every position and
 attribute to 50); and **our overall**, a formula per position on those skills, fit once to the
-card overall the game showed then (r 0.97-0.995, about 1.5 points off); the card shape is re-centred
+card overall the game showed then (r 0.97-0.995, about 1.5 points off); the card shape is re-centered
 when the real depth charts are re-tuned (`python -m teamdata.game_scale`, October 26 after the week 8
 re-tune: the skills' middles and the frozen engine means did not move). Since then nothing reads
 EA: a career's league and its recruits store our ratings, develop in them, and every overall the
@@ -194,7 +194,7 @@ scale into the formulas it was tuned on, so 2026 plays exactly as it did (the sa
 passing, awareness and throwing under pressure to decision making, agility, jukes and
 break tackle to elusiveness, man and zone coverage to coverage, power and finesse moves
 plus block shedding to pass rush, and so on (the full map is in the file's docstring).
-Every attribute is then re-centred so that the league-average FBS starter at that position
+Every attribute is then re-centered so that the league-average FBS starter at that position
 group sits at the engine's neutral rating, with the spread between players scaled by
 `SPREAD_SCALE` (1.38, set by the season replay). The engine's formulas work on rating
 differences, so this keeps a league of these teams playing like FBS football while
@@ -222,7 +222,7 @@ on a touchback); net takes off the return and 20 yards a touchback.
 **Coaches.** The coordinators' pass-rate and tempo tendencies shift the run/pass table and
 the clock, the head coach's fourth-down tendency scales the go-for-it odds, and the
 play-calling ratings of the two coordinators tilt whether the defense guesses the play.
-Tendencies are centred so the FBS average is 50. Army, Navy and Air Force run about 70%
+Tendencies are centered so the FBS average is 50. Army, Navy and Air Force run about 70%
 of their snaps.
 
 **Venue.** At a home site the home team gains and the away team loses half of a home
@@ -236,8 +236,8 @@ Each team plays a little above or below itself on the day: a gaussian shift of
 `GAME_FORM_SD` (3.6) rating points per team per game, drawn once before kickoff on the
 same attributes as home field and shown in the box score's meta line. It widens the
 spread of outcomes from a 13-point standard deviation to about 16, which is what real
-college football shows around the closing line, so a 21-point favourite now loses about
-one game in ten and a 28-point favourite a few in a hundred (they lost almost never
+college football shows around the closing line, so a 21-point favorite now loses about
+one game in ten and a 28-point favorite a few in a hundred (they lost almost never
 before). `python tools/upset_odds.py` simulates seven mismatches 200 times and prints the
 upset rate and margins; `tools/calibrate_season.py` showed the sim's margins were not too
 steep (actual margins run 15% larger than predicted on the 2026 games), only too sure of
@@ -384,12 +384,12 @@ were -0.28 in the sim against -0.50 real, while offense counted for too much (0.
 | 10 seasons through week 8 | Real | Before | After |
 |---|---|---|---|
 | Same-matchup margin SD | (15.9 residual) | 17.5 | 15.9 |
-| Favourite wins, rating gap 6-10 | 92.5% | 77.6% | 84.2% |
+| Favorite wins, rating gap 6-10 | 92.5% | 77.6% | 84.2% |
 | Power 4 over Group of Five | 96.2% | 87.9% | 92.8% |
 | Points allowed per defense-rating point | -0.50 | -0.28 | -0.51 |
 | Points scored per offense-rating point | 0.58 | 0.73 | 0.65 |
 | Bottom-third defenses, points allowed | 30.2 | 28.4 | 30.7 |
-| Sim favourite won (388 games) | | 68.6% | 70.6% |
+| Sim favorite won (388 games) | | 68.6% | 70.6% |
 | Brier score | | 0.202 | 0.195 |
 
 `tools/calibrate_season.py 30` (the real games so far): straight up 71.6% to 73.5%, margin
@@ -404,7 +404,7 @@ completions against 8.1%) and kicked too few field goals. A short field now sque
 coverage (`REDZONE_COMPLETION`: -0.06 completion inside the 20, -0.10 inside the 10), and
 `COMPLETION_BASE` 0.637 to 0.641 keeps league completion at 62-63%. Over 20 seasons through
 week 8: touchdown passes 1.81 to 1.67 a team-game (9.0% of completions), field goals made
-0.97 to 1.05, with game picks unchanged (favourite won 72.6% / 72.8%).
+0.97 to 1.05, with game picks unchanged (favorite won 72.6% / 72.8%).
 
 Two other changes were tested the same way (20 seasons each, one change at a time) and
 left out:
@@ -412,7 +412,7 @@ left out:
 - **Fewer interceptions** (the scramble decided before the throw, `INT_BASE` 0.065 to
   0.060; and the review's flatter slopes, 0.0013 to 0.0007 a point). Interceptions fell from
   3.0 to 2.5 per 100 attempts (real 2.3 through week 8, 2.6 over the 2025 season), but every
-  run with it picked fewer winners: favourite won 70.2% against 72.6%, Brier 0.190 against
+  run with it picked fewer winners: favorite won 70.2% against 72.6%, Brier 0.190 against
   0.177. Interceptions are one of the places where QB and coverage ratings decide games, so
   they stay; the worst cases (low-rated QBs who throw few real interceptions) are rating
   cards to fix, not the engine.
@@ -449,7 +449,7 @@ linebacker. The causes were elsewhere:
 
 Result (4 full seasons): hundred-tackle players 64 (real 51-64), tackle leaders within 1%
 of real at ranks 5-100 (mean gap 10% to 2%). Game picks held (20 seasons through week 8:
-favourite won 72.4% before, 73.6% after; Brier 0.187, 0.182; `calibrate_season.py 30`:
+favorite won 72.4% before, 73.6% after; Brier 0.187, 0.182; `calibrate_season.py 30`:
 74.0%, MAE 12.5, slope 1.01). One cost: sim players who never appear in a real box score
 but play 5+ sim games rose from 170 to 188, because coverage tackles give backups a stat
 line. Play-log fingerprint 5368e4b5cb876edc.
@@ -459,14 +459,14 @@ line. Play-log fingerprint 5368e4b5cb876edc.
 short of the opponent's 40 or on fourth-and-1 or 2, and trying 60% of 50+ yard field goals
 instead of 45%, gave 1.7 tries a game at a 52% conversion rate, points +0.7 a game in
 `calibrate.py league 400` (+0.3 over full seasons), and every benchmark in band. It cost
-picks in both checks: 20 seasons through week 8, favourite won 73.6% to 71.4% and Brier
+picks in both checks: 20 seasons through week 8, favorite won 73.6% to 71.4% and Brier
 0.182 to 0.187; `calibrate_season.py 30` 74.0% to 71.9%. More fourth-down tries add variance,
 which helps underdogs. (A version applying the multiplier everywhere took the tries from
 field-goal range: 1.8 tries but 1.25 field goals.)
 
 Retested later on 40 seasons, once the run-to-run noise had been measured (about +-0.004
-Brier and 2-3 points of favourite-won rate on 20 seasons) and on top of the margin-corrected
-fourth-down tendencies: favourite won 75.0% to 75.9%, Brier 0.173 to 0.171, wins correlation
+Brier and 2-3 points of favorite-won rate on 20 seasons) and on top of the margin-corrected
+fourth-down tendencies: favorite won 75.0% to 75.9%, Brier 0.173 to 0.171, wins correlation
 0.656 to 0.667; `calibrate_season.py 30` 71.9% both, MAE 12.7 to 12.8. League (400 games):
 1.6 tries a game at 53% (real 2.1 at 53%), combined points 52.0 (real 51.7), field goals 1.4.
 So it is in (`FOURTH_DOWN_AGGRESSION` 1.8, `FG_LONG_ATTEMPT_CHANCE` 0.6). Play-log fingerprint
@@ -490,7 +490,7 @@ receivers miss fewer games than real ones. Not changed here.
 15-17 real, and every rank of the sack leaderboard runs 10-19% high (team sacks 2.25 a game
 against 2.0), so it is volume, not who gets the credit. The review's `SACK_BASE` 0.050 to
 0.046 with `SACK_PER_QB_POINT` 0.0004 to 0.0002 brought ten-sack players to 19, but cost
-picks (20 seasons: favourite won 74.0% to 71.8%, Brier 0.182 to 0.184); the base cut alone
+picks (20 seasons: favorite won 74.0% to 71.8%, Brier 0.182 to 0.184); the base cut alone
 was worse (Brier 0.190, real-versus-sim wins correlation 0.66 to 0.61). The sack rate is
 one of the places where line and QB ratings decide games, so it stays.
 
@@ -499,7 +499,7 @@ ten-sack players over 4 full seasons, real 15-17). The other complaint, team sac
 narrow (UTEP is sacked 5.8 times a game; no rating gap took the sim past about 12% of
 dropbacks), was retested on 40 seasons with a steeper line slope (`SACK_PER_LINE_POINT`
 0.0015 to 0.0022): team sacks taken spread only 0.55 to 0.62 a game (real 0.92), the
-real-versus-sim correlation stayed 0.32, and picks fell (favourite won 75.9% to 73.1%, Brier
+real-versus-sim correlation stayed 0.32, and picks fell (favorite won 75.9% to 73.1%, Brier
 0.171 to 0.176; `calibrate_season` slope 0.94 to 0.92). Left out: the spread is a rating
 question (pass rush and protection cards), not the slope.
 
@@ -523,7 +523,7 @@ against 9.3 real).
 League (400 games): yards per carry 4.05 to 4.2 (real 4.2), points +0.5 a team-game. Full
 seasons: carries leaders' gap 9% to 4%, rushing leaders 5% to 4%. Game picks are mixed: the
 Brier score is the best of this round (20 seasons through week 8: 0.182 to 0.181) and the
-margin error held (`calibrate_season.py 30`: MAE 12.4, slope 1.00), but the favourite won
+margin error held (`calibrate_season.py 30`: MAE 12.4, slope 1.00), but the favorite won
 less often (73.9% to 71.1%; `calibrate_season` 74.5% to 72.2%; the October 20 baseline before
 this round was 72.7% in both). The share fix alone was worse on every measure (Brier 0.185),
 so the two go together. Rebuild the teams after pulling this (`python -m teamdata.build_teams`).
@@ -538,7 +538,7 @@ Navy 28%, Army 33%, Air Force 35% over 30 games each. The academies' games are n
 better (Brier over their 16 games through week 8 0.170 to 0.150). The other 409 games
 changed only through what carries over inside a season (opponents' injuries, morale and
 form), and that alone moved their Brier 0.172 to 0.176: a direct measure of the run-to-run
-noise in these checks (about +-0.004 Brier, 2-3 points of favourite-won rate).
+noise in these checks (about +-0.004 Brier, 2-3 points of favorite-won rate).
 Play-log fingerprint 99510529d1e1827c.
 
 **Blitzing defensive backs.** `blitz_rate` was written into every team but read nowhere,
@@ -550,7 +550,7 @@ is unchanged (checked on 40 games). Play-log fingerprint 0b3de0274cc130a7.
 
 **3-3-5 fronts play three safeties** (Wake Forest, Troy, Tulsa and UAB do; `personnel.FRONTS`
 had three corners and two safeties). Tested together with a 75/25 split between the second
-and third running back (`BACKUP_RB_ROTATION` 0.40 to 0.20): picks held (20 seasons: favourite
+and third running back (`BACKUP_RB_ROTATION` 0.40 to 0.20): picks held (20 seasons: favorite
 won 69.8% to 72.0%, Brier 0.185 to 0.183; `calibrate_season.py 30` 72.2% to 70.9%, MAE 12.4
 to 12.6), but the backs' carries matched real box scores worse (average miss 15.8 to 18.0
 carries), so the running-back split was left out. Play-log fingerprint 33a30b0570a78958.
@@ -615,7 +615,7 @@ Controlled test (Ohio State against Penn State, 150 games each, only attributes 
 | Julian Sayin deep 50, short 99 | 54.3% | 85.5% | |
 | Jeremiah Smith contested catches and leaping 20 | 50.3% | | 73.1% to 64.6% |
 
-Against main before it (same checks): 20 seasons through week 8, favourite won 73.3% (70.6%),
+Against main before it (same checks): 20 seasons through week 8, favorite won 73.3% (70.6%),
 Brier 0.181 (0.179); forward test MAE 12.5 (12.6), correlation 0.62 (0.60), straight up
 71.6% (73.7%, eight games); full seasons, receiving leaders 7% over real (10%), receptions 2%
 (6%), passing leaders 4% (3%). Play-log fingerprint 2fe2a3cb1e3a5d74.
@@ -636,7 +636,7 @@ Brier 0.181 (0.179); forward test MAE 12.5 (12.6), correlation 0.62 (0.60), stra
   (3% to 7% of dropbacks); a matched line holds it at 3%.
 - **Turnovers and the body (phase 5).** Fumbles from Ball Security against the tacklers' Hit
   Power; interceptions more likely on deep (x1.65) and hurried throws and against ball-hawking
-  coverage; Durability scales injuries and Football IQ penalties. Level effects are centred
+  coverage; Durability scales injuries and Football IQ penalties. Level effects are centered
   on the FBS starter average (`ATTR_LEAGUE_AVG` 46).
 - **Traits (phase 6).** About 30 traits change games a little, per tier (`TRAIT_FX`): Pinpoint
   and Timing Passer (accuracy), Unflappable (pressure), Jump-Ball Winner, Glue Hands, Double
@@ -644,12 +644,12 @@ Brier 0.181 (0.179); forward test MAE 12.5 (12.6), correlation 0.62 (0.60), stra
   the rushers' traits, Sure Tackler, Heavy Hitter, Iron Horse (stamina), Long Range and
   Automatic (kicking), Crowd Favorite and Road Warrior (venue).
 
-The effects that reward absolute levels, and the traits, mostly favour teams that are
+The effects that reward absolute levels, and the traits, mostly favor teams that are
 already better, so they widened margins: the forward test's slope fell to 0.78. They were
 scaled down (level effects to 60%, traits to 30% of the first design) and home field to 1.5
 rating points. Forward test against main before these phases: straight up 73.5% (71.6%),
 correlation 0.62 (0.62), MAE 12.6 (12.5), slope 0.87 (0.94). 20 seasons through week 8:
-records spread more like real ones (win SD 1.05 against 0.97, real 1.50) and favourites in the
+records spread more like real ones (win SD 1.05 against 0.97, real 1.50) and favorites in the
 6-10 rating gap win 87.6% (82.9%, real 92.5%).
 
 ## Diminishing returns at the top (October 21)
@@ -673,8 +673,8 @@ position mean) widened both tiers, because Power 4 starters straddle the positio
 
 Forward test (`calibrate_season.py 30`): slope 0.86 to 0.98, picks 72.2% to 72.7%, Brier 0.184 to 0.177, MAE
 12.7 to 12.6; Power 4 v Power 4 slope 0.70 to 0.82, Group of Five games unchanged. 20 seasons under the same
-tree: slope 0.82 to 0.90, Brier 0.186 to 0.179, MAE 13.0 to 12.7, wins correlation 0.65 to 0.66, favourite
-won 72.2% to 73.5%. The two confidence rates the report tracks fell 1-3 points (favourite at rating gap 6-10
+tree: slope 0.82 to 0.90, Brier 0.186 to 0.179, MAE 13.0 to 12.7, wins correlation 0.65 to 0.66, favorite
+won 72.2% to 73.5%. The two confidence rates the report tracks fell 1-3 points (favorite at rating gap 6-10
 85.0% to 81.9%, Power 4 over Group of Five 93.1% to 92.3%; real 91.4% and 96.2%, n 70 and 78).
 
 Two findings from the same review. The report's "records bunch toward .500" (win SD across teams 1.03
@@ -699,7 +699,7 @@ rate +0.067 against -0.007. Real interceptions barely follow the ratings.
 margin weight beyond the overall 0.155 to 0.086; completion per QB point 0.20 to 0.12; interceptions per
 QB point -0.055 to -0.022; league completion 63.7% to 64.3% (real 62.9%), interceptions 2.37 to 2.34 per
 100 attempts (real 2.30). Forward test (`calibrate_season.py 30`): picks 72.7% to 73.2%, Brier 0.177 to
-0.174, MAE 12.6 to 12.5, slope 0.98 to 1.09. 20 seasons: favourite won 71.4% to 73.2%, slope 0.92 to 0.985,
+0.174, MAE 12.6 to 12.5, slope 0.98 to 1.09. 20 seasons: favorite won 71.4% to 73.2%, slope 0.92 to 0.985,
 Brier 0.178 to 0.180, correlation 0.664 to 0.656, wins correlation 0.663 to 0.650. Game prediction is
 unchanged within the tests' noise; the gain is in the passing stats. The cost: completion % spreads less
 across teams (SD 4.3 to 3.1; real about 4.5 once a 7-game sample's noise is taken out).
@@ -1057,7 +1057,7 @@ offered. An FCS date can go to any other FCS team (they always come to you). Tra
 `state["schedule_changes"]`.
 
 **A player keeps his seasons** (`offseason.record_seasons`, run when the offseason opens): every
-player's season line and honours go onto his entry in the career's league (`c["hist"]`, the last
+player's season line and honors go onto his entry in the career's league (`c["hist"]`, the last
 eight), follow him through the rollover and a transfer, and his page lists them under "Season by
 season" with the current season as the last row and a career line (totals, longs as the best). The Office's program card and the programs table
 show a standing in words (a tag: blue blood, power, solid, Group of 5, bottom), with no rating
@@ -1092,11 +1092,11 @@ pane: the pitch as a dropdown (his known priorities first, each with your progra
 NIL points with his ask for an offer; a call or in-home visit plays as a scene in the pane. Under
 the head, a strip of four cells (your chance, his list, NIL, scouted), the tags you know, and
 sub-tabs: Overview, Scouting, Profile, History. On a phone the pane is a full-screen dialog and
-the menu a bottom sheet. Every standing word (Yours, Lost, Favourite, In it, Long shot, Not
+the menu a bottom sheet. Every standing word (Yours, Lost, Favorite, In it, Long shot, Not
 offered) is one ladder read from his list, with your offer as the qualifier
 (`standingOf` in `web/recruiting.js`), so the list, the pane and the Office agree. His list is
 drawn as a race, one lane a school, a school without an offer in as a hollow pill, and a map of
-the US shows your nine areas and where the board's prospects live. Every colour is a theme variable, so the screens work
+the US shows your nine areas and where the board's prospects live. Every color is a theme variable, so the screens work
 in the light and the dark theme. One set of spacing rules holds on every Coach Career screen:
 button rows keep 8 px between buttons, tag rows 6 px, cards 12 px of padding, and buttons stand
 36 px tall (44 px on a phone), segment controls and the depth chart's compact controls aside
@@ -1106,7 +1106,7 @@ button rows keep 8 px between buttons, tag rows 6 px, cards 12 px of padding, an
 softmax of his interest in it (`exp(interest / 3)`), against the field: the schools not yet in
 it, worth 14 interest points at week 0, 10 at week 8 and 4 by signing day. The board shows your
 chance as a range that narrows as signing day nears (plus or minus 25 points at week 0, 12 at
-week 8, 4 from week 13), labelled Early read, Taking shape or Solid read. Class rank weighs each
+week 8, 4 from week 13), labeled Early read, Taking shape or Solid read. Class rank weighs each
 class's best commitments most (each counts 0.85 times the one before).
 
 **Interested in you** (a Prospects filter and sort): the 15% of the class your school appeals
@@ -1377,7 +1377,7 @@ coach; a recruiter moves on 12% of the time. Each coordinator opening offers the
 five (why each is available, his last job, his stops and age); a recruiter's opening five
 position coaches. At the Staff step you can also let any of your own coaches go and hire from
 the market, and the screen lists the market's top 40. Auto hires the best. Your coordinators' evaluation
-moves with their unit's year (a top-third offence or defence by points +2, a bottom third −2)
+moves with their unit's year (a top-third offense or defense by points +2, a bottom third −2)
 and every recruiter's recruiting with the class you signed (top 25 +2, outside the top 70 −1),
 plus a point of noise.
 
@@ -1516,7 +1516,7 @@ scored on 7-8 with `calibrate_players.py --from-week 6`, then 40 seasons through
   position does not use to 25-85 and gives a core skill of an EA-60+ player a floor of 20
   (`CORE_SKILLS`, `OFF_SKILL_RANGE`, `CORE_FLOOR`; `BUILD_NO_CLAMP=1` builds without it).
 
-40 seasons through week 8 against the committed data: favourite won 72.7% to 73.1%, Brier
+40 seasons through week 8 against the committed data: favorite won 72.7% to 73.1%, Brier
 0.177 to 0.176, real-versus-sim receiving yards correlation 0.515 to 0.537, sim-only players
 178 to 171; `calibrate_season.py 30` 70.4%, MAE 12.5, slope 1.00. The lead-back splits in
 `data/real_adjustments.json` are the ones from before this change: rerunning the tool with
@@ -1557,7 +1557,7 @@ refreshed from all eight weeks of box scores (they were from the first five or s
   limit (Sac State 99). The tries expected from the margin come off first
   (`FOURTH_PER_MARGIN`).
 
-Tested together with the added players (40 seasons through week 8): favourite won 73.1% to
+Tested together with the added players (40 seasons through week 8): favorite won 73.1% to
 71.9% and Brier 0.176 to 0.177 (both inside the noise), real-versus-sim wins correlation
 0.639 to 0.652; `calibrate_season.py 30` 70.4% to 72.9%, MAE 12.5, slope 0.99. Play-log
 fingerprint e8d02e170713db66.
@@ -1567,7 +1567,7 @@ board (`PASS_LEAN` 0.016 now comes off every run chance), and plays per game var
 little from team to team (`TEMPO_EFFECT` 0.60 to 0.80). Over 40 seasons: pass-share bias
 -1.2 to +0.2 points (error 2.19 to 2.06), plays per game across teams spread 3.5 to 4.1 (real
 5.1, about 4.4 once the sampling noise of seven games is taken out) and correlation 0.76 to
-0.81; favourite won 71.9% to 73.3%, Brier 0.177 to 0.176. `calibrate_season.py 30`: 72.2%,
+0.81; favorite won 71.9% to 73.3%, Brier 0.177 to 0.176. `calibrate_season.py 30`: 72.2%,
 MAE 12.7, slope 0.94 (0.99 before: faster teams run up wider margins). Play-log fingerprint
 276d229ae94c1256.
 
@@ -1678,7 +1678,7 @@ selection** or **Sim to the end**. The week strip lets you look back at any week
   final CFP ranking and AP poll, then your team's record, conference finish, postseason
   result, scoring, longest win streak, best win, worst loss, biggest win and closest loss,
   your statistical leaders (passer, rusher, receiver, tackler, sacks, interceptions,
-  kicker, returner) totalled from the box scores of your games, the national leaders in
+  kicker, returner) totaled from the box scores of your games, the national leaders in
   passing, rushing and receiving yards, tackles, sacks, interceptions and kicker scoring
   from the season-long stats of every simulated game, and the biggest surprise and
   disappointment of the season: each FBS team's expectation is its preseason AP rank, or
@@ -1769,15 +1769,15 @@ If a progress check collides with the sim thread changing the season, it answers
 the last good record; the page retries a missed check up to five times, and if the
 season is gone it closes the season and says so instead of waiting forever.
 
-### Team colours
+### Team colors
 
-While a season is open the page wears the team's colours. The accent (buttons, week
+While a season is open the page wears the team's colors. The accent (buttons, week
 chips, the progress bar, your row in tables) is the first of the team's primary,
-secondary and accent colours that reads against the page in the current light or dark
+secondary and accent colors that reads against the page in the current light or dark
 theme (contrast at least 2.6 to the background and panels); if none does, the primary is
 pushed toward white or black until it does. The ink on the accent is black or white,
 whichever contrasts more. The top bar and the season header's title band are solid in
-the primary with a line of the secondary, their buttons take the first other team colour
+the primary with a line of the secondary, their buttons take the first other team color
 that reads against the primary, the page background is washed in the primary at the top,
 and panel headings and the active tab take the accent. Michigan is maize on dark and navy on light, Penn State is
 navy on light and white on dark, Oregon is green on light and yellow on dark, and so on;
@@ -1885,8 +1885,8 @@ and the real results it lands within 1.07 spots per team of the next real poll o
 unchanged"; on the October 18, 2026 poll it was 1.68 with all ten of the real top ten.
 In a simulated season a top-5 team drops 6 spots after a loss to a ranked team and 8 to
 an unranked one, against 5 and 7 in real polls, and about 3 teams a week turn over
-(`tests/test_poll_behaviour.py`). In "rest of season" mode the real weeks show the real
-polls with their real vote points, so the first modelled poll starts from the real one.
+(`tests/test_poll_behavior.py`). In "rest of season" mode the real weeks show the real
+polls with their real vote points, so the first modeled poll starts from the real one.
 The season-long scores still run underneath for the committee model.
 `python tools/ap_forecast.py predict` freezes a forecast of the next real poll and
 `score NN` compares it once the poll is out; `python tools/fetch_polls.py --others` adds
@@ -1959,7 +1959,7 @@ every ballot. One difference from real polls: late in a simulated season the vot
 agree more, so 3 to 5 teams receive votes outside the Top 25 where real polls list 10 to 15.
 
 **How the poll behaves over a season (October 20 review).** Ten simulated 2026 seasons
-against the real 2026 poll flagged three behaviours: narrow wins were never punished, teams
+against the real 2026 poll flagged three behaviors: narrow wins were never punished, teams
 ranked 16-25 always fell out after a loss, and teams with three or more losses stayed
 ranked. `python tools/backtest_ballots.py season` now measures each of them on the real
 2014-2025 polls and on the model rolled through the same seasons (seeded voters, real
@@ -1994,7 +1994,7 @@ results, never reset), so one season's small samples do not decide it:
 
 The new terms live in `polls.BALLOT_PARAMS` (all off by default) and the fitted values in
 `data/poll_params.json` under "ballots". `python tools/backtest_ballots.py fit` scores the
-season replay plus 0.05 x the gap to the real behaviours above (`BEHAVIOURS`), with the
+season replay plus 0.05 x the gap to the real behaviors above (`BEHAVIORS`), with the
 one-week-ahead error held within 0.01 of the earlier fit (train 1.013) and the season replay
 no worse than it was (3.114); it starts from the best of a few starting points
 (`FIT_STARTS`), since a coordinate search cannot leave a switched-off term. Result, with
@@ -2006,7 +2006,7 @@ no worse than it was (3.114); it starts from the best of a few starting points
 | One week ahead, 2024-2025 (held out) | 0.985 | 0.963 |
 | Season replay, 2014-2023 | 3.114 | 2.965 |
 | Season replay, 2024-2025 | 2.841 | 2.699 |
-| Behaviour gap, 2024-2025 (units) | 6.30 | 4.29 |
+| Behavior gap, 2024-2025 (units) | 6.30 | 4.29 |
 
 On 20 simulated 2026 seasons (weeks 1-8): teams with 3+ losses in the week-8 poll 1.10 to
 0.80 a season, top-10 loser drop 6.38 to 6.59 spots (real 6.7), ranked loser drop 7.19 to
@@ -2173,7 +2173,7 @@ applies it, so with the setting off a game is bit-for-bit what it was). Between 
 every team carries a mood from its results and every player a form from how each game
 compared with his season so far; both fade 15% a week. A team's mood moves by half of
 (result minus its pre-game win chance, from the rating gap and home field) plus 0.05 for
-a 21-point result, so a heavy favourite's win or an FCS win adds little and an upset
+a 21-point result, so a heavy favorite's win or an FCS win adds little and an upset
 moves both teams a lot (`MORALE_RESULT`, `MORALE_BLOWOUT`). Flat steps of 0.25 a result
 used to pin good teams at +1 by midseason: in 5 simulated seasons at week 8, 50 of 690
 team values sat at +1 and Notre Dame was at +1 in 4 of 5; now 7 of 690, Notre Dame
@@ -2181,7 +2181,7 @@ team values sat at +1 and Notre Dame was at +1 in 4 of 5; now 7 of 690, Notre Da
 the season average, so later games read below par) and takes off the league's running
 mean (`MORALE_Z_TRACK`): form averaged -0.04 with 56% of values negative, now -0.004 and
 51%, with hot and cold streaks equally common (8% each). Game picks did not move
-(20 seasons through week 8: favourite won 72.7% before, 72.4% after; Brier 0.186, 0.187).
+(20 seasons through week 8: favorite won 72.7% before, 72.4% after; Brier 0.186, 0.187).
 Entering a game, a player's ratings scale by up to 6% for his form and 3% for the team's
 mood. The player card shows the boosts as green ▲ and red ▼ arrows next to each rating,
 with a 🔥 Hot streak or ❄ Cold streak tag and the team's mood; the depth chart marks hot
@@ -2382,7 +2382,7 @@ Later, with the depth-chart fix and the carrier running against the defense's pu
 lead backs ran hot over full seasons (54 thousand-yard rushers against 44-51 real, leaders
 8% above real at ranks 1-50). The workhorse end of the return chance went from 1.0 to 0.6 a
 snap (`RB_LEAD_RETURN_CHANCE` (0.07, 0.6)): over 4 full seasons 47 thousand-yard rushers and
-the rushing leaders 5% off; game picks held (20 seasons through week 8: favourite won 73.6%
+the rushing leaders 5% off; game picks held (20 seasons through week 8: favorite won 73.6%
 to 74.0%, Brier 0.182 both; real-versus-sim wins correlation 0.62 to 0.66;
 `calibrate_season.py 30` 74.5%, MAE 12.4, slope 1.02).
 

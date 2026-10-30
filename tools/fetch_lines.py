@@ -44,7 +44,7 @@ def _num(text: str) -> float | None:
 
 def parse_board(html: str) -> list[dict]:
     """Every event card on a page: teams, kickoff, score if final, spread and total.
-    The spread is the home team's number (negative = home favoured)."""
+    The spread is the home team's number (negative = home favored)."""
     starts = [m.start() for m in re.finditer(r'<div[^>]*class="event-card"', html)]
     out = []
     for a, b in zip(starts, starts[1:] + [len(html)]):

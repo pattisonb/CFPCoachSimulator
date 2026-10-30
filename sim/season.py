@@ -1,7 +1,7 @@
 """Week-by-week season simulation with polls, conference championships, the CFP bracket
 and the playoff. No injuries.
 
-A season is a JSON-serialisable dict (data/seasons/<id>.json) that advances one week at
+A season is a JSON-serializable dict (data/seasons/<id>.json) that advances one week at
 a time. Weeks 1-13 are the regular season (2026 calendar: week 13 ends Nov 28), week 14
 is conference championship week, week 15 holds the games scheduled after it (Army-Navy)
 and the playoff selection, then weeks 16-19 are the playoff rounds (first round at the
@@ -2519,7 +2519,7 @@ def _preview_prediction(state: dict, g: dict, sims: int) -> dict:
 
     avg = {s: sum(v) / sims for s, v in pts.items()}
     # Win odds: the simulated win rate (with a one-game prior so 20 of 20 is not "certain")
-    # blended with a margin model (a 16-point favourite wins about 84% of the time in
+    # blended with a margin model (a 16-point favorite wins about 84% of the time in
     # college football), and never below 2% or above 98%: upsets happen.
     p_sims = (wins + 1) / (sims + 2)
     p_margin = 0.5 * (1 + math.erf((avg["home"] - avg["away"]) / (16 * math.sqrt(2))))
@@ -3132,7 +3132,7 @@ def _update_morale(state: dict, g: dict, lines: dict, before: dict[str, int]) ->
         won = (margin > 0) if side == "home" else (margin < 0)
         own_margin = margin if side == "home" else -margin
         expected = p_home if side == "home" else 1.0 - p_home
-        # the result against what was expected: a heavy favourite's win (or an FCS win) adds
+        # the result against what was expected: a heavy favorite's win (or an FCS win) adds
         # little, an upset moves both teams a lot (this replaced flat +-0.25 steps, which
         # left good teams pinned at +1 by midseason)
         delta = MORALE_RESULT * ((1.0 if won else 0.0) - expected)

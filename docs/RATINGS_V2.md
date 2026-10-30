@@ -2,7 +2,7 @@
 
 Status (October 20, 2026): agreed. Brian's answers to the open questions: keep the house scale,
 roll out phase by phase, build traits in this revamp. Phase 1 is built: `teamdata/ratings.py` holds the
-catalogue; build_teams writes each player's attributes (house scale), height in inches,
+catalog; build_teams writes each player's attributes (house scale), height in inches,
 play style and traits; the player card, its details view and god mode use them; edits move
 the engine composites through `ratings.COMPOSITES`. The sim is unchanged (same play-log
 fingerprint). Phase 2 (passing by depth, man and zone, contested catches) is built; see
@@ -43,7 +43,7 @@ game onto the new attributes and has to pass the same checks as today's tuning:
 - full seasons against 2023-2025;
 - the forward test.
 
-## Attribute catalogue
+## Attribute catalog
 
 Our name, what it does in the sim, and the EA source rating(s) it is built from.
 

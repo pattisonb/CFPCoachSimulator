@@ -4,7 +4,7 @@
     python tools/dev_server.py [--port N] [--host H]
 
 The dispatcher has no threads: an advance or a game day only sets its job running. Here one
-lock serialises every dispatcher call, and a background thread plays the running job a step
+lock serializes every dispatcher call, and a background thread plays the running job a step
 (one week, or your game) at a time, taking the lock per step. The season status is read
 without the lock, so the page's progress poll sees a week's games as they are played.
 """

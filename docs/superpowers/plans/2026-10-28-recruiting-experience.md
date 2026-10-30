@@ -17,7 +17,7 @@
 - Gem: read low end on potential ≥ 80 and (stars ≤ 3 or rank > `GEM_RANK = 300`). Bust risk: read high end on potential < 50 and stars ≥ 4. Both need `FIND_LOOKS = 2` looks. Never read from the truth.
 - Scenes: only `call` and `hc_visit` open one; `message` stays one tap. Points, backfire (`BACKFIRE`, `BACKFIRE_COST`), cooled, `DIMINISH`, `WEEKLY_ONCE`, `HC_VISIT_GAP` are unchanged. `CUE_TWO_SIDED = 0.5`. An abandoned scene adds no points and clears at the week step.
 - CPU parity: `auto_recruit`, `_auto_week`, `best_pitch`, `CALL_REVEAL` keep working on the one-shot `_act(..., pitch=...)` path. The one-shot call with a pitch stays valid for the player.
-- House copy: word scales, never a number out of 100; costs on the controls; every control says what it does or why it is off. Colours from theme variables so both themes read.
+- House copy: word scales, never a number out of 100; costs on the controls; every control says what it does or why it is off. Colors from theme variables so both themes read.
 - The sim golden test is re-recorded once (Task 3) and must stay identical afterwards.
 - Tests run as scripts: `python tests/test_x.py`; the whole suite with `python tests/run_all.py`.
 
@@ -26,7 +26,7 @@
 1. A career saved before this change (no `generational`, no `scenes`, no stage snapshot) loads, draws its generational tag, shows no stage move for one week, and never errors on the board. Test in Task 3 and Task 5.
 2. A scene left open when the week advances, or when Auto-recruit turns on, must not double-spend hours or leave a dangling "Finish the call" after the week step. Test in Task 6.
 3. A prospect in the Committed column who is committed elsewhere must still show his flip odds and allow Message, Call and Visit per today's rules; one committed to you shows no actions. Test in Task 8.
-4. The map must place a Texas prospect inside Texas and an Alaska or Hawaii prospect in the inset, and a hometown without coordinates must fall back to his state's centre, never off the canvas. Test in Task 7 and Task 9.
+4. The map must place a Texas prospect inside Texas and an Alaska or Hawaii prospect in the inset, and a hometown without coordinates must fall back to his state's center, never off the canvas. Test in Task 7 and Task 9.
 5. On a 400px phone the detail pane must be reachable right after a tap, and the pipeline must never scroll the page sideways. Test in Task 8 and Task 11.
 
 ---
@@ -78,7 +78,7 @@ git commit -m "Scouting grades read in words: All-American, Elite, Strong, Solid
 
 **Files:**
 - Modify: `web/recruiting.js:336-343` (`scoutLine`), `:620-624` (Prospects potential column), `:751-780` (profile grade cells and the tooltip legend), the Staff screen's explanatory copy in `renderStaff`
-- Modify: `web/styles.css` (a `.go-word` class per tier for colour)
+- Modify: `web/styles.css` (a `.go-word` class per tier for color)
 - Test: `tests/test_ux_sweep.py`
 
 **Interfaces:**
@@ -101,7 +101,7 @@ assert "C+ starts at 50" not in page.inner_text(".go-profile"), "the letter lege
 Run: `python tests/test_ux_sweep.py`
 Expected: FAIL on the letter assertion (grades still read like "B- to A").
 
-- [ ] **Step 3: Implement**: `scoutLine` and the profile cells render `wordTag` per end of the range joined with " to " (one tag when both ends match). Replace the tooltip legend sentence with: "on the game's scale (50 is the middle Power 4 starter: Solid from 50, Strong from 65, Elite from 80, All-American from 90)". The Prospects column reads `Potential Solid to Strong`. Add `.go-word` styles: a pill with the tier colours from theme tokens (`--good` for All-American and Elite, text colour for Strong and Solid, `--muted` for Fair and Weak).
+- [ ] **Step 3: Implement**: `scoutLine` and the profile cells render `wordTag` per end of the range joined with " to " (one tag when both ends match). Replace the tooltip legend sentence with: "on the game's scale (50 is the middle Power 4 starter: Solid from 50, Strong from 65, Elite from 80, All-American from 90)". The Prospects column reads `Potential Solid to Strong`. Add `.go-word` styles: a pill with the tier colors from theme tokens (`--good` for All-American and Elite, text color for Strong and Solid, `--muted` for Fair and Weak).
 
 - [ ] **Step 4: Run to verify it passes**
 
@@ -289,7 +289,7 @@ git commit -m "The week step snapshots each board prospect's stage; the view car
 - Test: `tests/test_recruiting.py`, `tests/test_recruiting_api.py`
 
 **Interfaces:**
-- Produces in `scenes.py`: `CUE_TWO_SIDED = 0.5`; `open_scene(state, slug, pid, action, week) -> dict` returning `{"id": str, "action": str, "week": int, "lines": list[str], "cue": {"topics": list[str], "text": str}, "ask": dict}` where `cue.topics` has one true unrevealed priority or two topics (one true, one not) and the `id` is `f"{action}-{pid}-{week}"`; `reaction(state, slug, pid, action, pitch, p) -> dict` returning `{"kind": "hit" | "polite" | "quiet", "text": str}`; `LINES: dict[str, dict[str, list[str]]]` keyed `topic -> {"cue", "hit", "polite", "quiet"}` with at least three variants each, templated with `{name}`, `{first}`, `{town}`, `{state}`, `{school}`, `{position}`, `{role}` (from `strengths()["playing_time"]`: "start", "compete", "wait"), `{record}`; two-sided cue lines under `LINES["_two_sided"]` with `{a}` and `{b}` topic phrases; one `COLOUR` list and one `FAMILY` list for the in-home visit.
+- Produces in `scenes.py`: `CUE_TWO_SIDED = 0.5`; `open_scene(state, slug, pid, action, week) -> dict` returning `{"id": str, "action": str, "week": int, "lines": list[str], "cue": {"topics": list[str], "text": str}, "ask": dict}` where `cue.topics` has one true unrevealed priority or two topics (one true, one not) and the `id` is `f"{action}-{pid}-{week}"`; `reaction(state, slug, pid, action, pitch, p) -> dict` returning `{"kind": "hit" | "polite" | "quiet", "text": str}`; `LINES: dict[str, dict[str, list[str]]]` keyed `topic -> {"cue", "hit", "polite", "quiet"}` with at least three variants each, templated with `{name}`, `{first}`, `{town}`, `{state}`, `{school}`, `{position}`, `{role}` (from `strengths()["playing_time"]`: "start", "compete", "wait"), `{record}`; two-sided cue lines under `LINES["_two_sided"]` with `{a}` and `{b}` topic phrases; one `COLOR` list and one `FAMILY` list for the in-home visit.
 - Produces in `recruiting.py`: `_act` with `action in ("call", "hc_visit") and pitch is None` opens a scene (spends hours, marks `WEEKLY_ONCE`/`hc_week`/`last_contact`, bumps nothing else, stores `rc["scenes"][slug][pid]`, returns the scene via `act()["scene"]`); `action == "pitch"` with `scene` id and `pitch` applies today's points for the stored action through `_contact_points`, runs `_reveal` on the pitched topic when it is a priority (`hit` or `quiet`), increments `contact["n"]`, clears the scene and returns `act()["reaction"]`; `_flush` drops every open scene; `clear_scenes(state, slug) -> None`. `act(state, slug, pid, action, pitch=None, nil=0, scene=None) -> dict`.
 - `RecruitRequest.scene: Optional[str] = None`.
 
@@ -354,7 +354,7 @@ sc = recruiting.act(st, "ohio-state", q, "hc_visit")["scene"]
 assert sc["ask"].get("exact") == recruiting.ask_from(st, "ohio-state", q)
 ```
 
-Note the CPU line above: `_act(..., "call", None, 0)` from a non-player school must keep today's coin-flip behaviour, so `_act` opens a scene only when `slug == state["team"]`; the AI path with `pitch=None` is unchanged.
+Note the CPU line above: `_act(..., "call", None, 0)` from a non-player school must keep today's coin-flip behavior, so `_act` opens a scene only when `slug == state["team"]`; the AI path with `pitch=None` is unchanged.
 
 In `tests/test_recruiting_api.py` add: `POST /recruit {pid, action: "call"}` returns 200 with `scene.id`; `POST /recruit {pid, action: "pitch", scene, pitch}` returns `reaction.kind`; `POST /settings {auto_recruit: "week"}` after an open scene leaves `GET /recruiting` rows with `scene: null`.
 
@@ -390,16 +390,16 @@ git commit -m "Calls and in-home visits open a scene: his lines and a cue, then 
 
 **Interfaces:**
 - Produces: `window.US_STATES = {viewBox: "0 0 975 610", paths: {AL: "M…", …, DC: "M…"}}` (51 keys, postal codes); `window.USMap.project([lat, lon]) -> [x, y] | null` (Albers USA composite below; null outside all three regions); `window.USMap.render(opts) -> SVGElement` where `opts = {areas: {name: [states]}, staffed: {name: staff_name}, dots: [{id, home, tone, ring, big, label}], selectedState, onDot(id), onState(code), teamColor}`; `window.USMap.centroid(code) -> [x, y]`.
-- The tool reads `us-atlas@3.0.1/states-10m.json` (ISC licence; Census data) from a local path given on the command line, decodes the TopoJSON arcs (delta-decoded, `transform.scale` and `translate`), projects every ring with the same Albers USA, drops Puerto Rico and the territories (FIPS 60, 66, 69, 72, 78), maps FIPS to postal codes, rounds to one decimal and writes `web/us-states.js`.
+- The tool reads `us-atlas@3.0.1/states-10m.json` (ISC license; Census data) from a local path given on the command line, decodes the TopoJSON arcs (delta-decoded, `transform.scale` and `translate`), projects every ring with the same Albers USA, drops Puerto Rico and the territories (FIPS 60, 66, 69, 72, 78), maps FIPS to postal codes, rounds to one decimal and writes `web/us-states.js`.
 
 Albers USA (port of d3-geo's `geoAlbersUsa`, for a 975 × 610 canvas, `k = 1070`):
 
 ```
-lower48: conic equal area, parallels 29.5° and 45.5°, rotate longitude +96°, centre (-0.6°, 38.7°), scale k, translate (487.5, 305)
-alaska:  conic equal area, parallels 55° and 65°, rotate +154°, centre (-2°, 58.5°), scale 0.35 k, translate (487.5 - 0.307 k, 305 + 0.201 k)
-hawaii:  conic equal area, parallels 8° and 18°, rotate +157°, centre (-3°, 19.9°), scale k, translate (487.5 - 0.205 k, 305 + 0.212 k)
+lower48: conic equal area, parallels 29.5° and 45.5°, rotate longitude +96°, center (-0.6°, 38.7°), scale k, translate (487.5, 305)
+alaska:  conic equal area, parallels 55° and 65°, rotate +154°, center (-2°, 58.5°), scale 0.35 k, translate (487.5 - 0.307 k, 305 + 0.201 k)
+hawaii:  conic equal area, parallels 8° and 18°, rotate +157°, center (-3°, 19.9°), scale k, translate (487.5 - 0.205 k, 305 + 0.212 k)
 conic equal area (φ0, φ1): n = (sin φ0 + sin φ1) / 2; C = cos²φ0 + 2 n sin φ0; ρ(φ) = sqrt(C - 2 n sin φ) / n;
-  x = ρ sin(n λ), y = ρ0 - ρ cos(n λ) with ρ0 = ρ(φc), λ = rotated longitude in radians minus the centre's, output scaled by `scale` and shifted by `translate`
+  x = ρ sin(n λ), y = ρ0 - ρ cos(n λ) with ρ0 = ρ(φc), λ = rotated longitude in radians minus the center's, output scaled by `scale` and shifted by `translate`
 region pick: Alaska when lat ≥ 50 and lon < -130 (and not Hawaii), Hawaii when 18 ≤ lat ≤ 23 and -161 ≤ lon ≤ -154, else lower 48
 ```
 
@@ -430,7 +430,7 @@ assert all(hits), f"Houston, Los Angeles, Anchorage, Honolulu, Miami inside thei
 Run: `python tests/test_us_map.py`
 Expected: FAIL with `FileNotFoundError` on `web/us-states.js`.
 
-- [ ] **Step 3: Implement** `tools/make_us_map.py` (`python tools/make_us_map.py path/to/states-10m.json`), run it once with the file fetched from `https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/states-10m.json` (fetch into a scratch directory, never into the repo), commit the generated `web/us-states.js` with a header comment naming the source and licence. Implement `web/us-map.js`: `project` per the block above (one function `conic(parallels, rotate, center, scale, translate)` returning a projector), `centroid` from each path's bounding box centre, and `render` drawing areas (one `<g>` per area, its states' paths with `fill` from `staffed`), state paths with `data-state` and a click handler, then dots as `<circle r=4>` (`r=6` when `big`) with `class="us-dot <tone>"` and a `<title>` from `label`; `ring` adds a second circle in `teamColor`. Add the script tags.
+- [ ] **Step 3: Implement** `tools/make_us_map.py` (`python tools/make_us_map.py path/to/states-10m.json`), run it once with the file fetched from `https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/states-10m.json` (fetch into a scratch directory, never into the repo), commit the generated `web/us-states.js` with a header comment naming the source and license. Implement `web/us-map.js`: `project` per the block above (one function `conic(parallels, rotate, center, scale, translate)` returning a projector), `centroid` from each path's bounding box center, and `render` drawing areas (one `<g>` per area, its states' paths with `fill` from `staffed`), state paths with `data-state` and a click handler, then dots as `<circle r=4>` (`r=6` when `big`) with `class="us-dot <tone>"` and a `<title>` from `label`; `ring` adds a second circle in `teamColor`. Add the script tags.
 
 - [ ] **Step 4: Run to verify it passes**
 
@@ -524,7 +524,7 @@ dots = page.evaluate("() => document.querySelectorAll('.go-map .us-dot').length"
 board = page.evaluate("() => document.querySelectorAll('.go-pcard').length")
 assert dots == board, (dots, board)
 assert page.evaluate("() => document.querySelectorAll('.go-map .us-state').length") == 51
-# every dot sits on the canvas (a hometown without coordinates falls back to its state's centre)
+# every dot sits on the canvas (a hometown without coordinates falls back to its state's center)
 assert page.evaluate("() => [...document.querySelectorAll('.go-map .us-dot')].every(c => { const x = +c.getAttribute('cx'), y = +c.getAttribute('cy'); return x > 0 && y > 0 && x < 975 && y < 610; })")
 page.click(".go-map .us-state[data-state='TX']")
 time.sleep(0.6)

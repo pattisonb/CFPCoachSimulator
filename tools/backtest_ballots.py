@@ -266,29 +266,29 @@ FIT_STARTS = [{"close_win": 0.04, "close_own": 1.0, "entry_all": 1.0, "loss_edge
               {"close_win": 0.15, "close_own": 2.0},
               {"close_win": 0.12, "close_own": 1.5, "loss_edge_extra": 0.02},
               {"close_win": 0.15, "close_own": 2.0, "entry_all": 1.0, "new_entry": 0.02}]
-# The caps hold against the parameters before the behaviour terms (a3d8dd6), so a refit
+# The caps hold against the parameters before the behavior terms (a3d8dd6), so a refit
 # from fitted parameters cannot ratchet them: one week ahead 1.013 (train), season replay 3.114.
 BASE_ONE_WEEK, BASE_SEASON = 1.013, 3.114
-# Poll behaviours the season replay must reproduce (the 2026 realism review's list), each
+# Poll behaviors the season replay must reproduce (the 2026 realism review's list), each
 # with the gap that counts as one unit. Rank error alone cannot see them: a model that is
 # right on average about narrow wins (most real narrow winners still move up) is not
 # punished for never dropping one.
-BEHAVIOURS = {"close win: share dropped": 0.10, "3+ losses ranked, weeks 6-12 mean": 0.5,
+BEHAVIORS = {"close win: share dropped": 0.10, "3+ losses ranked, weeks 6-12 mean": 0.5,
               "21-25 lose: share out": 0.05, "16-25 lose to ranked: share out": 0.10,
               "ranked loser: mean drop": 1.0, "top-10 loser: mean drop": 1.0}
-BEHAVIOUR_WEIGHT = 0.05   # rank-error points per unit of behaviour gap
+BEHAVIOR_WEIGHT = 0.05   # rank-error points per unit of behavior gap
 
 
 def season_check(seasons: list[str], params: dict) -> tuple[float, float, dict]:
-    """(season replay rank error, behaviour gap in units, the model's behaviour counts),
+    """(season replay rank error, behavior gap in units, the model's behavior counts),
     averaged over REPLAY_SEEDS."""
     errs, gaps, counts = [], [], defaultdict(list)
     for s in REPLAY_SEEDS:
         real_seq, model_seq = season_replay(seasons, params, seed=s)
         errs.append(rolling_error(real_seq, model_seq)["all"])
-        rb, mb = behaviour(real_seq), behaviour(model_seq)
-        gaps.append(sum(abs(mb[k] - rb[k]) / u for k, u in BEHAVIOURS.items()))
-        for k in BEHAVIOURS:
+        rb, mb = behavior(real_seq), behavior(model_seq)
+        gaps.append(sum(abs(mb[k] - rb[k]) / u for k, u in BEHAVIORS.items()))
+        for k in BEHAVIORS:
             counts[k].append(mb[k])
     return st.mean(errs), st.mean(gaps), {k: st.mean(v) for k, v in counts.items()}
 
@@ -299,24 +299,24 @@ def season_error(seasons: list[str], params: dict) -> float:
 
 def objective(week_frames: list[dict], seasons: list[str], params: dict, one_week_cap: float,
               season_cap: float) -> tuple[float, float, float, float]:
-    """(fit score, one week ahead MAE, season replay MAE, behaviour gap). The score is the
-    season replay's rank error plus BEHAVIOUR_WEIGHT x the behaviour gap; going over either
+    """(fit score, one week ahead MAE, season replay MAE, behavior gap). The score is the
+    season replay's rank error plus BEHAVIOR_WEIGHT x the behavior gap; going over either
     cap (one week ahead, or the season replay) counts ten times over."""
     one = evaluate(week_frames, params, "ballots")[0]
     roll, gap, _ = season_check(seasons, params)
-    score = roll + BEHAVIOUR_WEIGHT * gap + 10.0 * max(0.0, one - one_week_cap) + 10.0 * max(0.0, roll - season_cap)
+    score = roll + BEHAVIOR_WEIGHT * gap + 10.0 * max(0.0, one - one_week_cap) + 10.0 * max(0.0, roll - season_cap)
     return score, one, roll, gap
 
 
 def fit_line(e: tuple[float, float, float, float]) -> str:
     """One objective() result as text."""
-    return f"score {e[0]:.3f} (one week {e[1]:.3f}, season {e[2]:.3f}, behaviour gap {e[3]:.2f})"
+    return f"score {e[0]:.3f} (one week {e[1]:.3f}, season {e[2]:.3f}, behavior gap {e[3]:.2f})"
 
 
 def fit() -> None:
     """Coordinate search on 2014-2023 over every ballot parameter. The score is the rank
     error of whole seasons rolled forward from seeded voters (the way season mode runs)
-    plus the gap to the real polls' behaviours (BEHAVIOURS), with the one-week-ahead error
+    plus the gap to the real polls' behaviors (BEHAVIORS), with the one-week-ahead error
     (from the real ballots) held within ONE_WEEK_SLACK of the saved parameters' and the
     season replay no worse than theirs. One week ahead alone cannot see a poll that
     drifts over a season, because it starts from the real ballots every week."""
@@ -349,10 +349,10 @@ def fit() -> None:
     vs = season_check(VALID, params)
     v0 = evaluate(valid, saved, "ballots")[0], season_check(VALID, saved)
     print(f"validation 2024-2025: one week {v0[0]:.3f} -> {v[0]:.3f}, season {v0[1][0]:.3f} -> {vs[0]:.3f}, "
-          f"behaviour gap {v0[1][1]:.2f} -> {vs[1]:.2f}")
+          f"behavior gap {v0[1][1]:.2f} -> {vs[1]:.2f}")
     d = json.loads(PARAMS_FILE.read_text(encoding="utf-8")) if PARAMS_FILE.exists() else {}
     d["ballots"] = {k: round(params[k], 4) for k in params}
-    d["ballots_note"] = (f"tools/backtest_ballots.py fit (season replay + {BEHAVIOUR_WEIGHT} x behaviour gap; one week "
+    d["ballots_note"] = (f"tools/backtest_ballots.py fit (season replay + {BEHAVIOR_WEIGHT} x behavior gap; one week "
                          f"within {ONE_WEEK_SLACK}): train one week {best[1]:.3f}, season {best[2]:.3f}, gap {best[3]:.2f}; "
                          f"validation one week {v[0]:.3f}, season {vs[0]:.3f}, gap {vs[1]:.2f}")
     PARAMS_FILE.write_text(json.dumps(d, indent=1), encoding="utf-8")
@@ -373,7 +373,7 @@ _REPLAY: dict[str, tuple[list[dict], list[dict]]] = {}
 
 
 def _replay_frames(season: str) -> tuple[list[dict], list[dict]]:
-    """(the season's weekly frames, the real weeks in behaviour form), built once per run."""
+    """(the season's weekly frames, the real weeks in behavior form), built once per run."""
     if season not in _REPLAY:
         p, r, _ = load()
         frames = weeks_of(p, r, season)
@@ -394,7 +394,7 @@ def season_replay(seasons: list[str], params: dict, seed: int = 0) -> tuple[list
     (polls.seed_ballots from the poll's vote points), then rolled forward through the real
     results without ever resetting to the real poll: the job season mode does. Returns two
     lists of weeks, real and model, each {season, week, label, before, after, first, games,
-    records, tiers, since} so the same behaviour counts run on both."""
+    records, tiers, since} so the same behavior counts run on both."""
     real_seq, model_seq = [], []
     for s in seasons:
         frames, real = _replay_frames(s)
@@ -421,8 +421,8 @@ def mean_or_nan(xs: list[float]) -> float:
     return st.mean(xs) if xs else float("nan")
 
 
-def behaviour(seq: list[dict]) -> dict[str, float]:
-    """The poll behaviours the 2026 realism review measured, over a run of weeks."""
+def behavior(seq: list[dict]) -> dict[str, float]:
+    """The poll behaviors the 2026 realism review measured, over a run of weeks."""
     close, close_drop, win_drop, n_wins = [], 0, 0, 0
     ranked_loss, top10_loss = [], []
     lr_16, lr_16_out, l21, l21_out, lu_16, lu_16_out = 0, 0, 0, 0, 0, 0
@@ -508,8 +508,8 @@ def season_report(params: dict, label: str = "saved", seasons: list[str] = TRAIN
     err = rolling_error(real_seq, model_seq)
     print(f"season replay {seasons[0]}-{seasons[-1]} ({len(model_seq)} weeks), params: {label}")
     print("  rank error by weeks since the start: " + ", ".join(f"{k} {err[k]:.2f}" for k in ("1-4", "5-8", "9-12", "13+", "all") if k in err))
-    rb, mb = behaviour(real_seq), behaviour(model_seq)
-    print(f"  {'behaviour':<42}{'real':>8}{'model':>8}")
+    rb, mb = behavior(real_seq), behavior(model_seq)
+    print(f"  {'behavior':<42}{'real':>8}{'model':>8}")
     for k in rb:
         print(f"  {k:<42}{rb[k]:>8.2f}{mb[k]:>8.2f}")
 

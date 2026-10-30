@@ -1311,11 +1311,11 @@ def _staff_changes(state: dict, poached: list[str], why: Optional[dict] = None) 
     return {"leaving": leaving, "candidates": candidates, "hired": {}, "reasons": reasons}
 
 
-STAFF_MARK = 2                   # a top-third offense or defence lifts its coordinator this much a year; a bottom third costs it
+STAFF_MARK = 2                   # a top-third offense or defense lifts its coordinator this much a year; a bottom third costs it
 
 
 def _staff_marks(state: dict) -> dict[str, int]:
-    """What the year says about your staff: the offence's scoring and the defence's against the FBS
+    """What the year says about your staff: the offense's scoring and the defense's against the FBS
     (top third +STAFF_MARK, bottom third -STAFF_MARK), the class rank for every recruiter."""
     from coach_career import prospects
     ss = state.get("season_stats") or {}

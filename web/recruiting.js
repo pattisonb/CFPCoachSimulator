@@ -2,7 +2,7 @@
    Recruiting board (stage tabs, a list, one pane with the Recruit menu), Prospects (the
    class, filtered), Staff (who scouts where) and the Prospect Profile.
    window.Recruiting.render(tab, season, helpers); helpers from season.js: { api, postJSON, toast,
-   openModal, closeModal, errText, onChange(tab), play(what) }. Colours come from the site's theme variables,
+   openModal, closeModal, errText, onChange(tab), play(what) }. Colors come from the site's theme variables,
    so the screens read in the light and the dark theme. */
 (function () {
   "use strict";
@@ -30,7 +30,7 @@
   // where he is from: "Washington, D.C." rather than "Washington, DC"
   const place = (h) => (h.state === "DC" ? "Washington, D.C." : `${h.city}, ${h.state}`);
   const ATTR_NAMES = { bc_vision: "ball carrier vision", "bc vision": "ball carrier vision" };
-  // readable ink on a team colour
+  // readable ink on a team color
   function inkOn(hex) {
     const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
     if (!m) return "#ffffff";
@@ -97,7 +97,7 @@
 
   // ----- the one ladder: your standing with a prospect, read from his list -----------------------------
   // standingOf(b, me) -> { word, text, odds, tone, fill, lo, hi, certainty }. The word is one of six
-  // (Yours, Lost, Favourite, In it, Long shot, Not offered); the sentence and the odds word go with it.
+  // (Yours, Lost, Favorite, In it, Long shot, Not offered); the sentence and the odds word go with it.
   // His list (b.list: rank, bar, offered) and your offer decide it; the offer race's place is never used,
   // so the words and the race he draws agree. b.standing's pct/lo/hi only size the bar and the flip odds.
   function standingOf(b, me) {
@@ -121,7 +121,7 @@
     if (!leader || mine.at < leader.at) {
       if (!offered) return { word: "Not offered", text: "He would pick you today: he has no offer from you", odds: "Offer him", tone: "warn", fill: 0 };
       const clear = !leader || mine.bar - leader.bar >= 0.25;
-      return { word: "Favourite", text: "Leading his list, offered", odds: clear ? "Clear favorite" : "Narrow favorite", certainty: st.certainty, tone: "good", fill, lo: st.lo, hi: st.hi };
+      return { word: "Favorite", text: "Leading his list, offered", odds: clear ? "Clear favorite" : "Narrow favorite", certainty: st.certainty, tone: "good", fill, lo: st.lo, hi: st.hi };
     }
     const where = `${ordinal(mine.at)} on his list`;
     if (!offered) return { word: "Not offered", text: `${where} · not offered`, odds: "Offer to be in it", tone: "muted", fill: 0 };
@@ -131,11 +131,11 @@
              tone: close ? "warn" : "muted", fill, lo: st.lo, hi: st.hi };
   }
   const standing = standingOf;
-  // "Sort: your chance" climbs the ladder: yours, favourite, in it, not offered while leading his list, long shot,
+  // "Sort: your chance" climbs the ladder: yours, favorite, in it, not offered while leading his list, long shot,
   // not offered (behind or off his list), lost; within a rung the fuller bar first, then national rank
   function ladderRung(sd) {
     if (sd.word === "Not offered") return sd.tone === "warn" ? 3 : 5;
-    return { Yours: 0, Favourite: 1, "In it": 2, "Long shot": 4, Lost: 6 }[sd.word] ?? 5;
+    return { Yours: 0, Favorite: 1, "In it": 2, "Long shot": 4, Lost: 6 }[sd.word] ?? 5;
   }
   function byChance(me) {
     const memo = new Map();
@@ -409,7 +409,7 @@
   const GRADE_NAMES = { athleticism: "Athleticism", size_strength: "Size", technique: "Technique", football_iq: "IQ", potential: "Potential", coachability: "Coachability" };
   // a scouted prospect's grades in one line (his card and the top of his profile)
   const clsWord = (c) => (c && c.endsWith("RS") ? `RS ${c.slice(0, -2)}` : c);   // FRRS -> "RS FR"
-  // a scouting word as a coloured pill; the class is the word lower-cased ("All-American" -> all-american)
+  // a scouting word as a colored pill; the class is the word lower-cased ("All-American" -> all-american)
   const wordTag = (word) => el("span", { class: `go-word ${String(word).toLowerCase()}`, text: word });
   // a [low, high] pair of words: one tag when both ends match, else "low to high"
   const wordRange = (r) => (r[0] === r[1] ? [wordTag(r[0])] : [wordTag(r[0]), " to ", wordTag(r[1])]);
@@ -477,7 +477,7 @@
   }
 
   // his list as a race: one lane a school, its pill as far along as its pull (the leader at the right),
-  // in the school's colours, yours ringed, with this week's move as an arrow
+  // in the school's colors, yours ringed, with this week's move as an arrow
   function race(b, me) {
     const rows = (b.list || []).filter((x) => x.bar != null);
     if (!rows.length) return el("div", { class: "go-race empty" }, [el("span", { class: "muted small", text: b.signed || b.committed ? "His race is over." : "No school is on his list yet." })]);
@@ -488,7 +488,7 @@
       const at = Math.round(Math.max(0, Math.min(1, x.bar)) * 100);
       const arrow = x.new ? " ★" : x.move > 0 ? " ▲" : x.move < 0 ? " ▼" : "";
       const moved = x.new ? "new on his list" : x.move > 0 ? `up ${x.move}` : x.move < 0 ? `down ${-x.move}` : "no change";
-      // a school without an offer in draws hollow: an outline in its colour, so the race agrees with the standing words
+      // a school without an offer in draws hollow: an outline in its color, so the race agrees with the standing words
       const hollow = x.offered === false;
       return el("div", { class: "go-race-lane", role: "listitem" }, [el("span", { class: `go-race-pill ${you ? "you" : ""} ${hollow ? "unoffered" : ""} ${x.move > 0 || x.new ? "up" : x.move < 0 ? "down" : ""}`,
         style: `left: ${at}%; transform: translateX(-${at}%);${col ? (hollow ? ` border-color:${col}; color:${col};` : ` background:${col}; color:${inkOn(col)};`) : ""}`,
@@ -877,7 +877,7 @@
         const item = el("button", { type: "button", class: "go-menu-item", role: "menuitem", "data-action": it.action, tabindex: "-1" }, [
           el("span", { class: "go-menu-main" }, [el("b", { text: it.name }), it.cost ? el("span", { class: "muted small go-menu-cost", text: it.cost }) : null]),
           it.why ? el("span", { class: "go-menu-why", text: it.why }) : null]);
-        if (it.why) item.setAttribute("aria-disabled", "true");     // greyed, but reachable: the reason is read out
+        if (it.why) item.setAttribute("aria-disabled", "true");     // grayed, but reachable: the reason is read out
         item.addEventListener("click", () => { if (it.why) return; closeMenu(); pick(b, it.action); });
         return item;
       }));

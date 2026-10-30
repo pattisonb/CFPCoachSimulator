@@ -425,9 +425,9 @@
 
   // ----- rendering ---------------------------------------------------------
 
-  // ----- team colours --------------------------------------------------------
-  // While a season is open the page takes the team's colours: the accent (buttons, chips,
-  // progress, highlights) is the first of the team's colours that reads against the page
+  // ----- team colors --------------------------------------------------------
+  // While a season is open the page takes the team's colors: the accent (buttons, chips,
+  // progress, highlights) is the first of the team's colors that reads against the page
   // background in the current light/dark theme, else the primary lightened or darkened
   // until it does; the ink on it is black or white, whichever contrasts more. The top
   // bar and season header get a tint of the primary. Every team ends up legible.
@@ -472,7 +472,7 @@
     const inkFor = (rgb) => (contrast(rgb, [0, 0, 0]) >= contrast(rgb, [255, 255, 255]) ? "#1a1200" : "#ffffff");
     const primary = candidates[0];
     const secondary = candidates[1] || accent;
-    // the colour for buttons that sit on the primary band: the first other team colour that
+    // the color for buttons that sit on the primary band: the first other team color that
     // reads against the primary, else white or black
     const onPrimary = candidates.slice(1).find((c) => contrast(c, primary) >= 3) || hexToRgb(inkFor(primary) === "#ffffff" ? "#ffffff" : "#1a1200");
     return { accent: rgbToHex(accent), accentText: rgbToHex(accentText), ink: inkFor(accent), primary: rgbToHex(primary), primaryInk: inkFor(primary),
@@ -1021,7 +1021,7 @@
     const col = (t.colors || {});
     const primary = col.primary || "#888";
 
-    // header: back link, hero in team colours
+    // header: back link, hero in team colors
     const bar = el("div", { class: "player-bar" }, [
       el("span", { class: "muted small-text", text: `${team.name}${team.rank ? ` · #${team.rank}` : ""} · ${team.record} · ${team.conference}` }),
     ]);
@@ -1193,7 +1193,7 @@
     }
   }
 
-  // A 1-99 rating as a bar: the fill is the value out of 100 (at least a sliver), coloured by tier.
+  // A 1-99 rating as a bar: the fill is the value out of 100 (at least a sliver), colored by tier.
   function ratingBar(value) {
     const pct = Math.max(2, Math.min(100, value));
     let tone = "lo";

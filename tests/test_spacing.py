@@ -27,7 +27,7 @@ WIDTHS = (1280, 400)
 EXCLUDED = ".go-seg, .go-stages, .go-subtabs, nav.tabs"
 ITEM = "button, .go-tag, .go-badge, .go-word, .go-chip"
 # every button is a tap target, except the depth chart's compact .tiny controls (28 px by their own rule, a recorded
-# exception), the coach's colour swatches (28 px circles), the week strip (navigation, like a segment control) and text
+# exception), the coach's color swatches (28 px circles), the week strip (navigation, like a segment control) and text
 # links (.go-link, .btn-link, or any button inside running text); segments are left out through EXCLUDED
 ACTION = "button:not(.tiny, .swatch, .week-chip, .go-link, .btn-link)"
 # a button inside running text: its parent holds words of its own, or it is a text link laid out inline

@@ -55,4 +55,4 @@
 
 ### Task 3: Integrate (main)
 
-- [ ] Merge both; delete Task 1's `ui` shim in favour of `CFP.ui`; `tests/test_smoothness.py` gains the board actions (reusing the sweep's seeded careers or its own); run the sweep, smoothness, spacing, e2e, golden, then `python3 tests/run_all.py`; `docs/HOW_IT_WORKS.md` one paragraph; commit; push.
+- [ ] Merge both; delete Task 1's `ui` shim in favor of `CFP.ui`; `tests/test_smoothness.py` gains the board actions (reusing the sweep's seeded careers or its own); run the sweep, smoothness, spacing, e2e, golden, then `python3 tests/run_all.py`; `docs/HOW_IT_WORKS.md` one paragraph; commit; push.

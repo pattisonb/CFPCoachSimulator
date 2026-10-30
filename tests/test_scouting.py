@@ -204,8 +204,8 @@ if __name__ == "__main__":
     assert unscouted not in rc["reads"], "your area scout looked at your own commit"
     prof = prospects.profile(st, unscouted, me)
     assert prof["can_scout"] is False and prof["our_grades"] is None and prof["looks"] == 0
-    neighbour = next(pid for pid, p_ in rc["prospects"].items() if p_["hometown"]["state"] == home and rc["status"][pid]["committed"] is None)
-    assert rc["reads"][neighbour]["looks"] == before.get(neighbour, 0) + 1, "an uncommitted prospect in the area still gets his look"
+    neighbor = next(pid for pid, p_ in rc["prospects"].items() if p_["hometown"]["state"] == home and rc["status"][pid]["committed"] is None)
+    assert rc["reads"][neighbor]["looks"] == before.get(neighbor, 0) + 1, "an uncommitted prospect in the area still gets his look"
     # an uncommitted prospect still gets his three looks from you, and no more
     assert prospects.profile(st, open_, me)["can_scout"] is True
     for _ in range(3):

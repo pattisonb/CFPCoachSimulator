@@ -1,4 +1,4 @@
-"""Season-long AP behaviour in a simulated season against the real 2014-2025 polls
+"""Season-long AP behavior in a simulated season against the real 2014-2025 polls
 (data/history/poll_stats.json): how far a ranked team drops after a loss, by where it was
 ranked, and how many teams the poll turns over in a week. Also checks the rest-of-season
 mode starts from the real poll with its real vote points.
@@ -62,4 +62,4 @@ if __name__ == "__main__":
         assert [e["team"] for e in shown] == real_last[0], "a real week shows the real poll"
         assert shown[0]["points"] == real_last[2][shown[0]["team"]]["points"], "with its real vote points"
         print(f"rest of season: week {w} shows the real poll with real points ({shown[0]['name']} {shown[0]['points']})")
-    print("poll behaviour ok")
+    print("poll behavior ok")

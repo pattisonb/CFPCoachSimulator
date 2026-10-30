@@ -39,7 +39,7 @@ if __name__ == "__main__":
     tm = m["teams"].get("ohio-state", 0.0)
     rec = season._records(st)["ohio-state"]
     print(f"Ohio State {rec['wins']}-{rec['losses']}: team mood {tm:+.2f}")
-    # moods move with the result against expectation (a favourite's loss costs more than its
+    # moods move with the result against expectation (a favorite's loss costs more than its
     # wins add), so one team's sign need not follow its record; across the league they do
     recs = season._records(st)
     by = {}

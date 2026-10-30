@@ -1,4 +1,4 @@
-"""Do the living program ratings behave? At the start the top 25 by rating is a recognisable
+"""Do the living program ratings behave? At the start the top 25 by rating is a recognizable
 2026 top 25; over a long run (data/long_run/ov_N.league.json, the league a run left behind, or
 quick seasons played here) prestige moves at most PRESTIGE_STEP a year, no program crosses more
 than one tier in five years, and the starting top 25 keeps most of its members.

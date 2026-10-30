@@ -98,7 +98,7 @@ def _results(state: dict) -> dict[str, dict]:
 
 
 def judge(team: dict, slug: str, res: dict, year: int, state: Optional[dict] = None) -> dict:
-    """The AD's verdict on a season: security moves with wins against the goal and the honours."""
+    """The AD's verdict on a season: security moves with wins against the goal and the honors."""
     a = ad(team, slug, year)
     g = goal(slug, state)
     hc = team["coaches"]["head_coach"]

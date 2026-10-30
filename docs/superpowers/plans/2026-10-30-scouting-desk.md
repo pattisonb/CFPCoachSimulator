@@ -23,7 +23,7 @@
 
 1. **Old saves** without `rc["looks"]` load and the desk renders (empty reports). Task 1 test.
 2. **A look that changes nothing** never appears in reports but counts in the scout's yield. Task 1 test.
-3. **Sending the last affordable trip** greys every other Send with "Not enough hours" after the patch. Task 2 sweep.
+3. **Sending the last affordable trip** grays every other Send with "Not enough hours" after the patch. Task 2 sweep.
 4. **A report name for a recruit not on your board** opens the board's pane on him anyway (reveal path). Task 2 sweep.
 5. **The portal** (`is_portal`): the queue lists portal entrants and reports read the same. Task 1 test.
 

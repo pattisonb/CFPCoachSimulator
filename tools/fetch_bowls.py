@@ -162,7 +162,7 @@ NON_TEAM_HEADERS = ("date", "attend", "note", "venue", "bowl", "game", "season",
 
 def parse_results_table(t) -> list[dict]:
     """Game rows from one wikitable: 'Winning team / Losing team' tables (name and score in
-    neighbouring cells under a two-column header, or 'Alabama 31' in one cell) and the
+    neighboring cells under a two-column header, or 'Alabama 31' in one cell) and the
     Rose Bowl's 'West / East' layout where the winner is the side with the higher score."""
     rows = t.select("tr")
     if len(rows) < 3:

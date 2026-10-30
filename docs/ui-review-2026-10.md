@@ -18,7 +18,7 @@ Status: **fixed** on branch `ui-review`, or **deferred**.
    on a phone, and the career tabs came last, so Recruiting, Prospects, Staff and Classes were
    out of sight. The active tab was often off screen too. The tiles and tabs also used different
    names for the same screens (Roster and Depth Chart, Polls & CFP and Rankings, Schedule and
-   Team Schedule). *Fix:* a career now has one game-style tab bar (Barlow Condensed, team-colour
+   Team Schedule). *Fix:* a career now has one game-style tab bar (Barlow Condensed, team-color
    active state) above the header on every screen. The career screens come first. It wraps on a
    phone, so nothing scrolls out of sight, and it sticks under the top bar on a wide screen. The
    duplicate Office tiles are gone.
@@ -56,11 +56,11 @@ Status: **fixed** on branch `ui-review`, or **deferred**.
    single week and the overlay bar is for a longer sim.
 9. **"Game day" flashes on during a sim** (fixed). Redrawing the week strip each week turned the
    Game day button back on until the next poll. *Fix:* it stays hidden while the sim runs.
-10. **Team accent text fails contrast** (fixed). Text in the team colour (kickers, links, h3)
+10. **Team accent text fails contrast** (fixed). Text in the team color (kickers, links, h3)
     used the accent, which was chosen for 2.6:1. For Ohio State on dark that is #666 on navy,
     about 3:1. *Fix:* `--accent-text` is now computed to 4.5:1 against the page and panel, and
-    game-screen links use the text colour with an accent underline.
-11. **"Medium interest" and "close race" show in the team colour** (fixed). The warn tone used
+    game-screen links use the text color with an accent underline.
+11. **"Medium interest" and "close race" show in the team color** (fixed). The warn tone used
     the accent, so for red teams a neutral state looked like bad news. *Fix:* new `--go-warn` and
     `--go-warn-text` (amber, darker amber in light) for warn tags, standing text and bars.
 12. **Board card names wrap ("George / Raphael")** (fixed). The stars took the width. *Fix:* the

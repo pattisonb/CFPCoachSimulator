@@ -32,9 +32,9 @@ CASES = [
     ({"committed": "georgia", "standing": {"pct": 0.35, "lo": 0.2, "hi": 0.5}, "list": []}, "In it", "Verbal commit · Georgia", "warn", "He could still flip to you"),
     ({"committed": "georgia", "standing": {"pct": 0.1, "lo": 0.0, "hi": 0.2}, "list": []}, "Long shot", "Verbal commit · Georgia", "warn", "A flip is a long shot"),
     ({"committed": "georgia", "standing": {"pct": 0.02, "lo": 0.0, "hi": 0.05}, "list": []}, "Long shot", "Verbal commit · Georgia", "warn", "A flip looks unlikely"),
-    ({"offered": True, "standing": {"pct": 0.6}, "list": [row(ME, 1.0, True, 1), row("georgia", 0.5, True, 2)]}, "Favourite", "Leading his list", "good", "Clear favorite"),
-    ({"offered": True, "standing": {"pct": 0.5}, "list": [row(ME, 1.0, True, 1), row("georgia", 0.9, True, 2)]}, "Favourite", "Leading his list", "good", "Narrow favorite"),
-    ({"offered": True, "standing": {"pct": 0.7}, "list": [row(ME, 1.0, True, 1)]}, "Favourite", "Leading his list", "good", "Clear favorite"),
+    ({"offered": True, "standing": {"pct": 0.6}, "list": [row(ME, 1.0, True, 1), row("georgia", 0.5, True, 2)]}, "Favorite", "Leading his list", "good", "Clear favorite"),
+    ({"offered": True, "standing": {"pct": 0.5}, "list": [row(ME, 1.0, True, 1), row("georgia", 0.9, True, 2)]}, "Favorite", "Leading his list", "good", "Narrow favorite"),
+    ({"offered": True, "standing": {"pct": 0.7}, "list": [row(ME, 1.0, True, 1)]}, "Favorite", "Leading his list", "good", "Clear favorite"),
     ({"offered": False, "list": [row(ME, 1.0, False, 1), row("georgia", 0.7, True, 2)]}, "Not offered", "He would pick you today", "warn", "Offer him"),
     ({"offered": True, "standing": {"pct": 0.3}, "list": [row("georgia", 1.0, True, 1), row(ME, 0.95, True, 2)]}, "In it", "2nd on his list · Georgia leads", "warn", "Close race"),
     ({"offered": True, "standing": {"pct": 0.2}, "list": [row("georgia", 1.0, True, 1), row(ME, 0.3, True, 2)]}, "In it", "2nd on his list", "muted", "Behind, in the picture"),
@@ -42,7 +42,7 @@ CASES = [
     ({"offered": False, "list": [row("georgia", 1.0, True, 1), row(ME, 0.4, False, 3)]}, "Not offered", "3rd on his list · not offered", "muted", "Offer to be in it"),
     ({"offered": False, "list": [row("georgia", 1.0, True, 1)]}, "Not offered", "Not on his list yet", "muted", None),
 ]
-WORDS = {"Yours", "Lost", "Favourite", "In it", "Long shot", "Not offered"}
+WORDS = {"Yours", "Lost", "Favorite", "In it", "Long shot", "Not offered"}
 TONES = {"good", "warn", "muted", "bad"}
 
 

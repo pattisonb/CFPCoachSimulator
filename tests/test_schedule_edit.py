@@ -1,4 +1,4 @@
-"""Customising your schedule before the season (sim/season.py schedule_options, schedule_swap):
+"""Customizing your schedule before the season (sim/season.py schedule_options, schedule_swap):
 in a career, before week 1, each of your non-conference games can be traded for another FBS
 team's non-conference game the same week (the two displaced opponents play each other), the
 other school agreeing when it gets the home game or you are the bigger draw; an FCS opponent can

@@ -124,7 +124,7 @@ starters (season usage lags injuries) from CFBD.
 - **Validate:** the matched share of real player lines reported by `sim/realdata.py` (92.2% at
   week 8; the target is fewer of the 138 notable unmatched lines), `python tests/run_all.py`
   (`tests/test_realdata.py`), `tools/calibrate_players.py --from-week 6` (real starter in
-  the sim's QB1/RB1/WR1 slot), and the 40-season check through week 8 (Brier, favourite
+  the sim's QB1/RB1/WR1 slot), and the 40-season check through week 8 (Brier, favorite
   won %) used for every past roster change.
 
 ### 4. League benchmarks from CFBD instead of hand-typed numbers (`/stats/season`, `/stats/season/advanced`, `/drives`)

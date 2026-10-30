@@ -25,7 +25,7 @@ look log. Coordinators without an area read "No area: assign one".
 **Send a scout.** Hours left this week at the top (`v.hours_left` of `v.hours`). A list of
 recruits worth a look: everyone on your board first, then the class's visible prospects, sorted
 by your need at the group then national rank, each row: avatar, name, position and stars, looks
-so far `n of 3` as a small bar, the current potential word range, and a `Send (5h)` button (greyed
+so far `n of 3` as a small bar, the current potential word range, and a `Send (5h)` button (grayed
 with the reason when he is committed to you, at three trips, or hours are short). Sending posts
 the existing `scout` action; the row then shows the result inline: each grade's range before and
 after as `Fair–Strong → Solid–Strong` in the word tiers, flags gained (gem, bust risk,
@@ -70,7 +70,7 @@ the Scouting tab" linking there. The Prospects tab is unchanged.
 - `tests/test_scouting_desk.py` (native, through `app.api`): a seeded career; after `scout_week`
   the look log holds one entry per prospect per staffed area with `before`/`after` and flags;
   entries older than last week are dropped; the desk view's `reports` lists only changed looks
-  and groups by scout; the queue excludes committed-to-you and three-trip recruits and greys the
+  and groups by scout; the queue excludes committed-to-you and three-trip recruits and grays the
   rest with reasons; a `scout` action's response carries the look entry; golden unchanged.
 - The sweep: the Scouting tab renders the four blocks, Send spends hours and shows the inline
   result with a toast, a report name opens the board's pane on him, the area dropdown still

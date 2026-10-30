@@ -97,7 +97,7 @@
         p.addEventListener("click", () => opts.onState(code));
       }
     });
-    // the selected state's thick outline is painted last among the states, so its neighbours never cover it
+    // the selected state's thick outline is painted last among the states, so its neighbors never cover it
     const picked = svg.querySelector("path.selected");
     if (picked) el("g", { class: "us-selected" }, svg).appendChild(picked);
     const gDots = el("g", { class: "us-dots" }, svg);

@@ -1,6 +1,6 @@
 /* Coach Career's offseason on the season page: who leaves (the draft, graduation, the transfer
    portal), two portal rounds to fill your roster, who improved, staff changes, then the next
-   season. window.Offseason.render(season, box, helpers); helpers as for recruiting.js. Colours
+   season. window.Offseason.render(season, box, helpers); helpers as for recruiting.js. Colors
    come from the theme variables (light and dark). */
 (function () {
   "use strict";

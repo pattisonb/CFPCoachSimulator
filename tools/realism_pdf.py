@@ -394,7 +394,7 @@ def fullseason_pages(pdf, fs: dict):
         ax.plot([x - 0.2] * len(m["real"]), m["real"], linestyle="none", marker="_", color="#9aa3b5", markersize=9)
     ax.set_xticks(xs)
     ax.set_xticklabels([f"{m['mark']:,}+\n{short.get(m['stat'], m['stat'])}" for m in marks], fontsize=8)
-    ax.set_title("Players over a season mark (grey ticks: each real season)", fontsize=10)
+    ax.set_title("Players over a season mark (gray ticks: each real season)", fontsize=10)
     ax.legend(fontsize=7.5, frameon=False)
     ax = fig.add_subplot(gs[3, :])
     sh = fs.get("tackle_shares") or {}

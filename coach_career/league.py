@@ -246,7 +246,7 @@ def _real_usage() -> dict:
 
 def _role_players(by_pos: dict, role: str, taken: set, n: int) -> list[dict]:
     """A role's starters: its own position's best first (linebackers: the best MIKE, WILL and SAM
-    in that order, then the best of the rest), then a neighbouring position's."""
+    in that order, then the best of the rest), then a neighboring position's."""
     if role == "LB":
         picks = []
         for r in ("MIKE", "WILL", "SAM")[:n]:
@@ -264,7 +264,7 @@ def _role_players(by_pos: dict, role: str, taken: set, n: int) -> list[dict]:
 
 def lineup(roster: list[dict], shape: dict, year: int = FIRST_YEAR + 1) -> tuple[dict, dict]:
     """(starters, depth chart) in the source format: each role's best by EA overall (the
-    linebacker spots from SAM, MIKE and WILL together), borrowing a neighbouring position when
+    linebacker spots from SAM, MIKE and WILL together), borrowing a neighboring position when
     a role runs short; kick and punt returners by return ability."""
     by_pos: dict[str, list] = {}
     for p in roster:            # the coaches' eye: overall plus a little of what the numbers miss, fixed for the year

@@ -1,6 +1,6 @@
 """Everything that asks how good a program is reads the living rating (coach_career/programs.py):
 the AD's goal follows the tier, a sitting head coach moves only to a clearly better job, recruiting's
-prestige and NIL pulls and the NIL budget follow the program, development favours the top programs
+prestige and NIL pulls and the NIL budget follow the program, development favors the top programs
 by rating."""
 import sys as _sys
 from pathlib import Path as _Path

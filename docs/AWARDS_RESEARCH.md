@@ -10,7 +10,7 @@ Part 3 is the implementation plan.
 
 Source: National College Football Awards Association page and its navbox; the player of
 the year list; the Maxwell, Walter Camp and Touchdown Club of Columbus pages. "n/g" means
-the page did not give it. Touchdown Club of Columbus awards were cancelled in January 2020
+the page did not give it. Touchdown Club of Columbus awards were canceled in January 2020
 and are listed as defunct.
 
 ### Player of the year
@@ -365,7 +365,7 @@ a good team; K about 27 of 29 with a 50-yarder; P a 44 to 46 net and 25 to 30 in
 - Not carried: hometown, transfer status, walk-on status, academics, ancestry, injuries.
   Regional awards, Newcomer of the Year, Burlsworth, Campbell, Wuerffel, Polynesian POY,
   Comeback POY and the Disney Spirit Award cannot be awarded honestly, so they are listed
-  as not modelled rather than faked.
+  as not modeled rather than faked.
 
 ### Player stats the engine keeps today
 Passing (att, cmp, yds, TD, INT, sacks taken), rushing (att, yds, TD, fumbles), receiving

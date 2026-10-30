@@ -107,7 +107,7 @@ def _last_year(hist: dict, a: str, b: str) -> int:
 
 
 def _site_from_history(hist: dict, a: str, b: str, rng: random.Random, deficit=None, year: Optional[int] = None) -> tuple[str, str]:
-    """(home, away): the team that travelled last time hosts; a first meeting, or (with `year`) a
+    """(home, away): the team that traveled last time hosts; a first meeting, or (with `year`) a
     non-conference pair that last met before last year, goes to the team further below its
     home-game target this year (`deficit(team)`), else a coin flip."""
     m = last_meeting(hist, a, b)
@@ -318,7 +318,7 @@ def _conference_slate(year: int, conf: str, rule: dict, members: list[str], hist
         edges = _fill_edges(members, need, required, hist, rng, divisions, rule.get("cross_division"), booked)
     if edges is None:
         raise ScheduleError(f"no {conf} slate for {year}")
-    # sites: the traveller of the last meeting hosts; then even out league home games toward the target
+    # sites: the traveler of the last meeting hosts; then even out league home games toward the target
     target = _home_targets(members, k, year, hist, rule.get("home_split"))
     neutral_pairs = {tuple(sorted(p)) for p in rule.get("neutral", [])}
     hosted = len([e for e in edges if tuple(sorted(e)) not in neutral_pairs])      # home games to share out
@@ -385,7 +385,7 @@ def _home_targets(members: list[str], k: int, year: int, hist: dict, split: Opti
 def _fill_edges(members: list[str], need: dict[str, int], required: list[tuple[str, str]], hist: dict, rng: random.Random,
                 divisions: Optional[dict], cross: Optional[int], booked: set) -> Optional[list[tuple[str, str]]]:
     """A set of pairs giving every member its number of league games: the required pairs, then the
-    least recently met pairs, with a repair pass; several randomised attempts."""
+    least recently met pairs, with a repair pass; several randomized attempts."""
     div_of = {}
     if divisions:
         for name, ms in divisions.items():
@@ -644,7 +644,7 @@ def _home_conf_counts(games: list[dict], conf_of: dict) -> dict[str, int]:
 
 def _assign_weeks(games: list[dict], fbs: dict, rng: random.Random) -> None:
     """A week for every game: fixed weeks first, non-conference games early, conference games from
-    week 3, finales in week 14, nobody twice in a week; randomised attempts until it fits."""
+    week 3, finales in week 14, nobody twice in a week; randomized attempts until it fits."""
     for attempt in range(RESTARTS):
         busy: dict[str, set] = {s: set() for s in fbs}
         for g in games:
@@ -747,7 +747,7 @@ def _tidy_byes(games: list[dict], fbs: dict, fixed_weeks: set, rng: random.Rando
                    and g["kind"] in kinds and week not in by_week.get(g["away"] if g["home"] == s else g["home"], {})]
         if not movable:
             return False
-        # take the game from a week where leaving a bye costs least: one whose neighbours are both games
+        # take the game from a week where leaving a bye costs least: one whose neighbors are both games
         g = min(movable, key=lambda g: (kinds.index(g["kind"]), -_gap_cost(set(by_week[s]) - {g["week"]}, g["week"]), rng.random()))
         old = g["week"]
         for t in (g["home"], g["away"]):
@@ -761,7 +761,7 @@ def _tidy_byes(games: list[dict], fbs: dict, fixed_weeks: set, rng: random.Rando
         for s in sorted(fbs, key=lambda s: rng.random()):
             if week not in by_week.get(s, {}):
                 pull(s, week, kinds, ends)
-    # two byes in a row: fill one of them from a week whose neighbours are games
+    # two byes in a row: fill one of them from a week whose neighbors are games
     for _ in range(2):
         for s in sorted(fbs, key=lambda s: rng.random()):
             weeks = set(by_week.get(s, {}))

@@ -1,6 +1,6 @@
 """No real FCS school is named anywhere a career shows games: the fictional stand-ins
 (data/fcs_map.json maps every real FCS opponent on the 2026 schedules to one of eight) are
-labelled "FCS <region>" on schedules, results, week lists, box scores and the next season's
+labeled "FCS <region>" on schedules, results, week lists, box scores and the next season's
 schedule; the real names live only in the map and the strength tiers."""
 import json
 import re

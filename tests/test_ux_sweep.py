@@ -75,9 +75,9 @@ def open_tab(page, base, sid, tab, wait):
     time.sleep(0.8)
 
 
-# the ladder "Sort: your chance" follows: yours, favourite, in it, not offered while leading his list, long shot,
+# the ladder "Sort: your chance" follows: yours, favorite, in it, not offered while leading his list, long shot,
 # not offered elsewhere on (or off) his list, lost
-LADDER = {"Yours": 0, "Favourite": 1, "In it": 2, ("Not offered", "warn"): 3, "Long shot": 4, ("Not offered", "muted"): 5, "Lost": 6}
+LADDER = {"Yours": 0, "Favorite": 1, "In it": 2, ("Not offered", "warn"): 3, "Long shot": 4, ("Not offered", "muted"): 5, "Lost": 6}
 
 
 def ladder_of(sd: dict) -> int:
@@ -221,7 +221,7 @@ if __name__ == "__main__":
             assert page.evaluate("""() => [...document.querySelectorAll('.go-row-recruit')].every(r => r.tagName === 'BUTTON' && r.hasAttribute('aria-pressed')
                 && r.querySelector('.go-standing-word') && !r.querySelector('.go-tag, .go-bar, button, .go-badge'))"""), "a row is a button with one word of standing"
             words = page.eval_on_selector_all(".go-row-recruit .go-standing-word", "els => els.map(e => e.textContent.trim())")
-            assert words and set(words) <= {"Favourite", "In it", "Long shot", "Yours", "Lost", "Not offered"}, words
+            assert words and set(words) <= {"Favorite", "In it", "Long shot", "Yours", "Lost", "Not offered"}, words
             shot(page, "board-1280-dark")
             # a tab filters the list and shows as pressed
             stage, n = next(((c[0], c[1]) for c in counts[1:] if 0 < c[1] < board_n), (None, None))
@@ -264,8 +264,8 @@ if __name__ == "__main__":
               const R = window.CFP.recruiting;
               return [rows.slice().sort(R.byChance("smu")).map((b) => b.id), Object.fromEntries(rows.map((b) => [b.id, R.standingOf(b, "smu").word]))];
             }""")
-            assert ladder[1] == {"lost": "Lost", "trail": "Long shot", "lead": "Not offered", "cold": "Not offered", "init": "In it", "fav2": "Favourite",
-                                 "fav1": "Favourite", "favtie": "Favourite", "yours": "Yours"}, ladder[1]
+            assert ladder[1] == {"lost": "Lost", "trail": "Long shot", "lead": "Not offered", "cold": "Not offered", "init": "In it", "fav2": "Favorite",
+                                 "fav1": "Favorite", "favtie": "Favorite", "yours": "Yours"}, ladder[1]
             assert ladder[0] == ["yours", "favtie", "fav1", "fav2", "init", "lead", "trail", "cold", "lost"], ladder[0]
             assert_chance_order(page, v["board"], "smu")
             # the search narrows the list live (name, position or state)
@@ -336,7 +336,7 @@ if __name__ == "__main__":
             assert lines == ["Week 6 · Committed to Georgia", "Week 5 · Offer · 120 NIL", "Week 4 · Call · Program prestige · He lit up",
                              "Week 3 · Message · Playing time", "Week 2 · Offered by Georgia"], lines
             page.click(".go-subtabs button[data-sub=overview]")
-            # the Recruit menu: nine items, the unavailable ones greyed with the reason as a second line
+            # the Recruit menu: nine items, the unavailable ones grayed with the reason as a second line
             page.click("#rc-recruit")
             page.wait_for_selector(".go-menu[role=menu]")
             assert page.get_attribute("#rc-recruit", "aria-expanded") == "true"
@@ -353,13 +353,13 @@ if __name__ == "__main__":
             assert page.evaluate("() => document.activeElement.id") == "rc-recruit", "focus returns to the button"
             page.click("#rc-recruit")
             page.wait_for_selector(".go-menu[role=menu]")
-            assert page.evaluate("() => [...document.querySelectorAll('.go-menu .go-menu-item')].every(e => !e.disabled)"), "a greyed item is aria-disabled, not disabled"
+            assert page.evaluate("() => [...document.querySelectorAll('.go-menu .go-menu-item')].every(e => !e.disabled)"), "a grayed item is aria-disabled, not disabled"
             page.keyboard.press("End")
             assert page.evaluate("() => document.activeElement.dataset.action") == "off_board"
             page.keyboard.press("ArrowUp")
-            assert page.evaluate("() => document.activeElement.dataset.action") == "pull_offer", "the arrow keys reach a greyed item and its reason"
+            assert page.evaluate("() => document.activeElement.dataset.action") == "pull_offer", "the arrow keys reach a grayed item and its reason"
             page.keyboard.press("Enter")
-            assert page.query_selector(".go-menu"), "a greyed item ignores activation"
+            assert page.query_selector(".go-menu"), "a grayed item ignores activation"
             page.keyboard.press("Tab")
             assert not page.query_selector(".go-menu"), "Tab closes the menu"
             assert page.evaluate("() => document.activeElement.id") == "rc-recruit", "Tab returns focus to the button"
@@ -513,7 +513,7 @@ if __name__ == "__main__":
             board = page.evaluate("() => document.querySelectorAll('.go-row-recruit').length")
             assert dots == board, (dots, board)
             assert page.evaluate("() => document.querySelectorAll('.go-map .us-state').length") == 51
-            # every dot sits on the canvas (a hometown without coordinates falls back to its state's centre)
+            # every dot sits on the canvas (a hometown without coordinates falls back to its state's center)
             assert page.evaluate("() => [...document.querySelectorAll('.go-map .us-dot')].every(c => { const x = +c.getAttribute('cx'), y = +c.getAttribute('cy'); return x > 0 && y > 0 && x < 975 && y < 610; })")
             # a dot picks him even when the stage tab hides him: the board goes back to All with him selected
             vb = call(base, f"/api/season/{A}/recruiting")["board"]
@@ -680,7 +680,7 @@ if __name__ == "__main__":
             page.wait_for_selector(".go-menu")
             assert page.inner_text(".go-menu-item[data-action=offer] .go-menu-why").strip() == "Already offered"
             page.keyboard.press("Escape")
-            # the same without your offer: Offer… is greyed for the hard commit, and there is nothing to pull
+            # the same without your offer: Offer… is grayed for the hard commit, and there is nothing to pull
             page.click(f".go-row-recruit[data-pid='{hard_noffer_pid}']")
             time.sleep(0.5)
             assert page.text_content(".go-pane .go-chip").startswith("Hard commit · ")
@@ -762,7 +762,7 @@ if __name__ == "__main__":
                     assert "Nobody is redshirting" in page.inner_text(".depth-redshirts")
                 depth = page.inner_text("#tab-depth")
                 assert not CLASS_CODE.search(depth), CLASS_CODE.search(depth).group(0)
-                # a player page: attribute labels do not clip; the bar colours are explained
+                # a player page: attribute labels do not clip; the bar colors are explained
                 keys = page.evaluate("() => [...document.querySelectorAll('[data-player]')].slice(0, 3).map(e => e.dataset.player)")
                 page.click(f"[data-player='{keys[1]}']")
                 page.wait_for_selector(".player-page", timeout=60_000)
@@ -770,7 +770,7 @@ if __name__ == "__main__":
                 clipped = not_clipped(page, ".player-page .rating-label")
                 assert not clipped, f"{width}px: {clipped[:3]}"
                 legend = page.inner_text(".player-page")
-                assert "75" in legend and ("red" in legend.lower() or "green" in legend.lower()), "the rating bar colours are explained"
+                assert "75" in legend and ("red" in legend.lower() or "green" in legend.lower()), "the rating bar colors are explained"
                 assert not CLASS_CODE.search(legend), CLASS_CODE.search(legend).group(0)
                 page.keyboard.press("Escape")
             page.set_viewport_size({"width": 1280, "height": 1000})
