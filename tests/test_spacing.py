@@ -36,12 +36,19 @@ IN_TEXT = """(e) => (e.matches('button') && [...e.parentElement.childNodes].some
 # card-like containers keep at least 12 px of padding on every side
 CARDS = ".go-card, .coach-item, .leader-card, .start-card, .team-card, .bowl-card, .review-card, .rc-staff-card, .history-list li"
 
+# an element clipped out of a scrolling ancestor's box (a list that scrolls inside itself) is not on screen
+CLIPPED = """(e) => { const r = e.getBoundingClientRect();
+  for (let a = e.parentElement; a && a !== document.body; a = a.parentElement) { const o = getComputedStyle(a).overflowY;
+    if (o === 'auto' || o === 'scroll' || o === 'hidden') { const b = a.getBoundingClientRect(); if (r.bottom <= b.top + 0.5 || r.top >= b.bottom - 0.5) return true; } }
+  return false; }"""
+
 # every container with two or more visible buttons or tags as direct children: the gap between each pair
 # (8 px for buttons, 6 px for tags; within 0.5 px counts as touching) and no overlap
 GAPS_JS = """([SCREEN, ITEM, EXCLUDED]) => {
   const inText = """ + IN_TEXT + """;
+  const clipped = """ + CLIPPED + """;
   const bad = [];
-  const shown = (e) => e.offsetParent !== null || getComputedStyle(e).position === 'fixed';
+  const shown = (e) => (e.offsetParent !== null || getComputedStyle(e).position === 'fixed') && !clipped(e);
   const name = (e) => { const one = (x) => x.tagName.toLowerCase() + (x.id ? '#' + x.id : '') + [...x.classList].map(c => '.' + c).join('');
     const p = e.parentElement; return (p && p !== document.body ? one(p) + ' > ' : '') + one(e); };
   for (const g of document.querySelectorAll('*')) {
@@ -69,10 +76,12 @@ GAPS_JS = """([SCREEN, ITEM, EXCLUDED]) => {
 
 # every button and tag on the page, whatever its parent: two on the same row (vertical overlap at least half the smaller
 # height) keep 6 px apart and nothing overlaps; one inside the other is not a pair, and neither is a pair on different
-# layers (a sticky topbar or pane, a fixed sheet or dialog, over the page it scrolls past)
+# layers (a sticky topbar or pane, a fixed sheet or dialog, over the page it scrolls past), nor one scrolled out of a
+# list that scrolls inside itself (the scouting queue) with what sits under the list
 PAIRS_JS = """([SCREEN, ITEM, EXCLUDED]) => {
   const inText = """ + IN_TEXT + """;
-  const shown = (e) => e.offsetParent !== null || getComputedStyle(e).position === 'fixed';
+  const clipped = """ + CLIPPED + """;
+  const shown = (e) => (e.offsetParent !== null || getComputedStyle(e).position === 'fixed') && !clipped(e);
   const one = (x) => x.tagName.toLowerCase() + [...x.classList].map(c => '.' + c).join('') + ` "${x.textContent.trim().replace(/\\s+/g, ' ').slice(0, 20)}"`;
   const els = [...document.querySelectorAll(ITEM)].filter(e => shown(e) && !e.closest(EXCLUDED) && e.getClientRects().length && !inText(e));
   const boxes = els.map(e => [e, e.getBoundingClientRect()]).filter(([, r]) => r.width && r.height).sort((x, y) => x[1].left - y[1].left);
