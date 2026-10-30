@@ -702,7 +702,10 @@ def recruiting_view(state: dict) -> dict:
              and e["kind"] not in ("leaning_fcs",) + recruiting.CONTACT_KINDS]
     return {
         "week": week, "hours": recruiting.weekly_hours(state, me), "hours_left": recruiting._hours(state, me),
-        "nil": {"budget": nil["budget"], "held": sum(nil["held"].values()), "left": recruiting.nil_left(state, me)},
+        "nil": {"budget": nil["budget"], "held": sum(nil["held"].values()), "left": recruiting.nil_left(state, me),
+                "base": recruiting.nil_budget(state, me),                      # the year's budget alone (the class: budget = base + carry)
+                "pool": nil["budget"] if rc.get("portal") else None,            # the portal: the pool less what keeping players home cost
+                "carry": None if rc.get("portal") else int(nil.get("carry") or 0)},   # the class: last year's portal NIL carried over
         "open_spots": recruiting.open_spots(state, me), "committed": len([1 for s in rc["status"].values() if s["committed"] == me]),
         "needs": recruiting.needs(state, me),
         "needs_detail": recruiting.needs_detail(state, me),

@@ -111,7 +111,15 @@ PORTAL_TOP_TIER = 4                        # an entrant rated a four-star or bet
 PORTAL_NATIONAL = 40                       # the best entrants by portal rank are on every Power 4 board (the whole country chases them)
 PORTAL_STARTERS = {"QB": 1, "RB": 1, "WR": 3, "TE": 1, "OL": 5, "DL": 4, "LB": 3, "CB": 2, "S": 2, "K": 1, "P": 1}   # a group's starters: an entrant better than the last of them is an upgrade, taken past the group's cap
 PORTAL_COMMIT = (0.25, 0.4, 0.6, 1.0)      # an entrant with offers decides at each week's step this often
-PORTAL_NIL_POOL = 0.7                      # the share of next year's NIL budget a school spends in the portal (the portal now takes the bigger share)
+# the portal runs on this season's money: what a school had left of the year's budget plus a reward
+# for the season (shares of the budget, summed then capped), never less than the collective's
+# portal fund; what it does not spend carries into next year, capped by the program's tier
+REWARD = {"winning": 0.10, "nine_wins": 0.20, "conference": 0.10, "playoff": 0.10, "title": 0.15, "goal": 0.10}
+REWARD_CAP = 0.50                          # the reward at most this share of the budget
+REWARD_WHY = {"winning": "winning record", "nine_wins": "nine wins", "conference": "conference champion",
+              "playoff": "made the playoff", "title": "national champion", "goal": "AD goal met"}
+PORTAL_FLOOR = 0.30                        # the collective's portal fund: no program enters the portal with less
+CARRY_CAP = {1: 0.15, 2: 0.20, 3: 0.25, 4: 0.30, 5: 0.30}   # the share of next year's budget that may carry over, by program tier
 PORTAL_ASK = (25, 0.6)                     # an entrant's ask: this plus this per overall point over 50, times his position
 PORTAL_RANK_NOISE = 3.0                    # the public portal ranking: his overall plus this much noise (points)
 PORTAL_LOOK = 0.5                          # a staff's look at a transfer errs this much of a high schooler's: there is film
@@ -817,9 +825,77 @@ def weekly_hours(state: dict, slug: str) -> int:
 def nil_budget(state: dict, slug: str) -> int:
     """A school's NIL points for the year: 3 × its NIL tier (10-100), so the top programs keep the
     budget the recruiting baseline gave (Ohio State about 275) and the middle has room for a few
-    blue-chip asks (SMU about 135, Tulane 110), less what it spent keeping its own players home."""
+    blue-chip asks (SMU about 135, Tulane 110). The class adds last year's carry-over (`_nil`)."""
     from coach_career import programs
-    return max(NIL_FLOOR, _five(NIL_PER_TIER * programs.get(state, slug)["nil"]) - int((state.get("nil_retained") or {}).get(slug, 0)))
+    return max(NIL_FLOOR, _five(NIL_PER_TIER * programs.get(state, slug)["nil"]))
+
+
+def _reward_lines(facts: dict) -> list[str]:
+    """The reward lines a season earns: a winning record (nine wins replaces it), the conference
+    title, the playoff, the national title, the AD's goal met."""
+    lines = []
+    if facts.get("wins", 0) >= 9:
+        lines.append("nine_wins")
+    elif facts.get("wins", 0) > facts.get("losses", 0):
+        lines.append("winning")
+    for k in ("conference", "playoff", "title"):
+        if facts.get(k):
+            lines.append(k)
+    if facts.get("met"):
+        lines.append("goal")
+    return lines
+
+
+def reward(budget: int, facts: dict) -> int:
+    """The NIL the season just played earns for the portal: the lines' shares of the year's budget,
+    summed and capped at REWARD_CAP, in fives. `facts`: wins, losses, conference, playoff, title, met."""
+    share = min(REWARD_CAP, sum(REWARD[k] for k in _reward_lines(facts)))
+    return _five(share * budget)
+
+
+def reward_why(facts: dict) -> list[str]:
+    """The reward's lines in words, for the review."""
+    return [REWARD_WHY[k] for k in _reward_lines(facts)]
+
+
+def portal_pool(state: dict, slug: str, facts: Optional[dict] = None) -> dict:
+    """A school's NIL for the portal: what it had left of the year's budget after signing day plus
+    the season's reward, never less than the collective's portal fund (PORTAL_FLOOR of the budget).
+    The record the review shows: left, reward, reward_why, floor, pool, record; `retained` (keep
+    them home) and, after the portal, `unspent` and `carry` are filled in as they happen."""
+    if facts is None:
+        from coach_career import offseason
+        facts = offseason.season_facts(state).get(slug) or {}
+    budget = nil_budget(state, slug)
+    rc = state.get("recruiting_last") if is_portal(state) else state.get("recruiting")
+    n = (rc or {}).get("nil", {}).get(slug) if rc else None
+    left = max(0, n["budget"] - sum(n["held"].values())) if n else budget
+    earned = reward(budget, facts)
+    floor = _five(PORTAL_FLOOR * budget)
+    return {"budget": budget, "left": left, "reward": earned, "reward_why": reward_why(facts), "floor": floor,
+            "pool": max(floor, left + earned), "retained": 0, "record": [facts.get("wins", 0), facts.get("losses", 0)]}
+
+
+def pool_record(state: dict, slug: str) -> dict:
+    """The school's portal pool record, seeded by offseason.start (a save from before the pool: seeded now)."""
+    pools = state.setdefault("nil_pool", {})
+    if slug not in pools:
+        pools[slug] = portal_pool(state, slug)
+    return pools[slug]
+
+
+def portal_budget(state: dict, slug: str) -> int:
+    """What the school brings to the portal: its pool less what it spent keeping players home."""
+    p = pool_record(state, slug)
+    return max(0, p["pool"] - p.get("retained", 0))
+
+
+def carry_over(state: dict, slug: str, unspent: int) -> int:
+    """What a school's unspent portal NIL carries into next year: capped at CARRY_CAP of next
+    year's budget by the program's tier; anything above is gone."""
+    from coach_career import programs
+    cap = _five(CARRY_CAP[programs.get(state, slug)["tier"]] * nil_budget(state, slug))
+    return max(0, min(5 * (int(unspent) // 5), cap))          # whole fives only: a few stray points are not carried
 
 
 def _five(x: float) -> int:
@@ -903,8 +979,19 @@ def _hours(state: dict, slug: str) -> float:
 
 
 def _nil(state: dict, slug: str) -> dict:
-    budget = _five(PORTAL_NIL_POOL * nil_budget(state, slug)) if is_portal(state) else nil_budget(state, slug)
-    return state["recruiting"]["nil"].setdefault(slug, {"budget": budget, "held": {}})
+    """The school's NIL record this block: in the portal its pool; in the class the year's budget
+    plus last year's carry-over, consumed once when the record is created."""
+    n = state["recruiting"]["nil"].get(slug)
+    if n is None:
+        if is_portal(state):
+            n = {"budget": portal_budget(state, slug), "held": {}}
+        else:                                   # the carry is next season's: the old class block (the offseason still open) leaves it alone
+            carry = int((state.get("nil_carry") or {}).pop(slug, 0) or 0) if not state.get("offseason") else 0
+            n = {"budget": nil_budget(state, slug) + carry, "held": {}}
+            if carry:
+                n["carry"] = carry
+        state["recruiting"]["nil"][slug] = n
+    return n
 
 
 def nil_left(state: dict, slug: str) -> int:
