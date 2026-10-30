@@ -32,7 +32,7 @@ def _fictional() -> dict[str, dict]:
 GAME_LINE_KEYS = {"opponent", "opp", "home", "away"}
 
 
-def _assert_clean(label: str, payload, fict: dict[str, dict]) -> None:
+def _assert_clean(label: str, payload, fict: dict[str, dict], allow: frozenset = frozenset()) -> None:
     """No stand-in as a row of its own (a slug outside a game line), and its name and
     conference nowhere at all."""
     names = {t["name"] for t in fict.values()} | {t["conference"] for t in fict.values()}
@@ -46,7 +46,7 @@ def _assert_clean(label: str, payload, fict: dict[str, dict]) -> None:
             for i, v in enumerate(x):
                 walk(v, key, f"{path}[{i}]")
         elif isinstance(x, str):
-            assert not (x in fict and key not in GAME_LINE_KEYS), f"{label} shows {x} at {path}"
+            assert not (x in fict and key not in GAME_LINE_KEYS | allow), f"{label} shows {x} at {path}"
             hit = next((n for n in names if n in x), None)
             assert hit is None, f"{label} names {hit} at {path}: {x[:120]}"
     walk(payload, None, "")
@@ -64,6 +64,15 @@ def test_fcs_hidden():
     s = api.call("POST", "/api/season", {"team": "smu", "seed": 11})
     sid = s["id"]
     week, game = _first_fcs_week(api.loaded_state(), fict)
+    base = f"/api/season/{sid}"
+    # before week 1: the schedule trades; an FCS date's swap picker names regions, never a stand-in
+    edit = api.call("GET", f"{base}/schedule_edit")
+    _assert_clean("schedule edit", edit, fict, allow=frozenset({"slug"}))   # a swap option's value, shown by its region
+    fcs_options = [o for g in edit["games"] for o in g["options"] if o["slug"] in fict]
+    assert fcs_options, "SMU's FCS date offers the other stand-ins"
+    for o in fcs_options:
+        assert not any(t["name"] in json.dumps(o) for t in fict.values()), o
+    assert len({o["name"] for o in fcs_options}) == len(fcs_options), "two stand-ins share a picker name"
     api.call("POST", f"/api/season/{sid}/advance", {"to": week})
     while api.step() is not None:
         pass
@@ -82,7 +91,6 @@ def test_fcs_hidden():
         api._save_loaded()
     assert state["season_stats"].get(fslug), "the stand-in kept no season stats (the views could not leak them)"
 
-    base = f"/api/season/{sid}"
     _assert_clean("injuries", api.call("GET", f"{base}/injuries"), fict)
     _assert_clean("team stats", api.call("GET", f"{base}/stats/teams"), fict)
     for cat in season.PLAYER_CATEGORIES:
@@ -94,6 +102,8 @@ def test_fcs_hidden():
     _assert_clean("review", api.call("GET", f"{base}/review"), fict)
     _assert_clean("recruiting", api.call("GET", f"{base}/recruiting"), fict)
     _assert_clean("classes", api.call("GET", f"{base}/classes"), fict)
+    _assert_clean("week", api.call("GET", f"{base}/week/{week}"), fict)
+    _assert_clean("schedule", api.call("GET", f"{base}/schedule/smu"), fict)
 
     # the team list flags them, so every picker can leave them out
     cards = {c["slug"]: c for c in api.call("GET", "/api/teams")["teams"]}

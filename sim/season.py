@@ -2028,8 +2028,10 @@ def week_view(state: dict, week: int) -> list[dict]:
             continue
         out.append({**g, "home_rank": ap.get(g["home"]), "away_rank": ap.get(g["away"]),
                     "mine": state["team"] in (g["home"], g["away"]), "has_box": has_box(state, g),
-                    "home_name": teams[g["home"]]["name"], "away_name": teams[g["away"]]["name"],
-                    "home_record": _record_str(rec[g["home"]]), "away_record": _record_str(rec[g["away"]])})
+                    "home_name": team_display(g["home"], teams), "away_name": team_display(g["away"], teams),
+                    # the stand-ins play many schedules: no record
+                    "home_record": "" if teams[g["home"]]["fictional"] else _record_str(rec[g["home"]]),
+                    "away_record": "" if teams[g["away"]]["fictional"] else _record_str(rec[g["away"]])})
     out.sort(key=lambda g: (not g["mine"], {"playoff": 0, "bowl": 1}.get(g["kind"], 2), g["date"] or "", g["event_id"]))
     return out
 
@@ -2293,6 +2295,19 @@ def _other_game(state: dict, slug: str, week: int, skip: str) -> Optional[dict]:
                  and slug in (g["home"], g["away"])), None)
 
 
+def _fcs_picker_names(teams: dict) -> dict[str, str]:
+    """slug -> how a stand-in is named in a picker: its region label, never its own name;
+    stand-ins that share a label get "· A", "· B" by slug order."""
+    by_label: dict[str, list[str]] = {}
+    for slug in sorted(s for s, t in teams.items() if t.get("fictional")):
+        by_label.setdefault(fcs_label(slug), []).append(slug)
+    out = {}
+    for label, slugs in by_label.items():
+        for i, slug in enumerate(slugs):
+            out[slug] = label if len(slugs) == 1 else f"{label} · {chr(ord('A') + i)}"
+    return out
+
+
 def schedule_options(state: dict, event_id: str) -> list[dict]:
     """Who could take the other side of one of your non-conference games: FBS teams with a
     non-conference game that week (the two displaced opponents would play each other), each
@@ -2308,12 +2323,13 @@ def schedule_options(state: dict, event_id: str) -> list[dict]:
     venue = "neutral" if g["neutral"] else "home" if g["home"] == me else "away"
     fcs = bool(teams[opp].get("fictional"))
     rivals = load_rivalries()
+    fcs_names = _fcs_picker_names(teams) if fcs else {}
     out = []
     for slug, t in teams.items():
         if slug in (me, opp) or bool(t.get("fictional")) != fcs:
             continue
         if fcs:
-            out.append({"slug": slug, "name": f"{fcs_label(slug)} ({t['name']})", "conference": t["conference"], "standing": "FCS", "accepts": True,
+            out.append({"slug": slug, "name": fcs_names[slug], "conference": "FCS", "standing": "FCS", "accepts": True,
                         "venue": "home", "why": "an FCS team comes to you"})
             continue
         other = _other_game(state, slug, g["week"], event_id)
@@ -2692,7 +2708,7 @@ def summary(state: dict) -> dict:
         "heisman": ((state.get("awards") or {}).get("national") or {}).get("heisman"),
         "settings": settings(state),
         "injuries": injury_report(state, state["team"]),
-        "injury_count": sum(len(v) for k, v in state.get("injuries", {}).items() if not state_fictional(k)),
+        "injury_count": sum(len(state["injuries"][k]) for k in fbs_only(teams) & state.get("injuries", {}).keys()),
         "my_awards": awards.my_awards(state, state["awards"]) if state.get("awards") else [],
         "career": state.get("career"),
     }
