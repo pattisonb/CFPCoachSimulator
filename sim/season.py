@@ -1085,10 +1085,11 @@ def _skills(p: dict) -> dict[str, int]:
 def with_positions(team: dict, moves: dict) -> dict:
     """A copy of the team with this season's position changes applied (change_position): each
     moved player at his new position and depth-chart role, placed in that role's order by his
-    overall recomputed by our formula there (behind everyone rated at least as high; a
-    depth-chart override still pins whoever you moved); his old role closes up behind him. The engine reads his attributes as they are,
+    projected overall there (position_fit.season_move: his skills as they transfer, his size
+    against the spot's; behind everyone rated at least as high; a depth-chart override still pins
+    whoever you moved); his old role closes up behind him. The engine reads his attributes as they are,
     as it does for a player moved into another role on the depth chart."""
-    from teamdata import game_scale
+    from coach_career import position_fit
     players = [dict(p) for p in team["offense"] + team["defense"]]
     by_slug = {p.get("slug"): p for p in players}
     starters: dict[str, int] = {}
@@ -1107,9 +1108,9 @@ def with_positions(team: dict, moves: dict) -> dict:
         touched.update(r for r in (p.get("role"), role) if r)
         arriving.add(pslug)
         crossing = (p["position"] in OFFENSE_POSITIONS) != (pos in OFFENSE_POSITIONS)
-        p["position"], p["role"], p["depth"], p["in_game"] = pos, role, None, False
         if p.get("skills"):
-            p["ovr"] = game_scale.overall(_skills(p), role)
+            p["ovr"], p["skills"] = position_fit.season_move(p, p.get("role") or p["position"], role)
+        p["position"], p["role"], p["depth"], p["in_game"] = pos, role, None, False
         if crossing:
             p["stats"] = {k: 0 for k in stat_keys}    # a player crossing units needs every box-score key
     if not touched:
@@ -1140,16 +1141,16 @@ def _roster_player(state: dict, slug: str, player_slug: str) -> dict:
 
 def position_options(state: dict, slug: str, player_slug: str) -> list[dict]:
     """What one of a team's players would be at every position (kickers and punters among
-    themselves): his overall by our formula there, where he is now first, then best first."""
+    themselves): position_fit.project from the league file's player (his skills on the new
+    group's scale, the ones he has never used discounted, his size against the spot's), where he
+    is now first, then best first."""
     from coach_career import league as lg
-    from teamdata import game_scale
+    from coach_career import position_fit
     p = _roster_player(state, slug, player_slug)
-    ours, cur = _skills(p), p.get("role") or p["position"]
-    special = cur in ("K", "P")
-    out = [{"pos": pos, "group": lg.GROUP_OF[pos], "overall": game_scale.overall(ours, pos), "current": pos == cur}
-           for pos in lg.GROUP_OF if (pos in ("K", "P")) == special]
-    out.sort(key=lambda o: (-o["current"], -o["overall"]))
-    return out
+    t = load_teams()[slug]
+    base = next(x for x in t["offense"] + t["defense"] if x.get("slug") == player_slug)
+    return position_fit.options(_skills(base), base.get("height_in"), base.get("weight"), base.get("role") or base["position"],
+                                p.get("role") or p["position"], lg.GROUP_OF)
 
 
 def _rekey_player(state: dict, slug: str, name: str, old_pos: str, new_pos: str) -> None:
@@ -1176,7 +1177,7 @@ def change_position(state: dict, slug: str, player_slug: str, pos: str) -> dict:
     """Move one of your players to another position now: he plays and shows there from the next
     game (with_positions, through team_data and every game's edits), last in the new role's
     depth order and out of every slot of his old one, his overall recomputed by our formula
-    there; the career's league roster follows (the row at once in a later season, at the
+    there (position_fit); the career's league roster follows (the row at once in a later season, at the
     offseason in the first). Moving him back to the position the league file has clears the change."""
     if pos not in ROLE_POSITION:
         raise PositionError(400, "no such position")

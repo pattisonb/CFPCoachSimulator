@@ -17,6 +17,7 @@ import statistics as st
 from typing import Optional
 
 from coach_career import league as lg
+from coach_career import position_fit
 from coach_career import recruits
 from teamdata import game_scale
 
@@ -861,27 +862,21 @@ def _apply_redshirts(state: dict) -> None:
 
 
 def position_options(state: dict, pid: str) -> list[dict]:
-    """What he would be at every position: his overall by our formula there, best first."""
+    """What he would be at every position (position_fit.project: his ratings on the new group's
+    scale, skills he has never used discounted, his size against the spot's), best first."""
     lgd = state["league"]
     c = next((x for x in lgd["teams"][state["team"]]["roster"] if x["id"] == pid), None)
     if c is None:
         raise RosterError(404, "not on your roster")
-    ours = lg.ratings(c, lgd["attrs"])
-    special = c["pos"] in ("K", "P")
-    out = [{"pos": pos, "group": GROUP[pos], "overall": game_scale.overall(ours, pos), "current": pos == c["pos"]}
-           for pos in GROUP if (pos in ("K", "P")) == special]
-    out.sort(key=lambda o: (-o["current"], -o["overall"]))
-    return out
+    origin, r = (c["moved_from"], c["moved_attrs"]) if c.get("moved_attrs") else (c["pos"], c["r"])
+    return position_fit.options(dict(zip(lgd["attrs"], r)), c.get("ht"), c.get("wt"), origin, c["pos"], GROUP)
 
 
 def move_row(c: dict, pos: str, attrs: list[str]) -> None:
-    """A league roster row at another position: "moved_from" keeps where he came from (cleared
-    when he goes back), his overall is our formula there."""
-    c.setdefault("moved_from", c["pos"])
-    c["pos"] = pos
-    c["o"] = game_scale.overall(lg.ratings(c, attrs), pos)
-    if pos == c["moved_from"]:
-        c.pop("moved_from", None)
+    """A league roster row at another position (position_fit.move_row): his ratings and overall
+    become what he projects there, "moved_from" keeps where he came from (cleared, his ratings
+    restored, when he goes back the same season)."""
+    position_fit.move_row(c, pos, attrs)
 
 
 def _season_moves(state: dict, lgd: dict) -> None:
@@ -1930,6 +1925,8 @@ def next_season(state: dict) -> dict:
     year = off["year"]
     lgd = state["league"]
     lgd["year"] = year
+    for t in lgd["teams"].values():
+        position_fit.settle(t["roster"])          # this year's position changes are theirs now
     team = off.get("move_to") or state["team"]
     # your team's default depth chart is by overall (league.lineup); the season's depth-chart
     # overrides and redshirts are this season's and are not carried (new_season starts clean)

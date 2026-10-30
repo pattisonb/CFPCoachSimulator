@@ -1087,8 +1087,18 @@ candidate waits on you, the ones you sat down already marked (a freshman off the
 top takes it unless you say otherwise; an older player only if he never played); the AI programs
 draw as before but only within the four-game rule. A position change can be made any time, from
 the Depth Chart during the season or the offseason's Your roster card at any stage: it moves one
-of your players to any spot (kickers and punters among themselves), his overall recomputed by our
-formula there (`position_options` shows what he would be everywhere before you choose). During the
+of your players to any spot (kickers and punters among themselves); what he would be there is
+`coach_career/position_fit.project` (`position_options` shows it for every spot before you choose):
+his ratings put on the new group's scale (ours are kept relative to each group's middle starter,
+so a safety's blocking is read against the guards', not the safeties'), the position skills he has
+never used discounted (whole inside his technique group, `NEAR_DISCOUNT` of what he has above a raw
+athlete's `POSITION_FLOOR` within his unit, `max(floor, FAR_DISCOUNT x his)` across units; speed,
+strength and the other athletic attributes move untouched), less his build against the spot's real
+height and weight (`SIZE_PENALTY` per standard deviation light or short beyond the first,
+`HEAVY_PENALTY` heavy, as much as light at the speed positions, `SIZE_CAP` at most), floored at 20.
+A 197-pound safety projects in the 20s at guard, not the 60s. The change writes the transferred
+ratings onto him, so his overall and his game ratings agree; moving him back the same season or
+offseason restores the originals (`moved_attrs`), after `next_season` the change is his. During the
 season (`GET .../position_options/{team}/{player}`, `POST .../position` with `team`, `player`,
 `pos`) the change applies at once: `state["position_changes"]` rides along with every game's
 edits (`team_edits` → `with_edits` → `with_positions`), so the next game, the Depth Chart, his
