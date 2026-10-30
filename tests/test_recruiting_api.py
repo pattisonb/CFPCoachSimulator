@@ -143,6 +143,10 @@ if __name__ == "__main__":
         _rc.weekly_step(st_, 1)
         assert G(sid, "recruiting")["auto_recruit"] == "off"
         assert len(st_["recruiting"]["offers"].get("ohio-state", [])) > before, "Auto-recruit for the week did nothing"
+        # the contact log: your staff's actions on Auto are logged as yours; the other schools' contacts are not logged at all
+        mine_kinds = ("contact", "pitch", "raise_nil", "pull_offer")
+        assert any(e["kind"] == "contact" and e["school"] == "ohio-state" for e in st_["recruiting"]["log"]), "Auto-recruit's contacts not logged"
+        assert all(e["school"] == "ohio-state" for e in st_["recruiting"]["log"] if e["kind"] in mine_kinds), "another school's contact was logged"
         # ... and it works from your board: your picks first, everyone it chases shows on it
         board_ids = {b["id"] for b in G(sid, "recruiting")["board"]}
         assert mine in st_["recruiting"]["offers"]["ohio-state"], "Auto-recruit skipped a prospect on your board"
@@ -194,6 +198,40 @@ if __name__ == "__main__":
             assert any(x["id"] == sid for x in api.call("GET", "/api/seasons")["seasons"])
         finally:
             bad.unlink()
+        # History: every action you take on him, newest first, with what you pitched, his reaction and the NIL
+        logc = api.call("POST", "/api/season", {"team": "ohio-state", "mode": "full", "seed": 13, "career": True})["id"]
+        two = [r["id"] for r in search(logc, limit=40)["rows"][20:22]]
+        a, b = two
+        for q in two:
+            R(logc, "board", {"pid": q, "on": True})
+        hist = lambda q: next(x for x in G(logc, "recruiting")["board"] if x["id"] == q)["history"]
+        assert hist(a) == [] and hist(b) == [], "an untouched recruit has an empty history"
+        R(logc, "recruit", {"pid": a, "action": "message", "pitch": "prestige"})
+        sc = R(logc, "recruit", {"pid": a, "action": "call"})["scene"]
+        topic = sc["cue"]["topics"][0]
+        said = R(logc, "recruit", {"pid": a, "action": "pitch", "scene": sc["id"], "pitch": topic})["reaction"]["kind"]
+        R(logc, "recruit", {"pid": a, "action": "offer", "pitch": "winning", "nil": 120})
+        R(logc, "recruit", {"pid": a, "action": "raise_nil", "nil": 150})
+        h = [x for x in hist(a) if x["kind"] != "not_buying"]       # a backfiring pitch may add a not_buying line
+        got = [(x["kind"], x.get("action"), x.get("pitch"), x.get("reaction"), x.get("nil")) for x in h]
+        assert got == [("raise_nil", None, None, None, 150), ("offer", None, None, None, 120),
+                       ("pitch", "call", topic, said, None), ("contact", "call", None, None, None),
+                       ("contact", "message", "prestige", None, None)], got
+        assert all(x["week"] == 0 and x["school"] == "ohio-state" for x in h), h
+        assert hist(b) == [], "his history is his alone"
+        st_ = api.loaded_state()
+        _rc._act(st_, "michigan", a, "offer", pitch="winning")        # another school's offer shows; its contacts do not
+        _rc._act(st_, "michigan", a, "message", pitch="winning")
+        assert [(x["kind"], x["school"]) for x in hist(a)[:2]] == [("offer", "michigan"), ("raise_nil", "ohio-state")], hist(a)[:2]
+        # a long career: the last 40 entries for him, newest first
+        for w in range(1, 51):
+            st_["current_week"] = w
+            st_["recruiting"]["hours"] = {}
+            R(logc, "recruit", {"pid": a, "action": "message", "pitch": "coach"})
+        h = hist(a)
+        assert len(h) == 40 and h[0]["week"] == 50 and h[-1]["week"] >= 11, (len(h), h[0], h[-1])
+        assert [x["week"] for x in h] == sorted((x["week"] for x in h), reverse=True)
+        api.call("DELETE", f"/api/season/{logc}")
         for s in (sid, other):
             api.call("DELETE", f"/api/season/{s}")
         # sim progress: one week number and one share of that week, games then recruiting, never jumping ahead

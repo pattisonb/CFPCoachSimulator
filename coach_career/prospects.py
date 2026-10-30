@@ -460,9 +460,30 @@ def _stage_move(state: dict, pid: str, viewer: str) -> Optional[str]:
     return "up" if d > 0 else "down" if d < 0 else None
 
 
-def board_row(state: dict, pid: str, viewer: str) -> dict:
-    """A board line adds your standing with him: your interest, the leader and his known priorities."""
+HISTORY_SHOWN = 40                           # a board row's History: his newest log entries, this many
+HIS_OWN = ("commit", "hard", "flip", "decommit", "signed", "leaning_fcs")   # his own moves: every school's show
+HISTORY_KEYS = ("week", "kind", "action", "pitch", "nil", "reaction", "school")
+
+
+def history_index(state: dict, viewer: str) -> dict[str, list[dict]]:
+    """One pass over the log: each prospect's History for the viewer, newest first and capped. His
+    own moves and any school's offer show; everything else only when it is the viewer's."""
+    out: dict[str, list[dict]] = {}
+    for e in reversed(state["recruiting"]["log"]):
+        if e.get("school") != viewer and e["kind"] not in HIS_OWN and e["kind"] != "offer":
+            continue
+        rows = out.setdefault(e["pid"], [])
+        if len(rows) < HISTORY_SHOWN:
+            rows.append({k: e[k] for k in HISTORY_KEYS if e.get(k) is not None})
+    return out
+
+
+def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None) -> dict:
+    """A board line adds your standing with him: your interest, the leader and his known priorities,
+    and his History (`history`: a `history_index` built once per view; without it, one pass for him)."""
     rc = state["recruiting"]
+    if history is None:
+        history = history_index(state, viewer)
     out = row(state, pid, viewer)
     schools = _schools(state, pid)
     mine = next((s for s in schools if s["school"] == viewer), None)
@@ -484,7 +505,8 @@ def board_row(state: dict, pid: str, viewer: str) -> dict:
                hard=bool(rc["status"][pid].get("hard")) and not rc["status"][pid]["signed"],
                can_scout=can_scout(state, viewer, pid),
                role=_role(recruiting.pull(state, viewer, pid)["playing_time"]),
-               standing=standing(state, pid, viewer))
+               standing=standing(state, pid, viewer),
+               history=history.get(pid, []))
     return out
 
 
@@ -673,9 +695,10 @@ def recruiting_view(state: dict) -> dict:
     nil = recruiting._nil(state, me)
     week = state["current_week"]
     mine = set(rc["board"]) | set(offers)
-    board = [board_row(state, pid, me) for pid in rc["board"]]
+    hist = history_index(state, me)
+    board = [board_row(state, pid, me, hist) for pid in rc["board"]]
     recap = [e for e in rc["log"] if e["week"] == week and (e.get("school") == me or e.get("from") == me or e["pid"] in mine)
-             and e["kind"] != "leaning_fcs"]
+             and e["kind"] not in ("leaning_fcs",) + recruiting.CONTACT_KINDS]
     return {
         "week": week, "hours": recruiting.weekly_hours(state, me), "hours_left": recruiting._hours(state, me),
         "nil": {"budget": nil["budget"], "held": sum(nil["held"].values()), "left": recruiting.nil_left(state, me)},
