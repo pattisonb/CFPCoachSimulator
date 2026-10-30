@@ -1330,7 +1330,7 @@
         return cell;
       })),
         el("p", { class: "muted small", text: `${p.looks} look${p.looks === 1 ? "" : "s"}. Tap or hover a grade to see what it looks like in ratings. Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster.` }),
-        inPane ? null : el("div", { class: "go-row wrap rc-profile-actions" }, [scoutBtn]));
+        ...(inPane ? [] : [el("div", { class: "go-row wrap rc-profile-actions" }, [scoutBtn])]));
       node.append(p.our_comp ? el("p", {}, [el("b", { text: "Our comp: " }), comp(p.our_comp)])
         : el("p", { class: "muted", text: p.looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp after 3 looks (${p.looks} so far).` }));
     } else node.append(el("p", { class: "muted", text: inPane ? "Not scouted yet: Scout from the Recruit menu, or put a staff member on his area." : "Not scouted yet: send a scout, or put a staff member on his area." }),
