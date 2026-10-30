@@ -1089,7 +1089,8 @@ if __name__ == "__main__":
             page.wait_for_selector(".go-pane .go-strip .go-changed", timeout=10_000)
             settle(page, n)
             smooth(page, h, "Offer")
-            page.wait_for_function("(t) => [...document.querySelectorAll('.go-pane .go-tags .go-tag')].some(e => e.textContent.trim() === t)", arg=f"Offered · {nil} NIL", timeout=10_000)
+            # the tag carries the points when there are any (an offer to a recruit with no ask known starts at 0: plain "Offered")
+            page.wait_for_function("(t) => [...document.querySelectorAll('.go-pane .go-tags .go-tag')].some(e => e.textContent.trim() === t)", arg=f"Offered · {nil} NIL" if nil else "Offered", timeout=10_000)
             assert f"your {nil}" in page.inner_text(".go-pane .go-strip")
             # Raise NIL
             menu("raise_nil")

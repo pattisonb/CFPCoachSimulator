@@ -216,7 +216,7 @@ def board_cases(page, base: str, sid: str) -> None:
     send = ready(page, ".go-pane .go-step button.go-step-go")
     r = assert_smooth(page, ".go-pane", lambda: send.click(), f"Offer sent to {b['name']} · {nil} NIL", "Board: offer")
     assert r["pulses"] > 0, "the NIL cell and the Offered tag pulse"
-    page.wait_for_function("(t) => [...document.querySelectorAll('.go-pane .go-tags .go-tag')].some(e => e.textContent.trim() === t)", arg=f"Offered · {nil} NIL", timeout=10_000)
+    page.wait_for_function("(t) => [...document.querySelectorAll('.go-pane .go-tags .go-tag')].some(e => e.textContent.trim() === t)", arg=f"Offered · {nil} NIL" if nil else "Offered", timeout=10_000)
     assert_smooth(page, ".go-pane", lambda: menu("scout"), f"Scouted {b['name']} · look 1 of 3", "Board: scout")
     assert page.evaluate("() => document.activeElement.id") == "rc-recruit", "the Recruit button gets the focus back"
     assert "1 of 3 looks" in page.inner_text(".go-pane .go-strip")
