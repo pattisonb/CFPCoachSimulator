@@ -49,9 +49,14 @@ def settle(page, before: int) -> None:
 
 # ----- smoothness (the spec's section 5): an action patches the screen in place, says what happened, keeps the focus -----
 
-def watch(page, selector: str, scrolled: bool = True):
+def watch(page, selector: str, control: str = None, scrolled: bool = True):
     """Before an action: the element the player is looking at (a handle), the page's and its own scroll, and an observer
-    counting the removals of any node that holds it. scrolled: the page is scrolled (so the scroll check means something)."""
+    counting the removals of any node that holds it. control: the button about to be clicked, brought into view first
+    if it is off screen (Playwright scrolls an off-screen control into view itself, which the scroll check must not count).
+    scrolled: the page is scrolled (so the scroll check means something)."""
+    if control:
+        page.eval_on_selector(control, "e => e.scrollIntoView({ block: 'nearest' })")
+        time.sleep(0.3)
     h = page.query_selector(selector)
     assert h, selector
     s = page.evaluate("""(el) => { const s = window.__smooth = { el, gone: 0, top: el.scrollTop, page: window.scrollY };
@@ -1063,7 +1068,7 @@ if __name__ == "__main__":
             # Message: the step's Send goes busy, the step closes, the row and the pane update in place
             menu("message")
             page.wait_for_selector(".go-pane .go-step select#rc-pitch")
-            h = watch(page, ".go-pane")
+            h = watch(page, ".go-pane", ".go-pane .go-step button.go-step-go")
             n = draws(page)
             page.click(".go-pane .go-step button.go-step-go")
             assert page.evaluate("() => { const b = document.querySelector('.go-pane .go-step-go'); return !b || (b.disabled && b.classList.contains('go-busy')); }"), "Send shows busy while the action is in flight"
@@ -1076,7 +1081,7 @@ if __name__ == "__main__":
             menu("offer")
             page.wait_for_selector(".go-pane .go-step input#rc-nil")
             nil = int(page.input_value("#rc-nil"))
-            h = watch(page, ".go-pane")
+            h = watch(page, ".go-pane", ".go-pane .go-step button.go-step-go")
             n = draws(page)
             page.click(".go-pane .go-step button.go-step-go")
             toasted(page, f"Offer sent to {x['name']} · {nil} NIL")
@@ -1090,7 +1095,7 @@ if __name__ == "__main__":
             page.wait_for_selector(".go-pane .go-step input#rc-nil")
             nil2 = int(page.input_value("#rc-nil"))
             assert nil2 > nil
-            h = watch(page, ".go-pane")
+            h = watch(page, ".go-pane", ".go-pane .go-step button.go-step-go")
             n = draws(page)
             page.click(".go-pane .go-step button.go-step-go")
             toasted(page, f"Offer raised to {nil2} NIL")
@@ -1099,7 +1104,7 @@ if __name__ == "__main__":
             assert f"your {nil2}" in page.inner_text(".go-pane .go-strip")
             # Scout: from the menu, the Recruit button is the busy control and gets the focus back
             trips = x.get("trips") or 0
-            h = watch(page, ".go-pane")
+            h = watch(page, ".go-pane", "#rc-recruit")
             n = draws(page)
             menu("scout")
             toasted(page, f"Scouted {x['name']} · look {trips + 1} of 3")
@@ -1108,7 +1113,7 @@ if __name__ == "__main__":
             assert page.evaluate("() => document.activeElement.id") == "rc-recruit"
             assert f"{trips + 1} of 3 looks" in page.inner_text(".go-pane .go-strip")
             # Call: the scene opens inside the same pane; the pitch's toast sits clear of his reply
-            h = watch(page, ".go-pane")
+            h = watch(page, ".go-pane", "#rc-recruit")
             n = draws(page)
             menu("call")
             toasted(page, f"Called {x['name']} · 15 hours")
@@ -1117,7 +1122,7 @@ if __name__ == "__main__":
             smooth(page, h, "Call")
             topic = next(bb for bb in call(base, f"/api/season/{A}/recruiting")["board"] if bb["id"] == x["id"])["scene"]["cue"]["topics"][0]
             page.click(f".go-pane .go-pitch:has(input[value='{topic}'])")
-            h = watch(page, ".go-pane")
+            h = watch(page, ".go-pane", ".go-pane button:has-text('Pitch')")
             n = draws(page)
             page.click(".go-pane button:has-text('Pitch')")
             page.wait_for_selector(".go-pane .go-reaction", timeout=30_000)
@@ -1132,7 +1137,7 @@ if __name__ == "__main__":
             # Pull offer: confirmed, the offer goes; the tag leaves and the cell changes in place
             page.remove_listener("dialog", dismiss)
             page.once("dialog", lambda d: d.accept())
-            h = watch(page, ".go-pane")
+            h = watch(page, ".go-pane", "#rc-recruit")
             n = draws(page)
             menu("pull_offer")
             toasted(page, f"Offer to {x['name']} pulled")
@@ -1142,7 +1147,7 @@ if __name__ == "__main__":
             assert "Offered" not in page.inner_text(".go-pane .go-tags") if page.query_selector(".go-pane .go-tags") else True
             assert not next(bb for bb in call(base, f"/api/season/{A}/recruiting")["board"] if bb["id"] == x["id"])["offered"]
             # Off the board: the row leaves, the pane switches to the next recruit with a cross-fade (120 ms, none under reduced motion)
-            h = watch(page, ".go-pane")
+            h = watch(page, ".go-pane", "#rc-recruit")
             n = draws(page)
             menu("off_board")
             toasted(page, f"{x['name']} is off your board")
@@ -1189,7 +1194,7 @@ if __name__ == "__main__":
             before = dict(page.evaluate("() => [...document.querySelectorAll('.go-stages button[data-stage]')].map(b => [b.dataset.stage, +b.querySelector('b').textContent])"))
             menu("message")
             page.wait_for_selector(".go-pane .go-step select#rc-pitch")
-            h = watch(page, ".go-pane")
+            h = watch(page, ".go-pane", ".go-pane .go-step button.go-step-go")
             n = draws(page)
             page.click(".go-pane .go-step button.go-step-go")
             toasted(page, f"Message sent to {cold['name']} · 5 hours")
