@@ -734,6 +734,8 @@ def check_topbar_hide(page, base, sid) -> None:
         tabs: document.querySelector('#season-tabs').getBoundingClientRect().top,
         tbh: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--topbar-h')) })"""
     open_tab(page, base, sid, "stats", "#tab-stats .leader-row")        # a long page: it scrolls well past the header
+    # a few weeks into the season the Stats page scrolls only ~520 px; give it room, as the checks below do
+    page.evaluate("() => { document.body.style.minHeight = '4000px'; }")
     assert not page.evaluate(hidden), "at the top the bar shows"
     page.evaluate("() => window.scrollTo(0, 800)")
     page.wait_for_function(hidden, timeout=10_000)
