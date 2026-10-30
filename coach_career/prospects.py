@@ -147,10 +147,11 @@ def _public_grades(p: dict) -> dict[str, float]:
 
 
 def _ranks(state: dict) -> dict[str, tuple[int, int]]:
-    """(position rank, state rank) for every prospect."""
+    """(position rank, state rank) for every prospect. Keyed by the recruiting block (recruiting._ck),
+    not its year alone: the transfer portal's block shares its year with the class it replaces."""
     global _RANKS
     rc = state["recruiting"]
-    key = (state["id"], rc["year"])
+    key = (state["id"], recruiting._ck(rc), len(rc["prospects"]))
     cached = _RANKS                       # one read: another request may swap it in meanwhile
     if cached[0] == key:
         return cached[1]
