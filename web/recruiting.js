@@ -1719,7 +1719,10 @@
     const r = cell.getBoundingClientRect(), t = tip.getBoundingClientRect(), gap = 6, pad = 8;
     const below = r.bottom + gap + t.height <= document.documentElement.clientHeight - pad;
     const top = below ? r.bottom + gap : Math.max(pad, r.top - gap - t.height);
-    const left = Math.min(Math.max(pad, r.left), document.documentElement.clientWidth - t.width - pad);
+    // the right edge it may reach: the page's usable width, or a scrolling pane's inner edge (a phone's sheet keeps its scrollbar there)
+    const host = cell.closest(".go-pane");
+    const edge = Math.min(document.documentElement.clientWidth, host ? host.getBoundingClientRect().left + host.clientWidth : Infinity);
+    const left = Math.min(Math.max(pad, r.left), edge - t.width - pad);
     tip.style.top = `${top}px`;
     tip.style.left = `${left}px`;
   }
