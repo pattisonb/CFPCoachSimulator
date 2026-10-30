@@ -7,6 +7,7 @@ from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 
 from app import api
+from coach_career import recruiting as _rc
 from sim import season
 
 
@@ -116,6 +117,30 @@ if __name__ == "__main__":
         talk, held = (r["id"] for r in everyone[5:7])
         sc = R(sid, "recruit", {"pid": talk, "action": "call"})["scene"]
         assert sc["id"] and sc["action"] == "call" and "question" in sc
+        # the conversation opens with you and his small talk; the cue and his question wait on your opening (three topics)
+        assert [t["who"] for t in sc["turns"]] == ["you", "him"] and sc["cue"] is None and sc["presented"] is None
+        refused(lambda: R(sid, "recruit", {"pid": talk, "action": "pitch", "scene": sc["id"], "pitch": "winning"}), 409)
+        refused(lambda: R(sid, "recruit", {"pid": talk, "action": "present", "scene": sc["id"], "topics": ["winning", "nil"]}), 400)
+        refused(lambda: R(sid, "recruit", {"pid": talk, "action": "present", "scene": sc["id"], "topics": ["winning", "nil", "nil"]}), 400)
+        refused(lambda: R(sid, "recruit", {"pid": talk, "action": "present", "scene": sc["id"], "topics": "winning"}), 422)
+        refused(lambda: R(sid, "recruit", {"pid": talk, "action": "present", "scene": "nope", "topics": ["winning", "nil", "coach"]}), 409)
+        st_ = api.loaded_state()
+        pri = st_["recruiting"]["prospects"][talk]["priorities"]
+        str_ = _rc.strengths(st_, "ohio-state", talk)
+        strong = [t for t in pri if str_[t] >= _rc.BACKFIRE]
+        weak = [t for t in pri if str_[t] < _rc.BACKFIRE]
+        misses = [t for t in _rc.PITCHES if t not in pri]
+        three = (strong[:1] or weak[:1]) + misses[:2]
+        pr = R(sid, "recruit", {"pid": talk, "action": "present", "scene": sc["id"], "topics": three})
+        sc = pr["scene"]
+        assert sc["presented"] == three and sc["cue"]["topics"] and [t["who"] for t in sc["turns"][:6]] == ["you", "him", "you", "him", "you", "him"]
+        if strong:
+            assert pr["points"] > 0 and pr["hit"] == strong[:1] and sc["present"]["kind"] == "hit", pr
+        elif weak:
+            assert pr["points"] < 0 and pr["hit"] == [] and sc["present"]["kind"] == "quiet", pr
+        assert abs(_rc.pending(st_, "ohio-state", talk) - pr["points"]) < 1e-9
+        refused(lambda: R(sid, "recruit", {"pid": talk, "action": "present", "scene": sc["id"], "topics": three}), 409)
+        assert st_["recruiting"]["scenes"]["ohio-state"][talk]["presented"] == three, "the scene remembers your opening (Finish resumes it)"
         if sc["question"]:                                   # he asked about a named player: the pitch waits on an answer
             refused(lambda: R(sid, "recruit", {"pid": talk, "action": "pitch", "scene": sc["id"], "pitch": sc["cue"]["topics"][0]}), 409)
             assert R(sid, "recruit", {"pid": talk, "action": "answer", "scene": sc["id"], "answer": "deflect"})["points"] == 0.0
@@ -140,7 +165,6 @@ if __name__ == "__main__":
         assert R(sid, "settings", {"auto_recruit": "week"})["auto_recruit"] == "week"
         st_ = api.loaded_state()
         before = len(st_["recruiting"]["offers"].get("ohio-state", []))
-        from coach_career import recruiting as _rc
         mine = next(r["id"] for r in search(sid, stars=4, state="OH", limit=5)["rows"])   # one you picked
         R(sid, "board", {"pid": mine, "on": True})
         _rc.weekly_step(st_, 1)
@@ -211,6 +235,7 @@ if __name__ == "__main__":
         assert hist(a) == [] and hist(b) == [], "an untouched recruit has an empty history"
         R(logc, "recruit", {"pid": a, "action": "message", "pitch": "prestige"})
         sc = R(logc, "recruit", {"pid": a, "action": "call"})["scene"]
+        sc = R(logc, "recruit", {"pid": a, "action": "present", "scene": sc["id"], "topics": ["winning", "nil", "coach"]})["scene"]
         topic = sc["cue"]["topics"][0]
         if sc["question"]:
             R(logc, "recruit", {"pid": a, "action": "answer", "scene": sc["id"], "answer": "deflect"})
@@ -220,9 +245,11 @@ if __name__ == "__main__":
         h = [x for x in hist(a) if x["kind"] not in ("not_buying", "answer")]   # a backfiring pitch may add a not_buying line; his question an answer
         got = [(x["kind"], x.get("action"), x.get("pitch"), x.get("reaction"), x.get("nil")) for x in h]
         assert got == [("raise_nil", None, None, None, 150), ("offer", None, None, None, 120),
-                       ("pitch", "call", topic, said, None), ("contact", "call", None, None, None),
+                       ("pitch", "call", topic, said, None), ("present", "call", None, None, None), ("contact", "call", None, None, None),
                        ("contact", "message", "prestige", None, None)], got
         assert all(x["week"] == 0 and x["school"] == "ohio-state" for x in h), h
+        pres = next(x for x in h if x["kind"] == "present")
+        assert pres["topics"] == ["winning", "nil", "coach"] and isinstance(pres["hit"], int), pres
         assert hist(b) == [], "his history is his alone"
         st_ = api.loaded_state()
         _rc._act(st_, "michigan", a, "offer", pitch="winning")        # another school's offer shows; its contacts do not

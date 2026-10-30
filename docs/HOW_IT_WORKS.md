@@ -1084,13 +1084,37 @@ items and the Flags rows carry it, the Flags list has every liked recruit as a f
 the gems), and the queue's NAME cell shows a small "OC ♥" pill when the Send that completed his
 report won him over (a complete report stays in the queue while he is on your board). The weekly report says nothing.
 
-**Calls and in-home visits are scenes** (`coach_career/scenes.py`). For you, a call or an in-home
-visit without a pitch opens a two-step scene: he says his lines, with a cue that hints at what he
-cares about (one topic, or two when he is torn); then you choose your pitch and he answers with a
-hit, a polite answer or a quiet one. The hours are spent when the scene opens and the points land
-when you pitch. A scene you leave open is dropped at the week step: no points, the hours stay
-spent. The CPU schools keep the one-shot path. A player's call reveals one of his priorities about
-0.69 of the time against the CPU's 0.5.
+**Calls and in-home visits are conversations** (`coach_career/scenes.py`). For you, a call or an
+in-home visit without a pitch opens a scene of `turns` (`you`, `him`, `note`). You open ("Hey
+Marcus, Coach Lashlee at SMU. Got a minute?"; the week after a call, "Good talking last week"; a
+visit opens with the room and your thanks in the living room); he answers with small talk that
+knows the week: your last game by name and result ("Saw you beat Florida State Saturday."), the
+opener before your first game, his own practice, or the school leading his list when the board
+knows it ("My phone's been going all week. Georgia called twice."); a call that would pester him
+opens short. Then **your opening**: you pick three things to lead your program with (the seven
+pitch topics, with your Weak/Fair/Strong case on each) and Present (`action: "present"`, `topics`,
+exactly three, 400 otherwise; 409 once presented). The engine scores it against his true
+priorities without revealing them: each presented topic that is one of his earns `PRESENT_HIT`
+(0.25) of the action's base times (1 + your strength there); one you are weak at (under
+`BACKFIRE`) costs `BACKFIRE_COST` of that share; the rest add nothing; the total caps at the base;
+the points are the call's or visit's (his earlier contacts diminish them, cooling halves them, a
+pestering call earns nothing) and land with the pitch's at the week step. He reacts (a hit names
+the priority you are strongest on in his words, "Getting on the field early. Yeah. Keep talking,
+Coach."; a weak one gets that topic's quiet line; none, "Appreciate that, Coach."), you ask
+("So what's going to decide this for you?" or, for a two-sided cue, "Where's your head at right
+now?") and he answers with the cue, a complete sentence in his voice (one topic, or two when he is
+torn); on a visit his dad's ask follows; his question about a named player, when he has one, is
+introduced ("Can I ask you something?"). Then **what you lead with**: your pitch, and his reaction
+joins the conversation as his last turn (your line first: "We need QB help now. You'd have a real
+shot at the field."). The pitch waits on the opening (409 "present your program first") and on his
+question. The hours are spent when the scene opens; the opening's points land when you present and
+the pitch's when you pitch. A scene you leave open is dropped at the week step: no pitch, the hours
+stay spent (points already earned stay). History keeps the opening ("Presented playing time,
+winning now, NIL · one landed"). The CPU schools and Auto-recruit keep the one-shot path and never
+present. A player's call reveals one of his priorities about 0.69 of the time against the CPU's
+0.5; with the opening, a player's call is worth about 6.7 points a go against the one-shot 2.5
+(`tools/check_recruiting.py` prints it). `lines` (his turns' texts) stays on the scene one release
+for older readers.
 
 **Prospect Profiles** (`coach_career/prospects.py`). The public block is the national rankings' read (it
 has its own error). The top 300 get a written evaluation (his three strongest and two weakest
@@ -1183,7 +1207,16 @@ The pane is the only place anything happens to him: a head with his status chip 
 ▾** button, whose menu lists every action with its hour cost or the reason it waits (Once a
 week, Monthly, Offer him first, Finish your call first). Message and Offer… open a step in the
 pane: the pitch as a dropdown (his known priorities first, each with your program's case), the
-NIL points with his ask for an offer; a call or in-home visit plays as a scene in the pane. When
+NIL points with his ask for an offer; a call or in-home visit plays as a conversation in the pane
+(your turns right in a muted "You:" bubble, his left under his avatar, the room centered in
+italics; the cue keeps its frame): after his small talk, YOUR OPENING offers the topics as chips
+(three at a time, a counter, Present disabled until three); Present brings his reaction, your
+question and his cue in place, then WHAT YOU LEAD WITH (the pitch picker, the cue's topic
+preselected) and Pitch; his reaction to the pitch joins the conversation as a turn, the picker
+locks on what you led with and the buttons give way to "It counts at the week step" at the same
+height, and the finished conversation stays on screen through the board's catch-up (shrinking or
+removing it would pull the pane under the player's scroll) until the pane next changes what it
+shows: another recruit, a new call, the week step. When
 he asks about a named player on that call (the starter ahead of him, or another recruit you
 offered), the scene shows his line with three answers (straight, a promise, a sidestep) and
 locks the pitch until you pick one; his reply comes back in place (no toast) and History keeps

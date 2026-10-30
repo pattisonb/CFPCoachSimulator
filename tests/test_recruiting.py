@@ -162,7 +162,11 @@ if __name__ == "__main__":
     rc["hours"]["ohio-state"] = 100
     r = recruiting.act(st, "ohio-state", q, "call")
     sc = r["scene"]
-    assert r["hours_left"] == 85 and sc["action"] == "call" and 2 <= len(sc["lines"]) <= 4
+    assert r["hours_left"] == 85 and sc["action"] == "call" and len(sc["lines"]) == 1 and sc["cue"] is None, "the cue waits on your opening"
+    misses = [t for t in recruiting.PITCHES if t not in rc["prospects"][q]["priorities"]][:3]     # none of his: the opening earns nothing
+    present = lambda sc_: recruiting.act(st, "ohio-state", q, "present", scene=sc_["id"], topics=misses)["scene"]
+    sc = present(sc)
+    assert 2 <= len(sc["lines"]) <= 4 and sc["presented"] == misses
     assert set(sc["cue"]["topics"]) & set(rc["prospects"][q]["priorities"]) and len(sc["cue"]["topics"]) in (1, 2)
     assert recruiting.pending(st, "ohio-state", q) == 0.0 and rc["scenes"]["ohio-state"][q]["id"] == sc["id"]
     try:
@@ -184,12 +188,12 @@ if __name__ == "__main__":
     assert abs(recruiting.pending(st, "ohio-state", q) - want) < 1e-6 and q not in rc["scenes"]["ohio-state"]
     # quiet: a priority where you are weak backfires and logs not_buying; polite: not a priority
     st["current_week"] += 1
-    sc = recruiting.act(st, "ohio-state", q, "call")["scene"]
+    sc = present(recruiting.act(st, "ohio-state", q, "call")["scene"])
     other = next(t for t in recruiting.PITCHES if t not in rc["prospects"][q]["priorities"])
     r = recruiting.act(st, "ohio-state", q, "pitch", pitch=other, scene=sc["id"])
     assert r["reaction"]["kind"] == "polite" and r["reaction"]["revealed"] is None
     st["current_week"] += 1
-    sc = recruiting.act(st, "ohio-state", q, "call")["scene"]
+    sc = present(recruiting.act(st, "ohio-state", q, "call")["scene"])
     pri2 = rc["prospects"][q]["priorities"][-1]
     with recruiting.forced_strength(st, "ohio-state", q, pri2, 0.1):
         r = recruiting.act(st, "ohio-state", q, "pitch", pitch=pri2, scene=sc["id"])

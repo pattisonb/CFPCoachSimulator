@@ -909,10 +909,10 @@ def recruit_action(p: Params) -> dict:
     st = _career_state(p.path["season_id"], change=True)
     pid, action = _field(p, "pid", str), _field(p, "action", str)
     pitch, nil, scene = _field(p, "pitch", str, None), _field(p, "nil", int, 0), _field(p, "scene", str, None)
-    answer = _field(p, "answer", str, None)
+    answer, topics = _field(p, "answer", str, None), _field(p, "topics", list, None)
     if pid not in recruiting.visible(st):
         raise ApiError(404, "unknown prospect")
-    out = _recruiting_call(recruiting.act, st, st["team"], pid, action, pitch, nil, scene, answer)
+    out = _recruiting_call(recruiting.act, st, st["team"], pid, action, pitch, nil, scene, answer, topics)
     _save_loaded()
     return out
 

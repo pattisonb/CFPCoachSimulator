@@ -1,11 +1,17 @@
 """Coach Career scenes (docs/superpowers/specs/2026-10-28-recruiting-experience-design.md, section 6):
-your calls and in-home visits as a short scene. He talks; a cue hints at what he cares about (one
-topic, or two when he is torn); you pitch; he reacts. This file owns the words and the choice of cue
+your calls and in-home visits as a short conversation. You open; he answers with small talk that
+knows the week (your last game, his practice, the school leading his list); you present your program
+(three things); he reacts; you ask what will decide it; he answers with the cue (one topic, or two
+when he is torn); you lead with a pitch; he reacts. This file owns the words and the choice of cue
 and reaction; recruiting.py owns the scene's lifecycle and its points (the one `_act` path).
 
-Lines are in his voice, present tense, short, no numbers (an in-home visit's ask is in words). They
-take {name}, {first}, {town}, {state}, {school}, {position}, {role} ("start", "compete" or "wait"),
-{record} (the school's won-lost in words). Lines fit a high schooler and a transfer alike; two-sided cues take {a} and {b}, two topics' phrases."""
+A scene is `turns`: [{who: "you" | "him" | "note", text}] in order; `lines` (his turns' texts) stays
+one release for the page's old readers. Lines are in his voice (or yours), present tense, short, no
+numbers (an in-home visit's ask is in words). They take {name}, {first}, {town}, {state}, {school},
+{position}, {role} ("start", "compete" or "wait"), {record} (the school's won-lost in words), {coach}
+(your last name), {opponent} and {result} ("beat" / "lost to": your last game, or the opener before
+one), {leader} (the school leading his list, "" when none or you) and {week_word}. Lines fit a high
+schooler and a transfer alike; two-sided cues take {a} and {b}, two topics' phrases."""
 from __future__ import annotations
 
 import os
@@ -25,9 +31,9 @@ PHRASES = {"proximity": "staying close to home", "playing_time": "getting on the
 
 LINES: dict[str, dict[str, list[str]]] = {
     "proximity": {
-        "cue": ["My mom wants me close enough to drive to games.",
+        "cue": ["Honestly, Coach? My mom wants me close enough to drive to games.",
                 "I like Sunday dinners in {town}. I don't want to give that up.",
-                "Whoever I pick, my family has to be in the stands."],
+                "Whoever I pick, my family has to be in the stands. That's the big one."],
         "hit": ["That's what I want to hear. My folks could make every home game.",
                 "Home on a weekend? That matters, Coach. It really does.",
                 "{town} to {school} isn't far at all. I like that a lot."],
@@ -39,7 +45,7 @@ LINES: dict[str, dict[str, list[str]]] = {
                   "Yeah. I'll have to think about being that far out."],
     },
     "playing_time": {
-        "cue": ["I want to play {position} on Saturdays, not hold a clipboard.",
+        "cue": ["Honestly, Coach? I want to play {position} on Saturdays, not hold a clipboard.",
                 "Everybody says I'll play early. I want to see it.",
                 "I'm not sitting for three years. I want snaps."],
         "hit": ["A real shot at the field next year? I'm all in on that.",
@@ -53,7 +59,7 @@ LINES: dict[str, dict[str, list[str]]] = {
                   "...I've seen that depth chart, Coach."],
     },
     "prestige": {
-        "cue": ["I grew up watching the big programs on TV. I want that helmet.",
+        "cue": ["Honestly? I grew up watching the big programs on TV. I want that helmet.",
                 "Where I go says something. People back in {town} notice.",
                 "I want to be on a team everybody knows."],
         "hit": ["{school}. Man. That name means something.",
@@ -67,7 +73,7 @@ LINES: dict[str, dict[str, list[str]]] = {
                   "My friends haven't heard much about {school}."],
     },
     "winning": {
-        "cue": ["I want to win. Rings, conference titles, all of it.",
+        "cue": ["Winning, Coach. Rings, conference titles, all of it.",
                 "I'm not going somewhere to lose. Not again.",
                 "I want to play in the big games in December."],
         "hit": ["You guys win. I notice that, Coach.",
@@ -81,7 +87,7 @@ LINES: dict[str, dict[str, list[str]]] = {
                   "I don't know. I want to play in big games."],
     },
     "nil": {
-        "cue": ["My family could use the help. I'm not going to lie about that.",
+        "cue": ["The money, Coach. My family could use the help. I'm not going to lie about that.",
                 "The NIL stuff matters. My dad asks about it every time.",
                 "I want to take care of my mom. That's real."],
         "hit": ["That's real money for my family, Coach. Thank you.",
@@ -95,7 +101,7 @@ LINES: dict[str, dict[str, list[str]]] = {
                   "Yeah. That's less than I was hoping."],
     },
     "coach": {
-        "cue": ["I want a coach who's going to be there all four years.",
+        "cue": ["The staff. I want a coach who's going to be there all four years.",
                 "I need to trust the guy I play for. That's big for me.",
                 "I want somebody who'll yell at me and mean it."],
         "hit": ["I believe you, Coach. I really do.",
@@ -109,7 +115,7 @@ LINES: dict[str, dict[str, list[str]]] = {
                   "People back home have some questions about your staff."],
     },
     "academics": {
-        "cue": ["My mom says the degree is the whole point.",
+        "cue": ["School, honestly. My mom says the degree is the whole point.",
                 "I want a degree that means something after football.",
                 "I'm thinking about what I study, too. Not just ball."],
         "hit": ["My mom is going to love that. The degree matters.",
@@ -123,9 +129,9 @@ LINES: dict[str, dict[str, list[str]]] = {
                   "Yeah. I was hoping for a stronger school."],
     },
     "_two_sided": {
-        "cue": ["Honestly? It's {a} or {b}. I go back and forth.",
+        "cue": ["Honestly, Coach? It's {a} or {b}. I go back and forth.",
                 "My dad says {a}. My coach says {b}. I don't know yet.",
-                "Some days it's {a}. Some days it's {b}."],
+                "Some days it's {a}, some days it's {b}. Ask me tomorrow and I'll say the other one."],
     },
 }
 
@@ -163,12 +169,76 @@ REPLY_LINES = {"straight": "Fair. At least you're not blowing smoke.",
 CLASS_WORDS = {"FR": "freshman", "FRRS": "redshirt freshman", "SO": "sophomore", "SORS": "redshirt sophomore",
                "JR": "junior", "JRRS": "redshirt junior", "SR": "senior", "SRRS": "redshirt senior"}
 
-# the opening of a call (and the middle of a visit): small talk
-COLOR = ["Hey Coach. Just got back from practice.",
-          "Yes sir, I've got a few minutes.",
-          "This is {first}. My phone's been going all week.",
-          "Hey Coach. Everybody in {town} is talking about {school}.",
-          "Coach! I was just watching your film."]
+
+# ----- the conversation -------------------------------------------------------------------------------
+# you open a call: a first call, a call the week after the last one, or one after a gap
+OPEN = {
+    "first": ["Hey {first}, Coach {coach} at {school}. Got a minute?",
+              "{first}? Coach {coach}, {school}. Did I catch you at a good time?",
+              "Hey {first}. Coach {coach} over at {school}. You got a few minutes for me?"],
+    "last_week": ["Hey {first}, Coach {coach} again. Good talking last week.",
+                  "{first}, Coach {coach}. Good talking last week. Got a minute?"],
+    "again": ["Hey {first}, Coach {coach} at {school}. Week {week_word} already, you believe that?",
+              "{first}, Coach {coach}. Been a minute since we talked. How are you?"],
+}
+# you open an in-home visit: you are in the living room
+VISIT_OPEN = ["Thank you all for having me. {first}, good to finally sit down with you.",
+              "Appreciate you opening your home. {first}, you look bigger in person.",
+              "Thanks for having me, everybody. {first}, I've been looking forward to this."]
+# his answer: small talk that knows the week, picked by what is true
+CONTEXT = {
+    "game": ["Hey Coach. Saw you {result} {opponent} Saturday. I watched the whole thing.",
+             "Yes sir. Everybody in {town} saw you {result} {opponent}.",
+             "Hey Coach. You {result} {opponent}, right? I had it on in the locker room."],
+    "won": ["Hey Coach. Saw you beat {opponent} Saturday. That was a good one.",
+            "Yes sir. Nice win over {opponent}, Coach. My dad was yelling at the TV."],
+    "lost": ["Tough one against {opponent}, Coach. I watched the whole thing.",
+             "Hey Coach. Yeah, I saw {opponent} got you. That was a hard watch."],
+    "opener": ["Yes sir. Y'all open with {opponent}, right? I'll be watching.",
+               "Hey Coach. Everybody's waiting on the {opponent} game. Me too."],
+    "own": ["Hey Coach. Practice ran long. Coach has us in pads all week.",
+            "Yes sir. Just got home from practice. My legs are shot.",
+            "Hey Coach. Film session just let out. Coach is on us this week."],
+    "leader": ["Hey Coach. My phone's been going all week. {leader} called twice.",
+               "Yes sir. {leader} was just here, actually. It's been a lot.",
+               "Hey Coach. Yeah, I've got a minute. {leader} keeps calling, so I'm used to it."],
+    "tired": ["...Yeah, Coach. I've got a minute, I guess.",
+              "Hey. Yeah. Kind of a lot going on, Coach.",
+              "Hi Coach. Sure. Make it quick if you can."],
+}
+# your opening: the three things you lead your program with, as you say them
+PRESENT_SAID = ["Here's {school} in a nutshell: {x}, {y} and {z}.",
+                "Let me tell you what we're about at {school}: {x}, {y} and {z}.",
+                "Three things about us, {first}: {x}, {y} and {z}."]
+# how he takes your opening: one of his priorities in it (the one you are strongest on, {topic}, in his
+# words), none, or he is tired of you; a priority you are weak at gets that topic's quiet line
+PRESENT_LINES = {
+    "hit": ["{topic}. Yeah. Keep talking, Coach.",
+            "{topic}... okay. That's the part I wanted to hear.",
+            "You said {topic}. That's the one. Go on."],
+    "polite": ["Appreciate that, Coach.",
+               "Okay. Yes sir.",
+               "I hear you, Coach."],
+    "tired": ["Okay.",
+              "Yeah. I've heard the speech, Coach."],
+}
+# your question that sets up the cue: for one topic, and for a cue that names two
+ASK = {
+    "one": ["So what's going to decide this for you?",
+            "Tell me straight, {first}: what's going to decide this for you?"],
+    "two": ["Where's your head at right now?",
+            "Where's your head at, {first}? Honest answer."],
+}
+# your lead-with, as you say it, after he has told you what he cares about
+LEAD_LINES = {"proximity": "You'd be close, {first}. Your folks could make every home game.",
+              "playing_time": "We need {position} help now. You'd have a real shot at the field.",
+              "prestige": "You know what this name means. Everybody does.",
+              "winning": "We're built to win now, and we are not slowing down.",
+              "nil": "The collective takes care of our guys. That's real, and it's yours.",
+              "coach": "I'm not going anywhere. You'd play for me every year you're here.",
+              "academics": "The degree here means something. Your mom will like that part."}
+# he has a question (recruit questions): this turn introduces it
+QUESTION_INTRO = "Can I ask you something?"
 
 # an in-home visit opens with his family
 FAMILY = ["His mom has the table set and the good plates out.",
@@ -176,6 +246,12 @@ FAMILY = ["His mom has the table set and the good plates out.",
           "His little brother asks if you know anybody in the NFL.",
           "His grandmother wants to know if there's a church near {school}.",
           "The whole family is on the couch in {town}. {first} sits closest to the door."]
+
+# every table of lines (tests format each line with FIELDS)
+TABLES = {"LINES": LINES, "TIRED": TIRED, "OPEN": OPEN, "VISIT_OPEN": VISIT_OPEN, "CONTEXT": CONTEXT, "PRESENT_SAID": PRESENT_SAID,
+          "PRESENT_LINES": PRESENT_LINES, "ASK": ASK, "LEAD_LINES": LEAD_LINES, "FAMILY": FAMILY}
+FIELDS = ("name", "first", "town", "state", "school", "position", "role", "record", "coach", "opponent", "result", "leader",
+          "week_word", "a", "b", "x", "y", "z", "topic")
 
 _ONES = ("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen "
          "sixteen seventeen eighteen nineteen").split()
@@ -211,23 +287,132 @@ def _record(state: dict, slug: str) -> str:
     return f"{words(w)} and {words(l)}".capitalize()
 
 
-def _fields(state: dict, slug: str, p: dict) -> dict:
+def coach_name(state: dict, slug: str) -> str:
+    """Your last name: the created coach's, else the team's head coach's, else the school's name."""
+    from sim import season
+    car = (state.get("career") or {}).get("coach") or {}
+    name = car.get("name") or ((season.load_teams().get(slug) or {}).get("coaches") or {}).get("head_coach", {}).get("name") or ""
+    return name.split()[-1] if name.strip() else (season.load_teams().get(slug) or {}).get("name", slug)
+
+
+def last_game(state: dict, slug: str, week: int) -> dict | None:
+    """The school's most recent played game as of `week`: {"opponent", "won", "week"}; None before the first."""
+    from sim import season
+    teams = season.load_teams()
+    best = None
+    for g in state["games"].values():
+        if not g.get("played") or g["week"] > week or slug not in (g["home"], g["away"]):
+            continue
+        if best is None or g["week"] > best["week"]:
+            opp = g["away"] if g["home"] == slug else g["home"]
+            mine, theirs = (g["home_score"], g["away_score"]) if g["home"] == slug else (g["away_score"], g["home_score"])
+            best = {"opponent": (teams.get(opp) or {}).get("name", opp), "won": mine > theirs, "week": g["week"]}
+    return best
+
+
+def next_game(state: dict, slug: str, week: int) -> dict | None:
+    """The school's next unplayed game: {"opponent", "week"}; None when the season is over."""
+    from sim import season
+    teams = season.load_teams()
+    best = None
+    for g in state["games"].values():
+        if g.get("played") or g["week"] < week or slug not in (g["home"], g["away"]):
+            continue
+        if best is None or g["week"] < best["week"]:
+            opp = g["away"] if g["home"] == slug else g["home"]
+            best = {"opponent": (teams.get(opp) or {}).get("name", opp), "week": g["week"]}
+    return best
+
+
+def leader_of(state: dict, slug: str, pid: str) -> str:
+    """The school leading his list as the board knows it (the week step's ranks), its name; "" when
+    there is none yet or it is you."""
+    from sim import season
+    now = ((state["recruiting"].get("ranks") or {}).get(pid) or {}).get("now") or {}
+    lead = next((s for s, rk in now.items() if rk == 1), None)
+    if not lead or lead == slug:
+        return ""
+    return (season.load_teams().get(lead) or {}).get("name", lead)
+
+
+def _fields(state: dict, slug: str, p: dict, week: int | None = None) -> dict:
     from sim import season
     team = season.load_teams().get(slug) or {}
+    week = state["current_week"] if week is None else week
+    game, nxt = last_game(state, slug, week), next_game(state, slug, week)
     return {"name": p["name"], "first": p["name"].split()[0], "town": p["hometown"]["city"] or p["hometown"]["state"],   # a transfer has no town on file
             "state": p["hometown"]["state"], "school": team.get("name", slug), "position": p["position"],
-            "role": _role(state, slug, p["id"]), "record": _record(state, slug)}
+            "role": _role(state, slug, p["id"]), "record": _record(state, slug), "coach": coach_name(state, slug),
+            "opponent": game["opponent"] if game else nxt["opponent"] if nxt else "", "result": ("beat" if game["won"] else "lost to") if game else "",
+            "leader": leader_of(state, slug, p["id"]), "week_word": words(week)}
+
+
+def _turn(who: str, text: str) -> dict:
+    return {"who": who, "text": text}
+
+
+def last_talk(state: dict, slug: str, pid: str, week: int) -> int | None:
+    """The week of your last contact with him before this one (his History's contacts and pitches), or None."""
+    weeks = [e["week"] for e in state["recruiting"]["log"]
+             if e["pid"] == pid and e.get("school") == slug and e["kind"] in ("contact", "pitch") and e["week"] < week]
+    return max(weeks) if weeks else None
+
+
+def context_line(state: dict, slug: str, pid: str, week: int, f: dict, rng: random.Random, tired: bool) -> str:
+    """His small talk, from what is true: your last game (first, when it was this past Saturday), the
+    school leading his list, his own week; the opener before your first game; tired when the call pesters him."""
+    if tired:
+        return rng.choice(CONTEXT["tired"]).format(**f)
+    game = last_game(state, slug, week)
+    kinds = []
+    if game:
+        kinds.append("game")
+    elif f["opponent"]:
+        kinds.append("opener")
+    if f["leader"]:
+        kinds.append("leader")
+    kinds.append("own")
+    kind = "game" if game and game["week"] >= week - 1 else rng.choice(kinds)
+    if kind == "game":
+        kind = rng.choice(["game", "won" if game["won"] else "lost"])
+    return rng.choice(CONTEXT[kind]).format(**f)
 
 
 def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict:
-    """A call's or in-home visit's scene: his lines and a cue on one priority you have not heard
-    (or two topics, one his and one not, CUE_TWO_SIDED of the time), and his ask as you know it."""
+    """A call's or in-home visit's scene as it opens: the room (a visit), your opener and his small
+    talk. The cue and his question wait on your opening (`present`); his ask is as you know it."""
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    rng = random.Random(f"open-{rc['seed']}-{slug}-{pid}-{week}")
+    f = _fields(state, slug, p, week)
+    tired = recruiting.would_pester(state, slug, pid)
+    turns = []
+    if action == "hc_visit":
+        turns.append(_turn("note", rng.choice(FAMILY).format(**f)))
+        turns.append(_turn("you", rng.choice(VISIT_OPEN).format(**f)))
+    else:
+        prev = last_talk(state, slug, pid, week)
+        table = OPEN["first"] if prev is None else OPEN["last_week"] if prev == week - 1 else OPEN["again"]
+        turns.append(_turn("you", rng.choice(table).format(**f)))
+    turns.append(_turn("him", context_line(state, slug, pid, week, f, rng, tired)))
+    sc = {"id": f"{action}-{pid}-{week}", "action": action, "week": week, "turns": turns, "lines": [],
+          "cue": None, "ask": recruiting.ask_view(state, slug, pid), "question": None, "presented": None, "tired": tired}
+    _lines(sc)
+    return sc
+
+
+def _lines(sc: dict) -> None:
+    sc["lines"] = [t["text"] for t in sc["turns"] if t["who"] == "him"]
+
+
+def cue(state: dict, slug: str, pid: str, week: int, f: dict) -> dict:
+    """The cue: one priority you have not heard (or two topics, one his and one not, CUE_TWO_SIDED
+    of the time), as a complete answer in his voice."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
     known = (rc["revealed"].get(slug) or {}).get(pid) or []
     true = next((t for t in p["priorities"] if t not in known), p["priorities"][0])
     rng = random.Random(f"cue-{rc['seed']}-{slug}-{pid}-{week}")
-    f = _fields(state, slug, p)
     if rng.random() < CUE_TWO_SIDED:
         decoy = rng.choice([t for t in recruiting.PITCHES if t not in p["priorities"]])
         topics = [true, decoy] if rng.random() < 0.5 else [decoy, true]
@@ -235,15 +420,47 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
     else:
         topics = [true]
         text = rng.choice(LINES[true]["cue"]).format(**f)
-    ask = recruiting.ask_view(state, slug, pid)
-    lines = [rng.choice(COLOR).format(**f), text]
-    if action == "hc_visit":
-        lines.insert(0, rng.choice(FAMILY).format(**f))
-        n = ask.get("exact", 0)
-        lines.append(f"His dad asks what the collective can do: {words(n)} points." if n
-                     else "His dad says the money isn't the point.")
-    return {"id": f"{action}-{pid}-{week}", "action": action, "week": week, "lines": lines,
-            "cue": {"topics": topics, "text": text}, "ask": ask, "question": question(state, slug, pid, week)}
+    return {"topics": topics, "text": text}
+
+
+def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits: list[str], back: list[str], tired: bool) -> str:
+    """Your opening lands on the scene: your turn (the three things), his reaction (a hit names the
+    priority you are strongest on; a weak one gets its quiet line; none, polite), your question, his
+    cue, his question's intro when he has one, and on a visit his dad's ask. Returns the reaction's kind."""
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    week = sc["week"]
+    rng = random.Random(f"present-{rc['seed']}-{slug}-{pid}-{week}")
+    f = _fields(state, slug, p, week)
+    x, y, z = (PHRASES[t] for t in topics)
+    sc["turns"].append(_turn("you", rng.choice(PRESENT_SAID).format(x=x, y=y, z=z, **f)))
+    if tired:
+        kind, text = "tired", rng.choice(PRESENT_LINES["tired"]).format(**f)
+    elif hits:
+        st_ = recruiting.strengths(state, slug, pid)
+        best = max(hits, key=lambda t: st_[t])
+        phrase = PHRASES[best]
+        kind, text = "hit", rng.choice(PRESENT_LINES["hit"]).format(topic=phrase[0].upper() + phrase[1:], **f)
+    elif back:
+        kind, text = "quiet", rng.choice(LINES[back[0]]["quiet"]).format(**f)
+    else:
+        kind, text = "polite", rng.choice(PRESENT_LINES["polite"]).format(**f)
+    sc["turns"].append(_turn("him", text))
+    c = cue(state, slug, pid, week, f)
+    sc["turns"].append(_turn("you", rng.choice(ASK["two" if len(c["topics"]) > 1 else "one"]).format(**f)))
+    sc["turns"].append(_turn("him", c["text"]))
+    sc["cue"] = c
+    if sc["action"] == "hc_visit":
+        n = sc["ask"].get("exact", 0)
+        sc["turns"].append(_turn("note", f"His dad asks what the collective can do: {words(n)} points." if n
+                                 else "His dad says the money isn't the point."))
+    sc["question"] = question(state, slug, pid, week)
+    if sc["question"]:
+        sc["turns"].append(_turn("him", QUESTION_INTRO))
+    sc["presented"] = list(topics)
+    sc["present"] = {"kind": kind, "hit": list(hits)}
+    _lines(sc)
+    return kind
 
 
 def question(state: dict, slug: str, pid: str, week: int) -> dict | None:
@@ -282,13 +499,16 @@ def answer_reply(state: dict, slug: str, pid: str, question: dict, answer: str, 
 
 
 def reaction(state: dict, slug: str, pid: str, action: str, pitch: str, p: dict, tired: bool = False) -> dict:
-    """How he takes your pitch: a priority where you are strong lights him up (hit), one where you are
-    weak goes quiet, anything else is polite; `tired` (the call pestered him) and the pitch falls flat."""
+    """How he takes your lead-with: a priority where you are strong lights him up (hit), one where you
+    are weak goes quiet, anything else is polite; `tired` (the call pestered him) and the pitch falls
+    flat. `you` is your line, for the conversation."""
     rng = random.Random(f"react-{state['recruiting']['seed']}-{slug}-{pid}-{state['current_week']}-{action}")
+    f = _fields(state, slug, p)
+    you = LEAD_LINES[pitch].format(**f)
     if tired:
-        return {"kind": "tired", "text": rng.choice(TIRED).format(**_fields(state, slug, p))}
+        return {"kind": "tired", "text": rng.choice(TIRED).format(**f), "you": you}
     if pitch in p["priorities"]:
         kind = "hit" if recruiting.strengths(state, slug, pid)[pitch] >= recruiting.BACKFIRE else "quiet"
     else:
         kind = "polite"
-    return {"kind": kind, "text": rng.choice(LINES[pitch][kind]).format(**_fields(state, slug, p))}
+    return {"kind": kind, "text": rng.choice(LINES[pitch][kind]).format(**f), "you": you}
