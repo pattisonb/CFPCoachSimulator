@@ -1128,15 +1128,17 @@ the season; `offseason.redshirt`, `offseason.change_position` and the Your Roste
 offseason). A player who has
 played four games or fewer (`REDSHIRT_GAMES`) with his redshirt year unused (FR, SO, JR) can take
 it: his class stays for next season and he still develops. During the season his page has a
-"Redshirt him" button and every eligible row of your Depth Chart a "Redshirt" control (the
-chart's cards carry his standing: `redshirt_status`): he sits out every remaining game (kept
-out like an injury, `_injured`) and can come back off it while he is still at four games or fewer.
-A Redshirting panel above your chart lists everyone sitting out, his games and the way back,
-and how many others are still eligible. At the Departures step every
+"Redshirt him" button and every eligible player on your Depth Chart screen a "Redshirt" control
+(his drawer, the List view's rail, his Players card and the Redshirts board; the chart's cards
+carry his standing: `redshirt_status`): he sits out every remaining game (kept out like an
+injury, `_injured`) and can come back off it while he is still at four games or fewer. The
+screen's Redshirts board lists everyone sitting out, his games and the way back, and who is still
+eligible. At the Departures step every
 candidate waits on you, the ones you sat down already marked (a freshman off the depth chart's
 top takes it unless you say otherwise; an older player only if he never played); the AI programs
 draw as before but only within the four-game rule. A position change can be made any time, from
-the Depth Chart during the season or the offseason's Your roster card at any stage: it moves one
+the Depth Chart screen's Position box (a player's drawer, the List view's rail or his Players card)
+during the season or the offseason's Your roster card at any stage: it moves one
 of your players to any spot (kickers and punters among themselves); what he would be there is
 `coach_career/position_fit.project` (`position_options` shows it for every spot before you choose):
 his ratings put on the new group's scale (ours are kept relative to each group's middle starter,
@@ -1192,7 +1194,12 @@ hottest targets, the week's news) and tiles to every screen. The tab bar is two 
 screens you act on (Office, Offseason once the season is over, Recruiting, Prospects, Scouting,
 Schedule, Depth Chart) and a League row that follows the calendar (Standings, Rankings and Stats
 all year; Awards from week 4; Classes, Bracket and Bowls from selection week; Summary when the
-season is done). A plain season keeps every League tab. The **Recruiting board** (a prospect you take off it stays off, Auto-recruit included, until
+season is done). A plain season keeps every League tab. The Depth Chart button opens its own
+screen (`web/depth/depth.js`, `index.html?id=…&screen=depth`, Back returns to the season): the
+team's most-used formations as the next game fills them (`formations_view`) or one position at a
+time (List view), a Players box of portraits, the Redshirts board and Availability; its moves,
+redshirts and position changes patch the screen in place (`CFP.ui.morph`), and god mode opens
+another team's chart from the Settings entry on its sidebar. The **Recruiting board** (a prospect you take off it stays off, Auto-recruit included, until
 you put him back) is stage tabs with counts (All, Cold, In touch, Top 8, Visited, Committed),
 a search and a sort, then a plain list beside one sticky pane. A list row is his avatar, name, one
 line (stars, position, state) and one word of standing; a dot marks a move up or down this week.

@@ -144,7 +144,7 @@ def assert_chance_order(page, board: list, me: str) -> None:
 
 PITCH = {"proximity": "Close to home", "playing_time": "Playing time", "prestige": "Program prestige", "winning": "Winning now",
          "nil": "NIL", "coach": "The head coach", "academics": "Academics"}
-REACTION = {"hit": "He lit up", "polite": "Polite", "quiet": "He went quiet"}
+REACTION = {"hit": "He lit up", "polite": "Polite", "quiet": "He went quiet", "tired": "He is tired of this"}
 GONE = "heard".title()     # the word the cue tag used to print: the page never shows it now
 HISTORY_EMPTY = "Nothing with him yet: no contact, no offer."
 CUE_TITLE = "He brought this up on the call this week"
@@ -197,7 +197,8 @@ def check_pane_profile(page, base, sid) -> None:
             assert t0 - tabs["scrolled"] < tabs["visTop"] - 4, f"the check scrolls the strip's place out of view at {width}: {t0}, {tabs}"
             assert tabs["top"] <= tabs["visTop"] + 4, f"the sub-tab strip pins to the top of the pane's scroll box at {width}: {tabs}"
         else:               # a short profile (no evaluation, one-line grades) has less than that to scroll: the strip rides at its place, still in view
-            assert abs(tabs["top"] - (t0 - tabs["scrolled"])) <= 4, f"the sub-tab strip sits at its place in a short profile at {width}: {t0}, {tabs}"
+            # its place, or the top of the scroll box once its place has reached it (a profile that scrolls right up to the pin line)
+            assert abs(tabs["top"] - max(t0 - tabs["scrolled"], tabs["visTop"])) <= 4, f"the sub-tab strip sits at its place in a short profile at {width}: {t0}, {tabs}"
         shot(page, f"pane-profile-scrolled-{width}-dark")
         if width <= 700:
             page.click(".go-pane .go-pane-back")
@@ -596,8 +597,8 @@ def check_header(page, base, sid) -> None:
     # past the header card: the compact bar, the pane below it
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#season:visible")
-    page.click("#season-tabs button[data-tab=depth]")        # a long page: it scrolls well past the header
-    page.wait_for_selector("#tab-depth [data-player]", timeout=60_000)
+    page.click("#season-tabs button[data-tab=stats]")        # a long page: it scrolls well past the header
+    page.wait_for_selector("#tab-stats .leader-row", timeout=60_000)
     assert not page.is_visible("#season-compact"), "at the top the full card shows, no bar"
     sticky0 = page.evaluate("() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sticky-top'))")
     page.evaluate("() => window.scrollTo(0, 800)")
@@ -648,17 +649,19 @@ def check_header(page, base, sid) -> None:
 # ----- position changes any time (pos-anytime brief, Part B): the Depth Chart's Position control -----
 
 def check_position_change(page, base, sid) -> None:
-    """From the Depth Chart a WR moves to TE through the row's position box: the chart patches in place (no rebuild),
-    his cell sits in the TE row with "(was WR)", the toast says so, and the API agrees."""
+    """From the depth chart screen a WR moves to TE through the Position box on his drawer: the screen patches in
+    place (no rebuild of the field), his card sits at a TE spot (or in the TE row of the list) with "was WR", the
+    toast says so, and the API agrees; the List view's rail carries the same box."""
     page.set_viewport_size({"width": 1280, "height": 1000})
     s = call(base, f"/api/season/{sid}")
-    open_tab(page, base, sid, "depth", "[data-player]")
     d = call(base, f"/api/season/{sid}/depth/{s['team']}")
     wr = next(row for u in d["units"] for row in u["rows"] if row["role"] == "WR")
-    p = next(x for x in wr["players"] if x["role"] == "WR" and not x.get("moved_from") and not x.get("injury"))
-    sel = f".depth-cell[data-key='WR:{p['slug']}'] select.depth-pos"
-    assert page.query_selector(sel), "your roster's rows carry a position box"
-    h = watch(page, "#tab-depth .depth-table", control=sel, scrolled=False)
+    p = next(x for x in wr["players"][:3] if x["role"] == "WR" and not x.get("moved_from") and not x.get("injury"))   # a starting receiver: he is on the field
+    open_tab(page, base, sid, "depth", ".dc-card")
+    page.click(f".dc-card[data-slug='{p['slug']}']")
+    sel = ".dc-drawer select.depth-pos"
+    page.wait_for_selector(sel, timeout=30_000)
+    h = watch(page, ".dc-field", control=sel, scrolled=False)
     page.hover(sel)
     page.wait_for_function("(q) => document.querySelector(q).options.length > 5", arg=sel, timeout=30_000)
     groups = page.eval_on_selector_all(f"{sel} optgroup", "els => els.map(e => e.label)")
@@ -666,18 +669,34 @@ def check_position_change(page, base, sid) -> None:
     assert page.eval_on_selector(f"{sel} option", "o => o.textContent").startswith("WR"), "his position now comes first"
     page.select_option(sel, "TE")
     toasted(page, f"{p['name']} moves to TE (was WR)")
-    page.wait_for_selector(f".depth-cell[data-key='TE:{p['slug']}']", timeout=30_000)
+    page.wait_for_selector(f".dc-drawer .dc-was:has-text('was WR')", timeout=30_000)
     time.sleep(0.4)
     smooth(page, h, "a position change")
-    cell = f".depth-cell[data-key='TE:{p['slug']}']"
-    assert page.eval_on_selector(cell, "c => c.closest('tr').querySelector('.depth-role b').textContent") == "TE", "his row is the TE row"
-    assert "(was WR)" in page.inner_text(cell)
-    assert not page.query_selector(f".depth-cell[data-key='WR:{p['slug']}']"), "he left the WR row"
     dv = call(base, f"/api/season/{sid}/depth/{s['team']}")
     te = next(row for u in dv["units"] for row in u["rows"] if row["role"] == "TE")
     me = next(x for x in te["players"] if x["slug"] == p["slug"])
     assert me["moved_from"] == "WR" and me["role"] == "TE", me
-    call(base, f"/api/season/{sid}/position", {"team": s["team"], "player": p["slug"], "pos": "WR"})   # back where he was
+    assert not any(x["slug"] == p["slug"] for x in next(row for u in dv["units"] for row in u["rows"] if row["role"] == "WR")["players"]), "he left the WR row"
+    # the List view: his row in the TE list says where he came from, and the rail's box moves him back
+    page.goto(f"{base}/index.html?id={sid}&screen=depth&view=list&role=TE")
+    page.wait_for_selector(".dc-table tbody tr", timeout=120_000)
+    row = f".dc-table tbody tr[data-slug='{p['slug']}']"
+    page.wait_for_selector(row, timeout=30_000)
+    assert page.eval_on_selector(f"{row} .dc-was", "e => e.textContent") == "was WR", page.inner_text(row)
+    page.click(row)
+    page.wait_for_function("(slug) => document.querySelector('.dc-rail select.depth-pos') && document.querySelector('.dc-rail').textContent.includes('was WR')", arg=p["slug"], timeout=30_000)
+    rsel = ".dc-rail select.depth-pos"
+    h = watch(page, ".dc-table", control=rsel, scrolled=False)
+    page.hover(rsel)
+    page.wait_for_function("(q) => document.querySelector(q).options.length > 5", arg=rsel, timeout=30_000)
+    page.select_option(rsel, "WR")
+    toasted(page, f"{p['name']} moves back to WR")
+    page.wait_for_function("(q) => !document.querySelector(q)", arg=row, timeout=30_000)   # he left the TE list
+    time.sleep(0.4)
+    smooth(page, h, "a position change back")
+    dv = call(base, f"/api/season/{sid}/depth/{s['team']}")
+    me = next(x for u in dv["units"] for row in u["rows"] for x in row["players"] if x["slug"] == p["slug"] and row["role"] == "WR")
+    assert not me.get("moved_from") and me["role"] == "WR", me
 
 
 # ----- the NIL economy (nil-economy spec, section 3): the review's line reads the pool's math -----
@@ -714,7 +733,9 @@ def check_topbar_hide(page, base, sid) -> None:
         compact: document.querySelector('#season-compact').getBoundingClientRect().top,
         tabs: document.querySelector('#season-tabs').getBoundingClientRect().top,
         tbh: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--topbar-h')) })"""
-    open_tab(page, base, sid, "depth", "#tab-depth [data-player]")        # a long page: it scrolls well past the header
+    open_tab(page, base, sid, "stats", "#tab-stats .leader-row")        # a long page: it scrolls well past the header
+    # a few weeks into the season the Stats page scrolls only ~520 px; give it room, as the checks below do
+    page.evaluate("() => { document.body.style.minHeight = '4000px'; }")
     assert not page.evaluate(hidden), "at the top the bar shows"
     page.evaluate("() => window.scrollTo(0, 800)")
     page.wait_for_function(hidden, timeout=10_000)
@@ -2085,31 +2106,55 @@ if __name__ == "__main__":
             assert all(refused), "an option the other school refuses cannot be picked"
             page.keyboard.press("Escape")
 
-            # --- Depth chart: controls big enough to tap, never faint, named; class codes read as "RS Sr."
+            # --- Depth chart: its own screen at ?screen=depth. The tab opens it and Back returns; the formation's cards
+            # pick a player whose depth controls are big enough to tap and named; your roster redshirts from the board;
+            # class codes read as "RS Sr."; a link straight to the screen opens it
             for width in (1280, 400):
                 page.set_viewport_size({"width": width, "height": 1000})
-                open_tab(page, base, A, "depth", "[data-player]")
-                ctl = page.evaluate("""() => [...document.querySelectorAll('.depth-ctl button')].filter(b => b.offsetWidth).slice(0, 30).map(b => {
-                    const r = b.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height), op: getComputedStyle(b.closest('.depth-ctl')).opacity, label: b.getAttribute('aria-label') }; })""")
-                assert ctl, "no depth controls"
+                open_tab(page, base, A, "depth", ".dc-card")
+                assert "screen=depth" in page.url and page.is_hidden(".season-layout"), "the depth chart takes over the page"
+                assert page.locator(".dc-card").count() == 11, "eleven on the field"
+                page.click(".dc-card >> nth=0")
+                page.wait_for_selector(".dc-depth-acts button", timeout=30_000)
+                ctl = page.evaluate("""() => [...document.querySelectorAll('.dc-depth-acts button')].filter(b => b.offsetWidth).map(b => {
+                    const r = b.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height), op: getComputedStyle(b).opacity, label: b.getAttribute('aria-label') }; })""")
                 small = [c for c in ctl if c["w"] < 24 or c["h"] < 24]
                 assert not small, f"{width}px: depth controls under 24px: {small[:3]}"
-                assert all(c["op"] == "1" for c in ctl), f"{width}px: depth controls are faint without hover"
+                assert all(c["op"] == "1" for c in ctl), f"{width}px: depth controls are faint"
                 assert all(c["label"] for c in ctl), "depth controls carry an aria-label"
-                # your roster redshirts in place: an eligible player's row has the control, and it works both ways
-                rsb = page.query_selector(".depth-rs:not(.on)")
-                assert rsb, "no Redshirt control on an eligible player's row"
-                if width == 1280:
-                    assert "REDSHIRTING · 0" in page.inner_text(".depth-redshirts") and "Nobody is redshirting" in page.inner_text(".depth-redshirts")
-                    rsb.click(); page.wait_for_selector(".depth-redshirt", timeout=30_000)
-                    assert "REDSHIRTING · 1" in page.inner_text(".depth-redshirts"), "the redshirt list shows him"
-                    page.click(".depth-redshirt .depth-rs.on"); page.wait_for_function("() => !document.querySelector('.depth-rs.on')", timeout=30_000)
-                    assert "Nobody is redshirting" in page.inner_text(".depth-redshirts")
-                depth = page.inner_text("#tab-depth")
+                depth = page.inner_text("#depth-screen")
                 assert not CLASS_CODE.search(depth), CLASS_CODE.search(depth).group(0)
-                # a player page: attribute labels do not clip; the bar colors are explained
-                keys = page.evaluate("() => [...document.querySelectorAll('[data-player]')].slice(0, 3).map(e => e.dataset.player)")
-                page.click(f"[data-player='{keys[1]}']")
+                assert "null" not in depth.split(), "an empty value printed as null"
+                # the units cycle, and the URL follows
+                page.keyboard.press("]")
+                page.wait_for_selector(".dc-cycle-name:has-text('Defense')", timeout=30_000)
+                assert "unit=defense" in page.url
+                # your roster redshirts from the board, both ways
+                if width == 1280:
+                    page.click(".dc-nav-item:has-text('Redshirts')")
+                    page.wait_for_selector(".dc-person", timeout=30_000)
+                    page.click(".dc-person button:has-text('Redshirt') >> nth=0")
+                    page.wait_for_selector(".dc-person button:has-text('Off redshirt')", timeout=30_000)
+                    assert "sitting out" in page.inner_text(".dc-people").lower()
+                    page.click(".dc-person button:has-text('Off redshirt')")
+                    page.wait_for_function("() => !document.body.innerText.includes('Off Redshirt')", timeout=30_000)
+                # the Players box: a tile picks a player and his card follows; the arrows walk the box
+                page.click(".dc-nav-item:has-text('Players')")
+                page.wait_for_selector(".dc-tile", timeout=30_000)
+                tiles = page.locator(".dc-tile")
+                assert tiles.count() > 10, "a box of portraits"
+                tile2 = tiles.nth(1).get_attribute("data-slug")
+                tiles.nth(1).click()
+                page.wait_for_function("(slug) => new URLSearchParams(location.search).get('player') === slug", arg=tile2, timeout=30_000)
+                page.wait_for_selector(".dc-pc-attrs", timeout=60_000)
+                assert page.inner_text(".dc-pc-name").strip() == page.locator(".dc-tile.on").get_attribute("title").split(" · ")[0]
+                page.keyboard.press("ArrowRight")
+                page.wait_for_function("(slug) => new URLSearchParams(location.search).get('player') !== slug", arg=tile2, timeout=30_000)
+                # a player page from the rail: attribute labels do not clip; the bar colors are explained
+                page.click(".dc-nav-item:has-text('Overview')")
+                page.wait_for_selector(".dc-card", timeout=30_000)
+                page.click(".dc-card >> nth=0")
+                page.click(".dc-panel-acts .dc-player-link")
                 page.wait_for_selector(".player-page", timeout=60_000)
                 time.sleep(1.5)
                 clipped = not_clipped(page, ".player-page .rating-label")
@@ -2118,6 +2163,27 @@ if __name__ == "__main__":
                 assert "75" in legend and ("red" in legend.lower() or "green" in legend.lower()), "the rating bar colors are explained"
                 assert not CLASS_CODE.search(legend), CLASS_CODE.search(legend).group(0)
                 page.keyboard.press("Escape")
+                # Back to the season; a link straight to the screen opens it on the screen it names
+                page.click(".dc-btn-back")
+                page.wait_for_selector("#season:visible", timeout=30_000)
+                assert "screen=depth" not in page.url and page.is_hidden("#depth-screen")
+                page.goto(f"{base}/index.html?id={A}&screen=depth&view=list&unit=defense&role=CB")
+                page.wait_for_selector(".dc-table tbody tr", timeout=120_000)
+                assert page.inner_text(".dc-role.on").strip() == "CB", "the link opens the screen it names"
+                # an old link to the Personnel screen lands on the List view
+                page.goto(f"{base}/index.html?id={A}&screen=depth&sub=personnel&role=WR")
+                page.wait_for_selector(".dc-table tbody tr", timeout=120_000)
+                assert page.inner_text(".dc-role.on").strip() == "WR"
+                # on a laptop the screen fits the window: no page scroll
+                if width == 1280:
+                    page.set_viewport_size({"width": 1280, "height": 720})
+                    for unit in ("offense", "defense"):
+                        page.goto(f"{base}/index.html?id={A}&screen=depth&unit={unit}")
+                        page.wait_for_selector(".dc-card", timeout=120_000)
+                        time.sleep(0.8)
+                        over = page.evaluate("() => [document.documentElement.scrollHeight - innerHeight, document.querySelector('.dc-rows').classList.contains('fit-scroll')]")
+                        assert over[0] <= 0 and not over[1], f"{unit} at 1280x720: the page or the field scrolls {over}"
+                    page.set_viewport_size({"width": width, "height": 1000})
             page.set_viewport_size({"width": 1280, "height": 1000})
 
             # --- A call left open when the week moves on: Finish finds it gone, drops the scene and unlocks the menu

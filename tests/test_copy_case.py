@@ -15,7 +15,7 @@ WEB = ROOT / "web"
 
 # TODO(pass 2): web/recruiting.js and web/scouting.js (and coach_career/scenes.py, coach_career/prospects.py)
 # are being edited by other workers; add them here once their Title Case pass lands.
-PAGES = ["season.js", "offseason.js", "coach.js", "gameview.js", "us-map.js", "index.html", "coach.html"]
+PAGES = ["season.js", "offseason.js", "coach.js", "gameview.js", "us-map.js", "index.html", "coach.html", "depth/depth.js"]
 
 SMALL = {"a", "an", "the", "of", "to", "for", "and", "or", "in", "on", "at", "by"}
 ALLOW = {line.strip() for line in (ROOT / "tests" / "copy_case_allow.txt").read_text(encoding="utf-8").splitlines()

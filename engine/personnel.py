@@ -76,11 +76,13 @@ def offense_grouping(scheme: str, down: int, distance: int, yardline: int, conse
     return random.choices(names, weights=[mix[n] for n in names], k=1)[0]
 
 
-def defense_package(scheme: str, grouping: str, down: int, distance: int) -> dict:
+def defense_package(scheme: str, grouping: str, down: int, distance: int, rnd=None) -> dict:
     """The defensive counts for this snap. The base front answers 12 and 21 personnel; three
     receivers bring a fifth defensive back (always for a 4-2-5 or 3-3-5, often for a 4-3 or
     3-4); four receivers or third-and-long bring a sixth; extra tight ends take a back off
-    the field for a linebacker. Linebackers trade one-for-one with the backs."""
+    the field for a linebacker. Linebackers trade one-for-one with the backs. `rnd` stands in
+    for random.random (the depth chart's formations take the usual answer: rnd=lambda: 0.0)."""
+    rnd = rnd or random.random
     base = dict(FRONTS[SCHEME_FRONT.get(scheme, "4-2-5")])
     receivers = GROUPINGS[grouping]["WR"]
     passing_down = down >= 3 and distance >= 7
@@ -90,8 +92,8 @@ def defense_package(scheme: str, grouping: str, down: int, distance: int) -> dic
         target = 6
     elif receivers == 3:
         if passing_down:
-            target = 6 if random.random() < cfg.DIME_ON_PASSING_DOWN else 5
-        elif dbs >= 5 or random.random() < cfg.NICKEL_VS_11:
+            target = 6 if rnd() < cfg.DIME_ON_PASSING_DOWN else 5
+        elif dbs >= 5 or rnd() < cfg.NICKEL_VS_11:
             target = 5
     elif receivers <= 1:
         target = max(4, dbs - 1)

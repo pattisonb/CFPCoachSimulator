@@ -1094,7 +1094,7 @@
         let top = r.bottom + 6;
         if (top + m.height > window.innerHeight - pad) top = Math.max(pad, r.top - 6 - m.height);
         menu.style.top = `${top}px`;
-        menu.style.left = `${Math.max(pad, Math.min(r.right - m.width, window.innerWidth - m.width - pad))}px`;
+        menu.style.left = `${Math.max(pad, Math.min(r.right - m.width, document.documentElement.clientWidth - m.width - pad))}px`;
       };
       if (!sheet) place();
       const onDoc = (e) => { if (!menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) closeMenu(); };
@@ -1717,9 +1717,18 @@
   function placeTip(cell, tip) {
     tip.classList.add("show");
     const r = cell.getBoundingClientRect(), t = tip.getBoundingClientRect(), gap = 6, pad = 8;
-    const below = r.bottom + gap + t.height <= window.innerHeight - pad;
+    const below = r.bottom + gap + t.height <= document.documentElement.clientHeight - pad;
     const top = below ? r.bottom + gap : Math.max(pad, r.top - gap - t.height);
-    const left = Math.min(Math.max(pad, r.left), window.innerWidth - t.width - pad);
+    // the right edge it may reach: the page's usable width, the inner edge of any box around it that scrolls, and the
+    // edge of the pane or window it opens in (with the page's scrollbar gutter, a phone's sheet and the Prospects window
+    // stop short of the window's width, and a tip past them sits under the gutter)
+    let edge = document.documentElement.clientWidth;
+    for (let n = cell.parentElement; n && n !== document.body; n = n.parentElement) {
+      if (n.clientWidth && n.offsetWidth - n.clientWidth > 2) edge = Math.min(edge, n.getBoundingClientRect().left + n.clientLeft + n.clientWidth);
+    }
+    const host = cell.closest(".go-pane") || cell.closest(".modal-body");
+    if (host) edge = Math.min(edge, host.getBoundingClientRect().right);
+    const left = Math.min(Math.max(pad, r.left), edge - t.width - pad);
     tip.style.top = `${top}px`;
     tip.style.left = `${left}px`;
   }

@@ -231,7 +231,7 @@ if __name__ == "__main__":
             w.both("seasons-menu", seasons_menu)
 
             def compact(_):
-                open_tab(page, base, A, "depth", "[data-player]")      # a long page: it scrolls well past the header
+                open_tab(page, base, A, "stats", "#tab-stats .leader-row")      # a long page: it scrolls well past the header
                 page.evaluate("() => window.scrollTo(0, 800)")
                 page.wait_for_selector("#season-compact:visible", timeout=30_000)
             w.both("season-compact", compact)
@@ -248,7 +248,7 @@ if __name__ == "__main__":
             page.click("button.go-btn:has-text('Add these')")
             time.sleep(4)
             for tab, wait in (("office", ".go-program"), ("recruiting", ".go-row-recruit"), ("prospects", ".go-list-row"),
-                              ("scouting", ".sc-scout"), ("depth", "[data-player]"), ("schedule", ".schedule-pick")):
+                              ("scouting", ".sc-scout"), ("depth", ".dc-card"), ("schedule", ".schedule-pick")):
                 w.both(tab, lambda _w, tab=tab, wait=wait: open_tab(page, base, A, tab, wait))
 
             # the new board: a recruit selected (a full-screen pane on a phone), the Recruit menu open (a bottom sheet on a
