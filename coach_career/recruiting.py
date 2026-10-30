@@ -124,8 +124,11 @@ GENERATIONAL_FROM = 95                     # true projected overall at least thi
 GENERATIONAL_ODDS = {5: 0.4, 4: 0.1}       # a qualifying prospect is drawn this often, by stars
 GENERATIONAL_MAX = 4                       # at most this many a class (some years none)
 GENERATIONAL_ASK = 1.5                     # his NIL ask is this times larger
-GEM_RANK = 300                             # a gem is a three-star or less, or ranked below this
+GEM_RANK = 300                             # a gem is a three-star or less ranked past this
 FIND_LOOKS = REPORT_LOOKS                  # looks before your staff names a gem, a bust risk or a generational talent: a complete report
+GEM_PERCENTILE = 0.94                      # a gem's potential read beats, even at its low end, this share of his star tier's true potential
+BUST_PERCENTILE = 0.0175                   # a bust risk's read sits, even at its high end, under this share of his star tier's (one in 57)
+FLAG_HOLD = 4.0                            # a flag found stays until the read moves this far back past its cut (a read's slack, WORD_SLACK): no flicker
 LOOK_LOG_KEEP = 30                         # the look log keeps this many of a scout's looks a week (flags, then potential, then the rest)
 # the transfer portal as recruiting (offseason.py runs it): four weeks after signing day *tune*
 PORTAL_WEEKS = 4
@@ -351,6 +354,39 @@ def _tiers(rc: dict) -> dict[str, int]:
 
 
 _TIERS: tuple = (None, {})
+
+
+def flag_cuts(rc: dict) -> dict[int, tuple[float, float]]:
+    """Each star tier's (gem, bust) cuts on potential: the GEM_PERCENTILE and BUST_PERCENTILE of the
+    class's true potential at that star level, once per class (prospects.find reads against them).
+    Potential varies nearly as much within a tier as across tiers (about a fifth of two- and
+    three-stars project Elite), so an absolute cut names a quarter of the class; a tier-relative one
+    names the few who stand out among their own."""
+    key = (_ck(rc), rc.get("seed"), len(rc["prospects"]))
+    cached = _CUTS
+    if cached[0] != key:
+        by: dict[int, list[float]] = {}
+        for p in rc["prospects"].values():
+            if p.get("stars") is not None and p.get("truth"):
+                by.setdefault(p["stars"], []).append(p["truth"]["potential"])
+        cuts = {}
+        for stars, vals in by.items():
+            vals.sort()
+            cuts[stars] = (_percentile(vals, GEM_PERCENTILE), _percentile(vals, BUST_PERCENTILE))
+        cached = globals()["_CUTS"] = (key, cuts)
+    return cached[1]
+
+
+_CUTS: tuple = (None, {})
+
+
+def _percentile(sorted_vals: list[float], q: float) -> float:
+    """The q-quantile of sorted values, interpolated between neighbors (potentials are whole numbers,
+    so a nearest-rank cut would jump a whole point and a share of the tier with it)."""
+    pos = q * (len(sorted_vals) - 1)
+    i = int(pos)
+    j = min(i + 1, len(sorted_vals) - 1)
+    return round(sorted_vals[i] + (sorted_vals[j] - sorted_vals[i]) * (pos - i), 2)
 
 
 def _ck(rc: dict):
@@ -2333,6 +2369,7 @@ def look(state: dict, pid: str, evaluator_rating: int, rng: random.Random, by: O
     (default: look_week): the words before and after of the groups that changed, and the flags
     gained. The log keeps a scout's LOOK_LOG_KEEP most notable looks a week (the save is written
     after every action). Returns the entry, logged or not."""
+    from coach_career import prospects as pr
     rc = state["recruiting"]
     p = rc["prospects"][pid]
     week = look_week(state) if week is None else week
@@ -2344,7 +2381,9 @@ def look(state: dict, pid: str, evaluator_rating: int, rng: random.Random, by: O
     if by != "trip":
         w = min(w, AREA_CAP - area_looks(read))
     w = round(w, 3)
-    if w <= 0:
+    if w <= 0:                                        # nothing left to add: no look, only the flag he holds refreshed
+        if read is not None:
+            read["find"] = pr.find(state, pid)
         return {"week": week, "pid": pid, "by": by, "before": {}, "after": {}, "flags": []}
     before, flags_before = _read_words(state, pid), _flags(state, pid)     # before his first look: no words, no flags
     read = rc["reads"].setdefault(pid, {"looks": 0.0, "area": 0.0, "by": {}, "g": {}})
@@ -2361,6 +2400,7 @@ def look(state: dict, pid: str, evaluator_rating: int, rng: random.Random, by: O
         read["area"] = round(read["area"] + w, 3)
     key = str(evaluator_rating)
     read["by"][key] = round(read["by"].get(key, 0) + w, 3)
+    read["find"] = pr.find(state, pid)               # the flag he holds after this look: find's hysteresis anchor
     after = _read_words(state, pid)
     moved = [g for g in GROUPS if before.get(g) != after.get(g)]
     entry = {"week": week, "pid": pid, "by": by,

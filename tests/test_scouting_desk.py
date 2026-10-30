@@ -235,7 +235,8 @@ if __name__ == "__main__":
         # flags: your staff's finds this class, with his looks and where he stands with you; a flag waits for a complete report
         threes = [pid for pid, p in rc["prospects"].items() if p["stars"] == 3 and scoutable(st, pid) and pid in rc["reads"]]
         gem = threes[0]
-        rc["reads"][gem]["g"]["potential"] = [95.0, 1000.0]
+        gem_cut = recruiting.flag_cuts(rc)[3][0]                     # the gem cut is relative to his star tier
+        rc["reads"][gem]["g"]["potential"] = [gem_cut + 1.0, 1000.0]
         assert rc["reads"][gem]["looks"] == 1.5 and gem not in {f["pid"] for f in G(sid, "scouting")["flags"]}, "no flag before the report is complete"
         rc["reads"][gem]["looks"] = recruiting.FIND_LOOKS
         v = G(sid, "scouting")
@@ -246,7 +247,7 @@ if __name__ == "__main__":
         rc["hours"][ME] = 50
         rc["reads"][gem]["g"]["potential"] = [70.0, 1000.0]
         before_flag = threes[1]
-        rc["reads"][before_flag]["g"]["potential"] = [95.0, 1000.0]
+        rc["reads"][before_flag]["g"]["potential"] = [gem_cut + 1.0, 1000.0]
         rc["reads"][before_flag]["looks"] = recruiting.FIND_LOOKS - 1       # the trip's look completes the report
         out = R(sid, "recruit", {"pid": before_flag, "action": "scout"})
         assert out["look"]["flags"] == ["gem"], out["look"]

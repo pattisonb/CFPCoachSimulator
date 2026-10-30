@@ -353,18 +353,23 @@ def generational_seen(rc: dict, pid: str, viewer: str) -> bool:
 
 
 def find(state: dict, pid: str) -> Optional[str]:
-    """Your staff's finding from the read, never the truth: "gem" (his low end reads Elite on
-    potential and he is a three-star or less, or ranked past GEM_RANK), "bust" (a four- or five-star
-    whose high end reads below Solid), or None. Needs a complete report (FIND_LOOKS = REPORT_LOOKS
-    looks); portal prospects get none."""
+    """Your staff's finding from the read, never the truth: "gem", "bust" or None. Needs a complete
+    report (REPORT_LOOKS looks: no flag at 2 or 2.5); portal prospects get none. The cuts are relative to his star tier (recruiting.flag_cuts):
+    a gem is a three-star or less ranked past GEM_RANK whose potential read, even at its low end,
+    beats the GEM_PERCENTILE (94th) of true potential at his star level; a bust risk is a four- or
+    five-star whose read, even at its high end, sits under the BUST_PERCENTILE (1.75th) of his. A flag
+    holds: `read["find"]`, the finding after his last look (look() keeps it), stays until the read
+    moves FLAG_HOLD points back past its cut, so one look that widens the read does not flicker it."""
     rc = state["recruiting"]
     p, read = rc["prospects"][pid], rc["reads"].get(pid)
     if p.get("portal") or p["stars"] is None or not read or not recruiting.report_complete(read):
         return None
     lo, hi = recruiting.read_interval(state, pid, "potential")
-    if lo >= 80 and (p["stars"] <= 3 or p["rank"] > recruiting.GEM_RANK):
+    gem_cut, bust_cut = recruiting.flag_cuts(rc).get(p["stars"], (99.0, -1.0))
+    held = read.get("find")
+    if p["stars"] <= 3 and p["rank"] > recruiting.GEM_RANK and lo >= gem_cut - (recruiting.FLAG_HOLD if held == "gem" else 0.0):
         return "gem"
-    if hi < 50 and p["stars"] >= 4:
+    if p["stars"] >= 4 and hi < bust_cut + (recruiting.FLAG_HOLD if held == "bust" else 0.0):
         return "bust"
     return None
 

@@ -21,8 +21,8 @@
   const WORDS = ["Weak", "Fair", "Solid", "Strong", "Elite", "All-American"];         // recruiting.WORDS, low to high
   const GRADE_NAMES = { potential: "Potential", athleticism: "Athleticism", size_strength: "Size & strength", technique: "Technique", football_iq: "Football IQ", coachability: "Coachability" };
   const FLAGS = { generational: ["Generational", "Your staff's find after three looks: a once-in-a-generation talent every program in the country wants"],
-                  gem: ["Gem", "Your staff's find: his potential reads Elite even at the low end, and few programs rate him that high"],
-                  bust: ["Bust risk", "Your staff's find: his ranking is high but even the top of their read is below Solid"] };
+                  gem: ["Gem", "Your staff's find: even the low end of his potential read beats all but a few prospects at his star level, and few programs rate him that high"],
+                  bust: ["Bust risk", "Your staff's find: his ranking is high but even the top of their read sits under nearly every prospect at his star level"] };
   const ROLE_SHORT = { "Offensive coordinator": "OC", "Defensive coordinator": "DC", Recruiter: "Recruiter" };
   const SORTS = { need: (r) => r.need || 0, rank: (r) => r.national_rank || 1e9, looks: (r) => r.looks || 0,
                   potential: (r) => (r.potential ? WORDS.indexOf(r.potential[1]) * 10 + WORDS.indexOf(r.potential[0]) : -1) };

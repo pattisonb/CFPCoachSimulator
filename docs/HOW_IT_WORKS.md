@@ -1026,11 +1026,19 @@ for a five-star and 10% for a four-star. The tag is your staff's to find: it sho
 profile and the Classes view once your staff have looked at him three times (or once he signs with
 you), and his NIL ask is 1.5 times larger whether you know it or not. Every program wants him.
 
-**Gems and bust risks** are your staff's finds, read from the scouting, never the truth. Once his
-report is complete (three looks), a prospect whose potential read is Elite or better even at its low end is a gem if he is a
-three-star or lower, or ranked past 300; a four- or five-star whose read is below Solid even at
-its high end is a bust risk. The read can be wrong. When he signs with you, the Classes view
-judges the call: "Gem: the read held" or "The read was off".
+**Gems and bust risks** are your staff's finds, read from the scouting, never the truth. The cuts
+are relative to his star tier, because potential varies nearly as much within a tier as across
+them (about a fifth of two- and three-stars project Elite, so an absolute Elite cut once named a
+quarter of the class). Once his report is complete (three looks), a three-star or lower ranked past 300 whose potential
+read, even at its low end, beats the 94th percentile of true potential at his star level
+(`GEM_PERCENTILE`, computed once from the class) is a gem; a four- or five-star whose read, even
+at its high end, sits under the lowest 1.75% of his star level (`BUST_PERCENTILE`, one four-star in
+57) is a bust risk. With a complete report (three looks) on every prospect in a staffed area that
+leaves gems at 2-5% of them and bust risks at 2-5% of the four- and five-stars, nearly all real. A flag holds once found: it
+stays until the read moves four points back past its cut (`FLAG_HOLD`, the slack a read already
+carries), so one look that widens the read a little does not flicker it off and on. The read can still be wrong.
+When he signs with you, the Classes view judges the call: "Gem: the read held" (his potential is
+Elite) or "The read was off".
 
 **Calls and in-home visits are scenes** (`coach_career/scenes.py`). For you, a call or an in-home
 visit without a pitch opens a two-step scene: he says his lines, with a cue that hints at what he

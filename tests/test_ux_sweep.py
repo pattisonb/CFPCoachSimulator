@@ -7,6 +7,7 @@ import re
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -820,8 +821,9 @@ def test_look_units_pane(page, base, sid) -> None:
     try:
         call(base, f"/api/season/{sid}/recruit", {"pid": done["id"], "action": "scout"})
         raise AssertionError("a Send on a complete report")
-    except Exception as e:  # noqa: BLE001
-        assert "his report is complete: 3 of 3 looks" in str(e), str(e)
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", "replace")
+        assert e.code == 409 and "his report is complete: 3 of 3 looks" in body, (e.code, body)
     open_tab(page, base, sid, "recruiting", ".go-stages")
     page.click(".go-stages button[data-stage=all]")
     page.click(f".go-row-recruit[data-pid='{done['id']}']")
