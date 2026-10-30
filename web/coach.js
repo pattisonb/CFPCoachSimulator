@@ -74,16 +74,16 @@
     age.addEventListener("input", () => { c.age = Number(age.value) || 42; changed(); });
     const fbs = TEAMS.filter((t) => !t.fictional);
     id.append(el("div", { class: "coach-grid" }, [
-      field("First name", text("first_name", "First")), field("Last name", text("last_name", "Last")),
+      field("First Name", text("first_name", "First")), field("Last Name", text("last_name", "Last")),
       field("Age", age), field("Hometown", text("hometown", "City, State", 60)),
-      field("Alma mater", select(c.alma_mater || "", [["", "None"], ...fbs.map((t) => [t.slug, t.name])], (v) => { c.alma_mater = v || null; changed(); })),
+      field("Alma Mater", select(c.alma_mater || "", [["", "None"], ...fbs.map((t) => [t.slug, t.name])], (v) => { c.alma_mater = v || null; changed(); })),
       field("Played", select(c.played, OPT.positions_played.map((p) => [p, p]), (v) => { c.played = v; changed(); })),
-      field("Playing career", select(c.playing_level, OPT.playing_levels.map((p) => [p, p]), (v) => { c.playing_level = v; changed(); })),
+      field("Playing Career", select(c.playing_level, OPT.playing_levels.map((p) => [p, p]), (v) => { c.playing_level = v; changed(); })),
     ]));
     f.append(id);
 
     // archetype and ratings
-    const arch = el("section", { class: "panel coach-section" }, [el("h3", { text: "Archetype and ratings" })]);
+    const arch = el("section", { class: "panel coach-section" }, [el("h3", { text: "Archetype and Ratings" })]);
     const archSel = select(c.archetype, Object.keys(OPT.archetypes).map((a) => [a, a]), (v) => {
       c.archetype = v; c.ratings = clone(OPT.archetypes[v].ratings); renderForm();
     });
@@ -104,7 +104,7 @@
     const sliderFor = (k) => slider(k, OPT.rating_labels[k], c.ratings[k], OPT.rating_about[k], (v) => { c.ratings[k] = v; showBudget(); changed(); }, 40, 99);
     arch.append(el("div", { class: "coach-sliders" }, liveKeys.map(sliderFor)));
     if (laterKeys.length) {
-      arch.append(el("h4", { class: "coach-subhead", text: "Coming later: no effect on games yet" }),
+      arch.append(el("h4", { class: "coach-subhead", text: "Coming Later: No Effect on Games Yet" }),
         el("p", { class: "muted small-text", text: "These count toward the same total and start to matter when recruiting, the offseason and coach mode arrive." }),
         el("div", { class: "coach-sliders" }, laterKeys.map(sliderFor)));
     }
@@ -113,7 +113,7 @@
     f.append(arch);
 
     // coaching style
-    const sty = el("section", { class: "panel coach-section" }, [el("h3", { text: "Coaching style" }),
+    const sty = el("section", { class: "panel coach-section" }, [el("h3", { text: "Coaching Style" }),
       el("p", { class: "muted small-text", text: "50 is the FBS average. These change how the team plays on a side of the ball the coach calls. The team's coordinators stay for the season; staff changes come after it." })]);
     const offSel = select(c.offense_scheme, Object.keys(OPT.offense_schemes).map((s) => [s, s]), (v) => { c.offense_scheme = v; renderForm(); });
     const defSel = select(c.defense_scheme, Object.keys(OPT.defense_schemes).map((s) => [s, s]), (v) => { c.defense_scheme = v; renderForm(); });
@@ -122,9 +122,9 @@
     const callD = el("input", { type: "checkbox" }); callD.checked = !!c.calls_defense;
     callD.addEventListener("change", () => { c.calls_defense = callD.checked; renderForm(); });
     sty.append(el("div", { class: "coach-grid two" }, [
-      el("div", {}, [field("Offensive scheme", offSel, OPT.offense_schemes[c.offense_scheme]),
+      el("div", {}, [field("Offensive Scheme", offSel, OPT.offense_schemes[c.offense_scheme]),
         el("label", { class: "coach-check" }, [callO, " Calls the offense (the coach's own scheme and style; otherwise the team's offensive coordinator calls it)"])]),
-      el("div", {}, [field("Defensive scheme", defSel, OPT.defense_schemes[c.defense_scheme]),
+      el("div", {}, [field("Defensive Scheme", defSel, OPT.defense_schemes[c.defense_scheme]),
         el("label", { class: "coach-check" }, [callD, " Calls the defense (the coach's own scheme and style; otherwise the team's defensive coordinator calls it)"])]),
     ]));
     const sliders = el("div", { class: "coach-sliders" });
@@ -140,7 +140,7 @@
     // look
     const look = el("section", { class: "panel coach-section" }, [el("h3", { text: "Look" })]);
     const lg = el("div", { class: "coach-grid" });
-    const names = { skin: "Skin tone", hair: "Hair", hair_color: "Hair color", facial_hair: "Facial hair", glasses: "Glasses", headwear: "Headwear", outfit: "Sideline outfit" };
+    const names = { skin: "Skin Tone", hair: "Hair", hair_color: "Hair Color", facial_hair: "Facial Hair", glasses: "Glasses", headwear: "Headwear", outfit: "Sideline Outfit" };
     for (const [k, opts] of Object.entries(OPT.look)) {
       if (k === "skin" || k === "hair_color") {
         const row = el("div", { class: "swatches", role: "radiogroup", "aria-label": names[k] });
@@ -162,18 +162,18 @@
     const ta = el("textarea", { rows: "5", maxlength: "1500", placeholder: "The coach's story. Write your own, or fill it in from the choices above." });
     ta.value = c.background || "";
     ta.addEventListener("input", () => { c.background = ta.value; changed(); });
-    const gen = el("button", { type: "button", class: "ghost small", text: "Write it from my choices" });
+    const gen = el("button", { type: "button", class: "ghost small", text: "Write It From My Choices" });
     gen.addEventListener("click", () => { c.background = story(c); ta.value = c.background; changed(); });
     bg.append(ta, el("div", { class: "coach-actions" }, [gen]));
     f.append(bg);
 
     // save and start
     const actions = el("section", { class: "panel coach-section coach-final" });
-    const save = el("button", { type: "button", class: "primary", text: c.id ? "Save changes" : "Save coach" });
+    const save = el("button", { type: "button", class: "primary", text: c.id ? "Save Changes" : "Save Coach" });
     save.addEventListener("click", saveCoach);
     const teamSel = el("select", { "aria-label": "Team to coach" }, fbs.map((t) => el("option", { value: t.slug, text: t.name })));
     teamSel.value = $("#preview-team").value || (fbs[0] || {}).slug;
-    const start = el("button", { type: "button", class: "accent", text: "Start a season with this coach" });
+    const start = el("button", { type: "button", class: "accent", text: "Start a Season With This Coach" });
     start.addEventListener("click", () => startSeason(teamSel.value));
     actions.append(el("div", { class: "coach-actions" }, [save, el("span", { class: "muted small-text", text: "then" }), teamSel, start]));
     f.append(actions);
@@ -205,7 +205,7 @@
 
   // ----- saving, listing, starting ----------------------------------------------------------
   // Save patches in place: the form stays as it is (the saved coach is merged into the one it edits),
-  // the button's label turns to "Save changes", the list gains or updates his row; the button is busy meanwhile.
+  // the button's label turns to "Save Changes", the list gains or updates his row; the button is busy meanwhile.
   function saveCoach(ev) {
     const btn = ev && ev.currentTarget;
     const work = (async () => {
@@ -213,7 +213,7 @@
         const saved = await api("/api/coaches", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ coach }) });
         coach = Object.assign(coach, saved);
         const label = $("#coach-form .coach-final button.primary");
-        if (label && label.textContent !== "Save changes") { label.textContent = "Save changes"; window.CFP.ui.pulse(label); }
+        if (label && label.textContent !== "Save Changes") { label.textContent = "Save Changes"; window.CFP.ui.pulse(label); }
         await renderList();
         toast(`${fullName(coach)} saved.`);
         return coach;

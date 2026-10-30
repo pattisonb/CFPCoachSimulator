@@ -75,7 +75,7 @@ if __name__ == "__main__":
             # the position-change picker groups your transfers first
             assert page.query_selector("#tab-offseason select.go-sel optgroup[label=Transfers]"), "an optgroup for the transfers"
             groups = page.eval_on_selector_all("#tab-offseason select.go-sel optgroup", "els => els.map(e => e.label)")
-            assert groups == ["Transfers", "Everyone else"], groups
+            assert groups == ["Transfers", "Everyone Else"], groups
             opts = page.eval_on_selector_all("#tab-offseason select.go-sel optgroup[label=Transfers] option", "els => els.map(e => e.textContent)")
             assert len(opts) >= len(rec["signed"]) and all("transfer from" in o for o in opts), opts
             # Who improved tags the transfers, in their own block and in the list

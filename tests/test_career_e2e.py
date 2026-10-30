@@ -88,13 +88,13 @@ if __name__ == "__main__":
             page.click("#week-strip button.week-chip[aria-label='Week 4']")
             page.click("#season-tabs button[data-tab=office]")
             page.wait_for_selector(".go-play")
-            page.click(".go-play >> text=/Sim the week|ADVANCE THE WEEK/")
+            page.click(".go-play >> text=/Sim the Week|ADVANCE THE WEEK/")
             for _ in range(600):
                 if call(base, f"/api/season/{sid}/status?since=0")["status"] != "running" and call(base, f"/api/season/{sid}")["current_week"] >= 1:
                     break
                 time.sleep(0.5)
             assert call(base, f"/api/season/{sid}")["current_week"] == 1, call(base, f"/api/season/{sid}")["current_week"]
-            page.click(".go-play >> text=Sim to signing day")        # the Office is the only place time moves
+            page.click(".go-play >> text=Sim to Signing Day")        # the Office is the only place time moves
             page.wait_for_function("() => /Season complete|national champion/.test(document.querySelector('#season-meta').textContent)",
                                    timeout=900_000)
             summary = call(base, f"/api/season/{sid}")

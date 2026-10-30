@@ -1,0 +1,4 @@
+# Titles the copy-case test lets through as written, one per line (tests/test_copy_case.py).
+# Column headers where the lowercase word is the convention.
+vs Top 25
+vs .500+

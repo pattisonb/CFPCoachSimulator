@@ -24,10 +24,10 @@ from teamdata import game_scale
 STAGES = ("departures", "retention", "portal_w1", "portal_w2", "portal_w3", "portal_w4", "development", "staff", "ready")
 PORTAL_STAGES = ("portal_w1", "portal_w2", "portal_w3", "portal_w4")
 OLD_PORTAL = {"portal_1": "portal_w1", "portal_2": "portal_w2"}     # saves from the two-round portal
-STAGE_NAMES = {"departures": "Departures", "retention": "Keep them home", "portal_w1": "Transfer portal, week 1", "portal_w2": "Transfer portal, week 2",
-               "portal_w3": "Transfer portal, week 3", "portal_w4": "Transfer portal, week 4",
-               "portal_1": "Transfer portal, round 1", "portal_2": "Transfer portal, round 2",
-               "development": "Development", "staff": "Staff", "ready": "Ready for next season"}
+STAGE_NAMES = {"departures": "Departures", "retention": "Keep Them Home", "portal_w1": "Transfer Portal, Week 1", "portal_w2": "Transfer Portal, Week 2",
+               "portal_w3": "Transfer Portal, Week 3", "portal_w4": "Transfer Portal, Week 4",
+               "portal_1": "Transfer Portal, Round 1", "portal_2": "Transfer Portal, Round 2",
+               "development": "Development", "staff": "Staff", "ready": "Ready for Next Season"}
 ROSTER_LIMIT = 85          # EA's roster limit (the real 2026 rosters; the NCAA's has been 105 since 2025)
 FILL_TO = 80               # walk-ons and lower-level transfers top a roster up to this
 GROUP = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL", "LG": "OL", "C": "OL", "RG": "OL", "RT": "OL",
@@ -128,10 +128,10 @@ COACH_IDLE = 0.5                                   # a coach for hire (the marke
 CLASS_MARK_MIN = 70                                # the class verdict needs this many schools with a class (none: no school ranked "first" on nothing)
 COACH_FLOOR, COACH_CAP = 35, 99
 COACH_AGE_UNKNOWN = (32, 58)                       # a recruiter's age when first seen (the league's coaches: carousel._age)
-RATING_WORDS = {"player_development": "Evaluation", "recruiting": "Recruiting", "play_calling": "Play calling", "offense": "Offense",
-                "defense": "Defense", "discipline": "Discipline", "game_management": "Game management", "motivation": "Motivation",
-                "qb_development": "QB development", "ol_development": "OL development", "pass_rush_development": "Pass rush development",
-                "secondary_development": "Secondary development", "evaluation": "Evaluation"}
+RATING_WORDS = {"player_development": "Evaluation", "recruiting": "Recruiting", "play_calling": "Play Calling", "offense": "Offense",
+                "defense": "Defense", "discipline": "Discipline", "game_management": "Game Management", "motivation": "Motivation",
+                "qb_development": "QB Development", "ol_development": "OL Development", "pass_rush_development": "Pass Rush Development",
+                "secondary_development": "Secondary Development", "evaluation": "Evaluation"}
 
 
 def seed_key(state: dict):
@@ -454,7 +454,7 @@ ROLE_NAMES = {"starter": "Starter", "rotation": "Rotation", "bench": "Bench"}
 
 
 def _chance_word(c: float) -> str:
-    return "Likely to stay" if c >= 0.65 else "Could go either way" if c >= 0.4 else "Leaning out" if c >= 0.2 else "As good as gone"
+    return "Likely to Stay" if c >= 0.65 else "Could Go Either Way" if c >= 0.4 else "Leaning Out" if c >= 0.2 else "As Good As Gone"
 
 
 def stay_chance(e: dict) -> float:
@@ -566,8 +566,8 @@ BREAKOUT_FROM = 1.0              # production this far over the average starter 
 BREAKOUT_ROOM = 2.5              # ... by this many points (our scale) per standard deviation beyond half of one
 HONOR_ROOM = {"heisman": 8, "national": 6, "all_america_1": 5, "national_finalist": 3, "all_america_2": 3,
               "conference_award": 3, "all_conference_1": 2, "all_conference_2": 1}
-HONOR_NAMES = {"heisman": "Heisman Trophy", "all_america_1": "All-America first team", "all_america_2": "All-America second team",
-               "all_conference_1": "All-conference first team", "all_conference_2": "All-conference second team"}
+HONOR_NAMES = {"heisman": "Heisman Trophy", "all_america_1": "All-America First Team", "all_america_2": "All-America Second Team",
+               "all_conference_1": "All-Conference First Team", "all_conference_2": "All-Conference Second Team"}
 ROOM_CAP = 10                     # the most a year's honors and production add to his ceiling
 LEVEL_UP = 0.4                   # a national award winner or All-American moves up a coachability level this often
 PHYSICAL = {"speed", "acceleration", "agility", "change_of_direction", "jumping", "stamina", "injury", "toughness", "strength",
@@ -2072,8 +2072,8 @@ def next_season(state: dict) -> dict:
 
 # ----- what the page shows ----------------------------------------------------------------------
 
-KIND_NAMES = {"draft": "Drafted", "undrafted": "Declared, undrafted", "graduated": "Graduated", "portal": "Transfer portal",
-              "quit": "Left the team"}
+KIND_NAMES = {"draft": "Drafted", "undrafted": "Declared, Undrafted", "graduated": "Graduated", "portal": "Transfer Portal",
+              "quit": "Left the Team"}
 PT_NAMES = {1.0: "Would start", 0.5: "Next in line", 0.15: "Depth"}
 
 

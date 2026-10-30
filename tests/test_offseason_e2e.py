@@ -61,7 +61,7 @@ if __name__ == "__main__":
                 first = page.query_selector("button.go-act:has-text('Meet')")
                 if first:
                     first.click(); page.wait_for_selector("text=He wants", timeout=30_000)
-            page.click("text=Advance to the transfer portal")
+            page.click("text=Advance to the Transfer Portal")
             page.wait_for_selector("text=WEEK 1 OF 4", timeout=120_000)
             assert not page.query_selector(".off-board .go-row-recruit"), "the portal opens with an empty board"
             # you pick an entrant from the pool (the best one not leaving your own program) and recruit him on the board
@@ -78,19 +78,19 @@ if __name__ == "__main__":
             page.click(".off-board .go-pane .go-step button.go-step-go")
             page.wait_for_selector(".off-board .go-pane .go-tag:has-text('Offered')", timeout=30_000)
             for w in (1, 2, 3):
-                page.click(f"text=Advance to portal week {w + 1}")
+                page.click(f"text=Advance to Portal Week {w + 1}")
                 page.wait_for_selector(f"text=WEEK {w + 1} OF 4", timeout=120_000)
-            page.click("text=Close the portal and advance")
+            page.click("text=Close the Portal and Advance")
             page.wait_for_selector("text=WHO IMPROVED", timeout=120_000)
-            page.click("text=Advance to staff changes")
+            page.click("text=Advance to Staff Changes")
             page.wait_for_selector("text=YOUR STAFF", timeout=60_000)
             if page.query_selector(".off-cand"):
                 page.click(".off-cand >> nth=1")
                 page.wait_for_selector(".off-cand.picked", timeout=30_000)
             page.screenshot(path=os.environ.get("SHOT_DIR", str(ROOT / "data" / "seasons")) + f"/{sid}-offseason.png", full_page=True)
-            page.click("text=Finish the offseason")
-            page.wait_for_selector("text=Start the 2027 season", timeout=60_000)
-            page.click("text=Start the 2027 season")
+            page.click("text=Finish the Offseason")
+            page.wait_for_selector("text=Start the 2027 Season", timeout=60_000)
+            page.click("text=Start the 2027 Season")
             page.wait_for_selector(".go-office", timeout=300_000)                 # the next season opens on the Office
             page.wait_for_selector("#tab-office >> text=CLASS OF 2028", timeout=120_000)   # the new class of seniors
             summary = call(base, f"/api/season/{sid}")

@@ -559,14 +559,14 @@ def check_header(page, base, sid) -> None:
     page.click("#season-tabs button[data-tab=office]")
     page.wait_for_selector(".go-play [data-play=advance]", timeout=60_000)
     labels = page.eval_on_selector_all("#tab-office .go-play button", "els => els.map(e => e.textContent.trim())")
-    assert labels[0] == "Sim the week", labels
-    assert "Sim to selection day" in labels and "Sim to signing day" in labels and "▾" in labels, labels
+    assert labels[0] == "Sim the Week", labels
+    assert "Sim to Selection Day" in labels and "Sim to Signing Day" in labels and "▾" in labels, labels
     nxt = next((g for g in s["schedule"] if g["week"] == s["current_week"] + 1 and g.get("opponent")), None)
-    assert any(l.startswith("Game day") for l in labels) == bool(nxt and not nxt["played"]), labels
+    assert any(l.startswith("Game Day") for l in labels) == bool(nxt and not nxt["played"]), labels
     page.click("#tab-office .go-play .go-play-more")
     page.wait_for_selector(".go-menu .go-menu-item")
     weeks = page.eval_on_selector_all(".go-menu .go-menu-item b", "els => els.map(e => e.textContent)")
-    assert len(weeks) == 20 - (s["current_week"] + 2) + 1 and weeks[-1] == "National championship", weeks
+    assert len(weeks) == 20 - (s["current_week"] + 2) + 1 and weeks[-1] == "National Championship", weeks
     page.keyboard.press("Escape")
     assert not page.query_selector(".go-menu"), "Escape closes the week picker"
     assert page.evaluate("() => document.activeElement === document.querySelector('.go-play-more')"), "the focus returns to ▾"
@@ -579,7 +579,7 @@ def check_header(page, base, sid) -> None:
     page.click("#btn-seasons-menu")
     page.wait_for_selector(".season-menu .go-menu-item")
     names = page.eval_on_selector_all(".season-menu .go-menu-item b", "els => els.map(e => e.textContent)")
-    assert any(s["team_name"] in n for n in names) and "New season" in names and "Load career" in names and "Clear all" in names, names
+    assert any(s["team_name"] in n for n in names) and "New Season" in names and "Load Career" in names and "Clear All" in names, names
     assert page.get_attribute("#btn-seasons-menu", "aria-expanded") == "true"
     page.click(".season-menu .go-menu-item:has-text('New season')")
     page.wait_for_selector(".start-pick select")
@@ -661,7 +661,7 @@ def check_position_change(page, base, sid) -> None:
     page.hover(sel)
     page.wait_for_function("(q) => document.querySelector(q).options.length > 5", arg=sel, timeout=30_000)
     groups = page.eval_on_selector_all(f"{sel} optgroup", "els => els.map(e => e.label)")
-    assert groups and "Tight ends" in groups and "Kickers" not in groups, groups
+    assert groups and "Tight Ends" in groups and "Kickers" not in groups, groups
     assert page.eval_on_selector(f"{sel} option", "o => o.textContent").startswith("WR"), "his position now comes first"
     page.select_option(sel, "TE")
     toasted(page, f"{p['name']} moves to TE (was WR)")
@@ -755,8 +755,8 @@ def check_topbar_hide(page, base, sid) -> None:
     page.click("#btn-compact-more")
     page.wait_for_selector(".go-menu .go-menu-item:has-text('Settings')")
     names = page.eval_on_selector_all(".go-menu .go-menu-item b", "els => els.map(e => e.textContent)")
-    assert "Seasons" in names and "Your coach" in names and any("theme" in n.lower() for n in names), names
-    assert names.index("Your coach") > names.index("Seasons") > names.index("⚙ Settings"), names
+    assert "Seasons" in names and "Your Coach" in names and any("theme" in n.lower() for n in names), names
+    assert names.index("Your Coach") > names.index("Seasons") > names.index("⚙ Settings"), names
     theme0 = page.evaluate("() => document.documentElement.dataset.theme")
     page.click(".go-menu .go-menu-item:has-text('theme')")
     time.sleep(0.2)
@@ -949,7 +949,7 @@ def check_staff_contracts(page, base, sid) -> None:
         if m["id"] in leaving:
             continue
         renewed = next((r for r in st["renewed"] if r["id"] == m["id"]), None)
-        want = f"Re-signed through {renewed['through']}" if renewed else f"Signed through {m['contract_until']}"
+        want = f"Re-signed Through {renewed['through']}" if renewed else f"Signed Through {m['contract_until']}"
         assert want.upper() in text.upper(), (want, text[:400])
     cards = page.query_selector_all("#tab-offseason .off-cand")
     if cards:
@@ -976,7 +976,7 @@ def check_staff_developed(page, base, sid) -> None:
             n = c["to"] - c["from"]
             assert f"{c['rating']} {c['from']} → {c['to']} ({'+' if n > 0 else ''}{n})" in li.inner_text(), (c, li.inner_text())
         if not r["changes"]:
-            assert "no change" in li.inner_text()
+            assert "No Change" in li.inner_text()
     assert not re.search(r"\bundefined\b|\bnull\b|NaN", text), text[:200]
 
 # ----- the grade cards' tooltips and a complete report's final grades (final-grade brief) -----
@@ -1955,11 +1955,11 @@ if __name__ == "__main__":
 
             # --- Schedule: the trade window says what the button does and names itself after the entry point
             open_tab(page, base, A, "schedule", ".schedule-pick")
-            page.click(".schedule-pick button:has-text('Trade a non-conference game')")
+            page.click(".schedule-pick button:has-text('Trade a Non-Conference Game')")
             page.wait_for_selector(".sched-edit-row", timeout=60_000)
-            assert "Trade a non-conference game" in page.inner_text(".modal-title >> visible=true")
+            assert "Trade a Non-Conference Game" in page.inner_text(".modal-title >> visible=true")
             labels = page.evaluate("() => [...document.querySelectorAll('.sched-edit-row button')].map(b => b.textContent.trim())")
-            assert labels and all(re.match(r"Trade (the )?week \d+", t) for t in labels), labels
+            assert labels and all(re.match(r"Trade (the )?[Ww]eek \d+", t) for t in labels), labels
             refused = page.evaluate("() => [...document.querySelectorAll('.sched-edit-row option')].filter(o => /· no:/.test(o.textContent)).map(o => o.disabled)")
             assert all(refused), "an option the other school refuses cannot be picked"
             page.keyboard.press("Escape")
@@ -2257,7 +2257,7 @@ if __name__ == "__main__":
             assert not CLASS_CODE.search(off), CLASS_CODE.search(off).group(0)
             # "Sim to next season" asks first: dismissed, nothing moves
             n_dialogs = len(dialogs)
-            page.click("#tab-offseason button:has-text('Sim to next season')")
+            page.click("#tab-offseason button:has-text('Sim to Next Season')")
             time.sleep(1)
             assert len(dialogs) == n_dialogs + 1, "skipping the whole offseason asks first"
             assert call(base, f"/api/season/{B}/offseason")["stage"] == "departures"
@@ -2273,7 +2273,7 @@ if __name__ == "__main__":
                 assert not CLASS_CODE.search(keep), CLASS_CODE.search(keep).group(0)
                 # letting a player go asks first
                 n_dialogs = len(dialogs)
-                page.click(".off-keep button.go-act:has-text('Let him go') >> nth=0")
+                page.click(".off-keep button.go-act:has-text('Let Him Go') >> nth=0")
                 time.sleep(0.8)
                 assert len(dialogs) == n_dialogs + 1, "letting a player go asks first"
                 assert "letting go" not in page.inner_text(".off-keep .go-pcard >> nth=0")
@@ -2302,7 +2302,7 @@ if __name__ == "__main__":
             assert not OUT_OF_100.search(staff), OUT_OF_100.search(staff).group(0)
             dup = page.evaluate("() => [...document.querySelectorAll('.off-table tbody tr')].filter(r => r.cells[3].textContent.trim() === r.cells[4].textContent.trim()).length")
             assert dup == 0, f"{dup} coaches repeat why they are available as their last job"
-            lg = page.query_selector("button.go-act:has-text('Let him go')")
+            lg = page.query_selector("button.go-act:has-text('Let Him Go')")
             if lg:
                 page.remove_listener("dialog", dismiss)
                 page.once("dialog", lambda d: d.accept())
