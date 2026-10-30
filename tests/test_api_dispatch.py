@@ -233,6 +233,7 @@ EXPECTED = {("GET", "/api/season/{season_id}/week/{week}"), ("GET", "/api/season
             ("GET", "/api/season/{season_id}/prospects"), ("GET", "/api/season/{season_id}/classes"),
             ("GET", "/api/season/{season_id}/prospect/{pid}"), ("POST", "/api/season/{season_id}/recruit"),
             ("POST", "/api/season/{season_id}/board"), ("POST", "/api/season/{season_id}/staff"),
+            ("GET", "/api/season/{season_id}/scouting"),
             ("GET", "/api/season/{season_id}/offseason"), ("POST", "/api/season/{season_id}/offseason/advance"),
             ("POST", "/api/season/{season_id}/offseason/portal"), ("POST", "/api/season/{season_id}/offseason/redshirt"),
             ("GET", "/api/season/{season_id}/offseason/position_options"), ("POST", "/api/season/{season_id}/offseason/position"),
@@ -262,7 +263,7 @@ def test_view_routes_answer():
     refused(lambda: api.call("GET", f"{base}/schedule/nope"), 404)
     assert "games" in api.call("GET", f"{base}/schedule_edit")
     assert api.call("GET", f"{base}/standings")["standings"]
-    for path in ("review", "resume", "resume?team=smu", "programs", "recruiting/report", "classes?school=smu", "preview",
+    for path in ("review", "resume", "resume?team=smu", "programs", "recruiting/report", "scouting", "classes?school=smu", "preview",
                  "rivalries", "stats/teams", "stats/leaders?n=99", "stats/players?cat=rushing&limit=10", "depth/smu",
                  "depth/smu/position/QB", "injuries", "awards"):
         assert isinstance(api.call("GET", f"{base}/{path}"), dict), path

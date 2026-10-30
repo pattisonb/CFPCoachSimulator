@@ -820,6 +820,12 @@ def recruiting_view(p: Params) -> dict:
     return prospects.recruiting_view(_career_state(p.path["season_id"], change=True))
 
 
+@route("GET", "/api/season/{season_id}/scouting")
+def scouting_view(p: Params) -> dict:
+    """The Scouting tab: your scouts, the queue of recruits worth a trip, this and last week's reports, your flags."""
+    return prospects.scouting_view(_career_state(p.path["season_id"], change=True))
+
+
 @route("GET", "/api/season/{season_id}/programs")
 def programs_view(p: Params) -> dict:
     """Every program's living rating (prestige, winning, NIL, market, conference, coach; tier and goal), yours first."""

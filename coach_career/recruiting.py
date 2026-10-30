@@ -956,6 +956,8 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
         if pid not in marks:
             marks.append(pid)
     out = {"hours_left": rc["hours"][slug], "revealed": revealed}
+    if action == "scout":                                   # the desk shows the trip's before/after from this
+        out["look"] = rc["looks"][-1]
     if opens:
         out["scene"] = rc["scenes"][slug][pid]
     return out
@@ -1772,7 +1774,7 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     _flush(state, week)                # your week's actions land
     if not rc.get("portal"):
         _visits(state, week)
-    scout_week(state)
+    scout_week(state, week + 1 if rc.get("portal") else week)   # the portal's week counter moves after the step
     mine = state.get("team")
     mode = auto_mode(state)
     auto_mine = auto_user or mode != "off"
@@ -1920,14 +1922,45 @@ def word(points: float) -> str:
     return next(w for w, floor in zip(WORDS, WORD_FLOORS) if points >= floor)
 
 
-def look(state: dict, pid: str, evaluator_rating: int, rng: random.Random) -> None:
+def look_week(state: dict) -> int:
+    """The week a look belongs to: the season's week, or the portal's own."""
+    rc = state["recruiting"]
+    return rc["week"] if rc.get("portal") else state["current_week"]
+
+
+def _read_words(state: dict, pid: str) -> dict:
+    """Every group's grade range in words, or {} before his first look (the look log's before/after)."""
+    if pid not in state["recruiting"]["reads"]:
+        return {}
+    return {g: list(grade_range(state, pid, g)) for g in GROUPS}
+
+
+def _flags(state: dict, pid: str) -> list[str]:
+    """Your staff's flags on him from the read: gem, bust, generational (prospects.find, generational_seen)."""
+    from coach_career import prospects as pr
+    rc = state["recruiting"]
+    out = []
+    f = pr.find(state, pid)
+    if f:
+        out.append(f)
+    if pr.generational_seen(rc, pid, state.get("team")):
+        out.append("generational")
+    return out
+
+
+def look(state: dict, pid: str, evaluator_rating: int, rng: random.Random, by: Optional[str] = None,
+         week: Optional[int] = None) -> dict:
     """One look at a prospect by an evaluator: every group's read moves toward what he saw. A look's
     error shrinks with the rating; so does how far its confidence can stray (a weak evaluator is
-    sometimes sure and wrong)."""
-    p = state["recruiting"]["prospects"][pid]
+    sometimes sure and wrong). Logged in `rc["looks"]` (the scouting desk's reports) as `by` (a
+    staff id, or "trip" for your scouting trip) at `week` (default: look_week): the grade words
+    before and after, and the flags gained. Returns the entry."""
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    before, flags_before = _read_words(state, pid), _flags(state, pid)
     s = evaluator_rating / 99
     sd = (LOOK_SD[0] * (1 - s) + LOOK_SD[1]) * (PORTAL_LOOK if is_portal(state) else 1.0)
-    read = state["recruiting"]["reads"].setdefault(pid, {"looks": 0, "by": {}, "g": {}})
+    read = rc["reads"].setdefault(pid, {"looks": 0, "by": {}, "g": {}})
     for g in GROUPS:
         seen = p["truth"][g] + rng.gauss(0, sd)
         felt = sd * math.exp(rng.gauss(0, CONFIDENCE_NOISE * (1 - s)))
@@ -1937,6 +1970,11 @@ def look(state: dict, pid: str, evaluator_rating: int, rng: random.Random) -> No
     read["looks"] += 1
     key = str(evaluator_rating)
     read["by"][key] = read["by"].get(key, 0) + 1
+    entry = {"week": look_week(state) if week is None else week, "pid": pid, "by": by or "trip",
+             "before": before, "after": _read_words(state, pid),
+             "flags": [f for f in _flags(state, pid) if f not in flags_before]}
+    rc.setdefault("looks", []).append(entry)
+    return entry
 
 
 def read_interval(state: dict, pid: str, group: str) -> Optional[tuple[float, float]]:
@@ -2014,9 +2052,15 @@ def assign(state: dict, staff_id: str, area: str) -> None:
     member["area"] = area
 
 
-def scout_week(state: dict) -> None:
-    """Every prospect in each staffed area gets a look from the staff member there."""
+def scout_week(state: dict, week: Optional[int] = None) -> None:
+    """Every prospect in each staffed area gets a look from the staff member there, logged at `week`
+    (default: look_week; the portal's step passes the week it opens). Looks older than the week
+    before are dropped from the log first: the desk keeps this week's and last week's."""
     staff = (state.get("career") or {}).get("staff") or []
+    rc = state["recruiting"]
+    if week is None:
+        week = look_week(state)
+    rc["looks"] = [e for e in rc.get("looks") or [] if e["week"] >= week - 1]
     rng = random.Random(f"scout-{state['recruiting']['seed']}-{state['current_week']}")
     by_state: dict[str, list[str]] = {}
     me = state.get("team")
@@ -2027,7 +2071,7 @@ def scout_week(state: dict) -> None:
     for member in staff:
         for code in AREAS.get(member.get("area"), []):
             for pid in by_state.get(code, []):
-                look(state, pid, member["evaluation"], rng)
+                look(state, pid, member["evaluation"], rng, by=member["id"], week=week)
 
 
 def visible(state: dict) -> set[str]:

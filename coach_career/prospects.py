@@ -724,6 +724,131 @@ def recruiting_view(state: dict) -> dict:
     }
 
 
+# ----- the Scouting tab -------------------------------------------------------------------------------
+
+ROLE_NAMES = {"OC": "Offensive coordinator", "DC": "Defensive coordinator", "Recruiter": "Recruiter"}
+NOT_ENOUGH_HOURS = "Not enough hours"
+REPORT_ITEMS = 30                  # a scout's report lists this many of his changed looks: flags, then potential, then the rest
+LOOK_NAMES = dict(GROUP_NAMES, potential="potential")
+STANDING_WORDS = {"cold": "Not yet contacted", "contact": "In contact", "top": "In his top group", "visited": "Visited",
+                  "committed": "Committed to you"}
+
+
+def _look_change(e: dict) -> str:
+    """What a logged look changed, in words: potential first, else the first group whose words moved
+    ("narrowed to" when the range tightened, "now" when it shifted, "first read:" for his first look); "" for none."""
+    for g in _LOOK_ORDER:
+        after, before = e["after"].get(g), e["before"].get(g)
+        if after == before or after is None:
+            continue
+        name = LOOK_NAMES[g]
+        words = f"{after[0]}–{after[1]}" if after[0] != after[1] else after[0]
+        if before is None:
+            return f"first read: {name} {words}"
+        width = lambda r: recruiting.WORDS.index(r[0]) - recruiting.WORDS.index(r[1])
+        return f"{name} {'narrowed to' if width(after) < width(before) else 'now'} {words}"
+    return ""
+
+
+_LOOK_ORDER = ("potential",) + tuple(g for g in recruiting.GROUPS if g != "potential")
+
+
+def _notable(e: dict) -> int:
+    """A changed look's place in a report: a flag gained first, then a potential change, then the rest."""
+    return 0 if e["flags"] else 1 if e["after"].get("potential") != e["before"].get("potential") else 2
+
+
+def _report_groups(state: dict, entries: list[dict], staff: dict) -> list[dict]:
+    """One week's look log as the desk's reports: grouped by scout in order of the newest look, each
+    group's looks counted (`looks`), the looks that changed a grade word or gained a flag counted
+    (`changed`) and the most notable REPORT_ITEMS of them listed (flags, then potential, then the
+    rest; newest first within each)."""
+    rc = state["recruiting"]
+    groups: dict[str, dict] = {}
+    changed: dict[str, list[dict]] = {}
+    for e in reversed(entries):
+        g = groups.get(e["by"])
+        if g is None:
+            member = staff.get(e["by"])
+            g = groups[e["by"]] = {"scout_id": e["by"], "scout": member["name"] if member else "Your trips",
+                                   "area": member.get("area") if member else None, "looks": 0, "changed": 0, "items": []}
+        g["looks"] += 1
+        if e["before"] != e["after"] or e["flags"]:
+            g["changed"] += 1
+            changed.setdefault(e["by"], []).append(e)
+    for by, g in groups.items():
+        for e in sorted(changed.get(by, []), key=_notable)[:REPORT_ITEMS]:
+            p = rc["prospects"][e["pid"]]
+            g["items"].append({"pid": e["pid"], "name": p["name"], "position": p["position"], "stars": p["stars"],
+                               "change": _look_change(e), "flags": list(e["flags"])})
+    return list(groups.values())
+
+
+def scouting_view(state: dict) -> dict:
+    """The Scouting tab: your scouts and this week's yield, the queue of recruits worth a trip, this
+    and last week's reports from the look log, and your staff's flags this class."""
+    rc, me = state["recruiting"], state["team"]
+    week = recruiting.look_week(state)
+    staff = {m["id"]: m for m in state["career"].get("staff", [])}
+    log = rc.get("looks") or []
+    this_week = [e for e in log if e["week"] == week]
+    last_week = [e for e in log if e["week"] == week - 1]
+    hours_left = recruiting._hours(state, me)
+    need = recruiting.needs(state, me)
+    live = {pid for pid, st in rc["status"].items() if not st["signed"] and st["committed"] != me}
+    scouts = []
+    for m in staff.values():
+        codes = recruiting.AREAS.get(m.get("area"), [])
+        mine = [e for e in this_week if e["by"] == m["id"]]
+        scouts.append({"id": m["id"], "name": m["name"], "role": ROLE_NAMES.get(m["role"], m["role"]),
+                       "evaluation_word": recruiting.word(m["evaluation"]), "area": m.get("area"),
+                       "looking_at": sum(1 for pid in live if rc["prospects"][pid]["hometown"]["state"] in codes),
+                       "yield": {"looks": len(mine), "narrowed": sum(1 for e in mine if e["before"] != e["after"]),
+                                 "flags": sum(1 for e in mine if e["flags"])}})
+    queue = []
+    board = [pid for pid in rc["board"] if pid in live]
+    rest = sorted((pid for pid in recruiting.visible(state) if pid in live and pid not in rc["board"]),
+                  key=lambda pid: (-need[recruiting._group_of(rc["prospects"][pid])], rc["prospects"][pid]["rank"]))
+    for pid in board + rest:
+        p, read = rc["prospects"][pid], rc["reads"].get(pid)
+        trips = ((rc["contacts"].get(pid) or {}).get(me) or {}).get("scouted", 0)
+        if trips >= recruiting.SCOUT_MAX:
+            continue
+        short = hours_left < recruiting.HOURS["scout"]
+        queue.append({"pid": pid, "name": p["name"], "position": p["position"], "stars": p["stars"],
+                      "group": recruiting._group_of(p), "need": need[recruiting._group_of(p)], "national_rank": p["rank"],
+                      "looks": read["looks"] if read else 0, "trips": trips,
+                      "potential": list(recruiting.grade_range(state, pid, "potential")) if read else None,
+                      "can_send": not short, "why": NOT_ENOUGH_HOURS if short else None,
+                      "state": p["hometown"]["state"]})
+    flags = []
+    for pid in rc["reads"]:
+        p = rc["prospects"].get(pid)
+        if p is None:
+            continue
+        for flag in recruiting._flags(state, pid):
+            flags.append({"pid": pid, "name": p["name"], "position": p["position"], "stars": p["stars"], "flag": flag,
+                          "looks": rc["reads"][pid]["looks"],
+                          "standing_word": _standing_word(state, pid, me)})
+    flags.sort(key=lambda f: (("generational", "gem", "bust").index(f["flag"]), rc["prospects"][f["pid"]]["rank"]))
+    return {"hours": recruiting.weekly_hours(state, me), "hours_left": hours_left, "scouts": scouts, "queue": queue,
+            "reports": {"this_week": _report_groups(state, this_week, staff), "last_week": _report_groups(state, last_week, staff)},
+            "flags": flags}
+
+
+def _standing_word(state: dict, pid: str, me: str) -> str:
+    """Where he stands with you, in a few words: signed or committed (to you or elsewhere), else your stage with him."""
+    from sim import season
+    st = state["recruiting"]["status"][pid]
+    if st["signed"] == me:
+        return "Signed with you"
+    if st["signed"] or st["committed"] not in (None, me):
+        school = st["signed"] or st["committed"]
+        name = "FCS" if school == "FCS" else season.load_teams()[school]["name"]
+        return f"{'Signed' if st['signed'] else 'Committed'} to {name}"
+    return STANDING_WORDS[recruiting.stage(state, me, pid)]
+
+
 # ----- the odds you see ------------------------------------------------------------------------------
 
 ODDS_TEMPERATURE = 3.0             # interest points between two schools that make one e (2.7x) likelier *tune*
