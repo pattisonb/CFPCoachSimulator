@@ -1,5 +1,6 @@
 """Smoothness, measured: an action patches the screen in place, it does not rebuild it. For every
-action on the Office, the depth chart (a move, a redshirt, a position change), Settings, each
+action on the Office, the depth chart (a move, a redshirt, a position change), Settings, the
+recruiting board (a message, an offer, a scout), each
 offseason stage's decision buttons (the AD's review, a redshirt, a position change, a retention
 offer, a portal offer, letting a coach go, a hire, the job choice when there is one) and Your
 coach's save, driven through the real page: the element the player is looking at stays connected,
@@ -186,6 +187,41 @@ def season_cases(page, base: str, sid: str) -> None:
     assert_smooth(page, "#tab-depth table.stats", lambda: add.click(), f"{name} joins the QB rotation", "Depth chart: position change")
 
 
+def board_cases(page, base: str, sid: str) -> None:
+    """The recruiting board: Message (the step's Send), Offer and Scout (a menu item) patch the pane in place."""
+    rows = call(base, f"/api/season/{sid}/prospects?status=open&limit=40")["rows"]
+    for r in rows[:14]:                     # a board of fourteen uncommitted prospects (no hours): the list outruns the pane, as a real board does
+        call(base, f"/api/season/{sid}/board", {"pid": r["id"], "on": True})
+    open_tab(page, base, sid, "recruiting", ".go-stages")
+    v = call(base, f"/api/season/{sid}/recruiting")
+    assert v["hours_left"] >= 25, v["hours_left"]
+    b = next(x for x in v["board"] if not x["offered"] and not x["committed"] and not x["signed"] and not x.get("scene") and not (x.get("trips") or 0))
+    page.click(f".go-row-recruit[data-pid='{b['id']}']")
+    time.sleep(1.2)                       # the pick's own smooth scroll ends
+    page.evaluate("() => window.scrollTo(0, Math.max(window.scrollY, 120))")
+    time.sleep(0.3)
+
+    def menu(action):
+        page.click("#rc-recruit")
+        page.wait_for_selector(".go-menu[role=menu]")
+        page.click(f".go-menu .go-menu-item[data-action={action}]")
+
+    menu("message")
+    send = ready(page, ".go-pane .go-step button.go-step-go")
+    assert_smooth(page, ".go-pane", lambda: send.click(), f"Message sent to {b['name']} · 5 hours", "Board: message")
+    assert not page.query_selector(".go-pane .go-step"), "the step closes once the message is sent"
+    menu("offer")
+    page.wait_for_selector(".go-pane .go-step input#rc-nil")
+    nil = int(page.input_value("#rc-nil"))
+    send = ready(page, ".go-pane .go-step button.go-step-go")
+    r = assert_smooth(page, ".go-pane", lambda: send.click(), f"Offer sent to {b['name']} · {nil} NIL", "Board: offer")
+    assert r["pulses"] > 0, "the NIL cell and the Offered tag pulse"
+    page.wait_for_function("(t) => [...document.querySelectorAll('.go-pane .go-tags .go-tag')].some(e => e.textContent.trim() === t)", arg=f"Offered · {nil} NIL", timeout=10_000)
+    assert_smooth(page, ".go-pane", lambda: menu("scout"), f"Scouted {b['name']} · look 1 of 3", "Board: scout")
+    assert page.evaluate("() => document.activeElement.id") == "rc-recruit", "the Recruit button gets the focus back"
+    assert "1 of 3 looks" in page.inner_text(".go-pane .go-strip")
+
+
 def offseason_cases(page, base: str, sid: str) -> None:
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#tab-offseason .off-roster", timeout=120_000)
@@ -355,6 +391,7 @@ if __name__ == "__main__":
             errors = []
             page.on("pageerror", lambda e: errors.append(str(e)))
             season_cases(page, base, fresh["id"])
+            board_cases(page, base, fresh["id"])
             offseason_cases(page, base, done["id"])
             portal_case(page, base, old["id"])
             job_case(page, base, let_go["id"])
@@ -362,7 +399,7 @@ if __name__ == "__main__":
             assert not errors, errors
             reduced_motion(browser, base, fresh["id"])
             browser.close()
-        print("smoothness ok: office, settings, depth chart (move, redshirt, position), offseason (review, redshirt, position, "
+        print("smoothness ok: office, settings, depth chart (move, redshirt, position), board (message, offer, scout), offseason (review, redshirt, position, "
               "keep them home, portal offer, staff, the job), your coach; reduced motion")
     finally:
         for sid in (fresh["id"], done["id"], old["id"], let_go["id"]):

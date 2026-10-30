@@ -49,20 +49,22 @@ def settle(page, before: int) -> None:
 
 # ----- smoothness (the spec's section 5): an action patches the screen in place, says what happened, keeps the focus -----
 
-def watch(page, selector: str):
+def watch(page, selector: str, scrolled: bool = True):
     """Before an action: the element the player is looking at (a handle), the page's and its own scroll, and an observer
-    counting the removals of any node that holds it."""
+    counting the removals of any node that holds it. scrolled: the page is scrolled (so the scroll check means something)."""
     h = page.query_selector(selector)
     assert h, selector
-    page.evaluate("""(el) => { const s = window.__smooth = { el, gone: 0, top: el.scrollTop, page: window.scrollY };
+    s = page.evaluate("""(el) => { const s = window.__smooth = { el, gone: 0, top: el.scrollTop, page: window.scrollY };
         s.mo = new MutationObserver((ms) => { for (const m of ms) for (const n of m.removedNodes) if (n === el || (n.nodeType === 1 && n.contains(el))) s.gone++; });
-        s.mo.observe(document.documentElement, { childList: true, subtree: true }); }""", h)
+        s.mo.observe(document.documentElement, { childList: true, subtree: true }); return { page: s.page, top: s.top }; }""", h)
+    if scrolled:
+        assert s["page"] > 0, f"the page is not scrolled ({s}), so the scroll check would pass for nothing"
     return h
 
 
 def toasted(page, text: str) -> None:
     """A toast with that exact sentence is on the stack (it leaves on its own later)."""
-    page.wait_for_function("(t) => [...document.querySelectorAll('#toasts .go-toast')].some(e => e.textContent.trim() === t)", arg=text, timeout=30_000)
+    page.wait_for_function("(t) => [...document.querySelectorAll('#toasts .toast-item')].some(e => e.textContent.trim() === t)", arg=text, timeout=30_000)
 
 
 def smooth(page, h, what: str, same: bool = True) -> None:
@@ -1035,6 +1037,11 @@ if __name__ == "__main__":
             # --- Smoothness: every board action patches in place (the pane stays, nothing that holds it is removed, no scroll
             #     jump), says what happened in a toast with the spec's words, and leaves the focus on a control
             wait_week(base, A)      # a new week's hours
+            # a board of a dozen more uncommitted prospects (no hours): the list outruns the pane, as a real board does, so the
+            # page's height does not follow the pane (a step closing would shrink the page and the browser clamp the scroll)
+            on_board = {b["id"] for b in call(base, f"/api/season/{A}/recruiting")["board"]}
+            for r in [r for r in call(base, f"/api/season/{A}/prospects?status=open&limit=60")["rows"] if r["id"] not in on_board][:12]:
+                call(base, f"/api/season/{A}/board", {"pid": r["id"], "on": True})
             open_tab(page, base, A, "recruiting", ".go-stages")
             vb = call(base, f"/api/season/{A}/recruiting")
             assert vb["hours_left"] >= 50, vb["hours_left"]
@@ -1051,6 +1058,8 @@ if __name__ == "__main__":
 
             page.click(f".go-row-recruit[data-pid='{x['id']}']")
             time.sleep(1.2)                       # the first pick's own smooth scroll ends
+            page.evaluate("() => window.scrollTo(0, Math.max(window.scrollY, 120))")   # the page is scrolled, so a jump back to 0 would show
+            time.sleep(0.3)
             # Message: the step's Send goes busy, the step closes, the row and the pane update in place
             menu("message")
             page.wait_for_selector(".go-pane .go-step select#rc-pitch")
@@ -1116,6 +1125,7 @@ if __name__ == "__main__":
             toasted(page, f"Pitch: {PITCH[topic]} · {REACTION[kind]}")
             assert no_overlap(page, "#toasts", ".go-pane .go-reaction"), "a pitch's toast never covers his reply"
             smooth(page, h, "Pitch")
+            h = watch(page, ".go-pane")      # a fresh watch: smooth() disconnected the first observer
             settle(page, n)          # his reaction stays a moment, then the board catches up in place
             smooth(page, h, "Pitch, after the re-fetch")
             assert not page.query_selector(".go-pane .go-reaction")
@@ -1146,7 +1156,7 @@ if __name__ == "__main__":
             # the toast stack: at most three, newest on top
             page.evaluate("() => { for (const t of ['one', 'two', 'three', 'four']) window.CFP.ui.toast(t); }")
             time.sleep(0.4)
-            stack = page.eval_on_selector_all("#toasts .go-toast:not(.go-fade-out)", "els => els.map(e => e.textContent.trim())")
+            stack = page.eval_on_selector_all("#toasts .toast-item:not(.go-leaving)", "els => els.map(e => e.textContent.trim())")
             assert len(stack) == 3 and stack[0] == "four" and stack[-1] == "two", stack
             # Review Focus 1: two quick actions: a Message whose re-fetch is slow, then a Call before it lands; the stale
             # re-fetch is dropped and the board shows both

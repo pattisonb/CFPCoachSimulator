@@ -23,91 +23,7 @@
                 stage: null, search: "", sub: "overview", step: null, needsOpen: false, expectScene: null, reveal: null };
   let H = null;
 
-  // ----- window.CFP.ui: the toast stack, the pulse, the fades, a keyed reconcile and the busy state -----
-  // web/ui.js provides these for every screen. Until it is linked, this shim gives the board the same names and
-  // behavior, so the board runs on its own (the integration deletes this block and its rules in recruiting.css).
-  if (!window.CFP.ui) window.CFP.ui = (() => {
-    const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const frames = (fn) => requestAnimationFrame(() => requestAnimationFrame(fn));
-    function stack() {
-      let t = document.getElementById("toasts");
-      if (!t) { t = el("div", { id: "toasts", class: "go-toasts-shim", role: "status", "aria-live": "polite" }); document.body.append(t); }
-      return t;
-    }
-    // one short sentence on the stack (at most three; the oldest leaves), newest on top
-    function toast(text, { ms = 3500, kind = "info" } = {}) {
-      const box = stack();
-      const n = el("div", { class: `go-toast ${kind}`, text });
-      box.prepend(n);
-      fadeIn(n);
-      const live = [...box.children].filter((c) => !c.classList.contains("go-fade-out"));
-      for (const old of live.slice(3)) fadeOut(old);
-      setTimeout(() => fadeOut(n), ms);
-      return n;
-    }
-    // a 600 ms background pulse on what changed (nothing under reduced motion)
-    function pulse(node) {
-      if (!node || reduced()) return;
-      node.classList.remove("go-changed");
-      void node.offsetWidth;                       // restart the pulse when it fires again
-      node.classList.add("go-changed");
-      clearTimeout(node._pulse);
-      node._pulse = setTimeout(() => node.classList.remove("go-changed"), 600);
-    }
-    function fadeIn(node) {
-      if (reduced()) return;
-      node.classList.add("go-fade", "go-fade-in");
-      frames(() => node.classList.remove("go-fade-in"));
-      setTimeout(() => node.classList.remove("go-fade"), 220);
-    }
-    // resolves once the node has left the DOM
-    function fadeOut(node) {
-      return new Promise((resolve) => {
-        const gone = () => { node.remove(); resolve(); };
-        if (reduced()) { gone(); return; }
-        node.classList.add("go-fade");
-        frames(() => node.classList.add("go-fade-out"));
-        node._fadeT = setTimeout(gone, 170);
-      });
-    }
-    // the container's children keyed by data-key: a row's node is patched or drawn, moved into order; a gone key fades out
-    function reconcile(container, rows, key, draw, patch) {
-      const have = new Map();
-      for (const c of container.children) if (c.dataset.key != null) have.set(c.dataset.key, c);
-      let prev = null;
-      const out = [];
-      for (const r of rows) {
-        const k = String(key(r));
-        let n = have.get(k);
-        if (n) {
-          have.delete(k);
-          if (n.classList.contains("go-fade-out")) { clearTimeout(n._fadeT); n.classList.remove("go-fade-out", "go-fade"); }
-          patch(n, r);
-        } else { n = draw(r); n.dataset.key = k; fadeIn(n); }
-        if (prev ? prev.nextElementSibling !== n : container.firstElementChild !== n) { if (prev) prev.after(n); else container.prepend(n); }
-        prev = n;
-        out.push(n);
-      }
-      for (const n of have.values()) if (!n.classList.contains("go-fade-out")) fadeOut(n);
-      return out;
-    }
-    // the button is disabled and marked busy until the promise settles, then restored and focused again
-    function busy(button, promise) {
-      if (!button) return Promise.resolve(promise);
-      button.disabled = true;
-      button.classList.add("go-busy");
-      button.setAttribute("aria-busy", "true");
-      const done = () => {
-        button.disabled = false;
-        button.classList.remove("go-busy");
-        button.removeAttribute("aria-busy");
-        if (button.isConnected) button.focus({ preventScroll: true });
-      };
-      return Promise.resolve(promise).then((x) => { done(); return x; }, (e) => { done(); throw e; });
-    }
-    if (document.body) stack(); else document.addEventListener("DOMContentLoaded", stack);
-    return { toast, pulse, fadeIn, fadeOut, reconcile, busy };
-  })();
+  // window.CFP.ui (web/ui.js, loaded before this file): the toast stack, the pulse, the fades, a keyed reconcile and the busy state
   const ui = () => window.CFP.ui;
 
   const stars = (n) => "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
@@ -865,7 +781,7 @@
     // arrow keys move the selection; on a phone they move the focus and Enter opens the pane
     list.addEventListener("keydown", (e) => {
       if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
-      const btns = [...list.querySelectorAll(".go-row-recruit:not(.go-fade-out)")];
+      const btns = [...list.querySelectorAll(".go-row-recruit:not(.go-leaving)")];
       if (!btns.length) return;
       const i = btns.indexOf(document.activeElement);
       const j = e.key === "ArrowDown" ? Math.min(btns.length - 1, i + 1) : e.key === "ArrowUp" ? Math.max(0, i - 1) : e.key === "Home" ? 0 : btns.length - 1;
@@ -1069,11 +985,15 @@
       focusScene();
       view.focusScene = false;
     }
-    // after a menu action: the scene it opened keeps the focus; a pane that switched hands it to its Recruit button or the row
+    // after a menu action: the scene it opened keeps the focus; a pane that switched (Off the board) hands it to the new
+    // pane's Recruit button, also when busy() settled on a row because the control left with the old pane; else a row
     function refocus(b) {
       if (view.scene === b.id) { const sc = box.querySelector(".go-pane .go-scene"); if (sc) { sc.focus({ preventScroll: true }); return; } }
-      if (document.activeElement && document.activeElement !== document.body) return;
-      const f = box.querySelector("#rc-recruit") || list.querySelector(".go-row-recruit[aria-pressed=\"true\"]") || list.querySelector(".go-row-recruit");
+      const active = document.activeElement, onBody = !active || active === document.body;
+      const recruit = box.querySelector("#rc-recruit");
+      if (recruit && (onBody || active.classList.contains("go-row-recruit"))) { recruit.focus({ preventScroll: true }); return; }
+      if (!onBody) return;
+      const f = list.querySelector(".go-row-recruit[aria-pressed=\"true\"]") || list.querySelector(".go-row-recruit");
       if (f) f.focus({ preventScroll: true });
     }
     function pick(b, action, control) {
@@ -1122,7 +1042,7 @@
           el("span", { class: "go-menu-main" }, [el("b", { text: it.name }), it.cost ? el("span", { class: "muted small go-menu-cost", text: it.cost }) : null]),
           it.why ? el("span", { class: "go-menu-why", text: it.why }) : null]);
         if (it.why) item.setAttribute("aria-disabled", "true");     // grayed, but reachable: the reason is read out
-        item.addEventListener("click", () => { if (it.why) return; closeMenu(); pick(b, it.action); });
+        item.addEventListener("click", () => { if (it.why) return; closeMenu(true); pick(b, it.action); });   // the Recruit button holds the focus while the action is busy
         return item;
       }));
       menu.addEventListener("keydown", (e) => {
@@ -1264,7 +1184,7 @@
         });
         if (wanted.length) tags.hidden = false;
         else if (first || still()) tags.hidden = true;
-        else setTimeout(() => { if (!tags.querySelector(":scope > :not(.go-fade-out)")) tags.hidden = true; }, 180);
+        else setTimeout(() => { if (!tags.querySelector(":scope > :not(.go-leaving)")) tags.hidden = true; }, 180);
         // the sub-tab's body: rebuilt only when what it shows changed
         if (!SUBS.some(([k]) => k === view.sub)) view.sub = "overview";
         const k = view.sub;
