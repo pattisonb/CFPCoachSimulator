@@ -680,7 +680,7 @@ def check_position_change(page, base, sid) -> None:
     page.wait_for_selector(".dc-table tbody tr", timeout=120_000)
     row = f".dc-table tbody tr[data-slug='{p['slug']}']"
     page.wait_for_selector(row, timeout=30_000)
-    assert "was WR" in page.inner_text(row), page.inner_text(row)
+    assert page.eval_on_selector(f"{row} .dc-was", "e => e.textContent") == "was WR", page.inner_text(row)
     page.click(row)
     page.wait_for_function("(slug) => document.querySelector('.dc-rail select.depth-pos') && document.querySelector('.dc-rail').textContent.includes('was WR')", arg=p["slug"], timeout=30_000)
     rsel = ".dc-rail select.depth-pos"

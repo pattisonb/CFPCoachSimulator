@@ -74,7 +74,10 @@
 
   // a move on the depth chart (saved with the season, used by every game from the next sim on): the screen
   // patches in place and a toast says what happened; the control that acted is busy meanwhile and keeps the focus
+  // the control that acts takes the focus first (a row's click may hold it, and the row may leave), so busy() hands it back
+  const acting = (ev) => { const c = ev && ev.currentTarget; if (c && c.focus && document.activeElement !== c) c.focus({ preventScroll: true }); return c; };
   function change(body, said, ev) {
+    acting(ev);
     const run = (async () => {
       try {
         await ctx.api(base(), ctx.postJSON(body));
@@ -87,6 +90,7 @@
   }
   // your roster: sit him out (season.redshirt_toggle) or put him back; the screen patches in place
   function redshirt(p, on, ev) {
+    acting(ev);
     const run = (async () => {
       try {
         await ctx.api(`/api/season/${ctx.season().id}/redshirt`, ctx.postJSON({ team: S.team, player: p.slug, on }));
@@ -125,16 +129,17 @@
     const now = p.role || p.position;
     const cur = opts.find((o) => o.current) || { pos: now, overall: p.overall };
     sel.innerHTML = "";
-    sel.append(el("option", { value: cur.pos, text: `${cur.pos} · now` }));
+    sel.append(el("option", { value: cur.pos, text: `${cur.pos} · Now` }));
     const groups = new Map();
     for (const o of opts) { if (o.current) continue; if (!groups.has(o.group)) groups.set(o.group, []); groups.get(o.group).push(o); }
     const order = Object.keys(POS_GROUPS);     // the groups in formation order, best overall first within each
-    for (const g of [...groups.keys()].sort((a, b) => order.indexOf(a) - order.indexOf(b))) sel.append(el("optgroup", { label: POS_GROUPS[g] || g }, groups.get(g).map((o) => el("option", { value: o.pos, text: `${o.pos} · ${o.overall} ovr` }))));
+    for (const g of [...groups.keys()].sort((a, b) => order.indexOf(a) - order.indexOf(b))) sel.append(el("optgroup", { label: POS_GROUPS[g] || g }, groups.get(g).map((o) => el("option", { value: o.pos, text: `${o.pos} · ${o.overall} OVR` }))));
     sel.value = cur.pos;
   }
   function changePosition(ev, p) {
     const sel = ev.currentTarget, pos = sel.value, now = p.role || p.position;
     if (!pos || pos === now) return;
+    acting(ev);
     window.CFP.ui.busy(sel, (async () => {
       try {
         const r = await ctx.api(`/api/season/${ctx.season().id}/position`, ctx.postJSON({ team: S.team, player: p.slug, pos }));
