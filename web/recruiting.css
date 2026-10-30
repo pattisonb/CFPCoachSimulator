@@ -24,7 +24,9 @@
 .go-needs-box .go-needs { margin: 0 0 4px; }
 
 /* ----- the two panels: the list and the pane ----- */
-.go-board { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 16px; align-items: start; }
+/* overflow-anchor: a row that moves after an action must not drag the page's scroll with it (the browser would
+   otherwise shift scrollY to hold a lower row still); the scroll stays where the player left it */
+.go-board { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 16px; align-items: start; overflow-anchor: none; }
 .go-board .go-list-recruits { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .go-list-empty { margin: 12px 8px; }
 .go-list-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; flex-wrap: wrap; padding: 10px 8px 0; }
@@ -149,3 +151,40 @@
 /* ☆: a topic he brought up on this week's call or visit (★, a confirmed priority, keeps the plain tag) */
 .go-tag.cue { border-color: var(--go-primary, var(--accent)); border-style: dashed; color: var(--text); white-space: normal; }
 .go-pitch.cue .go-tag { border-color: var(--go-primary, var(--accent)); border-style: dashed; color: var(--text); font-weight: 700; }
+
+/* ----- motion: an action patches the board in place and shows what changed ----- */
+/* a value that changed pulses for 600 ms (window.CFP.ui.pulse adds .go-changed and takes it off again) */
+.go-changed { animation: go-pulse 600ms ease-out; }
+@keyframes go-pulse {
+  from { box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--go-primary, var(--accent)) 38%, transparent); }
+  to { box-shadow: inset 0 0 0 999px transparent; }
+}
+.go-changed.go-standing-word, .go-changed.go-chip, .go-changed.go-tag, .go-changed b { border-radius: 6px; }
+/* rows, tags, the step and his reaction fade in and out (150 ms) */
+.go-fade { transition: opacity 150ms ease; }
+.go-fade-in, .go-fade-out { opacity: 0; }
+/* another recruit's pane cross-fades in (120 ms) */
+.go-pane { transition: opacity 120ms ease; }
+.go-pane.go-pane-in { opacity: 0; }
+.go-pane > .go-tags[hidden] { display: none; }
+.rc-head .go-meter-fill { transition: width 150ms ease; }
+/* the acting control while its action and re-fetch are in flight: disabled, its label gives way to a spinner */
+.go-busy { position: relative; color: transparent !important; pointer-events: none; }
+.go-busy::after { content: ""; position: absolute; inset: 0; margin: auto; width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--text) 30%, transparent); border-top-color: var(--text); animation: go-spin 700ms linear infinite; }
+.go-btn.primary.go-busy::after { border-color: color-mix(in srgb, var(--bg) 40%, transparent); border-top-color: var(--bg); }
+@keyframes go-spin { to { transform: rotate(360deg); } }
+/* the toast stack the shim in recruiting.js builds when web/ui.js is not linked (the integration deletes this):
+   bottom-left, newest on top, under the Recruit menu (z 70) and clear of the pane's scene */
+.go-toasts-shim { position: fixed; left: 16px; bottom: 16px; z-index: 60; display: flex; flex-direction: column; gap: 8px;
+  width: max-content; max-width: min(360px, calc(100vw - 32px)); pointer-events: none; }
+.go-toasts-shim .go-toast { padding: 10px 14px; border-radius: 10px; background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+  box-shadow: 0 8px 24px var(--shadow, rgba(0, 0, 0, 0.35)); font-size: 14px; line-height: 1.35; }
+.go-toasts-shim .go-toast.error { border-color: var(--bad); }
+/* no motion when the player asked for none: instant changes */
+@media (prefers-reduced-motion: reduce) {
+  .go-changed { animation: none; }
+  .go-fade, .go-pane, .rc-head .go-meter-fill { transition-duration: 0s; }
+  .go-fade-in, .go-fade-out, .go-pane.go-pane-in { opacity: 1; }
+  .go-busy::after { animation: none; }
+}
