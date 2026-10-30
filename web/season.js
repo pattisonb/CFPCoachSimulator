@@ -220,7 +220,7 @@
     clearTimeout(state.timer);
     state.season = null;
     state.viewWeek = null; state.standings = null; state.summaryShown = false; state.simLastDone = null;
-    depthState.team = null; depthState.data = null; depthState.pos = null;
+    if (window.CFPDepth) window.CFPDepth.refresh();
     await openSeason(id);
   }
 
@@ -515,7 +515,7 @@
     if (s.done && state.tab === "games") state.tab = "summary";
     if (s.done && state.tab === "schedule" && !state.summaryShown) { state.tab = "summary"; state.summaryShown = true; }
     if (!s.done && state.tab === "summary") state.tab = "schedule";
-    if (opening) { depthState.team = null; depthState.data = null; depthState.pos = null; applyTeamTheme(s.team); }
+    if (opening) { if (window.CFPDepth && window.CFPDepth.isOpen()) closeDepth(false); applyTeamTheme(s.team); }
     // the team picker (for a new season) starts on the open season's team
     if (opening && $("#pick-team").querySelector(`option[value="${s.team}"]`)) $("#pick-team").value = s.team;
     state.standings = null;
@@ -642,7 +642,7 @@
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "office", "offseason", "recruiting", "prospects", "staff", "classes"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "office", "offseason", "recruiting", "prospects", "staff", "classes"]) $(`#tab-${t}`).hidden = t !== name;
     document.body.classList.toggle("on-office", name === "office");
     document.body.classList.toggle("on-career-tab", CAREER_TABS.includes(name));
   }
@@ -659,7 +659,6 @@
     else if (t === "summary") renderSummary();
     else if (t === "awards") renderAwards();
     else if (t === "stats") renderStats();
-    else if (t === "depth") renderDepthChart();
     else if (t === "offseason" && window.Offseason) window.Offseason.render(state.season, $("#tab-offseason"), recruitingHelpers);
     else if (CAREER_TABS.includes(t) && window.Recruiting) window.Recruiting.render(t, state.season, recruitingHelpers);
   }
@@ -732,8 +731,6 @@
   // ----- stats tab: team stats, player stats and the depth chart under one tab --------
 
   const statsState = { view: "players" };
-  const depthState = { team: null, data: null, key: null, unit: "Offense", view: "formation", role: "QB", sel: null, showAll: false, pos: null, posKey: null };
-  const DEPTH_ROLES = ["QB", "HB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT", "LEDG", "DT", "REDG", "SAM", "MIKE", "WILL", "CB", "FS", "SS", "K", "P", "KR", "PR"];
 
   function renderStats() {
     const s = state.season;
@@ -751,348 +748,42 @@
     else renderSeasonPlayerStats();
   }
 
-  // Depth chart: a Formation view (the starters as cards on the field, the next men up under
-  // them) and a List view (one role at a time, every player rated there, moves on the pick).
-  async function renderDepthChart() {
-    const s = state.season;
-    if (!s) return;
-    const box = $("#tab-depth");
-    box.innerHTML = "";
-    try { await renderDepthChartBody(box, s); }
-    catch (err) { box.append(el("p", { class: "muted", text: `Could not draw the depth chart: ${errText(err)}` })); console.error(err); }
+  // ----- the depth chart: its own screen (web/depth/depth.js) at ?id=…&screen=depth -------
+  // Opening it pushes a history entry, so Back returns to the season; its own moves (unit,
+  // screen, formation, position) replace that entry, so the URL can be kept or shared as it stands.
+  function setDepthParams(params) {
+    const q = new URLSearchParams({ id: state.season.id });
+    for (const [k, v] of Object.entries(params)) if (v != null) q.set(k, v);
+    history.replaceState(history.state, "", `?${q}`);
   }
 
-  // A depth-chart control button (★ ▲ ▼ + or Reset); a title of null leaves the attribute off.
-  function controlButton(text, title, onClick, cls = "ghost tiny") {
-    const b = el("button", title == null ? { type: "button", class: cls, text } : { type: "button", class: cls, text, title, "aria-label": title });
-    b.addEventListener("click", onClick);
-    return b;
+  function openDepth(params, push = true) {
+    if (!state.season || !window.CFPDepth) return;
+    if (push) history.pushState({ cfpDepth: true }, "", `?id=${encodeURIComponent(state.season.id)}&screen=depth`);
+    window.CFPDepth.open({
+      host: $("#depth-screen"), season: () => state.season, teams: () => state.teams, api, postJSON, toast, errText, godMode, openPlayer,
+      setParams: setDepthParams, close: () => closeDepth(true),
+    }, params || new URLSearchParams());
   }
 
-  async function renderDepthChartBody(box, s) {
-    const ds = depthState;
-    if (ds.team === null) ds.team = s.team;
-    const controls = el("div", { class: "stats-controls" });
-    const teamSel = el("select", { "aria-label": "Team" }, state.teams.filter((t) => !t.fictional).map((t) => el("option", { value: t.slug, text: `${t.name} (${CONF_SHORT[t.conference] || t.conference})` })));
-    teamSel.value = ds.team;
-    teamSel.addEventListener("change", () => { ds.team = teamSel.value; ds.sel = null; renderDepthChart(); });
-    const viewChips = el("div", { class: "view-chips" }, [["formation", "Formation"], ["list", "List"]].map(([v, label]) => {
-      const b = el("button", { type: "button", class: `chip ${ds.view === v ? "active" : ""}`, text: label });
-      b.addEventListener("click", () => { ds.view = v; renderDepthChart(); });
-      return b;
-    }));
-    controls.append(teamSel);
-    if (ds.team !== s.team) {
-      const mineBtn = el("button", { type: "button", class: "ghost small", text: "My team" });
-      mineBtn.addEventListener("click", () => { ds.team = s.team; ds.sel = null; renderDepthChart(); });
-      controls.append(mineBtn);
+  // back to the season: the history entry the screen pushed is popped (or, opened from a link, replaced)
+  function closeDepth(fromScreen) {
+    if (!window.CFPDepth || !window.CFPDepth.isOpen()) return;
+    window.CFPDepth.close();
+    if (fromScreen) {
+      if (history.state && history.state.cfpDepth) history.back();
+      else history.replaceState(null, "", `?id=${encodeURIComponent(state.season.id)}`);
     }
-    controls.append(viewChips);
-    box.append(controls);
-    const key = `${s.id}|${s.current_week}|${ds.team}`;
-    if (!ds.data || ds.key !== key) {
-      try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`); ds.key = key; } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
-    }
-    const d = ds.data;
-    const canEdit = !s.done && (ds.team === s.team || godMode());
-    // moves are saved with the season and used by every game from then on
-    const change = async (body) => {
-      try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`, postJSON(body)); ds.pos = null; renderDepthChart(); }
-      catch (err) { toast(`Could not change the depth chart: ${errText(err)}`, 4000); }
-    };
-    const redshirt = async (p, on) => {                      // your roster: redshirt him in place
-      try {
-        await api(`/api/season/${s.id}/redshirt`, postJSON({ team: ds.team, player: p.slug, on }));
-        toast(on ? `${p.name} is redshirting: he keeps his year.` : `${p.name} is back in the lineup.`, 3000);
-        playerState.cache.clear(); ds.data = null; ds.pos = null; renderDepthChart();
-      } catch (err) { toast(`Could not do that: ${errText(err)}`, 4000); }
-    };
-    const resetBtn = d.overridden && canEdit
-      ? controlButton("Reset to the original depth chart", null, () => { if (confirm(`Reset the ${d.name} depth chart to the original?`)) change({ reset: true }); }, "ghost small")
-      : null;
-    const r = d.ratings || {};
-    box.append(el("div", { class: "roster-head depth-head" }, [
-      el("span", {}, [teamPill(ds.team), el("b", { text: ` ${d.name}` }),
-        el("span", { class: "muted", text: ` · ${d.conference} · ${d.head_coach || ""} · overall ${Math.round(r.overall)} (off ${Math.round(r.offense)}, def ${Math.round(r.defense)}, ST ${Math.round(r.special_teams)}) · ${d.roster_size} players` })]),
-      resetBtn,
-    ]));
-    if (s.done) box.append(el("p", { class: "muted small-text", text: "Season complete; the depth chart is read-only." }));
-    else if (!canEdit) box.append(el("p", { class: "muted small-text", text: "Another team's depth chart: turn on god mode in ⚙ Settings to edit it." }));
-    if (ds.view === "list") return renderDepthList(box, ds, s, canEdit, change, redshirt);
-    renderFormation(box, ds, s, d, canEdit, redshirt);
+    renderTab();
   }
 
-  // engine position for each depth-chart role: a player from another group shows his own
-  const ROLE_GROUP = { QB: "QB", HB: "RB", FB: "RB", WR: "WR", TE: "TE", LT: "OL", LG: "OL", C: "OL", RG: "OL", RT: "OL", LEDG: "DL", DT: "DL", REDG: "DL",
-    SAM: "LB", MIKE: "LB", WILL: "LB", CB: "CB", FS: "S", SS: "S", K: "K", P: "P" };
-  const posGroup = (pos) => (["MLB", "ROLB", "LOLB", "OLB"].includes(pos) ? "LB" : pos);
-  const offRole = (p, role) => ROLE_GROUP[role] && posGroup(p.position) !== ROLE_GROUP[role];
-  const ratingTier = (v) => (v >= 80 ? "hi" : v >= 65 ? "mid" : v < 50 ? "lo" : "");
-  // A player's portrait (web/faces.js): a generated face seeded from his slug, so he keeps the
-  // same one everywhere and after a transfer. Drawn once to a 40×40 crop of the 48×48 frame
-  // (the head and neck) and kept as an image URL.
-  const faceCache = new Map();
-  function playerFace(slug, cls) {
-    const F = window.CFPFaces;
-    if (!F || !slug) return null;
-    let url = faceCache.get(slug);
-    if (!url) {
-      let h = 2166136261;                                          // FNV-1a of the slug seeds a mulberry32 stream
-      for (const ch of slug) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
-      const rnd = () => { h = (h + 0x6d2b79f5) | 0; let t = Math.imul(h ^ (h >>> 15), 1 | h); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-      const c = document.createElement("canvas");
-      c.width = 40; c.height = 40;
-      const spec = F.randomFace(rnd);
-      if (["grey", "white"].includes(spec.hairColor)) spec.hairColor = F.HAIR_COLORS[Math.floor(rnd() * 6)].id;   // college players: no grey
-      F.paintFace(c.getContext("2d"), F.renderFace(spec), -4, -8, 1);
-      url = c.toDataURL();
-      faceCache.set(slug, url);
-    }
-    return el("img", { class: cls, src: url, alt: "", width: "40", height: "40", draggable: "false" });
-  }
-  const shortName = (n) => { const w = n.split(" "); return w.length > 1 ? `${w[0][0]}. ${w.slice(1).join(" ")}` : n; };   // "J. Smith"
-  const roleSlot = (row, i) => (row.starters > 1 ? `${row.role}${i + 1}` : row.role);
-
-  // The starters' slots in formation order, row by row. Offense from behind the quarterback
-  // (the line on top, receivers split wide); defense facing it (the line at the bottom).
-  function formationRows(unit, rows) {
-    const by = Object.fromEntries(rows.map((r) => [r.role, r]));
-    const slots = (role, from = 0, to = Infinity) => {
-      const r = by[role];
-      const out = [];
-      for (let i = from; r && i < Math.min(r.starters, to); i++) out.push({ row: r, i });
-      return out;
-    };
-    if (unit === "Offense") return [
-      [...slots("WR", 0, 1), ...["LT", "LG", "C", "RG", "RT"].flatMap((r) => slots(r)), ...slots("TE"), ...slots("WR", 1, 2)],
-      [...slots("WR", 2), ...slots("QB"), ...slots("HB"), ...slots("FB")],
-    ];
-    if (unit === "Defense") return [
-      [...slots("FS"), ...slots("SS")],
-      [...slots("CB", 2), ...slots("SAM"), ...slots("MIKE"), ...slots("WILL")],
-      [...slots("CB", 0, 1), ...slots("LEDG"), ...slots("DT"), ...slots("REDG"), ...slots("CB", 1, 2)],
-    ];
-    return [["K", "P", "KR", "PR"].flatMap((r) => slots(r))];
-  }
-
-  // Formation: a card per starter (jersey, overall, name, class) and the next men up under
-  // the role's last starter. A card opens the role's list with that player picked.
-  function renderFormation(box, ds, s, d, canEdit, redshirt) {
-    if (!["Offense", "Defense", "Special teams"].includes(ds.unit)) ds.unit = "Offense";
-    box.append(el("div", { class: "view-chips" }, ["Offense", "Defense", "Special teams"].map((v) => {
-      const b = el("button", { type: "button", class: `chip ${ds.unit === v ? "active" : ""}`, text: v });
-      b.addEventListener("click", () => { ds.unit = v; renderDepthChart(); });
-      return b;
-    })));
-    redshirtStrip(box, d, canEdit, redshirt);
-    const unit = d.units.find((u) => u.name === ds.unit);
-    if (!unit || !unit.rows.length) { box.append(el("p", { class: "muted", text: "Nobody here." })); return; }
-    const pick = (role, p) => { ds.view = "list"; ds.role = role; ds.sel = p ? p.slug : null; renderDepthChart(); };
-    const col = (window.CFP.teamsBySlug[ds.team] || {}).colors || {};
-    const field = el("div", { class: `fm-field fm-${ds.unit === "Offense" ? "off" : ds.unit === "Defense" ? "def" : "st"}` });
-    field.style.setProperty("--c1", col.primary || "#888");
-    field.style.setProperty("--c2", col.secondary || col.primary || "#888");
-    const rows = formationRows(ds.unit, unit.rows);
-    rows.forEach((slots, ri) => {
-      if (ds.unit === "Defense" && ri === rows.length - 1) field.append(el("div", { class: "fm-los", "aria-hidden": "true" }));
-      field.append(el("div", { class: "fm-row" }, slots.map(({ row, i }) => depthCard(row, i, pick))));
-      if (ds.unit === "Offense" && ri === 0) field.append(el("div", { class: "fm-los", "aria-hidden": "true" }));
-    });
-    box.append(field);
-    // roles the base formation leaves out (a 4-2-5 has no SAM or WILL): still on the chart
-    const extra = unit.rows.filter((row) => row.starters === 0);
-    if (extra.length) {
-      box.append(el("div", { class: "go-kicker fm-kicker", text: "NOT IN THE BASE FORMATION" }));
-      box.append(el("div", { class: "fm-row fm-extra" }, extra.map((row) => depthCard(row, -1, pick))));
-    }
-    box.append(el("p", { class: "muted small-text", text: canEdit
-      ? "Pick a card to open that position's list, where you can move players, start someone else or bring a player over from another position. Changes are saved with this season and used by every game from the next sim on."
-      : "Pick a card to see that position's list." }));
-  }
-
-  // One formation card: the starter at slot i of a role (i = -1: a role with no starters,
-  // which lists its players under a placeholder).
-  function depthCard(row, i, pick) {
-    const p = i >= 0 ? row.players[i] : null;
-    const last = i < 0 || i === row.starters - 1;
-    const bench = last ? row.players.slice(Math.max(0, row.starters), Math.max(0, row.starters) + (i < 0 ? 3 : 2)) : [];
-    const card = el("div", { class: `fm-card ${p && p.injury ? "hurt" : ""} ${i < 0 ? "fm-empty" : ""}` });
-    if (p) {
-      const tags = [
-        p.injury ? el("span", { class: "injury-tag", title: `${p.injury.type}, out ${p.injury.weeks_left} weeks`, text: `OUT ${p.injury.weeks_left}w` }) : null,
-        p.form >= 0.35 ? el("span", { class: "form hot", text: "🔥", title: `Hot streak (form +${p.form})` }) : p.form <= -0.35 ? el("span", { class: "form cold", text: "❄", title: `Cold streak (form ${p.form})` }) : null,
-        p.redshirt && p.redshirt.on ? el("span", { class: "tag", text: "RS", title: "Redshirting" }) : null,
-      ].filter(Boolean);
-      card.append(el("button", { type: "button", class: "fm-main", title: `${roleSlot(row, i)}: ${p.name}. Open the ${row.label.toLowerCase()} list`, onclick: () => pick(row.role, p) }, [
-        el("div", { class: "fm-top" }, [playerFace(p.slug, "fm-face"), el("span", { class: "fm-jersey", text: p.jersey ? `#${p.jersey}` : "" }), el("span", { class: `fm-ovr ${ratingTier(p.overall)}`, text: String(p.overall), title: "Overall" })]),
-        el("div", { class: "fm-name" }, [el("span", { class: "full", text: p.name }), el("span", { class: "short", text: shortName(p.name) })]),
-        el("div", { class: "fm-meta", text: [CLASS_LABEL[p.class] || p.class, offRole(p, row.role) ? p.position : "", p.height && p.weight ? `${p.height} ${p.weight}` : ""].filter(Boolean).join(" · ") }),
-        tags.length ? el("div", { class: "fm-tags" }, tags) : null,
-      ]));
-    } else {
-      card.append(el("button", { type: "button", class: "fm-main", title: `Open the ${row.label.toLowerCase()} list`, onclick: () => pick(row.role, null) }, [
-        el("div", { class: "fm-name muted", text: row.label }),
-        el("div", { class: "fm-meta", text: "Not used in the base formation" }),
-      ]));
-    }
-    if (bench.length) {
-      card.append(el("div", { class: "fm-bench" }, bench.map((b) => el("button", { type: "button", class: "fm-sub", title: `${b.name}: open the ${row.label.toLowerCase()} list`, onclick: () => pick(row.role, b) }, [
-        el("span", { class: "fm-sub-name", text: `${b.jersey ? "#" + b.jersey + " " : ""}${shortName(b.name)}` }),
-        b.injury ? el("span", { class: "injury-tag", text: "OUT" }) : null,
-        el("span", { class: `fm-sub-ovr ${ratingTier(b.overall)}`, text: String(b.overall) }),
-      ]))));
-    }
-    card.append(el("div", { class: "fm-slot", text: i >= 0 ? roleSlot(row, i) : row.role }));
-    return card;
-  }
-
-  // Your redshirts in one line: who is sitting out and the way back, and how many still can.
-  function redshirtStrip(box, d, canEdit, redshirt) {
-    const seen = new Set();
-    const cards = d.units.flatMap((u) => u.rows.flatMap((row) => row.players)).filter((p) => p.redshirt && !seen.has(p.slug) && seen.add(p.slug));
-    if (!cards.length) return;
-    const sitting = cards.filter((p) => p.redshirt.on);
-    const eligible = cards.filter((p) => p.redshirt.can && !p.redshirt.on).length;
-    box.append(el("div", { class: "depth-redshirts" }, [
-      el("div", { class: "depth-redshirt-sum" }, [
-        el("span", { class: "go-kicker", text: `REDSHIRTING · ${sitting.length}` }),
-        el("span", { class: "muted small-text", text: eligible
-          ? `${eligible} more ${eligible === 1 ? "player is" : "players are"} eligible (four games or fewer, year unused): redshirt one from his row in the List view.`
-          : "Nobody else is eligible this season." }),
-      ]),
-      sitting.length ? el("div", { class: "depth-redshirt-list" }, sitting.map((p) => el("div", { class: "depth-redshirt" }, [
-        el("span", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, el("span", { text: p.name, ...playerAttrs(d.team, p.name, p.position) }),
-          el("span", { class: "pos", text: `${CLASS_LABEL[p.class] || p.class || ""} · ${p.position}` })]),
-        el("span", { class: "muted small-text", text: `${p.redshirt.games} of ${p.redshirt.limit} games played · ${p.overall} ovr` }),
-        canEdit ? controlButton("Off redshirt", "He plays again; the year is still his if he stays at four games or fewer", () => redshirt(p, false), "ghost tiny depth-rs on") : null]))) : null,
-    ]));
-  }
-
-  // List: one role at a time. The role's players in depth order (the starters above the
-  // line), then everyone else on the roster rated at the role; the picked player's profile on
-  // top with the moves. Ratings here are what he would be at this spot.
-  async function renderDepthList(box, ds, s, canEdit, change, redshirt) {
-    box.append(el("div", { class: "view-chips depth-roles" }, DEPTH_ROLES.map((r) => {
-      const b = el("button", { type: "button", class: `chip ${ds.role === r ? "active" : ""}`, text: r });
-      b.addEventListener("click", () => { ds.role = r; ds.sel = null; ds.showAll = false; renderDepthChart(); });
-      return b;
-    })));
-    const key = `${s.id}|${s.current_week}|${ds.team}|${ds.role}`;
-    if (!ds.pos || ds.posKey !== key) {
-      try { ds.pos = await api(`/api/season/${s.id}/depth/${ds.team}/position/${ds.role}`); ds.posKey = key; } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
-    }
-    const d = ds.pos;
-    const role = ds.role;
-    const returner = ["KR", "PR"].includes(role);
-    const inRole = d.players.filter((p) => p.in_role).sort((a, b) => a.spot - b.spot);
-    const others = d.players.filter((p) => !p.in_role);
-    const holder = el("div");
-    box.append(holder);
-    const draw = () => {
-      holder.innerHTML = "";
-      if (!d.players.some((p) => p.slug === ds.sel)) ds.sel = (inRole[0] || d.players[0] || {}).slug;
-      const sel = d.players.find((p) => p.slug === ds.sel);
-      if (sel) holder.append(depthProfile(ds, d, sel, inRole, canEdit, change, redshirt));
-      const auto = canEdit && !returner && inRole.length > 1
-        ? controlButton("Auto reorder", "Order this position by rating here, best first", () => {
-            const order = inRole.slice().sort((a, b) => b.rating - a.rating || a.spot - b.spot).map((p) => p.slug);
-            if (order.every((slug, i) => slug === inRole[i].slug)) { toast(`The ${role} order already follows the ratings.`, 2500); return; }
-            change({ role, order });
-          }, "ghost small")
-        : null;
-      const startNote = d.starters === 0 ? `The base formation leaves ${role} out; these players only play if you move them.` : `${d.starters === 1 ? "The starter is" : `The top ${d.starters} start`} above the line.`;
-      holder.append(el("div", { class: "stats-controls depth-note" }, [el("span", { class: "muted small-text", text: `${startNote} Pick a row to see a player and move him.` }), auto]));
-      const shown = ds.showAll ? others : others.slice(0, 12);
-      const table = el("table", { class: "stats depth-list" });
-      table.append(el("tr", {}, [
-        el("th", { class: "left", text: "Slot" }), el("th", { class: "left", text: "Player" }), el("th", { text: "Pos" }), el("th", { text: "Class" }),
-        el("th", { text: "OVR", title: `Rating as a ${role}` }), el("th", { class: "ph", text: "NAT", title: "Rating at his own position" }),
-        ...d.columns.map((c) => el("th", { text: c.short, title: c.label })),
-        el("th", { class: "left ph", text: "Season" }),
-      ]));
-      const rowFor = (p) => {
-        const cut = p.in_role && d.starters > 0 && p.spot === d.starters && inRole.length > d.starters;
-        const tr = el("tr", { class: `${p.slug === ds.sel ? "sel" : ""} ${cut ? "cut" : ""} ${p.in_role ? "" : "off"}`, tabindex: "0", "aria-selected": String(p.slug === ds.sel) }, [
-          el("td", { class: "left slot", text: p.in_role ? `${p.spot}.` : "--" }),
-          el("td", { class: "left" }, [el("span", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, p.name]),
-            p.injury ? el("span", { class: "injury-tag", title: p.injury.type, text: `OUT ${p.injury.weeks_left}w` }) : null,
-            p.redshirt && p.redshirt.on ? el("span", { class: "tag", text: "RS", title: "Redshirting" }) : null]),
-          el("td", { text: p.position }), el("td", { text: CLASS_LABEL[p.class] || p.class || "" }),
-          el("td", {}, [el("b", { class: `rt ${ratingTier(p.rating)}`, text: String(p.rating) })]),
-          el("td", { class: "ph muted", text: String(p.natural) }),
-          ...d.columns.map((c) => { const v = p.attrs[c.key]; return el("td", { class: `rt ${v == null ? "muted" : ratingTier(v)}`, text: v == null ? "–" : String(v) }); }),
-          el("td", { class: "left ph muted small-text", text: p.headline || (p.games ? `${p.games} games` : "") }),
-        ]);
-        const pickRow = () => { ds.sel = p.slug; draw(); };
-        tr.addEventListener("click", pickRow);
-        tr.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickRow(); } });
-        return tr;
-      };
-      for (const p of inRole) table.append(rowFor(p));
-      for (const p of shown) table.append(rowFor(p));
-      holder.append(el("div", { class: "table-scroll" }, [table]));
-      if (others.length > shown.length) {
-        holder.append(controlButton(`Show all ${others.length} others`, null, () => { ds.showAll = true; draw(); }, "ghost small"));
-      }
-    };
-    draw();
-  }
-
-  // The picked player in the List view: name, where he sits, his ratings here and at home,
-  // and the moves (start, up, down, bring him over from another position, redshirt).
-  function depthProfile(ds, d, p, inRole, canEdit, change, redshirt) {
-    const role = ds.role;
-    const returner = ["KR", "PR"].includes(role);
-    const col = (window.CFP.teamsBySlug[ds.team] || {}).colors || {};
-    const where = !p.in_role ? `Not on the ${role} chart`
-      : d.starters === 0 ? `${role}: ${ORD(p.spot - 1)}`
-      : p.spot <= d.starters ? `${role}: Starter` : `${role}: Backup (${ORD(p.spot - 1)})`;
-    const words = p.name.split(" ");
-    const hero = el("div", { class: "dp-hero" });
-    hero.style.setProperty("--c1", col.primary || "#888");
-    hero.style.setProperty("--c2", col.secondary || col.primary || "#888");
-    hero.append(playerFace(p.slug, "dp-face"), el("div", { class: "dp-badge" }, [
-      el("span", { class: "dp-num", text: p.jersey ? `#${p.jersey}` : p.position }),
-      el("span", { class: "dp-pos", text: p.position }),
-    ]));
-    const facts = [
-      ["OVR", `${p.rating}`, `Rating as a ${role}`],
-      ["Natural", `${p.natural} ${p.position}`, "Rating at his own position"],
-      ["Class", CLASS_LABEL[p.class] || p.class || "–"],
-      p.height && p.weight ? ["Size", `${p.height} ${p.weight}`] : null,
-      p.dev_trait ? ["Dev", p.dev_trait, "Development trait"] : null,
-      p.archetype ? ["Type", p.archetype] : null,
-    ].filter(Boolean);
-    const acts = [];
-    if (canEdit) {
-      if (!p.in_role) {
-        acts.push(controlButton(returner ? `★ Make ${role === "KR" ? "kick" : "punt"} returner` : `★ Start at ${role}`, null, () => change({ role, player: p.slug, move: "top" }), "primary small"));
-        if (!returner) acts.push(controlButton(`+ Add to the ${role} rotation`, null, () => change({ role, player: p.slug, move: "add" }), "ghost small"));
-      } else if (!returner) {
-        if (p.spot > 1) acts.push(controlButton("★ Make starter", null, () => change({ role, player: p.slug, move: "top" }), "primary small"));
-        if (p.spot > 1) acts.push(controlButton("▲ Up", "Move up one spot", () => change({ role, player: p.slug, move: "up" }), "ghost small"));
-        if (p.spot < inRole.length) acts.push(controlButton("▼ Down", "Move down one spot", () => change({ role, player: p.slug, move: "down" }), "ghost small"));
-      }
-      const rs = p.redshirt;
-      if (rs && (rs.can || rs.on)) acts.push(controlButton(rs.on ? "Off redshirt" : "Redshirt", rs.on ? "He plays again; the year is still his if he stays at four games or fewer"
-        : `Sit him out the rest of the season and keep his year (${rs.games} of ${rs.limit} games played)`, () => redshirt(p, !rs.on), `ghost small depth-rs ${rs.on ? "on" : ""}`));
-    }
-    acts.push(el("button", { type: "button", class: "ghost small plink", "data-player": `${ds.team}|${p.name}|${p.position}`, text: "Player page" }));
-    return el("div", { class: "dp" }, [
-      hero,
-      el("div", { class: "dp-main" }, [
-        el("div", { class: "dp-first", text: words.length > 1 ? words[0] : "" }),
-        el("div", { class: "dp-last", text: words.length > 1 ? words.slice(1).join(" ") : p.name }),
-        el("div", { class: "dp-facts" }, [
-          el("span", { class: `dp-where ${p.in_role && p.spot <= d.starters ? "start" : ""}`, text: where }),
-          ...facts.map(([k, v, t]) => el("span", { class: "dp-fact", ...(t ? { title: t } : {}) }, [el("span", { class: "k", text: k }), el("b", { text: v })])),
-          p.injury ? el("span", { class: "injury-tag", text: `${p.injury.type} · OUT ${p.injury.weeks_left}w` }) : null,
-        ]),
-        p.headline ? el("div", { class: "muted small-text", text: `This season: ${p.headline}` }) : null,
-        el("div", { class: "dp-acts" }, acts),
-      ]),
-    ]);
-  }
+  window.addEventListener("popstate", () => {
+    if (!window.CFPDepth || !state.season) return;
+    const params = new URLSearchParams(location.search);
+    const want = params.get("screen") === "depth";
+    if (want && !window.CFPDepth.isOpen()) openDepth(params, false);
+    else if (!want && window.CFPDepth.isOpen()) closeDepth(false);
+  });
 
   // ----- shared modal ----------------------------------------------------------
   // openModal(title, node): shows node in an overlay with a title and a close button.
@@ -1354,7 +1045,7 @@
         try {
           await api(`/api/season/${s.id}/redshirt`, postJSON({ team: p.team.slug, player: p.slug, on: !p.redshirt.on }));
           toast(p.redshirt.on ? `${p.name} is back in the lineup.` : `${p.name} is redshirting.`, 3000);
-          playerState.cache.clear(); depthState.data = null; depthState.pos = null; closeAllModals(); openPlayer(p.team.slug, p.name, p.position);
+          playerState.cache.clear(); if (window.CFPDepth) window.CFPDepth.refresh(); closeAllModals(); openPlayer(p.team.slug, p.name, p.position);
         } catch (err) { toast(`Could not do that: ${errText(err)}`, 4000); rsBtn.disabled = false; }
       });
       box.append(el("div", { class: "player-redshirt" }, [rsBtn, p.redshirt.on ? null : el("span", { class: "muted small-text", text: " Four games or fewer keeps the year." })]));
@@ -3263,7 +2954,7 @@
         toast(`${p.name} updated.`, 2500);
         const box = card.closest(".player-page");
         if (box && j.player) renderPlayer(j.player, box);
-        if (state.tab === "depth") renderDepthChart();
+        if (window.CFPDepth) window.CFPDepth.refresh();
       } catch (err) { toast(`Could not save: ${errText(err)}`, 4000); save.disabled = false; }
     });
     actions.append(save, cancel);
@@ -3660,15 +3351,25 @@
   $("#btn-settings").addEventListener("click", openSettings);
   $("#btn-to-selection").addEventListener("click", () => advance(15));
   $("#btn-to-end").addEventListener("click", () => advance(20));
-  $("#season-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) { state.tab = b.dataset.tab; renderTab(); } });
+  $("#season-tabs").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-tab]");
+    if (!b) return;
+    if (b.dataset.tab === "depth") { openDepth(); return; }     // the depth chart is its own screen
+    state.tab = b.dataset.tab;
+    renderTab();
+  });
   $("#poll-pills").addEventListener("click", (e) => { const b = e.target.closest("button[data-poll]"); if (b) { state.poll = b.dataset.poll; state.pollChosen = true; renderRankings(); } });
   $("#sbox-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-btab]"); if (b) selectBoxTab(b.dataset.btab); });
 
   (async () => {
-    const id = new URLSearchParams(location.search).get("id");
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
     for (const a of document.querySelectorAll(".site-nav a")) a.classList.toggle("active", a.dataset.nav === "season");
     loadSeasons().catch(() => {});   // the sidebar list loads alongside; the season needs only the teams
     try { await loadTeams(); } catch (err) { toast(`Teams unavailable: ${errText(err)}`, 4000); }
-    if (id) openSeason(id);   // it reloads the season list too, marking the open season
+    if (id) {
+      await openSeason(id);   // it reloads the season list too, marking the open season
+      if (params.get("screen") === "depth" && state.season) openDepth(params, false);   // a link straight to the depth chart
+    }
   })();
 })();

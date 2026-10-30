@@ -1076,6 +1076,22 @@ def season_depth_chart(p: Params) -> dict:
     return season.depth_chart_view(state, p.path["slug"])
 
 
+@route("GET", "/api/season/{season_id}/depth/{slug}/formations")
+def season_depth_formations(p: Params) -> dict:
+    """The formations a team uses most, filled from its depth chart as the next game fills them."""
+    state = _season_state(p.path["season_id"])
+    _check_team(p.path["slug"])
+    return season.formations_view(state, p.path["slug"])
+
+
+@route("GET", "/api/season/{season_id}/depth/{slug}/roster")
+def season_depth_roster(p: Params) -> dict:
+    """Every player on the roster as a depth-chart card: injuries and redshirts included."""
+    state = _season_state(p.path["season_id"])
+    _check_team(p.path["slug"])
+    return season.depth_roster_view(state, p.path["slug"])
+
+
 @route("GET", "/api/season/{season_id}/depth/{slug}/position/{role}")
 def season_depth_position(p: Params) -> dict:
     """Every player on the roster rated at one depth-chart role."""

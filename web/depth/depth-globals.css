@@ -1,0 +1,89 @@
+/* The depth chart screen's globals: its tokens, base type and the page takeover. Everything is scoped
+   to .dc (the screen's root, #depth-screen) so nothing here reaches the rest of the site. The tokens
+   come from the site's own colours, so the light and dark themes and the team accent carry over.
+   Components are in depth.css. */
+
+/* while the screen is open the season page under it is hidden; the site's top bar stays */
+body.dc-open .season-layout { display: none; }
+
+.dc {
+  /* colour: an 8-bit menu, ink on dark: near-black surfaces, crisp light frames, white for what is picked;
+     the team's readable accent from the site, used sparingly */
+  --dc-bg: #0d0c11;
+  --dc-surface: #15141a;
+  --dc-raised: #1d1c23;
+  --dc-line: #3d3b45;
+  --dc-frame: #d8d6de;             /* the crisp frame round cards, buttons and the field */
+  --dc-text: #f2f1f5;
+  --dc-muted: #a19fab;
+  --dc-ink: #f2f1f5;               /* filled buttons and badges: ink on the page's colour */
+  --dc-on-ink: #0d0c11;
+  --dc-accent: var(--accent);
+  --dc-accent-text: var(--accent-text);
+  --dc-accent-ink: var(--accent-ink);
+  --dc-good: var(--good-text);
+  --dc-bad: var(--bad-text);
+  --dc-shadow: var(--shadow);
+  /* layout */
+  --dc-side-w: 220px;
+  --dc-rail-w: 248px;
+  --dc-pad: clamp(16px, 4vw, 56px);
+  --dc-gap: 24px;
+  --dc-radius: 0;
+  /* type: monogram (a monospaced pixel face, styles.css loads it) for titles, names, buttons and ratings, at
+     multiples of its 16 px grid so it stays crisp; small labels stay in the site's face */
+  --dc-display: "monogram", ui-monospace, monospace;
+  --dc-fs-xs: 10px;
+  --dc-fs-s: 12px;
+  --dc-fs-m: 14px;
+  --dc-fs-l: 22px;
+  --dc-fs-xl: clamp(28px, 4vw, 40px);
+  --dc-track: 0.14em;
+
+  display: block;
+  min-height: calc(100vh - 64px);
+  background: var(--dc-bg);
+  color: var(--dc-text);
+  font-size: var(--dc-fs-m);
+  line-height: 1.45;
+}
+.dc[hidden] { display: none; }
+/* the light theme: the same frames, ink on paper */
+:root[data-theme="light"] .dc {
+  --dc-bg: #e6e7eb; --dc-surface: #efeff2; --dc-raised: #f8f8fa; --dc-line: #b9bac3; --dc-frame: #17161c;
+  --dc-text: #17161c; --dc-muted: #55565f; --dc-ink: #17161c; --dc-on-ink: #f8f8fa;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .dc {
+    --dc-bg: #e6e7eb; --dc-surface: #efeff2; --dc-raised: #f8f8fa; --dc-line: #b9bac3; --dc-frame: #17161c;
+    --dc-text: #17161c; --dc-muted: #55565f; --dc-ink: #17161c; --dc-on-ink: #f8f8fa;
+  }
+}
+/* the resets carry no weight (:where), so any component class beats them */
+:where(.dc) *, :where(.dc) *::before, :where(.dc) *::after { box-sizing: border-box; }
+:where(.dc) :where(h1, h2, p, ol) { margin: 0; }
+:where(.dc) ol { padding: 0; list-style: none; }
+:where(.dc) :where(button, input, select) { font: inherit; color: inherit; }
+.dc kbd { font: inherit; font-size: var(--dc-fs-xs); line-height: 1.4; color: var(--dc-muted); border: 1px solid var(--dc-line); border-radius: 3px; padding: 0 4px; }
+.dc :focus-visible { outline: 2px solid var(--dc-accent); outline-offset: 2px; }
+
+/* the small capitals the screen labels everything with */
+.dc .dc-label, .dc .dc-kicker, .dc .dc-eyebrow, .dc .dc-slot-label, .dc .dc-field-label {
+  font-size: var(--dc-fs-xs); font-weight: 700; letter-spacing: var(--dc-track); text-transform: uppercase; color: var(--dc-accent-text);
+}
+.dc .dc-muted { color: var(--dc-muted); }
+.dc .hi { color: var(--dc-good); }
+.dc .lo { color: var(--dc-muted); }
+.dc .num { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) { .dc *, .dc *::before, .dc *::after { transition: none !important; } }
+
+/* switching (screen, unit, formation, position) cross-fades briefly; a player's card glides to his new spot and the
+   picked tab's marker slides (depth.js names them); nothing moves under reduced motion */
+.dc .dc-tab.on { view-transition-name: dc-tab-on; }
+.dc .dc-form.on { view-transition-name: dc-form-on; }
+.dc .dc-role.on { view-transition-name: dc-role-on; }
+.dc .dc-nav-item.on { view-transition-name: dc-nav-on; }
+::view-transition-group(*) { animation-duration: 200ms; animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1); }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 140ms; }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }

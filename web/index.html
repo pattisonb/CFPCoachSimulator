@@ -26,6 +26,8 @@
   <link rel="stylesheet" href="./styles.css" />
   <link rel="stylesheet" href="./offseason.css" />
   <link rel="stylesheet" href="./recruiting.css" />
+  <link rel="stylesheet" href="./depth/depth-globals.css" />
+  <link rel="stylesheet" href="./depth/depth.css" />
 </head>
 <body>
   <header class="topbar">
@@ -148,7 +150,6 @@
           <div id="tab-teamstats" hidden></div>
           <div id="tab-playerstats" hidden></div>
         </div>
-        <div class="panel tab-body" id="tab-depth" hidden></div>
         <div class="tab-body go-tab" id="tab-office" hidden></div>
         <div class="tab-body go-tab" id="tab-offseason" hidden></div>
         <div class="panel tab-body" id="tab-recruiting" hidden></div>
@@ -178,6 +179,9 @@
     </section>
   </main>
 
+  <!-- the depth chart: its own screen (web/depth/), at ?id=…&screen=depth -->
+  <div id="depth-screen" class="dc" hidden></div>
+
   <div id="modal" class="modal" hidden>
     <div class="modal-backdrop" id="modal-backdrop"></div>
     <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -197,7 +201,6 @@
   <div id="toast" class="toast" hidden></div>
   <script src="./gameview.js"></script>
   <script src="./coachsprite.js"></script>
-  <script src="./faces.js"></script>
   <script src="./game-client.js"></script>
   <script>(function () {
     var game = window.CFP.game, box = document.getElementById("loading"), text = document.getElementById("loading-text"), bar = document.getElementById("loading-bar");
@@ -216,6 +219,8 @@
   <script src="./us-map.js"></script>
   <script src="./recruiting.js"></script>
   <script src="./offseason.js"></script>
+  <script src="./depth/portraits.js"></script>
+  <script src="./depth/depth.js"></script>
   <script src="./season.js"></script>
 </body>
 </html>
