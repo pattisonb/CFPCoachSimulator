@@ -133,6 +133,8 @@ def offseason_metrics(state: dict) -> dict:
         "departures": dict(kinds), "early_entrants": sum(1 for d in off["departures"] if d.get("early")),
         "draft_p4_share": round(p4_picks / max(1, len(draft)), 3),
         "portal_entrants": len(portal), "portal_signed": sum(1 for e in portal.values() if e["signed"]),
+        "portal_nil_spent": (off.get("portal_nil") or {}).get("spent", 0), "portal_nil_ai_spent": (off.get("portal_nil") or {}).get("ai_spent", 0),
+        "portal_nil_carry": (off.get("portal_nil") or {}).get("carry", 0),
         "walk_ons": off["report"]["walk_ons"], "released": off["report"]["released"],
         "dev_gain_ea": off["report"]["development"]["mean_gain_ea"],
         "class_sizes": {"mean": round(st.mean(signed.values()), 1) if signed else 0, "min": min(signed.values(), default=0),
@@ -179,7 +181,8 @@ def run(seasons: int, seed: int, team: str, out: Path) -> None:
               f"team rtg {row['team_rating']['mean']:.1f}±{row['team_rating']['sd']:.1f}  QB {row['starters_ovr'].get('QB', 0):.1f} "
               f"OL {row['starters_ovr'].get('OL', 0):.1f}  ppg {row['ppg']:.1f}  stats off "
               f"{100 * st.mean(row['stats_off'].values()):.1f}%  draft early {o['early_entrants']}  portal {o['portal_entrants']}/"
-              f"{o['portal_signed']}  walk-ons {o['walk_ons']}  ({row['seconds']['season']}s + {row['seconds']['offseason']}s)", flush=True)
+              f"{o['portal_signed']}  portal NIL {o['portal_nil_spent']} (AI {o['portal_nil_ai_spent']}, carried {o['portal_nil_carry']})  "
+              f"walk-ons {o['walk_ons']}  ({row['seconds']['season']}s + {row['seconds']['offseason']}s)", flush=True)
     from coach_career import league
     league.forget(st_["id"])
     season.close_pool()
@@ -219,6 +222,8 @@ def report(paths: list[str]) -> str:
     for label, f in (("graduated", lambda o: o["departures"].get("graduated", 0)), ("drafted", lambda o: o["departures"].get("draft", 0)),
                      ("early entrants", lambda o: o["early_entrants"]), ("draft P4 share", lambda o: o["draft_p4_share"]),
                      ("portal entrants", lambda o: o["portal_entrants"]), ("portal signed", lambda o: o["portal_signed"]),
+                     ("portal NIL spent", lambda o: o.get("portal_nil_spent", 0)), ("portal NIL AI spent", lambda o: o.get("portal_nil_ai_spent", 0)),
+                     ("portal NIL carried", lambda o: o.get("portal_nil_carry", 0)),
                      ("quit", lambda o: o["departures"].get("quit", 0)), ("walk-ons", lambda o: o["walk_ons"]),
                      ("class size mean", lambda o: o["class_sizes"]["mean"]), ("dev gain EA", lambda o: o["dev_gain_ea"]),
                      ("HC changes", lambda o: o["coaching_changes"].get("head_coach", 0)),

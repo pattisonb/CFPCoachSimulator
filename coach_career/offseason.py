@@ -167,9 +167,36 @@ def start(state: dict) -> dict:
                           "signed": signed, "staff": None, "report": None, "performance": _performance(state),
                           "retention": {"players": _retention_entries(state, lgd, pending), "results": None, "spent": 0}}
     state["offseason"]["review"] = _review(state, lgd)
+    _seed_pools(state)
     state["offseason"]["redshirts"] = _redshirt_block(state, lgd, usage)
     state["offseason"]["position_changes"] = []
     return state["offseason"]
+
+
+def season_facts(state: dict) -> dict[str, dict]:
+    """What each program's season earns NIL for: wins, losses, the conference title, the playoff,
+    the national title and whether the AD's goal was met (yours from the review's verdict, an AI
+    school's by the same rule the carousel judges it by, without moving its AD)."""
+    from coach_career import carousel
+    me = state.get("team")
+    rv = (state.get("offseason") or {}).get("review") or {}
+    out = {}
+    for slug, res in carousel._results(state).items():
+        if slug == me and "met" in rv:
+            met = bool(rv["met"])
+        else:
+            g = carousel.goal(slug, state)
+            met = res["wins"] >= g["wins"] and (g["kind"] != "playoff" or res["playoff"]) and (g["kind"] != "conference" or res["conference"])
+        out[slug] = {**res, "met": met}
+    return out
+
+
+def _seed_pools(state: dict) -> None:
+    """Every school's NIL for the portal (recruiting.portal_pool), from the class it just signed
+    and the season it just played."""
+    from coach_career import recruiting
+    facts = season_facts(state)
+    state["nil_pool"] = {slug: recruiting.portal_pool(state, slug, facts.get(slug) or {}) for slug in state["league"]["teams"]}
 
 
 # ----- the yearly meeting with your athletic director -------------------------------------------
@@ -366,7 +393,7 @@ def _retention_view(state: dict) -> Optional[dict]:
     if ret is None:
         return None
     me = state["team"]
-    budget = recruiting.nil_budget(state, me)
+    budget = recruiting.pool_record(state, me)["pool"]           # keep them home spends from the portal pool
     players = []
     for e in ret["players"]:
         row = {k: v for k, v in e.items() if k != "ask"}
@@ -412,8 +439,8 @@ def _retention_spent(off: dict) -> int:
 
 
 def retain(state: dict, pid: str, action: str, nil: int = 0) -> dict:
-    """One move with a leaver: meet (his ask), promise (a starting role), nil (points from next year's
-    budget, replacing any earlier number), release (let him go). Returns the retention block."""
+    """One move with a leaver: meet (his ask), promise (a starting role), nil (points from the portal
+    pool, replacing any earlier number), release (let him go). Returns the retention block."""
     from coach_career import recruiting
     off = state.get("offseason") or {}
     if off.get("stage") != "retention":
@@ -433,8 +460,8 @@ def retain(state: dict, pid: str, action: str, nil: int = 0) -> dict:
         if nil < 0:
             raise RetentionError(400, "NIL points cannot be negative")
         others = _retention_spent(off) - e["offers"].get("nil", 0)
-        if others + nil > recruiting.nil_budget(state, state["team"]):
-            raise RetentionError(400, "not enough NIL in next year's budget")
+        if others + nil > recruiting.pool_record(state, state["team"])["pool"]:
+            raise RetentionError(400, "not enough NIL in the portal pool")
         e["offers"]["nil"] = int(nil)
         e["offers"]["released"] = False
     elif action == "release":
@@ -447,7 +474,7 @@ def retain(state: dict, pid: str, action: str, nil: int = 0) -> dict:
 
 def _resolve_retention(state: dict) -> None:
     """When you advance: each leaver stays or goes; the leavers join the portal or the draft, the
-    NIL you spent comes off next year's budget (the portal pool reads it too)."""
+    NIL you spent comes off your portal pool."""
     from coach_career import recruiting
     lgd, off = state["league"], state["offseason"]
     ret = off["retention"]
@@ -483,7 +510,7 @@ def _resolve_retention(state: dict) -> None:
                         "chance": round(chance, 2), "nil": e["offers"].get("nil", 0) if stayed else 0, "promise": bool(e["offers"].get("promise")) and stayed})
     team["roster"] = [p for p in team["roster"] if p["id"] not in leaving]
     ret["results"], ret["spent"] = results, spent
-    state.setdefault("nil_retained", {})[me] = spent
+    recruiting.pool_record(state, me)["retained"] = spent
     recruiting.reset_caches()
 
 
@@ -1093,12 +1120,35 @@ def _close_portal(state: dict) -> None:
         portal["moves"].append({"id": pid, "name": p["n"], "pos": p["pos"], "from": e["from"], "to": school,
                                 "overall": house(p["pos"], p["o"]), "round": rc.get("week", PORTAL_WEEKS_DONE), "walk_on": bool(p.get("walk_on"))})
     off["portal_recruiting"] = {"reports": rc.get("reports") or [], "log": rc.get("log") or []}
+    _carry_over(state)
     if state.get("recruiting_last"):
         state["recruiting"] = state.pop("recruiting_last")
         recruiting.reset_caches()
 
 
 PORTAL_WEEKS_DONE = 4
+
+
+def _carry_over(state: dict) -> None:
+    """The portal closed: what each school did not spend of its pool (keep them home and the
+    transfers it signed) carries into next year's budget, capped by its tier (recruiting.carry_over);
+    the portal's NIL spend and signings are kept for the record."""
+    from coach_career import recruiting
+    rc, off = state["recruiting"], state["offseason"]
+    me = state.get("team")
+    carry, spent, ai_spent = {}, 0, 0
+    for slug in state["league"]["teams"]:
+        p = recruiting.pool_record(state, slug)
+        budget = recruiting.portal_budget(state, slug)
+        unspent = recruiting.nil_left(state, slug) if slug in rc["nil"] else budget
+        p["unspent"] = max(0, unspent)
+        p["carry"] = carry[slug] = recruiting.carry_over(state, slug, p["unspent"])
+        spent += budget - p["unspent"]
+        if slug != me:
+            ai_spent += budget - p["unspent"]
+    state["nil_carry"] = carry
+    off["portal_nil"] = {"spent": spent, "ai_spent": ai_spent, "signed": sum(1 for s_ in rc["status"].values() if s_["signed"]),
+                         "carry": sum(carry.values())}
 
 
 # ----- development ------------------------------------------------------------------------------
@@ -1626,8 +1676,8 @@ def next_season(state: dict) -> dict:
         history[-1]["moved_to"] = team
         car.setdefault("schools", []).append({"team": team, "from": year})
     new.pop("recruiting_last", None)
-    if state.get("nil_retained"):              # the NIL you spent keeping players home comes off next year's budget
-        new["nil_retained"] = dict(state["nil_retained"])
+    if state.get("nil_carry"):                 # the portal NIL left over carries into the new class's budget (recruiting._nil)
+        new["nil_carry"] = dict(state["nil_carry"])
     recruiting.start(new, year=year + 1)
     from coach_career import prospects
     prospects.reset_caches()
@@ -1712,6 +1762,7 @@ def portal_rows(state: dict, position: Optional[str] = None, status: Optional[st
 
 def view(state: dict, position: Optional[str] = None, status: Optional[str] = None) -> dict:
     """The Offseason screen: where the offseason stands and what it means for your program."""
+    from coach_career import recruiting
     off = state["offseason"]
     me = state["team"]
     lgd = state["league"]
@@ -1767,6 +1818,8 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
         "coaching_changes": [c for c in off.get("coaching_changes", []) if c["role"] == "head_coach"][:60],
         "history": (state.get("career") or {}).get("history", []),
     }
+    if out["review"] is not None:            # the pool's math for your school: left + reward (+ fund) = pool
+        out["review"]["nil_portal"] = recruiting.pool_record(state, me)
     car = off.get("carousel")
     if car:
         from coach_career import carousel
