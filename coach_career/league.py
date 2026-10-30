@@ -262,15 +262,17 @@ def _role_players(by_pos: dict, role: str, taken: set, n: int) -> list[dict]:
     return picks[:n]
 
 
-def lineup(roster: list[dict], shape: dict, year: int = FIRST_YEAR + 1) -> tuple[dict, dict]:
-    """(starters, depth chart) in the source format: each role's best by EA overall (the
-    linebacker spots from SAM, MIKE and WILL together), borrowing a neighboring position when
-    a role runs short; kick and punt returners by return ability."""
+def lineup(roster: list[dict], shape: dict, year: int = FIRST_YEAR + 1, by_overall: bool = False) -> tuple[dict, dict]:
+    """(starters, depth chart) in the source format: each role's best (the linebacker spots
+    from SAM, MIKE and WILL together), borrowing a neighboring position when a role runs short;
+    kick and punt returners by return ability. A CPU staff picks by the coaches' eye (overall,
+    experience and a fixed draw of what the numbers miss); `by_overall` (your own team: you are
+    the eye, and move players on the Depth Chart) orders every role by overall, ties by name."""
     by_pos: dict[str, list] = {}
     for p in roster:            # the coaches' eye: overall plus a little of what the numbers miss, fixed for the year
-        p["_depth"] = (p["ovr"] + DEPTH_EXPERIENCE * EXPERIENCE.get(p.get("class"), 0)
-                       + random.Random(f"depth-{p['slug']}-{year}").gauss(0, DEPTH_EYE.get(_EYE_GROUP.get(p["position"], "K"), 3.0)))
-    for p in sorted(roster, key=lambda q: -q["_depth"]):
+        p["_depth"] = p["ovr"] if by_overall else (p["ovr"] + DEPTH_EXPERIENCE * EXPERIENCE.get(p.get("class"), 0)
+                                                   + random.Random(f"depth-{p['slug']}-{year}").gauss(0, DEPTH_EYE.get(_EYE_GROUP.get(p["position"], "K"), 3.0)))
+    for p in sorted(roster, key=lambda q: (-q["_depth"], q["name"])):
         by_pos.setdefault(p["position"], []).append(p)
     depth = {role: [p["slug"] for p in by_pos.get(role, [])] for role in
              ("QB", "HB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT", "LEDG", "DT", "REDG", "SAM", "MIKE", "WILL", "CB", "FS", "SS", "K", "P")}
@@ -320,13 +322,13 @@ def team_ratings(roster: list[dict], starters: dict) -> dict:
     return out
 
 
-def source_team(league: dict, slug: str) -> dict:
+def source_team(league: dict, slug: str, by_overall: bool = False) -> dict:
     """One league team in the source format: the base team's identity, the league's roster,
-    coaches and a lineup picked from the roster."""
+    coaches and a lineup picked from the roster (`by_overall`: every role by overall, your team)."""
     base = base_meta(slug)
     entry = league["teams"][slug]
     roster = [expand(c, league["attrs"], base) for c in entry["roster"]]
-    starters, depth = lineup(roster, entry["formation"], league["year"])
+    starters, depth = lineup(roster, entry["formation"], league["year"], by_overall)
     on_field = {s for role in ("WR", "TE") for s in starters["offense"].get(role, [])}
     mean = st.mean([p["ovr"] for p in roster if p["slug"] in on_field] or [50])
     for p in roster:            # what the coaches see in a receiver they also throw him the ball for (real 2026 usage's spread),
@@ -343,15 +345,16 @@ def source_team(league: dict, slug: str) -> dict:
     return out
 
 
-def source_teams(league: dict) -> list[dict]:
-    return [source_team(league, s) if s in league["teams"] else base_team(s) for s in base_slugs()]
+def source_teams(league: dict, me: Optional[str] = None) -> list[dict]:
+    return [source_team(league, s, by_overall=(s == me)) if s in league["teams"] else base_team(s) for s in base_slugs()]
 
 
-def build(league: dict) -> dict:
-    """The league as the engine's teams file (build_teams.build, without the real 2026 adjustments)."""
+def build(league: dict, me: Optional[str] = None) -> dict:
+    """The league as the engine's teams file (build_teams.build, without the real 2026 adjustments).
+    `me`: your team, whose default depth chart is by overall (lineup)."""
     from teamdata import build_teams
     styles = {s: t.get("style", s) for s, t in league["teams"].items()}
-    return build_teams.build(source_teams(league), real=False, quiet=True, styles=styles)
+    return build_teams.build(source_teams(league, me), real=False, quiet=True, styles=styles)
 
 
 def path(career_id: str, year: int) -> Path:
@@ -370,7 +373,7 @@ def ensure_built(state: dict) -> Optional[Path]:
     if not out.exists():
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         tmp = out.with_suffix(f".{os.getpid()}.tmp")
-        tmp.write_text(json.dumps(build(lg)), encoding="utf-8")
+        tmp.write_text(json.dumps(build(lg, state.get("team"))), encoding="utf-8")
         os.replace(tmp, out)
     return out
 

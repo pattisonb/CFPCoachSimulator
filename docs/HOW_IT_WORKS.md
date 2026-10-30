@@ -1157,7 +1157,12 @@ a 512 MB instance's limit the first time a played career opened its offseason (p
 under 470). Each season the league goes back into the
 source format (our ratings back through the frozen scale) and through the same build as the real
 data (`build_teams.build`, about 4 s), without the real 2026 adjustments (depth by real usage,
-rating nudges). The engine's attributes go onto its scale through the real 2026 build's starter
+rating nudges). Each team's depth chart is picked then (`league.lineup`): a CPU staff by the
+coaches' eye (overall, `DEPTH_EXPERIENCE` a year in college and a fixed draw per player of what
+the numbers miss, `DEPTH_EYE`, set so its starters sit as far below the best available as the real
+2026 starters did); your own team by overall, ties by name, every season (you are the eye: moves
+on your Depth Chart pin the players you move, everyone else falls in by overall, and the season's
+overrides and redshirts end with the season; `tests/test_depth_default.py`). The engine's attributes go onto its scale through the real 2026 build's starter
 means, frozen in `data/game_scale.json` (`engine_means`): re-centring each season on its own
 starters moved every player's numbers whenever a league's talent or depth charts shifted (team
 rushing ran 12% low with the 2026 players themselves). Lineups take each role's best by our

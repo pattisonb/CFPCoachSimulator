@@ -1608,7 +1608,10 @@ def next_season(state: dict) -> dict:
     year = off["year"]
     lgd = state["league"]
     lgd["year"] = year
-    season.use_league(lg.ensure_built({"id": state["id"], "league": lgd, "year": year}))
+    team = off.get("move_to") or state["team"]
+    # your team's default depth chart is by overall (league.lineup); the season's depth-chart
+    # overrides and redshirts are this season's and are not carried (new_season starts clean)
+    season.use_league(lg.ensure_built({"id": state["id"], "league": lgd, "year": year, "team": team}))
     teams = season.load_teams()
     # every program's last three records, for the coaching carousel
     records = state["career"].setdefault("league_records", {})
@@ -1617,7 +1620,6 @@ def next_season(state: dict) -> dict:
         records[slug] = records[slug][-3:]
     history = state["career"].setdefault("history", [])
     history.append(summary(state))
-    team = off.get("move_to") or state["team"]
     # the year's schedule, built the way the conferences build theirs; the league carries the history it needs
     from sim import schedule_gen
     teams = season.load_teams()
