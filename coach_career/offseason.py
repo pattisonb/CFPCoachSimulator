@@ -1163,9 +1163,11 @@ def _develop_all(state: dict) -> dict:
             p["yrs"] = p.get("yrs", 0) + 1
             gains.append(g)
             if slug == state["team"]:
-                mine.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "gain": g, "overall": p["o"], "why": why})
+                mine.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "gain": g, "overall": p["o"], "why": why,
+                             "transfer": p.get("transfer")})
     mine.sort(key=lambda r: -r["gain"])
-    return {"mean_gain_ea": round(st.mean(gains), 2) if gains else 0.0, "mine": mine, "raised_ceilings": breakouts}
+    return {"mean_gain_ea": round(st.mean(gains), 2) if gains else 0.0, "mine": mine, "raised_ceilings": breakouts,
+            "transfers": [r for r in mine if r["transfer"]]}
 
 
 def _newcomer(r: dict, slug: str) -> dict:
@@ -1710,6 +1712,56 @@ def portal_rows(state: dict, position: Optional[str] = None, status: Optional[st
     return rows[:limit]
 
 
+RECAP_STAGES = ("development", "staff", "ready")
+
+
+def _school_name(slug: Optional[str]) -> str:
+    """A school's short name for the recap; a player who left FBS has none."""
+    if not slug:
+        return "out of FBS"
+    try:
+        return lg.base_meta(slug)["short_name"]
+    except (KeyError, FileNotFoundError):
+        return slug
+
+
+def _portal_recap(state: dict) -> Optional[dict]:
+    """After the portal closes: who you got out of it (and where from), who you lost to it (where he
+    went and why he left, from the retention step), against the whole portal's numbers. None before
+    Development and for a save with no portal."""
+    off = state.get("offseason") or {}
+    if off.get("stage") not in RECAP_STAGES:
+        return None
+    players = (off.get("portal") or {}).get("players")
+    if not isinstance(players, dict):
+        return None
+    me = state.get("team")
+    lgd = state.get("league") or {}
+    roster = (lgd.get("teams") or {}).get(me, {}).get("roster") or []
+    by_id = {p["id"]: p for p in roster}
+    walk_ons = {m["id"] for m in (off.get("portal") or {}).get("moves") or [] if m.get("walk_on")}
+    reasons = {e["id"]: e.get("reason") for e in (off.get("retention") or {}).get("players") or []}
+    left = {d["id"]: d for d in off.get("departures") or [] if d.get("team") == me and d.get("kind") == "portal"}
+    signed, lost = [], []
+    for pid, e in players.items():
+        to = e.get("signed")
+        if to == me:
+            p = by_id.get(pid) or e["player"]
+            signed.append({"id": pid, "name": p["n"], "pos": p["pos"], "cls": p["cls"], "overall": house(p["pos"], p["o"]),
+                           "from": e["from"], "from_name": e.get("from_name") or _school_name(e["from"]),
+                           "walk_on": bool(p.get("walk_on")) or pid in walk_ons})
+        elif e.get("from") == me:
+            p = e["player"]
+            d = left.get(pid) or {}
+            lost.append({"id": pid, "name": p["n"], "pos": p["pos"], "cls": d.get("cls") or p["cls"],
+                         "overall": d.get("overall") or house(p["pos"], p["o"]), "to": to, "to_name": _school_name(to),
+                         "reason": reasons.get(pid)})
+    signed.sort(key=lambda r: -r["overall"])
+    lost.sort(key=lambda r: -r["overall"])
+    return {"signed": signed, "lost": lost, "entrants": len(players),
+            "signed_league": sum(1 for e in players.values() if e.get("signed"))}
+
+
 def view(state: dict, position: Optional[str] = None, status: Optional[str] = None) -> dict:
     """The Offseason screen: where the offseason stands and what it means for your program."""
     off = state["offseason"]
@@ -1744,7 +1796,8 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
         "redshirts": off.get("redshirts"),
         "position_changes": off.get("position_changes") or [],
         "my_roster": sorted(({"id": c["id"], "name": c["n"], "pos": c["pos"], "cls": c["cls"], "overall": house(c["pos"], c["o"]),
-                              "moved_from": c.get("moved_from")} for c in lgd["teams"][me]["roster"]), key=lambda r: (GROUP.get(r["pos"], "Z"), -r["overall"])),
+                              "moved_from": c.get("moved_from"), "transfer": c.get("transfer")} for c in lgd["teams"][me]["roster"]),
+                             key=lambda r: (GROUP.get(r["pos"], "Z"), -r["overall"])),
         "roster": len(lgd["teams"][me]["roster"]), "roster_limit": ROSTER_LIMIT,
         "open_spots": recruiting_spots(state, me) if new_portal else open_spots(lgd, me, portal),
         "release_spots": 0 if new_portal else churn_left(portal, me),
@@ -1757,7 +1810,10 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
                                    else max(0, math.ceil(PORTAL_OFFER_FACTOR * my_spots(lgd, me, portal)) - len(portal["offers"].get(me, [])))),
                    "moves_mine": my_moves,
                    "rows": portal_rows(state, position, status) if off["stage"] in ("portal_1", "portal_2") else []},
+        "portal_recap": _portal_recap(state),
         "report": off.get("report") and {"mine": off["report"]["development"]["mine"][:25],
+                                         "transfers": (off["report"]["development"].get("transfers")
+                                                       or [r for r in off["report"]["development"]["mine"] if r.get("transfer")]),
                                          "mean_gain_ea": off["report"]["development"]["mean_gain_ea"],
                                          "walk_ons": off["report"]["walk_ons"]},
         "staff": None,

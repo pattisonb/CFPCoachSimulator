@@ -1273,7 +1273,10 @@ national award 6, All-America first team 5, a finalist, second team or conferenc
 all-conference 2 or 1 (the best counts in full, the next two at half, at most 10 in a year). Speed,
 strength and the other gifts are not raised. A Heisman winner, national award winner or
 first-team All-American moves up a coachability level 40% of the time. The Development step
-lists your risers with the reasons.
+lists your risers with the reasons. It opens on a transfer portal recap (who you signed out of the
+portal and where from, who you lost to it, where he went and why he left; one collapsed line at
+the Staff and Ready steps), your transfers are marked in the risers and listed in their own block,
+and the position-change picker groups them first.
 
 **The coaching carousel** (`coach_career/carousel.py`). Each program's AD sets a goal from its tier
 (program ratings, below): make the playoff, win nine, win eight, win seven and go bowling, reach a
