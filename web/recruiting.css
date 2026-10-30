@@ -133,3 +133,6 @@
   .go-pane .go-step .go-sel { max-width: none; }
   .go-needs-toggle { min-height: 44px; }
 }
+/* ☆: a topic he brought up on this week's call or visit (★, a confirmed priority, keeps the plain tag) */
+.go-tag.cue { border-color: var(--go-primary, var(--accent)); border-style: dashed; color: var(--text); white-space: normal; }
+.go-pitch.cue .go-tag { border-color: var(--go-primary, var(--accent)); border-style: dashed; color: var(--text); font-weight: 700; }
