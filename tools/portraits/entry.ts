@@ -25,7 +25,7 @@ export interface TeamColors {
   accent?: string;
 }
 
-/** the portrait's crops, as the locker room's thumbnails take them: card rows [top, bottom) and a centred width */
+/** the portrait's crops, as the locker room's thumbnails take them: card rows [top, bottom) and a centered width */
 export const CROPS = {
   head: { top: 0, bottom: 18, width: 23 },
   hair: { top: -6, bottom: 20, width: 23 },

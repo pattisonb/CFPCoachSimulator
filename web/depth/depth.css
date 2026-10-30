@@ -57,7 +57,7 @@
 .dc-note { margin-top: 10px; font-size: var(--dc-fs-s); color: var(--dc-muted); }
 .dc-empty { margin-top: 28px; }
 
-/* ---------- toolbar: tabs, and the search front and centre ---------- */
+/* ---------- toolbar: tabs, and the search front and center ---------- */
 /* every screen's toolbar is the same height: its left side (tabs, or a summary) and the search sit on its bottom line */
 .dc-toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; min-height: 56px; margin-top: 6px; border-bottom: 1px solid var(--dc-line); }
 .dc-toolbar-left { display: flex; align-items: flex-end; min-height: 52px; }
