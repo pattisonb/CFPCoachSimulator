@@ -37,24 +37,65 @@ def shot(page, name: str) -> None:
 
 
 def draws(page) -> int:
-    """The board's redraw counter (web/recruiting.js stamps it on every draw)."""
+    """The board's draw counter (web/recruiting.js stamps it on every draw and every patch)."""
     return page.evaluate("() => +(document.querySelector('.rc-head').parentElement.dataset.draw || 0)")
 
 
 def settle(page, before: int) -> None:
-    """The board re-fetches after an action lands; wait for that redraw before the next click."""
+    """The board re-fetches after an action lands and patches itself; wait for that patch before the next click."""
     page.wait_for_function("(n) => +(document.querySelector('.rc-head').parentElement.dataset.draw || 0) > n", arg=before, timeout=30_000)
     time.sleep(0.3)
 
 
-def test_stale_scene_unlocks(page, base, sid) -> None:
-    """A call left open when the week moves on: Finish re-reads the board, finds the call gone, drops the
-    scene and the Recruit menu works again."""
+# ----- smoothness (the spec's section 5): an action patches the screen in place, says what happened, keeps the focus -----
+
+def watch(page, selector: str):
+    """Before an action: the element the player is looking at (a handle), the page's and its own scroll, and an observer
+    counting the removals of any node that holds it."""
+    h = page.query_selector(selector)
+    assert h, selector
+    page.evaluate("""(el) => { const s = window.__smooth = { el, gone: 0, top: el.scrollTop, page: window.scrollY };
+        s.mo = new MutationObserver((ms) => { for (const m of ms) for (const n of m.removedNodes) if (n === el || (n.nodeType === 1 && n.contains(el))) s.gone++; });
+        s.mo.observe(document.documentElement, { childList: true, subtree: true }); }""", h)
+    return h
+
+
+def toasted(page, text: str) -> None:
+    """A toast with that exact sentence is on the stack (it leaves on its own later)."""
+    page.wait_for_function("(t) => [...document.querySelectorAll('#toasts .go-toast')].some(e => e.textContent.trim() === t)", arg=text, timeout=30_000)
+
+
+def smooth(page, h, what: str, same: bool = True) -> None:
+    """After the action landed: the watched element is still the one on screen (or, same=False, the pane switched),
+    nothing that held it was removed, the scrolls are within 2 px, and the focus is on a control, not the body."""
+    r = page.evaluate("""(el) => { const s = window.__smooth; s.mo.disconnect();
+        return { connected: el.isConnected, gone: s.gone, top: el.scrollTop - s.top, page: window.scrollY - s.page, active: document.activeElement.tagName,
+                 pane: !!document.querySelector('.go-pane') }; }""", h)
+    if same:
+        assert r["connected"] and r["gone"] == 0, f"{what}: the pane was rebuilt ({r})"
+    else:
+        assert r["pane"] and not r["connected"], f"{what}: the pane should have switched ({r})"
+    assert abs(r["page"]) <= 2 and abs(r["top"]) <= 2, f"{what}: the scroll jumped ({r})"
+    assert r["active"] != "BODY", f"{what}: the focus fell to the body"
+
+
+def no_overlap(page, a: str, b: str) -> bool:
+    return page.evaluate("""([a, b]) => { const x = document.querySelector(a), y = document.querySelector(b); if (!x || !y) return false;
+        const p = x.getBoundingClientRect(), q = y.getBoundingClientRect(); return p.right <= q.left || p.left >= q.right || p.bottom <= q.top || p.top >= q.bottom; }""", [a, b])
+
+
+def wait_week(base, sid) -> None:
     call(base, f"/api/season/{sid}/advance", {})
     for _ in range(1200):
         if call(base, f"/api/season/{sid}/status")["status"] != "running":
             break
         time.sleep(0.5)
+
+
+def test_stale_scene_unlocks(page, base, sid) -> None:
+    """A call left open when the week moves on: Finish re-reads the board, finds the call gone, drops the
+    scene and the Recruit menu works again."""
+    wait_week(base, sid)
     n = draws(page)
     page.click("#rc-finish")
     settle(page, n)
@@ -492,8 +533,7 @@ if __name__ == "__main__":
                         assert [f"☆ {PITCH[t]}", CUE_TITLE] in [[x[0], x[2]] for x in ts if "cue" in x[1]], (where, t, ts)
                 assert GONE not in page.inner_text("body"), where
             one_star("after his reaction")
-            toast = page.inner_text("#toast")
-            assert toast.startswith(("He lit up:", "He was polite and moved on", "He went quiet:")), toast
+            toasted(page, f"Pitch: {PITCH[hit]} · {REACTION[kind]}")
             settle(page, n)   # the reaction stays four seconds, then the board re-fetches
             assert not page.query_selector(".go-pane .go-reaction"), "the board re-renders after his reaction"
             one_star("after the re-render")
@@ -992,6 +1032,178 @@ if __name__ == "__main__":
             page.click(".go-pane .go-step button.go-step-cancel")
             assert not errors, errors
 
+            # --- Smoothness: every board action patches in place (the pane stays, nothing that holds it is removed, no scroll
+            #     jump), says what happened in a toast with the spec's words, and leaves the focus on a control
+            wait_week(base, A)      # a new week's hours
+            open_tab(page, base, A, "recruiting", ".go-stages")
+            vb = call(base, f"/api/season/{A}/recruiting")
+            assert vb["hours_left"] >= 50, vb["hours_left"]
+            fresh_rows = [b for b in vb["board"] if not b["offered"] and not b["committed"] and not b["signed"] and not b.get("scene")
+                          and (b.get("trips") or 0) < 3 and b["id"] not in (pid, second, third)]
+            x, y = fresh_rows[0], fresh_rows[1]
+            cold = next(b for b in fresh_rows[2:] if b["stage"] == "cold")
+            assert page.get_attribute("#toasts", "role") == "status" and page.get_attribute("#toasts", "aria-live") == "polite", "the toast stack is announced"
+
+            def menu(action):
+                page.click("#rc-recruit")
+                page.wait_for_selector(".go-menu[role=menu]")
+                page.click(f".go-menu .go-menu-item[data-action={action}]")
+
+            page.click(f".go-row-recruit[data-pid='{x['id']}']")
+            time.sleep(1.2)                       # the first pick's own smooth scroll ends
+            # Message: the step's Send goes busy, the step closes, the row and the pane update in place
+            menu("message")
+            page.wait_for_selector(".go-pane .go-step select#rc-pitch")
+            h = watch(page, ".go-pane")
+            n = draws(page)
+            page.click(".go-pane .go-step button.go-step-go")
+            assert page.evaluate("() => { const b = document.querySelector('.go-pane .go-step-go'); return !b || (b.disabled && b.classList.contains('go-busy')); }"), "Send shows busy while the action is in flight"
+            toasted(page, f"Message sent to {x['name']} · 5 hours")
+            settle(page, n)
+            smooth(page, h, "Message")
+            assert not page.query_selector(".go-pane .go-step"), "the step closes once the message is sent"
+            assert page.evaluate("() => document.activeElement.id") == "rc-recruit", "focus goes to the Recruit button once the step closed"
+            # Offer: the NIL cell and the Offered tag change and pulse
+            menu("offer")
+            page.wait_for_selector(".go-pane .go-step input#rc-nil")
+            nil = int(page.input_value("#rc-nil"))
+            h = watch(page, ".go-pane")
+            n = draws(page)
+            page.click(".go-pane .go-step button.go-step-go")
+            toasted(page, f"Offer sent to {x['name']} · {nil} NIL")
+            page.wait_for_selector(".go-pane .go-strip .go-changed", timeout=10_000)
+            settle(page, n)
+            smooth(page, h, "Offer")
+            page.wait_for_function("(t) => [...document.querySelectorAll('.go-pane .go-tags .go-tag')].some(e => e.textContent.trim() === t)", arg=f"Offered · {nil} NIL", timeout=10_000)
+            assert f"your {nil}" in page.inner_text(".go-pane .go-strip")
+            # Raise NIL
+            menu("raise_nil")
+            page.wait_for_selector(".go-pane .go-step input#rc-nil")
+            nil2 = int(page.input_value("#rc-nil"))
+            assert nil2 > nil
+            h = watch(page, ".go-pane")
+            n = draws(page)
+            page.click(".go-pane .go-step button.go-step-go")
+            toasted(page, f"Offer raised to {nil2} NIL")
+            settle(page, n)
+            smooth(page, h, "Raise NIL")
+            assert f"your {nil2}" in page.inner_text(".go-pane .go-strip")
+            # Scout: from the menu, the Recruit button is the busy control and gets the focus back
+            trips = x.get("trips") or 0
+            h = watch(page, ".go-pane")
+            n = draws(page)
+            menu("scout")
+            toasted(page, f"Scouted {x['name']} · look {trips + 1} of 3")
+            settle(page, n)
+            smooth(page, h, "Scout")
+            assert page.evaluate("() => document.activeElement.id") == "rc-recruit"
+            assert f"{trips + 1} of 3 looks" in page.inner_text(".go-pane .go-strip")
+            # Call: the scene opens inside the same pane; the pitch's toast sits clear of his reply
+            h = watch(page, ".go-pane")
+            n = draws(page)
+            menu("call")
+            toasted(page, f"Called {x['name']} · 15 hours")
+            page.wait_for_selector(".go-pane .go-scene .go-scene-line.cue", timeout=30_000)
+            settle(page, n)
+            smooth(page, h, "Call")
+            topic = next(bb for bb in call(base, f"/api/season/{A}/recruiting")["board"] if bb["id"] == x["id"])["scene"]["cue"]["topics"][0]
+            page.click(f".go-pane .go-pitch:has(input[value='{topic}'])")
+            h = watch(page, ".go-pane")
+            n = draws(page)
+            page.click(".go-pane button:has-text('Pitch')")
+            page.wait_for_selector(".go-pane .go-reaction", timeout=30_000)
+            kind = page.get_attribute(".go-pane .go-reaction", "data-kind")
+            toasted(page, f"Pitch: {PITCH[topic]} · {REACTION[kind]}")
+            assert no_overlap(page, "#toasts", ".go-pane .go-reaction"), "a pitch's toast never covers his reply"
+            smooth(page, h, "Pitch")
+            settle(page, n)          # his reaction stays a moment, then the board catches up in place
+            smooth(page, h, "Pitch, after the re-fetch")
+            assert not page.query_selector(".go-pane .go-reaction")
+            # Pull offer: confirmed, the offer goes; the tag leaves and the cell changes in place
+            page.remove_listener("dialog", dismiss)
+            page.once("dialog", lambda d: d.accept())
+            h = watch(page, ".go-pane")
+            n = draws(page)
+            menu("pull_offer")
+            toasted(page, f"Offer to {x['name']} pulled")
+            settle(page, n)
+            page.on("dialog", dismiss)
+            smooth(page, h, "Pull offer")
+            assert "Offered" not in page.inner_text(".go-pane .go-tags") if page.query_selector(".go-pane .go-tags") else True
+            assert not next(bb for bb in call(base, f"/api/season/{A}/recruiting")["board"] if bb["id"] == x["id"])["offered"]
+            # Off the board: the row leaves, the pane switches to the next recruit with a cross-fade (120 ms, none under reduced motion)
+            h = watch(page, ".go-pane")
+            n = draws(page)
+            menu("off_board")
+            toasted(page, f"{x['name']} is off your board")
+            settle(page, n)
+            smooth(page, h, "Off the board", same=False)
+            assert not page.query_selector(f".go-row-recruit[data-pid='{x['id']}']"), "his row left the list"
+            first_now = page.get_attribute(".go-row-recruit >> nth=0", "data-pid")
+            assert page.eval_on_selector_all(".go-row-recruit[aria-pressed=true]", "els => els.map(e => e.dataset.pid)") == [first_now], "the pane moved to the first row"
+            assert page.evaluate("() => getComputedStyle(document.querySelector('.go-pane')).transitionDuration") == "0.12s"
+            assert page.evaluate("() => document.activeElement.tagName") != "BODY"
+            # the toast stack: at most three, newest on top
+            page.evaluate("() => { for (const t of ['one', 'two', 'three', 'four']) window.CFP.ui.toast(t); }")
+            time.sleep(0.4)
+            stack = page.eval_on_selector_all("#toasts .go-toast:not(.go-fade-out)", "els => els.map(e => e.textContent.trim())")
+            assert len(stack) == 3 and stack[0] == "four" and stack[-1] == "two", stack
+            # Review Focus 1: two quick actions: a Message whose re-fetch is slow, then a Call before it lands; the stale
+            # re-fetch is dropped and the board shows both
+            page.click(f".go-row-recruit[data-pid='{y['id']}']")
+            time.sleep(0.6)
+            menu("message")
+            page.wait_for_selector(".go-pane .go-step select#rc-pitch")
+            hours = call(base, f"/api/season/{A}/recruiting")["hours_left"]
+            page.evaluate("""() => { const g = window.CFP.game, orig = g.fetch; let held = 0; window.__restoreFetch = () => { g.fetch = orig; };
+                g.fetch = async (p, o) => { const r = await orig(p, o); if (/\\/recruiting$/.test(String(p)) && !(o && o.method) && held++ === 0) await new Promise((res) => setTimeout(res, 2500)); return r; }; }""")
+            n = draws(page)
+            page.click(".go-pane .go-step button.go-step-go")
+            toasted(page, f"Message sent to {y['name']} · 5 hours")
+            menu("call")
+            toasted(page, f"Called {y['name']} · 15 hours")
+            page.wait_for_selector(".go-pane .go-scene .go-scene-line.cue", timeout=30_000)
+            settle(page, n)
+            time.sleep(3)
+            page.evaluate("() => window.__restoreFetch()")
+            assert draws(page) == n + 1, "the superseded re-fetch is dropped, the later one patches once"
+            assert f"{hours - 20} / " in page.inner_text(".go-meters"), page.inner_text(".go-meters")
+            assert page.query_selector(".go-pane .go-scene"), "the call's scene stays on screen"
+            page.click(".go-pane .go-scene button:has-text('Hang up')")
+            time.sleep(0.3)
+            # Review Focus 2: an action moves him out of the open tab: the row leaves, the counts update, the pane stays on him
+            page.click(".go-stages button[data-stage=cold]")
+            time.sleep(0.5)
+            page.click(f".go-row-recruit[data-pid='{cold['id']}']")
+            time.sleep(0.6)
+            before = dict(page.evaluate("() => [...document.querySelectorAll('.go-stages button[data-stage]')].map(b => [b.dataset.stage, +b.querySelector('b').textContent])"))
+            menu("message")
+            page.wait_for_selector(".go-pane .go-step select#rc-pitch")
+            h = watch(page, ".go-pane")
+            n = draws(page)
+            page.click(".go-pane .go-step button.go-step-go")
+            toasted(page, f"Message sent to {cold['name']} · 5 hours")
+            settle(page, n)
+            smooth(page, h, "Message from the Cold tab")
+            assert not page.query_selector(f".go-row-recruit[data-pid='{cold['id']}']"), "the row left the Cold tab"
+            assert cold["name"] in page.inner_text(".go-pane .go-pane-head"), "the pane stays on him"
+            assert page.eval_on_selector_all(".go-row-recruit[aria-pressed=true]", "els => els.length") == 0, "no other row is picked"
+            after = dict(page.evaluate("() => [...document.querySelectorAll('.go-stages button[data-stage]')].map(b => [b.dataset.stage, +b.querySelector('b').textContent])"))
+            assert after["cold"] == before["cold"] - 1 and after["contact"] == before["contact"] + 1, (before, after)
+            assert page.get_attribute(".go-stages button[data-stage=cold]", "aria-pressed") == "true"
+            page.click(".go-stages button[data-stage=all]")
+            time.sleep(0.4)
+            # reduced motion: no pulse, no fade, no cross-fade
+            page.emulate_media(reduced_motion="reduce")
+            motion = page.evaluate("""() => { const p = document.querySelector('.go-pane'), w = p.querySelector('.go-chip'); w.classList.add('go-changed');
+                const r = [getComputedStyle(p).transitionDuration, getComputedStyle(w).animationDuration, getComputedStyle(w).transitionDuration]; w.classList.remove('go-changed'); return r; }""")
+            assert motion == ["0s", "0s", "0s"], motion
+            page.emulate_media(reduced_motion="no-preference")
+            motion = page.evaluate("""() => { const w = document.querySelector('.go-pane .go-chip'); w.classList.add('go-changed');
+                const r = getComputedStyle(w).animationDuration; w.classList.remove('go-changed'); return r; }""")
+            assert motion == "0.6s", motion
+            assert not errors, errors
+
             # --- Box score of an FCS game: the stand-in's players are plain text (it has no player
             # pages), the FBS side's names still open the player page
             fict = {slug for slug, t in season.load_teams().items() if t["fictional"]}
@@ -1077,7 +1289,7 @@ if __name__ == "__main__":
                 assert "go-btn" in hire, f"the hire control reads as a button, not a tag ({hire})"
             browser.close()
         assert not errors, errors
-        print("ux sweep ok: office, prospects, board (tabs, list, pane, menu, step, scene, phone), staff, schedule, depth, player page, an FCS box score and every offseason stage at 1280 and 400")
+        print("ux sweep ok: office, prospects, board (tabs, list, pane, menu, step, scene, phone, every action patching in place with its toast), staff, schedule, depth, player page, an FCS box score and every offseason stage at 1280 and 400")
     finally:
         for sid in (fresh["id"], done["id"]):
             try:
