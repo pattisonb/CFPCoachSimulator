@@ -183,7 +183,3 @@
   .go-pane, .rc-head .go-meter-fill { transition-duration: 0s; }
   .go-pane.go-pane-in { opacity: 1; }
 }
-  .go-fade, .go-pane, .rc-head .go-meter-fill { transition-duration: 0s; }
-  .go-fade-in, .go-fade-out, .go-pane.go-pane-in { opacity: 1; }
-  .go-busy::after { animation: none; }
-}
