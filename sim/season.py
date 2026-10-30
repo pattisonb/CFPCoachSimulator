@@ -259,7 +259,7 @@ def shown_overall(p: dict, base: Optional[dict] = None) -> int:
     if not isinstance(p.get("ovr"), (int, float)):
         return house_value(p["position"], "overall", player_overall(p))
     out = p["ovr"]
-    if base is not None and base is not p:
+    if base is not None and base is not p and base["position"] == p["position"]:   # a position change recomputes "ovr" itself
         out += house_value(p["position"], "overall", player_overall(p)) - house_value(base["position"], "overall", player_overall(base))
     return int(max(1, min(99, out)))
 
@@ -1047,7 +1047,7 @@ def redshirt_status(state: dict, slug: str, p: dict) -> dict:
 def redshirt_toggle(state: dict, slug: str, player_slug: str, on: bool) -> dict:
     """Redshirt one of your players for the rest of the season (he sits out every game, keeps his
     year), or take him off it while he has played four games or fewer."""
-    t = load_teams().get(slug)
+    t = team_data(state, slug) if slug in load_teams() else None
     p = next((x for x in (t["offense"] + t["defense"]) if x.get("slug") == player_slug), None) if t else None
     if p is None:
         raise RedshirtError(404, "player not found")
@@ -1060,6 +1060,160 @@ def redshirt_toggle(state: dict, slug: str, player_slug: str, on: bool) -> dict:
     else:
         rs.pop(player_slug, None)
     return redshirt_status(state, slug, p)
+
+
+# ----- position changes during the season --------------------------------------------------------
+
+class PositionError(Exception):
+    def __init__(self, code: int, message: str):
+        super().__init__(message)
+        self.code = code
+
+
+def position_changes(state: dict, slug: str) -> dict:
+    """This season's position changes on a team: player slug -> {"from": his position in the
+    league file, "to": where he plays now, "week"} (positions as depth-chart roles, WR, LT, FS)."""
+    return (state.get("position_changes") or {}).get(slug) or {}
+
+
+def _skills(p: dict) -> dict[str, int]:
+    """His skills on our scale (game_scale.py), as the league stores them."""
+    from teamdata import game_scale
+    return dict(zip(game_scale.keys(), p.get("skills") or []))
+
+
+def with_positions(team: dict, moves: dict) -> dict:
+    """A copy of the team with this season's position changes applied (change_position): each
+    moved player at his new position and depth-chart role, placed in that role's order by his
+    overall recomputed by our formula there (behind everyone rated at least as high; a
+    depth-chart override still pins whoever you moved); his old role closes up behind him. The engine reads his attributes as they are,
+    as it does for a player moved into another role on the depth chart."""
+    from teamdata import game_scale
+    players = [dict(p) for p in team["offense"] + team["defense"]]
+    by_slug = {p.get("slug"): p for p in players}
+    starters: dict[str, int] = {}
+    for p in players:
+        if p.get("role") and p.get("in_game"):
+            starters[p["role"]] = starters.get(p["role"], 0) + 1
+    stat_keys = sorted({k for p in players for k in (p.get("stats") or {})})
+    touched, arriving = set(), set()
+    for pslug, m in moves.items():
+        p, role = by_slug.get(pslug), (m or {}).get("to")
+        if p is None or role not in ROLE_POSITION:
+            continue
+        pos = ROLE_POSITION[role]
+        if p.get("role") == role and p["position"] == pos:
+            continue                                  # the league file has him there already
+        touched.update(r for r in (p.get("role"), role) if r)
+        arriving.add(pslug)
+        crossing = (p["position"] in OFFENSE_POSITIONS) != (pos in OFFENSE_POSITIONS)
+        p["position"], p["role"], p["depth"], p["in_game"] = pos, role, None, False
+        if p.get("skills"):
+            p["ovr"] = game_scale.overall(_skills(p), role)
+        if crossing:
+            p["stats"] = {k: 0 for k in stat_keys}    # a player crossing units needs every box-score key
+    if not touched:
+        return team
+    for role in touched:
+        group = sorted((p for p in players if p.get("role") == role and p["slug"] not in arriving), key=lambda p: (p.get("depth") or 99, p["name"]))
+        for p in sorted((p for p in players if p.get("role") == role and p["slug"] in arriving), key=lambda p: (-(p.get("ovr") or 0), p["name"])):
+            at = next((i for i, q in enumerate(group) if (q.get("ovr") or 0) < (p.get("ovr") or 0)), len(group))
+            group.insert(at, p)
+        n = starters.get(role, 1 if role in ROLE_POSITION else 0)
+        for i, p in enumerate(group):
+            p["depth"] = i + 1
+            p["in_game"] = i < n
+    out = {**team}
+    out["offense"] = [p for p in players if p["position"] in OFFENSE_POSITIONS]
+    out["defense"] = [p for p in players if p["position"] not in OFFENSE_POSITIONS]
+    return out
+
+
+def _roster_player(state: dict, slug: str, player_slug: str) -> dict:
+    check_fbs(slug)
+    t = team_data(state, slug)
+    p = next((x for x in t["offense"] + t["defense"] if x.get("slug") == player_slug), None)
+    if p is None:
+        raise PositionError(404, "not on your roster")
+    return p
+
+
+def position_options(state: dict, slug: str, player_slug: str) -> list[dict]:
+    """What one of a team's players would be at every position (kickers and punters among
+    themselves): his overall by our formula there, where he is now first, then best first."""
+    from coach_career import league as lg
+    from teamdata import game_scale
+    p = _roster_player(state, slug, player_slug)
+    ours, cur = _skills(p), p.get("role") or p["position"]
+    special = cur in ("K", "P")
+    out = [{"pos": pos, "group": lg.GROUP_OF[pos], "overall": game_scale.overall(ours, pos), "current": pos == cur}
+           for pos in lg.GROUP_OF if (pos in ("K", "P")) == special]
+    out.sort(key=lambda o: (-o["current"], -o["overall"]))
+    return out
+
+
+def _rekey_player(state: dict, slug: str, name: str, old_pos: str, new_pos: str) -> None:
+    """A player's season records are keyed name|position: they follow him to his new position."""
+    old, new = f"{name}|{old_pos}", f"{name}|{new_pos}"
+    inj = (state.get("injuries") or {}).get(slug) or {}
+    if old in inj:
+        inj[new] = dict(inj.pop(old), position=new_pos)
+    forms = ((state.get("morale") or {}).get("players") or {}).get(slug) or {}
+    if old in forms:
+        forms[new] = forms.pop(old)
+    lines = ((state.get("season_stats") or {}).get(slug) or {}).get("players") or {}
+    if old in lines:
+        line = lines.pop(old)
+        line.update(position=new_pos, unit="offense" if new_pos in OFFENSE_POSITIONS else "defense")
+        if new in lines:
+            lines[new]["games"] += line["games"]
+            _add_into(lines[new]["stats"], line["stats"])
+        else:
+            lines[new] = line
+
+
+def change_position(state: dict, slug: str, player_slug: str, pos: str) -> dict:
+    """Move one of your players to another position now: he plays and shows there from the next
+    game (with_positions, through team_data and every game's edits), last in the new role's
+    depth order and out of every slot of his old one, his overall recomputed by our formula
+    there; the career's league roster follows (the row at once in a later season, at the
+    offseason in the first). Moving him back to the position the league file has clears the change."""
+    if pos not in ROLE_POSITION:
+        raise PositionError(400, "no such position")
+    p = _roster_player(state, slug, player_slug)
+    cur = p.get("role") or p["position"]
+    if cur == pos:
+        raise PositionError(409, "he plays there already")
+    if (cur in ("K", "P")) != (pos in ("K", "P")):
+        raise PositionError(400, "kickers and punters change only among themselves")
+    base = next(x for x in load_teams()[slug]["offense"] + load_teams()[slug]["defense"] if x.get("slug") == player_slug)
+    origin = base.get("role") or base["position"]
+    moves = state.setdefault("position_changes", {}).setdefault(slug, {})
+    if pos == origin:
+        moves.pop(player_slug, None)
+    else:
+        moves[player_slug] = {"from": origin, "to": pos, "week": state.get("current_week", 0)}
+    if not moves:
+        state["position_changes"].pop(slug, None)
+    old_pos, new_pos = p["position"], ROLE_POSITION[pos]
+    if old_pos != new_pos:
+        _rekey_player(state, slug, p["name"], old_pos, new_pos)
+    rs = ((state.get("redshirting") or {}).get(slug) or {}).get(player_slug)
+    if rs:
+        rs["position"] = new_pos
+    overrides = (state.get("depth") or {}).get(slug) or {}
+    for role in [r for r, lst in overrides.items() if r != pos and player_slug in lst]:
+        overrides[role].remove(player_slug)
+        if not overrides[role]:
+            del overrides[role]
+    lgd = state.get("league")
+    row = next((c for c in ((lgd or {}).get("teams") or {}).get(slug, {}).get("roster", []) if c["id"] == player_slug), None)
+    if row is not None:
+        from coach_career import offseason
+        offseason.move_row(row, pos, lgd["attrs"])
+    q = _roster_player(state, slug, player_slug)
+    return {"slug": player_slug, "position": q.get("role") or q["position"], "overall": shown_overall(q),
+            "moved_from": (position_changes(state, slug).get(player_slug) or {}).get("from")}
 
 
 def _game_team(slug: str, form_shift: float, player_shifts: dict, edits: dict, morale: Optional[dict],
@@ -1651,7 +1805,7 @@ def position_candidates(state: dict, slug: str, role: str) -> dict:
 
 def depth_order(state: dict, slug: str, role: str) -> list[str]:
     """The current order of a role, overrides applied."""
-    team = apply_depth(load_teams()[slug], (state.get("depth") or {}).get(slug))
+    team = apply_depth(team_data(state, slug), (state.get("depth") or {}).get(slug))
     if role in ("KR", "PR"):
         pick = team.get("kick_returner" if role == "KR" else "punt_returner")
         return [pick] if pick else []
@@ -1662,7 +1816,7 @@ def move_depth(state: dict, slug: str, role: str, player: str, move: str) -> Non
     """Move a player within his role: up, down, or to the top (the starter spot). KR and
     PR take the named player as the returner."""
     check_fbs(slug)
-    team = load_teams()[slug]
+    team = team_data(state, slug)
     by_slug = {p["slug"]: p for p in team["offense"] + team["defense"]}
     if player not in by_slug:
         raise ValueError("unknown player")
@@ -1713,6 +1867,7 @@ def depth_chart_view(state: dict, slug: str) -> dict:
 
     injured = (state.get("injuries") or {}).get(slug, {})
     yours = bool(state.get("career")) and slug == state.get("team") and not state.get("done")   # your roster: redshirt in place
+    moves = position_changes(state, slug)
 
     def card(p: dict, role: str) -> dict:
         inj = injured.get(f"{p['name']}|{p['position']}")
@@ -1727,6 +1882,7 @@ def depth_chart_view(state: dict, slug: str) -> dict:
                 "form": round(player_form(state, slug, p["name"], p["position"]), 2) if morale_on(state) else 0.0,
                 "headline": awards.headline({"stats": st}, group) if st else "",
                 "injury": {"type": inj["type"], "weeks_left": inj["weeks_left"], "returns_week": state["current_week"] + inj["weeks_left"]} if inj else None,
+                "moved_from": (moves.get(p.get("slug")) or {}).get("from"),
                 **({"redshirt": redshirt_status(state, slug, p)} if yours else {})}
 
     units = []
@@ -3273,8 +3429,12 @@ def with_edits(team: dict, edits: Optional[dict]) -> dict:
         # your coach (coaches.apply_coach): his schemes and tendencies on this team
         team = coaches.apply_coach(team, edits["__coach__"])
         edits = {k: v for k, v in edits.items() if k != "__coach__"}
-        if not edits:
-            return team
+    if "__positions__" in edits:
+        # this season's position changes (change_position): he plays and shows at his new spot
+        team = with_positions(team, edits["__positions__"])
+        edits = {k: v for k, v in edits.items() if k != "__positions__"}
+    if not edits:
+        return team
     out = {**team}
 
     def merged(p: dict) -> dict:
@@ -3336,6 +3496,9 @@ def team_edits(state: dict, slug: str) -> dict:
     """What this season changes on a team before a game: god-mode edits to its players, and
     your coach (state["coach"]) on your team."""
     edits = player_edits(state, slug)
+    moves = position_changes(state, slug)
+    if moves:
+        edits = {**edits, "__positions__": moves}
     if state.get("coach") and slug == state.get("team"):
         edits = {**edits, "__coach__": state["coach"]}
     return edits
@@ -3602,7 +3765,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     t = teams.get(team)
     if not t:
         return None
-    t = with_edits(t, player_edits(state, team))
+    t = with_edits(t, team_edits(state, team))
     roster = t["offense"] + t["defense"]
     p = next((x for x in roster if (slug and x.get("slug") == slug) or (name and x["name"] == name and (not position or x["position"] == position))), None)
     if not p:

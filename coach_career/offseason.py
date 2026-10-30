@@ -158,6 +158,7 @@ def start(state: dict) -> dict:
     lgd = state.get("league") or lg.from_base(year)
     lgd["year"] = year
     state["league"] = lgd
+    _season_moves(state, lgd)
     record_seasons(state, lgd)
     usage = _usage()
     deps, entrants, pending = _departures(state, lgd, usage)
@@ -846,11 +847,30 @@ def position_options(state: dict, pid: str) -> list[dict]:
     return out
 
 
+def move_row(c: dict, pos: str, attrs: list[str]) -> None:
+    """A league roster row at another position: "moved_from" keeps where he came from (cleared
+    when he goes back), his overall is our formula there."""
+    c.setdefault("moved_from", c["pos"])
+    c["pos"] = pos
+    c["o"] = game_scale.overall(lg.ratings(c, attrs), pos)
+    if pos == c["moved_from"]:
+        c.pop("moved_from", None)
+
+
+def _season_moves(state: dict, lgd: dict) -> None:
+    """Position changes made during the season (season.change_position) go onto the league's
+    rows (a career's first season plays the real league, so its rows are made only now)."""
+    for slug, moves in (state.get("position_changes") or {}).items():
+        rows = (lgd["teams"].get(slug) or {}).get("roster") or []
+        for pid, m in moves.items():
+            c = next((x for x in rows if x["id"] == pid), None)
+            if c is not None and c["pos"] != m["to"]:
+                move_row(c, m["to"], lgd["attrs"])
+
+
 def change_position(state: dict, pid: str, pos: str) -> dict:
-    """Move one of your players to another position for next season (his overall follows)."""
+    """Move one of your players to another position, at any offseason stage (his overall follows)."""
     off = state.get("offseason") or {}
-    if off.get("stage") in (None, "ready"):
-        raise RosterError(409, "position changes are made during the offseason")
     if pos not in GROUP:
         raise RosterError(400, "no such position")
     lgd = state["league"]
@@ -859,16 +879,11 @@ def change_position(state: dict, pid: str, pos: str) -> dict:
         raise RosterError(404, "not on your roster")
     if c["pos"] == pos:
         raise RosterError(409, "he plays there already")
-    was = c["pos"]
-    c.setdefault("moved_from", was)
-    c["pos"] = pos
-    c["o"] = game_scale.overall(lg.ratings(c, lgd["attrs"]), pos)
+    move_row(c, pos, lgd["attrs"])
     moves = off.setdefault("position_changes", [])
     moves[:] = [m for m in moves if m["id"] != pid]
-    if pos != c["moved_from"]:
+    if c.get("moved_from"):
         moves.append({"id": pid, "name": c["n"], "from": c["moved_from"], "to": pos, "overall": house(pos, c["o"])})
-    else:
-        c.pop("moved_from", None)
     return {"id": pid, "pos": pos, "overall": house(pos, c["o"])}
 
 
@@ -1646,7 +1661,10 @@ def next_season(state: dict) -> dict:
     year = off["year"]
     lgd = state["league"]
     lgd["year"] = year
-    season.use_league(lg.ensure_built({"id": state["id"], "league": lgd, "year": year}))
+    team = off.get("move_to") or state["team"]
+    # your team's default depth chart is by overall (league.lineup); the season's depth-chart
+    # overrides and redshirts are this season's and are not carried (new_season starts clean)
+    season.use_league(lg.ensure_built({"id": state["id"], "league": lgd, "year": year, "team": team}))
     teams = season.load_teams()
     # every program's last three records, for the coaching carousel
     records = state["career"].setdefault("league_records", {})
@@ -1655,7 +1673,6 @@ def next_season(state: dict) -> dict:
         records[slug] = records[slug][-3:]
     history = state["career"].setdefault("history", [])
     history.append(summary(state))
-    team = off.get("move_to") or state["team"]
     # the year's schedule, built the way the conferences build theirs; the league carries the history it needs
     from sim import schedule_gen
     teams = season.load_teams()
