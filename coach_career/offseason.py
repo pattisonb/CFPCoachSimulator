@@ -903,6 +903,9 @@ def _sign_classes(state: dict, lgd: dict) -> dict[str, int]:
         c = _compact_prospect(state, rc["prospects"][pid], attrs)
         c["j"] = _jersey(team["roster"], c["pos"], rng)
         c["signed"] = True
+        contact = (rc.get("contacts") or {}).get(pid, {}).get(slug) or {}
+        if any(pr["kind"] == "roster" for pr in contact.get("promises") or ()):
+            c["promised"] = lgd["year"]                    # told the job was his: the retention step's promise (PROMISE_BROKEN reads it)
         team["roster"].append(c)
         out[slug] = out.get(slug, 0) + 1
     return out

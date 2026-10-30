@@ -93,6 +93,12 @@ LOWBALL = 0.5                              # an offer under this share of his as
 LOWBALL_MIN = 20                           # ... as is a 0-NIL offer when he asks for at least this
 COOL_WEEKS = 3                             # a lowball cools him on you for this long: contacts count half, no visit
 COOLED_CONTACT = 0.5
+ANSWER_STRAIGHT = 1.0                      # his question about a named player (scenes.question): a straight answer's points ...
+ANSWER_PROMISE = 3.0                       # ... a promise he can believe (he would start; he is the better recruit) ...
+ANSWER_HOLLOW = 2.0                        # ... and what a hollow one costs (he cools on you a week too) *tune*
+PROMISE_MARGIN = 5                         # a roster promise holds when he is within this of the player ahead, or that player is in his last year *tune: tools/check_recruiting.py*
+LAST_YEAR = {"JR", "JRRS"}                 # this season's class of a player in his last year next season (the portal's rosters already read next season: LEAVING)
+PROMISE_RIVAL = 20                         # firmness lost when the other recruit you promised him over commits to you too
 ASK_MORE = (1.5, 1.25)                     # a rival's NIL this much over yours, with you in his top group: his ask from you rises this much
 TOP_GROUP = 8                              # the schools he is seriously considering: his top this many by interest
 # pestering: contacts past his patience from a school he is not considering cost it *tune*
@@ -485,6 +491,65 @@ def _ahead(state: dict, slug: str, group: str, ovr: float) -> int:
         from coach_career import offseason
         return sum(1 for c in state["league"]["teams"][slug]["roster"] if offseason.GROUP.get(c["pos"]) == group and c["o"] >= ovr)
     return sum(1 for o in _returning(slug, group) if o >= ovr)
+
+
+def ahead_of(state: dict, slug: str, pid: str) -> Optional[dict]:
+    """The best returning player at his position group on that roster rated at least as high as him
+    (`_ahead`'s test, the one player it names): {name, position, cls, ovr, slug}, or None. In the
+    portal the career league's roster (next year's, signees included); otherwise the season's."""
+    p = state["recruiting"]["prospects"][pid]
+    group = _group_of(p)
+    best = None
+    if is_portal(state):
+        from coach_career import offseason
+        for c in state["league"]["teams"][slug]["roster"]:
+            if offseason.GROUP.get(c["pos"]) == group and c["o"] >= p["ovr"] and (best is None or c["o"] > best["ovr"]):
+                best = {"name": c["n"], "position": POS_247_OF.get(c["pos"], c["pos"]), "cls": c["cls"], "ovr": c["o"], "slug": c["id"],
+                        "last_year": c["cls"] in LEAVING}
+        return best
+    if not any(o >= p["ovr"] for o in _returning(slug, group)):       # `_ahead`'s own test, so the two always agree
+        return None
+    from sim import season
+    t = season.load_teams()[slug]
+    for q in t["offense"] + t["defense"]:
+        ovr = q.get("ovr") or 0
+        if (("LB" if q["position"] in ("MLB", "ROLB", "LOLB") else q["position"]) == group and q.get("class") not in LEAVING
+                and ovr >= p["ovr"] and (best is None or ovr > best["ovr"])):
+            best = {"name": q["name"], "position": q["position"], "cls": q.get("class"), "ovr": ovr, "slug": q["slug"],
+                    "last_year": q.get("class") in LAST_YEAR}
+    return best
+
+
+def promise_holds(state: dict, slug: str, pid: str, question: dict) -> bool:
+    """Whether he can believe your promise: over a roster player, when that player is in his last
+    year or the recruit's overall is within PROMISE_MARGIN of his; over another recruit, when the
+    recruit is rated at least as high."""
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    about = question["about"]
+    if question["kind"] == "roster":
+        if "ovr" not in about or "last_year" not in about:          # a scene from before these were kept: read him again
+            ahead = ahead_of(state, slug, pid) or {}
+            about = {**about, "ovr": ahead.get("ovr", 99), "last_year": ahead.get("last_year", False)}
+        return bool(about["last_year"]) or p["ovr"] >= about["ovr"] - PROMISE_MARGIN
+    other = rc["prospects"].get(about.get("pid"))
+    return other is None or p["ovr"] >= other["ovr"]
+
+
+def other_offered(state: dict, slug: str, pid: str) -> Optional[dict]:
+    """The highest-ranked other recruit at his position group the school has offered who is
+    uncommitted or committed to that school: {pid, name, position, rank}, or None."""
+    rc = state["recruiting"]
+    group = _group_of(rc["prospects"][pid])
+    best = None
+    for other in rc["offers"].get(slug, []):
+        st_ = rc["status"][other]
+        if other == pid or st_["signed"] or st_["committed"] not in (None, slug):
+            continue
+        q = rc["prospects"][other]
+        if _group_of(q) == group and (best is None or q["rank"] < best["rank"]):
+            best = {"pid": other, "name": q["name"], "position": q["position"], "rank": q["rank"]}
+    return best
 
 
 _LEAVER_CUT: tuple = (None, 0)   # (career and year, the overall at the EARLY_LEAVER_POOL-th best draft-eligible underclassman)
@@ -1073,12 +1138,14 @@ def _unmark(state: dict, slug: str, pid: str) -> None:
 
 
 def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
-        scene: Optional[str] = None) -> dict:
+        scene: Optional[str] = None, answer: Optional[str] = None) -> dict:
     """One recruiting action by `slug` on prospect `pid` this week. Its interest lands at the week
     step (you see his list move next week), so this returns no interest. Your call or in-home visit
-    without a pitch opens a scene (returned); `pitch` with the scene's id finishes it and returns
-    his reaction. Raises RecruitingError."""
+    without a pitch opens a scene (returned); `answer` with the scene's id fields his question
+    (`_answer`); `pitch` with the scene's id finishes it and returns his reaction. Raises RecruitingError."""
     rc = state["recruiting"]
+    if action == "answer":
+        return _answer(state, slug, pid, scene, answer)
     if action == "pitch":
         sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
         start = len(rc["log"])
@@ -1104,6 +1171,55 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
 def clear_scenes(state: dict, slug: str) -> None:
     """Drop the school's open scenes (Auto-recruit took over): no points, the hours stay spent."""
     (state["recruiting"].get("scenes") or {}).pop(slug, None)
+
+
+def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Optional[str]) -> dict:
+    """Your answer to the open scene's question (spec section 3), no hours: straight earns
+    ANSWER_STRAIGHT and tells you he cares about playing time; a promise earns ANSWER_PROMISE when
+    he can believe it (`promise_holds`) and
+    otherwise costs ANSWER_HOLLOW and cools him a week; a deflection does nothing. The points go on
+    the scene's action; the answer and his reply are kept on the scene, a promise on his contact."""
+    from coach_career import scenes
+    rc = state["recruiting"]
+    p = rc["prospects"].get(pid)
+    if p is None:
+        raise RecruitingError(400, "unknown prospect")
+    if answer is None:
+        raise RecruitingError(422, "answer is required")
+    if answer not in scenes.ANSWERS:
+        raise RecruitingError(400, "unknown answer")
+    sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
+    if sc is None or scene is None or sc["id"] != scene:
+        raise RecruitingError(409, "no call or visit open")
+    q = sc.get("question")
+    if not q:
+        raise RecruitingError(409, "he asked nothing")
+    if q.get("answer"):
+        raise RecruitingError(409, "you already answered")
+    contact = _contact(state, slug, pid)
+    week = state["current_week"]
+    points, truthful, revealed = 0.0, None, []
+    if answer == "straight":
+        points = ANSWER_STRAIGHT
+        seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
+        if "playing_time" not in seen:
+            seen.append("playing_time")
+            revealed.append("playing_time")
+    elif answer == "promise":
+        truthful = promise_holds(state, slug, pid, q)
+        if truthful:
+            points = ANSWER_PROMISE
+        else:
+            points = -ANSWER_HOLLOW
+            contact["cooled_until"] = week + 1
+            _event(state, "not_buying", pid, slug, topic="playing_time")
+        contact.setdefault("promises", []).append({"kind": q["kind"], "about": q["about"], "week": week, "broken": None})
+    q["answer"] = answer
+    q["reply"] = scenes.answer_reply(state, slug, pid, q, answer, truthful)
+    _event(state, "answer", pid, slug, action=sc["action"], answer=answer, about=q["about"]["name"], truthful=truthful)
+    if points:
+        _add_points(state, slug, pid, points, sc["action"])
+    return {"scene": sc, "points": points, "truthful": truthful, "revealed": revealed, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
 
 
 REPORTS_KEPT = 4           # weekly reports kept (the Office shows the latest)
@@ -1219,8 +1335,8 @@ def _report(state: dict, week: int) -> dict:
     return report
 
 
-REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "pester")
-CONTACT_KINDS = ("contact", "pitch", "raise_nil", "pull_offer")   # your actions, logged for his History (not news)
+REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "pester", "promise_broken")
+CONTACT_KINDS = ("contact", "pitch", "raise_nil", "pull_offer", "answer")   # your actions, logged for his History (not news)
 
 
 def _pester_line(prospect: str, school: str) -> str:
@@ -1341,6 +1457,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
         if sc is None or scene is None or sc["id"] != scene:
             raise RecruitingError(409, "no open call or visit with him")
+        if sc.get("question") and not sc["question"].get("answer"):
+            raise RecruitingError(409, "answer him first")
         if pitch is None:
             raise RecruitingError(400, "a pitch: what you are selling him")
         if pitch in p["priorities"]:                  # he tells you plainly when it is one of his
@@ -1760,6 +1878,33 @@ def flip_by_signing(state: dict, pid: str, gap: float, weeks_left: int) -> float
     return 1 - keep
 
 
+def _promises(state: dict, week: int) -> None:
+    """Promises follow him (spec section 4): a recruit told he was the one over another recruit
+    (a "recruit" promise) remembers when that recruit commits to the school too, once: committed
+    to the school, his firmness drops PROMISE_RIVAL (a hard commit is immune); otherwise he cools on
+    it for COOL_WEEKS. The promise is marked broken and a promise_broken event logged either way."""
+    rc = state["recruiting"]
+    for pid, by in rc["contacts"].items():
+        for slug, c in by.items():
+            for pr in c.get("promises") or ():
+                if pr["kind"] != "recruit" or pr.get("broken") is not None:
+                    continue
+                other = rc["status"].get(pr["about"].get("pid"))
+                if not other or slug not in (other["committed"], other["signed"]):
+                    continue
+                st_ = rc["status"][pid]
+                if st_["signed"]:
+                    continue
+                if st_["committed"] == slug:
+                    if st_.get("hard"):
+                        continue
+                    st_["firmness"] = int(max(0, (st_.get("firmness") or FIRM_START) - PROMISE_RIVAL))
+                else:
+                    c["cooled_until"] = week + COOL_WEEKS
+                pr["broken"] = week
+                _event(state, "promise_broken", pid, slug, about=pr["about"]["name"], other=pr["about"].get("pid"))
+
+
 def _firm_up(state: dict, week: int) -> None:
     """Every verbal commitment firms up with the week: he warms to his school on his own
     (FIRM_DRIFT), faster with contact from it (FIRM_TOUCH) and the NIL still held, and cools
@@ -1971,6 +2116,7 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     if rc.get("portal"):
         _portal_draws(state, week, rng)
     else:
+        _promises(state, week)         # the recruit you promised him over committed too: he remembers
         _firm_up(state, week)
         if week < season.FINAL_WEEK:
             _draws(state, week, rng)

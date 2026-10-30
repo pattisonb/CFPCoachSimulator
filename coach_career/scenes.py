@@ -8,11 +8,15 @@ take {name}, {first}, {town}, {state}, {school}, {position}, {role} ("start", "c
 {record} (the school's won-lost in words). Lines fit a high schooler and a transfer alike; two-sided cues take {a} and {b}, two topics' phrases."""
 from __future__ import annotations
 
+import os
 import random
 
 from coach_career import recruiting
 
 CUE_TWO_SIDED = 0.6        # how often a cue names two topics (one his, one not) *tune: tools/check_recruiting.py*
+# how often a playing-time recruit asks about a named player on a call or visit *tune: tools/check_recruiting.py*
+# (CFP_QUESTION_RATE: the sweep forces it through the dev server's environment)
+QUESTION_RATE = float(os.environ.get("CFP_QUESTION_RATE", "0.6"))
 
 # the topics as he would say them, for two-sided cues
 PHRASES = {"proximity": "staying close to home", "playing_time": "getting on the field early",
@@ -130,6 +134,35 @@ TIRED = ["He is polite but short. He is not weighing you right now, and the call
          "He lets it ring a while before he picks up. {school} is not on his mind, and he does not hide it.",
          "He hears you out and says nothing about {school}. His mind is on other schools, and he wants the calls to stop."]
 
+# his question about a named player (docs/superpowers/specs/2026-10-29-recruit-questions-design.md,
+# section 2): the player ahead of him on your roster ({ahead}, {ahead_cls} his class in words, {position}
+# the recruit's position), or another recruit you offered at his position ({other})
+QUESTION_LINES = {
+    "roster": ["Is {ahead} still your {position} next year? I'm not coming to sit behind him.",
+               "{ahead} is a {ahead_cls}. That's two more years of him. Where does that leave me?",
+               "My dad looked at your depth chart. He says {ahead} has that spot locked."],
+    "recruit": ["You offered {other} too. Which one of us do you actually want?",
+                "I saw {other} post your offer. You telling him the same thing you're telling me?",
+                "If {other} commits first, is there still a spot for me?"],
+}
+ANSWERS = ("straight", "promise", "deflect")
+# your reply buttons, by the question's kind (the page draws them; the engine keeps the one copy)
+ANSWER_COPY = {
+    "roster": {"straight": "He's the starter today. You'd compete, and the best man plays.",
+               "promise": "The job's yours.",
+               "deflect": "Let's talk about what you'd bring."},
+    "recruit": {"straight": "I offered him too. One of you starts; I want it to be you.",
+                "promise": "You're the one I want.",
+                "deflect": "Let's talk about what you'd bring."},
+}
+# what he says back: a promise he believes ("promise") or one he has heard before ("hollow")
+REPLY_LINES = {"straight": "Fair. At least you're not blowing smoke.",
+               "promise": "That's what I needed to hear, Coach.",
+               "hollow": "I've heard that one before.",
+               "deflect": "...Okay."}
+CLASS_WORDS = {"FR": "freshman", "FRRS": "redshirt freshman", "SO": "sophomore", "SORS": "redshirt sophomore",
+               "JR": "junior", "JRRS": "redshirt junior", "SR": "senior", "SRRS": "redshirt senior"}
+
 # the opening of a call (and the middle of a visit): small talk
 COLOR = ["Hey Coach. Just got back from practice.",
           "Yes sir, I've got a few minutes.",
@@ -210,7 +243,42 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
         lines.append(f"His dad asks what the collective can do: {words(n)} points." if n
                      else "His dad says the money isn't the point.")
     return {"id": f"{action}-{pid}-{week}", "action": action, "week": week, "lines": lines,
-            "cue": {"topics": topics, "text": text}, "ask": ask}
+            "cue": {"topics": topics, "text": text}, "ask": ask, "question": question(state, slug, pid, week)}
+
+
+def question(state: dict, slug: str, pid: str, week: int) -> dict | None:
+    """His question about a named player, QUESTION_RATE of the time when playing time is one of his
+    priorities (its own RNG: no other draw moves): the best returning player at his group on your
+    roster rated at least as high ("roster"), else the highest-ranked other recruit you offered at
+    his group who is uncommitted or yours ("recruit"); neither, no question."""
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    if "playing_time" not in p["priorities"]:
+        return None
+    rng = random.Random(f"question-{rc['seed']}-{slug}-{pid}-{week}")
+    if rng.random() >= QUESTION_RATE:
+        return None
+    ahead = recruiting.ahead_of(state, slug, pid)
+    if ahead:
+        text = rng.choice(QUESTION_LINES["roster"]).format(ahead=ahead["name"], ahead_cls=CLASS_WORDS.get(ahead["cls"], "veteran"),
+                                                           position=p["position"])
+        return {"kind": "roster", "text": text, "answer": None, "reply": None,
+                "about": {"id": ahead["slug"], "name": ahead["name"], "position": ahead["position"], "cls": ahead["cls"],
+                          "ovr": ahead["ovr"], "last_year": ahead["last_year"]}}
+    other = recruiting.other_offered(state, slug, pid)
+    if other:
+        text = rng.choice(QUESTION_LINES["recruit"]).format(other=other["name"])
+        return {"kind": "recruit", "text": text, "answer": None, "reply": None,
+                "about": {"pid": other["pid"], "name": other["name"], "position": other["position"],
+                          "cls": rc["prospects"][other["pid"]].get("cls")}}
+    return None
+
+
+def answer_reply(state: dict, slug: str, pid: str, question: dict, answer: str, truthful: bool | None) -> str:
+    """What he says back to your answer (a hollow promise gets its own line)."""
+    if answer == "promise" and not truthful:
+        return REPLY_LINES["hollow"]
+    return REPLY_LINES[answer]
 
 
 def reaction(state: dict, slug: str, pid: str, action: str, pitch: str, p: dict, tired: bool = False) -> dict:
