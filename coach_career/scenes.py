@@ -258,7 +258,8 @@ def question(state: dict, slug: str, pid: str, week: int) -> dict | None:
         text = rng.choice(QUESTION_LINES["roster"]).format(ahead=ahead["name"], ahead_cls=CLASS_WORDS.get(ahead["cls"], "veteran"),
                                                            position=p["position"])
         return {"kind": "roster", "text": text, "answer": None, "reply": None,
-                "about": {"id": ahead["slug"], "name": ahead["name"], "position": ahead["position"], "cls": ahead["cls"]}}
+                "about": {"id": ahead["slug"], "name": ahead["name"], "position": ahead["position"], "cls": ahead["cls"],
+                          "ovr": ahead["ovr"], "last_year": ahead["last_year"]}}
     other = recruiting.other_offered(state, slug, pid)
     if other:
         text = rng.choice(QUESTION_LINES["recruit"]).format(other=other["name"])

@@ -106,7 +106,7 @@ if __name__ == "__main__":
         sc = call(sid, pid)
         q = sc["question"]
         assert q and q["kind"] == "roster" and q["about"]["name"] == want["name"] and q["about"]["id"] == want["slug"], q
-        assert q["answer"] is None and q["reply"] is None and want["name"] in q["text"]
+        assert q["answer"] is None and q["reply"] is None and want["name"] in q["text"] and "None" not in q["text"]
         p = rc["prospects"][pid]
         f = {"ahead": want["name"], "ahead_cls": scenes.CLASS_WORDS[want["class"]], "position": p["position"]}
         assert q["text"] in [line.format(**f) for line in scenes.QUESTION_LINES["roster"]], q["text"]
@@ -158,17 +158,17 @@ if __name__ == "__main__":
         assert recruiting.pending(st, ME, pid2) == 0.0 and not rc["contacts"][pid2][ME].get("promises")
         assert events(st, pid2, "answer")[-1]["answer"] == "deflect"
 
-        # ----- a hollow promise: he would wait, and you told him the job was his -----
+        # ----- a hollow promise: the player ahead is back next year and well clear of him -----
         pid3 = None
         while pid3 is None:
             cand = cold(st, True, used)
-            if best_ahead(st, cand) is not None:
+            a = recruiting.ahead_of(st, ME, cand)
+            if a and not a["last_year"] and rc["prospects"][cand]["ovr"] < a["ovr"] - recruiting.PROMISE_MARGIN:
                 pid3 = cand
         sc3 = call(sid, pid3)
-        assert sc3["question"]["kind"] == "roster"
-        with recruiting.forced_strength(st, ME, pid3, "playing_time", 0.1):
-            assert scenes._role(st, ME, pid3) == "wait"
-            r = answer(sid, pid3, sc3, "promise")
+        assert sc3["question"]["kind"] == "roster" and sc3["question"]["about"]["last_year"] is False
+        assert not recruiting.promise_holds(st, ME, pid3, sc3["question"])
+        r = answer(sid, pid3, sc3, "promise")
         assert r["points"] == -recruiting.ANSWER_HOLLOW and r["truthful"] is False
         assert r["scene"]["question"]["reply"] == "I've heard that one before." == scenes.REPLY_LINES["hollow"]
         assert abs(recruiting.pending(st, ME, pid3) + recruiting.ANSWER_HOLLOW) < 1e-9
@@ -178,23 +178,28 @@ if __name__ == "__main__":
         assert c3["promises"] == [{"kind": "roster", "about": sc3["question"]["about"], "week": week, "broken": None}]
         assert events(st, pid3, "answer")[-1]["truthful"] is False
 
-        # ----- a true promise: he would start -----
+        # ----- a true promise: the player ahead is in his last year next season -----
         pid4 = None
         while pid4 is None:
             cand = cold(st, True, used)
-            if best_ahead(st, cand) is not None:
+            a = recruiting.ahead_of(st, ME, cand)
+            if a and a["last_year"]:
                 pid4 = cand
         sc4 = call(sid, pid4)
-        assert sc4["question"]["kind"] == "roster"
-        with recruiting.forced_strength(st, ME, pid4, "playing_time", 1.0):
-            assert scenes._role(st, ME, pid4) == "start"
-            r = answer(sid, pid4, sc4, "promise")
+        assert sc4["question"]["kind"] == "roster" and sc4["question"]["about"]["cls"] in recruiting.LAST_YEAR
+        assert recruiting.promise_holds(st, ME, pid4, sc4["question"])
+        r = answer(sid, pid4, sc4, "promise")
         assert r["points"] == recruiting.ANSWER_PROMISE and r["truthful"] is True
         assert r["scene"]["question"]["reply"] == "That's what I needed to hear, Coach." == scenes.REPLY_LINES["promise"]
         assert abs(recruiting.pending(st, ME, pid4) - recruiting.ANSWER_PROMISE) < 1e-9
         c4 = rc["contacts"][pid4][ME]
         assert "cooled_until" not in c4 and c4["promises"][0]["kind"] == "roster" and c4["promises"][0]["broken"] is None
         assert not events(st, pid4, "not_buying")
+        # the margin alone holds it too: within PROMISE_MARGIN of a returning player
+        q_ = dict(sc4["question"], about=dict(sc4["question"]["about"], last_year=False, ovr=rc["prospects"][pid4]["ovr"] + recruiting.PROMISE_MARGIN))
+        assert recruiting.promise_holds(st, ME, pid4, q_)
+        q_["about"]["ovr"] += 1
+        assert not recruiting.promise_holds(st, ME, pid4, q_)
 
         # ----- no question: no playing-time priority; or nobody ahead and nobody else offered -----
         pid5 = cold(st, False, used)
@@ -220,6 +225,7 @@ if __name__ == "__main__":
             sc7 = call(sid, pid7)
             q7 = sc7["question"]
             assert q7["kind"] == "recruit" and q7["about"]["pid"] == top and q7["about"]["name"] == rc["prospects"][top]["name"], q7
+            assert q7["about"]["cls"] is None and "None" not in q7["text"]
             assert q7["text"] in [line.format(other=rc["prospects"][top]["name"]) for line in scenes.QUESTION_LINES["recruit"]]
             r = answer(sid, pid7, sc7, "promise")
             truthful = rc["prospects"][pid7]["ovr"] >= rc["prospects"][top]["ovr"]

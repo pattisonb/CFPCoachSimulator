@@ -159,7 +159,8 @@ def reveal_rate(seed: int, team: str = "georgia") -> float:
 def question_mix(seed: int, team: str = "georgia") -> dict:
     """How often a call brings a question about a named player (scenes.QUESTION_RATE of the calls to
     recruits who care about playing time), the roster/recruit split, and how often a promise would be
-    hollow: a fresh career, the first 300 prospects you can see, each a call, every question promised."""
+    hollow (roster questions; PROMISE_MARGIN sets it, the band 30-60% truthful): a fresh career, the first
+    300 prospects you can see, each a call, every question promised."""
     from coach_career import scenes
     state = season.new_season(team, "full", seed=seed, career=True)
     rc = state["recruiting"]
@@ -175,8 +176,9 @@ def question_mix(seed: int, team: str = "georgia") -> dict:
         out["questions"] += 1
         out[q["kind"]] += 1
         r = recruiting.act(state, team, pid, "answer", scene=sc["id"], answer="promise")
-        out["promises"] += 1
-        out["hollow"] += r["truthful"] is False
+        if q["kind"] == "roster":
+            out["promises"] += 1
+            out["hollow"] += r["truthful"] is False
     out["rate"] = scenes.QUESTION_RATE
     return out
 
@@ -187,7 +189,7 @@ def main() -> None:
     qm = question_mix(1)
     print(f"  recruit questions: {qm['questions']} on {qm['calls']} calls ({qm['playing_time']} care about playing time; "
           f"want about {qm['rate']:.2f} of those), roster {qm['roster']} / recruit {qm['recruit']}; "
-          f"promises hollow {qm['hollow']} of {qm['promises']}")
+          f"roster promises truthful {qm['promises'] - qm['hollow']} of {qm['promises']}   want 30-60%")
     for seed in range(1, n + 1):
         print(f"season seed {seed}")
         print("\n".join(report(measure(play(seed)))))

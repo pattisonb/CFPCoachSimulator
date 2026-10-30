@@ -96,6 +96,8 @@ COOLED_CONTACT = 0.5
 ANSWER_STRAIGHT = 1.0                      # his question about a named player (scenes.question): a straight answer's points ...
 ANSWER_PROMISE = 3.0                       # ... a promise he can believe (he would start; he is the better recruit) ...
 ANSWER_HOLLOW = 2.0                        # ... and what a hollow one costs (he cools on you a week too) *tune*
+PROMISE_MARGIN = 5                         # a roster promise holds when he is within this of the player ahead, or that player is in his last year *tune: tools/check_recruiting.py*
+LAST_YEAR = {"JR", "JRRS"}                 # this season's class of a player in his last year next season (the portal's rosters already read next season: LEAVING)
 PROMISE_RIVAL = 20                         # firmness lost when the other recruit you promised him over commits to you too
 ASK_MORE = (1.5, 1.25)                     # a rival's NIL this much over yours, with you in his top group: his ask from you rises this much
 TOP_GROUP = 8                              # the schools he is seriously considering: his top this many by interest
@@ -443,7 +445,8 @@ def ahead_of(state: dict, slug: str, pid: str) -> Optional[dict]:
         from coach_career import offseason
         for c in state["league"]["teams"][slug]["roster"]:
             if offseason.GROUP.get(c["pos"]) == group and c["o"] >= p["ovr"] and (best is None or c["o"] > best["ovr"]):
-                best = {"name": c["n"], "position": POS_247_OF.get(c["pos"], c["pos"]), "cls": c["cls"], "ovr": c["o"], "slug": c["id"]}
+                best = {"name": c["n"], "position": POS_247_OF.get(c["pos"], c["pos"]), "cls": c["cls"], "ovr": c["o"], "slug": c["id"],
+                        "last_year": c["cls"] in LEAVING}
         return best
     if not any(o >= p["ovr"] for o in _returning(slug, group)):       # `_ahead`'s own test, so the two always agree
         return None
@@ -453,8 +456,25 @@ def ahead_of(state: dict, slug: str, pid: str) -> Optional[dict]:
         ovr = q.get("ovr") or 0
         if (("LB" if q["position"] in ("MLB", "ROLB", "LOLB") else q["position"]) == group and q.get("class") not in LEAVING
                 and ovr >= p["ovr"] and (best is None or ovr > best["ovr"])):
-            best = {"name": q["name"], "position": q["position"], "cls": q.get("class"), "ovr": ovr, "slug": q["slug"]}
+            best = {"name": q["name"], "position": q["position"], "cls": q.get("class"), "ovr": ovr, "slug": q["slug"],
+                    "last_year": q.get("class") in LAST_YEAR}
     return best
+
+
+def promise_holds(state: dict, slug: str, pid: str, question: dict) -> bool:
+    """Whether he can believe your promise: over a roster player, when that player is in his last
+    year or the recruit's overall is within PROMISE_MARGIN of his; over another recruit, when the
+    recruit is rated at least as high."""
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    about = question["about"]
+    if question["kind"] == "roster":
+        if "ovr" not in about or "last_year" not in about:          # a scene from before these were kept: read him again
+            ahead = ahead_of(state, slug, pid) or {}
+            about = {**about, "ovr": ahead.get("ovr", 99), "last_year": ahead.get("last_year", False)}
+        return bool(about["last_year"]) or p["ovr"] >= about["ovr"] - PROMISE_MARGIN
+    other = rc["prospects"].get(about.get("pid"))
+    return other is None or p["ovr"] >= other["ovr"]
 
 
 def other_offered(state: dict, slug: str, pid: str) -> Optional[dict]:
@@ -1016,7 +1036,7 @@ def clear_scenes(state: dict, slug: str) -> None:
 def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Optional[str]) -> dict:
     """Your answer to the open scene's question (spec section 3), no hours: straight earns
     ANSWER_STRAIGHT and tells you he cares about playing time; a promise earns ANSWER_PROMISE when
-    he can believe it (he would start; or he is rated at least as high as the other recruit) and
+    he can believe it (`promise_holds`) and
     otherwise costs ANSWER_HOLLOW and cools him a week; a deflection does nothing. The points go on
     the scene's action; the answer and his reply are kept on the scene, a promise on his contact."""
     from coach_career import scenes
@@ -1046,11 +1066,7 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
             seen.append("playing_time")
             revealed.append("playing_time")
     elif answer == "promise":
-        if q["kind"] == "roster":
-            truthful = scenes._role(state, slug, pid) == "start"
-        else:
-            other = rc["prospects"].get(q["about"].get("pid"))
-            truthful = other is None or p["ovr"] >= other["ovr"]
+        truthful = promise_holds(state, slug, pid, q)
         if truthful:
             points = ANSWER_PROMISE
         else:
@@ -1911,10 +1927,10 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
         if slug != mine or auto_mine:
             auto_recruit(state, slug, random.Random(f"auto-{rc['seed']}-{slug}-{week}"), commits, yours=slug == mine)
     _flush(state, week)                # the other schools' week lands with yours
-    _promises(state, week)             # the recruit you promised him over committed too: he remembers
     if rc.get("portal"):
         _portal_draws(state, week, rng)
     else:
+        _promises(state, week)         # the recruit you promised him over committed too: he remembers
         _firm_up(state, week)
         if week < season.FINAL_WEEK:
             _draws(state, week, rng)
