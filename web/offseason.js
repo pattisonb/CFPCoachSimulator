@@ -91,11 +91,11 @@
   function draw(s, v, root, patching) {     // root: the live box, or a detached one to patch from (handlers use BOX)
     drawn = { sid: s.id, stage: v.stage };
     const head = el("section", { class: "go-card off-head", "data-key": "head" }, [
-      el("div", { class: "go-kicker", text: `OFFSEASON · ON TO ${v.year}` }),
+      el("div", { class: "go-kicker", text: `Offseason · On to ${v.year}` }),
       el("div", { class: "go-display xl", text: v.stage_name.toUpperCase() }),
       stepper(v),
-      el("div", { class: "go-mini off-numbers" }, [stat("ROSTER", `${v.roster} / ${v.roster_limit || 85}${v.retention && !v.retention.results && v.retention.players.length ? ` · ${v.retention.players.length} deciding` : ""}`), stat("CLASS SIGNED", String(v.signed)),
-        stat("OPEN SPOTS", String(v.open_spots)), stat("PORTAL", `${v.portal.signed} of ${v.portal.entrants} placed`)]),
+      el("div", { class: "go-mini off-numbers" }, [stat("Roster", `${v.roster} / ${v.roster_limit || 85}${v.retention && !v.retention.results && v.retention.players.length ? ` · ${v.retention.players.length} deciding` : ""}`), stat("Class Signed", String(v.signed)),
+        stat("Open Spots", String(v.open_spots)), stat("Portal", `${v.portal.signed} of ${v.portal.entrants} placed`)]),
     ]);
     const actions = el("div", { class: "go-play off-actions" });
     head.append(actions);
@@ -103,15 +103,15 @@
     const main = el("div", { class: "off-main", "data-key": "main" });
     root.append(main);
     // the primary button says where it takes you ("Advance to …"), never what the next stage does
-    const next = { departures: v.retention && v.retention.players.length ? "Advance to Keep them home" : "Advance to the transfer portal", retention: "Advance to the transfer portal",
-                   portal_1: "Advance to portal round 2", portal_2: "Close the portal and advance", portal_w1: "Advance to portal week 2", portal_w2: "Advance to portal week 3",
-                   portal_w3: "Advance to portal week 4", portal_w4: "Close the portal and advance", development: "Advance to staff changes",
-                   staff: "Finish the offseason", ready: `Start the ${v.year} season` }[v.stage];
+    const next = { departures: v.retention && v.retention.players.length ? "Advance to Keep Them Home" : "Advance to the Transfer Portal", retention: "Advance to the Transfer Portal",
+                   portal_1: "Advance to Portal Round 2", portal_2: "Close the Portal and Advance", portal_w1: "Advance to Portal Week 2", portal_w2: "Advance to Portal Week 3",
+                   portal_w3: "Advance to Portal Week 4", portal_w4: "Close the Portal and Advance", development: "Advance to Staff Changes",
+                   staff: "Finish the Offseason", ready: `Start the ${v.year} Season` }[v.stage];
     const go = el("button", { type: "button", class: "go-btn primary big", text: next });
     ui.on(go, "click", (ev) => advance(s, BOX, ev.currentTarget, v.stage === "ready" ? "next_season" : null));
     actions.append(go);
     if (v.stage !== "ready") {
-      const all = el("button", { type: "button", class: "go-btn big2", text: "Sim to next season" });
+      const all = el("button", { type: "button", class: "go-btn big2", text: "Sim to Next Season" });
       ui.on(all, "click", (ev) => { if (window.confirm("Sim the rest of the offseason? Every decision still open (players deciding, the portal, your staff) is made for you.")) advance(s, BOX, ev.currentTarget, "next_season"); });
       actions.append(all);
     }
@@ -130,7 +130,7 @@
   }
 
   function firedNote(v) {
-    return el("section", { class: "go-card off-fired", "data-key": "fired" }, [el("div", { class: "go-kicker", text: "YOU HAVE BEEN LET GO" }),
+    return el("section", { class: "go-card off-fired", "data-key": "fired" }, [el("div", { class: "go-kicker", text: "You Have Been Let Go" }),
       el("p", { text: `The program's next coach runs the rest of the ${v.year} offseason. Walk the steps and pick your next job at the Staff step.` })]);
   }
 
@@ -142,9 +142,9 @@
 
   function renderReview(s, v) {
     const r = v.review;
-    const card = el("section", { class: "go-card off-review", "data-key": "review" }, [el("div", { class: "go-kicker", text: "YOUR MEETING WITH THE AD" }),
-      el("div", { class: "go-mini off-numbers" }, [stat("THE GOAL", r.goal), stat("YOUR RECORD", `${r.record[0]}-${r.record[1]}`),
-        stat("JOB SECURITY", r.mood || ""), stat("HIS PATIENCE", `${r.patience} years`), stat("YEAR", `${r.tenure} in the job`)]),
+    const card = el("section", { class: "go-card off-review", "data-key": "review" }, [el("div", { class: "go-kicker", text: "Your Meeting With the AD" }),
+      el("div", { class: "go-mini off-numbers" }, [stat("The Goal", r.goal), stat("Your Record", `${r.record[0]}-${r.record[1]}`),
+        stat("Job Security", r.mood || ""), stat("His Patience", `${r.patience} years`), stat("Year", `${r.tenure} in the job`)]),
       meter(r.security),
       el("p", { class: "off-why", text: r.words })]);
     if (r.nil_portal) card.append(nilPortalLine(r.nil_portal));
@@ -218,11 +218,11 @@
     SAM: "SAM", MIKE: "MIKE", WILL: "WILL", CB: "CB", FS: "FS", SS: "SS", K: "K", P: "P" };
   const NEXT_CLASS = { FR: "SO", FRRS: "SORS", SO: "JR", SORS: "JRRS", JR: "SR", JRRS: "SRRS" };
   function renderRosterMoves(s, v, patching) {
-    const card = el("section", { class: "go-card off-roster", "data-key": "roster" }, [el("div", { class: "go-kicker", text: "YOUR ROSTER" })]);
+    const card = el("section", { class: "go-card off-roster", "data-key": "roster" }, [el("div", { class: "go-kicker", text: "Your Roster" })]);
     const rs = v.redshirts;
     if (rs && v.stage === "departures") {
       const picked = rs.players.filter((p) => p.redshirt).length;
-      card.append(el("div", { class: "go-kicker muted off-sub", text: `REDSHIRTS · ${picked} OF ${rs.players.length}` }),
+      card.append(el("div", { class: "go-kicker muted off-sub", text: `Redshirts · ${picked} of ${rs.players.length}` }),
         el("p", { class: "muted small", text: rs.decided ? "Decided: the classes below are set for next season."
           : "Four games or fewer and the year unused: a redshirt keeps his class for next season (he still develops). Freshmen off the depth chart's top take it unless you say otherwise." }));
       if (!rs.players.length) card.append(el("p", { class: "muted", text: "Nobody on your roster can take a redshirt this year." }));
@@ -239,14 +239,14 @@
       card.append(list);
     }
     // position changes: pick a player, see what he would be everywhere, move him
-    card.append(el("div", { class: "go-kicker muted off-sub", text: `POSITION CHANGES · ${(v.position_changes || []).length}` }),
+    card.append(el("div", { class: "go-kicker muted off-sub", text: `Position Changes · ${(v.position_changes || []).length}` }),
       el("p", { class: "muted small", text: "Move a player to another spot; his overall follows our formula there. Changes apply at once." }));
     const option = (r) => el("option", { value: r.id, text: `${r.pos} · ${r.name} · ${clsWord(r.cls)} · ${r.overall} OVR${r.moved_from ? ` (was ${r.moved_from})` : ""}${r.transfer ? ` · transfer from ${teamName(r.transfer)}` : ""}` });
     const roster = v.my_roster || [];
     const transfers = roster.filter((r) => r.transfer);
     if (view.posPick && !roster.some((r) => r.id === view.posPick)) view.posPick = "";
-    const pick = el("select", { class: "go-sel", "aria-label": "Player to move" }, [el("option", { value: "", text: "Pick a player…" }),
-      ...(transfers.length ? [el("optgroup", { label: "Transfers" }, transfers.map(option)), el("optgroup", { label: "Everyone else" }, roster.filter((r) => !r.transfer).map(option))]
+    const pick = el("select", { class: "go-sel", "aria-label": "Player to move" }, [el("option", { value: "", text: "Pick a Player…" }),
+      ...(transfers.length ? [el("optgroup", { label: "Transfers" }, transfers.map(option)), el("optgroup", { label: "Everyone Else" }, roster.filter((r) => !r.transfer).map(option))]
         : roster.map(option))]);
     pick.value = view.posPick;
     // his options as chips (keyed by position, patched in place); a patch of the card keeps them (data-keep)
@@ -275,7 +275,7 @@
     if (view.posPick && !patching) loadOpts(opts).catch((err) => H.toast(H.errText(err)));
     card.append(el("div", { class: "go-row wrap" }, [pick]), opts);
     if ((v.position_changes || []).length) card.append(el("ul", { class: "off-list", "data-key": "moves" }, v.position_changes.map((m) => {
-      const undo = el("button", { type: "button", class: "go-link", text: "undo" });
+      const undo = el("button", { type: "button", class: "go-link", text: "Undo" });
       ui.on(undo, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/position`, H.postJSON({ pid: m.id, pos: m.from })), `${m.name} moves back to ${m.from}`,
         { after: () => loadOpts(document.querySelector("#tab-offseason .off-pos-opts")) }));
       return el("li", { "data-key": m.id }, [el("b", { text: m.name }), ` ${m.from} → ${m.to} · ${m.overall} OVR `, undo]);
@@ -285,20 +285,20 @@
 
   function renderDepartures(v, main) {
     const mine = v.departures.mine;
-    const card = el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: `LEAVING YOUR PROGRAM · ${mine.length}` })]);
+    const card = el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: `Leaving Your Program · ${mine.length}` })]);
     for (const kind of KIND_ORDER) {
       const rows = mine.filter((d) => d.kind === kind);
       if (!rows.length) continue;
-      card.append(el("div", { class: "go-kicker muted off-sub", text: `${rows[0].kind_name.toUpperCase()} · ${rows.length}` }),
+      card.append(el("div", { class: "go-kicker muted off-sub", text: `${rows[0].kind_name} · ${rows.length}` }),
         el("ul", { class: "off-list" }, rows.sort((a, b) => (a.pick || 999) - (b.pick || 999) || b.overall - a.overall).map((d) => el("li", {}, [
           el("b", { text: d.name }), el("span", { class: "muted", text: ` ${d.pos} · ${clsWord(d.cls)} · ${d.overall} OVR` }),
-          d.kind === "draft" ? el("span", { class: "go-tag good", text: `Round ${d.round}, pick ${d.pick}${d.early ? " · early" : ""}` }) : null]))));
+          d.kind === "draft" ? el("span", { class: "go-tag good", text: `Round ${d.round}, Pick ${d.pick}${d.early ? " · early" : ""}` }) : null]))));
     }
     if (!mine.length) card.append(el("p", { class: "muted", text: "Nobody leaves." }));
-    const league = el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: "AROUND THE LEAGUE" }),
+    const league = el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: "Around the League" }),
       el("p", {}, [`${v.departures.league.graduated || 0} graduated, ${v.departures.league.draft || 0} drafted (${v.departures.early_entrants} declared early), `,
         `${v.departures.league.portal || 0} entered the transfer portal, ${v.departures.league.quit || 0} left their teams.`]),
-      el("div", { class: "go-kicker muted off-sub", text: "THE FIRST ROUND" }),
+      el("div", { class: "go-kicker muted off-sub", text: "The First Round" }),
       el("ol", { class: "off-list off-draft" }, v.departures.first_round.map((d) => el("li", {}, [
         el("span", { class: "muted", text: `${d.pick}. ` }), window.CFP.teamPill(d.team), el("b", { text: ` ${d.name}` }),
         el("span", { class: "muted", text: ` ${d.pos} · ${d.team_name}${d.early ? " · early" : ""}` })])))]);
@@ -311,21 +311,21 @@
     const retain = (ev, pid, action, said, nil) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/retain`, H.postJSON({ pid, action, nil: nil || 0 })), said,
       { fail: (err) => H.toast(`Could not do that: ${H.errText(err)}`, 4000) });
     const head = el("section", { class: "go-card", "data-key": "keep-head" }, [
-      el("div", { class: "go-kicker", text: `KEEP THEM HOME · ${r.players.length} WANT OUT` }),
+      el("div", { class: "go-kicker", text: `Keep Them Home · ${r.players.length} Want Out` }),
       el("p", {}, [`${r.players.length} of your players with eligibility left mean to leave: transfers and early draft entrants. Meet each one to hear what it would take. `,
         "A promised starting role only counts if your depth chart would really start him; NIL comes out of next year's budget, so it is money you will not have for recruits or the portal. ",
         "Nobody decides until you advance; graduating seniors are gone either way."]),
-      el("div", { class: "go-row wrap" }, [el("span", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: "NEXT YEAR'S NIL" }), el("div", { class: "go-stat-val", text: `${r.left} / ${r.budget}` })]),
-        el("span", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: "COMMITTED TO KEEP THEM" }), el("div", { class: "go-stat-val", text: `${r.spent}` })])]),
+      el("div", { class: "go-row wrap" }, [el("span", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: "Next Year's NIL" }), el("div", { class: "go-stat-val", text: `${r.left} / ${r.budget}` })]),
+        el("span", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: "Committed to Keep Them" }), el("div", { class: "go-stat-val", text: `${r.spent}` })])]),
     ]);
     const cards = el("div", { class: "go-cards off-keep", "data-key": "keep" });
     for (const e of r.players) {
       const c = el("article", { class: `go-card go-pcard ${e.offers.released ? "muted" : ""}`, "data-key": e.id });
       c.append(el("div", { class: "go-card-head" }, [el("div", {}, [el("b", { class: "go-name", text: e.name }),
         el("div", { class: "muted small", text: `${e.pos} · ${clsWord(e.cls)} next year · ${e.overall} OVR${e.stars ? ` · ${"★".repeat(e.stars)}` : ""}` })]),
-        el("span", { class: `go-tag ${e.intent === "draft" ? "warn" : "bad"}`, text: e.intent === "draft" ? "NFL draft" : "Transfer portal" })]));
+        el("span", { class: `go-tag ${e.intent === "draft" ? "warn" : "bad"}`, text: e.intent === "draft" ? "NFL Draft" : "Transfer Portal" })]));
       c.append(el("p", { class: "off-why" }, [el("b", { text: "Why: " }), e.reason, e.draft_pick ? ` (projected pick ${e.draft_pick})` : ""]));
-      c.append(el("div", { class: "go-tags" }, [el("span", { class: "go-tag muted", text: `Now: ${e.role_now_name}` }), el("span", { class: `go-tag ${e.role_next === "starter" ? "good" : "muted"}`, text: `Next year: ${e.role_next_name}`, title: "Where he would sit on your depth chart next season" }),
+      c.append(el("div", { class: "go-tags" }, [el("span", { class: "go-tag muted", text: `Now: ${e.role_now_name}` }), el("span", { class: `go-tag ${e.role_next === "starter" ? "good" : "muted"}`, text: `Next Year: ${e.role_next_name}`, title: "Where he would sit on your depth chart next season" }),
         e.chance_word ? el("span", { class: `go-tag ${e.chance >= 0.65 ? "good" : e.chance >= 0.4 ? "warn" : "bad"}`, text: e.chance_word }) : null]));
       const askText = !e.ask.known ? "Meet with him to hear what it would take."
         : e.ask.kind === "playing_time" ? `He wants a starting role${e.ask.nil ? `; short of that, about ${e.ask.nil} NIL would do it` : ""}.`
@@ -339,8 +339,8 @@
       const btn = (label, sub, onclick, tone, off) => { const b = el("button", { type: "button", class: `go-act ${tone || ""}` }, [el("b", { text: label }), el("span", { text: sub })]); if (off) b.setAttribute("disabled", ""); ui.on(b, "click", onclick); return b; };
       const row = el("div", { class: "go-actions off-keep-acts" }, [
         btn("Meet", e.met ? "done" : "free", (ev) => retain(ev, e.id, "meet", `Met with ${e.name}`), "", e.met),
-        btn("Promise a start", e.role_next === "starter" ? "he would start" : "he would not", (ev) => retain(ev, e.id, "promise", `Promised ${e.name} a start`), e.role_next === "starter" ? "go" : "", e.offers.promise),
-        btn("Let him go", e.offers.released ? "letting go" : "", (ev) => { if (window.confirm(`Let ${e.name} go? He leaves when you advance; no NIL, no promise.`)) retain(ev, e.id, "release", `Letting ${e.name} go`); }, "", e.offers.released)]);
+        btn("Promise a Start", e.role_next === "starter" ? "he would start" : "he would not", (ev) => retain(ev, e.id, "promise", `Promised ${e.name} a start`), e.role_next === "starter" ? "go" : "", e.offers.promise),
+        btn("Let Him Go", e.offers.released ? "letting go" : "", (ev) => { if (window.confirm(`Let ${e.name} go? He leaves when you advance; no NIL, no promise.`)) retain(ev, e.id, "release", `Letting ${e.name} go`); }, "", e.offers.released)]);
       const nil = el("input", { type: "number", min: "0", step: "5", value: String(e.offers.nil || e.ask.nil || 0), class: "go-nil", id: `keep-nil-${e.id}` });
       const nilRow = el("div", { class: "go-row off-keep-nil" }, [el("label", { for: `keep-nil-${e.id}`, class: "muted small", text: "NIL" }), nil,
         btn("Offer NIL", "from next year's", (ev) => {        // the amount typed in the live box beside the button
@@ -357,7 +357,7 @@
   function renderPortalWeeks(s, v, main, patching) {
     const p = v.portal;
     const head = el("section", { class: "go-card", "data-key": "portal-head" }, [
-      el("div", { class: "go-kicker", text: `TRANSFER PORTAL · WEEK ${p.week} OF ${p.weeks}` }),
+      el("div", { class: "go-kicker", text: `Transfer Portal · Week ${p.week} of ${p.weeks}` }),
       el("p", {}, [`You have ${v.open_spots} spots (the roster limit, plus up to 8 by releasing the end of your roster) and ${p.offers_left} offers left. `,
         "Transfers are recruited like a class, condensed: message, call, a campus visit, an offer with a pitch and NIL from your portal pool. ",
         "Entrants with offers decide at each week's end (a quarter of them, then 40%, 60%, then everyone), for the school they like best with room; what you do this week lands at the step. ",
@@ -365,16 +365,16 @@
     ]);
     const kept = (v.retention && v.retention.results) || [];
     if (kept.length && p.week === 1) {
-      head.append(el("div", { class: "go-kicker muted off-sub", text: "KEEP THEM HOME · THE ANSWERS" }),
+      head.append(el("div", { class: "go-kicker muted off-sub", text: "Keep Them Home · The Answers" }),
         el("ul", { class: "off-list" }, kept.map((k) => el("li", {}, [el("b", { text: k.name }), el("span", { class: "muted", text: ` ${k.pos} · ` }),
           k.status === "stayed" ? el("span", { class: "go-tag good", text: `Stays${k.nil ? ` · ${k.nil} NIL` : ""}${k.promise ? " · promised a start" : ""}` })
             : el("span", { class: "go-tag bad", text: k.intent === "draft" ? "Off to the draft" : "Into the portal" })]))));
     }
     const moves = p.moves_mine || [];
     if (moves.length) {
-      head.append(el("div", { class: "go-kicker muted off-sub", text: "YOUR MOVES" }),
+      head.append(el("div", { class: "go-kicker muted off-sub", text: "Your Moves" }),
         el("ul", { class: "off-list" }, moves.map((m) => el("li", {}, [el("b", { text: m.name }), el("span", { class: "muted", text: ` ${m.pos} · ${m.overall} OVR · ` }),
-          m.to === s.team ? el("span", { class: "go-tag good", text: `Joins you from ${teamName(m.from)}` }) : el("span", { class: "go-tag bad", text: `Left for ${teamName(m.to)}` })]))));
+          m.to === s.team ? el("span", { class: "go-tag good", text: `Joins You From ${teamName(m.from)}` }) : el("span", { class: "go-tag bad", text: `Left for ${teamName(m.to)}` })]))));
     }
     const board = el("div", { class: "off-board", "data-key": "board", "data-keep": "" });     // the board draws and patches itself (recruiting.js)
     main.append(head, board);
@@ -384,15 +384,15 @@
   function renderPortal(s, v, main) {
     const p = v.portal;
     const head = el("section", { class: "go-card", "data-key": "portal-head" }, [
-      el("div", { class: "go-kicker", text: `TRANSFER PORTAL · ROUND ${p.round} OF 2` }),
+      el("div", { class: "go-kicker", text: `Transfer Portal · Round ${p.round} of 2` }),
       el("p", {}, [`You have ${v.open_spots} open spots${v.release_spots ? ` (and ${v.release_spots} more by releasing the end of your roster)` : ""} and ${p.offers_left} offers left this round. Entrants with offers pick a school when the round ends: `,
         "playing time first, then the program, winning and home."]),
     ]);
     const filters = el("div", { class: "off-filters" });
-    const pos = el("select", { "aria-label": "Position" }, [el("option", { value: "", text: "All positions" }), ...GROUPS.map((g) => el("option", { value: g, text: g }))]);
+    const pos = el("select", { "aria-label": "Position" }, [el("option", { value: "", text: "All Positions" }), ...GROUPS.map((g) => el("option", { value: g, text: g }))]);
     pos.value = view.position;
     ui.on(pos, "change", (ev) => { view.position = ev.currentTarget.value; refresh(s).catch((err) => H.toast(H.errText(err))); });
-    const status = el("select", { "aria-label": "Status" }, [["available", "Still available"], ["offered", "Offered by you"], ["signed", "Signed"], ["", "Everyone"]]
+    const status = el("select", { "aria-label": "Status" }, [["available", "Still Available"], ["offered", "Offered by You"], ["signed", "Signed"], ["", "Everyone"]]
       .map(([k, t]) => el("option", { value: k, text: t })));
     status.value = view.status;
     ui.on(status, "change", (ev) => { view.status = ev.currentTarget.value; refresh(s).catch((err) => H.toast(H.errText(err))); });
@@ -400,9 +400,9 @@
     head.append(filters);
     const moves = p.moves_mine;
     if (moves.length) {
-      head.append(el("div", { class: "go-kicker muted off-sub", text: "YOUR MOVES" }),
+      head.append(el("div", { class: "go-kicker muted off-sub", text: "Your Moves" }),
         el("ul", { class: "off-list" }, moves.map((m) => el("li", {}, [el("b", { text: m.name }), el("span", { class: "muted", text: ` ${m.pos} · ${m.overall} OVR · ` }),
-          m.to === s.team ? el("span", { class: "go-tag good", text: `Joins you from ${teamName(m.from)}` }) : el("span", { class: "go-tag bad", text: `Left for ${teamName(m.to)}` })]))));
+          m.to === s.team ? el("span", { class: "go-tag good", text: `Joins You From ${teamName(m.from)}` }) : el("span", { class: "go-tag bad", text: `Left for ${teamName(m.to)}` })]))));
     }
     const table = el("table", { class: "off-table" }, [el("thead", {}, [el("tr", {}, ["Player", "Pos", "Year", "OVR", "From", "Last year", "With you", "Offers", ""].map((h) => el("th", { text: h })))])]);
     const body = el("tbody");
@@ -429,20 +429,20 @@
   function renderPortalRecap(v, collapsed) {
     const rec = v.portal_recap;
     const body = [el("p", { class: "off-recap-line", text: `You signed ${rec.signed.length} of the ${rec.entrants} players who entered.${rec.signed_league ? ` ${rec.signed_league} found a new school around the league.` : ""}` })];
-    const got = el("div", { class: "off-recap-col" }, [el("div", { class: "go-kicker muted off-sub", text: `WHO YOU GOT · ${rec.signed.length}` })]);
+    const got = el("div", { class: "off-recap-col" }, [el("div", { class: "go-kicker muted off-sub", text: `Who You Got · ${rec.signed.length}` })]);
     got.append(rec.signed.length ? el("ul", { class: "off-list off-recap-list" }, rec.signed.map((r) => el("li", {}, [window.CFP.teamPill(r.from), " ", el("b", { text: r.name }),
       el("span", { class: "muted", text: ` ${r.pos} · ${clsWord(r.cls)} · ${r.overall} OVR · from ${r.from_name}` }),
-      r.walk_on ? el("span", { class: "go-tag muted", text: "walk-on" }) : null])))
+      r.walk_on ? el("span", { class: "go-tag muted", text: "Walk-On" }) : null])))
       : el("p", { class: "muted", text: "Nobody came in through the portal." }));
-    const lost = el("div", { class: "off-recap-col" }, [el("div", { class: "go-kicker muted off-sub", text: `WHO YOU LOST · ${rec.lost.length}` })]);
+    const lost = el("div", { class: "off-recap-col" }, [el("div", { class: "go-kicker muted off-sub", text: `Who You Lost · ${rec.lost.length}` })]);
     lost.append(rec.lost.length ? el("ul", { class: "off-list off-recap-list" }, rec.lost.map((r) => el("li", {}, [el("b", { text: r.name }),
       el("span", { class: "muted", text: ` ${r.pos} · ${r.overall} OVR → ` }), r.to ? window.CFP.teamPill(r.to) : null, r.to ? " " : null, el("span", { text: r.to_name }),
       r.reason ? el("span", { class: "muted small off-recap-why", text: ` · ${r.reason}` }) : null])))
       : el("p", { class: "muted", text: "Nobody left through the portal." }));
     body.push(el("div", { class: "off-recap-cols" }, [got, lost]));
-    if (!collapsed) return el("section", { class: "go-card off-recap", "data-key": "recap" }, [el("div", { class: "go-kicker", text: "TRANSFER PORTAL RECAP" }), ...body]);
+    if (!collapsed) return el("section", { class: "go-card off-recap", "data-key": "recap" }, [el("div", { class: "go-kicker", text: "Transfer Portal Recap" }), ...body]);
     // a patch (ui.morph) redraws this card: it keeps whether the player opened it (view.recapOpen)
-    const det = el("details", { class: "go-card off-recap", "data-key": "recap", ...(view.recapOpen ? { open: "" } : {}) }, [el("summary", { class: "off-recap-sum" }, [el("span", { class: "go-kicker", text: "TRANSFER PORTAL RECAP" }),
+    const det = el("details", { class: "go-card off-recap", "data-key": "recap", ...(view.recapOpen ? { open: "" } : {}) }, [el("summary", { class: "off-recap-sum" }, [el("span", { class: "go-kicker", text: "Transfer Portal Recap" }),
       el("span", { class: "muted", text: `Portal: +${rec.signed.length} / −${rec.lost.length} · details` })]), ...body]);
     ui.on(det, "toggle", (ev) => { view.recapOpen = ev.currentTarget.open; });
     return det;
@@ -451,7 +451,7 @@
   function devRow(d) {
     return el("li", {}, [el("b", { text: d.name }), el("span", { class: "muted", text: ` ${d.pos} · ${clsWord(d.cls)} · now ${d.overall} OVR ` }),
       el("span", { class: `go-tag ${d.gain > 0 ? "good" : "muted"}`, text: d.gain > 0 ? `+${d.gain}` : "no change" }),
-      d.transfer ? el("span", { class: "go-tag", text: `Transfer · from ${teamAbbr(d.transfer)}` }) : null,
+      d.transfer ? el("span", { class: "go-tag", text: `Transfer · From ${teamAbbr(d.transfer)}` }) : null,
       ...(d.why || []).map((w) => el("span", { class: `go-tag ${/Struggled/.test(w) ? "bad" : "warn"}`, text: w }))]);
   }
 
@@ -459,10 +459,10 @@
     const r = v.report || { mine: [], transfers: [] };
     if (v.portal_recap) main.append(renderPortalRecap(v, false));
     const card = el("section", { class: "go-card", "data-key": "improved" }, [
-      el("div", { class: "go-kicker", text: "WHO IMPROVED" }),
+      el("div", { class: "go-kicker", text: "Who Improved" }),
       el("p", { class: "muted", text: `Every returning player grows toward his potential at his coachability's pace, faster under good developers and faster still after a big year: production and honors raise a player's ceiling and his pace. ${r.walk_ons} walk-ons and lower-level transfers joined around the league to fill out rosters.` })]);
-    if ((r.transfers || []).length) card.append(el("div", { class: "go-kicker muted off-sub", text: `YOUR TRANSFERS · ${r.transfers.length}` }),
-      el("ul", { class: "off-list" }, r.transfers.map(devRow)), el("div", { class: "go-kicker muted off-sub", text: `THE TOP ${r.mine.length}` }));
+    if ((r.transfers || []).length) card.append(el("div", { class: "go-kicker muted off-sub", text: `Your Transfers · ${r.transfers.length}` }),
+      el("ul", { class: "off-list" }, r.transfers.map(devRow)), el("div", { class: "go-kicker muted off-sub", text: `The Top ${r.mine.length}` }));
     card.append(el("ul", { class: "off-list" }, r.mine.map(devRow)));
     main.append(card);
   }
@@ -471,7 +471,7 @@
     const j = v.job;
     if (!j) return null;
     const you = j.you || {};
-    const card = el("section", { class: "go-card off-job", "data-key": "job" }, [el("div", { class: "go-kicker", text: "YOUR JOB" })]);
+    const card = el("section", { class: "go-card off-job", "data-key": "job" }, [el("div", { class: "go-kicker", text: "Your Job" })]);
     if (you.goal) card.append(el("p", {}, [`Your AD's goal: ${you.goal.text}. `, you.met ? "You met it." : "You fell short.",
       ` Job security: ${(you.mood || "").toLowerCase()} (patience: ${you.patience} years).`]));
     const list = you.fired ? j.openings : j.offers;
@@ -511,12 +511,12 @@
     const st = v.staff || { leaving: [], candidates: {}, hired: {}, reasons: {}, market: [], contract: {}, renewed: [], turned_down: {} };
     const contract = st.contract || {};
     const renewed = new Map((st.renewed || []).map((r) => [r.id, r]));
-    const card = el("section", { class: "go-card off-staff", "data-key": "staff" }, [el("div", { class: "go-kicker", text: "YOUR STAFF" })]);
+    const card = el("section", { class: "go-card off-staff", "data-key": "staff" }, [el("div", { class: "go-kicker", text: "Your Staff" })]);
     if (!st.leaving.length) card.append(el("p", { "data-key": "all-back", text: "Your whole staff is back." }));
     for (const who of st.leaving) {
       const c = contract[who.id] || {};
       card.append(el("p", { "data-key": `leaving-${who.id}` }, [el("b", { text: `${who.role} ${who.name}` }), ` ${(st.reasons || {})[who.id] || "is moving on"}.`,
-        c.expiring ? el("span", { class: "go-tag warn off-contract", text: "Contract up: he is shopping" }) : null]));
+        c.expiring ? el("span", { class: "go-tag warn off-contract", text: "Contract Up: He Is Shopping" }) : null]));
       const row = el("div", { class: "off-cands", "data-key": `cands-${who.id}` });
       (st.candidates[who.id] || []).forEach((c, i) => {
         row.append(candidateCard(c, st.hired[who.id] === i, (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/hire`, H.postJSON({ staff_id: who.id, index: i })),
@@ -534,13 +534,13 @@
         ` turned down ${school ? school : "a bigger job"}: under contract${x.contract_until ? ` through ${x.contract_until}` : ""}.`]));
     }
     if (staying.length && !v.fired) {
-      card.append(el("div", { class: "go-kicker muted off-sub", "data-key": "staying", text: "STAYING · LET ONE GO AND HIRE FROM THE MARKET" }));
+      card.append(el("div", { class: "go-kicker muted off-sub", "data-key": "staying", text: "Staying · Let One Go and Hire From the Market" }));
       const row = el("div", { class: "off-letgo", "data-key": "letgo" });
       for (const x of staying) {
         const r = renewed.get(x.id);
-        const term = r ? el("span", { class: "go-tag good off-contract", text: `Re-signed through ${r.through}` })
-          : x.contract_until ? el("span", { class: "go-tag muted off-contract", text: `Signed through ${x.contract_until}` }) : null;
-        const b = el("button", { type: "button", class: "go-act", "data-key": x.id }, [el("span", { class: "off-staff-name" }, [`${x.role} ${x.name} `, term]), el("span", { text: "Let him go" })]);
+        const term = r ? el("span", { class: "go-tag good off-contract", text: `Re-signed Through ${r.through}` })
+          : x.contract_until ? el("span", { class: "go-tag muted off-contract", text: `Signed Through ${x.contract_until}` }) : null;
+        const b = el("button", { type: "button", class: "go-act", "data-key": x.id }, [el("span", { class: "off-staff-name" }, [`${x.role} ${x.name} `, term]), el("span", { text: "Let Him Go" })]);
         ui.on(b, "click", (ev) => {
           if (!window.confirm(`Let ${x.role} ${x.name} go? He joins the coaching market and you hire his replacement now.`)) return;
           act(ev, s, () => H.api(`/api/season/${s.id}/offseason/open_role`, H.postJSON({ staff_id: x.id })), `${x.role} ${x.name} is out · hire his replacement`);
@@ -552,15 +552,15 @@
     // your staff developed like the players did: one row per coach with each rating that moved and why
     const dev = st.developed || [];
     if (dev.length) {
-      card.append(el("div", { class: "go-kicker muted off-sub", "data-key": "developed", text: "YOUR STAFF DEVELOPED" }));
+      card.append(el("div", { class: "go-kicker muted off-sub", "data-key": "developed", text: "Your Staff Developed" }));
       card.append(el("ul", { class: "off-list off-dev", "data-key": "developed-list" }, dev.map((d) => el("li", { "data-key": `dev-${d.id}` }, [
         el("b", { text: `${d.role} ${d.name}` }), d.age ? el("span", { class: "muted small", text: ` · ${d.age}` }) : null, " ",
         ...(d.changes.length ? d.changes.map((c) => { const n = c.to - c.from;
           return el("span", { class: `go-tag ${n > 0 ? "good" : "bad"} off-dev-change`, text: `${c.rating} ${c.from} → ${c.to} (${n > 0 ? "+" : ""}${n})` }); })
-          : [el("span", { class: "go-tag muted", text: "no change" })]),
+          : [el("span", { class: "go-tag muted", text: "No Change" })]),
         ...(d.why || []).map((w) => el("span", { class: `go-tag ${/Bottom|outside|^Age$/.test(w) ? "warn" : ""}`, text: w }))]))));
     }
-    const coaches = el("section", { class: "go-card", "data-key": "carousel" }, [el("div", { class: "go-kicker", text: "COACHING CAROUSEL" }),
+    const coaches = el("section", { class: "go-card", "data-key": "carousel" }, [el("div", { class: "go-kicker", text: "Coaching Carousel" }),
       v.coaching_changes.length ? el("ul", { class: "off-list" }, v.coaching_changes.map((c) => el("li", {}, [window.CFP.teamPill(c.team),
         c.reason === "hired" ? ` ${teamName(c.team)} hires ${c.new}${c.from ? ` (${c.from})` : ""}.` : ` ${teamName(c.team)}: ${c.old} ${c.reason}.`])))
         : el("p", { class: "muted", text: "No head coaching changes this year." })]);
@@ -573,14 +573,14 @@
           el("td", { text: `${m.why}${m.sits_out ? " · sitting out this cycle" : ""}` }), el("td", { text: m.previous_job && m.previous_job !== m.why ? m.previous_job : "—" })]));
       }
       t.append(body);
-      main.append(el("section", { class: "go-card off-scroll", "data-key": "market" }, [el("div", { class: "go-kicker", text: `COACHES FOR HIRE · THE TOP ${st.market.length}` }),
+      main.append(el("section", { class: "go-card off-scroll", "data-key": "market" }, [el("div", { class: "go-kicker", text: `Coaches for Hire · The Top ${st.market.length}` }),
         el("p", { class: "muted small", text: "The coaching market: fired and let-go coaches, head coaches from the FCS and lower divisions, NFL assistants and position coaches. Open a job on your staff to hire from it." }), t]));
     }
   }
 
   function renderReady(v, main) {
     const moving = v.job && v.job.moving_to;
-    main.append(el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: "READY" }),
+    main.append(el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: "Ready" }),
       el("p", { text: moving ? `You are the new head coach at ${teamName(moving)}. A new class of high school seniors is waiting, and the ${v.year} schedule is out.`
         : `Your roster is set at ${v.roster}. A new class of high school seniors is waiting, and the ${v.year} schedule is out.` })]));
   }
@@ -595,7 +595,7 @@
         el("td", { class: "num", text: h.class_rank ? `#${h.class_rank}` : "—" }), el("td", { class: "num", text: String(h.drafted || 0) })]));
     }
     t.append(body);
-    return el("section", { class: "go-card off-scroll", "data-key": "history" }, [el("div", { class: "go-kicker", text: "YOUR PROGRAM'S HISTORY" }), t]);
+    return el("section", { class: "go-card off-scroll", "data-key": "history" }, [el("div", { class: "go-kicker", text: "Your Program's History" }), t]);
   }
 
   window.Offseason = { render };

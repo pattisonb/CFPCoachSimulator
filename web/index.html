@@ -40,15 +40,15 @@
     </div>
     <nav class="site-nav" aria-label="Sections">
       <a href="./index.html" data-nav="season">Coach Career</a>
-      <a href="./coach.html" data-nav="coach">Your coach</a>
+      <a href="./coach.html" data-nav="coach">Your Coach</a>
     </nav>
 
     <div class="toolbar" id="season-toolbar">
       <button id="btn-seasons-menu" class="ghost" type="button" hidden aria-haspopup="menu" aria-expanded="false" title="Your saved seasons, a new season, a career file">Seasons ▾</button>
       <select id="pick-team" aria-label="Your team"></select>
-      <button id="btn-new" class="accent" type="button" title="Play the whole 2026 season from week 1">New season</button>
+      <button id="btn-new" class="accent" type="button" title="Play the whole 2026 season from week 1">New Season</button>
       <button id="btn-seasons" class="ghost" type="button" aria-pressed="false" title="Show or hide the saved seasons">Seasons</button>
-      <button id="btn-load-career" class="ghost" type="button" title="Open a Coach Career saved as a file">Load career</button>
+      <button id="btn-load-career" class="ghost" type="button" title="Open a Coach Career saved as a file">Load Career</button>
       <input id="career-file" type="file" accept=".ccsave,application/gzip" hidden />
       <button class="ghost btn-theme" type="button" aria-label="Toggle light or dark mode"></button>
     </div>
@@ -56,13 +56,13 @@
 
   <main class="season-layout">
     <aside class="season-side" id="season-side">
-      <div class="section-head"><h2>Seasons</h2><span class="side-actions"><button id="btn-clear-seasons" class="ghost small" type="button" hidden>Clear all</button><button id="btn-hide-seasons" class="ghost small" type="button" title="Hide this list">Hide ‹</button></span></div>
+      <div class="section-head"><h2>Seasons</h2><span class="side-actions"><button id="btn-clear-seasons" class="ghost small" type="button" hidden>Clear All</button><button id="btn-hide-seasons" class="ghost small" type="button" title="Hide this list">Hide ‹</button></span></div>
       <ul id="season-list" class="history-list"><li class="muted">Loading seasons…</li></ul>
     </aside>
 
     <section class="season-main">
       <div id="season-empty" class="empty">
-        <p id="season-intro">Pick your team, then choose <b>New season</b> to play the 2026 season from week 1. You can play it a week at a time from the Office, or sim ahead to selection day or signing day.</p>
+        <p id="season-intro">Pick your team, then choose <b>New Season</b> to play the 2026 season from week 1. You can play it a week at a time from the Office, or sim ahead to selection day or signing day.</p>
         <p id="season-loading" class="muted" hidden></p>
       </div>
       <!-- a season is about to load (a link to a saved one): say so instead of the instructions -->
@@ -91,13 +91,13 @@
             </div>
             <div class="season-actions">
               <button id="btn-settings" class="ghost" type="button" title="Season settings: god mode and more">⚙ Settings</button>
-              <button id="btn-download-career" class="ghost" type="button" hidden title="Save this career as a file to keep or open on another device">Download career</button>
+              <button id="btn-download-career" class="ghost" type="button" hidden title="Save this career as a file to keep or open on another device">Download Career</button>
             </div>
             <!-- a phone's sheet only: the top bar's essentials, since the bar scrolls away -->
             <div class="season-sheet-links">
               <button id="btn-sheet-seasons" class="ghost" type="button" aria-haspopup="menu" title="Your saved seasons, a new season, a career file">Seasons ▾</button>
-              <a class="ghost" href="./coach.html">Your coach</a>
-              <button id="btn-sheet-theme" class="ghost" type="button">Light theme</button>
+              <a class="ghost" href="./coach.html">Your Coach</a>
+              <button id="btn-sheet-theme" class="ghost" type="button">Light Theme</button>
             </div>
           </div>
           <div id="season-progress" class="progress" hidden><div id="season-progress-bar" class="progress-bar"></div></div>
@@ -137,7 +137,7 @@
               <div id="sim-stage" class="sim-stage"></div>
               <div id="sim-sub" class="muted small-text"></div>
             </div>
-            <button id="btn-pause" class="ghost" type="button">Pause after this week</button>
+            <button id="btn-pause" class="ghost" type="button">Pause After This Week</button>
           </div>
           <div class="progress"><div id="sim-bar" class="progress-bar"></div></div>
           <div id="sim-results" class="sim-results"></div>

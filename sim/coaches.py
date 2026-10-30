@@ -54,8 +54,8 @@ ARCHETYPES = {
                      "ratings": {"offense": 72, "defense": 72, "recruiting": 70, "player_development": 70, "game_management": 92, "motivation": 70, "discipline": 75}},
 }
 RATING_KEYS = ("offense", "defense", "recruiting", "player_development", "game_management", "motivation", "discipline")
-RATING_LABELS = {"offense": "Offense", "defense": "Defense", "recruiting": "Recruiting", "player_development": "Player development",
-                 "game_management": "Game management", "motivation": "Motivation", "discipline": "Discipline"}
+RATING_LABELS = {"offense": "Offense", "defense": "Defense", "recruiting": "Recruiting", "player_development": "Player Development",
+                 "game_management": "Game Management", "motivation": "Motivation", "discipline": "Discipline"}
 RATING_ABOUT = {
     "offense": "Play-calling on offense, when the coach calls it: wins more of the guessing game.",
     "defense": "Play-calling on defense, when the coach calls it.",
