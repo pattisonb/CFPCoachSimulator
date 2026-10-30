@@ -324,6 +324,14 @@ def fcs_label(slug: str) -> str:
     return f"FCS {region}" if region else "FCS"
 
 
+def team_display(slug: str, teams: dict) -> str:
+    """A team's name on a game line: the FCS stand-ins as their region label (fcs_label)."""
+    t = teams.get(slug)
+    if t is None:
+        return slug
+    return fcs_label(slug) if t.get("fictional") else t["name"]
+
+
 def fcs_map(schedules: dict, teams: dict) -> dict[str, str]:
     saved = json.loads(FCS_MAP_FILE.read_text(encoding="utf-8")) if FCS_MAP_FILE.exists() else {}
     fictional = sorted(slug for slug, t in teams.items() if t["fictional"])
@@ -820,7 +828,7 @@ def _team_form(state: dict, teams: dict) -> dict[str, dict]:
                 f[f"{venue}_{'wins' if won else 'losses'}"] += 1
             f["streak"] = (f["streak"] + 1 if f["streak"] > 0 else 1) if won else (f["streak"] - 1 if f["streak"] < 0 else -1)
             f["last"] = {"won": won, "score": f"{pf}-{pa}", "opponent": opp,
-                         "opponent_name": teams[opp]["name"] if opp in teams else opp, "venue": venue, "week": g["week"]}
+                         "opponent_name": team_display(opp, teams), "venue": venue, "week": g["week"]}
     return out
 
 
@@ -1137,6 +1145,24 @@ def _form_table(teams: dict, through_week: int) -> tuple[dict, dict]:
 def state_fictional(slug: str) -> bool:
     """Is `slug` one of the fictional FCS stand-ins?"""
     return bool(load_teams().get(slug, {}).get("fictional"))
+
+
+class StandInError(LookupError):
+    """A team-scoped view asked for an FCS stand-in. The stand-ins exist only so FBS teams
+    can play their FCS games: they show in the box scores (and schedule lines) of those
+    games and nowhere else, so they have no pages of their own."""
+
+
+def fbs_only(teams: dict) -> set[str]:
+    """The slugs every league-wide view covers: every team but the FCS stand-ins."""
+    return {slug for slug, t in teams.items() if not t.get("fictional")}
+
+
+def check_fbs(slug: str) -> None:
+    """Refuse a team-scoped view of an FCS stand-in (StandInError)."""
+    t = load_teams().get(slug)
+    if t and t.get("fictional"):
+        raise StandInError(f"{t['name']} is an FCS stand-in: it shows only in the box scores of its games")
 
 
 def team_form_shift(state: dict, slug: str) -> float:
@@ -1462,11 +1488,15 @@ def _heal(state: dict) -> None:
 
 
 def injury_report(state: dict, team: Optional[str] = None) -> list[dict]:
-    """Current injuries, longest absences first; one team or the whole league."""
+    """Current injuries, longest absences first; one team or the whole league (FBS only:
+    the FCS stand-ins' injuries are never listed)."""
     teams = load_teams()
+    if team:
+        check_fbs(team)
+    fbs = fbs_only(teams)
     out = []
     for slug, lst in state.get("injuries", {}).items():
-        if team and slug != team:
+        if (team and slug != team) or slug not in fbs:
             continue
         for inj in lst.values():
             out.append({**inj, "team": slug, "team_name": teams[slug]["name"], "conference": teams[slug]["conference"],
@@ -1598,6 +1628,7 @@ def apply_depth(team: dict, overrides: Optional[dict]) -> dict:
 def position_candidates(state: dict, slug: str, role: str) -> dict:
     """Every player on the roster rated at one depth-chart role, best first, with where he
     sits now, so anyone can be moved into that spot."""
+    check_fbs(slug)
     team = apply_depth(team_data(state, slug), (state.get("depth") or {}).get(slug))
     ss = (state.get("season_stats") or {}).get(slug, {}).get("players", {})
     pos = "KR" if role in ("KR", "PR") else ROLE_POSITION.get(role, role)
@@ -1630,6 +1661,7 @@ def depth_order(state: dict, slug: str, role: str) -> list[str]:
 def move_depth(state: dict, slug: str, role: str, player: str, move: str) -> None:
     """Move a player within his role: up, down, or to the top (the starter spot). KR and
     PR take the named player as the returner."""
+    check_fbs(slug)
     team = load_teams()[slug]
     by_slug = {p["slug"]: p for p in team["offense"] + team["defense"]}
     if player not in by_slug:
@@ -1656,12 +1688,14 @@ def move_depth(state: dict, slug: str, role: str, player: str, move: str) -> Non
 
 
 def reset_depth(state: dict, slug: str) -> None:
+    check_fbs(slug)
     (state.get("depth") or {}).pop(slug, None)
 
 
 def depth_chart_view(state: dict, slug: str) -> dict:
     """A team's depth chart: every role in formation order, players in depth order, with
     class, size, rating and the player's season headline."""
+    check_fbs(slug)
     teams = load_teams()
     overrides = (state.get("depth") or {}).get(slug)
     t = apply_depth(team_data(state, slug), overrides)
@@ -1896,6 +1930,8 @@ def resume(state: dict, after_week: Optional[int] = None, team: Optional[str] = 
     ranked teams (rank at the time and today), strength of schedule, record against
     winning teams, best win and worst loss. With `team`, that team's full game list too.
     "Ranked" means the current top 25: the CFP ranking once released, the AP poll before."""
+    if team:
+        check_fbs(team)
     teams = load_teams()
     cur = state["current_week"]
     w = cur if after_week is None else max(0, min(int(after_week), cur))
@@ -1992,8 +2028,10 @@ def week_view(state: dict, week: int) -> list[dict]:
             continue
         out.append({**g, "home_rank": ap.get(g["home"]), "away_rank": ap.get(g["away"]),
                     "mine": state["team"] in (g["home"], g["away"]), "has_box": has_box(state, g),
-                    "home_name": teams[g["home"]]["name"], "away_name": teams[g["away"]]["name"],
-                    "home_record": _record_str(rec[g["home"]]), "away_record": _record_str(rec[g["away"]])})
+                    "home_name": team_display(g["home"], teams), "away_name": team_display(g["away"], teams),
+                    # the stand-ins play many schedules: no record
+                    "home_record": "" if teams[g["home"]]["fictional"] else _record_str(rec[g["home"]]),
+                    "away_record": "" if teams[g["away"]]["fictional"] else _record_str(rec[g["away"]])})
     out.sort(key=lambda g: (not g["mine"], {"playoff": 0, "bowl": 1}.get(g["kind"], 2), g["date"] or "", g["event_id"]))
     return out
 
@@ -2090,7 +2128,7 @@ def team_stats_view(state: dict) -> dict:
     rows = []
     for slug, t in ss.items():
         info = teams.get(slug)
-        if not info:
+        if not info or info["fictional"]:
             continue
         g = t["games"] or 1
         s, o, e, oe = t["team"], t["opp"], t["events"], t["opp_events"]
@@ -2130,12 +2168,14 @@ def team_stats_view(state: dict) -> dict:
 
 def _stat_teams(ss: dict, teams: dict, team: Optional[str], conference: Optional[str]) -> Iterator[tuple[str, dict, dict]]:
     """(slug, season stats, team info) for the teams a stats table covers: one team, or the
-    league or one conference without the FCS stand-ins."""
+    league or one conference, never an FCS stand-in (asking for one is refused)."""
+    if team:
+        check_fbs(team)
     for slug, t in ss.items():
         if team and slug != team:
             continue
         info = teams.get(slug)
-        if not info or (info["fictional"] and not team):
+        if not info or info["fictional"]:
             continue
         if conference and not team and info["conference"] != conference:
             continue
@@ -2255,6 +2295,19 @@ def _other_game(state: dict, slug: str, week: int, skip: str) -> Optional[dict]:
                  and slug in (g["home"], g["away"])), None)
 
 
+def _fcs_picker_names(teams: dict) -> dict[str, str]:
+    """slug -> how a stand-in is named in a picker: its region label, never its own name;
+    stand-ins that share a label get "· A", "· B" by slug order."""
+    by_label: dict[str, list[str]] = {}
+    for slug in sorted(s for s, t in teams.items() if t.get("fictional")):
+        by_label.setdefault(fcs_label(slug), []).append(slug)
+    out = {}
+    for label, slugs in by_label.items():
+        for i, slug in enumerate(slugs):
+            out[slug] = label if len(slugs) == 1 else f"{label} · {chr(ord('A') + i)}"
+    return out
+
+
 def schedule_options(state: dict, event_id: str) -> list[dict]:
     """Who could take the other side of one of your non-conference games: FBS teams with a
     non-conference game that week (the two displaced opponents would play each other), each
@@ -2270,12 +2323,13 @@ def schedule_options(state: dict, event_id: str) -> list[dict]:
     venue = "neutral" if g["neutral"] else "home" if g["home"] == me else "away"
     fcs = bool(teams[opp].get("fictional"))
     rivals = load_rivalries()
+    fcs_names = _fcs_picker_names(teams) if fcs else {}
     out = []
     for slug, t in teams.items():
         if slug in (me, opp) or bool(t.get("fictional")) != fcs:
             continue
         if fcs:
-            out.append({"slug": slug, "name": f"{fcs_label(slug)} ({t['name']})", "conference": t["conference"], "standing": "FCS", "accepts": True,
+            out.append({"slug": slug, "name": fcs_names[slug], "conference": "FCS", "standing": "FCS", "accepts": True,
                         "venue": "home", "why": "an FCS team comes to you"})
             continue
         other = _other_game(state, slug, g["week"], event_id)
@@ -2311,14 +2365,14 @@ def schedule_swap(state: dict, event_id: str, slug: str) -> dict:
         g["home"], g["away"] = me, slug
     else:
         g["home"], g["away"] = slug, me
-    g["home_display"], g["away_display"] = teams[g["home"]]["name"], teams[g["away"]]["name"]
+    g["home_display"], g["away_display"] = team_display(g["home"], teams), team_display(g["away"], teams)
     if not teams[slug].get("fictional"):                 # their old game: your old opponent takes their place
         other = _other_game(state, slug, g["week"], event_id)
         if other["home"] == slug:
             other["home"] = old
         else:
             other["away"] = old
-        other["home_display"], other["away_display"] = teams[other["home"]]["name"], teams[other["away"]]["name"]
+        other["home_display"], other["away_display"] = team_display(other["home"], teams), team_display(other["away"], teams)
         other["conference_game"] = teams[other["home"]]["conference"] == teams[other["away"]]["conference"] and not teams[other["home"]].get("fictional")
     state.setdefault("schedule_changes", []).append({"week": g["week"], "from": old, "to": slug, "venue": o["venue"], "event_id": event_id})
     return g
@@ -2397,6 +2451,7 @@ def game_rivalry(state: dict, g: dict, after: bool = False) -> Optional[dict]:
 
 def rivalries_view(state: dict, slug: str) -> dict:
     """Your rivals this season: the trophy, the series today and this season's meeting."""
+    check_fbs(slug)
     teams = load_teams()
     out = []
     for pair, riv in load_rivalries().items():
@@ -2536,6 +2591,7 @@ def game_preview(state: dict, slug: str, sims: int = 20) -> dict:
     """This week for one team: the next game with both ranks and records, and a prediction
     from simulating it `sims` times (win odds, the likely score, the margin, the passer and
     rusher to watch). Nothing here touches the season's random stream."""
+    check_fbs(slug)
     teams = load_teams()
     week = state["current_week"] + 1
     g = next((x for x in state["games"].values() if slug in (x["home"], x["away"]) and x["week"] == week), None)
@@ -2588,12 +2644,14 @@ def game_preview(state: dict, slug: str, sims: int = 20) -> dict:
     prediction = {"sims": pred["sims"], "win_prob": pred["home_win_prob"] if home else round(1 - pred["home_win_prob"], 2),
                   "points_for": pred[f"{mine}_points"], "points_against": pred[f"{theirs}_points"],
                   "margin": round(pred[f"{mine}_points"] - pred[f"{theirs}_points"], 1), "total": pred["total"],
-                  "watch": pred["watch"][mine], "their_watch": pred["watch"][theirs]}
+                  "watch": pred["watch"][mine], "their_watch": None if teams[opp]["fictional"] else pred["watch"][theirs]}
     return {"team": slug, "team_name": teams[slug]["name"], "game": game, "prediction": prediction,
             "injuries": injury_report(state, slug)}
 
 
 def team_schedule_view(state: dict, slug: str) -> dict:
+    # a stand-in's schedule is refused by the dispatcher (no page asks for it); the
+    # no-real-FCS scan still reads it here
     teams = load_teams()
     t = teams[slug]
     rec = _records(state, include_playoff=True)[slug]
@@ -2650,7 +2708,7 @@ def summary(state: dict) -> dict:
         "heisman": ((state.get("awards") or {}).get("national") or {}).get("heisman"),
         "settings": settings(state),
         "injuries": injury_report(state, state["team"]),
-        "injury_count": sum(len(v) for v in state.get("injuries", {}).values()),
+        "injury_count": sum(len(state["injuries"][k]) for k in fbs_only(teams) & state.get("injuries", {}).keys()),
         "my_awards": awards.my_awards(state, state["awards"]) if state.get("awards") else [],
         "career": state.get("career"),
     }
@@ -2909,7 +2967,7 @@ def season_review(state: dict) -> dict:
         orank = ap_before(g["week"]).get(opp)
         orec = all_rec[opp] if opp in teams else None
         line = {"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "opponent": opp,
-                "opponent_name": teams[opp]["name"], "opponent_rank": orank, "opponent_record": _record_str(orec) if orec else None,
+                "opponent_name": team_display(opp, teams), "opponent_rank": orank, "opponent_record": _record_str(orec) if orec else None,
                 "venue": _venue(g, home), "won": won, "points_for": pf, "points_against": pa,
                 "margin": pf - pa, "overtime": g.get("overtime", 0), "has_box": has_box(state, g)}
         lines.append(line)
@@ -3292,6 +3350,7 @@ def edit_player(state: dict, slug: str, player_slug: str, changes: dict) -> dict
     """Store god-mode changes to one player. Ratings are whole numbers 0-99; the class, the
     development trait and the size must be real values. Names and positions stay as they
     are (the season's stats are keyed on them). Returns the stored edits for the player."""
+    check_fbs(slug)
     team = load_teams().get(slug)
     if team is None:
         raise ValueError("unknown team")
@@ -3538,6 +3597,7 @@ def recruit_stars(p: dict) -> int:
 
 def player_profile(state: dict, team: str, name: Optional[str] = None, position: Optional[str] = None,
                    slug: Optional[str] = None) -> Optional[dict]:
+    check_fbs(team)
     teams = load_teams()
     t = teams.get(team)
     if not t:

@@ -142,7 +142,10 @@ def call(method: str, path: str, body: dict | bytes | None = None) -> dict | byt
             continue
         known_path = True
         if m == method:
-            return fn(Params(path=values, query=query, body=body))
+            try:
+                return fn(Params(path=values, query=query, body=body))
+            except season.StandInError as e:     # a team page asked for an FCS stand-in: it has none
+                raise ApiError(404, str(e)) from e
     if known_path:
         raise ApiError(405, "method not allowed")
     raise ApiError(404, "not found")
@@ -409,7 +412,8 @@ def create_season(p: Params) -> dict:
     mode = _field(p, "mode", str, "full")
     seed = _field(p, "seed", int, None)
     coach_id = _field(p, "coach", str, None)
-    _team(team)
+    if _team(team)["fictional"]:
+        raise ApiError(404, f"{_team(team)['name']} is an FCS stand-in: pick an FBS team")
     coach = None
     if coach_id:
         coach = coaches.load(coach_id)
@@ -640,9 +644,14 @@ def _save_loaded() -> None:
 
 
 def _check_team(slug: str) -> None:
-    """404 for a slug that is not a team."""
+    """404 for a slug that is not a team, or is an FCS stand-in (those show only in the box
+    scores of their games, so no season view is about one)."""
     if slug not in _all_teams():
         raise ApiError(404, "unknown team")
+    try:
+        season.check_fbs(slug)
+    except season.StandInError as e:
+        raise ApiError(404, str(e)) from e
 
 
 def _need(p: Params, name: str) -> str:

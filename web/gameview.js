@@ -235,11 +235,12 @@ window.CFP = (function () {
     const P = team.players;
     const st = (p, k) => p.stats[k] || 0;
     const has = (p, ...keys) => keys.some((k) => st(p, k));
-    // on the season page (currentBoxSlugs set) a player's name opens his player page
+    // on the season page (currentBoxSlugs set) a player's name opens his player page; an
+    // FCS stand-in has no player pages (it shows only in its box scores), so its names stay text
     const nameNode = (p) => {
       const slugs = window.CFP.currentBoxSlugs || {};
       const slug = slugs[box.id && box.id.endsWith("home") ? "home" : "away"];
-      if (!slug) return el("span", { text: p.name });
+      if (!slug || (teamsBySlug[slug] || {}).fictional) return el("span", { text: p.name });
       return el("span", { text: p.name, "data-player": `${slug}|${p.name}|${p.position}`, class: "plink", title: "Open player page" });
     };
 

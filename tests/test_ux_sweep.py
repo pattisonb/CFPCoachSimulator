@@ -869,6 +869,29 @@ if __name__ == "__main__":
             page.click(".go-pane .go-step button.go-step-cancel")
             assert not errors, errors
 
+            # --- Box score of an FCS game: the stand-in's players are plain text (it has no player
+            # pages), the FBS side's names still open the player page
+            fict = {slug for slug, t in season.load_teams().items() if t["fictional"]}
+            sched = call(base, f"/api/season/{A}/schedule/smu")["schedule"]
+            fcs_game = next(g for g in sched if g.get("opponent") in fict)
+            call(base, f"/api/season/{A}/advance", {"to": fcs_game["week"]})
+            for _ in range(1200):
+                if call(base, f"/api/season/{A}/status")["status"] != "running":
+                    break
+                time.sleep(0.5)
+            box = call(base, f"/api/season/{A}/game/{fcs_game['event_id']}")
+            fside, bside = ("home", "away") if box["home_slug"] in fict else ("away", "home")
+            open_tab(page, base, A, "schedule", ".schedule-pick")
+            page.click(f"#tab-schedule tr.clickable:has-text('{fcs_game['opponent_name']}')")
+            page.wait_for_selector(f"#sbox-{bside} [data-player]", state="attached", timeout=60_000)
+            stand_in = page.evaluate(f"() => [document.querySelectorAll('#sbox-{fside} td.name, #sbox-{fside} [data-player], #sbox-{fside} .plink').length, document.querySelectorAll('#sbox-{fside} [data-player], #sbox-{fside} .plink').length, document.querySelector('#sbox-{fside}').textContent]")
+            names = [p["name"] for p in box[fside]["players"]]
+            assert any(n in stand_in[2] for n in names), "the stand-in's players are in the box score"
+            assert stand_in[1] == 0, f"{stand_in[1]} FCS stand-in player names link to a player page"
+            assert page.eval_on_selector_all(f"#sbox-{bside} [data-player]", "els => els.length") > 0, "the FBS side's names still link"
+            page.keyboard.press("Escape")
+            assert not errors, errors
+
             # --- Offseason, every stage: no number out of 100, no run-together class codes
             page.goto(f"{base}/index.html?id={B}")
             page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)
@@ -931,7 +954,7 @@ if __name__ == "__main__":
                 assert "go-btn" in hire, f"the hire control reads as a button, not a tag ({hire})"
             browser.close()
         assert not errors, errors
-        print("ux sweep ok: office, prospects, board (tabs, list, pane, menu, step, scene, phone), staff, schedule, depth, player page and every offseason stage at 1280 and 400")
+        print("ux sweep ok: office, prospects, board (tabs, list, pane, menu, step, scene, phone), staff, schedule, depth, player page, an FCS box score and every offseason stage at 1280 and 400")
     finally:
         for sid in (fresh["id"], done["id"]):
             try:
