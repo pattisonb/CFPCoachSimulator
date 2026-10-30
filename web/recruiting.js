@@ -1,6 +1,6 @@
 /* Coach Career on the season page, styled as a game: the Office (your week at a glance), the
    Recruiting board (stage tabs, a list, one pane with the Recruit menu), Prospects (the
-   class, filtered), Staff (who scouts where) and the Prospect Profile.
+   class, filtered) and the Prospect Profile; the Scouting tab is web/scouting.js.
    window.Recruiting.render(tab, season, helpers); helpers from season.js: { api, postJSON, toast,
    openModal, closeModal, errText, onChange(tab), play(what) }. Colors come from the site's theme variables,
    so the screens read in the light and the dark theme. */
@@ -177,6 +177,10 @@
       else if (e.kind === "hung_up") bits = [e.action === "hc_visit" ? "Visit left unfinished" : "Call left unfinished"];
       else if (e.kind === "asked_more") bits = ["He asked for more NIL"];
       else if (e.kind === "not_buying") bits = ["He isn't buying your pitch"];
+      else if (e.kind === "pester") bits = [`He tuned out your ${e.action === "hc_visit" ? "visit" : e.action === "call" ? "call" : "message"}`];
+      else if (e.kind === "answer") bits = [e.answer === "promise" ? `Promised him the job over ${e.about}${e.truthful === false ? " (he did not buy it)" : ""}`
+        : e.answer === "deflect" ? `Sidestepped his question about ${e.about}` : `Told him straight about ${e.about}`];
+      else if (e.kind === "promise_broken") bits = [`He heard you promised the same spot to ${e.about}`];
       else if (HISTORY_WORDS[e.kind]) bits = [`${HISTORY_WORDS[e.kind]} ${teamName(e.school)}`];
       else bits = [`${eventWord(e)} ${e.school ? teamName(e.school) : ""}`.trim()];
       return [`Week ${e.week}`, ...bits].filter(Boolean).join(" · ");
@@ -195,8 +199,15 @@
   // a topic in a sentence: "playing time", "NIL"
   const topicWord = (t) => (t === "nil" ? "NIL" : (PITCH_NAMES[t] || t).toLowerCase());
   const REACTION_TOAST = { hit: (t) => `He lit up: ${topicWord(t)} matters to him`, polite: () => "He was polite and moved on",
-                           quiet: (t) => `He went quiet: he isn't buying ${topicWord(t)} from you` };
-  const REACTION_WORDS = { hit: "He lit up", polite: "Polite", quiet: "He went quiet" };
+                           quiet: (t) => `He went quiet: he isn't buying ${topicWord(t)} from you`, tired: () => "He is tired of this: the call wore on him" };
+  const REACTION_WORDS = { hit: "He lit up", polite: "Polite", quiet: "He went quiet", tired: "He is tired of this" };
+  // your answers to his question about a named player, by the question's kind (the same copy as coach_career/scenes.py ANSWER_COPY)
+  const ANSWERS = ["straight", "promise", "deflect"];
+  const HOLLOW_REPLY = "I've heard that one before.";      // his reply to a promise he has heard before (scenes.py REPLY_LINES.hollow)
+  const ANSWER_COPY = {
+    roster: { straight: "He's the starter today. You'd compete, and the best man plays.", promise: "The job's yours.", deflect: "Let's talk about what you'd bring." },
+    recruit: { straight: "I offered him too. One of you starts; I want it to be you.", promise: "You're the one I want.", deflect: "Let's talk about what you'd bring." },
+  };
   // the ☆ tag's title: where he brought the topic up this week
   const cueTitle = (action) => `He brought this up on the ${action === "hc_visit" ? "visit" : "call"} this week`;
   // the one network path for an action. A call or in-home visit without a pitch opens a scene (handed to
@@ -233,15 +244,16 @@
     catch (err) { H.toast(`Could not change your board: ${H.errText(err)}`, 4000); return false; }
   }
 
-  function meter(label, value, total, alt) {
+  function meter(label, value, total, alt, title) {
     const fill = total ? Math.max(0, Math.min(1, value / total)) : 0;
-    return el("div", { class: "go-meter" }, [
+    return el("div", { class: "go-meter", ...(title ? { title } : {}) }, [
       el("div", { class: "go-meter-top" }, [el("span", { text: label }), el("b", { text: `${value} / ${total}` })]),
       el("div", { class: "go-meter-track" }, [el("span", { class: `go-meter-fill ${alt ? "alt" : ""}`, style: `width:${100 * fill}%` })]),
     ]);
   }
   // a meter's new value in place: the number pulses, the fill slides
-  function patchMeter(node, value, total) {
+  function patchMeter(node, value, total, title) {
+    if (title) node.title = title; else node.removeAttribute("title");
     const b = node.querySelector("b"), text = `${value} / ${total}`;
     if (b.textContent === text) return;
     b.textContent = text;
@@ -475,6 +487,7 @@
       title: b.need > 0 ? `Your roster needs ${b.need} at his position this class` : "Your roster is covered at his position this class" }));
     if (b.offered && !b.signed && b.committed !== me) out.append(el("span", { class: "go-tag good", text: b.nil ? `Offered · ${b.nil} NIL` : "Offered" }));
     if (b.cooled) out.append(el("span", { class: "go-tag bad", text: "Cooled", title: "He read your offer as a lowball: contacts count half and he will not visit until you raise it to what he wants" }));
+    if (b.pestering) out.append(el("span", { class: "go-tag bad", text: "Tuning you out", title: "He is not considering you; more contact pushes him away" }));
     if (b.committed === me && !b.signed) out.append(b.hard ? el("span", { class: "go-tag good", text: "Hard commit", title: "Locked in: he cannot flip and his offer stands until he signs" })
       : el("span", { class: `go-tag ${b.firmness >= 70 ? "good" : b.firmness < 40 ? "warn" : ""}`, text: `Verbal · ${b.firmness}`, title: "A verbal commit (0-100): he warms to you on his own each week, faster with a message, call or visit; rivals offering more playing time cool him. At 90 he is a hard commit and cannot flip." }));
     return out.childElementCount ? out : null;
@@ -665,6 +678,11 @@
     return v;
   }
   const still = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // the NIL meter: in the portal what is left of the pool (the title says so); in the class what is left of the year's
+  // budget, which includes last year's portal carry-over when there was one
+  const nilTotal = (v) => (v.portal && v.nil.pool != null ? v.nil.pool : v.nil.budget);
+  const nilTitle = (v) => (v.portal ? "What is left of your portal NIL pool this offseason" : v.nil.carry > 0 ? `Includes ${v.nil.carry} NIL carried over from last year's portal` : null);
+  const boardTitle = (v) => (v.portal ? `TRANSFER PORTAL · WEEK ${v.portal.week} OF ${v.portal.weeks}${v.nil.pool != null ? ` · ${v.nil.pool} NIL` : ""}` : "RECRUITING BOARD");
 
   // the board from a view already fetched: the first draw, and the redraws a needs or map filter asks for.
   // patchBoard(v) (an action's re-fetch) and refill() (a stage tab, the search, the sort) update it in place.
@@ -695,10 +713,10 @@
       })()));
       return b;
     }));
-    const meters = { hours: meter("Hours", v.hours_left, v.hours), nil: meter("NIL points", v.nil.left, v.nil.budget),
+    const meters = { hours: meter("Hours", v.hours_left, v.hours), nil: meter("NIL points", v.nil.left, nilTotal(v), false, nilTitle(v)),
       offers: meter("Offers", v.offers, v.offers + v.offers_left, true), commits: meter("Commits", v.committed, v.open_spots, true) };
     box.append(el("div", { class: "go-board-head rc-head" }, [
-      el("div", { class: "go-display l", text: v.portal ? `TRANSFER PORTAL · WEEK ${v.portal.week} OF ${v.portal.weeks}` : "RECRUITING BOARD" }),
+      el("div", { class: "go-display l", text: boardTitle(v) }),
       el("div", { class: "go-meters" }, [meters.hours, meters.nil, meters.offers, meters.commits]),
       el("div", { class: "go-auto" }, [el("span", { class: "small muted", text: "Auto-recruit" }), auto]),
     ]));
@@ -796,7 +814,7 @@
       if (!v.board.length || !boardEl || !boardEl.isConnected) { drawBoard(s, box, v); return; }
       box.dataset.draw = String((Number(box.dataset.draw) || 0) + 1);
       patchMeter(meters.hours, v.hours_left, v.hours);
-      patchMeter(meters.nil, v.nil.left, v.nil.budget);
+      patchMeter(meters.nil, v.nil.left, nilTotal(v), nilTitle(v));
       patchMeter(meters.offers, v.offers, v.offers + v.offers_left);
       patchMeter(meters.commits, v.committed, v.open_spots);
       for (const b of auto.children) { const on = v.auto_recruit === b.dataset.auto; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }
@@ -1022,13 +1040,14 @@
         ["pull_offer", "Pull offer", "", !b.offered ? "Not offered" : null],
         ["off_board", "Off the board", "", null],
       ];
-      return items.map(([action, name, cost, why]) => ({ action, name, cost, why: busy ? `Finish your ${busy} first` : why }));
+      const tip = (action) => (b.pestering && ["message", "call", "hc_visit"].includes(action) ? "Costs you interest while he is tuning you out" : null);
+      return items.map(([action, name, cost, why]) => ({ action, name, cost, why: busy ? `Finish your ${busy} first` : why, title: tip(action) }));
     }
     function openMenu(b, btn) {
       if (menuState) { closeMenu(true); return; }
       const sheet = phone();
       const menu = el("div", { class: `go-menu ${sheet ? "sheet" : ""}`, role: "menu", tabindex: "-1", "aria-label": `Recruit ${b.name}` }, menuItems(b).map((it) => {
-        const item = el("button", { type: "button", class: "go-menu-item", role: "menuitem", "data-action": it.action, tabindex: "-1" }, [
+        const item = el("button", { type: "button", class: "go-menu-item", role: "menuitem", "data-action": it.action, tabindex: "-1", ...(it.title ? { title: it.title } : {}) }, [
           el("span", { class: "go-menu-main" }, [el("b", { text: it.name }), it.cost ? el("span", { class: "muted small go-menu-cost", text: it.cost }) : null]),
           it.why ? el("span", { class: "go-menu-why", text: it.why }) : null]);
         if (it.why) item.setAttribute("aria-disabled", "true");     // grayed, but reachable: the reason is read out
@@ -1103,7 +1122,7 @@
         return t;
       }));
       p.append(el("div", { class: "go-strip" }, cells), tags, strip, body);
-      let finishBtn = null, recruitBtn = null, offBtn = null, stepEl = null, sceneEl = null, reactEl = null, chipText = null, bodyKey = null;
+      let finishBtn = null, recruitBtn = null, offBtn = null, warnEl = null, stepEl = null, sceneEl = null, reactEl = null, chipText = null, bodyKey = null;
       p._patch = (nb) => { b = nb; fill(false); };
       fill(true);
       return p;
@@ -1135,6 +1154,13 @@
           acts.append(recruitBtn);
         } else if (!open && recruitBtn) { recruitBtn.remove(); recruitBtn = null; }
         if (recruitBtn) recruitBtn.classList.toggle("primary", !busy);
+        // he is tuning you out: a warning above the Recruit button (the menu's contacts stay open, their titles carry the cost)
+        const wantWarn = !!(open && b.pestering);
+        if (wantWarn && !warnEl) {
+          warnEl = el("p", { class: "go-warn", role: "note", text: "He is tuning you out: another contact costs you interest." });
+          acts.prepend(warnEl);
+          if (!first) ui().fadeIn(warnEl);
+        } else if (!wantWarn && warnEl) { const old = warnEl; warnEl = null; if (first) old.remove(); else ui().fadeOut(old); }
         const wantOff = !open && !!b.signed && b.signed !== me;
         if (wantOff && !offBtn) { offBtn = el("button", { type: "button", class: "go-btn", text: "Off the board", onclick: () => pick(b, "off_board", offBtn) }); acts.append(offBtn); }
         else if (!wantOff && offBtn) { offBtn.remove(); offBtn = null; }
@@ -1279,6 +1305,7 @@
         out.append(el("div", { class: "go-grades" }, Object.entries(b.our_grades).map(([g, r]) => el("div", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: (GROUP_NAMES[g] || g).toUpperCase() }), el("div", { class: "go-stat-val" }, wordRange(r))]))));
         out.append(el("p", { class: "muted small", text: `${b.looks} look${b.looks === 1 ? "" : "s"} by your staff · ${b.trips || 0} of 3 scouting trips. Ranges narrow with every look, but a read can be wrong.` }));
       } else out.append(el("p", { class: "muted", text: "Not scouted yet: send a scout from the Recruit menu, or put a staff member on his area." }));
+      out.append(el("p", { class: "small" }, [el("button", { type: "button", class: "go-link sc-reports-link", text: "Reports on the Scouting tab", onclick: () => H.onChange("scouting") })]));
       const comps = el("div", { class: "go-comps" });
       out.append(comps);
       const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall ? `, ${c.overall} OVR` : ""})`;
@@ -1319,10 +1346,23 @@
         const cue = t === scene.cue.text, room = visit && !cue && (i === 0 || i === scene.lines.length - 1);
         return el("p", { class: `go-scene-line ${cue ? "cue" : ""} ${room ? "room" : ""}`, text: t, ...(cue ? { title: "The cue: what he is telling you he cares about" } : {}) });
       })));
+      // his question about a named player: answered before any pitch (the engine refuses a pitch until then)
+      const q = scene.question;
+      const pending = () => !!(q && !q.answer);
+      if (q) sc.append(questionView(b, scene));
       sc.append(el("div", { class: "go-kicker muted", text: "YOUR PITCH" }),
-        pitchPicker(b, chosen, (t) => { chosen = t; view.pitch[b.id] = t; }, scene.cue.topics, cueTitle(scene.action)));
-      const go = el("button", { type: "button", class: "go-btn primary", text: "Pitch", title: "Sell him on this: it costs nothing more, the hours went when you picked up" });
+        pitchPicker(b, chosen, (t) => { chosen = t; view.pitch[b.id] = t; }, scene.cue.topics, cueTitle(scene.action), pending()));
+      const PITCH_TIP = "Sell him on this: it costs nothing more, the hours went when you picked up";
+      const go = el("button", { type: "button", class: "go-btn primary", text: "Pitch", title: pending() ? "Answer him first" : PITCH_TIP });
+      go.disabled = pending();
+      // his question answered: the pitch and its radios open up in place
+      sc._unlock = () => {
+        go.disabled = false;
+        go.title = PITCH_TIP;
+        for (const r of sc.querySelectorAll(".go-pitches input")) r.disabled = false;
+      };
       go.addEventListener("click", async () => {
+        if (pending()) { H.toast("Answer him first.", 3000); return; }
         if (!chosen) { H.toast("Pick a pitch first: what you are selling him.", 3000); return; }
         const r = await ui().busy(go, act(s, b.id, "pitch", chosen, null, { silent: true, scene: scene.id, onReaction: (re) => {
           view.heard[`${s.id}:${b.id}`] = { week: s.current_week, topics: scene.cue.topics, action: scene.action };
@@ -1355,8 +1395,42 @@
         el("p", { class: "muted small", text: `Hanging up keeps the ${what} open: finish it from the pane this week. One you never finish counts for nothing.` }));
       return sc;
     }
-    // the topics as radios, each with your program's case: ★ a known priority, ☆ what he just brought up (`cueTopics`, a scene's cue; `cueTip`, the ☆ title)
-    function pitchPicker(b, current, onPick, cueTopics, cueTip) {
+    // his question in the scene (docs/superpowers/specs/2026-10-29-recruit-questions-design.md, section 3): his line, three answers
+    // while it waits (straight, a promise, a sidestep), his reply once you answered; the reply is the feedback, there is no toast
+    function questionView(b, scene) {
+      const q = scene.question;
+      const wrap = el("div", { class: "go-question", role: "group", "aria-label": `${b.name} asks` });
+      wrap.append(el("div", { class: "go-kicker", text: "HE ASKS" }),
+        el("p", { class: "go-question-line" }, [el("q", { text: q.text }), el("span", { class: "muted small", text: ` — ${b.name}` })]));
+      // his reply's tone: a straight answer or a promise he believes reads good, a promise he has heard before bad, a sidestep muted
+      const replyTone = (qq) => (qq.answer === "deflect" ? "muted" : qq.answer === "promise" && (qq.truthful === false || qq.reply === HOLLOW_REPLY) ? "bad" : "good");
+      const replyView = (qq) => el("p", { class: `go-question-reply ${replyTone(qq)}`, role: "status", tabindex: "-1", text: qq.reply || "" });
+      if (q.answer) { wrap.append(replyView(q)); return wrap; }
+      const copy = ANSWER_COPY[q.kind] || ANSWER_COPY.roster;
+      const acts = el("div", { class: "go-row wrap go-answers" }, ANSWERS.map((k) => {
+        const btn = el("button", { type: "button", class: "go-btn go-answer", "data-answer": k, text: copy[k] });
+        btn.addEventListener("click", () => ui().busy(btn, (async () => {
+          let r;
+          try { r = await H.api(`/api/season/${s.id}/recruit`, H.postJSON({ pid: b.id, action: "answer", scene: scene.id, answer: k })); }
+          catch (err) { H.toast(`Could not answer him: ${H.errText(err)}`, 4000); return; }
+          Object.assign(q, (r.scene && r.scene.question) || { answer: k, reply: "" }, { truthful: r.truthful });
+          for (const t of r.revealed || []) if (!b.priorities_known.includes(t)) b.priorities_known.push(t);   // he told you: known now, not at the re-fetch
+          // the answers leave, his reply comes in and takes the focus, the pitch opens up: all in place
+          const reply = replyView(q), sc = wrap.closest(".go-scene");
+          await ui().fadeOut(acts);
+          wrap.append(reply);
+          ui().fadeIn(reply);
+          if (sc && sc._unlock) sc._unlock();
+          reply.focus({ preventScroll: true });
+        })()));
+        return btn;
+      }));
+      wrap.append(acts);
+      return wrap;
+    }
+    // the topics as radios, each with your program's case: ★ a known priority, ☆ what he just brought up (`cueTopics`, a scene's cue; `cueTip`, the ☆ title);
+    // `locked`: his question waits, the radios are disabled until you answer
+    function pitchPicker(b, current, onPick, cueTopics, cueTip, locked) {
       cueTopics = cueTopics || [];
       const pitches = el("div", { class: "go-pitches", role: "radiogroup", "aria-label": `Pitch to ${b.name}` });
       for (const t of Object.keys(PITCH_NAMES)) {
@@ -1364,6 +1438,7 @@
         const id = `pitch-${b.id}-${t}`;
         const r = el("input", { type: "radio", name: `pitch-${b.id}`, id, value: t });
         r.checked = current === t;
+        if (locked) r.disabled = true;
         r.addEventListener("change", () => onPick(t));
         const sv = b.strength ? b.strength[t] : null, word = caseWord(b, t);
         const tone = sv == null ? "" : sv >= 0.6 ? "good" : sv < 0.25 ? "bad" : "";
@@ -1623,41 +1698,7 @@
       node.append(p.our_comp ? el("p", {}, [el("b", { text: "Our comp: " }), comp(p.our_comp)])
         : el("p", { class: "muted", text: p.looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp after 3 looks (${p.looks} so far).` }));
     } else node.append(el("p", { class: "muted", text: inPane ? "Not scouted yet: Scout from the Recruit menu, or put a staff member on his area." : "Not scouted yet: send a scout, or put a staff member on his area." }),
-      el("div", { class: "go-row wrap rc-profile-actions" }, [inPane ? null : scoutBtn, el("button", { type: "button", class: "go-btn", text: "Assign your staff →", onclick: () => { H.closeModal(); H.onChange("staff"); } })]));
-  }
-
-  // ----- Staff -------------------------------------------------------------------------------------
-
-  async function renderStaff(s, box) {
-    if (!box.firstChild) box.append(loading("Loading your staff…"));
-    let v;
-    try { v = await H.api(`/api/season/${s.id}/recruiting`); }
-    catch (err) { box.innerHTML = ""; box.append(loading(`Could not load your staff: ${H.errText(err)}`)); return; }
-    box.innerHTML = "";
-    box.append(el("div", { class: "go-display l", text: "STAFF" }),
-      el("p", { class: "muted", text: "Every week each prospect in a staff member's area gets a look. Looks add up and never reset; better evaluators read closer to the truth." }));
-    const covered = new Set(v.staff.map((m) => m.area));
-    const grid = el("div", { class: "go-staff rc-staff" });
-    for (const m of v.staff) {
-      const sel = el("select", { id: `area-${m.id}`, class: "go-sel" }, Object.keys(v.areas).map((a) => el("option", { value: a, text: `${a} (${v.area_counts[a]})` })));
-      sel.value = m.area;
-      sel.addEventListener("change", async () => {
-        try { await H.api(`/api/season/${s.id}/staff`, H.postJSON({ staff_id: m.id, area: sel.value })); H.toast(`${m.name} now scouts ${sel.value}.`, 2500); renderStaff(s, box); }
-        catch (err) { sel.value = m.area; H.toast(`Could not reassign: ${H.errText(err)}`, 4000); }
-      });
-      const rating = (label, n) => el("div", { class: "go-rating" }, [el("span", { class: "muted small", text: label }),
-        el("div", { class: "go-meter-track" }, [el("span", { class: "go-meter-fill", style: `width:${n}%` })]), el("b", { text: String(n) })]);
-      grid.append(el("div", { class: "go-card go-coach rc-staff-card" }, [
-        el("div", { class: "go-coach-top" }, [avatar(`staff-${m.id}-${m.name}`), el("div", {}, [
-          el("div", { class: "go-kicker muted", text: m.role === "Recruiter" ? "RECRUITER" : m.role === "OC" ? "OFFENSIVE COORDINATOR" : "DEFENSIVE COORDINATOR" }),
-          el("div", { class: "go-display m", text: m.name.toUpperCase() })])]),
-        rating("Evaluation", m.evaluation), rating("Recruiting", m.recruiting),
-        el("label", { class: "go-area", for: `area-${m.id}` }, [el("span", { class: "muted small", text: "Scouting area (prospects there)" }), sel]),
-      ]));
-    }
-    box.append(grid);
-    const open = Object.keys(v.areas).filter((a) => !covered.has(a));
-    if (open.length) box.append(el("p", { class: "muted small", text: `Not covered: ${open.map((a) => `${a} (${v.area_counts[a]})`).join(", ")}. Prospects there show public information only.` }));
+      el("div", { class: "go-row wrap rc-profile-actions" }, [inPane ? null : scoutBtn, el("button", { type: "button", class: "go-btn", text: "Assign your staff →", onclick: () => { H.closeModal(); H.onChange("scouting"); } })]));
   }
 
   // ----- every school's class ------------------------------------------------------------------------
@@ -1707,9 +1748,9 @@
     if (tab === "office") renderOffice(season, box);
     else if (tab === "recruiting") renderRecruiting(season, box);
     else if (tab === "prospects") renderProspects(season, box);
-    else if (tab === "staff") renderStaff(season, box);
+    else if (tab === "scouting") window.CFP.scouting.render(season, box, H);
     else if (tab === "classes") renderClasses(season, box);
   }
 
-  window.Recruiting = { wordTag, render, openProfile: (s, pid) => openProfile(s, pid), board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
+  window.Recruiting = { wordTag, render, openProfile: (s, pid) => openProfile(s, pid), reveal: (pid) => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; }, board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
 })();

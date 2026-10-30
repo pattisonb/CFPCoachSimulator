@@ -1,0 +1,71 @@
+/* The Scouting tab (web/scouting.js): the scouts, the queue, the reports and the flags. Colors come from the
+   site's theme variables (styles.css), so it reads in the light and the dark theme. Buttons stand 44 px tall
+   (the house .go-btn), cards keep 12 px of padding, tag rows 6 px, button rows 8 px (tests/test_spacing.py). */
+#tab-scouting { display: flex; flex-direction: column; gap: 20px; }
+#tab-scouting.tab-body { overflow: visible; }
+.sc-head p { margin: 6px 0 0; }
+.sc-block { display: flex; flex-direction: column; gap: 10px; }
+
+/* your scouts */
+.sc-scout .go-coach-top { align-items: center; }
+.sc-scout-id { min-width: 0; }
+.sc-scout .go-display.m { overflow-wrap: anywhere; }
+.sc-eval { display: flex; align-items: center; gap: 6px; }
+
+/* send a scout: the hours beside the title, the tools to the right */
+.sc-sendbar { align-items: flex-end; }
+.sc-send-title { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.sc-hours { font-weight: 700; }
+.sc-tools { display: flex; gap: 8px; flex-wrap: wrap; }
+#sc-search { min-height: 44px; min-width: 200px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; font-size: 14px; }
+#sc-search:focus { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: 1px; }
+.sc-send > p { margin: 0; }
+/* the queue scrolls inside itself; a row's patch (the result, a grayed Send) must not drag the scroll */
+.sc-queue { display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow-y: auto; overscroll-behavior: contain; overflow-anchor: none; padding: 2px; }
+.sc-row { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto minmax(0, 220px) auto; grid-template-areas: "av id looks pot act" "av result result result result";
+  align-items: center; gap: 6px 12px; padding: 8px 12px 8px 8px; border-radius: 14px; border: 1px solid var(--border); background: var(--panel); }
+.sc-row > .go-avatar { grid-area: av; }
+.sc-id { grid-area: id; display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.sc-name { align-self: flex-start; font-size: 15px; line-height: 1.3; text-align: left; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.sc-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-looks { grid-area: looks; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.sc-trips { display: inline-flex; gap: 3px; }
+.sc-trip { display: inline-block; width: 14px; height: 6px; border-radius: 3px; background: var(--panel-2); border: 1px solid var(--border); }
+.sc-trip.on { background: var(--go-primary, var(--accent)); border-color: var(--go-primary, var(--accent)); }
+.sc-pot { grid-area: pot; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; min-width: 0; }
+.sc-act { grid-area: act; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.sc-why { text-align: right; }
+.sc-result { grid-area: result; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--panel-2); }
+.sc-result[hidden], .sc-why[hidden], .sc-more[hidden], .sc-queue-empty[hidden] { display: none; }
+.sc-report-items li[hidden] { display: none; }
+.sc-report-more { align-self: flex-start; }
+.sc-change { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.sc-queue-empty { margin: 8px; }
+.sc-more { min-height: 44px; }
+
+/* the reports */
+.sc-report-list { display: flex; flex-direction: column; gap: 10px; }
+.sc-report { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.sc-report-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 12px; flex-wrap: wrap; }
+.sc-report-items { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.sc-report-items li { line-height: 1.4; }
+.sc-item-flags, .sc-flags-gained { display: inline-flex; gap: 6px; margin-left: 8px; vertical-align: middle; }
+
+/* the flags */
+.sc-flag-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.sc-flag { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.sc-flag-id { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.sc-flag-id .go-link { align-self: flex-start; text-align: left; }
+.sc-standing { white-space: nowrap; }
+
+@media (max-width: 759px) {
+  .sc-sendbar, .sc-send-title { align-items: stretch; }
+  #sc-search { min-width: 0; width: 100%; }
+  .sc-tools { width: 100%; }
+  .sc-tools .go-sel { flex: 1; min-width: 0; }
+  .sc-queue { max-height: 60vh; }
+  .sc-row { grid-template-columns: 38px minmax(0, 1fr) auto; grid-template-areas: "av id act" "looks looks looks" "pot pot pot" "result result result"; gap: 8px 10px; }
+  .sc-flag { grid-template-columns: auto minmax(0, 1fr); }
+  .sc-standing { grid-column: 1 / -1; white-space: normal; }
+}
+@media (prefers-reduced-motion: reduce) { .sc-row, .sc-result { transition: none; animation: none; } }

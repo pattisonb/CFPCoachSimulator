@@ -148,6 +148,26 @@
   .go-pane .go-step .go-sel { max-width: none; }
   .go-needs-toggle { min-height: 44px; }
 }
+/* he is tuning you out: the warning above the Recruit button (a note, not a button: the menu's contacts stay open) */
+.go-pane-act .go-warn { margin: 0; max-width: 200px; font-size: 12px; line-height: 1.35; text-align: right; color: var(--bad-text); }
+@media (max-width: 759px) { .go-pane.sheet .go-pane-act .go-warn { flex: 1 1 100%; max-width: none; text-align: left; } }
+/* a pestering call's pitch fell flat: his reaction in a muted, bad tone */
+.go-reaction.tired { border-color: color-mix(in srgb, var(--bad) 55%, var(--border)); }
+.go-reaction.tired .go-kicker, .go-reaction.tired .go-reaction-line { color: var(--muted); }
+
+/* his question in a scene: his line quoted, three answers while it waits, his reply once you answered */
+.go-question { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1px dashed var(--go-primary, var(--accent)); background: var(--panel-2); }
+.go-question p { margin: 0; }
+.go-question-line { line-height: 1.4; }
+.go-question-line q { font-style: italic; }
+.go-answers { gap: 8px 10px; }
+.go-answer { text-align: left; white-space: normal; line-height: 1.3; min-height: 40px; }
+.go-question-reply { font-weight: 600; line-height: 1.35; }
+.go-question-reply.good { color: var(--good-text); }
+.go-question-reply.bad { color: var(--bad-text); }
+.go-question-reply.muted { color: var(--muted); }
+.go-question-reply:focus { outline: none; }
+
 /* ☆: a topic he brought up on this week's call or visit (★, a confirmed priority, keeps the plain tag) */
 .go-tag.cue { border-color: var(--go-primary, var(--accent)); border-style: dashed; color: var(--text); white-space: normal; }
 .go-pitch.cue .go-tag { border-color: var(--go-primary, var(--accent)); border-style: dashed; color: var(--text); font-weight: 700; }
