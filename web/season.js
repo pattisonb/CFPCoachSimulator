@@ -129,7 +129,7 @@
       let top = r.bottom + 6;
       if (top + m.height > window.innerHeight - pad) top = Math.max(pad, r.top - 6 - m.height);
       menu.style.top = `${top}px`;
-      menu.style.left = `${Math.max(pad, Math.min(r.left, window.innerWidth - m.width - pad))}px`;
+      menu.style.left = `${Math.max(pad, Math.min(r.left, document.documentElement.clientWidth - m.width - pad))}px`;
     };
     if (!sheet) place();
     const onDoc = (e) => { if (!menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) closeMenu(); };

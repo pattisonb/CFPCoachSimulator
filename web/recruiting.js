@@ -1094,7 +1094,7 @@
         let top = r.bottom + 6;
         if (top + m.height > window.innerHeight - pad) top = Math.max(pad, r.top - 6 - m.height);
         menu.style.top = `${top}px`;
-        menu.style.left = `${Math.max(pad, Math.min(r.right - m.width, window.innerWidth - m.width - pad))}px`;
+        menu.style.left = `${Math.max(pad, Math.min(r.right - m.width, document.documentElement.clientWidth - m.width - pad))}px`;
       };
       if (!sheet) place();
       const onDoc = (e) => { if (!menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) closeMenu(); };
@@ -1717,9 +1717,9 @@
   function placeTip(cell, tip) {
     tip.classList.add("show");
     const r = cell.getBoundingClientRect(), t = tip.getBoundingClientRect(), gap = 6, pad = 8;
-    const below = r.bottom + gap + t.height <= window.innerHeight - pad;
+    const below = r.bottom + gap + t.height <= document.documentElement.clientHeight - pad;
     const top = below ? r.bottom + gap : Math.max(pad, r.top - gap - t.height);
-    const left = Math.min(Math.max(pad, r.left), window.innerWidth - t.width - pad);
+    const left = Math.min(Math.max(pad, r.left), document.documentElement.clientWidth - t.width - pad);
     tip.style.top = `${top}px`;
     tip.style.left = `${left}px`;
   }
