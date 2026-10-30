@@ -8,8 +8,12 @@
   const GROUPS = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P"];
   const USAGE = { starter: "Started", rotation: "Rotation", bench: "Bench" };
   const KIND_ORDER = ["draft", "undrafted", "graduated", "portal", "quit"];
-  const view = { position: "", status: "available" };
+  const view = { position: "", status: "available", posPick: "", recapOpen: false };
+  const ui = window.CFP.ui;
   let H = null;
+  let BOX = null;                 // #tab-offseason
+  let drawn = null;               // what is on screen: { sid, stage }
+  let seq = 0;                    // the latest fetch; an older one landing late is dropped
 
   const teamName = (slug) => (window.CFP.teamsBySlug[slug] || {}).name || slug;
   const loading = (text) => el("p", { class: "muted go-loading", text });
@@ -22,23 +26,71 @@
         el("span", { class: "off-step-mark", text: st.done ? "✓" : String(i + 1) }), el("span", { text: st.name })])));
   }
 
+  function fetchView(s) {
+    const q = new URLSearchParams();
+    if (view.position) q.set("position", view.position);
+    if (view.status) q.set("status", view.status);
+    return H.api(`/api/season/${s.id}/offseason?${q}`);
+  }
+
+  // The full draw: opening the tab, and the offseason moving to its next stage.
   async function render(s, box, helpers) {
     H = helpers;
+    BOX = box;
+    const token = ++seq;
     box.innerHTML = "";
     box.append(loading("Opening the offseason…"));
     let v;
-    try {
-      const q = new URLSearchParams();
-      if (view.position) q.set("position", view.position);
-      if (view.status) q.set("status", view.status);
-      v = await H.api(`/api/season/${s.id}/offseason?${q}`);
-    } catch (err) {
+    try { v = await fetchView(s); }
+    catch (err) {
+      if (token !== seq) return;
       box.innerHTML = "";
       box.append(loading(`Could not open the offseason: ${H.errText(err)}`));
       return;
     }
+    if (token !== seq) return;
     box.innerHTML = "";
-    const head = el("section", { class: "go-card off-head" }, [
+    draw(s, v, box, false);
+  }
+
+  // After an action: fetch again and patch what is on screen to match (web/ui.js morph): the cards
+  // stay, the scroll stays, what changed pulses. A new stage (or another career) draws in full.
+  async function refresh(s) {
+    const box = BOX;
+    const token = ++seq;
+    const v = await fetchView(s);
+    if (token !== seq) return;
+    if (!box || !box.isConnected || !drawn || drawn.sid !== s.id || drawn.stage !== v.stage) {
+      box.innerHTML = "";
+      draw(s, v, box, false);
+      return;
+    }
+    const fresh = el("div");
+    draw(s, v, fresh, true);
+    ui.morph(box, fresh);
+  }
+
+  // One decision button: the button is busy, the call goes out, the screen patches, a toast says what
+  // happened (said: text, or a function of the call's answer). Errors keep their toasts (fail).
+  function act(ev, s, call, said, opt = {}) {
+    const btn = ev && ev.currentTarget instanceof HTMLElement ? ev.currentTarget : null;
+    const work = (async () => {
+      let r;
+      try { r = await call(); }
+      catch (err) { if (opt.fail) opt.fail(err); else H.toast(H.errText(err)); return; }
+      try { await refresh(s); if (opt.after) await opt.after(r); }
+      catch (err) { H.toast(`Could not refresh the offseason: ${H.errText(err)}`, 4000); return; }
+      const msg = typeof said === "function" ? said(r) : said;
+      if (msg) H.toast(msg, 3500);
+    })();
+    return btn ? ui.busy(btn, work) : work;
+  }
+
+  // the stage drawn into root; patching: drawn off screen to patch the live one (the portal board
+  // keeps itself: recruiting.js draws it once)
+  function draw(s, v, root, patching) {     // root: the live box, or a detached one to patch from (handlers use BOX)
+    drawn = { sid: s.id, stage: v.stage };
+    const head = el("section", { class: "go-card off-head", "data-key": "head" }, [
       el("div", { class: "go-kicker", text: `OFFSEASON · ON TO ${v.year}` }),
       el("div", { class: "go-display xl", text: v.stage_name.toUpperCase() }),
       stepper(v),
@@ -47,29 +99,29 @@
     ]);
     const actions = el("div", { class: "go-play off-actions" });
     head.append(actions);
-    box.append(head);
-    const main = el("div", { class: "off-main" });
-    box.append(main);
+    root.append(head);
+    const main = el("div", { class: "off-main", "data-key": "main" });
+    root.append(main);
     const next = { departures: v.retention && v.retention.players.length ? "KEEP THEM HOME" : "OPEN THE TRANSFER PORTAL", retention: "OPEN THE TRANSFER PORTAL",
                    portal_1: "END ROUND 1", portal_2: "CLOSE THE PORTAL", portal_w1: "END WEEK 1", portal_w2: "END WEEK 2",
       portal_w3: "END WEEK 3", portal_w4: "CLOSE THE PORTAL", development: "STAFF CHANGES",
                    staff: "FINISH THE OFFSEASON", ready: `START THE ${v.year} SEASON` }[v.stage];
     const go = el("button", { type: "button", class: "go-btn primary big", text: next });
-    go.addEventListener("click", () => advance(s, box, go, v.stage === "ready" ? "next_season" : null));
+    ui.on(go, "click", (ev) => advance(s, BOX, ev.currentTarget, v.stage === "ready" ? "next_season" : null));
     actions.append(go);
     if (v.stage !== "ready") {
       const all = el("button", { type: "button", class: "go-btn big2", text: "Sim to next season" });
-      all.addEventListener("click", () => { if (window.confirm("Sim the rest of the offseason? Every decision still open (players deciding, the portal, your staff) is made for you.")) advance(s, box, all, "next_season"); });
+      ui.on(all, "click", (ev) => { if (window.confirm("Sim the rest of the offseason? Every decision still open (players deciding, the portal, your staff) is made for you.")) advance(s, BOX, ev.currentTarget, "next_season"); });
       actions.append(all);
     }
-    if (v.review) main.append(renderReview(s, v, box));
+    if (v.review) main.append(renderReview(s, v));
     if (v.fired && v.stage !== "departures" && v.stage !== "staff" && v.stage !== "ready") main.append(firedNote(v));
-    if (v.stage === "departures" || v.stage === "development") main.append(renderRosterMoves(s, v, box));
+    if (v.stage === "departures" || v.stage === "development") main.append(renderRosterMoves(s, v, patching));
     if (v.portal_recap && (v.stage === "staff" || v.stage === "ready")) main.append(renderPortalRecap(v, true));
     if (v.stage === "departures") renderDepartures(v, main);
-    else if (v.stage === "retention") renderRetention(s, v, main, box);
-    else if (v.stage === "portal_1" || v.stage === "portal_2") renderPortal(s, v, main, box);
-    else if (v.stage.startsWith("portal_w")) renderPortalWeeks(s, v, main, box);
+    else if (v.stage === "retention") renderRetention(s, v, main);
+    else if (v.stage === "portal_1" || v.stage === "portal_2") renderPortal(s, v, main);
+    else if (v.stage.startsWith("portal_w")) renderPortalWeeks(s, v, main, patching);
     else if (v.stage === "development") renderDevelopment(v, main);
     else if (v.stage === "staff") renderStaff(s, v, main);
     else renderReady(v, main);
@@ -77,7 +129,7 @@
   }
 
   function firedNote(v) {
-    return el("section", { class: "go-card off-fired" }, [el("div", { class: "go-kicker", text: "YOU HAVE BEEN LET GO" }),
+    return el("section", { class: "go-card off-fired", "data-key": "fired" }, [el("div", { class: "go-kicker", text: "YOU HAVE BEEN LET GO" }),
       el("p", { text: `The program's next coach runs the rest of the ${v.year} offseason. Walk the steps and pick your next job at the Staff step.` })]);
   }
 
@@ -87,9 +139,9 @@
     return el("div", { class: `off-meter ${cls}` }, [el("div", { class: "off-meter-fill", style: `width:${Math.max(2, Math.min(100, sec))}%` })]);
   }
 
-  function renderReview(s, v, box) {
+  function renderReview(s, v) {
     const r = v.review;
-    const card = el("section", { class: "go-card off-review" }, [el("div", { class: "go-kicker", text: "YOUR MEETING WITH THE AD" }),
+    const card = el("section", { class: "go-card off-review", "data-key": "review" }, [el("div", { class: "go-kicker", text: "YOUR MEETING WITH THE AD" }),
       el("div", { class: "go-mini off-numbers" }, [stat("THE GOAL", r.goal), stat("YOUR RECORD", `${r.record[0]}-${r.record[1]}`),
         stat("JOB SECURITY", r.mood || ""), stat("HIS PATIENCE", `${r.patience} years`), stat("YEAR", `${r.tenure} in the job`)]),
       meter(r.security),
@@ -103,10 +155,9 @@
     card.append(el("p", { class: "muted", text: r.risk === "fire" ? "He is deciding whether to make a change. What do you say?"
       : "A warning. What do you say?" }));
     const acts = el("div", { class: "off-review-acts" });
-    const send = async (action, staffId) => {
-      try { await H.api(`/api/season/${s.id}/offseason/review`, H.postJSON({ action, staff_id: staffId || null })); render(s, box, H); }
-      catch (err) { H.toast(H.errText(err)); }
-    };
+    const said = { case: "You make your case to the AD", year: "You ask the AD for one more year", nothing: "You say nothing to the AD" };
+    const send = (ev, action, staffId, line) =>
+      act(ev, s, () => H.api(`/api/season/${s.id}/offseason/review`, H.postJSON({ action, staff_id: staffId || null })), line || said[action]);
     const tips = { case: "Point to the class you signed and the players you developed; a little goodwill.",
       change: "Let a coordinator go; the AD sees a coach who will not stand pat.",
       year: "He always says yes, but the goal must be met next season or you are gone.",
@@ -116,13 +167,13 @@
         const coords = (v.your_staff || []).filter((x) => x.role === "OC" || x.role === "DC");
         for (const c of coords) {
           const b = el("button", { type: "button", class: "go-act" }, [`Let ${c.role} ${c.name} go`, el("span", { text: tips.change })]);
-          b.addEventListener("click", () => send("change", c.id));
+          ui.on(b, "click", (ev) => send(ev, "change", c.id, `You let ${c.role} ${c.name} go`));
           acts.append(b);
         }
         continue;
       }
       const b = el("button", { type: "button", class: "go-act" }, [r.option_names[o], el("span", { text: tips[o] })]);
-      b.addEventListener("click", () => send(o));
+      ui.on(b, "click", (ev) => send(ev, o));
       acts.append(b);
     }
     card.append(acts);
@@ -141,7 +192,7 @@
         await H.openSeason(s.id);          // in place: no reload, no loading screen
         return;
       }
-      render(s, box, H);
+      render(s, box, H);            // the next stage: a full draw
     } catch (err) {
       btn.disabled = false;
       H.toast(`Could not continue: ${H.errText(err)}`);
@@ -152,8 +203,8 @@
   const POS_NAMES = { QB: "QB", HB: "HB", FB: "FB", WR: "WR", TE: "TE", LT: "LT", LG: "LG", C: "C", RG: "RG", RT: "RT", LEDG: "LEDG", REDG: "REDG", DT: "DT",
     SAM: "SAM", MIKE: "MIKE", WILL: "WILL", CB: "CB", FS: "FS", SS: "SS", K: "K", P: "P" };
   const NEXT_CLASS = { FR: "SO", FRRS: "SORS", SO: "JR", SORS: "JRRS", JR: "SR", JRRS: "SRRS" };
-  function renderRosterMoves(s, v, box) {
-    const card = el("section", { class: "go-card off-roster" }, [el("div", { class: "go-kicker", text: "YOUR ROSTER" })]);
+  function renderRosterMoves(s, v, patching) {
+    const card = el("section", { class: "go-card off-roster", "data-key": "roster" }, [el("div", { class: "go-kicker", text: "YOUR ROSTER" })]);
     const rs = v.redshirts;
     if (rs && v.stage === "departures") {
       const picked = rs.players.filter((p) => p.redshirt).length;
@@ -161,16 +212,14 @@
         el("p", { class: "muted small", text: rs.decided ? "Decided: the classes below are set for next season."
           : "Four games or fewer and the year unused: a redshirt keeps his class for next season (he still develops). Freshmen off the depth chart's top take it unless you say otherwise." }));
       if (!rs.players.length) card.append(el("p", { class: "muted", text: "Nobody on your roster can take a redshirt this year." }));
-      const list = el("div", { class: "off-rs" });
+      const list = el("div", { class: "off-rs", "data-key": "rs" });
       for (const p of rs.players) {
-        const b = el("button", { type: "button", class: `go-act ${p.redshirt ? "on" : ""}`, "aria-pressed": String(p.redshirt), ...(rs.decided ? { disabled: "true" } : {}),
+        const b = el("button", { type: "button", class: `go-act ${p.redshirt ? "on" : ""}`, "aria-pressed": String(p.redshirt), "data-key": p.id, ...(rs.decided ? { disabled: "true" } : {}),
           title: `${p.name}: played ${p.games} of ${p.team_games} games · ${p.use === "starter" ? "a starter" : p.use === "rotation" ? "in the rotation" : "off the depth chart"}` },
           [el("b", { text: p.name }), el("span", { text: `${p.pos} · ${clsWord(p.cls)} · ${p.overall} OVR · ${p.games} of ${p.team_games} games` }),
            el("span", { class: `go-tag ${p.redshirt ? "good" : "muted"}`, text: p.redshirt ? `Redshirt → ${clsWord(`${p.cls}RS`)}` : `Plays on → ${clsWord(NEXT_CLASS[p.cls] || p.cls)}` })]);
-        if (!rs.decided) b.addEventListener("click", async () => {
-          try { await H.api(`/api/season/${s.id}/offseason/redshirt`, H.postJSON({ pid: p.id, on: !p.redshirt })); render(s, box, H); }
-          catch (err) { H.toast(H.errText(err)); }
-        });
+        if (!rs.decided) ui.on(b, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/redshirt`, H.postJSON({ pid: p.id, on: !p.redshirt })),
+          p.redshirt ? `Plays on: ${p.name}` : `Redshirt: ${p.name}`));
         list.append(b);
       }
       card.append(list);
@@ -181,32 +230,41 @@
     const option = (r) => el("option", { value: r.id, text: `${r.pos} · ${r.name} · ${clsWord(r.cls)} · ${r.overall} OVR${r.moved_from ? ` (was ${r.moved_from})` : ""}${r.transfer ? ` · transfer from ${teamName(r.transfer)}` : ""}` });
     const roster = v.my_roster || [];
     const transfers = roster.filter((r) => r.transfer);
+    if (view.posPick && !roster.some((r) => r.id === view.posPick)) view.posPick = "";
     const pick = el("select", { class: "go-sel", "aria-label": "Player to move" }, [el("option", { value: "", text: "Pick a player…" }),
       ...(transfers.length ? [el("optgroup", { label: "Transfers" }, transfers.map(option)), el("optgroup", { label: "Everyone else" }, roster.filter((r) => !r.transfer).map(option))]
         : roster.map(option))]);
-    const opts = el("div", { class: "off-pos-opts" });
-    pick.addEventListener("change", async () => {
-      opts.innerHTML = "";
-      if (!pick.value) return;
-      try {
-        const d = await H.api(`/api/season/${s.id}/offseason/position_options?pid=${encodeURIComponent(pick.value)}`);
+    pick.value = view.posPick;
+    // his options as chips (keyed by position, patched in place); a patch of the card keeps them (data-keep)
+    const opts = el("div", { class: "off-pos-opts", "data-keep": "" });
+    const nameOf = (pid) => (roster.find((r) => r.id === pid) || {}).name || "He";
+    const loadOpts = async (live) => {
+      const pid = view.posPick;
+      const fresh = el("div");
+      if (pid) {
+        const d = await H.api(`/api/season/${s.id}/offseason/position_options?pid=${encodeURIComponent(pid)}`);
+        if (pid !== view.posPick) return;
         for (const o of d.options) {
-          const b = el("button", { type: "button", class: `go-chip small ${o.current ? "on" : ""}`, text: `${POS_NAMES[o.pos] || o.pos} ${o.overall}`, ...(o.current ? { disabled: "true" } : {}), title: o.current ? "His position now" : `Move him to ${o.pos}: ${o.overall} OVR there` });
-          if (!o.current) b.addEventListener("click", async () => {
-            try { await H.api(`/api/season/${s.id}/offseason/position`, H.postJSON({ pid: pick.value, pos: o.pos })); H.toast(`Moved to ${o.pos}.`, 2500); render(s, box, H); }
-            catch (err) { H.toast(H.errText(err)); }
-          });
-          opts.append(b);
+          const b = el("button", { type: "button", class: `go-chip small ${o.current ? "on" : ""}`, "data-key": o.pos, text: `${POS_NAMES[o.pos] || o.pos} ${o.overall}`, ...(o.current ? { disabled: "true" } : {}), title: o.current ? "His position now" : `Move him to ${o.pos}: ${o.overall} OVR there` });
+          if (!o.current) ui.on(b, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/position`, H.postJSON({ pid, pos: o.pos })),
+            `${nameOf(pid)} moves to ${o.pos}`, { after: () => loadOpts(live) }));
+          fresh.append(b);
         }
-      } catch (err) { H.toast(H.errText(err)); }
+      }
+      ui.morph(live, fresh);
+    };
+    ui.on(pick, "change", (ev) => {
+      view.posPick = ev.currentTarget.value;
+      const live = ev.currentTarget.closest(".off-roster").querySelector(".off-pos-opts");
+      loadOpts(live).catch((err) => H.toast(H.errText(err)));
     });
+    if (view.posPick && !patching) loadOpts(opts).catch((err) => H.toast(H.errText(err)));
     card.append(el("div", { class: "go-row wrap" }, [pick]), opts);
-    if ((v.position_changes || []).length) card.append(el("ul", { class: "off-list" }, v.position_changes.map((m) => {
+    if ((v.position_changes || []).length) card.append(el("ul", { class: "off-list", "data-key": "moves" }, v.position_changes.map((m) => {
       const undo = el("button", { type: "button", class: "go-link", text: "undo" });
-      undo.addEventListener("click", async () => {
-        try { await H.api(`/api/season/${s.id}/offseason/position`, H.postJSON({ pid: m.id, pos: m.from })); render(s, box, H); } catch (err) { H.toast(H.errText(err)); }
-      });
-      return el("li", {}, [el("b", { text: m.name }), ` ${m.from} → ${m.to} · ${m.overall} OVR `, undo]);
+      ui.on(undo, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/position`, H.postJSON({ pid: m.id, pos: m.from })), `${m.name} moves back to ${m.from}`,
+        { after: () => loadOpts(document.querySelector("#tab-offseason .off-pos-opts")) }));
+      return el("li", { "data-key": m.id }, [el("b", { text: m.name }), ` ${m.from} → ${m.to} · ${m.overall} OVR `, undo]);
     })));
     return card;
   }
@@ -230,17 +288,15 @@
       el("ol", { class: "off-list off-draft" }, v.departures.first_round.map((d) => el("li", {}, [
         el("span", { class: "muted", text: `${d.pick}. ` }), window.CFP.teamPill(d.team), el("b", { text: ` ${d.name}` }),
         el("span", { class: "muted", text: ` ${d.pos} · ${d.team_name}${d.early ? " · early" : ""}` })])))]);
-    main.append(el("div", { class: "off-grid" }, [card, league]));
+    main.append(el("div", { class: "off-grid", "data-key": "departures" }, [card, league]));
   }
 
   // Keep them home: your leavers with eligibility left, what each wants, and your moves (API: offseason/retain)
-  function renderRetention(s, v, main, box) {
+  function renderRetention(s, v, main) {
     const r = v.retention;
-    const act = async (pid, action, nil) => {
-      try { await H.api(`/api/season/${s.id}/offseason/retain`, H.postJSON({ pid, action, nil: nil || 0 })); render(s, box, H); }
-      catch (err) { H.toast(`Could not do that: ${H.errText(err)}`, 4000); }
-    };
-    const head = el("section", { class: "go-card" }, [
+    const retain = (ev, pid, action, said, nil) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/retain`, H.postJSON({ pid, action, nil: nil || 0 })), said,
+      { fail: (err) => H.toast(`Could not do that: ${H.errText(err)}`, 4000) });
+    const head = el("section", { class: "go-card", "data-key": "keep-head" }, [
       el("div", { class: "go-kicker", text: `KEEP THEM HOME · ${r.players.length} WANT OUT` }),
       el("p", {}, [`${r.players.length} of your players with eligibility left mean to leave: transfers and early draft entrants. Meet each one to hear what it would take. `,
         "A promised starting role only counts if your depth chart would really start him; NIL comes out of next year's budget, so it is money you will not have for recruits or the portal. ",
@@ -248,9 +304,9 @@
       el("div", { class: "go-row wrap" }, [el("span", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: "NEXT YEAR'S NIL" }), el("div", { class: "go-stat-val", text: `${r.left} / ${r.budget}` })]),
         el("span", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: "COMMITTED TO KEEP THEM" }), el("div", { class: "go-stat-val", text: `${r.spent}` })])]),
     ]);
-    const cards = el("div", { class: "go-cards off-keep" });
+    const cards = el("div", { class: "go-cards off-keep", "data-key": "keep" });
     for (const e of r.players) {
-      const c = el("article", { class: `go-card go-pcard ${e.offers.released ? "muted" : ""}` });
+      const c = el("article", { class: `go-card go-pcard ${e.offers.released ? "muted" : ""}`, "data-key": e.id });
       c.append(el("div", { class: "go-card-head" }, [el("div", {}, [el("b", { class: "go-name", text: e.name }),
         el("div", { class: "muted small", text: `${e.pos} · ${clsWord(e.cls)} next year · ${e.overall} OVR${e.stars ? ` · ${"★".repeat(e.stars)}` : ""}` })]),
         el("span", { class: `go-tag ${e.intent === "draft" ? "warn" : "bad"}`, text: e.intent === "draft" ? "NFL draft" : "Transfer portal" })]));
@@ -266,14 +322,17 @@
       if (e.offers.nil) offers.push(`${e.offers.nil} NIL on the table`);
       if (e.offers.released) offers.push("Letting him go");
       if (offers.length) c.append(el("p", { class: "small" }, [el("b", { text: "Your offer: " }), offers.join(" · ")]));
-      const btn = (label, sub, onclick, tone, off) => { const b = el("button", { type: "button", class: `go-act ${tone || ""}` }, [el("b", { text: label }), el("span", { text: sub })]); if (off) b.disabled = true; b.addEventListener("click", onclick); return b; };
+      const btn = (label, sub, onclick, tone, off) => { const b = el("button", { type: "button", class: `go-act ${tone || ""}` }, [el("b", { text: label }), el("span", { text: sub })]); if (off) b.setAttribute("disabled", ""); ui.on(b, "click", onclick); return b; };
       const row = el("div", { class: "go-actions off-keep-acts" }, [
-        btn("Meet", e.met ? "done" : "free", () => act(e.id, "meet"), "", e.met),
-        btn("Promise a start", e.role_next === "starter" ? "he would start" : "he would not", () => act(e.id, "promise"), e.role_next === "starter" ? "go" : "", e.offers.promise),
-        btn("Let him go", e.offers.released ? "letting go" : "", () => { if (window.confirm(`Let ${e.name} go? He leaves when you advance; no NIL, no promise.`)) act(e.id, "release"); }, "", e.offers.released)]);
+        btn("Meet", e.met ? "done" : "free", (ev) => retain(ev, e.id, "meet", `Met with ${e.name}`), "", e.met),
+        btn("Promise a start", e.role_next === "starter" ? "he would start" : "he would not", (ev) => retain(ev, e.id, "promise", `Promised ${e.name} a start`), e.role_next === "starter" ? "go" : "", e.offers.promise),
+        btn("Let him go", e.offers.released ? "letting go" : "", (ev) => { if (window.confirm(`Let ${e.name} go? He leaves when you advance; no NIL, no promise.`)) retain(ev, e.id, "release", `Letting ${e.name} go`); }, "", e.offers.released)]);
       const nil = el("input", { type: "number", min: "0", step: "5", value: String(e.offers.nil || e.ask.nil || 0), class: "go-nil", id: `keep-nil-${e.id}` });
       const nilRow = el("div", { class: "go-row off-keep-nil" }, [el("label", { for: `keep-nil-${e.id}`, class: "muted small", text: "NIL" }), nil,
-        btn("Offer NIL", "from next year's", () => act(e.id, "nil", Number(nil.value) || 0), "alt")]);
+        btn("Offer NIL", "from next year's", (ev) => {        // the amount typed in the live box beside the button
+          const amount = Number(document.getElementById(`keep-nil-${e.id}`).value) || 0;
+          retain(ev, e.id, "nil", `Offer to ${e.name} · ${amount} NIL`, amount);
+        }, "alt")]);
       c.append(row, nilRow);
       cards.append(c);
     }
@@ -281,9 +340,9 @@
     main.append(head, cards);
   }
 
-  function renderPortalWeeks(s, v, main, box) {
+  function renderPortalWeeks(s, v, main, patching) {
     const p = v.portal;
-    const head = el("section", { class: "go-card" }, [
+    const head = el("section", { class: "go-card", "data-key": "portal-head" }, [
       el("div", { class: "go-kicker", text: `TRANSFER PORTAL · WEEK ${p.week} OF ${p.weeks}` }),
       el("p", {}, [`You have ${v.open_spots} spots (the roster limit, plus up to 8 by releasing the end of your roster) and ${p.offers_left} offers left. `,
         "Transfers are recruited like a class, condensed: message, call, a campus visit, an offer with a pitch and NIL from your portal pool. ",
@@ -303,14 +362,14 @@
         el("ul", { class: "off-list" }, moves.map((m) => el("li", {}, [el("b", { text: m.name }), el("span", { class: "muted", text: ` ${m.pos} · ${m.overall} OVR · ` }),
           m.to === s.team ? el("span", { class: "go-tag good", text: `Joins you from ${teamName(m.from)}` }) : el("span", { class: "go-tag bad", text: `Left for ${teamName(m.to)}` })]))));
     }
-    const board = el("div", { class: "off-board" });
+    const board = el("div", { class: "off-board", "data-key": "board", "data-keep": "" });     // the board draws and patches itself (recruiting.js)
     main.append(head, board);
-    window.Recruiting.board(s, board, H);
+    if (!patching) window.Recruiting.board(s, board, H);
   }
 
-  function renderPortal(s, v, main, box) {
+  function renderPortal(s, v, main) {
     const p = v.portal;
-    const head = el("section", { class: "go-card" }, [
+    const head = el("section", { class: "go-card", "data-key": "portal-head" }, [
       el("div", { class: "go-kicker", text: `TRANSFER PORTAL · ROUND ${p.round} OF 2` }),
       el("p", {}, [`You have ${v.open_spots} open spots${v.release_spots ? ` (and ${v.release_spots} more by releasing the end of your roster)` : ""} and ${p.offers_left} offers left this round. Entrants with offers pick a school when the round ends: `,
         "playing time first, then the program, winning and home."]),
@@ -318,11 +377,11 @@
     const filters = el("div", { class: "off-filters" });
     const pos = el("select", { "aria-label": "Position" }, [el("option", { value: "", text: "All positions" }), ...GROUPS.map((g) => el("option", { value: g, text: g }))]);
     pos.value = view.position;
-    pos.addEventListener("change", () => { view.position = pos.value; render(s, box, H); });
+    ui.on(pos, "change", (ev) => { view.position = ev.currentTarget.value; refresh(s).catch((err) => H.toast(H.errText(err))); });
     const status = el("select", { "aria-label": "Status" }, [["available", "Still available"], ["offered", "Offered by you"], ["signed", "Signed"], ["", "Everyone"]]
       .map(([k, t]) => el("option", { value: k, text: t })));
     status.value = view.status;
-    status.addEventListener("change", () => { view.status = status.value; render(s, box, H); });
+    ui.on(status, "change", (ev) => { view.status = ev.currentTarget.value; refresh(s).catch((err) => H.toast(H.errText(err))); });
     filters.append(pos, status);
     head.append(filters);
     const moves = p.moves_mine;
@@ -336,12 +395,9 @@
     for (const r of p.rows) {
       const btn = el("button", { type: "button", class: `go-btn small ${r.offered ? "" : "primary"}`, text: r.signed ? "Signed" : r.offered ? "Withdraw" : "Offer" });
       btn.disabled = !!r.signed || (!r.offered && p.offers_left <= 0);
-      btn.addEventListener("click", async () => {
-        btn.disabled = true;
-        try { await H.api(`/api/season/${s.id}/offseason/portal`, H.postJSON({ pid: r.id, on: !r.offered })); render(s, box, H); }
-        catch (err) { btn.disabled = false; H.toast(H.errText(err)); }
-      });
-      body.append(el("tr", { class: r.offered ? "offered" : "" }, [
+      ui.on(btn, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/portal`, H.postJSON({ pid: r.id, on: !r.offered })),
+        r.offered ? `Offer to ${r.name} pulled` : `Offer sent to ${r.name}`));
+      body.append(el("tr", { class: r.offered ? "offered" : "", "data-key": r.id }, [
         el("td", {}, [el("b", { text: r.name }), r.stars ? el("span", { class: "muted small", text: ` ${stars(r.stars)}` }) : null]),
         el("td", { text: r.pos }), el("td", { text: clsWord(r.cls) }), el("td", { class: "num", text: String(r.overall) }),
         el("td", {}, [window.CFP.teamPill(r.from), ` ${r.from_name}`]), el("td", { text: USAGE[r.last_year] || "" }),
@@ -349,7 +405,7 @@
         el("td", { class: "num", text: r.signed ? r.signed_name : String(r.offers) }), el("td", {}, [btn])]));
     }
     table.append(body);
-    main.append(head, el("section", { class: "go-card off-scroll" }, [p.rows.length ? table : el("p", { class: "muted", text: "Nobody matches." })]));
+    main.append(head, el("section", { class: "go-card off-scroll", "data-key": "portal-table" }, [p.rows.length ? table : el("p", { class: "muted", text: "Nobody matches." })]));
   }
 
   const teamAbbr = (slug) => (window.CFP.teamsBySlug[slug] || {}).abbreviation || teamName(slug);
@@ -370,9 +426,12 @@
       r.reason ? el("span", { class: "muted small off-recap-why", text: ` · ${r.reason}` }) : null])))
       : el("p", { class: "muted", text: "Nobody left through the portal." }));
     body.push(el("div", { class: "off-recap-cols" }, [got, lost]));
-    if (!collapsed) return el("section", { class: "go-card off-recap" }, [el("div", { class: "go-kicker", text: "TRANSFER PORTAL RECAP" }), ...body]);
-    return el("details", { class: "go-card off-recap" }, [el("summary", { class: "off-recap-sum" }, [el("span", { class: "go-kicker", text: "TRANSFER PORTAL RECAP" }),
+    if (!collapsed) return el("section", { class: "go-card off-recap", "data-key": "recap" }, [el("div", { class: "go-kicker", text: "TRANSFER PORTAL RECAP" }), ...body]);
+    // a patch (ui.morph) redraws this card: it keeps whether the player opened it (view.recapOpen)
+    const det = el("details", { class: "go-card off-recap", "data-key": "recap", ...(view.recapOpen ? { open: "" } : {}) }, [el("summary", { class: "off-recap-sum" }, [el("span", { class: "go-kicker", text: "TRANSFER PORTAL RECAP" }),
       el("span", { class: "muted", text: `Portal: +${rec.signed.length} / −${rec.lost.length} · details` })]), ...body]);
+    ui.on(det, "toggle", (ev) => { view.recapOpen = ev.currentTarget.open; });
+    return det;
   }
 
   function devRow(d) {
@@ -385,7 +444,7 @@
   function renderDevelopment(v, main) {
     const r = v.report || { mine: [], transfers: [] };
     if (v.portal_recap) main.append(renderPortalRecap(v, false));
-    const card = el("section", { class: "go-card" }, [
+    const card = el("section", { class: "go-card", "data-key": "improved" }, [
       el("div", { class: "go-kicker", text: "WHO IMPROVED" }),
       el("p", { class: "muted", text: `Every returning player grows toward his potential at his coachability's pace, faster under good developers and faster still after a big year: production and honors raise a player's ceiling and his pace. ${r.walk_ons} walk-ons and lower-level transfers joined around the league to fill out rosters.` })]);
     if ((r.transfers || []).length) card.append(el("div", { class: "go-kicker muted off-sub", text: `YOUR TRANSFERS · ${r.transfers.length}` }),
@@ -398,7 +457,7 @@
     const j = v.job;
     if (!j) return null;
     const you = j.you || {};
-    const card = el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: "YOUR JOB" })]);
+    const card = el("section", { class: "go-card off-job", "data-key": "job" }, [el("div", { class: "go-kicker", text: "YOUR JOB" })]);
     if (you.goal) card.append(el("p", {}, [`Your AD's goal: ${you.goal.text}. `, you.met ? "You met it." : "You fell short.",
       ` Job security: ${(you.mood || "").toLowerCase()} (patience: ${you.patience} years).`]));
     const list = you.fired ? j.openings : j.offers;
@@ -407,29 +466,27 @@
     else card.append(el("p", { class: "muted", text: "No offers this year. Win big and better programs with an opening will call." }));
     for (const o of list) {
       const picked = j.choice === o.team;
-      const b = el("button", { type: "button", class: `go-card off-cand ${picked ? "picked" : ""}`, "aria-pressed": String(picked) }, [
+      const b = el("button", { type: "button", class: `go-card off-cand ${picked ? "picked" : ""}`, "aria-pressed": String(picked), "data-key": o.team }, [
         el("span", {}, [window.CFP.teamPill(o.team), el("b", { text: ` ${o.name}` })]),
         el("span", { class: "muted small", text: `${o.conference} · team rating ${Math.round(o.rating)} · goal: ${o.goal}` }),
         el("span", { class: "go-tag", text: picked ? "Taking it" : "Take this job" })]);
-      b.addEventListener("click", async () => {
-        try { await H.api(`/api/season/${s.id}/offseason/job`, H.postJSON({ team: picked ? null : o.team })); render(s, document.getElementById("tab-offseason"), H); }
-        catch (err) { H.toast(H.errText(err)); }
-      });
+      ui.on(b, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/job`, H.postJSON({ team: picked ? null : o.team })),
+        picked ? `Not taking the ${o.name} job` : `Taking the job at ${o.name}`));
       card.append(b);
     }
     return card;
   }
 
-  function candidateCard(c, picked, onClick) {
+  function candidateCard(c, picked, onClick, key) {
     const stops = (c.history || []).slice(-3).map((h) => `${h.team_name || h.team}${h.year ? ` ${h.year}–${h.to || ""}` : ""}`).join(" · ");
-    const b = el("button", { type: "button", class: `go-card off-cand ${picked ? "picked" : ""}`, "aria-pressed": String(picked) }, [
+    const b = el("button", { type: "button", class: `go-card off-cand ${picked ? "picked" : ""}`, "aria-pressed": String(picked), "data-key": key }, [
       el("b", { text: `${c.name}${c.age ? `, ${c.age}` : ""}` }),
       el("span", { class: "muted small", text: `Evaluation ${c.evaluation} · Recruiting ${c.recruiting}${c.play_calling ? ` · Play calling ${c.play_calling}` : ""}` }),
       c.previous_job ? el("span", { class: "small", text: c.previous_job }) : null,
       c.why ? el("span", { class: "muted small off-cand-why", text: c.why }) : null,
       stops ? el("span", { class: "muted small", text: stops }) : null,
       el("span", { class: `go-btn off-cand-hire ${picked ? "" : "primary"}`, text: picked ? "Hired" : `Hire ${c.name.split(" ").slice(-1)[0]}` })]);
-    b.addEventListener("click", onClick);
+    ui.on(b, "click", onClick);
     return b;
   }
 
@@ -437,40 +494,37 @@
     const job = renderJob(s, v);
     if (job) main.append(job);
     const st = v.staff || { leaving: [], candidates: {}, hired: {}, reasons: {}, market: [] };
-    const card = el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: "YOUR STAFF" })]);
-    if (!st.leaving.length) card.append(el("p", { text: "Your whole staff is back. Everyone grew a little." }));
+    const card = el("section", { class: "go-card off-staff", "data-key": "staff" }, [el("div", { class: "go-kicker", text: "YOUR STAFF" })]);
+    if (!st.leaving.length) card.append(el("p", { "data-key": "all-back", text: "Your whole staff is back. Everyone grew a little." }));
     for (const who of st.leaving) {
-      card.append(el("p", {}, [el("b", { text: `${who.role} ${who.name}` }), ` ${(st.reasons || {})[who.id] || "is moving on"}.`]));
-      const row = el("div", { class: "off-cands" });
+      card.append(el("p", { "data-key": `leaving-${who.id}` }, [el("b", { text: `${who.role} ${who.name}` }), ` ${(st.reasons || {})[who.id] || "is moving on"}.`]));
+      const row = el("div", { class: "off-cands", "data-key": `cands-${who.id}` });
       (st.candidates[who.id] || []).forEach((c, i) => {
-        row.append(candidateCard(c, st.hired[who.id] === i, async () => {
-          try { await H.api(`/api/season/${s.id}/offseason/hire`, H.postJSON({ staff_id: who.id, index: i })); render(s, document.getElementById("tab-offseason"), H); }
-          catch (err) { H.toast(H.errText(err)); }
-        }));
+        row.append(candidateCard(c, st.hired[who.id] === i, (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/hire`, H.postJSON({ staff_id: who.id, index: i })),
+          `Hired ${c.name} as ${who.role}`), `${who.id}-${i}`));
       });
       card.append(row);
     }
     const leaving = new Set(st.leaving.map((w) => w.id));
     const staying = (v.your_staff || []).filter((x) => !leaving.has(x.id));
     if (staying.length && !v.fired) {
-      card.append(el("div", { class: "go-kicker muted off-sub", text: "STAYING · LET ONE GO AND HIRE FROM THE MARKET" }));
-      const row = el("div", { class: "off-letgo" });
+      card.append(el("div", { class: "go-kicker muted off-sub", "data-key": "staying", text: "STAYING · LET ONE GO AND HIRE FROM THE MARKET" }));
+      const row = el("div", { class: "off-letgo", "data-key": "letgo" });
       for (const x of staying) {
-        const b = el("button", { type: "button", class: "go-act" }, [`${x.role} ${x.name}`, el("span", { text: "Let him go" })]);
-        b.addEventListener("click", async () => {
+        const b = el("button", { type: "button", class: "go-act", "data-key": x.id }, [`${x.role} ${x.name}`, el("span", { text: "Let him go" })]);
+        ui.on(b, "click", (ev) => {
           if (!window.confirm(`Let ${x.role} ${x.name} go? He joins the coaching market and you hire his replacement now.`)) return;
-          try { await H.api(`/api/season/${s.id}/offseason/open_role`, H.postJSON({ staff_id: x.id })); render(s, document.getElementById("tab-offseason"), H); }
-          catch (err) { H.toast(H.errText(err)); }
+          act(ev, s, () => H.api(`/api/season/${s.id}/offseason/open_role`, H.postJSON({ staff_id: x.id })), `${x.role} ${x.name} is out · hire his replacement`);
         });
         row.append(b);
       }
       card.append(row);
     }
-    const coaches = el("section", { class: "go-card" }, [el("div", { class: "go-kicker", text: "COACHING CAROUSEL" }),
+    const coaches = el("section", { class: "go-card", "data-key": "carousel" }, [el("div", { class: "go-kicker", text: "COACHING CAROUSEL" }),
       v.coaching_changes.length ? el("ul", { class: "off-list" }, v.coaching_changes.map((c) => el("li", {}, [window.CFP.teamPill(c.team),
         c.reason === "hired" ? ` ${teamName(c.team)} hires ${c.new}${c.from ? ` (${c.from})` : ""}.` : ` ${teamName(c.team)}: ${c.old} ${c.reason}.`])))
         : el("p", { class: "muted", text: "No head coaching changes this year." })]);
-    main.append(el("div", { class: "off-grid" }, [card, coaches]));
+    main.append(el("div", { class: "off-grid", "data-key": "staff-grid" }, [card, coaches]));
     if ((st.market || []).length) {
       const t = el("table", { class: "off-table" }, [el("thead", {}, [el("tr", {}, ["Coach", "Would take", "Rating", "Why he is available", "Last job"].map((h) => el("th", { text: h })))])]);
       const body = el("tbody");
@@ -479,7 +533,7 @@
           el("td", { text: `${m.why}${m.sits_out ? " · sitting out this cycle" : ""}` }), el("td", { text: m.previous_job && m.previous_job !== m.why ? m.previous_job : "—" })]));
       }
       t.append(body);
-      main.append(el("section", { class: "go-card off-scroll" }, [el("div", { class: "go-kicker", text: `COACHES FOR HIRE · THE TOP ${st.market.length}` }),
+      main.append(el("section", { class: "go-card off-scroll", "data-key": "market" }, [el("div", { class: "go-kicker", text: `COACHES FOR HIRE · THE TOP ${st.market.length}` }),
         el("p", { class: "muted small", text: "The coaching market: fired and let-go coaches, head coaches from the FCS and lower divisions, NFL assistants and position coaches. Open a job on your staff to hire from it." }), t]));
     }
   }
@@ -501,7 +555,7 @@
         el("td", { class: "num", text: h.class_rank ? `#${h.class_rank}` : "—" }), el("td", { class: "num", text: String(h.drafted || 0) })]));
     }
     t.append(body);
-    return el("section", { class: "go-card off-scroll" }, [el("div", { class: "go-kicker", text: "YOUR PROGRAM'S HISTORY" }), t]);
+    return el("section", { class: "go-card off-scroll", "data-key": "history" }, [el("div", { class: "go-kicker", text: "YOUR PROGRAM'S HISTORY" }), t]);
   }
 
   window.Offseason = { render };

@@ -24,7 +24,9 @@
 .go-needs-box .go-needs { margin: 0 0 4px; }
 
 /* ----- the two panels: the list and the pane ----- */
-.go-board { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 16px; align-items: start; }
+/* overflow-anchor: a row that moves after an action must not drag the page's scroll with it (the browser would
+   otherwise shift scrollY to hold a lower row still); the scroll stays where the player left it */
+.go-board { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 16px; align-items: start; overflow-anchor: none; }
 .go-board .go-list-recruits { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .go-list-empty { margin: 12px 8px; }
 .go-list-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; flex-wrap: wrap; padding: 10px 8px 0; }
@@ -167,3 +169,17 @@
 .us-leader { stroke: var(--muted); pointer-events: none; }
 .us-label.crowded { visibility: hidden; }
 .us-map.moving .us-label, .us-map.moving .us-leader { visibility: hidden; }   /* hidden while the camera moves; laid out again when it settles */
+
+/* ----- motion: an action patches the board in place and shows what changed (styles.css owns the pulse,
+   the fades, the busy spinner and the toast stack; these are the board's own) ----- */
+.go-changed.go-standing-word, .go-changed.go-chip, .go-changed.go-tag, .go-changed b { border-radius: 6px; }
+/* another recruit's pane cross-fades in (120 ms) */
+.go-pane { transition: opacity 120ms ease; }
+.go-pane.go-pane-in { opacity: 0; }
+.go-pane > .go-tags[hidden] { display: none; }
+.rc-head .go-meter-fill { transition: width 150ms ease; }
+/* no motion when the player asked for none: instant changes */
+@media (prefers-reduced-motion: reduce) {
+  .go-pane, .rc-head .go-meter-fill { transition-duration: 0s; }
+  .go-pane.go-pane-in { opacity: 1; }
+}

@@ -1812,6 +1812,25 @@ and panel headings and the active tab take the accent. Michigan is maize on dark
 navy on light and white on dark, Oregon is green on light and yellow on dark, and so on;
 the accent is re-picked when the theme toggle flips.
 
+### Smooth actions (`web/ui.js`)
+
+An action patches the screen in place; it never rebuilds the part of the page the player is
+looking at. `window.CFP.ui` (loaded right after `gameview.js`, before every screen's script)
+holds the shared helpers: `morph` patches a live tree to match a freshly drawn one (nodes matched
+by `data-key`, text and attributes moved onto the live node, a field the player is typing in left
+alone), `reconcile` keeps a keyed list (an existing row is patched and moved into order, a new one
+fades in over 150 ms, a gone one fades out), `pulse` marks what changed with a 600 ms background
+pulse (`.go-changed`), `busy` disables the control that acted and shows a spinner until the request
+and the re-fetch land, then hands the focus back to it (or the nearest live control if it left), and
+`toast` says what happened in one short sentence on a stack bottom-left: a polite `status` region,
+newest on top, three at most, 3.5 s each; `#toast` stays as a hidden mirror of the latest for older
+scripts. The recruiting board, the depth chart, Settings, every offseason stage and Your coach use
+these, so the scroll never jumps and focus never falls to the page body. Under
+`prefers-reduced-motion: reduce` there is no pulse, no fade and no cross-fade: changes are instant.
+`tests/test_smoothness.py` measures all of it through the real page (a MutationObserver counts
+removals of anything holding the watched element; the scroll must stay within 2 px), and the UX
+sweep does the same for every board action.
+
 ### Later seasons: a schedule of their own (`sim/schedule_gen.py`)
 
 A career's seasons after 2026 no longer replay the 2026 slate. Each new year is built the way

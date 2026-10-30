@@ -14,11 +14,17 @@
   function postJSON(body) {
     return { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
   }
-  let toastTimer = null;
+  // toast(msg, ms): a thin wrapper over the shared stack (web/ui.js). Without ms it stays up until the
+  // next toast replaces it (a "working on it" line); hideToast() takes that one down.
+  let stickyToast = null;
+  const ERROR_TOAST = /^(Could not|Simulation error|Teams unavailable)/;
   function toast(msg, ms) {
-    const t = $("#toast"); t.textContent = msg; t.hidden = false;
-    clearTimeout(toastTimer); if (ms) toastTimer = setTimeout(() => { t.hidden = true; }, ms);
+    if (stickyToast) { stickyToast.dismiss(); stickyToast = null; }
+    const node = window.CFP.ui.toast(msg, { ms: ms || 0, kind: ERROR_TOAST.test(msg) ? "error" : "info" });
+    if (!ms) stickyToast = node;
+    return node;
   }
+  function hideToast() { if (stickyToast) { stickyToast.dismiss(); stickyToast = null; } }
   function when(iso) { return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
   function name(slug) { const t = window.CFP.teamsBySlug[slug]; return t ? t.name : slug; }
 
@@ -197,7 +203,7 @@
       history.replaceState(null, "", `?id=${s.id}`);
       showSeason(s);
       loadSeasons();
-      clearTimeout(toastTimer); $("#toast").hidden = true;
+      hideToast();
     } catch (err) { toast(`Could not start the season: ${errText(err)}`, 4000); }
     finally { $("#btn-new").disabled = false; }
   }
@@ -732,7 +738,7 @@
   // ----- stats tab: team stats, player stats and the depth chart under one tab --------
 
   const statsState = { view: "players" };
-  const depthState = { team: null, data: null, key: null, unit: "", view: "chart", role: "QB", pos: null, posKey: null };
+  const depthState = { team: null, data: null, key: null, unit: "", view: "chart", role: "QB", pos: null, posKey: null, seq: 0 };
   const DEPTH_ROLES = ["QB", "HB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT", "LEDG", "DT", "REDG", "SAM", "MIKE", "WILL", "CB", "FS", "SS", "K", "P", "KR", "PR"];
 
   function renderStats() {
@@ -757,15 +763,28 @@
     const s = state.season;
     if (!s) return;
     const box = $("#tab-depth");
+    depthState.seq++;
     box.innerHTML = "";
     try { await renderDepthChartBody(box, s); }
     catch (err) { box.append(el("p", { class: "muted", text: `Could not draw the depth chart: ${errText(err)}` })); console.error(err); }
   }
+  // after an action: the chart is drawn again off screen and the one on screen patched to match it
+  // (web/ui.js morph): nothing blanks, the scroll stays, what changed pulses. A newer patch wins.
+  async function patchDepthChart() {
+    const s = state.season;
+    if (!s) return;
+    const token = ++depthState.seq;
+    const fresh = el("div");
+    await renderDepthChartBody(fresh, s);
+    if (token !== depthState.seq || state.season !== s) return;
+    window.CFP.ui.morph($("#tab-depth"), fresh);
+  }
 
   // A depth-chart control button (★ ▲ ▼ + or Reset); a title of null leaves the attribute off.
+  // onClick(event) is held with CFP.ui.on, so a patch hands the button on screen the new handler.
   function controlButton(text, title, onClick, cls = "ghost tiny") {
     const b = el("button", title == null ? { type: "button", class: cls, text } : { type: "button", class: cls, text, title, "aria-label": title });
-    b.addEventListener("click", onClick);
+    window.CFP.ui.on(b, "click", onClick);
     return b;
   }
 
@@ -802,21 +821,22 @@
       try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`); ds.key = key; } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
     }
     const d = ds.data;
-    const redshirt = async (p, on) => {                      // your roster: redshirt him in place
+    const redshirt = (ev, p, on) => window.CFP.ui.busy(ev.currentTarget, (async () => {   // your roster: redshirt him in place
       try {
         await api(`/api/season/${s.id}/redshirt`, postJSON({ team: ds.team, player: p.slug, on }));
-        toast(on ? `${p.name} is redshirting: he keeps his year.` : `${p.name} is back in the lineup.`, 3000);
-        playerState.cache.clear(); ds.data = null; renderDepthChart();
+        playerState.cache.clear(); ds.data = null;
+        await patchDepthChart();
+        toast(on ? `Redshirt: ${p.name}` : `Off redshirt: ${p.name}`, 3000);
       } catch (err) { toast(`Could not do that: ${errText(err)}`, 4000); }
-    };
-    // moves are saved with the season and used by every game from then on
-    const change = async (body) => {
-      try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`, postJSON(body)); renderDepthChart(); }
+    })());
+    // moves are saved with the season and used by every game from then on; the chart patches in place
+    const change = (ev, body, said) => window.CFP.ui.busy(ev.currentTarget, (async () => {
+      try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`, postJSON(body)); await patchDepthChart(); if (said) toast(said, 3000); }
       catch (err) { toast(`Could not change the depth chart: ${errText(err)}`, 4000); }
-    };
+    })());
     const canEdit = !s.done && (ds.team === s.team || godMode());
     const resetBtn = d.overridden && canEdit
-      ? controlButton("Reset to the original depth chart", null, () => { if (confirm(`Reset the ${d.name} depth chart to the original?`)) change({ reset: true }); }, "ghost small")
+      ? controlButton("Reset to the original depth chart", null, (ev) => { if (confirm(`Reset the ${d.name} depth chart to the original?`)) change(ev, { reset: true }, `${d.name} depth chart reset to the original`); }, "ghost small")
       : null;
     const note = el("div", { class: "stats-controls depth-note" }, [
       el("span", { class: "muted small-text", text: s.done ? "Season complete; the depth chart is read-only." : !canEdit ? "Another team's depth chart: turn on god mode in ⚙ Settings to edit it." : `▲ ▼ move a player one spot, ★ makes him the starter.${ds.team !== s.team ? " God mode: this is another team's chart." : ""} Changes are saved with this season and used by every game from the next sim on.` }),
@@ -836,11 +856,11 @@
       const eligible = cards.filter((p) => p.redshirt.can && !p.redshirt.on);
       const panel = el("div", { class: "depth-redshirts" }, [el("div", { class: "go-kicker", text: `REDSHIRTING · ${sitting.length}` })]);
       if (sitting.length) {
-        panel.append(el("div", { class: "depth-redshirt-list" }, sitting.map((p) => el("div", { class: "depth-redshirt" }, [
+        panel.append(el("div", { class: "depth-redshirt-list" }, sitting.map((p) => el("div", { class: "depth-redshirt", "data-key": p.slug }, [
           el("span", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, el("span", { text: p.name, ...playerAttrs(ds.team, p.name, p.position) }),
             el("span", { class: "pos", text: `${CLASS_LABEL[p.class] || p.class || ""} · ${p.position}` })]),
           el("span", { class: "muted small-text", text: `${p.redshirt.games} of ${p.redshirt.limit} games played · ${p.overall} ovr` }),
-          canEdit ? controlButton("Off redshirt", "He plays again; the year is still his if he stays at four games or fewer", () => redshirt(p, false), "ghost tiny depth-rs on") : null]))));
+          canEdit ? controlButton("Off redshirt", "He plays again; the year is still his if he stays at four games or fewer", (ev) => redshirt(ev, p, false), "ghost tiny depth-rs on") : null]))));
       } else {
         panel.append(el("p", { class: "muted small-text", text: "Nobody is redshirting." }));
       }
@@ -863,14 +883,14 @@
           const rs = p.redshirt;                                   // your own roster in a career: redshirt him here
           const rsCtl = !canEdit || !rs || !(rs.can || rs.on) || ["KR", "PR"].includes(row.role) ? null
             : controlButton(rs.on ? "Off redshirt" : "Redshirt", rs.on ? "He plays again; the year is still his if he stays at four games or fewer"
-                : `Sit him out the rest of the season and keep his year (${rs.games} of ${rs.limit} games played)`, () => redshirt(p, !rs.on), `ghost tiny depth-rs ${rs.on ? "on" : ""}`);
+                : `Sit him out the rest of the season and keep his year (${rs.games} of ${rs.limit} games played)`, (ev) => redshirt(ev, p, !rs.on), `ghost tiny depth-rs ${rs.on ? "on" : ""}`);
           const ctl = !canEdit ? null : el("span", { class: "depth-ctl" }, [
-            i > 0 ? controlButton("★", "Make starter", () => change({ role: row.role, player: p.slug, move: "top" })) : null,
-            i > 0 ? controlButton("▲", "Move up", () => change({ role: row.role, player: p.slug, move: "up" })) : null,
-            i < row.players.length - 1 && !["KR", "PR"].includes(row.role) ? controlButton("▼", "Move down", () => change({ role: row.role, player: p.slug, move: "down" })) : null,
+            i > 0 ? controlButton("★", "Make starter", (ev) => change(ev, { role: row.role, player: p.slug, move: "top" }, `${p.name} starts at ${row.role}`)) : null,
+            i > 0 ? controlButton("▲", "Move up", (ev) => change(ev, { role: row.role, player: p.slug, move: "up" }, `${p.name} moves up at ${row.role}`)) : null,
+            i < row.players.length - 1 && !["KR", "PR"].includes(row.role) ? controlButton("▼", "Move down", (ev) => change(ev, { role: row.role, player: p.slug, move: "down" }, `${p.name} moves down at ${row.role}`)) : null,
             rsCtl,
           ]);
-          cells.push(el("td", { class: `left depth-cell ${i === 0 ? "starter" : ""} ${i >= 2 ? "ph" : ""}` }, [
+          cells.push(el("td", { class: `left depth-cell ${i === 0 ? "starter" : ""} ${i >= 2 ? "ph" : ""}`, "data-key": `${row.role}:${p.slug}` }, [
             el("div", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, el("span", { text: p.name, ...playerAttrs(ds.team, p.name, p.position) }), el("span", { class: "pos", text: `${CLASS_LABEL[p.class] || p.class || ""}${p.position !== row.role ? " · " + p.position : ""}` }),
               p.form >= 0.35 ? el("span", { class: "form hot", text: "🔥", title: `Hot streak (form +${p.form})` }) : p.form <= -0.35 ? el("span", { class: "form cold", text: "❄", title: `Cold streak (form ${p.form})` }) : null,
               p.injury ? el("span", { class: "injury-tag", title: `${p.injury.type}, back ${s.week_labels[p.injury.returns_week] || "week " + p.injury.returns_week}`, text: `OUT ${p.injury.weeks_left}w` }) : null, ctl]),
@@ -2498,12 +2518,14 @@
       try { ds.pos = await api(`/api/season/${s.id}/depth/${ds.team}/position/${ds.role}`); ds.posKey = key; } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
     }
     const d = ds.pos;
-    const change = async (body) => {
+    const change = (ev, body, said) => window.CFP.ui.busy(ev.currentTarget, (async () => {
       try {
         await api(`/api/season/${s.id}/depth/${ds.team}`, postJSON(body));
-        ds.pos = null; ds.data = null; renderDepthChart();
+        ds.pos = null; ds.data = null;
+        await patchDepthChart();
+        toast(said, 3000);
       } catch (err) { toast(`Could not change the depth chart: ${errText(err)}`, 4000); }
-    };
+    })());
     const label = { QB: "quarterback", HB: "running back", FB: "fullback", WR: "receiver", TE: "tight end", LT: "left tackle", LG: "left guard", C: "center", RG: "right guard", RT: "right tackle", LEDG: "left edge", DT: "defensive tackle", REDG: "right edge", SAM: "strongside linebacker", MIKE: "middle linebacker", WILL: "weakside linebacker", CB: "cornerback", FS: "free safety", SS: "strong safety", K: "kicker", P: "punter", KR: "kick returner", PR: "punt returner" }[ds.role] || ds.role;
     box.append(el("p", { class: "muted small-text", text: `Every ${d.name || ""}player rated as a ${label}. Rating is what he would be at this spot; Natural is his rating at his own position. ★ makes him the starter here${["KR", "PR"].includes(ds.role) ? "" : ", + adds him to the rotation at the bottom"}. Changes save with this season.` }));
     const cols = [
@@ -2515,8 +2537,8 @@
       { key: "size", label: "Size", get: (p) => (p.height && p.weight ? `${p.height} ${p.weight}` : ""), sort: (p) => p.weight || 0 },
       { key: "line", label: "Season", left: true, get: (p) => el("span", { class: "muted small-text", text: p.headline || (p.games ? `${p.games} games` : "") }) },
       { key: "act", label: "", get: (p) => (s.done ? "" : el("span", { class: "depth-ctl" }, [
-          p.spot === 1 ? null : controlButton("★", "Make starter here", () => change({ role: ds.role, player: p.slug, move: "top" })),
-          p.in_role || ["KR", "PR"].includes(ds.role) ? null : controlButton("+", "Add to this spot's rotation", () => change({ role: ds.role, player: p.slug, move: "add" })),
+          p.spot === 1 ? null : controlButton("★", "Make starter here", (ev) => change(ev, { role: ds.role, player: p.slug, move: "top" }, `${p.name} starts at ${ds.role}`)),
+          p.in_role || ["KR", "PR"].includes(ds.role) ? null : controlButton("+", "Add to this spot's rotation", (ev) => change(ev, { role: ds.role, player: p.slug, move: "add" }, `${p.name} joins the ${ds.role} rotation`)),
         ])) },
     ];
     if (!ds.posSort) { ds.posSort = { sort: "rating", desc: true }; }
@@ -2954,12 +2976,22 @@
     };
     const toggle = (on, onChange) => {
       const b = el("button", { type: "button", class: `switch ${on ? "on" : ""}`, role: "switch", "aria-checked": on ? "true" : "false" }, [el("span", { class: "knob" })]);
-      b.addEventListener("click", async () => { const next = !b.classList.contains("on"); b.disabled = true; try { await onChange(next); b.classList.toggle("on", next); b.setAttribute("aria-checked", next ? "true" : "false"); } catch (err) { toast(err.message, 4000); } b.disabled = false; });
+      b.addEventListener("click", () => {
+        const next = !b.classList.contains("on");
+        window.CFP.ui.busy(b, (async () => {
+          try { await onChange(next); b.classList.toggle("on", next); b.setAttribute("aria-checked", next ? "true" : "false"); window.CFP.ui.pulse(b.closest(".settings-row")); }
+          catch (err) { toast(err.message, 4000); }
+        })());
+      });
       return b;
     };
     node.append(
       row("God mode", "Edit every player's ratings, class, size, jersey and development trait from his player card, and every team's depth chart. Changes are saved with this season and used by every game from the next sim on.",
-        toggle(godMode(), async (on) => { await saveSettings({ god_mode: on }); toast(on ? "God mode on: open any player or depth chart to edit it." : "God mode off.", 3000); renderTab(); })),
+        toggle(godMode(), async (on) => {     // the chart behind the dialog patches (another team's chart turns editable); no other tab shows it
+          await saveSettings({ god_mode: on });
+          if (state.tab === "depth") await patchDepthChart();
+          toast(on ? "God mode on: open any player or depth chart to edit it." : "God mode off.", 3000);
+        })),
       row("Momentum and morale", "Big plays swing momentum inside a game and nudge ratings play by play; wins, losses and each player's own games set a mood that carries into the next game and fades week by week. Player cards show the boosts as green and red arrows.",
         toggle(!!(s.settings || {}).morale, async (on) => { await saveSettings({ morale: on }); toast(on ? "Momentum and morale on from the next sim." : "Momentum and morale off.", 3000); })),
       row("Game day pace", "How fast the plays come during a game day replay.",
@@ -3085,7 +3117,7 @@
         toast(`${p.name} updated.`, 2500);
         const box = card.closest(".player-page");
         if (box && j.player) renderPlayer(j.player, box);
-        if (state.tab === "depth") renderDepthChart();
+        if (state.tab === "depth") patchDepthChart();
       } catch (err) { toast(`Could not save: ${errText(err)}`, 4000); save.disabled = false; }
     });
     actions.append(save, cancel);

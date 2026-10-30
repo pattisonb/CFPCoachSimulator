@@ -219,7 +219,29 @@ table.compare td.better { font-weight: 800; }
 .loading[hidden] { display: none; }
 .loading-box { max-width: 420px; text-align: center; }
 .loading-box progress { width: 100%; }
-.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--panel-2); border: 1px solid var(--border); padding: 10px 16px; border-radius: 8px; z-index: 10; }
+/* toasts (web/ui.js): a stack bottom-left, newest on top, three at most; above dialogs (60), under the
+   Recruit menu and its sheet (70) so they never cover it. #toast is a hidden mirror of the latest. */
+.toasts { position: fixed; left: 16px; bottom: 16px; z-index: 65; display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
+  width: max-content; max-width: min(380px, calc(100vw - 32px)); pointer-events: none; }
+.toast-item { pointer-events: auto; cursor: default; background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  padding: 9px 14px; border-radius: 8px; box-shadow: 0 6px 18px var(--shadow); font-size: 14px; line-height: 1.35;
+  transition: opacity 150ms ease, transform 150ms ease; }
+.toast-item.error { border-left-color: var(--bad); }
+.toast-mirror { display: none !important; }
+/* what an action changed: a 600 ms pulse; rows and tags that arrive fade in, ones that leave fade out (150 ms) */
+@keyframes go-pulse { from { background-color: color-mix(in srgb, var(--accent) 34%, transparent); } to { background-color: transparent; } }
+@keyframes go-fade-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+.go-changed { animation: go-pulse 600ms ease-out; transition: background-color 600ms ease-out; border-radius: 4px; }
+.go-fade-in { animation: go-fade-in 150ms ease-out; }
+.go-leaving { opacity: 0; transition: opacity 150ms ease; pointer-events: none; }
+/* the control that acted, while its request is out: off, with a small spinner */
+@keyframes go-spin { to { transform: rotate(360deg); } }
+.go-busy { position: relative; cursor: progress; }
+.go-busy::after { content: ""; display: inline-block; width: 0.8em; height: 0.8em; margin-left: 6px; vertical-align: -0.1em; border-radius: 50%;
+  border: 2px solid currentColor; border-right-color: transparent; opacity: 0.7; animation: go-spin 700ms linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .go-changed, .go-fade-in, .go-leaving, .toast-item, .go-busy::after { animation: none !important; transition: none !important; }
+}
 
 @media (max-width: 900px) {
   .layout { grid-template-columns: 1fr; }
