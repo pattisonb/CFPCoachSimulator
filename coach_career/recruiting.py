@@ -95,6 +95,18 @@ COOL_WEEKS = 3                             # a lowball cools him on you for this
 COOLED_CONTACT = 0.5
 ASK_MORE = (1.5, 1.25)                     # a rival's NIL this much over yours, with you in his top group: his ask from you rises this much
 TOP_GROUP = 8                              # the schools he is seriously considering: his top this many by interest
+# pestering: contacts past his patience from a school he is not considering cost it *tune*
+PESTER_FREE = 3                            # contacts (message, call, in-home visit; a scene's pitch is the contact it finishes) a school gets
+#                                            before more count as pestering while it is outside his top group (an offer in hand does not
+#                                            exempt it; an official visit or his commitment does)
+PESTER_COST = 1.5                          # a pestering contact costs this times the action's base points (no pitch bonus) ...
+PESTER_RAMP = 0.5                          # ... and each pester costs this much more than the one before
+PESTER_ASK = 1.1                           # his ask from the school rises this much per pester (ask_mult, capped at ASK_MULT_MAX overall)
+ASK_MULT_MAX = 2.0
+# Only your own hand pesters. AI schools (_auto_week acting for them) are exempt, and Auto-recruit acting
+# for your school never does it: it skips a contact that would pester and spends the hours elsewhere (and
+# _act's `auto` flag keeps the penalty off its contacts regardless). The AI's targeting does not spam, and
+# tests/test_sim_golden.py stays byte-identical.
 AI_OVER_ASK = 1.1                          # an AI school offers up to this times his ask from it
 # generational prospects: a public tag on a few top four- and five-stars, drawn once per class *tune*
 GENERATIONAL_FROM = 95                     # true projected overall at least this
@@ -391,6 +403,29 @@ def is_lowball(nil: int, ask: int) -> bool:
 def cooled(state: dict, slug: str, pid: str) -> bool:
     """Whether he is cooled on the school after a lowball (contacts count half, no visit)."""
     return (_contact(state, slug, pid).get("cooled_until") or -1) > state["current_week"]
+
+
+def _pester_exempt(state: dict, slug: str, pid: str) -> bool:
+    """He has committed to the school or taken an official visit there: none of its contacts pester."""
+    rc = state["recruiting"]
+    st = rc["status"][pid]
+    return slug in (st["committed"], st["signed"]) or bool((rc["visits"].get(pid, {}).get(slug) or {}).get("done"))
+
+
+def would_pester(state: dict, slug: str, pid: str) -> bool:
+    """Whether the school's next contact would pester him: PESTER_FREE contacts landed, the school
+    outside his top group, no official visit or commitment. Only your school (by hand) ever does."""
+    if slug != state.get("team"):
+        return False
+    c = (state["recruiting"]["contacts"].get(pid) or {}).get(slug) or {}
+    if c.get("n", 0) < PESTER_FREE or _pester_exempt(state, slug, pid):
+        return False
+    return slug not in top_group(state, pid)
+
+
+def pesters(state: dict, slug: str, pid: str) -> int:
+    """How many times the school has pestered him (reset when it makes his top group)."""
+    return ((state["recruiting"]["contacts"].get(pid) or {}).get(slug) or {}).get("pester", 0)
 
 
 def upgrade_grades(state: dict) -> None:
@@ -943,9 +978,11 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
     rc = state["recruiting"]
     if action == "pitch":
         sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
+        start = len(rc["log"])
         revealed = _act(state, slug, pid, action, pitch, nil, scene=scene)
         from coach_career import scenes
-        said = scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid])
+        tired = any(e["kind"] == "pester" for e in rc["log"][start:])      # the call or visit pestered him: the pitch fell flat
+        said = scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid], tired=tired)
         if slug == state.get("team"):                 # your History: the pitch and how he took it
             _event(state, "pitch", pid, slug, action=sc["action"], pitch=pitch, reaction=said["kind"])
         return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed}}
@@ -1041,7 +1078,15 @@ def _report(state: dict, week: int) -> dict:
     teams = season.load_teams()
     name = lambda s: teams[s]["name"] if s in teams else s
     pids = list(dict.fromkeys(list(rc["board"]) + list(rc["offers"].get(me, []))))
-    events = [e for e in rc["log"] if e["week"] == week and e["kind"] in REPORT_KINDS]
+    events, pestered = [], set()
+    for e in rc["log"]:
+        if e["week"] != week or e["kind"] not in REPORT_KINDS:
+            continue
+        if e["kind"] == "pester":                 # once per prospect per week, however many contacts wore on him
+            if e["pid"] in pestered:
+                continue
+            pestered.add(e["pid"])
+        events.append(e)
     rows = []
     for pid in pids:
         r = rc.get("ranks", {}).get(pid) or {}
@@ -1061,7 +1106,8 @@ def _report(state: dict, week: int) -> dict:
                      "leader": {"school": leader, "name": name(leader)} if leader else None,
                      "moves": [m for m in moves if m["from"] != m["to"]][:MOVES_SHOWN],
                      "events": [dict(e, school_name=name(e["school"]) if e.get("school") else None,
-                                     rival_name=name(e["rival"]) if e.get("rival") else None)
+                                     rival_name=name(e["rival"]) if e.get("rival") else None,
+                                     **({"line": _pester_line(p["name"], name(e["school"]))} if e["kind"] == "pester" else {}))
                                 for e in events if e["pid"] == pid]})
     report = {"week": week, "rows": rows}
     reports = rc.setdefault("reports", [])
@@ -1070,8 +1116,12 @@ def _report(state: dict, week: int) -> dict:
     return report
 
 
-REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up")
+REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "pester")
 CONTACT_KINDS = ("contact", "pitch", "raise_nil", "pull_offer")   # your actions, logged for his History (not news)
+
+
+def _pester_line(prospect: str, school: str) -> str:
+    return f"{prospect} is tuning you out: he is not considering {school}, and more calls push him further away."
 
 
 def latest_report(state: dict) -> Optional[dict]:
@@ -1080,10 +1130,11 @@ def latest_report(state: dict) -> Optional[dict]:
 
 
 def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
-         scale: float = 1.0, scene: Optional[str] = None, opens: bool = False) -> Optional[str]:
+         scale: float = 1.0, scene: Optional[str] = None, opens: bool = False, auto: bool = False) -> Optional[str]:
     """The one action path every school takes (yours, the AI's, Auto-recruit's). Only `act` passes
     `opens` (your call or visit with no pitch: a scene, no points yet) and `scene` (the pitch that
-    finishes it); every other caller keeps the one-shot path."""
+    finishes it); every other caller keeps the one-shot path. `auto`: Auto-recruit's contact, which
+    never pesters him."""
     rc = state["recruiting"]
     p = rc["prospects"].get(pid)
     if p is None:
@@ -1174,6 +1225,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             while _reveal(state, slug, pid):
                 pass
             contact.update(asked=True, last_contact=week)
+            contact.pop("pester", None)
             points = BASE_POINTS["official_visit"]
         else:
             game_week = _home_game_left(state, slug)
@@ -1192,7 +1244,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
             if pitch not in seen:
                 seen.append(pitch)
-        points = _contact_land(state, slug, p, contact, sc["action"], pitch)
+        points = _contact_land(state, slug, p, contact, sc["action"], pitch, auto)
         del rc["scenes"][slug][pid]
         if points:                                    # the points are the call's or the visit's; its hours went when it opened
             _add_points(state, slug, pid, points * scale, sc["action"])
@@ -1230,23 +1282,51 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
                 contact["asked"] = "range"
         if not opens:
             contact["last_contact"] = week
-            points = _contact_land(state, slug, p, contact, action, pitch)
+            points = _contact_land(state, slug, p, contact, action, pitch, auto)
     rc["hours"][slug] = _hours(state, slug) - HOURS[action]
     if points:
         _add_points(state, slug, pid, points * scale, action)
     return revealed
 
 
-def _contact_land(state: dict, slug: str, p: dict, contact: dict, action: str, pitch: Optional[str]) -> float:
+def _contact_land(state: dict, slug: str, p: dict, contact: dict, action: str, pitch: Optional[str],
+                  auto: bool = False) -> float:
     """A contact's points (a message, call or visit, one-shot or a scene's pitch): the pitch's worth
-    cut by earlier contacts, halved while he is cooled; a backfire is logged."""
+    cut by earlier contacts, halved while he is cooled; a backfire is logged. Past PESTER_FREE
+    contacts from your hand while he is not considering you, the contact pesters him instead: negative
+    points that grow with each pester, the pitch ignored, his ask from you up (not Auto-recruit's,
+    never an AI school's)."""
+    pid = p["id"]
+    if not auto and slug == state.get("team") and contact["n"] >= PESTER_FREE and not _pester_exempt(state, slug, pid):
+        if slug in top_group(state, pid):
+            contact.pop("pester", None)           # he is considering you: the old pesters are forgotten
+        else:
+            k = contact.get("pester", 0)
+            contact["pester"] = k + 1
+            contact["ask_mult"] = round(min(ASK_MULT_MAX, contact.get("ask_mult", 1.0) * PESTER_ASK), 3)
+            _event(state, "pester", pid, slug, action=action, n=k + 1)
+            points = -(PESTER_COST * BASE_POINTS[action]) * (1 + PESTER_RAMP * k)
+            if cooled(state, slug, pid):
+                points *= COOLED_CONTACT
+            contact["n"] += 1
+            return points
     points = _contact_points(state, slug, p, action, pitch) / (1 + DIMINISH * contact["n"])
     if points < 0:
-        _event(state, "not_buying", p["id"], slug, topic=pitch)
-    if cooled(state, slug, p["id"]):
+        _event(state, "not_buying", pid, slug, topic=pitch)
+    if cooled(state, slug, pid):
         points *= COOLED_CONTACT
     contact["n"] += 1
     return points
+
+
+def _forgive_pesters(state: dict) -> None:
+    """A school that made his top group (or hosted or landed him) starts clean: a later slide does
+    not carry the old pesters. Only your school ever has any."""
+    rc, me = state["recruiting"], state.get("team")
+    for pid, by in rc["contacts"].items():
+        c = by.get(me)
+        if c and c.get("pester") and (_pester_exempt(state, me, pid) or me in top_group(state, pid)):
+            c.pop("pester")
 
 
 # ----- the week: AI schools, visits, commitments, flips and signing ----------------------------------
@@ -1482,9 +1562,10 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
                 _act(state, slug, pid, "official_visit")
             except RecruitingError:
                 pass
+    targets = [pid for pid in targets if not would_pester(state, slug, pid)]   # your staff on Auto never pester: those hours go elsewhere
     if targets:
         try:
-            _act(state, slug, targets[0], "hc_visit", pitch=best_pitch(state, slug, targets[0]), scale=edge)
+            _act(state, slug, targets[0], "hc_visit", pitch=best_pitch(state, slug, targets[0]), scale=edge, auto=True)
         except RecruitingError:
             pass
     for action in ("call", "message"):          # each target a call and a message a week, as the hours allow
@@ -1492,14 +1573,14 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
             if _hours(state, slug) < HOURS[action]:
                 break
             try:
-                _act(state, slug, pid, action, pitch=best_pitch(state, slug, pid), scale=edge)
+                _act(state, slug, pid, action, pitch=best_pitch(state, slug, pid), scale=edge, auto=True)
             except RecruitingError:
                 pass
     for pid in [q for q in offers if rc["status"][q]["committed"] == slug and not rc["status"][q]["signed"]]:
         if _hours(state, slug) < HOURS["message"]:
             break                              # out of hours: the commits go quiet this week and soften
         try:                                   # a message a week keeps a commitment firm
-            _act(state, slug, pid, "message", pitch=best_pitch(state, slug, pid), scale=edge)
+            _act(state, slug, pid, "message", pitch=best_pitch(state, slug, pid), scale=edge, auto=True)
         except RecruitingError:
             pass
 
@@ -1519,6 +1600,7 @@ def _visits(state: dict, week: int) -> None:
             while _reveal(state, slug, pid):     # a weekend on campus: you learn everything he cares about, his ask too
                 pass
             _contact(state, slug, pid).update(asked=True, last_contact=week)
+            _contact(state, slug, pid).pop("pester", None)     # a weekend on campus clears the air
             margin = game["home_score"] - game["away_score"]
             mood = 1.2 if margin > 0 else (0.6 if margin <= -21 else 0.9)
             cap = ((season.load_teams()[slug].get("stadium") or {}).get("capacity") or 50000)
@@ -1782,6 +1864,7 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
         if slug != mine or auto_mine:
             auto_recruit(state, slug, random.Random(f"auto-{rc['seed']}-{slug}-{week}"), commits, yours=slug == mine)
     _flush(state, week)                # the other schools' week lands with yours
+    _forgive_pesters(state)
     if rc.get("portal"):
         _portal_draws(state, week, rng)
     else:

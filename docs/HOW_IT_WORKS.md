@@ -898,7 +898,12 @@ offer before any contact counts half. AI boards start warm (the staff has evalua
 everyone on them, one priority known) and pitch the strongest priority they know. Each contact
 from a school is worth a little less than the last, and a
 prospect takes one message and one call a week from a school (more contact is not more interest:
-the rest of your hours go to other prospects). Offers are capped at
+the rest of your hours go to other prospects). **Pestering costs you:** after three contacts while
+you are outside his top group (an offer does not change that; an official visit or his commitment
+does), each further message, call or in-home visit counts against you (1.5 times the action's worth,
+half again more each time, the pitch ignored) and raises his ask from you 10%; the count clears when
+you make his top group, and the weekly report says so once a week.
+Only your own hand pesters: AI schools and Auto-recruit for your school never do. Offers are capped at
 1.5 times your open spots: 85 minus returning players, plus four early leavers, capped at
 the school's real class size plus two.
 

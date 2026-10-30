@@ -410,6 +410,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "ratings": signed_ratings(state, p) if status["signed"] == viewer else None,     # signing day shows what you got
         "ask": recruiting.ask_view(state, viewer, pid), "cooled": recruiting.cooled(state, viewer, pid),
         "stage": recruiting.stage(state, viewer, pid), "strength": recruiting.strengths(state, viewer, pid),
+        "pestering": recruiting.would_pester(state, viewer, pid), "pesters": recruiting.pesters(state, viewer, pid),
     }
 
 
@@ -499,6 +500,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                need=recruiting.needs(state, viewer)[recruiting._group_of(rc["prospects"][pid])],
                ask=recruiting.ask_view(state, viewer, pid), cooled=recruiting.cooled(state, viewer, pid),
                stage=recruiting.stage(state, viewer, pid), strength=recruiting.strengths(state, viewer, pid),
+               pestering=recruiting.would_pester(state, viewer, pid), pesters=recruiting.pesters(state, viewer, pid),
                stage_move=_stage_move(state, pid, viewer),
                scene=((rc.get("scenes") or {}).get(viewer) or {}).get(pid),
                list=[dict(x, you=x["school"] == viewer) for x in _schools(state, pid)[:5]],
