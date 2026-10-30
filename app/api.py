@@ -822,8 +822,11 @@ def recruiting_view(p: Params) -> dict:
 
 @route("GET", "/api/season/{season_id}/scouting")
 def scouting_view(p: Params) -> dict:
-    """The Scouting tab: your scouts, the queue of recruits worth a trip, this and last week's reports, your flags."""
-    return prospects.scouting_view(_career_state(p.path["season_id"], change=True))
+    """The Scouting tab: your scouts, a page of the queue of recruits worth a trip (q, position, group, offset,
+    limit), this and last week's reports, your flags."""
+    st = _career_state(p.path["season_id"], change=True)
+    return prospects.scouting_view(st, p.q("q"), p.q("position"), p.q("group"), max(0, p.q("offset", int, 0)),
+                                   p.q("limit", int, prospects.QUEUE_LIMIT))
 
 
 @route("GET", "/api/season/{season_id}/programs")
