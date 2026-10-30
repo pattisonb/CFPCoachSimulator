@@ -19,7 +19,7 @@
                   "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY"];
   const view = { filters: { q: "", position: "", stars: "", state: "", status: "", sort: "rank", group: "" }, offset: 0, openClass: null, sort: "chance", selected: null, sheet: false, pitch: {}, group: null, state: null,
                 heard: {}, scene: null, reaction: null, focusScene: false,
-                // the board: the stage tab (per career), the search, the pane's sub-tab, the inline step, the needs disclosure, a Finish awaiting the re-fetch
+                // the board: the stage tab, the search, the position (group) and state filters (all per career: view.stage.sid), the pane's sub-tab, the inline step, the needs disclosure, a Finish awaiting the re-fetch
                 stage: null, search: "", sub: "overview", step: null, needsOpen: false, expectScene: null, reveal: null };
   let H = null;
 
@@ -131,7 +131,55 @@
              tone: close ? "warn" : "muted", fill, lo: st.lo, hi: st.hi };
   }
   const standing = standingOf;
-  window.CFP.recruiting = { standingOf };
+  // "Sort: your chance" climbs the ladder: yours, favourite, in it, not offered while leading his list, long shot,
+  // not offered (behind or off his list), lost; within a rung the fuller bar first, then national rank
+  function ladderRung(sd) {
+    if (sd.word === "Not offered") return sd.tone === "warn" ? 3 : 5;
+    return { Yours: 0, Favourite: 1, "In it": 2, "Long shot": 4, Lost: 6 }[sd.word] ?? 5;
+  }
+  function byChance(me) {
+    const memo = new Map();
+    const keyOf = (b) => {
+      if (!memo.has(b)) { const sd = standingOf(b, me); memo.set(b, [ladderRung(sd), -(sd.fill || 0), b.national_rank ?? b.portal_rank ?? Infinity]); }
+      return memo.get(b);
+    };
+    return (a, b) => {
+      const x = keyOf(a), y = keyOf(b);
+      for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] < y[i] ? -1 : 1;
+      return 0;
+    };
+  }
+  // his History, one line an entry, newest first: "Week 3 · Message · Playing time", "Week 4 · Call · Program prestige · He lit up",
+  // "Week 5 · Offer · 120 NIL", "Week 6 · Committed to Georgia". A call's or visit's pitch folds into that call's line.
+  const HISTORY_WORDS = { commit: "Committed to", hard: "Hard commit to", flip: "Flipped to", decommit: "Decommitted from", signed: "Signed with", leaning_fcs: "Leaning toward" };
+  function historyLines(events, me) {
+    const evs = events || [];
+    const folded = new Set();
+    const actionOf = new Map();
+    evs.forEach((e, i) => {
+      if (e.kind !== "pitch") return;
+      // the call or visit this pitch finished: the same week, the nearest older contact that opened a scene
+      const j = evs.findIndex((c, k) => k > i && !folded.has(k) && c.kind === "contact" && c.week === e.week && (c.action === "call" || c.action === "hc_visit") && !c.pitch && (!e.action || c.action === e.action));
+      if (j >= 0) { folded.add(j); actionOf.set(i, evs[j].action); }
+    });
+    const nil = (e) => (e.nil != null ? `${e.nil} NIL` : null);
+    const line = (e, i) => {
+      let bits;
+      if (e.kind === "contact") bits = [ACTION_NAMES[e.action] || e.action, e.pitch ? PITCH_NAMES[e.pitch] || e.pitch : null];
+      else if (e.kind === "pitch") bits = [ACTION_NAMES[e.action || actionOf.get(i)] || "Pitch", PITCH_NAMES[e.pitch] || e.pitch, REACTION_WORDS[e.reaction] || null];
+      else if (e.kind === "offer") bits = e.school && e.school !== me ? [`Offered by ${teamName(e.school)}`] : ["Offer", nil(e)];
+      else if (e.kind === "raise_nil") bits = ["NIL raised", nil(e)];
+      else if (e.kind === "pull_offer") bits = ["Offer pulled"];
+      else if (e.kind === "hung_up") bits = [e.action === "hc_visit" ? "Visit left unfinished" : "Call left unfinished"];
+      else if (e.kind === "asked_more") bits = ["He asked for more NIL"];
+      else if (e.kind === "not_buying") bits = ["He isn't buying your pitch"];
+      else if (HISTORY_WORDS[e.kind]) bits = [`${HISTORY_WORDS[e.kind]} ${teamName(e.school)}`];
+      else bits = [`${eventWord(e)} ${e.school ? teamName(e.school) : ""}`.trim()];
+      return [`Week ${e.week}`, ...bits].filter(Boolean).join(" · ");
+    };
+    return evs.map((e, i) => (folded.has(i) ? null : line(e, i))).filter(Boolean);
+  }
+  window.CFP.recruiting = { standingOf, byChance, historyLines };
 
   function bar(sd) {
     const wrap = el("div", { class: "go-bar", role: "img", "aria-label": sd.odds ? `Chance to land: ${sd.odds}` : sd.text });
@@ -145,6 +193,8 @@
   const REACTION_TOAST = { hit: (t) => `He lit up: ${topicWord(t)} matters to him`, polite: () => "He was polite and moved on",
                            quiet: (t) => `He went quiet: he isn't buying ${topicWord(t)} from you` };
   const REACTION_WORDS = { hit: "He lit up", polite: "Polite", quiet: "He went quiet" };
+  // the ☆ tag's title: where he brought the topic up this week
+  const cueTitle = (action) => `He brought this up on the ${action === "hc_visit" ? "visit" : "call"} this week`;
   // the one network path for an action. A call or in-home visit without a pitch opens a scene (handed to
   // opts.onScene); a pitch with opts.scene (its id) finishes it, and his reaction goes to opts.onReaction.
   async function act(s, pid, action, pitch, nil, opts = {}) {
@@ -586,6 +636,8 @@
     const stageHadFocus = document.activeElement && box.contains(document.activeElement) && document.activeElement.dataset.stage;
     const sortHadFocus = document.activeElement && box.contains(document.activeElement) && document.activeElement.id === "rc-sort";
     closeMenu();
+    // the stage tab, the position and state filters and the search belong to one career: another career starts clear
+    if (!view.stage || view.stage.sid !== s.id) { view.stage = { sid: s.id, key: "all" }; view.group = null; view.state = null; view.search = ""; }
     box.innerHTML = "";
     box.dataset.draw = String((Number(box.dataset.draw) || 0) + 1);      // a redraw counter: tests wait on it after an action lands
     document.body.classList.remove("go-sheet-open");
@@ -614,7 +666,6 @@
     }
 
     // ----- the stage row: tabs with counts, the search and the sort; the needs as a disclosure; the map -----
-    if (!view.stage || view.stage.sid !== s.id) view.stage = { sid: s.id, key: "all" };
     const label = (k, name) => (k === "visited" && v.portal ? "Campus visit" : name);
     const q = view.search.trim().toLowerCase();
     const matches = (b) => !q || b.name.toLowerCase().includes(q) || b.position.toLowerCase() === q || ((b.hometown && b.hometown.state) || "").toLowerCase() === q;
@@ -653,7 +704,7 @@
     box.append(mapCard(v, s, me, { selectedState: view.state, onState: (c) => { view.state = view.state === c ? null : c; drawBoard(s, box, v); } }));
 
     // ----- the list: one row a recruit in the chosen tab, in sort order -----
-    const key = { chance: (b) => (b.committed === me || b.signed === me ? -2 : 0) - ((b.standing && b.standing.pct) || 0), rank: (b) => b.national_rank ?? Infinity };
+    const order = { chance: byChance(me), rank: (a, b) => (a.national_rank ?? Infinity) - (b.national_rank ?? Infinity) };
     const inTab = (b) => view.stage.key === "all" || columnOf(b) === view.stage.key;
     // picked from the map's dot or his profile (view.reveal) while a tab, the search or a filter hides him: show everyone and him
     const want = view.reveal ? v.board.find((b) => b.id === view.reveal) : null;
@@ -663,7 +714,7 @@
       view.selected = want.id;
       drawBoard(s, box, v); return;
     }
-    const rows = pool.filter(inTab).sort((a, b) => key[view.sort](a) - key[view.sort](b));
+    const rows = pool.filter(inTab).sort(order[view.sort]);
     if (rows.length && !rows.some((b) => b.id === view.selected)) { view.selected = rows[0].id; view.step = null; }
     let sel = rows.find((b) => b.id === view.selected) || null;
     // a Finish pressed on a call the week step has closed: the board says so and the menu works again
@@ -915,8 +966,8 @@
       // the tags: only what is known
       const tags = badges(b, me) || el("div", { class: "go-tags go-badges" });
       for (const t of b.priorities_known) tags.append(el("span", { class: "go-tag", text: `★ ${PITCH_NAMES[t]}`, title: "He told you he cares about this" }));
-      const heard = heardTopics(b);
-      if (heard.length) tags.append(el("span", { class: "go-tag heard", text: `Heard: ${heard.map((t) => PITCH_NAMES[t] || t).join(" or ")}`, title: "What he told you this week he cares about" }));
+      const cue = cueOf(b);
+      for (const t of cue.topics) if (!b.priorities_known.includes(t)) tags.append(el("span", { class: "go-tag cue", text: `☆ ${PITCH_NAMES[t] || t}`, title: cue.title }));
       if (b.visit) tags.append(el("span", { class: "go-tag", text: b.visit.done ? "Visited" : `Visit wk ${b.visit.week}` }));
       if (b.portal && b.role) tags.append(el("span", { class: `go-tag ${b.role === "Would start" ? "good" : b.role === "Next in line" ? "warn" : "muted"}`, text: b.role, title: "Where he would sit on your depth chart next season" }));
       if (tags.childElementCount) p.append(tags);
@@ -949,21 +1000,23 @@
         else body.append(historyView(b));
       }
     }
-    // what he told you this week: the cue of an open scene, or of one you finished this week
-    function heardTopics(b) {
+    // what he brought up this week: the cue of an open scene, or of one you finished this week, and the ☆ tag's title
+    function cueOf(b) {
       const hw = view.heard[`${s.id}:${b.id}`];
-      return b.scene ? b.scene.cue.topics : hw && hw.week === s.current_week ? hw.topics : [];
+      const c = b.scene ? { topics: b.scene.cue.topics, action: b.scene.action } : hw && hw.week === s.current_week ? hw : { topics: [] };
+      return { topics: c.topics, title: cueTitle(c.action) };
     }
-    // the pitch as a dropdown: his known priorities first, then the rest, each with your program's case; the week's cue says Heard
+    // the pitch as a dropdown: his known priorities first, then the rest, each with your program's case;
+    // ★ marks a known priority, ☆ a topic he brought up this week (a known one keeps ★)
     function pitchSelect(b) {
-      const heard = heardTopics(b);
+      const cued = cueOf(b).topics;
       const order = [...b.priorities_known, ...Object.keys(PITCH_NAMES).filter((t) => !b.priorities_known.includes(t))];
       const selEl = el("select", { id: "rc-pitch", class: "go-sel", "aria-label": `Pitch to ${b.name}` }, order.map((t) => {
-        const known = b.priorities_known.includes(t);
-        const parts = [PITCH_NAMES[t], known ? "Priority" : null, heard.includes(t) ? "Heard" : null, caseWord(b, t) || null].filter(Boolean);
+        const star = b.priorities_known.includes(t) ? "★ " : cued.includes(t) ? "☆ " : "";
+        const parts = [`${star}${PITCH_NAMES[t]}`, caseWord(b, t) || null].filter(Boolean);
         return el("option", { value: t, text: parts.join(" · ") });
       }));
-      selEl.value = view.pitch[b.id] && order.includes(view.pitch[b.id]) ? view.pitch[b.id] : b.priorities_known[0] || heard[0] || order[0];
+      selEl.value = view.pitch[b.id] && order.includes(view.pitch[b.id]) ? view.pitch[b.id] : b.priorities_known[0] || cued[0] || order[0];
       selEl.addEventListener("change", () => { view.pitch[b.id] = selEl.value; });
       return selEl;
     }
@@ -1012,9 +1065,16 @@
       }).catch(() => { /* the grades stand without the comps */ });
       return out;
     }
-    // the History sub-tab: this week's contacts and his season in the news, newest first
+    // the History sub-tab: every contact, offer and decision with him, newest first (b.history); a board without the log
+    // shows this week's contacts and his season in the news
     function historyView(b) {
       const out = el("div", { class: "go-history" });
+      if (Array.isArray(b.history)) {
+        const lines = historyLines(b.history, me);
+        out.append(lines.length ? el("ul", { class: "go-news go-history-rows" }, lines.map((t) => el("li", { text: t })))
+          : el("p", { class: "muted small", text: "Nothing with him yet: no contact, no offer." }));
+        return out;
+      }
       const done = b.done_this_week || [];
       out.append(el("p", { class: "small" }, [el("b", { text: "Contacts this week: " }), done.length ? done.map((k) => ACTION_NAMES[k] || k).join(", ") : "none yet"]));
       const evs = (v.recap || []).filter((e) => e.pid === b.id).slice().reverse();
@@ -1035,13 +1095,13 @@
         return el("p", { class: `go-scene-line ${cue ? "cue" : ""} ${room ? "room" : ""}`, text: t, ...(cue ? { title: "The cue: what he is telling you he cares about" } : {}) });
       })));
       sc.append(el("div", { class: "go-kicker muted", text: "YOUR PITCH" }),
-        pitchPicker(b, chosen, (t) => { chosen = t; view.pitch[b.id] = t; }, scene.cue.topics));
+        pitchPicker(b, chosen, (t) => { chosen = t; view.pitch[b.id] = t; }, scene.cue.topics, cueTitle(scene.action)));
       const go = el("button", { type: "button", class: "go-btn primary", text: "Pitch", title: "Sell him on this: it costs nothing more, the hours went when you picked up" });
       go.addEventListener("click", async () => {
         if (!chosen) { H.toast("Pick a pitch first: what you are selling him.", 3000); return; }
         go.disabled = true;
         const r = await act(s, b.id, "pitch", chosen, null, { scene: scene.id, onReaction: (re) => {
-          view.heard[`${s.id}:${b.id}`] = { week: s.current_week, topics: scene.cue.topics };
+          view.heard[`${s.id}:${b.id}`] = { week: s.current_week, topics: scene.cue.topics, action: scene.action };
           b.scene = null;
           view.scene = null;
           view.reaction = { pid: b.id, r: re };
@@ -1068,21 +1128,21 @@
         el("p", { class: "muted small", text: `Hanging up keeps the ${what} open: finish it from the pane this week. One you never finish counts for nothing.` }));
       return sc;
     }
-    // the topics as radios, each with your program's case; `heard` (a scene's cue) tags what he just told you
-    function pitchPicker(b, current, onPick, heard) {
-      heard = heard || [];
+    // the topics as radios, each with your program's case: ★ a known priority, ☆ what he just brought up (`cueTopics`, a scene's cue; `cueTip`, the ☆ title)
+    function pitchPicker(b, current, onPick, cueTopics, cueTip) {
+      cueTopics = cueTopics || [];
       const pitches = el("div", { class: "go-pitches", role: "radiogroup", "aria-label": `Pitch to ${b.name}` });
       for (const t of Object.keys(PITCH_NAMES)) {
-        const known = b.priorities_known.includes(t), cue = heard.includes(t);
+        const known = b.priorities_known.includes(t), cue = !known && cueTopics.includes(t);
         const id = `pitch-${b.id}-${t}`;
         const r = el("input", { type: "radio", name: `pitch-${b.id}`, id, value: t });
         r.checked = current === t;
         r.addEventListener("change", () => onPick(t));
         const sv = b.strength ? b.strength[t] : null, word = caseWord(b, t);
         const tone = sv == null ? "" : sv >= 0.6 ? "good" : sv < 0.25 ? "bad" : "";
-        const tag = cue ? (word ? `Heard · ${word}` : "Heard") : known ? `Priority · ${word}` : word;
-        pitches.append(el("label", { class: `go-pitch ${known ? "known" : ""} ${cue ? "heard" : ""}`, for: id, title: sv == null ? "" : known && sv < 0.25 ? "He cares about this and you are weak here: pitching it backfires" : `Your program's case on ${PITCH_NAMES[t].toLowerCase()}: ${word.toLowerCase()}` }, [r,
-          el("span", {}, [el("b", { text: PITCH_NAMES[t] }), el("span", { class: `go-tag ${tone}`, text: tag })])]));
+        const tag = [known ? "★" : cue ? "☆" : null, word || null].filter(Boolean).join(" ");
+        pitches.append(el("label", { class: `go-pitch ${known ? "known" : ""} ${cue ? "cue" : ""}`, for: id, title: sv == null ? "" : known && sv < 0.25 ? "He cares about this and you are weak here: pitching it backfires" : `Your program's case on ${PITCH_NAMES[t].toLowerCase()}: ${word.toLowerCase()}` }, [r,
+          el("span", {}, [el("b", { text: PITCH_NAMES[t] }), el("span", { class: `go-tag ${tone}`, text: tag, ...(cue ? { title: cueTip } : known ? { title: "He told you he cares about this" } : {}) })])]));
       }
       return pitches;
     }
