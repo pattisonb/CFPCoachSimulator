@@ -76,6 +76,7 @@
     for (const id of ["pick-team", "btn-new", "btn-seasons", "btn-load-career"]) $(`#${id}`).hidden = open;
     $("#btn-seasons-menu").hidden = !open;
     document.body.classList.toggle("season-open", open);
+    if (!open) setTopbarHidden(false);
   }
   const phone = () => window.matchMedia("(max-width: 759px)").matches;
 
@@ -143,8 +144,9 @@
     return menu;
   }
 
-  function seasonsMenu() {
-    const btn = $("#btn-seasons-menu");
+  function seasonsMenu(anchor) {
+    const btn = anchor instanceof Element ? anchor : $("#btn-seasons-menu");
+    if (btn === $("#btn-seasons-menu")) setTopbarHidden(false);   // the menu hangs from the bar: keep it on screen
     const items = [];
     const list = state.seasons || [];
     items.push({ heading: list.length ? "Saved seasons" : "No saved seasons" });
@@ -696,7 +698,7 @@
   }
   function stickyH() {
     const h = (n) => (n && getComputedStyle(n).position === "sticky" ? n.getBoundingClientRect().height : 0);
-    return Math.round(h($(".topbar")) + (document.body.classList.contains("career-mode") ? h($("#season-tabs")) : 0));
+    return Math.round(topbarH() + (document.body.classList.contains("career-mode") ? h($("#season-tabs")) : 0));
   }
   function watchHeader() {
     const margin = `-${stickyH()}px 0px 0px 0px`;
@@ -745,9 +747,22 @@
     if (phone()) { if (document.body.classList.contains("head-sheet")) closeHeadSheet(); else openHeadSheet(); return; }
     const items = [{ name: "⚙ Settings", why: "God mode and more", onPick: () => $("#btn-settings").click() }];
     if (state.season && state.season.career) items.push({ name: "Download career", why: "Save this career as a file", onPick: () => $("#btn-download-career").click() });
+    // the top bar hides while the page scrolls: its essentials live here too
+    items.push({ heading: "" });
+    items.push({ name: "Seasons", why: "Your saved seasons, a new season, a career file", onPick: () => seasonsMenu($("#btn-compact-more")) });
+    items.push({ name: "Your coach", why: "Your record, your look, your résumé", onPick: () => { location.href = "./coach.html"; } });
+    items.push({ name: themeLabel(), why: `Switch from the ${currentTheme()} theme`, onPick: toggleTheme });
+    items.push({ heading: "" });
     items.push({ name: "Back to the top", why: "The full header", onPick: () => window.scrollTo({ top: 0 }) });
     openMenu($("#btn-compact-more"), items, "More");
   }
+  // the theme, through the top bar's own button (gameview.js owns it); the entries read as the switch they make
+  const currentTheme = () => document.documentElement.dataset.theme || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+  const themeLabel = () => (currentTheme() === "light" ? "Dark theme" : "Light theme");
+  function toggleTheme() { const b = $(".topbar .btn-theme"); if (b) b.click(); }
+  function syncThemeLabels() { const b = $("#btn-sheet-theme"); if (b) b.textContent = themeLabel(); }
+  new MutationObserver(syncThemeLabels).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  syncThemeLabels();
   // the Office is where the week moves: open it and put the focus on Sim the week
   function goOffice() {
     if (!state.season || !state.season.career) { state.tab = "schedule"; renderTab(); return; }
@@ -874,7 +889,7 @@
   // screen) as --sticky-top, so the board's side panel stops below it rather than under it
   function stickyTop() {
     const h = (n) => (n && getComputedStyle(n).position === "sticky" ? n.getBoundingClientRect().height : 0);
-    const top = h($(".topbar")), nav = document.body.classList.contains("career-mode") ? h($("#season-tabs")) : 0;
+    const top = topbarH(), nav = document.body.classList.contains("career-mode") ? h($("#season-tabs")) : 0;
     const bar = $("#season-compact"), barH = bar && !bar.hidden ? bar.getBoundingClientRect().height : 0;
     document.documentElement.style.setProperty("--topbar-h", `${Math.round(top)}px`);
     document.documentElement.style.setProperty("--compact-h", `${Math.round(barH)}px`);
@@ -882,6 +897,41 @@
     if (state.season && compact.io) watchHeader();
   }
   if (window.ResizeObserver) { const ro = new ResizeObserver(stickyTop); ro.observe($(".topbar")); ro.observe($("#season-tabs")); ro.observe($("#season-compact")); }
+
+  // ----- the top bar hides while a season scrolls ---------------------------------------------
+  // With a season open the sticky top bar slides up (transform, 160 ms; none under reduced motion)
+  // once the page has scrolled past the bar's own height, and --topbar-h goes to 0 with it so the
+  // compact bar and the tab row ride up flush at the top. It comes back when the player scrolls up
+  // 24 px, reaches the top, puts the pointer in the top 8 px (a mouse), focuses anything in it or
+  // opens its Seasons menu; it never hides while that menu is open. No season
+  // open, or the bar not sticky (a phone, where it scrolls away itself), and it never hides. The
+  // compact ▾ (and the phone's sheet) carry Seasons, Your coach and Theme, so nothing is unreachable.
+  const topbar = { hidden: false, lastY: window.scrollY, up: 0 };
+  function topbarH() {
+    const bar = $(".topbar");
+    if (!bar || topbar.hidden || getComputedStyle(bar).position !== "sticky") return 0;
+    return bar.getBoundingClientRect().height;
+  }
+  const topbarCanHide = () => !!state.season && getComputedStyle($(".topbar")).position === "sticky";
+  const topbarPinned = () => !!(menuState && $(".topbar").contains(menuState.btn));
+  function setTopbarHidden(on) {
+    if (topbar.hidden === on) return;
+    topbar.hidden = on;
+    $(".topbar").classList.toggle("topbar-hidden", on);
+    stickyTop();
+  }
+  function onTopbarScroll() {
+    const y = window.scrollY, dy = y - topbar.lastY;
+    topbar.lastY = y;
+    if (!topbarCanHide()) { setTopbarHidden(false); return; }
+    const bar = $(".topbar");
+    if (y <= bar.getBoundingClientRect().height) { topbar.up = 0; setTopbarHidden(false); return; }
+    if (dy > 0) { topbar.up = 0; if (!topbarPinned()) setTopbarHidden(true); }
+    else if (dy < 0) { topbar.up += -dy; if (topbar.up >= 24) setTopbarHidden(false); }
+  }
+  window.addEventListener("scroll", onTopbarScroll, { passive: true });
+  document.addEventListener("pointermove", (e) => { if (topbar.hidden && e.pointerType === "mouse" && e.clientY <= 8) setTopbarHidden(false); }, { passive: true });
+  $(".topbar").addEventListener("focusin", () => setTopbarHidden(false));
   // The Office is the only place time moves. play(what, to): "gameday" plays your game drive by
   // drive, "advance" sims the next week (always the next one: the schedule's highlighted week is
   // not in view, so it cannot be the target), "advance_to" sims through week `to`, "selection" to
@@ -3810,6 +3860,8 @@
   $("#btn-seasons-menu").addEventListener("click", seasonsMenu);
   $("#btn-compact-office").addEventListener("click", goOffice);
   $("#btn-compact-more").addEventListener("click", compactMore);
+  $("#btn-sheet-seasons").addEventListener("click", () => { closeHeadSheet(); seasonsMenu($("#btn-compact-more")); });   // the sheet gives way to the Seasons sheet, anchored to ▾
+  $("#btn-sheet-theme").addEventListener("click", toggleTheme);
   $("#season-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) { state.tab = b.dataset.tab; renderTab(); } });
   $("#poll-pills").addEventListener("click", (e) => { const b = e.target.closest("button[data-poll]"); if (b) { state.poll = b.dataset.poll; state.pollChosen = true; renderRankings(); } });
   $("#sbox-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-btab]"); if (b) selectBoxTab(b.dataset.btab); });

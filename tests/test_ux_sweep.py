@@ -526,7 +526,8 @@ def check_header(page, base, sid) -> None:
     time.sleep(0.3)
     sticky1 = page.evaluate("() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sticky-top'))")
     bar_h = page.evaluate("() => document.querySelector('#season-compact').getBoundingClientRect().height")
-    assert abs((sticky1 - sticky0) - bar_h) <= 2, (sticky0, sticky1, bar_h)
+    top_h = page.evaluate("() => document.querySelector('.topbar').getBoundingClientRect().height")   # the top bar hid on the way down (check_topbar_hide)
+    assert abs((sticky1 - sticky0) - (bar_h - top_h)) <= 2, (sticky0, sticky1, bar_h, top_h)
     page.click("#btn-compact-more")
     page.wait_for_selector(".go-menu .go-menu-item:has-text('Settings')")
     page.keyboard.press("Escape")
@@ -616,6 +617,115 @@ def check_nil_review(page, base, sid) -> None:
         assert "portal fund" not in text, text
     for why in n.get("reward_why") or []:
         assert why in text, (why, text)
+
+
+# ----- the top bar hides while a season scrolls (topbar-hide brief) -----
+
+def check_topbar_hide(page, base, sid) -> None:
+    """A season open, past its own height the top bar slides up and the compact bar sits flush at the top;
+    scrolling up 24 px, the pointer at the top edge, the focus inside it or the Seasons menu bring it back;
+    the compact ▾ carries Seasons, Your coach and Theme (the Theme entry toggles data-theme); with no season
+    open and on the Your coach page it never hides."""
+    page.set_viewport_size({"width": 1280, "height": 1000})
+    hidden = "() => document.querySelector('.topbar').classList.contains('topbar-hidden')"
+    rects = """() => ({ bar: document.querySelector('.topbar').getBoundingClientRect().bottom,
+        compact: document.querySelector('#season-compact').getBoundingClientRect().top,
+        tabs: document.querySelector('#season-tabs').getBoundingClientRect().top,
+        tbh: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--topbar-h')) })"""
+    open_tab(page, base, sid, "depth", "#tab-depth [data-player]")        # a long page: it scrolls well past the header
+    assert not page.evaluate(hidden), "at the top the bar shows"
+    page.evaluate("() => window.scrollTo(0, 800)")
+    page.wait_for_function(hidden, timeout=10_000)
+    page.wait_for_selector("#season-compact:visible", timeout=10_000)
+    time.sleep(0.5)                                                        # the 160 ms slide, twice over
+    r = page.evaluate(rects)
+    assert r["bar"] <= 0, f"the hidden bar is still on screen: {r}"
+    assert abs(r["compact"]) <= 1, f"the compact bar sits flush at the top while the bar hides: {r}"
+    assert r["tbh"] == 0, f"--topbar-h is 0 while the bar hides: {r}"
+    assert abs(r["tabs"] - page.evaluate("() => document.querySelector('#season-compact').getBoundingClientRect().height")) <= 1, f"the tab row sits under the compact bar: {r}"
+    # scrolling up 60 px brings it back
+    page.evaluate("() => window.scrollTo(0, 740)")
+    page.wait_for_function(f"() => !({hidden})()", timeout=10_000)
+    time.sleep(0.4)
+    r = page.evaluate(rects)
+    assert r["bar"] > 40 and r["tbh"] > 40 and abs(r["compact"] - r["tbh"]) <= 1, f"the bar is back and the compact bar sits under it: {r}"
+    # scrolling on hides it; the pointer at the top edge brings it back
+    page.evaluate("() => window.scrollTo(0, 900)")
+    page.wait_for_function(hidden, timeout=10_000)
+    page.mouse.move(600, 500)
+    page.mouse.move(600, 2)
+    page.wait_for_function(f"() => !({hidden})()", timeout=10_000)
+    # the keyboard: the focus inside the bar brings it back
+    page.mouse.move(600, 500)
+    page.evaluate("() => window.scrollTo(0, 1000)")
+    page.wait_for_function(hidden, timeout=10_000)
+    page.focus("#btn-seasons-menu")
+    page.wait_for_function(f"() => !({hidden})()", timeout=10_000)
+    # the Seasons menu keeps it on screen while open
+    page.click("#btn-seasons-menu")
+    page.wait_for_selector(".season-menu .go-menu-item")
+    page.evaluate("() => window.scrollTo(0, 1100)")
+    time.sleep(0.4)
+    assert not page.evaluate(hidden), "the bar stays while its Seasons menu is open"
+    page.keyboard.press("Escape")
+    # the compact ▾ carries the bar's essentials
+    page.evaluate("() => window.scrollTo(0, 1200)")
+    page.wait_for_function(hidden, timeout=10_000)
+    page.click("#btn-compact-more")
+    page.wait_for_selector(".go-menu .go-menu-item:has-text('Settings')")
+    names = page.eval_on_selector_all(".go-menu .go-menu-item b", "els => els.map(e => e.textContent)")
+    assert "Seasons" in names and "Your coach" in names and any("theme" in n.lower() for n in names), names
+    assert names.index("Your coach") > names.index("Seasons") > names.index("⚙ Settings"), names
+    theme0 = page.evaluate("() => document.documentElement.dataset.theme")
+    page.click(".go-menu .go-menu-item:has-text('theme')")
+    time.sleep(0.2)
+    theme1 = page.evaluate("() => document.documentElement.dataset.theme")
+    assert theme1 != theme0 and theme1 in ("light", "dark"), (theme0, theme1)
+    page.click("#btn-compact-more")
+    page.click(".go-menu .go-menu-item:has-text('theme')")
+    time.sleep(0.2)
+    assert page.evaluate("() => document.documentElement.dataset.theme") == theme0, "the Theme entry toggles back"
+    page.click("#btn-compact-more")
+    page.wait_for_selector(".go-menu .go-menu-item:has-text('Seasons')")
+    page.click(".go-menu .go-menu-item:has-text('Seasons')")
+    page.wait_for_selector(".season-menu .go-menu-item:has-text('New season')", timeout=10_000)
+    assert page.get_attribute("#btn-compact-more", "aria-expanded") == "true", "the Seasons menu from the compact bar anchors to its ▾"
+    page.keyboard.press("Escape")
+    assert not page.query_selector(".go-menu")
+    # a phone: the same entries in the compact bar's sheet
+    page.set_viewport_size({"width": 400, "height": 860})
+    page.goto(f"{base}/index.html?id={sid}")
+    page.wait_for_selector("#season:visible")
+    page.wait_for_selector("#season-compact:visible", timeout=10_000)
+    page.click("#btn-compact-more")
+    page.wait_for_selector(".season-head-row:visible", timeout=10_000)
+    assert page.is_visible("#btn-sheet-seasons") and page.is_visible(".season-sheet-links a[href='./coach.html']") and page.is_visible("#btn-sheet-theme"), "the sheet carries Seasons, Your coach and Theme"
+    page.click("#btn-sheet-theme")
+    time.sleep(0.2)
+    assert page.evaluate("() => document.documentElement.dataset.theme") != theme0
+    page.click("#btn-sheet-theme")
+    time.sleep(0.2)
+    assert page.evaluate("() => document.documentElement.dataset.theme") == theme0
+    page.keyboard.press("Escape")
+    page.wait_for_function("() => !document.body.classList.contains('head-sheet')")
+    # no season open: scrolling never hides it
+    page.set_viewport_size({"width": 1280, "height": 1000})
+    page.goto(f"{base}/index.html")
+    page.wait_for_selector("#btn-new:visible")
+    page.evaluate("() => { document.body.style.minHeight = '4000px'; window.scrollTo(0, 800); }")
+    time.sleep(0.4)
+    page.evaluate("() => window.scrollTo(0, 1200)")
+    time.sleep(0.4)
+    assert not page.evaluate(hidden) and page.evaluate("() => document.querySelector('.topbar').getBoundingClientRect().bottom") > 40, "no season open: the bar stays"
+    # the Your coach page: never hidden
+    page.goto(f"{base}/coach.html")
+    page.wait_for_selector(".topbar")
+    page.evaluate("() => { document.body.style.minHeight = '4000px'; window.scrollTo(0, 800); }")
+    time.sleep(0.4)
+    page.evaluate("() => window.scrollTo(0, 1200)")
+    time.sleep(0.4)
+    assert not page.evaluate(hidden) and page.evaluate("() => document.querySelector('.topbar').getBoundingClientRect().bottom") > 40, "Your coach: the bar stays"
+    page.evaluate("() => window.scrollTo(0, 0)")
 
 
 if __name__ == "__main__":
@@ -1667,6 +1777,7 @@ if __name__ == "__main__":
 
             check_header(page, base, A)
             check_position_change(page, base, A)
+            check_topbar_hide(page, base, A)
 
             # --- Offseason, every stage: no number out of 100, no run-together class codes
             page.goto(f"{base}/index.html?id={B}")
@@ -1742,3 +1853,4 @@ if __name__ == "__main__":
             except Exception:  # noqa: BLE001
                 pass
         server.terminate()
+

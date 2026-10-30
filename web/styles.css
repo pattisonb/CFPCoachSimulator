@@ -65,7 +65,12 @@ input[type="number"] {
   position: sticky; top: 0; z-index: 5;
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   padding: 12px 20px; background: var(--panel); border-bottom: 1px solid var(--border);
+  transition: transform 160ms ease;
 }
+/* a season open, scrolled past the bar's own height: it slides up out of view (season.js setTopbarHidden) and
+   --topbar-h goes to 0 in the same breath, so the compact bar and the tab row ride up with it, flush at the top */
+.topbar.topbar-hidden { transform: translateY(-100%); }
+@media (prefers-reduced-motion: reduce) { .topbar, .season-compact, body.career-mode #season-tabs { transition: none !important; } }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
 .brand-link { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; white-space: nowrap; }
 .brand-icon { width: 28px; height: 28px; border-radius: 7px; display: block; flex: none; }
@@ -1228,7 +1233,7 @@ body.career-mode #season-tabs button.league.active { color: var(--go-primary-ink
 body.career-mode #season-tabs .tab-divider { border-color: var(--border); }
 @media (hover: hover) { body.career-mode #season-tabs button:hover:not(.active) { border-color: var(--border); background: var(--panel-2); } }
 body.career-mode #season-tabs button.active { background: var(--go-primary); color: var(--go-primary-ink); border-color: var(--go-primary); box-shadow: none; }
-@media (min-width: 861px) { body.career-mode #season-tabs { position: sticky; top: calc(var(--topbar-h, 0px) + var(--compact-h, 0px)); z-index: 4; box-shadow: 0 6px 16px var(--shadow); } }
+@media (min-width: 861px) { body.career-mode #season-tabs { position: sticky; top: calc(var(--topbar-h, 0px) + var(--compact-h, 0px)); z-index: 4; box-shadow: 0 6px 16px var(--shadow); transition: top 160ms ease; } }
 @media (max-width: 600px) { body.career-mode #season-tabs button { min-height: 36px; padding: 0 9px; font-size: 15px; } body.career-mode #season-tabs button[data-tab=classes] { margin-right: 0; } }
 /* the header: on the Office its sim buttons step aside (the Office has its own); the week strip
    is for the season's screens, so the career screens leave it out */
@@ -1399,7 +1404,7 @@ body.team-theme .topbar #btn-seasons-menu[aria-expanded="true"] { background: co
 .start-pick select { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); max-width: 100%; }
 .season-compact { position: sticky; top: var(--topbar-h, 0px); z-index: 6; display: flex; align-items: center; gap: 8px 12px; flex-wrap: nowrap; min-height: 44px; padding: 4px 12px;
   margin: 0; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 0 0 var(--radius) var(--radius); box-shadow: 0 6px 16px var(--shadow);
-  animation: sc-in 120ms ease-out; }
+  animation: sc-in 120ms ease-out; transition: top 160ms ease; }
 .season-compact[hidden] { display: none; }
 /* on a desktop the bar appears only once the card has scrolled past: it takes no room in the flow, so nothing jumps */
 body:not(.phone-compact) .season-compact { height: 44px; min-height: 0; margin-bottom: -44px; }
@@ -1433,4 +1438,14 @@ body:not(.team-theme) .season-compact .sc-rank { background: var(--panel-2); bor
   body.phone-compact.head-sheet .season-head-row { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 70; max-height: 85vh; overflow: auto;
     background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 16px 16px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -10px 40px var(--shadow); }
   body.team-theme.phone-compact.head-sheet .season-head-row { background: var(--team-primary); color: var(--team-primary-ink); }
+  /* a career tab hides the whole card on a phone; the sheet still opens from it (the card itself takes no room) */
+  body.phone-compact.on-career-tab.head-sheet .season-head { display: block; padding: 0; margin: 0; border: 0; background: none; box-shadow: none; }
+  body.phone-compact.on-career-tab.head-sheet .season-head > :not(.season-head-row) { display: none; }
+  /* the top bar's essentials in the sheet (the bar itself scrolls away on a phone): Seasons, Your coach, Theme */
+  body.phone-compact.head-sheet .season-sheet-links { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; padding-top: 12px; border-top: 1px solid color-mix(in srgb, currentColor 25%, transparent); }
+  body.phone-compact.head-sheet .season-sheet-links > * { flex: 1 1 auto; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  body.team-theme.phone-compact.head-sheet .season-sheet-links a.ghost { color: var(--team-primary-ink); border-color: color-mix(in srgb, var(--team-primary-ink) 45%, transparent); background: color-mix(in srgb, var(--team-primary-ink) 10%, transparent); }
 }
+.season-sheet-links { display: none; }
+.season-sheet-links a.ghost { font: inherit; font-weight: 600; color: var(--text); text-decoration: none; border-radius: 8px; border: 1px solid var(--border); padding: 8px 14px; background: transparent; }
+.season-sheet-links a.ghost:hover { border-color: var(--accent); }

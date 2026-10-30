@@ -1481,6 +1481,19 @@ up next (or the offseason stage), an **Office** button and ▾ (settings, the ca
 phone the bar is the default and the header row opens from its ▾ as a sheet, so the Office is the
 first thing on screen. The career tabs and the League tabs share one scrolling row.
 
+**The top bar hides while a season scrolls** (`season.js` `onTopbarScroll`, `setTopbarHidden`;
+`.topbar.topbar-hidden`). With a season open the sticky top bar slides up out of view (a
+transform, 160 ms; instant under reduced motion) once the page has scrolled past the bar's own
+height, and `--topbar-h` goes to 0 in the same breath so the compact bar and the tab row ride up
+flush at the top (their sticky `top` transitions at the same pace). It slides back when the player
+scrolls up 24 px or more, reaches the top, puts the mouse in the top 8 px of the window, focuses
+anything inside it (Tab) or opens its Seasons menu, and it never hides while that menu is open.
+There is no "show the bar" button: scrolling up or the pointer at the top edge reveals it, and the
+compact bar's ▾ menu carries the bar's essentials after a divider (Seasons, which opens the same
+Seasons menu anchored to the ▾; Your coach; Light theme / Dark theme, the switch it makes), as
+does the phone's sheet. With no season open, on the Your coach page, and on a phone (where the bar
+is not sticky and scrolls away on its own) it never hides.
+
 **NIL economy** (`coach_career/recruiting.py` `portal_pool`, `reward`, `carry_over`; spec
 `docs/superpowers/specs/2026-10-30-nil-economy-design.md`). The season budget B is the
 collective's tier times three. At signing day what is left of B (`left = B − spent`) plus a reward
