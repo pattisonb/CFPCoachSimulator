@@ -1095,12 +1095,20 @@ def season_depth_change(p: Params) -> dict:
     slug = p.path["slug"]
     role, player = _field(p, "role", str, None), _field(p, "player", str, None)
     move, reset = _field(p, "move", str, "up"), _field(p, "reset", bool, False)
+    order = _field(p, "order", list, None)
     _check_team(slug)
     if slug != state["team"] and not season.settings(state)["god_mode"]:
         raise ApiError(403, "turn on god mode in Settings to edit another team's depth chart")
     _check_not_running()
     if reset:
         season.reset_depth(state, slug)
+    elif order is not None:
+        if not role:
+            raise ApiError(400, "role is required")
+        try:
+            season.set_depth_order(state, slug, role, order)
+        except ValueError as exc:
+            raise ApiError(400, str(exc)) from exc
     else:
         if not role or not player:
             raise ApiError(400, "role and player are required")

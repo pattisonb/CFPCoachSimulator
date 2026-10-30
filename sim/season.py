@@ -1595,13 +1595,57 @@ def apply_depth(team: dict, overrides: Optional[dict]) -> dict:
     return out
 
 
+# the attributes the depth chart's list view shows for each role, most telling first
+_OL_COLUMNS = ["strength", "drive_block", "reach_block", "pass_anchor", "pass_footwork", "football_iq"]
+_DL_COLUMNS = ["strength", "burst", "power_rush", "speed_rush", "block_shedding", "tackling", "pursuit"]
+_LB_COLUMNS = ["top_speed", "tackling", "pursuit", "diagnosis", "block_shedding", "zone_coverage", "man_coverage"]
+_S_COLUMNS = ["top_speed", "zone_coverage", "man_coverage", "diagnosis", "tackling", "hit_power", "ball_skills"]
+_RET_COLUMNS = ["return_skill", "top_speed", "burst", "agility", "elusiveness"]
+DEPTH_COLUMNS = {
+    "QB": ["arm_strength", "short_accuracy", "mid_accuracy", "deep_accuracy", "pocket_poise", "decision_making", "top_speed"],
+    "HB": ["top_speed", "burst", "agility", "run_vision", "elusiveness", "power_running", "ball_security"],
+    "FB": ["lead_block", "drive_block", "power_running", "strength", "hands", "ball_security"],
+    "WR": ["top_speed", "burst", "hands", "contested_catch", "short_routes", "mid_routes", "deep_routes", "release"],
+    "TE": ["hands", "contested_catch", "short_routes", "release", "drive_block", "reach_block", "top_speed"],
+    "LT": _OL_COLUMNS, "LG": _OL_COLUMNS, "C": _OL_COLUMNS, "RG": _OL_COLUMNS, "RT": _OL_COLUMNS,
+    "LEDG": _DL_COLUMNS, "DT": _DL_COLUMNS, "REDG": _DL_COLUMNS,
+    "SAM": _LB_COLUMNS, "MIKE": _LB_COLUMNS, "WILL": _LB_COLUMNS,
+    "CB": ["top_speed", "burst", "man_coverage", "zone_coverage", "press", "ball_skills", "tackling"],
+    "FS": _S_COLUMNS, "SS": _S_COLUMNS,
+    "K": ["kick_power", "kick_accuracy", "football_iq"], "P": ["punt_power", "punt_accuracy", "football_iq"],
+    "KR": _RET_COLUMNS, "PR": _RET_COLUMNS,
+}
+COLUMN_SHORT = {"top_speed": "SPD", "burst": "ACC", "agility": "AGI", "strength": "STR", "football_iq": "IQ",
+                "arm_strength": "THP", "short_accuracy": "SAC", "mid_accuracy": "MAC", "deep_accuracy": "DAC",
+                "pocket_poise": "POI", "decision_making": "DEC", "run_vision": "VIS", "elusiveness": "ELU",
+                "power_running": "POW", "ball_security": "CAR", "hands": "CTH", "contested_catch": "CIT",
+                "short_routes": "SRR", "mid_routes": "MRR", "deep_routes": "DRR", "release": "REL",
+                "drive_block": "RBP", "reach_block": "RBF", "pass_anchor": "PBP", "pass_footwork": "PBF",
+                "lead_block": "LBK", "power_rush": "PMV", "speed_rush": "FMV", "block_shedding": "BSH",
+                "tackling": "TAK", "pursuit": "PUR", "diagnosis": "PRC", "man_coverage": "MCV",
+                "zone_coverage": "ZCV", "press": "PRS", "ball_skills": "BSK", "hit_power": "POW",
+                "kick_power": "KPW", "kick_accuracy": "KAC", "punt_power": "KPW", "punt_accuracy": "KAC",
+                "return_skill": "RET"}
+
+
+def role_starters(team: dict, role: str) -> int:
+    """How many players start at a role in the team's base formation (three receivers, two
+    tackles, none at a linebacker spot the scheme leaves out). Kickers and returners: one."""
+    if role in ("K", "P", "KR", "PR"):
+        return 1
+    return sum(1 for p in team["offense"] + team["defense"] if p.get("role") == role and p.get("in_game"))
+
+
 def position_candidates(state: dict, slug: str, role: str) -> dict:
     """Every player on the roster rated at one depth-chart role, best first, with where he
     sits now, so anyone can be moved into that spot."""
     team = apply_depth(team_data(state, slug), (state.get("depth") or {}).get(slug))
     ss = (state.get("season_stats") or {}).get(slug, {}).get("players", {})
+    injured = (state.get("injuries") or {}).get(slug, {})
+    yours = bool(state.get("career")) and slug == state.get("team") and not state.get("done")
     pos = "KR" if role in ("KR", "PR") else ROLE_POSITION.get(role, role)
     current = depth_order(state, slug, role)
+    columns = DEPTH_COLUMNS.get(role, [])
     rows = []
     for p in team["offense"] + team["defense"]:
         rating = (house_value(p["position"], "return_rating", int(p.get("return_rating") or 0)) if pos == "KR"
@@ -1613,9 +1657,14 @@ def position_candidates(state: dict, slug: str, role: str) -> dict:
                      "class": p.get("class"), "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"),
                      "rating": rating, "natural": shown_overall(p), "starter": bool(p.get("in_game")),
                      "in_role": p["slug"] in current, "spot": (current.index(p["slug"]) + 1) if p["slug"] in current else None,
-                     "games": rec["games"] if rec else 0, "headline": awards.headline({"stats": st}, group) if st else ""})
+                     "games": rec["games"] if rec else 0, "headline": awards.headline({"stats": st}, group) if st else "",
+                     "dev_trait": p.get("dev_trait"), "archetype": p.get("archetype"),
+                     "attrs": {k: (p.get("attributes") or {}).get(k) for k in columns},
+                     "injury": {"type": inj["type"], "weeks_left": inj["weeks_left"]} if (inj := injured.get(f"{p['name']}|{p['position']}")) else None,
+                     **({"redshirt": redshirt_status(state, slug, p)} if yours else {})})
     rows.sort(key=lambda r: (-r["rating"], r["name"]))
-    return {"role": role, "position": pos, "players": rows, "current": current}
+    return {"role": role, "position": pos, "players": rows, "current": current, "starters": role_starters(team, role),
+            "columns": [{"key": k, "short": COLUMN_SHORT.get(k, k[:3].upper()), "label": ratings_v2.ATTRIBUTES[k][0]} for k in columns]}
 
 
 def depth_order(state: dict, slug: str, role: str) -> list[str]:
@@ -1625,6 +1674,15 @@ def depth_order(state: dict, slug: str, role: str) -> list[str]:
         pick = team.get("kick_returner" if role == "KR" else "punt_returner")
         return [pick] if pick else []
     return [p["slug"] for p in sorted((p for p in team["offense"] + team["defense"] if p.get("role") == role), key=lambda p: p.get("depth") or 99)]
+
+
+def set_depth_order(state: dict, slug: str, role: str, order: list) -> None:
+    """Put a role's players in a new order (an auto reorder, or a swap of two spots): the
+    same players the role has now, nobody added or dropped."""
+    current = depth_order(state, slug, role)
+    if role in ("KR", "PR") or sorted(order) != sorted(current):
+        raise ValueError("the order must hold exactly the players at this role")
+    state.setdefault("depth", {}).setdefault(slug, {})[role] = list(order)
 
 
 def move_depth(state: dict, slug: str, role: str, player: str, move: str) -> None:
@@ -1690,6 +1748,7 @@ def depth_chart_view(state: dict, slug: str) -> dict:
         return {"name": p["name"], "slug": p.get("slug"), "position": p["position"], "role": p.get("role"), "depth": p.get("depth"), "class": p.get("class"),
                 "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"), "overall": shown_overall(p, base_by_slug.get(p.get("slug"))),
                 "starter": bool(p.get("in_game")), "games": rec["games"] if rec else 0,
+                "dev_trait": p.get("dev_trait"), "archetype": p.get("archetype"),
                 "form": round(player_form(state, slug, p["name"], p["position"]), 2) if morale_on(state) else 0.0,
                 "headline": awards.headline({"stats": st}, group) if st else "",
                 "injury": {"type": inj["type"], "weeks_left": inj["weeks_left"], "returns_week": state["current_week"] + inj["weeks_left"]} if inj else None,
@@ -1702,7 +1761,7 @@ def depth_chart_view(state: dict, slug: str) -> dict:
             group = returners.get(role) if role in returners else by_role.get(role, [])
             if not group:
                 continue
-            out_rows.append({"role": role, "label": label, "players": [card(p, role) for p in group[:6]]})
+            out_rows.append({"role": role, "label": label, "starters": role_starters(t, role), "players": [card(p, role) for p in group[:6]]})
         units.append({"name": unit, "rows": out_rows})
     hc = (t.get("coaches") or {}).get("head_coach") or {}
     return {"team": slug, "name": t["name"], "conference": t["conference"], "head_coach": hc.get("name"),

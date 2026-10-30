@@ -281,6 +281,10 @@ def test_view_routes_answer():
     api.call("POST", f"{base}/player/edit", {"team": "smu", "player": slug, "changes": {"jersey": 99}})
     assert api.changed() and season.load_season(s["id"])["settings"]["god_mode"]
     refused(lambda: api.call("POST", f"{base}/depth/smu", {"move": "up"}), 400)
+    wr = api.call("GET", f"{base}/depth/smu/position/WR")["current"]
+    refused(lambda: api.call("POST", f"{base}/depth/smu", {"order": wr}), 400)                     # no role
+    refused(lambda: api.call("POST", f"{base}/depth/smu", {"role": "WR", "order": wr[:-1]}), 400)  # a player missing
+    assert api.call("POST", f"{base}/depth/smu", {"role": "WR", "order": wr[::-1]})["overridden"] and api.changed()
     assert api.call("POST", f"{base}/depth/smu", {"reset": True}) and api.changed()
     api.call("DELETE", base)
 
