@@ -146,7 +146,7 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `coach_career/programs.py` | Program ratings: every program's living rating (prestige, winning, NIL, market, conference, coach), its tier and the AD's goal |
 | `tools/build_program_history.py`, `tools/build_program_market.py`, `tools/check_programs.py` | The starting values (thirty seasons of results; real crowds and TV) in `data/program_history.json` and `data/program_market.json`; the drift check |
 | `tools/check_carousel.py` | Plays quick offseasons and counts the carousel's churn against real years |
-| `web/recruiting.js`, `web/careersave.js` | The Recruiting, Prospects and Staff tabs; Download career and Load career (`.ccsave` files) |
+| `web/recruiting.js`, `web/scouting.js`, `web/careersave.js` | The Recruiting, Prospects and Scouting tabs; Download career and Load career (`.ccsave` files) |
 | `tools/check_recruiting.py` | Plays career seasons and holds their recruiting to the real classes |
 | `tools/clean_data.py` | Clears the generated data that piles up under `data/` (orphan league files, box scores without a season, long-run output) and the site build (`dist/`, `data/base_*.json`); dry run by default |
 | `tools/export_ratings.py` | Every real player's ratings and potential on the game's scale as one JSON file (`data/player_ratings.json`, generated) |
@@ -1093,7 +1093,7 @@ the class moves. A school's weekly hours are a multiple of 5.
 with the win chance and projected score, your week's three steps (Recruit, Game day, Advance)
 and the play buttons, the recruiting summary (commitments, class rank, hours, NIL points, your
 hottest targets, the week's news) and tiles to every screen. The tab bar is two rows: the
-screens you act on (Office, Offseason once the season is over, Recruiting, Prospects, Staff,
+screens you act on (Office, Offseason once the season is over, Recruiting, Prospects, Scouting,
 Schedule, Depth Chart) and a League row that follows the calendar (Standings, Rankings and Stats
 all year; Awards from week 4; Classes, Bracket and Bowls from selection week; Summary when the
 season is done). A plain season keeps every League tab. The **Recruiting board** (a prospect you take off it stays off, Auto-recruit included, until
@@ -1128,6 +1128,22 @@ in the light and the dark theme. One set of spacing rules holds on every Coach C
 button rows keep 8 px between buttons, tag rows 6 px, cards 12 px of padding, and buttons stand
 36 px tall (44 px on a phone), segment controls and the depth chart's compact controls aside
 (`tests/test_spacing.py`).
+
+**The Scouting tab** (`web/scouting.js`, `GET /api/season/{id}/scouting`) replaces Staff: four
+blocks. Your scouts, a card each with his role, evaluation word, the area dropdown (posts to
+`POST .../staff`; "Marcus Reed now scouts Texas"), how many prospects he is looking at and this
+week's yield from the look log (looks, narrowed, flags); a coordinator without an area reads "No
+area: assign one". Send a scout: the hours left this week, a search (name or home state) with
+position and roster-group filters, and the queue of recruits worth a trip (your board first, then
+the class by your need and his rank; one page of 120 with Show more), each row his trips of three,
+his looks, the potential range and `Send (5h)`, grayed with the reason (Not enough hours, Scouted
+3 of 3). Send posts the `scout` action and patches the row in place: the look's before and after
+in word ranges, the flags gained, a toast "Scouted Wesley Adams · look 2 of 3", and once the hours
+run short every Send grays. Reports: this week's (or last week's) looks grouped by scout, only the
+looks that changed a grade word or found a flag ("nothing new" otherwise); a name opens him in the
+board's pane (he goes on your board if he was not). Flags: your staff's gems, bust risks and
+generational prospects this class with his looks and where he stands with you. The pane's Scouting
+sub-tab links to the tab's reports.
 
 **The odds you see** (`prospects.odds`). Each offering school's chance to land a prospect is a
 softmax of his interest in it (`exp(interest / 3)`), against the field: the schools not yet in

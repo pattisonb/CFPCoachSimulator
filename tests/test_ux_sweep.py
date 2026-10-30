@@ -358,6 +358,101 @@ def test_portal_nil_title(page, base, sid) -> None:
     assert f"{v['nil']['left']} / {v['nil']['pool']}" in page.inner_text("#tab-offseason .rc-head .go-meters")
 
 
+# ----- the Scouting tab (web/scouting.js): the scouts, the queue, the reports and the flags -----
+
+SCOUT_HOURS = 5
+
+
+def test_scouting_tab(page, base, sid) -> None:
+    """The Scouting tab replaces Staff and draws its four blocks; the area dropdown posts and toasts; Send spends
+    the trip, shows the inline before/after and toasts without rebuilding the queue (and once the hours run short
+    every Send grays with the reason); the search filters the queue; a report name (a recruit off your board too)
+    opens the board's pane on him; the pane's Scouting sub-tab links back; on a phone the blocks stack and the
+    queue scrolls inside itself."""
+    wait_week(base, sid)        # a new week's hours, and a fresh week of looks for the reports
+    page.goto(f"{base}/index.html?id={sid}")
+    page.wait_for_selector("#season:visible")
+    assert not page.query_selector("#season-tabs button[data-tab=staff]") and not page.query_selector("#tab-staff"), "the Staff tab is gone"
+    open_tab(page, base, sid, "scouting", ".sc-queue .sc-row")
+    for block in (".sc-scouts .rc-staff-card", ".sc-send", ".sc-reports .sc-report", ".sc-flags"):
+        assert page.query_selector(block), f"the Scouting tab draws {block}"
+    text = page.inner_text("#tab-scouting")
+    assert "null" not in text.split() and not OUT_OF_100.search(text), text[:200]
+    # the area dropdown: posts to /staff and toasts
+    v = call(base, f"/api/season/{sid}/scouting")
+    scout = v["scouts"][0]
+    sel = f"#area-{scout['id']}"
+    options = page.eval_on_selector_all(f"{sel} option", "els => els.map(e => e.value)")
+    other = next(a for a in options if a != scout["area"])
+    page.select_option(sel, other)
+    toasted(page, f"{scout['name']} now scouts {other}.")
+    assert next(m for m in call(base, f"/api/season/{sid}/recruiting")["staff"] if m["id"] == scout["id"])["area"] == other
+    page.wait_for_function("([sel, a]) => document.querySelector(sel).value === a", arg=[sel, other], timeout=10_000)
+    # Send: the row patches in place (the queue container stays), the result reads inline, the toast names the look
+    v = call(base, f"/api/season/{sid}/scouting")
+    assert v["hours_left"] >= SCOUT_HOURS, "a new week has hours for a trip"
+    row = next(r for r in v["queue"] if r["can_send"])
+    pid = row["pid"]
+    h = watch(page, ".sc-queue", control=f".sc-row[data-key='{pid}'] .sc-send", scrolled=False)
+    page.click(f".sc-row[data-key='{pid}'] .sc-send")
+    toasted(page, f"Scouted {row['name']} · look {row['trips'] + 1} of 3")
+    smooth(page, h, "Send")
+    assert page.query_selector(f".sc-row[data-key='{pid}'] .sc-result"), "the trip's before/after reads inline on his row"
+    left = call(base, f"/api/season/{sid}/scouting")["hours_left"]
+    assert f"{left} of" in page.inner_text("#sc-hours"), (left, page.inner_text("#sc-hours"))
+    # Review Focus 3: spend the week down; after the last affordable trip every Send grays with the reason
+    for _ in range(40):
+        v = call(base, f"/api/season/{sid}/scouting")
+        if v["hours_left"] < SCOUT_HOURS:
+            break
+        nxt = next(r for r in v["queue"] if r["can_send"])
+        page.click(f".sc-row[data-key='{nxt['pid']}'] .sc-send")
+        toasted(page, f"Scouted {nxt['name']} · look {nxt['trips'] + 1} of 3")
+    assert call(base, f"/api/season/{sid}/scouting")["hours_left"] < SCOUT_HOURS
+    states = page.eval_on_selector_all(".sc-row .sc-send", "els => els.map(e => [e.disabled, e.title])")
+    assert states and all(d and t in ("Not enough hours", "Scouted 3 of 3") for d, t in states), states[:4]
+    assert any(t == "Not enough hours" for _, t in states), "the rows with trips left say the hours ran out"
+    assert page.evaluate("(el) => el.isConnected", h), "the queue container was never rebuilt"
+    # the search filters the queue through the API
+    target = v["queue"][3]
+    page.fill("#sc-search", target["name"].split()[-1])
+    page.wait_for_function("(n) => [...document.querySelectorAll('.sc-row:not(.go-leaving)')].length && [...document.querySelectorAll('.sc-row:not(.go-leaving) .sc-name')].every(e => e.textContent.toLowerCase().includes(n))",
+                           arg=target["name"].split()[-1].lower(), timeout=15_000)
+    page.fill("#sc-search", "")
+    page.wait_for_function("() => document.querySelectorAll('.sc-row:not(.go-leaving)').length > 5", timeout=15_000)
+    # a report name opens the board's pane on him, a recruit off your board included (Review Focus 4); the tab is
+    # reopened first so its reports hold the trips just sent
+    open_tab(page, base, sid, "scouting", ".sc-reports .sc-report")
+    v = call(base, f"/api/season/{sid}/scouting")
+    board = {b["id"] for b in call(base, f"/api/season/{sid}/recruiting")["board"]}
+    items = [it for g in v["reports"]["this_week"] for it in g["items"]] or [{"pid": f["pid"], "name": f["name"]} for f in v["flags"]]
+    assert items, "a week of looks leaves something to report"
+    item = next((it for it in items if it["pid"] not in board), items[0])
+    page.click(f".sc-reports .go-link[data-pid='{item['pid']}']")
+    page.wait_for_selector(".go-pane .go-pane-name", timeout=60_000)
+    assert item["name"] in page.inner_text(".go-pane .go-pane-head"), "the pane opens on him"
+    assert item["pid"] in {b["id"] for b in call(base, f"/api/season/{sid}/recruiting")["board"]}
+    # the pane's Scouting sub-tab links back to the tab
+    page.click(".go-pane .go-subtabs button[data-sub=scouting]")
+    page.wait_for_selector(".go-pane .go-sub-body .sc-reports-link", timeout=30_000)
+    assert page.inner_text(".go-pane .go-sub-body .sc-reports-link").strip() == "Reports on the Scouting tab"
+    page.click(".go-pane .go-sub-body .sc-reports-link")
+    page.wait_for_selector("#tab-scouting:visible .sc-queue", timeout=60_000)
+    # Last week's reports
+    page.click(".sc-reports button[data-week=last_week]")
+    time.sleep(0.4)
+    assert page.get_attribute(".sc-reports button[data-week=last_week]", "aria-pressed") == "true"
+    assert page.query_selector(".sc-reports .sc-report") or page.query_selector(".sc-reports .sc-reports-empty")
+    # a phone: the blocks stack and the queue scrolls inside itself, no sideways page scroll
+    page.set_viewport_size({"width": 400, "height": 860})
+    open_tab(page, base, sid, "scouting", ".sc-queue .sc-row")
+    assert page.evaluate("() => getComputedStyle(document.querySelector('.sc-queue')).overflowY") == "auto"
+    assert page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth + 1"), "no sideways scroll on a phone"
+    clipped = not_clipped(page, ".sc-row .sc-name")
+    assert not clipped, clipped[:3]
+    page.set_viewport_size({"width": 1280, "height": 1000})
+
+
 if __name__ == "__main__":
     try:
         from playwright.sync_api import sync_playwright
@@ -1110,8 +1205,8 @@ if __name__ == "__main__":
                 if badge:
                     assert badge.text_content().strip() == "Generational"
 
-            # --- Staff: the area picker looks like a picker
-            open_tab(page, base, A, "staff", ".rc-staff-card select")
+            # --- Scouting: the area picker looks like a picker
+            open_tab(page, base, A, "scouting", ".rc-staff-card select")
             assert "go-sel" in (page.get_attribute(".rc-staff-card select", "class") or ""), "the scouting-area select is a house picker"
 
             # --- Schedule: the trade window says what the button does and names itself after the entry point
@@ -1379,6 +1474,9 @@ if __name__ == "__main__":
             assert motion == "0.6s", motion
             assert not errors, errors
 
+            # --- Scouting: the scouts, the queue (Send patches in place), the reports and the flags
+            test_scouting_tab(page, base, A)
+
             # --- Box score of an FCS game: the stand-in's players are plain text (it has no player
             # pages), the FBS side's names still open the player page
             fict = {slug for slug, t in season.load_teams().items() if t["fictional"]}
@@ -1467,7 +1565,7 @@ if __name__ == "__main__":
             test_recruit_question(page)
             browser.close()
         assert not errors, errors
-        print("ux sweep ok: office, prospects, board (tabs, list, pane, menu, step, scene, phone, every action patching in place with its toast), staff, schedule, depth, player page, an FCS box score and every offseason stage at 1280 and 400")
+        print("ux sweep ok: office, prospects, board (tabs, list, pane, menu, step, scene, phone, every action patching in place with its toast), scouting, schedule, depth, player page, an FCS box score and every offseason stage at 1280 and 400")
     finally:
         for sid in (fresh["id"], done["id"]):
             try:

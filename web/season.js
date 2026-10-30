@@ -648,7 +648,7 @@
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "office", "offseason", "recruiting", "prospects", "staff", "classes"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "office", "offseason", "recruiting", "prospects", "scouting", "classes"]) $(`#tab-${t}`).hidden = t !== name;
     document.body.classList.toggle("on-office", name === "office");
     document.body.classList.toggle("on-career-tab", CAREER_TABS.includes(name));
   }
@@ -671,7 +671,7 @@
   }
 
   // Coach Career: the recruiting tabs (recruiting.js) and the week's steps under the header
-  const CAREER_TABS = ["offseason", "office", "recruiting", "prospects", "staff", "classes"];
+  const CAREER_TABS = ["offseason", "office", "recruiting", "prospects", "scouting", "classes"];
   // the League row follows the calendar in a career: the bracket and bowls once the field is set
   // (selection week), the awards once the races have a shape, the classes once signing opens,
   // the summary when the season is done; a plain season keeps every tab
