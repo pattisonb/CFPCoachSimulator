@@ -193,8 +193,11 @@ def check_pane_profile(page, base, sid) -> None:
         assert tabs["scrolled"] > 100, f"the pane's body scrolls at {width}: {tabs}"
         assert tabs["top"] >= tabs["visTop"] - 1 and tabs["bottom"] <= tabs["paneBottom"] and tabs["height"] >= 36 and tabs["left"] and tabs["right"], \
             f"the sub-tab strip scrolled away or clipped at {width}: {tabs}"
-        assert t0 - tabs["scrolled"] < tabs["visTop"] - 4, f"the check scrolls the strip's place out of view at {width}: {t0}, {tabs}"
-        assert tabs["top"] <= tabs["visTop"] + 4, f"the sub-tab strip pins to the top of the pane's scroll box at {width}: {tabs}"
+        if tabs["scrolled"] >= t0 - tabs["visTop"] + 4:   # the body scrolled far enough for the strip's place to pass the top: it pins there
+            assert t0 - tabs["scrolled"] < tabs["visTop"] - 4, f"the check scrolls the strip's place out of view at {width}: {t0}, {tabs}"
+            assert tabs["top"] <= tabs["visTop"] + 4, f"the sub-tab strip pins to the top of the pane's scroll box at {width}: {tabs}"
+        else:               # a short profile (no evaluation, one-line grades) has less than that to scroll: the strip rides at its place, still in view
+            assert abs(tabs["top"] - (t0 - tabs["scrolled"])) <= 4, f"the sub-tab strip sits at its place in a short profile at {width}: {t0}, {tabs}"
         shot(page, f"pane-profile-scrolled-{width}-dark")
         if width <= 700:
             page.click(".go-pane .go-pane-back")
@@ -446,7 +449,11 @@ def test_scouting_tab(page, base, sid) -> None:
         assert page.eval_on_selector(f".sc-row[data-pid='{pid}'] .sc-complete", "e => e.textContent") == "Complete", "the tag reads Complete (the tag style sets it in capitals)"
         assert segments() == [1, 1, 1], segments()
         assert not page.is_visible(f".sc-row[data-pid='{pid}'] .sc-send"), "a complete report shows the tag instead of Send"
-        assert pid not in {r["pid"] for r in call(base, f"/api/season/{sid}/scouting?limit=400")["queue"]}, "a complete report is out of the queue"
+        on_board = pid in {b["id"] for b in call(base, f"/api/season/{sid}/recruiting")["board"]}
+        kept = next((r for r in call(base, f"/api/season/{sid}/scouting?limit=400")["queue"] if r["pid"] == pid), None)
+        assert (kept is not None) == on_board, "a complete report stays in the queue only while he is on your board"
+        if kept:
+            assert kept["can_send"] is False and kept["why"] == "His report is complete: 3 of 3 looks" and kept["potential"][0] == kept["potential"][1], kept
         assert page.evaluate("(el) => el.isConnected", h), "the table body was never rebuilt by the completing Send"
     left = call(base, f"/api/season/{sid}/scouting")["hours_left"]
     assert f"{left} of" in page.inner_text("#sc-hours"), (left, page.inner_text("#sc-hours"))
@@ -856,8 +863,8 @@ def test_look_units_pane(page, base, sid) -> None:
 
 def test_staff_likes_tags(page, base) -> None:
     """"OC likes him": a board row whose complete report says he starts for you shows the tag (title: the coordinator's
-    sentence) among the pane's tags and beside the chip on its head; the profile says it in a line; the Scouting tab's
-    Flags list has him as a "likes" row; a Send that completes a report shows the queue row's "OC ♥" pill at once."""
+    sentence) once on the pane, among its tags (the head keeps to the status chip); the profile says it in a line; the
+    Scouting tab's Flags list has him as a "likes" row; a Send that completes a report shows the queue row's "OC ♥" pill at once."""
     from coach_career import offseason
     from coach_career import recruiting
     from sim import season
@@ -890,8 +897,8 @@ def test_staff_likes_tags(page, base) -> None:
         page.wait_for_selector(".go-pane .go-tags .go-tag.go-likes:has-text('OC likes him')", timeout=30_000)
         tag = page.query_selector(".go-pane .go-tags .go-tag.go-likes")
         assert "good" in (tag.get_attribute("class") or "") and tag.get_attribute("title") == "Your offensive coordinator thinks he starts for you next year", (tag.get_attribute("class"), tag.get_attribute("title"))
-        assert page.is_visible(".go-pane .go-pane-head .go-pane-likes") and page.inner_text(".go-pane .go-pane-head .go-pane-likes").strip().lower() == "oc likes him"
-        assert page.get_attribute(".go-pane .go-pane-head .go-pane-likes", "title") == "Your offensive coordinator thinks he starts for you next year"
+        assert not page.query_selector(".go-pane .go-pane-head .go-likes"), "the head does not repeat the tag"
+        assert page.evaluate("() => [...document.querySelectorAll('.go-pane .go-likes')].filter(e => e.getClientRects().length).length") == 1, "the pane says it once"
         assert not page.evaluate("() => [...document.querySelectorAll('.go-row-recruit')].some(r => r.querySelector('.go-tag'))"), "a list row stays one word of standing"
         page.click(".go-pane .go-subtabs button[data-sub=profile]")
         page.wait_for_selector(".go-pane .go-likes-line", timeout=30_000)
@@ -899,7 +906,7 @@ def test_staff_likes_tags(page, base) -> None:
         # the one short of complete has no tag yet
         page.click(f".go-row-recruit[data-pid='{nearly}']")
         page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n); }", arg=rc["prospects"][nearly]["name"], timeout=15_000)
-        assert not page.query_selector(".go-pane .go-tags .go-tag.go-likes") and not page.is_visible(".go-pane .go-pane-head .go-pane-likes")
+        assert not page.query_selector(".go-pane .go-tags .go-tag.go-likes") and not page.query_selector(".go-pane .go-pane-head .go-likes")
         # the Scouting tab: the Flags list has him as a "likes" row with the tag
         open_tab(page, base, sid, "scouting", ".sc-reports .go-subtabs")
         page.click(".sc-reports .go-subtabs button[data-week=flags]")
@@ -910,7 +917,8 @@ def test_staff_likes_tags(page, base) -> None:
         assert name in row.inner_text()
         assert not page.query_selector(f".sc-reports .sc-flag[data-pid='{nearly}']")
         v = call(base, f"/api/season/{sid}/scouting")
-        assert all(r["likes"] is None for r in v["queue"]), "the queue holds reports short of complete: no like yet"
+        assert all(r["likes"] is None for r in v["queue"] if r["looks"] < 3), "an open report has no like yet"
+        assert next(r for r in v["queue"] if r["pid"] == liked)["likes"]["who"] == "OC", "the board's complete report stays in the queue with his like"
         assert v["hours_left"] >= 5, v["hours_left"]
         # the queue: the Send that completes his report shows the pill in the NAME cell and the tag in the result row
         page.wait_for_selector(f".sc-table .sc-row[data-pid='{nearly}'] .sc-send", timeout=15_000)
@@ -970,6 +978,220 @@ def check_staff_developed(page, base, sid) -> None:
         if not r["changes"]:
             assert "no change" in li.inner_text()
     assert not re.search(r"\bundefined\b|\bnull\b|NaN", text), text[:200]
+
+# ----- the grade cards' tooltips and a complete report's final grades (final-grade brief) -----
+
+TIP_STATE = """(cell) => { const t = cell.querySelector('.go-tip-box'); if (!t) return { tip: false };
+  const shown = t.classList.contains('show'), r = t.getBoundingClientRect();
+  const box = cell.closest('.go-pane') || cell.closest('.modal-body'); const pr = box.getBoundingClientRect();
+  const pts = [[r.left + 4, r.top + 4], [r.right - 4, r.top + 4], [(r.left + r.right) / 2, (r.top + r.bottom) / 2], [r.left + 4, r.bottom - 4]];
+  t.style.pointerEvents = 'auto';     // the tip takes no pointer events (so it never blocks a card); hit-test it anyway to see what paints over it
+  const over = pts.map(([x, y]) => { const e = document.elementFromPoint(x, y); return e ? (t.contains(e) ? 'tip' : (e.className || e.tagName).toString().slice(0, 40)) : 'offscreen'; });
+  t.style.pointerEvents = '';
+  const parents = []; for (let n = t.parentElement; n && n !== document.documentElement; n = n.parentElement) { const s = getComputedStyle(n); if (s.transform !== 'none' || s.filter !== 'none' || s.willChange !== 'auto') parents.push(n.className); }
+  return { tip: true, shown, visible: shown && t.getClientRects().length > 0 && getComputedStyle(t).display !== 'none', rect: [r.left, r.top, r.right, r.bottom],
+           inViewport: r.left >= 0 && r.top >= 0 && r.right <= innerWidth + 0.5 && r.bottom <= innerHeight + 0.5, box: [pr.left, pr.top, pr.right, pr.bottom],
+           onTop: over.every(o => o === 'tip'), over, transformed: parents }; }"""
+
+
+def hover_grades(page, scope: str, where: str, height: int, escape: bool = False) -> None:
+    """Every grade card under `scope`: hover shows its tooltip, visible, inside the viewport and on top of everything (not
+    clipped by the pane or the modal, no transformed ancestor); the pointer off, it closes; focus shows it too, and the
+    focus leaving closes it. escape: Escape closes it too (checked only where Escape does not also close the window around it:
+    the desktop pane; the phone's sheet and the Prospects modal close on Escape)."""
+    cells = page.query_selector_all(f"{scope} .go-grades .go-stat")
+    assert cells, f"grade cards in {where}"
+    for c in cells:
+        c.scroll_into_view_if_needed()
+        time.sleep(0.15)
+        assert "go-tip" in (c.get_attribute("class") or ""), f"a grade card without a tooltip in {where}: {c.inner_text()!r}"
+        c.hover()
+        time.sleep(0.25)
+        st = page.evaluate(TIP_STATE, c)
+        assert st["shown"] and st["visible"], f"hovering a grade shows its tooltip in {where}: {st}"
+        assert st["inViewport"], f"the tooltip sits inside the viewport in {where}: {st}"
+        assert st["onTop"], f"the tooltip is on top, not clipped or covered, in {where}: {st}"
+        assert not st["transformed"], f"a transformed ancestor would pin the fixed tooltip to it in {where}: {st}"
+        page.mouse.move(2, height - 2)
+        time.sleep(0.2)
+        assert not page.evaluate(TIP_STATE, c)["shown"], f"the pointer off the grade closes its tooltip in {where}"
+        c.focus()
+        time.sleep(0.2)
+        st = page.evaluate(TIP_STATE, c)
+        assert st["shown"] and st["visible"] and st["inViewport"] and st["onTop"], f"focusing a grade shows its tooltip in {where}: {st}"
+        if escape:
+            page.keyboard.press("Escape")
+            time.sleep(0.15)
+            assert not page.evaluate(TIP_STATE, c)["shown"], f"Escape closes the tooltip in {where}"
+        page.evaluate("() => document.activeElement && document.activeElement.blur()")     # the focus off the card (the next one's focus() is a fresh focus event)
+        time.sleep(0.1)
+        assert not page.evaluate(TIP_STATE, c)["shown"], f"the focus leaving the grade closes its tooltip in {where}"
+
+
+def test_grade_hover(page, base, sid) -> None:
+    """A complete report's grade cards: on the board pane's Profile and Scouting sub-tabs and on the Prospects tab's full
+    profile, at 1280 and 400 (a tap there), hovering or focusing any card shows its "looks like" tooltip, visible, inside the
+    viewport and on top; the cards read one word each ("Strong", never "Solid to Strong") under the final-grades line; an
+    open report keeps its ranges."""
+    board = call(base, f"/api/season/{sid}/recruiting")["board"]
+    done = next((b for b in board if (b.get("looks") or 0) >= 3 and b.get("our_grades")), None)
+    if done is None:
+        rows = call(base, f"/api/season/{sid}/prospects?limit=5000")["rows"]
+        pick = next(r for r in rows if (r.get("looks") or 0) >= 3)
+        call(base, f"/api/season/{sid}/board", {"pid": pick["id"], "on": True})
+        done = next(b for b in call(base, f"/api/season/{sid}/recruiting")["board"] if b["id"] == pick["id"])
+    prof = call(base, f"/api/season/{sid}/prospect/{done['id']}")
+    assert prof["looks"] >= 3 and all(lo == hi for lo, hi in prof["our_grades"].values()), prof["our_grades"]
+    assert all(lo == hi for lo, hi in done["our_grades"].values()), done["our_grades"]
+    opened = next((b for b in board if 0 < (b.get("looks") or 0) < 3 and b.get("our_grades")), None)   # an open report: its line says the ranges still narrow
+    for width, height in ((1280, 800), (400, 760)):
+        page.set_viewport_size({"width": width, "height": height})
+        # the board pane: the Profile sub-tab, then the Scouting sub-tab (its tooltips arrive with his profile)
+        open_tab(page, base, sid, "recruiting", ".go-stages")
+        page.click(".go-stages button[data-stage=all]")
+        page.click(f".go-row-recruit[data-pid='{done['id']}']")
+        page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n); }", arg=done["name"], timeout=15_000)
+        page.click(".go-pane .go-subtabs button[data-sub=profile]")
+        page.wait_for_selector(".go-pane .go-sub-body.go-profile .go-grades .go-stat.go-tip", timeout=60_000)
+        time.sleep(0.4)
+        words = page.eval_on_selector_all(".go-pane .go-profile .go-grades .go-stat-val", "els => els.map(e => e.textContent.trim())")
+        assert words and all(" to " not in w and w in ("All-American", "Elite", "Strong", "Solid", "Fair", "Weak") for w in words), f"one final grade per card at {width}: {words}"
+        note = page.inner_text(".go-pane .go-profile .go-grades-note")
+        assert "3 of 3 looks: his report is complete: these are your staff's final grades." in note and "A read can still be wrong; the truth shows once he is on your roster." in note, note
+        assert "Ranges narrow" not in note, note
+        hover_grades(page, ".go-pane .go-profile", f"the pane's Profile sub-tab at {width}", height, escape=width > 700)
+        page.click(".go-pane .go-subtabs button[data-sub=scouting]")
+        page.wait_for_selector(".go-pane .go-scouting .go-grades .go-stat.go-tip", timeout=30_000)
+        time.sleep(0.3)
+        note = page.inner_text(".go-pane .go-scouting .go-grades-note")
+        assert "3 of 3 looks · his report is complete: these are your staff's final grades." in note, note
+        words = page.eval_on_selector_all(".go-pane .go-scouting .go-grades .go-stat-val", "els => els.map(e => e.textContent.trim())")
+        assert all(" to " not in w for w in words), words
+        hover_grades(page, ".go-pane .go-scouting", f"the pane's Scouting sub-tab at {width}", height)
+        if opened:          # an open report's Scouting sub-tab keeps its ranges and its narrowing line
+            if width <= 700:
+                page.click(".go-pane .go-pane-back")
+                time.sleep(0.4)
+            page.click(f".go-row-recruit[data-pid='{opened['id']}']")
+            page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n); }", arg=opened["name"], timeout=15_000)
+            page.click(".go-pane .go-subtabs button[data-sub=scouting]")
+            page.wait_for_selector(".go-pane .go-scouting .go-grades-note", timeout=30_000)
+            note = page.inner_text(".go-pane .go-scouting .go-grades-note")
+            assert "final grades" not in note and "ranges narrow with every look" in note, note
+        if width <= 700:
+            page.click(".go-pane .go-pane-back")
+            time.sleep(0.4)
+        # the Prospects tab's full profile (a modal)
+        open_tab(page, base, sid, "prospects", ".go-list-row")
+        page.fill("#tab-prospects input[type=search]", done["name"])
+        page.wait_for_selector(f"#tab-prospects .go-list-row:has-text('{done['name']}')", timeout=30_000)
+        time.sleep(0.5)
+        page.click(f"#tab-prospects .go-list-row:has-text('{done['name']}') .go-list-id")
+        page.wait_for_selector(".modal .go-profile .go-grades .go-stat.go-tip", timeout=60_000)
+        time.sleep(0.4)
+        assert done["name"].upper() in page.inner_text(".modal .go-profile"), "the profile is his"
+        words = page.eval_on_selector_all(".modal .go-profile .go-grades .go-stat-val", "els => els.map(e => e.textContent.trim())")
+        assert words and all(" to " not in w for w in words), f"one final grade per card on the full profile at {width}: {words}"
+        assert "these are your staff's final grades" in page.inner_text(".modal .go-profile .go-grades-note")
+        hover_grades(page, ".modal .go-profile", f"the Prospects profile at {width}", height)
+        # a tap (the phone) opens it too
+        if width <= 700:
+            page.mouse.move(2, height - 2)
+            first = page.query_selector(".modal .go-profile .go-grades .go-stat")
+            first.scroll_into_view_if_needed()
+            first.click()
+            time.sleep(0.3)
+            st = page.evaluate(TIP_STATE, first)
+            assert st["shown"] and st["visible"] and st["inViewport"], f"a tap shows the tooltip at {width}: {st}"
+        page.evaluate("() => { const c = document.querySelector('.modal:not([hidden]) .modal-close'); if (c) c.click(); }")
+        time.sleep(0.3)
+    page.set_viewport_size({"width": 1280, "height": 1000})
+
+
+# ----- a committed recruit's profile: his chance to flip in words, never a number (final-grade brief) -----
+
+FLIP_WORDS = {"None", "Slim", "Real", "Likely"}
+
+
+def test_flip_words(page, base) -> None:
+    """The profile of a recruit committed to you: the banner's second line says where he stands in words (no "%"), the
+    table under "Who else is calling" carries one of the four flip words per rival (or one line when nobody is close);
+    committed elsewhere: "His chance to flip to each", the words again, your row marked. The API carries `flip`."""
+    from coach_career import recruiting
+    from sim import season
+    me = "ohio-state"
+    st = season.new_season(me, "full", seed=21, career=True)
+    rc = st["recruiting"]
+    ranked = sorted((pid for pid in rc["prospects"] if not rc["prospects"][pid].get("hidden") and not rc["status"][pid]["signed"] and not rc["status"][pid]["committed"]),
+                    key=lambda q: rc["prospects"][q]["rank"])
+    mine, theirs = ranked[0], ranked[1]
+    rivals = [s for s in ("georgia", "alabama", "michigan") if s in recruiting.fbs_schools(st)]
+    for s in rivals:                                        # three rivals with offers out to both
+        for pid in (mine, theirs):
+            if pid not in rc["offers"].setdefault(s, []):
+                rc["offers"][s].append(pid)
+    rc["offers"].setdefault(me, [])
+    for pid in (mine, theirs):
+        if pid not in rc["offers"][me]:
+            rc["offers"][me].append(pid)
+    rc["status"][mine].update(committed=me, hard=False)
+    rc["status"][theirs].update(committed=rivals[0], hard=False)
+    season.save_season(st)
+    sid = st["id"]
+    errs = []
+    page.on("pageerror", lambda e: errs.append(str(e)))
+    try:
+        prof = call(base, f"/api/season/{sid}/prospect/{mine}")
+        flip = prof["flip"]
+        assert flip and set(flip) == {"total", "word", "rivals"} and flip["word"] in FLIP_WORDS, flip
+        assert [r["school"] for r in flip["rivals"]] == sorted((r["school"] for r in flip["rivals"]), key=lambda s: -next(x["pct"] for x in flip["rivals"] if x["school"] == s))
+        assert all(set(r) == {"school", "name", "pct", "word"} and r["word"] in FLIP_WORDS and r["school"] != me for r in flip["rivals"]), flip
+        assert abs(sum(r["pct"] for r in flip["rivals"]) - flip["total"]) < 1e-3
+        assert call(base, f"/api/season/{sid}/prospect/{ranked[2]}")["flip"] is None, "no commitment, nothing to flip from"
+        for pid, holder in ((mine, me), (theirs, rivals[0])):
+            prof = call(base, f"/api/season/{sid}/prospect/{pid}")
+            open_tab(page, base, sid, "prospects", ".go-list-row")
+            page.fill("#tab-prospects input[type=search]", prof["public"]["name"])
+            page.wait_for_selector(f"#tab-prospects .go-list-row:has-text(\"{prof['public']['name']}\")", timeout=30_000)
+            time.sleep(0.5)
+            page.click(f"#tab-prospects .go-list-row:has-text(\"{prof['public']['name']}\") .go-list-id")
+            page.wait_for_selector(".modal .go-profile .go-commit", timeout=60_000)
+            banner = page.inner_text(".modal .go-profile .go-commit")
+            assert "%" not in banner and "Still considering" not in banner, banner
+            lines = [t for t in banner.split("\n") if t.strip()]
+            assert lines[0].startswith("VERBAL COMMIT TO"), lines
+            word = prof["flip"]["word"]
+            leader = prof["flip"]["rivals"][0]["name"] if prof["flip"]["rivals"] else None
+            expect = ("Solid: nobody is close to pulling him away" if word == "None" or not leader
+                      else f"Hearing out {leader}: a slim chance he flips before signing day" if word == "Slim"
+                      else f"{leader} is working him hard: a real chance he flips" if word == "Real" else f"{leader} is close to flipping him")
+            assert lines[1] == expect, (lines, word)
+            heads = [h.strip().lower() for h in page.eval_on_selector_all(".modal .go-profile h3", "els => els.map(e => e.textContent)")]
+            if holder == me:
+                assert "who else is calling" in heads, heads
+                if page.query_selector(".modal .go-profile .go-nobody-close"):
+                    assert word == "None" and page.inner_text(".modal .go-profile .go-nobody-close") == "Nobody is close to pulling him away."
+                    assert not page.query_selector(".modal .go-profile .go-schools"), "no table when nobody is close"
+                else:
+                    assert word != "None"
+            else:
+                assert "his chance to flip to each" in heads, heads
+                assert page.query_selector(".modal .go-profile .go-school.yours"), "your own row is marked among his rivals"
+                assert "(you)" in page.inner_text(".modal .go-profile .go-school.yours")
+            rows = page.eval_on_selector_all(".modal .go-profile .go-schools .go-school", "els => els.map(e => [e.querySelector('b').textContent, e.querySelector('.go-school-odds').textContent.trim(), e.lastElementChild.textContent])")
+            for name, w, marks in rows:
+                assert w in FLIP_WORDS or w == "no offer", (name, w)
+                if w in FLIP_WORDS:
+                    assert "Offer" in marks, (name, marks)
+            assert "%" not in page.inner_text(".modal .go-profile .go-schools") if rows else True
+            words_by_api = {r["name"]: r["word"] for r in prof["flip"]["rivals"]}
+            assert all(words_by_api.get(name, "no offer") == w for name, w, _ in rows), (rows, words_by_api)
+            assert [name for name, w, _ in rows if w in FLIP_WORDS] == [r["name"] for r in prof["flip"]["rivals"] if r["name"] in {n for n, _, _ in rows}], "rivals sorted by their chance"
+            page.evaluate("() => { const c = document.querySelector('.modal:not([hidden]) .modal-close'); if (c) c.click(); }")
+            time.sleep(0.3)
+        assert not errs, errs
+    finally:
+        call(base, f"/api/season/{sid}", method="DELETE")
 
 
 if __name__ == "__main__":
@@ -1866,7 +2088,7 @@ if __name__ == "__main__":
             smooth(page, h, "Offer")
             # the tag carries the points when there are any (an offer to a recruit with no ask known starts at 0: plain "Offered")
             page.wait_for_function("(t) => [...document.querySelectorAll('.go-pane .go-tags .go-tag')].some(e => e.textContent.trim() === t)", arg=f"Offered · {nil} NIL" if nil else "Offered", timeout=10_000)
-            assert f"your {nil}" in page.inner_text(".go-pane .go-strip")
+            assert f"{nil} NIL" in page.inner_text(".go-pane .go-strip") and "your " not in page.inner_text(".go-pane .go-strip .go-stat:nth-child(3)")
             # Raise NIL
             menu("raise_nil")
             page.wait_for_selector(".go-pane .go-step input#rc-nil")
@@ -1878,7 +2100,7 @@ if __name__ == "__main__":
             toasted(page, f"Offer raised to {nil2} NIL")
             settle(page, n)
             smooth(page, h, "Raise NIL")
-            assert f"your {nil2}" in page.inner_text(".go-pane .go-strip")
+            assert f"{nil2} NIL" in page.inner_text(".go-pane .go-strip")
             # Scout: from the menu, the Recruit button is the busy control and gets the focus back
             looks = min(3, (x.get("looks") or 0) + 1)          # looks in trip units: a Send adds one (an area week added halves)
             h = watch(page, ".go-pane", "#rc-recruit")
@@ -2094,6 +2316,8 @@ if __name__ == "__main__":
             test_recruit_question(page)
             test_look_units_pane(page, base, A)
             test_staff_likes_tags(page, base)
+            test_grade_hover(page, base, A)
+            test_flip_words(page, base)
             browser.close()
         assert not errors, errors
         print("ux sweep ok: office, prospects, board (tabs, list, pane, menu, step, scene, phone, every action patching in place with its toast), scouting, schedule, depth, player page, an FCS box score and every offseason stage at 1280 and 400")
@@ -2104,4 +2328,3 @@ if __name__ == "__main__":
             except Exception:  # noqa: BLE001
                 pass
         server.terminate()
-
