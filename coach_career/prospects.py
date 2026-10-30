@@ -567,7 +567,7 @@ def _stage_move(state: dict, pid: str, viewer: str) -> Optional[str]:
 
 HISTORY_SHOWN = 40                           # a board row's History: his newest log entries, this many
 HIS_OWN = ("commit", "hard", "flip", "decommit", "signed", "leaning_fcs")   # his own moves: every school's show
-HISTORY_KEYS = ("week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful")
+HISTORY_KEYS = ("week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful", "topics", "hit")
 
 
 def history_index(state: dict, viewer: str) -> dict[str, list[dict]]:

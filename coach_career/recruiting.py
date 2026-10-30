@@ -77,6 +77,9 @@ PITCH_PRIORITY = (1.0, 3.0)                # a pitch on one of his three priorit
 PITCH_OTHER = (0.3, 0.4)                   # any other topic: 0.3 + 0.4 * strength
 BACKFIRE = 0.25                            # a priority pitched at a strength under this backfires (he isn't buying it) ...
 BACKFIRE_COST = 0.5                        # ... and costs this much of the action's base points
+PRESENT_HIT = 0.25                         # your opening on a call or visit (scenes.present): each of the three things that is one of his
+#                                            priorities earns this share of the action's base times (1 + your strength); a weak one costs
+#                                            BACKFIRE_COST of that share; the total caps at the base *tune: tools/check_recruiting.py*
 COLD_OFFER = 0.5                           # an offer before any contact counts this much
 STAGES = ("cold", "contact", "top", "visited", "committed")
 DIMINISH = 0.2                             # each earlier contact from the school cuts a new one's worth *tune*
@@ -1189,7 +1192,7 @@ _LAST_LOOK: list = [None]        # the trip's look entry, for the scout action's
 
 
 def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
-        scene: Optional[str] = None, answer: Optional[str] = None) -> dict:
+        scene: Optional[str] = None, answer: Optional[str] = None, topics: Optional[list] = None) -> dict:
     """One recruiting action by `slug` on prospect `pid` this week. Its interest lands at the week
     step (you see his list move next week), so this returns no interest. Your call or in-home visit
     without a pitch opens a scene (returned); `answer` with the scene's id fields his question
@@ -1197,6 +1200,8 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
     rc = state["recruiting"]
     if action == "answer":
         return _answer(state, slug, pid, scene, answer)
+    if action == "present":
+        return _present(state, slug, pid, scene, topics)
     if action == "pitch":
         sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
         start = len(rc["log"])
@@ -1274,6 +1279,52 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
     if points:
         _add_points(state, slug, pid, points, sc["action"])
     return {"scene": sc, "points": points, "truthful": truthful, "revealed": revealed, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
+
+
+def _present(state: dict, slug: str, pid: str, scene: Optional[str], topics: Optional[list]) -> dict:
+    """Your opening on the open scene (scenes.present), no hours: three different topics, scored
+    against his true priorities without revealing them. Each that is one of his earns PRESENT_HIT of
+    the action's base times (1 + your strength); one you are weak at (under BACKFIRE) costs
+    BACKFIRE_COST of that share; the rest add nothing; the total caps at the base. The points are the
+    call's or visit's (diminished by his earlier contacts, halved while he is cooled, nothing while
+    the call pesters him) and land through `_add_points` on the scene's action. His reaction, your
+    question and his cue join the scene; it remembers what you presented."""
+    from coach_career import scenes
+    rc = state["recruiting"]
+    p = rc["prospects"].get(pid)
+    if p is None:
+        raise RecruitingError(400, "unknown prospect")
+    sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
+    if sc is None or scene is None or sc["id"] != scene:
+        raise RecruitingError(409, "no call or visit open")
+    if sc.get("presented"):
+        raise RecruitingError(409, "you already presented")
+    if not isinstance(topics, list) or len(topics) != 3 or len(set(topics)) != 3 or any(t not in PITCHES for t in topics):
+        raise RecruitingError(400, "present exactly three different topics")
+    contact = _contact(state, slug, pid)
+    st_ = strengths(state, slug, pid)
+    base = BASE_POINTS[sc["action"]]
+    hits, back, raw = [], [], 0.0
+    for t in topics:
+        if t not in p["priorities"]:
+            continue
+        if st_[t] < BACKFIRE:
+            back.append(t)
+            raw -= BACKFIRE_COST * PRESENT_HIT * base
+        else:
+            hits.append(t)
+            raw += PRESENT_HIT * base * (1 + st_[t])
+    tired = would_pester(state, slug, pid)
+    points = 0.0 if tired else min(raw, base) / (1 + DIMINISH * contact["n"])
+    if points and cooled(state, slug, pid):
+        points *= COOLED_CONTACT
+    if points < 0:
+        _event(state, "not_buying", pid, slug, topic=back[0])
+    scenes.present(state, slug, pid, sc, topics, hits, back, tired)
+    _event(state, "present", pid, slug, action=sc["action"], topics=list(topics), hit=len(hits))
+    if points:
+        _add_points(state, slug, pid, points, sc["action"])
+    return {"scene": sc, "points": points, "hit": hits, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
 
 
 REPORTS_KEPT = 4           # weekly reports kept (the Office shows the latest)
@@ -1390,7 +1441,7 @@ def _report(state: dict, week: int) -> dict:
 
 
 REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "pester", "promise_broken")
-CONTACT_KINDS = ("contact", "pitch", "raise_nil", "pull_offer", "answer")   # your actions, logged for his History (not news)
+CONTACT_KINDS = ("contact", "pitch", "raise_nil", "pull_offer", "answer", "present")   # your actions, logged for his History (not news)
 
 
 def _pester_line(prospect: str, school: str) -> str:
@@ -1511,6 +1562,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
         if sc is None or scene is None or sc["id"] != scene:
             raise RecruitingError(409, "no open call or visit with him")
+        if not sc.get("presented"):
+            raise RecruitingError(409, "present your program first")
         if sc.get("question") and not sc["question"].get("answer"):
             raise RecruitingError(409, "answer him first")
         if pitch is None:
