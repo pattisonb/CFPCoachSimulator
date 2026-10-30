@@ -1040,6 +1040,24 @@ carries), so one look that widens the read a little does not flicker it off and 
 When he signs with you, the Classes view judges the call: "Gem: the read held" (his potential is
 Elite) or "The read was off".
 
+**"OC likes him" / "DC likes him"** (`prospects.staff_likes`) is a coordinator's word on a recruit
+you may not know how to read at his position: once his report is complete (the flags' gate, three
+looks), his overall now as the READ sees it (`prospects.read_overall`: the midpoint of each group's
+read moved onto his current attributes, scored at his position on the roster's scale) is set
+against your returning roster at his position group exactly as `recruiting.ahead_of` counts it
+(seniors gone); when fewer returning players rate at or above him than the group starts
+(`offseason.STARTERS`: one QB, three receivers, five linemen ...) he would start, and the OC (offense)
+or DC (defense) vouches for him ("Your defensive coordinator thinks he starts for you next year");
+a kicker or punter gets one of the two, fixed by the seed. The truth never enters it: a recruit who
+would start by his real rating is not liked while the read sits under your starter, and the read
+can be wrong the other way. Never in the portal, never once he has signed elsewhere. The tag
+(`go-tag good`, "OC likes him", the sentence as its title) sits among the board pane's tags after
+the ★/☆ priorities and beside the status chip on the pane's head; the profile says it in a line
+("Your DC, Matt Patricia, thinks he starts for you next year."); on the Scouting tab the report
+items and the Flags rows carry it, the Flags list has every liked recruit as a fourth kind (after
+the gems), and the queue's NAME cell shows a small "OC ♥" pill when the Send that completed his
+report won him over (a complete report leaves the queue otherwise). The weekly report says nothing.
+
 **Calls and in-home visits are scenes** (`coach_career/scenes.py`). For you, a call or an in-home
 visit without a pitch opens a two-step scene: he says his lines, with a cue that hints at what he
 cares about (one topic, or two when he is torn); then you choose your pitch and he answers with a
@@ -1156,8 +1174,9 @@ flags count when there are any; "Not covered: …" is one
 muted line under the list. Reports beside it, with tabs This week · Last week · Flags: the looks
 grouped by scout (scout · area, "364 looks, 299 changed"), only the looks that changed a grade word
 or found a flag, in compact rows (stars, position, name, what changed, flag tags), past eight folded
-behind "Show all n"; Flags lists your staff's gems, bust risks and generational prospects this class
-with his looks and where he stands with you. A name anywhere opens him in the board's pane (he goes
+behind "Show all n"; Flags lists your staff's gems, bust risks and generational prospects this class,
+and the recruits a coordinator likes ("OC likes him", after the gems), with his looks and where he
+stands with you. A name anywhere opens him in the board's pane (he goes
 on your board if he was not); the pane's Scouting sub-tab links back to the reports. Under them the
 Scouting queue, a table of the recruits worth a trip (your board first, then the class by your need
 and his rank), 25 to a page on the API's `offset`/`limit`/`queue_total` with "Showing 1 to 25 of

@@ -854,6 +854,80 @@ def test_look_units_pane(page, base, sid) -> None:
         page.keyboard.press("Escape")
 
 
+def test_staff_likes_tags(page, base) -> None:
+    """"OC likes him": a board row whose complete report says he starts for you shows the tag (title: the coordinator's
+    sentence) among the pane's tags and beside the chip on its head; the profile says it in a line; the Scouting tab's
+    Flags list has him as a "likes" row; a Send that completes a report shows the queue row's "OC ♥" pill at once."""
+    from coach_career import offseason
+    from coach_career import recruiting
+    from sim import season
+    me = "ohio-state"
+    st = season.new_season(me, "full", seed=13, career=True)
+    rc = st["recruiting"]
+    oc = next(m["name"] for m in st["career"]["staff"] if m["role"] == "OC")
+    tight = lambda p, looks: {"looks": float(looks), "area": 0.0, "by": {"95": float(looks)},
+                              "g": {g: [min(99.0, p["truth"][g] + 40.0), 1000.0] for g in recruiting.GROUPS}}
+    qbs = [pid for pid in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"])
+           if recruiting._group_of(rc["prospects"][pid]) == "QB" and not rc["prospects"][pid].get("hidden")
+           and not rc["status"][pid]["signed"] and not rc["status"][pid]["committed"]
+           and sum(1 for o in recruiting._returning(me, "QB") if o >= rc["prospects"][pid]["ovr"]) >= offseason.STARTERS["QB"]]
+    liked, nearly = qbs[0], qbs[1]
+    rc["reads"][liked] = tight(rc["prospects"][liked], 3)          # a complete report whose read says he starts: liked
+    rc["reads"][nearly] = tight(rc["prospects"][nearly], 2)        # one Send from complete: the Send wins him the OC
+    rc["board"] = [liked, nearly]
+    season.save_season(st)
+    sid = st["id"]
+    name = rc["prospects"][liked]["name"]
+    errs = []
+    page.on("pageerror", lambda e: errs.append(str(e)))
+    try:
+        rows = {b["id"]: b for b in call(base, f"/api/season/{sid}/recruiting")["board"]}
+        assert rows[liked]["likes"] == {"who": "OC", "name": oc, "text": "Your offensive coordinator thinks he starts for you next year"}, rows[liked]["likes"]
+        assert rows[nearly]["likes"] is None
+        # the board's pane: the tag among the tags and on the head, the profile's line
+        open_tab(page, base, sid, "recruiting", ".go-stages")
+        page.click(f".go-row-recruit[data-pid='{liked}']")
+        page.wait_for_selector(".go-pane .go-tags .go-tag.go-likes:has-text('OC likes him')", timeout=30_000)
+        tag = page.query_selector(".go-pane .go-tags .go-tag.go-likes")
+        assert "good" in (tag.get_attribute("class") or "") and tag.get_attribute("title") == "Your offensive coordinator thinks he starts for you next year", (tag.get_attribute("class"), tag.get_attribute("title"))
+        assert page.is_visible(".go-pane .go-pane-head .go-pane-likes") and page.inner_text(".go-pane .go-pane-head .go-pane-likes").strip().lower() == "oc likes him"
+        assert page.get_attribute(".go-pane .go-pane-head .go-pane-likes", "title") == "Your offensive coordinator thinks he starts for you next year"
+        assert not page.evaluate("() => [...document.querySelectorAll('.go-row-recruit')].some(r => r.querySelector('.go-tag'))"), "a list row stays one word of standing"
+        page.click(".go-pane .go-subtabs button[data-sub=profile]")
+        page.wait_for_selector(".go-pane .go-likes-line", timeout=30_000)
+        assert page.inner_text(".go-pane .go-likes-line").strip().endswith(f"Your OC, {oc}, thinks he starts for you next year."), page.inner_text(".go-pane .go-likes-line")
+        # the one short of complete has no tag yet
+        page.click(f".go-row-recruit[data-pid='{nearly}']")
+        page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n); }", arg=rc["prospects"][nearly]["name"], timeout=15_000)
+        assert not page.query_selector(".go-pane .go-tags .go-tag.go-likes") and not page.is_visible(".go-pane .go-pane-head .go-pane-likes")
+        # the Scouting tab: the Flags list has him as a "likes" row with the tag
+        open_tab(page, base, sid, "scouting", ".sc-reports .go-subtabs")
+        page.click(".sc-reports .go-subtabs button[data-week=flags]")
+        page.wait_for_selector(f".sc-reports .sc-flag[data-pid='{liked}'][data-flag=likes]", timeout=15_000)
+        row = page.query_selector(f".sc-reports .sc-flag[data-pid='{liked}'][data-flag=likes]")
+        assert row.inner_text().strip().lower().startswith("oc likes him"), row.inner_text()
+        assert row.query_selector(".go-likes").get_attribute("title") == "Your offensive coordinator thinks he starts for you next year"
+        assert name in row.inner_text()
+        assert not page.query_selector(f".sc-reports .sc-flag[data-pid='{nearly}']")
+        v = call(base, f"/api/season/{sid}/scouting")
+        assert all(r["likes"] is None for r in v["queue"]), "the queue holds reports short of complete: no like yet"
+        assert v["hours_left"] >= 5, v["hours_left"]
+        # the queue: the Send that completes his report shows the pill in the NAME cell and the tag in the result row
+        page.wait_for_selector(f".sc-table .sc-row[data-pid='{nearly}'] .sc-send", timeout=15_000)
+        assert not page.query_selector(f".sc-row[data-pid='{nearly}'] .sc-likes")
+        page.click(f".sc-row[data-pid='{nearly}'] .sc-send")
+        page.wait_for_selector(f".sc-row[data-pid='{nearly}'] .sc-likes", timeout=15_000)
+        pill = page.query_selector(f".sc-row[data-pid='{nearly}'] .sc-c-name .sc-likes")
+        assert pill.inner_text().strip().lower() == "oc ♥" and pill.get_attribute("title") == "Your offensive coordinator thinks he starts for you next year", (pill.inner_text(), pill.get_attribute("title"))
+        assert not page.query_selector(f".sc-row[data-pid='{nearly}'] .sc-c-name .sc-likes[hidden]")
+        page.wait_for_function("(pid) => { const r = document.querySelector(`.sc-row[data-pid='${pid}']`); return r && r.nextElementSibling && r.nextElementSibling.classList.contains('sc-result-row') && r.nextElementSibling.querySelector('.go-likes'); }", arg=nearly, timeout=15_000)
+        assert page.inner_text(f".sc-row[data-pid='{nearly}'] + .sc-result-row .go-likes").strip().lower() == "oc likes him"
+        assert next(b for b in call(base, f"/api/season/{sid}/recruiting")["board"] if b["id"] == nearly)["likes"]["who"] == "OC"
+        assert not errs, errs
+    finally:
+        call(base, f"/api/season/{sid}", method="DELETE")
+
+
 if __name__ == "__main__":
     try:
         from playwright.sync_api import sync_playwright
@@ -1973,6 +2047,7 @@ if __name__ == "__main__":
             test_pester_tags(page, base)
             test_recruit_question(page)
             test_look_units_pane(page, base, A)
+            test_staff_likes_tags(page, base)
             browser.close()
         assert not errors, errors
         print("ux sweep ok: office, prospects, board (tabs, list, pane, menu, step, scene, phone, every action patching in place with its toast), scouting, schedule, depth, player page, an FCS box score and every offseason stage at 1280 and 400")

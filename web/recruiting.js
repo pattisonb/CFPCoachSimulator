@@ -480,6 +480,9 @@
 
   // what stands out about him, as small tags: the staff's finds, then today's need, offer, mood and commitment
   const genBadge = () => el("span", { class: "go-badge generational", text: "Generational", title: "Your staff's find after three looks: a once-in-a-generation talent every program in the country wants" });
+  // "OC likes him": with his report complete, the read says he would start on your returning roster; the tag's title carries the sentence
+  const likesText = (l) => `${l.who} likes him`;
+  const likesLine = (l) => (l.name ? `Your ${l.who}, ${l.name}, thinks he starts for you next year.` : `${l.text}.`);
   function badges(b, me) {
     const out = el("div", { class: "go-tags go-badges" });
     if (b.generational) out.append(genBadge());
@@ -1107,10 +1110,11 @@
       const nameBtn = el("button", { type: "button", class: "go-link go-pane-name", text: b.name, title: "Open his profile", onclick: () => showSub("profile") });
       const subLine = el("span", { class: "muted small" });
       const chipEl = el("span", { class: "go-chip" });
+      const likeEl = el("span", { class: "go-tag good go-likes go-pane-likes", hidden: "" });   // "OC likes him": his report is complete and the read says he starts for you
       const acts = el("div", { class: "go-pane-act" });
       const head = el("div", { class: "go-pane-head" }, [
         sheet ? el("button", { type: "button", class: "go-btn go-pane-back", "aria-label": "Back to the list", text: "‹ Back", onclick: closeSheet }) : null,
-        avatar(b.id), el("div", { class: "go-pane-id" }, [nameBtn, subLine, chipEl]), acts]);
+        avatar(b.id), el("div", { class: "go-pane-id" }, [nameBtn, subLine, el("div", { class: "go-pane-chips" }, [chipEl, likeEl])]), acts]);
       p.append(head);
       // on a phone the head is pinned to the top of the sheet: the sub-tab strip pins just under it, at its height
       if (sheet && window.ResizeObserver) new ResizeObserver(() => p.style.setProperty("--go-head-h", `${head.offsetHeight}px`)).observe(head);
@@ -1139,6 +1143,11 @@
         subLine.textContent = b.portal ? `${b.position} · ${clsWord(b.cls)} · from ${b.from_name} · #${b.portal_rank} in the portal` : `${stars(b.stars)} ${b.position} · ${place(b.hometown)} · #${b.national_rank}`;
         const chip = chipOf(b, me, v.portal);
         if (chip.text !== chipText) { chipText = chip.text; chipEl.textContent = chip.text; chipEl.className = `go-chip ${chip.tone}`; if (!first) ui().pulse(chipEl); }
+        if (b.likes) {
+          const was = likeEl.hidden || likeEl.textContent !== likesText(b.likes);
+          likeEl.textContent = likesText(b.likes); likeEl.title = b.likes.text; likeEl.hidden = false;
+          if (was && !first) ui().pulse(likeEl);
+        } else likeEl.hidden = true;
         // his call or visit is open but not on screen: Finish brings it back (it re-reads the board first: the week may have moved on)
         const wantFinish = !!(busy && !shown);
         if (wantFinish && !finishBtn) {
@@ -1220,6 +1229,7 @@
         for (const t of b.priorities_known) out.push(el("span", { class: "go-tag", "data-key": `pri:${t}`, text: `★ ${PITCH_NAMES[t]}`, title: "He told you he cares about this" }));
         const cue = cueOf(b);
         for (const t of cue.topics) if (!b.priorities_known.includes(t)) out.push(el("span", { class: "go-tag cue", "data-key": `pri:${t}`, text: `☆ ${PITCH_NAMES[t] || t}`, title: cue.title }));
+        if (b.likes) out.push(el("span", { class: "go-tag good go-likes", "data-key": "likes", text: likesText(b.likes), title: b.likes.text }));
         if (b.visit) out.push(el("span", { class: "go-tag", "data-key": "visit", text: b.visit.done ? "Visited" : `Visit wk ${b.visit.week}` }));
         if (b.portal && b.role) out.push(el("span", { class: `go-tag ${b.role === "Would start" ? "good" : b.role === "Next in line" ? "warn" : "muted"}`, "data-key": "role", text: b.role, title: "Where he would sit on your depth chart next season" }));
         for (const n of out) if (!n.dataset.key) n.dataset.key = tagKey(n.textContent);
@@ -1640,6 +1650,7 @@
       node.append(scoutLine(p.our_grades, p.looks));
       if (p.our_comp && !(p.public_comp && p.public_comp.name === p.our_comp.name)) node.append(el("p", { class: "small" }, [el("b", { text: "Our comp: " }), `${p.our_comp.name}, ${p.our_comp.school} (${p.our_comp.position}${p.our_comp.overall ? `, ${p.our_comp.overall} OVR` : ""})`]));
     }
+    if (p.likes) node.append(el("p", { class: "small go-likes-line" }, [el("span", { class: "go-tag good go-likes", text: likesText(p.likes), title: p.likes.text }), ` ${likesLine(p.likes)}`]));
     if (pub.schools.length) {
       const listed = holder ? pub.schools.filter((x) => x.school !== holder) : pub.schools;
       const sorted = listed.slice().sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1));

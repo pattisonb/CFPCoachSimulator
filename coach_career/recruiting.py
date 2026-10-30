@@ -1206,8 +1206,9 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
         if pid not in marks:
             marks.append(pid)
     out = {"hours_left": rc["hours"][slug], "revealed": revealed}
-    if action == "scout":                                   # the desk shows the trip's before/after from this
-        out["look"] = _LAST_LOOK[0]
+    if action == "scout":                                   # the desk shows the trip's before/after from this, and the like a completed report earned
+        from coach_career import prospects as pr
+        out["look"] = dict(_LAST_LOOK[0], likes=pr.staff_likes(state, pid, slug))
     if opens:
         out["scene"] = rc["scenes"][slug][pid]
     return out

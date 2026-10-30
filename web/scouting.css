@@ -94,6 +94,9 @@ th[aria-sort="ascending"] .sc-sort, th[aria-sort="descending"] .sc-sort { color:
 .sc-id { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
 .sc-name { align-self: flex-start; font-size: 15px; line-height: 1.3; text-align: left; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .sc-line { white-space: nowrap; }
+.sc-line-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.sc-likes { padding: 1px 7px; font-size: 10px; }           /* the queue's "OC ♥": his report completed on a Send and the read says he starts */
+.sc-flag-likes .go-likes { flex: none; }
 .sc-pot { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .sc-looks { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
 .sc-trips { display: inline-flex; gap: 3px; }

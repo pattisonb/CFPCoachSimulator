@@ -39,6 +39,10 @@
   const api = (s, path, body) => (body === undefined ? H.api(`/api/season/${s.id}/${path}`) : H.api(`/api/season/${s.id}/${path}`, H.postJSON(body)));
   const wordRange = (r) => (r[0] === r[1] ? [R().wordTag(r[0])] : [R().wordTag(r[0]), " to ", R().wordTag(r[1])]);
   const flagBadge = (f) => el("span", { class: `go-badge ${f}`, text: (FLAGS[f] || [f])[0], title: (FLAGS[f] || [])[1] || "" });
+  // "OC likes him" (the API's `likes`: {who, name, text}): his report is complete and the read says he would start for you.
+  // The tag on report items and Flags rows; a small "OC ♥" pill in the queue's NAME cell
+  const likesTag = (l) => el("span", { class: "go-tag good go-likes", text: `${l.who} likes him`, title: l.text });
+  const likesPill = (l) => el("span", { class: "go-tag good sc-likes", text: `${l.who} ♥`, title: l.text });
   function avatar(seed, cls) {
     // a portrait from the coach sprite system, its look picked from the id (as the board's rows)
     let h = 0;
@@ -178,19 +182,21 @@
     const lis = items.map((it) => el("li", { class: "sc-report-item" }, [el("span", { class: "go-stars sc-item-stars", text: stars(it.stars) }),
       el("span", { class: "muted small sc-item-pos", text: it.position }), nameLink(s, it.pid, it.name),
       it.change ? el("span", { class: "muted small sc-item-change", text: it.change }) : null,
-      it.flags && it.flags.length ? el("span", { class: "go-tags sc-item-flags" }, it.flags.map(flagBadge)) : null]));
+      it.flags && it.flags.length || it.likes ? el("span", { class: "go-tags sc-item-flags" }, [...(it.flags || []).map(flagBadge), it.likes ? likesTag(it.likes) : null]) : null]));
     const more = foldable(lis);
     return el("div", { class: "sc-report", "data-key": g.scout_id }, [
       el("div", { class: "sc-report-head" }, [el("b", { text: [g.scout, g.area].filter(Boolean).join(" · ") }),
         el("span", { class: "muted small", text: items.length ? `${looksText(g.looks)}, ${g.changed} changed` : `${looksText(g.looks)}, nothing new` })]),
       items.length ? el("ul", { class: "sc-report-items" }, lis) : null, more]);
   }
-  // the flags: gems, bust risks and generational prospects your staff found this class
+  // the flags: gems, bust risks and generational prospects your staff found this class, and the recruits a coordinator likes
+  // (flag "likes": the tag is the row's badge; a gem or bust row he also earned carries the tag beside his name)
   function flagsList(s, v) {
     const rows = v.flags || [];
-    if (!rows.length) return el("p", { class: "muted sc-flags-empty", text: "No finds yet: as the looks add up your scouts flag gems, bust risks and generational prospects here." });
-    const lis = rows.map((f) => el("li", { class: "sc-flag", "data-pid": f.pid }, [flagBadge(f.flag),
+    if (!rows.length) return el("p", { class: "muted sc-flags-empty", text: "No finds yet: as the looks add up your scouts flag gems, bust risks and generational prospects here, and your coordinators name the recruits they think start for you." });
+    const lis = rows.map((f) => el("li", { class: `sc-flag ${f.flag === "likes" ? "sc-flag-likes" : ""}`, "data-pid": f.pid, "data-flag": f.flag }, [f.flag === "likes" && f.likes ? likesTag(f.likes) : flagBadge(f.flag),
       el("span", { class: "sc-flag-id" }, [nameLink(s, f.pid, f.name), el("span", { class: "muted small", text: `${f.position} · ${stars(f.stars)} · ${looksText(f.looks)}` })]),
+      f.flag !== "likes" && f.likes ? likesTag(f.likes) : null,
       el("span", { class: "muted small sc-standing", text: f.standing_word })]));
     const more = foldable(lis);
     return el("div", { class: "sc-flags" }, [el("ul", { class: "sc-flag-list" }, lis), more]);
@@ -324,6 +330,7 @@
       row.looks = Math.min(REPORT_LOOKS, (row.looks || 0) + SEND_LOOK);
       const look = res.look || null;
       if (look && look.after && look.after.potential) row.potential = look.after.potential;
+      if (look && "likes" in look) row.likes = look.likes;        // the look that completed his report may have won him a coordinator
       st.left = res.hours_left;
       ctx.hours.textContent = ctx.hoursText();
       ui().pulse(ctx.hours);
@@ -341,7 +348,7 @@
     });
     node.append(
       el("td", { class: "sc-c-board" }, [el("span", { class: "sc-board-cell" })]),
-      el("td", { class: "sc-c-name" }, [el("div", { class: "sc-who" }, [avatar(r.pid, "sm"), el("div", { class: "sc-id" }, [nameLink(s, r.pid, r.name, "sc-name"), el("span", { class: "muted small sc-line" })])])]),
+      el("td", { class: "sc-c-name" }, [el("div", { class: "sc-who" }, [avatar(r.pid, "sm"), el("div", { class: "sc-id" }, [nameLink(s, r.pid, r.name, "sc-name"), el("span", { class: "sc-line-row" }, [el("span", { class: "muted small sc-line" })])])])]),
       el("td", { class: "sc-c-need" }, [el("span", { class: "sc-need-cell" })]),
       el("td", { class: "sc-c-rank" }, [el("span", { class: "sc-rank" })]),
       el("td", { class: "sc-c-pot" }, [el("span", { class: "sc-pot" })]),
@@ -359,6 +366,10 @@
     if (on && !board.firstChild) board.append(el("span", { class: "go-tag sc-board-mark", title: "On your board" }, [el("span", { "aria-hidden": "true", text: "★ " }), "On board"]));
     else if (!on && board.firstChild) board.innerHTML = "";
     node.querySelector(".sc-line").textContent = `${r.position} · ${stars(r.stars)} · ${r.state}`;
+    const lineRow = node.querySelector(".sc-line-row"), pill = lineRow.querySelector(".sc-likes");
+    if (r.likes && !pill) { lineRow.append(likesPill(r.likes)); ui().pulse(lineRow.lastChild); }
+    else if (r.likes && pill) { pill.textContent = `${r.likes.who} ♥`; pill.title = r.likes.text; }
+    else if (!r.likes && pill) pill.remove();
     const need = node.querySelector(".sc-need-cell");
     const needText = r.need > 0 ? `Need ${r.need}` : "Set", needCls = r.need > 0 ? "go-tag warn" : "go-tag muted";
     if (!need.firstChild) need.append(el("span", { class: needCls, text: needText, title: r.need > 0 ? `${r.group}: ${plural(r.need, "spot")} to fill` : `${r.group}: your class is set there` }));
@@ -394,6 +405,7 @@
     for (const g of groups) out.append(el("span", { class: "sc-change" }, [el("span", { class: "muted small", text: `${GRADE_NAMES[g]}: ` }),
       ...(before[g] ? [...wordRange(before[g]), " → "] : ["first read: "]), ...wordRange(after[g])]));
     if (flags.length) out.append(el("span", { class: "sc-change" }, [el("span", { class: "muted small", text: "flagged " }), el("span", { class: "go-tags sc-flags-gained" }, flags.map(flagBadge))]));
+    if (look && look.likes) out.append(el("span", { class: "sc-change" }, [el("span", { class: "muted small", text: "and " }), likesTag(look.likes)]));
     return el("tr", { class: "sc-result-row" }, [el("td", { colspan: "7" }, [out])]);
   }
 

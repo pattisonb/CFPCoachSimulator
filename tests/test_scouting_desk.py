@@ -17,14 +17,14 @@ from tests.test_offseason import finished
 
 ME = "ohio-state"
 ENTRY_KEYS = {"week", "pid", "by", "before", "after", "flags"}
-FLAGS = {"gem", "bust", "generational"}
+FLAGS = {"gem", "bust", "generational", "likes"}      # "likes": prospects.staff_likes, the Flags list's fourth kind
 VIEW_KEYS = {"hours", "hours_left", "scouts", "queue", "queue_total", "reports", "flags"}
 SCOUT_KEYS = {"id", "name", "role", "evaluation_word", "area", "looking_at", "yield"}
 QUEUE_KEYS = {"pid", "name", "position", "stars", "group", "need", "national_rank", "looks", "trips", "potential",
-              "can_send", "why", "state"}
+              "can_send", "why", "state", "likes"}
 GROUP_KEYS = {"scout_id", "scout", "area", "looks", "changed", "items"}
-ITEM_KEYS = {"pid", "name", "position", "stars", "change", "flags"}
-FLAG_KEYS = {"pid", "name", "position", "stars", "flag", "looks", "standing_word"}
+ITEM_KEYS = {"pid", "name", "position", "stars", "change", "flags", "likes"}
+FLAG_KEYS = {"pid", "name", "position", "stars", "flag", "looks", "standing_word", "likes"}
 
 
 def G(sid: str, path: str) -> dict:
@@ -196,7 +196,8 @@ if __name__ == "__main__":
         hours = v["hours_left"]
         out = R(sid, "recruit", {"pid": target["pid"], "action": "scout"})
         assert out["hours_left"] == hours - recruiting.HOURS["scout"]
-        look = out["look"]
+        assert "likes" in out["look"], out["look"]      # a Send also returns the like a completed report earned (prospects.staff_likes)
+        look = {k: v for k, v in out["look"].items() if k != "likes"}     # the logged entry itself
         check_entry(look, rc)
         assert look["by"] == "trip" and look["pid"] == target["pid"] and look["week"] == 2
         assert rc["look_counts"]["2"]["trip"] == 1

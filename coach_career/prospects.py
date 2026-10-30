@@ -127,15 +127,76 @@ def comp(profile_vector: dict, position: str, pool) -> Optional[dict]:
     return out
 
 
-def _shifted(state: dict, p: dict, grades: dict[str, float]) -> dict:
-    """His ceiling as a read sees it: each group's attributes moved by how far the read is off
-    his true grade (grade points to rating points)."""
+def _shifted(state: dict, p: dict, grades: dict[str, float], field: str = "potential") -> dict:
+    """His ceiling (`field` "potential") or his skills now ("ratings") as a read sees them: each
+    group's attributes moved by how far the read is off his true grade (grade points to rating points)."""
     groups = {"athleticism": recruiting._ATHLETIC, "size_strength": recruiting._SIZE, "football_iq": recruiting._IQ}
     out = {}
-    for k, v in ceiling(state, p).items():
+    for k, v in recruiting.attributes(state, p, field).items():
         g = next((g for g, keys in groups.items() if k in keys), "technique")
         off = READ_SHIFT * (grades[g] - p["truth"][g]) + READ_SHIFT / 2 * (grades["potential"] - p["truth"]["potential"])
         out[k] = max(0, min(99, v + off))
+    return out
+
+
+# ----- "OC likes him": a coordinator vouches for a recruit the read says would start -------------------
+
+LIKES_TEXT = "Your {role} thinks he starts for you next year"
+COORDINATORS = {"OC": "offensive coordinator", "DC": "defensive coordinator"}
+OFFENSE_GROUPS = ("QB", "RB", "WR", "TE", "OL")
+KICKING_GROUPS = ("K", "P")
+_LIKES: tuple = (None, {})           # (class key, {(pid, looks, viewer): the like}): a board builds hundreds of rows
+
+
+def read_overall(state: dict, pid: str) -> Optional[int]:
+    """His overall now as your staff's read sees it, never the truth: the midpoint of each group's read
+    (recruiting.read_interval) moved onto his current attributes (_shifted, "ratings"), scored at his
+    position (game_scale.overall, the roster's own scale). None before any look."""
+    from teamdata import game_scale
+    rc = state["recruiting"]
+    p, read = rc["prospects"][pid], rc["reads"].get(pid)
+    if not read:
+        return None
+    grades = {}
+    for g in recruiting.GROUPS:
+        lo, hi = recruiting.read_interval(state, pid, g)
+        grades[g] = (lo + hi) / 2
+    return game_scale.overall(_shifted(state, p, grades, "ratings"), p["ea_position"])
+
+
+def staff_likes(state: dict, pid: str, viewer: str) -> Optional[dict]:
+    """Your coordinator's word on him, from the read: {"who": "OC"|"DC", "name", "text"} when his report
+    is complete (FIND_LOOKS looks, the flags' gate) and his read overall (read_overall) would start on
+    your returning roster at his position group, counted as recruiting.ahead_of counts (the season's
+    roster, seniors out): fewer returning players at or above him than the group starts
+    (offseason.STARTERS: one QB, three receivers, five linemen ...), so a kicker or punter is liked when he
+    beats your returning K or P. The OC speaks for the offense, the DC for the defense, one of them, fixed
+    by the seed, for a kicker or punter; `name` is None while the slot is vacant. Never in the portal,
+    never once he has signed elsewhere. Cached per read, like _ranks."""
+    global _LIKES
+    rc = state["recruiting"]
+    p, read = rc["prospects"].get(pid), rc["reads"].get(pid)
+    st = rc["status"].get(pid) or {}
+    if p is None or p.get("portal") or rc.get("portal") or not recruiting.report_complete(read) or (st.get("signed") and st["signed"] != viewer):
+        return None
+    class_key = (state["id"], recruiting._ck(rc), rc.get("seed"))
+    cached = _LIKES
+    if cached[0] != class_key:
+        cached = _LIKES = (class_key, {})
+    key = (pid, read["looks"], tuple(read["g"][g][0] for g in recruiting.GROUPS), viewer)    # the read itself: a rewritten read at the same looks is a new one
+    if key in cached[1]:
+        return cached[1][key]
+    from coach_career import offseason
+    group = recruiting._group_of(p)
+    ovr = read_overall(state, pid)
+    ahead = sum(1 for o in recruiting._returning(viewer, group) if o >= ovr)
+    out = None
+    if ahead < offseason.STARTERS.get(group, 1):
+        who = ("OC" if group in OFFENSE_GROUPS else random.Random(f"likes-{rc['seed']}-{pid}").choice(("OC", "DC")) if group in KICKING_GROUPS else "DC")
+        member = next((m for m in (state.get("career") or {}).get("staff", []) if m.get("role") == who), None)
+        name = member["name"] if member and member.get("name") and member["name"] != who else None
+        out = {"who": who, "name": name, "text": LIKES_TEXT.format(role=COORDINATORS[who])}
+    cached[1][key] = out
     return out
 
 
@@ -209,9 +270,10 @@ _LEAGUE: dict = {}
 
 def reset_caches() -> None:
     """Forget everything worked out from the league's rosters (season.use_league switched it)."""
-    global _RANKS
+    global _RANKS, _LIKES
     _LEAGUE.clear()
     _RANKS = (None, {})
+    _LIKES = (None, {})
     starter_pool.cache_clear()
     _attributes.cache_clear()
     comp_max_distance.cache_clear()
@@ -412,6 +474,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "our_grades": our_grades,
         "looks": looks_out(read),
         "our_comp": our_comp,
+        "likes": staff_likes(state, pid, viewer),
         "can_scout": can_scout(state, viewer, pid),
         "ratings": signed_ratings(state, p) if status["signed"] == viewer else None,     # signing day shows what you got
         "ask": recruiting.ask_view(state, viewer, pid), "cooled": recruiting.cooled(state, viewer, pid),
@@ -443,7 +506,7 @@ def row(state: dict, pid: str, viewer: str) -> dict:
         "school_name": "FCS" if school == "FCS" else (teams[school]["name"] if school else None),
         "on_board": pid in rc["board"], "offered": pid in rc["offers"].get(viewer, []),
         "group": recruiting._group_of(p),
-        "looks": looks_out(read), "scouted": recruiting.report_complete(read),
+        "looks": looks_out(read), "scouted": recruiting.report_complete(read), "likes": staff_likes(state, pid, viewer),
         "trips": ((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("scouted", 0),
         "our_potential": list(recruiting.grade_range(state, pid, "potential")) if read else None,
         "our_grades": {g: list(recruiting.grade_range(state, pid, g)) for g in recruiting.GROUPS} if read else None,
@@ -798,11 +861,12 @@ def _report_groups(state: dict, entries: list[dict], counts: dict, changes: dict
         for e in sorted(kept.get(by, []), key=recruiting.look_notability)[:REPORT_ITEMS]:
             p = rc["prospects"][e["pid"]]
             g["items"].append({"pid": e["pid"], "name": p["name"], "position": p["position"], "stars": p["stars"],
-                               "change": _look_change(e), "flags": list(e["flags"])})
+                               "change": _look_change(e), "flags": list(e["flags"]), "likes": staff_likes(state, e["pid"], state["team"])})
     return list(groups.values())
 
 
 QUEUE_LIMIT, QUEUE_MAX = 120, 400            # the queue's page: the default and the most rows one ask returns
+FLAG_ORDER = ("generational", "gem", "likes", "bust")   # the Flags list: the liked recruits after the gems
 
 
 def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] = None, group: Optional[str] = None,
@@ -811,7 +875,8 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
     0.5), one page of the queue of recruits worth a trip (reports not yet complete: your board's
     one Send from complete first, then the board, then the class by need and rank; filtered by `q`
     on name or home state, `position`, `group`; `queue_total` counts the whole match), this and last
-    week's reports from the look log, and your staff's flags this class."""
+    week's reports from the look log, and your staff's flags this class (gems, bust risks, generational
+    prospects and the recruits a coordinator likes: staff_likes), every row carrying `likes`."""
     rc, me = state["recruiting"], state["team"]
     week = recruiting.look_week(state)
     staff = {m["id"]: m for m in state["career"].get("staff", [])}
@@ -859,17 +924,18 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
                       "looks": looks_out(read), "trips": trips,
                       "potential": list(recruiting.grade_range(state, pid, "potential")) if read else None,
                       "can_send": not short, "why": NOT_ENOUGH_HOURS if short else None,
-                      "state": p["hometown"]["state"]})
+                      "state": p["hometown"]["state"], "likes": staff_likes(state, pid, me)})
     flags = []
     for pid in rc["reads"]:
         p = rc["prospects"].get(pid)
         if p is None:
             continue
-        for flag in recruiting._flags(state, pid):
+        likes = staff_likes(state, pid, me)
+        for flag in recruiting._flags(state, pid) + (["likes"] if likes else []):
             flags.append({"pid": pid, "name": p["name"], "position": p["position"], "stars": p["stars"], "flag": flag,
-                          "looks": looks_out(rc["reads"][pid]),
+                          "looks": looks_out(rc["reads"][pid]), "likes": likes,
                           "standing_word": _standing_word(state, pid, me)})
-    flags.sort(key=lambda f: (("generational", "gem", "bust").index(f["flag"]), rc["prospects"][f["pid"]]["rank"]))
+    flags.sort(key=lambda f: (FLAG_ORDER.index(f["flag"]), rc["prospects"][f["pid"]]["rank"]))
     return {"hours": recruiting.weekly_hours(state, me), "hours_left": hours_left, "scouts": scouts,
             "queue": queue, "queue_total": len(matched),
             "reports": {"this_week": _report_groups(state, this_week, this_count, this_changes, staff),

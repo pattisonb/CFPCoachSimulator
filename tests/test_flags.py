@@ -60,7 +60,7 @@ def check_flicker(st: dict) -> None:
     hold = recruiting.FLAG_HOLD
     tight = lambda mean: {"looks": recruiting.FIND_LOOKS - 1, "by": {"95": recruiting.FIND_LOOKS - 1},
                           "g": {g: [mean, 1000.0] for g in recruiting.GROUPS}}      # a read this sure has no width
-    in_view = lambda pid: {f["flag"] for f in prospects.scouting_view(st)["flags"] if f["pid"] == pid}
+    in_view = lambda pid: {f["flag"] for f in prospects.scouting_view(st)["flags"] if f["pid"] == pid and f["flag"] != "likes"}   # a read this high also wins a coordinator (staff_likes): not this test's kind
 
     # a gem: the look that completes the set gains him; a look that moves the low end a little under the cut keeps him
     two = next(pid for pid, p in rc["prospects"].items() if p["stars"] == 2 and p["rank"] > recruiting.GEM_RANK
@@ -121,6 +121,6 @@ if __name__ == "__main__":
         assert BAND[0] <= r["bust_rate"] <= BAND[1], r
         assert r["precision"] >= PRECISION, r
         assert r["high_star_gems"] == 0, "a gem is a three-star or less"
-        assert all(f["flag"] in ("gem", "bust", "generational") for f in prospects.scouting_view(st)["flags"])
+        assert all(f["flag"] in ("gem", "bust", "generational", "likes") for f in prospects.scouting_view(st)["flags"])
         check_flicker(st)
     print("flags ok")
