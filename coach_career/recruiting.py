@@ -2469,6 +2469,9 @@ def make_staff(state: dict) -> list[dict]:
     order += [a for a in AREAS if a not in order]
     for member, area in zip(staff, order):
         member["area"] = area
+    year = state.get("year", 2026)
+    for member in staff:                   # signed through this season or the next one or two (offseason.py: contracts)
+        member["contract_until"] = year + rng.randint(0, 2)
     return staff
 
 

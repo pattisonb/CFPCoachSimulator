@@ -491,11 +491,12 @@
     return card;
   }
 
-  function candidateCard(c, picked, onClick, key) {
+  function candidateCard(c, picked, onClick, key, year) {
     const stops = (c.history || []).slice(-3).map((h) => `${h.team_name || h.team}${h.year ? ` ${h.year}–${h.to || ""}` : ""}`).join(" · ");
     const b = el("button", { type: "button", class: `go-card off-cand ${picked ? "picked" : ""}`, "aria-pressed": String(picked), "data-key": key }, [
       el("b", { text: `${c.name}${c.age ? `, ${c.age}` : ""}` }),
       el("span", { class: "muted small", text: `Evaluation ${c.evaluation} · Recruiting ${c.recruiting}${c.play_calling ? ` · Play calling ${c.play_calling}` : ""}` }),
+      c.years ? el("span", { class: "small off-cand-years", text: `Wants ${c.years} ${c.years === 1 ? "year" : "years"}${year ? ` (through ${year + c.years - 1})` : ""}` }) : null,
       c.previous_job ? el("span", { class: "small", text: c.previous_job }) : null,
       c.why ? el("span", { class: "muted small off-cand-why", text: c.why }) : null,
       stops ? el("span", { class: "muted small", text: stops }) : null,
@@ -507,25 +508,39 @@
   function renderStaff(s, v, main) {
     const job = renderJob(s, v);
     if (job) main.append(job);
-    const st = v.staff || { leaving: [], candidates: {}, hired: {}, reasons: {}, market: [] };
+    const st = v.staff || { leaving: [], candidates: {}, hired: {}, reasons: {}, market: [], contract: {}, renewed: [], turned_down: {} };
+    const contract = st.contract || {};
+    const renewed = new Map((st.renewed || []).map((r) => [r.id, r]));
     const card = el("section", { class: "go-card off-staff", "data-key": "staff" }, [el("div", { class: "go-kicker", text: "YOUR STAFF" })]);
-    if (!st.leaving.length) card.append(el("p", { "data-key": "all-back", text: "Your whole staff is back. Everyone grew a little." }));
+    if (!st.leaving.length) card.append(el("p", { "data-key": "all-back", text: "Your whole staff is back." }));
     for (const who of st.leaving) {
-      card.append(el("p", { "data-key": `leaving-${who.id}` }, [el("b", { text: `${who.role} ${who.name}` }), ` ${(st.reasons || {})[who.id] || "is moving on"}.`]));
+      const c = contract[who.id] || {};
+      card.append(el("p", { "data-key": `leaving-${who.id}` }, [el("b", { text: `${who.role} ${who.name}` }), ` ${(st.reasons || {})[who.id] || "is moving on"}.`,
+        c.expiring ? el("span", { class: "go-tag warn off-contract", text: "Contract up: he is shopping" }) : null]));
       const row = el("div", { class: "off-cands", "data-key": `cands-${who.id}` });
       (st.candidates[who.id] || []).forEach((c, i) => {
         row.append(candidateCard(c, st.hired[who.id] === i, (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/hire`, H.postJSON({ staff_id: who.id, index: i })),
-          `Hired ${c.name} as ${who.role}`), `${who.id}-${i}`));
+          `Hired ${c.name} as ${who.role}`), `${who.id}-${i}`, v.year));
       });
       card.append(row);
     }
     const leaving = new Set(st.leaving.map((w) => w.id));
     const staying = (v.your_staff || []).filter((x) => !leaving.has(x.id));
+    // a coordinator another program wanted as its head coach, who turned it down: he is under contract
+    for (const x of staying) {
+      if (!(x.id in (st.turned_down || {}))) continue;
+      const school = st.turned_down[x.id];
+      card.append(el("p", { class: "muted", "data-key": `declined-${x.id}` }, [el("b", { text: `${x.role} ${x.name}` }),
+        ` turned down ${school ? school : "a bigger job"}: under contract${x.contract_until ? ` through ${x.contract_until}` : ""}.`]));
+    }
     if (staying.length && !v.fired) {
       card.append(el("div", { class: "go-kicker muted off-sub", "data-key": "staying", text: "STAYING · LET ONE GO AND HIRE FROM THE MARKET" }));
       const row = el("div", { class: "off-letgo", "data-key": "letgo" });
       for (const x of staying) {
-        const b = el("button", { type: "button", class: "go-act", "data-key": x.id }, [`${x.role} ${x.name}`, el("span", { text: "Let him go" })]);
+        const r = renewed.get(x.id);
+        const term = r ? el("span", { class: "go-tag good off-contract", text: `Re-signed through ${r.through}` })
+          : x.contract_until ? el("span", { class: "go-tag muted off-contract", text: `Signed through ${x.contract_until}` }) : null;
+        const b = el("button", { type: "button", class: "go-act", "data-key": x.id }, [el("span", { class: "off-staff-name" }, [`${x.role} ${x.name} `, term]), el("span", { text: "Let him go" })]);
         ui.on(b, "click", (ev) => {
           if (!window.confirm(`Let ${x.role} ${x.name} go? He joins the coaching market and you hire his replacement now.`)) return;
           act(ev, s, () => H.api(`/api/season/${s.id}/offseason/open_role`, H.postJSON({ staff_id: x.id })), `${x.role} ${x.name} is out · hire his replacement`);
@@ -533,6 +548,17 @@
         row.append(b);
       }
       card.append(row);
+    }
+    // your staff developed like the players did: one row per coach with each rating that moved and why
+    const dev = st.developed || [];
+    if (dev.length) {
+      card.append(el("div", { class: "go-kicker muted off-sub", "data-key": "developed", text: "YOUR STAFF DEVELOPED" }));
+      card.append(el("ul", { class: "off-list off-dev", "data-key": "developed-list" }, dev.map((d) => el("li", { "data-key": `dev-${d.id}` }, [
+        el("b", { text: `${d.role} ${d.name}` }), d.age ? el("span", { class: "muted small", text: ` · ${d.age}` }) : null, " ",
+        ...(d.changes.length ? d.changes.map((c) => { const n = c.to - c.from;
+          return el("span", { class: `go-tag ${n > 0 ? "good" : "bad"} off-dev-change`, text: `${c.rating} ${c.from} → ${c.to} (${n > 0 ? "+" : ""}${n})` }); })
+          : [el("span", { class: "go-tag muted", text: "no change" })]),
+        ...(d.why || []).map((w) => el("span", { class: `go-tag ${/Bottom|outside|^Age$/.test(w) ? "warn" : ""}`, text: w }))]))));
     }
     const coaches = el("section", { class: "go-card", "data-key": "carousel" }, [el("div", { class: "go-kicker", text: "COACHING CAROUSEL" }),
       v.coaching_changes.length ? el("ul", { class: "off-list" }, v.coaching_changes.map((c) => el("li", {}, [window.CFP.teamPill(c.team),

@@ -894,7 +894,7 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
         codes = recruiting.AREAS.get(m.get("area"), [])
         mine = this_changes.get(m["id"]) or {}
         scouts.append({"id": m["id"], "name": m["name"], "role": ROLE_NAMES.get(m["role"], m["role"]),
-                       "evaluation_word": recruiting.word(m["evaluation"]), "area": m.get("area"),
+                       "evaluation_word": recruiting.word(m["evaluation"]), "area": m.get("area"), "contract_until": m.get("contract_until"),
                        "looking_at": sum(1 for pid in live if rc["prospects"][pid]["hometown"]["state"] in codes
                                          and recruiting.area_open(rc["reads"].get(pid))),
                        "yield": {"looks": this_count.get(m["id"], 0), "narrowed": mine.get("changed", 0),

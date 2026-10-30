@@ -95,7 +95,29 @@ ERA_SD = 0.30                                      # a program's era: a slow-mov
 ERA_PERSIST = 0.75                                 # ... carried year to year at this rate (stationary spread ERA_SD); programs' paths part and cross
 PLAYER_YEAR_SD = 0.35                              # a player's year: booms and busts, a lognormal factor on his growth (mean-preserving)
 COORD_SHARE = 0.4                                  # the coordinator's part of a player's coach factor
-RECRUITER_LEAVE = 0.12
+RECRUITER_LEAVE = 0.12                             # a recruiter's base chance of moving on in a year
+# ----- staff contracts *tune* (money is not in yet: contract["ask"] is None; asked raise on renewal: not yet) -----
+UNDER_CONTRACT = 0.35                              # signed for the coming season: his leaving odds, times this (a coordinator the
+                                                   # carousel wanted goes through this often; the rest turn the job down)
+SHOPPING = 2.0                                     # his contract up: a recruiter's leaving odds, times this ...
+SHOP_CAP = 0.9                                     # ... capped here
+COORD_SHOP = 0.25                                  # a coordinator whose contract is up and whom no program wanted still leaves this often
+TERM = {"coordinator": (2, 4), "recruiter": (1, 3)}   # the years a new contract runs (candidates ask the same ranges)
+# ----- coach development *tune*: every coach in the league (head coaches, coordinators, your recruiters, the market) -----
+COACH_RATE = 0.18                                  # the share of the gap to his hidden level a rating closes in a year
+COACH_POT = (-4.0, 8.0)                            # his level against his rating when first seen: N(mean, sd), capped at COACH_CAP (a ceiling-only
+                                                   # draw, max(0, N(10, 6)), inflated the league's head coaches 9-14 points in ten seasons)
+COACH_POT_MIN = None                               # the draw's floor (None: a coach rated over his level settles back down to it)
+COACH_AGE = ((40, 1.3), (55, 1.0), (63, 0.6))      # the pace under 40, 40-54 and 55-62; from 63 he gains nothing ...
+COACH_DECLINE = 0.5                                # ... and each rating drifts a point down a year this often
+COACH_PERF = {2: 1.3, 0: 1.0, -1: 0.8, -2: 0.7}    # his year's verdict on his pace, on the _staff_marks scale (+2 top third, -2 bottom third, -1 a weak class)
+COACH_IDLE = 0.5                                   # a coach for hire (the market) develops at this pace
+COACH_FLOOR, COACH_CAP = 35, 99
+COACH_AGE_UNKNOWN = (32, 58)                       # a recruiter's age when first seen (the league's coaches: carousel._age)
+RATING_WORDS = {"player_development": "Evaluation", "recruiting": "Recruiting", "play_calling": "Play calling", "offense": "Offense",
+                "defense": "Defense", "discipline": "Discipline", "game_management": "Game management", "motivation": "Motivation",
+                "qb_development": "QB development", "ol_development": "OL development", "pass_rush_development": "Pass rush development",
+                "secondary_development": "Secondary development", "evaluation": "Evaluation"}
 
 
 def seed_key(state: dict):
@@ -1204,6 +1226,195 @@ def develop(p: dict, attrs: list[str], factor: float, rng: random.Random) -> int
     return p["o"] - before
 
 
+def age_factor(age: int) -> float:
+    """A coach's pace by age (COACH_AGE); 0 from 63: he no longer gains."""
+    for upto, f in COACH_AGE:
+        if age < upto:
+            return f
+    return 0.0
+
+
+def grow_coach(ratings: dict, pot: dict, age: int, perf, rng: random.Random) -> dict[str, int]:
+    """One offseason for a coach's ratings, in place: each closes COACH_RATE of its gap to his hidden
+    level (up, or down when he is rated over it) at his age's pace times his year's (`perf`: one
+    factor, or one per rating; a good year speeds a climb and slows a fall), with a point of noise;
+    from 63 he gains nothing and each rating drifts down a point COACH_DECLINE of the time. His
+    overall follows. Floors COACH_FLOOR, caps COACH_CAP; the noise never carries him past his level.
+    Returns {rating: change}."""
+    f = age_factor(age)
+    out = {}
+    for k in sorted(ratings):
+        if k == "overall":
+            continue
+        v = ratings[k]
+        gap = pot.get(k, v) - v
+        if f == 0:
+            d = -1 if rng.random() < COACH_DECLINE else 0
+        else:                                    # toward his level, at his age's pace times his year's: a good year speeds the climb
+            pf = perf.get(k, 1.0) if isinstance(perf, dict) else perf    # and slows the fall of a coach rated over his level, a bad year the reverse
+            x = COACH_RATE * gap * f * (pf if gap > 0 else 2.0 - pf)
+            whole = int(x)
+            d = whole + (1 if x > 0 else -1 if x < 0 else 0) * (1 if rng.random() < abs(x - whole) else 0)
+            d += rng.choice((-1, 0, 0, 1)) if v >= COACH_FLOOR else 0   # under the floor the noise would only ever lift him
+        new = int(max(min(COACH_FLOOR, v), min(COACH_CAP, v + d)))     # a rating already under the floor is not lifted, only held
+        if d > 0:
+            new = min(new, max(v, pot.get(k, COACH_CAP)))              # the noise never carries him past his level ...
+        elif d < 0 and f > 0:
+            new = max(new, min(v, pot.get(k, COACH_FLOOR)))            # ... nor under it
+        if new != v:
+            out[k] = new - v
+            ratings[k] = new
+    if "overall" in ratings and out:
+        rest = [v for k, v in ratings.items() if k != "overall"]
+        ratings["overall"] = int(round(sum(rest) / len(rest)))
+    return out
+
+
+def _pot(c: dict, ratings: dict, rng: random.Random) -> dict:
+    """His hidden levels, drawn once per rating when first seen (COACH_POT against the rating; never under a
+    rating already below the floor) and kept on him."""
+    pot = c.setdefault("pot", {})
+    for k in sorted(ratings):
+        if k != "overall" and k not in pot:
+            d = rng.gauss(*COACH_POT)
+            pot[k] = int(max(min(COACH_FLOOR, ratings[k]), min(COACH_CAP, ratings[k] + (d if COACH_POT_MIN is None else max(COACH_POT_MIN, d)))))
+    return pot
+
+
+def _league_marks(state: dict) -> dict[str, dict[str, int]]:
+    """Each program's year on the _staff_marks scale: offense (O) and defense (D) by points a game against
+    the FBS (top third +2, bottom third -2), the win share third (W), the class rank (class: top 25 +2,
+    outside the top 70 -1)."""
+    from coach_career import prospects, recruiting
+    from sim import season
+    ss = state.get("season_stats") or {}
+    out: dict[str, dict[str, int]] = {slug: {} for slug in state["league"]["teams"]}
+
+    def thirds(ranked: list[str], key: str) -> None:
+        n = len(ranked)
+        for i, slug in enumerate(ranked):
+            if slug in out:
+                out[slug][key] = STAFF_MARK if i < n / 3 else -STAFF_MARK if i >= 2 * n / 3 else 0
+
+    pts, allowed = [], []
+    for slug, t in ss.items():
+        if slug == "__meta__" or not isinstance(t, dict) or not t.get("games"):
+            continue
+        pts.append((t["points"] / t["games"], slug))
+        allowed.append((t["opp_points"] / t["games"], slug))
+    thirds([s for _, s in sorted(pts, reverse=True)], "O")
+    thirds([s for _, s in sorted(allowed)], "D")
+    recs = season._records(state, include_playoff=True)
+    thirds([s for _, s in sorted(((r["wins"] / max(1, r["wins"] + r["losses"]), s) for s, r in recs.items() if s in out), reverse=True)], "W")
+    try:
+        rc = prospects.class_rc(state)
+        by_school: dict[str, list] = {}
+        for pid, st_ in rc["status"].items():
+            school = st_["signed"] or st_["committed"]
+            if school and school != "FCS":
+                by_school.setdefault(school, []).append(rc["prospects"][pid]["composite"])
+        points = {s: sum(c * prospects.CLASS_DECAY ** i for i, c in enumerate(sorted(v, reverse=True))) for s, v in by_school.items()}
+        fbs = list(recruiting.fbs_schools(state))
+        for slug in out:
+            cr = 1 + sum(1 for s in fbs if points.get(s, 0.0) > points.get(slug, 0.0))
+            out[slug]["class"] = STAFF_MARK if cr <= 25 else -1 if cr > 70 else 0
+    except Exception:  # noqa: BLE001
+        pass
+    return out
+
+
+def _why(age: int, unit: str, m: dict, gained: bool) -> list[str]:
+    words = {"O": "offense", "D": "defense", "W": "record"}
+    out = []
+    if age >= COACH_AGE[-1][0]:
+        out.append("Age")
+    elif age < COACH_AGE[0][0] and gained:
+        out.append("Young and improving")
+    if unit in words and m.get(unit) == STAFF_MARK:
+        out.append(f"Top-third {words[unit]}")
+    elif unit in words and m.get(unit) == -STAFF_MARK:
+        out.append(f"Bottom-third {words[unit]}")
+    if m.get("class") == STAFF_MARK:
+        out.append("Top-25 class")
+    elif m.get("class", 0) < 0:
+        out.append("Class outside the top 70")
+    return out
+
+
+def _develop_coaches(state: dict) -> dict:
+    """Every coach in the league develops like a player, once a year at the Development stage: head
+    coaches, coordinators, your recruiters and the coaches for hire (grow_coach toward his hidden
+    level; its own stream, so nothing in the season moves). A coordinator's ratings follow his unit's year, a head coach's his
+    record, everyone's recruiting the class (your staff by _staff_marks); the market at COACH_IDLE.
+    Your OC and DC on career.staff mirror the team's coaches. Returns {"mine": rows for the Staff
+    step, "moved": ratings changed around the league}."""
+    from coach_career import carousel
+    lgd = state["league"]
+    rng = _rng(state, "coaches")
+    year = state["offseason"]["year"]
+    me = state["team"]
+    marks = _league_marks(state)
+    mine = _staff_marks(state)
+    marks[me] = {**marks.get(me, {}), "O": mine.get("OC", 0), "D": mine.get("DC", 0), "class": mine.get("class", 0)}
+    units = {"head_coach": "W", "offensive_coordinator": "O", "defensive_coordinator": "D"}
+    short = {"head_coach": "HC", "offensive_coordinator": "OC", "defensive_coordinator": "DC"}
+    rows, moved = [], 0
+
+    def row(id_: str, name: str, role: str, age: int, unit: str, m: dict, changes: dict, before: dict) -> dict:
+        return {"id": id_, "name": name, "role": role, "age": age, "why": _why(age, unit, m, any(d > 0 for d in changes.values())),
+                "changes": [{"rating": RATING_WORDS.get(k, k), "from": before[k], "to": before[k] + d} for k, d in changes.items()]}
+
+    for slug in sorted(lgd["teams"]):
+        t = lgd["teams"][slug]
+        m = marks.get(slug, {})
+        for role, unit in units.items():
+            c = t["coaches"].get(role)
+            if not (c and c.get("name") and c.get("ratings")):
+                continue
+            age = carousel._age(c, year)
+            before = dict(c["ratings"])
+            perf = {k: COACH_PERF.get(m.get("class" if k == "recruiting" else unit, 0), 1.0) for k in c["ratings"]}
+            changes = grow_coach(c["ratings"], _pot(c, c["ratings"], rng), age, perf, rng)
+            moved += len(changes)
+            if slug == me:
+                you = (state.get("career") or {}).get("coach")
+                name = "You" if role == "head_coach" and you else c["name"]
+                rows.append(row(short[role].lower(), name, short[role], age, unit, m, changes, before))
+    staff_rows = {r["role"]: r for r in rows if r["role"] in ("OC", "DC")}
+    for s in (state.get("career") or {}).get("staff") or []:
+        key = STAFF_ROLES.get(s["role"])
+        c = lgd["teams"][me]["coaches"].get(key) if key else None
+        if c and c.get("name") == s["name"] and c.get("ratings"):      # your coordinator: the team's coach, mirrored
+            s["evaluation"], s["recruiting"] = int(c["ratings"].get("player_development", s["evaluation"])), int(c["ratings"].get("recruiting", s["recruiting"]))
+            if s["role"] in staff_rows:
+                staff_rows[s["role"]]["id"] = s["id"]
+            continue
+        if not s.get("age_at"):
+            s["age_at"] = [year, rng.randint(*COACH_AGE_UNKNOWN)]
+        age = carousel._age(s, year)
+        ratings = {"evaluation": s["evaluation"], "recruiting": s["recruiting"]}
+        before = dict(ratings)
+        perf = COACH_PERF.get(marks[me].get("class", 0), 1.0) if s["role"] == "Recruiter" else \
+            {"evaluation": COACH_PERF.get(marks[me].get(units.get(key, "W"), 0), 1.0), "recruiting": COACH_PERF.get(marks[me].get("class", 0), 1.0)}
+        changes = grow_coach(ratings, _pot(s, ratings, rng), age, perf, rng)
+        s["evaluation"], s["recruiting"] = ratings["evaluation"], ratings["recruiting"]
+        moved += len(changes)
+        rows.append(row(s["id"], s["name"], s["role"], age, units.get(key, "class"), marks[me], changes, before))
+    for e in (lgd.get("market") or {}).get("coaches", []):               # the coaches for hire, slowly
+        if not e.get("ratings"):
+            continue
+        age = e["age"] + (year - e["year"])
+        changes = grow_coach(e["ratings"], _pot(e, e["ratings"], rng), age, COACH_IDLE, rng)
+        moved += len(changes)
+        for r in (e.get("ratings_by_role") or {}).values():
+            for k, d in changes.items():
+                if k in r:
+                    r[k] = int(max(COACH_FLOOR, min(COACH_CAP, r[k] + d)))
+    order = {"HC": 0, "OC": 1, "DC": 2}
+    rows.sort(key=lambda r: (order.get(r["role"], 3), r["id"]))
+    return {"mine": rows, "moved": moved}
+
+
 def _develop_all(state: dict) -> dict:
     """Everyone back from last season develops; transfers too; this year's signees arrive as they are."""
     lgd = state["league"]
@@ -1363,29 +1574,58 @@ STAFF_ROLES = {"OC": "offensive_coordinator", "DC": "defensive_coordinator"}
 STAFF_CANDIDATES = 5             # coaches offered for each opening on your staff
 
 
-def _staff_changes(state: dict, poached: list[str], why: Optional[dict] = None) -> dict:
+def term_of(role: str) -> tuple[int, int]:
+    """The contract lengths a coach in `role` (OC, DC or Recruiter) signs or asks for."""
+    return TERM["coordinator"] if role in STAFF_ROLES else TERM["recruiter"]
+
+
+def expiring(s: dict, year: int) -> bool:
+    """His contract is up before `year` (the coming season). A member without one (an old save)
+    is treated as expiring: he shops once and signs a term."""
+    until = s.get("contract_until")
+    return until is None or until < year
+
+
+def _staff_changes(state: dict, poached: list[str], why: Optional[dict] = None, declined: Optional[dict] = None) -> dict:
     """Your staff: a coordinator another program hired as its head coach or who left for a bigger
     job (the carousel), a recruiter who moves on now and then; each opening gets candidates
     (coordinators from the coaching market, recruiters from position coaches around the country).
-    `why` says, per coordinator role, how he came to leave."""
+    Contracts: signed for the coming season a recruiter leaves at UNDER_CONTRACT of his odds (and
+    the carousel already let a coordinator turn a job down, `declined`: role -> the school, or
+    None for a bigger job in general); with his contract up he shops: a recruiter leaves at
+    SHOPPING times his odds, a coordinator the carousel wanted for sure, one it did not want at
+    COORD_SHOP. Whoever stays at expiry re-signs a term (`renewed`). `why` says, per coordinator
+    role, how he came to leave. The new draws come after today's, in the same stream (your staff's
+    ratings now move in `_develop_coaches` at the Development stage, not here)."""
     rng = _rng(state, "staff")
     staff = state["career"]["staff"]
-    leaving, candidates, reasons = [], {}, {}
+    year = state["offseason"]["year"]
+    leaving, candidates, reasons, renewed, turned_down = [], {}, {}, [], {}
     taken = {s["name"] for s in staff}
     for s in staff:
-        gone = STAFF_ROLES[s["role"]] in poached if s["role"] in STAFF_ROLES else rng.random() < RECRUITER_LEAVE
+        if s["role"] in STAFF_ROLES:
+            gone = STAFF_ROLES[s["role"]] in poached
+        else:
+            odds = RECRUITER_LEAVE * (SHOPPING if expiring(s, year) else UNDER_CONTRACT)
+            gone = rng.random() < min(SHOP_CAP, odds)
         if gone:
             leaving.append(s["id"])
             candidates[s["id"]] = _candidates(state, s, rng, taken)
             if s["role"] in STAFF_ROLES and (why or {}).get(STAFF_ROLES[s["role"]]):
                 reasons[s["id"]] = why[STAFF_ROLES[s["role"]]]
-    marks = _staff_marks(state)
-    for s in staff:                       # the rest move with their unit's year and the class they signed
-        if s["id"] not in leaving:
-            m = marks.get(s["role"], 0)
-            s["evaluation"] = int(max(35, min(99, s["evaluation"] + m + rng.choice((-1, 0, 0, 1)))))
-            s["recruiting"] = int(max(35, min(99, s["recruiting"] + marks.get("class", 0) + rng.choice((-1, 0, 0, 1)))))
-    return {"leaving": leaving, "candidates": candidates, "hired": {}, "reasons": reasons}
+        elif s["role"] in STAFF_ROLES and STAFF_ROLES[s["role"]] in (declined or {}):
+            turned_down[s["id"]] = (declined or {})[STAFF_ROLES[s["role"]]]
+    for s in staff:                       # a coordinator whose contract is up and whom nobody wanted still shops
+        if s["id"] not in leaving and s["role"] in STAFF_ROLES and expiring(s, year) and rng.random() < COORD_SHOP:
+            leaving.append(s["id"])
+            candidates[s["id"]] = _candidates(state, s, rng, taken)
+            reasons[s["id"]] = "took a coordinator job elsewhere"
+    for s in staff:                       # the stayers whose contracts are up re-sign
+        if s["id"] not in leaving and expiring(s, year):
+            s["contract_until"] = year + rng.randint(*term_of(s["role"])) - 1
+            s["ask"] = None               # asked raise on renewal: not yet (the money step)
+            renewed.append({"id": s["id"], "name": s["name"], "role": s["role"], "through": s["contract_until"]})
+    return {"leaving": leaving, "candidates": candidates, "hired": {}, "reasons": reasons, "renewed": renewed, "turned_down": turned_down}
 
 
 STAFF_MARK = 2                   # a top-third offense or defense lifts its coordinator this much a year; a bottom third costs it
@@ -1438,6 +1678,8 @@ def _candidates(state: dict, s: dict, rng: random.Random, taken: set) -> list[di
                     "age": e["age"] + (year - e["year"]), "history": [dict(h, team_name=carousel._name(h["team"])) for h in e["history"]]})
     while len(out) < STAFF_CANDIDATES:
         out.append(_candidate(rng, s, taken))
+    for c in out:                                  # the term he wants (drawn after the rest, so the market picks stand)
+        c.setdefault("years", rng.randint(*term_of(s["role"])))
     return out
 
 
@@ -1448,7 +1690,7 @@ def _candidate(rng: random.Random, s: dict, taken: set) -> dict:
                        "High school head coach", "Position coach at a Power 4 program", "Graduate assistant turned recruiter"))
     return {"name": name, "role": s["role"], "evaluation": int(max(40, min(92, rng.gauss(64, 10)))),
             "recruiting": int(max(40, min(92, rng.gauss(64, 10)))), "why": "Looking for a step up", "previous_job": prev,
-            "from_market": False}
+            "from_market": False, "years": rng.randint(*term_of(s["role"]))}
 
 
 def open_role(state: dict, staff_id: str) -> dict:
@@ -1504,8 +1746,10 @@ def _apply_staff(state: dict) -> list[dict]:
         if i is None:
             i = max(range(len(cands)), key=lambda j: cands[j]["evaluation"] + cands[j]["recruiting"])
         c = cands[i]
-        out.append({"role": s["role"], "old": s["name"], "new": c["name"], "previous_job": c.get("previous_job")})
-        s.update(name=c["name"], evaluation=c["evaluation"], recruiting=c["recruiting"])
+        out.append({"role": s["role"], "old": s["name"], "new": c["name"], "previous_job": c.get("previous_job"),
+                    "through": year + c.get("years", 1) - 1})
+        s.update(name=c["name"], evaluation=c["evaluation"], recruiting=c["recruiting"], contract_until=year + c.get("years", 1) - 1, ask=None)
+        s.pop("pot", None)                       # his own ceiling is drawn when he is first seen (coach development)
         key = STAFF_ROLES.get(s["role"])
         if key and c.get("market_id"):
             try:
@@ -1587,6 +1831,7 @@ def advance(state: dict) -> dict:
         else:
             _close_portal(state)
             off["report"] = {"development": _develop_all(state), **_fill_rosters(state)}
+            off["report"]["coaches"] = _develop_coaches(state)
             off["stage"] = "development"
     elif stage == "portal_1":
         resolve_round(state)
@@ -1596,6 +1841,7 @@ def advance(state: dict) -> dict:
         resolve_round(state)
         _close_portal_rounds(state)
         off["report"] = {"development": _develop_all(state), **_fill_rosters(state)}
+        off["report"]["coaches"] = _develop_coaches(state)
         off["stage"] = "development"
     elif stage == "development":
         from coach_career import carousel
@@ -1604,7 +1850,7 @@ def advance(state: dict) -> dict:
         off["coaching_changes"] = car["changes"]
         off["staff"] = _staff_changes(state, car["poached"] + [STAFF_ROLES[x["role"]] for x in state["career"]["staff"]
                                                               if x["id"] in (off.get("staff_open") or {}) and x["role"] in STAFF_ROLES],
-                                      car.get("poached_why"))
+                                      car.get("poached_why"), car.get("declined"))
         off["stage"] = "staff"
     elif stage == "staff":
         off["staff"]["changes"] = _apply_staff(state)
@@ -1694,7 +1940,9 @@ def next_season(state: dict) -> dict:
             c = coaches.get(key) if key else None
             if c:
                 r = c.get("ratings") or {}
-                s.update(name=c.get("name") or s["name"], evaluation=int(r.get("player_development", 60)), recruiting=int(r.get("recruiting", 60)))
+                s.update(name=c.get("name") or s["name"], evaluation=int(r.get("player_development", 60)), recruiting=int(r.get("recruiting", 60)),
+                         contract_until=year + random.Random(f"contract-{state['id']}-{year}-{s['id']}").randint(*term_of(s["role"])) - 1)
+                s.pop("pot", None)
         history[-1]["moved_to"] = team
         car.setdefault("schools", []).append({"team": team, "from": year})
     new.pop("recruiting_last", None)
@@ -1890,7 +2138,8 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
         "staff": None,
         "review": {k: v for k, v in (off.get("review") or {}).items() if k != "verdict"} or None,
         "fired": bool(off.get("fired")),
-        "your_staff": [{"id": x["id"], "role": x["role"], "name": x["name"]} for x in (state.get("career") or {}).get("staff", [])],
+        "your_staff": [{"id": x["id"], "role": x["role"], "name": x["name"], "contract_until": x.get("contract_until")}
+                       for x in (state.get("career") or {}).get("staff", [])],
         "coaching_changes": [c for c in off.get("coaching_changes", []) if c["role"] == "head_coach"][:60],
         "history": (state.get("career") or {}).get("history", []),
     }
@@ -1908,7 +2157,14 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
         opened = off.get("staff_open") or {}
         reasons = {i: opened.get(i) or staff.get("reasons", {}).get(i) or ("is moving on" if by_id[i]["role"] == "Recruiter" else "was hired away as a head coach")
                    for i in staff["leaving"] if i in by_id}
+        year = off["year"]
         out["staff"] = {"leaving": [by_id[i] for i in staff["leaving"] if i in by_id], "candidates": staff["candidates"],
                         "hired": staff["hired"], "changes": staff.get("changes", []), "reasons": reasons,
+                        # contracts: each member's through year and whether it ran out before the coming season (a leaver at
+                        # expiry shopped; a stayer at expiry is in `renewed` with his new term); the coordinators who turned a job down
+                        "contract": {i: {"until": s.get("contract_until"), "expiring": expiring(s, year)} for i, s in by_id.items()},
+                        "expiring": [i for i, s in by_id.items() if expiring(s, year)],
+                        "renewed": staff.get("renewed", []), "turned_down": staff.get("turned_down", {}),
+                        "developed": ((off.get("report") or {}).get("coaches") or {}).get("mine", []),
                         "market": carousel.market_rows(state)[:40] if off["stage"] == "staff" else []}
     return out

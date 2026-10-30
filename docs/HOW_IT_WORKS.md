@@ -1486,6 +1486,44 @@ moves with their unit's year (a top-third offense or defense by points +2, a bot
 and every recruiter's recruiting with the class you signed (top 25 +2, outside the top 70 −1),
 plus a point of noise.
 
+**Staff contracts** (`contract_until` on each member of `career.staff`; `offseason.py` *tune*
+constants). Your coordinators and recruiters are signed through a year: at the start 1-3 seasons,
+a hire for the term the candidate asks (a coordinator wants 2-4 years, a recruiter 1-3; his card
+says "Wants 3 years (through 2029)"). Signed for the coming season a recruiter leaves at 0.35 of
+his odds (4% a year instead of 12%), and a coordinator another program wants as its head coach
+or who would look for a bigger job goes through 35% of the time; the rest turn the job down
+("turned down Akron: under contract through 2028" on the Staff step) and the program hires its
+next choice (`carousel.contract_holds`, one seeded draw a year). With his contract up he shops:
+a recruiter leaves at twice his odds (24%, capped at 90%), a coordinator the carousel wanted
+leaves for sure and one it did not want still takes a coordinator job elsewhere 25% of the time.
+Whoever stays at expiry re-signs a term from the same ranges ("Re-signed through 2030" on the
+Staff step, `renewed` in the view); the Scouting tab's scout rows read "Recruiter · through 2028".
+A save from before contracts treats everyone as expiring once. Pay and the NIL cost of a
+higher-level coordinator come later (`ask` on the member is the hook, None for now).
+
+**Coaches develop like players** (`offseason._develop_coaches`, once a year at the Development
+stage, its own random stream; *tune* constants `COACH_*`). Every coach in the league, head
+coaches, coordinators, your recruiters and the coaches for hire, carries a hidden level per
+rating (`pot`, drawn when he is first seen: the rating plus N(−4, 8), capped at 99; most coaches
+are rated a little over their level and settle back, the rest have room) and each rating closes
+18% of its gap a year, up or down, times an age curve (under 40 ×1.3, 40-54 ×1.0, 55-62 ×0.6;
+from 63 he gains nothing and each rating drifts a point down half the years), times his year (a
+top-third offense or defense for a coordinator's ratings, a top-third record for a head coach's,
+a top-25 class for everyone's recruiting ×1.3 on a climb and ×0.7 on a fall; a bottom third the
+reverse; a class outside the top 70 ×0.8; the market ×0.5), plus a point of noise that never
+carries him past his level; floors 35 (a rating already under it is held, not lifted), caps 99;
+his overall follows. Ages: the real birth years where known, else `carousel._age`'s draw, a
+recruiter's 32-58. The Staff step's "Your staff developed" lists you (the head coach's ratings),
+your coordinators and recruiters with each rating that moved ("Evaluation 61 → 64 (+3)") and why
+(Young and improving, Top-third offense, Top-25 class, Age); the rest of the league develops
+silently and the Programs and coach pages read the live ratings. Over ten quick seasons (the
+`tools/check_carousel.py` loop, seeds 1 and 2) the league's mean head-coach ratings end within 4
+of where they ended without the pass (on average +0.7 defense, +3.0 discipline, +2.7 game
+management, +2.2 motivation, +1.9 offense, −1.4 player development, +0.3 recruiting) and their
+spreads within a quarter (player development and recruiting −24%, the rest −3% to −10%): a
+ceiling-only draw, max(0, N(10, 6)), inflated them 9-14 points, so the level can sit under the
+rating.
+
 **Many seasons** (`tools/long_run.py`, every step on Auto). Six 20-season careers on 85-man rosters
 (120 seasons) held the league's mean team rating at 59.0-60.0 every season (2026: 59.4) with
 stats 6.3-7.8% off real (the 2026 rosters: 5.6%) and 26 points a game. Then depth charts favoring

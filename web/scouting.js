@@ -148,7 +148,7 @@
       avatar(`staff-${m.id}-${m.name}`, "sm"),
       el("div", { class: "sc-scout-main" }, [
         el("div", { class: "sc-scout-line" }, [el("b", { class: "sc-scout-name", text: m.name }),
-          el("span", { class: "muted small sc-role", text: ROLE_SHORT[role] || role, title: role }), R().wordTag(m.evaluation_word)]),
+          el("span", { class: "muted small sc-role", text: `${ROLE_SHORT[role] || role}${m.contract_until ? ` · through ${m.contract_until}` : ""}`, title: role }), R().wordTag(m.evaluation_word)]),
         sel,
         el("div", { class: "sc-scout-yield", title: m.area ? `${looksText(y.looks)} this week in ${m.area} (half a look a prospect): ${y.narrowed} narrowed a read` : "No area: assign one" }, [
           el("div", { class: "sc-bar", role: "progressbar", "aria-label": "Narrowed this week", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(pct) },
