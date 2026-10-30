@@ -93,8 +93,28 @@ LOWBALL = 0.5                              # an offer under this share of his as
 LOWBALL_MIN = 20                           # ... as is a 0-NIL offer when he asks for at least this
 COOL_WEEKS = 3                             # a lowball cools him on you for this long: contacts count half, no visit
 COOLED_CONTACT = 0.5
+ANSWER_STRAIGHT = 1.0                      # his question about a named player (scenes.question): a straight answer's points ...
+ANSWER_PROMISE = 3.0                       # ... a promise he can believe (he would start; he is the better recruit) ...
+ANSWER_HOLLOW = 2.0                        # ... and what a hollow one costs (he cools on you a week too) *tune*
+PROMISE_MARGIN = 5                         # a roster promise holds when he is within this of the player ahead, or that player is in his last year *tune: tools/check_recruiting.py*
+LAST_YEAR = {"JR", "JRRS"}                 # this season's class of a player in his last year next season (the portal's rosters already read next season: LEAVING)
+PROMISE_RIVAL = 20                         # firmness lost when the other recruit you promised him over commits to you too
 ASK_MORE = (1.5, 1.25)                     # a rival's NIL this much over yours, with you in his top group: his ask from you rises this much
 TOP_GROUP = 8                              # the schools he is seriously considering: his top this many by interest
+# pestering: contacts past his patience from a school he is not considering cost it *tune*
+PESTER_FREE = 3                            # contacts (message, call, in-home visit; a scene's pitch is the contact it finishes) a school gets
+#                                            before more count as pestering while he is not considering it (an offer in hand does not
+#                                            exempt it; an official visit or his commitment does)
+PESTER_TOP = 3                             # he is not considering a school outside his top this many (by interest plus pending, among the
+PESTER_SHARE = 0.6                         # schools that worked or offered him) or under this share of his leader's; his leader never
+PESTER_COST = 1.5                          # a pestering contact costs this times the action's base points (no pitch bonus) ...
+PESTER_RAMP = 0.5                          # ... and each pester costs this much more than the one before
+PESTER_ASK = 1.1                           # his ask from the school rises this much per pester (ask_mult, capped at ASK_MULT_MAX overall)
+ASK_MULT_MAX = 2.0
+# Only your own hand pesters. AI schools (_auto_week acting for them) are exempt, and Auto-recruit acting
+# for your school never does it: it skips a contact that would pester and spends the hours elsewhere (and
+# _act's `auto` flag keeps the penalty off its contacts regardless). The AI's targeting does not spam, and
+# tests/test_sim_golden.py stays byte-identical.
 AI_OVER_ASK = 1.1                          # an AI school offers up to this times his ask from it
 # generational prospects: a public tag on a few top four- and five-stars, drawn once per class *tune*
 GENERATIONAL_FROM = 95                     # true projected overall at least this
@@ -103,6 +123,7 @@ GENERATIONAL_MAX = 4                       # at most this many a class (some yea
 GENERATIONAL_ASK = 1.5                     # his NIL ask is this times larger
 GEM_RANK = 300                             # a gem is a three-star or less, or ranked below this
 FIND_LOOKS = SCOUT_MAX                     # looks before your staff names a gem, a bust risk or a generational talent: a full set
+LOOK_LOG_KEEP = 30                         # the look log keeps this many of a scout's looks a week (flags, then potential, then the rest)
 # the transfer portal as recruiting (offseason.py runs it): four weeks after signing day *tune*
 PORTAL_WEEKS = 4
 PORTAL_PRIORITY_ODDS = {"playing_time": 0.45, "nil": 0.20, "winning": 0.15, "proximity": 0.10, "prestige": 0.07, "coach": 0.03}
@@ -111,7 +132,15 @@ PORTAL_TOP_TIER = 4                        # an entrant rated a four-star or bet
 PORTAL_NATIONAL = 40                       # the best entrants by portal rank are on every Power 4 board (the whole country chases them)
 PORTAL_STARTERS = {"QB": 1, "RB": 1, "WR": 3, "TE": 1, "OL": 5, "DL": 4, "LB": 3, "CB": 2, "S": 2, "K": 1, "P": 1}   # a group's starters: an entrant better than the last of them is an upgrade, taken past the group's cap
 PORTAL_COMMIT = (0.25, 0.4, 0.6, 1.0)      # an entrant with offers decides at each week's step this often
-PORTAL_NIL_POOL = 0.7                      # the share of next year's NIL budget a school spends in the portal (the portal now takes the bigger share)
+# the portal runs on this season's money: what a school had left of the year's budget plus a reward
+# for the season (shares of the budget, summed then capped), never less than the collective's
+# portal fund; what it does not spend carries into next year, capped by the program's tier
+REWARD = {"winning": 0.10, "nine_wins": 0.20, "conference": 0.10, "playoff": 0.10, "title": 0.15, "goal": 0.10}
+REWARD_CAP = 0.50                          # the reward at most this share of the budget
+REWARD_WHY = {"winning": "winning record", "nine_wins": "nine wins", "conference": "conference champion",
+              "playoff": "made the playoff", "title": "national champion", "goal": "AD goal met"}
+PORTAL_FLOOR = 0.30                        # the collective's portal fund: no program enters the portal with less
+CARRY_CAP = {1: 0.15, 2: 0.20, 3: 0.25, 4: 0.30, 5: 0.30}   # the share of next year's budget that may carry over, by program tier
 PORTAL_ASK = (25, 0.6)                     # an entrant's ask: this plus this per overall point over 50, times his position
 PORTAL_RANK_NOISE = 3.0                    # the public portal ranking: his overall plus this much noise (points)
 PORTAL_LOOK = 0.5                          # a staff's look at a transfer errs this much of a high schooler's: there is film
@@ -393,6 +422,43 @@ def cooled(state: dict, slug: str, pid: str) -> bool:
     return (_contact(state, slug, pid).get("cooled_until") or -1) > state["current_week"]
 
 
+def _pester_exempt(state: dict, slug: str, pid: str) -> bool:
+    """He has committed to the school or taken an official visit there: none of its contacts pester."""
+    rc = state["recruiting"]
+    st = rc["status"][pid]
+    return slug in (st["committed"], st["signed"]) or bool((rc["visits"].get(pid, {}).get(slug) or {}).get("done"))
+
+
+def not_considering(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> bool:
+    """He is not considering the school: among the schools that have worked or offered him (the set
+    `top_group` reads), ordered by interest plus this week's pending, it sits outside his top
+    PESTER_TOP or under PESTER_SHARE of his leader's. His leader never is."""
+    rc = state["recruiting"]
+    schools = set(rc["lists"][pid]) | {s for s, pids in rc["offers"].items() if pid in pids} | set((rc.get("pending") or {}).get(pid, {})) | {slug}
+    win = win if win is not None else _winning(state)
+    score = {s: interest(state, s, pid, win) + pending(state, s, pid) for s in schools}
+    order = sorted(schools, key=lambda s: -score[s])
+    if order[0] == slug:
+        return False
+    return order.index(slug) >= PESTER_TOP or score[slug] < PESTER_SHARE * score[order[0]]
+
+
+def would_pester(state: dict, slug: str, pid: str) -> bool:
+    """Whether the school's next contact would pester him: PESTER_FREE contacts landed, he is not
+    considering the school, no official visit or commitment. Only your school (by hand) ever does."""
+    if slug != state.get("team"):
+        return False
+    c = (state["recruiting"]["contacts"].get(pid) or {}).get(slug) or {}
+    if c.get("n", 0) < PESTER_FREE or _pester_exempt(state, slug, pid):
+        return False
+    return not_considering(state, slug, pid)
+
+
+def pesters(state: dict, slug: str, pid: str) -> int:
+    """How many times the school has pestered him (reset once he is considering it)."""
+    return ((state["recruiting"]["contacts"].get(pid) or {}).get(slug) or {}).get("pester", 0)
+
+
 def upgrade_grades(state: dict) -> None:
     """A career saved when grades were class percentiles in school points: its true grades move
     to the game's scale and each read keeps how far off it was (and its looks)."""
@@ -426,6 +492,65 @@ def _ahead(state: dict, slug: str, group: str, ovr: float) -> int:
         from coach_career import offseason
         return sum(1 for c in state["league"]["teams"][slug]["roster"] if offseason.GROUP.get(c["pos"]) == group and c["o"] >= ovr)
     return sum(1 for o in _returning(slug, group) if o >= ovr)
+
+
+def ahead_of(state: dict, slug: str, pid: str) -> Optional[dict]:
+    """The best returning player at his position group on that roster rated at least as high as him
+    (`_ahead`'s test, the one player it names): {name, position, cls, ovr, slug}, or None. In the
+    portal the career league's roster (next year's, signees included); otherwise the season's."""
+    p = state["recruiting"]["prospects"][pid]
+    group = _group_of(p)
+    best = None
+    if is_portal(state):
+        from coach_career import offseason
+        for c in state["league"]["teams"][slug]["roster"]:
+            if offseason.GROUP.get(c["pos"]) == group and c["o"] >= p["ovr"] and (best is None or c["o"] > best["ovr"]):
+                best = {"name": c["n"], "position": POS_247_OF.get(c["pos"], c["pos"]), "cls": c["cls"], "ovr": c["o"], "slug": c["id"],
+                        "last_year": c["cls"] in LEAVING}
+        return best
+    if not any(o >= p["ovr"] for o in _returning(slug, group)):       # `_ahead`'s own test, so the two always agree
+        return None
+    from sim import season
+    t = season.load_teams()[slug]
+    for q in t["offense"] + t["defense"]:
+        ovr = q.get("ovr") or 0
+        if (("LB" if q["position"] in ("MLB", "ROLB", "LOLB") else q["position"]) == group and q.get("class") not in LEAVING
+                and ovr >= p["ovr"] and (best is None or ovr > best["ovr"])):
+            best = {"name": q["name"], "position": q["position"], "cls": q.get("class"), "ovr": ovr, "slug": q["slug"],
+                    "last_year": q.get("class") in LAST_YEAR}
+    return best
+
+
+def promise_holds(state: dict, slug: str, pid: str, question: dict) -> bool:
+    """Whether he can believe your promise: over a roster player, when that player is in his last
+    year or the recruit's overall is within PROMISE_MARGIN of his; over another recruit, when the
+    recruit is rated at least as high."""
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    about = question["about"]
+    if question["kind"] == "roster":
+        if "ovr" not in about or "last_year" not in about:          # a scene from before these were kept: read him again
+            ahead = ahead_of(state, slug, pid) or {}
+            about = {**about, "ovr": ahead.get("ovr", 99), "last_year": ahead.get("last_year", False)}
+        return bool(about["last_year"]) or p["ovr"] >= about["ovr"] - PROMISE_MARGIN
+    other = rc["prospects"].get(about.get("pid"))
+    return other is None or p["ovr"] >= other["ovr"]
+
+
+def other_offered(state: dict, slug: str, pid: str) -> Optional[dict]:
+    """The highest-ranked other recruit at his position group the school has offered who is
+    uncommitted or committed to that school: {pid, name, position, rank}, or None."""
+    rc = state["recruiting"]
+    group = _group_of(rc["prospects"][pid])
+    best = None
+    for other in rc["offers"].get(slug, []):
+        st_ = rc["status"][other]
+        if other == pid or st_["signed"] or st_["committed"] not in (None, slug):
+            continue
+        q = rc["prospects"][other]
+        if _group_of(q) == group and (best is None or q["rank"] < best["rank"]):
+            best = {"pid": other, "name": q["name"], "position": q["position"], "rank": q["rank"]}
+    return best
 
 
 _LEAVER_CUT: tuple = (None, 0)   # (career and year, the overall at the EARLY_LEAVER_POOL-th best draft-eligible underclassman)
@@ -817,9 +942,77 @@ def weekly_hours(state: dict, slug: str) -> int:
 def nil_budget(state: dict, slug: str) -> int:
     """A school's NIL points for the year: 3 × its NIL tier (10-100), so the top programs keep the
     budget the recruiting baseline gave (Ohio State about 275) and the middle has room for a few
-    blue-chip asks (SMU about 135, Tulane 110), less what it spent keeping its own players home."""
+    blue-chip asks (SMU about 135, Tulane 110). The class adds last year's carry-over (`_nil`)."""
     from coach_career import programs
-    return max(NIL_FLOOR, _five(NIL_PER_TIER * programs.get(state, slug)["nil"]) - int((state.get("nil_retained") or {}).get(slug, 0)))
+    return max(NIL_FLOOR, _five(NIL_PER_TIER * programs.get(state, slug)["nil"]))
+
+
+def _reward_lines(facts: dict) -> list[str]:
+    """The reward lines a season earns: a winning record (nine wins replaces it), the conference
+    title, the playoff, the national title, the AD's goal met."""
+    lines = []
+    if facts.get("wins", 0) >= 9:
+        lines.append("nine_wins")
+    elif facts.get("wins", 0) > facts.get("losses", 0):
+        lines.append("winning")
+    for k in ("conference", "playoff", "title"):
+        if facts.get(k):
+            lines.append(k)
+    if facts.get("met"):
+        lines.append("goal")
+    return lines
+
+
+def reward(budget: int, facts: dict) -> int:
+    """The NIL the season just played earns for the portal: the lines' shares of the year's budget,
+    summed and capped at REWARD_CAP, in fives. `facts`: wins, losses, conference, playoff, title, met."""
+    share = min(REWARD_CAP, sum(REWARD[k] for k in _reward_lines(facts)))
+    return _five(share * budget)
+
+
+def reward_why(facts: dict) -> list[str]:
+    """The reward's lines in words, for the review."""
+    return [REWARD_WHY[k] for k in _reward_lines(facts)]
+
+
+def portal_pool(state: dict, slug: str, facts: Optional[dict] = None) -> dict:
+    """A school's NIL for the portal: what it had left of the year's budget after signing day plus
+    the season's reward, never less than the collective's portal fund (PORTAL_FLOOR of the budget).
+    The record the review shows: left, reward, reward_why, floor, pool, record; `retained` (keep
+    them home) and, after the portal, `unspent` and `carry` are filled in as they happen."""
+    if facts is None:
+        from coach_career import offseason
+        facts = offseason.season_facts(state).get(slug) or {}
+    budget = nil_budget(state, slug)
+    rc = state.get("recruiting_last") if is_portal(state) else state.get("recruiting")
+    n = (rc or {}).get("nil", {}).get(slug) if rc else None
+    left = max(0, n["budget"] - sum(n["held"].values())) if n else budget
+    earned = reward(budget, facts)
+    floor = _five(PORTAL_FLOOR * budget)
+    return {"budget": budget, "left": left, "reward": earned, "reward_why": reward_why(facts), "floor": floor,
+            "pool": max(floor, left + earned), "retained": 0, "record": [facts.get("wins", 0), facts.get("losses", 0)]}
+
+
+def pool_record(state: dict, slug: str) -> dict:
+    """The school's portal pool record, seeded by offseason.start (a save from before the pool: seeded now)."""
+    pools = state.setdefault("nil_pool", {})
+    if slug not in pools:
+        pools[slug] = portal_pool(state, slug)
+    return pools[slug]
+
+
+def portal_budget(state: dict, slug: str) -> int:
+    """What the school brings to the portal: its pool less what it spent keeping players home."""
+    p = pool_record(state, slug)
+    return max(0, p["pool"] - p.get("retained", 0))
+
+
+def carry_over(state: dict, slug: str, unspent: int) -> int:
+    """What a school's unspent portal NIL carries into next year: capped at CARRY_CAP of next
+    year's budget by the program's tier; anything above is gone."""
+    from coach_career import programs
+    cap = _five(CARRY_CAP[programs.get(state, slug)["tier"]] * nil_budget(state, slug))
+    return max(0, min(5 * (int(unspent) // 5), cap))          # whole fives only: a few stray points are not carried
 
 
 def _five(x: float) -> int:
@@ -903,8 +1096,19 @@ def _hours(state: dict, slug: str) -> float:
 
 
 def _nil(state: dict, slug: str) -> dict:
-    budget = _five(PORTAL_NIL_POOL * nil_budget(state, slug)) if is_portal(state) else nil_budget(state, slug)
-    return state["recruiting"]["nil"].setdefault(slug, {"budget": budget, "held": {}})
+    """The school's NIL record this block: in the portal its pool; in the class the year's budget
+    plus last year's carry-over, consumed once when the record is created."""
+    n = state["recruiting"]["nil"].get(slug)
+    if n is None:
+        if is_portal(state):
+            n = {"budget": portal_budget(state, slug), "held": {}}
+        else:                                   # the carry is next season's: the old class block (the offseason still open) leaves it alone
+            carry = int((state.get("nil_carry") or {}).pop(slug, 0) or 0) if not state.get("offseason") else 0
+            n = {"budget": nil_budget(state, slug) + carry, "held": {}}
+            if carry:
+                n["carry"] = carry
+        state["recruiting"]["nil"][slug] = n
+    return n
 
 
 def nil_left(state: dict, slug: str) -> int:
@@ -934,18 +1138,25 @@ def _unmark(state: dict, slug: str, pid: str) -> None:
             marks.remove(pid)
 
 
+_LAST_LOOK: list = [None]        # the trip's look entry, for the scout action's response
+
+
 def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
-        scene: Optional[str] = None) -> dict:
+        scene: Optional[str] = None, answer: Optional[str] = None) -> dict:
     """One recruiting action by `slug` on prospect `pid` this week. Its interest lands at the week
     step (you see his list move next week), so this returns no interest. Your call or in-home visit
-    without a pitch opens a scene (returned); `pitch` with the scene's id finishes it and returns
-    his reaction. Raises RecruitingError."""
+    without a pitch opens a scene (returned); `answer` with the scene's id fields his question
+    (`_answer`); `pitch` with the scene's id finishes it and returns his reaction. Raises RecruitingError."""
     rc = state["recruiting"]
+    if action == "answer":
+        return _answer(state, slug, pid, scene, answer)
     if action == "pitch":
         sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
+        start = len(rc["log"])
         revealed = _act(state, slug, pid, action, pitch, nil, scene=scene)
         from coach_career import scenes
-        said = scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid])
+        tired = any(e["kind"] == "pester" for e in rc["log"][start:])      # the call or visit pestered him: the pitch fell flat
+        said = scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid], tired=tired)
         if slug == state.get("team"):                 # your History: the pitch and how he took it
             _event(state, "pitch", pid, slug, action=sc["action"], pitch=pitch, reaction=said["kind"])
         return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed}}
@@ -956,6 +1167,8 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
         if pid not in marks:
             marks.append(pid)
     out = {"hours_left": rc["hours"][slug], "revealed": revealed}
+    if action == "scout":                                   # the desk shows the trip's before/after from this
+        out["look"] = _LAST_LOOK[0]
     if opens:
         out["scene"] = rc["scenes"][slug][pid]
     return out
@@ -964,6 +1177,55 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
 def clear_scenes(state: dict, slug: str) -> None:
     """Drop the school's open scenes (Auto-recruit took over): no points, the hours stay spent."""
     (state["recruiting"].get("scenes") or {}).pop(slug, None)
+
+
+def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Optional[str]) -> dict:
+    """Your answer to the open scene's question (spec section 3), no hours: straight earns
+    ANSWER_STRAIGHT and tells you he cares about playing time; a promise earns ANSWER_PROMISE when
+    he can believe it (`promise_holds`) and
+    otherwise costs ANSWER_HOLLOW and cools him a week; a deflection does nothing. The points go on
+    the scene's action; the answer and his reply are kept on the scene, a promise on his contact."""
+    from coach_career import scenes
+    rc = state["recruiting"]
+    p = rc["prospects"].get(pid)
+    if p is None:
+        raise RecruitingError(400, "unknown prospect")
+    if answer is None:
+        raise RecruitingError(422, "answer is required")
+    if answer not in scenes.ANSWERS:
+        raise RecruitingError(400, "unknown answer")
+    sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
+    if sc is None or scene is None or sc["id"] != scene:
+        raise RecruitingError(409, "no call or visit open")
+    q = sc.get("question")
+    if not q:
+        raise RecruitingError(409, "he asked nothing")
+    if q.get("answer"):
+        raise RecruitingError(409, "you already answered")
+    contact = _contact(state, slug, pid)
+    week = state["current_week"]
+    points, truthful, revealed = 0.0, None, []
+    if answer == "straight":
+        points = ANSWER_STRAIGHT
+        seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
+        if "playing_time" not in seen:
+            seen.append("playing_time")
+            revealed.append("playing_time")
+    elif answer == "promise":
+        truthful = promise_holds(state, slug, pid, q)
+        if truthful:
+            points = ANSWER_PROMISE
+        else:
+            points = -ANSWER_HOLLOW
+            contact["cooled_until"] = week + 1
+            _event(state, "not_buying", pid, slug, topic="playing_time")
+        contact.setdefault("promises", []).append({"kind": q["kind"], "about": q["about"], "week": week, "broken": None})
+    q["answer"] = answer
+    q["reply"] = scenes.answer_reply(state, slug, pid, q, answer, truthful)
+    _event(state, "answer", pid, slug, action=sc["action"], answer=answer, about=q["about"]["name"], truthful=truthful)
+    if points:
+        _add_points(state, slug, pid, points, sc["action"])
+    return {"scene": sc, "points": points, "truthful": truthful, "revealed": revealed, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
 
 
 REPORTS_KEPT = 4           # weekly reports kept (the Office shows the latest)
@@ -1041,7 +1303,15 @@ def _report(state: dict, week: int) -> dict:
     teams = season.load_teams()
     name = lambda s: teams[s]["name"] if s in teams else s
     pids = list(dict.fromkeys(list(rc["board"]) + list(rc["offers"].get(me, []))))
-    events = [e for e in rc["log"] if e["week"] == week and e["kind"] in REPORT_KINDS]
+    events, pestered = [], set()
+    for e in rc["log"]:
+        if e["week"] != week or e["kind"] not in REPORT_KINDS:
+            continue
+        if e["kind"] == "pester":                 # once per prospect per week, however many contacts wore on him
+            if e["pid"] in pestered:
+                continue
+            pestered.add(e["pid"])
+        events.append(e)
     rows = []
     for pid in pids:
         r = rc.get("ranks", {}).get(pid) or {}
@@ -1061,7 +1331,8 @@ def _report(state: dict, week: int) -> dict:
                      "leader": {"school": leader, "name": name(leader)} if leader else None,
                      "moves": [m for m in moves if m["from"] != m["to"]][:MOVES_SHOWN],
                      "events": [dict(e, school_name=name(e["school"]) if e.get("school") else None,
-                                     rival_name=name(e["rival"]) if e.get("rival") else None)
+                                     rival_name=name(e["rival"]) if e.get("rival") else None,
+                                     **({"line": _pester_line(p["name"], name(e["school"]))} if e["kind"] == "pester" else {}))
                                 for e in events if e["pid"] == pid]})
     report = {"week": week, "rows": rows}
     reports = rc.setdefault("reports", [])
@@ -1070,8 +1341,12 @@ def _report(state: dict, week: int) -> dict:
     return report
 
 
-REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up")
-CONTACT_KINDS = ("contact", "pitch", "raise_nil", "pull_offer")   # your actions, logged for his History (not news)
+REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "pester", "promise_broken")
+CONTACT_KINDS = ("contact", "pitch", "raise_nil", "pull_offer", "answer")   # your actions, logged for his History (not news)
+
+
+def _pester_line(prospect: str, school: str) -> str:
+    return f"{prospect} is tuning you out: he is not considering {school}, and more calls push him further away."
 
 
 def latest_report(state: dict) -> Optional[dict]:
@@ -1080,10 +1355,11 @@ def latest_report(state: dict) -> Optional[dict]:
 
 
 def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
-         scale: float = 1.0, scene: Optional[str] = None, opens: bool = False) -> Optional[str]:
+         scale: float = 1.0, scene: Optional[str] = None, opens: bool = False, auto: bool = False) -> Optional[str]:
     """The one action path every school takes (yours, the AI's, Auto-recruit's). Only `act` passes
     `opens` (your call or visit with no pitch: a scene, no points yet) and `scene` (the pitch that
-    finishes it); every other caller keeps the one-shot path."""
+    finishes it); every other caller keeps the one-shot path. `auto`: Auto-recruit's contact, which
+    never pesters him."""
     rc = state["recruiting"]
     p = rc["prospects"].get(pid)
     if p is None:
@@ -1174,6 +1450,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             while _reveal(state, slug, pid):
                 pass
             contact.update(asked=True, last_contact=week)
+            contact.pop("pester", None)
             points = BASE_POINTS["official_visit"]
         else:
             game_week = _home_game_left(state, slug)
@@ -1186,13 +1463,15 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
         if sc is None or scene is None or sc["id"] != scene:
             raise RecruitingError(409, "no open call or visit with him")
+        if sc.get("question") and not sc["question"].get("answer"):
+            raise RecruitingError(409, "answer him first")
         if pitch is None:
             raise RecruitingError(400, "a pitch: what you are selling him")
         if pitch in p["priorities"]:                  # he tells you plainly when it is one of his
             seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
             if pitch not in seen:
                 seen.append(pitch)
-        points = _contact_land(state, slug, p, contact, sc["action"], pitch)
+        points = _contact_land(state, slug, p, contact, sc["action"], pitch, auto)
         del rc["scenes"][slug][pid]
         if points:                                    # the points are the call's or the visit's; its hours went when it opened
             _add_points(state, slug, pid, points * scale, sc["action"])
@@ -1205,7 +1484,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         rating = max([m.get("evaluation", 50) for m in staff] + [((state.get("coach") or {}).get("ratings") or {}).get("evaluation", 60)])
         rng = random.Random(f"scout-{rc['seed']}-{slug}-{pid}-{week}-{contact['scouted']}")
         for _ in range(SCOUT_LOOKS):
-            look(state, pid, rating, rng)
+            _LAST_LOOK[0] = look(state, pid, rating, rng)
     else:
         if action == "hc_visit":
             if contact["hc_week"] is not None and week - contact["hc_week"] < HC_VISIT_GAP:
@@ -1230,23 +1509,51 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
                 contact["asked"] = "range"
         if not opens:
             contact["last_contact"] = week
-            points = _contact_land(state, slug, p, contact, action, pitch)
+            points = _contact_land(state, slug, p, contact, action, pitch, auto)
     rc["hours"][slug] = _hours(state, slug) - HOURS[action]
     if points:
         _add_points(state, slug, pid, points * scale, action)
     return revealed
 
 
-def _contact_land(state: dict, slug: str, p: dict, contact: dict, action: str, pitch: Optional[str]) -> float:
+def _contact_land(state: dict, slug: str, p: dict, contact: dict, action: str, pitch: Optional[str],
+                  auto: bool = False) -> float:
     """A contact's points (a message, call or visit, one-shot or a scene's pitch): the pitch's worth
-    cut by earlier contacts, halved while he is cooled; a backfire is logged."""
+    cut by earlier contacts, halved while he is cooled; a backfire is logged. Past PESTER_FREE
+    contacts from your hand while he is not considering you (`not_considering`), the contact pesters him instead: negative
+    points that grow with each pester, the pitch ignored, his ask from you up (not Auto-recruit's,
+    never an AI school's)."""
+    pid = p["id"]
+    if not auto and slug == state.get("team") and contact["n"] >= PESTER_FREE and not _pester_exempt(state, slug, pid):
+        if not not_considering(state, slug, pid):
+            contact.pop("pester", None)           # he is considering you: the old pesters are forgotten
+        else:
+            k = contact.get("pester", 0)
+            contact["pester"] = k + 1
+            contact["ask_mult"] = round(min(ASK_MULT_MAX, contact.get("ask_mult", 1.0) * PESTER_ASK), 3)
+            _event(state, "pester", pid, slug, action=action, n=k + 1)
+            points = -(PESTER_COST * BASE_POINTS[action]) * (1 + PESTER_RAMP * k)
+            if cooled(state, slug, pid):
+                points *= COOLED_CONTACT
+            contact["n"] += 1
+            return points
     points = _contact_points(state, slug, p, action, pitch) / (1 + DIMINISH * contact["n"])
     if points < 0:
-        _event(state, "not_buying", p["id"], slug, topic=pitch)
-    if cooled(state, slug, p["id"]):
+        _event(state, "not_buying", pid, slug, topic=pitch)
+    if cooled(state, slug, pid):
         points *= COOLED_CONTACT
     contact["n"] += 1
     return points
+
+
+def _forgive_pesters(state: dict) -> None:
+    """A school he has come to consider (or that hosted or landed him) starts clean: a later slide
+    does not carry the old pesters. Only your school ever has any."""
+    rc, me = state["recruiting"], state.get("team")
+    for pid, by in rc["contacts"].items():
+        c = by.get(me)
+        if c and c.get("pester") and (_pester_exempt(state, me, pid) or not not_considering(state, me, pid)):
+            c.pop("pester")
 
 
 # ----- the week: AI schools, visits, commitments, flips and signing ----------------------------------
@@ -1482,9 +1789,10 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
                 _act(state, slug, pid, "official_visit")
             except RecruitingError:
                 pass
+    targets = [pid for pid in targets if not would_pester(state, slug, pid)]   # your staff on Auto never pester: those hours go elsewhere
     if targets:
         try:
-            _act(state, slug, targets[0], "hc_visit", pitch=best_pitch(state, slug, targets[0]), scale=edge)
+            _act(state, slug, targets[0], "hc_visit", pitch=best_pitch(state, slug, targets[0]), scale=edge, auto=True)
         except RecruitingError:
             pass
     for action in ("call", "message"):          # each target a call and a message a week, as the hours allow
@@ -1492,14 +1800,14 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
             if _hours(state, slug) < HOURS[action]:
                 break
             try:
-                _act(state, slug, pid, action, pitch=best_pitch(state, slug, pid), scale=edge)
+                _act(state, slug, pid, action, pitch=best_pitch(state, slug, pid), scale=edge, auto=True)
             except RecruitingError:
                 pass
     for pid in [q for q in offers if rc["status"][q]["committed"] == slug and not rc["status"][q]["signed"]]:
         if _hours(state, slug) < HOURS["message"]:
             break                              # out of hours: the commits go quiet this week and soften
         try:                                   # a message a week keeps a commitment firm
-            _act(state, slug, pid, "message", pitch=best_pitch(state, slug, pid), scale=edge)
+            _act(state, slug, pid, "message", pitch=best_pitch(state, slug, pid), scale=edge, auto=True)
         except RecruitingError:
             pass
 
@@ -1519,6 +1827,7 @@ def _visits(state: dict, week: int) -> None:
             while _reveal(state, slug, pid):     # a weekend on campus: you learn everything he cares about, his ask too
                 pass
             _contact(state, slug, pid).update(asked=True, last_contact=week)
+            _contact(state, slug, pid).pop("pester", None)     # a weekend on campus clears the air
             margin = game["home_score"] - game["away_score"]
             mood = 1.2 if margin > 0 else (0.6 if margin <= -21 else 0.9)
             cap = ((season.load_teams()[slug].get("stadium") or {}).get("capacity") or 50000)
@@ -1573,6 +1882,33 @@ def flip_by_signing(state: dict, pid: str, gap: float, weeks_left: int) -> float
         keep *= 1 - flip_weekly(state, pid, gap, f)
         f = min(100, f + FIRM_TOUCH + FIRM_NIL)
     return 1 - keep
+
+
+def _promises(state: dict, week: int) -> None:
+    """Promises follow him (spec section 4): a recruit told he was the one over another recruit
+    (a "recruit" promise) remembers when that recruit commits to the school too, once: committed
+    to the school, his firmness drops PROMISE_RIVAL (a hard commit is immune); otherwise he cools on
+    it for COOL_WEEKS. The promise is marked broken and a promise_broken event logged either way."""
+    rc = state["recruiting"]
+    for pid, by in rc["contacts"].items():
+        for slug, c in by.items():
+            for pr in c.get("promises") or ():
+                if pr["kind"] != "recruit" or pr.get("broken") is not None:
+                    continue
+                other = rc["status"].get(pr["about"].get("pid"))
+                if not other or slug not in (other["committed"], other["signed"]):
+                    continue
+                st_ = rc["status"][pid]
+                if st_["signed"]:
+                    continue
+                if st_["committed"] == slug:
+                    if st_.get("hard"):
+                        continue
+                    st_["firmness"] = int(max(0, (st_.get("firmness") or FIRM_START) - PROMISE_RIVAL))
+                else:
+                    c["cooled_until"] = week + COOL_WEEKS
+                pr["broken"] = week
+                _event(state, "promise_broken", pid, slug, about=pr["about"]["name"], other=pr["about"].get("pid"))
 
 
 def _firm_up(state: dict, week: int) -> None:
@@ -1772,7 +2108,7 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     _flush(state, week)                # your week's actions land
     if not rc.get("portal"):
         _visits(state, week)
-    scout_week(state)
+    scout_week(state, week + 1 if rc.get("portal") else week)   # the portal's week counter moves after the step
     mine = state.get("team")
     mode = auto_mode(state)
     auto_mine = auto_user or mode != "off"
@@ -1782,9 +2118,11 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
         if slug != mine or auto_mine:
             auto_recruit(state, slug, random.Random(f"auto-{rc['seed']}-{slug}-{week}"), commits, yours=slug == mine)
     _flush(state, week)                # the other schools' week lands with yours
+    _forgive_pesters(state)
     if rc.get("portal"):
         _portal_draws(state, week, rng)
     else:
+        _promises(state, week)         # the recruit you promised him over committed too: he remembers
         _firm_up(state, week)
         if week < season.FINAL_WEEK:
             _draws(state, week, rng)
@@ -1920,14 +2258,48 @@ def word(points: float) -> str:
     return next(w for w, floor in zip(WORDS, WORD_FLOORS) if points >= floor)
 
 
-def look(state: dict, pid: str, evaluator_rating: int, rng: random.Random) -> None:
+def look_week(state: dict) -> int:
+    """The week a look belongs to: the season's week, or the portal's own."""
+    rc = state["recruiting"]
+    return rc["week"] if rc.get("portal") else state["current_week"]
+
+
+def _read_words(state: dict, pid: str) -> dict:
+    """Every group's grade range in words, or {} before his first look (the look log's before/after)."""
+    if pid not in state["recruiting"]["reads"]:
+        return {}
+    return {g: list(grade_range(state, pid, g)) for g in GROUPS}
+
+
+def _flags(state: dict, pid: str) -> list[str]:
+    """Your staff's flags on him from the read: gem, bust, generational (prospects.find, generational_seen)."""
+    from coach_career import prospects as pr
+    rc = state["recruiting"]
+    out = []
+    f = pr.find(state, pid)
+    if f:
+        out.append(f)
+    if pr.generational_seen(rc, pid, state.get("team")):
+        out.append("generational")
+    return out
+
+
+def look(state: dict, pid: str, evaluator_rating: int, rng: random.Random, by: Optional[str] = None,
+         week: Optional[int] = None) -> dict:
     """One look at a prospect by an evaluator: every group's read moves toward what he saw. A look's
     error shrinks with the rating; so does how far its confidence can stray (a weak evaluator is
-    sometimes sure and wrong)."""
-    p = state["recruiting"]["prospects"][pid]
+    sometimes sure and wrong). Counted in `rc["look_counts"][week][by]` and, when it changed a grade
+    word or gained a flag, in `rc["look_changes"][week][by]` ({changed, flags}) and logged in
+    `rc["looks"]` (the scouting desk's reports) as `by` (a staff id, or "trip" for your scouting
+    trip) at `week` (default: look_week): the words before and after of the groups that changed, and
+    the flags gained. The log keeps a scout's LOOK_LOG_KEEP most notable looks a week (the save is
+    written after every action). Returns the entry, logged or not."""
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    before, flags_before = _read_words(state, pid), _flags(state, pid)
     s = evaluator_rating / 99
     sd = (LOOK_SD[0] * (1 - s) + LOOK_SD[1]) * (PORTAL_LOOK if is_portal(state) else 1.0)
-    read = state["recruiting"]["reads"].setdefault(pid, {"looks": 0, "by": {}, "g": {}})
+    read = rc["reads"].setdefault(pid, {"looks": 0, "by": {}, "g": {}})
     for g in GROUPS:
         seen = p["truth"][g] + rng.gauss(0, sd)
         felt = sd * math.exp(rng.gauss(0, CONFIDENCE_NOISE * (1 - s)))
@@ -1937,6 +2309,30 @@ def look(state: dict, pid: str, evaluator_rating: int, rng: random.Random) -> No
     read["looks"] += 1
     key = str(evaluator_rating)
     read["by"][key] = read["by"].get(key, 0) + 1
+    week = look_week(state) if week is None else week
+    by = by or "trip"
+    after = _read_words(state, pid)
+    moved = [g for g in GROUPS if before.get(g) != after.get(g)]
+    entry = {"week": week, "pid": pid, "by": by,
+             "before": {g: before[g] for g in moved if g in before}, "after": {g: after[g] for g in moved},
+             "flags": [f for f in _flags(state, pid) if f not in flags_before]}
+    counts = rc.setdefault("look_counts", {}).setdefault(str(week), {})
+    counts[by] = counts.get(by, 0) + 1
+    if moved or entry["flags"]:                      # a look that changed nothing is only counted
+        tally = rc.setdefault("look_changes", {}).setdefault(str(week), {}).setdefault(by, {"changed": 0, "flags": 0})
+        tally["changed"] += 1
+        tally["flags"] += 1 if entry["flags"] else 0
+        log = rc.setdefault("looks", [])
+        log.append(entry)
+        mine = [i for i, e in enumerate(log) if e["week"] == week and e["by"] == by]
+        if len(mine) > LOOK_LOG_KEEP:                # the log keeps a scout's most notable looks of the week
+            del log[max(mine, key=lambda i: (look_notability(log[i]), -i))]
+    return entry
+
+
+def look_notability(e: dict) -> int:
+    """A logged look's place in a scout's report: a flag gained first (0), then a potential change (1), then the rest (2)."""
+    return 0 if e["flags"] else 1 if "potential" in e["after"] else 2
 
 
 def read_interval(state: dict, pid: str, group: str) -> Optional[tuple[float, float]]:
@@ -2014,9 +2410,17 @@ def assign(state: dict, staff_id: str, area: str) -> None:
     member["area"] = area
 
 
-def scout_week(state: dict) -> None:
-    """Every prospect in each staffed area gets a look from the staff member there."""
+def scout_week(state: dict, week: Optional[int] = None) -> None:
+    """Every prospect in each staffed area gets a look from the staff member there, logged at `week`
+    (default: look_week; the portal's step passes the week it opens). Looks older than the week
+    before are dropped from the log and the counts first: the desk keeps this week's and last week's."""
     staff = (state.get("career") or {}).get("staff") or []
+    rc = state["recruiting"]
+    if week is None:
+        week = look_week(state)
+    rc["looks"] = [e for e in rc.get("looks") or [] if e["week"] >= week - 1]
+    for key in ("look_counts", "look_changes"):
+        rc[key] = {w: c for w, c in (rc.get(key) or {}).items() if int(w) >= week - 1}
     rng = random.Random(f"scout-{state['recruiting']['seed']}-{state['current_week']}")
     by_state: dict[str, list[str]] = {}
     me = state.get("team")
@@ -2027,7 +2431,7 @@ def scout_week(state: dict) -> None:
     for member in staff:
         for code in AREAS.get(member.get("area"), []):
             for pid in by_state.get(code, []):
-                look(state, pid, member["evaluation"], rng)
+                look(state, pid, member["evaluation"], rng, by=member["id"], week=week)
 
 
 def visible(state: dict) -> set[str]:

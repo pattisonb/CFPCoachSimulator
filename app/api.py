@@ -820,6 +820,15 @@ def recruiting_view(p: Params) -> dict:
     return prospects.recruiting_view(_career_state(p.path["season_id"], change=True))
 
 
+@route("GET", "/api/season/{season_id}/scouting")
+def scouting_view(p: Params) -> dict:
+    """The Scouting tab: your scouts, a page of the queue of recruits worth a trip (q, position, group, offset,
+    limit), this and last week's reports, your flags."""
+    st = _career_state(p.path["season_id"], change=True)
+    return prospects.scouting_view(st, p.q("q"), p.q("position"), p.q("group"), max(0, p.q("offset", int, 0)),
+                                   p.q("limit", int, prospects.QUEUE_LIMIT))
+
+
 @route("GET", "/api/season/{season_id}/programs")
 def programs_view(p: Params) -> dict:
     """Every program's living rating (prestige, winning, NIL, market, conference, coach; tier and goal), yours first."""
@@ -869,9 +878,10 @@ def recruit_action(p: Params) -> dict:
     st = _career_state(p.path["season_id"], change=True)
     pid, action = _field(p, "pid", str), _field(p, "action", str)
     pitch, nil, scene = _field(p, "pitch", str, None), _field(p, "nil", int, 0), _field(p, "scene", str, None)
+    answer = _field(p, "answer", str, None)
     if pid not in recruiting.visible(st):
         raise ApiError(404, "unknown prospect")
-    out = _recruiting_call(recruiting.act, st, st["team"], pid, action, pitch, nil, scene)
+    out = _recruiting_call(recruiting.act, st, st["team"], pid, action, pitch, nil, scene, answer)
     _save_loaded()
     return out
 

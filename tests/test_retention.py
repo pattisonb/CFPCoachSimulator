@@ -1,8 +1,8 @@
 """Keep them home (offseason.py): after departures, your players who mean to leave with eligibility
 left (portal entrants, early draft entrants) wait on a retention step. You meet them (their ask),
 promise a starting role (worth something only if your depth chart would start him), or offer NIL
-from next year's budget; when you advance, each stays or goes, the leavers join the portal or the
-draft, and the NIL you spent comes off next year's budget. AI schools keep a would-be entrant who
+from your portal pool; when you advance, each stays or goes, the leavers join the portal or the
+draft, and the NIL you spent comes off the pool. AI schools keep a would-be entrant who
 would start for them a third of the time. (Run as a file: multiprocessing on Windows.)"""
 import sys as _sys
 from pathlib import Path as _Path
@@ -39,9 +39,9 @@ if __name__ == "__main__":
     v = offseason.retain(st, p0["id"], "meet")
     e0 = next(e for e in v["players"] if e["id"] == p0["id"])
     assert e0["ask"]["known"] and e0["ask"]["kind"] in ("playing_time", "nil") and e0["ask"]["nil"] >= 0
-    budget = recruiting.nil_budget(st, me)
+    budget = st["nil_pool"][me]["pool"]
     try:
-        offseason.retain(st, p0["id"], "nil", nil=budget + 1); raise AssertionError("NIL past next year's budget")
+        offseason.retain(st, p0["id"], "nil", nil=budget + 1); raise AssertionError("NIL past the portal pool")
     except offseason.RetentionError as ex:
         assert ex.code == 400
     # the chances: a met ask keeps him, a hollow promise does not, a first-round pick is gone
@@ -76,11 +76,11 @@ if __name__ == "__main__":
             else:
                 assert any(d["id"] == e["id"] and d["kind"] in ("draft", "undrafted") for d in off["departures"])
     assert all(e["id"] in roster_ids for e in players if results[e["id"]]["status"] == "stayed")
-    # next year's budget carries the NIL you spent (a deal he turned down costs nothing); the
-    # portal pool reads the same budget
+    # the portal pool carries the NIL you spent (a deal he turned down costs nothing); the portal
+    # budget is the pool less that
     spent = spent if results[p0["id"]]["status"] == "stayed" else 0
-    assert st["nil_retained"][me] == spent and recruiting.nil_budget(st, me) == budget - spent
-    assert recruiting._nil(st, me)["budget"] == recruiting._five(recruiting.PORTAL_NIL_POOL * (budget - spent))
+    assert st["nil_pool"][me]["retained"] == spent
+    assert recruiting._nil(st, me)["budget"] == budget - spent
     # on Auto nobody is talked to: every pending leaver goes
     st2 = season.new_season("ohio-state", "full", seed=6, career=True)
     finished(st2)
@@ -98,4 +98,4 @@ if __name__ == "__main__":
     offseason.advance(st3)
     assert off3["stage"] == "portal_w1" and st3["recruiting"].get("portal")
     season.close_pool()
-    print(f"retention ok: {len(players)} leavers to talk to, {sum(1 for r in results.values() if r['status'] == 'stayed')} stayed, {spent} NIL off next year")
+    print(f"retention ok: {len(players)} leavers to talk to, {sum(1 for r in results.values() if r['status'] == 'stayed')} stayed, {spent} NIL off the portal pool")

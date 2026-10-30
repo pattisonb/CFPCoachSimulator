@@ -149,14 +149,47 @@ def reveal_rate(seed: int, team: str = "georgia") -> float:
     for pid in pids:
         rc["hours"][team] = 100
         sc = recruiting.act(state, team, pid, "call")["scene"]
+        if sc["question"]:                        # he asked about a named player: the pitch waits on an answer
+            recruiting.act(state, team, pid, "answer", scene=sc["id"], answer="deflect")
         r = recruiting.act(state, team, pid, "pitch", pitch=sc["cue"]["topics"][0], scene=sc["id"])
         found += r["reaction"]["kind"] in ("hit", "quiet")
     return found / len(pids)
 
 
+def question_mix(seed: int, team: str = "georgia") -> dict:
+    """How often a call brings a question about a named player (scenes.QUESTION_RATE of the calls to
+    recruits who care about playing time), the roster/recruit split, and how often a promise would be
+    hollow (roster questions; PROMISE_MARGIN sets it, the band 30-60% truthful): a fresh career, the first
+    300 prospects you can see, each a call, every question promised."""
+    from coach_career import scenes
+    state = season.new_season(team, "full", seed=seed, career=True)
+    rc = state["recruiting"]
+    pids = [q for q in recruiting.prospect_list(state) if not rc["prospects"][q].get("hidden")][:300]
+    out = {"calls": len(pids), "playing_time": 0, "questions": 0, "roster": 0, "recruit": 0, "promises": 0, "hollow": 0}
+    for pid in pids:
+        rc["hours"][team] = 100
+        out["playing_time"] += "playing_time" in rc["prospects"][pid]["priorities"]
+        sc = recruiting.act(state, team, pid, "call")["scene"]
+        q = sc["question"]
+        if not q:
+            continue
+        out["questions"] += 1
+        out[q["kind"]] += 1
+        r = recruiting.act(state, team, pid, "answer", scene=sc["id"], answer="promise")
+        if q["kind"] == "roster":
+            out["promises"] += 1
+            out["hollow"] += r["truthful"] is False
+    out["rate"] = scenes.QUESTION_RATE
+    return out
+
+
 def main() -> None:
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 1
     print(f"  player reveal rate {reveal_rate(1):.3f}   want 0.55-0.75")
+    qm = question_mix(1)
+    print(f"  recruit questions: {qm['questions']} on {qm['calls']} calls ({qm['playing_time']} care about playing time; "
+          f"want about {qm['rate']:.2f} of those), roster {qm['roster']} / recruit {qm['recruit']}; "
+          f"roster promises truthful {qm['promises'] - qm['hollow']} of {qm['promises']}   want 30-60%")
     for seed in range(1, n + 1):
         print(f"season seed {seed}")
         print("\n".join(report(measure(play(seed)))))
