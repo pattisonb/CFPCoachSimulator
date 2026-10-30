@@ -77,7 +77,7 @@ def smooth(page, h, what: str, same: bool = True) -> None:
     """After the action landed: the watched element is still the one on screen (or, same=False, the pane switched),
     nothing that held it was removed, the scrolls are within 2 px, and the focus is on a control, not the body."""
     r = page.evaluate("""(el) => { const s = window.__smooth; s.mo.disconnect();
-        return { connected: el.isConnected, gone: s.gone, top: el.scrollTop - s.top, page: window.scrollY - s.page, active: document.activeElement.tagName,
+        return { connected: el.isConnected, gone: s.gone, top: el.isConnected ? el.scrollTop - s.top : 0, page: window.scrollY - s.page, active: document.activeElement.tagName,
                  pane: !!document.querySelector('.go-pane') }; }""", h)
     if same:
         assert r["connected"] and r["gone"] == 0, f"{what}: the pane was rebuilt ({r})"
@@ -302,6 +302,7 @@ def test_recruit_question(page) -> None:
         page.click("#rc-recruit")
         page.wait_for_selector(".go-menu")
         page.click(".go-menu .go-menu-item[data-action=call]")
+        present_three(page)
         page.wait_for_selector(".go-pane .go-scene .go-question", timeout=30_000)
         b = next(x for x in call(base, f"/api/season/{sid}/recruiting")["board"] if x["id"] == pid)
         q = b["scene"]["question"]
@@ -972,6 +973,124 @@ def check_staff_developed(page, base, sid) -> None:
     assert not re.search(r"\bundefined\b|\bnull\b|NaN", text), text[:200]
 
 
+def present_three(page, pane: str = ".go-pane") -> None:
+    """A call or visit just opened: the conversation shows your opener and his answer; pick three things and Present,
+    which brings his cue in place (the cue and his question follow your opening)."""
+    page.wait_for_selector(f"{pane} .go-scene .go-opening .go-present-chip", timeout=30_000)
+    if page.query_selector(f"{pane} .go-scene .go-scene-line.cue"):
+        return
+    assert page.eval_on_selector(f"{pane} .go-scene .go-opening .go-present", "e => e.disabled"), "Present waits for three"
+    # clicks from the page itself: Playwright's would scroll an off-screen chip into view, which a smoothness watch counts
+    page.eval_on_selector_all(f"{pane} .go-scene .go-opening .go-present-chip", "els => els.slice(0, 3).forEach((e) => e.click())")
+    assert page.inner_text(f"{pane} .go-scene .go-present-count").strip() == "3 of 3"
+    assert not page.eval_on_selector(f"{pane} .go-scene .go-opening .go-present", "e => e.disabled")
+    page.eval_on_selector(f"{pane} .go-scene .go-opening .go-present", "e => e.click()")
+    page.wait_for_selector(f"{pane} .go-scene .go-scene-line.cue", timeout=30_000)
+    page.wait_for_selector(f"{pane} .go-scene .go-opening", state="detached", timeout=10_000)
+
+
+def test_conversation(page, base) -> None:
+    """A call reads as a conversation (its own career, week two so his small talk has a game to talk about): "You:"
+    bubbles right, his left, your opener names him and you, his first answer names your last opponent, your opening
+    (a fourth chip is refused, Present brings his reaction, your question and the cue in place, the opening block
+    leaves), "WHAT YOU LEAD WITH", and his reaction to the pitch joins the conversation as a turn, then the board catches
+    up and the scene leaves. A visit opens with the room."""
+    from coach_career import recruiting, scenes
+    from sim import season
+    me = "smu"
+    st = season.new_season(me, "full", seed=23, career=True)
+    season.advance_to(st, 2)
+    rc = st["recruiting"]
+    rc["hours"][me] = 200
+    game = scenes.last_game(st, me, st["current_week"])
+    assert game, "a game to talk about"
+    pids = [q for q in recruiting.prospect_list(st) if not rc["prospects"][q].get("hidden") and me not in rc["contacts"].get(q, {})
+            and not rc["status"][q]["committed"] and not recruiting.would_pester(st, me, q)][:2]
+    rc["board"] = list(pids)
+    season.save_season(st)
+    sid = st["id"]
+    errs = []
+    page.on("pageerror", lambda e: errs.append(str(e)))
+    try:
+        pid, other = pids
+        first = rc["prospects"][pid]["name"].split()[0]
+        coach = scenes.coach_name(st, me)
+        open_tab(page, base, sid, "recruiting", ".go-stages")
+        page.click(f".go-row-recruit[data-pid='{pid}']")
+        time.sleep(0.4)
+        page.click("#rc-recruit")
+        page.click(".go-menu .go-menu-item[data-action=call]")
+        page.wait_for_selector(".go-pane .go-scene .go-opening", timeout=30_000)
+        turns = page.eval_on_selector_all(".go-pane .go-scene .go-convo .go-turn", "els => els.map(e => [e.className, e.textContent])")
+        assert len(turns) == 2 and "you" in turns[0][0].split() and "him" in turns[1][0].split(), turns
+        assert turns[0][1].startswith("You:") and first in turns[0][1] and coach in turns[0][1], turns[0]
+        assert game["opponent"] in turns[1][1], (turns[1], game)
+        you_right = page.evaluate("() => { const y = document.querySelector('.go-pane .go-turn.you').getBoundingClientRect(), h = document.querySelector('.go-pane .go-turn.him').getBoundingClientRect(); return y.right > h.right + 20 && y.left > h.left; }")
+        assert you_right, "your bubble sits right, his left"
+        assert not page.query_selector(".go-pane .go-scene .go-scene-line.cue"), "the cue waits on your opening"
+        assert "YOUR OPENING" in page.inner_text(".go-pane .go-scene") and "WHAT YOU LEAD WITH" not in page.inner_text(".go-pane .go-scene")
+        chips = page.query_selector_all(".go-pane .go-scene .go-present-chip")
+        assert len(chips) == 7 and all(c.get_attribute("aria-pressed") == "false" for c in chips)
+        for c in chips[:3]:
+            c.click()
+        chips[3].click()
+        toasted(page, "Three things. Drop one first.")
+        assert chips[3].get_attribute("aria-pressed") == "false" and page.inner_text(".go-pane .go-present-count").strip() == "3 of 3"
+        h = watch(page, ".go-pane .go-scene", ".go-pane .go-present", scrolled=False)
+        page.click(".go-pane .go-present")
+        page.wait_for_selector(".go-pane .go-scene .go-scene-line.cue", timeout=30_000)
+        page.wait_for_selector(".go-pane .go-scene .go-opening", state="detached", timeout=10_000)
+        smooth(page, h, "Present")
+        b = next(x for x in call(base, f"/api/season/{sid}/recruiting")["board"] if x["id"] == pid)
+        sc = b["scene"]
+        assert sc["presented"] and len(sc["presented"]) == 3 and sc["cue"]
+        turns = page.eval_on_selector_all(".go-pane .go-scene .go-convo .go-turn", "els => els.map(e => [e.className, e.textContent])")
+        assert [t["who"] for t in sc["turns"]] == [next(w for w in ("you", "him", "note") if w in c.split()) for c, _ in turns], (turns, sc["turns"])
+        assert turns[2][1].startswith("You:") and "cue" in turns[5][0].split() and turns[5][1] == sc["cue"]["text"], turns
+        assert "WHAT YOU LEAD WITH" in page.inner_text(".go-pane .go-scene") and "YOUR PITCH" not in page.inner_text("body")
+        hist = page.inner_text("body")
+        # the pitch: his reaction joins the conversation, then the board catches up and the scene leaves
+        topic = sc["cue"]["topics"][0]
+        page.click(f".go-pane .go-pitch:has(input[value='{topic}'])")
+        n = draws(page)
+        page.click(".go-pane .go-scene button:has-text('Pitch')")
+        page.wait_for_selector(".go-pane .go-scene .go-convo .go-turn.go-reaction", timeout=30_000)
+        kind = page.get_attribute(".go-pane .go-reaction", "data-kind")
+        assert kind in ("hit", "polite", "quiet"), kind
+        turns = page.eval_on_selector_all(".go-pane .go-scene .go-convo .go-turn", "els => els.map(e => [e.className, e.textContent])")
+        assert turns[-2][1].startswith("You:") and "go-reaction" in turns[-1][0], turns[-2:]
+        assert "counts at the week step" in page.inner_text(".go-pane .go-scene .go-scene-acts")
+        assert page.evaluate("() => [...document.querySelectorAll('.go-pane .go-scene .go-pitches input')].every(r => r.disabled)"), "what you led with stays on record, locked"
+        assert not page.query_selector(".go-pane .go-scene button:has-text('Pitch')"), "the buttons gave way"
+        settle(page, n)
+        assert page.query_selector(".go-pane .go-scene .go-reaction"), "the finished conversation stays until the pane moves on"
+        assert "Hang up" not in page.inner_text(".go-pane .go-scene"), "a finished conversation has nothing left to do"
+        # History: the opening's line
+        page.click(".go-subtabs button[data-sub=history]")
+        time.sleep(0.3)
+        hist = page.inner_text(".go-pane")
+        assert re.search(r"Presented [a-zA-Z ]+, [a-zA-Z ]+, [a-zA-Z ]+ · (none|one|two|three) landed", hist), hist
+        # a visit opens with the room, then you in the living room
+        page.click(f".go-row-recruit[data-pid='{other}']")
+        time.sleep(0.5)
+        assert not page.query_selector(".go-pane .go-scene"), "another recruit's pane starts without the old conversation"
+        page.click("#rc-recruit")
+        page.click(".go-menu .go-menu-item[data-action=hc_visit]")
+        page.wait_for_selector(".go-pane .go-scene .go-opening", timeout=30_000)
+        turns = page.eval_on_selector_all(".go-pane .go-scene .go-convo .go-turn", "els => els.map(e => [e.className, e.textContent])")
+        assert len(turns) == 3 and "note" in turns[0][0].split() and "you" in turns[1][0].split() and "him" in turns[2][0].split(), turns
+        present_three(page)
+        turns = page.eval_on_selector_all(".go-pane .go-scene .go-convo .go-turn", "els => els.map(e => [e.className, e.textContent])")
+        assert any("His dad" in t for _, t in turns), turns
+        assert "null" not in page.inner_text(".go-pane .go-scene") and "{" not in page.inner_text(".go-pane .go-scene")
+        assert not errs, errs
+    finally:
+        try:
+            call(base, f"/api/season/{sid}", method="DELETE")
+        except Exception:  # noqa: BLE001
+            pass
+
+
 if __name__ == "__main__":
     try:
         from playwright.sync_api import sync_playwright
@@ -1274,6 +1393,7 @@ if __name__ == "__main__":
             n = draws(page)
             page.click("#rc-recruit")
             page.click(".go-menu .go-menu-item[data-action=call]")
+            present_three(page)
             page.wait_for_selector(".go-pane .go-scene .go-scene-line.cue", timeout=30_000)
             settle(page, n)
             # the cue marks its pitch with a hollow star (a known priority keeps the full one); the old tag's word is gone
@@ -1315,7 +1435,7 @@ if __name__ == "__main__":
             one_star("after his reaction")
             toasted(page, f"Pitch: {PITCH[hit]} · {REACTION[kind]}")
             settle(page, n)   # the reaction stays four seconds, then the board re-fetches
-            assert not page.query_selector(".go-pane .go-reaction"), "the board re-renders after his reaction"
+            assert page.query_selector(".go-pane .go-scene .go-reaction"), "the finished conversation stays on screen after the board catches up"
             one_star("after the re-render")
             # the Offer step's pitch list: his known priorities wear ★, the cued topic he named among them (never both)
             page.click("#rc-recruit")
@@ -1346,6 +1466,7 @@ if __name__ == "__main__":
             n = draws(page)
             page.click("#rc-recruit")
             page.click(".go-menu .go-menu-item[data-action=call]")
+            present_three(page)
             page.wait_for_selector(".go-pane .go-scene .go-scene-line.cue", timeout=30_000)
             settle(page, n)
             page.click("#rc-recruit")
@@ -1790,6 +1911,7 @@ if __name__ == "__main__":
             n = draws(page)
             page.click("#rc-recruit")
             page.click(".go-menu .go-menu-item[data-action=call]")
+            present_three(page)
             page.wait_for_selector(".go-pane .go-scene .go-scene-line.cue", timeout=30_000)
             settle(page, n)
             row3 = next(x for x in call(base, f"/api/season/{A}/recruiting")["board"] if x["id"] == third)
@@ -1894,6 +2016,7 @@ if __name__ == "__main__":
             n = draws(page)
             menu("call")
             toasted(page, f"Called {x['name']} · 15 hours")
+            present_three(page)
             page.wait_for_selector(".go-pane .go-scene .go-scene-line.cue", timeout=30_000)
             settle(page, n)
             smooth(page, h, "Call")
@@ -1910,7 +2033,7 @@ if __name__ == "__main__":
             h = watch(page, ".go-pane")      # a fresh watch: smooth() disconnected the first observer
             settle(page, n)          # his reaction stays a moment, then the board catches up in place
             smooth(page, h, "Pitch, after the re-fetch")
-            assert not page.query_selector(".go-pane .go-reaction")
+            assert page.query_selector(".go-pane .go-scene .go-reaction"), "the finished conversation stays on screen"
             # Pull offer: confirmed, the offer goes; the tag leaves and the cell changes in place
             page.remove_listener("dialog", dismiss)
             page.once("dialog", lambda d: d.accept())
@@ -1954,6 +2077,7 @@ if __name__ == "__main__":
             toasted(page, f"Message sent to {y['name']} · 5 hours")
             menu("call")
             toasted(page, f"Called {y['name']} · 15 hours")
+            present_three(page)
             page.wait_for_selector(".go-pane .go-scene .go-scene-line.cue", timeout=30_000)
             settle(page, n)
             time.sleep(3)
@@ -2094,6 +2218,7 @@ if __name__ == "__main__":
             test_recruit_question(page)
             test_look_units_pane(page, base, A)
             test_staff_likes_tags(page, base)
+            test_conversation(page, base)
             browser.close()
         assert not errors, errors
         print("ux sweep ok: office, prospects, board (tabs, list, pane, menu, step, scene, phone, every action patching in place with its toast), scouting, schedule, depth, player page, an FCS box score and every offseason stage at 1280 and 400")

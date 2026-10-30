@@ -152,22 +152,31 @@ def report(m: dict) -> list[str]:
     return out
 
 
-def reveal_rate(seed: int, team: str = "georgia") -> float:
+PRESENT_WITH = ("winning", "playing_time", "coach")      # the scripted calls' opening: three things, the same every call
+
+
+def reveal_rate(seed: int, team: str = "georgia") -> dict:
     """How often your call scene's cue leads you to one of his priorities: a fresh career, the first
-    100 prospects you can see, each a call, pitching the first topic the cue names (the band: 0.55-0.75,
-    set by scenes.CUE_TWO_SIDED)."""
+    100 prospects you can see, each a call, presenting PRESENT_WITH and pitching the first topic the
+    cue names (the band: 0.55-0.75, set by scenes.CUE_TWO_SIDED). Also what a player's call is worth a
+    go: the opening's points and the pitch's, against the one-shot call the AI makes (BASE_POINTS)."""
     state = season.new_season(team, "full", seed=seed, career=True)
     rc = state["recruiting"]
     pids = [q for q in recruiting.prospect_list(state) if not rc["prospects"][q].get("hidden")][:100]
-    found = 0
+    found, present, pitch = 0, 0.0, 0.0
     for pid in pids:
         rc["hours"][team] = 100
         sc = recruiting.act(state, team, pid, "call")["scene"]
+        before = recruiting.pending(state, team, pid)
+        sc = recruiting.act(state, team, pid, "present", scene=sc["id"], topics=list(PRESENT_WITH))["scene"]
+        mid = recruiting.pending(state, team, pid)
         if sc["question"]:                        # he asked about a named player: the pitch waits on an answer
             recruiting.act(state, team, pid, "answer", scene=sc["id"], answer="deflect")
         r = recruiting.act(state, team, pid, "pitch", pitch=sc["cue"]["topics"][0], scene=sc["id"])
         found += r["reaction"]["kind"] in ("hit", "quiet")
-    return found / len(pids)
+        present += mid - before
+        pitch += recruiting.pending(state, team, pid) - mid
+    return {"rate": found / len(pids), "present": present / len(pids), "pitch": pitch / len(pids)}
 
 
 def question_mix(seed: int, team: str = "georgia") -> dict:
@@ -184,6 +193,7 @@ def question_mix(seed: int, team: str = "georgia") -> dict:
         rc["hours"][team] = 100
         out["playing_time"] += "playing_time" in rc["prospects"][pid]["priorities"]
         sc = recruiting.act(state, team, pid, "call")["scene"]
+        sc = recruiting.act(state, team, pid, "present", scene=sc["id"], topics=list(PRESENT_WITH))["scene"]   # his question follows the opening
         q = sc["question"]
         if not q:
             continue
@@ -199,7 +209,10 @@ def question_mix(seed: int, team: str = "georgia") -> dict:
 
 def main() -> None:
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-    print(f"  player reveal rate {reveal_rate(1):.3f}   want 0.55-0.75")
+    rr = reveal_rate(1)
+    print(f"  player reveal rate {rr['rate']:.3f}   want 0.55-0.75")
+    print(f"  a player's call a go: opening {rr['present']:.2f} + pitch on the cue {rr['pitch']:.2f} = {rr['present'] + rr['pitch']:.2f} "
+          f"(a one-shot call {recruiting.BASE_POINTS['call']}; want the opening about a quarter of the call: PRESENT_HIT {recruiting.PRESENT_HIT})")
     qm = question_mix(1)
     print(f"  recruit questions: {qm['questions']} on {qm['calls']} calls ({qm['playing_time']} care about playing time; "
           f"want about {qm['rate']:.2f} of those), roster {qm['roster']} / recruit {qm['recruit']}; "

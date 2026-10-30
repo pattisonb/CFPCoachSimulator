@@ -117,6 +117,10 @@ if __name__ == "__main__":
         assert pester2 < pester1 < 0, (pester1, pester2)
         assert pester2 == -recruiting.PESTER_COST * recruiting.BASE_POINTS["message"] * (1 + recruiting.PESTER_RAMP), pester2
         sc = R(sid, "recruit", {"pid": pid, "action": "call"})["scene"]
+        assert sc["tired"] is True, "a pestering call opens short"
+        pr = R(sid, "recruit", {"pid": pid, "action": "present", "scene": sc["id"], "topics": ["winning", "nil", "coach"]})
+        assert pr["points"] == 0.0 and pr["scene"]["present"]["kind"] == "tired", "a pestering call's opening earns nothing"
+        sc = pr["scene"]
         r = R(sid, "recruit", {"pid": pid, "action": "pitch", "scene": sc["id"], "pitch": sc["cue"]["topics"][0]})
         assert r["reaction"]["kind"] == "tired" and r["reaction"]["text"], r["reaction"]
         assert recruiting.pending(st, ME, pid) < pester2, "the pestering call cost nothing"

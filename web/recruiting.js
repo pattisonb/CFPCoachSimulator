@@ -167,6 +167,8 @@
       if (j >= 0) { folded.add(j); actionOf.set(i, evs[j].action); }
     });
     const nil = (e) => (e.nil != null ? `${e.nil} NIL` : null);
+    const lowerName = (t) => { const n = PITCH_NAMES[t] || t; return n === n.toUpperCase() ? n : n[0].toLowerCase() + n.slice(1); };
+    const LANDED = ["none landed", "one landed", "two landed", "three landed"];
     const line = (e, i) => {
       let bits;
       if (e.kind === "contact") bits = [ACTION_NAMES[e.action] || e.action, e.pitch ? PITCH_NAMES[e.pitch] || e.pitch : null];
@@ -178,6 +180,7 @@
       else if (e.kind === "asked_more") bits = ["He asked for more NIL"];
       else if (e.kind === "not_buying") bits = ["He isn't buying your pitch"];
       else if (e.kind === "pester") bits = [`He tuned out your ${e.action === "hc_visit" ? "visit" : e.action === "call" ? "call" : "message"}`];
+      else if (e.kind === "present") bits = [`Presented ${(e.topics || []).map((t) => lowerName(t)).join(", ")}`, LANDED[e.hit] || `${e.hit} landed`];
       else if (e.kind === "answer") bits = [e.answer === "promise" ? `Promised him the job over ${e.about}${e.truthful === false ? " (he did not buy it)" : ""}`
         : e.answer === "deflect" ? `Sidestepped his question about ${e.about}` : `Told him straight about ${e.about}`];
       else if (e.kind === "promise_broken") bits = [`He heard you promised the same spot to ${e.about}`];
@@ -1264,7 +1267,7 @@
     // what he brought up this week: the cue of an open scene, or of one you finished this week, and the ☆ tag's title
     function cueOf(b) {
       const hw = view.heard[`${s.id}:${b.id}`];
-      const c = b.scene ? { topics: b.scene.cue.topics, action: b.scene.action } : hw && hw.week === s.current_week ? hw : { topics: [] };
+      const c = b.scene ? { topics: b.scene.cue ? b.scene.cue.topics : [], action: b.scene.action } : hw && hw.week === s.current_week ? hw : { topics: [] };
       return { topics: c.topics, title: cueTitle(c.action) };
     }
     // the pitch as a dropdown: his known priorities first, then the rest, each with your program's case;
@@ -1348,65 +1351,158 @@
         : el("p", { class: "muted small", text: "Nothing on him in the news yet this season." }));
       return out;
     }
-    // a call or in-home visit as a scene in the pane: his lines, the cue, your pitch. The other actions wait
-    // until you pitch; hanging up only closes the view (Finish in the head resumes it).
+    // a call or in-home visit as a conversation in the pane (coach_career/scenes.py): the turns so far (you, him, the
+    // room), then your opening (three things, Present), which brings his reaction, your question and his cue in place;
+    // then his question when he has one, what you lead with, Pitch. His reaction to the pitch joins the conversation.
+    // The other actions wait until you pitch; hanging up only closes the view (Finish in the head resumes it).
+    const MAX_PRESENT = 3;
     function sceneView(b) {
       const scene = b.scene, visit = scene.action === "hc_visit", what = visit ? "visit" : "call";
-      let chosen = scene.cue.topics[0] || "";
+      let chosen = (scene.cue && scene.cue.topics[0]) || "";
       const sc = el("section", { class: "go-scene", tabindex: "-1", "aria-label": `${visit ? "In-home visit" : "Call"} with ${b.name}` });
       sc.append(el("div", { class: "go-scene-head" }, [avatar(b.id), el("div", {}, [el("div", { class: "go-kicker", text: visit ? "IN HIS HOME" : "ON THE PHONE" }), el("b", { text: b.name })])]));
-      // his lines; on a visit the first line and the last are the room, not him
-      sc.append(el("div", { class: "go-scene-lines" }, scene.lines.map((t, i) => {
-        const cue = t === scene.cue.text, room = visit && !cue && (i === 0 || i === scene.lines.length - 1);
-        return el("p", { class: `go-scene-line ${cue ? "cue" : ""} ${room ? "room" : ""}`, text: t, ...(cue ? { title: "The cue: what he is telling you he cares about" } : {}) });
-      })));
-      // his question about a named player: answered before any pitch (the engine refuses a pitch until then)
-      const q = scene.question;
-      const pending = () => !!(q && !q.answer);
-      if (q) sc.append(questionView(b, scene));
-      sc.append(el("div", { class: "go-kicker muted", text: "YOUR PITCH" }),
-        pitchPicker(b, chosen, (t) => { chosen = t; view.pitch[b.id] = t; }, scene.cue.topics, cueTitle(scene.action), pending()));
-      const PITCH_TIP = "Sell him on this: it costs nothing more, the hours went when you picked up";
-      const go = el("button", { type: "button", class: "go-btn primary", text: "Pitch", title: pending() ? "Answer him first" : PITCH_TIP });
-      go.disabled = pending();
-      // his question answered: the pitch and its radios open up in place
-      sc._unlock = () => {
-        go.disabled = false;
-        go.title = PITCH_TIP;
-        for (const r of sc.querySelectorAll(".go-pitches input")) r.disabled = false;
+      // the turns: yours right in a muted bubble, his left, the room centered in italics; the cue keeps its frame
+      const convo = el("div", { class: "go-scene-lines go-convo", role: "log", "aria-label": `The ${what}` });
+      const turnEl = (t) => {
+        const cue = !!(scene.cue && t.who === "him" && t.text === scene.cue.text);
+        const p = el("p", { class: `go-scene-line go-turn ${t.who} ${cue ? "cue" : ""} ${t.who === "note" ? "room" : ""}`,
+          ...(cue ? { title: "The cue: what he is telling you he cares about" } : {}) });
+        if (t.who === "you") p.append(el("span", { class: "go-turn-who", text: "You:" }), " ");
+        p.append(t.text);
+        return p;
       };
-      go.addEventListener("click", async () => {
-        if (pending()) { H.toast("Answer him first.", 3000); return; }
-        if (!chosen) { H.toast("Pick a pitch first: what you are selling him.", 3000); return; }
-        const r = await ui().busy(go, act(s, b.id, "pitch", chosen, null, { silent: true, scene: scene.id, onReaction: (re) => {
-          view.heard[`${s.id}:${b.id}`] = { week: s.current_week, topics: scene.cue.topics, action: scene.action };
-          b.scene = null;
-          view.scene = null;
-          view.reaction = { pid: b.id, r: re };
-          if (re.revealed && !b.priorities_known.includes(re.revealed)) b.priorities_known.push(re.revealed);   // he told you: known now, not at the re-fetch
-          ui().toast(`Pitch: ${PITCH_NAMES[chosen] || chosen} · ${REACTION_WORDS[re.kind] || re.kind}`);
-          patchPane(b);
-          const rv = box.querySelector(".go-pane .go-reaction");
+      let drawn = 0;
+      const addTurns = (animate) => {
+        const added = scene.turns.slice(drawn).map((t) => turnEl(t));
+        drawn = scene.turns.length;
+        for (const e of added) { convo.append(e); if (animate) ui().fadeIn(e); }
+        return added;
+      };
+      addTurns(false);
+      sc.append(convo);
+      const tail = el("div", { class: "go-scene-tail" });
+      sc.append(tail);
+      const PITCH_TIP = "Sell him on this: it costs nothing more, the hours went when you picked up";
+      // ----- after your opening: his question, what you lead with, Pitch and Hang up -----
+      function drawFinish(animate) {
+        const q = scene.question;
+        const pending = () => !!(q && !q.answer);
+        const parts = [];
+        if (q) parts.push(questionView(b, scene));
+        parts.push(el("div", { class: "go-kicker muted", text: "WHAT YOU LEAD WITH" }),
+          pitchPicker(b, chosen, (t) => { chosen = t; view.pitch[b.id] = t; }, scene.cue.topics, cueTitle(scene.action), pending()));
+        const go = el("button", { type: "button", class: "go-btn primary", text: "Pitch", title: pending() ? "Answer him first" : PITCH_TIP });
+        go.disabled = pending();
+        // his question answered: the pitch and its radios open up in place
+        sc._unlock = () => {
+          go.disabled = false;
+          go.title = PITCH_TIP;
+          for (const r of sc.querySelectorAll(".go-pitches input")) r.disabled = false;
+        };
+        go.addEventListener("click", async () => {
+          if (pending()) { H.toast("Answer him first.", 3000); return; }
+          if (!chosen) { H.toast("Pick what you lead with first: what you are selling him.", 3000); return; }
+          const r = await ui().busy(go, act(s, b.id, "pitch", chosen, null, { silent: true, scene: scene.id, onReaction: (re) => {
+            view.heard[`${s.id}:${b.id}`] = { week: s.current_week, topics: scene.cue.topics, action: scene.action };
+            b.scene = null;
+            view.scene = null;
+            if (re.revealed && !b.priorities_known.includes(re.revealed)) b.priorities_known.push(re.revealed);   // he told you: known now, not at the re-fetch
+            ui().toast(`Pitch: ${PITCH_NAMES[chosen] || chosen} · ${REACTION_WORDS[re.kind] || re.kind}`);
+            // the conversation ends in place: your line and his reaction join it, the picker leaves; the finished
+            // conversation stays on screen (no scene id to match, so the board's patches keep it) until the pane
+            // next changes what it shows (another recruit, a new call, the week step); removing it would shrink the
+            // pane under the player's scroll
+            sc._sid = null;
+            scene.turns.push({ who: "you", text: re.you || PITCH_NAMES[chosen] });
+            scene.turns.push({ who: re.kind === "tired" ? "note" : "him", text: re.text });
+            const added = addTurns(true);
+            const last = added[added.length - 1];
+            last.classList.add("go-reaction", re.kind);
+            last.dataset.kind = re.kind;
+            last.setAttribute("role", "status");
+            last.tabIndex = -1;
+            // what you led with stays on record (the radios locked); the buttons give way to the note, at the same
+            // height, so the pane never shrinks under the player's scroll
+            for (const r of fin.querySelectorAll(".go-pitches input")) r.disabled = true;
+            acts.style.minHeight = `${acts.offsetHeight}px`;
+            hint.style.minHeight = `${hint.offsetHeight}px`;
+            acts.replaceChildren(el("span", { class: "muted small go-scene-done", text: "It counts at the week step." }));
+            hint.textContent = `The ${what} is over. The conversation stays here until you move on.`;
+            patchPane(b);
+            last.focus({ preventScroll: true });
+            // his reaction stays a moment, then the board catches up in place (unless the board has moved on: another career, a new week, another tab)
+            setTimeout(() => {
+              if (boardAt && boardAt.box === box && boardAt.s.id === s.id && boardAt.s.current_week === s.current_week && box.offsetParent) refresh(s, box);
+            }, 4000);
+          } }));
+          if (!r) { view.scene = null; refresh(s, box); return; }     // a stale call (the week moved on): the board shows where things stand
+          const rv = box.querySelector(".go-pane .go-reaction");       // his reply keeps the focus, not the Pitch button in the leaving scene
           if (rv) rv.focus({ preventScroll: true });
-          // his reaction stays a moment, then the board catches up in place (unless the board has moved on: another career, a new week, another tab)
-          setTimeout(() => {
-            if (view.reaction && view.reaction.r === re) view.reaction = null;
-            if (boardAt && boardAt.box === box && boardAt.s.id === s.id && boardAt.s.current_week === s.current_week && box.offsetParent) refresh(s, box);
-          }, 4000);
-        } }));
-        if (!r) { view.scene = null; refresh(s, box); return; }     // a stale call (the week moved on): the board shows where things stand
-        const rv = box.querySelector(".go-pane .go-reaction");       // his reply keeps the focus, not the Pitch button in the leaving scene
-        if (rv) rv.focus({ preventScroll: true });
-      });
-      const hang = el("button", { type: "button", class: "go-link go-hangup", text: "Hang up",
-        onclick: () => {
-          view.scene = null;
-          patchPane(b);
-          const f = box.querySelector("#rc-finish");
-          if (f) f.focus({ preventScroll: true });
-        } });
-      sc.append(el("div", { class: "go-row wrap go-scene-acts" }, [go, hang]),
-        el("p", { class: "muted small", text: `Hanging up keeps the ${what} open: finish it from the pane this week. One you never finish counts for nothing.` }));
+        });
+        const hang = el("button", { type: "button", class: "go-link go-hangup", text: "Hang up", onclick: hangUp });
+        const acts = el("div", { class: "go-row wrap go-scene-acts" }, [go, hang]);
+        const hint = el("p", { class: "muted small", text: `Hanging up keeps the ${what} open: finish it from the pane this week. One you never finish counts for nothing.` });
+        parts.push(acts, hint);
+        const fin = el("div", { class: "go-scene-finish" }, parts);
+        tail.append(fin);
+        if (animate) ui().fadeIn(fin);
+        return fin;
+      }
+      function hangUp() {
+        view.scene = null;
+        patchPane(b);
+        const f = box.querySelector("#rc-finish");
+        if (f) f.focus({ preventScroll: true });
+      }
+      // ----- your opening: three things about your program, then Present -----
+      function drawOpening() {
+        const picked = new Set();
+        const wrap = el("div", { class: "go-opening", role: "group", "aria-label": "Your opening" });
+        const count = el("span", { class: "go-present-count muted small", role: "status", text: `0 of ${MAX_PRESENT}` });
+        const go = el("button", { type: "button", class: "go-btn primary go-present", text: "Present", title: `Pick ${MAX_PRESENT} things first` });
+        go.disabled = true;
+        const chips = el("div", { class: "go-row wrap go-present-chips", role: "group", "aria-label": "Three things about your program" });
+        for (const t of Object.keys(PITCH_NAMES)) {
+          const sv = b.strength ? b.strength[t] : null, word = caseWord(b, t);
+          const tone = sv == null ? "" : sv >= 0.6 ? "good" : sv < 0.25 ? "bad" : "";
+          const chip = el("button", { type: "button", class: "go-chip go-present-chip", "data-topic": t, "aria-pressed": "false",
+            title: word ? `Your program's case on ${PITCH_NAMES[t].toLowerCase()}: ${word.toLowerCase()}` : "" },
+            [el("b", { text: PITCH_NAMES[t] }), word ? el("span", { class: `go-tag ${tone}`, text: word }) : null]);
+          chip.addEventListener("click", () => {
+            if (picked.has(t)) picked.delete(t);
+            else if (picked.size >= MAX_PRESENT) { H.toast(`Three things. Drop one first.`, 3000); return; }
+            else picked.add(t);
+            chip.classList.toggle("on", picked.has(t));
+            chip.setAttribute("aria-pressed", String(picked.has(t)));
+            count.textContent = `${picked.size} of ${MAX_PRESENT}`;
+            go.disabled = picked.size !== MAX_PRESENT;
+            go.title = go.disabled ? `Pick ${MAX_PRESENT} things first` : "Tell him what your program is about, then ask him what he is looking for";
+          });
+          chips.append(chip);
+        }
+        go.addEventListener("click", async () => {
+          if (picked.size !== MAX_PRESENT) { H.toast(`Pick ${MAX_PRESENT} things first.`, 3000); return; }
+          let r;
+          try { r = await ui().busy(go, H.api(`/api/season/${s.id}/recruit`, H.postJSON({ pid: b.id, action: "present", scene: scene.id, topics: [...picked] }))); }
+          catch (err) { H.toast(`Could not present: ${H.errText(err)}`, 4000); return; }
+          if (!(r && r.scene)) { view.scene = null; refresh(s, box); return; }     // a stale call (the week moved on)
+          Object.assign(scene, r.scene);               // the same scene object: the board row and the view share it
+          chosen = scene.cue.topics[0] || "";
+          // the opening leaves, the new turns come in, then his question and the lead-with: all in place
+          await ui().fadeOut(wrap);
+          const added = addTurns(true);
+          drawFinish(true);
+          const first = added[0];
+          if (first) { first.tabIndex = -1; first.focus({ preventScroll: true }); }
+        });
+        wrap.append(el("div", { class: "go-kicker muted", text: "YOUR OPENING" }),
+          el("p", { class: "muted small", text: "Three things you lead your program with. Then you ask him what he is looking for." }),
+          chips,
+          el("div", { class: "go-row wrap go-scene-acts" }, [go, count, el("button", { type: "button", class: "go-link go-hangup", text: "Hang up", onclick: hangUp })]),
+          el("p", { class: "muted small", text: `Hanging up keeps the ${what} open: finish it from the pane this week. One you never finish counts for nothing.` }));
+        tail.append(wrap);
+      }
+      if (scene.presented) drawFinish(false); else drawOpening();
       return sc;
     }
     // his question in the scene (docs/superpowers/specs/2026-10-29-recruit-questions-design.md, section 3): his line, three answers

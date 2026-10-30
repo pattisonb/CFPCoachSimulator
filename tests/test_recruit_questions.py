@@ -35,8 +35,16 @@ def R(sid: str, path: str, body: dict) -> dict:
 
 
 def call(sid: str, pid: str) -> dict:
-    api.loaded_state()["recruiting"]["hours"][ME] = 100          # hours are not the point here
-    return R(sid, "recruit", {"pid": pid, "action": "call"})["scene"]
+    """A call, presented with three topics that are not his (his question comes after your opening;
+    the opening earns nothing here, so the points under test are the answer's alone)."""
+    st = api.loaded_state()
+    st["recruiting"]["hours"][ME] = 100          # hours are not the point here
+    sc = R(sid, "recruit", {"pid": pid, "action": "call"})["scene"]
+    assert sc["question"] is None and sc["cue"] is None, "his question and the cue wait on your opening"
+    misses = [t for t in recruiting.PITCHES if t not in st["recruiting"]["prospects"][pid]["priorities"]][:3]
+    r = R(sid, "recruit", {"pid": pid, "action": "present", "scene": sc["id"], "topics": misses})
+    assert r["points"] == 0.0, r
+    return r["scene"]
 
 
 def answer(sid: str, pid: str, sc: dict, how: str) -> dict:
