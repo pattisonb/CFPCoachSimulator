@@ -918,6 +918,22 @@ def _home_game_left(state: dict, slug: str) -> Optional[int]:
     return min(weeks) if weeks else None
 
 
+def manual_offers(state: dict, slug: str) -> set[str]:
+    """Your offers made by hand (through `act`), which Auto-recruit never pulls; empty for any
+    other school (Auto-recruit's own offers and the AI's are never marked)."""
+    if slug != state.get("team"):
+        return set()
+    return set(state["recruiting"].get("manual_offers") or ())
+
+
+def _unmark(state: dict, slug: str, pid: str) -> None:
+    """Your offer to him is gone (pulled by hand, or lapsed when he signed): its hand mark goes too."""
+    if slug == state.get("team"):
+        marks = state["recruiting"].get("manual_offers")
+        if marks and pid in marks:
+            marks.remove(pid)
+
+
 def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
         scene: Optional[str] = None) -> dict:
     """One recruiting action by `slug` on prospect `pid` this week. Its interest lands at the week
@@ -935,6 +951,10 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
         return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed}}
     opens = slug == state.get("team") and action in SCENES and pitch is None
     revealed = _act(state, slug, pid, action, pitch, nil, opens=opens)
+    if action == "offer" and slug == state.get("team"):     # your offer by hand: Auto-recruit leaves it be
+        marks = rc.setdefault("manual_offers", [])
+        if pid not in marks:
+            marks.append(pid)
     out = {"hours_left": rc["hours"][slug], "revealed": revealed}
     if opens:
         out["scene"] = rc["scenes"][slug][pid]
@@ -1096,6 +1116,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         if rc["status"][pid]["committed"] == slug and rc["status"][pid].get("hard"):
             raise RecruitingError(409, "he is a hard commit: his offer stands until he signs")
         offers.remove(pid)
+        _unmark(state, slug, pid)
         held = _nil(state, slug)["held"].pop(pid, None)
         if you:
             _event(state, "pull_offer", pid, slug, nil=held or 0)
@@ -1411,9 +1432,11 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
     if spots_left <= 0:
         return
     offers = rc["offers"].setdefault(slug, [])
+    kept = manual_offers(state, slug)          # your offers by hand: never pulled here (a signing elsewhere still ends one)
     for pid in [q for q in offers if rc["status"][q]["committed"] not in (None, slug)
-                and (rc["status"][q]["signed"] or rc["prospects"][q]["rank"] > RIVAL_RANK)]:
+                and (rc["status"][q]["signed"] or (rc["prospects"][q]["rank"] > RIVAL_RANK and q not in kept))]:
         offers.remove(pid)                     # he went elsewhere: the offer frees up (a top prospect is still chased)
+        _unmark(state, slug, pid)
         _nil(state, slug)["held"].pop(pid, None)
     edge = 1 + _coach_edge(state, slug)
     allowed = math.ceil(offer_cap(state, slug) * (1.0 if is_portal(state) else min(1.0, 0.35 + 0.65 * week / 8) * (LATE_OFFERS if week >= LATE_MARKET else 1.0)))
@@ -1421,8 +1444,8 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
     known = rc["revealed"].get(slug, {})
     win = _winning(state)
     need, commits = needs(state, slug), commits_by_group(state, slug)
-    for pid in list(offers):                   # a group at its cap: the open offers there are pulled (no more chasing flips)
-        if rc["status"][pid]["committed"] != slug and not rc["status"][pid]["signed"] \
+    for pid in list(offers):                   # a group at its cap: the open offers there are pulled (no more chasing flips), yours by hand kept
+        if pid not in kept and rc["status"][pid]["committed"] != slug and not rc["status"][pid]["signed"] \
                 and commits[_group_of(rc["prospects"][pid])] >= group_cap(need, _group_of(rc["prospects"][pid])):
             offers.remove(pid)
             _nil(state, slug)["held"].pop(pid, None)
@@ -1699,6 +1722,7 @@ def _sign(state: dict, final: bool) -> None:
         for school, pids in rc["offers"].items():  # every other school's offer to him lapses
             if school != st["signed"] and pid in pids:
                 pids.remove(pid)
+                _unmark(state, school, pid)
                 rc["nil"].get(school, {}).get("held", {}).pop(pid, None)
 
 
@@ -1807,6 +1831,7 @@ def _portal_draws(state: dict, week: int, rng: random.Random) -> None:
         for other, pids in rc["offers"].items():           # every other school's offer lapses
             if other != school and pid in pids:
                 pids.remove(pid)
+                _unmark(state, other, pid)
                 rc["nil"].get(other, {}).get("held", {}).pop(pid, None)
         n = rc["nil"].get(school)
         if n and pid in n["held"]:
