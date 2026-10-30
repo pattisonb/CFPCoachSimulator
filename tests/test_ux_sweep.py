@@ -592,6 +592,117 @@ if __name__ == "__main__":
             page.click(f".go-map .us-state[data-state='{st}']")
             time.sleep(0.6)
             assert page.evaluate("() => document.querySelectorAll('.go-row-recruit').length") == board, "tapping again clears the filter"
+            # --- Map zoom: a state tap zooms to its box (and filters), labels its dots, keeps dots one screen size; again resets
+            FULL_VB = "0 0 975 610"
+            map_vb = lambda: page.get_attribute(".go-map svg.us-map", "viewBox")
+            map_box = lambda: [float(x) for x in re.split(r"[\s,]+", map_vb().strip())]
+            n_rows = lambda: page.evaluate("() => document.querySelectorAll('.go-row-recruit').length")
+            home = lambda b: (b.get("hometown") or {}).get("state")
+            assert map_vb() == FULL_VB, map_vb()
+            zst = "TX" if any(home(b) == "TX" for b in vb) else st
+            in_st = {b["id"] for b in vb if home(b) == zst}
+            dot_px = lambda pid: page.eval_on_selector(f".go-map .us-dot[data-id='{pid}']", "e => e.getBoundingClientRect().width")
+            some = sorted(in_st)[0]
+            px_full = dot_px(some)
+            page.click(f".go-map .us-state[data-state='{zst}']")
+            time.sleep(0.6)
+            x, y, w, h = map_box()
+            cx, cy = page.evaluate("(c) => USMap.centroid(c)", zst)
+            assert w < 0.4 * 975 and x <= cx <= x + w and y <= cy <= y + h, f"a state tap zooms to its box: {(x, y, w, h)} around {(cx, cy)}"
+            assert n_rows() == len(in_st), "the same tap filters the list to the state's prospects"
+            labels = page.eval_on_selector_all(".go-map .us-dots text", "els => els.map(e => [e.dataset.id, e.textContent, e.getBoundingClientRect().height])")
+            names = {b["id"]: b["name"] for b in vb}
+            assert in_st <= {i for i, _, _ in labels}, "every dot of the zoomed state carries its name"
+            assert all(t == names[i] for i, t, _ in labels), "a label is the recruit's name"
+            assert all(8 <= hh <= 22 for _, _, hh in labels), f"labels read at a normal text size: {[hh for _, _, hh in labels][:5]}"
+            in_view = page.evaluate("""() => { const r = document.querySelector('.go-map svg.us-map').getBoundingClientRect();
+              return [...document.querySelectorAll('.go-map .us-dot')].filter(c => { const b = c.getBoundingClientRect(), x = b.left + b.width / 2, y = b.top + b.height / 2;
+                return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; }).map(c => c.dataset.id); }""")
+            assert {i for i, _, _ in labels} == set(in_view), "the labels are the dots in view, no more"
+            # a cluster's names step aside rather than print over each other (one with no room waits for a closer zoom)
+            boxes = page.eval_on_selector_all(".go-map .us-dots text.us-label:not(.crowded)", "els => els.map(e => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom]; })")
+            assert boxes, "some labels show"
+            hits = [(a, b) for i, a in enumerate(boxes) for b in boxes[i + 1:] if a[0] < b[2] - 1 and b[0] < a[2] - 1 and a[1] < b[3] - 1 and b[1] < a[3] - 1]
+            assert not hits, f"labels overlap: {hits[:3]}"
+            assert abs(dot_px(some) - px_full) <= 1, f"a dot keeps its screen size at zoom: {dot_px(some)} vs {px_full}"
+            page.click(f".go-map .us-state[data-state='{zst}']")
+            time.sleep(0.6)
+            assert map_vb() == FULL_VB, f"tapping again resets the view: {map_vb()}"
+            assert n_rows() == board and not page.query_selector(".go-map .us-dots text"), "and clears the filter and the labels"
+            # Escape resets the zoom and the filter (focus comes back to the state after the board redraws)
+            page.click(f".go-map .us-state[data-state='{zst}']")
+            time.sleep(0.6)
+            assert n_rows() == len(in_st)
+            page.keyboard.press("Escape")
+            time.sleep(0.6)
+            assert map_vb() == FULL_VB and n_rows() == board, "Escape resets the zoom and clears the filter"
+            # the region buttons: one per scouting area, the scout's name on a covered one; a region zooms, no filter
+            rv = call(base, f"/api/season/{A}/recruiting")
+            areas = rv["areas"]
+            staffed = {m["area"]: m["name"] for m in rv.get("staff") or [] if m.get("area")}
+            regs = page.eval_on_selector_all(".go-map-regions button[data-area]", "els => els.map(e => [e.dataset.area, e.textContent, e.getAttribute('aria-pressed')])")
+            assert [a for a, _, _ in regs] == list(areas), regs
+            assert all((staffed[a] in t) if a in staffed else t == a for a, t, _ in regs), regs
+            assert all(p == "false" for _, _, p in regs)
+            ri = max(range(len(regs)), key=lambda i: len(areas[regs[i][0]]))
+            ra = regs[ri][0]
+            page.click(f".go-map-regions button[data-area] >> nth={ri}")
+            time.sleep(0.6)
+            x, y, w, h = map_box()
+            cents = page.evaluate("(cs) => cs.map(c => USMap.centroid(c))", areas[ra])
+            assert w < 975 and all(x <= a <= x + w and y <= b <= y + h for a, b in cents), f"a region zooms to a box holding its states: {(x, y, w, h)}"
+            assert page.get_attribute(f".go-map-regions button[data-area] >> nth={ri}", "aria-pressed") == "true"
+            assert n_rows() == board, "a region is not a filter"
+            page.click(".go-map-regions .go-map-reset")
+            time.sleep(0.6)
+            assert map_vb() == FULL_VB and page.get_attribute(f".go-map-regions button[data-area] >> nth={ri}", "aria-pressed") == "false", "Whole country resets"
+            # the wheel zooms around the pointer: the point under it stays put; it never zooms out past the whole map
+            page.eval_on_selector(".go-map svg.us-map", "e => e.scrollIntoView({ block: 'center' })")
+            at = """() => { const s = document.querySelector('.go-map svg.us-map'); const [x, y] = USMap.centroid('MO');
+              const p = new DOMPoint(x, y).matrixTransform(s.getScreenCTM()); return [p.x, p.y]; }"""
+            p0 = page.evaluate(at)
+            page.mouse.move(p0[0] + 0.0, p0[1] + 0.0)
+            page.mouse.wheel(0, -300)
+            time.sleep(0.4)
+            p1 = page.evaluate(at)
+            assert map_box()[2] < 975, f"the wheel zooms in: {map_vb()}"
+            assert abs(p1[0] - p0[0]) <= 2 and abs(p1[1] - p0[1]) <= 2, f"the point under the pointer stays put: {p0} -> {p1}"
+            page.mouse.wheel(0, 3000)
+            time.sleep(0.4)
+            assert map_vb() == FULL_VB, f"zooming out stops at the whole map: {map_vb()}"
+            # a wheel burst over a zoomed state lays the labels out once, when it settles (not on every tick)
+            page.click(f".go-map .us-state[data-state='{zst}']")
+            time.sleep(0.6)
+            page.evaluate("""() => { window.__labelBatches = 0; const g = document.querySelector('.go-map .us-dots');
+              new MutationObserver(() => { window.__labelBatches++; }).observe(g, { childList: true }); }""")
+            mid = page.eval_on_selector(".go-map svg.us-map", "e => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }")
+            page.mouse.move(*mid)
+            for _ in range(10):
+                page.mouse.wheel(0, -40)
+            time.sleep(0.5)
+            batches = page.evaluate("() => window.__labelBatches")
+            assert batches <= 1, f"a ten-tick wheel burst relaid the labels {batches} times"
+            assert page.query_selector(".go-map .us-dots text.us-label") and not page.query_selector(".go-map svg.us-map.moving"), "the labels are back once it settles"
+            page.keyboard.press("Escape")
+            time.sleep(0.6)
+            assert map_vb() == FULL_VB and n_rows() == board, "Escape after the burst resets both"
+            # the keyboard: + zooms in on the focused map, Escape resets; a state is a button with its name and count
+            page.focus(".go-map svg.us-map")
+            page.keyboard.press("+")
+            time.sleep(0.4)
+            assert map_box()[2] < 975, "+ zooms in"
+            page.keyboard.press("Escape")
+            time.sleep(0.4)
+            assert map_vb() == FULL_VB, "Escape resets"
+            lab = page.eval_on_selector(f".go-map .us-state[data-state='{zst}']", "e => [e.getAttribute('tabindex'), e.getAttribute('role'), e.getAttribute('aria-label')]")
+            assert lab[0] == "0" and lab[1] == "button" and str(len(in_st)) in lab[2], lab
+            page.focus(f".go-map .us-state[data-state='{zst}']")
+            page.keyboard.press("Enter")
+            time.sleep(0.6)
+            assert n_rows() == len(in_st) and map_box()[2] < 0.4 * 975, "Enter on a state zooms and filters"
+            page.keyboard.press("Escape")
+            time.sleep(0.6)
+            assert map_vb() == FULL_VB and n_rows() == board
             # your choice is remembered across a reload, both ways
             open_tab(page, base, A, "recruiting", ".go-stages")
             assert not page.evaluate("() => document.querySelector('.go-map-body').hidden"), "an opened map stays open"
@@ -606,6 +717,18 @@ if __name__ == "__main__":
             assert page.evaluate("() => document.querySelectorAll('.go-stages button[data-stage]').length") == 6, "the board still renders its stage tabs"
             page.click(".go-map button:has-text('List the states')")
             assert page.query_selector(".go-map-table tr"), "the table is still reachable on a tiny screen"
+            page.click(".go-map .go-map-toggle")
+            # a phone: the region row scrolls sideways inside itself (the page does not), and a region button still zooms
+            page.set_viewport_size({"width": 400, "height": 860})
+            open_tab(page, base, A, "recruiting", ".go-stages")
+            if page.evaluate("() => document.querySelector('.go-map-body').hidden"):
+                page.click(".go-map .go-map-toggle")
+            row = page.eval_on_selector(".go-map-regions", "e => [getComputedStyle(e).overflowX, e.scrollWidth, e.clientWidth, getComputedStyle(e).flexWrap]")
+            assert row[0] == "auto" and row[3] == "nowrap" and row[1] > row[2], f"the region row scrolls on a phone: {row}"
+            assert page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth + 1"), "no sideways page scroll with the map open"
+            page.click(".go-map-regions button[data-area] >> nth=-1")
+            time.sleep(0.6)
+            assert map_box()[2] < 975, "a region button zooms on a phone"
             page.click(".go-map .go-map-toggle")
             page.set_viewport_size({"width": 1280, "height": 1000})
 
