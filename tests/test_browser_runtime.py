@@ -108,7 +108,7 @@ def sim_week(page) -> tuple[float, list]:
     the progress bar widths seen on the way (in-week progress reaches the page)."""
     page.wait_for_selector(".go-play")
     t0 = time.perf_counter()
-    page.click(".go-play >> text=/Sim the week|ADVANCE THE WEEK/")
+    page.click(".go-play >> text=/Sim the Week|ADVANCE THE WEEK/")
     page.wait_for_selector("body.simming", timeout=10_000)
     widths = []
     while time.perf_counter() - t0 < SIM_TIMEOUT / 1000:

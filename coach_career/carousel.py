@@ -561,7 +561,7 @@ def _name(slug: str) -> str:
 
 
 def mood(sec: int) -> str:
-    return "Untouchable" if sec >= 90 else "Secure" if sec >= 65 else "Warm seat" if sec >= 40 else "Hot seat"
+    return "Untouchable" if sec >= 90 else "Secure" if sec >= 65 else "Warm Seat" if sec >= 40 else "Hot Seat"
 
 
 def status(state: dict) -> dict:

@@ -69,7 +69,7 @@ DIVISIONS = {
 # Title games played at the higher seed's stadium rather than a neutral site.
 HOSTED_CCG = {"Sun Belt", "Mountain West", "American Athletic Conference", "Conference USA"}
 PLAYOFF_WEEKS = {17: "First round", 18: "Quarterfinals", 19: "Semifinals", 20: "National championship"}
-BOWL_WEEK_LABELS = {17: "First round & bowls", 18: "Quarterfinals & bowls", 19: "Semifinals & New Year bowls", 20: "National championship"}
+BOWL_WEEK_LABELS = {17: "First Round & Bowls", 18: "Quarterfinals & Bowls", 19: "Semifinals & New Year Bowls", 20: "National Championship"}
 CFP_WEEKS = {10, 11, 12, 13, 14, 15}   # committee rankings released after these weeks (Nov 3 ... Dec 6, 2026)
 # Calendar of the postseason weeks (regular-season weeks take their dates from the schedule).
 POSTSEASON_DATES = {CCG_WEEK: ("2026-12-04", "2026-12-05"), SELECTION_WEEK: ("2026-12-06", "2026-12-12"),
@@ -1496,9 +1496,9 @@ def _bowl_games(state: dict, teams: dict) -> list[dict]:
 
 def week_label(week: int) -> str:
     if week == CCG_WEEK:
-        return "Championship week"
+        return "Championship Week"
     if week == SELECTION_WEEK:
-        return "Selection week"
+        return "Selection Week"
     return BOWL_WEEK_LABELS.get(week) or f"Week {week}"
 
 
@@ -2855,7 +2855,7 @@ def summary(state: dict) -> dict:
         "record": rec, "schedule": schedule, "weeks": weeks, "my_rank": current_rank(state),
         "coach": _coach_line(state, teams[state["team"]]),
         "form": (state.get("form") or {}).get(state["team"]),
-        "week_labels": {**{w: f"Week {w}" for w in range(1, LAST_REGULAR_WEEK + 1)}, CCG_WEEK: "Championship week",
+        "week_labels": {**{w: f"Week {w}" for w in range(1, LAST_REGULAR_WEEK + 1)}, CCG_WEEK: "Championship Week",
                         SELECTION_WEEK: "Selection", **BOWL_WEEK_LABELS},
         "polls": state["polls"], "champions": state["champions"], "bracket": state["bracket"], "playoff": state["playoff"],
         "cfp_weeks": sorted(CFP_WEEKS), "bowls": bowl_view(state), "playoff_sites": state.get("playoff_sites"),
@@ -3197,9 +3197,9 @@ POSITION_RATINGS = {
 }
 RATING_LABELS = [("speed", "Speed"), ("strength", "Strength"), ("intelligence", "Awareness"), ("endurance", "Stamina"),
                  ("passing", "Passing"), ("decision_making", "Decisions"), ("elusiveness", "Elusiveness"), ("vision", "Vision"),
-                 ("hands", "Hands"), ("route_running", "Route running"), ("run_blocking", "Run blocking"), ("pass_blocking", "Pass blocking"),
-                 ("rushing", "Pass rush"), ("tackling", "Tackling"), ("coverage", "Coverage"), ("kick_power", "Kick power"),
-                 ("kick_accuracy", "Kick accuracy"), ("punt_power", "Punt power"), ("punt_accuracy", "Punt accuracy"), ("return_rating", "Returns")]
+                 ("hands", "Hands"), ("route_running", "Route Running"), ("run_blocking", "Run Blocking"), ("pass_blocking", "Pass Blocking"),
+                 ("rushing", "Pass Rush"), ("tackling", "Tackling"), ("coverage", "Coverage"), ("kick_power", "Kick Power"),
+                 ("kick_accuracy", "Kick Accuracy"), ("punt_power", "Punt Power"), ("punt_accuracy", "Punt Accuracy"), ("return_rating", "Returns")]
 CLASS_NAMES = {"FR": "Freshman", "FRRS": "Redshirt freshman", "SO": "Sophomore", "SORS": "Redshirt sophomore", "JR": "Junior",
                "JRRS": "Redshirt junior", "SR": "Senior", "SRRS": "Redshirt senior"}
 

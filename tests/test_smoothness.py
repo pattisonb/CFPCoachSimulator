@@ -150,10 +150,10 @@ def season_cases(page, base: str, sid: str) -> None:
     page.evaluate("() => window.scrollTo(0, 400)")
     page.click("#btn-settings")
     page.wait_for_selector(".modal-body .settings")
-    god = ready(page, ".settings-row:has-text('God mode') .switch")
+    god = ready(page, ".settings-row:has-text('God Mode') .switch")
     assert_smooth(page, ".depth-table", lambda: god.click(),
                   re.compile(r"^God mode (on: open any player or depth chart to edit it|off)\.$"), "Settings: god mode")
-    morale = ready(page, ".settings-row:has-text('Momentum and morale') .switch")
+    morale = ready(page, ".settings-row:has-text('Momentum and Morale') .switch")
     assert_smooth(page, ".modal-body .settings", lambda: morale.click(),
                   re.compile(r"^Momentum and morale (on from the next sim|off)\.$"), "Settings: morale")
     page.keyboard.press("Escape")
@@ -276,7 +276,7 @@ def offseason_cases(page, base: str, sid: str) -> None:
     lg = page.query_selector(".off-letgo button.go-act")
     if lg:
         center(lg)
-        who = lg.evaluate("b => b.firstChild.textContent")
+        who = lg.evaluate("b => b.firstChild.firstChild.textContent.trim()")   # the name, not the contract tag beside it
         page.once("dialog", lambda d: d.accept())
         assert_smooth(page, staff, lambda: lg.click(), f"{who} is out · hire his replacement", "Offseason: let a coach go")
     cand = ready(page, ".off-cands .off-cand:not(.picked)")
@@ -312,7 +312,7 @@ def coach_case(page, base: str) -> str:
     page.fill(".coach-grid input[placeholder=Last]", "Saver")
     save = ready(page, ".coach-final button.primary")
     assert_smooth(page, "#coach-form > section.coach-final", lambda: save.click(), "Smooth Saver saved.", "Your coach: save")
-    assert page.inner_text(".coach-final button.primary") == "Save changes"
+    assert page.inner_text(".coach-final button.primary") == "Save Changes"
     page.wait_for_selector(".coach-item:has-text('Smooth Saver')")
     return page.evaluate("() => new URLSearchParams(location.search).get('id')") or ""
 
