@@ -670,6 +670,22 @@ if __name__ == "__main__":
             page.mouse.wheel(0, 3000)
             time.sleep(0.4)
             assert map_vb() == FULL_VB, f"zooming out stops at the whole map: {map_vb()}"
+            # a wheel burst over a zoomed state lays the labels out once, when it settles (not on every tick)
+            page.click(f".go-map .us-state[data-state='{zst}']")
+            time.sleep(0.6)
+            page.evaluate("""() => { window.__labelBatches = 0; const g = document.querySelector('.go-map .us-dots');
+              new MutationObserver(() => { window.__labelBatches++; }).observe(g, { childList: true }); }""")
+            mid = page.eval_on_selector(".go-map svg.us-map", "e => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }")
+            page.mouse.move(*mid)
+            for _ in range(10):
+                page.mouse.wheel(0, -40)
+            time.sleep(0.5)
+            batches = page.evaluate("() => window.__labelBatches")
+            assert batches <= 1, f"a ten-tick wheel burst relaid the labels {batches} times"
+            assert page.query_selector(".go-map .us-dots text.us-label") and not page.query_selector(".go-map svg.us-map.moving"), "the labels are back once it settles"
+            page.keyboard.press("Escape")
+            time.sleep(0.6)
+            assert map_vb() == FULL_VB and n_rows() == board, "Escape after the burst resets both"
             # the keyboard: + zooms in on the focused map, Escape resets; a state is a button with its name and count
             page.focus(".go-map svg.us-map")
             page.keyboard.press("+")

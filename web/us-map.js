@@ -131,7 +131,8 @@
         p.setAttribute("aria-label", `${NAMES[code] || code}: ${n} ${n === 1 ? "prospect" : "prospects"}`);
         // the second click of a double-click is the zoom's, not a second toggle of the filter
         p.addEventListener("click", (e) => { if (e.detail > 1 || zoom.swallow()) return; zoom.pick(code); });
-        p.addEventListener("dblclick", () => zoom.zoomToState(code));
+        // after a double-click the filter matches the zoom: a state the first click cleared is picked again
+        p.addEventListener("dblclick", () => { if (zoom.selected() !== code) zoom.pick(code); else zoom.zoomToState(code); });
         p.addEventListener("keydown", (e) => {
           if (e.key !== "Enter" && e.key !== " ") return;
           e.preventDefault();
@@ -192,19 +193,30 @@
     // screen pixels per canvas unit at 1x (a fallback while the map is not on the page)
     const basePx = () => (svg.clientWidth || 760) / FW;
 
-    function set(b) {
+    // set(box): the camera moves and the labels are laid out now; set(box, "anim"): one frame of an animation (sizes only,
+    // the labels hidden until its last frame); set(box, "live"): a wheel tick, drag or pinch move (sizes only, the
+    // labels laid out once ~80 ms after the last one)
+    let settleT = 0;
+    function set(b, mode) {
       cur = isFull(b) ? FULL : b;
       mem.box = cur;
       svg.setAttribute("viewBox", cur === FULL ? S.viewBox : cur.map((n) => +n.toFixed(2)).join(" "));
-      paint();
+      sizes();
+      clearTimeout(settleT);
+      if (!mode) { svg.classList.remove("moving"); layout(); return; }
+      svg.classList.add("moving");
+      if (mode === "live") settleT = setTimeout(() => requestAnimationFrame(() => { svg.classList.remove("moving"); layout(); }), 80);
     }
-    function paint() {
+    const sized = [...gDots.querySelectorAll("circle[data-r]")];
+    const rings = sized.filter((c) => c.classList.contains("us-ring"));
+    function sizes() {
       const k = scaleOf(cur);
       svg.classList.toggle("zoomed", k > 1.001);
-      for (const c of gDots.querySelectorAll("circle[data-r]")) {
-        c.setAttribute("r", +(c.dataset.r / k).toFixed(3));
-        if (c.classList.contains("us-ring")) c.setAttribute("stroke-width", +(2 / k).toFixed(3));
-      }
+      for (const c of sized) c.setAttribute("r", +(c.dataset.r / k).toFixed(3));
+      for (const c of rings) c.setAttribute("stroke-width", +(2 / k).toFixed(3));
+    }
+    function layout() {
+      const k = scaleOf(cur);
       for (const t of gDots.querySelectorAll(".us-label, .us-leader")) t.remove();
       if (cur[2] >= LABEL_AT * FW) return;
       const px = basePx() * k;              // screen pixels per canvas unit now
@@ -247,7 +259,7 @@
       const step = (now) => {
         const t = Math.min(1, (now - t0) / ANIM_MS), e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
         if (t >= 1) return set(to);
-        set(from.map((n, i) => n + (to[i] - n) * e));
+        set(from.map((n, i) => n + (to[i] - n) * e), "anim");
         anim = requestAnimationFrame(step);
       };
       anim = requestAnimationFrame(step);
@@ -274,9 +286,9 @@
       const [ux, uy] = at || [v[0] + v[2] / 2, v[1] + v[3] / 2];
       const w = Math.min(Math.max(v[2] / f, FW / MAX_ZOOM), FW), r = w / v[2];
       cancelAnimationFrame(anim);
-      set(clamp([ux - (ux - v[0]) * r, uy - (uy - v[1]) * r, w, v[3] * r]));
+      set(clamp([ux - (ux - v[0]) * r, uy - (uy - v[1]) * r, w, v[3] * r]), "live");
     }
-    function panBy(dx, dy) { const v = shown(cur); cancelAnimationFrame(anim); set(clamp([v[0] + dx, v[1] + dy, v[2], v[3]])); }
+    function panBy(dx, dy) { const v = shown(cur); cancelAnimationFrame(anim); set(clamp([v[0] + dx, v[1] + dy, v[2], v[3]]), "live"); }
     // a screen point to canvas units
     function toCanvas(cx, cy) {
       const m = svg.getScreenCTM();
@@ -344,12 +356,15 @@
       if (svg.classList.contains("dragging") || moved >= 5) { swallowClick = moved >= 5; svg.classList.remove("dragging"); if (swallowClick) changed(); }
       if (!ptrs.size) setTimeout(() => { swallowClick = false; }, 0);
     };
+    // two fingers on the map are the map's pinch, not a page scroll (one finger at 1x still scrolls the page)
+    svg.addEventListener("touchstart", (e) => { if (e.touches.length >= 2 && e.cancelable) e.preventDefault(); }, { passive: false });
     svg.addEventListener("pointerup", up);
     svg.addEventListener("pointercancel", up);
     // a click that ends a drag picks nothing
     svg.addEventListener("click", (e) => { if (swallowClick) { e.stopPropagation(); e.preventDefault(); } }, true);
 
     svg.addEventListener("keydown", (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;      // browser zoom, back and forward stay the browser's
       const v = shown(cur);
       if (e.key === "+" || e.key === "=") zoomBy(1.5);
       else if (e.key === "-" || e.key === "_") zoomBy(1 / 1.5);
@@ -380,9 +395,10 @@
         if (p) p.focus({ preventScroll: true });
       });
     }
-    if (typeof ResizeObserver === "function") new ResizeObserver(() => { if (cur !== FULL) paint(); }).observe(svg);
+    if (typeof ResizeObserver === "function") new ResizeObserver(() => { if (cur !== FULL && !svg.classList.contains("moving")) layout(); }).observe(svg);
 
-    return { zoomTo, zoomToState, zoomToStates, reset, home, pick, region: () => mem.region, swallow: () => swallowClick };
+    return { zoomTo, zoomToState, zoomToStates, reset, home, pick, region: () => mem.region, swallow: () => swallowClick,
+      selected: () => (opts.onState ? opts.selectedState || null : mem.state) };
   }
 
   window.USMap = { project, centroid, stateBox, render };

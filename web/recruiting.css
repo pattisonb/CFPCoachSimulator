@@ -166,3 +166,4 @@
 .us-label { fill: var(--text); stroke: var(--panel); paint-order: stroke; stroke-linejoin: round; font-weight: 600; pointer-events: none; }
 .us-leader { stroke: var(--muted); pointer-events: none; }
 .us-label.crowded { visibility: hidden; }
+.us-map.moving .us-label, .us-map.moving .us-leader { visibility: hidden; }   /* hidden while the camera moves; laid out again when it settles */
