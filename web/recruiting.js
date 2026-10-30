@@ -1719,9 +1719,12 @@
     const r = cell.getBoundingClientRect(), t = tip.getBoundingClientRect(), gap = 6, pad = 8;
     const below = r.bottom + gap + t.height <= document.documentElement.clientHeight - pad;
     const top = below ? r.bottom + gap : Math.max(pad, r.top - gap - t.height);
-    // the right edge it may reach: the page's usable width, or a scrolling pane's inner edge (a phone's sheet keeps its scrollbar there)
-    const host = cell.closest(".go-pane");
-    const edge = Math.min(document.documentElement.clientWidth, host ? host.getBoundingClientRect().left + host.clientWidth : Infinity);
+    // the right edge it may reach: the page's usable width, or the inner edge of any box around it that scrolls
+    // (a phone's pane sheet and the Prospects window keep their scrollbar there)
+    let edge = document.documentElement.clientWidth;
+    for (let n = cell.parentElement; n && n !== document.body; n = n.parentElement) {
+      if (n.clientWidth && n.offsetWidth - n.clientWidth > 2) edge = Math.min(edge, n.getBoundingClientRect().left + n.clientLeft + n.clientWidth);
+    }
     const left = Math.min(Math.max(pad, r.left), edge - t.width - pad);
     tip.style.top = `${top}px`;
     tip.style.left = `${left}px`;
