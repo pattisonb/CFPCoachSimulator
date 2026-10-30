@@ -7,6 +7,7 @@
   let OPT = null;          // /api/coach-options
   let TEAMS = [];          // FBS teams for the alma mater, colors and the season picker
   let coach = null;        // the coach being edited
+  let listSeq = 0;         // the coach list's latest draw (an older fetch landing late is dropped)
   const START_PARAMS = new URLSearchParams(location.search);
 
   async function api(url, opts) {
@@ -17,10 +18,9 @@
     if (!r.ok) throw new Error(typeof j.detail === "string" && j.detail ? j.detail : r.status >= 500 ? "the server hit an error. Try again in a moment." : `the server said no (${r.status}).`);
     return j;
   }
+  // a thin wrapper over the shared toast stack (web/ui.js)
   function toast(msg, ms = 2500) {
-    const t = $("#toast");
-    t.textContent = msg; t.hidden = false;
-    clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, ms);
+    return window.CFP.ui.toast(msg, { ms, kind: /^Could not/.test(msg) ? "error" : "info" });
   }
   const clone = (o) => JSON.parse(JSON.stringify(o));
   const fullName = (c) => `${c.first_name || "First"} ${c.last_name || "Last"}`.trim();
@@ -204,19 +204,26 @@
   }
 
   // ----- saving, listing, starting ----------------------------------------------------------
-  async function saveCoach() {
-    try {
-      const saved = await api("/api/coaches", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ coach }) });
-      coach = saved;
-      toast(`${fullName(coach)} saved.`);
-      renderForm();
-      renderList();
-      return saved;
-    } catch (err) { toast(`Could not save: ${err.message}`, 4000); return null; }
+  // Save patches in place: the form stays as it is (the saved coach is merged into the one it edits),
+  // the button's label turns to "Save changes", the list gains or updates his row; the button is busy meanwhile.
+  function saveCoach(ev) {
+    const btn = ev && ev.currentTarget;
+    const work = (async () => {
+      try {
+        const saved = await api("/api/coaches", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ coach }) });
+        coach = Object.assign(coach, saved);
+        const label = $("#coach-form .coach-final button.primary");
+        if (label && label.textContent !== "Save changes") { label.textContent = "Save changes"; window.CFP.ui.pulse(label); }
+        await renderList();
+        toast(`${fullName(coach)} saved.`);
+        return coach;
+      } catch (err) { toast(`Could not save: ${err.message}`, 4000); return null; }
+    })();
+    return btn instanceof HTMLButtonElement ? window.CFP.ui.busy(btn, work) : work;
   }
 
   async function startSeason(team) {
-    const saved = await saveCoach();
+    const saved = await saveCoach(null);
     if (!saved) return;
     try {
       const s = await api("/api/season", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team, mode: "full", coach: saved.id }) });
@@ -226,28 +233,35 @@
 
   async function renderList() {
     const box = $("#coach-list");
-    box.innerHTML = "";
+    const token = ++listSeq;
+    const fresh = el("div");                // drawn off screen, then the list on screen patched to match (web/ui.js morph)
+    const done = () => { if (token === listSeq) window.CFP.ui.morph(box, fresh); };
     let list = [];
-    try { list = (await api("/api/coaches")).coaches; } catch (err) { box.append(el("p", { class: "muted", text: err.message })); return; }
-    if (!list.length) { box.append(el("p", { class: "muted small-text", text: "No coaches yet. Build one below and save it." })); return; }
+    try { list = (await api("/api/coaches")).coaches; } catch (err) { fresh.append(el("p", { class: "muted", text: err.message })); done(); return; }
+    if (!list.length) { fresh.append(el("p", { class: "muted small-text", text: "No coaches yet. Build one below and save it." })); done(); return; }
     const preview = TEAMS.find((x) => x.slug === $("#preview-team").value) || {};
     for (const c of list) {
       const school = TEAMS.find((t) => t.slug === c.alma_mater) || preview;
-      const item = el("div", { class: `coach-item ${coach && coach.id === c.id ? "on" : ""}` });
+      const item = el("div", { class: `coach-item ${coach && coach.id === c.id ? "on" : ""}`, "data-key": c.id });
       const pic = el("div", { class: "coach-item-pic" });
       pic.innerHTML = sprite(c.look, school.colors);
       const edit = el("button", { type: "button", class: "ghost small", text: "Edit" });
-      edit.addEventListener("click", () => { coach = clone(c); renderForm(); renderList(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+      window.CFP.ui.on(edit, "click", () => { coach = clone(c); renderForm(); renderList(); window.scrollTo({ top: 0, behavior: "smooth" }); });
       const del = el("button", { type: "button", class: "ghost small", text: "Delete" });
-      del.addEventListener("click", async () => {
+      window.CFP.ui.on(del, "click", (ev) => {
         if (!confirm(`Delete ${fullName(c)}?`)) return;
-        await api(`/api/coaches/${c.id}`, { method: "DELETE" });
-        if (coach && coach.id === c.id) coach = clone(OPT.blank);
-        renderForm(); renderList();
+        window.CFP.ui.busy(ev.currentTarget, (async () => {
+          try { await api(`/api/coaches/${c.id}`, { method: "DELETE" }); }
+          catch (err) { toast(`Could not delete: ${err.message}`, 4000); return; }
+          if (coach && coach.id === c.id) { coach = clone(OPT.blank); renderForm(); }   // the form was editing him: a blank coach
+          await renderList();
+          toast(`${fullName(c)} deleted.`);
+        })());
       });
       item.append(pic, el("div", { class: "coach-item-text" }, [el("b", { text: fullName(c) }), el("span", { class: "muted small-text", text: `${c.archetype} · ${c.calls_offense ? c.offense_scheme : "team's OC"} / ${c.calls_defense ? c.defense_scheme : "team's DC"}` })]), el("div", { class: "coach-item-actions" }, [edit, del]));
-      box.append(item);
+      fresh.append(item);
     }
+    done();
   }
 
   async function init() {
