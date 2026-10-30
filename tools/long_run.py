@@ -129,8 +129,16 @@ def offseason_metrics(state: dict) -> dict:
     draft = [d for d in off["departures"] if d["kind"] == "draft"]
     p4_picks = sum(1 for d in draft if season._is_p4(d["team"], teams[d["team"]]))
     signed = off.get("signed", {})
+    # why they entered (offseason.portal_odds): the role, a NIL shortfall, a slipping program, a weak coach;
+    # and the starters lost a school by the program's tier (the bottom tiers should lose more)
+    drivers = collections.Counter(e.get("driver") or "role" for e in portal.values())
+    tier_of = {s: (t.get("program") or {}).get("tier", 0) for s, t in lg["teams"].items()}
+    schools = collections.Counter(tier_of.values())
+    starters = collections.Counter(tier_of.get(e["from"], 0) for e in portal.values() if e.get("usage") == "starter")
     return {
         "departures": dict(kinds), "early_entrants": sum(1 for d in off["departures"] if d.get("early")),
+        "portal_drivers": dict(drivers),
+        "portal_starters_by_tier": {k: round(starters[k] / schools[k], 2) for k in sorted(schools) if k},
         "draft_p4_share": round(p4_picks / max(1, len(draft)), 3),
         "portal_entrants": len(portal), "portal_signed": sum(1 for e in portal.values() if e["signed"]),
         "portal_nil_spent": (off.get("portal_nil") or {}).get("spent", 0), "portal_nil_ai_spent": (off.get("portal_nil") or {}).get("ai_spent", 0),
@@ -174,6 +182,7 @@ def run(seasons: int, seed: int, team: str, out: Path) -> None:
         o = row["offseason"]
         tr = row["tiers"]
         print(f"      carousel {dict(o.get('hc_departures', {}))}  you {o.get('you')}  moved {o.get('moved_to')}  programs {o.get('programs')}", flush=True)
+        print(f"      portal drivers {o.get('portal_drivers')}  starters lost a school by tier {o.get('portal_starters_by_tier')}", flush=True)
         print("      tiers " + "  ".join(f"{k} st {v['starters']:.1f} rtg {v['rating']:.1f} rec {v['recruit_composite'] or 0:.3f} x{v['signed_per_team']}"
                                        f" young {v.get('young', 0):.2f} tr {v.get('transfer', 0):.2f} low {v.get('lower', 0):.2f} wo {v.get('walkon', 0):.2f}"
                                        for k, v in sorted(tr.items())), flush=True)
@@ -224,6 +233,12 @@ def report(paths: list[str]) -> str:
                      ("portal entrants", lambda o: o["portal_entrants"]), ("portal signed", lambda o: o["portal_signed"]),
                      ("portal NIL spent", lambda o: o.get("portal_nil_spent", 0)), ("portal NIL AI spent", lambda o: o.get("portal_nil_ai_spent", 0)),
                      ("portal NIL carried", lambda o: o.get("portal_nil_carry", 0)),
+                     ("portal for NIL", lambda o: o.get("portal_drivers", {}).get("deal", 0)),
+                     ("portal, program slipping", lambda o: o.get("portal_drivers", {}).get("slipping", 0)),
+                     ("portal, better coach", lambda o: o.get("portal_drivers", {}).get("better_coach", 0)),
+                     ("starters lost, tier 1", lambda o: o.get("portal_starters_by_tier", {}).get("1", o.get("portal_starters_by_tier", {}).get(1, 0))),
+                     ("starters lost, tier 3", lambda o: o.get("portal_starters_by_tier", {}).get("3", o.get("portal_starters_by_tier", {}).get(3, 0))),
+                     ("starters lost, tier 5", lambda o: o.get("portal_starters_by_tier", {}).get("5", o.get("portal_starters_by_tier", {}).get(5, 0))),
                      ("quit", lambda o: o["departures"].get("quit", 0)), ("walk-ons", lambda o: o["walk_ons"]),
                      ("class size mean", lambda o: o["class_sizes"]["mean"]), ("dev gain EA", lambda o: o["dev_gain_ea"]),
                      ("HC changes", lambda o: o["coaching_changes"].get("head_coach", 0)),
