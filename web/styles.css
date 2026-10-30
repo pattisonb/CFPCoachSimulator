@@ -1134,7 +1134,6 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-pitch:has(input:checked) { border-color: var(--go-primary, var(--accent)); }
 .go-pitch.known b { color: var(--good-text); }
 .go-pitch span { display: flex; align-items: center; gap: 8px; }
-.go-pitch.heard .go-tag { border-color: var(--go-primary, var(--accent)); color: var(--text); font-weight: 700; }
 /* a call or in-home visit on the pane: his lines, the cue marked, your pitch, his reaction in its tone */
 .go-scene { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--border); outline: none; }
 .go-scene:focus-visible { border-color: var(--go-primary, var(--accent)); }
@@ -1152,7 +1151,6 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-reaction.quiet { border-color: var(--bad); } .go-reaction.quiet .go-kicker { color: var(--bad-text, var(--bad)); }
 .go-reaction.polite .go-kicker { color: var(--muted); }
 .go-scene-open { align-items: center; padding: 8px 10px; border-radius: 10px; border: 1px dashed var(--go-primary, var(--accent)); }
-.go-tag.heard { border-color: var(--go-primary, var(--accent)); color: var(--text); white-space: normal; }
 .go-finish { margin-top: 6px; width: 100%; }
 .go-nil { width: 80px; min-height: 40px; }
 .go-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }

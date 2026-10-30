@@ -75,9 +75,9 @@ def open_tab(page, base, sid, tab, wait):
     time.sleep(0.8)
 
 
-# the ladder "Sort: your chance" follows: yours, favorite, in it, not offered while leading his list, long shot,
+# the ladder "Sort: your chance" follows: yours, favorite, not offered while leading his list, in it, long shot,
 # not offered elsewhere on (or off) his list, lost
-LADDER = {"Yours": 0, "Favorite": 1, "In it": 2, ("Not offered", "warn"): 3, "Long shot": 4, ("Not offered", "muted"): 5, "Lost": 6}
+LADDER = {"Yours": 0, "Favorite": 1, ("Not offered", "warn"): 2, "In it": 3, "Long shot": 4, ("Not offered", "muted"): 5, "Lost": 6}
 
 
 def ladder_of(sd: dict) -> int:
@@ -99,6 +99,57 @@ REACTION = {"hit": "He lit up", "polite": "Polite", "quiet": "He went quiet"}
 GONE = "heard".title()     # the word the cue tag used to print: the page never shows it now
 HISTORY_EMPTY = "Nothing with him yet: no contact, no offer."
 CUE_TITLE = "He brought this up on the call this week"
+
+
+NULL_TEXT = "() => { const w = document.createTreeWalker(document.querySelector('.go-pane'), NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (n.nodeValue.trim() === 'null') return true; return false; }"
+
+
+def check_pane_profile(page, base, sid) -> None:
+    """The pane's Profile sub-tab on a scouted recruit, at 1280 (short window, so the pane scrolls inside itself) and
+    400 (the full-screen sheet): no second head, no "null", every grade card inside the pane, and the sub-tab strip
+    pinned in view, never clipped, after the body scrolls 600 px."""
+    board = call(base, f"/api/season/{sid}/recruiting")["board"]
+    scouted = next((b for b in board if (b.get("looks") or 0) >= 3 and b.get("our_grades")), None)
+    if not scouted:         # the prospect the Prospects step scouted three times goes on the board (no hours)
+        rows = call(base, f"/api/season/{sid}/prospects?limit=5000")["rows"]
+        pick = next(r for r in rows if (r.get("looks") or 0) >= 3)
+        call(base, f"/api/season/{sid}/board", {"pid": pick["id"], "on": True})
+        scouted = next(b for b in call(base, f"/api/season/{sid}/recruiting")["board"] if b["id"] == pick["id"])
+    assert scouted.get("our_grades"), f"a scouted recruit carries his grades: {scouted['id']}"
+    for width, height in ((1280, 640), (400, 640)):     # short windows: the pane's body has room to scroll
+        page.set_viewport_size({"width": width, "height": height})
+        open_tab(page, base, sid, "recruiting", ".go-stages")
+        if width > 700:     # a long board under the pane: scroll the page until the pane sticks
+            page.evaluate("() => window.scrollTo(0, 1500)")
+        page.click(f".go-row-recruit[data-pid='{scouted['id']}']")
+        time.sleep(0.6)
+        page.click(".go-pane .go-subtabs button[data-sub=profile]")
+        page.wait_for_selector(".go-pane .go-sub-body.go-profile .go-grades .go-stat", timeout=60_000)
+        page.mouse.move(2, height - 2)      # the pointer off the grade cards: no "looks like" box over the screenshots
+        time.sleep(0.4)
+        assert not page.query_selector(".go-pane .go-profile-head, .go-pane .go-sub-body h2.go-display"), f"the pane's Profile repeats his head at {width}"
+        assert not page.evaluate(NULL_TEXT), f"a text node reads null in the pane at {width}"
+        cards = page.evaluate("""() => { const pr = document.querySelector('.go-pane').getBoundingClientRect();
+          return [...document.querySelectorAll('.go-pane .go-grades .go-stat')].map(c => { const r = c.getBoundingClientRect();
+            const inner = Math.max(...[...c.querySelectorAll('.go-kicker, .go-stat-val, .go-word')].map(e => e.getBoundingClientRect().right));
+            return [c.textContent.slice(0, 24), r.right <= pr.right + 0.5, inner <= r.right + 0.5]; }); }""")
+        assert cards and all(c[1] and c[2] for c in cards), f"a grade card (or its words) runs past the pane at {width}: {cards}"
+        shot(page, f"pane-profile-{width}-dark")
+        t0 = page.evaluate("() => document.querySelector('.go-pane .go-subtabs').getBoundingClientRect().top")
+        page.evaluate("() => { document.querySelector('.go-pane').scrollTop += 600; }")
+        time.sleep(0.4)
+        tabs = page.evaluate("""() => { const p = document.querySelector('.go-pane'), pr = p.getBoundingClientRect(), t = p.querySelector('.go-subtabs').getBoundingClientRect();
+          const head = p.classList.contains('sheet') ? p.querySelector('.go-pane-head').getBoundingClientRect().bottom : pr.top;
+          return { scrolled: p.scrollTop, top: t.top, bottom: t.bottom, height: t.height, visTop: Math.max(pr.top, 0, head), paneBottom: pr.bottom, left: t.left >= pr.left - 0.5, right: t.right <= pr.right + 0.5 }; }""")
+        assert tabs["scrolled"] > 100, f"the pane's body scrolls at {width}: {tabs}"
+        assert tabs["top"] >= tabs["visTop"] - 1 and tabs["bottom"] <= tabs["paneBottom"] and tabs["height"] >= 36 and tabs["left"] and tabs["right"], \
+            f"the sub-tab strip scrolled away or clipped at {width}: {tabs}"
+        assert t0 - tabs["scrolled"] < tabs["visTop"] - 4, f"the check scrolls the strip's place out of view at {width}: {t0}, {tabs}"
+        assert tabs["top"] <= tabs["visTop"] + 4, f"the sub-tab strip pins to the top of the pane's scroll box at {width}: {tabs}"
+        shot(page, f"pane-profile-scrolled-{width}-dark")
+        if width <= 700:
+            page.click(".go-pane .go-pane-back")
+    page.set_viewport_size({"width": 1280, "height": 1000})
 
 
 if __name__ == "__main__":
@@ -245,8 +296,8 @@ if __name__ == "__main__":
             assert page.evaluate("() => document.activeElement.matches('.go-tools select.go-sel') && document.activeElement.value === 'rank'"), "the sort keeps the focus after the redraw"
             page.select_option(".go-tools select.go-sel", "chance")
             time.sleep(0.3)
-            # sorting by your chance follows the ladder: a recruit you lead without an offer sits above one you trail far behind with one;
-            # yours first, lost last; ties by the bar, then national rank
+            # sorting by your chance follows the ladder: a recruit you lead without an offer sits above one you trail with one (close
+            # or far behind); yours first, lost last; ties by the bar, then national rank
             ladder = page.evaluate("""() => {
               const L = (id, o) => ({ id, name: id, position: "QB", national_rank: 50, offered: false, committed: null, signed: null, list: [], standing: {}, ...o });
               const me = { school: "smu", you: true }, ga = { school: "georgia" };
@@ -266,7 +317,7 @@ if __name__ == "__main__":
             }""")
             assert ladder[1] == {"lost": "Lost", "trail": "Long shot", "lead": "Not offered", "cold": "Not offered", "init": "In it", "fav2": "Favorite",
                                  "fav1": "Favorite", "favtie": "Favorite", "yours": "Yours"}, ladder[1]
-            assert ladder[0] == ["yours", "favtie", "fav1", "fav2", "init", "lead", "trail", "cold", "lost"], ladder[0]
+            assert ladder[0] == ["yours", "favtie", "fav1", "fav2", "lead", "init", "trail", "cold", "lost"], ladder[0]
             assert_chance_order(page, v["board"], "smu")
             # the search narrows the list live (name, position or state)
             token = v["board"][0]["name"].split()[-1]
@@ -313,8 +364,10 @@ if __name__ == "__main__":
             time.sleep(0.3)
             assert page.get_attribute(".go-subtabs button[data-sub=scouting]", "aria-selected") == "true"
             page.click(".go-subtabs button[data-sub=profile]")
-            page.wait_for_selector(".go-pane .go-sub-body .go-profile-head", timeout=60_000)
+            page.wait_for_selector(".go-pane .go-sub-body.go-profile h3", timeout=60_000)
             assert not page.query_selector(".modal:not([hidden])"), "the profile draws inline, not in a modal"
+            # the pane's head already carries him: the inline profile draws no second head (avatar, name, stars, school, rankings)
+            assert not page.query_selector(".go-pane .go-sub-body .go-profile-head, .go-pane .go-sub-body h2.go-display"), "the pane's Profile repeats his head"
             # the menu holds every action: the inline profile carries no scout button and no on-board toggle
             prof_btns = page.eval_on_selector_all(".go-pane .go-sub-body button", "els => els.map(e => e.textContent)")
             assert not [x for x in prof_btns if "scout" in x.lower() or "board" in x.lower()], f"the inline profile acts outside the menu: {prof_btns}"
@@ -555,6 +608,9 @@ if __name__ == "__main__":
             assert page.query_selector(".go-map-table tr"), "the table is still reachable on a tiny screen"
             page.click(".go-map .go-map-toggle")
             page.set_viewport_size({"width": 1280, "height": 1000})
+
+            # --- The pane's Profile sub-tab: no second head, grade cards inside the pane, the sub-tab strip pinned while it scrolls
+            check_pane_profile(page, base, A)
 
             # --- A phone: the list fills the width, a row opens the pane full-screen with a back button, the menu is a bottom sheet
             page.set_viewport_size({"width": 400, "height": 860})

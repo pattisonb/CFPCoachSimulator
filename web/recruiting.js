@@ -131,11 +131,12 @@
              tone: close ? "warn" : "muted", fill, lo: st.lo, hi: st.hi };
   }
   const standing = standingOf;
-  // "Sort: your chance" climbs the ladder: yours, favorite, in it, not offered while leading his list, long shot,
-  // not offered (behind or off his list), lost; within a rung the fuller bar first, then national rank
+  // "Sort: your chance" climbs the ladder: yours, favorite, not offered while leading his list (one offer makes him
+  // your favorite), in it, long shot, not offered (behind or off his list), lost; within a rung the fuller bar
+  // first, then national rank
   function ladderRung(sd) {
-    if (sd.word === "Not offered") return sd.tone === "warn" ? 3 : 5;
-    return { Yours: 0, Favorite: 1, "In it": 2, "Long shot": 4, Lost: 6 }[sd.word] ?? 5;
+    if (sd.word === "Not offered") return sd.tone === "warn" ? 2 : 5;
+    return { Yours: 0, Favorite: 1, "In it": 3, "Long shot": 4, Lost: 6 }[sd.word] ?? 5;
   }
   function byChance(me) {
     const memo = new Map();
@@ -940,14 +941,17 @@
       } else if (b.signed && b.signed !== me) {
         acts.append(el("button", { type: "button", class: "go-btn", text: "Off the board", onclick: () => pick(b, "off_board") }));
       }
-      p.append(el("div", { class: "go-pane-head" }, [
+      const head = el("div", { class: "go-pane-head" }, [
         sheet ? el("button", { type: "button", class: "go-btn go-pane-back", "aria-label": "Back to the list", text: "‹ Back", onclick: closeSheet }) : null,
         avatar(b.id),
         el("div", { class: "go-pane-id" }, [
           el("button", { type: "button", class: "go-link go-pane-name", text: b.name, title: "Open his profile", onclick: () => showSub("profile") }),
           el("span", { class: "muted small", text: b.portal ? `${b.position} · ${clsWord(b.cls)} · from ${b.from_name} · #${b.portal_rank} in the portal` : `${stars(b.stars)} ${b.position} · ${place(b.hometown)} · #${b.national_rank}` }),
           el("span", { class: `go-chip ${chip.tone}`, text: chip.text })]),
-        acts]));
+        acts]);
+      p.append(head);
+      // on a phone the head is pinned to the top of the sheet: the sub-tab strip pins just under it, at its height
+      if (sheet && window.ResizeObserver) new ResizeObserver(() => p.style.setProperty("--go-head-h", `${head.offsetHeight}px`)).observe(head);
       // the inline step (Message, Offer…, Raise NIL…), the scene or his reaction
       if (open && !busy && view.step && view.step.pid === b.id) p.append(stepView(b, view.step.kind));
       const reacted = view.reaction && view.reaction.pid === b.id ? view.reaction.r : null;
@@ -1277,8 +1281,8 @@
   async function openProfile(s, pid, into, opts = {}) {
     // the window opens at once, saying it is loading, and fills in when his profile arrives; with
     // `into` (a profile already open) it refreshes in place instead of closing and reopening. With
-    // opts.pane it is the board pane's Profile sub-tab: the Recruit menu there holds Scout and Off the
-    // board, so the profile draws no buttons of its own for them
+    // opts.pane it is the board pane's Profile sub-tab: the pane's head shows who he is and the Recruit menu
+    // there holds Scout and Off the board, so the profile draws neither its own head nor buttons for them
     const inPane = !!opts.pane;
     const node = into || el("div", { class: "rc-profile go-profile" }, [el("p", { class: "muted rc-loading go-loading", text: "Loading his profile…" })]);
     if (into) { node.innerHTML = ""; node.append(el("p", { class: "muted rc-loading go-loading", text: "Updating his profile…" })); }
@@ -1289,7 +1293,9 @@
     const pub = p.public;
     const me = s.team;
     node.innerHTML = "";
-    node.append(el("div", { class: "rc-profile-head go-profile-head" }, [avatar(pub.avatar_seed, "lg"), el("div", {}, [
+    // in the pane the pane's own head already carries him (name, avatar, stars, position, hometown, rank, chip):
+    // the profile starts below that, at his commitment, the scouting read and his list
+    if (!inPane) node.append(el("div", { class: "rc-profile-head go-profile-head" }, [avatar(pub.avatar_seed, "lg"), el("div", {}, [
       el("h2", { class: "rc-profile-name go-display l", text: pub.name.toUpperCase() }),
       el("div", { class: "go-stars big", text: stars(pub.stars) }),
       el("div", { text: `${pub.position}${pub.ea_position && pub.ea_position !== pub.position ? ` · projects at ${pub.ea_position} in the game` : ""} · ${pub.archetype} · ${height(pub.height)}, ${pub.weight} lb` }),

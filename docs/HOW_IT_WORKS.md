@@ -1091,7 +1091,13 @@ week, Monthly, Offer him first, Finish your call first). Message and Offer… op
 pane: the pitch as a dropdown (his known priorities first, each with your program's case), the
 NIL points with his ask for an offer; a call or in-home visit plays as a scene in the pane. Under
 the head, a strip of four cells (your chance, his list, NIL, scouted), the tags you know, and
-sub-tabs: Overview, Scouting, Profile, History. On a phone the pane is a full-screen dialog and
+sub-tabs: Overview, Scouting, Profile, History. A ★ tag is a priority he has confirmed to you and a ☆
+tag a topic he brought up on this week's call or visit (a topic that is both shows once, as ★). History lists every contact you have had with
+him from the contact log, newest first, one line each (`Week 4 · Call · Program prestige · He lit
+up`, `Week 5 · Offer · 120 NIL`, his commitments too). The sub-tab strip stays pinned at the top of
+the pane while its body scrolls, and the Profile sub-tab starts below the pane's head instead of
+repeating it. Sort: your chance climbs the ladder (yours, favorite, not offered while you lead
+his list, in it, long shot, not offered elsewhere, lost). On a phone the pane is a full-screen dialog and
 the menu a bottom sheet. Every standing word (Yours, Lost, Favorite, In it, Long shot, Not
 offered) is one ladder read from his list, with your offer as the qualifier
 (`standingOf` in `web/recruiting.js`), so the list, the pane and the Office agree. His list is
