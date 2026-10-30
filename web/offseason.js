@@ -8,7 +8,7 @@
   const GROUPS = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P"];
   const USAGE = { starter: "Started", rotation: "Rotation", bench: "Bench" };
   const KIND_ORDER = ["draft", "undrafted", "graduated", "portal", "quit"];
-  const view = { position: "", status: "available", posPick: "" };
+  const view = { position: "", status: "available", posPick: "", recapOpen: false };
   const ui = window.CFP.ui;
   let H = null;
   let BOX = null;                 // #tab-offseason
@@ -117,6 +117,7 @@
     if (v.review) main.append(renderReview(s, v));
     if (v.fired && v.stage !== "departures" && v.stage !== "staff" && v.stage !== "ready") main.append(firedNote(v));
     if (v.stage === "departures" || v.stage === "development") main.append(renderRosterMoves(s, v, patching));
+    if (v.portal_recap && (v.stage === "staff" || v.stage === "ready")) main.append(renderPortalRecap(v, true));
     if (v.stage === "departures") renderDepartures(v, main);
     else if (v.stage === "retention") renderRetention(s, v, main);
     else if (v.stage === "portal_1" || v.stage === "portal_2") renderPortal(s, v, main);
@@ -226,10 +227,13 @@
     // position changes: pick a player, see what he would be everywhere, move him
     card.append(el("div", { class: "go-kicker muted off-sub", text: `POSITION CHANGES · ${(v.position_changes || []).length}` }),
       el("p", { class: "muted small", text: "Move a player for next season; his overall follows our formula at the new spot. Changes take effect when the season starts." }));
+    const option = (r) => el("option", { value: r.id, text: `${r.pos} · ${r.name} · ${clsWord(r.cls)} · ${r.overall} OVR${r.moved_from ? ` (was ${r.moved_from})` : ""}${r.transfer ? ` · transfer from ${teamName(r.transfer)}` : ""}` });
     const roster = v.my_roster || [];
+    const transfers = roster.filter((r) => r.transfer);
     if (view.posPick && !roster.some((r) => r.id === view.posPick)) view.posPick = "";
     const pick = el("select", { class: "go-sel", "aria-label": "Player to move" }, [el("option", { value: "", text: "Pick a player…" }),
-      ...roster.map((r) => el("option", { value: r.id, text: `${r.pos} · ${r.name} · ${clsWord(r.cls)} · ${r.overall} OVR${r.moved_from ? ` (was ${r.moved_from})` : ""}` }))]);
+      ...(transfers.length ? [el("optgroup", { label: "Transfers" }, transfers.map(option)), el("optgroup", { label: "Everyone else" }, roster.filter((r) => !r.transfer).map(option))]
+        : roster.map(option))]);
     pick.value = view.posPick;
     // his options as chips (keyed by position, patched in place); a patch of the card keeps them (data-keep)
     const opts = el("div", { class: "off-pos-opts", "data-keep": "" });
@@ -404,14 +408,49 @@
     main.append(head, el("section", { class: "go-card off-scroll", "data-key": "portal-table" }, [p.rows.length ? table : el("p", { class: "muted", text: "Nobody matches." })]));
   }
 
+  const teamAbbr = (slug) => (window.CFP.teamsBySlug[slug] || {}).abbreviation || teamName(slug);
+
+  // the transfer portal recap: who you got, who you lost and where he went; at Development a card
+  // above Who improved, at Staff and Ready one line that opens on click
+  function renderPortalRecap(v, collapsed) {
+    const rec = v.portal_recap;
+    const body = [el("p", { class: "off-recap-line", text: `You signed ${rec.signed.length} of the ${rec.entrants} players who entered.${rec.signed_league ? ` ${rec.signed_league} found a new school around the league.` : ""}` })];
+    const got = el("div", { class: "off-recap-col" }, [el("div", { class: "go-kicker muted off-sub", text: `WHO YOU GOT · ${rec.signed.length}` })]);
+    got.append(rec.signed.length ? el("ul", { class: "off-list off-recap-list" }, rec.signed.map((r) => el("li", {}, [window.CFP.teamPill(r.from), " ", el("b", { text: r.name }),
+      el("span", { class: "muted", text: ` ${r.pos} · ${clsWord(r.cls)} · ${r.overall} OVR · from ${r.from_name}` }),
+      r.walk_on ? el("span", { class: "go-tag muted", text: "walk-on" }) : null])))
+      : el("p", { class: "muted", text: "Nobody came in through the portal." }));
+    const lost = el("div", { class: "off-recap-col" }, [el("div", { class: "go-kicker muted off-sub", text: `WHO YOU LOST · ${rec.lost.length}` })]);
+    lost.append(rec.lost.length ? el("ul", { class: "off-list off-recap-list" }, rec.lost.map((r) => el("li", {}, [el("b", { text: r.name }),
+      el("span", { class: "muted", text: ` ${r.pos} · ${r.overall} OVR → ` }), r.to ? window.CFP.teamPill(r.to) : null, r.to ? " " : null, el("span", { text: r.to_name }),
+      r.reason ? el("span", { class: "muted small off-recap-why", text: ` · ${r.reason}` }) : null])))
+      : el("p", { class: "muted", text: "Nobody left through the portal." }));
+    body.push(el("div", { class: "off-recap-cols" }, [got, lost]));
+    if (!collapsed) return el("section", { class: "go-card off-recap", "data-key": "recap" }, [el("div", { class: "go-kicker", text: "TRANSFER PORTAL RECAP" }), ...body]);
+    // a patch (ui.morph) redraws this card: it keeps whether the player opened it (view.recapOpen)
+    const det = el("details", { class: "go-card off-recap", "data-key": "recap", ...(view.recapOpen ? { open: "" } : {}) }, [el("summary", { class: "off-recap-sum" }, [el("span", { class: "go-kicker", text: "TRANSFER PORTAL RECAP" }),
+      el("span", { class: "muted", text: `Portal: +${rec.signed.length} / −${rec.lost.length} · details` })]), ...body]);
+    ui.on(det, "toggle", (ev) => { view.recapOpen = ev.currentTarget.open; });
+    return det;
+  }
+
+  function devRow(d) {
+    return el("li", {}, [el("b", { text: d.name }), el("span", { class: "muted", text: ` ${d.pos} · ${clsWord(d.cls)} · now ${d.overall} OVR ` }),
+      el("span", { class: `go-tag ${d.gain > 0 ? "good" : "muted"}`, text: d.gain > 0 ? `+${d.gain}` : "no change" }),
+      d.transfer ? el("span", { class: "go-tag", text: `Transfer · from ${teamAbbr(d.transfer)}` }) : null,
+      ...(d.why || []).map((w) => el("span", { class: `go-tag ${/Struggled/.test(w) ? "bad" : "warn"}`, text: w }))]);
+  }
+
   function renderDevelopment(v, main) {
-    const r = v.report || { mine: [] };
-    main.append(el("section", { class: "go-card", "data-key": "improved" }, [
+    const r = v.report || { mine: [], transfers: [] };
+    if (v.portal_recap) main.append(renderPortalRecap(v, false));
+    const card = el("section", { class: "go-card", "data-key": "improved" }, [
       el("div", { class: "go-kicker", text: "WHO IMPROVED" }),
-      el("p", { class: "muted", text: `Every returning player grows toward his potential at his coachability's pace, faster under good developers and faster still after a big year: production and honors raise a player's ceiling and his pace. ${r.walk_ons} walk-ons and lower-level transfers joined around the league to fill out rosters.` }),
-      el("ul", { class: "off-list" }, r.mine.map((d) => el("li", {}, [el("b", { text: d.name }), el("span", { class: "muted", text: ` ${d.pos} · ${clsWord(d.cls)} · now ${d.overall} OVR ` }),
-        el("span", { class: `go-tag ${d.gain > 0 ? "good" : "muted"}`, text: d.gain > 0 ? `+${d.gain}` : "no change" }),
-        ...(d.why || []).map((w) => el("span", { class: `go-tag ${/Struggled/.test(w) ? "bad" : "warn"}`, text: w }))])))]));
+      el("p", { class: "muted", text: `Every returning player grows toward his potential at his coachability's pace, faster under good developers and faster still after a big year: production and honors raise a player's ceiling and his pace. ${r.walk_ons} walk-ons and lower-level transfers joined around the league to fill out rosters.` })]);
+    if ((r.transfers || []).length) card.append(el("div", { class: "go-kicker muted off-sub", text: `YOUR TRANSFERS · ${r.transfers.length}` }),
+      el("ul", { class: "off-list" }, r.transfers.map(devRow)), el("div", { class: "go-kicker muted off-sub", text: `THE TOP ${r.mine.length}` }));
+    card.append(el("ul", { class: "off-list" }, r.mine.map(devRow)));
+    main.append(card);
   }
 
   function renderJob(s, v) {

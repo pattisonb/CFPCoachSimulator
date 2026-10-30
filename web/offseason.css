@@ -47,3 +47,11 @@
 .off-rs .go-act { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; }
 .off-rs .go-act.on { border-color: var(--accent); }
 .off-pos-opts { margin: 8px 0; }
+.off-recap-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0 14px; }
+.off-recap-list { padding-left: 0; list-style: none; }
+.off-recap-why { white-space: normal; }
+.off-recap-line { margin: 4px 0 0; }
+details.off-recap > summary { cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; list-style: none; }
+details.off-recap > summary::-webkit-details-marker { display: none; }
+details.off-recap > summary::after { content: "▸"; color: var(--muted); margin-left: auto; }
+details.off-recap[open] > summary::after { content: "▾"; }
