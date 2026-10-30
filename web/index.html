@@ -41,6 +41,7 @@
     </nav>
 
     <div class="toolbar" id="season-toolbar">
+      <button id="btn-seasons-menu" class="ghost" type="button" hidden aria-haspopup="menu" aria-expanded="false" title="Your saved seasons, a new season, a career file">Seasons ▾</button>
       <select id="pick-team" aria-label="Your team"></select>
       <button id="btn-new" class="accent" type="button" title="Play the whole 2026 season from week 1">New season</button>
       <button id="btn-seasons" class="ghost" type="button" aria-pressed="false" title="Show or hide the saved seasons">Seasons</button>
@@ -58,7 +59,7 @@
 
     <section class="season-main">
       <div id="season-empty" class="empty">
-        <p id="season-intro">Pick your team, then choose <b>New season</b> to play the 2026 season from week 1. You can play it a week at a time, or sim ahead to selection day or the title game.</p>
+        <p id="season-intro">Pick your team, then choose <b>New season</b> to play the 2026 season from week 1. You can play it a week at a time from the Office, or sim ahead to selection day or signing day.</p>
         <p id="season-loading" class="muted" hidden></p>
       </div>
       <!-- a season is about to load (a link to a saved one): say so instead of the instructions -->
@@ -69,6 +70,16 @@
         note.hidden = false; })();</script>
 
       <div id="season" hidden>
+        <div id="season-compact" class="season-compact" hidden>
+          <span class="sc-team"><span id="sc-pill"></span><b id="sc-abbr"></b></span>
+          <span id="sc-rec" class="sc-rec"></span>
+          <span id="sc-rank" class="sc-rank" hidden></span>
+          <span id="sc-next" class="sc-next"></span>
+          <span class="sc-actions">
+            <button id="btn-compact-office" class="ghost small" type="button" hidden title="Open the Office: this week's steps and the sim buttons">Office</button>
+            <button id="btn-compact-more" class="ghost small" type="button" aria-label="More: settings and the career file" aria-haspopup="menu" aria-expanded="false">▾</button>
+          </span>
+        </div>
         <div class="panel season-head">
           <div class="season-head-row">
             <div>
@@ -76,10 +87,6 @@
               <div id="season-meta" class="muted"></div>
             </div>
             <div class="season-actions">
-              <button id="btn-gameday" class="primary" type="button" title="Play your game this week, drive by drive; Advance then plays the rest of the week">Game day</button>
-              <span class="advance-to"><select id="advance-to" aria-label="Advance to which week"></select><button id="btn-advance" class="ghost" type="button">Advance to Next Week</button></span>
-              <button id="btn-to-selection" class="ghost" type="button">Sim to selection</button>
-              <button id="btn-to-end" class="ghost" type="button">Sim to the end</button>
               <button id="btn-settings" class="ghost" type="button" title="Season settings: god mode and more">⚙ Settings</button>
               <button id="btn-download-career" class="ghost" type="button" hidden title="Save this career as a file to keep or open on another device">Download career</button>
             </div>
@@ -90,9 +97,10 @@
           <div id="week-strip" class="week-strip"></div>
           <div id="week-date" class="week-date muted"></div>
         </div>
+        <div id="season-head-end" class="season-head-end" aria-hidden="true"></div>
 
         <nav class="tabs" id="season-tabs" aria-label="Season sections">
-          <div class="tab-row tab-primary">
+          <div class="tab-row">
             <button data-tab="office" type="button" hidden>Office</button>
             <button data-tab="offseason" type="button" hidden>Offseason</button>
             <button data-tab="recruiting" type="button" hidden>Recruiting</button>
@@ -101,17 +109,15 @@
             <button data-tab="schedule" class="active" type="button">Schedule</button>
             <button data-tab="depth" type="button">Depth Chart</button>
             <button data-tab="games" type="button" hidden>Games</button>
-          </div>
-          <div class="tab-row tab-secondary">
-            <span class="tab-row-label" aria-hidden="true">League</span>
-            <button data-tab="standings" type="button">Standings</button>
-            <button data-tab="rankings" type="button">Rankings</button>
-            <button data-tab="stats" type="button">Stats</button>
-            <button data-tab="classes" type="button" hidden>Classes</button>
-            <button data-tab="bracket" type="button">Bracket</button>
-            <button data-tab="bowls" type="button">Bowls</button>
-            <button data-tab="awards" type="button">Awards</button>
-            <button data-tab="summary" type="button" hidden>Summary</button>
+            <span class="tab-divider" aria-hidden="true">League</span>
+            <button data-tab="standings" class="league" type="button">Standings</button>
+            <button data-tab="rankings" class="league" type="button">Rankings</button>
+            <button data-tab="stats" class="league" type="button">Stats</button>
+            <button data-tab="classes" class="league" type="button" hidden>Classes</button>
+            <button data-tab="bracket" class="league" type="button">Bracket</button>
+            <button data-tab="bowls" class="league" type="button">Bowls</button>
+            <button data-tab="awards" class="league" type="button">Awards</button>
+            <button data-tab="summary" class="league" type="button" hidden>Summary</button>
           </div>
         </nav>
 

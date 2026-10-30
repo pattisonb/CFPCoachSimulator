@@ -94,7 +94,7 @@ if __name__ == "__main__":
                     break
                 time.sleep(0.5)
             assert call(base, f"/api/season/{sid}")["current_week"] == 1, call(base, f"/api/season/{sid}")["current_week"]
-            page.click(".go-play >> text=Sim to the end")
+            page.click(".go-play >> text=Sim to signing day")        # the Office is the only place time moves
             page.wait_for_function("() => /Season complete|national champion/.test(document.querySelector('#season-meta').textContent)",
                                    timeout=900_000)
             summary = call(base, f"/api/season/{sid}")

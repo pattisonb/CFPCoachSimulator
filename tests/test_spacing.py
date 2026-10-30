@@ -213,6 +213,20 @@ if __name__ == "__main__":
                 page.wait_for_function("() => !document.querySelector('#season-list').textContent.includes('Loading')", timeout=60_000)
             w.both("seasons", seasons)
 
+            # the Seasons menu (a season open folds the toolbar into one button) and the compact header bar (past the card)
+            def seasons_menu(_):
+                page.goto(f"{base}/index.html?id={A}")
+                page.wait_for_selector("#season:visible")
+                page.click("#btn-seasons-menu")
+                page.wait_for_selector(".go-menu .go-menu-item", timeout=30_000)
+            w.both("seasons-menu", seasons_menu)
+
+            def compact(_):
+                open_tab(page, base, A, "depth", "[data-player]")      # a long page: it scrolls well past the header
+                page.evaluate("() => window.scrollTo(0, 800)")
+                page.wait_for_selector("#season-compact:visible", timeout=30_000)
+            w.both("season-compact", compact)
+
             def coach(_):
                 page.goto(f"{base}/coach.html")
                 page.wait_for_selector("#coach-form button, #coach-form input", timeout=60_000)

@@ -200,6 +200,171 @@ def check_pane_profile(page, base, sid) -> None:
     page.set_viewport_size({"width": 1280, "height": 1000})
 
 
+# ----- the compact header (compact-header brief), the Office as the only place time moves -----
+
+def check_header(page, base, sid) -> None:
+    """No season open: the toolbar shows New season and Load career. A season open: they fold into Seasons ▾, whose
+    menu lists the seasons and starts a new career end to end; the header card keeps no time-moving control (the
+    Office's play card holds Sim the week, Game day, Sim to selection day, Sim to signing day and the week picker);
+    past the card a sticky bar shows the record and an Office button and the pane's --sticky-top grows by it; at
+    400 px the bar is the default and its ▾ opens the header row; the tabs are one row."""
+    page.set_viewport_size({"width": 1280, "height": 1000})
+    page.goto(f"{base}/index.html")
+    page.wait_for_selector("#btn-new:visible")
+    assert page.is_visible("#btn-load-career") and not page.is_visible("#btn-seasons-menu"), "no season open: the full toolbar"
+    page.goto(f"{base}/index.html?id={sid}")
+    page.wait_for_selector("#season:visible")
+    time.sleep(0.6)
+    assert page.is_visible("#btn-seasons-menu"), "a season open: the Seasons menu button"
+    for sel in ("#btn-new", "#btn-load-career", "#btn-seasons", "#pick-team"):
+        assert not page.is_visible(sel), f"{sel} shows with a season open"
+    assert not page.query_selector("#btn-advance, #btn-to-end, #btn-to-selection, #advance-to, #btn-gameday"), "the header keeps no time-moving control"
+    assert page.is_visible("#btn-settings") and page.is_visible("#btn-download-career"), "Settings and Download career stay in the header"
+    # the Office's play card
+    s = call(base, f"/api/season/{sid}")
+    page.click("#season-tabs button[data-tab=office]")
+    page.wait_for_selector(".go-play [data-play=advance]", timeout=60_000)
+    labels = page.eval_on_selector_all("#tab-office .go-play button", "els => els.map(e => e.textContent.trim())")
+    assert labels[0] == "Sim the week", labels
+    assert "Sim to selection day" in labels and "Sim to signing day" in labels and "▾" in labels, labels
+    nxt = next((g for g in s["schedule"] if g["week"] == s["current_week"] + 1 and g.get("opponent")), None)
+    assert any(l.startswith("Game day") for l in labels) == bool(nxt and not nxt["played"]), labels
+    page.click("#tab-office .go-play .go-play-more")
+    page.wait_for_selector(".go-menu .go-menu-item")
+    weeks = page.eval_on_selector_all(".go-menu .go-menu-item b", "els => els.map(e => e.textContent)")
+    assert len(weeks) == 20 - (s["current_week"] + 2) + 1 and weeks[-1] == "National championship", weeks
+    page.keyboard.press("Escape")
+    assert not page.query_selector(".go-menu"), "Escape closes the week picker"
+    assert page.evaluate("() => document.activeElement === document.querySelector('.go-play-more')"), "the focus returns to ▾"
+    # one tab row
+    assert page.evaluate("() => document.querySelectorAll('#season-tabs .tab-row').length") == 1, "one tab row"
+    assert page.evaluate("() => document.querySelectorAll('#season > nav.tabs').length") == 1, "one tab bar"
+    assert page.evaluate("() => document.querySelectorAll('#season-tabs button[data-tab]').length") == 16, "every tab of the old two rows"
+    assert page.evaluate("() => document.querySelectorAll('#season-tabs .tab-divider').length") == 1
+    # the Seasons menu: the seasons, New season end to end
+    page.click("#btn-seasons-menu")
+    page.wait_for_selector(".season-menu .go-menu-item")
+    names = page.eval_on_selector_all(".season-menu .go-menu-item b", "els => els.map(e => e.textContent)")
+    assert any(s["team_name"] in n for n in names) and "New season" in names and "Load career" in names and "Clear all" in names, names
+    assert page.get_attribute("#btn-seasons-menu", "aria-expanded") == "true"
+    page.click(".season-menu .go-menu-item:has-text('New season')")
+    page.wait_for_selector(".start-pick select")
+    page.select_option(".start-pick select", "akron")
+    page.click(".start-pick button.accent")
+    page.wait_for_selector(".start-card button.accent", timeout=60_000)
+    page.click(".start-card button.accent")
+    page.wait_for_function("(id) => { const q = new URLSearchParams(location.search).get('id'); return q && q !== id && !document.querySelector('#season').hidden; }", arg=sid, timeout=180_000)
+    new_id = page.evaluate("() => new URLSearchParams(location.search).get('id')")
+    assert call(base, f"/api/season/{new_id}")["team"] == "akron", "the new career from the menu is Akron's"
+    assert "AKRON" in page.inner_text("#season-title").upper()
+    call(base, f"/api/season/{new_id}", method="DELETE")
+    # past the header card: the compact bar, the pane below it
+    page.goto(f"{base}/index.html?id={sid}")
+    page.wait_for_selector("#season:visible")
+    page.click("#season-tabs button[data-tab=depth]")        # a long page: it scrolls well past the header
+    page.wait_for_selector("#tab-depth [data-player]", timeout=60_000)
+    assert not page.is_visible("#season-compact"), "at the top the full card shows, no bar"
+    sticky0 = page.evaluate("() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sticky-top'))")
+    page.evaluate("() => window.scrollTo(0, 800)")
+    page.wait_for_selector("#season-compact:visible", timeout=10_000)
+    bar = page.inner_text("#season-compact")
+    assert f"{s['record']['wins']}-{s['record']['losses']}" in bar and "up next" in bar, bar
+    assert page.is_visible("#btn-compact-office") and page.is_visible("#btn-compact-more")
+    time.sleep(0.3)
+    sticky1 = page.evaluate("() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sticky-top'))")
+    bar_h = page.evaluate("() => document.querySelector('#season-compact').getBoundingClientRect().height")
+    assert abs((sticky1 - sticky0) - bar_h) <= 2, (sticky0, sticky1, bar_h)
+    page.click("#btn-compact-more")
+    page.wait_for_selector(".go-menu .go-menu-item:has-text('Settings')")
+    page.keyboard.press("Escape")
+    page.evaluate("() => window.scrollTo(0, 0)")
+    page.wait_for_function("() => document.querySelector('#season-compact').hidden", timeout=10_000)
+    # the Recruiting pane keeps below the bar
+    page.click("#season-tabs button[data-tab=recruiting]")
+    page.wait_for_selector(".go-row-recruit", timeout=60_000)
+    page.click(".go-row-recruit >> nth=0")
+    page.wait_for_selector(".go-pane", timeout=30_000)
+    page.evaluate("() => window.scrollTo(0, 800)")
+    time.sleep(0.5)
+    if page.evaluate("() => window.scrollY") > 300:
+        r = page.evaluate("() => ({ pane: document.querySelector('.go-pane').getBoundingClientRect().top, bar: document.querySelector('#season-compact').getBoundingClientRect().bottom, on: !document.querySelector('#season-compact').hidden })")
+        assert r["on"] and r["pane"] >= r["bar"] - 1, r
+    # the Office button in the bar opens the Office with the focus on Sim the week
+    page.click("#btn-compact-office")
+    page.wait_for_selector("#tab-office:visible .go-play")
+    assert page.evaluate("() => document.activeElement && document.activeElement.dataset.play === 'advance'"), "Office: the focus lands on Sim the week"
+    # a phone: the bar is the default; ▾ opens the header row as a sheet
+    page.set_viewport_size({"width": 400, "height": 860})
+    page.goto(f"{base}/index.html?id={sid}")
+    page.wait_for_selector("#season:visible")
+    page.click("#season-tabs button[data-tab=schedule]")
+    page.wait_for_selector(".schedule-pick", timeout=60_000)
+    page.wait_for_selector("#season-compact:visible", timeout=10_000)
+    assert not page.is_visible(".season-head-row"), "a phone folds the header row"
+    page.click("#btn-compact-more")
+    page.wait_for_selector(".season-head-row:visible", timeout=10_000)
+    assert page.is_visible("#btn-settings")
+    page.keyboard.press("Escape")
+    page.wait_for_function("() => !document.body.classList.contains('head-sheet')")
+    page.set_viewport_size({"width": 1280, "height": 1000})
+
+
+# ----- position changes any time (pos-anytime brief, Part B): the Depth Chart's Position control -----
+
+def check_position_change(page, base, sid) -> None:
+    """From the Depth Chart a WR moves to TE through the row's position box: the chart patches in place (no rebuild),
+    his cell sits in the TE row with "(was WR)", the toast says so, and the API agrees."""
+    page.set_viewport_size({"width": 1280, "height": 1000})
+    s = call(base, f"/api/season/{sid}")
+    open_tab(page, base, sid, "depth", "[data-player]")
+    d = call(base, f"/api/season/{sid}/depth/{s['team']}")
+    wr = next(row for u in d["units"] for row in u["rows"] if row["role"] == "WR")
+    p = next(x for x in wr["players"] if x["role"] == "WR" and not x.get("moved_from") and not x.get("injury"))
+    sel = f".depth-cell[data-key='WR:{p['slug']}'] select.depth-pos"
+    assert page.query_selector(sel), "your roster's rows carry a position box"
+    h = watch(page, "#tab-depth .depth-table", control=sel, scrolled=False)
+    page.hover(sel)
+    page.wait_for_function("(q) => document.querySelector(q).options.length > 5", arg=sel, timeout=30_000)
+    groups = page.eval_on_selector_all(f"{sel} optgroup", "els => els.map(e => e.label)")
+    assert groups and "Tight ends" in groups and "Kickers" not in groups, groups
+    assert page.eval_on_selector(f"{sel} option", "o => o.textContent").startswith("WR"), "his position now comes first"
+    page.select_option(sel, "TE")
+    toasted(page, f"{p['name']} moves to TE (was WR)")
+    page.wait_for_selector(f".depth-cell[data-key='TE:{p['slug']}']", timeout=30_000)
+    time.sleep(0.4)
+    smooth(page, h, "a position change")
+    cell = f".depth-cell[data-key='TE:{p['slug']}']"
+    assert page.eval_on_selector(cell, "c => c.closest('tr').querySelector('.depth-role b').textContent") == "TE", "his row is the TE row"
+    assert "(was WR)" in page.inner_text(cell)
+    assert not page.query_selector(f".depth-cell[data-key='WR:{p['slug']}']"), "he left the WR row"
+    dv = call(base, f"/api/season/{sid}/depth/{s['team']}")
+    te = next(row for u in dv["units"] for row in u["rows"] if row["role"] == "TE")
+    me = next(x for x in te["players"] if x["slug"] == p["slug"])
+    assert me["moved_from"] == "WR" and me["role"] == "TE", me
+    call(base, f"/api/season/{sid}/position", {"team": s["team"], "player": p["slug"], "pos": "WR"})   # back where he was
+
+
+# ----- the NIL economy (nil-economy spec, section 3): the review's line reads the pool's math -----
+
+def check_nil_review(page, base, sid) -> None:
+    """At Departures the primary button reads "Advance to …" (compact-header brief, item 7) and the review's NIL line
+    carries the pool's numbers as the API gives them."""
+    assert page.evaluate("() => document.querySelector('#tab-offseason .go-btn.primary.big').textContent").startswith("Advance to"), "the primary button says where it goes"
+    v = call(base, f"/api/season/{sid}/offseason")
+    n = (v.get("review") or {}).get("nil_portal")
+    assert n, "the offseason review carries the pool record"
+    page.wait_for_selector("#tab-offseason .off-nil-line", timeout=30_000)
+    text = page.inner_text("#tab-offseason .off-nil-line")
+    assert text.startswith(f"NIL for the portal: {n['left']} left + {n['reward']} earned"), text
+    assert f"= {n['left'] + n['reward']}" in text, text
+    if n["pool"] == n["floor"] and n["pool"] > n["left"] + n["reward"]:
+        assert f"raised to the {n['floor']} portal fund" in text, text
+    else:
+        assert "portal fund" not in text, text
+    for why in n.get("reward_why") or []:
+        assert why in text, (why, text)
+
+
 if __name__ == "__main__":
     try:
         from playwright.sync_api import sync_playwright
@@ -1244,9 +1409,13 @@ if __name__ == "__main__":
             page.keyboard.press("Escape")
             assert not errors, errors
 
+            check_header(page, base, A)
+            check_position_change(page, base, A)
+
             # --- Offseason, every stage: no number out of 100, no run-together class codes
             page.goto(f"{base}/index.html?id={B}")
             page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)
+            check_nil_review(page, base, B)
             off = page.inner_text("#tab-offseason")
             assert not OUT_OF_100.search(off), OUT_OF_100.search(off).group(0)
             assert not CLASS_CODE.search(off), CLASS_CODE.search(off).group(0)

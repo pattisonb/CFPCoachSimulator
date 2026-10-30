@@ -354,18 +354,8 @@
     let reportBox = el("div");
     week.append(reportBox);
     if (!s.done) {
-      const gameReady = !!(next && next.opponent && !next.played);
-      const main = el("button", { type: "button", class: "go-btn primary big", text: gameReady ? "PLAY GAME DAY" : "ADVANCE THE WEEK" });
-      main.addEventListener("click", () => H.play(gameReady ? "gameday" : "advance"));
-      const sim = el("button", { type: "button", class: "go-btn big2", text: gameReady ? "Sim the week" : "Sim to selection" });
-      sim.addEventListener("click", () => H.play(gameReady ? "advance" : "selection"));
-      const end = el("button", { type: "button", class: "go-btn big2", text: "Sim to the end" });
-      end.addEventListener("click", () => H.play("end"));
-      // sim through a week of your choosing (the recruiting weeks in between run on Auto)
-      const to = el("select", { class: "go-sel", "aria-label": "Sim to a week" }, [el("option", { value: "", text: "Sim to week…" })]);
-      for (let k = s.current_week + 2; k <= 20; k++) to.append(el("option", { value: String(k), text: `Through ${s.week_labels[k] || `Week ${k}`}` }));
-      to.addEventListener("change", () => { if (to.value) H.play("advance_to", Number(to.value)); });
-      week.append(el("div", { class: "go-play" }, [main, sim, end, to.options.length > 1 ? to : null]));
+      // the play card (season.js playCard): Sim the week, Game day, Sim to selection day, Sim to signing day, ▾ the week picker
+      week.append(el("div", { class: "go-play" }, H.playCard(s)));
     }
 
     let v;

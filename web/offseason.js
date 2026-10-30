@@ -102,10 +102,11 @@
     root.append(head);
     const main = el("div", { class: "off-main", "data-key": "main" });
     root.append(main);
-    const next = { departures: v.retention && v.retention.players.length ? "KEEP THEM HOME" : "OPEN THE TRANSFER PORTAL", retention: "OPEN THE TRANSFER PORTAL",
-                   portal_1: "END ROUND 1", portal_2: "CLOSE THE PORTAL", portal_w1: "END WEEK 1", portal_w2: "END WEEK 2",
-      portal_w3: "END WEEK 3", portal_w4: "CLOSE THE PORTAL", development: "STAFF CHANGES",
-                   staff: "FINISH THE OFFSEASON", ready: `START THE ${v.year} SEASON` }[v.stage];
+    // the primary button says where it takes you ("Advance to …"), never what the next stage does
+    const next = { departures: v.retention && v.retention.players.length ? "Advance to Keep them home" : "Advance to the transfer portal", retention: "Advance to the transfer portal",
+                   portal_1: "Advance to portal round 2", portal_2: "Close the portal and advance", portal_w1: "Advance to portal week 2", portal_w2: "Advance to portal week 3",
+                   portal_w3: "Advance to portal week 4", portal_w4: "Close the portal and advance", development: "Advance to staff changes",
+                   staff: "Finish the offseason", ready: `Start the ${v.year} season` }[v.stage];
     const go = el("button", { type: "button", class: "go-btn primary big", text: next });
     ui.on(go, "click", (ev) => advance(s, BOX, ev.currentTarget, v.stage === "ready" ? "next_season" : null));
     actions.append(go);
@@ -146,6 +147,7 @@
         stat("JOB SECURITY", r.mood || ""), stat("HIS PATIENCE", `${r.patience} years`), stat("YEAR", `${r.tenure} in the job`)]),
       meter(r.security),
       el("p", { class: "off-why", text: r.words })]);
+    if (r.nil_portal) card.append(nilPortalLine(r.nil_portal));
     if (r.decided) {
       if (r.outcome && r.outcome !== r.words) card.append(el("p", {}, [el("b", { text: r.outcome })]));
       if (r.fired) card.append(el("p", { class: "bad-text", text: "Firing happens only at the end of a season; you will pick your next job at the Staff step." }));
@@ -181,6 +183,18 @@
   }
 
   function stat(k, val) { return el("div", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: k }), el("div", { class: "go-stat-val", text: val })]); }
+
+  // The pool's math for the portal: "NIL for the portal: 60 left + 40 earned (nine wins, AD goal met) = 100",
+  // "… raised to the 85 portal fund" when the collective's floor applied, then what keeping players home
+  // cost and what carries into next year once the portal has closed.
+  function nilPortalLine(n) {
+    const why = (n.reward_why || []).join(", ");
+    let text = `NIL for the portal: ${n.left} left + ${n.reward} earned${why ? ` (${why})` : ""} = ${n.left + n.reward}`;
+    if (n.pool === n.floor && n.pool > n.left + n.reward) text += `, raised to the ${n.floor} portal fund`;
+    if (n.retained > 0) text += ` · ${n.retained} spent keeping players home`;
+    if (n.carry != null) text += ` · ${n.carry} carries into next year`;
+    return el("p", { class: "muted small off-nil-line", "data-key": "nil", text });
+  }
 
   async function advance(s, box, btn, to) {
     btn.disabled = true;
@@ -226,7 +240,7 @@
     }
     // position changes: pick a player, see what he would be everywhere, move him
     card.append(el("div", { class: "go-kicker muted off-sub", text: `POSITION CHANGES · ${(v.position_changes || []).length}` }),
-      el("p", { class: "muted small", text: "Move a player for next season; his overall follows our formula at the new spot. Changes take effect when the season starts." }));
+      el("p", { class: "muted small", text: "Move a player to another spot; his overall follows our formula there. Changes apply at once." }));
     const option = (r) => el("option", { value: r.id, text: `${r.pos} · ${r.name} · ${clsWord(r.cls)} · ${r.overall} OVR${r.moved_from ? ` (was ${r.moved_from})` : ""}${r.transfer ? ` · transfer from ${teamName(r.transfer)}` : ""}` });
     const roster = v.my_roster || [];
     const transfers = roster.filter((r) => r.transfer);

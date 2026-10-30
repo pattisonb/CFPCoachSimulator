@@ -62,8 +62,113 @@
       list.appendChild(li);
     }
     const count = data.seasons.length;
+    state.seasons = data.seasons;
     $("#btn-seasons").textContent = count ? `Seasons (${count})` : "Seasons";
+    $("#btn-seasons-menu").textContent = count ? `Seasons (${count}) ▾` : "Seasons ▾";
     $("#btn-clear-seasons").hidden = !count;
+  }
+
+  // ----- the Seasons menu (a season open: the toolbar folds into one button) ------------------
+  // With a season open the team picker, New season, Seasons and Load career fold into "Seasons ▾",
+  // a popover with the saved seasons, New season, Load career and Clear all; the side panel is for
+  // the empty state only. With no season open the full toolbar shows as before.
+  function toolbarMode(open) {
+    for (const id of ["pick-team", "btn-new", "btn-seasons", "btn-load-career"]) $(`#${id}`).hidden = open;
+    $("#btn-seasons-menu").hidden = !open;
+    document.body.classList.toggle("season-open", open);
+  }
+  const phone = () => window.matchMedia("(max-width: 759px)").matches;
+
+  // A popover menu under a button (the Recruit menu's look and keys: Escape, Tab and an outside click
+  // close it, arrows move, focus returns to the button); a bottom sheet on a phone. items: {heading} rows
+  // and {name, cost, why, onPick, current} rows; a row with a why is grayed but reachable.
+  let menuState = null;
+  function closeMenu(refocus) {
+    const m = menuState;
+    if (!m) return;
+    menuState = null;
+    m.el.remove();
+    if (m.backdrop) m.backdrop.remove();
+    document.removeEventListener("pointerdown", m.onDoc, true);
+    window.removeEventListener("scroll", m.onMove, true);
+    window.removeEventListener("resize", m.onMove);
+    m.btn.setAttribute("aria-expanded", "false");
+    if (refocus && m.btn.isConnected) m.btn.focus({ preventScroll: true });
+  }
+  function openMenu(btn, items, label) {
+    if (menuState) { const same = menuState.btn === btn; closeMenu(true); if (same) return; }
+    const sheet = phone();
+    const menu = el("div", { class: `go-menu season-menu ${sheet ? "sheet" : ""}`, role: "menu", tabindex: "-1", "aria-label": label }, items.map((it) => {
+      if (it.heading) return el("div", { class: "go-menu-head muted small-text", role: "presentation", text: it.heading });
+      const item = el("button", { type: "button", class: `go-menu-item ${it.current ? "current" : ""}`, role: "menuitem", tabindex: "-1" }, [
+        el("span", { class: "go-menu-main" }, [el("b", { text: it.name }), it.cost ? el("span", { class: "muted small go-menu-cost", text: it.cost }) : null]),
+        it.why ? el("span", { class: "go-menu-why", text: it.why }) : null]);
+      if (it.current) item.setAttribute("aria-current", "true");
+      if (it.disabled) item.setAttribute("aria-disabled", "true");
+      item.addEventListener("click", () => { if (it.disabled) return; closeMenu(true); it.onPick(); });
+      return item;
+    }));
+    menu.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeMenu(true); return; }
+      if (e.key === "Tab") { e.preventDefault(); closeMenu(true); return; }
+      if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
+      e.preventDefault();
+      const live = [...menu.querySelectorAll(".go-menu-item")];
+      if (!live.length) return;
+      const i = live.indexOf(document.activeElement);
+      const j = e.key === "ArrowDown" ? (i + 1) % live.length : e.key === "ArrowUp" ? (i - 1 + live.length) % live.length : e.key === "Home" ? 0 : live.length - 1;
+      live[j].focus();
+    });
+    const backdrop = sheet ? el("div", { class: "go-menu-backdrop" }) : null;
+    if (backdrop) { backdrop.addEventListener("click", () => closeMenu(true)); document.body.append(backdrop); }
+    document.body.append(menu);
+    const place = () => {
+      const r = btn.getBoundingClientRect(), m = menu.getBoundingClientRect(), pad = 8;
+      if (r.bottom < 0 || r.top > window.innerHeight) { closeMenu(); return; }
+      let top = r.bottom + 6;
+      if (top + m.height > window.innerHeight - pad) top = Math.max(pad, r.top - 6 - m.height);
+      menu.style.top = `${top}px`;
+      menu.style.left = `${Math.max(pad, Math.min(r.left, window.innerWidth - m.width - pad))}px`;
+    };
+    if (!sheet) place();
+    const onDoc = (e) => { if (!menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) closeMenu(); };
+    const onMove = () => { if (!sheet) place(); };
+    document.addEventListener("pointerdown", onDoc, true);
+    window.addEventListener("scroll", onMove, true);
+    window.addEventListener("resize", onMove);
+    btn.setAttribute("aria-expanded", "true");
+    menuState = { el: menu, backdrop, btn, onDoc, onMove };
+    const first = menu.querySelector(".go-menu-item:not([aria-disabled=\"true\"])") || menu.querySelector(".go-menu-item");
+    (first || menu).focus();
+    return menu;
+  }
+
+  function seasonsMenu() {
+    const btn = $("#btn-seasons-menu");
+    const items = [];
+    const list = state.seasons || [];
+    items.push({ heading: list.length ? "Saved seasons" : "No saved seasons" });
+    for (const x of list) {
+      const status = x.offseason ? "offseason" : x.done ? `done · champion ${x.champion_name}` : `through week ${x.current_week}`;
+      items.push({ name: `${x.team_name} · ${x.career ? `Coach Career · ${x.year}` : "full"}`, cost: `${x.wins}-${x.losses}`, why: `${status} · ${when(x.created_at)}`,
+                   current: !!(state.season && state.season.id === x.id), onPick: () => { if (!state.season || state.season.id !== x.id) openSeason(x.id); } });
+    }
+    items.push({ heading: "" });
+    items.push({ name: "New season", why: "Pick a team and who coaches it", onPick: newSeasonFlow, disabled: !!state.simming });
+    items.push({ name: "Load career", why: "Open a Coach Career saved as a file", onPick: () => $("#career-file").click() });
+    if (list.length) items.push({ name: "Clear all", why: "Delete every saved season", onPick: clearSeasons });
+    openMenu(btn, items, "Seasons");
+  }
+
+  // New season from the menu: pick the team, then who coaches (chooseCoach, in the same dialog)
+  function newSeasonFlow() {
+    const pick = $("#pick-team");
+    const sel = el("select", { "aria-label": "Your team", class: "start-team" }, [...pick.options].map((o) => el("option", { value: o.value, text: o.textContent })));
+    sel.value = pick.value;
+    const go = el("button", { type: "button", class: "accent", text: "Who coaches? →" });
+    go.addEventListener("click", () => { pick.value = sel.value; chooseCoach("full", true); });
+    openModal("New season", el("div", { class: "start-pick" }, [el("p", { class: "muted small-text", text: "Pick the program. The 2026 season starts from week 1, with the real schedule and roster." }), sel, go]));
+    sel.focus({ preventScroll: true });
   }
 
   // An API error as a sentence: FastAPI sends {"detail": "..."} after the status code.
@@ -116,6 +221,9 @@
     $("#season-empty").hidden = false;
     startNote(null);
     history.replaceState(null, "", location.pathname);
+    toolbarMode(false);
+    setCompact(false);
+    closeHeadSheet();
     setSidebar(true, false);
   }
 
@@ -154,7 +262,7 @@
 
   // Who coaches: take over the team's own head coach, or one of your created coaches (the Your
   // coach page). The team's coordinators stay for the season either way.
-  async function chooseCoach(mode) {
+  async function chooseCoach(mode, inPlace) {
     const slug = $("#pick-team").value;
     const t = window.CFP.teamsBySlug[slug] || {};
     const staff = t.staff || {};
@@ -176,7 +284,8 @@
     mine.append(el("div", { class: "coach-actions" }, [create]));
     box.append(own, mine,
       el("p", { class: "muted small-text", text: `Either way the staff stays for the season: ${staff.offense || "the offensive coordinator"} and ${staff.defense || "the defensive coordinator"}. Staff changes come after the season.` }));
-    openModal(`Who coaches ${t.name || "your team"}?`, box);
+    if (inPlace && modalStack.length) swapModal(`Who coaches ${t.name || "your team"}?`, box);
+    else openModal(`Who coaches ${t.name || "your team"}?`, box);
     try {
       const coaches = (await api("/api/coaches")).coaches;
       list.innerHTML = "";
@@ -260,8 +369,6 @@
   async function advance(to) {
     const s = state.season;
     if (!s || s.done) return;
-    // the Advance dropdown picks the week to sim through (the next one unless you chose further)
-    if (!to) { const pick = Number(($("#advance-to") || {}).value); if (pick > s.current_week + 1) to = pick; }
     beginSim(s, to || s.current_week + 1, false);
     showProgress({ status: "running", done: s.current_week, total: to || s.current_week + 1, stage: "Starting", week: s.current_week + 1 });
     try {
@@ -313,8 +420,9 @@
 
   function setBusy(b) {
     if (!b) state.simming = false;
-    for (const id of ["btn-advance", "btn-to-selection", "btn-to-end", "btn-gameday"]) $(`#${id}`).disabled = b || (state.season && state.season.done);
+    for (const n of document.querySelectorAll("#tab-office .go-play button, #tab-office .go-play select")) n.disabled = b;
     $("#btn-settings").disabled = b;
+    $("#btn-compact-office").disabled = b;
     for (const chip of document.querySelectorAll("#week-strip .week-chip")) chip.disabled = b;
     $("#btn-new").disabled = b;
     $("#season-list").classList.toggle("locked", b);
@@ -334,10 +442,10 @@
   function liveHead(j) {
     const s = state.season;
     if (!s) return;
-    $("#btn-gameday").hidden = true;
     if (j.record) {
       const rec = $("#season-title .rec");
       if (rec) rec.textContent = `${j.record.wins}-${j.record.losses}`;
+      $("#sc-rec").textContent = `${j.record.wins}-${j.record.losses}`;
       const conf = $("#season-title .conf-rec");
       if (conf) conf.textContent = `${j.record.conf_wins}-${j.record.conf_losses} ${s.conference}`;
     }
@@ -354,6 +462,7 @@
     }
     const simDate = simDateText(s);
     $("#season-meta").textContent = `Simming · through ${j.done === 0 ? "the preseason" : s.week_labels[j.done] || "week " + j.done}${simDate ? ` · ${simDate}` : ""}`;
+    $("#sc-next").textContent = `Simming · through ${j.done === 0 ? "the preseason" : s.week_labels[j.done] || "week " + j.done}`;
   }
 
   // Progress while simming: weeks completed plus the fraction of the current week's games,
@@ -374,7 +483,8 @@
     // one line for the whole week: its games, the polls and recruiting all count toward the bar
     text.append(el("b", { text: label ? `Simming ${label}` : (j.stage || "Simming") }), ` · ${pct}%`);
     text.hidden = span > 1;
-    $("#btn-advance").textContent = "Simming…";
+    const simBtn = $("#tab-office .go-play .go-btn.primary");
+    if (simBtn) simBtn.textContent = "Simming…";
     if (span > 1) showSimOverlay(j, pct, span, from);
   }
 
@@ -397,7 +507,7 @@
     $("#sim-sub").textContent = `${pct}%`;
     $("#sim-bar").style.width = `${pct}%`;
     // the week strip follows the sim
-    if (j.done !== state.simLastDone) { state.simLastDone = j.done; state.viewWeek = j.done; state.season.current_week = j.done; renderWeekStrip(); $("#btn-advance").textContent = "Simming…"; $("#btn-gameday").hidden = true; }
+    if (j.done !== state.simLastDone) { state.simLastDone = j.done; state.viewWeek = j.done; state.season.current_week = j.done; renderWeekStrip(); }
     for (const r of j.results || []) {
       const key = `${r.week}|${r.opponent}`;
       if (state.simShown.has(key)) continue;
@@ -525,7 +635,7 @@
     // the team picker (for a new season) starts on the open season's team
     if (opening && $("#pick-team").querySelector(`option[value="${s.team}"]`)) $("#pick-team").value = s.team;
     state.standings = null;
-    if (opening && sidebarPreferred() !== "1") setSidebar(false, false);
+    if (opening) { setSidebar(false, false); toolbarMode(true); }
     const upNext = s.done ? s.current_week : Math.min(s.current_week + 1, 20);
     // a season opens on the week up next
     if (state.viewWeek == null) state.viewWeek = upNext;
@@ -556,8 +666,99 @@
     renderCareerSteps(s);
     setBusy(false);
     renderWeekStrip();
+    renderCompact(s);
     renderTab();
   }
+
+  // ----- the compact header -------------------------------------------------------------------
+  // Once the page scrolls past the header card a one-line bar sticks under the top bar: the team,
+  // the record and rank, what is up next, an Office button (a career) and ▾ (settings, the career
+  // file; on a phone the full header row as a sheet). On a phone the bar is the default and the
+  // header row stays folded. An IntersectionObserver on the sentinel after the card drives it.
+  const compact = { on: false, past: false, io: null, margin: null };
+  const STAGE_NAMES = { departures: "Offseason · Departures", retention: "Offseason · Keep them home", portal_1: "Offseason · Transfer portal", portal_2: "Offseason · Transfer portal",
+    portal_w1: "Offseason · Portal week 1", portal_w2: "Offseason · Portal week 2", portal_w3: "Offseason · Portal week 3", portal_w4: "Offseason · Portal week 4",
+    development: "Offseason · Development", staff: "Offseason · Staff changes", ready: "Offseason · Ready for next season" };
+  function renderCompact(s) {
+    const t = window.CFP.teamsBySlug[s.team] || {};
+    const pill = $("#sc-pill");
+    pill.innerHTML = "";
+    pill.append(teamPill(s.team));
+    $("#sc-abbr").textContent = t.abbreviation || s.team_name;
+    $("#sc-rec").textContent = `${s.record.wins}-${s.record.losses}`;
+    const rank = s.my_rank && s.my_rank.rank ? (s.my_rank.kind === "cfp" ? `CFP #${s.my_rank.rank}` : `#${s.my_rank.rank}`) : "";
+    $("#sc-rank").textContent = rank;
+    $("#sc-rank").hidden = !rank;
+    $("#sc-next").textContent = s.done ? (s.career && s.offseason_stage ? STAGE_NAMES[s.offseason_stage] || "Offseason" : "Season complete")
+      : `${s.week_labels[s.current_week + 1] || "Week " + (s.current_week + 1)} up next`;
+    $("#btn-compact-office").hidden = !s.career;
+    watchHeader();
+  }
+  function stickyH() {
+    const h = (n) => (n && getComputedStyle(n).position === "sticky" ? n.getBoundingClientRect().height : 0);
+    return Math.round(h($(".topbar")) + (document.body.classList.contains("career-mode") ? h($("#season-tabs")) : 0));
+  }
+  function watchHeader() {
+    const margin = `-${stickyH()}px 0px 0px 0px`;
+    if (compact.io && compact.margin === margin) { applyCompact(); return; }
+    if (compact.io) compact.io.disconnect();
+    compact.margin = margin;
+    compact.io = new IntersectionObserver((entries) => {
+      for (const e of entries) compact.past = !e.isIntersecting && e.boundingClientRect.top < 0 + stickyH();
+      applyCompact();
+    }, { rootMargin: margin, threshold: 0 });
+    compact.io.observe($("#season-head-end"));
+  }
+  function applyCompact() {
+    const ph = phone();
+    document.body.classList.toggle("phone-compact", ph);
+    setCompact(!!state.season && (ph || compact.past));
+  }
+  function setCompact(on) {
+    if (compact.on === on) return;
+    compact.on = on;
+    const bar = $("#season-compact");
+    bar.hidden = !on;
+    document.body.classList.toggle("head-compact", on);
+    if (!on) closeHeadSheet();
+    stickyTop();
+  }
+  // the phone's ▾: the header row (title, record, settings, the career file) as a sheet
+  function openHeadSheet() {
+    if (document.body.classList.contains("head-sheet")) return;
+    const back = el("div", { class: "go-menu-backdrop sc-backdrop" });
+    back.addEventListener("click", closeHeadSheet);
+    document.body.append(back);
+    document.body.classList.add("head-sheet");
+    $("#btn-compact-more").setAttribute("aria-expanded", "true");
+    $("#btn-settings").focus({ preventScroll: true });
+  }
+  function closeHeadSheet() {
+    if (!document.body.classList.contains("head-sheet")) return;
+    document.body.classList.remove("head-sheet");
+    for (const b of document.querySelectorAll(".sc-backdrop")) b.remove();
+    const more = $("#btn-compact-more");
+    more.setAttribute("aria-expanded", "false");
+    if (more.isConnected && !more.hidden) more.focus({ preventScroll: true });
+  }
+  function compactMore() {
+    if (phone()) { if (document.body.classList.contains("head-sheet")) closeHeadSheet(); else openHeadSheet(); return; }
+    const items = [{ name: "⚙ Settings", why: "God mode and more", onPick: () => $("#btn-settings").click() }];
+    if (state.season && state.season.career) items.push({ name: "Download career", why: "Save this career as a file", onPick: () => $("#btn-download-career").click() });
+    items.push({ name: "Back to the top", why: "The full header", onPick: () => window.scrollTo({ top: 0 }) });
+    openMenu($("#btn-compact-more"), items, "More");
+  }
+  // the Office is where the week moves: open it and put the focus on Sim the week
+  function goOffice() {
+    if (!state.season || !state.season.career) { state.tab = "schedule"; renderTab(); return; }
+    state.tab = "office";
+    renderTab();
+    window.scrollTo({ top: 0 });
+    const b = $("#tab-office .go-play .go-btn.primary");
+    if (b) b.focus({ preventScroll: true });
+  }
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("head-sheet") && !modalOpen()) closeHeadSheet(); });
+  window.matchMedia("(max-width: 759px)").addEventListener("change", () => { if (state.season) { watchHeader(); applyCompact(); } });
 
   function renderWeekStrip() {
     const s = state.season;
@@ -622,32 +823,13 @@
     else status = "ahead";
     box.append(el("b", { text: label }), el("span", { text: ` · ${weekDateText(s, w)}` }));
     if (status) box.append(el("span", { text: ` · ${status}` }));
-    const btn = $("#btn-advance");
-    const next = (s.schedule || []).find((g) => g.week === s.current_week + 1 && g.opponent);
-    const mineDone = !!(next && next.played);
-    // the dropdown: every week left, the next one picked; Advance sims through the pick
-    const sel = $("#advance-to");
-    const last = 20;
-    sel.innerHTML = "";
-    for (let k = s.current_week + 1; k <= last; k++) sel.append(el("option", { value: String(k), text: k === s.current_week + 1 ? `Next: ${s.week_labels[k] || `Week ${k}`}` : `Through ${s.week_labels[k] || `Week ${k}`}` }));
-    sel.hidden = !!s.done || sel.options.length <= 1;
-    sel.onchange = () => { btn.textContent = Number(sel.value) > s.current_week + 1 ? `Sim to ${s.week_labels[Number(sel.value)] || `Week ${sel.value}`}` : "Advance to Next Week"; };
-    if (s.done) btn.textContent = "Season complete";
-    else btn.textContent = "Advance to Next Week";
-    btn.title = mineDone ? "Your game is in the books: this plays the rest of the week" : "Plays every game this week, or through the week picked in the dropdown";
-    // Game day plays only your game this week (hidden on a bye, once it is played, and after the season)
-    // after the title game there is nothing left to sim; past selection, "Sim to selection" is moot
-    btn.hidden = !!s.done;
-    $("#btn-to-end").hidden = !!s.done;
-    $("#btn-to-selection").hidden = !!s.done || s.current_week >= 15;
-    const gd = $("#btn-gameday");
-    gd.hidden = s.done || !next || mineDone;
-    if (next) gd.textContent = `Game day · ${next.venue === "away" ? "at" : "vs"} ${next.opponent_name}`;
   }
 
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
+    const active = $("#season-tabs button.active");   // one scrolling row: the open tab stays in view
+    if (active && !active.hidden && active.scrollIntoView) active.scrollIntoView({ block: "nearest", inline: "nearest" });
     for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "depth", "office", "offseason", "recruiting", "prospects", "staff", "classes"]) $(`#tab-${t}`).hidden = t !== name;
     document.body.classList.toggle("on-office", name === "office");
     document.body.classList.toggle("on-career-tab", CAREER_TABS.includes(name));
@@ -667,6 +849,7 @@
     else if (t === "stats") renderStats();
     else if (t === "depth") renderDepthChart();
     else if (t === "offseason" && window.Offseason) window.Offseason.render(state.season, $("#tab-offseason"), recruitingHelpers);
+    else if (t === "office" && window.Recruiting) { window.Recruiting.render(t, state.season, { ...recruitingHelpers, api: officeApi }); officeCarryLine(state.season); }
     else if (CAREER_TABS.includes(t) && window.Recruiting) window.Recruiting.render(t, state.season, recruitingHelpers);
   }
 
@@ -692,22 +875,76 @@
   function stickyTop() {
     const h = (n) => (n && getComputedStyle(n).position === "sticky" ? n.getBoundingClientRect().height : 0);
     const top = h($(".topbar")), nav = document.body.classList.contains("career-mode") ? h($("#season-tabs")) : 0;
+    const bar = $("#season-compact"), barH = bar && !bar.hidden ? bar.getBoundingClientRect().height : 0;
     document.documentElement.style.setProperty("--topbar-h", `${Math.round(top)}px`);
-    document.documentElement.style.setProperty("--sticky-top", `${Math.round(top + nav)}px`);
+    document.documentElement.style.setProperty("--compact-h", `${Math.round(barH)}px`);
+    document.documentElement.style.setProperty("--sticky-top", `${Math.round(top + nav + barH)}px`);
+    if (state.season && compact.io) watchHeader();
   }
-  if (window.ResizeObserver) { const ro = new ResizeObserver(stickyTop); ro.observe($(".topbar")); ro.observe($("#season-tabs")); }
-  // what the Office's buttons do: the same as the header's, except that Advance there is always
-  // the next week (the schedule's highlighted week is not in view, so it cannot be the target)
+  if (window.ResizeObserver) { const ro = new ResizeObserver(stickyTop); ro.observe($(".topbar")); ro.observe($("#season-tabs")); ro.observe($("#season-compact")); }
+  // The Office is the only place time moves. play(what, to): "gameday" plays your game drive by
+  // drive, "advance" sims the next week (always the next one: the schedule's highlighted week is
+  // not in view, so it cannot be the target), "advance_to" sims through week `to`, "selection" to
+  // selection day (week 15), "end" to national signing day (week 20, with the title game).
   function play(what, to) {
-    if (what === "advance_to") { if (!$("#btn-advance").disabled && to > state.season.current_week) advance(to); return; }
-    const btn = { gameday: "#btn-gameday", advance: "#btn-advance", selection: "#btn-to-selection", end: "#btn-to-end" }[what];
-    const b = btn && $(btn);
-    if (b && !b.hidden && !b.disabled) {
-      if (what === "advance") advance(state.season.current_week + 1);
-      else b.click();
-    } else if (what === "gameday") toast("No game to play this week: a bye, or it is already played. Advance plays the rest of the week.", 4000);
+    const s = state.season;
+    if (!s || s.done || state.simming) return;
+    const next = (s.schedule || []).find((g) => g.week === s.current_week + 1 && g.opponent);
+    if (what === "gameday") {
+      if (next && !next.played) playGameDay();
+      else toast("No game to play this week: a bye, or it is already played. Sim the week plays the rest of it.", 4000);
+    } else if (what === "advance") advance(s.current_week + 1);
+    else if (what === "advance_to") { if (to > s.current_week) advance(to); }
+    else if (what === "selection") { if (s.current_week < 15) advance(15); }
+    else if (what === "end") advance(20);
   }
-  const recruitingHelpers = { api, postJSON, toast, openModal, closeModal: closeAllModals, errText, play, openSeason: reopenSeason, onChange: (tab) => { state.tab = tab; renderTab(); window.scrollTo({ top: 0 }); } };
+  // The Office's play card (recruiting.js hands its .go-play to this): Sim the week, Game day while
+  // your game is unplayed, Sim to selection day until selection, Sim to signing day, and ▾ with the
+  // week picker (sim through a week of your choosing; the recruiting weeks between run on Auto).
+  function playCard(s) {
+    const next = (s.schedule || []).find((g) => g.week === s.current_week + 1 && g.opponent);
+    const gameReady = !!(next && !next.played);
+    const btn = (cls, text, title, what) => {
+      const b = el("button", { type: "button", class: `go-btn ${cls}`, text, title, "data-play": what });
+      window.CFP.ui.on(b, "click", () => play(what));
+      return b;
+    };
+    const week = btn("primary big", "Sim the week", gameReady ? "Plays every game this week, yours included; the recruiting week runs with it"
+      : next && next.played ? "Your game is in the books: this plays the rest of the week" : "Plays every game this week", "advance");
+    const game = gameReady ? btn("big2", `Game day · ${next.venue === "away" ? "at" : "vs"} ${next.opponent_name}`, "Play your game this week, drive by drive; Sim the week then plays the rest of it", "gameday") : null;
+    const selection = s.current_week < 15 ? btn("big2", "Sim to selection day", `Sim through ${s.week_labels[15] || "selection day"}; the recruiting weeks between run on Auto`, "selection") : null;
+    const end = btn("big2", "Sim to signing day", "Sim through the title game and national signing day; the recruiting weeks between run on Auto", "end");
+    const more = el("button", { type: "button", class: "go-btn big2 go-play-more", text: "▾", "aria-label": "Sim to a week", title: "Sim through a week of your choosing", "aria-haspopup": "menu", "aria-expanded": "false" });
+    window.CFP.ui.on(more, "click", () => {
+      const items = [{ heading: "Sim through" }];
+      for (let k = s.current_week + 2; k <= 20; k++) items.push({ name: s.week_labels[k] || `Week ${k}`, why: k === 15 ? "Selection day" : k === 20 ? "The title game and national signing day" : "", onPick: () => play("advance_to", k) });
+      openMenu(more, items, "Sim to a week");
+    });
+    return [week, game, selection, end, s.current_week + 2 <= 20 ? more : null].filter(Boolean);
+  }
+  // the Office's recruiting view, fetched once for the Office and the NIL line (a short memo)
+  const officeMemo = { path: null, at: 0, p: null };
+  function officeApi(path, options) {
+    if (options || !/\/recruiting$/.test(path)) return api(path, options);
+    if (officeMemo.p && officeMemo.path === path && Date.now() - officeMemo.at < 3000) return officeMemo.p;
+    officeMemo.path = path; officeMemo.at = Date.now(); officeMemo.p = api(path);
+    return officeMemo.p;
+  }
+  // a career's new season: "NIL carried over: 25 (of 135 this year)" in the Office's program card
+  async function officeCarryLine(s) {
+    if (!s.career || s.done) return;
+    let v;
+    try { v = await officeApi(`/api/season/${s.id}/recruiting`); } catch (e) { return; }
+    const carry = v && v.nil ? Number(v.nil.carry || 0) : 0;
+    if (!(carry > 0) || state.season !== s || state.tab !== "office") return;
+    for (let i = 0; i < 40 && !$("#tab-office .go-program"); i++) await new Promise((r) => setTimeout(r, 250));   // the program card lands after its own fetch
+    const card = $("#tab-office .go-program");
+    if (!card || card.querySelector(".go-nil-carry") || state.season !== s) return;
+    const head = card.querySelector(".go-program-head");
+    const line = el("p", { class: "muted small go-nil-carry", text: `NIL carried over: ${carry} (of ${v.nil.budget} this year)` });
+    if (head) head.after(line); else card.prepend(line);
+  }
+  const recruitingHelpers = { api, postJSON, toast, openModal, closeModal: closeAllModals, errText, play, playCard, openSeason: reopenSeason, onChange: (tab) => { state.tab = tab; renderTab(); window.scrollTo({ top: 0 }); } };
   function renderCareerSteps(s) {
     const box = $("#career-steps");
     const career = !!s.career;
@@ -717,8 +954,8 @@
     // a career's tabs sit above the header, in the same place on every screen (the header
     // changes with the tab); a plain season keeps them under the header
     const nav = $("#season-tabs");
-    if (career && nav.previousElementSibling) $("#season").prepend(nav);
-    else if (!career && !nav.previousElementSibling) $(".season-head").after(nav);
+    if (career && nav.previousElementSibling !== $("#season-compact")) $("#season-compact").after(nav);
+    else if (!career && nav.previousElementSibling !== $("#season-head-end")) $("#season-head-end").after(nav);
     stickyTop();
     if (!career && CAREER_TABS.includes(state.tab)) state.tab = "schedule";
     // a career opens on the Office
@@ -730,9 +967,9 @@
     box.innerHTML = "";
     const step = (n, label, onclick) => el("button", { type: "button", class: "ghost career-step", onclick }, [el("b", { text: `${n}` }), ` ${label}`]);
     box.append(step(1, "Recruit", () => { state.tab = "recruiting"; renderTab(); }), el("span", { class: "muted", text: "→" }),
-      step(2, "Your game", () => { const gd = $("#btn-gameday"); if (!gd.hidden && !gd.disabled) gd.click(); else { state.tab = "schedule"; renderTab(); } }),
+      step(2, "Your game", () => play("gameday")),
       el("span", { class: "muted", text: "→" }),
-      step(3, "Advance", () => { if (!$("#btn-advance").disabled) advance(); }));
+      step(3, "Advance", goOffice));   // the Office is where the week moves: open it, the focus on Sim the week
   }
 
   // ----- stats tab: team stats, player stats and the depth chart under one tab --------
@@ -829,6 +1066,51 @@
         toast(on ? `Redshirt: ${p.name}` : `Off redshirt: ${p.name}`, 3000);
       } catch (err) { toast(`Could not do that: ${errText(err)}`, 4000); }
     })());
+    // a position change: his row moves to the new role's row and says where he came from; the chart patches in place
+    const POS_GROUPS = { QB: "Quarterback", RB: "Running backs", WR: "Receivers", TE: "Tight ends", OL: "Offensive line", DL: "Defensive line", LB: "Linebackers", DB: "Secondary", K: "Kickers", P: "Punters" };
+    const posOptions = async (p) => {
+      const key = `${s.id}|${s.current_week}|${p.slug}|${p.role}`;
+      ds.posOpts = ds.posOpts || new Map();
+      if (!ds.posOpts.has(key)) ds.posOpts.set(key, api(`/api/season/${s.id}/position_options/${ds.team}/${p.slug}`).then((r) => r.options).catch((err) => { ds.posOpts.delete(key); throw err; }));
+      return ds.posOpts.get(key);
+    };
+    const fillPositions = async (sel, p) => {
+      if (sel.dataset.filled) return;
+      sel.dataset.filled = "1";
+      let opts;
+      try { opts = await posOptions(p); } catch (err) { delete sel.dataset.filled; toast(`Could not list his positions: ${errText(err)}`, 4000); return; }
+      if (!sel.isConnected) return;
+      const cur = opts.find((o) => o.current) || { pos: p.role, overall: p.overall };
+      sel.innerHTML = "";
+      sel.append(el("option", { value: cur.pos, text: `${cur.pos} · now` }));
+      const groups = new Map();
+      for (const o of opts) { if (o.current) continue; if (!groups.has(o.group)) groups.set(o.group, []); groups.get(o.group).push(o); }
+      const order = Object.keys(POS_GROUPS);     // the groups in formation order, best overall first within each
+      for (const g of [...groups.keys()].sort((a, b) => order.indexOf(a) - order.indexOf(b))) sel.append(el("optgroup", { label: POS_GROUPS[g] || g }, groups.get(g).map((o) => el("option", { value: o.pos, text: `${o.pos} · ${o.overall} ovr` }))));
+      sel.value = cur.pos;
+    };
+    const changePosition = (ev, p) => {
+      const sel = ev.currentTarget, pos = sel.value;
+      if (!pos || pos === p.role) return;
+      window.CFP.ui.busy(sel, (async () => {
+        try {
+          const r = await api(`/api/season/${s.id}/position`, postJSON({ team: ds.team, player: p.slug, pos }));
+          playerState.cache.clear(); ds.data = null; if (ds.posOpts) ds.posOpts.clear();
+          await patchDepthChart();
+          toast(r.moved_from ? `${p.name} moves to ${r.position} (was ${r.moved_from})` : `${p.name} moves back to ${r.position}`, 3500);
+        } catch (err) { sel.value = p.role; toast(`Could not change his position: ${errText(err)}`, 4000); }
+      })());
+    };
+    const positionControl = (p, role) => {
+      if (!canEdit || ds.team !== s.team || ["KR", "PR"].includes(role) || p.role !== role) return null;
+      const sel = el("select", { class: "depth-pos tiny", "aria-label": `Position for ${p.name}`, title: "Move him to another position: his overall follows our formula there, and he plays there from the next game" },
+        [el("option", { value: p.role, text: p.role })]);
+      sel.addEventListener("focus", () => fillPositions(sel, p));
+      sel.addEventListener("pointerenter", () => fillPositions(sel, p));
+      sel.addEventListener("touchstart", () => fillPositions(sel, p), { passive: true });
+      window.CFP.ui.on(sel, "change", (ev) => changePosition(ev, p));
+      return sel;
+    };
     // moves are saved with the season and used by every game from then on; the chart patches in place
     const change = (ev, body, said) => window.CFP.ui.busy(ev.currentTarget, (async () => {
       try { ds.data = await api(`/api/season/${s.id}/depth/${ds.team}`, postJSON(body)); await patchDepthChart(); if (said) toast(said, 3000); }
@@ -839,7 +1121,7 @@
       ? controlButton("Reset to the original depth chart", null, (ev) => { if (confirm(`Reset the ${d.name} depth chart to the original?`)) change(ev, { reset: true }, `${d.name} depth chart reset to the original`); }, "ghost small")
       : null;
     const note = el("div", { class: "stats-controls depth-note" }, [
-      el("span", { class: "muted small-text", text: s.done ? "Season complete; the depth chart is read-only." : !canEdit ? "Another team's depth chart: turn on god mode in ⚙ Settings to edit it." : `▲ ▼ move a player one spot, ★ makes him the starter.${ds.team !== s.team ? " God mode: this is another team's chart." : ""} Changes are saved with this season and used by every game from the next sim on.` }),
+      el("span", { class: "muted small-text", text: s.done ? "Season complete; the depth chart is read-only." : !canEdit ? "Another team's depth chart: turn on god mode in ⚙ Settings to edit it." : `▲ ▼ move a player one spot, ★ makes him the starter${ds.team === s.team ? ", the position box moves him to another spot" : ""}.${ds.team !== s.team ? " God mode: this is another team's chart." : ""} Changes are saved with this season and used by every game from the next sim on.` }),
       resetBtn,
     ]);
     box.append(note);
@@ -889,9 +1171,11 @@
             i > 0 ? controlButton("▲", "Move up", (ev) => change(ev, { role: row.role, player: p.slug, move: "up" }, `${p.name} moves up at ${row.role}`)) : null,
             i < row.players.length - 1 && !["KR", "PR"].includes(row.role) ? controlButton("▼", "Move down", (ev) => change(ev, { role: row.role, player: p.slug, move: "down" }, `${p.name} moves down at ${row.role}`)) : null,
             rsCtl,
+            positionControl(p, row.role),
           ]);
           cells.push(el("td", { class: `left depth-cell ${i === 0 ? "starter" : ""} ${i >= 2 ? "ph" : ""}`, "data-key": `${row.role}:${p.slug}` }, [
             el("div", { class: "name" }, [p.jersey ? el("span", { class: "muted", text: `#${p.jersey} ` }) : null, el("span", { text: p.name, ...playerAttrs(ds.team, p.name, p.position) }), el("span", { class: "pos", text: `${CLASS_LABEL[p.class] || p.class || ""}${p.position !== row.role ? " · " + p.position : ""}` }),
+              p.moved_from ? el("span", { class: "muted small-text depth-was", text: `(was ${p.moved_from})`, title: `Moved from ${p.moved_from} this season` }) : null,
               p.form >= 0.35 ? el("span", { class: "form hot", text: "🔥", title: `Hot streak (form +${p.form})` }) : p.form <= -0.35 ? el("span", { class: "form cold", text: "❄", title: `Cold streak (form ${p.form})` }) : null,
               p.injury ? el("span", { class: "injury-tag", title: `${p.injury.type}, back ${s.week_labels[p.injury.returns_week] || "week " + p.injury.returns_week}`, text: `OUT ${p.injury.weeks_left}w` }) : null, ctl]),
             el("div", { class: "muted small-text", text: [`${p.overall} ovr`, p.height && p.weight ? `${p.height} ${p.weight}` : "", p.headline || (p.games ? `${p.games} games` : "")].filter(Boolean).join(" · ") }),
@@ -944,6 +1228,19 @@
     layer.querySelector(".modal-close").focus({ preventScroll: true });
   }
 
+  function swapModal(title, node) {
+    const top = modalStack[modalStack.length - 1];
+    if (!top) { openModal(title, node); return; }
+    const t = top.layer.querySelector(".modal-title");
+    t.innerHTML = "";
+    t.append(typeof title === "string" ? document.createTextNode(title) : title);
+    const body = top.layer.querySelector(".modal-body");
+    body.innerHTML = "";
+    body.append(node);
+    body.scrollTop = 0;
+    top.layer.querySelector(".modal-close").focus({ preventScroll: true });
+  }
+
   function closeModal(fromHistory = false) {
     const top = modalStack.pop();
     if (!top) return;
@@ -952,7 +1249,7 @@
     if (!modalStack.length) document.body.classList.remove("modal-open");
     if (state.afterGameday && gameday.layerNode === top.layer) showAfterGameday();
     // back to what opened it; if that is gone or hidden now (Game day, once played), the next step
-    const under = modalStack.length ? modalStack[modalStack.length - 1].layer.querySelector(".modal-close") : $("#btn-advance");
+    const under = modalStack.length ? modalStack[modalStack.length - 1].layer.querySelector(".modal-close") : ($("#tab-office .go-play .go-btn.primary") || $("#btn-settings"));
     const back = [top.opener, under].find((n) => n && n.isConnected && n.offsetParent !== null && !n.disabled);
     if (back) back.focus({ preventScroll: true });
     // going back in history fires popstate, which must not close a second layer
@@ -3509,11 +3806,10 @@
   $("#btn-clear-seasons").addEventListener("click", clearSeasons);
   $("#btn-hide-seasons").addEventListener("click", () => setSidebar(false));
   setSidebar(true, false);
-  $("#btn-advance").addEventListener("click", () => advance());
-  $("#btn-gameday").addEventListener("click", playGameDay);
   $("#btn-settings").addEventListener("click", openSettings);
-  $("#btn-to-selection").addEventListener("click", () => advance(15));
-  $("#btn-to-end").addEventListener("click", () => advance(20));
+  $("#btn-seasons-menu").addEventListener("click", seasonsMenu);
+  $("#btn-compact-office").addEventListener("click", goOffice);
+  $("#btn-compact-more").addEventListener("click", compactMore);
   $("#season-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) { state.tab = b.dataset.tab; renderTab(); } });
   $("#poll-pills").addEventListener("click", (e) => { const b = e.target.closest("button[data-poll]"); if (b) { state.poll = b.dataset.poll; state.pollChosen = true; renderRankings(); } });
   $("#sbox-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-btab]"); if (b) selectBoxTab(b.dataset.btab); });

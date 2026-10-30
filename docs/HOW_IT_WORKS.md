@@ -1443,10 +1443,36 @@ Georgia Tech have had their years). `tools/long_run.py`'s tiers now follow the 2
 programs. Still open: the first offseason runs hot at the top (the real rosters' seeded
 potential: the top tier's starters 63-64 in 2027 before settling), so year two looks like a leap.
 
-**Advance.** The header's Advance plays the next week; its dropdown (and the Office's "Sim to
-week…") sims through a later week, the recruiting weeks between on Auto. Clicking a week on the
-schedule or standings only looks at it. The header line leads with your next game (opponent and
-rank); the staff live on the Office and the coach page.
+**Advancing, only from the Office.** The Office's play card is the one place time moves: **Sim
+the week** plays every game this week (yours included, unless you played it on **Game day**, drive
+by drive), **Sim to selection day** and **Sim to signing day** jump ahead, and the ▾ beside them
+picks any week to sim through; the recruiting weeks between run on Auto. The season header keeps
+no time-moving control, only Settings and Download career; its line leads with your next game
+(opponent and rank). Clicking a week on the schedule or standings only looks at it. The staff
+live on the Office and the coach page.
+
+**The compact header.** With a season open the top bar's team picker, New season, Seasons and
+Load career fold into one **Seasons ▾** menu (the saved seasons, New season, Load career, Clear
+all; the side panel serves the empty state only). Once the page scrolls past the header card a
+one-line bar sticks under the top bar (`#season-compact`): the team, the record and rank, what is
+up next (or the offseason stage), an **Office** button and ▾ (settings, the career file). On a
+phone the bar is the default and the header row opens from its ▾ as a sheet, so the Office is the
+first thing on screen. The career tabs and the League tabs share one scrolling row.
+
+**NIL economy** (`coach_career/recruiting.py` `portal_pool`, `reward`, `carry_over`; spec
+`docs/superpowers/specs/2026-10-30-nil-economy-design.md`). The season budget B is the
+collective's tier times three. At signing day what is left of B (`left = B − spent`) plus a reward
+from the season just played (a winning record 10% of B, nine or more wins 20% instead, +10% for a
+conference title, +10% for the playoff, +15% for the national title, +10% for a met AD goal, capped
+at 50%, in fives) makes the portal pool, never less than the collective's portal fund of 30% of B:
+`pool = max(0.3·B, left + reward)`. Keeping players home spends from that pool, and the transfers
+you sign hold the rest. When the portal closes, what is unspent carries into next year's budget up
+to a cap by tier (15% of next year's B for tier 1, 20% for tier 2, 25% for tier 3, 30% for tiers 4
+and 5; anything above is gone), applied once to the next class. AI schools earn, pool, keep and
+carry by the same rules. The review shows the math ("NIL for the portal: 60 left + 40 earned (nine
+wins, AD goal met) = 100", "raised to the 85 portal fund" when the floor applied, what keeping
+players home cost and what carries), the portal board's header shows the pool, and the next
+season's first Office card says "NIL carried over: 25 (of 135 this year)".
 
 **The Offseason screen** walks the steps: Departures (your leavers by kind, the league's numbers,
 the first round), Transfer portal round 1 and 2 (entrants with position and status filters, your
@@ -1687,8 +1713,9 @@ charts changed at 13 teams and target weights at 127. Play-log fingerprint 9e204
 ## The season page
 
 The site opens on the season page (`web/index.html`). Pick your team, start a season, and
-play it a week at a time with **Advance week**, or jump with **Sim to
-selection** or **Sim to the end**. The week strip lets you look back at any week. Tabs:
+play it a week at a time with **Sim the week**, or jump with **Sim to
+selection day** or **Sim to signing day** (a career moves time from the Office's play card). The
+week strip lets you look back at any week. Tabs:
 
 - **Games**: every game that week, your game first, with the AP ranks the teams carried
   into it; click your game for the full box score.
