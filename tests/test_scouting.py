@@ -13,8 +13,10 @@ from sim import season
 
 
 def coverage(st: dict, rating: int, pids: list[str]) -> tuple[float, float, list[tuple[float, bool]]]:
-    """A complete report (REPORT_LOOKS looks) on each prospect by one evaluator: the share of ranges
-    holding the true grade, the mean range width (grade points) and each (width, held) pair."""
+    """A complete report (REPORT_LOOKS looks) on each prospect by one evaluator, judged on the read's
+    own spread (recruiting.read_spread: what the player saw narrowing before the report was complete):
+    the share of ranges holding the true grade, the mean range width (grade points) and each (width,
+    held) pair."""
     st["recruiting"]["reads"] = {}
     rng = random.Random(f"cov-{rating}")
     for pid in pids:
@@ -24,12 +26,34 @@ def coverage(st: dict, rating: int, pids: list[str]) -> tuple[float, float, list
     for pid in pids:
         p = st["recruiting"]["prospects"][pid]
         for g in recruiting.GROUPS:
-            lo, hi = recruiting.read_interval(st, pid, g)
-            lo_l, hi_l = recruiting.grade_range(st, pid, g)
+            mean, half = recruiting.read_spread(st, pid, g)
+            lo_l, hi_l = recruiting.word(mean - half), recruiting.word(mean + half)
             truth = recruiting.WORDS.index(recruiting.word(p["truth"][g]))
             held = recruiting.WORDS.index(hi_l) <= truth <= recruiting.WORDS.index(lo_l)
-            rows.append((hi - lo, held))
+            rows.append((2 * half, held))
     return sum(h for _, h in rows) / len(rows), statistics.mean(w for w, _ in rows), rows
+
+
+def final_grades(st: dict, rating: int, pids: list[str]) -> tuple[float, float]:
+    """After coverage(): every complete report's read is one point per group (read_interval) and one
+    word (grade_range); returns the mean absolute error of that final grade against the truth and the
+    mean half-width of the range the read spanned before it collapsed, in grade points (read_spread's
+    half plus WORD_SLACK, the part of the read's uncertainty the word range absorbs: a range "Solid to
+    Strong" covers both words whole)."""
+    errs, halves = [], []
+    for pid in pids:
+        p = st["recruiting"]["prospects"][pid]
+        read = st["recruiting"]["reads"][pid]
+        assert recruiting.report_complete(read)
+        for g in recruiting.GROUPS:
+            lo, hi = recruiting.read_interval(st, pid, g)
+            mean, half = recruiting.read_spread(st, pid, g)
+            assert lo == hi == mean, (lo, hi, mean)
+            lo_w, hi_w = recruiting.grade_range(st, pid, g)
+            assert lo_w == hi_w == recruiting.word(mean), (lo_w, hi_w)
+            errs.append(abs(mean - p["truth"][g]))
+            halves.append(half + recruiting.WORD_SLACK)
+    return statistics.mean(errs), statistics.mean(halves)
 
 
 if __name__ == "__main__":
@@ -42,9 +66,23 @@ if __name__ == "__main__":
     # reads: an average evaluator holds the truth about 80%, an elite one about 90%, a weak one is
     # wider yet misses more, sometimes tight and wrong
     pids = list(rc["prospects"])[:500]
+    # one final grade at a complete report: the interval collapses to the read's mean, whose distance to the
+    # truth is on average within the half-width the range had (the range held the truth most of the time)
+    mae = {}
     avg, avg_w, avg_rows = coverage(st, 60, pids)
+    mae[60] = final_grades(st, 60, pids)
     elite, _, _ = coverage(st, 95, pids)
+    mae[95] = final_grades(st, 95, pids)
     weak, weak_w, weak_rows = coverage(st, 40, pids)
+    mae[40] = final_grades(st, 40, pids)
+    for rating, (err, half) in mae.items():
+        assert err <= half, (rating, err, half)
+    assert mae[95][0] < mae[60][0] < mae[40][0], mae
+    # an incomplete report keeps its range: 2.5 looks on the same read shows lo < hi
+    rc["reads"][pids[0]]["looks"] = 2.5
+    lo, hi = recruiting.read_interval(st, pids[0], "potential")
+    assert lo < hi and recruiting.word(lo) >= recruiting.word(hi), (lo, hi)
+    rc["reads"][pids[0]]["looks"] = 3.0
     assert 0.72 <= avg <= 0.88, avg
     assert 0.85 <= elite <= 0.95, elite
     assert weak < avg and weak_w > avg_w, (weak, avg, weak_w, avg_w)
@@ -101,8 +139,13 @@ if __name__ == "__main__":
     ours = prospects.profile(st, fresh, "ohio-state")
     assert ours["our_comp"] is not None and set(ours["our_grades"]) == set(recruiting.GROUPS)
     assert "truth" not in ours["public"]
-    # hovering a grade: what prospects graded like that look like in ratings
+    # hovering a grade: what prospects graded like that look like in ratings; a complete report's single grade is
+    # described by the prospects whose true grade carries that word (the ranges inside are their middle half)
     det = ours["grade_details"]
+    assert all(lo == hi for lo, hi in ours["our_grades"].values()), ours["our_grades"]
+    assert det["athleticism"]["peers"] >= 4 and all(v[0] <= v[1] for v in det["athleticism"]["ratings"].values()), det["athleticism"]
+    band = recruiting.word_band(recruiting.read_interval(st, fresh, "athleticism")[0])
+    assert band[0] <= recruiting.read_interval(st, fresh, "athleticism")[0] <= band[1] and recruiting.word(band[0]) == recruiting.word(band[1])
     assert set(det) == set(recruiting.GROUPS) and "Top Speed" in det["athleticism"]["ratings"], det["athleticism"]
     # one scale: the game's (player cards'), never EA's: no EA attribute names, comps by the card overall
     assert not any(k in det[g]["ratings"] for g in det for k in ("speed", "acceleration", "change of direction"))
@@ -254,4 +297,6 @@ if __name__ == "__main__":
     row4 = next(r for r in prospects.class_detail(st, "ohio-state", "ohio-state") if r["id"] == four)
     assert row4["find"] == "bust" and row4["find_held"] == (rc["prospects"][four]["truth"]["potential"] < 50)
     print(f"scouting ok: ranges hold the truth {weak:.0%} (40), {avg:.0%} (60), {elite:.0%} (95); "
-          f"widths {weak_w:.1f} vs {avg_w:.1f}; hidden {share:.0%}")
+          f"widths {weak_w:.1f} vs {avg_w:.1f}; final grade's mean absolute error "
+          + ", ".join(f"{mae[r][0]:.1f} (rating {r}, the range's half-width {mae[r][1]:.1f})" for r in (40, 60, 95))
+          + f"; hidden {share:.0%}")

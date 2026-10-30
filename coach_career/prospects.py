@@ -234,9 +234,13 @@ DETAIL_PEERS = 8                   # prospects at his position needed to describ
 
 def grade_detail(state: dict, p: dict, group: str, lo: float, hi: float) -> dict:
     """What a grade range looks like in ratings: the middle half of the EA ratings of this class's
-    prospects whose true grade falls in the range (at his position when there are enough).
-    Coachability is described by its labels instead."""
+    prospects whose true grade falls in the range (at his position when there are enough). A single
+    grade (lo == hi, a complete report's final grade) is described by the prospects whose true grade
+    carries that word (the word's whole band), so the ranges inside the tooltip are still the middle
+    half of his peers. Coachability is described by its labels instead."""
     rc = state["recruiting"]
+    if lo == hi and group != "coachability":                     # one final grade: the prospects graded like that
+        lo, hi = recruiting.word_band(lo)
     lo, hi = max(recruiting.GRADE_LOW, lo), min(recruiting.GRADE_LOW + recruiting.GRADE_SPAN, hi)
     if group == "coachability":
         labels = [name for name, pts in recruiting.COACHABILITY_POINTS.items() if lo - 5 <= pts <= hi + 5]
@@ -426,7 +430,8 @@ def find(state: dict, pid: str) -> Optional[str]:
     p, read = rc["prospects"][pid], rc["reads"].get(pid)
     if p.get("portal") or p["stars"] is None or not read or not recruiting.report_complete(read):
         return None
-    lo, hi = recruiting.read_interval(state, pid, "potential")
+    mean, half = recruiting.read_spread(state, pid, "potential")      # the read's own spread: the final grade's collapse to one point (read_interval) does not move a flag's cut
+    lo, hi = mean - half, mean + half
     gem_cut, bust_cut = recruiting.flag_cuts(rc).get(p["stars"], (99.0, -1.0))
     held = read.get("find")
     if p["stars"] <= 3 and p["rank"] > recruiting.GEM_RANK and lo >= gem_cut - (recruiting.FLAG_HOLD if held == "gem" else 0.0):
@@ -434,6 +439,34 @@ def find(state: dict, pid: str) -> Optional[str]:
     if p["stars"] >= 4 and hi < bust_cut + (recruiting.FLAG_HOLD if held == "bust" else 0.0):
         return "bust"
     return None
+
+
+FLIP_WORDS = ((0.15, "Likely"), (0.05, "Real"), (0.0, "Slim"))     # a flip chance as a word: at or past the share; exactly 0 is "None"
+
+
+def flip_word(pct: float) -> str:
+    """A flip chance (a share, 0-1) as the game says it: None, Slim (under 5%), Real (under 15%), Likely."""
+    if pct <= 0:
+        return "None"
+    return next(w for edge, w in FLIP_WORDS if pct >= edge)
+
+
+def flip_view(state: dict, pid: str) -> Optional[dict]:
+    """A committed prospect's chance to flip before signing day, in words, never a number: {"total": the
+    rivals' share together, "word": its word ("Locked In" on a hard commit), "rivals": [{school, name, pct,
+    word}] by pct, the offering schools other than the one he holds}. None unless he holds a verbal or hard
+    commitment to an FBS school (signed, or uncommitted: nothing to flip from)."""
+    from sim import season
+    rc = state["recruiting"]
+    st = rc["status"][pid]
+    if st["signed"] or not st["committed"] or st["committed"] == "FCS":
+        return None
+    o = odds(state, pid)
+    teams = season.load_teams()
+    rivals = sorted((r for r in o["schools"] if r["school"] != st["committed"]), key=lambda r: -r["pct"])
+    total = round(min(1.0, sum(r["pct"] for r in rivals)), 4)
+    return {"total": total, "word": "Locked In" if st.get("hard") else flip_word(total),
+            "rivals": [{"school": r["school"], "name": teams[r["school"]]["name"], "pct": round(r["pct"], 4), "word": flip_word(r["pct"])} for r in rivals]}
 
 
 def profile(state: dict, pid: str, viewer: str) -> dict:
@@ -468,6 +501,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
     details = {g: grade_detail(state, p, g, *recruiting.read_interval(state, pid, g)) for g in recruiting.GROUPS} if read else None
     return {
         "public": public,
+        "flip": flip_view(state, pid),
         "grade_details": details,
         "evaluation": _evaluation(p, public_grades) if top else None,
         "public_comp": comp(_shifted(state, p, public_grades), p["ea_position"], starter_pool()) if top else None,
@@ -807,6 +841,7 @@ def recruiting_view(state: dict) -> dict:
 
 ROLE_NAMES = {"OC": "Offensive coordinator", "DC": "Defensive coordinator", "Recruiter": "Recruiter"}
 NOT_ENOUGH_HOURS = "Not enough hours"
+REPORT_COMPLETE = f"His report is complete: {recruiting.REPORT_LOOKS} of {recruiting.REPORT_LOOKS} looks"   # a board row kept in the queue with no Send
 REPORT_ITEMS = recruiting.LOOK_LOG_KEEP   # a scout's report lists this many of his changed looks: flags, then potential, then the rest
 LOOK_NAMES = dict(GROUP_NAMES, potential="potential")
 STANDING_WORDS = {"cold": "Not yet contacted", "contact": "In contact", "top": "In his top group", "visited": "Visited",
@@ -872,8 +907,10 @@ FLAG_ORDER = ("generational", "gem", "likes", "bust")   # the Flags list: the li
 def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] = None, group: Optional[str] = None,
                   offset: int = 0, limit: int = QUEUE_LIMIT) -> dict:
     """The Scouting tab: your scouts and this week's yield (looks in trip units: an area week counts
-    0.5), one page of the queue of recruits worth a trip (reports not yet complete: your board's
-    one Send from complete first, then the board, then the class by need and rank; filtered by `q`
+    0.5), one page of the queue of recruits worth a trip (your board's one Send from complete first,
+    then the board's open reports, then the board's complete reports (kept in view with no Send:
+    `can_send` False, `why` REPORT_COMPLETE), then the class's open reports by need and rank; a
+    complete report off your board is out of the queue; filtered by `q`
     on name or home state, `position`, `group`; `queue_total` counts the whole match), this and last
     week's reports from the look log, and your staff's flags this class (gems, bust risks, generational
     prospects and the recruits a coordinator likes: staff_likes), every row carrying `likes`."""
@@ -907,23 +944,26 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
             return False
         return not text or text in p["name"].lower() or text == p["hometown"]["state"].lower()
 
+    complete = lambda pid: recruiting.report_complete(rc["reads"].get(pid))
     board = [pid for pid in rc["board"] if pid in live]
-    board.sort(key=lambda pid: 0 if recruiting.looks_left(rc["reads"].get(pid)) <= recruiting.SEND_LOOK else 1)   # one Send from complete first
-    rest = sorted((pid for pid in recruiting.visible(state) if pid in live and pid not in rc["board"]),
+    # one Send from complete first, then the board's open reports, then its complete ones (they stay listed: no Send, a Complete tag)
+    board.sort(key=lambda pid: 2 if complete(pid) else 0 if recruiting.looks_left(rc["reads"].get(pid)) <= recruiting.SEND_LOOK else 1)
+    rest = sorted((pid for pid in recruiting.visible(state) if pid in live and pid not in rc["board"] and not complete(pid)),
                   key=lambda pid: (-need[recruiting._group_of(rc["prospects"][pid])], rc["prospects"][pid]["rank"]))
     trips_of = lambda pid: ((rc["contacts"].get(pid) or {}).get(me) or {}).get("scouted", 0)
-    matched = [pid for pid in board + rest if not recruiting.report_complete(rc["reads"].get(pid)) and fits(rc["prospects"][pid])]
+    matched = [pid for pid in board + rest if fits(rc["prospects"][pid])]
     limit = max(1, min(int(limit), QUEUE_MAX))
     offset = max(0, int(offset))
     queue = []
     for pid in matched[offset:offset + limit]:
         p, read, trips = rc["prospects"][pid], rc["reads"].get(pid), trips_of(pid)
         short = hours_left < recruiting.HOURS["scout"]
+        done = complete(pid)
         queue.append({"pid": pid, "name": p["name"], "position": p["position"], "stars": p["stars"],
                       "group": recruiting._group_of(p), "need": need[recruiting._group_of(p)], "national_rank": p["rank"],
                       "looks": looks_out(read), "trips": trips,
                       "potential": list(recruiting.grade_range(state, pid, "potential")) if read else None,
-                      "can_send": not short, "why": NOT_ENOUGH_HOURS if short else None,
+                      "can_send": not short and not done, "why": REPORT_COMPLETE if done else NOT_ENOUGH_HOURS if short else None,
                       "state": p["hometown"]["state"], "likes": staff_likes(state, pid, me)})
     flags = []
     for pid in rc["reads"]:

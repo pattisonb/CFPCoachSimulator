@@ -883,6 +883,32 @@ game; a win sells, a 21-point loss hurts, a big stadium helps, and the weekend t
 three of his priorities), a scouting trip 5 (one look by your best evaluator, any week, allowed
 while his report is short of complete; a prospect with a complete report shows his grades in one
 line on his card and at the top of his profile) and an offer nothing.
+**A commitment in words.** A committed recruit's profile (`prospects.flip_view`, the profile's
+`flip`) says his chance to flip before signing day as a word, never a number: the rivals' shares
+of his flip chance (`_committed_odds`) together and each on its own, "None" at 0, "Slim" under 5%,
+"Real" under 15%, "Likely" from there, "Locked In" on a hard commit. The banner's second line
+follows the total ("Solid: nobody is close to pulling him away", "Hearing out Georgia: a slim
+chance he flips before signing day", "Georgia is working him hard: a real chance he flips",
+"Georgia is close to flipping him", "Hard commit: he is not taking calls"); the table under it,
+"Who else is calling" for a commit to you (one line, "Nobody is close to pulling him away.", when
+every rival reads None) or "His chance to flip to each" for a commit elsewhere (your row marked),
+carries the word per rival with the muted Offer marker, sorted by his chance.
+**One final grade at a complete report.** While his report is short of complete, each group's read
+is a range of grade words ("Solid to Strong": `recruiting.read_interval` is the read's mean plus
+and minus a half-width that shrinks with the looks' precision and the best evaluator's rating,
+less `WORD_SLACK`). Once it is complete (`report_complete`, 3 looks) the read collapses to one
+point per group, the mean, and `grade_range` gives the same word twice: the profile and the pane's
+Scouting sub-tab show one word per card under "3 of 3 looks: his report is complete: these are your
+staff's final grades. A read can still be wrong; the truth shows once he is on your roster.", the
+queue's POTENTIAL cell and the report items say "potential narrowed to Elite". The read itself
+(`recruiting.read_spread`: mean and half-width, whatever the looks) is unchanged: the flags
+(`prospects.find`, their cuts and `FLAG_HOLD`) judge the read's own low and high end, and
+"OC likes him" its mean, so neither moves at the collapse. The "looks like" tooltip of a final
+grade describes the prospects whose true grade carries that word (`recruiting.word_band`), the
+ranges inside it still their middle half. Hover, focus or tap a grade card for the tooltip, on the
+profile and on the pane's Scouting sub-tab alike (`gradeGrid`/`gradeTips` in web/recruiting.js: the
+listeners sit on the grid, so redrawn cells keep working; the tip floats fixed over the page and
+takes no pointer events, so a tall tip never blocks the card under it).
 **Looks come in trip units** (`REPORT_LOOKS = 3`, `SEND_LOOK = 1.0`, `AREA_LOOK = 0.5`,
 `AREA_CAP = 2.0`). A full report is three looks and nothing goes past it (`read["looks"]` is never
 over 3). A Send adds one look (or what is left: at 2.5 one Send finishes him). An area scout's
@@ -1051,12 +1077,12 @@ or DC (defense) vouches for him ("Your defensive coordinator thinks he starts fo
 a kicker or punter gets one of the two, fixed by the seed. The truth never enters it: a recruit who
 would start by his real rating is not liked while the read sits under your starter, and the read
 can be wrong the other way. Never in the portal, never once he has signed elsewhere. The tag
-(`go-tag good`, "OC likes him", the sentence as its title) sits among the board pane's tags after
-the ★/☆ priorities and beside the status chip on the pane's head; the profile says it in a line
+(`go-tag good`, "OC likes him", the sentence as its title) sits once on the board's pane, among its
+tags after the ★/☆ priorities (the head keeps to his status chip); the profile says it in a line
 ("Your DC, Matt Patricia, thinks he starts for you next year."); on the Scouting tab the report
 items and the Flags rows carry it, the Flags list has every liked recruit as a fourth kind (after
 the gems), and the queue's NAME cell shows a small "OC ♥" pill when the Send that completed his
-report won him over (a complete report leaves the queue otherwise). The weekly report says nothing.
+report won him over (a complete report stays in the queue while he is on your board). The weekly report says nothing.
 
 **Calls and in-home visits are scenes** (`coach_career/scenes.py`). For you, a call or an in-home
 visit without a pitch opens a two-step scene: he says his lines, with a cue that hints at what he
@@ -1087,8 +1113,18 @@ candidate waits on you, the ones you sat down already marked (a freshman off the
 top takes it unless you say otherwise; an older player only if he never played); the AI programs
 draw as before but only within the four-game rule. A position change can be made any time, from
 the Depth Chart during the season or the offseason's Your roster card at any stage: it moves one
-of your players to any spot (kickers and punters among themselves), his overall recomputed by our
-formula there (`position_options` shows what he would be everywhere before you choose). During the
+of your players to any spot (kickers and punters among themselves); what he would be there is
+`coach_career/position_fit.project` (`position_options` shows it for every spot before you choose):
+his ratings put on the new group's scale (ours are kept relative to each group's middle starter,
+so a safety's blocking is read against the guards', not the safeties'), the position skills he has
+never used discounted (whole inside his technique group, `NEAR_DISCOUNT` of what he has above a raw
+athlete's `POSITION_FLOOR` within his unit, `max(floor, FAR_DISCOUNT x his)` across units; speed,
+strength and the other athletic attributes move untouched), less his build against the spot's real
+height and weight (`SIZE_PENALTY` per standard deviation light or short beyond the first,
+`HEAVY_PENALTY` heavy, as much as light at the speed positions, `SIZE_CAP` at most), floored at 20.
+A 197-pound safety projects in the 20s at guard, not the 60s. The change writes the transferred
+ratings onto him, so his overall and his game ratings agree; moving him back the same season or
+offseason restores the originals (`moved_attrs`), after `next_season` the change is his. During the
 season (`GET .../position_options/{team}/{player}`, `POST .../position` with `team`, `player`,
 `pos`) the change applies at once: `state["position_changes"]` rides along with every game's
 edits (`team_edits` → `with_edits` → `with_positions`), so the next game, the Depth Chart, his
@@ -1145,7 +1181,9 @@ he asks about a named player on that call (the starter ahead of him, or another 
 offered), the scene shows his line with three answers (straight, a promise, a sidestep) and
 locks the pitch until you pick one; his reply comes back in place (no toast) and History keeps
 the answer (`Told him straight about …`, `Promised him the job over …`). Under
-the head, a strip of four cells (your chance, his list, NIL, scouted), the tags you know (a
+the head, a strip of four cells (YOUR CHANCE, HIS LIST, YOUR OFFER: "135 NIL · He wants 105" once
+you have offered, "He wants about 75–135" or the number before, "—" when nothing is known; SCOUTED;
+no value starts lowercase), the tags you know (a
 prospect who is tuning you out carries a `Tuning you out` tag, a warning above the Recruit button
 says another contact costs you interest, and History lists each tuned-out contact), and
 sub-tabs: Overview, Scouting, Profile, History. A ★ tag is a priority he has confirmed to you and a ☆
@@ -1178,15 +1216,18 @@ behind "Show all n"; Flags lists your staff's gems, bust risks and generational 
 and the recruits a coordinator likes ("OC likes him", after the gems), with his looks and where he
 stands with you. A name anywhere opens him in the board's pane (he goes
 on your board if he was not); the pane's Scouting sub-tab links back to the reports. Under them the
-Scouting queue, a table of the recruits worth a trip (your board first, then the class by your need
-and his rank), 25 to a page on the API's `offset`/`limit`/`queue_total` with "Showing 1 to 25 of
+Scouting queue, a table of the recruits worth a trip (your board first, its complete reports last
+among them, then the class by your need and his rank), 25 to a page on the API's `offset`/`limit`/`queue_total` with "Showing 1 to 25 of
 1,204" and Previous · 1 2 … 49 · Next: columns BOARD (a "★ On board" pill and a left accent in the
 team color on your board's rows), NAME (avatar, name, "pos · stars · state"), NEED ("Need 2", or a
 muted "Set"), RANK, POTENTIAL (the word range, or "Not read"), LOOKS (three segments filled in
 halves, "1.5 of 3"; no separate trips count) and `Send (5h)`, which reads `Send (5h) · finishes his
 report` when one look is left, is grayed with the reason (Not enough hours) and gives way to a
-"Complete" tag on a complete report; the queue lists only reports short of complete, your board's
-one Send from complete at the top. The help line under SCOUTING: "A full report is three looks. A
+"Complete" tag (title "His report is complete: 3 of 3 looks") on a complete report; the queue lists
+the reports short of complete, your board's one Send from complete at the top, and keeps a
+complete report only while he is on your board (after the board's open reports: his LOOKS bar
+full, POTENTIAL one final word, the "OC ♥" pill when liked, `can_send` false with the tag's text
+as `why`); a complete report off your board is out of the queue. The help line under SCOUTING: "A full report is three looks. A
 trip is one look; a week in a scout's area is half a look, up to two. After four weeks in an area
 one trip finishes him." Above it the chips All ·
 On my board · Not on my board (the board ones client-side on one ask of the whole board, which the
@@ -1286,6 +1327,29 @@ projected pick (95% in the first round, 65% by pick 100, 12% by 257): about 55-8
 seniors, times 0.12 for starters, 0.65 for the next man up and 1.3 for the bench, and 1.25 after
 a losing year; a Group of 5 player with a card overall of 50 or more (a Power 4 starter) enters
 40% of the time to move up. About 1.2% quit a year (2.5 times as likely in a team's bottom 15%).
+
+**Why players leave** (`portal_odds`, every school). A player's portal chance is the sum of
+segments, each with its driver, and one draw against the sum: the segment it lands in is why he
+goes, stored on the entrant (`driver`) and on your leaver's Keep Them Home card, so the reason is
+the real cause, not a guess after the fact. The first segment is the role chance above (his
+class and role, a losing year, a Group of 5 standout moving up, a broken promise, a keep last
+year). The second is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
+the recruit ask of the star tier his overall reads as, 60 for a five-star-equivalent, 30 a
+four, 8 a three, times his position), and his program's tier pays a starter `NIL_TIER_PAY` (60
+at tier 1, 40, 20, 8, 2 at tier 5); when his market is over that, his chance adds `NIL_PULL`
+(0.25) times the shortfall's share of his market, at most 0.30, and he leaves "Chasing a bigger
+NIL deal" with the shortfall as the floor of his retention ask. A player you kept with NIL last
+offseason was paid: no NIL pull that year. The third is the program: it is slipping when this
+year's results take a tier off its rating (a probe of `programs.update`, which runs for real at
+the Staff step), when a new head coach has just had his first year, or after a losing year
+under a head coach whose player development is under 50; its starters and rotation players
+rated 45 or better add `PROGRAM_PULL` (0.10) and leave because "The program is slipping" or
+they "Want a better coach". A program that rose a tier this year halves its starters' chances
+(`RISING_STAY`). The league's portal share stays about 8% (7% before the drivers; about 865
+entrants a year over a ten-season run, 820 before, with 5% of them chasing NIL and 2.5% leaving
+a slipping program or a weak coach), and the bottom tier loses about one starter a school a
+year to the portal where the top tier loses a seventh of one (tiers 1 to 5: 0.14, 0.44, 0.41,
+0.78, 1.02).
 
 **Keep them home** (the step after Departures). Your players who mean to leave with eligibility
 left wait on you: transfers and early draft entrants (graduating seniors and quitters are gone

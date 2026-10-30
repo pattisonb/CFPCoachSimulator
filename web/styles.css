@@ -1219,6 +1219,7 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-school { display: grid; grid-template-columns: minmax(0, 1fr) 64px minmax(0, 120px); gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--panel-2); }
 .go-school-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .go-school-odds { font-weight: 800; text-align: right; }
+.go-school.yours { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: -2px; }   /* your own row among a commit's rivals */
 .go-bar { display: block; height: 6px; border-radius: 3px; background: var(--panel-2); overflow: hidden; }
 .go-bar-fill { display: block; height: 100%; background: var(--accent); }
 .go-report-rows li { line-height: 1.45; }
@@ -1286,7 +1287,7 @@ body.career-mode.on-career-tab .season-head { padding-bottom: 0; }
 .go-solid { color: var(--text); }
 .go-tip { position: relative; cursor: help; }
 .go-tip:focus { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: 2px; }
-.go-tip-box { display: none; position: fixed; z-index: 1000; left: 0; top: 0; min-width: 240px; max-width: 360px; padding: 10px 12px;
+.go-tip-box { display: none; position: fixed; z-index: 1000; left: 0; top: 0; min-width: 240px; max-width: 360px; padding: 10px 12px; pointer-events: none;   /* a tall tip never blocks the grade under it from being hovered */
   border-radius: 10px; background: var(--panel); color: var(--text); border: 1px solid var(--border); box-shadow: 0 8px 24px var(--shadow); font-size: 13px; line-height: 1.5; }
 .go-tip-box b { display: block; margin-bottom: 2px; }
 .go-tip-box.show { display: block; }

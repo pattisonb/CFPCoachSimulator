@@ -223,6 +223,19 @@ if __name__ == "__main__":
         pids = {r["pid"] for r in v["queue"]}
         assert target["pid"] not in pids and yours not in pids and v["queue_total"] == total - 2
         assert all(r["can_send"] for r in v["queue"])
+        # on your board his complete report stays in the queue (nothing to send: the Complete tag's text as `why`), after
+        # the board's open reports, his potential one final grade word; off the board again he is out
+        R(sid, "board", {"pid": target["pid"], "on": True})
+        v = G(sid, "scouting?limit=400")
+        rows = v["queue"]
+        assert v["queue_total"] == total - 1 and set(rows[0]) == QUEUE_KEYS
+        i = next(i for i, r in enumerate(rows) if r["pid"] == target["pid"])
+        assert all(r["pid"] in rc["board"] for r in rows[:i + 1]) and all(r["looks"] < 3 for r in rows[:i]), [r["pid"] for r in rows[:i + 1]]
+        assert rows[i]["looks"] == 3 and rows[i]["can_send"] is False and rows[i]["why"] == prospects.REPORT_COMPLETE, rows[i]
+        assert rows[i]["potential"][0] == rows[i]["potential"][1] in recruiting.WORDS, rows[i]["potential"]
+        assert all(r["can_send"] and r["looks"] < 3 for r in rows[i + 1:])
+        R(sid, "board", {"pid": target["pid"], "on": False})
+        assert target["pid"] not in {r["pid"] for r in G(sid, "scouting?limit=400")["queue"]}
         rc["hours"][ME] = recruiting.HOURS["scout"] - 1
         v = G(sid, "scouting")
         assert v["hours_left"] == recruiting.HOURS["scout"] - 1

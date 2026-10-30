@@ -432,6 +432,16 @@
   // a [low, high] pair of words: one tag when both ends match, else "low to high"
   const wordRange = (r) => (r[0] === r[1] ? [wordTag(r[0])] : [wordTag(r[0]), " to ", wordTag(r[1])]);
   const wordText = (r) => (r[0] === r[1] ? r[0] : `${r[0]} to ${r[1]}`);
+  // the line under the grade cards: a complete report's single final grades, or how far the ranges have narrowed
+  // (profile: a colon after the looks; the pane's Scouting sub-tab: a middle dot, and what a look is)
+  function gradesNote(looks, profile) {
+    const left = 3 - looks, sep = profile ? ": " : " · ";
+    const hover = "Tap or hover a grade to see what it looks like in ratings.";
+    if (left <= 0) return `${fmtLooks(looks)} of 3 looks${sep}his report is complete: these are your staff's final grades. ${hover} A read can still be wrong; the truth shows once he is on your roster.`;
+    const narrowing = profile ? "Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster."
+      : "A trip is one look, a week in a scout's area half; ranges narrow with every look, but a read can be wrong.";
+    return `${fmtLooks(looks)} of 3 looks${left <= 1 ? `${sep}one trip finishes his report` : ""}. ${hover} ${narrowing}`;
+  }
   function scoutLine(grades, looks) {
     return el("div", { class: "go-scouted", title: `Your staff's read after ${fmtLooks(looks)} looks: the range each grade could still fall in` }, [el("b", { text: "SCOUTED" }),
       ...["potential", "athleticism", "technique", "football_iq", "size_strength", "coachability"].filter((k) => grades[k]).map((k) => el("span", {}, [el("span", { class: "muted", text: `${GRADE_NAMES[k]} ` }), el("b", {}, wordRange(grades[k]))]))]);
@@ -1110,16 +1120,15 @@
       const nameBtn = el("button", { type: "button", class: "go-link go-pane-name", text: b.name, title: "Open his profile", onclick: () => showSub("profile") });
       const subLine = el("span", { class: "muted small" });
       const chipEl = el("span", { class: "go-chip" });
-      const likeEl = el("span", { class: "go-tag good go-likes go-pane-likes", hidden: "" });   // "OC likes him": his report is complete and the read says he starts for you
       const acts = el("div", { class: "go-pane-act" });
       const head = el("div", { class: "go-pane-head" }, [
         sheet ? el("button", { type: "button", class: "go-btn go-pane-back", "aria-label": "Back to the list", text: "‹ Back", onclick: closeSheet }) : null,
-        avatar(b.id), el("div", { class: "go-pane-id" }, [nameBtn, subLine, el("div", { class: "go-pane-chips" }, [chipEl, likeEl])]), acts]);
+        avatar(b.id), el("div", { class: "go-pane-id" }, [nameBtn, subLine, el("div", { class: "go-pane-chips" }, [chipEl])]), acts]);
       p.append(head);
       // on a phone the head is pinned to the top of the sheet: the sub-tab strip pins just under it, at its height
       if (sheet && window.ResizeObserver) new ResizeObserver(() => p.style.setProperty("--go-head-h", `${head.offsetHeight}px`)).observe(head);
       // the stat strip: four cells; the tags; the sub-tabs and their body
-      const cells = ["YOUR CHANCE", "HIS LIST", "NIL", "SCOUTED"].map((k) => stat(k, ""));
+      const cells = ["YOUR CHANCE", "HIS LIST", "YOUR OFFER", "SCOUTED"].map((k) => stat(k, ""));
       const tags = el("div", { class: "go-tags go-badges" });
       const body = el("div", { class: "go-sub-body", role: "tabpanel" });
       const strip = el("div", { class: "go-subtabs", role: "tablist", "aria-label": "About him" }, SUBS.map(([k, name]) => {
@@ -1143,11 +1152,7 @@
         subLine.textContent = b.portal ? `${b.position} · ${clsWord(b.cls)} · from ${b.from_name} · #${b.portal_rank} in the portal` : `${stars(b.stars)} ${b.position} · ${place(b.hometown)} · #${b.national_rank}`;
         const chip = chipOf(b, me, v.portal);
         if (chip.text !== chipText) { chipText = chip.text; chipEl.textContent = chip.text; chipEl.className = `go-chip ${chip.tone}`; if (!first) ui().pulse(chipEl); }
-        if (b.likes) {
-          const was = likeEl.hidden || likeEl.textContent !== likesText(b.likes);
-          likeEl.textContent = likesText(b.likes); likeEl.title = b.likes.text; likeEl.hidden = false;
-          if (was && !first) ui().pulse(likeEl);
-        } else likeEl.hidden = true;
+        // "OC likes him" sits once, among the tags under the strip (tagNodes): the head keeps to his status chip
         // his call or visit is open but not on screen: Finish brings it back (it re-reads the board first: the week may have moved on)
         const wantFinish = !!(busy && !shown);
         if (wantFinish && !finishBtn) {
@@ -1197,10 +1202,11 @@
         const mineRow = rowsOf.find((x) => x.you || x.school === me);
         const at = mineRow ? (mineRow.rank != null ? mineRow.rank : rowsOf.indexOf(mineRow) + 1) : null;
         const ask = askWord(b);
+        // YOUR OFFER: "135 NIL · He wants 105" once you have offered, "He wants about 75–135" (or the number) before, "—" when nothing is known
         const vals = [sd.odds || "—",
           at ? `#${at} of ${Math.max(b.schools || 0, rowsOf.length)}` : b.offered && !(b.signed || b.committed) ? "Outside his top 5" : "Not on it",
-          b.offered ? `your ${b.nil || 0}${ask ? ` · wants ${ask}` : ""}` : ask ? `wants ${ask}` : "—",
-          b.looks ? `${fmtLooks(Math.min(3, b.looks))} of 3 looks` : "Not yet"];
+          b.offered ? `${b.nil || 0} NIL${ask ? ` · He wants ${ask}` : ""}` : ask ? `He wants ${ask}` : "—",
+          b.looks ? `${fmtLooks(Math.min(3, b.looks))} of 3 looks` : "Not yet"].map((t) => t.replace(/^[a-z]/, (c) => c.toUpperCase()));   // no stat value starts lowercase
         vals.forEach((t, i) => { const c = cells[i].querySelector(".go-stat-val"); if (c.textContent !== t) { c.textContent = t; if (!first) ui().pulse(cells[i]); } });
         // the tags: only what is known; a new one fades in and pulses, a gone one fades out, a changed one pulses
         const wanted = tagNodes(b);
@@ -1314,9 +1320,9 @@
       if (b.portal && b.line) out.append(el("p", { class: "muted small", text: lineText(b.line) }));
       if (b.our_grades) {
         out.append(scoutLine(b.our_grades, b.looks));
-        out.append(el("div", { class: "go-grades" }, Object.entries(b.our_grades).map(([g, r]) => el("div", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: (GROUP_NAMES[g] || g).toUpperCase() }), el("div", { class: "go-stat-val" }, wordRange(r))]))));
-        const looks = Math.min(3, b.looks || 0), left = 3 - looks;
-        out.append(el("p", { class: "muted small", text: `${fmtLooks(looks)} of 3 looks${left <= 0 ? " · his report is complete" : left <= 1 ? " · one trip finishes his report" : ""}. A trip is one look, a week in a scout's area half; ranges narrow with every look, but a read can be wrong.` }));
+        out.append(gradeGrid(b.id, b.our_grades, null));
+        const looks = Math.min(3, b.looks || 0);
+        out.append(el("p", { class: "muted small go-grades-note", text: gradesNote(looks, false) }));
       } else out.append(el("p", { class: "muted", text: "Not scouted yet: send a scout from the Recruit menu, or put a staff member on his area." }));
       out.append(el("p", { class: "small" }, [el("button", { type: "button", class: "go-link sc-reports-link", text: "Reports on the Scouting tab", onclick: () => H.onChange("scouting") })]));
       const comps = el("div", { class: "go-comps" });
@@ -1324,6 +1330,8 @@
       const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall ? `, ${c.overall} OVR` : ""})`;
       H.api(`/api/season/${s.id}/prospect/${encodeURIComponent(b.id)}`).then((pr) => {
         if (!comps.isConnected) return;
+        const grid = out.querySelector(".go-grades");
+        if (grid && pr.our_grades && pr.grade_details) gradeTips(grid, b.id, pr.our_grades, pr.grade_details);   // hover a grade here too
         if (pr.public_comp) comps.append(el("p", { class: "small" }, [el("b", { text: "Comp: " }), comp(pr.public_comp)]));
         if (pr.our_comp) comps.append(el("p", { class: "small" }, [el("b", { text: "Our comp: " }), comp(pr.our_comp)]));
         else if (pr.looks >= 3) comps.append(el("p", { class: "muted small", text: "Our comp: nobody close enough among the starters." }));
@@ -1567,6 +1575,49 @@
   // A grade's tooltip floats over the page (fixed to the screen), below the grade when there is
   // room and above it when not, kept inside the screen, so the profile window never clips or scrolls it.
   document.addEventListener("pointerdown", (e) => { if (!e.target.closest(".go-tip")) document.querySelectorAll(".go-tip-box.show").forEach((t) => t.classList.remove("show")); });
+  // The staff's grade cards (the profile and the pane's Scouting sub-tab): one cell per group with the word
+  // range (or the single final grade), and with `details` (the profile's grade_details) a "looks like" tooltip
+  // on each, opened on hover, focus or tap. The listeners sit on the grid and find the cell under the event,
+  // so cells redrawn or patched later keep working; gradeTips adds the tooltips to a grid drawn without them.
+  function gradeGrid(pid, grades, details) {
+    const grid = el("div", { class: "go-grades" }, Object.entries(grades).map(([g, r]) => el("div", { class: "go-stat", "data-group": g }, [
+      el("div", { class: "go-kicker muted", text: (GROUP_NAMES[g] || g).toUpperCase() }), el("div", { class: "go-stat-val" }, wordRange(r))])));
+    if (details) gradeTips(grid, pid, grades, details);
+    return grid;
+  }
+  function gradeTips(grid, pid, grades, details) {
+    for (const cell of grid.querySelectorAll(".go-stat:not(.go-tip)")) {
+      const g = cell.dataset.group, r = grades[g], d = (details || {})[g] || {};
+      const grade = wordText(r);
+      const lines = d.labels ? [`Coachability like: ${d.labels.join(", ")}`]
+        : Object.entries(d.ratings || {}).map(([k, v]) => {
+            const lg = (d.league || {})[k];
+            const where = lg ? ` · about #${lg.rank} of ${lg.of} ${plural(lg.group)} today (#${lg.starter_rank} of ${lg.starters} starters)` : "";
+            return `${(ATTR_NAMES[k] || k).replace(/^./, (c) => c.toUpperCase())}: ${v[0] === v[1] ? v[0] : `${v[0]}–${v[1]}`}${where}`;
+          });
+      const tipId = `tip-${pid}-${g}`;
+      const tip = el("div", { class: "go-tip-box", role: "tooltip", id: tipId }, [el("b", { text: `${GROUP_NAMES[g] || g} ${grade} looks like` }),
+        ...lines.map((t) => el("div", { text: t })),
+        d.peers ? el("div", { class: "muted small", text: `Middle half of ${d.peers} prospects at his position graded like this, on the game's scale (50 is the middle Power 4 starter: Solid from 50, Strong from 65, Elite from 80, All-American from 90), ranked against today's players at his position.` }) : null]);
+      cell.classList.add("go-tip");
+      cell.setAttribute("tabindex", "0");
+      cell.setAttribute("aria-describedby", tipId);
+      cell.append(tip);
+    }
+    if (grid.__tips) return;
+    grid.__tips = true;
+    const cellOf = (e) => { const c = e.target.closest(".go-tip"); return c && grid.contains(c) ? c : null; };
+    const tipOf = (c) => c.querySelector(":scope > .go-tip-box");
+    const show = (c) => { if (c) placeTip(c, tipOf(c)); };
+    const hide = (c) => { if (c) tipOf(c).classList.remove("show"); };
+    const left = (e) => { const c = cellOf(e); if (c && !(e.relatedTarget && c.contains(e.relatedTarget))) hide(c); };
+    grid.addEventListener("mouseover", (e) => { const c = cellOf(e); if (c && !(e.relatedTarget && c.contains(e.relatedTarget))) show(c); });
+    grid.addEventListener("mouseout", left);
+    grid.addEventListener("focusin", (e) => show(cellOf(e)));
+    grid.addEventListener("focusout", left);
+    grid.addEventListener("click", (e) => show(cellOf(e)));
+    grid.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(cellOf(e)); });
+  }
   function placeTip(cell, tip) {
     tip.classList.add("show");
     const r = cell.getBoundingClientRect(), t = tip.getBoundingClientRect(), gap = 6, pad = 8;
@@ -1621,12 +1672,15 @@
       const t = window.CFP.teamsBySlug[holder] || {};
       const col = t.colors || {};
       const bg = holder === "FCS" ? "var(--panel-2)" : col.primary || "var(--panel-2)";
-      const odds = pub.schools.find((x) => x.school === holder);
-      const others = pub.schools.filter((x) => x.school !== holder && x.pct != null);
+      // his chance to flip, in words (p.flip: the rivals' shares and their words), never a number
+      const flip = p.flip || { word: "None", rivals: [] };
+      const leader = flip.rivals.length ? flip.rivals[0].name : null;
       const sub = pub.signed ? "Signed: his recruitment is over."
-        : pub.hard ? "Hard commit: he cannot flip and signs on signing day."
-        : others.length ? `Still considering offers · ${odds && odds.pct != null ? pct(1 - odds.pct) : "some"} chance he flips before signing day`
-        : "No other school is in it.";
+        : pub.hard ? "Hard commit: he is not taking calls"
+        : flip.word === "None" || !leader ? "Solid: nobody is close to pulling him away"
+        : flip.word === "Slim" ? `Hearing out ${leader}: a slim chance he flips before signing day`
+        : flip.word === "Real" ? `${leader} is working him hard: a real chance he flips`
+        : `${leader} is close to flipping him`;
       const banner = el("div", { class: "go-commit rc-status", style: holder === "FCS" ? "" : `background:${bg};color:${inkOn(col.primary)};border-color:${col.secondary || bg}` }, [
         el("div", { class: "go-display m", text: `${pub.signed ? "SIGNED WITH" : pub.hard ? "HARD COMMIT TO" : "VERBAL COMMIT TO"} ${teamName(holder).toUpperCase()}` }),
         el("div", { class: "small", text: sub }),
@@ -1654,9 +1708,15 @@
     if (pub.schools.length) {
       const listed = holder ? pub.schools.filter((x) => x.school !== holder) : pub.schools;
       const sorted = listed.slice().sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1));
-      if (sorted.length) node.append(el("h3", { text: holder ? (pub.signed ? "Who else offered" : "Still in it: his chance to flip to each") : "His list" }), el("div", { class: "go-schools" }, sorted.map((x, i) => el("div", { class: "go-school" }, [
-        el("span", { class: "go-school-name" }, [el("b", { text: x.name }), x.school === s.team ? el("span", { class: "muted small", text: " (you)" }) : null, i === 0 && !holder && x.pct != null ? el("span", { class: "go-tag good", text: "Leader" }) : null]),
-        el("span", { class: "go-school-odds", text: pub.signed ? "" : x.pct == null ? "no offer" : i === 0 ? "leads" : x.pct >= (sorted[0].pct || 0) - 0.1 ? "close" : x.pct >= 0.15 ? "in it" : "long shot" }),
+      // a committed recruit: each rival's chance to flip him as a word (p.flip), your own row marked; a commit to you
+      // whose rivals have no chance is one line instead of a table
+      const flipWords = Object.fromEntries(((p.flip && p.flip.rivals) || []).map((r) => [r.school, r.word]));
+      const committed = holder && !pub.signed;
+      const quiet = committed && holder === me && sorted.every((x) => (flipWords[x.school] || "None") === "None");
+      if (quiet) node.append(el("h3", { text: "Who Else Is Calling" }), el("p", { class: "muted go-nobody-close", text: "Nobody is close to pulling him away." }));
+      else if (sorted.length) node.append(el("h3", { text: holder ? (pub.signed ? "Who Else Offered" : holder === me ? "Who Else Is Calling" : "His Chance to Flip to Each") : "His list" }), el("div", { class: "go-schools" }, sorted.map((x, i) => el("div", { class: `go-school${x.school === me ? " yours" : ""}` }, [
+        el("span", { class: "go-school-name" }, [el("b", { text: x.name }), x.school === me ? el("span", { class: "muted small", text: " (you)" }) : null, i === 0 && !holder && x.pct != null ? el("span", { class: "go-tag good", text: "Leader" }) : null]),
+        el("span", { class: "go-school-odds", text: pub.signed ? "" : x.pct == null ? "no offer" : committed ? (flipWords[x.school] || "None") : i === 0 ? "leads" : x.pct >= (sorted[0].pct || 0) - 0.1 ? "close" : x.pct >= 0.15 ? "in it" : "long shot" }),
         el("span", { class: "muted small", text: [x.offered ? "Offer" : "", x.visit ? (x.visit.done ? "Visited" : `Visit wk ${x.visit.week}`) : ""].filter(Boolean).join(" · ") }),
       ]))));
     } else node.append(el("p", { class: "muted", text: "No school is recruiting him yet." }));
@@ -1686,29 +1746,8 @@
     node.append(el("h3", { text: "Our staff's grades" }));
     if (p.our_grades) {
       // hover (or tab to) a grade: what prospects in this class graded like that look like
-      node.append(el("div", { class: "go-grades" }, Object.entries(p.our_grades).map(([g, r]) => {
-        const d = (p.grade_details || {})[g] || {};
-        const grade = wordText(r);
-        const lines = d.labels ? [`Coachability like: ${d.labels.join(", ")}`]
-          : Object.entries(d.ratings || {}).map(([k, v]) => {
-              const lg = (d.league || {})[k];
-              const where = lg ? ` · about #${lg.rank} of ${lg.of} ${plural(lg.group)} today (#${lg.starter_rank} of ${lg.starters} starters)` : "";
-              return `${(ATTR_NAMES[k] || k).replace(/^./, (c) => c.toUpperCase())}: ${v[0] === v[1] ? v[0] : `${v[0]}–${v[1]}`}${where}`;
-            });
-        const tipId = `tip-${pid}-${g}`;
-        const tip = el("div", { class: "go-tip-box", role: "tooltip", id: tipId }, [el("b", { text: `${GROUP_NAMES[g] || g} ${grade} looks like` }),
-          ...lines.map((t) => el("div", { text: t })),
-          d.peers ? el("div", { class: "muted small", text: `Middle half of ${d.peers} prospects at his position graded like this, on the game's scale (50 is the middle Power 4 starter: Solid from 50, Strong from 65, Elite from 80, All-American from 90), ranked against today's players at his position.` }) : null]);
-        const cell = el("div", { class: "go-stat go-tip", tabindex: "0", "aria-describedby": tipId }, [el("div", { class: "go-kicker muted", text: (GROUP_NAMES[g] || g).toUpperCase() }),
-          el("div", { class: "go-stat-val" }, wordRange(r)), tip]);
-        const show = () => placeTip(cell, tip);
-        const hide = () => tip.classList.remove("show");
-        cell.addEventListener("mouseenter", show); cell.addEventListener("focus", show); cell.addEventListener("click", show);
-        cell.addEventListener("mouseleave", hide); cell.addEventListener("blur", hide);
-        cell.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(); });
-        return cell;
-      })),
-        el("p", { class: "muted small", text: `${fmtLooks(looks)} of 3 looks${left <= 0 ? ": his report is complete" : left <= 1 ? ": one trip finishes his report" : ""}. Tap or hover a grade to see what it looks like in ratings. Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster.` }),
+      node.append(gradeGrid(pid, p.our_grades, p.grade_details || {}),
+        el("p", { class: "muted small go-grades-note", text: gradesNote(looks, true) }),
         ...(inPane ? [] : [el("div", { class: "go-row wrap rc-profile-actions" }, [scoutBtn])]));
       node.append(p.our_comp ? el("p", {}, [el("b", { text: "Our comp: " }), comp(p.our_comp)])
         : el("p", { class: "muted", text: looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp once his report is complete (${fmtLooks(looks)} of 3 looks).` }));

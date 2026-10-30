@@ -17,6 +17,7 @@ import statistics as st
 from typing import Optional
 
 from coach_career import league as lg
+from coach_career import position_fit
 from coach_career import recruits
 from teamdata import game_scale
 
@@ -67,6 +68,14 @@ QUIT = 0.012                                       # quitting or a medical retir
 PROMISE_BROKEN = 3.0                               # a player promised a starting role who did not get it: his portal chance next year
 KEPT_STAY = 0.7                                    # a player you kept home: his portal chance the year after
 AI_KEEP = 0.33                                     # an AI school keeps a would-be portal entrant who would start for it this often
+# why starters leave (every school): NIL under his market, a slipping program, a weak or new coach *tune*
+NIL_TIER_PAY = {1: 60, 2: 40, 3: 20, 4: 8, 5: 2}    # what a starter can expect in NIL points at a program of this tier (recruiting.market_value is his market)
+NIL_PULL = 0.25                                    # a starter's or rotation player's portal chance adds this times his shortfall's share of his market ...
+NIL_PULL_CAP = 0.30                                # ... at most this (a kept player was paid: exempt the next year)
+PROGRAM_PULL = 0.10                                # ... and this when the program is slipping: a tier lost this year, a new head coach's first year,
+PROGRAM_FLOOR = 45                                 # or a losing year under a weak developer (WEAK_COACH); for players rated at least this (ours)
+WEAK_COACH = 50                                    # a head coach's player development under this, after a losing year: players want a better coach
+RISING_STAY = 0.5                                  # a program that rose a tier this year: its starters' portal chances, times this
 RETAIN_ASK = (25, 0.8)                             # what a leaver wants to stay: this plus this per card-overall point over 50, times his position
 RETAIN_PLAYING_TIME = 1.5                          # ... times this when what he really wants is snaps (NIL can still buy him)
 RETAIN_DRAFT = 2.5                                 # ... times this for a draft entrant (and 1.5 more for a top-100 projection)
@@ -353,7 +362,8 @@ class RetentionError(Exception):
 REASONS = {"buried": "Buried on the depth chart behind {ahead}", "snaps": "Wants more than a rotation role",
            "losing": "A losing year", "move_up": "A Power 4 program is calling", "restless": "Restless: no starting role in sight",
            "deal": "Chasing a bigger NIL deal", "last_year": "One year left and he wants a bigger stage", "fresh_start": "Wants a fresh start",
-           "draft": "Projects as a round {round} pick", "declared": "Believes he is ready for the NFL"}
+           "draft": "Projects as a round {round} pick", "declared": "Believes he is ready for the NFL",
+           "better_coach": "Wants a better coach", "slipping": "The program is slipping"}
 
 
 def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict]:
@@ -386,6 +396,8 @@ def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict
             key, ahead = "snaps", None
         elif item["losing"]:
             key, ahead = "losing", None
+        elif item.get("driver") in ("deal", "better_coach", "slipping"):
+            key, ahead = item["driver"], None                      # what really drove him (portal_odds), not a guess
         elif not item["p4"] and house(p["pos"], p["o"]) >= TRANSFER_UP_FROM:
             key, ahead = "move_up", None
         elif use != "starter":
@@ -405,9 +417,13 @@ def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict
             kind, ask = "nil", base
         else:
             kind, ask = "playing_time", base * RETAIN_PLAYING_TIME
+        shortfall = int(item.get("shortfall") or 0)
+        if key == "deal" and shortfall:
+            ask = max(ask, shortfall)                                # he wants at least what the market pays over your tier
         out.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "overall": ovr, "stars": p.get("s"),
                     "role_now": use, "role_next": role_next, "intent": intent, "reason_key": key,
                     "reason": REASONS[key].format(ahead=ahead, round=ev.get("round")),
+                    "driver": item.get("driver"), "shortfall": shortfall or None,
                     "draft_pick": ev.get("pick"), "draft_kind": ev["kind"] if intent == "draft" else None,
                     "ask": {"kind": kind, "nil": int(5 * round(ask / 5)), "known": False},
                     "offers": {"nil": 0, "promise": False, "released": False}, "met": False})
@@ -532,7 +548,8 @@ def _resolve_retention(state: dict) -> None:
             else:
                 ev["kind"] = "portal"
                 off["portal"]["players"][p["id"]] = {"player": dict(p), "from": me, "from_name": ev["team_name"],
-                                                     "offers": [], "signed": None, "usage": e["role_now"]}
+                                                     "offers": [], "signed": None, "usage": e["role_now"],
+                                                     "driver": e.get("driver"), "shortfall": e.get("shortfall")}
             off["departures"].append(ev)
         results.append({"id": e["id"], "name": e["name"], "pos": e["pos"], "intent": e["intent"], "status": "stayed" if stayed else "left",
                         "chance": round(chance, 2), "nil": e["offers"].get("nil", 0) if stayed else 0, "promise": bool(e["offers"].get("promise")) and stayed})
@@ -661,8 +678,74 @@ def growth_terms(perf: Optional[dict]) -> tuple[float, int, list[str], bool]:
     return mult, int(round(min(ROOM_CAP, room))), why, level_up
 
 
-def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict, list[dict]]:
+def program_shifts(state: dict, lgd: dict) -> dict[str, int]:
+    """Where this year's results take each program's tier (programs.update runs at the Staff step,
+    after the portal: a probe runs it on copies now): slug -> tiers lost (negative: gained)."""
+    from coach_career import carousel, programs
+    try:
+        res = carousel._results(state)
+        ranks = programs.final_ranks(state)
+    except (KeyError, TypeError):                                 # no season behind this state: nothing moves
+        return {}
+    programs.init(lgd)
+    probe = {"league": {"teams": {s: {"program": dict(t["program"]), "coaches": t.get("coaches") or {}} for s, t in lgd["teams"].items()},
+                        "year": lgd.get("year"), "conference_start": lgd.get("conference_start")}}
+    if probe["league"]["conference_start"] is None:
+        del probe["league"]["conference_start"]
+    programs.update(probe, res, ranks, year=lgd.get("year"))
+    return {s: probe["league"]["teams"][s]["program"]["tier"] - t["program"]["tier"] for s, t in lgd["teams"].items()}
+
+
+def _program_context(lgd: dict, slug: str, losing: bool, p4: bool, shifts: dict) -> dict:
+    """What a school's players weigh this offseason: its NIL tier's pay, whether it is slipping
+    (and why) or rising."""
+    from coach_career import programs
+    t = lgd["teams"][slug]
+    tier = (t.get("program") or programs.base(slug))["tier"]
+    hc = (t.get("coaches") or {}).get("head_coach") or {}
+    shift = shifts.get(slug, 0)
+    if shift > 0 or hc.get("since") == lgd["year"] - 1:
+        slipping = "slipping"                                   # a tier lost this year, or a new head coach's first year
+    elif losing and (hc.get("ratings") or {}).get("player_development", 60) < WEAK_COACH:
+        slipping = "better_coach"
+    else:
+        slipping = None
+    return {"losing": losing, "p4": p4, "year": lgd["year"], "tier": tier, "slipping": slipping, "rising": shift < 0}
+
+
+def portal_odds(p: dict, use: str, ctx: dict) -> list[tuple[str, float]]:
+    """A player's portal chance this offseason as segments that add up to it, each with its driver:
+    "role" (his class, his role, a losing year, a Group of 5 standout moving up, a promise broken,
+    a keep last year), "deal" (NIL under his market at his program's tier), "slipping" or
+    "better_coach" (PROGRAM_PULL). One draw against the sum; the segment it lands in is why."""
+    from coach_career import recruiting
+    year = ctx["year"]
+    base = PORTAL_BASE.get(p["cls"], 0.15) * PORTAL_USAGE[use] * (PORTAL_LOSING if ctx["losing"] else 1.0)
+    ovr = house(p["pos"], p["o"])
+    if not ctx["p4"] and ovr >= TRANSFER_UP_FROM:
+        base = max(base, TRANSFER_UP)                           # a Group of 5 standout moves up
+    kept = p.get("kept") == year - 1
+    if p.get("promised") == year - 1 and use != "starter":
+        base *= PROMISE_BROKEN                                  # promised a starting role and did not get it
+    elif kept:
+        base *= KEPT_STAY
+    parts = [("role", base)]
+    if use in ("starter", "rotation") and not kept:              # a kept player was paid this year
+        market = recruiting.market_value(p["pos"], ovr)
+        shortfall = market - NIL_TIER_PAY.get(ctx["tier"], NIL_TIER_PAY[5])
+        if market > 0 and shortfall > 0:
+            parts.append(("deal", min(NIL_PULL_CAP, NIL_PULL * shortfall / market)))
+    if ctx.get("slipping") and use in ("starter", "rotation") and ovr >= PROGRAM_FLOOR:
+        parts.append((ctx["slipping"], PROGRAM_PULL))
+    if ctx.get("rising") and use == "starter":
+        parts = [(k, v * RISING_STAY) for k, v in parts]
+    return parts
+
+
+def _departures(state: dict, lgd: dict, usage: dict, shifts: Optional[dict] = None) -> tuple[list[dict], dict, list[dict]]:
     rng = _rng(state, "departures")
+    if shifts is None:
+        shifts = program_shifts(state, lgd)
     attrs = _attrs(lgd)
     events, entrants = [], {}
     records = {slug: _record(state, slug) for slug in lgd["teams"]}
@@ -682,6 +765,7 @@ def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict, 
         wins, losses = records[slug]
         losing = wins < losses
         would_start = _would_start(t["roster"], recruiting.PORTAL_STARTERS)
+        ctx = _program_context(lgd, slug, losing, p4[slug], shifts)
         os_ = sorted(q["o"] for q in t["roster"])
         low = os_[max(0, int(len(os_) * 0.15) - 1)] if os_ else 0
         team_name = lg.base_meta(slug)["short_name"]
@@ -706,27 +790,34 @@ def _departures(state: dict, lgd: dict, usage: dict) -> tuple[list[dict], dict, 
                 if rng.random() < QUIT * (QUIT_LOW if p["o"] <= low else 1.0):
                     ev.update(kind="quit")
                 else:
-                    chance = PORTAL_BASE.get(p["cls"], 0.15) * PORTAL_USAGE[use] * (PORTAL_LOSING if losing else 1.0)
-                    if not p4[slug] and house(p["pos"], p["o"]) >= TRANSFER_UP_FROM:
-                        chance = max(chance, TRANSFER_UP)            # a Group of 5 standout moves up
-                    if p.get("promised") == lgd["year"] - 1 and use != "starter":
-                        chance *= PROMISE_BROKEN                     # promised a starting role and did not get it
-                    elif p.get("kept") == lgd["year"] - 1:
-                        chance *= KEPT_STAY
-                    if rng.random() < chance and (slug == me or not (p["id"] in would_start and rng.random() < AI_KEEP)):
+                    parts = portal_odds(p, use, ctx)
+                    chance = sum(v for _, v in parts)
+                    draw = rng.random()
+                    if draw < chance and (slug == me or not (p["id"] in would_start and rng.random() < AI_KEEP)):
+                        driver, edge = None, 0.0
+                        for key, v in parts:                         # the segment the draw landed in is why he goes
+                            edge += v
+                            if draw < edge:
+                                driver = None if key == "role" else key
+                                break
+                        shortfall = 0
+                        if driver == "deal":
+                            market = recruiting.market_value(p["pos"], house(p["pos"], p["o"]))
+                            shortfall = 5 * math.ceil((market - NIL_TIER_PAY.get(ctx["tier"], NIL_TIER_PAY[5])) / 5)
                         ev.update(kind="portal")
                         q = dict(p, cls=nxt)
                         entrants[p["id"]] = {"player": q, "from": slug, "from_name": team_name, "offers": [],
-                                             "signed": None, "usage": use}
+                                             "signed": None, "usage": use, "driver": driver, "shortfall": shortfall or None}
                     else:
                         p["cls"] = nxt
                         continue
             if slug == me and (ev["kind"] == "portal" or (ev["kind"] in ("draft", "undrafted") and ev.get("early"))):
                 # your leaver with eligibility left: he waits on the retention step, on the roster (a class
                 # up, as if he stays), out of the portal and the draft until you advance
-                entrants.pop(p["id"], None)
+                gone = entrants.pop(p["id"], None) or {}
                 p["cls"] = "SRRS" if p["cls"] == "SR" else NEXT_CLASS.get(p["cls"], p["cls"])
-                pending.append({"ev": ev, "use": use, "losing": losing, "winning": wins > losses, "p4": p4[slug]})
+                pending.append({"ev": ev, "use": use, "losing": losing, "winning": wins > losses, "p4": p4[slug],
+                                "driver": gone.get("driver"), "shortfall": gone.get("shortfall")})
                 continue
             events.append(ev)
             leaving[slug].add(p["id"])
@@ -861,27 +952,21 @@ def _apply_redshirts(state: dict) -> None:
 
 
 def position_options(state: dict, pid: str) -> list[dict]:
-    """What he would be at every position: his overall by our formula there, best first."""
+    """What he would be at every position (position_fit.project: his ratings on the new group's
+    scale, skills he has never used discounted, his size against the spot's), best first."""
     lgd = state["league"]
     c = next((x for x in lgd["teams"][state["team"]]["roster"] if x["id"] == pid), None)
     if c is None:
         raise RosterError(404, "not on your roster")
-    ours = lg.ratings(c, lgd["attrs"])
-    special = c["pos"] in ("K", "P")
-    out = [{"pos": pos, "group": GROUP[pos], "overall": game_scale.overall(ours, pos), "current": pos == c["pos"]}
-           for pos in GROUP if (pos in ("K", "P")) == special]
-    out.sort(key=lambda o: (-o["current"], -o["overall"]))
-    return out
+    origin, r = (c["moved_from"], c["moved_attrs"]) if c.get("moved_attrs") else (c["pos"], c["r"])
+    return position_fit.options(dict(zip(lgd["attrs"], r)), c.get("ht"), c.get("wt"), origin, c["pos"], GROUP)
 
 
 def move_row(c: dict, pos: str, attrs: list[str]) -> None:
-    """A league roster row at another position: "moved_from" keeps where he came from (cleared
-    when he goes back), his overall is our formula there."""
-    c.setdefault("moved_from", c["pos"])
-    c["pos"] = pos
-    c["o"] = game_scale.overall(lg.ratings(c, attrs), pos)
-    if pos == c["moved_from"]:
-        c.pop("moved_from", None)
+    """A league roster row at another position (position_fit.move_row): his ratings and overall
+    become what he projects there, "moved_from" keeps where he came from (cleared, his ratings
+    restored, when he goes back the same season)."""
+    position_fit.move_row(c, pos, attrs)
 
 
 def _season_moves(state: dict, lgd: dict) -> None:
@@ -1930,6 +2015,8 @@ def next_season(state: dict) -> dict:
     year = off["year"]
     lgd = state["league"]
     lgd["year"] = year
+    for t in lgd["teams"].values():
+        position_fit.settle(t["roster"])          # this year's position changes are theirs now
     team = off.get("move_to") or state["team"]
     # your team's default depth chart is by overall (league.lineup); the season's depth-chart
     # overrides and redshirts are this season's and are not carried (new_season starts clean)

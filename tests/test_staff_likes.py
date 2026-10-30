@@ -111,7 +111,8 @@ if __name__ == "__main__":
         rc["status"][d]["signed"] = None
         assert prospects.staff_likes(st, d, ME) is not None
 
-        # the views carry it: board rows, the profile, the queue (a complete report leaves the queue, so the key is None there), the Flags list
+        # the views carry it: board rows, the profile, the queue (a complete report stays in the queue only on your board, with the
+        # like; an open report has none yet), the Flags list
         for pid in (qb, d, k):
             R(sid, "board", {"pid": pid, "on": True})
         rows = {b["id"]: b for b in G(sid, "recruiting")["board"]}
@@ -122,7 +123,11 @@ if __name__ == "__main__":
         assert prof["likes"] == {"who": "OC", "name": staff["OC"], "text": TEXT["OC"]}, prof["likes"]
         assert prospects.staff_likes(st, t, ME) is None and G(sid, f"prospect/{t}")["likes"] is None
         v = G(sid, "scouting")
-        assert all("likes" in r for r in v["queue"]) and all(r["likes"] is None for r in v["queue"]), "the queue holds incomplete reports: no like yet"
+        assert all("likes" in r for r in v["queue"])
+        assert all(r["likes"] is None for r in v["queue"] if r["looks"] < 3), "an open report has no like yet"
+        kept = {r["pid"]: r for r in v["queue"] if r["looks"] >= 3}
+        assert set(kept) >= {qb, d, k} and all(kept[pid]["likes"]["who"] for pid in (qb, d, k)), "the board's complete reports stay in the queue with the like"
+        assert all(r["pid"] in rc["board"] for r in kept.values()), "a complete report off the board is out of the queue"
         liked = {f["pid"]: f for f in v["flags"] if f["flag"] == "likes"}
         assert set(liked) >= {qb, d, k}, (set(liked), qb, d, k)
         assert liked[qb]["likes"]["who"] == "OC" and liked[qb]["looks"] == 3

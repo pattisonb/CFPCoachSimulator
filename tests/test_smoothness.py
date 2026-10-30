@@ -289,7 +289,7 @@ def offseason_cases(page, base: str, sid: str) -> None:
     lg = page.query_selector(".off-letgo button.go-act")
     if lg:
         center(lg)
-        who = lg.evaluate("b => b.firstChild.textContent")
+        who = lg.evaluate("b => b.querySelector('.off-staff-name').firstChild.textContent.trim()")
         page.once("dialog", lambda d: d.accept())
         assert_smooth(page, staff, lambda: lg.click(), f"{who} is out · hire his replacement", "Offseason: let a coach go")
     cand = ready(page, ".off-cands .off-cand:not(.picked)")
