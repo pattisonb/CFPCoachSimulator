@@ -3,6 +3,7 @@
    accent is the team color (--go-primary). Buttons stand 36 px tall (44 on a phone), cards keep 12 px of padding,
    tag rows 6 px, button rows 8 px (tests/test_spacing.py). */
 #tab-scouting { display: flex; flex-direction: column; gap: 16px; }
+#tab-scouting[hidden] { display: none; }   /* an author display rule beats the hidden attribute; keep the tab switch working */
 #tab-scouting.tab-body { overflow: visible; }
 .sc-head p { margin: 6px 0 0; }
 .sc-block { display: flex; flex-direction: column; gap: 12px; }

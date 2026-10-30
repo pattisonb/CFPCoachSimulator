@@ -1113,7 +1113,7 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 
 /* the Recruiting board */
 .career-mode #tab-recruiting, .career-mode #tab-prospects, .career-mode #tab-staff, .career-mode #tab-classes { display: flex; flex-direction: column; gap: 14px; }
-.career-mode #tab-recruiting[hidden], .career-mode #tab-prospects[hidden], .career-mode #tab-staff[hidden], .career-mode #tab-classes[hidden] { display: none; }
+.career-mode #tab-recruiting[hidden], .career-mode #tab-prospects[hidden], .career-mode #tab-scouting[hidden], .career-mode #tab-classes[hidden] { display: none; }
 .go-board-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 18px; }
 .go-meters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .go-auto { display: flex; flex-direction: column; gap: 4px; }
