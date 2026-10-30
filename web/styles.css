@@ -1323,13 +1323,13 @@ body.career-mode.on-career-tab .season-head { padding-bottom: 0; }
 
 /* needs by position (the board and the class): chips, a way of counting */
 .go-needs { margin: 6px 0 10px; }
-.go-needs-label { font-size: 12px; letter-spacing: 0.08em; color: var(--muted); margin-right: 2px; }
+.go-needs-label { text-transform: uppercase; font-size: 12px; letter-spacing: 0.08em; color: var(--muted); margin-right: 2px; }
 .go-chip.small { min-height: 36px; padding: 0 10px; font-size: 13px; }
 .go-chip.short:not(.on) { border-color: color-mix(in srgb, var(--good) 60%, var(--border)); color: var(--good-text, var(--good)); }
 .go-chip.full:not(.on) { color: var(--muted); }
 .go-needs .go-needs-mode { min-height: 32px; padding-top: 0; padding-bottom: 0; font-size: 13px; margin-left: auto; }
 .go-scouted { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; padding: 6px 10px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 10%, transparent); }
-.go-scouted > b:first-child { font-size: 11px; letter-spacing: 0.08em; color: var(--accent-text, var(--accent)); align-self: center; }
+.go-scouted > b:first-child { text-transform: uppercase; font-size: 11px; letter-spacing: 0.08em; color: var(--accent-text, var(--accent)); align-self: center; }
 .go-list-row { flex-wrap: wrap; }
 .go-list-head { align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .sched-edit { display: flex; flex-direction: column; gap: 12px; }

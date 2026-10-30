@@ -13,9 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 WEB = ROOT / "web"
 
-# TODO(pass 2): web/recruiting.js and web/scouting.js (and coach_career/scenes.py, coach_career/prospects.py)
-# are being edited by other workers; add them here once their Title Case pass lands.
-PAGES = ["season.js", "offseason.js", "coach.js", "gameview.js", "us-map.js", "index.html", "coach.html", "depth/depth.js"]
+PAGES = ["season.js", "offseason.js", "coach.js", "gameview.js", "us-map.js", "recruiting.js", "scouting.js", "index.html", "coach.html", "depth/depth.js"]
 
 SMALL = {"a", "an", "the", "of", "to", "for", "and", "or", "in", "on", "at", "by"}
 ALLOW = {line.strip() for line in (ROOT / "tests" / "copy_case_allow.txt").read_text(encoding="utf-8").splitlines()
@@ -23,17 +21,29 @@ ALLOW = {line.strip() for line in (ROOT / "tests" / "copy_case_allow.txt").read_
 
 STR = r'(?:"((?:[^"\\]|\\.)*)"|`((?:[^`\\]|\\.)*)`)'       # a JS string or template literal, its body in group 1 or 2
 JS_PATTERNS = [
-    ("kicker/tag", re.compile(r'class:\s*(?:"go-(?:kicker|tag)[^"]*"|`go-(?:kicker|tag)[^`]*`)[^}\n]*?\btext:\s*' + STR)),
+    ("kicker/tag/chip/badge", re.compile(r'class:\s*(?:"(?:go-(?:kicker|tag|chip|badge|pill|display)|sc-sr)[^"]*"|`go-(?:kicker|tag|chip|badge|pill|display)[^`]*`)[^}\n]*?\btext:\s*' + STR)),
     ("button", re.compile(r'el\("button",\s*\{[^}\n]*?\btext:\s*' + STR)),
     ("th/heading/option", re.compile(r'el\("(?:th|h[1-4]|option|summary|legend)",\s*\{[^}\n]*?\btext:\s*' + STR)),
     ("btn()", re.compile(r'\bbtn\("[a-z0-9 ]*",\s*' + STR)),          # season.js: btn(classes, label, ...)
     ("btn() label", re.compile(r'\bbtn\("([A-Z][^"]*)",')),              # offseason.js: btn(label, sub, ...)
-    ("step()", re.compile(r'\bstep\(\d+,\s*' + STR)),
+    ("step()", re.compile(r'\bstep\([^,\n]+,\s*' + STR)),                 # season.js step(n, label); recruiting.js step(mark, title, sub, ...)
+    ("th()", re.compile(r'\bth\("[a-z]+",\s*' + STR)),                   # scouting.js: th(cls, label, sortKey)
+    ("meter()", re.compile(r'\bmeter\(' + STR)),                           # recruiting.js: meter(label, value, total)
+    # [key, label] pairs (and [key, label, tip] triples) with a lowercase key: options, tabs, chips, segments, columns
+    ("pair label", re.compile(r'\[\s*"[a-z_0-9]*",\s*"((?=[^"]*[A-Z ])[^"]+)"(?:,\s*"[^"]*")?\s*\]')),   # a label has a capital or a space; ["chance", "rank"] is data
     ("settings row", re.compile(r'\brow\(' + STR)),
     ("stat()", re.compile(r'\bstat\(' + STR)),
     ("modal title", re.compile(r'openModal\(\s*' + STR)),
-    ("label/name", re.compile(r'\b(?:label|name|heading):\s*' + STR)),
+    ("label/name", re.compile(r'(?<!"radio", )\b(?:label|name|heading):\s*' + STR)),   # not a radio group's name attribute
 ]
+# a button relabeled in place: more.textContent = open ? "Show Fewer" : `Show All ${n}`; every literal in it is a title
+BUTTON_RELABEL = re.compile(r'\b(?:more|tBtn|finishBtn|add|onBoard|toggle)\.textContent\s*=\s*([^;\n]+)')
+# a list of column headers mapped onto th cells: ["Program", "Standing", ...].map((h) => el("th", ...)); every entry is a title
+TH_LIST = re.compile(r'(\[(?:"[^"]*",\s*)+"[^"]*"\])\.map\(\(\w+\)\s*=>\s*el\("th"')
+# the page's name tables (PITCH_NAMES, GROUP_NAMES, ACTION_NAMES, GRADE_NAMES, FLAGS): every value a title shown as a tag, an
+# option or a kicker; ATTR_NAMES and LINE_LABELS are sentence words and stat abbreviations, not titles
+NAME_TABLE = re.compile(r'const (?!ATTR_)(\w+_NAMES|FLAGS)\s*=\s*\{([^}]*)\}')
+NAME_VALUE = re.compile(r':\s*\[?"([^"]*)"')
 HTML_PATTERNS = [
     ("button", re.compile(r"<button[^>]*>([^<]+)</button>")),
     ("th", re.compile(r"<th[^>]*>([^<]+)")),
@@ -84,12 +94,25 @@ def page_titles() -> list[tuple[str, str, str]]:
                     continue
                 line = src.count("\n", 0, m.start()) + 1
                 found.append((f"web/{name}:{line}", kind, title))
+        if name.endswith(".js"):
+            for m in TH_LIST.finditer(src):
+                line = src.count("\n", 0, m.start()) + 1
+                found.extend((f"web/{name}:{line}", "th list", t) for t in re.findall(r'"([^"]*)"', m.group(1)) if WORD.search(t))
+            for m in BUTTON_RELABEL.finditer(src):
+                line = src.count("\n", 0, m.start()) + 1
+                for g1, g2 in re.findall(STR, re.sub(r'[!=]==\s*"[^"]*"', "", m.group(1))):   # not the operand of a comparison
+                    t = flatten(g1 or g2)
+                    if WORD.search(t):
+                        found.append((f"web/{name}:{line}", "button relabel", t))
+            for m in NAME_TABLE.finditer(src):
+                line = src.count("\n", 0, m.start()) + 1
+                found.extend((f"web/{name}:{line}", f"{m.group(1)} value", t) for t in NAME_VALUE.findall(m.group(2)) if WORD.search(t))
     return found
 
 
 def engine_titles() -> list[tuple[str, str, str]]:
     """(where, kind, title) for the engine's title tables that reach the page as names, tags and labels."""
-    from coach_career import offseason, programs, recruiting, carousel
+    from coach_career import offseason, programs, recruiting, carousel, prospects, scenes
     from sim import season, coaches
     tables = [
         ("coach_career/offseason.py STAGE_NAMES", offseason.STAGE_NAMES.values()),
@@ -101,6 +124,12 @@ def engine_titles() -> list[tuple[str, str, str]]:
         ("coach_career/recruiting.py WORDS", recruiting.WORDS),
         ("coach_career/recruiting.py COACHABILITY_POINTS", recruiting.COACHABILITY_POINTS.keys()),
         ("coach_career/carousel.py mood", [carousel.mood(s) for s in (95, 70, 50, 10)]),
+        ("coach_career/prospects.py ROLE_NAMES", prospects.ROLE_NAMES.values()),
+        ("coach_career/prospects.py STANDING_WORDS", prospects.STANDING_WORDS.values()),
+        ("coach_career/prospects.py CERTAINTY", [label for _, label in prospects.CERTAINTY]),
+        ("coach_career/prospects.py _role", [prospects._role(pt) for pt in (1.0, 0.5, 0.1)]),
+        ("coach_career/offseason.py PT_NAMES", offseason.PT_NAMES.values()),
+        ("coach_career/scenes.py ANSWER_LABELS", scenes.ANSWER_LABELS.values()),
         ("sim/season.py RATING_LABELS", [lbl for _, lbl in season.RATING_LABELS]),
         ("sim/season.py BOWL_WEEK_LABELS", season.BOWL_WEEK_LABELS.values()),
         ("sim/season.py week_label", [season.week_label(w) for w in (season.CCG_WEEK, season.SELECTION_WEEK)]),
@@ -118,4 +147,8 @@ if __name__ == "__main__":
     for where, kind, title, bad in failures:
         print(f"{where}  [{kind}]  {title!r}  lowercase: {bad}")
     assert not failures, f"{len(failures)} titles are not Title Case"
+    # the answer buttons' labels: the page keeps a copy of scenes.ANSWER_LABELS, and the two must agree
+    from coach_career import scenes
+    js = re.search(r"const ANSWER_LABELS = \{([^}]*)\}", (WEB / "recruiting.js").read_text(encoding="utf-8"))
+    assert js and dict(re.findall(r'(\w+):\s*"([^"]*)"', js.group(1))) == scenes.ANSWER_LABELS, "web/recruiting.js ANSWER_LABELS differs from coach_career/scenes.py"
     print(f"copy case ok: {len(titles)} titles over {len(PAGES)} page sources and the engine's title tables")

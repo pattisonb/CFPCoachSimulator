@@ -91,7 +91,7 @@ if __name__ == "__main__":
         assert [s["id"] for s in v["scouts"]] == [m["id"] for m in staff]
         for s in v["scouts"]:
             assert set(s) == SCOUT_KEYS, set(s)
-            assert s["role"] in ("Offensive coordinator", "Defensive coordinator", "Recruiter")
+            assert s["role"] in ("Offensive Coordinator", "Defensive Coordinator", "Recruiter")
             assert s["evaluation_word"] in recruiting.WORDS
             assert s["area"] in recruiting.AREAS and s["looking_at"] > 0
             assert s["yield"] == {"looks": 0, "narrowed": 0, "flags": 0}

@@ -550,7 +550,7 @@ def row(state: dict, pid: str, viewer: str) -> dict:
 
 
 def _role(playing_time: float) -> str:
-    return "Would start" if playing_time >= 0.9 else "Next in line" if playing_time >= 0.5 else "Depth"
+    return "Would Start" if playing_time >= 0.9 else "Next in Line" if playing_time >= 0.5 else "Depth"
 
 
 def _stage_move(state: dict, pid: str, viewer: str) -> Optional[str]:
@@ -839,13 +839,13 @@ def recruiting_view(state: dict) -> dict:
 
 # ----- the Scouting tab -------------------------------------------------------------------------------
 
-ROLE_NAMES = {"OC": "Offensive coordinator", "DC": "Defensive coordinator", "Recruiter": "Recruiter"}
+ROLE_NAMES = {"OC": "Offensive Coordinator", "DC": "Defensive Coordinator", "Recruiter": "Recruiter"}
 NOT_ENOUGH_HOURS = "Not enough hours"
 REPORT_COMPLETE = f"His report is complete: {recruiting.REPORT_LOOKS} of {recruiting.REPORT_LOOKS} looks"   # a board row kept in the queue with no Send
 REPORT_ITEMS = recruiting.LOOK_LOG_KEEP   # a scout's report lists this many of his changed looks: flags, then potential, then the rest
 LOOK_NAMES = dict(GROUP_NAMES, potential="potential")
-STANDING_WORDS = {"cold": "Not yet contacted", "contact": "In contact", "top": "In his top group", "visited": "Visited",
-                  "committed": "Committed to you"}
+STANDING_WORDS = {"cold": "Not Yet Contacted", "contact": "In Contact", "top": "In His Top Group", "visited": "Visited",
+                  "committed": "Committed to You"}
 
 
 def _look_change(e: dict) -> str:
@@ -988,7 +988,7 @@ def _standing_word(state: dict, pid: str, me: str) -> str:
     from sim import season
     st = state["recruiting"]["status"][pid]
     if st["signed"] == me:
-        return "Signed with you"
+        return "Signed With You"
     if st["signed"] or st["committed"] not in (None, me):
         school = st["signed"] or st["committed"]
         name = "FCS" if school == "FCS" else season.load_teams()[school]["name"]
@@ -1002,7 +1002,7 @@ ODDS_TEMPERATURE = 3.0             # interest points between two schools that ma
 FIELD = ((0, 14.0), (8, 10.0), (16, 4.0))   # interest of the schools not yet in it, fading toward signing day *tune*
 ODDS_BAND = ((0, 0.25), (8, 0.12), (13, 0.04))   # half-width of the range shown, by week *tune*
 CLASS_DECAY = 0.85
-CERTAINTY = ((0.18, "Early read"), (0.08, "Taking shape"), (0.0, "Solid read"))
+CERTAINTY = ((0.18, "Early Read"), (0.08, "Taking Shape"), (0.0, "Solid Read"))
 
 
 def odds(state: dict, pid: str, week: Optional[int] = None) -> dict:

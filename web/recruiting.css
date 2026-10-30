@@ -189,7 +189,10 @@
 .go-question-line { line-height: 1.4; }
 .go-question-line q { font-style: italic; }
 .go-answers { gap: 8px 10px; }
-.go-answer { text-align: left; white-space: normal; line-height: 1.3; min-height: 40px; }
+.go-answer { text-align: left; white-space: normal; line-height: 1.3; min-height: 44px; padding-top: 6px; padding-bottom: 6px; }
+/* the answer: a Title Case label over the line you say, in quotes */
+.go-answer-label, .go-answer-line { display: block; }
+.go-answer-line { margin-top: 2px; font-weight: 400; quotes: "\201C" "\201D"; }
 .go-question-reply { font-weight: 600; line-height: 1.35; }
 .go-question-reply.good { color: var(--good-text); }
 .go-question-reply.bad { color: var(--bad-text); }
