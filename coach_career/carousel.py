@@ -339,6 +339,18 @@ def _fired_why(slug: str, res: dict) -> str:
     return f"Fired by {_name(slug)} after a {res.get('wins', 0)}-{res.get('losses', 0)} season"
 
 
+def contract_holds(state: dict, role: str, year: int) -> bool:
+    """Your coordinator in `role` is signed for the coming season and honors it this offseason:
+    one seeded draw a year (its own stream, so the carousel's draws stand), he goes through at
+    offseason.UNDER_CONTRACT. A member without a contract (an old save) is free to go."""
+    from coach_career import offseason
+    staff = (state.get("career") or {}).get("staff") or []
+    s = next((x for x in staff if offseason.STAFF_ROLES.get(x["role"]) == role), None)
+    if s is None or offseason.expiring(s, year):
+        return False
+    return random.Random(f"contract-{offseason.seed_key(state)}-{year}-{role}").random() >= offseason.UNDER_CONTRACT
+
+
 def run(state: dict) -> dict:
     """The whole carousel for the offseason: verdicts, departures, the hiring chain, coordinators,
     your staff and your job. Returns the record shown on the Offseason screen."""
@@ -361,6 +373,8 @@ def run(state: dict) -> dict:
         r = res.get(slug, {"wins": 0, "losses": 0})
         programs.nil_move(t, met=verdicts[slug]["met"], losing=r["wins"] < r["losses"])
     changes, open_hc, left_hc = [], [], {}
+    holds = {role: contract_holds(state, role, year) for role in COORD_ROLES}    # your coordinators under contract who stay put this year
+    your_declined: dict[str, Optional[str]] = {}                                 # role -> the school he turned down (None: a bigger job in general)
 
     def leave(slug: str, reason: str, why: Optional[str] = None) -> None:
         t = lgd["teams"][slug]
@@ -401,7 +415,10 @@ def run(state: dict) -> dict:
     while queue and guard < 400:
         guard += 1
         slug = queue.pop(0)
-        hire, src = _pick_head_coach(state, slug, verdicts, res, filled, rng, year, taken)
+        declined: list[dict] = []
+        hire, src = _pick_head_coach(state, slug, verdicts, res, filled, rng, year, taken, holds, declined)
+        for d in declined:                                    # your coordinator turned the job down: under contract
+            your_declined[d["role"]] = teams[slug]["name"]
         taken.add(hire["name"])
         lgd["teams"][slug]["coaches"]["head_coach"] = hire
         lgd["teams"][slug]["style"] = new_style(rng, lgd, slug)
@@ -433,6 +450,9 @@ def run(state: dict) -> dict:
                 market_add(state, c, role, slug, f"Let go at {_name(slug)} when {filled[slug]['name']} brought his own staff", year)
                 open_coords.append((slug, role, "let go"))
             elif rng.random() < COORD_MOVE:                      # yours too: a coordinator looks for a bigger job
+                if slug == me and holds.get(role):                # ... unless he is yours and honors his contract this year
+                    your_declined.setdefault(role, None)
+                    continue
                 changes.append({"team": slug, "role": role, "old": c["name"], "reason": "moved on"})
                 market_add(state, c, role, slug, f"Left {_name(slug)} after {year - (c.get('since') or year)} seasons to look for a bigger job", year)
                 open_coords.append((slug, role, "moved on"))
@@ -461,7 +481,7 @@ def run(state: dict) -> dict:
         lower = sorted({s for s in open_hc + list(filled) if s != me}, key=lambda s: -attract(state, s))
         openings = [s for s in lower if attract(state, s) <= my_a][:FIRED_PICKS] or lower[-FIRED_PICKS:]
     return {"changes": changes, "you": dict(you, fired=bool(fired_you)) if you else {}, "offers": offers, "openings": openings,
-            "choice": None, "poached": your_poached, "poached_why": your_poached_why, "verdicts": {s: {"security": v["security"], "met": v["met"], "goal": v["goal"]["text"]}
+            "choice": None, "poached": your_poached, "poached_why": your_poached_why, "declined": your_declined, "verdicts": {s: {"security": v["security"], "met": v["met"], "goal": v["goal"]["text"]}
                                                                 for s, v in verdicts.items()}}
 
 
@@ -477,9 +497,11 @@ def _pick_coordinator(state: dict, slug: str, role: str, rng: random.Random, yea
 
 
 def _pick_head_coach(state: dict, slug: str, verdicts: dict, res: dict, filled: dict, rng: random.Random, year: int,
-                     taken: Optional[set] = None) -> tuple[dict, dict]:
+                     taken: Optional[set] = None, holds: Optional[dict] = None, declined: Optional[list] = None) -> tuple[dict, dict]:
     """The best candidate who would take the job: a sitting head coach at a smaller program with a
-    winning run, a coordinator at a strong program, or one of the market's best three."""
+    winning run, a coordinator at a strong program, or one of the market's best three. Your
+    coordinator under contract who honors it (`holds[role]`) turns the job down when he is the
+    pick (noted in `declined`) and the next best takes it."""
     lgd = state["league"]
     me = state["team"]
     b = programs.z(state, slug)
@@ -508,7 +530,14 @@ def _pick_head_coach(state: dict, slug: str, verdicts: dict, res: dict, filled: 
     if not cands:
         g = generated(rng, lgd, "head_coach", slug, year, level=programs.coach_level(state, slug))
         cands.append((0, g, {"kind": "generated", "text": g["previous_job"]}))
-    score, pick, src = max(cands, key=lambda x: x[0])
+    cands.sort(key=lambda x: -x[0])
+    score, pick, src = cands[0]
+    for score, pick, src in cands:
+        if src["kind"] == "coordinator" and src["team"] == me and (holds or {}).get(src["role"]):
+            if declined is not None:
+                declined.append({"role": src["role"], "name": pick["name"]})
+            continue
+        break
     if src["kind"] == "market":
         return market_take(state, src["id"], "head_coach", slug, year), src
     hire = json.loads(json.dumps(pick))

@@ -1441,6 +1441,21 @@ moves with their unit's year (a top-third offense or defense by points +2, a bot
 and every recruiter's recruiting with the class you signed (top 25 +2, outside the top 70 −1),
 plus a point of noise.
 
+**Staff contracts** (`contract_until` on each member of `career.staff`; `offseason.py` *tune*
+constants). Your coordinators and recruiters are signed through a year: at the start 1-3 seasons,
+a hire for the term the candidate asks (a coordinator wants 2-4 years, a recruiter 1-3; his card
+says "Wants 3 years (through 2029)"). Signed for the coming season a recruiter leaves at 0.35 of
+his odds (4% a year instead of 12%), and a coordinator another program wants as its head coach
+or who would look for a bigger job goes through 35% of the time; the rest turn the job down
+("turned down Akron: under contract through 2028" on the Staff step) and the program hires its
+next choice (`carousel.contract_holds`, one seeded draw a year). With his contract up he shops:
+a recruiter leaves at twice his odds (24%, capped at 90%), a coordinator the carousel wanted
+leaves for sure and one it did not want still takes a coordinator job elsewhere 25% of the time.
+Whoever stays at expiry re-signs a term from the same ranges ("Re-signed through 2030" on the
+Staff step, `renewed` in the view); the Scouting tab's scout rows read "Recruiter · through 2028".
+A save from before contracts treats everyone as expiring once. Pay and the NIL cost of a
+higher-level coordinator come later (`ask` on the member is the hook, None for now).
+
 **Many seasons** (`tools/long_run.py`, every step on Auto). Six 20-season careers on 85-man rosters
 (120 seasons) held the league's mean team rating at 59.0-60.0 every season (2026: 59.4) with
 stats 6.3-7.8% off real (the 2026 rosters: 5.6%) and 26 points a game. Then depth charts favoring

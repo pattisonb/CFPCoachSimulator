@@ -32,6 +32,8 @@ def test_your_coordinators_can_leave():
         st = season.new_season("ohio-state", "full", seed=5, career=True)
         finished(st)
         offseason.start(st)
+        for s in st["career"]["staff"]:        # their contracts are up, so neither holds to one (test_staff_contracts.py has the under-contract case)
+            s["contract_until"] = st["offseason"]["year"] - 1
         to_stage(st, "staff")
         car = st["offseason"]["carousel"]
         assert sorted(car["poached"]) == ["defensive_coordinator", "offensive_coordinator"], car["poached"]
