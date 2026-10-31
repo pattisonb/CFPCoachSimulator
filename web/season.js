@@ -320,6 +320,8 @@
   }
 
   async function openSeason(id) {
+    newsReset();
+    news.since = null;
     try {
       const s = await api(`/api/season/${id}`);
       history.replaceState(null, "", `?id=${s.id}`);
@@ -352,6 +354,8 @@
     state.simResults = [];
     state.simTarget = target;
     state.headWeek = s.current_week;
+    news.since = s.current_week;
+    news.want = s.current_week;
     setBusy(true);
   }
 
@@ -384,6 +388,7 @@
     state.timer = setTimeout(async () => {
       try {
         const j = await api(`/api/season/${state.season.id}/status?since=${state.advanceFrom != null ? state.advanceFrom : state.season.current_week}`);
+        if (j.done != null) fetchNews(j.done);
         if (j.status === "running") {
           showProgress(j);
           poll();
@@ -539,6 +544,103 @@
       const r = await api(`/api/season/${s.id}/pause`, { method: "POST" });
       if (r.stopping) { $("#btn-pause").disabled = true; $("#btn-pause").textContent = "Pausing after this week…"; }
     } catch (err) { toast(`Could not pause: ${errText(err)}`, 3000); }
+  }
+
+  // ----- league news while simming ---------------------------------------------------
+  // Each finished week of a sim asks /news for the big things around the league (sim/news.py) and
+  // shows them as chat bubbles bottom-right (bottom, full width, on a phone, kept off the Office's
+  // play card): one every NEWS_GAP_MS, NEWS_MAX at most, each fading after NEWS_MS. A bubble with a
+  // link opens its game, team or recruit. Settings has the News switch (on unless turned off).
+  const NEWS_GAP_MS = 1500, NEWS_MS = 6000, NEWS_MAX = 3, NEWS_OUT_MS = 400;
+  const news = { since: null, want: 0, queue: [], timer: null, stack: null, asking: false };
+  const newsOn = () => { try { return localStorage.getItem("cfp.news") !== "off"; } catch (e) { return true; } };
+  const saveNewsOn = (on) => { try { localStorage.setItem("cfp.news", on ? "on" : "off"); } catch (e) { /* private mode */ } };
+  function newsStack() {
+    if (news.stack && news.stack.isConnected) return news.stack;
+    news.stack = el("div", { id: "news-stack", class: "news-stack", role: "log", "aria-live": "polite", "aria-label": "League News" });
+    document.body.append(news.stack);
+    return news.stack;
+  }
+  // on a phone the stack sits above the toasts, and above the Office's play card when the card is in the way
+  function placeNews() {
+    const stack = news.stack;
+    if (!stack) return;
+    if (!window.matchMedia("(max-width: 640px)").matches) { stack.style.bottom = ""; return; }
+    let bottom = 16;
+    const toasts = document.getElementById("toasts");
+    if (toasts && toasts.children.length) bottom += toasts.getBoundingClientRect().height + 8;
+    const card = document.querySelector("#tab-office:not([hidden]) .go-play");
+    const h = stack.getBoundingClientRect().height || 60;
+    if (card) {
+      const r = card.getBoundingClientRect();
+      const top = window.innerHeight - bottom - h;
+      if (r.height && r.bottom > top && r.top < window.innerHeight - bottom) bottom = Math.max(bottom, window.innerHeight - r.top + 8);
+    }
+    stack.style.bottom = `${Math.min(bottom, window.innerHeight - h - 16)}px`;
+  }
+  function newsReset() {
+    clearTimeout(news.timer);
+    news.timer = null;
+    news.queue = [];
+    if (news.stack) news.stack.innerHTML = "";
+  }
+  function dropBubble(b) {
+    if (!b || b.__out) return;
+    b.__out = true;
+    clearTimeout(b.__timer);
+    b.classList.add("news-out");
+    setTimeout(() => { b.remove(); placeNews(); }, NEWS_OUT_MS);
+  }
+  function openNews(item) {
+    const s = state.season, link = item.link || {};
+    if (!s) return;
+    if (link.type === "game") openBox(link.event_id);
+    else if (link.type === "team") openResume(link.slug, s.current_week);
+    else if (link.type === "recruit" && window.Recruiting) window.Recruiting.openProfile(s, link.pid);
+  }
+  function showBubble(item) {
+    const s = state.season;
+    const when = item.week > 14 && s ? postseasonLabel(s, item.week) : `Week ${item.week}`;
+    const linked = !!(item.link && item.link.type);
+    const b = el(linked ? "button" : "div", { class: `news-bubble news-${item.kind}`, "data-kind": item.kind, ...(linked ? { type: "button" } : {}) }, [
+      item.team ? teamPill(item.team) : el("span", { class: "news-icon", "aria-hidden": "true" }),
+      el("span", { class: "news-body" }, [el("span", { class: "news-text", text: item.text }), el("span", { class: "news-week muted", text: when })]),
+    ]);
+    if (linked) b.addEventListener("click", () => { dropBubble(b); openNews(item); });
+    const stack = newsStack();
+    stack.append(b);
+    const live = [...stack.children].filter((n) => !n.__out);
+    for (const old of live.slice(0, Math.max(0, live.length - NEWS_MAX))) dropBubble(old);
+    b.__timer = setTimeout(() => dropBubble(b), NEWS_MS);
+    placeNews();
+  }
+  function pumpNews() {
+    if (news.timer) return;
+    const next = () => {
+      news.timer = null;
+      if (!news.queue.length || !newsOn()) return;
+      showBubble(news.queue.shift());
+      news.timer = setTimeout(next, NEWS_GAP_MS);
+    };
+    next();
+  }
+  // the weeks after news.since that the sim has finished (`done`): their items join the queue
+  async function fetchNews(done) {
+    const s = state.season;
+    news.want = Math.max(news.want || 0, done);
+    if (!s || !newsOn() || news.since == null || done <= news.since || news.asking) return;
+    const since = news.since;
+    news.asking = true;
+    try {
+      const r = await api(`/api/season/${s.id}/news?since_week=${since}`);
+      news.since = Math.max(news.since, r.current_week != null ? r.current_week : done);
+      news.queue.push(...(r.items || []).filter((i) => i.week > since));
+      pumpNews();
+    } catch (err) { /* the news is a nicety: a missed week stays quiet */ }
+    finally {
+      news.asking = false;
+      if (news.since != null && news.want > news.since && state.season && state.season.id === s.id) fetchNews(news.want);   // a week finished while it asked
+    }
   }
 
   // ----- rendering ---------------------------------------------------------
@@ -3146,6 +3248,8 @@
         })),
       row("Momentum and Morale", "Big plays swing momentum inside a game and nudge ratings play by play; wins, losses and each player's own games set a mood that carries into the next game and fades week by week. Player cards show the boosts as green and red arrows.",
         toggle(!!(s.settings || {}).morale, async (on) => { await saveSettings({ morale: on }); toast(on ? "Momentum and morale on from the next sim." : "Momentum and morale off.", 3000); })),
+      row("News", "Little bubbles with the big results, poll moves, commitments and injuries around the league while the weeks sim. Click one to open it.",
+        toggle(newsOn(), async (on) => { saveNewsOn(on); if (!on) newsReset(); })),
       row("Game Day Pace", "How fast the plays come during a game day replay.",
         chipRow([["slow", "Slow"], ["normal", "Normal"], ["fast", "Fast"]], gdSpeed(), saveGdSpeed)),
     );
