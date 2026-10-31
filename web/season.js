@@ -6,9 +6,48 @@
   const state = { teams: [], season: null, viewWeek: null, tab: "schedule", poll: "ap", timer: null, standings: null };
 
   async function api(path, options) {
+    const method = ((options && options.method) || "GET").toUpperCase();
+    if (longCall && method !== "GET" && options !== longCall) throw heldError();
     const res = await window.CFP.game.fetch(path, options);
     if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
     return res.json();
+  }
+  // The offseason's advance is one long call (to next season it sims the whole offseason). While it
+  // runs every other change (POST, DELETE) is refused here, no request sent, so a click cannot queue
+  // behind it and land on a later stage or the next season. long(path, options) makes that call.
+  const HOLD_TEXT = "Hold on: the offseason is still working.";
+  const HOLD_ECHO_MS = 1500;      // *tune* how long a caller's own error toast for a held call is swallowed
+  let longCall = null;            // the options object of the call in flight, the one change let through
+  let heldAt = 0;
+  let holdToast = null;
+  function heldError() {
+    heldAt = Date.now();
+    if (!holdToast || !holdToast.isConnected) holdToast = window.CFP.ui.toast(HOLD_TEXT, { ms: 3000 });
+    const err = new Error(HOLD_TEXT);
+    err.held = true;
+    return err;
+  }
+  const holding = () => !!longCall;
+  // a season-level control (New Season, Load Career, Clear All, Settings) while a long call runs: say so, do nothing
+  function held() {
+    if (!longCall) return false;
+    heldError();
+    return true;
+  }
+  async function long(path, options) {
+    if (longCall) throw heldError();
+    longCall = options;
+    document.body.classList.add("long-call");
+    for (const id of ["#btn-new", "#btn-settings", "#btn-load-career", "#btn-clear-seasons"]) { const b = $(id); if (b) b.disabled = true; }
+    $("#season-list").classList.add("locked");
+    try { return await api(path, options); }
+    finally {
+      longCall = null;
+      document.body.classList.remove("long-call");
+      for (const id of ["#btn-load-career", "#btn-clear-seasons"]) { const b = $(id); if (b) b.disabled = false; }
+      $("#btn-new").disabled = $("#btn-settings").disabled = !!state.simming;
+      if (!state.simming) $("#season-list").classList.remove("locked");
+    }
   }
   // fetch options for a POST with a JSON body
   function postJSON(body) {
@@ -19,6 +58,8 @@
   let stickyToast = null;
   const ERROR_TOAST = /^(Could not|Simulation error|Teams unavailable)/;
   function toast(msg, ms) {
+    // a caller's own "Could not …" for a call held above: the hold toast already said it
+    if (Date.now() - heldAt < HOLD_ECHO_MS && (ERROR_TOAST.test(msg) || String(msg).includes(HOLD_TEXT))) return holdToast || { dismiss() {} };
     if (stickyToast) { stickyToast.dismiss(); stickyToast = null; }
     const node = window.CFP.ui.toast(msg, { ms: ms || 0, kind: ERROR_TOAST.test(msg) ? "error" : "info" });
     if (!ms) stickyToast = node;
@@ -153,17 +194,18 @@
     for (const x of list) {
       const status = x.offseason ? "Offseason" : x.done ? `Done · champion ${x.champion_name}` : `Through week ${x.current_week}`;
       items.push({ name: `${x.team_name} · ${x.career ? `Coach Career · ${x.year}` : "full"}`, cost: `${x.wins}-${x.losses}`, why: `${status} · ${when(x.created_at)}`,
-                   current: !!(state.season && state.season.id === x.id), onPick: () => { if (!state.season || state.season.id !== x.id) openSeason(x.id); } });
+                   current: !!(state.season && state.season.id === x.id), onPick: () => { if (held()) return; if (!state.season || state.season.id !== x.id) openSeason(x.id); } });
     }
     items.push({ heading: "" });
     items.push({ name: "New Season", why: "Pick a team and who coaches it", onPick: newSeasonFlow, disabled: !!state.simming });
-    items.push({ name: "Load Career", why: "Open a Coach Career saved as a file", onPick: () => $("#career-file").click() });
+    items.push({ name: "Load Career", why: "Open a Coach Career saved as a file", onPick: () => { if (!held()) $("#career-file").click(); } });
     if (list.length) items.push({ name: "Clear All", why: "Delete every saved season", onPick: clearSeasons });
     openMenu(btn, items, "Seasons");
   }
 
   // New season from the menu: pick the team, then who coaches (chooseCoach, in the same dialog)
   function newSeasonFlow() {
+    if (held()) return;
     const pick = $("#pick-team");
     const sel = el("select", { "aria-label": "Your team", class: "start-team" }, [...pick.options].map((o) => el("option", { value: o.value, text: o.textContent })));
     sel.value = pick.value;
@@ -230,6 +272,7 @@
   }
 
   async function deleteSeason(s) {
+    if (held()) return;
     const label = `${s.team_name} ${s.wins}-${s.losses} (${s.done ? "complete" : `through week ${s.current_week}`})`;
     if (!confirm(`Delete the ${label} season? This cannot be undone.`)) return;
     try {
@@ -241,6 +284,7 @@
   }
 
   async function clearSeasons() {
+    if (held()) return;
     if (!confirm("Delete every saved season? This cannot be undone.")) return;
     try {
       const r = await api("/api/seasons", { method: "DELETE" });
@@ -993,7 +1037,7 @@
     const line = el("p", { class: "muted small go-nil-carry", text: `NIL carried over: ${carry} (of ${v.nil.budget} this year)` });
     if (head) head.after(line); else card.prepend(line);
   }
-  const recruitingHelpers = { api, postJSON, toast, openModal, closeModal: closeAllModals, errText, play, playCard, openSeason: reopenSeason, onChange: (tab) => { state.tab = tab; renderTab(); window.scrollTo({ top: 0 }); } };
+  const recruitingHelpers = { api, long, holding, postJSON, toast, openModal, closeModal: closeAllModals, errText, play, playCard, openSeason: reopenSeason, onChange: (tab) => { state.tab = tab; renderTab(); window.scrollTo({ top: 0 }); } };
   function renderCareerSteps(s) {
     const box = $("#career-steps");
     const career = !!s.career;
@@ -3119,6 +3163,7 @@
     return j.settings;
   }
   function openSettings() {
+    if (held()) return;
     const s = state.season;
     if (!s) return;
     const node = el("div", { class: "settings" });
@@ -3639,13 +3684,13 @@
 
   // ----- wiring ------------------------------------------------------------
 
-  $("#btn-new").addEventListener("click", () => chooseCoach("full"));
+  $("#btn-new").addEventListener("click", () => { if (!held()) chooseCoach("full"); });
   $("#btn-pause").addEventListener("click", pauseSim);
   $("#btn-seasons").addEventListener("click", () => setSidebar($("#btn-seasons").getAttribute("aria-pressed") !== "true"));
   $("#btn-download-career").addEventListener("click", () => {
     if (state.season) window.CareerSave.download(state.season.id).catch((err) => toast(`Could not download: ${errText(err)}`, 4000));
   });
-  $("#btn-load-career").addEventListener("click", () => $("#career-file").click());
+  $("#btn-load-career").addEventListener("click", () => { if (!held()) $("#career-file").click(); });
   $("#career-file").addEventListener("change", async (e) => {
     const file = e.target.files[0];
     e.target.value = "";

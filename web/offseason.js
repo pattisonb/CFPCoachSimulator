@@ -19,6 +19,9 @@
   const loading = (text) => el("p", { class: "muted go-loading", text });
   const ordinal = (n) => { const t = n % 100, u = n % 10; return `${n}${t > 10 && t < 14 ? "th" : u === 1 ? "st" : u === 2 ? "nd" : u === 3 ? "rd" : "th"}`; };
   const stars = (n) => (n ? "★".repeat(n) : "");
+  // every offseason change carries the stage on screen: the server refuses one meant for a stage it has left
+  const movedOn = (err) => /^409\b/.test((err && err.message) || "") && /moved on/.test(err.message);
+  const staged = (body) => H.postJSON({ ...body, stage: drawn ? drawn.stage : null });
 
   function stepper(v) {
     return el("ol", { class: "off-steps", "aria-label": "Offseason steps" }, v.stages.map((st, i) =>
@@ -77,7 +80,11 @@
     const work = (async () => {
       let r;
       try { r = await call(); }
-      catch (err) { if (opt.fail) opt.fail(err); else H.toast(H.errText(err)); return; }
+      catch (err) {
+        if (movedOn(err)) { H.toast(H.errText(err), 4000); render(s, BOX, H); return; }   // the screen was a stage behind: draw the one it is on
+        if (opt.fail) opt.fail(err); else H.toast(H.errText(err));
+        return;
+      }
       try { await refresh(s); if (opt.after) await opt.after(r); }
       catch (err) { H.toast(`Could not refresh the offseason: ${H.errText(err)}`, 4000); return; }
       const msg = typeof said === "function" ? said(r) : said;
@@ -159,7 +166,7 @@
     const acts = el("div", { class: "off-review-acts" });
     const said = { case: "You make your case to the AD", year: "You ask the AD for one more year", nothing: "You say nothing to the AD" };
     const send = (ev, action, staffId, line) =>
-      act(ev, s, () => H.api(`/api/season/${s.id}/offseason/review`, H.postJSON({ action, staff_id: staffId || null })), line || said[action]);
+      act(ev, s, () => H.api(`/api/season/${s.id}/offseason/review`, staged({ action, staff_id: staffId || null })), line || said[action]);
     const tips = { case: "Point to the class you signed and the players you developed; a little goodwill.",
       change: "Let a coordinator go; the AD sees a coach who will not stand pat.",
       year: "He always says yes, but the goal must be met next season or you are gone.",
@@ -196,11 +203,38 @@
     return el("p", { class: "muted small off-nil-line", "data-key": "nil", text });
   }
 
+  // While an advance is out: a cover over the tab ("Working Through the Offseason"), the stage under it
+  // inert and aria-busy; season.js holds every other change until the call is back. Returns the undo.
+  function holdTab(box) {
+    const cover = el("section", { class: "go-card off-busy", role: "status", "data-key": "busy" }, [
+      el("span", { class: "off-busy-spin", "aria-hidden": "true" }),
+      el("div", {}, [el("div", { class: "go-kicker", text: "Working Through the Offseason" }),
+        el("p", { class: "muted small", text: "This takes a moment; everything waits until it is done." })])]);
+    const under = [...box.children];
+    for (const n of under) n.inert = true;
+    box.setAttribute("aria-busy", "true");
+    box.classList.add("off-held");
+    box.prepend(cover);
+    let done = false;
+    return () => {
+      if (done) return;
+      done = true;
+      cover.remove();
+      for (const n of under) n.inert = false;
+      box.removeAttribute("aria-busy");
+      box.classList.remove("off-held");
+    };
+  }
+
   async function advance(s, box, btn, to) {
+    if (H.holding && H.holding()) { H.api(`/api/season/${s.id}/offseason/advance`, staged({})).catch(() => {}); return; }   // says "Hold on", sends nothing
+    const label = btn.textContent;
     btn.disabled = true;
     btn.textContent = to ? "Working through the offseason…" : "Working…";
+    const lift = holdTab(box);
     try {
-      const r = await H.api(`/api/season/${s.id}/offseason/advance`, H.postJSON(to ? { to } : {}));
+      const r = await (H.long || H.api)(`/api/season/${s.id}/offseason/advance`, staged(to ? { to } : {}));
+      lift();
       if (r.next_season) {
         H.toast(`On to ${r.year}: a new season and a new class of recruits.`, 3500);
         await H.openSeason(s.id);          // in place: no reload, no loading screen
@@ -208,7 +242,10 @@
       }
       render(s, box, H);            // the next stage: a full draw
     } catch (err) {
+      lift();
       btn.disabled = false;
+      btn.textContent = label;
+      if (movedOn(err)) { H.toast(H.errText(err), 4000); render(s, box, H); return; }
       H.toast(`Could not continue: ${H.errText(err)}`);
     }
   }
@@ -232,7 +269,7 @@
           title: `${p.name}: played ${p.games} of ${p.team_games} games · ${p.use === "starter" ? "a starter" : p.use === "rotation" ? "in the rotation" : "off the depth chart"}` },
           [el("b", { text: p.name }), el("span", { text: `${p.pos} · ${clsWord(p.cls)} · ${p.overall} OVR · ${p.games} of ${p.team_games} games` }),
            el("span", { class: `go-tag ${p.redshirt ? "good" : "muted"}`, text: p.redshirt ? `Redshirt → ${clsWord(`${p.cls}RS`)}` : `Plays on → ${clsWord(NEXT_CLASS[p.cls] || p.cls)}` })]);
-        if (!rs.decided) ui.on(b, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/redshirt`, H.postJSON({ pid: p.id, on: !p.redshirt })),
+        if (!rs.decided) ui.on(b, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/redshirt`, staged({ pid: p.id, on: !p.redshirt })),
           p.redshirt ? `Plays on: ${p.name}` : `Redshirt: ${p.name}`));
         list.append(b);
       }
@@ -260,7 +297,7 @@
         if (pid !== view.posPick) return;
         for (const o of d.options) {
           const b = el("button", { type: "button", class: `go-chip small ${o.current ? "on" : ""}`, "data-key": o.pos, text: `${POS_NAMES[o.pos] || o.pos} ${o.overall}`, ...(o.current ? { disabled: "true" } : {}), title: o.current ? "His position now" : `Move him to ${o.pos}: ${o.overall} OVR there` });
-          if (!o.current) ui.on(b, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/position`, H.postJSON({ pid, pos: o.pos })),
+          if (!o.current) ui.on(b, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/position`, staged({ pid, pos: o.pos })),
             `${nameOf(pid)} moves to ${o.pos}`, { after: () => loadOpts(live) }));
           fresh.append(b);
         }
@@ -276,7 +313,7 @@
     card.append(el("div", { class: "go-row wrap" }, [pick]), opts);
     if ((v.position_changes || []).length) card.append(el("ul", { class: "off-list", "data-key": "moves" }, v.position_changes.map((m) => {
       const undo = el("button", { type: "button", class: "go-link", text: "Undo" });
-      ui.on(undo, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/position`, H.postJSON({ pid: m.id, pos: m.from })), `${m.name} moves back to ${m.from}`,
+      ui.on(undo, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/position`, staged({ pid: m.id, pos: m.from })), `${m.name} moves back to ${m.from}`,
         { after: () => loadOpts(document.querySelector("#tab-offseason .off-pos-opts")) }));
       return el("li", { "data-key": m.id }, [el("b", { text: m.name }), ` ${m.from} → ${m.to} · ${m.overall} OVR `, undo]);
     })));
@@ -308,7 +345,7 @@
   // Keep them home: your leavers with eligibility left, what each wants, and your moves (API: offseason/retain)
   function renderRetention(s, v, main) {
     const r = v.retention;
-    const retain = (ev, pid, action, said, nil) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/retain`, H.postJSON({ pid, action, nil: nil || 0 })), said,
+    const retain = (ev, pid, action, said, nil) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/retain`, staged({ pid, action, nil: nil || 0 })), said,
       { fail: (err) => H.toast(`Could not do that: ${H.errText(err)}`, 4000) });
     const head = el("section", { class: "go-card", "data-key": "keep-head" }, [
       el("div", { class: "go-kicker", text: `Keep Them Home · ${r.players.length} Want Out` }),
@@ -409,7 +446,7 @@
     for (const r of p.rows) {
       const btn = el("button", { type: "button", class: `go-btn small ${r.offered ? "" : "primary"}`, text: r.signed ? "Signed" : r.offered ? "Withdraw" : "Offer" });
       btn.disabled = !!r.signed || (!r.offered && p.offers_left <= 0);
-      ui.on(btn, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/portal`, H.postJSON({ pid: r.id, on: !r.offered })),
+      ui.on(btn, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/portal`, staged({ pid: r.id, on: !r.offered })),
         r.offered ? `Offer to ${r.name} pulled` : `Offer sent to ${r.name}`));
       body.append(el("tr", { class: r.offered ? "offered" : "", "data-key": r.id }, [
         el("td", {}, [el("b", { text: r.name }), r.stars ? el("span", { class: "muted small", text: ` ${stars(r.stars)}` }) : null]),
@@ -484,7 +521,7 @@
         el("span", {}, [window.CFP.teamPill(o.team), el("b", { text: ` ${o.name}` })]),
         el("span", { class: "muted small", text: `${o.conference} · team rating ${Math.round(o.rating)} · goal: ${o.goal}` }),
         el("span", { class: "go-tag", text: picked ? "Taking it" : "Take this job" })]);
-      ui.on(b, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/job`, H.postJSON({ team: picked ? null : o.team })),
+      ui.on(b, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/job`, staged({ team: picked ? null : o.team })),
         picked ? `Not taking the ${o.name} job` : `Taking the job at ${o.name}`));
       card.append(b);
     }
@@ -519,7 +556,7 @@
         c.expiring ? el("span", { class: "go-tag warn off-contract", text: "Contract Up: He Is Shopping" }) : null]));
       const row = el("div", { class: "off-cands", "data-key": `cands-${who.id}` });
       (st.candidates[who.id] || []).forEach((c, i) => {
-        row.append(candidateCard(c, st.hired[who.id] === i, (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/hire`, H.postJSON({ staff_id: who.id, index: i })),
+        row.append(candidateCard(c, st.hired[who.id] === i, (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/hire`, staged({ staff_id: who.id, index: i })),
           `Hired ${c.name} as ${who.role}`), `${who.id}-${i}`, v.year));
       });
       card.append(row);
@@ -543,7 +580,7 @@
         const b = el("button", { type: "button", class: "go-act", "data-key": x.id }, [el("span", { class: "off-staff-name" }, [`${x.role} ${x.name} `, term]), el("span", { text: "Let Him Go" })]);
         ui.on(b, "click", (ev) => {
           if (!window.confirm(`Let ${x.role} ${x.name} go? He joins the coaching market and you hire his replacement now.`)) return;
-          act(ev, s, () => H.api(`/api/season/${s.id}/offseason/open_role`, H.postJSON({ staff_id: x.id })), `${x.role} ${x.name} is out · hire his replacement`);
+          act(ev, s, () => H.api(`/api/season/${s.id}/offseason/open_role`, staged({ staff_id: x.id })), `${x.role} ${x.name} is out · hire his replacement`);
         });
         row.append(b);
       }

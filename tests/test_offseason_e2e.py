@@ -16,6 +16,46 @@ sys.path.insert(0, str(ROOT / "tests"))
 
 from test_career_e2e import call, free_port, launch   # noqa: E402
 
+
+def check_busy_advance(browser, base: str, sid: str) -> None:
+    """Sim to Next Season is one long call: while it runs the tab sits under a "Working Through the
+    Offseason" cover, the stage under it is inert and aria-busy, and a click that gets through anyway
+    (a redshirt toggle, the Advance button, Enter) is held with a toast and sends nothing. When the call
+    is back the new season opens on the Office as usual."""
+    page = browser.new_page(viewport={"width": 1280, "height": 900})
+    errors, posts = [], []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.on("request", lambda r: posts.append(r.url) if r.method != "GET" and "/offseason/" in r.url else None)
+    page.goto(f"{base}/index.html?id={sid}")
+    page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)
+    page.wait_for_selector("#tab-offseason .off-rs button", timeout=30_000)
+    page.once("dialog", lambda d: d.accept())
+    page.click("#tab-offseason button:has-text('Sim to Next Season')")
+    page.wait_for_selector("#tab-offseason .off-busy", timeout=30_000)
+    cover = page.inner_text("#tab-offseason .off-busy")
+    assert "WORKING THROUGH THE OFFSEASON" in cover.upper() and "This takes a moment; everything waits until it is done." in cover, cover
+    held = page.evaluate("""() => { const box = document.querySelector('#tab-offseason');
+        return box.getAttribute('aria-busy') === 'true' && [...box.children].filter((n) => !n.classList.contains('off-busy')).every((n) => n.inert); }""")
+    assert held, "the stage under the cover is not inert and aria-busy"
+    assert page.evaluate("() => document.body.classList.contains('long-call')")
+    # a real click on a redshirt toggle lands on nothing (inert); a scripted one runs its handler, which is held
+    page.click("#tab-offseason .off-rs button >> nth=0", force=True, timeout=5_000)
+    page.evaluate("() => document.querySelector('#tab-offseason .off-rs button').click()")
+    page.wait_for_selector(".toast-item:has-text('Hold on: the offseason is still working.')", timeout=10_000)
+    page.evaluate("() => document.querySelector('#tab-offseason .go-btn.primary.big').click()")      # the Advance button
+    page.keyboard.press("Enter")
+    page.keyboard.press("Space")
+    assert len(posts) == 1, posts
+    assert not page.query_selector(".toast-item.error"), "a held click toasted an error over the hold line"
+    page.wait_for_selector(".go-office", timeout=300_000)                 # the next season opens on the Office
+    page.wait_for_function("() => !document.body.classList.contains('long-call')", timeout=30_000)
+    assert len(posts) == 1, f"a held click reached the server: {posts}"
+    summary = call(base, f"/api/season/{sid}")
+    assert summary["year"] == 2027 and summary["current_week"] == 0 and not summary["done"], summary
+    assert not page.query_selector("#tab-offseason .off-busy"), "the cover stayed up"
+    assert not errors, errors
+    page.close()
+
 if __name__ == "__main__":
     try:
         from playwright.sync_api import sync_playwright
@@ -29,6 +69,9 @@ if __name__ == "__main__":
     finished(st)
     season.save_season(st)
     sid = st["id"]
+    busy = season.new_season("texas", "full", seed=9, career=True)        # check_busy_advance's own career
+    finished(busy)
+    season.save_season(busy)
     port = free_port()
     base = f"http://127.0.0.1:{port}"
     server = subprocess.Popen([sys.executable, "tools/dev_server.py"], cwd=ROOT, env={**os.environ, "PORT": str(port)},
@@ -97,16 +140,19 @@ if __name__ == "__main__":
             assert summary["year"] == 2027 and summary["current_week"] == 0 and not summary["done"]
             assert not page.is_visible("#season-tabs button[data-tab=offseason]")
             assert not errors, errors
+            check_busy_advance(browser, base, busy["id"])
             browser.close()
-        print("offseason e2e ok: departures, a portal offer on the board, four weeks, development, staff, on to 2027")
+        print("offseason e2e ok: departures, a portal offer on the board, four weeks, development, staff, on to 2027; a busy Sim to Next Season holds every other click")
     finally:
-        try:
-            call(base, f"/api/season/{sid}", method="DELETE")
-        except Exception:  # noqa: BLE001 - already gone
-            pass
+        for gone in (sid, busy["id"]):
+            try:
+                call(base, f"/api/season/{gone}", method="DELETE")
+            except Exception:  # noqa: BLE001 - already gone
+                pass
         shot = ROOT / "data" / "seasons" / f"{sid}-offseason.png"
         if shot.exists():
             shot.unlink()
         league.forget(sid)
+        league.forget(busy["id"])
         server.terminate()
         server.wait(timeout=30)
