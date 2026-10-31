@@ -230,7 +230,7 @@
     if (H.holding && H.holding()) { H.api(`/api/season/${s.id}/offseason/advance`, staged({})).catch(() => {}); return; }   // says "Hold on", sends nothing
     const label = btn.textContent;
     btn.disabled = true;
-    btn.textContent = to ? "Working through the offseason…" : "Working…";
+    btn.textContent = to ? "Working Through the Offseason…" : "Working…";
     const lift = holdTab(box);
     try {
       const r = await (H.long || H.api)(`/api/season/${s.id}/offseason/advance`, staged(to ? { to } : {}));
