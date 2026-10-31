@@ -72,7 +72,14 @@
       if (r.rank == null) bits.push("Not on his list");
       else if (r.prev_rank != null && r.prev_rank !== r.rank) bits.push(`${r.prev_rank > r.rank ? "Up" : "Down"} to #${r.rank} of ${r.of}${r.rank === 1 ? "" : r.leader ? ` · ${r.leader.name} leads` : ""}`);
       else bits.push(r.rank === 1 ? "You lead" : `#${r.rank} of ${r.of}${r.leader ? ` · ${r.leader.name} leads` : ""}`);
-      for (const e of r.events.filter((e) => BIG.has(e.kind)).slice(0, 2)) bits.push(`${eventWord(e)} ${e.school_name || ""}`.trim());
+      // his ask from you went up because a rival's NIL beat yours: say so once, naming the rival; another school's ask is not yours
+      const seen = new Set();
+      for (const e of r.events.filter((e) => BIG.has(e.kind) && (e.kind !== "asked_more" || e.school === s.team))) {
+        const bit = e.kind === "asked_more" ? `Wants more NIL from you: ${e.rival_name || "a rival"} offered more` : `${eventWord(e)} ${e.school_name || ""}`.trim();
+        if (seen.has(bit) || seen.size >= 2) continue;
+        seen.add(bit);
+        bits.push(bit);
+      }
       return el("li", {}, [el("button", { type: "button", class: "go-link", text: r.name, onclick: () => openProfile(s, r.pid) }), el("span", { class: "muted small", text: ` ${r.position} ${stars(r.stars)} · ` }), el("span", { text: bits.join(" · ") })]);
     })));
     if (rows.length > 6) card.append(el("p", { class: "muted small", text: `${rows.length - 6} more moved: see his list on the board.` }));
@@ -862,8 +869,11 @@
       rows = pool.filter(inTab).sort(order[view.sort]);
       const onBoard = v.board.some((b) => b.id === view.selected);
       const inList = rows.some((b) => b.id === view.selected);
-      if (!onBoard || (!opts.keep && rows.length && !inList)) { view.selected = rows.length ? rows[0].id : null; view.step = null; }
-      sel = (opts.keep || inList || rows.some((b) => b.id === view.selected)) ? v.board.find((b) => b.id === view.selected) || null : null;
+      const left = view.leave && view.leave.id === view.selected && !inList ? view.leave : null;   // a pulled offer took him out of this tab
+      view.leave = null;
+      if (left) { view.selected = rows.length ? rows[Math.max(0, Math.min(left.at, rows.length - 1))].id : null; view.step = null; }
+      else if (!onBoard || (!opts.keep && rows.length && !inList)) { view.selected = rows.length ? rows[0].id : null; view.step = null; }
+      sel = ((opts.keep && !left) || inList || rows.some((b) => b.id === view.selected)) ? v.board.find((b) => b.id === view.selected) || null : null;
       empty.textContent = view.search.trim() ? "Nobody matches that search." : "Nobody here yet.";
       empty.hidden = rows.length > 0;
       footCount.textContent = `${v.board.length} on your board`;
@@ -1031,14 +1041,20 @@
         const f = box.querySelector(".go-step select, .go-step input");
         if (f) f.focus({ preventScroll: true });
       } else if (action === "off_board") {
+        // taking him off pulls your offer too (the engine does it): one misclick should not cost you a recruit
+        if (b.offered && !window.confirm(`Take ${b.name} off your board? Your offer to him is pulled too: the NIL points come back to you${b.committed === me && !b.signed ? ", and he decommits from you" : ""}.`)) return;
+        const hadOffer = b.offered;
         ui().busy(btn, (async () => {
           if (!(await setBoard(s, b.id, false))) return;
-          ui().toast(`${b.name} is off your board`);
+          ui().toast(hadOffer ? `${b.name} is off your board · offer pulled` : `${b.name} is off your board`);
           view.sheet = false;
           await refresh(s, box);
         })()).then(() => refocus(b));
       } else if (action === "pull_offer") {       // one misclick in a menu should not cost you a recruit
-        if (window.confirm(`Pull your offer to ${b.name}? The NIL points come back to you${b.committed === me && !b.signed ? ", and he decommits from you" : ""}.`)) run(b, action, null, null, btn).then(() => refocus(b));
+        if (window.confirm(`Pull your offer to ${b.name}? The NIL points come back to you${b.committed === me && !b.signed ? ", and he decommits from you" : ""}.`)) {
+          view.leave = { id: b.id, at: rows.findIndex((r) => r.id === b.id) };   // he may leave the tab (Top 8 needs an offer): the next row takes the pane
+          run(b, action, null, null, btn).then(() => refocus(b));
+        }
       } else run(b, action, null, null, btn).then(() => refocus(b));
     }
     // the Recruit menu's items for him: every action with its cost, or the reason it waits
@@ -1057,7 +1073,7 @@
         ["offer", "Offer…", "No Hours", b.signed ? "Signed" : b.offered ? "Already offered" : b.hard ? "Hard commit elsewhere" : v.offers_left <= 0 ? "Offer limit reached" : null],
         ["raise_nil", "Raise NIL…", "No Hours", !b.offered ? "Not offered" : null],
         ["pull_offer", "Pull Offer", "", !b.offered ? "Not offered" : null],
-        ["off_board", "Off the Board", "", null],
+        ["off_board", "Off the Board", "", b.offered && b.hard && b.committed === me ? "Hard commit: his offer stands until he signs" : null],
       ];
       const tip = (action) => (b.pestering && ["message", "call", "hc_visit"].includes(action) ? "Costs you interest while he is tuning you out" : null);
       return items.map(([action, name, cost, why]) => ({ action, name, cost, why: busy ? `Finish your ${busy} first` : why, title: tip(action) }));

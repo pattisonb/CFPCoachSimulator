@@ -993,7 +993,10 @@ def board_change(p: Params) -> dict:
     pid, on = _field(p, "pid", str), _field(p, "on", bool, True)
     if pid not in recruiting.visible(st):
         raise ApiError(404, "unknown prospect")
-    recruiting.set_board(st, pid, on)
+    try:
+        recruiting.set_board(st, pid, on)
+    except recruiting.RecruitingError as e:
+        raise ApiError(e.code, e.message) from e
     _save_loaded()
     return {"board": st["recruiting"]["board"]}
 
