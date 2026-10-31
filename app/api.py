@@ -30,6 +30,7 @@ from coach_career import offseason
 from coach_career import prospects
 from coach_career import recruiting
 from sim import coaches
+from sim import news
 from sim import season
 
 MAX_SAVE_BYTES = 40 * 1024 * 1024    # an uploaded career (gzip); a career with its recruiting class is about 5 MB compressed
@@ -472,6 +473,13 @@ def import_career(p: Params) -> dict:
 def season_status(p: Params) -> dict:
     """Job progress plus your record and, with `since`, your results after that week."""
     return _status(_season_state(p.path["season_id"]), p.q("since", int, None))
+
+
+@route("GET", "/api/season/{season_id}/news")
+def season_news(p: Params) -> dict:
+    """Around-the-league news for the finished weeks after `since_week` (sim/news.py), oldest week first."""
+    state = _season_state(p.path["season_id"])
+    return {"items": news.league_news(state, p.q("since_week", int, 0)), "current_week": state["current_week"]}
 
 
 @route("POST", "/api/season/{season_id}/pause")
