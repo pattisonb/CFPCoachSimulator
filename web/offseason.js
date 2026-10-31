@@ -452,7 +452,7 @@
     return el("li", {}, [el("b", { text: d.name }), el("span", { class: "muted", text: ` ${d.pos} · ${clsWord(d.cls)} · now ${d.overall} OVR ` }),
       el("span", { class: `go-tag ${d.gain > 0 ? "good" : "muted"}`, text: d.gain > 0 ? `+${d.gain}` : "no change" }),
       d.transfer ? el("span", { class: "go-tag", text: `Transfer · From ${teamAbbr(d.transfer)}` }) : null,
-      ...(d.why || []).map((w) => el("span", { class: `go-tag ${/Struggled/.test(w) ? "bad" : "warn"}`, text: w }))]);
+      ...(d.why || []).map((w) => el("span", { class: `go-tag ${/Struggled|Benched/.test(w) ? "bad" : "warn"}`, text: w }))]);
   }
 
   function renderDevelopment(v, main) {

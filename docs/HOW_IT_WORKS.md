@@ -1473,7 +1473,18 @@ IQ by 2.5 points (our scale) per deviation beyond half of one; so do honors: the
 national award 6, All-America first team 5, a finalist, second team or conference award 3,
 all-conference 2 or 1 (the best counts in full, the next two at half, at most 10 in a year). Speed,
 strength and the other gifts are not raised. A Heisman winner, national award winner or
-first-team All-American moves up a coachability level 40% of the time. The Development step
+first-team All-American moves up a coachability level 40% of the time.
+
+**Coachability can change** (`offseason.coachability_chances`, `coachability_roll`). Besides the
+honors above, each offseason gives a player separate chances of moving up one level, rolled in its
+own seeded stream (`coachability`, after the development draws, so nobody else's growth moves): a
+breakout year 20%; coaches whose player development (the head coach blended with his coordinator,
+as in the coach factor) is 80 or better 8% a year, 90 or better 12%; a junior or senior who played
+and sits two or more levels below the top 6% ("growing up"); a redshirt year just taken under a
+staff at 70 or better 10%. He moves at most one level a year and never above Coach's Dream. The
+other way, a starter who struggled (0.75 deviations under the average starter) and has fallen off
+the depth chart's top drops a level 5% of the time. Your risers show the move and why ("Now a Film
+Junkie: A Breakout Year"), a drop in red; AI rosters change silently. The Development step
 lists your risers with the reasons. It opens on a transfer portal recap (who you signed out of the
 portal and where from, who you lost to it, where he went and why he left; one collapsed line at
 the Staff and Ready steps), your transfers are marked in the risers and listed in their own block,
