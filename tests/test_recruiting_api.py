@@ -266,18 +266,22 @@ if __name__ == "__main__":
         api.call("DELETE", f"/api/season/{logc}")
         for s in (sid, other):
             api.call("DELETE", f"/api/season/{s}")
-        # sim progress: one week number and one share of that week, games then recruiting, never jumping ahead
-        api.job().update(done=4)
+        # sim progress: one week number and one share of that week, games then recruiting, never going back
+        api.job().update(done=4, week=None, kind="advance", progress=0.0, week_frac=None, _part=0, _before=0.0,
+                         _plan={5: {"setup": 5, "games": 70, "polls": 2, "recruiting": 15, "ahead": 1, "save": 6}})
         state = {"current_week": 4}
         rep = api._reporter(state, None)
         rep("Setting the matchups", None, None)
         assert api.job()["week"] == 5 and api.job()["week_frac"] < 0.1
-        rep("Simming Week 5", 35, 70)
+        rep("Playing Week 5 games", 35, 70)
         first = api.job()["week_frac"]
         assert api.job()["week"] == 5 and 0.1 < first < 0.85
         state["current_week"] = 5                                    # the games are in; the poll and recruiting follow
-        rep("Recruiting", None, None)
-        assert api.job()["week"] == 5 and api.job()["week_frac"] >= 0.85 > first, api.job()
+        rep(season.RECRUITING_STAGE, None, None)
+        later = api.job()["progress"]
+        assert api.job()["week"] == 5 and api.job()["week_frac"] >= 77 / 99 > first, api.job()
+        rep("Setting the first round matchups", None, None)        # next week's games, set after this week's
+        assert api.job()["progress"] >= later and api.job()["progress"] < 1
     finally:
         season.close_pool()
         shutil.rmtree(season.SEASONS_DIR, ignore_errors=True)

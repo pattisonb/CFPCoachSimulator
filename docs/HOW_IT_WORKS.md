@@ -897,9 +897,10 @@ carries the word per rival with the muted Offer marker, sorted by his chance.
 is a range of grade words ("Solid to Strong": `recruiting.read_interval` is the read's mean plus
 and minus a half-width that shrinks with the looks' precision and the best evaluator's rating,
 less `WORD_SLACK`). Once it is complete (`report_complete`, 3 looks) the read collapses to one
-point per group, the mean, and `grade_range` gives the same word twice: the profile and the pane's
-Scouting sub-tab show one word per card under "3 of 3 looks: his report is complete: these are your
-staff's final grades. A read can still be wrong; the truth shows once he is on your roster.", the
+point per group, the mean, and `grade_range` gives the same word twice: the profile shows one word per
+card under "3 of 3 looks: his report is complete: these are your staff's final grades. A read can
+still be wrong; the truth shows once he is on your roster.", the pane's Scouting sub-tab one word per
+card under a "Report Complete" tag, the
 queue's POTENTIAL cell and the report items say "potential narrowed to Elite". The read itself
 (`recruiting.read_spread`: mean and half-width, whatever the looks) is unchanged: the flags
 (`prospects.find`, their cuts and `FLAG_HOLD`) judge the read's own low and high end, and
@@ -1278,8 +1279,12 @@ action and patches the row in place: the LOOKS bar and POTENTIAL cell pulse, the
 after reads on a line under his row, a toast "Scouted Wesley Adams · 2.5 of 3 looks" ("· his
 report is complete" at 3), the hours pill patches, and the page refetches so every other Send
 follows `can_send` (a row whose report the Send just completed stays, with its tag); a click on the
-row itself opens him on the board. The pane's Scouting sub-tab reads "2 of 3 looks · one trip
-finishes his report", and its Recruit menu grays Scout with the 409 text once he is complete.
+row itself opens him on the board. The pane's Scouting sub-tab heads its grade cards with a
+"Scouting Report" kicker, the looks bar (filled in halves), "2 of 3 Looks" and a "One Trip Finishes
+His Report" tag ("Report Complete" at 3); the cards give each grade once, as plain words in their
+tone color ("Weak–Fair" on one line), three a row (two on a phone), over one help line and a row with
+the "Reports on the Scouting Tab" link and, once complete, our comp. Its Recruit menu grays Scout
+with the 409 text once he is complete.
 
 **The odds you see** (`prospects.odds`). Each offering school's chance to land a prospect is a
 softmax of his interest in it (`exp(interest / 3)`), against the field: the schools not yet in
@@ -1473,7 +1478,18 @@ IQ by 2.5 points (our scale) per deviation beyond half of one; so do honors: the
 national award 6, All-America first team 5, a finalist, second team or conference award 3,
 all-conference 2 or 1 (the best counts in full, the next two at half, at most 10 in a year). Speed,
 strength and the other gifts are not raised. A Heisman winner, national award winner or
-first-team All-American moves up a coachability level 40% of the time. The Development step
+first-team All-American moves up a coachability level 40% of the time.
+
+**Coachability can change** (`offseason.coachability_chances`, `coachability_roll`). Besides the
+honors above, each offseason gives a player separate chances of moving up one level, rolled in its
+own seeded stream (`coachability`, after the development draws, so nobody else's growth moves): a
+breakout year 20%; coaches whose player development (the head coach blended with his coordinator,
+as in the coach factor) is 80 or better 8% a year, 90 or better 12%; a junior or senior who played
+and sits two or more levels below the top 6% ("growing up"); a redshirt year just taken under a
+staff at 70 or better 10%. He moves at most one level a year and never above Coach's Dream. The
+other way, a starter who struggled (0.75 deviations under the average starter) and has fallen off
+the depth chart's top drops a level 5% of the time. Your risers show the move and why ("Now a Film
+Junkie: A Breakout Year"), a drop in red; AI rosters change silently. The Development step
 lists your risers with the reasons. It opens on a transfer portal recap (who you signed out of the
 portal and where from, who you lost to it, where he went and why he left; one collapsed line at
 the Staff and Ready steps), your transfers are marked in the risers and listed in their own block,
@@ -2045,11 +2061,21 @@ tools/profile_sim.py game|week` profiles the engine and a week; `tests/test_play
 prints the fingerprint of five seeded games that must not change when the engine is
 edited (7f1f625a5f714c6c).
 
-While a sim runs the page shows what the engine is doing, live: "Simming Week 7 · 38 of
-92 games", then "Updating the AP poll and CFP rankings", "Setting the conference title
-games", "Building the playoff bracket", "Selecting the bowls", and so on, with the bar
-counting weeks done plus the fraction of the current week's games (the status endpoint
-carries `stage`, `week`, `games_done` and `games_total`).
+While a sim runs the page shows what the engine is doing, live: "Playing Week 7 games · 38
+of 92", then "Updating the AP poll and CFP rankings", "Handing out the conference awards",
+"Recruiting week", "Setting the first round matchups", "Saving", and so on (the status
+endpoint carries `stage`, `week`, `games_done` and `games_total`). The bar follows the
+engine's `progress` (0 to 1 for the whole job): when an advance starts, `app/api.py` plans
+every week's work by part with `season.week_work` (a pre-game setup, one unit per game, the
+polls, the awards, the recruiting week, the save; the `PROGRESS_*` constants in
+`sim/season.py`, measured so one unit is about one game's time), re-plans each week as it
+begins, and reports work done over the plan's total, clamped so it never goes back and short
+of 1 until the job is over. So a 90-game week moves the bar much further than a one-game bowl
+week, and the recruiting week after the games moves it too. `week_frac` (the week's share)
+stays for older pages. The page draws the bar with a short width transition and, between
+statuses, a creep at the pace of the last ones capped at half the next expected step (none
+with reduced motion); the percentage follows the drawn bar and reads 100% only when the sim
+is done (`tests/test_sim_progress.py`, the ux sweep's `test_sim_bar`).
 
 `SIM_WORKERS` sets how many processes simulate games: unset uses the machine's cores
 (capped at 8); `1` simulates in-process, which the browser always does (Pyodide has no

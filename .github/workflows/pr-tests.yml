@@ -2,6 +2,8 @@
 # first and that merged tree is what gets built and tested. The full suite runs with a real
 # Chromium (a browser test that skips fails here). PR Auto-merge (pr-automerge.yml) merges the PR
 # when this passes, and asks for a fresh run (workflow_dispatch) when main moved in between.
+# A run started that way never fires PR Auto-merge's workflow_run trigger (GitHub starts no
+# workflow_run from a run its own token started), so a dispatched run hands off by name instead.
 name: PR Tests
 
 on:
@@ -96,6 +98,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install playwright
           python -m playwright install --with-deps chromium
+          sudo apt-get install -y --no-install-recommends fonts-dejavu-core   # the browser tests' pinned font (tests/fonts-ci.conf)
 
       - name: Every Python file compiles, every script parses
         run: |
@@ -122,3 +125,17 @@ jobs:
           path: ${{ runner.temp }}/tests.log
           if-no-files-found: ignore
           retention-days: 14
+
+  # a dispatched run (a re-test after main moved, or one started by hand) asks PR Auto-merge to look
+  # at it; PR Auto-merge reads the result from GitHub, not from this job
+  hand-off:
+    needs: test
+    if: always() && github.event_name == 'workflow_dispatch' && (needs.test.result == 'success' || needs.test.result == 'failure')
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Start PR Auto-merge for this run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pr-automerge.yml --repo "$GITHUB_REPOSITORY" --ref main -f run_id="$GITHUB_RUN_ID"

@@ -109,6 +109,22 @@
 .go-scouting, .go-history { display: flex; flex-direction: column; gap: 10px; }
 .go-scouting p, .go-history p { margin: 0; }
 .go-comps:empty { display: none; }
+/* the pane's Scouting sub-tab: a head row (kicker, looks bar, count, tag), the grade cards as plain words, a footer row */
+.go-scout-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.go-scout-head .go-kicker { margin-right: 2px; }
+.go-scout-looks { font-size: 13px; font-weight: 700; }
+.go-scout-head .go-tag { text-transform: none; letter-spacing: 0; font-size: 12px; }
+.go-sub-body .go-grades.go-grades-plain { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 8px; }
+@media (max-width: 700px) { .go-sub-body .go-grades.go-grades-plain { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.go-grades-plain .go-stat { display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.go-sub-body .go-grades-plain .go-kicker { font-size: 11px; overflow-wrap: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.go-sub-body .go-grades-plain .go-stat-val { font-size: 15px; white-space: nowrap; overflow-wrap: normal; line-height: 1.25; }
+.go-grade { font-weight: 800; color: var(--text); }
+.go-grade.weak, .go-grade.fair { color: var(--muted); }
+.go-grade.strong, .go-grade.elite { color: var(--good-text, var(--good)); }
+.go-grade.all-american { color: var(--accent-text, var(--accent)); }
+.go-grade-dash { color: var(--muted); padding: 0 1px; }
+.go-scout-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
 
 /* his list as a race: a school without an offer in is hollow */
 .go-race-pill.unoffered { background: transparent; border-width: 2px; padding: 0 7px; }

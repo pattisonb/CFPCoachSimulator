@@ -30,6 +30,7 @@ from coach_career import offseason
 from coach_career import prospects
 from coach_career import recruiting
 from sim import coaches
+from sim import news
 from sim import season
 
 MAX_SAVE_BYTES = 40 * 1024 * 1024    # an uploaded career (gzip); a career with its recruiting class is about 5 MB compressed
@@ -216,7 +217,7 @@ def _idle_job(state: dict) -> dict:
     """A season's job record when nothing is simulating."""
     week = state["current_week"]
     return {"id": state["id"], "status": "idle", "done": week, "total": week, "stage": None, "week": None,
-            "games_done": None, "games_total": None, "week_frac": None, "paused": False, "gameday_event": None,
+            "games_done": None, "games_total": None, "week_frac": None, "progress": None, "paused": False, "gameday_event": None,
             "error": None, "stop": False, "target": None, "kind": None}
 
 
@@ -266,32 +267,84 @@ def _season_state(season_id: str) -> dict:
     return state
 
 
+def _plan(state: dict, first: int, last: int, only_mine: bool = False) -> None:
+    """Set the job's work plan: weeks `first`..`last`, each by part, estimated up front from the
+    schedule (season.week_work). `progress` is then the work done over the plan's total."""
+    _job["_plan"] = {w: season.week_work(state, w, only_mine) for w in range(first, last + 1)}
+    _job["_before"] = 0.0                     # the work of the weeks already finished
+    _job["_part"] = 0                         # the part of the week reached (an index into PROGRESS_PARTS)
+    _job["progress"] = 0.0
+    _job["week_frac"] = None
+
+
+def _replan_week(state: dict, week: int, games_total: Optional[int] = None) -> None:
+    """The week about to run, planned again from the schedule as it stands now (its postseason
+    games are set by then), and its games from the sim's own count once it reports one."""
+    plan = _job.get("_plan")
+    if not plan or week not in plan:
+        return
+    if games_total is None:
+        if _job.get("kind") != "gameday":
+            plan[week] = season.week_work(state, week)
+    else:
+        plan[week]["games"] = games_total * season.PROGRESS_GAME
+
+
+def _set_progress(week: int, done_in_week: float) -> None:
+    """Write `progress` (the job's work done over its total) and `week_frac` (the week's share
+    done), each clamped so it never goes back within a job or a week, and short of 1 until the
+    job is over."""
+    plan = _job.get("_plan") or {}
+    week_total = sum((plan.get(week) or {}).values()) or 1.0
+    total = sum(sum(p.values()) for p in plan.values()) or 1.0
+    frac = min(1.0, done_in_week / week_total)
+    _job["week_frac"] = max(_job.get("week_frac") or 0.0, frac)
+    prog = min(0.995, (_job.get("_before", 0.0) + done_in_week) / total)
+    _job["progress"] = round(max(_job.get("progress") or 0.0, prog), 4)
+
+
 def _reporter(state: dict, report: Callable[[str], None] | None):
-    """The callback a sim calls with its stage and game count: written onto the job for the
-    status, then, when `report` is given, the status passed on as JSON (in-week progress)."""
+    """The callback a sim calls with its stage and game count: the stage, the games and the
+    progress (work done, by the job's plan) are written onto the job for the status, then, when
+    `report` is given, the status passed on as JSON (in-week progress)."""
     def on_progress(stage: str, games_done: Optional[int], games_total: Optional[int]) -> None:
         _job["stage"] = stage
         week = _job["done"] + 1                    # the week being simmed (`done` moves once all of it is over)
         if _job.get("week") != week:
-            _job["week"], _job["_played"] = week, False
+            _job["week"], _job["_part"], _job["week_frac"] = week, 0, 0.0
+        part = season.progress_part(stage, games_total)
+        idx = season.PROGRESS_PARTS.index(part)
+        if part == "setup" and _job.get("_part", 0) >= season.PROGRESS_PARTS.index("games"):
+            idx = season.PROGRESS_PARTS.index("ahead")     # next week's games set after this week's
+        idx = max(idx, _job.get("_part", 0))               # a week's parts run in order
+        _job["_part"] = idx
         if games_total is not None:
             _job["games_done"], _job["games_total"] = games_done, games_total
-            _job["_played"] = _job.get("_played") or games_done >= games_total
-            _job["week_frac"] = 0.05 + 0.75 * games_done / max(1, games_total)
+            if games_done == 0:
+                _replan_week(state, week, games_total)
         else:
             _job["games_done"] = _job["games_total"] = None
-            # before the games a sliver; after them (polls, awards, recruiting) the last part of the week
-            played = _job.get("_played") or state["current_week"] >= week
-            _job["week_frac"] = max(_job.get("week_frac") or 0, 0.85) if played else 0.02
+        parts = (_job.get("_plan") or {}).get(week) or {}
+        done = sum(parts.get(p, 0.0) for p in season.PROGRESS_PARTS[:idx])
+        if season.PROGRESS_PARTS[idx] == "games" and games_total:
+            done += parts.get("games", 0.0) * games_done / games_total
+        _set_progress(week, done)
         if report is not None:
             report(json.dumps(_status(state, _job.get("since"))))
     return on_progress
 
 
+def _finish_week(week: int) -> None:
+    """The week is over: its work counts as done."""
+    work = sum(((_job.get("_plan") or {}).get(week) or {}).values())
+    _set_progress(week, work)
+    _job["_before"] = _job.get("_before", 0.0) + work
+
+
 def _status(state: dict, since: Optional[int]) -> dict:
     """Job progress plus your record and rank, and your results after week `since` when given."""
     out = {k: _job.get(k) for k in ("id", "status", "done", "total", "error", "stage", "week", "games_done",
-                                    "games_total", "week_frac", "paused", "gameday_event")}
+                                    "games_total", "week_frac", "progress", "paused", "gameday_event")}
     out["current_week"] = state["current_week"]
     rec = season._records(state, include_playoff=True)[state["team"]]
     out["record"] = {"wins": rec["wins"], "losses": rec["losses"], "conf_wins": rec["conf_wins"], "conf_losses": rec["conf_losses"]}
@@ -313,11 +366,17 @@ def step(report: Callable[[str], None] | None = None) -> dict | None:
         return None
     state = _loaded
     on_progress = _reporter(state, report)
+    week = state["current_week"] + 1
+    _replan_week(state, week)
+    if _job.get("week") != week:
+        _job["week"], _job["_part"], _job["week_frac"] = week, 0, 0.0
     if report is not None:
+        _job["stage"], _job["games_done"], _job["games_total"] = f"Getting {season.week_label(week)} ready", None, None
         report(json.dumps(_status(state, _job.get("since"))))
     try:
         if _job["kind"] == "gameday":
             _job["gameday_event"] = season.play_my_game(state, None, report=on_progress)
+            on_progress(season.SAVING_STAGE, None, None)
             season.save_season(state)
             _mark_changed()
             over = True
@@ -325,14 +384,16 @@ def step(report: Callable[[str], None] | None = None) -> dict | None:
             if not _job["stop"] and not state["done"]:   # a pause lands between weeks, as advance_to checked it
                 # every week after the run's first runs your recruiting week too, as one advance_to call did
                 season.advance(state, season.shared_pool(), on_progress, auto_recruit=state["current_week"] > _job["since"])
+                on_progress(season.SAVING_STAGE, None, None)
                 season.save_season(state)
                 _mark_changed()
+            _finish_week(week)
             _job["done"] = state["current_week"]
             over = _job["done"] >= _job["target"] or state["done"] or _job["stop"]
             if over:
                 _job["paused"] = _job["stop"] and _job["done"] < _job["target"] and not state["done"]
         if over:
-            _job.update(status="idle", stage=None, stop=False)
+            _job.update(status="idle", stage=None, stop=False, progress=1.0, week_frac=1.0)
     except Exception as exc:  # noqa: BLE001 - the page shows the error; the dispatcher stays up
         # the half-played week is dropped: the season in memory is the last save again, so the
         # next handler that saves cannot write it
@@ -474,6 +535,13 @@ def season_status(p: Params) -> dict:
     return _status(_season_state(p.path["season_id"]), p.q("since", int, None))
 
 
+@route("GET", "/api/season/{season_id}/news")
+def season_news(p: Params) -> dict:
+    """Around-the-league news for the finished weeks after `since_week` (sim/news.py), oldest week first."""
+    state = _season_state(p.path["season_id"])
+    return {"items": news.league_news(state, p.q("since_week", int, 0)), "current_week": state["current_week"]}
+
+
 @route("POST", "/api/season/{season_id}/pause")
 def pause_season(p: Params) -> dict:
     """Stop a running advance once the week in progress is over."""
@@ -497,6 +565,7 @@ def advance_season(p: Params) -> dict:
     target = max(week + 1, min(season.FINAL_WEEK, to if to is not None else week + 1))
     _job.update(status="running", kind="advance", target=target, done=week, total=target, since=week,
                 stop=False, paused=False, gameday_event=None, error=None)
+    _plan(state, week + 1, target)
     return {"status": "running", "done": week, "total": target}
 
 
@@ -513,7 +582,8 @@ def gameday_season(p: Params) -> dict:
     if season.my_game_id(state) is None:
         raise ApiError(409, "no game this week: a bye, or your game is already played")
     _job.update(status="running", kind="gameday", target=week + 1, done=week, total=week + 1, since=week,
-                stop=False, paused=False, gameday_event=None, error=None, stage="Simming your game", week=week + 1)
+                stop=False, paused=False, gameday_event=None, error=None, stage="Playing your game", week=week + 1)
+    _plan(state, week + 1, week + 1, only_mine=True)
     return {"status": "running", "done": week, "total": week + 1}
 
 
@@ -932,7 +1002,10 @@ def board_change(p: Params) -> dict:
     pid, on = _field(p, "pid", str), _field(p, "on", bool, True)
     if pid not in recruiting.visible(st):
         raise ApiError(404, "unknown prospect")
-    recruiting.set_board(st, pid, on)
+    try:
+        recruiting.set_board(st, pid, on)
+    except recruiting.RecruitingError as e:
+        raise ApiError(e.code, e.message) from e
     _save_loaded()
     return {"board": st["recruiting"]["board"]}
 

@@ -364,6 +364,8 @@
   }
 
   async function openSeason(id) {
+    newsReset();
+    news.since = null;
     try {
       const s = await api(`/api/season/${id}`);
       history.replaceState(null, "", `?id=${s.id}`);
@@ -393,9 +395,12 @@
     state.gamedayWanted = gamedayWanted;
     state.advanceFrom = s.current_week;
     state.simming = true;
+    barReset();
     state.simResults = [];
     state.simTarget = target;
     state.headWeek = s.current_week;
+    news.since = s.current_week;
+    news.want = s.current_week;
     setBusy(true);
   }
 
@@ -405,7 +410,7 @@
     const s = state.season;
     if (!s || s.done) return;
     beginSim(s, s.current_week + 1, true);
-    showProgress({ status: "running", done: s.current_week, total: s.current_week + 1, stage: "Simming your game", week: s.current_week + 1 });
+    showProgress({ status: "running", done: s.current_week, total: s.current_week + 1, stage: "Playing your game", week: s.current_week + 1 });
     try {
       await api(`/api/season/${s.id}/gameday`, { method: "POST" });
       poll();
@@ -416,7 +421,7 @@
     const s = state.season;
     if (!s || s.done) return;
     beginSim(s, to || s.current_week + 1, false);
-    showProgress({ status: "running", done: s.current_week, total: to || s.current_week + 1, stage: "Starting", week: s.current_week + 1 });
+    showProgress({ status: "running", done: s.current_week, total: to || s.current_week + 1, stage: "Getting ready", week: s.current_week + 1 });
     try {
       await api(`/api/season/${s.id}/advance`, postJSON(to ? { to } : {}));
       poll();
@@ -428,11 +433,13 @@
     state.timer = setTimeout(async () => {
       try {
         const j = await api(`/api/season/${state.season.id}/status?since=${state.advanceFrom != null ? state.advanceFrom : state.season.current_week}`);
+        if (j.done != null) fetchNews(j.done);
         if (j.status === "running") {
           showProgress(j);
           poll();
         } else {
           if (j.paused) toast("Paused. Advance when you are ready.", 3000);
+          barDone(j.status !== "error");
           hideSimOverlay();
           if (j.status === "error") toast(`Simulation error: ${j.error}`, 6000);
           const s = await api(`/api/season/${state.season.id}`);
@@ -511,32 +518,90 @@
     $("#sc-next").textContent = `Simming · through ${j.done === 0 ? "the preseason" : s.week_labels[j.done] || "week " + j.done}`;
   }
 
-  // Progress while simming: weeks completed plus the fraction of the current week's games,
+  // Progress while simming: the engine's `progress` (the job's work done over its plan, which
+  // weighs every week by its games, polls, awards and recruiting), drawn by the sim bar below,
   // and a line saying what the sim is doing right now.
   function showProgress(j) {
-    const s = state.season;
     liveHead(j);
     const from = state.advanceFrom != null ? state.advanceFrom : Math.max(0, j.done - 1);
     const span = Math.max(1, j.total - from);
-    const frac = j.week_frac != null ? j.week_frac : (j.games_total ? j.games_done / j.games_total : 0);
-    const pct = Math.min(100, Math.round((100 * (j.done - from + frac)) / span));
+    let p = j.progress;
+    if (p == null) {   // an older status (or the page's own first one): whole weeks plus the week's share
+      const frac = j.week_frac != null ? j.week_frac : (j.games_total ? j.games_done / j.games_total : 0);
+      p = (j.done - from + frac) / span;
+    }
     // one bar at a time: the header's for a single week, the overlay's for a longer sim
     $("#season-progress").hidden = span > 1;
-    $("#season-progress-bar").style.width = `${pct}%`;
-    const label = j.week ? (s.week_labels[j.week] || `Week ${j.week}`) : "";
     const text = $("#season-progress-text");
     text.innerHTML = "";
-    // one line for the whole week: its games, the polls and recruiting all count toward the bar
-    text.append(el("b", { text: label ? `Simming ${label}` : (j.stage || "Simming") }), ` · ${pct}%`);
+    text.append(el("b", { text: stageLine(j) }), el("span", { id: "season-progress-pct" }));
     text.hidden = span > 1;
     const simBtn = $("#tab-office .go-play .go-btn.primary");
     if (simBtn) simBtn.textContent = "Simming…";
-    if (span > 1) showSimOverlay(j, pct, span, from);
+    if (span > 1) showSimOverlay(j);
+    barReport(p);
+  }
+
+  // What the sim is doing, from the engine's stage: "Playing Week 6 games · 34 of 61", "Recruiting week", "Saving".
+  function stageLine(j) {
+    const stage = j.stage || "Getting ready";
+    return j.games_total ? `${stage} · ${j.games_done} of ${j.games_total}` : stage;
+  }
+
+  // ----- the sim bar ------------------------------------------------------------------------------
+  // Each status moves the bar to its progress (a short CSS width transition). Between statuses
+  // it creeps on at the pace of the last ones, but never past BAR_CREEP_SHARE of the way to
+  // where the next status is expected, so it does not run ahead of the sim. It never goes back,
+  // the percentage follows the drawn bar, and 100% shows only once the job is over. Reduced
+  // motion: no creep, and the width jumps (styles.css).
+  const BAR_TICK_MS = 100, BAR_POLL_MS = 500, BAR_CREEP_SHARE = 0.5;
+  const reducedMotion = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  function barReset() {
+    if (state.bar && state.bar.timer) clearInterval(state.bar.timer);
+    state.bar = { target: 0, drawn: 0, at: performance.now(), rate: 0, timer: null };
+    barDraw(0);
+  }
+  function barReport(p) {
+    if (!state.bar) barReset();
+    const b = state.bar, now = performance.now();
+    p = Math.max(0, Math.min(1, Number(p) || 0));
+    if (p > b.target) {
+      const dt = (now - b.at) / 1000, r = (p - b.target) / Math.max(dt, 0.05);
+      b.rate = b.rate ? 0.6 * b.rate + 0.4 * r : r;   // the pace of the last few statuses
+      b.target = p;
+      b.at = now;
+    }
+    barDraw(b.target);
+    if (!b.timer && !reducedMotion()) b.timer = setInterval(barTick, BAR_TICK_MS);
+  }
+  function barTick() {
+    const b = state.bar;
+    if (!b || !state.simming) { if (b && b.timer) { clearInterval(b.timer); b.timer = null; } return; }
+    const dt = (performance.now() - b.at) / 1000;
+    const ahead = b.rate * BAR_CREEP_SHARE * Math.min(dt, BAR_POLL_MS / 1000);
+    barDraw(b.target + ahead);
+  }
+  function barDone(ok) {
+    const b = state.bar;
+    if (!b) return;
+    if (b.timer) { clearInterval(b.timer); b.timer = null; }
+    if (ok) barDraw(1, true);
+  }
+  function barDraw(p, done) {
+    const b = state.bar;
+    b.drawn = done ? 1 : Math.min(0.99, Math.max(b.drawn, p));
+    const pct = done ? 100 : Math.min(99, Math.round(b.drawn * 100));
+    const width = `${(b.drawn * 100).toFixed(1)}%`;
+    for (const id of ["sim-bar", "season-progress-bar"]) { const n = document.getElementById(id); if (n && n.style.width !== width) n.style.width = width; }
+    const sub = document.getElementById("sim-sub");
+    if (sub) sub.textContent = `${pct}%`;
+    const head = document.getElementById("season-progress-pct");
+    if (head) head.textContent = ` · ${pct}%`;
   }
 
   // A multi-week sim covers the tab (the tabs stay, dimmed) and shows what is happening: the stage, the bar, your
   // record ticking up in the header, each of your results as it lands, and a Pause button.
-  function showSimOverlay(j, pct, span, from) {
+  function showSimOverlay(j) {
     const s = state.season;
     const ov = $("#sim-overlay");
     if (ov.hidden) {
@@ -547,11 +612,8 @@
       $("#btn-pause").disabled = false;
       $("#btn-pause").textContent = "Pause after this week";
     }
-    const label = j.week ? (s.week_labels[j.week] || `Week ${j.week}`) : "";
-    $("#sim-stage").textContent = label ? `Simming ${label}` : (j.stage || "Simming");
+    $("#sim-stage").textContent = stageLine(j);
     $("#sim-overlay .review-label").textContent = `Simming through ${s.week_labels[j.total] || "week " + j.total}`;
-    $("#sim-sub").textContent = `${pct}%`;
-    $("#sim-bar").style.width = `${pct}%`;
     // the week strip follows the sim
     if (j.done !== state.simLastDone) { state.simLastDone = j.done; state.viewWeek = j.done; state.season.current_week = j.done; renderWeekStrip(); }
     for (const r of j.results || []) {
@@ -583,6 +645,103 @@
       const r = await api(`/api/season/${s.id}/pause`, { method: "POST" });
       if (r.stopping) { $("#btn-pause").disabled = true; $("#btn-pause").textContent = "Pausing after this week…"; }
     } catch (err) { toast(`Could not pause: ${errText(err)}`, 3000); }
+  }
+
+  // ----- league news while simming ---------------------------------------------------
+  // Each finished week of a sim asks /news for the big things around the league (sim/news.py) and
+  // shows them as chat bubbles bottom-right (bottom, full width, on a phone, kept off the Office's
+  // play card): one every NEWS_GAP_MS, NEWS_MAX at most, each fading after NEWS_MS. A bubble with a
+  // link opens its game, team or recruit. Settings has the News switch (on unless turned off).
+  const NEWS_GAP_MS = 1500, NEWS_MS = 6000, NEWS_MAX = 3, NEWS_OUT_MS = 400;
+  const news = { since: null, want: 0, queue: [], timer: null, stack: null, asking: false };
+  const newsOn = () => { try { return localStorage.getItem("cfp.news") !== "off"; } catch (e) { return true; } };
+  const saveNewsOn = (on) => { try { localStorage.setItem("cfp.news", on ? "on" : "off"); } catch (e) { /* private mode */ } };
+  function newsStack() {
+    if (news.stack && news.stack.isConnected) return news.stack;
+    news.stack = el("div", { id: "news-stack", class: "news-stack", role: "log", "aria-live": "polite", "aria-label": "League News" });
+    document.body.append(news.stack);
+    return news.stack;
+  }
+  // on a phone the stack sits above the toasts, and above the Office's play card when the card is in the way
+  function placeNews() {
+    const stack = news.stack;
+    if (!stack) return;
+    if (!window.matchMedia("(max-width: 640px)").matches) { stack.style.bottom = ""; return; }
+    let bottom = 16;
+    const toasts = document.getElementById("toasts");
+    if (toasts && toasts.children.length) bottom += toasts.getBoundingClientRect().height + 8;
+    const card = document.querySelector("#tab-office:not([hidden]) .go-play");
+    const h = stack.getBoundingClientRect().height || 60;
+    if (card) {
+      const r = card.getBoundingClientRect();
+      const top = window.innerHeight - bottom - h;
+      if (r.height && r.bottom > top && r.top < window.innerHeight - bottom) bottom = Math.max(bottom, window.innerHeight - r.top + 8);
+    }
+    stack.style.bottom = `${Math.min(bottom, window.innerHeight - h - 16)}px`;
+  }
+  function newsReset() {
+    clearTimeout(news.timer);
+    news.timer = null;
+    news.queue = [];
+    if (news.stack) news.stack.innerHTML = "";
+  }
+  function dropBubble(b) {
+    if (!b || b.__out) return;
+    b.__out = true;
+    clearTimeout(b.__timer);
+    b.classList.add("news-out");
+    setTimeout(() => { b.remove(); placeNews(); }, NEWS_OUT_MS);
+  }
+  function openNews(item) {
+    const s = state.season, link = item.link || {};
+    if (!s) return;
+    if (link.type === "game") openBox(link.event_id);
+    else if (link.type === "team") openResume(link.slug, s.current_week);
+    else if (link.type === "recruit" && window.Recruiting) window.Recruiting.openProfile(s, link.pid);
+  }
+  function showBubble(item) {
+    const s = state.season;
+    const when = item.week > 14 && s ? postseasonLabel(s, item.week) : `Week ${item.week}`;
+    const linked = !!(item.link && item.link.type);
+    const b = el(linked ? "button" : "div", { class: `news-bubble news-${item.kind}`, "data-kind": item.kind, ...(linked ? { type: "button" } : {}) }, [
+      item.team ? teamPill(item.team) : el("span", { class: "news-icon", "aria-hidden": "true" }),
+      el("span", { class: "news-body" }, [el("span", { class: "news-text", text: item.text }), el("span", { class: "news-week muted", text: when })]),
+    ]);
+    if (linked) b.addEventListener("click", () => { dropBubble(b); openNews(item); });
+    const stack = newsStack();
+    stack.append(b);
+    const live = [...stack.children].filter((n) => !n.__out);
+    for (const old of live.slice(0, Math.max(0, live.length - NEWS_MAX))) dropBubble(old);
+    b.__timer = setTimeout(() => dropBubble(b), NEWS_MS);
+    placeNews();
+  }
+  function pumpNews() {
+    if (news.timer) return;
+    const next = () => {
+      news.timer = null;
+      if (!news.queue.length || !newsOn()) return;
+      showBubble(news.queue.shift());
+      news.timer = setTimeout(next, NEWS_GAP_MS);
+    };
+    next();
+  }
+  // the weeks after news.since that the sim has finished (`done`): their items join the queue
+  async function fetchNews(done) {
+    const s = state.season;
+    news.want = Math.max(news.want || 0, done);
+    if (!s || !newsOn() || news.since == null || done <= news.since || news.asking) return;
+    const since = news.since;
+    news.asking = true;
+    try {
+      const r = await api(`/api/season/${s.id}/news?since_week=${since}`);
+      news.since = Math.max(news.since, r.current_week != null ? r.current_week : done);
+      news.queue.push(...(r.items || []).filter((i) => i.week > since));
+      pumpNews();
+    } catch (err) { /* the news is a nicety: a missed week stays quiet */ }
+    finally {
+      news.asking = false;
+      if (news.since != null && news.want > news.since && state.season && state.season.id === s.id) fetchNews(news.want);   // a week finished while it asked
+    }
   }
 
   // ----- rendering ---------------------------------------------------------
@@ -3191,6 +3350,8 @@
         })),
       row("Momentum and Morale", "Big plays swing momentum inside a game and nudge ratings play by play; wins, losses and each player's own games set a mood that carries into the next game and fades week by week. Player cards show the boosts as green and red arrows.",
         toggle(!!(s.settings || {}).morale, async (on) => { await saveSettings({ morale: on }); toast(on ? "Momentum and morale on from the next sim." : "Momentum and morale off.", 3000); })),
+      row("News", "Little bubbles with the big results, poll moves, commitments and injuries around the league while the weeks sim. Click one to open it.",
+        toggle(newsOn(), async (on) => { saveNewsOn(on); if (!on) newsReset(); })),
       row("Game Day Pace", "How fast the plays come during a game day replay.",
         chipRow([["slow", "Slow"], ["normal", "Normal"], ["fast", "Fast"]], gdSpeed(), saveGdSpeed)),
     );

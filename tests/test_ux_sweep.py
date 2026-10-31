@@ -2,6 +2,7 @@
 number out of 100, depth-chart controls big enough to tap and never faint, labels that do not
 clip, buttons that say what they do, class codes that read, tooltips reachable by tap, and the
 confirms a one-tap skip needs. Needs Playwright with a Chromium; skipped without one."""
+import json
 import os
 import re
 import subprocess
@@ -833,9 +834,9 @@ def check_topbar_hide(page, base, sid) -> None:
 
 
 def test_look_units_pane(page, base, sid) -> None:
-    """Looks in trip units on the board's pane: a complete report reads "3 of 3 looks · his report is complete" on the
-    Scouting sub-tab, the strip's SCOUTED cell counts looks in halves, and the Recruit menu's Scout item is grayed with the
-    409 text; a report short of complete says what is left ("one trip finishes his report")."""
+    """Looks in trip units on the board's pane: a complete report's Scouting sub-tab heads "3 of 3 Looks" with a
+    "Report Complete" tag (the grades once, in the cards), the strip's SCOUTED cell counts looks in halves, and the Recruit menu's Scout item is grayed with the
+    409 text; a report short of complete says what is left ("One Trip Finishes His Report")."""
     fmt = lambda n: str(int(n)) if float(n) == int(n) else f"{n:.1f}"
     v = call(base, f"/api/season/{sid}/recruiting")
     rows = [b for b in v["board"] if not b["committed"] and not b["signed"]]
@@ -861,8 +862,11 @@ def test_look_units_pane(page, base, sid) -> None:
     assert "3 of 3 looks" in page.inner_text(".go-pane .go-strip"), page.inner_text(".go-pane .go-strip")
     page.click(".go-pane .go-subtabs button[data-sub=scouting]")
     page.wait_for_selector(".go-pane .go-scouting", timeout=15_000)
+    text = page.inner_text(".go-pane .go-scouting .go-scout-head")
+    assert "3 of 3 Looks" in text and page.inner_text(".go-pane .go-scouting .go-scout-tag") == "Report Complete", text
+    assert page.evaluate("() => document.querySelectorAll('.go-pane .go-scouting .sc-trip.on').length") == 3, "the looks bar is full"
+    assert not page.query_selector(".go-pane .go-scouting .go-scouted"), "the grades show once, in the cards (no strip above them)"
     text = page.inner_text(".go-pane .go-scouting")
-    assert "3 of 3 looks · his report is complete" in text, text
     assert "scouting trips" not in text, "no separate trips count"
     page.click("#rc-recruit")
     page.wait_for_selector(".go-menu[role=menu]")
@@ -877,7 +881,8 @@ def test_look_units_pane(page, base, sid) -> None:
         page.click(f".go-row-recruit[data-pid='{near['id']}']")
         page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n); }", arg=near["name"], timeout=15_000)
         page.click(".go-pane .go-subtabs button[data-sub=scouting]")
-        page.wait_for_function("(t) => { const b = document.querySelector('.go-pane .go-scouting'); return b && b.innerText.includes(t); }", arg=f"{fmt(near['looks'])} of 3 looks · one trip finishes his report", timeout=15_000)
+        page.wait_for_function("(t) => { const b = document.querySelector('.go-pane .go-scouting .go-scout-head'); return b && b.innerText.includes(t); }", arg=f"{fmt(near['looks'])} of 3 Looks", timeout=15_000)
+        assert page.inner_text(".go-pane .go-scouting .go-scout-tag") == "One Trip Finishes His Report"
         page.click("#rc-recruit")
         page.wait_for_selector(".go-menu[role=menu]")
         assert "finishes his report" in page.inner_text(".go-menu .go-menu-item[data-action=scout]")
@@ -1086,10 +1091,17 @@ def test_grade_hover(page, base, sid) -> None:
         page.click(".go-pane .go-subtabs button[data-sub=scouting]")
         page.wait_for_selector(".go-pane .go-scouting .go-grades .go-stat.go-tip", timeout=30_000)
         time.sleep(0.3)
+        assert page.inner_text(".go-pane .go-scouting .go-scout-tag") == "Report Complete"
         note = page.inner_text(".go-pane .go-scouting .go-grades-note")
-        assert "3 of 3 looks · his report is complete: these are your staff's final grades." in note, note
+        assert note.startswith("Tap a grade to see what it looks like in ratings.") and "half a look, up to two." in note, note
         words = page.eval_on_selector_all(".go-pane .go-scouting .go-grades .go-stat-val", "els => els.map(e => e.textContent.trim())")
-        assert all(" to " not in w for w in words), words
+        assert words and all(w in ("All-American", "Elite", "Strong", "Solid", "Fair", "Weak") for w in words), f"one plain word per card: {words}"
+        assert not page.query_selector(".go-pane .go-scouting .go-grades .go-word"), "plain words, no chips"
+        # three cards a row on the desktop, two on a phone; every card the same height; a grade on one line
+        geo = page.evaluate("""() => { const cs = [...document.querySelectorAll('.go-pane .go-scouting .go-grades .go-stat')].map(c => c.getBoundingClientRect());
+          const vals = [...document.querySelectorAll('.go-pane .go-scouting .go-grades .go-stat-val')].map(v => v.getClientRects().length === 1 && v.getBoundingClientRect().height < 26);
+          return { perRow: cs.filter(r => Math.abs(r.top - cs[0].top) < 2).length, heights: [...new Set(cs.map(r => Math.round(r.height)))], oneLine: vals.every(Boolean) }; }""")
+        assert geo["perRow"] == (3 if width > 700 else 2) and len(geo["heights"]) == 1 and geo["oneLine"], f"the grade cards at {width}: {geo}"
         hover_grades(page, ".go-pane .go-scouting", f"the pane's Scouting sub-tab at {width}", height)
         if opened:          # an open report's Scouting sub-tab keeps its ranges and its narrowing line
             if width <= 700:
@@ -1099,17 +1111,19 @@ def test_grade_hover(page, base, sid) -> None:
             page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n); }", arg=opened["name"], timeout=15_000)
             page.click(".go-pane .go-subtabs button[data-sub=scouting]")
             page.wait_for_selector(".go-pane .go-scouting .go-grades-note", timeout=30_000)
-            note = page.inner_text(".go-pane .go-scouting .go-grades-note")
-            assert "final grades" not in note and "ranges narrow with every look" in note, note
+            assert "Report Complete" not in page.inner_text(".go-pane .go-scouting .go-scout-head")
+            vals = page.eval_on_selector_all(".go-pane .go-scouting .go-grades .go-stat-val", "els => els.map(e => e.textContent.trim())")
+            words = ("All-American", "Elite", "Strong", "Solid", "Fair", "Weak")
+            assert vals and all(all(w in words for w in v.split("–")) for v in vals), f"ranges read 'Weak–Fair', never 'Weak to Fair': {vals}"
         if width <= 700:
             page.click(".go-pane .go-pane-back")
             time.sleep(0.4)
         # the Prospects tab's full profile (a modal)
         open_tab(page, base, sid, "prospects", ".go-list-row")
         page.fill("#tab-prospects input[type=search]", done["name"])
-        page.wait_for_selector(f"#tab-prospects .go-list-row:has-text('{done['name']}')", timeout=30_000)
+        page.wait_for_selector(f"#tab-prospects .go-list-row:has-text({json.dumps(done['name'])})", timeout=30_000)
         time.sleep(0.5)
-        page.click(f"#tab-prospects .go-list-row:has-text('{done['name']}') .go-list-id")
+        page.click(f"#tab-prospects .go-list-row:has-text({json.dumps(done['name'])}) .go-list-id")
         page.wait_for_selector(".modal .go-profile .go-grades .go-stat.go-tip", timeout=60_000)
         time.sleep(0.4)
         assert done["name"].upper() in page.inner_text(".modal .go-profile"), "the profile is his"
@@ -1333,6 +1347,89 @@ def test_conversation(page, base) -> None:
             call(base, f"/api/season/{sid}", method="DELETE")
         except Exception:  # noqa: BLE001
             pass
+
+
+def test_news_bubbles(page, base) -> None:
+    """League news while simming: Sim the Week from the Office brings at least one .news-bubble (bottom-right, a
+    sentence and its week), which fades within a few seconds; with Settings' News switch off no bubble shows."""
+    from sim import season
+    st = season.new_season("smu", "full", seed=41, career=True)
+    season.save_season(st)
+    sid = st["id"]
+    errs = []
+    page.on("pageerror", lambda e: errs.append(str(e)))
+    try:
+        page.set_viewport_size({"width": 1280, "height": 1000})
+        page.goto(f"{base}/index.html?id={sid}")
+        page.evaluate("() => { try { localStorage.removeItem('cfp.news'); } catch (e) {} }")
+        open_tab(page, base, sid, "office", ".go-play [data-play=advance]")
+        assert not page.query_selector(".news-bubble"), "no news before a sim"
+        page.click("#tab-office .go-play [data-play=advance]")
+        page.wait_for_selector(".news-bubble", timeout=180_000)
+        b = page.eval_on_selector(".news-bubble:last-child", "e => { const r = e.getBoundingClientRect(); return [e.querySelector('.news-text').textContent, e.querySelector('.news-week').textContent, r.right, r.bottom, innerWidth, innerHeight, r.height]; }")
+        text, when, right, bottom, w, h, height = b
+        assert text[0].isupper() and text.endswith(".") and "null" not in text and "undefined" not in text, text
+        assert when.startswith("Week "), when
+        assert w - right < 40 and h - bottom < 120 and height >= 44, b
+        page.wait_for_function("() => !document.querySelector('.news-bubble')", timeout=60_000)   # every bubble fades
+        page.wait_for_selector(".go-play [data-play=advance]:not([disabled])", timeout=60_000)
+        # the News switch off: the next week shows none
+        page.click("#btn-settings")
+        page.click(".settings-row:has(b:text-is('News')) [role=switch]")
+        page.wait_for_function("() => document.querySelector('[role=switch][aria-label=News]').getAttribute('aria-checked') === 'false'")
+        assert page.evaluate("() => localStorage.getItem('cfp.news')") == "off"
+        page.keyboard.press("Escape")
+        before = call(base, f"/api/season/{sid}")["current_week"]
+        page.wait_for_selector(".go-play [data-play=advance]:not([disabled])", timeout=60_000)
+        page.click("#tab-office .go-play [data-play=advance]")
+        seen = False
+        for _ in range(240):
+            seen = seen or bool(page.query_selector(".news-bubble"))
+            if call(base, f"/api/season/{sid}/status")["status"] != "running" and call(base, f"/api/season/{sid}")["current_week"] > before:
+                break
+            time.sleep(0.25)
+        time.sleep(3)
+        seen = seen or bool(page.query_selector(".news-bubble"))
+        assert not seen, "News off: no bubble"
+        page.evaluate("() => { try { localStorage.removeItem('cfp.news'); } catch (e) {} }")
+        assert not errs, errs
+    finally:
+        try:
+            call(base, f"/api/season/{sid}", method="DELETE")
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def test_sim_bar(page, base) -> None:
+    """A three-week sim from the Office on a fresh career: the overlay's bar, sampled every 100 ms, never
+    shrinks, shows under 100% while the sim runs and fills at the end; the stage line says what is happening."""
+    sid = call(base, "/api/season", {"team": "smu", "seed": 5})["id"]
+    try:
+        page.goto(f"{base}/index.html?id={sid}")
+        page.wait_for_selector("#season:visible")
+        page.click("#season-tabs button[data-tab=office]")
+        page.wait_for_selector(".go-play [data-play=advance]", timeout=60_000)
+        page.click("#tab-office .go-play .go-play-more")
+        page.wait_for_selector(".go-menu .go-menu-item")
+        page.evaluate("""() => { window.__bar = []; window.__barTimer = setInterval(() => { const ov = document.getElementById('sim-overlay'); if (ov.hidden) return;
+            const bar = document.getElementById('sim-bar'); window.__bar.push([bar.getBoundingClientRect().width / bar.parentElement.getBoundingClientRect().width,
+            document.getElementById('sim-sub').textContent, document.getElementById('sim-stage').textContent]); }, 100); }""")
+        page.click(".go-menu .go-menu-item:has(b:text-is('Week 3'))")
+        page.wait_for_selector("#sim-overlay:visible", timeout=30_000)
+        page.wait_for_selector("#sim-overlay", state="hidden", timeout=300_000)
+        samples = page.evaluate("() => { clearInterval(window.__barTimer); return window.__bar; }")
+        assert len(samples) > 20, f"only {len(samples)} samples of the bar"
+        widths = [w for w, _, _ in samples]
+        back = [(a, b) for a, b in zip(widths, widths[1:]) if b < a - 0.002]
+        assert not back, f"the bar went back: {back[:3]}"
+        assert all(t != "100%" for _, t, _ in samples[:-1]), "100% before the sim was done"
+        assert widths[-1] > 0.8, f"the bar ended at {widths[-1]:.2f}"
+        assert page.evaluate("() => document.getElementById('sim-bar').style.width") == "100%", "the bar fills when the sim is done"
+        stages = {st for _, _, st in samples}
+        assert any(st.startswith("Playing Week 2 games · ") for st in stages), stages
+        assert not any("Simming" in st or "null" in st or "undefined" in st for st in stages), stages
+    finally:
+        call(base, f"/api/season/{sid}", method="DELETE")
 
 
 if __name__ == "__main__":
@@ -2510,6 +2607,8 @@ if __name__ == "__main__":
             test_grade_hover(page, base, A)
             test_flip_words(page, base)
             test_conversation(page, base)
+            test_news_bubbles(page, base)
+            test_sim_bar(page, base)
             browser.close()
         assert not errors, errors
         print("ux sweep ok: office, prospects, board (tabs, list, pane, menu, step, scene, phone, every action patching in place with its toast), scouting, schedule, depth, player page, an FCS box score and every offseason stage at 1280 and 400")

@@ -11,12 +11,22 @@
 #     sent back to PR Tests against the new main instead of being merged
 # A merge made here does not fire the push trigger of the Pages workflow (GitHub does not start
 # workflows from this token's pushes), so the deploy is started by name.
+#
+# Two ways in: workflow_run for a PR Tests run a push started, and workflow_dispatch (run_id) for a
+# dispatched PR Tests run, which hands off here by name from its last job (GitHub fires no
+# workflow_run for a run this token started). A dispatched run arriving through workflow_run too is
+# left to its hand-off, so each run is handled once.
 name: PR Auto-merge
 
 on:
   workflow_run:
     workflows: ["PR Tests"]
     types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "The PR Tests run to act on"
+        required: true
 
 permissions:
   contents: write
@@ -29,14 +39,17 @@ concurrency:
 
 jobs:
   merge:
-    if: github.event.workflow_run.conclusion != 'cancelled' && github.event.workflow_run.conclusion != 'skipped'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.event != 'workflow_dispatch' &&
+       github.event.workflow_run.conclusion != 'cancelled' && github.event.workflow_run.conclusion != 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: tested
           path: tested
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event.workflow_run.id || inputs.run_id }}
           github-token: ${{ github.token }}
         continue-on-error: true
 
@@ -49,8 +62,21 @@ jobs:
           RUN_EVENT: ${{ github.event.workflow_run.event }}
           RUN_HEAD: ${{ github.event.workflow_run.head_sha }}
           EVENT_PR: ${{ github.event.workflow_run.pull_requests[0].number }}
+          INPUT_RUN: ${{ inputs.run_id }}
         run: |
           set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            # the run's facts come from GitHub: it must be a PR Tests run of main's workflow file, and its
+            # result is its test job's conclusion (the run itself is still finishing its hand-off)
+            case "$INPUT_RUN" in ''|*[!0-9]*) echo "::error::run_id must be a number"; exit 1;; esac
+            run=$(gh api "repos/$REPO/actions/runs/$INPUT_RUN")
+            [ "$(jq -r .path <<<"$run")" = ".github/workflows/pr-tests.yml" ] || { echo "::error::run $INPUT_RUN is not a PR Tests run"; exit 1; }
+            [ "$(jq -r .head_branch <<<"$run")" = "main" ] || { echo "::error::run $INPUT_RUN did not use main's PR Tests"; exit 1; }
+            RUN_EVENT=$(jq -r .event <<<"$run"); RUN_HEAD=$(jq -r .head_sha <<<"$run"); RUN_URL=$(jq -r .html_url <<<"$run")
+            CONCLUSION=$(gh api "repos/$REPO/actions/runs/$INPUT_RUN/jobs" -q '[.jobs[] | select(.name == "test")][0].conclusion')
+            EVENT_PR=""
+            [ "$RUN_EVENT" = "workflow_dispatch" ] || { echo "::error::run $INPUT_RUN was not dispatched: its workflow_run handles it"; exit 1; }
+          fi
           comment() { gh pr comment "$PR" --repo "$REPO" --body "$1"$'\n\n'"[PR Tests run]($RUN_URL)"; }
 
           if [ ! -f tested/tested.json ]; then

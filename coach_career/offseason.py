@@ -570,6 +570,14 @@ HONOR_NAMES = {"heisman": "Heisman Trophy", "all_america_1": "All-America First 
                "all_conference_1": "All-Conference First Team", "all_conference_2": "All-Conference Second Team"}
 ROOM_CAP = 10                     # the most a year's honors and production add to his ceiling
 LEVEL_UP = 0.4                   # a national award winner or All-American moves up a coachability level this often
+COACH_UP_BREAKOUT = 0.20          # a breakout year (production BREAKOUT_FROM over the average starter) moves him up a level this often
+COACH_UP_DEVELOPER = ((90, 0.12), (80, 0.08))   # his coaches' player development (coach_factor's blend) at least this: a level up this often a year
+COACH_UP_MATURITY = 0.06          # a junior or senior who played, two or more levels from the top, grows up a level this often
+COACH_UP_MATURITY_GAP = 2         # ... the levels he must be below Coach's Dream
+COACH_UP_REDSHIRT = 0.10          # a redshirt year under a staff at REDSHIRT_STAFF or better player development moves him up this often
+REDSHIRT_STAFF = 70               # ... the staff's player development that makes the year one of learning
+COACH_DOWN_BENCHED = 0.05         # a starter who struggled and fell off the depth chart drops a level this often
+COACH_CASES = ("breakout", "developer", "maturity", "redshirt")   # the order a player's draws are taken in (fixed: one each, always)
 PHYSICAL = {"speed", "acceleration", "agility", "change_of_direction", "jumping", "stamina", "injury", "toughness", "strength",
             "kick_power", "throw_power"}   # gifts and body: production does not raise these ceilings
 
@@ -1291,14 +1299,79 @@ def program_factor(state: dict, slug: str) -> float:
     return 1 + (PROGRAM_DEV if b > 0 else PROGRAM_DEV_BELOW) * b
 
 
-def coach_factor(coaches: dict, pos: str) -> float:
-    """His coaches' factor on development: the head coach's player development with the
-    coordinator on his side of the ball; about 0.8 at 30, 1.0 at 50, 1.2 at 90."""
+def _dev_side(pos: str) -> str:
+    return "offensive_coordinator" if pos in lg.OFFENSE_ROLES else "defensive_coordinator" if GROUP[pos] not in ("K", "P") else "head_coach"
+
+
+def dev_rating(coaches: dict, pos: str) -> float:
+    """His coaches' player development: the head coach's with the coordinator on his side of the ball."""
     hc = (coaches.get("head_coach") or {}).get("ratings", {}).get("player_development", 50)
-    side = "offensive_coordinator" if pos in lg.OFFENSE_ROLES else "defensive_coordinator" if GROUP[pos] not in ("K", "P") else "head_coach"
-    co = (coaches.get(side) or {}).get("ratings", {}).get("player_development", hc)
-    r = (1 - COORD_SHARE) * hc + COORD_SHARE * co
+    co = (coaches.get(_dev_side(pos)) or {}).get("ratings", {}).get("player_development", hc)
+    return (1 - COORD_SHARE) * hc + COORD_SHARE * co
+
+
+def coach_factor(coaches: dict, pos: str) -> float:
+    """His coaches' factor on development (dev_rating); about 0.8 at 30, 1.0 at 50, 1.2 at 90."""
+    r = dev_rating(coaches, pos)
     return 1 + (r - 50) / 200 if r >= 50 else 1 + (r - 50) / 100
+
+
+def coachability_chances(level: str, cls: str, z: Optional[float], rated: float, redshirted: bool,
+                         benched: bool) -> tuple[dict[str, float], float]:
+    """The cases that can move his coachability this offseason, each its own chance of one level
+    up ({case: chance}), and his chance of slipping one level down. `cls` is the class he enters,
+    `z` last season's production against the average starter (None: he did not play enough),
+    `rated` his coaches' player development (dev_rating), `redshirted` a redshirt year just taken,
+    `benched` off the depth chart's top now."""
+    levels = [name for name, _, _ in recruits.COACHABILITY]
+    if level not in levels:
+        return {}, 0.0
+    i = levels.index(level)
+    up: dict[str, float] = {}
+    if i > 0:
+        if z is not None and z >= BREAKOUT_FROM:
+            up["breakout"] = COACH_UP_BREAKOUT
+        dev = next((c for at, c in COACH_UP_DEVELOPER if rated >= at), 0.0)
+        if dev:
+            up["developer"] = dev
+        if (cls or "")[:2] in ("JR", "SR") and z is not None and i >= COACH_UP_MATURITY_GAP:
+            up["maturity"] = COACH_UP_MATURITY
+        if redshirted and rated >= REDSHIRT_STAFF:
+            up["redshirt"] = COACH_UP_REDSHIRT
+    down = COACH_DOWN_BENCHED if benched and z is not None and z <= -0.75 and i < len(levels) - 1 else 0.0
+    return up, down
+
+
+def coachability_roll(level: str, chances: dict[str, float], drop: float, rng: random.Random) -> tuple[str, Optional[str]]:
+    """One offseason's roll: (his level now, the case that moved him or None). Every case is its own
+    chance; at most one level a year; a fixed five draws whatever applies, so the stream stays aligned."""
+    levels = [name for name, _, _ in recruits.COACHABILITY]
+    rolls = [rng.random() for _ in COACH_CASES]
+    down = rng.random()
+    if level not in levels:
+        return level, None
+    i = levels.index(level)
+    hit = next((k for k, r in zip(COACH_CASES, rolls) if r < chances.get(k, 0.0)), None)
+    if hit and i > 0:
+        return levels[i - 1], hit
+    if drop and down < drop and i < len(levels) - 1:
+        return levels[i + 1], "benched"
+    return level, None
+
+
+COACH_NOTES = {"award": "A National Honor", "breakout": "A Breakout Year", "developer": "{coach}'s Development",
+               "redshirt": "A Redshirt Year Well Spent", "maturity": "Growing Up", "benched": "Benched After a Rough Year"}
+
+
+def coachability_note(level: str, case: str, coach: str = "His Coaches") -> str:
+    """The Who Improved tag for a move: "Now a Film Junkie: A Breakout Year"."""
+    return f"Now a {level}: {COACH_NOTES[case].format(coach=coach)}"
+
+
+def _coach_title(coaches: dict, pos: str) -> str:
+    c = coaches.get(_dev_side(pos)) or coaches.get("head_coach") or {}
+    last = (c.get("name") or "").split()
+    return f"Coach {last[-1]}" if last else "His Coaches"
 
 
 def develop(p: dict, attrs: list[str], factor: float, rng: random.Random) -> int:
@@ -1530,8 +1603,12 @@ def _develop_all(state: dict) -> dict:
     attrs = _attrs(lgd)
     perf = state["offseason"].get("performance") or {}
     levels = [name for name, _, _ in recruits.COACHABILITY]
+    crng = _rng(state, "coachability")
+    year = state["offseason"].get("year") or lgd.get("year") or 0
+    moves = {"up": 0, "down": 0}
     gains, mine, breakouts = [], [], 0
     for slug, t in lgd["teams"].items():
+        depth = _depth_values(t["roster"]) if t.get("roster") else None
         era = t["era"] = ERA_PERSIST * t.get("era", 0.0) + rng.gauss(0, ERA_SD * math.sqrt(1 - ERA_PERSIST ** 2))
         team_year = math.exp(era - ERA_SD ** 2 / 2) * math.exp(rng.gauss(-TEAM_YEAR_SD ** 2 / 2, TEAM_YEAR_SD))
         for p in t["roster"]:
@@ -1545,7 +1622,20 @@ def _develop_all(state: dict) -> dict:
                 breakouts += 1
             if level_up and rng.random() < LEVEL_UP and p.get("c") in levels[1:]:
                 p["c"] = levels[levels.index(p["c"]) - 1]
-                why.append(f"Now a {p['c']}")
+                why.append(coachability_note(p["c"], "award"))
+                moves["up"] += 1
+            else:                          # the other cases, in their own stream (the award's draw above stays where it was)
+                z = (perf.get(p["id"]) or {}).get("z")
+                rated = dev_rating(t["coaches"], p["pos"])
+                redshirted = (p.get("cls") or "").endswith("RS") and p.get("rs_year") == year - 1
+                g_ = GROUP[p["pos"]]
+                benched = depth is not None and sum(1 for v in depth[g_] if v > p["o"]) >= STARTERS[g_] + 2
+                chances, drop = coachability_chances(p.get("c"), p.get("cls"), z, rated, redshirted, benched)
+                new, case = coachability_roll(p.get("c"), chances, drop, crng)
+                if case:
+                    p["c"] = new
+                    why.append(coachability_note(new, case, _coach_title(t["coaches"], p["pos"])))
+                    moves["down" if case == "benched" else "up"] += 1
             g = develop(p, attrs, coach_factor(t["coaches"], p["pos"]) * mult * program_factor(state, slug), rng)
             p["yrs"] = p.get("yrs", 0) + 1
             gains.append(g)
@@ -1554,7 +1644,7 @@ def _develop_all(state: dict) -> dict:
                              "transfer": p.get("transfer")})
     mine.sort(key=lambda r: -r["gain"])
     return {"mean_gain_ea": round(st.mean(gains), 2) if gains else 0.0, "mine": mine, "raised_ceilings": breakouts,
-            "transfers": [r for r in mine if r["transfer"]]}
+            "coachability": moves, "transfers": [r for r in mine if r["transfer"]]}
 
 
 def _newcomer(r: dict, slug: str) -> dict:

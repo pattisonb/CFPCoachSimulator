@@ -238,6 +238,31 @@ table.compare td.better { font-weight: 800; }
   transition: opacity 150ms ease, transform 150ms ease; }
 .toast-item.error { border-left-color: var(--bad); }
 .toast-mirror { display: none !important; }
+/* league news while simming (web/season.js): chat bubbles bottom-right, one every 1.5 s, three at most, each fading
+   after 6 s; above the toasts (65); on a phone bottom, full width, lifted above the toasts and the Office's play card */
+.news-stack { position: fixed; right: 16px; bottom: 16px; z-index: 66; display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+  width: min(360px, calc(100vw - 32px)); pointer-events: none; }
+.news-stack:empty { display: none; }
+.news-bubble { pointer-events: auto; display: flex; align-items: flex-start; gap: 9px; width: 100%; min-height: 44px; box-sizing: border-box; text-align: left;
+  font: inherit; font-size: 14px; line-height: 1.35; color: var(--text); background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 14px 14px 4px 14px; padding: 9px 12px; box-shadow: 0 6px 18px var(--shadow); animation: news-in 220ms ease-out;
+  transition: opacity 400ms ease; }
+button.news-bubble { cursor: pointer; }
+button.news-bubble:hover { border-color: var(--accent); }
+.news-bubble .team-pill { flex: none; margin-top: 3px; }
+.news-icon { flex: none; width: 12px; height: 12px; margin-top: 4px; border-radius: 50%; background: var(--accent); }
+.news-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.news-week { font-size: 12px; }
+.news-bubble.news-upset { border-left: 3px solid var(--accent); }
+.news-bubble.news-out { opacity: 0; pointer-events: none; }
+@keyframes news-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes news-in-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (max-width: 640px) {
+  .news-stack { left: 16px; right: 16px; width: auto; align-items: stretch; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .news-bubble { animation-name: news-in-fade; }          /* no slide: a fade only */
+}
 /* what an action changed: a 600 ms pulse; rows and tags that arrive fade in, ones that leave fade out (150 ms) */
 @keyframes go-pulse { from { background-color: color-mix(in srgb, var(--accent) 34%, transparent); } to { background-color: transparent; } }
 @keyframes go-fade-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
@@ -327,6 +352,9 @@ button.accent { background: #3ddc84; color: #04210f; border-color: #3ddc84; }
 .season-controls select { font: inherit; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
 .progress { height: 10px; background: var(--panel-2); border-radius: 5px; overflow: hidden; margin: 10px 0 6px; }
 .progress-bar { height: 100%; width: 0; background: var(--accent); transition: width 0.3s; }
+/* the sim bars: season.js draws them every 100 ms between statuses, so each step glides into the next */
+#sim-bar, #season-progress-bar { transition: width 0.15s linear; }
+@media (prefers-reduced-motion: reduce) { #sim-bar, #season-progress-bar { transition: none; } }
 .progress-text { font-size: 13px; margin-bottom: 4px; }
 .progress-text b { color: var(--text); font-weight: 600; }
 .season-head { margin-bottom: 12px; }
