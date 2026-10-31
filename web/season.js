@@ -351,6 +351,7 @@
     state.gamedayWanted = gamedayWanted;
     state.advanceFrom = s.current_week;
     state.simming = true;
+    barReset();
     state.simResults = [];
     state.simTarget = target;
     state.headWeek = s.current_week;
@@ -365,7 +366,7 @@
     const s = state.season;
     if (!s || s.done) return;
     beginSim(s, s.current_week + 1, true);
-    showProgress({ status: "running", done: s.current_week, total: s.current_week + 1, stage: "Simming your game", week: s.current_week + 1 });
+    showProgress({ status: "running", done: s.current_week, total: s.current_week + 1, stage: "Playing your game", week: s.current_week + 1 });
     try {
       await api(`/api/season/${s.id}/gameday`, { method: "POST" });
       poll();
@@ -376,7 +377,7 @@
     const s = state.season;
     if (!s || s.done) return;
     beginSim(s, to || s.current_week + 1, false);
-    showProgress({ status: "running", done: s.current_week, total: to || s.current_week + 1, stage: "Starting", week: s.current_week + 1 });
+    showProgress({ status: "running", done: s.current_week, total: to || s.current_week + 1, stage: "Getting ready", week: s.current_week + 1 });
     try {
       await api(`/api/season/${s.id}/advance`, postJSON(to ? { to } : {}));
       poll();
@@ -394,6 +395,7 @@
           poll();
         } else {
           if (j.paused) toast("Paused. Advance when you are ready.", 3000);
+          barDone(j.status !== "error");
           hideSimOverlay();
           if (j.status === "error") toast(`Simulation error: ${j.error}`, 6000);
           const s = await api(`/api/season/${state.season.id}`);
@@ -472,32 +474,90 @@
     $("#sc-next").textContent = `Simming · through ${j.done === 0 ? "the preseason" : s.week_labels[j.done] || "week " + j.done}`;
   }
 
-  // Progress while simming: weeks completed plus the fraction of the current week's games,
+  // Progress while simming: the engine's `progress` (the job's work done over its plan, which
+  // weighs every week by its games, polls, awards and recruiting), drawn by the sim bar below,
   // and a line saying what the sim is doing right now.
   function showProgress(j) {
-    const s = state.season;
     liveHead(j);
     const from = state.advanceFrom != null ? state.advanceFrom : Math.max(0, j.done - 1);
     const span = Math.max(1, j.total - from);
-    const frac = j.week_frac != null ? j.week_frac : (j.games_total ? j.games_done / j.games_total : 0);
-    const pct = Math.min(100, Math.round((100 * (j.done - from + frac)) / span));
+    let p = j.progress;
+    if (p == null) {   // an older status (or the page's own first one): whole weeks plus the week's share
+      const frac = j.week_frac != null ? j.week_frac : (j.games_total ? j.games_done / j.games_total : 0);
+      p = (j.done - from + frac) / span;
+    }
     // one bar at a time: the header's for a single week, the overlay's for a longer sim
     $("#season-progress").hidden = span > 1;
-    $("#season-progress-bar").style.width = `${pct}%`;
-    const label = j.week ? (s.week_labels[j.week] || `Week ${j.week}`) : "";
     const text = $("#season-progress-text");
     text.innerHTML = "";
-    // one line for the whole week: its games, the polls and recruiting all count toward the bar
-    text.append(el("b", { text: label ? `Simming ${label}` : (j.stage || "Simming") }), ` · ${pct}%`);
+    text.append(el("b", { text: stageLine(j) }), el("span", { id: "season-progress-pct" }));
     text.hidden = span > 1;
     const simBtn = $("#tab-office .go-play .go-btn.primary");
     if (simBtn) simBtn.textContent = "Simming…";
-    if (span > 1) showSimOverlay(j, pct, span, from);
+    if (span > 1) showSimOverlay(j);
+    barReport(p);
+  }
+
+  // What the sim is doing, from the engine's stage: "Playing Week 6 games · 34 of 61", "Recruiting week", "Saving".
+  function stageLine(j) {
+    const stage = j.stage || "Getting ready";
+    return j.games_total ? `${stage} · ${j.games_done} of ${j.games_total}` : stage;
+  }
+
+  // ----- the sim bar ------------------------------------------------------------------------------
+  // Each status moves the bar to its progress (a short CSS width transition). Between statuses
+  // it creeps on at the pace of the last ones, but never past BAR_CREEP_SHARE of the way to
+  // where the next status is expected, so it does not run ahead of the sim. It never goes back,
+  // the percentage follows the drawn bar, and 100% shows only once the job is over. Reduced
+  // motion: no creep, and the width jumps (styles.css).
+  const BAR_TICK_MS = 100, BAR_POLL_MS = 500, BAR_CREEP_SHARE = 0.5;
+  const reducedMotion = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  function barReset() {
+    if (state.bar && state.bar.timer) clearInterval(state.bar.timer);
+    state.bar = { target: 0, drawn: 0, at: performance.now(), rate: 0, timer: null };
+    barDraw(0);
+  }
+  function barReport(p) {
+    if (!state.bar) barReset();
+    const b = state.bar, now = performance.now();
+    p = Math.max(0, Math.min(1, Number(p) || 0));
+    if (p > b.target) {
+      const dt = (now - b.at) / 1000, r = (p - b.target) / Math.max(dt, 0.05);
+      b.rate = b.rate ? 0.6 * b.rate + 0.4 * r : r;   // the pace of the last few statuses
+      b.target = p;
+      b.at = now;
+    }
+    barDraw(b.target);
+    if (!b.timer && !reducedMotion()) b.timer = setInterval(barTick, BAR_TICK_MS);
+  }
+  function barTick() {
+    const b = state.bar;
+    if (!b || !state.simming) { if (b && b.timer) { clearInterval(b.timer); b.timer = null; } return; }
+    const dt = (performance.now() - b.at) / 1000;
+    const ahead = b.rate * BAR_CREEP_SHARE * Math.min(dt, BAR_POLL_MS / 1000);
+    barDraw(b.target + ahead);
+  }
+  function barDone(ok) {
+    const b = state.bar;
+    if (!b) return;
+    if (b.timer) { clearInterval(b.timer); b.timer = null; }
+    if (ok) barDraw(1, true);
+  }
+  function barDraw(p, done) {
+    const b = state.bar;
+    b.drawn = done ? 1 : Math.min(0.99, Math.max(b.drawn, p));
+    const pct = done ? 100 : Math.min(99, Math.round(b.drawn * 100));
+    const width = `${(b.drawn * 100).toFixed(1)}%`;
+    for (const id of ["sim-bar", "season-progress-bar"]) { const n = document.getElementById(id); if (n && n.style.width !== width) n.style.width = width; }
+    const sub = document.getElementById("sim-sub");
+    if (sub) sub.textContent = `${pct}%`;
+    const head = document.getElementById("season-progress-pct");
+    if (head) head.textContent = ` · ${pct}%`;
   }
 
   // A multi-week sim covers the tab (the tabs stay, dimmed) and shows what is happening: the stage, the bar, your
   // record ticking up in the header, each of your results as it lands, and a Pause button.
-  function showSimOverlay(j, pct, span, from) {
+  function showSimOverlay(j) {
     const s = state.season;
     const ov = $("#sim-overlay");
     if (ov.hidden) {
@@ -508,11 +568,8 @@
       $("#btn-pause").disabled = false;
       $("#btn-pause").textContent = "Pause after this week";
     }
-    const label = j.week ? (s.week_labels[j.week] || `Week ${j.week}`) : "";
-    $("#sim-stage").textContent = label ? `Simming ${label}` : (j.stage || "Simming");
+    $("#sim-stage").textContent = stageLine(j);
     $("#sim-overlay .review-label").textContent = `Simming through ${s.week_labels[j.total] || "week " + j.total}`;
-    $("#sim-sub").textContent = `${pct}%`;
-    $("#sim-bar").style.width = `${pct}%`;
     // the week strip follows the sim
     if (j.done !== state.simLastDone) { state.simLastDone = j.done; state.viewWeek = j.done; state.season.current_week = j.done; renderWeekStrip(); }
     for (const r of j.results || []) {

@@ -232,9 +232,18 @@
       const placed = [];
       const free = (x, y, w) => placed.every((q) => x + w <= q[0] || q[0] + q[2] <= x || y + lh <= q[1] || q[1] + lh <= y);
       const SLOTS = [0, 1, -1, 2, -2, 3, -3, 4, -4];
+      // a name's width as this browser draws it (fonts differ by machine; an estimate let names overlap): measured once
+      // per layout on a probe at the label's size and weight, falling back to an estimate where measuring is not possible
+      const probe = el("text", { class: "us-label", "font-size": +size.toFixed(3), visibility: "hidden" }, gDots);
+      const widthOf = (name) => {
+        probe.textContent = name;
+        let w = 0;
+        try { w = probe.getComputedTextLength(); } catch (e) { w = 0; }
+        return w > 0 ? w : name.length * size * 0.62;
+      };
       for (const c of inView) {
         const cx = +c.getAttribute("cx"), cy = +c.getAttribute("cy"), r = +c.getAttribute("r");
-        const w = c.dataset.name.length * size * 0.6;
+        const w = widthOf(c.dataset.name);
         let at = null;
         for (const side of [1, -1]) {
           for (const n of SLOTS) {
@@ -250,6 +259,7 @@
           "stroke-width": +(3 / px).toFixed(3), "dominant-baseline": "central" }, gDots);
         t.textContent = c.dataset.name;
       }
+      probe.remove();
     }
     function animateTo(b) {
       cancelAnimationFrame(anim);
