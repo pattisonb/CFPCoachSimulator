@@ -2,6 +2,7 @@
 number out of 100, depth-chart controls big enough to tap and never faint, labels that do not
 clip, buttons that say what they do, class codes that read, tooltips reachable by tap, and the
 confirms a one-tap skip needs. Needs Playwright with a Chromium; skipped without one."""
+import json
 import os
 import re
 import subprocess
@@ -833,9 +834,9 @@ def check_topbar_hide(page, base, sid) -> None:
 
 
 def test_look_units_pane(page, base, sid) -> None:
-    """Looks in trip units on the board's pane: a complete report reads "3 of 3 looks · his report is complete" on the
-    Scouting sub-tab, the strip's SCOUTED cell counts looks in halves, and the Recruit menu's Scout item is grayed with the
-    409 text; a report short of complete says what is left ("one trip finishes his report")."""
+    """Looks in trip units on the board's pane: a complete report's Scouting sub-tab heads "3 of 3 Looks" with a
+    "Report Complete" tag (the grades once, in the cards), the strip's SCOUTED cell counts looks in halves, and the Recruit menu's Scout item is grayed with the
+    409 text; a report short of complete says what is left ("One Trip Finishes His Report")."""
     fmt = lambda n: str(int(n)) if float(n) == int(n) else f"{n:.1f}"
     v = call(base, f"/api/season/{sid}/recruiting")
     rows = [b for b in v["board"] if not b["committed"] and not b["signed"]]
@@ -861,8 +862,11 @@ def test_look_units_pane(page, base, sid) -> None:
     assert "3 of 3 looks" in page.inner_text(".go-pane .go-strip"), page.inner_text(".go-pane .go-strip")
     page.click(".go-pane .go-subtabs button[data-sub=scouting]")
     page.wait_for_selector(".go-pane .go-scouting", timeout=15_000)
+    text = page.inner_text(".go-pane .go-scouting .go-scout-head")
+    assert "3 of 3 Looks" in text and page.inner_text(".go-pane .go-scouting .go-scout-tag") == "Report Complete", text
+    assert page.evaluate("() => document.querySelectorAll('.go-pane .go-scouting .sc-trip.on').length") == 3, "the looks bar is full"
+    assert not page.query_selector(".go-pane .go-scouting .go-scouted"), "the grades show once, in the cards (no strip above them)"
     text = page.inner_text(".go-pane .go-scouting")
-    assert "3 of 3 looks · his report is complete" in text, text
     assert "scouting trips" not in text, "no separate trips count"
     page.click("#rc-recruit")
     page.wait_for_selector(".go-menu[role=menu]")
@@ -877,7 +881,8 @@ def test_look_units_pane(page, base, sid) -> None:
         page.click(f".go-row-recruit[data-pid='{near['id']}']")
         page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n); }", arg=near["name"], timeout=15_000)
         page.click(".go-pane .go-subtabs button[data-sub=scouting]")
-        page.wait_for_function("(t) => { const b = document.querySelector('.go-pane .go-scouting'); return b && b.innerText.includes(t); }", arg=f"{fmt(near['looks'])} of 3 looks · one trip finishes his report", timeout=15_000)
+        page.wait_for_function("(t) => { const b = document.querySelector('.go-pane .go-scouting .go-scout-head'); return b && b.innerText.includes(t); }", arg=f"{fmt(near['looks'])} of 3 Looks", timeout=15_000)
+        assert page.inner_text(".go-pane .go-scouting .go-scout-tag") == "One Trip Finishes His Report"
         page.click("#rc-recruit")
         page.wait_for_selector(".go-menu[role=menu]")
         assert "finishes his report" in page.inner_text(".go-menu .go-menu-item[data-action=scout]")
@@ -1086,10 +1091,17 @@ def test_grade_hover(page, base, sid) -> None:
         page.click(".go-pane .go-subtabs button[data-sub=scouting]")
         page.wait_for_selector(".go-pane .go-scouting .go-grades .go-stat.go-tip", timeout=30_000)
         time.sleep(0.3)
+        assert page.inner_text(".go-pane .go-scouting .go-scout-tag") == "Report Complete"
         note = page.inner_text(".go-pane .go-scouting .go-grades-note")
-        assert "3 of 3 looks · his report is complete: these are your staff's final grades." in note, note
+        assert note.startswith("Tap a grade to see what it looks like in ratings.") and "half a look, up to two." in note, note
         words = page.eval_on_selector_all(".go-pane .go-scouting .go-grades .go-stat-val", "els => els.map(e => e.textContent.trim())")
-        assert all(" to " not in w for w in words), words
+        assert words and all(w in ("All-American", "Elite", "Strong", "Solid", "Fair", "Weak") for w in words), f"one plain word per card: {words}"
+        assert not page.query_selector(".go-pane .go-scouting .go-grades .go-word"), "plain words, no chips"
+        # three cards a row on the desktop, two on a phone; every card the same height; a grade on one line
+        geo = page.evaluate("""() => { const cs = [...document.querySelectorAll('.go-pane .go-scouting .go-grades .go-stat')].map(c => c.getBoundingClientRect());
+          const vals = [...document.querySelectorAll('.go-pane .go-scouting .go-grades .go-stat-val')].map(v => v.getClientRects().length === 1 && v.getBoundingClientRect().height < 26);
+          return { perRow: cs.filter(r => Math.abs(r.top - cs[0].top) < 2).length, heights: [...new Set(cs.map(r => Math.round(r.height)))], oneLine: vals.every(Boolean) }; }""")
+        assert geo["perRow"] == (3 if width > 700 else 2) and len(geo["heights"]) == 1 and geo["oneLine"], f"the grade cards at {width}: {geo}"
         hover_grades(page, ".go-pane .go-scouting", f"the pane's Scouting sub-tab at {width}", height)
         if opened:          # an open report's Scouting sub-tab keeps its ranges and its narrowing line
             if width <= 700:
@@ -1099,17 +1111,19 @@ def test_grade_hover(page, base, sid) -> None:
             page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n); }", arg=opened["name"], timeout=15_000)
             page.click(".go-pane .go-subtabs button[data-sub=scouting]")
             page.wait_for_selector(".go-pane .go-scouting .go-grades-note", timeout=30_000)
-            note = page.inner_text(".go-pane .go-scouting .go-grades-note")
-            assert "final grades" not in note and "ranges narrow with every look" in note, note
+            assert "Report Complete" not in page.inner_text(".go-pane .go-scouting .go-scout-head")
+            vals = page.eval_on_selector_all(".go-pane .go-scouting .go-grades .go-stat-val", "els => els.map(e => e.textContent.trim())")
+            words = ("All-American", "Elite", "Strong", "Solid", "Fair", "Weak")
+            assert vals and all(all(w in words for w in v.split("–")) for v in vals), f"ranges read 'Weak–Fair', never 'Weak to Fair': {vals}"
         if width <= 700:
             page.click(".go-pane .go-pane-back")
             time.sleep(0.4)
         # the Prospects tab's full profile (a modal)
         open_tab(page, base, sid, "prospects", ".go-list-row")
         page.fill("#tab-prospects input[type=search]", done["name"])
-        page.wait_for_selector(f"#tab-prospects .go-list-row:has-text('{done['name']}')", timeout=30_000)
+        page.wait_for_selector(f"#tab-prospects .go-list-row:has-text({json.dumps(done['name'])})", timeout=30_000)
         time.sleep(0.5)
-        page.click(f"#tab-prospects .go-list-row:has-text('{done['name']}') .go-list-id")
+        page.click(f"#tab-prospects .go-list-row:has-text({json.dumps(done['name'])}) .go-list-id")
         page.wait_for_selector(".modal .go-profile .go-grades .go-stat.go-tip", timeout=60_000)
         time.sleep(0.4)
         assert done["name"].upper() in page.inner_text(".modal .go-profile"), "the profile is his"

@@ -897,9 +897,10 @@ carries the word per rival with the muted Offer marker, sorted by his chance.
 is a range of grade words ("Solid to Strong": `recruiting.read_interval` is the read's mean plus
 and minus a half-width that shrinks with the looks' precision and the best evaluator's rating,
 less `WORD_SLACK`). Once it is complete (`report_complete`, 3 looks) the read collapses to one
-point per group, the mean, and `grade_range` gives the same word twice: the profile and the pane's
-Scouting sub-tab show one word per card under "3 of 3 looks: his report is complete: these are your
-staff's final grades. A read can still be wrong; the truth shows once he is on your roster.", the
+point per group, the mean, and `grade_range` gives the same word twice: the profile shows one word per
+card under "3 of 3 looks: his report is complete: these are your staff's final grades. A read can
+still be wrong; the truth shows once he is on your roster.", the pane's Scouting sub-tab one word per
+card under a "Report Complete" tag, the
 queue's POTENTIAL cell and the report items say "potential narrowed to Elite". The read itself
 (`recruiting.read_spread`: mean and half-width, whatever the looks) is unchanged: the flags
 (`prospects.find`, their cuts and `FLAG_HOLD`) judge the read's own low and high end, and
@@ -1278,8 +1279,12 @@ action and patches the row in place: the LOOKS bar and POTENTIAL cell pulse, the
 after reads on a line under his row, a toast "Scouted Wesley Adams · 2.5 of 3 looks" ("· his
 report is complete" at 3), the hours pill patches, and the page refetches so every other Send
 follows `can_send` (a row whose report the Send just completed stays, with its tag); a click on the
-row itself opens him on the board. The pane's Scouting sub-tab reads "2 of 3 looks · one trip
-finishes his report", and its Recruit menu grays Scout with the 409 text once he is complete.
+row itself opens him on the board. The pane's Scouting sub-tab heads its grade cards with a
+"Scouting Report" kicker, the looks bar (filled in halves), "2 of 3 Looks" and a "One Trip Finishes
+His Report" tag ("Report Complete" at 3); the cards give each grade once, as plain words in their
+tone color ("Weak–Fair" on one line), three a row (two on a phone), over one help line and a row with
+the "Reports on the Scouting Tab" link and, once complete, our comp. Its Recruit menu grays Scout
+with the 409 text once he is complete.
 
 **The odds you see** (`prospects.odds`). Each offering school's chance to land a prospect is a
 softmax of his interest in it (`exp(interest / 3)`), against the field: the schools not yet in

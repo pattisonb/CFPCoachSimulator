@@ -443,16 +443,19 @@
   // a [low, high] pair of words: one tag when both ends match, else "low to high"
   const wordRange = (r) => (r[0] === r[1] ? [wordTag(r[0])] : [wordTag(r[0]), " to ", wordTag(r[1])]);
   const wordText = (r) => (r[0] === r[1] ? r[0] : `${r[0]} to ${r[1]}`);
-  // the line under the grade cards: a complete report's single final grades, or how far the ranges have narrowed
-  // (profile: a colon after the looks; the pane's Scouting sub-tab: a middle dot, and what a look is)
-  function gradesNote(looks, profile) {
-    const left = 3 - looks, sep = profile ? ": " : " · ";
+  // the line under the profile's grade cards: a complete report's single final grades, or how far the ranges have narrowed
+  function gradesNote(looks) {
+    const left = 3 - looks;
     const hover = "Tap or hover a grade to see what it looks like in ratings.";
-    if (left <= 0) return `${fmtLooks(looks)} of 3 looks${sep}his report is complete: these are your staff's final grades. ${hover} A read can still be wrong; the truth shows once he is on your roster.`;
-    const narrowing = profile ? "Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster."
-      : "A trip is one look, a week in a scout's area half; ranges narrow with every look, but a read can be wrong.";
-    return `${fmtLooks(looks)} of 3 looks${left <= 1 ? `${sep}one trip finishes his report` : ""}. ${hover} ${narrowing}`;
+    if (left <= 0) return `${fmtLooks(looks)} of 3 looks: his report is complete: these are your staff's final grades. ${hover} A read can still be wrong; the truth shows once he is on your roster.`;
+    return `${fmtLooks(looks)} of 3 looks${left <= 1 ? ": one trip finishes his report" : ""}. ${hover} Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster.`;
   }
+  // a grade as plain bold words in their tone color ("Weak–Fair" on one line), for the pane's Scouting sub-tab cards
+  const gradeWord = (w) => el("b", { class: `go-grade ${String(w).toLowerCase()}`, text: w });
+  const gradePlain = (r) => (r[0] === r[1] ? [gradeWord(r[0])] : [gradeWord(r[0]), el("span", { class: "go-grade-dash", text: "–" }), gradeWord(r[1])]);
+  // the looks as a 3-segment bar, filled in halves (as on the Scouting tab)
+  const looksBar = (looks) => el("span", { class: "sc-trips", role: "img", "aria-label": `${fmtLooks(looks)} of 3 looks` },
+    [0, 1, 2].map((i) => el("i", { class: `sc-trip${looks >= i + 1 ? " on" : looks > i ? " half" : ""}` })));
   function scoutLine(grades, looks) {
     return el("div", { class: "go-scouted", title: `Your staff's read after ${fmtLooks(looks)} looks: the range each grade could still fall in` }, [el("b", { text: "Scouted" }),
       ...["potential", "athleticism", "technique", "football_iq", "size_strength", "coachability"].filter((k) => grades[k]).map((k) => el("span", {}, [el("span", { class: "muted", text: `${GRADE_NAMES[k]} ` }), el("b", {}, wordRange(grades[k]))]))]);
@@ -1338,24 +1341,26 @@
     function scoutingView(b) {
       const out = el("div", { class: "go-scouting" });
       if (b.portal && b.line) out.append(el("p", { class: "muted small", text: lineText(b.line) }));
+      const looks = Math.min(3, b.looks || 0), left = 3 - looks;
       if (b.our_grades) {
-        out.append(scoutLine(b.our_grades, b.looks));
-        out.append(gradeGrid(b.id, b.our_grades, null));
-        const looks = Math.min(3, b.looks || 0);
-        out.append(el("p", { class: "muted small go-grades-note", text: gradesNote(looks, false) }));
+        // the head: the kicker, the looks bar and count, and what one more trip does (or that the report is complete)
+        out.append(el("div", { class: "go-scout-head" }, [el("span", { class: "go-kicker", text: "Scouting Report" }), looksBar(looks),
+          el("span", { class: "go-scout-looks", text: `${fmtLooks(looks)} of 3 Looks` }),
+          left <= 0 ? el("span", { class: "go-tag good go-scout-tag", text: "Report Complete" })
+            : left <= 1 ? el("span", { class: "go-tag go-scout-tag", text: "One Trip Finishes His Report" }) : null]));
+        out.append(gradeGrid(b.id, b.our_grades, null, true));
+        out.append(el("p", { class: "muted small go-grades-note", text: "Tap a grade to see what it looks like in ratings. A trip is one look; a week in a scout's area is half a look, up to two." }));
       } else out.append(el("p", { class: "muted", text: "Not scouted yet: send a scout from the Recruit menu, or put a staff member on his area." }));
-      out.append(el("p", { class: "small" }, [el("button", { type: "button", class: "go-link sc-reports-link", text: "Reports on the Scouting Tab", onclick: () => H.onChange("scouting") })]));
-      const comps = el("div", { class: "go-comps" });
-      out.append(comps);
+      // the footer: the link to the Scouting tab and, once his report is complete, our comp
+      const comps = el("span", { class: "small go-comps" });
+      out.append(el("div", { class: "go-scout-foot" }, [el("button", { type: "button", class: "go-link sc-reports-link", text: "Reports on the Scouting Tab", onclick: () => H.onChange("scouting") }), comps]));
       const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall ? `, ${c.overall} OVR` : ""})`;
       H.api(`/api/season/${s.id}/prospect/${encodeURIComponent(b.id)}`).then((pr) => {
         if (!comps.isConnected) return;
         const grid = out.querySelector(".go-grades");
         if (grid && pr.our_grades && pr.grade_details) gradeTips(grid, b.id, pr.our_grades, pr.grade_details);   // hover a grade here too
-        if (pr.public_comp) comps.append(el("p", { class: "small" }, [el("b", { text: "Comp: " }), comp(pr.public_comp)]));
-        if (pr.our_comp) comps.append(el("p", { class: "small" }, [el("b", { text: "Our comp: " }), comp(pr.our_comp)]));
-        else if (pr.looks >= 3) comps.append(el("p", { class: "muted small", text: "Our comp: nobody close enough among the starters." }));
-        else comps.append(el("p", { class: "muted small", text: `Our comp once his report is complete (${fmtLooks(pr.looks)} of 3 looks).` }));
+        if (pr.our_comp) comps.append(el("b", { text: "Our comp: " }), comp(pr.our_comp));
+        else if (pr.looks >= 3) comps.append(el("span", { class: "muted", text: "Our comp: nobody close enough among the starters." }));
       }).catch(() => { /* the grades stand without the comps */ });
       return out;
     }
@@ -1692,9 +1697,10 @@
   // range (or the single final grade), and with `details` (the profile's grade_details) a "looks like" tooltip
   // on each, opened on hover, focus or tap. The listeners sit on the grid and find the cell under the event,
   // so cells redrawn or patched later keep working; gradeTips adds the tooltips to a grid drawn without them.
-  function gradeGrid(pid, grades, details) {
-    const grid = el("div", { class: "go-grades" }, Object.entries(grades).map(([g, r]) => el("div", { class: "go-stat", "data-group": g }, [
-      el("div", { class: "go-kicker muted", text: GROUP_NAMES[g] || g }), el("div", { class: "go-stat-val" }, wordRange(r))])));
+  // plain: the grades as bold words in their tone color, no chips (the pane's Scouting sub-tab)
+  function gradeGrid(pid, grades, details, plain) {
+    const grid = el("div", { class: `go-grades${plain ? " go-grades-plain" : ""}` }, Object.entries(grades).map(([g, r]) => el("div", { class: "go-stat", "data-group": g }, [
+      el("div", { class: "go-kicker muted", text: GROUP_NAMES[g] || g }), el("div", { class: "go-stat-val" }, plain ? gradePlain(r) : wordRange(r))])));
     if (details) gradeTips(grid, pid, grades, details);
     return grid;
   }
@@ -1869,7 +1875,7 @@
     if (p.our_grades) {
       // hover (or tab to) a grade: what prospects in this class graded like that look like
       node.append(gradeGrid(pid, p.our_grades, p.grade_details || {}),
-        el("p", { class: "muted small go-grades-note", text: gradesNote(looks, true) }),
+        el("p", { class: "muted small go-grades-note", text: gradesNote(looks) }),
         ...(inPane ? [] : [el("div", { class: "go-row wrap rc-profile-actions" }, [scoutBtn])]));
       node.append(p.our_comp ? el("p", {}, [el("b", { text: "Our comp: " }), comp(p.our_comp)])
         : el("p", { class: "muted", text: looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp once his report is complete (${fmtLooks(looks)} of 3 looks).` }));
