@@ -66,6 +66,12 @@ p .off-contract { margin-left: 6px; }
 /* the Staff step's "Your staff developed" rows: the rating tags wrap, text case kept ("Evaluation 61 → 64 (+3)") */
 .off-dev li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .off-dev .go-tag { text-transform: none; letter-spacing: 0; }
+/* while an advance is out: a cover on top, the stage under it dimmed and inert (web/offseason.js holdTab) */
+.off-busy { position: sticky; top: 8px; z-index: 5; display: flex; align-items: center; gap: 14px; border: 1px solid var(--accent); margin-bottom: 14px; }
+.off-busy p { margin: 4px 0 0; }
+.off-busy-spin { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--accent); border-right-color: transparent; animation: go-spin 800ms linear infinite; }
+.off-held > :not(.off-busy) { opacity: 0.55; }
+@media (prefers-reduced-motion: reduce) { .off-busy-spin { animation: none; } }
 
 /* ---------- the stage header and the AD's meeting: room to breathe ---------- */
 .off-head { padding: 28px 32px 26px; gap: 16px; }

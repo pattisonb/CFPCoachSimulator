@@ -749,9 +749,18 @@ def _recruiting_call(fn, *args, **kwargs):
         raise ApiError(404 if e.message in ("unknown prospect",) else e.code, e.message) from e
 
 
-def _offseason_state(season_id: str) -> dict:
-    """A career whose season is over, with its offseason open (opened on first ask)."""
+def _offseason_state(season_id: str, p: Optional[Params] = None) -> dict:
+    """A career whose season is over, with its offseason open (opened on first ask). Given the
+    call's params, an optional body field `stage` (the stage the page drew) must still be the
+    offseason's stage: a click queued behind an advance is refused (409) instead of landing on a
+    later stage or on the next season. Callers that omit it are not checked."""
     st = _career_state(season_id, change=True)
+    drawn = _field(p, "stage", str, None) if p is not None else None
+    if drawn is not None:
+        off = st.get("offseason") if st.get("done") else None
+        if not off or off.get("stage") != drawn:
+            name = offseason.STAGE_NAMES.get(drawn, "an earlier stage")
+            raise ApiError(409, f"The offseason has moved on: this was for {name}.")
     if not st.get("done"):
         raise ApiError(409, "the season is not over")
     if not st.get("offseason"):
@@ -1020,7 +1029,7 @@ def offseason_view(p: Params) -> dict:
 @route("POST", "/api/season/{season_id}/offseason/advance")
 def offseason_advance(p: Params) -> dict:
     """The next offseason stage; past the last one (or with to="next_season"), the next season."""
-    st = _offseason_state(p.path["season_id"])
+    st = _offseason_state(p.path["season_id"], p)
     to = _field(p, "to", str, None)
     if to == "next_season":
         offseason.run_all(st)
@@ -1036,7 +1045,7 @@ def offseason_advance(p: Params) -> dict:
 
 @route("POST", "/api/season/{season_id}/offseason/portal")
 def offseason_portal(p: Params) -> dict:
-    st = _offseason_state(p.path["season_id"])
+    st = _offseason_state(p.path["season_id"], p)
     pid, on = _field(p, "pid", str), _field(p, "on", bool, True)
     try:
         offers = offseason.portal_offer(st, pid, on)
@@ -1051,7 +1060,7 @@ def offseason_portal(p: Params) -> dict:
 @route("POST", "/api/season/{season_id}/offseason/redshirt")
 def offseason_redshirt(p: Params) -> dict:
     """Your call on one player's redshirt (the Departures step)."""
-    st = _offseason_state(p.path["season_id"])
+    st = _offseason_state(p.path["season_id"], p)
     pid, on = _field(p, "pid", str), _field(p, "on", bool, True)
     try:
         offseason.redshirt(st, pid, on)
@@ -1075,7 +1084,7 @@ def offseason_position_options(p: Params) -> dict:
 @route("POST", "/api/season/{season_id}/offseason/position")
 def offseason_position(p: Params) -> dict:
     """Move one of your players to another position for next season."""
-    st = _offseason_state(p.path["season_id"])
+    st = _offseason_state(p.path["season_id"], p)
     pid, pos = _field(p, "pid", str), _field(p, "pos", str)
     try:
         offseason.change_position(st, pid, pos)
@@ -1088,7 +1097,7 @@ def offseason_position(p: Params) -> dict:
 @route("POST", "/api/season/{season_id}/offseason/retain")
 def offseason_retain(p: Params) -> dict:
     """Keep them home: one move with a leaver (meet, promise a starting role, NIL from next year's budget, let him go)."""
-    st = _offseason_state(p.path["season_id"])
+    st = _offseason_state(p.path["season_id"], p)
     pid, action, nil = _field(p, "pid", str), _field(p, "action", str), _field(p, "nil", int, 0)
     try:
         offseason.retain(st, pid, action, nil=nil)
@@ -1101,7 +1110,7 @@ def offseason_retain(p: Params) -> dict:
 @route("POST", "/api/season/{season_id}/offseason/review")
 def offseason_review(p: Params) -> dict:
     """Your meeting with the AD: what you say, then his decision (firing happens only here)."""
-    st = _offseason_state(p.path["season_id"])
+    st = _offseason_state(p.path["season_id"], p)
     action, staff_id = _field(p, "action", str), _field(p, "staff_id", str, None)
     try:
         offseason.review_decide(st, action, staff_id=staff_id)
@@ -1114,7 +1123,7 @@ def offseason_review(p: Params) -> dict:
 @route("POST", "/api/season/{season_id}/offseason/job")
 def offseason_job(p: Params) -> dict:
     """Take a job offer (or, fired, an opening); team null stays put."""
-    st = _offseason_state(p.path["season_id"])
+    st = _offseason_state(p.path["season_id"], p)
     team = _field(p, "team", str, None)
     try:
         car = offseason.choose_job(st, team)
@@ -1126,7 +1135,7 @@ def offseason_job(p: Params) -> dict:
 
 @route("POST", "/api/season/{season_id}/offseason/hire")
 def offseason_hire(p: Params) -> dict:
-    st = _offseason_state(p.path["season_id"])
+    st = _offseason_state(p.path["season_id"], p)
     staff_id, index = _field(p, "staff_id", str), _field(p, "index", int)
     try:
         staff = offseason.hire(st, staff_id, index)
@@ -1139,7 +1148,7 @@ def offseason_hire(p: Params) -> dict:
 @route("POST", "/api/season/{season_id}/offseason/open_role")
 def offseason_open_role(p: Params) -> dict:
     """Let one of your own coaches go at the Staff step: he joins the market, his job gets candidates."""
-    st = _offseason_state(p.path["season_id"])
+    st = _offseason_state(p.path["season_id"], p)
     staff_id = _field(p, "staff_id", str)
     try:
         offseason.open_role(st, staff_id)
