@@ -1335,6 +1335,57 @@ def test_conversation(page, base) -> None:
             pass
 
 
+def test_news_bubbles(page, base) -> None:
+    """League news while simming: Sim the Week from the Office brings at least one .news-bubble (bottom-right, a
+    sentence and its week), which fades within a few seconds; with Settings' News switch off no bubble shows."""
+    from sim import season
+    st = season.new_season("smu", "full", seed=41, career=True)
+    season.save_season(st)
+    sid = st["id"]
+    errs = []
+    page.on("pageerror", lambda e: errs.append(str(e)))
+    try:
+        page.set_viewport_size({"width": 1280, "height": 1000})
+        page.goto(f"{base}/index.html?id={sid}")
+        page.evaluate("() => { try { localStorage.removeItem('cfp.news'); } catch (e) {} }")
+        open_tab(page, base, sid, "office", ".go-play [data-play=advance]")
+        assert not page.query_selector(".news-bubble"), "no news before a sim"
+        page.click("#tab-office .go-play [data-play=advance]")
+        page.wait_for_selector(".news-bubble", timeout=180_000)
+        b = page.eval_on_selector(".news-bubble:last-child", "e => { const r = e.getBoundingClientRect(); return [e.querySelector('.news-text').textContent, e.querySelector('.news-week').textContent, r.right, r.bottom, innerWidth, innerHeight, r.height]; }")
+        text, when, right, bottom, w, h, height = b
+        assert text[0].isupper() and text.endswith(".") and "null" not in text and "undefined" not in text, text
+        assert when.startswith("Week "), when
+        assert w - right < 40 and h - bottom < 120 and height >= 44, b
+        page.wait_for_function("() => !document.querySelector('.news-bubble')", timeout=60_000)   # every bubble fades
+        page.wait_for_selector(".go-play [data-play=advance]:not([disabled])", timeout=60_000)
+        # the News switch off: the next week shows none
+        page.click("#btn-settings")
+        page.click(".settings-row:has(b:text-is('News')) [role=switch]")
+        page.wait_for_function("() => document.querySelector('[role=switch][aria-label=News]').getAttribute('aria-checked') === 'false'")
+        assert page.evaluate("() => localStorage.getItem('cfp.news')") == "off"
+        page.keyboard.press("Escape")
+        before = call(base, f"/api/season/{sid}")["current_week"]
+        page.wait_for_selector(".go-play [data-play=advance]:not([disabled])", timeout=60_000)
+        page.click("#tab-office .go-play [data-play=advance]")
+        seen = False
+        for _ in range(240):
+            seen = seen or bool(page.query_selector(".news-bubble"))
+            if call(base, f"/api/season/{sid}/status")["status"] != "running" and call(base, f"/api/season/{sid}")["current_week"] > before:
+                break
+            time.sleep(0.25)
+        time.sleep(3)
+        seen = seen or bool(page.query_selector(".news-bubble"))
+        assert not seen, "News off: no bubble"
+        page.evaluate("() => { try { localStorage.removeItem('cfp.news'); } catch (e) {} }")
+        assert not errs, errs
+    finally:
+        try:
+            call(base, f"/api/season/{sid}", method="DELETE")
+        except Exception:  # noqa: BLE001
+            pass
+
+
 def test_sim_bar(page, base) -> None:
     """A three-week sim from the Office on a fresh career: the overlay's bar, sampled every 100 ms, never
     shrinks, shows under 100% while the sim runs and fills at the end; the stage line says what is happening."""
@@ -2542,6 +2593,7 @@ if __name__ == "__main__":
             test_grade_hover(page, base, A)
             test_flip_words(page, base)
             test_conversation(page, base)
+            test_news_bubbles(page, base)
             test_sim_bar(page, base)
             browser.close()
         assert not errors, errors
