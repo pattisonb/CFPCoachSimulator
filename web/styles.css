@@ -327,6 +327,9 @@ button.accent { background: #3ddc84; color: #04210f; border-color: #3ddc84; }
 .season-controls select { font: inherit; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
 .progress { height: 10px; background: var(--panel-2); border-radius: 5px; overflow: hidden; margin: 10px 0 6px; }
 .progress-bar { height: 100%; width: 0; background: var(--accent); transition: width 0.3s; }
+/* the sim bars: season.js draws them every 100 ms between statuses, so each step glides into the next */
+#sim-bar, #season-progress-bar { transition: width 0.15s linear; }
+@media (prefers-reduced-motion: reduce) { #sim-bar, #season-progress-bar { transition: none; } }
 .progress-text { font-size: 13px; margin-bottom: 4px; }
 .progress-text b { color: var(--text); font-weight: 600; }
 .season-head { margin-bottom: 12px; }

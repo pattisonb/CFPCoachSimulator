@@ -1335,6 +1335,38 @@ def test_conversation(page, base) -> None:
             pass
 
 
+def test_sim_bar(page, base) -> None:
+    """A three-week sim from the Office on a fresh career: the overlay's bar, sampled every 100 ms, never
+    shrinks, shows under 100% while the sim runs and fills at the end; the stage line says what is happening."""
+    sid = call(base, "/api/season", {"team": "smu", "seed": 5})["id"]
+    try:
+        page.goto(f"{base}/index.html?id={sid}")
+        page.wait_for_selector("#season:visible")
+        page.click("#season-tabs button[data-tab=office]")
+        page.wait_for_selector(".go-play [data-play=advance]", timeout=60_000)
+        page.click("#tab-office .go-play .go-play-more")
+        page.wait_for_selector(".go-menu .go-menu-item")
+        page.evaluate("""() => { window.__bar = []; window.__barTimer = setInterval(() => { const ov = document.getElementById('sim-overlay'); if (ov.hidden) return;
+            const bar = document.getElementById('sim-bar'); window.__bar.push([bar.getBoundingClientRect().width / bar.parentElement.getBoundingClientRect().width,
+            document.getElementById('sim-sub').textContent, document.getElementById('sim-stage').textContent]); }, 100); }""")
+        page.click(".go-menu .go-menu-item:has(b:text-is('Week 3'))")
+        page.wait_for_selector("#sim-overlay:visible", timeout=30_000)
+        page.wait_for_selector("#sim-overlay", state="hidden", timeout=300_000)
+        samples = page.evaluate("() => { clearInterval(window.__barTimer); return window.__bar; }")
+        assert len(samples) > 20, f"only {len(samples)} samples of the bar"
+        widths = [w for w, _, _ in samples]
+        back = [(a, b) for a, b in zip(widths, widths[1:]) if b < a - 0.002]
+        assert not back, f"the bar went back: {back[:3]}"
+        assert all(t != "100%" for _, t, _ in samples[:-1]), "100% before the sim was done"
+        assert widths[-1] > 0.8, f"the bar ended at {widths[-1]:.2f}"
+        assert page.evaluate("() => document.getElementById('sim-bar').style.width") == "100%", "the bar fills when the sim is done"
+        stages = {st for _, _, st in samples}
+        assert any(st.startswith("Playing Week 2 games · ") for st in stages), stages
+        assert not any("Simming" in st or "null" in st or "undefined" in st for st in stages), stages
+    finally:
+        call(base, f"/api/season/{sid}", method="DELETE")
+
+
 if __name__ == "__main__":
     try:
         from playwright.sync_api import sync_playwright
@@ -2510,6 +2542,7 @@ if __name__ == "__main__":
             test_grade_hover(page, base, A)
             test_flip_words(page, base)
             test_conversation(page, base)
+            test_sim_bar(page, base)
             browser.close()
         assert not errors, errors
         print("ux sweep ok: office, prospects, board (tabs, list, pane, menu, step, scene, phone, every action patching in place with its toast), scouting, schedule, depth, player page, an FCS box score and every offseason stage at 1280 and 400")

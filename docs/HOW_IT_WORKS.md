@@ -2045,11 +2045,21 @@ tools/profile_sim.py game|week` profiles the engine and a week; `tests/test_play
 prints the fingerprint of five seeded games that must not change when the engine is
 edited (7f1f625a5f714c6c).
 
-While a sim runs the page shows what the engine is doing, live: "Simming Week 7 · 38 of
-92 games", then "Updating the AP poll and CFP rankings", "Setting the conference title
-games", "Building the playoff bracket", "Selecting the bowls", and so on, with the bar
-counting weeks done plus the fraction of the current week's games (the status endpoint
-carries `stage`, `week`, `games_done` and `games_total`).
+While a sim runs the page shows what the engine is doing, live: "Playing Week 7 games · 38
+of 92", then "Updating the AP poll and CFP rankings", "Handing out the conference awards",
+"Recruiting week", "Setting the first round matchups", "Saving", and so on (the status
+endpoint carries `stage`, `week`, `games_done` and `games_total`). The bar follows the
+engine's `progress` (0 to 1 for the whole job): when an advance starts, `app/api.py` plans
+every week's work by part with `season.week_work` (a pre-game setup, one unit per game, the
+polls, the awards, the recruiting week, the save; the `PROGRESS_*` constants in
+`sim/season.py`, measured so one unit is about one game's time), re-plans each week as it
+begins, and reports work done over the plan's total, clamped so it never goes back and short
+of 1 until the job is over. So a 90-game week moves the bar much further than a one-game bowl
+week, and the recruiting week after the games moves it too. `week_frac` (the week's share)
+stays for older pages. The page draws the bar with a short width transition and, between
+statuses, a creep at the pace of the last ones capped at half the next expected step (none
+with reduced motion); the percentage follows the drawn bar and reads 100% only when the sim
+is done (`tests/test_sim_progress.py`, the ux sweep's `test_sim_bar`).
 
 `SIM_WORKERS` sets how many processes simulate games: unset uses the machine's cores
 (capped at 8); `1` simulates in-process, which the browser always does (Pyodide has no

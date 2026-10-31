@@ -1577,7 +1577,7 @@ def play_my_game(state: dict, pool: Optional[Pool] = None, report: Optional[Repo
     eid = my_game_id(state, week)
     if eid is None:
         return None
-    _run_games(state, [eid], pool, report, stage="Simming your game")
+    _run_games(state, [eid], pool, report, stage="Playing your game")
     return eid
 
 
@@ -1594,7 +1594,7 @@ def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter]
     week = state["current_week"] + 1
     _setup_week(state, week, teams, say)
     ids = [eid for eid, g in state["games"].items() if g["week"] == week and not g["played"]]
-    _run_games(state, ids, pool, report, stage=f"Simming {week_label(week)}")
+    _run_games(state, ids, pool, report, stage=f"Playing {week_label(week)} games")
 
     if week == CCG_WEEK:
         for g in state["games"].values():
@@ -1625,10 +1625,67 @@ def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter]
         say(_AWARD_STAGES[week])
         _award_step(state, teams, week)
     if state.get("recruiting"):
-        say("Recruiting")
+        say(RECRUITING_STAGE)
         recruiting.weekly_step(state, week, auto_recruit)
     schedule_ahead(state, say)
     return state
+
+
+# ----- sim progress ----------------------------------------------------------------------------
+# A week's work by part, so the progress bar moves with the clock: a 90-game week is long, a
+# one-game bowl week short, and the recruiting week after the games counts too. One unit is one
+# simulated game (about 65 ms in one process); measured on a seeded career, one process and four.
+PROGRESS_SETUP = 5            # *tune* before the games: matchups, seeds, the games' payloads (~0.3 s)
+PROGRESS_GAME = 1.0           # *tune* one game with its box score and stats (~65 ms)
+PROGRESS_POLLS = 2            # *tune* the AP poll, the CFP rankings and the bracket (~0.05 s)
+PROGRESS_AWARDS = 8           # *tune* a week that hands out awards (~0.1-0.9 s)
+PROGRESS_RECRUIT = 15         # *tune* a recruiting week (~0.6-1.5 s)
+PROGRESS_RECRUIT_FIRST = 40   # *tune* week 1's recruiting week, which builds the boards (~2.6-3.5 s)
+PROGRESS_RECRUIT_LATE = 25    # *tune* championship and selection weeks' recruiting (~1.3-2.8 s)
+PROGRESS_AHEAD = 1            # *tune* setting the next postseason games after the week
+PROGRESS_SAVE = 6             # *tune* writing the season (~0.2-0.7 s)
+PROGRESS_POSTSEASON_GAMES = {CCG_WEEK: 10, 17: 19, 18: 20, 19: 6, FINAL_WEEK: 1}   # *tune* games a postseason week has before its matchups are set
+PROGRESS_PARTS = ("setup", "games", "polls", "awards", "recruiting", "ahead", "save")   # the order a week runs them
+RECRUITING_STAGE = "Recruiting week"
+SAVING_STAGE = "Saving"
+
+
+def week_work(state: dict, week: int, only_mine: bool = False) -> dict[str, float]:
+    """The planned work of `week` by part (PROGRESS_PARTS), from the schedule as it stands:
+    the unplayed games (a postseason week not yet set counts the games it will have), the
+    polls, the awards, the recruiting week and the save. `only_mine`: game day (your game)."""
+    games = sum(1 for g in state["games"].values() if g["week"] == week and not g["played"])
+    if only_mine:
+        return {"setup": PROGRESS_SETUP, "games": PROGRESS_GAME, "save": PROGRESS_SAVE}
+    if week in PROGRESS_POSTSEASON_GAMES and week not in (state.get("matchups_set") or []):
+        games = max(games, PROGRESS_POSTSEASON_GAMES[week])
+    out = {"setup": PROGRESS_SETUP if games else 1.0, "games": games * PROGRESS_GAME}
+    if week <= CCG_WEEK or week == FINAL_WEEK:
+        out["polls"] = PROGRESS_POLLS
+    if week in _AWARD_STAGES:
+        out["awards"] = PROGRESS_AWARDS
+    if state.get("recruiting"):
+        out["recruiting"] = (PROGRESS_RECRUIT_FIRST if week == 1 else PROGRESS_RECRUIT_LATE if week in (CCG_WEEK, SELECTION_WEEK)
+                             else PROGRESS_RECRUIT)
+    out["ahead"] = PROGRESS_AHEAD
+    out["save"] = PROGRESS_SAVE
+    return out
+
+
+def progress_part(stage: Optional[str], games_total: Optional[int]) -> str:
+    """Which part of the week (PROGRESS_PARTS) a progress report's stage is. A matchup stage
+    after the games is the next week's games being set ("ahead"; the caller knows the order)."""
+    if games_total is not None:
+        return "games"
+    if stage == RECRUITING_STAGE:
+        return "recruiting"
+    if stage == SAVING_STAGE:
+        return "save"
+    if stage in _AWARD_STAGES.values():
+        return "awards"
+    if stage and stage.startswith(("Updating the", "Building the playoff", "Final AP poll")):
+        return "polls"
+    return "setup"
 
 
 def _heal(state: dict) -> None:

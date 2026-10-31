@@ -141,6 +141,8 @@ def test_two_weeks_match_native_and_reload_restores(browser, base: str, timings:
             timings[f"week {week}"], widths = sim_week(page)
             assert shim(page, f"/api/season/{sid}")["json"]["current_week"] == week
             assert len(widths) >= 2, f"no in-week progress reached the page: {widths} (week {week} took {timings[f'week {week}']:.1f}s)"
+            pcts = [float(w.rstrip("%")) for w in widths]
+            assert pcts == sorted(pcts) and all(x < 100 for x in pcts[:-1]), f"the worker's progress went back or showed 100% early: {widths}"
         b64 = page.evaluate(f"""CFP.game.fetch('/api/season/{sid}/export').then(async (r) => {{
             const b = new Uint8Array(await r.arrayBuffer()); let s = "";
             for (let i = 0; i < b.length; i += 8192) s += String.fromCharCode.apply(null, b.subarray(i, i + 8192));
