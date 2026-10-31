@@ -2,6 +2,7 @@
 number out of 100, depth-chart controls big enough to tap and never faint, labels that do not
 clip, buttons that say what they do, class codes that read, tooltips reachable by tap, and the
 confirms a one-tap skip needs. Needs Playwright with a Chromium; skipped without one."""
+import json
 import os
 import re
 import subprocess
@@ -1120,9 +1121,9 @@ def test_grade_hover(page, base, sid) -> None:
         # the Prospects tab's full profile (a modal)
         open_tab(page, base, sid, "prospects", ".go-list-row")
         page.fill("#tab-prospects input[type=search]", done["name"])
-        page.wait_for_selector(f"#tab-prospects .go-list-row:has-text('{done['name']}')", timeout=30_000)
+        page.wait_for_selector(f"#tab-prospects .go-list-row:has-text({json.dumps(done['name'])})", timeout=30_000)
         time.sleep(0.5)
-        page.click(f"#tab-prospects .go-list-row:has-text('{done['name']}') .go-list-id")
+        page.click(f"#tab-prospects .go-list-row:has-text({json.dumps(done['name'])}) .go-list-id")
         page.wait_for_selector(".modal .go-profile .go-grades .go-stat.go-tip", timeout=60_000)
         time.sleep(0.4)
         assert done["name"].upper() in page.inner_text(".modal .go-profile"), "the profile is his"
