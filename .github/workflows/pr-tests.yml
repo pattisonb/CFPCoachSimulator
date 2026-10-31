@@ -96,6 +96,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install playwright
           python -m playwright install --with-deps chromium
+          sudo apt-get install -y --no-install-recommends fonts-dejavu-core   # the browser tests' pinned font (tests/fonts-ci.conf)
 
       - name: Every Python file compiles, every script parses
         run: |

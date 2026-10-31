@@ -57,6 +57,9 @@ details.off-recap > summary::after { content: "▸"; color: var(--muted); margin
 details.off-recap[open] > summary::after { content: "▾"; }
 /* the Staff step's contracts: the through-year tag beside a staying member's name, a candidate's ask */
 .off-letgo .go-act .off-staff-name { font-size: inherit; color: inherit; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 4px; }
+/* a staff member's contract tag stays inside his button whatever the font: it may wrap, never poke out */
+.off-letgo .go-act { padding: 8px 10px; }
+.off-letgo .go-act .off-contract { white-space: normal; max-width: 100%; text-align: center; }
 .off-contract { vertical-align: middle; }
 p .off-contract { margin-left: 6px; }
 .off-cand-years { color: var(--text); }

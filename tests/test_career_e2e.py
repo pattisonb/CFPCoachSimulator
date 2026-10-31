@@ -36,8 +36,15 @@ def signed_with(base: str, sid: str, team: str) -> list[str]:
     return sorted(r["id"] for r in rows if r.get("signed") == team)
 
 
+FONTS_CONF = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts-ci.conf")
+
+
 def launch(p):
-    """Playwright's own Chromium, else one installed beside it (CI images, PLAYWRIGHT_BROWSERS_PATH)."""
+    """Playwright's own Chromium, else one installed beside it (CI images, PLAYWRIGHT_BROWSERS_PATH).
+    Its fonts are pinned (tests/fonts-ci.conf: sans-serif is the wide DejaVu Sans) where DejaVu is
+    installed, so a layout that only fits a narrow font fails the same way here and in CI."""
+    if not os.environ.get("FONTCONFIG_FILE") and glob.glob("/usr/share/fonts/**/DejaVuSans.ttf", recursive=True):
+        os.environ["FONTCONFIG_FILE"] = FONTS_CONF
     try:
         return p.chromium.launch()
     except Exception as first:  # noqa: BLE001 - try the installed builds before giving up
