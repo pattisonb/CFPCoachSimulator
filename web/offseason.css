@@ -15,7 +15,7 @@
 .off-sub { margin-top: 10px; }
 .off-list { margin: 6px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
 .off-list li { line-height: 1.4; }
-.off-list .go-tag { margin-left: 6px; }
+.off-list .go-tag { margin: 3px 0 3px 6px; }   /* wrapped tags (the coachability reasons) keep a gap between rows */
 .off-draft { padding-left: 0; list-style: none; }
 .off-filters { margin-top: 6px; }
 .off-scroll { overflow-x: auto; }
