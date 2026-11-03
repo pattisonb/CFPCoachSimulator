@@ -39,6 +39,13 @@ def signed_with(base: str, sid: str, team: str) -> list[str]:
 FONTS_CONF = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts-ci.conf")
 
 
+def menu_pick(page, name: str) -> None:
+    """☰ Menu's dropdown (a season open): open it and pick an item by its label, e.g. "Settings",
+    "Download Career", "Show the Top Bar" or "Hide the Top Bar"."""
+    page.click("#btn-menu")
+    page.click(f".go-menu .go-menu-item:has(b:has-text('{name}'))")
+
+
 def launch(p):
     """Playwright's own Chromium, else one installed beside it (CI images, PLAYWRIGHT_BROWSERS_PATH).
     Its fonts are pinned (tests/fonts-ci.conf: sans-serif is the wide DejaVu Sans) where DejaVu is
@@ -102,7 +109,7 @@ if __name__ == "__main__":
                 time.sleep(0.5)
             assert call(base, f"/api/season/{sid}")["current_week"] == 1, call(base, f"/api/season/{sid}")["current_week"]
             page.click(".go-play >> text=Sim to Signing Day")        # the Office is the only place time moves
-            page.wait_for_function("() => /Season complete|national champion/.test(document.querySelector('#season-meta').textContent)",
+            page.wait_for_function("() => /national champion/.test(document.querySelector('#team-chip').title)",
                                    timeout=900_000)
             summary = call(base, f"/api/season/{sid}")
             assert summary["done"] and summary["current_week"] == 20
@@ -116,7 +123,7 @@ if __name__ == "__main__":
             assert 0 < len(signed) <= spots, (len(signed), spots)
             # download, forget, load back
             with page.expect_download() as dl:
-                page.click("#btn-download-career")
+                menu_pick(page, "Download Career")                         # the career file waits behind ☰ Menu
             path = Path(tempfile.mkdtemp()) / "career.ccsave"
             dl.value.save_as(str(path))
             call(base, f"/api/season/{sid}", method="DELETE")
