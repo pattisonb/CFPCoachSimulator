@@ -93,7 +93,8 @@ if __name__ == "__main__":
     assert kept["potential"] == list(recruiting.grade_range(st, inside, "potential"))
     assert all(lo == hi for lo, hi in (recruiting.read_interval(st, inside, g) for g in recruiting.GROUPS)), "a complete report's read is one point per group"
     rc["board"] = []
-    assert inside not in {r["pid"] for r in prospects.scouting_view(st)["queue"]}, "a complete report off your board leaves the queue"
+    off = next(r for r in prospects.scouting_view(st, q=rc["prospects"][inside]["name"], limit=prospects.QUEUE_MAX)["queue"] if r["pid"] == inside)
+    assert off["can_send"] is False and off["why"] == prospects.REPORT_COMPLETE, "a complete report off your board stays listed, no Send"
     rc["board"] = [inside]
     try:
         send(st, inside)
@@ -125,7 +126,7 @@ if __name__ == "__main__":
     assert [r["pid"] for r in queue[:3]] == [near, far, inside], [r["pid"] for r in queue[:4]]
     assert queue[0]["looks"] == 2.0 and queue[1]["looks"] == 0 and queue[2]["looks"] == 3
     assert queue[0]["can_send"] and queue[1]["can_send"] and not queue[2]["can_send"]
-    assert all(r["looks"] < 3 for r in queue[3:]), "off the board, only open reports"
+    assert all(r["can_send"] == (r["looks"] < 3) for r in queue[3:]), "off the board a complete report stays listed with no Send"
 
     # ten weeks with trips along the way: nothing anywhere past 3 looks or 2 from an area
     for w in range(5, 15):

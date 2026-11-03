@@ -911,8 +911,8 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
     """The Scouting tab: your scouts and this week's yield (looks in trip units: an area week counts
     0.5), one page of the queue of recruits worth a trip (your board's one Send from complete first,
     then the board's open reports, then the board's complete reports (kept in view with no Send:
-    `can_send` False, `why` REPORT_COMPLETE), then the class's open reports by need and rank; a
-    complete report off your board is out of the queue; filtered by `q`
+    `can_send` False, `why` REPORT_COMPLETE), then the rest of the class by need and rank, a complete
+    report among them too (the tab is the prospect database: scouting a prospect never hides him); filtered by `q`
     on name or home state, `position`, `group`; `queue_total` counts the whole match), this and last
     week's reports from the look log, and your staff's flags this class (gems, bust risks, generational
     prospects and the recruits a coordinator likes: staff_likes), every row carrying `likes`; a queue row
@@ -954,7 +954,7 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
     board = [pid for pid in rc["board"] if pid in live]
     # one Send from complete first, then the board's open reports, then its complete ones (they stay listed: no Send, a Complete tag)
     board.sort(key=lambda pid: 2 if complete(pid) else 0 if recruiting.looks_left(rc["reads"].get(pid)) <= recruiting.SEND_LOOK else 1)
-    rest = sorted((pid for pid in recruiting.visible(state) if pid in live and pid not in rc["board"] and not complete(pid)),
+    rest = sorted((pid for pid in recruiting.visible(state) if pid in live and pid not in rc["board"]),
                   key=lambda pid: (-need[recruiting._group_of(rc["prospects"][pid])], rc["prospects"][pid]["rank"]))
     trips_of = lambda pid: ((rc["contacts"].get(pid) or {}).get(me) or {}).get("scouted", 0)
     matched = [pid for pid in board + rest if fits(rc["prospects"][pid])]

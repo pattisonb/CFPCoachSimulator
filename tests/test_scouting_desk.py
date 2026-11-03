@@ -6,6 +6,7 @@ it. Covers an old save without the log, a look that changes nothing, the queue's
 filters, and the portal. (Run as a file.)"""
 import sys as _sys
 from pathlib import Path as _Path
+import urllib.parse
 
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 
@@ -225,10 +226,10 @@ if __name__ == "__main__":
         recruiting._commit(st, yours, ME)
         v = G(sid, "scouting?limit=400")
         pids = {r["pid"] for r in v["queue"]}
-        assert target["pid"] not in pids and yours not in pids and v["queue_total"] == total - 2
-        assert all(r["can_send"] for r in v["queue"])
+        assert target["pid"] in pids and yours not in pids and v["queue_total"] == total - 1   # scouting never hides him; a commit does
+        assert all(r["can_send"] == (r["pid"] != target["pid"]) for r in v["queue"])
         # on your board his complete report stays in the queue (nothing to send: the Complete tag's text as `why`), after
-        # the board's open reports, his potential one final grade word; off the board again he is out
+        # the board's open reports, his potential one final grade word; off the board again he stays, no Send
         R(sid, "board", {"pid": target["pid"], "on": True})
         v = G(sid, "scouting?limit=400")
         rows = v["queue"]
@@ -239,11 +240,12 @@ if __name__ == "__main__":
         assert rows[i]["potential"][0] == rows[i]["potential"][1] in recruiting.WORDS, rows[i]["potential"]
         assert all(r["can_send"] and r["looks"] < 3 for r in rows[i + 1:])
         R(sid, "board", {"pid": target["pid"], "on": False})
-        assert target["pid"] not in {r["pid"] for r in G(sid, "scouting?limit=400")["queue"]}
+        off = next(r for r in G(sid, "scouting?limit=400")["queue"] if r["pid"] == target["pid"])
+        assert off["can_send"] is False and off["why"] == prospects.REPORT_COMPLETE, off
         rc["hours"][ME] = recruiting.HOURS["scout"] - 1
         v = G(sid, "scouting")
         assert v["hours_left"] == recruiting.HOURS["scout"] - 1
-        assert all(not r["can_send"] and r["why"] == "Not enough hours" for r in v["queue"])
+        assert all(not r["can_send"] and r["why"] == (prospects.REPORT_COMPLETE if r["looks"] >= 3 else "Not enough hours") for r in v["queue"])
         home = rc["prospects"][yours]["hometown"]["state"]
         area = next(a for a, codes in recruiting.AREAS.items() if home in codes)
         for s in v["scouts"]:
@@ -261,7 +263,8 @@ if __name__ == "__main__":
         assert all(set(f) == FLAG_KEYS and f["flag"] in FLAGS for f in v["flags"])
         found = next(f for f in v["flags"] if f["pid"] == gem)
         assert found["flag"] == "gem" and found["looks"] == rc["reads"][gem]["looks"] == 3 and found["standing_word"]
-        assert gem not in {r["pid"] for r in G(sid, "scouting?limit=400")["queue"]}, "a complete report is out of the queue"
+        named = urllib.parse.quote(rc["prospects"][gem]["name"])
+        assert any(r["pid"] == gem and not r["can_send"] for r in G(sid, f"scouting?limit=400&q={named}")["queue"]), "a complete report stays listed, no Send"
         rc["hours"][ME] = 50
         rc["reads"][gem]["g"]["potential"] = [70.0, 1000.0]
         before_flag = threes[1]

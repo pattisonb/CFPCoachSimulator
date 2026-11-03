@@ -124,6 +124,29 @@ def check_send_and_board(page, base, sid, errors) -> None:
     assert not errors, errors
 
 
+def check_complete_stays(page, base, sid, pid, name, errors) -> None:
+    """The player's report: a prospect off the board, scouted to a full report by hand, must not vanish. He stays
+    in the list (Complete, no Send), shows under Scouted, and is still there after a refresh."""
+    page.fill("#sc-search", name)
+    page.wait_for_selector(f".sc-row[data-pid='{pid}']", timeout=10_000)
+    page.click(f".sc-row[data-pid='{pid}'] .sc-row-btn")
+    wait_intel(page, name)
+    page.click("#sc-send")
+    toasted(page, f"Scouted {name} · 3 of 3 looks · his report is complete")
+    page.wait_for_function("(pid) => document.querySelector(`.sc-row[data-pid='${pid}'] .sc-looks-text`)?.textContent === '3/3'", arg=pid, timeout=10_000)
+    assert intel_name(page) == name, "the report still shows him"
+    page.wait_for_function("() => document.querySelector('#sc-send').disabled && /complete/.test(document.querySelector('.sc-why')?.textContent || '')", timeout=10_000)   # a complete report: no Send
+    page.click(".sc-chips [data-board=scouted]")
+    page.wait_for_selector(f".sc-row[data-pid='{pid}']", timeout=10_000)
+    reload(page)
+    wait_intel(page, name)            # still selected after a refresh (the search is not in the address, so he may be on a later page)
+    assert pid not in board_ids(base, sid) and tab_on(page, "scouting")
+    page.click(".sc-chips [data-board=all]")
+    page.fill("#sc-search", "")
+    page.wait_for_function("() => document.querySelectorAll('.sc-row').length > 5", timeout=10_000)
+    assert not errors, errors
+
+
 def check_flags(page, base, sid, errors) -> None:
     v = call(base, f"/api/season/{sid}/scouting?limit=400")
     flagged = next(r for r in v["queue"] if r["flags"] or r["likes"])
@@ -222,6 +245,8 @@ if __name__ == "__main__":
     for i, pid in enumerate(top):            # full reports this week on the class's top 30: gems, generational reads, Likes Him finds
         recruiting.look(st, pid, 90, random.Random(f"layout-{i}"), by="trip", weight=recruiting.REPORT_LOOKS)
     recruiting.look(st, near, 90, random.Random("layout-near"), by="trip", weight=2)   # one trip from complete: the long Send label
+    off = ranked[31]                          # off the board, one trip from complete: finishing him must not hide him
+    recruiting.look(st, off, 90, random.Random("layout-off"), by="trip", weight=2)
     season.save_season(st)
     A = st["id"]
     port = free_port()
@@ -250,6 +275,7 @@ if __name__ == "__main__":
             check_first_viewport(page, base, A, errors)
             check_select_and_subtab(page, base, A, errors)
             check_send_and_board(page, base, A, errors)
+            check_complete_stays(page, base, A, off, rc["prospects"][off]["name"], errors)
             check_flags(page, base, A, errors)
             check_ops(page, base, A, errors)
             check_reports(page, base, A, errors)

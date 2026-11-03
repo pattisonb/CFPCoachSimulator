@@ -1,7 +1,7 @@
 /* The Scouting tab (replaces Staff): the Scouting Center, master and detail.
    - The header: "Recruiting Intelligence / Class of 2027", SCOUTING CENTER, a subtitle and All Reports; beside it four
      stat cards: My Board, Full Reports, Scouting Queue (your trips this week) and Scouting Hours (left / total, a bar).
-   - Left, the Prospect Database: the recruits worth a trip (the API's queue), 20 to a page, with a search, the chips
+   - Left, the Prospect Database: the whole class you can see (the API's queue; a full report stays listed), 20 to a page, with a search, the chips
      All Prospects · My Board · Scouted, a position filter and a sort; a row is the board star, the avatar, the name,
      "POS · ST · stars", any flag, the rank, the potential read ("Unscouted" before a look) and the Scouting
      Confidence meter (three segments filled in halves, "1.5/3"). A row selects him; the list scrolls in its card.
@@ -152,7 +152,7 @@
     const all = el("button", { type: "button", id: "sc-all-reports", class: "go-btn sc-all-reports" }, ["All Reports", newCount]);
     ui().on(all, "click", () => openReports(s, "this_week"));
     // patchHead(v): the numbers from the latest view, each pulsing when it moved
-    const set = (node, text) => { if (node.textContent !== text) { const had = node.textContent; node.textContent = text; if (had) ui().pulse(node.closest(".sc-stat") || node); } };
+    const set = (node, text) => { if (node.textContent !== text) node.textContent = text; };
     cur.patchHead = (d) => {
       set(boardVal, String(cur.board));
       set(fullVal, String(d.full_reports || 0));
@@ -317,7 +317,7 @@
     btn.setAttribute("aria-label", `${r.name}, ${r.position}, ${r.state}, ${r.stars} stars, rank ${r.national_rank || "unranked"}${on ? ", on your board" : ""}: ${r.potential ? `potential ${rangeText(r.potential)}` : "unscouted"}, ${fmtLooks(looks)} of ${REPORT_LOOKS} looks`);
     const star = li.querySelector(".sc-star");
     const want = on ? "★" : "☆";
-    if (star.textContent !== want) { const had = star.textContent; star.textContent = want; star.classList.toggle("on", on); star.title = on ? "On your board" : "Not on your board"; if (had) ui().pulse(star); }
+    if (star.textContent !== want) { const had = star.textContent; star.textContent = want; star.classList.toggle("on", on); star.title = on ? "On your board" : "Not on your board"; }
     li.querySelector(".sc-name").textContent = r.name;
     li.querySelector(".sc-line").textContent = `${r.position} · ${r.state} · ${stars(r.stars)}`;
     const flags = li.querySelector(".sc-row-flags"), fkey = [...(r.flags || []), r.likes ? `likes:${r.likes.who}` : ""].join("|");
@@ -382,7 +382,7 @@
       paintIntel();
     };
     panel.__row = (row) => { if (sel.pid === row.pid) { sel.row = row; if (sel.pr) paintIntel(); } };
-    panel.__focus = () => { if (window.matchMedia("(max-width: 899px)").matches) panel.scrollIntoView({ block: "start", behavior: "smooth" }); };
+    panel.__focus = () => { if (window.matchMedia("(max-width: 899px)").matches) panel.scrollIntoView({ block: "start" }); };
     function paintIntel() {
       const { row: r, pr } = sel, p = pr.public;
       const looks = Math.min(REPORT_LOOKS, r.looks || 0), complete = looks >= REPORT_LOOKS;
@@ -580,7 +580,7 @@
       toggle.setAttribute("aria-expanded", String(open));
       manage.textContent = open ? "Hide Staff" : "Manage Staff";
       syncRoute();
-      if (open) { ui().fadeIn(body); bar.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+      if (open) bar.scrollIntoView({ block: "nearest" });
     };
     ui().on(toggle, "click", () => setOpen(!desk.ops));
     ui().on(manage, "click", () => setOpen(!desk.ops));
