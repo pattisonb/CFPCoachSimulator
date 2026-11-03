@@ -223,6 +223,19 @@ def board_cases(page, base: str, sid: str) -> None:
     open_tab(page, base, sid, "recruiting", ".go-stages")
     v = call(base, f"/api/season/{sid}/recruiting")
     assert v["hours_left"] >= 25, v["hours_left"]
+    # switching recruits and the pane's sub-tabs is navigation: no pulse, no fade anywhere
+    page.wait_for_selector(".go-row-recruit", timeout=30_000)
+    pids = page.eval_on_selector_all(".go-row-recruit", "els => els.map(e => e.dataset.pid)")[:4]
+    page.evaluate(QUIET_WATCH)
+    for pid in pids + pids[:2]:
+        page.click(f".go-row-recruit[data-pid='{pid}']")
+        time.sleep(0.4)
+    for sub in ("profile", "history", "scouting"):
+        if page.query_selector(f".go-pane .go-subtabs button[data-sub={sub}]"):
+            page.click(f".go-pane .go-subtabs button[data-sub={sub}]")
+            time.sleep(0.3)
+    loud = page.evaluate("() => { window.__quiet.obs.disconnect(); return window.__quiet.n; }")
+    assert loud == 0, f"switching recruits or sub-tabs flashed or faded {loud} time(s)"
     b = next(x for x in v["board"] if not x["offered"] and not x["committed"] and not x["signed"] and not x.get("scene") and not (x.get("looks") or 0))
     page.click(f".go-row-recruit[data-pid='{b['id']}']")
     time.sleep(1.2)                       # the pick's own smooth scroll ends
