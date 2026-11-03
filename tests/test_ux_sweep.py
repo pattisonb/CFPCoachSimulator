@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from test_career_e2e import call, free_port, launch   # noqa: E402
+from test_career_e2e import call, free_port, launch, menu_pick   # noqa: E402
 
 CLASS_CODE = re.compile(r"\b(FR|SO|JR|SR)RS\b")
 OUT_OF_100 = re.compile(r"\b\d{1,3}\s*(/|of)\s*100\b")
@@ -542,10 +542,10 @@ def test_scouting_tab(page, base, sid) -> None:
 
 def check_header(page, base, sid) -> None:
     """No season open: the toolbar shows New season and Load career. A season open: they fold into Seasons ▾, whose
-    menu lists the seasons and starts a new career end to end; the header card keeps no time-moving control (the
-    Office's play card holds Sim the week, Game day, Sim to selection day, Sim to signing day and the week picker);
-    past the card a sticky bar shows the record and an Office button and the pane's --sticky-top grows by it; at
-    400 px the bar is the default and its ▾ opens the header row; the tabs are one row."""
+    menu lists the seasons and starts a new career end to end; no header card and no time-moving control outside the
+    Office's play card (Sim the week, Game day, Sim to selection day, Sim to signing day and the week picker);
+    Settings and Download Career sit on the Office only; the tab bar's team chip names the team and its record;
+    the tabs are one row (the slim header: tests/test_slim_header.py)."""
     page.set_viewport_size({"width": 1280, "height": 1000})
     page.goto(f"{base}/index.html")
     page.wait_for_selector("#btn-new:visible")
@@ -553,15 +553,26 @@ def check_header(page, base, sid) -> None:
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#season:visible")
     time.sleep(0.6)
+    assert not page.is_visible(".topbar"), "a season open: the top bar waits behind ☰ Menu"
+    menu_pick(page, "Show the Top Bar")
     assert page.is_visible("#btn-seasons-menu"), "a season open: the Seasons menu button"
     for sel in ("#btn-new", "#btn-load-career", "#btn-seasons", "#pick-team"):
         assert not page.is_visible(sel), f"{sel} shows with a season open"
     assert not page.query_selector("#btn-advance, #btn-to-end, #btn-to-selection, #advance-to, #btn-gameday"), "the header keeps no time-moving control"
-    assert page.is_visible("#btn-settings") and page.is_visible("#btn-download-career"), "Settings and Download career stay in the header"
-    # the Office's play card
+    assert not page.query_selector(".season-head, #season-title, #season-compact"), "no season banner"
     s = call(base, f"/api/season/{sid}")
+    chip = page.inner_text("#team-chip")
+    assert s["team_name"] in chip and f"{s['record']['wins']}-{s['record']['losses']}" in chip, chip
+    page.click("#season-tabs button[data-tab=stats]")
+    assert not page.is_visible("#btn-settings") and not page.is_visible("#btn-download-career"), "Settings and Download Career live behind ☰ Menu"
+    # the Office's play card
     page.click("#season-tabs button[data-tab=office]")
     page.wait_for_selector(".go-play [data-play=advance]", timeout=60_000)
+    assert not page.is_visible("#btn-settings") and not page.is_visible("#btn-download-career"), "not on the Office either: ☰ Menu"
+    page.click("#btn-menu")
+    items = page.eval_on_selector_all(".go-menu .go-menu-item b", "els => els.map(e => e.textContent)")
+    assert items == ["⚙ Settings", "Download Career", "Hide the Top Bar"], items
+    page.keyboard.press("Escape")
     labels = page.eval_on_selector_all("#tab-office .go-play button", "els => els.map(e => e.textContent.trim())")
     assert labels[0] == "Sim the Week", labels
     assert "Sim to Selection Day" in labels and "Sim to Signing Day" in labels and "▾" in labels, labels
@@ -594,31 +605,12 @@ def check_header(page, base, sid) -> None:
     page.wait_for_function("(id) => { const q = new URLSearchParams(location.search).get('id'); return q && q !== id && !document.querySelector('#season').hidden; }", arg=sid, timeout=180_000)
     new_id = page.evaluate("() => new URLSearchParams(location.search).get('id')")
     assert call(base, f"/api/season/{new_id}")["team"] == "akron", "the new career from the menu is Akron's"
-    assert "AKRON" in page.inner_text("#season-title").upper()
+    page.wait_for_function("() => /Akron/i.test(document.querySelector('#chip-name').textContent)", timeout=30_000)
     call(base, f"/api/season/{new_id}", method="DELETE")
-    # past the header card: the compact bar, the pane below it
+    menu_pick(page, "Hide the Top Bar")                           # the bar hidden again, the default
+    # the Recruiting pane keeps below the sticky tab bar
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#season:visible")
-    page.click("#season-tabs button[data-tab=stats]")        # a long page: it scrolls well past the header
-    page.wait_for_selector("#tab-stats .leader-row", timeout=60_000)
-    assert not page.is_visible("#season-compact"), "at the top the full card shows, no bar"
-    sticky0 = page.evaluate("() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sticky-top'))")
-    page.evaluate("() => window.scrollTo(0, 800)")
-    page.wait_for_selector("#season-compact:visible", timeout=10_000)
-    bar = page.inner_text("#season-compact")
-    assert f"{s['record']['wins']}-{s['record']['losses']}" in bar and "up next" in bar, bar
-    assert page.is_visible("#btn-compact-office") and page.is_visible("#btn-compact-more")
-    time.sleep(0.3)
-    sticky1 = page.evaluate("() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sticky-top'))")
-    bar_h = page.evaluate("() => document.querySelector('#season-compact').getBoundingClientRect().height")
-    top_h = page.evaluate("() => document.querySelector('.topbar').getBoundingClientRect().height")   # the top bar hid on the way down (check_topbar_hide)
-    assert abs((sticky1 - sticky0) - (bar_h - top_h)) <= 2, (sticky0, sticky1, bar_h, top_h)
-    page.click("#btn-compact-more")
-    page.wait_for_selector(".go-menu .go-menu-item:has-text('Settings')")
-    page.keyboard.press("Escape")
-    page.evaluate("() => window.scrollTo(0, 0)")
-    page.wait_for_function("() => document.querySelector('#season-compact').hidden", timeout=10_000)
-    # the Recruiting pane keeps below the bar
     page.click("#season-tabs button[data-tab=recruiting]")
     page.wait_for_selector(".go-row-recruit", timeout=60_000)
     page.click(".go-row-recruit >> nth=0")
@@ -626,26 +618,9 @@ def check_header(page, base, sid) -> None:
     page.evaluate("() => window.scrollTo(0, 800)")
     time.sleep(0.5)
     if page.evaluate("() => window.scrollY") > 300:
-        r = page.evaluate("() => ({ pane: document.querySelector('.go-pane').getBoundingClientRect().top, bar: document.querySelector('#season-compact').getBoundingClientRect().bottom, on: !document.querySelector('#season-compact').hidden })")
-        assert r["on"] and r["pane"] >= r["bar"] - 1, r
-    # the Office button in the bar opens the Office with the focus on Sim the week
-    page.click("#btn-compact-office")
-    page.wait_for_selector("#tab-office:visible .go-play")
-    assert page.evaluate("() => document.activeElement && document.activeElement.dataset.play === 'advance'"), "Office: the focus lands on Sim the week"
-    # a phone: the bar is the default; ▾ opens the header row as a sheet
-    page.set_viewport_size({"width": 400, "height": 860})
-    page.goto(f"{base}/index.html?id={sid}")
-    page.wait_for_selector("#season:visible")
-    page.click("#season-tabs button[data-tab=schedule]")
-    page.wait_for_selector(".schedule-pick", timeout=60_000)
-    page.wait_for_selector("#season-compact:visible", timeout=10_000)
-    assert not page.is_visible(".season-head-row"), "a phone folds the header row"
-    page.click("#btn-compact-more")
-    page.wait_for_selector(".season-head-row:visible", timeout=10_000)
-    assert page.is_visible("#btn-settings")
-    page.keyboard.press("Escape")
-    page.wait_for_function("() => !document.body.classList.contains('head-sheet')")
-    page.set_viewport_size({"width": 1280, "height": 1000})
+        r = page.evaluate("() => ({ pane: document.querySelector('.go-pane').getBoundingClientRect().top, bar: document.querySelector('#season-tabs').getBoundingClientRect().bottom })")
+        assert r["pane"] >= r["bar"] - 1, r
+    page.evaluate("() => window.scrollTo(0, 0)")
 
 
 # ----- position changes any time (pos-anytime brief, Part B): the Depth Chart's Position control -----
@@ -720,117 +695,6 @@ def check_nil_review(page, base, sid) -> None:
         assert "portal fund" not in text, text
     for why in n.get("reward_why") or []:
         assert why in text, (why, text)
-
-
-# ----- the top bar hides while a season scrolls (topbar-hide brief) -----
-
-def check_topbar_hide(page, base, sid) -> None:
-    """A season open, past its own height the top bar slides up and the compact bar sits flush at the top;
-    scrolling up 24 px, the pointer at the top edge, the focus inside it or the Seasons menu bring it back;
-    the compact ▾ carries Seasons, Your coach and Theme (the Theme entry toggles data-theme); with no season
-    open and on the Your coach page it never hides."""
-    page.set_viewport_size({"width": 1280, "height": 1000})
-    hidden = "() => document.querySelector('.topbar').classList.contains('topbar-hidden')"
-    rects = """() => ({ bar: document.querySelector('.topbar').getBoundingClientRect().bottom,
-        compact: document.querySelector('#season-compact').getBoundingClientRect().top,
-        tabs: document.querySelector('#season-tabs').getBoundingClientRect().top,
-        tbh: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--topbar-h')) })"""
-    open_tab(page, base, sid, "stats", "#tab-stats .leader-row")        # a long page: it scrolls well past the header
-    # a few weeks into the season the Stats page scrolls only ~520 px; give it room, as the checks below do
-    page.evaluate("() => { document.body.style.minHeight = '4000px'; }")
-    assert not page.evaluate(hidden), "at the top the bar shows"
-    page.evaluate("() => window.scrollTo(0, 800)")
-    page.wait_for_function(hidden, timeout=10_000)
-    page.wait_for_selector("#season-compact:visible", timeout=10_000)
-    time.sleep(0.5)                                                        # the 160 ms slide, twice over
-    r = page.evaluate(rects)
-    assert r["bar"] <= 0, f"the hidden bar is still on screen: {r}"
-    assert abs(r["compact"]) <= 1, f"the compact bar sits flush at the top while the bar hides: {r}"
-    assert r["tbh"] == 0, f"--topbar-h is 0 while the bar hides: {r}"
-    assert abs(r["tabs"] - page.evaluate("() => document.querySelector('#season-compact').getBoundingClientRect().height")) <= 1, f"the tab row sits under the compact bar: {r}"
-    # scrolling up 60 px brings it back
-    page.evaluate("() => window.scrollTo(0, 740)")
-    page.wait_for_function(f"() => !({hidden})()", timeout=10_000)
-    time.sleep(0.4)
-    r = page.evaluate(rects)
-    assert r["bar"] > 40 and r["tbh"] > 40 and abs(r["compact"] - r["tbh"]) <= 1, f"the bar is back and the compact bar sits under it: {r}"
-    # scrolling on hides it; the pointer at the top edge brings it back
-    page.evaluate("() => window.scrollTo(0, 900)")
-    page.wait_for_function(hidden, timeout=10_000)
-    page.mouse.move(600, 500)
-    page.mouse.move(600, 2)
-    page.wait_for_function(f"() => !({hidden})()", timeout=10_000)
-    # the keyboard: the focus inside the bar brings it back
-    page.mouse.move(600, 500)
-    page.evaluate("() => window.scrollTo(0, 1000)")
-    page.wait_for_function(hidden, timeout=10_000)
-    page.focus("#btn-seasons-menu")
-    page.wait_for_function(f"() => !({hidden})()", timeout=10_000)
-    # the Seasons menu keeps it on screen while open
-    page.click("#btn-seasons-menu")
-    page.wait_for_selector(".season-menu .go-menu-item")
-    page.evaluate("() => window.scrollTo(0, 1100)")
-    time.sleep(0.4)
-    assert not page.evaluate(hidden), "the bar stays while its Seasons menu is open"
-    page.keyboard.press("Escape")
-    # the compact ▾ carries the bar's essentials
-    page.evaluate("() => window.scrollTo(0, 1200)")
-    page.wait_for_function(hidden, timeout=10_000)
-    page.click("#btn-compact-more")
-    page.wait_for_selector(".go-menu .go-menu-item:has-text('Settings')")
-    names = page.eval_on_selector_all(".go-menu .go-menu-item b", "els => els.map(e => e.textContent)")
-    assert "Seasons" in names and "Your Coach" in names and any("theme" in n.lower() for n in names), names
-    assert names.index("Your Coach") > names.index("Seasons") > names.index("⚙ Settings"), names
-    theme0 = page.evaluate("() => document.documentElement.dataset.theme")
-    page.click(".go-menu .go-menu-item:has-text('theme')")
-    time.sleep(0.2)
-    theme1 = page.evaluate("() => document.documentElement.dataset.theme")
-    assert theme1 != theme0 and theme1 in ("light", "dark"), (theme0, theme1)
-    page.click("#btn-compact-more")
-    page.click(".go-menu .go-menu-item:has-text('theme')")
-    time.sleep(0.2)
-    assert page.evaluate("() => document.documentElement.dataset.theme") == theme0, "the Theme entry toggles back"
-    page.click("#btn-compact-more")
-    page.wait_for_selector(".go-menu .go-menu-item:has-text('Seasons')")
-    page.click(".go-menu .go-menu-item:has-text('Seasons')")
-    page.wait_for_selector(".season-menu .go-menu-item:has-text('New season')", timeout=10_000)
-    assert page.get_attribute("#btn-compact-more", "aria-expanded") == "true", "the Seasons menu from the compact bar anchors to its ▾"
-    page.keyboard.press("Escape")
-    assert not page.query_selector(".go-menu")
-    # a phone: the same entries in the compact bar's sheet
-    page.set_viewport_size({"width": 400, "height": 860})
-    page.goto(f"{base}/index.html?id={sid}")
-    page.wait_for_selector("#season:visible")
-    page.wait_for_selector("#season-compact:visible", timeout=10_000)
-    page.click("#btn-compact-more")
-    page.wait_for_selector(".season-head-row:visible", timeout=10_000)
-    assert page.is_visible("#btn-sheet-seasons") and page.is_visible(".season-sheet-links a[href='./coach.html']") and page.is_visible("#btn-sheet-theme"), "the sheet carries Seasons, Your coach and Theme"
-    page.click("#btn-sheet-theme")
-    time.sleep(0.2)
-    assert page.evaluate("() => document.documentElement.dataset.theme") != theme0
-    page.click("#btn-sheet-theme")
-    time.sleep(0.2)
-    assert page.evaluate("() => document.documentElement.dataset.theme") == theme0
-    page.keyboard.press("Escape")
-    page.wait_for_function("() => !document.body.classList.contains('head-sheet')")
-    # no season open: scrolling never hides it
-    page.set_viewport_size({"width": 1280, "height": 1000})
-    page.goto(f"{base}/index.html")
-    page.wait_for_selector("#btn-new:visible")
-    page.evaluate("() => { document.body.style.minHeight = '4000px'; window.scrollTo(0, 800); }")
-    time.sleep(0.4)
-    page.evaluate("() => window.scrollTo(0, 1200)")
-    time.sleep(0.4)
-    assert not page.evaluate(hidden) and page.evaluate("() => document.querySelector('.topbar').getBoundingClientRect().bottom") > 40, "no season open: the bar stays"
-    # the Your coach page: never hidden
-    page.goto(f"{base}/coach.html")
-    page.wait_for_selector(".topbar")
-    page.evaluate("() => { document.body.style.minHeight = '4000px'; window.scrollTo(0, 800); }")
-    time.sleep(0.4)
-    page.evaluate("() => window.scrollTo(0, 1200)")
-    time.sleep(0.4)
-    assert not page.evaluate(hidden) and page.evaluate("() => document.querySelector('.topbar').getBoundingClientRect().bottom") > 40, "Your coach: the bar stays"
-    page.evaluate("() => window.scrollTo(0, 0)")
 
 
 def test_look_units_pane(page, base, sid) -> None:
@@ -1393,7 +1257,7 @@ def test_news_bubbles(page, base) -> None:
         assert len(after) <= 2 and all(b["week"] == last for b in after), ("news after the sim stopped", after)
         page.wait_for_function("() => !document.querySelector('.news-bubble')", timeout=60_000)
         # the News switch off: the next week shows none
-        page.click("#btn-settings")
+        menu_pick(page, "Settings")
         page.click(".settings-row:has(b:text-is('News')) [role=switch]")
         page.wait_for_function("() => document.querySelector('[role=switch][aria-label=News]').getAttribute('aria-checked') === 'false'")
         assert page.evaluate("() => localStorage.getItem('cfp.news')") == "off"
@@ -2553,7 +2417,6 @@ if __name__ == "__main__":
 
             check_header(page, base, A)
             check_position_change(page, base, A)
-            check_topbar_hide(page, base, A)
 
             # --- Offseason, every stage: no number out of 100, no run-together class codes
             page.goto(f"{base}/index.html?id={B}")

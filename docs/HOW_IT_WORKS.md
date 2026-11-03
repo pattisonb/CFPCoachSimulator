@@ -1695,31 +1695,34 @@ potential: the top tier's starters 63-64 in 2027 before settling), so year two l
 **Advancing, only from the Office.** The Office's play card is the one place time moves: **Sim
 the week** plays every game this week (yours included, unless you played it on **Game day**, drive
 by drive), **Sim to Selection Day** and **Sim to Signing Day** jump ahead, and the ▾ beside them
-picks any week to sim through; the recruiting weeks between run on Auto. The season header keeps
-no time-moving control, only Settings and Download career; its line leads with your next game
-(opponent and rank). Clicking a week on the schedule or standings only looks at it. The staff
+picks any week to sim through; the recruiting weeks between run on Auto. Nothing outside the
+Office moves time. Clicking a week on the schedule or standings only looks at it. The staff
 live on the Office and the coach page.
 
-**The compact header.** With a season open the top bar's team picker, New season, Seasons and
-Load career fold into one **Seasons ▾** menu (the saved seasons, New season, Load career, Clear
-all; the side panel serves the empty state only). Once the page scrolls past the header card a
-one-line bar sticks under the top bar (`#season-compact`): the team, the record and rank, what is
-up next (or the offseason stage), an **Office** button and ▾ (settings, the career file). On a
-phone the bar is the default and the header row opens from its ▾ as a sheet, so the Office is the
-first thing on screen. The career tabs and the League tabs share one scrolling row.
+**The slim header** (`season.js` `renderChip`, `setTopbarShown`, `syncWeeksPanel`). With a season
+open there is no season banner: the tab bar is the top of the page, a little slimmer (36 px tabs,
+4 px padding; 44 px on a phone), and sticks to the top on a wide screen. Its left end is a **team
+chip**: the team mark, the school, then small "#7 · 3-1 · Week 5" (the rank only when ranked, CFP
+once the committee ranks; "Offseason" once the games are done, "Final" for an older plain season).
+Its title carries the longer line the banner used to show (the next game, the sim date, the
+champion). A sim's statuses patch it week by week (`liveHead`), so the record ticks up while it
+runs. The week strip keeps its own panel on the season's screens (Schedule, Standings, Rankings
+and the rest); the career screens leave it out, and a one-week sim's bar shows there.
 
-**The top bar hides while a season scrolls** (`season.js` `onTopbarScroll`, `setTopbarHidden`;
-`.topbar.topbar-hidden`). With a season open the sticky top bar slides up out of view (a
-transform, 160 ms; instant under reduced motion) once the page has scrolled past the bar's own
-height, and `--topbar-h` goes to 0 in the same breath so the compact bar and the tab row ride up
-flush at the top (their sticky `top` transitions at the same pace). It slides back when the player
-scrolls up 24 px or more, reaches the top, puts the mouse in the top 8 px of the window, focuses
-anything inside it (Tab) or opens its Seasons menu, and it never hides while that menu is open.
-There is no "show the bar" button: scrolling up or the pointer at the top edge reveals it, and the
-compact bar's ▾ menu carries the bar's essentials after a divider (Seasons, which opens the same
-Seasons menu anchored to the ▾; Your coach; Light theme / Dark theme, the switch it makes), as
-does the phone's sheet. With no season open, on the Your coach page, and on a phone (where the bar
-is not sticky and scrolls away on its own) it never hides.
+**The top bar is hidden while a season is open.** **☰ Menu** at the right end of the tab bar (first
+on a phone, before the chip) is a dropdown: ⚙ Settings (waits while a sim runs), Download Career (a
+career) and Show/Hide the Top Bar, which puts the bar (Seasons ▾, Your Coach, the theme) above the tabs
+or takes it away; a class on the body (`topbar-off`), no redraw, no animation. The choice is kept per browser
+(`localStorage` `cfp.topbar`, "1" shown). With no season open, and on the Your Coach page, the bar
+always shows. With a season open its team picker, New Season, Seasons and Load Career fold into one
+**Seasons ▾** menu (the saved seasons, New Season, Load Career, Clear All; the side panel serves the
+empty state only). Nothing hides or shows on scroll any more.
+
+**Settings and Download Career** live behind ☰ Menu in a career, on every tab. Their buttons
+(`#season-tools`, `#btn-settings`, `#btn-download-career`) stay in the page, hidden, and the menu
+clicks them; an older plain season, which has no Office, still shows them as buttons on every screen.
+The depth chart screen keeps its own ⚙ Settings in its sidebar. `tests/test_slim_header.py` checks all of
+it at 1280 and 400 px.
 
 **NIL economy** (`coach_career/recruiting.py` `portal_pool`, `reward`, `carry_over`; spec
 `docs/superpowers/specs/2026-10-30-nil-economy-design.md`). The season budget B is the
@@ -2104,9 +2107,7 @@ chips, the progress bar, your row in tables) is the first of the team's primary,
 secondary and accent colors that reads against the page in the current light or dark
 theme (contrast at least 2.6 to the background and panels); if none does, the primary is
 pushed toward white or black until it does. The ink on the accent is black or white,
-whichever contrasts more. The top bar and the season header's title band are solid in
-the primary with a line of the secondary, their buttons take the first other team color
-that reads against the primary, the page background is washed in the primary at the top,
+whichever contrasts more. The page background is washed in the primary at the top,
 and panel headings and the active tab take the accent. Michigan is maize on dark and navy on light, Penn State is
 navy on light and white on dark, Oregon is green on light and yellow on dark, and so on;
 the accent is re-picked when the theme toggle flips.
@@ -2574,7 +2575,7 @@ setting off and that moods, form and the boosts move with results when it is on.
 
 ### Settings and god mode
 
-The ⚙ Settings button next to the sim buttons opens the season's settings. God mode
+⚙ Settings in ☰ Menu (and the depth chart's sidebar) opens the season's settings. God mode
 lets you edit every player and every depth chart: any player card gets an Edit button
 (ratings 0-99, jersey, class, height, weight and development trait; names and positions
 stay, since the season's stats are keyed on them) and every team's depth chart becomes

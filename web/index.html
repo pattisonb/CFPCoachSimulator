@@ -37,7 +37,7 @@
     <a class="moved-go" href="https://cfp-coach-simulator.vercel.app/">Go to the New Site</a>
   </div>
   <script>if (/\.github\.io$/.test(location.hostname)) document.getElementById("moved-banner").hidden = false;</script>
-  <header class="topbar">
+  <header class="topbar" id="site-topbar">
     <div class="brand">
       <a class="brand-link" href="./" aria-label="CFP Coach Simulator home">
         <img class="brand-icon" src="./favicon.svg" alt="" width="28" height="28" />
@@ -79,42 +79,9 @@
         note.hidden = false; })();</script>
 
       <div id="season" hidden>
-        <div id="season-compact" class="season-compact" hidden>
-          <span class="sc-team"><span id="sc-pill"></span><b id="sc-abbr"></b></span>
-          <span id="sc-rec" class="sc-rec"></span>
-          <span id="sc-rank" class="sc-rank" hidden></span>
-          <span id="sc-next" class="sc-next"></span>
-          <span class="sc-actions">
-            <button id="btn-compact-office" class="ghost small" type="button" hidden title="Open the Office: this week's steps and the sim buttons">Office</button>
-            <button id="btn-compact-more" class="ghost small" type="button" aria-label="More: settings and the career file" aria-haspopup="menu" aria-expanded="false">▾</button>
-          </span>
-        </div>
-        <div class="panel season-head">
-          <div class="season-head-row">
-            <div>
-              <div id="season-title"></div>
-              <div id="season-meta" class="muted"></div>
-            </div>
-            <div class="season-actions">
-              <button id="btn-settings" class="ghost" type="button" title="Season settings: god mode and more">⚙ Settings</button>
-              <button id="btn-download-career" class="ghost" type="button" hidden title="Save this career as a file to keep or open on another device">Download Career</button>
-            </div>
-            <!-- a phone's sheet only: the top bar's essentials, since the bar scrolls away -->
-            <div class="season-sheet-links">
-              <button id="btn-sheet-seasons" class="ghost" type="button" aria-haspopup="menu" title="Your saved seasons, a new season, a career file">Seasons ▾</button>
-              <a class="ghost" href="./coach.html">Your Coach</a>
-              <button id="btn-sheet-theme" class="ghost" type="button">Light Theme</button>
-            </div>
-          </div>
-          <div id="season-progress" class="progress" hidden><div id="season-progress-bar" class="progress-bar"></div></div>
-          <div id="season-progress-text" class="progress-text muted" hidden></div>
-          <div id="career-steps" class="career-steps" hidden></div>
-          <div id="week-strip" class="week-strip"></div>
-          <div id="week-date" class="week-date muted"></div>
-        </div>
-        <div id="season-head-end" class="season-head-end" aria-hidden="true"></div>
-
         <nav class="tabs" id="season-tabs" aria-label="Season sections">
+          <!-- the tab bar is the top of the page in a season: the team chip, the tabs, and ☰ Menu (it shows the top bar) -->
+          <span id="team-chip" class="team-chip"><span id="chip-pill" class="chip-pill"></span><span class="chip-text"><b id="chip-name"></b><small id="chip-line"></small></span></span>
           <div class="tab-row">
             <button data-tab="office" type="button" hidden>Office</button>
             <button data-tab="offseason" type="button" hidden>Offseason</button>
@@ -134,7 +101,16 @@
             <button data-tab="awards" class="league" type="button">Awards</button>
             <button data-tab="summary" class="league" type="button" hidden>Summary</button>
           </div>
+          <button id="btn-menu" class="ghost tab-menu" type="button" aria-haspopup="menu" aria-expanded="false" title="Settings, Download Career and the top bar">☰ Menu</button>
         </nav>
+        <!-- the week strip (the season's screens) and a one-week sim's bar -->
+        <div class="panel season-weeks" id="season-weeks">
+          <div id="season-progress" class="progress" hidden><div id="season-progress-bar" class="progress-bar"></div></div>
+          <div id="season-progress-text" class="progress-text muted" hidden></div>
+          <div id="career-steps" class="career-steps" hidden></div>
+          <div id="week-strip" class="week-strip"></div>
+          <div id="week-date" class="week-date muted"></div>
+        </div>
 
         <div class="panel" id="sim-overlay" hidden>
           <div class="sim-head">
@@ -147,6 +123,11 @@
           </div>
           <div class="progress"><div id="sim-bar" class="progress-bar"></div></div>
           <div id="sim-results" class="sim-results"></div>
+        </div>
+        <!-- Settings and the career file: the Office's top right (any screen of an older plain season) -->
+        <div id="season-tools" class="season-tools">
+          <button id="btn-settings" class="ghost small" type="button" title="Season settings: god mode and more">⚙ Settings</button>
+          <button id="btn-download-career" class="ghost small" type="button" hidden title="Save this career as a file to keep or open on another device">Download Career</button>
         </div>
         <div class="panel tab-body" id="tab-games"></div>
         <div class="panel tab-body" id="tab-schedule" hidden></div>
