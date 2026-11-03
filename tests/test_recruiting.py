@@ -162,6 +162,7 @@ if __name__ == "__main__":
     week0 = st["current_week"]
     q = next(x for x in rc["prospects"] if x not in rc["contacts"] and not rc["prospects"][x].get("hidden"))
     rc["hours"]["ohio-state"] = 100
+    rc["prospects"][q]["persona"] = {"personality": "business", "decider": "self", "decider_topic": None}     # a plain recruit: a Guarded or Shy one keeps his priority to himself on a call
     r = recruiting.act(st, "ohio-state", q, "call")
     sc = r["scene"]
     assert r["hours_left"] == 85 and sc["action"] == "call" and len(sc["lines"]) == 1 and sc["cue"] is None, "the cue waits on your opening"

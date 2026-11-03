@@ -464,13 +464,19 @@ def ask_view(state: dict, slug: str, pid: str) -> dict:
     return {"lo": max(0, min(ask - 5, _five(ask * lo))), "hi": max(ask + 5, _five(ask * hi))}     # a range in fives that straddles the number
 
 
-def nil_value(p: dict, nil: int, ask: int) -> float:
-    """The interest NIL on an offer is worth: in full up to his ask, NIL_OVER past it."""
-    return NIL_VALUE.get(tier_of(p), 0.1) * (min(nil, ask) + NIL_OVER * max(0, nil - ask))
+def nil_value(p: dict, nil: int, ask: int, state: Optional[dict] = None) -> float:
+    """The interest NIL on an offer is worth: in full up to his ask, NIL_OVER past it (with `state`,
+    as his personality and decider read it: a Trainer counts it in full to 1.2 times his ask, an
+    All Business recruit a third more)."""
+    rate, cap = (NIL_OVER, math.inf) if state is None else persona.nil_over(state, p["id"])
+    edge = min(nil, cap * ask)                         # past his ask up to here NIL counts at `rate`, beyond it at NIL_OVER
+    value = min(nil, ask) + rate * max(0, edge - ask) + NIL_OVER * max(0, nil - max(edge, ask))
+    mult = 1.0 if state is None else persona.offer_mult(state, p["id"])
+    return NIL_VALUE.get(tier_of(p), 0.1) * value * mult
 
 
-def is_lowball(nil: int, ask: int) -> bool:
-    return nil < LOWBALL * ask or (nil == 0 and ask >= LOWBALL_MIN)
+def is_lowball(nil: int, ask: int, share: float = LOWBALL) -> bool:
+    return nil < share * ask or (nil == 0 and ask >= LOWBALL_MIN)
 
 
 def cooled(state: dict, slug: str, pid: str) -> bool:
@@ -505,7 +511,7 @@ def would_pester(state: dict, slug: str, pid: str) -> bool:
     if slug != state.get("team"):
         return False
     c = (state["recruiting"]["contacts"].get(pid) or {}).get(slug) or {}
-    if c.get("n", 0) < PESTER_FREE or _pester_exempt(state, slug, pid):
+    if c.get("n", 0) < persona.pester_free(state, pid) or _pester_exempt(state, slug, pid):
         return False
     return not_considering(state, slug, pid)
 
@@ -1154,18 +1160,22 @@ def offer_cap(state: dict, slug: str) -> int:
     return math.ceil(OFFER_FACTOR * open_spots(state, slug))
 
 
-def _contact_points(state: dict, slug: str, p: dict, action: str, pitch: Optional[str]) -> float:
+def _contact_points(state: dict, slug: str, p: dict, action: str, pitch: Optional[str], first_call: bool = False) -> float:
     """What one action is worth to the prospect before diminishing returns: the pitch on one of
-    his priorities counts by your strength there (and backfires where you are weak); any other
-    topic counts a little."""
+    his priorities (or his decider's topic) counts by your strength there (and backfires where you
+    are weak); any other topic counts a little. His personality scales it (persona.pitch_mult)."""
+    pid = p["id"]
+    mult = persona.pitch_mult(state, pid, action, pitch, first_call)
+    if action == "offer":
+        mult *= persona.offer_mult(state, pid)
     if pitch is None:
-        return BASE_POINTS[action]
-    strength = strengths(state, slug, p["id"])[pitch]
-    if pitch in p["priorities"]:
+        return BASE_POINTS[action] * mult
+    strength = strengths(state, slug, pid)[pitch]
+    if persona.counts_as_priority(state, pid, pitch):
         if strength < BACKFIRE:
             return -BACKFIRE_COST * BASE_POINTS[action]
-        return BASE_POINTS[action] * (PITCH_PRIORITY[0] + PITCH_PRIORITY[1] * strength)
-    return BASE_POINTS[action] * (PITCH_OTHER[0] + PITCH_OTHER[1] * strength)
+        return BASE_POINTS[action] * (PITCH_PRIORITY[0] + PITCH_PRIORITY[1] * strength) * mult
+    return BASE_POINTS[action] * (PITCH_OTHER[0] + PITCH_OTHER[1] * strength) * mult
 
 
 def best_pitch(state: dict, slug: str, pid: str, required: bool = False) -> Optional[str]:
@@ -1307,7 +1317,7 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
         if truthful:
             points = ANSWER_PROMISE
         else:
-            points = -ANSWER_HOLLOW
+            points = -ANSWER_HOLLOW * persona.hollow_mult(state, pid)
             contact["cooled_until"] = week + 1
             _event(state, "not_buying", pid, slug, topic="playing_time")
         contact.setdefault("promises", []).append({"kind": q["kind"], "about": q["about"], "week": week, "broken": None})
@@ -1554,8 +1564,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         if nil:
             _nil(state, slug)["held"][pid] = nil
         _event(state, "offer", pid, slug, nil=nil)
-        points = nil_value(p, nil, ask)
-        if is_lowball(nil, ask):                # he reads it as a lowball: no points for the offer, and he cools on the school
+        points = nil_value(p, nil, ask, state)
+        if is_lowball(nil, ask, persona.lowball_share(state, pid)):                # he reads it as a lowball: no points for the offer, and he cools on the school
             contact["cooled_until"] = week + COOL_WEEKS
             contact["lowball"] = True
         else:
@@ -1574,7 +1584,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         _nil(state, slug)["held"][pid] = nil
         if you:
             _event(state, "raise_nil", pid, slug, nil=nil)
-        points = nil_value(p, nil, ask) - nil_value(p, held, ask)
+        points = nil_value(p, nil, ask, state) - nil_value(p, held, ask, state)
         if nil >= ask and contact.get("cooled_until"):     # meeting his ask ends the cooling
             contact.pop("cooled_until", None)
             points += _contact_points(state, slug, p, "offer", None)      # and the offer itself counts now
@@ -1609,7 +1619,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             raise RecruitingError(409, "answer him first")
         if pitch is None:
             raise RecruitingError(400, "a pitch: what you are selling him")
-        if pitch in p["priorities"]:                  # he tells you plainly when it is one of his
+        tells = sc["action"] != "call" or persona.call_reveals(state, slug, pid, roll=False)   # a Guarded or first-call Shy recruit keeps it to himself on a call
+        if pitch in p["priorities"] and tells:        # he tells you plainly when it is one of his
             seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
             if pitch not in seen:
                 seen.append(pitch)
@@ -1617,7 +1628,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         del rc["scenes"][slug][pid]
         if points:                                    # the points are the call's or the visit's; its hours went when it opened
             _add_points(state, slug, pid, points * scale, sc["action"])
-        return pitch if pitch in p["priorities"] else None      # a hit or a quiet one tells you his priority
+        return pitch if pitch in p["priorities"] and tells else None      # a hit or a quiet one tells you his priority
     elif action == "scout":                        # a scouting trip: your best evaluator's look, no contact with him
         contact["scouted"] = contact.get("scouted", 0) + 1       # trips sent, a tally; the gate is his report's looks
         if you:
@@ -1644,7 +1655,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             revealed = _reveal(state, slug, pid)
             contact["asked"] = True
         elif action == "call":                        # a call: sometimes a priority, and about what he wants
-            if random.Random(f"call-{rc['seed']}-{slug}-{pid}-{week}").random() < CALL_REVEAL:
+            if persona.call_reveals(state, slug, pid):
                 revealed = _reveal(state, slug, pid)
             if contact.get("asked") is not True:
                 contact["asked"] = "range"
@@ -1666,7 +1677,7 @@ def _contact_land(state: dict, slug: str, p: dict, contact: dict, action: str, p
     points that grow with each pester, the pitch ignored, his ask from you up (not Auto-recruit's,
     never an AI school's)."""
     pid = p["id"]
-    if not auto and slug == state.get("team") and contact["n"] >= PESTER_FREE and not _pester_exempt(state, slug, pid):
+    if not auto and slug == state.get("team") and contact["n"] >= persona.pester_free(state, pid) and not _pester_exempt(state, slug, pid):
         if not not_considering(state, slug, pid):
             contact.pop("pester", None)           # he is considering you: the old pesters are forgotten
         else:
@@ -1678,13 +1689,17 @@ def _contact_land(state: dict, slug: str, p: dict, contact: dict, action: str, p
             if cooled(state, slug, pid):
                 points *= COOLED_CONTACT
             contact["n"] += 1
+            if action == "call":
+                contact["calls"] = contact.get("calls", 0) + 1
             return points
-    points = _contact_points(state, slug, p, action, pitch) / (1 + DIMINISH * contact["n"])
+    points = _contact_points(state, slug, p, action, pitch, first_call=action == "call" and not contact.get("calls")) / (1 + DIMINISH * contact["n"])
     if points < 0:
         _event(state, "not_buying", pid, slug, topic=pitch)
     if cooled(state, slug, pid):
         points *= COOLED_CONTACT
     contact["n"] += 1
+    if action == "call":
+        contact["calls"] = contact.get("calls", 0) + 1
     return points
 
 
@@ -2008,7 +2023,7 @@ def flip_weekly(state: dict, pid: str, gap: float, firmness: Optional[float] = N
         firmness = st.get("firmness") or FIRM_START
     if firmness >= HARD_AT:
         return 0.0
-    return 2 * DECOMMIT_RATE * _logistic(gap / FLIP_MARGIN) * (100 - firmness) / 100
+    return 2 * DECOMMIT_RATE * _logistic(gap / FLIP_MARGIN) * (100 - firmness) / 100 * persona.decommit_mult(state, pid)
 
 
 def flip_by_signing(state: dict, pid: str, gap: float, weeks_left: int) -> float:
@@ -2249,6 +2264,7 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     start_log = len(rc["log"])
     rng = random.Random(f"recruiting-{rc['seed']}-{'portal-' if rc.get('portal') else ''}{week}")
     _flush(state, week)                # your week's actions land
+    persona.cool_quiet(state, week)    # a recruit who loves the attention cools on a school gone quiet
     if not rc.get("portal"):
         _visits(state, week)
     scout_week(state, week + 1 if rc.get("portal") else week)   # the portal's week counter moves after the step

@@ -8,6 +8,7 @@ from pathlib import Path as _Path
 
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 
+from coach_career import persona
 from coach_career import recruiting
 from coach_career import scenes
 from sim import season
@@ -252,7 +253,7 @@ def test_tired(st: dict, used: set) -> None:
     """A call that pesters him: he is short on the phone, your opening earns nothing."""
     rc = st["recruiting"]
     pid = cold(st, used, lambda q: rc["lists"][q] and recruiting.not_considering(st, ME, q) and not recruiting._pester_exempt(st, ME, q))
-    rc["contacts"].setdefault(pid, {})[ME] = {"n": recruiting.PESTER_FREE, "hc_week": None}
+    rc["contacts"].setdefault(pid, {})[ME] = {"n": persona.pester_free(st, pid), "hc_week": None}
     assert recruiting.would_pester(st, ME, pid)
     sc = act(st, pid, "call")["scene"]
     assert sc["tired"] is True and sc["turns"][1]["text"] in scenes.CONTEXT["tired"], sc["turns"]

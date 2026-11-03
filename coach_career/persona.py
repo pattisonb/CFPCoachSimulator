@@ -30,3 +30,108 @@ def of(state: dict, pid: str) -> dict:
     if "persona" not in p:
         p["persona"] = draw(pid, rc.get("seed", 0))
     return p["persona"]
+
+
+# ----- what the personality and the decider change in recruiting --------------------------------------
+
+ATTENTION_GAP = 2                # weeks without a contact before a Loves-the-Attention recruit cools on a school *tune*
+COCKY_PITCH = 1.3                # Cocky: playing time and prestige pitches count this much more *tune*
+SHY_VISIT = 1.5                  # Shy: an in-home visit counts this much more *tune*
+SHY_FIRST_CALL = 0.5             # Shy: his first call from a school counts this much *tune*
+BUSINESS_MESSAGE = 0.3           # All Business: a message counts this much *tune*
+BUSINESS_OFFER = 1.3             # All Business: an offer and its NIL count this much more *tune*
+DECIDER_VISIT = 1.2              # an in-home visit on the topic his decider cares about counts this much more *tune*
+COCKY_LOWBALL, TRAINER_LOWBALL = 0.7, 0.8     # the share of his ask under which an offer is a lowball *tune*
+TRAINER_OVER = 1.2               # the Trainer counts NIL at full value up to this multiple of his ask *tune*
+COCKY_HOLLOW = 2.0               # Cocky: a hollow promise costs this many times more *tune*
+ATTENTION_PESTER_FREE = 5        # Loves the Attention: contacts before more start to pester *tune*
+GUARDED_DECOMMIT = 0.5           # Guarded: his weekly decommit chance is this share of the usual *tune*
+
+
+def pitch_mult(state: dict, pid: str, action: str, pitch, first_call: bool = False) -> float:
+    """What his personality and decider do to a pitch's worth (before diminishing returns)."""
+    d = of(state, pid)
+    k, m = d["personality"], 1.0
+    if k == "cocky" and pitch in ("playing_time", "prestige"):
+        m *= COCKY_PITCH
+    elif k == "shy":
+        if action == "hc_visit":
+            m *= SHY_VISIT
+        elif action == "call" and first_call:
+            m *= SHY_FIRST_CALL
+    elif k == "business" and action == "message":
+        m *= BUSINESS_MESSAGE
+    if action == "hc_visit" and pitch is not None and pitch == d["decider_topic"]:
+        m *= DECIDER_VISIT
+    return m
+
+
+def counts_as_priority(state: dict, pid: str, pitch) -> bool:
+    """A pitch on one of his priorities, or on the topic his decider cares about, lands as a priority."""
+    p = state["recruiting"]["prospects"][pid]
+    return pitch in p["priorities"] or (pitch is not None and pitch == of(state, pid)["decider_topic"])
+
+
+def lowball_share(state: dict, pid: str) -> float:
+    """The share of his ask under which an offer reads as a lowball."""
+    from coach_career import recruiting
+    d = of(state, pid)
+    if d["personality"] == "cocky":
+        return COCKY_LOWBALL
+    if d["decider"] == "trainer":
+        return TRAINER_LOWBALL
+    return recruiting.LOWBALL
+
+
+def nil_over(state: dict, pid: str) -> tuple:
+    """(the share of value NIL past his ask counts, up to what multiple of his ask it counts that way)."""
+    from coach_career import recruiting
+    if of(state, pid)["decider"] == "trainer":
+        return (1.0, TRAINER_OVER)
+    return (recruiting.NIL_OVER, float("inf"))
+
+
+def offer_mult(state: dict, pid: str) -> float:
+    return BUSINESS_OFFER if of(state, pid)["personality"] == "business" else 1.0
+
+
+def hollow_mult(state: dict, pid: str) -> float:
+    return COCKY_HOLLOW if of(state, pid)["personality"] == "cocky" else 1.0
+
+
+def pester_free(state: dict, pid: str) -> int:
+    from coach_career import recruiting
+    return ATTENTION_PESTER_FREE if of(state, pid)["personality"] == "attention" else recruiting.PESTER_FREE
+
+
+def call_reveals(state: dict, slug: str, pid: str, roll: bool = True) -> bool:
+    """Whether a call tells the school one of his priorities: never for Guarded, not on the first call
+    for Shy, otherwise today's roll (`roll=False`: only the personality's gate, for a scene's pitch)."""
+    from coach_career import recruiting
+    k = of(state, pid)["personality"]
+    if k == "guarded":
+        return False
+    if k == "shy" and not (state["recruiting"]["contacts"].get(pid, {}).get(slug) or {}).get("calls", 0):
+        return False
+    if not roll:
+        return True
+    rc = state["recruiting"]
+    return random.Random(f"call-{rc['seed']}-{slug}-{pid}-{state['current_week']}").random() < recruiting.CALL_REVEAL
+
+
+def decommit_mult(state: dict, pid: str) -> float:
+    return GUARDED_DECOMMIT if of(state, pid)["personality"] == "guarded" else 1.0
+
+
+def cool_quiet(state: dict, week: int) -> None:
+    """A Loves-the-Attention recruit cools on a school that has not been in touch for ATTENTION_GAP weeks."""
+    rc = state["recruiting"]
+    for pid, by in rc["contacts"].items():
+        if rc["status"][pid]["signed"]:
+            continue
+        for c in by.values():
+            last = c.get("last_contact")
+            if last is None or last > week - ATTENTION_GAP or (c.get("cooled_until") or -1) >= week + 1:
+                continue
+            if of(state, pid)["personality"] == "attention":
+                c["cooled_until"] = week + 1
