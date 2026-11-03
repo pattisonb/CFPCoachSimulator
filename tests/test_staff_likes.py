@@ -122,12 +122,12 @@ if __name__ == "__main__":
         prof = G(sid, f"prospect/{qb}")
         assert prof["likes"] == {"who": "OC", "name": staff["OC"], "text": TEXT["OC"]}, prof["likes"]
         assert prospects.staff_likes(st, t, ME) is None and G(sid, f"prospect/{t}")["likes"] is None
-        v = G(sid, "scouting")
+        v = G(sid, "scouting?sort=board")
         assert all("likes" in r for r in v["queue"])
         assert all(r["likes"] is None for r in v["queue"] if r["looks"] < 3), "an open report has no like yet"
         kept = {r["pid"]: r for r in v["queue"] if r["looks"] >= 3}
         assert set(kept) >= {qb, d, k} and all(kept[pid]["likes"]["who"] for pid in (qb, d, k)), "the board's complete reports stay in the queue with the like"
-        assert all(r["pid"] in rc["board"] for r in kept.values()), "a complete report off the board is out of the queue"
+        assert all(not r["can_send"] for r in kept.values()), "a complete report stays listed with no Send, on the board or off"
         liked = {f["pid"]: f for f in v["flags"] if f["flag"] == "likes"}
         assert set(liked) >= {qb, d, k}, (set(liked), qb, d, k)
         assert liked[qb]["likes"]["who"] == "OC" and liked[qb]["looks"] == 3
@@ -155,7 +155,7 @@ if __name__ == "__main__":
         ppid = next(pid for pid in prc["prospects"] if prc["prospects"][pid].get("portal"))
         force_read(pst, ppid, +40.0)
         assert prospects.staff_likes(pst, ppid, ME) is None
-        assert all(f["flag"] != "likes" for f in G(sid, "scouting")["flags"])
+        assert all(f["flag"] != "likes" for f in G(sid, "scouting?sort=board")["flags"])
         print(f"staff likes ok: {liked_names[0]} (QB, OC), {liked_names[1]} ({liked_names[2]}, DC),"
               f" {liked_names[3]} ({liked_names[4]}, {who}); {len(liked)} liked in the Flags list; none in the portal")
     finally:

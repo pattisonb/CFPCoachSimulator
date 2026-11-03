@@ -1086,10 +1086,10 @@ would start by his real rating is not liked while the read sits under your start
 can be wrong the other way. Never in the portal, never once he has signed elsewhere. The tag
 (`go-tag good`, "OC Likes Him", the sentence as its title) sits once on the board's pane, among its
 tags after the ★/☆ priorities (the head keeps to his status chip); the profile says it in a line
-("Your DC, Matt Patricia, thinks he starts for you next year."); on the Scouting tab the report
-items and the Flags rows carry it, the Flags list has every liked recruit as a fourth kind (after
-the gems), and the queue's NAME cell shows a small "OC ♥" pill when the Send that completed his
-report won him over (a complete report stays in the queue while he is on your board). The weekly report says nothing.
+("Your DC, Matt Patricia, thinks he starts for you next year."); on the Scouting tab the report's
+Scouting sub-tab, the report items and the Flags rows carry it, the Flags list has every liked recruit
+as a fourth kind (after the gems), and a database row shows a small "OC ♥" pill once his report has
+won a coordinator over (a complete report stays in the database while he is on your board). The weekly report says nothing.
 
 **Calls and in-home visits are conversations** (`coach_career/scenes.py`). For you, a call or an
 in-home visit without a pitch opens a scene of `turns` (`you`, `him`, `note`). You open ("Hey
@@ -1251,46 +1251,67 @@ button rows keep 8 px between buttons, tag rows 6 px, cards 12 px of padding, an
 36 px tall (44 px on a phone), segment controls and the depth chart's compact controls aside
 (`tests/test_spacing.py`).
 
-**The Scouting tab** (`web/scouting.js`, `GET /api/season/{id}/scouting`) replaces Staff: a
-dashboard in three regions. My scouts, a compact row per staff member (every one of them, the DC
-included): avatar, name, role word (OC, DC, Recruiter), his evaluation word, the area dropdown
-(posts to `POST .../staff`; "Marcus Reed now scouts Texas") and a thin bar of this week's yield from
-the look log, "255 looks this week · 478 narrowed" (looks in trip units: each of his is half), with a
-flags count when there are any; "Not covered: …" is one
-muted line under the list. Reports beside it, with tabs This week · Last week · Flags: the looks
-grouped by scout (scout · area, "364 looks, 299 changed"), only the looks that changed a grade word
-or found a flag, in compact rows (stars, position, name, what changed, flag tags), past eight folded
-behind "Show All n"; Flags lists your staff's gems, bust risks and generational prospects this class,
-and the recruits a coordinator likes ("OC Likes Him", after the gems), with his looks and where he
-stands with you. A name anywhere opens him in the board's pane (he goes
-on your board if he was not); the pane's Scouting sub-tab links back to the reports. Under them the
-Scouting queue, a table of the recruits worth a trip (your board first, its complete reports last
-among them, then the class by your need and his rank), 25 to a page on the API's `offset`/`limit`/`queue_total` with "Showing 1 to 25 of
-1,204" and Previous · 1 2 … 49 · Next: columns BOARD (a "★ On board" pill and a left accent in the
-team color on your board's rows), NAME (avatar, name, "pos · stars · state"), NEED ("Need 2", or a
-muted "Set"), RANK, POTENTIAL (the word range, or "Not read"), LOOKS (three segments filled in
-halves, "1.5 of 3"; no separate trips count) and `Send (5h)`, which reads `Send (5h) · finishes his
-report` when one look is left, is grayed with the reason (Not enough hours) and gives way to a
-"Complete" tag (title "His report is complete: 3 of 3 looks") on a complete report; the queue lists
-the reports short of complete, your board's one Send from complete at the top, and keeps a
-complete report only while he is on your board (after the board's open reports: his LOOKS bar
-full, POTENTIAL one final word, the "OC ♥" pill when liked, `can_send` false with the tag's text
-as `why`); a complete report off your board is out of the queue. The help line under SCOUTING: "A full report is three looks. A
-trip is one look; a week in a scout's area is half a look, up to two. After four weeks in an area
-one trip finishes him." Above it the chips All ·
-On My Board · Not On My Board (the board ones client-side on one ask of the whole board, which the
-API lists first), the search (name or home state), position and roster-group filters and the hours
-pill; NEED, RANK, POTENTIAL and LOOKS sort the page shown (`aria-sort`). Send posts the `scout`
-action and patches the row in place: the LOOKS bar and POTENTIAL cell pulse, the look's before and
-after reads on a line under his row, a toast "Scouted Wesley Adams · 2.5 of 3 looks" ("· his
-report is complete" at 3), the hours pill patches, and the page refetches so every other Send
-follows `can_send` (a row whose report the Send just completed stays, with its tag); a click on the
-row itself opens him on the board. The pane's Scouting sub-tab heads its grade cards with a
-"Scouting Report" kicker, the looks bar (filled in halves), "2 of 3 Looks" and a "One Trip Finishes
-His Report" tag ("Report Complete" at 3); the cards give each grade once, as plain words in their
-tone color ("Weak–Fair" on one line), three a row (two on a phone), over one help line and a row with
-the "Reports on the Scouting Tab" link and, once complete, our comp. Its Recruit menu grays Scout
-with the 409 text once he is complete.
+**The Scouting tab** (`web/scouting.js`, `GET /api/season/{id}/scouting`) replaces Staff. It is the
+Scouting Center, master and detail, built from the player's mockup in the site's own look:
+
+- **The header**: the kicker "Recruiting Intelligence / Class of 2027", SCOUTING CENTER, one help line
+  ("Evaluate talent: a full report is three looks; a trip is one, a week in a scout's area half.") and
+  **All Reports** with a count of this week's finds ("3 New"). Beside it four stat cards: My Board (your
+  board's size, "Tracked Players"), Full Reports (`full_reports`: complete reports this class), Scouting
+  Queue (`trips_this_week`: your Sends this week) and Scouting Hours ("30 / 55" and a bar, `#sc-hours`).
+  On a phone the cards are a 2×2 grid.
+- **The Prospect Database** (left): every prospect you can see (`visible`), committed to you or signed
+  too (no Send; `why` says so), 20 to a page on `offset`/`limit`/`queue_total` ("1–20 of 3,810", ‹ 1 2 … 191 ›),
+  with a count pill, the search (name or home state), the chips All Prospects · My Board · Scouted (the
+  API's `on_board=1` and `scouted=1`: your board, or the prospects your staff has a read on), a position
+  filter and a sort (Rank by default, Board First, Need, Potential, Looks: the API's `sort`, over the whole
+  class, never just the page on screen). A row is a button: the board star (★ on your board), the
+  avatar, the name, "POS · ST · stars" with any flag badge (`flags`: Gem, Bust Risk, Generational) and
+  the "OC ♥" pill, then the rank, the potential read in its tone color on one line
+  ("Elite–All-American", or "Unscouted") and the Scouting Confidence meter (three segments filled in
+  halves, "1.5/3"). On a desktop the list scrolls inside its card so the page stays about one screen.
+- **The Player Intelligence Report** (right; under the database on a phone): the selected prospect,
+  the first row until you pick one. The portrait, name, "EDGE · Douglasville, GA · National Rank #8",
+  stars and a status pill (Fully Scouted, "1.5 of 3 Looks", Unscouted); boxes Potential, Team Need
+  ("5 Spots Open", "Set") and Report (Complete, In Progress, Not Started); the sub-tabs **Ratings** (a
+  Skill Breakdown: each grade group's word range from your staff's read as a bar over the six words,
+  Weak to All-American, the range lit in its tone; "Not Read" before a look; hovering a row gives what
+  the read looks like in ratings, as the profile's grade tips; no number the scouting does not
+  reveal), **Overview** (hometown, high school, build, archetype, rankings, where he stands, his top
+  schools, the public comp and the evaluation's strengths and concerns) and **Scouting** (his looks,
+  the flags, a coordinator's "Likes Him" with its sentence, our comp, this and last week's report lines
+  on him, and All Reports). Under them **Send Scout (5h)** ("· Finishes His Report" when one look is
+  left; disabled with the reason underneath: Not enough hours, or "His report is complete: 3 of 3
+  looks") and **Add to Board** / **Remove from Board** (the board's own confirm when that pulls a
+  standing offer), and **View Full Profile**, which opens the profile modal. Send posts the `scout`
+  action and patches in place: the row's meter pulses, the look's before and after reads show under
+  the boxes, a toast "Scouted Wesley Adams · 2.5 of 3 looks" ("· his report is complete" at 3), the
+  hours card patches and the page refetches so every row follows. The board button flips the row's
+  star and the My Board card with a toast ("Wesley Adams is on your board."). Neither leaves the tab.
+- **Scouting Operations** (bottom): a folded bar, "Staff assignments, regions and coverage", with the
+  scouts' areas in one line and **Manage Staff**. Opening it shows a card per staff member (every one,
+  the DC included): avatar, name, role word with the contract ("Recruiter · through 2028"), his
+  evaluation word, the area dropdown (posts to `POST .../staff`; toast "Marcus Reed now scouts Texas.")
+  and a thin bar of this week's yield, "255 looks this week · 478 narrowed", with a flags count; then
+  "Not covered: …". The cards morph in place after a change.
+- **All Reports** (the app's modal, token `reports`, `reports:last_week` or `reports:flags`): tabs This
+  Week · Last Week · Flags (n). The looks grouped by scout (scout · area, "364 looks, 299 changed"),
+  only the looks that changed a grade word or found a flag, in compact rows (stars, position, name,
+  what changed, flag tags), past eight folded behind "Show All n"; Flags lists your staff's gems, bust
+  risks and generational prospects this class and the recruits a coordinator likes, with his looks and
+  where he stands. Moving between tabs rewrites the modal's token in place (`retoken` in season.js's
+  helpers), so a refresh reopens the same tab.
+
+A prospect's name never puts him on your board or leaves the tab: a row selects him; a name in All
+Reports opens his Prospect Profile over the tab. The address keeps `qboard` (the chip), `ssort` (the sort), `spid` (the
+selected prospect), `ssub` (the sub-tab) and `sops` (Operations open), so a refresh lands on the same
+prospect and sub-tab. The pane's Scouting sub-tab links here with "Reports on the Scouting Tab", which
+opens All Reports; a profile's "Assign Your Staff →" opens Scouting Operations. The pane's Scouting
+sub-tab heads its grade cards with a "Scouting Report" kicker, the looks bar (filled in halves), "2 of
+3 Looks" and a "One Trip Finishes His Report" tag ("Report Complete" at 3); the cards give each grade
+once, as plain words in their tone color ("Weak–Fair" on one line), three a row (two on a phone), over
+one help line and a row with the link and, once complete, our comp. Its Recruit menu grays Scout with
+the 409 text once he is complete. `tests/test_scouting_layout.py` checks the tab in a browser.
 
 **The odds you see** (`prospects.odds`). Each offering school's chance to land a prospect is a
 softmax of his interest in it (`exp(interest / 3)`), against the field: the schools not yet in
@@ -1624,7 +1645,7 @@ next choice (`carousel.contract_holds`, one seeded draw a year). With his contra
 a recruiter leaves at twice his odds (24%, capped at 90%), a coordinator the carousel wanted
 leaves for sure and one it did not want still takes a coordinator job elsewhere 25% of the time.
 Whoever stays at expiry re-signs a term from the same ranges ("Re-signed through 2030" on the
-Staff step, `renewed` in the view); the Scouting tab's scout rows read "Recruiter · through 2028".
+Staff step, `renewed` in the view); the Scouting tab's Scouting Operations cards read "Recruiter · through 2028".
 A save from before contracts treats everyone as expiring once. Pay and the NIL cost of a
 higher-level coordinator come later (`ask` on the member is the hook, None for now).
 
@@ -2148,13 +2169,13 @@ anything; landing on one (a load, Back, Forward) draws the target tab, which cou
 | `week` | The week picked on the week strip (left out when it is the week up next) |
 | `stage`, `sort`, `pid`, `pane` | The recruiting board (also the offseason's portal board): the stage tab, the sort, the recruit in the pane, its sub-tab (`scouting`, `profile`, `history`) |
 | `ppos`, `pstars`, `pstate`, `pstatus`, `psort`, `pgroup`, `ppage` | The Prospects filters and page |
-| `rep`, `qboard` | Scouting: the reports tab (`last_week`, `flags`) and the queue's board chip (`on`, `off`) |
+| `qboard`, `ssort`, `spid`, `ssub`, `sops` | Scouting: the database chip (`on`, `scouted`), the sort (`board`, `need`, `potential`, `looks`; rank when absent), the selected prospect, the report's sub-tab (`overview`, `scouting`) and Scouting Operations open (`1`); All Reports is a modal token |
 | `opos`, `ostatus` | The offseason portal list's filters (the stage itself is the server's) |
 | `poll` | Rankings: `ap`, `coaches`, `cfp`, `resume` |
 | `stats`, `steam`, `sview` | Stats: `team` for Team Stats; the player stats' team (`all` for the league) and view (`roster`, a category) |
 | `aview` | Awards: the view |
 | `screen=depth` | The depth chart over the tab, with its own `team`, `sub`, `unit`, `view`, `player`, `f`, `role` |
-| `modal` | The open modals, bottom to top, repeated: `box:<event id>`, `player:<team>\|<name>\|<pos>`, `resume:<team>\|<week>`, `profile:<pid>`, `settings` |
+| `modal` | The open modals, bottom to top, repeated: `box:<event id>`, `player:<team>\|<name>\|<pos>`, `resume:<team>\|<week>`, `profile:<pid>`, `settings`; on the Scouting tab `reports`, `reports:last_week`, `reports:flags` (All Reports on that tab) |
 
 A top-level tab, the depth chart and a modal push a history entry (Back closes the modal, leaves
 the depth chart, returns to the tab before); a filter, a sort, a sub-tab, another recruit or a week

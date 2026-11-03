@@ -995,7 +995,7 @@
   const TABS = ["office", "offseason", "recruiting", "prospects", "scouting", "classes", "games", "schedule", "standings", "rankings", "stats", "bracket", "bowls", "awards", "summary"];
   const BOARD_KEYS = ["stage", "sort", "pid", "pane"];
   const TAB_KEYS = { recruiting: BOARD_KEYS, offseason: [...BOARD_KEYS, "opos", "ostatus"], prospects: ["ppos", "pstars", "pstate", "pstatus", "psort", "pgroup", "ppage"],
-    scouting: ["rep", "qboard"], rankings: ["poll"], stats: ["stats", "steam", "sview"], awards: ["aview"] };
+    scouting: ["qboard", "spid", "ssub", "sops"], rankings: ["poll"], stats: ["stats", "steam", "sview"], awards: ["aview"] };
   const VIEW_KEYS = [...new Set(Object.values(TAB_KEYS).flat())];
   const DEPTH_KEYS = ["team", "sub", "unit", "view", "player", "f", "role"];
   // a tab and the keys of every other tab dropped, so an address never carries a view from a tab left behind
@@ -1062,6 +1062,7 @@
       }
       if (kind === "settings") return !!openSettings(o);
       if (kind === "profile" && arg && window.Recruiting) return !!(await window.Recruiting.openProfile(s, arg, o));
+      if (kind === "reports" && window.CFP.scouting && state.tab === "scouting") return !!(await window.CFP.scouting.openToken(s, recruitingHelpers, kind, arg, o));
     } catch (e) { return false; }
     return false;
   }
@@ -1204,7 +1205,15 @@
     const line = el("p", { class: "muted small go-nil-carry", text: `NIL carried over: ${carry} (of ${v.nil.budget} this year)` });
     if (head) head.after(line); else card.prepend(line);
   }
-  const recruitingHelpers = { api, long, holding, postJSON, toast, openModal, closeModal: closeAllModals, errText, play, playCard, openSeason: reopenSeason, onChange: (tab) => { goTab(tab); window.scrollTo({ top: 0 }); } };
+  // retoken(node, token): the modal holding node takes a new address token in place (a replace, no new entry): the
+  // Scouting tab's All Reports moving between This Week, Last Week and Flags
+  function retoken(node, token) {
+    const m = modalStack.find((x) => x.layer.contains(node));
+    if (!m || m.token === token) return;
+    m.token = token;
+    route.set({ modal: modalTokens() }, { state: { modal: modalStack.length } });
+  }
+  const recruitingHelpers = { api, long, holding, postJSON, toast, openModal, closeModal: closeAllModals, retoken, errText, play, playCard, openSeason: reopenSeason, onChange: (tab) => { goTab(tab); window.scrollTo({ top: 0 }); } };
   if (window.Recruiting && window.Recruiting.init) window.Recruiting.init(recruitingHelpers);   // a profile reopened from the address before any career tab drew
   function renderCareerSteps(s) {
     const box = $("#career-steps");
@@ -1285,7 +1294,8 @@
   // backdrop, the close button and the browser's Back each close the top one; opening
   // pushes a history entry so Back on a phone closes a modal instead of leaving the page.
   // token: the modal's place in the address ("box:<event id>", "player:<team>|<name>|<pos>",
-  // "resume:<team>|<week>", "profile:<pid>", "settings"), so a refresh reopens it; a modal
+  // "resume:<team>|<week>", "profile:<pid>", "settings", and on the Scouting tab "reports[:last_week|flags]"),
+  // so a refresh reopens it; a modal
   // without one (a picker, a confirm) still gets its history entry but is not reopened.
   // opts.restore: reopening from the address, which already names it, so no entry is pushed.
   const modalStack = [];   // [{layer, pushed, opener, token}] bottom to top
