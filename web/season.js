@@ -891,7 +891,7 @@
   function setTopbarShown(on, remember) {
     document.body.classList.toggle("topbar-off", !on);
     const b = $("#btn-menu");
-    if (b) { b.setAttribute("aria-pressed", on ? "true" : "false"); b.title = on ? "Hide the top bar" : "Show the top bar: Seasons, Your Coach and the theme"; }
+    if (b) b.setAttribute("data-topbar", on ? "shown" : "hidden");
     if (remember) { try { localStorage.setItem(TOPBAR_KEY, on ? "1" : "0"); } catch (e) { /* private mode */ } }
     stickyTop();
   }
@@ -3888,7 +3888,16 @@
   setSidebar(true, false);
   $("#btn-settings").addEventListener("click", openSettings);
   $("#btn-seasons-menu").addEventListener("click", seasonsMenu);
-  $("#btn-menu").addEventListener("click", () => setTopbarShown(document.body.classList.contains("topbar-off"), true));
+  // ☰ Menu: a dropdown with Settings, Download Career (a career) and the top bar (Seasons, Your Coach, the theme)
+  $("#btn-menu").addEventListener("click", () => {
+    const menu = $("#btn-menu"), shown = !document.body.classList.contains("topbar-off");
+    const items = [
+      { name: "⚙ Settings", why: state.simming ? "Wait for the sim to finish" : "God mode, momentum, the news and more", disabled: !!state.simming, onPick: openSettings },
+      state.season && state.season.career ? { name: "Download Career", why: "Save this career as a file to keep or open on another device", onPick: () => $("#btn-download-career").click() } : null,
+      { name: shown ? "Hide the Top Bar" : "Show the Top Bar", why: "Seasons, Your Coach and the theme", onPick: () => setTopbarShown(!shown, true) },
+    ].filter(Boolean);
+    openMenu(menu, items, "Menu");
+  });
   $("#season-tabs").addEventListener("click", (e) => {
     const b = e.target.closest("button[data-tab]");
     if (!b) return;

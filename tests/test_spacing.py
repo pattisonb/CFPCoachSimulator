@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from test_career_e2e import call, free_port, launch   # noqa: E402
+from test_career_e2e import call, free_port, launch, menu_pick   # noqa: E402
 
 WIDTHS = (1280, 400)
 EXCLUDED = ".go-seg, .go-stages, .go-subtabs, nav.tabs"
@@ -227,7 +227,7 @@ if __name__ == "__main__":
                 page.goto(f"{base}/index.html?id={A}")
                 page.wait_for_selector("#season:visible")
                 if not page.is_visible("#btn-seasons-menu"):
-                    page.click("#btn-menu")                                       # the top bar waits behind ☰ Menu
+                    menu_pick(page, "Show the Top Bar")                           # the top bar waits behind ☰ Menu
                 page.click("#btn-seasons-menu")
                 page.wait_for_selector(".go-menu .go-menu-item", timeout=30_000)
             w.both("seasons-menu", seasons_menu)
@@ -235,7 +235,7 @@ if __name__ == "__main__":
             def topbar_shown(_):                                                   # ☰ Menu shows the top bar above the tabs
                 page.evaluate("() => localStorage.setItem('cfp.topbar', '0')")
                 open_tab(page, base, A, "office", ".go-program")
-                page.click("#btn-menu")
+                menu_pick(page, "Show the Top Bar")
                 page.wait_for_selector(".topbar:visible", timeout=30_000)
             w.both("topbar-shown", topbar_shown)
             page.evaluate("() => localStorage.setItem('cfp.topbar', '0')")        # the rest of the walk: the bar hidden, the default

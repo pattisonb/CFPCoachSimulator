@@ -1,9 +1,8 @@
 """The slim header (round 3, slim-header brief): with a career open the black top bar is hidden and the tab bar is the
-first thing on the page; ☰ Menu at the tab bar's right end (first on a phone) shows the bar and hides it again, in
-place, and the choice survives a reload; no season open, the bar shows. No season banner remains: the tab bar's team
-chip shows the school, the rank when ranked, the record and the week, and follows a simmed week. Settings and Download
-Career sit at the Office's top right (Settings opens, Download Career downloads, Settings is disabled while a sim
-runs). At 400 px: ☰ Menu, then the chip, then the tabs; no sideways scroll; the controls are 44 px. The depth chart
+first thing on the page; ☰ Menu at the tab bar's right end (first on a phone) is a dropdown: Settings, Download Career
+and Show/Hide the Top Bar (in place; the choice survives a reload); no season open, the bar shows. No season banner remains: the tab bar's team
+chip shows the school, the rank when ranked, the record and the week, and follows a simmed week. Settings opens and
+Download Career downloads from the menu on any tab, Settings waits while a sim runs. At 400 px: ☰ Menu, then the chip, then the tabs; no sideways scroll; the controls are 44 px. The depth chart
 screen and the offseason still open. Needs Playwright with a Chromium; skipped without one. (Run as a file.)"""
 import os
 import subprocess
@@ -16,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from test_career_e2e import call, free_port, launch   # noqa: E402
+from test_career_e2e import call, free_port, launch, menu_pick   # noqa: E402
 
 SHOWN = "() => getComputedStyle(document.querySelector('.topbar')).display !== 'none'"
 
@@ -41,13 +40,18 @@ def check_top_bar(page, base, sid) -> None:
           && getComputedStyle(e).position !== 'fixed' && e.getBoundingClientRect().height > 0 && e.getBoundingClientRect().bottom <= t.top + 0.5);
         return { top: t.top, above: above.map(e => e.tagName + '.' + e.className).slice(0, 4) }; }""")
     assert first["top"] < 24 and not first["above"], f"the tab bar is the first thing on the page: {first}"
-    assert page.get_attribute("#btn-menu", "aria-pressed") == "false"
+    assert page.get_attribute("#btn-menu", "data-topbar") == "hidden" and page.get_attribute("#btn-menu", "aria-haspopup") == "menu"
     assert page.inner_text("#btn-menu").strip() == "☰ Menu"
-    # ☰ Menu shows it above the tabs, in place: the Office is not redrawn
-    page.evaluate("() => { window.__office = document.querySelector('#tab-office').firstElementChild; }")
+    # ☰ Menu is a dropdown: Settings, Download Career, the top bar
     page.click("#btn-menu")
+    items = page.eval_on_selector_all(".go-menu .go-menu-item b", "els => els.map(e => e.textContent)")
+    assert items == ["⚙ Settings", "Download Career", "Show the Top Bar"], items
+    page.keyboard.press("Escape")
+    # Show the Top Bar puts it above the tabs, in place: the Office is not redrawn
+    page.evaluate("() => { window.__office = document.querySelector('#tab-office').firstElementChild; }")
+    menu_pick(page, "Show the Top Bar")
     assert page.evaluate(SHOWN), "☰ Menu shows the top bar"
-    assert page.get_attribute("#btn-menu", "aria-pressed") == "true"
+    assert page.get_attribute("#btn-menu", "data-topbar") == "shown"
     r = page.evaluate("() => ({ bar: document.querySelector('.topbar').getBoundingClientRect().bottom, tabs: document.querySelector('#season-tabs').getBoundingClientRect().top })")
     assert r["bar"] > 40 and r["bar"] <= r["tabs"] + 0.5, f"the bar sits above the tabs: {r}"
     assert page.is_visible("#btn-seasons-menu") and page.is_visible(".topbar .btn-theme") and page.is_visible(".site-nav a[href='./coach.html']")
@@ -55,7 +59,7 @@ def check_top_bar(page, base, sid) -> None:
     # the choice survives a reload
     open_career(page, base, sid)
     assert page.evaluate(SHOWN), "the shown bar survives a reload"
-    page.click("#btn-menu")
+    menu_pick(page, "Hide the Top Bar")
     assert not page.evaluate(SHOWN), "☰ Menu hides it again"
     open_career(page, base, sid)
     assert not page.evaluate(SHOWN), "the hidden bar survives a reload"
@@ -88,31 +92,28 @@ def check_no_banner_and_chip(page, base, sid) -> None:
     assert r["chip"]["right"] <= r["row"]["left"] + 0.5 and r["row"]["right"] <= r["menu"]["left"] + 0.5, r
     assert r["bar"]["height"] <= 52, f"the tab bar is slimmer: {r['bar']['height']}"
     assert page.evaluate("() => Math.min(...[...document.querySelectorAll('#season-tabs button:not([hidden])')].map(b => b.getBoundingClientRect().height).filter(h => h > 0))") >= 36
-    # Settings and Download Career: the Office's top right, not on the other screens
-    assert page.is_visible("#btn-settings") and page.is_visible("#btn-download-career")
-    t = page.evaluate("""() => { const a = document.querySelector('#btn-download-career').getBoundingClientRect(), c = document.querySelector('#tab-office').getBoundingClientRect();
-        return { right: a.right, bottom: a.bottom, officeRight: c.right, officeTop: c.top }; }""")
-    assert abs(t["right"] - t["officeRight"]) <= 2 and t["bottom"] <= t["officeTop"] + 1, f"top right of the Office: {t}"
-    assert page.inner_text("#btn-settings").strip() == "⚙ Settings" and page.inner_text("#btn-download-career").strip() == "Download Career"
-    page.click("#btn-settings")
+    # Settings and Download Career live behind ☰ Menu, on every tab; no buttons on the page
+    assert not page.is_visible("#btn-settings") and not page.is_visible("#btn-download-career"), "no Office buttons: ☰ Menu"
+    page.click("#season-tabs button[data-tab=standings]")
+    menu_pick(page, "Settings")
     page.wait_for_selector("#modal:not([hidden]) .settings", timeout=30_000)
     page.keyboard.press("Escape")
     page.wait_for_selector("#modal", state="hidden", timeout=10_000)
     with page.expect_download(timeout=60_000) as dl:
-        page.click("#btn-download-career")
+        menu_pick(page, "Download Career")
     assert dl.value.suggested_filename.endswith(".ccsave"), dl.value.suggested_filename
-    page.click("#season-tabs button[data-tab=standings]")
-    assert not page.is_visible("#btn-settings") and not page.is_visible("#btn-download-career"), "only on the Office"
     page.click("#season-tabs button[data-tab=office]")
     # a simmed week: Settings is disabled while it runs, then the chip follows
     page.wait_for_selector(".go-play [data-play=advance]:not([disabled])", timeout=60_000)
     page.click("#tab-office .go-play [data-play=advance]")
-    page.wait_for_function("() => document.querySelector('#btn-settings').disabled", timeout=10_000)
+    page.wait_for_function("() => document.body.classList.contains('simming')", timeout=10_000)
+    # mid-sim the tab bar, ☰ Menu with it, takes no clicks: Settings waits for the sim
+    assert page.evaluate("() => !document.body.classList.contains('simming') || getComputedStyle(document.querySelector('#btn-menu')).pointerEvents === 'none'")
     for _ in range(600):
         if call(base, f"/api/season/{sid}/status?since=0")["status"] != "running" and call(base, f"/api/season/{sid}")["current_week"] >= 1:
             break
         time.sleep(0.5)
-    page.wait_for_function("() => !document.querySelector('#btn-settings').disabled", timeout=60_000)
+    page.wait_for_function("() => !document.body.classList.contains('simming')", timeout=60_000)
     s = call(base, f"/api/season/{sid}")
     rec = f"{s['record']['wins']}-{s['record']['losses']}"
     page.wait_for_function("(want) => document.querySelector('#chip-line').textContent.includes(want)", arg=f"{rec} · Week {s['current_week'] + 1}", timeout=30_000)
@@ -130,13 +131,10 @@ def check_phone(page, base, sid) -> None:
         assert r["menu"]["height"] >= 44 and r["tabs"] >= 44, f"44 px controls: {r}"
         assert r["bar"]["right"] <= 400.5, r
         assert page.evaluate("() => { const t = document.querySelector('#season-tabs .tab-row'); return t.scrollWidth > t.clientWidth; }"), "the tabs scroll sideways"
-        if tab == "office":
-            for b in ("#btn-settings", "#btn-download-career"):
-                assert page.eval_on_selector(b, "e => e.getBoundingClientRect().height") >= 44, b
-    page.click("#btn-menu")
+    menu_pick(page, "Show the Top Bar")
     assert page.evaluate(SHOWN)
     assert page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth + 1"), "no sideways scroll with the bar shown"
-    page.click("#btn-menu")
+    menu_pick(page, "Hide the Top Bar")
     page.set_viewport_size({"width": 1280, "height": 900})
 
 
@@ -149,7 +147,10 @@ def check_other_screens(page, base, sid, done) -> None:
     assert abs(h[0] - h[1]) <= 2, f"the depth chart fills the window: {h}"
     page.goto(f"{base}/index.html?id={done}")
     page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)
-    assert page.is_visible("#btn-settings") and page.is_visible("#btn-download-career"), "the offseason keeps Settings and the career file"
+    page.click("#btn-menu")
+    items = page.eval_on_selector_all(".go-menu .go-menu-item b", "els => els.map(e => e.textContent)")
+    assert "⚙ Settings" in items and "Download Career" in items, items
+    page.keyboard.press("Escape")
     assert "Offseason" in page.inner_text("#chip-line")
 
 
@@ -193,7 +194,7 @@ if __name__ == "__main__":
             check_no_banner_and_chip(page, base, fresh["id"])
             browser.close()
         assert not errors, errors
-        print("slim header ok: the top bar waits behind ☰ Menu, the tab bar leads with the team chip, Settings and Download Career on the Office")
+        print("slim header ok: the top bar waits behind ☰ Menu, the tab bar leads with the team chip, Settings and Download Career behind ☰ Menu")
     finally:
         for sid in (fresh["id"], done["id"]):
             try:

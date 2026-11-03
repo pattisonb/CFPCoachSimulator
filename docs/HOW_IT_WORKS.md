@@ -1710,17 +1710,18 @@ runs. The week strip keeps its own panel on the season's screens (Schedule, Stan
 and the rest); the career screens leave it out, and a one-week sim's bar shows there.
 
 **The top bar is hidden while a season is open.** **☰ Menu** at the right end of the tab bar (first
-on a phone, before the chip) shows it above the tabs (Seasons ▾, Your Coach, the theme) and hides it
-again; a class on the body (`topbar-off`), no redraw, no animation. The choice is kept per browser
+on a phone, before the chip) is a dropdown: ⚙ Settings (waits while a sim runs), Download Career (a
+career) and Show/Hide the Top Bar, which puts the bar (Seasons ▾, Your Coach, the theme) above the tabs
+or takes it away; a class on the body (`topbar-off`), no redraw, no animation. The choice is kept per browser
 (`localStorage` `cfp.topbar`, "1" shown). With no season open, and on the Your Coach page, the bar
 always shows. With a season open its team picker, New Season, Seasons and Load Career fold into one
 **Seasons ▾** menu (the saved seasons, New Season, Load Career, Clear All; the side panel serves the
 empty state only). Nothing hides or shows on scroll any more.
 
-**Settings and Download Career** are two small buttons at the top right of the Office (and of the
-Offseason screen), above its first card with no card of their own (`#season-tools`); an older plain
-season, which has no Office, shows them on every screen. Settings is disabled while a sim runs. The
-depth chart screen keeps its own ⚙ Settings in its sidebar. `tests/test_slim_header.py` checks all of
+**Settings and Download Career** live behind ☰ Menu in a career, on every tab. Their buttons
+(`#season-tools`, `#btn-settings`, `#btn-download-career`) stay in the page, hidden, and the menu
+clicks them; an older plain season, which has no Office, still shows them as buttons on every screen.
+The depth chart screen keeps its own ⚙ Settings in its sidebar. `tests/test_slim_header.py` checks all of
 it at 1280 and 400 px.
 
 **NIL economy** (`coach_career/recruiting.py` `portal_pool`, `reward`, `carry_over`; spec
@@ -2572,7 +2573,7 @@ setting off and that moods, form and the boosts move with results when it is on.
 
 ### Settings and god mode
 
-The ⚙ Settings button at the Office's top right (and the depth chart's sidebar) opens the season's settings. God mode
+⚙ Settings in ☰ Menu (and the depth chart's sidebar) opens the season's settings. God mode
 lets you edit every player and every depth chart: any player card gets an Edit button
 (ratings 0-99, jersey, class, height, weight and development trait; names and positions
 stay, since the season's stats are keyed on them) and every team's depth chart becomes

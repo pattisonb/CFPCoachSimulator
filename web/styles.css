@@ -1441,7 +1441,7 @@ body.team-theme .topbar #btn-seasons-menu[aria-expanded="true"] { background: co
 #season-tabs .tab-menu[aria-pressed="true"] { background: var(--panel-2); }
 /* Settings and the career file: two small buttons at the Office's top right, no card (any screen of a plain season) */
 .season-tools { display: none; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
-body:not(.career-mode) .season-tools, body.career-mode.on-office .season-tools, body.career-mode.on-offseason .season-tools { display: flex; }
+body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Settings and Download Career through ☰ Menu */
 .season-tools button { min-height: 36px; padding: 0 12px; font-size: 13px; }
 @media (max-width: 759px) {
   #season-tabs .tab-menu, body.career-mode #season-tabs .tab-menu { order: -2; min-height: 44px; padding: 0 10px; }

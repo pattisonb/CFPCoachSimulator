@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from test_career_e2e import call, free_port, launch   # noqa: E402
+from test_career_e2e import call, free_port, launch, menu_pick   # noqa: E402
 
 CLASS_CODE = re.compile(r"\b(FR|SO|JR|SR)RS\b")
 OUT_OF_100 = re.compile(r"\b\d{1,3}\s*(/|of)\s*100\b")
@@ -554,7 +554,7 @@ def check_header(page, base, sid) -> None:
     page.wait_for_selector("#season:visible")
     time.sleep(0.6)
     assert not page.is_visible(".topbar"), "a season open: the top bar waits behind ☰ Menu"
-    page.click("#btn-menu")
+    menu_pick(page, "Show the Top Bar")
     assert page.is_visible("#btn-seasons-menu"), "a season open: the Seasons menu button"
     for sel in ("#btn-new", "#btn-load-career", "#btn-seasons", "#pick-team"):
         assert not page.is_visible(sel), f"{sel} shows with a season open"
@@ -564,11 +564,15 @@ def check_header(page, base, sid) -> None:
     chip = page.inner_text("#team-chip")
     assert s["team_name"] in chip and f"{s['record']['wins']}-{s['record']['losses']}" in chip, chip
     page.click("#season-tabs button[data-tab=stats]")
-    assert not page.is_visible("#btn-settings") and not page.is_visible("#btn-download-career"), "Settings and Download Career live on the Office"
+    assert not page.is_visible("#btn-settings") and not page.is_visible("#btn-download-career"), "Settings and Download Career live behind ☰ Menu"
     # the Office's play card
     page.click("#season-tabs button[data-tab=office]")
     page.wait_for_selector(".go-play [data-play=advance]", timeout=60_000)
-    assert page.is_visible("#btn-settings") and page.is_visible("#btn-download-career"), "Settings and Download Career on the Office"
+    assert not page.is_visible("#btn-settings") and not page.is_visible("#btn-download-career"), "not on the Office either: ☰ Menu"
+    page.click("#btn-menu")
+    items = page.eval_on_selector_all(".go-menu .go-menu-item b", "els => els.map(e => e.textContent)")
+    assert items == ["⚙ Settings", "Download Career", "Hide the Top Bar"], items
+    page.keyboard.press("Escape")
     labels = page.eval_on_selector_all("#tab-office .go-play button", "els => els.map(e => e.textContent.trim())")
     assert labels[0] == "Sim the Week", labels
     assert "Sim to Selection Day" in labels and "Sim to Signing Day" in labels and "▾" in labels, labels
@@ -603,7 +607,7 @@ def check_header(page, base, sid) -> None:
     assert call(base, f"/api/season/{new_id}")["team"] == "akron", "the new career from the menu is Akron's"
     page.wait_for_function("() => /Akron/i.test(document.querySelector('#chip-name').textContent)", timeout=30_000)
     call(base, f"/api/season/{new_id}", method="DELETE")
-    page.click("#btn-menu")                                       # the bar hidden again, the default
+    menu_pick(page, "Hide the Top Bar")                           # the bar hidden again, the default
     # the Recruiting pane keeps below the sticky tab bar
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#season:visible")
@@ -1234,7 +1238,7 @@ def test_news_bubbles(page, base) -> None:
         page.wait_for_function("() => !document.querySelector('.news-bubble')", timeout=60_000)   # every bubble fades
         page.wait_for_selector(".go-play [data-play=advance]:not([disabled])", timeout=60_000)
         # the News switch off: the next week shows none
-        page.click("#btn-settings")
+        menu_pick(page, "Settings")
         page.click(".settings-row:has(b:text-is('News')) [role=switch]")
         page.wait_for_function("() => document.querySelector('[role=switch][aria-label=News]').getAttribute('aria-checked') === 'false'")
         assert page.evaluate("() => localStorage.getItem('cfp.news')") == "off"
