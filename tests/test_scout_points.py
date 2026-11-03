@@ -27,6 +27,7 @@ def test_hours_range():
     assert recruiting.weekly_hours(fresh(recruiting_rating=50), ME) == 140
     assert recruiting.weekly_hours(fresh(recruiting_rating=100), ME) == 160
     assert recruiting.weekly_hours(fresh(recruiting_rating=30), ME) == 140
+    assert recruiting.weekly_hours(fresh(recruiting_rating=63), ME) == 145
 
 
 def test_points_range():
@@ -35,6 +36,11 @@ def test_points_range():
     assert recruiting.best_evaluator(st) == 50 and recruiting.scout_points(st, ME) == 40
     st["coach"]["ratings"]["evaluation"] = 100
     assert recruiting.best_evaluator(st) == 100 and recruiting.scout_points(st, ME) == 60
+    for rating, want in ((63, 45), (77, 50)):         # in fives
+        st["coach"]["ratings"]["evaluation"] = rating
+        for m in st["career"]["staff"]:
+            m["evaluation"] = min(m.get("evaluation", 50), rating)
+        assert recruiting.best_evaluator(st) == rating and recruiting.scout_points(st, ME) == want and want % 5 == 0
 
 
 def pick(st, in_area):

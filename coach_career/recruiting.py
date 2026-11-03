@@ -1002,9 +1002,9 @@ def best_evaluator(state: dict) -> int:
 
 
 def scout_points(state: dict, slug: str) -> int:
-    """The week's scouting points: SCOUT_POINTS_BASE plus SCOUT_POINTS_PER of the best evaluator's rating over 50.
+    """The week's scouting points, a multiple of 5: SCOUT_POINTS_BASE plus SCOUT_POINTS_PER of the best evaluator's rating over 50.
     Only your school scouts (the AI's do not send anyone), but the slug keeps the shape of `weekly_hours`."""
-    return int(round(SCOUT_POINTS_BASE + max(0, best_evaluator(state) - 50) * SCOUT_POINTS_PER))
+    return 5 * int(round((SCOUT_POINTS_BASE + max(0, best_evaluator(state) - 50) * SCOUT_POINTS_PER) / 5))
 
 
 def scout_points_left(state: dict, slug: str) -> int:
