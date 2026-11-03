@@ -46,9 +46,13 @@ INSTALL = """(target) => {
 }"""
 
 # any pulse or fade-in from now on (a view switch must add none)
-QUIET_WATCH = """() => { const q = window.__quiet = { n: 0 };
-  q.obs = new MutationObserver((recs) => { for (const r of recs) if (r.target.classList && (r.target.classList.contains('go-changed') || r.target.classList.contains('go-fade-in'))) q.n++; });
-  q.obs.observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['class'] }); }"""
+# a pulse or fade STARTED from now on (a class newly gaining go-changed or go-fade-in; a pulse still running from
+# the action before does not count). A view switch must start none.
+QUIET_WATCH = """() => { const q = window.__quiet = { n: 0, what: [] };
+  const has = (cls, c) => (' ' + (cls || '') + ' ').includes(' ' + c + ' ');
+  q.obs = new MutationObserver((recs) => { for (const r of recs) for (const c of ['go-changed', 'go-fade-in'])
+    if (r.target.classList && r.target.classList.contains(c) && !has(r.oldValue, c) && !r.target.closest('#toasts')) { q.n++; if (q.what.length < 6) q.what.push(r.target.className); } });
+  q.obs.observe(document.documentElement, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['class'] }); }"""
 
 TOAST_SEEN = """(pat) => [...document.querySelectorAll('#toasts > *')].some((t) => !window.__smooth.toastsBefore.has(t) && new RegExp(pat).test(t.textContent.trim()))"""
 
@@ -181,8 +185,8 @@ def season_cases(page, base: str, sid: str) -> None:
         page.click(f".dc-card >> nth={i}")
         page.wait_for_selector(".dc-drawer", timeout=10_000)
         time.sleep(0.25)
-    loud = page.evaluate("() => { window.__quiet.obs.disconnect(); return window.__quiet.n; }")
-    assert loud == 0, f"switching depth-chart players flashed {loud} time(s)"
+    loud, what = page.evaluate("() => { window.__quiet.obs.disconnect(); return [window.__quiet.n, window.__quiet.what]; }")
+    assert loud == 0, f"switching depth-chart players flashed {loud} time(s): {what}"
     page.keyboard.press("Escape")
 
     # --- depth chart: a redshirt from the Redshirts board, both ways; the board patches
@@ -234,8 +238,8 @@ def board_cases(page, base: str, sid: str) -> None:
         if page.query_selector(f".go-pane .go-subtabs button[data-sub={sub}]"):
             page.click(f".go-pane .go-subtabs button[data-sub={sub}]")
             time.sleep(0.3)
-    loud = page.evaluate("() => { window.__quiet.obs.disconnect(); return window.__quiet.n; }")
-    assert loud == 0, f"switching recruits or sub-tabs flashed or faded {loud} time(s)"
+    loud, what = page.evaluate("() => { window.__quiet.obs.disconnect(); return [window.__quiet.n, window.__quiet.what]; }")
+    assert loud == 0, f"switching recruits or sub-tabs flashed or faded {loud} time(s): {what}"
     b = next(x for x in v["board"] if not x["offered"] and not x["committed"] and not x["signed"] and not x.get("scene") and not (x.get("looks") or 0))
     page.click(f".go-row-recruit[data-pid='{b['id']}']")
     time.sleep(1.2)                       # the pick's own smooth scroll ends
