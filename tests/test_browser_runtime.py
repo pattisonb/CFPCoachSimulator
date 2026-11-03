@@ -13,6 +13,7 @@ ROOT = _Path(__file__).resolve().parents[1]
 _sys.path.insert(0, str(ROOT))
 _sys.path.insert(0, str(ROOT / "tests"))
 import base64
+import urllib.parse
 import functools
 import hashlib
 import http.server
@@ -162,7 +163,10 @@ def test_two_weeks_match_native_and_reload_restores(browser, base: str, timings:
         assert back["size"] > 1000 and back["deleted"] == 200 and back["missing"] == 404, back
         assert back["status"] == 200 and back["json"]["id"] == sid, back
         assert shim(page, f"/api/season/{sid}")["json"]["current_week"] == 2
-        assert page.url == f"{base}/index.html?id={sid}", page.url     # the page keeps its own address
+        # the page keeps its own address: the same page and save (web/route.js adds the view, e.g. &tab=office)
+        here = urllib.parse.urlsplit(page.url)
+        assert f"{here.scheme}://{here.netloc}{here.path}" == f"{base}/index.html", page.url
+        assert urllib.parse.parse_qs(here.query).get("id") == [sid], page.url
         timings["reload"] = load(page, None)     # a fresh worker: the career comes back from IndexedDB
         page.wait_for_selector("#season:visible")
         assert shim(page, f"/api/season/{sid}")["json"]["current_week"] == 2

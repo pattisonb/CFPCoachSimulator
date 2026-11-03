@@ -11,7 +11,7 @@ against FBS season averages and against the real 2026 results played so far.
 
 ## Run it
 
-The published site is <https://pattisonb.github.io/CFPCoachSimulator/>. It is static: the
+The published site is <https://cfp-coach-simulator.vercel.app/> (Vercel). It is static: the
 whole game runs in the browser. `web/worker.js` starts Pyodide (CPython on WebAssembly, from
 the jsDelivr CDN) in a Web Worker, unpacks `game.zip` (the Python packages and the data a
 career reads) into its in-memory filesystem and calls the dispatcher, `app/api.py`, with the
@@ -75,13 +75,18 @@ The code lives at <https://github.com/pattisonb/CFPCoachSimulator>. Generated fi
 `data/base_meta.json`) are ignored and rebuilt; the source data, box scores and season
 results are committed.
 
-Every push to `main` (or a manual run) starts `.github/workflows/pages.yml` on GitHub
-Actions: Python 3.12, `python -m teamdata.build_teams`, then `python tools/build_site.py`,
-which writes `dist/` (the `web/` files, `game.zip`, `version.json` and `.nojekyll`; the first
-offseason's league is precomputed into `data/base_league.json` and `data/base_meta.json`
-first), and `dist/` is published to GitHub Pages. No pip install step: the game and the
-build use the standard library only. The one-time setting is in the repository's Settings →
-Pages: Source: **GitHub Actions**; the site's URL shows there after the first deploy.
+Vercel builds and serves the site (`vercel.json`): Python 3, `python3 -m teamdata.build_teams`,
+then `python3 tools/build_site.py`, which writes `dist/` (the `web/` files, `game.zip`,
+`version.json` and `.nojekyll`; the first offseason's league is precomputed into
+`data/base_league.json` and `data/base_meta.json` first). No install step: the game and the
+build use the standard library only. Every push to `main` deploys to production, and every
+pull request gets a preview deployment with its own link. `game.zip`, `version.json` and
+`worker.js` are served `no-cache`, so a new deploy is picked up on the next visit.
+
+The old GitHub Pages address still builds the same `dist/` on every push to `main`
+(`.github/workflows/pages.yml`) and shows a strip pointing to the new site, because careers
+are saved in the browser per address: a player opens theirs there, uses Download Career, and
+Load Career on the new site.
 
 The data refresh tools (`tools/fetch_*.py`, `tools/forward_test.py`, the realism and
 calibration tools) stay on the owner's computer; what they write under `data/` is
@@ -110,7 +115,8 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `tools/dev_server.py` | Serves `web/` and the dispatcher on this computer (`python tools/dev_server.py`) |
 | `tools/build_site.py` | Builds the static site into `dist/` (`web/`, `game.zip`, `version.json`) |
 | `web/worker.js`, `web/game-client.js` | The game in the browser: Pyodide in a Web Worker, saves in IndexedDB; the page's client for it |
-| `.github/workflows/pages.yml` | Builds `dist/` and publishes it to GitHub Pages on every push to `main` |
+| `vercel.json` | How Vercel builds and serves the site: production from `main`, a preview per pull request |
+| `.github/workflows/pages.yml` | Keeps the old GitHub Pages address running (with a strip pointing to the new site) on every push to `main` |
 | `sim/` | The season simulation: the season engine, polls, bowls, awards, in-season form, head coaches, the real box score import |
 | `web/` | The site: plain HTML, CSS and JavaScript, no build step |
 | `tools/fetch_results.py` | Downloads the 2026 FBS results played so far from NCAA.com into `data/season_games.json` |
