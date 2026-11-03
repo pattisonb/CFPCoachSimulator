@@ -264,7 +264,7 @@
     $("#season").hidden = true;
     $("#season-empty").hidden = false;
     startNote(null);
-    history.replaceState(null, "", location.pathname);
+    history.replaceState(null, "", "./");
     toolbarMode(false);
     setCompact(false);
     closeHeadSheet();
