@@ -45,6 +45,15 @@ INSTALL = """(target) => {
   st.top = target.getBoundingClientRect().top;
 }"""
 
+# any pulse or fade-in from now on (a view switch must add none)
+# a pulse or fade STARTED from now on (a class newly gaining go-changed or go-fade-in; a pulse still running from
+# the action before does not count). A view switch must start none.
+QUIET_WATCH = """() => { const q = window.__quiet = { n: 0, what: [] };
+  const has = (cls, c) => (' ' + (cls || '') + ' ').includes(' ' + c + ' ');
+  q.obs = new MutationObserver((recs) => { for (const r of recs) for (const c of ['go-changed', 'go-fade-in'])
+    if (r.target.classList && r.target.classList.contains(c) && !has(r.oldValue, c) && !r.target.closest('#toasts')) { q.n++; if (q.what.length < 6) q.what.push(r.target.className); } });
+  q.obs.observe(document.documentElement, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['class'] }); }"""
+
 TOAST_SEEN = """(pat) => [...document.querySelectorAll('#toasts > *')].some((t) => !window.__smooth.toastsBefore.has(t) && new RegExp(pat).test(t.textContent.trim()))"""
 
 RESULT = """(target) => {
@@ -169,6 +178,16 @@ def season_cases(page, base: str, sid: str) -> None:
     assert btn.evaluate("b => b.isConnected && document.activeElement === b"), "focus returns to the same Move up button"
     assert r["pulses"] > 0, f"the moved players' cells pulse ({name} at {role})"
     page.keyboard.press("Escape")
+    # --- the player's report: switching players flashed every value that differed. Picking another card (and
+    # another again) patches silently: no pulse, no fade, anywhere on the page
+    page.evaluate(QUIET_WATCH)
+    for i in (0, 1, 2, 1):
+        page.click(f".dc-card >> nth={i}")
+        page.wait_for_selector(".dc-drawer", timeout=10_000)
+        time.sleep(0.25)
+    loud, what = page.evaluate("() => { window.__quiet.obs.disconnect(); return [window.__quiet.n, window.__quiet.what]; }")
+    assert loud == 0, f"switching depth-chart players flashed {loud} time(s): {what}"
+    page.keyboard.press("Escape")
 
     # --- depth chart: a redshirt from the Redshirts board, both ways; the board patches
     page.click(".dc-nav-item:has-text('Redshirts')")
@@ -208,6 +227,19 @@ def board_cases(page, base: str, sid: str) -> None:
     open_tab(page, base, sid, "recruiting", ".go-stages")
     v = call(base, f"/api/season/{sid}/recruiting")
     assert v["hours_left"] >= 25, v["hours_left"]
+    # switching recruits and the pane's sub-tabs is navigation: no pulse, no fade anywhere
+    page.wait_for_selector(".go-row-recruit", timeout=30_000)
+    pids = page.eval_on_selector_all(".go-row-recruit", "els => els.map(e => e.dataset.pid)")[:4]
+    page.evaluate(QUIET_WATCH)
+    for pid in pids + pids[:2]:
+        page.click(f".go-row-recruit[data-pid='{pid}']")
+        time.sleep(0.4)
+    for sub in ("profile", "history", "scouting"):
+        if page.query_selector(f".go-pane .go-subtabs button[data-sub={sub}]"):
+            page.click(f".go-pane .go-subtabs button[data-sub={sub}]")
+            time.sleep(0.3)
+    loud, what = page.evaluate("() => { window.__quiet.obs.disconnect(); return [window.__quiet.n, window.__quiet.what]; }")
+    assert loud == 0, f"switching recruits or sub-tabs flashed or faded {loud} time(s): {what}"
     b = next(x for x in v["board"] if not x["offered"] and not x["committed"] and not x["signed"] and not x.get("scene") and not (x.get("looks") or 0))
     page.click(f".go-row-recruit[data-pid='{b['id']}']")
     time.sleep(1.2)                       # the pick's own smooth scroll ends
