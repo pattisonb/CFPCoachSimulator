@@ -583,7 +583,7 @@ def check_header(page, base, sid) -> None:
     # one tab row
     assert page.evaluate("() => document.querySelectorAll('#season-tabs .tab-row').length") == 1, "one tab row"
     assert page.evaluate("() => document.querySelectorAll('#season > nav.tabs').length") == 1, "one tab bar"
-    assert page.evaluate("() => document.querySelectorAll('#season-tabs button[data-tab]').length") == 16, "every tab of the old two rows"
+    assert page.evaluate("() => document.querySelectorAll('#season-tabs button[data-tab]').length") == 17, "every tab of the old two rows, and Programs"
     assert page.evaluate("() => document.querySelectorAll('#season-tabs .tab-divider').length") == 1
     # the Seasons menu: the seasons, New season end to end
     page.click("#btn-seasons-menu")
