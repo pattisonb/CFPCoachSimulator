@@ -76,7 +76,7 @@ def check_bye(page, base, sid) -> None:
     s = call(base, f"/api/season/{sid}")
     nxt = next(x for x in s["schedule"] if x["opponent"] and not x["played"])
     k = page.text_content("#tab-office .go-game-next .go-kicker")
-    assert k.startswith("Bye This Week · Next Game · ") and s["week_labels"][nxt["week"]] in k, k
+    assert k.startswith("Bye This Week · Next Game · ") and (s["week_labels"].get(str(nxt["week"])) or f"Week {nxt['week']}") in k, k
     assert nxt["opponent_name"] in page.inner_text("#tab-office .go-game-next")
 
 
