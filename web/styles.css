@@ -264,9 +264,10 @@ button.news-bubble:hover { border-color: var(--accent); }
   .news-bubble { animation-name: news-in-fade; }          /* no slide: a fade only */
 }
 /* what an action changed: a 600 ms pulse; rows and tags that arrive fade in, ones that leave fade out (150 ms) */
-@keyframes go-pulse { from { background-color: color-mix(in srgb, var(--accent) 34%, transparent); } to { background-color: transparent; } }
+/* a changed value after the player's own action: a soft neutral wash, never the team color */
+@keyframes go-pulse { from { background-color: color-mix(in srgb, var(--text) 12%, transparent); } to { background-color: transparent; } }
 @keyframes go-fade-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
-.go-changed { animation: go-pulse 600ms ease-out; transition: background-color 600ms ease-out; border-radius: 4px; }
+.go-changed { animation: go-pulse 450ms ease-out; transition: background-color 450ms ease-out; border-radius: 4px; }
 .go-fade-in { animation: go-fade-in 150ms ease-out; }
 .go-leaving { opacity: 0; transition: opacity 150ms ease; pointer-events: none; }
 /* the control that acted, while its request is out: off, with a small spinner */

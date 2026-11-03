@@ -2117,9 +2117,11 @@ An action patches the screen in place; it never rebuilds the part of the page th
 looking at. `window.CFP.ui` (loaded right after `gameview.js`, before every screen's script)
 holds the shared helpers: `morph` patches a live tree to match a freshly drawn one (nodes matched
 by `data-key`, text and attributes moved onto the live node, a field the player is typing in left
-alone), `reconcile` keeps a keyed list (an existing row is patched and moved into order, a new one
-fades in over 150 ms, a gone one fades out), `pulse` marks what changed with a 600 ms background
-pulse (`.go-changed`), `busy` disables the control that acted and shows a spinner until the request
+alone; silent by default, so switching what is shown — another player, prospect, tab or sort —
+never flashes, and `morph(live, fresh, { pulse: true })` after the player's own action pulses what
+changed and fades in what is new), `reconcile` keeps a keyed list (an existing row is patched and
+moved into order, a new one fades in over 150 ms, a gone one fades out), `pulse` marks what changed
+with a 450 ms neutral background wash (`.go-changed`, the text color at 12%, never the team color), `busy` disables the control that acted and shows a spinner until the request
 and the re-fetch land, then hands the focus back to it (or the nearest live control if it left), and
 `toast` says what happened in one short sentence on a stack bottom-left: a polite `status` region,
 newest on top, three at most, 3.5 s each; `#toast` stays as a hidden mirror of the latest for older

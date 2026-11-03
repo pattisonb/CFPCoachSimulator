@@ -45,6 +45,11 @@ INSTALL = """(target) => {
   st.top = target.getBoundingClientRect().top;
 }"""
 
+# any pulse or fade-in from now on (a view switch must add none)
+QUIET_WATCH = """() => { const q = window.__quiet = { n: 0 };
+  q.obs = new MutationObserver((recs) => { for (const r of recs) if (r.target.classList && (r.target.classList.contains('go-changed') || r.target.classList.contains('go-fade-in'))) q.n++; });
+  q.obs.observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['class'] }); }"""
+
 TOAST_SEEN = """(pat) => [...document.querySelectorAll('#toasts > *')].some((t) => !window.__smooth.toastsBefore.has(t) && new RegExp(pat).test(t.textContent.trim()))"""
 
 RESULT = """(target) => {
@@ -168,6 +173,16 @@ def season_cases(page, base: str, sid: str) -> None:
     r = assert_smooth(page, ".dc-field", lambda: page.keyboard.press("Enter"), re.compile(rf"^{re.escape(full)} moves up at [A-Z]+$"), "Depth chart: move up")
     assert btn.evaluate("b => b.isConnected && document.activeElement === b"), "focus returns to the same Move up button"
     assert r["pulses"] > 0, f"the moved players' cells pulse ({name} at {role})"
+    page.keyboard.press("Escape")
+    # --- the player's report: switching players flashed every value that differed. Picking another card (and
+    # another again) patches silently: no pulse, no fade, anywhere on the page
+    page.evaluate(QUIET_WATCH)
+    for i in (0, 1, 2, 1):
+        page.click(f".dc-card >> nth={i}")
+        page.wait_for_selector(".dc-drawer", timeout=10_000)
+        time.sleep(0.25)
+    loud = page.evaluate("() => { window.__quiet.obs.disconnect(); return window.__quiet.n; }")
+    assert loud == 0, f"switching depth-chart players flashed {loud} time(s)"
     page.keyboard.press("Escape")
 
     # --- depth chart: a redshirt from the Redshirts board, both ways; the board patches
