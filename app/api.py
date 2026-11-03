@@ -932,11 +932,12 @@ def recruiting_view(p: Params) -> dict:
 
 @route("GET", "/api/season/{season_id}/scouting")
 def scouting_view(p: Params) -> dict:
-    """The Scouting tab: your scouts, a page of the queue of recruits worth a trip (q, position, group, offset,
-    limit), this and last week's reports, your flags."""
+    """The Scouting tab: your scouts, a page of the Prospect Database (q, position, group, offset, limit,
+    scouted, on_board, sort: rank, board, need, potential or looks), this and last week's reports, your flags."""
     st = _career_state(p.path["season_id"], change=True)
     return prospects.scouting_view(st, p.q("q"), p.q("position"), p.q("group"), max(0, p.q("offset", int, 0)),
-                                   p.q("limit", int, prospects.QUEUE_LIMIT))
+                                   p.q("limit", int, prospects.QUEUE_LIMIT), scouted=p.q("scouted") in ("1", "true"),
+                                   sort=p.q("sort") or "rank", on_board=p.q("on_board") in ("1", "true"))
 
 
 @route("GET", "/api/season/{season_id}/programs")
@@ -1218,10 +1219,14 @@ def season_depth_formations(p: Params) -> dict:
 
 @route("GET", "/api/season/{season_id}/depth/{slug}/roster")
 def season_depth_roster(p: Params) -> dict:
-    """Every player on the roster as a depth-chart card: injuries and redshirts included."""
+    """Every player on the roster as a depth-chart card: injuries and redshirts included; with the team
+    line as this season sees it (name, conference, head coach, ratings) for the Stats tab's roster."""
     state = _season_state(p.path["season_id"])
     _check_team(p.path["slug"])
-    return season.depth_roster_view(state, p.path["slug"])
+    out = season.depth_roster_view(state, p.path["slug"])
+    t = season.team_data(state, p.path["slug"])
+    hc = ((t.get("coaches") or {}).get("head_coach") or {}).get("name")
+    return dict(out, name=t["name"], conference=t.get("conference"), head_coach=hc, ratings=t.get("team_ratings") or {})
 
 
 @route("GET", "/api/season/{season_id}/depth/{slug}/position/{role}")

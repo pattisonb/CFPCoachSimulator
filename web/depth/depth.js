@@ -310,8 +310,9 @@
 
   // every screen's toolbar: its own controls on the left (tabs, a summary), the search on the right,
   // and an optional note under it, so nothing moves when you switch screens
-  function toolbar(main, left, note, middle) {
-    main.append(el("div", { class: "dc-toolbar" }, [el("div", { class: "dc-toolbar-left" }, [left]), middle || null, search("Find a player…")]));
+  // help: [text, label]: what the screen is for, in an ⓘ beside its controls (web/ui.js tip) rather than a line under them
+  function toolbar(main, left, note, middle, help) {
+    main.append(el("div", { class: "dc-toolbar" }, [el("div", { class: "dc-toolbar-left" }, [left, help ? window.CFP.ui.tip(help[0], help[1]) : null]), middle || null, search("Find a player…")]));
     if (note) main.append(el("p", { class: "dc-note", text: note }));
   }
 
@@ -539,7 +540,7 @@
     line.replaceChildren(
       el("strong", { text: p.name }),
       el("span", { class: "dc-muted", text: [p.jersey ? `#${p.jersey}` : "", p.position, CLASS_LABEL[p.class] || p.class, p.height && p.weight ? `${p.height} ${p.weight}` : ""].filter(Boolean).join(" · ") }),
-      el("span", { class: `dc-card-ovr ${tier(p.overall)}`, text: String(p.overall) }),
+      el("span", { class: `dc-card-ovr ${tier(p.overall)}`, title: "Overall rating", text: String(p.overall) }),
       behind.length ? el("span", { class: "dc-muted", text: behind.map((b, k) => `${ordinal(k + 2)} ${shortName(b.name)} ${b.overall}`).join(" · ") }) : null,
     );
     head.classList.add("previewing");
@@ -598,7 +599,7 @@
       out.push(el("div", { class: "dc-kicker dc-panel-sub", text: `${row.role} Depth` }));
       out.push(el("ol", { class: "dc-depth" }, row.players.map((x, i) => el("li", { class: `${x.slug === p.slug ? "on" : ""} ${i < Math.max(1, row.starters) ? "start" : ""}` }, [
         el("button", { type: "button", class: "dc-depth-name", text: `${i + 1}. ${shortName(x.name)}`, onclick: () => { S.sel = x.slug; patch(); } }),
-        el("span", { class: `dc-depth-ovr ${tier(x.overall)}`, text: String(x.overall) }),
+        el("span", { class: `dc-depth-ovr ${tier(x.overall)}`, title: "Overall rating", text: String(x.overall) }),
         edit ? el("span", { class: "dc-depth-acts" }, [
           i > 0 ? el("button", { type: "button", class: "dc-btn dc-mini tiny", title: "Make Starter", "aria-label": `Make ${x.name} the starter`, text: "★", onclick: (e) => change({ role: row.role, player: x.slug, move: "top" }, `${x.name} starts at ${row.role}`, e) }) : null,
           i > 0 ? el("button", { type: "button", class: "dc-btn dc-mini tiny", title: "Move Up", "aria-label": `Move ${x.name} up`, text: "▲", onclick: (e) => change({ role: row.role, player: x.slug, move: "up" }, `${x.name} moves up at ${row.role}`, e) }) : null,
@@ -983,13 +984,13 @@
     const sitting = players.filter((p) => p.redshirt.on);
     const can = players.filter((p) => !p.redshirt.on).sort((a, b) => b.overall - a.overall);
     toolbar(main, el("div", { class: "dc-summary" }, [stat("Redshirting", String(sitting.length)), stat("Still Eligible", String(can.length))]),
-      "Four games or fewer and the year unused: sit a player out and he keeps his year.");
+      null, null, ["Four games or fewer and the year unused: sit a player out and he keeps his year.", "Redshirts"]);
     const list = el("div", { class: "dc-people" });
     const person = (p) => el("div", { class: "dc-person", "data-name": p.name.toLowerCase(), "data-key": p.slug }, [
       face(p, "head", "dc-chip-face"),
       el("div", { class: "dc-person-main" }, [el("strong", { text: p.name }), el("span", { class: "dc-muted" }, [[p.position, CLASS_LABEL[p.class] || p.class, p.role && p.depth ? `${p.role} #${p.depth}` : ""].filter(Boolean).join(" · "), movedFrom(p)])]),
       el("span", { class: "dc-muted", text: `${p.redshirt.games} of ${p.redshirt.limit} games` }),
-      el("span", { class: `dc-person-ovr ${tier(p.overall)}`, text: String(p.overall) }),
+      el("span", { class: `dc-person-ovr ${tier(p.overall)}`, title: "Overall rating", text: String(p.overall) }),
       rsButton(p) || el("span"),
     ]);
     if (sitting.length) { list.append(el("div", { class: "dc-kicker", "data-key": "k:sitting", text: "Sitting Out" })); sitting.forEach((p) => list.append(person(p))); }
@@ -1006,7 +1007,7 @@
     const all = cache.roster.players;
     const out = all.filter((p) => inUnit(p) && (p.injury || (p.redshirt && p.redshirt.on)));
     toolbar(main, el("div", { class: "dc-summary" }, [stat("Injured", String(out.filter((p) => p.injury).length)), stat("Redshirting", String(out.filter((p) => !p.injury).length))]),
-      "Who is hurt or sitting out, and who plays in his place.");
+      null, null, ["Who is hurt or sitting out, and who plays in his place.", "Who Is Available"]);
     if (!out.length) { main.append(el("p", { class: "dc-muted dc-empty", text: `Everyone on the ${unitOf(S.unit).name.toLowerCase()} is available.` })); return; }
     // who plays instead: the next man at his role who is neither hurt nor sitting
     const next = (p) => all.filter((x) => x.role === p.role && x.slug !== p.slug && !x.injury && !(x.redshirt && x.redshirt.on)).sort((a, b) => (a.depth || 99) - (b.depth || 99))[0];
@@ -1018,7 +1019,7 @@
         el("div", { class: "dc-person-main" }, [el("strong", { text: p.name }), el("span", { class: "dc-muted" }, [[p.position, p.role && p.depth ? `${p.role} #${p.depth}` : ""].filter(Boolean).join(" · "), movedFrom(p)])]),
         el("span", { class: p.injury ? "dc-flag bad" : "dc-flag", text: p.injury ? `${p.injury.type} · back ${(s.week_labels && s.week_labels[p.injury.returns_week]) || "week " + p.injury.returns_week}` : "Redshirting" }),
         el("span", { class: "dc-muted", text: sub ? `In his place: ${shortName(sub.name)} (${sub.overall})` : "Nobody behind him" }),
-        el("span", { class: `dc-person-ovr ${tier(p.overall)}`, text: String(p.overall) }),
+        el("span", { class: `dc-person-ovr ${tier(p.overall)}`, title: "Overall rating", text: String(p.overall) }),
       ]));
     }
     main.append(list);

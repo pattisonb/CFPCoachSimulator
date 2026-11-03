@@ -179,6 +179,15 @@ def check_player_from_stats(page, base, A, errors) -> None:
     page.click(".modal:not([hidden]) .modal-close")
     page.wait_for_selector("#tab-playerstats .view-chips button.active:has-text('Roster')", timeout=60_000)   # the roster under it, as it was
     clean(page, errors)
+    # the League's Programs tab (a career): its own address, back after a reload
+    if page.is_visible("#season-tabs button[data-tab=programs]"):
+        page.click("#season-tabs button[data-tab=programs]")
+        wait_url(page, lambda p: p.get("tab") == "programs", "tab=programs")
+        page.wait_for_selector("#tab-programs .go-programs tbody tr", timeout=60_000)
+        reload(page)
+        page.wait_for_selector("#tab-programs .go-programs tbody tr", timeout=60_000)
+        assert tab_on(page, "programs")
+        clean(page, errors)
 
 
 def check_box_and_stack(page, base, A, errors) -> None:

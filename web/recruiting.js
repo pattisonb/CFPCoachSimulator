@@ -283,26 +283,36 @@
     ["nil", "NIL", "The collective's tier, set by your AD"], ["market", "Market", "Crowds and TV"], ["conference", "Conference", "Your league's strength"],
     ["coach", "Coach", "Your rating and tenure"]];
 
-  // your program's living rating: the six metrics as bars, the tier and rank, and every program on request
+  // your program's living rating: the six metrics as bars and the tier (the League's Programs tab, with every program's table under it)
   function programCard(pv) {
     const you = pv.you;
     if (!you) return el("div");
-    const card = el("div", { class: "go-program" }, [
-      el("div", { class: "go-program-head" }, [el("span", { class: "go-kicker muted", text: "Your Program" }),
+    return el("section", { class: "go-card go-program", "aria-label": "Your Program" }, [
+      el("div", { class: "go-program-head" }, [el("span", { class: "go-kicker" }, ["Your Program ",
+        ui().tip("Prestige and the market move slowly with results; your AD raises NIL after a year that meets his goal.", "Your Program")]),
         el("span", { class: "go-tag", text: you.tier_name, title: "Where your program stands: its name, results, NIL, market, league and coach, moving slowly with what you do" })]),
       el("div", { class: "go-program-bars" }, PROGRAM_METRICS.map(([k, label, tip]) => el("div", { class: "go-program-bar", title: tip }, [
         el("span", { class: "go-program-label", text: label }), el("i", {}, [el("b", { style: `width:${Math.max(2, Math.min(100, you[k]))}%` })]),
         el("span", { class: "go-program-val", text: METRIC_WORDS(you[k]) })]))),
     ]);
-    const more = el("button", { type: "button", class: "go-btn", text: "Every Program" });
-    const tableBox = el("div", { hidden: true });
-    more.addEventListener("click", () => {
-      tableBox.hidden = !tableBox.hidden;
-      more.textContent = tableBox.hidden ? "Every Program" : "Hide the Programs";
-      if (!tableBox.hidden && !tableBox.childElementCount) tableBox.append(programsTable(pv));
-    });
-    card.append(el("div", { class: "go-program-foot" }, [el("span", { class: "muted small", text: "Prestige and the market move slowly with results; your AD raises NIL after a year that meets his goal." }), more]), tableBox);
-    return card;
+  }
+
+  // the League's Programs tab: your program's card (with the AD's goal), then every program, open
+  async function renderPrograms(s, box) {
+    box.innerHTML = "";
+    box.append(loading("Loading the programs…"));
+    let pv;
+    try { pv = await H.api(`/api/season/${s.id}/programs`); }
+    catch (err) { box.innerHTML = ""; box.append(el("p", { class: "muted", text: `Could not load the programs: ${H.errText(err)}` })); return; }
+    box.innerHTML = "";
+    const card = programCard(pv);
+    if (s.job) card.append(el("div", { class: `go-job ${s.job.security < 40 ? "bad" : s.job.security < 65 ? "warn" : "good"}` }, [
+      el("span", { class: "go-kicker muted", text: "Your AD's Goal" }), el("b", { text: ` ${s.job.goal}` }),
+      el("span", { class: "go-tag", text: `${s.job.mood}${s.job.ultimatum ? " · Ultimatum Year" : ""}` })]));
+    box.append(card, el("section", { class: "go-card go-programs-card", "aria-label": "Every Program" }, [
+      el("div", { class: "go-kicker" }, ["Every Program ", ui().tip("Every FBS program's standing on the same six measures, and what its AD expects this season.", "Every Program")]),
+      programsTable(pv)]));
+    if (H.carryLine) H.carryLine(s, card);
   }
 
   function programsTable(pv) {
@@ -316,6 +326,132 @@
     }
     t.append(body);
     return el("div", { class: "go-scroll" }, [t]);
+  }
+
+  // ----- the Office's games: Last Game (a quick box score) and Next Game (the matchup) ------------
+  const weekName = (s, w) => (s.week_labels && s.week_labels[w]) || `Week ${w}`;
+  const dateText = (d) => (d ? new Date(d).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "");
+  const recText = (r) => (r ? `${r.wins}-${r.losses}` : "0-0");
+  const venueWord = (g) => (g.venue === "away" ? "Road Game" : g.venue === "neutral" ? "Neutral Site" : "Home Game");
+  // the games the Office shows: the latest your team played, and the next it plays (this week's when unplayed)
+  function gamesOf(s) {
+    const sched = (s.schedule || []).filter((g) => g.opponent);
+    const last = sched.filter((g) => g.played).pop() || null;
+    const next = s.done ? null : sched.find((g) => !g.played && g.week >= s.current_week + 1) || null;
+    return { last, next };
+  }
+  function officeGames(s) {
+    const { last, next } = gamesOf(s);
+    if (!last && !next) return null;
+    const row = el("div", { class: `go-games${last && next ? " two" : ""}` });
+    if (last) row.append(lastGameCard(s, last));
+    if (next) row.append(nextGameCard(s, next));
+    return row;
+  }
+  // one side of a matchup: the mark, the rank, the name and the record
+  function sideLine(slug, name, rank, record, mine) {
+    return el("div", { class: `go-side${mine ? " mine" : ""}` }, [window.CFP.teamPill(slug),
+      rank ? el("span", { class: "go-rank", text: `#${rank}` }) : null, el("b", { class: "go-side-name", text: name }),
+      el("span", { class: "muted go-side-rec", text: record || "0-0" })]);
+  }
+  function nextGameCard(s, g) {
+    const thisWeek = g.week === s.current_week + 1;
+    const bye = !thisWeek && !s.done && s.current_week + 1 <= 14 && !(s.schedule || []).some((x) => x.week === s.current_week + 1 && x.opponent);
+    const myRank = s.my_rank && s.my_rank.rank;
+    const kicker = `${bye ? "Bye This Week · " : ""}Next Game · ${weekName(s, g.week)}${g.date ? ` · ${dateText(g.date)}` : ""}`;
+    const at = g.venue === "away";
+    const mine = sideLine(s.team, s.team_name, myRank, recText(s.record), true);
+    const them = sideLine(g.opponent, g.opponent_name, g.opponent_rank, g.opponent_record, false);
+    const edge = el("div", { class: "go-edge" });
+    const card = el("section", { class: "go-game go-game-next", "aria-label": "Next Game" }, [
+      el("div", { class: "go-kicker muted", text: kicker }),
+      el("div", { class: "go-sides" }, [mine, el("span", { class: "go-vs muted", text: at ? "at" : "vs" }), them]),
+      el("div", { class: "go-next-foot" }, [el("span", { class: "muted small go-venue", text: [venueWord(g), g.title, g.site].filter(Boolean).join(" · ") }), edge])]);
+    if (thisWeek) {
+      edge.append(el("span", { class: "muted small", text: "Scouting the matchup…" }));
+      H.api(`/api/season/${s.id}/preview?team=${s.team}`).then((pv) => {
+        const p = pv && pv.prediction;
+        edge.innerHTML = "";
+        if (!p) return;
+        edge.append(el("span", { class: "go-edge-item" }, [el("span", { class: "go-kicker muted", text: "Win Chance" }),
+            el("b", { class: p.win_prob >= 0.5 ? "good" : "bad", text: pct(p.win_prob) })]),
+          el("span", { class: "go-edge-item" }, [el("span", { class: "go-kicker muted", text: "Projected" }),
+            el("b", { text: `${Math.round(p.points_for)}–${Math.round(p.points_against)}` })]));
+      }).catch(() => { edge.innerHTML = ""; });
+    }
+    return card;
+  }
+  function lastGameCard(s, g) {
+    const res = g.won ? "W" : "L";
+    const card = el("section", { class: "go-game go-game-last", "aria-label": "Last Game" }, [
+      el("div", { class: "go-game-head" }, [el("div", { class: "go-kicker muted", text: `Last Game · ${weekName(s, g.week)}` })]),
+      el("div", { class: "go-final" }, [el("span", { class: `go-result ${g.won ? "good" : "bad"}`, text: res }),
+        el("span", { class: "go-display l go-final-score", text: `${g.points_for}–${g.points_against}` }),
+        el("span", { class: "go-final-opp" }, [el("span", { class: "muted", text: g.venue === "away" ? "at " : "vs " }), window.CFP.teamPill(g.opponent), ` ${g.opponent_name}`,
+          g.overtime ? el("span", { class: "muted", text: ` · ${g.overtime > 1 ? `${g.overtime}OT` : "OT"}` }) : null])])]);
+    if (!g.has_box || !g.event_id) return card;
+    const detail = el("div", { class: "go-box-mini" }, [el("span", { class: "muted small", text: "Loading the box score…" })]);
+    const full = el("button", { type: "button", class: "go-btn go-full-box", text: "Full Box Score" });
+    ui().on(full, "click", () => H.openBox(g.event_id));
+    card.querySelector(".go-game-head").append(full);     // in the card's head: the card stays short
+    card.append(detail);
+    H.api(`/api/season/${s.id}/game/${encodeURIComponent(g.event_id)}`).then((b) => {
+      detail.innerHTML = "";
+      if (!b || !b.home || !b.away) return;
+      detail.append(quarterTable(b), leadersList(b));
+    }).catch(() => { detail.innerHTML = ""; });
+    return card;
+  }
+  const SIDES = ["away", "home"];     // the box score reads away first
+  // the score by quarter, away first (as the box score reads)
+  function quarterTable(b) {
+    const ot = (b.home.overtime || []).length;
+    const cols = ["1", "2", "3", "4", ...(ot ? ["OT"] : []), "T"];
+    const abbr = (side) => { const t = window.CFP.teamsBySlug[b[`${side}_slug`]]; return (t && t.abbreviation) || b[side].name; };
+    const row = (side) => el("tr", { class: b.winner === side ? "won" : "" }, [el("th", { scope: "row" }, [window.CFP.teamPill(b[`${side}_slug`]), ` ${abbr(side)}`]),
+      ...(b[side].quarters || []).slice(0, 4).map((q) => el("td", { text: String(q) })),
+      ...(ot ? [el("td", { text: String((b[side].overtime || []).reduce((a, x) => a + x, 0)) })] : []),
+      el("td", { class: "total", text: String(b[side].score) })]);
+    const body = SIDES.map(row);
+    return el("table", { class: "go-quarters", "aria-label": "Score by quarter" }, [
+      el("thead", {}, [el("tr", {}, [el("th", { text: "" }), ...cols.map((c) => el("th", { scope: "col", text: c }))])]),
+      el("tbody", {}, body)]);
+  }
+  // the game's leaders, both teams: the top passer, rusher, receiver and defender
+  function leadersList(b) {
+    const all = [];
+    for (const side of SIDES) for (const p of b[side].players || []) all.push({ p, slug: b[`${side}_slug`] });
+    const st = (x, k) => (x.p.stats && x.p.stats[k]) || 0;
+    const best = (score, ok) => all.filter(ok).sort((a, z) => score(z) - score(a))[0];
+    const tds = (n, w) => (n ? `, ${n} ${w}` : "");
+    const rows = [];
+    const pass = best((x) => st(x, "pass_yards"), (x) => st(x, "pass_attempts") > 0);
+    if (pass) rows.push(["Passing", pass, `${st(pass, "pass_yards")} yds${tds(st(pass, "passing_touchdowns"), "TD")}${tds(st(pass, "interceptions_thrown"), "INT")}`]);
+    const rush = best((x) => st(x, "rush_yards"), (x) => st(x, "carries") > 0);
+    if (rush) rows.push(["Rushing", rush, `${st(rush, "rush_yards")} yds${tds(st(rush, "rushing_touchdowns"), "TD")}`]);
+    const rec = best((x) => st(x, "receiving_yards"), (x) => st(x, "receptions") > 0);
+    if (rec) rows.push(["Receiving", rec, `${st(rec, "receiving_yards")} yds${tds(st(rec, "receiving_touchdowns"), "TD")}`]);
+    const tk = (x) => st(x, "solo_tackles") + st(x, "assisted_tackles");
+    const def = best((x) => tk(x) + 3 * st(x, "sacks") + 4 * st(x, "interceptions"), (x) => tk(x) + st(x, "sacks") + st(x, "interceptions") > 0);
+    if (def) rows.push(["Defense", def, [`${tk(def)} tkl`, st(def, "sacks") ? `${st(def, "sacks")} sk` : "", st(def, "interceptions") ? `${st(def, "interceptions")} INT` : ""].filter(Boolean).join(", ")]);
+    const short = (n) => { const w = String(n).split(" "); return w.length > 1 ? `${w[0][0]}. ${w.slice(1).join(" ")}` : n; };
+    return el("ul", { class: "go-leaders" }, rows.map(([k, x, line]) => el("li", { title: `${x.p.name}, ${x.p.position}: ${line}` }, [el("span", { class: "go-kicker muted", text: k }),
+      el("span", { class: "go-leader-who" }, [window.CFP.teamPill(x.slug), el("b", { text: ` ${short(x.p.name)}` })]),
+      el("span", { class: "go-leader-line", text: line })])));
+  }
+  // one line: where you stand in your conference ("2nd in the Big Ten · 5-1 (3-0 Big Ten)"); an independent shows its record
+  function standingLine(s) {
+    const line = el("div", { class: "go-standing-line", "aria-label": "Your standing" }, [el("span", { text: recText(s.record) })]);
+    if (!s.record || !(s.record.wins + s.record.losses)) return line;
+    H.api(`/api/season/${s.id}/standings`).then((d) => {
+      const rows = (d && d.standings && d.standings[s.conference]) || [];
+      const r = rows.find((x) => x.slug === s.team);
+      if (!r) return;
+      const indep = /independent/i.test(s.conference || "");
+      line.textContent = indep ? `${r.wins}-${r.losses} · ${s.conference}`
+        : `${ordinal(r.conf_rank)} in the ${s.conference}${r.division ? ` ${r.division}` : ""} · ${r.wins}-${r.losses} (${r.conf_wins}-${r.conf_losses} ${s.conference})`;
+    }).catch(() => {});
+    return line;
   }
 
   async function renderOffice(s, box) {
@@ -336,42 +472,19 @@
         el("span", { class: "go-display m", text: final ? "National Signing Day Is Done" : "The Early Signing Period Is Done" }),
         el("span", { text: final ? "Every class is signed. See how yours ranks →" : "Commitments signed in December. See every school's class →" })]));
     }
-    const boxes = el("div", { class: "go-stats" });
     if (s.job) week.append(el("div", { class: `go-job ${s.job.security < 40 ? "bad" : s.job.security < 65 ? "warn" : "good"}` }, [
       el("span", { class: "go-kicker muted", text: "Your AD's Goal" }), el("b", { text: ` ${s.job.goal}` }),
-      el("span", { class: "go-tag", text: `${s.job.mood}${s.job.ultimatum ? " · ultimatum year" : ""}` })]));
-    if (s.job) {
-      const progBox = el("div");
-      week.append(progBox);
-      H.api(`/api/season/${s.id}/programs`).then((pv) => progBox.replaceWith(programCard(pv))).catch(() => progBox.remove());
-    }
+      el("span", { class: "go-tag", text: `${s.job.mood}${s.job.ultimatum ? " · Ultimatum Year" : ""}` })]));
     if (s.done) {
       head.append(el("div", { class: "go-display xl", text: s.champion_name ? `${s.champion_name} Won It All` : "That's a Wrap" }));
       week.append(el("div", { class: "go-play" }, [el("button", { type: "button", class: "go-btn primary big", text: "On to the Offseason →",
         onclick: () => H.onChange("offseason") })]));
-    } else if (!next || !next.opponent) {
-      head.append(el("div", { class: "go-display xl", text: s.current_week + 1 > 14 ? "No Game This Week" : "Bye Week" }), el("span", { class: "go-pill", text: "Recruit, Then Advance" }));
-    } else {
-      head.append(el("div", { class: "go-matchup" }, [
-        el("div", { class: "go-display xl", text: `${next.venue === "away" ? "AT" : "VS"} ${String(next.opponent_name).toUpperCase()}` }),
-        el("span", { class: "go-pill", text: next.played ? `Final: ${next.won ? "W" : "L"} ${next.points_for}–${next.points_against}` : next.venue === "away" ? "Road Game" : next.venue === "neutral" ? "Neutral Site" : "Home Game" }),
-      ]));
-      if (!next.played) {
-        const chanceVal = el("span", { class: "go-display l", text: "…" });
-        head.append(el("div", { class: "go-chance" }, [el("span", { class: "go-kicker muted", text: "Win Chance" }), chanceVal]));
-        boxes.append(loading("Scouting the matchup…"));
-        H.api(`/api/season/${s.id}/preview?team=${me}`).then((pv) => {
-          const p = pv.prediction;
-          boxes.innerHTML = "";
-          if (!p) { chanceVal.textContent = "—"; return; }
-          chanceVal.textContent = pct(p.win_prob);
-          chanceVal.classList.add(p.win_prob >= 0.5 ? "good" : "bad");
-          boxes.append(stat("Projected Score", `${Math.round(p.points_for)}–${Math.round(p.points_against)}`),
-                       stat("Margin", `${p.margin > 0 ? "+" : ""}${p.margin}`), stat("Based On", `${p.sims} sims`));
-        }).catch(() => { boxes.innerHTML = ""; chanceVal.textContent = "—"; });
-      }
     }
-    week.append(boxes);
+    // the game: the last one played (a quick box score) beside the next one (the matchup); a phone stacks them
+    const games = officeGames(s);
+    if (s.done) { if (games) head.after(games); }
+    else if (games) head.replaceWith(games); else head.remove();
+    if (!s.done) week.querySelector(".go-kicker").after(standingLine(s));
     const steps = el("div", { class: "go-steps" });
     week.append(el("div", { class: "go-kicker muted", text: "Your Week" }), steps);
     let reportBox = el("div");
@@ -1379,16 +1492,16 @@
       const looks = Math.min(3, b.looks || 0), left = 3 - looks;
       if (b.our_grades) {
         // the head: the kicker, the looks bar and count, and what one more trip does (or that the report is complete)
-        out.append(el("div", { class: "go-scout-head" }, [el("span", { class: "go-kicker", text: "Scouting Report" }), looksBar(looks),
+        out.append(el("div", { class: "go-scout-head" }, [el("span", { class: "go-kicker", text: "Scouting Report" }),
+          ui().tip("Tap a grade to see what it looks like in ratings. A trip is one look; a week in a scout's area is half a look, up to two.", "Scouting Report"), looksBar(looks),
           el("span", { class: "go-scout-looks", text: `${fmtLooks(looks)} of 3 Looks` }),
           left <= 0 ? el("span", { class: "go-tag good go-scout-tag", text: "Report Complete" })
             : left <= 1 ? el("span", { class: "go-tag go-scout-tag", text: "One Trip Finishes His Report" }) : null]));
         out.append(gradeGrid(b.id, b.our_grades, null, true));
-        out.append(el("p", { class: "muted small go-grades-note", text: "Tap a grade to see what it looks like in ratings. A trip is one look; a week in a scout's area is half a look, up to two." }));
       } else out.append(el("p", { class: "muted", text: "Not scouted yet: send a scout from the Recruit menu, or put a staff member on his area." }));
       // the footer: the link to the Scouting tab and, once his report is complete, our comp
       const comps = el("span", { class: "small go-comps" });
-      out.append(el("div", { class: "go-scout-foot" }, [el("button", { type: "button", class: "go-link sc-reports-link", text: "Reports on the Scouting Tab", onclick: () => H.onChange("scouting") }), comps]));
+      out.append(el("div", { class: "go-scout-foot" }, [el("button", { type: "button", class: "go-link sc-reports-link", text: "Reports on the Scouting Tab", onclick: () => { if (window.CFP.scouting) window.CFP.scouting.want("reports"); H.onChange("scouting"); } }), comps]));
       const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall ? `, ${c.overall} OVR` : ""})`;
       H.api(`/api/season/${s.id}/prospect/${encodeURIComponent(b.id)}`).then((pr) => {
         if (!comps.isConnected) return;
@@ -1775,29 +1888,12 @@
     grid.addEventListener("click", (e) => show(cellOf(e)));
     grid.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(cellOf(e)); });
   }
-  function placeTip(cell, tip) {
-    tip.classList.add("show");
-    const r = cell.getBoundingClientRect(), t = tip.getBoundingClientRect(), gap = 6, pad = 8;
-    const below = r.bottom + gap + t.height <= document.documentElement.clientHeight - pad;
-    const top = below ? r.bottom + gap : Math.max(pad, r.top - gap - t.height);
-    // the right edge it may reach: the page's usable width, the inner edge of any box around it that scrolls, and the
-    // edge of the pane or window it opens in (with the page's scrollbar gutter, a phone's sheet and the Prospects window
-    // stop short of the window's width, and a tip past them sits under the gutter)
-    let edge = document.documentElement.clientWidth;
-    for (let n = cell.parentElement; n && n !== document.body; n = n.parentElement) {
-      if (n.clientWidth && n.offsetWidth - n.clientWidth > 2) edge = Math.min(edge, n.getBoundingClientRect().left + n.clientLeft + n.clientWidth);
-    }
-    const host = cell.closest(".go-pane") || cell.closest(".modal-body");
-    if (host) edge = Math.min(edge, host.getBoundingClientRect().right);
-    const left = Math.min(Math.max(pad, r.left), edge - t.width - pad);
-    tip.style.top = `${top}px`;
-    tip.style.left = `${left}px`;
-  }
+  const placeTip = (cell, tip) => ui().placeTip(cell, tip);     // web/ui.js: clamped to the window and its scrolling box
 
   // a floating tooltip follows its grade while the page or the profile scrolls, and closes once
   // the grade has scrolled out of sight
   window.addEventListener("scroll", () => {
-    for (const t of document.querySelectorAll(".go-tip-box.show")) {
+    for (const t of document.querySelectorAll(".go-tip-box.show:not(.go-info-box)")) {
       const cell = t.closest(".go-tip");
       const r = cell && cell.getBoundingClientRect();
       if (!r || r.bottom < 0 || r.top > window.innerHeight) t.classList.remove("show");
@@ -1922,7 +2018,7 @@
       node.append(p.our_comp ? el("p", {}, [el("b", { text: "Our comp: " }), comp(p.our_comp)])
         : el("p", { class: "muted", text: looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp once his report is complete (${fmtLooks(looks)} of 3 looks).` }));
     } else node.append(el("p", { class: "muted", text: inPane ? "Not scouted yet: Scout from the Recruit menu, or put a staff member on his area." : "Not scouted yet: send a scout, or put a staff member on his area." }),
-      el("div", { class: "go-row wrap rc-profile-actions" }, [inPane ? null : scoutBtn, el("button", { type: "button", class: "go-btn", text: "Assign Your Staff →", onclick: () => { H.closeModal(); H.onChange("scouting"); } })]));
+      el("div", { class: "go-row wrap rc-profile-actions" }, [inPane ? null : scoutBtn, el("button", { type: "button", class: "go-btn", text: "Assign Your Staff →", onclick: () => { H.closeModal(); if (window.CFP.scouting) window.CFP.scouting.want("scouts"); H.onChange("scouting"); } })]));
     return true;
   }
 
@@ -1971,6 +2067,7 @@
     H = helpers;
     const box = document.getElementById(`tab-${tab}`);
     if (tab === "office") renderOffice(season, box);
+    else if (tab === "programs") renderPrograms(season, box);
     else if (tab === "recruiting") renderRecruiting(season, box);
     else if (tab === "prospects") renderProspects(season, box);
     else if (tab === "scouting") window.CFP.scouting.render(season, box, H);

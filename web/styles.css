@@ -1299,6 +1299,17 @@ body.career-mode.on-career-tab .season-weeks { padding-bottom: 6px; }
   border-radius: 10px; background: var(--panel); color: var(--text); border: 1px solid var(--border); box-shadow: 0 8px 24px var(--shadow); font-size: 13px; line-height: 1.5; }
 .go-tip-box b { display: block; margin-bottom: 2px; }
 .go-tip-box.show { display: block; }
+/* the ⓘ (CFP.ui.tip): help text off the page. A 22 px circle in a 36 px hit area (44 px on a phone); negative margins
+   keep the title line its own height */
+.go-info-wrap { display: inline-flex; vertical-align: middle; }
+button.go-info { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; min-height: 36px; min-width: 36px; margin: -8px -4px;
+  padding: 0; border: 0; background: transparent; color: var(--muted); cursor: help; box-shadow: none; border-radius: 50%; flex: none; }
+.go-info-i { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid currentColor;
+  font: italic 700 13px/1 Georgia, "Times New Roman", serif; }
+button.go-info:hover, button.go-info:focus-visible, button.go-info[aria-expanded="true"] { color: var(--text); background: transparent; }
+button.go-info:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+.go-info-box { font-weight: 400; text-transform: none; letter-spacing: normal; font-family: inherit; white-space: normal; text-align: left; max-width: min(360px, calc(100vw - 16px)); min-width: 200px; }
+@media (max-width: 759px) { button.go-info { width: 44px; height: 44px; min-height: 44px; min-width: 44px; margin: -11px -4px; } }
 
 .go-list-read { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
 .go-signing { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; margin-bottom: 16px; padding: 16px 20px; border-radius: 16px; border: none;
@@ -1450,3 +1461,55 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
   .team-chip b { font-size: 13px; }
   .season-tools button { min-height: 44px; }
 }
+/* the Stats roster: each position card's head names the number on its rows (OVR, with an ⓘ) */
+.roster-grid .leader-head { justify-content: flex-start; align-items: center; gap: 8px; }
+.roster-grid .leader-head > .small-text:not(.roster-ovr-head) { margin-left: auto; }
+.roster-ovr-head { display: inline-flex; align-items: center; gap: 2px; font-weight: 700; letter-spacing: 0.3px; }
+/* the Office's games: Last Game (a quick box score) beside Next Game (the matchup); a phone stacks them */
+.go-standing-line { font-size: 14px; font-weight: 600; color: var(--text); margin-top: -8px; }
+.go-games { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.go-games.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.go-game { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel-2); min-width: 0; }
+.go-sides { display: flex; flex-direction: column; gap: 4px; }
+.go-side { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 15px; }
+.go-side .team-pill { flex: none; }
+.go-side-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.go-side-rec { margin-left: auto; font-variant-numeric: tabular-nums; }
+.go-rank { font-size: 12px; font-weight: 700; color: var(--muted); }
+.go-vs { font-size: 12px; padding-left: 2px; }
+.go-edge { display: flex; flex-wrap: wrap; gap: 6px 20px; align-items: baseline; min-height: 20px; }
+.go-edge-item { display: inline-flex; align-items: baseline; gap: 8px; }
+.go-edge-item b { font-size: 18px; font-variant-numeric: tabular-nums; } .go-edge .good { color: var(--good-text); } .go-edge .bad { color: var(--bad-text); }
+.go-final { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
+.go-result { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 8px; font-weight: 800; color: #fff; }
+.go-result.good { background: var(--good); } .go-result.bad { background: var(--bad); }
+.go-final-score { font-variant-numeric: tabular-nums; }
+.go-final-opp { min-width: 0; }
+.go-box-mini { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.go-quarters { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; width: 100%; }
+.go-quarters th, .go-quarters td { padding: 3px 6px; text-align: center; }
+.go-quarters th[scope=row] { text-align: left; white-space: nowrap; font-weight: 600; }
+.go-quarters thead th { color: var(--muted); font-size: 11px; font-weight: 700; }
+.go-quarters td.total { font-weight: 800; } .go-quarters tr.won th, .go-quarters tr.won td.total { color: var(--text); }
+.go-leaders { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.go-leaders li { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; gap: 0 8px; align-items: baseline; font-size: 13px; }
+.go-leaders .go-kicker { font-size: 11px; letter-spacing: 1px; }
+.go-leader-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.go-leader-line { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.go-next-foot { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.go-game-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; margin: -6px 0 -4px; }
+.go-full-box { min-height: 36px; padding: 0 12px; font-size: 13px; }
+.go-programs-card { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+#tab-programs .go-program { padding: 16px 18px; }
+@media (max-width: 899px) { .go-games.two { grid-template-columns: minmax(0, 1fr); } }
+/* a phone: the week's three steps sit in one row, the mark over the title, the line under it dropped */
+@media (max-width: 599px) {
+  .go-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .go-steps .go-step { flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px; min-height: 44px; }
+  .go-steps .go-step-text .small { display: none; }
+  .go-steps .go-step-mark { width: 26px; height: 26px; }
+}
+#tab-programs .go-program-bars { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 899px) { #tab-programs .go-program-bars { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 599px) { #tab-programs .go-program-bars { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 759px) { .go-full-box { min-height: 44px; } .go-game-head { min-height: 44px; } }

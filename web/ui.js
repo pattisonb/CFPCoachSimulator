@@ -1,6 +1,6 @@
 /* Shared UI helpers for every page: the toast stack, the change pulse, fades, keyed lists, a busy
    state for the control that acted, and an in-place patch (morph) so an action updates the screen
-   instead of rebuilding it. window.CFP.ui = { toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph }.
+   instead of rebuilding it, and the ⓘ tooltip. window.CFP.ui = { toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph, tip, placeTip }.
    Motion honors prefers-reduced-motion. Loaded after gameview.js (which makes window.CFP). */
 (function () {
   "use strict";
@@ -264,7 +264,87 @@
     if (a.tagName === "INPUT" && (a.type === "checkbox" || a.type === "radio") && a.checked !== b.checked) a.checked = b.checked;
   }
 
-  CFP.ui = { toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph };
+  // ----- tooltips --------------------------------------------------------------------------------
+  // placeTip(anchor, box): show a fixed .go-tip-box under the anchor (above it when there is no room), its right edge
+  // clamped to the window, any scrolling box around the anchor, and the pane or modal it opens in.
+  function placeTip(cell, tip) {
+    tip.classList.add("show");
+    const r = cell.getBoundingClientRect(), t = tip.getBoundingClientRect(), gap = 6, pad = 8;
+    const below = r.bottom + gap + t.height <= document.documentElement.clientHeight - pad;
+    const top = below ? r.bottom + gap : Math.max(pad, r.top - gap - t.height);
+    // the right edge it may reach: the page's usable width, the inner edge of any box around it that scrolls, and the
+    // edge of the pane or window it opens in (with the page's scrollbar gutter, a phone's sheet and the Prospects window
+    // stop short of the window's width, and a tip past them sits under the gutter)
+    let edge = document.documentElement.clientWidth;
+    for (let n = cell.parentElement; n && n !== document.body; n = n.parentElement) {
+      if (n.clientWidth && n.offsetWidth - n.clientWidth > 2) edge = Math.min(edge, n.getBoundingClientRect().left + n.clientLeft + n.clientWidth);
+    }
+    const host = cell.closest(".go-pane") || cell.closest(".modal-body");
+    if (host) edge = Math.min(edge, host.getBoundingClientRect().right);
+    const left = Math.min(Math.max(pad, r.left), edge - t.width - pad);
+    tip.style.top = `${top}px`;
+    tip.style.left = `${Math.max(pad, left)}px`;
+  }
+
+  // tip(text, label): a small ⓘ button that explains what sits beside it (help text moved off the page). The text
+  // shows in a popover on hover and on focus, and a tap (a phone) pins it open; Escape, a tap outside or blur close it.
+  // The button is named "About <label>" (Title Case) and described by the text (a sentence). Visually a 22 px circle,
+  // its hit area is 36 px on a desktop and 44 px on a phone (styles.css .go-info).
+  let tipSeq = 0;
+  const openTips = new Set();
+  function closeTip(w) { if (!w) return; w.__pinned = false; w.__box.classList.remove("show"); w.__btn.setAttribute("aria-expanded", "false"); openTips.delete(w); }
+  function openTip(w) {
+    for (const o of [...openTips]) if (o !== w) closeTip(o);
+    placeTip(w.__btn, w.__box);
+    w.__btn.setAttribute("aria-expanded", "true");
+    openTips.add(w);
+  }
+  function tip(text, label) {
+    const id = `go-info-${++tipSeq}`;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "go-info";
+    btn.setAttribute("aria-label", `About ${label}`);
+    btn.setAttribute("aria-describedby", id);
+    btn.setAttribute("aria-expanded", "false");
+    const glyph = document.createElement("span");
+    glyph.className = "go-info-i";
+    glyph.setAttribute("aria-hidden", "true");
+    glyph.textContent = "i";
+    btn.append(glyph);
+    const box = document.createElement("span");
+    box.className = "go-tip-box go-info-box";
+    box.id = id;
+    box.setAttribute("role", "tooltip");
+    box.textContent = text;
+    const w = document.createElement("span");
+    w.className = "go-info-wrap";
+    w.__btn = btn; w.__box = box; w.__pinned = false;
+    w.append(btn, box);
+    const hover = () => window.matchMedia && window.matchMedia("(hover: hover)").matches;
+    btn.addEventListener("mouseenter", () => { if (hover()) openTip(w); });
+    btn.addEventListener("mouseleave", () => { if (hover() && !w.__pinned && document.activeElement !== btn) closeTip(w); });
+    btn.addEventListener("focus", () => openTip(w));
+    btn.addEventListener("blur", () => closeTip(w));
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (w.__pinned) { closeTip(w); return; }
+      w.__pinned = true;
+      openTip(w);
+    });
+    btn.addEventListener("keydown", (e) => { if (e.key === "Escape" && openTips.has(w)) { e.stopPropagation(); closeTip(w); } });
+    return w;
+  }
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") for (const w of [...openTips]) closeTip(w); });
+  document.addEventListener("pointerdown", (e) => { for (const w of [...openTips]) if (!w.contains(e.target)) closeTip(w); }, true);
+  window.addEventListener("scroll", () => {
+    for (const w of [...openTips]) {
+      const r = w.__btn.getBoundingClientRect();
+      if (!w.isConnected || r.bottom < 0 || r.top > window.innerHeight) closeTip(w); else placeTip(w.__btn, w.__box);
+    }
+  }, true);
+
+  CFP.ui = { toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph, tip, placeTip };
   if (document.body) mount();
   else document.addEventListener("DOMContentLoaded", mount);
 })();
