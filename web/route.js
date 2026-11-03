@@ -42,7 +42,7 @@
       else if (v != null && v !== "" && v !== false) q.set(k, String(v));
     }
     const s = q.toString();
-    return s ? `?${s}` : location.pathname.split("/").pop() || "./";
+    return s ? `./?${s}` : "./";     // the folder, never index.html: the host serves its index page there
   }
   const ORDER = ["id", "tab", "screen", "week"];
   const rank = (k) => (ORDER.includes(k) ? ORDER.indexOf(k) : k === "modal" ? 99 : 50);
@@ -77,6 +77,11 @@
     clearTimeout(backTimer);
     backTimer = setTimeout(flush, BACK_WAIT_MS);
     history.go(-n);
+  }
+
+  // arrived at …/index.html (an old link or bookmark): show the folder's address instead, same page
+  if (/\/index\.html$/.test(location.pathname)) {
+    try { history.replaceState(history.state, "", `./${location.search}${location.hash}`); } catch (e) { /* a sandboxed frame */ }
   }
 
   const depth = () => ((history.state && Number(history.state.modal)) || 0);

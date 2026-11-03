@@ -227,7 +227,7 @@
     if (!saved) return;
     try {
       const s = await api("/api/season", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ team, mode: "full", coach: saved.id }) });
-      location.href = `./index.html?id=${encodeURIComponent(s.id)}`;
+      location.href = `./?id=${encodeURIComponent(s.id)}`;
     } catch (err) { toast(`Could not start the season: ${err.message}`, 4000); }
   }
 

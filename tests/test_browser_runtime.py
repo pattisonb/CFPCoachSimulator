@@ -165,7 +165,7 @@ def test_two_weeks_match_native_and_reload_restores(browser, base: str, timings:
         assert shim(page, f"/api/season/{sid}")["json"]["current_week"] == 2
         # the page keeps its own address: the same page and save (web/route.js adds the view, e.g. &tab=office)
         here = urllib.parse.urlsplit(page.url)
-        assert f"{here.scheme}://{here.netloc}{here.path}" == f"{base}/index.html", page.url
+        assert f"{here.scheme}://{here.netloc}{here.path}" == f"{base}/", page.url     # the folder, not index.html
         assert urllib.parse.parse_qs(here.query).get("id") == [sid], page.url
         timings["reload"] = load(page, None)     # a fresh worker: the career comes back from IndexedDB
         page.wait_for_selector("#season:visible")
