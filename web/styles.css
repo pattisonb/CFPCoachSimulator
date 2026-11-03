@@ -1496,7 +1496,7 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
 .go-leader-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .go-leader-line { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .go-next-foot { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
-.go-full-box { align-self: flex-start; }
+.go-full-box { margin-left: auto; }
 .go-programs-card { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
 #tab-programs .go-program { padding: 16px 18px; }
 @media (max-width: 899px) { .go-games.two { grid-template-columns: minmax(0, 1fr); } }
@@ -1507,3 +1507,6 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
   .go-steps .go-step-text .small { display: none; }
   .go-steps .go-step-mark { width: 26px; height: 26px; }
 }
+#tab-programs .go-program-bars { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 899px) { #tab-programs .go-program-bars { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 599px) { #tab-programs .go-program-bars { grid-template-columns: minmax(0, 1fr); } }

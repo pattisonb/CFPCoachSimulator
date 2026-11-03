@@ -1179,7 +1179,7 @@ offered. An FCS date can go to any other FCS team (they always come to you). Tra
 **A player keeps his seasons** (`offseason.record_seasons`, run when the offseason opens): every
 player's season line and honors go onto his entry in the career's league (`c["hist"]`, the last
 eight), follow him through the rollover and a transfer, and his page lists them under "Season by
-season" with the current season as the last row and a career line (totals, longs as the best). The Office's program card and the programs table
+season" with the current season as the last row and a career line (totals, longs as the best). The Programs tab's program card and table
 show a standing in words (a tag: blue blood, power, solid, Group of 5, bottom), with no rating
 number or rank.
 
@@ -1194,13 +1194,21 @@ with one button to add them all: a base to build a board from. Nobody commits an
 first three weeks (`COMMIT_FREEZE_WEEKS`), so there is time to scout and build a board before
 the class moves. A school's weekly hours are a multiple of 5.
 
-**The screens** (`web/recruiting.js`). A career opens on the **Office**: this week's opponent
-with the win chance and projected score, your week's three steps (Recruit, Game day, Advance)
+**The screens** (`web/recruiting.js`). A career opens on the **Office**: a one-line conference
+standing ("2nd in the SEC · 5-1 (3-0 SEC)", the Standings tab's place and record; an independent
+shows its record and "FBS Independents"; "0-0" before any games), then the game. **Last Game**
+(your latest played game: W or L and the final, the score by quarter, the game's top passer,
+rusher, receiver and defender from its box score, and **Full Box Score**, the box-score modal
+with its `box:` token) sits beside **Next Game** (both teams with marks, ranks and records, the
+venue and the week; for this week's game the win chance and projected score from the preview).
+Early in the season only Next Game shows, after the last game only Last Game; on a bye Next Game
+says "Bye This Week" and names the next opponent. A phone stacks them, and its week's three
+steps sit in one row. Then the AD's goal, your week's three steps (Recruit, Game day, Advance)
 and the play buttons, the recruiting summary (commitments, class rank, hours, NIL points, your
 hottest targets, the week's news) and tiles to every screen. The tab bar is two rows: the
 screens you act on (Office, Offseason once the season is over, Recruiting, Prospects, Scouting,
-Schedule, Depth Chart) and a League row that follows the calendar (Standings, Rankings and Stats
-all year; Awards from week 4; Classes, Bracket and Bowls from selection week; Summary when the
+Schedule, Depth Chart) and a League row that follows the calendar (Standings, Rankings, Stats
+and, in a career, **Programs** all year; Awards from week 4; Classes, Bracket and Bowls from selection week; Summary when the
 season is done). A plain season keeps every League tab. The Depth Chart button opens its own
 screen (`web/depth/depth.js`, `index.html?id=…&screen=depth`, Back returns to the season): the
 team's most-used formations as the next game fills them (`formations_view`) or one position at a
@@ -1592,9 +1600,10 @@ openings at least 3 above you, and a fired coach's openings are at or below. The
 candidates and generated coaches are drawn against the rating on the baseline's scale (`z_of`,
 fitted so the ratings line up with the recruiting baseline). Recruiting's prestige pull reads
 0.6 × prestige + 0.4 × rating and the NIL pull the NIL tier; the portal's prestige and the
-program's share of development read the rating. The Office shows your program's card (the six
-metrics as bars read in words: elite 80 and up, strong 65, solid 50, fair 35, weak below; the
-standing as a tag) and opens every program in a table of the same words. `tools/check_programs.py`
+program's share of development read the rating. The League's **Programs** tab shows your
+program's card (the six metrics as bars read in words: elite 80 and up, strong 65, solid 50, fair
+35, weak below; the standing as a tag; the AD's goal) and, open under it, every program in a table
+of the same words (it left the Office in round 3 to give the game the room). `tools/check_programs.py`
 checks the starting top 25 and, over a run, that the top 25 keeps at least 18 of its starting
 members; `tools/long_run.py` prints the same each season.
 
@@ -1616,7 +1625,7 @@ verdict: the goal, your record, your security and his patience. Under 40 he warn
 decided there, only at the end of a season. You can make your case (2-10 points of goodwill),
 offer a change on your staff (let a coordinator go: he joins the market, his job gets
 candidates at the Staff step, +10), ask for one more year (he always says yes, with an
-ultimatum: miss the goal next season and you are gone; the Office shows "ultimatum year") or
+ultimatum: miss the goal next season and you are gone; the Office shows "Ultimatum Year") or
 say nothing (he decides). The meeting also says where the collective goes: next year's NIL points, up after a year that
 met the goal and down after a losing one. Auto says nothing. Fired, you walk the rest of the offseason on Auto
 (the program's next coach runs it) and pick your next job from the openings at or below your
@@ -1758,7 +1767,7 @@ and 5; anything above is gone), applied once to the next class. AI schools earn,
 carry by the same rules. The review shows the math ("NIL for the portal: 60 left + 40 earned (nine
 wins, AD goal met) = 100", "raised to the 85 portal fund" when the floor applied, what keeping
 players home cost and what carries), the portal board's header shows the pool, and the next
-season's first Office card says "NIL carried over: 25 (of 135 this year)".
+season's Programs tab says "NIL carried over: 25 (of 135 this year)" on your program's card.
 
 **The Offseason screen** walks the steps: Departures (your leavers by kind, the league's numbers,
 the first round), Transfer portal round 1 and 2 (entrants with position and status filters, your
@@ -2175,7 +2184,7 @@ anything; landing on one (a load, Back, Forward) draws the target tab, which cou
 | Param | Meaning |
 | --- | --- |
 | `id` | The save |
-| `tab` | The top-level tab: `office`, `offseason`, `recruiting`, `prospects`, `scouting`, `classes`, `games`, `schedule`, `standings`, `rankings`, `stats`, `bracket`, `bowls`, `awards`, `summary` |
+| `tab` | The top-level tab: `office`, `offseason`, `recruiting`, `prospects`, `scouting`, `classes`, `games`, `schedule`, `standings`, `rankings`, `stats`, `programs`, `bracket`, `bowls`, `awards`, `summary` |
 | `week` | The week picked on the week strip (left out when it is the week up next) |
 | `stage`, `sort`, `pid`, `pane` | The recruiting board (also the offseason's portal board): the stage tab, the sort, the recruit in the pane, its sub-tab (`scouting`, `profile`, `history`) |
 | `ppos`, `pstars`, `pstate`, `pstatus`, `psort`, `pgroup`, `ppage` | The Prospects filters and page |

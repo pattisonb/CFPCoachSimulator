@@ -393,7 +393,8 @@
     const detail = el("div", { class: "go-box-mini" }, [el("span", { class: "muted small", text: "Loading the box score…" })]);
     const full = el("button", { type: "button", class: "go-btn go-full-box", text: "Full Box Score" });
     ui().on(full, "click", () => H.openBox(g.event_id));
-    card.append(detail, full);
+    card.querySelector(".go-final").append(full);     // beside the final: the card stays short
+    card.append(detail);
     H.api(`/api/season/${s.id}/game/${encodeURIComponent(g.event_id)}`).then((b) => {
       detail.innerHTML = "";
       if (!b || !b.home || !b.away) return;
@@ -401,6 +402,7 @@
     }).catch(() => { detail.innerHTML = ""; });
     return card;
   }
+  const SIDES = ["away", "home"];     // the box score reads away first
   // the score by quarter, away first (as the box score reads)
   function quarterTable(b) {
     const ot = (b.home.overtime || []).length;
@@ -410,14 +412,15 @@
       ...(b[side].quarters || []).slice(0, 4).map((q) => el("td", { text: String(q) })),
       ...(ot ? [el("td", { text: String((b[side].overtime || []).reduce((a, x) => a + x, 0)) })] : []),
       el("td", { class: "total", text: String(b[side].score) })]);
+    const body = SIDES.map(row);
     return el("table", { class: "go-quarters", "aria-label": "Score by quarter" }, [
       el("thead", {}, [el("tr", {}, [el("th", { text: "" }), ...cols.map((c) => el("th", { scope: "col", text: c }))])]),
-      el("tbody", {}, [row("away"), row("home")])]);
+      el("tbody", {}, body)]);
   }
   // the game's leaders, both teams: the top passer, rusher, receiver and defender
   function leadersList(b) {
     const all = [];
-    for (const side of ["away", "home"]) for (const p of b[side].players || []) all.push({ p, slug: b[`${side}_slug`] });
+    for (const side of SIDES) for (const p of b[side].players || []) all.push({ p, slug: b[`${side}_slug`] });
     const st = (x, k) => (x.p.stats && x.p.stats[k]) || 0;
     const best = (score, ok) => all.filter(ok).sort((a, z) => score(z) - score(a))[0];
     const tds = (n, w) => (n ? `, ${n} ${w}` : "");
