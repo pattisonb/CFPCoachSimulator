@@ -5,7 +5,7 @@
 (function () {
   "use strict";
   const CFP = (window.CFP = window.CFP || {});
-  const PULSE_MS = 400, FADE_MS = 150, MAX_TOASTS = 3;
+  const PULSE_MS = 600, FADE_MS = 150, MAX_TOASTS = 3;
   const mq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   const still = () => !!(mq && mq.matches);
 
@@ -120,9 +120,7 @@
       prev = n;
     }
   }
-  // opts.quiet: no fades (a filter, a sort, a page: a view switch, not an action), gone nodes go at once.
-  function reconcile(container, rows, key, draw, patch, opts) {
-    const quiet = !!(opts && opts.quiet);
+  function reconcile(container, rows, key, draw, patch) {
     const keyOf = typeof key === "function" ? key : (r) => r[key];
     const have = new Map();
     for (const c of container.children) if (c.dataset.key != null && !c.__leaving) have.set(c.dataset.key, c);
@@ -134,9 +132,9 @@
       else { n = draw(row); n.dataset.key = k; n.__fresh = true; }
       out.push(n);
     }
-    for (const n of have.values()) { if (quiet) n.remove(); else fadeOut(n); }
+    for (const n of have.values()) fadeOut(n);
     place(container, out);
-    for (const n of out) if (n.__fresh) { delete n.__fresh; if (!quiet) fadeIn(n); }
+    for (const n of out) if (n.__fresh) { delete n.__fresh; fadeIn(n); }
     return out;
   }
 
@@ -189,24 +187,19 @@
   // Nodes are matched by data-key among siblings where they carry one, otherwise in order; a node
   // of another tag is replaced. Text, attributes, form values (unless the player is typing in it)
   // and on() handlers move to the live node. Children of an element marked data-keep stay as they
-  // are. By default the patch is silent: a view switch (another prospect, another player, a sub-tab) must not
-  // flash. morph(live, fresh, { pulse: true }) is for a patch that shows what the player's own action changed or
-  // revealed: then changed elements pulse, new ones fade in and keyed ones that left fade out. Returns the changed elements.
+  // are. Changed elements pulse, new ones fade in. Returns the changed elements.
   const VALUE_TAGS = { INPUT: 1, SELECT: 1, TEXTAREA: 1 };
   const TRANSIENT = ["go-changed", "go-fade-in", "go-leaving"];
-  function morph(live, fresh, opts) {
-    const loud = !!(opts && opts.pulse);
+  function morph(live, fresh) {
     const changed = new Set(), born = [];
-    morphChildren(live, fresh, changed, born, loud);
-    if (loud) {
-      for (const n of born) fadeIn(n);
-      for (const n of changed) if (n.isConnected && !born.includes(n)) pulse(n);
-    }
+    morphChildren(live, fresh, changed, born);
+    for (const n of born) fadeIn(n);
+    for (const n of changed) if (n.isConnected && !born.includes(n)) pulse(n);
     return [...changed];
   }
   function keyOfNode(n) { return n.nodeType === 1 ? n.getAttribute("data-key") || null : null; }
   function same(a, b) { return a.nodeType === b.nodeType && a.nodeName === b.nodeName; }
-  function morphChildren(a, b, changed, born, loud) {
+  function morphChildren(a, b, changed, born) {
     const oldKids = [...a.childNodes].filter((n) => !n.__leaving), newKids = [...b.childNodes];
     const byKey = new Map();
     for (const o of oldKids) { const k = keyOfNode(o); if (k && !byKey.has(k)) byKey.set(k, o); }
@@ -217,16 +210,16 @@
       const k = keyOfNode(n);
       let o = k ? byKey.get(k) : loose[li++];
       if (o && used.has(o)) o = null;
-      if (o && same(o, n)) { used.add(o); morphNode(o, n, changed, born, loud); out.push(o); }
+      if (o && same(o, n)) { used.add(o); morphNode(o, n, changed, born); out.push(o); }
       else { out.push(n); if (n.nodeType === 1) born.push(n); else if (n.nodeType === 3 && n.data.trim()) changed.add(a); }
     }
     for (const o of oldKids) if (!used.has(o)) {
-      if (o.nodeType === 1 && keyOfNode(o) && loud) fadeOut(o);
+      if (o.nodeType === 1 && keyOfNode(o)) fadeOut(o);
       else { if (o.nodeType === 3 && o.data.trim()) changed.add(a); o.remove(); }
     }
     place(a, out);
   }
-  function morphNode(a, b, changed, born, loud) {
+  function morphNode(a, b, changed, born) {
     if (a.nodeType === 3 || a.nodeType === 8) {
       if (a.data !== b.data) { a.data = b.data; if (a.parentElement) changed.add(a.parentElement); }
       return;
@@ -262,11 +255,10 @@
     if (a.__on) for (const t of Object.keys(a.__on)) if (!b.__on || !b.__on[t]) a.__on[t] = null;
     if (attrChanged && a.tagName !== "TR" && a.tagName !== "TABLE") changed.add(a);
     if (a.hasAttribute("data-keep")) return;
-    morphChildren(a, b, changed, born, loud);
+    morphChildren(a, b, changed, born);
     if (a.tagName === "SELECT" && a.value !== b.value && document.activeElement !== a) a.value = b.value;
     if (a.tagName === "INPUT" && (a.type === "checkbox" || a.type === "radio") && a.checked !== b.checked) a.checked = b.checked;
   }
-
 
   // ----- tooltips --------------------------------------------------------------------------------
   // placeTip(anchor, box): show a fixed .go-tip-box under the anchor (above it when there is no room), its right edge

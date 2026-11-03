@@ -2885,16 +2885,20 @@
     box.append(el("div", { class: "table-scroll" }, [table]));
   }
 
+  const OVR_TIP = "Overall rating from 1 to 99 at his position, from his attributes there: 50 is an average Power 4 starter, 65 a good one, 80 elite.";
   async function renderRoster(box, slug) {
     const ps = playerStatsState;
     if (!ps.roster || ps.roster.slug !== slug) {
-      try { ps.roster = { slug, ...(await api(`/api/teams/${slug}`)) }; } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
+      // the season's own roster (development, transfers, recruits, god-mode edits): the same overall the depth chart and the player page show
+      const s = state.season;
+      try { ps.roster = { slug, ...(await api(`/api/season/${s.id}/depth/${slug}/roster`)) }; } catch (err) { box.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); return; }
     }
     const t = ps.roster;
     const r = t.ratings || {};
+    const num = (x) => (Number.isFinite(Number(x)) ? String(Math.round(x)) : "—");
     box.append(el("div", { class: "roster-head" }, [
       teamPill(slug), el("b", { text: t.name }),
-      el("span", { class: "muted", text: ` · ${t.conference} · ${t.head_coach} · overall ${Math.round(r.overall)} (off ${Math.round(r.offense)}, def ${Math.round(r.defense)}, ST ${Math.round(r.special_teams)})` }),
+      el("span", { class: "muted", text: ` · ${[t.conference, t.head_coach].filter(Boolean).join(" · ")} · Overall ${num(r.overall)} (Off ${num(r.offense)}, Def ${num(r.defense)}, ST ${num(r.special_teams)})` }),
     ]));
     const groups = new Map();
     for (const p of t.players) {
@@ -2908,7 +2912,8 @@
       const players = (groups.get(label) || []).slice().sort((a, b) => b.starter - a.starter || b.overall - a.overall);
       if (!players.length) continue;
       const card = el("div", { class: "leader-card panel-2" });
-      card.append(el("div", { class: "leader-head" }, [el("h4", { text: label }), el("span", { class: "muted small-text", text: `${players.length} players` })]));
+      card.append(el("div", { class: "leader-head" }, [el("h4", { text: label }), el("span", { class: "muted small-text", text: `${players.length} Players` }),
+        el("span", { class: "roster-ovr-head muted small-text" }, ["OVR", window.CFP.ui.tip(OVR_TIP, "Overall")])]));
       players.forEach((p, i) => {
         card.append(el("div", { class: `leader-row ${p.starter ? "top" : ""}` }, [
           el("span", { class: "rank", text: p.starter ? "★" : String(i + 1) }),
@@ -2916,7 +2921,7 @@
             el("span", { class: "name" }, [el("span", { text: p.name, ...playerAttrs(slug, p.name, p.position) }), p.class ? el("span", { class: "pos", text: CLASS_LABEL[p.class] || p.class }) : null]),
             el("span", { class: "muted small-text", text: [p.starter ? (p.role && p.role !== p.position ? `starter · ${p.role}` : "starter") : (p.role && p.role !== p.position ? p.role : ""), p.height && p.weight ? `${p.height} ${p.weight}` : ""].filter(Boolean).join(" · ") }),
           ]),
-          el("span", { class: "value", text: String(p.overall) }),
+          el("span", { class: "value", text: String(p.overall), title: "Overall rating" }),
         ]));
       });
       grid.append(card);

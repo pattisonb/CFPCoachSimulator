@@ -203,7 +203,7 @@
     const showing = el("span", { class: "muted small sc-showing", role: "status" });
     const pager = el("nav", { class: "sc-pager", "aria-label": "Pages" });
     function paint() {
-      ui().reconcile(list, st.rows, (r) => r.pid, (r) => drawRow(r), (n, r) => { n.__row = r; fill(n, r); }, { quiet: true });
+      ui().reconcile(list, st.rows, (r) => r.pid, (r) => drawRow(r), (n, r) => { n.__row = r; fill(n, r); });
       const from = st.rows.length ? desk.page * PAGE + 1 : 0, to = desk.page * PAGE + st.rows.length;
       showing.textContent = st.rows.length ? `${num(from)}–${num(to)} of ${num(st.total)}` : `0 of ${num(st.total)}`;
       count.textContent = `${num(st.total)} ${st.total === 1 ? "Prospect" : "Prospects"}`;
@@ -375,8 +375,7 @@
     };
     panel.__row = (row) => { if (sel.pid === row.pid) { sel.row = row; if (sel.pr) paintIntel(); } };
     panel.__focus = () => { if (window.matchMedia("(max-width: 899px)").matches) panel.scrollIntoView({ block: "start" }); };
-    // opts.pulse: the patch shows what the player's own action revealed (a Send Scout, the board); a selection or a sub-tab is silent
-    function paintIntel(opts) {
+    function paintIntel() {
       const { row: r, pr } = sel, p = pr.public;
       const looks = Math.min(REPORT_LOOKS, r.looks || 0), complete = looks >= REPORT_LOOKS;
       const sp = complete ? ["Fully Scouted", "good"] : looks > 0 ? [`${fmtLooks(looks)} of ${REPORT_LOOKS} Looks`, "warn"] : ["Unscouted", "muted"];
@@ -416,7 +415,7 @@
         el("div", { class: "sc-sub-body", "data-key": `sub-${desk.sub}`, role: "tabpanel" }, [subBody]),
         el("div", { class: "sc-actions", "data-key": "actions" }, [send, boardBtn]),
         el("div", { class: "sc-actions-foot", "data-key": "foot" }, [reason ? el("span", { class: "muted small sc-why", text: reason }) : el("span", {}), full])]);
-      ui().morph(body, fresh, opts);
+      ui().morph(body, fresh);
     }
     async function sendScout(btn) {
       const r = sel.row;
@@ -435,7 +434,7 @@
       cur.patchHead(cur.v);
       ui().toast(`Scouted ${r.name} · ${fmtLooks(r.looks)} of ${REPORT_LOOKS} looks${r.looks >= REPORT_LOOKS ? " · his report is complete" : ""}`, { ms: 3000 });
       try { sel.pr = await api(s, `prospect/${encodeURIComponent(r.pid)}`); } catch (err) { /* the old read stands */ }
-      paintIntel({ pulse: true });
+      paintIntel();
       // the Send that completed his report disabled itself: the focus moves on to the board button, never the page body
       const a = document.activeElement;
       if (!a || a === document.body || a.disabled) { const next = body.querySelector("#sc-board"); if (next) next.focus({ preventScroll: true }); }
@@ -454,7 +453,7 @@
       cur.board += on ? 1 : -1;
       cur.fillRow(r.pid);
       cur.patchHead(cur.v);
-      paintIntel({ pulse: true });
+      paintIntel();
       ui().toast(on ? `${r.name} is on your board.` : hadOffer ? `${r.name} is off your board · offer pulled.` : `${r.name} is off your board.`, { ms: 2500 });
       if (desk.board === "on") cur.reload(r.pid);
     }
@@ -553,7 +552,7 @@
     list.__redraw = async () => {
       let x;
       try { x = await api(s, deskPath(0, 1)); } catch (err) { return; }
-      ui().morph(list, draw(x), { pulse: true });
+      ui().morph(list, draw(x));
       note.textContent = openText(x, rv);
       summary.textContent = sumText(x);
       cur.v.scouts = x.scouts;

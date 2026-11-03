@@ -1219,10 +1219,14 @@ def season_depth_formations(p: Params) -> dict:
 
 @route("GET", "/api/season/{season_id}/depth/{slug}/roster")
 def season_depth_roster(p: Params) -> dict:
-    """Every player on the roster as a depth-chart card: injuries and redshirts included."""
+    """Every player on the roster as a depth-chart card: injuries and redshirts included; with the team
+    line as this season sees it (name, conference, head coach, ratings) for the Stats tab's roster."""
     state = _season_state(p.path["season_id"])
     _check_team(p.path["slug"])
-    return season.depth_roster_view(state, p.path["slug"])
+    out = season.depth_roster_view(state, p.path["slug"])
+    t = season.team_data(state, p.path["slug"])
+    hc = ((t.get("coaches") or {}).get("head_coach") or {}).get("name")
+    return dict(out, name=t["name"], conference=t.get("conference"), head_coach=hc, ratings=t.get("team_ratings") or {})
 
 
 @route("GET", "/api/season/{season_id}/depth/{slug}/position/{role}")

@@ -82,7 +82,7 @@
       try {
         await ctx.api(base(), ctx.postJSON(body));
         dropCache();
-        await patch({ pulse: true });
+        await patch();
         if (said) ctx.toast(said, 3000);
       } catch (err) { ctx.toast(`Could not change the depth chart: ${ctx.errText(err)}`, 4000); }
     })();
@@ -95,7 +95,7 @@
       try {
         await ctx.api(`/api/season/${ctx.season().id}/redshirt`, ctx.postJSON({ team: S.team, player: p.slug, on }));
         dropCache();
-        await patch({ pulse: true });
+        await patch();
         ctx.toast(on ? `${p.name} is redshirting: he keeps his year.` : `${p.name} is back in the lineup.`, 3000);
       } catch (err) { ctx.toast(`Could not do that: ${ctx.errText(err)}`, 4000); }
     })();
@@ -144,7 +144,7 @@
       try {
         const r = await ctx.api(`/api/season/${ctx.season().id}/position`, ctx.postJSON({ team: S.team, player: p.slug, pos }));
         dropCache(); faces.clear();
-        await patch({ pulse: true });
+        await patch();
         ctx.toast(r.moved_from ? `${p.name} moves to ${r.position} (was ${r.moved_from})` : `${p.name} moves back to ${r.position}`, 3500);
       } catch (err) { sel.value = now; ctx.toast(`Could not change his position: ${ctx.errText(err)}`, 4000); }
     })());
@@ -249,9 +249,7 @@
   // after an action: the screen is drawn again off screen and the one in front patched to match it (web/ui.js
   // morph): nothing blanks, the scroll and the focus stay, what changed pulses. The field's fit (a size and
   // classes on .dc-rows) carries over so the patch does not flash it; fit() runs again after.
-  // opts.pulse: after a move, a redshirt or a position change (what the player's action changed shows);
-  // a selection, a view or a toggle patches silently
-  async function patch(opts) {
+  async function patch() {
     if (!host || !ctx) return;
     if (!host.firstChild) return render();
     const token = ++seq;
@@ -259,7 +257,7 @@
     if (!(await draw(fresh, token))) return;
     const a = host.querySelector(".dc-rows"), b = fresh.querySelector(".dc-rows");
     if (a && b) { if (a.getAttribute("style")) b.setAttribute("style", a.getAttribute("style")); b.className = a.className; }
-    window.CFP.ui.morph(host, fresh, opts);
+    window.CFP.ui.morph(host, fresh);
     fit();
   }
 
@@ -540,7 +538,7 @@
     line.replaceChildren(
       el("strong", { text: p.name }),
       el("span", { class: "dc-muted", text: [p.jersey ? `#${p.jersey}` : "", p.position, CLASS_LABEL[p.class] || p.class, p.height && p.weight ? `${p.height} ${p.weight}` : ""].filter(Boolean).join(" · ") }),
-      el("span", { class: `dc-card-ovr ${tier(p.overall)}`, text: String(p.overall) }),
+      el("span", { class: `dc-card-ovr ${tier(p.overall)}`, title: "Overall rating", text: String(p.overall) }),
       behind.length ? el("span", { class: "dc-muted", text: behind.map((b, k) => `${ordinal(k + 2)} ${shortName(b.name)} ${b.overall}`).join(" · ") }) : null,
     );
     head.classList.add("previewing");
@@ -599,7 +597,7 @@
       out.push(el("div", { class: "dc-kicker dc-panel-sub", text: `${row.role} Depth` }));
       out.push(el("ol", { class: "dc-depth" }, row.players.map((x, i) => el("li", { class: `${x.slug === p.slug ? "on" : ""} ${i < Math.max(1, row.starters) ? "start" : ""}` }, [
         el("button", { type: "button", class: "dc-depth-name", text: `${i + 1}. ${shortName(x.name)}`, onclick: () => { S.sel = x.slug; patch(); } }),
-        el("span", { class: `dc-depth-ovr ${tier(x.overall)}`, text: String(x.overall) }),
+        el("span", { class: `dc-depth-ovr ${tier(x.overall)}`, title: "Overall rating", text: String(x.overall) }),
         edit ? el("span", { class: "dc-depth-acts" }, [
           i > 0 ? el("button", { type: "button", class: "dc-btn dc-mini tiny", title: "Make Starter", "aria-label": `Make ${x.name} the starter`, text: "★", onclick: (e) => change({ role: row.role, player: x.slug, move: "top" }, `${x.name} starts at ${row.role}`, e) }) : null,
           i > 0 ? el("button", { type: "button", class: "dc-btn dc-mini tiny", title: "Move Up", "aria-label": `Move ${x.name} up`, text: "▲", onclick: (e) => change({ role: row.role, player: x.slug, move: "up" }, `${x.name} moves up at ${row.role}`, e) }) : null,
@@ -990,7 +988,7 @@
       face(p, "head", "dc-chip-face"),
       el("div", { class: "dc-person-main" }, [el("strong", { text: p.name }), el("span", { class: "dc-muted" }, [[p.position, CLASS_LABEL[p.class] || p.class, p.role && p.depth ? `${p.role} #${p.depth}` : ""].filter(Boolean).join(" · "), movedFrom(p)])]),
       el("span", { class: "dc-muted", text: `${p.redshirt.games} of ${p.redshirt.limit} games` }),
-      el("span", { class: `dc-person-ovr ${tier(p.overall)}`, text: String(p.overall) }),
+      el("span", { class: `dc-person-ovr ${tier(p.overall)}`, title: "Overall rating", text: String(p.overall) }),
       rsButton(p) || el("span"),
     ]);
     if (sitting.length) { list.append(el("div", { class: "dc-kicker", "data-key": "k:sitting", text: "Sitting Out" })); sitting.forEach((p) => list.append(person(p))); }
@@ -1019,7 +1017,7 @@
         el("div", { class: "dc-person-main" }, [el("strong", { text: p.name }), el("span", { class: "dc-muted" }, [[p.position, p.role && p.depth ? `${p.role} #${p.depth}` : ""].filter(Boolean).join(" · "), movedFrom(p)])]),
         el("span", { class: p.injury ? "dc-flag bad" : "dc-flag", text: p.injury ? `${p.injury.type} · back ${(s.week_labels && s.week_labels[p.injury.returns_week]) || "week " + p.injury.returns_week}` : "Redshirting" }),
         el("span", { class: "dc-muted", text: sub ? `In his place: ${shortName(sub.name)} (${sub.overall})` : "Nobody behind him" }),
-        el("span", { class: `dc-person-ovr ${tier(p.overall)}`, text: String(p.overall) }),
+        el("span", { class: `dc-person-ovr ${tier(p.overall)}`, title: "Overall rating", text: String(p.overall) }),
       ]));
     }
     main.append(list);

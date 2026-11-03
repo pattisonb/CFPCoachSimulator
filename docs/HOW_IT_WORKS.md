@@ -2140,22 +2140,13 @@ looking at. `window.CFP.ui` (loaded right after `gameview.js`, before every scre
 holds the shared helpers: `morph` patches a live tree to match a freshly drawn one (nodes matched
 by `data-key`, text and attributes moved onto the live node, a field the player is typing in left
 alone), `reconcile` keeps a keyed list (an existing row is patched and moved into order, a new one
-fades in over 150 ms, a gone one fades out; `{quiet: true}` for a filter, a sort or a page: no
-fades), `pulse` marks what changed with a 400 ms background pulse (`.go-changed`, a soft neutral
-yellow, never the team color: a red team's pulse read as an error), `busy` disables the control that acted and shows a spinner until the request
+fades in over 150 ms, a gone one fades out), `pulse` marks what changed with a 600 ms background
+pulse (`.go-changed`), `busy` disables the control that acted and shows a spinner until the request
 and the re-fetch land, then hands the focus back to it (or the nearest live control if it left), and
 `toast` says what happened in one short sentence on a stack bottom-left: a polite `status` region,
 newest on top, three at most, 3.5 s each; `#toast` stays as a hidden mirror of the latest for older
 scripts. The recruiting board, the depth chart, Settings, every offseason stage and Your coach use
 these, so the scroll never jumps and focus never falls to the page body.
-
-**Only an action flashes.** `morph(live, fresh)` is silent by default: selecting another prospect
-in the Scouting Center, another player or position on the depth chart, a report's sub-tab, a page
-or a filter patches with no pulse and no fade. A patch that shows what the player's own action
-changed or revealed passes `{pulse: true}`: a Send Scout's new grades and the board button
-(Scouting), a depth move, a redshirt or a position change (the depth chart), an offseason
-decision, a saved or deleted coach. `tests/test_smoothness.py` counts `.go-changed` and the fade
-classes right after a switch and expects none, and still expects a pulse after a move or an offer.
 
 **Help in an ⓘ** (`CFP.ui.tip(text, label)`). Explanations that used to sit under a title as a muted
 line live in a small ⓘ beside it: a 22 px circle with a 36 px hit area (44 px on a phone). The text

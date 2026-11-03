@@ -912,7 +912,7 @@
       empty.hidden = rows.length > 0;
       footCount.textContent = `${v.board.length} on your board`;
       const focused = document.activeElement && list.contains(document.activeElement) ? document.activeElement.dataset.pid : null;
-      ui().reconcile(list, rows, (b) => b.id, row, patchRow, { quiet: !opts.pulse });
+      ui().reconcile(list, rows, (b) => b.id, row, patchRow);
       markRows();
       if (focused) { const f = list.querySelector(`.go-row-recruit[data-pid="${focused}"]`); if (f && document.activeElement !== f) f.focus({ preventScroll: true }); }
       // the pane: patched for the same recruit, swapped (a cross-fade) for another, gone with the last row
@@ -1303,6 +1303,7 @@
         view.sub = k;
         bodyKey = null;
         fill(false);
+        ui().fadeIn(body);
         syncBoard();
       }
       function fillSub(k, sd) {

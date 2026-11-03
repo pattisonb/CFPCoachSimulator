@@ -2372,7 +2372,7 @@ if __name__ == "__main__":
             page.emulate_media(reduced_motion="no-preference")
             motion = page.evaluate("""() => { const w = document.querySelector('.go-pane .go-chip'); w.classList.add('go-changed');
                 const r = getComputedStyle(w).animationDuration; w.classList.remove('go-changed'); return r; }""")
-            assert motion == "0.4s", motion
+            assert motion == "0.6s", motion
             assert not errors, errors
 
             # --- Scouting: the scouts, the queue (Send patches in place), the reports and the flags
