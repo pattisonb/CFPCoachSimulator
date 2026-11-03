@@ -903,11 +903,14 @@ def _report_groups(state: dict, entries: list[dict], counts: dict, changes: dict
 
 
 QUEUE_LIMIT, QUEUE_MAX = 120, 400            # the queue's page: the default and the most rows one ask returns
+QUEUE_SORTS = ("rank", "board", "need", "potential", "looks")   # the Prospect Database's orders; rank by default
+COMMITTED_TO_YOU, SIGNED = "He is committed to you", "He has signed"   # why a listed prospect takes no Send
 FLAG_ORDER = ("generational", "gem", "likes", "bust")   # the Flags list: the liked recruits after the gems
 
 
 def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] = None, group: Optional[str] = None,
-                  offset: int = 0, limit: int = QUEUE_LIMIT, scouted: bool = False) -> dict:
+                  offset: int = 0, limit: int = QUEUE_LIMIT, scouted: bool = False, sort: str = "rank",
+                  on_board: bool = False) -> dict:
     """The Scouting tab: your scouts and this week's yield (looks in trip units: an area week counts
     0.5), one page of the queue of recruits worth a trip (your board's one Send from complete first,
     then the board's open reports, then the board's complete reports (kept in view with no Send:
@@ -916,8 +919,11 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
     on name or home state, `position`, `group`; `queue_total` counts the whole match), this and last
     week's reports from the look log, and your staff's flags this class (gems, bust risks, generational
     prospects and the recruits a coordinator likes: staff_likes), every row carrying `likes`; a queue row
-    carries `on_board` (read-only). `scouted` keeps only prospects your staff has a read on. Read-only counts
-    for the tab's header: `full_reports` (complete reports this class) and `trips_this_week` (your Sends)."""
+    carries `on_board` (read-only). `scouted` keeps only prospects your staff has a read on, `on_board` only
+    your board. The list is every prospect you can see (`visible`), committed to you or signed too (no Send,
+    `why` says so), in `sort` order over the whole match (QUEUE_SORTS: rank by default; "board" is the board
+    first as above, then the class by need and rank). Read-only counts for the tab's header: `full_reports`
+    (complete reports this class) and `trips_this_week` (your Sends)."""
     rc, me = state["recruiting"], state["team"]
     week = recruiting.look_week(state)
     staff = {m["id"]: m for m in state["career"].get("staff", [])}
@@ -946,7 +952,7 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
     def fits(p: dict) -> bool:
         if want_pos and p["position"].upper() != want_pos or want_group and recruiting._group_of(p) != want_group:
             return False
-        if scouted and p["id"] not in rc["reads"]:
+        if scouted and p["id"] not in rc["reads"] or on_board and p["id"] not in rc["board"]:
             return False
         return not text or text in p["name"].lower() or text == p["hometown"]["state"].lower()
 
@@ -954,10 +960,31 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
     board = [pid for pid in rc["board"] if pid in live]
     # one Send from complete first, then the board's open reports, then its complete ones (they stay listed: no Send, a Complete tag)
     board.sort(key=lambda pid: 2 if complete(pid) else 0 if recruiting.looks_left(rc["reads"].get(pid)) <= recruiting.SEND_LOOK else 1)
-    rest = sorted((pid for pid in recruiting.visible(state) if pid in live and pid not in rc["board"]),
-                  key=lambda pid: (-need[recruiting._group_of(rc["prospects"][pid])], rc["prospects"][pid]["rank"]))
+    seen = [pid for pid in recruiting.visible(state) if pid in rc["status"]]
+    rank_of = lambda pid: rc["prospects"][pid]["rank"] or 10 ** 6
+    need_of = lambda pid: need[recruiting._group_of(rc["prospects"][pid])]
+    def potential_of(pid: str) -> int:
+        # the read's high word then its low word (best first); no read sorts last
+        if pid not in rc["reads"]:
+            return -1
+        lo, hi = recruiting.grade_range(state, pid, "potential")
+        return recruiting.WORDS.index(hi) * 10 + recruiting.WORDS.index(lo)
+    sort = sort if sort in QUEUE_SORTS else "rank"
+    if sort == "board":
+        # the open board as above, then board prospects committed to you or signed, then the class by need and rank
+        listed = set(seen)
+        order = (board + [pid for pid in rc["board"] if pid not in board and pid in listed]
+                 + sorted((pid for pid in seen if pid not in rc["board"]), key=lambda pid: (-need_of(pid), rank_of(pid))))
+    elif sort == "need":
+        order = sorted(seen, key=lambda pid: (-need_of(pid), rank_of(pid)))
+    elif sort == "potential":
+        order = sorted(seen, key=lambda pid: (-potential_of(pid), rank_of(pid)))
+    elif sort == "looks":
+        order = sorted(seen, key=lambda pid: (-((rc["reads"].get(pid) or {}).get("looks") or 0), rank_of(pid)))
+    else:
+        order = sorted(seen, key=rank_of)
     trips_of = lambda pid: ((rc["contacts"].get(pid) or {}).get(me) or {}).get("scouted", 0)
-    matched = [pid for pid in board + rest if fits(rc["prospects"][pid])]
+    matched = [pid for pid in order if fits(rc["prospects"][pid])]
     limit = max(1, min(int(limit), QUEUE_MAX))
     offset = max(0, int(offset))
     queue = []
@@ -965,11 +992,14 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
         p, read, trips = rc["prospects"][pid], rc["reads"].get(pid), trips_of(pid)
         short = hours_left < recruiting.HOURS["scout"]
         done = complete(pid)
+        status = rc["status"][pid]
+        gone = SIGNED if status["signed"] else COMMITTED_TO_YOU if status["committed"] == me else None
         queue.append({"pid": pid, "name": p["name"], "position": p["position"], "stars": p["stars"],
                       "group": recruiting._group_of(p), "need": need[recruiting._group_of(p)], "national_rank": p["rank"],
                       "looks": looks_out(read), "trips": trips,
                       "potential": list(recruiting.grade_range(state, pid, "potential")) if read else None,
-                      "can_send": not short and not done, "why": REPORT_COMPLETE if done else NOT_ENOUGH_HOURS if short else None,
+                      "can_send": not short and not done and not gone,
+                      "why": gone or (REPORT_COMPLETE if done else NOT_ENOUGH_HOURS if short else None),
                       "state": p["hometown"]["state"], "likes": staff_likes(state, pid, me), "on_board": pid in rc["board"],
                       "flags": recruiting._flags(state, pid) if read else []})
     flags = []

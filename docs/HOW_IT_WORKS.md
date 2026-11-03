@@ -1260,13 +1260,12 @@ Scouting Center, master and detail, built from the player's mockup in the site's
   board's size, "Tracked Players"), Full Reports (`full_reports`: complete reports this class), Scouting
   Queue (`trips_this_week`: your Sends this week) and Scouting Hours ("30 / 55" and a bar, `#sc-hours`).
   On a phone the cards are a 2×2 grid.
-- **The Prospect Database** (left): the recruits worth a trip, the API's queue (your board first, its
-  complete reports last among them, then the class by your need and his rank; a complete report off
-  your board is out), 20 to a page on `offset`/`limit`/`queue_total` ("1–20 of 3,969", ‹ 1 2 … 199 ›),
-  with a count pill, the search (name or home state), the chips All Prospects · My Board · Scouted (My
-  Board client-side on one ask of the whole board, the rows' `on_board`; Scouted is the API's
-  `scouted=1`, the prospects your staff has a read on), a position filter and a sort (Board First, Rank,
-  Need, Potential, Looks; on the page shown). A row is a button: the board star (★ on your board), the
+- **The Prospect Database** (left): every prospect you can see (`visible`), committed to you or signed
+  too (no Send; `why` says so), 20 to a page on `offset`/`limit`/`queue_total` ("1–20 of 3,810", ‹ 1 2 … 191 ›),
+  with a count pill, the search (name or home state), the chips All Prospects · My Board · Scouted (the
+  API's `on_board=1` and `scouted=1`: your board, or the prospects your staff has a read on), a position
+  filter and a sort (Rank by default, Board First, Need, Potential, Looks: the API's `sort`, over the whole
+  class, never just the page on screen). A row is a button: the board star (★ on your board), the
   avatar, the name, "POS · ST · stars" with any flag badge (`flags`: Gem, Bust Risk, Generational) and
   the "OC ♥" pill, then the rank, the potential read in its tone color on one line
   ("Elite–All-American", or "Unscouted") and the Scouting Confidence meter (three segments filled in
@@ -1304,7 +1303,7 @@ Scouting Center, master and detail, built from the player's mockup in the site's
   helpers), so a refresh reopens the same tab.
 
 A prospect's name never puts him on your board or leaves the tab: a row selects him; a name in All
-Reports opens his Prospect Profile over the tab. The address keeps `qboard` (the chip), `spid` (the
+Reports opens his Prospect Profile over the tab. The address keeps `qboard` (the chip), `ssort` (the sort), `spid` (the
 selected prospect), `ssub` (the sub-tab) and `sops` (Operations open), so a refresh lands on the same
 prospect and sub-tab. The pane's Scouting sub-tab links here with "Reports on the Scouting Tab", which
 opens All Reports; a profile's "Assign Your Staff →" opens Scouting Operations. The pane's Scouting
@@ -2169,7 +2168,7 @@ anything; landing on one (a load, Back, Forward) draws the target tab, which cou
 | `week` | The week picked on the week strip (left out when it is the week up next) |
 | `stage`, `sort`, `pid`, `pane` | The recruiting board (also the offseason's portal board): the stage tab, the sort, the recruit in the pane, its sub-tab (`scouting`, `profile`, `history`) |
 | `ppos`, `pstars`, `pstate`, `pstatus`, `psort`, `pgroup`, `ppage` | The Prospects filters and page |
-| `qboard`, `spid`, `ssub`, `sops` | Scouting: the database chip (`on`, `scouted`), the selected prospect, the report's sub-tab (`overview`, `scouting`) and Scouting Operations open (`1`); All Reports is a modal token |
+| `qboard`, `ssort`, `spid`, `ssub`, `sops` | Scouting: the database chip (`on`, `scouted`), the sort (`board`, `need`, `potential`, `looks`; rank when absent), the selected prospect, the report's sub-tab (`overview`, `scouting`) and Scouting Operations open (`1`); All Reports is a modal token |
 | `opos`, `ostatus` | The offseason portal list's filters (the stage itself is the server's) |
 | `poll` | Rankings: `ap`, `coaches`, `cfp`, `resume` |
 | `stats`, `steam`, `sview` | Stats: `team` for Team Stats; the player stats' team (`all` for the league) and view (`roster`, a category) |

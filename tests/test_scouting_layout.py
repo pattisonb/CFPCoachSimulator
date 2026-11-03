@@ -92,9 +92,11 @@ def check_select_and_subtab(page, base, sid, errors) -> None:
 
 
 def check_send_and_board(page, base, sid, errors) -> None:
-    v = call(base, f"/api/season/{sid}/scouting")
+    v = call(base, f"/api/season/{sid}/scouting?limit=400")
     row = next(r for r in v["queue"] if r["can_send"] and not r["on_board"] and (r["looks"] or 0) <= 1)
     pid = row["pid"]
+    page.fill("#sc-search", row["name"])           # the class's top rows are fully scouted here: find him by name
+    page.wait_for_selector(f".sc-row[data-pid='{pid}']", timeout=10_000)
     page.click(f".sc-row[data-pid='{pid}'] .sc-row-btn")
     wait_intel(page, row["name"])
     lst = page.query_selector(".sc-list")
@@ -121,6 +123,8 @@ def check_send_and_board(page, base, sid, errors) -> None:
     page.wait_for_function("(pid) => document.querySelector(`.sc-row[data-pid='${pid}'] .sc-star`).textContent === '☆'", arg=pid, timeout=10_000)
     assert pid not in board_ids(base, sid) and tab_on(page, "scouting")
     assert page.evaluate("(e) => e.isConnected", lst), "the list was never redrawn"
+    page.fill("#sc-search", "")
+    page.wait_for_function("() => document.querySelectorAll('.sc-row').length > 5", timeout=10_000)
     assert not errors, errors
 
 
@@ -144,6 +148,31 @@ def check_complete_stays(page, base, sid, pid, name, errors) -> None:
     page.click(".sc-chips [data-board=all]")
     page.fill("#sc-search", "")
     page.wait_for_function("() => document.querySelectorAll('.sc-row').length > 5", timeout=10_000)
+    assert not errors, errors
+
+
+def check_sort(page, base, sid, errors) -> None:
+    """The player's report: the sort did nothing (it reordered only the page on screen). The list is every prospect,
+    by rank by default; a sort orders the whole class (the first row is the class's best by it) and a refresh keeps it."""
+    rows = lambda: page.eval_on_selector_all(".sc-row", "els => els.map(e => e.dataset.pid)")
+    first = call(base, f"/api/season/{sid}/scouting?limit=20")["queue"]
+    assert first[0]["national_rank"] == 1 and [r["national_rank"] for r in first] == sorted(r["national_rank"] for r in first), "rank by default"
+    assert rows()[:5] == [r["pid"] for r in first[:5]], (rows()[:5], [r["pid"] for r in first[:5]])
+    for key in ("looks", "need", "rank"):
+        want = call(base, f"/api/season/{sid}/scouting?limit=20&sort={key}")["queue"]
+        page.select_option("#sc-sort", key)
+        page.wait_for_function("(p) => document.querySelector('.sc-row')?.dataset.pid === p", arg=want[0]["pid"], timeout=10_000)
+        assert rows()[:5] == [r["pid"] for r in want[:5]], key
+        assert params(page).get("ssort", "rank") == key
+    whole = call(base, f"/api/season/{sid}/scouting?limit=400&sort=looks")["queue"]
+    assert whole[0]["looks"] == max(r["looks"] or 0 for r in whole), "looks sorts the whole class, most first"
+    page.select_option("#sc-sort", "looks")
+    page.wait_for_function("(p) => document.querySelector('.sc-row')?.dataset.pid === p", arg=whole[0]["pid"], timeout=10_000)
+    reload(page)
+    page.wait_for_function("(p) => document.querySelector('.sc-row')?.dataset.pid === p", arg=whole[0]["pid"], timeout=60_000)
+    assert page.input_value("#sc-sort") == "looks", "the sort survives a refresh"
+    page.select_option("#sc-sort", "rank")
+    page.wait_for_function("(p) => document.querySelector('.sc-row')?.dataset.pid === p", arg=first[0]["pid"], timeout=10_000)
     assert not errors, errors
 
 
@@ -274,6 +303,7 @@ if __name__ == "__main__":
             page.on("dialog", lambda d: d.dismiss())
             check_first_viewport(page, base, A, errors)
             check_select_and_subtab(page, base, A, errors)
+            check_sort(page, base, A, errors)
             check_send_and_board(page, base, A, errors)
             check_complete_stays(page, base, A, off, rc["prospects"][off]["name"], errors)
             check_flags(page, base, A, errors)
@@ -282,7 +312,7 @@ if __name__ == "__main__":
             check_phone(page, base, A, errors)
             browser.close()
         print("scouting layout ok: the database and the report in the first viewport, a row fills the report and a refresh restores him "
-              "and the sub-tab, Send patches the meter, Add to Board flips the star, flags on the rows and the Scouting sub-tab, "
+              "and the sub-tab, the sort orders the whole class and survives a refresh, Send patches the meter, Add to Board flips the star, flags on the rows and the Scouting sub-tab, "
               "Scouting Operations patches in place and reloads, All Reports by scout reloads on Flags, a name opens his profile, a phone fits")
     finally:
         try:

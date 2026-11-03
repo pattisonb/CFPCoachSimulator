@@ -52,7 +52,7 @@ if __name__ == "__main__":
     assert outside not in rc["reads"]
     assert rc["look_counts"]["0"][scout["id"]] == 0.5 * sum(1 for pid in rc["prospects"] if live(pid) and area_of(st, pid) == scout["area"])
     rc["board"] = [inside]                      # the board heads the queue, so his row is on the first page
-    v = prospects.scouting_view(st)
+    v = prospects.scouting_view(st, sort="board")
     row_in = v["queue"][0]
     assert row_in["pid"] == inside and row_in["looks"] == 0.5 and row_in["can_send"], row_in
     assert next(s for s in v["scouts"] if s["id"] == scout["id"])["yield"]["looks"] == rc["look_counts"]["0"][scout["id"]]
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     assert read["looks"] == 2.0 and read["area"] == 2.0, read
     assert rc["look_counts"].get("4", {}).get(scout["id"], 0) == 0, "a scout whose area is all read has nothing to count"
     assert scout["id"] not in rc["look_changes"].get("4", {})
-    v = prospects.scouting_view(st, limit=prospects.QUEUE_MAX)
+    v = prospects.scouting_view(st, limit=prospects.QUEUE_MAX, sort="board")
     assert next(s for s in v["scouts"] if s["id"] == scout["id"])["looking_at"] == 0, "his area is read: he is looking at nobody"
 
     # one Send then finishes his report: 3 of 3, scouted, complete, out of the queue; another Send is a 409
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     assert prospects.row(st, inside, ME)["scouted"] is True and prospects.can_scout(st, ME, inside) is False
     assert prospects.profile(st, inside, ME)["can_scout"] is False and prospects.profile(st, inside, ME)["looks"] == 3
     # on your board his complete report stays in the queue: no Send (why: the 409 text), the looks full, one final grade word
-    kept = next(r for r in prospects.scouting_view(st)["queue"] if r["pid"] == inside)
+    kept = next(r for r in prospects.scouting_view(st, sort="board")["queue"] if r["pid"] == inside)
     assert kept["can_send"] is False and kept["why"] == prospects.REPORT_COMPLETE == "His report is complete: 3 of 3 looks", kept
     assert kept["looks"] == 3 and kept["potential"][0] == kept["potential"][1] in recruiting.WORDS, kept["potential"]
     assert kept["potential"] == list(recruiting.grade_range(st, inside, "potential"))
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     far = next(pid for pid in rc["prospects"] if live(pid) and area_of(st, pid) not in staffed and pid not in rc["reads"])
     near = next(pid for pid in rc["prospects"] if live(pid) and pid not in (inside, far) and rc["reads"].get(pid, {}).get("looks") == 2.0)
     rc["board"] = [far, near, inside]           # the board's complete report sorts after its open ones
-    queue = prospects.scouting_view(st)["queue"]
+    queue = prospects.scouting_view(st, sort="board")["queue"]
     assert [r["pid"] for r in queue[:3]] == [near, far, inside], [r["pid"] for r in queue[:4]]
     assert queue[0]["looks"] == 2.0 and queue[1]["looks"] == 0 and queue[2]["looks"] == 3
     assert queue[0]["can_send"] and queue[1]["can_send"] and not queue[2]["can_send"]
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     except recruiting.RecruitingError as e:
         assert e.code == 409 and "complete" in str(e)
     rc["board"] = [old]
-    v = prospects.scouting_view(st)
+    v = prospects.scouting_view(st, sort="board")
     kept = next(r for r in v["queue"] if r["pid"] == old)
     assert kept["looks"] == 3 and kept["can_send"] is False and kept["why"] == prospects.REPORT_COMPLETE, kept
     assert all(f["looks"] <= 3 for f in v["flags"])

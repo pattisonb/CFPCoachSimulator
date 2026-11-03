@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
         # Review Focus 1: an old save has no log; the desk renders with empty reports
         rc.pop("looks", None); rc.pop("look_counts", None); rc.pop("look_changes", None)
-        v = G(sid, "scouting")
+        v = G(sid, "scouting?sort=board")
         assert set(v) == VIEW_KEYS, set(v)
         assert v["hours"] == v["hours_left"] > 0
         assert v["reports"] == {"this_week": [], "last_week": []}
@@ -132,10 +132,10 @@ if __name__ == "__main__":
             assert len([e for e in kept if e["flags"]]) == min(recruiting.LOOK_LOG_KEEP, c["flags"])
 
         # the view: this week's reports group by scout and list only the changed looks; yields count every look, in trip units
-        v = G(sid, "scouting")
+        v = G(sid, "scouting?sort=board")
         this_week, last_week = v["reports"]["this_week"], v["reports"]["last_week"]
         on_board = {b["id"] for b in G(sid, "recruiting")["board"]}
-        full = {r["pid"] for r in G(sid, f"scouting?limit={prospects.QUEUE_MAX}")["queue"] if r["looks"] >= recruiting.REPORT_LOOKS}
+        full = {r["pid"] for r in G(sid, f"scouting?sort=board&limit={prospects.QUEUE_MAX}")["queue"] if r["looks"] >= recruiting.REPORT_LOOKS}
         assert all(r["on_board"] == (r["pid"] in on_board) for r in v["queue"]), "a queue row's on_board is the board"
         assert this_week and last_week
         for group in this_week + last_week:
@@ -169,7 +169,7 @@ if __name__ == "__main__":
         queue, total = v["queue"], v["queue_total"]
         first = queue[0]["pid"]
         R(sid, "board", {"pid": queue[5]["pid"], "on": True})
-        v = G(sid, "scouting")
+        v = G(sid, "scouting?sort=board")
         assert v["queue"][0]["pid"] == queue[5]["pid"] and v["queue"][1]["pid"] == first and v["queue_total"] == total
         rest = v["queue"][1:]
         keys = [(-r["need"], r["national_rank"]) for r in rest]
@@ -178,23 +178,23 @@ if __name__ == "__main__":
         assert seen["looks"] == rc["reads"][seen["pid"]]["looks"] and seen["potential"] == list(recruiting.grade_range(st, seen["pid"], "potential"))
         assert all(r["state"] == rc["prospects"][r["pid"]]["hometown"]["state"] for r in rest)
         # paging and filters: offset and limit (capped), a name or state search, position, group
-        page2 = G(sid, "scouting?offset=120&limit=10")
+        page2 = G(sid, "scouting?sort=board&offset=120&limit=10")
         assert len(page2["queue"]) == 10 and page2["queue_total"] == total
-        whole = G(sid, "scouting?limit=1000")
+        whole = G(sid, "scouting?sort=board&limit=1000")
         assert len(whole["queue"]) == prospects.QUEUE_MAX
         assert whole["queue"][:120] == v["queue"] and whole["queue"][120:130] == page2["queue"]
-        tx = G(sid, "scouting?q=tx")
+        tx = G(sid, "scouting?sort=board&q=tx")
         assert 0 < tx["queue_total"] < total and all(r["state"] == "TX" for r in tx["queue"])
         assert tx["queue_total"] == sum(1 for pid in rc["prospects"] if scoutable(st, pid) and rc["prospects"][pid]["hometown"]["state"] == "TX")
         name = rest[3]["name"].split()[-1]
-        named = G(sid, f"scouting?q={name.upper()}")
+        named = G(sid, f"scouting?sort=board&q={name.upper()}")
         assert rest[3]["pid"] in {r["pid"] for r in named["queue"]} and all(name.lower() in r["name"].lower() for r in named["queue"])
-        qb = G(sid, "scouting?position=qb&limit=400")
+        qb = G(sid, "scouting?sort=board&position=qb&limit=400")
         assert qb["queue"] and all(r["position"] == "QB" for r in qb["queue"])
         assert qb["queue_total"] == sum(1 for pid in rc["prospects"] if scoutable(st, pid) and rc["prospects"][pid]["position"] == "QB")
-        ol = G(sid, "scouting?group=OL&limit=5")
+        ol = G(sid, "scouting?sort=board&group=OL&limit=5")
         assert len(ol["queue"]) == 5 and all(r["group"] == "OL" for r in ol["queue"])
-        assert G(sid, "scouting?q=zzzzzz")["queue"] == [] and G(sid, "scouting?q=zzzzzz")["queue_total"] == 0
+        assert G(sid, "scouting?sort=board&q=zzzzzz")["queue"] == [] and G(sid, "scouting?sort=board&q=zzzzzz")["queue_total"] == 0
 
         # a scouting trip: the action's response carries the look entry (by "trip"), logged when it changed something
         target = next(r for r in rest if r["can_send"])
@@ -207,7 +207,7 @@ if __name__ == "__main__":
         assert look["by"] == "trip" and look["pid"] == target["pid"] and look["week"] == 2
         assert rc["look_counts"]["2"]["trip"] == 1
         assert (look in rc["looks"]) == bool(look["after"] or look["flags"]) == ("trip" in rc["look_changes"]["2"])
-        v = G(sid, "scouting")
+        v = G(sid, "scouting?sort=board")
         trips = next(g for g in v["reports"]["this_week"] if g["scout_id"] == "trip")
         assert trips["looks"] == 1 and trips["area"] is None and trips["scout"] == "Your trips"
         assert trips["changed"] == len(trips["items"]) == (1 if look["after"] or look["flags"] else 0)
@@ -224,28 +224,30 @@ if __name__ == "__main__":
             assert "his report is complete: 3 of 3 looks" in str(e), str(e)
         yours = rest[1]["pid"]
         recruiting._commit(st, yours, ME)
-        v = G(sid, "scouting?limit=400")
+        v = G(sid, "scouting?sort=board&limit=400")
         pids = {r["pid"] for r in v["queue"]}
-        assert target["pid"] in pids and yours not in pids and v["queue_total"] == total - 1   # scouting never hides him; a commit does
-        assert all(r["can_send"] == (r["pid"] != target["pid"]) for r in v["queue"])
+        assert target["pid"] in pids and yours in pids and v["queue_total"] == total   # every prospect stays listed: a full report, a commit
+        why = {r["pid"]: r["why"] for r in v["queue"] if not r["can_send"]}
+        assert why == {target["pid"]: prospects.REPORT_COMPLETE, yours: prospects.COMMITTED_TO_YOU}, why
         # on your board his complete report stays in the queue (nothing to send: the Complete tag's text as `why`), after
         # the board's open reports, his potential one final grade word; off the board again he stays, no Send
         R(sid, "board", {"pid": target["pid"], "on": True})
-        v = G(sid, "scouting?limit=400")
+        v = G(sid, "scouting?sort=board&limit=400")
         rows = v["queue"]
-        assert v["queue_total"] == total - 1 and set(rows[0]) == QUEUE_KEYS
+        assert v["queue_total"] == total and set(rows[0]) == QUEUE_KEYS
         i = next(i for i, r in enumerate(rows) if r["pid"] == target["pid"])
         assert all(r["pid"] in rc["board"] for r in rows[:i + 1]) and all(r["looks"] < 3 for r in rows[:i]), [r["pid"] for r in rows[:i + 1]]
         assert rows[i]["looks"] == 3 and rows[i]["can_send"] is False and rows[i]["why"] == prospects.REPORT_COMPLETE, rows[i]
         assert rows[i]["potential"][0] == rows[i]["potential"][1] in recruiting.WORDS, rows[i]["potential"]
-        assert all(r["can_send"] and r["looks"] < 3 for r in rows[i + 1:])
+        assert all(r["can_send"] and r["looks"] < 3 for r in rows[i + 1:] if r["pid"] != yours)
         R(sid, "board", {"pid": target["pid"], "on": False})
-        off = next(r for r in G(sid, "scouting?limit=400")["queue"] if r["pid"] == target["pid"])
+        off = next(r for r in G(sid, "scouting?sort=board&limit=400")["queue"] if r["pid"] == target["pid"])
         assert off["can_send"] is False and off["why"] == prospects.REPORT_COMPLETE, off
         rc["hours"][ME] = recruiting.HOURS["scout"] - 1
-        v = G(sid, "scouting")
+        v = G(sid, "scouting?sort=board")
         assert v["hours_left"] == recruiting.HOURS["scout"] - 1
-        assert all(not r["can_send"] and r["why"] == (prospects.REPORT_COMPLETE if r["looks"] >= 3 else "Not enough hours") for r in v["queue"])
+        assert all(not r["can_send"] and r["why"] == (prospects.COMMITTED_TO_YOU if r["pid"] == yours else prospects.REPORT_COMPLETE if r["looks"] >= 3
+                                                      else "Not enough hours") for r in v["queue"])
         home = rc["prospects"][yours]["hometown"]["state"]
         area = next(a for a, codes in recruiting.AREAS.items() if home in codes)
         for s in v["scouts"]:
@@ -257,14 +259,14 @@ if __name__ == "__main__":
         gem = threes[0]
         gem_cut = recruiting.flag_cuts(rc)[3][0]                     # the gem cut is relative to his star tier
         rc["reads"][gem]["g"]["potential"] = [gem_cut + 1.0, 1000.0]
-        assert rc["reads"][gem]["looks"] == 1.5 and gem not in {f["pid"] for f in G(sid, "scouting")["flags"]}, "no flag before the report is complete"
+        assert rc["reads"][gem]["looks"] == 1.5 and gem not in {f["pid"] for f in G(sid, "scouting?sort=board")["flags"]}, "no flag before the report is complete"
         rc["reads"][gem]["looks"] = recruiting.FIND_LOOKS
-        v = G(sid, "scouting")
+        v = G(sid, "scouting?sort=board")
         assert all(set(f) == FLAG_KEYS and f["flag"] in FLAGS for f in v["flags"])
         found = next(f for f in v["flags"] if f["pid"] == gem)
         assert found["flag"] == "gem" and found["looks"] == rc["reads"][gem]["looks"] == 3 and found["standing_word"]
         named = urllib.parse.quote(rc["prospects"][gem]["name"])
-        assert any(r["pid"] == gem and not r["can_send"] for r in G(sid, f"scouting?limit=400&q={named}")["queue"]), "a complete report stays listed, no Send"
+        assert any(r["pid"] == gem and not r["can_send"] for r in G(sid, f"scouting?sort=board&limit=400&q={named}")["queue"]), "a complete report stays listed, no Send"
         rc["hours"][ME] = 50
         rc["reads"][gem]["g"]["potential"] = [70.0, 1000.0]
         before_flag = threes[1]
@@ -272,7 +274,7 @@ if __name__ == "__main__":
         rc["reads"][before_flag]["looks"] = recruiting.FIND_LOOKS - 1       # the trip's look completes the report
         out = R(sid, "recruit", {"pid": before_flag, "action": "scout"})
         assert out["look"]["flags"] == ["gem"], out["look"]
-        item = next(it for g in G(sid, "scouting")["reports"]["this_week"] if g["scout_id"] == "trip" for it in g["items"] if it["pid"] == before_flag)
+        item = next(it for g in G(sid, "scouting?sort=board")["reports"]["this_week"] if g["scout_id"] == "trip" for it in g["items"] if it["pid"] == before_flag)
         assert item["flags"] == ["gem"]
 
         # Review Focus 5: the portal's desk lists entrants in the queue and reads its reports the same way
@@ -283,7 +285,7 @@ if __name__ == "__main__":
         st = api.loaded_state()
         rc = st["recruiting"]
         assert rc.get("portal") and "looks" not in rc and "look_counts" not in rc and "look_changes" not in rc
-        v = G(sid, "scouting")
+        v = G(sid, "scouting?sort=board")
         assert v["queue"] and all(r["pid"] in rc["prospects"] and r["stars"] is None for r in v["queue"])
         assert v["reports"] == {"this_week": [], "last_week": []} and v["flags"] == []
         R(sid, "offseason/advance", {})                # portal week 1 steps: the scouts look at the entrants
@@ -293,7 +295,7 @@ if __name__ == "__main__":
         assert len(rc["looks"]) <= len(staff) * recruiting.LOOK_LOG_KEEP
         for e in rc["looks"]:
             check_entry(e, rc)
-        v = G(sid, "scouting")
+        v = G(sid, "scouting?sort=board")
         assert v["reports"]["this_week"] and v["reports"]["last_week"] == []
         assert all(it["pid"] in rc["prospects"] for g in v["reports"]["this_week"] for it in g["items"])
         assert sum(g["looks"] for g in v["reports"]["this_week"]) == sum(rc["look_counts"]["2"].values())

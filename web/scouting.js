@@ -26,7 +26,7 @@
   const fmtLooks = (n) => (Number.isInteger(Number(n)) ? String(Number(n)) : Number(n).toFixed(1));
   const looksText = (n) => `${fmtLooks(n)} look${Number(n) === 1 ? "" : "s"}`;
   const leftOf = (looks) => Math.max(0, REPORT_LOOKS - (looks || 0));
-  const PAGE = 20, WHOLE = 400;                      // rows a page; the most one ask returns (prospects.QUEUE_MAX)
+  const PAGE = 20;                                   // rows a page
   const POSITIONS = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "ATH", "K", "P"];
   const WORDS = ["Weak", "Fair", "Solid", "Strong", "Elite", "All-American"];         // recruiting.WORDS, low to high
   const GRADE_NAMES = { potential: "Potential", athleticism: "Athleticism", size_strength: "Size & Strength", technique: "Technique", football_iq: "Football IQ", coachability: "Coachability" };
@@ -34,14 +34,13 @@
                   gem: ["Gem", "Your staff's find: even the low end of his potential read beats all but a few prospects at his star level, and few programs rate him that high"],
                   bust: ["Bust Risk", "Your staff's find: his ranking is high but even the top of their read sits under nearly every prospect at his star level"] };
   const ROLE_SHORT = { "Offensive Coordinator": "OC", "Defensive Coordinator": "DC", Recruiter: "Recruiter" };
-  const SORTS = { need: (r) => r.need || 0, rank: (r) => r.national_rank || 1e9, looks: (r) => r.looks || 0,
-                  potential: (r) => (r.potential ? WORDS.indexOf(r.potential[1]) * 10 + WORDS.indexOf(r.potential[0]) : -1) };
-  const SORT_DIR = { need: -1, rank: 1, looks: -1, potential: -1 };      // the most need, the best rank, the most looks, the best read
+  // the list's orders, applied by the API over the whole class (prospects.QUEUE_SORTS), never just to the page on screen
+  const SORTS = [["rank", "Sort: Rank"], ["board", "Sort: Board First"], ["need", "Sort: Need"], ["potential", "Sort: Potential"], ["looks", "Sort: Looks"]];
   const CHIPS = [["all", "All Prospects"], ["on", "My Board"], ["scouted", "Scouted"]];
   const SUBS = [["ratings", "Ratings"], ["overview", "Overview"], ["scouting", "Scouting"]];
   const WEEKS = [["this_week", "This Week"], ["last_week", "Last Week"], ["flags", "Flags"]];
   // the filters, the page, the sort, the selection and its sub-tab, kept across renders (and in the address)
-  const desk = { q: "", position: "", board: "all", page: 0, sort: "", pid: null, sub: "ratings", ops: false };
+  const desk = { q: "", position: "", board: "all", page: 0, sort: "rank", pid: null, sub: "ratings", ops: false };
   let H = null;
   let cur = null;                                    // the tab as drawn: { s, v (the latest view), rv (/recruiting), st, ... }
   let wanted = null;                                 // a modal to open once the tab draws: the pane's "Reports on the Scouting Tab"
@@ -78,6 +77,8 @@
     if (desk.q) q.set("q", desk.q);
     if (desk.position) q.set("position", desk.position);
     if (desk.board === "scouted") q.set("scouted", "1");
+    if (desk.board === "on") q.set("on_board", "1");
+    if (desk.sort && desk.sort !== "rank") q.set("sort", desk.sort);
     if (offset) q.set("offset", String(offset));
     if (limit) q.set("limit", String(limit));
     for (const [k, v] of Object.entries(extra || {})) q.set(k, v);
@@ -108,13 +109,14 @@
   // the tab's place in the address: the chip, the selected prospect, the sub-tab, an open Operations bar (a replace)
   const syncRoute = () => {
     if (window.CFP.route) window.CFP.route.set({ qboard: desk.board !== "all" ? desk.board : null, spid: desk.pid || null,
-      ssub: desk.sub !== "ratings" ? desk.sub : null, sops: desk.ops ? "1" : null });
+      ssub: desk.sub !== "ratings" ? desk.sub : null, sops: desk.ops ? "1" : null, ssort: desk.sort !== "rank" ? desk.sort : null });
   };
   function applyRoute(r) {
     desk.board = ["on", "scouted"].includes(r.qboard) ? r.qboard : "all";
     desk.pid = typeof r.spid === "string" && r.spid ? r.spid : null;
     desk.sub = ["overview", "scouting"].includes(r.ssub) ? r.ssub : "ratings";
     desk.ops = r.sops === "1";
+    desk.sort = SORTS.some(([k]) => k === r.ssort) ? r.ssort : "rank";
   }
 
   async function render(s, box, helpers) {
@@ -122,7 +124,7 @@
     desk.page = 0;
     if (!box.firstChild) box.append(loading("Loading the Scouting Center…"));
     let v, rv;
-    try { [v, rv] = await Promise.all([api(s, deskPath(0, desk.board === "on" ? WHOLE : PAGE)), api(s, "recruiting")]); }
+    try { [v, rv] = await Promise.all([api(s, deskPath(0, PAGE)), api(s, "recruiting")]); }
     catch (err) { box.innerHTML = ""; box.append(loading(`Could not load the Scouting Center: ${H.errText(err)}`)); return; }
     cur = { s, v, rv, board: (rv.board || []).length };
     const st = { hours: v.hours, left: v.hours_left, total: v.queue_total, rows: [] };
@@ -194,19 +196,14 @@
       return node;
     };
     const pos = sel("sc-position", "Position", [["", "Any Position"], ...POSITIONS.map((p) => [p, p])], desk.position);
-    const sort = sel("sc-sort", "Sort", [["", "Sort: Board First"], ["rank", "Sort: Rank"], ["need", "Sort: Need"], ["potential", "Sort: Potential"], ["looks", "Sort: Looks"]], desk.sort);
+    const sort = sel("sc-sort", "Sort", SORTS, desk.sort);
     const list = el("ul", { class: "sc-list", "aria-label": "Prospects" });
     const wrap = el("div", { class: "sc-list-wrap" }, [list]);
     const empty = el("p", { class: "muted sc-queue-empty", text: "Nobody matches: clear the search or a filter.", hidden: "" });
     const showing = el("span", { class: "muted small sc-showing", role: "status" });
     const pager = el("nav", { class: "sc-pager", "aria-label": "Pages" });
-    const sorted = (rows) => {
-      if (!desk.sort) return rows;
-      const f = SORTS[desk.sort], dir = SORT_DIR[desk.sort];
-      return rows.slice().sort((a, b) => (f(a) - f(b)) * dir || (a.national_rank || 0) - (b.national_rank || 0));
-    };
     function paint() {
-      ui().reconcile(list, sorted(st.rows), (r) => r.pid, (r) => drawRow(r), (n, r) => { n.__row = r; fill(n, r); });
+      ui().reconcile(list, st.rows, (r) => r.pid, (r) => drawRow(r), (n, r) => { n.__row = r; fill(n, r); });
       const from = st.rows.length ? desk.page * PAGE + 1 : 0, to = desk.page * PAGE + st.rows.length;
       showing.textContent = st.rows.length ? `${num(from)}–${num(to)} of ${num(st.total)}` : `0 of ${num(st.total)}`;
       count.textContent = `${num(st.total)} ${st.total === 1 ? "Prospect" : "Prospects"}`;
@@ -237,20 +234,15 @@
       wrap.scrollTop = 0;
     }
     let seq = 0;
-    // load(keep): the page the filters, the chip and desk.page name. "My Board" is client-side on the whole board (each
-    // row's on_board, the board listed first). keep: a pid whose row stays even if the API dropped him (his third trip).
+    // load(keep): the page the filters, the chip, the sort and desk.page name; the API filters and sorts the whole class
+    // and returns that page. keep: a pid whose row stays even if a filter would now drop him (his third trip under a chip).
     // Every load patches the header's numbers.
     async function load(keep) {
       const mine = ++seq;
       wrap.setAttribute("aria-busy", "true");
       let d;
-      try {
-        if (desk.board === "on") {
-          const big = await api(s, deskPath(0, WHOLE));
-          const mineRows = big.queue.filter((r) => r.on_board);
-          d = { ...big, queue: mineRows.slice(desk.page * PAGE, desk.page * PAGE + PAGE), queue_total: mineRows.length };
-        } else d = await api(s, deskPath(desk.page * PAGE, PAGE));
-      } catch (err) { if (mine === seq) wrap.removeAttribute("aria-busy"); ui().toast(`Could not load the prospects: ${H.errText(err)}`, { ms: 4000, kind: "error" }); return; }
+      try { d = await api(s, deskPath(desk.page * PAGE, PAGE)); }
+      catch (err) { if (mine === seq) wrap.removeAttribute("aria-busy"); ui().toast(`Could not load the prospects: ${H.errText(err)}`, { ms: 4000, kind: "error" }); return; }
       if (mine !== seq) return;                       // a newer ask landed first
       wrap.removeAttribute("aria-busy");
       if (keep && !d.queue.some((r) => r.pid === keep)) {
@@ -291,7 +283,7 @@
     let qTimer = null;
     search.addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(() => { desk.q = search.value.trim(); desk.page = 0; load(); }, 150); });
     pos.addEventListener("change", () => { desk.position = pos.value; desk.page = 0; load(); });
-    sort.addEventListener("change", () => { desk.sort = sort.value; paint(); });
+    sort.addEventListener("change", () => { desk.sort = sort.value; desk.page = 0; syncRoute(); load(); });
     // the first page: the view render fetched (the whole board when My Board is on)
     if (desk.board === "on") { const mineRows = v.queue.filter((r) => r.on_board); st.rows = mineRows.slice(0, PAGE); st.total = mineRows.length; }
     else { st.rows = v.queue.slice(); st.total = v.queue_total; }
@@ -299,7 +291,7 @@
     // the selection: the address's prospect, else the first row
     queueMicrotask(() => select(desk.pid || (st.rows[0] && st.rows[0].pid) || null));
     return el("section", { class: "go-card sc-panel sc-db", "aria-label": "Prospect Database" }, [
-      el("div", { class: "sc-panel-head" }, [el("div", {}, [el("h2", { class: "sc-h", text: "Prospect Database" }), el("p", { class: "muted small sc-sub", text: "Your board first, then the class by your need and his rank." })]), count]),
+      el("div", { class: "sc-panel-head" }, [el("div", {}, [el("h2", { class: "sc-h", text: "Prospect Database" }), el("p", { class: "muted small sc-sub", text: "Every prospect in the class: filter and sort the whole list." })]), count]),
       search,
       el("div", { class: "sc-toolbar" }, [chips, el("div", { class: "sc-tools" }, [pos, sort])]),
       el("div", { class: "sc-list-head", "aria-hidden": "true" }, [el("span", { text: "Player / Position" }), el("span", { text: "Rank · Evaluation" })]),
