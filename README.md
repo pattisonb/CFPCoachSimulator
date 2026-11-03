@@ -146,5 +146,10 @@ GitHub Pages. One setting is needed once, in the repository's Settings → Pages
 **GitHub Actions**. The data refresh tools (real results, rosters, polls) stay on the owner's
 computer; their output is committed and goes out with the next push.
 
+Every pull request also gets its own preview link from Vercel, built from that branch with the
+same two commands (`vercel.json`). Vercel posts the link on the pull request; nothing needs to
+merge first. One setup step, once: import this repository at vercel.com/new and keep the
+settings `vercel.json` gives it.
+
 To learn how it works, including the engine, the data, hosting, calibration and the test
 tools, read [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md).
