@@ -309,8 +309,9 @@
 
   // every screen's toolbar: its own controls on the left (tabs, a summary), the search on the right,
   // and an optional note under it, so nothing moves when you switch screens
-  function toolbar(main, left, note, middle) {
-    main.append(el("div", { class: "dc-toolbar" }, [el("div", { class: "dc-toolbar-left" }, [left]), middle || null, search("Find a player…")]));
+  // help: [text, label]: what the screen is for, in an ⓘ beside its controls (web/ui.js tip) rather than a line under them
+  function toolbar(main, left, note, middle, help) {
+    main.append(el("div", { class: "dc-toolbar" }, [el("div", { class: "dc-toolbar-left" }, [left, help ? window.CFP.ui.tip(help[0], help[1]) : null]), middle || null, search("Find a player…")]));
     if (note) main.append(el("p", { class: "dc-note", text: note }));
   }
 
@@ -982,7 +983,7 @@
     const sitting = players.filter((p) => p.redshirt.on);
     const can = players.filter((p) => !p.redshirt.on).sort((a, b) => b.overall - a.overall);
     toolbar(main, el("div", { class: "dc-summary" }, [stat("Redshirting", String(sitting.length)), stat("Still Eligible", String(can.length))]),
-      "Four games or fewer and the year unused: sit a player out and he keeps his year.");
+      null, null, ["Four games or fewer and the year unused: sit a player out and he keeps his year.", "Redshirts"]);
     const list = el("div", { class: "dc-people" });
     const person = (p) => el("div", { class: "dc-person", "data-name": p.name.toLowerCase(), "data-key": p.slug }, [
       face(p, "head", "dc-chip-face"),
@@ -1005,7 +1006,7 @@
     const all = cache.roster.players;
     const out = all.filter((p) => inUnit(p) && (p.injury || (p.redshirt && p.redshirt.on)));
     toolbar(main, el("div", { class: "dc-summary" }, [stat("Injured", String(out.filter((p) => p.injury).length)), stat("Redshirting", String(out.filter((p) => !p.injury).length))]),
-      "Who is hurt or sitting out, and who plays in his place.");
+      null, null, ["Who is hurt or sitting out, and who plays in his place.", "Who Is Available"]);
     if (!out.length) { main.append(el("p", { class: "dc-muted dc-empty", text: `Everyone on the ${unitOf(S.unit).name.toLowerCase()} is available.` })); return; }
     // who plays instead: the next man at his role who is neither hurt nor sitting
     const next = (p) => all.filter((x) => x.role === p.role && x.slug !== p.slug && !x.injury && !(x.redshirt && x.redshirt.on)).sort((a, b) => (a.depth || 99) - (b.depth || 99))[0];

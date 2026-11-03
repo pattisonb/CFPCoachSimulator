@@ -138,12 +138,13 @@ def check_reconcile(page) -> None:
 
 
 def season_cases(page, base: str, sid: str) -> None:
-    # --- the Office: its one in-place control (every program) opens without a redraw
-    open_tab(page, base, sid, "office", ".go-program")
+    # --- the Office (the toast stack and the keyed list), then the Programs tab: its ⓘ opens in place, nothing redrawn
+    open_tab(page, base, sid, "office", ".go-games")
     check_toast_stack(page)
     check_reconcile(page)
-    more = ready(page, ".go-program-foot button")
-    assert_smooth(page, ".go-office", lambda: more.click(), None, "Office: every program")
+    open_tab(page, base, sid, "programs", ".go-programs")
+    info = ready(page, "#tab-programs .go-program .go-info")
+    assert_smooth(page, "#tab-programs .go-programs", lambda: info.click(), None, "Programs: the ⓘ")
 
     # --- Settings over the depth chart screen: god mode does not redraw the field behind the dialog
     open_tab(page, base, sid, "depth", ".dc-card")

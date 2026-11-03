@@ -266,9 +266,9 @@
     const rs = v.redshirts;
     if (rs && v.stage === "departures") {
       const picked = rs.players.filter((p) => p.redshirt).length;
-      card.append(el("div", { class: "go-kicker muted off-sub", text: `Redshirts · ${picked} of ${rs.players.length}` }),
-        el("p", { class: "muted small", text: rs.decided ? "Decided: the classes below are set for next season."
-          : "Four games or fewer and the year unused: a redshirt keeps his class for next season (he still develops). Freshmen off the depth chart's top take it unless you say otherwise." }));
+      card.append(el("div", { class: "go-kicker muted off-sub" }, [`Redshirts · ${picked} of ${rs.players.length} `,
+        ui.tip("Four games or fewer and the year unused: a redshirt keeps his class for next season (he still develops). Freshmen off the depth chart's top take it unless you say otherwise.", "Redshirts")]));
+      if (rs.decided) card.append(el("p", { class: "muted small", text: "Decided: the classes below are set for next season." }));
       if (!rs.players.length) card.append(el("p", { class: "muted", text: "Nobody on your roster can take a redshirt this year." }));
       const list = el("div", { class: "off-rs", "data-key": "rs" });
       for (const p of rs.players) {
@@ -283,8 +283,8 @@
       card.append(list);
     }
     // position changes: pick a player, see what he would be everywhere, move him
-    card.append(el("div", { class: "go-kicker muted off-sub", text: `Position Changes · ${(v.position_changes || []).length}` }),
-      el("p", { class: "muted small", text: "Move a player to another spot; his overall follows our formula there. Changes apply at once." }));
+    card.append(el("div", { class: "go-kicker muted off-sub" }, [`Position Changes · ${(v.position_changes || []).length} `,
+      ui.tip("Move a player to another spot; his overall follows our formula there. Changes apply at once.", "Position Changes")]));
     const option = (r) => el("option", { value: r.id, text: `${r.pos} · ${r.name} · ${clsWord(r.cls)} · ${r.overall} OVR${r.moved_from ? ` (was ${r.moved_from})` : ""}${r.transfer ? ` · transfer from ${teamName(r.transfer)}` : ""}` });
     const roster = v.my_roster || [];
     const transfers = roster.filter((r) => r.transfer);
@@ -503,8 +503,8 @@
     const r = v.report || { mine: [], transfers: [] };
     if (v.portal_recap) main.append(renderPortalRecap(v, false));
     const card = el("section", { class: "go-card", "data-key": "improved" }, [
-      el("div", { class: "go-kicker", text: "Who Improved" }),
-      el("p", { class: "muted", text: `Every returning player grows toward his potential at his coachability's pace, faster under good developers and faster still after a big year: production and honors raise a player's ceiling and his pace. ${r.walk_ons} walk-ons and lower-level transfers joined around the league to fill out rosters.` })]);
+      el("div", { class: "go-kicker" }, ["Who Improved ", ui.tip("Every returning player grows toward his potential at his coachability's pace, faster under good developers and faster still after a big year: production and honors raise a player's ceiling and his pace.", "Who Improved")]),
+      el("p", { class: "muted", text: `${r.walk_ons} walk-ons and lower-level transfers joined around the league to fill out rosters.` })]);
     if ((r.transfers || []).length) card.append(el("div", { class: "go-kicker muted off-sub", text: `Your Transfers · ${r.transfers.length}` }),
       el("ul", { class: "off-list" }, r.transfers.map(devRow)), el("div", { class: "go-kicker muted off-sub", text: `The Top ${r.mine.length}` }));
     card.append(el("ul", { class: "off-list" }, r.mine.map(devRow)));
@@ -617,8 +617,8 @@
           el("td", { text: `${m.why}${m.sits_out ? " · sitting out this cycle" : ""}` }), el("td", { text: m.previous_job && m.previous_job !== m.why ? m.previous_job : "—" })]));
       }
       t.append(body);
-      main.append(el("section", { class: "go-card off-scroll", "data-key": "market" }, [el("div", { class: "go-kicker", text: `Coaches for Hire · The Top ${st.market.length}` }),
-        el("p", { class: "muted small", text: "The coaching market: fired and let-go coaches, head coaches from the FCS and lower divisions, NFL assistants and position coaches. Open a job on your staff to hire from it." }), t]));
+      main.append(el("section", { class: "go-card off-scroll", "data-key": "market" }, [el("div", { class: "go-kicker" }, [`Coaches for Hire · The Top ${st.market.length} `,
+          ui.tip("The coaching market: fired and let-go coaches, head coaches from the FCS and lower divisions, NFL assistants and position coaches. Open a job on your staff to hire from it.", "Coaches for Hire")]), t]));
     }
   }
 

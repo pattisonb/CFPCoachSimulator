@@ -978,7 +978,7 @@
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
     const active = $("#season-tabs button.active");   // one scrolling row: the open tab stays in view
     if (active && !active.hidden && active.scrollIntoView) active.scrollIntoView({ block: "nearest", inline: "nearest" });
-    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "office", "offseason", "recruiting", "prospects", "scouting", "classes"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "programs", "office", "offseason", "recruiting", "prospects", "scouting", "classes"]) $(`#tab-${t}`).hidden = t !== name;
     document.body.classList.toggle("on-office", name === "office");
     document.body.classList.toggle("on-career-tab", CAREER_TABS.includes(name));
     document.body.classList.toggle("on-offseason", name === "offseason");
@@ -992,7 +992,7 @@
   // the open modals (modal=<kind>:<arg>, bottom to top). A top-level tab or a modal pushes a history entry; a
   // filter, a sort, a sub-tab or another recruit replaces it. Writing the address never redraws anything.
   const route = window.CFP.route;
-  const TABS = ["office", "offseason", "recruiting", "prospects", "scouting", "classes", "games", "schedule", "standings", "rankings", "stats", "bracket", "bowls", "awards", "summary"];
+  const TABS = ["office", "offseason", "recruiting", "prospects", "scouting", "classes", "games", "schedule", "standings", "rankings", "stats", "programs", "bracket", "bowls", "awards", "summary"];
   const BOARD_KEYS = ["stage", "sort", "pid", "pane"];
   const TAB_KEYS = { recruiting: BOARD_KEYS, offseason: [...BOARD_KEYS, "opos", "ostatus"], prospects: ["ppos", "pstars", "pstate", "pstatus", "psort", "pgroup", "ppage"],
     scouting: ["qboard", "spid", "ssub", "sops"], rankings: ["poll"], stats: ["stats", "steam", "sview"], awards: ["aview"] };
@@ -1107,12 +1107,12 @@
     else if (t === "awards") renderAwards();
     else if (t === "stats") renderStats();
     else if (t === "offseason" && window.Offseason) window.Offseason.render(state.season, $("#tab-offseason"), recruitingHelpers);
-    else if (t === "office" && window.Recruiting) { window.Recruiting.render(t, state.season, { ...recruitingHelpers, api: officeApi }); officeCarryLine(state.season); }
+    else if (t === "office" && window.Recruiting) window.Recruiting.render(t, state.season, { ...recruitingHelpers, api: officeApi });
     else if (CAREER_TABS.includes(t) && window.Recruiting) window.Recruiting.render(t, state.season, recruitingHelpers);
   }
 
   // Coach Career: the recruiting tabs (recruiting.js) and the week's steps under the header
-  const CAREER_TABS = ["offseason", "office", "recruiting", "prospects", "scouting", "classes"];
+  const CAREER_TABS = ["offseason", "office", "recruiting", "prospects", "scouting", "classes", "programs"];
   // the League row follows the calendar in a career: the bracket and bowls once the field is set
   // (selection week), the awards once the races have a shape, the classes once signing opens,
   // the summary when the season is done; a plain season keeps every tab
@@ -1191,16 +1191,13 @@
     officeMemo.path = path; officeMemo.at = Date.now(); officeMemo.p = api(path);
     return officeMemo.p;
   }
-  // a career's new season: "NIL carried over: 25 (of 135 this year)" in the Office's program card
-  async function officeCarryLine(s) {
-    if (!s.career || s.done) return;
+  // a career's new season: "NIL carried over: 25 (of 135 this year)" in the Programs tab's Your Program card
+  async function officeCarryLine(s, card) {
+    if (!s.career || s.done || !card) return;
     let v;
     try { v = await officeApi(`/api/season/${s.id}/recruiting`); } catch (e) { return; }
     const carry = v && v.nil ? Number(v.nil.carry || 0) : 0;
-    if (!(carry > 0) || state.season !== s || state.tab !== "office") return;
-    for (let i = 0; i < 40 && !$("#tab-office .go-program"); i++) await new Promise((r) => setTimeout(r, 250));   // the program card lands after its own fetch
-    const card = $("#tab-office .go-program");
-    if (!card || card.querySelector(".go-nil-carry") || state.season !== s) return;
+    if (!(carry > 0) || state.season !== s || !card.isConnected || card.querySelector(".go-nil-carry")) return;
     const head = card.querySelector(".go-program-head");
     const line = el("p", { class: "muted small go-nil-carry", text: `NIL carried over: ${carry} (of ${v.nil.budget} this year)` });
     if (head) head.after(line); else card.prepend(line);
@@ -1213,7 +1210,7 @@
     m.token = token;
     route.set({ modal: modalTokens() }, { state: { modal: modalStack.length } });
   }
-  const recruitingHelpers = { api, long, holding, postJSON, toast, openModal, closeModal: closeAllModals, retoken, errText, play, playCard, openSeason: reopenSeason, onChange: (tab) => { goTab(tab); window.scrollTo({ top: 0 }); } };
+  const recruitingHelpers = { openBox: (id) => openBox(id), carryLine: (s, card) => officeCarryLine(s, card), api, long, holding, postJSON, toast, openModal, closeModal: closeAllModals, retoken, errText, play, playCard, openSeason: reopenSeason, onChange: (tab) => { goTab(tab); window.scrollTo({ top: 0 }); } };
   if (window.Recruiting && window.Recruiting.init) window.Recruiting.init(recruitingHelpers);   // a profile reopened from the address before any career tab drew
   function renderCareerSteps(s) {
     const box = $("#career-steps");
@@ -3416,7 +3413,7 @@
   function appendRatingsAt(node, p) {
     const others = Object.entries(p.ratings_at || {}).filter(([pos]) => !(pos === "MLB" && /LB$/.test(p.position))).sort((a, b) => b[1] - a[1]);
     if (!others.length) return;
-    node.append(el("h4", { text: "Rated at Every Position" }), el("p", { class: "muted small-text", text: "On the same scale: 50 is an average Power 4 starter at that position. The depth chart's By position view uses these when you move someone." }));
+    node.append(el("h4", {}, ["Rated at Every Position ", window.CFP.ui.tip("On the same scale: 50 is an average Power 4 starter at that position. The depth chart's By position view uses these when you move someone.", "Rated at Every Position")]));
     node.append(el("div", { class: "ratings-at" }, others.map(([pos, v]) => el("div", { class: `review-tile ${pos === p.position ? "mine" : ""}` }, [el("div", { class: "review-leader-big", text: String(v) }), el("div", { class: "review-label", text: pos === p.position ? `${pos} (his spot)` : pos })]))));
   }
 

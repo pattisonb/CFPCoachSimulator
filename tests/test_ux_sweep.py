@@ -958,8 +958,8 @@ def test_grade_hover(page, base, sid) -> None:
         page.wait_for_selector(".go-pane .go-scouting .go-grades .go-stat.go-tip", timeout=30_000)
         time.sleep(0.3)
         assert page.inner_text(".go-pane .go-scouting .go-scout-tag") == "Report Complete"
-        note = page.inner_text(".go-pane .go-scouting .go-grades-note")
-        assert note.startswith("Tap a grade to see what it looks like in ratings.") and "half a look, up to two." in note, note
+        note = page.evaluate("() => { const b = document.querySelector('.go-pane .go-scouting .go-scout-head .go-info'); return b && document.getElementById(b.getAttribute('aria-describedby')).textContent; }")
+        assert note and note.startswith("Tap a grade to see what it looks like in ratings.") and "half a look, up to two." in note, note   # the help sits in the report's ⓘ
         words = page.eval_on_selector_all(".go-pane .go-scouting .go-grades .go-stat-val", "els => els.map(e => e.textContent.trim())")
         assert words and all(w in ("All-American", "Elite", "Strong", "Solid", "Fair", "Weak") for w in words), f"one plain word per card: {words}"
         assert not page.query_selector(".go-pane .go-scouting .go-grades .go-word"), "plain words, no chips"
@@ -976,7 +976,7 @@ def test_grade_hover(page, base, sid) -> None:
             page.click(f".go-row-recruit[data-pid='{opened['id']}']")
             page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n); }", arg=opened["name"], timeout=15_000)
             page.click(".go-pane .go-subtabs button[data-sub=scouting]")
-            page.wait_for_selector(".go-pane .go-scouting .go-grades-note", timeout=30_000)
+            page.wait_for_selector(".go-pane .go-scouting .go-scout-head", timeout=30_000)
             assert "Report Complete" not in page.inner_text(".go-pane .go-scouting .go-scout-head")
             vals = page.eval_on_selector_all(".go-pane .go-scouting .go-grades .go-stat-val", "els => els.map(e => e.textContent.trim())")
             words = ("All-American", "Elite", "Strong", "Solid", "Fair", "Weak")
@@ -1354,7 +1354,7 @@ if __name__ == "__main__":
             A, B = fresh["id"], done["id"]
 
             # --- Office: the AD chip is a word, not a number out of 100
-            open_tab(page, base, A, "office", ".go-program")
+            open_tab(page, base, A, "office", ".go-games")
             office = page.inner_text("#tab-office")
             assert not OUT_OF_100.search(office), OUT_OF_100.search(office).group(0)
             assert "SECURE" in office.upper() or "SEAT" in office.upper(), "the AD's mood word is missing"

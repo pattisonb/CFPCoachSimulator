@@ -477,3 +477,6 @@
 .dc .dc-pc-foot .dc-pos { margin-left: auto; }
 /* a patch pulses what changed (styles.css .go-changed); on the dark ground the pulse is a frame, not a wash */
 .dc .go-changed { border-radius: 0; }
+/* the screen's ⓘ (web/ui.js tip) beside its summary */
+.dc-toolbar-left .go-info-wrap { align-self: center; margin-left: 10px; }
+.dc button.go-info { background: transparent; border: 0; color: var(--dc-muted, var(--muted)); }
