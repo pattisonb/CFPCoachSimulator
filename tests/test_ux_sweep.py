@@ -166,7 +166,7 @@ def check_pane_profile(page, base, sid) -> None:
         call(base, f"/api/season/{sid}/board", {"pid": pick["id"], "on": True})
         scouted = next(b for b in call(base, f"/api/season/{sid}/recruiting")["board"] if b["id"] == pick["id"])
     assert scouted.get("our_grades"), f"a scouted recruit carries his grades: {scouted['id']}"
-    for width, height in ((1280, 640), (400, 640)):     # short windows: the pane's body has room to scroll
+    for width, height in ((1280, 560), (400, 640)):     # short windows: the pane's body has room to scroll (help is in an ⓘ now)
         page.set_viewport_size({"width": width, "height": height})
         open_tab(page, base, sid, "recruiting", ".go-stages")
         if width > 700:     # a long board under the pane: scroll the page until the pane sticks
