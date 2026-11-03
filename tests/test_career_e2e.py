@@ -102,7 +102,7 @@ if __name__ == "__main__":
                 time.sleep(0.5)
             assert call(base, f"/api/season/{sid}")["current_week"] == 1, call(base, f"/api/season/{sid}")["current_week"]
             page.click(".go-play >> text=Sim to Signing Day")        # the Office is the only place time moves
-            page.wait_for_function("() => /Season complete|national champion/.test(document.querySelector('#season-meta').textContent)",
+            page.wait_for_function("() => /national champion/.test(document.querySelector('#team-chip').title)",
                                    timeout=900_000)
             summary = call(base, f"/api/season/{sid}")
             assert summary["done"] and summary["current_week"] == 20
@@ -115,6 +115,7 @@ if __name__ == "__main__":
             spots = call(base, f"/api/season/{sid}/recruiting")["open_spots"]
             assert 0 < len(signed) <= spots, (len(signed), spots)
             # download, forget, load back
+            page.click("#season-tabs button[data-tab=office]")             # Settings and the career file live on the Office
             with page.expect_download() as dl:
                 page.click("#btn-download-career")
             path = Path(tempfile.mkdtemp()) / "career.ccsave"

@@ -1255,7 +1255,7 @@ body.career-mode #season-tabs .tab-divider { border-color: var(--border); }
 @media (hover: hover) { body.career-mode #season-tabs button:hover:not(.active) { border-color: var(--border); background: var(--panel-2); } }
 body.career-mode #season-tabs button.active { background: var(--go-primary); color: var(--go-primary-ink); border-color: var(--go-primary); box-shadow: none; }
 @media (min-width: 861px) { body.career-mode #season-tabs { position: sticky; top: var(--topbar-h, 0px); z-index: 4; box-shadow: 0 6px 16px var(--shadow); } }
-@media (max-width: 759px) { body.career-mode #season-tabs button { min-height: 44px; padding: 0 9px; font-size: 15px; } body.career-mode #season-tabs button[data-tab=classes] { margin-right: 0; } }
+@media (max-width: 759px) { body.career-mode #season-tabs button { min-height: 44px; padding: 0 9px; font-size: 15px; } body.career-mode #season-tabs button.league { min-height: 44px; font-size: 14px; } body.career-mode #season-tabs button[data-tab=classes] { margin-right: 0; } }
 /* the week strip is for the season's screens, so the career screens leave it out (a one-week sim's bar still shows) */
 body.career-mode.on-career-tab #week-strip, body.career-mode.on-career-tab #week-date { display: none !important; }
 .go-sel { min-height: 44px; border-radius: 12px; }

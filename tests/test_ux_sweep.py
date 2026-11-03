@@ -553,6 +553,8 @@ def check_header(page, base, sid) -> None:
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#season:visible")
     time.sleep(0.6)
+    assert not page.is_visible(".topbar"), "a season open: the top bar waits behind ☰ Menu"
+    page.click("#btn-menu")
     assert page.is_visible("#btn-seasons-menu"), "a season open: the Seasons menu button"
     for sel in ("#btn-new", "#btn-load-career", "#btn-seasons", "#pick-team"):
         assert not page.is_visible(sel), f"{sel} shows with a season open"
@@ -601,6 +603,7 @@ def check_header(page, base, sid) -> None:
     assert call(base, f"/api/season/{new_id}")["team"] == "akron", "the new career from the menu is Akron's"
     page.wait_for_function("() => /Akron/i.test(document.querySelector('#chip-name').textContent)", timeout=30_000)
     call(base, f"/api/season/{new_id}", method="DELETE")
+    page.click("#btn-menu")                                       # the bar hidden again, the default
     # the Recruiting pane keeps below the sticky tab bar
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#season:visible")
