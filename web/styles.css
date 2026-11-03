@@ -1483,3 +1483,11 @@ body:not(.team-theme) .season-compact .sc-rank { background: var(--panel-2); bor
 .season-sheet-links { display: none; }
 .season-sheet-links a.ghost { font: inherit; font-weight: 600; color: var(--text); text-decoration: none; border-radius: 8px; border: 1px solid var(--border); padding: 8px 14px; background: transparent; }
 .season-sheet-links a.ghost:hover { border-color: var(--accent); }
+
+/* the old GitHub Pages address: a strip pointing to the new site (web/index.html) */
+.moved-banner { position: relative; z-index: 80; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 16px; background: var(--accent); color: var(--accent-ink); }
+.moved-banner[hidden] { display: none; }
+.moved-banner p { margin: 0; flex: 1 1 320px; }
+.moved-banner a { color: inherit; }
+.moved-go { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 8px; background: var(--accent-ink); color: var(--accent) !important; font-weight: 700; text-decoration: none; }
+@media (max-width: 640px) { .moved-go { min-height: 44px; } }

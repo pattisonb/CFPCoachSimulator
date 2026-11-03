@@ -2,7 +2,7 @@
 
 ![CFP Coach Simulator](web/icons/og-image.png)
 
-**Play it now: <https://pattisonb.github.io/CFPCoachSimulator/>**
+**Play it now: <https://cfp-coach-simulator.vercel.app/>**
 
 A college football coaching career built on the real 2026 season. Take one of 138 FBS
 schools through the season to the playoff and the bowls, recruit your classes, and keep
@@ -140,16 +140,17 @@ The tests run on your computer too: `python tests/run_all.py`.
 
 ## Publishing
 
-The site is static: every push to `main` runs `.github/workflows/pages.yml`, which builds the
-team data and the site (`python tools/build_site.py` writes `dist/`) and publishes it to
-GitHub Pages. One setting is needed once, in the repository's Settings → Pages: Source:
-**GitHub Actions**. The data refresh tools (real results, rosters, polls) stay on the owner's
-computer; their output is committed and goes out with the next push.
+The site is static and hosted on Vercel at <https://cfp-coach-simulator.vercel.app/>.
+`vercel.json` tells Vercel how to build it: `python3 -m teamdata.build_teams`, then
+`python3 tools/build_site.py`, which writes `dist/`. Every push to `main` deploys there.
+Every pull request also gets its own preview link, built from that branch, which Vercel posts
+on the pull request, so a change can be played before it merges. The data refresh tools
+(real results, rosters, polls) stay on the owner's computer; their output is committed and
+goes out with the next push.
 
-Every pull request also gets its own preview link from Vercel, built from that branch with the
-same two commands (`vercel.json`). Vercel posts the link on the pull request; nothing needs to
-merge first. One setup step, once: import this repository at vercel.com/new and keep the
-settings `vercel.json` gives it.
+The old address, <https://pattisonb.github.io/CFPCoachSimulator/>, still runs the game
+(`.github/workflows/pages.yml`) with a strip pointing to the new site. Careers are saved per
+address, so players can still open theirs there, Download Career, and Load Career on Vercel.
 
 To learn how it works, including the engine, the data, hosting, calibration and the test
 tools, read [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md).
