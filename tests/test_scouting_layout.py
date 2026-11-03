@@ -1,13 +1,16 @@
-"""The Scouting tab, queue first (web/scouting.js), in a browser: the queue's first rows are in the first viewport at
-1280 and the page is well under half its old height; Manage Scouts opens over the tab and an area change patches the
-strip in place with a toast; All Reports opens with the full by-scout view and its Flags tab; a refresh restores an
-open All Reports (and Manage Scouts) from the address; the This Week digest lists the week's finds (a flag or a Likes
-Him find); a prospect's name opens his profile over the tab with the board unchanged and the tab still Scouting; on a
-phone the rows fit the card (Send in view, no sideways scroll) and the digest folds above the queue.
+"""The Scouting tab, the Scouting Center (web/scouting.js), in a browser: the database's first rows and the selected
+prospect's report are in the first viewport at 1280 and the page is well under half its old height; the stat cards
+read the API; the ratings are grade words, never invented numbers; a row fills the report without leaving the tab and
+a refresh restores him and the sub-tab; Send Scout patches the row's meter; Add to Board flips the star and Remove
+flips it back; a flagged row carries its badge and the Scouting sub-tab its flags; Scouting Operations opens the
+staff rows, an area change patches in place and a refresh keeps it open; All Reports opens by scout and a refresh
+restores it on Flags; a name there opens his profile with the board unchanged; on a phone the cards are 2×2, the
+report stacks under the database, the controls are 44 px and nothing scrolls sideways.
 The save is seeded before the server starts: full reports on the class's top prospects this week, so finds exist.
 Needs Playwright with a Chromium; without one it is skipped. (Run as a file: multiprocessing on Windows.)"""
 import os
 import random
+import re
 import subprocess
 import sys
 import time
@@ -23,137 +26,183 @@ from test_deep_links import modals, params, reload, tab_on, wait_url   # noqa: E
 from test_ux_sweep import open_tab, toasted   # noqa: E402
 
 OLD_HEIGHT_1280 = 3621          # the old Scouting page at 1280 (scouts and reports over the queue)
+NO_MODAL = "() => ![...document.querySelectorAll('.modal')].some(m => !m.hidden)"
 
 
 def board_ids(base, sid) -> set:
     return {b["id"] for b in call(base, f"/api/season/{sid}/recruiting")["board"]}
 
 
+def intel_name(page) -> str:
+    return page.inner_text(".sc-intel .sc-big-name").strip()
+
+
+def wait_intel(page, name: str) -> None:
+    page.wait_for_function("(n) => { const e = document.querySelector('.sc-intel .sc-big-name'); return e && e.textContent.trim() === n && !document.querySelector('.sc-intel[aria-busy]'); }",
+                           arg=name, timeout=30_000)
+
+
 def check_first_viewport(page, base, sid, errors) -> None:
     page.set_viewport_size({"width": 1280, "height": 1000})
-    open_tab(page, base, sid, "scouting", ".sc-table .sc-row")
+    open_tab(page, base, sid, "scouting", ".sc-list .sc-row")
+    page.wait_for_selector(".sc-intel .sc-big-name", timeout=30_000)
     page.evaluate("() => window.scrollTo(0, 0)")
-    rows = page.evaluate("() => [...document.querySelectorAll('.sc-table .sc-row')].slice(0, 3).map(r => r.getBoundingClientRect().bottom)")
-    assert len(rows) == 3 and all(b <= 1000 for b in rows), f"the queue's first rows sit in the first viewport: {rows}"
+    v = call(base, f"/api/season/{sid}/scouting")
+    first = v["queue"][0]
+    wait_intel(page, first["name"])
+    assert params(page).get("spid") == first["pid"], "before anything is picked, the first row is selected (and in the address)"
+    rows = page.evaluate("() => [...document.querySelectorAll('.sc-list .sc-row')].slice(0, 3).map(r => r.getBoundingClientRect().bottom)")
+    assert len(rows) == 3 and all(b <= 1000 for b in rows), f"the database's first rows sit in the first viewport: {rows}"
+    assert page.evaluate("() => document.querySelector('.sc-intel .sc-boxes').getBoundingClientRect().bottom") <= 1000, "the report's head and boxes are in the first viewport"
     height = page.evaluate("() => document.documentElement.scrollHeight")
     assert height < OLD_HEIGHT_1280 / 2, f"the page is well under half its old height: {height}"
-    assert not page.query_selector("#tab-scouting .sc-scout"), "the full scout rows are not on the page, only in Manage Scouts"
-    assert page.query_selector(".sc-strip .sc-scout-chip"), "the scouts strip"
-    pot = page.evaluate("() => [...document.querySelectorAll('.sc-table .sc-row .sc-pot')].filter(p => p.getClientRects().length > 1 || p.offsetHeight > 30).length")
-    assert pot == 0, "every potential read sits on one line"
+    stats = page.eval_on_selector_all(".sc-stats .sc-stat", "els => els.map(e => e.dataset.stat + ':' + e.querySelector('.sc-stat-value').textContent)")
+    assert stats == [f"board:{len(board_ids(base, sid))}", f"full:{v['full_reports']}", f"trips:{v['trips_this_week']}", f"hours:{v['hours_left']} / {v['hours']}"], stats
+    assert page.eval_on_selector(".sc-intel .sc-subtabs button[data-sub=ratings]", "e => e.getAttribute('aria-selected')") == "true"
+    words = page.eval_on_selector_all(".sc-intel .sc-skill .sc-skill-val", "els => els.map(e => e.textContent.trim())")
+    assert words and all(re.fullmatch(r"(Weak|Fair|Solid|Strong|Elite|All-American)(–(Weak|Fair|Solid|Strong|Elite|All-American))?|Not Read", w) for w in words), \
+        f"the ratings are the staff's grade words, never invented numbers: {words}"
+    assert not page.query_selector("#tab-scouting .sc-ops-body:not([hidden])"), "the staff rows are folded under Scouting Operations"
     assert not errors, errors
 
 
-def check_digest(page, base, sid, errors) -> None:
-    v = call(base, f"/api/season/{sid}/scouting")
-    finds = {it["pid"] for g in v["reports"]["this_week"] for it in g["items"] if it["flags"] or it["likes"]}
-    assert finds, "the seeded week has finds"
-    page.wait_for_selector(".sc-digest[open] [data-key=finds] .sc-dg-item", timeout=15_000)
-    shown = page.eval_on_selector_all(".sc-digest [data-key=finds] .sc-dg-item", "els => els.map(e => [e.dataset.pid, e.textContent])")
-    assert shown and all(pid in finds for pid, _ in shown), shown[:3]
-    assert all(any(w in t for w in ("Generational", "Gem", "Bust Risk", "Likes Him")) for _, t in shown), shown[:3]
-    assert page.query_selector(".sc-digest #sc-all-reports"), "the digest ends with All Reports"
-    # the queue fits its card beside the digest, the long "Send (5h) · Finishes His Report" and the board rows' pills included
-    assert "Finishes His Report" in page.inner_text(".sc-table"), "a board row one trip from complete"
-    fit = page.evaluate("""() => { const t = document.querySelector('.sc-table').getBoundingClientRect(), w = document.querySelector('.sc-table-wrap').getBoundingClientRect(),
-        d = document.querySelector('.sc-digest').getBoundingClientRect(); return [t.right, w.right, d.left]; }""")
-    assert fit[0] <= fit[1] + 1 and fit[0] < fit[2], f"the table stays inside its card, clear of the digest: {fit}"
-
-
-def check_name_opens_profile(page, base, sid, errors) -> None:
+def check_select_and_subtab(page, base, sid, errors) -> None:
     before = board_ids(base, sid)
-    pid = page.evaluate("() => { const r = [...document.querySelectorAll('.sc-table .sc-row')].find(r => !r.classList.contains('on-board')); return r && r.dataset.pid; }")
-    assert pid, "a queue row off the board"
+    lst = page.query_selector(".sc-list")
+    li = page.query_selector(".sc-list .sc-row:nth-child(2)")
+    pid = li.get_attribute("data-pid")
     name = page.inner_text(f".sc-row[data-pid='{pid}'] .sc-name")
-    page.click(f".sc-row[data-pid='{pid}'] .sc-name")
-    page.wait_for_selector(".modal:not([hidden]) .rc-profile .go-display, .modal:not([hidden]) .rc-profile h2, .modal:not([hidden]) .rc-profile", timeout=30_000)
-    p = wait_url(page, lambda p: p["modal"] == [f"profile:{pid}"], f"modal=profile:{pid}")
-    assert p.get("tab") == "scouting" and tab_on(page, "scouting"), "the tab stays Scouting"
-    page.wait_for_function("(n) => [...document.querySelectorAll('.modal:not([hidden])')].some(m => m.textContent.toLowerCase().includes(n))", arg=name.lower(), timeout=30_000)
-    assert board_ids(base, sid) == before, "opening his profile leaves the board as it was"
-    page.keyboard.press("Escape")
-    page.wait_for_function("() => ![...document.querySelectorAll('.modal')].some(m => !m.hidden)", timeout=10_000)
-    assert tab_on(page, "scouting") and board_ids(base, sid) == before
+    page.click(f".sc-row[data-pid='{pid}'] .sc-row-btn")
+    wait_intel(page, name)
+    p = wait_url(page, lambda p: p.get("spid") == pid, f"spid={pid}")
+    assert p.get("tab") == "scouting" and tab_on(page, "scouting") and modals(page) == 0, "a row fills the report without leaving the tab"
+    assert page.get_attribute(f".sc-row[data-pid='{pid}'] .sc-row-btn", "aria-pressed") == "true"
+    assert page.evaluate("(e) => e.isConnected", lst), "the list was never redrawn"
+    assert board_ids(base, sid) == before, "selecting him leaves the board as it was"
+    page.click(".sc-intel .sc-subtabs button[data-sub=overview]")
+    page.wait_for_selector(".sc-intel .sc-facts", timeout=10_000)
+    wait_url(page, lambda p: p.get("ssub") == "overview", "ssub=overview")
+    reload(page, ".sc-intel .sc-facts")
+    wait_intel(page, name)
+    assert params(page).get("spid") == pid and page.get_attribute(".sc-intel .sc-subtabs button[data-sub=overview]", "aria-selected") == "true", \
+        "a refresh restores the selected prospect and the sub-tab"
+    page.click(".sc-intel .sc-subtabs button[data-sub=ratings]")
+    wait_url(page, lambda p: p.get("ssub") is None, "ssub dropped on Ratings")
     assert not errors, errors
 
 
-def check_manage(page, base, sid, errors) -> None:
+def check_send_and_board(page, base, sid, errors) -> None:
     v = call(base, f"/api/season/{sid}/scouting")
-    tbody = page.query_selector(".sc-table tbody")
-    chips = page.query_selector(".sc-strip .sc-strip-list")
+    row = next(r for r in v["queue"] if r["can_send"] and not r["on_board"] and (r["looks"] or 0) <= 1)
+    pid = row["pid"]
+    page.click(f".sc-row[data-pid='{pid}'] .sc-row-btn")
+    wait_intel(page, row["name"])
+    lst = page.query_selector(".sc-list")
+    fmt = lambda n: str(int(n)) if float(n) == int(n) else f"{n:.1f}"
+    before, after = row["looks"] or 0, min(3, (row["looks"] or 0) + 1)
+    assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-looks-text") == f"{fmt(before)}/3"
+    page.click("#sc-send")
+    toasted(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
+    page.wait_for_function("([pid, t]) => document.querySelector(`.sc-row[data-pid='${pid}'] .sc-looks-text`).textContent === t", arg=[pid, f"{fmt(after)}/3"], timeout=10_000)
+    segs = page.evaluate("(pid) => [...document.querySelectorAll(`.sc-row[data-pid='${pid}'] .sc-trip`)].map(t => t.classList.contains('on') ? 1 : t.classList.contains('half') ? 0.5 : 0)", pid)
+    assert segs == [min(1, max(0, after - i)) for i in range(3)], segs
+    page.wait_for_selector(".sc-intel .sc-result", timeout=10_000)
+    page.wait_for_function("(h) => document.querySelector('#sc-hours .sc-hours-val').textContent.startsWith(String(h) + ' /')", arg=v["hours_left"] - 5, timeout=10_000)
+    assert page.evaluate("(e) => e.isConnected", lst) and tab_on(page, "scouting")
+    # Add to Board flips the star; Remove from Board flips it back (no offer out: no confirm)
+    assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-star") == "☆"
+    page.click("#sc-board")
+    toasted(page, f"{row['name']} is on your board.")
+    page.wait_for_function("(pid) => document.querySelector(`.sc-row[data-pid='${pid}'] .sc-star`).textContent === '★'", arg=pid, timeout=10_000)
+    assert pid in board_ids(base, sid) and page.inner_text("#sc-board").strip() == "★ Remove from Board"
+    assert page.inner_text(".sc-stat[data-stat=board] .sc-stat-value") == str(len(board_ids(base, sid)))
+    page.click("#sc-board")
+    toasted(page, f"{row['name']} is off your board.")
+    page.wait_for_function("(pid) => document.querySelector(`.sc-row[data-pid='${pid}'] .sc-star`).textContent === '☆'", arg=pid, timeout=10_000)
+    assert pid not in board_ids(base, sid) and tab_on(page, "scouting")
+    assert page.evaluate("(e) => e.isConnected", lst), "the list was never redrawn"
+    assert not errors, errors
+
+
+def check_flags(page, base, sid, errors) -> None:
+    v = call(base, f"/api/season/{sid}/scouting?limit=400")
+    flagged = next(r for r in v["queue"] if r["flags"] or r["likes"])
+    assert page.query_selector(f".sc-row[data-pid='{flagged['pid']}'] .sc-row-flags .go-badge, .sc-row[data-pid='{flagged['pid']}'] .sc-row-flags .go-tag"), "the row carries a small flag badge"
+    page.click(f".sc-row[data-pid='{flagged['pid']}'] .sc-row-btn")
+    wait_intel(page, flagged["name"])
+    page.click(".sc-intel .sc-subtabs button[data-sub=scouting]")
+    page.wait_for_selector(".sc-intel .sc-sc-flags", timeout=10_000)
+    text = page.inner_text(".sc-intel .sc-sc-flags")
+    assert any(w.lower() in text.lower() for w in ("Generational", "Gem", "Bust Risk", "Likes Him")), text
+    assert page.get_attribute("#sc-all-reports .sc-new-n", "hidden") is None, "All Reports counts this week's finds"
+    page.click(".sc-intel .sc-subtabs button[data-sub=ratings]")
+    assert not errors, errors
+
+
+def check_ops(page, base, sid, errors) -> None:
+    v = call(base, f"/api/season/{sid}/scouting")
     page.click("#sc-manage")
-    page.wait_for_selector(".modal:not([hidden]) .sc-block-scouts .sc-scout", timeout=15_000)
-    wait_url(page, lambda p: p["modal"] == ["scouts"], "modal=scouts")
-    assert page.evaluate("() => document.querySelectorAll('.modal:not([hidden]) .sc-scout').length") == len(v["scouts"]) == 5
-    assert all(page.query_selector(f".modal:not([hidden]) .sc-scout[data-key='{m['id']}'] .sc-bar") for m in v["scouts"]), "each scout carries his narrowed bar"
+    page.wait_for_selector(".sc-ops-body .sc-scout", timeout=10_000)
+    wait_url(page, lambda p: p.get("sops") == "1", "sops=1")
+    assert page.evaluate("() => document.querySelectorAll('.sc-ops-body .sc-scout').length") == len(v["scouts"]) == 5
+    assert all(page.query_selector(f".sc-ops-body .sc-scout[data-key='{m['id']}'] .sc-bar") for m in v["scouts"]), "each scout carries his narrowed bar"
+    lst = page.query_selector(".sc-list")
     scout = v["scouts"][0]
     sel = f"#area-{scout['id']}"
     other = next(a for a in page.eval_on_selector_all(f"{sel} option", "els => els.map(e => e.value)") if a and a != scout["area"])
     page.select_option(sel, other)
     toasted(page, f"{scout['name']} now scouts {other}.")
-    page.wait_for_function("([id, a]) => { const c = document.querySelector(`.sc-strip .sc-scout-chip[data-key='${id}'] .sc-chip-area`); return c && c.textContent === a; }",
-                           arg=[scout["id"], other], timeout=10_000)
-    assert page.evaluate("(e) => e.isConnected", chips), "the strip patched in place"
-    assert page.evaluate("(e) => e.isConnected", tbody), "the queue was never redrawn"
-    assert page.evaluate("() => document.querySelectorAll('.modal:not([hidden]) .sc-scout').length") == 5, "the list keeps every scout"
-    reload(page, ".modal:not([hidden]) .sc-block-scouts .sc-scout")
-    assert params(page)["modal"] == ["scouts"] and tab_on(page, "scouting"), "a refresh reopens Manage Scouts"
-    assert page.eval_on_selector(sel, "e => e.value") == other
-    page.keyboard.press("Escape")
-    page.wait_for_function("() => ![...document.querySelectorAll('.modal')].some(m => !m.hidden)", timeout=10_000)
-    wait_url(page, lambda p: p["modal"] == [], "no modal")
+    page.wait_for_function("(a) => document.querySelector('.sc-ops-summary').textContent.includes(a)", arg=other, timeout=10_000)
+    assert page.evaluate("() => document.querySelectorAll('.sc-ops-body .sc-scout').length") == 5 and page.evaluate("(e) => e.isConnected", lst)
+    reload(page, ".sc-ops-body .sc-scout")
+    assert params(page).get("sops") == "1" and page.eval_on_selector(sel, "e => e.value") == other, "a refresh keeps Scouting Operations open"
+    page.click("#sc-manage")
+    wait_url(page, lambda p: p.get("sops") is None, "sops dropped")
     assert not errors, errors
 
 
 def check_reports(page, base, sid, errors) -> None:
     v = call(base, f"/api/season/{sid}/scouting")
-    page.wait_for_selector("#sc-all-reports", timeout=60_000)
     page.click("#sc-all-reports")
     page.wait_for_selector(".modal:not([hidden]) .sc-reports .go-subtabs", timeout=15_000)
     wait_url(page, lambda p: p["modal"] == ["reports"], "modal=reports")
     groups = page.eval_on_selector_all(".modal:not([hidden]) .sc-reports .sc-report", "els => els.map(e => e.dataset.key)")
-    assert groups == [g["scout_id"] for g in v["reports"]["this_week"]], (groups, [g["scout_id"] for g in v["reports"]["this_week"]])
+    assert groups == [g["scout_id"] for g in v["reports"]["this_week"]], groups
     for g in v["reports"]["this_week"]:
-        n = len(g["items"])
-        if n > 8:
-            assert page.inner_text(f".modal:not([hidden]) .sc-report[data-key='{g['scout_id']}'] .sc-report-more") == f"Show All {n}", "a long report folds behind Show All"
-    assert page.get_attribute(".modal:not([hidden]) .sc-reports button[data-week=this_week]", "aria-selected") == "true"
+        if len(g["items"]) > 8:
+            assert page.inner_text(f".modal:not([hidden]) .sc-report[data-key='{g['scout_id']}'] .sc-report-more") == f"Show All {len(g['items'])}"
     page.click(".modal:not([hidden]) .sc-reports button[data-week=flags]")
     wait_url(page, lambda p: p["modal"] == ["reports:flags"], "modal=reports:flags")
     assert page.evaluate("() => document.querySelectorAll('.modal:not([hidden]) .sc-flag').length") == len(v["flags"])
     reload(page, ".modal:not([hidden]) .sc-reports button[data-week=flags][aria-selected=true]")
     assert params(page)["modal"] == ["reports:flags"] and tab_on(page, "scouting"), "a refresh restores All Reports on its Flags tab"
-    # a name in the reports opens his profile on top; the tab stays Scouting and the board as it was
     before = board_ids(base, sid)
     pid = page.eval_on_selector(".modal:not([hidden]) .sc-flag .go-link", "e => e.dataset.pid")
     page.click(f".modal:not([hidden]) .sc-flag .go-link[data-pid='{pid}']")
     wait_url(page, lambda p: p["modal"] == ["reports:flags", f"profile:{pid}"], "the profile over All Reports")
     page.wait_for_function("() => [...document.querySelectorAll('.modal')].filter(m => !m.hidden).length === 2", timeout=15_000)
-    assert tab_on(page, "scouting") and board_ids(base, sid) == before
+    assert tab_on(page, "scouting") and board_ids(base, sid) == before, "a name opens his profile: no board change, no tab switch"
     page.keyboard.press("Escape")
     page.wait_for_function("() => [...document.querySelectorAll('.modal')].filter(m => !m.hidden).length === 1", timeout=10_000)
-    page.click(".modal:not([hidden]) .sc-reports button[data-week=last_week]")
-    wait_url(page, lambda p: p["modal"] == ["reports:last_week"], "modal=reports:last_week")
     page.keyboard.press("Escape")
     wait_url(page, lambda p: p["modal"] == [], "no modal")
-    assert modals(page) == 0
+    page.wait_for_function(NO_MODAL, timeout=10_000)
     assert not errors, errors
 
 
 def check_phone(page, base, sid, errors) -> None:
     page.set_viewport_size({"width": 400, "height": 860})
-    open_tab(page, base, sid, "scouting", ".sc-table .sc-row")
+    open_tab(page, base, sid, "scouting", ".sc-list .sc-row")
+    page.wait_for_selector(".sc-intel .sc-big-name", timeout=30_000)
     assert page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth + 1"), "no sideways scroll on a phone"
-    r = page.evaluate("() => { const b = document.querySelector('.sc-table .sc-row .sc-send:not([hidden])'); const x = b.getBoundingClientRect(); return [x.right, x.height]; }")
-    assert r[0] <= 400 and r[1] >= 44, f"Send sits in the row, 44 px tall: {r}"
-    assert not page.evaluate("() => document.querySelector('.sc-digest').open"), "the digest folds on a phone"
-    q, d = page.evaluate("() => [document.querySelector('.sc-queue-panel').getBoundingClientRect().top, document.querySelector('.sc-digest').getBoundingClientRect().top]")
-    assert d < q, "the folded digest sits above the queue"
-    page.click(".sc-digest .sc-dg-head")
-    page.wait_for_selector(".sc-digest[open] #sc-all-reports:visible", timeout=5_000)
-    for sel in ("#sc-manage", "#sc-all-reports", ".sc-digest .sc-dg-head", ".sc-pager .go-btn"):
+    tops = page.eval_on_selector_all(".sc-stats .sc-stat", "els => els.map(e => Math.round(e.getBoundingClientRect().top))")
+    assert len(set(tops)) == 2 and tops[0] == tops[1] and tops[2] == tops[3], f"the stat cards are a 2×2 grid: {tops}"
+    assert page.evaluate("() => document.querySelector('.sc-db').getBoundingClientRect().bottom <= document.querySelector('.sc-intel').getBoundingClientRect().top + 1"), "the report stacks under the database"
+    for sel in ("#sc-all-reports", ".sc-row-btn", "#sc-search", ".sc-pager .go-btn", "#sc-send", "#sc-board", ".sc-intel .sc-subtabs button", "#sc-manage", ".sc-ops-toggle"):
         h = page.eval_on_selector(sel, "e => e.getBoundingClientRect().height")
         assert h >= 44, f"{sel} is {h} px tall on a phone"
+    wide = page.evaluate("() => [...document.querySelectorAll('.sc-row-btn, .sc-intel *')].filter(e => e.getBoundingClientRect().right > window.innerWidth + 1).length")
+    assert wide == 0, f"{wide} elements run past the screen"
     page.set_viewport_size({"width": 1280, "height": 1000})
     assert not errors, errors
 
@@ -199,14 +248,16 @@ if __name__ == "__main__":
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.on("dialog", lambda d: d.dismiss())
             check_first_viewport(page, base, A, errors)
-            check_digest(page, base, A, errors)
-            check_name_opens_profile(page, base, A, errors)
-            check_manage(page, base, A, errors)
+            check_select_and_subtab(page, base, A, errors)
+            check_send_and_board(page, base, A, errors)
+            check_flags(page, base, A, errors)
+            check_ops(page, base, A, errors)
             check_reports(page, base, A, errors)
             check_phone(page, base, A, errors)
             browser.close()
-        print("scouting layout ok: the queue in the first viewport, the digest's finds, a name opens his profile over the tab "
-              "(board unchanged), Manage Scouts patches in place and reloads, All Reports by scout reloads on Flags, a phone fits")
+        print("scouting layout ok: the database and the report in the first viewport, a row fills the report and a refresh restores him "
+              "and the sub-tab, Send patches the meter, Add to Board flips the star, flags on the rows and the Scouting sub-tab, "
+              "Scouting Operations patches in place and reloads, All Reports by scout reloads on Flags, a name opens his profile, a phone fits")
     finally:
         try:
             call(base, f"/api/season/{A}", method="DELETE")

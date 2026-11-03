@@ -2208,8 +2208,8 @@ if __name__ == "__main__":
             open_tab(page, base, A, "scouting", "#sc-manage")
             page.click("#sc-manage")
             page.wait_for_selector(".sc-scout select", timeout=15_000)
-            assert "go-sel" in (page.get_attribute(".sc-scout select", "class") or ""), "the scouting-area select (in Manage Scouts) is a house picker"
-            page.keyboard.press("Escape")
+            assert "go-sel" in (page.get_attribute(".sc-scout select", "class") or ""), "the scouting-area select (under Scouting Operations) is a house picker"
+            page.click("#sc-manage")
 
             # --- Schedule: the trade window says what the button does and names itself after the entry point
             open_tab(page, base, A, "schedule", ".schedule-pick")

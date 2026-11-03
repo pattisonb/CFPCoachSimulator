@@ -18,10 +18,10 @@ from tests.test_offseason import finished
 ME = "ohio-state"
 ENTRY_KEYS = {"week", "pid", "by", "before", "after", "flags"}
 FLAGS = {"gem", "bust", "generational", "likes"}      # "likes": prospects.staff_likes, the Flags list's fourth kind
-VIEW_KEYS = {"hours", "hours_left", "scouts", "queue", "queue_total", "reports", "flags"}
+VIEW_KEYS = {"hours", "hours_left", "scouts", "queue", "queue_total", "reports", "flags", "full_reports", "trips_this_week"}
 SCOUT_KEYS = {"id", "name", "role", "evaluation_word", "area", "looking_at", "yield", "contract_until"}
 QUEUE_KEYS = {"pid", "name", "position", "stars", "group", "need", "national_rank", "looks", "trips", "potential",
-              "can_send", "why", "state", "likes", "on_board"}
+              "can_send", "why", "state", "likes", "on_board", "flags"}
 GROUP_KEYS = {"scout_id", "scout", "area", "looks", "changed", "items"}
 ITEM_KEYS = {"pid", "name", "position", "stars", "change", "flags", "likes", "on_board", "complete"}   # on_board, complete: read-only, for the tab's digest
 FLAG_KEYS = {"pid", "name", "position", "stars", "flag", "looks", "standing_word", "likes"}
