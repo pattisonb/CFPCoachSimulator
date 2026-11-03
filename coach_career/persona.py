@@ -137,3 +137,58 @@ def cool_quiet(state: dict, week: int) -> None:
                 continue
             if of(state, pid)["personality"] == "attention":
                 c["cooled_until"] = week + 1
+
+
+# ----- discovery: what a school has learned about him ---------------------------------------------------
+
+DECIDER_LOOKS = 2.0              # looks of his report before the player's staff learns who decides *tune*
+PERSONALITY_LINE = {"cocky": "He's cocky, and he isn't shy about it.", "shy": "He's shy and doesn't say much.",
+                    "guarded": "He's guarded and keeps things close.", "attention": "He loves the attention and wants to hear from you often.",
+                    "business": "He's all business and wants to talk about the offer."}
+DECIDER_LINE = {"self": "Your staff learned he makes his own call.", "mom": "Your staff learned his mom has the final say.",
+                "dad": "Your staff learned his dad has the final say.", "grandma": "Your staff learned his grandmother has the final say.",
+                "hs_coach": "Your staff learned his high school coach has the final say.", "trainer": "Your staff learned his trainer has the final say."}
+
+
+def known(state: dict, slug: str, pid: str) -> dict:
+    """What `slug` has learned about him: {"personality": bool, "decider": bool}."""
+    k = ((state["recruiting"].get("traits_known") or {}).get(slug) or {}).get(pid) or {}
+    return {"personality": bool(k.get("personality")), "decider": bool(k.get("decider"))}
+
+
+def learn(state: dict, slug: str, pid: str, trait: str) -> bool:
+    """`slug` learns one of his traits; True when newly learned. Only the player's school keeps a map
+    (nothing reads an AI school's yet), and only the player's learning is logged for his History."""
+    from coach_career import recruiting
+    if slug != state.get("team"):
+        return False
+    rc = state["recruiting"]
+    mine = rc.setdefault("traits_known", {}).setdefault(slug, {}).setdefault(pid, {"personality": False, "decider": False})
+    if mine.get(trait):
+        return False
+    mine[trait] = True
+    d = of(state, pid)
+    line = PERSONALITY_LINE[d["personality"]] if trait == "personality" else DECIDER_LINE[d["decider"]]
+    recruiting._event(state, "learned", pid, slug, trait=trait, line=line)
+    return True
+
+
+def learn_on_contact(state: dict, slug: str, pid: str, action: str) -> None:
+    """His personality shows on the school's first call (Guarded: its first in-home visit)."""
+    guarded = of(state, pid)["personality"] == "guarded"
+    if (action == "call" and not guarded) or (action == "hc_visit" and guarded):
+        learn(state, slug, pid, "personality")
+
+
+def learn_from_read(state: dict, pid: str, looks: float) -> None:
+    """His decider shows once the player's read of him holds DECIDER_LOOKS looks."""
+    if looks >= DECIDER_LOOKS:
+        learn(state, state["team"], pid, "decider")
+
+
+def view(state: dict, viewer: str, pid: str) -> dict:
+    """What `viewer` may show of him: labels, or None for Not Known Yet."""
+    d, k = of(state, pid), known(state, viewer, pid)
+    return {"personality": PERSONALITY_LABEL[d["personality"]] if k["personality"] else None,
+            "decider": DECIDER_LABEL[d["decider"]] if k["decider"] else None,
+            "decider_topic": d["decider_topic"] if k["decider"] else None}

@@ -15,7 +15,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
-from coach_career import recruiting
+from coach_career import persona, recruiting
 
 ROOT = Path(__file__).resolve().parents[1]   # the project root
 SOURCE_TEAMS = ROOT / "cfb_sim_data" / "teams"
@@ -501,6 +501,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
     details = {g: grade_detail(state, p, g, *recruiting.read_interval(state, pid, g)) for g in recruiting.GROUPS} if read else None
     return {
         "public": public,
+        "traits": persona.view(state, viewer, pid),
         "flip": flip_view(state, pid),
         "grade_details": details,
         "evaluation": _evaluation(p, public_grades) if top else None,
@@ -567,7 +568,7 @@ def _stage_move(state: dict, pid: str, viewer: str) -> Optional[str]:
 
 HISTORY_SHOWN = 40                           # a board row's History: his newest log entries, this many
 HIS_OWN = ("commit", "hard", "flip", "decommit", "signed", "leaning_fcs")   # his own moves: every school's show
-HISTORY_KEYS = ("week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful", "topics", "hit")
+HISTORY_KEYS = ("week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful", "topics", "hit", "line")
 
 
 def history_index(state: dict, viewer: str) -> dict[str, list[dict]]:
@@ -596,6 +597,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                leader=schools[0] if schools else None, schools=len(schools),
                visit=(rc["visits"].get(pid) or {}).get(viewer),
                priorities_known=list((rc["revealed"].get(viewer) or {}).get(pid, [])),
+               traits=persona.view(state, viewer, pid),
                hc_week=((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("hc_week"),
                done_this_week=[k for k, w in (((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("week") or {}).items()
                                if w == state["current_week"]],

@@ -1647,6 +1647,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             _event(state, "contact", pid, slug, action=action, **({"pitch": pitch} if pitch else {}))
         if action in WEEKLY_ONCE:
             contact.setdefault("week", {})[action] = week
+        if action in ("call", "hc_visit"):
+            persona.learn_on_contact(state, slug, pid, action)
         if opens:                                     # your scene: the contact is marked, his lines and cue stored; no points until the pitch
             contact["asked"] = True if action == "hc_visit" or contact.get("asked") is True else "range"
             contact["last_contact"] = week
@@ -2533,6 +2535,7 @@ def look(state: dict, pid: str, evaluator_rating: int, rng: random.Random, by: O
     key = str(evaluator_rating)
     read["by"][key] = round(read["by"].get(key, 0) + w, 3)
     read["find"] = pr.find(state, pid)               # the flag he holds after this look: find's hysteresis anchor
+    persona.learn_from_read(state, pid, report_looks(read))
     after = _read_words(state, pid)
     moved = [g for g in GROUPS if before.get(g) != after.get(g)]
     entry = {"week": week, "pid": pid, "by": by,
