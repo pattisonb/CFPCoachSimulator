@@ -941,13 +941,14 @@ def test_staff_likes_tags(page, base) -> None:
         assert row.query_selector(".go-likes").get_attribute("title") == "Your offensive coordinator thinks he starts for you next year"
         assert name in row.inner_text()
         assert not page.query_selector(f".sc-reports .sc-flag[data-pid='{nearly}']")
-        v = call(base, f"/api/season/{sid}/scouting")
+        v = call(base, f"/api/season/{sid}/scouting?on_board=1&limit=400")      # his board, wherever it ranks
         assert all(r["likes"] is None for r in v["queue"] if r["looks"] < 3), "an open report has no like yet"
         assert next(r for r in v["queue"] if r["pid"] == liked)["likes"]["who"] == "OC", "the board's complete report stays in the queue with his like"
         assert v["hours_left"] >= 5, v["hours_left"]
         page.keyboard.press("Escape")
         page.wait_for_function("() => ![...document.querySelectorAll('.modal')].some(m => !m.hidden)", timeout=10_000)
         # the database: the Send that completes his report shows the pill on his row and the tag in the report's result line
+        page.fill("#sc-search", rc["prospects"][nearly]["name"])      # the list is the class by rank: find him by name
         page.wait_for_selector(f".sc-list .sc-row[data-pid='{nearly}']", timeout=15_000)
         assert not page.query_selector(f".sc-row[data-pid='{nearly}'] .sc-likes")
         page.click(f".sc-row[data-pid='{nearly}'] .sc-row-btn")
