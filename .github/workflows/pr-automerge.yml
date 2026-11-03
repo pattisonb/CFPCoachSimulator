@@ -118,4 +118,4 @@ jobs:
 
           gh pr merge "$PR" --repo "$REPO" --merge --match-head-commit "$HEAD_SHA"
           gh workflow run pages.yml --repo "$REPO" --ref main
-          comment "Every test passed against the current main: merged, and the site is deploying."
+          comment "Every test passed against the current main: merged. Vercel deploys main to the site."
