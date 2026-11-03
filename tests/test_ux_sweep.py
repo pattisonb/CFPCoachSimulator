@@ -928,7 +928,9 @@ def test_staff_likes_tags(page, base) -> None:
         page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n); }", arg=rc["prospects"][nearly]["name"], timeout=15_000)
         assert not page.query_selector(".go-pane .go-tags .go-tag.go-likes") and not page.query_selector(".go-pane .go-pane-head .go-likes")
         # the Scouting tab: the Flags list has him as a "likes" row with the tag
-        open_tab(page, base, sid, "scouting", ".sc-reports .go-subtabs")
+        open_tab(page, base, sid, "scouting", "#sc-all-reports")
+        page.click("#sc-all-reports")
+        page.wait_for_selector(".modal:not([hidden]) .sc-reports .go-subtabs", timeout=15_000)
         page.click(".sc-reports .go-subtabs button[data-week=flags]")
         page.wait_for_selector(f".sc-reports .sc-flag[data-pid='{liked}'][data-flag=likes]", timeout=15_000)
         row = page.query_selector(f".sc-reports .sc-flag[data-pid='{liked}'][data-flag=likes]")
@@ -940,16 +942,20 @@ def test_staff_likes_tags(page, base) -> None:
         assert all(r["likes"] is None for r in v["queue"] if r["looks"] < 3), "an open report has no like yet"
         assert next(r for r in v["queue"] if r["pid"] == liked)["likes"]["who"] == "OC", "the board's complete report stays in the queue with his like"
         assert v["hours_left"] >= 5, v["hours_left"]
-        # the queue: the Send that completes his report shows the pill in the NAME cell and the tag in the result row
-        page.wait_for_selector(f".sc-table .sc-row[data-pid='{nearly}'] .sc-send", timeout=15_000)
+        page.keyboard.press("Escape")
+        page.wait_for_function("() => ![...document.querySelectorAll('.modal')].some(m => !m.hidden)", timeout=10_000)
+        # the database: the Send that completes his report shows the pill on his row and the tag in the report's result line
+        page.wait_for_selector(f".sc-list .sc-row[data-pid='{nearly}']", timeout=15_000)
         assert not page.query_selector(f".sc-row[data-pid='{nearly}'] .sc-likes")
-        page.click(f".sc-row[data-pid='{nearly}'] .sc-send")
+        page.click(f".sc-row[data-pid='{nearly}'] .sc-row-btn")
+        page.wait_for_function("(n) => { const e = document.querySelector('.sc-intel .sc-big-name'); return e && e.textContent.trim() === n && !document.querySelector('.sc-intel[aria-busy]'); }",
+                               arg=rc["prospects"][nearly]["name"], timeout=30_000)
+        page.click("#sc-send")
         page.wait_for_selector(f".sc-row[data-pid='{nearly}'] .sc-likes", timeout=15_000)
-        pill = page.query_selector(f".sc-row[data-pid='{nearly}'] .sc-c-name .sc-likes")
+        pill = page.query_selector(f".sc-row[data-pid='{nearly}'] .sc-row-flags .sc-likes")
         assert pill.inner_text().strip().lower() == "oc ♥" and pill.get_attribute("title") == "Your offensive coordinator thinks he starts for you next year", (pill.inner_text(), pill.get_attribute("title"))
-        assert not page.query_selector(f".sc-row[data-pid='{nearly}'] .sc-c-name .sc-likes[hidden]")
-        page.wait_for_function("(pid) => { const r = document.querySelector(`.sc-row[data-pid='${pid}']`); return r && r.nextElementSibling && r.nextElementSibling.classList.contains('sc-result-row') && r.nextElementSibling.querySelector('.go-likes'); }", arg=nearly, timeout=15_000)
-        assert page.inner_text(f".sc-row[data-pid='{nearly}'] + .sc-result-row .go-likes").strip().lower() == "oc likes him"
+        page.wait_for_selector(".sc-intel .sc-result .go-likes", timeout=15_000)
+        assert page.inner_text(".sc-intel .sc-result .go-likes").strip().lower() == "oc likes him"
         assert next(b for b in call(base, f"/api/season/{sid}/recruiting")["board"] if b["id"] == nearly)["likes"]["who"] == "OC"
         assert not errs, errs
     finally:
