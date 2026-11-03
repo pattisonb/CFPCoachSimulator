@@ -42,9 +42,9 @@ def wait_url(page, pred, what: str, timeout: float = 30) -> dict:
     raise AssertionError(f"the address never showed {what}: {page.url}")
 
 
-def reload(page) -> None:
+def reload(page, wait: str = "#season:visible") -> None:
     page.reload()
-    page.wait_for_selector("#season:visible", timeout=120_000)
+    page.wait_for_selector(wait, timeout=120_000)
 
 
 def tab_on(page, tab: str) -> bool:
@@ -229,8 +229,7 @@ def check_depth(page, base, A, errors) -> None:
     page.wait_for_selector("#depth-screen:not([hidden])", timeout=60_000)
     p = wait_url(page, lambda p: p.get("screen") == "depth", "screen=depth")
     assert p["tab"] == "standings"
-    reload(page)
-    page.wait_for_selector("#depth-screen:not([hidden])", timeout=60_000)
+    reload(page, "#depth-screen:not([hidden])")      # the depth chart covers the season
     assert params(page).get("screen") == "depth"
     page.go_back()
     wait_url(page, lambda p: "screen" not in p, "the season after Back")
