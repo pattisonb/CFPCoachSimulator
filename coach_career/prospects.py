@@ -872,7 +872,8 @@ def _report_groups(state: dict, entries: list[dict], counts: dict, changes: dict
     (then the scouts whose looks changed nothing, in staff order), each group's looks counted (`looks`,
     from the week's tally), the looks that changed a grade word or gained a flag counted (`changed`,
     from the tally) and the most notable REPORT_ITEMS of them listed (flags, then potential, then the
-    rest; newest first within each)."""
+    rest; newest first within each). Each item carries `on_board` and `complete` (his report is complete now:
+    a look this week on a complete report is the look that completed it), read-only, for the tab's This Week digest."""
     rc = state["recruiting"]
     groups: dict[str, dict] = {}
     kept: dict[str, list[dict]] = {}
@@ -896,7 +897,8 @@ def _report_groups(state: dict, entries: list[dict], counts: dict, changes: dict
         for e in sorted(kept.get(by, []), key=recruiting.look_notability)[:REPORT_ITEMS]:
             p = rc["prospects"][e["pid"]]
             g["items"].append({"pid": e["pid"], "name": p["name"], "position": p["position"], "stars": p["stars"],
-                               "change": _look_change(e), "flags": list(e["flags"]), "likes": staff_likes(state, e["pid"], state["team"])})
+                               "change": _look_change(e), "flags": list(e["flags"]), "likes": staff_likes(state, e["pid"], state["team"]),
+                               "on_board": e["pid"] in rc["board"], "complete": recruiting.report_complete(rc["reads"].get(e["pid"]))})
     return list(groups.values())
 
 
@@ -913,7 +915,8 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
     complete report off your board is out of the queue; filtered by `q`
     on name or home state, `position`, `group`; `queue_total` counts the whole match), this and last
     week's reports from the look log, and your staff's flags this class (gems, bust risks, generational
-    prospects and the recruits a coordinator likes: staff_likes), every row carrying `likes`."""
+    prospects and the recruits a coordinator likes: staff_likes), every row carrying `likes`; a queue row
+    carries `on_board` (read-only)."""
     rc, me = state["recruiting"], state["team"]
     week = recruiting.look_week(state)
     staff = {m["id"]: m for m in state["career"].get("staff", [])}
@@ -964,7 +967,7 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
                       "looks": looks_out(read), "trips": trips,
                       "potential": list(recruiting.grade_range(state, pid, "potential")) if read else None,
                       "can_send": not short and not done, "why": REPORT_COMPLETE if done else NOT_ENOUGH_HOURS if short else None,
-                      "state": p["hometown"]["state"], "likes": staff_likes(state, pid, me)})
+                      "state": p["hometown"]["state"], "likes": staff_likes(state, pid, me), "on_board": pid in rc["board"]})
     flags = []
     for pid in rc["reads"]:
         p = rc["prospects"].get(pid)

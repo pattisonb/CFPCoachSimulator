@@ -1,21 +1,28 @@
-/* The Scouting tab (replaces Staff): a dashboard in three regions. My scouts (a compact list: avatar, name, role,
-   the area dropdown, a "narrowed this week" bar), Reports (This Week · Last Week · Flags), and the Scouting queue:
-   a table of recruits worth a trip, 25 to a page (BOARD, NAME, NEED, RANK, POTENTIAL, LOOKS in halves of three, Send), with a board
-   filter, a search, sortable headers and Previous · 1 2 … n · Next pagination on the API's offset/limit.
+/* The Scouting tab (replaces Staff), queue first. Top to bottom: the header (title, the hours left this week, one help
+   line); the scouts strip (a chip per scout: avatar, role, area; the areas nobody covers; Manage Scouts opens the full
+   scout rows with the area dropdowns in a modal, token "scouts"); then the Scouting queue, the page itself: a table of
+   recruits worth a trip, 20 to a page (NAME with an On Board mark, NEED, RANK, POTENTIAL, LOOKS in halves of three,
+   Send), with a board filter, a search, sortable headers and Previous · 1 2 … n · Next pagination on the API's
+   offset/limit; beside it (above it, folded, on a narrow screen) the This Week digest: the finds, the reports
+   completed, the reads that moved on your board, one summary line and All Reports, which opens the full reports
+   (This Week · Last Week · Flags, by scout, Show All) in a modal, token "reports[:last_week|flags]".
+   A prospect's name anywhere here opens his Prospect Profile over the tab: nothing goes on your board by itself.
    window.CFP.scouting.render(season, box, helpers); helpers are season.js's recruitingHelpers, the same
-   H as web/recruiting.js: { api, postJSON, toast, errText, onChange(tab), ... }. Smoothness through
+   H as web/recruiting.js: { api, postJSON, toast, errText, openModal, retoken, onChange(tab), ... }. Smoothness through
    window.CFP.ui: an action never rebuilds the block the player is looking at. */
 (function () {
   "use strict";
   const { el } = window.CFP;
   const ui = () => window.CFP.ui;
-  const R = () => window.Recruiting;                 // wordTag, reveal (the board's pane on him), openProfile
+  const R = () => window.Recruiting;                 // wordTag, openProfile
   const SCOUT_HOURS = 5, REPORT_LOOKS = 3, SEND_LOOK = 1, AREA_LOOK = 0.5;   // recruiting.HOURS["scout"], REPORT_LOOKS, SEND_LOOK, AREA_LOOK
   // looks come in trip units: a Send is one, a week in a scout's area half, a full report three; a count shows its half only when it has one
   const fmtLooks = (n) => (Number.isInteger(Number(n)) ? String(Number(n)) : Number(n).toFixed(1));
+  const looksTotal = (n) => `${Number.isInteger(Number(n)) ? Number(n).toLocaleString("en-US") : fmtLooks(n)} looks`;   // a week's total, with its comma
   const looksText = (n) => `${fmtLooks(n)} look${Number(n) === 1 ? "" : "s"}`;
   const leftOf = (looks) => Math.max(0, REPORT_LOOKS - (looks || 0));
-  const PAGE = 25, WHOLE = 400;                      // rows a page; the most one ask returns (prospects.QUEUE_MAX)
+  const PAGE = 20, WHOLE = 400;                      // rows a page (20 keeps the page short: the queue is the page); the most one ask returns (prospects.QUEUE_MAX)
+  const DIGEST_ROWS = 5;                             // a digest section's rows before "n more in All Reports"
   const POSITIONS = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "ATH", "K", "P"];
   const GROUPS = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P"];     // offseason.GROUP's roster groups
   const WORDS = ["Weak", "Fair", "Solid", "Strong", "Elite", "All-American"];         // recruiting.WORDS, low to high
@@ -27,20 +34,27 @@
   const SORTS = { need: (r) => r.need || 0, rank: (r) => r.national_rank || 1e9, looks: (r) => r.looks || 0,
                   potential: (r) => (r.potential ? WORDS.indexOf(r.potential[1]) * 10 + WORDS.indexOf(r.potential[0]) : -1) };
   const SORT_DEFAULT = { need: -1, rank: 1, looks: -1, potential: -1 };     // the first click: the most need, the best rank, the most looks, the best read
-  // the filters, the page and the sort, kept across renders; the reports open on This week at every render
-  const desk = { q: "", position: "", group: "", board: "all", page: 0, sort: null, dir: 1, week: "this_week" };
+  const WEEKS = [["this_week", "This Week"], ["last_week", "Last Week"], ["flags", "Flags"]];
+  // the filters, the page and the sort, kept across renders
+  const desk = { q: "", position: "", group: "", board: "all", page: 0, sort: null, dir: 1 };
   let H = null;
+  let cur = null;                                    // the tab as drawn: { s, v (the latest view), rv (/recruiting: the areas), strip, digest, reload }
+  let wanted = null;                                 // a modal to open once the tab draws ("scouts", "reports"): the pane's links here
 
   const stars = (n) => "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
   const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
   const num = (n) => Number(n).toLocaleString("en-US");
+  const cap = (t) => (t ? t[0].toUpperCase() + t.slice(1) : t);
   const loading = (text) => el("p", { class: "muted go-loading", text });
   // api(s, "board", body): one call on this season (the path after /api/season/{id}/; a body posts)
   const api = (s, path, body) => (body === undefined ? H.api(`/api/season/${s.id}/${path}`) : H.api(`/api/season/${s.id}/${path}`, H.postJSON(body)));
   const wordRange = (r) => (r[0] === r[1] ? [R().wordTag(r[0])] : [R().wordTag(r[0]), " to ", R().wordTag(r[1])]);
+  // the queue's potential: plain words in their tone color on one line ("Elite–All-American"), as the pane's grade cards
+  const gradeWord = (w) => el("b", { class: `go-grade ${String(w).toLowerCase()}`, text: w });
+  const gradePlain = (r) => (r[0] === r[1] ? [gradeWord(r[0])] : [gradeWord(r[0]), el("span", { class: "go-grade-dash", text: "–" }), gradeWord(r[1])]);
   const flagBadge = (f) => el("span", { class: `go-badge ${f}`, text: (FLAGS[f] || [f])[0], title: (FLAGS[f] || [])[1] || "" });
   // "OC likes him" (the API's `likes`: {who, name, text}): his report is complete and the read says he would start for you.
-  // The tag on report items and Flags rows; a small "OC ♥" pill in the queue's NAME cell
+  // The tag on report items, Flags rows and the digest; a small "OC ♥" pill in the queue's NAME cell
   const likesTag = (l) => el("span", { class: "go-tag good go-likes", text: `${l.who} Likes Him`, title: l.text });
   const likesPill = (l) => el("span", { class: "go-tag good sc-likes", text: `${l.who} ♥`, title: l.text });
   function avatar(seed, cls) {
@@ -64,19 +78,25 @@
     const qs = q.toString();
     return `scouting${qs ? `?${qs}` : ""}`;
   }
-  // a recruit's name anywhere on the desk opens him in the board's pane: he goes on your board (a set, so
-  // one already there stays put), the board reveals him, and the tab switches. A prospect the board cannot
-  // hold (hidden) opens as his profile instead.
-  async function openOnBoard(s, pid, control) {
-    try { await ui().busy(control, api(s, "board", { pid, on: true })); }
-    catch (err) { ui().toast(`Could not put him on your board: ${H.errText(err)}`, { ms: 4000, kind: "error" }); R().openProfile(s, pid); return; }
-    if (boardSet) boardSet.add(pid);
-    R().reveal(pid);
-    H.onChange("recruiting");
+  // a recruit's name anywhere on the tab opens his Prospect Profile over it: no board change, no tab switch (putting
+  // him on the board is the profile's own Add to Your Board). When the profile closes the queue refetches, so a
+  // board change made there shows as his On Board mark.
+  const openLayers = () => document.querySelectorAll(".modal:not([hidden])").length;
+  function openHim(s, pid) {
+    R().openProfile(s, pid);
+    const n = openLayers();
+    const watch = new MutationObserver(() => {
+      if (openLayers() >= n) return;
+      watch.disconnect();
+      if (cur && cur.s.id === s.id && cur.reload) cur.reload();
+    });
+    watch.observe(document.body, { childList: true, subtree: false });
+    const base = document.getElementById("modal");
+    if (base) watch.observe(base, { attributes: true, attributeFilter: ["hidden"] });
   }
   function nameLink(s, pid, name, cls) {
-    const b = el("button", { type: "button", class: `go-link ${cls || ""}`, "data-pid": pid, text: name, title: "Open him on your board" });
-    ui().on(b, "click", () => openOnBoard(s, pid, b));
+    const b = el("button", { type: "button", class: `go-link ${cls || ""}`, "data-pid": pid, text: name, title: "Open his profile" });
+    ui().on(b, "click", () => openHim(s, pid));
     return b;
   }
   // a list longer than n folds past n with "Show All n" (a toggle)
@@ -94,47 +114,93 @@
     });
     return more;
   }
-  let boardSet = null;                               // the pids on your board (from /recruiting; a name click adds to it)
 
-  // the desk's place in the address (web/route.js): the reports tab and the queue's board chip (a replace)
-  const syncRoute = () => { if (window.CFP.route) window.CFP.route.set({ rep: desk.week !== "this_week" ? desk.week : null, qboard: desk.board !== "all" ? desk.board : null }); };
-  let routeWeek = null;                              // a reports tab the address asked for: the next render opens on it
-  function applyRoute(r) {
-    routeWeek = ["last_week", "flags"].includes(r.rep) ? r.rep : null;
-    desk.board = ["on", "off"].includes(r.qboard) ? r.qboard : "all";
-  }
+  // the tab's place in the address (web/route.js): the queue's board chip (a replace); Manage Scouts and All Reports are modal tokens
+  const syncRoute = () => { if (window.CFP.route) window.CFP.route.set({ qboard: desk.board !== "all" ? desk.board : null }); };
+  function applyRoute(r) { desk.board = ["on", "off"].includes(r.qboard) ? r.qboard : "all"; }
 
   async function render(s, box, helpers) {
     H = helpers;
-    desk.week = routeWeek || "this_week";
-    routeWeek = null;
     desk.page = 0;
     if (!box.firstChild) box.append(loading("Loading the scouting desk…"));
     let v, rv;
     try { [v, rv] = await Promise.all([api(s, deskPath(0, PAGE)), api(s, "recruiting")]); }
     catch (err) { box.innerHTML = ""; box.append(loading(`Could not load the scouting desk: ${H.errText(err)}`)); return; }
-    boardSet = new Set((rv.board || []).map((b) => b.id));
+    cur = { s, v, rv };
+    const hours = el("div", { id: "sc-hours", class: "go-pill sc-hours", role: "status" });
     box.innerHTML = "";
-    box.append(el("div", { class: "sc-head" }, [el("div", { class: "go-display l", text: "Scouting" }),
-      el("p", { class: "muted", text: "A full report is three looks. A trip is one look; a week in a scout's area is half a look, up to two. After four weeks in an area one trip finishes him." })]));
-    box.append(el("div", { class: "sc-top" }, [scoutsPanel(s, v, rv), reportsPanel(s, v)]), queuePanel(s, v));
+    box.append(el("div", { class: "sc-head" }, [
+      el("div", { class: "sc-title-row" }, [el("div", { class: "go-display l", text: "Scouting" }), hours]),
+      el("p", { class: "muted sc-help", text: `A full report is three looks. A trip (${SCOUT_HOURS} hours) is one look; a week in a scout's area is half a look, up to two.` })]));
+    cur.strip = scoutStrip(s, v, rv);
+    cur.digest = digestPanel(s, v);
+    box.append(cur.strip, el("div", { class: "sc-main" }, [queuePanel(s, v, hours), cur.digest]));
+    if (wanted) {
+      const k = wanted;
+      wanted = null;
+      if (k === "scouts") openScouts(s);
+      else openReports(s, "this_week");
+    }
   }
 
-  // ----- My scouts: a compact row each; the area dropdown posts to /staff, a change refetches and morphs the list -----
-  function scoutsPanel(s, v, rv) {
-    const list = el("ul", { class: "sc-scout-list" });
-    const draw = (d) => el("ul", { class: "sc-scout-list" }, d.scouts.map((m) => scoutRow(s, m, rv, list)));
-    list.append(...[...draw(v).children]);           // a copy of the live collection: moving a node while walking it skips the next
-    list.__redraw = async () => {
-      let d;
-      try { d = await api(s, deskPath(0, 1)); } catch (err) { return; }
-      ui().morph(list, draw(d));
-    };
+  // ----- the scouts strip: a chip each, the uncovered areas, Manage Scouts -----
+  const uncovered = (v, rv) => {
     const covered = new Set(v.scouts.map((m) => m.area).filter(Boolean));
-    const open = Object.keys(rv.areas || {}).filter((a) => !covered.has(a));
-    return el("section", { class: "go-card sc-panel sc-block sc-block-scouts", "aria-label": "My scouts" }, [
-      el("div", { class: "go-kicker", text: "My Scouts" }), list,
-      open.length ? el("p", { class: "muted small sc-open", text: `Not covered: ${open.map((a) => `${a} (${rv.area_counts[a]})`).join(", ")}. Prospects there show public information only.` }) : null]);
+    return Object.keys(rv.areas || {}).filter((a) => !covered.has(a));
+  };
+  const roleShort = (m) => ROLE_SHORT[String(m.role)] || String(m.role);
+  function scoutChip(m) {
+    return el("li", { class: "sc-scout-chip", "data-key": m.id, title: `${m.name}, ${m.role}: ${m.area || "no area"}` }, [
+      avatar(`staff-${m.id}-${m.name}`, "xs"), el("b", { class: "sc-chip-role", text: roleShort(m) }),
+      el("span", { class: `sc-chip-area${m.area ? "" : " muted"}`, text: m.area || "No Area" })]);
+  }
+  function stripList(v) { return el("ul", { class: "sc-strip-list", "aria-label": "Your scouts and their areas" }, v.scouts.map(scoutChip)); }
+  function openNote(v, rv) {
+    const open = uncovered(v, rv);
+    return el("span", { class: "muted small sc-strip-open", "data-key": "open", title: open.length ? `Prospects there show public information only: ${open.join(", ")}` : "",
+      text: open.length ? `Not covered: ${open.join(", ")}` : "Every area covered." });
+  }
+  function scoutStrip(s, v, rv) {
+    const manage = el("button", { type: "button", id: "sc-manage", class: "go-btn sc-manage", text: "Manage Scouts" });
+    ui().on(manage, "click", () => openScouts(s));
+    const list = stripList(v), note = el("div", { class: "sc-strip-note" }, [openNote(v, rv)]);
+    const strip = el("section", { class: "sc-strip", "aria-label": "Your scouts" }, [
+      el("span", { class: "go-kicker sc-strip-kicker", text: plural(v.scouts.length, "Scout") }), list, note, manage]);
+    strip.__patch = (d) => { ui().morph(list, stripList(d)); ui().morph(note, el("div", {}, [openNote(d, cur.rv)])); };
+    return strip;
+  }
+
+  // ----- Manage Scouts (a modal, token "scouts"): a row each with the area dropdown, contract and narrowed bar -----
+  async function tabData(s, fresh) {
+    if (!fresh && cur && cur.s.id === s.id) return cur;
+    const [v, rv] = await Promise.all([api(s, deskPath(0, 1)), api(s, "recruiting")]);
+    if (cur && cur.s.id === s.id) { Object.assign(cur.v, { scouts: v.scouts, reports: v.reports, flags: v.flags }); cur.rv = rv; return cur; }
+    return { s, v, rv };
+  }
+  async function openScouts(s, opts = {}) {
+    let d;
+    try { d = await tabData(s, !!opts.restore); } catch (err) { if (opts.restore) return false; ui().toast(`Could not load your scouts: ${H.errText(err)}`, { ms: 4000, kind: "error" }); return false; }
+    const { v, rv } = d;
+    const list = el("ul", { class: "sc-scout-list" });
+    const draw = (x) => el("ul", { class: "sc-scout-list" }, x.scouts.map((m) => scoutRow(s, m, rv, list)));
+    list.append(...[...draw(v).children]);           // a copy of the live collection: moving a node while walking it skips the next
+    const note = el("p", { class: "muted small sc-open" }, [openText(v, rv)]);
+    list.__redraw = async () => {
+      let x;
+      try { x = await api(s, deskPath(0, 1)); } catch (err) { return; }
+      ui().morph(list, draw(x));
+      note.textContent = openText(x, rv);
+      if (cur && cur.s.id === s.id) { cur.v.scouts = x.scouts; if (cur.strip) cur.strip.__patch(x); }
+    };
+    const node = el("div", { class: "sc-block sc-block-scouts" }, [
+      el("p", { class: "muted small sc-manage-help", text: "Each scout takes a look at every prospect in his area each week: half a look, up to two. Pick the area each one covers." }),
+      list, note]);
+    H.openModal("Manage Scouts", node, "scouts", { restore: !!opts.restore });
+    return true;
+  }
+  function openText(v, rv) {
+    const open = uncovered(v, rv);
+    return open.length ? `Not covered: ${open.map((a) => `${a} (${rv.area_counts[a]})`).join(", ")}. Prospects there show public information only.` : "Every area has a scout.";
   }
   function scoutRow(s, m, rv, list) {
     const sel = el("select", { id: `area-${m.id}`, class: "go-sel sc-area", "aria-label": `${m.name}'s scouting area` },
@@ -163,34 +229,107 @@
           el("div", { class: "sc-bar", role: "progressbar", "aria-label": "Narrowed this week", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(pct) },
             [el("i", { class: "sc-bar-fill", style: `width:${pct}%` })]),
           el("span", { class: "muted small sc-yield-text", text: m.area ? `${looksText(y.looks)} this week · ${num(y.narrowed)} narrowed` : "No area: assign one" }),
-          y.flags > 0 ? el("span", { class: "go-tag warn sc-flags-n", text: plural(y.flags, "flag") }) : null])])]);
+          y.flags > 0 ? el("span", { class: "go-tag warn sc-flags-n", text: plural(y.flags, "Flag") }) : null])])]);
   }
 
-  // ----- Reports: This week · Last week · Flags, a tab strip like the pane's sub-tabs -----
-  function reportsPanel(s, v) {
+  // ----- the This Week digest: only what needs attention, then one summary line and All Reports -----
+  function digestBody(s, v) {
+    const groups = (v.reports && v.reports.this_week) || [];
+    const seen = new Map();                          // one row a recruit: a scout's look and your trip on the same man merge
+    for (const g of groups) for (const it of g.items || []) {
+      const had = seen.get(it.pid);
+      if (!had) seen.set(it.pid, { ...it, flags: [...(it.flags || [])] });
+      else { for (const f of it.flags || []) if (!had.flags.includes(f)) had.flags.push(f); had.change = had.change || it.change; }
+    }
+    const items = [...seen.values()];
+    const finds = items.filter((it) => it.flags.length || it.likes);
+    const done = items.filter((it) => it.complete && !finds.includes(it));
+    const board = items.filter((it) => it.on_board && it.change && !finds.includes(it) && !done.includes(it));
+    const looks = groups.reduce((n, g) => n + (g.looks || 0), 0), changed = groups.reduce((n, g) => n + (g.changed || 0), 0);
+    const areas = new Set(groups.map((g) => g.area).filter(Boolean)).size;
+    const who = (it) => [nameLink(s, it.pid, it.name, "sc-dg-name"), el("span", { class: "muted small sc-dg-pos", text: it.position })];
+    const section = (key, title, rows, draw) => {
+      if (!rows.length) return null;
+      const shown = rows.slice(0, DIGEST_ROWS), more = rows.length - shown.length;
+      return el("div", { class: "sc-dg-section", "data-key": key }, [el("div", { class: "sc-dg-title", text: title }),
+        el("ul", { class: "sc-dg-list" }, shown.map((it) => el("li", { class: "sc-dg-item", "data-key": it.pid, "data-pid": it.pid }, draw(it)))),
+        more > 0 ? moreLink(s, `${more} More in All Reports`, "this_week") : null]);
+    };
+    const out = [
+      section("finds", "Finds", finds, (it) => [el("span", { class: "go-tags sc-dg-tags" }, [...it.flags.map(flagBadge), it.likes ? likesTag(it.likes) : null]), ...who(it)]),
+      section("done", "Reports Completed", done, (it) => [el("span", { class: "go-tag good sc-dg-done", text: "Complete" }), ...who(it)]),
+      section("board", "Your Board", board, (it) => [...who(it), el("span", { class: "muted small sc-dg-change", text: cap(it.change) })])].filter(Boolean);
+    const notable = out.length;
+    if (!looks && !notable) out.push(el("p", { class: "muted sc-dg-empty", "data-key": "empty", text: "Nothing new this week: send a scout from the queue." }));
+    else {
+      if (!notable) out.push(el("p", { class: "muted small sc-dg-quiet", "data-key": "quiet", text: "No finds and nothing moved on your board this week." }));
+      out.push(el("p", { class: "muted small sc-dg-summary", "data-key": "summary",
+        text: `${num(changed)} ${changed === 1 ? "read" : "reads"} changed across ${plural(areas, "area")} this week (${looksTotal(looks)} in all).` }));
+    }
+    const all = el("button", { type: "button", class: "go-btn sc-all-reports", id: "sc-all-reports", text: "All Reports" });
+    ui().on(all, "click", () => openReports(s, "this_week"));
+    const flagsN = (v.flags || []).length;
+    out.push(el("div", { class: "sc-dg-foot", "data-key": "foot" }, [all, flagsN ? moreLink(s, `${plural(flagsN, "Find")} This Class`, "flags") : null]));
+    return { nodes: out, count: finds.length + done.length + board.length };
+  }
+  function moreLink(s, text, week) {
+    const b = el("button", { type: "button", class: "go-link small sc-dg-more", "data-week": week, text });
+    ui().on(b, "click", () => openReports(s, week));
+    return b;
+  }
+  const narrow = () => window.matchMedia && window.matchMedia("(max-width: 1099px)").matches;
+  function digestPanel(s, v) {
+    const body = el("div", { class: "sc-dg-body" });
+    const count = el("span", { class: "go-tag sc-dg-count" });
+    const fill = (d) => {
+      const b = digestBody(s, d);
+      ui().morph(body, el("div", {}, b.nodes));
+      count.textContent = b.count ? `${b.count} New` : "Quiet";
+      count.classList.toggle("good", b.count > 0);
+    };
+    const b = digestBody(s, v);
+    body.append(...b.nodes);
+    count.textContent = b.count ? `${b.count} New` : "Quiet";
+    count.classList.toggle("good", b.count > 0);
+    // a side column on a wide screen (always open); a folded block above the queue on a narrow one
+    const panel = el("details", { class: "go-card sc-panel sc-digest", "aria-label": "This week" }, [
+      el("summary", { class: "sc-dg-head" }, [el("span", { class: "go-kicker", text: "This Week" }), count]), body]);
+    if (!narrow()) panel.open = true;
+    panel.addEventListener("toggle", () => { if (!panel.open && !narrow()) panel.open = true; });
+    panel.__patch = fill;
+    return panel;
+  }
+
+  // ----- All Reports (a modal, token "reports" or "reports:last_week|flags"): This Week · Last Week · Flags, by scout -----
+  async function openReports(s, week, opts = {}) {
+    let d;
+    try { d = await tabData(s, !!opts.restore); } catch (err) { if (opts.restore) return false; ui().toast(`Could not load the reports: ${H.errText(err)}`, { ms: 4000, kind: "error" }); return false; }
+    const v = d.v;
+    let at = WEEKS.some(([k]) => k === week) ? week : "this_week";
     const body = el("div", { class: "sc-report-list" });
     const strip = el("div", { class: "go-subtabs sc-tabs", role: "tablist", "aria-label": "Reports" });
+    const node = el("section", { class: "sc-block sc-reports", "aria-label": "Reports" }, [strip, body]);
     const draw = () => {
       body.innerHTML = "";
-      for (const t of strip.children) t.setAttribute("aria-selected", String(t.dataset.week === desk.week));
-      if (desk.week === "flags") { body.append(flagsList(s, v)); return; }
-      const groups = v.reports[desk.week] || [];
-      if (!groups.length) body.append(el("p", { class: "muted sc-reports-empty", text: desk.week === "this_week" ? "No looks yet this week: your scouts' looks land at the week step; a trip from the queue adds one now." : "No looks last week." }));
+      for (const t of strip.children) t.setAttribute("aria-selected", String(t.dataset.week === at));
+      if (at === "flags") { body.append(flagsList(s, v)); return; }
+      const groups = v.reports[at] || [];
+      if (!groups.length) body.append(el("p", { class: "muted sc-reports-empty", text: at === "this_week" ? "No looks yet this week: your scouts' looks land at the week step; a trip from the queue adds one now." : "No looks last week." }));
       for (const g of groups) body.append(reportGroup(s, g));
     };
-    for (const [k, t] of [["this_week", "This Week"], ["last_week", "Last Week"], ["flags", "Flags"]]) {
+    for (const [k, t] of WEEKS) {
       strip.append(el("button", { type: "button", role: "tab", "data-week": k, "aria-selected": "false", text: k === "flags" && v.flags && v.flags.length ? `Flags (${v.flags.length})` : t,
-        onclick: () => { desk.week = k; syncRoute(); draw(); } }));
+        onclick: () => { at = k; if (H.retoken) H.retoken(node, k === "this_week" ? "reports" : `reports:${k}`); draw(); } }));
     }
     draw();
-    return el("section", { class: "go-card sc-panel sc-block sc-reports", "aria-label": "Reports" }, [
-      el("div", { class: "sc-panel-head" }, [el("div", { class: "go-kicker", text: "Reports" }), strip]), body]);
+    H.openModal("All Reports", node, at === "this_week" ? "reports" : `reports:${at}`, { restore: !!opts.restore });
+    return true;
   }
   function reportGroup(s, g) {
     const items = g.items || [];
     const lis = items.map((it) => el("li", { class: "sc-report-item" }, [el("span", { class: "go-stars sc-item-stars", text: stars(it.stars) }),
       el("span", { class: "muted small sc-item-pos", text: it.position }), nameLink(s, it.pid, it.name),
-      it.change ? el("span", { class: "muted small sc-item-change", text: it.change }) : null,
+      it.change ? el("span", { class: "muted small sc-item-change", text: cap(it.change) }) : null,
       it.flags && it.flags.length || it.likes ? el("span", { class: "go-tags sc-item-flags" }, [...(it.flags || []).map(flagBadge), it.likes ? likesTag(it.likes) : null]) : null]));
     const more = foldable(lis);
     return el("div", { class: "sc-report", "data-key": g.scout_id }, [
@@ -211,12 +350,12 @@
     return el("div", { class: "sc-flags" }, [el("ul", { class: "sc-flag-list" }, lis), more]);
   }
 
-  // ----- the Scouting queue: the hours, the chips and tools, the table (keyed rows patched in place), the pager -----
-  function queuePanel(s, v) {
+  // ----- the Scouting queue: the chips and tools, the table (keyed rows patched in place), the pager -----
+  function queuePanel(s, v, hours) {
     const st = { hours: v.hours, left: v.hours_left, total: v.queue_total, rows: v.queue.slice() };
     const results = new Map();                       // pid -> the last trip's look, shown as a row under him
     const hoursText = () => `${st.left} of ${plural(st.hours, "hour")} left this week`;
-    const hours = el("div", { id: "sc-hours", class: "go-pill sc-hours", role: "status", text: hoursText() });
+    hours.textContent = hoursText();
     const chips = el("div", { class: "sc-chips", role: "group", "aria-label": "Whose rows" }, [["all", "All"], ["on", "On My Board"], ["off", "Not On My Board"]].map(([k, t]) =>
       el("button", { type: "button", class: `go-chip small${desk.board === k ? " on" : ""}`, "data-board": k, "aria-pressed": String(desk.board === k), text: t,
         onclick: () => { if (desk.board === k) return; desk.board = k; desk.page = 0; syncRoute(); for (const c of chips.children) { c.classList.toggle("on", c.dataset.board === k); c.setAttribute("aria-pressed", String(c.dataset.board === k)); } load(); } })));
@@ -234,13 +373,14 @@
     const th = (cls, content, key) => el("th", { scope: "col", class: `sc-c-${cls}`, ...(key ? { "aria-sort": "none" } : {}) }, key ? [sortBtn(key, content)] : [el("span", { text: content })]);
     const heads = { need: th("need", "Need", "need"), rank: th("rank", "Rank", "rank"), potential: th("pot", "Potential", "potential"), looks: th("looks", "Looks", "looks") };
     const tbody = el("tbody", { class: "sc-tbody" });
-    const table = el("table", { class: "sc-table" }, [el("thead", {}, [el("tr", {}, [th("board", "Board"), th("name", "Name"), heads.need, heads.rank, heads.potential, heads.looks,
+    const table = el("table", { class: "sc-table" }, [el("thead", {}, [el("tr", {}, [th("name", "Name"), heads.need, heads.rank, heads.potential, heads.looks,
       el("th", { scope: "col", class: "sc-c-act" }, [el("span", { class: "sc-sr", text: "Send a Scout" })])])]), tbody]);
     const wrap = el("div", { class: "sc-table-wrap" }, [table]);
     const empty = el("p", { class: "muted sc-queue-empty", text: "Nobody matches: clear the search or a filter.", hidden: "" });
     const showing = el("span", { class: "muted small sc-showing", role: "status" });
     const pager = el("nav", { class: "sc-pager", "aria-label": "Pages" });
     const ctx = { hours, hoursText, tbody, results, paint: () => paint(), reload: (keep) => load(keep) };
+    if (cur) cur.reload = () => load();
     const sorted = (rows) => {
       if (!desk.sort) return rows;
       const f = SORTS[desk.sort];
@@ -258,21 +398,21 @@
       drawPager();
     }
     function drawPager() {
-      const pages = Math.max(1, Math.ceil(st.total / PAGE)), cur = desk.page + 1;
-      const want = [...new Set([1, pages, cur - 1, cur, cur + 1])].filter((p) => p >= 1 && p <= pages).sort((a, b) => a - b);
+      const pages = Math.max(1, Math.ceil(st.total / PAGE)), at = desk.page + 1;
+      const want = [...new Set([1, pages, at - 1, at, at + 1])].filter((p) => p >= 1 && p <= pages).sort((a, b) => a - b);
       const btn = (cls, text, attrs, to, off) => {
         const b = el("button", { type: "button", class: `go-btn ${cls}`, text, ...attrs });
         b.disabled = !!off;
         return ui().on(b, "click", () => go(to));
       };
-      const nodes = [btn("sc-prev", "Previous", {}, desk.page - 1, cur <= 1)];
+      const nodes = [btn("sc-prev", "Previous", {}, desk.page - 1, at <= 1)];
       let last = 0;
       for (const p of want) {
         if (p - last > 1) nodes.push(el("span", { class: "muted sc-gap", "aria-hidden": "true", text: "…" }));
-        nodes.push(btn(`sc-page${p === cur ? " primary" : ""}`, String(p), { "data-page": String(p), ...(p === cur ? { "aria-current": "page" } : {}) }, p - 1, false));
+        nodes.push(btn(`sc-page${p === at ? " primary" : ""}`, String(p), { "data-page": String(p), ...(p === at ? { "aria-current": "page" } : {}) }, p - 1, false));
         last = p;
       }
-      nodes.push(btn("sc-next", "Next", {}, desk.page + 1, cur >= pages));
+      nodes.push(btn("sc-next", "Next", {}, desk.page + 1, at >= pages));
       ui().morph(pager, el("nav", { class: "sc-pager", "aria-label": "Pages" }, nodes));
     }
     function go(page) {
@@ -283,8 +423,9 @@
     }
     let seq = 0;
     // load(keep): the page the filters, the board chip and desk.page name. "On my board" and "Not on my board" are
-    // client-side on the whole board: the API lists board rows first, so one ask of 400 holds them all; the rest
-    // of the class pages past them. keep: a pid whose row stays even if the API dropped him (his third trip just landed).
+    // client-side on the whole board (each row's on_board): the API lists board rows first, so one ask of 400 holds
+    // them all; the rest of the class pages past them. keep: a pid whose row stays even if the API dropped him (his
+    // third trip just landed). Every load also patches the digest and the scouts strip from the view it fetched.
     async function load(keep) {
       const mine = ++seq;
       wrap.setAttribute("aria-busy", "true");
@@ -293,12 +434,12 @@
         if (desk.board === "all") d = await api(s, deskPath(desk.page * PAGE, PAGE));
         else {
           const big = await api(s, deskPath(0, WHOLE));
-          const mineRows = big.queue.filter((r) => boardSet.has(r.pid));
+          const mineRows = big.queue.filter((r) => r.on_board);
           if (desk.board === "on") d = { ...big, queue: mineRows.slice(desk.page * PAGE, desk.page * PAGE + PAGE), queue_total: mineRows.length };
           else {
             const off = mineRows.length + desk.page * PAGE;
             const page = off + PAGE <= big.queue.length || big.queue.length < WHOLE ? big.queue.slice(off, off + PAGE) : (await api(s, deskPath(off, PAGE))).queue;
-            d = { ...big, queue: page.filter((r) => !boardSet.has(r.pid)), queue_total: Math.max(0, big.queue_total - mineRows.length) };
+            d = { ...big, queue: page.filter((r) => !r.on_board), queue_total: Math.max(0, big.queue_total - mineRows.length) };
           }
         }
       } catch (err) { if (mine === seq) wrap.removeAttribute("aria-busy"); ui().toast(`Could not load the queue: ${H.errText(err)}`, { ms: 4000, kind: "error" }); return; }
@@ -312,6 +453,10 @@
       if (hours.textContent !== hoursText()) { hours.textContent = hoursText(); ui().pulse(hours); }
       st.rows = d.queue;
       paint();
+      if (cur && cur.s.id === s.id) {
+        Object.assign(cur.v, { scouts: d.scouts, reports: d.reports, flags: d.flags });
+        if (cur.digest && cur.digest.isConnected) cur.digest.__patch(cur.v);
+      }
     }
     let qTimer = null;
     search.addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(() => { desk.q = search.value.trim(); desk.page = 0; load(); }, 150); });
@@ -320,8 +465,8 @@
     paint();
     if (desk.board !== "all") load();
     return el("section", { class: "go-card sc-panel sc-block sc-queue-panel", "aria-label": "Scouting queue" }, [
-      el("div", { class: "sc-panel-head sc-queue-head" }, [el("div", { class: "sc-queue-title" }, [el("div", { class: "go-kicker", text: "Scouting Queue" }), hours]),
-        el("p", { class: "muted small sc-queue-note", text: `A trip costs ${SCOUT_HOURS} hours: one look by your best evaluator; a report is complete at ${REPORT_LOOKS}. Your board first, those one trip from complete at the top and its complete reports last, then the class by your need and his rank.` })]),
+      el("div", { class: "sc-panel-head sc-queue-head" }, [el("div", { class: "go-kicker", text: "Scouting Queue" }),
+        el("span", { class: "muted small sc-queue-note", text: "Your board first, then the class by your need and his rank." })]),
       el("div", { class: "go-filterbar sc-toolbar" }, [chips, el("div", { class: "go-tools sc-tools" }, [search, pos, grp])]),
       wrap, empty,
       el("div", { class: "sc-foot" }, [showing, pager])]);
@@ -348,16 +493,16 @@
       ui().pulse(node.querySelector(".sc-c-looks"));
       ui().pulse(node.querySelector(".sc-c-pot"));
       ui().toast(`Scouted ${row.name} · ${fmtLooks(row.looks)} of ${REPORT_LOOKS} looks${row.looks >= REPORT_LOOKS ? " · his report is complete" : ""}`, { ms: 3000 });
-      ctx.reload(row.pid);                            // the other rows' Send follows can_send, reconciled by pid
+      ctx.reload(row.pid);                            // the other rows' Send follows can_send, reconciled by pid; the digest patches
     });
-    // a click on the row itself (not on a control) opens him on the board
+    // a click on the row itself (not on a control) opens his profile
     node.addEventListener("click", (e) => {
       if (e.target.closest("button, select, input, a, .sc-result-row")) return;
-      openOnBoard(s, node.__row.pid, send);
+      openHim(s, node.__row.pid);
     });
     node.append(
-      el("td", { class: "sc-c-board" }, [el("span", { class: "sc-board-cell" })]),
-      el("td", { class: "sc-c-name" }, [el("div", { class: "sc-who" }, [avatar(r.pid, "sm"), el("div", { class: "sc-id" }, [nameLink(s, r.pid, r.name, "sc-name"), el("span", { class: "sc-line-row" }, [el("span", { class: "muted small sc-line" })])])])]),
+      el("td", { class: "sc-c-name" }, [el("div", { class: "sc-who" }, [avatar(r.pid, "sm"), el("div", { class: "sc-id" }, [nameLink(s, r.pid, r.name, "sc-name"),
+        el("span", { class: "sc-line-row" }, [el("span", { class: "muted small sc-line" }), el("span", { class: "sc-board-cell" })])])])]),
       el("td", { class: "sc-c-need" }, [el("span", { class: "sc-need-cell" })]),
       el("td", { class: "sc-c-rank" }, [el("span", { class: "sc-rank" })]),
       el("td", { class: "sc-c-pot" }, [el("span", { class: "sc-pot" })]),
@@ -369,8 +514,8 @@
   }
   // the row's cells from its data: the board mark, the line, the need, the rank, the potential, the looks and the Send button's state
   function fill(node, r, st) {
-    const on = boardSet && boardSet.has(r.pid);
-    node.classList.toggle("on-board", !!on);
+    const on = !!r.on_board;
+    node.classList.toggle("on-board", on);
     const board = node.querySelector(".sc-board-cell");
     if (on && !board.firstChild) board.append(el("span", { class: "go-tag sc-board-mark", title: "On your board" }, [el("span", { "aria-hidden": "true", text: "★ " }), "On Board"]));
     else if (!on && board.firstChild) board.innerHTML = "";
@@ -393,7 +538,8 @@
     if (pot.dataset.v !== potKey) {
       pot.dataset.v = potKey;
       pot.innerHTML = "";
-      pot.append(...(r.potential ? wordRange(r.potential) : [el("span", { class: "muted small", text: "Not read" })]));
+      pot.append(...(r.potential ? gradePlain(r.potential) : [el("span", { class: "muted small", text: "Not Read" })]));
+      pot.title = r.potential ? `Potential: ${r.potential[0] === r.potential[1] ? r.potential[0] : `${r.potential[0]} to ${r.potential[1]}`}` : "No look yet";
     }
     const send = node.querySelector(".sc-send"), tag = node.querySelector(".sc-complete");
     send.hidden = complete;                           // a complete report shows the tag where Send was
@@ -415,8 +561,18 @@
       ...(before[g] ? [...wordRange(before[g]), " → "] : ["first read: "]), ...wordRange(after[g])]));
     if (flags.length) out.append(el("span", { class: "sc-change" }, [el("span", { class: "muted small", text: "flagged " }), el("span", { class: "go-tags sc-flags-gained" }, flags.map(flagBadge))]));
     if (look && look.likes) out.append(el("span", { class: "sc-change" }, [el("span", { class: "muted small", text: "and " }), likesTag(look.likes)]));
-    return el("tr", { class: "sc-result-row" }, [el("td", { colspan: "7" }, [out])]);
+    return el("tr", { class: "sc-result-row" }, [el("td", { colspan: "6" }, [out])]);
   }
 
-  window.CFP.scouting = { render, applyRoute };
+  // a modal the address names (season.js's openToken, on a load or Back/Forward): "scouts", or "reports" with its tab
+  async function openToken(s, helpers, kind, arg, opts) {
+    H = H || helpers;
+    if (kind === "scouts") return openScouts(s, opts);
+    if (kind === "reports") return openReports(s, arg || "this_week", opts);
+    return false;
+  }
+  // want(kind): open Manage Scouts or All Reports once the tab next draws (the profile's and the pane's links here)
+  const want = (kind) => { wanted = kind; };
+
+  window.CFP.scouting = { render, applyRoute, openToken, want };
 })();

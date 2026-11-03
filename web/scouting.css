@@ -1,19 +1,65 @@
-/* The Scouting tab (web/scouting.js): My scouts and Reports side by side, the Scouting queue table under them.
-   Colors come from the site's theme variables (styles.css), so it reads in the light and the dark theme; the board
-   accent is the team color (--go-primary). Buttons stand 36 px tall (44 on a phone), cards keep 12 px of padding,
-   tag rows 6 px, button rows 8 px (tests/test_spacing.py). */
-#tab-scouting { display: flex; flex-direction: column; gap: 16px; }
+/* The Scouting tab (web/scouting.js), queue first: the header with the hours, the scouts strip, then the Scouting
+   queue with the This Week digest beside it (folded above it on a narrow screen). Manage Scouts and All Reports open
+   in the app's modal. Colors come from the site's theme variables (styles.css), so it reads in the light and the dark
+   theme; the board accent is the team color (--go-primary). Buttons stand 36 px tall (44 on a phone), cards keep
+   12 px of padding, tag rows 6 px, button rows 8 px (tests/test_spacing.py). */
+#tab-scouting { display: flex; flex-direction: column; gap: 12px; }
 #tab-scouting[hidden] { display: none; }   /* an author display rule beats the hidden attribute; keep the tab switch working */
 #tab-scouting.tab-body { overflow: visible; }
-.sc-head p { margin: 6px 0 0; }
+.sc-head { display: flex; flex-direction: column; gap: 4px; }
+.sc-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+.sc-help { margin: 0; font-size: 14px; }
 .sc-block { display: flex; flex-direction: column; gap: 12px; }
 .sc-panel { padding: 16px 18px; min-width: 0; }
 .sc-panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
 .sc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* the top row: My scouts (two fifths), Reports (three fifths) */
-.sc-top { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 16px; align-items: start; }
+/* the scouts strip: one line of chips, the areas nobody covers, Manage Scouts */
+.sc-strip { display: flex; align-items: center; gap: 8px 12px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--panel); min-width: 0; }
+.sc-strip-kicker { margin: 0; flex: none; }
+.sc-strip-list { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; flex: none; min-width: 0; }
+.sc-scout-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 2px 10px 2px 3px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-2); font-size: 13px; white-space: nowrap; flex: none; }
+.sc-scout-chip .go-avatar { width: 24px; height: 24px; }
+.sc-chip-role { font-size: 12px; }
+.sc-strip-note { flex: 1 1 0; min-width: 0; }
+.sc-strip-open { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-manage { flex: none; min-height: 36px; padding: 0 14px; font-size: 13px; }
+@media (max-width: 1099px) {
+  .sc-strip { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "kicker manage" "list list" "note note"; }
+  .sc-strip-kicker { grid-area: kicker; }
+  .sc-manage { grid-area: manage; }
+  .sc-strip-list { grid-area: list; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding-bottom: 2px; }
+  .sc-strip-note { grid-area: note; }
+  .sc-strip-open { white-space: normal; }
+}
 
+/* the queue and the digest: the queue takes the width, the digest a side column */
+.sc-main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+.sc-queue-panel { grid-column: 1; grid-row: 1; }
+.sc-digest { grid-column: 2; grid-row: 1; position: sticky; top: 76px; }
+.sc-dg-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; list-style: none; cursor: default; min-height: 24px; }
+.sc-dg-head::-webkit-details-marker { display: none; }
+.sc-dg-head .go-kicker { margin: 0; }
+.sc-dg-body { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+.sc-dg-section { display: flex; flex-direction: column; gap: 6px; }
+.sc-dg-title { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.sc-dg-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.sc-dg-item { display: flex; align-items: center; gap: 4px 8px; flex-wrap: wrap; min-height: 28px; font-size: 14px; line-height: 1.3; }
+.sc-dg-item .go-link { text-align: left; }
+.sc-dg-tags { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.sc-dg-change { flex-basis: 100%; }
+.sc-dg-empty, .sc-dg-quiet, .sc-dg-summary { margin: 0; }
+.sc-dg-more { align-self: flex-start; }
+.sc-dg-foot { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+.sc-all-reports { min-height: 36px; padding: 0 14px; font-size: 13px; }
+
+/* Manage Scouts (in the modal): two columns of scout rows on a wide screen */
+.sc-manage-help { margin: 0; }
+@media (min-width: 900px) {
+  .sc-block-scouts .sc-scout-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; }
+  .sc-block-scouts .sc-scout, .sc-block-scouts .sc-scout:first-child { border-top: 1px solid var(--border); padding: 10px 0; }
+  .sc-block-scouts .sc-scout:nth-child(-n + 2) { border-top: none; padding-top: 0; }
+}
 /* My scouts: a compact row each */
 .sc-scout-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .sc-scout { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 0; border-top: 1px solid var(--border); }
@@ -30,7 +76,7 @@
 .sc-yield-text { white-space: nowrap; }
 .sc-open { margin: 0; }
 
-/* Reports: the tab strip in the head, groups of compact rows */
+/* All Reports (in the modal): the tab strip, groups of compact rows */
 .sc-tabs { border-bottom: none; }
 .sc-report-list { display: flex; flex-direction: column; gap: 12px; }
 .sc-report { display: flex; flex-direction: column; gap: 6px; }
@@ -53,11 +99,9 @@
 .sc-flag-id .go-link, .sc-report-item .go-link { text-align: left; }
 .sc-standing { white-space: nowrap; }
 
-/* the Scouting queue: the hours beside the title, the chips and the tools, then the table */
-.sc-queue-head { align-items: flex-start; }
-.sc-queue-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+/* the Scouting queue: the title and note, the chips and the tools, then the table */
 .sc-hours { font-weight: 700; }
-.sc-queue-note { margin: 0; flex: 1 1 320px; }
+.sc-queue-note { margin: 0; }
 .sc-toolbar { align-items: center; }
 .sc-chips { display: flex; gap: 8px; flex-wrap: wrap; }
 .sc-tools { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -77,31 +121,32 @@
 th[aria-sort="ascending"] .sc-sort::after { content: "↑"; opacity: 1; }
 th[aria-sort="descending"] .sc-sort::after { content: "↓"; opacity: 1; }
 th[aria-sort="ascending"] .sc-sort, th[aria-sort="descending"] .sc-sort { color: var(--text); }
-.sc-table td { padding: 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.sc-table td { padding: 4px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 .sc-row td:first-child { border-left: 3px solid transparent; }
 .sc-row.on-board td:first-child { border-left-color: var(--go-primary, var(--accent)); }
 .sc-row.on-board td { background: color-mix(in srgb, var(--go-primary, var(--accent)) 6%, transparent); }
 .sc-row { cursor: pointer; }
 .sc-row:hover td { background: var(--panel-2); }
-.sc-c-board { width: 112px; }
 .sc-board-mark { color: var(--go-primary-text, var(--text)); border-color: color-mix(in srgb, var(--go-primary, var(--accent)) 60%, var(--border)); }
 .sc-c-need { width: 86px; }
 .sc-c-rank { width: 70px; font-variant-numeric: tabular-nums; }
-.sc-c-pot { width: 190px; }
+.sc-c-pot { width: 168px; }
 .sc-c-looks { width: 120px; }
-.sc-c-act { width: 112px; text-align: right; }
+.sc-c-act { width: 1%; text-align: right; white-space: nowrap; }
 .sc-who { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.sc-who .go-avatar.sm { width: 32px; height: 32px; }
-.sc-id { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
-.sc-name { align-self: flex-start; font-size: 15px; line-height: 1.3; text-align: left; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.sc-who .go-avatar.sm { width: 28px; height: 28px; }
+.sc-id { display: flex; flex-direction: column; min-width: 0; gap: 0; }
+.sc-line-row .small { font-size: 12px; }
+.sc-name { align-self: flex-start; font-size: 15px; line-height: 1.25; text-align: left; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .sc-line { white-space: nowrap; }
 .sc-line-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .sc-likes { padding: 1px 7px; font-size: 10px; }           /* the queue's "OC ♥": his report completed on a Send and the read says he starts */
 .sc-flag-likes .go-likes { flex: none; }
-.sc-pot { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.sc-pot { display: inline-flex; align-items: baseline; white-space: nowrap; font-size: 14px; }   /* "Elite–All-American" on one line */
+.sc-board-mark { padding: 1px 7px; font-size: 10px; }
 .sc-looks { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
 .sc-trips { display: inline-flex; gap: 3px; }
-.sc-trip { display: inline-block; width: 16px; height: 6px; border-radius: 3px; background: var(--panel-2); border: 1px solid var(--border); }
+.sc-trip { display: inline-block; width: 18px; height: 8px; border-radius: 3px; background: var(--panel-2); border: 1px solid var(--border); }
 .sc-trip.on { background: var(--go-primary, var(--accent)); border-color: var(--go-primary, var(--accent)); }
 .sc-trip.half { background: linear-gradient(to right, var(--go-primary, var(--accent)) 50%, var(--panel-2) 50%); border-color: var(--go-primary, var(--accent)); }   /* half a look: an area scout's week */
 .sc-complete[hidden], .sc-send[hidden] { display: none; }
@@ -119,13 +164,27 @@ th[aria-sort="ascending"] .sc-sort, th[aria-sort="descending"] .sc-sort { color:
 .sc-pager .sc-page { min-width: 36px; padding: 0 8px; }
 .sc-gap { padding: 0 2px; }
 
-@media (max-width: 899px) {
+@media (max-width: 1099px) {
+  .sc-main { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .sc-digest { grid-column: 1; grid-row: 1; position: static; padding: 4px 14px; }
+  .sc-queue-panel { grid-row: 2; }
+  .sc-dg-head { cursor: pointer; min-height: 40px; }
+  .sc-dg-head::after { content: "▾"; color: var(--muted); margin-left: 4px; }
+  .sc-digest[open] .sc-dg-head::after { content: "▴"; }
+  .sc-dg-head .sc-dg-count { margin-left: auto; }
+  .sc-digest[open] .sc-dg-body { margin-bottom: 10px; }
+}
+@media (max-width: 899px) and (min-width: 760px) {
   .sc-table-wrap { overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
-  .sc-table { min-width: 820px; }
+  .sc-table { min-width: 720px; }
   .sc-table thead th { position: relative; top: auto; }   /* the header scrolls with the table; relative so the hidden label stays inside its cell */
 }
 @media (max-width: 759px) {
-  .sc-top { grid-template-columns: minmax(0, 1fr); }
+  .sc-strip { padding: 8px 10px; }
+  .sc-manage, .sc-all-reports { min-height: 44px; }
+  .sc-manage { margin-left: 0; }
+  .sc-dg-head { min-height: 44px; }
+  .sc-dg-item .go-link { min-height: 44px; }
   .sc-panel { padding: 14px; }
   .sc-toolbar, .sc-queue-head { align-items: stretch; }
   #sc-search { min-width: 0; width: 100%; min-height: 44px; }
@@ -137,5 +196,25 @@ th[aria-sort="ascending"] .sc-sort, th[aria-sort="descending"] .sc-sort { color:
   .sc-flag { grid-template-columns: auto minmax(0, 1fr); }
   .sc-standing { grid-column: 1 / -1; white-space: normal; }
   .sc-foot { justify-content: center; }
+  .sc-digest { padding: 0 14px; }
+  .sc-digest[open] { padding-bottom: 4px; }
+  /* a phone: each row stacks in its card width, no sideways scroll: the name and the looks, then the need, rank,
+     potential and Send (Send wraps to its own line, right-aligned, when the row runs out of room) */
+  .sc-table-wrap { overflow: visible; }
+  .sc-table, .sc-table thead, .sc-table tbody { display: block; min-width: 0; }
+  .sc-table thead tr { display: flex; flex-wrap: wrap; gap: 0 14px; border-bottom: 1px solid var(--border); }
+  .sc-table thead th { display: block; border: none; padding: 0 4px; position: static; width: auto; }
+  .sc-table thead th.sc-c-name, .sc-table thead th.sc-c-act { display: none; }
+  .sc-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 0 8px 6px; border-bottom: 1px solid var(--border); border-left: 3px solid transparent; }
+  .sc-row.on-board { border-left-color: var(--go-primary, var(--accent)); }
+  .sc-row td, .sc-row td:first-child { display: block; padding: 0; border: none; width: auto; }
+  .sc-row td.sc-c-name { flex: 1 1 200px; min-width: 0; order: 1; }
+  .sc-row td.sc-c-looks { order: 2; flex: none; }
+  .sc-row td.sc-c-need { order: 3; }
+  .sc-row td.sc-c-rank { order: 4; }
+  .sc-row td.sc-c-pot { order: 5; }
+  .sc-row td.sc-c-act { order: 6; margin-left: auto; }
+  .sc-result-row { display: block; }
+  .sc-result-row td { display: block; padding: 6px 0 8px; }
 }
 @media (prefers-reduced-motion: reduce) { .sc-row, .sc-result, .sc-bar-fill, .sc-table-wrap { transition: none; animation: none; } }
