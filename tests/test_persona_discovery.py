@@ -86,6 +86,26 @@ def test_guarded_needs_visit():
     assert persona.view(st, ME, pid)["personality"] == "Guarded"
 
 
+def test_first_visit_reveals_anyone():
+    st = fresh()
+    pid = pick(st)
+    force(st, pid, "cocky")
+    recruiting.act(st, ME, pid, "hc_visit", "prestige")
+    assert persona.view(st, ME, pid)["personality"] == "Cocky"
+
+
+def test_area_half_looks_reach_decider():
+    st = fresh()
+    pid = pick(st)
+    force(st, pid, "business", "dad", "nil")
+    rng = random.Random(3)
+    for i in range(3):
+        recruiting.look(st, pid, 70, rng, by="scout-1", weight=0.5)
+    assert persona.view(st, ME, pid)["decider"] is None
+    recruiting.look(st, pid, 70, rng, by="scout-1", weight=0.5)
+    assert persona.view(st, ME, pid)["decider"] == "Dad"
+
+
 def test_reveals_are_per_school():
     st = fresh()
     pid = pick(st)
@@ -109,7 +129,7 @@ def test_history_logs_learned():
     recruiting.look(st, pid, 70, rng, weight=1.0)
     recruiting.look(st, pid, 70, rng, weight=1.0)       # a third look learns nothing new
     lines = [e["line"] for e in prospects.board_row(st, pid, ME)["history"] if e["kind"] == "learned"]
-    assert sorted(lines) == ["He's all business and wants to talk about the offer.", "Your staff learned his mom has the final say."], lines
+    assert sorted(lines) == ["Your staff learned he's all business.", "Your staff learned his mom has the final say."], lines
     for ln in lines:
         assert ln[0].isupper() and ln.endswith(".")
 

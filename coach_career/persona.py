@@ -142,9 +142,9 @@ def cool_quiet(state: dict, week: int) -> None:
 # ----- discovery: what a school has learned about him ---------------------------------------------------
 
 DECIDER_LOOKS = 2.0              # looks of his report before the player's staff learns who decides *tune*
-PERSONALITY_LINE = {"cocky": "He's cocky, and he isn't shy about it.", "shy": "He's shy and doesn't say much.",
-                    "guarded": "He's guarded and keeps things close.", "attention": "He loves the attention and wants to hear from you often.",
-                    "business": "He's all business and wants to talk about the offer."}
+PERSONALITY_LINE = {"cocky": "Your staff learned he's cocky.", "shy": "Your staff learned he's shy.",
+                    "guarded": "Your staff learned he's guarded.", "attention": "Your staff learned he loves the attention.",
+                    "business": "Your staff learned he's all business."}
 DECIDER_LINE = {"self": "Your staff learned he makes his own call.", "mom": "Your staff learned his mom has the final say.",
                 "dad": "Your staff learned his dad has the final say.", "grandma": "Your staff learned his grandmother has the final say.",
                 "hs_coach": "Your staff learned his high school coach has the final say.", "trainer": "Your staff learned his trainer has the final say."}
@@ -174,9 +174,9 @@ def learn(state: dict, slug: str, pid: str, trait: str) -> bool:
 
 
 def learn_on_contact(state: dict, slug: str, pid: str, action: str) -> None:
-    """His personality shows on the school's first call (Guarded: its first in-home visit)."""
+    """His personality shows on the school's first call or first in-home visit (Guarded: the visit only)."""
     guarded = of(state, pid)["personality"] == "guarded"
-    if (action == "call" and not guarded) or (action == "hc_visit" and guarded):
+    if action == "hc_visit" or (action == "call" and not guarded):
         learn(state, slug, pid, "personality")
 
 
