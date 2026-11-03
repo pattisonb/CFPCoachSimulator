@@ -239,6 +239,8 @@
   // buttons and week strip match the server again.
   async function simFailed(err, what) {
     clearTimeout(state.timer);
+    newsStop();
+    news.queue = [];
     state.gamedayWanted = false;
     hideSimOverlay();
     setBusy(false);
@@ -405,6 +407,8 @@
     state.headWeek = s.current_week;
     news.since = s.current_week;
     news.want = s.current_week;
+    news.stopped = false;
+    news.queue = [];
     setBusy(true);
   }
 
@@ -442,6 +446,7 @@
           showProgress(j);
           poll();
         } else {
+          newsStop();
           if (j.paused) toast("Paused. Advance when you are ready.", 3000);
           barDone(j.status !== "error");
           hideSimOverlay();
@@ -656,8 +661,12 @@
   // shows them as chat bubbles bottom-right (bottom, full width, on a phone, kept off the Office's
   // play card): one every NEWS_GAP_MS, NEWS_MAX at most, each fading after NEWS_MS. A bubble with a
   // link opens its game, team or recruit. Settings has the News switch (on unless turned off).
+  // The ticker keeps up with the sim: a newer week's news replaces what is still waiting from an
+  // older one and at most NEWS_QUEUE_MAX wait; when the sim stops, at most NEWS_AFTER_STOP more show.
   const NEWS_GAP_MS = 1500, NEWS_MS = 6000, NEWS_MAX = 3, NEWS_OUT_MS = 400;
-  const news = { since: null, want: 0, queue: [], timer: null, stack: null, asking: false };
+  const NEWS_QUEUE_MAX = 4;   // *tune* items waiting to show while simming; the rest of a busy week is skipped
+  const NEWS_AFTER_STOP = 2;  // *tune* bubbles still to come once the sim stops (the last week's top items)
+  const news = { since: null, want: 0, queue: [], timer: null, stack: null, asking: false, stopped: false };
   const newsOn = () => { try { return localStorage.getItem("cfp.news") !== "off"; } catch (e) { return true; } };
   const saveNewsOn = (on) => { try { localStorage.setItem("cfp.news", on ? "on" : "off"); } catch (e) { /* private mode */ } };
   function newsStack() {
@@ -682,6 +691,12 @@
       if (r.height && r.bottom > top && r.top < window.innerHeight - bottom) bottom = Math.max(bottom, window.innerHeight - r.top + 8);
     }
     stack.style.bottom = `${Math.min(bottom, window.innerHeight - h - 16)}px`;
+  }
+  // the sim stopped (done or paused): its last week may still land (it was asked for as the sim ended), but
+  // no more than NEWS_AFTER_STOP bubbles follow and nothing more is asked for; bubbles on screen fade as usual
+  function newsStop() {
+    news.stopped = true;
+    news.queue = news.queue.slice(0, NEWS_AFTER_STOP);
   }
   function newsReset() {
     clearTimeout(news.timer);
@@ -738,13 +753,19 @@
     news.asking = true;
     try {
       const r = await api(`/api/season/${s.id}/news?since_week=${since}`);
+      if (news.since == null || !state.season || state.season.id !== s.id) return;   // reset while it asked
       news.since = Math.max(news.since, r.current_week != null ? r.current_week : done);
-      news.queue.push(...(r.items || []).filter((i) => i.week > since));
+      const fresh = (r.items || []).filter((i) => i.week > since);
+      if (fresh.length) {
+        // only the newest week's items wait: an older week still in the queue is behind the sim
+        const latest = Math.max(...fresh.map((i) => i.week));
+        news.queue = [...news.queue, ...fresh].filter((i) => i.week === latest).slice(0, news.stopped ? NEWS_AFTER_STOP : NEWS_QUEUE_MAX);
+      }
       pumpNews();
     } catch (err) { /* the news is a nicety: a missed week stays quiet */ }
     finally {
       news.asking = false;
-      if (news.since != null && news.want > news.since && state.season && state.season.id === s.id) fetchNews(news.want);   // a week finished while it asked
+      if (!news.stopped && news.since != null && news.want > news.since && state.season && state.season.id === s.id) fetchNews(news.want);   // a week finished while it asked
     }
   }
 

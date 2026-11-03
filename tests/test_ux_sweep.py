@@ -1349,6 +1349,9 @@ def test_conversation(page, base) -> None:
             pass
 
 
+NEWS_SETTLE_S = 8   # after a sim stops: long enough for any late bubble to show (NEWS_GAP_MS 1.5 s, two at most)
+
+
 def test_news_bubbles(page, base) -> None:
     """League news while simming: Sim the Week from the Office brings at least one .news-bubble (bottom-right, a
     sentence and its week), which fades within a few seconds; with Settings' News switch off no bubble shows."""
@@ -1373,6 +1376,22 @@ def test_news_bubbles(page, base) -> None:
         assert w - right < 40 and h - bottom < 120 and height >= 44, b
         page.wait_for_function("() => !document.querySelector('.news-bubble')", timeout=60_000)   # every bubble fades
         page.wait_for_selector(".go-play [data-play=advance]:not([disabled])", timeout=60_000)
+        # a three-week sim goes quiet when it stops: at most NEWS_AFTER_STOP more bubbles, all from its last week
+        page.evaluate("""() => { window.__nb = []; new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes)
+            if (n.classList && n.classList.contains('news-bubble')) window.__nb.push({ at: performance.now(), week: n.querySelector('.news-week').textContent }); })
+            .observe(document.body, { childList: true, subtree: true }); }""")
+        start = call(base, f"/api/season/{sid}")["current_week"]
+        page.click("#tab-office .go-play .go-play-more")
+        page.click(f".go-menu-item:has(b:text-is('Week {start + 3}'))")
+        page.wait_for_function("() => document.body.classList.contains('simming')", timeout=30_000)
+        page.wait_for_function("() => !document.body.classList.contains('simming')", timeout=300_000)
+        stopped_at = page.evaluate("() => performance.now()")
+        time.sleep(NEWS_SETTLE_S)
+        shown = page.evaluate("() => window.__nb")
+        after = [b for b in shown if b["at"] > stopped_at]
+        last = f"Week {start + 3}"
+        assert len(after) <= 2 and all(b["week"] == last for b in after), ("news after the sim stopped", after)
+        page.wait_for_function("() => !document.querySelector('.news-bubble')", timeout=60_000)
         # the News switch off: the next week shows none
         page.click("#btn-settings")
         page.click(".settings-row:has(b:text-is('News')) [role=switch]")
