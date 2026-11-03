@@ -2205,8 +2205,11 @@ if __name__ == "__main__":
                     assert badge.text_content().strip() == "Generational"
 
             # --- Scouting: the area picker looks like a picker
-            open_tab(page, base, A, "scouting", ".sc-scout select")
-            assert "go-sel" in (page.get_attribute(".sc-scout select", "class") or ""), "the scouting-area select is a house picker"
+            open_tab(page, base, A, "scouting", "#sc-manage")
+            page.click("#sc-manage")
+            page.wait_for_selector(".sc-scout select", timeout=15_000)
+            assert "go-sel" in (page.get_attribute(".sc-scout select", "class") or ""), "the scouting-area select (in Manage Scouts) is a house picker"
+            page.keyboard.press("Escape")
 
             # --- Schedule: the trade window says what the button does and names itself after the entry point
             open_tab(page, base, A, "schedule", ".schedule-pick")

@@ -196,14 +196,15 @@ th[aria-sort="ascending"] .sc-sort, th[aria-sort="descending"] .sc-sort { color:
   .sc-flag { grid-template-columns: auto minmax(0, 1fr); }
   .sc-standing { grid-column: 1 / -1; white-space: normal; }
   .sc-foot { justify-content: center; }
-  .sc-digest { padding: 0 14px; }
-  .sc-digest[open] { padding-bottom: 4px; }
+  .sc-digest { padding: 12px 14px; }
+  .sc-dg-head { margin: -6px 0; }
   /* a phone: each row stacks in its card width, no sideways scroll: the name and the looks, then the need, rank,
      potential and Send (Send wraps to its own line, right-aligned, when the row runs out of room) */
   .sc-table-wrap { overflow: visible; }
   .sc-table, .sc-table thead, .sc-table tbody { display: block; min-width: 0; }
-  .sc-table thead tr { display: flex; flex-wrap: wrap; gap: 0 14px; border-bottom: 1px solid var(--border); }
-  .sc-table thead th { display: block; border: none; padding: 0 4px; position: static; width: auto; }
+  .sc-table thead tr { display: flex; flex-wrap: wrap; gap: 0 8px; border-bottom: 1px solid var(--border); }
+  .sc-table thead th { display: block; border: none; padding: 0; position: static; width: auto; }
+  .sc-table thead .sc-sort { margin: 0; }
   .sc-table thead th.sc-c-name, .sc-table thead th.sc-c-act { display: none; }
   .sc-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 0 8px 6px; border-bottom: 1px solid var(--border); border-left: 3px solid transparent; }
   .sc-row.on-board { border-left-color: var(--go-primary, var(--accent)); }
