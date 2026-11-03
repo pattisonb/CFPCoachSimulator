@@ -18,7 +18,7 @@
   const SCOUT_HOURS = 5, REPORT_LOOKS = 3, SEND_LOOK = 1, AREA_LOOK = 0.5;   // recruiting.HOURS["scout"], REPORT_LOOKS, SEND_LOOK, AREA_LOOK
   // looks come in trip units: a Send is one, a week in a scout's area half, a full report three; a count shows its half only when it has one
   const fmtLooks = (n) => (Number.isInteger(Number(n)) ? String(Number(n)) : Number(n).toFixed(1));
-  const looksTotal = (n) => `${Number.isInteger(Number(n)) ? Number(n).toLocaleString("en-US") : fmtLooks(n)} looks`;   // a week's total, with its comma
+  const looksTotal = (n) => `${Number(n).toLocaleString("en-US", { maximumFractionDigits: 1 })} looks`;   // a week's total, with its comma
   const looksText = (n) => `${fmtLooks(n)} look${Number(n) === 1 ? "" : "s"}`;
   const leftOf = (looks) => Math.max(0, REPORT_LOOKS - (looks || 0));
   const PAGE = 20, WHOLE = 400;                      // rows a page (20 keeps the page short: the queue is the page); the most one ask returns (prospects.QUEUE_MAX)

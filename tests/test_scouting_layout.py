@@ -53,6 +53,11 @@ def check_digest(page, base, sid, errors) -> None:
     assert shown and all(pid in finds for pid, _ in shown), shown[:3]
     assert all(any(w in t for w in ("Generational", "Gem", "Bust Risk", "Likes Him")) for _, t in shown), shown[:3]
     assert page.query_selector(".sc-digest #sc-all-reports"), "the digest ends with All Reports"
+    # the queue fits its card beside the digest, the long "Send (5h) · Finishes His Report" and the board rows' pills included
+    assert "Finishes His Report" in page.inner_text(".sc-table"), "a board row one trip from complete"
+    fit = page.evaluate("""() => { const t = document.querySelector('.sc-table').getBoundingClientRect(), w = document.querySelector('.sc-table-wrap').getBoundingClientRect(),
+        d = document.querySelector('.sc-digest').getBoundingClientRect(); return [t.right, w.right, d.left]; }""")
+    assert fit[0] <= fit[1] + 1 and fit[0] < fit[2], f"the table stays inside its card, clear of the digest: {fit}"
 
 
 def check_name_opens_profile(page, base, sid, errors) -> None:
@@ -163,9 +168,11 @@ if __name__ == "__main__":
     from sim import season
     st = season.new_season("smu", "full", seed=62, career=True)
     rc = st["recruiting"]
-    top = sorted((pid for pid in recruiting.visible(st)), key=lambda pid: rc["prospects"][pid]["rank"])[:30]
+    ranked = sorted((pid for pid in recruiting.visible(st)), key=lambda pid: rc["prospects"][pid]["rank"])
+    top, near = ranked[:30], ranked[30]
     for i, pid in enumerate(top):            # full reports this week on the class's top 30: gems, generational reads, Likes Him finds
         recruiting.look(st, pid, 90, random.Random(f"layout-{i}"), by="trip", weight=recruiting.REPORT_LOOKS)
+    recruiting.look(st, near, 90, random.Random("layout-near"), by="trip", weight=2)   # one trip from complete: the long Send label
     season.save_season(st)
     A = st["id"]
     port = free_port()
@@ -179,7 +186,7 @@ if __name__ == "__main__":
                 break
             except OSError:
                 time.sleep(0.5)
-        for pid in top[:3]:
+        for pid in top[:3] + [near]:
             call(base, f"/api/season/{A}/board", {"pid": pid, "on": True})
         with sync_playwright() as p:
             try:
