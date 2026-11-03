@@ -410,7 +410,8 @@ def test_scouting_tab(page, base, sid) -> None:
     page.click("#sc-manage")
     # the My Board chip: only board rows, each starred
     board = {b["id"] for b in call(base, f"/api/season/{sid}/recruiting")["board"]}
-    on_board = [r["pid"] for r in call(base, f"/api/season/{sid}/scouting?limit=400")["queue"] if r["pid"] in board]
+    on_board = [r["pid"] for r in call(base, f"/api/season/{sid}/scouting?on_board=1&limit=400")["queue"]]   # the whole board, wherever it ranks
+    assert set(on_board) <= board
     assert on_board, "the board has recruits worth a trip"
     page.click(".sc-chips .go-chip[data-board=on]")
     page.wait_for_function("(n) => document.querySelector('.sc-chips .go-chip[data-board=on]').getAttribute('aria-pressed') === 'true' && !document.querySelector('.sc-list-wrap[aria-busy]') && document.querySelector('.sc-showing').textContent.endsWith(`of ${n}`)",
@@ -423,7 +424,7 @@ def test_scouting_tab(page, base, sid) -> None:
     marks = page.eval_on_selector_all(".sc-list .sc-row:not(.go-leaving)", "els => els.map(e => [e.dataset.pid, e.classList.contains('on-board')])")
     assert all(on == (pid in board) for pid, on in marks), "All Prospects: the board rows carry the star, the rest do not"
     # a row fills the report: the tab and the board stay as they were
-    v = call(base, f"/api/season/{sid}/scouting")
+    v = call(base, f"/api/season/{sid}/scouting?limit=20")        # the page on screen
     assert v["hours_left"] >= SCOUT_HOURS, "a new week has hours for a trip"
     row = next(r for r in v["queue"] if r["can_send"])
     pid = row["pid"]
@@ -475,12 +476,14 @@ def test_scouting_tab(page, base, sid) -> None:
     page.click(".sc-pager .sc-prev")
     page.wait_for_function("() => document.querySelector('.sc-showing').textContent.startsWith('1–20')", timeout=15_000)
     assert page.eval_on_selector_all(".sc-list .sc-row:not(.go-leaving)", "els => els.map(e => e.dataset.pid)") == first
-    # the rank sort orders the page shown
-    page.select_option("#sc-sort", "rank")
-    time.sleep(0.4)
+    # rank is the default order over the whole class; Need reorders the whole class, Rank puts it back
     ranks = page.eval_on_selector_all(".sc-list .sc-row:not(.go-leaving) .sc-rank", "els => els.map(e => +e.textContent.replace('#', ''))")
-    assert ranks == sorted(ranks), ranks
-    page.select_option("#sc-sort", "")
+    assert ranks == sorted(ranks) and ranks[0] == min(r["national_rank"] for r in call(base, f"/api/season/{sid}/scouting?limit=400")["queue"]), ranks
+    by_need = call(base, f"/api/season/{sid}/scouting?limit=20&sort=need")["queue"]
+    page.select_option("#sc-sort", "need")
+    page.wait_for_function("(p) => document.querySelector('.sc-row')?.dataset.pid === p", arg=by_need[0]["pid"], timeout=15_000)
+    page.select_option("#sc-sort", "rank")
+    page.wait_for_function("(p) => document.querySelector('.sc-row')?.dataset.pid === p", arg=first[0], timeout=15_000)
     # a name in All Reports opens his profile over the tab: the board stays as it was
     v = call(base, f"/api/season/{sid}/scouting")
     board = {b["id"] for b in call(base, f"/api/season/{sid}/recruiting")["board"]}
