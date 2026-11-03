@@ -384,7 +384,7 @@
   function lastGameCard(s, g) {
     const res = g.won ? "W" : "L";
     const card = el("section", { class: "go-game go-game-last", "aria-label": "Last Game" }, [
-      el("div", { class: "go-kicker muted", text: `Last Game · ${weekName(s, g.week)}` }),
+      el("div", { class: "go-game-head" }, [el("div", { class: "go-kicker muted", text: `Last Game · ${weekName(s, g.week)}` })]),
       el("div", { class: "go-final" }, [el("span", { class: `go-result ${g.won ? "good" : "bad"}`, text: res }),
         el("span", { class: "go-display l go-final-score", text: `${g.points_for}–${g.points_against}` }),
         el("span", { class: "go-final-opp" }, [el("span", { class: "muted", text: g.venue === "away" ? "at " : "vs " }), window.CFP.teamPill(g.opponent), ` ${g.opponent_name}`,
@@ -393,7 +393,7 @@
     const detail = el("div", { class: "go-box-mini" }, [el("span", { class: "muted small", text: "Loading the box score…" })]);
     const full = el("button", { type: "button", class: "go-btn go-full-box", text: "Full Box Score" });
     ui().on(full, "click", () => H.openBox(g.event_id));
-    card.querySelector(".go-final").append(full);     // beside the final: the card stays short
+    card.querySelector(".go-game-head").append(full);     // in the card's head: the card stays short
     card.append(detail);
     H.api(`/api/season/${s.id}/game/${encodeURIComponent(g.event_id)}`).then((b) => {
       detail.innerHTML = "";
