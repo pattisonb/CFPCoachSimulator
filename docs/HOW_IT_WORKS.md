@@ -2130,6 +2130,41 @@ these, so the scroll never jumps and focus never falls to the page body. Under
 removals of anything holding the watched element; the scroll must stay within 2 px), and the UX
 sweep does the same for every board action.
 
+### Deep links (`web/route.js`)
+
+Every place on the season page has a URL, so a refresh lands in the same place and Back goes where
+the player came from. The site is static, so it is all query parameters on `index.html`, every URL
+relative. `window.CFP.route` (loaded right after `gameview.js`) is the one place that reads and
+writes them: `get()` the params (`modal` as a list), `set(patch, {push})` merges a patch into the
+address (`null` drops a key), `back(n)` steps back over entries the page pushed (a closed modal)
+without a change event, and `on(fn)` hears Back and Forward. Writing the address never redraws
+anything; landing on one (a load, Back, Forward) draws the target tab, which counts as a tab open.
+
+| Param | Meaning |
+| --- | --- |
+| `id` | The save |
+| `tab` | The top-level tab: `office`, `offseason`, `recruiting`, `prospects`, `scouting`, `classes`, `games`, `schedule`, `standings`, `rankings`, `stats`, `bracket`, `bowls`, `awards`, `summary` |
+| `week` | The week picked on the week strip (left out when it is the week up next) |
+| `stage`, `sort`, `pid`, `pane` | The recruiting board (also the offseason's portal board): the stage tab, the sort, the recruit in the pane, its sub-tab (`scouting`, `profile`, `history`) |
+| `ppos`, `pstars`, `pstate`, `pstatus`, `psort`, `pgroup`, `ppage` | The Prospects filters and page |
+| `rep`, `qboard` | Scouting: the reports tab (`last_week`, `flags`) and the queue's board chip (`on`, `off`) |
+| `opos`, `ostatus` | The offseason portal list's filters (the stage itself is the server's) |
+| `poll` | Rankings: `ap`, `coaches`, `cfp`, `resume` |
+| `stats`, `steam`, `sview` | Stats: `team` for Team Stats; the player stats' team (`all` for the league) and view (`roster`, a category) |
+| `aview` | Awards: the view |
+| `screen=depth` | The depth chart over the tab, with its own `team`, `sub`, `unit`, `view`, `player`, `f`, `role` |
+| `modal` | The open modals, bottom to top, repeated: `box:<event id>`, `player:<team>\|<name>\|<pos>`, `resume:<team>\|<week>`, `profile:<pid>`, `settings` |
+
+A top-level tab, the depth chart and a modal push a history entry (Back closes the modal, leaves
+the depth chart, returns to the tab before); a filter, a sort, a sub-tab, another recruit or a week
+replace the entry. A tab's keys go when the player leaves it. Modals without a token (a picker,
+All Ratings) still push an entry for Back but are not reopened. On a load the save opens, then the
+tab and its views, the depth chart, then the modals in order; anything that does not check out
+falls back to the nearest valid view quietly, with no toast: a tab that is not open in this phase
+gives way to the season's own landing tab, a recruit no longer on the board to the first row, a
+game or prospect id that is gone ends the modal stack there, and the address is corrected to
+match. `tests/test_deep_links.py` walks each place by clicking, reloads, and checks it is back.
+
 ### Later seasons: a schedule of their own (`sim/schedule_gen.py`)
 
 A career's seasons after 2026 no longer replay the 2026 slate. Each new year is built the way

@@ -363,14 +363,18 @@
     finally { $("#btn-new").disabled = false; }
   }
 
-  async function openSeason(id) {
+  // want: a route to land on (a refresh, a link, Back to another save): its tab, view, depth chart and
+  // modals; without one the save opens where a fresh open does and the address is just its id
+  async function openSeason(id, want) {
     newsReset();
     news.since = null;
     try {
       const s = await api(`/api/season/${id}`);
-      history.replaceState(null, "", `?id=${s.id}`);
-      showSeason(s);
+      if (!want) history.replaceState(null, "", `?id=${encodeURIComponent(s.id)}`);
+      state.pendingRoute = want || null;
+      try { showSeason(s); } finally { state.pendingRoute = null; }
       loadSeasons();
+      if (want) await landOn(want);
     } catch (err) {
       toast(`Could not open the season: ${errText(err)}`, 4000);
       if (!state.season) startNote(`Could not load the season: ${errText(err)}`);
@@ -830,6 +834,7 @@
     $("#btn-download-career").hidden = !s.career;
     const opening = !state.season || state.season.id !== s.id;
     state.season = s;
+    if (state.pendingRoute) applyViewRoute(state.pendingRoute, s, true);   // a refresh or a link: its tab and views, checked below like any other
     // no more games once the season is complete: the Summary tab takes the Games tab's place
     $("#season-tabs button[data-tab=games]").hidden = !!s.done;
     $("#season-tabs button[data-tab=summary]").hidden = !s.done;
@@ -844,7 +849,7 @@
     const upNext = s.done ? s.current_week : Math.min(s.current_week + 1, 20);
     // a season opens on the week up next
     if (state.viewWeek == null) state.viewWeek = upNext;
-    if (state.viewWeek > upNext) state.viewWeek = upNext;
+    if (state.viewWeek > upNext || state.viewWeek < 0) state.viewWeek = upNext;
     $("#season-empty").hidden = true;
     $("#season").hidden = false;
     const r = s.record;
@@ -968,9 +973,8 @@
   syncThemeLabels();
   // the Office is where the week moves: open it and put the focus on Sim the week
   function goOffice() {
-    if (!state.season || !state.season.career) { state.tab = "schedule"; renderTab(); return; }
-    state.tab = "office";
-    renderTab();
+    if (!state.season || !state.season.career) { goTab("schedule"); return; }
+    goTab("office");
     window.scrollTo({ top: 0 });
     const b = $("#tab-office .go-play .go-btn.primary");
     if (b) b.focus({ preventScroll: true });
@@ -992,6 +996,9 @@
       strip.appendChild(b);
     }
     renderWeekDate();
+    // the address keeps a week the player picked; the week up next is the default and stays out of it
+    const upNext = s.done ? s.current_week : Math.min(s.current_week + 1, 20);
+    if (!state.simming) route.set({ week: state.viewWeek === upNext ? null : state.viewWeek });
   }
 
   // Short week names for the week chips: "Pre", "W5", "CCG", "Sel", "R1", "QF", "SF", "Title"
@@ -1051,7 +1058,115 @@
     for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "office", "offseason", "recruiting", "prospects", "scouting", "classes"]) $(`#tab-${t}`).hidden = t !== name;
     document.body.classList.toggle("on-office", name === "office");
     document.body.classList.toggle("on-career-tab", CAREER_TABS.includes(name));
+    // the address follows the tab on screen (a replace: a tab the season moved the player to, as Summary at the end)
+    if (state.season && route.get().tab !== name) route.set(tabPatch(name));
   }
+
+  // ----- the address: every place on the page has a URL (web/route.js; docs/HOW_IT_WORKS.md "Deep links") -----
+  // ?id=<save>&tab=<tab>, the open tab's own views (TAB_KEYS), the depth chart (screen=depth and its keys) and
+  // the open modals (modal=<kind>:<arg>, bottom to top). A top-level tab or a modal pushes a history entry; a
+  // filter, a sort, a sub-tab or another recruit replaces it. Writing the address never redraws anything.
+  const route = window.CFP.route;
+  const TABS = ["office", "offseason", "recruiting", "prospects", "scouting", "classes", "games", "schedule", "standings", "rankings", "stats", "bracket", "bowls", "awards", "summary"];
+  const BOARD_KEYS = ["stage", "sort", "pid", "pane"];
+  const TAB_KEYS = { recruiting: BOARD_KEYS, offseason: [...BOARD_KEYS, "opos", "ostatus"], prospects: ["ppos", "pstars", "pstate", "pstatus", "psort", "pgroup", "ppage"],
+    scouting: ["rep", "qboard"], rankings: ["poll"], stats: ["stats", "steam", "sview"], awards: ["aview"] };
+  const VIEW_KEYS = [...new Set(Object.values(TAB_KEYS).flat())];
+  const DEPTH_KEYS = ["team", "sub", "unit", "view", "player", "f", "role"];
+  // a tab and the keys of every other tab dropped, so an address never carries a view from a tab left behind
+  function tabPatch(name) {
+    const p = { tab: name };
+    for (const k of VIEW_KEYS) if (!(TAB_KEYS[name] || []).includes(k)) p[k] = null;
+    return p;
+  }
+  // a top-level tab the player picked: its own history entry, so Back returns to the tab before
+  function goTab(name) {
+    if (state.season && name !== state.tab) route.set(tabPatch(name), { push: true });
+    state.tab = name;
+    renderTab();
+  }
+  // a route's tab and views onto the page's state, before the tab draws (load, refresh, Back and Forward).
+  // Anything that does not check out is left to the page's own defaults: the nearest valid view.
+  function applyViewRoute(r, s, opening) {
+    if (TABS.includes(r.tab)) {
+      state.tab = r.tab;
+      if (opening) { state.officeFor = `${s.id}-${s.year}`; state.summaryShown = true; }   // the career's own landing tab gives way to the address
+    }
+    const wk = Number(r.week);
+    const weeks = [0, ...(s.weeks || [])];
+    if (r.week != null && Number.isInteger(wk) && weeks.includes(wk)) state.viewWeek = wk;
+    else if (opening) state.viewWeek = null;                         // showSeason puts it on the week up next
+    else state.viewWeek = s.done ? s.current_week : Math.min(s.current_week + 1, 20);
+    // each tab's own views from its own keys; the other tabs keep what they had
+    if (r.tab === "rankings") {
+      if (["ap", "coaches", "cfp", "resume"].includes(r.poll)) { state.poll = r.poll; state.pollChosen = true; }
+      else state.pollChosen = false;
+    }
+    if (r.tab === "stats") {
+      statsState.view = r.stats === "team" ? "team" : "players";
+      const ps = playerStatsState;
+      const team = r.steam === "all" ? "" : window.CFP.teamsBySlug[r.steam] ? r.steam : s.team;
+      if (team !== ps.team) { ps.team = team; ps.data = ps.leaders = ps.roster = null; ps.sort = null; }
+      ps.view = typeof r.sview === "string" && /^[a-z]+$/.test(r.sview) ? r.sview : "leaders";   // a view it does not have falls back to the leaders
+    }
+    if (r.tab === "awards" && r.aview) awardsState.view = r.aview;          // renderAwards checks it against the views it has
+    if (window.Recruiting && window.Recruiting.applyRoute) window.Recruiting.applyRoute(r, s);
+    if (r.tab === "scouting" && window.CFP.scouting && window.CFP.scouting.applyRoute) window.CFP.scouting.applyRoute(r);
+    if (r.tab === "offseason" && window.Offseason && window.Offseason.applyRoute) window.Offseason.applyRoute(r);
+  }
+  // after the season drew: the depth chart and the modals the address names, each checked as it opens
+  async function landOn(r) {
+    if (r.screen === "depth" && state.season) openDepth(new URLSearchParams(location.search), false);
+    else if (r.screen) route.set({ screen: null });
+    await restoreModals(r.modal || []);
+  }
+  // one modal from its token; false when what it names is gone (an old game id, a recruit who left the class)
+  async function openToken(tok) {
+    const s = state.season;
+    if (!s || !tok) return false;
+    const i = tok.indexOf(":");
+    const kind = i < 0 ? tok : tok.slice(0, i), arg = i < 0 ? "" : tok.slice(i + 1);
+    const o = { restore: true };
+    try {
+      if (kind === "box" && arg) return !!(await openBox(arg, o));
+      if (kind === "player") { const [team, name, pos] = arg.split("|"); return !!(team && name && (await openPlayer(team, name, pos || "", o))); }
+      if (kind === "resume") {
+        const [slug, w] = arg.split("|");
+        const wk = Number(w);
+        return !!(slug && window.CFP.teamsBySlug[slug] && (await openResume(slug, Number.isInteger(wk) && wk >= 0 && wk <= s.current_week ? wk : s.current_week, o)));
+      }
+      if (kind === "settings") return !!openSettings(o);
+      if (kind === "profile" && arg && window.Recruiting) return !!(await window.Recruiting.openProfile(s, arg, o));
+    } catch (e) { return false; }
+    return false;
+  }
+  // the modals in order, bottom to top; the first that cannot open ends it there (the view under it stands)
+  async function restoreModals(tokens) {
+    for (const t of tokens) if (!(await openToken(t))) break;
+    route.set({ modal: modalTokens() }, { state: { modal: modalStack.length } });
+  }
+  const modalTokens = () => modalStack.map((m) => m.token).filter(Boolean);
+
+  // Back and Forward: the page moves to the entry's place. A different save opens; the modals close or
+  // reopen to the entry's depth; the depth chart opens or closes; the tab and its views follow.
+  route.on(async (r) => {
+    if (!r.id) { if (state.season) { closeAllModals(true); closeSeason(); } return; }
+    if (!state.season || state.season.id !== r.id) { closeAllModals(true); await openSeason(r.id, r); return; }
+    const want = history.state && history.state.cfp ? route.depth() : r.modal.length;
+    while (modalStack.length > want) closeModal(true);
+    const depthWant = r.screen === "depth";
+    const depthOpen = !!(window.CFPDepth && window.CFPDepth.isOpen());
+    const tabMoved = TABS.includes(r.tab) && r.tab !== state.tab;
+    if (tabMoved) applyViewRoute(r, state.season, false);
+    if (depthWant && !depthOpen) openDepth(new URLSearchParams(location.search), false);
+    else if (!depthWant && depthOpen) closeDepth(false);             // it draws the tab under it
+    else if (tabMoved && !depthWant) { renderWeekStrip(); renderTab(); }
+    if (modalStack.length < want) {
+      const have = modalTokens().length;
+      for (const t of r.modal.slice(have)) { if (modalStack.length >= want || !(await openToken(t))) break; }
+      route.set({ modal: modalTokens() }, { state: { modal: modalStack.length } });
+    }
+  });
 
   function renderTab() {
     selectTab(state.tab);
@@ -1196,7 +1311,8 @@
     const line = el("p", { class: "muted small go-nil-carry", text: `NIL carried over: ${carry} (of ${v.nil.budget} this year)` });
     if (head) head.after(line); else card.prepend(line);
   }
-  const recruitingHelpers = { api, long, holding, postJSON, toast, openModal, closeModal: closeAllModals, errText, play, playCard, openSeason: reopenSeason, onChange: (tab) => { state.tab = tab; renderTab(); window.scrollTo({ top: 0 }); } };
+  const recruitingHelpers = { api, long, holding, postJSON, toast, openModal, closeModal: closeAllModals, errText, play, playCard, openSeason: reopenSeason, onChange: (tab) => { goTab(tab); window.scrollTo({ top: 0 }); } };
+  if (window.Recruiting && window.Recruiting.init) window.Recruiting.init(recruitingHelpers);   // a profile reopened from the address before any career tab drew
   function renderCareerSteps(s) {
     const box = $("#career-steps");
     const career = !!s.career;
@@ -1218,7 +1334,7 @@
     if (box.hidden) return;
     box.innerHTML = "";
     const step = (n, label, onclick) => el("button", { type: "button", class: "ghost career-step", onclick }, [el("b", { text: `${n}` }), ` ${label}`]);
-    box.append(step(1, "Recruit", () => { state.tab = "recruiting"; renderTab(); }), el("span", { class: "muted", text: "→" }),
+    box.append(step(1, "Recruit", () => goTab("recruiting")), el("span", { class: "muted", text: "→" }),
       step(2, "Your Game", () => play("gameday")),
       el("span", { class: "muted", text: "→" }),
       step(3, "Advance", goOffice));   // the Office is where the week moves: open it, the focus on Sim the week
@@ -1236,7 +1352,7 @@
     chips.innerHTML = "";
     for (const [v, label] of [["team", "Team Stats"], ["players", "Player Stats"]]) {
       const b = el("button", { type: "button", class: `chip ${st.view === v ? "active" : ""}`, text: label });
-      b.addEventListener("click", () => { st.view = v; renderStats(); });
+      b.addEventListener("click", () => { st.view = v; route.set({ stats: v === "team" ? "team" : null }); renderStats(); });
       chips.append(b);
     }
     for (const v of ["teamstats", "playerstats"]) $(`#tab-${v}`).hidden = v !== (st.view === "team" ? "teamstats" : "playerstats");
@@ -1247,14 +1363,16 @@
   // ----- the depth chart: its own screen (web/depth/depth.js) at ?id=…&screen=depth -------
   // Opening it pushes a history entry, so Back returns to the season; its own moves (unit,
   // screen, formation, position) replace that entry, so the URL can be kept or shared as it stands.
+  // The season's tab stays in the address under it, so closing it (or a refresh) lands back there.
+  const depthClear = () => Object.fromEntries(DEPTH_KEYS.map((k) => [k, null]));
   function setDepthParams(params) {
-    const q = new URLSearchParams({ id: state.season.id });
-    for (const [k, v] of Object.entries(params)) if (v != null) q.set(k, v);
-    history.replaceState(history.state, "", `?${q}`);
+    const patch = { ...depthClear(), screen: "depth" };
+    for (const [k, v] of Object.entries(params)) if (DEPTH_KEYS.includes(k)) patch[k] = v;
+    route.set(patch);
   }
   function openDepth(params, push = true) {
     if (!state.season || !window.CFPDepth) return;
-    if (push) history.pushState({ cfpDepth: true }, "", `?id=${encodeURIComponent(state.season.id)}&screen=depth`);
+    if (push) route.set({ ...depthClear(), screen: "depth" }, { push: true, state: { cfpDepth: true } });
     window.CFPDepth.open({
       host: $("#depth-screen"), season: () => state.season, teams: () => state.teams, api, postJSON, toast, errText, godMode, openPlayer, openSettings,
       setParams: setDepthParams, close: () => closeDepth(true),
@@ -1266,19 +1384,11 @@
     if (!window.CFPDepth || !window.CFPDepth.isOpen()) return;
     window.CFPDepth.close();
     if (fromScreen) {
-      if (history.state && history.state.cfpDepth) history.back();
-      else history.replaceState(null, "", `?id=${encodeURIComponent(state.season.id)}`);
+      if (history.state && history.state.cfpDepth) route.back(1);
+      else route.set({ ...depthClear(), screen: null });
     }
     renderTab();
   }
-
-  window.addEventListener("popstate", () => {
-    if (!window.CFPDepth || !state.season) return;
-    const params = new URLSearchParams(location.search);
-    const want = params.get("screen") === "depth";
-    if (want && !window.CFPDepth.isOpen()) openDepth(params, false);
-    else if (!want && window.CFPDepth.isOpen()) closeDepth(false);
-  });
 
   // ----- shared modal ----------------------------------------------------------
   // openModal(title, node): shows node in an overlay with a title and a close button.
@@ -1286,7 +1396,11 @@
   // with the first still visible behind it (a player page over a box score). Esc, the
   // backdrop, the close button and the browser's Back each close the top one; opening
   // pushes a history entry so Back on a phone closes a modal instead of leaving the page.
-  const modalStack = [];   // [{layer, pushed}] bottom to top
+  // token: the modal's place in the address ("box:<event id>", "player:<team>|<name>|<pos>",
+  // "resume:<team>|<week>", "profile:<pid>", "settings"), so a refresh reopens it; a modal
+  // without one (a picker, a confirm) still gets its history entry but is not reopened.
+  // opts.restore: reopening from the address, which already names it, so no entry is pushed.
+  const modalStack = [];   // [{layer, pushed, opener, token}] bottom to top
 
   function makeLayer(nested) {
     const base = $("#modal");
@@ -1302,7 +1416,7 @@
     return layer;
   }
 
-  function openModal(title, node) {
+  function openModal(title, node, token = null, opts = {}) {
     const layer = makeLayer(modalStack.length > 0);
     const t = layer.querySelector(".modal-title");
     t.innerHTML = "";
@@ -1313,11 +1427,11 @@
     body.scrollTop = 0;
     layer.hidden = false;
     document.body.classList.add("modal-open");
-    let pushed = false;
-    try { history.pushState({ cfpModal: modalStack.length + 1 }, ""); pushed = true; } catch (e) { pushed = false; }
+    const pushed = !opts.restore;
     // remember what opened it, so focus goes back there when it closes
     const opener = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
-    modalStack.push({ layer, pushed, opener });
+    modalStack.push({ layer, pushed, opener, token: token || null });
+    route.set({ modal: modalTokens() }, { push: pushed, state: { modal: modalStack.length, cfpDepth: !!(window.CFPDepth && window.CFPDepth.isOpen() && history.state && history.state.cfpDepth) } });
     layer.querySelector(".modal-close").focus({ preventScroll: true });
   }
 
@@ -1345,17 +1459,24 @@
     const under = modalStack.length ? modalStack[modalStack.length - 1].layer.querySelector(".modal-close") : ($("#tab-office .go-play .go-btn.primary") || $("#btn-settings"));
     const back = [top.opener, under].find((n) => n && n.isConnected && n.offsetParent !== null && !n.disabled);
     if (back) back.focus({ preventScroll: true });
-    // going back in history fires popstate, which must not close a second layer
-    if (!fromHistory && top.pushed) { modalSkipPop = true; history.back(); }
+    // its history entry goes (route.back fires no change event, so no second layer closes); one reopened from
+    // the address has no entry of its own: the address drops it in place
+    if (!fromHistory) {
+      if (top.pushed) route.back(1);
+      else route.set({ modal: modalTokens() }, { state: { modal: modalStack.length } });
+    }
   }
-  let modalSkipPop = false;
 
-  function closeAllModals() {
-    while (modalStack.length) closeModal();
+  // every modal at once: one step back over the entries they pushed (fromHistory: Back already moved)
+  function closeAllModals(fromHistory = false) {
+    let pushed = 0;
+    while (modalStack.length) { if (modalStack[modalStack.length - 1].pushed) pushed++; closeModal(true); }
+    if (fromHistory) return;
+    if (pushed) route.back(pushed);
+    route.set({ modal: [] }, { state: { modal: 0 } });
   }
 
   const modalOpen = () => modalStack.length > 0;
-  window.addEventListener("popstate", () => { if (modalSkipPop) { modalSkipPop = false; return; } if (modalOpen()) closeModal(true); });
   document.addEventListener("keydown", (e) => {
     if (!modalOpen()) return;
     if (e.key === "Escape") { closeModal(); return; }
@@ -1392,19 +1513,22 @@
     return team && name ? { "data-player": `${team}|${name}|${position || ""}`, class: "plink", title: "Open player page" } : {};
   }
 
-  async function openPlayer(team, name, position) {
+  // opts.restore: reopened from the address; a player no longer there is passed over quietly (false)
+  async function openPlayer(team, name, position, opts = {}) {
     const s = state.season;
-    if (!s) return;
+    if (!s) return false;
     const key = `${s.id}|${s.current_week}|${team}|${name}|${position}`;
     let p = playerState.cache.get(key);
     if (!p) {
       try { p = await api(`/api/season/${s.id}/player?team=${encodeURIComponent(team)}&name=${encodeURIComponent(name)}&position=${encodeURIComponent(position || "")}`); }
-      catch (err) { toast(`Could not load that player: ${errText(err)}`, 3000); return; }
+      catch (err) { if (!opts.restore) toast(`Could not load that player: ${errText(err)}`, 3000); return false; }
+      if (!p || !p.name) return false;
       playerState.cache.set(key, p);
     }
     const node = el("div", { class: "player-page" });
     renderPlayer(p, node);
-    openModal(`${p.jersey ? "#" + p.jersey + " " : ""}${p.name}`, node);
+    openModal(`${p.jersey ? "#" + p.jersey + " " : ""}${p.name}`, node, `player:${team}|${name}|${position || ""}`, opts);
+    return true;
   }
 
   function headlineTiles(p) {
@@ -1840,7 +1964,7 @@
                    ["allamerica", "All-America"], ["conference", "Conference Awards"]].filter(([v]) => !(live && v === "allamerica") && (v !== "mine" || s.team));
     if (!views.some(([v]) => v === st.view)) st.view = views[0][0];
     const controls = el("div", { class: "stats-controls" });
-    controls.append(chipRow(views, st.view, (v) => { st.view = v; st.sort = null; st.filter = ""; renderAwards(); }));
+    controls.append(chipRow(views, st.view, (v) => { st.view = v; st.sort = null; st.filter = ""; route.set({ aview: v }); renderAwards(); }));
     const given = d.given_through || 0;
     const through = s.week_labels[s.current_week] || `week ${s.current_week}`;
     controls.append(el("span", { class: "muted small-text", text: live
@@ -1962,7 +2086,7 @@
         el("div", { class: "muted small-text", text: `Finalists: ${s.heisman.finalists.map((f) => `${f.name} (${f.team_name}, ${f.points})`).join(", ")}` }),
       ]);
       card.classList.add("clickable");
-      card.addEventListener("click", () => { state.tab = "awards"; awardsState.view = "heisman"; renderTab(); });
+      card.addEventListener("click", () => { awardsState.view = "heisman"; goTab("awards"); route.set({ aview: "heisman" }); });
       box.append(card);
     }
 
@@ -2753,6 +2877,8 @@
     const ps = playerStatsState;
     if (ps.team === null) ps.team = s.team || "";
     const played = s.current_week > 0;
+    if (!["leaders", "roster", ...Object.keys(PLAYER_COLS)].includes(ps.view) || (ps.view === "roster" && !ps.team)) ps.view = "leaders";
+    route.set({ steam: ps.team === s.team ? null : ps.team || "all", sview: ps.view !== "leaders" ? ps.view : null });
 
     const controls = el("div", { class: "stats-controls" });
     // conference picker narrows the team picker and the league views to that conference
@@ -3287,10 +3413,11 @@
     return { team: hw ? g.home : g.away, seed: m ? Number(m[1]) : null, name: m ? m[2] : disp };
   }
 
-  async function openBox(eventId) {
+  async function openBox(eventId, opts = {}) {
     const s = state.season;
     try {
-      const g = await api(`/api/season/${s.id}/game/${eventId}`);
+      const g = await api(`/api/season/${s.id}/game/${encodeURIComponent(eventId)}`);
+      if (!g || !g.home || !g.away) return false;
       window.CFP.currentBoxSlugs = { home: g.home_slug, away: g.away_slug };
       // the box score lives in #tab-box; it is rendered in place, then moved into the shared modal
       const node = state.boxNode || (state.boxNode = $("#tab-box"));
@@ -3304,8 +3431,9 @@
       selectBoxTab("scoring");
       const title = el("span", {}, [teamPill(g.away_slug), `${g.away.name} ${g.away.score}`, el("span", { class: "muted", text: " at " }), teamPill(g.home_slug), `${g.home.name} ${g.home.score}`,
         el("span", { class: "muted small-text", text: g.overtime_periods ? ` · Final / ${g.overtime_periods}OT` : " · Final" })]);
-      openModal(title, node);
-    } catch (err) { toast(`Could not load that game: ${errText(err)}`, 3000); }
+      openModal(title, node, `box:${eventId}`, opts);
+      return true;
+    } catch (err) { if (!opts.restore) toast(`Could not load that game: ${errText(err)}`, 3000); return false; }
   }
   function selectBoxTab(name) {
     for (const b of $("#sbox-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.btab === name);
@@ -3321,10 +3449,11 @@
     playerState.cache.clear();
     return j.settings;
   }
-  function openSettings() {
-    if (held()) return;
+  function openSettings(opts = {}) {
+    if (!(opts && opts.restore) && held()) return false;
+    if (!opts || opts instanceof Event) opts = {};
     const s = state.season;
-    if (!s) return;
+    if (!s) return false;
     const node = el("div", { class: "settings" });
     const row = (title, desc, control) => {
       if (control.getAttribute("role") === "switch") control.setAttribute("aria-label", title);   // the switch is named after its row
@@ -3355,7 +3484,8 @@
       row("Game Day Pace", "How fast the plays come during a game day replay.",
         chipRow([["slow", "Slow"], ["normal", "Normal"], ["fast", "Fast"]], gdSpeed(), saveGdSpeed)),
     );
-    openModal("Settings", node);
+    openModal("Settings", node, "settings", opts);
+    return true;
   }
 
   // every rating the player carries, with the boosts and the god-mode marks, and his rating at other positions
@@ -3545,12 +3675,12 @@
     if (rows.length < data.rows.length) box.append(el("p", { class: "muted small-text", text: `${rows.length} of ${data.rows.length} teams shown; every team's resume opens from its schedule.` }));
   }
 
-  async function openResume(slug, w) {
+  async function openResume(slug, w, opts = {}) {
     const s = state.season;
     let data;
-    try { data = await api(`/api/season/${s.id}/resume?week=${w}&team=${slug}`); } catch (err) { toast(`Could not load the resume: ${errText(err)}`, 3000); return; }
-    const r = data.rows[0];
-    if (!r) return;
+    try { data = await api(`/api/season/${s.id}/resume?week=${w}&team=${encodeURIComponent(slug)}`); } catch (err) { if (!opts.restore) toast(`Could not load the resume: ${errText(err)}`, 3000); return false; }
+    const r = data && data.rows && data.rows[0];
+    if (!r) return false;
     const node = el("div", { class: "resume" });
     node.append(
       el("div", { class: "muted small-text", text: `${r.conference} · ${w === 0 ? "preseason" : `through ${s.week_labels[w] || "week " + w}`} · ranks are today's ${data.kind === "cfp" ? "CFP ranking" : "AP poll"}` }),
@@ -3582,7 +3712,8 @@
       table.append(tr);
     }
     node.append(el("h4", { text: "Games" }), el("div", { class: "table-scroll" }, [table]));
-    openModal(el("span", {}, [teamPill(slug), `${r.name} Resume`, el("span", { class: "muted small-text", text: ` · ${r.rank ? `#${r.rank} · ` : ""}${r.record}` })]), node);
+    openModal(el("span", {}, [teamPill(slug), `${r.name} Resume`, el("span", { class: "muted small-text", text: ` · ${r.rank ? `#${r.rank} · ` : ""}${r.record}` })]), node, `resume:${slug}|${w}`, opts);
+    return true;
   }
 
   // ----- game day: your game, drive by drive ----------------------------------
@@ -3877,10 +4008,9 @@
     const b = e.target.closest("button[data-tab]");
     if (!b) return;
     if (b.dataset.tab === "depth") { openDepth(); return; }     // the depth chart is its own screen
-    state.tab = b.dataset.tab;
-    renderTab();
+    goTab(b.dataset.tab);
   });
-  $("#poll-pills").addEventListener("click", (e) => { const b = e.target.closest("button[data-poll]"); if (b) { state.poll = b.dataset.poll; state.pollChosen = true; renderRankings(); } });
+  $("#poll-pills").addEventListener("click", (e) => { const b = e.target.closest("button[data-poll]"); if (b) { state.poll = b.dataset.poll; state.pollChosen = true; route.set({ poll: b.dataset.poll }); renderRankings(); } });
   $("#sbox-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-btab]"); if (b) selectBoxTab(b.dataset.btab); });
 
   (async () => {
@@ -3889,9 +4019,7 @@
     for (const a of document.querySelectorAll(".site-nav a")) a.classList.toggle("active", a.dataset.nav === "season");
     loadSeasons().catch(() => {});   // the sidebar list loads alongside; the season needs only the teams
     try { await loadTeams(); } catch (err) { toast(`Teams unavailable: ${errText(err)}`, 4000); }
-    if (id) {
-      await openSeason(id);   // it reloads the season list too, marking the open season
-      if (params.get("screen") === "depth" && state.season) openDepth(params, false);   // a link straight to the depth chart
-    }
+    // a refresh or a link: the save, then its tab and views, the depth chart and the modals the address names
+    if (id) await openSeason(id, route.get());   // it reloads the season list too, marking the open season
   })();
 })();
