@@ -469,7 +469,7 @@ def nil_value(p: dict, nil: int, ask: int, state: Optional[dict] = None) -> floa
     as his personality and decider read it: a Trainer counts it in full to 1.2 times his ask, an
     All Business recruit a third more)."""
     rate, cap = (NIL_OVER, math.inf) if state is None else persona.nil_over(state, p["id"])
-    edge = min(nil, cap * ask)                         # past his ask up to here NIL counts at `rate`, beyond it at NIL_OVER
+    edge = nil if cap == math.inf else min(nil, cap * ask)     # past his ask up to here NIL counts at `rate`, beyond it at NIL_OVER
     value = min(nil, ask) + rate * max(0, edge - ask) + NIL_OVER * max(0, nil - max(edge, ask))
     mult = 1.0 if state is None else persona.offer_mult(state, p["id"])
     return NIL_VALUE.get(tier_of(p), 0.1) * value * mult
@@ -1565,7 +1565,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             _nil(state, slug)["held"][pid] = nil
         _event(state, "offer", pid, slug, nil=nil)
         points = nil_value(p, nil, ask, state)
-        if is_lowball(nil, ask, persona.lowball_share(state, pid)):                # he reads it as a lowball: no points for the offer, and he cools on the school
+        # he reads a lowball as: no points for the offer, and he cools on the school
+        if is_lowball(nil, ask, persona.lowball_share(state, pid)):
             contact["cooled_until"] = week + COOL_WEEKS
             contact["lowball"] = True
         else:

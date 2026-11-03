@@ -166,6 +166,16 @@ if __name__ == "__main__":
     persona.cool_quiet(st, 3)
     assert not rc["contacts"][pid][ME].get("cooled_until"), "only Attention recruits cool"
 
+    # test_attention_skips_committed_school
+    pid2 = next(q for q in rc["prospects"] if q != pid and not rc["status"][q]["committed"] and not rc["status"][q]["signed"])
+    force(st, pid2, "attention")
+    rc["contacts"][pid2] = {ME: {"n": 1, "hc_week": None, "last_contact": 1}, "michigan": {"n": 1, "hc_week": None, "last_contact": 1}}
+    rc["status"][pid2]["committed"] = ME
+    persona.cool_quiet(st, 4)
+    assert not rc["contacts"][pid2][ME].get("cooled_until"), "the school he committed to is not cooled"
+    assert rc["contacts"][pid2]["michigan"]["cooled_until"] == 5
+    rc["status"][pid2]["committed"] = None
+
     # test_business_message_0_3
     st = fresh()
     rc = st["recruiting"]

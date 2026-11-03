@@ -129,7 +129,9 @@ def cool_quiet(state: dict, week: int) -> None:
     for pid, by in rc["contacts"].items():
         if rc["status"][pid]["signed"]:
             continue
-        for c in by.values():
+        for slug, c in by.items():
+            if rc["status"][pid]["committed"] == slug:      # post-commit attention is the commit style's, not this
+                continue
             last = c.get("last_contact")
             if last is None or last > week - ATTENTION_GAP or (c.get("cooled_until") or -1) >= week + 1:
                 continue
