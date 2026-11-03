@@ -77,14 +77,21 @@ GAPS_JS = """([SCREEN, ITEM, EXCLUDED]) => {
 # every button and tag on the page, whatever its parent: two on the same row (vertical overlap at least half the smaller
 # height) keep 6 px apart and nothing overlaps; one inside the other is not a pair, and neither is a pair on different
 # layers (a sticky topbar or pane, a fixed sheet or dialog, over the page it scrolls past), nor one scrolled out of a
-# list that scrolls inside itself (the scouting queue) with what sits under the list
+# list that scrolls inside itself (the Scouting database) with what sits under the list; a box half scrolled out of
+# such a list counts only the part still in view
 PAIRS_JS = """([SCREEN, ITEM, EXCLUDED]) => {
   const inText = """ + IN_TEXT + """;
   const clipped = """ + CLIPPED + """;
   const shown = (e) => (e.offsetParent !== null || getComputedStyle(e).position === 'fixed') && !clipped(e);
   const one = (x) => x.tagName.toLowerCase() + [...x.classList].map(c => '.' + c).join('') + ` "${x.textContent.trim().replace(/\\s+/g, ' ').slice(0, 20)}"`;
   const els = [...document.querySelectorAll(ITEM)].filter(e => shown(e) && !e.closest(EXCLUDED) && e.getClientRects().length && !inText(e));
-  const boxes = els.map(e => [e, e.getBoundingClientRect()]).filter(([, r]) => r.width && r.height).sort((x, y) => x[1].left - y[1].left);
+  // the part of each box a list that scrolls inside itself leaves visible (a row half scrolled out of the Scouting database
+  // is cut at the list's edge; the part past it is not on screen)
+  const seen = (e) => { const r = e.getBoundingClientRect(); let top = r.top, bottom = r.bottom;
+    for (let a = e.parentElement; a && a !== document.body; a = a.parentElement) { const o = getComputedStyle(a).overflowY;
+      if (o === 'auto' || o === 'scroll') { const q = a.getBoundingClientRect(); top = Math.max(top, q.top); bottom = Math.min(bottom, q.bottom); } }
+    return { left: r.left, right: r.right, top, bottom: Math.max(top, bottom), width: r.width, height: Math.max(0, bottom - top) }; };
+  const boxes = els.map(e => [e, seen(e)]).filter(([, r]) => r.width && r.height).sort((x, y) => x[1].left - y[1].left);
   const layers = new Map();
   const layer = (e) => { if (!layers.has(e)) { let l = null; for (let x = e; x; x = x.parentElement) { const p = getComputedStyle(x).position;
     if (p === 'fixed' || p === 'sticky' || x.tagName === 'DIALOG') { l = x; break; } } layers.set(e, l); } return layers.get(e); };

@@ -70,7 +70,7 @@
 .sc-queue-empty { margin: 0; padding: 12px 8px; }
 .sc-queue-empty[hidden] { display: none; }
 .sc-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
-.sc-pager { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sc-pager { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .sc-pager .go-btn { min-height: 36px; min-width: 36px; padding: 0 10px; font-size: 13px; }
 .sc-gap { padding: 0 2px; }
 @media (min-width: 900px) {
@@ -125,7 +125,7 @@
 .sc-intel-empty { margin: 0; }
 
 /* Scouting Operations: the bar, then the staff rows */
-.sc-ops { padding: 8px 14px; }
+.sc-ops { padding: 12px 14px; }
 .sc-ops-head { display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; }
 .sc-ops-toggle { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 6px; border: none; border-radius: 10px; background: none; color: var(--text); font: inherit; cursor: pointer; text-align: left; }
 .sc-ops-toggle:hover { background: var(--panel-2); }
