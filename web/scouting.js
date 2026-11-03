@@ -443,6 +443,9 @@
       ui().toast(`Scouted ${r.name} · ${fmtLooks(r.looks)} of ${REPORT_LOOKS} looks${r.looks >= REPORT_LOOKS ? " · his report is complete" : ""}`, { ms: 3000 });
       try { sel.pr = await api(s, `prospect/${encodeURIComponent(r.pid)}`); } catch (err) { /* the old read stands */ }
       paintIntel();
+      // the Send that completed his report disabled itself: the focus moves on to the board button, never the page body
+      const a = document.activeElement;
+      if (!a || a === document.body || a.disabled) { const next = body.querySelector("#sc-board"); if (next) next.focus({ preventScroll: true }); }
       cur.reload(r.pid);                              // the counts, the flags and every other row follow
     }
     async function toggleBoard(btn) {
@@ -475,13 +478,14 @@
         WORDS.map((w, i) => el("i", { class: lo >= 0 && i >= lo && i <= hi ? `on ${WORDS[hi].toLowerCase()}` : "", title: w })));
       const d = details[k] || {};
       const what = d.labels ? `Like: ${d.labels.join(", ")}` : Object.entries(d.ratings || {}).map(([n, v]) => `${cap(n)} ${v[0] === v[1] ? v[0] : `${v[0]}–${v[1]}`}`).join(" · ");
-      return el("li", { class: "sc-skill", "data-group": k }, [el("span", { class: "sc-skill-name", text: GRADE_NAMES[k] }), track,
-        el("span", { class: "sc-skill-val" }, r ? gradePlain(r) : [el("span", { class: "muted", text: "Not Read" })]),
-        r && what ? el("span", { class: "muted small sc-skill-what", text: what, title: "What the read looks like on the game's scale (50 is the middle Power 4 starter)" }) : null]);
+      // what the read looks like on the game's scale (50 is the middle Power 4 starter): on hover, as the profile's grade tips
+      return el("li", { class: "sc-skill", "data-group": k, ...(r && what ? { title: `${GRADE_NAMES[k]} ${rangeText(r)} looks like: ${what}` } : {}) }, [
+        el("span", { class: "sc-skill-name", text: GRADE_NAMES[k] }), track,
+        el("span", { class: "sc-skill-val" }, r ? gradePlain(r) : [el("span", { class: "muted", text: "Not Read" })])]);
     });
     return el("div", { class: "sc-ratings" }, [el("div", { class: "sc-sub-head" }, [el("b", { text: "Skill Breakdown" }), el("span", { class: "muted small", text: "Your Staff's Read" })]),
       el("ul", { class: "sc-skills" }, rows),
-      el("p", { class: "muted small sc-skill-note", text: pr.looks >= REPORT_LOOKS ? "His report is complete: these are your staff's final grades. A read can still be wrong." : "Ranges narrow with every look; a read can be wrong until he is on your roster." })]);
+      el("p", { class: "muted small sc-skill-note", text: pr.looks >= REPORT_LOOKS ? "His report is complete: these are your staff's final grades. Hover a grade for what it looks like in ratings." : "Ranges narrow with every look; hover a grade for what it looks like in ratings." })]);
   }
   // Overview: the profile's summary (where he is from, his build, rankings, where he stands, the evaluation)
   function overviewView(pr) {

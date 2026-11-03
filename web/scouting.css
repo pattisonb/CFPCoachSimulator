@@ -84,9 +84,9 @@
 .sc-intel[aria-busy="true"] .sc-intel-body { opacity: 0.7; transition: opacity 150ms ease-out; }
 .sc-intel-body { display: flex; flex-direction: column; gap: 12px; }
 .sc-who-big { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; }
-.sc-who-big .go-avatar.lg { width: 84px; height: 84px; border-radius: 16px; border: 1px solid var(--border); }
+.sc-who-big .go-avatar.lg { width: 72px; height: 72px; border-radius: 16px; border: 1px solid var(--border); }
 .sc-who-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.sc-big-name { font-size: 26px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+.sc-big-name { font-size: 24px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
 .sc-big-line { font-size: 14px; }
 .sc-big-stars { font-size: 18px; }
 .sc-boxes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
@@ -96,9 +96,9 @@
 .sc-result { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 12px; border-radius: 10px; background: var(--panel-2); font-size: 13px; }
 .sc-change { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .sc-subtabs { border-bottom: 1px solid var(--border); }
-.sc-sub-body { min-height: 180px; }
+.sc-sub-body { min-height: 150px; }
 .sc-sub-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
-.sc-skills { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.sc-skills { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
 .sc-skill { display: grid; grid-template-columns: 130px minmax(0, 1fr) 150px; gap: 2px 12px; align-items: center; }
 .sc-skill-name { font-size: 14px; }
 .sc-skill-track { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; }
@@ -108,7 +108,6 @@
 .sc-skill-track i.on.strong, .sc-skill-track i.on.elite { background: var(--good); border-color: var(--good); }
 .sc-skill-track i.on.all-american { background: var(--accent); border-color: var(--accent); }
 .sc-skill-val { font-size: 14px; white-space: nowrap; text-align: right; }
-.sc-skill-what { grid-column: 2 / -1; font-size: 12px; }
 .sc-skill-note { margin: 10px 0 0; }
 .sc-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; margin: 0; }
 .sc-fact dt { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -210,7 +209,6 @@
   .sc-box-value { font-size: 15px; }
   .sc-skill { grid-template-columns: minmax(0, 1fr) auto; }
   .sc-skill-track { grid-column: 1 / -1; grid-row: 2; }
-  .sc-skill-what { grid-column: 1 / -1; }
   .sc-facts { grid-template-columns: minmax(0, 1fr); }
   .sc-subtabs button { min-height: 44px; }
   .sc-actions { grid-template-columns: minmax(0, 1fr); }
