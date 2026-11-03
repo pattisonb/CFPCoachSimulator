@@ -350,6 +350,58 @@ def reduced_motion(browser, base: str, sid: str) -> None:
         ctx.close()
 
 
+FLASH_WATCH = """() => { const st = window.__flash = { n: 0 };
+  st.obs = new MutationObserver((recs) => { for (const r of recs) {
+    const c = r.target.classList; if (c && (c.contains('go-changed') || c.contains('go-fade-in') || c.contains('go-leaving'))) st.n++;
+    for (const a of r.addedNodes || []) if (a.classList && (a.classList.contains('go-changed') || a.classList.contains('go-fade-in'))) st.n++; } });
+  st.obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] }); }"""
+FLASH_COUNT = "() => { window.__flash.obs.disconnect(); return window.__flash.n + document.querySelectorAll('.go-changed, .go-fade-in').length; }"
+
+
+def no_flash_cases(page, base: str, sid: str) -> None:
+    """A view switch is silent: selecting another Scouting prospect, another report sub-tab, or another player on the
+    depth chart's Players box adds no pulse and no fade anywhere (only the player's own actions pulse)."""
+    open_tab(page, base, sid, "scouting", ".sc-list .sc-row")
+    page.wait_for_selector(".sc-intel .sc-boxes", timeout=60_000)
+    time.sleep(0.8)
+    for i in (1, 2, 3):
+        page.evaluate(FLASH_WATCH)
+        pid = page.get_attribute(f".sc-list .sc-row:nth-child({i + 1})", "data-pid")
+        page.click(f".sc-row[data-pid='{pid}'] .sc-row-btn")
+        page.wait_for_function("(pid) => new URLSearchParams(location.search).get('spid') === pid", arg=pid, timeout=30_000)
+        time.sleep(0.6)
+        n = page.evaluate(FLASH_COUNT)
+        assert n == 0, f"selecting another Scouting prospect flashed {n} time(s)"
+    page.evaluate(FLASH_WATCH)
+    page.click(".sc-subtabs button[data-sub=scouting]")
+    time.sleep(0.5)
+    assert page.evaluate(FLASH_COUNT) == 0, "a report sub-tab flashed"
+    page.goto(f"{base}/index.html?id={sid}&screen=depth")
+    page.wait_for_selector(".dc-card", timeout=120_000)
+    page.click(".dc-nav-item:has-text('Players')")
+    page.wait_for_selector(".dc-tile", timeout=30_000)
+    page.wait_for_selector(".dc-pc-attrs", timeout=60_000)
+    time.sleep(0.5)
+    for i in (1, 2, 3):
+        page.evaluate(FLASH_WATCH)
+        slug = page.locator(".dc-tile").nth(i).get_attribute("data-slug")
+        page.locator(".dc-tile").nth(i).click()
+        page.wait_for_function("(slug) => new URLSearchParams(location.search).get('player') === slug", arg=slug, timeout=30_000)
+        time.sleep(1.0)           # his profile arrives and the card patches
+        n = page.evaluate(FLASH_COUNT)
+        assert n == 0, f"switching depth-chart players flashed {n} time(s)"
+    # the field: picking a card opens the drawer without a flash
+    page.click(".dc-nav-item:has-text('Overview')") if page.query_selector(".dc-nav-item:has-text('Overview')") else None
+    if page.query_selector(".dc-card"):
+        page.evaluate(FLASH_WATCH)
+        page.click(".dc-card >> nth=0")
+        time.sleep(0.6)
+        page.click(".dc-card >> nth=1")
+        time.sleep(0.6)
+        n = page.evaluate(FLASH_COUNT)
+        assert n == 0, f"switching depth-chart positions flashed {n} time(s)"
+
+
 if __name__ == "__main__":
     try:
         from playwright.sync_api import sync_playwright
@@ -402,6 +454,7 @@ if __name__ == "__main__":
             page = browser.new_page(viewport={"width": 1280, "height": 900})
             errors = []
             page.on("pageerror", lambda e: errors.append(str(e)))
+            no_flash_cases(page, base, fresh["id"])
             season_cases(page, base, fresh["id"])
             board_cases(page, base, fresh["id"])
             offseason_cases(page, base, done["id"])

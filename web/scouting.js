@@ -171,8 +171,8 @@
     cur.patchHead(v);
     return el("div", { class: "sc-head" }, [
       el("div", { class: "sc-head-text" }, [el("div", { class: "go-kicker sc-kicker", text: `Recruiting Intelligence / Class of ${(s.year || 2026) + 1}` }),
-        el("div", { class: "go-display l", text: "Scouting Center" }),
-        el("p", { class: "muted sc-help", text: "Evaluate talent: a full report is three looks; a trip is one, a week in a scout's area half." }),
+        el("div", { class: "go-display l sc-title" }, ["Scouting Center ",
+          ui().tip("Evaluate talent: a full report is three looks; a trip is one, a week in a scout's area half.", "Scouting Center")]),
         el("div", { class: "sc-head-actions" }, [all])]),
       cards]);
   }
@@ -203,7 +203,7 @@
     const showing = el("span", { class: "muted small sc-showing", role: "status" });
     const pager = el("nav", { class: "sc-pager", "aria-label": "Pages" });
     function paint() {
-      ui().reconcile(list, st.rows, (r) => r.pid, (r) => drawRow(r), (n, r) => { n.__row = r; fill(n, r); });
+      ui().reconcile(list, st.rows, (r) => r.pid, (r) => drawRow(r), (n, r) => { n.__row = r; fill(n, r); }, { quiet: true });
       const from = st.rows.length ? desk.page * PAGE + 1 : 0, to = desk.page * PAGE + st.rows.length;
       showing.textContent = st.rows.length ? `${num(from)}–${num(to)} of ${num(st.total)}` : `0 of ${num(st.total)}`;
       count.textContent = `${num(st.total)} ${st.total === 1 ? "Prospect" : "Prospects"}`;
@@ -291,7 +291,7 @@
     // the selection: the address's prospect, else the first row
     queueMicrotask(() => select(desk.pid || (st.rows[0] && st.rows[0].pid) || null));
     return el("section", { class: "go-card sc-panel sc-db", "aria-label": "Prospect Database" }, [
-      el("div", { class: "sc-panel-head" }, [el("div", {}, [el("h2", { class: "sc-h", text: "Prospect Database" }), el("p", { class: "muted small sc-sub", text: "Every prospect in the class: filter and sort the whole list." })]), count]),
+      el("div", { class: "sc-panel-head" }, [el("div", {}, [el("h2", { class: "sc-h" }, ["Prospect Database ", ui().tip("Every prospect in the class: filter and sort the whole list.", "Prospect Database")])]), count]),
       search,
       el("div", { class: "sc-toolbar" }, [chips, el("div", { class: "sc-tools" }, [pos, sort])]),
       el("div", { class: "sc-list-head", "aria-hidden": "true" }, [el("span", { text: "Player / Position" }), el("span", { text: "Rank · Evaluation" })]),
@@ -375,7 +375,8 @@
     };
     panel.__row = (row) => { if (sel.pid === row.pid) { sel.row = row; if (sel.pr) paintIntel(); } };
     panel.__focus = () => { if (window.matchMedia("(max-width: 899px)").matches) panel.scrollIntoView({ block: "start" }); };
-    function paintIntel() {
+    // opts.pulse: the patch shows what the player's own action revealed (a Send Scout, the board); a selection or a sub-tab is silent
+    function paintIntel(opts) {
       const { row: r, pr } = sel, p = pr.public;
       const looks = Math.min(REPORT_LOOKS, r.looks || 0), complete = looks >= REPORT_LOOKS;
       const sp = complete ? ["Fully Scouted", "good"] : looks > 0 ? [`${fmtLooks(looks)} of ${REPORT_LOOKS} Looks`, "warn"] : ["Unscouted", "muted"];
@@ -415,7 +416,7 @@
         el("div", { class: "sc-sub-body", "data-key": `sub-${desk.sub}`, role: "tabpanel" }, [subBody]),
         el("div", { class: "sc-actions", "data-key": "actions" }, [send, boardBtn]),
         el("div", { class: "sc-actions-foot", "data-key": "foot" }, [reason ? el("span", { class: "muted small sc-why", text: reason }) : el("span", {}), full])]);
-      ui().morph(body, fresh);
+      ui().morph(body, fresh, opts);
     }
     async function sendScout(btn) {
       const r = sel.row;
@@ -434,7 +435,7 @@
       cur.patchHead(cur.v);
       ui().toast(`Scouted ${r.name} · ${fmtLooks(r.looks)} of ${REPORT_LOOKS} looks${r.looks >= REPORT_LOOKS ? " · his report is complete" : ""}`, { ms: 3000 });
       try { sel.pr = await api(s, `prospect/${encodeURIComponent(r.pid)}`); } catch (err) { /* the old read stands */ }
-      paintIntel();
+      paintIntel({ pulse: true });
       // the Send that completed his report disabled itself: the focus moves on to the board button, never the page body
       const a = document.activeElement;
       if (!a || a === document.body || a.disabled) { const next = body.querySelector("#sc-board"); if (next) next.focus({ preventScroll: true }); }
@@ -453,7 +454,7 @@
       cur.board += on ? 1 : -1;
       cur.fillRow(r.pid);
       cur.patchHead(cur.v);
-      paintIntel();
+      paintIntel({ pulse: true });
       ui().toast(on ? `${r.name} is on your board.` : hadOffer ? `${r.name} is off your board · offer pulled.` : `${r.name} is off your board.`, { ms: 2500 });
       if (desk.board === "on") cur.reload(r.pid);
     }
@@ -475,9 +476,9 @@
         el("span", { class: "sc-skill-name", text: GRADE_NAMES[k] }), track,
         el("span", { class: "sc-skill-val" }, r ? gradePlain(r) : [el("span", { class: "muted", text: "Not Read" })])]);
     });
-    return el("div", { class: "sc-ratings" }, [el("div", { class: "sc-sub-head" }, [el("b", { text: "Skill Breakdown" }), el("span", { class: "muted small", text: "Your Staff's Read" })]),
-      el("ul", { class: "sc-skills" }, rows),
-      el("p", { class: "muted small sc-skill-note", text: pr.looks >= REPORT_LOOKS ? "His report is complete: these are your staff's final grades. Hover a grade for what it looks like in ratings." : "Ranges narrow with every look; hover a grade for what it looks like in ratings." })]);
+    return el("div", { class: "sc-ratings" }, [el("div", { class: "sc-sub-head" }, [el("b", {}, ["Skill Breakdown ", ui().tip(pr.looks >= REPORT_LOOKS ? "His report is complete: these are your staff's final grades. Hover a grade for what it looks like in ratings." : "Ranges narrow with every look; hover a grade for what it looks like in ratings.", "Skill Breakdown")]),
+        el("span", { class: "muted small", text: "Your Staff's Read" })]),
+      el("ul", { class: "sc-skills" }, rows)]);
   }
   // Overview: the profile's summary (where he is from, his build, rankings, where he stands, the evaluation)
   function overviewView(pr) {
@@ -552,19 +553,20 @@
     list.__redraw = async () => {
       let x;
       try { x = await api(s, deskPath(0, 1)); } catch (err) { return; }
-      ui().morph(list, draw(x));
+      ui().morph(list, draw(x), { pulse: true });
       note.textContent = openText(x, rv);
       summary.textContent = sumText(x);
       cur.v.scouts = x.scouts;
     };
     const body = el("div", { class: "sc-ops-body sc-block-scouts", id: "sc-ops-body" }, [
-      el("p", { class: "muted small sc-manage-help", text: "Each scout takes a look at every prospect in his area each week: half a look, up to two. Pick the area each one covers." }), list, note]);
+      list, note]);
     body.hidden = !desk.ops;
     const toggle = el("button", { type: "button", class: "sc-ops-toggle", "aria-expanded": String(desk.ops), "aria-controls": "sc-ops-body" }, [
       el("span", { class: "sc-chev", "aria-hidden": "true", text: "▾" }), el("b", { class: "sc-ops-title", text: "Scouting Operations" }),
       el("span", { class: "muted small sc-ops-tag", text: "Staff assignments, regions and coverage" })]);
+    const opsTip = ui().tip("Each scout takes a look at every prospect in his area each week: half a look, up to two. Pick the area each one covers.", "Scouting Operations");
     const manage = el("button", { type: "button", id: "sc-manage", class: "go-btn sc-manage", text: desk.ops ? "Hide Staff" : "Manage Staff", "aria-controls": "sc-ops-body" });
-    const bar = el("section", { class: `go-card sc-ops${desk.ops ? " open" : ""}`, "aria-label": "Scouting Operations" }, [el("div", { class: "sc-ops-head" }, [toggle, summary, manage]), body]);
+    const bar = el("section", { class: `go-card sc-ops${desk.ops ? " open" : ""}`, "aria-label": "Scouting Operations" }, [el("div", { class: "sc-ops-head" }, [toggle, opsTip, summary, manage]), body]);
     const setOpen = (open) => {
       desk.ops = open;
       body.hidden = !open;

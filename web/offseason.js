@@ -64,8 +64,9 @@
   }
 
   // After an action: fetch again and patch what is on screen to match (web/ui.js morph): the cards
-  // stay, the scroll stays, what changed pulses. A new stage (or another career) draws in full.
-  async function refresh(s) {
+  // stay, the scroll stays; what changed pulses only after an action (opts.pulse), never for a filter. A new stage
+  // (or another career) draws in full.
+  async function refresh(s, opts) {
     const box = BOX;
     const token = ++seq;
     const v = await fetchView(s);
@@ -77,7 +78,7 @@
     }
     const fresh = el("div");
     draw(s, v, fresh, true);
-    ui.morph(box, fresh);
+    ui.morph(box, fresh, opts);
   }
 
   // One decision button: the button is busy, the call goes out, the screen patches, a toast says what
@@ -92,7 +93,7 @@
         if (opt.fail) opt.fail(err); else H.toast(H.errText(err));
         return;
       }
-      try { await refresh(s); if (opt.after) await opt.after(r); }
+      try { await refresh(s, { pulse: true }); if (opt.after) await opt.after(r, { pulse: true }); }
       catch (err) { H.toast(`Could not refresh the offseason: ${H.errText(err)}`, 4000); return; }
       const msg = typeof said === "function" ? said(r) : said;
       if (msg) H.toast(msg, 3500);

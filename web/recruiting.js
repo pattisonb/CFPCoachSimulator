@@ -912,7 +912,7 @@
       empty.hidden = rows.length > 0;
       footCount.textContent = `${v.board.length} on your board`;
       const focused = document.activeElement && list.contains(document.activeElement) ? document.activeElement.dataset.pid : null;
-      ui().reconcile(list, rows, (b) => b.id, row, patchRow);
+      ui().reconcile(list, rows, (b) => b.id, row, patchRow, { quiet: !opts.pulse });
       markRows();
       if (focused) { const f = list.querySelector(`.go-row-recruit[data-pid="${focused}"]`); if (f && document.activeElement !== f) f.focus({ preventScroll: true }); }
       // the pane: patched for the same recruit, swapped (a cross-fade) for another, gone with the last row
@@ -1303,7 +1303,6 @@
         view.sub = k;
         bodyKey = null;
         fill(false);
-        ui().fadeIn(body);
         syncBoard();
       }
       function fillSub(k, sd) {
@@ -1776,29 +1775,12 @@
     grid.addEventListener("click", (e) => show(cellOf(e)));
     grid.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(cellOf(e)); });
   }
-  function placeTip(cell, tip) {
-    tip.classList.add("show");
-    const r = cell.getBoundingClientRect(), t = tip.getBoundingClientRect(), gap = 6, pad = 8;
-    const below = r.bottom + gap + t.height <= document.documentElement.clientHeight - pad;
-    const top = below ? r.bottom + gap : Math.max(pad, r.top - gap - t.height);
-    // the right edge it may reach: the page's usable width, the inner edge of any box around it that scrolls, and the
-    // edge of the pane or window it opens in (with the page's scrollbar gutter, a phone's sheet and the Prospects window
-    // stop short of the window's width, and a tip past them sits under the gutter)
-    let edge = document.documentElement.clientWidth;
-    for (let n = cell.parentElement; n && n !== document.body; n = n.parentElement) {
-      if (n.clientWidth && n.offsetWidth - n.clientWidth > 2) edge = Math.min(edge, n.getBoundingClientRect().left + n.clientLeft + n.clientWidth);
-    }
-    const host = cell.closest(".go-pane") || cell.closest(".modal-body");
-    if (host) edge = Math.min(edge, host.getBoundingClientRect().right);
-    const left = Math.min(Math.max(pad, r.left), edge - t.width - pad);
-    tip.style.top = `${top}px`;
-    tip.style.left = `${left}px`;
-  }
+  const placeTip = (cell, tip) => ui().placeTip(cell, tip);     // web/ui.js: clamped to the window and its scrolling box
 
   // a floating tooltip follows its grade while the page or the profile scrolls, and closes once
   // the grade has scrolled out of sight
   window.addEventListener("scroll", () => {
-    for (const t of document.querySelectorAll(".go-tip-box.show")) {
+    for (const t of document.querySelectorAll(".go-tip-box.show:not(.go-info-box)")) {
       const cell = t.closest(".go-tip");
       const r = cell && cell.getBoundingClientRect();
       if (!r || r.bottom < 0 || r.top > window.innerHeight) t.classList.remove("show");

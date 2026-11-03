@@ -13,13 +13,11 @@
 .sc-panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
 .sc-block { display: flex; flex-direction: column; gap: 12px; }
 .sc-h { margin: 0; font-size: 20px; line-height: 1.2; text-transform: none; letter-spacing: 0; color: var(--text); }
-.sc-sub { margin: 2px 0 0; }
 
 /* the header: the title block left, the four stat cards right */
 .sc-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 20px; align-items: center; }
 .sc-head-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding-left: 14px; border-left: 4px solid var(--go-primary, var(--accent)); }
 .sc-kicker { margin: 0; }
-.sc-help { margin: 0; font-size: 14px; }
 .sc-head-actions { display: flex; gap: 8px; margin-top: 6px; }
 .sc-all-reports { min-height: 36px; padding: 0 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
 .sc-stats { display: grid; grid-template-columns: repeat(4, minmax(128px, 1fr)); gap: 10px; }
@@ -111,7 +109,6 @@
 .sc-skill-track i.on.strong, .sc-skill-track i.on.elite { background: var(--good); border-color: var(--good); }
 .sc-skill-track i.on.all-american { background: var(--good); border-color: var(--good); }
 .sc-skill-val { font-size: 14px; white-space: nowrap; text-align: right; }
-.sc-skill-note { margin: 10px 0 0; }
 .sc-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; margin: 0; }
 .sc-fact dt { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .sc-fact dd { margin: 0; font-size: 14px; }
@@ -140,7 +137,7 @@
 .sc-manage { min-height: 36px; padding: 0 14px; font-size: 13px; margin-left: auto; }
 .sc-ops-body { padding: 10px 4px 6px; display: flex; flex-direction: column; gap: 10px; }
 .sc-ops-body[hidden] { display: none; }
-.sc-manage-help, .sc-open { margin: 0; }
+.sc-open { margin: 0; }
 .sc-scout-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
 .sc-scout { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 10px; align-items: start; padding: 12px; border: 1px solid var(--border); border-radius: 12px; }
 .sc-scout-main { display: flex; flex-direction: column; gap: 6px; min-width: 0; }

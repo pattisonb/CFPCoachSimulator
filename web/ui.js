@@ -1,11 +1,11 @@
 /* Shared UI helpers for every page: the toast stack, the change pulse, fades, keyed lists, a busy
    state for the control that acted, and an in-place patch (morph) so an action updates the screen
-   instead of rebuilding it. window.CFP.ui = { toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph }.
+   instead of rebuilding it, and the ⓘ tooltip. window.CFP.ui = { toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph, tip, placeTip }.
    Motion honors prefers-reduced-motion. Loaded after gameview.js (which makes window.CFP). */
 (function () {
   "use strict";
   const CFP = (window.CFP = window.CFP || {});
-  const PULSE_MS = 600, FADE_MS = 150, MAX_TOASTS = 3;
+  const PULSE_MS = 400, FADE_MS = 150, MAX_TOASTS = 3;
   const mq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   const still = () => !!(mq && mq.matches);
 
@@ -120,7 +120,9 @@
       prev = n;
     }
   }
-  function reconcile(container, rows, key, draw, patch) {
+  // opts.quiet: no fades (a filter, a sort, a page: a view switch, not an action), gone nodes go at once.
+  function reconcile(container, rows, key, draw, patch, opts) {
+    const quiet = !!(opts && opts.quiet);
     const keyOf = typeof key === "function" ? key : (r) => r[key];
     const have = new Map();
     for (const c of container.children) if (c.dataset.key != null && !c.__leaving) have.set(c.dataset.key, c);
@@ -132,9 +134,9 @@
       else { n = draw(row); n.dataset.key = k; n.__fresh = true; }
       out.push(n);
     }
-    for (const n of have.values()) fadeOut(n);
+    for (const n of have.values()) { if (quiet) n.remove(); else fadeOut(n); }
     place(container, out);
-    for (const n of out) if (n.__fresh) { delete n.__fresh; fadeIn(n); }
+    for (const n of out) if (n.__fresh) { delete n.__fresh; if (!quiet) fadeIn(n); }
     return out;
   }
 
@@ -187,19 +189,24 @@
   // Nodes are matched by data-key among siblings where they carry one, otherwise in order; a node
   // of another tag is replaced. Text, attributes, form values (unless the player is typing in it)
   // and on() handlers move to the live node. Children of an element marked data-keep stay as they
-  // are. Changed elements pulse, new ones fade in. Returns the changed elements.
+  // are. By default the patch is silent: a view switch (another prospect, another player, a sub-tab) must not
+  // flash. morph(live, fresh, { pulse: true }) is for a patch that shows what the player's own action changed or
+  // revealed: then changed elements pulse, new ones fade in and keyed ones that left fade out. Returns the changed elements.
   const VALUE_TAGS = { INPUT: 1, SELECT: 1, TEXTAREA: 1 };
   const TRANSIENT = ["go-changed", "go-fade-in", "go-leaving"];
-  function morph(live, fresh) {
+  function morph(live, fresh, opts) {
+    const loud = !!(opts && opts.pulse);
     const changed = new Set(), born = [];
-    morphChildren(live, fresh, changed, born);
-    for (const n of born) fadeIn(n);
-    for (const n of changed) if (n.isConnected && !born.includes(n)) pulse(n);
+    morphChildren(live, fresh, changed, born, loud);
+    if (loud) {
+      for (const n of born) fadeIn(n);
+      for (const n of changed) if (n.isConnected && !born.includes(n)) pulse(n);
+    }
     return [...changed];
   }
   function keyOfNode(n) { return n.nodeType === 1 ? n.getAttribute("data-key") || null : null; }
   function same(a, b) { return a.nodeType === b.nodeType && a.nodeName === b.nodeName; }
-  function morphChildren(a, b, changed, born) {
+  function morphChildren(a, b, changed, born, loud) {
     const oldKids = [...a.childNodes].filter((n) => !n.__leaving), newKids = [...b.childNodes];
     const byKey = new Map();
     for (const o of oldKids) { const k = keyOfNode(o); if (k && !byKey.has(k)) byKey.set(k, o); }
@@ -210,16 +217,16 @@
       const k = keyOfNode(n);
       let o = k ? byKey.get(k) : loose[li++];
       if (o && used.has(o)) o = null;
-      if (o && same(o, n)) { used.add(o); morphNode(o, n, changed, born); out.push(o); }
+      if (o && same(o, n)) { used.add(o); morphNode(o, n, changed, born, loud); out.push(o); }
       else { out.push(n); if (n.nodeType === 1) born.push(n); else if (n.nodeType === 3 && n.data.trim()) changed.add(a); }
     }
     for (const o of oldKids) if (!used.has(o)) {
-      if (o.nodeType === 1 && keyOfNode(o)) fadeOut(o);
+      if (o.nodeType === 1 && keyOfNode(o) && loud) fadeOut(o);
       else { if (o.nodeType === 3 && o.data.trim()) changed.add(a); o.remove(); }
     }
     place(a, out);
   }
-  function morphNode(a, b, changed, born) {
+  function morphNode(a, b, changed, born, loud) {
     if (a.nodeType === 3 || a.nodeType === 8) {
       if (a.data !== b.data) { a.data = b.data; if (a.parentElement) changed.add(a.parentElement); }
       return;
@@ -255,12 +262,93 @@
     if (a.__on) for (const t of Object.keys(a.__on)) if (!b.__on || !b.__on[t]) a.__on[t] = null;
     if (attrChanged && a.tagName !== "TR" && a.tagName !== "TABLE") changed.add(a);
     if (a.hasAttribute("data-keep")) return;
-    morphChildren(a, b, changed, born);
+    morphChildren(a, b, changed, born, loud);
     if (a.tagName === "SELECT" && a.value !== b.value && document.activeElement !== a) a.value = b.value;
     if (a.tagName === "INPUT" && (a.type === "checkbox" || a.type === "radio") && a.checked !== b.checked) a.checked = b.checked;
   }
 
-  CFP.ui = { toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph };
+
+  // ----- tooltips --------------------------------------------------------------------------------
+  // placeTip(anchor, box): show a fixed .go-tip-box under the anchor (above it when there is no room), its right edge
+  // clamped to the window, any scrolling box around the anchor, and the pane or modal it opens in.
+  function placeTip(cell, tip) {
+    tip.classList.add("show");
+    const r = cell.getBoundingClientRect(), t = tip.getBoundingClientRect(), gap = 6, pad = 8;
+    const below = r.bottom + gap + t.height <= document.documentElement.clientHeight - pad;
+    const top = below ? r.bottom + gap : Math.max(pad, r.top - gap - t.height);
+    // the right edge it may reach: the page's usable width, the inner edge of any box around it that scrolls, and the
+    // edge of the pane or window it opens in (with the page's scrollbar gutter, a phone's sheet and the Prospects window
+    // stop short of the window's width, and a tip past them sits under the gutter)
+    let edge = document.documentElement.clientWidth;
+    for (let n = cell.parentElement; n && n !== document.body; n = n.parentElement) {
+      if (n.clientWidth && n.offsetWidth - n.clientWidth > 2) edge = Math.min(edge, n.getBoundingClientRect().left + n.clientLeft + n.clientWidth);
+    }
+    const host = cell.closest(".go-pane") || cell.closest(".modal-body");
+    if (host) edge = Math.min(edge, host.getBoundingClientRect().right);
+    const left = Math.min(Math.max(pad, r.left), edge - t.width - pad);
+    tip.style.top = `${top}px`;
+    tip.style.left = `${Math.max(pad, left)}px`;
+  }
+
+  // tip(text, label): a small ⓘ button that explains what sits beside it (help text moved off the page). The text
+  // shows in a popover on hover and on focus, and a tap (a phone) pins it open; Escape, a tap outside or blur close it.
+  // The button is named "About <label>" (Title Case) and described by the text (a sentence). Visually a 22 px circle,
+  // its hit area is 36 px on a desktop and 44 px on a phone (styles.css .go-info).
+  let tipSeq = 0;
+  const openTips = new Set();
+  function closeTip(w) { if (!w) return; w.__pinned = false; w.__box.classList.remove("show"); w.__btn.setAttribute("aria-expanded", "false"); openTips.delete(w); }
+  function openTip(w) {
+    for (const o of [...openTips]) if (o !== w) closeTip(o);
+    placeTip(w.__btn, w.__box);
+    w.__btn.setAttribute("aria-expanded", "true");
+    openTips.add(w);
+  }
+  function tip(text, label) {
+    const id = `go-info-${++tipSeq}`;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "go-info";
+    btn.setAttribute("aria-label", `About ${label}`);
+    btn.setAttribute("aria-describedby", id);
+    btn.setAttribute("aria-expanded", "false");
+    const glyph = document.createElement("span");
+    glyph.className = "go-info-i";
+    glyph.setAttribute("aria-hidden", "true");
+    glyph.textContent = "i";
+    btn.append(glyph);
+    const box = document.createElement("span");
+    box.className = "go-tip-box go-info-box";
+    box.id = id;
+    box.setAttribute("role", "tooltip");
+    box.textContent = text;
+    const w = document.createElement("span");
+    w.className = "go-info-wrap";
+    w.__btn = btn; w.__box = box; w.__pinned = false;
+    w.append(btn, box);
+    const hover = () => window.matchMedia && window.matchMedia("(hover: hover)").matches;
+    btn.addEventListener("mouseenter", () => { if (hover()) openTip(w); });
+    btn.addEventListener("mouseleave", () => { if (hover() && !w.__pinned && document.activeElement !== btn) closeTip(w); });
+    btn.addEventListener("focus", () => openTip(w));
+    btn.addEventListener("blur", () => closeTip(w));
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (w.__pinned) { closeTip(w); return; }
+      w.__pinned = true;
+      openTip(w);
+    });
+    btn.addEventListener("keydown", (e) => { if (e.key === "Escape" && openTips.has(w)) { e.stopPropagation(); closeTip(w); } });
+    return w;
+  }
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") for (const w of [...openTips]) closeTip(w); });
+  document.addEventListener("pointerdown", (e) => { for (const w of [...openTips]) if (!w.contains(e.target)) closeTip(w); }, true);
+  window.addEventListener("scroll", () => {
+    for (const w of [...openTips]) {
+      const r = w.__btn.getBoundingClientRect();
+      if (!w.isConnected || r.bottom < 0 || r.top > window.innerHeight) closeTip(w); else placeTip(w.__btn, w.__box);
+    }
+  }, true);
+
+  CFP.ui = { toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph, tip, placeTip };
   if (document.body) mount();
   else document.addEventListener("DOMContentLoaded", mount);
 })();

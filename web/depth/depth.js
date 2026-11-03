@@ -82,7 +82,7 @@
       try {
         await ctx.api(base(), ctx.postJSON(body));
         dropCache();
-        await patch();
+        await patch({ pulse: true });
         if (said) ctx.toast(said, 3000);
       } catch (err) { ctx.toast(`Could not change the depth chart: ${ctx.errText(err)}`, 4000); }
     })();
@@ -95,7 +95,7 @@
       try {
         await ctx.api(`/api/season/${ctx.season().id}/redshirt`, ctx.postJSON({ team: S.team, player: p.slug, on }));
         dropCache();
-        await patch();
+        await patch({ pulse: true });
         ctx.toast(on ? `${p.name} is redshirting: he keeps his year.` : `${p.name} is back in the lineup.`, 3000);
       } catch (err) { ctx.toast(`Could not do that: ${ctx.errText(err)}`, 4000); }
     })();
@@ -144,7 +144,7 @@
       try {
         const r = await ctx.api(`/api/season/${ctx.season().id}/position`, ctx.postJSON({ team: S.team, player: p.slug, pos }));
         dropCache(); faces.clear();
-        await patch();
+        await patch({ pulse: true });
         ctx.toast(r.moved_from ? `${p.name} moves to ${r.position} (was ${r.moved_from})` : `${p.name} moves back to ${r.position}`, 3500);
       } catch (err) { sel.value = now; ctx.toast(`Could not change his position: ${ctx.errText(err)}`, 4000); }
     })());
@@ -249,7 +249,9 @@
   // after an action: the screen is drawn again off screen and the one in front patched to match it (web/ui.js
   // morph): nothing blanks, the scroll and the focus stay, what changed pulses. The field's fit (a size and
   // classes on .dc-rows) carries over so the patch does not flash it; fit() runs again after.
-  async function patch() {
+  // opts.pulse: after a move, a redshirt or a position change (what the player's action changed shows);
+  // a selection, a view or a toggle patches silently
+  async function patch(opts) {
     if (!host || !ctx) return;
     if (!host.firstChild) return render();
     const token = ++seq;
@@ -257,7 +259,7 @@
     if (!(await draw(fresh, token))) return;
     const a = host.querySelector(".dc-rows"), b = fresh.querySelector(".dc-rows");
     if (a && b) { if (a.getAttribute("style")) b.setAttribute("style", a.getAttribute("style")); b.className = a.className; }
-    window.CFP.ui.morph(host, fresh);
+    window.CFP.ui.morph(host, fresh, opts);
     fit();
   }
 

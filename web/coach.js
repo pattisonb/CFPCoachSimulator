@@ -214,7 +214,7 @@
         coach = Object.assign(coach, saved);
         const label = $("#coach-form .coach-final button.primary");
         if (label && label.textContent !== "Save Changes") { label.textContent = "Save Changes"; window.CFP.ui.pulse(label); }
-        await renderList();
+        await renderList({ pulse: true });
         toast(`${fullName(coach)} saved.`);
         return coach;
       } catch (err) { toast(`Could not save: ${err.message}`, 4000); return null; }
@@ -231,11 +231,11 @@
     } catch (err) { toast(`Could not start the season: ${err.message}`, 4000); }
   }
 
-  async function renderList() {
+  async function renderList(opts) {     // opts.pulse after a save or a delete; a team switch or an edit opening is silent
     const box = $("#coach-list");
     const token = ++listSeq;
     const fresh = el("div");                // drawn off screen, then the list on screen patched to match (web/ui.js morph)
-    const done = () => { if (token === listSeq) window.CFP.ui.morph(box, fresh); };
+    const done = () => { if (token === listSeq) window.CFP.ui.morph(box, fresh, opts); };
     let list = [];
     try { list = (await api("/api/coaches")).coaches; } catch (err) { fresh.append(el("p", { class: "muted", text: err.message })); done(); return; }
     if (!list.length) { fresh.append(el("p", { class: "muted small-text", text: "No coaches yet. Build one below and save it." })); done(); return; }
@@ -254,7 +254,7 @@
           try { await api(`/api/coaches/${c.id}`, { method: "DELETE" }); }
           catch (err) { toast(`Could not delete: ${err.message}`, 4000); return; }
           if (coach && coach.id === c.id) { coach = clone(OPT.blank); renderForm(); }   // the form was editing him: a blank coach
-          await renderList();
+          await renderList({ pulse: true });
           toast(`${fullName(c)} deleted.`);
         })());
       });

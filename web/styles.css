@@ -260,10 +260,11 @@ button.news-bubble:hover { border-color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
   .news-bubble { animation-name: news-in-fade; }          /* no slide: a fade only */
 }
-/* what an action changed: a 600 ms pulse; rows and tags that arrive fade in, ones that leave fade out (150 ms) */
-@keyframes go-pulse { from { background-color: color-mix(in srgb, var(--accent) 34%, transparent); } to { background-color: transparent; } }
+/* what an action changed: a 400 ms pulse in a soft neutral yellow (never the team color: a red team read as an
+   error); rows and tags that arrive fade in, ones that leave fade out (150 ms). Only after the player's own action. */
+@keyframes go-pulse { from { background-color: color-mix(in srgb, #f2c94c 28%, transparent); } to { background-color: transparent; } }
 @keyframes go-fade-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
-.go-changed { animation: go-pulse 600ms ease-out; transition: background-color 600ms ease-out; border-radius: 4px; }
+.go-changed { animation: go-pulse 400ms ease-out; transition: background-color 400ms ease-out; border-radius: 4px; }
 .go-fade-in { animation: go-fade-in 150ms ease-out; }
 .go-leaving { opacity: 0; transition: opacity 150ms ease; pointer-events: none; }
 /* the control that acted, while its request is out: off, with a small spinner */
@@ -1298,6 +1299,17 @@ body.career-mode.on-career-tab .season-weeks { padding-bottom: 6px; }
   border-radius: 10px; background: var(--panel); color: var(--text); border: 1px solid var(--border); box-shadow: 0 8px 24px var(--shadow); font-size: 13px; line-height: 1.5; }
 .go-tip-box b { display: block; margin-bottom: 2px; }
 .go-tip-box.show { display: block; }
+/* the ⓘ (CFP.ui.tip): help text off the page. A 22 px circle in a 36 px hit area (44 px on a phone); negative margins
+   keep the title line its own height */
+.go-info-wrap { display: inline-flex; vertical-align: middle; }
+button.go-info { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; min-height: 36px; min-width: 36px; margin: -8px -6px;
+  padding: 0; border: 0; background: transparent; color: var(--muted); cursor: help; box-shadow: none; border-radius: 50%; flex: none; }
+.go-info-i { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid currentColor;
+  font: italic 700 13px/1 Georgia, "Times New Roman", serif; }
+button.go-info:hover, button.go-info:focus-visible, button.go-info[aria-expanded="true"] { color: var(--text); background: transparent; }
+button.go-info:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+.go-info-box { font-weight: 400; text-transform: none; letter-spacing: normal; font-family: inherit; white-space: normal; text-align: left; max-width: min(360px, calc(100vw - 16px)); min-width: 200px; }
+@media (max-width: 759px) { button.go-info { width: 44px; height: 44px; min-height: 44px; min-width: 44px; margin: -11px -10px; } }
 
 .go-list-read { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
 .go-signing { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; margin-bottom: 16px; padding: 16px 20px; border-radius: 16px; border: none;
