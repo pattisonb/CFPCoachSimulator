@@ -1415,8 +1415,7 @@
       function showSub(k) {
         view.sub = k;
         bodyKey = null;
-        fill(false);
-        ui().fadeIn(body);
+        fill(false);                 // a sub-tab switch swaps the body at once: no fade (the player's ask: no motion on navigation)
         syncBoard();
       }
       function fillSub(k, sd) {

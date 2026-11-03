@@ -187,14 +187,18 @@
   // Nodes are matched by data-key among siblings where they carry one, otherwise in order; a node
   // of another tag is replaced. Text, attributes, form values (unless the player is typing in it)
   // and on() handlers move to the live node. Children of an element marked data-keep stay as they
-  // are. Changed elements pulse, new ones fade in. Returns the changed elements.
+  // are. By default the patch is silent: switching what is shown (another player, a tab, a sort) never
+  // flashes. opts.pulse marks the patch as the result of the player's own action: changed elements
+  // pulse and new ones fade in. Returns the changed elements.
   const VALUE_TAGS = { INPUT: 1, SELECT: 1, TEXTAREA: 1 };
   const TRANSIENT = ["go-changed", "go-fade-in", "go-leaving"];
-  function morph(live, fresh) {
+  function morph(live, fresh, opts) {
     const changed = new Set(), born = [];
     morphChildren(live, fresh, changed, born);
-    for (const n of born) fadeIn(n);
-    for (const n of changed) if (n.isConnected && !born.includes(n)) pulse(n);
+    if (opts && opts.pulse) {
+      for (const n of born) fadeIn(n);
+      for (const n of changed) if (n.isConnected && !born.includes(n)) pulse(n);
+    }
     return [...changed];
   }
   function keyOfNode(n) { return n.nodeType === 1 ? n.getAttribute("data-key") || null : null; }
