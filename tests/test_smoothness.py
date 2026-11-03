@@ -220,6 +220,20 @@ def season_cases(page, base: str, sid: str) -> None:
     assert_smooth(page, ".dc-table", lambda: page.select_option(".dc-rail select.depth-pos", "TE"), f"{name} moves to TE (was WR)", "Depth chart: position box")
 
 
+def scouting_case(page, base: str, sid: str) -> None:
+    """The Scouting Center: picking prospects in the list swaps the report without a pulse or a fade."""
+    open_tab(page, base, sid, "scouting", ".sc-row")
+    pids = page.eval_on_selector_all("#tab-scouting .sc-row", "els => els.map(e => e.dataset.pid)")[:4]
+    assert len(pids) >= 3, pids
+    time.sleep(0.6)
+    page.evaluate(QUIET_WATCH)
+    for pid in pids + pids[:2]:
+        page.click(f"#tab-scouting .sc-row[data-pid='{pid}'] .sc-row-btn")
+        time.sleep(0.4)
+    loud, what = page.evaluate("() => { window.__quiet.obs.disconnect(); return [window.__quiet.n, window.__quiet.what]; }")
+    assert loud == 0, f"picking prospects in Scouting flashed or faded {loud} time(s): {what}"
+
+
 def board_cases(page, base: str, sid: str) -> None:
     """The recruiting board: Message (the step's Send), Offer and Scout (a menu item) patch the pane in place."""
     rows = call(base, f"/api/season/{sid}/prospects?status=open&limit=40")["rows"]
@@ -437,6 +451,7 @@ if __name__ == "__main__":
             page.on("pageerror", lambda e: errors.append(str(e)))
             season_cases(page, base, fresh["id"])
             board_cases(page, base, fresh["id"])
+            scouting_case(page, base, fresh["id"])
             offseason_cases(page, base, done["id"])
             portal_case(page, base, old["id"])
             job_case(page, base, let_go["id"])
@@ -444,7 +459,7 @@ if __name__ == "__main__":
             assert not errors, errors
             reduced_motion(browser, base, fresh["id"])
             browser.close()
-        print("smoothness ok: office, settings, depth chart (move, redshirt, position), board (message, offer, scout), offseason (review, redshirt, position, "
+        print("smoothness ok: office, settings, depth chart (move, redshirt, position), board (message, offer, scout), scouting (no flash), offseason (review, redshirt, position, "
               "keep them home, portal offer, staff, the job), your coach; reduced motion")
     finally:
         for sid in (fresh["id"], done["id"], old["id"], let_go["id"]):
