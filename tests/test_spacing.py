@@ -248,7 +248,7 @@ if __name__ == "__main__":
             page.click("button.go-btn:has-text('Add These')")
             time.sleep(4)
             for tab, wait in (("office", ".go-program"), ("recruiting", ".go-row-recruit"), ("prospects", ".go-list-row"),
-                              ("scouting", ".sc-scout"), ("depth", ".dc-card"), ("schedule", ".schedule-pick")):
+                              ("scouting", ".sc-table .sc-row"), ("depth", ".dc-card"), ("schedule", ".schedule-pick")):
                 w.both(tab, lambda _w, tab=tab, wait=wait: open_tab(page, base, A, tab, wait))
 
             # the new board: a recruit selected (a full-screen pane on a phone), the Recruit menu open (a bottom sheet on a

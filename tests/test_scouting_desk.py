@@ -21,9 +21,9 @@ FLAGS = {"gem", "bust", "generational", "likes"}      # "likes": prospects.staff
 VIEW_KEYS = {"hours", "hours_left", "scouts", "queue", "queue_total", "reports", "flags"}
 SCOUT_KEYS = {"id", "name", "role", "evaluation_word", "area", "looking_at", "yield", "contract_until"}
 QUEUE_KEYS = {"pid", "name", "position", "stars", "group", "need", "national_rank", "looks", "trips", "potential",
-              "can_send", "why", "state", "likes"}
+              "can_send", "why", "state", "likes", "on_board"}
 GROUP_KEYS = {"scout_id", "scout", "area", "looks", "changed", "items"}
-ITEM_KEYS = {"pid", "name", "position", "stars", "change", "flags", "likes"}
+ITEM_KEYS = {"pid", "name", "position", "stars", "change", "flags", "likes", "on_board", "complete"}   # on_board, complete: read-only, for the tab's digest
 FLAG_KEYS = {"pid", "name", "position", "stars", "flag", "looks", "standing_word", "likes"}
 
 
@@ -133,12 +133,16 @@ if __name__ == "__main__":
         # the view: this week's reports group by scout and list only the changed looks; yields count every look, in trip units
         v = G(sid, "scouting")
         this_week, last_week = v["reports"]["this_week"], v["reports"]["last_week"]
+        on_board = {b["id"] for b in G(sid, "recruiting")["board"]}
+        full = {r["pid"] for r in G(sid, f"scouting?limit={prospects.QUEUE_MAX}")["queue"] if r["looks"] >= recruiting.REPORT_LOOKS}
+        assert all(r["on_board"] == (r["pid"] in on_board) for r in v["queue"]), "a queue row's on_board is the board"
         assert this_week and last_week
         for group in this_week + last_week:
             assert set(group) == GROUP_KEYS, set(group)
             assert group["scout_id"] in ids and group["area"] in recruiting.AREAS
             for it in group["items"]:
                 assert set(it) == ITEM_KEYS, set(it)
+                assert it["on_board"] == (it["pid"] in on_board) and it["complete"] is (it["pid"] in full), it
         assert [g["scout_id"] for g in this_week] == [m["id"] for m in reversed(staff) if any(e["by"] == m["id"] for e in third)]   # newest looks first
         for group in this_week:
             mine = [e for e in reversed(third) if e["by"] == group["scout_id"]]

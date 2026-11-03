@@ -372,23 +372,27 @@ SCOUT_HOURS = 5
 
 
 def test_scouting_tab(page, base, sid) -> None:
-    """The Scouting tab (the redesign): every scout listed in the compact My scouts list, the DC included; the area
-    dropdown posts and toasts; the board filter shows only board rows, each marked; Send patches the row in place
-    with the inline result and the toast, never rebuilding the table; pagination moves to page 2 and back; the RANK
-    header sorts both ways; a report name opens the board's pane on him and the pane links back to the reports; on
-    a phone the two top panels stack and the table scrolls sideways inside its card, never the page."""
+    """The Scouting tab (queue first): the scouts strip with a chip a scout, Manage Scouts listing every scout (the DC
+    included) whose area dropdown posts and toasts; the board filter shows only board rows, each marked; Send patches
+    the row in place with the inline result and the toast, never rebuilding the table; pagination moves to page 2 and
+    back; the RANK header sorts both ways; a name in All Reports opens his profile over the tab (no board change, no
+    tab switch) and the pane's link opens All Reports here; on a phone the digest folds above the queue and the rows
+    fit the card, never a sideways page scroll."""
     wait_week(base, sid)        # a new week's hours, and a fresh week of looks for the reports
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#season:visible")
     assert not page.query_selector("#season-tabs button[data-tab=staff]") and not page.query_selector("#tab-staff"), "the Staff tab is gone"
     open_tab(page, base, sid, "scouting", ".sc-table .sc-row")
-    for block in (".sc-block-scouts .sc-scout", ".sc-reports .go-subtabs", ".sc-queue-panel .sc-table thead", ".sc-pager"):
+    for block in (".sc-strip .sc-scout-chip", "#sc-manage", ".sc-digest #sc-all-reports", ".sc-queue-panel .sc-table thead", ".sc-pager"):
         assert page.query_selector(block), f"the Scouting tab draws {block}"
     assert not page.query_selector(".sc-queue, .rc-staff-card"), "the old queue list and the big scout cards are gone"
     text = page.inner_text("#tab-scouting")
     assert "null" not in text.split() and not OUT_OF_100.search(text), text[:200]
-    # every staff member has a row (the old grid dropped two of five), the DC among them
+    # every staff member has a chip on the strip and a row in Manage Scouts (the old grid dropped two of five), the DC among them
     v = call(base, f"/api/season/{sid}/scouting")
+    assert page.evaluate("() => document.querySelectorAll('.sc-strip .sc-scout-chip').length") == len(v["scouts"])
+    page.click("#sc-manage")
+    page.wait_for_selector(".sc-block-scouts .sc-scout", timeout=15_000)
     rows = page.eval_on_selector_all(".sc-block-scouts .sc-scout", "els => els.map(e => e.textContent)")
     assert len(rows) == len(v["scouts"]) == 5, (len(rows), len(v["scouts"]))
     dc = next(m for m in v["scouts"] if m["role"] == "Defensive Coordinator")
@@ -404,6 +408,9 @@ def test_scouting_tab(page, base, sid) -> None:
     assert next(m for m in call(base, f"/api/season/{sid}/recruiting")["staff"] if m["id"] == scout["id"])["area"] == other
     page.wait_for_function("([sel, a]) => document.querySelector(sel).value === a", arg=[sel, other], timeout=10_000)
     assert page.evaluate("() => document.querySelectorAll('.sc-block-scouts .sc-scout').length") == 5, "the list keeps every scout after a change"
+    page.wait_for_function("([id, a]) => document.querySelector(`.sc-strip .sc-scout-chip[data-key='${id}'] .sc-chip-area`).textContent === a", arg=[scout["id"], other], timeout=10_000)
+    page.keyboard.press("Escape")
+    page.wait_for_function("() => !document.querySelector('.sc-block-scouts')?.offsetParent", timeout=10_000)
     # the board filter: only board rows, each with the mark and the accent
     board = {b["id"] for b in call(base, f"/api/season/{sid}/recruiting")["board"]}
     on_board = [r["pid"] for r in call(base, f"/api/season/{sid}/scouting?limit=400")["queue"] if r["pid"] in board]
@@ -411,14 +418,14 @@ def test_scouting_tab(page, base, sid) -> None:
     page.click(".sc-chips .go-chip[data-board=on]")
     page.wait_for_function("(n) => document.querySelector('.sc-chips .go-chip[data-board=on]').getAttribute('aria-pressed') === 'true' && !document.querySelector('.sc-table-wrap[aria-busy]') && document.querySelector('.sc-showing').textContent.endsWith(`of ${n}`)",
                            arg=len(on_board), timeout=15_000)
-    assert page.evaluate("() => document.querySelectorAll('.sc-table .sc-row:not(.go-leaving)').length") == min(len(on_board), 25)
+    assert page.evaluate("() => document.querySelectorAll('.sc-table .sc-row:not(.go-leaving)').length") == min(len(on_board), 20)
     marks = page.eval_on_selector_all(".sc-table .sc-row:not(.go-leaving)", "els => els.map(e => [e.dataset.pid, e.classList.contains('on-board'), !!e.querySelector('.sc-board-mark')])")
     assert all(pid in board and on and mark for pid, on, mark in marks), marks[:3]
     page.click(".sc-chips .go-chip[data-board=all]")
-    page.wait_for_function("() => !document.querySelector('.sc-table-wrap[aria-busy]') && document.querySelector('.sc-showing').textContent.startsWith('Showing 1 to 25 of') && document.querySelectorAll('.sc-table .sc-row:not(.go-leaving)').length === 25", timeout=15_000)
+    page.wait_for_function("() => !document.querySelector('.sc-table-wrap[aria-busy]') && document.querySelector('.sc-showing').textContent.startsWith('Showing 1 to 20 of') && document.querySelectorAll('.sc-table .sc-row:not(.go-leaving)').length === 20", timeout=15_000)
     marks = page.eval_on_selector_all(".sc-table .sc-row:not(.go-leaving)", "els => els.map(e => [e.dataset.pid, e.classList.contains('on-board')])")
     assert all(on == (pid in board) for pid, on in marks), "All: the board rows carry the accent, the rest do not"
-    assert len(on_board) >= 25 or any(not on for _, on in marks), "All: the class follows the board"
+    assert len(on_board) >= 20 or any(not on for _, on in marks), "All: the class follows the board"
     # Send: the row patches in place (the table body stays), the result reads inline under him, the toast names the look
     v = call(base, f"/api/season/{sid}/scouting")
     assert v["hours_left"] >= SCOUT_HOURS, "a new week has hours for a trip"
@@ -462,23 +469,23 @@ def test_scouting_tab(page, base, sid) -> None:
     left = call(base, f"/api/season/{sid}/scouting")["hours_left"]
     assert f"{left} of" in page.inner_text("#sc-hours"), (left, page.inner_text("#sc-hours"))
     assert page.evaluate("(el) => el.isConnected", h), "the table body was never rebuilt"
-    if after >= 3:      # his kept row makes 26 on the page: reopen the tab (a render on tab open draws in full) before paging
+    if after >= 3:      # his kept row makes 21 on the page: reopen the tab (a render on tab open draws in full) before paging
         open_tab(page, base, sid, "scouting", ".sc-table .sc-row")
         h = watch(page, ".sc-table tbody", scrolled=False)
     # pagination: page 2 and back
     total = call(base, f"/api/season/{sid}/scouting")["queue_total"]
     assert total > 50, total
     first = page.eval_on_selector_all(".sc-table .sc-row:not(.go-leaving)", "els => els.map(e => e.dataset.pid)")
-    assert "Showing 1 to 25 of" in page.inner_text(".sc-showing"), page.inner_text(".sc-showing")
+    assert "Showing 1 to 20 of" in page.inner_text(".sc-showing"), page.inner_text(".sc-showing")
     assert page.get_attribute(".sc-pager .sc-page[aria-current=page]", "data-page") == "1"
     page.click(".sc-pager .sc-next")
-    page.wait_for_function("() => document.querySelector('.sc-showing').textContent.startsWith('Showing 26 to 50')", timeout=15_000)
+    page.wait_for_function("() => document.querySelector('.sc-showing').textContent.startsWith('Showing 21 to 40')", timeout=15_000)
     second = page.eval_on_selector_all(".sc-table .sc-row:not(.go-leaving)", "els => els.map(e => e.dataset.pid)")
     assert second and not set(second) & set(first), "page 2 holds other recruits"
     assert page.get_attribute(".sc-pager .sc-page[aria-current=page]", "data-page") == "2"
-    assert page.eval_on_selector_all(".sc-pager .sc-page", "els => els.map(e => e.textContent.trim())")[-1] == f"{-(-total // 25)}", "the last page is listed"
+    assert page.eval_on_selector_all(".sc-pager .sc-page", "els => els.map(e => e.textContent.trim())")[-1] == f"{-(-total // 20)}", "the last page is listed"
     page.click(".sc-pager .sc-prev")
-    page.wait_for_function("() => document.querySelector('.sc-showing').textContent.startsWith('Showing 1 to 25')", timeout=15_000)
+    page.wait_for_function("() => document.querySelector('.sc-showing').textContent.startsWith('Showing 1 to 20')", timeout=15_000)
     assert page.eval_on_selector_all(".sc-table .sc-row:not(.go-leaving)", "els => els.map(e => e.dataset.pid)") == first
     # sorting by RANK toggles the order (client-side, on the page shown)
     ranks = lambda: page.eval_on_selector_all(".sc-table .sc-row:not(.go-leaving) .sc-rank", "els => els.map(e => +e.textContent.replace('#', ''))")
@@ -492,9 +499,11 @@ def test_scouting_tab(page, base, sid) -> None:
     assert page.get_attribute(".sc-table th:has(.sc-sort[data-sort=rank])", "aria-sort") == "descending"
     assert ranks() == sorted(asc, reverse=True)
     assert page.evaluate("(el) => el.isConnected", h), "sorting reorders the rows, it does not rebuild the table"
-    # a report name opens the board's pane on him, a recruit off your board included; the tab is reopened first so
-    # its reports hold the trip just sent
-    open_tab(page, base, sid, "scouting", ".sc-reports .go-subtabs")
+    # a name in All Reports opens his profile over the tab: the board stays as it was and the tab stays Scouting; the
+    # tab is reopened first so its reports hold the trip just sent
+    open_tab(page, base, sid, "scouting", ".sc-digest #sc-all-reports")
+    page.click("#sc-all-reports")
+    page.wait_for_selector(".modal:not([hidden]) .sc-reports .go-subtabs", timeout=15_000)
     assert page.get_attribute(".sc-reports .go-subtabs button[data-week=this_week]", "aria-selected") == "true"
     v = call(base, f"/api/season/{sid}/scouting")
     board = {b["id"] for b in call(base, f"/api/season/{sid}/recruiting")["board"]}
@@ -508,16 +517,11 @@ def test_scouting_tab(page, base, sid) -> None:
         for b in page.query_selector_all(".sc-reports .sc-report-more"):
             b.click()
     page.click(f".sc-reports .go-link[data-pid='{item['pid']}']")
-    page.wait_for_selector(".go-pane .go-pane-name", timeout=60_000)
-    assert item["name"] in page.inner_text(".go-pane .go-pane-head"), "the pane opens on him"
-    assert item["pid"] in {b["id"] for b in call(base, f"/api/season/{sid}/recruiting")["board"]}
-    # the pane's Scouting sub-tab links back to the tab, on the Reports panel's This week
-    page.click(".go-pane .go-subtabs button[data-sub=scouting]")
-    page.wait_for_selector(".go-pane .go-sub-body .sc-reports-link", timeout=30_000)
-    assert page.inner_text(".go-pane .go-sub-body .sc-reports-link").strip() == "Reports on the Scouting Tab"
-    page.click(".go-pane .go-sub-body .sc-reports-link")
-    page.wait_for_selector("#tab-scouting:visible .sc-table", timeout=60_000)
-    assert page.get_attribute(".sc-reports .go-subtabs button[data-week=this_week]", "aria-selected") == "true"
+    page.wait_for_function("(n) => [...document.querySelectorAll('.modal')].filter(m => !m.hidden).length === 2 && [...document.querySelectorAll('.modal:not([hidden])')].some(m => m.textContent.toLowerCase().includes(n))",
+                           arg=item["name"].lower(), timeout=60_000)
+    assert not page.is_hidden("#tab-scouting"), "the tab stays Scouting"
+    assert {b["id"] for b in call(base, f"/api/season/{sid}/recruiting")["board"]} == board, "a name click leaves the board as it was"
+    page.keyboard.press("Escape")
     # Last week and Flags
     page.click(".sc-reports .go-subtabs button[data-week=last_week]")
     time.sleep(0.4)
@@ -526,14 +530,25 @@ def test_scouting_tab(page, base, sid) -> None:
     page.click(".sc-reports .go-subtabs button[data-week=flags]")
     time.sleep(0.4)
     assert page.query_selector(".sc-reports .sc-flag") or page.query_selector(".sc-reports .sc-flags-empty")
-    # a phone: the two top panels stack, the table scrolls sideways inside its card, no sideways page scroll
+    page.keyboard.press("Escape")
+    # the pane's Scouting sub-tab links back here, to All Reports on This Week
+    open_tab(page, base, sid, "recruiting", ".go-row-recruit")
+    page.click(".go-row-recruit >> nth=0")
+    page.wait_for_selector(".go-pane .go-subtabs", timeout=30_000)
+    page.click(".go-pane .go-subtabs button[data-sub=scouting]")
+    page.wait_for_selector(".go-pane .go-sub-body .sc-reports-link", timeout=30_000)
+    assert page.inner_text(".go-pane .go-sub-body .sc-reports-link").strip() == "Reports on the Scouting Tab"
+    page.click(".go-pane .go-sub-body .sc-reports-link")
+    page.wait_for_selector("#tab-scouting:visible .sc-table", timeout=60_000)
+    page.wait_for_selector(".modal:not([hidden]) .sc-reports .go-subtabs button[data-week=this_week][aria-selected=true]", timeout=30_000)
+    page.keyboard.press("Escape")
+    # a phone: the digest folds above the queue, each row fits the card, no sideways scroll
     page.set_viewport_size({"width": 400, "height": 860})
     open_tab(page, base, sid, "scouting", ".sc-table .sc-row")
-    assert page.evaluate("() => getComputedStyle(document.querySelector('.sc-table-wrap')).overflowX") == "auto"
-    assert page.evaluate("() => { const w = document.querySelector('.sc-table-wrap'); return w.scrollWidth > w.clientWidth + 1; }"), "the table is wider than its card and scrolls inside it"
     assert page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth + 1"), "no sideways scroll on a phone"
-    assert page.evaluate("() => { const a = document.querySelector('.sc-block-scouts').getBoundingClientRect(), b = document.querySelector('.sc-reports').getBoundingClientRect(); return a.bottom <= b.top + 1; }"), "the two top panels stack"
-    clipped = not_clipped(page, ".sc-scout .sc-scout-name")
+    assert page.evaluate("() => { const w = document.querySelector('.sc-table-wrap'); return w.scrollWidth <= w.clientWidth + 1; }"), "the rows fit the card"
+    assert page.evaluate("() => document.querySelector('.sc-digest').getBoundingClientRect().bottom <= document.querySelector('.sc-queue-panel').getBoundingClientRect().top + 1"), "the digest sits above the queue"
+    clipped = not_clipped(page, ".sc-scout-chip, .sc-table .sc-name")
     assert not clipped, clipped[:3]
     page.set_viewport_size({"width": 1280, "height": 1000})
 
