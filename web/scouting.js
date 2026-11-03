@@ -96,9 +96,18 @@
   }
   let boardSet = null;                               // the pids on your board (from /recruiting; a name click adds to it)
 
+  // the desk's place in the address (web/route.js): the reports tab and the queue's board chip (a replace)
+  const syncRoute = () => { if (window.CFP.route) window.CFP.route.set({ rep: desk.week !== "this_week" ? desk.week : null, qboard: desk.board !== "all" ? desk.board : null }); };
+  let routeWeek = null;                              // a reports tab the address asked for: the next render opens on it
+  function applyRoute(r) {
+    routeWeek = ["last_week", "flags"].includes(r.rep) ? r.rep : null;
+    desk.board = ["on", "off"].includes(r.qboard) ? r.qboard : "all";
+  }
+
   async function render(s, box, helpers) {
     H = helpers;
-    desk.week = "this_week";
+    desk.week = routeWeek || "this_week";
+    routeWeek = null;
     desk.page = 0;
     if (!box.firstChild) box.append(loading("Loading the scouting desk…"));
     let v, rv;
@@ -171,7 +180,7 @@
     };
     for (const [k, t] of [["this_week", "This Week"], ["last_week", "Last Week"], ["flags", "Flags"]]) {
       strip.append(el("button", { type: "button", role: "tab", "data-week": k, "aria-selected": "false", text: k === "flags" && v.flags && v.flags.length ? `Flags (${v.flags.length})` : t,
-        onclick: () => { desk.week = k; draw(); } }));
+        onclick: () => { desk.week = k; syncRoute(); draw(); } }));
     }
     draw();
     return el("section", { class: "go-card sc-panel sc-block sc-reports", "aria-label": "Reports" }, [
@@ -210,7 +219,7 @@
     const hours = el("div", { id: "sc-hours", class: "go-pill sc-hours", role: "status", text: hoursText() });
     const chips = el("div", { class: "sc-chips", role: "group", "aria-label": "Whose rows" }, [["all", "All"], ["on", "On My Board"], ["off", "Not On My Board"]].map(([k, t]) =>
       el("button", { type: "button", class: `go-chip small${desk.board === k ? " on" : ""}`, "data-board": k, "aria-pressed": String(desk.board === k), text: t,
-        onclick: () => { if (desk.board === k) return; desk.board = k; desk.page = 0; for (const c of chips.children) { c.classList.toggle("on", c.dataset.board === k); c.setAttribute("aria-pressed", String(c.dataset.board === k)); } load(); } })));
+        onclick: () => { if (desk.board === k) return; desk.board = k; desk.page = 0; syncRoute(); for (const c of chips.children) { c.classList.toggle("on", c.dataset.board === k); c.setAttribute("aria-pressed", String(c.dataset.board === k)); } load(); } })));
     const search = el("input", { type: "search", id: "sc-search", value: desk.q, placeholder: "Search name or state", "aria-label": "Search the queue" });
     const sel = (id, label, options, value) => {
       const node = el("select", { id, class: "go-sel", "aria-label": label }, options.map(([k, t]) => el("option", { value: k, text: t })));
@@ -409,5 +418,5 @@
     return el("tr", { class: "sc-result-row" }, [el("td", { colspan: "7" }, [out])]);
   }
 
-  window.CFP.scouting = { render };
+  window.CFP.scouting = { render, applyRoute };
 })();

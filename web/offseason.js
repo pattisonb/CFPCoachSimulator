@@ -29,6 +29,13 @@
         el("span", { class: "off-step-mark", text: st.done ? "✓" : String(i + 1) }), el("span", { text: st.name })])));
   }
 
+  // the portal list's filters in the address (web/route.js, a replace); the stage itself is the server's
+  const syncRoute = () => { if (window.CFP.route) window.CFP.route.set({ opos: view.position, ostatus: view.status !== "available" ? view.status || "all" : null }); };
+  function applyRoute(r) {
+    view.position = GROUPS.includes(r.opos) ? r.opos : "";
+    view.status = ["offered", "signed"].includes(r.ostatus) ? r.ostatus : r.ostatus === "all" ? "" : "available";
+  }
+
   function fetchView(s) {
     const q = new URLSearchParams();
     if (view.position) q.set("position", view.position);
@@ -428,11 +435,11 @@
     const filters = el("div", { class: "off-filters" });
     const pos = el("select", { "aria-label": "Position" }, [el("option", { value: "", text: "All Positions" }), ...GROUPS.map((g) => el("option", { value: g, text: g }))]);
     pos.value = view.position;
-    ui.on(pos, "change", (ev) => { view.position = ev.currentTarget.value; refresh(s).catch((err) => H.toast(H.errText(err))); });
+    ui.on(pos, "change", (ev) => { view.position = ev.currentTarget.value; syncRoute(); refresh(s).catch((err) => H.toast(H.errText(err))); });
     const status = el("select", { "aria-label": "Status" }, [["available", "Still Available"], ["offered", "Offered by You"], ["signed", "Signed"], ["", "Everyone"]]
       .map(([k, t]) => el("option", { value: k, text: t })));
     status.value = view.status;
-    ui.on(status, "change", (ev) => { view.status = ev.currentTarget.value; refresh(s).catch((err) => H.toast(H.errText(err))); });
+    ui.on(status, "change", (ev) => { view.status = ev.currentTarget.value; syncRoute(); refresh(s).catch((err) => H.toast(H.errText(err))); });
     filters.append(pos, status);
     head.append(filters);
     const moves = p.moves_mine;
@@ -635,5 +642,5 @@
     return el("section", { class: "go-card off-scroll", "data-key": "history" }, [el("div", { class: "go-kicker", text: "Your Program's History" }), t]);
   }
 
-  window.Offseason = { render };
+  window.Offseason = { render, applyRoute };
 })();

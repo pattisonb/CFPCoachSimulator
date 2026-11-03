@@ -545,6 +545,37 @@
 
   // the board redraws when the screen crosses the phone line (the pane and the menu change shape)
   let boardAt = null;
+  // the board's place in the address (web/route.js): the stage tab, the sort, the recruit in the pane and its
+  // sub-tab; a replace, never a redraw. Only while the board is the view on screen.
+  function syncBoard() {
+    const R = window.CFP.route;
+    if (!R || !boardAt || !boardAt.box.isConnected || boardAt.box.closest("[hidden]") || !view.stage) return;
+    R.set({ stage: view.stage.key !== "all" ? view.stage.key : null, sort: view.sort !== "chance" ? view.sort : null,
+      pid: phone() && !view.sheet ? null : view.selected || null, pane: view.sub !== "overview" ? view.sub : null });
+  }
+  // a route onto the board's, the Prospects' views (load, refresh, Back): what does not check out is the default
+  function applyRoute(r, s) {
+    if (r.tab === "prospects") return applyProspects(r);
+    if (r.tab !== "recruiting" && r.tab !== "offseason") return;
+    const stages = ["all", ...COLUMNS.map(([k]) => k)];
+    if (!view.stage || view.stage.sid !== s.id) { view.group = null; view.state = null; view.search = ""; }
+    view.stage = { sid: s.id, key: stages.includes(r.stage) ? r.stage : "all" };
+    view.sort = r.sort === "rank" ? "rank" : "chance";
+    view.sub = SUBS.some(([k]) => k === r.pane) ? r.pane : "overview";
+    if (r.pid) { if (view.selected !== r.pid) { view.step = null; view.scene = null; } view.selected = r.pid; view.sheet = phone(); }
+    else if (phone()) view.sheet = false;
+  }
+  function applyProspects(r) {
+    const f = view.filters;
+    f.position = POSITIONS.includes(r.ppos) ? r.ppos : "";
+    f.stars = ["5", "4", "3", "2"].includes(r.pstars) ? r.pstars : "";
+    f.state = STATES.includes(r.pstate) ? r.pstate : "";
+    f.status = r.pstatus === "recommended" || STATUS.some(([k]) => k && k === r.pstatus) ? r.pstatus : "";
+    f.sort = r.psort === "interest" ? "interest" : "rank";
+    f.group = /^[A-Z]{1,4}$/.test(r.pgroup || "") ? r.pgroup : "";
+    const pg = Number(r.ppage);
+    view.offset = Number.isInteger(pg) && pg > 1 ? (pg - 1) * 50 : 0;
+  }
   window.matchMedia("(max-width: 359px)").addEventListener("change", () => { if (boardAt && boardAt.box.isConnected && boardAt.box.offsetParent) renderRecruiting(boardAt.s, boardAt.box); });
   window.matchMedia(PHONE).addEventListener("change", () => { if (boardAt && boardAt.box.isConnected && boardAt.box.offsetParent) renderRecruiting(boardAt.s, boardAt.box); });
 
@@ -892,6 +923,7 @@
       else if (view.sheet) openSheet(sel);
       else dropPane();
       focusScene();
+      syncBoard();
     }
     function dropPane() {
       for (const old of box.querySelectorAll(".go-pane")) old.remove();
@@ -945,6 +977,8 @@
       sel = b;
       closeMenu();
       markRows();
+      if (phone()) view.sheet = true;
+      syncBoard();
       if (phone()) { view.sheet = true; openSheet(b); }
       else {
         const cur = box.querySelector(".go-pane");
@@ -981,6 +1015,7 @@
       view.sheet = false;
       closeMenu();
       dropPane();
+      syncBoard();
       const r = list.querySelector(".go-row-recruit.selected");
       if (r) r.focus({ preventScroll: true });
     }
@@ -1269,6 +1304,7 @@
         bodyKey = null;
         fill(false);
         ui().fadeIn(body);
+        syncBoard();
       }
       function fillSub(k, sd) {
         body.innerHTML = "";
@@ -1631,6 +1667,9 @@
     const body = el("div");
     box.append(body);
     async function load() {
+      // the filters and the page in the address (a replace), while the Prospects tab is the view on screen
+      if (box.isConnected && !box.closest("[hidden]") && window.CFP.route) window.CFP.route.set({ ppos: f.position, pstars: f.stars, pstate: f.state, pstatus: f.status,
+        psort: f.sort !== "rank" ? f.sort : null, pgroup: f.group, ppage: view.offset ? Math.floor(view.offset / 50) + 1 : null });
       const params = new URLSearchParams({ offset: view.offset, limit: 50 });
       for (const [k, v] of Object.entries(f)) if (v) params.set(k, v);
       body.innerHTML = "";
@@ -1774,13 +1813,17 @@
     // `into` (a profile already open) it refreshes in place instead of closing and reopening. With
     // opts.pane it is the board pane's Profile sub-tab: the pane's head shows who he is and the Recruit menu
     // there holds Scout and Off the board, so the profile draws neither its own head nor buttons for them
+    // opts.restore: reopened from the address (a refresh): it opens only once he loads, and a prospect who is
+    // gone (a bad id) is passed over quietly (false), the view under it standing
     const inPane = !!opts.pane;
+    const fetched = H.api(`/api/season/${s.id}/prospect/${encodeURIComponent(pid)}`);
+    if (!into && opts.restore) { try { const x = await fetched; if (!x || !x.public) return false; } catch (err) { return false; } }
     const node = into || el("div", { class: "rc-profile go-profile" }, [el("p", { class: "muted rc-loading go-loading", text: "Loading his profile…" })]);
     if (into) { node.innerHTML = ""; node.append(el("p", { class: "muted rc-loading go-loading", text: "Updating his profile…" })); }
-    else H.openModal("Prospect Profile", node);
+    else H.openModal("Prospect Profile", node, `profile:${pid}`, { restore: !!opts.restore });
     let p;
-    try { p = await H.api(`/api/season/${s.id}/prospect/${encodeURIComponent(pid)}`); }
-    catch (err) { node.innerHTML = ""; node.append(el("p", { class: "muted", text: `Could not open his profile: ${H.errText(err)}` })); return; }
+    try { p = await fetched; }
+    catch (err) { node.innerHTML = ""; node.append(el("p", { class: "muted", text: `Could not open his profile: ${H.errText(err)}` })); return false; }
     const pub = p.public;
     const me = s.team;
     node.innerHTML = "";
@@ -1864,7 +1907,7 @@
           el("span", { class: "rating-label", text: a.label }),
           el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${a.value >= 75 ? "hi" : a.value >= 55 ? "mid" : ""}`, style: `width:${Math.max(2, Math.min(100, a.value))}%` })]),
           el("b", { class: "rating-num", text: String(a.value), title: `${a.potential} at his potential` })]))));
-      return;
+      return true;
     }
     const mine = pub.committed === me && !pub.signed;
     const scoutBtn = mine ? el("span", { class: "muted small rc-no-scout", text: "Committed to you: no more looks" })
@@ -1881,6 +1924,7 @@
         : el("p", { class: "muted", text: looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp once his report is complete (${fmtLooks(looks)} of 3 looks).` }));
     } else node.append(el("p", { class: "muted", text: inPane ? "Not scouted yet: Scout from the Recruit menu, or put a staff member on his area." : "Not scouted yet: send a scout, or put a staff member on his area." }),
       el("div", { class: "go-row wrap rc-profile-actions" }, [inPane ? null : scoutBtn, el("button", { type: "button", class: "go-btn", text: "Assign Your Staff →", onclick: () => { H.closeModal(); H.onChange("scouting"); } })]));
+    return true;
   }
 
   // ----- every school's class ------------------------------------------------------------------------
@@ -1934,5 +1978,5 @@
     else if (tab === "classes") renderClasses(season, box);
   }
 
-  window.Recruiting = { wordTag, render, openProfile: (s, pid) => openProfile(s, pid), reveal: (pid) => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; }, board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
+  window.Recruiting = { wordTag, render, applyRoute, init: (helpers) => { H = H || helpers; }, openProfile: (s, pid, opts) => openProfile(s, pid, null, opts || {}), reveal: (pid) => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; }, board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
 })();
