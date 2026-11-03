@@ -1301,14 +1301,14 @@ body.career-mode.on-career-tab .season-weeks { padding-bottom: 6px; }
 /* the ⓘ (CFP.ui.tip): help text off the page. A 22 px circle in a 36 px hit area (44 px on a phone); negative margins
    keep the title line its own height */
 .go-info-wrap { display: inline-flex; vertical-align: middle; }
-button.go-info { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; min-height: 36px; min-width: 36px; margin: -8px -6px;
+button.go-info { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; min-height: 36px; min-width: 36px; margin: -8px -4px;
   padding: 0; border: 0; background: transparent; color: var(--muted); cursor: help; box-shadow: none; border-radius: 50%; flex: none; }
 .go-info-i { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid currentColor;
   font: italic 700 13px/1 Georgia, "Times New Roman", serif; }
 button.go-info:hover, button.go-info:focus-visible, button.go-info[aria-expanded="true"] { color: var(--text); background: transparent; }
 button.go-info:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
 .go-info-box { font-weight: 400; text-transform: none; letter-spacing: normal; font-family: inherit; white-space: normal; text-align: left; max-width: min(360px, calc(100vw - 16px)); min-width: 200px; }
-@media (max-width: 759px) { button.go-info { width: 44px; height: 44px; min-height: 44px; min-width: 44px; margin: -11px -10px; } }
+@media (max-width: 759px) { button.go-info { width: 44px; height: 44px; min-height: 44px; min-width: 44px; margin: -11px -4px; } }
 
 .go-list-read { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
 .go-signing { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; margin-bottom: 16px; padding: 16px 20px; border-radius: 16px; border: none;
@@ -1502,7 +1502,7 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
 @media (max-width: 899px) { .go-games.two { grid-template-columns: minmax(0, 1fr); } }
 /* a phone: the week's three steps sit in one row, the mark over the title, the line under it dropped */
 @media (max-width: 599px) {
-  .go-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .go-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .go-steps .go-step { flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px; min-height: 44px; }
   .go-steps .go-step-text .small { display: none; }
   .go-steps .go-step-mark { width: 26px; height: 26px; }
