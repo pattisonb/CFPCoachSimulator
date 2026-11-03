@@ -62,12 +62,17 @@ AREAS = {
     "West Coast": ["CA", "OR", "WA", "HI", "AK"],
     "Mountain-Southwest": ["AZ", "NV", "UT", "CO", "NM", "ID", "MT", "WY", "OK"],
 }
-HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0, "raise_nil": 0, "scout": 5,
+HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0, "raise_nil": 0,
          "pitch": 0}                               # a pitch finishes your call or visit scene: its hours went on the call
+WEEKLY_HOURS_BASE = 140                    # *tune* a school's recruiting hours a week at a recruiting rating of 50 ...
+WEEKLY_HOURS_PER = 0.4                     # *tune* ... plus this many per rating point over 50 (about 150 for most schools)
+SCOUT_POINTS_BASE = 40                     # *tune* your scouting points a week with a best evaluator of 50 ...
+SCOUT_POINTS_PER = 0.4                     # *tune* ... plus this many per evaluation point over 50
+LOOK_COST = {"area": 10, "away": 15, "portal": 5}   # *tune* a Send's points: a prospect in a staffed area, one away from your scouts, a portal entrant
 SCENES = ("call", "hc_visit")              # your calls and in-home visits without a pitch open a scene (scenes.py)
 # looks come in trip units: a full report is REPORT_LOOKS looks and nothing goes past it (read["looks"] <= 3 always)
 REPORT_LOOKS = 3                           # a complete scouting report: three looks (flags, "our comp" and the SCOUTED line wait for it)
-SEND_LOOK = 1.0                            # a scouting trip (a Send, 5 hours): one look by your best evaluator, allowed while his report is short
+SEND_LOOK = 1.0                            # a scouting trip (a Send, 5-15 scouting points): one look by your best evaluator, allowed while his report is short
 AREA_LOOK = 0.5                            # an area scout's weekly look: half a look (the read moves half as far) ...
 AREA_CAP = 2.0                             # ... up to this many looks from his area (read["area"]), so four weeks there leave one trip to finish him
 CALL_REVEAL = 0.5                          # a call tells you one of his priorities this often; an in-home visit always does
@@ -302,7 +307,7 @@ def start(state: dict, year: int = 2027) -> None:
     state["recruiting"] = {
         "year": year, "prospects": prospects, "lists": {pid: {} for pid in prospects},
         "status": {pid: {"committed": None, "signed": None, "fcs": False} for pid in prospects},
-        "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
+        "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "scout_points": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
         "boards": {}, "seed": state.get("rng_state", 0), "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
         "pending": {}, "why": {}, "ranks": {}, "reports": [], "action_points": {}, "leader_changes": {},
     }
@@ -986,8 +991,40 @@ def _recruiting_rating(state: dict, slug: str) -> float:
 
 
 def weekly_hours(state: dict, slug: str) -> int:
-    """A school's recruiting hours a week, a multiple of 5: 50 plus a quarter of its recruiting rating over 50."""
-    return 5 * int(round((50 + max(0, _recruiting_rating(state, slug) - 50) / 4) / 5))
+    """A school's recruiting hours a week, a multiple of 5: WEEKLY_HOURS_BASE plus WEEKLY_HOURS_PER of its recruiting rating over 50."""
+    return 5 * int(round((WEEKLY_HOURS_BASE + max(0, _recruiting_rating(state, slug) - 50) * WEEKLY_HOURS_PER) / 5))
+
+
+def best_evaluator(state: dict) -> int:
+    """The best evaluation rating on your side: your staff and your coach."""
+    staff = (state.get("career") or {}).get("staff") or []
+    return max([m.get("evaluation", 50) for m in staff] + [((state.get("coach") or {}).get("ratings") or {}).get("evaluation", 60)])
+
+
+def scout_points(state: dict, slug: str) -> int:
+    """The week's scouting points: SCOUT_POINTS_BASE plus SCOUT_POINTS_PER of the best evaluator's rating over 50.
+    Only your school scouts (the AI's do not send anyone), but the slug keeps the shape of `weekly_hours`."""
+    return int(round(SCOUT_POINTS_BASE + max(0, best_evaluator(state) - 50) * SCOUT_POINTS_PER))
+
+
+def scout_points_left(state: dict, slug: str) -> int:
+    """Scouting points left this week (refilled at the week step; an old save without the key starts full)."""
+    return state["recruiting"].setdefault("scout_points", {}).setdefault(slug, scout_points(state, slug))
+
+
+def covered_states(state: dict) -> set[str]:
+    """The state codes a staff scout covers: the areas `scout_week` sends them to."""
+    staff = (state.get("career") or {}).get("staff") or []
+    return {code for member in staff for code in AREAS.get(member.get("area"), [])}
+
+
+def look_cost(state: dict, slug: str, pid: str) -> int:
+    """What a Send on `pid` costs in scouting points: a portal entrant's is the cheapest, then one in an area a
+    staff scout covers, then one away from your scouts."""
+    if is_portal(state):
+        return LOOK_COST["portal"]
+    home = state["recruiting"]["prospects"][pid]["hometown"]["state"]
+    return LOOK_COST["area" if home in covered_states(state) else "away"]
 
 
 def nil_budget(state: dict, slug: str) -> int:
@@ -1219,7 +1256,7 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
         marks = rc.setdefault("manual_offers", [])
         if pid not in marks:
             marks.append(pid)
-    out = {"hours_left": rc["hours"][slug], "revealed": revealed}
+    out = {"hours_left": _hours(state, slug), "revealed": revealed}
     if action == "scout":                                   # the desk shows the trip's before/after from this, and the like a completed report earned
         from coach_career import prospects as pr
         out["look"] = dict(_LAST_LOOK[0], likes=pr.staff_likes(state, pid, slug))
@@ -1464,7 +1501,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
     p = rc["prospects"].get(pid)
     if p is None:
         raise RecruitingError(400, "unknown prospect")
-    if action not in HOURS:
+    if action not in HOURS and action != "scout":
         raise RecruitingError(400, "unknown action")
     if pitch is not None and pitch not in PITCHES:
         raise RecruitingError(400, "unknown pitch")
@@ -1483,7 +1520,10 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         raise RecruitingError(409, f"his report is complete: {REPORT_LOOKS} of {REPORT_LOOKS} looks")
     if opens and pid in ((rc.get("scenes") or {}).get(slug) or {}):
         raise RecruitingError(409, "finish your call with him first")
-    if _hours(state, slug) < HOURS[action]:
+    if action == "scout":
+        if scout_points_left(state, slug) < look_cost(state, slug, pid):
+            raise RecruitingError(409, "Not enough scouting points left this week.")
+    elif _hours(state, slug) < HOURS[action]:
         raise RecruitingError(409, "not enough hours left this week")
     offers = rc["offers"].setdefault(slug, [])
     if action == "pull_offer":
@@ -1582,8 +1622,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         contact["scouted"] = contact.get("scouted", 0) + 1       # trips sent, a tally; the gate is his report's looks
         if you:
             _event(state, "contact", pid, slug, action=action)
-        staff = (state.get("career") or {}).get("staff") or []
-        rating = max([m.get("evaluation", 50) for m in staff] + [((state.get("coach") or {}).get("ratings") or {}).get("evaluation", 60)])
+        rating = best_evaluator(state)
+        rc["scout_points"][slug] = scout_points_left(state, slug) - look_cost(state, slug, pid)
         rng = random.Random(f"scout-{rc['seed']}-{slug}-{pid}-{week}-{contact['scouted']}")
         _LAST_LOOK[0] = look(state, pid, rating, rng)          # one look, SEND_LOOK, or what is left of his report
     else:
@@ -1611,7 +1651,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         if not opens:
             contact["last_contact"] = week
             points = _contact_land(state, slug, p, contact, action, pitch, auto)
-    rc["hours"][slug] = _hours(state, slug) - HOURS[action]
+    if action != "scout":                          # a Send spends scouting points, not hours
+        rc["hours"][slug] = _hours(state, slug) - HOURS[action]
     if points:
         _add_points(state, slug, pid, points * scale, action)
     return revealed
@@ -2235,6 +2276,7 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     _snapshot_ranks(state, week)
     _report(state, week)
     rc["hours"] = {}
+    rc["scout_points"] = {}
     if mode == "week":                       # Auto-recruit for one week: done, so off again
         state["career"]["settings"]["auto_recruit"] = "off"
     return rc["log"][start_log:]
@@ -2335,7 +2377,7 @@ def portal_rc(state: dict, entrants: dict, year: int) -> dict:
     return {"portal": True, "week": 1, "weeks": PORTAL_WEEKS, "year": year, "cache_key": f"{year}-portal", "prospects": prospects,
             "lists": {pid: {} for pid in prospects},
             "status": {pid: {"committed": None, "signed": None, "fcs": False} for pid in prospects},
-            "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
+            "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "scout_points": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
             "boards": {}, "seed": seed, "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
             "pending": {}, "why": {}, "ranks": {}, "reports": [], "action_points": {}, "leader_changes": {}}
 

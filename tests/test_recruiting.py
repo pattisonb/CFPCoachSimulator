@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # actions: hours, a call reveals a priority, one in-home visit a month, pitches on his priorities count 4x
     pid = tx["id"]; h0 = recruiting.weekly_hours(st, "ohio-state")
     day = season.load_teams()["ohio-state"]["coaches"]["head_coach"]["ratings"]["recruiting"]
-    assert h0 == 5 * round((50 + max(0, day - 50) / 4) / 5) and h0 % 5 == 0
+    assert h0 == 5 * round((140 + max(0, day - 50) * 0.4) / 5) and h0 % 5 == 0
     r = recruiting.act(st, "ohio-state", pid, "call", pitch=tx["priorities"][0])
     assert r["hours_left"] == h0 - 15 and (r["revealed"] is None or r["revealed"] in tx["priorities"])
     # a call is not a confession: it reveals a priority only CALL_REVEAL of the time (over the class, not
@@ -70,14 +70,16 @@ if __name__ == "__main__":
     assert av.get("exact") is None and av["lo"] < ask_ < av["hi"] and av["hi"] - av["lo"] <= max(10, 0.6 * ask_), av
     r = recruiting.act(st, "ohio-state", pid, "hc_visit", pitch=next(t for t in recruiting.PITCHES if t not in tx["priorities"]))   # the one-shot form
     assert r["revealed"] in tx["priorities"] and recruiting.ask_view(st, "ohio-state", pid).get("exact") == recruiting.ask_from(st, "ohio-state", pid)
-    # scouting by hand: 5 hours a look by your best evaluator at one prospect, until his report is complete (three looks), any week
+    # scouting by hand: a look by your best evaluator at one prospect for scouting points (not hours), until his report is complete (three looks), any week
     unseen = next(q for q in list(rc["prospects"]) if q not in rc["reads"] and q != pid)
     rc["hours"]["ohio-state"] = 100
+    rc["scout_points"] = {"ohio-state": 100}
+    cost = recruiting.look_cost(st, "ohio-state", unseen)
     r = recruiting.act(st, "ohio-state", unseen, "scout")
-    assert rc["reads"][unseen]["looks"] == recruiting.SEND_LOOK == 1.0 and r["hours_left"] == 100 - recruiting.HOURS["scout"]
+    assert rc["reads"][unseen]["looks"] == recruiting.SEND_LOOK == 1.0 and r["hours_left"] == 100 and rc["scout_points"]["ohio-state"] == 100 - cost
     for _ in range(recruiting.REPORT_LOOKS - 1):
         recruiting.act(st, "ohio-state", unseen, "scout")
-    assert rc["reads"][unseen]["looks"] == recruiting.REPORT_LOOKS and rc["hours"]["ohio-state"] == 100 - recruiting.REPORT_LOOKS * recruiting.HOURS["scout"]
+    assert rc["reads"][unseen]["looks"] == recruiting.REPORT_LOOKS and rc["hours"]["ohio-state"] == 100 and rc["scout_points"]["ohio-state"] == 100 - recruiting.REPORT_LOOKS * cost
     lo, hi = recruiting.read_interval(st, unseen, "athleticism")
     assert hi - lo < 25, (lo, hi)
     try:
@@ -272,9 +274,10 @@ if __name__ == "__main__":
     recruiting.act(st, "ohio-state", pid, "pull_offer")
     assert pid not in st["recruiting"]["offers"]["ohio-state"] and pid not in st["recruiting"]["nil"]["ohio-state"]["held"]
     # the week's hours run out
+    others = iter([x for x in rc["prospects"] if x != pid and not rc["status"][x]["signed"]])
     while True:
         try:
-            recruiting.act(st, "ohio-state", pid, "message")
+            recruiting.act(st, "ohio-state", next(others), "message")      # a message a week to each prospect: a new one each time
         except recruiting.RecruitingError as e:
             assert e.code == 409 and st["recruiting"]["hours"]["ohio-state"] < 5
             break
@@ -330,7 +333,7 @@ if __name__ == "__main__":
     mine = season.new_season("kent-state", "full", seed=6, career=True,
                              coach={"id": "c1", "first_name": "Pat", "last_name": "Test",
                                     "ratings": {"recruiting": 92, "offense": 70, "defense": 70}})
-    assert recruiting.weekly_hours(mine, "kent-state") == 60 and recruiting.weekly_hours(mine, "kent-state") % 5 == 0
+    assert recruiting.weekly_hours(mine, "kent-state") == 155 and recruiting.weekly_hours(mine, "kent-state") % 5 == 0
     # a whole season: everyone signs somewhere, nobody past their open spots, about a third to FCS
     import time
     from collections import Counter
