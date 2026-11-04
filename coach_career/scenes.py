@@ -244,12 +244,20 @@ LEAD_LINES = {"proximity": "You'd be close, {first}. Your folks could make every
 # he has a question (recruit questions): this turn introduces it
 QUESTION_INTRO = "Can I ask you something?"
 
-# an in-home visit opens with his family
-FAMILY = ["His mom has the table set and the good plates out.",
-          "His dad shakes your hand and doesn't let go for a while.",
-          "His little brother asks if you know anybody in the NFL.",
-          "His grandmother wants to know if there's a church near {school}.",
-          "The whole family is on the couch in {town}. {first} sits closest to the door."]
+# an in-home visit opens with his family: the room note names the one who decides (a visit shows who decides)
+FAMILY_BY = {"mom": ["His mom has the table set and the good plates out.",
+                     "His mom hugs you at the door and asks if you have eaten."],
+             "dad": ["His dad shakes your hand and doesn't let go for a while.",
+                     "His dad turns the game off the moment you walk in."],
+             "grandma": ["His grandmother wants to know if there's a church near {school}.",
+                         "His grandmother pours you a glass of sweet tea."],
+             "hs_coach": ["His high school coach is already on the couch, arms crossed.",
+                          "His high school coach shakes your hand and says he has heard good things."],
+             "trainer": ["His trainer is at the table with a tablet full of film.",
+                         "His trainer sizes you up from the doorway before he says hello."],
+             "self": ["His little brother asks if you know anybody in the NFL.",
+                      "The whole family is on the couch in {town}. {first} sits closest to the door."]}
+FAMILY = [line for lines in FAMILY_BY.values() for line in lines]       # every note, for the line tests
 
 # every table of lines (tests format each line with FIELDS)
 TABLES = {"PERSONA_LINES": persona.LINES, "NO_TOPIC": persona.NO_TOPIC, "DECIDER_LINES": persona.DECIDER_LINES, "LINES": LINES, "TIRED": TIRED, "OPEN": OPEN, "VISIT_OPEN": VISIT_OPEN, "CONTEXT": CONTEXT, "PRESENT_SAID": PRESENT_SAID,
@@ -408,7 +416,7 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
     tired = recruiting.would_pester(state, slug, pid)
     turns = []
     if action == "hc_visit":
-        turns.append(_turn("note", rng.choice(FAMILY).format(**f)))
+        turns.append(_turn("note", rng.choice(FAMILY_BY[persona.of(state, pid)["decider"]]).format(**f)))
         turns.append(_turn("you", rng.choice(VISIT_OPEN).format(**f)))
     else:
         prev = last_talk(state, slug, pid, week)

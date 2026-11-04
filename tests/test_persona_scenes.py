@@ -227,6 +227,21 @@ def test_no_tell_call_hides_hits():
     assert r["hit"] == r["scene"]["present"]["hit"]
 
 
+def test_visit_note_names_the_decider():
+    """The room's note fits who decides: a grandmother-decided visit never mentions his dad, and so on for each."""
+    words = {"mom": "mom", "dad": "dad", "grandma": "grandmother", "hs_coach": "high school coach", "trainer": "trainer"}
+    st = fresh()
+    used = set()
+    for decider, word in words.items():
+        pid = cold(st, used)
+        force(st, pid, "business", decider, None)
+        note = open_scene(st, pid, "hc_visit")["turns"][0]
+        assert note["who"] == "note" and word in note["text"].lower(), (decider, note)
+        for other, w in words.items():
+            if other != decider:
+                assert f"his {w}" not in note["text"].lower(), (decider, note)
+
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

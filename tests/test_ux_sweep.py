@@ -745,7 +745,7 @@ def test_look_units_pane(page, base, sid) -> None:
         assert page.inner_text(".go-pane .go-scouting .go-scout-tag") == "One Trip Finishes His Report"
         page.click("#rc-recruit")
         page.wait_for_selector(".go-menu[role=menu]")
-        assert "finishes his report" in page.inner_text(".go-menu .go-menu-item[data-action=scout]")
+        assert "finishes his report" in page.inner_text(".go-menu .go-menu-item[data-action=scout]").lower()
         page.keyboard.press("Escape")
 
 

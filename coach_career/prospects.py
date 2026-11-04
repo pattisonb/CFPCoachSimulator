@@ -612,6 +612,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                firmness=rc["status"][pid].get("firmness") if rc["status"][pid]["committed"] == viewer and not rc["status"][pid]["signed"] else None,
                hard=bool(rc["status"][pid].get("hard")) and not rc["status"][pid]["signed"],
                can_scout=can_scout(state, viewer, pid),
+               scout_cost=recruiting.look_cost(state, viewer, pid),
                role=_role(recruiting.pull(state, viewer, pid)["playing_time"]),
                standing=standing(state, pid, viewer),
                history=history.get(pid, []))
@@ -814,6 +815,7 @@ def recruiting_view(state: dict) -> dict:
              and e["kind"] not in ("leaning_fcs",) + recruiting.CONTACT_KINDS]
     return {
         "week": week, "hours": recruiting.weekly_hours(state, me), "hours_left": recruiting._hours(state, me),
+        "points_left": recruiting.scout_points_left(state, me), "points_week": recruiting.scout_points(state, me),
         "nil": {"budget": nil["budget"], "held": sum(nil["held"].values()), "left": recruiting.nil_left(state, me),
                 "base": recruiting.nil_budget(state, me),                      # the year's budget alone (the class: budget = base + carry)
                 "pool": nil["budget"] if rc.get("portal") else None,            # the portal: the pool less what keeping players home cost

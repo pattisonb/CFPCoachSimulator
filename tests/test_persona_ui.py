@@ -112,6 +112,7 @@ def desktop(browser, base, sid, first, visit, guarded, names, errs) -> None:
     chips = page.eval_on_selector_all(".go-pane .go-tags [data-key^='trait:']", "els => els.map(e => e.textContent.trim())")
     assert rows["personality"] in chips, (chips, rows)
     no_null(page, "after the call")
+    scout_item(page, base, sid, first)
     # the Scouting Center: Points Left, a cost on each Send, two looks tell who decides
     open_tab(page, base, sid, "scouting", ".sc-list .sc-row")
     page.wait_for_selector(".sc-intel .sc-big-name", timeout=30_000)
@@ -183,16 +184,34 @@ def _state(sid):
     return season.load_season(sid)
 
 
-def drained(page, base, sid, errs) -> None:
+def scout_item(page, base, sid, pid) -> None:
+    """The Recruit menu's Scout item carries the look's point cost and waits with the Scouting Center's reason when short."""
+    b = next(x for x in call(base, f"/api/season/{sid}/recruiting")["board"] if x["id"] == pid)
+    left = call(base, f"/api/season/{sid}/recruiting")["points_left"]
+    assert b["scout_cost"] in (5, 10, 15) and left == call(base, f"/api/season/{sid}/scouting")["points_left"], (b["scout_cost"], left)
+    page.click(".go-pane #rc-recruit")
+    page.wait_for_selector(".go-menu[role=menu]")
+    item = page.query_selector(".go-menu .go-menu-item[data-action=scout]")
+    text = item.inner_text()
+    assert re.search(rf"Scout\s+{b['scout_cost']} Points · [\d.]+ of 3 Looks", text.replace("\n", " ")), text
+    short = left < b["scout_cost"] and (b["looks"] or 0) < 3
+    if page.viewport_size["width"] < 500:
+        assert short, "the drain left his Scout item short of points"
+    if short:
+        assert item.get_attribute("aria-disabled") == "true" and NO_POINTS in text, text
+    elif (b["looks"] or 0) < 3:
+        assert item.get_attribute("aria-disabled") != "true", text
+    page.keyboard.press("Escape")
+
+
+def drained(page, base, sid, keep) -> dict:
     ctx = page  # the page is the desktop one reopened below
     v = call(base, f"/api/season/{sid}/scouting?limit=400")
-    target = next(r for r in v["queue"] if r["can_send"] and (r["looks"] or 0) == 0 and not r["on_board"])
+    target = next(r for r in v["queue"] if r["can_send"] and (r["looks"] or 0) == 0 and not r["on_board"] and r["pid"] not in keep)
     pts = v["points_left"]
     for r in v["queue"]:
-        if r["pid"] == target["pid"] or not r["can_send"]:
+        if r["pid"] == target["pid"] or r["pid"] in keep or not r["can_send"]:
             continue
-        if pts < target["cost"]:
-            break
         if pts - r["cost"] < 0:
             continue
         try:
@@ -206,11 +225,11 @@ def drained(page, base, sid, errs) -> None:
     return row
 
 
-def phone(browser, base, sid, errs) -> None:
+def phone(browser, base, sid, board_pids, errs) -> None:
     ctx = browser.new_context(viewport={"width": 400, "height": 860}, device_scale_factor=2, color_scheme="dark", has_touch=True)
     page = ctx.new_page()
     page.on("pageerror", lambda e: errs.append(str(e)))
-    row = drained(None, base, sid, errs)
+    row = drained(None, base, sid, set(board_pids))
     open_tab(page, base, sid, "scouting", ".sc-list .sc-row")
     page.fill("#sc-search", row["name"])
     page.wait_for_selector(f".sc-row[data-pid='{row['pid']}']", timeout=10_000)
@@ -225,6 +244,13 @@ def phone(browser, base, sid, errs) -> None:
     assert h >= 44, h
     assert page.evaluate("() => document.documentElement.scrollWidth <= innerWidth + 1"), "nothing scrolls sideways"
     no_null(page, "scouting at 400")
+    # the board's Recruit menu agrees: his Scout item is out of points too (a board prospect the drain left short, or the cost shown)
+    open_board(page, base, sid)
+    for pid in board_pids[:1]:      # the sheet covers the list on a phone: one pick, and the drain left him short
+        page.click(f".go-row-recruit[data-pid='{pid}']")
+        page.wait_for_selector(".go-pane.sheet #rc-recruit", timeout=10_000)
+        time.sleep(0.4)
+        scout_item(page, base, sid, pid)
     ctx.close()
 
 
@@ -288,7 +314,7 @@ if __name__ == "__main__":
             desktop(browser, base, sid, first, visit, guarded, names, errs)
             visit_shot(browser, base, sid, visit, errs)
             phone_board(browser, base, sid, first, errs)
-            phone(browser, base, sid, errs)
+            phone(browser, base, sid, [first, visit, guarded], errs)
             browser.close()
         assert not errs, errs
         print("persona ui ok: traits on the profile and the pane, Points Left and a cost on each Send, a family turn, a Guarded call, 1280 and 400")
