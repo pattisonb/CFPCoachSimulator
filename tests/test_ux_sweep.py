@@ -74,6 +74,11 @@ def toasted(page, text: str) -> None:
     page.wait_for_function("(t) => [...document.querySelectorAll('#toasts .toast-item')].some(e => e.textContent.trim() === t)", arg=text, timeout=30_000)
 
 
+def toasted_start(page, text: str) -> None:
+    """A toast that starts with that sentence: a trip that completes a report may add "· OC likes him"."""
+    page.wait_for_function("(t) => [...document.querySelectorAll('#toasts .toast-item')].some(e => e.textContent.trim().startsWith(t))", arg=text, timeout=30_000)
+
+
 def smooth(page, h, what: str, same: bool = True) -> None:
     """After the action landed: the watched element is still the one on screen (or, same=False, the pane switched),
     nothing that held it was removed, the scrolls are within 2 px, and the focus is on a control, not the body."""

@@ -23,7 +23,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 
 from test_career_e2e import call, free_port, launch   # noqa: E402
 from test_deep_links import modals, params, reload, tab_on, wait_url   # noqa: E402
-from test_ux_sweep import open_tab, toasted   # noqa: E402
+from test_ux_sweep import open_tab, toasted, toasted_start   # noqa: E402
 
 OLD_HEIGHT_1280 = 3621          # the old Scouting page at 1280 (scouts and reports over the queue)
 NO_MODAL = "() => ![...document.querySelectorAll('.modal')].some(m => !m.hidden)"
@@ -136,7 +136,7 @@ def check_complete_stays(page, base, sid, pid, name, errors) -> None:
     page.click(f".sc-row[data-pid='{pid}'] .sc-row-btn")
     wait_intel(page, name)
     page.click("#sc-send")
-    toasted(page, f"Scouted {name} · 3 of 3 looks · his report is complete")
+    toasted_start(page, f"Scouted {name} · 3 of 3 looks · his report is complete")
     page.wait_for_function("(pid) => document.querySelector(`.sc-row[data-pid='${pid}'] .sc-looks-text`)?.textContent === '3/3'", arg=pid, timeout=10_000)
     assert intel_name(page) == name, "the report still shows him"
     page.wait_for_function("() => document.querySelector('#sc-send').disabled && /complete/.test(document.querySelector('.sc-why')?.textContent || '')", timeout=10_000)   # a complete report: no Send
