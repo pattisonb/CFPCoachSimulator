@@ -146,17 +146,17 @@
   // Scouting Points (left of the week's), Trips This Week, Board Scouted (prospects on your board with a look, of the
   // board) and Full Reports (complete reports in the class)
   function headBlock(s, v, st) {
-    const meterOf = (key, label, extra, value) => {
+    const meterOf = (key, label, extra, value, more) => {
       const fill = el("i");
       const node = el("div", { class: "sc-stat", "data-stat": key, ...(extra || {}) }, [el("div", { class: "sc-stat-value" }, value), el("div", { class: "sc-stat-label", text: label }),
-        el("div", { class: "pv-thin", "aria-hidden": "true" }, [fill])]);
+        el("div", { class: "pv-thin", "aria-hidden": "true" }, [fill]), ...(more || [])]);
       node.__fill = fill;
       return node;
     };
     const pointsBig = el("span", { class: "sc-points-val" }), pointsOf = el("span", { class: "sc-points-of" });
-    const pointsVal = el("span", { id: "sc-points", class: "pv-sr sc-points" });
+    const pointsVal = el("span", { id: "sc-points", class: "pv-sr sc-points" }), hoursVal = el("span", { class: "pv-sr sc-hours-line" });
     const boardVal = el("span", { class: "sc-board-n" }), fullVal = el("span", { class: "sc-full-n" }), tripsVal = el("span", { class: "sc-trips-n" });
-    const pointsCard = meterOf("points", "Scouting Points", { id: "sc-points-card", role: "status" }, [pointsBig, pointsOf, pointsVal]);
+    const pointsCard = meterOf("points", "Scouting Points", { id: "sc-points-card", role: "status" }, [pointsBig, pointsOf], [pointsVal, hoursVal]);
     const trips = meterOf("trips", "Trips This Week", null, [tripsVal]);
     const board = meterOf("board", "Board Scouted", null, [boardVal]);
     const full = meterOf("full", "Full Reports", null, [fullVal]);
@@ -182,6 +182,7 @@
       set(pointsOf, ` / ${st.pointsWeek}`);
       fillTo(pointsCard, st.pointsWeek ? st.points / st.pointsWeek : 0);
       set(pointsVal, `Points Left: ${st.points} of ${st.pointsWeek}`);
+      set(hoursVal, ` Recruiting Hours: ${st.left} of ${st.hours}`);
       pointsCard.title = `${st.points} of ${plural(st.pointsWeek, "scouting point")} left for trips this week; ${st.left} of ${plural(st.hours, "recruiting hour")} left for calls and visits`;
       pointsCard.setAttribute("aria-label", pointsCard.title);
       const n = finds(d).length;
@@ -434,7 +435,7 @@
         title: reason || `Spend ${r.cost} scouting points on one more look at ${r.name}`, ...(reason ? { disabled: "" } : {}) });
       ui().on(send, "click", () => sendScout(send));
       const on = !!r.on_board;
-      const boardBtn = el("button", { type: "button", id: "sc-board", class: "go-btn sc-board-btn", "aria-pressed": String(on), text: on ? "★ Remove from Board" : "☆ Add to Board" });
+      const boardBtn = el("button", { type: "button", id: "sc-board", class: "go-btn sc-board-btn", "aria-pressed": String(on), text: on ? "★ Remove From Board" : "☆ Add to Board" });
       ui().on(boardBtn, "click", () => toggleBoard(boardBtn));
       const full = el("button", { type: "button", class: "go-btn sc-full-profile", text: "View Full Profile" });
       ui().on(full, "click", () => openHim(s, r.pid));

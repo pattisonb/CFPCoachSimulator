@@ -301,8 +301,24 @@ if __name__ == "__main__":
             def profile(_):
                 open_tab(page, base, A, "prospects", ".go-list-row")
                 page.click(".go-list-row .go-list-id >> nth=0")
-                page.wait_for_selector(".go-profile .go-display", timeout=60_000)
+                page.wait_for_selector(".modal:not([hidden]) .pv-popup .pv-grid > .pv-card", timeout=60_000)
             w.both("prospect-profile", profile)
+
+            # the pane's other tabs, the Scouting Center's tabs and the popup's Scouting tab: the new cards
+            for sub in ("scouting", "profile", "history"):
+                def pane_tab(_, sub=sub):
+                    pane(_)
+                    page.click(f".go-pane .go-subtabs button[data-sub={sub}]")
+                    page.wait_for_selector(".go-pane .pv-grid > .pv-card", timeout=30_000)
+                    time.sleep(0.6)
+                w.both(f"recruiting-pane-{sub}", pane_tab)
+            for sub in ("looks", "profile"):
+                def center_tab(_, sub=sub):
+                    open_tab(page, base, A, "scouting", ".sc-list .sc-row")
+                    page.click(f".sc-intel .sc-subtabs button[data-sub={sub}]")
+                    page.wait_for_selector(".sc-intel .pv-grid > .pv-card", timeout=30_000)
+                    time.sleep(0.6)
+                w.both(f"scouting-{sub}", center_tab)
 
             # --- the finished career: Classes, Summary, then every offseason stage
             w.both("classes", lambda _: open_tab(page, base, B, "classes", ".go-class"))

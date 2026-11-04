@@ -224,6 +224,7 @@
 .sc-intel-head .go-kicker { color: var(--muted); }   /* one red kicker on the tab (the header): the panel kickers stay quiet */
 
 /* ----- the redesign: the header's meters, the database rows, the selected prospect (web/profile.css's pieces) ----- */
+.sc-new-n[hidden] { display: none; }
 .pv-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .sc-head { grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px 24px; }
 .sc-head-text { border-left: 0; padding-left: 0; gap: 2px; }

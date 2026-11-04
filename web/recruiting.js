@@ -515,7 +515,7 @@
       ? el("div", { class: "go-targets" }, v.targets.map((b) => {
           const sd = standing(b, me);
           return el("button", { type: "button", class: "go-target", onclick: () => openProfile(s, b.id) }, [avatar(b.id, "sm"),
-            el("span", { class: "go-target-text" }, [el("b", { text: b.name }), el("span", { class: "muted small", text: `${stars(b.stars)} ${b.position} · #${b.national_rank} · ${sd.odds || ""}` })]),
+            el("span", { class: "go-target-text" }, [el("b", { text: b.name }), el("span", { class: "muted small", text: `${stars(b.stars)} ${b.display_pos || b.position} · #${b.national_rank} · ${sd.odds || ""}` })]),
             el("span", { class: `go-tag ${sd.tone}`, text: sd.word })]);
         }))
       : el("p", { class: "muted", text: "Offer prospects on your board and your hottest targets show here." }));
@@ -673,7 +673,30 @@
     return x.bar >= rows[0].bar - 0.1 ? "Contender" : x.bar >= 0.15 ? "In the Mix" : "Long Shot";
   }
   const ARROWS = (x) => (x.new ? ["★", "New on his list"] : x.move > 0 ? ["↑", `Up ${x.move}`] : x.move < 0 ? ["↓", `Down ${-x.move}`] : ["—", "No change"]);
+  // a committed or signed recruit with his profile in hand: the banner, then every other school on his list with its chance
+  // to flip him in words (p.flip), your own row marked, sorted by that chance; a commit to you nobody is close to says so in a line
+  function rivalsCard(b, me, p) {
+    const holder = b.signed || b.committed;
+    const flip = Object.fromEntries((((p.flip || {}).rivals) || []).map((r) => [r.school, r.word]));
+    const listed = (p.public.schools || []).filter((x) => x.school !== holder).sort((a, c) => (c.pct ?? -1) - (a.pct ?? -1));
+    const committed = !b.signed;
+    const quiet = committed && holder === me && listed.every((x) => (flip[x.school] || "None") === "None");
+    const title = b.signed ? "Who Else Offered" : holder === me ? "Who Else Is Calling" : "His Chance to Flip to Each";
+    const parts = [commitBanner(b, me, p)];
+    if (quiet) parts.push(el("p", { class: "muted go-nobody-close", "data-key": "quiet", text: "Nobody is close to pulling him away." }));
+    else if (!listed.length) parts.push(el("p", { class: "muted pv-battle-empty", "data-key": "empty", text: "No other school recruited him." }));
+    else parts.push(el("div", { class: "pv-battle pv-rivals", role: "list", "data-key": "rivals" }, listed.map((x) => {
+      const you = x.school === me;
+      const word = b.signed ? "" : x.pct == null ? "No Offer" : flip[x.school] || "None";
+      return el("div", { class: `pv-battle-row pv-rival ${you ? "you" : ""}`.trim(), role: "listitem", "data-key": x.school, "data-school": x.school }, [
+        window.CFP.teamPill(x.school), el("span", { class: "pv-battle-name" }, [el("b", { text: x.name }), you ? el("span", { class: "muted small", text: " (Your School)" }) : null]),
+        el("span", { class: "pv-battle-w", text: word }),
+        el("span", { class: "muted small pv-battle-marks", text: [x.offered ? "Offer" : "", x.visit ? (x.visit.done ? "Visited" : `Visit Wk ${x.visit.week}`) : ""].filter(Boolean).join(" · ") })]);
+    })));
+    return PV().card(title, parts, { key: "battle", cls: "pv-battle-card" });
+  }
   function battleCard(b, me, p, opts = {}) {
+    if ((b.signed || b.committed) && p && p.public && !opts.arrows) return rivalsCard(b, me, p);
     const rows = (b.list || []).filter((x) => x.bar != null);
     const flip = Object.fromEntries((((p && p.flip) || {}).rivals || []).map((r) => [r.school, r.word]));
     const holder = b.signed || b.committed;
@@ -782,10 +805,16 @@
   // ----- Scouting: the Scouting Report and Attributes side by side, Looks & Uncertainty across under them -----
   // opts.send: a Send button for the report card's foot; opts.link: "Reports on the Scouting Tab"; opts.reads: report lines
   // (the Scouting Center's this and last week); opts.extra: more nodes for the Looks card (the popup's staff button)
-  const SCOUT_TIP = "Hover or tap a grade to see what it looks like in ratings. A trip is one look; a week in a scout's area is half a look, up to two.";
+  // the report's ⓘ: what the grades are (final once his report is complete), and that a grade shows what it looks like
+  function scoutTip(looks) {
+    const hover = "Tap or hover a grade to see what it looks like in ratings.", trips = "A trip is one look; a week in a scout's area is half a look, up to two.";
+    if (looks >= 3) return `${fmtLooks(looks)} of 3 looks: his report is complete: these are your staff's final grades. ${hover} A read can still be wrong; the truth shows once he is on your roster. ${trips}`;
+    return `${fmtLooks(looks)} of 3 looks${3 - looks <= 1 ? ": one trip finishes his report" : ""}. ${hover} Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster. ${trips}`;
+  }
   function looksLine(looks) {
+    if (looks >= 3) return null;
     const left = 3 - looks;
-    return el("p", { class: "muted small pv-looks-line", "data-key": "looks-line", text: looks >= 3 ? "His report is complete: these are your staff's final grades." : looks <= 0 ? "No look yet: send a scout, or put a staff member on his area."
+    return el("p", { class: "muted small pv-looks-line", "data-key": "looks-line", text: looks <= 0 ? "No look yet: send a scout, or put a staff member on his area."
       : left <= 1 ? "One more look finishes his report." : `${fmtLooks(left)} more looks finish his report.` });
   }
   function scoutCards(s, b, p, opts = {}) {
@@ -793,7 +822,7 @@
     const rep = p ? p.report : null;
     const tips = (node) => { if (p && p.our_grades && p.grade_details) gradeTips(node, b.id, p.our_grades, p.grade_details); };
     const potTone = (rep && rep.potential_tone) || "good";
-    const report = PV().reportCard(rep, { looks, tip: SCOUT_TIP, foot: p && !p.ratings ? compLine(p, looks) : null, extra: opts.send ? [el("div", { class: "pv-card-acts", "data-key": "send" }, [].concat(opts.send))] : null, potentialTone: potTone });
+    const report = PV().reportCard(rep, { looks, tip: scoutTip(looks), foot: p && !p.ratings ? compLine(p, looks) : null, extra: opts.send ? [el("div", { class: "pv-card-acts", "data-key": "send" }, [].concat(opts.send))] : null, potentialTone: potTone });
     tips(report);
     const attrs = PV().attributesCard(rep, { tips });
     return [report, attrs, looksCard(s, b, p, looks, opts)];
@@ -801,9 +830,8 @@
   function looksCard(s, b, p, looks, opts = {}) {
     const likes = (p && p.likes) || b.likes;
     const flags = [...new Set([...(b.generational || (p && p.public.generational) ? ["generational"] : []), ...(b.find ? [b.find] : p && p.public.find ? [p.public.find] : [])])];
-    const extra = [looksLine(looks)];
+    const extra = [looksLine(looks)].filter(Boolean);
     if (flags.length || likes) extra.push(el("div", { class: "go-tags pv-flags", "data-key": "flags" }, [...flags.map((f) => f === "generational" ? genBadge() : badges({ find: f }, null).firstChild), likes ? el("span", { class: "go-tag good go-likes", text: likesText(likes), title: likesLine(likes) }) : null]));
-    if (likes) extra.push(el("p", { class: "small pv-likes-line", "data-key": "likes-line", text: likesLine(likes) }));
     if (!flags.length && !likes) extra.push(el("p", { class: "muted small sc-no-flags", "data-key": "no-flags", text: "No flags on him: your staff flags gems, bust risks and generational talents once his report is complete." }));
     if (opts.reads) extra.push(...[].concat(opts.reads));
     if (opts.link) extra.push(el("div", { class: "go-scout-foot", "data-key": "foot" }, [el("button", { type: "button", class: "go-link sc-reports-link", text: "Reports on the Scouting Tab",
@@ -827,6 +855,8 @@
       kvRow("ranks", "Rankings", pub.portal ? null : `#${pub.national_rank} Overall · #${pub.pos_rank} ${pub.display_pos} · #${pub.state_rank} in ${st}`),
       pub.composite != null ? kvRow("composite", "Composite", pub.composite.toFixed(4)) : null,
       kvRow("status", "Status", status(pub)),
+      p.likes ? el("div", { class: "pv-row", "data-key": "likes" }, [el("span", { class: "pv-row-k", text: "Your Staff" }),
+        el("span", { class: "pv-row-v" }, [el("span", { class: "go-tag good go-likes", text: likesText(p.likes), title: likesLine(p.likes) })])]) : null,
       kvRow("comp", "Comp", p.our_comp ? compText(p.our_comp) : looks >= 3 ? "Nobody Close Enough" : null, p.our_comp || looks >= 3 ? null : "His third look brings it.")]);
     return PV().grid([traits, PV().card("Background", [bg], { key: "background", cls: "pv-background" })]);
   }
@@ -859,9 +889,9 @@
   }
   function historyCards(s, b, me) {
     const items = historyItems(b.history || [], me);
-    const timeline = items.length ? el("ul", { class: "pv-timeline go-news go-history-rows", "data-key": "timeline" }, items.map((x, i) => el("li", { class: "pv-tl-row", "data-key": `h-${items.length - i}` }, [
-      el("span", { class: "pv-tl-icon", "aria-hidden": "true", text: KIND_ICON[x.kind] || "•" }), el("b", { class: "pv-tl-week", text: `Week ${x.week}` }),
-      el("span", { class: "pv-tl-text", text: x.text }), el("span", { class: "go-tag pv-tl-chip", text: KIND_CHIP[x.kind] || "News" })])))
+    const timeline = items.length ? el("ul", { class: "pv-timeline go-news go-history-rows", "data-key": "timeline" }, items.map((x, i) => el("li", { class: "pv-tl-row", "data-key": `h-${items.length - i}`, "data-line": `Week ${x.week} · ${x.text}` }, [
+      el("span", { class: "pv-tl-icon", "aria-hidden": "true", text: KIND_ICON[x.kind] || "•" }), el("span", { class: "pv-tl-text" }, [el("b", { class: "pv-tl-week", text: `Week ${x.week}` }), ` · ${x.text}`]),
+      el("span", { class: "go-tag pv-tl-chip", text: KIND_CHIP[x.kind] || "News" })])))
       : el("p", { class: "muted small", "data-key": "timeline", text: "Nothing with him yet: no contact, no offer." });
     const notes = el("div", { class: "pv-notes", "data-key": "notes" }, notesOf(b, me).map((t) => el("p", { text: t })));
     return PV().grid([PV().card("Recruiting Timeline", [timeline], { key: "timeline", cls: "pv-timeline-card" }),
@@ -938,7 +968,7 @@
         if (!e.best || (TONE_RANK[sd.tone] ?? 9) < (TONE_RANK[e.best.tone] ?? 9) || ((TONE_RANK[sd.tone] ?? 9) === (TONE_RANK[e.best.tone] ?? 9) && (sd.fill || 0) > (e.best.fill || 0))) e.best = sd;
       }
       if (!xy) continue;
-      dots.push({ id: b.id, xy, tone: sd.tone, ring: b.committed === me || b.signed === me, big: !!b.generational, label: `${b.name} · ${b.position} · ${sd.text}`, name: b.name });
+      dots.push({ id: b.id, xy, tone: sd.tone, ring: b.committed === me || b.signed === me, big: !!b.generational, label: `${b.name} · ${b.display_pos || b.position} · ${sd.text}`, name: b.name });
     }
     const open = mapOpen();
     const body = el("div", { class: "go-map-body" });
@@ -1282,7 +1312,7 @@
       side = null;
       document.body.classList.remove("go-sheet-open");
     }
-    function rowLine(b) { return b.portal ? `${b.position} · ${clsWord(b.cls)} · from ${b.from_name}` : ` ${b.position} · ${(b.hometown && b.hometown.state) || ""}`; }
+    function rowLine(b) { return b.portal ? `${b.position} · ${clsWord(b.cls)} · from ${b.from_name}` : ` ${b.display_pos || b.position} · ${(b.hometown && b.hometown.state) || ""}`; }
     function row(b) {
       const on = b.id === view.selected;
       const btn = el("button", { type: "button", class: `go-row-recruit ${on ? "selected" : ""}`, "data-pid": b.id, "aria-pressed": String(on), tabindex: on || (!view.selected && b === rows[0]) ? "0" : "-1" }, [
@@ -1551,8 +1581,9 @@
       const p = el("aside", { class: `go-card go-pane ${sheet ? "sheet" : ""}`, "aria-label": `${b.name}: recruit him`, ...(sheet ? { role: "dialog", "aria-modal": "true" } : {}) });
       p._pid = b.id;
       if (sheet) p.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (menuState) closeMenu(true); else closeSheet(); } });
-      const nameBtn = el("button", { type: "button", class: "go-link go-pane-name pv-name", "data-key": "name", text: b.name, title: "His traits and background", onclick: () => showSub("profile") });
-      const back = sheet ? el("button", { type: "button", class: "go-btn go-pane-back", "data-key": "back", "aria-label": "Back to the list", text: "‹ Back", onclick: closeSheet }) : null;
+      // the name and the phone's Back are drawn fresh with the hero: the morph keeps the live buttons (and their listeners) by data-key
+      const nameBtn = () => el("button", { type: "button", class: "go-link go-pane-name pv-name", "data-key": "name", text: b.name, title: "His traits and background", onclick: () => showSub("profile") });
+      const back = () => (sheet ? el("button", { type: "button", class: "go-btn go-pane-back", "data-key": "back", "aria-label": "Back to the list", text: "‹ Back", onclick: closeSheet }) : null);
       const head = el("div", { class: "go-pane-head" });
       // the tab row: the sub-tabs, then the buttons (Finish, Recruit ▾, Off the Board, the ☆ watch star)
       const acts = el("div", { class: "go-pane-act pv-acts" });
@@ -1565,9 +1596,9 @@
         return t;
       }));
       const tabRow = el("div", { class: "pv-tabrow" }, [strip, acts]);
-      const warnSlot = el("div", { class: "go-pane-warn" });
+      const warnSlot = el("div", { class: "go-pane-warn" });        // above the tab row: the warning sits over the Recruit button
       const body = el("div", { class: "go-sub-body pv-host", role: "tabpanel" });
-      p.append(head, tabRow, warnSlot, body);
+      p.append(head, warnSlot, tabRow, body);
       // on a phone the head is pinned to the top of the sheet: the tab row pins just under it, at its height
       if (sheet && window.ResizeObserver) new ResizeObserver(() => p.style.setProperty("--go-head-h", `${head.offsetHeight}px`)).observe(head);
       let finishBtn = null, recruitBtn = null, offBtn = null, warnEl = null, stepEl = null, bodyKey = null;
@@ -1582,9 +1613,8 @@
         const busy = open && b.scene ? (b.scene.action === "hc_visit" ? "visit" : "call") : null;
         const shown = !!(open && b.scene && view.scene === b.id);
         p.setAttribute("aria-label", `${b.name}: recruit him`);
-        nameBtn.textContent = b.name;
         // the hero: his chip, his line, the ranks and Your Chance, patched in place
-        ui().morph(head, el("div", {}, [heroOf(b, me, { nameNode: nameBtn, back })]), { pulse: !first });
+        ui().morph(head, el("div", {}, [heroOf(b, me, { nameNode: nameBtn(), back: back() })]), { pulse: !first });
         // his call or visit is open but not on screen: Finish brings it back (it re-reads the board first: the week may have moved on)
         const wantFinish = !!(busy && !shown);
         if (wantFinish && !finishBtn) {
@@ -2022,7 +2052,7 @@
           el("span", { class: "go-rank", text: `#${r.national_rank}` }), avatar(r.id, "sm"),
           el("span", { class: "go-list-id" }, [el("b", { text: r.name }), el("span", { class: "muted small", text: r.portal
             ? `${r.position} · ${clsWord(r.cls)} · from ${r.from_name}${r.usage ? ` · ${r.usage}` : ""}`
-            : `${r.position} · ${typeof r.height === "number" ? height(r.height) : (r.height || "")} ${r.weight} · ${place(r.hometown)}` }),
+            : `${r.display_pos || r.position} · ${typeof r.height === "number" ? height(r.height) : (r.height || "")} ${r.weight} · ${place(r.hometown)}` }),
             badges({ generational: r.generational, find: r.find }, s.team)]),
           r.portal ? null : el("span", { class: "go-stars", text: stars(r.stars) }),
           el("span", { class: "go-list-tags" }, [
@@ -2066,23 +2096,26 @@
         ...lines.map((t) => el("div", { text: t })),
         d.peers ? el("div", { class: "muted small", text: `Middle half of ${d.peers} prospects at his position graded like this, on the game's scale (50 is the middle Power 4 starter: Solid from 50, Strong from 65, Elite from 80, All-American from 90), ranked against today's players at his position.` }) : null]);
       cell.classList.add("go-tip");
+      cell.setAttribute("data-gtip", "");
       cell.setAttribute("tabindex", "0");
       cell.setAttribute("aria-describedby", tipId);
       cell.append(tip);
     }
-    if (grid.__tips) return;
-    grid.__tips = true;
-    const cellOf = (e) => { const c = e.target.closest(".go-tip"); return c && grid.contains(c) ? c : null; };
+  }
+  // the grade tooltips' listeners, once, on the document: a card drawn fresh and morphed onto a live one (the pane's cards)
+  // keeps the live element, so listeners on the fresh one would be lost; any [data-gtip] cell under the event is the one
+  {
+    const cellOf = (e) => (e.target && e.target.closest ? e.target.closest("[data-gtip]") : null);
     const tipOf = (c) => c.querySelector(":scope > .go-tip-box");
-    const show = (c) => { if (c) placeTip(c, tipOf(c)); };
-    const hide = (c) => { if (c) tipOf(c).classList.remove("show"); };
+    const show = (c) => { if (c && tipOf(c)) placeTip(c, tipOf(c)); };
+    const hide = (c) => { if (c && tipOf(c)) tipOf(c).classList.remove("show"); };
     const left = (e) => { const c = cellOf(e); if (c && !(e.relatedTarget && c.contains(e.relatedTarget))) hide(c); };
-    grid.addEventListener("mouseover", (e) => { const c = cellOf(e); if (c && !(e.relatedTarget && c.contains(e.relatedTarget))) show(c); });
-    grid.addEventListener("mouseout", left);
-    grid.addEventListener("focusin", (e) => show(cellOf(e)));
-    grid.addEventListener("focusout", left);
-    grid.addEventListener("click", (e) => show(cellOf(e)));
-    grid.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(cellOf(e)); });
+    document.addEventListener("mouseover", (e) => { const c = cellOf(e); if (c && !(e.relatedTarget && c.contains(e.relatedTarget))) show(c); });
+    document.addEventListener("mouseout", left);
+    document.addEventListener("focusin", (e) => show(cellOf(e)));
+    document.addEventListener("focusout", left);
+    document.addEventListener("click", (e) => show(cellOf(e)));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(cellOf(e)); });
   }
   const placeTip = (cell, tip) => ui().placeTip(cell, tip);     // web/ui.js: clamped to the window and its scrolling box
 
@@ -2210,7 +2243,7 @@
       const li = el("li", { class: `go-list-row go-class ${c.yours ? "yours" : ""}` }, [head]);
       if (open && d.class) li.append(el("ul", { class: "go-class-list" }, d.class.map((r) => el("li", {}, [
         el("button", { type: "button", class: "go-link", text: r.name, onclick: () => openProfile(s, r.id) }),
-        el("span", { class: "muted small", text: ` ${"★".repeat(r.stars)} ${r.position} · #${r.national_rank} · ${place(r.hometown)}${r.signed ? " · signed" : ""}` }),
+        el("span", { class: "muted small", text: ` ${"★".repeat(r.stars)} ${r.display_pos || r.position} · #${r.national_rank} · ${place(r.hometown)}${r.signed ? " · signed" : ""}` }),
         r.generational ? genBadge() : null,
         r.find_held === true && r.find === "bust" ? el("span", { class: "go-badge bust-held", text: "Bust Risk: The Read Held", title: "Your staff called him a bust risk and he is one" })
           : r.find_held === true ? el("span", { class: "go-badge gem-held", text: "Gem: The Read Held", title: "Your staff called him a gem and he is one" })

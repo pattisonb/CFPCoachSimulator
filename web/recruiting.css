@@ -309,17 +309,18 @@
 .go-list-col .go-stages button[aria-pressed="true"] { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
 .go-list-col .go-tools { width: 100%; }
 .go-list-col #rc-search { flex: 1 1 140px; min-width: 0; }
-.go-list-col .go-board .go-list-recruits, .go-list-col .go-list-recruits { gap: 2px; }
 /* a row's standing word is a chip in its tone */
 .go-row-recruit .go-standing-word { border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; letter-spacing: 0.03em; }
 .go-row-recruit .go-standing-word.good { border-color: var(--good); }
 .go-row-recruit .go-standing-word.warn { border-color: var(--go-warn, var(--accent)); }
 .go-row-recruit .go-standing-word.bad { border-color: var(--bad); }
-.go-row-recruit[aria-pressed="true"] { background: color-mix(in srgb, var(--go-primary, var(--accent)) 8%, transparent); }
+.go-row-recruit[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 8%, transparent); border-color: var(--accent); }
 /* the pane: the hero, the tab row, the cards */
 .go-pane { gap: 12px; border-width: 1px; border-color: var(--border); }
 .go-pane .go-pane-head { display: block; }
 .go-pane .pv-tabrow .go-subtabs { position: static; background: none; }
+/* the tab row pins to the top of the pane's scroll box (the pane's padding above it) while his cards scroll */
+.go-pane > .pv-tabrow { position: sticky; top: -20px; z-index: 2; background: var(--panel); }
 .go-pane-warn:empty { display: none; }
 .go-pane-warn .go-warn { margin: 0; font-size: 13px; color: var(--bad-text); }
 .go-pane.sheet .pv-tabrow { position: sticky; top: calc(var(--go-head-h, 0px) - 12px); z-index: 1; background: var(--panel); }

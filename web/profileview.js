@@ -128,14 +128,14 @@
         const known = tr.decider_topic ? names[tr.decider_topic] || titleCase(tr.decider_topic)
           : tr.decider && (opts.priorities || []).length ? opts.priorities.map((t) => names[t] || titleCase(t)).join(", ") : null;
         const h = known ? null : tr.decider ? "A call tells you what he cares about." : hint.decider || null;
-        return row("cares", "Cares About", known, null, h);
+        return traitRow("cares", "Cares About", known, null, h);
       }
       const v = tr[k];
       const val = v == null ? null : typeof v === "string" ? v : v.label || String(v);
       const detail = tr[`${k}_detail`] || null;
-      return row(k, TRAIT_LABELS[k] || titleCase(k), val, detail, val ? (opts.notes || {})[k] || null : hint[k] || null);
+      return traitRow(k, TRAIT_LABELS[k] || titleCase(k), val, detail, val ? (opts.notes || {})[k] || null : hint[k] || null);
     });
-    function row(key, label, val, detail, note) {
+    function traitRow(key, label, val, detail, note) {
       return el("div", { class: "pv-row go-trait", "data-trait": key }, [el("span", { class: "pv-row-k go-trait-label", text: label }),
         el("span", { class: "pv-row-v" }, [el("b", { class: `go-trait-val ${val ? "" : "muted"}`, text: val ? `${val}${detail ? ` · ${detail}` : ""}` : NOT_KNOWN }),
           note ? el("span", { class: `pv-hint muted ${val ? "pv-note" : ""}`, text: note }) : null])]);

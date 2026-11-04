@@ -1,7 +1,8 @@
 """The Scouting tab, the Scouting Center (web/scouting.js), in a browser: the database's first rows and the selected
-prospect's report are in the first viewport at 1280 and the page is well under half its old height; the stat cards
-read the API; the ratings are grade words, never invented numbers; a row fills the report without leaving the tab and
-a refresh restores him and the sub-tab; Send Scout patches the row's meter; Add to Board flips the star and Remove
+prospect's report are in the first viewport at 1280 and the page is well under half its old height; the meters
+read the API; the Attributes are grade words, never invented numbers; a row fills the report without leaving the tab and
+a refresh restores him and the sub-tab (Report · Looks · Profile; the old ratings, overview and scouting keys open Report
+and Looks); Send Scout patches the row's meter; Add to Board flips the star and Remove
 flips it back; a flagged row carries its badge and the Scouting sub-tab its flags; Scouting Operations opens the
 staff rows, an area change patches in place and a refresh keeps it open; All Reports opens by scout and a refresh
 restores it on Flags; a name there opens his profile with the board unchanged; on a phone the cards are 2×2, the
@@ -53,14 +54,15 @@ def check_first_viewport(page, base, sid, errors) -> None:
     assert params(page).get("spid") == first["pid"], "before anything is picked, the first row is selected (and in the address)"
     rows = page.evaluate("() => [...document.querySelectorAll('.sc-list .sc-row')].slice(0, 3).map(r => r.getBoundingClientRect().bottom)")
     assert len(rows) == 3 and all(b <= 1000 for b in rows), f"the database's first rows sit in the first viewport: {rows}"
-    assert page.evaluate("() => document.querySelector('.sc-intel .sc-boxes').getBoundingClientRect().bottom") <= 1000, "the report's head and boxes are in the first viewport"
+    assert page.evaluate("() => document.querySelector('.sc-intel .pv-tabrow').getBoundingClientRect().bottom") <= 1000, "the report's hero and its tab row are in the first viewport"
     height = page.evaluate("() => document.documentElement.scrollHeight")
     assert height < OLD_HEIGHT_1280 / 2, f"the page is well under half its old height: {height}"
     stats = page.eval_on_selector_all(".sc-stats .sc-stat", "els => els.map(e => e.dataset.stat + ':' + e.querySelector('.sc-stat-value').textContent)")
-    assert stats == [f"board:{len(board_ids(base, sid))}", f"full:{v['full_reports']}", f"trips:{v['trips_this_week']}", f"points:{v['points_left']}"], stats
-    assert page.eval_on_selector(".sc-intel .sc-subtabs button[data-sub=ratings]", "e => e.getAttribute('aria-selected')") == "true"
-    words = page.eval_on_selector_all(".sc-intel .sc-skill .sc-skill-val", "els => els.map(e => e.textContent.trim())")
-    assert words and all(re.fullmatch(r"(Weak|Fair|Solid|Strong|Elite|All-American)(–(Weak|Fair|Solid|Strong|Elite|All-American))?|Not Read", w) for w in words), \
+    board = board_ids(base, sid)
+    assert stats == [f"points:{v['points_left']} / {v['points_week']}", f"trips:{v['trips_this_week']}", f"board:{v['board_scouted']} of {len(board)}", f"full:{v['full_reports']}"], stats
+    assert page.eval_on_selector(".sc-intel .sc-subtabs button[data-sub=report]", "e => e.getAttribute('aria-selected')") == "true"
+    words = page.eval_on_selector_all(".sc-intel .pv-attr .pv-attr-w", "els => els.map(e => e.textContent.trim())")
+    assert len(words) == 5 and all(re.fullmatch(r"(Weak|Fair|Solid|Strong|Elite|All-American)( – (Weak|Fair|Solid|Strong|Elite|All-American))?|Not Scouted", w) for w in words), \
         f"the ratings are the staff's grade words, never invented numbers: {words}"
     assert not page.query_selector("#tab-scouting .sc-ops-body:not([hidden])"), "the staff rows are folded under Scouting Operations"
     assert not errors, errors
@@ -79,15 +81,22 @@ def check_select_and_subtab(page, base, sid, errors) -> None:
     assert page.get_attribute(f".sc-row[data-pid='{pid}'] .sc-row-btn", "aria-pressed") == "true"
     assert page.evaluate("(e) => e.isConnected", lst), "the list was never redrawn"
     assert board_ids(base, sid) == before, "selecting him leaves the board as it was"
-    page.click(".sc-intel .sc-subtabs button[data-sub=overview]")
-    page.wait_for_selector(".sc-intel .sc-facts", timeout=10_000)
-    wait_url(page, lambda p: p.get("ssub") == "overview", "ssub=overview")
-    reload(page, ".sc-intel .sc-facts")
+    page.click(".sc-intel .sc-subtabs button[data-sub=profile]")
+    page.wait_for_selector(".sc-intel .pv-traits", timeout=10_000)
+    wait_url(page, lambda p: p.get("ssub") == "profile", "ssub=profile")
+    reload(page, ".sc-intel .pv-traits")
     wait_intel(page, name)
-    assert params(page).get("spid") == pid and page.get_attribute(".sc-intel .sc-subtabs button[data-sub=overview]", "aria-selected") == "true", \
+    assert params(page).get("spid") == pid and page.get_attribute(".sc-intel .sc-subtabs button[data-sub=profile]", "aria-selected") == "true", \
         "a refresh restores the selected prospect and the sub-tab"
-    page.click(".sc-intel .sc-subtabs button[data-sub=ratings]")
-    wait_url(page, lambda p: p.get("ssub") is None, "ssub dropped on Ratings")
+    page.click(".sc-intel .sc-subtabs button[data-sub=report]")
+    wait_url(page, lambda p: p.get("ssub") is None, "ssub dropped on Report")
+    # an address from before the redesign: ratings and overview open Report, scouting opens Looks
+    for old, new in (("ratings", "report"), ("overview", "report"), ("scouting", "looks")):
+        page.goto(f"{base}/index.html?id={sid}&tab=scouting&spid={pid}&ssub={old}")
+        page.wait_for_selector(f".sc-intel .sc-subtabs button[data-sub={new}][aria-selected=true]", timeout=60_000)
+        wait_intel(page, name)
+    page.click(".sc-intel .sc-subtabs button[data-sub=report]")
+    wait_url(page, lambda p: p.get("ssub") is None, "ssub dropped on Report")
     assert not errors, errors
 
 
@@ -111,13 +120,13 @@ def check_send_and_board(page, base, sid, errors) -> None:
     assert not page.query_selector(".sc-intel .sc-result"), "no first-read box after a trip (the player removed it)"
     page.wait_for_function("(h) => document.querySelector('#sc-points').textContent.startsWith('Points Left: ' + h + ' of')", arg=v["points_left"] - row["cost"], timeout=10_000)
     assert page.evaluate("(e) => e.isConnected", lst) and tab_on(page, "scouting")
-    # Add to Board flips the star; Remove from Board flips it back (no offer out: no confirm)
+    # Add to Board flips the star; Remove From Board flips it back (no offer out: no confirm)
     assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-star") == "☆"
     page.click("#sc-board")
     toasted(page, f"{row['name']} is on your board.")
     page.wait_for_function("(pid) => document.querySelector(`.sc-row[data-pid='${pid}'] .sc-star`).textContent === '★'", arg=pid, timeout=10_000)
-    assert pid in board_ids(base, sid) and page.inner_text("#sc-board").strip() == "★ Remove from Board"
-    assert page.inner_text(".sc-stat[data-stat=board] .sc-stat-value") == str(len(board_ids(base, sid)))
+    assert pid in board_ids(base, sid) and page.inner_text("#sc-board").strip() == "★ Remove From Board"
+    assert page.inner_text(".sc-stat[data-stat=board] .sc-stat-value").endswith(f" of {len(board_ids(base, sid))}")
     page.click("#sc-board")
     toasted(page, f"{row['name']} is off your board.")
     page.wait_for_function("(pid) => document.querySelector(`.sc-row[data-pid='${pid}'] .sc-star`).textContent === '☆'", arg=pid, timeout=10_000)
@@ -179,15 +188,15 @@ def check_sort(page, base, sid, errors) -> None:
 def check_flags(page, base, sid, errors) -> None:
     v = call(base, f"/api/season/{sid}/scouting?limit=400")
     flagged = next(r for r in v["queue"] if r["flags"] or r["likes"])
-    assert page.query_selector(f".sc-row[data-pid='{flagged['pid']}'] .sc-row-flags .go-badge, .sc-row[data-pid='{flagged['pid']}'] .sc-row-flags .go-tag"), "the row carries a small flag badge"
+    assert page.query_selector(f".sc-row[data-pid='{flagged['pid']}'] .sc-eval .go-badge, .sc-row[data-pid='{flagged['pid']}'] .sc-row-flags .go-badge, .sc-row[data-pid='{flagged['pid']}'] .sc-row-flags .go-tag"), "the row carries a small flag badge"
     page.click(f".sc-row[data-pid='{flagged['pid']}'] .sc-row-btn")
     wait_intel(page, flagged["name"])
-    page.click(".sc-intel .sc-subtabs button[data-sub=scouting]")
-    page.wait_for_selector(".sc-intel .sc-sc-flags", timeout=10_000)
-    text = page.inner_text(".sc-intel .sc-sc-flags")
+    page.click(".sc-intel .sc-subtabs button[data-sub=looks]")
+    page.wait_for_selector(".sc-intel .pv-flags", timeout=10_000)
+    text = page.inner_text(".sc-intel .pv-flags")
     assert any(w.lower() in text.lower() for w in ("Generational", "Gem", "Bust Risk", "Likes Him")), text
     assert page.get_attribute("#sc-all-reports .sc-new-n", "hidden") is None, "All Reports counts this week's finds"
-    page.click(".sc-intel .sc-subtabs button[data-sub=ratings]")
+    page.click(".sc-intel .sc-subtabs button[data-sub=report]")
     assert not errors, errors
 
 
@@ -196,7 +205,7 @@ def check_ops(page, base, sid, errors) -> None:
     page.click("#sc-manage")
     page.wait_for_selector(".sc-ops-body .sc-scout", timeout=10_000)
     wait_url(page, lambda p: p.get("sops") == "1", "sops=1")
-    assert page.evaluate("() => document.querySelectorAll('.sc-ops-body .sc-scout').length") == len(v["scouts"]) == 5
+    assert page.evaluate("() => document.querySelectorAll('.sc-ops-body .sc-scout:not(.sc-open-spot)').length") == len(v["scouts"]) == 5
     assert all(page.query_selector(f".sc-ops-body .sc-scout[data-key='{m['id']}'] .sc-bar") for m in v["scouts"]), "each scout carries his narrowed bar"
     lst = page.query_selector(".sc-list")
     scout = v["scouts"][0]
@@ -205,7 +214,7 @@ def check_ops(page, base, sid, errors) -> None:
     page.select_option(sel, other)
     toasted(page, f"{scout['name']} now scouts {other}.")
     page.wait_for_function("(a) => document.querySelector('.sc-ops-summary').textContent.includes(a)", arg=other, timeout=10_000)
-    assert page.evaluate("() => document.querySelectorAll('.sc-ops-body .sc-scout').length") == 5 and page.evaluate("(e) => e.isConnected", lst)
+    assert page.evaluate("() => document.querySelectorAll('.sc-ops-body .sc-scout:not(.sc-open-spot)').length") == 5 and page.evaluate("(e) => e.isConnected", lst)
     reload(page, ".sc-ops-body .sc-scout")
     assert params(page).get("sops") == "1" and page.eval_on_selector(sel, "e => e.value") == other, "a refresh keeps Scouting Operations open"
     page.click("#sc-manage")

@@ -188,9 +188,9 @@ def desktop(browser, base, sid, pids, names, errs) -> None:
     assert page.evaluate("() => document.activeElement.id") == "rc-recruit", "the Recruit button takes the focus"
     # History keeps one line for the call; none of the conversation
     page.click(".go-pane .go-subtabs button[data-sub=history]")
-    page.wait_for_selector(".go-pane .go-history", timeout=10_000)
+    page.wait_for_selector(".go-pane .go-history-rows", timeout=10_000)
     time.sleep(0.4)
-    lines = page.eval_on_selector_all(".go-pane .go-history li", "els => els.map(e => e.textContent.trim())")
+    lines = page.eval_on_selector_all(".go-pane .go-history-rows li", "els => els.map(e => e.dataset.line)")
     calls = [t for t in lines if re.match(r"^Week \d+ · Call · ", t)]
     assert len(calls) == 1, lines
     assert not any(re_["text"] in t for t in lines), "History keeps a line, not his words"

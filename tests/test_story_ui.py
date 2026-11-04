@@ -59,7 +59,13 @@ def open_profile(page) -> None:
 
 
 def chips(page) -> list:
-    return page.eval_on_selector_all(".go-pane .go-tags [data-key='trait:story']", "els => els.map(e => e.textContent.trim())")
+    """His story's chip among the tags: the Overview's Recruit Snapshot carries them; the Profile tab opens again after."""
+    page.click(".go-pane .go-subtabs button[data-sub=overview]")
+    page.wait_for_selector(".go-pane [data-key=snapshot]", timeout=30_000)
+    time.sleep(0.3)
+    out = page.eval_on_selector_all(".go-pane .go-tags [data-key='trait:story']", "els => els.map(e => e.textContent.trim())")
+    open_profile(page)
+    return out
 
 
 def no_null(page, what: str) -> None:
@@ -84,9 +90,9 @@ def desktop(browser, base, sid, hero, two, legacy, errs) -> None:
     open_profile(page)
     rows = rows_of(page)
     assert rows["story"] == "Hometown Hero", rows
-    assert page.inner_text(".go-pane .go-trait[data-trait=story] .go-trait-label").strip() == "His Story"
+    assert page.text_content(".go-pane .go-trait[data-trait=story] .go-trait-label").strip() == "His Story"
     assert chips(page) == ["Hometown Hero"], chips(page)
-    assert page.query_selector(".go-pane .go-story-line"), "a sentence says what his story means"
+    assert page.query_selector(".go-pane .go-trait[data-trait=story] .pv-note"), "a sentence says what his story means"
     no_null(page, "a hero")
     # Two-Sport, found by the complete report: the draft risk from you in words
     pick_row(page, two)

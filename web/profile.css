@@ -11,14 +11,15 @@ body { --pv-warn: var(--go-warn, #f5b942); }
 .go-pane-head, .rc-profile-head, .sc-hero { container-type: inline-size; min-width: 0; }
 .pv-hero { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 18px; min-width: 0; }
 .pv-who { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1 1 250px; }
-.pv-who > .go-avatar { flex: none; }
+.pv-who > .go-avatar { flex: none; width: 72px; height: 72px; }
 .pv-id { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
+.pv-id > .pv-tag { margin-bottom: 5px; }   /* 8 px from the chip to the name button (tests/test_spacing.py) */
 .pv-id .go-chip, .pv-id .pv-tag { min-height: 0; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-2); font-size: 11.5px; font-weight: 700; }
 .pv-id .go-pane-name { text-decoration: none; }
 .pv-id .go-pane-name:hover { text-decoration: underline; }
 .pv-name, .pv-id .go-pane-name { text-transform: none; letter-spacing: 0; font-size: 24px; line-height: 1.15; font-weight: 800; text-align: left; overflow-wrap: anywhere; color: var(--text); margin: 0; }
 .pv-line { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
-.pv-line .go-stars { font-size: 15px; }
+.pv-line .go-stars { font-size: 14px; letter-spacing: 0; }
 .pv-sep { color: var(--muted); }
 .pv-place { font-size: 13.5px; }
 .pv-right { display: flex; flex-wrap: nowrap; align-items: stretch; gap: 6px; margin-left: auto; flex: none; }
@@ -49,9 +50,9 @@ body { --pv-warn: var(--go-warn, #f5b942); }
 
 /* ----- the tab row: the tabs, then the actions on the right ----- */
 .pv-tabrow { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0 8px; border-bottom: 1px solid var(--border); }
-.pv-tabrow > .go-subtabs { flex: 0 1 auto; justify-content: flex-start; border-bottom: 0; min-width: 0; margin: 0; }
+.pv-tabrow > .go-subtabs { flex: 0 1 auto; align-self: stretch; align-items: flex-end; justify-content: flex-start; border-bottom: 0; min-width: 0; margin: 0; }
 .pv-tabrow .go-subtabs button { min-height: 44px; font-weight: 700; font-size: 14px; }
-.pv-acts, .go-pane-act.pv-acts { flex: none; display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 8px; padding-bottom: 6px; margin-left: auto; }
+.pv-acts, .go-pane-act.pv-acts { flex: 0 1 auto; display: flex; flex-direction: row; flex-wrap: wrap; justify-content: flex-end; min-width: 0; align-items: center; gap: 8px; padding-bottom: 6px; margin-left: auto; }
 .pv-acts .go-btn { min-height: 44px; white-space: nowrap; }
 .pv-star { min-width: 44px; min-height: 44px; padding: 0; font-size: 18px; line-height: 1; }
 .pv-star[aria-pressed="true"] { color: var(--accent-text, var(--accent)); }
@@ -132,6 +133,8 @@ body { --pv-warn: var(--go-warn, #f5b942); }
 .pv-battle-w { text-align: right; color: var(--muted); white-space: nowrap; }
 .pv-battle-w.good { color: var(--good-text, var(--good)); font-weight: 700; }
 .pv-battle-row:not(:has(.pv-bar)) { grid-template-columns: 20px 28px minmax(0, 1fr) auto; }
+.pv-battle-row.pv-rival { grid-template-columns: 28px minmax(0, 1fr) auto minmax(0, auto); }
+.pv-battle-marks { text-align: right; }
 .pv-arrow.up { color: var(--good-text, var(--good)); }
 .pv-arrow.down { color: var(--bad-text, var(--bad)); }
 .pv-kv3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
@@ -144,7 +147,7 @@ body { --pv-warn: var(--go-warn, #f5b942); }
 .pv-pri-v { display: flex; flex-direction: column; }
 .pv-snapshot .go-tags, .pv-snapshot .go-standing-text { margin: 0; }
 .pv-timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.pv-tl-row { display: grid; grid-template-columns: 24px 64px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.pv-tl-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .pv-tl-row:last-child { border-bottom: 0; }
 .pv-tl-icon { text-align: center; color: var(--muted); font-size: 16px; }
 .pv-tl-chip { text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; }
@@ -154,10 +157,12 @@ body { --pv-warn: var(--go-warn, #f5b942); }
 @container (max-width: 640px) {
   .pv-battle-row { grid-template-columns: 20px 28px minmax(0, 1fr) auto; }
   .pv-battle-row > .pv-bar { display: none; }
+  .pv-battle-row.pv-rival { grid-template-columns: 28px minmax(0, 1fr) auto; }
+  .pv-rival .pv-battle-marks { grid-column: 2 / -1; text-align: left; }
   .pv-kv3 { grid-template-columns: minmax(0, 1fr); }
   .pv-kv3 > .go-stat { border-left: 0; padding-left: 0; }
 }
-@media (max-width: 700px) { .pv-attr.go-tip, .pv-potential.go-tip { min-height: 44px; } }
+@media (max-width: 700px) { .pv-attr.go-tip, .pv-potential.go-tip { min-height: 44px; } .pv-id .go-pane-name, .pv-card .go-link { min-height: 44px; display: inline-flex; align-items: center; } }
 
 /* phone width: the header's stats wrap under him, the bars keep their words under them */
 @media (max-width: 600px) {
@@ -171,6 +176,4 @@ body { --pv-warn: var(--go-warn, #f5b942); }
   .pv-attr { grid-template-columns: minmax(90px, 8em) minmax(0, 1fr); gap: 4px 10px; }
   .pv-attr > .pv-attr-w { grid-column: 2; text-align: left; }
   .pv-unc { grid-template-columns: minmax(0, 1fr); }
-  .pv-tl-row { grid-template-columns: 24px minmax(0, 1fr) auto; }
-  .pv-tl-row > .pv-tl-text { grid-column: 2 / -1; }
 }

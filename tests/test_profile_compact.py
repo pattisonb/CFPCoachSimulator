@@ -1,10 +1,10 @@
-"""The compact Prospect Profile (web/recruiting.js openProfile, web/recruiting.css).
-For a fully scouted prospect on the board pane's Profile sub-tab at 1280x800 the whole profile, down to "Our comp", fits
-without scrolling; the grades show once (the Scouted strip's chips, each with its "looks like" tooltip; no card grid); the
-OC chip shows once and carries the coordinator's sentence as its title; the strip's note is an ⓘ; Personality and Who
-Decides share one row; the summary line and "Our comp" sit under the Evaluation, before His List. At 400 px nothing runs
-sideways and every control stands 44 px tall. Needs Playwright with a Chromium; skipped without one.
-PROFILE_SHOTS=<folder> saves screenshots (deviceScaleFactor 2)."""
+"""The compact profile, after the overhaul (web/profileview.js, web/recruiting.js): for a fully scouted prospect on the
+board pane's Scouting tab at 1280x800 the Scouting Report down to its comp is in view without scrolling the pane; the
+grades show once (the Attributes bars, each with its "looks like" tooltip, and the Potential headline; no grade grid, no
+chip strip); the OC chip shows once and carries the coordinator's sentence as its title; the report's note about the
+final grades is an ⓘ, off the page; the traits are easy to find (the Profile tab opens on one card with Who Decides,
+Cares About, Personality and His Story). At 400 px nothing runs sideways, every control stands 44 px tall and the cards
+stack. Needs Playwright with a Chromium; skipped without one. PROFILE_SHOTS=<folder> saves screenshots (deviceScaleFactor 2)."""
 import os
 import subprocess
 import sys
@@ -52,33 +52,45 @@ def shot(page, name: str) -> None:
 
 
 def open_pane_profile(page, base, sid, pid) -> None:
+    """His pane on the Scouting tab: the Scouting Report (its comp) and the Attributes card (the grades)."""
     open_tab(page, base, sid, "recruiting", ".go-stages")
     page.click(f".go-row-recruit[data-pid='{pid}']")
-    page.click(".go-pane .go-subtabs button[data-sub=profile]")
-    page.wait_for_selector(".go-pane .go-sub-body.go-profile .go-scouted .go-gchip.go-tip", timeout=60_000)
-    page.wait_for_selector(".go-pane .go-sub-body.go-profile .go-comp", timeout=30_000)
+    page.click(".go-pane .go-subtabs button[data-sub=scouting]")
+    page.wait_for_selector(".go-pane .pv-attributes .pv-attr.go-tip", timeout=60_000)
+    page.wait_for_selector(".go-pane .pv-report .go-comp", timeout=30_000)
     time.sleep(0.6)
 
 
 def check_content(page, oc: str, where: str) -> None:
-    assert not page.query_selector(".go-pane .go-profile .go-grades"), f"no second grade grid {where}"
-    assert not page.query_selector(".go-pane .go-profile .go-likes-line"), f"no separate likes line {where}"
+    # the grades show once: the Attributes bars, each with its "looks like" tooltip; no grade grid, no chip strip
+    assert not page.query_selector(".go-pane .go-grades, .go-pane .go-scouted"), f"no second grade grid {where}"
+    rows = page.query_selector_all(".go-pane .pv-attrs .pv-attr")
+    assert page.evaluate("() => document.querySelectorAll('.go-pane .pv-attrs').length") == 1, f"the grades show once {where}"
+    assert len(rows) == 5 and all("go-tip" in (c.get_attribute("class") or "") and c.query_selector(".go-tip-box") for c in rows), f"five attribute bars, each with a tooltip {where}"
+    assert page.query_selector(".go-pane .pv-report .pv-potential.go-tip .go-tip-box"), f"the potential headline carries its tooltip {where}"
+    # the OC chip shows once (the Scouting tab's flags) and carries the coordinator's sentence as its title; no separate likes line
+    assert not page.query_selector(".go-pane .go-likes-line, .go-pane .pv-likes-line"), f"no separate likes line {where}"
     assert page.evaluate("() => [...document.querySelectorAll('.go-pane .go-likes')].filter(e => e.getClientRects().length).length") == 1, f"the OC chip once {where}"
-    assert page.get_attribute(".go-pane .go-likes", "title") == f"Your OC, {oc}, thinks he starts for you next year.", f"the chip carries the sentence {where}"
-    chips = page.query_selector_all(".go-pane .go-profile .go-scouted .go-gchip")
-    assert len(chips) == 6 and all("go-tip" in (c.get_attribute("class") or "") and c.query_selector(".go-tip-box") for c in chips), f"six grade chips, each with a tooltip {where}"
-    info = page.query_selector(".go-pane .go-profile .go-scouted .go-info")
-    assert info, f"the strip's note is an ⓘ {where}"
+    assert page.get_attribute(".go-pane .pv-uncertainty .go-likes", "title") == f"Your OC, {oc}, thinks he starts for you next year.", f"the chip carries the sentence {where}"
+    # the report's note is an ⓘ: the long note about the final grades is off the page
+    info = page.query_selector(".go-pane .pv-report .go-info")
+    assert info, f"the report's note is an ⓘ {where}"
     assert "these are your staff's final grades" in page.evaluate("(b) => document.getElementById(b.getAttribute('aria-describedby')).textContent", info)
-    assert "his report is complete" not in page.inner_text(".go-pane .go-profile").replace("\n", " "), f"the long note is off the page {where}"
-    # one row: Personality, Who Decides and His Story side by side
-    tops = page.eval_on_selector_all(".go-pane .go-profile .go-trait", "els => els.map(e => Math.round(e.getBoundingClientRect().top))")
-    assert len(tops) == 3 and (where.endswith("400") or max(tops) - min(tops) <= 2), f"Personality, Who Decides and His Story share a row {where}: {tops}"
-    # the order: strip, traits, evaluation, outlook, our comp, his list
-    order = page.evaluate("""() => { const q = (s) => { const e = document.querySelector('.go-pane .go-profile ' + s); return e ? e.getBoundingClientRect().top : null; };
-      return [q('.go-scouted'), q('.go-traits'), q('.rc-eval'), q('.go-outlook'), q('.go-comp'), q('.go-schools, .go-no-schools')]; }""")
-    present = [t for t in order if t is not None]
-    assert order[0] is not None and order[1] is not None and order[4] is not None and present == sorted(present), f"strip, traits, evaluation, summary, comp, list in that order {where}: {order}"
+    assert "his report is complete" not in page.inner_text(".go-pane .go-sub-body").replace("\n", " ").lower(), f"the long note is off the page {where}"
+    # the order in the report: the potential, the verdict, the lists, then the comp; the Attributes beside or under it
+    order = page.evaluate("""() => { const q = (s) => { const e = document.querySelector('.go-pane ' + s); return e ? e.getBoundingClientRect().top : null; };
+      return [q('.pv-report .pv-potential'), q('.pv-report .pv-verdict'), q('.pv-report .pv-cols'), q('.pv-report .go-comp')]; }""")
+    assert None not in order and order == sorted(order), f"potential, verdict, lists, comp in that order {where}: {order}"
+    # the traits are easy to find: the Profile tab opens on them, every row there at once, in view
+    page.click(".go-pane .go-subtabs button[data-sub=profile]")
+    page.wait_for_selector(".go-pane .pv-traits .go-trait", timeout=30_000)
+    keys = page.eval_on_selector_all(".go-pane .pv-traits .go-trait", "els => els.map(e => e.dataset.trait)")
+    assert keys[:4] == ["decider", "cares", "personality", "story"], f"Who Decides, Cares About, Personality and His Story in the traits card {where}: {keys}"
+    fit = page.evaluate("() => { const e = document.querySelector('.go-pane .pv-traits'); return e.getBoundingClientRect().top < innerHeight; }")
+    assert fit, f"the traits card starts in the first view of the Profile tab {where}"
+    page.click(".go-pane .go-subtabs button[data-sub=scouting]")
+    page.wait_for_selector(".go-pane .pv-attributes .pv-attr.go-tip", timeout=30_000)
+    time.sleep(0.4)
 
 
 def desktop(browser, base, sid, pid, oc, errs) -> None:
@@ -89,24 +101,23 @@ def desktop(browser, base, sid, pid, oc, errs) -> None:
     check_content(page, oc, "at 1280")
     page.evaluate("() => window.scrollTo(0, 1500)")      # the page scrolled until the pane sticks at the top of the window, as a player works it
     time.sleep(0.5)
-    fit = page.evaluate("""() => { const c = document.querySelector('.go-pane .go-profile .go-comp'), pane = document.querySelector('.go-pane');
+    fit = page.evaluate("""() => { const c = document.querySelector('.go-pane .pv-report .go-comp'), pane = document.querySelector('.go-pane');
       const r = c.getBoundingClientRect(), pr = pane.getBoundingClientRect(); return { bottom: r.bottom, vh: innerHeight, paneBottom: pr.bottom, scrolled: pane.scrollTop, page: scrollY,
         paneScrolls: pane.scrollHeight > pane.clientHeight + 1 }; }""")
-    assert fit["bottom"] <= fit["vh"] and fit["bottom"] <= fit["paneBottom"] + 0.5 and fit["scrolled"] == 0, f"Our comp is in view without scrolling the pane at 1280x800: {fit}"
-    # the evaluation runs in two columns on a wide screen
-    cols = page.evaluate("() => getComputedStyle(document.querySelector('.go-pane .go-profile .rc-eval')).columnCount")
-    assert str(cols) == "2", f"two evaluation columns at 1280: {cols}"
-    # a chip's tooltip opens on hover
-    chip = page.query_selector(".go-pane .go-profile .go-scouted .go-gchip")
-    chip.hover()
+    assert fit["bottom"] <= fit["vh"] and fit["bottom"] <= fit["paneBottom"] + 0.5 and fit["scrolled"] == 0, f"the comp is in view without scrolling the pane at 1280x800: {fit}"
+    # the report and the Attributes sit side by side on a wide pane
+    tops = page.evaluate("() => ['.pv-report', '.pv-attributes'].map(s => Math.round(document.querySelector('.go-pane ' + s).getBoundingClientRect().top))")
+    assert abs(tops[0] - tops[1]) <= 1, f"the report and the Attributes side by side at 1280: {tops}"
+    # a bar's tooltip opens on hover
+    page.hover(".go-pane .pv-attributes .pv-attr >> nth=0")
     time.sleep(0.3)
-    assert page.query_selector(".go-pane .go-profile .go-tip-box.show"), "hovering a grade chip shows what it looks like"
+    assert page.query_selector(".go-pane .go-tip-box.show"), "hovering a grade shows what it looks like"
     shot(page, "after-1280")
     page.mouse.move(2, 790)
     # the ⓘ opens too
-    page.hover(".go-pane .go-profile .go-scouted .go-info")
+    page.hover(".go-pane .pv-report .go-info")
     time.sleep(0.3)
-    assert page.query_selector(".go-pane .go-profile .go-info-box.show"), "the ⓘ shows the note"
+    assert page.query_selector(".go-pane .go-info-box.show"), "the ⓘ shows the note"
     ctx.close()
 
 
@@ -118,13 +129,13 @@ def phone(browser, base, sid, pid, oc, errs) -> None:
     check_content(page, oc, "at 400")
     over = page.evaluate("""() => { const pane = document.querySelector('.go-pane'), pr = pane.getBoundingClientRect();
       return { page: document.documentElement.scrollWidth - innerWidth, pane: pane.scrollWidth - pane.clientWidth,
-        out: [...pane.querySelectorAll('.go-profile *')].filter(e => e.getClientRects().length && !e.closest('.go-tip-box') && e.getBoundingClientRect().right > pr.right + 0.5).map(e => e.className || e.tagName).slice(0, 5) }; }""")
+        out: [...pane.querySelectorAll('.go-sub-body *')].filter(e => e.getClientRects().length && !e.closest('.go-tip-box, .go-info-box') && e.getBoundingClientRect().right > pr.right + 0.5).map(e => e.className || e.tagName).slice(0, 5) }; }""")
     assert over["page"] <= 0 and over["pane"] <= 0 and not over["out"], f"nothing runs sideways at 400: {over}"
-    small = page.evaluate("""() => [...document.querySelectorAll('.go-pane .go-profile button, .go-pane .go-profile .go-gchip, .go-pane .go-profile .go-info')]
+    small = page.evaluate("""() => [...document.querySelectorAll('.go-pane .go-sub-body button, .go-pane .go-sub-body .go-tip, .go-pane .go-sub-body .go-info')]
       .filter(e => e.getClientRects().length).map(e => [e.className, e.textContent.trim().slice(0, 20), Math.round(e.getBoundingClientRect().height)]).filter(x => x[2] < 44)""")
     assert not small, f"every control is 44 px tall at 400: {small}"
-    cols = page.evaluate("() => getComputedStyle(document.querySelector('.go-pane .go-profile .rc-eval')).columnCount")
-    assert str(cols) == "auto", f"one evaluation column on a phone: {cols}"
+    tops = page.evaluate("() => ['.pv-report', '.pv-attributes'].map(s => Math.round(document.querySelector('.go-pane ' + s).getBoundingClientRect().top))")
+    assert tops[1] > tops[0], f"one column on a phone: the Attributes under the report {tops}"
     page.evaluate("() => { const p = document.querySelector('.go-pane'); p.scrollTop = 0; }")
     shot(page, "after-400")
     ctx.close()
@@ -154,7 +165,7 @@ if __name__ == "__main__":
             phone(browser, base, sid, pid, oc, errs)
             browser.close()
         assert not errs, errs
-        print("profile compact ok: Our comp in view at 1280x800, grades once in the strip with tooltips, the OC chip once, one traits row, 400 px clean")
+        print("profile compact ok: the comp in view at 1280x800, grades once as bars with tooltips, the OC chip once, the traits on the Profile tab, 400 px clean")
     finally:
         try:
             call(base, f"/api/season/{sid}", method="DELETE")

@@ -2,7 +2,7 @@
 His Profile shows a Personality row and a Who Decides row, each "Not Known Yet" until the staff learns it (a first call
 tells the personality, two looks tell who decides, plus "Cares About: <Topic>"); the pane's tag strip carries the known
 traits as chips; a learned trait patches in place (switching recruits starts no pulse or fade). The Scouting Center
-header reads "Points Left: N of M", each Send reads "10 Points" / "15 Points" / "5 Points", a Send the week cannot pay
+header reads "Points Left: N of M", each Send reads "10 Pts" / "15 Pts" / "5 Pts", a Send the week cannot pay
 is disabled with its reason. An in-home visit with a decider other than himself plays a family turn under the
 decider's label; a Guarded call (no topics cued) still plays and still lets you pitch any topic. At 400 px the new
 controls stand 44 px tall. Needs Playwright with a Chromium; skipped without one.
@@ -54,6 +54,14 @@ def profile_rows(page) -> dict:
         [r.dataset.trait, r.querySelector('.go-trait-val').textContent.trim()]))""")
 
 
+def trait_chips(page) -> list:
+    """The trait chips among the tags: the Overview's Recruit Snapshot carries them (the pane opens there)."""
+    page.click(".go-pane .go-subtabs button[data-sub=overview]")
+    page.wait_for_selector(".go-pane [data-key=snapshot]", timeout=30_000)
+    time.sleep(0.3)
+    return page.eval_on_selector_all(".go-pane .go-tags [data-key^='trait:']", "els => els.map(e => e.textContent.trim())")
+
+
 def open_profile(page) -> None:
     page.click(".go-pane .go-subtabs button[data-sub=profile]")
     page.wait_for_selector(".go-pane .go-trait", timeout=30_000)
@@ -86,15 +94,18 @@ def desktop(browser, base, sid, first, visit, guarded, names, errs) -> None:
     page = ctx.new_page()
     page.on("pageerror", lambda e: errs.append(str(e)))
     open_board(page, base, sid)
-    # before contact: both rows say Not Known Yet, no trait chip in the tag strip
+    # before contact: every row says Not Known Yet (with how it shows), no trait chip among the tags
     pick_row(page, first)
+    assert not trait_chips(page), "no trait chip before anything is learned"
     open_profile(page)
     rows = profile_rows(page)
-    assert rows == {"personality": NOT_KNOWN, "decider": NOT_KNOWN, "story": NOT_KNOWN}, rows
-    assert page.inner_text(".go-pane .go-trait[data-trait=personality] .go-trait-label").strip() == "Personality"
-    assert page.inner_text(".go-pane .go-trait[data-trait=decider] .go-trait-label").strip() == "Who Decides"
-    assert page.eval_on_selector_all(".go-pane .go-trait .go-trait-val.muted", "els => els.length") == 3, "Not Known Yet is muted"
-    assert not page.query_selector(".go-pane .go-tags [data-key^='trait:']"), "no trait chip before anything is learned"
+    assert rows == {"decider": NOT_KNOWN, "cares": NOT_KNOWN, "personality": NOT_KNOWN, "story": NOT_KNOWN}, rows
+    assert page.text_content(".go-pane .go-trait[data-trait=personality] .go-trait-label").strip() == "Personality"
+    assert page.text_content(".go-pane .go-trait[data-trait=decider] .go-trait-label").strip() == "Who Decides"
+    assert page.text_content(".go-pane .go-trait[data-trait=cares] .go-trait-label").strip() == "Cares About"
+    assert page.eval_on_selector_all(".go-pane .go-trait .go-trait-val.muted", "els => els.length") == 4, "Not Known Yet is muted"
+    hints = page.eval_on_selector_all(".go-pane .go-trait .pv-hint", "els => els.map(e => e.textContent)")
+    assert len(hints) == 4 and all(h[0].isupper() and h.endswith(".") for h in hints), f"each unknown trait says how it shows: {hints}"
     # switching recruits starts no pulse or fade
     page.evaluate(QUIET_WATCH, [".go-pane", ["go-changed", "go-fade-in"]])
     pick_row(page, visit)
@@ -109,7 +120,7 @@ def desktop(browser, base, sid, first, visit, guarded, names, errs) -> None:
     labels = set(persona.PERSONALITY_LABEL.values())
     assert rows["personality"] in labels, rows
     assert rows["decider"] == NOT_KNOWN, rows
-    chips = page.eval_on_selector_all(".go-pane .go-tags [data-key^='trait:']", "els => els.map(e => e.textContent.trim())")
+    chips = trait_chips(page)
     assert rows["personality"] in chips, (chips, rows)
     no_null(page, "after the call")
     scout_item(page, base, sid, first)
@@ -131,7 +142,7 @@ def desktop(browser, base, sid, first, visit, guarded, names, errs) -> None:
     for i in range(2):
         before = call(base, f"/api/season/{sid}/scouting")["points_left"]
         btn = page.inner_text("#sc-send")
-        m = re.search(r"\b(\d+) Points\b", btn)
+        m = re.search(r"\b(\d+) Pts\b", btn)
         assert m and int(m.group(1)) in (5, 10, 15), btn
         cost = int(m.group(1))
         page.click("#sc-send")
@@ -144,9 +155,9 @@ def desktop(browser, base, sid, first, visit, guarded, names, errs) -> None:
     open_profile(page)
     rows = profile_rows(page)
     assert rows["decider"] != NOT_KNOWN and rows["personality"] != NOT_KNOWN, rows
-    assert rows["decider"].split(" · ")[0].split(" Cares About")[0] in persona.DECIDER_LABEL.values(), rows
-    assert "Cares About: " in rows["decider"], rows
-    chips = page.eval_on_selector_all(".go-pane .go-tags [data-key^='trait:']", "els => els.map(e => e.textContent.trim())")
+    assert rows["decider"] in persona.DECIDER_LABEL.values(), rows
+    assert rows["cares"] != NOT_KNOWN, f"what the decider cares about shows with him: {rows}"
+    chips = trait_chips(page)
     assert len(chips) == 2, chips
     no_null(page, "after the looks")
     shot(page, "profile-1280")
@@ -258,12 +269,13 @@ def phone(browser, base, sid, board_pids, errs) -> None:
     page.wait_for_function("(n) => document.querySelector('.sc-intel .sc-big-name')?.textContent.trim() === n", arg=row["name"], timeout=30_000)
     send = page.query_selector("#sc-send")
     assert send.is_disabled() and send.get_attribute("title") == NO_POINTS, (send.get_attribute("title"), send.is_disabled())
-    assert re.search(rf"\b{row['cost']} Points\b", send.inner_text()), send.inner_text()
+    assert re.search(rf"\b{row['cost']} Pts\b", send.inner_text()), send.inner_text()
     assert NO_POINTS in page.inner_text(".sc-intel .sc-why"), "the reason is written beside the actions"
     # his profile (the modal) waits too: Send a Scout is disabled with the same reason
     page.goto(f"{base}/index.html?id={sid}&tab=prospects&modal=profile:{row['pid']}")
     page.wait_for_selector(".modal:not([hidden]) .rc-profile-name", timeout=60_000)
-    btn = page.wait_for_selector(".modal:not([hidden]) .rc-profile-actions button:has-text('Send a Scout')", timeout=10_000)
+    page.click(".modal:not([hidden]) .go-subtabs button[data-sub=scouting]")
+    btn = page.wait_for_selector(".modal:not([hidden]) .pv-report .pv-card-acts button:has-text('Send a Scout')", timeout=10_000)
     assert btn.is_disabled() and btn.get_attribute("title") == NO_POINTS, (btn.is_disabled(), btn.get_attribute("title"))
     assert re.search(rf"\b{row['cost']} Points\b", btn.inner_text()), btn.inner_text()
     page.goto(f"{base}/index.html?id={sid}&tab=scouting")
@@ -299,7 +311,7 @@ def phone_board(browser, base, sid, first, errs) -> None:
     time.sleep(0.5)
     open_profile(page)
     rows = profile_rows(page)
-    assert all(v != "" for v in rows.values()) and set(rows) == {"personality", "decider", "story"}, rows
+    assert all(v != "" for v in rows.values()) and set(rows) == {"personality", "decider", "cares", "story"}, rows
     assert page.evaluate("() => document.documentElement.scrollWidth <= innerWidth + 1"), "nothing scrolls sideways"
     no_null(page, "profile at 400")
     ctx.close()
