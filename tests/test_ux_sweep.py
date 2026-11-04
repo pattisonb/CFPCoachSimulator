@@ -368,8 +368,9 @@ def test_portal_nil_title(page, base, sid) -> None:
     """The portal board's title carries the NIL pool (the API's nil.pool), and its meter reads against the pool."""
     v = call(base, f"/api/season/{sid}/recruiting")
     assert v["portal"] and v["nil"]["pool"] is not None, v["nil"]
-    page.wait_for_selector("#tab-offseason .rc-head .go-display", timeout=30_000)
-    title = page.inner_text("#tab-offseason .rc-head .go-display").strip()
+    # the board's own title (recruiting.js) stays in the page for readers; the offseason's header shows the week on screen
+    page.wait_for_selector("#tab-offseason .rc-head .go-display", state="attached", timeout=30_000)
+    title = page.eval_on_selector("#tab-offseason .rc-head .go-display", "e => e.textContent").strip().upper()
     assert title == f"TRANSFER PORTAL · WEEK {v['portal']['week']} OF {v['portal']['weeks']} · {v['nil']['pool']} NIL", title
     assert f"{v['nil']['left']} / {v['nil']['pool']}" in page.inner_text("#tab-offseason .rc-head .go-meters")
 
@@ -686,8 +687,9 @@ def check_nil_review(page, base, sid) -> None:
     n = (v.get("review") or {}).get("nil_portal")
     assert n, "the offseason review carries the pool record"
     page.wait_for_selector("#tab-offseason .off-nil-line", timeout=30_000)
+    assert "NIL for the Portal" in page.eval_on_selector("#tab-offseason .off-nil", "e => e.textContent")    # the Takeaway's kicker over the math
     text = page.inner_text("#tab-offseason .off-nil-line")
-    assert text.startswith(f"NIL for the portal: {n['left']} left + {n['reward']} earned"), text
+    assert text.startswith(f"{n['left']} left + {n['reward']} earned"), text
     assert f"= {n['left'] + n['reward']}" in text, text
     if n["pool"] == n["floor"] and n["pool"] > n["left"] + n["reward"]:
         assert f"raised to the {n['floor']} portal fund" in text, text
@@ -2456,6 +2458,12 @@ if __name__ == "__main__":
             off = page.inner_text("#tab-offseason")
             assert not OUT_OF_100.search(off), OUT_OF_100.search(off).group(0)
             assert not CLASS_CODE.search(off), CLASS_CODE.search(off).group(0)
+            # the Overview's Advance opens the Departures page (no server call): the same checks there
+            page.click("#tab-offseason .off-foot .go-btn.primary")
+            page.wait_for_selector("#tab-offseason .off-page[data-page=departures]", timeout=30_000)
+            dep = page.inner_text("#tab-offseason")
+            assert not OUT_OF_100.search(dep), OUT_OF_100.search(dep).group(0)
+            assert not CLASS_CODE.search(dep), CLASS_CODE.search(dep).group(0)
             # "Sim to next season" asks first: dismissed, nothing moves
             n_dialogs = len(dialogs)
             page.click("#tab-offseason button:has-text('Sim to Next Season')")
@@ -2477,7 +2485,7 @@ if __name__ == "__main__":
                 page.click(".off-keep button.go-act:has-text('Let Him Go') >> nth=0")
                 time.sleep(0.8)
                 assert len(dialogs) == n_dialogs + 1, "letting a player go asks first"
-                assert "letting go" not in page.inner_text(".off-keep .go-pcard >> nth=0")
+                assert "Letting him go" not in page.inner_text(".off-keep .go-pcard >> nth=0"), "a dismissed Let Him Go changes nothing"
                 call(base, f"/api/season/{B}/offseason/advance", {})
             # the portal board: a transfer has no star row
             page.goto(f"{base}/index.html?id={B}")
