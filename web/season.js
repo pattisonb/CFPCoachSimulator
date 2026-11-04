@@ -1083,6 +1083,8 @@
       }
       if (kind === "settings") return !!openSettings(o);
       if (kind === "profile" && arg && window.Recruiting) return !!(await window.Recruiting.openProfile(s, arg, o));
+      // an unfinished call or in-home visit on the board: its window reopens (a finished one is gone from the board)
+      if (kind === "scene" && arg && window.Recruiting && window.Recruiting.openScene && (state.tab === "recruiting" || state.tab === "offseason")) return !!(await window.Recruiting.openScene(s, arg, o));
       if (kind === "reports" && window.CFP.scouting && state.tab === "scouting") return !!(await window.CFP.scouting.openToken(s, recruitingHelpers, kind, arg, o));
     } catch (e) { return false; }
     return false;
@@ -1231,7 +1233,7 @@
     m.token = token;
     route.set({ modal: modalTokens() }, { state: { modal: modalStack.length } });
   }
-  const recruitingHelpers = { openBox: (id) => openBox(id), carryLine: (s, card) => officeCarryLine(s, card), api, long, holding, postJSON, toast, openModal, closeModal: closeAllModals, retoken, errText, play, playCard, openSeason: reopenSeason, onChange: (tab) => { goTab(tab); window.scrollTo({ top: 0 }); } };
+  const recruitingHelpers = { openBox: (id) => openBox(id), carryLine: (s, card) => officeCarryLine(s, card), api, long, holding, postJSON, toast, openModal, closeModal: closeAllModals, closeTop: () => closeModal(), retoken, errText, play, playCard, openSeason: reopenSeason, onChange: (tab) => { goTab(tab); window.scrollTo({ top: 0 }); } };
   if (window.Recruiting && window.Recruiting.init) window.Recruiting.init(recruitingHelpers);   // a profile reopened from the address before any career tab drew
   function renderCareerSteps(s) {
     const box = $("#career-steps");
@@ -1312,11 +1314,13 @@
   // backdrop, the close button and the browser's Back each close the top one; opening
   // pushes a history entry so Back on a phone closes a modal instead of leaving the page.
   // token: the modal's place in the address ("box:<event id>", "player:<team>|<name>|<pos>",
-  // "resume:<team>|<week>", "profile:<pid>", "settings", and on the Scouting tab "reports[:last_week|flags]"),
-  // so a refresh reopens it; a modal
+  // "resume:<team>|<week>", "profile:<pid>", "settings", on the Scouting tab "reports[:last_week|flags]", and on the
+  // recruiting board "scene:<pid>", an unfinished call or visit), so a refresh reopens it; a modal
   // without one (a picker, a confirm) still gets its history entry but is not reopened.
   // opts.restore: reopening from the address, which already names it, so no entry is pushed.
-  const modalStack = [];   // [{layer, pushed, opener, token}] bottom to top
+  // opts.cls: a class on the layer while it is open (its own width); opts.onClose: called once it has closed,
+  // however it closed (the close button, Escape, the backdrop, Back), after the focus went back.
+  const modalStack = [];   // [{layer, pushed, opener, token, cls, onClose}] bottom to top
 
   function makeLayer(nested) {
     const base = $("#modal");
@@ -1324,6 +1328,7 @@
     const layer = base.cloneNode(true);
     layer.removeAttribute("id");
     layer.classList.add("modal-nested");
+    for (const m of modalStack) if (m.cls) layer.classList.remove(m.cls);    // a class the bottom modal wears is its own
     layer.style.zIndex = String(60 + modalStack.length);
     for (const n of layer.querySelectorAll("[id]")) n.removeAttribute("id");
     layer.querySelector(".modal-backdrop").addEventListener("click", () => closeModal());
@@ -1341,12 +1346,13 @@
     body.innerHTML = "";
     body.append(node);
     body.scrollTop = 0;
+    if (opts.cls) layer.classList.add(opts.cls);
     layer.hidden = false;
     document.body.classList.add("modal-open");
     const pushed = !opts.restore;
     // remember what opened it, so focus goes back there when it closes
     const opener = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
-    modalStack.push({ layer, pushed, opener, token: token || null });
+    modalStack.push({ layer, pushed, opener, token: token || null, cls: opts.cls || null, onClose: opts.onClose || null });
     route.set({ modal: modalTokens() }, { push: pushed, state: { modal: modalStack.length, cfpDepth: !!(window.CFPDepth && window.CFPDepth.isOpen() && history.state && history.state.cfpDepth) } });
     layer.querySelector(".modal-close").focus({ preventScroll: true });
   }
@@ -1367,7 +1373,7 @@
   function closeModal(fromHistory = false) {
     const top = modalStack.pop();
     if (!top) return;
-    if (top.layer.id === "modal") top.layer.hidden = true;
+    if (top.layer.id === "modal") { top.layer.hidden = true; if (top.cls) top.layer.classList.remove(top.cls); }
     else top.layer.remove();
     if (!modalStack.length) document.body.classList.remove("modal-open");
     if (state.afterGameday && gameday.layerNode === top.layer) showAfterGameday();
@@ -1381,6 +1387,7 @@
       if (top.pushed) route.back(1);
       else route.set({ modal: modalTokens() }, { state: { modal: modalStack.length } });
     }
+    if (top.onClose) top.onClose();
   }
 
   // every modal at once: one step back over the entries they pushed (fromHistory: Back already moved)

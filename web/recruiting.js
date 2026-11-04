@@ -18,7 +18,8 @@
                   "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD",
                   "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY"];
   const view = { filters: { q: "", position: "", stars: "", state: "", status: "", sort: "rank", group: "" }, offset: 0, openClass: null, sort: "chance", selected: null, sheet: false, pitch: {}, group: null, state: null,
-                heard: {}, scene: null, reaction: null, focusScene: false,
+                // scene: the recruit whose call or visit window is open
+                heard: {}, scene: null,
                 // the board: the stage tab, the search, the position (group) and state filters (all per career: view.stage.sid), the pane's sub-tab, the inline step, the needs disclosure, a Finish awaiting the re-fetch
                 stage: null, search: "", sub: "overview", step: null, needsOpen: false, expectScene: null, reveal: null };
   let H = null;
@@ -243,13 +244,6 @@
     else if (action === "scout") H.toast(`Scouting trip done · ${r.hours_left} hours left · his grades are updated`, 3000);
     else H.toast(`${names[action]} done · ${r.hours_left} hours left${r.revealed ? ` · he cares about ${PITCH_NAMES[r.revealed].toLowerCase()}` : action === "call" ? " · he kept his cards close" : ""} · it lands at the week step`, 3000);
     return r;
-  }
-  // his reaction to your pitch, in his words, in the tone of how it landed
-  function reactionView(r) {
-    return el("div", { class: `go-reaction ${r.kind}`, "data-kind": r.kind, role: "status", tabindex: "-1" }, [
-      el("div", { class: "go-kicker", text: (REACTION_WORDS[r.kind] || r.kind).toUpperCase() }),
-      el("p", { class: "go-reaction-line", text: r.text }),
-      el("p", { class: "muted small", text: "It counts at the week step." })]);
   }
   async function setBoard(s, pid, on) {
     try { await H.api(`/api/season/${s.id}/board`, H.postJSON({ pid, on })); return true; }
@@ -831,15 +825,31 @@
   // dropped, so two quick actions never leave the board showing the older one's data.
   let fetchSeq = 0;
   const loadBoard = (s) => H.api(`/api/season/${s.id}/recruiting`);
+  // the board's latest render, for a call's window reopened from the address: settles once it drew (or failed)
+  let drawn = null;
   async function renderRecruiting(s, box) {
-    if (!box.firstChild) box.append(loading("Loading your board…"));
-    const n = ++fetchSeq;
-    let v;
-    try { v = await loadBoard(s); }
-    catch (err) { if (n !== fetchSeq) return; box.innerHTML = ""; box.append(loading(`Could not load recruiting: ${H.errText(err)}`)); return; }
-    if (n !== fetchSeq) return;
-    drawBoard(s, box, v);
+    let settled;
+    drawn = { sid: s.id, p: new Promise((r) => { settled = r; }) };
+    try {
+      if (!box.firstChild) box.append(loading("Loading your board…"));
+      const n = ++fetchSeq;
+      let v;
+      try { v = await loadBoard(s); }
+      catch (err) { if (n !== fetchSeq) return; box.innerHTML = ""; box.append(loading(`Could not load recruiting: ${H.errText(err)}`)); return; }
+      if (n !== fetchSeq) return;
+      drawBoard(s, box, v);
+    } finally { settled(); }
   }
+  // the address names an open call or visit (scene:<pid>): once the board has drawn, its window opens again when
+  // the conversation is still unfinished; a finished one (or one the week step dropped) is gone, so false
+  async function openSceneRoute(s, pid, opts) {
+    const w = drawn;
+    if (!w || w.sid !== s.id) return false;
+    await w.p;
+    return !!(boardAt && boardAt.s.id === s.id && boardAt.box.isConnected && boardAt.openScene && boardAt.openScene(pid, opts || {}));
+  }
+  // the open call or visit window ({ pid, done, node }): one at a time
+  let sceneWin = null;
   // after an action: re-fetch and patch the drawn board (never a rebuild); null when overtaken or the board is gone
   async function refresh(s, box) {
     const n = ++fetchSeq;
@@ -873,7 +883,12 @@
     box.innerHTML = "";
     box.dataset.draw = String((Number(box.dataset.draw) || 0) + 1);      // a draw counter, bumped by every draw and patch: tests wait on it after an action lands
     document.body.classList.remove("go-sheet-open");
-    boardAt = { s, box, patch: patchBoard };
+    boardAt = { s, box, patch: patchBoard, openScene: (pid, o) => {
+      const b = v.board.find((x) => x.id === pid);
+      if (!(b && b.scene) || b.signed || b.committed === me) return false;
+      if (view.selected !== pid) choose(b);
+      return openSceneWindow(b, o);
+    } };
     let boardEl = null;
     // Auto-recruit: off, for the coming week only, or all season
     const AUTO = [["off", "Off"], ["week", "This Week"], ["season", "All Season"]];
@@ -977,7 +992,6 @@
     box.append(boardEl);
     settleExpect();
     refill({});
-    view.focusScene = false;
     if (searchHadFocus) { search.focus({ preventScroll: true }); const n = search.value.length; search.setSelectionRange(n, n); }
     else if (stageHadFocus) { const t = stages.querySelector(`button[data-stage="${stageHadFocus}"]`); if (t) t.focus({ preventScroll: true }); }
     else if (sortHadFocus) sort.focus({ preventScroll: true });
@@ -994,15 +1008,16 @@
       for (const b of auto.children) { const on = v.auto_recruit === b.dataset.auto; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }
       settleExpect();
       refill({ keep: true, pulse: true });
-      view.focusScene = false;
     }
-    // a Finish pressed on a call the week step has closed: the board says so and the menu works again
+    // a Finish pressed: the re-read board still has the call open, so its window opens again; a call the week
+    // step has closed is gone: the board says so and the menu works again
     function settleExpect() {
       if (!view.expectScene) return;
       const { pid: waited, what } = view.expectScene;
       const b = v.board.find((x) => x.id === waited);
       view.expectScene = null;
-      if (!(b && b.scene)) { view.scene = null; H.toast(`That ${what} lapsed: the week moved on. The hours stayed spent.`, 4000); }
+      if (b && b.scene) openSceneWindow(b);
+      else { view.scene = null; H.toast(`That ${what} lapsed: the week moved on. The hours stayed spent.`, 4000); }
     }
     // the counts, the rows (reconciled by id: rows move, appear or go; the rest are reused) and the pane, from the
     // current view and filters. opts.keep: an action keeps the pane on him even when it moved him out of the open
@@ -1036,7 +1051,6 @@
       else if (!phone()) swapPane(pane(sel));
       else if (view.sheet) openSheet(sel);
       else dropPane();
-      focusScene();
       syncBoard();
     }
     function dropPane() {
@@ -1115,7 +1129,6 @@
       if (!phone()) side = next;
       if (!still()) { next.classList.add("go-pane-in"); requestAnimationFrame(() => requestAnimationFrame(() => next.classList.remove("go-pane-in"))); }
       markRows();
-      focusScene();
     }
     function openSheet(b) {
       for (const old of box.querySelectorAll(".go-pane.sheet")) old.remove();
@@ -1123,7 +1136,7 @@
       box.append(p);
       document.body.classList.add("go-sheet-open");
       const back = p.querySelector(".go-pane-back");
-      if (back && !view.focusScene) back.focus();
+      if (back && !sceneWin) back.focus();
     }
     function closeSheet() {
       view.sheet = false;
@@ -1133,13 +1146,7 @@
       const r = list.querySelector(".go-row-recruit.selected");
       if (r) r.focus({ preventScroll: true });
     }
-    function focusScene() {
-      if (!view.focusScene) return;
-      const sc = box.querySelector(".go-pane .go-scene");
-      if (sc) sc.focus({ preventScroll: true });
-    }
-
-    // ----- actions: one network path; a call or in-home visit opens a scene in the pane -----
+    // ----- actions: one network path; a call or in-home visit opens its conversation in a window -----
     // what each action says once it lands: one sentence, his name, the cost or the result
     const SAID = {
       message: (b) => `Message sent to ${b.name} · 5 hours`,
@@ -1166,18 +1173,48 @@
     }
     function openScene(b, scene) {
       b.scene = scene;
-      view.scene = b.id;
-      view.reaction = null;
-      view.step = null;
-      view.focusScene = true;
-      patchPane(b);
-      focusScene();
-      view.focusScene = false;
+      openSceneWindow(b);
     }
-    // after a menu action: the scene it opened keeps the focus; a pane that switched (Off the Board) hands it to the new
+    // ----- the call or in-home visit: its own window over the board (the shared modal, token scene:<pid>) -----
+    // The whole conversation plays there. Closing it before your pitch (Hang Up, the close button, Escape, Back) keeps
+    // the call open: the pane's Finish the Call brings the window back this week. Once he has reacted to your pitch
+    // the window says Done, and closing it ends the conversation for good: the pane never shows it (History keeps a line).
+    function openSceneWindow(b, opts = {}) {
+      if (sceneWin) return sceneWin.pid === b.id;
+      if (!b || !b.scene) return false;
+      const visit = b.scene.action === "hc_visit";
+      const win = { pid: b.id, done: false, node: null, scene: b.scene };
+      sceneWin = win;
+      view.scene = b.id;
+      view.step = null;
+      win.node = sceneView(b, win);
+      H.openModal(`${visit ? "In-Home Visit" : "Call"} · ${b.name}`, win.node, `scene:${b.id}`,
+        { restore: !!opts.restore, cls: "modal-scene", onClose: () => sceneClosed(win, b) });
+      patchShown(b);
+      win.node.focus({ preventScroll: true });
+      return true;
+    }
+    function sceneClosed(win, b) {
+      if (sceneWin === win) sceneWin = null;
+      if (view.scene === win.pid) view.scene = null;
+      win.node.remove();         // the closed window keeps nothing of it (Finish draws it again from the board's scene)
+      // the window's scene is the live one (your opening, his answer): a re-fetch taken before them keeps an older copy
+      const row = v.board.find((x) => x.id === win.pid) || b;
+      if (!win.done && row.scene && row.scene !== win.scene && row.scene.id === win.scene.id) row.scene = win.scene;
+      patchShown(row);
+      // unfinished: Finish brings it back; finished: the Recruit button is next
+      const f = (!win.done && box.querySelector("#rc-finish")) || box.querySelector("#rc-recruit");
+      if (f && f.offsetParent !== null) f.focus({ preventScroll: true });
+    }
+    // the pane, when it is his, brought up to date in place (never swapped in for him from here)
+    function patchShown(b) {
+      const cur = box.querySelector(".go-pane");
+      if (cur && cur._pid === b.id) cur._patch(b);
+    }
+    // after a menu action: the window it opened keeps the focus; a pane that switched (Off the Board) hands it to the new
     // pane's Recruit button, also when busy() settled on a row because the control left with the old pane; else a row
     function refocus(b) {
-      if (view.scene === b.id) { const sc = box.querySelector(".go-pane .go-scene"); if (sc) { sc.focus({ preventScroll: true }); return; } }
+      if (sceneWin) { const a = document.activeElement; if (!(a && a.closest && a.closest(".modal-scene"))) sceneWin.node.focus({ preventScroll: true }); return; }
       const active = document.activeElement, onBody = !active || active === document.body;
       const recruit = box.querySelector("#rc-recruit");
       if (recruit && (onBody || active.classList.contains("go-row-recruit"))) { recruit.focus({ preventScroll: true }); return; }
@@ -1309,7 +1346,7 @@
         return t;
       }));
       p.append(el("div", { class: "go-strip" }, cells), tags, strip, body);
-      let finishBtn = null, recruitBtn = null, offBtn = null, warnEl = null, stepEl = null, sceneEl = null, reactEl = null, chipText = null, bodyKey = null;
+      let finishBtn = null, recruitBtn = null, offBtn = null, warnEl = null, stepEl = null, chipText = null, bodyKey = null;
       p._patch = (nb) => { b = nb; fill(false); };
       fill(true);
       return p;
@@ -1328,9 +1365,9 @@
         // his call or visit is open but not on screen: Finish brings it back (it re-reads the board first: the week may have moved on)
         const wantFinish = !!(busy && !shown);
         if (wantFinish && !finishBtn) {
-          finishBtn = el("button", { type: "button", id: "rc-finish", class: "go-btn primary" });
+          finishBtn = el("button", { type: "button", id: "rc-finish", class: "go-btn primary", "aria-haspopup": "dialog" });
           finishBtn.addEventListener("click", () => {
-            view.scene = b.id; view.focusScene = true; view.expectScene = { pid: b.id, what: busy };
+            view.expectScene = { pid: b.id, what: b.scene && b.scene.action === "hc_visit" ? "visit" : "call" };
             ui().busy(finishBtn, refresh(s, box)).then(() => refocus(b));
           });
           acts.prepend(finishBtn);
@@ -1362,13 +1399,7 @@
         };
         if (stepEl && (!stepKind || stepEl._kind !== stepKind)) { const old = stepEl; stepEl = null; leave(old); }
         if (stepKind && !stepEl) { stepEl = stepView(b, stepKind); stepEl._kind = stepKind; head.after(stepEl); if (!first) ui().fadeIn(stepEl); }
-        // the scene, or his reaction to your pitch
-        const sceneId = shown ? b.scene.id : null;
-        if (sceneEl && sceneEl._sid !== sceneId) { const old = sceneEl; sceneEl = null; leave(old); }
-        const reacted = !shown && view.reaction && view.reaction.pid === b.id ? view.reaction.r : null;
-        if (reactEl && reactEl._r !== reacted) { const old = reactEl; reactEl = null; leave(old); }
-        if (sceneId && !sceneEl) { sceneEl = sceneView(b); sceneEl._sid = sceneId; (stepEl || head).after(sceneEl); if (!first) ui().fadeIn(sceneEl); }
-        if (reacted && !reactEl) { reactEl = reactionView(reacted); reactEl._r = reacted; (stepEl || head).after(reactEl); if (!first) ui().fadeIn(reactEl); }
+        // the call or visit itself plays in its window (openSceneWindow): the pane shows none of it
         // the strip's cells
         const rowsOf = (b.list || []).filter((x) => x.bar != null);
         const mineRow = rowsOf.find((x) => x.you || x.school === me);
@@ -1477,9 +1508,8 @@
       const cancel = el("button", { type: "button", class: "go-btn go-step-cancel", text: "Cancel" });
       go.addEventListener("click", async () => {
         const r = await run(b, kind, pitch ? pitch.value : null, nil ? Number(nil.value) || 0 : null, go);
-        // the step closed with the action: the Recruit button takes the focus (unless a scene opened meanwhile and holds it)
-        const sc = box.querySelector(".go-pane .go-scene");
-        if (r && !view.step && !(sc && sc.contains(document.activeElement))) { const btn = box.querySelector("#rc-recruit"); if (btn) btn.focus({ preventScroll: true }); }
+        // the step closed with the action: the Recruit button takes the focus (unless a call's window opened meanwhile and holds it)
+        if (r && !view.step && !sceneWin) { const btn = box.querySelector("#rc-recruit"); if (btn) btn.focus({ preventScroll: true }); }
       });
       // Cancel is the player's own dismissal: the step leaves at once (an action's close fades it)
       cancel.addEventListener("click", () => { view.step = null; st.remove(); patchPane(b); const btn = box.querySelector("#rc-recruit"); if (btn) btn.focus({ preventScroll: true }); });
@@ -1530,12 +1560,13 @@
         : el("p", { class: "muted small", text: "Nothing on him in the news yet this season." }));
       return out;
     }
-    // a call or in-home visit as a conversation in the pane (coach_career/scenes.py): the turns so far (you, him, the
+    // a call or in-home visit as a conversation in its window (coach_career/scenes.py): the turns so far (you, him, the
     // room), then your opening (three things, Present), which brings his reaction, your question and his cue in place;
-    // then his question when he has one, what you lead with, Pitch. His reaction to the pitch joins the conversation.
-    // The other actions wait until you pitch; hanging up only closes the view (Finish in the head resumes it).
+    // then his question when he has one, what you lead with, Pitch. His reaction to the pitch joins the conversation
+    // and Done closes the window for good. The other actions wait until you pitch; hanging up only closes the window
+    // (Finish in the pane's head reopens it). `win`: the window's record (openSceneWindow).
     const MAX_PRESENT = 3;
-    function sceneView(b) {
+    function sceneView(b, win) {
       const scene = b.scene, visit = scene.action === "hc_visit", what = visit ? "visit" : "call";
       let chosen = (scene.cue && scene.cue.topics[0]) || "";
       const sc = el("section", { class: "go-scene", tabindex: "-1", "aria-label": `${visit ? "In-home visit" : "Call"} with ${b.name}` });
@@ -1561,6 +1592,21 @@
       sc.append(convo);
       const tail = el("div", { class: "go-scene-tail" });
       sc.append(tail);
+      // the window's body scrolls: what just came in is brought into view (its top first when it is taller than the window)
+      const reveal = (from, to) => {
+        const bx = sc.closest(".modal-body");
+        if (!bx || !from) return;
+        const r0 = from.getBoundingClientRect(), r1 = (to || from).getBoundingClientRect(), br = bx.getBoundingClientRect();
+        const down = Math.min(r1.bottom - br.bottom + 12, r0.top - br.top - 12);
+        if (down > 0) bx.scrollTo({ top: bx.scrollTop + down, behavior: still() ? "auto" : "smooth" });
+      };
+      // the stale case: the week moved on under the open window; it closes and the board shows where things stand
+      const lapsed = () => {
+        view.scene = null;
+        if (sceneWin === win) H.closeTop();
+        refresh(s, box);
+      };
+      const HANG_HINT = `Hanging up keeps the ${what} open: Finish the ${visit ? "Visit" : "Call"} in his pane brings it back this week. One you never finish counts for nothing.`;
       const PITCH_TIP = "Sell him on this: it costs nothing more, the hours went when you picked up";
       // ----- after your opening: his question, what you lead with, Pitch and Hang Up -----
       function drawFinish(animate) {
@@ -1584,14 +1630,17 @@
           const r = await ui().busy(go, act(s, b.id, "pitch", chosen, null, { silent: true, scene: scene.id, onReaction: (re) => {
             view.heard[`${s.id}:${b.id}`] = { week: s.current_week, topics: scene.cue.topics, action: scene.action };
             b.scene = null;
-            view.scene = null;
+            win.done = true;
+            H.retoken(sc, null);         // finished: a refresh never reopens it
             if (re.revealed && !b.priorities_known.includes(re.revealed)) b.priorities_known.push(re.revealed);   // he told you: known now, not at the re-fetch
+            // the board's current row for him (a re-fetch may have replaced b) learns the same, and the pane behind the
+            // window shows it at once: the call is over, what he told you is known
+            const row = v.board.find((x) => x.id === b.id);
+            if (row && row !== b) { row.scene = null; if (re.revealed && !row.priorities_known.includes(re.revealed)) row.priorities_known.push(re.revealed); }
+            patchShown(row || b);
             ui().toast(`Pitch: ${PITCH_NAMES[chosen] || chosen} · ${REACTION_WORDS[re.kind] || re.kind}`);
-            // the conversation ends in place: your line and his reaction join it, the picker leaves; the finished
-            // conversation stays on screen (no scene id to match, so the board's patches keep it) until the pane
-            // next changes what it shows (another recruit, a new call, the week step); removing it would shrink the
-            // pane under the player's scroll
-            sc._sid = null;
+            // the conversation ends in the window: your line and his reaction join it, the buttons give way to Done;
+            // closing the window ends it for good (the pane never shows it)
             scene.turns.push({ who: "you", text: re.you || PITCH_NAMES[chosen] });
             scene.turns.push({ who: re.kind === "tired" ? "note" : "him", text: re.text });
             const added = addTurns(true);
@@ -1600,38 +1649,29 @@
             last.dataset.kind = re.kind;
             last.setAttribute("role", "status");
             last.tabIndex = -1;
-            // what you led with stays on record (the radios locked); the buttons give way to the note, at the same
-            // height, so the pane never shrinks under the player's scroll
+            // what you led with stays on record (the radios locked); Pitch and Hang Up give way to Done
             for (const r of fin.querySelectorAll(".go-pitches input")) r.disabled = true;
-            acts.style.minHeight = `${acts.offsetHeight}px`;
-            hint.style.minHeight = `${hint.offsetHeight}px`;
-            acts.replaceChildren(el("span", { class: "muted small go-scene-done", text: "It counts at the week step." }));
-            hint.textContent = `The ${what} is over. The conversation stays here until you move on.`;
-            patchPane(b);
-            last.focus({ preventScroll: true });
-            // his reaction stays a moment, then the board catches up in place (unless the board has moved on: another career, a new week, another tab)
-            setTimeout(() => {
-              if (boardAt && boardAt.box === box && boardAt.s.id === s.id && boardAt.s.current_week === s.current_week && box.offsetParent) refresh(s, box);
-            }, 4000);
+            const done = el("button", { type: "button", class: "go-btn primary go-scene-close", text: "Done", onclick: () => { if (sceneWin === win) H.closeTop(); } });
+            acts.replaceChildren(done, el("span", { class: "muted small go-scene-done", text: "It counts at the week step." }));
+            hint.textContent = `The ${what} is over. Closing this window ends it; his History keeps a line.`;
+            if (sceneWin === win) { done.focus({ preventScroll: true }); reveal(added[0], hint); }
+            // the board behind the window catches up in place (unless it has moved on: another career, a new week, another tab)
+            if (boardAt && boardAt.box === box && boardAt.s.id === s.id && boardAt.s.current_week === s.current_week && box.isConnected) refresh(s, box);
           } }));
-          if (!r) { view.scene = null; refresh(s, box); return; }     // a stale call (the week moved on): the board shows where things stand
-          const rv = box.querySelector(".go-pane .go-reaction");       // his reply keeps the focus, not the Pitch button in the leaving scene
-          if (rv) rv.focus({ preventScroll: true });
+          if (!r) lapsed();     // a stale call (the week moved on)
         });
         const hang = el("button", { type: "button", class: "go-link go-hangup", text: "Hang Up", onclick: hangUp });
         const acts = el("div", { class: "go-row wrap go-scene-acts" }, [go, hang]);
-        const hint = el("p", { class: "muted small", text: `Hanging up keeps the ${what} open: finish it from the pane this week. One you never finish counts for nothing.` });
+        const hint = el("p", { class: "muted small", text: HANG_HINT });
         parts.push(acts, hint);
         const fin = el("div", { class: "go-scene-finish" }, parts);
         tail.append(fin);
         if (animate) ui().fadeIn(fin);
         return fin;
       }
+      // hanging up closes the window and keeps the call open (sceneClosed puts Finish in the pane and focuses it)
       function hangUp() {
-        view.scene = null;
-        patchPane(b);
-        const f = box.querySelector("#rc-finish");
-        if (f) f.focus({ preventScroll: true });
+        if (sceneWin === win) H.closeTop();
       }
       // ----- your opening: three things about your program, then Present -----
       function drawOpening() {
@@ -1664,7 +1704,7 @@
           let r;
           try { r = await ui().busy(go, H.api(`/api/season/${s.id}/recruit`, H.postJSON({ pid: b.id, action: "present", scene: scene.id, topics: [...picked] }))); }
           catch (err) { H.toast(`Could not present: ${H.errText(err)}`, 4000); return; }
-          if (!(r && r.scene)) { view.scene = null; refresh(s, box); return; }     // a stale call (the week moved on)
+          if (!(r && r.scene)) { lapsed(); return; }     // a stale call (the week moved on)
           Object.assign(scene, r.scene);               // the same scene object: the board row and the view share it
           chosen = scene.cue.topics[0] || "";
           // the opening leaves, the new turns come in, then his question and the lead-with: all in place
@@ -1672,13 +1712,13 @@
           const added = addTurns(true);
           drawFinish(true);
           const first = added[0];
-          if (first) { first.tabIndex = -1; first.focus({ preventScroll: true }); }
+          if (first && sceneWin === win) { first.tabIndex = -1; first.focus({ preventScroll: true }); reveal(first); }
         });
         wrap.append(el("div", { class: "go-kicker muted", text: "Your Opening" }),
           el("p", { class: "muted small", text: "Three things you lead your program with. Then you ask him what he is looking for." }),
           chips,
           el("div", { class: "go-row wrap go-scene-acts" }, [go, count, el("button", { type: "button", class: "go-link go-hangup", text: "Hang Up", onclick: hangUp })]),
-          el("p", { class: "muted small", text: `Hanging up keeps the ${what} open: finish it from the pane this week. One you never finish counts for nothing.` }));
+          el("p", { class: "muted small", text: HANG_HINT }));
         tail.append(wrap);
       }
       if (scene.presented) drawFinish(false); else drawOpening();
@@ -2075,5 +2115,5 @@
     else if (tab === "classes") renderClasses(season, box);
   }
 
-  window.Recruiting = { wordTag, render, applyRoute, init: (helpers) => { H = H || helpers; }, openProfile: (s, pid, opts) => openProfile(s, pid, null, opts || {}), reveal: (pid) => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; }, board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
+  window.Recruiting = { wordTag, render, applyRoute, openScene: openSceneRoute, init: (helpers) => { H = H || helpers; }, openProfile: (s, pid, opts) => openProfile(s, pid, null, opts || {}), reveal: (pid) => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; }, board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
 })();

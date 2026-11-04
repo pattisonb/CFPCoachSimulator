@@ -1222,16 +1222,22 @@ The pane is the only place anything happens to him: a head with his status chip 
 ▾** button, whose menu lists every action with its hour cost or the reason it waits (Once a
 week, Monthly, Offer him first, Finish your call first). Message and Offer… open a step in the
 pane: the pitch as a dropdown (his known priorities first, each with your program's case), the
-NIL points with his ask for an offer; a call or in-home visit plays as a conversation in the pane
-(your turns right in a muted "You:" bubble, his left under his avatar, the room centered in
-italics; the cue keeps its frame): after his small talk, YOUR OPENING offers the topics as chips
-(three at a time, a counter, Present disabled until three); Present brings his reaction, your
-question and his cue in place, then WHAT YOU LEAD WITH (the pitch picker, the cue's topic
-preselected) and Pitch; his reaction to the pitch joins the conversation as a turn, the picker
-locks on what you led with and the buttons give way to "It counts at the week step" at the same
-height, and the finished conversation stays on screen through the board's catch-up (shrinking or
-removing it would pull the pane under the player's scroll) until the pane next changes what it
-shows: another recruit, a new call, the week step. When
+NIL points with his ask for an offer. A call or in-home visit plays as a conversation in **its own
+window** over the board (`openSceneWindow` in `web/recruiting.js`: the shared modal, a dialog with
+`aria-modal`, the focus kept inside, titled "Call · Marcus Bell" or "In-Home Visit · Marcus Bell";
+680 px wide on a desktop, the whole screen at 700 px and under). In it your turns sit right in a
+muted "You:" bubble, his left under his avatar, the room centered in italics; the cue keeps its
+frame: after his small talk, YOUR OPENING offers the topics as chips (three at a time, a counter,
+Present disabled until three); Present brings his reaction, your question and his cue in place
+(the window's body scrolls them into view), then WHAT YOU LEAD WITH (the pitch picker, the cue's
+topic preselected) and Pitch; his reaction to the pitch joins the conversation as a turn, the picker
+locks on what you led with and Pitch and Hang Up give way to **Done** with "It counts at the week
+step". Closing the window then (Done, ×, Escape, Back) ends the conversation for good: nothing of it
+stays in the pane, it never reopens, and History keeps its one line. Closing it before the pitch
+(Hang Up, ×, Escape, Back) keeps the call open: the pane's head shows **Finish the Call** (or
+Finish the Visit), which takes the focus, re-reads the board and opens the window again where you
+left it (or says the call lapsed when the week step dropped it). The pane itself never shows the
+conversation. When
 he asks about a named player on that call (the starter ahead of him, or another recruit you
 offered), the scene shows his line with three answers (straight, a promise, a sidestep; each button a Title Case
 label, Tell Him Straight, Make Him a Promise or Sidestep It, over the line you say) and
@@ -2196,7 +2202,7 @@ anything; landing on one (a load, Back, Forward) draws the target tab, which cou
 | `stats`, `steam`, `sview` | Stats: `team` for Team Stats; the player stats' team (`all` for the league) and view (`roster`, a category) |
 | `aview` | Awards: the view |
 | `screen=depth` | The depth chart over the tab, with its own `team`, `sub`, `unit`, `view`, `player`, `f`, `role` |
-| `modal` | The open modals, bottom to top, repeated: `box:<event id>`, `player:<team>\|<name>\|<pos>`, `resume:<team>\|<week>`, `profile:<pid>`, `settings`; on the Scouting tab `reports`, `reports:last_week`, `reports:flags` (All Reports on that tab) |
+| `modal` | The open modals, bottom to top, repeated: `box:<event id>`, `player:<team>\|<name>\|<pos>`, `resume:<team>\|<week>`, `profile:<pid>`, `settings`; on the Scouting tab `reports`, `reports:last_week`, `reports:flags` (All Reports on that tab); on the recruiting board `scene:<pid>`, an unfinished call or visit's window (it reopens once the board has drawn, while the board still has that call open; his reaction drops the token, so a finished one never comes back) |
 
 A top-level tab, the depth chart and a modal push a history entry (Back closes the modal, leaves
 the depth chart, returns to the tab before); a filter, a sort, a sub-tab, another recruit or a week
