@@ -279,12 +279,14 @@ def _review(state: dict, lgd: dict) -> dict:
              + {"fire": "The AD is deciding whether to make a change.", "warning": "The AD wants to see more next year.",
                 "none": "The AD is pleased." if v["met"] else "The AD is patient."}[risk])
     nil_now = t["program"]["nil"] if t.get("program") else None
+    budgets = {}                                          # next year's NIL budget against this year's, for the recap
     if nil_now is not None:                               # the collective: where the AD's hand takes it (programs.nil_move, at the carousel)
         from coach_career import programs, recruiting
         probe = {"program": dict(t["program"])}
         programs.nil_move(probe, met=v["met"], losing=res["wins"] < res["losses"])
         nil_next = probe["program"]["nil"]
         budget_next = max(recruiting.NIL_FLOOR, recruiting._five(recruiting.NIL_PER_TIER * nil_next))
+        budgets = {"nil_now": max(recruiting.NIL_FLOOR, recruiting._five(recruiting.NIL_PER_TIER * nil_now)), "nil_next": budget_next}
         words += (f" The collective {'grows' if nil_next > nil_now + 0.5 else 'shrinks' if nil_next < nil_now - 0.5 else 'holds'}: "
                   f"about {budget_next} NIL points next year" + (f" ({'up' if nil_next > nil_now else 'down'} from {max(recruiting.NIL_FLOOR, recruiting._five(recruiting.NIL_PER_TIER * nil_now))})." if abs(nil_next - nil_now) > 0.5 else "."))
     if a.get("ultimatum") == year:
@@ -292,7 +294,7 @@ def _review(state: dict, lgd: dict) -> dict:
     return {"verdict": v, "goal": v["goal"]["text"], "met": v["met"], "record": [res["wins"], res["losses"]], "security": sec,
             "delta": v["delta"], "patience": v["patience"], "tenure": v["tenure"], "mood": carousel.mood(sec), "risk": risk,
             "must": must, "options": options, "option_names": {o: REVIEW_OPTIONS[o] for o in options},
-            "decided": risk == "none", "fired": False, "action": None, "outcome": None if risk != "none" else words, "words": words}
+            "decided": risk == "none", "fired": False, "action": None, "outcome": None if risk != "none" else words, "words": words, **budgets}
 
 
 def review_decide(state: dict, action: str, staff_id: Optional[str] = None) -> dict:
@@ -2412,6 +2414,9 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
     }
     if out["review"] is not None:            # the pool's math for your school: left + reward (+ fund) = pool
         out["review"]["nil_portal"] = recruiting.pool_record(state, me)
+    if off["stage"] == "ready":              # the AD's goal for the coming season, at the school you coach then
+        from coach_career import carousel
+        out["goal_next"] = carousel.goal(off.get("move_to") or me, state)["text"]
     car = off.get("carousel")
     if car:
         from coach_career import carousel
