@@ -170,9 +170,9 @@ FCS_LINE = 4.0                             # best FBS interest under this: Leani
 FCS_NO_OFFER_WEEK = 8                      # from this week a prospect with no FBS offer leans FCS
 COMMIT_ODDS = ((0, 0.02), (6, 0.05), (12, 0.08), (16, 0.10), (20, 0.30))   # weekly base chance by week *tune*
 COMMIT_FREEZE_WEEKS = 3                     # nobody commits anywhere in the first weeks: time to scout and build a board before the class moves
-LEAD_SCALE = 3.0                           # interest lead worth a doubling of the base chance *tune*
+LEAD_SCALE = 5.0                           # interest lead worth a doubling of the base chance (5: with 140-160 hours a week leads run bigger, and 3 had over 92% signed by the early period) *tune*
 VISIT_BOOST = 1.6                          # after an official visit to the leader
-DECOMMIT_RATE = 0.45                       # weekly chance of a decommitment at an even race *tune*
+DECOMMIT_RATE = 0.8                        # weekly chance of a decommitment at an even race (0.8: AI schools now message every commit weekly, so commits firm faster; 0.45 left 5% of the top 300 decommitting) *tune*
 # a commitment's firmness, 0-100: it starts soft and firms up only if the school keeps in touch *tune*
 FIRM_START, FIRM_VISIT = 40, 60            # at commitment (after an official visit there)
 FIRM_TOUCH, FIRM_DRIFT = 8, 3              # a week with a message, call or visit from the school / a quiet week (he still warms to you)
