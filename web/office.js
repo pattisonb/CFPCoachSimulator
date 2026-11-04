@@ -239,6 +239,7 @@
     const who = el("button", { type: "button", class: "go-link", text: n.name, onclick: () => window.Recruiting && window.Recruiting.openProfile(s, n.pid) });
     const tag = ` (${n.position}, `;
     const what = n.kind === "asked_more" && n.school === s.team ? `wants more NIL from you: ${n.rival_name || "a rival"} offered more.`
+      : (n.kind === "bloomed" || n.kind === "pro") && n.line ? n.line.replace(/^He /, "")
       : `${(rec().eventWord || ((e) => e.kind))(n)} ${n.school_name || ""}`.trim() + ".";
     return [who, tag, el("span", { class: "ofc-stars", text: stars(n.stars) }), `) ${what}`];
   }

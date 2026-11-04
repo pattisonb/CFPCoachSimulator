@@ -21,7 +21,7 @@ CONF_GAMES = 4        # *tune* the most results Around the Conference shows
 NEWS_WEEKS = 4        # *tune* how many weeks back Program News reaches
 
 # the recruiting events worth a line, the biggest first inside a week
-_NEWS_ORDER = ("signed", "commit", "hard", "flip", "decommit", "offer", "asked_more", "not_buying", "hung_up", "pester", "promise_broken")
+_NEWS_ORDER = ("signed", "pro", "commit", "hard", "flip", "decommit", "bloomed", "offer", "asked_more", "not_buying", "hung_up", "pester", "promise_broken")
 
 
 def _school_name(slug: Optional[str], teams: dict) -> Optional[str]:
@@ -58,6 +58,8 @@ def program_news(state: dict) -> list[dict]:
             item["rival_name"] = _school_name(e["rival"], teams)
         if e.get("action"):
             item["action"] = e["action"]
+        if e.get("line"):                    # a bloomer's jump, a two-sport star going pro: the log's own sentence
+            item["line"] = e["line"]
         items.append(item)
     for g in state["games"].values():
         if not g.get("played") or me not in (g["home"], g["away"]) or g["week"] <= week - NEWS_WEEKS:
