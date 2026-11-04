@@ -71,9 +71,9 @@ def check_content(page, oc: str, where: str) -> None:
     assert info, f"the strip's note is an ⓘ {where}"
     assert "these are your staff's final grades" in page.evaluate("(b) => document.getElementById(b.getAttribute('aria-describedby')).textContent", info)
     assert "his report is complete" not in page.inner_text(".go-pane .go-profile").replace("\n", " "), f"the long note is off the page {where}"
-    # one row: Personality and Who Decides side by side
+    # one row: Personality, Who Decides and His Story side by side
     tops = page.eval_on_selector_all(".go-pane .go-profile .go-trait", "els => els.map(e => Math.round(e.getBoundingClientRect().top))")
-    assert len(tops) == 2 and (where.endswith("400") or abs(tops[0] - tops[1]) <= 2), f"Personality and Who Decides share a row {where}: {tops}"
+    assert len(tops) == 3 and (where.endswith("400") or max(tops) - min(tops) <= 2), f"Personality, Who Decides and His Story share a row {where}: {tops}"
     # the order: strip, traits, evaluation, outlook, our comp, his list
     order = page.evaluate("""() => { const q = (s) => { const e = document.querySelector('.go-pane .go-profile ' + s); return e ? e.getBoundingClientRect().top : null; };
       return [q('.go-scouted'), q('.go-traits'), q('.rc-eval'), q('.go-outlook'), q('.go-comp'), q('.go-schools, .go-no-schools')]; }""")

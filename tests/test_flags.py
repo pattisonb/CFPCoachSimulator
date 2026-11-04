@@ -20,7 +20,7 @@ PRECISION = 0.5                     # at least this share of the gems are truly 
 
 
 def truth_cut(rc: dict, stars: int, q: float) -> float:
-    vals = sorted(p["truth"]["potential"] for p in rc["prospects"].values() if p["stars"] == stars)
+    vals = sorted(p["truth"]["potential"] for p in rc["prospects"].values() if (p.get("real") or p)["stars"] == stars)   # his real stars (his story may show him low)
     return recruiting._percentile(vals, q)
 
 

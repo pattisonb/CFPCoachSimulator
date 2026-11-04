@@ -64,7 +64,7 @@
     card.append(el("div", { class: "go-kicker", text: `What Changed · After ${report.week === 0 ? "the Preseason" : `Week ${report.week}`}` }));
     // the week in a glance: only prospects where something happened to you (your place moved, a
     // decision, an ask), the biggest first, one line each; his list on the card has the rest
-    const BIG = new Set(["commit", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up"]);
+    const BIG = new Set(["commit", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "bloomed", "pro"]);
     const weight = (r) => (r.rank !== r.prev_rank ? 2 : 0) + r.events.filter((e) => BIG.has(e.kind)).length * 3 + (r.moves.some((m) => m.you) ? 1 : 0);
     const rows = report.rows.filter((r) => weight(r) > 0).sort((a, b) => weight(b) - weight(a));
     if (!rows.length) return null;
@@ -76,7 +76,8 @@
       // his ask from you went up because a rival's NIL beat yours: say so once, naming the rival; another school's ask is not yours
       const seen = new Set();
       for (const e of r.events.filter((e) => BIG.has(e.kind) && (e.kind !== "asked_more" || e.school === s.team))) {
-        const bit = e.kind === "asked_more" ? `Wants more NIL from you: ${e.rival_name || "a rival"} offered more` : `${eventWord(e)} ${e.school_name || ""}`.trim();
+        const bit = e.kind === "asked_more" ? `Wants more NIL from you: ${e.rival_name || "a rival"} offered more`
+          : (e.kind === "bloomed" || e.kind === "pro") && e.line ? e.line.replace(/\.$/, "") : `${eventWord(e)} ${e.school_name || ""}`.trim();
         if (seen.has(bit) || seen.size >= 2) continue;
         seen.add(bit);
         bits.push(bit);
@@ -101,6 +102,7 @@
   }
 
   function status(r) {
+    if (r.pro) return "Went Pro in Baseball";
     if (r.signed) return r.signed === "FCS" ? "Signed With an FCS Program" : `Signed · ${teamName(r.signed)}`;
     if (r.committed) return `${r.hard ? "Hard Commit" : "Verbal Commit"} · ${teamName(r.committed)}`;
     if (r.leaning_fcs) return "Leaning FCS";
@@ -197,7 +199,7 @@
       else if (e.kind === "present") bits = [`Presented ${(e.topics || []).map((t) => lowerName(t)).join(", ")}`, e.hit == null ? "He gave nothing away" : LANDED[e.hit] || `${e.hit} landed`];
       else if (e.kind === "answer") bits = [e.answer === "promise" ? `Promised him the job over ${e.about}${e.truthful === false ? " (he did not buy it)" : ""}`
         : e.answer === "deflect" ? `Sidestepped his question about ${e.about}` : `Told him straight about ${e.about}`];
-      else if (e.kind === "learned") bits = [e.line];
+      else if (e.kind === "learned" || ((e.kind === "bloomed" || e.kind === "pro") && e.line)) bits = [e.line];     // what your staff learned; a bloomer's jump; a two-sport star going pro
       else if ((e.kind === "signed" || e.kind === "unsigned") && e.line) bits = [e.line];     // a recruit of yours went elsewhere: where, and why not you
       else if (e.kind === "promise_broken") bits = [`He heard you promised the same spot to ${e.about}`];
       else if (HISTORY_WORDS[e.kind]) bits = [`${HISTORY_WORDS[e.kind]} ${teamName(e.school)}`];
@@ -635,6 +637,15 @@
     promise: "He doubts a promise you made: contacts count half and he will not visit until he cools off",
     quiet: "He felt ignored: call or visit to warm him back up. Contacts count half and he will not visit until then",
   };
+  // his story in a sentence: what it means for recruiting him (the chip's title, and a line under the Profile's rows)
+  const STORY_TIPS = {
+    legacy: "His family has history at one program: it starts ahead, and its lowball or hollow promise costs double.",
+    hero: "His home state wants him to stay: schools there pull harder, and out-of-state pitches land softer unless they are playing time or NIL.",
+    package: "He comes with a teammate: he commits only where his teammate holds an offer, and they commit together.",
+    two_sport: "He could go pro in baseball on signing day: playing time pitches and NIL over his ask lower the risk.",
+    comeback: "He is coming back from an injury and is rated under what he is: schools that reached him early keep his loyalty.",
+    bloomer: "He is growing into a bigger prospect than his rating says: his stars jump midseason.",
+  };
   const COOLED_WHY = { lowball: "Cooled: raise your offer first", promise: "Cooled: give him time", quiet: "Cooled: he wants to hear from you" };
   function badges(b, me) {
     const out = el("div", { class: "go-tags go-badges" });
@@ -817,6 +828,7 @@
   function chipOf(b, me, portal) {
     if (b.signed === me) return { text: "Signed With You", tone: "good" };
     if (b.committed === me) return { text: "Committed to You", tone: "good" };
+    if (b.pro) return { text: "Went Pro in Baseball", tone: "bad" };
     if (b.signed) return { text: b.signed === "FCS" ? "Signed · an FCS Program" : `Signed · ${teamName(b.signed)}`, tone: "bad" };
     if (b.committed) return { text: `${b.hard ? "Hard Commit" : "Verbal Commit"} · ${teamName(b.committed)}`, tone: b.hard ? "bad" : "warn" };
     const k = STAGE_NAMES[b.stage] ? b.stage : "cold";
@@ -1467,6 +1479,8 @@
         const tr = b.traits || {};
         if (tr.personality) out.push(el("span", { class: "go-tag", "data-key": "trait:personality", text: tr.personality, title: "His personality: how he sounds on a call and how he reacts to you" }));
         if (tr.decider) out.push(el("span", { class: "go-tag", "data-key": "trait:decider", text: `Decides: ${tr.decider}`, title: "Who makes the final call on where he goes" }));
+        if (tr.story_key) out.push(el("span", { class: `go-tag ${tr.story_key === "two_sport" && /High$/.test(tr.story_detail || "") ? "warn" : ""}`, "data-key": "trait:story",
+          text: tr.story_detail ? `${tr.story} · ${tr.story_detail}` : tr.story, title: STORY_TIPS[tr.story_key] || "His story" }));
         if (b.likes) out.push(el("span", { class: "go-tag good go-likes", "data-key": "likes", text: likesText(b.likes), title: likesLine(b.likes) }));
         if (b.visit) out.push(el("span", { class: "go-tag", "data-key": "visit", text: b.visit.done ? "Visited" : `Visit Wk ${b.visit.week}` }));
         if (b.portal && b.role) out.push(el("span", { class: `go-tag ${b.role === "Would Start" ? "good" : b.role === "Next in Line" ? "warn" : "muted"}`, "data-key": "role", text: b.role, title: "Where he would sit on your depth chart next season" }));
@@ -2073,7 +2087,9 @@
         el("b", { class: `go-trait-val ${val ? "" : "muted"}` }, [val || "Not Known Yet", more ? el("span", { class: "go-trait-more muted small", text: ` · ${more}` }) : null])]);
       node.append(el("div", { class: "go-traits", "data-key": "traits" }, [
         traitRow("personality", "Personality", tr.personality),
-        traitRow("decider", "Who Decides", tr.decider, tr.decider && tr.decider_topic ? `Cares About: ${PITCH_NAMES[tr.decider_topic] || tr.decider_topic}` : null)]));
+        traitRow("decider", "Who Decides", tr.decider, tr.decider && tr.decider_topic ? `Cares About: ${PITCH_NAMES[tr.decider_topic] || tr.decider_topic}` : null),
+        traitRow("story", "His Story", tr.story, tr.story_detail || null)]));
+      if (tr.story_key && STORY_TIPS[tr.story_key]) node.append(el("p", { class: "muted small go-story-line", "data-key": "story-tip", text: STORY_TIPS[tr.story_key] }));
     }
     // the evaluation, its summary line and our comp right under it
     if (p.evaluation) {

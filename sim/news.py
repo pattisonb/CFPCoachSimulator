@@ -176,17 +176,45 @@ def _streaks(state: dict, teams: dict, fbs: set, week: int, games: list[dict]) -
     return out
 
 
+STAR_WORDS = {2: "Two-star", 3: "Three-star", 4: "Four-star", 5: "Five-star"}
+
+
 def _recruiting(state: dict, teams: dict, week: int) -> list[dict]:
     rc = state.get("recruiting")
     if not rc:
         return []
+    from coach_career import persona
     out = []
     for e in rc.get("log") or []:
-        if e.get("week") != week or e.get("kind") not in ("commit", "flip"):
+        if e.get("week") != week or e.get("kind") not in ("commit", "flip", "bloomed", "pro"):
             continue
         p = (rc.get("prospects") or {}).get(e.get("pid"))
         school = e.get("school")
-        if not p or p.get("stars") != 5 or not school or school not in teams or teams[school].get("fictional"):
+        if not p:
+            continue
+        stars = STAR_WORDS.get(p.get("stars"), "")
+        link = {"type": "recruit", "pid": e["pid"]}
+        if e["kind"] == "bloomed":             # his story: a late bloomer's jump to a blue chip
+            if (p.get("stars") or 0) >= 4:
+                out.append({"kind": "recruiting", "text": f"Late bloomer {p['position']} {p['name']} jumps to {stars.lower()} stars.",
+                            "team": None, "teams": (), "link": link, "_imp": _BASE["recruiting"] - 4 + p["stars"]})
+            continue
+        if not school or school not in teams or teams[school].get("fictional"):
+            continue
+        if e["kind"] == "pro":                 # a blue-chip two-sport star takes the baseball money
+            if (p.get("stars") or 0) >= 4:
+                out.append({"kind": "recruiting", "text": f"{stars} {p['position']} {p['name']} picks pro baseball over {_name(teams, school)}.",
+                            "team": school, "teams": (), "link": link, "_imp": _BASE["recruiting"] - 2 + p["stars"]})
+            continue
+        k, d = persona.story(state, e["pid"])
+        if k == "hero" and e["kind"] == "commit":          # a hometown hero's commitment makes the news, whatever his stars
+            home = teams[school].get("state") == d.get("state")
+            text = (f"Hometown hero {p['position']} {p['name']} stays home with {_name(teams, school)}." if home
+                    else f"Hometown hero {p['position']} {p['name']} leaves home for {_name(teams, school)}.")
+            out.append({"kind": "recruiting", "text": text, "team": school, "teams": (), "link": link,
+                        "_imp": _BASE["recruiting"] - 10 + 2 * (p.get("stars") or 2)})
+            continue
+        if p.get("stars") != 5:
             continue
         who = f"Five-star {p['position']} {p['name']}"
         old = e.get("from")

@@ -203,8 +203,11 @@ def staff_likes(state: dict, pid: str, viewer: str) -> Optional[dict]:
 # ----- the profile ---------------------------------------------------------------------------------
 
 def _public_grades(p: dict) -> dict[str, float]:
+    """The national rankings' grades: his true ones with their error; a prospect shown low for his story
+    (an Injury Comeback, a Late Bloomer before his jump: p["real"]) understated by persona.SHOWN_BAND."""
     rng = random.Random(f"public-{p['id']}")
-    return {g: p["truth"][g] + rng.gauss(0, PUBLIC_SD) for g in recruiting.GROUPS}
+    low = persona.SHOWN_BAND if p.get("real") else 0.0
+    return {g: p["truth"][g] + rng.gauss(0, PUBLIC_SD) - low for g in recruiting.GROUPS}
 
 
 def _ranks(state: dict) -> dict[str, tuple[int, int]]:
@@ -212,7 +215,7 @@ def _ranks(state: dict) -> dict[str, tuple[int, int]]:
     not its year alone: the transfer portal's block shares its year with the class it replaces."""
     global _RANKS
     rc = state["recruiting"]
-    key = (state["id"], recruiting._ck(rc), len(rc["prospects"]))
+    key = (state["id"], recruiting._ck(rc), len(rc["prospects"]), rc.get("class_v", 0))     # a Late Bloomer's jump re-ranks the class
     cached = _RANKS                       # one read: another request may swap it in meanwhile
     if cached[0] == key:
         return cached[1]
@@ -485,7 +488,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "ea_position": p["ea_position"], "archetype": p["archetype"], "stars": p["stars"], "composite": p["composite"],
         "generational": generational_seen(rc, pid, viewer), "find": find(state, pid),
         "national_rank": p["rank"], "position_rank": pos_rank, "state_rank": state_rank,
-        "schools": _schools(state, pid), "committed": status["committed"], "signed": status["signed"],
+        "schools": _schools(state, pid), "committed": status["committed"], "signed": status["signed"], "pro": bool(status.get("pro")),
         "hard": bool(status.get("hard")) and not status["signed"],
         "leaning_fcs": bool(status["fcs"]), "offered_by_you": pid in rc["offers"].get(viewer, []),
         "on_board": pid in rc["board"],
@@ -542,7 +545,8 @@ def row(state: dict, pid: str, viewer: str) -> dict:
         "height": p["height"], "weight": p["weight"], "home": p["home"],
         "hometown": {"city": p["hometown"]["city"], "state": p["hometown"]["state"]},
         "committed": st["committed"], "signed": st["signed"], "leaning_fcs": bool(st["fcs"]),
-        "school_name": "FCS" if school == "FCS" else (teams[school]["name"] if school else None),
+        "school_name": PRO if st.get("pro") else "FCS" if school == "FCS" else (teams[school]["name"] if school else None),
+        "pro": bool(st.get("pro")),
         "on_board": pid in rc["board"], "offered": pid in rc["offers"].get(viewer, []),
         "group": recruiting._group_of(p),
         "looks": looks_out(read), "scouted": recruiting.report_complete(read), "likes": staff_likes(state, pid, viewer),
@@ -571,7 +575,8 @@ def _stage_move(state: dict, pid: str, viewer: str) -> Optional[str]:
 
 
 HISTORY_SHOWN = 40                           # a board row's History: his newest log entries, this many
-HIS_OWN = ("commit", "hard", "flip", "decommit", "signed", "leaning_fcs")   # his own moves: every school's show
+HIS_OWN = ("commit", "hard", "flip", "decommit", "signed", "leaning_fcs", "bloomed", "pro")   # his own moves: every school's show
+PRO = "Pro Baseball"                          # where a Two-Sport recruit who took the baseball money went
 HISTORY_KEYS = ("week", "portal_week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful", "topics", "hit", "line")
 
 
