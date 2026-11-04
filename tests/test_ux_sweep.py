@@ -443,7 +443,6 @@ def test_scouting_tab(page, base, sid) -> None:
     after = min(3, before + 1)
     page.click("#sc-send")
     toasted(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
-    page.wait_for_selector(".sc-intel .sc-result", timeout=10_000)
     page.wait_for_function("([pid, t]) => document.querySelector(`.sc-row[data-pid='${pid}'] .sc-looks-text`).textContent === t", arg=[pid, f"{fmt(after)}/3"], timeout=10_000)
     assert segments() == [min(1, max(0, after - i)) for i in range(3)], "his meter fills one more segment, in halves"
     smooth(page, h, "Send", same=True)
@@ -823,8 +822,7 @@ def test_staff_likes_tags(page, base) -> None:
         page.wait_for_selector(f".sc-row[data-pid='{nearly}'] .sc-likes", timeout=15_000)
         pill = page.query_selector(f".sc-row[data-pid='{nearly}'] .sc-row-flags .sc-likes")
         assert pill.inner_text().strip().lower() == "oc ♥" and pill.get_attribute("title") == "Your offensive coordinator thinks he starts for you next year", (pill.inner_text(), pill.get_attribute("title"))
-        page.wait_for_selector(".sc-intel .sc-result .go-likes", timeout=15_000)
-        assert page.inner_text(".sc-intel .sc-result .go-likes").strip().lower() == "oc likes him"
+        assert not page.query_selector(".sc-intel .sc-result"), "no first-read box after a trip"
         assert next(b for b in call(base, f"/api/season/{sid}/recruiting")["board"] if b["id"] == nearly)["likes"]["who"] == "OC"
         assert not errs, errs
     finally:

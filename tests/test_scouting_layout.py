@@ -108,7 +108,7 @@ def check_send_and_board(page, base, sid, errors) -> None:
     page.wait_for_function("([pid, t]) => document.querySelector(`.sc-row[data-pid='${pid}'] .sc-looks-text`).textContent === t", arg=[pid, f"{fmt(after)}/3"], timeout=10_000)
     segs = page.evaluate("(pid) => [...document.querySelectorAll(`.sc-row[data-pid='${pid}'] .sc-trip`)].map(t => t.classList.contains('on') ? 1 : t.classList.contains('half') ? 0.5 : 0)", pid)
     assert segs == [min(1, max(0, after - i)) for i in range(3)], segs
-    page.wait_for_selector(".sc-intel .sc-result", timeout=10_000)
+    assert not page.query_selector(".sc-intel .sc-result"), "no first-read box after a trip (the player removed it)"
     page.wait_for_function("(h) => document.querySelector('#sc-points').textContent.startsWith('Points Left: ' + h + ' of')", arg=v["points_left"] - row["cost"], timeout=10_000)
     assert page.evaluate("(e) => e.isConnected", lst) and tab_on(page, "scouting")
     # Add to Board flips the star; Remove from Board flips it back (no offer out: no confirm)

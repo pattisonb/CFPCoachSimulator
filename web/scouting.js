@@ -418,7 +418,6 @@
           box("potential", "Potential", potential ? gradePlain(potential) : [el("span", { class: "muted", text: "Not Read" })]),
           box("need", "Team Need", [el("span", { text: needText, title: r.group ? `${r.group}: ${r.need > 0 ? `${plural(r.need, "spot")} to fill` : "your class is set there"}` : "" })]),
           box("report", "Report", [el("span", { text: complete ? "Complete" : looks > 0 ? "In Progress" : "Not Started" })])]),
-        sel.look ? el("div", { class: "sc-result", "data-key": "result" }, resultBits(sel.look)) : null,
         sub,
         el("div", { class: "sc-sub-body", "data-key": `sub-${desk.sub}`, role: "tabpanel" }, [subBody]),
         el("div", { class: "sc-actions", "data-key": "actions" }, [send, boardBtn]),
@@ -441,7 +440,8 @@
       const li = cur.fillRow(r.pid);
       if (li) ui().pulse(li.querySelector(".sc-conf"));
       cur.patchHead(cur.v);
-      ui().toast(`Scouted ${r.name} · ${fmtLooks(r.looks)} of ${REPORT_LOOKS} looks${r.looks >= REPORT_LOOKS ? " · his report is complete" : ""}`, { ms: 3000 });
+      // the toast is the trip's whole result: the grades it moved show in the Ratings tab, a coordinator's like on his row
+      ui().toast(`Scouted ${r.name} · ${fmtLooks(r.looks)} of ${REPORT_LOOKS} looks${r.looks >= REPORT_LOOKS ? " · his report is complete" : ""}${look && look.likes ? ` · ${look.likes.who} likes him` : ""}`, { ms: 3000 });
       try { sel.pr = await api(s, `prospect/${encodeURIComponent(r.pid)}`); } catch (err) { /* the old read stands */ }
       paintIntel();
       // the Send that completed his report disabled itself: the focus moves on to the board button, never the page body
@@ -528,19 +528,6 @@
       reads.length ? el("ul", { class: "sc-reads" }, reads) : el("p", { class: "muted small sc-no-reads", text: "No report lines on him this week or last." }),
       all]);
   }
-  // the trip's look in one line: each grade that moved, the flags gained, or that nothing changed
-  function resultBits(look) {
-    const after = (look && look.after) || {}, before = (look && look.before) || {}, flags = (look && look.flags) || [];
-    const groups = Object.keys(GRADE_NAMES).filter((g) => after[g]);
-    const out = [];
-    if (!groups.length && !flags.length) out.push(el("span", { class: "muted small", text: "This look changed nothing: his read holds." }));
-    for (const g of groups) out.push(el("span", { class: "sc-change" }, [el("span", { class: "muted small", text: `${GRADE_NAMES[g]}: ` }),
-      ...(before[g] ? [...wordRange(before[g]), " → "] : ["first read: "]), ...wordRange(after[g])]));
-    if (flags.length) out.push(el("span", { class: "sc-change" }, [el("span", { class: "muted small", text: "flagged " }), el("span", { class: "go-tags" }, flags.map(flagBadge))]));
-    if (look && look.likes) out.push(el("span", { class: "sc-change" }, [el("span", { class: "muted small", text: "and " }), likesTag(look.likes)]));
-    return out;
-  }
-
   // ----- Scouting Operations: a bar that opens the staff rows (area dropdown, contract, narrowed bar, coverage) -----
   const uncovered = (v, rv) => {
     const covered = new Set(v.scouts.map((m) => m.area).filter(Boolean));
