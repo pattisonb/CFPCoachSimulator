@@ -1998,12 +1998,21 @@
     // recruiting him happens on the board: once he is on it, a button goes straight there
     const toBoard = el("button", { type: "button", class: "go-btn primary", text: "Recruit Him on Your Board →",
       onclick: () => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; H.closeModal(); H.onChange("recruiting"); } });
-    const label = () => { onBoard.textContent = on ? "✓ On Your Board · Remove" : "+ Add to Your Board"; onBoard.classList.toggle("primary", !on); toBoard.hidden = !on || !!pub.signed || inPane; };
+    // signed with you, or a hard commit to you: he stays on your board (the engine refuses too)
+    const locked = pub.signed === s.team ? "He signed with you: he stays on your board" : pub.hard && pub.committed === s.team ? "Hard commit: he stays on your board until he signs" : null;
+    const label = () => {
+      onBoard.textContent = locked && on ? (pub.signed === s.team ? "✓ Signed With You" : "✓ On Your Board") : on ? "✓ On Your Board · Remove" : "+ Add to Your Board";
+      onBoard.classList.toggle("primary", !on);
+      onBoard.disabled = !!(locked && on);
+      if (locked && on) onBoard.title = locked; else onBoard.removeAttribute("title");
+      toBoard.hidden = !on || !!pub.signed || inPane;
+    };
     label();
     onBoard.addEventListener("click", async () => {
+      if (locked && on) return;
       onBoard.disabled = true;
-      if (await setBoard(s, pid, !on)) { on = !on; label(); H.toast(on ? `${pub.name} is on your board.` : `${pub.name} is off your board.`, 2500); }
-      onBoard.disabled = false;
+      if (await setBoard(s, pid, !on)) { on = !on; H.toast(on ? `${pub.name} is on your board.` : `${pub.name} is off your board.`, 2500); }
+      label();
     });
     if (!inPane) node.append(el("div", { class: "rc-profile-actions go-row wrap" }, [onBoard, toBoard]));
     if (p.looks >= 3 && p.our_grades) {
