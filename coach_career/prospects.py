@@ -375,7 +375,16 @@ def _high_school(p: dict) -> str:
     return f"{p['hometown']['city']} {kind}"
 
 
-def _schools(state: dict, pid: str) -> list[dict]:
+def seen_status(state: dict, pid: str, viewer: Optional[str]) -> dict:
+    """His status as `viewer` sees it: a Quiet Commit's commitment elsewhere is not shown (he reads as
+    uncommitted, marked "quiet")."""
+    st = state["recruiting"]["status"][pid]
+    if viewer and persona.hidden_from(state, viewer, pid):
+        return dict(st, committed=None, hard=False, firmness=None, quiet=True)
+    return st
+
+
+def _schools(state: dict, pid: str, viewer: Optional[str] = None) -> list[dict]:
     """His list: the ten schools he likes most among those recruiting him, the leader first."""
     from sim import season
     rc = state["recruiting"]
@@ -384,7 +393,7 @@ def _schools(state: dict, pid: str) -> list[dict]:
     schools = offers | set(rc["lists"][pid])
     rows = sorted(((recruiting.interest(state, s, pid), s) for s in schools), reverse=True)[:10]
     visits = rc["visits"].get(pid, {})
-    pct = {o["school"]: o for o in odds(state, pid)["schools"]}
+    pct = {o["school"]: o for o in odds(state, pid, viewer=viewer)["schools"]}
     ranks = rc.get("ranks", {}).get(pid) or {}
     now, prev = ranks.get("now") or {}, ranks.get("prev") or {}
     why = rc.get("why", {}).get(pid) or {}
@@ -454,17 +463,16 @@ def flip_word(pct: float) -> str:
     return next(w for edge, w in FLIP_WORDS if pct >= edge)
 
 
-def flip_view(state: dict, pid: str) -> Optional[dict]:
+def flip_view(state: dict, pid: str, viewer: Optional[str] = None) -> Optional[dict]:
     """A committed prospect's chance to flip before signing day, in words, never a number: {"total": the
     rivals' share together, "word": its word ("Locked In" on a hard commit), "rivals": [{school, name, pct,
     word}] by pct, the offering schools other than the one he holds}. None unless he holds a verbal or hard
-    commitment to an FBS school (signed, or uncommitted: nothing to flip from)."""
+    commitment to an FBS school (signed, or uncommitted: nothing to flip from) that `viewer` can see."""
     from sim import season
-    rc = state["recruiting"]
-    st = rc["status"][pid]
+    st = seen_status(state, pid, viewer)
     if st["signed"] or not st["committed"] or st["committed"] == "FCS":
         return None
-    o = odds(state, pid)
+    o = odds(state, pid, viewer=viewer)
     teams = season.load_teams()
     rivals = sorted((r for r in o["schools"] if r["school"] != st["committed"]), key=lambda r: -r["pct"])
     total = round(min(1.0, sum(r["pct"] for r in rivals)), 4)
@@ -479,7 +487,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
     if p is None or pid not in recruiting.visible(state):
         raise recruiting.RecruitingError(404, "unknown prospect")
     pos_rank, state_rank = _ranks(state)[pid]
-    status = rc["status"][pid]
+    status = seen_status(state, pid, viewer)
     top = p["rank"] <= EVALUATED
     public_grades = _public_grades(p)
     public = {
@@ -488,7 +496,8 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "ea_position": p["ea_position"], "archetype": p["archetype"], "stars": p["stars"], "composite": p["composite"],
         "generational": generational_seen(rc, pid, viewer), "find": find(state, pid),
         "national_rank": p["rank"], "position_rank": pos_rank, "state_rank": state_rank,
-        "schools": _schools(state, pid), "committed": status["committed"], "signed": status["signed"], "pro": bool(status.get("pro")),
+        "schools": _schools(state, pid, viewer), "committed": status["committed"], "signed": status["signed"], "pro": bool(status.get("pro")),
+        "quiet": bool(status.get("quiet")),
         "hard": bool(status.get("hard")) and not status["signed"],
         "leaning_fcs": bool(status["fcs"]), "offered_by_you": pid in rc["offers"].get(viewer, []),
         "on_board": pid in rc["board"],
@@ -505,7 +514,8 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
     return {
         "public": public,
         "traits": persona.view(state, viewer, pid),
-        "flip": flip_view(state, pid),
+        "twist": persona.twist_view(state, viewer, pid),
+        "flip": flip_view(state, pid, viewer),
         "grade_details": details,
         "evaluation": _evaluation(p, public_grades) if top else None,
         "public_comp": comp(_shifted(state, p, public_grades), p["ea_position"], starter_pool()) if top else None,
@@ -533,11 +543,12 @@ def row(state: dict, pid: str, viewer: str) -> dict:
     """A prospect as a line in a list: who he is, where he stands, what you know."""
     from sim import season
     rc = state["recruiting"]
-    p, st = rc["prospects"][pid], rc["status"][pid]
+    p, st = rc["prospects"][pid], seen_status(state, pid, viewer)
     school = st["signed"] or st["committed"]
     teams = season.load_teams()
     read = rc["reads"].get(pid)
     return {
+        "quiet": bool(st.get("quiet")),
         "id": pid, "name": p["name"], "stars": p["stars"], "composite": p["composite"], "national_rank": p["rank"],
         "generational": generational_seen(rc, pid, viewer), "find": find(state, pid),
         "position": p["position"], "ea_position": p["ea_position"], "archetype": p["archetype"],
@@ -574,7 +585,7 @@ def _stage_move(state: dict, pid: str, viewer: str) -> Optional[str]:
 
 
 HISTORY_SHOWN = 40                           # a board row's History: his newest log entries, this many
-HIS_OWN = ("commit", "hard", "flip", "decommit", "signed", "leaning_fcs", "bloomed", "pro")   # his own moves: every school's show
+HIS_OWN = ("commit", "hard", "flip", "decommit", "signed", "leaning_fcs", "bloomed", "pro", "twist", "hat", "softened")   # his own moves: every school's show (persona.shown_to: a quiet one, a private one, only its school)
 PRO = "Pro Baseball"                          # where a Two-Sport recruit who took the baseball money went
 HISTORY_KEYS = ("week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful", "topics", "hit", "line")
 
@@ -585,6 +596,8 @@ def history_index(state: dict, viewer: str) -> dict[str, list[dict]]:
     out: dict[str, list[dict]] = {}
     for e in reversed(state["recruiting"]["log"]):
         if e.get("school") != viewer and e["kind"] not in HIS_OWN and e["kind"] != "offer":
+            continue
+        if not persona.shown_to(e, viewer):        # a Quiet Commit's moves, a twist he told another school
             continue
         rows = out.setdefault(e["pid"], [])
         if len(rows) < HISTORY_SHOWN:
@@ -599,13 +612,15 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
     if history is None:
         history = history_index(state, viewer)
     out = row(state, pid, viewer)
-    schools = _schools(state, pid)
+    schools = _schools(state, pid, viewer)
+    seen = seen_status(state, pid, viewer)
     mine = next((s for s in schools if s["school"] == viewer), None)
     out.update(interest=round(recruiting.interest(state, viewer, pid), 1) if mine is None else mine["interest"],
                leader=schools[0] if schools else None, schools=len(schools),
                visit=(rc["visits"].get(pid) or {}).get(viewer),
                priorities_known=list((rc["revealed"].get(viewer) or {}).get(pid, [])),
                traits=persona.view(state, viewer, pid),
+               twist=persona.twist_view(state, viewer, pid),
                hc_week=((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("hc_week"),
                done_this_week=[k for k, w in (((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("week") or {}).items()
                                if w == state["current_week"]],
@@ -617,9 +632,9 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                pestering=recruiting.would_pester(state, viewer, pid), pesters=recruiting.pesters(state, viewer, pid),
                stage_move=_stage_move(state, pid, viewer),
                scene=((rc.get("scenes") or {}).get(viewer) or {}).get(pid),
-               list=[dict(x, you=x["school"] == viewer) for x in _schools(state, pid)[:5]],
-               firmness=rc["status"][pid].get("firmness") if rc["status"][pid]["committed"] == viewer and not rc["status"][pid]["signed"] else None,
-               hard=bool(rc["status"][pid].get("hard")) and not rc["status"][pid]["signed"],
+               list=[dict(x, you=x["school"] == viewer) for x in schools[:5]],
+               firmness=seen.get("firmness") if seen["committed"] == viewer and not seen["signed"] else None,
+               hard=bool(seen.get("hard")) and not seen["signed"],
                can_scout=can_scout(state, viewer, pid),
                scout_cost=recruiting.look_cost(state, viewer, pid),
                role=_role(recruiting.pull(state, viewer, pid)["playing_time"]),
@@ -657,7 +672,7 @@ def standing(state: dict, pid: str, viewer: str) -> dict:
     your chance as a range that narrows toward signing day, and the leader. `place` is None
     until you offer."""
     from sim import season
-    o = odds(state, pid)
+    o = odds(state, pid, viewer=viewer)
     order = [r["school"] for r in o["schools"]]
     mine = next((r for r in o["schools"] if r["school"] == viewer), None)
     lead = o["schools"][0] if o["schools"] else None
@@ -698,7 +713,7 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
     keen, cuts = your_interest(state, viewer, visible)
     recs = {r["pid"]: r for r in recruiting.recommended(state, viewer)} if status == "recommended" else {}
     for pid in visible:
-        p, st = rc["prospects"][pid], rc["status"][pid]
+        p, st = rc["prospects"][pid], seen_status(state, pid, viewer)
         if position and position not in (p["position"], p["ea_position"]):
             continue
         if group and recruiting._group_of(p) != group:
@@ -776,8 +791,8 @@ def national_classes(state: dict, viewer: Optional[str] = None) -> dict:
     by_school: dict[str, list] = {}
     for pid, st in rc["status"].items():
         school = st["signed"] or st["committed"]
-        if school and school != "FCS":
-            by_school.setdefault(school, []).append(pid)
+        if school and school != "FCS" and not (viewer and rc is state["recruiting"] and persona.hidden_from(state, viewer, pid)):
+            by_school.setdefault(school, []).append(pid)        # a Quiet Commit counts only in his school's own view
     rows = []
     for slug in recruiting.fbs_schools(state):
         pids = sorted(by_school.get(slug, []), key=lambda q: -rc["prospects"][q]["composite"])
@@ -802,7 +817,8 @@ def national_classes(state: dict, viewer: Optional[str] = None) -> dict:
 def class_detail(state: dict, slug: str, viewer: str) -> list[dict]:
     """One school's class, best first, as list rows."""
     rc = class_rc(state)
-    pids = [pid for pid, st in rc["status"].items() if (st["signed"] or st["committed"]) == slug]
+    pids = [pid for pid, st in rc["status"].items() if (st["signed"] or st["committed"]) == slug
+            and not (rc is state["recruiting"] and persona.hidden_from(state, viewer, pid))]
     rows = [row(state, pid, viewer) for pid in sorted(pids, key=lambda q: rc["prospects"][q]["rank"])]
     for r in rows:                           # his real ratings show once he signs with you: did the find hold?
         if r["signed"] == viewer:
@@ -821,7 +837,7 @@ def recruiting_view(state: dict) -> dict:
     hist = history_index(state, me)
     board = [board_row(state, pid, me, hist) for pid in rc["board"]]
     recap = [e for e in rc["log"] if e["week"] == week and (e.get("school") == me or e.get("from") == me or e["pid"] in mine)
-             and e["kind"] not in ("leaning_fcs",) + recruiting.HISTORY_ONLY]
+             and e["kind"] not in ("leaning_fcs",) + recruiting.HISTORY_ONLY and persona.shown_to(e, me)]
     return {
         "week": week, "hours": recruiting.weekly_hours(state, me), "hours_left": recruiting._hours(state, me),
         "points_left": recruiting.scout_points_left(state, me), "points_week": recruiting.scout_points(state, me),
@@ -1041,7 +1057,7 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
 def _standing_word(state: dict, pid: str, me: str) -> str:
     """Where he stands with you, in a few words: signed or committed (to you or elsewhere), else your stage with him."""
     from sim import season
-    st = state["recruiting"]["status"][pid]
+    st = seen_status(state, pid, me)
     if st["signed"] == me:
         return "Signed With You"
     if st["signed"] or st["committed"] not in (None, me):
@@ -1060,13 +1076,14 @@ CLASS_DECAY = 0.85
 CERTAINTY = ((0.18, "Early Read"), (0.08, "Taking Shape"), (0.0, "Solid Read"))
 
 
-def odds(state: dict, pid: str, week: Optional[int] = None) -> dict:
+def odds(state: dict, pid: str, week: Optional[int] = None, viewer: Optional[str] = None) -> dict:
     """Each offering school's chance to land him, the field's (schools not yet in it), and the
     range around each that narrows as signing day nears: {"schools": [{school, pct, lo, hi}],
-    "field", "band", "certainty"}, likeliest first."""
+    "field", "band", "certainty"}, likeliest first (as `viewer` sees him: a Quiet Commit elsewhere
+    reads as uncommitted)."""
     rc = state["recruiting"]
     week = state["current_week"] if week is None else week
-    st = rc["status"][pid]
+    st = seen_status(state, pid, viewer)
     if st["signed"]:                           # final
         rows = [] if st["signed"] == "FCS" else [{"school": st["signed"], "pct": 1.0, "lo": 1.0, "hi": 1.0}]
         return {"schools": rows, "field": 0.0 if rows else 1.0, "band": 0.0, "certainty": "Signed", "committed": st["signed"]}
