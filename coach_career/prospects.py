@@ -28,22 +28,23 @@ PUBLIC_SD = 3.0                    # the national rankings' error on his grades,
 EVAL_GROUPS = ("athleticism", "size_strength", "technique", "football_iq", "potential")
 GROUP_NAMES = {"athleticism": "athleticism", "size_strength": "size and strength", "technique": "technique",
                "football_iq": "football IQ", "potential": "upside", "coachability": "coachability"}
+# the public evaluation's lines: each a whole sentence that names its group once (no "Upside: Big upside")
 STRENGTH_TEXT = {
-    "athleticism": "Rare athleticism for a {pos}: burst, change of direction and speed to separate.",
-    "size_strength": "Size and strength already at a college level; wins with power.",
-    "technique": "Polished technique; plays like a coached, refined {pos}.",
-    "football_iq": "High football IQ: reads it fast and is rarely out of position.",
-    "potential": "Big upside: the frame and tools to keep climbing for years.",
+    "athleticism": "Rare athleticism for {a_noun}: burst, change of direction and speed to separate.",
+    "size_strength": "His size and strength are already at a college level; he wins with power.",
+    "technique": "Polished technique: he plays like a coached, refined {noun}.",
+    "football_iq": "A high football IQ: he reads it fast and is rarely out of position.",
+    "potential": "Real upside: the frame and tools to keep climbing for years.",
 }
 WEAKNESS_TEXT = {
-    "athleticism": "Athleticism is only average for the position; may lack a top gear.",
-    "size_strength": "Needs to add strength and fill out his frame.",
-    "technique": "Technique is raw and will need refinement.",
-    "football_iq": "Still learning the game; processing can be slow.",
-    "potential": "Closer to his ceiling than most at this stage.",
+    "athleticism": "His athleticism is only average for the position; he may lack a top gear.",
+    "size_strength": "He needs to add size and strength and fill out his frame.",
+    "technique": "His technique is raw and will need refinement.",
+    "football_iq": "His football IQ is still developing; his processing can be slow.",
+    "potential": "Less upside than most: he is closer to his ceiling at this stage.",
 }
 STRENGTH_FROM, WEAKNESS_BELOW = 60, 45        # the game's scale: a Solid-and-up read is a strength (60), below 45 a weakness
-SOLID_TEXT = "Solid for a {pos} at this level; not a concern."
+SOLID_TEXT = "His {group} is solid for {a_noun} at this level; not a concern."
 OUTLOOK = {
     5: "Day-one impact {pos} with early-round NFL upside.",
     4: "Projects as a multi-year starter at a Power 4 program.",
@@ -122,7 +123,8 @@ def comp(profile_vector: dict, position: str, pool) -> Optional[dict]:
                default=None)
     if best is None or _distance(profile_vector, best["skills"], keys) > comp_max_distance(position):
         return None
-    out = {k: best[k] for k in ("name", "slug", "school", "team", "position")}
+    out = {k: best[k] for k in ("name", "slug", "school", "team")}
+    out["position"] = display_pos(best["position"])
     out["overall"] = best.get("overall")
     return out
 
@@ -202,6 +204,142 @@ def staff_likes(state: dict, pid: str, viewer: str) -> Optional[dict]:
 
 # ----- the profile ---------------------------------------------------------------------------------
 
+# ----- what the page shows of him: the game's position, his size, the staff's write-up ----------------
+DISPLAY_POS = {"LEDG": "EDGE", "REDG": "EDGE", "LT": "OT", "RT": "OT", "LG": "IOL", "RG": "IOL", "C": "IOL",
+               "HB": "RB", "FB": "RB", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "FS": "S", "SS": "S"}
+POS_NOUNS = {"QB": "quarterback", "RB": "running back", "WR": "receiver", "TE": "tight end", "OT": "offensive tackle",
+             "IOL": "interior lineman", "EDGE": "edge rusher", "DT": "defensive tackle", "LB": "linebacker",
+             "CB": "cornerback", "S": "safety", "K": "kicker", "P": "punter", "ATH": "athlete"}
+REPORT_LABELS = {"athleticism": "Athleticism", "football_iq": "Football IQ", "technique": "Technique",
+                 "size_strength": "Size / Strength", "coachability": "Coachability", "potential": "Upside"}
+ATTRIBUTE_GROUPS = ("athleticism", "football_iq", "technique", "size_strength", "coachability")   # the Attributes card, in order
+GOOD_FROM, SOLID_FROM = 65, 50     # a read's midpoint: Strong and up is green, Solid and Fair yellow, Weak red (recruiting.WORD_FLOORS)
+OPENING = {      # the verdict's first sentence, by the potential read's midpoint word
+    "All-American": "A rare {noun} with first-round NFL upside.",
+    "Elite": "A gifted {noun} with early-round NFL upside.",
+    "Strong": "A {noun} who projects as a multi-year starter at a Power 4 program.",
+    "Solid": "A developmental {noun} who could start by his third year.",
+    "Fair": "A depth {noun} with a path to the field through development.",
+    "Weak": "A long-term project at {pos} who needs years of development.",
+}
+STRENGTH_LINE = {
+    "athleticism": "His athleticism stands out: burst, change of direction and speed to separate.",
+    "football_iq": "He reads the game fast and is rarely out of position.",
+    "technique": "His technique is polished; he plays like a coached, refined {pos}.",
+    "size_strength": "He already has college size and strength and wins with power.",
+    "coachability": "Coaches love him: he takes teaching and puts it on the field.",
+}
+CONCERN_LINE = {
+    "athleticism": "His athleticism is only average for the position; he may lack a top gear.",
+    "football_iq": "He is still learning the game, and his processing can be slow.",
+    "technique": "His technique is raw and will need real refinement.",
+    "size_strength": "He needs to add strength and fill out his frame.",
+    "coachability": "Coaches will have to work to get through to him.",
+}
+NO_CONCERN = "There is no glaring hole in his game."
+UNCERTAINTY = ((6.0, "Low"), (12.0, "Medium"))   # *tune* a read's half-width in grade points: under this, the word; past both, High
+TRAIT_HINTS = {      # how an unknown trait is revealed, a sentence under "Not Known Yet"
+    "personality": "Your first call or in-home visit shows it.",
+    "decider": "Two looks from your staff tell you.",
+    "story": "A complete report finds it.",
+    "commit_style": "An official visit shows it.",
+}
+
+
+def display_pos(ea_position: str) -> str:
+    """His position as the game shows it (LEDG -> EDGE, DT stays DT): the profile, the evaluation and the comp agree."""
+    return DISPLAY_POS.get(ea_position, ea_position)
+
+
+def height_text(h) -> Optional[str]:
+    """6'5\" from inches; a transfer's height already comes as text."""
+    if h is None:
+        return None
+    return h if isinstance(h, str) else f"{int(h) // 12}'{int(h) % 12}\""
+
+
+def weight_text(w) -> Optional[str]:
+    return None if w is None else f"{w} lbs"
+
+
+def pos_rank(state: dict, pid: str) -> int:
+    """His rank among the class at his game position (display_pos), by national rank."""
+    global _POS_RANKS
+    rc = state["recruiting"]
+    key = (state["id"], recruiting._ck(rc), len(rc["prospects"]), rc.get("class_v", 0))
+    cached = _POS_RANKS
+    if cached[0] != key:
+        seen, out = {}, {}
+        for q in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"]):
+            d = display_pos(rc["prospects"][q]["ea_position"])
+            seen[d] = seen.get(d, 0) + 1
+            out[q] = seen[d]
+        cached = _POS_RANKS = (key, out)
+    return cached[1][pid]
+
+
+_POS_RANKS: tuple = (None, {})
+
+
+def uncertainty(state: dict, pid: str, group: str) -> Optional[str]:
+    """How sure the read is, in a word: Low, Medium or High uncertainty (Low once his report is complete)."""
+    spread = recruiting.read_spread(state, pid, group)
+    if spread is None:
+        return None
+    if recruiting.report_complete(state["recruiting"]["reads"].get(pid)):
+        return "Low"
+    return next((w for edge, w in UNCERTAINTY if spread[1] < edge), "High")
+
+
+def report(state: dict, pid: str) -> Optional[dict]:
+    """Your staff's Scouting Report on him, written from the read alone (read_interval: never his true grades):
+    the potential headline, a verdict of two or three sentences, Strengths (his best reads from Solid up, three at
+    most), Areas to Develop (his weakest below Solid, three at most), and the Attributes card's bars (0-100 on the
+    grade scale, with the range's words, a tone and the read's uncertainty). None before his first look."""
+    if pid not in state["recruiting"]["reads"]:
+        return None
+    p = state["recruiting"]["prospects"][pid]
+    pos = display_pos(p["ea_position"])
+    noun = POS_NOUNS.get(pos, pos)
+    iv = {g: recruiting.read_interval(state, pid, g) for g in recruiting.GROUPS}
+    mid = {g: (lo + hi) / 2 for g, (lo, hi) in iv.items()}
+    words = {g: list(recruiting.grade_range(state, pid, g)) for g in recruiting.GROUPS}
+    pot = words["potential"]
+    order = sorted(recruiting.GROUPS, key=lambda g: -mid[g])
+    strengths = [g for g in order if mid[g] >= SOLID_FROM][:3]
+    develop = [g for g in reversed(order) if mid[g] < SOLID_FROM and g not in strengths][:3]
+    skills = [g for g in order if g in ATTRIBUTE_GROUPS]
+    best, worst = skills[0], skills[-1]
+    lines = [OPENING[recruiting.word(mid["potential"])].format(noun=noun, pos=pos)]
+    if mid[best] >= GOOD_FROM:
+        lines.append(STRENGTH_LINE[best].format(pos=pos))
+    lines.append(CONCERN_LINE[worst] if mid[worst] < SOLID_FROM else NO_CONCERN)
+    clamp = lambda x: round(max(0.0, min(100.0, x)), 1)
+    tone = lambda m: "good" if m >= GOOD_FROM else "warn" if m >= recruiting.WORD_FLOORS[4] else "bad"
+    return {
+        "headline": pot[0] if pot[0] == pot[1] else f"{pot[0]} – {pot[1]}",
+        "potential": pot,
+        "verdict": " ".join(lines),
+        "strengths": [REPORT_LABELS[g] for g in strengths],
+        "develop": [REPORT_LABELS[g] for g in develop],
+        "attributes": [{"group": g, "label": REPORT_LABELS[g], "words": words[g], "lo": clamp(iv[g][0]), "hi": clamp(iv[g][1]),
+                        "mid": clamp(mid[g]), "tone": tone(mid[g]), "uncertainty": uncertainty(state, pid, g)} for g in ATTRIBUTE_GROUPS],
+        "certainty": uncertainty(state, pid, "potential"),
+    }
+
+
+def trait_hints(traits: dict) -> dict:
+    """How each trait he has not shown yet is revealed: {trait: sentence}, for the traits the view leaves None."""
+    return {k: TRAIT_HINTS[k] for k, v in traits.items() if v is None and k in TRAIT_HINTS}
+
+
+def shown(state: dict, p: dict) -> dict:
+    """The page's display fields for him (a list row and the profile's public block)."""
+    return {"display_pos": display_pos(p["ea_position"]), "pos_rank": pos_rank(state, p["id"]),
+            "height_display": height_text(p.get("height")), "weight_display": weight_text(p.get("weight")),
+            "class_of": p.get("class_of")}
+
+
 def _public_grades(p: dict) -> dict[str, float]:
     """The national rankings' grades: his true ones with their error; a prospect shown low for his story
     (an Injury Comeback, a Late Bloomer before his jump: p["real"]) understated by persona.SHOWN_BAND."""
@@ -277,9 +415,10 @@ _LEAGUE: dict = {}
 
 def reset_caches() -> None:
     """Forget everything worked out from the league's rosters (season.use_league switched it)."""
-    global _RANKS, _LIKES
+    global _RANKS, _LIKES, _POS_RANKS
     _LEAGUE.clear()
     _RANKS = (None, {})
+    _POS_RANKS = (None, {})
     _LIKES = (None, {})
     starter_pool.cache_clear()
     _attributes.cache_clear()
@@ -399,15 +538,18 @@ def _schools(state: dict, pid: str) -> list[dict]:
 
 def _evaluation(p: dict, public: dict[str, float]) -> dict:
     """His three best and two weakest groups, written up: a strength only from Strong/Solid up (60), a weakness
-    only below Fair (45); anything between is "solid" (a five-star's lowest grade is often still good)."""
-    pos = p["ea_position"]
+    only below Fair (45); anything between is "solid" (a five-star's lowest grade is often still good). His position
+    is the game's display (display_pos), as on the rest of his profile."""
     order = sorted(EVAL_GROUPS, key=lambda g: -public[g])
-    head = lambda g: GROUP_NAMES[g][0].upper() + GROUP_NAMES[g][1:]
+    pos = display_pos(p["ea_position"])
+    noun = POS_NOUNS.get(pos, pos)
+    a_noun = f"{'an' if noun[0].lower() in 'aeiou' else 'a'} {noun}"
+    text = lambda t, g: t.format(pos=pos, noun=noun, a_noun=a_noun, group=GROUP_NAMES[g])
     strengths, solid, weaknesses = [], [], []
     for g in order[:3]:
-        (strengths if public[g] >= STRENGTH_FROM else solid).append(f"{head(g)}: " + (STRENGTH_TEXT[g] if public[g] >= STRENGTH_FROM else SOLID_TEXT).format(pos=pos))
+        (strengths if public[g] >= STRENGTH_FROM else solid).append(text(STRENGTH_TEXT[g] if public[g] >= STRENGTH_FROM else SOLID_TEXT, g))
     for g in order[-2:]:
-        (weaknesses if public[g] < WEAKNESS_BELOW else solid).append(f"{head(g)}: " + (WEAKNESS_TEXT[g] if public[g] < WEAKNESS_BELOW else SOLID_TEXT).format(pos=pos))
+        (weaknesses if public[g] < WEAKNESS_BELOW else solid).append(text(WEAKNESS_TEXT[g] if public[g] < WEAKNESS_BELOW else SOLID_TEXT, g))
     return {"strengths": strengths, "solid": solid, "weaknesses": weaknesses, "outlook": OUTLOOK.get(recruiting.tier_of(p), OUTLOOK[2]).format(pos=pos)}
 
 
@@ -494,6 +636,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "on_board": pid in rc["board"],
         "trips": ((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("scouted", 0),
         "priorities_known": list((rc["revealed"].get(viewer) or {}).get(pid, [])),
+        **shown(state, p),
     }
     read = rc["reads"].get(pid)
     our_grades = {g: list(recruiting.grade_range(state, pid, g)) for g in recruiting.GROUPS} if read else None
@@ -502,9 +645,14 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         ours = {g: read["g"][g][0] for g in recruiting.GROUPS}
         our_comp = comp(_shifted(state, p, ours), p["ea_position"], starter_pool())
     details = {g: grade_detail(state, p, g, *recruiting.read_interval(state, pid, g)) for g in recruiting.GROUPS} if read else None
+    traits = persona.view(state, viewer, pid)
     return {
         "public": public,
-        "traits": persona.view(state, viewer, pid),
+        "traits": traits,
+        "trait_hints": trait_hints(traits),
+        "report": report(state, pid),
+        "need": recruiting.needs(state, viewer)[recruiting._group_of(p)],
+        "history": history_index(state, viewer).get(pid, []),
         "flip": flip_view(state, pid),
         "grade_details": details,
         "evaluation": _evaluation(p, public_grades) if top else None,
@@ -541,7 +689,7 @@ def row(state: dict, pid: str, viewer: str) -> dict:
         "id": pid, "name": p["name"], "stars": p["stars"], "composite": p["composite"], "national_rank": p["rank"],
         "generational": generational_seen(rc, pid, viewer), "find": find(state, pid),
         "position": p["position"], "ea_position": p["ea_position"], "archetype": p["archetype"],
-        "height": p["height"], "weight": p["weight"], "home": p["home"],
+        "height": p["height"], "weight": p["weight"], "home": p["home"], **shown(state, p),
         "hometown": {"city": p["hometown"]["city"], "state": p["hometown"]["state"]},
         "committed": st["committed"], "signed": st["signed"], "leaning_fcs": bool(st["fcs"]),
         "school_name": PRO if st.get("pro") else "FCS" if school == "FCS" else (teams[school]["name"] if school else None),
