@@ -319,7 +319,7 @@ def last_game(state: dict, slug: str, week: int) -> dict | None:
         if best is None or g["week"] > best["week"]:
             opp = g["away"] if g["home"] == slug else g["home"]
             mine, theirs = (g["home_score"], g["away_score"]) if g["home"] == slug else (g["away_score"], g["home_score"])
-            best = {"opponent": (teams.get(opp) or {}).get("name", opp), "won": mine > theirs, "week": g["week"]}
+            best = {"opponent": season.team_display(opp, teams), "won": mine > theirs, "week": g["week"]}
     return best
 
 
@@ -333,7 +333,7 @@ def next_game(state: dict, slug: str, week: int) -> dict | None:
             continue
         if best is None or g["week"] < best["week"]:
             opp = g["away"] if g["home"] == slug else g["home"]
-            best = {"opponent": (teams.get(opp) or {}).get("name", opp), "week": g["week"]}
+            best = {"opponent": season.team_display(opp, teams), "week": g["week"]}
     return best
 
 

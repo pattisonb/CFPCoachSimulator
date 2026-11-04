@@ -50,7 +50,7 @@ INSTALL = """(target) => {
 # the action before does not count). A view switch must start none.
 QUIET_WATCH = """() => { const q = window.__quiet = { n: 0, what: [] };
   const has = (cls, c) => (' ' + (cls || '') + ' ').includes(' ' + c + ' ');
-  q.obs = new MutationObserver((recs) => { for (const r of recs) for (const c of ['go-changed', 'go-fade-in'])
+  q.obs = new MutationObserver((recs) => { for (const r of recs) for (const c of ['go-changed', 'go-fade-in', 'go-leaving'])
     if (r.target.classList && r.target.classList.contains(c) && !has(r.oldValue, c) && !r.target.closest('#toasts')) { q.n++; if (q.what.length < 6) q.what.push(r.target.className); } });
   q.obs.observe(document.documentElement, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['class'] }); }"""
 
@@ -232,6 +232,17 @@ def scouting_case(page, base: str, sid: str) -> None:
         time.sleep(0.4)
     loud, what = page.evaluate("() => { window.__quiet.obs.disconnect(); return [window.__quiet.n, window.__quiet.what]; }")
     assert loud == 0, f"picking prospects in Scouting flashed or faded {loud} time(s): {what}"
+    # the report's sub-tabs (the player's recording): the new body takes the old one's place at once,
+    # no lingering old body pushing it down, so its top never moves
+    page.evaluate(QUIET_WATCH)
+    for sub in ("overview", "scouting", "ratings", "overview", "ratings"):
+        page.click(f"#tab-scouting .sc-subtabs button[data-sub={sub}]")
+        tops = page.evaluate("""() => new Promise((ok) => { const b = document.querySelector('#tab-scouting .sc-subtabs');
+          const top = () => b.nextElementSibling ? Math.round(b.nextElementSibling.getBoundingClientRect().top) : null, seen = [top()];
+          let n = 0; const tick = () => { seen.push(top()); if (++n < 12) requestAnimationFrame(tick); else ok(seen); }; requestAnimationFrame(tick); })""")
+        assert len(set(tops)) == 1, f"the {sub} body moved after it was drawn: {tops}"
+    loud, what = page.evaluate("() => { window.__quiet.obs.disconnect(); return [window.__quiet.n, window.__quiet.what]; }")
+    assert loud == 0, f"switching the report's sub-tabs flashed, faded or lingered {loud} time(s): {what}"
 
 
 def board_cases(page, base: str, sid: str) -> None:
