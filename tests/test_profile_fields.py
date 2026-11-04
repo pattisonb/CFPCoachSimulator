@@ -118,7 +118,7 @@ def test_traits_hints(st) -> None:
     persona.learn(st, me, pid, "personality")
     pr = prospects.profile(st, pid, me)
     assert pr["trait_hints"] == {}, pr["trait_hints"]
-    assert pr["need"] is not None and isinstance(pr["history"], list)
+    assert pr["need"] is not None and isinstance(pr["row"]["history"], list) and pr["row"]["id"] == pid
 
 
 if __name__ == "__main__":

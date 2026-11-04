@@ -287,3 +287,46 @@
 .go-gchip:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 @media (max-width: 700px) { .go-gchip { min-height: 44px; } }
 .go-profile .go-no-schools { margin: 2px 0; }
+
+/* ----- the board's redesign (web/profile.css holds the pane's cards): the header's budgets, the list card ----- */
+.go-board-head { grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px 24px; }
+.go-board-title { margin: 0; font-size: 26px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.02em; }
+.go-board-head .go-meters { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: flex-end; }
+.go-board-head .go-meter { flex: 1 1 96px; min-width: 92px; max-width: 170px; }
+.go-board-head .go-meter-top { flex-direction: column-reverse; justify-content: flex-start; gap: 0; }
+.go-board-head .go-meter-top b { font-size: 17px; }
+.go-board-head .go-meter-top span { color: var(--muted); font-size: 12.5px; }
+.go-board-head .go-meter-track { height: 6px; background: var(--pv-track); }
+.go-board-head .go-meter-fill.alt { background: var(--home); }
+.go-auto .go-seg-btn { min-height: 44px; padding: 0 14px; font-weight: 700; }
+/* the list card and the pane line up at the top; one gap token between them */
+.go-board { gap: var(--pv-gap); align-items: start; }
+@media (min-width: 760px) { .go-board { grid-template-columns: minmax(300px, 350px) minmax(0, 1fr); } }
+.go-list-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; margin: 0; }
+.go-list-col .go-stagebar { flex-direction: column; align-items: stretch; }
+.go-list-col .go-stages { flex-wrap: wrap; }
+.go-list-col .go-stages button { min-height: 36px; }
+.go-list-col .go-stages button[aria-pressed="true"] { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
+.go-list-col .go-tools { width: 100%; }
+.go-list-col #rc-search { flex: 1 1 140px; min-width: 0; }
+.go-list-col .go-board .go-list-recruits, .go-list-col .go-list-recruits { gap: 2px; }
+/* a row's standing word is a chip in its tone */
+.go-row-recruit .go-standing-word { border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; letter-spacing: 0.03em; }
+.go-row-recruit .go-standing-word.good { border-color: var(--good); }
+.go-row-recruit .go-standing-word.warn { border-color: var(--go-warn, var(--accent)); }
+.go-row-recruit .go-standing-word.bad { border-color: var(--bad); }
+.go-row-recruit[aria-pressed="true"] { background: color-mix(in srgb, var(--go-primary, var(--accent)) 8%, transparent); }
+/* the pane: the hero, the tab row, the cards */
+.go-pane { gap: 12px; border-width: 1px; border-color: var(--border); }
+.go-pane .go-pane-head { display: block; }
+.go-pane .pv-tabrow .go-subtabs { position: static; background: none; }
+.go-pane-warn:empty { display: none; }
+.go-pane-warn .go-warn { margin: 0; font-size: 13px; color: var(--bad-text); }
+.go-pane.sheet .pv-tabrow { position: sticky; top: calc(var(--go-head-h, 0px) - 12px); z-index: 1; background: var(--panel); }
+@media (max-width: 759px) {
+  .go-board-head { grid-template-columns: minmax(0, 1fr); }
+  .go-board-head .go-meter { max-width: none; }
+  .go-pane.sheet .go-pane-head { position: static; margin: 0; padding: 0; border: 0; }
+  .go-pane.sheet .pv-tabrow { top: -12px; }
+  .go-pane.sheet .pv-acts .pv-star { flex: none; }
+}

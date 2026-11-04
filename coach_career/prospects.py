@@ -318,7 +318,7 @@ def report(state: dict, pid: str) -> Optional[dict]:
     tone = lambda m: "good" if m >= GOOD_FROM else "warn" if m >= recruiting.WORD_FLOORS[4] else "bad"
     return {
         "headline": pot[0] if pot[0] == pot[1] else f"{pot[0]} – {pot[1]}",
-        "potential": pot,
+        "potential": pot, "potential_tone": tone(mid["potential"]),
         "verdict": " ".join(lines),
         "strengths": [REPORT_LABELS[g] for g in strengths],
         "develop": [REPORT_LABELS[g] for g in develop],
@@ -652,7 +652,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "trait_hints": trait_hints(traits),
         "report": report(state, pid),
         "need": recruiting.needs(state, viewer)[recruiting._group_of(p)],
-        "history": history_index(state, viewer).get(pid, []),
+        "row": board_row(state, pid, viewer),          # the board's own line for him: the popup draws the board's pane from it
         "flip": flip_view(state, pid),
         "grade_details": details,
         "evaluation": _evaluation(p, public_grades) if top else None,
@@ -1157,7 +1157,7 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
         done = complete(pid)
         status = rc["status"][pid]
         gone = SIGNED if status["signed"] else COMMITTED_TO_YOU if status["committed"] == me else None
-        queue.append({"pid": pid, "name": p["name"], "position": p["position"], "stars": p["stars"],
+        queue.append({"pid": pid, "name": p["name"], "position": p["position"], "display_pos": display_pos(p["ea_position"]), "stars": p["stars"],
                       "group": recruiting._group_of(p), "need": need[recruiting._group_of(p)], "national_rank": p["rank"],
                       "looks": looks_out(read), "trips": trips, "cost": cost,
                       "potential": list(recruiting.grade_range(state, pid, "potential")) if read else None,
@@ -1180,6 +1180,7 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
             "points_week": recruiting.scout_points(state, me), "scouts": scouts,
             "full_reports": sum(1 for read in rc["reads"].values() if recruiting.report_complete(read)),
             "trips_this_week": round(this_count.get("trip", 0)),
+            "board_size": len(rc["board"]), "board_scouted": sum(1 for q in rc["board"] if recruiting.report_looks(rc["reads"].get(q)) > 0),
             "queue": queue, "queue_total": len(matched),
             "reports": {"this_week": _report_groups(state, this_week, this_count, this_changes, staff),
                         "last_week": _report_groups(state, last_week, last_count, last_changes, staff)},
