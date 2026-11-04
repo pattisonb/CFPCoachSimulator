@@ -270,8 +270,10 @@
     const st = c.standing, name = confShort(c.name);
     if (c.independent || !st) return `${s.team_name} plays as an independent: ${recText(st || s.record)} on the season.`;
     if (!(st.conf_wins + st.conf_losses)) return `${s.team_name} has not played a conference game yet.`;
+    const where = `${ordinal(st.conf_rank)} of ${st.of} in the ${name}${st.division ? ` ${st.division}` : ""}`;
+    if (s.done) return `${s.team_name} finished ${where}, ${st.conf_wins}-${st.conf_losses} in conference play.`;
     const after = c.week ? ` after ${weekName(s, c.week)}` : "";
-    return `${s.team_name} sits ${ordinal(st.conf_rank)} of ${st.of} in the ${name}${st.division ? ` ${st.division}` : ""}${after}, ${st.conf_wins}-${st.conf_losses} in conference play.`;
+    return `${s.team_name} sits ${where}${after}, ${st.conf_wins}-${st.conf_losses} in conference play.`;
   }
   // the standing line under your record: "2nd in the SEC · 3-0 SEC"; before any game "SEC · 0-0"
   function standingText(s, c) {
