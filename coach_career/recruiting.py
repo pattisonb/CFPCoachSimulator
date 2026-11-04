@@ -2566,10 +2566,13 @@ def make_staff(state: dict) -> list[dict]:
 def set_board(state: dict, pid: str, on: bool) -> None:
     """Put a prospect on your board or take him off; one you take off stays off, Auto-recruit
     included, until you put him back. Taking him off pulls your offer too (the NIL comes back, a
-    verbal commit of yours decommits); a hard commit's offer stands, so he cannot come off."""
+    verbal commit of yours decommits); a hard commit's offer stands, so he cannot come off, and
+    nor can a recruit who has signed with you."""
     rc = state["recruiting"]
     dropped = rc.setdefault("dropped", [])
     me = state.get("team")
+    if not on and rc["status"][pid]["signed"] == me:
+        raise RecruitingError(409, "he has signed with you: he stays on your board")
     if not on and pid in rc["offers"].get(me, []):
         st = rc["status"][pid]
         if st["committed"] == me and st.get("hard"):
