@@ -1198,7 +1198,7 @@
     else if (t === "awards") renderAwards();
     else if (t === "stats") renderStats();
     else if (t === "offseason" && window.Offseason) window.Offseason.render(state.season, $("#tab-offseason"), recruitingHelpers);
-    else if (t === "office" && window.Recruiting) window.Recruiting.render(t, state.season, { ...recruitingHelpers, api: officeApi });
+    else if (t === "office" && window.Office) window.Office.render(state.season, $("#tab-office"), { ...recruitingHelpers, api: officeApi });
     else if (CAREER_TABS.includes(t) && window.Recruiting) window.Recruiting.render(t, state.season, recruitingHelpers);
   }
 
@@ -1250,7 +1250,7 @@
     else if (what === "selection") { if (s.current_week < 15) advance(15); }
     else if (what === "end") advance(20);
   }
-  // The Office's play card (recruiting.js hands its .go-play to this): Sim the week, Game day while
+  // The Office's play card (office.js puts it in the Next Game hero, Game Day first): Sim the week, Game day while
   // your game is unplayed, Sim to selection day until selection, Sim to signing day, and ▾ with the
   // week picker (sim through a week of your choosing; the recruiting weeks between run on Auto).
   function playCard(s) {

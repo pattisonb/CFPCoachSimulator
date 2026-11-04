@@ -46,6 +46,8 @@ def program_news(state: dict) -> list[dict]:
             continue
         if not (e.get("school") == me or e.get("from") == me or e["pid"] in mine):
             continue
+        if e["kind"] == "offer" and e.get("school") == me:
+            continue                     # your own offers are your doing, not news
         p = (rc.get("prospects") or {}).get(e["pid"])
         if not p:
             continue
