@@ -1272,7 +1272,7 @@ Scouting Center, master and detail, built from the player's mockup in the site's
   ("Evaluate talent: a full report is three looks; a trip is one, a week in a scout's area half.") and
   **All Reports** with a count of this week's finds ("3 New"). Beside it four stat cards: My Board (your
   board's size, "Tracked Players"), Full Reports (`full_reports`: complete reports this class), Scouting
-  Queue (`trips_this_week`: your Sends this week) and Scouting Hours ("30 / 55" and a bar, `#sc-hours`) with "Points Left: 35 of 50" (`points_left` of `points_week`, `.sc-points`) beneath it: a Send spends scouting points, not hours.
+  Queue (`trips_this_week`: your Sends this week) and Scouting Points (`#sc-points-card`: the points left as the headline and a bar, "Points Left: 35 of 50" in `#sc-points` (`points_left` of `points_week`), and "Recruiting Hours: 30 of 55" as a second line): a Send spends scouting points, not hours.
   On a phone the cards are a 2×2 grid.
 - **The Prospect Database** (left): every prospect you can see (`visible`), committed to you or signed
   too (no Send; `why` says so), 20 to a page on `offset`/`limit`/`queue_total` ("1–20 of 3,810", ‹ 1 2 … 191 ›),
