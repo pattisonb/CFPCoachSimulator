@@ -67,6 +67,12 @@ if __name__ == "__main__":
 
     # ----- Legacy -----
     pid = plain(st)
+    win = recruiting._winning(st)
+    force(st, pid, None)
+    flat = recruiting.interest(st, ME, pid, win)
+    force(st, pid, "legacy", {"school": ME})
+    assert approx(recruiting.interest(st, ME, pid, win), flat + persona.LEGACY_HEAD, 1e-6), "the legacy school's head start"
+    assert ME not in rc["lists"][pid], "a head start, not a place on his list"
     for t in ("coach", "prestige", "academics"):
         force(st, pid, None)
         base = pts(st, pid, other, "message", t)

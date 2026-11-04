@@ -39,7 +39,7 @@ def make_career():
     rc = st["recruiting"]
     rc["hours"][me] = 300
     free = [q for q in recruiting.prospect_list(st) if not rc["prospects"][q].get("hidden") and me not in rc["contacts"].get(q, {})
-            and not rc["status"][q]["committed"] and not recruiting.would_pester(st, me, q)]
+            and not rc["status"][q]["committed"] and not recruiting.would_pester(st, me, q) and not persona.story(st, q)[0]]   # no story: His Story stays Not Known Yet
     of = lambda q: persona.of(st, q)
     first = next(q for q in free if of(q)["personality"] not in ("guarded",) and of(q)["decider"] != "self" and of(q)["decider_topic"])
     visit = next(q for q in free if q != first and of(q)["decider"] != "self" and of(q)["personality"] != "guarded")
@@ -90,10 +90,10 @@ def desktop(browser, base, sid, first, visit, guarded, names, errs) -> None:
     pick_row(page, first)
     open_profile(page)
     rows = profile_rows(page)
-    assert rows == {"personality": NOT_KNOWN, "decider": NOT_KNOWN}, rows
+    assert rows == {"personality": NOT_KNOWN, "decider": NOT_KNOWN, "story": NOT_KNOWN}, rows
     assert page.inner_text(".go-pane .go-trait[data-trait=personality] .go-trait-label").strip() == "Personality"
     assert page.inner_text(".go-pane .go-trait[data-trait=decider] .go-trait-label").strip() == "Who Decides"
-    assert page.eval_on_selector_all(".go-pane .go-trait .go-trait-val.muted", "els => els.length") == 2, "Not Known Yet is muted"
+    assert page.eval_on_selector_all(".go-pane .go-trait .go-trait-val.muted", "els => els.length") == 3, "Not Known Yet is muted"
     assert not page.query_selector(".go-pane .go-tags [data-key^='trait:']"), "no trait chip before anything is learned"
     # switching recruits starts no pulse or fade
     page.evaluate(QUIET_WATCH, [".go-pane", ["go-changed", "go-fade-in"]])
@@ -297,7 +297,7 @@ def phone_board(browser, base, sid, first, errs) -> None:
     time.sleep(0.5)
     open_profile(page)
     rows = profile_rows(page)
-    assert all(v != "" for v in rows.values()) and set(rows) == {"personality", "decider"}, rows
+    assert all(v != "" for v in rows.values()) and set(rows) == {"personality", "decider", "story"}, rows
     assert page.evaluate("() => document.documentElement.scrollWidth <= innerWidth + 1"), "nothing scrolls sideways"
     no_null(page, "profile at 400")
     ctx.close()

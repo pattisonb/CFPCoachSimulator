@@ -311,7 +311,7 @@ def start(state: dict, year: int = 2027) -> None:
         "pending": {}, "why": {}, "ranks": {}, "reports": [], "action_points": {}, "leader_changes": {},
     }
     state["recruiting"]["generational"] = draw_generational(state["recruiting"])
-    persona.apply_stories(state)       # his story: a legacy's head start, a comeback and a bloomer shown low, the class re-ranked
+    persona.apply_stories(state)       # his story: a comeback and a bloomer shown low, the class re-ranked
 
 
 def nil_ask(p: dict, year: int, seed) -> int:
@@ -956,7 +956,7 @@ def interest(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> fl
         w = weights(p)
         static = _STATIC[key] = sum(w[t] * v for t, v in pull(state, slug, pid, winning=False).items())
     win = min(1.0, (win if win is not None else _winning(state)).get(slug, 0.5))
-    return PULL_SCALE * (static + weights(p)["winning"] * win) * persona.hero_pull(state, slug, pid) + state["recruiting"]["lists"][pid].get(slug, 0.0)
+    return persona.story_interest(state, slug, pid, PULL_SCALE * (static + weights(p)["winning"] * win)) + state["recruiting"]["lists"][pid].get(slug, 0.0)
 
 
 _STATIC: dict = {}       # a prospect's pulls that hold all season (everything but winning), per school

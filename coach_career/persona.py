@@ -458,6 +458,7 @@ STORY_LABEL = {"legacy": "Legacy", "hero": "Hometown Hero", "package": "Package 
 NO_STORY = "No Story"                                   # a complete report that found none
 PUBLIC_STORIES = ("hero", "comeback")                   # everyone knows these at once (a Late Bloomer's jump is public too)
 TWO_SPORT_GROUPS = ("QB", "RB", "WR", "TE", "LB", "CB", "S")   # who also plays baseball
+MATE_NEAR = 4              # *tune* a Package Deal's mate is one of this many prospects rated just under him (his town first, else his state)
 LEGACY_TILT = 1.0          # *tune* a legacy school is drawn by exp(this x the program's strength): the big programs have more
 LEGACY_HEAD = 8.0          # *tune* the legacy school's head start, in interest points on his list
 LEGACY_PITCH = 1.2         # *tune* another school's Coach or Prestige pitch against a legacy counts this much more
@@ -477,6 +478,7 @@ LOYALTY_WEEK = 6
 COMEBACK_READ = 1.5        # *tune* a look's error on a comeback's potential, times the usual: the knee clouds his ceiling
 SHOWN_BAND = 6.0           # *tune* grade points the public grades understate a shown-low prospect (a comeback, a bloomer before his jump)
 BLOOM_WEEKS = (5, 9)       # a Late Bloomer jumps at the week step after one of these weeks (inclusive)
+COMEBACK_SHOWN = 1.0       # *tune* a comeback's shown composite comes from the top this share of the band under his own (1: anywhere in it)
 BLOOM_SHOWN = 0.5          # *tune* a bloomer's shown composite comes from the bottom this share of his starting band: unranked
 BLOOM_BOARDS = 10          # *tune* AI schools that add a bloomer to their boards at his jump: the ones he fits best
 STORY_CALL_LINE = 0.35     # *tune* how often a call's small talk is his story, once the school knows it
@@ -551,7 +553,7 @@ def _draw_class(state: dict) -> dict:
         pool = [q for q in by_state[p["hometown"]["state"]] if q not in out and not pros[q].get("hidden")
                 and q not in gen and _real(pros[q])[1] < comp]
         town = [q for q in pool if pros[q]["hometown"].get("city") and pros[q]["hometown"]["city"] == p["hometown"].get("city")]
-        cands = town or pool
+        cands = (town or pool)[:MATE_NEAR]                       # the best few just under him (the pool runs best first)
         if not cands:
             del out[pid]
             continue
@@ -601,10 +603,9 @@ def rerank(rc: dict) -> None:
 
 
 def apply_stories(state: dict) -> None:
-    """A new class's stories take their places (recruiting.start): a legacy school's head start on his list;
-    an Injury Comeback shown one star under his own and a Late Bloomer at his starting two or three stars
-    (`story-shown-{seed}-{pid}` draws the shown composite inside that band, a bloomer from its bottom
-    BLOOM_SHOWN), each one's NIL ask from his shown stars; the class re-ranked. Marks the class."""
+    """A new class's stories take their places (recruiting.start): an Injury Comeback shown one star under his own and a Late Bloomer at his starting two or three stars
+    (`story-shown-{seed}-{pid}` draws the shown composite inside that band: a comeback's from its top
+    COMEBACK_SHOWN, a bloomer's from its bottom BLOOM_SHOWN), each one's NIL ask from his shown stars; the class re-ranked. Marks the class."""
     from coach_career import recruiting, recruits
     global _STORIES
     rc = state["recruiting"]
@@ -612,11 +613,10 @@ def apply_stories(state: dict) -> None:
     bands = recruits.model()["generation"]["rating_quantiles"]
     for pid, s in drawn.items():
         p, kind, d = rc["prospects"][pid], s["story"], s["story_data"]
-        if kind == "legacy":
-            rc["lists"][pid][d["school"]] = rc["lists"][pid].get(d["school"], 0.0) + LEGACY_HEAD
-        elif kind in ("comeback", "bloomer"):
+        if kind in ("comeback", "bloomer"):
             shown = max(2, p["stars"] - (d["jump"] if kind == "bloomer" else 1))
-            u = random.Random(f"story-shown-{rc.get('seed', 0)}-{pid}").random() * (BLOOM_SHOWN if kind == "bloomer" else 1.0)
+            r = random.Random(f"story-shown-{rc.get('seed', 0)}-{pid}").random()
+            u = r * BLOOM_SHOWN if kind == "bloomer" else 1.0 - r * COMEBACK_SHOWN
             comp = round(recruits.from_quantiles(bands[str(shown)], u), 4)
             p["real"] = {"stars": p["stars"], "composite": p["composite"]}
             p["stars"], p["composite"] = shown, min(comp, p["composite"])
@@ -726,10 +726,16 @@ def school_state(slug: str) -> str:
     return s
 
 
-def hero_pull(state: dict, slug: str, pid: str) -> float:
-    """A Hometown Hero's pull toward a school in his state counts HERO_STATE times."""
+def story_interest(state: dict, slug: str, pid: str, pull: float) -> float:
+    """His pull toward the school (interest before list points) as his story reads it: a Hometown Hero's
+    toward a school in his state HERO_STATE times; his legacy school LEGACY_HEAD points ahead (a head
+    start, not a place on his list: the school still has to recruit him)."""
     k, d = story(state, pid)
-    return HERO_STATE if k == "hero" and school_state(slug) == d.get("state") else 1.0
+    if k == "hero" and school_state(slug) == d.get("state"):
+        return pull * HERO_STATE
+    if k == "legacy" and slug == d.get("school"):
+        return pull + LEGACY_HEAD
+    return pull
 
 
 def story_mult(state: dict, slug: str, pid: str, pitch) -> float:

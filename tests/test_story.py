@@ -70,7 +70,10 @@ if __name__ == "__main__":
     for pid, s in drawn.items():
         if s["story"] == "legacy":
             assert s["story_data"]["school"] in recruiting.fbs_schools(st)
-            assert rc["lists"][pid][s["story_data"]["school"]] == persona.LEGACY_HEAD, "the legacy school's head start"
+            school = s["story_data"]["school"]
+            assert school not in rc["lists"][pid], "a head start, not a place on his list"
+            pull = recruiting.interest(st, school, pid) - persona.LEGACY_HEAD
+            assert abs(persona.story_interest(st, school, pid, pull) - pull - persona.LEGACY_HEAD) < 1e-9
         if s["story"] == "hero":
             assert s["story_data"]["state"] == pros[pid]["hometown"]["state"]
             assert any(teams[t].get("state") == s["story_data"]["state"] for t in recruiting.fbs_schools(st))
