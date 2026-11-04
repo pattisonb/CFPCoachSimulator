@@ -447,7 +447,7 @@ def test_scouting_tab(page, base, sid) -> None:
     assert page.inner_text("#sc-send").strip() == (f"Send Scout · {row['cost']} Points · Finishes His Report" if 3 - before <= 1 else f"Send Scout · {row['cost']} Points")
     after = min(3, before + 1)
     page.click("#sc-send")
-    toasted(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
+    toasted_start(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
     page.wait_for_function("([pid, t]) => document.querySelector(`.sc-row[data-pid='${pid}'] .sc-looks-text`).textContent === t", arg=[pid, f"{fmt(after)}/3"], timeout=10_000)
     assert segments() == [min(1, max(0, after - i)) for i in range(3)], "his meter fills one more segment, in halves"
     smooth(page, h, "Send", same=True)
@@ -456,7 +456,7 @@ def test_scouting_tab(page, base, sid) -> None:
         page.wait_for_function("() => { const b = document.querySelector('#sc-send'); return b && !b.disabled && !b.classList.contains('go-busy'); }", timeout=15_000)
         page.click("#sc-send")
         after = min(3, after + 1)
-        toasted(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
+        toasted_start(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
     if after >= 3:
         page.wait_for_function("() => { const b = document.querySelector('#sc-send'); return b && b.disabled && !b.classList.contains('go-busy'); }", timeout=15_000)
         assert page.inner_text(".sc-intel .sc-why").strip() == "His report is complete: 3 of 3 looks", page.inner_text(".sc-intel .sc-why")
@@ -2298,7 +2298,7 @@ if __name__ == "__main__":
             h = watch(page, ".go-pane", "#rc-recruit")
             n = draws(page)
             menu("scout")
-            toasted(page, f"Scouted {x['name']} · {str(int(looks)) if looks == int(looks) else f'{looks:.1f}'} of 3 looks")
+            toasted_start(page, f"Scouted {x['name']} · {str(int(looks)) if looks == int(looks) else f'{looks:.1f}'} of 3 looks")
             settle(page, n)
             smooth(page, h, "Scout")
             assert page.evaluate("() => document.activeElement.id") == "rc-recruit"
