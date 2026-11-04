@@ -108,8 +108,12 @@ def offer_mult(state: dict, pid: str) -> float:
     return BUSINESS_OFFER if of(state, pid)["personality"] == "business" else 1.0
 
 
-def hollow_mult(state: dict, pid: str) -> float:
-    return COCKY_HOLLOW if of(state, pid)["personality"] == "cocky" else 1.0
+def hollow_mult(state: dict, pid: str, slug=None) -> float:
+    """What a hollow promise costs, times the usual: double for a Cocky recruit, and double again from his
+    legacy school (his story)."""
+    m = COCKY_HOLLOW if of(state, pid)["personality"] == "cocky" else 1.0
+    k, d = story(state, pid)
+    return m * (LEGACY_COST if slug is not None and k == "legacy" and d.get("school") == slug else 1.0)
 
 
 def pester_free(state: dict, pid: str) -> int:
@@ -566,3 +570,162 @@ def apply_stories(state: dict) -> None:
     rerank(rc)
     rc["stories"] = 1
     _STORIES = (rc, (state.get("id"), rc.get("year"), rc.get("seed"), len(rc["prospects"])), drawn)
+
+
+# ----- what his story changes in recruiting (hooks in recruiting.py) ----------------------------------
+
+STAR_WORD = {2: "two", 3: "three", 4: "four", 5: "five"}
+_SCHOOL_STATE: dict = {}
+
+
+def school_state(slug: str) -> str:
+    s = _SCHOOL_STATE.get(slug)
+    if s is None:
+        from sim import season
+        s = _SCHOOL_STATE[slug] = (season.load_teams().get(slug) or {}).get("state") or ""
+    return s
+
+
+def hero_pull(state: dict, slug: str, pid: str) -> float:
+    """A Hometown Hero's pull toward a school in his state counts HERO_STATE times."""
+    k, d = story(state, pid)
+    return HERO_STATE if k == "hero" and school_state(slug) == d.get("state") else 1.0
+
+
+def story_mult(state: dict, slug: str, pid: str, pitch) -> float:
+    """What his story does to the school's contact (before diminishing returns): another school's Coach or
+    Prestige pitch against a legacy, an out-of-state school's pitch to a hero (not Playing Time or NIL),
+    any contact from a school that reached a comeback early."""
+    k, d = story(state, pid)
+    if k is None:
+        return 1.0
+    if k == "legacy" and pitch in ("coach", "prestige") and slug != d.get("school"):
+        return LEGACY_PITCH
+    if k == "hero" and pitch is not None and pitch not in HERO_FULL and school_state(slug) != d.get("state"):
+        return HERO_AWAY
+    if k == "comeback" and ((state["recruiting"]["contacts"].get(pid) or {}).get(slug) or {}).get("loyal"):
+        return LOYALTY
+    return 1.0
+
+
+def note_contact(state: dict, slug: str, pid: str, contact: dict, pitch) -> None:
+    """What a contact leaves on the school's record with him: a comeback remembers who reached him before
+    LOYALTY_WEEK; a Two-Sport recruit counts the school's Playing Time pitches (his draft risk)."""
+    k, _ = story(state, pid)
+    if k == "comeback" and state["current_week"] < LOYALTY_WEEK:
+        contact["loyal"] = True
+    elif k == "two_sport" and pitch == "playing_time":
+        contact["pt"] = contact.get("pt", 0) + 1
+
+
+def lowball_weeks(state: dict, slug: str, pid: str) -> int:
+    """How long a lowball cools him on the school: LEGACY_COST times longer from his legacy school."""
+    from coach_career import recruiting
+    k, d = story(state, pid)
+    return int(round(recruiting.COOL_WEEKS * (LEGACY_COST if k == "legacy" and d.get("school") == slug else 1.0)))
+
+
+def draft_risk(state: dict, slug: str, pid: str) -> float:
+    """A Two-Sport recruit's chance to go pro in baseball if he signs with the school: DRAFT_RISK less
+    DRAFT_PT for each of its Playing Time pitches and DRAFT_NIL per his ask's worth of its NIL over his
+    ask, never under DRAFT_FLOOR; 0 for anyone else."""
+    from coach_career import recruiting
+    if story(state, pid)[0] != "two_sport":
+        return 0.0
+    rc = state["recruiting"]
+    c = (rc["contacts"].get(pid) or {}).get(slug) or {}
+    held = rc["nil"].get(slug, {}).get("held", {}).get(pid, 0) if pid in rc["offers"].get(slug, []) else 0
+    over = max(0.0, held / max(5, recruiting.ask_from(state, slug, pid)) - 1)
+    return max(DRAFT_FLOOR, DRAFT_RISK - DRAFT_PT * c.get("pt", 0) - DRAFT_NIL * over)
+
+
+def draft_word(risk: float) -> str:
+    return next(w for at, w in DRAFT_WORDS if risk >= at)
+
+
+def goes_pro(state: dict, slug: str, pid: str) -> bool:
+    """His one roll (`draft-{seed}-{pid}`) against his draft risk with the school he signs with."""
+    if story(state, pid)[0] != "two_sport":
+        return False
+    return random.Random(f"draft-{state['recruiting'].get('seed', 0)}-{pid}").random() < draft_risk(state, slug, pid)
+
+
+def ai_doubts(state: dict, slug: str, pid: str) -> bool:
+    """An AI school that doubts a comeback's knee does not offer him (COMEBACK_AI of them do): a fixed draw
+    per school (`comeback-{seed}-{slug}-{pid}`). Never your school."""
+    if slug == state.get("team") or story(state, pid)[0] != "comeback":
+        return False
+    return random.Random(f"comeback-{state['recruiting'].get('seed', 0)}-{slug}-{pid}").random() >= COMEBACK_AI
+
+
+def read_mult(state: dict, pid: str, group: str) -> float:
+    """A look's error on a comeback's potential is COMEBACK_READ times the usual."""
+    return COMEBACK_READ if group == "potential" and story(state, pid)[0] == "comeback" else 1.0
+
+
+_FRONT: tuple = (None, {})
+
+
+def board_front(state: dict, slug: str) -> list:
+    """The prospects an AI school puts at the front of its board for their story: its legacies, and the
+    four- and five-star Hometown Heroes of its state."""
+    global _FRONT
+    drawn = stories(state)
+    if _FRONT[0] is not drawn:
+        pros = state["recruiting"]["prospects"]
+        front: dict = {}
+        for pid, s in drawn.items():
+            if s["story"] == "legacy":
+                front.setdefault(s["story_data"]["school"], []).append(pid)
+            elif s["story"] == "hero" and pros[pid]["stars"] >= 4:
+                front.setdefault(("state", s["story_data"]["state"]), []).append(pid)
+        _FRONT = (drawn, front)
+    front = _FRONT[1]
+    return front.get(slug, []) + front.get(("state", school_state(slug)), [])
+
+
+def bloom(state: dict, week: int) -> list:
+    """The Late Bloomers whose jump is this week's step: each takes his real stars and composite (and the
+    NIL ask that goes with them), is no longer hidden, and the class is re-ranked (rc["class_v"] moves, so
+    the star-level caches start over); the jump is public (a "bloomed" event) and the BLOOM_BOARDS AI
+    schools he fits best add him at the front of their boards. Returns who jumped."""
+    from coach_career import recruiting
+    rc = state["recruiting"]
+    jumped = []
+    for pid, s in stories(state).items():
+        if s["story"] != "bloomer" or s["story_data"]["week"] != week:
+            continue
+        p = rc["prospects"][pid]
+        real = p.get("real")
+        if not real:
+            continue
+        p["stars"], p["composite"] = real["stars"], real["composite"]
+        del p["real"]
+        p["hidden"] = False
+        p["nil_ask"] = recruiting.nil_ask(p, rc["year"], rc.get("seed", 0))
+        jumped.append(pid)
+    if not jumped:
+        return []
+    rerank(rc)
+    rc["class_v"] = rc.get("class_v", 0) + 1
+    recruiting._ASKS.clear()
+    me = state.get("team")
+    schools = [s for s in recruiting.fbs_schools(state) if s != me]
+    for pid in sorted(jumped, key=lambda q: rc["prospects"][q]["rank"]):
+        p = rc["prospects"][pid]
+        recruiting._event(state, "bloomed", pid, None, stars=p["stars"], line=f"He jumped to {STAR_WORD[p['stars']]} stars.")
+        st = rc["status"][pid]
+        if st["committed"] or st["signed"]:
+            continue
+        best = sorted(schools, key=lambda s: (-recruiting._fits(state, s).get(pid, 0.0), s))[:BLOOM_BOARDS]
+        for s in best:
+            board = rc["boards"].setdefault(s, [])
+            if pid not in board:
+                board.insert(0, pid)
+    return jumped
+
+
+def pro_line(state: dict, slug: str) -> str:
+    """His History's line when he goes pro in baseball instead of signing with the school."""
+    from sim import season
+    return f"He chose pro baseball over {(season.load_teams().get(slug) or {}).get('name', slug)}."

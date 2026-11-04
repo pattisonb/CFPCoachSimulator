@@ -1733,7 +1733,7 @@ def _preferred_walk_on(state: dict, slug: str, group: str, taken: set) -> Option
         return None
     best, best_pts = None, -1.0
     for pid, st_ in rc["status"].items():
-        if st_["signed"] != "FCS" or pid in taken or slug not in rc["lists"].get(pid, {}):
+        if st_["signed"] != "FCS" or st_.get("pro") or pid in taken or slug not in rc["lists"].get(pid, {}):     # one who went pro in baseball is gone
             continue
         p = rc["prospects"][pid]
         if recruiting._group_of(p) != group:
