@@ -496,8 +496,8 @@ def _eligible(kind: str, p: dict, stars: int, fbs_states: set, generational: set
     from coach_career import recruiting
     if kind == "hero":
         return p["hometown"]["state"] in fbs_states            # a state with no FBS school has no hometown team to stay with
-    if kind == "two_sport":
-        return recruiting._group_of(p) in TWO_SPORT_GROUPS
+    if kind == "two_sport":                                    # his group read without caching it on the prospect (the save stays small)
+        return (p.get("group") or recruiting._group_of({"ea_position": p["ea_position"]})) in TWO_SPORT_GROUPS
     if kind in ("comeback", "bloomer"):                        # a generational talent is no secret
         return p["id"] not in generational and (kind == "comeback" or stars >= 3)
     return True
