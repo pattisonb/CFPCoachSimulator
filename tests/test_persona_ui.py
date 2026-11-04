@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 from test_career_e2e import call, free_port, launch   # noqa: E402
 from test_scene_window import (QUIET_READ, QUIET_WATCH, WIN, open_board, pick_row, present_three, start_call,   # noqa: E402
                                wait_server, answer_if_asked, pitch)
-from test_ux_sweep import open_tab, toasted   # noqa: E402
+from test_ux_sweep import PITCH, open_tab, toasted   # noqa: E402
 
 SHOTS = os.environ.get("PERSONA_SHOTS")
 NOT_KNOWN = "Not Known Yet"
@@ -120,7 +120,9 @@ def desktop(browser, base, sid, first, visit, guarded, names, errs) -> None:
     head = page.inner_text(".sc-head")
     assert re.search(r"Points Left: \d+ of \d+", head), head
     assert f"Points Left: {v['points_left']} of {v['points_week']}" in head, (head, v["points_left"], v["points_week"])
-    assert "scouting hours" in head.lower()
+    assert "scouting points" in head.lower() and "scouting hours" not in head.lower(), head
+    assert page.inner_text("#sc-points-card .sc-points-val").strip() == str(v["points_left"]), "the points are the card's headline"
+    assert f"recruiting hours: {v['hours_left']} of {v['hours']}" in head.lower(), head
     shot(page, "scouting-1280")
     page.fill("#sc-search", names[first])
     page.wait_for_selector(f".sc-row[data-pid='{first}']", timeout=10_000)
@@ -175,7 +177,26 @@ def desktop(browser, base, sid, first, visit, guarded, names, errs) -> None:
     assert not page.query_selector(f"{WIN} .go-pitch.cue"), "a Guarded call stars no topic"
     assert not page.query_selector(".go-pane .go-tag.cue"), "no starred topic"
     page.click(f"{WIN} .go-pitches label.go-pitch:nth-child(2)")      # nothing is picked for him: choose any topic
-    pitch(page)
+    topic = page.eval_on_selector(f"{WIN} .go-pitches label.go-pitch:nth-child(2) input", "e => e.value")
+    re_ = pitch(page)
+    # he gave nothing away: the reaction's kind is neutral (no hit or quiet border), the toast and History say so
+    assert re_["kind"] == "guarded", re_
+    cls = page.get_attribute(f"{WIN} .go-reaction", "class").split()
+    assert "hit" not in cls and "quiet" not in cls and "polite" not in cls, cls
+    toasted(page, f"Pitch: {PITCH[topic]} · He gave nothing away")
+    log = [e for e in _state(sid)["recruiting"]["log"] if e["pid"] == guarded and e.get("school") == _state(sid)["team"]]
+    assert next(e for e in log if e["kind"] == "pitch")["reaction"] == "guarded", log
+    assert next(e for e in log if e["kind"] == "present")["hit"] is None, log
+    page.click(f"{WIN} .go-scene-close")
+    page.wait_for_selector(WIN, state="hidden", timeout=10_000)
+    time.sleep(0.6)
+    page.click(".go-pane .go-subtabs button[data-sub=history]")
+    page.wait_for_function("() => /gave nothing away/.test(document.querySelector('.go-pane').innerText)", timeout=10_000)
+    hist = page.inner_text(".go-pane")
+    assert f"Call · {PITCH[topic]} · He gave nothing away" in hist, hist
+    assert re.search(r"Presented [a-zA-Z ]+, [a-zA-Z ]+, [a-zA-Z ]+ · He gave nothing away", hist), hist
+    assert "landed" not in hist and "He lit up" not in hist and "He went quiet" not in hist, hist
+    no_null(page, "after the Guarded call")
     ctx.close()
 
 
@@ -239,6 +260,18 @@ def phone(browser, base, sid, board_pids, errs) -> None:
     assert send.is_disabled() and send.get_attribute("title") == NO_POINTS, (send.get_attribute("title"), send.is_disabled())
     assert re.search(rf"\b{row['cost']} Points\b", send.inner_text()), send.inner_text()
     assert NO_POINTS in page.inner_text(".sc-intel .sc-why"), "the reason is written beside the actions"
+    # his profile (the modal) waits too: Send a Scout is disabled with the same reason
+    page.goto(f"{base}/index.html?id={sid}&tab=prospects&modal=profile:{row['pid']}")
+    page.wait_for_selector(".modal:not([hidden]) .rc-profile-name", timeout=60_000)
+    btn = page.wait_for_selector(".modal:not([hidden]) .rc-profile-actions button:has-text('Send a Scout')", timeout=10_000)
+    assert btn.is_disabled() and btn.get_attribute("title") == NO_POINTS, (btn.is_disabled(), btn.get_attribute("title"))
+    assert re.search(rf"\b{row['cost']} Points\b", btn.inner_text()), btn.inner_text()
+    page.goto(f"{base}/index.html?id={sid}&tab=scouting")
+    page.wait_for_selector(".sc-list .sc-row", timeout=60_000)
+    page.fill("#sc-search", row["name"])
+    page.wait_for_selector(f".sc-row[data-pid='{row['pid']}']", timeout=10_000)
+    page.click(f".sc-row[data-pid='{row['pid']}'] .sc-row-btn")
+    page.wait_for_function("(n) => document.querySelector('.sc-intel .sc-big-name')?.textContent.trim() === n", arg=row["name"], timeout=30_000)
     assert re.search(r"Points Left: \d+ of \d+", page.inner_text(".sc-head"))
     h = page.eval_on_selector("#sc-send", "e => e.getBoundingClientRect().height")
     assert h >= 44, h
