@@ -43,7 +43,7 @@ SKILL_GROUP = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT":
                "CB": "CB", "FS": "S", "SS": "S", "K": "K", "P": "P"}
 UNIT = {**{p: "offense" for p in ("QB", "HB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT")},
         **{p: "defense" for p in ("LEDG", "REDG", "DT", "SAM", "MIKE", "WILL", "CB", "FS", "SS")}, "K": "special", "P": "special"}
-ENGINE_TO_EA = {"RB": "HB", "OL": "LG", "DL": "DT", "MLB": "MIKE", "ROLB": "SAM", "LOLB": "WILL", "S": "FS"}   # an engine position without a role
+ENGINE_TO_EA = {"RB": "HB", "OL": "LG", "DL": "DT", "MLB": "MIKE", "ROLB": "WILL", "LOLB": "SAM", "S": "FS"}   # an engine position without a role (build_teams: WILL is ROLB, SAM is LOLB)
 # height (inches) and weight (pounds) by position, mean and standard deviation, when the engine file is missing
 HAND_SIZES = {"QB": ((74.1, 1.8), (207.6, 14.6)), "HB": ((70.5, 1.7), (203.7, 15.4)), "FB": ((72.1, 1.5), (228.3, 14.0)),
               "WR": ((72.5, 2.4), (190.3, 14.5)), "TE": ((75.8, 1.9), (238.2, 16.9)), "LT": ((77.7, 1.4), (305.6, 18.5)),
