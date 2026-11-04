@@ -1,6 +1,6 @@
 """Twists and Commit Style on the page (web/recruiting.js): the Profile's Commit Style row ("Not Known Yet" muted
 until an official visit or four weeks holding your offer; then its label and a sentence), his twist as a "What
-Happened" row with its weeks left and its line, the pane's tag strip carrying both as chips (Title Case); a
+Happened" line with its weeks left and its sentence, the pane's tag strip carrying both as chips (Title Case); a
 Quiet Commit elsewhere reads "Quiet", not where; the Office's What Changed card carries the week's twist line.
 At 400 px nothing scrolls sideways. Needs Playwright with a Chromium; skipped without one. TWIST_SHOTS=<folder>
 saves twists-*.png screenshots."""
@@ -59,7 +59,7 @@ def make_career():
 
 
 def rows_of(page) -> dict:
-    return page.evaluate("""() => Object.fromEntries([...document.querySelectorAll('.go-pane .go-trait')].map(r =>
+    return page.evaluate("""() => Object.fromEntries([...document.querySelectorAll('.go-pane .go-trait, .go-pane .go-trait-x')].map(r =>
         [r.dataset.trait, r.querySelector('.go-trait-val').textContent.trim()]))""")
 
 
@@ -97,14 +97,16 @@ def profile_checks(page, known, unknown, quiet, label, line) -> None:
     pick_row(page, known)
     open_profile(page)
     rows = rows_of(page)
-    assert rows["style"] == "Hat Ceremony", rows
-    assert rows["twist"].startswith(label) and "Weeks Left" in rows["twist"], rows
-    assert page.inner_text(".go-pane .go-trait[data-trait=style] .go-trait-label").strip() == "Commit Style"
-    assert page.inner_text(".go-pane .go-trait[data-trait=twist] .go-trait-label").strip() == "What Happened"
-    assert page.inner_text(".go-pane .go-twist-line").strip() == line
-    assert page.query_selector(".go-pane .go-style-line"), "a sentence says what his commit style means"
+    assert rows["style"] == "Hat Ceremony" and "twist" not in rows, rows
+    assert page.inner_text(".go-pane [data-trait=style] .go-trait-label").strip() == "Commit Style"
+    assert page.get_attribute(".go-pane [data-trait=style]", "title"), "his commit style's sentence is its title"
+    twist = page.text_content(".go-pane .go-twist .go-twist-val").strip()
+    more = page.text_content(".go-pane .go-twist .go-trait-more").strip(" ·")
+    assert page.text_content(".go-pane .go-twist .go-trait-label").strip() == "What Happened"
+    assert twist == label and more.endswith("Weeks Left"), (twist, more)
+    assert page.text_content(".go-pane .go-twist-line").strip() == line
     assert chip(page, "trait:style") == ["Hat Ceremony"] and chip(page, "twist") == [label], (chip(page, "trait:style"), chip(page, "twist"))
-    for t in chip(page, "trait:style") + chip(page, "twist") + list(rows.values()):
+    for t in chip(page, "trait:style") + chip(page, "twist") + list(rows.values()) + [twist, more]:
         assert title_case(t), t
     no_null(page, "a known style and a twist")
 
@@ -120,8 +122,8 @@ def desktop(browser, base, sid, known, unknown, quiet, label, line, errs) -> Non
     pick_row(page, unknown)
     open_profile(page)
     rows = rows_of(page)
-    assert rows["style"] == NOT_KNOWN and "twist" not in rows, rows
-    assert page.query_selector(".go-pane .go-trait[data-trait=style] .go-trait-val.muted")
+    assert rows["style"] == NOT_KNOWN and not page.query_selector(".go-pane .go-twist"), rows
+    assert page.query_selector(".go-pane [data-trait=style] .go-trait-val.muted")
     assert not chip(page, "trait:style")
     # a quiet commit elsewhere: "Quiet", never where
     pick_row(page, quiet)
@@ -150,7 +152,7 @@ def phone(browser, base, sid, known, unknown, quiet, label, line, errs) -> None:
     time.sleep(0.4)
     open_profile(page)
     rows = rows_of(page)
-    assert rows["style"] == "Hat Ceremony" and rows["twist"].startswith(label), rows
+    assert rows["style"] == "Hat Ceremony" and page.text_content(".go-pane .go-twist .go-twist-val").strip() == label, rows
     assert page.evaluate("() => document.documentElement.scrollWidth <= innerWidth + 1"), "nothing scrolls sideways"
     no_null(page, "the profile at 400")
     page.locator(".go-pane .go-traits").first.scroll_into_view_if_needed()

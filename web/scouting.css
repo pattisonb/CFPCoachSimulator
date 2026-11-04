@@ -96,7 +96,6 @@
 .sc-box { padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel-2); min-width: 0; }
 .sc-box-label { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .sc-box-value { font-size: 17px; font-weight: 800; margin-top: 2px; overflow-wrap: anywhere; }
-.sc-result { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 12px; border-radius: 10px; background: var(--panel-2); font-size: 13px; }
 .sc-change { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .sc-subtabs { border-bottom: 1px solid var(--border); }
 .sc-sub-body { min-height: 150px; }
@@ -220,6 +219,6 @@
   .sc-foot { justify-content: center; }
   .sc-scout-list { grid-template-columns: minmax(0, 1fr); }
 }
-@media (prefers-reduced-motion: reduce) { .sc-row-btn, .sc-result, .sc-bar-fill, .sc-hours-fill, .sc-list-wrap, .sc-chev { transition: none; animation: none; } }
+@media (prefers-reduced-motion: reduce) { .sc-row-btn, .sc-bar-fill, .sc-hours-fill, .sc-list-wrap, .sc-chev { transition: none; animation: none; } }
 #tab-scouting .go-grade.all-american { color: var(--good); }   /* the top read in the same green as the board's words, not the team color */
 .sc-intel-head .go-kicker { color: var(--muted); }   /* one red kicker on the tab (the header): the panel kickers stay quiet */
