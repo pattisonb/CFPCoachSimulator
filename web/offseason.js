@@ -745,7 +745,7 @@
     const you = j.you || {};
     const c = card("off-job", "job", [kicker("Your Job")]);
     if (you.goal) c.append(el("p", {}, [`Your AD's goal: ${you.goal.text}. `, you.met ? "You met it." : "You fell short.",
-      ` Job security: ${(you.mood || "").toLowerCase()} (patience: ${you.patience} years).`]));
+      you.mood ? ` Job security: ${you.mood.toLowerCase()}` : "", you.patience != null ? `${you.mood ? " (patience" : " His patience"}: ${you.patience} ${you.patience === 1 ? "year" : "years"}${you.mood ? ")" : ""}.` : you.mood ? "." : ""]));
     const list = you.fired ? j.openings : j.offers;
     if (you.fired) c.append(el("p", {}, [el("b", { text: "You have been fired. " }), "Pick your next job from the openings (Auto takes the best one)."]));
     else if (list.length) c.append(el("p", { text: "After the year you had, these programs want you as their head coach:" }));
