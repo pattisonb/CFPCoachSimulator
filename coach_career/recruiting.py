@@ -861,7 +861,8 @@ def strengths(state: dict, slug: str, pid: str) -> dict[str, float]:
     """Your program's strength on each topic for this prospect, 0-1: the school's pull on him
     (playing time from his place on the depth chart, winning, prestige, proximity, coach,
     academics) with NIL read as your offer against his ask (the program's level before an offer)."""
-    key = (state["id"], _ck(state["recruiting"]), pid, slug, persona.moved(state, pid) is not None)
+    mv = state["recruiting"].get("moved")
+    key = (state["id"], _ck(state["recruiting"]), pid, slug, bool(mv) and pid in mv)
     static = _PULLS.get(key)
     if static is None:
         if len(_PULLS) > 2_000_000:
@@ -950,7 +951,8 @@ def weights(p: dict) -> dict[str, float]:
 def interest(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> float:
     rc = state["recruiting"]
     p = rc["prospects"][pid]
-    key = (state["id"], _ck(rc), pid, slug, persona.moved(state, pid) is not None)
+    mv = rc.get("moved")
+    key = (state["id"], _ck(rc), pid, slug, bool(mv) and pid in mv)       # a Family Move changes his pulls
     static = _STATIC.get(key)
     if static is None:
         if len(_STATIC) > 2_000_000:
@@ -959,7 +961,9 @@ def interest(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> fl
         static = _STATIC[key] = sum(w[t] * v for t, v in pull(state, slug, pid, winning=False).items())
     win = min(1.0, (win if win is not None else _winning(state)).get(slug, 0.5))
     out = persona.story_interest(state, slug, pid, PULL_SCALE * (static + weights(p)["winning"] * win)) + rc["lists"][pid].get(slug, 0.0)
-    return out + persona.twist_bonus(state, slug, pid) if rc.get("twists") else out
+    tw = rc.get("twists")
+    tw = tw.get(pid) if tw else None
+    return out + tw["b"] if tw and tw["k"] == "surprise" and tw["s"] == slug else out      # persona.twist_bonus, inline: this runs often
 
 
 _STATIC: dict = {}       # a prospect's pulls that hold all season (everything but winning), per school
@@ -2241,6 +2245,7 @@ class _Room:
 
 
 def _draws(state: dict, week: int, rng: random.Random) -> None:
+    from sim import season
     rc = state["recruiting"]
     room = _Room(state, flier=week >= LATE_MARKET)
     commits = room.commits
@@ -2295,7 +2300,9 @@ def _draws(state: dict, week: int, rng: random.Random) -> None:
         top, leader = scores[0] if scores else (0.0, None)
         lead = top - (scores[1][0] if len(scores) > 1 else 0.8 * top)
         visited = (rc["visits"].get(pid, {}).get(leader) or {}).get("done")
-        odds = min(0.9, base * (0.5 + lead / LEAD_SCALE) * (VISIT_BOOST if visited else 1.0) * persona.commit_odds_mult(state, pid, week))
+        style = persona.style(state, pid)
+        early = style == "early_bird" and persona.EARLY_WEEKS[0] <= week <= persona.EARLY_WEEKS[1]     # persona.commit_odds_mult
+        odds = min(0.9, base * (0.5 + lead / LEAD_SCALE) * (VISIT_BOOST if visited else 1.0) * (persona.EARLY_ODDS if early else 1.0))
         roll = rng.random()                            # always drawn: his commit style never moves the stream
         if hat:
             if week >= hat[0]:
@@ -2304,13 +2311,12 @@ def _draws(state: dict, week: int, rng: random.Random) -> None:
                 else:
                     del hats[pid]                      # none of his finalists can take him: he opens it back up
             continue
-        if persona.waits(state, pid, week):             # Signing Day: no one until signing day ...
-            continue
-        if persona.signs_now(state, pid, week):         # ... then his leader, no roll
-            took(leader, pid, _commit(state, pid, leader))
+        if style == "signing_day":
+            if week >= season.SELECTION_WEEK:          # Signing Day: no one until signing day, then his leader, no roll (persona.waits, signs_now)
+                took(leader, pid, _commit(state, pid, leader))
             continue
         if roll < odds:
-            if persona.style(state, pid) == "hat":     # a Hat Ceremony: he names a date and his finalists instead
+            if style == "hat":                         # a Hat Ceremony: he names a date and his finalists instead
                 _hat(state, pid, week, [s for _, s in scores[:persona.HAT_FINALISTS]])
                 continue
             took(leader, pid, _commit(state, pid, leader))
