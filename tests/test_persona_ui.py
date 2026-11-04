@@ -41,7 +41,7 @@ def make_career():
     free = [q for q in recruiting.prospect_list(st) if not rc["prospects"][q].get("hidden") and me not in rc["contacts"].get(q, {})
             and not rc["status"][q]["committed"] and not recruiting.would_pester(st, me, q) and not persona.story(st, q)[0]]   # no story: His Story stays Not Known Yet
     of = lambda q: persona.of(st, q)
-    first = next(q for q in free if of(q)["personality"] not in ("guarded",) and of(q)["decider"] != "self" and of(q)["decider_topic"])
+    first = next(q for q in free if of(q)["personality"] not in ("guarded", "shy") and of(q)["decider"] != "self" and of(q)["decider_topic"])
     visit = next(q for q in free if q != first and of(q)["decider"] != "self" and of(q)["personality"] != "guarded")
     guarded = next(q for q in free if of(q)["personality"] == "guarded" and q not in (first, visit))
     rc["board"] = [first, visit, guarded]
@@ -279,7 +279,9 @@ def phone(browser, base, sid, board_pids, errs) -> None:
     no_null(page, "scouting at 400")
     # the board's Recruit menu agrees: his Scout item is out of points too (a board prospect the drain left short, or the cost shown)
     open_board(page, base, sid)
-    for pid in board_pids[:1]:      # the sheet covers the list on a phone: one pick, and the drain left him short
+    v = call(base, f"/api/season/{sid}/recruiting")
+    short = [b["id"] for b in v["board"] if b["id"] in board_pids and (b["looks"] or 0) < 3 and v["points_left"] < b["scout_cost"] and not b.get("scene")]
+    for pid in (short or board_pids)[:1]:      # the sheet covers the list on a phone: one pick, one the drain left short
         page.click(f".go-row-recruit[data-pid='{pid}']")
         page.wait_for_selector(".go-pane.sheet #rc-recruit", timeout=10_000)
         time.sleep(0.4)
