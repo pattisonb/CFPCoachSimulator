@@ -1020,15 +1020,15 @@ def learn_styles(state: dict, week: int) -> None:
 # school it is about, "w": weeks left, and a few of the kind's own}. A Family Move is kept for good in
 # rc["moved"][pid] (his new home). Every school plays by the same twists.
 
-TWISTS = {"surprise": 0.18, "at_game": 0.16, "hot_seat": 0.10, "late_offer": 0.12, "family_move": 0.10,
-          "grades": 0.12, "beat": 0.22}    # *tune* each twist's weight among those that can happen to him
-TWIST_RATE = {5: 0.11, 4: 0.09, 3: 0.07, 2: 0.06}   # *tune* a prospect's weekly chance of a twist by his real stars
+TWISTS = {"surprise": 0.15, "at_game": 0.14, "hot_seat": 0.10, "late_offer": 0.30, "family_move": 0.05,
+          "grades": 0.06, "beat": 0.20}    # *tune* each twist's weight among those that can happen to him
+TWIST_RATE = {5: 0.24, 4: 0.20, 3: 0.15, 2: 0.12}   # *tune* a prospect's weekly chance of a twist by his real stars
 TWIST_TRIES = 2            # *tune* a roll that hits draws a twist by weight; one that cannot happen to him draws once more, then none
 TWIST_LABEL = {"surprise": "Surprise Visit", "at_game": "At Your Game", "hot_seat": "Hot Seat", "late_offer": "Late Offer",
                "family_move": "Family Move", "grades": "Grades Scare", "beat": "Wants to See You Beat {foe}"}
 SURPRISE_WEEKS = 2         # *tune* a surprise school sits in his top three this long, unless a top-three school calls or visits first
 SURPRISE_SPOT = (0.25, 0.35, 0.40)   # *tune* where in his top three it jumps: first, second, third
-SURPRISE_TILT = 1.5        # *tune* the surprise school is drawn by exp(this x the program's strength) among his next five
+SURPRISE_TILT = 3.0        # *tune* the surprise school is drawn by exp(this x the program's strength) among his next five
 GAME_MILES = 400           # *tune* a home game this close to him is one he goes to
 GAME_WIN, GAME_BLOWOUT = 1.3, 1.5    # *tune* a win (by BLOWOUT or more) at his game: his interest in the school this much
 BLOWOUT = 21
@@ -1037,7 +1037,7 @@ HOT_SEAT = 30              # *tune* a head coach with AD security under this is 
 HOT_SEAT_WEEKS = 3
 HOT_SEAT_PITCH = 2.0       # *tune* another school's Coach pitch counts this much more against a hot-seat school
 LATE_ASK = 1.10            # *tune* a late blue-blood offer raises his ask this much
-LATE_FROM = 3              # a blue blood offers late only a prospect of this many real stars or more
+LATE_FROM = 4              # *tune* a blue blood offers late only a prospect of this many real stars or more (3 filled the blue bloods with three-stars)
 GRADES_WEEKS = 3
 GRADES_PITCH = 2.0         # *tune* an Academics pitch from a school outside ACADEMIC counts this much more during a Grades Scare
 BEAT_AHEAD = 3             # he names one of the school's next this many opponents

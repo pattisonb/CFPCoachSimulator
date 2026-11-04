@@ -168,11 +168,11 @@ CLASS_ROOM = 2                             # a class tops out this far over the 
 OFFER_FACTOR = 1.5
 FCS_LINE = 4.0                             # best FBS interest under this: Leaning FCS *tune*
 FCS_NO_OFFER_WEEK = 8                      # from this week a prospect with no FBS offer leans FCS
-COMMIT_ODDS = ((0, 0.02), (6, 0.05), (12, 0.08), (16, 0.10), (20, 0.30))   # weekly base chance by week *tune*
+COMMIT_ODDS = ((0, 0.02), (6, 0.05), (9, 0.095), (12, 0.11), (16, 0.12), (20, 0.30))   # weekly base chance by week (raised from Week 9 on when a fifth of the class became Signing Day recruits) *tune*
 COMMIT_FREEZE_WEEKS = 3                     # nobody commits anywhere in the first weeks: time to scout and build a board before the class moves
-LEAD_SCALE = 5.0                           # interest lead worth a doubling of the base chance (5: with 140-160 hours a week leads run bigger, and 3 had over 92% signed by the early period) *tune*
+LEAD_SCALE = 4.0                           # interest lead worth a doubling of the base chance (4 with the commit styles; 5: with 140-160 hours a week leads run bigger, and 3 had over 92% signed by the early period) *tune*
 VISIT_BOOST = 1.6                          # after an official visit to the leader
-DECOMMIT_RATE = 0.8                        # weekly chance of a decommitment at an even race (0.8: AI schools now message every commit weekly, so commits firm faster; 0.45 left 5% of the top 300 decommitting) *tune*
+DECOMMIT_RATE = 1.4                        # weekly chance of a decommitment at an even race (1.4: Early Bird, Quiet Commit and Signing Day recruits flip less or never; 0.8: AI schools now message every commit weekly, so commits firm faster; 0.45 left 5% of the top 300 decommitting) *tune*
 # a commitment's firmness, 0-100: it starts soft and firms up only if the school keeps in touch *tune*
 FIRM_START, FIRM_VISIT = 40, 60            # at commitment (after an official visit there)
 FIRM_TOUCH, FIRM_DRIFT = 8, 3              # a week with a message, call or visit from the school / a quiet week (he still warms to you)
@@ -188,7 +188,7 @@ NATIONAL_TARGETS = 25                      # national targets on a board, times 
 BOARD_FACTOR = 3                           # an AI school's board holds this many prospects per open spot
 NATIONAL_REACH = 0.08                      # a blue-chip program's pull on four- and five-stars anywhere *tune*
 STAR_KEY = {5: "5*", 4: "4*", 3: "3*", 2: "2*"}
-AI_NIL = {5: 0.25, 4: 0.12, 3: 0.04, 2: 0.0}   # share of the budget an AI school puts on one offer by stars *tune*
+AI_NIL = {5: 0.30, 4: 0.15, 3: 0.04, 2: 0.0}   # share of the budget an AI school puts on one offer by stars (0.25/0.12 before the twists spread the blue chips) *tune*
 POS_247 = {"OT": "OL", "IOL": "OL"}
 ACADEMIC = {"stanford", "notre-dame", "northwestern", "duke", "vanderbilt", "rice", "california", "ucla", "michigan",
             "virginia", "georgia-tech", "wake-forest", "boston-college", "navy", "army", "air-force", "usc", "north-carolina"}
