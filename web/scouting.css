@@ -185,6 +185,7 @@
 @media (max-width: 759px) {
   .sc-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sc-stat-value { font-size: 22px; }
+  .sc-stat-label { white-space: normal; letter-spacing: 0.04em; }     /* two columns on a phone: a long label ("Scouting Points") wraps instead of clipping */
   .sc-panel { padding: 14px; }
   #sc-search { min-height: 44px; }
   .sc-tools { width: 100%; }
