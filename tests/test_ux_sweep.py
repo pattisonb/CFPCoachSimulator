@@ -166,7 +166,7 @@ def check_pane_profile(page, base, sid) -> None:
         call(base, f"/api/season/{sid}/board", {"pid": pick["id"], "on": True})
         scouted = next(b for b in call(base, f"/api/season/{sid}/recruiting")["board"] if b["id"] == pick["id"])
     assert scouted.get("our_grades"), f"a scouted recruit carries his grades: {scouted['id']}"
-    for width, height in ((1280, 560), (400, 640)):     # short windows: the pane's body has room to scroll (help is in an ⓘ now)
+    for width, height in ((1280, 330), (400, 440)):     # short windows (the compact profile is short, so short indeed): the pane's body has room to scroll (help is in an ⓘ now)
         page.set_viewport_size({"width": width, "height": height})
         open_tab(page, base, sid, "recruiting", ".go-stages")
         if width > 700:     # a long board under the pane: scroll the page until the pane sticks
@@ -950,7 +950,7 @@ def test_grade_hover(page, base, sid) -> None:
         page.click(".go-pane .go-subtabs button[data-sub=profile]")
         page.wait_for_selector(".go-pane .go-sub-body.go-profile .go-scouted .go-gchip.go-tip", timeout=60_000)
         time.sleep(0.4)
-        words = page.eval_on_selector_all(".go-pane .go-profile .go-scouted .go-gchip b", "els => els.map(e => e.textContent.trim())")
+        words = page.eval_on_selector_all(".go-pane .go-profile .go-scouted .go-gchip > b", "els => els.map(e => e.textContent.trim())")
         assert words and all(" to " not in w and w in ("All-American", "Elite", "Strong", "Solid", "Fair", "Weak") for w in words), f"one final grade per chip at {width}: {words}"
         note = page.evaluate("() => { const b = document.querySelector('.go-pane .go-profile .go-scouted .go-info'); return b && document.getElementById(b.getAttribute('aria-describedby')).textContent; }")
         assert "3 of 3 looks: his report is complete: these are your staff's final grades." in note and "A read can still be wrong; the truth shows once he is on your roster." in note, note
@@ -995,7 +995,7 @@ def test_grade_hover(page, base, sid) -> None:
         page.wait_for_selector(".modal .go-profile .go-scouted .go-gchip.go-tip", timeout=60_000)
         time.sleep(0.4)
         assert done["name"].upper() in page.inner_text(".modal .go-profile"), "the profile is his"
-        words = page.eval_on_selector_all(".modal .go-profile .go-scouted .go-gchip b", "els => els.map(e => e.textContent.trim())")
+        words = page.eval_on_selector_all(".modal .go-profile .go-scouted .go-gchip > b", "els => els.map(e => e.textContent.trim())")
         assert words and all(" to " not in w for w in words), f"one final grade per chip on the full profile at {width}: {words}"
         assert not page.query_selector(".modal .go-profile .go-grades"), "no second grade grid on the full profile"
         assert "these are your staff's final grades" in page.evaluate("() => { const b = document.querySelector('.modal .go-profile .go-scouted .go-info'); return document.getElementById(b.getAttribute('aria-describedby')).textContent; }")
