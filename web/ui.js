@@ -60,7 +60,7 @@
   function dismiss(node) {
     if (!node || node.__leaving) return;
     clearTimeout(node.__timer);
-    fadeOut(node).then(syncMirror);
+    fadeOut(node, { linger: true }).then(syncMirror);
     syncMirror();
   }
   // toast(text, {ms = 3500, kind = "info" | "error"}): ms 0 keeps it up until dismissed or pushed out
@@ -98,10 +98,13 @@
     setTimeout(() => el.classList.remove("go-fade-in"), FADE_MS + 30);
     return el;
   }
-  function fadeOut(el) {
+  // fadeOut(el, {linger}): an element leaves at once by default: one that lingered while fading kept its
+  // place, so what replaced it was drawn below and jumped up when it went (the player's recording).
+  // Only a toast, floating over the page, lingers and fades.
+  function fadeOut(el, opts) {
     if (!el || !el.parentNode) return Promise.resolve();
     if (el.__leaving) return el.__leaving;
-    if (el.nodeType !== 1 || still()) { el.remove(); return Promise.resolve(); }
+    if (el.nodeType !== 1 || still() || !(opts && opts.linger)) { el.remove(); return Promise.resolve(); }
     el.classList.add("go-leaving");
     el.__leaving = new Promise((done) => setTimeout(() => { el.remove(); done(); }, FADE_MS));
     return el.__leaving;
