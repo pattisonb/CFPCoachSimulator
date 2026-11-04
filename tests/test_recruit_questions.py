@@ -9,6 +9,7 @@ _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project r
 
 from app import api
 from coach_career import offseason
+from coach_career import persona
 from coach_career import recruiting
 from coach_career import scenes
 from sim import season
@@ -41,7 +42,7 @@ def call(sid: str, pid: str) -> dict:
     st["recruiting"]["hours"][ME] = 100          # hours are not the point here
     sc = R(sid, "recruit", {"pid": pid, "action": "call"})["scene"]
     assert sc["question"] is None and sc["cue"] is None, "his question and the cue wait on your opening"
-    misses = [t for t in recruiting.PITCHES if t not in st["recruiting"]["prospects"][pid]["priorities"]][:3]
+    misses = [t for t in recruiting.PITCHES if not persona.counts_as_priority(st, pid, t)][:3]      # his decider's topic counts as his
     r = R(sid, "recruit", {"pid": pid, "action": "present", "scene": sc["id"], "topics": misses})
     assert r["points"] == 0.0, r
     return r["scene"]
@@ -147,7 +148,7 @@ if __name__ == "__main__":
         row = next(r for r in G(sid, "recruiting")["board"] if r["id"] == pid)
         assert row["scene"]["question"]["answer"] == "straight"
         r = R(sid, "recruit", {"pid": pid, "action": "pitch", "scene": sc["id"], "pitch": "playing_time"})
-        assert r["reaction"]["kind"] in ("hit", "polite", "quiet") and pid not in (rc.get("scenes", {}).get(ME) or {})
+        assert r["reaction"]["kind"] in ("hit", "polite", "quiet", "guarded") and pid not in (rc.get("scenes", {}).get(ME) or {})
         assert rc["contacts"][pid][ME]["n"] == 1
         hist = next(r_ for r_ in G(sid, "recruiting")["board"] if r_["id"] == pid)["history"]
         ans = next(h for h in hist if h["kind"] == "answer")

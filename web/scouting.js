@@ -1,6 +1,7 @@
 /* The Scouting tab (replaces Staff): the Scouting Center, master and detail.
    - The header: "Recruiting Intelligence / Class of 2027", SCOUTING CENTER, a subtitle and All Reports; beside it four
-     stat cards: My Board, Full Reports, Scouting Queue (your trips this week) and Scouting Hours (left / total, a bar).
+     stat cards: My Board, Full Reports, Scouting Queue (your trips this week) and Scouting Points (the points left for trips, a bar, "Points Left: 35 of 50",
+     and the week's recruiting hours as a second line).
    - Left, the Prospect Database: the whole class you can see (the API's queue; a full report stays listed), 20 to a page, with a search, the chips
      All Prospects · My Board · Scouted, a position filter and a sort; a row is the board star, the avatar, the name,
      "POS · ST · stars", any flag, the rank, the potential read ("Unscouted" before a look) and the Scouting
@@ -8,7 +9,7 @@
    - Right, the Player Intelligence Report on the selected prospect: portrait, name, position, hometown, national
      rank, stars and a status pill; Potential, Team Need and Report boxes; the sub-tabs Ratings (your staff's grade
      words as bars, never numbers the scouting does not reveal), Overview (the profile's summary) and Scouting (his
-     looks, flags, a coordinator's word, this and last week's reads); Send Scout (5h) and Add to / Remove from Board,
+     looks, flags, a coordinator's word, this and last week's reads); Send Scout (its cost in scouting points: 10, 15 or 5) and Add to / Remove from Board,
      both patched in place with a toast; View Full Profile opens the profile modal.
    - Bottom, Scouting Operations: a bar that opens the staff rows (area dropdown, contract, narrowed bar, coverage).
    - All Reports (a modal, token "reports" or "reports:last_week|flags"): This Week · Last Week · Flags by scout.
@@ -21,7 +22,8 @@
   const { el } = window.CFP;
   const ui = () => window.CFP.ui;
   const R = () => window.Recruiting;                 // wordTag, openProfile
-  const SCOUT_HOURS = 5, REPORT_LOOKS = 3, SEND_LOOK = 1, AREA_LOOK = 0.5;   // recruiting.HOURS["scout"], REPORT_LOOKS, SEND_LOOK, AREA_LOOK
+  const NO_POINTS = "Not enough scouting points left this week.";
+  const REPORT_LOOKS = 3, SEND_LOOK = 1, AREA_LOOK = 0.5;   // REPORT_LOOKS, SEND_LOOK, AREA_LOOK
   // looks come in trip units: a Send is one, a week in a scout's area half, a full report three; a count shows its half only when it has one
   const fmtLooks = (n) => (Number.isInteger(Number(n)) ? String(Number(n)) : Number(n).toFixed(1));
   const looksText = (n) => `${fmtLooks(n)} look${Number(n) === 1 ? "" : "s"}`;
@@ -127,7 +129,7 @@
     try { [v, rv] = await Promise.all([api(s, deskPath(0, PAGE)), api(s, "recruiting")]); }
     catch (err) { box.innerHTML = ""; box.append(loading(`Could not load the Scouting Center: ${H.errText(err)}`)); return; }
     cur = { s, v, rv, board: (rv.board || []).length };
-    const st = { hours: v.hours, left: v.hours_left, total: v.queue_total, rows: [] };
+    const st = { hours: v.hours, left: v.hours_left, points: v.points_left, pointsWeek: v.points_week, total: v.queue_total, rows: [] };
     cur.st = st;
     box.innerHTML = "";
     const head = headBlock(s, v, st);
@@ -141,15 +143,19 @@
   function headBlock(s, v, st) {
     const stat = (label, key, value, sub, extra) => el("div", { class: "sc-stat", "data-stat": key, ...(extra || {}) }, [
       el("div", { class: "sc-stat-label", text: label }), el("div", { class: "sc-stat-value" }, value), sub]);
-    const hoursVal = el("span", { class: "sc-hours-val" });
-    const hoursBar = el("i", { class: "sc-hours-fill" });
-    const hoursCard = stat("Scouting Hours", "hours", [hoursVal], el("span", { class: "sc-hours-bar", "aria-hidden": "true" }, [hoursBar]), { id: "sc-hours", role: "status" });
+    // Scouting Points: what a Send spends, the headline and its bar; the recruiting hours (calls, visits) a second line
+    const pointsBig = el("span", { class: "sc-points-val" });
+    const pointsBar = el("i", { class: "sc-hours-fill" });
+    const pointsVal = el("span", { id: "sc-points", class: "sc-stat-sub sc-points" });
+    const hoursVal = el("span", { class: "sc-stat-sub sc-hours-line" });
+    const pointsCard = stat("Scouting Points", "points", [pointsBig], el("span", { class: "sc-hours-sub" },
+      [el("span", { class: "sc-hours-bar", "aria-hidden": "true" }, [pointsBar]), pointsVal, hoursVal]), { id: "sc-points-card", role: "status" });
     const boardVal = el("span", { class: "sc-board-n" }), fullVal = el("span", { class: "sc-full-n" }), tripsVal = el("span", { class: "sc-trips-n" });
     const cards = el("div", { class: "sc-stats" }, [
       stat("My Board", "board", [boardVal], el("span", { class: "sc-stat-sub", text: "Tracked Players" })),
       stat("Full Reports", "full", [fullVal], el("span", { class: "sc-stat-sub", text: "Evaluated Prospects" })),
       stat("Scouting Queue", "trips", [tripsVal], el("span", { class: "sc-stat-sub", text: "Trips This Week" })),
-      hoursCard]);
+      pointsCard]);
     const newCount = el("span", { class: "go-tag good sc-new-n", hidden: "" });
     const all = el("button", { type: "button", id: "sc-all-reports", class: "go-btn sc-all-reports" }, ["All Reports", newCount]);
     ui().on(all, "click", () => openReports(s, "this_week"));
@@ -159,10 +165,12 @@
       set(boardVal, String(cur.board));
       set(fullVal, String(d.full_reports || 0));
       set(tripsVal, String(d.trips_this_week || 0));
-      set(hoursVal, `${st.left} / ${st.hours}`);
-      hoursBar.style.width = `${st.hours ? Math.round(100 * st.left / st.hours) : 0}%`;
-      hoursCard.title = `${st.left} of ${plural(st.hours, "hour")} left this week`;
-      hoursCard.setAttribute("aria-label", hoursCard.title);
+      set(pointsBig, String(st.points));
+      pointsBar.style.width = `${st.pointsWeek ? Math.round(100 * st.points / st.pointsWeek) : 0}%`;
+      set(pointsVal, `Points Left: ${st.points} of ${st.pointsWeek}`);
+      set(hoursVal, `Recruiting Hours: ${st.left} of ${st.hours}`);
+      pointsCard.title = `${st.points} of ${plural(st.pointsWeek, "scouting point")} left for trips this week; ${st.left} of ${plural(st.hours, "recruiting hour")} left for calls and visits`;
+      pointsCard.setAttribute("aria-label", pointsCard.title);
       const n = finds(d).length;
       newCount.hidden = !n;
       newCount.textContent = n ? `${n} New` : "";
@@ -249,7 +257,7 @@
         const i = st.rows.findIndex((r) => r.pid === keep);
         if (i >= 0) d.queue.splice(Math.min(i, d.queue.length), 0, st.rows[i]);
       }
-      st.total = d.queue_total; st.left = d.hours_left; st.hours = d.hours;
+      st.total = d.queue_total; st.left = d.hours_left; st.hours = d.hours; st.points = d.points_left; st.pointsWeek = d.points_week;
       st.rows = d.queue;
       Object.assign(cur.v, { scouts: d.scouts, reports: d.reports, flags: d.flags, full_reports: d.full_reports, trips_this_week: d.trips_this_week });
       paint();
@@ -392,9 +400,9 @@
       const subBody = desk.sub === "overview" ? overviewView(pr) : desk.sub === "scouting" ? scoutingView(s, r, pr) : ratingsView(pr);
       // the actions: Send Scout and the board button, with the reason when Send cannot act
       const left = leftOf(looks);
-      const reason = complete ? `His report is complete: ${REPORT_LOOKS} of ${REPORT_LOOKS} looks` : cur.st.left < SCOUT_HOURS ? "Not enough hours" : r.can_send === false ? (r.why || "Not now") : null;
-      const send = el("button", { type: "button", id: "sc-send", class: "go-btn primary sc-send", text: `Send Scout (${SCOUT_HOURS}h)${!complete && left <= SEND_LOOK ? " · Finishes His Report" : ""}`,
-        title: reason || `Spend ${SCOUT_HOURS} hours on one more look at ${r.name}`, ...(reason ? { disabled: "" } : {}) });
+      const reason = complete ? `His report is complete: ${REPORT_LOOKS} of ${REPORT_LOOKS} looks` : cur.st.points < r.cost ? NO_POINTS : r.can_send === false ? (r.why || "Not now") : null;
+      const send = el("button", { type: "button", id: "sc-send", class: "go-btn primary sc-send", text: `Send Scout · ${r.cost} Points${!complete && left <= SEND_LOOK ? " · Finishes His Report" : ""}`,
+        title: reason || `Spend ${r.cost} scouting points on one more look at ${r.name}`, ...(reason ? { disabled: "" } : {}) });
       ui().on(send, "click", () => sendScout(send));
       const on = !!r.on_board;
       const boardBtn = el("button", { type: "button", id: "sc-board", class: "go-btn sc-board-btn", "aria-pressed": String(on), text: on ? "★ Remove from Board" : "☆ Add to Board" });
@@ -428,6 +436,7 @@
       if (look && look.after && look.after.potential) r.potential = look.after.potential;
       if (look && "likes" in look) r.likes = look.likes;
       cur.st.left = res.hours_left;
+      cur.st.points = Math.max(0, cur.st.points - (r.cost || 0));      // the trip's cost (the desk's `cost`); the next load reads the week's truth
       sel.look = look;
       const li = cur.fillRow(r.pid);
       if (li) ui().pulse(li.querySelector(".sc-conf"));

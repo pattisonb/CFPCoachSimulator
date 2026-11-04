@@ -43,6 +43,7 @@ def far_prospect(st: dict) -> str:
             continue
         lead = max(recruiting.interest(st, s, pid) for s in rc["lists"][pid])
         if recruiting.interest(st, ME, pid) + 12 < recruiting.PESTER_SHARE * lead and recruiting.not_considering(st, ME, pid):
+            p["persona"] = {"personality": "business", "decider": "self", "decider_topic": None}     # a plain recruit: three free contacts, and the plain rules
             return pid
     raise AssertionError("no far prospect fits the test")
 
@@ -121,6 +122,8 @@ if __name__ == "__main__":
         pr = R(sid, "recruit", {"pid": pid, "action": "present", "scene": sc["id"], "topics": ["winning", "nil", "coach"]})
         assert pr["points"] == 0.0 and pr["scene"]["present"]["kind"] == "tired", "a pestering call's opening earns nothing"
         sc = pr["scene"]
+        if sc.get("question"):                          # a question the scene raised: a deflection costs nothing
+            sc = R(sid, "recruit", {"pid": pid, "action": "answer", "scene": sc["id"], "answer": "deflect"})["scene"]
         r = R(sid, "recruit", {"pid": pid, "action": "pitch", "scene": sc["id"], "pitch": sc["cue"]["topics"][0]})
         assert r["reaction"]["kind"] == "tired" and r["reaction"]["text"], r["reaction"]
         assert recruiting.pending(st, ME, pid) < pester2, "the pestering call cost nothing"

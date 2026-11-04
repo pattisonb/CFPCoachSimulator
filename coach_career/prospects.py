@@ -15,7 +15,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
-from coach_career import recruiting
+from coach_career import persona, recruiting
 
 ROOT = Path(__file__).resolve().parents[1]   # the project root
 SOURCE_TEAMS = ROOT / "cfb_sim_data" / "teams"
@@ -501,6 +501,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
     details = {g: grade_detail(state, p, g, *recruiting.read_interval(state, pid, g)) for g in recruiting.GROUPS} if read else None
     return {
         "public": public,
+        "traits": persona.view(state, viewer, pid),
         "flip": flip_view(state, pid),
         "grade_details": details,
         "evaluation": _evaluation(p, public_grades) if top else None,
@@ -510,8 +511,11 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "our_comp": our_comp,
         "likes": staff_likes(state, pid, viewer),
         "can_scout": can_scout(state, viewer, pid),
+        "scout_cost": recruiting.look_cost(state, viewer, pid),       # a Send's scouting points (as the board row's)
+        "points_left": recruiting.scout_points_left(state, viewer),     # the week's scouting points left (a Send it cannot pay is disabled)
         "ratings": signed_ratings(state, p) if status["signed"] == viewer else None,     # signing day shows what you got
         "ask": recruiting.ask_view(state, viewer, pid), "cooled": recruiting.cooled(state, viewer, pid),
+        "cooled_why": persona.cooled_why(state, viewer, pid) if recruiting.cooled(state, viewer, pid) else None,
         "stage": recruiting.stage(state, viewer, pid), "strength": recruiting.strengths(state, viewer, pid),
         "pestering": recruiting.would_pester(state, viewer, pid), "pesters": recruiting.pesters(state, viewer, pid),
     }
@@ -567,7 +571,7 @@ def _stage_move(state: dict, pid: str, viewer: str) -> Optional[str]:
 
 HISTORY_SHOWN = 40                           # a board row's History: his newest log entries, this many
 HIS_OWN = ("commit", "hard", "flip", "decommit", "signed", "leaning_fcs")   # his own moves: every school's show
-HISTORY_KEYS = ("week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful", "topics", "hit")
+HISTORY_KEYS = ("week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful", "topics", "hit", "line")
 
 
 def history_index(state: dict, viewer: str) -> dict[str, list[dict]]:
@@ -596,12 +600,14 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                leader=schools[0] if schools else None, schools=len(schools),
                visit=(rc["visits"].get(pid) or {}).get(viewer),
                priorities_known=list((rc["revealed"].get(viewer) or {}).get(pid, [])),
+               traits=persona.view(state, viewer, pid),
                hc_week=((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("hc_week"),
                done_this_week=[k for k, w in (((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("week") or {}).items()
                                if w == state["current_week"]],
                nil=rc["nil"].get(viewer, {}).get("held", {}).get(pid, 0),
                need=recruiting.needs(state, viewer)[recruiting._group_of(rc["prospects"][pid])],
                ask=recruiting.ask_view(state, viewer, pid), cooled=recruiting.cooled(state, viewer, pid),
+               cooled_why=persona.cooled_why(state, viewer, pid) if recruiting.cooled(state, viewer, pid) else None,
                stage=recruiting.stage(state, viewer, pid), strength=recruiting.strengths(state, viewer, pid),
                pestering=recruiting.would_pester(state, viewer, pid), pesters=recruiting.pesters(state, viewer, pid),
                stage_move=_stage_move(state, pid, viewer),
@@ -610,6 +616,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                firmness=rc["status"][pid].get("firmness") if rc["status"][pid]["committed"] == viewer and not rc["status"][pid]["signed"] else None,
                hard=bool(rc["status"][pid].get("hard")) and not rc["status"][pid]["signed"],
                can_scout=can_scout(state, viewer, pid),
+               scout_cost=recruiting.look_cost(state, viewer, pid),
                role=_role(recruiting.pull(state, viewer, pid)["playing_time"]),
                standing=standing(state, pid, viewer),
                history=history.get(pid, []))
@@ -809,9 +816,10 @@ def recruiting_view(state: dict) -> dict:
     hist = history_index(state, me)
     board = [board_row(state, pid, me, hist) for pid in rc["board"]]
     recap = [e for e in rc["log"] if e["week"] == week and (e.get("school") == me or e.get("from") == me or e["pid"] in mine)
-             and e["kind"] not in ("leaning_fcs",) + recruiting.CONTACT_KINDS]
+             and e["kind"] not in ("leaning_fcs",) + recruiting.HISTORY_ONLY]
     return {
         "week": week, "hours": recruiting.weekly_hours(state, me), "hours_left": recruiting._hours(state, me),
+        "points_left": recruiting.scout_points_left(state, me), "points_week": recruiting.scout_points(state, me),
         "nil": {"budget": nil["budget"], "held": sum(nil["held"].values()), "left": recruiting.nil_left(state, me),
                 "base": recruiting.nil_budget(state, me),                      # the year's budget alone (the class: budget = base + carry)
                 "pool": nil["budget"] if rc.get("portal") else None,            # the portal: the pool less what keeping players home cost
@@ -840,7 +848,7 @@ def recruiting_view(state: dict) -> dict:
 # ----- the Scouting tab -------------------------------------------------------------------------------
 
 ROLE_NAMES = {"OC": "Offensive Coordinator", "DC": "Defensive Coordinator", "Recruiter": "Recruiter"}
-NOT_ENOUGH_HOURS = "Not enough hours"
+NOT_ENOUGH_POINTS = "Not Enough Points"
 REPORT_COMPLETE = f"His report is complete: {recruiting.REPORT_LOOKS} of {recruiting.REPORT_LOOKS} looks"   # a board row kept in the queue with no Send
 REPORT_ITEMS = recruiting.LOOK_LOG_KEEP   # a scout's report lists this many of his changed looks: flags, then potential, then the rest
 LOOK_NAMES = dict(GROUP_NAMES, potential="potential")
@@ -934,6 +942,7 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
     this_week = [e for e in log if e["week"] == week]
     last_week = [e for e in log if e["week"] == week - 1]
     hours_left = recruiting._hours(state, me)
+    points_left = recruiting.scout_points_left(state, me)
     need = recruiting.needs(state, me)
     live = {pid for pid, st in rc["status"].items() if not st["signed"] and st["committed"] != me}
     scouts = []
@@ -990,16 +999,17 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
     queue = []
     for pid in matched[offset:offset + limit]:
         p, read, trips = rc["prospects"][pid], rc["reads"].get(pid), trips_of(pid)
-        short = hours_left < recruiting.HOURS["scout"]
+        cost = recruiting.look_cost(state, me, pid)
+        short = points_left < cost
         done = complete(pid)
         status = rc["status"][pid]
         gone = SIGNED if status["signed"] else COMMITTED_TO_YOU if status["committed"] == me else None
         queue.append({"pid": pid, "name": p["name"], "position": p["position"], "stars": p["stars"],
                       "group": recruiting._group_of(p), "need": need[recruiting._group_of(p)], "national_rank": p["rank"],
-                      "looks": looks_out(read), "trips": trips,
+                      "looks": looks_out(read), "trips": trips, "cost": cost,
                       "potential": list(recruiting.grade_range(state, pid, "potential")) if read else None,
                       "can_send": not short and not done and not gone,
-                      "why": gone or (REPORT_COMPLETE if done else NOT_ENOUGH_HOURS if short else None),
+                      "why": gone or (REPORT_COMPLETE if done else NOT_ENOUGH_POINTS if short else None),
                       "state": p["hometown"]["state"], "likes": staff_likes(state, pid, me), "on_board": pid in rc["board"],
                       "flags": recruiting._flags(state, pid) if read else []})
     flags = []
@@ -1013,7 +1023,8 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
                           "looks": looks_out(rc["reads"][pid]), "likes": likes,
                           "standing_word": _standing_word(state, pid, me)})
     flags.sort(key=lambda f: (FLAG_ORDER.index(f["flag"]), rc["prospects"][f["pid"]]["rank"]))
-    return {"hours": recruiting.weekly_hours(state, me), "hours_left": hours_left, "scouts": scouts,
+    return {"hours": recruiting.weekly_hours(state, me), "hours_left": hours_left, "points_left": points_left,
+            "points_week": recruiting.scout_points(state, me), "scouts": scouts,
             "full_reports": sum(1 for read in rc["reads"].values() if recruiting.report_complete(read)),
             "trips_this_week": round(this_count.get("trip", 0)),
             "queue": queue, "queue_total": len(matched),

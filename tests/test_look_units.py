@@ -1,5 +1,5 @@
 """Looks in trip units: a full scouting report is REPORT_LOOKS = 3 looks and nothing goes past it.
-A Send (a scouting trip, 5 hours) adds one look; an area scout's weekly look adds AREA_LOOK = 0.5,
+A Send (a scouting trip, 5-15 scouting points) adds one look; an area scout's weekly look adds AREA_LOOK = 0.5,
 up to AREA_CAP = 2.0 from his area, so four weeks in an area leave one trip to finish him. Old
 saves with a read past 3 and no area tally read as complete without error. (Run as a file.)"""
 import copy
@@ -28,6 +28,7 @@ def week_of_looks(st: dict, week: int) -> None:
 
 def send(st: dict, pid: str):
     st["recruiting"]["hours"][ME] = 100
+    st["recruiting"]["scout_points"] = {ME: 100}
     return recruiting.act(st, ME, pid, "scout")
 
 
