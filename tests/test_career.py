@@ -20,10 +20,9 @@ if __name__ == "__main__":
     assert took - (t1 - t0) < max(4.0, 8.0 * (t1 - t0)), f"a new career took {took:.1f} s to start against {t1 - t0:.1f} s for a plain season"
     assert career.is_career(st) and st["career"]["year"] == 2026
     # a career with its recruiting class stays small enough to keep in the browser every week
-    # (about 4.3 MB: 4.0 before each prospect carried his personality and who decides)
     import json as _json
     size = len(_json.dumps(st["recruiting"], separators=(",", ":")))
-    assert size < 4_500_000, f"the recruiting class is {size / 1e6:.1f} MB"
+    assert size < 4_000_000, f"the recruiting class is {size / 1e6:.1f} MB"
     assert len(career.export_save(st)) < 1_500_000, "a new career's save is over 1.5 MB"
     assert st["career"]["settings"]["auto_recruit"] is False and st["career"]["saved_week"] == 0
 

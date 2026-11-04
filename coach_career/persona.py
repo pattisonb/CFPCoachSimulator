@@ -1,9 +1,11 @@
 """Recruit personas (persona.py): every prospect has a personality (how he talks) and a decider
-(who has the say in where he signs, and the one topic that decider cares about). Drawn once, seeded
-by the class seed and his id, and stored on the prospect (old saves and portal entrants draw on first use)."""
+(who has the say in where he signs, and the one topic that decider cares about). A fixed draw from
+the class seed and his id, worked out when asked and never stored in the save (a save from before
+this keeps the persona it stored; a test may set one on the prospect)."""
 from __future__ import annotations
 
 import random
+from functools import lru_cache
 
 PERSONALITIES = ("cocky", "shy", "guarded", "attention", "business")   # equally likely
 PERSONALITY_LABEL = {"cocky": "Cocky", "shy": "Shy", "guarded": "Guarded", "attention": "Loves the Attention", "business": "All Business"}
@@ -23,13 +25,17 @@ def draw(pid: str, seed) -> dict:
     return {"personality": personality, "decider": decider, "decider_topic": rng.choice(topics) if topics else None}
 
 
+@lru_cache(maxsize=20000)
+def _drawn(pid: str, seed) -> dict:
+    return draw(pid, seed)
+
+
 def of(state: dict, pid: str) -> dict:
-    """The prospect's persona, drawn and stored if he has none yet (an old save, a portal entrant)."""
+    """The prospect's persona (read only): the one on the prospect when a save or a test set it,
+    otherwise his fixed draw, cached in memory and not written into the state."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
-    if "persona" not in p:
-        p["persona"] = draw(pid, rc.get("seed", 0))
-    return p["persona"]
+    return p["persona"] if "persona" in p else _drawn(pid, rc.get("seed", 0))
 
 
 # ----- what the personality and the decider change in recruiting --------------------------------------

@@ -29,12 +29,14 @@ if __name__ == "__main__":
     # test_class_gets_personas
     st = season.new_season("ohio-state", "full", seed=4, career=True)
     rc = st["recruiting"]
-    assert all("persona" in p for p in rc["prospects"].values())
-    assert all(p["persona"] == persona.draw(pid, rc["seed"]) for pid, p in list(rc["prospects"].items())[:50])
+    assert not any("persona" in p for p in rc["prospects"].values()), "the persona is a fixed draw: never stored in the save"
+    assert all(persona.of(st, pid) == persona.draw(pid, rc["seed"]) for pid in list(rc["prospects"])[:50])
+    assert not any("persona" in p for p in rc["prospects"].values()), "reading a persona must not store it"
 
-    # test_old_save_lazily_drawn
+    # test_old_save_keeps_its_persona: a save from before stored one; it is read as is
     pid = next(iter(rc["prospects"]))
+    rc["prospects"][pid]["persona"] = {"personality": "shy", "decider": "mom", "decider_topic": "academics"}
+    assert persona.of(st, pid) == {"personality": "shy", "decider": "mom", "decider_topic": "academics"}
     del rc["prospects"][pid]["persona"]
-    got = persona.of(st, pid)
-    assert got == persona.draw(pid, rc["seed"]) and rc["prospects"][pid]["persona"] == got
+    assert persona.of(st, pid) == persona.draw(pid, rc["seed"])
     print("test_persona: ok")

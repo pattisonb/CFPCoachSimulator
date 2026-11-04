@@ -290,7 +290,6 @@ def start(state: dict, year: int = 2027) -> None:
         hideable = p["stars"] == 2 or (p["stars"] == 3 and p["composite"] < HIDDEN_BELOW)
         p["hidden"] = hideable and random.Random(f"hidden-{year}-{state.get('rng_state', 0)}-{p['id']}").random() < HIDDEN_RATE
         p["nil_ask"] = nil_ask(p, year, state.get("rng_state", 0))
-        p["persona"] = persona.draw(p["id"], state.get("rng_state", 0))
         prospects[p["id"]] = p
     # the class is drawn by a model learned from real players and converted to our scale at once:
     # only our ratings are kept (as lists in one key order), with our overall now and projected
