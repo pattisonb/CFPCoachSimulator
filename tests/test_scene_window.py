@@ -100,6 +100,9 @@ def answer_if_asked(page) -> None:
 
 def pitch(page) -> dict:
     answer_if_asked(page)
+    # a recruit who gave nothing away on the call leaves no lead picked: pick one, as the player must
+    if not page.query_selector(f"{WIN} .go-pitches input:checked"):
+        page.click(f"{WIN} .go-pitches label >> nth=0")
     page.click(f"{WIN} .go-scene-acts button:has-text('Pitch')")
     page.wait_for_selector(f"{WIN} .go-convo .go-turn.go-reaction", timeout=30_000)
     page.wait_for_selector(f"{WIN} .go-scene-close", timeout=10_000)
