@@ -31,7 +31,18 @@ def test_topic_case_in_his_reply() -> None:
                 assert cap not in text, f"a phrase capitalized mid-sentence: {text}"
 
 
+def test_fcs_stand_in_by_region_in_scenes() -> None:
+    """His small talk names your opener as the schedule does: a fictional FCS stand-in by its region
+    ("FCS Gulf Coast"), never its made-up school name (the player saw "Port Rennick St.")."""
+    games = {"a": {"home": "rice", "away": "port-rennick-state", "week": 1, "played": False},
+             "b": {"home": "port-rennick-state", "away": "rice", "week": 0, "played": True, "home_score": 3, "away_score": 31}}
+    state = {"games": games}
+    assert scenes.next_game(state, "rice", 1)["opponent"] == "FCS Gulf Coast"
+    assert scenes.last_game(state, "rice", 1)["opponent"] == "FCS Gulf Coast"
+
+
 if __name__ == "__main__":
     test_injury_after_with()
     test_topic_case_in_his_reply()
+    test_fcs_stand_in_by_region_in_scenes()
     print("copy lines ok")
