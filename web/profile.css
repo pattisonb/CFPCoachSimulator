@@ -82,8 +82,9 @@ body { --pv-warn: var(--go-warn, #f5b942); }
 .pv-pips > i.h { background: linear-gradient(90deg, var(--good) 50%, var(--pv-track) 50%); }
 
 /* the Attributes rows and Looks & Uncertainty */
-.pv-attrs { display: flex; flex-direction: column; gap: 4px; }
-.pv-attr { display: grid; grid-template-columns: minmax(86px, 0.9fr) minmax(70px, 1.2fr) auto; gap: 12px; align-items: center; min-height: 34px; border-radius: 6px; }
+.pv-attrs { display: flex; flex-direction: column; gap: 4px; container-type: inline-size; }
+@container (max-width: 400px) { .pv-attr { grid-template-columns: 7.2em minmax(40px, 1fr) auto; gap: 8px; font-size: 14px; } }
+.pv-attr { display: grid; grid-template-columns: 8.2em minmax(60px, 1fr) 8.6em; gap: 12px; align-items: center; min-height: 34px; border-radius: 6px; }
 .pv-attr.go-tip { cursor: help; }
 .pv-attr-k { font-weight: 600; }
 .pv-attr-w { text-align: right; color: var(--muted); white-space: nowrap; }
@@ -124,6 +125,9 @@ body { --pv-warn: var(--go-warn, #f5b942); }
 .pv-row-v { text-align: right; display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; min-width: 0; overflow-wrap: anywhere; }
 .pv-hint { font-size: 12.5px; font-weight: 400; }
 .pv-traits .go-trait-val.muted { font-weight: 600; color: var(--text); }
+.pv-traits .go-traits { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 0; margin: 0; }
+.pv-traits .go-trait { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 14px; }
+.pv-traits .go-trait-label::after { content: none; }
 
 /* the board's cards: the battle rows, the snapshot, priorities, the timeline */
 .pv-battle { display: flex; flex-direction: column; gap: 2px; }
