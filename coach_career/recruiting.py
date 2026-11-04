@@ -1903,10 +1903,10 @@ def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None, co
         board = list(dict.fromkeys(board + [pid for pid in _build_board(state, slug, rng) if pid not in dropped]))
     if (week >= LATE_MARKET or is_portal(state)) and spots_left > 0:        # the late market: whoever is still out there is worth a look
         board = list(dict.fromkeys(board + [pid for pid in _build_board(state, slug, rng) if pid not in dropped]))
-    if not yours:                       # its legacies and its state's blue-chip heroes first (his story)
-        front = [pid for pid in persona.board_front(state, slug) if live(pid)]
-        if front:
-            board = list(dict.fromkeys(front + board))
+    if not yours:                       # his story: its legacies first, its state's blue-chip heroes on the board
+        front, back = persona.board_front(state, slug)
+        if front or back:
+            board = list(dict.fromkeys([pid for pid in front if live(pid)] + board + [pid for pid in back if live(pid)]))
     rc["boards"][slug] = board
     if yours:
         before = {pid: by[slug]["n"] for pid, by in rc["contacts"].items() if slug in by}

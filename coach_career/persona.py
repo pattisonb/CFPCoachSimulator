@@ -181,14 +181,16 @@ DECIDER_LINE = {"self": "Your staff learned he makes his own call.", "mom": "You
 
 
 def known(state: dict, slug: str, pid: str) -> dict:
-    """What `slug` has learned about him: {"personality": bool, "decider": bool}. The player's staff
-    knows his decider once its read holds DECIDER_LOOKS looks, logged or not (a save from before the
-    decider was learned in look() never logged it)."""
+    """What `slug` has learned about him: {"personality": bool, "decider": bool, "story": bool}. The
+    player's staff knows his decider once its read holds DECIDER_LOOKS looks and his story at a complete
+    report, logged or not (a save from before these were learned in look() never logged them); a public
+    story (story_public) is known to everyone."""
     from coach_career import recruiting
     rc = state["recruiting"]
     k = ((rc.get("traits_known") or {}).get(slug) or {}).get(pid) or {}
-    decider = bool(k.get("decider")) or (slug == state.get("team") and recruiting.report_looks((rc.get("reads") or {}).get(pid)) >= DECIDER_LOOKS)
-    return {"personality": bool(k.get("personality")), "decider": decider}
+    looks = recruiting.report_looks((rc.get("reads") or {}).get(pid)) if slug == state.get("team") else 0.0
+    return {"personality": bool(k.get("personality")), "decider": bool(k.get("decider")) or looks >= DECIDER_LOOKS,
+            "story": bool(k.get("story")) or looks >= recruiting.REPORT_LOOKS or story_public(state, pid)}
 
 
 def learn(state: dict, slug: str, pid: str, trait: str) -> bool:
@@ -202,6 +204,11 @@ def learn(state: dict, slug: str, pid: str, trait: str) -> bool:
     if mine.get(trait):
         return False
     mine[trait] = True
+    if trait == "story":                          # a story your staff did not already know of (not a public one, not none)
+        line = story_learned_line(state, pid)
+        if line:
+            recruiting._event(state, "learned", pid, slug, trait=trait, line=line)
+        return True
     d = of(state, pid)
     line = PERSONALITY_LINE[d["personality"]] if trait == "personality" else DECIDER_LINE[d["decider"]]
     recruiting._event(state, "learned", pid, slug, trait=trait, line=line)
@@ -209,24 +216,70 @@ def learn(state: dict, slug: str, pid: str, trait: str) -> bool:
 
 
 def learn_on_contact(state: dict, slug: str, pid: str, action: str) -> None:
-    """His personality shows on the school's first call or first in-home visit (Guarded: the visit only)."""
+    """His personality shows on the school's first call or first in-home visit (Guarded: the visit only);
+    a Package Deal tells the school about his mate the first time it calls or visits."""
     guarded = of(state, pid)["personality"] == "guarded"
     if action == "hc_visit" or (action == "call" and not guarded):
         learn(state, slug, pid, "personality")
+    if action in ("call", "hc_visit") and story(state, pid)[0] == "package":
+        learn(state, slug, pid, "story")
 
 
 def learn_from_read(state: dict, pid: str, looks: float) -> None:
-    """His decider shows once the player's read of him holds DECIDER_LOOKS looks."""
+    """His decider shows once the player's read of him holds DECIDER_LOOKS looks, his story at a complete report."""
+    from coach_career import recruiting
     if looks >= DECIDER_LOOKS:
         learn(state, state["team"], pid, "decider")
+    if looks >= recruiting.REPORT_LOOKS:
+        learn(state, state["team"], pid, "story")
+
+
+def story_public(state: dict, pid: str) -> bool:
+    """Everyone knows a Hometown Hero, an Injury Comeback and a Late Bloomer who has jumped."""
+    k, _ = story(state, pid)
+    return k in PUBLIC_STORIES or (k == "bloomer" and "real" not in state["recruiting"]["prospects"][pid])
+
+
+def _name_of(state: dict, pid: str) -> str:
+    return (state["recruiting"]["prospects"].get(pid) or {}).get("name") or ""
+
+
+def _school_name(slug) -> str:
+    from sim import season
+    return (season.load_teams().get(slug) or {}).get("name", slug or "")
+
+
+def story_learned_line(state: dict, pid: str):
+    """His History's sentence when your staff finds out his story; None for a public story or none."""
+    k, d = story(state, pid)
+    if k is None or story_public(state, pid):
+        return None
+    return STORY_LEARNED[k].format(school=_school_name(d.get("school")), mate=_name_of(state, d.get("mate")))
+
+
+def story_detail(state: dict, viewer: str, pid: str):
+    """The few words after his story's label (Title Case): a legacy's school, his mate, the draft risk from you."""
+    k, d = story(state, pid)
+    if k == "legacy":
+        return _school_name(d.get("school"))
+    if k == "package":
+        return f"With {_name_of(state, d.get('mate'))}"
+    if k == "two_sport":
+        return f"Draft Risk: {draft_word(draft_risk(state, viewer, pid))}"
+    return None
 
 
 def view(state: dict, viewer: str, pid: str) -> dict:
-    """What `viewer` may show of him: labels, or None for Not Known Yet."""
+    """What `viewer` may show of him: labels, or None for Not Known Yet. His story: its label (NO_STORY when
+    a complete report found none), `story_key` and `story_detail` (a legacy's school, his mate, "Draft Risk: Some")."""
     d, k = of(state, pid), known(state, viewer, pid)
+    kind = story(state, pid)[0] if k["story"] else None
     return {"personality": PERSONALITY_LABEL[d["personality"]] if k["personality"] else None,
             "decider": DECIDER_LABEL[d["decider"]] if k["decider"] else None,
-            "decider_topic": d["decider_topic"] if k["decider"] else None}
+            "decider_topic": d["decider_topic"] if k["decider"] else None,
+            "story": (STORY_LABEL[kind] if kind else NO_STORY) if k["story"] else None,
+            "story_key": kind,
+            "story_detail": story_detail(state, viewer, pid) if kind else None}
 
 
 # ----- how each personality and decider sounds in calls and in-home visits (scenes.py reads these) ------
@@ -408,7 +461,8 @@ TWO_SPORT_GROUPS = ("QB", "RB", "WR", "TE", "LB", "CB", "S")   # who also plays 
 LEGACY_TILT = 1.0          # *tune* a legacy school is drawn by exp(this x the program's strength): the big programs have more
 LEGACY_HEAD = 8.0          # *tune* the legacy school's head start, in interest points on his list
 LEGACY_PITCH = 1.2         # *tune* another school's Coach or Prestige pitch against a legacy counts this much more
-LEGACY_COST = 2.0          # *tune* the legacy school's lowball (its cooling) or hollow promise costs this many times more
+LEGACY_LEVEL = 0.5         # *tune* a legacy school recruits its legacy hard only at a star level it signs this share of the nation's rate or more
+LEGACY_COST = 2.0         # *tune* the legacy school's lowball (its cooling) or hollow promise costs this many times more
 HERO_STATE = 1.4           # *tune* a Hometown Hero's pull toward the schools in his state counts this much more
 HERO_AWAY = 0.8            # *tune* an out-of-state pitch to a hero counts this much (Playing Time and NIL in full)
 HERO_FULL = ("playing_time", "nil")
@@ -572,6 +626,92 @@ def apply_stories(state: dict) -> None:
     _STORIES = (rc, (state.get("id"), rc.get("year"), rc.get("seed"), len(rc["prospects"])), drawn)
 
 
+# ----- how each story sounds (scenes.py): "him" plays as his small talk, "family" is the decider's turn at an
+# in-home visit. His voice or theirs, present tense, no numbers; {legacy} is his legacy school, {mate} his
+# Package Deal mate, the rest scenes.FIELDS. A call brings a story up only once the school knows it.
+STORY_LINES: dict[str, dict[str, list[str]]] = {
+    "legacy": {
+        "him": ["My dad played at {legacy}, Coach. I grew up in that stadium.",
+                "Everybody at home figures I'm going to {legacy}. I'm keeping an open mind.",
+                "There's a picture of my dad in a {legacy} uniform in our hallway. Just so you know."],
+        "family": ["His father played at {legacy}, Coach. That means something in this house.",
+                   "We have been {legacy} people for a long time. You'll have to show us why that should change.",
+                   "Half this family went to {legacy}. I'm not saying that decides it. I'm saying it's there."],
+    },
+    "hero": {
+        "him": ["Everybody in {town} wants me to stay in {state}. I hear it at the grocery store.",
+                "I want to play in front of the people who raised me, Coach.",
+                "My whole town comes to my games. I think about that a lot."],
+        "family": ["This whole town wants him to stay home, Coach. People stop us at church about it.",
+                   "He's {town}'s boy. Folks here would love to watch him on Saturdays.",
+                   "Every kid in {town} wears his number. That counts for something."],
+    },
+    "package": {
+        "him": ["Me and {mate} have played together since we were kids. Where I go, he goes.",
+                "You want me, you want {mate} too. That's the deal, Coach.",
+                "{mate} is my guy. We're doing this together."],
+        "family": ["He and {mate} are a package, Coach. Two offers, or no deal.",
+                   "Those two boys have been inseparable since grade school. They want to go together.",
+                   "If you want our son, you'll need a spot for {mate} too."],
+    },
+    "two_sport": {
+        "him": ["I had a doubleheader yesterday, Coach. My arm's still sore.",
+                "Baseball scouts keep showing up at my games. It's a lot.",
+                "Honestly, baseball could be my thing too. I haven't decided."],
+        "family": ["Pro baseball scouts have been calling too, Coach. He has options.",
+                   "I'll be honest, the baseball draft is real for him. Give him a reason to pick football.",
+                   "The baseball people say he'll go high in the draft. Show us he'll play right away here."],
+    },
+    "comeback": {
+        "him": ["The knee feels great, Coach. Better than before, honestly.",
+                "Everybody forgot about me after I got hurt. I didn't forget.",
+                "I'm healthy now. I just need somebody who believes it."],
+        "family": ["After the injury, a lot of schools stopped calling. We remember who didn't.",
+                   "He worked so hard to come back, Coach. Every morning before school.",
+                   "We know who stuck with him when he was hurt. That matters to us."],
+    },
+    "bloomer": {
+        "him": ["I grew a few inches since last year, Coach. Everything feels different.",
+                "Nobody was calling me a year ago. Now my phone won't stop.",
+                "I'm just getting started. Wait until you see my senior film."],
+        "family": ["He grew so much this year, Coach. None of his old clothes fit.",
+                   "A year ago nobody called. Now everybody does. We remember that.",
+                   "He's still growing, Coach. You haven't seen the best of him."],
+    },
+}
+# his History's sentence when your staff finds out (a public story is never news to them)
+STORY_LEARNED = {"legacy": "Your staff learned he is a legacy at {school}.",
+                 "hero": "Your staff learned he is a hometown hero.",
+                 "package": "Your staff learned he and {mate} want to go together.",
+                 "two_sport": "Your staff learned he could go pro in baseball.",
+                 "comeback": "Your staff learned he is coming back from an injury.",
+                 "bloomer": "Your staff learned he is a late bloomer."}
+
+
+def story_fields(state: dict, pid: str) -> dict:
+    """The story's own placeholders for scenes: {legacy} (his legacy school's name) and {mate}."""
+    k, d = story(state, pid)
+    return {"legacy": _school_name(d.get("school")) if k == "legacy" else "",
+            "mate": _name_of(state, d.get("mate")) if k == "package" else ""}
+
+
+def story_line(state: dict, slug: str, pid: str, scene_id: str, who: str, f: dict, action: str, first_call: bool = False):
+    """His story's line for a scene (its own seeded draw `story-line-{scene_id}-{who}`, so no other stream
+    moves), or None: at an in-home visit always ("family": the decider brings it up, and the school learns
+    it); on a call ("him") a Package Deal's first call always, otherwise STORY_CALL_LINE of the time once
+    the school knows the story (never for All Business: no small talk)."""
+    k, _ = story(state, pid)
+    if k is None:
+        return None
+    rng = random.Random(f"story-line-{scene_id}-{who}")
+    line = rng.choice(STORY_LINES[k][who])
+    if action == "call":
+        if not (k == "package" and first_call):          # All Business skips the small talk, his story's too
+            if of(state, pid)["personality"] == "business" or not known(state, slug, pid)["story"] or rng.random() >= STORY_CALL_LINE:
+                return None
+    return line.format(**f)
+
+
 # ----- what his story changes in recruiting (hooks in recruiting.py) ----------------------------------
 
 STAR_WORD = {2: "two", 3: "three", 4: "four", 5: "five"}
@@ -666,9 +806,12 @@ def read_mult(state: dict, pid: str, group: str) -> float:
 _FRONT: tuple = (None, {})
 
 
-def board_front(state: dict, slug: str) -> list:
-    """The prospects an AI school puts at the front of its board for their story: its legacies, and the
-    four- and five-star Hometown Heroes of its state."""
+def board_front(state: dict, slug: str) -> tuple:
+    """The prospects an AI school adds to its board for their story, (at the front, at the end): its legacies at a star
+    level it recruits (its share of that level at least LEGACY_LEVEL of the nation's: a blue blood does not
+    take a two-star for his father) at the front; the four- and five-star Hometown Heroes of its state at the end
+    (their pull toward it, HERO_STATE, does the rest)."""
+    from coach_career import recruiting
     global _FRONT
     drawn = stories(state)
     if _FRONT[0] is not drawn:
@@ -676,12 +819,15 @@ def board_front(state: dict, slug: str) -> list:
         front: dict = {}
         for pid, s in drawn.items():
             if s["story"] == "legacy":
-                front.setdefault(s["story_data"]["school"], []).append(pid)
+                school, tier = s["story_data"]["school"], pros[pid]["stars"]
+                share = (recruiting._team_model(school).get("star_share") or {}).get(recruiting.STAR_KEY.get(tier, "2*"), 0.0)
+                if share >= LEGACY_LEVEL * recruiting._national_share(tier):
+                    front.setdefault(school, []).append(pid)
             elif s["story"] == "hero" and pros[pid]["stars"] >= 4:
                 front.setdefault(("state", s["story_data"]["state"]), []).append(pid)
         _FRONT = (drawn, front)
     front = _FRONT[1]
-    return front.get(slug, []) + front.get(("state", school_state(slug)), [])
+    return front.get(slug, []), front.get(("state", school_state(slug)), [])
 
 
 def bloom(state: dict, week: int) -> list:
@@ -718,10 +864,10 @@ def bloom(state: dict, week: int) -> list:
         if st["committed"] or st["signed"]:
             continue
         best = sorted(schools, key=lambda s: (-recruiting._fits(state, s).get(pid, 0.0), s))[:BLOOM_BOARDS]
-        for s in best:
+        for s in best:                                   # a new blue chip goes to the front; a new three-star joins the end
             board = rc["boards"].setdefault(s, [])
             if pid not in board:
-                board.insert(0, pid)
+                board.insert(0, pid) if p["stars"] >= 4 else board.append(pid)
     return jumped
 
 
