@@ -1298,9 +1298,9 @@ Scouting Center, master and detail, built from the player's mockup in the site's
   left; disabled with the reason underneath: "Not enough scouting points left this week.", or "His report is complete: 3 of 3
   looks") and **Add to Board** / **Remove from Board** (the board's own confirm when that pulls a
   standing offer), and **View Full Profile**, which opens the profile modal. Send posts the `scout`
-  action and patches in place: the row's meter pulses, the look's before and after reads show under
-  the boxes, a toast "Scouted Wesley Adams · 2.5 of 3 looks" ("· his report is complete" at 3), the
-  hours card patches and the page refetches so every row follows. The board button flips the row's
+  action and patches in place: the row's meter pulses, a toast "Scouted Wesley Adams · 2.5 of 3 looks"
+  ("· his report is complete" at 3, "· OC likes him" when a coordinator takes to him) is the trip's
+  whole result (the grades it moved show in the Ratings tab; no before-and-after box), the points card patches and the page refetches so every row follows. The board button flips the row's
   star and the My Board card with a toast ("Wesley Adams is on your board."). Neither leaves the tab.
 - **Scouting Operations** (bottom): a folded bar, "Staff assignments, regions and coverage", with the
   scouts' areas in one line and **Manage Staff**. Opening it shows a card per staff member (every one,

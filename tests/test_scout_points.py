@@ -33,10 +33,10 @@ def test_hours_range():
 def test_points_range():
     st = fresh()
     set_evaluator(st, 50)
-    assert recruiting.best_evaluator(st) == 50 and recruiting.scout_points(st, ME) == 40
+    assert recruiting.best_evaluator(st) == 50 and recruiting.scout_points(st, ME) == 150
     st["coach"]["ratings"]["evaluation"] = 100
-    assert recruiting.best_evaluator(st) == 100 and recruiting.scout_points(st, ME) == 60
-    for rating, want in ((63, 45), (77, 50)):         # in fives
+    assert recruiting.best_evaluator(st) == 100 and recruiting.scout_points(st, ME) == 250
+    for rating, want in ((63, 175), (77, 205)):         # in fives
         st["coach"]["ratings"]["evaluation"] = rating
         for m in st["career"]["staff"]:
             m["evaluation"] = min(m.get("evaluation", 50), rating)

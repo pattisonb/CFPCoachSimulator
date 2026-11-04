@@ -74,6 +74,11 @@ def toasted(page, text: str) -> None:
     page.wait_for_function("(t) => [...document.querySelectorAll('#toasts .toast-item')].some(e => e.textContent.trim() === t)", arg=text, timeout=30_000)
 
 
+def toasted_start(page, text: str) -> None:
+    """A toast that starts with that sentence: a trip that completes a report may add "· OC likes him"."""
+    page.wait_for_function("(t) => [...document.querySelectorAll('#toasts .toast-item')].some(e => e.textContent.trim().startsWith(t))", arg=text, timeout=30_000)
+
+
 def smooth(page, h, what: str, same: bool = True) -> None:
     """After the action landed: the watched element is still the one on screen (or, same=False, the pane switched),
     nothing that held it was removed, the scrolls are within 2 px, and the focus is on a control, not the body."""
@@ -442,8 +447,7 @@ def test_scouting_tab(page, base, sid) -> None:
     assert page.inner_text("#sc-send").strip() == (f"Send Scout · {row['cost']} Points · Finishes His Report" if 3 - before <= 1 else f"Send Scout · {row['cost']} Points")
     after = min(3, before + 1)
     page.click("#sc-send")
-    toasted(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
-    page.wait_for_selector(".sc-intel .sc-result", timeout=10_000)
+    toasted_start(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
     page.wait_for_function("([pid, t]) => document.querySelector(`.sc-row[data-pid='${pid}'] .sc-looks-text`).textContent === t", arg=[pid, f"{fmt(after)}/3"], timeout=10_000)
     assert segments() == [min(1, max(0, after - i)) for i in range(3)], "his meter fills one more segment, in halves"
     smooth(page, h, "Send", same=True)
@@ -452,7 +456,7 @@ def test_scouting_tab(page, base, sid) -> None:
         page.wait_for_function("() => { const b = document.querySelector('#sc-send'); return b && !b.disabled && !b.classList.contains('go-busy'); }", timeout=15_000)
         page.click("#sc-send")
         after = min(3, after + 1)
-        toasted(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
+        toasted_start(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
     if after >= 3:
         page.wait_for_function("() => { const b = document.querySelector('#sc-send'); return b && b.disabled && !b.classList.contains('go-busy'); }", timeout=15_000)
         assert page.inner_text(".sc-intel .sc-why").strip() == "His report is complete: 3 of 3 looks", page.inner_text(".sc-intel .sc-why")
@@ -823,8 +827,7 @@ def test_staff_likes_tags(page, base) -> None:
         page.wait_for_selector(f".sc-row[data-pid='{nearly}'] .sc-likes", timeout=15_000)
         pill = page.query_selector(f".sc-row[data-pid='{nearly}'] .sc-row-flags .sc-likes")
         assert pill.inner_text().strip().lower() == "oc ♥" and pill.get_attribute("title") == "Your offensive coordinator thinks he starts for you next year", (pill.inner_text(), pill.get_attribute("title"))
-        page.wait_for_selector(".sc-intel .sc-result .go-likes", timeout=15_000)
-        assert page.inner_text(".sc-intel .sc-result .go-likes").strip().lower() == "oc likes him"
+        assert not page.query_selector(".sc-intel .sc-result"), "no first-read box after a trip"
         assert next(b for b in call(base, f"/api/season/{sid}/recruiting")["board"] if b["id"] == nearly)["likes"]["who"] == "OC"
         assert not errs, errs
     finally:
@@ -2295,7 +2298,7 @@ if __name__ == "__main__":
             h = watch(page, ".go-pane", "#rc-recruit")
             n = draws(page)
             menu("scout")
-            toasted(page, f"Scouted {x['name']} · {str(int(looks)) if looks == int(looks) else f'{looks:.1f}'} of 3 looks")
+            toasted_start(page, f"Scouted {x['name']} · {str(int(looks)) if looks == int(looks) else f'{looks:.1f}'} of 3 looks")
             settle(page, n)
             smooth(page, h, "Scout")
             assert page.evaluate("() => document.activeElement.id") == "rc-recruit"
