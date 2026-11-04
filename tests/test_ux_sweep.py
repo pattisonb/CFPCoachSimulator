@@ -1137,8 +1137,12 @@ def test_conversation(page, base) -> None:
     rc["hours"][me] = 200
     game = scenes.last_game(st, me, st["current_week"])
     assert game, "a game to talk about"
-    pids = [q for q in recruiting.prospect_list(st) if not rc["prospects"][q].get("hidden") and me not in rc["contacts"].get(q, {})
-            and not rc["status"][q]["committed"] and not recruiting.would_pester(st, me, q)][:2]
+    from coach_career import persona
+    free = [q for q in recruiting.prospect_list(st) if not rc["prospects"][q].get("hidden") and me not in rc["contacts"].get(q, {})
+            and not rc["status"][q]["committed"] and not recruiting.would_pester(st, me, q)]
+    # the visit's recruit decides for himself and has no story: the room, you, him (no family turn, no story turn)
+    plain = [q for q in free[1:] if persona.of(st, q)["decider"] == "self" and not persona.story(st, q)[0]]
+    pids = [free[0], plain[0]]
     rc["board"] = list(pids)
     season.save_season(st)
     sid = st["id"]
