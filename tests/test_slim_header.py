@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from test_career_e2e import call, free_port, launch, menu_pick   # noqa: E402
+from test_career_e2e import call, free_port, launch, menu_pick, tab_click   # noqa: E402
 
 SHOWN = "() => getComputedStyle(document.querySelector('.topbar')).display !== 'none'"
 
@@ -94,7 +94,7 @@ def check_no_banner_and_chip(page, base, sid) -> None:
     assert page.evaluate("() => Math.min(...[...document.querySelectorAll('#season-tabs button:not([hidden])')].map(b => b.getBoundingClientRect().height).filter(h => h > 0))") >= 36
     # Settings and Download Career live behind ☰ Menu, on every tab; no buttons on the page
     assert not page.is_visible("#btn-settings") and not page.is_visible("#btn-download-career"), "no Office buttons: ☰ Menu"
-    page.click("#season-tabs button[data-tab=standings]")
+    tab_click(page, "standings")
     menu_pick(page, "Settings")
     page.wait_for_selector("#modal:not([hidden]) .settings", timeout=30_000)
     page.keyboard.press("Escape")
@@ -102,7 +102,7 @@ def check_no_banner_and_chip(page, base, sid) -> None:
     with page.expect_download(timeout=60_000) as dl:
         menu_pick(page, "Download Career")
     assert dl.value.suggested_filename.endswith(".ccsave"), dl.value.suggested_filename
-    page.click("#season-tabs button[data-tab=office]")
+    tab_click(page, "office")
     # a simmed week: Settings is disabled while it runs, then the chip follows
     page.wait_for_selector(".go-play [data-play=advance]:not([disabled])", timeout=60_000)
     page.click("#tab-office .go-play [data-play=advance]")
@@ -127,10 +127,11 @@ def check_phone(page, base, sid) -> None:
         r = page.evaluate("""() => { const q = (x) => document.querySelector(x).getBoundingClientRect();
             return { menu: q('#btn-menu'), chip: q('#team-chip'), row: q('#season-tabs .tab-row'), bar: q('#season-tabs'),
                      tabs: Math.min(...[...document.querySelectorAll('#season-tabs .tab-row button:not([hidden])')].map(b => b.getBoundingClientRect().height).filter(h => h > 0)) }; }""")
-        assert r["menu"]["right"] <= r["chip"]["left"] + 0.5 and r["chip"]["right"] <= r["row"]["left"] + 0.5, f"☰ Menu, the chip, then the tabs: {r}"
+        # ☰ Menu, then the chip, then the tabs (on one line, or the tabs on their own line when the room is short)
+        assert r["menu"]["right"] <= r["chip"]["left"] + 0.5 and (r["chip"]["right"] <= r["row"]["left"] + 0.5 or r["row"]["top"] >= r["chip"]["bottom"] - 0.5), f"☰ Menu, the chip, then the tabs: {r}"
         assert r["menu"]["height"] >= 44 and r["tabs"] >= 44, f"44 px controls: {r}"
         assert r["bar"]["right"] <= 400.5, r
-        assert page.evaluate("() => { const t = document.querySelector('#season-tabs .tab-row'); return t.scrollWidth > t.clientWidth; }"), "the tabs scroll sideways"
+        assert page.evaluate("() => { const t = document.querySelector('#season-tabs .tab-row'); return t.scrollWidth <= t.clientWidth + 1; }"), "the tabs never scroll sideways (More holds the rest)"
     menu_pick(page, "Show the Top Bar")
     assert page.evaluate(SHOWN)
     assert page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth + 1"), "no sideways scroll with the bar shown"

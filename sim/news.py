@@ -215,11 +215,18 @@ def _injuries(state: dict, teams: dict, fbs: set, week: int, games: list[dict], 
                     continue
                 wk = inj["weeks"]
                 span = "for the season" if wk >= 10 else f"for {wk} week{'s' if wk != 1 else ''}"
-                kind = f" with a {inj['type']}" if inj.get("type") else ""
+                kind = f" with {_with(inj['type'])}" if inj.get("type") else ""
                 text = f"No. {rank[slug]} {_name(teams, slug)} loses starting QB {inj['name']} {span}{kind}."
                 out.append({"kind": "injury", "text": text, "team": slug, "teams": (slug,), "link": {"type": "game", "event_id": g["event_id"]},
                             "_imp": _BASE["injury"] + (26 - rank[slug]) // 5})
     return out
+
+
+def _with(injury: str) -> str:
+    """An injury after "with": "an ankle sprain", "a concussion", "back spasms" (a plural takes no article)."""
+    if injury.endswith("s") and not injury.endswith("ss"):
+        return injury
+    return f"{'an' if injury[0] in 'aeiou' else 'a'} {injury}"
 
 
 def week_news(state: dict, week: int) -> list[dict]:

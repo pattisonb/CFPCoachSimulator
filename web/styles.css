@@ -128,7 +128,8 @@ body.season-open.topbar-off .topbar { display: none; }
 
 /* tabs */
 .tabs { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
-.tab-row { display: flex; gap: 6px; flex-wrap: nowrap; align-items: center; min-width: 0; overflow-x: auto; scrollbar-width: thin; }
+.tab-row { display: flex; gap: 6px; flex-wrap: nowrap; align-items: center; min-width: 0; overflow: hidden; }   /* never scrolls sideways: tabs that do not fit go into More (web/season.js layoutTabs) */
+#season-tabs .tab-row .tab-ovf { display: none !important; }
 .tab-row button { white-space: nowrap; flex: none; }
 .tab-divider { flex: none; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 0 4px 0 10px; margin-left: 4px; border-left: 1px solid var(--border); }
 .tab-row button.league { font-size: 13px; padding: 5px 10px; }
@@ -1458,6 +1459,9 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
 @media (max-width: 759px) {
   #season-tabs .tab-menu, body.career-mode #season-tabs .tab-menu { order: -2; min-height: 44px; padding: 0 10px; }
   .team-chip { order: -1; max-width: 132px; padding: 0 8px 0 2px; gap: 6px; }
+  /* the tabs need room for the open tab and More; when ☰ Menu and the chip leave less than that, the row drops to its own line (and fills it) */
+  #season-tabs { flex-wrap: wrap; }
+  #season-tabs .tab-row, body.career-mode #season-tabs .tab-row { flex: 1 1 14rem; min-width: 14rem; }
   .team-chip b { font-size: 13px; }
   .season-tools button { min-height: 44px; }
 }

@@ -215,10 +215,11 @@ PRESENT_SAID = ["Here's {school} in a nutshell: {x}, {y} and {z}.",
                 "Let me tell you what we're about at {school}: {x}, {y} and {z}.",
                 "Three things about us, {first}: {x}, {y} and {z}."]
 # how he takes your opening: one of his priorities in it (the one you are strongest on, {topic}, in his
-# words), none, or he is tired of you; a priority you are weak at gets that topic's quiet line
+# words: {Topic} to open a line, {topic} inside one), none, or he is tired of you; a priority you are weak at gets
+# that topic's quiet line
 PRESENT_LINES = {
-    "hit": ["{topic}. Yeah. Keep talking, Coach.",
-            "{topic}... okay. That's the part I wanted to hear.",
+    "hit": ["{Topic}. Yeah. Keep talking, Coach.",
+            "{Topic}... okay. That's the part I wanted to hear.",
             "You said {topic}. That's the one. Go on."],
     "polite": ["Appreciate that, Coach.",
                "Okay. Yes sir.",
@@ -263,7 +264,7 @@ FAMILY = [line for lines in FAMILY_BY.values() for line in lines]       # every 
 TABLES = {"PERSONA_LINES": persona.LINES, "NO_TOPIC": persona.NO_TOPIC, "DECIDER_LINES": persona.DECIDER_LINES, "LINES": LINES, "TIRED": TIRED, "OPEN": OPEN, "VISIT_OPEN": VISIT_OPEN, "CONTEXT": CONTEXT, "PRESENT_SAID": PRESENT_SAID,
           "PRESENT_LINES": PRESENT_LINES, "ASK": ASK, "LEAD_LINES": LEAD_LINES, "FAMILY": FAMILY}
 FIELDS = ("name", "first", "town", "state", "school", "position", "role", "record", "coach", "opponent", "result", "leader",
-          "week_word", "a", "b", "x", "y", "z", "topic")
+          "week_word", "a", "b", "x", "y", "z", "topic", "Topic")
 
 _ONES = ("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen "
          "sixteen seventeen eighteen nineteen").split()
@@ -488,7 +489,7 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
         st_ = recruiting.strengths(state, slug, pid)
         best = max(hits, key=lambda t: st_[t])
         phrase = PHRASES[best]
-        kind, text = "hit", rng.choice(PRESENT_LINES["hit"]).format(topic=phrase[0].upper() + phrase[1:], **f)
+        kind, text = "hit", rng.choice(PRESENT_LINES["hit"]).format(topic=phrase, Topic=phrase[0].upper() + phrase[1:], **f)
         mine = _persona_line(state, pid, sc["id"], "hit", f, always=not tells_)     # a call that tells nothing names no topic
         text = mine or text
     elif back:

@@ -994,11 +994,79 @@
     if (status) box.append(el("span", { text: ` · ${status}` }));
   }
 
+  // ----- the tab row never scrolls: the tabs that do not fit go behind "More ▾" (priority+ pattern) -----
+  // Measured synchronously (the classes come off, the widths are read, the final classes go on, all before the
+  // browser paints), so nothing flashes or jumps. The open tab always keeps a slot; the last tab on the right
+  // that would not fit makes way for it. Tab buttons stay in the DOM; an overflowed one only gets .tab-ovf.
+  let tabsBusy = false;
+  function layoutTabs() {
+    const row = $("#season-tabs .tab-row"), more = $("#tab-more");
+    if (!row || !more || tabsBusy) return;
+    tabsBusy = true;
+    try {
+      const tabs = [...row.querySelectorAll("button[data-tab]")], divider = row.querySelector(".tab-divider");
+      for (const b of tabs) b.classList.remove("tab-ovf");
+      if (divider) divider.classList.remove("tab-ovf");
+      more.hidden = false; more.textContent = "More ▾"; more.classList.remove("active");
+      const avail = row.clientWidth;
+      if (avail > 0) {
+        const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+        const wOf = (n) => { const cs = getComputedStyle(n); return n.getBoundingClientRect().width + (parseFloat(cs.marginLeft) || 0) + (parseFloat(cs.marginRight) || 0); };
+        const shown = tabs.filter((b) => b.offsetWidth > 0);          // not hidden by the calendar or career mode
+        const act = shown.find((b) => b.classList.contains("active"));
+        const w = new Map(shown.map((b) => [b, wOf(b)]));
+        const wDiv = divider && divider.offsetWidth > 0 ? wOf(divider) : 0, wMore = wOf(more);
+        const width = (set, withMore) => {
+          const n = set.length + (withMore ? 1 : 0) + (wDiv && set.some((b) => b.classList.contains("league")) ? 1 : 0);
+          return set.reduce((a, b) => a + w.get(b), 0) + (wDiv && set.some((b) => b.classList.contains("league")) ? wDiv : 0) + (withMore ? wMore : 0) + gap * Math.max(0, n - 1);
+        };
+        let keep = shown;
+        if (width(shown, false) > avail + 0.5) {
+          const rest = shown.filter((b) => b !== act);
+          let n = rest.length;
+          const pick = (k) => { const set = new Set(rest.slice(0, k)); if (act) set.add(act); return shown.filter((b) => set.has(b)); };
+          while (n > 0 && width(pick(n), true) > avail + 0.5) n--;
+          keep = pick(n);
+        }
+        const out = shown.filter((b) => !keep.includes(b));
+        for (const b of out) b.classList.add("tab-ovf");
+        if (divider && !keep.some((b) => b.classList.contains("league"))) divider.classList.add("tab-ovf");
+        more.hidden = !out.length;
+        more.dataset.hidden = out.map((b) => b.dataset.tab).join(" ");
+        const cur = out.find((b) => b.classList.contains("active"));    // guard: the open tab is never behind More
+        if (cur) { more.textContent = `More: ${cur.textContent.trim()} ▾`; more.setAttribute("aria-label", `More: ${cur.textContent.trim()}`); more.classList.add("active"); }
+        else more.setAttribute("aria-label", "More");
+      }
+    } finally { tabsBusy = false; }
+    if (tabsObserver) tabsObserver.takeRecords();
+  }
+  function tabPick(name) {
+    if (name === "depth") { openDepth(); return; }     // the depth chart is its own screen
+    goTab(name);
+  }
+  function openTabMore() {
+    const more = $("#tab-more");
+    const names = (more.dataset.hidden || "").split(" ").filter(Boolean);
+    const items = names.map((t) => ({ name: $(`#season-tabs button[data-tab=${t}]`).textContent.trim(), onPick: () => tabPick(t) }));
+    if (items.length) openMenu(more, items, "More Tabs");
+  }
+  let tabsObserver = null;
+  {
+    const row = $("#season-tabs .tab-row");
+    $("#tab-more").addEventListener("click", openTabMore);
+    if (window.ResizeObserver) new ResizeObserver(layoutTabs).observe(row);
+    // a tab shown or hidden (career mode, the offseason, awards and the bracket appearing) re-flows the row
+    if (window.MutationObserver) {
+      tabsObserver = new MutationObserver((recs) => { if (recs.some((r) => r.target !== $("#tab-more"))) layoutTabs(); });
+      tabsObserver.observe(row, { subtree: true, attributes: true, attributeFilter: ["hidden"] });
+    }
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutTabs);
+  }
+
   function selectTab(name) {
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
-    const active = $("#season-tabs button.active");   // one scrolling row: the open tab stays in view
-    if (active && !active.hidden && active.scrollIntoView) active.scrollIntoView({ block: "nearest", inline: "nearest" });
+    layoutTabs();   // the open tab always keeps a slot in the row
     for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "programs", "office", "offseason", "recruiting", "prospects", "scouting", "classes"]) $(`#tab-${t}`).hidden = t !== name;
     document.body.classList.toggle("on-office", name === "office");
     document.body.classList.toggle("on-career-tab", CAREER_TABS.includes(name));
@@ -3941,8 +4009,7 @@
   $("#season-tabs").addEventListener("click", (e) => {
     const b = e.target.closest("button[data-tab]");
     if (!b) return;
-    if (b.dataset.tab === "depth") { openDepth(); return; }     // the depth chart is its own screen
-    goTab(b.dataset.tab);
+    tabPick(b.dataset.tab);
   });
   $("#poll-pills").addEventListener("click", (e) => { const b = e.target.closest("button[data-poll]"); if (b) { state.poll = b.dataset.poll; state.pollChosen = true; route.set({ poll: b.dataset.poll }); renderRankings(); } });
   $("#sbox-tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-btab]"); if (b) selectBoxTab(b.dataset.btab); });

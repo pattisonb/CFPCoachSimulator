@@ -66,6 +66,11 @@ if __name__ == "__main__":
         rc["status"][c].update(committed=ME, firmness=95, hard=True)
         refused(lambda: R(sid, "board", {"pid": c, "on": False}), 409, "hard commit")
         assert c in rc["board"] and c in rc["offers"][ME]
-        print("board offer ok: off the board pulls the offer and returns its NIL; a verbal commit decommits; a hard commit stays")
+
+        # nor can a recruit who signed with you (the player took one off from the Classes tab's profile)
+        rc["status"][c].update(signed=ME, hard=False)
+        refused(lambda: R(sid, "board", {"pid": c, "on": False}), 409, "signed with you")
+        assert c in rc["board"]
+        print("board offer ok: off the board pulls the offer and returns its NIL; a verbal commit decommits; a hard commit and a signee stay")
     finally:
         shutil.rmtree(season.SEASONS_DIR, ignore_errors=True)
