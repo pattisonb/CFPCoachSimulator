@@ -1370,10 +1370,11 @@ def _present(state: dict, slug: str, pid: str, scene: Optional[str], topics: Opt
     if points < 0:
         _event(state, "not_buying", pid, slug, topic=back[0])
     scenes.present(state, slug, pid, sc, topics, hits, back, tired)
-    _event(state, "present", pid, slug, action=sc["action"], topics=list(topics), hit=len(hits))
+    shown = hits if scenes.tells(state, slug, pid, sc["action"]) else []      # a call that keeps his priority to himself does not say which were his
+    _event(state, "present", pid, slug, action=sc["action"], topics=list(topics), hit=len(shown))
     if points:
         _add_points(state, slug, pid, points, sc["action"])
-    return {"scene": sc, "points": points, "hit": hits, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
+    return {"scene": sc, "points": points, "hit": shown, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
 
 
 REPORTS_KEPT = 4           # weekly reports kept (the Office shows the latest)

@@ -418,16 +418,18 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
     context = context_line(state, slug, pid, week, f, rng, tired)     # always drawn: the seeded rng moves the same for every personality
     d = persona.of(state, pid)
     game = last_game(state, slug, week)
-    if tired or (game and game["week"] >= week - 1):                  # a game this past Saturday is news he always brings up
+    if tired or (game and game["week"] >= week - 1):                  # a game this past Saturday is news he always brings up (a deliberate exception: All Business too)
         said = context
     elif d["personality"] == "business":                              # no small talk: he gets to it
-        said = _persona_line(state, pid, sid, "open", f, always=True)
+        said = _persona_line(state, pid, sid, "visit_open" if action == "hc_visit" else "open", f, always=True)
     else:
-        said = _persona_line(state, pid, sid, "open", f, pool=("open", "small_talk")) or context
+        said = _persona_line(state, pid, sid, "visit_open" if action == "hc_visit" else "open", f,
+                             pool=("visit_open" if action == "hc_visit" else "open", "small_talk")) or context
     turns.append(_turn("him", said))
     if action == "hc_visit" and d["decider"] != "self":               # the one who decides speaks
         fam = random.Random(f"persona-line-{sid}-family").choice(persona.DECIDER_LINES[d["decider"]]).format(**f)
         turns.append({"who": "family", "label": persona.DECIDER_LABEL[d["decider"]], "text": fam})
+        persona.learn(state, slug, pid, "decider")                    # the family is in the room: you see who decides
     sc = {"id": sid, "action": action, "week": week, "turns": turns, "lines": [],
           "cue": None, "ask": recruiting.ask_view(state, slug, pid), "question": None, "presented": None, "tired": tired}
     _lines(sc)
@@ -499,7 +501,7 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
     if sc["question"]:
         sc["turns"].append(_turn("him", QUESTION_INTRO))
     sc["presented"] = list(topics)
-    sc["present"] = {"kind": kind, "hit": list(hits)}
+    sc["present"] = {"kind": kind, "hit": list(hits) if tells_ else []}      # a call that tells nothing hides which were his
     _lines(sc)
     return kind
 

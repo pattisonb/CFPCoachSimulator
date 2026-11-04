@@ -103,10 +103,10 @@ def test_business_skips_small_talk():
         force(st, pid, "business")
         sc = open_scene(st, pid)
         f = scenes._fields(st, ME, st["recruiting"]["prospects"][pid])
+        news = {l.format(**f) for k in ("game", "won", "lost") for l in scenes.CONTEXT[k]}     # last Saturday's game is news, not small talk
         for t in texts(sc):
             assert t not in {b.format(**f) for b in banned}, t
-        news = {l.format(**f) for k in ("game", "won", "lost") for l in scenes.CONTEXT[k]}     # last Saturday's game is news, not small talk
-        assert t in {l.format(**f) for l in persona.LINES["business"]["open"]} | news or sc["tired"], (t, sc["turns"])
+            assert t in {l.format(**f) for l in persona.LINES["business"]["open"]} | news or sc["tired"], (t, sc["turns"])
 
 
 def test_guarded_call_cue_has_no_topic():
@@ -166,6 +166,65 @@ def test_visit_has_decider_turn():
     pid3 = cold(st, used)
     force(st, pid3, "business", "dad", "nil")
     assert not [t for t in open_scene(st, pid3)["turns"] if t["who"] == "family"]
+
+
+MEDIUM = ("call", "phone", "who is this")
+
+
+def test_visit_lines_have_no_phone_words():
+    for k, table in persona.LINES.items():
+        for key in ("visit_open", "small_talk", "hit", "quiet"):
+            assert len(persona.LINES[k]["visit_open"]) >= 3
+            for line in table[key]:
+                assert not any(w in line.lower() for w in MEDIUM), (k, key, line)
+    used, st = set(), fresh()
+    seen = 0
+    for i in range(24):
+        pid = cold(st, used)
+        k = persona.PERSONALITIES[i % 5]
+        force(st, pid, k, "self")
+        sc = open_scene(st, pid, "hc_visit")
+        sc = present(st, pid, sc)
+        mine = {l.format(**scenes._fields(st, ME, st["recruiting"]["prospects"][pid])) for t in persona.LINES[k].values() for l in t}
+        for t in texts(sc):
+            if t in mine:
+                seen += 1
+                assert not any(w in t.lower() for w in MEDIUM), (k, t)
+    assert seen >= 24
+
+
+def test_visit_teaches_the_decider():
+    st = fresh()
+    pid = cold(st, set())
+    force(st, pid, "business", "mom", "proximity")
+    assert persona.view(st, ME, pid)["decider"] is None
+    open_scene(st, pid, "hc_visit")
+    assert persona.view(st, ME, pid)["decider"] == "Mom"
+    pid2 = cold(st, {pid})
+    force(st, pid2, "business", "self", None)
+    open_scene(st, pid2, "hc_visit")
+    assert persona.view(st, ME, pid2)["decider"] is None or persona.view(st, ME, pid2)["decider"] == "Himself"
+
+
+def test_no_tell_call_hides_hits():
+    st, used = fresh(), set()
+    for personality in ("guarded", "shy"):
+        pid = cold(st, used)
+        force(st, pid, personality)
+        p = st["recruiting"]["prospects"][pid]
+        st["recruiting"]["hours"][ME] = 1000
+        sc = recruiting.act(st, ME, pid, "call")["scene"]
+        r = recruiting.act(st, ME, pid, "present", scene=sc["id"], topics=list(p["priorities"]) + [t for t in recruiting.PITCHES if t not in p["priorities"]][:3 - len(p["priorities"])])
+        assert r["hit"] == [] and r["scene"]["present"]["hit"] == [], r
+        ev = [e for e in st["recruiting"]["log"] if e["kind"] == "present" and e["pid"] == pid][-1]
+        assert ev["hit"] == 0, ev
+    pid = cold(st, used)
+    force(st, pid, "business")
+    p = st["recruiting"]["prospects"][pid]
+    st["recruiting"]["hours"][ME] = 1000
+    sc = recruiting.act(st, ME, pid, "call")["scene"]
+    r = recruiting.act(st, ME, pid, "present", scene=sc["id"], topics=list(p["priorities"]) + [t for t in recruiting.PITCHES if t not in p["priorities"]][:3 - len(p["priorities"])])
+    assert r["hit"] == r["scene"]["present"]["hit"]
 
 
 if __name__ == "__main__":
