@@ -1253,10 +1253,11 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
     if action == "pitch":
         sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
         start = len(rc["log"])
-        revealed = _act(state, slug, pid, action, pitch, nil, scene=scene)
         from coach_career import scenes
+        tells = scenes.tells(state, slug, pid, sc["action"]) if sc else True       # asked before the pitch lands: a Shy recruit's first call is a call by then
+        revealed = _act(state, slug, pid, action, pitch, nil, scene=scene)
         tired = any(e["kind"] == "pester" for e in rc["log"][start:])      # the call or visit pestered him: the pitch fell flat
-        said = scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid], tired=tired)
+        said = scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid], tired=tired, tells=tells)
         if slug == state.get("team"):                 # your History: the pitch and how he took it
             _event(state, "pitch", pid, slug, action=sc["action"], pitch=pitch, reaction=said["kind"])
         return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed}}

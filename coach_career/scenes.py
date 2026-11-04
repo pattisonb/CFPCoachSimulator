@@ -5,7 +5,8 @@ knows the week (your last game, his practice, the school leading his list); you 
 when he is torn); you lead with a pitch; he reacts. This file owns the words and the choice of cue
 and reaction; recruiting.py owns the scene's lifecycle and its points (the one `_act` path).
 
-A scene is `turns`: [{who: "you" | "him" | "note", text}] in order; `lines` (his turns' texts) stays
+A scene is `turns`: [{who: "you" | "him" | "note", text}] in order (an in-home visit with a decider other
+than himself adds one {who: "family", label: the decider's label, text}); `lines` (his turns' texts) stays
 one release for the page's old readers. Lines are in his voice (or yours), present tense, short, no
 numbers (an in-home visit's ask is in words). They take {name}, {first}, {town}, {state}, {school},
 {position}, {role} ("start", "compete" or "wait"), {record} (the school's won-lost in words), {coach}
@@ -17,8 +18,9 @@ from __future__ import annotations
 import os
 import random
 
-from coach_career import recruiting
+from coach_career import persona, recruiting
 
+PERSONA_LINE = 0.5         # how often his personality's own line stands in for the generic one *tune*
 CUE_TWO_SIDED = 0.6        # how often a cue names two topics (one his, one not) *tune: tools/check_recruiting.py*
 # how often a playing-time recruit asks about a named player on a call or visit *tune: tools/check_recruiting.py*
 # (CFP_QUESTION_RATE: the sweep forces it through the dev server's environment)
@@ -250,7 +252,7 @@ FAMILY = ["His mom has the table set and the good plates out.",
           "The whole family is on the couch in {town}. {first} sits closest to the door."]
 
 # every table of lines (tests format each line with FIELDS)
-TABLES = {"LINES": LINES, "TIRED": TIRED, "OPEN": OPEN, "VISIT_OPEN": VISIT_OPEN, "CONTEXT": CONTEXT, "PRESENT_SAID": PRESENT_SAID,
+TABLES = {"PERSONA_LINES": persona.LINES, "NO_TOPIC": persona.NO_TOPIC, "DECIDER_LINES": persona.DECIDER_LINES, "LINES": LINES, "TIRED": TIRED, "OPEN": OPEN, "VISIT_OPEN": VISIT_OPEN, "CONTEXT": CONTEXT, "PRESENT_SAID": PRESENT_SAID,
           "PRESENT_LINES": PRESENT_LINES, "ASK": ASK, "LEAD_LINES": LEAD_LINES, "FAMILY": FAMILY}
 FIELDS = ("name", "first", "town", "state", "school", "position", "role", "record", "coach", "opponent", "result", "leader",
           "week_word", "a", "b", "x", "y", "z", "topic")
@@ -353,6 +355,22 @@ def _turn(who: str, text: str) -> dict:
     return {"who": who, "text": text}
 
 
+def _persona_line(state: dict, pid: str, scene_id: str, key: str, f: dict, always: bool = False, salt: str = "",
+                  pool: tuple = ()) -> str | None:
+    """His personality's own line for `key` (open, small_talk, hit, quiet), PERSONA_LINE of the time (always
+    when `always`); its own seeded draw, keyed on the scene, so no other stream moves. None: use the generic."""
+    rng = random.Random(f"persona-line-{scene_id}-{salt}{key}")
+    own = persona.LINES[persona.of(state, pid)["personality"]]
+    line = rng.choice([x for k in (pool or (key,)) for x in own[k]]).format(**f)
+    return line if always or rng.random() < PERSONA_LINE else None
+
+
+def tells(state: dict, slug: str, pid: str, action: str) -> bool:
+    """Whether this scene may name one of his priorities: every visit does; a call does unless he keeps
+    it to himself (a Guarded recruit, a Shy one's first call)."""
+    return action != "call" or persona.call_reveals(state, slug, pid, roll=False)
+
+
 def last_talk(state: dict, slug: str, pid: str, week: int) -> int | None:
     """The week of your last contact with him before this one (his History's contacts and pitches), or None."""
     weeks = [e["week"] for e in state["recruiting"]["log"]
@@ -396,8 +414,21 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
         prev = last_talk(state, slug, pid, week)
         table = OPEN["first"] if prev is None else OPEN["last_week"] if prev == week - 1 else OPEN["again"]
         turns.append(_turn("you", rng.choice(table).format(**f)))
-    turns.append(_turn("him", context_line(state, slug, pid, week, f, rng, tired)))
-    sc = {"id": f"{action}-{pid}-{week}", "action": action, "week": week, "turns": turns, "lines": [],
+    sid = f"{action}-{pid}-{week}"
+    context = context_line(state, slug, pid, week, f, rng, tired)     # always drawn: the seeded rng moves the same for every personality
+    d = persona.of(state, pid)
+    game = last_game(state, slug, week)
+    if tired or (game and game["week"] >= week - 1):                  # a game this past Saturday is news he always brings up
+        said = context
+    elif d["personality"] == "business":                              # no small talk: he gets to it
+        said = _persona_line(state, pid, sid, "open", f, always=True)
+    else:
+        said = _persona_line(state, pid, sid, "open", f, pool=("open", "small_talk")) or context
+    turns.append(_turn("him", said))
+    if action == "hc_visit" and d["decider"] != "self":               # the one who decides speaks
+        fam = random.Random(f"persona-line-{sid}-family").choice(persona.DECIDER_LINES[d["decider"]]).format(**f)
+        turns.append({"who": "family", "label": persona.DECIDER_LABEL[d["decider"]], "text": fam})
+    sc = {"id": sid, "action": action, "week": week, "turns": turns, "lines": [],
           "cue": None, "ask": recruiting.ask_view(state, slug, pid), "question": None, "presented": None, "tired": tired}
     _lines(sc)
     return sc
@@ -407,11 +438,15 @@ def _lines(sc: dict) -> None:
     sc["lines"] = [t["text"] for t in sc["turns"] if t["who"] == "him"]
 
 
-def cue(state: dict, slug: str, pid: str, week: int, f: dict) -> dict:
+def cue(state: dict, slug: str, pid: str, week: int, f: dict, tells: bool = True) -> dict:
     """The cue: one priority you have not heard (or two topics, one his and one not, CUE_TWO_SIDED
-    of the time), as a complete answer in his voice."""
+    of the time), as a complete answer in his voice. When the call keeps it to himself (`tells` False),
+    a line that names no topic and an empty `topics`."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
+    if not tells:
+        lines = persona.NO_TOPIC.get(persona.of(state, pid)["personality"]) or persona.NO_TOPIC["guarded"]
+        return {"topics": [], "text": random.Random(f"persona-line-call-{pid}-{week}-cue").choice(lines).format(**f)}
     known = (rc["revealed"].get(slug) or {}).get(pid) or []
     true = next((t for t in p["priorities"] if t not in known), p["priorities"][0])
     rng = random.Random(f"cue-{rc['seed']}-{slug}-{pid}-{week}")
@@ -436,6 +471,7 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
     f = _fields(state, slug, p, week)
     x, y, z = (PHRASES[t] for t in topics)
     sc["turns"].append(_turn("you", rng.choice(PRESENT_SAID).format(x=x, y=y, z=z, **f)))
+    tells_ = tells(state, slug, pid, sc["action"])
     if tired:
         kind, text = "tired", rng.choice(PRESENT_LINES["tired"]).format(**f)
     elif hits:
@@ -443,12 +479,15 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
         best = max(hits, key=lambda t: st_[t])
         phrase = PHRASES[best]
         kind, text = "hit", rng.choice(PRESENT_LINES["hit"]).format(topic=phrase[0].upper() + phrase[1:], **f)
+        mine = _persona_line(state, pid, sc["id"], "hit", f, always=not tells_)     # a call that tells nothing names no topic
+        text = mine or text
     elif back:
         kind, text = "quiet", rng.choice(LINES[back[0]]["quiet"]).format(**f)
+        text = _persona_line(state, pid, sc["id"], "quiet", f, always=not tells_) or text
     else:
         kind, text = "polite", rng.choice(PRESENT_LINES["polite"]).format(**f)
     sc["turns"].append(_turn("him", text))
-    c = cue(state, slug, pid, week, f)
+    c = cue(state, slug, pid, week, f, tells_)
     sc["turns"].append(_turn("you", rng.choice(ASK["two" if len(c["topics"]) > 1 else "one"]).format(**f)))
     sc["turns"].append(_turn("him", c["text"]))
     sc["cue"] = c
@@ -500,7 +539,7 @@ def answer_reply(state: dict, slug: str, pid: str, question: dict, answer: str, 
     return REPLY_LINES[answer]
 
 
-def reaction(state: dict, slug: str, pid: str, action: str, pitch: str, p: dict, tired: bool = False) -> dict:
+def reaction(state: dict, slug: str, pid: str, action: str, pitch: str, p: dict, tired: bool = False, tells: bool = True) -> dict:
     """How he takes your lead-with: a priority where you are strong lights him up (hit), one where you
     are weak goes quiet, anything else is polite; `tired` (the call pestered him) and the pitch falls
     flat. `you` is your line, for the conversation."""
@@ -513,4 +552,8 @@ def reaction(state: dict, slug: str, pid: str, action: str, pitch: str, p: dict,
         kind = "hit" if recruiting.strengths(state, slug, pid)[pitch] >= recruiting.BACKFIRE else "quiet"
     else:
         kind = "polite"
-    return {"kind": kind, "text": rng.choice(LINES[pitch][kind]).format(**f), "you": you}
+    text = rng.choice(LINES[pitch][kind]).format(**f)
+    if kind in ("hit", "quiet"):
+        sid = f"{action}-{p['id']}-{state['current_week']}"      # the scene's id: its personality line, keyed apart from every other draw
+        text = _persona_line(state, p["id"], sid, kind, f, always=not tells, salt="react") or text
+    return {"kind": kind, "text": text, "you": you}

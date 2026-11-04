@@ -125,6 +125,7 @@ def test_present(st: dict, pid: str, sc: dict) -> None:
     `cue.text`); presenting twice is refused; the lead-with then goes out and his reaction carries your line."""
     rc = st["recruiting"]
     p = rc["prospects"][pid]
+    p["persona"] = {"personality": "business", "decider": "self", "decider_topic": None}     # a plain recruit: a Guarded or Shy one names no topic on a call
     topics = [t for t in recruiting.PITCHES if t not in p["priorities"]][:3]
     r = act(st, pid, "present", scene=sc["id"], topics=topics)
     sc2 = r["scene"]
@@ -181,7 +182,8 @@ def test_present_points(st: dict, used: set) -> None:
     assert rc["why_week"][pid][ME] == {"call": want}, "the points sit on the scene's action"
     react = r["scene"]["turns"][3]
     phrase = scenes.PHRASES[strong]
-    assert react["who"] == "him" and (phrase in react["text"] or phrase[0].upper() + phrase[1:] in react["text"]), (react, strong)
+    own = {line.format(**scenes._fields(st, ME, p, week)) for line in persona.LINES[persona.of(st, pid)["personality"]]["hit"]}     # or his personality's own line, which names no topic
+    assert react["who"] == "him" and (phrase in react["text"] or phrase[0].upper() + phrase[1:] in react["text"] or react["text"] in own), (react, strong)
     assert r["scene"]["present"] == {"kind": "hit", "hit": [strong]}
     assert strong not in (rc["revealed"].get(ME) or {}).get(pid, []), "a hit does not mark the priority known"
     # the cap: three strong priorities never pass the action's base
@@ -196,7 +198,8 @@ def test_present_points(st: dict, used: set) -> None:
     want = -recruiting.BACKFIRE_COST * recruiting.PRESENT_HIT * recruiting.BASE_POINTS["call"]
     assert abs(r["points"] - want) < 1e-9 and r["hit"] == [] and r["scene"]["present"]["kind"] == "quiet", (r["points"], want)
     f = scenes._fields(st, ME, p, week)
-    assert r["scene"]["turns"][3]["text"] in {line.format(**f) for line in scenes.LINES[weak]["quiet"]}, r["scene"]["turns"][3]
+    own = {line.format(**f) for line in persona.LINES[persona.of(st, pid)["personality"]]["quiet"]}     # or his personality's own line
+    assert r["scene"]["turns"][3]["text"] in {line.format(**f) for line in scenes.LINES[weak]["quiet"]} | own, r["scene"]["turns"][3]
     assert any(e["kind"] == "not_buying" and e["pid"] == pid and e["topic"] == weak for e in rc["log"])
 
 
@@ -214,6 +217,7 @@ def test_repeat_and_visit(st: dict, used: set, talked: str) -> None:
     # a visit
     pid = cold(st, used, lambda q: not recruiting.would_pester(st, ME, q))
     p = rc["prospects"][pid]
+    persona.of(st, pid)["decider"] = "self"                 # a decider adds a family turn (tests/test_persona_scenes.py)
     sc = act(st, pid, "hc_visit")["scene"]
     assert whos(sc) == ["note", "you", "him"], whos(sc)
     f = scenes._fields(st, ME, p, week)
