@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from test_career_e2e import call, free_port, launch, menu_pick   # noqa: E402
+from test_career_e2e import call, free_port, launch, menu_pick, tab_click   # noqa: E402
 
 CLASS_CODE = re.compile(r"\b(FR|SO|JR|SR)RS\b")
 OUT_OF_100 = re.compile(r"\b\d{1,3}\s*(/|of)\s*100\b")
@@ -120,7 +120,7 @@ def test_stale_scene_unlocks(page, base, sid) -> None:
 def open_tab(page, base, sid, tab, wait):
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#season:visible")
-    page.click(f"#season-tabs button[data-tab={tab}]")
+    tab_click(page, tab)
     page.wait_for_selector(wait, timeout=120_000)
     time.sleep(0.8)
 
@@ -558,10 +558,10 @@ def check_header(page, base, sid) -> None:
     s = call(base, f"/api/season/{sid}")
     chip = page.inner_text("#team-chip")
     assert s["team_name"] in chip and f"{s['record']['wins']}-{s['record']['losses']}" in chip, chip
-    page.click("#season-tabs button[data-tab=stats]")
+    tab_click(page, "stats")
     assert not page.is_visible("#btn-settings") and not page.is_visible("#btn-download-career"), "Settings and Download Career live behind ☰ Menu"
     # the Office's play card
-    page.click("#season-tabs button[data-tab=office]")
+    tab_click(page, "office")
     page.wait_for_selector(".go-play [data-play=advance]", timeout=60_000)
     assert not page.is_visible("#btn-settings") and not page.is_visible("#btn-download-career"), "not on the Office either: ☰ Menu"
     page.click("#btn-menu")
@@ -606,7 +606,7 @@ def check_header(page, base, sid) -> None:
     # the Recruiting pane keeps below the sticky tab bar
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#season:visible")
-    page.click("#season-tabs button[data-tab=recruiting]")
+    tab_click(page, "recruiting")
     page.wait_for_selector(".go-row-recruit", timeout=60_000)
     page.click(".go-row-recruit >> nth=0")
     page.wait_for_selector(".go-pane", timeout=30_000)
@@ -1292,7 +1292,7 @@ def test_sim_bar(page, base) -> None:
     try:
         page.goto(f"{base}/index.html?id={sid}")
         page.wait_for_selector("#season:visible")
-        page.click("#season-tabs button[data-tab=office]")
+        tab_click(page, "office")
         page.wait_for_selector(".go-play [data-play=advance]", timeout=60_000)
         page.click("#tab-office .go-play .go-play-more")
         page.wait_for_selector(".go-menu .go-menu-item")
@@ -1974,7 +1974,7 @@ if __name__ == "__main__":
             ids = [x["id"] for x in call(base, "/api/seasons")["seasons"]]
             page.eval_on_selector(f"#season-list li >> nth={ids.index(B)}", "e => e.click()")      # in place: no reload
             page.wait_for_function("(id) => location.search.includes(id)", arg=B, timeout=60_000)
-            page.click("#season-tabs button[data-tab=recruiting]")
+            tab_click(page, "recruiting")
             page.wait_for_selector(".go-stages", timeout=120_000)
             time.sleep(0.8)
             vb = call(base, f"/api/season/{B}/recruiting")["board"]
@@ -2461,7 +2461,7 @@ if __name__ == "__main__":
             assert hollow == 0, f"{hollow} transfer rows show an empty star row"
             test_portal_nil_title(page, base, B)
             page.set_viewport_size({"width": 400, "height": 860})
-            page.click("#season-tabs button[data-tab=prospects]")
+            tab_click(page, "prospects")
             page.wait_for_selector(".go-list-row", timeout=60_000)
             time.sleep(0.8)
             clipped = not_clipped(page, ".go-list-row .go-tag")

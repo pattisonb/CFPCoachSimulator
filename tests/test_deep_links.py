@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from test_career_e2e import call, free_port, launch   # noqa: E402
+from test_career_e2e import call, free_port, launch, tab_click   # noqa: E402
 
 LEAKS = re.compile(r"\b(undefined|null|NaN)\b")
 
@@ -74,18 +74,18 @@ def advance_to(base: str, sid: str, week: int) -> None:
 def check_office_and_back(page, base, A, errors) -> None:
     page.goto(f"{base}/index.html?id={A}")
     page.wait_for_selector("#season:visible")
-    page.click("#season-tabs button[data-tab=schedule]")
+    tab_click(page, "schedule")
     wait_url(page, lambda p: p.get("tab") == "schedule", "tab=schedule")
-    page.click("#season-tabs button[data-tab=office]")
+    tab_click(page, "office")
     wait_url(page, lambda p: p.get("tab") == "office", "tab=office")
     page.wait_for_selector("#tab-office .go-play")
     reload(page)
     page.wait_for_selector("#tab-office .go-play", timeout=60_000)
     assert tab_on(page, "office") and params(page)["tab"] == "office"
     # Back from a tab: the tab before it
-    page.click("#season-tabs button[data-tab=standings]")
+    tab_click(page, "standings")
     wait_url(page, lambda p: p.get("tab") == "standings", "tab=standings")
-    page.click("#season-tabs button[data-tab=rankings]")
+    tab_click(page, "rankings")
     wait_url(page, lambda p: p.get("tab") == "rankings", "tab=rankings")
     page.go_back()
     wait_url(page, lambda p: p.get("tab") == "standings", "tab=standings after Back")
@@ -103,7 +103,7 @@ def check_office_and_back(page, base, A, errors) -> None:
 def check_board(page, base, A, errors) -> None:
     page.goto(f"{base}/index.html?id={A}")
     page.wait_for_selector("#season:visible")
-    page.click("#season-tabs button[data-tab=recruiting]")
+    tab_click(page, "recruiting")
     page.wait_for_selector(".go-row-recruit", timeout=60_000)
     # a stage tab other than All that holds two or more, the second row in it, his Scouting sub-tab
     stage = page.evaluate("""() => { const b = [...document.querySelectorAll('.go-stages button[data-stage]')]
@@ -133,7 +133,7 @@ def check_board(page, base, A, errors) -> None:
 def check_profile(page, base, A, errors) -> None:
     page.goto(f"{base}/index.html?id={A}")
     page.wait_for_selector("#season:visible")
-    page.click("#season-tabs button[data-tab=prospects]")
+    tab_click(page, "prospects")
     page.wait_for_selector(".go-list-row", timeout=60_000)
     page.click(".go-list-row .go-list-id >> nth=0")
     page.wait_for_selector(".modal:not([hidden]) .rc-profile-name", timeout=60_000)
@@ -162,7 +162,7 @@ def check_profile(page, base, A, errors) -> None:
 def check_player_from_stats(page, base, A, errors) -> None:
     page.goto(f"{base}/index.html?id={A}")
     page.wait_for_selector("#season:visible")
-    page.click("#season-tabs button[data-tab=stats]")
+    tab_click(page, "stats")
     page.wait_for_selector("#tab-playerstats select[aria-label=Team]", timeout=60_000)
     page.select_option("#tab-playerstats select[aria-label=Team]", "smu")
     page.click("#tab-playerstats .view-chips button:has-text('Roster')")
@@ -180,8 +180,8 @@ def check_player_from_stats(page, base, A, errors) -> None:
     page.wait_for_selector("#tab-playerstats .view-chips button.active:has-text('Roster')", timeout=60_000)   # the roster under it, as it was
     clean(page, errors)
     # the League's Programs tab (a career): its own address, back after a reload
-    if page.is_visible("#season-tabs button[data-tab=programs]"):
-        page.click("#season-tabs button[data-tab=programs]")
+    if page.evaluate("() => !document.querySelector('#season-tabs button[data-tab=programs]').hidden"):
+        tab_click(page, "programs")
         wait_url(page, lambda p: p.get("tab") == "programs", "tab=programs")
         page.wait_for_selector("#tab-programs .go-programs tbody tr", timeout=60_000)
         reload(page)
@@ -193,7 +193,7 @@ def check_player_from_stats(page, base, A, errors) -> None:
 def check_box_and_stack(page, base, A, errors) -> None:
     page.goto(f"{base}/index.html?id={A}")
     page.wait_for_selector("#season:visible")
-    page.click("#season-tabs button[data-tab=schedule]")
+    tab_click(page, "schedule")
     page.click("#week-strip button.week-chip[aria-label='Week 2']")
     wait_url(page, lambda p: p.get("week") == "2", "week=2")
     page.wait_for_selector("#tab-schedule .clickable", timeout=60_000)
@@ -232,9 +232,9 @@ def check_box_and_stack(page, base, A, errors) -> None:
 def check_depth(page, base, A, errors) -> None:
     page.goto(f"{base}/index.html?id={A}")
     page.wait_for_selector("#season:visible")
-    page.click("#season-tabs button[data-tab=standings]")
+    tab_click(page, "standings")
     wait_url(page, lambda p: p.get("tab") == "standings", "tab=standings")
-    page.click("#season-tabs button[data-tab=depth]")
+    tab_click(page, "depth")
     page.wait_for_selector("#depth-screen:not([hidden])", timeout=60_000)
     p = wait_url(page, lambda p: p.get("screen") == "depth", "screen=depth")
     assert p["tab"] == "standings"
@@ -251,14 +251,14 @@ def check_offseason(page, base, B, errors) -> None:
     page.goto(f"{base}/index.html?id={B}")
     page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)    # a finished career opens on the offseason
     wait_url(page, lambda p: p.get("tab") == "offseason", "tab=offseason")
-    page.click("#season-tabs button[data-tab=rankings]")
+    tab_click(page, "rankings")
     page.click("#poll-pills button[data-poll=coaches]")
     wait_url(page, lambda p: p.get("tab") == "rankings" and p.get("poll") == "coaches", "tab=rankings&poll=coaches")
     reload(page)
     page.wait_for_selector("#poll-body table", timeout=60_000)
     assert tab_on(page, "rankings"), "the offseason career reloads on the tab it was on, not its landing tab"
     assert page.get_attribute("#poll-pills button.active", "data-poll") == "coaches"
-    page.click("#season-tabs button[data-tab=offseason]")
+    tab_click(page, "offseason")
     wait_url(page, lambda p: p.get("tab") == "offseason" and "poll" not in p, "tab=offseason, the poll dropped")
     page.wait_for_selector("#tab-offseason .off-steps", timeout=60_000)
     reload(page)

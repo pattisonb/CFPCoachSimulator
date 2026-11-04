@@ -46,6 +46,18 @@ def menu_pick(page, name: str) -> None:
     page.click(f".go-menu .go-menu-item:has(b:has-text('{name}'))")
 
 
+def tab_click(page, tab: str) -> None:
+    """Open a season tab as the player does: click it in the row, or, when the row has no room for it (it sits behind
+    More ▾, web/season.js layoutTabs), pick it from More's menu."""
+    sel = f"#season-tabs button[data-tab={tab}]"
+    if page.evaluate("(s) => document.querySelector(s).classList.contains('tab-ovf')", sel):
+        label = page.evaluate("(s) => document.querySelector(s).textContent.trim()", sel)
+        page.click("#tab-more")
+        page.click(f".go-menu .go-menu-item:has(b:text-is('{label}'))")
+    else:
+        page.click(sel)
+
+
 def launch(p):
     """Playwright's own Chromium, else one installed beside it (CI images, PLAYWRIGHT_BROWSERS_PATH).
     Its fonts are pinned (tests/fonts-ci.conf: sans-serif is the wide DejaVu Sans) where DejaVu is
@@ -98,9 +110,9 @@ if __name__ == "__main__":
             page.wait_for_selector("#season:visible")
             page.wait_for_selector(".go-play")                 # a career opens on the Office
             # a week highlighted on the schedule is not the Office's Advance target: it plays one week
-            page.click("#season-tabs button[data-tab=schedule]")
+            tab_click(page, "schedule")
             page.click("#week-strip button.week-chip[aria-label='Week 4']")
-            page.click("#season-tabs button[data-tab=office]")
+            tab_click(page, "office")
             page.wait_for_selector(".go-play")
             page.click(".go-play >> text=/Sim the Week|ADVANCE THE WEEK/")
             for _ in range(600):
@@ -114,7 +126,7 @@ if __name__ == "__main__":
             summary = call(base, f"/api/season/{sid}")
             assert summary["done"] and summary["current_week"] == 20
             # the committee's final ranking leads the Rankings tab after the season (it does not vanish)
-            page.click("#season-tabs button[data-tab=rankings]")
+            tab_click(page, "rankings")
             page.wait_for_selector("#poll-body table")
             assert page.eval_on_selector("#poll-pills button.active", "b => b.dataset.poll") == "cfp"
             assert "Final ranking" in page.inner_text("#poll-body")
@@ -136,7 +148,7 @@ if __name__ == "__main__":
             page.set_input_files("#career-file", str(path))
             page.wait_for_function("() => /Loaded the/.test(document.querySelector('#toast').textContent)", timeout=120_000)
             assert signed_with(base, sid, team) == signed, "the signed class changed on the way back"
-            page.click("#season-tabs button[data-tab=recruiting]")
+            tab_click(page, "recruiting")
             page.wait_for_selector(".rc-head")
             assert not errors, errors
             browser.close()

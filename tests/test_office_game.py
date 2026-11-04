@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from test_career_e2e import call, free_port, launch   # noqa: E402
+from test_career_e2e import call, free_port, launch, tab_click   # noqa: E402
 
 BAD = ("null", "undefined", "NaN")
 
@@ -114,7 +114,7 @@ def check_played(page, base, sid) -> None:
     page.keyboard.press("Escape")
     page.wait_for_selector("#modal", state="hidden", timeout=10_000)
     # the Standings tab says the same
-    page.click("#season-tabs button[data-tab=standings]")
+    tab_click(page, "standings")
     page.wait_for_selector("#tab-standings tr.mine", timeout=60_000)
     row = page.eval_on_selector("#tab-standings tr.mine", "r => [...r.querySelectorAll('td')].map(t => t.textContent)")
     if want != "0-0" and " in the " in want:
@@ -145,7 +145,7 @@ def check_programs(page, base, sid) -> None:
     assert page.evaluate("() => new URLSearchParams(location.search).get('tab')") == "programs"
     assert not page.is_hidden("#tab-programs"), "a reload lands on Programs"
     clean(page)
-    page.click("#season-tabs button[data-tab=office]")
+    tab_click(page, "office")
     page.wait_for_selector("#tab-office .go-games", timeout=60_000)
     assert not page.query_selector("#tab-office .go-program"), "no program card on the Office"
 
