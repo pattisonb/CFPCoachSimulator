@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from test_career_e2e import call, free_port, launch   # noqa: E402
+from test_career_e2e import call, free_port, launch, tab_click   # noqa: E402
 from test_ux_sweep import open_tab                     # noqa: E402
 
 CONTROLS = ("BUTTON", "SELECT", "INPUT", "A", "TEXTAREA")

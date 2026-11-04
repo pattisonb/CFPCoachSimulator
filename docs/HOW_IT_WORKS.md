@@ -1745,6 +1745,22 @@ champion). A sim's statuses patch it week by week (`liveHead`), so the record ti
 runs. The week strip keeps its own panel on the season's screens (Schedule, Standings, Rankings
 and the rest); the career screens leave it out, and a one-week sim's bar shows there.
 
+**The tab row never scrolls: More ▾** (`season.js` `layoutTabs`, `openTabMore`). The tabs show left to
+right until the row is full; the ones that do not fit go behind a **More ▾** button at the row's end (it
+exists only while something overflows, `aria-haspopup="menu"`, and opens the same dropdown as ☰ Menu through
+`openMenu`). The open tab always keeps a slot: when it would overflow it takes the last visible slot and the tab
+it displaces goes into More (a guard labels the button "More: Awards ▾" if the open tab were ever behind it).
+Picking a tab from More runs the same `tabPick` as clicking it, so the address and the depth chart behave
+alike. The tab buttons stay in the DOM; an overflowed one only carries `.tab-ovf` (`display: none`), and
+the row is `overflow: hidden`, so it cannot scroll at any width. **No flash:** the measuring is synchronous.
+`layoutTabs` takes `.tab-ovf` off, reads the widths, puts the final classes on, all in one task before the
+browser paints, so no intermediate row is ever drawn and nothing fades or pulses. It runs from a
+`ResizeObserver` on the row (window, chip text), a `MutationObserver` on the tabs' `hidden` attributes (career
+mode, the offseason, Bracket/Bowls/Awards/Summary appearing) and from `selectTab` (the active tab). On a phone
+the row drops to its own line under ☰ Menu and the chip when they leave it less than 14rem. Tests that click a
+tab use `tab_click` (`tests/test_career_e2e.py`), which goes through More when the tab is overflowed.
+`tests/test_tab_overflow.py` checks it at 1280, 1024, 768 and 400.
+
 **The top bar is hidden while a season is open.** **☰ Menu** at the right end of the tab bar (first
 on a phone, before the chip) is a dropdown: ⚙ Settings (waits while a sim runs), Download Career (a
 career) and Show/Hide the Top Bar, which puts the bar (Seasons ▾, Your Coach, the theme) above the tabs
