@@ -45,7 +45,9 @@ if __name__ == "__main__":
     # every role by overall, ties by name, and the starters are the top of each role
     t = season.load_teams()[me]
     orders = role_orders(t)
-    assert len(orders) >= 19, sorted(orders)
+    # finished() hands each school 21 of the top prospects blind to position, so two seasons on a
+    # role or two (often FB, at times C or SAM) can have nobody playing it: most of the 21 hold
+    assert len(orders) >= 18, sorted(orders)
     for role, ps in orders.items():
         keys = [(-season.shown_overall(p), p["name"]) for p in ps]
         assert keys == sorted(keys), (role, [(p["name"], season.shown_overall(p)) for p in ps])
