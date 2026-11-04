@@ -23,7 +23,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 
 from test_career_e2e import call, free_port, launch   # noqa: E402
 from test_deep_links import modals, params, reload, tab_on, wait_url   # noqa: E402
-from test_ux_sweep import open_tab, toasted   # noqa: E402
+from test_ux_sweep import open_tab, toasted, toasted_start   # noqa: E402
 
 OLD_HEIGHT_1280 = 3621          # the old Scouting page at 1280 (scouts and reports over the queue)
 NO_MODAL = "() => ![...document.querySelectorAll('.modal')].some(m => !m.hidden)"
@@ -104,11 +104,11 @@ def check_send_and_board(page, base, sid, errors) -> None:
     before, after = row["looks"] or 0, min(3, (row["looks"] or 0) + 1)
     assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-looks-text") == f"{fmt(before)}/3"
     page.click("#sc-send")
-    toasted(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
+    toasted_start(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
     page.wait_for_function("([pid, t]) => document.querySelector(`.sc-row[data-pid='${pid}'] .sc-looks-text`).textContent === t", arg=[pid, f"{fmt(after)}/3"], timeout=10_000)
     segs = page.evaluate("(pid) => [...document.querySelectorAll(`.sc-row[data-pid='${pid}'] .sc-trip`)].map(t => t.classList.contains('on') ? 1 : t.classList.contains('half') ? 0.5 : 0)", pid)
     assert segs == [min(1, max(0, after - i)) for i in range(3)], segs
-    page.wait_for_selector(".sc-intel .sc-result", timeout=10_000)
+    assert not page.query_selector(".sc-intel .sc-result"), "no first-read box after a trip (the player removed it)"
     page.wait_for_function("(h) => document.querySelector('#sc-points').textContent.startsWith('Points Left: ' + h + ' of')", arg=v["points_left"] - row["cost"], timeout=10_000)
     assert page.evaluate("(e) => e.isConnected", lst) and tab_on(page, "scouting")
     # Add to Board flips the star; Remove from Board flips it back (no offer out: no confirm)
@@ -136,7 +136,7 @@ def check_complete_stays(page, base, sid, pid, name, errors) -> None:
     page.click(f".sc-row[data-pid='{pid}'] .sc-row-btn")
     wait_intel(page, name)
     page.click("#sc-send")
-    toasted(page, f"Scouted {name} · 3 of 3 looks · his report is complete")
+    toasted_start(page, f"Scouted {name} · 3 of 3 looks · his report is complete")
     page.wait_for_function("(pid) => document.querySelector(`.sc-row[data-pid='${pid}'] .sc-looks-text`)?.textContent === '3/3'", arg=pid, timeout=10_000)
     assert intel_name(page) == name, "the report still shows him"
     page.wait_for_function("() => document.querySelector('#sc-send').disabled && /complete/.test(document.querySelector('.sc-why')?.textContent || '')", timeout=10_000)   # a complete report: no Send

@@ -1253,7 +1253,14 @@ tag a topic he brought up on this week's call or visit (a topic that is both sho
 him from the contact log, newest first, one line each (`Week 4 · Call · Program Prestige · He lit
 up`, `Week 5 · Offer · 120 NIL`, his commitments too). The sub-tab strip stays pinned at the top of
 the pane while its body scrolls, and the Profile sub-tab starts below the pane's head instead of
-repeating it. Sort: Your Chance climbs the ladder (yours, favorite, not offered while you lead
+repeating it. The profile (pane and modal alike) is compact so a scouted prospect fits a 1280x800 laptop without
+scrolling: the compact Scouted strip first (a chip per grade group; tap or hover one for what it looks like in
+ratings, the same "looks like" tooltips the Scouting sub-tab's cards use; the ⓘ beside "Scouted" holds the note about
+the looks and the final grades; there is no second grade grid), then Personality, Who Decides and Cares About on one
+row (inline label: value pairs), then the Evaluation (two columns from 900 px, one on a phone) with the summary line
+and "Our comp" right under it, then His List or Who Else Offered, with half the usual gaps between sections. "OC Likes
+Him" shows once, as the chip in the pane's tag strip (the modal's head carries it), and the coordinator's sentence is
+that chip's title. `tests/test_profile_compact.py` checks the fit, the single grid, the single chip and 400 px. Sort: Your Chance climbs the ladder (yours, favorite, not offered while you lead
 his list, in it, long shot, not offered elsewhere, lost). On a phone the pane is a full-screen dialog and
 the menu a bottom sheet. Every standing word (Yours, Lost, Favorite, In It, Long Shot, Not
 Offered) is one ladder read from his list, with your offer as the qualifier
@@ -1298,9 +1305,9 @@ Scouting Center, master and detail, built from the player's mockup in the site's
   left; disabled with the reason underneath: "Not enough scouting points left this week.", or "His report is complete: 3 of 3
   looks") and **Add to Board** / **Remove from Board** (the board's own confirm when that pulls a
   standing offer), and **View Full Profile**, which opens the profile modal. Send posts the `scout`
-  action and patches in place: the row's meter pulses, the look's before and after reads show under
-  the boxes, a toast "Scouted Wesley Adams · 2.5 of 3 looks" ("· his report is complete" at 3), the
-  hours card patches and the page refetches so every row follows. The board button flips the row's
+  action and patches in place: the row's meter pulses, a toast "Scouted Wesley Adams · 2.5 of 3 looks"
+  ("· his report is complete" at 3, "· OC likes him" when a coordinator takes to him) is the trip's
+  whole result (the grades it moved show in the Ratings tab; no before-and-after box), the points card patches and the page refetches so every row follows. The board button flips the row's
   star and the My Board card with a toast ("Wesley Adams is on your board."). Neither leaves the tab.
 - **Scouting Operations** (bottom): a folded bar, "Staff assignments, regions and coverage", with the
   scouts' areas in one line and **Manage Staff**. Opening it shows a card per staff member (every one,

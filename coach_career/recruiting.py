@@ -66,8 +66,8 @@ HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit":
          "pitch": 0}                               # a pitch finishes your call or visit scene: its hours went on the call
 WEEKLY_HOURS_BASE = 140                    # *tune* a school's recruiting hours a week at a recruiting rating of 50 ...
 WEEKLY_HOURS_PER = 0.4                     # *tune* ... plus this many per rating point over 50 (about 150 for most schools)
-SCOUT_POINTS_BASE = 40                     # *tune* your scouting points a week with a best evaluator of 50 ...
-SCOUT_POINTS_PER = 0.4                     # *tune* ... plus this many per evaluation point over 50
+SCOUT_POINTS_BASE = 150                    # *tune* your scouting points a week with a best evaluator of 50 (about four full reports away from your areas) ...
+SCOUT_POINTS_PER = 2.0                     # *tune* ... plus this many per evaluation point over 50 (250 at 100)
 LOOK_COST = {"area": 10, "away": 15, "portal": 5}   # *tune* a Send's points: a prospect in a staffed area, one away from your scouts, a portal entrant
 SCENES = ("call", "hc_visit")              # your calls and in-home visits without a pitch open a scene (scenes.py)
 # looks come in trip units: a full report is REPORT_LOOKS looks and nothing goes past it (read["looks"] <= 3 always)
