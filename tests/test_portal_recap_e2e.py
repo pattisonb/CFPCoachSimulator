@@ -62,16 +62,21 @@ if __name__ == "__main__":
             page.goto(f"{base}/index.html?id={sid}")
             page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)
             page.wait_for_selector("text=TRANSFER PORTAL RECAP", timeout=60_000)
+            # the recap card: the portal's +/- and the line; the names are in the Your Transfers tab
             card = page.inner_text("#tab-offseason section.off-recap")
             assert f"You signed {len(rec['signed'])} of the {rec['entrants']} players who entered." in card, card
+            assert f"+{len(rec['signed'])}" in card and f"−{len(rec['lost'])}" in card, card
+            page.click("#tab-offseason .off-tab[data-key=transfers]")
+            page.wait_for_selector("#tab-offseason .off-tabpanel[data-tab=transfers]:not([hidden])", timeout=10_000)
+            lists = page.inner_text("#tab-offseason .off-tabpanel[data-tab=transfers]")
             for r in rec["signed"]:
-                assert r["name"] in card, r["name"]
-            assert ("Nobody left through the portal." in card) == (not rec["lost"])
+                assert r["name"] in lists, r["name"]
+            assert ("Nobody left through the portal." in lists) == (not rec["lost"])
             for r in rec["lost"]:
-                assert r["name"] in card and r["to_name"] in card, r
+                assert r["name"] in lists and r["to_name"] in lists, r
             # the card sits above Who improved
             text = page.inner_text("#tab-offseason")
-            assert text.index("TRANSFER PORTAL RECAP") < text.index("WHO IMPROVED")
+            assert text.upper().index("TRANSFER PORTAL RECAP") < text.upper().index("WHO IMPROVED")
             # the position-change picker groups your transfers first
             assert page.query_selector("#tab-offseason select.go-sel optgroup[label=Transfers]"), "an optgroup for the transfers"
             groups = page.eval_on_selector_all("#tab-offseason select.go-sel optgroup", "els => els.map(e => e.label)")
@@ -83,7 +88,7 @@ if __name__ == "__main__":
             tags = page.eval_on_selector_all("#tab-offseason .go-tag", "els => els.map(e => e.textContent).filter(t => t.startsWith('Transfer'))")
             assert len(tags) >= len(rec["signed"]), tags
             # at the Staff step the recap is one line that opens on click
-            page.click("text=STAFF CHANGES")
+            page.click("#tab-offseason .off-foot .go-btn.primary")                    # Advance to Staff Changes
             page.wait_for_selector("text=YOUR STAFF", timeout=60_000)
             summary = page.inner_text("#tab-offseason details.off-recap summary")
             assert f"Portal: +{len(rec['signed'])} / −{len(rec['lost'])}" in summary, summary
