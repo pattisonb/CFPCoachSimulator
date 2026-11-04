@@ -311,6 +311,7 @@ def start(state: dict, year: int = 2027) -> None:
         "pending": {}, "why": {}, "ranks": {}, "reports": [], "action_points": {}, "leader_changes": {},
     }
     state["recruiting"]["generational"] = draw_generational(state["recruiting"])
+    persona.apply_stories(state)       # his story: a legacy's head start, a comeback and a bloomer shown low, the class re-ranked
 
 
 def nil_ask(p: dict, year: int, seed) -> int:

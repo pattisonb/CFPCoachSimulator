@@ -4,6 +4,7 @@ the class seed and his id, worked out when asked and never stored in the save (a
 this keeps the persona it stored; a test may set one on the prospect)."""
 from __future__ import annotations
 
+import math
 import random
 from functools import lru_cache
 
@@ -383,3 +384,185 @@ DECIDER_LINES: dict[str, list[str]] = {
                 "He's an asset, Coach. Show me how {school} makes him more valuable.",
                 "I'm looking at the package, Coach. The whole thing, not the speech."],
 }
+
+
+# ----- his story (spec section 2): Legacy, Hometown Hero, Package Deal, Two-Sport, Injury Comeback, Late Bloomer -----
+# A class-wide fixed draw from the seed (each prospect's own stream `story-{seed}-{pid}`; a Package Deal's
+# mate from `story-mate-{seed}-{pid}`), worked out when asked and never stored: {pid: {"story", "story_data"}}
+# for the prospects who have one. Only a class drawn with stories (rc["stories"], set by recruiting.start)
+# has any: a save from before keeps playing without them, and the portal has none. The one thing stored is
+# a shown-low prospect's real stars and composite (p["real"]: an Injury Comeback all season, a Late Bloomer
+# until his jump), since the class's shown stars, composite and rank are what everyone reads.
+
+STORIES = {"legacy": 0.15, "hero": 0.20, "package": 0.15, "two_sport": 0.15, "comeback": 0.15, "bloomer": 0.20}   # *tune* each story's share of the stories
+STORY_RATE = {5: 0.53, 4: 0.53, 3: 0.30, 2: 0.30}     # *tune* the share of a star level drawn a story (his real stars); with the Package Deal mates about 35% of the class, half the blue chips
+STORY_LABEL = {"legacy": "Legacy", "hero": "Hometown Hero", "package": "Package Deal", "two_sport": "Two-Sport",
+               "comeback": "Injury Comeback", "bloomer": "Late Bloomer"}
+NO_STORY = "No Story"                                   # a complete report that found none
+PUBLIC_STORIES = ("hero", "comeback")                   # everyone knows these at once (a Late Bloomer's jump is public too)
+TWO_SPORT_GROUPS = ("QB", "RB", "WR", "TE", "LB", "CB", "S")   # who also plays baseball
+LEGACY_TILT = 1.0          # *tune* a legacy school is drawn by exp(this x the program's strength): the big programs have more
+LEGACY_HEAD = 8.0          # *tune* the legacy school's head start, in interest points on his list
+LEGACY_PITCH = 1.2         # *tune* another school's Coach or Prestige pitch against a legacy counts this much more
+LEGACY_COST = 2.0          # *tune* the legacy school's lowball (its cooling) or hollow promise costs this many times more
+HERO_STATE = 1.4           # *tune* a Hometown Hero's pull toward the schools in his state counts this much more
+HERO_AWAY = 0.8            # *tune* an out-of-state pitch to a hero counts this much (Playing Time and NIL in full)
+HERO_FULL = ("playing_time", "nil")
+DRAFT_RISK = 0.30          # *tune* a Two-Sport recruit's chance to go pro in baseball when he signs ...
+DRAFT_FLOOR = 0.05         # *tune* ... never under this ...
+DRAFT_PT = 0.04            # *tune* ... less this for each Playing Time pitch from the school he signs with ...
+DRAFT_NIL = 0.5            # *tune* ... and this per his ask's worth of NIL over his ask (1.2 times his ask: 0.10 off)
+DRAFT_WORDS = ((0.20, "High"), (0.10, "Some"), (0.0, "Low"))   # the risk as the page says it: at or past the share
+COMEBACK_AI = 0.6          # *tune* an AI school that would offer an Injury Comeback does this often (it doubts the knee)
+LOYALTY = 1.25             # *tune* contacts from a school that reached a comeback before LOYALTY_WEEK count this much more
+LOYALTY_WEEK = 6
+COMEBACK_READ = 1.5        # *tune* a look's error on a comeback's potential, times the usual: the knee clouds his ceiling
+SHOWN_BAND = 6.0           # *tune* grade points the public grades understate a shown-low prospect (a comeback, a bloomer before his jump)
+BLOOM_WEEKS = (5, 9)       # a Late Bloomer jumps at the week step after one of these weeks (inclusive)
+BLOOM_SHOWN = 0.5          # *tune* a bloomer's shown composite comes from the bottom this share of his starting band: unranked
+BLOOM_BOARDS = 10          # *tune* AI schools that add a bloomer to their boards at his jump: the ones he fits best
+STORY_CALL_LINE = 0.35     # *tune* how often a call's small talk is his story, once the school knows it
+
+_STORIES: tuple = (None, None, {})   # (the recruiting block, its key, its stories): the draw for one class, in memory only
+
+
+def _real(p: dict) -> tuple:
+    """His real (stars, composite): the shown ones unless he is shown low."""
+    r = p.get("real") or p
+    return r["stars"], r["composite"]
+
+
+def _eligible(kind: str, p: dict, stars: int, fbs_states: set, generational: set) -> bool:
+    from coach_career import recruiting
+    if kind == "hero":
+        return p["hometown"]["state"] in fbs_states            # a state with no FBS school has no hometown team to stay with
+    if kind == "two_sport":
+        return recruiting._group_of(p) in TWO_SPORT_GROUPS
+    if kind in ("comeback", "bloomer"):                        # a generational talent is no secret
+        return p["id"] not in generational and (kind == "comeback" or stars >= 3)
+    return True
+
+
+def _draw_class(state: dict) -> dict:
+    """Every story in the class: each prospect's own stream decides whether he has one (STORY_RATE by his
+    real stars) and which (STORIES, among those that fit him) and its data; then each Package Deal lead is
+    paired with a lower-rated prospect from his town, else his state, who has no story of his own and is
+    not hidden (a lead with none left has no story). Best prospects first, so the pairing is one order."""
+    from coach_career import recruiting
+    from sim import season
+    rc = state["recruiting"]
+    seed = rc.get("seed", 0)
+    teams = season.load_teams()
+    schools = recruiting.fbs_schools(state)
+    weights = [math.exp(LEGACY_TILT * recruiting._baseline(s)) for s in schools]
+    fbs_states = {teams[s].get("state") for s in schools}
+    gen = set(rc.get("generational") or ())
+    pros = rc["prospects"]
+    order = sorted(pros, key=lambda q: (-_real(pros[q])[1], q))
+    fits = {pid: [k for k in STORIES if _eligible(k, pros[pid], _real(pros[pid])[0], fbs_states, gen)] for pid in order}
+    # a story only some prospects can have weighs more for them, so its share of the class holds; a Package
+    # Deal lead weighs half, his mate (drawn below, from the prospects without a story) making the other half
+    weight = {k: STORIES[k] * len(order) / max(1, sum(1 for pid in order if k in fits[pid])) * (0.5 if k == "package" else 1.0) for k in STORIES}
+    out: dict = {}
+    for pid in order:
+        p = pros[pid]
+        stars = _real(p)[0]
+        rng = random.Random(f"story-{seed}-{pid}")
+        if rng.random() >= STORY_RATE.get(stars, STORY_RATE[2]):
+            continue
+        ok = fits[pid]
+        kind = rng.choices(ok, weights=[weight[k] for k in ok])[0]
+        data: dict = {}
+        if kind == "legacy":
+            data["school"] = rng.choices(schools, weights=weights)[0]
+        elif kind == "hero":
+            data["state"] = p["hometown"]["state"]
+        elif kind == "bloomer":                                  # starts at two or three stars: a five-star jumps two, a three-star one
+            data["week"] = rng.randint(*BLOOM_WEEKS)
+            data["jump"] = 1 if stars == 3 else 2 if stars == 5 else rng.choice((1, 2))
+        out[pid] = {"story": kind, "story_data": data}
+    by_state: dict = {}
+    for pid in order:
+        by_state.setdefault(pros[pid]["hometown"]["state"], []).append(pid)
+    for pid in order:
+        s = out.get(pid)
+        if not s or s["story"] != "package" or "mate" in s["story_data"]:
+            continue
+        p = pros[pid]
+        comp = _real(p)[1]
+        pool = [q for q in by_state[p["hometown"]["state"]] if q not in out and not pros[q].get("hidden")
+                and q not in gen and _real(pros[q])[1] < comp]
+        town = [q for q in pool if pros[q]["hometown"].get("city") and pros[q]["hometown"]["city"] == p["hometown"].get("city")]
+        cands = town or pool
+        if not cands:
+            del out[pid]
+            continue
+        mate = random.Random(f"story-mate-{seed}-{pid}").choice(cands)
+        s["story_data"] = {"mate": mate, "lead": True}
+        out[mate] = {"story": "package", "story_data": {"mate": pid, "lead": False}}
+    return out
+
+
+def stories(state: dict) -> dict:
+    """The class's stories {pid: {"story", "story_data"}} (read only; {} for a class from before stories and
+    for the portal), drawn once a process and kept in memory, never in the save."""
+    global _STORIES
+    rc = (state or {}).get("recruiting") or {}
+    if rc.get("portal") or not rc.get("stories") or not rc.get("prospects"):
+        return {}
+    cached = _STORIES
+    if cached[0] is rc:
+        return cached[2]
+    key = (state.get("id"), rc.get("year"), rc.get("seed"), len(rc["prospects"]))
+    cached = (rc, key, cached[2] if cached[1] == key else _draw_class(state))
+    _STORIES = cached
+    return cached[2]
+
+
+def story(state: dict, pid: str) -> tuple:
+    """(his story or None, its data): the one a save or a test set on his persona, else the class's draw."""
+    p = state["recruiting"]["prospects"].get(pid) or {}
+    forced = p.get("persona")
+    if forced and "story" in forced:
+        return forced["story"], forced.get("story_data") or {}
+    s = stories(state).get(pid)
+    return (s["story"], s["story_data"]) if s else (None, {})
+
+
+def mate(state: dict, pid: str):
+    """A Package Deal's other half, or None."""
+    k, d = story(state, pid)
+    return d.get("mate") if k == "package" else None
+
+
+def rerank(rc: dict) -> None:
+    """The class ranked 1..N again by the shown composite (ties keep their order)."""
+    pros = rc["prospects"]
+    for i, pid in enumerate(sorted(pros, key=lambda q: (-pros[q]["composite"], pros[q]["rank"], q)), 1):
+        pros[pid]["rank"] = i
+
+
+def apply_stories(state: dict) -> None:
+    """A new class's stories take their places (recruiting.start): a legacy school's head start on his list;
+    an Injury Comeback shown one star under his own and a Late Bloomer at his starting two or three stars
+    (`story-shown-{seed}-{pid}` draws the shown composite inside that band, a bloomer from its bottom
+    BLOOM_SHOWN), each one's NIL ask from his shown stars; the class re-ranked. Marks the class."""
+    from coach_career import recruiting, recruits
+    global _STORIES
+    rc = state["recruiting"]
+    drawn = _draw_class(state)
+    bands = recruits.model()["generation"]["rating_quantiles"]
+    for pid, s in drawn.items():
+        p, kind, d = rc["prospects"][pid], s["story"], s["story_data"]
+        if kind == "legacy":
+            rc["lists"][pid][d["school"]] = rc["lists"][pid].get(d["school"], 0.0) + LEGACY_HEAD
+        elif kind in ("comeback", "bloomer"):
+            shown = max(2, p["stars"] - (d["jump"] if kind == "bloomer" else 1))
+            u = random.Random(f"story-shown-{rc.get('seed', 0)}-{pid}").random() * (BLOOM_SHOWN if kind == "bloomer" else 1.0)
+            comp = round(recruits.from_quantiles(bands[str(shown)], u), 4)
+            p["real"] = {"stars": p["stars"], "composite": p["composite"]}
+            p["stars"], p["composite"] = shown, min(comp, p["composite"])
+            p["nil_ask"] = recruiting.nil_ask(p, rc["year"], rc.get("seed", 0))
+    rerank(rc)
+    rc["stories"] = 1
+    _STORIES = (rc, (state.get("id"), rc.get("year"), rc.get("seed"), len(rc["prospects"])), drawn)
