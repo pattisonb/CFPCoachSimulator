@@ -1083,7 +1083,7 @@
   const route = window.CFP.route;
   const TABS = ["office", "offseason", "recruiting", "prospects", "scouting", "classes", "games", "schedule", "standings", "rankings", "stats", "programs", "bracket", "bowls", "awards", "summary"];
   const BOARD_KEYS = ["stage", "sort", "pid", "pane"];
-  const TAB_KEYS = { recruiting: BOARD_KEYS, offseason: [...BOARD_KEYS, "opos", "ostatus"], prospects: ["ppos", "pstars", "pstate", "pstatus", "psort", "pgroup", "ppage"],
+  const TAB_KEYS = { recruiting: BOARD_KEYS, offseason: [...BOARD_KEYS, "opos", "ostatus", "opage", "odev"], prospects: ["ppos", "pstars", "pstate", "pstatus", "psort", "pgroup", "ppage"],
     scouting: ["qboard", "spid", "ssub", "sops"], rankings: ["poll"], stats: ["stats", "steam", "sview"], awards: ["aview"] };
   const VIEW_KEYS = [...new Set(Object.values(TAB_KEYS).flat())];
   const DEPTH_KEYS = ["team", "sub", "unit", "view", "player", "f", "role"];

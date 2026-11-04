@@ -1818,12 +1818,27 @@ wins, AD goal met) = 100", "raised to the 85 portal fund" when the floor applied
 players home cost and what carries), the portal board's header shows the pool, and the next
 season's Programs tab says "NIL carried over: 25 (of 135 this year)" on your program's card.
 
-**The Offseason screen** walks the steps: Departures (your leavers by kind, the league's numbers,
-the first round), Transfer portal round 1 and 2 (entrants with position and status filters, your
-offers, who he would be with you, your moves), Development (who improved), Staff (hire
-replacements, the coaching carousel), then Start the next season. **Sim to Next Season** runs
-every step on Auto. Your program's history (record, final AP rank, titles, class rank, players
-drafted) grows a row a year.
+**The Offseason screen** (`web/offseason.js`, `web/offseason.css`) walks the steps: Departures,
+Keep Them Home, the Transfer Portal's four weeks, Development, Staff Changes, then the Recap. Every
+page has one frame: the title, a "Stage N of 9" chip and a pill stepper (✓ for a done step, the
+accent for the current one) on top; Back to Offseason on the left and the primary "Advance to …"
+(with Sim to Next Season beside it) at the bottom. In front of each stage sits the **Overview**: a
+hero with what the stage is for, your numbers (roster, class signed, open spots, portal placed),
+Your Meeting With the AD (the goal, your record, job security, his patience, your year, and your
+answer while he is still deciding), The Takeaway (his words and the NIL-for-the-portal math) and
+your program's history. The tab opens on it at Departures; its Advance opens the stage's own page
+(no server call) and Back returns to it from any stage. Departures lists your leavers in folding
+groups ("+ N More" opens a long one), Around the League and The First Round, and keeps the
+redshirt and position-change card. Keep Them Home shows each leaver's roles now and next year, why
+he wants out, and Meet, Promise a Start, Offer NIL and Let Him Go, each with a hint from the rules.
+A portal week wraps the recruiting board (drawn by `recruiting.js`, untouched) with the Portal
+Overview, Keep Them Home's answers and your moves. Development has the portal's +/− and tabs for
+Redshirts, Position Changes, Who Improved and Your Transfers beside the top improvements. The Recap
+lists the key results and the road ahead (the schedule, the next class, the AD's goal for the
+coming season). Cards in a row share one height, one 16 px gap runs across and down, and at 760 px
+and under every row stacks. `tests/test_offseason_redesign.py` walks every stage at 1280 and 400,
+light and dark. **Sim to Next Season** runs every step on Auto. Your program's history (record,
+final AP rank, titles, class rank, players drafted) grows a row a year.
 
 ## Player stat lines against real box scores
 
@@ -2206,7 +2221,9 @@ and the re-fetch land, then hands the focus back to it (or the nearest live cont
 `toast` says what happened in one short sentence on a stack bottom-left: a polite `status` region,
 newest on top, three at most, 3.5 s each; `#toast` stays as a hidden mirror of the latest for older
 scripts. The recruiting board, the depth chart, Settings, every offseason stage and Your coach use
-these, so the scroll never jumps and focus never falls to the page body.
+these, so the scroll never jumps and focus never falls to the page body. On the Offseason screen a Development tab and "+ N More" are
+patches of the view on screen (nothing fetched); moving between the Overview and the stage's page
+draws that page from the same view, like a tab open, and puts the focus on its title.
 
 **Help in an ⓘ** (`CFP.ui.tip(text, label)`). Explanations that used to sit under a title as a muted
 line live in a small ⓘ beside it: a 22 px circle with a 36 px hit area (44 px on a phone). The text
@@ -2240,7 +2257,7 @@ anything; landing on one (a load, Back, Forward) draws the target tab, which cou
 | `stage`, `sort`, `pid`, `pane` | The recruiting board (also the offseason's portal board): the stage tab, the sort, the recruit in the pane, its sub-tab (`scouting`, `profile`, `history`) |
 | `ppos`, `pstars`, `pstate`, `pstatus`, `psort`, `pgroup`, `ppage` | The Prospects filters and page |
 | `qboard`, `ssort`, `spid`, `ssub`, `sops` | Scouting: the database chip (`on`, `scouted`), the sort (`board`, `need`, `potential`, `looks`; rank when absent), the selected prospect, the report's sub-tab (`overview`, `scouting`) and Scouting Operations open (`1`); All Reports is a modal token |
-| `opos`, `ostatus` | The offseason portal list's filters (the stage itself is the server's) |
+| `opos`, `ostatus`, `opage`, `odev` | The offseason: the old portal list's filters, the page within the stage (`hub` for the Overview, `stage` for the stage's own page) and Development's tab (`positions`, `improved`, `transfers`; Redshirts when absent). The stage itself is the server's |
 | `poll` | Rankings: `ap`, `coaches`, `cfp`, `resume` |
 | `stats`, `steam`, `sview` | Stats: `team` for Team Stats; the player stats' team (`all` for the league) and view (`roster`, a category) |
 | `aview` | Awards: the view |
