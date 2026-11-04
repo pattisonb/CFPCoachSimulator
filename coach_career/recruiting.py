@@ -1219,9 +1219,13 @@ def nil_left(state: dict, slug: str) -> int:
     return n["budget"] - sum(n["held"].values())
 
 
-def _home_game_left(state: dict, slug: str) -> Optional[int]:
+def _home_game_left(state: dict, slug: str, pid: Optional[str] = None) -> Optional[int]:
+    """The school's first home game still to play; with `pid`, the first weekend he has free: one
+    official visit a weekend (he was booked at three schools for the same Saturday)."""
+    taken = {v["week"] for s, v in (state["recruiting"]["visits"].get(pid) or {}).items() if s != slug} if pid else set()
     weeks = [g["week"] for g in state["games"].values()
-             if g["home"] == slug and g["kind"] == "regular" and not g["played"] and g["week"] > state["current_week"]]
+             if g["home"] == slug and g["kind"] == "regular" and not g["played"] and g["week"] > state["current_week"]
+             and g["week"] not in taken]
     return min(weeks) if weeks else None
 
 
@@ -1622,9 +1626,10 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             contact.pop("pester", None)
             points = BASE_POINTS["official_visit"]
         else:
-            game_week = _home_game_left(state, slug)
+            game_week = _home_game_left(state, slug, pid)
             if game_week is None:
-                raise RecruitingError(409, "no home game left for a visit")
+                raise RecruitingError(409, "no home game left for a visit" if _home_game_left(state, slug) is None
+                                      else "he has a visit booked for every home game you have left")
             rc["visits"].setdefault(pid, {})[slug] = {"week": game_week, "done": False}
         if you:
             _event(state, "contact", pid, slug, action=action)
