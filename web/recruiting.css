@@ -189,15 +189,26 @@
 .go-scene-tail:empty { display: none; }
 /* your opening: the topics as chips with your program's case, three at a time (the pane's small chips are status; these are buttons) */
 .go-present-chips { gap: 8px; }
-.go-pane .go-present-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; font-size: 13px; border-radius: 999px; }
-.go-pane .go-present-chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.go-scene .go-present-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; font-size: 13px; font-weight: 700; border-radius: 999px; background: var(--panel-2); }
+.go-scene .go-present-chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
 .go-present-chip.on .go-tag { background: transparent; color: inherit; border-color: color-mix(in srgb, var(--bg) 60%, transparent); }
 .go-present-count { align-self: center; }
 /* what you lead with: two columns on a desktop, so the conversation and the picker fit the pane together */
 .go-scene .go-pitches { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .go-scene .go-pitch { min-width: 0; }
 .go-scene .go-pitch > span { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
-@media (max-width: 759px) { .go-turn { max-width: 100%; } .go-present-chip { flex: 1 1 45%; justify-content: space-between; } .go-scene .go-pitches { grid-template-columns: 1fr; } }   /* a phone: full-width bubbles, one column */
+@media (max-width: 759px) { .go-turn { max-width: 100%; } .go-scene .go-present-chip { flex: 1 1 45%; justify-content: space-between; min-height: 44px; } .go-scene .go-pitches { grid-template-columns: 1fr; } }   /* a phone: full-width bubbles, one column */
+/* the call or visit's own window (recruiting.js openSceneWindow, the shared modal with .modal-scene): a conversation's
+   width on a desktop, the whole screen on a phone; the window is the frame, so the scene drops its own card */
+.modal.modal-scene .modal-panel { width: min(680px, 100%); }
+.modal-scene .go-scene { padding: 0; border: 0; background: none; border-radius: 0; }
+.modal-scene .go-scene:focus-visible { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: 4px; }
+.modal-scene .go-scene .go-turn.him, .modal-scene .go-scene .go-pitch { background: var(--panel-2); }
+.modal-scene .go-scene .go-turn.you { background: color-mix(in srgb, var(--text) 8%, var(--panel)); }
+@media (max-width: 700px) {
+  .modal.modal-scene .modal-panel { width: 100%; height: 100dvh; max-height: 100dvh; }
+  .modal.modal-scene .modal-close { min-width: 44px; min-height: 44px; }
+}
 
 /* his question in a scene: his line quoted, three answers while it waits, his reply once you answered */
 .go-question { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1px dashed var(--go-primary, var(--accent)); background: var(--panel-2); }
