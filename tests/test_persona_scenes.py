@@ -29,7 +29,8 @@ def cold(st, used):
 
 
 def force(st, pid, personality, decider="self", topic=None):
-    st["recruiting"]["prospects"][pid]["persona"] = {"personality": personality, "decider": decider, "decider_topic": topic}
+    st["recruiting"]["prospects"][pid]["persona"] = {"personality": personality, "decider": decider, "decider_topic": topic,
+                                                     "story": None}      # his personality's lines alone (his story has its own: test_story_discovery)
 
 
 def open_scene(st, pid, action="call"):

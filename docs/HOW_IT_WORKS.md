@@ -3057,3 +3057,37 @@ The pane's Profile body is keyed on `traits`, so a learned trait patches that bo
 redraw, no pulse on a recruit switch). A visit's family turn (`who: "family"`, `label`) plays like his
 own turn with the label as the speaker; a Guarded call or a Shy recruit's first call cues no topic
 (`scene.cue.topics` is `[]`): no ☆ on any topic, and the pitch picker still lets you choose any of them.
+
+
+### His story (`coach_career/persona.py`, spec section 2)
+
+About 35% of a high school class has one story (half the four- and five-stars), at most one each. The
+stories are a class-wide fixed draw (`persona.stories(state)`: each prospect's own stream
+`story-{seed}-{pid}`, a Package Deal's mate from `story-mate-{seed}-{pid}`), worked out when asked and
+never stored: `{pid: {"story", "story_data"}}`. Only a class marked `rc["stories"]` (set by
+`recruiting.start`) has any, so an older save plays on without them; the portal has none. A test or a
+save may set `story`/`story_data` on `p["persona"]`; `persona.story(state, pid)` reads that first.
+
+| Story | Rule (hook) | Shown |
+|---|---|---|
+| Legacy (`school`, drawn by `exp(LEGACY_TILT × strength)`) | His legacy school is `LEGACY_HEAD` interest ahead (`story_interest`, not a place on his list). Other schools' Coach and Prestige pitches ×`LEGACY_PITCH` (`story_mult`). The legacy school's lowball cools him `LEGACY_COST` times longer (`lowball_weeks`), its hollow promise costs double (`hollow_mult(..., slug)`). An AI legacy school puts him at the front of its board when it signs his star level (`board_front`, `LEGACY_LEVEL`). | Complete report, or a visit where it comes up |
+| Hometown Hero (`state`) | Schools in his state: his pull ×`HERO_STATE`; out-of-state pitches ×`HERO_AWAY` except Playing Time and NIL. Blue-chip heroes join their state schools' boards. His commitment makes the league news. | Public |
+| Package Deal (`mate`, `lead`) | Paired both ways with one of the `MATE_NEAR` prospects rated just under him (his town, else his state). He commits (or flips) only where his mate holds an offer and both have room (`_pair_ok`); `_commit` brings the mate along the same week. An AI school that offers one offers the other. | Complete report, or his first call or visit |
+| Two-Sport | When he signs (either period), one roll `draft-{seed}-{pid}` against `draft_risk`: `DRAFT_RISK` less `DRAFT_PT` per Playing Time pitch from that school (`contact["pt"]`) and `DRAFT_NIL` per ask's worth of NIL over his ask, floor `DRAFT_FLOOR`. Going pro: status `signed/committed = "FCS"` with `pro: true`, the NIL unspent, a `pro` event; rows show "Pro Baseball" / "Went Pro in Baseball". Shown as "Draft Risk: High / Some / Low" from your school. | Complete report |
+| Injury Comeback | Shown one star under his own (min two) with a shown composite in that band; his real stars and composite in `p["real"]`. Public grades understate him by `SHOWN_BAND`. AI schools that would offer him do so `COMEBACK_AI` of the time (`ai_doubts`, a fixed draw per school). A school that contacted him before `LOYALTY_WEEK` (`contact["loyal"]`) gets ×`LOYALTY` on its contacts. A look's error on his potential ×`COMEBACK_READ`. | Public |
+| Late Bloomer (`week` 5–9, `jump` 1–2) | Starts at two or three stars, his shown composite from the bottom `BLOOM_SHOWN` of that band (outside the top 300), `p["real"]` holding the truth. At the week step after his week (`persona.bloom`): real stars, composite and NIL ask back, unhidden, the class re-ranked (`rerank`, ranks stay 1..N), `rc["class_v"]` bumped (the tier, fit and rank caches key on it), a public `bloomed` event ("He jumped to four stars."), and the `BLOOM_BOARDS` AI schools he fits best add him (a blue chip at the front). | The jump is public; before it, a complete report |
+
+Discovery (`persona.known(...)["story"]`, `view`): public stories at once, the rest at a complete report
+(3 looks) or as above; a complete report with none shows **No Story**. A learned story logs a `learned`
+event with its sentence (History only). `view` adds `story` (label, None = Not Known Yet), `story_key`
+and `story_detail` (a legacy's school, "With <Mate>", "Draft Risk: Some").
+
+Scenes: `persona.STORY_LINES[story]` has `him` and `family` lines (fields `{legacy}`, `{mate}` beside
+`scenes.FIELDS`). At an in-home visit the decider's turn is the story (he says it himself when he
+decides), and the school learns it; on a call his small talk is his story `STORY_CALL_LINE` of the
+time once the school knows it (never for All Business), and always on a Package Deal's first call.
+
+On the page: the Profile's third row **His Story** (label · detail, muted Not Known Yet) with a sentence
+on what it means (`STORY_TIPS`), the pane chip `trait:story` ("Legacy · Florida", "Two-Sport · Draft
+Risk: Some"), History lines for `learned`, `bloomed` and `pro`, and What Changed lines for a jump or a
+pro decision. The board row patches in place (the Profile body's key carries `traits`).

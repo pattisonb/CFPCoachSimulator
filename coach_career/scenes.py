@@ -261,10 +261,10 @@ FAMILY_BY = {"mom": ["His mom has the table set and the good plates out.",
 FAMILY = [line for lines in FAMILY_BY.values() for line in lines]       # every note, for the line tests
 
 # every table of lines (tests format each line with FIELDS)
-TABLES = {"PERSONA_LINES": persona.LINES, "NO_TOPIC": persona.NO_TOPIC, "DECIDER_LINES": persona.DECIDER_LINES, "LINES": LINES, "TIRED": TIRED, "OPEN": OPEN, "VISIT_OPEN": VISIT_OPEN, "CONTEXT": CONTEXT, "PRESENT_SAID": PRESENT_SAID,
+TABLES = {"PERSONA_LINES": persona.LINES, "NO_TOPIC": persona.NO_TOPIC, "DECIDER_LINES": persona.DECIDER_LINES, "STORY_LINES": persona.STORY_LINES, "LINES": LINES, "TIRED": TIRED, "OPEN": OPEN, "VISIT_OPEN": VISIT_OPEN, "CONTEXT": CONTEXT, "PRESENT_SAID": PRESENT_SAID,
           "PRESENT_LINES": PRESENT_LINES, "ASK": ASK, "LEAD_LINES": LEAD_LINES, "FAMILY": FAMILY}
 FIELDS = ("name", "first", "town", "state", "school", "position", "role", "record", "coach", "opponent", "result", "leader",
-          "week_word", "a", "b", "x", "y", "z", "topic", "Topic")
+          "week_word", "a", "b", "x", "y", "z", "topic", "Topic", "legacy", "mate")
 
 _ONES = ("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen "
          "sixteen seventeen eighteen nineteen").split()
@@ -357,7 +357,7 @@ def _fields(state: dict, slug: str, p: dict, week: int | None = None) -> dict:
             "state": p["hometown"]["state"], "school": team.get("name", slug), "position": p["position"],
             "role": _role(state, slug, p["id"]), "record": _record(state, slug), "coach": coach_name(state, slug),
             "opponent": game["opponent"] if game else nxt["opponent"] if nxt else "", "result": ("beat" if game["won"] else "lost to") if game else "",
-            "leader": leader_of(state, slug, p["id"]), "week_word": words(week)}
+            "leader": leader_of(state, slug, p["id"]), "week_word": words(week), **persona.story_fields(state, p["id"])}
 
 
 def _turn(who: str, text: str) -> dict:
@@ -441,11 +441,23 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
     else:
         said = _persona_line(state, pid, sid, "visit_open" if action == "hc_visit" else "open", f,
                              pool=("visit_open" if action == "hc_visit" else "open", "small_talk")) or context
+    if action == "call" and not tired and not (game and game["week"] >= week - 1):    # his story, once you know it (a Package Deal's first call: always)
+        first = not ((rc["contacts"].get(pid) or {}).get(slug) or {}).get("calls")
+        said = persona.story_line(state, slug, pid, sid, "him", f, action, first_call=first) or said
     turns.append(_turn("him", said))
+    told = None                                                       # his story at a visit: the decider brings it up, or he does
     if action == "hc_visit" and d["decider"] != "self":               # the one who decides speaks
-        fam = random.Random(f"persona-line-{sid}-family").choice(persona.DECIDER_LINES[d["decider"]]).format(**f)
+        fam = persona.story_line(state, slug, pid, sid, "family", f, action) \
+            or random.Random(f"persona-line-{sid}-family").choice(persona.DECIDER_LINES[d["decider"]]).format(**f)
+        told = fam
         turns.append({"who": "family", "label": persona.DECIDER_LABEL[d["decider"]], "text": fam})
         persona.learn(state, slug, pid, "decider")                    # the family is in the room: you see who decides
+    elif action == "hc_visit":
+        told = persona.story_line(state, slug, pid, sid, "him", f, action)
+        if told:
+            turns.append(_turn("him", told))
+    if action == "hc_visit" and persona.story(state, pid)[0] and told:
+        persona.learn(state, slug, pid, "story")                      # it came up in his living room: now you know
     sc = {"id": sid, "action": action, "week": week, "turns": turns, "lines": [],
           "cue": None, "ask": recruiting.ask_view(state, slug, pid), "question": None, "presented": None, "tired": tired}
     _lines(sc)

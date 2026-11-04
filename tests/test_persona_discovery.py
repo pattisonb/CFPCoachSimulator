@@ -35,7 +35,8 @@ def force(st, pid, personality, decider="mom", topic="proximity"):
 def test_unknown_at_start():
     st = fresh()
     pid = pick(st)
-    assert persona.view(st, ME, pid) == {"personality": None, "decider": None, "decider_topic": None}
+    v = persona.view(st, ME, pid)
+    assert {k: v[k] for k in ("personality", "decider", "decider_topic")} == {"personality": None, "decider": None, "decider_topic": None}
     assert prospects.profile(st, pid, ME)["traits"]["personality"] is None
     assert prospects.board_row(st, pid, ME)["traits"]["decider"] is None
 
@@ -49,7 +50,7 @@ def test_decider_after_two_looks():
     assert persona.view(st, ME, pid)["decider"] is None
     recruiting.look(st, pid, 70, rng, by="scout-1", weight=1.0)
     v = persona.view(st, ME, pid)
-    assert v == {"personality": None, "decider": "Mom", "decider_topic": "academics"}, v
+    assert {k: v[k] for k in ("personality", "decider", "decider_topic")} == {"personality": None, "decider": "Mom", "decider_topic": "academics"}, v
 
 
 def test_personality_after_first_call():
@@ -116,7 +117,8 @@ def test_reveals_are_per_school():
     assert persona.view(st, ME, pid)["personality"] is None
     assert not persona.known(st, ME, pid)["personality"]
     assert not persona.learn(st, other, pid, "decider")
-    assert persona.known(st, ME, pid) == {"personality": False, "decider": False}
+    k = persona.known(st, ME, pid)
+    assert (k["personality"], k["decider"]) == (False, False), k
 
 
 def test_history_logs_learned():
