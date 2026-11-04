@@ -26,6 +26,8 @@
 .sc-stat-value { font-size: 26px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .sc-stat-sub { color: var(--muted); font-size: 12px; }
 .sc-hours-bar { display: block; height: 8px; margin-top: 6px; border-radius: 4px; background: var(--panel-2); border: 1px solid var(--border); overflow: hidden; }
+.sc-hours-sub { display: block; }
+.sc-points { display: block; margin-top: 4px; font-variant-numeric: tabular-nums; }
 .sc-hours-fill { display: block; height: 100%; background: var(--sc-mark); }
 
 /* master and detail */

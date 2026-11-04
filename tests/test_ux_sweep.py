@@ -278,7 +278,7 @@ def test_recruit_question(page) -> None:
     """A call on which he asks about a named player (its own dev server, CFP_QUESTION_RATE=1): the question block
     with his line and three answers, the pitch locked until you answer, a straight answer's reply unlocking it in
     place with no toast, the answered question kept through Hang up and Finish, and the History line."""
-    from coach_career import scenes
+    from coach_career import persona, scenes
     from sim import season
     st = season.new_season("smu", "full", seed=62, career=True)
     me, rc, week = st["team"], st["recruiting"], st["current_week"]
@@ -287,7 +287,8 @@ def test_recruit_question(page) -> None:
     try:
         pid = next(q for q in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"])
                    if not rc["prospects"][q].get("hidden") and rc["status"][q]["committed"] is None
-                   and "playing_time" in rc["prospects"][q]["priorities"] and scenes.question(st, me, q, week))
+                   and "playing_time" in rc["prospects"][q]["priorities"] and scenes.question(st, me, q, week)
+                   and persona.of(st, q)["personality"] not in ("guarded", "shy"))     # his call cues a topic to lead with
     finally:
         scenes.QUESTION_RATE = rate
     season.save_season(st)
@@ -370,8 +371,6 @@ def test_portal_nil_title(page, base, sid) -> None:
 
 # ----- the Scouting tab (web/scouting.js): the scouts, the queue, the reports and the flags -----
 
-SCOUT_HOURS = 5
-
 
 def test_scouting_tab(page, base, sid) -> None:
     """The Scouting Center: Scouting Operations lists every scout (the DC included) and its area dropdown posts and
@@ -427,7 +426,7 @@ def test_scouting_tab(page, base, sid) -> None:
     assert all(on == (pid in board) for pid, on in marks), "All Prospects: the board rows carry the star, the rest do not"
     # a row fills the report: the tab and the board stay as they were
     v = call(base, f"/api/season/{sid}/scouting?limit=20")        # the page on screen
-    assert v["hours_left"] >= SCOUT_HOURS, "a new week has hours for a trip"
+    assert v["points_left"] >= 15, "a new week has scouting points for a trip"
     row = next(r for r in v["queue"] if r["can_send"])
     pid = row["pid"]
     page.click(f".sc-row[data-pid='{pid}'] .sc-row-btn")
@@ -440,7 +439,7 @@ def test_scouting_tab(page, base, sid) -> None:
     before = row["looks"] or 0
     assert segments() == [min(1, max(0, before - i)) for i in range(3)], (before, segments())
     assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-looks-text") == f"{fmt(before)}/3"
-    assert page.inner_text("#sc-send").strip() == ("Send Scout (5h) · Finishes His Report" if 3 - before <= 1 else "Send Scout (5h)")
+    assert page.inner_text("#sc-send").strip() == (f"Send Scout · {row['cost']} Points · Finishes His Report" if 3 - before <= 1 else f"Send Scout · {row['cost']} Points")
     after = min(3, before + 1)
     page.click("#sc-send")
     toasted(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
@@ -449,18 +448,18 @@ def test_scouting_tab(page, base, sid) -> None:
     assert segments() == [min(1, max(0, after - i)) for i in range(3)], "his meter fills one more segment, in halves"
     smooth(page, h, "Send", same=True)
     # the Send that completes his report leaves Send disabled with the reason
-    while after < 3 and call(base, f"/api/season/{sid}/scouting")["hours_left"] >= SCOUT_HOURS:
+    while after < 3 and call(base, f"/api/season/{sid}/scouting")["points_left"] >= row["cost"]:
         page.wait_for_function("() => { const b = document.querySelector('#sc-send'); return b && !b.disabled && !b.classList.contains('go-busy'); }", timeout=15_000)
         page.click("#sc-send")
         after = min(3, after + 1)
         toasted(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
     if after >= 3:
         page.wait_for_function("() => { const b = document.querySelector('#sc-send'); return b && b.disabled && !b.classList.contains('go-busy'); }", timeout=15_000)
-        assert page.inner_text(".sc-intel .sc-why").strip() == "His report is complete: 3 of 3 looks"
+        assert page.inner_text(".sc-intel .sc-why").strip() == "His report is complete: 3 of 3 looks", page.inner_text(".sc-intel .sc-why")
         assert page.inner_text(".sc-intel .sc-status").strip().lower() == "fully scouted"
         assert segments() == [1, 1, 1], segments()
-    left = call(base, f"/api/season/{sid}/scouting")["hours_left"]
-    page.wait_for_function("(t) => document.querySelector('#sc-hours .sc-hours-val').textContent.startsWith(t)", arg=f"{left} /", timeout=10_000)
+    left = call(base, f"/api/season/{sid}/scouting")["points_left"]
+    page.wait_for_function("(t) => document.querySelector('#sc-hours .sc-points').textContent.startsWith(t)", arg=f"Points Left: {left} of", timeout=10_000)
     assert page.evaluate("(el) => el.isConnected", h), "the list was never rebuilt by the Sends"
     assert page.evaluate("() => document.activeElement && document.activeElement !== document.body"), "the focus never falls to the page body"
     # pagination: page 2 and back
@@ -810,7 +809,7 @@ def test_staff_likes_tags(page, base) -> None:
         v = call(base, f"/api/season/{sid}/scouting?on_board=1&limit=400")      # his board, wherever it ranks
         assert all(r["likes"] is None for r in v["queue"] if r["looks"] < 3), "an open report has no like yet"
         assert next(r for r in v["queue"] if r["pid"] == liked)["likes"]["who"] == "OC", "the board's complete report stays in the queue with his like"
-        assert v["hours_left"] >= 5, v["hours_left"]
+        assert v["points_left"] >= 5, v["points_left"]
         page.keyboard.press("Escape")
         page.wait_for_function("() => ![...document.querySelectorAll('.modal')].some(m => !m.hidden)", timeout=10_000)
         # the database: the Send that completes his report shows the pill on his row and the tag in the report's result line
@@ -1507,7 +1506,10 @@ if __name__ == "__main__":
             time.sleep(0.6)
             assert page.evaluate("() => document.querySelectorAll('.go-row-recruit').length") == board_n
             # picking a row fills the pane: his name, the chip with his stage, the strip, the tags, the sub-tabs; no pitch list, no action grid
-            pid = v["board"][1]["id"]
+            # a Guarded recruit (or a Shy one's first call) cues no topic: this walk follows a cue, so it takes one who tells
+            from coach_career import persona
+            _st = season.load_season(A)
+            pid = next(x["id"] for x in v["board"][1:] if persona.of(_st, x["id"])["personality"] not in ("guarded", "shy"))
             b = next(x for x in v["board"] if x["id"] == pid)
             page.click(f".go-row-recruit[data-pid='{pid}']")
             time.sleep(0.6)
@@ -1694,7 +1696,7 @@ if __name__ == "__main__":
             assert not page.query_selector("#rc-finish"), "a finished call leaves the head"
             # a second recruit's call: the menu waits, Hang up closes the scene and Finish stays in the head
             order = page.eval_on_selector_all(".go-row-recruit", "els => els.map(e => e.dataset.pid)")
-            second = next(x for x in order if x != pid)
+            second = next(x for x in order if x != pid and persona.of(season.load_season(A), x)["personality"] not in ("guarded", "shy"))      # his call cues a topic
             page.click(f".go-row-recruit[data-pid='{second}']")
             time.sleep(0.6)
             n = draws(page)
@@ -2071,7 +2073,7 @@ if __name__ == "__main__":
             # scouting trips at the best unscouted five-star until his report is complete (a Send adds a look, or what is
             # left of the three), then the list agrees with the API either way
             pick = min((r for r in unscouted if r.get("can_scout")), key=lambda r: r["national_rank"], default=None)
-            if pick and call(base, f"/api/season/{A}/recruiting")["hours_left"] >= 15:
+            if pick and call(base, f"/api/season/{A}/scouting")["points_left"] >= 45:      # three Sends at the dearest cost
                 for _ in range(3):
                     if call(base, f"/api/season/{A}/prospect/{pick['id']}")["looks"] >= 3:
                         break
@@ -2190,7 +2192,7 @@ if __name__ == "__main__":
             assert page.query_selector("#rc-finish"), "the call hung up earlier is still open"
             test_stale_scene_unlocks(page, base, A)
             # a new week's hours: a third recruit's call pitched on something he does not care about: the cue stays ☆ in the pane and in the step
-            third = next(x for x in order if x not in (pid, second))
+            third = next(x for x in order if x not in (pid, second) and persona.of(season.load_season(A), x)["personality"] not in ("guarded", "shy"))      # a recruit who tells his topic on a call
             page.click(f".go-row-recruit[data-pid='{third}']")
             time.sleep(0.6)
             n = draws(page)
@@ -2236,8 +2238,9 @@ if __name__ == "__main__":
             assert vb["hours_left"] >= 50, vb["hours_left"]
             fresh_rows = [b for b in vb["board"] if not b["offered"] and not b["committed"] and not b["signed"] and not b.get("scene")
                           and (b.get("looks") or 0) < 3 and b["id"] not in (pid, second, third)]
-            x, y = fresh_rows[0], fresh_rows[1]
-            cold = next(b for b in fresh_rows[2:] if b["stage"] == "cold")
+            tells = [b for b in fresh_rows if persona.of(season.load_season(A), b["id"])["personality"] not in ("guarded", "shy")]      # their calls cue a topic
+            x, y = tells[0], tells[1]
+            cold = next(b for b in fresh_rows if b["stage"] == "cold" and b["id"] not in (x["id"], y["id"]))
             assert page.get_attribute("#toasts", "role") == "status" and page.get_attribute("#toasts", "aria-live") == "polite", "the toast stack is announced"
 
             def menu(action):

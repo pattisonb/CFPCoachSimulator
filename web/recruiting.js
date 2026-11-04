@@ -241,7 +241,7 @@
     if (r.scene) { if (opts.onScene) opts.onScene(r.scene); else if (!opts.silent) H.toast(`${names[action]} open · finish it from his pane`, 3000); }
     else if (r.reaction) { if (!opts.silent) H.toast((REACTION_TOAST[r.reaction.kind] || REACTION_TOAST.polite)(pitch), 4000); if (opts.onReaction) opts.onReaction(r.reaction); }
     else if (opts.silent) { /* the board says what happened, in its own words */ }
-    else if (action === "scout") H.toast(`Scouting trip done · ${r.hours_left} hours left · his grades are updated`, 3000);
+    else if (action === "scout") H.toast("Scouting trip done · his grades are updated", 3000);
     else H.toast(`${names[action]} done · ${r.hours_left} hours left${r.revealed ? ` · he cares about ${PITCH_NAMES[r.revealed].toLowerCase()}` : action === "call" ? " · he kept his cards close" : ""} · it lands at the week step`, 3000);
     return r;
   }
@@ -531,7 +531,7 @@
 
   // ----- the Recruiting board ----------------------------------------------------------------------
 
-  const ACT_TIPS = { scout: "Send your best evaluator to see him: 5 hours a look, any week, until his report is complete at three looks; a week in a scout's area is half a look, up to two" };
+  const ACT_TIPS = { scout: "Send your best evaluator to see him: a look costs scouting points (5, 10 or 15, see the Scouting Center), any week, until his report is complete at three looks; a week in a scout's area is half a look, up to two" };
   // looks come in trip units (a Send one, an area week half, a full report three): a count shows its half only when it has one
   const fmtLooks = (n) => (Number.isInteger(Number(n)) ? String(Number(n)) : Number(n).toFixed(1));
 
@@ -1256,7 +1256,7 @@
         ["message", "Message", "5h", done.includes("message") ? "Once a week" : short(5)],
         ["call", "Call", "15h", done.includes("call") ? "Once a week" : short(15)],
         ["hc_visit", "HC Visit", "30h", hcWait ? "Monthly" : short(30)],
-        ["scout", "Scout", `5h · ${fmtLooks(looks)} of 3 looks${looks < 3 && 3 - looks <= 1 ? " · finishes his report" : ""}`, looks >= 3 ? "His report is complete: 3 of 3 looks" : short(5)],
+        ["scout", "Scout", `Scouting Points · ${fmtLooks(looks)} of 3 looks${looks < 3 && 3 - looks <= 1 ? " · finishes his report" : ""}`, looks >= 3 ? "His report is complete: 3 of 3 looks" : null],
         ["official_visit", v.portal ? "Campus Visit" : "Official Visit", "10h", !b.offered ? "Offer him first" : b.visit ? (b.visit.done ? "Visited" : `Booked for week ${b.visit.week}`)
           : !["top", "visited"].includes(b.stage) ? "Not yet: get into his top group" : b.cooled ? "Cooled: raise your offer first" : short(10)],
         ["offer", "Offer…", "No Hours", b.signed ? "Signed" : b.offered ? "Already offered" : b.hard ? "Hard commit elsewhere" : v.offers_left <= 0 ? "Offer limit reached" : null],
@@ -1425,7 +1425,7 @@
         if (!SUBS.some(([k]) => k === view.sub)) view.sub = "overview";
         const k = view.sub;
         for (const t of strip.children) t.setAttribute("aria-selected", String(t.dataset.sub === k));
-        const key = `${k}:${JSON.stringify(k === "overview" ? [sd, b.list] : k === "scouting" ? [b.our_grades, b.looks, b.trips, b.line] : k === "history" ? [b.history, b.done_this_week, (v.recap || []).filter((e) => e.pid === b.id)] : [b.trips, b.looks])}`;
+        const key = `${k}:${JSON.stringify(k === "overview" ? [sd, b.list] : k === "scouting" ? [b.our_grades, b.looks, b.trips, b.line] : k === "history" ? [b.history, b.done_this_week, (v.recap || []).filter((e) => e.pid === b.id)] : [b.trips, b.looks, b.traits])}`;
         if (key !== bodyKey) {
           const changed = bodyKey != null && bodyKey.startsWith(`${k}:`);
           bodyKey = key;
@@ -1438,6 +1438,9 @@
         for (const t of b.priorities_known) out.push(el("span", { class: "go-tag", "data-key": `pri:${t}`, text: `★ ${PITCH_NAMES[t]}`, title: "He told you he cares about this" }));
         const cue = cueOf(b);
         for (const t of cue.topics) if (!b.priorities_known.includes(t)) out.push(el("span", { class: "go-tag cue", "data-key": `pri:${t}`, text: `☆ ${PITCH_NAMES[t] || t}`, title: cue.title }));
+        const tr = b.traits || {};
+        if (tr.personality) out.push(el("span", { class: "go-tag", "data-key": "trait:personality", text: tr.personality, title: "His personality: how he sounds on a call and how he reacts to you" }));
+        if (tr.decider) out.push(el("span", { class: "go-tag", "data-key": "trait:decider", text: `Decides: ${tr.decider}`, title: "Who makes the final call on where he goes" }));
         if (b.likes) out.push(el("span", { class: "go-tag good go-likes", "data-key": "likes", text: likesText(b.likes), title: b.likes.text }));
         if (b.visit) out.push(el("span", { class: "go-tag", "data-key": "visit", text: b.visit.done ? "Visited" : `Visit Wk ${b.visit.week}` }));
         if (b.portal && b.role) out.push(el("span", { class: `go-tag ${b.role === "Would Start" ? "good" : b.role === "Next in Line" ? "warn" : "muted"}`, "data-key": "role", text: b.role, title: "Where he would sit on your depth chart next season" }));
@@ -1502,7 +1505,7 @@
         const start = kind === "offer" ? (b.ask ? (b.ask.exact != null ? b.ask.exact : b.ask.lo) : 0) : Math.max((b.nil || 0) + 5, b.ask && b.ask.exact != null ? b.ask.exact : 0);
         nil = el("input", { type: "number", id: "rc-nil", class: "go-nil", min: String(kind === "offer" ? 0 : (b.nil || 0) + 5), step: "5", value: String(start) });
         st.append(el("label", { for: "rc-nil" }, [el("span", { class: "small", text: `NIL Points · ${kind === "offer" ? (ask ? `He wants ${ask}` : "No ask known yet") : `Your offer is ${b.nil || 0}${ask ? ` · he wants ${ask}` : ""}`}` }), nil]));
-        if (kind === "offer") st.append(el("p", { class: "muted small", text: "Under half of what he wants reads as a lowball." }));
+        if (kind === "offer") st.append(el("p", { class: "muted small", text: "Well under what he wants reads as a lowball, and some recruits take offense sooner." }));
       }
       const go = el("button", { type: "button", class: "go-btn primary go-step-go", text: kind === "message" ? "Send" : kind === "offer" ? "Offer" : "Raise" });
       const cancel = el("button", { type: "button", class: "go-btn go-step-cancel", text: "Cancel" });
@@ -1578,6 +1581,7 @@
         const p = el("p", { class: `go-scene-line go-turn ${t.who} ${cue ? "cue" : ""} ${t.who === "note" ? "room" : ""}`,
           ...(cue ? { title: "The cue: what he is telling you he cares about" } : {}) });
         if (t.who === "you") p.append(el("span", { class: "go-turn-who", text: "You:" }), " ");
+        else if (t.who === "family" && t.label) p.append(el("span", { class: "go-turn-who", text: `${t.label}:` }), " ");   // the one who decides speaks, under their label
         p.append(t.text);
         return p;
       };
@@ -2010,6 +2014,16 @@
     if (p.looks >= 3 && p.our_grades) {
       node.append(scoutLine(p.our_grades, p.looks));
       if (p.our_comp && !(p.public_comp && p.public_comp.name === p.our_comp.name)) node.append(el("p", { class: "small" }, [el("b", { text: "Our comp: " }), `${p.our_comp.name}, ${p.our_comp.school} (${p.our_comp.position}${p.our_comp.overall ? `, ${p.our_comp.overall} OVR` : ""})`]));
+    }
+    // what the staff has learned about him: his personality and who decides (with what that person cares about), Not Known Yet until then
+    {
+      const tr = p.traits || {};
+      const traitRow = (key, label, val, more) => el("div", { class: "go-trait", "data-trait": key }, [
+        el("span", { class: "go-trait-label muted small", text: label }),
+        el("b", { class: `go-trait-val ${val ? "" : "muted"}` }, [val || "Not Known Yet", more ? el("span", { class: "go-trait-more muted small", text: ` · ${more}` }) : null])]);
+      node.append(el("div", { class: "go-traits", "data-key": "traits" }, [
+        traitRow("personality", "Personality", tr.personality),
+        traitRow("decider", "Who Decides", tr.decider, tr.decider && tr.decider_topic ? `Cares About: ${PITCH_NAMES[tr.decider_topic] || tr.decider_topic}` : null)]));
     }
     if (p.likes) node.append(el("p", { class: "small go-likes-line" }, [el("span", { class: "go-tag good go-likes", text: likesText(p.likes), title: p.likes.text }), ` ${likesLine(p.likes)}`]));
     if (pub.schools.length) {

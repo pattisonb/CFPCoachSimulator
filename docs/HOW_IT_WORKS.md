@@ -1272,7 +1272,7 @@ Scouting Center, master and detail, built from the player's mockup in the site's
   ("Evaluate talent: a full report is three looks; a trip is one, a week in a scout's area half.") and
   **All Reports** with a count of this week's finds ("3 New"). Beside it four stat cards: My Board (your
   board's size, "Tracked Players"), Full Reports (`full_reports`: complete reports this class), Scouting
-  Queue (`trips_this_week`: your Sends this week) and Scouting Hours ("30 / 55" and a bar, `#sc-hours`).
+  Queue (`trips_this_week`: your Sends this week) and Scouting Hours ("30 / 55" and a bar, `#sc-hours`) with "Points Left: 35 of 50" (`points_left` of `points_week`, `.sc-points`) beneath it: a Send spends scouting points, not hours.
   On a phone the cards are a 2×2 grid.
 - **The Prospect Database** (left): every prospect you can see (`visible`), committed to you or signed
   too (no Send; `why` says so), 20 to a page on `offset`/`limit`/`queue_total` ("1–20 of 3,810", ‹ 1 2 … 191 ›),
@@ -1294,8 +1294,8 @@ Scouting Center, master and detail, built from the player's mockup in the site's
   reveal), **Overview** (hometown, high school, build, archetype, rankings, where he stands, his top
   schools, the public comp and the evaluation's strengths and concerns) and **Scouting** (his looks,
   the flags, a coordinator's "Likes Him" with its sentence, our comp, this and last week's report lines
-  on him, and All Reports). Under them **Send Scout (5h)** ("· Finishes His Report" when one look is
-  left; disabled with the reason underneath: Not enough hours, or "His report is complete: 3 of 3
+  on him, and All Reports). Under them **Send Scout · 10 Points** (its row's `cost`: 10, 15 or 5; "· Finishes His Report" when one look is
+  left; disabled with the reason underneath: "Not enough scouting points left this week.", or "His report is complete: 3 of 3
   looks") and **Add to Board** / **Remove from Board** (the board's own confirm when that pulls a
   standing offer), and **View Full Profile**, which opens the profile modal. Send posts the `scout`
   action and patches in place: the row's meter pulses, the look's before and after reads show under
@@ -3019,3 +3019,18 @@ and fumbles lost.
 
 `tests/smoke_test.py 400` runs 400 games and reports any game whose stats do not add up to its
 score. It should report zero mismatches.
+
+
+### His personality and who decides on the page
+
+Every recruit has a personality and a decider (`traits` on `profile()` and on each board row:
+`personality`, `decider`, `decider_topic`; null means Not Known Yet). His **Profile** sub-tab (in the
+pane and in the modal) opens with a Personality row and a Who Decides row, each "Not Known Yet" (muted)
+until the staff learns it; Who Decides adds "Cares About: <Topic>" (the pitch's own Title Case name).
+The pane's tag strip carries the known traits as chips (`trait:personality`, `trait:decider`). Learning
+is by contact: a first call or in-home visit tells the personality (a Guarded recruit only on a visit),
+two looks of his report tell who decides, and a visit with a family decider shows them in the room.
+The pane's Profile body is keyed on `traits`, so a learned trait patches that body in place (no full
+redraw, no pulse on a recruit switch). A visit's family turn (`who: "family"`, `label`) plays like his
+own turn with the label as the speaker; a Guarded call or a Shy recruit's first call cues no topic
+(`scene.cue.topics` is `[]`): no ☆ on any topic, and the pitch picker still lets you choose any of them.
