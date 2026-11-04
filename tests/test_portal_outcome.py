@@ -84,8 +84,7 @@ def until_signed(sid: str, pid: str) -> tuple[str, int]:
 def case_room(sid: str) -> None:
     pid = target(sid)
     recruit(sid, pid)
-    st = api.loaded_state()
-    room = recruiting.portal_room(st, ME)
+    room = G(sid, "recruiting")["open_spots"]          # nothing signed yet: all your portal room
     sign_to_me(sid, (room + 1) // 2, {pid})
     v = G(sid, "recruiting")
     assert v["open_spots"] > 0, v["open_spots"]
@@ -106,8 +105,7 @@ def case_no_room(sid: str) -> None:
                 if q not in offered and rc["prospects"][q]["from"] != ME)
     api.call("POST", f"/api/season/{sid}/board", {"pid": lone, "on": True})
     api.call("POST", f"/api/season/{sid}/recruit", {"pid": lone, "action": "offer", "pitch": "playing_time", "nil": 0})
-    st = api.loaded_state()
-    sign_to_me(sid, recruiting.portal_room(st, ME), {pid, lone})
+    sign_to_me(sid, G(sid, "recruiting")["open_spots"], {pid, lone})
     v = G(sid, "recruiting")
     assert v["open_spots"] == 0, v["open_spots"]
     # before: the board row, his pane (the same row) and his profile say there is no room, Title Case, with a sentence

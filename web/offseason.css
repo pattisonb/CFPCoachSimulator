@@ -102,3 +102,5 @@ p .off-contract { margin-left: 6px; }
   .off-head .go-stat, .off-review .go-stat { padding: 12px 14px; }
   .off-head .go-stat-val, .off-review .go-stat-val { font-size: 18px; }
 }
+.off-away-line { margin: 2px 0 0; white-space: normal; }
+.off-recap-away { margin-top: 6px; }

@@ -270,3 +270,4 @@
 @media (max-width: 759px) { .go-traits { grid-template-columns: 1fr; } }
 .go-turn.family { align-self: flex-start; border-bottom-left-radius: 4px; }
 .modal-scene .go-scene .go-turn.family { background: var(--panel-2); }
+.rc-no-room { margin: 6px 0 0; font-size: 13px; line-height: 1.4; color: var(--bad-text); }

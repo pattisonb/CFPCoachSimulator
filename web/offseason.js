@@ -240,6 +240,7 @@
     btn.disabled = true;
     btn.textContent = to ? "Working Through the Offseason…" : "Working…";
     const lift = holdTab(box);
+    const wk = /^portal_w(\d)$/.exec((drawn && drawn.stage) || "");   // a portal week's step: say where your recruits went
     try {
       const r = await (H.long || H.api)(`/api/season/${s.id}/offseason/advance`, staged(to ? { to } : {}));
       lift();
@@ -249,6 +250,8 @@
         return;
       }
       render(s, box, H);            // the next stage: a full draw
+      const gone = wk ? (((r.portal && r.portal.away && r.portal.away.length ? r.portal.away : (r.portal_recap || {}).away)) || []).filter((x) => x.week === Number(wk[1])) : [];
+      if (gone.length) H.toast(`${awaySentence(gone[0])}${gone.length > 1 ? ` ${gone.length - 1} more of your recruits went elsewhere: see Who Got Away.` : ""}`, 6000);
     } catch (err) {
       lift();
       btn.disabled = false;
@@ -421,9 +424,23 @@
         el("ul", { class: "off-list" }, moves.map((m) => el("li", {}, [el("b", { text: m.name }), el("span", { class: "muted", text: ` ${m.pos} · ${m.overall} OVR · ` }),
           m.to === s.team ? el("span", { class: "go-tag good", text: `Joins You From ${teamName(m.from)}` }) : el("span", { class: "go-tag bad", text: `Left for ${teamName(m.to)}` })]))));
     }
+    const away = p.away || [];
+    if (away.length) head.append(el("div", { class: "go-kicker muted off-sub", text: `Who Got Away · ${away.length}` }), awayList(away));
     const board = el("div", { class: "off-board", "data-key": "board", "data-keep": "" });     // the board draws and patches itself (recruiting.js)
     main.append(head, board);
     if (!patching) window.Recruiting.board(s, board, H);
+  }
+
+  // a recruit of yours who went elsewhere, in a sentence: "Zach Lutmer signed with Georgia. You had no roster spot left for him."
+  function awaySentence(x) {
+    const went = !x.to ? "went unsigned" : x.walk_on ? `walked on at ${x.to_name}` : `signed with ${x.to_name}`;
+    return `${x.name} ${went}.${x.reason ? ` ${x.reason}` : ""}`;
+  }
+  // Who Got Away: the entrants you recruited (your offer, or on your board) who went elsewhere, each with where and why not you
+  function awayList(rows) {
+    return el("ul", { class: "off-list off-recap-list off-away" }, rows.map((r) => el("li", {}, [r.to ? window.CFP.teamPill(r.to) : null, r.to ? " " : null,
+      el("b", { text: r.name }), el("span", { class: "muted", text: ` ${r.pos} · ${r.overall} OVR${r.week ? ` · Week ${r.week}` : ""}` }),
+      el("div", { class: "small off-away-line", text: r.line })])));
   }
 
   function renderPortal(s, v, main) {
@@ -485,6 +502,8 @@
       r.reason ? el("span", { class: "muted small off-recap-why", text: ` · ${r.reason}` }) : null])))
       : el("p", { class: "muted", text: "Nobody left through the portal." }));
     body.push(el("div", { class: "off-recap-cols" }, [got, lost]));
+    const away = rec.away || [];
+    if (away.length) body.push(el("div", { class: "off-recap-away" }, [el("div", { class: "go-kicker muted off-sub", text: `Who Got Away · ${away.length}` }), awayList(away)]));
     if (!collapsed) return el("section", { class: "go-card off-recap", "data-key": "recap" }, [el("div", { class: "go-kicker", text: "Transfer Portal Recap" }), ...body]);
     // a patch (ui.morph) redraws this card: it keeps whether the player opened it (view.recapOpen)
     const det = el("details", { class: "go-card off-recap", "data-key": "recap", ...(view.recapOpen ? { open: "" } : {}) }, [el("summary", { class: "off-recap-sum" }, [el("span", { class: "go-kicker", text: "Transfer Portal Recap" }),
