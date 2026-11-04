@@ -100,10 +100,10 @@
 .ofc-kv .ofc-label ~ .ofc-label { margin-top: 6px; }
 .ofc-kv-line { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
 .ofc-kv-rows span b { font-variant-numeric: tabular-nums; }
-.ofc-target-list { display: flex; flex-direction: column; }
-.ofc-target { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 9px 4px; border: 0; border-bottom: 1px solid var(--border);
+.ofc-target-list { display: flex; flex-direction: column; gap: 8px; }
+.ofc-target { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 4px 4px 12px; border: 0; border-bottom: 1px solid var(--border);
   border-radius: 0; background: none; color: var(--text); text-align: left; font: inherit; cursor: pointer; width: 100%; }
-.ofc-target:last-child { border-bottom: 0; }
+.ofc-target:last-child { border-bottom: 0; padding-bottom: 4px; }
 .ofc-target:hover { background: var(--panel-2); }
 .ofc-target-text { display: flex; flex-direction: column; min-width: 0; }
 .ofc-target-text b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

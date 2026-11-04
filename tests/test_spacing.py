@@ -241,7 +241,7 @@ if __name__ == "__main__":
 
             def topbar_shown(_):                                                   # ☰ Menu shows the top bar above the tabs
                 page.evaluate("() => localStorage.setItem('cfp.topbar', '0')")
-                open_tab(page, base, A, "office", ".go-games")
+                open_tab(page, base, A, "office", ".ofc-hero")
                 menu_pick(page, "Show the Top Bar")
                 page.wait_for_selector(".topbar:visible", timeout=30_000)
             w.both("topbar-shown", topbar_shown)
@@ -258,7 +258,7 @@ if __name__ == "__main__":
             page.wait_for_selector("button.go-btn:has-text('Add These')", timeout=120_000)
             page.click("button.go-btn:has-text('Add These')")
             time.sleep(4)
-            for tab, wait in (("office", ".go-games"), ("programs", ".go-programs"), ("recruiting", ".go-row-recruit"), ("prospects", ".go-list-row"),
+            for tab, wait in (("office", ".ofc-hero"), ("programs", ".go-programs"), ("recruiting", ".go-row-recruit"), ("prospects", ".go-list-row"),
                               ("scouting", ".sc-list .sc-row"), ("depth", ".dc-card"), ("schedule", ".schedule-pick")):
                 w.both(tab, lambda _w, tab=tab, wait=wait: open_tab(page, base, A, tab, wait))
 

@@ -1194,18 +1194,27 @@ with one button to add them all: a base to build a board from. Nobody commits an
 first three weeks (`COMMIT_FREEZE_WEEKS`), so there is time to scout and build a board before
 the class moves. A school's weekly hours are a multiple of 5.
 
-**The screens** (`web/recruiting.js`). A career opens on the **Office**: a one-line conference
-standing ("2nd in the SEC · 5-1 (3-0 SEC)", the Standings tab's place and record; an independent
-shows its record and "FBS Independents"; "0-0" before any games), then the game. **Last Game**
-(your latest played game: W or L and the final, the score by quarter, the game's top passer,
-rusher, receiver and defender from its box score, and **Full Box Score**, the box-score modal
-with its `box:` token) sits beside **Next Game** (both teams with marks, ranks and records, the
-venue and the week; for this week's game the win chance and projected score from the preview).
-Early in the season only Next Game shows, after the last game only Last Game; on a bye Next Game
-says "Bye This Week" and names the next opponent. A phone stacks them, and its week's three
-steps sit in one row. Then the AD's goal, your week's three steps (Recruit, Game day, Advance)
-and the play buttons, the recruiting summary (commitments, class rank, hours, NIL points, your
-hottest targets, the week's news) and tiles to every screen. The tab bar is two rows: the
+**The screens** (`web/recruiting.js`; the Office is `web/office.js` and `web/office.css`). A career
+opens on the **Office**, two columns (one below 900 px). On the left: the **Next Game** hero (the
+week and date, the game's name or rivalry, a Home Game / Away Game / Neutral Site chip, both teams
+with marks, ranks, mascots and records; for this week's game the **Win Chance**, the game preview's
+simulated win probability shown between 1% and 99%, and the projected score; then the play card
+with **Game Day** first while your game is unplayed). On a bye it says "Bye This Week" and names
+the next opponent; a week with no game left says so; once the season is over it is the Season
+Complete card with **On to the Offseason**. Under it **Last Game** (W or L and the final, Pass
+Yds, Rush Yds, TFL and Sacks for your side, the score by quarter, the game's top passer, rusher,
+receiver and defender, and **Full Box Score**, the box-score modal with its `box:` token) beside
+**This Week's Plan**: Recruit, Game Day, Advance, read from the real state (Recruit is done once
+you have spent hours this week or Auto-recruit is on, Game Day until your game is played, then
+Advance; a week without your game has no Game Day step; no plan once the season is over). Then
+What Changed, **Program News** (`GET /api/season/{id}/office`, `coach_career/office.py`: your
+game results and the recruiting moves on your board over the last weeks, labeled "This Week" or
+by week) and **Around the Conference** (your conference's latest results and one sentence on
+your place). On the right: **Program Pulse** (record, the conference standing line, "2nd in the
+SEC · 3-0 SEC", the Standings tab's place, the last game, the AD's goal and mood), **Recruiting
+Pulse** (commitments of spots, Recruiting Hours, NIL Points, Scouting Points, Spots Filled, class
+rank) and **Top Targets** (your hottest targets with their standing word; Board → opens
+Recruiting). The tab bar is two rows: the
 screens you act on (Office, Offseason once the season is over, Recruiting, Prospects, Scouting,
 Schedule, Depth Chart) and a League row that follows the calendar (Standings, Rankings, Stats
 and, in a career, **Programs** all year; Awards from week 4; Classes, Bracket and Bowls from selection week; Summary when the

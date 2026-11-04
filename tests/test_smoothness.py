@@ -148,7 +148,7 @@ def check_reconcile(page) -> None:
 
 def season_cases(page, base: str, sid: str) -> None:
     # --- the Office (the toast stack and the keyed list), then the Programs tab: its ⓘ opens in place, nothing redrawn
-    open_tab(page, base, sid, "office", ".go-games")
+    open_tab(page, base, sid, "office", ".ofc-hero")
     check_toast_stack(page)
     check_reconcile(page)
     open_tab(page, base, sid, "programs", ".go-programs")
