@@ -57,7 +57,7 @@ def check_first_viewport(page, base, sid, errors) -> None:
     height = page.evaluate("() => document.documentElement.scrollHeight")
     assert height < OLD_HEIGHT_1280 / 2, f"the page is well under half its old height: {height}"
     stats = page.eval_on_selector_all(".sc-stats .sc-stat", "els => els.map(e => e.dataset.stat + ':' + e.querySelector('.sc-stat-value').textContent)")
-    assert stats == [f"board:{len(board_ids(base, sid))}", f"full:{v['full_reports']}", f"trips:{v['trips_this_week']}", f"hours:{v['hours_left']} / {v['hours']}"], stats
+    assert stats == [f"board:{len(board_ids(base, sid))}", f"full:{v['full_reports']}", f"trips:{v['trips_this_week']}", f"points:{v['points_left']}"], stats
     assert page.eval_on_selector(".sc-intel .sc-subtabs button[data-sub=ratings]", "e => e.getAttribute('aria-selected')") == "true"
     words = page.eval_on_selector_all(".sc-intel .sc-skill .sc-skill-val", "els => els.map(e => e.textContent.trim())")
     assert words and all(re.fullmatch(r"(Weak|Fair|Solid|Strong|Elite|All-American)(–(Weak|Fair|Solid|Strong|Elite|All-American))?|Not Read", w) for w in words), \
@@ -109,7 +109,7 @@ def check_send_and_board(page, base, sid, errors) -> None:
     segs = page.evaluate("(pid) => [...document.querySelectorAll(`.sc-row[data-pid='${pid}'] .sc-trip`)].map(t => t.classList.contains('on') ? 1 : t.classList.contains('half') ? 0.5 : 0)", pid)
     assert segs == [min(1, max(0, after - i)) for i in range(3)], segs
     page.wait_for_selector(".sc-intel .sc-result", timeout=10_000)
-    page.wait_for_function("(h) => document.querySelector('#sc-hours .sc-points').textContent.startsWith('Points Left: ' + h + ' of')", arg=v["points_left"] - row["cost"], timeout=10_000)
+    page.wait_for_function("(h) => document.querySelector('#sc-points').textContent.startsWith('Points Left: ' + h + ' of')", arg=v["points_left"] - row["cost"], timeout=10_000)
     assert page.evaluate("(e) => e.isConnected", lst) and tab_on(page, "scouting")
     # Add to Board flips the star; Remove from Board flips it back (no offer out: no confirm)
     assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-star") == "☆"

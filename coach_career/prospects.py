@@ -512,8 +512,10 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "likes": staff_likes(state, pid, viewer),
         "can_scout": can_scout(state, viewer, pid),
         "scout_cost": recruiting.look_cost(state, viewer, pid),       # a Send's scouting points (as the board row's)
+        "points_left": recruiting.scout_points_left(state, viewer),     # the week's scouting points left (a Send it cannot pay is disabled)
         "ratings": signed_ratings(state, p) if status["signed"] == viewer else None,     # signing day shows what you got
         "ask": recruiting.ask_view(state, viewer, pid), "cooled": recruiting.cooled(state, viewer, pid),
+        "cooled_why": persona.cooled_why(state, viewer, pid) if recruiting.cooled(state, viewer, pid) else None,
         "stage": recruiting.stage(state, viewer, pid), "strength": recruiting.strengths(state, viewer, pid),
         "pestering": recruiting.would_pester(state, viewer, pid), "pesters": recruiting.pesters(state, viewer, pid),
     }
@@ -605,6 +607,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                nil=rc["nil"].get(viewer, {}).get("held", {}).get(pid, 0),
                need=recruiting.needs(state, viewer)[recruiting._group_of(rc["prospects"][pid])],
                ask=recruiting.ask_view(state, viewer, pid), cooled=recruiting.cooled(state, viewer, pid),
+               cooled_why=persona.cooled_why(state, viewer, pid) if recruiting.cooled(state, viewer, pid) else None,
                stage=recruiting.stage(state, viewer, pid), strength=recruiting.strengths(state, viewer, pid),
                pestering=recruiting.would_pester(state, viewer, pid), pesters=recruiting.pesters(state, viewer, pid),
                stage_move=_stage_move(state, pid, viewer),
@@ -813,7 +816,7 @@ def recruiting_view(state: dict) -> dict:
     hist = history_index(state, me)
     board = [board_row(state, pid, me, hist) for pid in rc["board"]]
     recap = [e for e in rc["log"] if e["week"] == week and (e.get("school") == me or e.get("from") == me or e["pid"] in mine)
-             and e["kind"] not in ("leaning_fcs",) + recruiting.CONTACT_KINDS]
+             and e["kind"] not in ("leaning_fcs",) + recruiting.HISTORY_ONLY]
     return {
         "week": week, "hours": recruiting.weekly_hours(state, me), "hours_left": recruiting._hours(state, me),
         "points_left": recruiting.scout_points_left(state, me), "points_week": recruiting.scout_points(state, me),

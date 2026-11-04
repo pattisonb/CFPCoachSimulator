@@ -145,7 +145,7 @@ def assert_chance_order(page, board: list, me: str) -> None:
 
 PITCH = {"proximity": "Close to Home", "playing_time": "Playing Time", "prestige": "Program Prestige", "winning": "Winning Now",
          "nil": "NIL", "coach": "The Head Coach", "academics": "Academics"}
-REACTION = {"hit": "He lit up", "polite": "Polite", "quiet": "He went quiet", "tired": "He is tired of this"}
+REACTION = {"hit": "He lit up", "polite": "Polite", "quiet": "He went quiet", "tired": "He is tired of this", "guarded": "He gave nothing away"}
 GONE = "heard".title()     # the word the cue tag used to print: the page never shows it now
 HISTORY_EMPTY = "Nothing with him yet: no contact, no offer."
 CUE_TITLE = "He brought this up on the call this week"
@@ -459,7 +459,7 @@ def test_scouting_tab(page, base, sid) -> None:
         assert page.inner_text(".sc-intel .sc-status").strip().lower() == "fully scouted"
         assert segments() == [1, 1, 1], segments()
     left = call(base, f"/api/season/{sid}/scouting")["points_left"]
-    page.wait_for_function("(t) => document.querySelector('#sc-hours .sc-points').textContent.startsWith(t)", arg=f"Points Left: {left} of", timeout=10_000)
+    page.wait_for_function("(t) => document.querySelector('#sc-points').textContent.startsWith(t)", arg=f"Points Left: {left} of", timeout=10_000)
     assert page.evaluate("(el) => el.isConnected", h), "the list was never rebuilt by the Sends"
     assert page.evaluate("() => document.activeElement && document.activeElement !== document.body"), "the focus never falls to the page body"
     # pagination: page 2 and back

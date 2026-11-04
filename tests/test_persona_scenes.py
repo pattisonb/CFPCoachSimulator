@@ -216,8 +216,9 @@ def test_no_tell_call_hides_hits():
         sc = recruiting.act(st, ME, pid, "call")["scene"]
         r = recruiting.act(st, ME, pid, "present", scene=sc["id"], topics=list(p["priorities"]) + [t for t in recruiting.PITCHES if t not in p["priorities"]][:3 - len(p["priorities"])])
         assert r["hit"] == [] and r["scene"]["present"]["hit"] == [], r
+        assert r["scene"]["present"]["kind"] == "guarded", r["scene"]["present"]      # nothing of how it landed
         ev = [e for e in st["recruiting"]["log"] if e["kind"] == "present" and e["pid"] == pid][-1]
-        assert ev["hit"] == 0, ev
+        assert ev["hit"] is None, ev                                                  # History: he gave nothing away, not "none landed"
     pid = cold(st, used)
     force(st, pid, "business")
     p = st["recruiting"]["prospects"][pid]

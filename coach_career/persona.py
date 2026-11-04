@@ -12,30 +12,36 @@ PERSONALITY_LABEL = {"cocky": "Cocky", "shy": "Shy", "guarded": "Guarded", "atte
 
 DECIDERS = {"self": 0.30, "mom": 0.20, "dad": 0.15, "grandma": 0.10, "hs_coach": 0.15, "trainer": 0.10}   # who decides, by share *tune*
 DECIDER_LABEL = {"self": "Himself", "mom": "Mom", "dad": "Dad", "grandma": "Grandmother", "hs_coach": "High School Coach", "trainer": "Trainer"}
+PORTAL_DECIDERS = ("self", "mom", "dad", "trainer")   # a transfer's decider: no high school coach or grandmother (their shares renormalized)
 DECIDER_TOPICS = {"self": (), "mom": ("proximity", "academics"), "dad": ("nil", "playing_time"), "grandma": ("proximity", "coach"),
                   "hs_coach": ("coach", "playing_time", "winning"), "trainer": ("nil",)}   # what each decider cares about
 
 
-def draw(pid: str, seed) -> dict:
-    """His personality, decider and the decider's topic (None when he decides himself)."""
+def draw(pid: str, seed, portal: bool = False) -> dict:
+    """His personality, decider and the decider's topic (None when he decides himself). A transfer in
+    the portal (`portal`) keeps the same personality draw; his decider comes from its own stream and
+    only PORTAL_DECIDERS, so the class draw never moves."""
     rng = random.Random(f"persona-{seed}-{pid}")
     personality = rng.choice(PERSONALITIES)
     decider = rng.choices(list(DECIDERS), weights=list(DECIDERS.values()))[0]
+    if portal:
+        rng = random.Random(f"persona-portal-{seed}-{pid}")
+        decider = rng.choices(PORTAL_DECIDERS, weights=[DECIDERS[d] for d in PORTAL_DECIDERS])[0]
     topics = DECIDER_TOPICS[decider]
     return {"personality": personality, "decider": decider, "decider_topic": rng.choice(topics) if topics else None}
 
 
 @lru_cache(maxsize=20000)
-def _drawn(pid: str, seed) -> dict:
-    return draw(pid, seed)
+def _drawn(pid: str, seed, portal: bool = False) -> dict:
+    return draw(pid, seed, portal)
 
 
 def of(state: dict, pid: str) -> dict:
     """The prospect's persona (read only): the one on the prospect when a save or a test set it,
-    otherwise his fixed draw, cached in memory and not written into the state."""
+    otherwise his fixed draw (the portal's for a transfer), cached in memory and not written into the state."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
-    return p["persona"] if "persona" in p else _drawn(pid, rc.get("seed", 0))
+    return p["persona"] if "persona" in p else _drawn(pid, rc.get("seed", 0), bool(rc.get("portal")))
 
 
 # ----- what the personality and the decider change in recruiting --------------------------------------
@@ -143,6 +149,19 @@ def cool_quiet(state: dict, week: int) -> None:
                 continue
             if of(state, pid)["personality"] == "attention":
                 c["cooled_until"] = week + 1
+                set_cooled_why(state, slug, pid, "quiet")
+
+
+def set_cooled_why(state: dict, slug: str, pid: str, why: str) -> None:
+    """Why he cooled on the player's school ("lowball", "promise" or "quiet"), for the words the page
+    shows; kept off the contact (the recruiting digest) and only for the player's school."""
+    if slug == state.get("team"):
+        state["recruiting"].setdefault("cooled_why", {}).setdefault(slug, {})[pid] = why
+
+
+def cooled_why(state: dict, slug: str, pid: str) -> str:
+    """Why he is cooled on the school; a save from before this, or an AI school: "lowball"."""
+    return ((state["recruiting"].get("cooled_why") or {}).get(slug) or {}).get(pid) or "lowball"
 
 
 # ----- discovery: what a school has learned about him ---------------------------------------------------
@@ -157,9 +176,14 @@ DECIDER_LINE = {"self": "Your staff learned he makes his own call.", "mom": "You
 
 
 def known(state: dict, slug: str, pid: str) -> dict:
-    """What `slug` has learned about him: {"personality": bool, "decider": bool}."""
-    k = ((state["recruiting"].get("traits_known") or {}).get(slug) or {}).get(pid) or {}
-    return {"personality": bool(k.get("personality")), "decider": bool(k.get("decider"))}
+    """What `slug` has learned about him: {"personality": bool, "decider": bool}. The player's staff
+    knows his decider once its read holds DECIDER_LOOKS looks, logged or not (a save from before the
+    decider was learned in look() never logged it)."""
+    from coach_career import recruiting
+    rc = state["recruiting"]
+    k = ((rc.get("traits_known") or {}).get(slug) or {}).get(pid) or {}
+    decider = bool(k.get("decider")) or (slug == state.get("team") and recruiting.report_looks((rc.get("reads") or {}).get(pid)) >= DECIDER_LOOKS)
+    return {"personality": bool(k.get("personality")), "decider": decider}
 
 
 def learn(state: dict, slug: str, pid: str, trait: str) -> bool:

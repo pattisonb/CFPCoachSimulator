@@ -1,6 +1,7 @@
 /* The Scouting tab (replaces Staff): the Scouting Center, master and detail.
    - The header: "Recruiting Intelligence / Class of 2027", SCOUTING CENTER, a subtitle and All Reports; beside it four
-     stat cards: My Board, Full Reports, Scouting Queue (your trips this week) and Scouting Hours (left / total, a bar, and "Points Left: 35 of 50" for trips).
+     stat cards: My Board, Full Reports, Scouting Queue (your trips this week) and Scouting Points (the points left for trips, a bar, "Points Left: 35 of 50",
+     and the week's recruiting hours as a second line).
    - Left, the Prospect Database: the whole class you can see (the API's queue; a full report stays listed), 20 to a page, with a search, the chips
      All Prospects · My Board · Scouted, a position filter and a sort; a row is the board star, the avatar, the name,
      "POS · ST · stars", any flag, the rank, the potential read ("Unscouted" before a look) and the Scouting
@@ -142,16 +143,19 @@
   function headBlock(s, v, st) {
     const stat = (label, key, value, sub, extra) => el("div", { class: "sc-stat", "data-stat": key, ...(extra || {}) }, [
       el("div", { class: "sc-stat-label", text: label }), el("div", { class: "sc-stat-value" }, value), sub]);
-    const hoursVal = el("span", { class: "sc-hours-val" });
-    const hoursBar = el("i", { class: "sc-hours-fill" });
-    const pointsVal = el("span", { class: "sc-stat-sub sc-points" });
-    const hoursCard = stat("Scouting Hours", "hours", [hoursVal], el("span", { class: "sc-hours-sub" }, [el("span", { class: "sc-hours-bar", "aria-hidden": "true" }, [hoursBar]), pointsVal]), { id: "sc-hours", role: "status" });
+    // Scouting Points: what a Send spends, the headline and its bar; the recruiting hours (calls, visits) a second line
+    const pointsBig = el("span", { class: "sc-points-val" });
+    const pointsBar = el("i", { class: "sc-hours-fill" });
+    const pointsVal = el("span", { id: "sc-points", class: "sc-stat-sub sc-points" });
+    const hoursVal = el("span", { class: "sc-stat-sub sc-hours-line" });
+    const pointsCard = stat("Scouting Points", "points", [pointsBig], el("span", { class: "sc-hours-sub" },
+      [el("span", { class: "sc-hours-bar", "aria-hidden": "true" }, [pointsBar]), pointsVal, hoursVal]), { id: "sc-points-card", role: "status" });
     const boardVal = el("span", { class: "sc-board-n" }), fullVal = el("span", { class: "sc-full-n" }), tripsVal = el("span", { class: "sc-trips-n" });
     const cards = el("div", { class: "sc-stats" }, [
       stat("My Board", "board", [boardVal], el("span", { class: "sc-stat-sub", text: "Tracked Players" })),
       stat("Full Reports", "full", [fullVal], el("span", { class: "sc-stat-sub", text: "Evaluated Prospects" })),
       stat("Scouting Queue", "trips", [tripsVal], el("span", { class: "sc-stat-sub", text: "Trips This Week" })),
-      hoursCard]);
+      pointsCard]);
     const newCount = el("span", { class: "go-tag good sc-new-n", hidden: "" });
     const all = el("button", { type: "button", id: "sc-all-reports", class: "go-btn sc-all-reports" }, ["All Reports", newCount]);
     ui().on(all, "click", () => openReports(s, "this_week"));
@@ -161,11 +165,12 @@
       set(boardVal, String(cur.board));
       set(fullVal, String(d.full_reports || 0));
       set(tripsVal, String(d.trips_this_week || 0));
-      set(hoursVal, `${st.left} / ${st.hours}`);
-      hoursBar.style.width = `${st.hours ? Math.round(100 * st.left / st.hours) : 0}%`;
+      set(pointsBig, String(st.points));
+      pointsBar.style.width = `${st.pointsWeek ? Math.round(100 * st.points / st.pointsWeek) : 0}%`;
       set(pointsVal, `Points Left: ${st.points} of ${st.pointsWeek}`);
-      hoursCard.title = `${st.left} of ${plural(st.hours, "hour")} left this week; ${st.points} of ${plural(st.pointsWeek, "scouting point")} left for trips`;
-      hoursCard.setAttribute("aria-label", hoursCard.title);
+      set(hoursVal, `Recruiting Hours: ${st.left} of ${st.hours}`);
+      pointsCard.title = `${st.points} of ${plural(st.pointsWeek, "scouting point")} left for trips this week; ${st.left} of ${plural(st.hours, "recruiting hour")} left for calls and visits`;
+      pointsCard.setAttribute("aria-label", pointsCard.title);
       const n = finds(d).length;
       newCount.hidden = !n;
       newCount.textContent = n ? `${n} New` : "";

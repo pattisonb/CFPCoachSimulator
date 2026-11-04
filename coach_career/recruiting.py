@@ -478,8 +478,14 @@ def is_lowball(nil: int, ask: int, share: float = LOWBALL) -> bool:
     return nil < share * ask or (nil == 0 and ask >= LOWBALL_MIN)
 
 
+COOLED_409 = {"lowball": "he has cooled on you after that offer: raise it to what he wants",
+              "promise": "he has cooled on you after that promise: give him time",
+              "quiet": "he has cooled on you after you went quiet: call or visit to warm him back up"}
+
+
 def cooled(state: dict, slug: str, pid: str) -> bool:
-    """Whether he is cooled on the school after a lowball (contacts count half, no visit)."""
+    """Whether he is cooled on the school (a lowball, a hollow or broken promise, or silence for a
+    Loves-the-Attention recruit): contacts count half, no visit. persona.cooled_why says which."""
     return (_contact(state, slug, pid).get("cooled_until") or -1) > state["current_week"]
 
 
@@ -1319,6 +1325,7 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
         else:
             points = -ANSWER_HOLLOW * persona.hollow_mult(state, pid)
             contact["cooled_until"] = week + 1
+            persona.set_cooled_why(state, slug, pid, "promise")
             _event(state, "not_buying", pid, slug, topic="playing_time")
         contact.setdefault("promises", []).append({"kind": q["kind"], "about": q["about"], "week": week, "broken": None})
     q["answer"] = answer
@@ -1333,7 +1340,10 @@ def _present(state: dict, slug: str, pid: str, scene: Optional[str], topics: Opt
     """Your opening on the open scene (scenes.present), no hours: three different topics, scored
     against his true priorities without revealing them. Each that is one of his earns PRESENT_HIT of
     the action's base times (1 + your strength); one you are weak at (under BACKFIRE) costs
-    BACKFIRE_COST of that share; the rest add nothing; the total caps at the base. The points are the
+    BACKFIRE_COST of that share; the rest add nothing; the total caps at the base. His priorities
+    include his decider's topic, and his personality and decider scale each share and the cap as they
+    do a pitch (persona.pitch_mult: a Shy recruit's visit, his first call, a visit on the decider's
+    topic). The points are the
     call's or visit's (diminished by his earlier contacts, halved while he is cooled, nothing while
     the call pesters him) and land through `_add_points` on the scene's action. His reaction, your
     question and his cue join the scene; it remembers what you presented."""
@@ -1351,26 +1361,31 @@ def _present(state: dict, slug: str, pid: str, scene: Optional[str], topics: Opt
         raise RecruitingError(400, "present exactly three different topics")
     contact = _contact(state, slug, pid)
     st_ = strengths(state, slug, pid)
-    base = BASE_POINTS[sc["action"]]
+    action = sc["action"]
+    base = BASE_POINTS[action]
+    first_call = action == "call" and not contact.get("calls")      # a scene's call is counted when its pitch lands
+    mult = {t: persona.pitch_mult(state, pid, action, t, first_call) for t in topics}
     hits, back, raw = [], [], 0.0
     for t in topics:
-        if t not in p["priorities"]:
+        if not persona.counts_as_priority(state, pid, t):          # his priorities, or his decider's topic
             continue
         if st_[t] < BACKFIRE:
             back.append(t)
             raw -= BACKFIRE_COST * PRESENT_HIT * base
         else:
             hits.append(t)
-            raw += PRESENT_HIT * base * (1 + st_[t])
+            raw += PRESENT_HIT * base * (1 + st_[t]) * mult[t]
+    cap = base * max([persona.pitch_mult(state, pid, action, None, first_call)] + list(mult.values()))   # his personality scales the cap too
     tired = would_pester(state, slug, pid)
-    points = 0.0 if tired else min(raw, base) / (1 + DIMINISH * contact["n"])
+    points = 0.0 if tired else min(raw, cap) / (1 + DIMINISH * contact["n"])
     if points and cooled(state, slug, pid):
         points *= COOLED_CONTACT
     if points < 0:
         _event(state, "not_buying", pid, slug, topic=back[0])
     scenes.present(state, slug, pid, sc, topics, hits, back, tired)
-    shown = hits if scenes.tells(state, slug, pid, sc["action"]) else []      # a call that keeps his priority to himself does not say which were his
-    _event(state, "present", pid, slug, action=sc["action"], topics=list(topics), hit=len(shown))
+    tells = scenes.tells(state, slug, pid, action)
+    shown = hits if tells else []      # a call that keeps his priority to himself does not say which were his
+    _event(state, "present", pid, slug, action=action, topics=list(topics), hit=len(shown) if tells else None)
     if points:
         _add_points(state, slug, pid, points, sc["action"])
     return {"scene": sc, "points": points, "hit": shown, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
@@ -1491,6 +1506,7 @@ def _report(state: dict, week: int) -> dict:
 
 REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "pester", "promise_broken")
 CONTACT_KINDS = ("contact", "pitch", "raise_nil", "pull_offer", "answer", "present")   # your actions, logged for his History (not news)
+HISTORY_ONLY = CONTACT_KINDS + ("learned",)   # his History's alone: never the week's news (what your staff learned is his, not news)
 
 
 def _pester_line(prospect: str, school: str) -> str:
@@ -1570,6 +1586,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         if is_lowball(nil, ask, persona.lowball_share(state, pid)):
             contact["cooled_until"] = week + COOL_WEEKS
             contact["lowball"] = True
+            persona.set_cooled_why(state, slug, pid, "lowball")
         else:
             cold = not contact["n"] and not (rc["visits"].get(pid, {}).get(slug) or {}).get("done")
             contact["cold_offer"] = cold
@@ -1592,7 +1609,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             points += _contact_points(state, slug, p, "offer", None)      # and the offer itself counts now
     elif action == "official_visit":
         if cooled(state, slug, pid):
-            raise RecruitingError(409, "he has cooled on you after that offer: raise it to what he wants")
+            raise RecruitingError(409, COOLED_409[persona.cooled_why(state, slug, pid)])
         if slug not in top_group(state, pid):
             raise RecruitingError(409, "he is not considering you yet: get into his top group first")
         if slug in rc["visits"].get(pid, {}):
@@ -2069,6 +2086,7 @@ def _promises(state: dict, week: int) -> None:
                     st_["firmness"] = int(max(0, (st_.get("firmness") or FIRM_START) - PROMISE_RIVAL))
                 else:
                     c["cooled_until"] = week + COOL_WEEKS
+                    persona.set_cooled_why(state, slug, pid, "promise")
                 pr["broken"] = week
                 _event(state, "promise_broken", pid, slug, about=pr["about"]["name"], other=pr["about"].get("pid"))
 

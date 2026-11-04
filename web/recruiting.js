@@ -188,7 +188,7 @@
       else if (e.kind === "asked_more") bits = ["He asked for more NIL"];
       else if (e.kind === "not_buying") bits = ["He isn't buying your pitch"];
       else if (e.kind === "pester") bits = [`He tuned out your ${e.action === "hc_visit" ? "visit" : e.action === "call" ? "call" : "message"}`];
-      else if (e.kind === "present") bits = [`Presented ${(e.topics || []).map((t) => lowerName(t)).join(", ")}`, LANDED[e.hit] || `${e.hit} landed`];
+      else if (e.kind === "present") bits = [`Presented ${(e.topics || []).map((t) => lowerName(t)).join(", ")}`, e.hit == null ? "He gave nothing away" : LANDED[e.hit] || `${e.hit} landed`];
       else if (e.kind === "answer") bits = [e.answer === "promise" ? `Promised him the job over ${e.about}${e.truthful === false ? " (he did not buy it)" : ""}`
         : e.answer === "deflect" ? `Sidestepped his question about ${e.about}` : `Told him straight about ${e.about}`];
       else if (e.kind === "learned") bits = [e.line];
@@ -211,8 +211,10 @@
   // a topic in a sentence: "playing time", "NIL"
   const topicWord = (t) => (t === "nil" ? "NIL" : (PITCH_NAMES[t] || t).toLowerCase());
   const REACTION_TOAST = { hit: (t) => `He lit up: ${topicWord(t)} matters to him`, polite: () => "He was polite and moved on",
-                           quiet: (t) => `He went quiet: he isn't buying ${topicWord(t)} from you`, tired: () => "He is tired of this: the call wore on him" };
-  const REACTION_WORDS = { hit: "He lit up", polite: "Polite", quiet: "He went quiet", tired: "He is tired of this" };
+                           quiet: (t) => `He went quiet: he isn't buying ${topicWord(t)} from you`, tired: () => "He is tired of this: the call wore on him",
+                           guarded: () => "He gave nothing away" };
+  // "guarded": a call that keeps his priority to himself (a Guarded recruit, a Shy one's first call) says nothing of how the pitch landed
+  const REACTION_WORDS = { hit: "He lit up", polite: "Polite", quiet: "He went quiet", tired: "He is tired of this", guarded: "He gave nothing away" };
   // your answers to his question about a named player: the button's label, and your line by the question's kind (the same copy as coach_career/scenes.py ANSWER_LABELS and ANSWER_COPY)
   const ANSWERS = ["straight", "promise", "deflect"];
   const HOLLOW_REPLY = "I've heard that one before.";      // his reply to a promise he has heard before (scenes.py REPLY_LINES.hollow)
@@ -615,6 +617,13 @@
   // "OC likes him": with his report complete, the read says he would start on your returning roster; the tag's title carries the sentence
   const likesText = (l) => `${l.who} Likes Him`;
   const likesLine = (l) => (l.name ? `Your ${l.who}, ${l.name}, thinks he starts for you next year.` : `${l.text}.`);
+  // why he cooled on you (the payload's cooled_why): the tag's title and the Official Visit's reason
+  const COOLED_TITLE = {
+    lowball: "He read your offer as a lowball: contacts count half and he will not visit until you raise it to what he wants",
+    promise: "He doubts a promise you made: contacts count half and he will not visit until he cools off",
+    quiet: "He felt ignored: call or visit to warm him back up. Contacts count half and he will not visit until then",
+  };
+  const COOLED_WHY = { lowball: "Cooled: raise your offer first", promise: "Cooled: give him time", quiet: "Cooled: he wants to hear from you" };
   function badges(b, me) {
     const out = el("div", { class: "go-tags go-badges" });
     if (b.generational) out.append(genBadge());
@@ -623,7 +632,7 @@
     if (b.need != null && !b.signed && b.committed !== me) out.append(el("span", { class: `go-tag ${b.need > 0 ? "good" : "muted"}`, text: b.need > 0 ? `Need ${b.need}` : "Full",
       title: b.need > 0 ? `Your roster needs ${b.need} at his position this class` : "Your roster is covered at his position this class" }));
     if (b.offered && !b.signed && b.committed !== me) out.append(el("span", { class: "go-tag good", text: b.nil ? `Offered · ${b.nil} NIL` : "Offered" }));
-    if (b.cooled) out.append(el("span", { class: "go-tag bad", text: "Cooled", title: "He read your offer as a lowball: contacts count half and he will not visit until you raise it to what he wants" }));
+    if (b.cooled) out.append(el("span", { class: "go-tag bad", text: "Cooled", title: COOLED_TITLE[b.cooled_why] || COOLED_TITLE.lowball }));
     if (b.pestering) out.append(el("span", { class: "go-tag bad", text: "Tuning You Out", title: "He is not considering you; more contact pushes him away" }));
     if (b.committed === me && !b.signed) out.append(b.hard ? el("span", { class: "go-tag good", text: "Hard Commit", title: "Locked in: he cannot flip and his offer stands until he signs" })
       : el("span", { class: `go-tag ${b.firmness >= 70 ? "good" : b.firmness < 40 ? "warn" : ""}`, text: `Verbal · ${b.firmness}`, title: "A verbal commit (0-100): he warms to you on his own each week, faster with a message, call or visit; rivals offering more playing time cool him. At 90 he is a hard commit and cannot flip." }));
@@ -1259,7 +1268,7 @@
         ["scout", "Scout", `${b.scout_cost} Points · ${fmtLooks(looks)} of 3 Looks${looks < 3 && 3 - looks <= 1 ? " · Finishes His Report" : ""}`,
           looks >= 3 ? "His report is complete: 3 of 3 looks" : v.points_left < b.scout_cost ? "Not enough scouting points left this week." : null],
         ["official_visit", v.portal ? "Campus Visit" : "Official Visit", "10h", !b.offered ? "Offer him first" : b.visit ? (b.visit.done ? "Visited" : `Booked for week ${b.visit.week}`)
-          : !["top", "visited"].includes(b.stage) ? "Not yet: get into his top group" : b.cooled ? "Cooled: raise your offer first" : short(10)],
+          : !["top", "visited"].includes(b.stage) ? "Not yet: get into his top group" : b.cooled ? (COOLED_WHY[b.cooled_why] || COOLED_WHY.lowball) : short(10)],
         ["offer", "Offer…", "No Hours", b.signed ? "Signed" : b.offered ? "Already offered" : b.hard ? "Hard commit elsewhere" : v.offers_left <= 0 ? "Offer limit reached" : null],
         ["raise_nil", "Raise NIL…", "No Hours", !b.offered ? "Not offered" : null],
         ["pull_offer", "Pull Offer", "", !b.offered ? "Not offered" : null],
@@ -2072,7 +2081,9 @@
     const mine = pub.committed === me && !pub.signed;
     const scoutBtn = mine ? el("span", { class: "muted small rc-no-scout", text: "Committed to you: no more looks" })
       : el("button", { type: "button", class: "go-btn", text: left <= 0 ? "Report Complete · 3 of 3 Looks" : `Send a Scout${p.scout_cost != null ? ` · ${p.scout_cost} Points` : ""}${left <= 1 ? " · Finishes His Report" : ""} →`, title: ACT_TIPS.scout });
-    if (!mine && left <= 0) scoutBtn.disabled = true;
+    const short = !mine && left > 0 && p.points_left != null && p.scout_cost != null && p.points_left < p.scout_cost;
+    if (!mine && (left <= 0 || short)) scoutBtn.disabled = true;
+    if (short) scoutBtn.title = "Not enough scouting points left this week.";
     if (!mine) scoutBtn.addEventListener("click", async () => { scoutBtn.disabled = true; if (await act(s, pid, "scout")) openProfile(s, pid, node); else scoutBtn.disabled = false; });
     node.append(el("h3", { text: "Our Staff's Grades" }));
     if (p.our_grades) {

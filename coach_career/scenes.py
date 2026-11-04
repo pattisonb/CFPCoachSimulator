@@ -374,6 +374,13 @@ def _persona_line(state: dict, pid: str, scene_id: str, key: str, f: dict, alway
     return line if always or rng.random() < PERSONA_LINE else None
 
 
+def _no_tell_line(state: dict, pid: str, key: str, f: dict, avoid: str | None = None) -> str:
+    """What he says to a pitch on a call that keeps his priority to himself, when it was none of his
+    (his NO_TOPIC lines, never the cue's own): a line that names no topic and shows no tone. Its own draw."""
+    lines = [x.format(**f) for x in persona.NO_TOPIC.get(persona.of(state, pid)["personality"]) or persona.NO_TOPIC["guarded"]]
+    return random.Random(f"persona-line-{key}-guarded").choice([x for x in lines if x != avoid] or lines)
+
+
 def tells(state: dict, slug: str, pid: str, action: str) -> bool:
     """Whether this scene may name one of his priorities: every visit does; a call does unless he keeps
     it to himself (a Guarded recruit, a Shy one's first call)."""
@@ -474,7 +481,8 @@ def cue(state: dict, slug: str, pid: str, week: int, f: dict, tells: bool = True
 def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits: list[str], back: list[str], tired: bool) -> str:
     """Your opening lands on the scene: your turn (the three things), his reaction (a hit names the
     priority you are strongest on; a weak one gets its quiet line; none, polite), your question, his
-    cue, his question's intro when he has one, and on a visit his dad's ask. Returns the reaction's kind."""
+    cue, his question's intro when he has one, and on a visit his dad's ask. Returns the reaction's kind:
+    on a call that keeps his priority to himself, "guarded" (unless tired), whatever he thought of it."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
     week = sc["week"]
@@ -483,6 +491,7 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
     x, y, z = (PHRASES[t] for t in topics)
     sc["turns"].append(_turn("you", rng.choice(PRESENT_SAID).format(x=x, y=y, z=z, **f)))
     tells_ = tells(state, slug, pid, sc["action"])
+    c = cue(state, slug, pid, week, f, tells_)                     # its own draw: asked first so the reaction never repeats it
     if tired:
         kind, text = "tired", rng.choice(PRESENT_LINES["tired"]).format(**f)
     elif hits:
@@ -497,8 +506,11 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
         text = _persona_line(state, pid, sc["id"], "quiet", f, always=not tells_) or text
     else:
         kind, text = "polite", rng.choice(PRESENT_LINES["polite"]).format(**f)
+        if not tells_:                                              # a generic polite line would say none were his
+            text = _no_tell_line(state, pid, f"{sc['id']}-present", f, avoid=c["text"])
+    if not tells_ and kind != "tired":
+        kind = "guarded"
     sc["turns"].append(_turn("him", text))
-    c = cue(state, slug, pid, week, f, tells_)
     sc["turns"].append(_turn("you", rng.choice(ASK["two" if len(c["topics"]) > 1 else "one"]).format(**f)))
     sc["turns"].append(_turn("him", c["text"]))
     sc["cue"] = c
@@ -551,20 +563,24 @@ def answer_reply(state: dict, slug: str, pid: str, question: dict, answer: str, 
 
 
 def reaction(state: dict, slug: str, pid: str, action: str, pitch: str, p: dict, tired: bool = False, tells: bool = True) -> dict:
-    """How he takes your lead-with: a priority where you are strong lights him up (hit), one where you
-    are weak goes quiet, anything else is polite; `tired` (the call pestered him) and the pitch falls
-    flat. `you` is your line, for the conversation."""
+    """How he takes your lead-with: a priority (or his decider's topic, persona.counts_as_priority) where
+    you are strong lights him up (hit), one where you are weak goes quiet, anything else is polite;
+    `tired` (the call pestered him) and the pitch falls flat. On a call that keeps his priority to himself
+    (`tells` False) the kind is "guarded" whatever he thought (his personality's line keeps its tone; a
+    pitch that was none of his gets a line that names nothing). `you` is your line, for the conversation."""
     rng = random.Random(f"react-{state['recruiting']['seed']}-{slug}-{pid}-{state['current_week']}-{action}")
     f = _fields(state, slug, p)
     you = LEAD_LINES[pitch].format(**f)
     if tired:
         return {"kind": "tired", "text": rng.choice(TIRED).format(**f), "you": you}
-    if pitch in p["priorities"]:
+    if persona.counts_as_priority(state, pid, pitch):
         kind = "hit" if recruiting.strengths(state, slug, pid)[pitch] >= recruiting.BACKFIRE else "quiet"
     else:
         kind = "polite"
     text = rng.choice(LINES[pitch][kind]).format(**f)
+    sid = f"{action}-{p['id']}-{state['current_week']}"          # the scene's id: its personality line, keyed apart from every other draw
     if kind in ("hit", "quiet"):
-        sid = f"{action}-{p['id']}-{state['current_week']}"      # the scene's id: its personality line, keyed apart from every other draw
         text = _persona_line(state, p["id"], sid, kind, f, always=not tells, salt="react") or text
-    return {"kind": kind, "text": text, "you": you}
+    elif not tells:                                               # the topic's polite line would say it is none of his
+        text = _no_tell_line(state, p["id"], f"{sid}-react", f)
+    return {"kind": kind if tells else "guarded", "text": text, "you": you}
