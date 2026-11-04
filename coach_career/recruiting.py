@@ -1125,12 +1125,17 @@ def open_spots(state: dict, slug: str) -> int:
     return _open_spots(slug)
 
 
-def portal_spots(state: dict, slug: str) -> int:
-    """A school's portal spots: the roster limit (plus the end of the roster a Power 4 school or
-    you would release) minus next year's roster minus the transfers it has signed."""
-    taken = sum(1 for st_ in state["recruiting"]["status"].values() if st_["signed"] == slug)
+def portal_room(state: dict, slug: str) -> int:
+    """A school's room for transfers this portal, before any signs: the roster limit (plus the end
+    of the roster a Power 4 school or you would release) minus next year's roster."""
     extra = PORTAL_CHURN if slug == state.get("team") or _p4(slug) else 0
-    return max(0, ROSTER_LIMIT + extra - len(state["league"]["teams"][slug]["roster"]) - taken)
+    return ROSTER_LIMIT + extra - len(state["league"]["teams"][slug]["roster"])
+
+
+def portal_spots(state: dict, slug: str) -> int:
+    """A school's portal spots: its portal room minus the transfers it has signed."""
+    taken = sum(1 for st_ in state["recruiting"]["status"].values() if st_["signed"] == slug)
+    return max(0, portal_room(state, slug) - taken)
 
 
 def portal_upgrade(state: dict, slug: str, p: dict) -> bool:
@@ -1467,8 +1472,9 @@ def _report(state: dict, week: int) -> dict:
     name = lambda s: teams[s]["name"] if s in teams else s
     pids = list(dict.fromkeys(list(rc["board"]) + list(rc["offers"].get(me, []))))
     events, pestered = [], set()
+    portal = bool(rc.get("portal"))
     for e in rc["log"]:
-        if e["week"] != week or e["kind"] not in REPORT_KINDS:
+        if (e.get("portal_week") if portal else e["week"]) != week or e["kind"] not in REPORT_KINDS:
             continue
         if e["kind"] == "pester":                 # once per prospect per week, however many contacts wore on him
             if e["pid"] in pestered:
@@ -1495,7 +1501,8 @@ def _report(state: dict, week: int) -> dict:
                      "moves": [m for m in moves if m["from"] != m["to"]][:MOVES_SHOWN],
                      "events": [dict(e, school_name=name(e["school"]) if e.get("school") else None,
                                      rival_name=name(e["rival"]) if e.get("rival") else None,
-                                     **({"line": _pester_line(p["name"], name(e["school"]))} if e["kind"] == "pester" else {}))
+                                     **({"line": _pester_line(p["name"], name(e["school"]))} if e["kind"] == "pester" else {}),
+                                     **({"reason": lost_reason(e, name)} if e.get("lost") else {}))
                                 for e in events if e["pid"] == pid]})
     report = {"week": week, "rows": rows}
     reports = rc.setdefault("reports", [])
@@ -1759,7 +1766,11 @@ def signed_class(state: dict, slug: str) -> list[str]:
 
 
 def _event(state: dict, kind: str, pid: str, school: Optional[str] = None, **extra) -> dict:
+    """A line in the recruiting log. In the portal it also carries the portal week (`portal_week`):
+    the season's week stands still through the offseason."""
     e = {"week": state["current_week"], "kind": kind, "pid": pid, "school": school, **extra}
+    if state["recruiting"].get("portal"):
+        e["portal_week"] = state["recruiting"].get("week")
     state["recruiting"]["log"].append(e)
     return e
 
@@ -2136,21 +2147,38 @@ class _Room:
         self.groups: dict[str, tuple[dict, dict]] = {}
         self.slack = 1 if flier else 0
         self.yours = state.get("team") if auto_mode(state) == "off" else None
+        self.portal = is_portal(state)
 
     def _at(self, slug: str) -> tuple[dict, dict]:
         if slug not in self.groups:
             self.groups[slug] = (needs(self.state, slug), commits_by_group(self.state, slug))
         return self.groups[slug]
 
-    def __call__(self, slug: str, pid: str) -> bool:
-        if self.commits.get(slug, 0) >= open_spots(self.state, slug):
-            return False
-        if slug == self.yours and pid in self.state["recruiting"]["offers"].get(slug, []):
-            return True                                 # you offered him: your call to oversign
+    def _limit(self, slug: str) -> int:
+        """The commits a school can hold. In the portal your signings already come off your portal
+        spots, and `commits` counts them too: your limit is your portal room, so each counts once
+        and the room the page shows is the room he sees. (An AI school's stays as it was.)"""
+        if self.portal and slug == self.state.get("team"):
+            return portal_room(self.state, slug)
+        return open_spots(self.state, slug)
+
+    def why_not(self, slug: str, pid: str, offered: Optional[bool] = None) -> Optional[str]:
+        """None when the school has room for him; "roster" when its class (in the portal: its roster)
+        is full, "group" when his position group is at its cap. `offered`: count the school's offer
+        as made (a board's "would he have room if you offered") instead of looking it up."""
+        if self.commits.get(slug, 0) >= self._limit(slug):
+            return "roster"
+        if offered is None:
+            offered = pid in self.state["recruiting"]["offers"].get(slug, [])
+        if slug == self.yours and offered:
+            return None                                 # you offered him: your call to oversign
         need, com = self._at(slug)
         p = self.state["recruiting"]["prospects"][pid]
         g = _group_of(p)
-        return com[g] < group_cap(need, g) + self.slack or portal_upgrade(self.state, slug, p)
+        return None if com[g] < group_cap(need, g) + self.slack or portal_upgrade(self.state, slug, p) else "group"
+
+    def __call__(self, slug: str, pid: str) -> bool:
+        return self.why_not(slug, pid) is None
 
     def took(self, slug: str, pid: str, n: int = 1) -> None:
         self.commits[slug] = self.commits.get(slug, 0) + n
@@ -2342,12 +2370,13 @@ def _portal_draws(state: dict, week: int, rng: random.Random) -> None:
         if not scores:
             continue
         school = scores[0][1]
+        why = _lost_why(state, room, pid, school, offered[pid])   # read before his signing changes the room
         _commit(state, pid, school)
         st_["signed"] = school
         rc["commits_v"] = rc.get("commits_v", 0) + 1
         room.took(school, pid)
         taken.setdefault((school, p["position"]), []).append(p["composite"])
-        _event(state, "signed", pid, school)
+        _event(state, "signed", pid, school, **why)
         for other, pids in rc["offers"].items():           # every other school's offer lapses
             if other != school and pid in pids:
                 pids.remove(pid)
@@ -2356,6 +2385,91 @@ def _portal_draws(state: dict, week: int, rng: random.Random) -> None:
         n = rc["nil"].get(school)
         if n and pid in n["held"]:
             n["budget"] -= n["held"].pop(pid)
+
+
+GROUP_WORDS = {"QB": "quarterback", "RB": "running back", "WR": "receiver", "TE": "tight end", "OL": "offensive line", "DL": "defensive line",
+               "LB": "linebacker", "CB": "cornerback", "S": "safety", "K": "kicker", "P": "punter"}
+
+
+def _title(words: str) -> str:
+    """A label's Title Case: "offensive line" -> "Offensive Line"."""
+    return " ".join(w[:1].upper() + w[1:] for w in words.split())
+
+
+def no_room(state: dict, slug: str, pid: str) -> Optional[dict]:
+    """In the portal: why he could not sign with the school if he decided now (it is out of roster
+    spots, or on Auto-recruit at its cap at his position), as a chip and a sentence; None while it
+    has room, outside the portal and once he has signed. An entrant only picks among offering
+    schools with room, however much he likes one without it."""
+    rc = state["recruiting"]
+    if not is_portal(state) or rc["status"][pid]["signed"]:
+        return None
+    why = _Room(state, flier=rc.get("week", 1) >= PORTAL_WEEKS).why_not(slug, pid, offered=True)
+    if why is None:
+        return None
+    if why == "roster":
+        return {"why": "roster", "label": "No Room on Your Roster",
+                "tip": "Your roster is full for the portal: he only signs with a school that has a spot, even one he likes less."}
+    g = GROUP_WORDS.get(_group_of(rc["prospects"][pid]), "his position")
+    return {"why": "group", "group": g, "label": f"No Room at {_title(g)}",
+            "tip": f"Auto-recruit has taken all it wants at {g} this portal: he signs elsewhere unless he would start for you."}
+
+
+def _lost_why(state: dict, room: "_Room", pid: str, school: str, offered: list) -> dict:
+    """An entrant signing with `school` who was yours to win (your offer, or on your board): why he
+    went there and not to you, for his History and the week's news ({} when he picked you or you
+    never had him in sight). `room` as his decision saw it."""
+    me = state.get("team")
+    rc = state["recruiting"]
+    if school == me or not me or (me not in offered and pid not in rc["board"]):
+        return {}
+    if me not in offered:
+        return {"lost": "no_offer"}
+    why = room.why_not(me, pid)
+    if why:
+        return {"lost": f"no_room_{why}", **({"group": GROUP_WORDS.get(_group_of(rc["prospects"][pid]))} if why == "group" else {})}
+    led = ((rc.get("ranks") or {}).get(pid) or {}).get("now") or {}
+    return {"lost": "passed" if led.get(me) == 1 else "behind"}
+
+
+def lost_reason(e: dict, name) -> Optional[str]:
+    """Why an entrant you recruited went elsewhere, as a sentence for the news ("You had no room
+    left at linebacker."), or None. `e`: his "signed" or "unsigned" event (with `lost`); `name`: a
+    school's display name from its slug."""
+    why = e.get("lost")
+    if not why:
+        return None
+    to = name(e["school"]) if e.get("school") else None
+    return {"no_room_roster": "You had no roster spot left for him.",
+            "no_room_group": f"You had no room left at {e.get('group') or 'his position'}.",
+            "passed": f"{to} passed you on his list at the week's end.",
+            "behind": f"{to} stood ahead of you on his list.",
+            "no_offer": "You never offered him.",
+            "unsigned": "Nobody with room offered him."}.get(why)
+
+
+def lost_line(e: dict, name) -> Optional[str]:
+    """His History's sentence for an entrant you recruited who went elsewhere ("He signed with
+    Georgia: you had no room left at linebacker."), or None (see lost_reason)."""
+    why = e.get("lost")
+    if not why:
+        return None
+    if e["kind"] == "unsigned":
+        return "He went unsigned and is leaving FBS."
+    to = name(e["school"])
+    if e.get("walk_on"):
+        return f"He went unsigned and took a walk-on spot at {to}."
+    return {"no_room_roster": f"He signed with {to}: you had no roster spot left for him.",
+            "no_room_group": f"He signed with {to}: you had no room left at {e.get('group') or 'his position'}.",
+            "passed": f"He signed with {to}: {to} passed you on his list at the week's end.",
+            "behind": f"He signed with {to}, who stood ahead of you on his list.",
+            "no_offer": f"He signed with {to}: you never offered him."}.get(why, f"He signed with {to}.")
+
+
+def school_name(slug: Optional[str]) -> str:
+    """A school's display name (its slug when unknown)."""
+    from sim import season
+    return (season.load_teams().get(slug) or {}).get("name") or str(slug)
 
 
 POS_247_OF = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OT", "RT": "OT", "LG": "IOL", "RG": "IOL", "C": "IOL",

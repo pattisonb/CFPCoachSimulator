@@ -1291,6 +1291,7 @@ def _close_portal(state: dict) -> None:
     portal, rc = off["portal"], state["recruiting"]
     rng = _rng(state, "portal-jerseys")
     me, auto = state.get("team"), bool(off.get("auto")) or recruiting.auto_mode(state) != "off"
+    yours = set(rc.get("board") or []) | set(rc["offers"].get(me, []))      # the entrants you recruited: where each went is logged
     for pid, e in portal["players"].items():
         st_ = rc["status"].get(pid) or {}
         school = st_.get("signed")
@@ -1309,6 +1310,8 @@ def _close_portal(state: dict) -> None:
                         school = s_
                         break
             if not school:
+                if pid in yours and pid in rc["status"]:
+                    recruiting._event(state, "unsigned", pid, lost="unsigned")
                 continue
         p = dict(e["player"])
         team = lgd["teams"][school]
@@ -1317,12 +1320,12 @@ def _close_portal(state: dict) -> None:
         if not st_.get("signed"):
             p["walk_on"] = p["preferred"] = True
             st_["signed"] = school
-            recruiting._event(state, "signed", pid, school, walk_on=True)
+            recruiting._event(state, "signed", pid, school, walk_on=True, **({"lost": "unsigned"} if pid in yours and school != me else {}))
         team["roster"].append(p)
         e["signed"] = school
         portal["moves"].append({"id": pid, "name": p["n"], "pos": p["pos"], "from": e["from"], "to": school,
                                 "overall": house(p["pos"], p["o"]), "round": rc.get("week", PORTAL_WEEKS_DONE), "walk_on": bool(p.get("walk_on"))})
-    off["portal_recruiting"] = {"reports": rc.get("reports") or [], "log": rc.get("log") or []}
+    off["portal_recruiting"] = {"reports": rc.get("reports") or [], "log": rc.get("log") or [], "board": list(rc.get("board") or [])}
     _carry_over(state)
     if state.get("recruiting_last"):
         state["recruiting"] = state.pop("recruiting_last")
@@ -2310,6 +2313,28 @@ def _school_name(slug: Optional[str]) -> str:
         return slug
 
 
+def portal_away(state: dict) -> list[dict]:
+    """The entrants you recruited (your offer, or on your board) who signed elsewhere or went
+    unsigned: where each went and why not you (recruiting.lost_line), the latest portal week first.
+    Read from the portal's log while it is open, from the log kept at its close after."""
+    from coach_career import recruiting
+    off = state.get("offseason") or {}
+    rc = state.get("recruiting") or {}
+    log = rc.get("log") if rc.get("portal") else (off.get("portal_recruiting") or {}).get("log")
+    players = (off.get("portal") or {}).get("players") or {}
+    out: dict[str, dict] = {}
+    for e in log or []:
+        if not e.get("lost") or e["pid"] not in players:
+            continue
+        p = players[e["pid"]]["player"]
+        to = e.get("school")
+        out[e["pid"]] = {"id": e["pid"], "name": p["n"], "pos": p["pos"], "overall": house(p["pos"], p["o"]),
+                         "to": to, "to_name": _school_name(to), "walk_on": bool(e.get("walk_on")), "week": e.get("portal_week"),
+                         "why": e["lost"], "line": recruiting.lost_line(e, recruiting.school_name),
+                         "reason": recruiting.lost_reason(e, recruiting.school_name)}
+    return sorted(out.values(), key=lambda r: (-(r["week"] or 0), -r["overall"]))
+
+
 def _portal_recap(state: dict) -> Optional[dict]:
     """After the portal closes: who you got out of it (and where from), who you lost to it (where he
     went and why he left, from the retention step), against the whole portal's numbers. None before
@@ -2343,7 +2368,7 @@ def _portal_recap(state: dict) -> Optional[dict]:
                          "reason": reasons.get(pid)})
     signed.sort(key=lambda r: -r["overall"])
     lost.sort(key=lambda r: -r["overall"])
-    return {"signed": signed, "lost": lost, "entrants": len(players),
+    return {"signed": signed, "lost": lost, "away": portal_away(state), "entrants": len(players),
             "signed_league": sum(1 for e in players.values() if e.get("signed"))}
 
 
@@ -2395,6 +2420,7 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
                    "offers_left": (max(0, recruiting_offer_cap(state, me) - len(rc["offers"].get(me, []))) if new_portal
                                    else max(0, math.ceil(PORTAL_OFFER_FACTOR * my_spots(lgd, me, portal)) - len(portal["offers"].get(me, [])))),
                    "moves_mine": my_moves,
+                   "away": portal_away(state) if new_portal else [],
                    "rows": portal_rows(state, position, status) if off["stage"] in ("portal_1", "portal_2") else []},
         "portal_recap": _portal_recap(state),
         "report": off.get("report") and {"mine": off["report"]["development"]["mine"][:25],
