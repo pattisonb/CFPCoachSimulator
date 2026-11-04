@@ -511,6 +511,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "our_comp": our_comp,
         "likes": staff_likes(state, pid, viewer),
         "can_scout": can_scout(state, viewer, pid),
+        "scout_cost": recruiting.look_cost(state, viewer, pid),       # a Send's scouting points (as the board row's)
         "ratings": signed_ratings(state, p) if status["signed"] == viewer else None,     # signing day shows what you got
         "ask": recruiting.ask_view(state, viewer, pid), "cooled": recruiting.cooled(state, viewer, pid),
         "stage": recruiting.stage(state, viewer, pid), "strength": recruiting.strengths(state, viewer, pid),
