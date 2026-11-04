@@ -275,7 +275,9 @@
   }
   function stat(k, val) { return el("div", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: k }), el("div", { class: "go-stat-val", text: val })]); }
   function newsItem(s, e) {
-    return el("li", {}, [el("button", { type: "button", class: "go-link", text: e.name, onclick: () => openProfile(s, e.pid) }), ` ${eventWord(e)} ${teamName(e.school)}`]);
+    // an event with its own sentence (a twist, a hat ceremony, a bloomer's jump) says it after his name
+    const said = LINE_KINDS.has(e.kind) && e.line ? `: ${e.line}` : ` ${eventWord(e)}${e.school ? ` ${teamName(e.school)}` : ""}`;
+    return el("li", {}, [el("button", { type: "button", class: "go-link", text: e.name, onclick: () => openProfile(s, e.pid) }), said]);
   }
 
   // ----- the Office ------------------------------------------------------------------------------
