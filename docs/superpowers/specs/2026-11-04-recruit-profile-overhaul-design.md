@@ -64,3 +64,32 @@ Title Case labels, tags and kickers; sentences for the verdict and hints; Americ
 - Unit: `pos_rank`, height and weight formatting, verdict/strengths built from reads only.
 - Existing gates pass: `test_ux_sweep`, `test_spacing`, `test_smoothness`, `test_deep_links`, `test_profile_compact` (updated for the new layout), `test_persona_ui`, `test_story_ui`, the part 3 UI test, and `python3 tests/run_all.py`. Golden digests untouched.
 - Screenshots at 1280 and 400, both themes, for the preview message.
+
+## Addendum (2026-11-04): the whole board, and the Scouting Center
+
+The player sent a full Recruiting board redesign (board-overview.webp, board-scouting-history.webp, then board.html and scouting.html as the rendered reference). It supersedes the Overview/Recruitment split above; everything else above still holds (the EDGE/DT fix, reads from the viewer only, Title Case, patch in place, 44 px controls, golden digests untouched).
+
+### Board page
+
+- **Header:** "Recruiting Board", then five budget meters (a value and a thin bar each): Recruiting Hours, NIL Points, Offers (used of max), Commits (of spots), Scouting Points. On the right, Auto-Recruit as the segmented Off / This Week / All Season control, unchanged in behavior.
+- **List card (left):** the stage chips with counts (All, Cold, In Touch, Top 8, Visited, Committed), the search and the sort, Needs ▾; each row an avatar, name, stars, Pos · State and his real standing word as a chip. The selected row is outlined; sort, the ladder and the keyboard are as before. The list card and the pane line up at the top.
+- **Pane header:** the hero: his status chip, avatar, name, stars, Pos | Height | Weight, Hometown · #rank; Nat. Rank, Pos. Rank, Class; a **Your Chance** badge in words with a bar (the Potential badge moves to the Scouting tab). Recruit ▾ and the ☆ watch star sit on the tab row's right.
+- **Tabs: Overview · Scouting · Profile · History.** Deep links keep their keys: overview, scouting, profile, history.
+  - Overview: Recruiting Battle (his list as ranked rows: team pill, name, bar, standing word; yours highlighted "(Your School)") and Recruit Snapshot (Your Offer, His List, Scouted; Priorities, a bar only for the ones you know, "Not Known Yet" otherwise; His Ask; the standing sentence and odds; the tags) side by side; the Scout's Summary across the full width (verdict, Strengths, Areas to Develop in three columns).
+  - Scouting: the Scouting Report (looks pips, Potential headline, verdict, lists, the comp once complete, Send a Scout) and Attributes (Scouted Range) side by side; Looks & Uncertainty across under them (per attribute pips and Low / Medium / High from the read's width, the looks line, flags and staff likes, the link to the Scouting tab).
+  - Profile: the traits card (Who Decides, Cares About, Personality, His Story, Commit Style and any trait the server adds, each "Not Known Yet" with its reveal hint) and a Background card (high school, archetype, rankings, composite, status, the comp once complete).
+  - History: Recruiting Timeline (an icon per kind, Week N, the line, a kind chip), Recruiting Notes (sentences from what you know only) and Recent Interest Changes (his list with each school's word and ↑ ↓ —).
+- **Popup:** the Prospect Profile shows the same hero and four tabs from the profile's board row, without the Recruit menu; the star adds or removes him from the board.
+
+### Scouting Center
+
+- Header: "Class of 2027", SCOUTING CENTER; meters Scouting Points, Trips This Week, Board Scouted, Full Reports; All Reports.
+- Prospect Database: its chips, Position, Sort, search, paging and route state as before; a row is the board star, avatar, name, stars with Pos · State, the potential read tag (or a flag tag) over the confidence pips.
+- The selected prospect: the shared hero with Nat. Rank, Pos. Rank, Team Need and a Potential badge with its certainty word; tabs Report · Looks · Profile with Send Scout · N Pts, View Full Profile and Add to / Remove from Board on the tab row. Route keys qboard, spid, ssub, sops stay; old ssub values ratings and overview open Report, scouting opens Looks.
+- Scouting Operations: one card a staff member (area, eval word, contract, this week's yield), and an open recruiter spot as a card.
+
+### Layout rules
+
+- The header, cards, bars, report and traits card are one set of components (web/profileview.js, web/profile.css) used by the board, the popup and the Scouting Center.
+- Cards sit in a two-column grid that drops to one on a narrow pane; a card alone on its row spans it. Cards sharing a row stretch to the same height; full-width cards line up with the row's outer edges; one gap token (--pv-gap) between cards across and down.
+- At 400 px: the list, then the pane (the phone sheet, as today); meters wrap; no sideways scroll.
