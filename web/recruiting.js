@@ -566,9 +566,13 @@
   // the looks as a 3-segment bar, filled in halves (as on the Scouting tab)
   const looksBar = (looks) => el("span", { class: "sc-trips", role: "img", "aria-label": `${fmtLooks(looks)} of 3 looks` },
     [0, 1, 2].map((i) => el("i", { class: `sc-trip${looks >= i + 1 ? " on" : looks > i ? " half" : ""}` })));
-  function scoutLine(grades, looks) {
-    return el("div", { class: "go-scouted", title: `Your staff's read after ${fmtLooks(looks)} looks: the range each grade could still fall in` }, [el("b", { text: "Scouted" }),
-      ...["potential", "athleticism", "technique", "football_iq", "size_strength", "coachability"].filter((k) => grades[k]).map((k) => el("span", {}, [el("span", { class: "muted", text: `${GRADE_NAMES[k]} ` }), el("b", {}, wordRange(grades[k]))]))]);
+  // the compact Scouted strip: one chip per grade group (tap or hover shows what it looks like in ratings, via gradeTips),
+  // the ⓘ beside the label carrying the note about the looks and the final grades
+  function scoutLine(pid, grades, looks, details) {
+    const strip = el("div", { class: "go-scouted" }, [el("b", { text: "Scouted" }), ui().tip(gradesNote(looks), "Scouted"),
+      ...["potential", "athleticism", "technique", "football_iq", "size_strength", "coachability"].filter((k) => grades[k]).map((k) => el("span", { class: "go-gchip", "data-group": k }, [el("span", { class: "muted", text: `${GRADE_NAMES[k]} ` }), el("b", {}, wordRange(grades[k]))]))]);
+    if (details) gradeTips(strip, pid, grades, details);
+    return strip;
   }
   function needsMode() { try { return localStorage.getItem("cfp-needs-mode") || "need"; } catch (e) { return "need"; } }
   function needText(mode, g, r) {
@@ -1451,7 +1455,7 @@
         const tr = b.traits || {};
         if (tr.personality) out.push(el("span", { class: "go-tag", "data-key": "trait:personality", text: tr.personality, title: "His personality: how he sounds on a call and how he reacts to you" }));
         if (tr.decider) out.push(el("span", { class: "go-tag", "data-key": "trait:decider", text: `Decides: ${tr.decider}`, title: "Who makes the final call on where he goes" }));
-        if (b.likes) out.push(el("span", { class: "go-tag good go-likes", "data-key": "likes", text: likesText(b.likes), title: b.likes.text }));
+        if (b.likes) out.push(el("span", { class: "go-tag good go-likes", "data-key": "likes", text: likesText(b.likes), title: likesLine(b.likes) }));
         if (b.visit) out.push(el("span", { class: "go-tag", "data-key": "visit", text: b.visit.done ? "Visited" : `Visit Wk ${b.visit.week}` }));
         if (b.portal && b.role) out.push(el("span", { class: `go-tag ${b.role === "Would Start" ? "good" : b.role === "Next in Line" ? "warn" : "muted"}`, "data-key": "role", text: b.role, title: "Where he would sit on your depth chart next season" }));
         for (const n of out) if (!n.dataset.key) n.dataset.key = tagKey(n.textContent);
@@ -1911,7 +1915,7 @@
     return grid;
   }
   function gradeTips(grid, pid, grades, details) {
-    for (const cell of grid.querySelectorAll(".go-stat:not(.go-tip)")) {
+    for (const cell of grid.querySelectorAll("[data-group]:not(.go-tip)")) {
       const g = cell.dataset.group, r = grades[g], d = (details || {})[g] || {};
       const grade = wordText(r);
       const lines = d.labels ? [`Coachability like: ${d.labels.join(", ")}`]
@@ -1986,6 +1990,7 @@
       el("div", { class: "muted", text: `${pub.high_school} · ${place(pub.hometown)}` }),
       el("div", { class: "muted small", text: `National rankings: #${pub.national_rank} overall · #${pub.position_rank} ${pub.position} · #${pub.state_rank} in ${pub.hometown.state === "DC" ? "D.C." : pub.hometown.state} · composite ${pub.composite.toFixed(4)}` }),
       badges({ generational: pub.generational, find: p.find }, me),
+      p.likes ? el("div", { class: "go-tags" }, [el("span", { class: "go-tag good go-likes", text: likesText(p.likes), title: likesLine(p.likes) })]) : null,
       pub.signed || pub.committed ? null : el("div", { class: "rc-status go-standing-text", text: status(pub) }),
     ])]));
     const holder = pub.signed || pub.committed;
@@ -2030,11 +2035,23 @@
       label();
     });
     if (!inPane) node.append(el("div", { class: "rc-profile-actions go-row wrap" }, [onBoard, toBoard]));
-    if (p.looks >= 3 && p.our_grades) {
-      node.append(scoutLine(p.our_grades, p.looks));
-      if (p.our_comp && !(p.public_comp && p.public_comp.name === p.our_comp.name)) node.append(el("p", { class: "small" }, [el("b", { text: "Our comp: " }), `${p.our_comp.name}, ${p.our_comp.school} (${p.our_comp.position}${p.our_comp.overall ? `, ${p.our_comp.overall} OVR` : ""})`]));
-    }
-    // what the staff has learned about him: his personality and who decides (with what that person cares about), Not Known Yet until then
+    const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall ? `, ${c.overall} OVR` : ""})`;
+    const looks = Math.min(3, p.looks || 0), left = 3 - looks;
+    const mine = pub.committed === me && !pub.signed;
+    // the scout button: the pane's Recruit menu holds Scout, so only the modal draws it
+    const scoutBtn = mine ? el("span", { class: "muted small rc-no-scout", text: "Committed to you: no more looks" })
+      : el("button", { type: "button", class: "go-btn", text: left <= 0 ? "Report Complete · 3 of 3 Looks" : `Send a Scout${p.scout_cost != null ? ` · ${p.scout_cost} Points` : ""}${left <= 1 ? " · Finishes His Report" : ""} →`, title: ACT_TIPS.scout });
+    const short = !mine && left > 0 && p.points_left != null && p.scout_cost != null && p.points_left < p.scout_cost;
+    if (!mine && (left <= 0 || short)) scoutBtn.disabled = true;
+    if (short) scoutBtn.title = "Not enough scouting points left this week.";
+    if (!mine) scoutBtn.addEventListener("click", async () => { scoutBtn.disabled = true; if (await act(s, pid, "scout")) openProfile(s, pid, node); else scoutBtn.disabled = false; });
+    // the scouting read, once: the compact strip (a grade's chip shows what it looks like in ratings)
+    if (p.our_grades) {
+      node.append(scoutLine(pid, p.our_grades, looks, p.grade_details || {}));
+      if (!inPane && !p.ratings) node.append(el("div", { class: "go-row wrap rc-profile-actions" }, [scoutBtn]));
+    } else if (!p.ratings) node.append(el("p", { class: "muted small", text: inPane ? "Not scouted yet: Scout from the Recruit menu, or put a staff member on his area." : "Not scouted yet: send a scout, or put a staff member on his area." }),
+      el("div", { class: "go-row wrap rc-profile-actions" }, [inPane ? null : scoutBtn, el("button", { type: "button", class: "go-btn", text: "Assign Your Staff →", onclick: () => { H.closeModal(); if (window.CFP.scouting) window.CFP.scouting.want("scouts"); H.onChange("scouting"); } })]));
+    // what the staff has learned about him: his personality and who decides (with what that person cares about), Not Known Yet until then; one row
     {
       const tr = p.traits || {};
       const traitRow = (key, label, val, more) => el("div", { class: "go-trait", "data-trait": key }, [
@@ -2044,7 +2061,15 @@
         traitRow("personality", "Personality", tr.personality),
         traitRow("decider", "Who Decides", tr.decider, tr.decider && tr.decider_topic ? `Cares About: ${PITCH_NAMES[tr.decider_topic] || tr.decider_topic}` : null)]));
     }
-    if (p.likes) node.append(el("p", { class: "small go-likes-line" }, [el("span", { class: "go-tag good go-likes", text: likesText(p.likes), title: p.likes.text }), ` ${likesLine(p.likes)}`]));
+    // the evaluation, its summary line and our comp right under it
+    if (p.evaluation) {
+      node.append(el("h3", { text: "Evaluation" }),
+        el("ul", { class: "rc-eval" }, [...p.evaluation.strengths.map((t) => el("li", { class: "rc-good", text: t })), ...(p.evaluation.solid || []).map((t) => el("li", { class: "go-solid", text: t })), ...p.evaluation.weaknesses.map((t) => el("li", { class: "rc-bad", text: t }))]),
+        el("p", { class: "go-outlook", text: p.evaluation.outlook }));
+    }
+    if (p.our_grades && !p.ratings) node.append(p.our_comp ? el("p", { class: "go-comp" }, [el("b", { text: "Our comp: " }), comp(p.our_comp)])
+      : el("p", { class: "muted go-comp", text: looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp once his report is complete (${fmtLooks(looks)} of 3 looks).` }));
+    if (p.public_comp && !(p.our_comp && p.our_comp.name === p.public_comp.name)) node.append(el("p", { class: "go-comp" }, [el("b", { text: "Comp: " }), comp(p.public_comp)]));
     if (pub.schools.length) {
       const listed = holder ? pub.schools.filter((x) => x.school !== holder) : pub.schools;
       const sorted = listed.slice().sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1));
@@ -2059,16 +2084,8 @@
         el("span", { class: "go-school-odds", text: pub.signed ? "" : x.pct == null ? "No Offer" : committed ? (flipWords[x.school] || "None") : i === 0 ? "Leads" : x.pct >= (sorted[0].pct || 0) - 0.1 ? "Close" : x.pct >= 0.15 ? "In It" : "Long Shot" }),
         el("span", { class: "muted small", text: [x.offered ? "Offer" : "", x.visit ? (x.visit.done ? "Visited" : `Visit Wk ${x.visit.week}`) : ""].filter(Boolean).join(" · ") }),
       ]))));
-    } else node.append(el("p", { class: "muted", text: "No school is recruiting him yet." }));
-    if (pub.priorities_known.length) node.append(el("p", {}, [el("b", { text: "What he cares about: " }), pub.priorities_known.map((t) => PITCH_NAMES[t]).join(", ")]));
-    if (p.evaluation) {
-      node.append(el("h3", { text: "Evaluation" }),
-        el("ul", { class: "rc-eval" }, [...p.evaluation.strengths.map((t) => el("li", { class: "rc-good", text: t })), ...(p.evaluation.solid || []).map((t) => el("li", { class: "go-solid", text: t })), ...p.evaluation.weaknesses.map((t) => el("li", { class: "rc-bad", text: t }))]),
-        el("p", { text: p.evaluation.outlook }));
-    }
-    const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall ? `, ${c.overall} OVR` : ""})`;
-    if (p.public_comp) node.append(el("p", {}, [el("b", { text: "Comp: " }), comp(p.public_comp)]));
-    const looks = Math.min(3, p.looks || 0), left = 3 - looks;
+    } else node.append(el("p", { class: "muted small go-no-schools", text: "No school is recruiting him yet." }));
+    if (pub.priorities_known.length) node.append(el("p", { class: "go-cares" }, [el("b", { text: "What he cares about: " }), pub.priorities_known.map((t) => PITCH_NAMES[t]).join(", ")]));
     if (p.ratings) {                           // signed with you: what you got, every attribute
       node.append(el("h3", { text: "His Ratings" }),
         el("p", { class: "muted small", text: `${p.ratings.overall} overall now, ${p.ratings.potential_overall} at his potential · 50 is an average Power 4 starter.` }),
@@ -2076,25 +2093,7 @@
           el("span", { class: "rating-label", text: a.label }),
           el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${a.value >= 75 ? "hi" : a.value >= 55 ? "mid" : ""}`, style: `width:${Math.max(2, Math.min(100, a.value))}%` })]),
           el("b", { class: "rating-num", text: String(a.value), title: `${a.potential} at his potential` })]))));
-      return true;
     }
-    const mine = pub.committed === me && !pub.signed;
-    const scoutBtn = mine ? el("span", { class: "muted small rc-no-scout", text: "Committed to you: no more looks" })
-      : el("button", { type: "button", class: "go-btn", text: left <= 0 ? "Report Complete · 3 of 3 Looks" : `Send a Scout${p.scout_cost != null ? ` · ${p.scout_cost} Points` : ""}${left <= 1 ? " · Finishes His Report" : ""} →`, title: ACT_TIPS.scout });
-    const short = !mine && left > 0 && p.points_left != null && p.scout_cost != null && p.points_left < p.scout_cost;
-    if (!mine && (left <= 0 || short)) scoutBtn.disabled = true;
-    if (short) scoutBtn.title = "Not enough scouting points left this week.";
-    if (!mine) scoutBtn.addEventListener("click", async () => { scoutBtn.disabled = true; if (await act(s, pid, "scout")) openProfile(s, pid, node); else scoutBtn.disabled = false; });
-    node.append(el("h3", { text: "Our Staff's Grades" }));
-    if (p.our_grades) {
-      // hover (or tab to) a grade: what prospects in this class graded like that look like
-      node.append(gradeGrid(pid, p.our_grades, p.grade_details || {}),
-        el("p", { class: "muted small go-grades-note", text: gradesNote(looks) }),
-        ...(inPane ? [] : [el("div", { class: "go-row wrap rc-profile-actions" }, [scoutBtn])]));
-      node.append(p.our_comp ? el("p", {}, [el("b", { text: "Our comp: " }), comp(p.our_comp)])
-        : el("p", { class: "muted", text: looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp once his report is complete (${fmtLooks(looks)} of 3 looks).` }));
-    } else node.append(el("p", { class: "muted", text: inPane ? "Not scouted yet: Scout from the Recruit menu, or put a staff member on his area." : "Not scouted yet: send a scout, or put a staff member on his area." }),
-      el("div", { class: "go-row wrap rc-profile-actions" }, [inPane ? null : scoutBtn, el("button", { type: "button", class: "go-btn", text: "Assign Your Staff →", onclick: () => { H.closeModal(); if (window.CFP.scouting) window.CFP.scouting.want("scouts"); H.onChange("scouting"); } })]));
     return true;
   }
 
