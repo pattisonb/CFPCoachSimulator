@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Optional
 
 from teamdata import game_scale
-from coach_career import recruits
+from coach_career import persona, recruits
 
 ROOT = Path(__file__).resolve().parents[1]   # the project root
 PITCHES = ("proximity", "playing_time", "prestige", "winning", "nil", "coach", "academics")
@@ -62,12 +62,17 @@ AREAS = {
     "West Coast": ["CA", "OR", "WA", "HI", "AK"],
     "Mountain-Southwest": ["AZ", "NV", "UT", "CO", "NM", "ID", "MT", "WY", "OK"],
 }
-HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0, "raise_nil": 0, "scout": 5,
+HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0, "raise_nil": 0,
          "pitch": 0}                               # a pitch finishes your call or visit scene: its hours went on the call
+WEEKLY_HOURS_BASE = 140                    # *tune* a school's recruiting hours a week at a recruiting rating of 50 ...
+WEEKLY_HOURS_PER = 0.4                     # *tune* ... plus this many per rating point over 50 (about 150 for most schools)
+SCOUT_POINTS_BASE = 40                     # *tune* your scouting points a week with a best evaluator of 50 ...
+SCOUT_POINTS_PER = 0.4                     # *tune* ... plus this many per evaluation point over 50
+LOOK_COST = {"area": 10, "away": 15, "portal": 5}   # *tune* a Send's points: a prospect in a staffed area, one away from your scouts, a portal entrant
 SCENES = ("call", "hc_visit")              # your calls and in-home visits without a pitch open a scene (scenes.py)
 # looks come in trip units: a full report is REPORT_LOOKS looks and nothing goes past it (read["looks"] <= 3 always)
 REPORT_LOOKS = 3                           # a complete scouting report: three looks (flags, "our comp" and the SCOUTED line wait for it)
-SEND_LOOK = 1.0                            # a scouting trip (a Send, 5 hours): one look by your best evaluator, allowed while his report is short
+SEND_LOOK = 1.0                            # a scouting trip (a Send, 5-15 scouting points): one look by your best evaluator, allowed while his report is short
 AREA_LOOK = 0.5                            # an area scout's weekly look: half a look (the read moves half as far) ...
 AREA_CAP = 2.0                             # ... up to this many looks from his area (read["area"]), so four weeks there leave one trip to finish him
 CALL_REVEAL = 0.5                          # a call tells you one of his priorities this often; an in-home visit always does
@@ -165,9 +170,9 @@ FCS_LINE = 4.0                             # best FBS interest under this: Leani
 FCS_NO_OFFER_WEEK = 8                      # from this week a prospect with no FBS offer leans FCS
 COMMIT_ODDS = ((0, 0.02), (6, 0.05), (12, 0.08), (16, 0.10), (20, 0.30))   # weekly base chance by week *tune*
 COMMIT_FREEZE_WEEKS = 3                     # nobody commits anywhere in the first weeks: time to scout and build a board before the class moves
-LEAD_SCALE = 3.0                           # interest lead worth a doubling of the base chance *tune*
+LEAD_SCALE = 5.0                           # interest lead worth a doubling of the base chance (5: with 140-160 hours a week leads run bigger, and 3 had over 92% signed by the early period) *tune*
 VISIT_BOOST = 1.6                          # after an official visit to the leader
-DECOMMIT_RATE = 0.45                       # weekly chance of a decommitment at an even race *tune*
+DECOMMIT_RATE = 0.8                        # weekly chance of a decommitment at an even race (0.8: AI schools now message every commit weekly, so commits firm faster; 0.45 left 5% of the top 300 decommitting) *tune*
 # a commitment's firmness, 0-100: it starts soft and firms up only if the school keeps in touch *tune*
 FIRM_START, FIRM_VISIT = 40, 60            # at commitment (after an official visit there)
 FIRM_TOUCH, FIRM_DRIFT = 8, 3              # a week with a message, call or visit from the school / a quiet week (he still warms to you)
@@ -301,7 +306,7 @@ def start(state: dict, year: int = 2027) -> None:
     state["recruiting"] = {
         "year": year, "prospects": prospects, "lists": {pid: {} for pid in prospects},
         "status": {pid: {"committed": None, "signed": None, "fcs": False} for pid in prospects},
-        "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
+        "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "scout_points": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
         "boards": {}, "seed": state.get("rng_state", 0), "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
         "pending": {}, "why": {}, "ranks": {}, "reports": [], "action_points": {}, "leader_changes": {},
     }
@@ -458,17 +463,29 @@ def ask_view(state: dict, slug: str, pid: str) -> dict:
     return {"lo": max(0, min(ask - 5, _five(ask * lo))), "hi": max(ask + 5, _five(ask * hi))}     # a range in fives that straddles the number
 
 
-def nil_value(p: dict, nil: int, ask: int) -> float:
-    """The interest NIL on an offer is worth: in full up to his ask, NIL_OVER past it."""
-    return NIL_VALUE.get(tier_of(p), 0.1) * (min(nil, ask) + NIL_OVER * max(0, nil - ask))
+def nil_value(p: dict, nil: int, ask: int, state: Optional[dict] = None) -> float:
+    """The interest NIL on an offer is worth: in full up to his ask, NIL_OVER past it (with `state`,
+    as his personality and decider read it: a Trainer counts it in full to 1.2 times his ask, an
+    All Business recruit a third more)."""
+    rate, cap = (NIL_OVER, math.inf) if state is None else persona.nil_over(state, p["id"])
+    edge = nil if cap == math.inf else min(nil, cap * ask)     # past his ask up to here NIL counts at `rate`, beyond it at NIL_OVER
+    value = min(nil, ask) + rate * max(0, edge - ask) + NIL_OVER * max(0, nil - max(edge, ask))
+    mult = 1.0 if state is None else persona.offer_mult(state, p["id"])
+    return NIL_VALUE.get(tier_of(p), 0.1) * value * mult
 
 
-def is_lowball(nil: int, ask: int) -> bool:
-    return nil < LOWBALL * ask or (nil == 0 and ask >= LOWBALL_MIN)
+def is_lowball(nil: int, ask: int, share: float = LOWBALL) -> bool:
+    return nil < share * ask or (nil == 0 and ask >= LOWBALL_MIN)
+
+
+COOLED_409 = {"lowball": "he has cooled on you after that offer: raise it to what he wants",
+              "promise": "he has cooled on you after that promise: give him time",
+              "quiet": "he has cooled on you after you went quiet: call or visit to warm him back up"}
 
 
 def cooled(state: dict, slug: str, pid: str) -> bool:
-    """Whether he is cooled on the school after a lowball (contacts count half, no visit)."""
+    """Whether he is cooled on the school (a lowball, a hollow or broken promise, or silence for a
+    Loves-the-Attention recruit): contacts count half, no visit. persona.cooled_why says which."""
     return (_contact(state, slug, pid).get("cooled_until") or -1) > state["current_week"]
 
 
@@ -499,7 +516,7 @@ def would_pester(state: dict, slug: str, pid: str) -> bool:
     if slug != state.get("team"):
         return False
     c = (state["recruiting"]["contacts"].get(pid) or {}).get(slug) or {}
-    if c.get("n", 0) < PESTER_FREE or _pester_exempt(state, slug, pid):
+    if c.get("n", 0) < persona.pester_free(state, pid) or _pester_exempt(state, slug, pid):
         return False
     return not_considering(state, slug, pid)
 
@@ -985,8 +1002,40 @@ def _recruiting_rating(state: dict, slug: str) -> float:
 
 
 def weekly_hours(state: dict, slug: str) -> int:
-    """A school's recruiting hours a week, a multiple of 5: 50 plus a quarter of its recruiting rating over 50."""
-    return 5 * int(round((50 + max(0, _recruiting_rating(state, slug) - 50) / 4) / 5))
+    """A school's recruiting hours a week, a multiple of 5: WEEKLY_HOURS_BASE plus WEEKLY_HOURS_PER of its recruiting rating over 50."""
+    return 5 * int(round((WEEKLY_HOURS_BASE + max(0, _recruiting_rating(state, slug) - 50) * WEEKLY_HOURS_PER) / 5))
+
+
+def best_evaluator(state: dict) -> int:
+    """The best evaluation rating on your side: your staff and your coach."""
+    staff = (state.get("career") or {}).get("staff") or []
+    return max([m.get("evaluation", 50) for m in staff] + [((state.get("coach") or {}).get("ratings") or {}).get("evaluation", 60)])
+
+
+def scout_points(state: dict, slug: str) -> int:
+    """The week's scouting points, a multiple of 5: SCOUT_POINTS_BASE plus SCOUT_POINTS_PER of the best evaluator's rating over 50.
+    Only your school scouts (the AI's do not send anyone), but the slug keeps the shape of `weekly_hours`."""
+    return 5 * int(round((SCOUT_POINTS_BASE + max(0, best_evaluator(state) - 50) * SCOUT_POINTS_PER) / 5))
+
+
+def scout_points_left(state: dict, slug: str) -> int:
+    """Scouting points left this week (refilled at the week step; an old save without the key starts full)."""
+    return state["recruiting"].setdefault("scout_points", {}).setdefault(slug, scout_points(state, slug))
+
+
+def covered_states(state: dict) -> set[str]:
+    """The state codes a staff scout covers: the areas `scout_week` sends them to."""
+    staff = (state.get("career") or {}).get("staff") or []
+    return {code for member in staff for code in AREAS.get(member.get("area"), [])}
+
+
+def look_cost(state: dict, slug: str, pid: str) -> int:
+    """What a Send on `pid` costs in scouting points: a portal entrant's is the cheapest, then one in an area a
+    staff scout covers, then one away from your scouts."""
+    if is_portal(state):
+        return LOOK_COST["portal"]
+    home = state["recruiting"]["prospects"][pid]["hometown"]["state"]
+    return LOOK_COST["area" if home in covered_states(state) else "away"]
 
 
 def nil_budget(state: dict, slug: str) -> int:
@@ -1116,18 +1165,22 @@ def offer_cap(state: dict, slug: str) -> int:
     return math.ceil(OFFER_FACTOR * open_spots(state, slug))
 
 
-def _contact_points(state: dict, slug: str, p: dict, action: str, pitch: Optional[str]) -> float:
+def _contact_points(state: dict, slug: str, p: dict, action: str, pitch: Optional[str], first_call: bool = False) -> float:
     """What one action is worth to the prospect before diminishing returns: the pitch on one of
-    his priorities counts by your strength there (and backfires where you are weak); any other
-    topic counts a little."""
+    his priorities (or his decider's topic) counts by your strength there (and backfires where you
+    are weak); any other topic counts a little. His personality scales it (persona.pitch_mult)."""
+    pid = p["id"]
+    mult = persona.pitch_mult(state, pid, action, pitch, first_call)
+    if action == "offer":
+        mult *= persona.offer_mult(state, pid)
     if pitch is None:
-        return BASE_POINTS[action]
-    strength = strengths(state, slug, p["id"])[pitch]
-    if pitch in p["priorities"]:
+        return BASE_POINTS[action] * mult
+    strength = strengths(state, slug, pid)[pitch]
+    if persona.counts_as_priority(state, pid, pitch):
         if strength < BACKFIRE:
             return -BACKFIRE_COST * BASE_POINTS[action]
-        return BASE_POINTS[action] * (PITCH_PRIORITY[0] + PITCH_PRIORITY[1] * strength)
-    return BASE_POINTS[action] * (PITCH_OTHER[0] + PITCH_OTHER[1] * strength)
+        return BASE_POINTS[action] * (PITCH_PRIORITY[0] + PITCH_PRIORITY[1] * strength) * mult
+    return BASE_POINTS[action] * (PITCH_OTHER[0] + PITCH_OTHER[1] * strength) * mult
 
 
 def best_pitch(state: dict, slug: str, pid: str, required: bool = False) -> Optional[str]:
@@ -1205,10 +1258,11 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
     if action == "pitch":
         sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
         start = len(rc["log"])
-        revealed = _act(state, slug, pid, action, pitch, nil, scene=scene)
         from coach_career import scenes
+        tells = scenes.tells(state, slug, pid, sc["action"]) if sc else True       # asked before the pitch lands: a Shy recruit's first call is a call by then
+        revealed = _act(state, slug, pid, action, pitch, nil, scene=scene)
         tired = any(e["kind"] == "pester" for e in rc["log"][start:])      # the call or visit pestered him: the pitch fell flat
-        said = scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid], tired=tired)
+        said = scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid], tired=tired, tells=tells)
         if slug == state.get("team"):                 # your History: the pitch and how he took it
             _event(state, "pitch", pid, slug, action=sc["action"], pitch=pitch, reaction=said["kind"])
         return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed}}
@@ -1218,7 +1272,7 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
         marks = rc.setdefault("manual_offers", [])
         if pid not in marks:
             marks.append(pid)
-    out = {"hours_left": rc["hours"][slug], "revealed": revealed}
+    out = {"hours_left": _hours(state, slug), "revealed": revealed}
     if action == "scout":                                   # the desk shows the trip's before/after from this, and the like a completed report earned
         from coach_career import prospects as pr
         out["look"] = dict(_LAST_LOOK[0], likes=pr.staff_likes(state, pid, slug))
@@ -1269,8 +1323,9 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
         if truthful:
             points = ANSWER_PROMISE
         else:
-            points = -ANSWER_HOLLOW
+            points = -ANSWER_HOLLOW * persona.hollow_mult(state, pid)
             contact["cooled_until"] = week + 1
+            persona.set_cooled_why(state, slug, pid, "promise")
             _event(state, "not_buying", pid, slug, topic="playing_time")
         contact.setdefault("promises", []).append({"kind": q["kind"], "about": q["about"], "week": week, "broken": None})
     q["answer"] = answer
@@ -1285,7 +1340,10 @@ def _present(state: dict, slug: str, pid: str, scene: Optional[str], topics: Opt
     """Your opening on the open scene (scenes.present), no hours: three different topics, scored
     against his true priorities without revealing them. Each that is one of his earns PRESENT_HIT of
     the action's base times (1 + your strength); one you are weak at (under BACKFIRE) costs
-    BACKFIRE_COST of that share; the rest add nothing; the total caps at the base. The points are the
+    BACKFIRE_COST of that share; the rest add nothing; the total caps at the base. His priorities
+    include his decider's topic, and his personality and decider scale each share and the cap as they
+    do a pitch (persona.pitch_mult: a Shy recruit's visit, his first call, a visit on the decider's
+    topic). The points are the
     call's or visit's (diminished by his earlier contacts, halved while he is cooled, nothing while
     the call pesters him) and land through `_add_points` on the scene's action. His reaction, your
     question and his cue join the scene; it remembers what you presented."""
@@ -1303,28 +1361,34 @@ def _present(state: dict, slug: str, pid: str, scene: Optional[str], topics: Opt
         raise RecruitingError(400, "present exactly three different topics")
     contact = _contact(state, slug, pid)
     st_ = strengths(state, slug, pid)
-    base = BASE_POINTS[sc["action"]]
+    action = sc["action"]
+    base = BASE_POINTS[action]
+    first_call = action == "call" and not contact.get("calls")      # a scene's call is counted when its pitch lands
+    mult = {t: persona.pitch_mult(state, pid, action, t, first_call) for t in topics}
     hits, back, raw = [], [], 0.0
     for t in topics:
-        if t not in p["priorities"]:
+        if not persona.counts_as_priority(state, pid, t):          # his priorities, or his decider's topic
             continue
         if st_[t] < BACKFIRE:
             back.append(t)
             raw -= BACKFIRE_COST * PRESENT_HIT * base
         else:
             hits.append(t)
-            raw += PRESENT_HIT * base * (1 + st_[t])
+            raw += PRESENT_HIT * base * (1 + st_[t]) * mult[t]
+    cap = base * max([persona.pitch_mult(state, pid, action, None, first_call)] + list(mult.values()))   # his personality scales the cap too
     tired = would_pester(state, slug, pid)
-    points = 0.0 if tired else min(raw, base) / (1 + DIMINISH * contact["n"])
+    points = 0.0 if tired else min(raw, cap) / (1 + DIMINISH * contact["n"])
     if points and cooled(state, slug, pid):
         points *= COOLED_CONTACT
     if points < 0:
         _event(state, "not_buying", pid, slug, topic=back[0])
     scenes.present(state, slug, pid, sc, topics, hits, back, tired)
-    _event(state, "present", pid, slug, action=sc["action"], topics=list(topics), hit=len(hits))
+    tells = scenes.tells(state, slug, pid, action)
+    shown = hits if tells else []      # a call that keeps his priority to himself does not say which were his
+    _event(state, "present", pid, slug, action=action, topics=list(topics), hit=len(shown) if tells else None)
     if points:
         _add_points(state, slug, pid, points, sc["action"])
-    return {"scene": sc, "points": points, "hit": hits, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
+    return {"scene": sc, "points": points, "hit": shown, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
 
 
 REPORTS_KEPT = 4           # weekly reports kept (the Office shows the latest)
@@ -1442,6 +1506,7 @@ def _report(state: dict, week: int) -> dict:
 
 REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "pester", "promise_broken")
 CONTACT_KINDS = ("contact", "pitch", "raise_nil", "pull_offer", "answer", "present")   # your actions, logged for his History (not news)
+HISTORY_ONLY = CONTACT_KINDS + ("learned",)   # his History's alone: never the week's news (what your staff learned is his, not news)
 
 
 def _pester_line(prospect: str, school: str) -> str:
@@ -1463,7 +1528,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
     p = rc["prospects"].get(pid)
     if p is None:
         raise RecruitingError(400, "unknown prospect")
-    if action not in HOURS:
+    if action not in HOURS and action != "scout":
         raise RecruitingError(400, "unknown action")
     if pitch is not None and pitch not in PITCHES:
         raise RecruitingError(400, "unknown pitch")
@@ -1482,7 +1547,10 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         raise RecruitingError(409, f"his report is complete: {REPORT_LOOKS} of {REPORT_LOOKS} looks")
     if opens and pid in ((rc.get("scenes") or {}).get(slug) or {}):
         raise RecruitingError(409, "finish your call with him first")
-    if _hours(state, slug) < HOURS[action]:
+    if action == "scout":
+        if scout_points_left(state, slug) < look_cost(state, slug, pid):
+            raise RecruitingError(409, "Not enough scouting points left this week.")
+    elif _hours(state, slug) < HOURS[action]:
         raise RecruitingError(409, "not enough hours left this week")
     offers = rc["offers"].setdefault(slug, [])
     if action == "pull_offer":
@@ -1513,10 +1581,12 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         if nil:
             _nil(state, slug)["held"][pid] = nil
         _event(state, "offer", pid, slug, nil=nil)
-        points = nil_value(p, nil, ask)
-        if is_lowball(nil, ask):                # he reads it as a lowball: no points for the offer, and he cools on the school
+        points = nil_value(p, nil, ask, state)
+        # he reads a lowball as: no points for the offer, and he cools on the school
+        if is_lowball(nil, ask, persona.lowball_share(state, pid)):
             contact["cooled_until"] = week + COOL_WEEKS
             contact["lowball"] = True
+            persona.set_cooled_why(state, slug, pid, "lowball")
         else:
             cold = not contact["n"] and not (rc["visits"].get(pid, {}).get(slug) or {}).get("done")
             contact["cold_offer"] = cold
@@ -1533,13 +1603,13 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         _nil(state, slug)["held"][pid] = nil
         if you:
             _event(state, "raise_nil", pid, slug, nil=nil)
-        points = nil_value(p, nil, ask) - nil_value(p, held, ask)
+        points = nil_value(p, nil, ask, state) - nil_value(p, held, ask, state)
         if nil >= ask and contact.get("cooled_until"):     # meeting his ask ends the cooling
             contact.pop("cooled_until", None)
             points += _contact_points(state, slug, p, "offer", None)      # and the offer itself counts now
     elif action == "official_visit":
         if cooled(state, slug, pid):
-            raise RecruitingError(409, "he has cooled on you after that offer: raise it to what he wants")
+            raise RecruitingError(409, COOLED_409[persona.cooled_why(state, slug, pid)])
         if slug not in top_group(state, pid):
             raise RecruitingError(409, "he is not considering you yet: get into his top group first")
         if slug in rc["visits"].get(pid, {}):
@@ -1568,7 +1638,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             raise RecruitingError(409, "answer him first")
         if pitch is None:
             raise RecruitingError(400, "a pitch: what you are selling him")
-        if pitch in p["priorities"]:                  # he tells you plainly when it is one of his
+        tells = sc["action"] != "call" or persona.call_reveals(state, slug, pid, roll=False)   # a Guarded or first-call Shy recruit keeps it to himself on a call
+        if pitch in p["priorities"] and tells:        # he tells you plainly when it is one of his
             seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
             if pitch not in seen:
                 seen.append(pitch)
@@ -1576,13 +1647,13 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         del rc["scenes"][slug][pid]
         if points:                                    # the points are the call's or the visit's; its hours went when it opened
             _add_points(state, slug, pid, points * scale, sc["action"])
-        return pitch if pitch in p["priorities"] else None      # a hit or a quiet one tells you his priority
+        return pitch if pitch in p["priorities"] and tells else None      # a hit or a quiet one tells you his priority
     elif action == "scout":                        # a scouting trip: your best evaluator's look, no contact with him
         contact["scouted"] = contact.get("scouted", 0) + 1       # trips sent, a tally; the gate is his report's looks
         if you:
             _event(state, "contact", pid, slug, action=action)
-        staff = (state.get("career") or {}).get("staff") or []
-        rating = max([m.get("evaluation", 50) for m in staff] + [((state.get("coach") or {}).get("ratings") or {}).get("evaluation", 60)])
+        rating = best_evaluator(state)
+        rc["scout_points"][slug] = scout_points_left(state, slug) - look_cost(state, slug, pid)
         rng = random.Random(f"scout-{rc['seed']}-{slug}-{pid}-{week}-{contact['scouted']}")
         _LAST_LOOK[0] = look(state, pid, rating, rng)          # one look, SEND_LOOK, or what is left of his report
     else:
@@ -1594,6 +1665,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             _event(state, "contact", pid, slug, action=action, **({"pitch": pitch} if pitch else {}))
         if action in WEEKLY_ONCE:
             contact.setdefault("week", {})[action] = week
+        if action in ("call", "hc_visit"):
+            persona.learn_on_contact(state, slug, pid, action)
         if opens:                                     # your scene: the contact is marked, his lines and cue stored; no points until the pitch
             contact["asked"] = True if action == "hc_visit" or contact.get("asked") is True else "range"
             contact["last_contact"] = week
@@ -1603,14 +1676,15 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             revealed = _reveal(state, slug, pid)
             contact["asked"] = True
         elif action == "call":                        # a call: sometimes a priority, and about what he wants
-            if random.Random(f"call-{rc['seed']}-{slug}-{pid}-{week}").random() < CALL_REVEAL:
+            if persona.call_reveals(state, slug, pid):
                 revealed = _reveal(state, slug, pid)
             if contact.get("asked") is not True:
                 contact["asked"] = "range"
         if not opens:
             contact["last_contact"] = week
             points = _contact_land(state, slug, p, contact, action, pitch, auto)
-    rc["hours"][slug] = _hours(state, slug) - HOURS[action]
+    if action != "scout":                          # a Send spends scouting points, not hours
+        rc["hours"][slug] = _hours(state, slug) - HOURS[action]
     if points:
         _add_points(state, slug, pid, points * scale, action)
     return revealed
@@ -1624,7 +1698,7 @@ def _contact_land(state: dict, slug: str, p: dict, contact: dict, action: str, p
     points that grow with each pester, the pitch ignored, his ask from you up (not Auto-recruit's,
     never an AI school's)."""
     pid = p["id"]
-    if not auto and slug == state.get("team") and contact["n"] >= PESTER_FREE and not _pester_exempt(state, slug, pid):
+    if not auto and slug == state.get("team") and contact["n"] >= persona.pester_free(state, pid) and not _pester_exempt(state, slug, pid):
         if not not_considering(state, slug, pid):
             contact.pop("pester", None)           # he is considering you: the old pesters are forgotten
         else:
@@ -1636,13 +1710,17 @@ def _contact_land(state: dict, slug: str, p: dict, contact: dict, action: str, p
             if cooled(state, slug, pid):
                 points *= COOLED_CONTACT
             contact["n"] += 1
+            if action == "call":
+                contact["calls"] = contact.get("calls", 0) + 1
             return points
-    points = _contact_points(state, slug, p, action, pitch) / (1 + DIMINISH * contact["n"])
+    points = _contact_points(state, slug, p, action, pitch, first_call=action == "call" and not contact.get("calls")) / (1 + DIMINISH * contact["n"])
     if points < 0:
         _event(state, "not_buying", pid, slug, topic=pitch)
     if cooled(state, slug, pid):
         points *= COOLED_CONTACT
     contact["n"] += 1
+    if action == "call":
+        contact["calls"] = contact.get("calls", 0) + 1
     return points
 
 
@@ -1966,7 +2044,7 @@ def flip_weekly(state: dict, pid: str, gap: float, firmness: Optional[float] = N
         firmness = st.get("firmness") or FIRM_START
     if firmness >= HARD_AT:
         return 0.0
-    return 2 * DECOMMIT_RATE * _logistic(gap / FLIP_MARGIN) * (100 - firmness) / 100
+    return 2 * DECOMMIT_RATE * _logistic(gap / FLIP_MARGIN) * (100 - firmness) / 100 * persona.decommit_mult(state, pid)
 
 
 def flip_by_signing(state: dict, pid: str, gap: float, weeks_left: int) -> float:
@@ -2008,6 +2086,7 @@ def _promises(state: dict, week: int) -> None:
                     st_["firmness"] = int(max(0, (st_.get("firmness") or FIRM_START) - PROMISE_RIVAL))
                 else:
                     c["cooled_until"] = week + COOL_WEEKS
+                    persona.set_cooled_why(state, slug, pid, "promise")
                 pr["broken"] = week
                 _event(state, "promise_broken", pid, slug, about=pr["about"]["name"], other=pr["about"].get("pid"))
 
@@ -2207,6 +2286,7 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     start_log = len(rc["log"])
     rng = random.Random(f"recruiting-{rc['seed']}-{'portal-' if rc.get('portal') else ''}{week}")
     _flush(state, week)                # your week's actions land
+    persona.cool_quiet(state, week)    # a recruit who loves the attention cools on a school gone quiet
     if not rc.get("portal"):
         _visits(state, week)
     scout_week(state, week + 1 if rc.get("portal") else week)   # the portal's week counter moves after the step
@@ -2234,6 +2314,7 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     _snapshot_ranks(state, week)
     _report(state, week)
     rc["hours"] = {}
+    rc["scout_points"] = {}
     if mode == "week":                       # Auto-recruit for one week: done, so off again
         state["career"]["settings"]["auto_recruit"] = "off"
     return rc["log"][start_log:]
@@ -2334,7 +2415,7 @@ def portal_rc(state: dict, entrants: dict, year: int) -> dict:
     return {"portal": True, "week": 1, "weeks": PORTAL_WEEKS, "year": year, "cache_key": f"{year}-portal", "prospects": prospects,
             "lists": {pid: {} for pid in prospects},
             "status": {pid: {"committed": None, "signed": None, "fcs": False} for pid in prospects},
-            "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
+            "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "scout_points": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
             "boards": {}, "seed": seed, "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
             "pending": {}, "why": {}, "ranks": {}, "reports": [], "action_points": {}, "leader_changes": {}}
 
@@ -2473,6 +2554,7 @@ def look(state: dict, pid: str, evaluator_rating: int, rng: random.Random, by: O
     key = str(evaluator_rating)
     read["by"][key] = round(read["by"].get(key, 0) + w, 3)
     read["find"] = pr.find(state, pid)               # the flag he holds after this look: find's hysteresis anchor
+    persona.learn_from_read(state, pid, report_looks(read))
     after = _read_words(state, pid)
     moved = [g for g in GROUPS if before.get(g) != after.get(g)]
     entry = {"week": week, "pid": pid, "by": by,

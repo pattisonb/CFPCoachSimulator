@@ -115,6 +115,7 @@ if __name__ == "__main__":
         refused(lambda: R(sid, "staff", {"staff_id": "r1"}), 422)
         # a call without a pitch opens a scene; the pitch finishes it with his reaction; Auto-recruit on drops an open one
         talk, held = (r["id"] for r in everyone[5:7])
+        api.loaded_state()["recruiting"]["prospects"][talk]["persona"] = {"personality": "business", "decider": "self", "decider_topic": None}     # a plain recruit: a Guarded or Shy one names no topic on a call
         sc = R(sid, "recruit", {"pid": talk, "action": "call"})["scene"]
         assert sc["id"] and sc["action"] == "call" and "question" in sc
         # the conversation opens with you and his small talk; the cue and his question wait on your opening (three topics)
@@ -234,6 +235,7 @@ if __name__ == "__main__":
         hist = lambda q: next(x for x in G(logc, "recruiting")["board"] if x["id"] == q)["history"]
         assert hist(a) == [] and hist(b) == [], "an untouched recruit has an empty history"
         R(logc, "recruit", {"pid": a, "action": "message", "pitch": "prestige"})
+        api.loaded_state()["recruiting"]["prospects"][a]["persona"] = {"personality": "business", "decider": "self", "decider_topic": None}     # a plain recruit: a Guarded or Shy one names no topic on a call
         sc = R(logc, "recruit", {"pid": a, "action": "call"})["scene"]
         sc = R(logc, "recruit", {"pid": a, "action": "present", "scene": sc["id"], "topics": ["winning", "nil", "coach"]})["scene"]
         topic = sc["cue"]["topics"][0]
@@ -242,7 +244,7 @@ if __name__ == "__main__":
         said = R(logc, "recruit", {"pid": a, "action": "pitch", "scene": sc["id"], "pitch": topic})["reaction"]["kind"]
         R(logc, "recruit", {"pid": a, "action": "offer", "pitch": "winning", "nil": 120})
         R(logc, "recruit", {"pid": a, "action": "raise_nil", "nil": 150})
-        h = [x for x in hist(a) if x["kind"] not in ("not_buying", "answer")]   # a backfiring pitch may add a not_buying line; his question an answer
+        h = [x for x in hist(a) if x["kind"] not in ("not_buying", "answer", "learned")]   # a backfiring pitch may add a not_buying line; his question an answer; the first call a learned trait
         got = [(x["kind"], x.get("action"), x.get("pitch"), x.get("reaction"), x.get("nil")) for x in h]
         assert got == [("raise_nil", None, None, None, 150), ("offer", None, None, None, 120),
                        ("pitch", "call", topic, said, None), ("present", "call", None, None, None), ("contact", "call", None, None, None),

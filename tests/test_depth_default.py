@@ -8,13 +8,40 @@ from pathlib import Path as _Path
 
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 
-from coach_career import offseason
+from coach_career import offseason, recruiting
 from sim import season
 from test_offseason import finished
 
 
-def roll(st: dict) -> dict:
+def finished_by_need(st: dict) -> None:
+    """finished(), with each school's 21 signed by need as real recruiting does: the best prospect
+    left goes to the next school (in turn) with an open spot at his roster group, then to any
+    school with room once no school needs him."""
     finished(st)
+    rc = st["recruiting"]
+    schools = [s for s, t in season.load_teams().items() if not t["fictional"]]
+    for s_ in rc["status"].values():
+        s_["signed"] = None
+    recruiting.reset_caches()                  # signings set by hand: the cached counts are stale
+    need = {s: recruiting.needs(st, s) for s in schools}
+    room = {s: 21 for s in schools}
+    turn = 0
+    for pid in sorted(rc["prospects"], key=lambda p: rc["prospects"][p]["rank"]):
+        open_ = [s for s in schools if room[s]]
+        if not open_:
+            break
+        g = recruiting._group_of(rc["prospects"][pid])
+        order = schools[turn:] + schools[:turn]
+        to = next((s for s in order if room[s] and need[s].get(g, 0) > 0), None) or next(s for s in order if room[s])
+        rc["status"][pid]["signed"] = to
+        room[to] -= 1
+        need[to][g] = need[to].get(g, 0) - 1
+        turn = (schools.index(to) + 1) % len(schools)
+    recruiting.reset_caches()
+
+
+def roll(st: dict) -> dict:
+    finished_by_need(st)
     offseason.start(st)
     st["offseason"]["auto"] = True
     offseason.run_all(st)

@@ -19,9 +19,9 @@ from tests.test_offseason import finished
 ME = "ohio-state"
 ENTRY_KEYS = {"week", "pid", "by", "before", "after", "flags"}
 FLAGS = {"gem", "bust", "generational", "likes"}      # "likes": prospects.staff_likes, the Flags list's fourth kind
-VIEW_KEYS = {"hours", "hours_left", "scouts", "queue", "queue_total", "reports", "flags", "full_reports", "trips_this_week"}
+VIEW_KEYS = {"hours", "hours_left", "points_left", "points_week", "scouts", "queue", "queue_total", "reports", "flags", "full_reports", "trips_this_week"}
 SCOUT_KEYS = {"id", "name", "role", "evaluation_word", "area", "looking_at", "yield", "contract_until"}
-QUEUE_KEYS = {"pid", "name", "position", "stars", "group", "need", "national_rank", "looks", "trips", "potential",
+QUEUE_KEYS = {"cost", "pid", "name", "position", "stars", "group", "need", "national_rank", "looks", "trips", "potential",
               "can_send", "why", "state", "likes", "on_board", "flags"}
 GROUP_KEYS = {"scout_id", "scout", "area", "looks", "changed", "items"}
 ITEM_KEYS = {"pid", "name", "position", "stars", "change", "flags", "likes", "on_board", "complete"}   # on_board, complete: read-only, for the tab's digest
@@ -198,9 +198,11 @@ if __name__ == "__main__":
 
         # a scouting trip: the action's response carries the look entry (by "trip"), logged when it changed something
         target = next(r for r in rest if r["can_send"])
-        hours = v["hours_left"]
+        hours, points = v["hours_left"], v["points_left"]
+        assert target["cost"] in recruiting.LOOK_COST.values() and v["points_week"] == recruiting.scout_points(st, ME), target
         out = R(sid, "recruit", {"pid": target["pid"], "action": "scout"})
-        assert out["hours_left"] == hours - recruiting.HOURS["scout"]
+        assert out["hours_left"] == hours, "a Send spends scouting points, not hours"
+        assert G(sid, "scouting?sort=board")["points_left"] == points - target["cost"]
         assert "likes" in out["look"], out["look"]      # a Send also returns the like a completed report earned (prospects.staff_likes)
         look = {k: v for k, v in out["look"].items() if k != "likes"}     # the logged entry itself
         check_entry(look, rc)
@@ -243,11 +245,11 @@ if __name__ == "__main__":
         R(sid, "board", {"pid": target["pid"], "on": False})
         off = next(r for r in G(sid, "scouting?sort=board&limit=400")["queue"] if r["pid"] == target["pid"])
         assert off["can_send"] is False and off["why"] == prospects.REPORT_COMPLETE, off
-        rc["hours"][ME] = recruiting.HOURS["scout"] - 1
+        rc["scout_points"] = {ME: min(recruiting.LOOK_COST.values()) - 1}
         v = G(sid, "scouting?sort=board")
-        assert v["hours_left"] == recruiting.HOURS["scout"] - 1
+        assert v["points_left"] == min(recruiting.LOOK_COST.values()) - 1
         assert all(not r["can_send"] and r["why"] == (prospects.COMMITTED_TO_YOU if r["pid"] == yours else prospects.REPORT_COMPLETE if r["looks"] >= 3
-                                                      else "Not enough hours") for r in v["queue"])
+                                                      else prospects.NOT_ENOUGH_POINTS) for r in v["queue"])
         home = rc["prospects"][yours]["hometown"]["state"]
         area = next(a for a, codes in recruiting.AREAS.items() if home in codes)
         for s in v["scouts"]:
@@ -268,6 +270,7 @@ if __name__ == "__main__":
         named = urllib.parse.quote(rc["prospects"][gem]["name"])
         assert any(r["pid"] == gem and not r["can_send"] for r in G(sid, f"scouting?sort=board&limit=400&q={named}")["queue"]), "a complete report stays listed, no Send"
         rc["hours"][ME] = 50
+        rc["scout_points"] = {ME: 100}
         rc["reads"][gem]["g"]["potential"] = [70.0, 1000.0]
         before_flag = threes[1]
         rc["reads"][before_flag]["g"]["potential"] = [gem_cut + 1.0, 1000.0]

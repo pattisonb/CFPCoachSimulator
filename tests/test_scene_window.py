@@ -169,7 +169,7 @@ def desktop(browser, base, sid, pids, names, errs) -> None:
     answer_if_asked(page)
     shot(page, "1280-mid")
     re_ = pitch(page)
-    assert re_["kind"] in ("hit", "polite", "quiet", "tired"), re_
+    assert re_["kind"] in ("hit", "polite", "quiet", "tired", "guarded"), re_
     # after his reaction: Done, the note, no Pitch or Hang Up; the address no longer names the window
     assert page.inner_text(f"{WIN} .go-scene-close").strip() == "Done"
     assert "counts at the week step" in page.inner_text(f"{WIN} .go-scene-acts")

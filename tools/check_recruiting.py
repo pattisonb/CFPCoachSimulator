@@ -163,7 +163,7 @@ def reveal_rate(seed: int, team: str = "georgia") -> dict:
     state = season.new_season(team, "full", seed=seed, career=True)
     rc = state["recruiting"]
     pids = [q for q in recruiting.prospect_list(state) if not rc["prospects"][q].get("hidden")][:100]
-    found, present, pitch = 0, 0.0, 0.0
+    found, present, pitch, told = 0, 0.0, 0.0, 0
     for pid in pids:
         rc["hours"][team] = 100
         sc = recruiting.act(state, team, pid, "call")["scene"]
@@ -172,11 +172,15 @@ def reveal_rate(seed: int, team: str = "georgia") -> dict:
         mid = recruiting.pending(state, team, pid)
         if sc["question"]:                        # he asked about a named player: the pitch waits on an answer
             recruiting.act(state, team, pid, "answer", scene=sc["id"], answer="deflect")
+        if not sc["cue"]["topics"]:               # a Guarded or first-call Shy recruit keeps it to himself: no cue to follow
+            continue
+        told += 1
         r = recruiting.act(state, team, pid, "pitch", pitch=sc["cue"]["topics"][0], scene=sc["id"])
         found += r["reaction"]["kind"] in ("hit", "quiet")
         present += mid - before
         pitch += recruiting.pending(state, team, pid) - mid
-    return {"rate": found / len(pids), "present": present / len(pids), "pitch": pitch / len(pids)}
+    told = max(1, told)
+    return {"rate": found / told, "present": present / told, "pitch": pitch / told, "quiet": len(pids) - told, "calls": len(pids)}
 
 
 def question_mix(seed: int, team: str = "georgia") -> dict:
@@ -210,7 +214,7 @@ def question_mix(seed: int, team: str = "georgia") -> dict:
 def main() -> None:
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 1
     rr = reveal_rate(1)
-    print(f"  player reveal rate {rr['rate']:.3f}   want 0.55-0.75")
+    print(f"  player reveal rate {rr['rate']:.3f}   want 0.55-0.75  ({rr['quiet']} of {rr['calls']} first calls kept it to himself: Guarded or Shy)")
     print(f"  a player's call a go: opening {rr['present']:.2f} + pitch on the cue {rr['pitch']:.2f} = {rr['present'] + rr['pitch']:.2f} "
           f"(a one-shot call {recruiting.BASE_POINTS['call']}; want the opening about a quarter of the call: PRESENT_HIT {recruiting.PRESENT_HIT})")
     qm = question_mix(1)

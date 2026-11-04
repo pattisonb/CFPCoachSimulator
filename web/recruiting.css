@@ -261,3 +261,12 @@
   .go-pane, .rc-head .go-meter-fill { transition-duration: 0s; }
   .go-pane.go-pane-in { opacity: 1; }
 }
+
+/* his Personality and Who Decides rows (Profile): a label over its value, Not Known Yet muted */
+.go-traits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; margin: 8px 0; }
+.go-trait { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.go-trait-val { font-weight: 600; }
+.go-trait-val.muted { font-weight: 400; }
+@media (max-width: 759px) { .go-traits { grid-template-columns: 1fr; } }
+.go-turn.family { align-self: flex-start; border-bottom-left-radius: 4px; }
+.modal-scene .go-scene .go-turn.family { background: var(--panel-2); }

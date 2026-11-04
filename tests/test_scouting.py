@@ -221,6 +221,7 @@ if __name__ == "__main__":
     me = "ohio-state"
     st["current_week"] = 1
     st["recruiting"]["hours"][me] = 55
+    st["recruiting"]["scout_points"] = {me: 100}
     for p_ in st["recruiting"]["prospects"].values():
         p_["hidden"] = False
     scouted, unscouted, open_ = by_rank[20], by_rank[21], by_rank[22]
