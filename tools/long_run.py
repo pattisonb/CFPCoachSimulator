@@ -124,6 +124,7 @@ def offseason_metrics(state: dict) -> dict:
     sizes = [len(t["roster"]) for t in lg["teams"].values()]
     classes = collections.Counter(p["cls"] for t in lg["teams"].values() for p in t["roster"])
     total = sum(classes.values())
+    from coach_career import offseason
     from sim import season
     teams = season.load_teams()
     draft = [d for d in off["departures"] if d["kind"] == "draft"]
@@ -156,6 +157,9 @@ def offseason_metrics(state: dict) -> dict:
         "you": {k: v for k, v in ((off.get("carousel") or {}).get("you") or {}).items() if k in ("security", "met", "fired")},
         "moved_to": off.get("move_to"),
         "staff_changes": len((off.get("staff") or {}).get("changes", [])),
+        # rosters with no one at a role (offseason.empty_roles: a center, a SAM where the scheme has one): 0 after fill_roles
+        "roles_missing": dict(collections.Counter(r for t in lg["teams"].values() for r in offseason.empty_roles(t))),
+        "roles_filled": len(off.get("roles_filled") or []),
     }
 
 
@@ -240,6 +244,9 @@ def report(paths: list[str]) -> str:
                      ("starters lost, tier 3", lambda o: o.get("portal_starters_by_tier", {}).get("3", o.get("portal_starters_by_tier", {}).get(3, 0))),
                      ("starters lost, tier 5", lambda o: o.get("portal_starters_by_tier", {}).get("5", o.get("portal_starters_by_tier", {}).get(5, 0))),
                      ("quit", lambda o: o["departures"].get("quit", 0)), ("walk-ons", lambda o: o["walk_ons"]),
+                     ("roles filled", lambda o: o.get("roles_filled", 0)),
+                     ("teams without a C", lambda o: o.get("roles_missing", {}).get("C", 0)),
+                     ("teams without a SAM", lambda o: o.get("roles_missing", {}).get("SAM", 0)),
                      ("class size mean", lambda o: o["class_sizes"]["mean"]), ("dev gain EA", lambda o: o["dev_gain_ea"]),
                      ("HC changes", lambda o: o["coaching_changes"].get("head_coach", 0)),
                      ("HC fired", lambda o: o.get("hc_departures", {}).get("fired", 0)),

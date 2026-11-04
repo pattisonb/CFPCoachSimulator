@@ -88,6 +88,10 @@ PORTAL_PASSES = 3                                  # offer-and-sign passes in a 
 PORTAL_TAKE = 4                                    # transfers an AI school takes in a round from its open spots (real: 5-15 a year with churn)
 CHURN = 8                                          # portal spots a Power 4 school makes by releasing its weakest players
 OPEN_TAKE_ANY = 4                                  # with this many open spots a school takes good players at any position
+
+# ----- roles a roster keeps filled *tune* -----
+ROLE_FILL = {"C": ("LG", "RG", "LT", "RT"), "SAM": ("WILL", "MIKE")}   # a role no one plays at the offseason's end: the positions a staff moves a player from
+SAM_FRONT_LBS = 3                                  # a base front with this many linebackers has a SAM (has_sam)
 # an entrant's choice: playing time, the program (its recruiting pull and team rating), winning, home
 PT_WEIGHT, PRESTIGE_WEIGHT, RATING_WEIGHT, WIN_WEIGHT, HOME_WEIGHT, PICK_NOISE = 1.0, 0.8, 0.3, 0.6, 0.4, 0.5
 
@@ -1005,6 +1009,67 @@ def change_position(state: dict, pid: str, pos: str) -> dict:
     if c.get("moved_from"):
         moves.append({"id": pid, "name": c["n"], "from": c["moved_from"], "to": pos, "overall": house(pos, c["o"])})
     return {"id": pid, "pos": pos, "overall": house(pos, c["o"])}
+
+
+def defense_scheme(team: dict) -> str:
+    """A league team's defensive scheme, read the way the engine reads it (engine/game.py)."""
+    co = team.get("coaches") or {}
+    return (((co.get("defensive_coordinator") or {}).get("scheme") or {}).get("defensive_scheme")
+            or ((co.get("head_coach") or {}).get("scheme") or {}).get("defensive_philosophy") or "4-2-5")
+
+
+def has_sam(scheme: str) -> bool:
+    """Whether a defense lines up a SAM: a base front with SAM_FRONT_LBS linebackers (a 4-2-5's
+    nickel back plays where the SAM would, so its two linebackers are a MIKE and a WILL)."""
+    from engine import personnel
+    return personnel.FRONTS[personnel.SCHEME_FRONT.get(scheme, "4-2-5")]["LB"] >= SAM_FRONT_LBS
+
+
+def empty_roles(team: dict) -> list[str]:
+    """The roles in ROLE_FILL no one on a league team's roster plays: a center always, a SAM
+    where the scheme has one (has_sam)."""
+    held = {c["pos"] for c in team["roster"]}
+    return [r for r in ROLE_FILL if r not in held and (r != "SAM" or has_sam(defense_scheme(team)))]
+
+
+def fill_roles(state: dict, teams: Optional[list[str]] = None) -> list[dict]:
+    """Each team's staff moves a player into a role no one on its roster plays (empty_roles): a
+    backup guard to center, a backup MIKE or WILL to SAM. Recruiting and the walk-ons fill a
+    position group, not a spot inside it, so a class of tackles and guards can leave a roster
+    without a center (and the real rosters list no SAM at many programs). The pick is the one
+    who projects best there (position_fit.project) among the players at ROLE_FILL's positions who
+    are not the best at their own (the starters stay put), from a position someone else still
+    plays. Your moves go on the offseason's position changes (Undo there takes them back).
+    `teams`: the schools to look at (every league team when None). Returns the moves."""
+    lgd = state["league"]
+    attrs = _attrs(lgd)
+    off = state.get("offseason") or {}
+    out = []
+    for slug in (teams if teams is not None else sorted(lgd["teams"])):
+        t = lgd["teams"][slug]
+        for role in empty_roles(t):
+            by_pos: dict[str, list[dict]] = {}
+            for c in t["roster"]:
+                by_pos.setdefault(c["pos"], []).append(c)
+            tops = {pos: max(ps, key=lambda c: (c["o"], c["id"]))["id"] for pos, ps in by_pos.items()}
+            pool = [c for pos in ROLE_FILL[role] if len(by_pos.get(pos, ())) > 1 for c in by_pos[pos] if c["id"] != tops[pos]]
+            if not pool:
+                continue
+
+            def there(c: dict) -> int:
+                origin, r = (c["moved_from"], c["moved_attrs"]) if c.get("moved_attrs") else (c["pos"], c["r"])
+                return position_fit.project(dict(zip(attrs, r)), c.get("ht"), c.get("wt"), origin, role)
+            pick = max(pool, key=lambda c: (there(c), c["id"]))
+            was = pick["pos"]
+            move_row(pick, role, attrs)
+            move = {"team": slug, "id": pick["id"], "name": pick["n"], "from": was, "to": role, "overall": house(role, pick["o"])}
+            out.append(move)
+            if slug == state.get("team") and off:
+                moves = off.setdefault("position_changes", [])
+                moves[:] = [m for m in moves if m["id"] != pick["id"]]
+                if pick.get("moved_from"):
+                    moves.append({k: v for k, v in move.items() if k != "team"} | {"from": pick["moved_from"]})
+    return out
 
 
 def _jersey(roster: list[dict], pos: str, rng: random.Random) -> Optional[str]:
@@ -2056,6 +2121,7 @@ def advance(state: dict) -> dict:
         choice = car.get("choice") or ((car.get("openings") or [None])[0] if (car.get("you") or {}).get("fired") else None)
         if choice:
             _take_job(state, choice)
+        off["roles_filled"] = fill_roles(state)      # the schemes are set: every staff fills a role no one plays
         off["stage"] = "ready"
     return off
 
@@ -2105,6 +2171,7 @@ def next_season(state: dict) -> dict:
     year = off["year"]
     lgd = state["league"]
     lgd["year"] = year
+    fill_roles(state, [s for s in sorted(lgd["teams"]) if s != state["team"]])   # a save from before fill_roles ran at "ready" (yours: Undo is yours)
     for t in lgd["teams"].values():
         position_fit.settle(t["roster"])          # this year's position changes are theirs now
     team = off.get("move_to") or state["team"]
