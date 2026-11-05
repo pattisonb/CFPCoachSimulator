@@ -3272,7 +3272,8 @@ def _game_line(g: dict, teams: dict, state: Optional[dict] = None) -> dict:
             "site": g.get("site"), "played": g["played"],
             "home": g["home"], "away": g["away"], "home_name": g.get("home_display") or teams[g["home"]]["name"],
             "away_name": g.get("away_display") or teams[g["away"]]["name"], "home_score": g["home_score"], "away_score": g["away_score"],
-            "overtime": g.get("overtime", 0), "winner": _winner(g) if g["played"] else None}
+            "overtime": g.get("overtime", 0), "winner": _winner(g) if g["played"] else None,
+            "home_seed": g.get("home_seed"), "away_seed": g.get("away_seed"), "bowl": g.get("bowl")}
 
 
 def _player_leaders(boxes: list[dict], me: str) -> dict:
@@ -3427,7 +3428,8 @@ def season_review(state: dict) -> dict:
         line = {"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "opponent": opp,
                 "opponent_name": team_display(opp, teams), "opponent_rank": orank, "opponent_record": _record_str(orec) if orec else None,
                 "venue": _venue(g, home), "won": won, "points_for": pf, "points_against": pa,
-                "margin": pf - pa, "overtime": g.get("overtime", 0), "has_box": has_box(state, g)}
+                "margin": pf - pa, "overtime": g.get("overtime", 0), "has_box": has_box(state, g),
+                "conference_game": bool(g.get("conference_game"))}
         lines.append(line)
         (wins if won else losses).append(line)
         cur = cur + 1 if won else 0
@@ -3458,8 +3460,14 @@ def season_review(state: dict) -> dict:
     boxes += [b for g in state["games"].values() if g.get("real") and g["played"] and me in (g["home"], g["away"])
               and g["event_id"] not in state["my_boxes"] for b in [load_box(state, g["event_id"])] if b]
     surprises, disappointments = _surprises(state, teams, ap)
+    if title_game:
+        title_game = {**title_game, "home_record": _record_str(all_rec[title_game["home"]]), "away_record": _record_str(all_rec[title_game["away"]])}
+    non_conf = [l for l in lines if l["kind"] == "regular" and not l["conference_game"]]
+    regular_wins = sum(1 for l in lines if l["kind"] == "regular" and l["won"])
+    from sim.grade import season_grade
     return {
-        "done": state["done"], "current_week": state["current_week"],
+        "done": state["done"], "current_week": state["current_week"], "year": season_year(state),
+        "grade": season_grade(state) if state["done"] else None,
         "national_leaders": _national_leaders(state), "surprises": surprises, "disappointments": disappointments,
         "champion": state.get("champion"), "champion_name": teams[state["champion"]]["name"] if state.get("champion") else None,
         "title_game": title_game, "rounds": rounds, "champions": champions,
@@ -3472,8 +3480,34 @@ def season_review(state: dict) -> dict:
             "points_per_game": round(sum(l["points_for"] for l in lines) / n, 1), "allowed_per_game": round(sum(l["points_against"] for l in lines) / n, 1),
             "best_win": best_win, "worst_loss": worst_loss, "biggest_win": biggest_win, "closest_loss": closest_loss,
             "longest_streak": best_streak, "postseason": postseason, "leaders": _player_leaders(boxes, me),
+            "non_conf_wins": sum(1 for l in non_conf if l["won"]), "non_conf_losses": sum(1 for l in non_conf if not l["won"]),
+            "wins_short": max(0, BOWL_WINS - regular_wins) if finish == "No bowl" else 0,
+            "team_stats": _team_stat_ranks(state, me),
         },
     }
+
+
+BOWL_WINS = 6     # the wins a bowl trip takes
+
+
+def _team_stat_ranks(state: dict, me: str) -> Optional[dict]:
+    """Your total offense, total defense and turnover margin with their national ranks (yards a
+    game and takeaways less giveaways, among every FBS team that has played a simulated game),
+    or None when the season kept no league-wide stats."""
+    if not state.get("season_stats"):
+        return None
+    rows = team_stats_view(state)["teams"]
+    mine = next((r for r in rows if r["team"] == me), None)
+    if not mine:
+        return None
+
+    def rank(key, value, best_high=True):
+        return sum(1 for r in rows if (r[key] > value if best_high else r[key] < value)) + 1
+
+    margin = {r["team"]: r["takeaways"] - r["turnovers"] for r in rows}
+    return {"total_offense": {"value": round(mine["ypg"], 1), "rank": rank("ypg", mine["ypg"]), "of": len(rows)},
+            "total_defense": {"value": round(mine["opp_ypg"], 1), "rank": rank("opp_ypg", mine["opp_ypg"], best_high=False), "of": len(rows)},
+            "turnover_margin": {"value": margin[me], "rank": sum(1 for v in margin.values() if v > margin[me]) + 1, "of": len(rows)}}
 
 
 # ----- player profiles --------------------------------------------------------------------
