@@ -941,7 +941,11 @@ offer before any contact counts half. AI boards start warm (the staff has evalua
 everyone on them, one priority known) and pitch the strongest priority they know. Each contact
 from a school is worth a little less than the last, and a
 prospect takes one message and one call a week from a school (more contact is not more interest:
-the rest of your hours go to other prospects). **Pestering costs you:** after three contacts while
+the rest of your hours go to other prospects). The week is the one a contact lands in
+(`recruiting.contact_week`): yours count toward the next step, Auto-recruit's made during a step
+count toward that step, so your staff never use up the week you are about to play; in the portal
+the portal's own week counts (the season's week stands still there). A call or visit left open
+closes at the step, and the next week's call is yours again. **Pestering costs you:** after three contacts while
 he is not considering you (you outside his top three, or under 60% of his leader's interest, among
 the schools that have worked or offered him; an offer does not change that, an official visit or his
 commitment does), each further message, call or in-home visit counts against you (1.5 times the
@@ -1389,7 +1393,9 @@ most), each opening to its recruits; the Office points to it after the early sig
 and national signing day.
 
 **Auto-recruit** works from your board (your picks first) and puts everyone it recruits on it. It is off, this week (your staff spend your hours through the next advance, then
-it turns itself off) or all season.
+it turns itself off) or all season. An offer you make or whose NIL you raise by hand is yours
+(`recruiting.manual_offers`): Auto-recruit never pulls it or changes its NIL; a signing elsewhere
+still ends it.
 
 **Saves.** Every action and every week writes the season file (the state, with your own games'
 box scores in it), and the browser worker writes it to IndexedDB right after the call (see
