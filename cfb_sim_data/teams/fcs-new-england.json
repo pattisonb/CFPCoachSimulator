@@ -1,16 +1,14 @@
 {
- "slug": "kestrel-bay",
- "school_name": "Kestrel Bay University",
- "short_name": "Kestrel Bay",
- "abbreviation": "KBU",
- "mascot": "Sea Wolves",
- "city": "Kestrel Bay",
+ "slug": "fcs-new-england",
+ "school_name": "FCS New England",
+ "short_name": "FCS New England",
+ "abbreviation": "FCS",
  "state": "ME",
  "region": "New England",
- "conference": "Eight Rivers Football Conference",
+ "conference": "FCS",
  "subdivision": "FCS",
  "stadium": {
-  "name": "Harborview Field",
+  "name": "FCS New England Stadium",
   "capacity": 11200,
   "surface": "turf"
  },
@@ -29,7 +27,7 @@
   }
  },
  "rivals": [
-  "alder-ridge-state"
+  "fcs-mid-atlantic"
  ],
  "fictional": true,
  "program": {
@@ -58,8 +56,8 @@
  },
  "coaches": {
   "head_coach": {
-   "coach_id": "kestrel-bay:head_coach",
-   "team_slug": "kestrel-bay",
+   "coach_id": "fcs-new-england:head_coach",
+   "team_slug": "fcs-new-england",
    "name": "Marcus Caudill",
    "since": 2024,
    "fictional": true,
@@ -88,8 +86,8 @@
    "ratings_generated": true
   },
   "offensive_coordinator": {
-   "coach_id": "kestrel-bay:offensive_coordinator",
-   "team_slug": "kestrel-bay",
+   "coach_id": "fcs-new-england:offensive_coordinator",
+   "team_slug": "fcs-new-england",
    "name": "Dwayne Ashby",
    "since": 2020,
    "fictional": true,
@@ -116,8 +114,8 @@
    "ratings_generated": true
   },
   "defensive_coordinator": {
-   "coach_id": "kestrel-bay:defensive_coordinator",
-   "team_slug": "kestrel-bay",
+   "coach_id": "fcs-new-england:defensive_coordinator",
+   "team_slug": "fcs-new-england",
    "name": "Dale Tillman",
    "since": 2023,
    "fictional": true,
@@ -146,218 +144,218 @@
  "starters": {
   "offense": {
    "QB": [
-    "xavier-carmody-kestrel-bay"
+    "xavier-carmody-fcs-new-england"
    ],
    "HB": [
-    "ethan-bonner-kestrel-bay"
+    "ethan-bonner-fcs-new-england"
    ],
    "WR": [
-    "wade-bonner-kestrel-bay",
-    "santiago-kirkland-kestrel-bay",
-    "reggie-pruitt-kestrel-bay"
+    "wade-bonner-fcs-new-england",
+    "santiago-kirkland-fcs-new-england",
+    "reggie-pruitt-fcs-new-england"
    ],
    "TE": [
-    "nash-brannon-kestrel-bay"
+    "nash-brannon-fcs-new-england"
    ],
    "LT": [
-    "chase-chambliss-kestrel-bay"
+    "chase-chambliss-fcs-new-england"
    ],
    "LG": [
-    "corey-sewell-kestrel-bay"
+    "corey-sewell-fcs-new-england"
    ],
    "C": [
-    "evan-fitch-kestrel-bay"
+    "evan-fitch-fcs-new-england"
    ],
    "RG": [
-    "quincy-hollins-kestrel-bay"
+    "quincy-hollins-fcs-new-england"
    ],
    "RT": [
-    "drew-waddell-kestrel-bay"
+    "drew-waddell-fcs-new-england"
    ]
   },
   "defense": {
    "LEDG": [
-    "mason-abbott-kestrel-bay"
+    "mason-abbott-fcs-new-england"
    ],
    "REDG": [
-    "zaire-kimbrough-kestrel-bay"
+    "zaire-kimbrough-fcs-new-england"
    ],
    "DT": [
-    "evan-baptiste-kestrel-bay",
-    "tristan-crandall-kestrel-bay"
+    "evan-baptiste-fcs-new-england",
+    "tristan-crandall-fcs-new-england"
    ],
    "LB": [
-    "dawson-yancey-kestrel-bay",
-    "terrance-mccrae-kestrel-bay"
+    "dawson-yancey-fcs-new-england",
+    "terrance-mccrae-fcs-new-england"
    ],
    "CB": [
-    "dominic-pacheco-kestrel-bay",
-    "antoine-mcalister-kestrel-bay",
-    "adrian-brannon-kestrel-bay"
+    "dominic-pacheco-fcs-new-england",
+    "antoine-mcalister-fcs-new-england",
+    "adrian-brannon-fcs-new-england"
    ],
    "FS": [
-    "landon-rhodes-kestrel-bay"
+    "landon-rhodes-fcs-new-england"
    ],
    "SS": [
-    "tate-barlow-kestrel-bay"
+    "tate-barlow-fcs-new-england"
    ]
   },
   "special_teams": {
    "K": [
-    "jalen-sandoval-kestrel-bay"
+    "jalen-sandoval-fcs-new-england"
    ],
    "P": [
-    "warren-cantrell-kestrel-bay"
+    "warren-cantrell-fcs-new-england"
    ],
    "KR": [
-    "santiago-kirkland-kestrel-bay"
+    "santiago-kirkland-fcs-new-england"
    ],
    "PR": [
-    "trent-shipley-kestrel-bay"
+    "trent-shipley-fcs-new-england"
    ]
   }
  },
  "depth_chart": {
   "QB": [
-   "xavier-carmody-kestrel-bay",
-   "kai-forsythe-kestrel-bay",
-   "owen-eldridge-kestrel-bay",
-   "mateo-wilder-kestrel-bay",
-   "derrick-sandoval-kestrel-bay"
+   "xavier-carmody-fcs-new-england",
+   "kai-forsythe-fcs-new-england",
+   "owen-eldridge-fcs-new-england",
+   "mateo-wilder-fcs-new-england",
+   "derrick-sandoval-fcs-new-england"
   ],
   "HB": [
-   "ethan-bonner-kestrel-bay",
-   "mateo-lowery-kestrel-bay",
-   "blake-forsythe-kestrel-bay",
-   "brody-briscoe-kestrel-bay"
+   "ethan-bonner-fcs-new-england",
+   "mateo-lowery-fcs-new-england",
+   "blake-forsythe-fcs-new-england",
+   "brody-briscoe-fcs-new-england"
   ],
   "FB": [
-   "malachi-forsythe-kestrel-bay"
+   "malachi-forsythe-fcs-new-england"
   ],
   "WR": [
-   "wade-bonner-kestrel-bay",
-   "santiago-kirkland-kestrel-bay",
-   "reggie-pruitt-kestrel-bay",
-   "alec-blackwell-kestrel-bay",
-   "aiden-varnado-kestrel-bay",
-   "jamal-rowland-kestrel-bay",
-   "gavin-nettles-kestrel-bay",
-   "trent-shipley-kestrel-bay",
-   "carson-lockett-kestrel-bay",
-   "eli-radford-kestrel-bay",
-   "kai-sizemore-kestrel-bay",
-   "langston-greer-kestrel-bay",
-   "rowan-northcutt-kestrel-bay"
+   "wade-bonner-fcs-new-england",
+   "santiago-kirkland-fcs-new-england",
+   "reggie-pruitt-fcs-new-england",
+   "alec-blackwell-fcs-new-england",
+   "aiden-varnado-fcs-new-england",
+   "jamal-rowland-fcs-new-england",
+   "gavin-nettles-fcs-new-england",
+   "trent-shipley-fcs-new-england",
+   "carson-lockett-fcs-new-england",
+   "eli-radford-fcs-new-england",
+   "kai-sizemore-fcs-new-england",
+   "langston-greer-fcs-new-england",
+   "rowan-northcutt-fcs-new-england"
   ],
   "TE": [
-   "nash-brannon-kestrel-bay",
-   "darius-ambrose-kestrel-bay",
-   "jamal-barlow-kestrel-bay",
-   "xavier-gaither-kestrel-bay",
-   "nico-huddleston-kestrel-bay"
+   "nash-brannon-fcs-new-england",
+   "darius-ambrose-fcs-new-england",
+   "jamal-barlow-fcs-new-england",
+   "xavier-gaither-fcs-new-england",
+   "nico-huddleston-fcs-new-england"
   ],
   "LT": [
-   "chase-chambliss-kestrel-bay",
-   "jett-rainey-kestrel-bay",
-   "quentin-yancey-kestrel-bay"
+   "chase-chambliss-fcs-new-england",
+   "jett-rainey-fcs-new-england",
+   "quentin-yancey-fcs-new-england"
   ],
   "LG": [
-   "corey-sewell-kestrel-bay",
-   "quincy-pacheco-kestrel-bay",
-   "andre-trammell-kestrel-bay"
+   "corey-sewell-fcs-new-england",
+   "quincy-pacheco-fcs-new-england",
+   "andre-trammell-fcs-new-england"
   ],
   "C": [
-   "evan-fitch-kestrel-bay",
-   "zaire-bowden-kestrel-bay"
+   "evan-fitch-fcs-new-england",
+   "zaire-bowden-fcs-new-england"
   ],
   "RG": [
-   "quincy-hollins-kestrel-bay",
-   "aiden-dalton-kestrel-bay",
-   "justice-esparza-kestrel-bay"
+   "quincy-hollins-fcs-new-england",
+   "aiden-dalton-fcs-new-england",
+   "justice-esparza-fcs-new-england"
   ],
   "RT": [
-   "drew-waddell-kestrel-bay",
-   "miles-sutherland-kestrel-bay",
-   "trent-pacheco-kestrel-bay",
-   "ethan-draper-kestrel-bay"
+   "drew-waddell-fcs-new-england",
+   "miles-sutherland-fcs-new-england",
+   "trent-pacheco-fcs-new-england",
+   "ethan-draper-fcs-new-england"
   ],
   "LEDG": [
-   "mason-abbott-kestrel-bay",
-   "hayden-goins-kestrel-bay"
+   "mason-abbott-fcs-new-england",
+   "hayden-goins-fcs-new-england"
   ],
   "DT": [
-   "evan-baptiste-kestrel-bay",
-   "tristan-crandall-kestrel-bay",
-   "wade-mayfield-kestrel-bay",
-   "zaire-stroud-kestrel-bay",
-   "langston-montoya-kestrel-bay",
-   "tate-fontenot-kestrel-bay",
-   "gavin-haskins-kestrel-bay",
-   "rico-montoya-kestrel-bay"
+   "evan-baptiste-fcs-new-england",
+   "tristan-crandall-fcs-new-england",
+   "wade-mayfield-fcs-new-england",
+   "zaire-stroud-fcs-new-england",
+   "langston-montoya-fcs-new-england",
+   "tate-fontenot-fcs-new-england",
+   "gavin-haskins-fcs-new-england",
+   "rico-montoya-fcs-new-england"
   ],
   "REDG": [
-   "zaire-kimbrough-kestrel-bay",
-   "ezra-maddox-kestrel-bay",
-   "malik-mccrae-kestrel-bay"
+   "zaire-kimbrough-fcs-new-england",
+   "ezra-maddox-fcs-new-england",
+   "malik-mccrae-fcs-new-england"
   ],
   "SAM": [
-   "nico-halloway-kestrel-bay",
-   "jabari-talley-kestrel-bay"
+   "nico-halloway-fcs-new-england",
+   "jabari-talley-fcs-new-england"
   ],
   "MIKE": [
-   "dawson-yancey-kestrel-bay",
-   "terrance-mccrae-kestrel-bay",
-   "kyler-shipley-kestrel-bay"
+   "dawson-yancey-fcs-new-england",
+   "terrance-mccrae-fcs-new-england",
+   "kyler-shipley-fcs-new-england"
   ],
   "WILL": [
-   "kareem-forsythe-kestrel-bay",
-   "jett-radford-kestrel-bay",
-   "desmond-marchetti-kestrel-bay"
+   "kareem-forsythe-fcs-new-england",
+   "jett-radford-fcs-new-england",
+   "desmond-marchetti-fcs-new-england"
   ],
   "CB": [
-   "dominic-pacheco-kestrel-bay",
-   "antoine-mcalister-kestrel-bay",
-   "adrian-brannon-kestrel-bay",
-   "andre-overstreet-kestrel-bay",
-   "wes-dade-kestrel-bay",
-   "julian-dempsey-kestrel-bay",
-   "wade-garrity-kestrel-bay",
-   "cedric-beckett-kestrel-bay",
-   "trace-vickers-kestrel-bay",
-   "mateo-crandall-kestrel-bay",
-   "julian-brannon-kestrel-bay",
-   "quentin-tatum-kestrel-bay"
+   "dominic-pacheco-fcs-new-england",
+   "antoine-mcalister-fcs-new-england",
+   "adrian-brannon-fcs-new-england",
+   "andre-overstreet-fcs-new-england",
+   "wes-dade-fcs-new-england",
+   "julian-dempsey-fcs-new-england",
+   "wade-garrity-fcs-new-england",
+   "cedric-beckett-fcs-new-england",
+   "trace-vickers-fcs-new-england",
+   "mateo-crandall-fcs-new-england",
+   "julian-brannon-fcs-new-england",
+   "quentin-tatum-fcs-new-england"
   ],
   "FS": [
-   "landon-rhodes-kestrel-bay",
-   "alec-barlow-kestrel-bay",
-   "carson-glover-kestrel-bay",
-   "xavier-bradshaw-kestrel-bay"
+   "landon-rhodes-fcs-new-england",
+   "alec-barlow-fcs-new-england",
+   "carson-glover-fcs-new-england",
+   "xavier-bradshaw-fcs-new-england"
   ],
   "SS": [
-   "tate-barlow-kestrel-bay",
-   "malik-vance-kestrel-bay",
-   "ethan-rainey-kestrel-bay"
+   "tate-barlow-fcs-new-england",
+   "malik-vance-fcs-new-england",
+   "ethan-rainey-fcs-new-england"
   ],
   "K": [
-   "jalen-sandoval-kestrel-bay"
+   "jalen-sandoval-fcs-new-england"
   ],
   "P": [
-   "warren-cantrell-kestrel-bay"
+   "warren-cantrell-fcs-new-england"
   ]
  },
  "roster_size": 85,
  "roster": [
   {
-   "slug": "xavier-carmody-kestrel-bay",
+   "slug": "xavier-carmody-fcs-new-england",
    "position": "QB",
    "class": "SR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Xavier Carmody",
    "position_name": "Quarterback",
    "jersey": "10",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior",
    "height": "6'1\"",
    "weight_lbs": 195,
@@ -641,15 +639,15 @@
    "fictional": true
   },
   {
-   "slug": "kai-forsythe-kestrel-bay",
+   "slug": "kai-forsythe-fcs-new-england",
    "position": "QB",
    "class": "FRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Kai Forsythe",
    "position_name": "Quarterback",
    "jersey": "5",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",
    "weight_lbs": 169,
@@ -918,15 +916,15 @@
    "fictional": true
   },
   {
-   "slug": "owen-eldridge-kestrel-bay",
+   "slug": "owen-eldridge-fcs-new-england",
    "position": "QB",
    "class": "FRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Owen Eldridge",
    "position_name": "Quarterback",
    "jersey": "14",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman (RS)",
    "height": "5'11\"",
    "weight_lbs": 220,
@@ -1191,15 +1189,15 @@
    "fictional": true
   },
   {
-   "slug": "mateo-wilder-kestrel-bay",
+   "slug": "mateo-wilder-fcs-new-england",
    "position": "QB",
    "class": "SRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Mateo Wilder",
    "position_name": "Quarterback",
    "jersey": "7",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior (RS)",
    "height": "5'11\"",
    "weight_lbs": 190,
@@ -1460,15 +1458,15 @@
    "fictional": true
   },
   {
-   "slug": "derrick-sandoval-kestrel-bay",
+   "slug": "derrick-sandoval-fcs-new-england",
    "position": "QB",
    "class": "FR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Derrick Sandoval",
    "position_name": "Quarterback",
    "jersey": "18",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman",
    "height": "6'3\"",
    "weight_lbs": 245,
@@ -1753,15 +1751,15 @@
    "fictional": true
   },
   {
-   "slug": "ethan-bonner-kestrel-bay",
+   "slug": "ethan-bonner-fcs-new-england",
    "position": "HB",
    "class": "SR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Ethan Bonner",
    "position_name": "Halfback",
    "jersey": "31",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior",
    "height": "5'9\"",
    "weight_lbs": 205,
@@ -2037,15 +2035,15 @@
    "fictional": true
   },
   {
-   "slug": "mateo-lowery-kestrel-bay",
+   "slug": "mateo-lowery-fcs-new-england",
    "position": "HB",
    "class": "JRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Mateo Lowery",
    "position_name": "Halfback",
    "jersey": "24",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior (RS)",
    "height": "5'9\"",
    "weight_lbs": 215,
@@ -2321,15 +2319,15 @@
    "fictional": true
   },
   {
-   "slug": "blake-forsythe-kestrel-bay",
+   "slug": "blake-forsythe-fcs-new-england",
    "position": "HB",
    "class": "FR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Blake Forsythe",
    "position_name": "Halfback",
    "jersey": "22",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman",
    "height": "6'0\"",
    "weight_lbs": 220,
@@ -2609,15 +2607,15 @@
    "fictional": true
   },
   {
-   "slug": "brody-briscoe-kestrel-bay",
+   "slug": "brody-briscoe-fcs-new-england",
    "position": "HB",
    "class": "SORS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Brody Briscoe",
    "position_name": "Halfback",
    "jersey": "2",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore (RS)",
    "height": "6'0\"",
    "weight_lbs": 192,
@@ -2898,15 +2896,15 @@
    "fictional": true
   },
   {
-   "slug": "malachi-forsythe-kestrel-bay",
+   "slug": "malachi-forsythe-fcs-new-england",
    "position": "FB",
    "class": "JRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Malachi Forsythe",
    "position_name": "Fullback",
    "jersey": "8",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 235,
@@ -3192,15 +3190,15 @@
    "fictional": true
   },
   {
-   "slug": "wade-bonner-kestrel-bay",
+   "slug": "wade-bonner-fcs-new-england",
    "position": "WR",
    "class": "SORS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Wade Bonner",
    "position_name": "Wide Receiver",
    "jersey": "3",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore (RS)",
    "height": "6'2\"",
    "weight_lbs": 180,
@@ -3478,15 +3476,15 @@
    "fictional": true
   },
   {
-   "slug": "santiago-kirkland-kestrel-bay",
+   "slug": "santiago-kirkland-fcs-new-england",
    "position": "WR",
    "class": "SR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Santiago Kirkland",
    "position_name": "Wide Receiver",
    "jersey": "0",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior",
    "height": "5'11\"",
    "weight_lbs": 181,
@@ -3741,15 +3739,15 @@
    "fictional": true
   },
   {
-   "slug": "reggie-pruitt-kestrel-bay",
+   "slug": "reggie-pruitt-fcs-new-england",
    "position": "WR",
    "class": "SR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Reggie Pruitt",
    "position_name": "Wide Receiver",
    "jersey": "84",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior",
    "height": "6'2\"",
    "weight_lbs": 180,
@@ -4027,15 +4025,15 @@
    "fictional": true
   },
   {
-   "slug": "alec-blackwell-kestrel-bay",
+   "slug": "alec-blackwell-fcs-new-england",
    "position": "WR",
    "class": "FRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Alec Blackwell",
    "position_name": "Wide Receiver",
    "jersey": "46",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman (RS)",
    "height": "5'10\"",
    "weight_lbs": 179,
@@ -4292,15 +4290,15 @@
    "fictional": true
   },
   {
-   "slug": "aiden-varnado-kestrel-bay",
+   "slug": "aiden-varnado-fcs-new-england",
    "position": "WR",
    "class": "JRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Aiden Varnado",
    "position_name": "Wide Receiver",
    "jersey": "16",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior (RS)",
    "height": "6'4\"",
    "weight_lbs": 200,
@@ -4560,15 +4558,15 @@
    "fictional": true
   },
   {
-   "slug": "jamal-rowland-kestrel-bay",
+   "slug": "jamal-rowland-fcs-new-england",
    "position": "WR",
    "class": "SRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Jamal Rowland",
    "position_name": "Wide Receiver",
    "jersey": "15",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior (RS)",
    "height": "5'8\"",
    "weight_lbs": 160,
@@ -4858,15 +4856,15 @@
    "fictional": true
   },
   {
-   "slug": "gavin-nettles-kestrel-bay",
+   "slug": "gavin-nettles-fcs-new-england",
    "position": "WR",
    "class": "SRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Gavin Nettles",
    "position_name": "Wide Receiver",
    "jersey": "86",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior (RS)",
    "height": "6'0\"",
    "weight_lbs": 185,
@@ -5132,15 +5130,15 @@
    "fictional": true
   },
   {
-   "slug": "trent-shipley-kestrel-bay",
+   "slug": "trent-shipley-fcs-new-england",
    "position": "WR",
    "class": "JRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Trent Shipley",
    "position_name": "Wide Receiver",
    "jersey": "81",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior (RS)",
    "height": "6'3\"",
    "weight_lbs": 205,
@@ -5399,15 +5397,15 @@
    "fictional": true
   },
   {
-   "slug": "carson-lockett-kestrel-bay",
+   "slug": "carson-lockett-fcs-new-england",
    "position": "WR",
    "class": "SO",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Carson Lockett",
    "position_name": "Wide Receiver",
    "jersey": "9",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore",
    "height": "5'9\"",
    "weight_lbs": 195,
@@ -5676,15 +5674,15 @@
    "fictional": true
   },
   {
-   "slug": "eli-radford-kestrel-bay",
+   "slug": "eli-radford-fcs-new-england",
    "position": "WR",
    "class": "SRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Eli Radford",
    "position_name": "Wide Receiver",
    "jersey": "20",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior (RS)",
    "height": "5'11\"",
    "weight_lbs": 180,
@@ -5979,15 +5977,15 @@
    "fictional": true
   },
   {
-   "slug": "kai-sizemore-kestrel-bay",
+   "slug": "kai-sizemore-fcs-new-england",
    "position": "WR",
    "class": "SORS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Kai Sizemore",
    "position_name": "Wide Receiver",
    "jersey": "12",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore (RS)",
    "height": "6'1\"",
    "weight_lbs": 188,
@@ -6275,15 +6273,15 @@
    "fictional": true
   },
   {
-   "slug": "langston-greer-kestrel-bay",
+   "slug": "langston-greer-fcs-new-england",
    "position": "WR",
    "class": "FR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Langston Greer",
    "position_name": "Wide Receiver",
    "jersey": "80",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman",
    "height": "6'0\"",
    "weight_lbs": 185,
@@ -6577,15 +6575,15 @@
    "fictional": true
   },
   {
-   "slug": "rowan-northcutt-kestrel-bay",
+   "slug": "rowan-northcutt-fcs-new-england",
    "position": "WR",
    "class": "FRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Rowan Northcutt",
    "position_name": "Wide Receiver",
    "jersey": "17",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",
    "weight_lbs": 200,
@@ -6845,15 +6843,15 @@
    "fictional": true
   },
   {
-   "slug": "nash-brannon-kestrel-bay",
+   "slug": "nash-brannon-fcs-new-england",
    "position": "TE",
    "class": "FR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Nash Brannon",
    "position_name": "Tight End",
    "jersey": "44",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman",
    "height": "6'4\"",
    "weight_lbs": 230,
@@ -7132,15 +7130,15 @@
    "fictional": true
   },
   {
-   "slug": "darius-ambrose-kestrel-bay",
+   "slug": "darius-ambrose-fcs-new-england",
    "position": "TE",
    "class": "SRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Darius Ambrose",
    "position_name": "Tight End",
    "jersey": "88",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior (RS)",
    "height": "6'6\"",
    "weight_lbs": 238,
@@ -7440,15 +7438,15 @@
    "fictional": true
   },
   {
-   "slug": "jamal-barlow-kestrel-bay",
+   "slug": "jamal-barlow-fcs-new-england",
    "position": "TE",
    "class": "SO",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Jamal Barlow",
    "position_name": "Tight End",
    "jersey": "85",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore",
    "height": "6'4\"",
    "weight_lbs": 235,
@@ -7748,15 +7746,15 @@
    "fictional": true
   },
   {
-   "slug": "xavier-gaither-kestrel-bay",
+   "slug": "xavier-gaither-fcs-new-england",
    "position": "TE",
    "class": "SORS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Xavier Gaither",
    "position_name": "Tight End",
    "jersey": "87",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
    "weight_lbs": 237,
@@ -8051,15 +8049,15 @@
    "fictional": true
   },
   {
-   "slug": "nico-huddleston-kestrel-bay",
+   "slug": "nico-huddleston-fcs-new-england",
    "position": "TE",
    "class": "SORS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Nico Huddleston",
    "position_name": "Tight End",
    "jersey": "42",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore (RS)",
    "height": "6'1\"",
    "weight_lbs": 253,
@@ -8368,15 +8366,15 @@
    "fictional": true
   },
   {
-   "slug": "chase-chambliss-kestrel-bay",
+   "slug": "chase-chambliss-fcs-new-england",
    "position": "LT",
    "class": "SO",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Chase Chambliss",
    "position_name": "Left Tackle",
    "jersey": "58",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore",
    "height": "6'5\"",
    "weight_lbs": 280,
@@ -8633,15 +8631,15 @@
    "fictional": true
   },
   {
-   "slug": "jett-rainey-kestrel-bay",
+   "slug": "jett-rainey-fcs-new-england",
    "position": "LT",
    "class": "FR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Jett Rainey",
    "position_name": "Left Tackle",
    "jersey": "67",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman",
    "height": "6'4\"",
    "weight_lbs": 293,
@@ -8890,15 +8888,15 @@
    "fictional": true
   },
   {
-   "slug": "quentin-yancey-kestrel-bay",
+   "slug": "quentin-yancey-fcs-new-england",
    "position": "LT",
    "class": "JRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Quentin Yancey",
    "position_name": "Left Tackle",
    "jersey": "69",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior (RS)",
    "height": "6'4\"",
    "weight_lbs": 320,
@@ -9181,15 +9179,15 @@
    "fictional": true
   },
   {
-   "slug": "corey-sewell-kestrel-bay",
+   "slug": "corey-sewell-fcs-new-england",
    "position": "LG",
    "class": "SR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Corey Sewell",
    "position_name": "Left Guard",
    "jersey": "75",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior",
    "height": "6'4\"",
    "weight_lbs": 320,
@@ -9466,15 +9464,15 @@
    "fictional": true
   },
   {
-   "slug": "quincy-pacheco-kestrel-bay",
+   "slug": "quincy-pacheco-fcs-new-england",
    "position": "LG",
    "class": "JRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Quincy Pacheco",
    "position_name": "Left Guard",
    "jersey": "70",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 271,
@@ -9740,15 +9738,15 @@
    "fictional": true
   },
   {
-   "slug": "andre-trammell-kestrel-bay",
+   "slug": "andre-trammell-fcs-new-england",
    "position": "LG",
    "class": "SRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Andre Trammell",
    "position_name": "Left Guard",
    "jersey": "60",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior (RS)",
    "height": "6'3\"",
    "weight_lbs": 285,
@@ -10041,15 +10039,15 @@
    "fictional": true
   },
   {
-   "slug": "evan-fitch-kestrel-bay",
+   "slug": "evan-fitch-fcs-new-england",
    "position": "C",
    "class": "FRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Evan Fitch",
    "position_name": "Center",
    "jersey": "78",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",
    "weight_lbs": 317,
@@ -10309,15 +10307,15 @@
    "fictional": true
   },
   {
-   "slug": "zaire-bowden-kestrel-bay",
+   "slug": "zaire-bowden-fcs-new-england",
    "position": "C",
    "class": "SRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Zaire Bowden",
    "position_name": "Center",
    "jersey": "55",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior (RS)",
    "height": "6'1\"",
    "weight_lbs": 291,
@@ -10591,15 +10589,15 @@
    "fictional": true
   },
   {
-   "slug": "quincy-hollins-kestrel-bay",
+   "slug": "quincy-hollins-fcs-new-england",
    "position": "RG",
    "class": "SORS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Quincy Hollins",
    "position_name": "Right Guard",
    "jersey": "73",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore (RS)",
    "height": "6'2\"",
    "weight_lbs": 327,
@@ -10852,15 +10850,15 @@
    "fictional": true
   },
   {
-   "slug": "aiden-dalton-kestrel-bay",
+   "slug": "aiden-dalton-fcs-new-england",
    "position": "RG",
    "class": "JRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Aiden Dalton",
    "position_name": "Right Guard",
    "jersey": "66",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior (RS)",
    "height": "6'2\"",
    "weight_lbs": 295,
@@ -11106,15 +11104,15 @@
    "fictional": true
   },
   {
-   "slug": "justice-esparza-kestrel-bay",
+   "slug": "justice-esparza-fcs-new-england",
    "position": "RG",
    "class": "SRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Justice Esparza",
    "position_name": "Right Guard",
    "jersey": "59",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior (RS)",
    "height": "6'3\"",
    "weight_lbs": 314,
@@ -11356,15 +11354,15 @@
    "fictional": true
   },
   {
-   "slug": "drew-waddell-kestrel-bay",
+   "slug": "drew-waddell-fcs-new-england",
    "position": "RT",
    "class": "FRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Drew Waddell",
    "position_name": "Right Tackle",
    "jersey": "54",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman (RS)",
    "height": "6'5\"",
    "weight_lbs": 332,
@@ -11645,15 +11643,15 @@
    "fictional": true
   },
   {
-   "slug": "miles-sutherland-kestrel-bay",
+   "slug": "miles-sutherland-fcs-new-england",
    "position": "RT",
    "class": "SRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Miles Sutherland",
    "position_name": "Right Tackle",
    "jersey": "76",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior (RS)",
    "height": "6'6\"",
    "weight_lbs": 299,
@@ -11926,15 +11924,15 @@
    "fictional": true
   },
   {
-   "slug": "trent-pacheco-kestrel-bay",
+   "slug": "trent-pacheco-fcs-new-england",
    "position": "RT",
    "class": "SORS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Trent Pacheco",
    "position_name": "Right Tackle",
    "jersey": "64",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore (RS)",
    "height": "6'5\"",
    "weight_lbs": 310,
@@ -12183,15 +12181,15 @@
    "fictional": true
   },
   {
-   "slug": "ethan-draper-kestrel-bay",
+   "slug": "ethan-draper-fcs-new-england",
    "position": "RT",
    "class": "SRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Ethan Draper",
    "position_name": "Right Tackle",
    "jersey": "72",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior (RS)",
    "height": "6'5\"",
    "weight_lbs": 305,
@@ -12486,15 +12484,15 @@
    "fictional": true
   },
   {
-   "slug": "mason-abbott-kestrel-bay",
+   "slug": "mason-abbott-fcs-new-england",
    "position": "LEDG",
    "class": "JR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Mason Abbott",
    "position_name": "Left Edge",
    "jersey": "6",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior",
    "height": "6'4\"",
    "weight_lbs": 230,
@@ -12786,15 +12784,15 @@
    "fictional": true
   },
   {
-   "slug": "hayden-goins-kestrel-bay",
+   "slug": "hayden-goins-fcs-new-england",
    "position": "LEDG",
    "class": "JR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Hayden Goins",
    "position_name": "Left Edge",
    "jersey": "5",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior",
    "height": "6'3\"",
    "weight_lbs": 240,
@@ -13076,15 +13074,15 @@
    "fictional": true
   },
   {
-   "slug": "evan-baptiste-kestrel-bay",
+   "slug": "evan-baptiste-fcs-new-england",
    "position": "DT",
    "class": "JRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Evan Baptiste",
    "position_name": "Defensive Tackle",
    "jersey": "52",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior (RS)",
    "height": "6'3\"",
    "weight_lbs": 302,
@@ -13342,15 +13340,15 @@
    "fictional": true
   },
   {
-   "slug": "tristan-crandall-kestrel-bay",
+   "slug": "tristan-crandall-fcs-new-england",
    "position": "DT",
    "class": "SRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Tristan Crandall",
    "position_name": "Defensive Tackle",
    "jersey": "0",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior (RS)",
    "height": "6'5\"",
    "weight_lbs": 270,
@@ -13623,15 +13621,15 @@
    "fictional": true
   },
   {
-   "slug": "wade-mayfield-kestrel-bay",
+   "slug": "wade-mayfield-fcs-new-england",
    "position": "DT",
    "class": "SRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Wade Mayfield",
    "position_name": "Defensive Tackle",
    "jersey": "97",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior (RS)",
    "height": "6'1\"",
    "weight_lbs": 253,
@@ -13902,15 +13900,15 @@
    "fictional": true
   },
   {
-   "slug": "zaire-stroud-kestrel-bay",
+   "slug": "zaire-stroud-fcs-new-england",
    "position": "DT",
    "class": "FR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Zaire Stroud",
    "position_name": "Defensive Tackle",
    "jersey": "53",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman",
    "height": "5'11\"",
    "weight_lbs": 288,
@@ -14193,15 +14191,15 @@
    "fictional": true
   },
   {
-   "slug": "langston-montoya-kestrel-bay",
+   "slug": "langston-montoya-fcs-new-england",
    "position": "DT",
    "class": "SORS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Langston Montoya",
    "position_name": "Defensive Tackle",
    "jersey": "96",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore (RS)",
    "height": "6'2\"",
    "weight_lbs": 299,
@@ -14470,15 +14468,15 @@
    "fictional": true
   },
   {
-   "slug": "tate-fontenot-kestrel-bay",
+   "slug": "tate-fontenot-fcs-new-england",
    "position": "DT",
    "class": "SO",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Tate Fontenot",
    "position_name": "Defensive Tackle",
    "jersey": "95",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore",
    "height": "6'3\"",
    "weight_lbs": 292,
@@ -14745,15 +14743,15 @@
    "fictional": true
   },
   {
-   "slug": "gavin-haskins-kestrel-bay",
+   "slug": "gavin-haskins-fcs-new-england",
    "position": "DT",
    "class": "SORS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Gavin Haskins",
    "position_name": "Defensive Tackle",
    "jersey": "82",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
    "weight_lbs": 280,
@@ -15033,15 +15031,15 @@
    "fictional": true
   },
   {
-   "slug": "rico-montoya-kestrel-bay",
+   "slug": "rico-montoya-fcs-new-england",
    "position": "DT",
    "class": "SRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Rico Montoya",
    "position_name": "Defensive Tackle",
    "jersey": "32",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior (RS)",
    "height": "6'2\"",
    "weight_lbs": 290,
@@ -15315,15 +15313,15 @@
    "fictional": true
   },
   {
-   "slug": "zaire-kimbrough-kestrel-bay",
+   "slug": "zaire-kimbrough-fcs-new-england",
    "position": "REDG",
    "class": "FR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Zaire Kimbrough",
    "position_name": "Right Edge",
    "jersey": "99",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman",
    "height": "6'4\"",
    "weight_lbs": 240,
@@ -15564,15 +15562,15 @@
    "fictional": true
   },
   {
-   "slug": "ezra-maddox-kestrel-bay",
+   "slug": "ezra-maddox-fcs-new-england",
    "position": "REDG",
    "class": "SO",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Ezra Maddox",
    "position_name": "Right Edge",
    "jersey": "1",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore",
    "height": "6'3\"",
    "weight_lbs": 231,
@@ -15828,15 +15826,15 @@
    "fictional": true
   },
   {
-   "slug": "malik-mccrae-kestrel-bay",
+   "slug": "malik-mccrae-fcs-new-england",
    "position": "REDG",
    "class": "JRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Malik McCrae",
    "position_name": "Right Edge",
    "jersey": "48",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior (RS)",
    "height": "6'4\"",
    "weight_lbs": 230,
@@ -16111,15 +16109,15 @@
    "fictional": true
   },
   {
-   "slug": "nico-halloway-kestrel-bay",
+   "slug": "nico-halloway-fcs-new-england",
    "position": "SAM",
    "class": "JRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Nico Halloway",
    "position_name": "Sam Linebacker",
    "jersey": "10",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior (RS)",
    "height": "6'0\"",
    "weight_lbs": 230,
@@ -16408,15 +16406,15 @@
    "fictional": true
   },
   {
-   "slug": "jabari-talley-kestrel-bay",
+   "slug": "jabari-talley-fcs-new-england",
    "position": "SAM",
    "class": "FR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Jabari Talley",
    "position_name": "Sam Linebacker",
    "jersey": "34",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman",
    "height": "6'4\"",
    "weight_lbs": 258,
@@ -16704,15 +16702,15 @@
    "fictional": true
   },
   {
-   "slug": "dawson-yancey-kestrel-bay",
+   "slug": "dawson-yancey-fcs-new-england",
    "position": "MIKE",
    "class": "JR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Dawson Yancey",
    "position_name": "Mike Linebacker",
    "jersey": "11",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior",
    "height": "6'1\"",
    "weight_lbs": 230,
@@ -16958,15 +16956,15 @@
    "fictional": true
   },
   {
-   "slug": "terrance-mccrae-kestrel-bay",
+   "slug": "terrance-mccrae-fcs-new-england",
    "position": "MIKE",
    "class": "SO",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Terrance McCrae",
    "position_name": "Mike Linebacker",
    "jersey": "50",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore",
    "height": "6'0\"",
    "weight_lbs": 235,
@@ -17243,15 +17241,15 @@
    "fictional": true
   },
   {
-   "slug": "kyler-shipley-kestrel-bay",
+   "slug": "kyler-shipley-fcs-new-england",
    "position": "MIKE",
    "class": "SO",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Kyler Shipley",
    "position_name": "Mike Linebacker",
    "jersey": "94",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore",
    "height": "6'3\"",
    "weight_lbs": 227,
@@ -17531,15 +17529,15 @@
    "fictional": true
   },
   {
-   "slug": "kareem-forsythe-kestrel-bay",
+   "slug": "kareem-forsythe-fcs-new-england",
    "position": "WILL",
    "class": "FRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Kareem Forsythe",
    "position_name": "Will Linebacker",
    "jersey": "36",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
    "weight_lbs": 220,
@@ -17802,15 +17800,15 @@
    "fictional": true
   },
   {
-   "slug": "jett-radford-kestrel-bay",
+   "slug": "jett-radford-fcs-new-england",
    "position": "WILL",
    "class": "SORS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Jett Radford",
    "position_name": "Will Linebacker",
    "jersey": "8",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore (RS)",
    "height": "6'1\"",
    "weight_lbs": 235,
@@ -18097,15 +18095,15 @@
    "fictional": true
   },
   {
-   "slug": "desmond-marchetti-kestrel-bay",
+   "slug": "desmond-marchetti-fcs-new-england",
    "position": "WILL",
    "class": "SO",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Desmond Marchetti",
    "position_name": "Will Linebacker",
    "jersey": "30",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore",
    "height": "6'1\"",
    "weight_lbs": 210,
@@ -18393,15 +18391,15 @@
    "fictional": true
   },
   {
-   "slug": "dominic-pacheco-kestrel-bay",
+   "slug": "dominic-pacheco-fcs-new-england",
    "position": "CB",
    "class": "JR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Dominic Pacheco",
    "position_name": "Cornerback",
    "jersey": "26",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior",
    "height": "6'0\"",
    "weight_lbs": 180,
@@ -18686,15 +18684,15 @@
    "fictional": true
   },
   {
-   "slug": "antoine-mcalister-kestrel-bay",
+   "slug": "antoine-mcalister-fcs-new-england",
    "position": "CB",
    "class": "FRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Antoine McAlister",
    "position_name": "Cornerback",
    "jersey": "39",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman (RS)",
    "height": "5'11\"",
    "weight_lbs": 190,
@@ -18959,15 +18957,15 @@
    "fictional": true
   },
   {
-   "slug": "adrian-brannon-kestrel-bay",
+   "slug": "adrian-brannon-fcs-new-england",
    "position": "CB",
    "class": "JRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Adrian Brannon",
    "position_name": "Cornerback",
    "jersey": "25",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior (RS)",
    "height": "5'10\"",
    "weight_lbs": 192,
@@ -19240,15 +19238,15 @@
    "fictional": true
   },
   {
-   "slug": "andre-overstreet-kestrel-bay",
+   "slug": "andre-overstreet-fcs-new-england",
    "position": "CB",
    "class": "FR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Andre Overstreet",
    "position_name": "Cornerback",
    "jersey": "43",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman",
    "height": "5'11\"",
    "weight_lbs": 180,
@@ -19516,15 +19514,15 @@
    "fictional": true
   },
   {
-   "slug": "wes-dade-kestrel-bay",
+   "slug": "wes-dade-fcs-new-england",
    "position": "CB",
    "class": "FR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Wes Dade",
    "position_name": "Cornerback",
    "jersey": "20",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman",
    "height": "6'0\"",
    "weight_lbs": 195,
@@ -19800,15 +19798,15 @@
    "fictional": true
   },
   {
-   "slug": "julian-dempsey-kestrel-bay",
+   "slug": "julian-dempsey-fcs-new-england",
    "position": "CB",
    "class": "SORS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Julian Dempsey",
    "position_name": "Cornerback",
    "jersey": "16",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
    "weight_lbs": 195,
@@ -20090,15 +20088,15 @@
    "fictional": true
   },
   {
-   "slug": "wade-garrity-kestrel-bay",
+   "slug": "wade-garrity-fcs-new-england",
    "position": "CB",
    "class": "SORS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Wade Garrity",
    "position_name": "Cornerback",
    "jersey": "12",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore (RS)",
    "height": "5'10\"",
    "weight_lbs": 190,
@@ -20353,15 +20351,15 @@
    "fictional": true
   },
   {
-   "slug": "cedric-beckett-kestrel-bay",
+   "slug": "cedric-beckett-fcs-new-england",
    "position": "CB",
    "class": "SORS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Cedric Beckett",
    "position_name": "Cornerback",
    "jersey": "41",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore (RS)",
    "height": "5'9\"",
    "weight_lbs": 165,
@@ -20638,15 +20636,15 @@
    "fictional": true
   },
   {
-   "slug": "trace-vickers-kestrel-bay",
+   "slug": "trace-vickers-fcs-new-england",
    "position": "CB",
    "class": "FR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Trace Vickers",
    "position_name": "Cornerback",
    "jersey": "28",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman",
    "height": "6'0\"",
    "weight_lbs": 200,
@@ -20932,15 +20930,15 @@
    "fictional": true
   },
   {
-   "slug": "mateo-crandall-kestrel-bay",
+   "slug": "mateo-crandall-fcs-new-england",
    "position": "CB",
    "class": "SRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Mateo Crandall",
    "position_name": "Cornerback",
    "jersey": "23",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior (RS)",
    "height": "6'0\"",
    "weight_lbs": 190,
@@ -21236,15 +21234,15 @@
    "fictional": true
   },
   {
-   "slug": "julian-brannon-kestrel-bay",
+   "slug": "julian-brannon-fcs-new-england",
    "position": "CB",
    "class": "JR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Julian Brannon",
    "position_name": "Cornerback",
    "jersey": "4",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior",
    "height": "6'4\"",
    "weight_lbs": 190,
@@ -21502,15 +21500,15 @@
    "fictional": true
   },
   {
-   "slug": "quentin-tatum-kestrel-bay",
+   "slug": "quentin-tatum-fcs-new-england",
    "position": "CB",
    "class": "JRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Quentin Tatum",
    "position_name": "Cornerback",
    "jersey": "21",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 180,
@@ -21770,15 +21768,15 @@
    "fictional": true
   },
   {
-   "slug": "landon-rhodes-kestrel-bay",
+   "slug": "landon-rhodes-fcs-new-england",
    "position": "FS",
    "class": "JRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Landon Rhodes",
    "position_name": "Free Safety",
    "jersey": "14",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior (RS)",
    "height": "6'0\"",
    "weight_lbs": 200,
@@ -22054,15 +22052,15 @@
    "fictional": true
   },
   {
-   "slug": "alec-barlow-kestrel-bay",
+   "slug": "alec-barlow-fcs-new-england",
    "position": "FS",
    "class": "FR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Alec Barlow",
    "position_name": "Free Safety",
    "jersey": "37",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman",
    "height": "6'1\"",
    "weight_lbs": 180,
@@ -22322,15 +22320,15 @@
    "fictional": true
   },
   {
-   "slug": "carson-glover-kestrel-bay",
+   "slug": "carson-glover-fcs-new-england",
    "position": "FS",
    "class": "SRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Carson Glover",
    "position_name": "Free Safety",
    "jersey": "7",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior (RS)",
    "height": "6'0\"",
    "weight_lbs": 190,
@@ -22622,15 +22620,15 @@
    "fictional": true
   },
   {
-   "slug": "xavier-bradshaw-kestrel-bay",
+   "slug": "xavier-bradshaw-fcs-new-england",
    "position": "FS",
    "class": "SORS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Xavier Bradshaw",
    "position_name": "Free Safety",
    "jersey": "27",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore (RS)",
    "height": "6'0\"",
    "weight_lbs": 165,
@@ -22920,15 +22918,15 @@
    "fictional": true
   },
   {
-   "slug": "tate-barlow-kestrel-bay",
+   "slug": "tate-barlow-fcs-new-england",
    "position": "SS",
    "class": "SR",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Tate Barlow",
    "position_name": "Strong Safety",
    "jersey": "19",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Senior",
    "height": "5'10\"",
    "weight_lbs": 190,
@@ -23216,15 +23214,15 @@
    "fictional": true
   },
   {
-   "slug": "malik-vance-kestrel-bay",
+   "slug": "malik-vance-fcs-new-england",
    "position": "SS",
    "class": "SO",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Malik Vance",
    "position_name": "Strong Safety",
    "jersey": "17",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Sophomore",
    "height": "6'3\"",
    "weight_lbs": 195,
@@ -23510,15 +23508,15 @@
    "fictional": true
   },
   {
-   "slug": "ethan-rainey-kestrel-bay",
+   "slug": "ethan-rainey-fcs-new-england",
    "position": "SS",
    "class": "FRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Ethan Rainey",
    "position_name": "Strong Safety",
    "jersey": "22",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",
    "weight_lbs": 168,
@@ -23812,15 +23810,15 @@
    "fictional": true
   },
   {
-   "slug": "jalen-sandoval-kestrel-bay",
+   "slug": "jalen-sandoval-fcs-new-england",
    "position": "K",
    "class": "FRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Jalen Sandoval",
    "position_name": "Kicker",
    "jersey": "38",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Freshman (RS)",
    "height": "5'9\"",
    "weight_lbs": 160,
@@ -24071,15 +24069,15 @@
    "fictional": true
   },
   {
-   "slug": "warren-cantrell-kestrel-bay",
+   "slug": "warren-cantrell-fcs-new-england",
    "position": "P",
    "class": "JRRS",
-   "team_slug": "kestrel-bay",
+   "team_slug": "fcs-new-england",
    "url": null,
    "name": "Warren Cantrell",
    "position_name": "Punter",
    "jersey": "18",
-   "team": "Kestrel Bay",
+   "team": "FCS New England",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 195,

@@ -1,16 +1,14 @@
 {
- "slug": "cedar-sound",
- "school_name": "Cedar Sound University",
- "short_name": "Cedar Sound",
- "abbreviation": "CSDU",
- "mascot": "Orcas",
- "city": "Cedar Sound",
+ "slug": "fcs-pacific-northwest",
+ "school_name": "FCS Pacific Northwest",
+ "short_name": "FCS Pacific Northwest",
+ "abbreviation": "FCS",
  "state": "WA",
  "region": "Pacific Northwest",
- "conference": "Eight Rivers Football Conference",
+ "conference": "FCS",
  "subdivision": "FCS",
  "stadium": {
-  "name": "Driftwood Field",
+  "name": "FCS Pacific Northwest Stadium",
   "capacity": 10400,
   "surface": "turf"
  },
@@ -29,7 +27,7 @@
   }
  },
  "rivals": [
-  "talus-peak"
+  "fcs-mountain-west"
  ],
  "fictional": true,
  "program": {
@@ -58,8 +56,8 @@
  },
  "coaches": {
   "head_coach": {
-   "coach_id": "cedar-sound:head_coach",
-   "team_slug": "cedar-sound",
+   "coach_id": "fcs-pacific-northwest:head_coach",
+   "team_slug": "fcs-pacific-northwest",
    "name": "Mark Westbrook",
    "since": 2022,
    "fictional": true,
@@ -88,8 +86,8 @@
    "ratings_generated": true
   },
   "offensive_coordinator": {
-   "coach_id": "cedar-sound:offensive_coordinator",
-   "team_slug": "cedar-sound",
+   "coach_id": "fcs-pacific-northwest:offensive_coordinator",
+   "team_slug": "fcs-pacific-northwest",
    "name": "Mike Brandt",
    "since": 2025,
    "fictional": true,
@@ -116,8 +114,8 @@
    "ratings_generated": true
   },
   "defensive_coordinator": {
-   "coach_id": "cedar-sound:defensive_coordinator",
-   "team_slug": "cedar-sound",
+   "coach_id": "fcs-pacific-northwest:defensive_coordinator",
+   "team_slug": "fcs-pacific-northwest",
    "name": "Dwayne Brandt",
    "since": 2023,
    "fictional": true,
@@ -146,217 +144,217 @@
  "starters": {
   "offense": {
    "QB": [
-    "zane-burkett-cedar-sound"
+    "zane-burkett-fcs-pacific-northwest"
    ],
    "HB": [
-    "jayden-whitlock-cedar-sound"
+    "jayden-whitlock-fcs-pacific-northwest"
    ],
    "WR": [
-    "landon-merriweather-cedar-sound",
-    "brandon-boudreaux-cedar-sound",
-    "terrance-lowery-cedar-sound"
+    "landon-merriweather-fcs-pacific-northwest",
+    "brandon-boudreaux-fcs-pacific-northwest",
+    "terrance-lowery-fcs-pacific-northwest"
    ],
    "TE": [
-    "deion-galloway-cedar-sound"
+    "deion-galloway-fcs-pacific-northwest"
    ],
    "LT": [
-    "tate-bradshaw-cedar-sound"
+    "tate-bradshaw-fcs-pacific-northwest"
    ],
    "LG": [
-    "brady-goins-cedar-sound"
+    "brady-goins-fcs-pacific-northwest"
    ],
    "C": [
-    "solomon-baptiste-cedar-sound"
+    "solomon-baptiste-fcs-pacific-northwest"
    ],
    "RG": [
-    "tobias-wakefield-cedar-sound"
+    "tobias-wakefield-fcs-pacific-northwest"
    ],
    "RT": [
-    "owen-oakes-cedar-sound"
+    "owen-oakes-fcs-pacific-northwest"
    ]
   },
   "defense": {
    "LEDG": [
-    "kenji-fairley-cedar-sound"
+    "kenji-fairley-fcs-pacific-northwest"
    ],
    "REDG": [
-    "omari-dalton-cedar-sound"
+    "omari-dalton-fcs-pacific-northwest"
    ],
    "DT": [
-    "corey-upshaw-cedar-sound",
-    "jamal-larkin-cedar-sound"
+    "corey-upshaw-fcs-pacific-northwest",
+    "jamal-larkin-fcs-pacific-northwest"
    ],
    "LB": [
-    "rowan-haddix-cedar-sound",
-    "nash-greer-cedar-sound"
+    "rowan-haddix-fcs-pacific-northwest",
+    "nash-greer-fcs-pacific-northwest"
    ],
    "CB": [
-    "brandon-harlan-cedar-sound",
-    "terrance-keeling-cedar-sound",
-    "mason-hatcher-cedar-sound"
+    "brandon-harlan-fcs-pacific-northwest",
+    "terrance-keeling-fcs-pacific-northwest",
+    "mason-hatcher-fcs-pacific-northwest"
    ],
    "FS": [
-    "emmanuel-radford-cedar-sound"
+    "emmanuel-radford-fcs-pacific-northwest"
    ],
    "SS": [
-    "jaxon-delacroix-cedar-sound"
+    "jaxon-delacroix-fcs-pacific-northwest"
    ]
   },
   "special_teams": {
    "K": [
-    "brayden-larkin-cedar-sound"
+    "brayden-larkin-fcs-pacific-northwest"
    ],
    "P": [
-    "carter-farrow-cedar-sound"
+    "carter-farrow-fcs-pacific-northwest"
    ],
    "KR": [
-    "xavier-cantrell-cedar-sound"
+    "xavier-cantrell-fcs-pacific-northwest"
    ],
    "PR": [
-    "lamar-lowery-cedar-sound"
+    "lamar-lowery-fcs-pacific-northwest"
    ]
   }
  },
  "depth_chart": {
   "QB": [
-   "zane-burkett-cedar-sound",
-   "trent-sandoval-cedar-sound",
-   "reggie-boudreaux-cedar-sound",
-   "aaron-holcomb-cedar-sound"
+   "zane-burkett-fcs-pacific-northwest",
+   "trent-sandoval-fcs-pacific-northwest",
+   "reggie-boudreaux-fcs-pacific-northwest",
+   "aaron-holcomb-fcs-pacific-northwest"
   ],
   "HB": [
-   "jayden-whitlock-cedar-sound",
-   "colton-baptiste-cedar-sound",
-   "jabari-goins-cedar-sound",
-   "silas-fairley-cedar-sound",
-   "lamar-lowery-cedar-sound"
+   "jayden-whitlock-fcs-pacific-northwest",
+   "colton-baptiste-fcs-pacific-northwest",
+   "jabari-goins-fcs-pacific-northwest",
+   "silas-fairley-fcs-pacific-northwest",
+   "lamar-lowery-fcs-pacific-northwest"
   ],
   "FB": [],
   "WR": [
-   "landon-merriweather-cedar-sound",
-   "brandon-boudreaux-cedar-sound",
-   "terrance-lowery-cedar-sound",
-   "callum-kimbrough-cedar-sound",
-   "xavier-cantrell-cedar-sound",
-   "brady-clemmons-cedar-sound",
-   "eli-rowland-cedar-sound",
-   "gabriel-tatum-cedar-sound",
-   "amari-colvin-cedar-sound",
-   "malachi-garrity-cedar-sound",
-   "mason-holcomb-cedar-sound",
-   "griffin-fairley-cedar-sound"
+   "landon-merriweather-fcs-pacific-northwest",
+   "brandon-boudreaux-fcs-pacific-northwest",
+   "terrance-lowery-fcs-pacific-northwest",
+   "callum-kimbrough-fcs-pacific-northwest",
+   "xavier-cantrell-fcs-pacific-northwest",
+   "brady-clemmons-fcs-pacific-northwest",
+   "eli-rowland-fcs-pacific-northwest",
+   "gabriel-tatum-fcs-pacific-northwest",
+   "amari-colvin-fcs-pacific-northwest",
+   "malachi-garrity-fcs-pacific-northwest",
+   "mason-holcomb-fcs-pacific-northwest",
+   "griffin-fairley-fcs-pacific-northwest"
   ],
   "TE": [
-   "deion-galloway-cedar-sound",
-   "alec-briscoe-cedar-sound",
-   "anthony-rhodes-cedar-sound",
-   "cole-northcutt-cedar-sound",
-   "kareem-briscoe-cedar-sound",
-   "dylan-lockett-cedar-sound"
+   "deion-galloway-fcs-pacific-northwest",
+   "alec-briscoe-fcs-pacific-northwest",
+   "anthony-rhodes-fcs-pacific-northwest",
+   "cole-northcutt-fcs-pacific-northwest",
+   "kareem-briscoe-fcs-pacific-northwest",
+   "dylan-lockett-fcs-pacific-northwest"
   ],
   "LT": [
-   "tate-bradshaw-cedar-sound",
-   "wes-bowden-cedar-sound"
+   "tate-bradshaw-fcs-pacific-northwest",
+   "wes-bowden-fcs-pacific-northwest"
   ],
   "LG": [
-   "brady-goins-cedar-sound",
-   "kai-adair-cedar-sound",
-   "jace-goins-cedar-sound",
-   "abdul-kimbrough-cedar-sound"
+   "brady-goins-fcs-pacific-northwest",
+   "kai-adair-fcs-pacific-northwest",
+   "jace-goins-fcs-pacific-northwest",
+   "abdul-kimbrough-fcs-pacific-northwest"
   ],
   "C": [
-   "solomon-baptiste-cedar-sound",
-   "dylan-vance-cedar-sound"
+   "solomon-baptiste-fcs-pacific-northwest",
+   "dylan-vance-fcs-pacific-northwest"
   ],
   "RG": [
-   "tobias-wakefield-cedar-sound",
-   "keegan-keeling-cedar-sound",
-   "mateo-haskins-cedar-sound",
-   "nate-navarro-cedar-sound"
+   "tobias-wakefield-fcs-pacific-northwest",
+   "keegan-keeling-fcs-pacific-northwest",
+   "mateo-haskins-fcs-pacific-northwest",
+   "nate-navarro-fcs-pacific-northwest"
   ],
   "RT": [
-   "owen-oakes-cedar-sound",
-   "hayden-lindqvist-cedar-sound",
-   "keegan-quarles-cedar-sound",
-   "devon-haskins-cedar-sound"
+   "owen-oakes-fcs-pacific-northwest",
+   "hayden-lindqvist-fcs-pacific-northwest",
+   "keegan-quarles-fcs-pacific-northwest",
+   "devon-haskins-fcs-pacific-northwest"
   ],
   "LEDG": [
-   "kenji-fairley-cedar-sound",
-   "brennan-bonner-cedar-sound",
-   "dawson-bonner-cedar-sound",
-   "brody-farrow-cedar-sound"
+   "kenji-fairley-fcs-pacific-northwest",
+   "brennan-bonner-fcs-pacific-northwest",
+   "dawson-bonner-fcs-pacific-northwest",
+   "brody-farrow-fcs-pacific-northwest"
   ],
   "DT": [
-   "corey-upshaw-cedar-sound",
-   "jamal-larkin-cedar-sound",
-   "miles-tatum-cedar-sound",
-   "bo-stroud-cedar-sound",
-   "kaden-blackwell-cedar-sound",
-   "abdul-montoya-cedar-sound"
+   "corey-upshaw-fcs-pacific-northwest",
+   "jamal-larkin-fcs-pacific-northwest",
+   "miles-tatum-fcs-pacific-northwest",
+   "bo-stroud-fcs-pacific-northwest",
+   "kaden-blackwell-fcs-pacific-northwest",
+   "abdul-montoya-fcs-pacific-northwest"
   ],
   "REDG": [
-   "omari-dalton-cedar-sound",
-   "cole-corbett-cedar-sound",
-   "kai-paddock-cedar-sound"
+   "omari-dalton-fcs-pacific-northwest",
+   "cole-corbett-fcs-pacific-northwest",
+   "kai-paddock-fcs-pacific-northwest"
   ],
   "SAM": [
-   "tyrese-yancey-cedar-sound"
+   "tyrese-yancey-fcs-pacific-northwest"
   ],
   "MIKE": [
-   "nash-greer-cedar-sound",
-   "solomon-chambliss-cedar-sound",
-   "antoine-dempsey-cedar-sound",
-   "carter-radford-cedar-sound"
+   "nash-greer-fcs-pacific-northwest",
+   "solomon-chambliss-fcs-pacific-northwest",
+   "antoine-dempsey-fcs-pacific-northwest",
+   "carter-radford-fcs-pacific-northwest"
   ],
   "WILL": [
-   "rowan-haddix-cedar-sound",
-   "trent-sewell-cedar-sound",
-   "keon-jarrell-cedar-sound",
-   "malik-dunlap-cedar-sound"
+   "rowan-haddix-fcs-pacific-northwest",
+   "trent-sewell-fcs-pacific-northwest",
+   "keon-jarrell-fcs-pacific-northwest",
+   "malik-dunlap-fcs-pacific-northwest"
   ],
   "CB": [
-   "brandon-harlan-cedar-sound",
-   "terrance-keeling-cedar-sound",
-   "mason-hatcher-cedar-sound",
-   "kaden-yarbrough-cedar-sound",
-   "tate-rainey-cedar-sound",
-   "nash-dunlap-cedar-sound",
-   "zaire-ransom-cedar-sound",
-   "darius-cantrell-cedar-sound",
-   "ivan-calloway-cedar-sound"
+   "brandon-harlan-fcs-pacific-northwest",
+   "terrance-keeling-fcs-pacific-northwest",
+   "mason-hatcher-fcs-pacific-northwest",
+   "kaden-yarbrough-fcs-pacific-northwest",
+   "tate-rainey-fcs-pacific-northwest",
+   "nash-dunlap-fcs-pacific-northwest",
+   "zaire-ransom-fcs-pacific-northwest",
+   "darius-cantrell-fcs-pacific-northwest",
+   "ivan-calloway-fcs-pacific-northwest"
   ],
   "FS": [
-   "emmanuel-radford-cedar-sound",
-   "anthony-gentry-cedar-sound"
+   "emmanuel-radford-fcs-pacific-northwest",
+   "anthony-gentry-fcs-pacific-northwest"
   ],
   "SS": [
-   "jaxon-delacroix-cedar-sound",
-   "miles-bowden-cedar-sound",
-   "brody-beckett-cedar-sound",
-   "zaire-kirkland-cedar-sound",
-   "rico-cantrell-cedar-sound"
+   "jaxon-delacroix-fcs-pacific-northwest",
+   "miles-bowden-fcs-pacific-northwest",
+   "brody-beckett-fcs-pacific-northwest",
+   "zaire-kirkland-fcs-pacific-northwest",
+   "rico-cantrell-fcs-pacific-northwest"
   ],
   "K": [
-   "brayden-larkin-cedar-sound",
-   "camden-vance-cedar-sound"
+   "brayden-larkin-fcs-pacific-northwest",
+   "camden-vance-fcs-pacific-northwest"
   ],
   "P": [
-   "carter-farrow-cedar-sound",
-   "connor-haskins-cedar-sound"
+   "carter-farrow-fcs-pacific-northwest",
+   "connor-haskins-fcs-pacific-northwest"
   ]
  },
  "roster_size": 85,
  "roster": [
   {
-   "slug": "zane-burkett-cedar-sound",
+   "slug": "zane-burkett-fcs-pacific-northwest",
    "position": "QB",
    "class": "SORS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Zane Burkett",
    "position_name": "Quarterback",
    "jersey": "16",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Sophomore (RS)",
    "height": "5'11\"",
    "weight_lbs": 205,
@@ -649,15 +647,15 @@
    "fictional": true
   },
   {
-   "slug": "trent-sandoval-cedar-sound",
+   "slug": "trent-sandoval-fcs-pacific-northwest",
    "position": "QB",
    "class": "FR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Trent Sandoval",
    "position_name": "Quarterback",
    "jersey": "15",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman",
    "height": "6'3\"",
    "weight_lbs": 206,
@@ -910,15 +908,15 @@
    "fictional": true
   },
   {
-   "slug": "reggie-boudreaux-cedar-sound",
+   "slug": "reggie-boudreaux-fcs-pacific-northwest",
    "position": "QB",
    "class": "JRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Reggie Boudreaux",
    "position_name": "Quarterback",
    "jersey": "11",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior (RS)",
    "height": "6'3\"",
    "weight_lbs": 209,
@@ -1162,15 +1160,15 @@
    "fictional": true
   },
   {
-   "slug": "aaron-holcomb-cedar-sound",
+   "slug": "aaron-holcomb-fcs-pacific-northwest",
    "position": "QB",
    "class": "SORS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Aaron Holcomb",
    "position_name": "Quarterback",
    "jersey": "10",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
    "weight_lbs": 220,
@@ -1415,15 +1413,15 @@
    "fictional": true
   },
   {
-   "slug": "jayden-whitlock-cedar-sound",
+   "slug": "jayden-whitlock-fcs-pacific-northwest",
    "position": "HB",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Jayden Whitlock",
    "position_name": "Halfback",
    "jersey": "25",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "5'9\"",
    "weight_lbs": 175,
@@ -1694,15 +1692,15 @@
    "fictional": true
   },
   {
-   "slug": "colton-baptiste-cedar-sound",
+   "slug": "colton-baptiste-fcs-pacific-northwest",
    "position": "HB",
    "class": "JRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Colton Baptiste",
    "position_name": "Halfback",
    "jersey": "9",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior (RS)",
    "height": "6'2\"",
    "weight_lbs": 207,
@@ -1950,15 +1948,15 @@
    "fictional": true
   },
   {
-   "slug": "jabari-goins-cedar-sound",
+   "slug": "jabari-goins-fcs-pacific-northwest",
    "position": "HB",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Jabari Goins",
    "position_name": "Halfback",
    "jersey": "3",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'1\"",
    "weight_lbs": 209,
@@ -2230,15 +2228,15 @@
    "fictional": true
   },
   {
-   "slug": "silas-fairley-cedar-sound",
+   "slug": "silas-fairley-fcs-pacific-northwest",
    "position": "HB",
    "class": "SR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Silas Fairley",
    "position_name": "Halfback",
    "jersey": "23",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior",
    "height": "6'0\"",
    "weight_lbs": 210,
@@ -2515,15 +2513,15 @@
    "fictional": true
   },
   {
-   "slug": "lamar-lowery-cedar-sound",
+   "slug": "lamar-lowery-fcs-pacific-northwest",
    "position": "HB",
    "class": "FRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Lamar Lowery",
    "position_name": "Halfback",
    "jersey": "35",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman (RS)",
    "height": "5'7\"",
    "weight_lbs": 190,
@@ -2775,15 +2773,15 @@
    "fictional": true
   },
   {
-   "slug": "landon-merriweather-cedar-sound",
+   "slug": "landon-merriweather-fcs-pacific-northwest",
    "position": "WR",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Landon Merriweather",
    "position_name": "Wide Receiver",
    "jersey": "13",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "5'10\"",
    "weight_lbs": 185,
@@ -3083,15 +3081,15 @@
    "fictional": true
   },
   {
-   "slug": "brandon-boudreaux-cedar-sound",
+   "slug": "brandon-boudreaux-fcs-pacific-northwest",
    "position": "WR",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Brandon Boudreaux",
    "position_name": "Wide Receiver",
    "jersey": "83",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'4\"",
    "weight_lbs": 198,
@@ -3354,15 +3352,15 @@
    "fictional": true
   },
   {
-   "slug": "terrance-lowery-cedar-sound",
+   "slug": "terrance-lowery-fcs-pacific-northwest",
    "position": "WR",
    "class": "FRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Terrance Lowery",
    "position_name": "Wide Receiver",
    "jersey": "24",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman (RS)",
    "height": "5'11\"",
    "weight_lbs": 200,
@@ -3621,15 +3619,15 @@
    "fictional": true
   },
   {
-   "slug": "callum-kimbrough-cedar-sound",
+   "slug": "callum-kimbrough-fcs-pacific-northwest",
    "position": "WR",
    "class": "FR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Callum Kimbrough",
    "position_name": "Wide Receiver",
    "jersey": "18",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman",
    "height": "5'10\"",
    "weight_lbs": 170,
@@ -3890,15 +3888,15 @@
    "fictional": true
   },
   {
-   "slug": "xavier-cantrell-cedar-sound",
+   "slug": "xavier-cantrell-fcs-pacific-northwest",
    "position": "WR",
    "class": "JR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Xavier Cantrell",
    "position_name": "Wide Receiver",
    "jersey": "42",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior",
    "height": "5'9\"",
    "weight_lbs": 180,
@@ -4175,15 +4173,15 @@
    "fictional": true
   },
   {
-   "slug": "brady-clemmons-cedar-sound",
+   "slug": "brady-clemmons-fcs-pacific-northwest",
    "position": "WR",
    "class": "SR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Brady Clemmons",
    "position_name": "Wide Receiver",
    "jersey": "21",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior",
    "height": "5'10\"",
    "weight_lbs": 185,
@@ -4469,15 +4467,15 @@
    "fictional": true
   },
   {
-   "slug": "eli-rowland-cedar-sound",
+   "slug": "eli-rowland-fcs-pacific-northwest",
    "position": "WR",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Eli Rowland",
    "position_name": "Wide Receiver",
    "jersey": "12",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'1\"",
    "weight_lbs": 204,
@@ -4740,15 +4738,15 @@
    "fictional": true
   },
   {
-   "slug": "gabriel-tatum-cedar-sound",
+   "slug": "gabriel-tatum-fcs-pacific-northwest",
    "position": "WR",
    "class": "FR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Gabriel Tatum",
    "position_name": "Wide Receiver",
    "jersey": "80",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman",
    "height": "5'11\"",
    "weight_lbs": 205,
@@ -5037,15 +5035,15 @@
    "fictional": true
   },
   {
-   "slug": "amari-colvin-cedar-sound",
+   "slug": "amari-colvin-fcs-pacific-northwest",
    "position": "WR",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Amari Colvin",
    "position_name": "Wide Receiver",
    "jersey": "2",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'3\"",
    "weight_lbs": 205,
@@ -5323,15 +5321,15 @@
    "fictional": true
   },
   {
-   "slug": "malachi-garrity-cedar-sound",
+   "slug": "malachi-garrity-fcs-pacific-northwest",
    "position": "WR",
    "class": "SORS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Malachi Garrity",
    "position_name": "Wide Receiver",
    "jersey": "4",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
    "weight_lbs": 190,
@@ -5628,15 +5626,15 @@
    "fictional": true
   },
   {
-   "slug": "mason-holcomb-cedar-sound",
+   "slug": "mason-holcomb-fcs-pacific-northwest",
    "position": "WR",
    "class": "SR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Mason Holcomb",
    "position_name": "Wide Receiver",
    "jersey": "84",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior",
    "height": "6'3\"",
    "weight_lbs": 194,
@@ -5926,15 +5924,15 @@
    "fictional": true
   },
   {
-   "slug": "griffin-fairley-cedar-sound",
+   "slug": "griffin-fairley-fcs-pacific-northwest",
    "position": "WR",
    "class": "JRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Griffin Fairley",
    "position_name": "Wide Receiver",
    "jersey": "17",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior (RS)",
    "height": "6'2\"",
    "weight_lbs": 205,
@@ -6202,15 +6200,15 @@
    "fictional": true
   },
   {
-   "slug": "deion-galloway-cedar-sound",
+   "slug": "deion-galloway-fcs-pacific-northwest",
    "position": "TE",
    "class": "SORS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Deion Galloway",
    "position_name": "Tight End",
    "jersey": "44",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
    "weight_lbs": 245,
@@ -6501,15 +6499,15 @@
    "fictional": true
   },
   {
-   "slug": "alec-briscoe-cedar-sound",
+   "slug": "alec-briscoe-fcs-pacific-northwest",
    "position": "TE",
    "class": "JRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Alec Briscoe",
    "position_name": "Tight End",
    "jersey": "87",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior (RS)",
    "height": "6'7\"",
    "weight_lbs": 241,
@@ -6796,15 +6794,15 @@
    "fictional": true
   },
   {
-   "slug": "anthony-rhodes-cedar-sound",
+   "slug": "anthony-rhodes-fcs-pacific-northwest",
    "position": "TE",
    "class": "FRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Anthony Rhodes",
    "position_name": "Tight End",
    "jersey": "89",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman (RS)",
    "height": "6'6\"",
    "weight_lbs": 219,
@@ -7088,15 +7086,15 @@
    "fictional": true
   },
   {
-   "slug": "cole-northcutt-cedar-sound",
+   "slug": "cole-northcutt-fcs-pacific-northwest",
    "position": "TE",
    "class": "JRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Cole Northcutt",
    "position_name": "Tight End",
    "jersey": "19",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior (RS)",
    "height": "6'3\"",
    "weight_lbs": 205,
@@ -7390,15 +7388,15 @@
    "fictional": true
   },
   {
-   "slug": "kareem-briscoe-cedar-sound",
+   "slug": "kareem-briscoe-fcs-pacific-northwest",
    "position": "TE",
    "class": "JRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Kareem Briscoe",
    "position_name": "Tight End",
    "jersey": "88",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior (RS)",
    "height": "6'7\"",
    "weight_lbs": 240,
@@ -7665,15 +7663,15 @@
    "fictional": true
   },
   {
-   "slug": "dylan-lockett-cedar-sound",
+   "slug": "dylan-lockett-fcs-pacific-northwest",
    "position": "TE",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Dylan Lockett",
    "position_name": "Tight End",
    "jersey": "20",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'3\"",
    "weight_lbs": 255,
@@ -7986,15 +7984,15 @@
    "fictional": true
   },
   {
-   "slug": "tate-bradshaw-cedar-sound",
+   "slug": "tate-bradshaw-fcs-pacific-northwest",
    "position": "LT",
    "class": "JRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Tate Bradshaw",
    "position_name": "Left Tackle",
    "jersey": "75",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior (RS)",
    "height": "6'6\"",
    "weight_lbs": 285,
@@ -8252,15 +8250,15 @@
    "fictional": true
   },
   {
-   "slug": "wes-bowden-cedar-sound",
+   "slug": "wes-bowden-fcs-pacific-northwest",
    "position": "LT",
    "class": "SORS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Wes Bowden",
    "position_name": "Left Tackle",
    "jersey": "76",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Sophomore (RS)",
    "height": "6'6\"",
    "weight_lbs": 285,
@@ -8516,15 +8514,15 @@
    "fictional": true
   },
   {
-   "slug": "brady-goins-cedar-sound",
+   "slug": "brady-goins-fcs-pacific-northwest",
    "position": "LG",
    "class": "FRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Brady Goins",
    "position_name": "Left Guard",
    "jersey": "64",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman (RS)",
    "height": "6'6\"",
    "weight_lbs": 320,
@@ -8769,15 +8767,15 @@
    "fictional": true
   },
   {
-   "slug": "kai-adair-cedar-sound",
+   "slug": "kai-adair-fcs-pacific-northwest",
    "position": "LG",
    "class": "FRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Kai Adair",
    "position_name": "Left Guard",
    "jersey": "52",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman (RS)",
    "height": "6'6\"",
    "weight_lbs": 332,
@@ -9042,15 +9040,15 @@
    "fictional": true
   },
   {
-   "slug": "jace-goins-cedar-sound",
+   "slug": "jace-goins-fcs-pacific-northwest",
    "position": "LG",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Jace Goins",
    "position_name": "Left Guard",
    "jersey": "73",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'4\"",
    "weight_lbs": 320,
@@ -9327,15 +9325,15 @@
    "fictional": true
   },
   {
-   "slug": "abdul-kimbrough-cedar-sound",
+   "slug": "abdul-kimbrough-fcs-pacific-northwest",
    "position": "LG",
    "class": "SORS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Abdul Kimbrough",
    "position_name": "Left Guard",
    "jersey": "78",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Sophomore (RS)",
    "height": "6'5\"",
    "weight_lbs": 323,
@@ -9621,15 +9619,15 @@
    "fictional": true
   },
   {
-   "slug": "solomon-baptiste-cedar-sound",
+   "slug": "solomon-baptiste-fcs-pacific-northwest",
    "position": "C",
    "class": "JRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Solomon Baptiste",
    "position_name": "Center",
    "jersey": "50",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior (RS)",
    "height": "6'3\"",
    "weight_lbs": 306,
@@ -9900,15 +9898,15 @@
    "fictional": true
   },
   {
-   "slug": "dylan-vance-cedar-sound",
+   "slug": "dylan-vance-fcs-pacific-northwest",
    "position": "C",
    "class": "JRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Dylan Vance",
    "position_name": "Center",
    "jersey": "55",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 300,
@@ -10153,15 +10151,15 @@
    "fictional": true
   },
   {
-   "slug": "tobias-wakefield-cedar-sound",
+   "slug": "tobias-wakefield-fcs-pacific-northwest",
    "position": "RG",
    "class": "FRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Tobias Wakefield",
    "position_name": "Right Guard",
    "jersey": "77",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman (RS)",
    "height": "6'6\"",
    "weight_lbs": 339,
@@ -10420,15 +10418,15 @@
    "fictional": true
   },
   {
-   "slug": "keegan-keeling-cedar-sound",
+   "slug": "keegan-keeling-fcs-pacific-northwest",
    "position": "RG",
    "class": "FRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Keegan Keeling",
    "position_name": "Right Guard",
    "jersey": "58",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",
    "weight_lbs": 320,
@@ -10711,15 +10709,15 @@
    "fictional": true
   },
   {
-   "slug": "mateo-haskins-cedar-sound",
+   "slug": "mateo-haskins-fcs-pacific-northwest",
    "position": "RG",
    "class": "JRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Mateo Haskins",
    "position_name": "Right Guard",
    "jersey": "67",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 294,
@@ -10998,15 +10996,15 @@
    "fictional": true
   },
   {
-   "slug": "nate-navarro-cedar-sound",
+   "slug": "nate-navarro-fcs-pacific-northwest",
    "position": "RG",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Nate Navarro",
    "position_name": "Right Guard",
    "jersey": "70",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'1\"",
    "weight_lbs": 294,
@@ -11285,15 +11283,15 @@
    "fictional": true
   },
   {
-   "slug": "owen-oakes-cedar-sound",
+   "slug": "owen-oakes-fcs-pacific-northwest",
    "position": "RT",
    "class": "FRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Owen Oakes",
    "position_name": "Right Tackle",
    "jersey": "59",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman (RS)",
    "height": "6'5\"",
    "weight_lbs": 315,
@@ -11567,15 +11565,15 @@
    "fictional": true
   },
   {
-   "slug": "hayden-lindqvist-cedar-sound",
+   "slug": "hayden-lindqvist-fcs-pacific-northwest",
    "position": "RT",
    "class": "JR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Hayden Lindqvist",
    "position_name": "Right Tackle",
    "jersey": "72",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior",
    "height": "6'3\"",
    "weight_lbs": 301,
@@ -11858,15 +11856,15 @@
    "fictional": true
   },
   {
-   "slug": "keegan-quarles-cedar-sound",
+   "slug": "keegan-quarles-fcs-pacific-northwest",
    "position": "RT",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Keegan Quarles",
    "position_name": "Right Tackle",
    "jersey": "74",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'6\"",
    "weight_lbs": 295,
@@ -12147,15 +12145,15 @@
    "fictional": true
   },
   {
-   "slug": "devon-haskins-cedar-sound",
+   "slug": "devon-haskins-fcs-pacific-northwest",
    "position": "RT",
    "class": "FR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Devon Haskins",
    "position_name": "Right Tackle",
    "jersey": "71",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman",
    "height": "6'5\"",
    "weight_lbs": 305,
@@ -12448,15 +12446,15 @@
    "fictional": true
   },
   {
-   "slug": "kenji-fairley-cedar-sound",
+   "slug": "kenji-fairley-fcs-pacific-northwest",
    "position": "LEDG",
    "class": "FRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Kenji Fairley",
    "position_name": "Left Edge",
    "jersey": "59",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
    "weight_lbs": 285,
@@ -12704,15 +12702,15 @@
    "fictional": true
   },
   {
-   "slug": "brennan-bonner-cedar-sound",
+   "slug": "brennan-bonner-fcs-pacific-northwest",
    "position": "LEDG",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Brennan Bonner",
    "position_name": "Left Edge",
    "jersey": "55",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'3\"",
    "weight_lbs": 235,
@@ -12967,15 +12965,15 @@
    "fictional": true
   },
   {
-   "slug": "dawson-bonner-cedar-sound",
+   "slug": "dawson-bonner-fcs-pacific-northwest",
    "position": "LEDG",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Dawson Bonner",
    "position_name": "Left Edge",
    "jersey": "16",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'3\"",
    "weight_lbs": 240,
@@ -13230,15 +13228,15 @@
    "fictional": true
   },
   {
-   "slug": "brody-farrow-cedar-sound",
+   "slug": "brody-farrow-fcs-pacific-northwest",
    "position": "LEDG",
    "class": "FRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Brody Farrow",
    "position_name": "Left Edge",
    "jersey": "41",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
    "weight_lbs": 245,
@@ -13509,15 +13507,15 @@
    "fictional": true
   },
   {
-   "slug": "corey-upshaw-cedar-sound",
+   "slug": "corey-upshaw-fcs-pacific-northwest",
    "position": "DT",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Corey Upshaw",
    "position_name": "Defensive Tackle",
    "jersey": "92",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'3\"",
    "weight_lbs": 290,
@@ -13783,15 +13781,15 @@
    "fictional": true
   },
   {
-   "slug": "jamal-larkin-cedar-sound",
+   "slug": "jamal-larkin-fcs-pacific-northwest",
    "position": "DT",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Jamal Larkin",
    "position_name": "Defensive Tackle",
    "jersey": "52",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'1\"",
    "weight_lbs": 285,
@@ -14076,15 +14074,15 @@
    "fictional": true
   },
   {
-   "slug": "miles-tatum-cedar-sound",
+   "slug": "miles-tatum-fcs-pacific-northwest",
    "position": "DT",
    "class": "FRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Miles Tatum",
    "position_name": "Defensive Tackle",
    "jersey": "54",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
    "weight_lbs": 299,
@@ -14327,15 +14325,15 @@
    "fictional": true
   },
   {
-   "slug": "bo-stroud-cedar-sound",
+   "slug": "bo-stroud-fcs-pacific-northwest",
    "position": "DT",
    "class": "SORS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Bo Stroud",
    "position_name": "Defensive Tackle",
    "jersey": "99",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
    "weight_lbs": 305,
@@ -14608,15 +14606,15 @@
    "fictional": true
   },
   {
-   "slug": "kaden-blackwell-cedar-sound",
+   "slug": "kaden-blackwell-fcs-pacific-northwest",
    "position": "DT",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Kaden Blackwell",
    "position_name": "Defensive Tackle",
    "jersey": "33",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'1\"",
    "weight_lbs": 299,
@@ -14896,15 +14894,15 @@
    "fictional": true
   },
   {
-   "slug": "abdul-montoya-cedar-sound",
+   "slug": "abdul-montoya-fcs-pacific-northwest",
    "position": "DT",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Abdul Montoya",
    "position_name": "Defensive Tackle",
    "jersey": "56",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'4\"",
    "weight_lbs": 240,
@@ -15171,15 +15169,15 @@
    "fictional": true
   },
   {
-   "slug": "omari-dalton-cedar-sound",
+   "slug": "omari-dalton-fcs-pacific-northwest",
    "position": "REDG",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Omari Dalton",
    "position_name": "Right Edge",
    "jersey": "50",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'5\"",
    "weight_lbs": 225,
@@ -15441,15 +15439,15 @@
    "fictional": true
   },
   {
-   "slug": "cole-corbett-cedar-sound",
+   "slug": "cole-corbett-fcs-pacific-northwest",
    "position": "REDG",
    "class": "FRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Cole Corbett",
    "position_name": "Right Edge",
    "jersey": "44",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
    "weight_lbs": 245,
@@ -15708,15 +15706,15 @@
    "fictional": true
   },
   {
-   "slug": "kai-paddock-cedar-sound",
+   "slug": "kai-paddock-fcs-pacific-northwest",
    "position": "REDG",
    "class": "SR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Kai Paddock",
    "position_name": "Right Edge",
    "jersey": "98",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior",
    "height": "6'5\"",
    "weight_lbs": 235,
@@ -15990,15 +15988,15 @@
    "fictional": true
   },
   {
-   "slug": "tyrese-yancey-cedar-sound",
+   "slug": "tyrese-yancey-fcs-pacific-northwest",
    "position": "SAM",
    "class": "SORS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Tyrese Yancey",
    "position_name": "Sam Linebacker",
    "jersey": "20",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
    "weight_lbs": 213,
@@ -16273,15 +16271,15 @@
    "fictional": true
   },
   {
-   "slug": "nash-greer-cedar-sound",
+   "slug": "nash-greer-fcs-pacific-northwest",
    "position": "MIKE",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Nash Greer",
    "position_name": "Mike Linebacker",
    "jersey": "15",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'1\"",
    "weight_lbs": 230,
@@ -16522,15 +16520,15 @@
    "fictional": true
   },
   {
-   "slug": "solomon-chambliss-cedar-sound",
+   "slug": "solomon-chambliss-fcs-pacific-northwest",
    "position": "MIKE",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Solomon Chambliss",
    "position_name": "Mike Linebacker",
    "jersey": "29",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'2\"",
    "weight_lbs": 220,
@@ -16810,15 +16808,15 @@
    "fictional": true
   },
   {
-   "slug": "antoine-dempsey-cedar-sound",
+   "slug": "antoine-dempsey-fcs-pacific-northwest",
    "position": "MIKE",
    "class": "SO",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Antoine Dempsey",
    "position_name": "Mike Linebacker",
    "jersey": "22",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Sophomore",
    "height": "6'1\"",
    "weight_lbs": 222,
@@ -17104,15 +17102,15 @@
    "fictional": true
   },
   {
-   "slug": "carter-radford-cedar-sound",
+   "slug": "carter-radford-fcs-pacific-northwest",
    "position": "MIKE",
    "class": "SORS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Carter Radford",
    "position_name": "Mike Linebacker",
    "jersey": "48",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Sophomore (RS)",
    "height": "6'1\"",
    "weight_lbs": 210,
@@ -17407,15 +17405,15 @@
    "fictional": true
   },
   {
-   "slug": "rowan-haddix-cedar-sound",
+   "slug": "rowan-haddix-fcs-pacific-northwest",
    "position": "WILL",
    "class": "JR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Rowan Haddix",
    "position_name": "Will Linebacker",
    "jersey": "34",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior",
    "height": "6'1\"",
    "weight_lbs": 227,
@@ -17691,15 +17689,15 @@
    "fictional": true
   },
   {
-   "slug": "trent-sewell-cedar-sound",
+   "slug": "trent-sewell-fcs-pacific-northwest",
    "position": "WILL",
    "class": "FR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Trent Sewell",
    "position_name": "Will Linebacker",
    "jersey": "32",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman",
    "height": "5'11\"",
    "weight_lbs": 216,
@@ -17975,15 +17973,15 @@
    "fictional": true
   },
   {
-   "slug": "keon-jarrell-cedar-sound",
+   "slug": "keon-jarrell-fcs-pacific-northwest",
    "position": "WILL",
    "class": "SORS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Keon Jarrell",
    "position_name": "Will Linebacker",
    "jersey": "45",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Sophomore (RS)",
    "height": "6'2\"",
    "weight_lbs": 222,
@@ -18266,15 +18264,15 @@
    "fictional": true
   },
   {
-   "slug": "malik-dunlap-cedar-sound",
+   "slug": "malik-dunlap-fcs-pacific-northwest",
    "position": "WILL",
    "class": "JR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Malik Dunlap",
    "position_name": "Will Linebacker",
    "jersey": "18",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior",
    "height": "6'2\"",
    "weight_lbs": 228,
@@ -18550,15 +18548,15 @@
    "fictional": true
   },
   {
-   "slug": "brandon-harlan-cedar-sound",
+   "slug": "brandon-harlan-fcs-pacific-northwest",
    "position": "CB",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Brandon Harlan",
    "position_name": "Cornerback",
    "jersey": "10",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'2\"",
    "weight_lbs": 180,
@@ -18842,15 +18840,15 @@
    "fictional": true
   },
   {
-   "slug": "terrance-keeling-cedar-sound",
+   "slug": "terrance-keeling-fcs-pacific-northwest",
    "position": "CB",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Terrance Keeling",
    "position_name": "Cornerback",
    "jersey": "12",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "5'11\"",
    "weight_lbs": 168,
@@ -19128,15 +19126,15 @@
    "fictional": true
   },
   {
-   "slug": "mason-hatcher-cedar-sound",
+   "slug": "mason-hatcher-fcs-pacific-northwest",
    "position": "CB",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Mason Hatcher",
    "position_name": "Cornerback",
    "jersey": "24",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'0\"",
    "weight_lbs": 190,
@@ -19425,15 +19423,15 @@
    "fictional": true
   },
   {
-   "slug": "kaden-yarbrough-cedar-sound",
+   "slug": "kaden-yarbrough-fcs-pacific-northwest",
    "position": "CB",
    "class": "JRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Kaden Yarbrough",
    "position_name": "Cornerback",
    "jersey": "11",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior (RS)",
    "height": "5'10\"",
    "weight_lbs": 185,
@@ -19709,15 +19707,15 @@
    "fictional": true
   },
   {
-   "slug": "tate-rainey-cedar-sound",
+   "slug": "tate-rainey-fcs-pacific-northwest",
    "position": "CB",
    "class": "FR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Tate Rainey",
    "position_name": "Cornerback",
    "jersey": "23",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman",
    "height": "6'0\"",
    "weight_lbs": 190,
@@ -20006,15 +20004,15 @@
    "fictional": true
   },
   {
-   "slug": "nash-dunlap-cedar-sound",
+   "slug": "nash-dunlap-fcs-pacific-northwest",
    "position": "CB",
    "class": "JRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Nash Dunlap",
    "position_name": "Cornerback",
    "jersey": "14",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior (RS)",
    "height": "6'2\"",
    "weight_lbs": 172,
@@ -20296,15 +20294,15 @@
    "fictional": true
   },
   {
-   "slug": "zaire-ransom-cedar-sound",
+   "slug": "zaire-ransom-fcs-pacific-northwest",
    "position": "CB",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Zaire Ransom",
    "position_name": "Cornerback",
    "jersey": "21",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'3\"",
    "weight_lbs": 190,
@@ -20583,15 +20581,15 @@
    "fictional": true
   },
   {
-   "slug": "darius-cantrell-cedar-sound",
+   "slug": "darius-cantrell-fcs-pacific-northwest",
    "position": "CB",
    "class": "SORS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Darius Cantrell",
    "position_name": "Cornerback",
    "jersey": "25",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Sophomore (RS)",
    "height": "6'0\"",
    "weight_lbs": 165,
@@ -20875,15 +20873,15 @@
    "fictional": true
   },
   {
-   "slug": "ivan-calloway-cedar-sound",
+   "slug": "ivan-calloway-fcs-pacific-northwest",
    "position": "CB",
    "class": "FRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Ivan Calloway",
    "position_name": "Cornerback",
    "jersey": "27",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman (RS)",
    "height": "6'0\"",
    "weight_lbs": 190,
@@ -21179,15 +21177,15 @@
    "fictional": true
   },
   {
-   "slug": "emmanuel-radford-cedar-sound",
+   "slug": "emmanuel-radford-fcs-pacific-northwest",
    "position": "FS",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Emmanuel Radford",
    "position_name": "Free Safety",
    "jersey": "17",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'0\"",
    "weight_lbs": 202,
@@ -21434,15 +21432,15 @@
    "fictional": true
   },
   {
-   "slug": "anthony-gentry-cedar-sound",
+   "slug": "anthony-gentry-fcs-pacific-northwest",
    "position": "FS",
    "class": "FR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Anthony Gentry",
    "position_name": "Free Safety",
    "jersey": "39",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman",
    "height": "6'1\"",
    "weight_lbs": 175,
@@ -21735,15 +21733,15 @@
    "fictional": true
   },
   {
-   "slug": "jaxon-delacroix-cedar-sound",
+   "slug": "jaxon-delacroix-fcs-pacific-northwest",
    "position": "SS",
    "class": "SORS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Jaxon Delacroix",
    "position_name": "Strong Safety",
    "jersey": "19",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Sophomore (RS)",
    "height": "5'11\"",
    "weight_lbs": 190,
@@ -21995,15 +21993,15 @@
    "fictional": true
   },
   {
-   "slug": "miles-bowden-cedar-sound",
+   "slug": "miles-bowden-fcs-pacific-northwest",
    "position": "SS",
    "class": "SRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Miles Bowden",
    "position_name": "Strong Safety",
    "jersey": "7",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Senior (RS)",
    "height": "6'2\"",
    "weight_lbs": 190,
@@ -22258,15 +22256,15 @@
    "fictional": true
   },
   {
-   "slug": "brody-beckett-cedar-sound",
+   "slug": "brody-beckett-fcs-pacific-northwest",
    "position": "SS",
    "class": "FR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Brody Beckett",
    "position_name": "Strong Safety",
    "jersey": "30",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman",
    "height": "5'10\"",
    "weight_lbs": 195,
@@ -22511,15 +22509,15 @@
    "fictional": true
   },
   {
-   "slug": "zaire-kirkland-cedar-sound",
+   "slug": "zaire-kirkland-fcs-pacific-northwest",
    "position": "SS",
    "class": "JRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Zaire Kirkland",
    "position_name": "Strong Safety",
    "jersey": "28",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 195,
@@ -22823,15 +22821,15 @@
    "fictional": true
   },
   {
-   "slug": "rico-cantrell-cedar-sound",
+   "slug": "rico-cantrell-fcs-pacific-northwest",
    "position": "SS",
    "class": "JRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Rico Cantrell",
    "position_name": "Strong Safety",
    "jersey": "37",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 200,
@@ -23086,15 +23084,15 @@
    "fictional": true
   },
   {
-   "slug": "brayden-larkin-cedar-sound",
+   "slug": "brayden-larkin-fcs-pacific-northwest",
    "position": "K",
    "class": "FR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Brayden Larkin",
    "position_name": "Kicker",
    "jersey": "99",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman",
    "height": "6'2\"",
    "weight_lbs": 245,
@@ -23350,15 +23348,15 @@
    "fictional": true
   },
   {
-   "slug": "camden-vance-cedar-sound",
+   "slug": "camden-vance-fcs-pacific-northwest",
    "position": "K",
    "class": "SORS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Camden Vance",
    "position_name": "Kicker",
    "jersey": "33",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Sophomore (RS)",
    "height": "5'10\"",
    "weight_lbs": 176,
@@ -23618,15 +23616,15 @@
    "fictional": true
   },
   {
-   "slug": "carter-farrow-cedar-sound",
+   "slug": "carter-farrow-fcs-pacific-northwest",
    "position": "P",
    "class": "JRRS",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Carter Farrow",
    "position_name": "Punter",
    "jersey": "43",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 190,
@@ -23883,15 +23881,15 @@
    "fictional": true
   },
   {
-   "slug": "connor-haskins-cedar-sound",
+   "slug": "connor-haskins-fcs-pacific-northwest",
    "position": "P",
    "class": "FR",
-   "team_slug": "cedar-sound",
+   "team_slug": "fcs-pacific-northwest",
    "url": null,
    "name": "Connor Haskins",
    "position_name": "Punter",
    "jersey": "35",
-   "team": "Cedar Sound",
+   "team": "FCS Pacific Northwest",
    "class_year": "Freshman",
    "height": "6'0\"",
    "weight_lbs": 193,

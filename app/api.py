@@ -413,7 +413,7 @@ def _all_teams() -> dict[str, dict]:
     """The 2026 teams by slug (every team drop-down and the team pages read these)."""
     global _teams
     if not _teams:
-        _teams = json.loads(season.TEAMS_FILE.read_text(encoding="utf-8"))["teams"]
+        _teams = season.stand_in_names(json.loads(season.TEAMS_FILE.read_text(encoding="utf-8"))["teams"])
     return _teams
 
 

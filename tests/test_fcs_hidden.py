@@ -32,10 +32,17 @@ def _fictional() -> dict[str, dict]:
 GAME_LINE_KEYS = {"opponent", "opp", "home", "away"}
 
 
+def _old_names() -> set[str]:
+    """The placeholder slugs, school names, towns, mascots and stadiums the stand-ins once had
+    (kept encoded in sim/fcs_names.py): none may show anywhere."""
+    from sim import fcs_names
+    return set(fcs_names._table()[1])
+
+
 def _assert_clean(label: str, payload, fict: dict[str, dict], allow: frozenset = frozenset()) -> None:
-    """No stand-in as a row of its own (a slug outside a game line), and its name and
-    conference nowhere at all."""
-    names = {t["name"] for t in fict.values()} | {t["conference"] for t in fict.values()}
+    """No stand-in as a row of its own (a slug outside a game line), no old placeholder name
+    anywhere, and a stand-in named only by its region label."""
+    names = _old_names()
 
     def walk(x, key, path):
         if isinstance(x, dict):
@@ -71,7 +78,8 @@ def test_fcs_hidden():
     fcs_options = [o for g in edit["games"] for o in g["options"] if o["slug"] in fict]
     assert fcs_options, "SMU's FCS date offers the other stand-ins"
     for o in fcs_options:
-        assert not any(t["name"] in json.dumps(o) for t in fict.values()), o
+        assert o["name"] == season.fcs_label(o["slug"]), o
+        assert not any(n in json.dumps(o) for n in _old_names()), o
     assert len({o["name"] for o in fcs_options}) == len(fcs_options), "two stand-ins share a picker name"
     api.call("POST", f"/api/season/{sid}/advance", {"to": week})
     while api.step() is not None:

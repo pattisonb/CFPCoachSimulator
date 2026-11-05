@@ -41,6 +41,7 @@ from typing import Callable, Iterator, Optional
 from sim import awards
 from teamdata import ratings as ratings_v2
 from sim import coaches
+from sim import fcs_names
 from sim import bowls
 from sim import polls
 from coach_career import recruiting
@@ -88,11 +89,9 @@ def week_of_date(date_iso: Optional[str]) -> Optional[int]:
     return max(1, (local - SEASON_EPOCH).days // 7 + 1)
 
 
-REGION_TEAM = {
-    "New England": "kestrel-bay", "Mid-Atlantic": "alder-ridge-state", "Southeast": "calder-springs",
-    "Gulf Coast": "port-rennick-state", "Great Lakes": "wendt-lake-tech", "Plains": "red-prairie-state",
-    "Mountain West": "talus-peak", "Pacific Northwest": "cedar-sound",
-}
+# the FCS stand-ins: one per region, each named only for its region ("FCS Southeast")
+REGION_TEAM = {r: "fcs-" + r.lower().replace(" ", "-") for r in (
+    "New England", "Mid-Atlantic", "Southeast", "Gulf Coast", "Great Lakes", "Plains", "Mountain West", "Pacific Northwest")}
 STATE_REGION = {
     **{s: "New England" for s in ("ME", "NH", "VT", "MA", "RI", "CT")},
     **{s: "Mid-Atlantic" for s in ("NY", "NJ", "PA", "DE", "MD", "DC", "VA", "WV")},
@@ -140,7 +139,7 @@ def load_teams() -> dict:
     global _teams_cache
     if not _teams_cache:
         data = json.loads(_league_path.read_text(encoding="utf-8"))
-        _teams_cache = data["teams"]
+        _teams_cache = stand_in_names(data["teams"])
         _teams_meta.clear()
         _teams_meta.update(attribute_scale=data.get("attribute_scale") or {}, spread_scale=data.get("spread_scale") or 1.5)
     return _teams_cache
@@ -325,6 +324,17 @@ def fcs_label(slug: str) -> str:
     real school it replaces."""
     region = TEAM_REGION.get(slug)
     return f"FCS {region}" if region else "FCS"
+
+
+def stand_in_names(teams: dict) -> dict:
+    """`teams` with every FCS stand-in named only for its region, whatever its file says: name and
+    school "FCS Southeast", abbreviation "FCS", no mascot, no town. Every page that shows a team's
+    name reads these, so a stand-in can never show anything but its label."""
+    for slug, t in teams.items():
+        if t.get("fictional"):
+            t.update(name=fcs_label(slug), school=fcs_label(slug), abbreviation="FCS", mascot="")
+            t.pop("city", None)
+    return teams
 
 
 def team_display(slug: str, teams: dict) -> str:
@@ -2282,12 +2292,45 @@ def save_box(state: dict, event_id: str, game: dict) -> None:
 
 def load_box(state: dict, event_id: str) -> Optional[dict]:
     box = state.get("my_boxes", {}).get(event_id)
-    if box is not None:
-        return box
-    path = box_dir(state) / f"{event_id}.json"
-    if path.exists():
-        return json.loads(path.read_text(encoding="utf-8"))
-    return None
+    if box is None:
+        path = box_dir(state) / f"{event_id}.json"
+        if not path.exists():
+            return None
+        box = json.loads(fcs_names.rewrite_text(path.read_text(encoding="utf-8")))   # a box saved before the rename
+    return box_names(box)
+
+
+def box_names(box: dict) -> dict:
+    """A box score with each side's name as every page shows it: an FCS stand-in as its region
+    label (team_display), in the header, the line score, the injuries and the scoring plays."""
+    teams = load_teams()
+    for side in ("home", "away"):
+        slug = box.get(f"{side}_slug")
+        t = box.get(side)
+        if not isinstance(t, dict) or not (teams.get(slug) or {}).get("fictional"):
+            continue
+        shown = team_display(slug, teams)
+        if t.get("name") != shown:
+            t["name"] = shown
+            for s in box.get("scoring_plays") or []:
+                if s.get("team") == side:
+                    s["team_name"] = shown
+    return box
+
+
+def _rename_stand_ins_files(season_id: str) -> None:
+    """A season saved before the FCS stand-ins were renamed: its box scores and its cached
+    leagues get today's slugs and names too (fcs_names), once."""
+    from coach_career import league
+    files = list((SEASONS_DIR / season_id / "boxes").glob("*.json")) + list(league.CACHE_DIR.glob(f"{season_id}-*.json"))
+    for f in files:
+        try:
+            text = f.read_text(encoding="utf-8")
+            new = fcs_names.rewrite_text(text)
+            if new is not text:
+                f.write_text(new, encoding="utf-8")
+        except (OSError, ValueError):
+            continue
 
 
 def has_box(state: dict, g: dict) -> bool:
@@ -2308,7 +2351,12 @@ def load_season(season_id: str) -> Optional[dict]:
     path = SEASONS_DIR / f"{season_id}.json"
     if not path.exists():
         return None
-    state = json.loads(path.read_text(encoding="utf-8"))
+    text = path.read_text(encoding="utf-8")
+    renamed = fcs_names.rewrite_text(text)
+    if renamed is not text:               # saved before the FCS stand-ins were named for their regions
+        path.write_text(renamed, encoding="utf-8")
+        _rename_stand_ins_files(season_id)
+    state = json.loads(renamed)
     # seasons saved before the FCS stand-ins were anonymised still carry "Duquesne (as ...)"
     for g in state["games"].values():
         for side in ("home", "away"):

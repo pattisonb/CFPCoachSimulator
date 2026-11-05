@@ -2093,7 +2093,7 @@ with the gaps and quirks in the NCAA feed (fixed after the overnight review, wee
   1.11 fumbles and 0.52 lost a team-game.
 - **Games against FCS schools.** The season plays them against the fictional stand-in for
   the school's region (`data/fcs_map.json`), so the NCAA name (UNI) never matches the
-  season's opponent (Red Prairie St.). `_ncaa_index` files a game where one side is an FBS
+  season's opponent (FCS Plains). `_ncaa_index` files a game where one side is an FBS
   team and the other matches no team under (the FBS team, `FCS`), and `_real_games` takes
   it for a stand-in game when the dates are within 2 days (`FCS_DATE_DAYS`; season dates
   are UTC). The FCS school's team box goes to the stand-in's side: its team line (yards,
@@ -2166,6 +2166,16 @@ Davis, Villanova, Tarleton State and others), +3 for good ones, -7 for weak ones
 the lower SWAC and MEAC), 0 for the rest. One stand-in per region used to play every school alike:
 replaying the 122 real 2026 FBS-FCS games, the FCS side won 2.5% (real 4.9%); with the tiers it wins
 4.2% (strong programs 12%, good 7%, weak under 1%) and FBS teams win by 36 on average (real 37). No injuries.
+
+The stand-ins are named only for their regions, at the source: slug `fcs-<region>` (`fcs-mid-atlantic`),
+name, short name and school "FCS Mid-Atlantic", abbreviation "FCS", no mascot and no town
+(`cfb_sim_data/teams/fcs-*.json`). `season.load_teams` and the API's team list enforce that whatever
+a file says (`season.stand_in_names`), the box score view names a stand-in's side by its label
+(`season.box_names`, and `CFP.boxNames` on the page), and the team pill's title is `CFP.teamName`.
+They once had made-up school names, towns, mascots and stadiums; a save from then (its state, its box
+scores, a downloaded .ccsave, a cached league, a coach file) is rewritten to today's slugs and labels
+when it is read (`sim/fcs_names.py`, which keeps the old strings rot13-encoded).
+`tests/test_no_standin_names.py` checks that no tracked file holds any of them.
 
 Ties in the standings follow the procedure the Power Four (and most Group of Five)
 conferences publish for seeding their title games, in this order: head-to-head (the

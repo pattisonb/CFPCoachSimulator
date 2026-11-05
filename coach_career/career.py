@@ -11,6 +11,8 @@ import zlib
 from datetime import datetime, timezone
 from typing import Optional
 
+from sim import fcs_names
+
 FIRST_YEAR = 2026
 MAX_UNPACKED = 200 * 1024 * 1024     # an uploaded save, unpacked (a full season of box scores is well under this)
 MAX_BOXES = 2000                     # box scores in one save (a season has about 900)
@@ -47,7 +49,7 @@ def export_save(state: dict, boxes: bool = True) -> bytes:
     """The career as one gzip file: the season state and every saved box score (`boxes=False`:
     the state alone, your own games' box scores included, for the browser's weekly copy)."""
     from sim import season
-    files = {p.name: p.read_text(encoding="utf-8") for p in sorted(season.box_dir(state).glob("*.json"))} \
+    files = {p.name: fcs_names.rewrite_text(p.read_text(encoding="utf-8")) for p in sorted(season.box_dir(state).glob("*.json"))} \
         if boxes and season.box_dir(state).exists() else {}
     return gzip.compress(json.dumps({"state": state, "boxes": files}, separators=(",", ":")).encode("utf-8"), compresslevel=6)
 
@@ -60,7 +62,7 @@ def read_save(blob: bytes) -> tuple[dict, dict]:
         raw = unpack.decompress(blob, MAX_UNPACKED)
         if unpack.unconsumed_tail:
             raise ValueError("too large")
-        data = json.loads(raw.decode("utf-8"))
+        data = json.loads(fcs_names.rewrite_text(raw.decode("utf-8")))   # a save from before the FCS stand-ins' rename
         state = data["state"]
     except (OSError, ValueError, KeyError, TypeError, zlib.error) as exc:
         raise ValueError("not a Coach Career save") from exc
@@ -69,7 +71,7 @@ def read_save(blob: bytes) -> tuple[dict, dict]:
     boxes = data.get("boxes") or {}
     if not isinstance(boxes, dict) or len(boxes) > MAX_BOXES:
         raise ValueError("not a Coach Career save")
-    return state, {n: t for n, t in boxes.items() if isinstance(t, str) and BOX_NAME.fullmatch(n)}
+    return state, {n: fcs_names.rewrite_text(t) for n, t in boxes.items() if isinstance(t, str) and BOX_NAME.fullmatch(n)}
 
 
 def _looks_like_career(state) -> bool:

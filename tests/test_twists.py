@@ -331,10 +331,12 @@ def test_determinism_and_rate():
     assert per_blue >= per, (per_blue, per)
     # an FCS stand-in's placeholder name never reaches a line: it is only ever its region label ("FCS Gulf Coast"),
     # and no recruit asks a school to beat an FCS team
-    stand_ins = [t["name"] for t in season.load_teams().values() if t.get("fictional")]
+    from sim import fcs_names
     texts = [e.get("line") or "" for e in rc["log"]] + [persona.twist_label(t) for t in (rc.get("twists") or {}).values()]
-    leaked = sorted({n for n in stand_ins for x in texts if n and n in x})
-    assert not leaked, f"FCS stand-in names in twist lines: {leaked}"
+    leaked = [x for x in texts if fcs_names.has_old(x)]
+    assert not leaked, f"FCS stand-in placeholder names in twist lines: {leaked[:3]}"
+    labels = {t["name"] for t in season.load_teams().values() if t.get("fictional")}
+    assert labels and all(n.startswith("FCS ") for n in labels), labels
     fbs_only = [e for e in starts if e["twist"] == "beat"]
     assert all(not (season.load_teams().get(rc["twists"].get(e["pid"], {}).get("o")) or {}).get("fictional") for e in fbs_only if e["pid"] in (rc.get("twists") or {}))
     print(f"  determinism and rate ok: {per:.2f} twists a top-1000 recruit, {per_blue:.2f} a blue chip; {kinds}; no stand-in names")
