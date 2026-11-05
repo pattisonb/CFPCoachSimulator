@@ -279,7 +279,9 @@ def view(state: dict, viewer: str, pid: str) -> dict:
             "decider_topic": d["decider_topic"] if k["decider"] else None,
             "story": (STORY_LABEL[kind] if kind else NO_STORY) if k["story"] else None,
             "story_key": kind,
-            "story_detail": story_detail(state, viewer, pid) if kind else None}
+            "story_detail": story_detail(state, viewer, pid) if kind else None,
+            # his legacy school is the viewer's own: the tip speaks to you, not about "them"
+            "story_yours": bool(kind == "legacy" and story(state, pid)[1].get("school") == viewer)}
 
 
 # ----- how each personality and decider sounds in calls and in-home visits (scenes.py reads these) ------
