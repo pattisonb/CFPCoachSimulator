@@ -291,7 +291,9 @@ def view(state: dict, viewer: str, pid: str) -> dict:
             "story_detail": story_detail(state, viewer, pid) if kind else None,
             "commit_style": STYLE_LABEL[style(state, pid)] if k["style"] else None,
             "style_key": style(state, pid) if k["style"] else None,
-            "has_style": style(state, pid) is not None}
+            "has_style": style(state, pid) is not None,
+            # his legacy school is the viewer's own: the tip speaks to you, not about "them"
+            "story_yours": bool(kind == "legacy" and story(state, pid)[1].get("school") == viewer)}
 
 
 # ----- how each personality and decider sounds in calls and in-home visits (scenes.py reads these) ------

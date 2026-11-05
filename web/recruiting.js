@@ -404,14 +404,17 @@
     quiet: "He felt ignored: call or visit to warm him back up. Contacts count half and he will not visit until then",
   };
   // his story in a sentence: what it means for recruiting him (the chip's title, and a line under the Profile's rows)
+  // his story in plain words; `detail` is what the story names (the legacy school, the hero's state, the mate)
   const STORY_TIPS = {
-    legacy: "His family has history at one program: it starts ahead, and its lowball or hollow promise costs double.",
-    hero: "His home state wants him to stay: schools there pull harder, and out-of-state pitches land softer unless they are playing time or NIL.",
-    package: "He comes with a teammate: he commits only where his teammate holds an offer, and they commit together.",
-    two_sport: "He could go pro in baseball on signing day: playing time pitches and NIL over his ask lower the risk.",
-    comeback: "He is coming back from an injury and is rated under what he is: schools that reached him early keep his loyalty.",
-    bloomer: "He is growing into a bigger prospect than his rating says: his stars jump midseason.",
+    legacy: (d, yours) => yours ? `His family played at ${d || "your school"}, so you start with a head start on everyone else. If you lowball him or break a promise, it stings twice as much.`
+      : `His family played at ${d || "one school"}, so ${d ? "they start" : "it starts"} with a head start on everyone else. If ${d ? "they lowball" : "it lowballs"} him or ${d ? "break" : "breaks"} a promise, it stings twice as much.`,
+    hero: () => "His home state wants him to stay. Schools in his state have the edge, and pitches from out of state land softer unless they sell playing time or NIL.",
+    package: () => "He comes with a teammate. He only commits where his teammate has an offer too, and they commit together.",
+    two_sport: () => "He could sign a pro baseball contract instead. Playing time pitches and NIL over his ask make that less likely.",
+    comeback: () => "He's coming back from an injury, so his rating sells him short. Schools that reached out early keep an edge with him.",
+    bloomer: () => "He's still growing into his game. His rating will jump during the season.",
   };
+  const storyTip = (tr) => (STORY_TIPS[tr.story_key] ? STORY_TIPS[tr.story_key](tr.story_detail, tr.story_yours) : null);
   const COOLED_WHY = { lowball: "Cooled: raise your offer first", promise: "Cooled: give him time", quiet: "Cooled: he wants to hear from you", game: "Cooled: he saw you lose" };
   // his commit style in a sentence: what it means for recruiting him (the chip's title, and a line under the Profile's rows)
   const STYLE_TIPS = {
@@ -599,7 +602,7 @@
     if (tr.personality) out.push(el("span", { class: "go-tag", "data-key": "trait:personality", text: tr.personality, title: "His personality: how he sounds on a call and how he reacts to you" }));
     if (tr.decider) out.push(el("span", { class: "go-tag", "data-key": "trait:decider", text: `Decides: ${tr.decider}`, title: "Who makes the final call on where he goes" }));
     if (tr.story_key) out.push(el("span", { class: `go-tag ${tr.story_key === "two_sport" && /High$/.test(tr.story_detail || "") ? "warn" : ""}`.trim(), "data-key": "trait:story",
-      text: tr.story_detail ? `${tr.story} · ${tr.story_detail}` : tr.story, title: STORY_TIPS[tr.story_key] || "His story" }));
+      text: tr.story_detail ? `${tr.story} · ${tr.story_detail}` : tr.story, title: storyTip(tr) || "His story" }));
     if (tr.style_key) out.push(el("span", { class: "go-tag", "data-key": "trait:style", text: tr.commit_style, title: STYLE_TIPS[tr.style_key] || "How he commits" }));
     if (b.twist) out.push(el("span", { class: "go-tag warn", "data-key": "twist", text: b.twist.label, title: b.twist.line || TWIST_TIP }));
     if (b.likes) out.push(el("span", { class: "go-tag good go-likes", "data-key": "likes", text: likesText(b.likes), title: likesLine(b.likes) }));
@@ -665,7 +668,7 @@
         weeksLeft(twist.weeks_left) ? el("span", { class: "go-trait-more muted small", text: ` · ${weeksLeft(twist.weeks_left)}` }) : null]),
         twist.line ? el("span", { class: "pv-hint muted go-twist-line", text: twist.line }) : null])]) : null;
     const notes = {};
-    if (tr.story_key && STORY_TIPS[tr.story_key]) notes.story = STORY_TIPS[tr.story_key];
+    if (storyTip(tr)) notes.story = storyTip(tr);
     if (tr.style_key && STYLE_TIPS[tr.style_key]) notes.commit_style = STYLE_TIPS[tr.style_key];
     const traits = PV().traitsCard(tr, (p && p.trait_hints) || {}, { pitchNames: PITCH_NAMES, priorities: b.priorities_known, notes, extra: happened ? [happened] : null });
     if (!p) return PV().grid([traits, PV().card("Background", [el("p", { class: "muted go-loading", text: "Loading his profile…" })], { key: "background" })]);
