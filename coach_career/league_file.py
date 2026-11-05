@@ -271,17 +271,21 @@ def validate(doc: dict) -> list[str]:
         if cid in file_confs:
             add(f"{label}: the conference id '{cid}' is used by two conferences; give each its own id.")
             continue
-        if cid not in b["conf_names"]:      # a new conference: its name is its engine name, so it must be its own
-            bid = next((k for k, n in b["conf_names"].items() if n.casefold() == cname.strip().casefold()), None)
-            if bid is not None:
+        # every conference's name is its own: a new one's name is its engine name, and the page shows a renamed
+        # built-in one by its new name, so no name may be another conference's name in the game or in the file
+        key = cname.strip().casefold()
+        bid = next((k for k, n in b["conf_names"].items() if k != cid and n.casefold() == key), None)
+        if bid is not None:
+            if cid not in b["conf_names"]:
                 add(f"Conference {i} ({cname}): that name belongs to a conference in the game; give the new conference "
                     f"its own name, or use the id '{bid}' to change that one.")
-                continue
-            twin = next((c["name"] for k, c in file_confs.items() if k not in b["conf_names"]
-                         and c["name"].strip().casefold() == cname.strip().casefold()), None)
-            if twin is not None:
-                add(f"Conference {i} ({cname}): another conference in the file is named {twin}; give each its own name.")
-                continue
+            else:
+                add(f"Conference {i} ({cname}): that name belongs to another conference in the game; give it its own name.")
+            continue
+        twin = next((c["name"] for c in file_confs.values() if c["name"].strip().casefold() == key), None)
+        if twin is not None:
+            add(f"Conference {i} ({cname}): another conference in the file is named {twin}; give each its own name.")
+            continue
         lvl = c.get("level")
         if lvl is not None and lvl != LEVEL:
             add(f"{label}: level '{_say(lvl)}' is not supported; FCS games use the game's own opponents.")

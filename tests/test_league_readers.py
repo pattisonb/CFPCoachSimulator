@@ -142,6 +142,16 @@ def season_routes(sid: str, st: dict) -> None:
     assert any(s["id"] == sid and s["team_name"] == "Alder Tech" for s in seasons)
 
 
+def edited_builtin_rivalries() -> None:
+    """A league that only nudges a game team's prestige gives it a "meta" (league_fill); its rivalries, and its
+    listed rivals', stay the game's: no trophyless pair is added between two of the game's teams."""
+    meta = copy.deepcopy(league.base_meta("alabama"))
+    meta["prestige"] = (meta.get("prestige") or 50) + 5
+    plain, edited = {"games": {}}, {"games": {}, "league": {"teams": {"alabama": {"meta": meta}}}}
+    for slug in ["alabama", *(meta.get("rivals") or [])]:
+        assert season.rivalries_view(edited, slug) == season.rivalries_view(plain, slug), slug
+
+
 def run() -> None:
     blob = league_file.dumps(fixture())
     r = lc.api_call("POST", "/api/league/check", body_bytes=blob)
@@ -191,6 +201,7 @@ if __name__ == "__main__":
     leagues_dir = _Path(tempfile.mkdtemp(prefix="cfp-readers-leagues-"))
     season.SEASONS_DIR, coaches.COACHES_DIR, league.CACHE_DIR = seasons_dir, coaches_dir, leagues_dir
     try:
+        edited_builtin_rivalries()
         run()
     finally:
         season.close_pool()

@@ -2929,18 +2929,23 @@ def game_rivalry(state: dict, g: dict, after: bool = False) -> Optional[dict]:
 
 
 def _file_rivalries(state: dict, slug: str, teams: dict) -> list[tuple[frozenset, dict]]:
-    """The rivalries a league file lists for its own teams (league.team_meta's "rivals") that the game's
-    rivalries file lacks: no trophy and no series before this season. None for the built-in league."""
+    """The rivalries a league file lists for a team it adds (league.team_meta's "rivals"; the file may also list the
+    new team among a game team's rivals): no trophy and no series before this season. A pair of the game's own
+    teams is never one, even when the file edits either of them (league_fill gives an edited team a "meta" too):
+    their rivalries stay the game's. None for the built-in league."""
     from coach_career import league
     lgd = state.get("league") or {}
     own = {s for s, t in (lgd.get("teams") or {}).items() if t.get("meta") is not None}
     if not own:
         return []
+    base = set(league.base_slugs())
     opps = set(league.team_meta(lgd, slug).get("rivals") or []) if slug in own else set()
     opps |= {s for s in own if slug in (league.team_meta(lgd, s).get("rivals") or [])}
     out = []
     for opp in sorted(opps):
         pair = frozenset((slug, opp))
+        if pair <= base:                     # two of the game's teams: the game's rivalries file decides
+            continue
         if opp == slug or opp not in teams or teams[opp].get("fictional") or pair in load_rivalries():
             continue
         a, b = sorted(pair, key=lambda x: teams[x]["name"])

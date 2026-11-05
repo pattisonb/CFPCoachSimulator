@@ -13,6 +13,7 @@ browser then persists its files).
 """
 from __future__ import annotations
 
+import functools
 import hashlib
 import json
 import os
@@ -172,11 +173,21 @@ def _conference_names(state: dict) -> dict[str, str]:
     return {k: v for k, v in names.items() if k != v}
 
 
+@functools.lru_cache(maxsize=8)
+def _conference_pattern(engine_names: tuple[str, ...]) -> re.Pattern:
+    """One whole-word pattern for a career's renamed conferences, longest name first, compiled once per set."""
+    return re.compile(r"(?<![\w-])(" + "|".join(re.escape(k) for k in sorted(engine_names, key=len, reverse=True)) + r")(?![\w-])")
+
+
 def _show_conferences(out: Any, names: dict[str, str]) -> Any:
-    """`out` with every renamed conference shown by its display name: keys, values and words in sentences."""
+    """`out` with every renamed conference shown by its display name. The whole-word rewrite reaches every string
+    in the answer: dict keys, values, and free text (news, scene lines, reasons), so a team or player name that
+    holds a renamed conference's built-in name as a whole word is rewritten too. The built-in league (no renames)
+    passes through untouched. league_file.validate keeps every display name its conference's own, so no two keys
+    can meet."""
     if not names:
         return out
-    pattern = re.compile(r"(?<![\w-])(" + "|".join(re.escape(k) for k in sorted(names, key=len, reverse=True)) + r")(?![\w-])")
+    pattern = _conference_pattern(tuple(sorted(names)))
 
     def show(x: Any) -> Any:
         if isinstance(x, str):

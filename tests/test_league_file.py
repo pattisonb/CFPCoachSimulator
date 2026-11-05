@@ -300,6 +300,20 @@ def test_new_conference_named_like_a_builtin():
     assert league_file.validate({"format": "cfp-league/1", "conferences": [{"id": cid, "name": name, "games": league_file._builtin()["games"][cid]}]}) == []
 
 
+def test_renamed_conference_names_stay_their_own():
+    """A renamed built-in conference shows by its new name (lgd["conference_names"]), so that name may not be another
+    conference's: another built-in one's (any case), a new one's in the file, or another renamed one's."""
+    games = league_file._builtin()["games"]
+    conf = lambda cid, name: {"id": cid, "name": name, "games": games.get(cid, 8)}
+    errs = league_file.validate({"format": "cfp-league/1", "conferences": [conf("pac-12", "mac")]})
+    assert "Conference 1 (mac): that name belongs to another conference in the game; give it its own name." in errs, errs
+    errs = league_file.validate({"format": "cfp-league/1", "conferences": [conf("big-sky-east", "Big Sky East"), conf("pac-12", "Big Sky East")]})
+    assert "Conference 2 (Big Sky East): another conference in the file is named Big Sky East; give each its own name." in errs, errs
+    errs = league_file.validate({"format": "cfp-league/1", "conferences": [conf("mac", "Lake Erie League"), conf("pac-12", "lake erie league")]})
+    assert "Conference 2 (lake erie league): another conference in the file is named Lake Erie League; give each its own name." in errs, errs
+    assert league_file.validate({"format": "cfp-league/1", "conferences": [conf("mac", "Lake Erie League")]}) == []
+
+
 def test_merge_does_not_share_builtin_cache():
     m = league_file.merge({"format": "cfp-league/1", "teams": [{"slug": "rice", "prestige": 55}]})
     m["teams"]["rice"]["roster"].clear()
@@ -313,6 +327,7 @@ if __name__ == "__main__":
     test_export_round_trips_to_from_base()
     test_export_is_byte_stable_and_fcs_free()
     test_shape_and_conferences()
+    test_renamed_conference_names_stay_their_own()
     print("ok")
 
     for _n, _f in sorted(globals().items()):

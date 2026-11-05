@@ -3342,6 +3342,8 @@
     // the conference groups from the cards (a league file may show a conference under its own name)
     const cards = leagueTeams().filter((t) => !t.fictional);
     const P4 = [...new Set(cards.filter((t) => t.group === "P4").map((t) => t.conference))].sort();
+    // a new conference's teams carry group "" and are never the projected top Group of Six, as in sim/polls.py's
+    // build_bracket (its G6 is the game's six conferences by name)
     const G6 = new Set(cards.filter((t) => t.group === "G6").map((t) => t.conference));
     const order = cfp.map((e) => e.team);
     const pos = {}; cfp.forEach((e) => { pos[e.team] = e.rank; });

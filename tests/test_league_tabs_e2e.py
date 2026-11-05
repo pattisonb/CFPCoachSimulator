@@ -39,6 +39,9 @@ def start_server(port: int) -> subprocess.Popen:
     raise RuntimeError("the dev server did not start")
 
 
+IN_FLIGHT: dict = {}     # page -> its API calls not yet answered (watched counts them, quiet waits on them)
+
+
 def dev_only(url: str) -> bool:
     """version.json is written by the site build (tools/build_site.py), not served by the dev server."""
     return url.endswith("/version.json")
@@ -60,9 +63,6 @@ def watched(ctx_page, problems: list):
     page.on("requestfailed", lambda r: problems.append(f"failed: {r.url}") if not dev_only(r.url) else None)
     page.on("response", lambda r: problems.append(f"{r.status}: {r.url}") if r.status >= 400 and not dev_only(r.url) else None)
     return page
-
-
-IN_FLIGHT: dict = {}     # page -> its API calls not yet answered
 
 
 def quiet(page) -> None:
