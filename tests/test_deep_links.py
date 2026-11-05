@@ -264,6 +264,14 @@ def check_offseason(page, base, B, errors) -> None:
     reload(page)
     page.wait_for_selector("#tab-offseason .off-steps", timeout=60_000)
     assert tab_on(page, "offseason")
+    # the page within the stage: the Overview (opage=hub), then Departures' own page (opage=stage), which a reload keeps
+    page.wait_for_selector("#tab-offseason .off-page[data-page=hub]", timeout=60_000)
+    wait_url(page, lambda p: p.get("opage") == "hub", "opage=hub")
+    page.click("#tab-offseason .off-foot .go-btn.primary")
+    page.wait_for_selector("#tab-offseason .off-page[data-page=departures]", timeout=30_000)
+    wait_url(page, lambda p: p.get("opage") == "stage", "opage=stage")
+    reload(page)
+    page.wait_for_selector("#tab-offseason .off-page[data-page=departures]", timeout=60_000)
     clean(page, errors)
 
 

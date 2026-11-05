@@ -1499,7 +1499,26 @@ entrants with offers decide, best players first, a quarter of them the first wee
 transfers it already took there); a decision is a signing. After the last week an unsigned
 entrant may walk on, half the time, at a school from his top group that had spoken to him and has
 a spot (an AI school takes him when it needs his group or he beats its worst player there; your
-staff takes him on Auto); the rest leave FBS. Transfers keep their years in college. **Preferred
+staff takes him on Auto); the rest leave FBS. Transfers keep their years in college.
+
+**Room, and where your recruits went** (`recruiting._Room`, `no_room`, `_lost_why`, `lost_line`;
+`offseason.portal_away`; `tests/test_portal_outcome.py`). He only picks among offering schools
+with room, however much he likes one without it. Your room is your portal room (`portal_room`:
+the roster limit plus the 8 you may release, less next year's roster) against the transfers you
+signed, each counted once (it once counted them twice, so with half your spots filled you had no
+room while the page showed spots, and your clear favorite signed with the next school). An AI
+school's room is unchanged. When you have none, his board row says No Room, his pane's Your
+Chance says No Room with a sentence under his standing, and the pane and his profile carry a "No
+Room on Your Roster" chip (on Auto-recruit, "No Room at Linebacker" when your staff's cap at his
+group is reached). When an entrant you offered or had on your board signs elsewhere, his "signed"
+event keeps why (`lost`: no roster spot, no room at his group, the winner passed you on his list
+at the week's end, the winner stood ahead of you, or you never offered); at the close one you
+recruited who goes unsigned gets an "unsigned" event (or a walk-on's). His History says it in a
+sentence ("He signed with Georgia: you had no roster spot left for him."), the news and the What
+Changed report add the reason, a toast says it after the week's step, and the portal screen and
+the recap (after the close) list **Who Got Away**. Portal events carry their portal week
+(`portal_week`; the season's week stands still), so History reads "Week 2" and the What Changed
+report finds the week's decisions. **Preferred
 walk-ons** from the class too: when the offseason fills rosters, an unsigned high school prospect
 who had the school on his list comes first (a named walk-on), then generated ones.
 
@@ -1548,7 +1567,8 @@ other way, a starter who struggled (0.75 deviations under the average starter) a
 the depth chart's top drops a level 5% of the time. Your risers show the move and why ("Now a Film
 Junkie: A Breakout Year"), a drop in red; AI rosters change silently. The Development step
 lists your risers with the reasons. It opens on a transfer portal recap (who you signed out of the
-portal and where from, who you lost to it, where he went and why he left; one collapsed line at
+portal and where from, who you lost to it, where he went and why he left, and who got away: the
+entrants you recruited who went elsewhere, and why; one collapsed line at
 the Staff and Ready steps), your transfers are marked in the risers and listed in their own block,
 and the position-change picker groups them first.
 
@@ -1807,12 +1827,27 @@ wins, AD goal met) = 100", "raised to the 85 portal fund" when the floor applied
 players home cost and what carries), the portal board's header shows the pool, and the next
 season's Programs tab says "NIL carried over: 25 (of 135 this year)" on your program's card.
 
-**The Offseason screen** walks the steps: Departures (your leavers by kind, the league's numbers,
-the first round), Transfer portal round 1 and 2 (entrants with position and status filters, your
-offers, who he would be with you, your moves), Development (who improved), Staff (hire
-replacements, the coaching carousel), then Start the next season. **Sim to Next Season** runs
-every step on Auto. Your program's history (record, final AP rank, titles, class rank, players
-drafted) grows a row a year.
+**The Offseason screen** (`web/offseason.js`, `web/offseason.css`) walks the steps: Departures,
+Keep Them Home, the Transfer Portal's four weeks, Development, Staff Changes, then the Recap. Every
+page has one frame: the title, a "Stage N of 9" chip and a pill stepper (✓ for a done step, the
+accent for the current one) on top; Back to Offseason on the left and the primary "Advance to …"
+(with Sim to Next Season beside it) at the bottom. In front of each stage sits the **Overview**: a
+hero with what the stage is for, your numbers (roster, class signed, open spots, portal placed),
+Your Meeting With the AD (the goal, your record, job security, his patience, your year, and your
+answer while he is still deciding), The Takeaway (his words and the NIL-for-the-portal math) and
+your program's history. The tab opens on it at Departures; its Advance opens the stage's own page
+(no server call) and Back returns to it from any stage. Departures lists your leavers in folding
+groups ("+ N More" opens a long one), Around the League and The First Round, and keeps the
+redshirt and position-change card. Keep Them Home shows each leaver's roles now and next year, why
+he wants out, and Meet, Promise a Start, Offer NIL and Let Him Go, each with a hint from the rules.
+A portal week wraps the recruiting board (drawn by `recruiting.js`, untouched) with the Portal
+Overview, Keep Them Home's answers and your moves. Development has the portal's +/− and tabs for
+Redshirts, Position Changes, Who Improved and Your Transfers beside the top improvements. The Recap
+lists the key results and the road ahead (the schedule, the next class, the AD's goal for the
+coming season). Cards in a row share one height, one 16 px gap runs across and down, and at 760 px
+and under every row stacks. `tests/test_offseason_redesign.py` walks every stage at 1280 and 400,
+light and dark. **Sim to Next Season** runs every step on Auto. Your program's history (record,
+final AP rank, titles, class rank, players drafted) grows a row a year.
 
 ## Player stat lines against real box scores
 
@@ -2195,7 +2230,9 @@ and the re-fetch land, then hands the focus back to it (or the nearest live cont
 `toast` says what happened in one short sentence on a stack bottom-left: a polite `status` region,
 newest on top, three at most, 3.5 s each; `#toast` stays as a hidden mirror of the latest for older
 scripts. The recruiting board, the depth chart, Settings, every offseason stage and Your coach use
-these, so the scroll never jumps and focus never falls to the page body.
+these, so the scroll never jumps and focus never falls to the page body. On the Offseason screen a Development tab and "+ N More" are
+patches of the view on screen (nothing fetched); moving between the Overview and the stage's page
+draws that page from the same view, like a tab open, and puts the focus on its title.
 
 **Help in an ⓘ** (`CFP.ui.tip(text, label)`). Explanations that used to sit under a title as a muted
 line live in a small ⓘ beside it: a 22 px circle with a 36 px hit area (44 px on a phone). The text
@@ -2229,7 +2266,7 @@ anything; landing on one (a load, Back, Forward) draws the target tab, which cou
 | `stage`, `sort`, `pid`, `pane` | The recruiting board (also the offseason's portal board): the stage tab, the sort, the recruit in the pane, its sub-tab (`scouting`, `profile`, `history`) |
 | `ppos`, `pstars`, `pstate`, `pstatus`, `psort`, `pgroup`, `ppage` | The Prospects filters and page |
 | `qboard`, `ssort`, `spid`, `ssub`, `sops` | Scouting: the database chip (`on`, `scouted`), the sort (`board`, `need`, `potential`, `looks`; rank when absent), the selected prospect, the report's sub-tab (`overview`, `scouting`) and Scouting Operations open (`1`); All Reports is a modal token |
-| `opos`, `ostatus` | The offseason portal list's filters (the stage itself is the server's) |
+| `opos`, `ostatus`, `opage`, `odev` | The offseason: the old portal list's filters, the page within the stage (`hub` for the Overview, `stage` for the stage's own page) and Development's tab (`positions`, `improved`, `transfers`; Redshirts when absent). The stage itself is the server's |
 | `poll` | Rankings: `ap`, `coaches`, `cfp`, `resume` |
 | `stats`, `steam`, `sview` | Stats: `team` for Team Stats; the player stats' team (`all` for the league) and view (`roster`, a category) |
 | `aview` | Awards: the view |

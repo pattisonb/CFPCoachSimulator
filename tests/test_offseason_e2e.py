@@ -28,6 +28,7 @@ def check_busy_advance(browser, base: str, sid: str) -> None:
     page.on("request", lambda r: posts.append(r.url) if r.method != "GET" and "/offseason/" in r.url else None)
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)
+    page.click("#tab-offseason .off-foot .go-btn.primary")                 # the Overview first: Advance to Departures
     page.wait_for_selector("#tab-offseason .off-rs button", timeout=30_000)
     page.once("dialog", lambda d: d.accept())
     page.click("#tab-offseason button:has-text('Sim to Next Season')")
@@ -95,7 +96,11 @@ if __name__ == "__main__":
             page.goto(f"{base}/index.html?id={sid}")
             page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)   # a finished career opens on the offseason
             assert page.is_visible("#season-tabs button[data-tab=offseason]")
-            assert "DEPARTURES" in page.inner_text("#tab-offseason")
+            assert "OFFSEASON · ON TO 2027" in page.inner_text("#tab-offseason .off-head")   # it opens on the Overview
+            assert page.inner_text("#tab-offseason .go-btn.primary.big") == "Advance to Departures"
+            page.click("#tab-offseason .go-btn.primary.big")
+            page.wait_for_selector("#tab-offseason .off-page[data-page=departures]", timeout=30_000)
+            assert "DEPARTURES" in page.inner_text("#tab-offseason .off-head")
             assert "LEAVING YOUR PROGRAM" in page.inner_text("#tab-offseason")
             if "KEEP THEM HOME" in page.inner_text("#tab-offseason .go-btn.primary.big").upper():   # your leavers with eligibility left wait on you
                 assert page.inner_text("#tab-offseason .go-btn.primary.big").upper().startswith("ADVANCE TO"), "the button says where it goes"
@@ -104,7 +109,7 @@ if __name__ == "__main__":
                 first = page.query_selector("button.go-act:has-text('Meet')")
                 if first:
                     first.click(); page.wait_for_selector("text=He wants", timeout=30_000)
-            page.click("text=Advance to the Transfer Portal")
+            page.click("text=Advance to Transfer Portal (Week 1)")
             page.wait_for_selector("text=WEEK 1 OF 4", timeout=120_000)
             assert not page.query_selector(".off-board .go-row-recruit"), "the portal opens with an empty board"
             # you pick an entrant from the pool (the best one not leaving your own program) and recruit him on the board
@@ -121,7 +126,7 @@ if __name__ == "__main__":
             page.click(".off-board .go-pane .go-step button.go-step-go")
             page.wait_for_selector(".off-board .go-pane .go-tag:has-text('Offered')", timeout=30_000)
             for w in (1, 2, 3):
-                page.click(f"text=Advance to Portal Week {w + 1}")
+                page.click(f"text=Advance to Transfer Portal (Week {w + 1})")
                 page.wait_for_selector(f"text=WEEK {w + 1} OF 4", timeout=120_000)
             page.click("text=Close the Portal and Advance")
             page.wait_for_selector("text=WHO IMPROVED", timeout=120_000)

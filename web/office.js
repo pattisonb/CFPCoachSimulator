@@ -240,8 +240,10 @@
     const tag = ` (${n.position}, `;
     const what = n.kind === "asked_more" && n.school === s.team ? `wants more NIL from you: ${n.rival_name || "a rival"} offered more.`
       : (n.kind === "bloomed" || n.kind === "pro") && n.line ? n.line.replace(/^He /, "")
+      : n.kind === "unsigned" ? "went unsigned."
       : `${(rec().eventWord || ((e) => e.kind))(n)} ${n.school_name || ""}`.trim() + ".";
-    return [who, tag, el("span", { class: "ofc-stars", text: stars(n.stars) }), `) ${what}`];
+    return [who, tag, el("span", { class: "ofc-stars", text: stars(n.stars) }), `) ${what}`,
+      n.reason ? el("span", { class: "muted small", text: ` ${n.reason}` }) : null];
   }
   function newsCard(s, items) {
     const card = el("section", { class: "go-card ofc-news", "aria-label": "Program News" }, [kicker("Program News")]);
