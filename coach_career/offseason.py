@@ -126,6 +126,13 @@ YEAR_CURVE = (0.45, 0.7, 1.35, 1.35, 1.0)
 # all become 85+ seniors: a career's senior classes keep the real 2026 seniors' top end (tests/test_progression_realism.py) *tune*
 DEV_TOP = 55
 DEV_TOP_SPAN = 10
+# the most of his room an offseason closes: the pace's factors (his year, his program, his staff, his
+# production, his position, his third year) compound to 2-4 for a few players a year, a rate past 1,
+# and a real junior rated 49 with a 1,300-point room became a 99 in one offseason (a career's first
+# senior class had 10-12 linebackers rated 85+ where the real 2026 seniors have 2). Half his room a
+# year keeps the real seniors' top end (tests/test_progression_realism.py) and leaves the medians by
+# stars and years (tools/check_development.py) where they were *tune*
+DEV_YEAR_CAP = 0.5
 # a position group's pace against the league's: the real rosters' backs, quarterbacks and receivers peak
 # early and their senior classes sit lowest, linemen come on late (the real 2026 seniors by position),
 # where one pace for everyone left a career's skill-position seniors 2-5 points high and its linemen low.
@@ -1583,6 +1590,7 @@ def develop(p: dict, attrs: list[str], factor: float, rng: random.Random) -> int
     rate = recruits.RATE.get(p.get("c"), 0.27) * factor * DEV_RATE * YEAR_CURVE[min(len(YEAR_CURVE) - 1, int(p.get("yrs") or 0))]
     rate /= 1 + max(0, p["o"] - DEV_TOP) / DEV_TOP_SPAN       # the last points come slowest (DEV_TOP)
     rate *= DEV_PACE.get(DRAFT_GROUP.get(p["pos"], ""), 1.0)  # ... and by position (DEV_PACE)
+    rate = min(DEV_YEAR_CAP, rate)                            # no offseason closes more than half his room (DEV_YEAR_CAP)
     new_r, new_g = [], []
     for v, g in zip(p["r"], p["g"]):
         step = int(round(min(g, g * rate * rng.uniform(0.8, 1.2)))) if g > 0 else 0
@@ -2384,7 +2392,7 @@ def next_season(state: dict) -> dict:
             if c:
                 r = c.get("ratings") or {}
                 s.update(name=c.get("name") or s["name"], evaluation=int(r.get("player_development", 60)), recruiting=int(r.get("recruiting", 60)),
-                         contract_until=year + random.Random(f"contract-{state['id']}-{year}-{s['id']}").randint(*term_of(s["role"])) - 1)
+                         contract_until=year + random.Random(f"contract-{seed_key(state)}-{year}-{s['id']}").randint(*term_of(s["role"])) - 1)
                 s.pop("pot", None)
         history[-1]["moved_to"] = team
         car.setdefault("schools", []).append({"team": team, "from": year})

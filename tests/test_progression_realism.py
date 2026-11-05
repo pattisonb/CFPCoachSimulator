@@ -70,16 +70,18 @@ def main() -> None:
     st_["career"]["settings"]["auto_recruit"] = "season"
     season.advance_to(st_, season.FINAL_WEEK)                   # a real season: its production and honors feed development
     rows, bad = [], []
-    for i in range(2):
-        offseason.run_all(st_)
-        st_ = offseason.next_season(st_)
-        finished(st_)                                           # the next season faked (scores and classes only)
-        year = season.season_year(st_)
-        sim = table(seniors(st_["league"]))
-        rows.append((year, sim))
-        bad += compare(real, sim, year)
-    lg.forget(st_["id"])
-    season.close_pool()
+    try:
+        for i in range(2):
+            offseason.run_all(st_)
+            st_ = offseason.next_season(st_)
+            finished(st_)                                       # the next season faked (scores and classes only)
+            year = season.season_year(st_)
+            sim = table(seniors(st_["league"]))
+            rows.append((year, sim))
+            bad += compare(real, sim, year)
+    finally:
+        lg.forget(st_["id"])                                    # a failed run leaves no league file behind for a retry
+        season.close_pool()
     for year, sim in rows:
         print(f"seniors {year} (real 2026 in brackets): " + "  ".join(
             f"{g} {sim[g][0]:.0f}/{sim[g][1]}/{sim[g][2]} ({real[g][0]:.0f}/{real[g][1]}/{real[g][2]})" for g in real))

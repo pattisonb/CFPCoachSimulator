@@ -1589,7 +1589,11 @@ his class, and a transfer keeps his), divided above an overall of 55 by 1 plus a
 over it (`DEV_TOP`, `DEV_TOP_SPAN`: the last points come slowest, so a 75 grows at a third of the
 pace; without it a career's 2027 seniors had about 125 players rated 85+ where the real 2026
 seniors had 25, at every position, and the draft's first round filled with them;
-tests/test_progression_realism.py). A real 2026 underclassman's room to potential is 1.2 times
+tests/test_progression_realism.py), and never more than half his room in one offseason
+(`DEV_YEAR_CAP`: the factors on his pace, his year, his program, his staff, his production, his
+position and his third year, compound to 2-4 for a few players a year, a rate past 1, and a
+real junior rated 49 with a 1,300-point room became a 99 in one offseason; a career's first
+senior class had 10-12 linebackers rated 85+ where the real seniors have 2). A real 2026 underclassman's room to potential is 1.2 times
 his seeded one (it ran short of a generated player's at the same class, and the Group of 5 dipped
 as those players became its upperclassmen). A generated player's room
 to potential is scaled by position group (`game_scale.ROOM`: 1.0 for backs to 1.63 for safeties),

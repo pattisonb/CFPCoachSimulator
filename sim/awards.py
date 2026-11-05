@@ -797,7 +797,12 @@ def all_conference(pool: Pool, conference: str, rng: random.Random) -> dict:
 
 
 def _rng(state: dict, salt: str) -> random.Random:
-    return random.Random(f"{state.get('seed', 0)}|{state['id']}|{salt}")
+    """The voters' noise for a season's honors: seeded from the season's seed and year, so a
+    seeded season gives the same finalists and teams every run (a season without a seed draws
+    from its id). The honors feed development (offseason.growth_terms), so a stream seeded from
+    the id made a seeded career's development differ run to run."""
+    key = state["seed"] if state.get("seed") is not None else state["id"]
+    return random.Random(f"{key}|{state.get('year') or 2026}|{salt}")
 
 
 def conference_awards(pool: Pool, state: dict, final: bool = True) -> dict:
