@@ -492,6 +492,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "hard": bool(status.get("hard")) and not status["signed"],
         "leaning_fcs": bool(status["fcs"]), "offered_by_you": pid in rc["offers"].get(viewer, []),
         "on_board": pid in rc["board"],
+        "no_room": recruiting.no_room(state, viewer, pid),            # the portal: your roster (or Auto's cap at his position) has no room for him
         "trips": ((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("scouted", 0),
         "priorities_known": list((rc["revealed"].get(viewer) or {}).get(pid, [])),
     }
@@ -576,7 +577,7 @@ def _stage_move(state: dict, pid: str, viewer: str) -> Optional[str]:
 HISTORY_SHOWN = 40                           # a board row's History: his newest log entries, this many
 HIS_OWN = ("commit", "hard", "flip", "decommit", "signed", "leaning_fcs", "bloomed", "pro")   # his own moves: every school's show
 PRO = "Pro Baseball"                          # where a Two-Sport recruit who took the baseball money went
-HISTORY_KEYS = ("week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful", "topics", "hit", "line")
+HISTORY_KEYS = ("week", "portal_week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful", "topics", "hit", "line")
 
 
 def history_index(state: dict, viewer: str) -> dict[str, list[dict]]:
@@ -588,7 +589,10 @@ def history_index(state: dict, viewer: str) -> dict[str, list[dict]]:
             continue
         rows = out.setdefault(e["pid"], [])
         if len(rows) < HISTORY_SHOWN:
-            rows.append({k: e[k] for k in HISTORY_KEYS if e.get(k) is not None})
+            row = {k: e[k] for k in HISTORY_KEYS if e.get(k) is not None}
+            if e.get("lost"):                     # an entrant you recruited went elsewhere: where, and why not you
+                row["line"] = recruiting.lost_line(e, recruiting.school_name)
+            rows.append(row)
     return out
 
 
@@ -624,6 +628,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                scout_cost=recruiting.look_cost(state, viewer, pid),
                role=_role(recruiting.pull(state, viewer, pid)["playing_time"]),
                standing=standing(state, pid, viewer),
+               no_room=recruiting.no_room(state, viewer, pid),
                history=history.get(pid, []))
     return out
 
@@ -841,7 +846,8 @@ def recruiting_view(state: dict) -> dict:
                           key=lambda b: -b["standing"]["pct"])[:4],
         "class_rank": class_rank(state, me),
         "hours_used": recruiting.weekly_hours(state, me) - recruiting._hours(state, me),
-        "recap": [dict(e, name=rc["prospects"][e["pid"]]["name"]) for e in recap[-60:]],
+        "recap": [dict(e, name=rc["prospects"][e["pid"]]["name"], **({"reason": recruiting.lost_reason(e, recruiting.school_name)} if e.get("lost") else {}))
+                  for e in recap[-60:]],
         "auto_recruit": recruiting.auto_mode(state),
         "staff": state["career"].get("staff", []), "areas": {a: list(states) for a, states in recruiting.AREAS.items()},
         "area_counts": {a: sum(1 for pid in rc["prospects"] if rc["prospects"][pid]["hometown"]["state"] in states
