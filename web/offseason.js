@@ -514,8 +514,8 @@
       const rows = all.filter((d) => d.kind === kind).sort((a, b) => (a.pick || 999) - (b.pick || 999) || b.overall - a.overall);
       if (!rows.length) continue;
       const shown = cut(`kind-${kind}`, rows);
-      const table = el("table", { class: "off-table off-dep-table" }, [el("thead", {}, [el("tr", {}, [el("th", { class: "off-mark-col", "aria-label": "Gone" }), el("th", { text: "Player" }), el("th", { class: "num", text: "Pos" }), el("th", { class: "num", text: "OVR" })])]),
-        el("tbody", {}, shown.map((d) => el("tr", { "data-key": d.id }, [el("td", { class: "off-mark", text: d.kind === "stayed" ? "↺" : "✓" }),
+      const table = el("table", { class: "off-table off-dep-table" }, [el("thead", {}, [el("tr", {}, [el("th", { text: "Player" }), el("th", { class: "num", text: "Pos" }), el("th", { class: "num", text: "OVR" })])]),
+        el("tbody", {}, shown.map((d) => el("tr", { "data-key": d.id }, [
           el("td", {}, [el("b", { text: d.name }), d.kind === "draft" ? el("span", { class: "go-tag good off-pick", text: `Round ${d.round}, Pick ${d.pick}${d.early ? " · Early" : ""}` }) : null]),
           el("td", { class: "num", text: d.pos }), el("td", { class: "num", text: String(d.overall) })])))]);
       const det = el("details", { class: "off-group", "data-key": `kind-${kind}`, ...(view.closed[kind] ? {} : { open: "" }) }, [
@@ -867,9 +867,12 @@
     if ((st.market || []).length) {
       const t = el("table", { class: "off-table" }, [el("thead", {}, [el("tr", {}, ["Coach", "Would Take", "Rating", "Why He Is Available", "Last Job"].map((h) => el("th", { text: h })))])]);
       const body = el("tbody");
+      // a role is a label (Title Case): "head coach" → "Head Coach", "defensive coordinator at Texas" → "Defensive Coordinator at Texas"
+      const roleCase = (t) => String(t || "").replace(/\b(head coach|offensive coordinator|defensive coordinator)\b/g, (r) => r.replace(/\b\w/g, (c) => c.toUpperCase()));
+      const cap = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t);
       for (const m of st.market) {
-        body.append(el("tr", {}, [el("td", { text: `${m.name}, ${m.age}` }), el("td", { text: m.roles.join(", ") }), el("td", { class: "num", text: String(m.rating) }),
-          el("td", { text: `${m.why}${m.sits_out ? " · sitting out this cycle" : ""}` }), el("td", { text: m.previous_job && m.previous_job !== m.why ? m.previous_job : "—" })]));
+        body.append(el("tr", {}, [el("td", { text: `${m.name}, ${m.age}` }), el("td", { text: m.roles.map(roleCase).join(", ") }), el("td", { class: "num", text: String(m.rating) }),
+          el("td", { text: `${cap(m.why)}${m.sits_out ? " · Sitting out this cycle" : ""}` }), el("td", { text: m.previous_job && m.previous_job !== m.why ? cap(roleCase(m.previous_job)) : "—" })]));
       }
       t.append(body);
       page.append(card("off-market", "market", [el("div", { class: "go-kicker" }, [`Coaches for Hire · The Top ${st.market.length} `,

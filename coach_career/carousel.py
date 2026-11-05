@@ -255,6 +255,11 @@ def market_refresh(state: dict) -> None:
     mk["year"] = year
 
 
+def _seasons(n: int) -> str:
+    """"1 season", "2 seasons"."""
+    return f"{n} season" if n == 1 else f"{n} seasons"
+
+
 def market_add(state: dict, coach: dict, role: str, team: Optional[str], why: str, year: int,
                roles: Optional[list[str]] = None) -> dict:
     """A coach who lost or left his job joins the market (fired coaches sit out this offseason)."""
@@ -455,7 +460,7 @@ def run(state: dict) -> dict:
                     your_declined.setdefault(role, None)
                     continue
                 changes.append({"team": slug, "role": role, "old": c["name"], "reason": "moved on"})
-                market_add(state, c, role, slug, f"Left {_name(slug)} after {year - (c.get('since') or year)} seasons to look for a bigger job", year)
+                market_add(state, c, role, slug, f"Left {_name(slug)} after {_seasons(year - (c.get('since') or year))} to look for a bigger job", year)
                 open_coords.append((slug, role, "moved on"))
     your_poached, your_poached_why = [], {}
     for slug, role, reason in sorted(open_coords, key=lambda x: -attract(state, x[0])):
