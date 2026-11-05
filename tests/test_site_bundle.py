@@ -7,6 +7,7 @@ import sys as _sys
 from pathlib import Path as _Path
 
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root
+import json
 import os
 import shutil
 import subprocess
@@ -66,6 +67,9 @@ print("week 1 of 2027 ok")
 def test_bundle_plays_a_season_and_its_offseason(tmp_dir):
     info = build_site.build(tmp_dir / "dist")
     assert info["zip_bytes"] < 12_000_000
+    exported = json.loads((tmp_dir / "dist" / "league.json").read_text(encoding="utf-8"))
+    assert exported["format"] == "cfp-league/1"
+    assert "league.json" not in info["files"]
     zipfile.ZipFile(tmp_dir / "dist" / "game.zip").extractall(tmp_dir / "game")
     assert not (tmp_dir / "game" / "data" / "seasons").exists()
     assert len(list((tmp_dir / "game" / "cfb_sim_data" / "teams").glob("*.json"))) == 8

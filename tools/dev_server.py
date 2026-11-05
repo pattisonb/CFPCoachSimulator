@@ -26,6 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from app import api  # noqa: E402
+from coach_career import league_file  # noqa: E402
 
 WEB_DIR = (ROOT / "web").resolve()
 PAGES = {"/": "index.html", "/season": "index.html", "/coach": "coach.html"}
@@ -135,6 +136,8 @@ class Handler(BaseHTTPRequestHandler):
     def _static(self, path: str) -> None:
         name = PAGES.get(path, urllib.parse.unquote(path).lstrip("/"))
         file = (WEB_DIR / name).resolve()
+        if name == "league.json" and not file.is_file():
+            return self._send(200, league_file.builtin_bytes(), "application/json")
         if not file.is_relative_to(WEB_DIR) or not file.is_file():
             return self._json(404, {"detail": "not found"})
         ctype = mimetypes.guess_type(file.name)[0] or "application/octet-stream"
