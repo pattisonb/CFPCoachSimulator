@@ -514,8 +514,8 @@
       const rows = all.filter((d) => d.kind === kind).sort((a, b) => (a.pick || 999) - (b.pick || 999) || b.overall - a.overall);
       if (!rows.length) continue;
       const shown = cut(`kind-${kind}`, rows);
-      const table = el("table", { class: "off-table off-dep-table" }, [el("thead", {}, [el("tr", {}, [el("th", { class: "off-mark-col", "aria-label": "Gone" }), el("th", { text: "Player" }), el("th", { class: "num", text: "Pos" }), el("th", { class: "num", text: "OVR" })])]),
-        el("tbody", {}, shown.map((d) => el("tr", { "data-key": d.id }, [el("td", { class: "off-mark", text: d.kind === "stayed" ? "↺" : "✓" }),
+      const table = el("table", { class: "off-table off-dep-table" }, [el("thead", {}, [el("tr", {}, [el("th", { text: "Player" }), el("th", { class: "num", text: "Pos" }), el("th", { class: "num", text: "OVR" })])]),
+        el("tbody", {}, shown.map((d) => el("tr", { "data-key": d.id }, [
           el("td", {}, [el("b", { text: d.name }), d.kind === "draft" ? el("span", { class: "go-tag good off-pick", text: `Round ${d.round}, Pick ${d.pick}${d.early ? " · Early" : ""}` }) : null]),
           el("td", { class: "num", text: d.pos }), el("td", { class: "num", text: String(d.overall) })])))]);
       const det = el("details", { class: "off-group", "data-key": `kind-${kind}`, ...(view.closed[kind] ? {} : { open: "" }) }, [
