@@ -330,6 +330,14 @@ if __name__ == "__main__":
                     page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)
                     time.sleep(0.8)
                 w.both(f"offseason:{stage}", offseason)
+                if stage == "departures":               # the tab opens on the Overview: Departures' own page too
+                    def departures_page(_):
+                        page.goto(f"{base}/index.html?id={B}")
+                        page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)
+                        page.click("#tab-offseason .off-foot .go-btn.primary")
+                        page.wait_for_selector("#tab-offseason .off-page[data-page=departures]", timeout=30_000)
+                        time.sleep(0.8)
+                    w.both("offseason:departures-page", departures_page)
                 if stage == "ready":
                     break
                 call(base, f"/api/season/{B}/offseason/advance", {})

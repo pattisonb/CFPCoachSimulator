@@ -295,12 +295,15 @@ def board_cases(page, base: str, sid: str) -> None:
 
 def offseason_cases(page, base: str, sid: str) -> None:
     page.goto(f"{base}/index.html?id={sid}")
-    page.wait_for_selector("#tab-offseason .off-roster", timeout=120_000)
+    page.wait_for_selector("#tab-offseason .off-page[data-page=hub] .off-review", timeout=120_000)   # Departures opens on the Overview
     time.sleep(0.6)
     # the AD's review
     case = ready(page, ".off-review-acts button.go-act:has-text('Make your case')")
     assert_smooth(page, ".off-review", lambda: case.click(),
                   "You make your case to the AD", "Offseason: the review")
+    page.click("#tab-offseason .off-foot .go-btn.primary")                          # Advance to Departures: the stage's own page
+    page.wait_for_selector("#tab-offseason .off-page[data-page=departures] .off-roster", timeout=30_000)
+    time.sleep(0.4)
     # a redshirt at Departures
     b = ready(page, ".off-rs button.go-act:not([disabled])")
     name = b.evaluate("b => b.querySelector('b').textContent")
