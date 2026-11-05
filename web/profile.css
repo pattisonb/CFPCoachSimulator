@@ -83,10 +83,10 @@ body { --pv-warn: var(--go-warn, #f5b942); }
 
 /* the Attributes rows and Looks & Uncertainty */
 .pv-attrs { display: flex; flex-direction: column; gap: 4px; container-type: inline-size; }
-@container (max-width: 400px) { .pv-attr { grid-template-columns: 7.2em minmax(40px, 1fr) auto; gap: 8px; font-size: 14px; } }
-.pv-attr { display: grid; grid-template-columns: 8.2em minmax(60px, 1fr) 8.6em; gap: 12px; align-items: center; min-height: 34px; border-radius: 6px; }
+@container (max-width: 400px) { .pv-attr { grid-template-columns: 8.6em minmax(40px, 1fr) auto; gap: 8px; font-size: 14px; } }
+.pv-attr { display: grid; grid-template-columns: 9.6em minmax(60px, 1fr) 8.6em; gap: 12px; align-items: center; min-height: 34px; border-radius: 6px; }
 .pv-attr.go-tip { cursor: help; }
-.pv-attr-k { font-weight: 600; }
+.pv-attr-k { font-weight: 600; white-space: nowrap; }   /* one line in any font: every bar the same height */
 .pv-attr-w { text-align: right; color: var(--muted); white-space: nowrap; }
 .pv-unc { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px var(--pv-gap); }
 .pv-unc-row { display: grid; grid-template-columns: minmax(96px, 9em) auto 1fr; gap: 10px; align-items: center; min-height: 30px; }
@@ -177,7 +177,7 @@ body { --pv-warn: var(--go-warn, #f5b942); }
   .pv-tabrow { flex-wrap: wrap; }
   .pv-acts { width: 100%; padding-bottom: 8px; }
   .pv-acts .go-btn:not(.pv-star) { flex: 1 1 0; }
-  .pv-attr { grid-template-columns: minmax(90px, 8em) minmax(0, 1fr); gap: 4px 10px; }
+  .pv-attr { grid-template-columns: minmax(90px, 9.6em) minmax(0, 1fr); gap: 4px 10px; }
   .pv-attr > .pv-attr-w { grid-column: 2; text-align: left; }
   .pv-unc { grid-template-columns: minmax(0, 1fr); }
 }
