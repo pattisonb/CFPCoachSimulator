@@ -62,10 +62,10 @@ DRAFT_FROM_FBS = 0.97                              # the share of picks from FBS
 DRAFT_GROUP = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OT", "RT": "OT", "LG": "IOL", "RG": "IOL", "C": "IOL",
                "LEDG": "EDGE", "REDG": "EDGE", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "CB", "FS": "S", "SS": "S",
                "K": "K", "P": "P"}
-DRAFT_VALUE = {"QB": 1.72, "RB": 0.642, "WR": 1.588, "TE": 0.881, "OT": 1.349, "IOL": 1.015, "EDGE": 1.225, "DL": 0.841,   # draft score per standard deviation of grade *tune*
-               "LB": 1.161, "CB": 0.968, "S": 0.857, "K": 0.5, "P": 0.5}
-DRAFT_SHIFT = {"QB": 0.219, "RB": -0.098, "WR": -0.375, "TE": -0.847, "OT": -0.002, "IOL": -0.807, "EDGE": -0.42, "DL": -0.568,   # a position's step up or down the board *tune*
-               "LB": -0.951, "CB": -0.272, "S": -0.965, "K": -1.582, "P": -1.524}
+DRAFT_VALUE = {"QB": 1.634, "RB": 0.619, "WR": 1.548, "TE": 0.884, "OT": 1.374, "IOL": 1.041, "EDGE": 1.248, "DL": 0.856,   # draft score per standard deviation of grade *tune*
+               "LB": 1.183, "CB": 0.969, "S": 0.866, "K": 0.5, "P": 0.5}
+DRAFT_SHIFT = {"QB": 0.161, "RB": -0.159, "WR": -0.41, "TE": -0.876, "OT": -0.035, "IOL": -0.813, "EDGE": -0.408, "DL": -0.507,   # a position's step up or down the board *tune*
+               "LB": -0.972, "CB": -0.214, "S": -0.938, "K": -1.575, "P": -1.506}
 DRAFT_NOISE = 0.25                                 # the scouts' disagreement, in standard deviations of grade *tune*
 DRAFT_REF_SHARE = 0.08                             # a grade is against the top this share of a position's draft-eligible players ... *tune*
 DRAFT_REF_MIN = 12                                 # ... at least this many of them *tune*

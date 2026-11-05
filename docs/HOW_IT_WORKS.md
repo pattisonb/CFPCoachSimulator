@@ -1452,11 +1452,12 @@ the top of the depth chart, 35% of sophomores, 25% of juniors (half that for the
 Seniors leave; a senior with his redshirt unused who barely played stays a fifth year 60% of the
 time. The NFL draft has 257 picks, 97% from FBS, ranked by a draft score. A prospect's grade is
 his card overall against this year's best draft-eligible players at his position (a z-score on
-the mean and spread of the top 8% there, at least 12: `draft_grades`), 40% of it against the best
-at every position (`DRAFT_ABS_SHARE`: a 99 is a 99); his score is his position group's value per
-point of grade (`DRAFT_VALUE`: quarterbacks steepest, then receivers, tackles, linebackers and
-edges; backs flattest; kickers and punters 0.5) times it, plus the group's step (`DRAFT_SHIFT`),
-plus noise (0.25). Graded within the year's pool, a position whose overalls run high or drift up
+the mean and spread of the top 8% there, at least 12: `draft_grades`), a quarter of it against the
+best at every position (`DRAFT_ABS_SHARE`: a 99 is a 99); his score is his position group's value
+per point of grade (`DRAFT_VALUE`: quarterbacks steepest, then receivers, tackles, edges and
+linebackers; backs flattest; kickers and punters 0.5) times it, plus the group's step
+(`DRAFT_SHIFT`), plus noise (0.25), less 0.12 for each player at his group ahead of him on the
+board, up to six (`DRAFT_RUN`: thirty-two teams' needs spread a round). Graded within the year's pool, a position whose overalls run high or drift up
 over a career cannot take the round over: the old score, a value per raw overall point (5.0 for a
 quarterback, 3.9 for a receiver, 2.1 for a tackle), fitted to the first offseason, gave a played
 career's second offseason 24 to 28 quarterbacks and receivers in round one

@@ -17,7 +17,7 @@ import time
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
-SLOW = {"test_bowls.py", "test_awards.py", "test_review.py", "test_site_bundle.py", "test_sim_progress.py", "test_elite_draft.py"}   # full seasons (the bundle: a week, an offseason, a week): a few minutes each
+SLOW = {"test_bowls.py", "test_awards.py", "test_review.py", "test_site_bundle.py", "test_sim_progress.py", "test_elite_draft.py", "test_progression_realism.py"}   # full seasons (the bundle: a week, an offseason, a week): a few minutes each
 
 SEASONS = ROOT / "data" / "seasons"
 DEFAULT_SECONDS = 20     # a test not in durations.json yet (a new one)

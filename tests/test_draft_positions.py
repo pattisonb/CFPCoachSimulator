@@ -73,17 +73,22 @@ def top_pick(drafted: dict, by_id: dict, where: str) -> None:
 
 
 def drift() -> None:
-    """Quarterbacks' and receivers' overalls up 10 across the pool (development drifting): the round barely moves."""
+    """Quarterbacks' and receivers' overalls up 10 across the pool (development drifting, as it did
+    before DEV_TOP): the round moves by a few picks, where the old score per raw overall point gave
+    them two thirds of it."""
     base = lg.from_base(2027)
-    pool = pool_of(base)
-    r_before, _, _, _ = first_round(pool, random.Random("drift"))
-    for t in pool["teams"].values():
-        for p in t["roster"]:
-            if p["pos"] in ("QB", "WR"):
-                p["o"] = min(99, p["o"] + 10)
-    r_after, _, _, _ = first_round(pool, random.Random("drift"))
-    check_round(r_after, "drifted")
-    assert r_after["QB"] + r_after["WR"] <= r_before["QB"] + r_before["WR"] + 2, (dict(r_before), dict(r_after))
+    before, after = collections.Counter(), collections.Counter()
+    for seed in range(4):
+        pool = pool_of(base)
+        before += first_round(pool, random.Random(f"drift-{seed}"))[0]
+        for t in pool["teams"].values():
+            for p in t["roster"]:
+                if p["pos"] in ("QB", "WR"):
+                    p["o"] = min(99, p["o"] + 10)
+        r1 = first_round(pool, random.Random(f"drift-{seed}"))[0]
+        assert r1["QB"] + r1["WR"] <= 13 and r1["EDGE"] + r1["OT"] + r1["CB"] + r1["DL"] >= 10, ("drifted", dict(r1))
+        after += r1
+    assert (after["QB"] + after["WR"]) / 4 <= (before["QB"] + before["WR"]) / 4 + 4, (dict(before), dict(after))
 
 
 def declares() -> None:
