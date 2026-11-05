@@ -7,6 +7,7 @@ from pathlib import Path as _Path
 
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 
+from coach_career import persona
 from coach_career import prospects
 from coach_career import recruiting
 from sim import season
@@ -16,6 +17,8 @@ if __name__ == "__main__":
     rc, me = st["recruiting"], "ohio-state"
     by_rank = sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"])
     quiet, touched, verbal = by_rank[10], by_rank[11], by_rank[12]
+    for pid in by_rank[10:14]:              # a commit style that firms up as usual (tests/test_commit_style.py has the others)
+        rc["prospects"][pid]["persona"] = dict(persona.of(st, pid), commit_style="hat")
     for pid in (quiet, touched, verbal):
         rc["offers"].setdefault(me, []).append(pid)
         recruiting._commit(st, pid, me)

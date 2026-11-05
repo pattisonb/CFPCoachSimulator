@@ -260,11 +260,69 @@ FAMILY_BY = {"mom": ["His mom has the table set and the good plates out.",
                       "The whole family is on the couch in {town}. {first} sits closest to the door."]}
 FAMILY = [line for lines in FAMILY_BY.values() for line in lines]       # every note, for the line tests
 
+# his twist in his own words, while it is on (persona.TWISTS): "you" when the twist is about the school he is
+# talking to, "other" when it is about another school ({rival}); a twist about no school has "him". {foe} is
+# the opponent of the game he watches or wants won, {moved} his family's new town. No numbers, no phone words.
+TWIST_LINES: dict[str, dict[str, list[str]]] = {
+    "surprise": {"you": ["I didn't expect you to show up at practice like that, Coach. It got my attention.",
+                         "Everybody at school saw your staff on the sideline this week. That was a statement.",
+                         "You came out of nowhere, Coach. I'm taking you seriously now."],
+                 "other": ["{rival}'s staff showed up at my practice out of nowhere. I didn't see that coming.",
+                           "I'll be honest, Coach, {rival} surprised me this week. They came all the way out here.",
+                           "{rival} just walked into my school unannounced. People are talking about it."]},
+    "at_game": {"you": ["I'm coming to your game against {foe}, Coach. I want to see the place loud.",
+                        "My dad got us seats for your game against {foe}. Don't let me down.",
+                        "I'll be in the stands when you play {foe}. I want to feel it for myself."],
+                "other": ["I'm going to the {rival} game against {foe}. It's close enough to drive.",
+                          "My family's taking me to see {rival} play {foe}. I'm excited for it.",
+                          "I've got tickets to {rival} and {foe}. I'll let you know how it goes."]},
+    "hot_seat": {"you": ["People keep telling me your job might not be safe, Coach. Is that true?",
+                         "I keep hearing the hot seat talk about you. I need to know you'll be here.",
+                         "Everybody asks me what happens if you get fired, Coach. I don't know what to tell them."],
+                 "other": ["I keep hearing the coach at {rival} might not last. That worries me.",
+                           "Everybody says {rival}'s coach is on the hot seat. I don't want to sign and lose him.",
+                           "If the coach at {rival} gets fired, where does that leave me? I think about that."]},
+    "late_offer": {"you": ["I didn't think you'd offer this late, Coach. It changes things for me.",
+                           "Your offer caught everybody off guard. My phone hasn't stopped since.",
+                           "Honestly, Coach, getting your offer now feels huge."],
+                   "other": ["{rival} just offered me. I didn't see that coming this late.",
+                             "When {rival} offered, my whole family lost it. It's a big deal, Coach.",
+                             "{rival} is in now. I have to take that seriously."]},
+    "family_move": {"him": ["We're moving to {moved}, Coach. My mom got a new job.",
+                            "My family packed up for {moved}. Everything's different now.",
+                            "New house in {moved}, new school soon. It's a lot."]},
+    "grades": {"him": ["My grades slipped this semester, Coach. I'm working on it, I promise.",
+                       "A couple of schools backed off over my transcript. I'm fixing it.",
+                       "I've got a tutor now. The classroom stuff is getting handled."]},
+    "beat": {"you": ["I want to see you beat {foe}, Coach. Do that and we'll talk.",
+                     "Beat {foe} and you'll have my full attention.",
+                     "Everybody back home says {foe} is better than you. Prove them wrong."]},
+}
+
+# how his commit style sounds, once the school knows it (persona.STYLES): his voice, no numbers
+STYLE_LINES: dict[str, list[str]] = {
+    "early_bird": ["I want to get this done early, Coach. I'm not dragging it out.",
+                   "When I know, I know. I'm not waiting around for the end of the year.",
+                   "I'd like to lock in soon and get back to football."],
+    "signing_day": ["I'm not deciding until signing day, Coach. Everybody can wait.",
+                    "I'm keeping it open all the way. Signing day is my day.",
+                    "Nobody gets an answer before signing day. Not even my mom."],
+    "hat": ["I'm doing the hats, Coach. Three on the table and the whole town watching.",
+            "When I pick, it's going to be a show. Hats and everything.",
+            "I'm going to name my finalists first. Then the hat ceremony."],
+    "quiet": ["When I decide, I'm not making a big deal of it. No posts, no hats.",
+              "I'll keep it to myself when I pick. That's just how I am.",
+              "I don't need an announcement, Coach. My family will know and that's enough."],
+    "needs_attention": ["I like hearing from you, Coach. Don't go quiet on me.",
+                        "Schools that stop checking in, I stop thinking about.",
+                        "Keep in touch, Coach. It matters to me more than you'd think."],
+}
+
 # every table of lines (tests format each line with FIELDS)
 TABLES = {"PERSONA_LINES": persona.LINES, "NO_TOPIC": persona.NO_TOPIC, "DECIDER_LINES": persona.DECIDER_LINES, "STORY_LINES": persona.STORY_LINES, "LINES": LINES, "TIRED": TIRED, "OPEN": OPEN, "VISIT_OPEN": VISIT_OPEN, "CONTEXT": CONTEXT, "PRESENT_SAID": PRESENT_SAID,
-          "PRESENT_LINES": PRESENT_LINES, "ASK": ASK, "LEAD_LINES": LEAD_LINES, "FAMILY": FAMILY}
+          "PRESENT_LINES": PRESENT_LINES, "ASK": ASK, "LEAD_LINES": LEAD_LINES, "FAMILY": FAMILY, "TWIST_LINES": TWIST_LINES, "STYLE_LINES": STYLE_LINES}
 FIELDS = ("name", "first", "town", "state", "school", "position", "role", "record", "coach", "opponent", "result", "leader",
-          "week_word", "a", "b", "x", "y", "z", "topic", "Topic", "legacy", "mate")
+          "week_word", "a", "b", "x", "y", "z", "topic", "Topic", "legacy", "mate", "rival", "foe", "moved")
 
 _ONES = ("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen "
          "sixteen seventeen eighteen nineteen").split()
@@ -357,7 +415,8 @@ def _fields(state: dict, slug: str, p: dict, week: int | None = None) -> dict:
             "state": p["hometown"]["state"], "school": team.get("name", slug), "position": p["position"],
             "role": _role(state, slug, p["id"]), "record": _record(state, slug), "coach": coach_name(state, slug),
             "opponent": game["opponent"] if game else nxt["opponent"] if nxt else "", "result": ("beat" if game["won"] else "lost to") if game else "",
-            "leader": leader_of(state, slug, p["id"]), "week_word": words(week), **persona.story_fields(state, p["id"])}
+            "leader": leader_of(state, slug, p["id"]), "week_word": words(week), **persona.story_fields(state, p["id"]),
+            **persona.twist_fields(state, p["id"])}
 
 
 def _turn(who: str, text: str) -> dict:
@@ -414,6 +473,34 @@ def context_line(state: dict, slug: str, pid: str, week: int, f: dict, rng: rand
     return rng.choice(CONTEXT[kind]).format(**f)
 
 
+def twist_line(state: dict, slug: str, pid: str, sid: str, f: dict, always: bool = False):
+    """His twist in his words while it is on (its own seeded draw `twist-line-{sid}`): on a call
+    persona.TWIST_CALL_LINE of the time, at a visit always; a Wants to See You Beat X only to the school he told."""
+    tw = persona._twist(state, pid)
+    if not tw or (tw["k"] == "beat" and tw["s"] != slug):
+        return None
+    table = TWIST_LINES[tw["k"]]
+    key = "him" if "him" in table else "you" if tw.get("s") == slug else "other"
+    if key not in table:
+        return None
+    rng = random.Random(f"twist-line-{sid}")
+    line = rng.choice(table[key])
+    if not always and rng.random() >= persona.TWIST_CALL_LINE:
+        return None
+    return line.format(**f)
+
+
+def style_line(state: dict, slug: str, pid: str, sid: str, f: dict):
+    """How he means to commit, in his words, once the school knows his commit style: persona.STYLE_CALL_LINE
+    of the calls (its own seeded draw `style-line-{sid}`); never for All Business (no small talk)."""
+    k = persona.style(state, pid)
+    if not k or not persona.known(state, slug, pid)["style"] or persona.of(state, pid)["personality"] == "business":
+        return None
+    rng = random.Random(f"style-line-{sid}")
+    line = rng.choice(STYLE_LINES[k])
+    return line.format(**f) if rng.random() < persona.STYLE_CALL_LINE else None
+
+
 def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict:
     """A call's or in-home visit's scene as it opens: the room (a visit), your opener and his small
     talk. The cue and his question wait on your opening (`present`); his ask is as you know it."""
@@ -443,8 +530,13 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
                              pool=("visit_open" if action == "hc_visit" else "open", "small_talk")) or context
     if action == "call" and not tired and not (game and game["week"] >= week - 1):    # his story, once you know it (a Package Deal's first call: always)
         first = not ((rc["contacts"].get(pid) or {}).get(slug) or {}).get("calls")
-        said = persona.story_line(state, slug, pid, sid, "him", f, action, first_call=first) or said
+        said = (twist_line(state, slug, pid, sid, f) or persona.story_line(state, slug, pid, sid, "him", f, action, first_call=first)
+                or style_line(state, slug, pid, sid, f) or said)      # what happened to him first, then his story, then how he means to commit
     turns.append(_turn("him", said))
+    if action == "hc_visit":                                          # in his living room what happened to him always comes up
+        news = twist_line(state, slug, pid, sid, f, always=True)
+        if news:
+            turns.append(_turn("him", news))
     told = None                                                       # his story at a visit: the decider brings it up, or he does
     if action == "hc_visit" and d["decider"] != "self":               # the one who decides speaks
         fam = persona.story_line(state, slug, pid, sid, "family", f, action) \

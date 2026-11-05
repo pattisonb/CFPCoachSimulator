@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from coach_career import recruiting
+from coach_career import persona, recruiting
 from sim import season
 
 NEWS_ITEMS = 6        # *tune* the most items Program News shows
@@ -21,7 +21,8 @@ CONF_GAMES = 4        # *tune* the most results Around the Conference shows
 NEWS_WEEKS = 4        # *tune* how many weeks back Program News reaches
 
 # the recruiting events worth a line, the biggest first inside a week
-_NEWS_ORDER = ("signed", "unsigned", "pro", "commit", "hard", "flip", "decommit", "bloomed", "offer", "asked_more", "not_buying", "hung_up", "pester", "promise_broken")
+_NEWS_ORDER = ("signed", "unsigned", "pro", "commit", "hard", "flip", "decommit", "softened", "hat", "bloomed", "twist", "offer", "asked_more", "not_buying",
+               "hung_up", "pester", "promise_broken")
 
 
 def _school_name(slug: Optional[str], teams: dict) -> Optional[str]:
@@ -46,6 +47,8 @@ def program_news(state: dict) -> list[dict]:
             continue
         if not (e.get("school") == me or e.get("from") == me or e["pid"] in mine):
             continue
+        if not persona.shown_to(e, me):    # a Quiet Commit elsewhere, a twist he told another school
+            continue
         if e["kind"] == "offer" and e.get("school") == me:
             continue                     # your own offers are your doing, not news
         p = (rc.get("prospects") or {}).get(e["pid"])
@@ -61,7 +64,7 @@ def program_news(state: dict) -> list[dict]:
         why = recruiting.lost_reason(e, lambda slug: _school_name(slug, teams)) if e.get("lost") else None
         if why:
             item["reason"] = why                  # a recruit of yours who went elsewhere: why not you
-        if e.get("line"):                    # a bloomer's jump, a two-sport star going pro: the log's own sentence
+        if e.get("line"):                    # a bloomer's jump, a two-sport star going pro, a twist, a hat ceremony: the log's own sentence
             item["line"] = e["line"]
         items.append(item)
     for g in state["games"].values():

@@ -186,7 +186,9 @@ def _recruiting(state: dict, teams: dict, week: int) -> list[dict]:
     from coach_career import persona
     out = []
     for e in rc.get("log") or []:
-        if e.get("week") != week or e.get("kind") not in ("commit", "flip", "bloomed", "pro"):
+        if e.get("week") != week or e.get("kind") not in ("commit", "flip", "bloomed", "pro", "twist", "hat"):
+            continue
+        if e.get("quiet") or e.get("private"):     # a Quiet Commit stays out of the news; a twist he told one school is that school's
             continue
         p = (rc.get("prospects") or {}).get(e.get("pid"))
         school = e.get("school")
@@ -194,6 +196,22 @@ def _recruiting(state: dict, teams: dict, week: int) -> list[dict]:
             continue
         stars = STAR_WORDS.get(p.get("stars"), "")
         link = {"type": "recruit", "pid": e["pid"]}
+        blue = (p.get("stars") or 0) >= 4
+        if e["kind"] == "hat":                 # a blue chip names his finalists and his day
+            fin = [_name(teams, s) for s in e.get("finalists") or () if s in teams]
+            if blue and len(fin) > 1:
+                said = " and ".join(fin) if len(fin) == 2 else f"{', '.join(fin[:-1])} and {fin[-1]}"
+                out.append({"kind": "recruiting", "text": f"{stars} {p['position']} {p['name']} will choose from {said} at a hat ceremony in Week {e['day']}.",
+                            "team": None, "teams": tuple(e.get("finalists") or ()), "link": link, "_imp": _BASE["recruiting"] - 4 + p["stars"]})
+            continue
+        if e["kind"] == "twist":               # a blue blood's late offer or a surprise visit to a blue chip
+            if blue and school in teams and not teams[school].get("fictional") and e.get("twist") in ("late_offer", "surprise"):
+                verb = "jumps in late for" if e["twist"] == "late_offer" else "makes a surprise visit to"
+                if e.get("end"):               # your call knocked the surprise school back out: not news
+                    continue
+                out.append({"kind": "recruiting", "text": f"{_name(teams, school)} {verb} {stars.lower()} {p['position']} {p['name']}.",
+                            "team": school, "teams": (), "link": link, "_imp": _BASE["recruiting"] - 5 + p["stars"]})
+            continue
         if e["kind"] == "bloomed":             # his story: a late bloomer's jump to a blue chip
             if (p.get("stars") or 0) >= 4:
                 out.append({"kind": "recruiting", "text": f"Late bloomer {p['position']} {p['name']} jumps to {stars.lower()} stars.",
@@ -208,7 +226,7 @@ def _recruiting(state: dict, teams: dict, week: int) -> list[dict]:
             continue
         k, d = persona.story(state, e["pid"])
         if k == "hero" and e["kind"] == "commit":          # a hometown hero's commitment makes the news, whatever his stars
-            home = teams[school].get("state") == d.get("state")
+            home = teams[school].get("state") == persona.hero_state(state, e["pid"], d)
             text = (f"Hometown hero {p['position']} {p['name']} stays home with {_name(teams, school)}." if home
                     else f"Hometown hero {p['position']} {p['name']} leaves home for {_name(teams, school)}.")
             out.append({"kind": "recruiting", "text": text, "team": school, "teams": (), "link": link,
@@ -220,6 +238,8 @@ def _recruiting(state: dict, teams: dict, week: int) -> list[dict]:
         old = e.get("from")
         if e["kind"] == "flip" and old in teams and not teams[old].get("fictional"):
             text, imp = f"{who} flips from {_name(teams, old)} to {_name(teams, school)}.", _BASE["recruiting_flip"]
+        elif e.get("hat"):
+            text, imp = f"{who} picks {_name(teams, school)} at his hat ceremony.", _BASE["recruiting"]
         else:
             text, imp = f"{who} commits to {_name(teams, school)}.", _BASE["recruiting"]
         out.append({"kind": "recruiting", "text": text, "team": school, "teams": (), "link": {"type": "recruit", "pid": e["pid"]}, "_imp": imp})

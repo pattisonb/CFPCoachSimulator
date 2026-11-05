@@ -37,7 +37,7 @@ def pick(st, used=()):
 
 def force(st, pid, kind, data=None, personality="business", decider="self", topic=None):
     st["recruiting"]["prospects"][pid]["persona"] = {"personality": personality, "decider": decider, "decider_topic": topic,
-                                                     "story": kind, "story_data": data or {}}
+                                                     "story": kind, "story_data": data or {}, "commit_style": "hat"}   # a style that announces and drifts as usual
 
 
 def report(st, pid):
