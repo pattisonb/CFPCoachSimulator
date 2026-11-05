@@ -63,9 +63,10 @@ def watch(page, selector: str, control: str = None, scrolled: bool = True):
     assert h, selector
     s = page.evaluate("""(el) => { const s = window.__smooth = { el, gone: 0, top: el.scrollTop, page: window.scrollY };
         s.mo = new MutationObserver((ms) => { for (const m of ms) for (const n of m.removedNodes) if (n === el || (n.nodeType === 1 && n.contains(el))) s.gone++; });
-        s.mo.observe(document.documentElement, { childList: true, subtree: true }); return { page: s.page, top: s.top }; }""", h)
-    if scrolled:
-        assert s["page"] > 0, f"the page is not scrolled ({s}), so the scroll check would pass for nothing"
+        s.mo.observe(document.documentElement, { childList: true, subtree: true });
+        return { page: s.page, top: s.top, fits: document.documentElement.scrollHeight <= innerHeight + 1 }; }""", h)
+    if scrolled:   # a board that fits the screen (tests/test_board_scroll.py) has no page scroll: its own scroll is the check
+        assert s["page"] > 0 or (s["fits"] and s["top"] > 0), f"neither the page nor the watched box is scrolled ({s}), so the scroll check would pass for nothing"
     return h
 
 
@@ -612,7 +613,9 @@ def check_header(page, base, sid) -> None:
     page.wait_for_function("() => /Akron/i.test(document.querySelector('#chip-name').textContent)", timeout=30_000)
     call(base, f"/api/season/{new_id}", method="DELETE")
     menu_pick(page, "Hide the Top Bar")                           # the bar hidden again, the default
-    # the Recruiting pane keeps below the sticky tab bar
+    # the Recruiting pane keeps below the sticky tab bar: the board fits the screen (tests/test_board_scroll.py), so
+    # with Your Footprint Map closed the page does not scroll and the pane starts under the bar
+    page.evaluate("() => { try { localStorage.setItem('cfp-map-open', '0'); } catch (e) {} }")
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#season:visible")
     tab_click(page, "recruiting")
@@ -621,9 +624,8 @@ def check_header(page, base, sid) -> None:
     page.wait_for_selector(".go-pane", timeout=30_000)
     page.evaluate("() => window.scrollTo(0, 800)")
     time.sleep(0.5)
-    if page.evaluate("() => window.scrollY") > 300:
-        r = page.evaluate("() => ({ pane: document.querySelector('.go-pane').getBoundingClientRect().top, bar: document.querySelector('#season-tabs').getBoundingClientRect().bottom })")
-        assert r["pane"] >= r["bar"] - 1, r
+    r = page.evaluate("() => ({ y: window.scrollY, pane: document.querySelector('.go-pane').getBoundingClientRect().top, bar: document.querySelector('#season-tabs').getBoundingClientRect().bottom })")
+    assert r["y"] == 0 and r["pane"] >= r["bar"] - 1, r
     page.evaluate("() => window.scrollTo(0, 0)")
 
 
@@ -2275,6 +2277,7 @@ if __name__ == "__main__":
             page.click(f".go-row-recruit[data-pid='{x['id']}']")
             time.sleep(1.2)                       # the first pick's own smooth scroll ends
             page.evaluate("() => window.scrollTo(0, Math.max(window.scrollY, 120))")   # the page is scrolled, so a jump back to 0 would show
+            page.evaluate("() => { const p = document.querySelector('.go-pane'); p.scrollTop = Math.max(p.scrollTop, 60); }")   # and the pane, where the board fits the screen
             time.sleep(0.3)
             # Message: the step's Send goes busy, the step closes, the row and the pane update in place
             menu("message")
