@@ -228,6 +228,15 @@ def desktop(browser, base, sid, ids, profile, scheme, errs) -> None:
     tab(page, ".go-pane", "history")
     check_layout(page, ".go-pane", f"(History) {where}", [["timeline", "notes"], ["interest"]])
     assert page.inner_text(".go-pane [data-key=notes] .pv-notes").strip()
+    # a long timeline scrolls inside its card, so Recent Interest Changes stays near (the player's ask)
+    tl = page.evaluate("""() => { const u = document.querySelector('.go-pane .pv-timeline'); if (!u) return null;
+      for (let i = 0; i < 40; i++) u.append(u.firstElementChild.cloneNode(true));
+      const cs = getComputedStyle(u); return { oy: cs.overflowY, max: parseFloat(cs.maxHeight), h: u.getBoundingClientRect().height,
+        sh: u.scrollHeight, tab: u.tabIndex }; }""")
+    if tl:
+        assert tl["oy"] == "auto" and tl["max"] <= 420 and tl["h"] <= tl["max"] + 1 and tl["sh"] > tl["h"] and tl["tab"] == 0, f"the timeline scrolls in its card: {tl}"
+        tab(page, ".go-pane", "overview")
+        tab(page, ".go-pane", "history")
     no_bad_text(page, ".go-pane", where)
     no_sideways(page, where, ".go-pane")
     # the pane narrowed: the cards stack, still aligned
