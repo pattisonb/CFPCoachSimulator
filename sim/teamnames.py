@@ -41,7 +41,9 @@ def build_matcher(teams: dict) -> dict[str, str]:
     """A lookup from every spelling of a team (slug, name, school, abbreviation, alias) to its slug."""
     lookup: dict[str, str] = {}
     for slug, t in teams.items():
-        for key in (slug, slug.replace("-", " "), t["name"], t["school"], t["abbreviation"]):
+        # an FCS stand-in by its slug only: its names and abbreviation ("FCS") are no real school's
+        keys = (slug,) if t.get("fictional") else (slug, slug.replace("-", " "), t["name"], t["school"], t["abbreviation"])
+        for key in keys:
             lookup.setdefault(norm(key), slug)
     for k, v in ALIASES.items():
         if v in teams:

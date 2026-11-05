@@ -1,16 +1,14 @@
 {
- "slug": "wendt-lake-tech",
- "school_name": "Wendt Lake Polytechnic Institute",
- "short_name": "Wendt Lake Tech",
- "abbreviation": "WLT",
- "mascot": "Freighters",
- "city": "Wendt Lake",
+ "slug": "fcs-great-lakes",
+ "school_name": "FCS Great Lakes",
+ "short_name": "FCS Great Lakes",
+ "abbreviation": "FCS",
  "state": "MI",
  "region": "Great Lakes",
- "conference": "Eight Rivers Football Conference",
+ "conference": "FCS",
  "subdivision": "FCS",
  "stadium": {
-  "name": "Ore Dock Field",
+  "name": "FCS Great Lakes Stadium",
   "capacity": 9800,
   "surface": "turf"
  },
@@ -29,7 +27,7 @@
   }
  },
  "rivals": [
-  "red-prairie-state"
+  "fcs-plains"
  ],
  "fictional": true,
  "program": {
@@ -58,8 +56,8 @@
  },
  "coaches": {
   "head_coach": {
-   "coach_id": "wendt-lake-tech:head_coach",
-   "team_slug": "wendt-lake-tech",
+   "coach_id": "fcs-great-lakes:head_coach",
+   "team_slug": "fcs-great-lakes",
    "name": "Brian Westbrook",
    "since": 2022,
    "fictional": true,
@@ -88,8 +86,8 @@
    "ratings_generated": true
   },
   "offensive_coordinator": {
-   "coach_id": "wendt-lake-tech:offensive_coordinator",
-   "team_slug": "wendt-lake-tech",
+   "coach_id": "fcs-great-lakes:offensive_coordinator",
+   "team_slug": "fcs-great-lakes",
    "name": "Brian Strickland",
    "since": 2018,
    "fictional": true,
@@ -116,8 +114,8 @@
    "ratings_generated": true
   },
   "defensive_coordinator": {
-   "coach_id": "wendt-lake-tech:defensive_coordinator",
-   "team_slug": "wendt-lake-tech",
+   "coach_id": "fcs-great-lakes:defensive_coordinator",
+   "team_slug": "fcs-great-lakes",
    "name": "Phil Westbrook",
    "since": 2026,
    "fictional": true,
@@ -146,218 +144,218 @@
  "starters": {
   "offense": {
    "QB": [
-    "adrian-calloway-wendt-lake-tech"
+    "adrian-calloway-fcs-great-lakes"
    ],
    "HB": [
-    "tyrese-bonner-wendt-lake-tech"
+    "tyrese-bonner-fcs-great-lakes"
    ],
    "WR": [
-    "ashton-jessup-wendt-lake-tech",
-    "sam-toliver-wendt-lake-tech",
-    "rico-tatum-wendt-lake-tech"
+    "ashton-jessup-fcs-great-lakes",
+    "sam-toliver-fcs-great-lakes",
+    "rico-tatum-fcs-great-lakes"
    ],
    "TE": [
-    "rashad-ledbetter-wendt-lake-tech"
+    "rashad-ledbetter-fcs-great-lakes"
    ],
    "LT": [
-    "damari-shipley-wendt-lake-tech"
+    "damari-shipley-fcs-great-lakes"
    ],
    "LG": [
-    "evan-lacombe-wendt-lake-tech"
+    "evan-lacombe-fcs-great-lakes"
    ],
    "C": [
-    "blake-lacombe-wendt-lake-tech"
+    "blake-lacombe-fcs-great-lakes"
    ],
    "RG": [
-    "zane-langford-wendt-lake-tech"
+    "zane-langford-fcs-great-lakes"
    ],
    "RT": [
-    "jamal-dade-wendt-lake-tech"
+    "jamal-dade-fcs-great-lakes"
    ]
   },
   "defense": {
    "LEDG": [
-    "derrick-dalton-wendt-lake-tech"
+    "derrick-dalton-fcs-great-lakes"
    ],
    "REDG": [
-    "quentin-barlow-wendt-lake-tech"
+    "quentin-barlow-fcs-great-lakes"
    ],
    "DT": [
-    "kai-draper-wendt-lake-tech",
-    "santiago-ivey-wendt-lake-tech"
+    "kai-draper-fcs-great-lakes",
+    "santiago-ivey-fcs-great-lakes"
    ],
    "LB": [
-    "xavier-garrity-wendt-lake-tech",
-    "logan-bradshaw-wendt-lake-tech"
+    "xavier-garrity-fcs-great-lakes",
+    "logan-bradshaw-fcs-great-lakes"
    ],
    "CB": [
-    "hayden-delacroix-wendt-lake-tech",
-    "jamal-rainey-wendt-lake-tech",
-    "dante-stroud-wendt-lake-tech"
+    "hayden-delacroix-fcs-great-lakes",
+    "jamal-rainey-fcs-great-lakes",
+    "dante-stroud-fcs-great-lakes"
    ],
    "FS": [
-    "micah-ambrose-wendt-lake-tech"
+    "micah-ambrose-fcs-great-lakes"
    ],
    "SS": [
-    "hayden-kearney-wendt-lake-tech"
+    "hayden-kearney-fcs-great-lakes"
    ]
   },
   "special_teams": {
    "K": [
-    "ryder-mosely-wendt-lake-tech"
+    "ryder-mosely-fcs-great-lakes"
    ],
    "P": [
-    "zion-lowery-wendt-lake-tech"
+    "zion-lowery-fcs-great-lakes"
    ],
    "KR": [
-    "ashton-jessup-wendt-lake-tech"
+    "ashton-jessup-fcs-great-lakes"
    ],
    "PR": [
-    "rico-tatum-wendt-lake-tech"
+    "rico-tatum-fcs-great-lakes"
    ]
   }
  },
  "depth_chart": {
   "QB": [
-   "adrian-calloway-wendt-lake-tech",
-   "solomon-archer-wendt-lake-tech",
-   "julian-goins-wendt-lake-tech",
-   "kyler-dalton-wendt-lake-tech"
+   "adrian-calloway-fcs-great-lakes",
+   "solomon-archer-fcs-great-lakes",
+   "julian-goins-fcs-great-lakes",
+   "kyler-dalton-fcs-great-lakes"
   ],
   "HB": [
-   "tyrese-bonner-wendt-lake-tech",
-   "zane-alvarado-wendt-lake-tech",
-   "gavin-draper-wendt-lake-tech",
-   "solomon-bellamy-wendt-lake-tech",
-   "reggie-akins-wendt-lake-tech",
-   "wade-montoya-wendt-lake-tech",
-   "wade-bradshaw-wendt-lake-tech",
-   "bo-abbott-wendt-lake-tech"
+   "tyrese-bonner-fcs-great-lakes",
+   "zane-alvarado-fcs-great-lakes",
+   "gavin-draper-fcs-great-lakes",
+   "solomon-bellamy-fcs-great-lakes",
+   "reggie-akins-fcs-great-lakes",
+   "wade-montoya-fcs-great-lakes",
+   "wade-bradshaw-fcs-great-lakes",
+   "bo-abbott-fcs-great-lakes"
   ],
   "FB": [
-   "mason-ostrander-wendt-lake-tech",
-   "emmanuel-cutler-wendt-lake-tech"
+   "mason-ostrander-fcs-great-lakes",
+   "emmanuel-cutler-fcs-great-lakes"
   ],
   "WR": [
-   "ashton-jessup-wendt-lake-tech",
-   "sam-toliver-wendt-lake-tech",
-   "rico-tatum-wendt-lake-tech",
-   "brayden-yancey-wendt-lake-tech",
-   "zane-stallworth-wendt-lake-tech",
-   "quincy-navarro-wendt-lake-tech",
-   "owen-rios-wendt-lake-tech"
+   "ashton-jessup-fcs-great-lakes",
+   "sam-toliver-fcs-great-lakes",
+   "rico-tatum-fcs-great-lakes",
+   "brayden-yancey-fcs-great-lakes",
+   "zane-stallworth-fcs-great-lakes",
+   "quincy-navarro-fcs-great-lakes",
+   "owen-rios-fcs-great-lakes"
   ],
   "TE": [
-   "rashad-ledbetter-wendt-lake-tech",
-   "tariq-atwater-wendt-lake-tech",
-   "brayden-boudreaux-wendt-lake-tech",
-   "xavier-fenwick-wendt-lake-tech",
-   "wes-rainey-wendt-lake-tech",
-   "cole-larkin-wendt-lake-tech"
+   "rashad-ledbetter-fcs-great-lakes",
+   "tariq-atwater-fcs-great-lakes",
+   "brayden-boudreaux-fcs-great-lakes",
+   "xavier-fenwick-fcs-great-lakes",
+   "wes-rainey-fcs-great-lakes",
+   "cole-larkin-fcs-great-lakes"
   ],
   "LT": [
-   "damari-shipley-wendt-lake-tech",
-   "emmanuel-dunlap-wendt-lake-tech"
+   "damari-shipley-fcs-great-lakes",
+   "emmanuel-dunlap-fcs-great-lakes"
   ],
   "LG": [
-   "evan-lacombe-wendt-lake-tech",
-   "quincy-shipley-wendt-lake-tech",
-   "antoine-marchetti-wendt-lake-tech",
-   "jabari-briscoe-wendt-lake-tech"
+   "evan-lacombe-fcs-great-lakes",
+   "quincy-shipley-fcs-great-lakes",
+   "antoine-marchetti-fcs-great-lakes",
+   "jabari-briscoe-fcs-great-lakes"
   ],
   "C": [
-   "blake-lacombe-wendt-lake-tech",
-   "terrance-clemmons-wendt-lake-tech"
+   "blake-lacombe-fcs-great-lakes",
+   "terrance-clemmons-fcs-great-lakes"
   ],
   "RG": [
-   "zane-langford-wendt-lake-tech",
-   "grady-trammell-wendt-lake-tech",
-   "bryce-brannon-wendt-lake-tech"
+   "zane-langford-fcs-great-lakes",
+   "grady-trammell-fcs-great-lakes",
+   "bryce-brannon-fcs-great-lakes"
   ],
   "RT": [
-   "jamal-dade-wendt-lake-tech",
-   "tristan-burkett-wendt-lake-tech"
+   "jamal-dade-fcs-great-lakes",
+   "tristan-burkett-fcs-great-lakes"
   ],
   "LEDG": [
-   "derrick-dalton-wendt-lake-tech",
-   "cole-keeling-wendt-lake-tech",
-   "ivan-benoit-wendt-lake-tech",
-   "alec-scruggs-wendt-lake-tech"
+   "derrick-dalton-fcs-great-lakes",
+   "cole-keeling-fcs-great-lakes",
+   "ivan-benoit-fcs-great-lakes",
+   "alec-scruggs-fcs-great-lakes"
   ],
   "DT": [
-   "kai-draper-wendt-lake-tech",
-   "santiago-ivey-wendt-lake-tech",
-   "justice-archer-wendt-lake-tech",
-   "tristan-wilder-wendt-lake-tech",
-   "ryder-garrity-wendt-lake-tech",
-   "colton-lockett-wendt-lake-tech"
+   "kai-draper-fcs-great-lakes",
+   "santiago-ivey-fcs-great-lakes",
+   "justice-archer-fcs-great-lakes",
+   "tristan-wilder-fcs-great-lakes",
+   "ryder-garrity-fcs-great-lakes",
+   "colton-lockett-fcs-great-lakes"
   ],
   "REDG": [
-   "quentin-barlow-wendt-lake-tech",
-   "ethan-kearney-wendt-lake-tech",
-   "hunter-rios-wendt-lake-tech"
+   "quentin-barlow-fcs-great-lakes",
+   "ethan-kearney-fcs-great-lakes",
+   "hunter-rios-fcs-great-lakes"
   ],
   "SAM": [
-   "quentin-burkett-wendt-lake-tech",
-   "lamar-benoit-wendt-lake-tech"
+   "quentin-burkett-fcs-great-lakes",
+   "lamar-benoit-fcs-great-lakes"
   ],
   "MIKE": [
-   "xavier-garrity-wendt-lake-tech",
-   "logan-bradshaw-wendt-lake-tech",
-   "kareem-mcalister-wendt-lake-tech",
-   "colton-glover-wendt-lake-tech",
-   "bennett-varnado-wendt-lake-tech",
-   "drew-greer-wendt-lake-tech",
-   "parker-sheffield-wendt-lake-tech"
+   "xavier-garrity-fcs-great-lakes",
+   "logan-bradshaw-fcs-great-lakes",
+   "kareem-mcalister-fcs-great-lakes",
+   "colton-glover-fcs-great-lakes",
+   "bennett-varnado-fcs-great-lakes",
+   "drew-greer-fcs-great-lakes",
+   "parker-sheffield-fcs-great-lakes"
   ],
   "WILL": [
-   "kareem-hollins-wendt-lake-tech",
-   "drew-akins-wendt-lake-tech",
-   "darius-satterfield-wendt-lake-tech",
-   "micah-calloway-wendt-lake-tech"
+   "kareem-hollins-fcs-great-lakes",
+   "drew-akins-fcs-great-lakes",
+   "darius-satterfield-fcs-great-lakes",
+   "micah-calloway-fcs-great-lakes"
   ],
   "CB": [
-   "hayden-delacroix-wendt-lake-tech",
-   "jamal-rainey-wendt-lake-tech",
-   "dante-stroud-wendt-lake-tech",
-   "desmond-lacombe-wendt-lake-tech",
-   "quincy-clemmons-wendt-lake-tech",
-   "amari-rios-wendt-lake-tech",
-   "zion-shipley-wendt-lake-tech",
-   "garrett-harlan-wendt-lake-tech",
-   "dominic-boudreaux-wendt-lake-tech"
+   "hayden-delacroix-fcs-great-lakes",
+   "jamal-rainey-fcs-great-lakes",
+   "dante-stroud-fcs-great-lakes",
+   "desmond-lacombe-fcs-great-lakes",
+   "quincy-clemmons-fcs-great-lakes",
+   "amari-rios-fcs-great-lakes",
+   "zion-shipley-fcs-great-lakes",
+   "garrett-harlan-fcs-great-lakes",
+   "dominic-boudreaux-fcs-great-lakes"
   ],
   "FS": [
-   "micah-ambrose-wendt-lake-tech",
-   "blake-winfield-wendt-lake-tech",
-   "quincy-larkin-wendt-lake-tech",
-   "eli-keeling-wendt-lake-tech"
+   "micah-ambrose-fcs-great-lakes",
+   "blake-winfield-fcs-great-lakes",
+   "quincy-larkin-fcs-great-lakes",
+   "eli-keeling-fcs-great-lakes"
   ],
   "SS": [
-   "hayden-kearney-wendt-lake-tech",
-   "jabari-adair-wendt-lake-tech",
-   "owen-langford-wendt-lake-tech"
+   "hayden-kearney-fcs-great-lakes",
+   "jabari-adair-fcs-great-lakes",
+   "owen-langford-fcs-great-lakes"
   ],
   "K": [
-   "ryder-mosely-wendt-lake-tech"
+   "ryder-mosely-fcs-great-lakes"
   ],
   "P": [
-   "zion-lowery-wendt-lake-tech",
-   "abdul-crandall-wendt-lake-tech"
+   "zion-lowery-fcs-great-lakes",
+   "abdul-crandall-fcs-great-lakes"
   ]
  },
  "roster_size": 85,
  "roster": [
   {
-   "slug": "adrian-calloway-wendt-lake-tech",
+   "slug": "adrian-calloway-fcs-great-lakes",
    "position": "QB",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Adrian Calloway",
    "position_name": "Quarterback",
    "jersey": "4",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "6'1\"",
    "weight_lbs": 190,
@@ -625,15 +623,15 @@
    "fictional": true
   },
   {
-   "slug": "solomon-archer-wendt-lake-tech",
+   "slug": "solomon-archer-fcs-great-lakes",
    "position": "QB",
    "class": "FR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Solomon Archer",
    "position_name": "Quarterback",
    "jersey": "14",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Freshman",
    "height": "6'5\"",
    "weight_lbs": 216,
@@ -906,15 +904,15 @@
    "fictional": true
   },
   {
-   "slug": "julian-goins-wendt-lake-tech",
+   "slug": "julian-goins-fcs-great-lakes",
    "position": "QB",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Julian Goins",
    "position_name": "Quarterback",
    "jersey": "6",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "6'1\"",
    "weight_lbs": 190,
@@ -1191,15 +1189,15 @@
    "fictional": true
   },
   {
-   "slug": "kyler-dalton-wendt-lake-tech",
+   "slug": "kyler-dalton-fcs-great-lakes",
    "position": "QB",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Kyler Dalton",
    "position_name": "Quarterback",
    "jersey": "3",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'2\"",
    "weight_lbs": 203,
@@ -1449,15 +1447,15 @@
    "fictional": true
   },
   {
-   "slug": "tyrese-bonner-wendt-lake-tech",
+   "slug": "tyrese-bonner-fcs-great-lakes",
    "position": "HB",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Tyrese Bonner",
    "position_name": "Halfback",
    "jersey": "1",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "5'10\"",
    "weight_lbs": 215,
@@ -1722,15 +1720,15 @@
    "fictional": true
   },
   {
-   "slug": "zane-alvarado-wendt-lake-tech",
+   "slug": "zane-alvarado-fcs-great-lakes",
    "position": "HB",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Zane Alvarado",
    "position_name": "Halfback",
    "jersey": "18",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "5'11\"",
    "weight_lbs": 215,
@@ -1993,15 +1991,15 @@
    "fictional": true
   },
   {
-   "slug": "gavin-draper-wendt-lake-tech",
+   "slug": "gavin-draper-fcs-great-lakes",
    "position": "HB",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Gavin Draper",
    "position_name": "Halfback",
    "jersey": "27",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "5'10\"",
    "weight_lbs": 215,
@@ -2277,15 +2275,15 @@
    "fictional": true
   },
   {
-   "slug": "solomon-bellamy-wendt-lake-tech",
+   "slug": "solomon-bellamy-fcs-great-lakes",
    "position": "HB",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Solomon Bellamy",
    "position_name": "Halfback",
    "jersey": "7",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "5'11\"",
    "weight_lbs": 220,
@@ -2565,15 +2563,15 @@
    "fictional": true
   },
   {
-   "slug": "reggie-akins-wendt-lake-tech",
+   "slug": "reggie-akins-fcs-great-lakes",
    "position": "HB",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Reggie Akins",
    "position_name": "Halfback",
    "jersey": "2",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'1\"",
    "weight_lbs": 205,
@@ -2844,15 +2842,15 @@
    "fictional": true
   },
   {
-   "slug": "wade-montoya-wendt-lake-tech",
+   "slug": "wade-montoya-fcs-great-lakes",
    "position": "HB",
    "class": "FR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Wade Montoya",
    "position_name": "Halfback",
    "jersey": "30",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Freshman",
    "height": "5'9\"",
    "weight_lbs": 190,
@@ -3128,15 +3126,15 @@
    "fictional": true
   },
   {
-   "slug": "wade-bradshaw-wendt-lake-tech",
+   "slug": "wade-bradshaw-fcs-great-lakes",
    "position": "HB",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Wade Bradshaw",
    "position_name": "Halfback",
    "jersey": "20",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "5'10\"",
    "weight_lbs": 212,
@@ -3385,15 +3383,15 @@
    "fictional": true
   },
   {
-   "slug": "bo-abbott-wendt-lake-tech",
+   "slug": "bo-abbott-fcs-great-lakes",
    "position": "HB",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Bo Abbott",
    "position_name": "Halfback",
    "jersey": "88",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'1\"",
    "weight_lbs": 215,
@@ -3660,15 +3658,15 @@
    "fictional": true
   },
   {
-   "slug": "mason-ostrander-wendt-lake-tech",
+   "slug": "mason-ostrander-fcs-great-lakes",
    "position": "FB",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Mason Ostrander",
    "position_name": "Fullback",
    "jersey": "33",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'1\"",
    "weight_lbs": 210,
@@ -3962,15 +3960,15 @@
    "fictional": true
   },
   {
-   "slug": "emmanuel-cutler-wendt-lake-tech",
+   "slug": "emmanuel-cutler-fcs-great-lakes",
    "position": "FB",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Emmanuel Cutler",
    "position_name": "Fullback",
    "jersey": "34",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'1\"",
    "weight_lbs": 210,
@@ -4264,15 +4262,15 @@
    "fictional": true
   },
   {
-   "slug": "ashton-jessup-wendt-lake-tech",
+   "slug": "ashton-jessup-fcs-great-lakes",
    "position": "WR",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Ashton Jessup",
    "position_name": "Wide Receiver",
    "jersey": "23",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "5'10\"",
    "weight_lbs": 195,
@@ -4546,15 +4544,15 @@
    "fictional": true
   },
   {
-   "slug": "sam-toliver-wendt-lake-tech",
+   "slug": "sam-toliver-fcs-great-lakes",
    "position": "WR",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Sam Toliver",
    "position_name": "Wide Receiver",
    "jersey": "84",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'3\"",
    "weight_lbs": 182,
@@ -4838,15 +4836,15 @@
    "fictional": true
   },
   {
-   "slug": "rico-tatum-wendt-lake-tech",
+   "slug": "rico-tatum-fcs-great-lakes",
    "position": "WR",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Rico Tatum",
    "position_name": "Wide Receiver",
    "jersey": "46",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "5'9\"",
    "weight_lbs": 185,
@@ -5106,15 +5104,15 @@
    "fictional": true
   },
   {
-   "slug": "brayden-yancey-wendt-lake-tech",
+   "slug": "brayden-yancey-fcs-great-lakes",
    "position": "WR",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Brayden Yancey",
    "position_name": "Wide Receiver",
    "jersey": "83",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'0\"",
    "weight_lbs": 185,
@@ -5384,15 +5382,15 @@
    "fictional": true
   },
   {
-   "slug": "zane-stallworth-wendt-lake-tech",
+   "slug": "zane-stallworth-fcs-great-lakes",
    "position": "WR",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Zane Stallworth",
    "position_name": "Wide Receiver",
    "jersey": "11",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "5'11\"",
    "weight_lbs": 190,
@@ -5678,15 +5676,15 @@
    "fictional": true
   },
   {
-   "slug": "quincy-navarro-wendt-lake-tech",
+   "slug": "quincy-navarro-fcs-great-lakes",
    "position": "WR",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Quincy Navarro",
    "position_name": "Wide Receiver",
    "jersey": "89",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'4\"",
    "weight_lbs": 205,
@@ -5961,15 +5959,15 @@
    "fictional": true
   },
   {
-   "slug": "owen-rios-wendt-lake-tech",
+   "slug": "owen-rios-fcs-great-lakes",
    "position": "WR",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Owen Rios",
    "position_name": "Wide Receiver",
    "jersey": "26",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'2\"",
    "weight_lbs": 185,
@@ -6260,15 +6258,15 @@
    "fictional": true
   },
   {
-   "slug": "rashad-ledbetter-wendt-lake-tech",
+   "slug": "rashad-ledbetter-fcs-great-lakes",
    "position": "TE",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Rashad Ledbetter",
    "position_name": "Tight End",
    "jersey": "80",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'5\"",
    "weight_lbs": 245,
@@ -6548,15 +6546,15 @@
    "fictional": true
   },
   {
-   "slug": "tariq-atwater-wendt-lake-tech",
+   "slug": "tariq-atwater-fcs-great-lakes",
    "position": "TE",
    "class": "FR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Tariq Atwater",
    "position_name": "Tight End",
    "jersey": "8",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Freshman",
    "height": "6'4\"",
    "weight_lbs": 246,
@@ -6813,15 +6811,15 @@
    "fictional": true
   },
   {
-   "slug": "brayden-boudreaux-wendt-lake-tech",
+   "slug": "brayden-boudreaux-fcs-great-lakes",
    "position": "TE",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Brayden Boudreaux",
    "position_name": "Tight End",
    "jersey": "44",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'6\"",
    "weight_lbs": 250,
@@ -7120,15 +7118,15 @@
    "fictional": true
   },
   {
-   "slug": "xavier-fenwick-wendt-lake-tech",
+   "slug": "xavier-fenwick-fcs-great-lakes",
    "position": "TE",
    "class": "FR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Xavier Fenwick",
    "position_name": "Tight End",
    "jersey": "28",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Freshman",
    "height": "6'3\"",
    "weight_lbs": 233,
@@ -7415,15 +7413,15 @@
    "fictional": true
   },
   {
-   "slug": "wes-rainey-wendt-lake-tech",
+   "slug": "wes-rainey-fcs-great-lakes",
    "position": "TE",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Wes Rainey",
    "position_name": "Tight End",
    "jersey": "86",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'5\"",
    "weight_lbs": 249,
@@ -7717,15 +7715,15 @@
    "fictional": true
   },
   {
-   "slug": "cole-larkin-wendt-lake-tech",
+   "slug": "cole-larkin-fcs-great-lakes",
    "position": "TE",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Cole Larkin",
    "position_name": "Tight End",
    "jersey": "85",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'3\"",
    "weight_lbs": 237,
@@ -8020,15 +8018,15 @@
    "fictional": true
   },
   {
-   "slug": "damari-shipley-wendt-lake-tech",
+   "slug": "damari-shipley-fcs-great-lakes",
    "position": "LT",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Damari Shipley",
    "position_name": "Left Tackle",
    "jersey": "58",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'6\"",
    "weight_lbs": 320,
@@ -8301,15 +8299,15 @@
    "fictional": true
   },
   {
-   "slug": "emmanuel-dunlap-wendt-lake-tech",
+   "slug": "emmanuel-dunlap-fcs-great-lakes",
    "position": "LT",
    "class": "FR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Emmanuel Dunlap",
    "position_name": "Left Tackle",
    "jersey": "68",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Freshman",
    "height": "6'6\"",
    "weight_lbs": 315,
@@ -8595,15 +8593,15 @@
    "fictional": true
   },
   {
-   "slug": "evan-lacombe-wendt-lake-tech",
+   "slug": "evan-lacombe-fcs-great-lakes",
    "position": "LG",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Evan Lacombe",
    "position_name": "Left Guard",
    "jersey": "62",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'6\"",
    "weight_lbs": 340,
@@ -8859,15 +8857,15 @@
    "fictional": true
   },
   {
-   "slug": "quincy-shipley-wendt-lake-tech",
+   "slug": "quincy-shipley-fcs-great-lakes",
    "position": "LG",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Quincy Shipley",
    "position_name": "Left Guard",
    "jersey": "75",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'3\"",
    "weight_lbs": 310,
@@ -9158,15 +9156,15 @@
    "fictional": true
   },
   {
-   "slug": "antoine-marchetti-wendt-lake-tech",
+   "slug": "antoine-marchetti-fcs-great-lakes",
    "position": "LG",
    "class": "FR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Antoine Marchetti",
    "position_name": "Left Guard",
    "jersey": "57",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Freshman",
    "height": "6'4\"",
    "weight_lbs": 320,
@@ -9420,15 +9418,15 @@
    "fictional": true
   },
   {
-   "slug": "jabari-briscoe-wendt-lake-tech",
+   "slug": "jabari-briscoe-fcs-great-lakes",
    "position": "LG",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Jabari Briscoe",
    "position_name": "Left Guard",
    "jersey": "72",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'7\"",
    "weight_lbs": 318,
@@ -9710,15 +9708,15 @@
    "fictional": true
   },
   {
-   "slug": "blake-lacombe-wendt-lake-tech",
+   "slug": "blake-lacombe-fcs-great-lakes",
    "position": "C",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Blake Lacombe",
    "position_name": "Center",
    "jersey": "63",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'2\"",
    "weight_lbs": 291,
@@ -10006,15 +10004,15 @@
    "fictional": true
   },
   {
-   "slug": "terrance-clemmons-wendt-lake-tech",
+   "slug": "terrance-clemmons-fcs-great-lakes",
    "position": "C",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Terrance Clemmons",
    "position_name": "Center",
    "jersey": "51",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'2\"",
    "weight_lbs": 290,
@@ -10266,15 +10264,15 @@
    "fictional": true
   },
   {
-   "slug": "zane-langford-wendt-lake-tech",
+   "slug": "zane-langford-fcs-great-lakes",
    "position": "RG",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Zane Langford",
    "position_name": "Right Guard",
    "jersey": "60",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'2\"",
    "weight_lbs": 292,
@@ -10548,15 +10546,15 @@
    "fictional": true
   },
   {
-   "slug": "grady-trammell-wendt-lake-tech",
+   "slug": "grady-trammell-fcs-great-lakes",
    "position": "RG",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Grady Trammell",
    "position_name": "Right Guard",
    "jersey": "64",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'6\"",
    "weight_lbs": 316,
@@ -10830,15 +10828,15 @@
    "fictional": true
   },
   {
-   "slug": "bryce-brannon-wendt-lake-tech",
+   "slug": "bryce-brannon-fcs-great-lakes",
    "position": "RG",
    "class": "FR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Bryce Brannon",
    "position_name": "Right Guard",
    "jersey": "79",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Freshman",
    "height": "6'3\"",
    "weight_lbs": 285,
@@ -11091,15 +11089,15 @@
    "fictional": true
   },
   {
-   "slug": "jamal-dade-wendt-lake-tech",
+   "slug": "jamal-dade-fcs-great-lakes",
    "position": "RT",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Jamal Dade",
    "position_name": "Right Tackle",
    "jersey": "74",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'3\"",
    "weight_lbs": 305,
@@ -11367,15 +11365,15 @@
    "fictional": true
   },
   {
-   "slug": "tristan-burkett-wendt-lake-tech",
+   "slug": "tristan-burkett-fcs-great-lakes",
    "position": "RT",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Tristan Burkett",
    "position_name": "Right Tackle",
    "jersey": "56",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'4\"",
    "weight_lbs": 320,
@@ -11668,15 +11666,15 @@
    "fictional": true
   },
   {
-   "slug": "derrick-dalton-wendt-lake-tech",
+   "slug": "derrick-dalton-fcs-great-lakes",
    "position": "LEDG",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Derrick Dalton",
    "position_name": "Left Edge",
    "jersey": "49",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'4\"",
    "weight_lbs": 250,
@@ -11945,15 +11943,15 @@
    "fictional": true
   },
   {
-   "slug": "cole-keeling-wendt-lake-tech",
+   "slug": "cole-keeling-fcs-great-lakes",
    "position": "LEDG",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Cole Keeling",
    "position_name": "Left Edge",
    "jersey": "93",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'5\"",
    "weight_lbs": 250,
@@ -12223,15 +12221,15 @@
    "fictional": true
   },
   {
-   "slug": "ivan-benoit-wendt-lake-tech",
+   "slug": "ivan-benoit-fcs-great-lakes",
    "position": "LEDG",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Ivan Benoit",
    "position_name": "Left Edge",
    "jersey": "76",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "6'3\"",
    "weight_lbs": 240,
@@ -12486,15 +12484,15 @@
    "fictional": true
   },
   {
-   "slug": "alec-scruggs-wendt-lake-tech",
+   "slug": "alec-scruggs-fcs-great-lakes",
    "position": "LEDG",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Alec Scruggs",
    "position_name": "Left Edge",
    "jersey": "47",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'3\"",
    "weight_lbs": 205,
@@ -12797,15 +12795,15 @@
    "fictional": true
   },
   {
-   "slug": "kai-draper-wendt-lake-tech",
+   "slug": "kai-draper-fcs-great-lakes",
    "position": "DT",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Kai Draper",
    "position_name": "Defensive Tackle",
    "jersey": "91",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'4\"",
    "weight_lbs": 297,
@@ -13071,15 +13069,15 @@
    "fictional": true
   },
   {
-   "slug": "santiago-ivey-wendt-lake-tech",
+   "slug": "santiago-ivey-fcs-great-lakes",
    "position": "DT",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Santiago Ivey",
    "position_name": "Defensive Tackle",
    "jersey": "52",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'3\"",
    "weight_lbs": 265,
@@ -13364,15 +13362,15 @@
    "fictional": true
   },
   {
-   "slug": "justice-archer-wendt-lake-tech",
+   "slug": "justice-archer-fcs-great-lakes",
    "position": "DT",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Justice Archer",
    "position_name": "Defensive Tackle",
    "jersey": "56",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'0\"",
    "weight_lbs": 304,
@@ -13653,15 +13651,15 @@
    "fictional": true
   },
   {
-   "slug": "tristan-wilder-wendt-lake-tech",
+   "slug": "tristan-wilder-fcs-great-lakes",
    "position": "DT",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Tristan Wilder",
    "position_name": "Defensive Tackle",
    "jersey": "96",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'3\"",
    "weight_lbs": 280,
@@ -13939,15 +13937,15 @@
    "fictional": true
   },
   {
-   "slug": "ryder-garrity-wendt-lake-tech",
+   "slug": "ryder-garrity-fcs-great-lakes",
    "position": "DT",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Ryder Garrity",
    "position_name": "Defensive Tackle",
    "jersey": "94",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'4\"",
    "weight_lbs": 270,
@@ -14209,15 +14207,15 @@
    "fictional": true
   },
   {
-   "slug": "colton-lockett-wendt-lake-tech",
+   "slug": "colton-lockett-fcs-great-lakes",
    "position": "DT",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Colton Lockett",
    "position_name": "Defensive Tackle",
    "jersey": "95",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "6'1\"",
    "weight_lbs": 315,
@@ -14502,15 +14500,15 @@
    "fictional": true
   },
   {
-   "slug": "quentin-barlow-wendt-lake-tech",
+   "slug": "quentin-barlow-fcs-great-lakes",
    "position": "REDG",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Quentin Barlow",
    "position_name": "Right Edge",
    "jersey": "99",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'3\"",
    "weight_lbs": 236,
@@ -14775,15 +14773,15 @@
    "fictional": true
   },
   {
-   "slug": "ethan-kearney-wendt-lake-tech",
+   "slug": "ethan-kearney-fcs-great-lakes",
    "position": "REDG",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Ethan Kearney",
    "position_name": "Right Edge",
    "jersey": "45",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'2\"",
    "weight_lbs": 285,
@@ -15033,15 +15031,15 @@
    "fictional": true
   },
   {
-   "slug": "hunter-rios-wendt-lake-tech",
+   "slug": "hunter-rios-fcs-great-lakes",
    "position": "REDG",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Hunter Rios",
    "position_name": "Right Edge",
    "jersey": "97",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'2\"",
    "weight_lbs": 285,
@@ -15291,15 +15289,15 @@
    "fictional": true
   },
   {
-   "slug": "quentin-burkett-wendt-lake-tech",
+   "slug": "quentin-burkett-fcs-great-lakes",
    "position": "SAM",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Quentin Burkett",
    "position_name": "Sam Linebacker",
    "jersey": "33",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'1\"",
    "weight_lbs": 226,
@@ -15557,15 +15555,15 @@
    "fictional": true
   },
   {
-   "slug": "lamar-benoit-wendt-lake-tech",
+   "slug": "lamar-benoit-fcs-great-lakes",
    "position": "SAM",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Lamar Benoit",
    "position_name": "Sam Linebacker",
    "jersey": "10",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'1\"",
    "weight_lbs": 209,
@@ -15849,15 +15847,15 @@
    "fictional": true
   },
   {
-   "slug": "xavier-garrity-wendt-lake-tech",
+   "slug": "xavier-garrity-fcs-great-lakes",
    "position": "MIKE",
    "class": "FR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Xavier Garrity",
    "position_name": "Mike Linebacker",
    "jersey": "90",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Freshman",
    "height": "6'2\"",
    "weight_lbs": 220,
@@ -16128,15 +16126,15 @@
    "fictional": true
   },
   {
-   "slug": "logan-bradshaw-wendt-lake-tech",
+   "slug": "logan-bradshaw-fcs-great-lakes",
    "position": "MIKE",
    "class": "FR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Logan Bradshaw",
    "position_name": "Mike Linebacker",
    "jersey": "98",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Freshman",
    "height": "6'1\"",
    "weight_lbs": 220,
@@ -16416,15 +16414,15 @@
    "fictional": true
   },
   {
-   "slug": "kareem-mcalister-wendt-lake-tech",
+   "slug": "kareem-mcalister-fcs-great-lakes",
    "position": "MIKE",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Kareem McAlister",
    "position_name": "Mike Linebacker",
    "jersey": "19",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "5'11\"",
    "weight_lbs": 220,
@@ -16687,15 +16685,15 @@
    "fictional": true
   },
   {
-   "slug": "colton-glover-wendt-lake-tech",
+   "slug": "colton-glover-fcs-great-lakes",
    "position": "MIKE",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Colton Glover",
    "position_name": "Mike Linebacker",
    "jersey": "48",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "6'2\"",
    "weight_lbs": 220,
@@ -16966,15 +16964,15 @@
    "fictional": true
   },
   {
-   "slug": "bennett-varnado-wendt-lake-tech",
+   "slug": "bennett-varnado-fcs-great-lakes",
    "position": "MIKE",
    "class": "FR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Bennett Varnado",
    "position_name": "Mike Linebacker",
    "jersey": "29",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Freshman",
    "height": "6'3\"",
    "weight_lbs": 215,
@@ -17265,15 +17263,15 @@
    "fictional": true
   },
   {
-   "slug": "drew-greer-wendt-lake-tech",
+   "slug": "drew-greer-fcs-great-lakes",
    "position": "MIKE",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Drew Greer",
    "position_name": "Mike Linebacker",
    "jersey": "21",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "6'3\"",
    "weight_lbs": 225,
@@ -17530,15 +17528,15 @@
    "fictional": true
   },
   {
-   "slug": "parker-sheffield-wendt-lake-tech",
+   "slug": "parker-sheffield-fcs-great-lakes",
    "position": "MIKE",
    "class": "FR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Parker Sheffield",
    "position_name": "Mike Linebacker",
    "jersey": "41",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Freshman",
    "height": "6'2\"",
    "weight_lbs": 220,
@@ -17796,15 +17794,15 @@
    "fictional": true
   },
   {
-   "slug": "kareem-hollins-wendt-lake-tech",
+   "slug": "kareem-hollins-fcs-great-lakes",
    "position": "WILL",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Kareem Hollins",
    "position_name": "Will Linebacker",
    "jersey": "50",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "6'2\"",
    "weight_lbs": 223,
@@ -18079,15 +18077,15 @@
    "fictional": true
   },
   {
-   "slug": "drew-akins-wendt-lake-tech",
+   "slug": "drew-akins-fcs-great-lakes",
    "position": "WILL",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Drew Akins",
    "position_name": "Will Linebacker",
    "jersey": "42",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "5'11\"",
    "weight_lbs": 219,
@@ -18364,15 +18362,15 @@
    "fictional": true
   },
   {
-   "slug": "darius-satterfield-wendt-lake-tech",
+   "slug": "darius-satterfield-fcs-great-lakes",
    "position": "WILL",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Darius Satterfield",
    "position_name": "Will Linebacker",
    "jersey": "38",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "6'2\"",
    "weight_lbs": 220,
@@ -18646,15 +18644,15 @@
    "fictional": true
   },
   {
-   "slug": "micah-calloway-wendt-lake-tech",
+   "slug": "micah-calloway-fcs-great-lakes",
    "position": "WILL",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Micah Calloway",
    "position_name": "Will Linebacker",
    "jersey": "31",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'1\"",
    "weight_lbs": 244,
@@ -18942,15 +18940,15 @@
    "fictional": true
   },
   {
-   "slug": "hayden-delacroix-wendt-lake-tech",
+   "slug": "hayden-delacroix-fcs-great-lakes",
    "position": "CB",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Hayden Delacroix",
    "position_name": "Cornerback",
    "jersey": "2",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "6'2\"",
    "weight_lbs": 163,
@@ -19220,15 +19218,15 @@
    "fictional": true
   },
   {
-   "slug": "jamal-rainey-wendt-lake-tech",
+   "slug": "jamal-rainey-fcs-great-lakes",
    "position": "CB",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Jamal Rainey",
    "position_name": "Cornerback",
    "jersey": "17",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'0\"",
    "weight_lbs": 210,
@@ -19484,15 +19482,15 @@
    "fictional": true
   },
   {
-   "slug": "dante-stroud-wendt-lake-tech",
+   "slug": "dante-stroud-fcs-great-lakes",
    "position": "CB",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Dante Stroud",
    "position_name": "Cornerback",
    "jersey": "16",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "5'11\"",
    "weight_lbs": 183,
@@ -19739,15 +19737,15 @@
    "fictional": true
   },
   {
-   "slug": "desmond-lacombe-wendt-lake-tech",
+   "slug": "desmond-lacombe-fcs-great-lakes",
    "position": "CB",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Desmond Lacombe",
    "position_name": "Cornerback",
    "jersey": "7",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "5'11\"",
    "weight_lbs": 190,
@@ -20022,15 +20020,15 @@
    "fictional": true
   },
   {
-   "slug": "quincy-clemmons-wendt-lake-tech",
+   "slug": "quincy-clemmons-fcs-great-lakes",
    "position": "CB",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Quincy Clemmons",
    "position_name": "Cornerback",
    "jersey": "15",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "5'11\"",
    "weight_lbs": 180,
@@ -20314,15 +20312,15 @@
    "fictional": true
   },
   {
-   "slug": "amari-rios-wendt-lake-tech",
+   "slug": "amari-rios-fcs-great-lakes",
    "position": "CB",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Amari Rios",
    "position_name": "Cornerback",
    "jersey": "18",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "5'9\"",
    "weight_lbs": 165,
@@ -20599,15 +20597,15 @@
    "fictional": true
   },
   {
-   "slug": "zion-shipley-wendt-lake-tech",
+   "slug": "zion-shipley-fcs-great-lakes",
    "position": "CB",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Zion Shipley",
    "position_name": "Cornerback",
    "jersey": "25",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "5'10\"",
    "weight_lbs": 183,
@@ -20863,15 +20861,15 @@
    "fictional": true
   },
   {
-   "slug": "garrett-harlan-wendt-lake-tech",
+   "slug": "garrett-harlan-fcs-great-lakes",
    "position": "CB",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Garrett Harlan",
    "position_name": "Cornerback",
    "jersey": "9",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "5'10\"",
    "weight_lbs": 175,
@@ -21144,15 +21142,15 @@
    "fictional": true
   },
   {
-   "slug": "dominic-boudreaux-wendt-lake-tech",
+   "slug": "dominic-boudreaux-fcs-great-lakes",
    "position": "CB",
    "class": "FR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Dominic Boudreaux",
    "position_name": "Cornerback",
    "jersey": "35",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Freshman",
    "height": "6'0\"",
    "weight_lbs": 170,
@@ -21426,15 +21424,15 @@
    "fictional": true
   },
   {
-   "slug": "micah-ambrose-wendt-lake-tech",
+   "slug": "micah-ambrose-fcs-great-lakes",
    "position": "FS",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Micah Ambrose",
    "position_name": "Free Safety",
    "jersey": "43",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "6'0\"",
    "weight_lbs": 205,
@@ -21702,15 +21700,15 @@
    "fictional": true
   },
   {
-   "slug": "blake-winfield-wendt-lake-tech",
+   "slug": "blake-winfield-fcs-great-lakes",
    "position": "FS",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Blake Winfield",
    "position_name": "Free Safety",
    "jersey": "37",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "6'0\"",
    "weight_lbs": 203,
@@ -21965,15 +21963,15 @@
    "fictional": true
   },
   {
-   "slug": "quincy-larkin-wendt-lake-tech",
+   "slug": "quincy-larkin-fcs-great-lakes",
    "position": "FS",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Quincy Larkin",
    "position_name": "Free Safety",
    "jersey": "3",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "5'11\"",
    "weight_lbs": 186,
@@ -22264,15 +22262,15 @@
    "fictional": true
   },
   {
-   "slug": "eli-keeling-wendt-lake-tech",
+   "slug": "eli-keeling-fcs-great-lakes",
    "position": "FS",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Eli Keeling",
    "position_name": "Free Safety",
    "jersey": "22",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'0\"",
    "weight_lbs": 196,
@@ -22532,15 +22530,15 @@
    "fictional": true
   },
   {
-   "slug": "hayden-kearney-wendt-lake-tech",
+   "slug": "hayden-kearney-fcs-great-lakes",
    "position": "SS",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Hayden Kearney",
    "position_name": "Strong Safety",
    "jersey": "13",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "6'1\"",
    "weight_lbs": 193,
@@ -22823,15 +22821,15 @@
    "fictional": true
   },
   {
-   "slug": "jabari-adair-wendt-lake-tech",
+   "slug": "jabari-adair-fcs-great-lakes",
    "position": "SS",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Jabari Adair",
    "position_name": "Strong Safety",
    "jersey": "39",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "6'2\"",
    "weight_lbs": 199,
@@ -23079,15 +23077,15 @@
    "fictional": true
   },
   {
-   "slug": "owen-langford-wendt-lake-tech",
+   "slug": "owen-langford-fcs-great-lakes",
    "position": "SS",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Owen Langford",
    "position_name": "Strong Safety",
    "jersey": "32",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'2\"",
    "weight_lbs": 205,
@@ -23388,15 +23386,15 @@
    "fictional": true
   },
   {
-   "slug": "ryder-mosely-wendt-lake-tech",
+   "slug": "ryder-mosely-fcs-great-lakes",
    "position": "K",
    "class": "JR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Ryder Mosely",
    "position_name": "Kicker",
    "jersey": "95",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Junior",
    "height": "5'9\"",
    "weight_lbs": 185,
@@ -23657,15 +23655,15 @@
    "fictional": true
   },
   {
-   "slug": "zion-lowery-wendt-lake-tech",
+   "slug": "zion-lowery-fcs-great-lakes",
    "position": "P",
    "class": "SR",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Zion Lowery",
    "position_name": "Punter",
    "jersey": "46",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Senior",
    "height": "6'2\"",
    "weight_lbs": 232,
@@ -23896,15 +23894,15 @@
    "fictional": true
   },
   {
-   "slug": "abdul-crandall-wendt-lake-tech",
+   "slug": "abdul-crandall-fcs-great-lakes",
    "position": "P",
    "class": "SO",
-   "team_slug": "wendt-lake-tech",
+   "team_slug": "fcs-great-lakes",
    "url": null,
    "name": "Abdul Crandall",
    "position_name": "Punter",
    "jersey": "0",
-   "team": "Wendt Lake Tech",
+   "team": "FCS Great Lakes",
    "class_year": "Sophomore",
    "height": "6'0\"",
    "weight_lbs": 180,

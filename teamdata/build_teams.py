@@ -303,7 +303,7 @@ def team_from_source(t: dict) -> dict:
         "name": t["short_name"],
         "school": display_school(t["school_name"]),
         "abbreviation": t["abbreviation"],
-        "mascot": t["mascot"],
+        "mascot": t.get("mascot") or "",          # the FCS stand-ins have none
         "conference": t["conference"],
         "subdivision": t["subdivision"],
         "city": t.get("city"),
