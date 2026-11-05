@@ -28,7 +28,8 @@
   const fmtLooks = (n) => (Number.isInteger(Number(n)) ? String(Number(n)) : Number(n).toFixed(1));
   const looksText = (n) => `${fmtLooks(n)} look${Number(n) === 1 ? "" : "s"}`;
   const leftOf = (looks) => Math.max(0, REPORT_LOOKS - (looks || 0));
-  const PAGE = 20;                                   // rows a page
+  const PAGE = 20;
+  const RECRUITERS = 3;                              // recruiters on a full staff (recruiting.make_staff): fewer shows an open spot                                   // rows a page
   const POSITIONS = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "ATH", "K", "P"];
   const WORDS = ["Weak", "Fair", "Solid", "Strong", "Elite", "All-American"];         // recruiting.WORDS, low to high
   const GRADE_NAMES = { potential: "Potential", athleticism: "Athleticism", size_strength: "Size & Strength", technique: "Technique", football_iq: "Football IQ", coachability: "Coachability" };
@@ -39,10 +40,11 @@
   // the list's orders, applied by the API over the whole class (prospects.QUEUE_SORTS), never just to the page on screen
   const SORTS = [["rank", "Sort: Rank"], ["board", "Sort: Board First"], ["need", "Sort: Need"], ["potential", "Sort: Potential"], ["looks", "Sort: Looks"]];
   const CHIPS = [["all", "All Prospects"], ["on", "My Board"], ["scouted", "Scouted"]];
-  const SUBS = [["ratings", "Ratings"], ["overview", "Overview"], ["scouting", "Scouting"]];
+  const SUBS = [["report", "Report"], ["looks", "Looks"], ["profile", "Profile"]];
+  const OLD_SUBS = { ratings: "report", overview: "report", scouting: "looks" };      // the sub-tabs before the redesign, in old addresses
   const WEEKS = [["this_week", "This Week"], ["last_week", "Last Week"], ["flags", "Flags"]];
   // the filters, the page, the sort, the selection and its sub-tab, kept across renders (and in the address)
-  const desk = { q: "", position: "", board: "all", page: 0, sort: "rank", pid: null, sub: "ratings", ops: false };
+  const desk = { q: "", position: "", board: "all", page: 0, sort: "rank", pid: null, sub: "report", ops: false };
   let H = null;
   let cur = null;                                    // the tab as drawn: { s, v (the latest view), rv (/recruiting), st, ... }
   let wanted = null;                                 // a modal to open once the tab draws: the pane's "Reports on the Scouting Tab"
@@ -111,12 +113,13 @@
   // the tab's place in the address: the chip, the selected prospect, the sub-tab, an open Operations bar (a replace)
   const syncRoute = () => {
     if (window.CFP.route) window.CFP.route.set({ qboard: desk.board !== "all" ? desk.board : null, spid: desk.pid || null,
-      ssub: desk.sub !== "ratings" ? desk.sub : null, sops: desk.ops ? "1" : null, ssort: desk.sort !== "rank" ? desk.sort : null });
+      ssub: desk.sub !== "report" ? desk.sub : null, sops: desk.ops ? "1" : null, ssort: desk.sort !== "rank" ? desk.sort : null });
   };
   function applyRoute(r) {
     desk.board = ["on", "scouted"].includes(r.qboard) ? r.qboard : "all";
     desk.pid = typeof r.spid === "string" && r.spid ? r.spid : null;
-    desk.sub = ["overview", "scouting"].includes(r.ssub) ? r.ssub : "ratings";
+    const sub = OLD_SUBS[r.ssub] || r.ssub;
+    desk.sub = SUBS.some(([k]) => k === sub) ? sub : "report";
     desk.ops = r.sops === "1";
     desk.sort = SORTS.some(([k]) => k === r.ssort) ? r.ssort : "rank";
   }
@@ -128,7 +131,7 @@
     let v, rv;
     try { [v, rv] = await Promise.all([api(s, deskPath(0, PAGE)), api(s, "recruiting")]); }
     catch (err) { box.innerHTML = ""; box.append(loading(`Could not load the Scouting Center: ${H.errText(err)}`)); return; }
-    cur = { s, v, rv, board: (rv.board || []).length };
+    cur = { s, v, rv, board: v.board_size != null ? v.board_size : (rv.board || []).length };
     const st = { hours: v.hours, left: v.hours_left, points: v.points_left, pointsWeek: v.points_week, total: v.queue_total, rows: [] };
     cur.st = st;
     box.innerHTML = "";
@@ -139,36 +142,47 @@
     if (wanted) { wanted = null; openReports(s, "this_week"); }
   }
 
-  // ----- the header: kicker, title, subtitle, All Reports; the four stat cards -----
+  // ----- the header: "Class of 2027", SCOUTING CENTER, four meters (a value and a thin bar each), All Reports -----
+  // Scouting Points (left of the week's), Trips This Week, Board Scouted (prospects on your board with a look, of the
+  // board) and Full Reports (complete reports in the class)
   function headBlock(s, v, st) {
-    const stat = (label, key, value, sub, extra) => el("div", { class: "sc-stat", "data-stat": key, ...(extra || {}) }, [
-      el("div", { class: "sc-stat-label", text: label }), el("div", { class: "sc-stat-value" }, value), sub]);
-    // Scouting Points: what a Send spends, the headline and its bar; the recruiting hours (calls, visits) a second line
-    const pointsBig = el("span", { class: "sc-points-val" });
-    const pointsBar = el("i", { class: "sc-hours-fill" });
-    const pointsVal = el("span", { id: "sc-points", class: "sc-stat-sub sc-points" });
-    const hoursVal = el("span", { class: "sc-stat-sub sc-hours-line" });
-    const pointsCard = stat("Scouting Points", "points", [pointsBig], el("span", { class: "sc-hours-sub" },
-      [el("span", { class: "sc-hours-bar", "aria-hidden": "true" }, [pointsBar]), pointsVal, hoursVal]), { id: "sc-points-card", role: "status" });
+    const meterOf = (key, label, extra, value, more) => {
+      const fill = el("i");
+      const node = el("div", { class: "sc-stat", "data-stat": key, ...(extra || {}) }, [el("div", { class: "sc-stat-value" }, value), el("div", { class: "sc-stat-label", text: label }),
+        el("div", { class: "pv-thin", "aria-hidden": "true" }, [fill]), ...(more || [])]);
+      node.__fill = fill;
+      return node;
+    };
+    const pointsBig = el("span", { class: "sc-points-val" }), pointsOf = el("span", { class: "sc-points-of" });
+    const pointsVal = el("span", { id: "sc-points", class: "pv-sr sc-points" }), hoursVal = el("span", { class: "pv-sr sc-hours-line" });
     const boardVal = el("span", { class: "sc-board-n" }), fullVal = el("span", { class: "sc-full-n" }), tripsVal = el("span", { class: "sc-trips-n" });
-    const cards = el("div", { class: "sc-stats" }, [
-      stat("My Board", "board", [boardVal], el("span", { class: "sc-stat-sub", text: "Tracked Players" })),
-      stat("Full Reports", "full", [fullVal], el("span", { class: "sc-stat-sub", text: "Evaluated Prospects" })),
-      stat("Scouting Queue", "trips", [tripsVal], el("span", { class: "sc-stat-sub", text: "Trips This Week" })),
-      pointsCard]);
+    const pointsCard = meterOf("points", "Scouting Points", { id: "sc-points-card", role: "status" }, [pointsBig, pointsOf], [pointsVal, hoursVal]);
+    const trips = meterOf("trips", "Trips This Week", null, [tripsVal]);
+    const board = meterOf("board", "Board Scouted", null, [boardVal]);
+    const full = meterOf("full", "Full Reports", null, [fullVal]);
+    const cards = el("div", { class: "sc-stats" }, [pointsCard, trips, board, full]);
     const newCount = el("span", { class: "go-tag good sc-new-n", hidden: "" });
     const all = el("button", { type: "button", id: "sc-all-reports", class: "go-btn sc-all-reports" }, ["All Reports", newCount]);
     ui().on(all, "click", () => openReports(s, "this_week"));
-    // patchHead(v): the numbers from the latest view, each pulsing when it moved
+    // patchHead(v): the numbers from the latest view
     const set = (node, text) => { if (node.textContent !== text) node.textContent = text; };
+    const fillTo = (node, x) => { node.__fill.style.width = `${Math.round(100 * Math.max(0, Math.min(1, x || 0)))}%`; };
     cur.patchHead = (d) => {
-      set(boardVal, String(cur.board));
+      const size = cur.board, scouted = Math.min(size, d.board_scouted != null ? d.board_scouted : 0);
+      set(boardVal, `${scouted} of ${size}`);
+      fillTo(board, size ? scouted / size : 0);
+      board.title = `${scouted} of the ${plural(size, "prospect")} on your board have had a look`;
       set(fullVal, String(d.full_reports || 0));
-      set(tripsVal, String(d.trips_this_week || 0));
+      fillTo(full, size ? (d.full_reports || 0) / Math.max(size, d.full_reports || 0) : 0);
+      const t = d.trips_this_week || 0, more = st.points ? Math.floor(st.points / 10) : 0;
+      set(tripsVal, String(t));
+      fillTo(trips, t + more ? t / (t + more) : 0);
+      trips.title = `${plural(t, "trip")} this week; about ${plural(more, "more")} at 10 points`;
       set(pointsBig, String(st.points));
-      pointsBar.style.width = `${st.pointsWeek ? Math.round(100 * st.points / st.pointsWeek) : 0}%`;
+      set(pointsOf, ` / ${st.pointsWeek}`);
+      fillTo(pointsCard, st.pointsWeek ? st.points / st.pointsWeek : 0);
       set(pointsVal, `Points Left: ${st.points} of ${st.pointsWeek}`);
-      set(hoursVal, `Recruiting Hours: ${st.left} of ${st.hours}`);
+      set(hoursVal, ` Recruiting Hours: ${st.left} of ${st.hours}`);
       pointsCard.title = `${st.points} of ${plural(st.pointsWeek, "scouting point")} left for trips this week; ${st.left} of ${plural(st.hours, "recruiting hour")} left for calls and visits`;
       pointsCard.setAttribute("aria-label", pointsCard.title);
       const n = finds(d).length;
@@ -178,11 +192,10 @@
     };
     cur.patchHead(v);
     return el("div", { class: "sc-head" }, [
-      el("div", { class: "sc-head-text" }, [el("div", { class: "go-kicker sc-kicker", text: `Recruiting Intelligence / Class of ${(s.year || 2026) + 1}` }),
-        el("div", { class: "go-display l sc-title" }, ["Scouting Center ",
-          ui().tip("Evaluate talent: a full report is three looks; a trip is one, a week in a scout's area half.", "Scouting Center")]),
-        el("div", { class: "sc-head-actions" }, [all])]),
-      cards]);
+      el("div", { class: "sc-head-text" }, [el("div", { class: "pv-kick sc-kicker", text: `Class of ${(s.year || 2026) + 1}` }),
+        el("h2", { class: "go-display l sc-title" }, ["Scouting Center ",
+          ui().tip("Evaluate talent: a full report is three looks; a trip is one, a week in a scout's area half.", "Scouting Center")])]),
+      cards, el("div", { class: "sc-head-actions" }, [all])]);
   }
   // this week's finds from the reports: a flag gained or a coordinator's word, one a recruit
   function finds(v) {
@@ -259,7 +272,8 @@
       }
       st.total = d.queue_total; st.left = d.hours_left; st.hours = d.hours; st.points = d.points_left; st.pointsWeek = d.points_week;
       st.rows = d.queue;
-      Object.assign(cur.v, { scouts: d.scouts, reports: d.reports, flags: d.flags, full_reports: d.full_reports, trips_this_week: d.trips_this_week });
+      Object.assign(cur.v, { scouts: d.scouts, reports: d.reports, flags: d.flags, full_reports: d.full_reports, trips_this_week: d.trips_this_week, board_scouted: d.board_scouted });
+      if (d.board_size != null) cur.board = d.board_size;
       paint();
       cur.patchHead(cur.v);
       const row = st.rows.find((r) => r.pid === desk.pid);
@@ -276,8 +290,8 @@
       const btn = el("button", { type: "button", class: "sc-row-btn", "aria-pressed": "false" }, [
         el("span", { class: "sc-star", "aria-hidden": "true" }),
         avatar(r.pid, "sm"),
-        el("span", { class: "sc-id" }, [el("span", { class: "sc-name" }), el("span", { class: "sc-line-row" }, [el("span", { class: "muted small sc-line" }), el("span", { class: "sc-row-flags" })])]),
-        el("span", { class: "sc-right" }, [el("span", { class: "sc-rank" }), el("span", { class: "sc-eval" }),
+        el("span", { class: "sc-id" }, [el("span", { class: "sc-name" }), el("span", { class: "sc-line-row" }, [el("span", { class: "go-stars sc-row-stars" }), el("span", { class: "muted small sc-line" }), el("span", { class: "sc-row-flags" })])]),
+        el("span", { class: "sc-right" }, [el("span", { class: "sc-eval" }),
           el("span", { class: "sc-conf" }, [el("span", { class: "sc-trips", role: "img" }, meterSegs(0)), el("span", { class: "muted small sc-looks-text" })])])]);
       const li = el("li", { class: "sc-row", "data-pid": r.pid, "data-key": r.pid }, [btn]);
       ui().on(btn, "click", () => { if (desk.pid !== li.dataset.pid) select(li.dataset.pid); intel.__focus(); });
@@ -302,7 +316,6 @@
       el("div", { class: "sc-panel-head" }, [el("div", {}, [el("h2", { class: "sc-h" }, ["Prospect Database ", ui().tip("Every prospect in the class: filter and sort the whole list.", "Prospect Database")])]), count]),
       search,
       el("div", { class: "sc-toolbar" }, [chips, el("div", { class: "sc-tools" }, [pos, sort])]),
-      el("div", { class: "sc-list-head", "aria-hidden": "true" }, [el("span", { text: "Player / Position" }), el("span", { text: "Rank · Evaluation" })]),
       wrap, empty,
       el("div", { class: "sc-foot" }, [showing, pager])]);
   }
@@ -319,19 +332,23 @@
     const want = on ? "★" : "☆";
     if (star.textContent !== want) { const had = star.textContent; star.textContent = want; star.classList.toggle("on", on); star.title = on ? "On your board" : "Not on your board"; }
     li.querySelector(".sc-name").textContent = r.name;
-    li.querySelector(".sc-line").textContent = `${r.position} · ${r.state} · ${stars(r.stars)}`;
-    const flags = li.querySelector(".sc-row-flags"), fkey = [...(r.flags || []), r.likes ? `likes:${r.likes.who}` : ""].join("|");
+    li.querySelector(".sc-row-stars").textContent = r.stars ? stars(r.stars) : "";
+    li.querySelector(".sc-line").textContent = ` ${r.display_pos || r.position} · ${r.state}`;
+    li.dataset.rank = r.national_rank ? String(r.national_rank) : "";
+    // the right-hand tag: a flag (Generational, Gem, Bust Risk) when your staff has one, else the potential read
+    const flagged = (r.flags || []).filter((f) => FLAGS[f]);
+    const flags = li.querySelector(".sc-row-flags"), fkey = [...flagged.slice(1), r.likes ? `likes:${r.likes.who}` : ""].join("|");
     if (flags.dataset.v !== fkey) {
       flags.dataset.v = fkey;
       flags.innerHTML = "";
-      flags.append(...(r.flags || []).map(flagBadge), ...(r.likes ? [el("span", { class: "go-tag good sc-likes", text: `${r.likes.who} ♥`, title: r.likes.text })] : []));
+      flags.append(...flagged.slice(1).map(flagBadge), ...(r.likes ? [el("span", { class: "go-tag good sc-likes", text: `${r.likes.who} ♥`, title: r.likes.text })] : []));
     }
-    li.querySelector(".sc-rank").textContent = r.national_rank ? `#${r.national_rank}` : "—";
-    const ev = li.querySelector(".sc-eval"), key = r.potential ? r.potential.join("|") : "-";
+    const ev = li.querySelector(".sc-eval"), key = flagged.length ? `flag:${flagged[0]}` : r.potential ? r.potential.join("|") : "-";
     if (ev.dataset.v !== key) {
       ev.dataset.v = key;
       ev.innerHTML = "";
-      ev.append(...(r.potential ? gradePlain(r.potential) : [el("span", { class: "muted", text: "Unscouted" })]));
+      ev.className = `sc-eval${flagged.length ? " flag" : r.potential ? ` sc-tag ${String(r.potential[1]).toLowerCase()}` : " sc-tag muted"}`;
+      ev.append(...(flagged.length ? [flagBadge(flagged[0])] : r.potential ? gradePlain(r.potential) : [el("span", { text: "Unscouted" })]));
     }
     [...li.querySelectorAll(".sc-trip")].forEach((t, i) => { t.classList.toggle("on", looks >= i + 1); t.classList.toggle("half", looks < i + 1 && looks > i); });
     li.querySelector(".sc-trips").setAttribute("aria-label", `Scouting confidence: ${looksText(looks)} of ${REPORT_LOOKS}`);
@@ -341,9 +358,7 @@
   // ----- the Player Intelligence Report: the selected prospect, patched in place -----
   function intelPanel(s) {
     const body = el("div", { class: "sc-intel-body" }, [loading("Loading his report…")]);
-    const status = el("span", { class: "go-tag sc-status", hidden: "" });
-    const panel = el("section", { class: "go-card sc-panel sc-intel", "aria-label": "Player Intelligence Report" }, [
-      el("div", { class: "sc-panel-head sc-intel-head" }, [el("div", { class: "go-kicker", text: "Player Intelligence Report" }), status]), body]);
+    const panel = el("section", { class: "go-card sc-panel sc-intel", "aria-label": "Player Intelligence Report" }, [body]);
     const sel = { pid: null, row: null, pr: null, look: null, seq: 0 };
     // the row's data for him: from the list, else one ask by his name (a selection restored from the address on another page)
     async function rowFor(pid, pr) {
@@ -360,7 +375,7 @@
                why: pr.looks >= REPORT_LOOKS ? `His report is complete: ${REPORT_LOOKS} of ${REPORT_LOOKS} looks` : null };
     }
     panel.__show = async (pid, row) => {
-      if (!pid) { ui().morph(body, el("div", {}, [el("p", { class: "muted sc-intel-empty", text: "Nobody here yet: clear the search or a filter." })])); status.hidden = true; return; }
+      if (!pid) { ui().morph(body, el("div", {}, [el("p", { class: "muted sc-intel-empty", text: "Nobody here yet: clear the search or a filter." })])); return; }
       const mine = ++sel.seq;
       if (sel.pid !== pid) sel.look = null;
       sel.pid = pid;
@@ -383,46 +398,71 @@
     };
     panel.__row = (row) => { if (sel.pid === row.pid) { sel.row = row; if (sel.pr) paintIntel(); } };
     panel.__focus = () => { if (window.matchMedia("(max-width: 899px)").matches) panel.scrollIntoView({ block: "start" }); };
+    // the selected prospect, drawn with the board's pieces (window.Recruiting.parts, web/profileview.js): the hero with
+    // Nat. Rank, Pos. Rank, Team Need and his Potential (with how sure the read is), the tabs Report · Looks · Profile and,
+    // on the tab row, Send Scout, View Full Profile and the board star
+    const CERTAINTY = { Low: "Settled Read", Medium: "Read Could Move", High: "Early Read" };
+    const POT_TONE = { "All-American": "good", Elite: "good", Strong: "good", Solid: "warn", Fair: "warn", Weak: "bad" };
     function paintIntel() {
       const { row: r, pr } = sel, p = pr.public;
+      const P = R().parts, me = s.team;
+      const b = pr.row || { id: r.pid, name: p.name, stars: p.stars, position: p.position, display_pos: p.display_pos, hometown: p.hometown, national_rank: p.national_rank,
+        pos_rank: p.pos_rank, height_display: p.height_display, weight_display: p.weight_display, looks: pr.looks, traits: pr.traits, priorities_known: p.priorities_known, list: [] };
       const looks = Math.min(REPORT_LOOKS, r.looks || 0), complete = looks >= REPORT_LOOKS;
       const sp = complete ? ["Fully Scouted", "good"] : looks > 0 ? [`${fmtLooks(looks)} of ${REPORT_LOOKS} Looks`, "warn"] : ["Unscouted", "muted"];
-      status.hidden = false;
-      if (status.textContent !== sp[0]) { status.textContent = sp[0]; status.className = `go-tag sc-status ${sp[1]}`; }
       const potential = r.potential || (pr.our_grades && pr.our_grades.potential);
-      const box = (k, label, value) => el("div", { class: "sc-box", "data-box": k }, [el("div", { class: "sc-box-label", text: label }), el("div", { class: "sc-box-value" }, value)]);
-      const needText = r.need == null ? "Not Listed" : r.need > 0 ? `${plural(r.need, "Spot")} Open` : "Set";
+      const rep = pr.report;
+      const need = r.need != null ? r.need : pr.need;
+      const needWord = need == null ? "Not Listed" : need >= 3 ? "High" : need >= 1 ? "Medium" : "Set";
+      const name = el("h2", { class: "sc-big-name pv-name", "data-key": "name", text: p.name });
+      const status = el("span", { class: `go-chip pv-tag sc-status ${sp[1]}`, "data-key": "chip", text: sp[0], title: r.on_board ? "On your board" : "Not on your board" });
+      const hero = P.heroOf(b, me, { nameNode: name, chip: { text: sp[0], tone: sp[1] },
+        stats: [{ key: "nat", label: "Nat. Rank", value: p.national_rank ? `#${p.national_rank}` : "—" }, { key: "pos", label: "Pos. Rank", value: p.pos_rank ? `#${p.pos_rank}` : "—", sub: p.display_pos },
+          { key: "need", label: "Team Need", value: needWord, tone: needWord === "High" ? "good" : needWord === "Medium" ? "warn" : "" }],
+        badge: { kicker: "Potential", value: potential ? (potential[0] === potential[1] ? potential[0] : `${potential[0]} – ${potential[1]}`) : "Not Read",
+          sub: rep && rep.certainty ? CERTAINTY[rep.certainty] : potential ? null : "Send a Scout", tone: rep && rep.potential_tone ? rep.potential_tone : potential ? POT_TONE[potential[0]] || "" : "" } });
+      const chip = hero.querySelector(".pv-tag");
+      if (chip) chip.replaceWith(status);
       const sub = el("div", { class: "go-subtabs sc-subtabs", role: "tablist", "aria-label": "Report", "data-key": "subtabs" }, SUBS.map(([k, t]) => {
-        const b = el("button", { type: "button", role: "tab", "data-sub": k, "aria-selected": String(desk.sub === k), text: t });
-        ui().on(b, "click", () => { if (desk.sub === k) return; desk.sub = k; syncRoute(); paintIntel(); });
-        return b;
+        const btn = el("button", { type: "button", role: "tab", "data-sub": k, "aria-selected": String(desk.sub === k), text: t });
+        ui().on(btn, "click", () => { if (desk.sub === k) return; desk.sub = k; syncRoute(); paintIntel(); });
+        return btn;
       }));
-      const subBody = desk.sub === "overview" ? overviewView(pr) : desk.sub === "scouting" ? scoutingView(s, r, pr) : ratingsView(pr);
-      // the actions: Send Scout and the board button, with the reason when Send cannot act
+      // the actions: Send Scout (its cost), View Full Profile, the board star; the reason under them when Send cannot act
       const left = leftOf(looks);
       const reason = complete ? `His report is complete: ${REPORT_LOOKS} of ${REPORT_LOOKS} looks` : cur.st.points < r.cost ? NO_POINTS : r.can_send === false ? (r.why || "Not now") : null;
-      const send = el("button", { type: "button", id: "sc-send", class: "go-btn primary sc-send", text: `Send Scout · ${r.cost} Points${!complete && left <= SEND_LOOK ? " · Finishes His Report" : ""}`,
+      const send = el("button", { type: "button", id: "sc-send", class: "go-btn primary sc-send", text: `Send Scout · ${r.cost} Pts${!complete && left <= SEND_LOOK ? " · Finishes His Report" : ""}`,
         title: reason || `Spend ${r.cost} scouting points on one more look at ${r.name}`, ...(reason ? { disabled: "" } : {}) });
       ui().on(send, "click", () => sendScout(send));
       const on = !!r.on_board;
-      const boardBtn = el("button", { type: "button", id: "sc-board", class: "go-btn sc-board-btn", "aria-pressed": String(on), text: on ? "★ Remove from Board" : "☆ Add to Board" });
+      const boardBtn = el("button", { type: "button", id: "sc-board", class: "go-btn sc-board-btn", "aria-pressed": String(on), text: on ? "★ Remove From Board" : "☆ Add to Board" });
       ui().on(boardBtn, "click", () => toggleBoard(boardBtn));
-      const full = el("button", { type: "button", class: "go-link sc-full-profile", text: "View Full Profile" });
+      const full = el("button", { type: "button", class: "go-btn sc-full-profile", text: "View Full Profile" });
       ui().on(full, "click", () => openHim(s, r.pid));
+      let cards;
+      if (desk.sub === "looks") cards = [P.looksCard(s, b, pr, Math.min(REPORT_LOOKS, pr.looks != null ? pr.looks : looks), { reads: readsOf(s, r) })];
+      else if (desk.sub === "profile") cards = null;
+      else cards = P.scoutCards(s, b, pr).slice(0, 2);
       const fresh = el("div", {}, [
-        el("div", { class: "sc-who-big", "data-key": `who-${r.pid}` }, [avatar(p.avatar_seed || r.pid, "lg"),
-          el("div", { class: "sc-who-text" }, [el("div", { class: "sc-big-name", text: p.name }),
-            el("div", { class: "muted sc-big-line", text: `${p.position} · ${p.hometown.city}, ${p.hometown.state} · National Rank ${p.national_rank ? `#${p.national_rank}` : "Unranked"}` }),
-            el("div", { class: "go-stars sc-big-stars", text: stars(p.stars), "aria-label": `${p.stars} stars` })])]),
-        el("div", { class: "sc-boxes", "data-key": "boxes" }, [
-          box("potential", "Potential", potential ? gradePlain(potential) : [el("span", { class: "muted", text: "Not Read" })]),
-          box("need", "Team Need", [el("span", { text: needText, title: r.group ? `${r.group}: ${r.need > 0 ? `${plural(r.need, "spot")} to fill` : "your class is set there"}` : "" })]),
-          box("report", "Report", [el("span", { text: complete ? "Complete" : looks > 0 ? "In Progress" : "Not Started" })])]),
-        sub,
-        el("div", { class: "sc-sub-body", "data-key": `sub-${desk.sub}`, role: "tabpanel" }, [subBody]),
-        el("div", { class: "sc-actions", "data-key": "actions" }, [send, boardBtn]),
-        el("div", { class: "sc-actions-foot", "data-key": "foot" }, [reason ? el("span", { class: "muted small sc-why", text: reason }) : el("span", {}), full])]);
+        el("div", { class: "sc-hero", "data-key": `who-${r.pid}` }, [hero]),
+        el("div", { class: "pv-tabrow", "data-key": "tabrow" }, [sub, el("div", { class: "pv-acts sc-actions", "data-key": "actions" }, [send, full, boardBtn])]),
+        reason ? el("p", { class: "muted small sc-why", "data-key": "why", text: reason }) : null,
+        el("div", { class: "sc-sub-body pv-host", "data-key": `sub-${desk.sub}`, role: "tabpanel" }, [cards ? window.CFP.pv.grid(cards) : P.profileCards(s, b, me, pr)])]);
       ui().morph(body, fresh);
+    }
+    // this and last week's report lines on him: who looked and what moved, with the All Reports link
+    function readsOf(s, r) {
+      const lines = [];
+      for (const [wk, label] of [["this_week", "This Week"], ["last_week", "Last Week"]]) {
+        const items = [];
+        for (const g of (cur.v.reports && cur.v.reports[wk]) || []) for (const it of g.items || []) if (it.pid === r.pid && it.change)
+          items.push(el("li", { class: "small sc-read" }, [el("b", { text: `${g.area || g.scout}: ` }), cap(it.change)]));
+        lines.push(el("div", { class: "sc-reads-week", "data-key": `reads-${wk}` }, [el("h4", { class: "pv-kick", text: label }),
+          items.length ? el("ul", { class: "sc-reads" }, items) : el("p", { class: "muted small sc-no-reads", text: wk === "this_week" ? "No report lines on him this week." : "No report lines on him last week." })]));
+      }
+      const all = el("button", { type: "button", class: "go-link small sc-reports-open", "data-key": "all-reports", text: "All Reports" });
+      ui().on(all, "click", () => openReports(s, (r.flags && r.flags.length) || r.likes ? "flags" : "this_week"));
+      return [...lines, all];
     }
     async function sendScout(btn) {
       const r = sel.row;
@@ -445,9 +485,11 @@
       try { sel.pr = await api(s, `prospect/${encodeURIComponent(r.pid)}`); } catch (err) { /* the old read stands */ }
       paintIntel();
       // the Send that completed his report disabled itself: the focus moves on to the board button, never the page body
-      const a = document.activeElement;
-      if (!a || a === document.body || a.disabled) { const next = body.querySelector("#sc-board"); if (next) next.focus({ preventScroll: true }); }
-      cur.reload(r.pid);                              // the counts, the flags and every other row follow
+      const keepFocus = () => { const a = document.activeElement; if (!a || a === document.body || a.disabled) { const next = body.querySelector("#sc-board"); if (next) next.focus({ preventScroll: true }); } };
+      keepFocus();
+      // the counts, the flags and every other row follow; the browser may drop the focus off the disabled Send only now
+      // (its focus fix-up runs late), so the board button takes it again once the list has settled
+      Promise.resolve(cur.reload(r.pid)).then(() => requestAnimationFrame(keepFocus));
     }
     async function toggleBoard(btn) {
       const r = sel.row, p = sel.pr.public, on = !r.on_board;
@@ -470,66 +512,6 @@
     }
     return panel;
   }
-  // Ratings: your staff's grade words for every group as a bar over the six words (the range lit), never a number the
-  // scouting has not revealed; before a look, "Not Read"
-  function ratingsView(pr) {
-    const g = pr.our_grades || {}, details = pr.grade_details || {};
-    const rows = Object.keys(GRADE_NAMES).map((k) => {
-      const r = g[k];
-      const lo = r ? WORDS.indexOf(r[0]) : -1, hi = r ? WORDS.indexOf(r[1]) : -1;
-      const track = el("span", { class: "sc-skill-track", role: "img", "aria-label": `${GRADE_NAMES[k]}: ${r ? rangeText(r) : "not read"}` },
-        WORDS.map((w, i) => el("i", { class: lo >= 0 && i >= lo && i <= hi ? `on ${WORDS[hi].toLowerCase()}` : "", title: w })));
-      const d = details[k] || {};
-      const what = d.labels ? `Like: ${d.labels.join(", ")}` : Object.entries(d.ratings || {}).map(([n, v]) => `${cap(n)} ${v[0] === v[1] ? v[0] : `${v[0]}–${v[1]}`}`).join(" · ");
-      // what the read looks like on the game's scale (50 is the middle Power 4 starter): on hover, as the profile's grade tips
-      return el("li", { class: "sc-skill", "data-group": k, ...(r && what ? { title: `${GRADE_NAMES[k]} ${rangeText(r)} looks like: ${what}` } : {}) }, [
-        el("span", { class: "sc-skill-name", text: GRADE_NAMES[k] }), track,
-        el("span", { class: "sc-skill-val" }, r ? gradePlain(r) : [el("span", { class: "muted", text: "Not Read" })])]);
-    });
-    return el("div", { class: "sc-ratings" }, [el("div", { class: "sc-sub-head" }, [el("b", {}, ["Skill Breakdown ", ui().tip(pr.looks >= REPORT_LOOKS ? "His report is complete: these are your staff's final grades. Hover a grade for what it looks like in ratings." : "Ranges narrow with every look; hover a grade for what it looks like in ratings.", "Skill Breakdown")]),
-        el("span", { class: "muted small", text: "Your Staff's Read" })]),
-      el("ul", { class: "sc-skills" }, rows)]);
-  }
-  // Overview: the profile's summary (where he is from, his build, rankings, where he stands, the evaluation)
-  function overviewView(pr) {
-    const p = pr.public, ev = pr.evaluation || {};
-    const fact = (k, label, value) => (value ? el("div", { class: "sc-fact", "data-k": k }, [el("dt", { text: label }), el("dd", { text: value })]) : null);
-    const top = (p.schools || []).slice(0, 3).map((x) => x.name).join(", ");
-    const lists = [["Strengths", ev.strengths], ["Solid", ev.solid], ["Concerns", ev.weaknesses]].filter(([, xs]) => xs && xs.length);
-    const team = (slug) => (window.CFP.teamsBySlug && window.CFP.teamsBySlug[slug] && window.CFP.teamsBySlug[slug].name) || slug;
-    return el("div", { class: "sc-overview" }, [
-      el("dl", { class: "sc-facts" }, [fact("home", "Hometown", `${p.hometown.city}, ${p.hometown.state}`), fact("school", "High School", p.high_school),
-        fact("build", "Build", [feet(p.height), p.weight ? `${p.weight} lb` : ""].filter(Boolean).join(", ")), fact("type", "Archetype", p.archetype),
-        fact("ranks", "Rankings", `#${p.national_rank} Overall · #${p.position_rank} ${p.position} · #${p.state_rank} in ${p.hometown.state}`),
-        fact("status", "Status", p.signed ? `Signed with ${team(p.signed)}` : p.committed ? `Committed to ${team(p.committed)}` : "Uncommitted"),
-        fact("schools", "His Top Schools", top || "None Yet"),
-        fact("comp", "Public Comp", pr.public_comp ? `${pr.public_comp.name}, ${pr.public_comp.school}` : "")]),
-      ...lists.map(([t, xs]) => el("div", { class: "sc-eval-list" }, [el("b", { class: "small", text: t }), el("ul", {}, xs.map((x) => el("li", { class: "small", text: x })))]))]);
-  }
-  // Scouting: his looks, the flags, a coordinator's word, our comp, and this and last week's reads on him
-  function scoutingView(s, r, pr) {
-    const looks = Math.min(REPORT_LOOKS, pr.looks != null ? pr.looks : r.looks || 0);
-    const flags = [...new Set([...(r.flags || []), ...(pr.public.find ? [pr.public.find] : []), ...(pr.public.generational ? ["generational"] : [])])].filter((f) => FLAGS[f]);
-    const likes = pr.likes || r.likes;
-    const reads = [];
-    for (const [wk, label] of [["this_week", "This Week"], ["last_week", "Last Week"]]) {
-      for (const g of (cur.v.reports && cur.v.reports[wk]) || []) for (const it of g.items || []) if (it.pid === r.pid && it.change)
-        reads.push(el("li", { class: "small sc-read" }, [el("b", { text: `${label} · ${g.area || g.scout}: ` }), cap(it.change)]));
-    }
-    const all = el("button", { type: "button", class: "go-link small sc-reports-open", text: "All Reports" });
-    ui().on(all, "click", () => openReports(s, flags.length || likes ? "flags" : "this_week"));
-    const more = leftOf(looks);
-    return el("div", { class: "sc-scouting" }, [
-      el("div", { class: "sc-sc-line" }, [el("span", { class: "sc-trips sc-trips-lg", role: "img", "aria-label": `${looksText(looks)} of ${REPORT_LOOKS}` }, meterSegs(looks)),
-        el("b", { text: `${fmtLooks(looks)} of ${REPORT_LOOKS} Looks` }),
-        el("span", { class: "muted small", text: looks >= REPORT_LOOKS ? "His report is complete." : looks > 0 ? `${fmtLooks(more)} more ${more === 1 ? "look finishes" : "looks finish"} his report.` : "No look yet: send a scout, or put one on his area." })]),
-      flags.length || likes ? el("div", { class: "go-tags sc-sc-flags" }, [...flags.map(flagBadge), likes ? likesTag(likes) : null])
-        : el("p", { class: "muted small sc-no-flags", text: "No flags on him: your staff flags gems, bust risks and generational talents once his report is complete." }),
-      likes ? el("p", { class: "small sc-likes-line", text: `${cap(likes.text)}.` }) : null,
-      pr.our_comp ? el("p", { class: "small" }, [el("b", { text: "Our comp: " }), `${pr.our_comp.name}, ${pr.our_comp.school} (${pr.our_comp.position}${pr.our_comp.overall ? `, ${pr.our_comp.overall} OVR` : ""})`]) : null,
-      reads.length ? el("ul", { class: "sc-reads" }, reads) : el("p", { class: "muted small sc-no-reads", text: "No report lines on him this week or last." }),
-      all]);
-  }
   // ----- Scouting Operations: a bar that opens the staff rows (area dropdown, contract, narrowed bar, coverage) -----
   const uncovered = (v, rv) => {
     const covered = new Set(v.scouts.map((m) => m.area).filter(Boolean));
@@ -541,7 +523,12 @@
   }
   function opsBar(s, v, rv) {
     const list = el("ul", { class: "sc-scout-list" });
-    const draw = (x) => el("ul", { class: "sc-scout-list" }, x.scouts.map((m) => scoutRow(s, m, rv, list)));
+    // one card a staff member; an open recruiter spot (fewer than RECRUITERS) shows as a card too
+    const draw = (x) => el("ul", { class: "sc-scout-list" }, [...x.scouts.map((m) => scoutRow(s, m, rv, list)),
+      ...Array.from({ length: Math.max(0, RECRUITERS - x.scouts.filter((m) => String(m.role) === "Recruiter").length) }, (_, i) =>
+        el("li", { class: "sc-scout sc-open-spot", "data-key": `open-${i}` }, [avatar(`open-${i}`, "sm"), el("div", { class: "sc-scout-main" }, [
+          el("div", { class: "sc-scout-line" }, [el("b", { class: "sc-scout-name", text: "Open Spot" }), el("span", { class: "muted small sc-role", text: "Recruiter" })]),
+          el("p", { class: "muted small", text: "Hire one in the offseason." })])]))]);
     list.append(...[...draw(v).children]);           // a copy of the live collection: moving a node while walking it skips the next
     const note = el("p", { class: "muted small sc-open" }, [openText(v, rv)]);
     const summary = el("span", { class: "muted small sc-ops-summary" });

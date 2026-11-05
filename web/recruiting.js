@@ -173,7 +173,8 @@
   // his History, one line an entry, newest first: "Week 3 · Message · Playing Time", "Week 4 · Call · Program Prestige · He lit up",
   // "Week 5 · Offer · 120 NIL", "Week 6 · Committed to Georgia". A call's or visit's pitch folds into that call's line.
   const HISTORY_WORDS = { commit: "Committed to", hard: "Hard commit to", flip: "Flipped to", decommit: "Decommitted from", signed: "Signed with", leaning_fcs: "Leaning toward" };
-  function historyLines(events, me) {
+  // as items: { week, text (the line without its week), kind (a contact's or pitch's action, else the log's kind) }
+  function historyItems(events, me) {
     const evs = events || [];
     const folded = new Set();
     const actionOf = new Map();
@@ -205,19 +206,14 @@
       else if (e.kind === "promise_broken") bits = [`He heard you promised the same spot to ${e.about}`];
       else if (HISTORY_WORDS[e.kind]) bits = [`${HISTORY_WORDS[e.kind]} ${teamName(e.school)}`];
       else bits = [`${eventWord(e)} ${e.school ? teamName(e.school) : ""}`.trim()];
-      return [`Week ${e.portal_week ?? e.week}`, ...bits].filter(Boolean).join(" · ");
+      return { week: e.portal_week ?? e.week, text: bits.filter(Boolean).join(" · "), kind: e.kind === "contact" || e.kind === "pitch" ? e.action || actionOf.get(i) || "pitch" : e.kind };
     };
     return evs.map((e, i) => (folded.has(i) ? null : line(e, i))).filter(Boolean);
   }
+  // the History as text lines ("Week 4 · Call · Program Prestige · He lit up")
+  function historyLines(events, me) { return historyItems(events, me).map((x) => [`Week ${x.week}`, x.text].filter(Boolean).join(" · ")); }
   // the Office (web/office.js) shares the ladder, the portraits, the week's What Changed card and the event words
   window.CFP.recruiting = { standingOf, byChance, historyLines, avatar, reportCard, eventWord };
-
-  function bar(sd) {
-    const wrap = el("div", { class: "go-bar", role: "img", "aria-label": sd.odds ? `Chance to land: ${sd.odds}` : sd.text });
-    if (sd.lo != null) wrap.append(el("span", { class: "go-bar-range", style: `left:${100 * sd.lo}%;width:${100 * (sd.hi - sd.lo)}%` }));
-    wrap.append(el("span", { class: `go-bar-fill ${sd.tone}`, style: `width:${sd.fill ? Math.max(2, 100 * sd.fill) : 0}%` }));
-    return wrap;
-  }
 
   // a topic in a sentence: "playing time", "NIL"
   const topicWord = (t) => (t === "nil" ? "NIL" : (PITCH_NAMES[t] || t).toLowerCase());
@@ -347,7 +343,6 @@
     ["offers", "Offers Out / Need", "Your open offers at each position against the spots to fill"],
     ["left", "Only What's Short", "Just the positions still short, by how many"]];
   const GROUP_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P"];
-  const GRADE_NAMES = { athleticism: "Athleticism", size_strength: "Size", technique: "Technique", football_iq: "IQ", potential: "Potential", coachability: "Coachability" };
   // a scouted prospect's grades in one line (his card and the top of his profile)
   const clsWord = (c) => (c && c.endsWith("RS") ? `RS ${c.slice(0, -2)}` : c);   // FRRS -> "RS FR"
   // a scouting word as a colored pill; the class is the word lower-cased ("All-American" -> all-american)
@@ -355,27 +350,6 @@
   // a [low, high] pair of words: one tag when both ends match, else "low to high"
   const wordRange = (r) => (r[0] === r[1] ? [wordTag(r[0])] : [wordTag(r[0]), " to ", wordTag(r[1])]);
   const wordText = (r) => (r[0] === r[1] ? r[0] : `${r[0]} to ${r[1]}`);
-  // the line under the profile's grade cards: a complete report's single final grades, or how far the ranges have narrowed
-  function gradesNote(looks) {
-    const left = 3 - looks;
-    const hover = "Tap or hover a grade to see what it looks like in ratings.";
-    if (left <= 0) return `${fmtLooks(looks)} of 3 looks: his report is complete: these are your staff's final grades. ${hover} A read can still be wrong; the truth shows once he is on your roster.`;
-    return `${fmtLooks(looks)} of 3 looks${left <= 1 ? ": one trip finishes his report" : ""}. ${hover} Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster.`;
-  }
-  // a grade as plain bold words in their tone color ("Weak–Fair" on one line), for the pane's Scouting sub-tab cards
-  const gradeWord = (w) => el("b", { class: `go-grade ${String(w).toLowerCase()}`, text: w });
-  const gradePlain = (r) => (r[0] === r[1] ? [gradeWord(r[0])] : [gradeWord(r[0]), el("span", { class: "go-grade-dash", text: "–" }), gradeWord(r[1])]);
-  // the looks as a 3-segment bar, filled in halves (as on the Scouting tab)
-  const looksBar = (looks) => el("span", { class: "sc-trips", role: "img", "aria-label": `${fmtLooks(looks)} of 3 looks` },
-    [0, 1, 2].map((i) => el("i", { class: `sc-trip${looks >= i + 1 ? " on" : looks > i ? " half" : ""}` })));
-  // the compact Scouted strip: one chip per grade group (tap or hover shows what it looks like in ratings, via gradeTips),
-  // the ⓘ beside the label carrying the note about the looks and the final grades
-  function scoutLine(pid, grades, looks, details) {
-    const strip = el("div", { class: "go-scouted" }, [el("b", { text: "Scouted" }), ui().tip(gradesNote(looks), "Scouted"),
-      ...["potential", "athleticism", "technique", "football_iq", "size_strength", "coachability"].filter((k) => grades[k]).map((k) => el("span", { class: "go-gchip", "data-group": k }, [el("span", { class: "muted", text: `${GRADE_NAMES[k]} ` }), el("b", {}, wordRange(grades[k]))]))]);
-    if (details) gradeTips(strip, pid, grades, details);
-    return strip;
-  }
   function needsMode() { try { return localStorage.getItem("cfp-needs-mode") || "need"; } catch (e) { return "need"; } }
   function needText(mode, g, r) {
     const spots = r.need + r.commits;                       // the spots this class fills at the position
@@ -430,14 +404,17 @@
     quiet: "He felt ignored: call or visit to warm him back up. Contacts count half and he will not visit until then",
   };
   // his story in a sentence: what it means for recruiting him (the chip's title, and a line under the Profile's rows)
+  // his story in plain words; `detail` is what the story names (the legacy school, the hero's state, the mate)
   const STORY_TIPS = {
-    legacy: "His family has history at one program: it starts ahead, and its lowball or hollow promise costs double.",
-    hero: "His home state wants him to stay: schools there pull harder, and out-of-state pitches land softer unless they are playing time or NIL.",
-    package: "He comes with a teammate: he commits only where his teammate holds an offer, and they commit together.",
-    two_sport: "He could go pro in baseball on signing day: playing time pitches and NIL over his ask lower the risk.",
-    comeback: "He is coming back from an injury and is rated under what he is: schools that reached him early keep his loyalty.",
-    bloomer: "He is growing into a bigger prospect than his rating says: his stars jump midseason.",
+    legacy: (d, yours) => yours ? `His family played at ${d || "your school"}, so you start with a head start on everyone else. If you lowball him or break a promise, it stings twice as much.`
+      : `His family played at ${d || "one school"}, so ${d ? "they start" : "it starts"} with a head start on everyone else. If ${d ? "they lowball" : "it lowballs"} him or ${d ? "break" : "breaks"} a promise, it stings twice as much.`,
+    hero: () => "His home state wants him to stay. Schools in his state have the edge, and pitches from out of state land softer unless they sell playing time or NIL.",
+    package: () => "He comes with a teammate. He only commits where his teammate has an offer too, and they commit together.",
+    two_sport: () => "He could sign a pro baseball contract instead. Playing time pitches and NIL over his ask make that less likely.",
+    comeback: () => "He's coming back from an injury, so his rating sells him short. Schools that reached out early keep an edge with him.",
+    bloomer: () => "He's still growing into his game. His rating will jump during the season.",
   };
+  const storyTip = (tr) => (STORY_TIPS[tr.story_key] ? STORY_TIPS[tr.story_key](tr.story_detail, tr.story_yours) : null);
   const COOLED_WHY = { lowball: "Cooled: raise your offer first", promise: "Cooled: give him time", quiet: "Cooled: he wants to hear from you", game: "Cooled: he saw you lose" };
   // his commit style in a sentence: what it means for recruiting him (the chip's title, and a line under the Profile's rows)
   const STYLE_TIPS = {
@@ -466,29 +443,292 @@
     return out.childElementCount ? out : null;
   }
 
-  // his list as a race: one lane a school, its pill as far along as its pull (the leader at the right),
-  // in the school's colors, yours ringed, with this week's move as an arrow
-  function race(b, me) {
+  // ----- his profile, one view in three places: the board's pane, the Prospect Profile popup and the Scouting Center ---------
+  // b: his board line (prospects.board_row; a profile carries it as `row`); p: his profile (prospects.profile), null while it
+  // loads. The pieces are web/profileview.js's (window.CFP.pv); these fill them from the board's data.
+  const PV = () => window.CFP.pv;
+  const TONES = { good: "good", warn: "warn", bad: "bad" };
+  const attr = (cond, attrs) => (cond ? attrs : {});
+  // the header: his status chip, his name (nameNode: the pane's button or the popup's heading), stars, Pos | Height | Weight,
+  // Hometown · #rank; Nat. Rank, Pos. Rank, Class; Your Chance in words with its bar. opts.stats / opts.badge replace those
+  // (the Scouting Center: Team Need, Potential); opts.chip replaces the status chip; opts.back: the phone sheet's Back.
+  function heroOf(b, me, opts = {}) {
+    const portal = !!b.portal;
+    const chip = opts.chip || chipOf(b, me, portal);
+    const tag = el("span", { class: `go-chip pv-tag ${chip.tone || ""}`.trim(), "data-key": "chip", text: chip.text });
+    const sd = standingOf(b, me);
+    const pos = b.display_pos || b.position;
+    const badge = opts.badge || { kicker: "Your Chance", value: sd.odds || sd.word, tone: TONES[sd.tone] || "", fill: sd.fill || 0 };
+    const stats = opts.stats || [
+      portal ? { key: "portal", label: "Portal Rank", value: b.portal_rank ? `#${b.portal_rank}` : "—" } : { key: "nat", label: "Nat. Rank", value: b.national_rank ? `#${b.national_rank}` : "—" },
+      { key: "pos", label: "Pos. Rank", value: b.pos_rank ? `#${b.pos_rank}` : "—", sub: pos },
+      { key: "class", label: "Class", value: portal ? clsWord(b.cls) || "—" : b.class_of ? String(b.class_of) : "—" }];
+    const where = portal ? `From ${b.from_name}${b.portal_rank ? ` · #${b.portal_rank} in the Portal` : ""}` : `${place(b.hometown)}${b.national_rank ? ` · #${b.national_rank}` : ""}`;
+    return PV().hero({ avatar: avatar(b.id, "lg"), tag, nameNode: opts.nameNode, back: opts.back, stars: b.stars ? stars(b.stars) : null, starsLabel: b.stars ? `${b.stars} stars` : null,
+      pos, height: b.height_display, weight: b.weight_display, place: where, stats, badge });
+  }
+  // a label and its value as one row (the snapshot's His Ask, the Background card)
+  const kvRow = (key, label, value, hint) => el("div", { class: "pv-row", "data-key": key }, [el("span", { class: "pv-row-k", text: label }),
+    el("span", { class: "pv-row-v" }, [el("b", { class: value ? "" : "muted", text: value || PV().NOT_KNOWN }), hint ? el("span", { class: "pv-hint muted", text: hint }) : null])]);
+  const compText = (c) => `${c.name}, ${c.school} (${c.position}${c.overall ? `, ${c.overall} OVR` : ""})`;
+  // the comp, once: ours once his report is complete; before that, what the third look brings
+  function compLine(p, looks) {
+    if (p && p.our_comp) return el("p", { class: "pv-foot go-comp", "data-key": "comp" }, [el("b", { text: "Comp: " }), compText(p.our_comp)]);
+    return el("p", { class: "pv-foot muted go-comp", "data-key": "comp", text: looks >= 3 ? "Comp: nobody close enough among the starters." : "Comp after his third look." });
+  }
+
+  // ----- Overview: the Recruiting Battle, the Recruit Snapshot, the Scout's Summary -----
+  // a school's place in his race, in words: the leader is the Favorite; then Contender, In the Mix, Long Shot; a committed
+  // recruit's other schools read their chance to flip him (p.flip), never a number
+  function battleWord(x, i, rows, b, flip) {
+    const holder = b.signed || b.committed;
+    if (holder) return x.school === holder ? (b.signed ? "Signed" : b.hard ? "Hard Commit" : "Committed") : b.signed ? "Missed Out" : `Flip: ${flip[x.school] || "None"}`;
+    if (x.offered === false) return "No Offer";
+    if (i === 0) return "Favorite";
+    return x.bar >= rows[0].bar - 0.1 ? "Contender" : x.bar >= 0.15 ? "In the Mix" : "Long Shot";
+  }
+  const ARROWS = (x) => (x.new ? ["★", "New on his list"] : x.move > 0 ? ["↑", `Up ${x.move}`] : x.move < 0 ? ["↓", `Down ${-x.move}`] : ["—", "No change"]);
+  // a committed or signed recruit with his profile in hand: the banner, then every other school on his list with its chance
+  // to flip him in words (p.flip), your own row marked, sorted by that chance; a commit to you nobody is close to says so in a line
+  function rivalsCard(b, me, p) {
+    const holder = b.signed || b.committed;
+    const flip = Object.fromEntries((((p.flip || {}).rivals) || []).map((r) => [r.school, r.word]));
+    const listed = (p.public.schools || []).filter((x) => x.school !== holder).sort((a, c) => (c.pct ?? -1) - (a.pct ?? -1));
+    const committed = !b.signed;
+    const quiet = committed && holder === me && listed.every((x) => (flip[x.school] || "None") === "None");
+    const title = b.signed ? "Who Else Offered" : holder === me ? "Who Else Is Calling" : "His Chance to Flip to Each";
+    const parts = [commitBanner(b, me, p)];
+    if (quiet) parts.push(el("p", { class: "muted go-nobody-close", "data-key": "quiet", text: "Nobody is close to pulling him away." }));
+    else if (!listed.length) parts.push(el("p", { class: "muted pv-battle-empty", "data-key": "empty", text: "No other school recruited him." }));
+    else parts.push(el("div", { class: "pv-battle pv-rivals", role: "list", "data-key": "rivals" }, listed.map((x) => {
+      const you = x.school === me;
+      const word = b.signed ? "" : x.pct == null ? "No Offer" : flip[x.school] || "None";
+      return el("div", { class: `pv-battle-row pv-rival ${you ? "you" : ""}`.trim(), role: "listitem", "data-key": x.school, "data-school": x.school }, [
+        window.CFP.teamPill(x.school), el("span", { class: "pv-battle-name" }, [el("b", { text: x.name }), you ? el("span", { class: "muted small", text: " (Your School)" }) : null]),
+        el("span", { class: "pv-battle-w", text: word }),
+        el("span", { class: "muted small pv-battle-marks", text: [x.offered ? "Offer" : "", x.visit ? (x.visit.done ? "Visited" : `Visit Wk ${x.visit.week}`) : ""].filter(Boolean).join(" · ") })]);
+    })));
+    return PV().card(title, parts, { key: "battle", cls: "pv-battle-card" });
+  }
+  function battleCard(b, me, p, opts = {}) {
+    if ((b.signed || b.committed) && p && p.public && !opts.arrows) return rivalsCard(b, me, p);
     const rows = (b.list || []).filter((x) => x.bar != null);
-    if (!rows.length) return el("div", { class: "go-race empty" }, [el("span", { class: "muted small", text: b.signed || b.committed ? "His race is over." : "No school is on his list yet." })]);
-    return el("div", { class: "go-race", role: "list", "aria-label": "His list: each school's pull, the leader at the right" }, rows.map((x) => {
+    const flip = Object.fromEntries((((p && p.flip) || {}).rivals || []).map((r) => [r.school, r.word]));
+    const holder = b.signed || b.committed;
+    const parts = [];
+    if (holder) parts.push(commitBanner(b, me, p));
+    if (!rows.length) parts.push(el("p", { class: "muted pv-battle-empty", text: holder ? "His race is over." : "No school is on his list yet." }));
+    else parts.push(el("div", { class: "pv-battle", role: "list", "aria-label": "His list: each school's pull", "data-key": "battle" }, rows.map((x, i) => {
       const you = x.you || x.school === me;
-      const t = window.CFP.teamsBySlug[x.school] || {};
-      const col = (t.colors || {}).primary;
-      const at = Math.round(Math.max(0, Math.min(1, x.bar)) * 100);
-      const arrow = x.new ? " ★" : x.move > 0 ? " ▲" : x.move < 0 ? " ▼" : "";
-      const moved = x.new ? "new on his list" : x.move > 0 ? `up ${x.move}` : x.move < 0 ? `down ${-x.move}` : "no change";
-      // a school without an offer in draws hollow: an outline in its color, so the race agrees with the standing words
-      const hollow = x.offered === false;
-      return el("div", { class: "go-race-lane", role: "listitem" }, [el("span", { class: `go-race-pill ${you ? "you" : ""} ${hollow ? "unoffered" : ""} ${x.move > 0 || x.new ? "up" : x.move < 0 ? "down" : ""}`,
-        style: `left: ${at}%; transform: translateX(-${at}%);${col ? (hollow ? ` border-color:${col}; color:${col};` : ` background:${col}; color:${inkOn(col)};`) : ""}`,
-        title: `${x.rank != null ? `#${x.rank} ` : ""}${x.name}${you ? " (you)" : ""}${hollow ? " · no offer" : ""} · ${moved} since last week${x.why ? ` · ${WHY[x.why] || x.why}` : ""}`,
-        text: `${x.rank != null ? `${x.rank}. ` : ""}${t.abbreviation || x.name}${arrow}` })]);
+      const word = battleWord(x, i, rows, b, flip);
+      const [arrow, moved] = ARROWS(x);
+      return el("div", { class: `pv-battle-row ${you ? "you" : ""}`.trim(), role: "listitem", "data-key": x.school, "data-school": x.school,
+        title: `${x.name}${x.offered === false ? " · no offer" : ""}${opts.arrows ? "" : ` · ${moved} since last week`}${x.why ? ` · ${WHY[x.why] || x.why}` : ""}` }, [
+        el("b", { class: "pv-battle-n", text: String(x.rank != null ? x.rank : i + 1) }), window.CFP.teamPill(x.school),
+        el("span", { class: "pv-battle-name" }, [el("b", { text: x.name }), you ? el("span", { class: "muted small", text: " (Your School)" }) : null]),
+        opts.arrows ? null : PV().bar({ lo: 0, hi: 0, mid: Math.round(100 * Math.max(0, Math.min(1, x.bar))), tone: you ? "good" : "blue", words: [word, word] }),
+        el("span", { class: `pv-battle-w ${word === "Favorite" || word === "Committed" || word === "Signed" || word === "Hard Commit" ? "good" : ""}`.trim() },
+          [word, opts.arrows ? el("span", { class: `pv-arrow ${x.move > 0 || x.new ? "up" : x.move < 0 ? "down" : ""}`.trim(), title: moved, "aria-label": moved, text: ` (${arrow})` }) : null])]);
+    })));
+    return PV().card(opts.title || "Recruiting Battle", parts, { key: opts.key || "battle", cls: "pv-battle-card", wide: opts.wide });
+  }
+  // a committed or signed recruit: the school in its colors and his chance to flip, in words
+  function commitBanner(b, me, p) {
+    const holder = b.signed || b.committed;
+    const t = window.CFP.teamsBySlug[holder] || {};
+    const col = t.colors || {};
+    const bg = holder === "FCS" ? "var(--panel)" : col.primary || "var(--panel)";
+    const flip = (p && p.flip) || { word: "None", rivals: [] };
+    const leader = flip.rivals.length ? flip.rivals[0].name : null;
+    const sub = b.pro ? "He took the baseball money." : b.signed ? "Signed: his recruitment is over."
+      : b.hard ? "Hard commit: he is not taking calls."
+      : flip.word === "None" || !leader ? "Solid: nobody is close to pulling him away."
+      : flip.word === "Slim" ? `Hearing out ${leader}: a slim chance he flips before signing day.`
+      : flip.word === "Real" ? `${leader} is working him hard: a real chance he flips.`
+      : `${leader} is close to flipping him.`;
+    return el("div", { class: "go-commit rc-status", "data-key": "commit", style: holder === "FCS" ? "" : `background:${bg};color:${inkOn(col.primary)};border-color:${col.secondary || bg}` }, [
+      el("div", { class: "go-display m", text: `${b.signed ? "Signed With" : b.hard ? "Hard Commit to" : "Verbal Commit to"} ${teamName(holder)}` }), el("div", { class: "small", text: sub })]);
+  }
+  function snapshotCard(s, b, me) {
+    const sd = standingOf(b, me);
+    const rowsOf = (b.list || []).filter((x) => x.bar != null);
+    const mineRow = rowsOf.find((x) => x.you || x.school === me);
+    const at = mineRow ? (mineRow.rank != null ? mineRow.rank : rowsOf.indexOf(mineRow) + 1) : null;
+    const ask = askWord(b);
+    const looks = Math.min(3, b.looks || 0);
+    const cell = (k, label, val) => el("div", { class: "go-stat pv-kv", "data-key": `cell-${k}`, "data-cell": k }, [el("div", { class: "go-kicker muted", text: label }), el("div", { class: "go-stat-val", text: val })]);
+    const cells = el("div", { class: "go-strip pv-kv3", "data-key": "cells" }, [
+      cell("offer", "Your Offer", b.offered ? `${b.nil || 0} NIL` : "None Yet"),
+      cell("list", "His List", at ? `#${at} of ${Math.max(b.schools || 0, rowsOf.length)}` : b.offered && !(b.signed || b.committed) ? "Outside His Top 5" : "Not on It"),
+      cell("looks", "Scouted", looks ? `${fmtLooks(looks)} of 3 Looks` : "Not Yet")]);
+    // his priorities: a known one shows your program's case on it as a bar and a word; one not known yet says so
+    const known = b.priorities_known || [];
+    const ORD = ["First", "Second", "Third"];
+    const pri = el("div", { class: "pv-pri", "data-key": "priorities" }, [0, 1, 2].map((i) => {
+      const t = known[i];
+      if (!t) return el("div", { class: "pv-pri-row", "data-key": `pri-${i}` }, [el("span", { class: "pv-pri-k", text: `${ORD[i]} Priority` }),
+        el("span", { class: "pv-pri-v" }, [el("b", { class: "muted", text: PV().NOT_KNOWN }), el("span", { class: "pv-hint muted", text: "A call may reveal it." })])]);
+      const sv = b.strength ? b.strength[t] : null, w = caseWord(b, t);
+      return el("div", { class: "pv-pri-row", "data-key": `pri-${i}`, ...attr(w, { title: `Your program's case on ${PITCH_NAMES[t] || t}: ${w}` }) }, [el("span", { class: "pv-pri-k", text: PITCH_NAMES[t] || t }),
+        PV().bar(sv == null ? null : { lo: 0, hi: 0, mid: Math.round(100 * Math.max(0, Math.min(1, sv))), tone: w === "Strong" ? "good" : w === "Weak" ? "bad" : "warn", words: [w, w] }),
+        el("span", { class: "muted small pv-pri-w", text: w || "" })]);
     }));
+    const tags = tagList(s, b, me);
+    return PV().card("Recruit Snapshot", [cells,
+      el("div", { class: `go-standing-text ${sd.tone}`, "data-key": "standing", text: sd.text }),
+      b.no_room ? el("p", { class: "go-warn small rc-no-room", role: "note", "data-key": "no-room", text: b.no_room.tip }) : null,
+      sd.odds ? el("div", { class: "muted small", "data-key": "odds", text: `${sd.odds}${sd.certainty ? ` · ${sd.certainty}${sd.certainty !== "Solid Read" ? ": the range narrows as signing day nears" : ""}` : ""}` }) : null,
+      el("h4", { class: "pv-kick", "data-key": "pri-kick", text: "Priorities" }), pri,
+      kvRow("ask", "His Ask", ask ? `He Wants ${ask.replace(/^about/, "About")}` : null),
+      el("div", { class: "go-tags go-badges", "data-key": "tags", ...attr(!tags.length, { hidden: "" }) }, tags)], { key: "snapshot", cls: "pv-snapshot" });
+  }
+  function overviewCards(s, b, me, p) {
+    const summary = p ? PV().summaryCard(p.report) : PV().card("Scout's Summary", [el("p", { class: "muted go-loading", text: "Loading his report…" })], { wide: true, key: "summary" });
+    return PV().grid([battleCard(b, me, p), snapshotCard(s, b, me), summary]);
+  }
+  // what stands out about him, as small tags: the staff's finds, need, offer, mood, commitment, his known priorities and
+  // this week's cue, his known traits, a coordinator's word, his visit and (a transfer) his role
+  function cueOf(s, b) {
+    const hw = view.heard[`${s.id}:${b.id}`];
+    const c = b.scene ? { topics: b.scene.cue ? b.scene.cue.topics : [], action: b.scene.action } : hw && hw.week === s.current_week ? hw : { topics: [] };
+    return { topics: c.topics, title: cueTitle(c.action) };
+  }
+  function tagList(s, b, me) {
+    const out = [...(badges(b, me) || { children: [] }).children];
+    for (const t of b.priorities_known || []) out.push(el("span", { class: "go-tag", "data-key": `pri:${t}`, text: `★ ${PITCH_NAMES[t]}`, title: "He told you he cares about this" }));
+    const cue = cueOf(s, b);
+    for (const t of cue.topics) if (!(b.priorities_known || []).includes(t)) out.push(el("span", { class: "go-tag cue", "data-key": `pri:${t}`, text: `☆ ${PITCH_NAMES[t] || t}`, title: cue.title }));
+    const tr = b.traits || {};
+    if (tr.personality) out.push(el("span", { class: "go-tag", "data-key": "trait:personality", text: tr.personality, title: "His personality: how he sounds on a call and how he reacts to you" }));
+    if (tr.decider) out.push(el("span", { class: "go-tag", "data-key": "trait:decider", text: `Decides: ${tr.decider}`, title: "Who makes the final call on where he goes" }));
+    if (tr.story_key) out.push(el("span", { class: `go-tag ${tr.story_key === "two_sport" && /High$/.test(tr.story_detail || "") ? "warn" : ""}`.trim(), "data-key": "trait:story",
+      text: tr.story_detail ? `${tr.story} · ${tr.story_detail}` : tr.story, title: storyTip(tr) || "His story" }));
+    if (tr.style_key) out.push(el("span", { class: "go-tag", "data-key": "trait:style", text: tr.commit_style, title: STYLE_TIPS[tr.style_key] || "How he commits" }));
+    if (b.twist) out.push(el("span", { class: "go-tag warn", "data-key": "twist", text: b.twist.label, title: b.twist.line || TWIST_TIP }));
+    if (b.likes) out.push(el("span", { class: "go-tag good go-likes", "data-key": "likes", text: likesText(b.likes), title: likesLine(b.likes) }));
+    if (b.visit) out.push(el("span", { class: "go-tag", "data-key": "visit", text: b.visit.done ? "Visited" : `Visit Wk ${b.visit.week}` }));
+    if (b.portal && b.role) out.push(el("span", { class: `go-tag ${b.role === "Would Start" ? "good" : b.role === "Next in Line" ? "warn" : "muted"}`, "data-key": "role", text: b.role, title: "Where he would sit on your depth chart next season" }));
+    for (const n of out) if (!n.dataset.key) n.dataset.key = tagKey(n.textContent);
+    return out;
+  }
+  // a tag's identity for a keyed patch: the kind, so a changed number ("Offered · 150 NIL") patches in place
+  function tagKey(text) {
+    const t = text.trim();
+    if (/^(Offered)/.test(t)) return "offered";
+    if (/^(Need \d+|Full)$/.test(t)) return "need";
+    if (/^(Verbal|Hard Commit)/.test(t)) return "commit";
+    return t;
+  }
+
+  // ----- Scouting: the Scouting Report and Attributes side by side, Looks & Uncertainty across under them -----
+  // opts.send: a Send button for the report card's foot; opts.link: "Reports on the Scouting Tab"; opts.reads: report lines
+  // (the Scouting Center's this and last week); opts.extra: more nodes for the Looks card (the popup's staff button)
+  // the report's ⓘ: what the grades are (final once his report is complete), and that a grade shows what it looks like
+  function scoutTip(looks) {
+    const hover = "Tap or hover a grade to see what it looks like in ratings.", trips = "A trip is one look; a week in a scout's area is half a look, up to two.";
+    if (looks >= 3) return `${fmtLooks(looks)} of 3 looks: his report is complete: these are your staff's final grades. ${hover} A read can still be wrong; the truth shows once he is on your roster. ${trips}`;
+    return `${fmtLooks(looks)} of 3 looks${3 - looks <= 1 ? ": one trip finishes his report" : ""}. ${hover} Ranges narrow with every look, but a read can be wrong; the truth shows once he is on your roster. ${trips}`;
+  }
+  function looksLine(looks) {
+    if (looks >= 3) return null;
+    const left = 3 - looks;
+    return el("p", { class: "muted small pv-looks-line", "data-key": "looks-line", text: looks <= 0 ? "No look yet: send a scout, or put a staff member on his area."
+      : left <= 1 ? "One more look finishes his report." : `${fmtLooks(left)} more looks finish his report.` });
+  }
+  function scoutCards(s, b, p, opts = {}) {
+    const looks = Math.min(3, p && p.looks != null ? p.looks : b.looks || 0);
+    const rep = p ? p.report : null;
+    const tips = (node) => { if (p && p.our_grades && p.grade_details) gradeTips(node, b.id, p.our_grades, p.grade_details); };
+    const potTone = (rep && rep.potential_tone) || "good";
+    const report = PV().reportCard(rep, { looks, tip: scoutTip(looks), foot: p && !p.ratings ? compLine(p, looks) : null, extra: opts.send ? [el("div", { class: "pv-card-acts", "data-key": "send" }, [].concat(opts.send))] : null, potentialTone: potTone });
+    tips(report);
+    const attrs = PV().attributesCard(rep, { tips });
+    return [report, attrs, looksCard(s, b, p, looks, opts)];
+  }
+  function looksCard(s, b, p, looks, opts = {}) {
+    const likes = (p && p.likes) || b.likes;
+    const flags = [...new Set([...(b.generational || (p && p.public.generational) ? ["generational"] : []), ...(b.find ? [b.find] : p && p.public.find ? [p.public.find] : [])])];
+    const extra = [looksLine(looks)].filter(Boolean);
+    if (flags.length || likes) extra.push(el("div", { class: "go-tags pv-flags", "data-key": "flags" }, [...flags.map((f) => f === "generational" ? genBadge() : badges({ find: f }, null).firstChild), likes ? el("span", { class: "go-tag good go-likes", text: likesText(likes), title: likesLine(likes) }) : null]));
+    if (!flags.length && !likes) extra.push(el("p", { class: "muted small sc-no-flags", "data-key": "no-flags", text: "No flags on him: your staff flags gems, bust risks and generational talents once his report is complete." }));
+    if (opts.reads) extra.push(...[].concat(opts.reads));
+    if (opts.link) extra.push(el("div", { class: "go-scout-foot", "data-key": "foot" }, [el("button", { type: "button", class: "go-link sc-reports-link", text: "Reports on the Scouting Tab",
+      onclick: () => { if (window.CFP.scouting) window.CFP.scouting.want("reports"); H.onChange("scouting"); } })]));
+    if (opts.extra) extra.push(...[].concat(opts.extra).filter(Boolean));
+    return PV().uncertaintyCard(p ? p.report : null, extra);
+  }
+
+  // ----- Profile: his traits (Not Known Yet with how each shows) and the background, with the comp once complete -----
+  function profileCards(s, b, me, p) {
+    const tr = (p && p.traits) || b.traits || {};
+    // what happened to him this season (his twist): a row under the traits, its weeks left beside it and its line under
+    const twist = (p && p.twist) || b.twist;
+    const happened = twist ? el("div", { class: "pv-row go-twist", "data-key": `twist:${twist.key}:${twist.weeks_left}` }, [el("span", { class: "pv-row-k go-trait-label", text: "What Happened" }),
+      el("span", { class: "pv-row-v" }, [el("span", {}, [el("b", { class: "go-twist-val", text: twist.label }),
+        weeksLeft(twist.weeks_left) ? el("span", { class: "go-trait-more muted small", text: ` · ${weeksLeft(twist.weeks_left)}` }) : null]),
+        twist.line ? el("span", { class: "pv-hint muted go-twist-line", text: twist.line }) : null])]) : null;
+    const notes = {};
+    if (storyTip(tr)) notes.story = storyTip(tr);
+    if (tr.style_key && STYLE_TIPS[tr.style_key]) notes.commit_style = STYLE_TIPS[tr.style_key];
+    const traits = PV().traitsCard(tr, (p && p.trait_hints) || {}, { pitchNames: PITCH_NAMES, priorities: b.priorities_known, notes, extra: happened ? [happened] : null });
+    if (!p) return PV().grid([traits, PV().card("Background", [el("p", { class: "muted go-loading", text: "Loading his profile…" })], { key: "background" })]);
+    const pub = p.public;
+    const looks = Math.min(3, p.looks || 0);
+    const st = pub.hometown.state === "DC" ? "D.C." : pub.hometown.state;
+    const bg = el("div", { class: "pv-rows" }, [
+      kvRow("school", "High School", pub.high_school),
+      kvRow("type", "Archetype", pub.archetype),
+      kvRow("ranks", "Rankings", pub.portal ? null : `#${pub.national_rank} Overall · #${pub.pos_rank} ${pub.display_pos} · #${pub.state_rank} in ${st}`),
+      pub.composite != null ? kvRow("composite", "Composite", pub.composite.toFixed(4)) : null,
+      kvRow("status", "Status", status(pub)),
+      p.likes ? el("div", { class: "pv-row", "data-key": "likes" }, [el("span", { class: "pv-row-k", text: "Your Staff" }),
+        el("span", { class: "pv-row-v" }, [el("span", { class: "go-tag good go-likes", text: likesText(p.likes), title: likesLine(p.likes) })])]) : null,
+      kvRow("comp", "Comp", p.our_comp ? compText(p.our_comp) : looks >= 3 ? "Nobody Close Enough" : null, p.our_comp || looks >= 3 ? null : "His third look brings it.")]);
+    return PV().grid([traits, PV().card("Background", [bg], { key: "background", cls: "pv-background" })]);
+  }
+
+  // ----- History: the Recruiting Timeline, Recruiting Notes from what you know, Recent Interest Changes -----
+  const KIND_CHIP = { message: "Message", call: "Call", hc_visit: "Visit", official_visit: "Visit", pitch: "Pitch", offer: "Offer", raise_nil: "NIL", pull_offer: "Offer",
+    learned: "Scout", present: "Call", answer: "Call", hung_up: "Call", asked_more: "NIL", not_buying: "Pitch", pester: "Contact", commit: "Commit", hard: "Commit",
+    flip: "Commit", decommit: "Commit", signed: "Signed", leaning_fcs: "Commit", bloomed: "News", pro: "News", promise_broken: "Promise" };
+  const KIND_ICON = { message: "✉", call: "☎", hc_visit: "⌂", official_visit: "⌂", pitch: "☎", offer: "✎", raise_nil: "$", pull_offer: "✕", learned: "◉",
+    present: "☎", answer: "☎", hung_up: "☎", asked_more: "$", commit: "⚑", hard: "⚑", flip: "⚑", decommit: "⚑", signed: "✔", leaning_fcs: "⚑", bloomed: "★", pro: "★" };
+  const PERSONALITY_NOTE = { Cocky: "He is cocky: he wants to hear how good he is.", Shy: "He is shy: he opens up slowly.", Guarded: "He is guarded: he keeps what he wants to himself.",
+    "Loves the Attention": "He loves the attention: every contact counts with him.", "All Business": "He is all business: he wants the facts and the offer." };
+  function notesOf(b, me) {
+    const out = [];
+    const tr = b.traits || {};
+    if (tr.personality) out.push(PERSONALITY_NOTE[tr.personality] || `His personality: ${tr.personality}.`);
+    if (tr.decider) out.push(tr.decider === "Himself" ? "He makes the call himself." : `His ${tr.decider === "High School Coach" ? "high school coach" : tr.decider.toLowerCase()} makes the call.`);
+    const known = (b.priorities_known || []).map((t) => topicWord(t));
+    if (known.length) out.push(`He told you he cares about ${known.length > 1 ? `${known.slice(0, -1).join(", ")} and ${known[known.length - 1]}` : known[0]}.`);
+    const rows = (b.list || []).filter((x) => x.bar != null);
+    const mine = rows.find((x) => x.you || x.school === me);
+    if (b.signed === me || b.committed === me) out.push(b.signed ? "He signed with you." : "He is committed to you.");
+    else if (!mine) out.push("You are not on his list yet.");
+    else if (mine.new) out.push("You joined his list this week.");
+    else if (mine.move > 0) out.push("His interest in you rose this week.");
+    else if (mine.move < 0) out.push("His interest in you slipped this week.");
+    else out.push("His interest in you held steady this week.");
+    if (!tr.personality && !known.length) out.push("A call tells you more about him.");
+    return out;
+  }
+  function historyCards(s, b, me) {
+    const items = historyItems(b.history || [], me);
+    const timeline = items.length ? el("ul", { class: "pv-timeline go-news go-history-rows", "data-key": "timeline" }, items.map((x, i) => el("li", { class: "pv-tl-row", "data-key": `h-${items.length - i}`, "data-line": `Week ${x.week} · ${x.text}` }, [
+      el("span", { class: "pv-tl-icon", "aria-hidden": "true", text: KIND_ICON[x.kind] || "•" }), el("span", { class: "pv-tl-text" }, [el("b", { class: "pv-tl-week", text: `Week ${x.week}` }), ` · ${x.text}`]),
+      el("span", { class: "go-tag pv-tl-chip", text: KIND_CHIP[x.kind] || "News" })])))
+      : el("p", { class: "muted small", "data-key": "timeline", text: "Nothing with him yet: no contact, no offer." });
+    const notes = el("div", { class: "pv-notes", "data-key": "notes" }, notesOf(b, me).map((t) => el("p", { text: t })));
+    return PV().grid([PV().card("Recruiting Timeline", [timeline], { key: "timeline", cls: "pv-timeline-card" }),
+      PV().card("Recruiting Notes", [notes], { key: "notes" }),
+      battleCard(b, me, null, { title: "Recent Interest Changes", key: "interest", arrows: true })]);
   }
 
   // the board redraws when the screen crosses the phone line (the pane and the menu change shape)
   let boardAt = null;
+  // his profile per career and recruit ({ key, pr }): the pane draws it at once when nothing it reads has changed
+  const profiles = new Map();
   // the board's place in the address (web/route.js): the stage tab, the sort, the recruit in the pane and its
   // sub-tab; a replace, never a redraw. Only while the board is the view on screen.
   function syncBoard() {
@@ -554,7 +794,7 @@
         if (!e.best || (TONE_RANK[sd.tone] ?? 9) < (TONE_RANK[e.best.tone] ?? 9) || ((TONE_RANK[sd.tone] ?? 9) === (TONE_RANK[e.best.tone] ?? 9) && (sd.fill || 0) > (e.best.fill || 0))) e.best = sd;
       }
       if (!xy) continue;
-      dots.push({ id: b.id, xy, tone: sd.tone, ring: b.committed === me || b.signed === me, big: !!b.generational, label: `${b.name} · ${b.position} · ${sd.text}`, name: b.name });
+      dots.push({ id: b.id, xy, tone: sd.tone, ring: b.committed === me || b.signed === me, big: !!b.generational, label: `${b.name} · ${b.display_pos || b.position} · ${sd.text}`, name: b.name });
     }
     const open = mapOpen();
     const body = el("div", { class: "go-map-body" });
@@ -740,12 +980,14 @@
       })()));
       return b;
     }));
-    const meters = { hours: meter("Hours", v.hours_left, v.hours), nil: meter("NIL Points", v.nil.left, nilTotal(v), false, nilTitle(v)),
-      offers: meter("Offers", v.offers, v.offers + v.offers_left, true), commits: meter("Commits", v.committed, v.open_spots, true) };
+    // the budgets: hours, NIL, offers, commits (of the class's spots) and the week's scouting points, each a value and a thin bar
+    const meters = { hours: meter("Recruiting Hours", v.hours_left, v.hours), nil: meter("NIL Points", v.nil.left, nilTotal(v), false, nilTitle(v)),
+      offers: meter("Offers", v.offers, v.offers + v.offers_left, true), commits: meter("Commits", v.committed, v.open_spots, true),
+      points: meter("Scouting Points", v.points_left != null ? v.points_left : 0, v.points_week != null ? v.points_week : 0, true, "What is left of this week's scouting points for trips") };
     box.append(el("div", { class: "go-board-head rc-head" }, [
-      el("div", { class: "go-display l", text: boardTitle(v) }),
-      el("div", { class: "go-meters" }, [meters.hours, meters.nil, meters.offers, meters.commits]),
-      el("div", { class: "go-auto" }, [el("span", { class: "small muted", text: "Auto-recruit" }), auto]),
+      el("h2", { class: "go-display l go-board-title", text: boardTitle(v) }),
+      el("div", { class: "go-meters" }, [meters.hours, meters.nil, meters.offers, meters.commits, meters.points]),
+      el("div", { class: "go-auto" }, [el("span", { class: "pv-kick", text: "Auto-Recruit" }), auto]),
     ]));
     if (!v.board.length) {
       box.append(el("div", { class: "go-card go-empty" }, [el("div", { class: "go-display l", text: "Your Board Is Empty" }),
@@ -779,7 +1021,7 @@
     const sort = el("select", { id: "rc-sort", class: "go-sel", "aria-label": "Sort" }, [["chance", "Sort: Your Chance"], ["rank", "Sort: National Rank"]].map(([k, t]) => el("option", { value: k, text: t })));
     sort.value = view.sort;
     sort.addEventListener("change", () => { view.sort = sort.value; refill({}); });
-    box.append(el("div", { class: "go-stagebar" }, [stages, el("div", { class: "go-tools" }, [search, sort])]));
+    const stagebar = el("div", { class: "go-stagebar" }, [stages, el("div", { class: "go-tools" }, [search, sort])]);
     // what the roster needs this class, by position, behind a disclosure; a position picked there filters the list to it
     const open = (view.needsOpen = needsOpen());
     const needsBox = el("div", { id: "rc-needs", class: "go-needs-box" }, [needsStrip(v.needs_detail, view.group, (g) => { view.group = g; drawBoard(s, box, v); }, () => drawBoard(s, box, v))]);
@@ -794,8 +1036,8 @@
       needsBtn.firstChild.textContent = `Needs ${now ? "▾" : "▸"}`;
       try { localStorage.setItem("cfp-needs-open", now ? "1" : "0"); } catch (e) { /* no storage */ }
     });
-    box.append(el("div", { class: "go-needs-disclosure" }, [needsBtn, needsBox]));
-    box.append(mapCard(v, s, me, { selectedState: view.state, onState: (c) => { view.state = view.state === c ? null : c; drawBoard(s, box, v); } }));
+    const needsDis = el("div", { class: "go-needs-disclosure" }, [needsBtn, needsBox]);
+    const mapEl = (mapCard(v, s, me, { selectedState: view.state, onState: (c) => { view.state = view.state === c ? null : c; drawBoard(s, box, v); } }));
 
     // ----- the list: one row a recruit in the chosen tab, in sort order -----
     const order = { chance: byChance(me), rank: (a, b) => (a.national_rank ?? Infinity) - (b.national_rank ?? Infinity) };
@@ -826,8 +1068,8 @@
       if (phone()) { view.selected = b.id; markRows(); btns[j].focus(); }
       else { choose(b); btns[j].focus({ preventScroll: true }); }
     });
-    boardEl = el("div", { class: "go-board" }, [list]);
-    box.append(boardEl);
+    boardEl = el("div", { class: "go-board" }, [el("section", { class: "go-card go-list-col", "aria-label": "Your board" }, [stagebar, needsDis, list])]);
+    box.append(boardEl, mapEl);
     settleExpect();
     refill({});
     if (searchHadFocus) { search.focus({ preventScroll: true }); const n = search.value.length; search.setSelectionRange(n, n); }
@@ -843,6 +1085,7 @@
       patchMeter(meters.nil, v.nil.left, nilTotal(v), nilTitle(v));
       patchMeter(meters.offers, v.offers, v.offers + v.offers_left);
       patchMeter(meters.commits, v.committed, v.open_spots);
+      patchMeter(meters.points, v.points_left != null ? v.points_left : 0, v.points_week != null ? v.points_week : 0, "What is left of this week's scouting points for trips");
       for (const b of auto.children) { const on = v.auto_recruit === b.dataset.auto; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }
       settleExpect();
       refill({ keep: true, pulse: true });
@@ -896,7 +1139,7 @@
       side = null;
       document.body.classList.remove("go-sheet-open");
     }
-    function rowLine(b) { return b.portal ? `${b.position} · ${clsWord(b.cls)} · from ${b.from_name}` : ` ${b.position} · ${(b.hometown && b.hometown.state) || ""}`; }
+    function rowLine(b) { return b.portal ? `${b.position} · ${clsWord(b.cls)} · from ${b.from_name}` : ` ${b.display_pos || b.position} · ${(b.hometown && b.hometown.state) || ""}`; }
     function row(b) {
       const on = b.id === view.selected;
       const btn = el("button", { type: "button", class: `go-row-recruit ${on ? "selected" : ""}`, "data-pid": b.id, "aria-pressed": String(on), tabindex: on || (!view.selected && b === rows[0]) ? "0" : "-1" }, [
@@ -1157,37 +1400,38 @@
     }
 
     // ----- the pane: everything about him, every action on him -----
-    // One element for as long as he is the one on screen: p._patch(b) brings it up to date in place (the head's
-    // chip and buttons, the step, the scene or his reaction, the strip's cells, the tags, the sub-tab's body),
-    // pulsing what changed; only another recruit swaps the element.
+    // One element for as long as he is the one on screen: p._patch(b) brings it up to date in place (the hero, the
+    // buttons on the tab row, the step, the tab's cards), pulsing what changed; only another recruit swaps the element.
+    // The hero and the cards are drawn fresh and morphed onto the live ones (web/ui.js): nothing is emptied. His profile
+    // (the report, the hints, the comps, the flip words) is fetched when what it reads changed, and kept per recruit.
     function pane(b0) {
       let b = b0;
       const sheet = phone();
       const p = el("aside", { class: `go-card go-pane ${sheet ? "sheet" : ""}`, "aria-label": `${b.name}: recruit him`, ...(sheet ? { role: "dialog", "aria-modal": "true" } : {}) });
       p._pid = b.id;
       if (sheet) p.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (menuState) closeMenu(true); else closeSheet(); } });
-      // the head: who he is, his status chip, and the one primary button
-      const nameBtn = el("button", { type: "button", class: "go-link go-pane-name", text: b.name, title: "Open his profile", onclick: () => showSub("profile") });
-      const subLine = el("span", { class: "muted small" });
-      const chipEl = el("span", { class: "go-chip" });
-      const acts = el("div", { class: "go-pane-act" });
-      const head = el("div", { class: "go-pane-head" }, [
-        sheet ? el("button", { type: "button", class: "go-btn go-pane-back", "aria-label": "Back to the list", text: "‹ Back", onclick: closeSheet }) : null,
-        avatar(b.id), el("div", { class: "go-pane-id" }, [nameBtn, subLine, el("div", { class: "go-pane-chips" }, [chipEl])]), acts]);
-      p.append(head);
-      // on a phone the head is pinned to the top of the sheet: the sub-tab strip pins just under it, at its height
-      if (sheet && window.ResizeObserver) new ResizeObserver(() => p.style.setProperty("--go-head-h", `${head.offsetHeight}px`)).observe(head);
-      // the stat strip: four cells; the tags; the sub-tabs and their body
-      const cells = ["Your Chance", "His List", "Your Offer", "Scouted"].map((k) => stat(k, ""));
-      const tags = el("div", { class: "go-tags go-badges" });
-      const body = el("div", { class: "go-sub-body", role: "tabpanel" });
+      // the name and the phone's Back are drawn fresh with the hero: the morph keeps the live buttons (and their listeners) by data-key
+      const nameBtn = () => el("button", { type: "button", class: "go-link go-pane-name pv-name", "data-key": "name", text: b.name, title: "His traits and background", onclick: () => showSub("profile") });
+      const back = () => (sheet ? el("button", { type: "button", class: "go-btn go-pane-back", "data-key": "back", "aria-label": "Back to the list", text: "‹ Back", onclick: closeSheet }) : null);
+      const head = el("div", { class: "go-pane-head" });
+      // the tab row: the sub-tabs, then the buttons (Finish, Recruit ▾, Off the Board, the ☆ watch star)
+      const acts = el("div", { class: "go-pane-act pv-acts" });
+      const star = el("button", { type: "button", class: "go-btn pv-star", "aria-pressed": "true", text: "★" });
+      star.addEventListener("click", () => pick(b, "off_board", star));
+      acts.append(star);
       const strip = el("div", { class: "go-subtabs", role: "tablist", "aria-label": "About him" }, SUBS.map(([k, name]) => {
         const t = el("button", { type: "button", role: "tab", "data-sub": k, "aria-selected": "false", text: name });
         t.addEventListener("click", () => showSub(k));
         return t;
       }));
-      p.append(el("div", { class: "go-strip" }, cells), tags, strip, body);
-      let finishBtn = null, recruitBtn = null, offBtn = null, warnEl = null, stepEl = null, chipText = null, bodyKey = null;
+      const tabRow = el("div", { class: "pv-tabrow" }, [strip, acts]);
+      const warnSlot = el("div", { class: "go-pane-warn" });        // above the tab row: the warning sits over the Recruit button
+      const body = el("div", { class: "go-sub-body pv-host", role: "tabpanel" });
+      p.append(head, warnSlot, tabRow, body);
+      // on a phone the head is pinned to the top of the sheet: the tab row pins just under it, at its height
+      if (sheet && window.ResizeObserver) new ResizeObserver(() => p.style.setProperty("--go-head-h", `${head.offsetHeight}px`)).observe(head);
+      let finishBtn = null, recruitBtn = null, offBtn = null, warnEl = null, stepEl = null, bodyKey = null;
+      let prof = (profiles.get(`${s.id}:${b.id}`) || {}).pr || null, profKey = (profiles.get(`${s.id}:${b.id}`) || {}).key || null, profSeq = 0, profN = 0;
       p._patch = (nb) => { b = nb; fill(false); };
       fill(true);
       return p;
@@ -1198,11 +1442,8 @@
         const busy = open && b.scene ? (b.scene.action === "hc_visit" ? "visit" : "call") : null;
         const shown = !!(open && b.scene && view.scene === b.id);
         p.setAttribute("aria-label", `${b.name}: recruit him`);
-        nameBtn.textContent = b.name;
-        subLine.textContent = b.portal ? `${b.position} · ${clsWord(b.cls)} · from ${b.from_name} · #${b.portal_rank} in the portal` : `${stars(b.stars)} ${b.position} · ${place(b.hometown)} · #${b.national_rank}`;
-        const chip = chipOf(b, me, v.portal);
-        if (chip.text !== chipText) { chipText = chip.text; chipEl.textContent = chip.text; chipEl.className = `go-chip ${chip.tone}`; if (!first) ui().pulse(chipEl); }
-        // "OC likes him" sits once, among the tags under the strip (tagNodes): the head keeps to his status chip
+        // the hero: his chip, his line, the ranks and Your Chance, patched in place
+        ui().morph(head, el("div", {}, [heroOf(b, me, { nameNode: nameBtn(), back: back() })]), { pulse: !first });
         // his call or visit is open but not on screen: Finish brings it back (it re-reads the board first: the week may have moved on)
         const wantFinish = !!(busy && !shown);
         if (wantFinish && !finishBtn) {
@@ -1217,19 +1458,25 @@
         if (open && !recruitBtn) {
           recruitBtn = el("button", { type: "button", id: "rc-recruit", class: "go-btn", "aria-haspopup": "menu", "aria-expanded": "false", text: "Recruit ▾" });
           recruitBtn.addEventListener("click", () => openMenu(b, recruitBtn));
-          acts.append(recruitBtn);
+          acts.insertBefore(recruitBtn, star);
         } else if (!open && recruitBtn) { recruitBtn.remove(); recruitBtn = null; }
         if (recruitBtn) recruitBtn.classList.toggle("primary", !busy);
-        // he is tuning you out: a warning above the Recruit button (the menu's contacts stay open, their titles carry the cost)
+        // he is tuning you out: a warning under the tab row (the menu's contacts stay open, their titles carry the cost)
         const wantWarn = !!(open && b.pestering);
         if (wantWarn && !warnEl) {
           warnEl = el("p", { class: "go-warn", role: "note", text: "He is tuning you out: another contact costs you interest." });
-          acts.prepend(warnEl);
+          warnSlot.append(warnEl);
           if (!first) ui().fadeIn(warnEl);
         } else if (!wantWarn && warnEl) { const old = warnEl; warnEl = null; if (first) old.remove(); else ui().fadeOut(old); }
         const wantOff = !open && !!b.signed && b.signed !== me;
-        if (wantOff && !offBtn) { offBtn = el("button", { type: "button", class: "go-btn", text: "Off the Board", onclick: () => pick(b, "off_board", offBtn) }); acts.append(offBtn); }
+        if (wantOff && !offBtn) { offBtn = el("button", { type: "button", class: "go-btn", text: "Off the Board", onclick: () => pick(b, "off_board", offBtn) }); acts.insertBefore(offBtn, star); }
         else if (!wantOff && offBtn) { offBtn.remove(); offBtn = null; }
+        // the watch star: he is on your board; it takes him off (as the menu's Off the Board), except a hard commit to you
+        const locked = b.offered && b.hard && b.committed === me;
+        star.hidden = wantOff;
+        star.disabled = !!locked;
+        star.title = locked ? "Hard commit: his offer stands until he signs" : "On your board: take him off";
+        star.setAttribute("aria-label", locked ? `${b.name} stays on your board until he signs` : `Take ${b.name} off your board`);
         // the inline step (Message, Offer…, Raise NIL…): kept while it is the same step (what you typed stays)
         const stepKind = open && !busy && view.step && view.step.pid === b.id ? view.step.kind : null;
         // a part that leaves while it holds the focus hands it to the Recruit button (never to the page body)
@@ -1239,58 +1486,55 @@
           if (first) old.remove(); else ui().fadeOut(old).then(catchFocus);
         };
         if (stepEl && (!stepKind || stepEl._kind !== stepKind)) { const old = stepEl; stepEl = null; leave(old); }
-        if (stepKind && !stepEl) { stepEl = stepView(b, stepKind); stepEl._kind = stepKind; head.after(stepEl); if (!first) ui().fadeIn(stepEl); }
+        if (stepKind && !stepEl) { stepEl = stepView(b, stepKind); stepEl._kind = stepKind; tabRow.after(stepEl); if (!first) ui().fadeIn(stepEl); }
         // the call or visit itself plays in its window (openSceneWindow): the pane shows none of it
-        // the strip's cells
-        const rowsOf = (b.list || []).filter((x) => x.bar != null);
-        const mineRow = rowsOf.find((x) => x.you || x.school === me);
-        const at = mineRow ? (mineRow.rank != null ? mineRow.rank : rowsOf.indexOf(mineRow) + 1) : null;
-        const ask = askWord(b);
-        // YOUR OFFER: "135 NIL · He wants 105" once you have offered, "He wants about 75–135" (or the number) before, "—" when nothing is known
-        const vals = [sd.odds || "—",
-          at ? `#${at} of ${Math.max(b.schools || 0, rowsOf.length)}` : b.offered && !(b.signed || b.committed) ? "Outside his top 5" : "Not on it",
-          b.offered ? `${b.nil || 0} NIL${ask ? ` · He wants ${ask}` : ""}` : ask ? `He wants ${ask}` : "—",
-          b.looks ? `${fmtLooks(Math.min(3, b.looks))} of 3 looks` : "Not yet"].map((t) => t.replace(/^[a-z]/, (c) => c.toUpperCase()));   // no stat value starts lowercase
-        vals.forEach((t, i) => { const c = cells[i].querySelector(".go-stat-val"); if (c.textContent !== t) { c.textContent = t; if (!first) ui().pulse(cells[i]); } });
-        // the tags: only what is known; a new one fades in and pulses, a gone one fades out, a changed one pulses
-        const wanted = tagNodes(b);
-        ui().reconcile(tags, wanted, (n) => n.dataset.key, (n) => { if (!first) ui().pulse(n); return n; }, (old, n) => {
-          if (old.textContent !== n.textContent) { old.textContent = n.textContent; ui().pulse(old); }
-          old.className = n.className;
-          if (n.title) old.title = n.title; else old.removeAttribute("title");
-        });
-        if (wanted.length) tags.hidden = false;
-        else if (first || still()) tags.hidden = true;
-        else setTimeout(() => { if (!tags.querySelector(":scope > :not(.go-leaving)")) tags.hidden = true; }, 180);
-        // the sub-tab's body: rebuilt only when what it shows changed
         if (!SUBS.some(([k]) => k === view.sub)) view.sub = "overview";
-        const k = view.sub;
-        for (const t of strip.children) t.setAttribute("aria-selected", String(t.dataset.sub === k));
-        const key = `${k}:${JSON.stringify(k === "overview" ? [sd, b.list, b.no_room] : k === "scouting" ? [b.our_grades, b.looks, b.trips, b.line] : k === "history" ? [b.history, b.done_this_week, (v.recap || []).filter((e) => e.pid === b.id)] : [b.trips, b.looks, b.traits])}`;
-        if (key !== bodyKey) {
-          const changed = bodyKey != null && bodyKey.startsWith(`${k}:`);
-          bodyKey = key;
-          fillSub(k, sd);
-          if (changed) ui().pulse(body.firstElementChild);
+        for (const t of strip.children) t.setAttribute("aria-selected", String(t.dataset.sub === view.sub));
+        // his profile: re-read when what it is built from changed (a look, a trait, his list, an offer)
+        const pk = JSON.stringify([b.looks, b.our_grades, b.traits, b.list, b.committed, b.signed, b.hard, b.offered, b.priorities_known, b.likes, b.find, b.generational]);
+        if (pk !== profKey) {
+          profKey = pk;
+          const n = ++profSeq;
+          H.api(`/api/season/${s.id}/prospect/${encodeURIComponent(b.id)}`).then((pr) => {
+            if (n !== profSeq || !pr || !pr.public) return;
+            prof = pr;
+            profiles.set(`${s.id}:${b.id}`, { key: pk, pr });
+            profN++;
+            drawBody(profN === 1 && !prof.__seen);    // his first profile on this pane draws quietly (a recruit switch never pulses)
+            prof.__seen = true;
+          }).catch(() => { /* the cards stand with what the board knows */ });
         }
+        drawBody(first);
       }
-      function tagNodes(b) {
-        const out = [...(badges(b, me) || { children: [] }).children];
-        for (const t of b.priorities_known) out.push(el("span", { class: "go-tag", "data-key": `pri:${t}`, text: `★ ${PITCH_NAMES[t]}`, title: "He told you he cares about this" }));
-        const cue = cueOf(b);
-        for (const t of cue.topics) if (!b.priorities_known.includes(t)) out.push(el("span", { class: "go-tag cue", "data-key": `pri:${t}`, text: `☆ ${PITCH_NAMES[t] || t}`, title: cue.title }));
-        const tr = b.traits || {};
-        if (tr.personality) out.push(el("span", { class: "go-tag", "data-key": "trait:personality", text: tr.personality, title: "His personality: how he sounds on a call and how he reacts to you" }));
-        if (tr.decider) out.push(el("span", { class: "go-tag", "data-key": "trait:decider", text: `Decides: ${tr.decider}`, title: "Who makes the final call on where he goes" }));
-        if (tr.story_key) out.push(el("span", { class: `go-tag ${tr.story_key === "two_sport" && /High$/.test(tr.story_detail || "") ? "warn" : ""}`, "data-key": "trait:story",
-          text: tr.story_detail ? `${tr.story} · ${tr.story_detail}` : tr.story, title: STORY_TIPS[tr.story_key] || "His story" }));
-        if (tr.style_key) out.push(el("span", { class: "go-tag", "data-key": "trait:style", text: tr.commit_style, title: STYLE_TIPS[tr.style_key] || "How he commits" }));
-        if (b.twist) out.push(el("span", { class: "go-tag warn", "data-key": "twist", text: b.twist.label, title: b.twist.line || TWIST_TIP }));
-        if (b.likes) out.push(el("span", { class: "go-tag good go-likes", "data-key": "likes", text: likesText(b.likes), title: likesLine(b.likes) }));
-        if (b.visit) out.push(el("span", { class: "go-tag", "data-key": "visit", text: b.visit.done ? "Visited" : `Visit Wk ${b.visit.week}` }));
-        if (b.portal && b.role) out.push(el("span", { class: `go-tag ${b.role === "Would Start" ? "good" : b.role === "Next in Line" ? "warn" : "muted"}`, "data-key": "role", text: b.role, title: "Where he would sit on your depth chart next season" }));
-        for (const n of out) if (!n.dataset.key) n.dataset.key = tagKey(n.textContent);
-        return out;
+      // the tab's cards: drawn fresh, morphed onto the live ones when the tab is the same (what changed pulses),
+      // swapped at once for another tab (no motion on navigation)
+      function drawBody(quiet) {
+        const k = view.sub;
+        const key = `${k}:${JSON.stringify([b, cueOf(s, b), prof ? profKey : null, prof ? prof.report : null])}`;
+        if (key === bodyKey) return;
+        const same = bodyKey != null && bodyKey.startsWith(`${k}:`);
+        bodyKey = key;
+        const fresh = el("div", {}, [tabBody(k)]);
+        if (same) ui().morph(body, fresh, { pulse: !quiet });
+        else { body.innerHTML = ""; body.append(...fresh.childNodes); }
+        body.className = `go-sub-body pv-host ${k === "profile" ? "go-profile" : ""}`.trim();
+        const tags = body.querySelector(".go-tags[data-key=tags]");
+        if (tags) tags.hidden = !tags.children.length;
+      }
+      function tabBody(k) {
+        if (k === "scouting") {
+          const looks = Math.min(3, b.looks || 0);
+          const send = el("button", { type: "button", class: "go-btn pv-send", text: looks >= 3 ? "Report Complete" : `Send a Scout · ${b.scout_cost} Points${3 - looks <= 1 ? " · Finishes His Report" : ""}`,
+            title: looks >= 3 ? "His report is complete: 3 of 3 looks" : v.points_left < b.scout_cost ? "Not enough scouting points left this week." : ACT_TIPS.scout });
+          if (looks >= 3 || !b.can_scout || v.points_left < b.scout_cost || b.scene) send.disabled = true;
+          send.addEventListener("click", () => pick(b, "scout", send));
+          // until his profile arrives the cards say so (a scouted recruit never reads "Not Scouted" while it loads)
+          if (!prof && b.looks) return PV().grid(["Scouting Report", "Attributes"].map((t) => PV().card(t, [el("p", { class: "muted go-loading", text: "Loading his report…" })], { key: t === "Attributes" ? "attributes" : "report", cls: "pv-loading" })));
+          return PV().grid(scoutCards(s, b, prof, { send: b.signed || b.committed === me ? null : send, link: true }));
+        }
+        if (k === "profile") return profileCards(s, b, me, prof);
+        if (k === "history") return historyCards(s, b, me);
+        return overviewCards(s, b, me, prof);
       }
       function showSub(k) {
         view.sub = k;
@@ -1298,37 +1542,11 @@
         fill(false);                 // a sub-tab switch swaps the body at once: no fade (the player's ask: no motion on navigation)
         syncBoard();
       }
-      function fillSub(k, sd) {
-        body.innerHTML = "";
-        body.className = `go-sub-body ${k === "profile" ? "go-profile rc-profile" : ""}`;
-        if (k === "overview") {
-          body.append(el("div", { class: `go-standing-text ${sd.tone}`, text: sd.text }));
-          if (b.no_room) body.append(el("p", { class: "go-warn small rc-no-room", role: "note", text: b.no_room.tip }));
-          if (sd.odds) body.append(el("div", { class: "muted small", text: `${sd.odds}${sd.certainty ? ` · ${sd.certainty}${sd.certainty !== "Solid Read" ? ": the range narrows as signing day nears" : ""}` : ""}` }));
-          body.append(bar(sd), el("div", { class: "go-kicker muted", text: "His List" }), race(b, me));
-        } else if (k === "scouting") body.append(scoutingView(b));
-        else if (k === "profile") openProfile(s, b.id, body, { pane: true });
-        else body.append(historyView(b));
-      }
-    }
-    // a tag's identity for the reconcile: the kind, so a changed number ("Offered · 150 NIL") patches in place
-    function tagKey(text) {
-      const t = text.trim();
-      if (/^(Offered)/.test(t)) return "offered";
-      if (/^(Need \d+|Full)$/.test(t)) return "need";
-      if (/^(Verbal|Hard Commit)/.test(t)) return "commit";
-      return t;
-    }
-    // what he brought up this week: the cue of an open scene, or of one you finished this week, and the ☆ tag's title
-    function cueOf(b) {
-      const hw = view.heard[`${s.id}:${b.id}`];
-      const c = b.scene ? { topics: b.scene.cue ? b.scene.cue.topics : [], action: b.scene.action } : hw && hw.week === s.current_week ? hw : { topics: [] };
-      return { topics: c.topics, title: cueTitle(c.action) };
     }
     // the pitch as a dropdown: his known priorities first, then the rest, each with your program's case;
     // ★ marks a known priority, ☆ a topic he brought up this week (a known one keeps ★)
     function pitchSelect(b) {
-      const cued = cueOf(b).topics;
+      const cued = cueOf(s, b).topics;
       const order = [...b.priorities_known, ...Object.keys(PITCH_NAMES).filter((t) => !b.priorities_known.includes(t))];
       const selEl = el("select", { id: "rc-pitch", class: "go-sel", "aria-label": `Pitch to ${b.name}` }, order.map((t) => {
         const star = b.priorities_known.includes(t) ? "★ " : cued.includes(t) ? "☆ " : "";
@@ -1364,51 +1582,6 @@
       cancel.addEventListener("click", () => { view.step = null; st.remove(); patchPane(b); const btn = box.querySelector("#rc-recruit"); if (btn) btn.focus({ preventScroll: true }); });
       st.append(el("div", { class: "go-step-acts" }, [go, cancel]));
       return st;
-    }
-    // the Scouting sub-tab: the word grades with their ranges, the looks, the scout line and the comps
-    function scoutingView(b) {
-      const out = el("div", { class: "go-scouting" });
-      if (b.portal && b.line) out.append(el("p", { class: "muted small", text: lineText(b.line) }));
-      const looks = Math.min(3, b.looks || 0), left = 3 - looks;
-      if (b.our_grades) {
-        // the head: the kicker, the looks bar and count, and what one more trip does (or that the report is complete)
-        out.append(el("div", { class: "go-scout-head" }, [el("span", { class: "go-kicker", text: "Scouting Report" }),
-          ui().tip("Tap a grade to see what it looks like in ratings. A trip is one look; a week in a scout's area is half a look, up to two.", "Scouting Report"), looksBar(looks),
-          el("span", { class: "go-scout-looks", text: `${fmtLooks(looks)} of 3 Looks` }),
-          left <= 0 ? el("span", { class: "go-tag good go-scout-tag", text: "Report Complete" })
-            : left <= 1 ? el("span", { class: "go-tag go-scout-tag", text: "One Trip Finishes His Report" }) : null]));
-        out.append(gradeGrid(b.id, b.our_grades, null, true));
-      } else out.append(el("p", { class: "muted", text: "Not scouted yet: send a scout from the Recruit menu, or put a staff member on his area." }));
-      // the footer: the link to the Scouting tab and, once his report is complete, our comp
-      const comps = el("span", { class: "small go-comps" });
-      out.append(el("div", { class: "go-scout-foot" }, [el("button", { type: "button", class: "go-link sc-reports-link", text: "Reports on the Scouting Tab", onclick: () => { if (window.CFP.scouting) window.CFP.scouting.want("reports"); H.onChange("scouting"); } }), comps]));
-      const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall ? `, ${c.overall} OVR` : ""})`;
-      H.api(`/api/season/${s.id}/prospect/${encodeURIComponent(b.id)}`).then((pr) => {
-        if (!comps.isConnected) return;
-        const grid = out.querySelector(".go-grades");
-        if (grid && pr.our_grades && pr.grade_details) gradeTips(grid, b.id, pr.our_grades, pr.grade_details);   // hover a grade here too
-        if (pr.our_comp) comps.append(el("b", { text: "Our comp: " }), comp(pr.our_comp));
-        else if (pr.looks >= 3) comps.append(el("span", { class: "muted", text: "Our comp: nobody close enough among the starters." }));
-      }).catch(() => { /* the grades stand without the comps */ });
-      return out;
-    }
-    // the History sub-tab: every contact, offer and decision with him, newest first (b.history); a board without the log
-    // shows this week's contacts and his season in the news
-    function historyView(b) {
-      const out = el("div", { class: "go-history" });
-      if (Array.isArray(b.history)) {
-        const lines = historyLines(b.history, me);
-        out.append(lines.length ? el("ul", { class: "go-news go-history-rows" }, lines.map((t) => el("li", { text: t })))
-          : el("p", { class: "muted small", text: "Nothing with him yet: no contact, no offer." }));
-        return out;
-      }
-      const done = b.done_this_week || [];
-      out.append(el("p", { class: "small" }, [el("b", { text: "Contacts this week: " }), done.length ? done.map((k) => ACTION_NAMES[k] || k).join(", ") : "none yet"]));
-      const evs = (v.recap || []).filter((e) => e.pid === b.id).slice().reverse();
-      out.append(evs.length ? el("ul", { class: "go-news" }, evs.map((e) => el("li", {}, [el("span", { class: "muted small", text: `Week ${e.week} · ` }),
-        LINE_KINDS.has(e.kind) && e.line ? e.line : `${eventWord(e)}${e.school ? ` ${teamName(e.school)}` : ""}`])))
-        : el("p", { class: "muted small", text: "Nothing on him in the news yet this season." }));
-      return out;
     }
     // a call or in-home visit as a conversation in its window (coach_career/scenes.py): the turns so far (you, him, the
     // room), then your opening (three things, Present), which brings his reaction, your question and his cue in place;
@@ -1710,7 +1883,7 @@
           el("span", { class: "go-rank", text: `#${r.national_rank}` }), avatar(r.id, "sm"),
           el("span", { class: "go-list-id" }, [el("b", { text: r.name }), el("span", { class: "muted small", text: r.portal
             ? `${r.position} · ${clsWord(r.cls)} · from ${r.from_name}${r.usage ? ` · ${r.usage}` : ""}`
-            : `${r.position} · ${typeof r.height === "number" ? height(r.height) : (r.height || "")} ${r.weight} · ${place(r.hometown)}` }),
+            : `${r.display_pos || r.position} · ${typeof r.height === "number" ? height(r.height) : (r.height || "")} ${r.weight} · ${place(r.hometown)}` }),
             badges({ generational: r.generational, find: r.find }, s.team)]),
           r.portal ? null : el("span", { class: "go-stars", text: stars(r.stars) }),
           el("span", { class: "go-list-tags" }, [
@@ -1736,17 +1909,9 @@
   // A grade's tooltip floats over the page (fixed to the screen), below the grade when there is
   // room and above it when not, kept inside the screen, so the profile window never clips or scrolls it.
   document.addEventListener("pointerdown", (e) => { if (!e.target.closest(".go-tip")) document.querySelectorAll(".go-tip-box.show").forEach((t) => t.classList.remove("show")); });
-  // The staff's grade cards (the profile and the pane's Scouting sub-tab): one cell per group with the word
-  // range (or the single final grade), and with `details` (the profile's grade_details) a "looks like" tooltip
-  // on each, opened on hover, focus or tap. The listeners sit on the grid and find the cell under the event,
-  // so cells redrawn or patched later keep working; gradeTips adds the tooltips to a grid drawn without them.
-  // plain: the grades as bold words in their tone color, no chips (the pane's Scouting sub-tab)
-  function gradeGrid(pid, grades, details, plain) {
-    const grid = el("div", { class: `go-grades${plain ? " go-grades-plain" : ""}` }, Object.entries(grades).map(([g, r]) => el("div", { class: "go-stat", "data-group": g }, [
-      el("div", { class: "go-kicker muted", text: GROUP_NAMES[g] || g }), el("div", { class: "go-stat-val" }, plain ? gradePlain(r) : wordRange(r))])));
-    if (details) gradeTips(grid, pid, grades, details);
-    return grid;
-  }
+  // "What it looks like" tooltips on the staff's reads (the Attributes rows and the Potential headline): on each
+  // [data-group] cell, opened on hover, focus or tap. The listeners sit on the container and find the cell under the
+  // event, so cells morphed or patched later keep working.
   function gradeTips(grid, pid, grades, details) {
     for (const cell of grid.querySelectorAll("[data-group]:not(.go-tip)")) {
       const g = cell.dataset.group, r = grades[g], d = (details || {})[g] || {};
@@ -1762,23 +1927,26 @@
         ...lines.map((t) => el("div", { text: t })),
         d.peers ? el("div", { class: "muted small", text: `Middle half of ${d.peers} prospects at his position graded like this, on the game's scale (50 is the middle Power 4 starter: Solid from 50, Strong from 65, Elite from 80, All-American from 90), ranked against today's players at his position.` }) : null]);
       cell.classList.add("go-tip");
+      cell.setAttribute("data-gtip", "");
       cell.setAttribute("tabindex", "0");
       cell.setAttribute("aria-describedby", tipId);
       cell.append(tip);
     }
-    if (grid.__tips) return;
-    grid.__tips = true;
-    const cellOf = (e) => { const c = e.target.closest(".go-tip"); return c && grid.contains(c) ? c : null; };
+  }
+  // the grade tooltips' listeners, once, on the document: a card drawn fresh and morphed onto a live one (the pane's cards)
+  // keeps the live element, so listeners on the fresh one would be lost; any [data-gtip] cell under the event is the one
+  {
+    const cellOf = (e) => (e.target && e.target.closest ? e.target.closest("[data-gtip]") : null);
     const tipOf = (c) => c.querySelector(":scope > .go-tip-box");
-    const show = (c) => { if (c) placeTip(c, tipOf(c)); };
-    const hide = (c) => { if (c) tipOf(c).classList.remove("show"); };
+    const show = (c) => { if (c && tipOf(c)) placeTip(c, tipOf(c)); };
+    const hide = (c) => { if (c && tipOf(c)) tipOf(c).classList.remove("show"); };
     const left = (e) => { const c = cellOf(e); if (c && !(e.relatedTarget && c.contains(e.relatedTarget))) hide(c); };
-    grid.addEventListener("mouseover", (e) => { const c = cellOf(e); if (c && !(e.relatedTarget && c.contains(e.relatedTarget))) show(c); });
-    grid.addEventListener("mouseout", left);
-    grid.addEventListener("focusin", (e) => show(cellOf(e)));
-    grid.addEventListener("focusout", left);
-    grid.addEventListener("click", (e) => show(cellOf(e)));
-    grid.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(cellOf(e)); });
+    document.addEventListener("mouseover", (e) => { const c = cellOf(e); if (c && !(e.relatedTarget && c.contains(e.relatedTarget))) show(c); });
+    document.addEventListener("mouseout", left);
+    document.addEventListener("focusin", (e) => show(cellOf(e)));
+    document.addEventListener("focusout", left);
+    document.addEventListener("click", (e) => show(cellOf(e)));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(cellOf(e)); });
   }
   const placeTip = (cell, tip) => ui().placeTip(cell, tip);     // web/ui.js: clamped to the window and its scrolling box
 
@@ -1796,150 +1964,85 @@
   // ----- the Prospect Profile ----------------------------------------------------------------------
 
   async function openProfile(s, pid, into, opts = {}) {
-    // the window opens at once, saying it is loading, and fills in when his profile arrives; with
-    // `into` (a profile already open) it refreshes in place instead of closing and reopening. With
-    // opts.pane it is the board pane's Profile sub-tab: the pane's head shows who he is and the Recruit menu
-    // there holds Scout and Off the board, so the profile draws neither its own head nor buttons for them
+    // the window opens at once, saying it is loading, and fills in when his profile arrives: the board pane's view of him
+    // (heroOf and the four tabs), without the Recruit menu. The ☆ star puts him on your board or takes him off; once he
+    // is on it, Recruit Him on Your Board goes there. With `into` (a profile already open) it refreshes in place.
     // opts.restore: reopened from the address (a refresh): it opens only once he loads, and a prospect who is
-    // gone (a bad id) is passed over quietly (false), the view under it standing
-    const inPane = !!opts.pane;
+    // gone (a bad id) is passed over quietly (false), the view under it standing. opts.sub: the tab to show.
     const fetched = H.api(`/api/season/${s.id}/prospect/${encodeURIComponent(pid)}`);
     if (!into && opts.restore) { try { const x = await fetched; if (!x || !x.public) return false; } catch (err) { return false; } }
-    const node = into || el("div", { class: "rc-profile go-profile" }, [el("p", { class: "muted rc-loading go-loading", text: "Loading his profile…" })]);
-    if (into) { node.innerHTML = ""; node.append(el("p", { class: "muted rc-loading go-loading", text: "Updating his profile…" })); }
-    else H.openModal("Prospect Profile", node, `profile:${pid}`, { restore: !!opts.restore });
+    const node = into || el("div", { class: "rc-profile go-profile pv-popup" }, [el("p", { class: "muted rc-loading go-loading", text: "Loading his profile…" })]);
+    if (!into) H.openModal("Prospect Profile", node, `profile:${pid}`, { restore: !!opts.restore });
     let p;
     try { p = await fetched; }
     catch (err) { node.innerHTML = ""; node.append(el("p", { class: "muted", text: `Could not open his profile: ${H.errText(err)}` })); return false; }
     const pub = p.public;
     const me = s.team;
-    node.innerHTML = "";
-    // in the pane the pane's own head already carries him (name, avatar, stars, position, hometown, rank, chip):
-    // the profile starts below that, at his commitment, the scouting read and his list
-    if (!inPane) node.append(el("div", { class: "rc-profile-head go-profile-head" }, [avatar(pub.avatar_seed, "lg"), el("div", {}, [
-      el("h2", { class: "rc-profile-name go-display l", text: pub.name.toUpperCase() }),
-      el("div", { class: "go-stars big", text: stars(pub.stars) }),
-      el("div", { text: `${pub.position}${pub.ea_position && pub.ea_position !== pub.position ? ` · projects at ${pub.ea_position} in the game` : ""} · ${pub.archetype} · ${height(pub.height)}, ${pub.weight} lb` }),
-      el("div", { class: "muted", text: `${pub.high_school} · ${place(pub.hometown)}` }),
-      el("div", { class: "muted small", text: `National rankings: #${pub.national_rank} overall · #${pub.position_rank} ${pub.position} · #${pub.state_rank} in ${pub.hometown.state === "DC" ? "D.C." : pub.hometown.state} · composite ${pub.composite.toFixed(4)}` }),
-      badges({ generational: pub.generational, find: p.find, no_room: pub.no_room }, me),
-      p.likes ? el("div", { class: "go-tags" }, [el("span", { class: "go-tag good go-likes", text: likesText(p.likes), title: likesLine(p.likes) })]) : null,
-      pub.signed || pub.committed ? null : el("div", { class: "rc-status go-standing-text", text: status(pub) }),
-      pub.no_room ? el("p", { class: "go-warn small rc-no-room", role: "note", text: pub.no_room.tip }) : null,
-    ])]));
-    const holder = pub.signed || pub.committed;
-    if (holder) {
-      const t = window.CFP.teamsBySlug[holder] || {};
-      const col = t.colors || {};
-      const bg = holder === "FCS" ? "var(--panel-2)" : col.primary || "var(--panel-2)";
-      // his chance to flip, in words (p.flip: the rivals' shares and their words), never a number
-      const flip = p.flip || { word: "None", rivals: [] };
-      const leader = flip.rivals.length ? flip.rivals[0].name : null;
-      const sub = pub.signed ? "Signed: his recruitment is over."
-        : pub.hard ? "Hard commit: he is not taking calls"
-        : flip.word === "None" || !leader ? "Solid: nobody is close to pulling him away"
-        : flip.word === "Slim" ? `Hearing out ${leader}: a slim chance he flips before signing day`
-        : flip.word === "Real" ? `${leader} is working him hard: a real chance he flips`
-        : `${leader} is close to flipping him`;
-      const banner = el("div", { class: "go-commit rc-status", style: holder === "FCS" ? "" : `background:${bg};color:${inkOn(col.primary)};border-color:${col.secondary || bg}` }, [
-        el("div", { class: "go-display m", text: `${pub.signed ? "Signed With" : pub.hard ? "Hard Commit to" : "Verbal Commit to"} ${teamName(holder)}` }),
-        el("div", { class: "small", text: sub }),
-      ]);
-      node.append(banner);
-    }
+    const b = p.row || { ...pub, list: [], looks: p.looks, our_grades: p.our_grades, traits: p.traits, priorities_known: pub.priorities_known };
+    let sub = SUBS.some(([k]) => k === opts.sub) ? opts.sub : "overview";
+    const name = el("h2", { class: "rc-profile-name pv-name", "data-key": "name", text: pub.name });
+    // the board star and, once he is on your board, the way there; signed with you or a hard commit to you, he stays on it
     let on = !!pub.on_board;
-    const onBoard = el("button", { type: "button", class: "go-btn" });
-    // recruiting him happens on the board: once he is on it, a button goes straight there
+    const locked = pub.signed === s.team ? "He signed with you: he stays on your board" : pub.hard && pub.committed === s.team ? "Hard commit: he stays on your board until he signs" : null;
+    const star = el("button", { type: "button", class: "go-btn pv-star rc-board-star" });
     const toBoard = el("button", { type: "button", class: "go-btn primary", text: "Recruit Him on Your Board →",
       onclick: () => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; H.closeModal(); H.onChange("recruiting"); } });
-    // signed with you, or a hard commit to you: he stays on your board (the engine refuses too)
-    const locked = pub.signed === s.team ? "He signed with you: he stays on your board" : pub.hard && pub.committed === s.team ? "Hard commit: he stays on your board until he signs" : null;
     const label = () => {
-      onBoard.textContent = locked && on ? (pub.signed === s.team ? "✓ Signed With You" : "✓ On Your Board") : on ? "✓ On Your Board · Remove" : "+ Add to Your Board";
-      onBoard.classList.toggle("primary", !on);
-      onBoard.disabled = !!(locked && on);
-      if (locked && on) onBoard.title = locked; else onBoard.removeAttribute("title");
-      toBoard.hidden = !on || !!pub.signed || inPane;
+      star.textContent = on ? "★" : "☆";
+      star.setAttribute("aria-pressed", String(on));
+      star.setAttribute("aria-label", locked && on ? locked : on ? `Take ${pub.name} off your board` : `Add ${pub.name} to your board`);
+      star.title = locked && on ? locked : on ? "On your board: take him off" : "Add him to your board";
+      star.disabled = !!(locked && on);
+      toBoard.hidden = !on || !!pub.signed;
     };
     label();
-    onBoard.addEventListener("click", async () => {
+    star.addEventListener("click", async () => {
       if (locked && on) return;
-      onBoard.disabled = true;
+      if (on && pub.offered_by_you && !window.confirm(`Take ${pub.name} off your board? Your offer to him is pulled too: the NIL points come back to you${pub.committed === me && !pub.signed ? ", and he decommits from you" : ""}.`)) return;
+      star.disabled = true;
       if (await setBoard(s, pid, !on)) { on = !on; H.toast(on ? `${pub.name} is on your board.` : `${pub.name} is off your board.`, 2500); }
       label();
     });
-    if (!inPane) node.append(el("div", { class: "rc-profile-actions go-row wrap" }, [onBoard, toBoard]));
-    const comp = (c) => `${c.name}, ${c.school} (${c.position}${c.overall ? `, ${c.overall} OVR` : ""})`;
+    // the scout button: Send a Scout from here (the board's pane has it in the Recruit menu too)
     const looks = Math.min(3, p.looks || 0), left = 3 - looks;
     const mine = pub.committed === me && !pub.signed;
-    // the scout button: the pane's Recruit menu holds Scout, so only the modal draws it
     const scoutBtn = mine ? el("span", { class: "muted small rc-no-scout", text: "Committed to you: no more looks" })
       : el("button", { type: "button", class: "go-btn", text: left <= 0 ? "Report Complete · 3 of 3 Looks" : `Send a Scout${p.scout_cost != null ? ` · ${p.scout_cost} Points` : ""}${left <= 1 ? " · Finishes His Report" : ""} →`, title: ACT_TIPS.scout });
     const short = !mine && left > 0 && p.points_left != null && p.scout_cost != null && p.points_left < p.scout_cost;
     if (!mine && (left <= 0 || short)) scoutBtn.disabled = true;
     if (short) scoutBtn.title = "Not enough scouting points left this week.";
-    if (!mine) scoutBtn.addEventListener("click", async () => { scoutBtn.disabled = true; if (await act(s, pid, "scout")) openProfile(s, pid, node); else scoutBtn.disabled = false; });
-    // the scouting read, once: the compact strip (a grade's chip shows what it looks like in ratings)
-    if (p.our_grades) {
-      node.append(scoutLine(pid, p.our_grades, looks, p.grade_details || {}));
-      if (!inPane && !p.ratings) node.append(el("div", { class: "go-row wrap rc-profile-actions" }, [scoutBtn]));
-    } else if (!p.ratings) node.append(el("p", { class: "muted small", text: inPane ? "Not scouted yet: Scout from the Recruit menu, or put a staff member on his area." : "Not scouted yet: send a scout, or put a staff member on his area." }),
-      el("div", { class: "go-row wrap rc-profile-actions" }, [inPane ? null : scoutBtn, el("button", { type: "button", class: "go-btn", text: "Assign Your Staff →", onclick: () => { H.closeModal(); if (window.CFP.scouting) window.CFP.scouting.want("scouts"); H.onChange("scouting"); } })]));
-    // what the staff has learned about him: his personality and who decides (with what that person cares about), Not Known Yet until then; one row
-    {
-      const tr = p.traits || {};
-      const traitRow = (key, label, val, more, tip) => el(key === "style" ? "span" : "div", { class: key === "style" ? "go-trait-x" : "go-trait", "data-trait": key, ...(tip ? { title: tip } : {}) }, [
-        el("span", { class: "go-trait-label muted small", text: label }),
-        el("b", { class: `go-trait-val ${val ? "" : "muted"}` }, [val || "Not Known Yet", more ? el("span", { class: "go-trait-more muted small", text: ` · ${more}` }) : null])]);
-      node.append(el("div", { class: "go-traits", "data-key": "traits" }, [
-        traitRow("personality", "Personality", tr.personality),
-        traitRow("decider", "Who Decides", tr.decider, tr.decider && tr.decider_topic ? `Cares About: ${PITCH_NAMES[tr.decider_topic] || tr.decider_topic}` : null),
-        traitRow("story", "His Story", tr.story, tr.story_detail || null)]));
-      if (tr.story_key && STORY_TIPS[tr.story_key]) node.append(el("p", { class: "muted small go-story-line", "data-key": "story-tip", text: STORY_TIPS[tr.story_key] }));
-      // how he commits: its own line under the traits row (Not Known Yet until an official visit or four weeks holding your offer)
-      if (tr.has_style) node.append(el("p", { class: "go-traits go-style", "data-key": `style:${tr.style_key || ""}` }, [
-        traitRow("style", "Commit Style", tr.commit_style, null, STYLE_TIPS[tr.style_key] || null)]));
-      // what happened to him this season (his twist): its name and weeks left, then its line, on one line under the traits
-      if (p.twist) node.append(el("p", { class: "small go-twist", "data-key": `twist:${p.twist.key}:${p.twist.weeks_left}` }, [
-        el("span", { class: "go-trait-label muted small", text: "What Happened" }), " ",
-        el("b", { class: "go-twist-val", text: p.twist.label }),
-        weeksLeft(p.twist.weeks_left) ? el("span", { class: "go-trait-more muted small", text: ` · ${weeksLeft(p.twist.weeks_left)}` }) : null,
-        p.twist.line ? el("span", { class: "go-twist-line", text: ` ${p.twist.line}` }) : null]));
+    if (!mine) scoutBtn.addEventListener("click", async () => { scoutBtn.disabled = true; if (await act(s, pid, "scout")) openProfile(s, pid, node, { sub }); else scoutBtn.disabled = false; });
+    const staffBtn = el("button", { type: "button", class: "go-btn", text: "Assign Your Staff →", onclick: () => { H.closeModal(); if (window.CFP.scouting) window.CFP.scouting.want("scouts"); H.onChange("scouting"); } });
+    const strip = el("div", { class: "go-subtabs", role: "tablist", "aria-label": "About him" }, SUBS.map(([k, t]) => {
+      const btn = el("button", { type: "button", role: "tab", "data-sub": k, "aria-selected": String(k === sub), text: t });
+      btn.addEventListener("click", () => { sub = k; draw(); });
+      return btn;
+    }));
+    const body = el("div", { class: "go-sub-body pv-host", role: "tabpanel" });
+    function draw() {
+      for (const t of strip.children) t.setAttribute("aria-selected", String(t.dataset.sub === sub));
+      body.innerHTML = "";
+      if (sub === "scouting") {
+        const cards = scoutCards(s, b, p, { send: p.ratings ? null : [scoutBtn, p.our_grades ? null : staffBtn] });
+        if (p.ratings) cards.push(ratingsCard(p.ratings));
+        body.append(PV().grid(cards));
+      } else if (sub === "profile") body.append(profileCards(s, b, me, p));
+      else if (sub === "history") body.append(historyCards(s, b, me));
+      else body.append(overviewCards(s, b, me, p));
     }
-    // the evaluation, its summary line and our comp right under it
-    if (p.evaluation) {
-      node.append(el("h3", { text: "Evaluation" }),
-        el("ul", { class: "rc-eval" }, [...p.evaluation.strengths.map((t) => el("li", { class: "rc-good", text: t })), ...(p.evaluation.solid || []).map((t) => el("li", { class: "go-solid", text: t })), ...p.evaluation.weaknesses.map((t) => el("li", { class: "rc-bad", text: t }))]),
-        el("p", { class: "go-outlook", text: p.evaluation.outlook }));
-    }
-    if (p.our_grades && !p.ratings) node.append(p.our_comp ? el("p", { class: "go-comp" }, [el("b", { text: "Our comp: " }), comp(p.our_comp)])
-      : el("p", { class: "muted go-comp", text: looks >= 3 ? "Our comp: nobody close enough among the starters." : `Our comp once his report is complete (${fmtLooks(looks)} of 3 looks).` }));
-    if (p.public_comp && !(p.our_comp && p.our_comp.name === p.public_comp.name)) node.append(el("p", { class: "go-comp" }, [el("b", { text: "Comp: " }), comp(p.public_comp)]));
-    if (pub.schools.length) {
-      const listed = holder ? pub.schools.filter((x) => x.school !== holder) : pub.schools;
-      const sorted = listed.slice().sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1));
-      // a committed recruit: each rival's chance to flip him as a word (p.flip), your own row marked; a commit to you
-      // whose rivals have no chance is one line instead of a table
-      const flipWords = Object.fromEntries(((p.flip && p.flip.rivals) || []).map((r) => [r.school, r.word]));
-      const committed = holder && !pub.signed;
-      const quiet = committed && holder === me && sorted.every((x) => (flipWords[x.school] || "None") === "None");
-      if (quiet) node.append(el("h3", { text: "Who Else Is Calling" }), el("p", { class: "muted go-nobody-close", text: "Nobody is close to pulling him away." }));
-      else if (sorted.length) node.append(el("h3", { text: holder ? (pub.signed ? "Who Else Offered" : holder === me ? "Who Else Is Calling" : "His Chance to Flip to Each") : "His List" }), el("div", { class: "go-schools" }, sorted.map((x, i) => el("div", { class: `go-school${x.school === me ? " yours" : ""}` }, [
-        el("span", { class: "go-school-name" }, [el("b", { text: x.name }), x.school === me ? el("span", { class: "muted small", text: " (you)" }) : null, i === 0 && !holder && x.pct != null ? el("span", { class: "go-tag good", text: "Leader" }) : null]),
-        el("span", { class: "go-school-odds", text: pub.signed ? "" : x.pct == null ? "No Offer" : committed ? (flipWords[x.school] || "None") : i === 0 ? "Leads" : x.pct >= (sorted[0].pct || 0) - 0.1 ? "Close" : x.pct >= 0.15 ? "In It" : "Long Shot" }),
-        el("span", { class: "muted small", text: [x.offered ? "Offer" : "", x.visit ? (x.visit.done ? "Visited" : `Visit Wk ${x.visit.week}`) : ""].filter(Boolean).join(" · ") }),
-      ]))));
-    } else node.append(el("p", { class: "muted small go-no-schools", text: "No school is recruiting him yet." }));
-    if (pub.priorities_known.length) node.append(el("p", { class: "go-cares" }, [el("b", { text: "What he cares about: " }), pub.priorities_known.map((t) => PITCH_NAMES[t]).join(", ")]));
-    if (p.ratings) {                           // signed with you: what you got, every attribute
-      node.append(el("h3", { text: "His Ratings" }),
-        el("p", { class: "muted small", text: `${p.ratings.overall} overall now, ${p.ratings.potential_overall} at his potential · 50 is an average Power 4 starter.` }),
-        el("div", { class: "rc-ratings" }, p.ratings.attributes.map((a) => el("div", { class: "rating-row" }, [
-          el("span", { class: "rating-label", text: a.label }),
-          el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${a.value >= 75 ? "hi" : a.value >= 55 ? "mid" : ""}`, style: `width:${Math.max(2, Math.min(100, a.value))}%` })]),
-          el("b", { class: "rating-num", text: String(a.value), title: `${a.potential} at his potential` })]))));
-    }
+    node.innerHTML = "";
+    node.append(el("div", { class: "rc-profile-head go-profile-head" }, [heroOf(b, me, { nameNode: name })]),
+      el("div", { class: "pv-tabrow" }, [strip, el("div", { class: "pv-acts rc-profile-actions" }, [toBoard, star])]), body);
+    draw();
     return true;
+  }
+  // signed with you: what you got, every attribute now (and at his potential in the title)
+  function ratingsCard(r) {
+    return PV().card("His Ratings", [el("p", { class: "muted small", text: `${r.overall} overall now, ${r.potential_overall} at his potential · 50 is an average Power 4 starter.` }),
+      el("div", { class: "rc-ratings" }, r.attributes.map((a) => el("div", { class: "rating-row" }, [
+        el("span", { class: "rating-label", text: a.label }),
+        el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${a.value >= 75 ? "hi" : a.value >= 55 ? "mid" : ""}`, style: `width:${Math.max(2, Math.min(100, a.value))}%` })]),
+        el("b", { class: "rating-num", text: String(a.value), title: `${a.potential} at his potential` })])))], { wide: true, key: "ratings" });
   }
 
   // ----- every school's class ------------------------------------------------------------------------
@@ -1971,7 +2074,7 @@
       const li = el("li", { class: `go-list-row go-class ${c.yours ? "yours" : ""}` }, [head]);
       if (open && d.class) li.append(el("ul", { class: "go-class-list" }, d.class.map((r) => el("li", {}, [
         el("button", { type: "button", class: "go-link", text: r.name, onclick: () => openProfile(s, r.id) }),
-        el("span", { class: "muted small", text: ` ${"★".repeat(r.stars)} ${r.position} · #${r.national_rank} · ${place(r.hometown)}${r.signed ? " · signed" : ""}` }),
+        el("span", { class: "muted small", text: ` ${"★".repeat(r.stars)} ${r.display_pos || r.position} · #${r.national_rank} · ${place(r.hometown)}${r.signed ? " · signed" : ""}` }),
         r.generational ? genBadge() : null,
         r.find_held === true && r.find === "bust" ? el("span", { class: "go-badge bust-held", text: "Bust Risk: The Read Held", title: "Your staff called him a bust risk and he is one" })
           : r.find_held === true ? el("span", { class: "go-badge gem-held", text: "Gem: The Read Held", title: "Your staff called him a gem and he is one" })
@@ -1993,5 +2096,5 @@
     else if (tab === "classes") renderClasses(season, box);
   }
 
-  window.Recruiting = { wordTag, render, applyRoute, openScene: openSceneRoute, init: (helpers) => { H = H || helpers; }, openProfile: (s, pid, opts) => openProfile(s, pid, null, opts || {}), reveal: (pid) => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; }, board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
+  window.Recruiting = { wordTag, parts: { heroOf, scoutCards, looksCard, profileCards, compLine, gradeTips }, render, applyRoute, openScene: openSceneRoute, init: (helpers) => { H = H || helpers; }, openProfile: (s, pid, opts) => openProfile(s, pid, null, opts || {}), reveal: (pid) => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; }, board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
 })();

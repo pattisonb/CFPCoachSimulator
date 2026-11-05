@@ -59,8 +59,9 @@ def make_career():
 
 
 def rows_of(page) -> dict:
-    return page.evaluate("""() => Object.fromEntries([...document.querySelectorAll('.go-pane .go-trait, .go-pane .go-trait-x')].map(r =>
-        [r.dataset.trait, r.querySelector('.go-trait-val').textContent.trim()]))""")
+    """The Profile tab's traits card: trait -> its value (commit_style read as "style")."""
+    return page.evaluate("""() => Object.fromEntries([...document.querySelectorAll('.go-pane .go-trait')].map(r =>
+        [r.dataset.trait === 'commit_style' ? 'style' : r.dataset.trait, r.querySelector('.go-trait-val').textContent.trim()]))""")
 
 
 def open_profile(page) -> None:
@@ -70,7 +71,13 @@ def open_profile(page) -> None:
 
 
 def chip(page, key) -> list:
-    return page.eval_on_selector_all(f".go-pane .go-tags [data-key='{key}']", "els => els.map(e => e.textContent.trim())")
+    """A chip among the tags: the Overview's Recruit Snapshot carries them; the Profile tab opens again after."""
+    page.click(".go-pane .go-subtabs button[data-sub=overview]")
+    page.wait_for_selector(".go-pane [data-key=snapshot]", timeout=30_000)
+    time.sleep(0.3)
+    out = page.eval_on_selector_all(f".go-pane .go-tags [data-key='{key}']", "els => els.map(e => e.textContent.trim())")
+    open_profile(page)
+    return out
 
 
 def no_null(page, what: str) -> None:
@@ -98,8 +105,8 @@ def profile_checks(page, known, unknown, quiet, label, line) -> None:
     open_profile(page)
     rows = rows_of(page)
     assert rows["style"] == "Hat Ceremony" and "twist" not in rows, rows
-    assert page.inner_text(".go-pane [data-trait=style] .go-trait-label").strip() == "Commit Style"
-    assert page.get_attribute(".go-pane [data-trait=style]", "title"), "his commit style's sentence is its title"
+    assert page.text_content(".go-pane [data-trait=commit_style] .go-trait-label").strip() == "Commit Style"
+    assert page.text_content(".go-pane [data-trait=commit_style] .pv-note").strip().endswith("."), "his commit style's sentence sits under it"
     twist = page.text_content(".go-pane .go-twist .go-twist-val").strip()
     more = page.text_content(".go-pane .go-twist .go-trait-more").strip(" ·")
     assert page.text_content(".go-pane .go-twist .go-trait-label").strip() == "What Happened"
@@ -123,13 +130,14 @@ def desktop(browser, base, sid, known, unknown, quiet, label, line, errs) -> Non
     open_profile(page)
     rows = rows_of(page)
     assert rows["style"] == NOT_KNOWN and not page.query_selector(".go-pane .go-twist"), rows
-    assert page.query_selector(".go-pane [data-trait=style] .go-trait-val.muted")
+    assert page.query_selector(".go-pane [data-trait=commit_style] .go-trait-val.muted")
+    assert page.text_content(".go-pane [data-trait=commit_style] .pv-hint").strip() == "An official visit, or four weeks holding your offer, shows it.", "how his style shows"
     assert not chip(page, "trait:style")
     # a quiet commit elsewhere: "Quiet", never where
     pick_row(page, quiet)
     pane = page.inner_text(".go-pane").lower()            # (the chip is set in capitals)
     head = pane.split("his list")[0]
-    assert "quiet" in head and "tcu" not in head and "commit" not in head, head
+    assert "quiet" in head and "tcu" not in head and not re.search(r"commit(?!\s*style)", head), head      # "Commit Style" is a trait's label, not where he went
     no_null(page, "a quiet commit")
     # the week's report: the twist's line
     page.click("#season-tabs button[data-tab=office]")

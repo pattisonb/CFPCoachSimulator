@@ -235,10 +235,10 @@ def scouting_case(page, base: str, sid: str) -> None:
     # the report's sub-tabs (the player's recording): the new body takes the old one's place at once,
     # no lingering old body pushing it down, so its top never moves
     page.evaluate(QUIET_WATCH)
-    for sub in ("overview", "scouting", "ratings", "overview", "ratings"):
+    for sub in ("looks", "profile", "report", "looks", "report"):
         page.click(f"#tab-scouting .sc-subtabs button[data-sub={sub}]")
-        tops = page.evaluate("""() => new Promise((ok) => { const b = document.querySelector('#tab-scouting .sc-subtabs');
-          const top = () => b.nextElementSibling ? Math.round(b.nextElementSibling.getBoundingClientRect().top) : null, seen = [top()];
+        tops = page.evaluate("""() => new Promise((ok) => { const body = () => [...document.querySelectorAll('#tab-scouting .sc-sub-body')].filter(e => !e.classList.contains('go-leaving'));
+          const top = () => { const b = body(); return b.length === 1 ? Math.round(b[0].getBoundingClientRect().top) : null; }, seen = [top()];
           let n = 0; const tick = () => { seen.push(top()); if (++n < 12) requestAnimationFrame(tick); else ok(seen); }; requestAnimationFrame(tick); })""")
         assert len(set(tops)) == 1, f"the {sub} body moved after it was drawn: {tops}"
     loud, what = page.evaluate("() => { window.__quiet.obs.disconnect(); return [window.__quiet.n, window.__quiet.what]; }")
@@ -260,7 +260,7 @@ def board_cases(page, base: str, sid: str) -> None:
     for pid in pids + pids[:2]:
         page.click(f".go-row-recruit[data-pid='{pid}']")
         time.sleep(0.4)
-    for sub in ("profile", "history", "scouting"):
+    for sub in ("profile", "history", "scouting", "overview"):     # back on Overview: the snapshot carries the tags and the cells
         if page.query_selector(f".go-pane .go-subtabs button[data-sub={sub}]"):
             page.click(f".go-pane .go-subtabs button[data-sub={sub}]")
             time.sleep(0.3)
@@ -290,7 +290,7 @@ def board_cases(page, base: str, sid: str) -> None:
     page.wait_for_function("(t) => [...document.querySelectorAll('.go-pane .go-tags .go-tag')].some(e => e.textContent.trim() === t)", arg=f"Offered · {nil} NIL" if nil else "Offered", timeout=10_000)
     assert_smooth(page, ".go-pane", lambda: menu("scout"), f"Scouted {b['name']} · 1 of 3 looks", "Board: scout")
     assert page.evaluate("() => document.activeElement.id") == "rc-recruit", "the Recruit button gets the focus back"
-    assert "1 of 3 looks" in page.inner_text(".go-pane .go-strip")
+    assert "1 of 3 Looks" in page.inner_text(".go-pane .go-strip")
 
 
 def offseason_cases(page, base: str, sid: str) -> None:

@@ -116,9 +116,9 @@ if __name__ == "__main__":
     by_rank = {p["rank"]: pid for pid, p in rc["prospects"].items()}
     top = prospects.profile(st, by_rank[1], "ohio-state")
     assert top["evaluation"] and top["public_comp"], top["public_comp"]
-    pool = {(c["name"], c["position"]) for c in prospects.starter_pool()}
+    pool = {(c["name"], prospects.display_pos(c["position"])) for c in prospects.starter_pool()}
     assert (top["public_comp"]["name"], top["public_comp"]["position"]) in pool
-    assert top["public_comp"]["position"] == rc["prospects"][by_rank[1]]["ea_position"]
+    assert top["public_comp"]["position"] == prospects.display_pos(rc["prospects"][by_rank[1]]["ea_position"]), "the comp shows his position as the header does"
     truth = rc["prospects"][by_rank[1]]["truth"]
     best = max(prospects.EVAL_GROUPS, key=lambda g: truth[g])
     assert prospects.GROUP_NAMES[best] in " ".join(top["evaluation"]["strengths"]), (best, top["evaluation"])
