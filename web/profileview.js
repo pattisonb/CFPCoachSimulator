@@ -109,7 +109,7 @@
         pips(u ? PIPS_FOR[u] : 0, 3, u ? `${label}: ${u} uncertainty` : `${label}: not scouted`), el("span", { class: "muted pv-unc-w", text: u || "Not Scouted" })]);
     }));
     return card("Looks & Uncertainty", [rows, ...[].concat(extra || []).filter(Boolean)], { wide: opts.wide !== false, key: "uncertainty", cls: "pv-uncertainty",
-      tip: "Each look narrows a read: three pips is a settled read (Low uncertainty), one a wide one (High)." });
+      tip: "Each look narrows a read: three pips is a confident read (Low uncertainty), one a wide one (High)." });
   }
 
   // the traits, from whatever the traits view carries: Who Decides with what that person Cares About, Personality, His Story,

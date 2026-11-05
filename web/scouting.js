@@ -401,7 +401,7 @@
     // the selected prospect, drawn with the board's pieces (window.Recruiting.parts, web/profileview.js): the hero with
     // Nat. Rank, Pos. Rank, Team Need and his Potential (with how sure the read is), the tabs Report · Looks · Profile and,
     // on the tab row, Send Scout, View Full Profile and the board star
-    const CERTAINTY = { Low: "Settled Read", Medium: "Read Could Move", High: "Early Read" };
+    const CERTAINTY = { Low: "Confident", Medium: "Could Change", High: "Early Look" };
     const POT_TONE = { "All-American": "good", Elite: "good", Strong: "good", Solid: "warn", Fair: "warn", Weak: "bad" };
     function paintIntel() {
       const { row: r, pr } = sel, p = pr.public;
