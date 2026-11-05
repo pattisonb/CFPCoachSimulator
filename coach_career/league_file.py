@@ -557,6 +557,24 @@ def _builtin_docs() -> dict:
     return {s: team_doc(lgd, s) for s in _builtin()["slugs"] if s in lgd["teams"]}
 
 
+def _deep_merge(base: dict, over: dict) -> dict:
+    out = copy.deepcopy(base)
+    for k, v in over.items():
+        out[k] = _deep_merge(out[k], v) if isinstance(v, dict) and isinstance(out.get(k), dict) else copy.deepcopy(v)
+    return out
+
+
+def _merge_coaches(base: dict, given: dict) -> dict:
+    """A built-in team's staff with the file's coaches over it, role by role: a given role edits the
+    built-in coach (deep-merged), a role left out stays as built in, the offense/defense words replace."""
+    out = copy.deepcopy(base)
+    for k, v in given.items():
+        if v is None:
+            continue
+        out[k] = _deep_merge(out[k], v) if isinstance(v, dict) and isinstance(out.get(k), dict) else copy.deepcopy(v)
+    return out
+
+
 def merge(doc: dict) -> dict:
     """A validated file merged into the built-in league by slug. An imported team equal to its built-in
     export is not "changed", so a round-tripped export is the built-in league (`builtin` is true)."""
@@ -579,6 +597,8 @@ def merge(doc: dict) -> dict:
         if given.get("conference") is not None:
             given["conference"] = resolve(given["conference"])
         if slug in base:
+            if isinstance(given.get("coaches"), dict):
+                given["coaches"] = _merge_coaches(base[slug].get("coaches") or {}, given["coaches"])
             merged = {**copy.deepcopy(base[slug]), **given}
             if merged != base[slug]:
                 changed.append(slug)

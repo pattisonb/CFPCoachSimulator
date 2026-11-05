@@ -475,10 +475,20 @@ def team_meta_doc(team: dict, conf_name: str) -> dict:
             "roster_size": len(team.get("roster") or []) or sum(offseason.TARGET.values())}
 
 
-def coaches_for(team: dict, conf: dict, lgd: dict, rng: random.Random) -> dict:
+def _set_rating(c: dict, rating) -> None:
+    """The coach's overall set to `rating`, his other ratings shifted by the same amount."""
+    shift = int(round(rating)) - c["ratings"]["overall"]
+    c["ratings"] = {k: int(max(1, min(99, v + shift))) for k, v in c["ratings"].items()}
+    c["ratings"]["overall"] = int(round(rating))
+
+
+def coaches_for(team: dict, conf: dict, lgd: dict, rng: random.Random, taken: Optional[set[str]] = None) -> dict:
     """A file team's staff in the league's form: each role the file leaves out is generated like the
     coach market's hires (carousel.generated), carrying the conference's most common scheme; a given
-    name or rating replaces the generated one; a role given with full ratings is kept as given."""
+    name or rating replaces the generated one; a role given with full ratings (a built-in coach, the
+    file's edits merged over him) is kept, with a given `rating` applied. `taken`: coach names (lower
+    case) already in the league; a generated name never repeats one, and this staff's are added."""
+    taken = set() if taken is None else taken
     slug = team["slug"]
     given = team.get("coaches") or {}
     off_c, def_c, carrier = _schemes(conf, lgd)
@@ -491,18 +501,20 @@ def coaches_for(team: dict, conf: dict, lgd: dict, rng: random.Random) -> dict:
         gr = g.get("ratings") if isinstance(g.get("ratings"), dict) else {}
         if gr and model_keys <= set(gr):
             c = copy.deepcopy(g)
-            c.pop("rating", None)
+            rating = c.pop("rating", None)
+            if rating is not None:
+                _set_rating(c, rating)
         else:
             c = carousel.generated(rng, lgd, role, slug, COACH_YEAR, like=lgd["teams"][carrier]["coaches"][role])
             c.pop("alma_mater", None)
             c.update(team_slug=slug, role=role, is_interim=False)
             if g.get("name"):
                 c["name"] = str(g["name"]).strip()
+            elif c["name"].lower() in taken:
+                c["name"] = recruits._name(rng, taken)
             c["ratings"].update({k: int(v) for k, v in gr.items() if k in c["ratings"]})
             if g.get("rating") is not None:
-                shift = int(round(g["rating"])) - c["ratings"]["overall"]
-                c["ratings"] = {k: int(max(1, min(99, v + shift))) for k, v in c["ratings"].items()}
-                c["ratings"]["overall"] = int(round(g["rating"]))
+                _set_rating(c, g["rating"])
             c.setdefault("scheme", {})
             if role == "head_coach":
                 c["scheme"]["offensive_philosophy"] = off_c
@@ -516,6 +528,8 @@ def coaches_for(team: dict, conf: dict, lgd: dict, rng: random.Random) -> dict:
             sc["offensive_philosophy" if role == "head_coach" else "offensive_scheme"] = off
         if de and role in ("head_coach", "defensive_coordinator"):
             sc["defensive_philosophy" if role == "head_coach" else "defensive_scheme"] = de
+        if c.get("name"):
+            taken.add(str(c["name"]).lower())
         out[role] = c
     return out
 
@@ -657,6 +671,7 @@ def to_league(merged: dict, seed: int) -> tuple[dict, list[str]]:
 
     models: dict[str, dict] = {}
     fill_lines: list[str] = []
+    coach_names = carousel._taken_names(lgd)        # every coach name already in the league (lower case)
     for slug in work:
         doc = merged["teams"][slug]
         conf = merged["conferences"].get(doc.get("conference")) or {"members": []}
@@ -666,7 +681,12 @@ def to_league(merged: dict, seed: int) -> tuple[dict, list[str]]:
         bdoc = docs.get(slug, {})
         entry = lgd["teams"].setdefault(slug, {})
         if new or doc.get("coaches") != bdoc.get("coaches"):
-            entry["coaches"] = coaches_for(doc, conf, base, rng)
+            entry["coaches"] = coaches_for(doc, conf, base, rng, coach_names)
+            if not new and entry["coaches"]["head_coach"] != base["teams"][slug]["coaches"]["head_coach"]:
+                p = entry["program"]              # a new or edited head coach: the program's coach appeal follows him
+                p["coach"] = float(entry["coaches"]["head_coach"]["ratings"]["overall"])
+                p["rating"] = round(programs.mix(p), 1)
+                p["tier"] = programs.tier_of(p["rating"])
         built = {**doc, "coaches": entry["coaches"]}
         if new:
             style, formation = style_and_formation(built, conf, base)
@@ -686,6 +706,8 @@ def to_league(merged: dict, seed: int) -> tuple[dict, list[str]]:
                 p["prestige"] = p["history"] = float(doc["prestige"])
                 p["rating"] = round(programs.mix(p), 1)
                 p["tier"] = programs.tier_of(p["rating"])
+                entry.setdefault("meta", copy.deepcopy(league.base_meta(slug)))
+                entry["meta"]["program"] = {**entry["meta"]["program"], "prestige": 1 + round(5 * float(doc["prestige"]) / 100)}
         if slug in refill:
             target = strength_target(doc, conf, strengths)
             team = {**doc, "formation": entry["formation"]}

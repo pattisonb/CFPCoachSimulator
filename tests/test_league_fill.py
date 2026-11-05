@@ -364,6 +364,77 @@ def test_moved_builtin_team_gets_a_recruiting_model():
     assert rm["smu"]["location"] == [40.0, -100.0] and lgd["teams"]["rice"]["meta"]["state"] == "OR"
 
 
+def _rice_with(coaches):
+    doc = {"format": "cfp-league/1", "teams": [{"slug": "rice", "coaches": coaches}]}
+    assert league_file.validate(doc) == []
+    merged = league_file.merge(doc)
+    return merged, league_fill.to_league(merged, 1)[0]
+
+
+def test_offense_word_keeps_builtin_staff():
+    base = league.from_base(2026)["teams"]["rice"]["coaches"]
+    merged, lgd = _rice_with({"offense": "Air Raid"})
+    c = lgd["teams"]["rice"]["coaches"]
+    assert merged["changed"] == ["rice"]
+    for role in ("head_coach", "offensive_coordinator", "defensive_coordinator"):
+        assert c[role]["name"] == base[role]["name"] and c[role]["ratings"] == base[role]["ratings"]
+        assert c[role]["tendencies"] == base[role]["tendencies"]
+    assert c["defensive_coordinator"] == base["defensive_coordinator"]
+    assert c["head_coach"]["scheme"] == {**base["head_coach"]["scheme"], "offensive_philosophy": "Air Raid"}
+    assert c["offensive_coordinator"]["scheme"] == {**base["offensive_coordinator"]["scheme"], "offensive_scheme": "Air Raid"}
+    assert {k: v for k, v in c["head_coach"].items() if k != "scheme"} == {k: v for k, v in base["head_coach"].items() if k != "scheme"}
+
+
+def test_head_name_renames_builtin_coach():
+    base = league.from_base(2026)["teams"]["rice"]["coaches"]
+    _, lgd = _rice_with({"head": {"name": "Joe Q"}})
+    c = lgd["teams"]["rice"]["coaches"]
+    assert c["head_coach"] == {**base["head_coach"], "name": "Joe Q"}
+    assert c["offensive_coordinator"] == base["offensive_coordinator"] and c["defensive_coordinator"] == base["defensive_coordinator"]
+
+
+def test_head_rating_sets_builtin_coach():
+    lg0 = league.from_base(2026)["teams"]["rice"]
+    base = lg0["coaches"]
+    _, lgd = _rice_with({"head": {"rating": 80}})
+    t = lgd["teams"]["rice"]
+    hc = t["coaches"]["head_coach"]
+    assert hc["name"] == base["head_coach"]["name"] and hc["ratings"]["overall"] == 80 and "rating" not in hc
+    shift = 80 - base["head_coach"]["ratings"]["overall"]
+    assert all(hc["ratings"][k] == max(1, min(99, v + shift)) for k, v in base["head_coach"]["ratings"].items() if k != "overall")
+    assert t["coaches"]["offensive_coordinator"] == base["offensive_coordinator"]
+    assert t["coaches"]["defensive_coordinator"] == base["defensive_coordinator"]
+    assert t["program"]["coach"] == 80 and t["program"]["rating"] > lg0["program"]["rating"]
+
+
+def test_unchanged_coaches_collapse_to_builtin():
+    doc = {"format": "cfp-league/1", "teams": [{"slug": "rice", "coaches": copy.deepcopy(league_file._builtin_docs()["rice"]["coaches"])}]}
+    assert league_file.merge(doc)["builtin"] is True
+
+
+def test_prestige_edit_sets_meta_stars():
+    doc = {"format": "cfp-league/1", "teams": [{"slug": "rice", "prestige": 90}]}
+    lgd, _ = league_fill.to_league(league_file.merge(doc), 1)
+    m = lgd["teams"]["rice"]["meta"]
+    assert m["program"]["prestige"] == 1 + round(5 * 90 / 100) and m["short_name"] == "Rice"
+
+
+def test_generated_coach_names_never_clash():
+    doc = copy.deepcopy(ALDER_FILE)
+    doc["teams"][0]["coaches"] = {}
+    doc["teams"].append({"slug": "zeta-u", "name": "Zeta U", "state": "WA", "conference": "big-sky-east", "roster": []})
+    lgd, _ = league_fill.to_league(league_file.merge(doc), 1)
+    new = [c["name"].lower() for s in ("alder-tech", "zeta-u") for c in lgd["teams"][s]["coaches"].values()]
+    others = {c["name"].lower() for s, t in lgd["teams"].items() if s not in ("alder-tech", "zeta-u")
+              for c in t["coaches"].values() if c and c.get("name")}
+    assert len(new) == 6 == len(set(new)) and not set(new) & others
+    base, team = league.from_base(2026), {"slug": "x"}
+    first = league_fill.coaches_for(team, {"members": []}, base, random.Random(5), set())
+    taken = {c["name"].lower() for c in first.values()}
+    again = league_fill.coaches_for(team, {"members": []}, base, random.Random(5), set(taken))   # the same draws, those names taken
+    assert not {c["name"].lower() for c in again.values()} & taken
+
+
 def test_league_seed():
     assert league_fill.league_seed(b"abc", 7) == 7
     s = league_fill.league_seed(b"abc", None)
