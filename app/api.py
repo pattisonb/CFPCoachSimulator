@@ -222,8 +222,8 @@ def _idle_job(state: dict) -> dict:
 
 
 def _activate(state: dict) -> None:
-    """Put the season's league in play (a career's later seasons have their own, league.py)."""
-    season.use_league(league.ensure_built(state) or season.TEAMS_FILE)
+    """Put the season's league in play (a career's later seasons, or one from a league file, have their own, league.py)."""
+    season.activate(state)
 
 
 def _hold(state: dict) -> None:
@@ -483,6 +483,7 @@ def create_season(p: Params) -> dict:
     if mode != "full":
         raise ApiError(400, "Coach Career starts from week 1")
     _check_not_running()
+    recruiting.use_league_models({})
     season.use_league(season.TEAMS_FILE)          # a new career starts in the 2026 league
     state = season.new_season(team, mode, seed, coach=coach, career=True)
     season.save_season(state)

@@ -606,6 +606,7 @@ def recruiting_model_for(team: dict, conf: dict, strength: float) -> dict:
             "class_size": {"mean": round(_median([(r.get("class_size") or {}).get("mean") for r in rows], 20.0), 1), "by_year": {}},
             "star_share": _tree_median([r.get("star_share") or {} for r in rows], True),
             "blue_chip_share": round(_median([r.get("blue_chip_share") for r in rows], 0.0), 3),
+            "avg_rating": round(_median([r.get("avg_rating") for r in rows], 0.0), 4), "signees": 0,   # no signing history of its own
             "positions_per_class": _tree_median([r.get("positions_per_class") or {} for r in rows], True),
             "in_state_share": in_state,
             "top_states": [[team["state"], in_state]] if team.get("state") else [],

@@ -218,8 +218,22 @@ def _interp(points: tuple, x: float) -> float:
     return points[-1][1]
 
 
+_LEAGUE_MODELS: dict = {}   # the career league's own recruiting models (a league file's new or moved teams), use_league_models
+
+
+def use_league_models(models: dict) -> None:
+    """Put a career league's recruiting models (state["league"]["recruiting_models"]) over the
+    built-in ones; {} for none. Everything worked out from the old ones is forgotten when they change."""
+    global _LEAGUE_MODELS
+    models = models or {}
+    if models == _LEAGUE_MODELS:
+        return
+    _LEAGUE_MODELS = models
+    reset_caches()
+
+
 def _team_model(slug: str) -> dict:
-    return model()["teams"].get(slug) or {}
+    return _LEAGUE_MODELS.get(slug) or model()["teams"].get(slug) or {}
 
 
 def _baseline(slug: str) -> float:
@@ -233,7 +247,7 @@ def attributes(state: dict, p: dict, field: str = "potential") -> dict[str, int]
 
 def fbs_schools(state: dict) -> list[str]:
     from sim import season
-    return sorted(s for s, t in season.load_teams().items() if not t.get("fictional") and s in model()["teams"])
+    return sorted(s for s, t in season.load_teams().items() if not t.get("fictional") and _team_model(s))
 
 
 # ----- scouting (spec section 6) *tune* -----

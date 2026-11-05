@@ -8,6 +8,7 @@ _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project r
 import copy
 import json
 import random
+import shutil
 import statistics
 
 from coach_career import league, league_file, league_fill, offseason
@@ -439,6 +440,137 @@ def test_league_seed():
     assert league_fill.league_seed(b"abc", 7) == 7
     s = league_fill.league_seed(b"abc", None)
     assert isinstance(s, int) and s == league_fill.league_seed(b"abc", None) != league_fill.league_seed(b"abd", None)
+
+
+# ---- the career league from season one ---------------------------------------------------------
+
+def test_imported_league_builds_from_season_one():
+    lgd, _ = league_fill.to_league(league_file.merge(ALDER_FILE), 1)
+    st = {"id": "lf-test", "league": lgd, "year": 2026, "team": "alder-tech"}
+    try:
+        p = league.ensure_built(st)
+        teams = json.loads(p.read_text())["teams"]
+        assert "alder-tech" in teams and "kent-state" not in teams
+        assert teams["alder-tech"]["name"] == "Alder Tech" and teams["alder-tech"]["conference"] == "Big Sky East"
+        assert any(t["fictional"] for t in teams.values())                     # the stand-ins are still there as fill
+        assert teams["alder-tech"]["offense"][0]["slug"].startswith("alder-tech-")
+    finally:
+        league.forget("lf-test")
+    assert league.ensure_built({"id": "x", "league": league.from_base(2027), "year": 2026}) is None   # built-in: unchanged
+
+
+def test_league_slugs_and_is_imported():
+    base = league.from_base(2027)
+    assert league.league_slugs(base) == league.base_slugs()
+    assert not league.is_imported(base) and not league.is_imported(None) and not league.is_imported({})
+    lgd, _ = _to_league("alder", ALDER_FILE)
+    slugs = league.league_slugs(lgd)
+    assert league.is_imported(lgd) and "alder-tech" in slugs and "kent-state" not in slugs
+    assert all(s in slugs for s in league.base_slugs() if league.base_meta(s)["fictional"])
+    assert list(slugs) == sorted(slugs)
+
+
+def _rice_roster():
+    lgd = league.from_base(2026)
+    e = lgd["teams"]["rice"]
+    return [league.expand(c, lgd["attrs"], league.base_meta("rice")) for c in e["roster"]], e["formation"]
+
+
+def test_depth_chart_preferred():
+    roster, shape = _rice_roster()
+    starters, depth = league.lineup(roster, shape, 2026)
+    assert league.lineup(roster, shape, 2026, preferred=None) == (starters, depth)
+    backup_slug = depth["QB"][1]
+    s2, d2 = league.lineup(roster, shape, 2026, preferred={"QB": [backup_slug]})
+    assert d2["QB"][0] == backup_slug and s2["offense"]["QB"] == [backup_slug]
+    assert sorted(d2["QB"]) == sorted(depth["QB"]) and d2["QB"][1:] == [s for s in depth["QB"] if s != backup_slug]
+    assert d2["WR"] == depth["WR"]                                              # other roles as before
+    two = depth["QB"][2], depth["QB"][1]
+    assert league.lineup(roster, shape, 2026, preferred={"QB": list(two)})[1]["QB"][:2] == list(two)   # in the given order
+    assert league.lineup(roster, shape, 2026, preferred={"QB": ["nobody"]})[1]["QB"] == depth["QB"]  # unknown names ignored
+
+
+def test_source_team_uses_file_depth():
+    lgd, _ = _to_league("alder", ALDER_FILE)
+    jay = next(c["id"] for c in lgd["teams"]["alder-tech"]["roster"] if c["n"] == "Jay Smith")
+    assert lgd["teams"]["alder-tech"]["depth"]["QB"] == [jay]
+    t = league.source_team(lgd, "alder-tech")
+    assert t["depth_chart"]["QB"][0] == jay and t["starters"]["offense"]["QB"] == [jay]
+
+
+def test_offseason_drops_file_depth():
+    from sim import season
+    lgd, _ = league_fill.to_league(league_file.merge(ALDER_FILE), 1)
+    assert lgd["teams"][SLUG].get("depth")
+    st = {"id": "lf-off", "league": lgd, "year": 2026, "team": SLUG}
+    try:
+        season.activate(st)
+        st = {**season.new_season(SLUG, "full", seed=2, career=True), "id": "lf-off", "league": lgd}
+        teams = season.load_teams()
+        for g in st["games"].values():
+            g.update(played=True, home_score=24, away_score=17)
+        rc = st["recruiting"]
+        schools = [s for s, t in teams.items() if not t["fictional"]]
+        for i, pid in enumerate(sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"])[:len(schools) * 21]):
+            rc["status"][pid]["signed"] = schools[i % len(schools)]
+        st.update(done=True, current_week=season.FINAL_WEEK, champion="ohio-state")
+        off = offseason.start(st)
+        assert not any("depth" in t for t in st["league"]["teams"].values())        # the file's depth chart: season one only
+        assert st["league"]["year"] == 2027 and SLUG in st["league"]["teams"] and league.is_imported(st["league"])
+        mine = [d for d in off["departures"] if d.get("team") == SLUG]
+        assert all(d.get("team_name") == "Alder Tech" for d in mine)
+    finally:
+        season.use_league(None)
+        from coach_career import recruiting
+        recruiting.use_league_models({})
+        league.forget("lf-off")
+        shutil.rmtree(season.box_dir({"id": "lf-off"}).parent, ignore_errors=True)
+
+
+def test_recruiting_league_models():
+    from coach_career import recruiting
+    lgd, _ = _to_league("alder", ALDER_FILE)
+    models = lgd["recruiting_models"]
+    assert set(recruiting.model()["teams"]["rice"]) <= set(models["alder-tech"])   # every key a built-in model has
+    assert models["alder-tech"]["signees"] == 0 and 0 < models["alder-tech"]["avg_rating"] < 1
+    try:
+        recruiting.use_league_models(models)
+        assert recruiting._team_model("alder-tech") is models["alder-tech"]
+        assert recruiting._team_model("ohio-state") is recruiting.model()["teams"]["ohio-state"]
+        recruiting._STATIC["x"] = 1
+        recruiting.use_league_models(models)                                  # the same models: the caches stay
+        assert recruiting._STATIC.get("x") == 1
+        recruiting.reset_caches()
+        assert recruiting._team_model("alder-tech") is models["alder-tech"]  # reset_caches keeps the league's models
+        recruiting._STATIC["x"] = 1
+        recruiting.use_league_models({})
+        assert "x" not in recruiting._STATIC and recruiting._team_model("alder-tech") == {}
+    finally:
+        recruiting.use_league_models({})
+
+
+def test_new_team_through_a_recruiting_week():
+    from coach_career import career, recruiting
+    from sim import season
+    lgd, _ = league_fill.to_league(league_file.merge(ALDER_FILE), 1)
+    st = {"id": "lf-rec", "league": lgd, "year": 2026, "team": SLUG}
+    try:
+        season.activate(st)
+        assert recruiting._team_model(SLUG) and SLUG in season.load_teams() and "kent-state" not in season.load_teams()
+        st = {**season.new_season(SLUG, "full", seed=3, career=True), "id": "lf-rec", "league": lgd}
+        season.activate(st)
+        assert SLUG in recruiting.fbs_schools(st)
+        st["career"]["settings"]["auto_recruit"] = True
+        recruiting.weekly_step(st, 1, auto_user=True)
+        rc = st["recruiting"]
+        pid = next(iter(rc["prospects"]))
+        assert recruiting.interest(st, SLUG, pid) >= 0 and recruiting.open_spots(st, SLUG) > 0
+        assert rc["offers"].get(SLUG) and rc["lists"] and recruiting.weekly_hours(st, SLUG) > 0   # the new team recruits like the rest
+    finally:
+        season.use_league(None)
+        recruiting.use_league_models({})
+        league.forget("lf-rec")
+        shutil.rmtree(season.box_dir({"id": "lf-rec"}).parent, ignore_errors=True)
 
 
 if __name__ == "__main__":

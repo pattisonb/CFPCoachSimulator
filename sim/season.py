@@ -165,8 +165,11 @@ def use_league(path: Optional[Path]) -> None:
 
 
 def activate(state: dict) -> None:
-    """Make `state`'s league the one in play (a career past its first season plays its own)."""
+    """Make `state`'s league the one in play (a career past its first season, or one from a league
+    file, plays its own), with its recruiting models."""
     from coach_career import league
+    from coach_career import recruiting
+    recruiting.use_league_models((state.get("league") or {}).get("recruiting_models") or {})
     use_league(league.ensure_built(state))
 
 
