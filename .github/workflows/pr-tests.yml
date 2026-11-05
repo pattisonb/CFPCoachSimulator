@@ -155,7 +155,8 @@ jobs:
   # the one result PR Auto-merge reads (its job named "test"): every part passed
   test:
     needs: [prepare, shard]
-    if: always() && (github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false)
+    # !cancelled(): a run superseded by a newer push stays cancelled, never a red 'failed' check
+    if: ${{ !cancelled() && (github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false) }}
     runs-on: ubuntu-latest
     steps:
       - name: Every part passed
