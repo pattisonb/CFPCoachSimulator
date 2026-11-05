@@ -738,6 +738,8 @@ def to_league(merged: dict, seed: int) -> tuple[dict, list[str]]:
 
     lgd["source"] = {"format": league_file.FORMAT, "name": merged["name"]}
     lgd["recruiting_models"] = models
+    lgd["schedule_rules"] = league_file.schedule_rules(merged)   # the generator's rules_override (offseason.next_season)
+    lgd["divisions"] = league_file.divisions(merged)             # season.divisions
     n_add, n_chg, n_rem = len(merged["added"]), len(merged["changed"]), len(merged["removed"])
     lines = [f"{n_add} {'team' if n_add == 1 else 'teams'} added, {n_chg} changed and {n_rem} removed."] + fill_lines
     return lgd, lines

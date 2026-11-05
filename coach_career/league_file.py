@@ -631,3 +631,168 @@ def merge(doc: dict) -> dict:
     return {"teams": teams, "added": added, "changed": changed, "removed": removed, "conferences": confs,
             "structural": structural, "conferences_changed": conf_changed,
             "builtin": not (added or changed or removed or structural or conf_changed), "name": name}
+
+
+# ---- Schedules ----------------------------------------------------------------------------------
+
+NEW_CONFERENCE_POWER_ROAD = [1, 2]   # *tune* a new conference team's Power pay games a year (fewest, most)
+NEW_CONFERENCE_FCS_MAX = 1           # *tune* a new conference team's FCS games a year, at most
+
+
+def _base_members() -> dict[str, list[str]]:
+    """Built-in conference id -> its teams, sorted."""
+    b = _builtin()
+    out: dict[str, list[str]] = {}
+    for s in sorted(b["slugs"]):
+        out.setdefault(b["team_conf"][s], []).append(s)
+    return out
+
+
+def _conf_changed(merged: dict, cid: str) -> bool:
+    """A built-in conference whose members, games or name the file changed."""
+    b, c = _builtin(), merged["conferences"].get(cid)
+    return c is None or sorted(c["members"]) != _base_members().get(cid, []) or c["games"] != b["games"].get(cid, 0) \
+        or c["name"] != b["conf_names"].get(cid)
+
+
+def divisions(merged: dict) -> dict:
+    """{conference name: {division: [slugs]}} for each conference that plays divisions
+    (season.DIVISIONS) and whose membership (or games) the file changed: the built-in divisions less
+    the teams gone, each added member in the smaller division (a tie to the first alphabetically).
+    {} (no divisions) when a division would be empty or too big for the conference's games."""
+    from sim import season
+    out = {}
+    for conf_name, divs in season.DIVISIONS.items():
+        cid = conference_id(conf_name)
+        if not _conf_changed(merged, cid):
+            continue
+        c = merged["conferences"].get(cid)
+        members = list(c["members"]) if c else []
+        keep = set(members)
+        new = {d: [s for s in ms if s in keep] for d, ms in divs.items()}
+        placed = {s for ms in new.values() for s in ms}
+        for s in sorted(keep - placed):
+            d = min(sorted(new), key=lambda d: len(new[d]))
+            new[d].append(s)
+        if not c or any(not ms for ms in new.values()) or max(len(ms) for ms in new.values()) - 1 > c["games"]:
+            new = {}
+        out[c["name"] if c else conf_name] = new
+    return out
+
+
+def _new_rule(n: int, games: int) -> dict:
+    return {"games": games, "cycle": 1 if n - 1 == games else 2, "home_split": "even", "protected": [], "finales": [],
+            "non_conference": {"games": 12 - games, "power_road": list(NEW_CONFERENCE_POWER_ROAD), "fcs_max": NEW_CONFERENCE_FCS_MAX}}
+
+
+def _trimmed_rule(base: dict, c: dict, divs: dict) -> dict:
+    """A built-in conference's rule for its merged members and games: the pairs, eight-game turns and
+    round robin its teams no longer allow are dropped; its divisions are divisions()'s."""
+    rule = copy.deepcopy(base)
+    mem, n, games = set(c["members"]), len(c["members"]), c["games"]
+    for k in ("protected", "finales", "neutral"):
+        if k in rule:
+            rule[k] = [p for p in rule[k] if p[0] in mem and p[1] in mem]
+    if "eight_game_team" in rule:
+        rule["eight_game_team"] = {y: s for y, s in rule["eight_game_team"].items() if s in mem}
+        if not rule["eight_game_team"]:
+            del rule["eight_game_team"]
+    from sim import schedule_gen
+    if games != schedule_gen._league_games(base, YEAR):  # the file set the conference's games: every year
+        rule["games"] = games
+        rule.pop("games_from", None)
+        rule.setdefault("non_conference", {})["games"] = 12 - games
+    if "games_from" in rule:
+        rule["games_from"] = {y: k for y, k in rule["games_from"].items() if k <= n - 1}
+        if not rule["games_from"]:
+            del rule["games_from"]
+    if rule.get("round_robin") and n - 1 != games:
+        del rule["round_robin"]
+    if c["name"] in divs:
+        d = divs[c["name"]]
+        if d:
+            rule["divisions"] = d
+            rule["cross_division"] = max(0, games - (min(len(ms) for ms in d.values()) - 1))
+        else:
+            rule.pop("divisions", None)
+            rule.pop("cross_division", None)
+    return rule
+
+
+def _protect_fits(rule: dict, games: int, pair: list) -> bool:
+    """A listed rivalry can be a protected pair: each team keeps a league game free beyond its
+    protected games and division, and a cross-division pair fits the cross-division games."""
+    divs = rule.get("divisions") or {}
+    div_of = {s: d for d, ms in divs.items() for s in ms}
+    a, b = pair
+    if divs and div_of.get(a) is not None and div_of.get(a) == div_of.get(b):
+        return False                                    # division mates meet every year already
+    for s in pair:
+        cross = [p for p in rule.get("protected", []) if s in p and not (div_of and div_of.get(p[0]) == div_of.get(p[1]))]
+        load = len(cross) + (len(divs.get(div_of[s], [])) - 1 if s in div_of else 0)
+        if load + 1 >= games:
+            return False
+        if divs and rule.get("cross_division") is not None and len(cross) + 1 >= rule["cross_division"]:
+            return False
+    return True
+
+
+def schedule_rules(merged: dict) -> dict:
+    """The schedule generator's rules_override for a merged league: {"conferences": {name: rule}} for
+    each new conference and each built-in one whose members, games or name changed (or that gains a
+    protected pair), and {"annual": [...]} for listed rivalries across conferences. A rival in the
+    same conference is a protected pair; new conferences are never Power conferences."""
+    from sim import schedule_gen
+    R = schedule_gen.rules()["conferences"]
+    b, docs = _builtin(), _builtin_docs()
+    confs, teams = merged["conferences"], merged["teams"]
+    divs = divisions(merged)
+    work: dict[str, dict | None] = {}
+    out_ids: set[str] = set()
+
+    def rule_for(cid: str):
+        if cid not in work:
+            c = confs[cid]
+            if cid not in b["conf_names"]:
+                work[cid] = _new_rule(len(c["members"]), c["games"])
+                out_ids.add(cid)
+            elif R.get(b["conf_names"][cid]) is None:
+                work[cid] = None                        # the independents: scheduled team by team
+            elif _conf_changed(merged, cid):
+                work[cid] = _trimmed_rule(R[b["conf_names"][cid]], c, divs)
+                out_ids.add(cid)
+            else:
+                work[cid] = copy.deepcopy(R[b["conf_names"][cid]])
+        return work[cid]
+
+    for cid in confs:
+        rule_for(cid)
+
+    def listed(slug: str) -> list:
+        rv = teams[slug].get("rivals") or []
+        if slug in merged["added"] or rv != (docs.get(slug) or {}).get("rivals"):
+            return [r for r in rv if isinstance(r, str)]
+        return []
+
+    seen = {tuple(sorted(s["teams"])) for s in schedule_gen.series()["annual"]}
+    annual = []
+    for slug in sorted(set(merged["added"]) | set(merged["changed"])):
+        if slug not in teams:
+            continue
+        for r in listed(slug):
+            if r == slug or r not in teams:
+                continue
+            pair = sorted((slug, r))
+            ca, cr = teams[slug].get("conference"), teams[r].get("conference")
+            rule = rule_for(ca) if ca == cr and ca in confs else None
+            if rule is not None and confs[ca]["games"] > 0:
+                prot = rule.setdefault("protected", [])
+                if not rule.get("round_robin") and pair not in [sorted(p) for p in prot] \
+                        and _protect_fits(rule, confs[ca]["games"], pair):
+                    prot.append(pair)
+                    out_ids.add(ca)
+                continue
+            if tuple(pair) not in seen:
+                seen.add(tuple(pair))
+                annual.append({"teams": pair, "name": ""})
+    return {"conferences": {confs[cid]["name"]: work[cid] for cid in sorted(out_ids)}, "annual": annual}

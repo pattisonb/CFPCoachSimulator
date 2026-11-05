@@ -120,16 +120,26 @@ def _site_from_history(hist: dict, a: str, b: str, rng: random.Random, deficit=N
     return (a, b) if rng.random() < 0.5 else (b, a)
 
 
+def empty_history() -> dict:
+    """A history with no meetings: a season one built from a league file's conferences (nothing to return)."""
+    return {"pairs": {}, "home_conf": {}, "pending": [], "years": []}
+
+
 # ----- the season ----------------------------------------------------------------------------------
 
-def generate(year: int, teams: dict, history: Optional[dict], rng: random.Random) -> tuple[dict, dict]:
+def generate(year: int, teams: dict, history: Optional[dict], rng: random.Random,
+             rules_override: Optional[dict] = None) -> tuple[dict, dict]:
     """The season's games (season.new_season's records, keyed by event id) and the history
-    carried forward. Raises ScheduleError when no slate satisfies the rules for this seed."""
+    carried forward. Raises ScheduleError when no slate satisfies the rules for this seed.
+    `rules_override` (a league file's, league_file.schedule_rules): "conferences" by name over the
+    built-in ones, and "annual" series played after the built-in ones. Power status never changes."""
+    override = rules_override or {}
     hist = json.loads(json.dumps(history)) if history else seed_history(teams)
     fbs = {s: t for s, t in teams.items() if not t.get("fictional")}
     fcs = [s for s, t in teams.items() if t.get("fictional")]
     conf_of = {s: t["conference"] for s, t in fbs.items()}
     R = rules()
+    confs = {**R["conferences"], **(override.get("conferences") or {})}
     power_confs = set(R["power"])
     is_power = lambda s: conf_of.get(s) in power_confs or s in R["power_independents"]
     games: list[dict] = []       # {home, away, neutral, week (or None), title, kind: fixed|conf|nonconf|fcs}
@@ -183,19 +193,20 @@ def generate(year: int, teams: dict, history: Optional[dict], rng: random.Random
     booked = played_pairs
     league_k = {}
     for conf, members in _by_conference(fbs).items():
-        rule = R["conferences"].get(conf)
+        rule = confs.get(conf)
         for s in members:
             league_k[s] = _league_games(rule, year) if rule else 0
     room = lambda s: count[s] < GAMES - league_k.get(s, 0)       # non-conference room left before the league slate
-    _fixed_games(year, fbs, hist, rng, add, is_power, booked, room, lambda: games)
+    _fixed_games(year, fbs, hist, rng, add, is_power, booked, room, lambda: games, override.get("annual") or [])
     # 2. every conference's league slate
     for conf, members in _by_conference(fbs).items():
-        rule = R["conferences"].get(conf)
+        rule = confs.get(conf)
         if rule is None:
             continue
         _conference_slate(year, conf, rule, members, hist, rng, add, home_total, booked)
     # 3. non-conference fill by tier
-    _nonconference(year, fbs, fcs, hist, rng, add, is_power, count, nonconf_power, fcs_games, home_total, pending_next, teams, booked, games, remove)
+    _nonconference(year, fbs, fcs, hist, rng, add, is_power, count, nonconf_power, fcs_games, home_total, pending_next, teams, booked, games,
+                   remove, confs)
     short = [s for s, n in count.items() if n != GAMES]
     if short:
         raise ScheduleError(f"{len(short)} teams without {GAMES} games in {year}: {short[:6]}")
@@ -223,9 +234,10 @@ def _by_conference(fbs: dict) -> dict[str, list[str]]:
 
 # ----- fixed games ---------------------------------------------------------------------------------
 
-def _fixed_games(year: int, fbs: dict, hist: dict, rng: random.Random, add, is_power, booked: set, room, games_so_far) -> None:
+def _fixed_games(year: int, fbs: dict, hist: dict, rng: random.Random, add, is_power, booked: set, room, games_so_far,
+                 extra_annual: tuple = ()) -> None:
     S = series()
-    for s in S["annual"]:                                 # annual series first: they outrank a new series
+    for s in list(S["annual"]) + list(extra_annual):   # a league file's listed rivals after the built-in series                                 # annual series first: they outrank a new series
         a, b = s["teams"]
         if a not in fbs or b not in fbs:
             continue
@@ -293,6 +305,8 @@ def _conference_slate(year: int, conf: str, rule: dict, members: list[str], hist
         odd_one = members[year % len(members)]
         need[odd_one] -= 1
     divisions = rule.get("divisions")
+    if divisions and len(divisions) == 2:
+        _balance_divisions(need, divisions, rule.get("cross_division"), rule.get("protected", []), year)
     required: list[tuple[str, str]] = [tuple(p) for p in rule.get("protected", []) if p[0] in need and p[1] in need]
     if rule.get("round_robin"):
         required = [(a, b) for i, a in enumerate(members) for b in members[i + 1:]]
@@ -348,6 +362,36 @@ def _conference_slate(year: int, conf: str, rule: dict, members: list[str], hist
     for home, away, _ in sited:
         key = tuple(sorted((home, away)))
         add(home, away, key in neutral_pairs, FINALE_WEEK if key in finale_pairs else None, "", "conf")
+
+
+def _balance_divisions(need: dict, divisions: dict, cross: Optional[int], protected: list, year: int) -> None:
+    """Two divisions of different sizes (a league file's added team) cannot give every team the same
+    number of cross-division games: the side with more cross games to play gives some up, a game
+    each for its members in turn from `year`, so both sides play the same number. Equal divisions
+    (every built-in one) are left alone."""
+    sides = [[s for s in d if s in need] for d in divisions.values()]
+    if any(not d for d in sides):
+        return
+    if cross is not None:
+        for d in sides:
+            for s in d:
+                need[s] = min(need[s], len(d) - 1 + cross)
+    side_of = {s: i for i, d in enumerate(sides) for s in d}
+    fixed = {s: 0 for s in need}                           # protected games across the divisions: these stay
+    for a, b in protected:
+        if a in side_of and b in side_of and side_of[a] != side_of[b]:
+            fixed[a] += 1; fixed[b] += 1
+    spare = lambda s, d: need[s] - (len(d) - 1) - fixed[s]
+    totals = [sum(max(0, need[s] - (len(d) - 1)) for s in d) for d in sides]
+    while totals[0] != totals[1]:
+        i = 0 if totals[0] > totals[1] else 1
+        d = sides[i]
+        free = [s for s in d if spare(s, d) > 0]
+        if not free:
+            return
+        s = max(free, key=lambda s: (spare(s, d), -((d.index(s) - year) % len(d))))
+        need[s] -= 1
+        totals[i] -= 1
 
 
 def _normalise_targets(target: dict, hosted: int, members: list, year: int, hist: dict, rng: random.Random) -> None:
@@ -464,10 +508,11 @@ def _legal(a: str, x: str, cands: list, edges: list) -> bool:
 
 def _nonconference(year: int, fbs: dict, fcs: list[str], hist: dict, rng: random.Random, add, is_power, count: dict,
                    nonconf_power: dict, fcs_games: dict, home_total: dict, pending_next: list, teams: dict, booked: set,
-                   games: list, remove) -> None:
+                   games: list, remove, confs: Optional[dict] = None) -> None:
     R = rules()
+    confs = R["conferences"] if confs is None else confs
     conf_of = {s: t["conference"] for s, t in fbs.items()}
-    rule_of = lambda s: R["conferences"].get(conf_of[s]) or {}
+    rule_of = lambda s: confs.get(conf_of[s]) or {}
     nc = lambda s: (rule_of(s).get("non_conference") or R["independents"].get(s) or {})
     slots = lambda s: GAMES - count[s]
     recent = lambda a, b: _last_year(hist, a, b) >= year - 1

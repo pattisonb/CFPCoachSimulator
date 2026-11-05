@@ -691,8 +691,15 @@ def _opponents(state: dict) -> dict[str, list[dict]]:
     return out
 
 
-def division_of(conference: str, slug: str) -> Optional[str]:
-    for name, members in DIVISIONS.get(conference, {}).items():
+def divisions(state: dict) -> dict:
+    """The conferences that play divisions in this state's league: the built-in ones with a league
+    file's over them (league_file.divisions); a conference mapped to {} plays without."""
+    out = {**DIVISIONS, **(((state or {}).get("league") or {}).get("divisions") or {})}
+    return {c: d for c, d in out.items() if d}
+
+
+def division_of(conference: str, slug: str, divs: Optional[dict] = None) -> Optional[str]:
+    for name, members in (DIVISIONS if divs is None else divs).get(conference, {}).items():
         if slug in members:
             return name
     return None
@@ -844,17 +851,18 @@ def standings(state: dict) -> dict[str, list[dict]]:
     opp = _opponents(state)
     rank_pos = _ranking_positions(state)
     form = _team_form(state, teams)
+    divs = divisions(state)
     table: dict[str, list[dict]] = {}
     for slug, t in teams.items():
         if t["fictional"]:
             continue
-        r = {"slug": slug, "name": t["name"], "division": division_of(t["conference"], slug), **rec[slug], **form[slug]}
+        r = {"slug": slug, "name": t["name"], "division": division_of(t["conference"], slug, divs), **rec[slug], **form[slug]}
         table.setdefault(t["conference"], []).append(r)
 
     for conf, rows in table.items():
-        if conf in DIVISIONS:
+        if conf in divs:
             ordered = []
-            for div in DIVISIONS[conf]:
+            for div in divs[conf]:
                 group = _order_rows([r for r in rows if r["division"] == div], rows, opp, rank_pos)
                 for i, r in enumerate(group, 1):
                     r["conf_rank"] = i
@@ -1406,13 +1414,14 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
 
 def _ccg_matchups(state: dict, teams: dict) -> list[dict]:
     table = standings(state)
+    divs = divisions(state)
     out = []
     for conf, rows in table.items():
         if conf in polls.INDEPENDENT or len(rows) < 4:
             continue
-        if conf in DIVISIONS:
+        if conf in divs:
             # division winners; the better record (conference, then overall, then margin) is the higher seed
-            winners = [next(r for r in rows if r["division"] == div and r["conf_rank"] == 1) for div in DIVISIONS[conf]]
+            winners = [next(r for r in rows if r["division"] == div and r["conf_rank"] == 1) for div in divs[conf]]
             winners.sort(key=lambda r: (-(r["conf_wins"] / max(1, r["conf_wins"] + r["conf_losses"])),
                                         -(r["wins"] / max(1, r["wins"] + r["losses"])), -(r["points_for"] - r["points_against"])))
             a, b = winners[0], winners[1]
@@ -1424,7 +1433,7 @@ def _ccg_matchups(state: dict, teams: dict) -> list[dict]:
                     "home": a["slug"], "away": b["slug"], "home_display": a["name"], "away_display": b["name"],
                     "conference_game": False, "played": False, "home_score": None, "away_score": None, "overtime": 0,
                     "real": False, "kind": "ccg", "conference": conf, "title": f"{conf} Championship", "site": site,
-                    "divisions": [a.get("division"), b.get("division")] if conf in DIVISIONS else None})
+                    "divisions": [a.get("division"), b.get("division")] if conf in divs else None})
     return out
 
 
