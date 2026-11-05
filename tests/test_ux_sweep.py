@@ -575,10 +575,11 @@ def check_header(page, base, sid) -> None:
     assert items == ["⚙ Settings", "Download Career", "Hide the Top Bar"], items
     page.keyboard.press("Escape")
     labels = page.eval_on_selector_all("#tab-office .go-play button", "els => els.map(e => e.textContent.trim())")
-    assert labels[0] == "Sim the Week", labels
     assert "Sim to Selection Day" in labels and "Sim to Signing Day" in labels and "▾" in labels, labels
     nxt = next((g for g in s["schedule"] if g["week"] == s["current_week"] + 1 and g.get("opponent")), None)
     assert any(l.startswith("Game Day") for l in labels) == bool(nxt and not nxt["played"]), labels
+    # the Next Game hero leads with Game Day while your game is ready, then Sim the Week; otherwise Sim the Week leads
+    assert labels[:2] == [labels[0], "Sim the Week"] and labels[0].startswith("Game Day") if nxt and not nxt["played"] else labels[0] == "Sim the Week", labels
     page.click("#tab-office .go-play .go-play-more")
     page.wait_for_selector(".go-menu .go-menu-item")
     weeks = page.eval_on_selector_all(".go-menu .go-menu-item b", "els => els.map(e => e.textContent)")
@@ -1394,7 +1395,7 @@ if __name__ == "__main__":
             A, B = fresh["id"], done["id"]
 
             # --- Office: the AD chip is a word, not a number out of 100
-            open_tab(page, base, A, "office", ".go-games")
+            open_tab(page, base, A, "office", ".ofc-hero")
             office = page.inner_text("#tab-office")
             assert not OUT_OF_100.search(office), OUT_OF_100.search(office).group(0)
             assert "SECURE" in office.upper() or "SEAT" in office.upper(), "the AD's mood word is missing"
