@@ -132,6 +132,19 @@ def _potentials() -> dict:
     return json.loads(recruits.POTENTIAL_FILE.read_text(encoding="utf-8")) if recruits.POTENTIAL_FILE.exists() else {}
 
 
+@lru_cache(maxsize=1)
+def base_development() -> dict[str, tuple[str, int]]:
+    """slug -> (coachability, projected overall at his potential) for every real 2026 player, from
+    BASE_LEAGUE_FILE (the first season has no league of its own yet), read once. Without the file,
+    the seeded coachability alone (no projection: 0)."""
+    if BASE_LEAGUE_FILE.exists():
+        lgd = json.loads(BASE_LEAGUE_FILE.read_text(encoding="utf-8"))
+        attrs = lgd["attrs"]
+        return {c["id"]: (c.get("c") or "Steady Grinder", game_scale.overall(potential(c, attrs), c["pos"]))
+                for t in lgd["teams"].values() for c in t["roster"]}
+    return {s: (v["coachability"], 0) for s, v in _potentials().items() if v.get("coachability")}
+
+
 def height_in(h) -> Optional[int]:
     if isinstance(h, int):
         return h

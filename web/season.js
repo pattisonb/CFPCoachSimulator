@@ -1549,6 +1549,10 @@
     return tiles;
   }
 
+  // the player page's Coachability and Potential tags (your own roster only)
+  const COACH_TIP = "How fast he grows toward his potential each offseason, from Coach's Dream down to Set in His Ways. A big year or a good developer can raise it.";
+  const POT_TIP = "How good he can become: his projected rating at his ceiling, in the scouting report's words.";
+
   function renderPlayer(p, box) {
     const s = state.season;
     box.innerHTML = "";
@@ -1566,10 +1570,10 @@
     hero.style.setProperty("--p-primary", primary);
     hero.style.setProperty("--p-secondary", col.secondary || primary);
     const facts = [p.position + (p.role && !["QB", "WR", "TE", "K", "P", "HB", "CB"].includes(p.role) ? ` · ${p.role}` : ""), p.class_name, p.height && p.weight ? `${p.height}, ${p.weight} lbs` : (p.height || "")].filter(Boolean);
-    // development trait on a five-star scale: Normal 2, Impact 3, Star 4, Elite 5 (the data has those four tiers)
-    const DEV_STARS = { Normal: 2, Impact: 3, Star: 4, Elite: 5 };
-    const devStars = DEV_STARS[p.dev_trait] || 0;
-    const devTag = devStars ? el("span", { class: `tag dev dev-${(p.dev_trait || "").toLowerCase()}`, title: "Development trait: how quickly the player improves (Normal, Impact, Star, Elite)." }, [el("b", { text: `${p.dev_trait} Development` })]) : null;
+    // your own players: coachability (how fast he closes the gap to his potential, recruits.COACHABILITY's six
+    // levels) and his potential in the scouting report's Potential words; nobody else's is shown
+    const devTag = p.coachability ? el("span", { class: `tag dev coach-${p.coach_level || 4}`, title: COACH_TIP }, [el("span", { text: "Coachability: " }), el("b", { text: p.coachability })]) : null;
+    const potTag = p.coachability && p.potential_word ? el("span", { class: "tag dev pot", title: POT_TIP }, [el("span", { text: "Potential: " }), el("b", { text: p.potential_word })]) : null;
     // recruiting stars next to the name (estimated from the rating; the rosters carry no recruiting rankings)
     const recruit = p.stars ? el("span", { class: "recruit-stars", title: `${p.stars}-star recruit (estimated from the rating against the whole FBS pool)` }, [1, 2, 3, 4, 5].map((i) => el("span", { class: `rs ${i <= p.stars ? "on" : ""}`, text: "★" }))) : null;
     const bigPill = teamPill(team.slug);
@@ -1590,7 +1594,7 @@
             p.form ? el("span", { class: `tag ${p.form.shift > 0 ? "good" : "bad"}`, text: `${p.form.shift > 0 ? "📈" : "📉"} Box scores ${p.form.shift > 0 ? "+" : ""}${Math.round(p.form.shift)}`, title: `Real 2026 box scores: ${p.form.note}. The rating shift is informational unless player form is switched on.` }) : null,
             p.games ? el("span", { class: "tag", text: `${p.games} of ${p.team_games} games` }) : el("span", { class: "tag", text: "No Games Yet" }),
           ]),
-          devTag ? el("div", { class: "player-dev" }, [devTag]) : null,
+          devTag ? el("div", { class: "player-dev" }, [devTag, potTag]) : null,
           (p.archetype || (p.traits || []).length) ? el("div", { class: "player-traits" }, [
             p.archetype ? el("span", { class: "tag style", text: p.archetype, title: "Play style" }) : null,
             ...(p.traits || []).map((tr) => el("span", { class: `trait tier-${tr.tier}`, text: tr.name, title: traitHover(tr) })),
@@ -3588,7 +3592,6 @@
       el("label", {}, ["Class", select("class", p.class, (p.editable_classes || []).map((c) => [c, CLASS_FULL[c] || c]))]),
       el("label", {}, ["Height", text("height", p.height, { placeholder: "6'2\"" })]),
       el("label", {}, ["Weight", inputs.weight]),
-      el("label", {}, ["Development", select("dev_trait", p.dev_trait, (p.dev_traits || ["Normal", "Impact", "Star", "Elite"]).map((d) => [d, d]))]),
     ]);
     form.append(el("h4", { text: "Identity" }), grid);
     const actions = el("div", { class: "player-edit-actions" });
@@ -3603,7 +3606,7 @@
         if (r.key.startsWith("attr:")) (changes.attributes = changes.attributes || {})[r.key.slice(5)] = Math.round(v);
         else changes[r.key] = Math.round(v);
       }
-      for (const k of ["jersey", "class", "height", "dev_trait"]) if (inputs[k].value !== String(p[k] == null ? "" : p[k])) changes[k] = inputs[k].value;
+      for (const k of ["jersey", "class", "height"]) if (inputs[k].value !== String(p[k] == null ? "" : p[k])) changes[k] = inputs[k].value;
       if (inputs.weight.value && Number(inputs.weight.value) !== p.weight) changes.weight = Number(inputs.weight.value);
       if (!Object.keys(changes).length) { toast("Nothing changed.", 2000); return; }
       save.disabled = true;

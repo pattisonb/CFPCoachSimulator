@@ -2771,7 +2771,7 @@ setting off and that moods, form and the boosts move with results when it is on.
 
 ⚙ Settings in ☰ Menu (and the depth chart's sidebar) opens the season's settings. God mode
 lets you edit every player and every depth chart: any player card gets an Edit button
-(ratings 0-99, jersey, class, height, weight and development trait; names and positions
+(ratings 0-99, jersey, class, height and weight; names and positions
 stay, since the season's stats are keyed on them) and every team's depth chart becomes
 editable, not just yours. Edits are saved with the season (`player_edits` in the state)
 and used by every game from the next sim on; an edited rating is marked on the card.
