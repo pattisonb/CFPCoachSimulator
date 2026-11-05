@@ -388,10 +388,10 @@ button.small { padding: 4px 8px; font-size: 12px; }
 .season-side { position: sticky; top: 68px; align-self: start; max-height: calc(100vh - 90px); overflow: auto; }
 #season-toolbar select { font: inherit; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); max-width: 220px; }
 .pill-inline { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: middle; }
-/* team pill: primary over secondary on a diagonal, the accent color as the border;
-   with no accent, a ring that reads against the current theme */
-.team-pill { width: 12px; height: 12px; background: linear-gradient(135deg, var(--c1) 0 50%, var(--c2) 50% 100%); border: 1.5px solid var(--c3, var(--pill-ring)); border-radius: 3px; }
-.team-pill.no-accent { border-style: solid; box-shadow: inset 0 0 0 1px var(--pill-ring); border-color: transparent; }
+/* team pill: primary over secondary on a diagonal, the accent (third) color as the border;
+   with no third color, a solid neutral border that reads against the current theme */
+.team-pill { width: 12px; height: 12px; background: linear-gradient(135deg, var(--c1) 0 50%, var(--c2) 50% 100%) padding-box; border: 1.5px solid var(--c3, var(--pill-ring)); border-radius: 3px; }
+.team-pill.no-accent { border-color: var(--pill-ring); }    /* no third color: a solid neutral border, never the team colors showing through */
 .btn-theme { padding: 6px 9px; line-height: 1; font-size: 15px; }
 .week-strip { display: flex; flex-wrap: wrap; margin-top: 12px; }
 .week-chip { padding: 4px 8px; font-size: 12px; border-radius: 6px; background: var(--panel-2); border: 1px solid transparent; color: var(--muted); }
