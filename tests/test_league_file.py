@@ -287,6 +287,19 @@ def test_conference_by_name_resolves():
     assert m["teams"][slug]["conference"] == cid and slug in m["conferences"][cid]["members"] and m["structural"]
 
 
+def test_new_conference_named_like_a_builtin():
+    # a new conference's engine name is its name, so a built-in conference's name (any case) would be shared
+    cid, name = _big12()
+    for given in (name, name.upper()):
+        doc = base_file(conferences=[{"id": "big-sky-east", "name": given, "level": "FBS", "games": 8}])
+        assert (f"Conference 1 ({given}): that name belongs to a conference in the game; give the new conference its own name, "
+                f"or use the id '{cid}' to change that one.") in league_file.validate(doc)
+    two = base_file(conferences=[{"id": "big-sky-east", "name": "Big Sky East", "games": 8}, {"id": "bse-2", "name": "big sky east", "games": 0}])
+    assert "Conference 2 (big sky east): another conference in the file is named Big Sky East; give each its own name." in league_file.validate(two)
+    # the built-in conference by its own id, renamed or not, is still an edit of that conference
+    assert league_file.validate({"format": "cfp-league/1", "conferences": [{"id": cid, "name": name, "games": league_file._builtin()["games"][cid]}]}) == []
+
+
 def test_merge_does_not_share_builtin_cache():
     m = league_file.merge({"format": "cfp-league/1", "teams": [{"slug": "rice", "prestige": 55}]})
     m["teams"]["rice"]["roster"].clear()

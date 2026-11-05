@@ -6,9 +6,11 @@ from __future__ import annotations
 
 import copy
 import json
+import random
 import re
 from functools import lru_cache
 from pathlib import Path
+from typing import Optional
 
 from coach_career import league, offseason, recruiting
 from teamdata import game_scale
@@ -269,6 +271,17 @@ def validate(doc: dict) -> list[str]:
         if cid in file_confs:
             add(f"{label}: the conference id '{cid}' is used by two conferences; give each its own id.")
             continue
+        if cid not in b["conf_names"]:      # a new conference: its name is its engine name, so it must be its own
+            bid = next((k for k, n in b["conf_names"].items() if n.casefold() == cname.strip().casefold()), None)
+            if bid is not None:
+                add(f"Conference {i} ({cname}): that name belongs to a conference in the game; give the new conference "
+                    f"its own name, or use the id '{bid}' to change that one.")
+                continue
+            twin = next((c["name"] for k, c in file_confs.items() if k not in b["conf_names"]
+                         and c["name"].strip().casefold() == cname.strip().casefold()), None)
+            if twin is not None:
+                add(f"Conference {i} ({cname}): another conference in the file is named {twin}; give each its own name.")
+                continue
         lvl = c.get("level")
         if lvl is not None and lvl != LEVEL:
             add(f"{label}: level '{_say(lvl)}' is not supported; FCS games use the game's own opponents.")
@@ -817,3 +830,67 @@ def schedule_rules(merged: dict) -> dict:
                 seen.add(tuple(pair))
                 annual.append({"teams": pair, "name": ""})
     return {"conferences": {engine_name(merged, cid): work[cid] for cid in sorted(out_ids)}, "annual": annual}
+
+
+# ---- Check: a file as the career it would start --------------------------------------------------
+
+def _plain(reason: str, teams: dict) -> str:
+    """A ScheduleError's reason for the page: each team slug as its name, an FCS stand-in as "an FCS
+    opponent" (never its slug or a real school), and no list brackets or quotes."""
+    from sim import season
+
+    def word(m: re.Match) -> str:
+        t = teams.get(m.group(0))
+        if t is None:
+            return m.group(0)
+        return "an FCS opponent" if t.get("fictional") else season.team_display(m.group(0), teams)
+    text = re.sub(r"[a-z0-9]+(?:-[a-z0-9]+)*", word, str(reason))
+    return re.sub(r"[\[\]']", "", text).strip().rstrip(".") or "no schedule fits its conferences"
+
+
+def _count(n: int, one: str, many: str) -> str:
+    return f"{n} {one if n == 1 else many}"
+
+
+def check(blob: bytes, seed: Optional[int] = None) -> dict:
+    """A league file read, checked, merged and filled: what Start Career needs. Errors as sentences
+    ({"ok": False, "errors"}); an import that changes nothing collapses to the built-in league
+    ({"ok": True, "builtin": True, "summary"}); otherwise the career league (`league`), its engine teams
+    file (`engine`, league.build's), season one's games (`games`: generated from the file's conferences
+    with random.Random(f"league-schedule-{seed}") when the file changes the league's shape, else None for
+    the real 2026 schedule), `structural` (merge's: no real 2026 AP poll then) and the summary
+    ({"name", "added", "changed", "removed", "generated", "lines"}; `generated`: players the fill made)."""
+    from coach_career import league_fill
+    from sim import schedule_gen, season
+    try:
+        doc = parse(blob)
+    except LeagueFileError as e:
+        return {"ok": False, "errors": e.errors}
+    errs = validate(doc)
+    if errs:
+        return {"ok": False, "errors": errs}
+    merged = merge(doc)
+    counts = {"added": len(merged["added"]), "changed": len(merged["changed"]), "removed": len(merged["removed"])}
+    if merged["builtin"]:
+        return {"ok": True, "builtin": True,
+                "summary": {"name": merged["name"], **counts, "generated": 0,
+                            "lines": ["The file matches the game's own league, so the career starts from it."]}}
+    seed = league_fill.league_seed(blob, seed)
+    lgd, lines = league_fill.to_league(merged, seed)
+    generated = sum(max(0, len(lgd["teams"][s]["roster"]) - len(merged["teams"][s].get("roster") or []))
+                    for s in set(merged["added"]) | set(merged["changed"]) if s in lgd["teams"])
+    engine = league.build(lgd)
+    games = None
+    if merged["structural"]:
+        # the teams as season.load_teams shows them (the stand-ins by region), as offseason.next_season passes them
+        teams = {s: (season.stand_in_names({s: dict(t)})[s] if t.get("fictional") else t) for s, t in engine["teams"].items()}
+        try:
+            games, lgd["schedule_history"] = schedule_gen.generate(
+                YEAR, teams, schedule_gen.empty_history(), random.Random(f"league-schedule-{seed}"), lgd["schedule_rules"])
+        except schedule_gen.ScheduleError as e:
+            return {"ok": False, "errors": [f"The {YEAR} schedule could not be built for this league: {_plain(str(e), teams)}."]}
+    lines.append(f"Generated {_count(generated, 'player', 'players')} in all." if generated else "Generated no players.")
+    lines.append(f"The {YEAR} schedule is built from the file's conferences." if merged["structural"]
+                 else f"The real {YEAR} schedule is kept.")
+    return {"ok": True, "builtin": False, "league": lgd, "engine": engine, "games": games, "structural": merged["structural"],
+            "summary": {"name": merged["name"], **counts, "generated": generated, "lines": lines}}

@@ -276,7 +276,7 @@ def test_new_team_complete():
     assert lgd["recruiting_models"]["alder-tech"]["top_states"][0][0] == "OR"
     assert lgd["source"]["name"] == "My League" and "kent-state" not in lgd["teams"]
     assert lgd["year"] == 2026
-    assert lines[0] == "1 team added, 0 changed and 1 removed."
+    assert lines[0] == "Added 1 team, changed 0 and removed 1."
     assert any(ln.startswith("Alder Tech: ") and "added to reach the position floors" in ln for ln in lines[1:])
     ids = {c["n"]: c["id"] for c in t["roster"]}
     assert t["depth"] == {"QB": [ids["Jay Smith"]]}
@@ -308,7 +308,7 @@ def test_defaults_derived():
     assert set(c) == {"head_coach", "offensive_coordinator", "defensive_coordinator"}
     assert c["head_coach"]["scheme"]["offensive_philosophy"] == common
     assert len(lgd["teams"]["owl-state"]["roster"]) == 85
-    assert lines[0] == "1 team added, 0 changed and 0 removed."
+    assert lines[0] == "Added 1 team, changed 0 and removed 0."
     assert "source" in lgd and lgd["source"]["format"] == "cfp-league/1"
 
 
@@ -348,7 +348,7 @@ def test_changed_builtin_team():
     lgd, lines = league_fill.to_league(league_file.merge(doc), 1)
     base = league.from_base(2026)["teams"]
     t = lgd["teams"]["rice"]
-    assert lines[0] == "0 teams added, 1 changed and 0 removed."
+    assert lines[0] == "Added 0 teams, changed 1 and removed 0."
     assert t["program"]["prestige"] == 70 == t["program"]["history"]
     assert t["meta"]["colors"]["primary"]["hex"] == "#AA0000" and t["meta"]["colors"]["accent"] is None
     assert t["meta"]["short_name"] == "Rice" and t["meta"]["rivals"] == league.base_meta("rice")["rivals"]

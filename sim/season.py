@@ -533,13 +533,17 @@ def _fill_open_dates(games: dict, teams: dict) -> int:
 
 def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, fill_open_dates: bool = True,
                coach: Optional[dict] = None, career: bool = False, year: int = 2026,
-               schedule: Optional[dict] = None) -> dict:
+               schedule: Optional[dict] = None, league: Optional[dict] = None, career_id: Optional[str] = None,
+               real_polls: bool = True) -> dict:
     """A new season from the 2026 schedule, or from `schedule` (a generated later year's games,
     sim/schedule_gen.py, keyed by event id). `fill_open_dates` adds a game for teams whose
     schedule has an unannounced date (the real 2026 page turns it off: it shows only real games).
     `career`: a Coach Career (career.py), which starts from week 1. `year`: a career's later
     season (the active league's rosters, offseason.py), which gets no real polls; without a
-    generated `schedule` it replays the 2026 games with home and away swapped every other year."""
+    generated `schedule` it replays the 2026 games with home and away swapped every other year.
+    `league`: a career from a league file (league_file.check's, already in play through use_league),
+    stored with id `career_id` before the career starts. `real_polls=False`: the preseason poll comes
+    from the ratings (_rating_poll), not the real 2026 AP poll (a league whose shape the file changed)."""
     if career and mode != "full":
         raise ValueError("Coach Career starts from week 1")
     teams = load_teams()
@@ -601,7 +605,12 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
         "form": form_teams, "player_form": form_players,
         "rng_state": rng.randrange(1 << 30), "year": year,
     }
-    real_polls = _real_polls_2026(teams) if year == 2026 else {}
+    if league is not None:
+        state["league"] = league
+        if career_id:
+            state["id"] = career_id
+    use_real = real_polls and year == 2026
+    real_polls = _real_polls_2026(teams) if use_real else {}
     real = real_polls if mode == "remaining" else {}
     preseason = real_polls.get(0) or _rating_poll(teams)
     ap_params, _ = polls.load_params()
@@ -611,7 +620,7 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
     pre_full = polls.rank(state["scores"], {}, tiers, ap_params, n=25 + AP_OTHERS)
     pre_others = [t for t in pre_full if t not in set(preseason[:25])][:AP_OTHERS]
     pre_votes = _ap_votes(state, preseason[:25] + pre_others, tiers, ap_params, 0)
-    real_pre = _real_ap_votes_2026(0, teams) if year == 2026 else None
+    real_pre = _real_ap_votes_2026(0, teams) if use_real else None
     if real_pre and real_pre[0][:25] == preseason[:25]:
         preseason, pre_others, pre_votes = real_pre[0], real_pre[1] or pre_others, {**pre_votes, **real_pre[2]}
     # week=0: the preseason poll shows 0-0 even in "remaining" mode, where games are already played
@@ -3181,6 +3190,7 @@ def summary(state: dict) -> dict:
         "injury_count": sum(len(state["injuries"][k]) for k in fbs_only(teams) & state.get("injuries", {}).keys()),
         "my_awards": awards.my_awards(state, state["awards"]) if state.get("awards") else [],
         "career": state.get("career"),
+        "league": ((state.get("league") or {}).get("source") or {}).get("name"),   # a career from a league file
     }
 
 

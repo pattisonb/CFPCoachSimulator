@@ -13,11 +13,13 @@ browser then persists its files).
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
 import sys
 import urllib.parse
+import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
@@ -26,6 +28,7 @@ if sys.platform == "emscripten":                 # in the browser: no worker pro
 
 from coach_career import career
 from coach_career import league
+from coach_career import league_file
 from coach_career import offseason
 from coach_career import prospects
 from coach_career import recruiting
@@ -189,6 +192,7 @@ _job: dict = {}                      # its job record (an advance or game day in
 _changed: bool = False               # a season or coach file was written or deleted since changed() was last read
 _cards: dict[str, tuple[float, dict]] = {}   # season id -> (file mtime, card) for the seasons list
 _teams: dict[str, dict] = {}         # the 2026 teams (data/engine_teams.json), read on first use
+_pending_league: dict | None = None  # the league file last checked (/api/league/check), until a career starts from it
 
 
 def changed() -> bool:
@@ -466,14 +470,89 @@ def get_team(p: Params) -> dict:
 
 # ----- seasons -----------------------------------------------------------------
 
+def _fbs_cards(teams: dict) -> list[dict]:
+    """The team picker's cards for a league's FBS teams, by name."""
+    return sorted((_team_card(t) for t in teams.values() if not t["fictional"]), key=lambda c: c["name"].casefold())
+
+
+def _pend(blob: bytes, seed: Optional[int]) -> dict:
+    """league_file.check on `blob`, held as the pending league when it can start a career."""
+    global _pending_league
+    r = league_file.check(blob, seed)
+    if r["ok"] and not r["builtin"]:
+        _pending_league = {"key": hashlib.sha256(bytes(blob)).hexdigest(), "seed": seed, "blob": bytes(blob),
+                           "lgd": r["league"], "engine": r["engine"], "games": r["games"], "real_polls": not r["structural"]}
+    elif r["ok"]:
+        _pending_league = None
+    return r
+
+
+@route("POST", "/api/league/check")
+def league_check(p: Params) -> dict:
+    """A league file (the body is its bytes) checked for New Career: its errors as sentences, or its
+    summary and the teams a career can start with; `key` names it for POST /api/season ("builtin" when
+    it changes nothing). `?seed=` fills it with that seed (otherwise one read from the file)."""
+    blob = p.body
+    if not isinstance(blob, (bytes, bytearray)):
+        raise ApiError(422, "body is required")
+    _check_not_running()
+    r = _pend(bytes(blob), p.q("seed", int, None))
+    if not r["ok"]:
+        return {"ok": False, "errors": r["errors"], "summary": None, "key": None, "teams": []}
+    if r["builtin"]:
+        return {"ok": True, "errors": [], "summary": r["summary"], "key": "builtin", "teams": _fbs_cards(_all_teams())}
+    teams = season.stand_in_names({s: dict(t) for s, t in r["engine"]["teams"].items()})
+    return {"ok": True, "errors": [], "summary": r["summary"], "key": _pending_league["key"], "teams": _fbs_cards(teams)}
+
+
+def _start_from_league(key: str, team: str, seed: Optional[int], coach: Optional[dict]) -> dict:
+    """A new career from the pending league file: its teams file written as the career's 2026 league,
+    then the season with the file's league in its state (and its schedule when the file made one)."""
+    global _pending_league
+    pending = _pending_league
+    if pending is None or pending["key"] != key:
+        raise ApiError(409, "That league file is no longer loaded; import it again.")
+    t = pending["engine"]["teams"].get(team)
+    if t is None:
+        raise ApiError(404, f"unknown team {team}")
+    if t["fictional"]:
+        raise ApiError(404, "That team is an FCS stand-in: pick an FBS team.")
+    if seed is not None and seed != pending["seed"]:
+        r = _pend(pending["blob"], seed)
+        if not r["ok"]:
+            raise ApiError(409, r["errors"][0])
+        pending = _pending_league
+    cid = uuid.uuid4().hex[:12]
+    out = league.path(cid, league.FIRST_YEAR)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    tmp = out.with_suffix(f".{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(pending["engine"]), encoding="utf-8")
+    os.replace(tmp, out)
+    lgd = pending["lgd"]
+    try:
+        season.use_league(out)
+        recruiting.use_league_models(lgd.get("recruiting_models") or {})
+        state = season.new_season(team, "full", seed, coach=coach, career=True, schedule=pending["games"],
+                                  league=lgd, career_id=cid, real_polls=pending["real_polls"])
+    except Exception:
+        league.forget(cid)
+        recruiting.use_league_models({})
+        season.use_league(season.TEAMS_FILE)
+        raise
+    _pending_league = None
+    return state
+
+
 @route("POST", "/api/season")
 def create_season(p: Params) -> dict:
-    """A new Coach Career (the only mode; a `career` field in the body is ignored)."""
+    """A new Coach Career (the only mode; a `career` field in the body is ignored). `league`: the key
+    /api/league/check gave for a league file ("builtin" or absent: the game's own league)."""
     team = _field(p, "team", str)
     mode = _field(p, "mode", str, "full")
     seed = _field(p, "seed", int, None)
     coach_id = _field(p, "coach", str, None)
-    if _team(team)["fictional"]:
+    key = _field(p, "league", str, "builtin")
+    if key == "builtin" and _team(team)["fictional"]:
         raise ApiError(404, f"{_team(team)['name']} is an FCS stand-in: pick an FBS team")
     coach = None
     if coach_id:
@@ -483,9 +562,12 @@ def create_season(p: Params) -> dict:
     if mode != "full":
         raise ApiError(400, "Coach Career starts from week 1")
     _check_not_running()
-    recruiting.use_league_models({})
-    season.use_league(season.TEAMS_FILE)          # a new career starts in the 2026 league
-    state = season.new_season(team, mode, seed, coach=coach, career=True)
+    if key != "builtin":
+        state = _start_from_league(key, team, seed, coach)
+    else:
+        recruiting.use_league_models({})
+        season.use_league(season.TEAMS_FILE)          # a new career starts in the 2026 league
+        state = season.new_season(team, mode, seed, coach=coach, career=True)
     season.save_season(state)
     _mark_changed()
     _hold(state)
@@ -619,6 +701,13 @@ def list_seasons(p: Params) -> dict:
 @route("GET", "/api/season/{season_id}")
 def get_season(p: Params) -> dict:
     return season.summary(_season_state(p.path["season_id"]))
+
+
+@route("GET", "/api/season/{season_id}/teams")
+def season_teams(p: Params) -> dict:
+    """The team cards of the league this season plays (a career from a league file has its own teams)."""
+    _season_state(p.path["season_id"])          # puts its league in play
+    return {"teams": [_team_card(t) for t in season.load_teams().values()]}
 
 
 def _delete_season_file(season_id: str) -> bool:
