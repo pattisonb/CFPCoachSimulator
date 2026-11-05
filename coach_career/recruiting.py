@@ -2902,12 +2902,18 @@ def make_staff(state: dict) -> list[dict]:
     from sim import season
     t = season.load_teams()[state["team"]]
     rng = random.Random(f"staff-{state.get('rng_state', 0)}-{state['team']}")
-    taken = {p["name"].lower() for p in state["recruiting"]["prospects"].values()}
+    from coach_career import coach_names
+    you = (state.get("career") or {}).get("coach")
+    hc_name = (you or {}).get("name") or ((t.get("coaches") or {}).get("head_coach") or {}).get("name")
+    # no recruiter shares a prospect's name, a coach's or yours (coach_names: one coach, one name)
+    taken = {p["name"].lower() for p in state["recruiting"]["prospects"].values()} | coach_names.base_names() | {(hc_name or "").lower()}
     staff = []
     for sid, role, key in (("oc", "OC", "offensive_coordinator"), ("dc", "DC", "defensive_coordinator")):
         c = (t.get("coaches") or {}).get(key) or {}
         r = c.get("ratings") or {}
-        staff.append({"id": sid, "role": role, "name": c.get("name") or role, "evaluation": int(r.get("player_development", 60)),
+        name = coach_names.coordinator_name(state["team"], key, c.get("name") or "", hc_name, bool(you)) or role
+        taken.add(name.lower())
+        staff.append({"id": sid, "role": role, "name": name, "evaluation": int(r.get("player_development", 60)),
                       "recruiting": int(r.get("recruiting", 60))})
     for i in range(1, 4):
         staff.append({"id": f"r{i}", "role": "Recruiter", "name": recruits._name(rng, taken),

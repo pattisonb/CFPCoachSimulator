@@ -2360,6 +2360,9 @@ def load_season(season_id: str) -> Optional[dict]:
     if state.get("recruiting"):
         recruiting.upgrade_asks(state)     # careers saved before prospects had NIL asks
         recruiting.upgrade_generational(state)   # careers saved before generational prospects
+    if state.get("career"):
+        from coach_career import coach_names
+        coach_names.distinct(state)        # careers saved with one coach in two jobs or two coaches under one name
     return state
 
 
@@ -3126,6 +3129,14 @@ def _coach_line(state: dict, team: dict) -> dict:
     """Who is coaching your team this season, for the season page header: your created coach
     (the Your coach page) or the team's own head coach, and who runs each side."""
     coach = state.get("coach")
+    # a career's coordinators are its staff's (coach_names: the data's head coach doubling as OC is his own man there)
+    names = {s["role"]: s["name"] for s in ((state.get("career") or {}).get("staff") or []) if s.get("role") in ("OC", "DC")}
+    if names:
+        cs = {**(team.get("coaches") or {})}
+        for role, key in (("OC", "offensive_coordinator"), ("DC", "defensive_coordinator")):
+            if role in names and cs.get(key):
+                cs[key] = {**cs[key], "name": names[role]}
+        team = {**team, "coaches": cs}
     if coach:
         return {**{k: coach.get(k) for k in ("id", "first_name", "last_name", "archetype", "offense_scheme",
                                               "defense_scheme", "calls_offense", "calls_defense", "look")},

@@ -71,6 +71,8 @@ def read_save(blob: bytes) -> tuple[dict, dict]:
     boxes = data.get("boxes") or {}
     if not isinstance(boxes, dict) or len(boxes) > MAX_BOXES:
         raise ValueError("not a Coach Career save")
+    from coach_career import coach_names
+    coach_names.distinct(state)          # a save with one coach in two jobs or two coaches under one name heals
     return state, {n: fcs_names.rewrite_text(t) for n, t in boxes.items() if isinstance(t, str) and BOX_NAME.fullmatch(n)}
 
 
