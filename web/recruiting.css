@@ -271,6 +271,7 @@
 .go-twist-line { display: block; }          /* his twist's sentence under its name */
 .go-turn.family { align-self: flex-start; border-bottom-left-radius: 4px; }
 .modal-scene .go-scene .go-turn.family { background: var(--panel-2); }
+.rc-no-room { margin: 6px 0 0; font-size: 13px; line-height: 1.4; color: var(--bad-text); }
 
 /* the Prospect Profile (modal and pane), compact: half the usual gaps, the evaluation in two columns on a wide screen,
    the Scouted strip's grade chips as the grade tooltips' triggers */
