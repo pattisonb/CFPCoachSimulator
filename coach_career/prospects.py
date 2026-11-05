@@ -525,6 +525,28 @@ def seen_status(state: dict, pid: str, viewer: Optional[str]) -> dict:
     return st
 
 
+def visit_view(state: dict, slug: str, v: Optional[dict]) -> Optional[dict]:
+    """An official visit as the page shows it: the stored {week, done} plus `game`, the visited school's game that
+    week from the school's side ({week, opponent_name, venue, played, won, points_for, points_against, overtime};
+    the score only once played), or None when it has no game that week (a bye, a portal campus visit). Read-only:
+    the stored visit is never changed."""
+    if not v:
+        return v
+    from sim import season
+    g = next((x for x in state["games"].values() if x["week"] == v["week"] and slug in (x["home"], x["away"])), None)
+    out = dict(v, game=None)
+    if g is None:
+        return out
+    home = g["home"] == slug
+    played = bool(g.get("played")) and g.get("home_score") is not None and g.get("away_score") is not None
+    pf, pa = ((g["home_score"], g["away_score"]) if home else (g["away_score"], g["home_score"])) if played else (None, None)
+    out["game"] = {"week": g["week"], "opponent_name": season.team_display(g["away"] if home else g["home"], season.load_teams()),
+                   "venue": "neutral" if g.get("neutral") else "home" if home else "away", "played": played,
+                   "won": (pf > pa) if played else None, "points_for": pf, "points_against": pa,
+                   "overtime": (g.get("overtime") or 0) if played else 0}
+    return out
+
+
 def _schools(state: dict, pid: str, viewer: Optional[str] = None) -> list[dict]:
     """His list: the ten schools he likes most among those recruiting him, the leader first."""
     from sim import season
@@ -540,7 +562,7 @@ def _schools(state: dict, pid: str, viewer: Optional[str] = None) -> list[dict]:
     why = rc.get("why", {}).get(pid) or {}
     top = rows[0][0] if rows and rows[0][0] > 0 else 1.0
     return [{"school": s, "name": teams[s]["name"], "interest": round(v, 1), "offered": s in offers,
-             "visit": visits.get(s), "pct": round(pct[s]["pct"], 3) if s in pct else None,
+             "visit": visit_view(state, s, visits.get(s)), "pct": round(pct[s]["pct"], 3) if s in pct else None,
              "bar": round(max(0.0, min(1.0, v / top)), 3), "rank": now.get(s),
              "move": (prev[s] - now[s]) if s in prev and s in now else (None if s in now else None),
              "new": bool(now) and s in now and s not in prev,
@@ -771,7 +793,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
     mine = next((s for s in schools if s["school"] == viewer), None)
     out.update(interest=round(recruiting.interest(state, viewer, pid), 1) if mine is None else mine["interest"],
                leader=schools[0] if schools else None, schools=len(schools),
-               visit=(rc["visits"].get(pid) or {}).get(viewer),
+               visit=visit_view(state, viewer, (rc["visits"].get(pid) or {}).get(viewer)),
                priorities_known=list((rc["revealed"].get(viewer) or {}).get(pid, [])),
                traits=persona.view(state, viewer, pid),
                twist=persona.twist_view(state, viewer, pid),
