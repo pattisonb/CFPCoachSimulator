@@ -227,7 +227,9 @@ def develop(p: dict, rng: random.Random, coach_factor: float = 1.0) -> None:
 def as_roster_player(p: dict, team: dict, slug: str, jersey: Optional[str] = None) -> dict:
     """A signed recruit in the source roster format (cfb_sim_data/teams/*.json), so he joins a
     roster and build_teams.map_player reads him like a real player. Potential and
-    coachability ride along; the development trait is left for the code that replaces it."""
+    coachability ride along. The EA development trait is a placeholder ("Normal"): only the real
+    players' trait means anything (it seeds their potential once, TRAIT_ROOM), and the game shows
+    coachability instead (season.development_reads)."""
     return {
         "slug": slug, "name": p["name"], "position": p["ea_position"], "class": "FR", "class_year": "Freshman",
         "height": f"{p['height'] // 12}'{p['height'] % 12}\"", "weight_lbs": p["weight"], "jersey": jersey,

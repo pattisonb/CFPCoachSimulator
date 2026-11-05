@@ -572,7 +572,13 @@
   }
   // his player page (season.js's modal); a button, so the page's [data-player] links pass it by
   const playerLink = (p) => el("button", { type: "button", class: "dc-btn dc-link dc-player-link", text: "Player Page →", onclick: () => ctx.openPlayer(S.team, p.name, p.position) });
-  const stat = (k, v) => el("div", { class: "dc-stat" }, [el("span", { text: k }), el("strong", { text: v })]);
+  const stat = (k, v, title) => el("div", { class: "dc-stat", ...(title ? { title } : {}) }, [el("span", { text: k }), el("strong", { text: v })]);
+  // your own players: coachability (how fast he grows, the six levels from Coach's Dream to Set in His Ways)
+  // and his potential in the scouting report's words; the server sends them for your roster only
+  const COACH_TIP = "How fast he grows toward his potential each offseason, from Coach's Dream down to Set in His Ways.";
+  const POT_TIP = "How good he can become: his projected rating at his ceiling, in the scouting report's words.";
+  const devStats = (p) => [p.coachability ? stat("Coachability", p.coachability, COACH_TIP) : null,
+    p.coachability && p.potential_word ? stat("Potential", p.potential_word, POT_TIP) : null];
 
   // the depth chart row a player sits on (KR and PR are their own rows)
   function rowOf(p) {
@@ -590,7 +596,7 @@
       el("h2", { class: "dc-rail-title dc-panel-name", text: p.name }),
       el("p", { class: "dc-muted dc-rail-copy" }, [[p.jersey ? `#${p.jersey}` : "", p.position, CLASS_LABEL[p.class] || p.class, p.height && p.weight ? `${p.height} ${p.weight}` : ""].filter(Boolean).join(" · "), movedFrom(p)]),
       stat("OVR", String(p.overall)),
-      p.dev_trait ? stat("Development", p.dev_trait) : null,
+      ...devStats(p),
       p.archetype ? stat("Type", p.archetype) : null,
       p.injury ? stat("Injury", `${p.injury.type}, ${p.injury.weeks_left}w`) : null,
       p.headline ? el("p", { class: "dc-muted dc-rail-copy", text: p.headline }) : null,
@@ -762,7 +768,7 @@
       el("p", { class: "dc-muted dc-rail-copy" }, [[p.jersey ? `#${p.jersey}` : "", p.position, CLASS_LABEL[p.class] || p.class, p.height && p.weight ? `${p.height} ${p.weight}` : ""].filter(Boolean).join(" · "), movedFrom(p)]),
       stat(`OVR at ${role}`, String(p.rating)),
       stat("At His Own Position", `${p.natural} ${p.position}`),
-      p.dev_trait ? stat("Development", p.dev_trait) : null,
+      ...devStats(p),
       p.archetype ? stat("Type", p.archetype) : null,
       p.injury ? stat("Injury", `${p.injury.type}, ${p.injury.weeks_left}w`) : null,
       p.headline ? el("p", { class: "dc-muted dc-rail-copy", text: p.headline }) : null,
@@ -910,7 +916,7 @@
             movedFrom(p, "dc-pc-tag dc-was"),
             el("span", { class: "dc-pc-tag", text: CLASS_LABEL[p.class] || p.class || "" }),
             p.archetype ? el("span", { class: "dc-pc-tag", text: p.archetype }) : null,
-            p.dev_trait ? el("span", { class: "dc-pc-tag", text: `${p.dev_trait} Dev` }) : null,
+            p.coachability ? el("span", { class: "dc-pc-tag", title: COACH_TIP, text: `Coachability: ${p.coachability}` }) : null,
             pr && pr.stars ? el("span", { class: "dc-pc-tag", title: `${pr.stars}-star recruit`, text: "★".repeat(pr.stars) }) : null,
           ]),
         ]),
@@ -922,6 +928,7 @@
           info("Size", [p.height, p.weight ? `${p.weight} lb` : ""].filter(Boolean).join(" · ") || "–"),
           info("Status", status),
           info("This Season", p.headline || (p.games ? `${p.games} games` : "Has not played")),
+          p.coachability && p.potential_word ? info("Potential", p.potential_word) : null,
           pr && pr.morale && pr.morale.enabled ? info("Form", pr.morale.label || "Steady") : null,
         ]),
         attrs.length >= 3 ? radar(attrs) : el("div", { class: "dc-pc-radar dc-muted", text: pr ? "" : "…" }),
