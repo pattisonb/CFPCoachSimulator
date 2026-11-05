@@ -70,6 +70,7 @@
 "test_program_market.py": 0,
 "test_program_readers.py": 6,
 "test_programs_update.py": 8,
+"test_prospects_redesign.py": 120,
 "test_realdata.py": 0,
 "test_recruit_questions.py": 6,
 "test_recruiting.py": 64,

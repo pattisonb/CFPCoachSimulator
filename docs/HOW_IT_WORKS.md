@@ -1185,8 +1185,9 @@ number or rank.
 
 **Needs, recommendations and the first weeks.** Both the board and the class open with a needs
 strip by position (`recruiting.needs_detail`: a healthy roster's make-up minus who comes back
-minus your commits), counted the way you pick (what's left; committed, firm commits, your
-board or your offers against the spots to fill; only what's short); a position picked there
+minus your commits); the board's is counted the way you pick (what's left; committed, firm commits, your
+board or your offers against the spots to fill; only what's short), the class's Your Needs chips
+show what's left; a position picked there
 filters the board or the class to it. The class's **Recommended for You** view
 (`recruiting.recommended`) lists the prospects the Auto-recruit rules would put on your board
 this week, best fit first, each with why (your states, your star level, a position you need),
@@ -1342,6 +1343,35 @@ sub-tab heads its grade cards with a "Scouting Report" kicker, the looks bar (fi
 once, as plain words in their tone color ("Weak–Fair" on one line), three a row (two on a phone), over
 one help line and a row with the link and, once complete, our comp. Its Recruit menu grays Scout with
 the 409 text once he is complete. `tests/test_scouting_layout.py` checks the tab in a browser.
+
+**The Prospects tab** (`renderProspects` in `web/recruiting.js`, `web/prospects.css`), built from the player's
+mockup in the site's theme tokens, flat (no gradient; the board button is the page's yellow, never the team color):
+
+- **The header**: "Prospects · Class of 2027" ("Transfer Portal · 2027" in the portal weeks), one count line ("The
+  national recruiting database: 3,815 prospects.") and the class by star level (Total Prospects, 5-Star … 2-Star),
+  all from the search's `summary` (`prospects.class_summary`: over the whole class you can see, never the filters).
+- **The list card**: **Your Needs** chips (`needs_detail`: "QB 2", the count still to fill, or "P ✓" once covered; a
+  tap filters the list to the position, `pgroup`), the search, **Recommended for You** (with "Add These N to Your
+  Board"), Position, Stars, State, Status and Sort, then the table: #, the avatar, name and hometown (and his find
+  badges), Pos (the game's position, `display_pos`), Ht, Wt, Stars, Status ("Uncommitted", "Verbal: School", "Hard
+  Commit: School", "Signed: School"; the school's name is `season.team_display`, so an FCS stand-in never shows),
+  Interest in You (High, Medium or Low), Potential (your staff's read, "Strong" or "Elite – All-American", or
+  "Unscouted"; never the truth) and **+ Board** / **✓ On Board**. A row opens the Prospect Profile. 50 to a page.
+  As the card narrows the columns give way (Ht and Wt, then Potential, then Status; `fitTable` measures, so a wide
+  font or a long school name never pushes the table past its card); on a phone a row is the name, the interest
+  and the board button. On a desktop the list scrolls inside its card and the side column sets the row's height.
+- **The side column**: **Your Footprint** (the game's map, `us-map.js`: your scouts' areas and your board as dots; a
+  state tap filters the list, a dot opens him; On Board, In Contact (contacted or offered) and Evaluated (a read
+  from your staff); **View Map** opens the board's full map card in a window), **Class Outlook** (your commits of
+  the spots this class fills, then your commits by star level as plain counts: no targets, the player asked for no
+  goals) and **Top Uncommitted** (the class's best three without a commitment, `TOP_UNCOMMITTED`; **View All**
+  lists the uncommitted by rank). Under 1100 px the three cards sit under the list, two to a row with the third
+  across it; on a phone, one column.
+
+Everything patches in place: a filter, a chip, the page or the map reconciles the rows by id and morphs the header,
+the chips and the side cards; **+ Board** flips its button, pulses the footprint's On Board count, toasts ("Harold
+Graham is on your board.") and redraws the map's dots. The address keeps `ppos`, `pstars`, `pstate`, `pstatus`,
+`psort`, `pgroup` and `ppage`. `tests/test_prospects_redesign.py` checks the tab at 1280, 900 and 400 in both themes.
 
 **The odds you see** (`prospects.odds`). Each offering school's chance to land a prospect is a
 softmax of his interest in it (`exp(interest / 3)`), against the field: the schools not yet in

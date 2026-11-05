@@ -706,7 +706,7 @@ def row(state: dict, pid: str, viewer: str) -> dict:
         "height": p["height"], "weight": p["weight"], "home": p["home"], **shown(state, p),
         "hometown": {"city": p["hometown"]["city"], "state": p["hometown"]["state"]},
         "committed": st["committed"], "signed": st["signed"], "leaning_fcs": bool(st["fcs"]),
-        "school_name": PRO if st.get("pro") else "FCS" if school == "FCS" else (teams[school]["name"] if school else None),
+        "school_name": PRO if st.get("pro") else "FCS" if school == "FCS" else (season.team_display(school, teams) if school else None),
         "pro": bool(st.get("pro")),
         "on_board": pid in rc["board"], "offered": pid in rc["offers"].get(viewer, []),
         "group": recruiting._group_of(p),
@@ -909,7 +909,45 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
         if pid in recs:
             r["why"] = recs[pid]["why"]
         rows.append(r)
-    return {"total": len(out), "rows": rows, "needs": recruiting.needs_detail(state, viewer), "recommended_ids": list(recs)}
+    needs = recruiting.needs_detail(state, viewer)
+    return {"total": len(out), "rows": rows, "needs": needs, "recommended_ids": list(recs),
+            "summary": class_summary(state, viewer, visible, needs)}
+
+
+TOP_UNCOMMITTED = 3                          # the Prospects tab's Top Uncommitted card: this many, best ranked first *tune*
+
+
+def class_summary(state: dict, viewer: str, visible: list, needs: dict) -> dict:
+    """The Prospects tab's side column and header, over the whole class you can see (never the filters):
+    the class by star level, your footprint (on your board, in contact, evaluated by your staff), your
+    class so far (commits against the spots to fill, and commits by star level: plain counts, no targets)
+    and the best uncommitted prospects in the country."""
+    rc = state["recruiting"]
+    stars = {str(n): 0 for n in (5, 4, 3, 2)}
+    mine = {str(n): 0 for n in (5, 4, 3, 2)}
+    contact = evaluated = 0
+    top = []
+    offers = set(rc["offers"].get(viewer, []))
+    for pid in visible:
+        p, st = rc["prospects"][pid], seen_status(state, pid, viewer)
+        k = str(p.get("stars") or 0)
+        if k in stars:
+            stars[k] += 1
+        c = (rc["contacts"].get(pid) or {}).get(viewer) or {}
+        if c.get("n") or pid in offers:
+            contact += 1
+        if rc["reads"].get(pid):
+            evaluated += 1
+        if (st["signed"] or st["committed"]) == viewer and k in mine:
+            mine[k] += 1
+        if len(top) < TOP_UNCOMMITTED and not (st["signed"] or st["committed"] or st.get("pro")):
+            top.append({"id": pid, "name": p["name"], "stars": p.get("stars") or 0, "national_rank": p["rank"],
+                        "display_pos": display_pos(p["ea_position"]), "position": p["position"], "portal": bool(p.get("portal"))})
+    commits = sum(r["commits"] for r in needs.values())
+    return {"stars": stars, "total": len(visible),
+            "footprint": {"board": len(rc["board"]), "contact": contact, "evaluated": evaluated},
+            "outlook": {"commits": commits, "spots": commits + sum(max(0, r["need"]) for r in needs.values()), "by_stars": mine},
+            "top": top}
 
 
 class class_block:
