@@ -542,3 +542,68 @@ def validate(doc: dict) -> list[str]:
 
 def checks_label(checks: list[tuple], slug: str) -> str:
     return next((c[0] for c in checks if c[2] == slug), slug)
+
+
+# ---- Merge ------------------------------------------------------------------------------------
+
+DEFAULT_NAME = "Imported League"
+
+
+@lru_cache(maxsize=1)
+def _builtin_docs() -> dict:
+    """slug -> the built-in team's file form (what an import is compared with)."""
+    lgd = league.from_base(YEAR + 1)
+    return {s: team_doc(lgd, s) for s in _builtin()["slugs"] if s in lgd["teams"]}
+
+
+def merge(doc: dict) -> dict:
+    """A validated file merged into the built-in league by slug. An imported team equal to its built-in
+    export is not "changed", so a round-tripped export is the built-in league (`builtin` is true)."""
+    b, base = _builtin(), _builtin_docs()
+    remove = {s for s in (doc.get("remove") or []) if isinstance(s, str) and s in base}
+    file_confs = {c["id"]: c for c in doc.get("conferences") or [] if isinstance(c, dict) and isinstance(c.get("id"), str)}
+
+    def resolve(ref):
+        if ref in file_confs or ref in b["conf_names"]:
+            return ref
+        return next((cid for cid, name in b["conf_names"].items() if ref == name), ref)
+
+    teams = {s: d for s, d in base.items() if s not in remove}
+    added, changed = [], []
+    for t in doc.get("teams") or []:
+        if not isinstance(t, dict) or not isinstance(t.get("slug"), str):
+            continue
+        slug = t["slug"]
+        given = {k: v for k, v in t.items() if v is not None}
+        if given.get("conference") is not None:
+            given["conference"] = resolve(given["conference"])
+        if slug in base:
+            merged = {**base[slug], **given}
+            if merged != base[slug]:
+                changed.append(slug)
+        else:
+            merged, _ = given, added.append(slug)
+        teams[slug] = merged
+    removed = sorted(remove)
+
+    members: dict[str, list[str]] = {}
+    for slug in sorted(teams):
+        members.setdefault(teams[slug].get("conference"), []).append(slug)
+    confs = {}
+    for cid, mem in members.items():
+        fc = file_confs.get(cid)
+        if fc is not None:
+            games = fc.get("games") or 0
+            name, level = fc["name"], fc.get("level") or LEVEL
+        else:
+            name, games, level = b["conf_names"].get(cid, cid), b["games"].get(cid, 0), LEVEL
+        confs[cid] = {"id": cid, "name": name, "level": level, "games": int(games), "members": mem}
+    base_members: dict[str, list[str]] = {}
+    for slug in sorted(base):
+        base_members.setdefault(b["team_conf"][slug], []).append(slug)
+    structural = bool(added or removed) or set(confs) != set(base_members) or any(
+        confs[c]["members"] != base_members[c] or confs[c]["games"] != b["games"].get(c, 0) for c in confs)
+    added, changed = sorted(added), sorted(changed)
+    name = doc.get("name") if isinstance(doc.get("name"), str) and doc["name"].strip() else DEFAULT_NAME
+    return {"teams": teams, "added": added, "changed": changed, "removed": removed, "conferences": confs,
+            "structural": structural, "builtin": not (added or changed or removed or structural), "name": name}

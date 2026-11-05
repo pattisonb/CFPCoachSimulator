@@ -227,6 +227,30 @@ def test_every_error_is_a_sentence():
     assert not any(w in e for e in out for w in ("None", "null", "undefined", "NaN"))
 
 
+
+# ---- merge ----------------------------------------------------------------------------------------
+
+def test_unchanged_export_collapses():
+    m = league_file.merge(league_file.parse(league_file.builtin_bytes()))
+    assert m["builtin"] and not (m["added"] or m["changed"] or m["removed"] or m["structural"])
+
+
+def test_one_team_file():
+    m = league_file.merge({"format": "cfp-league/1", "teams": [{"slug": "rice", "prestige": 55}]})
+    assert m["changed"] == ["rice"] and not m["structural"] and len(m["teams"]) == 138 and not m["builtin"]
+    assert m["teams"]["rice"]["roster"] == league_file.team_doc(league.from_base(2027), "rice")["roster"]
+    assert m["name"] == "Imported League"
+
+
+def test_add_and_remove_are_structural():
+    doc = base_file(remove=["kent-state"])
+    m = league_file.merge(doc)
+    assert m["added"] == sorted(["alder-tech"] + [f"bse-{i}" for i in range(9)])
+    assert m["removed"] == ["kent-state"] and m["structural"]
+    assert "kent-state" not in m["teams"] and "alder-tech" in m["conferences"]["big-sky-east"]["members"]
+    assert m["conferences"]["big-sky-east"]["games"] == 8
+
+
 if __name__ == "__main__":
     test_export_round_trips_to_from_base()
     test_export_is_byte_stable_and_fcs_free()
