@@ -142,7 +142,7 @@
     for (const s of data.seasons) {
       const del = el("button", { class: "del", type: "button", title: "Delete this season", "aria-label": "Delete this season", text: "×" });
       del.addEventListener("click", (e) => { e.stopPropagation(); deleteSeason(s); });
-      const li = el("li", { onclick: () => openSeason(s.id) }, [
+      const li = el("li", { "data-id": s.id, onclick: () => openSeason(s.id) }, [
         el("span", { class: "teams", text: `${s.team_name} · ${s.career ? `Coach Career · ${s.year}` : "full"}` }),
         el("span", { class: "score", text: `${s.wins}-${s.losses}` }),
         el("span", { class: "when", text: `${s.offseason ? "Offseason" : s.done ? `Done · champion ${s.champion_name}` : `Through week ${s.current_week}`} · ${when(s.created_at)}` }),
@@ -1131,6 +1131,7 @@
     document.body.classList.toggle("on-career-tab", CAREER_TABS.includes(name));
     document.body.classList.toggle("on-offseason", name === "offseason");
     syncWeeksPanel();
+    boardFit();
     // the address follows the tab on screen (a replace: a tab the season moved the player to, as Summary at the end)
     if (state.season && route.get().tab !== name) route.set(tabPatch(name));
   }
@@ -1290,8 +1291,25 @@
     const top = topbarH(), nav = document.body.classList.contains("career-mode") ? h($("#season-tabs")) : 0;
     document.documentElement.style.setProperty("--topbar-h", `${Math.round(top)}px`);
     document.documentElement.style.setProperty("--sticky-top", `${Math.round(top + nav)}px`);
+    boardFit();
   }
-  if (window.ResizeObserver) { const ro = new ResizeObserver(stickyTop); ro.observe($(".topbar")); ro.observe($("#season-tabs")); }
+  // the Recruiting board and the Scouting Center fill the screen under what sits above them (recruiting.css and
+  // scouting.css, "the board fits the screen"): where the open tab starts on the page (--board-top) and the room the
+  // page keeps under it (--board-below), so on a wide screen the list and the pane scroll and the page does not
+  function boardFit() {
+    const tb = $("#tab-recruiting:not([hidden])") || $("#tab-scouting:not([hidden])");
+    if (!tb) return;
+    let below = parseFloat(getComputedStyle(tb).marginBottom) || 0;
+    for (let n = tb.parentElement; n && n !== document.documentElement; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      below += (parseFloat(cs.paddingBottom) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
+    }
+    const root = document.documentElement.style;
+    root.setProperty("--board-top", `${Math.ceil(tb.getBoundingClientRect().top + window.scrollY)}px`);
+    root.setProperty("--board-below", `${Math.ceil(below)}px`);
+  }
+  if (window.ResizeObserver) { const ro = new ResizeObserver(stickyTop); ro.observe($(".topbar")); ro.observe($("#season-tabs")); ro.observe($("#season-weeks")); }
+  window.addEventListener("resize", boardFit);
 
   // The Office is the only place time moves. play(what, to): "gameday" plays your game drive by
   // drive, "advance" sims the next week (always the next one: the schedule's highlighted week is
