@@ -771,7 +771,7 @@
   const TONE_RANK = { good: 0, warn: 1, muted: 2, bad: 3 };
   // The map card: your nine areas (shaded when staffed), every board prospect as a dot by your standing,
   // a tap on a dot or a state, and a table of the states for anyone who cannot use the picture.
-  // opts: {small, selectedState, onState(code), onDot(id)}
+  // opts: {small, open (drawn open whatever was kept: the Prospects' View Map window), selectedState, onState(code), onDot(id)}
   function mapCard(v, s, me, opts) {
     opts = opts || {};
     const card = el("div", { class: `go-card go-map ${opts.small ? "small" : ""}` });
@@ -796,7 +796,7 @@
       if (!xy) continue;
       dots.push({ id: b.id, xy, tone: sd.tone, ring: b.committed === me || b.signed === me, big: !!b.generational, label: `${b.name} · ${b.display_pos || b.position} · ${sd.text}`, name: b.name });
     }
-    const open = mapOpen();
+    const open = !!opts.open || mapOpen();
     const body = el("div", { class: "go-map-body" });
     body.hidden = !open;
     const toggle = el("button", { type: "button", class: "go-btn go-map-toggle", "aria-expanded": String(open), "aria-controls": "go-map-body", text: MAP_TOGGLE(open, opts.small) });
@@ -1804,105 +1804,319 @@
   }
 
   // ----- Prospects ---------------------------------------------------------------------------------
+  // The class as a database (web/prospects.css), built from the player's mockup: the header (Prospects · Class of YYYY, a
+  // count line, the class by star level), then the list card (Your Needs chips, the filters, the table) beside a side column
+  // (Your Footprint with the game's map, Class Outlook: your commits of the spots and by star level as plain counts, never a
+  // target; Top Uncommitted). A filter, the page or a board toggle patches in place: the rows are reconciled by id and the
+  // side cards morphed; only opening the tab draws it whole. The address keeps the filters and the page (applyProspects).
+  const INTEREST_TONE = { High: "good", Medium: "warn", Low: "bad" };
+  const POT_TONE = { "All-American": "good", Elite: "good", Strong: "", Solid: "", Fair: "muted", Weak: "muted" };
+  const num = (n) => Number(n || 0).toLocaleString("en-US");
+  const PER_PAGE = 50;
+  // his status in a few words: Uncommitted, Verbal: School, Hard Commit: School, Signed: School (the server's name for the school)
+  function statusShort(r, me) {
+    const school = r.school_name || (r.signed || r.committed ? teamName(r.signed || r.committed) : "");
+    if (r.pro) return ["Went Pro", "muted"];
+    if (r.quiet) return ["Quiet", "muted"];
+    if (r.signed) return [r.signed === "FCS" ? "Signed: FCS Program" : `Signed: ${school}`, r.signed === me ? "good" : ""];
+    if (r.committed) return [`${r.hard ? "Hard Commit" : "Verbal"}: ${school}`, r.committed === me ? "good" : "warn"];
+    if (r.leaning_fcs) return ["Leaning FCS", "muted"];
+    return ["Uncommitted", ""];
+  }
+  const potText = (p) => (!p ? "Unscouted" : p[0] === p[1] ? p[0] : `${p[0]} – ${p[1]}`);
+  const boardLabel = (r) => `${r.on_board ? "Remove" : "Add"} ${r.name} ${r.on_board ? "from" : "to"} your board`;
 
   async function renderProspects(s, box) {
     const f = view.filters;
+    const me = s.team;
     box.innerHTML = "";
+    box.classList.add("pr-page");
+    const year = (s.year || 2026) + 1;
     const inPortal = !!(s.offseason_stage && /^portal/.test(s.offseason_stage)) || !!view.portal;
-    const title = el("div", { class: "go-display l", text: inPortal ? `Transfer Portal · ${(s.year || 2026) + 1}` : `Prospects · Class of ${(s.year || 2026) + 1}` });
-    box.append(title);
-    const q = el("input", { type: "search", placeholder: "Search by name", value: f.q, "aria-label": "Search by name" });
-    const mk = (key, opts, label) => {
-      const sel = el("select", { "aria-label": label }, opts.map(([v, t]) => el("option", { value: v, text: t })));
-      sel.value = f[key];
-      sel.addEventListener("change", () => { f[key] = sel.value; view.offset = 0; load(); });
-      return sel;
-    };
+    // what the side column and the map read; kept between patches
+    const ctx = { summary: null, board: null, rows: [], total: 0, portal: inPortal };
+
+    // the header: the title, one count line, the class by star level
+    const title = el("h2", { class: "go-display l pr-title", text: inPortal ? `Transfer Portal · ${year}` : `Prospects · Class of ${year}` });
+    const countLine = el("p", { class: "muted pr-count", text: "Loading the class…" });
+    const meters = el("div", { class: "pr-meters", role: "group", "aria-label": "The class by star level" });
+    box.append(el("header", { class: "pr-head" }, [el("div", { class: "pr-head-text" }, [title, countLine]), meters]));
+
+    // the list card: Your Needs, the filters, the table, the pager
+    const needsBox = el("div", { class: "pr-needs", role: "group", "aria-label": "Your needs" });
+    const q = el("input", { type: "search", class: "pr-search", placeholder: "Search by name", value: f.q, "aria-label": "Search by name" });
     let qTimer = null;
     q.addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(() => { f.q = q.value; view.offset = 0; load(); }, 250); });
-    const mapBox = el("div");
-    box.append(mapBox);
-    const needsBox = el("div");
-    box.append(needsBox);
-    const recBtn = el("button", { type: "button", class: `go-chip ${f.status === "recommended" ? "on" : ""}`, text: "Recommended for You", "aria-pressed": String(f.status === "recommended"),
+    const sels = {};
+    const mk = (key, opts, label) => {
+      const sel = el("select", { class: "go-sel pr-sel", "aria-label": label }, opts.map(([v, t]) => el("option", { value: v, text: t })));
+      sel.value = key === "status" && f.status === "recommended" ? "" : f[key];
+      sel.addEventListener("change", () => { f[key] = sel.value; view.offset = 0; syncFilters(); load(); });
+      sels[key] = sel;
+      return sel;
+    };
+    const recBtn = el("button", { type: "button", class: "go-chip pr-rec", text: "Recommended for You",
       title: "The prospects the Auto-recruit rules would put on your board this week: your states, your star level, the positions you need. A base to build a board from." });
-    recBtn.addEventListener("click", () => { f.status = f.status === "recommended" ? "" : "recommended"; view.offset = 0; render(); });
-    const render = () => renderProspects(s, box);
-    H.api(`/api/season/${s.id}/recruiting`).then((v) => {
-      if (!mapBox.isConnected) return;
-      mapBox.replaceChildren(mapCard(v, s, s.team, { small: true, selectedState: f.state || null,
-        onState: (c) => { f.state = f.state === c ? "" : c; view.offset = 0; renderProspects(s, box); },
-        onDot: (id) => openProfile(s, id) }));
-    }).catch(() => { /* the list works without the map */ });
-    box.append(el("div", { class: "go-filters rc-filters" }, [q, recBtn,
+    recBtn.addEventListener("click", () => { f.status = f.status === "recommended" ? "" : "recommended"; view.offset = 0; syncFilters(); load(); });
+    const filters = el("div", { class: "go-filters rc-filters pr-filters" }, [q, recBtn,
       mk("position", [["", "Any Position"], ...POSITIONS.map((p) => [p, p])], "Position"),
       mk("stars", [["", "Any Stars"], ["5", "5 Stars"], ["4", "4 Stars"], ["3", "3 Stars"], ["2", "2 Stars"]], "Stars"),
       mk("state", [["", "Any State"], ...STATES.map((c) => [c, c])], "Home state"),
       mk("status", STATUS, "Status"),
-      mk("sort", [["rank", "Sort: National Rank"], ["interest", "Sort: Interest in You"]], "Sort"),
-    ]));
-    const body = el("div");
-    box.append(body);
-    async function load() {
+      mk("sort", [["rank", "Sort: National Rank"], ["interest", "Sort: Interest in You"]], "Sort")]);
+    // the filters' look follows the view (a chip, a state tapped on the map, View All): no redraw
+    function syncFilters(withSearch) {
+      const rec = f.status === "recommended";
+      recBtn.classList.toggle("on", rec);
+      recBtn.setAttribute("aria-pressed", String(rec));
+      for (const [k, sel] of Object.entries(sels)) { const want = k === "status" && rec ? "" : f[k]; if (sel.value !== want) sel.value = want; }
+      if (withSearch && q.value !== f.q) q.value = f.q;      // only View All clears the search box; a pending search is folded in by load()
+    }
+    syncFilters();
+    const listHead = el("div", { class: "go-row wrap go-list-head pr-list-head" });
+    const HEADS = [["rank", "#"], ["who", "Prospect"], ["pos", "Pos"], ["ht", "Ht"], ["wt", "Wt"], ["stars", inPortal ? "Class" : "Stars"],
+      ["status", "Status"], ["int", "Interest in You"], ["pot", "Potential"], ["act", "Board"]];
+    const starsHead = el("th", { scope: "col", class: "pr-c-stars", text: inPortal ? "Class" : "Stars" });
+    const thead = el("thead", {}, [el("tr", {}, HEADS.map(([k, t]) => (k === "stars" ? starsHead
+      : el("th", { scope: "col", class: `pr-c-${k}`, text: t, ...(k === "act" ? { "aria-label": "Your Board" } : {}) }))))]);
+    const tbody = el("tbody", { class: "rc-list" });
+    const table = el("table", { class: "pr-table" }, [thead, tbody]);
+    const tableWrap = el("div", { class: "pr-table-wrap" }, [table]);
+    // the columns give way when the words do not fit the card (a wide font, a long school name): Ht and Wt, then the potential, then
+    // the status (the CSS drops them by the card's width too); measured again whenever the card changes width
+    function fitTable() {
+      const FIT = ["pr-fit-1", "pr-fit-2", "pr-fit-3"];
+      table.classList.remove(...FIT);
+      for (const c of FIT) { if (!tableWrap.clientWidth || tableWrap.scrollWidth <= tableWrap.clientWidth + 1) break; table.classList.add(c); }
+    }
+    let fitW = 0;
+    if (window.ResizeObserver) new ResizeObserver(() => { if (tableWrap.clientWidth !== fitW) { fitW = tableWrap.clientWidth; fitTable(); } }).observe(tableWrap);
+    const empty = el("p", { class: "muted pr-empty", text: "No prospect matches these filters." });
+    empty.hidden = true;
+    const prev = el("button", { type: "button", class: "go-btn", text: "← Previous" });
+    const next = el("button", { type: "button", class: "go-btn", text: "Next →" });
+    const pageText = el("span", { class: "muted pr-page-text", text: "" });
+    prev.addEventListener("click", () => { view.offset = Math.max(0, view.offset - PER_PAGE); load({ top: true }); });
+    next.addEventListener("click", () => { view.offset += PER_PAGE; load({ top: true }); });
+    const pager = el("div", { class: "go-pager pr-pager" }, [prev, pageText, next]);
+    const main = el("section", { class: "go-card pr-main", "aria-label": "The class" }, [needsBox, filters, listHead, tableWrap, empty, pager]);
+
+    // the side column: Your Footprint, Class Outlook, Top Uncommitted
+    const side = el("aside", { class: "pr-side", "aria-label": "Your class at a glance" });
+    box.append(el("div", { class: "pr-lay" }, [main, side]));
+
+    function card(kicker, key, right, body) {
+      return el("section", { class: "go-card pr-card", "data-key": key, "aria-label": kicker }, [
+        el("div", { class: "pr-card-head" }, [el("h3", { class: "pv-kick pr-kick", text: kicker }), right || null]), ...body]);
+    }
+    // the map in the footprint card: your areas (shaded where a scout works), your board as dots; a state tap filters
+    function drawMap() {
+      const v = ctx.board, mapHold = side.querySelector(".pr-map");
+      if (!v || !mapHold || !window.USMap || !window.US_STATES) return;
+      const team = (window.CFP.teamsBySlug[s.team] || {}).colors;
+      const color = (team && team.primary) || "#888";
+      const staffed = {};
+      for (const m of v.staff || []) if (m.area) staffed[m.area] = staffed[m.area] ? `${staffed[m.area]}, ${m.name}` : m.name;
+      const counts = {};
+      const dots = [];
+      for (const b of v.board || []) {
+        const code = b.hometown && b.hometown.state;
+        if (code) counts[code] = (counts[code] || 0) + 1;
+        const xy = window.USMap.project(b.home) || (code ? window.USMap.centroid(code) : null);
+        const sd = standing(b, me);
+        if (xy) dots.push({ id: b.id, xy, tone: sd.tone, ring: b.committed === me || b.signed === me, big: !!b.generational, label: `${b.name} · ${b.display_pos || b.position} · ${sd.text}`, name: b.name });
+      }
+      const svg = window.USMap.render({ areas: v.areas || {}, staffed, dots, counts, selectedState: f.state || null, teamColor: color, zoomKey: `prospects:${s.id}`,
+        onDot: (id) => openProfile(s, id), onState: (c) => { f.state = f.state === c ? "" : c; view.offset = 0; syncFilters(); load(); },
+        onReset: () => { if (f.state) { f.state = ""; view.offset = 0; syncFilters(); load(); } } });
+      svg.style.setProperty("--us-team", color);
+      svg.setAttribute("aria-label", "Your footprint: your scouts' areas and your board. Tap a state to filter the list to it");
+      mapHold.replaceChildren(svg);
+    }
+    // the cards' links: drawn with each card (a morph moves their handlers onto the live ones)
+    function viewMap() {
+      return ui().on(el("button", { type: "button", class: "pr-more", text: "View Map →" }), "click", () => {
+        if (!ctx.board) return;
+        H.openModal("Your Footprint", mapCard(ctx.board, s, me, { open: true, selectedState: f.state || null,
+          onState: (c) => { f.state = f.state === c ? "" : c; view.offset = 0; syncFilters(); H.closeModal(); load(); },
+          onDot: (id) => { H.closeModal(); openProfile(s, id); } }));
+      });
+    }
+    function viewAll() {
+      return ui().on(el("button", { type: "button", class: "pr-more", text: "View All →" }), "click", () => {
+        clearTimeout(qTimer); qTimer = null;
+        Object.assign(f, { q: "", position: "", stars: "", state: "", status: "open", sort: "rank", group: "" });
+        view.offset = 0; syncFilters(true); load({ top: true });
+      });
+    }
+    const fpStat = (key, label, n) => el("div", { class: "pr-fp-stat", "data-key": key }, [el("b", { text: num(n) }), el("span", { class: "muted", text: label })]);
+    function footprintCard(sm) {
+      const fp = sm.footprint;
+      return card("Your Footprint", "footprint", viewMap(), [el("div", { class: "pr-fp" }, [el("div", { class: "pr-map", "data-keep": "" }),
+        el("div", { class: "pr-fp-stats" }, [fpStat("board", "On Board", fp.board), fpStat("contact", "In Contact", fp.contact), fpStat("evaluated", "Evaluated", fp.evaluated)])])]);
+    }
+    function outlookCard(sm) {
+      const o = sm.outlook;
+      const fill = o.spots ? Math.max(0, Math.min(1, o.commits / o.spots)) : 0;
+      const rows = ctx.portal ? [] : ["5", "4", "3", "2"].map((k) => el("div", { class: "pr-co-row", "data-key": `s${k}` }, [
+        el("span", { class: "go-stars", text: stars(Number(k)), "aria-hidden": "true" }), el("span", { class: "pr-co-label", text: `${k}-Star` }),
+        el("b", { class: "pr-co-n", text: num(o.by_stars[k]), "aria-label": `${o.by_stars[k]} ${k}-star ${o.by_stars[k] === 1 ? "commit" : "commits"}` })]));
+      return card("Class Outlook", "outlook", el("span", { class: "pr-co-total" }, [el("b", { text: `${num(o.commits)} / ${num(o.spots)}` }), el("span", { class: "muted", text: " Commits" })]), [
+        el("div", { class: "pv-thin pr-co-bar", role: "img", "aria-label": `${o.commits} of ${o.spots} spots filled` }, [el("i", { style: `width:${Math.round(100 * fill)}%` })]),
+        rows.length ? el("div", { class: "pr-co-rows" }, rows) : null,
+        el("p", { class: "muted small pr-co-note", text: ctx.portal ? "Your commits against the spots this class still fills." : "Your commits so far, by star level." })]);
+    }
+    function topCard(sm) {
+      const list = el("ol", { class: "pr-top" }, sm.top.map((t) => {
+        const b = el("button", { type: "button", class: "pr-top-row", "data-key": t.id, "aria-label": `${t.name}, ${t.display_pos || t.position}, number ${t.national_rank}` }, [
+          el("span", { class: "muted pr-top-rank", text: `#${t.national_rank}` }), avatar(t.id, "sm"),
+          el("span", { class: "pr-top-id" }, [el("b", { text: t.name }), el("span", { class: "muted small", text: t.display_pos || t.position })]),
+          t.portal ? null : el("span", { class: "go-stars", text: stars(t.stars) })]);
+        ui().on(b, "click", () => openProfile(s, t.id));
+        return el("li", { "data-key": t.id }, [b]);
+      }));
+      return card("Top Uncommitted", "top", viewAll(), [sm.top.length ? list : el("p", { class: "muted small", text: "Every prospect in the class has committed." })]);
+    }
+    function drawSide() {
+      const sm = ctx.summary;
+      if (!sm) return;
+      const fresh = el("aside", {}, [footprintCard(sm), outlookCard(sm), topCard(sm)]);
+      if (!side.firstChild) { side.append(...fresh.childNodes); drawMap(); }
+      else ui().morph(side, fresh);
+    }
+    function drawHead(d) {
+      const sm = d.summary;
+      if (!sm) return;
+      countLine.textContent = ctx.portal ? `The transfer portal: ${num(sm.total)} ${sm.total === 1 ? "entrant" : "entrants"}.`
+        : `The national recruiting database: ${num(sm.total)} ${sm.total === 1 ? "prospect" : "prospects"}.`;
+      const m = (key, v, label) => el("div", { class: "pr-meter", "data-key": key }, [el("b", { text: num(v) }), el("span", { class: "muted", text: label })]);
+      const fresh = el("div", {}, ctx.portal ? [m("total", sm.total, "Total Entrants")]
+        : [m("total", sm.total, "Total Prospects"), ...["5", "4", "3", "2"].map((k) => m(`s${k}`, sm.stars[k], `${k}-Star`))]);
+      ui().morph(meters, fresh);
+    }
+    // Your Needs: a chip per position, the count still to fill or ✓ when it is covered; a tap filters the list to it
+    function drawNeeds(detail) {
+      const chips = [];
+      for (const g of GROUP_ORDER) {
+        const r = (detail || {})[g];
+        if (!r) continue;
+        const short = r.need > 0;
+        const b = el("button", { type: "button", class: `go-chip small pr-need ${short ? "short" : "full"} ${f.group === g ? "on" : ""}`, "data-key": g, "aria-pressed": String(f.group === g),
+          text: short ? `${g} ${r.need}` : `${g} ✓`, "aria-label": short ? `${g}: ${r.need} still to fill` : `${g}: covered`,
+          title: `${g}: ${r.target} on a healthy roster · ${r.back} coming back · ${r.commits} committed (${r.firm} hard) · ${r.board} on your board · ${r.offers} offers out · ${short ? `${r.need} still to fill` : "covered"}` });
+        ui().on(b, "click", () => { f.group = f.group === g ? "" : g; view.offset = 0; load(); });
+        chips.push(b);
+      }
+      const fresh = el("div", {}, [el("span", { class: "pv-kick pr-needs-label", text: "Your Needs" }), ...chips]);
+      ui().morph(needsBox, fresh);
+    }
+
+    // a row of the table; a tap anywhere on it (but the board button) opens his Prospect Profile
+    function drawRow(r) {
+      const [stText, stTone] = statusShort(r, me);
+      const pot = r.our_potential;
+      const potTone = pot ? (POT_TONE[pot[1]] ?? "") : "muted";
+      const hw = typeof r.height === "number" ? height(r.height) : (r.height || "—");
+      const sub = r.portal ? `${clsWord(r.cls)} · ${r.from_name || ""}`.replace(/ · $/, "") : place(r.hometown);
+      const who = el("button", { type: "button", class: "go-list-main pr-who" }, [avatar(r.id, "sm"),
+        el("span", { class: "go-list-id" }, [el("b", { text: r.name }), el("span", { class: "muted small", text: sub }),
+          badges({ generational: r.generational, find: r.find }, me)])]);
+      ui().on(who, "click", () => openProfile(s, r.id));
+      const add = el("button", { type: "button", class: `go-btn pr-board ${r.on_board ? "on" : "primary"}`, text: r.on_board ? "✓ On Board" : "+ Board",
+        "aria-pressed": String(!!r.on_board), "aria-label": boardLabel(r) });
+      ui().on(add, "click", (e) => { e.stopPropagation(); toggleBoard(r, add); });
+      const tr = el("tr", { class: "go-list-row rc-row pr-row", "data-key": r.id }, [
+        el("td", { class: "pr-c-rank muted", text: `#${r.portal && r.portal_rank ? r.portal_rank : r.national_rank}` }),
+        el("td", { class: "pr-c-who" }, [who]),
+        el("td", { class: "pr-c-pos" }, [el("b", { text: r.display_pos || r.position })]),
+        el("td", { class: "pr-c-ht", text: hw }),
+        el("td", { class: "pr-c-wt", text: r.weight != null ? String(r.weight) : "—" }),
+        el("td", { class: "pr-c-stars" }, [r.portal ? el("span", { text: clsWord(r.cls) || "—" }) : el("span", { class: "go-stars", text: stars(r.stars), "aria-label": `${r.stars} stars` })]),
+        el("td", { class: "pr-c-status" }, [el("span", { class: `go-tag ${stTone}`, text: stText, title: stText })]),
+        el("td", { class: "pr-c-int" }, [el("span", { class: `go-tag ${INTEREST_TONE[r.interest_level] || ""}`, title: "How much your school appeals to him now", text: r.interest_level || "Low" })]),
+        el("td", { class: "pr-c-pot" }, [el("span", { class: `go-tag ${potTone}`, title: pot ? "Your staff's read of his potential" : "Your staff has no read on him yet", text: potText(pot) })]),
+        el("td", { class: "pr-c-act" }, [add])]);
+      ui().on(tr, "click", (e) => { if (!e.target.closest("button, a, input, select")) openProfile(s, r.id); });
+      return tr;
+    }
+    // + Board / ✓ On Board: the button, the footprint's count and the map follow in place
+    async function toggleBoard(r, btn) {
+      const want = !r.on_board;
+      if (!want && r.offered && !window.confirm(`Take ${r.name} off your board? Your offer to him is pulled too: the NIL points come back to you${r.committed === me && !r.signed ? ", and he decommits from you" : ""}.`)) return;
+      const ok = await ui().busy(btn, setBoard(s, r.id, want));
+      if (!ok) return;
+      r.on_board = want;
+      if (!want) r.offered = false;
+      btn.textContent = want ? "✓ On Board" : "+ Board";          // the button itself, patched (a morph patches only what is under a node)
+      btn.classList.toggle("on", want); btn.classList.toggle("primary", !want);
+      btn.setAttribute("aria-pressed", String(want)); btn.setAttribute("aria-label", boardLabel(r));
+      ui().pulse(btn);
+      ui().toast(want ? `${r.name} is on your board.` : `${r.name} is off your board.`);
+      if (ctx.summary) {
+        ctx.summary.footprint.board = Math.max(0, ctx.summary.footprint.board + (want ? 1 : -1));
+        const changed = ui().morph(side, el("aside", {}, [footprintCard(ctx.summary), outlookCard(ctx.summary), topCard(ctx.summary)]));
+        const n = side.querySelector('[data-key="board"] b');
+        if (n && !changed.includes(n)) ui().pulse(n);
+      }
+      fetchBoard();
+    }
+    function fetchBoard() {
+      return H.api(`/api/season/${s.id}/recruiting`).then((v) => { if (!box.isConnected) return; ctx.board = v; drawMap(); }).catch(() => { /* the list works without the map */ });
+    }
+
+    let seq = 0;
+    async function load(opts = {}) {
+      if (qTimer) { clearTimeout(qTimer); qTimer = null; if (f.q !== q.value) { f.q = q.value; view.offset = 0; } }   // a search still typing joins this load
       // the filters and the page in the address (a replace), while the Prospects tab is the view on screen
       if (box.isConnected && !box.closest("[hidden]") && window.CFP.route) window.CFP.route.set({ ppos: f.position, pstars: f.stars, pstate: f.state, pstatus: f.status,
-        psort: f.sort !== "rank" ? f.sort : null, pgroup: f.group, ppage: view.offset ? Math.floor(view.offset / 50) + 1 : null });
-      const params = new URLSearchParams({ offset: view.offset, limit: 50 });
+        psort: f.sort !== "rank" ? f.sort : null, pgroup: f.group, ppage: view.offset ? Math.floor(view.offset / PER_PAGE) + 1 : null });
+      const params = new URLSearchParams({ offset: view.offset, limit: PER_PAGE });
       for (const [k, v] of Object.entries(f)) if (v) params.set(k, v);
-      body.innerHTML = "";
-      body.append(loading("Loading prospects…"));
+      const mine = ++seq;
+      main.setAttribute("aria-busy", "true");
       let d;
       try { d = await H.api(`/api/season/${s.id}/prospects?${params}`); }
-      catch (err) { body.innerHTML = ""; body.append(loading(`Could not load the class: ${H.errText(err)}`)); return; }
-      body.innerHTML = "";
+      catch (err) { if (mine === seq) { main.removeAttribute("aria-busy"); ui().toast(`Could not load the class: ${H.errText(err)}`, { ms: 4000, kind: "error" }); } return; }
+      if (mine !== seq || !box.isConnected) return;
+      main.removeAttribute("aria-busy");
       const portalRows = d.rows.some((r) => r.portal);
-      view.portal = portalRows;
-      if (portalRows) title.textContent = `Transfer Portal · ${(s.year || 2026) + 1}`;      // the summary may predate the portal
-      needsBox.replaceChildren(needsStrip(d.needs, f.group || null, (g) => { f.group = g || ""; view.offset = 0; load(); }, load));
-      const rec = f.status === "recommended";
-      const head = el("div", { class: "go-row wrap go-list-head" }, [el("p", { class: "muted small", text: rec ? `${d.total} recommended · the prospects the Auto-recruit rules would chase for a program like yours, best fit first`
-        : portalRows ? `${d.total} entrants · portal rankings · no stars on a transfer: his film is his rating`
-        : `${d.total} prospects · national rankings · hidden prospects appear once your staff scout their area` })]);
-      if (rec && d.rows.some((r) => !r.on_board)) {
-        const all = el("button", { type: "button", class: "go-btn", text: `Add These ${d.rows.filter((r) => !r.on_board).length} to Your Board` });
-        all.addEventListener("click", async () => {
-          all.disabled = true; all.textContent = "Adding…";
-          for (const r of d.rows.filter((r) => !r.on_board)) { if (await setBoard(s, r.id, true)) r.on_board = true; }
-          H.toast("They are on your board.", 2500); load();
-        });
-        head.append(all);
+      if (portalRows && !ctx.portal) {                          // the summary may predate the portal
+        ctx.portal = view.portal = true;
+        title.textContent = `Transfer Portal · ${year}`;
+        starsHead.textContent = "Class";
       }
-      body.append(head);
-      body.append(el("ul", { class: "go-list rc-list" }, d.rows.map((r) => {
-        const add = el("button", { type: "button", class: `go-btn ${r.on_board ? "" : "primary"}`, text: r.on_board ? "✓ On Board" : "+ Board", "aria-label": `${r.on_board ? "Remove" : "Add"} ${r.name} ${r.on_board ? "from" : "to"} your board` });
-        add.addEventListener("click", async (e) => {
-          e.stopPropagation();
-          if (await setBoard(s, r.id, !r.on_board)) { r.on_board = !r.on_board; add.textContent = r.on_board ? "✓ On Board" : "+ Board"; add.classList.toggle("primary", !r.on_board); }
+      ctx.summary = d.summary || null;
+      ctx.rows = d.rows;
+      ctx.total = d.total;
+      drawHead(d);
+      drawNeeds(d.needs);
+      drawSide();
+      const rec = f.status === "recommended";
+      const bits = [el("p", { class: "muted small", text: rec ? `${num(d.total)} recommended · the prospects the Auto-recruit rules would chase for a program like yours, best fit first`
+        : ctx.portal ? `${num(d.total)} entrants · portal rankings · no stars on a transfer: his film is his rating`
+        : `${num(d.total)} prospects · national rankings · hidden prospects appear once your staff scout their area` })];
+      const off = d.rows.filter((r) => !r.on_board);
+      if (rec && off.length) {
+        const all = el("button", { type: "button", class: "go-btn", "data-key": "add-all", text: `Add These ${off.length} to Your Board` });
+        ui().on(all, "click", async () => {
+          const added = await ui().busy(all, (async () => { let n = 0; for (const r of off) if (await setBoard(s, r.id, true)) { r.on_board = true; n++; } return n; })());
+          ui().toast(added === 1 ? "He is on your board." : "They are on your board.");
+          fetchBoard();
+          load();
         });
-        const open = el("button", { type: "button", class: "go-list-main", onclick: () => openProfile(s, r.id) }, [
-          el("span", { class: "go-rank", text: `#${r.national_rank}` }), avatar(r.id, "sm"),
-          el("span", { class: "go-list-id" }, [el("b", { text: r.name }), el("span", { class: "muted small", text: r.portal
-            ? `${r.position} · ${clsWord(r.cls)} · from ${r.from_name}${r.usage ? ` · ${r.usage}` : ""}`
-            : `${r.display_pos || r.position} · ${typeof r.height === "number" ? height(r.height) : (r.height || "")} ${r.weight} · ${place(r.hometown)}` }),
-            badges({ generational: r.generational, find: r.find }, s.team)]),
-          r.portal ? null : el("span", { class: "go-stars", text: stars(r.stars) }),
-          el("span", { class: "go-list-tags" }, [
-            el("span", { class: `go-tag ${r.signed || r.committed ? "" : r.leaning_fcs ? "muted" : "good"}`, text: status(r) }),
-            el("span", { class: "go-list-read" }, [
-              el("span", { class: `go-tag ${r.interest_level === "High" ? "good" : r.interest_level === "Medium" ? "warn" : "muted"}`, title: "How much your school appeals to him now", text: `${r.interest_level} Interest` }),
-              el("span", { class: "muted small", title: "Your staff's read of his potential", ...(r.our_potential ? { text: " Potential " } : { text: " Not Scouted" }) }, r.our_potential ? wordRange(r.our_potential) : [])])]),
-        ]);
-        const li = el("li", { class: "go-list-row rc-row" }, [open, add]);
-        return li;
-      })));
-      const prev = el("button", { type: "button", class: "go-btn", text: "← Previous" });
-      const next = el("button", { type: "button", class: "go-btn", text: "Next →" });
-      if (view.offset <= 0) prev.disabled = true;
-      if (view.offset + 50 >= d.total) next.disabled = true;
-      prev.addEventListener("click", () => { view.offset = Math.max(0, view.offset - 50); load(); });
-      next.addEventListener("click", () => { view.offset += 50; load(); });
-      body.append(el("div", { class: "go-pager" }, [prev, el("span", { class: "muted", text: `${d.total ? view.offset + 1 : 0}–${Math.min(d.total, view.offset + 50)} of ${d.total}` }), next]));
+        bits.push(all);
+      }
+      ui().morph(listHead, el("div", {}, bits));
+      ui().reconcile(tbody, d.rows, "id", drawRow, (n, r) => ui().morph(n, drawRow(r)));
+      fitTable();
+      empty.hidden = d.rows.length > 0;
+      table.hidden = !d.rows.length;
+      prev.disabled = view.offset <= 0;
+      next.disabled = view.offset + PER_PAGE >= d.total;
+      pageText.textContent = `${d.total ? num(view.offset + 1) : 0}–${num(Math.min(d.total, view.offset + PER_PAGE))} of ${num(d.total)}`;
+      if (opts.top) { tableWrap.scrollTop = 0; if (main.getBoundingClientRect().top < 0) main.scrollIntoView({ block: "start", behavior: "auto" }); }
     }
+    fetchBoard();
     load();
   }
 
