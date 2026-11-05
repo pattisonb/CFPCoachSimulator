@@ -2024,7 +2024,9 @@
       ui().on(who, "click", () => openProfile(s, r.id));
       const add = el("button", { type: "button", class: `go-btn pr-board ${r.on_board ? "on" : "primary"}`, text: r.on_board ? "✓ On Board" : "+ Board",
         "aria-pressed": String(!!r.on_board), "aria-label": boardLabel(r) });
-      ui().on(add, "click", (e) => { e.stopPropagation(); toggleBoard(r, add); });
+      // the button patched is the live one the player clicked (e.currentTarget): a reconcile morphs this row onto the
+      // row on screen and hands it this handler, so `add` here may be a fresh node that never reached the page
+      ui().on(add, "click", (e) => { e.stopPropagation(); toggleBoard(r, e.currentTarget); });
       const tr = el("tr", { class: "go-list-row rc-row pr-row", "data-key": r.id }, [
         el("td", { class: "pr-c-rank muted", text: `#${r.portal && r.portal_rank ? r.portal_rank : r.national_rank}` }),
         el("td", { class: "pr-c-who" }, [who]),
@@ -2098,8 +2100,8 @@
       const off = d.rows.filter((r) => !r.on_board);
       if (rec && off.length) {
         const all = el("button", { type: "button", class: "go-btn", "data-key": "add-all", text: `Add These ${off.length} to Your Board` });
-        ui().on(all, "click", async () => {
-          const added = await ui().busy(all, (async () => { let n = 0; for (const r of off) if (await setBoard(s, r.id, true)) { r.on_board = true; n++; } return n; })());
+        ui().on(all, "click", async (e) => {
+          const added = await ui().busy(e.currentTarget, (async () => { let n = 0; for (const r of off) if (await setBoard(s, r.id, true)) { r.on_board = true; n++; } return n; })());
           ui().toast(added === 1 ? "He is on your board." : "They are on your board.");
           fetchBoard();
           load();
