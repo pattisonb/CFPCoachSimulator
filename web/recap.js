@@ -116,7 +116,7 @@
       el("div", { class: "rcp-heis-text" }, [kicker("Heisman Trophy"),
         el("div", { class: "rcp-who" }, [el("span", { text: w.name, ...H.playerAttrs(w.team, w.name, w.position) }), el("small", { text: `${w.position} · ${w.team_name} · ${w.line}` })]),
         h.finalists && h.finalists.length > 1 ? el("div", { class: "rcp-foot", text: `Finalists: ${h.finalists.filter((f) => f.name !== w.name).map((f) => `${f.name} (${f.team_name})`).join(", ")}.` }) : null]),
-      el("div", { class: "rcp-pts" }, [el("b", { text: Number(w.points).toLocaleString() }), el("span", { text: `points · ${h.share}% of possible` })])],
+      el("div", { class: "rcp-pts" }, [el("b", { text: Number(w.points).toLocaleString() }), el("span", { text: `points · ${Number(h.share).toFixed(1)}% of possible` })])],
       { "aria-label": "Heisman Trophy" });
     const open = el("button", { type: "button", class: "rcp-link", text: "Open the Vote" });
     window.CFP.ui.on(open, "click", () => H.openAwards("heisman"));
