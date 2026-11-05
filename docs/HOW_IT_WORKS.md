@@ -1308,7 +1308,7 @@ Scouting Center, master and detail, built from the player's mockup in the site's
 - **The Player Intelligence Report** (right; under the database on a phone): the selected prospect,
   the first row until you pick one, drawn with the board's pieces (`window.Recruiting.parts`): the hero (a status chip:
   Fully Scouted, "1.5 of 3 Looks", Unscouted; Nat. Rank, Pos. Rank, Team Need in a word; a Potential badge with how sure
-  the read is: Settled Read, Read Could Move, Early Read), then the tabs **Report** (the Scouting Report and the
+  the read is: Confident, Could Change, Early Look), then the tabs **Report** (the Scouting Report and the
   Attributes card), **Looks** (Looks & Uncertainty with the flags, a coordinator's "Likes Him", this and last week's
   report lines on him and All Reports) and **Profile** (the traits and background cards). On the tab row: **Send Scout
   · 10 Pts** (its row's `cost`: 10, 15 or 5; "· Finishes His Report" when one look is left; disabled with the reason
