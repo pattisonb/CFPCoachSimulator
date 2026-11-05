@@ -74,16 +74,53 @@
   async function loadTeams() {
     const data = await api("/api/teams");
     state.teams = data.teams;
+    mergeCards(data.teams, "builtin");
+    fillPicker(data.teams);
     const sel = $("#pick-team");
-    // one alphabetical list (the API sorts by name); the conference rides in the label
-    for (const t of data.teams) {
-      window.CFP.teamsBySlug[t.slug] = t;
-      if (!t.fictional) sel.appendChild(el("option", { value: t.slug, text: `${t.name} (${t.ratings.overall.toFixed(0)} OVR) · ${CONF_SHORT[t.conference] || t.conference}` }));
-    }
     const params = new URLSearchParams(location.search);
-    if (params.get("team") && window.CFP.teamsBySlug[params.get("team")]) sel.value = params.get("team");
+    if (params.get("team") && state.pickCards[params.get("team")]) sel.value = params.get("team");
     else sel.value = "ohio-state";
   }
+
+  // The team cards the page draws names, colors and coaches from (window.CFP.teamsBySlug): the built-in league's,
+  // an import's on the New Career screen, or the open career's own league (a career from a league file).
+  // state.cardsFrom names which: "builtin", "import" or "<season id>:<year>".
+  function mergeCards(cards, from) {
+    for (const t of cards || []) window.CFP.teamsBySlug[t.slug] = t;
+    state.cardsFrom = from;
+  }
+  // Before a season draws: its league's cards (/api/season/{id}/teams, a career from a league file), or the
+  // built-in cards back for a career in the game's own league. A failed fetch draws with the cards there are.
+  async function leagueCards(s) {
+    const want = s && s.league ? `${s.id}:${s.year}` : "builtin";
+    if (state.cardsFrom === want) return;
+    if (want === "builtin") { mergeCards(state.teams, "builtin"); return; }
+    try { mergeCards((await api(`/api/season/${encodeURIComponent(s.id)}/teams`)).teams, want); }
+    catch (err) { /* the season still opens; names fall back to what the page has */ }
+  }
+  // The team picker (#pick-team): one alphabetical list of FBS teams (the API sorts by name), the conference in
+  // the label, patched in place (keyed by slug) when the league changes; state.pickCards are the cards behind it.
+  function teamLabel(t) {
+    const ovr = t.ratings && Number.isFinite(t.ratings.overall) ? ` (${t.ratings.overall.toFixed(0)} OVR)` : "";
+    const conf = CONF_SHORT[t.conference] || t.conference || "";
+    return `${t.name}${ovr}${conf ? ` · ${conf}` : ""}`;
+  }
+  function fillPicker(cards) {
+    const sel = $("#pick-team"), keep = sel.value;
+    const rows = (cards || []).filter((t) => !t.fictional);
+    state.pickCards = Object.fromEntries(rows.map((t) => [t.slug, t]));
+    window.CFP.ui.reconcile(sel, rows, "slug", (t) => el("option", { value: t.slug, text: teamLabel(t) }),
+      (n, t) => { const x = teamLabel(t); if (n.textContent !== x) n.textContent = x; });
+    if (keep && state.pickCards[keep]) sel.value = keep;
+  }
+  // The League panel picked a league (an import checked, or back to the built-in one): its teams in the picker,
+  // and, with no season open, their cards
+  function leagueChanged(lf) {
+    const cards = lf.teams || state.teams;
+    if (!state.season) mergeCards(cards, lf.teams ? "import" : "builtin");
+    fillPicker(cards);
+  }
+  const pickCard = (slug) => (state.pickCards && state.pickCards[slug]) || window.CFP.teamsBySlug[slug];
 
   async function loadSeasons() {
     const data = await api("/api/seasons");
@@ -252,6 +289,7 @@
   // the empty state shows the start-a-season instructions, or a note in their place (loading, or why loading failed)
   function startNote(text) {
     $("#season-intro").hidden = !!text;
+    $("#league-panel").hidden = !!text;
     $("#season-loading").hidden = !text;
     $("#season-loading").textContent = text || "";
   }
@@ -309,7 +347,7 @@
   // coach page). The team's coordinators stay for the season either way.
   async function chooseCoach(mode, inPlace) {
     const slug = $("#pick-team").value;
-    const t = window.CFP.teamsBySlug[slug] || {};
+    const t = pickCard(slug) || {};
     const staff = t.staff || {};
     const box = el("div", { class: "start-choice" });
     const own = el("div", { class: "start-card" }, [
@@ -350,10 +388,13 @@
     const team = $("#pick-team").value;
     $("#btn-new").disabled = true;
     // building a season takes a few seconds (schedules, rosters, preseason polls): say so
-    const teamName = (window.CFP.teamsBySlug[team] || {}).name || "your team";
+    const teamName = (pickCard(team) || {}).name || "your team";
+    const lf = window.LeagueFile, league = lf ? lf.key() : "builtin";
     toast(`Setting up the ${teamName} season: schedule, rosters and preseason polls…`);
     try {
-      const s = await api("/api/season", postJSON({ team, mode, coach: coach || null, career: mode === "full" }));
+      const s = await api("/api/season", postJSON({ team, mode, coach: coach || null, career: mode === "full", league }));
+      if (lf) lf.reset();                  // the checked league is used up: the New Career screen is back on the built-in one
+      await leagueCards(s);
       history.replaceState(null, "", `?id=${s.id}`);
       showSeason(s);
       loadSeasons();
@@ -370,6 +411,7 @@
     try {
       const s = await api(`/api/season/${id}`);
       if (!want) history.replaceState(null, "", `?id=${encodeURIComponent(s.id)}`);
+      await leagueCards(s);
       state.pendingRoute = want || null;
       try { showSeason(s); } finally { state.pendingRoute = null; }
       loadSeasons();
@@ -3967,6 +4009,11 @@
   // ----- wiring ------------------------------------------------------------
 
   $("#btn-new").addEventListener("click", () => { if (!held()) chooseCoach("full"); });
+  // the League panel (web/leaguefile.js): its league's teams in the picker, and its Start Career
+  if (window.LeagueFile) {
+    window.LeagueFile.onChange(leagueChanged);
+    window.LeagueFile.onStart(() => { if (!held()) chooseCoach("full"); });
+  }
   $("#btn-pause").addEventListener("click", pauseSim);
   $("#btn-seasons").addEventListener("click", () => setSidebar($("#btn-seasons").getAttribute("aria-pressed") !== "true"));
   $("#btn-download-career").addEventListener("click", () => {
@@ -3979,6 +4026,7 @@
     if (!file) return;
     try {
       const s = await window.CareerSave.upload(file);
+      await leagueCards(s);
       history.replaceState(null, "", `?id=${s.id}`);
       showSeason(s);
       loadSeasons().catch(() => {});

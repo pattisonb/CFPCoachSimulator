@@ -149,7 +149,7 @@ def check_good(page, good: Path, tag: str) -> None:
     if page.query_selector("#league-result .league-busy"):
         assert page.eval_on_selector("#pick-league", "e => e.disabled && e.getAttribute('aria-busy') === 'true'"), "the select is busy"
         assert page.eval_on_selector("#btn-export-league", "e => e.disabled"), "Export waits for the check"
-        line = page.inner_text("#league-result .league-busy")
+        line = page.inner_text("#league-result .league-busy p")
         assert line.startswith("Checking good.json") and line.rstrip().endswith("."), line
     page.wait_for_selector("#btn-league-start", timeout=180_000)
     print(f"  {tag}: checked in {time.time() - t0:.1f} s")

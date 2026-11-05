@@ -73,10 +73,24 @@
       <div id="season-empty" class="empty">
         <p id="season-intro">Pick your team, then choose <b>New Season</b> to play the 2026 season from week 1. You can play it a week at a time from the Office, or sim ahead to selection day or signing day.</p>
         <p id="season-loading" class="muted" hidden></p>
+        <!-- the league a new career plays: the game's own, or a league file (web/leaguefile.js) -->
+        <section id="league-panel" class="panel league-panel" aria-labelledby="league-title">
+          <div class="league-head"><h2 id="league-title">League</h2></div>
+          <div class="league-row">
+            <select id="pick-league" aria-label="League">
+              <option value="builtin">League: Built-in</option>
+              <option value="import">Import League File…</option>
+            </select>
+            <button id="btn-export-league" class="ghost" type="button">Export League</button>
+            <input id="league-file" type="file" accept=".json,application/json" hidden />
+          </div>
+          <div id="league-result" aria-live="polite"></div>
+        </section>
       </div>
       <!-- a season is about to load (a link to a saved one): say so instead of the instructions -->
       <script>(function () { if (!/[?&]id=/.test(location.search)) return;
         document.getElementById("season-intro").hidden = true;
+        document.getElementById("league-panel").hidden = true;
         var note = document.getElementById("season-loading");
         note.textContent = "Loading the season…";
         note.hidden = false; })();</script>
@@ -231,6 +245,7 @@
   <script src="./offseason.js"></script>
   <script src="./depth/portraits.js"></script>
   <script src="./depth/depth.js"></script>
+  <script src="./leaguefile.js"></script>
   <script src="./season.js"></script>
 </body>
 </html>
