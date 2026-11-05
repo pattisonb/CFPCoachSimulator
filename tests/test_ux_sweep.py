@@ -160,9 +160,9 @@ NULL_TEXT = "() => { const w = document.createTreeWalker(document.querySelector(
 
 
 def check_pane_profile(page, base, sid) -> None:
-    """The pane's Profile sub-tab on a scouted recruit, at 1280 (short window, so the pane scrolls inside itself) and
-    400 (the full-screen sheet): no second head, no "null", every grade card inside the pane, and the sub-tab strip
-    pinned in view, never clipped, after the body scrolls 600 px."""
+    """The pane's Scouting sub-tab (his report and Attributes) on a scouted recruit, at 1280 (short window, so the pane
+    scrolls inside itself) and 400 (the full-screen sheet): one hero, no "null", every grade bar inside the pane, and the
+    tab row pinned in view, never clipped, after the body scrolls 600 px."""
     board = call(base, f"/api/season/{sid}/recruiting")["board"]
     scouted = next((b for b in board if (b.get("looks") or 0) >= 3 and b.get("our_grades")), None)
     if not scouted:         # the prospect the Prospects step scouted three times goes on the board (no hours)
@@ -178,17 +178,19 @@ def check_pane_profile(page, base, sid) -> None:
             page.evaluate("() => window.scrollTo(0, 1500)")
         page.click(f".go-row-recruit[data-pid='{scouted['id']}']")
         time.sleep(0.6)
-        page.click(".go-pane .go-subtabs button[data-sub=profile]")
-        page.wait_for_selector(".go-pane .go-sub-body.go-profile .go-scouted .go-gchip.go-tip", timeout=60_000)
-        assert not page.query_selector(".go-pane .go-profile .go-grades"), "the grades show once, in the Scouted strip (no card grid)"
-        page.mouse.move(2, height - 2)      # the pointer off the grade chips: no "looks like" box over the screenshots
+        page.click(".go-pane .go-subtabs button[data-sub=scouting]")
+        page.wait_for_selector(".go-pane .pv-attributes .pv-attr.go-tip", timeout=60_000)
+        assert not page.query_selector(".go-pane .go-grades, .go-pane .go-scouted") and page.evaluate("() => document.querySelectorAll('.go-pane .pv-attrs').length") == 1, \
+            "the grades show once, as the Attributes bars (no card grid, no chip strip)"
+        page.mouse.move(2, height - 2)      # the pointer off the grade bars: no "looks like" box over the screenshots
         time.sleep(0.4)
-        assert not page.query_selector(".go-pane .go-profile-head, .go-pane .go-sub-body h2.go-display"), f"the pane's Profile repeats his head at {width}"
+        assert page.evaluate("() => document.querySelectorAll('.go-pane .pv-hero').length") == 1 and not page.query_selector(".go-pane .go-profile-head, .go-pane .go-sub-body h2"), \
+            f"the pane repeats his head at {width}"
         assert not page.evaluate(NULL_TEXT), f"a text node reads null in the pane at {width}"
         cards = page.evaluate("""() => { const pr = document.querySelector('.go-pane').getBoundingClientRect();
-          return [...document.querySelectorAll('.go-pane .go-profile .go-scouted .go-gchip')].map(c => { const r = c.getBoundingClientRect();
+          return [...document.querySelectorAll('.go-pane .pv-attr')].map(c => { const r = c.getBoundingClientRect();
             return [c.textContent.slice(0, 24), r.right <= pr.right + 0.5, r.left >= pr.left - 0.5]; }); }""")
-        assert cards and all(c[1] and c[2] for c in cards), f"a grade chip runs past the pane at {width}: {cards}"
+        assert len(cards) == 5 and all(c[1] and c[2] for c in cards), f"a grade bar runs past the pane at {width}: {cards}"
         shot(page, f"pane-profile-{width}-dark")
         t0 = page.evaluate("() => document.querySelector('.go-pane .go-subtabs').getBoundingClientRect().top")
         page.evaluate("() => { document.querySelector('.go-pane').scrollTop += 600; }")
@@ -445,7 +447,7 @@ def test_scouting_tab(page, base, sid) -> None:
     before = row["looks"] or 0
     assert segments() == [min(1, max(0, before - i)) for i in range(3)], (before, segments())
     assert page.inner_text(f".sc-row[data-pid='{pid}'] .sc-looks-text") == f"{fmt(before)}/3"
-    assert page.inner_text("#sc-send").strip() == (f"Send Scout · {row['cost']} Points · Finishes His Report" if 3 - before <= 1 else f"Send Scout · {row['cost']} Points")
+    assert page.inner_text("#sc-send").strip() == (f"Send Scout · {row['cost']} Pts · Finishes His Report" if 3 - before <= 1 else f"Send Scout · {row['cost']} Pts")
     after = min(3, before + 1)
     page.click("#sc-send")
     toasted_start(page, f"Scouted {row['name']} · {fmt(after)} of 3 looks" + (" · his report is complete" if after >= 3 else ""))
@@ -483,7 +485,7 @@ def test_scouting_tab(page, base, sid) -> None:
     page.wait_for_function("() => document.querySelector('.sc-showing').textContent.startsWith('1–20')", timeout=15_000)
     assert page.eval_on_selector_all(".sc-list .sc-row:not(.go-leaving)", "els => els.map(e => e.dataset.pid)") == first
     # rank is the default order over the whole class; Need reorders the whole class, Rank puts it back
-    ranks = page.eval_on_selector_all(".sc-list .sc-row:not(.go-leaving) .sc-rank", "els => els.map(e => +e.textContent.replace('#', ''))")
+    ranks = page.eval_on_selector_all(".sc-list .sc-row:not(.go-leaving)", "els => els.map(e => +e.dataset.rank)")      # a row's rank rides on it (its label says it; the tag shows his read)
     assert ranks == sorted(ranks) and ranks[0] == min(r["national_rank"] for r in call(base, f"/api/season/{sid}/scouting?limit=400")["queue"]), ranks
     by_need = call(base, f"/api/season/{sid}/scouting?limit=20&sort=need")["queue"]
     page.select_option("#sc-sort", "need")
@@ -726,14 +728,16 @@ def test_look_units_pane(page, base, sid) -> None:
     page.click(".go-stages button[data-stage=all]")
     page.click(f".go-row-recruit[data-pid='{done['id']}']")
     page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n) && document.querySelector('.go-pane .go-strip'); }", arg=done["name"], timeout=15_000)
-    assert "3 of 3 looks" in page.inner_text(".go-pane .go-strip"), page.inner_text(".go-pane .go-strip")
+    assert "3 of 3 Looks" in page.inner_text(".go-pane .go-strip"), page.inner_text(".go-pane .go-strip")
     page.click(".go-pane .go-subtabs button[data-sub=scouting]")
-    page.wait_for_selector(".go-pane .go-scouting", timeout=15_000)
-    text = page.inner_text(".go-pane .go-scouting .go-scout-head")
-    assert "3 of 3 Looks" in text and page.inner_text(".go-pane .go-scouting .go-scout-tag") == "Report Complete", text
-    assert page.evaluate("() => document.querySelectorAll('.go-pane .go-scouting .sc-trip.on').length") == 3, "the looks bar is full"
-    assert not page.query_selector(".go-pane .go-scouting .go-scouted"), "the grades show once, in the cards (no strip above them)"
-    text = page.inner_text(".go-pane .go-scouting")
+    page.wait_for_selector(".go-pane .pv-report", timeout=15_000)
+    text = page.inner_text(".go-pane .pv-report .pv-card-head")
+    assert "3 of 3 Looks" in text and page.inner_text(".go-pane .pv-report .pv-send").strip() == "Report Complete", text
+    assert page.is_disabled(".go-pane .pv-report .pv-send"), "no Send on a complete report"
+    assert page.evaluate("() => document.querySelectorAll('.go-pane .pv-report .pv-pips i.f').length") == 3, "the looks pips are full"
+    assert not page.query_selector(".go-pane .go-scouted, .go-pane .go-grades") and page.evaluate("() => document.querySelectorAll('.go-pane .pv-attrs').length") == 1, \
+        "the grades show once, in the Attributes card"
+    text = page.inner_text(".go-pane .go-sub-body")
     assert "scouting trips" not in text, "no separate trips count"
     page.click("#rc-recruit")
     page.wait_for_selector(".go-menu[role=menu]")
@@ -748,8 +752,9 @@ def test_look_units_pane(page, base, sid) -> None:
         page.click(f".go-row-recruit[data-pid='{near['id']}']")
         page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n); }", arg=near["name"], timeout=15_000)
         page.click(".go-pane .go-subtabs button[data-sub=scouting]")
-        page.wait_for_function("(t) => { const b = document.querySelector('.go-pane .go-scouting .go-scout-head'); return b && b.innerText.includes(t); }", arg=f"{fmt(near['looks'])} of 3 Looks", timeout=15_000)
-        assert page.inner_text(".go-pane .go-scouting .go-scout-tag") == "One Trip Finishes His Report"
+        page.wait_for_function("(t) => { const b = document.querySelector('.go-pane .pv-report .pv-card-head'); return b && b.innerText.includes(t); }", arg=f"{fmt(near['looks'])} of 3 Looks", timeout=15_000)
+        assert page.inner_text(".go-pane .pv-report .pv-send").strip().endswith("· Finishes His Report")
+        assert page.inner_text(".go-pane .pv-looks-line") == "One more look finishes his report."
         page.click("#rc-recruit")
         page.wait_for_selector(".go-menu[role=menu]")
         assert "finishes his report" in page.inner_text(".go-menu .go-menu-item[data-action=scout]").lower()
@@ -930,11 +935,14 @@ def hover_grades(page, scope: str, where: str, height: int, escape: bool = False
         assert not page.evaluate(TIP_STATE, c)["shown"], f"the focus leaving the grade closes its tooltip in {where}"
 
 
+GRADE_WORDS = ("All-American", "Elite", "Strong", "Solid", "Fair", "Weak")
+
+
 def test_grade_hover(page, base, sid) -> None:
-    """A complete report's grade cards: on the board pane's Profile and Scouting sub-tabs and on the Prospects tab's full
-    profile, at 1280 and 400 (a tap there), hovering or focusing any card shows its "looks like" tooltip, visible, inside the
-    viewport and on top; the cards read one word each ("Strong", never "Solid to Strong") under the final-grades line; an
-    open report keeps its ranges."""
+    """A complete report's grades: on the board pane's Scouting sub-tab and on the Prospects tab's full profile (its
+    Scouting tab), at 1280 and 400 (a tap there), hovering or focusing any Attributes bar or the Potential headline shows its
+    "looks like" tooltip, visible, inside the viewport and on top; the bars read one word each ("Strong", never "Solid to
+    Strong") under the final-grades note in the report's ⓘ; an open report keeps its ranges."""
     board = call(base, f"/api/season/{sid}/recruiting")["board"]
     done = next((b for b in board if (b.get("looks") or 0) >= 3 and b.get("our_grades")), None)
     if done is None:
@@ -948,68 +956,62 @@ def test_grade_hover(page, base, sid) -> None:
     opened = next((b for b in board if 0 < (b.get("looks") or 0) < 3 and b.get("our_grades")), None)   # an open report: its line says the ranges still narrow
     for width, height in ((1280, 800), (400, 760)):
         page.set_viewport_size({"width": width, "height": height})
-        # the board pane: the Profile sub-tab, then the Scouting sub-tab (its tooltips arrive with his profile)
+        # the board pane's Scouting sub-tab: the report (its Potential headline) and the Attributes bars, their tooltips with his profile
         open_tab(page, base, sid, "recruiting", ".go-stages")
         page.click(".go-stages button[data-stage=all]")
         page.click(f".go-row-recruit[data-pid='{done['id']}']")
         page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n); }", arg=done["name"], timeout=15_000)
-        page.click(".go-pane .go-subtabs button[data-sub=profile]")
-        page.wait_for_selector(".go-pane .go-sub-body.go-profile .go-scouted .go-gchip.go-tip", timeout=60_000)
-        time.sleep(0.4)
-        words = page.eval_on_selector_all(".go-pane .go-profile .go-scouted .go-gchip > b", "els => els.map(e => e.textContent.trim())")
-        assert words and all(" to " not in w and w in ("All-American", "Elite", "Strong", "Solid", "Fair", "Weak") for w in words), f"one final grade per chip at {width}: {words}"
-        note = page.evaluate("() => { const b = document.querySelector('.go-pane .go-profile .go-scouted .go-info'); return b && document.getElementById(b.getAttribute('aria-describedby')).textContent; }")
-        assert "3 of 3 looks: his report is complete: these are your staff's final grades." in note and "A read can still be wrong; the truth shows once he is on your roster." in note, note
-        assert "Ranges narrow" not in note, note
-        hover_grades(page, ".go-pane .go-profile", f"the pane's Profile sub-tab at {width}", height, escape=width > 700, cell=".go-scouted .go-gchip")
         page.click(".go-pane .go-subtabs button[data-sub=scouting]")
-        page.wait_for_selector(".go-pane .go-scouting .go-grades .go-stat.go-tip", timeout=30_000)
-        time.sleep(0.3)
-        assert page.inner_text(".go-pane .go-scouting .go-scout-tag") == "Report Complete"
-        note = page.evaluate("() => { const b = document.querySelector('.go-pane .go-scouting .go-scout-head .go-info'); return b && document.getElementById(b.getAttribute('aria-describedby')).textContent; }")
-        assert note and note.startswith("Tap a grade to see what it looks like in ratings.") and "half a look, up to two." in note, note   # the help sits in the report's ⓘ
-        words = page.eval_on_selector_all(".go-pane .go-scouting .go-grades .go-stat-val", "els => els.map(e => e.textContent.trim())")
-        assert words and all(w in ("All-American", "Elite", "Strong", "Solid", "Fair", "Weak") for w in words), f"one plain word per card: {words}"
-        assert not page.query_selector(".go-pane .go-scouting .go-grades .go-word"), "plain words, no chips"
-        # three cards a row on the desktop, two on a phone; every card the same height; a grade on one line
-        geo = page.evaluate("""() => { const cs = [...document.querySelectorAll('.go-pane .go-scouting .go-grades .go-stat')].map(c => c.getBoundingClientRect());
-          const vals = [...document.querySelectorAll('.go-pane .go-scouting .go-grades .go-stat-val')].map(v => v.getClientRects().length === 1 && v.getBoundingClientRect().height < 26);
-          return { perRow: cs.filter(r => Math.abs(r.top - cs[0].top) < 2).length, heights: [...new Set(cs.map(r => Math.round(r.height)))], oneLine: vals.every(Boolean) }; }""")
-        assert geo["perRow"] == (3 if width > 700 else 2) and len(geo["heights"]) == 1 and geo["oneLine"], f"the grade cards at {width}: {geo}"
-        hover_grades(page, ".go-pane .go-scouting", f"the pane's Scouting sub-tab at {width}", height)
-        if opened:          # an open report's Scouting sub-tab keeps its ranges and its narrowing line
+        page.wait_for_selector(".go-pane .pv-attributes .pv-attr.go-tip", timeout=60_000)
+        time.sleep(0.4)
+        assert page.inner_text(".go-pane .pv-report .pv-send").strip() == "Report Complete"
+        words = page.eval_on_selector_all(".go-pane .pv-attr .pv-attr-w", "els => els.map(e => e.textContent.trim())")
+        assert len(words) == 5 and all(w in GRADE_WORDS for w in words), f"one final grade per bar at {width}: {words}"
+        assert page.text_content(".go-pane .pv-report .pv-potential b").strip() in GRADE_WORDS, "the Potential headline is one final word"
+        note = page.evaluate("() => { const b = document.querySelector('.go-pane .pv-report .go-info'); return b && document.getElementById(b.getAttribute('aria-describedby')).textContent; }")
+        assert "3 of 3 looks: his report is complete: these are your staff's final grades." in note and "A read can still be wrong; the truth shows once he is on your roster." in note, note
+        assert "Ranges narrow" not in note and "half a look, up to two." in note, note     # the help sits in the report's ⓘ
+        # every bar the same height, its words on one line
+        geo = page.evaluate("""() => { const rs = [...document.querySelectorAll('.go-pane .pv-attr')].map(c => c.getBoundingClientRect());
+          const vals = [...document.querySelectorAll('.go-pane .pv-attr .pv-attr-w')].map(v => v.getClientRects().length === 1 && v.getBoundingClientRect().height < 26);
+          return { heights: [...new Set(rs.map(r => Math.round(r.height)))], oneLine: vals.every(Boolean) }; }""")
+        assert len(geo["heights"]) == 1 and geo["oneLine"], f"the Attributes bars at {width}: {geo}"
+        hover_grades(page, ".go-pane .go-sub-body", f"the pane's Attributes at {width}", height, escape=width > 700, cell=".pv-attr")
+        hover_grades(page, ".go-pane .go-sub-body", f"the pane's Potential at {width}", height, escape=width > 700, cell=".pv-potential")
+        if opened:          # an open report keeps its ranges and says what the next look does
             if width <= 700:
                 page.click(".go-pane .go-pane-back")
                 time.sleep(0.4)
             page.click(f".go-row-recruit[data-pid='{opened['id']}']")
             page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n); }", arg=opened["name"], timeout=15_000)
             page.click(".go-pane .go-subtabs button[data-sub=scouting]")
-            page.wait_for_selector(".go-pane .go-scouting .go-scout-head", timeout=30_000)
-            assert "Report Complete" not in page.inner_text(".go-pane .go-scouting .go-scout-head")
-            vals = page.eval_on_selector_all(".go-pane .go-scouting .go-grades .go-stat-val", "els => els.map(e => e.textContent.trim())")
-            words = ("All-American", "Elite", "Strong", "Solid", "Fair", "Weak")
-            assert vals and all(all(w in words for w in v.split("–")) for v in vals), f"ranges read 'Weak–Fair', never 'Weak to Fair': {vals}"
+            page.wait_for_selector(".go-pane .pv-report .pv-card-head", timeout=30_000)
+            assert "Report Complete" not in page.inner_text(".go-pane .pv-report")
+            vals = page.eval_on_selector_all(".go-pane .pv-attr .pv-attr-w", "els => els.map(e => e.textContent.trim())")
+            assert vals and all(all(w in GRADE_WORDS for w in v.split(" – ")) for v in vals), f"ranges read 'Weak – Fair', never 'Weak to Fair': {vals}"
         if width <= 700:
             page.click(".go-pane .go-pane-back")
             time.sleep(0.4)
-        # the Prospects tab's full profile (a modal)
+        # the Prospects tab's full profile (a modal): its Scouting tab, the same bars
         open_tab(page, base, sid, "prospects", ".go-list-row")
         page.fill("#tab-prospects input[type=search]", done["name"])
         page.wait_for_selector(f"#tab-prospects .go-list-row:has-text({json.dumps(done['name'])})", timeout=30_000)
         time.sleep(0.5)
         page.click(f"#tab-prospects .go-list-row:has-text({json.dumps(done['name'])}) .go-list-id")
-        page.wait_for_selector(".modal .go-profile .go-scouted .go-gchip.go-tip", timeout=60_000)
+        page.wait_for_selector(".modal .pv-popup .go-subtabs button[data-sub=scouting]", timeout=60_000)
+        page.click(".modal .pv-popup .go-subtabs button[data-sub=scouting]")
+        page.wait_for_selector(".modal .pv-popup .pv-attr.go-tip", timeout=60_000)
         time.sleep(0.4)
-        assert done["name"].upper() in page.inner_text(".modal .go-profile"), "the profile is his"
-        words = page.eval_on_selector_all(".modal .go-profile .go-scouted .go-gchip > b", "els => els.map(e => e.textContent.trim())")
-        assert words and all(" to " not in w for w in words), f"one final grade per chip on the full profile at {width}: {words}"
-        assert not page.query_selector(".modal .go-profile .go-grades"), "no second grade grid on the full profile"
-        assert "these are your staff's final grades" in page.evaluate("() => { const b = document.querySelector('.modal .go-profile .go-scouted .go-info'); return document.getElementById(b.getAttribute('aria-describedby')).textContent; }")
-        hover_grades(page, ".modal .go-profile", f"the Prospects profile at {width}", height, cell=".go-scouted .go-gchip")
+        assert done["name"] in page.inner_text(".modal .pv-popup .rc-profile-name"), "the profile is his"
+        words = page.eval_on_selector_all(".modal .pv-popup .pv-attr .pv-attr-w", "els => els.map(e => e.textContent.trim())")
+        assert len(words) == 5 and all(w in GRADE_WORDS for w in words), f"one final grade per bar on the full profile at {width}: {words}"
+        assert not page.query_selector(".modal .go-profile .go-grades, .modal .go-profile .go-scouted"), "no second grade grid on the full profile"
+        assert "these are your staff's final grades" in page.evaluate("() => { const b = document.querySelector('.modal .pv-popup .pv-report .go-info'); return document.getElementById(b.getAttribute('aria-describedby')).textContent; }")
+        hover_grades(page, ".modal .pv-popup", f"the Prospects profile at {width}", height, cell=".pv-attr")
         # a tap (the phone) opens it too
         if width <= 700:
             page.mouse.move(2, height - 2)
-            first = page.query_selector(".modal .go-profile .go-scouted .go-gchip")
+            first = page.query_selector(".modal .pv-popup .pv-attr")
             first.scroll_into_view_if_needed()
             first.click()
             time.sleep(0.3)
@@ -1074,30 +1076,30 @@ def test_flip_words(page, base) -> None:
             assert lines[0].startswith("VERBAL COMMIT TO"), lines
             word = prof["flip"]["word"]
             leader = prof["flip"]["rivals"][0]["name"] if prof["flip"]["rivals"] else None
-            expect = ("Solid: nobody is close to pulling him away" if word == "None" or not leader
-                      else f"Hearing out {leader}: a slim chance he flips before signing day" if word == "Slim"
-                      else f"{leader} is working him hard: a real chance he flips" if word == "Real" else f"{leader} is close to flipping him")
+            expect = ("Solid: nobody is close to pulling him away." if word == "None" or not leader
+                      else f"Hearing out {leader}: a slim chance he flips before signing day." if word == "Slim"
+                      else f"{leader} is working him hard: a real chance he flips." if word == "Real" else f"{leader} is close to flipping him.")
             assert lines[1] == expect, (lines, word)
             heads = [h.strip().lower() for h in page.eval_on_selector_all(".modal .go-profile h3", "els => els.map(e => e.textContent)")]
             if holder == me:
                 assert "who else is calling" in heads, heads
                 if page.query_selector(".modal .go-profile .go-nobody-close"):
                     assert word == "None" and page.inner_text(".modal .go-profile .go-nobody-close") == "Nobody is close to pulling him away."
-                    assert not page.query_selector(".modal .go-profile .go-schools"), "no table when nobody is close"
+                    assert not page.query_selector(".modal .go-profile .pv-rivals"), "no table when nobody is close"
                 else:
                     assert word != "None"
             else:
                 assert "his chance to flip to each" in heads, heads
-                assert page.query_selector(".modal .go-profile .go-school.yours"), "your own row is marked among his rivals"
-                assert "(you)" in page.inner_text(".modal .go-profile .go-school.yours")
-            rows = page.eval_on_selector_all(".modal .go-profile .go-schools .go-school", "els => els.map(e => [e.querySelector('b').textContent, e.querySelector('.go-school-odds').textContent.trim(), e.lastElementChild.textContent])")
+                assert page.query_selector(".modal .go-profile .pv-rival.you"), "your own row is marked among his rivals"
+                assert "(Your School)" in page.inner_text(".modal .go-profile .pv-rival.you")
+            rows = page.eval_on_selector_all(".modal .go-profile .pv-rivals .pv-rival", "els => els.map(e => [e.querySelector('b').textContent, e.querySelector('.pv-battle-w').textContent.trim(), e.lastElementChild.textContent])")
             for name, w, marks in rows:
-                assert w in FLIP_WORDS or w == "no offer", (name, w)
+                assert w in FLIP_WORDS or w == "No Offer", (name, w)
                 if w in FLIP_WORDS:
                     assert "Offer" in marks, (name, marks)
-            assert "%" not in page.inner_text(".modal .go-profile .go-schools") if rows else True
+            assert "%" not in page.inner_text(".modal .go-profile .pv-rivals") if rows else True
             words_by_api = {r["name"]: r["word"] for r in prof["flip"]["rivals"]}
-            assert all(words_by_api.get(name, "no offer") == w for name, w, _ in rows), (rows, words_by_api)
+            assert all(words_by_api.get(name, "No Offer") == w for name, w, _ in rows), (rows, words_by_api)
             assert [name for name, w, _ in rows if w in FLIP_WORDS] == [r["name"] for r in prof["flip"]["rivals"] if r["name"] in {n for n, _, _ in rows}], "rivals sorted by their chance"
             page.evaluate("() => { const c = document.querySelector('.modal:not([hidden]) .modal-close'); if (c) c.click(); }")
             time.sleep(0.3)
@@ -1414,30 +1416,37 @@ if __name__ == "__main__":
             page.click("button.go-btn:has-text('Add These')")
             time.sleep(4)
             page.click(".go-list-row .go-list-id >> nth=0")
-            page.wait_for_selector(".go-profile .go-display", timeout=60_000)
+            page.wait_for_selector(".go-profile .pv-hero", timeout=60_000)
+            page.click(".go-profile .go-subtabs button[data-sub=scouting]")
+            page.wait_for_selector(".go-profile .pv-report", timeout=60_000)
             for _ in range(3):
-                sc = page.query_selector(".go-profile button:has-text('Send a Scout')")
-                if not sc:
+                sc = page.query_selector(".go-profile .pv-report button:has-text('Send a Scout')")
+                if not sc or sc.is_disabled():
                     break
-                assert "go-link" not in (sc.get_attribute("class") or ""), "scouting costs hours: a button, not an inline link"
+                assert "go-link" not in (sc.get_attribute("class") or ""), "scouting costs points: a button, not an inline link"
                 sc.click()
                 time.sleep(2.5)
                 if not page.query_selector(".go-profile h2"):
                     page.click(".go-list-row .go-list-id >> nth=0")
-                    page.wait_for_selector(".go-profile .go-display", timeout=60_000)
-            page.wait_for_selector(".go-profile .go-scouted", timeout=30_000)
+                    page.wait_for_selector(".go-profile .pv-hero", timeout=60_000)
+                    page.click(".go-profile .go-subtabs button[data-sub=scouting]")
+            page.wait_for_selector(".go-profile .pv-attrs .pv-attr.go-tip", timeout=30_000)
             prof = page.inner_text(".go-profile")
             assert not re.search(r"^null$", prof, re.M), "a null reached the profile"
-            assert "–" not in page.inner_text(".go-profile .go-scouted"), "grade ranges read 'D to C-', not 'C-–D'"
+            WORDS_UP = ["Weak", "Fair", "Solid", "Strong", "Elite", "All-American"]
+            vals = page.eval_on_selector_all(".go-profile .pv-attr .pv-attr-w", "els => els.map(e => e.textContent.trim())")
+            for v_ in vals:
+                ends = v_.split(" – ")
+                assert all(w in WORDS_UP for w in ends) and WORDS_UP.index(ends[0]) <= WORDS_UP.index(ends[-1]), f"a grade range reads low to high in words: {v_!r}"
             LETTER = re.compile(r"(^|\s)[A-D][+-]?(\s|$)|(^|\s)F(\s|$)")
-            grades = page.inner_text(".go-profile .go-scouted")
+            grades = page.inner_text(".go-profile .pv-attrs") + " " + page.inner_text(".go-profile .pv-report .pv-potential")
             assert not LETTER.search(grades), f"a letter grade on the profile: {LETTER.search(grades).group(0)!r}"
             assert any(w in grades for w in ("All-American", "Elite", "Strong", "Solid", "Fair", "Weak")), grades
             assert "Generational" not in grades, "the grade tier must never read as the generational tag"
             assert "C+ starts at 50" not in page.inner_text(".go-profile"), "the letter legend is gone"
-            assert page.query_selector(".go-profile .go-scouted .go-word") and not page.query_selector(".go-profile .go-grades"), "grades render as .go-word tags, once, in the strip"
+            assert page.evaluate("() => document.querySelectorAll('.go-profile .pv-attrs').length") == 1 and not page.query_selector(".go-profile .go-grades"), "grades render once, as the Attributes bars"
             # a grade's "looks like" box opens on tap, not only on hover
-            page.click(".go-profile .go-scouted .go-gchip.go-tip >> nth=0")
+            page.click(".go-profile .pv-attr.go-tip >> nth=0")
             time.sleep(0.3)
             assert page.query_selector(".go-profile .go-tip-box.show"), "tapping a grade shows what it looks like"
             page.keyboard.press("Escape")
@@ -1540,15 +1549,16 @@ if __name__ == "__main__":
             shot(page, "pane-sticky-1280-dark")
             page.evaluate("() => window.scrollTo(0, 0)")
             time.sleep(0.2)
-            assert page.evaluate("() => document.querySelectorAll('.go-pane .go-strip .go-stat').length") == 4, "four stat cells"
+            assert page.eval_on_selector_all(".go-pane .go-strip .go-stat .go-kicker", "els => els.map(e => e.textContent)") == ["Your Offer", "His List", "Scouted"], "three snapshot cells"
+            assert page.text_content(".go-pane .pv-hero .pv-badge .pv-kick") == "Your Chance", "Your Chance is the hero's badge"
             assert page.eval_on_selector_all(".go-pane .go-subtabs button[data-sub]", "els => els.map(e => e.dataset.sub)") == ["overview", "scouting", "profile", "history"]
-            assert page.query_selector(".go-pane .go-sub-body .go-race"), "Overview draws his list as a race"
+            assert page.query_selector(".go-pane .go-sub-body [data-key=battle] .pv-battle-row, .go-pane .go-sub-body [data-key=battle] .pv-battle-empty"), "Overview draws his list as the Recruiting Battle"
             assert not page.query_selector(".modal-scene .go-pitch, .go-pane .go-act, .go-pane .go-actions, .go-pane .go-nil"), "nothing is shown for an interaction you are not having"
             # the row's word, the strip's odds and the Overview sentence come from the one ladder
             sd = page.evaluate("([b, me]) => window.CFP.recruiting.standingOf(b, me)", [b, "smu"])
             assert page.inner_text(f".go-row-recruit[data-pid='{pid}'] .go-standing-word").strip() == sd["word"]
             assert sd["text"] in page.inner_text(".go-pane .go-sub-body"), (sd, page.inner_text(".go-pane .go-sub-body"))
-            assert (sd.get("odds") or "—") in page.inner_text(".go-pane .go-strip")
+            assert page.text_content(".go-pane .pv-hero .pv-badge-v") == (sd.get("odds") or sd["word"]), "the badge says your chance in the ladder's words"
             shot(page, "pane-1280-dark")
             # sub-tabs: Scouting, Profile inline (no modal), History with this week's contacts
             page.click(".go-subtabs button[data-sub=scouting]")
@@ -1564,8 +1574,8 @@ if __name__ == "__main__":
             assert not [x for x in prof_btns if "scout" in x.lower() or "board" in x.lower()], f"the inline profile acts outside the menu: {prof_btns}"
             page.click(".go-subtabs button[data-sub=history]")
             time.sleep(0.3)
-            if "history" in b:      # the contact log: an untouched recruit reads the empty line
-                assert page.inner_text(".go-pane .go-sub-body").strip() == HISTORY_EMPTY, page.inner_text(".go-pane .go-sub-body")
+            if "history" in b:      # the contact log: an untouched recruit's timeline reads the empty line
+                assert page.inner_text(".go-pane .go-sub-body [data-key=timeline] .muted").strip() == HISTORY_EMPTY, page.inner_text(".go-pane .go-sub-body")
             else:                   # before the server logs contacts: this week's contacts
                 assert "Contacts this week" in page.inner_text(".go-pane .go-sub-body")
             # a History row reads Week n · what you did · the pitch · his reaction (a call's pitch folds into the call), newest first
@@ -2311,7 +2321,7 @@ if __name__ == "__main__":
             settle(page, n)
             smooth(page, h, "Scout")
             assert page.evaluate("() => document.activeElement.id") == "rc-recruit"
-            assert f"{str(int(looks)) if looks == int(looks) else f'{looks:.1f}'} of 3 looks" in page.inner_text(".go-pane .go-strip")
+            assert f"{str(int(looks)) if looks == int(looks) else f'{looks:.1f}'} of 3 Looks" in page.inner_text(".go-pane .go-strip")
             # Call: the conversation opens in its own window over the pane (the pane stays); the pitch's toast sits clear of his reply
             h = watch(page, ".go-pane", "#rc-recruit")
             n = draws(page)

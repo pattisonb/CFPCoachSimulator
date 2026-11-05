@@ -19,9 +19,9 @@ from tests.test_offseason import finished
 ME = "ohio-state"
 ENTRY_KEYS = {"week", "pid", "by", "before", "after", "flags"}
 FLAGS = {"gem", "bust", "generational", "likes"}      # "likes": prospects.staff_likes, the Flags list's fourth kind
-VIEW_KEYS = {"hours", "hours_left", "points_left", "points_week", "scouts", "queue", "queue_total", "reports", "flags", "full_reports", "trips_this_week"}
+VIEW_KEYS = {"hours", "hours_left", "points_left", "points_week", "scouts", "queue", "queue_total", "reports", "flags", "full_reports", "trips_this_week", "board_size", "board_scouted"}
 SCOUT_KEYS = {"id", "name", "role", "evaluation_word", "area", "looking_at", "yield", "contract_until"}
-QUEUE_KEYS = {"cost", "pid", "name", "position", "stars", "group", "need", "national_rank", "looks", "trips", "potential",
+QUEUE_KEYS = {"cost", "pid", "name", "position", "display_pos", "stars", "group", "need", "national_rank", "looks", "trips", "potential",
               "can_send", "why", "state", "likes", "on_board", "flags"}
 GROUP_KEYS = {"scout_id", "scout", "area", "looks", "changed", "items"}
 ITEM_KEYS = {"pid", "name", "position", "stars", "change", "flags", "likes", "on_board", "complete"}   # on_board, complete: read-only, for the tab's digest
@@ -87,6 +87,7 @@ if __name__ == "__main__":
         rc.pop("looks", None); rc.pop("look_counts", None); rc.pop("look_changes", None)
         v = G(sid, "scouting?sort=board")
         assert set(v) == VIEW_KEYS, set(v)
+        assert v["board_size"] == len(rc["board"]) and v["board_scouted"] == sum(1 for q in rc["board"] if recruiting.report_looks(rc["reads"].get(q)) > 0), (v["board_size"], v["board_scouted"])
         assert v["hours"] == v["hours_left"] > 0
         assert v["reports"] == {"this_week": [], "last_week": []}
         assert [s["id"] for s in v["scouts"]] == [m["id"] for m in staff]

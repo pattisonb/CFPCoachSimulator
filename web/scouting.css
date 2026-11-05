@@ -222,3 +222,47 @@
 @media (prefers-reduced-motion: reduce) { .sc-row-btn, .sc-bar-fill, .sc-hours-fill, .sc-list-wrap, .sc-chev { transition: none; animation: none; } }
 #tab-scouting .go-grade.all-american { color: var(--good); }   /* the top read in the same green as the board's words, not the team color */
 .sc-intel-head .go-kicker { color: var(--muted); }   /* one red kicker on the tab (the header): the panel kickers stay quiet */
+
+/* ----- the redesign: the header's meters, the database rows, the selected prospect (web/profile.css's pieces) ----- */
+.sc-new-n[hidden] { display: none; }
+.pv-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.sc-head { grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px 24px; }
+.sc-head-text { border-left: 0; padding-left: 0; gap: 2px; }
+.sc-title { margin: 0; font-size: 28px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.02em; }
+.sc-head-actions { margin: 0; }
+.sc-stats { display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: flex-end; }
+.sc-stat { flex: 1 1 130px; max-width: 200px; padding: 0; border: 0; border-radius: 0; background: none; gap: 0; }
+.sc-stat-value { font-size: 17px; font-weight: 800; }
+.sc-stat-label { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 12.5px; }
+.sc-stat .pv-thin > i { background: var(--good); }
+.sc-stat[data-stat=points] .pv-thin > i { background: var(--home); }
+.sc-main { gap: var(--pv-gap); grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); align-items: start; }
+#tab-scouting .sc-intel { gap: 12px; }
+.sc-intel-body { gap: 12px; }
+.sc-hero .pv-badge-s { text-transform: none; }
+.sc-why { margin: 0; }
+.sc-sub-body.pv-host { display: block; }
+.sc-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; }
+.sc-reads-week { display: flex; flex-direction: column; gap: 4px; }
+.sc-reads { margin: 0; padding-left: 18px; }
+/* a database row: star, avatar, name over stars and Pos · State; the tag (his read or a flag) over the pips */
+.sc-row-stars { font-size: 12px; letter-spacing: 0; }
+.sc-eval.sc-tag { display: inline-flex; align-items: center; gap: 1px; border: 1px solid var(--border); border-radius: 999px; padding: 1px 9px; font-size: 12px; font-weight: 800; }
+.sc-eval.sc-tag.strong, .sc-eval.sc-tag.elite, .sc-eval.sc-tag.all-american { border-color: var(--good); }
+.sc-eval.sc-tag.muted { color: var(--muted); }
+.sc-conf { display: inline-flex; align-items: center; gap: 6px; }
+.sc-trip { width: 16px; height: 8px; border-radius: 3px; border: 0; background: var(--pv-track); }
+.sc-trip.on { background: var(--good); }
+.sc-trip.half { background: linear-gradient(90deg, var(--good) 50%, var(--pv-track) 50%); }
+.sc-row.selected .sc-row-btn { border: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+/* Scouting Operations: one card a staff member, and an open spot */
+.sc-scout { background: var(--panel-2); }
+.sc-open-spot { border-style: dashed; }
+.sc-open-spot p { margin: 2px 0 0; }
+@media (max-width: 1199px) { .sc-head { grid-template-columns: minmax(0, 1fr) auto; } .sc-stats { grid-column: 1 / -1; grid-row: 2; } }
+@media (max-width: 899px) { .sc-main { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 759px) {
+  .sc-stat { max-width: none; flex-basis: 40%; }
+  .sc-actions { width: 100%; }
+  .sc-actions .go-btn { flex: 1 1 auto; }
+}

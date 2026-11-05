@@ -22,7 +22,10 @@
    "name": "Gold",
    "hex": "#FFD200"
   },
-  "accent": null
+  "accent": {
+   "name": "Cool Gray",
+   "hex": "#BDBDBD"
+  }
  },
  "rivals": [
   "james-madison"

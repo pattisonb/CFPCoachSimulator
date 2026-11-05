@@ -22,7 +22,10 @@
    "name": "White",
    "hex": "#FFFFFF"
   },
-  "accent": null
+  "accent": {
+   "name": "Putnam",
+   "hex": "#756E65"
+  }
  },
  "rivals": [
   "miami-oh",

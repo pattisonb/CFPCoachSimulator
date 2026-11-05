@@ -22,7 +22,10 @@
    "name": "White",
    "hex": "#FFFFFF"
   },
-  "accent": null
+  "accent": {
+   "name": "Midnight Murphy",
+   "hex": "#343636"
+  }
  },
  "rivals": [
   "w-kentucky"

@@ -1185,8 +1185,9 @@ number or rank.
 
 **Needs, recommendations and the first weeks.** Both the board and the class open with a needs
 strip by position (`recruiting.needs_detail`: a healthy roster's make-up minus who comes back
-minus your commits), counted the way you pick (what's left; committed, firm commits, your
-board or your offers against the spots to fill; only what's short); a position picked there
+minus your commits); the board's is counted the way you pick (what's left; committed, firm commits, your
+board or your offers against the spots to fill; only what's short), the class's Your Needs chips
+show what's left; a position picked there
 filters the board or the class to it. The class's **Recommended for You** view
 (`recruiting.recommended`) lists the prospects the Auto-recruit rules would put on your board
 this week, best fit first, each with why (your states, your star level, a position you need),
@@ -1251,30 +1252,35 @@ he asks about a named player on that call (the starter ahead of him, or another 
 offered), the scene shows his line with three answers (straight, a promise, a sidestep; each button a Title Case
 label, Tell Him Straight, Make Him a Promise or Sidestep It, over the line you say) and
 locks the pitch until you pick one; his reply comes back in place (no toast) and History keeps
-the answer (`Told him straight about …`, `Promised him the job over …`). Under
-the head, a strip of four cells (Your Chance, His List, Your Offer: "135 NIL · He wants 105" once
-you have offered, "He wants about 75–135" or the number before, "—" when nothing is known; Scouted;
-no value starts lowercase), the tags you know (a
-prospect who is tuning you out carries a `Tuning You Out` tag, a warning above the Recruit button
-says another contact costs you interest, and History lists each tuned-out contact), and
-sub-tabs: Overview, Scouting, Profile, History. A ★ tag is a priority he has confirmed to you and a ☆
-tag a topic he brought up on this week's call or visit (a topic that is both shows once, as ★). History lists every contact you have had with
-him from the contact log, newest first, one line each (`Week 4 · Call · Program Prestige · He lit
-up`, `Week 5 · Offer · 120 NIL`, his commitments too). The sub-tab strip stays pinned at the top of
-the pane while its body scrolls, and the Profile sub-tab starts below the pane's head instead of
-repeating it. The profile (pane and modal alike) is compact so a scouted prospect fits a 1280x800 laptop without
-scrolling: the compact Scouted strip first (a chip per grade group; tap or hover one for what it looks like in
-ratings, the same "looks like" tooltips the Scouting sub-tab's cards use; the ⓘ beside "Scouted" holds the note about
-the looks and the final grades; there is no second grade grid), then Personality, Who Decides and Cares About on one
-row (inline label: value pairs), then the Evaluation (two columns from 900 px, one on a phone) with the summary line
-and "Our comp" right under it, then His List or Who Else Offered, with half the usual gaps between sections. "OC Likes
-Him" shows once, as the chip in the pane's tag strip (the modal's head carries it), and the coordinator's sentence is
-that chip's title. `tests/test_profile_compact.py` checks the fit, the single grid, the single chip and 400 px. Sort: Your Chance climbs the ladder (yours, favorite, not offered while you lead
+the answer (`Told him straight about …`, `Promised him the job over …`). The pane, the Prospect Profile popup and the
+Scouting Center draw a recruit with one set of pieces (`web/profileview.js`, `web/profile.css`): a hero (his status chip,
+avatar, name, stars, Pos | Height | Weight with the position as the game shows it, `display_pos`: an EDGE who plays DT
+reads DT everywhere; Hometown · #rank; Nat. Rank, Pos. Rank, Class; a Your Chance badge in the ladder's words with a
+bar), a tab row (Overview, Scouting, Profile, History, with Recruit ▾ and the ☆ watch star on its right; it stays pinned
+at the top of the pane while the cards scroll) and cards in a two-column grid (one column on a narrow pane; a card alone
+on its row spans it; one gap token, `--pv-gap`, across and down; cards in a row stretch to one height).
+**Overview**: the Recruiting Battle (his list as ranked rows, your school marked; a committed recruit's other schools
+read their chance to flip him, in words) and the Recruit Snapshot (Your Offer, His List, Scouted; the standing sentence
+and odds; his priorities, a bar of your program's case only for the ones he has told you, Not Known Yet otherwise; His
+Ask; the tags you know: a prospect who is tuning you out carries a `Tuning You Out` tag, and a warning above the Recruit
+button says another contact costs you interest; a ★ tag is a priority he has confirmed and a ☆ tag a topic he brought up
+this week), then the Scout's Summary across (the verdict, Strengths, Areas to Develop). **Scouting**: the Scouting
+Report (looks pips, the Potential headline, the verdict and the lists, the comp once his report is complete, Send a
+Scout; the ⓘ holds the note about the looks and the final grades) and the Attributes card (five bars at the read's
+midpoint with its range as a lighter band and the words, "Solid – Strong"; tap or hover for what it looks like in
+ratings), then Looks & Uncertainty across (pips and Low / Medium / High from the read's width, the flags, a
+coordinator's "Likes Him"). **Profile**: his traits (Who Decides, Cares About, Personality, His Story, Commit Style and
+any trait the server adds; each Not Known Yet with how it shows) and his background. **History**: the Recruiting
+Timeline (every contact from the contact log, newest first: `Week 4 · Call · Program Prestige · He lit up`), Recruiting
+Notes (sentences from what you know) and Recent Interest Changes. The verdict, Strengths and Areas to Develop are
+written on the server from your staff's read only (`prospects.report`), never his true grades.
+`tests/test_profile_overhaul.py` checks the three places, the alignment by bounding boxes and 400 px;
+`tests/test_profile_compact.py` that the comp is in view at 1280x800 and the grades show once. Sort: Your Chance climbs the ladder (yours, favorite, not offered while you lead
 his list, in it, long shot, not offered elsewhere, lost). On a phone the pane is a full-screen dialog and
 the menu a bottom sheet. Every standing word (Yours, Lost, Favorite, In It, Long Shot, Not
 Offered) is one ladder read from his list, with your offer as the qualifier
 (`standingOf` in `web/recruiting.js`), so the list, the pane and the Office agree. His list is
-drawn as a race, one lane a school, a school without an offer in as a hollow pill, and a map of
+drawn as the Recruiting Battle, and a map of
 the US shows your nine areas and where the board's prospects live. Every color is a theme variable, so the screens work
 in the light and the dark theme. One set of spacing rules holds on every Coach Career screen:
 button rows keep 8 px between buttons, tag rows 6 px, cards 12 px of padding, and buttons stand
@@ -1284,43 +1290,38 @@ button rows keep 8 px between buttons, tag rows 6 px, cards 12 px of padding, an
 **The Scouting tab** (`web/scouting.js`, `GET /api/season/{id}/scouting`) replaces Staff. It is the
 Scouting Center, master and detail, built from the player's mockup in the site's own look:
 
-- **The header**: the kicker "Recruiting Intelligence / Class of 2027", SCOUTING CENTER, one help line
-  ("Evaluate talent: a full report is three looks; a trip is one, a week in a scout's area half.") and
-  **All Reports** with a count of this week's finds ("3 New"). Beside it four stat cards: My Board (your
-  board's size, "Tracked Players"), Full Reports (`full_reports`: complete reports this class), Scouting
-  Queue (`trips_this_week`: your Sends this week) and Scouting Points (`#sc-points-card`: the points left as the headline and a bar, "Points Left: 35 of 50" in `#sc-points` (`points_left` of `points_week`), and "Recruiting Hours: 30 of 55" as a second line): a Send spends scouting points, not hours.
-  On a phone the cards are a 2×2 grid.
+- **The header**: the kicker "Class of 2027", SCOUTING CENTER (its ⓘ: "Evaluate talent: a full report is three looks;
+  a trip is one, a week in a scout's area half."), four meters, each a value and a thin bar: Scouting Points
+  (`#sc-points-card`: `points_left` / `points_week`; "Points Left: 35 of 50" and the recruiting hours for a screen
+  reader), Trips This Week (`trips_this_week`), Board Scouted (`board_scouted` of `board_size`: board prospects with a
+  look) and Full Reports (`full_reports`), then **All Reports** with a count of this week's finds ("3 New"). A Send
+  spends scouting points, not hours. On a phone the meters wrap two by two.
 - **The Prospect Database** (left): every prospect you can see (`visible`), committed to you or signed
   too (no Send; `why` says so), 20 to a page on `offset`/`limit`/`queue_total` ("1–20 of 3,810", ‹ 1 2 … 191 ›),
   with a count pill, the search (name or home state), the chips All Prospects · My Board · Scouted (the
   API's `on_board=1` and `scouted=1`: your board, or the prospects your staff has a read on), a position
   filter and a sort (Rank by default, Board First, Need, Potential, Looks: the API's `sort`, over the whole
   class, never just the page on screen). A row is a button: the board star (★ on your board), the
-  avatar, the name, "POS · ST · stars" with any flag badge (`flags`: Gem, Bust Risk, Generational) and
-  the "OC ♥" pill, then the rank, the potential read in its tone color on one line
-  ("Elite–All-American", or "Unscouted") and the Scouting Confidence meter (three segments filled in
-  halves, "1.5/3"). On a desktop the list scrolls inside its card so the page stays about one screen.
+  avatar, the name over his stars and "POS · ST" (the game's position), the "OC ♥" pill, then a tag (his first flag,
+  `flags`: Gem, Bust Risk, Generational, else the potential read, "Elite–All-American", or "Unscouted") over the
+  confidence pips (three, filled in halves, "1.5/3"); his rank rides on the row (`data-rank`, and its label). On a desktop the list scrolls inside its card so the page stays about one screen.
 - **The Player Intelligence Report** (right; under the database on a phone): the selected prospect,
-  the first row until you pick one. The portrait, name, "EDGE · Douglasville, GA · National Rank #8",
-  stars and a status pill (Fully Scouted, "1.5 of 3 Looks", Unscouted); boxes Potential, Team Need
-  ("5 Spots Open", "Set") and Report (Complete, In Progress, Not Started); the sub-tabs **Ratings** (a
-  Skill Breakdown: each grade group's word range from your staff's read as a bar over the six words,
-  Weak to All-American, the range lit in its tone; "Not Read" before a look; hovering a row gives what
-  the read looks like in ratings, as the profile's grade tips; no number the scouting does not
-  reveal), **Overview** (hometown, high school, build, archetype, rankings, where he stands, his top
-  schools, the public comp and the evaluation's strengths and concerns) and **Scouting** (his looks,
-  the flags, a coordinator's "Likes Him" with its sentence, our comp, this and last week's report lines
-  on him, and All Reports). Under them **Send Scout · 10 Points** (its row's `cost`: 10, 15 or 5; "· Finishes His Report" when one look is
-  left; disabled with the reason underneath: "Not enough scouting points left this week.", or "His report is complete: 3 of 3
-  looks") and **Add to Board** / **Remove from Board** (the board's own confirm when that pulls a
-  standing offer), and **View Full Profile**, which opens the profile modal. Send posts the `scout`
-  action and patches in place: the row's meter pulses, a toast "Scouted Wesley Adams · 2.5 of 3 looks"
-  ("· his report is complete" at 3, "· OC likes him" when a coordinator takes to him) is the trip's
-  whole result (the grades it moved show in the Ratings tab; no before-and-after box), the points card patches and the page refetches so every row follows. The board button flips the row's
-  star and the My Board card with a toast ("Wesley Adams is on your board."). Neither leaves the tab.
+  the first row until you pick one, drawn with the board's pieces (`window.Recruiting.parts`): the hero (a status chip:
+  Fully Scouted, "1.5 of 3 Looks", Unscouted; Nat. Rank, Pos. Rank, Team Need in a word; a Potential badge with how sure
+  the read is: Settled Read, Read Could Move, Early Read), then the tabs **Report** (the Scouting Report and the
+  Attributes card), **Looks** (Looks & Uncertainty with the flags, a coordinator's "Likes Him", this and last week's
+  report lines on him and All Reports) and **Profile** (the traits and background cards). On the tab row: **Send Scout
+  · 10 Pts** (its row's `cost`: 10, 15 or 5; "· Finishes His Report" when one look is left; disabled with the reason
+  under the row: "Not enough scouting points left this week.", or "His report is complete: 3 of 3 looks"), **View Full
+  Profile** (the popup) and **Add to Board** / **Remove From Board** (the board's own confirm when that pulls a standing
+  offer). The address keeps `ssub` (report, looks, profile); an old address's ratings or overview opens Report and
+  scouting opens Looks. Send posts the `scout` action and patches in place: the row's pips pulse, a toast "Scouted
+  Wesley Adams · 2.5 of 3 looks" ("· his report is complete" at 3, "· OC likes him" when a coordinator takes to him) is
+  the trip's whole result, the meters patch and the page refetches so every row follows. The board button flips the
+  row's star and the Board Scouted meter with a toast ("Wesley Adams is on your board."). Neither leaves the tab.
 - **Scouting Operations** (bottom): a folded bar, "Staff assignments, regions and coverage", with the
   scouts' areas in one line and **Manage Staff**. Opening it shows a card per staff member (every one,
-  the DC included): avatar, name, role word with the contract ("Recruiter · through 2028"), his
+  the DC included, and an Open Spot card when fewer than three recruiters are on staff): avatar, name, role word with the contract ("Recruiter · through 2028"), his
   evaluation word, the area dropdown (posts to `POST .../staff`; toast "Marcus Reed now scouts Texas.")
   and a thin bar of this week's yield, "255 looks this week · 478 narrowed", with a flags count; then
   "Not covered: …". The cards morph in place after a change.
@@ -1342,6 +1343,35 @@ sub-tab heads its grade cards with a "Scouting Report" kicker, the looks bar (fi
 once, as plain words in their tone color ("Weak–Fair" on one line), three a row (two on a phone), over
 one help line and a row with the link and, once complete, our comp. Its Recruit menu grays Scout with
 the 409 text once he is complete. `tests/test_scouting_layout.py` checks the tab in a browser.
+
+**The Prospects tab** (`renderProspects` in `web/recruiting.js`, `web/prospects.css`), built from the player's
+mockup in the site's theme tokens, flat (no gradient; the board button is the page's yellow, never the team color):
+
+- **The header**: "Prospects · Class of 2027" ("Transfer Portal · 2027" in the portal weeks), one count line ("The
+  national recruiting database: 3,815 prospects.") and the class by star level (Total Prospects, 5-Star … 2-Star),
+  all from the search's `summary` (`prospects.class_summary`: over the whole class you can see, never the filters).
+- **The list card**: **Your Needs** chips (`needs_detail`: "QB 2", the count still to fill, or "P ✓" once covered; a
+  tap filters the list to the position, `pgroup`), the search, **Recommended for You** (with "Add These N to Your
+  Board"), Position, Stars, State, Status and Sort, then the table: #, the avatar, name and hometown (and his find
+  badges), Pos (the game's position, `display_pos`), Ht, Wt, Stars, Status ("Uncommitted", "Verbal: School", "Hard
+  Commit: School", "Signed: School"; the school's name is `season.team_display`, so an FCS stand-in never shows),
+  Interest in You (High, Medium or Low), Potential (your staff's read, "Strong" or "Elite – All-American", or
+  "Unscouted"; never the truth) and **+ Board** / **✓ On Board**. A row opens the Prospect Profile. 50 to a page.
+  As the card narrows the columns give way (Ht and Wt, then Potential, then Status; `fitTable` measures, so a wide
+  font or a long school name never pushes the table past its card); on a phone a row is the name, the interest
+  and the board button. On a desktop the list scrolls inside its card and the side column sets the row's height.
+- **The side column**: **Your Footprint** (the game's map, `us-map.js`: your scouts' areas and your board as dots; a
+  state tap filters the list, a dot opens him; On Board, In Contact (contacted or offered) and Evaluated (a read
+  from your staff); **View Map** opens the board's full map card in a window), **Class Outlook** (your commits of
+  the spots this class fills, then your commits by star level as plain counts: no targets, the player asked for no
+  goals) and **Top Uncommitted** (the class's best three without a commitment, `TOP_UNCOMMITTED`; **View All**
+  lists the uncommitted by rank). Under 1100 px the three cards sit under the list, two to a row with the third
+  across it; on a phone, one column.
+
+Everything patches in place: a filter, a chip, the page or the map reconciles the rows by id and morphs the header,
+the chips and the side cards; **+ Board** flips its button, pulses the footprint's On Board count, toasts ("Harold
+Graham is on your board.") and redraws the map's dots. The address keeps `ppos`, `pstars`, `pstate`, `pstatus`,
+`psort`, `pgroup` and `ppage`. `tests/test_prospects_redesign.py` checks the tab at 1280, 900 and 400 in both themes.
 
 **The odds you see** (`prospects.odds`). Each offering school's chance to land a prospect is a
 softmax of his interest in it (`exp(interest / 3)`), against the field: the schools not yet in

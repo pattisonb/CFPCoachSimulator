@@ -22,7 +22,10 @@
    "name": "White",
    "hex": "#FFFFFF"
   },
-  "accent": null
+  "accent": {
+   "name": "Gray",
+   "hex": "#333333"
+  }
  },
  "rivals": [
   "mtsu",

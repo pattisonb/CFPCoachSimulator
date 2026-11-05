@@ -22,7 +22,10 @@
    "name": "Gold",
    "hex": "#FFC82E"
   },
-  "accent": null
+  "accent": {
+   "name": "Red Accent",
+   "hex": "#EF3340"
+  }
  },
  "rivals": [
   "w-michigan",

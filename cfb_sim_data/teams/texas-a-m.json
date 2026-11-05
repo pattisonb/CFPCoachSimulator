@@ -22,7 +22,10 @@
    "name": "White",
    "hex": "#FFFFFF"
   },
-  "accent": null
+  "accent": {
+   "name": "Black",
+   "hex": "#000000"
+  }
  },
  "rivals": [
   "texas",
