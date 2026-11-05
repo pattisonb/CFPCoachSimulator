@@ -1,7 +1,8 @@
 """A call's lines agree with the facts (coach_career/scenes.py `facts`, `truth`): at two and five, leading with
 Winning Now gets an honest line from you and a skeptical one from him, and your opening says "building a
 winner", never "winning right away"; at six and one the confident lines come back. A topic you cannot claim
-(a long way from his home) is said honestly in your opening and your lead. Native; the engine's `act`
+(a long way from his home) is said honestly in your opening and your lead. An in-home visit's note on his
+family's NIL ask uses numerals and the game's NIL words and says where your NIL stands. Native; the engine's `act`
 path, a North Texas career with its record forced. (Run as a file.)"""
 import shutil
 import sys as _sys
@@ -122,6 +123,53 @@ def test_opening_names_only_strengths(st: dict) -> None:
     assert rc["scenes"][ME][pid]
 
 
+SPELLED = ("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "twenty", "thirty", "forty", "fifty",
+           "sixty", "seventy", "eighty", "ninety", "hundred")
+
+
+def test_ask_note(st: dict) -> None:
+    """An in-home visit's note on his family's NIL ask: the ask His Ask shows, in numerals and NIL words, never
+    "points" or a spelled-out number; your NIL left, and when the ask is more than you can put up, it says so."""
+    import re
+    pid = recruits(st, 1)[0]
+    rc = st["recruiting"]
+    st["recruiting"]["hours"][ME] = 1000
+    sc = recruiting.act(st, ME, pid, "hc_visit")["scene"]
+    sc = recruiting.act(st, ME, pid, "present", scene=sc["id"], topics=["winning", "nil", "coach"])["scene"]
+    ask = recruiting.ask_view(st, ME, pid)
+    assert sc["ask"] == ask and ask.get("exact") is not None, (sc["ask"], ask)    # the scene's ask is the profile's
+    note = next(t["text"] for t in sc["turns"] if t["who"] == "note" and ("NIL" in t["text"] or "money" in t["text"]))
+    n = ask["exact"]
+
+    def plain(text):
+        assert re.search(r"\d", text) and "points" not in text and "collective" not in text, text
+        assert not any(re.search(rf"\b{w}\b", text.lower()) for w in SPELLED), text
+        assert text[0].isupper() and text.endswith("."), text
+
+    if n:
+        plain(note)
+        assert str(n) in note, note
+        assert str(recruiting.nil_left(st, ME)) in note, note
+    # more than you have left: it says so, with what you have
+    nil = recruiting._nil(st, ME)
+    keep = nil["budget"]
+    nil["budget"] = sum(nil["held"].values()) + 40
+    try:
+        big = scenes.ask_note(st, ME, pid, {"exact": 115})
+        plain(big)
+        assert big == "His dad wants 115 in NIL, more than you have left (40).", big
+        small = scenes.ask_note(st, ME, pid, {"exact": 30})
+        plain(small)
+        assert "30" in small and "You have 40 NIL left." in small, small
+        rng = scenes.ask_note(st, ME, pid, {"lo": 90, "hi": 140})     # before a number: the middle of the range His Ask shows
+        plain(rng)
+        assert "about 115" in rng, rng
+        assert scenes.ask_note(st, ME, pid, {"exact": 0}) == "His dad says the money isn't the point."
+    finally:
+        nil["budget"] = keep
+    assert rc["scenes"][ME].get(pid) is not None
+
+
 def test_winning(st: dict) -> None:
     force_record(st, [False, True, True, True, True, True, True])
     fx = scenes.facts(st, ME)
@@ -172,6 +220,7 @@ if __name__ == "__main__":
         st = career()
         test_losing(st)
         test_opening_names_only_strengths(st)
+        test_ask_note(st)
         test_winning(st)
         print("scene truth ok")
     finally:

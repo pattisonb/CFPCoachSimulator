@@ -820,9 +820,7 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
     sc["turns"].append(_turn("him", c["text"]))
     sc["cue"] = c
     if sc["action"] == "hc_visit":
-        n = sc["ask"].get("exact", 0)
-        sc["turns"].append(_turn("note", f"His dad asks what the collective can do: {words(n)} points." if n
-                                 else "His dad says the money isn't the point."))
+        sc["turns"].append(_turn("note", ask_note(state, slug, pid, sc["ask"])))
     sc["question"] = question(state, slug, pid, week)
     if sc["question"]:
         sc["turns"].append(_turn("him", QUESTION_INTRO))
@@ -830,6 +828,28 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
     sc["present"] = {"kind": kind, "hit": list(hits) if tells_ else []}      # a call that tells nothing hides which were his
     _lines(sc)
     return kind
+
+
+def ask_note(state: dict, slug: str, pid: str, ask: dict) -> str:
+    """The visit's note on his family's NIL ask, in the game's NIL words and numerals: the ask the profile's
+    His Ask shows (the number after a visit, the middle of the range before) and where you stand: the NIL
+    you have left (and what your offer already holds on him), or that the ask is more than you can put up."""
+    n = ask.get("exact")
+    if n is None and ask.get("hi"):
+        n = recruiting._five((ask["lo"] + ask["hi"]) / 2)
+    if not n:
+        return "His dad says the money isn't the point."
+    rec = state["recruiting"]["nil"].get(slug)
+    left = (recruiting.nil_left(state, slug) if rec                 # read only: never opens the school's NIL record here
+            else recruiting.portal_budget(state, slug) if recruiting.is_portal(state) else recruiting.nil_budget(state, slug))
+    held = ((rec or {}).get("held") or {}).get(pid, 0)
+    room = left + held                                            # an offer to him can hold up to this (recruiting.act)
+    about = "" if ask.get("exact") is not None else "about "
+    if n > room:
+        return f"His dad wants {about}{n} in NIL, more than you have left ({room})."
+    if held:
+        return f"His dad wants to know about NIL: they're looking for {about}{n}. Your offer holds {held}, and you have {left} NIL left."
+    return f"His dad wants to know about NIL: they're looking for {about}{n}. You have {left} NIL left."
 
 
 def question(state: dict, slug: str, pid: str, week: int) -> dict | None:
