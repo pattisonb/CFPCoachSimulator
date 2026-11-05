@@ -133,8 +133,9 @@ def test_present(st: dict, pid: str, sc: dict) -> None:
     kinds = whos(sc2)
     assert kinds[:6] == ["you", "him", "you", "him", "you", "him"], kinds
     said, react, ask, cue = sc2["turns"][2:6]
+    tr = scenes.truth(st, ME, pid)
     for t in topics:
-        assert scenes.PHRASES[t] in said["text"], (t, said)
+        assert scenes.said_phrase(tr, t) in said["text"], (t, said)     # a strength you lack is said honestly (tests/test_scene_truth.py)
     assert react["text"] in scenes.PRESENT_LINES["polite"], react
     assert ask["text"] in {line.format(first=p["name"].split()[0]) for line in scenes.ASK["one"] + scenes.ASK["two"]}, ask
     assert (ask["text"] in {line.format(first=p["name"].split()[0]) for line in scenes.ASK["two"]}) == (len(sc2["cue"]["topics"]) == 2)
@@ -148,7 +149,7 @@ def test_present(st: dict, pid: str, sc: dict) -> None:
     assert e["topics"] == topics and e["hit"] == 0 and e["action"] == "call" and e["school"] == ME
     r = act(st, pid, "pitch", pitch=sc2["cue"]["topics"][0], scene=sc["id"])
     re = r["reaction"]
-    assert re["kind"] in ("hit", "polite", "quiet") and re["you"] == scenes.LEAD_LINES[sc2["cue"]["topics"][0]].format(**scenes._fields(st, ME, p))
+    assert re["kind"] in ("hit", "polite", "quiet") and re["you"] == scenes.lead_line(scenes.truth(st, ME, pid), sc2["cue"]["topics"][0]).format(**scenes._fields(st, ME, p))
     assert pid not in rc["scenes"][ME]
 
 
@@ -181,7 +182,7 @@ def test_present_points(st: dict, used: set) -> None:
     assert abs(recruiting.pending(st, ME, pid) - before - want) < 1e-9
     assert rc["why_week"][pid][ME] == {"call": want}, "the points sit on the scene's action"
     react = r["scene"]["turns"][3]
-    phrase = scenes.PHRASES[strong]
+    phrase = scenes.said_phrase(scenes.truth(st, ME, pid), strong)      # he echoes what you said
     own = {line.format(**scenes._fields(st, ME, p, week)) for line in persona.LINES[persona.of(st, pid)["personality"]]["hit"]}     # or his personality's own line, which names no topic
     assert react["who"] == "him" and (phrase in react["text"] or phrase[0].upper() + phrase[1:] in react["text"] or react["text"] in own), (react, strong)
     assert r["scene"]["present"] == {"kind": "hit", "hit": [strong]}

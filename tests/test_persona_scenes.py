@@ -133,7 +133,7 @@ def test_guarded_call_cue_has_no_topic():
             mine = {l.format(**f) for k in persona.LINES[personality].values() for l in k}
             assert r["reaction"]["text"] in mine or r["reaction"]["kind"] in ("polite", "tired"), r["reaction"]
             for t in texts(sc) + [r["reaction"]["text"]]:
-                assert not any(ph in t for ph in scenes.PHRASES.values()), t
+                assert not any(ph in t for ph in list(scenes.PHRASES.values()) + list(scenes.SAID_HONEST.values())), t
     # a business recruit's cue still names his topic
     st = fresh()
     pid = cold(st, set())
