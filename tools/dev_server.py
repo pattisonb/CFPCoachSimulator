@@ -32,6 +32,7 @@ WEB_DIR = (ROOT / "web").resolve()
 PAGES = {"/": "index.html", "/season": "index.html", "/coach": "coach.html"}
 STATUS = re.compile(r"^/api/season/([^/]+)/status$")
 SEASON_ID = re.compile(r"^/api/season/([^/]+)/")
+RAW_BODY = {"/api/league/check"}   # paths whose body is passed on as bytes whatever its Content-Type
 
 _lock = threading.Lock()          # one dispatcher call or step at a time
 _stepping = False                 # a stepper thread is playing the running job (read and set under _lock)
@@ -105,18 +106,20 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._send(405, b'{"detail":"method not allowed"}', "application/json")
 
-    def _body(self) -> dict | bytes | None:
+    def _body(self, path: str = "") -> dict | bytes | None:
         length = int(self.headers.get("Content-Length") or 0)
         if length <= 0:
             return None
         raw = self.rfile.read(length)
+        if path in RAW_BODY:              # a league file: its bytes, read and checked by the game (bad JSON is its error)
+            return raw
         if (self.headers.get("Content-Type") or "").split(";")[0].strip().lower() == "application/json":
             return json.loads(raw)
         return raw
 
     def _api(self, method: str, path: str) -> None:
         try:
-            body = self._body()
+            body = self._body(path)
         except ValueError:
             return self._json(400, {"detail": "invalid JSON"})
         try:
