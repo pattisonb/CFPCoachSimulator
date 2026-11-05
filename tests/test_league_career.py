@@ -68,7 +68,7 @@ def sentence(s: str) -> bool:
 
 def test_check_errors():
     r = league_file.check(b'{"format": "cfp-league/2"}')
-    assert r == {"ok": False, "errors": ["The file's format is 'cfp-league/2'; this game reads 'cfp-league/1'."]}
+    assert r == {"ok": False, "errors": ["The file's format is 'cfp-league/2'; this game reads 'cfp-league/1'."], "errors_total": 1}
     bad = {"format": "cfp-league/1", "teams": [{"slug": "alder-tech", "name": "Alder Tech", "conference": "big-sky-e"}]}
     r = league_file.check(league_file.dumps(bad))
     assert not r["ok"] and "Alder Tech: conference 'big-sky-e' is not in the file or the game." in r["errors"]
@@ -86,7 +86,7 @@ def test_check_schedule_error_names_no_stand_in():
     finally:
         schedule_gen.generate = real
     assert r == {"ok": False, "errors": ["The 2026 schedule could not be built for this league: "
-                                         "an FCS opponent cannot fill its 2026 schedule; Alder Tech too."]}, r
+                                         "an FCS opponent cannot fill its 2026 schedule; Alder Tech too."], "errors_total": 1}, r
 
 
 def test_plain_reasons():
@@ -137,7 +137,10 @@ def test_refusals():
     refused(lambda: api_call("POST", "/api/season", {"team": "smu", "seed": 1, "league": "0" * 64}), 409)
     assert "no longer loaded" in refused(lambda: api_call("POST", "/api/season", {"team": "smu", "league": "abc"}), 409)
     r = api_call("POST", "/api/league/check", body_bytes=b"{")
-    assert not r["ok"] and r["errors"] and r["key"] is None and r["teams"] == []
+    assert not r["ok"] and r["errors"] and r["key"] is None and r["teams"] == [] and r["errors_total"] == 1
+    many = {"format": "cfp-league/1", "teams": [{"slug": f"bad-{i}", "name": f"Bad {i}", "conference": "nowhere"} for i in range(100)]}
+    r = api_call("POST", "/api/league/check", body_bytes=league_file.dumps(many))
+    assert r["errors_total"] == 100 and len(r["errors"]) == league_file.MAX_ERRORS + 1 and r["errors"][-1] == "And 50 more.", r["errors_total"]
 
 
 def test_stale_key_and_failed_check():

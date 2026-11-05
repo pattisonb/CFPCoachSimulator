@@ -6,13 +6,14 @@ from __future__ import annotations
 
 import copy
 import json
+import logging
 import random
 import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
-from coach_career import league, offseason, recruiting
+from coach_career import league, offseason, recruiting, recruits
 from teamdata import game_scale
 
 MAX_LEAGUE_BYTES = 64 * 1024 * 1024  # *tune* the largest league file read (the built-in export is about 22 MB)
@@ -29,6 +30,7 @@ LEVEL = "FBS"
 _COACH_ROLES = (("head", "head_coach"), ("oc", "offensive_coordinator"), ("dc", "defensive_coordinator"))
 _FILE_POS = {"HB": "RB"}                       # the file's position words; the game calls a running back HB
 _GAME_POS = {v: k for k, v in _FILE_POS.items()}
+_log = logging.getLogger(__name__)
 
 
 def conference_id(name: str) -> str:
@@ -210,8 +212,223 @@ def _say(v) -> str:
     return v if isinstance(v, str) else "that value"
 
 
+# ---- the field table: every key the export writes, at team, coach and player level ---------------
+
+HOME_FIELD_RANGE = (0, 100)          # a team's home_field, as the engine reads home_field_advantage (50 is neutral)
+STADIUM_CAPACITY_MAX = 200000        # *tune* the largest stadium a file may give
+SURFACES = ("grass", "turf")
+YEARS_RANGE = (0, 6)                 # *tune* a player's years in college football (the export runs 0 to 4)
+TARGET_SHARE_MIN = 0.3               # *tune* a receiver's smallest real-usage target weight (tools/tune_from_real's floor)
+JERSEY_RANGE = (0, 99)
+MAX_HOMETOWN = 40                    # *tune* the longest hometown text (the export writes a state code)
+UNIT_PLAYERS = 11                    # the players on the field for the offense and for the defense
+FORMATION_ROLES = {"offense": ("QB", "HB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT"),
+                   "defense": ("LEDG", "DT", "REDG", "LB", "SAM", "MIKE", "WILL", "CB", "FS", "SS"),
+                   "special_teams": ("K", "P", "KR", "PR")}
+ABILITY_TIERS = ("Locked", "Bronze", "Silver", "Gold", "Platinum")   # Locked: named but not yet earned
+_ROLE_WORD = {"head": "head coach", "oc": "offensive coordinator", "dc": "defensive coordinator"}
+_COACH_RATINGS = {
+    "head": ("overall", "offense", "defense", "recruiting", "player_development", "game_management", "motivation", "discipline"),
+    "oc": ("overall", "play_calling", "player_development", "qb_development", "ol_development", "recruiting"),
+    "dc": ("overall", "play_calling", "player_development", "pass_rush_development", "secondary_development", "recruiting")}
+_COACH_TENDENCIES = {
+    "head": ("aggressiveness", "fourth_down_go_rate", "two_point_tendency", "clock_management"),
+    "oc": ("aggressiveness", "deep_shot_rate", "pass_rate", "play_action_rate", "tempo"),
+    "dc": ("aggressiveness", "blitz_rate", "man_coverage_rate", "press_rate")}
+_COACH_SCHEMES = {"head": (("offensive_philosophy", "offense"), ("defensive_philosophy", "defense")),
+                  "oc": (("offensive_scheme", "offense"),), "dc": (("defensive_scheme", "defense"),)}
+_COACH_TEXT = ("coach_id", "team_slug", "previous_job", "alma_mater", "co_coordinator", "notes")
+_COACH_FLAGS = ("is_interim", "ratings_generated", "vacant", "plays_called_by_hc")
+
+
+@lru_cache(maxsize=1)
+def _words() -> dict:
+    """The game's own words a file's fields must use (small; read once)."""
+    from engine import game_config
+    from sim import coaches as sim_coaches, season
+    from teamdata import ratings as rv
+    return {"offense": tuple(sim_coaches.OFFENSE_SCHEMES), "defense": tuple(sim_coaches.DEFENSE_SCHEMES),
+            "dev": tuple(season.DEV_TRAITS), "coachability": tuple(n for n, _, _ in recruits.COACHABILITY),
+            "archetype": frozenset(rv.ARCHETYPES), "ability": frozenset(rv.TRAITS),
+            "target_max": float(game_config.TARGET_MULT_MAX)}
+
+
+def _or(words) -> str:
+    """Words as a list in a sentence: "A, B or C"."""
+    words = list(words)
+    return words[0] if len(words) == 1 else ", ".join(words[:-1]) + " or " + words[-1]
+
+
+def _num_text(x: float) -> str:
+    return f"{x:g}"
+
+
+def _check_team_fields(label: str, t: dict, b: dict, add) -> None:
+    """A team's identity and setup fields beyond the core ones: home field, stadium, style, formation and coaches."""
+    hf = t.get("home_field")
+    if hf is not None and not _is_num(hf, *HOME_FIELD_RANGE):
+        add(f"{label}: home field must be a number from {HOME_FIELD_RANGE[0]} to {HOME_FIELD_RANGE[1]}.")
+    sd = t.get("stadium")
+    if sd is not None:
+        if not isinstance(sd, dict):
+            add(f"{label}: the stadium must list its name, capacity and surface.")
+        else:
+            if sd.get("name") is not None and (not isinstance(sd["name"], str) or not sd["name"].strip()):
+                add(f"{label}: the stadium's name must be text.")
+            if sd.get("capacity") is not None and not _is_int(sd["capacity"], 0, STADIUM_CAPACITY_MAX):
+                add(f"{label}: the stadium's capacity must be a whole number from 0 to {STADIUM_CAPACITY_MAX}.")
+            if sd.get("surface") is not None and sd["surface"] not in SURFACES:
+                add(f"{label}: the stadium's surface must be {_or(SURFACES)}.")
+    style = t.get("style")
+    if style is not None:
+        if not isinstance(style, str):
+            add(f"{label}: style must be a built-in team's slug.")
+        elif style not in b["slugs"]:
+            add(f"{label}: style '{style}' is not a team in the game; use a built-in team's slug.")
+    fm = t.get("formation")
+    if fm is not None:
+        _check_formation(label, fm, add)
+    colors = t.get("colors")
+    if isinstance(colors, dict):
+        for k in ("primary", "secondary", "accent"):
+            cv = colors.get(k)
+            if isinstance(cv, dict) and cv.get("name") is not None and not isinstance(cv["name"], str):
+                add(f"{label}: the {k} color's name must be text.")
+    coaches = t.get("coaches")
+    if isinstance(coaches, dict):
+        w = _words()
+        for side in ("offense", "defense"):
+            v = coaches.get(side)
+            if v is None:
+                continue
+            if not isinstance(v, str):
+                add(f"{label}: {side} must be a scheme word such as {w[side][0]}.")
+            elif v not in w[side]:
+                add(f"{label}: {side} '{v}' is not a scheme in the game; use {_or(w[side])}.")
+        for key in ("head", "oc", "dc"):
+            if isinstance(coaches.get(key), dict):
+                _check_coach(label, key, coaches[key], add)
+
+
+def _check_formation(label: str, fm, add) -> None:
+    if not isinstance(fm, dict) or not isinstance(fm.get("offense"), dict) or not isinstance(fm.get("defense"), dict) \
+            or (fm.get("special_teams") is not None and not isinstance(fm["special_teams"], dict)):
+        add(f"{label}: the formation must list the offense, defense and special teams roles and their counts.")
+        return
+    for unit, roles in FORMATION_ROLES.items():
+        counts = fm.get(unit) or {}
+        ok = True
+        for role, n in counts.items():
+            if role not in roles:
+                add(f"{label}: the formation's {unit.replace('_', ' ')} role '{role}' is not a role in the game; use {_or(roles)}.")
+                ok = False
+            elif not _is_int(n, 0, UNIT_PLAYERS):
+                add(f"{label}: the formation's {unit.replace('_', ' ')} {role} count must be a whole number from 0 to {UNIT_PLAYERS}.")
+                ok = False
+        if ok and unit != "special_teams":
+            total = sum(int(n) for n in counts.values())
+            if total != UNIT_PLAYERS:
+                add(f"{label}: the formation's {unit} must have {UNIT_PLAYERS} players; it has {total}.")
+
+
+def _check_coach(label: str, key: str, c: dict, add) -> None:
+    """One coach as the file gives him (all of him, or the fields a built-in coach changes)."""
+    w, role = _words(), _ROLE_WORD[key]
+    who = f"{label}: the {role}'s"
+    if c.get("name") is not None and (not isinstance(c["name"], str) or not c["name"].strip()):
+        add(f"{who} name must be text.")
+    if c.get("rating") is not None and not _is_int(c["rating"], 1, 99):
+        add(f"{who} rating must be a whole number from 1 to 99.")
+    for field, keys, lo, hi, word, whole in (("ratings", _COACH_RATINGS[key], 1, 99, "rating", True),
+                                             ("tendencies", _COACH_TENDENCIES[key], 0, 100, "tendency", False)):
+        vals = c.get(field)
+        if vals is None:
+            continue
+        if not isinstance(vals, dict):
+            add(f"{who} {field} must list {field} and their values.")
+            continue
+        for k, v in vals.items():
+            if k not in keys:
+                add(f"{who} {word} '{k}' is not a {role} {word}; use {_or(keys)}.")
+            elif not (_is_int(v, lo, hi) if whole else _is_num(v, lo, hi)):
+                add(f"{who} {word} '{k}' must be a {'whole number' if whole else 'number'} from {lo} to {hi}.")
+    sc = c.get("scheme")
+    if sc is not None:
+        if not isinstance(sc, dict):
+            add(f"{who} scheme must list his {_or([k.replace('_', ' ') for k, _ in _COACH_SCHEMES[key]])}.")
+        else:
+            for k, side in _COACH_SCHEMES[key]:
+                v = sc.get(k)
+                if v is None:
+                    continue
+                if not isinstance(v, str):
+                    add(f"{who} {k.replace('_', ' ')} must be a scheme word such as {w[side][0]}.")
+                elif v not in w[side]:
+                    add(f"{who} {k.replace('_', ' ')} '{v}' is not a scheme in the game; use {_or(w[side])}.")
+    if c.get("since") is not None and not _is_int(c["since"], 1900, YEAR):
+        add(f"{who} 'since' must be a year such as {YEAR - 2}.")
+    for k in _COACH_FLAGS:
+        if c.get(k) is not None and not isinstance(c[k], bool):
+            add(f"{who} '{k}' must be true or false.")
+    for k in _COACH_TEXT:
+        if c.get(k) is not None and not isinstance(c[k], str):
+            add(f"{who} '{k}' must be text.")
+    want = dict(_COACH_ROLES)[key]
+    if c.get("role") is not None and c["role"] != want:
+        add(f"{who} 'role' must be {want} or left out.")
+
+
+def _check_player_fields(who: str, p: dict, add) -> None:
+    """A player's fields beyond name, position, class and the numbers checked with them."""
+    w = _words()
+    j = p.get("jersey")
+    if j is not None:
+        n = int(j) if isinstance(j, str) and j.isascii() and j.isdigit() and len(j) <= 2 else j
+        if not _is_int(n, *JERSEY_RANGE):
+            add(f"{who}: jersey must be a whole number from {JERSEY_RANGE[0]} to {JERSEY_RANGE[1]}.")
+    a = p.get("archetype")
+    if a is not None and (not isinstance(a, str) or a not in w["archetype"]):
+        add(f"{who}: archetype '{_say(a)}' is not an archetype in the game.")
+    for field in ("dev", "coachability"):
+        v = p.get(field)
+        if v is not None and v not in w[field]:
+            add(f"{who}: {field} '{_say(v)}' must be {_or(w[field])}.")
+    ab = p.get("abilities")
+    if ab is not None:
+        if not isinstance(ab, list):
+            add(f"{who}: abilities must be a list of names and tiers.")
+        else:
+            for i, x in enumerate(ab, 1):
+                if not isinstance(x, dict) or not isinstance(x.get("name"), str) or not isinstance(x.get("tier"), str):
+                    add(f"{who}: ability {i} needs a name and a tier.")
+                elif x["name"] not in w["ability"]:
+                    add(f"{who}: ability '{x['name']}' is not an ability in the game.")
+                elif x["tier"] not in ABILITY_TIERS:
+                    add(f"{who}: ability tier '{x['tier']}' must be {_or(ABILITY_TIERS)}.")
+    h = p.get("hometown")
+    if h is not None and (not isinstance(h, str) or len(h) > MAX_HOMETOWN):
+        add(f"{who}: hometown must be text of at most {MAX_HOMETOWN} characters.")
+    y = p.get("years")
+    if y is not None and not _is_int(y, *YEARS_RANGE):
+        add(f"{who}: years must be a whole number from {YEARS_RANGE[0]} to {YEARS_RANGE[1]}.")
+    ts = p.get("target_share")
+    if ts is not None and not _is_num(ts, TARGET_SHARE_MIN, w["target_max"]):
+        add(f"{who}: target share must be a number from {_num_text(TARGET_SHARE_MIN)} to {_num_text(w['target_max'])}.")
+
+
 def validate(doc: dict) -> list[str]:
     """Every problem in a parsed league file, as sentences (capped at MAX_ERRORS, then "And N more.")."""
+    return _capped(problems(doc))
+
+
+def _capped(errs: list[str]) -> list[str]:
+    if len(errs) > MAX_ERRORS:
+        return errs[:MAX_ERRORS] + [f"And {len(errs) - MAX_ERRORS} more."]
+    return errs
+
+
+def problems(doc: dict) -> list[str]:
+    """Every problem in a parsed league file, as sentences, uncapped (validate caps them)."""
     errs: list[str] = []
     add = errs.append
     b = _builtin()
@@ -413,7 +630,8 @@ def validate(doc: dict) -> list[str]:
             else:
                 for k in ("head", "oc", "dc"):
                     if coaches.get(k) is not None and not isinstance(coaches[k], dict):
-                        add(f"{label}: the {k} coach must be an object with a name.")
+                        add(f"{label}: the {_ROLE_WORD[k]} must be an object with a name.")
+        _check_team_fields(label, t, b, add)
         checks.append((label, t, slug, is_builtin))
 
         # -- roster -----------------------------------------------------------------------------
@@ -478,6 +696,7 @@ def validate(doc: dict) -> list[str]:
                 add(f"{who}: height must be from 60 to 90 inches.")
             if p.get("weight") is not None and not _is_num(p["weight"], 140, 420):
                 add(f"{who}: weight must be from 140 to 420 pounds.")
+            _check_player_fields(who, p, add)
             pid = p.get("id")
             if pid is not None:
                 if not isinstance(pid, str) or not _SLUG.match(pid):
@@ -552,9 +771,6 @@ def validate(doc: dict) -> list[str]:
         if games > 0 and n - 1 < games:
             add(f"{name}: {n} team{'s' if n != 1 else ''} can't play {games} conference games each; it needs at least {games + 1}.")
 
-    if len(errs) > MAX_ERRORS:
-        more = len(errs) - MAX_ERRORS
-        errs = errs[:MAX_ERRORS] + [f"And {more} more."]
     return errs
 
 
@@ -860,23 +1076,43 @@ def _count(n: int, one: str, many: str) -> str:
     return f"{n} {one if n == 1 else many}"
 
 
+def _failed(errors: list[str], total: Optional[int] = None) -> dict:
+    """A check that cannot start a career: its sentences (capped) and how many problems there are in all."""
+    return {"ok": False, "errors": _capped(errors), "errors_total": len(errors) if total is None else total}
+
+
 def check(blob: bytes, seed: Optional[int] = None) -> dict:
     """A league file read, checked, merged and filled: what Start Career needs. Errors as sentences
-    ({"ok": False, "errors"}); an import that changes nothing collapses to the built-in league
-    ({"ok": True, "builtin": True, "summary"}); otherwise the career league (`league`), its engine teams
-    file (`engine`, league.build's), season one's games (`games`: generated from the file's conferences
-    with random.Random(f"league-schedule-{seed}") when the file changes the league's shape, else None for
-    the real 2026 schedule), `structural` (merge's: no real 2026 AP poll then) and the summary
-    ({"name", "added", "changed", "removed", "generated", "lines"}; `generated`: players the fill made)."""
+    ({"ok": False, "errors", "errors_total"}: at most MAX_ERRORS and "And N more.", and the full count); an
+    import that changes nothing collapses to the built-in league ({"ok": True, "builtin": True, "summary"});
+    otherwise the career league (`league`), its engine teams file (`engine`, league.build's), season one's
+    games (`games`: generated from the file's conferences with random.Random(f"league-schedule-{seed}") when
+    the file changes the league's shape, else None for the real 2026 schedule), `structural` (merge's: no
+    real 2026 AP poll then) and the summary ({"name", "added", "changed", "removed", "generated", "lines"};
+    `generated`: players the fill made). Anything the fill or the build still throws is one sentence (the
+    team's, when it is one team's), with the traceback in the server's log: a check never fails outright."""
     from coach_career import league_fill
-    from sim import schedule_gen, season
     try:
         doc = parse(blob)
     except LeagueFileError as e:
-        return {"ok": False, "errors": e.errors}
-    errs = validate(doc)
+        return _failed(e.errors)
+    errs = problems(doc)
     if errs:
-        return {"ok": False, "errors": errs}
+        return _failed(errs)
+    try:
+        return _check_merged(doc, blob, seed)
+    except league_fill.TeamBuildError as e:
+        _log.error("league check: building %s failed", e.slug, exc_info=e.__cause__ or e)
+        return _failed([f"{e.label}: the game could not build this team from the file; compare it with an exported league file."])
+    except Exception:  # noqa: BLE001 - the page shows a sentence; the traceback goes to the log
+        _log.exception("league check failed")
+        return _failed(["The game could not build a league from this file; compare it with an exported league file."])
+
+
+def _check_merged(doc: dict, blob: bytes, seed: Optional[int]) -> dict:
+    """check() after validation: merge, fill, build and schedule."""
+    from coach_career import league_fill
+    from sim import schedule_gen, season
     merged = merge(doc)
     counts = {"added": len(merged["added"]), "changed": len(merged["changed"]), "removed": len(merged["removed"])}
     if merged["builtin"]:
@@ -896,7 +1132,7 @@ def check(blob: bytes, seed: Optional[int] = None) -> dict:
             games, lgd["schedule_history"] = schedule_gen.generate(
                 YEAR, teams, schedule_gen.empty_history(), random.Random(f"league-schedule-{seed}"), lgd["schedule_rules"])
         except schedule_gen.ScheduleError as e:
-            return {"ok": False, "errors": [f"The {YEAR} schedule could not be built for this league: {_plain(str(e), teams, lgd.get("conference_names"))}."]}
+            return _failed([f"The {YEAR} schedule could not be built for this league: {_plain(str(e), teams, lgd.get("conference_names"))}."])
     lines.append(f"Generated {_count(generated, 'player', 'players')} in all." if generated else "Generated no players.")
     lines.append(f"The {YEAR} schedule is built from the file's conferences." if merged["structural"]
                  else f"The real {YEAR} schedule is kept.")

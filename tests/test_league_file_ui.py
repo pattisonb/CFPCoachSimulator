@@ -77,6 +77,20 @@ def bad_doc() -> dict:
     return doc
 
 
+def many_doc() -> dict:
+    """100 new teams in a conference that is nowhere: 100 problems; the server lists 50 and "And 50 more."."""
+    return {"format": "cfp-league/1", "teams": [{"slug": f"bad-{i}", "name": f"Bad {i}", "conference": "nowhere"} for i in range(100)]}
+
+
+def check_many(page, many: Path) -> None:
+    """The head counts every problem the file has, not the capped list's lines."""
+    page.set_input_files("#league-file", str(many))
+    page.wait_for_function("() => (document.querySelector('#league-result .league-error-head') || {}).textContent?.includes('100 problems')",
+                           timeout=60_000)
+    errs = page.eval_on_selector_all("#league-result .league-errors li", "els => els.map(e => e.textContent)")
+    assert errs[-1] == "And 50 more.", errs[-3:]
+
+
 def title_case(label: str) -> bool:
     return not bad_words(label)
 
@@ -316,6 +330,8 @@ def run(browser, base, files) -> None:
             page.screenshot(path=str(SHOTS / f"league-{tag}-builtin.png"), full_page=True)
             check_too_big(page, files["big"], posted)
             check_errors(page, files["bad"], tag)
+            if i == 0:
+                check_many(page, files["many"])
             check_layout(page, w, f"{tag} errors")
             page.screenshot(path=str(SHOTS / f"league-{tag}-errors.png"), full_page=True)
             check_good(page, files["good"], tag, w)
@@ -354,7 +370,8 @@ if __name__ == "__main__":
     from coach_career import league_file
     assert js_max_league_bytes() == league_file.MAX_LEAGUE_BYTES, "web/leaguefile.js's limit is the game's"
     tmp = Path(tempfile.mkdtemp(prefix="cfp-league-ui-"))
-    files = {"good": tmp / "good.json", "bad": tmp / "bad.json", "big": tmp / "huge.json", "long": tmp / "long.json"}
+    files = {"good": tmp / "good.json", "bad": tmp / "bad.json", "big": tmp / "huge.json", "long": tmp / "long.json", "many": tmp / "many.json"}
+    files["many"].write_bytes(league_file.dumps(many_doc()))
     files["long"].write_bytes(league_file.dumps(long_doc()))
     files["good"].write_bytes(league_file.dumps(good_doc()))
     files["bad"].write_bytes(league_file.dumps(bad_doc()))

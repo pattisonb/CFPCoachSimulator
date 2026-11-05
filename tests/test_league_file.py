@@ -179,6 +179,9 @@ def test_errors_capped():
     doc["teams"][0].pop("depth_chart")
     e = league_file.validate(doc)
     assert len(e) == league_file.MAX_ERRORS + 1 and e[-1] == "And 30 more."
+    # check() gives the same capped list and the full count, so the page can say how many there are in all
+    r = league_file.check(league_file.dumps(doc))
+    assert r["errors"] == e and r["errors_total"] == 80, (len(r["errors"]), r.get("errors_total"))
 
 
 def test_bad_rating_values():
@@ -321,6 +324,124 @@ def test_merge_does_not_share_builtin_cache():
     m2 = league_file.merge(league_file.parse(league_file.builtin_bytes()))
     assert m2["builtin"]
     assert m2["teams"]["rice"] == league_file.team_doc(league.from_base(2027), "rice")
+
+
+# ---- every exported field is checked: a wrong type or value is a sentence, never a crash --------------
+
+_EXPORT: list = []
+
+
+def exported(slug: str = "rice") -> dict:
+    """A built-in team as the export writes it (a fresh copy)."""
+    if not _EXPORT:
+        _EXPORT.append({t["slug"]: t for t in json.loads(league_file.builtin_bytes())["teams"]})
+    return copy.deepcopy(_EXPORT[0][slug])
+
+
+def _set(d: dict, path: str, value):
+    keys = path.split(".")
+    for k in keys[:-1]:
+        d = d[int(k)] if isinstance(d, list) else d[k]
+    d[keys[-1]] = value
+
+
+# (path into the exported Rice, a wrong value, a part of the sentence that must come back)
+FIELD_CASES = [
+    ("home_field", "70", "Rice: home field must be a number from 0 to 100."),
+    ("home_field", 150, "Rice: home field must be a number from 0 to 100."),
+    ("stadium", "Rice Stadium", "Rice: the stadium must list its name, capacity and surface."),
+    ("stadium.capacity", "lots", "Rice: the stadium's capacity must be a whole number from 0 to 200000."),
+    ("stadium.surface", "ice", "Rice: the stadium's surface must be grass or turf."),
+    ("stadium.name", 5, "Rice: the stadium's name must be text."),
+    ("style", "nowhere", "Rice: style 'nowhere' is not a team in the game; use a built-in team's slug."),
+    ("style", 5, "Rice: style must be a built-in team's slug."),
+    ("formation", "4-3", "Rice: the formation must list the offense, defense and special teams roles and their counts."),
+    ("formation.offense.QB", "1", "Rice: the formation's offense QB count must be a whole number from 0 to 11."),
+    ("formation.offense.QB", 2, "Rice: the formation's offense must have 11 players; it has 12."),
+    ("formation.defense.XX", 1, "Rice: the formation's defense role 'XX' is not a role in the game; use LEDG,"),
+    ("coaches.offense", "Wishbone", "Rice: offense 'Wishbone' is not a scheme in the game; use Air Raid,"),
+    ("coaches.defense", 5, "Rice: defense must be a scheme word"),
+    ("coaches.head.rating", "60", "Rice: the head coach's rating must be a whole number from 1 to 99."),
+    ("coaches.head.ratings.overall", "x", "Rice: the head coach's rating 'overall' must be a whole number from 1 to 99."),
+    ("coaches.head.ratings.speed", 50, "Rice: the head coach's rating 'speed' is not a head coach rating; use overall,"),
+    ("coaches.oc.ratings", [1, 2], "Rice: the offensive coordinator's ratings must list ratings and their values."),
+    ("coaches.head.scheme.offensive_philosophy", "Wishbone", "Rice: the head coach's offensive philosophy 'Wishbone' is not a scheme in the game; use Air Raid,"),
+    ("coaches.dc.scheme.defensive_scheme", 4, "Rice: the defensive coordinator's defensive scheme must be a scheme word"),
+    ("coaches.head.tendencies.aggressiveness", 300, "Rice: the head coach's tendency 'aggressiveness' must be a number from 0 to 100."),
+    ("coaches.head.name", 5, "Rice: the head coach's name must be text."),
+    ("coaches.head.since", "x", "Rice: the head coach's 'since' must be a year such as 2024."),
+    ("coaches.head.is_interim", "no", "Rice: the head coach's 'is_interim' must be true or false."),
+    ("coaches.oc.role", "head_coach", "Rice: the offensive coordinator's 'role' must be offensive_coordinator or left out."),
+    ("roster.0.abilities", [{"name": "Workhorse"}], "Rice, player 1 (Jacurri Brown): ability 1 needs a name and a tier."),
+    ("roster.0.abilities", "Workhorse", "Rice, player 1 (Jacurri Brown): abilities must be a list of names and tiers."),
+    ("roster.0.abilities", [{"name": "Speed", "tier": "Gold"}], "Rice, player 1 (Jacurri Brown): ability 'Speed' is not an ability in the game."),
+    ("roster.0.abilities", [{"name": "Workhorse", "tier": "Mega"}], "Rice, player 1 (Jacurri Brown): ability tier 'Mega' must be Locked, Bronze, Silver, Gold or Platinum."),
+    ("roster.0.target_share", "lots", "Rice, player 1 (Jacurri Brown): target share must be a number from 0.3 to 2."),
+    ("roster.0.target_share", 5, "Rice, player 1 (Jacurri Brown): target share must be a number from 0.3 to 2."),
+    ("roster.0.years", "two", "Rice, player 1 (Jacurri Brown): years must be a whole number from 0 to 6."),
+    ("roster.0.years", 9, "Rice, player 1 (Jacurri Brown): years must be a whole number from 0 to 6."),
+    ("roster.0.dev", "Super", "Rice, player 1 (Jacurri Brown): dev 'Super' must be Normal, Impact, Star or Elite."),
+    ("roster.0.coachability", "Lazy", "Rice, player 1 (Jacurri Brown): coachability 'Lazy' must be Coach's Dream, Film Junkie, Quick Study, Steady Grinder, Slow to Click or Set in His Ways."),
+    ("roster.0.archetype", "Wizard", "Rice, player 1 (Jacurri Brown): archetype 'Wizard' is not an archetype in the game."),
+    ("roster.0.jersey", "AB", "Rice, player 1 (Jacurri Brown): jersey must be a whole number from 0 to 99."),
+    ("roster.0.jersey", 120, "Rice, player 1 (Jacurri Brown): jersey must be a whole number from 0 to 99."),
+    ("roster.0.hometown", 5, "Rice, player 1 (Jacurri Brown): hometown must be text of at most 40 characters."),
+    ("roster.0.hometown", "x" * 41, "Rice, player 1 (Jacurri Brown): hometown must be text of at most 40 characters."),
+    ("colors.primary.name", 5, "Rice: the primary color's name must be text."),
+]
+
+
+def test_every_exported_field_is_checked():
+    """Each case changes one field of the exported Rice; check() answers with that sentence (no exception)."""
+    for path, value, want in FIELD_CASES:
+        t = exported()
+        _set(t, path, value)
+        r = league_file.check(league_file.dumps({"format": "cfp-league/1", "teams": [t]}))
+        assert not r["ok"], (path, value)
+        assert any(e.startswith(want) for e in r["errors"]), (path, value, r["errors"])
+        assert all(e[0].isupper() and e.endswith(".") for e in r["errors"]), r["errors"]
+    # the export's own values all pass, and a valid edit of each field passes too
+    t = exported()
+    t["home_field"], t["stadium"]["capacity"], t["style"] = 70, 50000, "smu"
+    t["coaches"]["head"]["rating"], t["roster"][0]["jersey"], t["roster"][0]["years"] = 60, 7, 2
+    t["roster"][0]["abilities"] = [{"name": "Workhorse", "tier": "Gold"}]
+    assert league_file.validate({"format": "cfp-league/1", "teams": [t]}) == []
+
+
+def test_new_team_fields_are_checked():
+    """A new team's coaches and players go through the same table (no built-in staff to merge over)."""
+    out = errs(coaches={"head": {"name": "Pat Doe", "rating": "60"}, "offense": "Wishbone"},
+               roster=[dict(JAY, abilities="Speed", years="two"), MAX_], depth_chart=None)
+    for want in ("Alder Tech: the head coach's rating must be", "Alder Tech: offense 'Wishbone' is not a scheme",
+                 "Alder Tech, player 1 (Jay Smith): abilities must be", "Alder Tech, player 1 (Jay Smith): years must be"):
+        assert any(e.startswith(want) for e in out), (want, out)
+
+
+def test_a_fill_that_throws_is_a_sentence():
+    """Anything that still escapes the fill or the build is one sentence naming the team, never a crash."""
+    from coach_career import league_fill
+    real = league_fill.fill_roster
+
+    def boom(*a, **k):
+        raise TypeError("unsupported operand type(s)")
+    league_fill.fill_roster = boom
+    try:
+        r = league_file.check(league_file.dumps({"format": "cfp-league/1", "teams": [dict(exported("rice"), roster=[dict(JAY)])]}))
+    finally:
+        league_fill.fill_roster = real
+    assert r == {"ok": False, "errors": ["Rice: the game could not build this team from the file; compare it with an exported league file."],
+                 "errors_total": 1}, r
+    real_build = league.build
+
+    def boom_build(*a, **k):
+        raise KeyError("x")
+    league.build = boom_build
+    try:
+        r = league_file.check(league_file.dumps({"format": "cfp-league/1", "teams": [{"slug": "rice", "prestige": 55}]}))
+    finally:
+        league.build = real_build
+    assert r == {"ok": False, "errors": ["The game could not build a league from this file; compare it with an exported league file."],
+                 "errors_total": 1}, r
 
 
 if __name__ == "__main__":

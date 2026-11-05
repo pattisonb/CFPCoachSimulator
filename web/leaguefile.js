@@ -62,8 +62,9 @@
   }
   function errorsView(v) {
     const shown = v.errors.slice(0, MAX_ERRORS_SHOWN), more = v.errors.length - shown.length;
+    // the server lists the first problems and "And N more."; the head counts them all
     return [
-      el("p", { class: "league-error-head", "data-key": "error-head", text: `The file ${v.file} has ${plural(v.errors.length, "problem", "problems")}, so it cannot start a career. Fix ${v.errors.length === 1 ? "it" : "them"} and import it again.` }),
+      el("p", { class: "league-error-head", "data-key": "error-head", text: `The file ${v.file} has ${plural(v.total, "problem", "problems")}, so it cannot start a career. Fix ${v.total === 1 ? "it" : "them"} and import it again.` }),
       el("ul", { class: "league-errors", "data-key": "errors" }, shown.map((e) => el("li", { text: e }))),
       more > 0 ? el("p", { class: "muted", "data-key": "more", text: `${plural(more, "more problem is", "more problems are")} not shown.` }) : null,
     ].filter(Boolean);
@@ -145,7 +146,9 @@
     if (!r) { toBuiltin(); return; }      // the check failed: no league is pending, so the select, the picker and New Season agree on the built-in one
     if (!r.ok) {
       const errors = (r.errors || []).filter((e) => typeof e === "string" && e);
-      st.view = { kind: "errors", file: fileName, errors: errors.length ? errors : ["The file could not be read."] };
+      const list = errors.length ? errors : ["The file could not be read."];
+      const total = Number.isInteger(r.errors_total) && r.errors_total >= list.length ? r.errors_total : list.length;
+      st.view = { kind: "errors", file: fileName, errors: list, total };
       const was = st.mode !== "builtin" || st.name;
       Object.assign(st, { mode: "builtin", key: "builtin", teams: null, name: null });
       drawSelect();

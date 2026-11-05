@@ -501,6 +501,8 @@ def coaches_for(team: dict, conf: dict, lgd: dict, rng: random.Random, taken: Op
         gr = g.get("ratings") if isinstance(g.get("ratings"), dict) else {}
         if gr and model_keys <= set(gr):
             c = copy.deepcopy(g)
+            c.update(team_slug=slug, role=role)   # a coach copied from another team's export works here now
+            c.setdefault("is_interim", False)
             rating = c.pop("rating", None)
             if rating is not None:
                 _set_rating(c, rating)
@@ -646,6 +648,14 @@ def _depth(doc: dict, roster: list[dict]) -> dict:
     return out
 
 
+class TeamBuildError(Exception):
+    """One team of a checked file that the fill could not build (a bug, or a value the checks missed)."""
+
+    def __init__(self, slug: str, label: str):
+        super().__init__(f"{label}: the team could not be built")
+        self.slug, self.label = slug, label
+
+
 def to_league(merged: dict, seed: int) -> tuple[dict, list[str]]:
     """A merged, checked league file as a career league (state["league"]; league.from_base's shape) and
     the import summary's sentences. Built-in teams the file leaves alone are the built-in league's."""
@@ -674,67 +684,72 @@ def to_league(merged: dict, seed: int) -> tuple[dict, list[str]]:
     fill_lines: list[str] = []
     coach_names = carousel._taken_names(lgd)        # every coach name already in the league (lower case)
     for slug in work:
-        doc = merged["teams"][slug]
-        conf = merged["conferences"].get(doc.get("conference")) or {"members": []}
-        conf_name = league_file.engine_name(merged, doc.get("conference"))   # a renamed built-in keeps its engine name
-        rng = random.Random(f"league-{seed}-{slug}")
-        new = slug in added
-        bdoc = docs.get(slug, {})
-        entry = lgd["teams"].setdefault(slug, {})
-        if new or doc.get("coaches") != bdoc.get("coaches"):
-            entry["coaches"] = coaches_for(doc, conf, base, rng, coach_names)
-            if not new and entry["coaches"]["head_coach"] != base["teams"][slug]["coaches"]["head_coach"]:
-                p = entry["program"]              # a new or edited head coach: the program's coach appeal follows him
-                p["coach"] = float(entry["coaches"]["head_coach"]["ratings"]["overall"])
-                p["rating"] = round(programs.mix(p), 1)
-                p["tier"] = programs.tier_of(p["rating"])
-        built = {**doc, "coaches": entry["coaches"]}
-        if new:
-            style, formation = style_and_formation(built, conf, base)
-            entry["style"] = doc.get("style") or style
-            entry["formation"] = copy.deepcopy(doc.get("formation")) or formation
-            entry["program"] = program_for(built, conf, base)
-            entry["meta"] = team_meta_doc({**doc, "prestige": entry["program"]["prestige"]}, conf_name)
-        else:
-            if doc.get("formation") != bdoc.get("formation") and doc.get("formation"):
-                entry["formation"] = copy.deepcopy(doc["formation"])
-            if doc.get("style") != bdoc.get("style") and doc.get("style"):
-                entry["style"] = doc["style"]
-            if any(doc.get(k) != bdoc.get(k) for k in _IDENTITY):
-                entry["meta"] = _meta_edit(slug, doc, bdoc, conf_name)
-            if doc.get("prestige") != bdoc.get("prestige") and doc.get("prestige") is not None:
-                p = entry["program"]
-                p["prestige"] = p["history"] = float(doc["prestige"])
-                p["rating"] = round(programs.mix(p), 1)
-                p["tier"] = programs.tier_of(p["rating"])
-                entry.setdefault("meta", copy.deepcopy(league.base_meta(slug)))
-                entry["meta"]["program"] = {**entry["meta"]["program"], "prestige": 1 + round(5 * float(doc["prestige"]) / 100)}
-        if slug in refill:
-            target = strength_target(doc, conf, strengths)
-            team = {**doc, "formation": entry["formation"]}
-            if not new:
-                team.setdefault("short_name", league.base_meta(slug)["short_name"])
-            entry["roster"], more = fill_roster(team, target, rng, attrs, taken)
-            fill_lines += more
-            if "meta" in entry:
-                entry["meta"]["roster_size"] = len(entry["roster"])
-        else:
-            target = strengths.get(slug, st.median(strengths.values()))
-        if doc.get("depth_chart"):
-            entry["depth"] = _depth(doc, entry["roster"])
-        if new:
-            models[slug] = recruiting_model_for(doc, conf, target)
-        elif any(doc.get(k) != bdoc.get(k) for k in ("lat", "lon", "state")):
-            m = copy.deepcopy(recruits.model()["teams"].get(slug) or {})
-            if (doc.get("lat"), doc.get("lon")) != (bdoc.get("lat"), bdoc.get("lon")) and _location(doc, []) != list(US_CENTER):
-                m["location"] = _location(doc, [])
-            elif doc.get("state") in STATE_CENTER:      # moved to another state, no new lat/lon: the state's center
-                m["location"] = list(STATE_CENTER[doc["state"]])
-            if doc.get("state") != bdoc.get("state") and doc.get("state"):
-                share = m.get("in_state_share") or 0.0
-                m["top_states"] = [[doc["state"], share]] + [r for r in m.get("top_states") or []
-                                                             if r[0] not in (doc["state"], bdoc.get("state"))]
-            models[slug] = m
+        try:
+            doc = merged["teams"][slug]
+            conf = merged["conferences"].get(doc.get("conference")) or {"members": []}
+            conf_name = league_file.engine_name(merged, doc.get("conference"))   # a renamed built-in keeps its engine name
+            rng = random.Random(f"league-{seed}-{slug}")
+            new = slug in added
+            bdoc = docs.get(slug, {})
+            entry = lgd["teams"].setdefault(slug, {})
+            if new or doc.get("coaches") != bdoc.get("coaches"):
+                entry["coaches"] = coaches_for(doc, conf, base, rng, coach_names)
+                if not new and entry["coaches"]["head_coach"] != base["teams"][slug]["coaches"]["head_coach"]:
+                    p = entry["program"]              # a new or edited head coach: the program's coach appeal follows him
+                    p["coach"] = float(entry["coaches"]["head_coach"]["ratings"]["overall"])
+                    p["rating"] = round(programs.mix(p), 1)
+                    p["tier"] = programs.tier_of(p["rating"])
+            built = {**doc, "coaches": entry["coaches"]}
+            if new:
+                style, formation = style_and_formation(built, conf, base)
+                entry["style"] = doc.get("style") or style
+                entry["formation"] = copy.deepcopy(doc.get("formation")) or formation
+                entry["program"] = program_for(built, conf, base)
+                entry["meta"] = team_meta_doc({**doc, "prestige": entry["program"]["prestige"]}, conf_name)
+            else:
+                if doc.get("formation") != bdoc.get("formation") and doc.get("formation"):
+                    entry["formation"] = copy.deepcopy(doc["formation"])
+                if doc.get("style") != bdoc.get("style") and doc.get("style"):
+                    entry["style"] = doc["style"]
+                if any(doc.get(k) != bdoc.get(k) for k in _IDENTITY):
+                    entry["meta"] = _meta_edit(slug, doc, bdoc, conf_name)
+                if doc.get("prestige") != bdoc.get("prestige") and doc.get("prestige") is not None:
+                    p = entry["program"]
+                    p["prestige"] = p["history"] = float(doc["prestige"])
+                    p["rating"] = round(programs.mix(p), 1)
+                    p["tier"] = programs.tier_of(p["rating"])
+                    entry.setdefault("meta", copy.deepcopy(league.base_meta(slug)))
+                    entry["meta"]["program"] = {**entry["meta"]["program"], "prestige": 1 + round(5 * float(doc["prestige"]) / 100)}
+            if slug in refill:
+                target = strength_target(doc, conf, strengths)
+                team = {**doc, "formation": entry["formation"]}
+                if not new:
+                    team.setdefault("short_name", league.base_meta(slug)["short_name"])
+                entry["roster"], more = fill_roster(team, target, rng, attrs, taken)
+                fill_lines += more
+                if "meta" in entry:
+                    entry["meta"]["roster_size"] = len(entry["roster"])
+            else:
+                target = strengths.get(slug, st.median(strengths.values()))
+            if doc.get("depth_chart"):
+                entry["depth"] = _depth(doc, entry["roster"])
+            if new:
+                models[slug] = recruiting_model_for(doc, conf, target)
+            elif any(doc.get(k) != bdoc.get(k) for k in ("lat", "lon", "state")):
+                m = copy.deepcopy(recruits.model()["teams"].get(slug) or {})
+                if (doc.get("lat"), doc.get("lon")) != (bdoc.get("lat"), bdoc.get("lon")) and _location(doc, []) != list(US_CENTER):
+                    m["location"] = _location(doc, [])
+                elif doc.get("state") in STATE_CENTER:      # moved to another state, no new lat/lon: the state's center
+                    m["location"] = list(STATE_CENTER[doc["state"]])
+                if doc.get("state") != bdoc.get("state") and doc.get("state"):
+                    share = m.get("in_state_share") or 0.0
+                    m["top_states"] = [[doc["state"], share]] + [r for r in m.get("top_states") or []
+                                                                 if r[0] not in (doc["state"], bdoc.get("state"))]
+                models[slug] = m
+        except Exception as e:  # noqa: BLE001 - league_file.check turns it into the team's sentence
+            doc = merged["teams"].get(slug) or {}
+            label = next((v.strip() for v in (doc.get("short_name"), doc.get("name")) if isinstance(v, str) and v.strip()), slug)
+            raise TeamBuildError(slug, label) from e
 
     lgd["source"] = {"format": league_file.FORMAT, "name": merged["name"]}
     lgd["recruiting_models"] = models

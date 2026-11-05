@@ -547,18 +547,19 @@ def _pend(blob: bytes, seed: Optional[int]) -> dict:
 def league_check(p: Params) -> dict:
     """A league file (the body is its bytes) checked for New Career: its errors as sentences, or its
     summary and the teams a career can start with; `key` names it for POST /api/season ("builtin" when
-    it changes nothing). `?seed=` fills it with that seed (otherwise one read from the file)."""
+    it changes nothing). `?seed=` fills it with that seed (otherwise one read from the file). `errors_total`: how
+    many problems the file has in all (the list stops at league_file.MAX_ERRORS and "And N more.")."""
     blob = p.body
     if not isinstance(blob, (bytes, bytearray)):
         raise ApiError(422, "body is required")
     _check_not_running()
     r = _pend(bytes(blob), p.q("seed", int, None))
     if not r["ok"]:
-        return {"ok": False, "errors": r["errors"], "summary": None, "key": None, "teams": []}
+        return {"ok": False, "errors": r["errors"], "errors_total": r["errors_total"], "summary": None, "key": None, "teams": []}
     if r["builtin"]:
-        return {"ok": True, "errors": [], "summary": r["summary"], "key": "builtin", "teams": _fbs_cards(_all_teams())}
+        return {"ok": True, "errors": [], "errors_total": 0, "summary": r["summary"], "key": "builtin", "teams": _fbs_cards(_all_teams())}
     teams = season.stand_in_names({s: dict(t) for s, t in r["engine"]["teams"].items()})
-    return {"ok": True, "errors": [], "summary": r["summary"], "key": _pending_league["key"], "teams": _fbs_cards(teams)}
+    return {"ok": True, "errors": [], "errors_total": 0, "summary": r["summary"], "key": _pending_league["key"], "teams": _fbs_cards(teams)}
 
 
 def _undo_start(cid: str) -> None:
