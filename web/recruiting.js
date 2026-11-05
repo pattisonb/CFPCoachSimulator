@@ -83,6 +83,7 @@
         if (seen.has(bit) || seen.size >= 2) continue;
         seen.add(bit);
         bits.push(bit);
+        if (e.reason) bits.push(e.reason);
       }
       return el("li", {}, [el("button", { type: "button", class: "go-link", text: r.name, onclick: () => openProfile(s, r.pid) }), el("span", { class: "muted small", text: ` ${r.position} ${stars(r.stars)} · ` }), el("span", { text: bits.join(" · ") })]);
     })));
@@ -116,7 +117,12 @@
   // (Yours, Lost, Favorite, In It, Long Shot, Not Offered); the sentence and the odds word go with it.
   // His list (b.list: rank, bar, offered) and your offer decide it; the offer race's place is never used,
   // so the words and the race he draws agree. b.standing's pct/lo/hi only size the bar and the flip odds.
+  // In the portal, a school without room is no school for him (b.no_room): the odds say "No Room", whatever his list says.
   function standingOf(b, me) {
+    const sd = standingCore(b, me);
+    return b.no_room && !(b.signed || b.committed) ? { ...sd, odds: "No Room", tone: "bad" } : sd;
+  }
+  function standingCore(b, me) {
     const st = b.standing || {};
     const school = b.signed || b.committed;
     if (school === me) return { word: "Yours", text: b.signed ? "Signed with you" : b.hard ? "Hard commit to you" : "Verbal commit to you", tone: "good", fill: 1 };
@@ -198,10 +204,11 @@
       else if (e.kind === "answer") bits = [e.answer === "promise" ? `Promised him the job over ${e.about}${e.truthful === false ? " (he did not buy it)" : ""}`
         : e.answer === "deflect" ? `Sidestepped his question about ${e.about}` : `Told him straight about ${e.about}`];
       else if (e.kind === "learned" || (LINE_KINDS.has(e.kind) && e.line)) bits = [e.line];     // what your staff learned; a bloomer's jump; a twist; a hat ceremony
+      else if ((e.kind === "signed" || e.kind === "unsigned") && e.line) bits = [e.line];     // a recruit of yours went elsewhere: where, and why not you
       else if (e.kind === "promise_broken") bits = [`He heard you promised the same spot to ${e.about}`];
       else if (HISTORY_WORDS[e.kind]) bits = [`${HISTORY_WORDS[e.kind]} ${teamName(e.school)}`];
       else bits = [`${eventWord(e)} ${e.school ? teamName(e.school) : ""}`.trim()];
-      return { week: e.week, text: bits.filter(Boolean).join(" · "), kind: e.kind === "contact" || e.kind === "pitch" ? e.action || actionOf.get(i) || "pitch" : e.kind };
+      return { week: e.portal_week ?? e.week, text: bits.filter(Boolean).join(" · "), kind: e.kind === "contact" || e.kind === "pitch" ? e.action || actionOf.get(i) || "pitch" : e.kind };
     };
     return evs.map((e, i) => (folded.has(i) ? null : line(e, i))).filter(Boolean);
   }
@@ -271,9 +278,10 @@
   }
   function stat(k, val) { return el("div", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: k }), el("div", { class: "go-stat-val", text: val })]); }
   function newsItem(s, e) {
-    // an event with its own sentence (a twist, a hat ceremony, a bloomer's jump) says it after his name
-    const said = LINE_KINDS.has(e.kind) && e.line ? `: ${e.line}` : ` ${eventWord(e)}${e.school ? ` ${teamName(e.school)}` : ""}`;
-    return el("li", {}, [el("button", { type: "button", class: "go-link", text: e.name, onclick: () => openProfile(s, e.pid) }), said]);
+    // an event with its own sentence (a twist, a hat ceremony, a bloomer's jump) says it after his name; a recruit who went unsigned says so, with why
+    const said = e.kind === "unsigned" ? " went unsigned" : LINE_KINDS.has(e.kind) && e.line ? `: ${e.line}` : ` ${eventWord(e)}${e.school ? ` ${teamName(e.school)}` : ""}`;
+    return el("li", {}, [el("button", { type: "button", class: "go-link", text: e.name, onclick: () => openProfile(s, e.pid) }), said,
+      e.reason ? el("span", { class: "muted small", text: ` · ${e.reason}` }) : null]);
   }
 
   // ----- the Office ------------------------------------------------------------------------------
@@ -638,6 +646,8 @@
     if (b.offered && !b.signed && b.committed !== me) out.append(el("span", { class: "go-tag good", text: b.nil ? `Offered · ${b.nil} NIL` : "Offered" }));
     if (b.cooled) out.append(el("span", { class: "go-tag bad", text: "Cooled", title: COOLED_TITLE[b.cooled_why] || COOLED_TITLE.lowball }));
     if (b.pestering) out.append(el("span", { class: "go-tag bad", text: "Tuning You Out", title: "He is not considering you; more contact pushes him away" }));
+    // the portal: he picks only among offering schools with room, so a lead without room is no lead
+    if (b.no_room) out.append(el("span", { class: "go-tag bad", "data-key": "no-room", text: b.no_room.label, title: b.no_room.tip }));
     if (b.committed === me && !b.signed) out.append(b.hard ? el("span", { class: "go-tag good", text: "Hard Commit", title: "Locked in: he cannot flip and his offer stands until he signs" })
       : el("span", { class: `go-tag ${b.firmness >= 70 ? "good" : b.firmness < 40 ? "warn" : ""}`, text: `Verbal · ${b.firmness}`, title: "A verbal commit (0-100): he warms to you on his own each week, faster with a message, call or visit; rivals offering more playing time cool him. At 90 he is a hard commit and cannot flip." }));
     return out.childElementCount ? out : null;
@@ -776,6 +786,7 @@
     const tags = tagList(s, b, me);
     return PV().card("Recruit Snapshot", [cells,
       el("div", { class: `go-standing-text ${sd.tone}`, "data-key": "standing", text: sd.text }),
+      b.no_room ? el("p", { class: "go-warn small rc-no-room", role: "note", "data-key": "no-room", text: b.no_room.tip }) : null,
       sd.odds ? el("div", { class: "muted small", "data-key": "odds", text: `${sd.odds}${sd.certainty ? ` · ${sd.certainty}${sd.certainty !== "Solid Read" ? ": the range narrows as signing day nears" : ""}` : ""}` }) : null,
       el("h4", { class: "pv-kick", "data-key": "pri-kick", text: "Priorities" }), pri,
       kvRow("ask", "His Ask", ask ? `He Wants ${ask.replace(/^about/, "About")}` : null),
@@ -1366,9 +1377,11 @@
       else { line.firstChild.textContent = stars(b.stars); line.lastChild.data = rowLine(b); }
       const word = btn.querySelector(".go-standing-word");
       const was = word.textContent;
-      word.textContent = sd.word;
+      const shown = sd.odds === "No Room" ? "No Room" : sd.word;
+      word.textContent = shown;
+      if (sd.odds === "No Room") word.title = b.no_room.tip; else word.removeAttribute("title");
       word.className = `go-standing-word ${sd.tone}`;
-      if (!first && was !== sd.word) ui().pulse(word);
+      if (!first && was !== shown) ui().pulse(word);
     }
     function markRows() {
       for (const r of list.querySelectorAll(".go-row-recruit")) {

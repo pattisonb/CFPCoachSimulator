@@ -240,3 +240,5 @@ p .off-contract { margin-left: 6px; }
   .off-hero-mark .team-pill { width: 64px; height: 64px; font-size: 24px; }
   .off-keep-nil .go-nil, .off-tab, .off-page select.go-sel { min-height: 44px; }
 }
+.off-away-line { margin: 2px 0 0; white-space: normal; }
+.off-recap-away { margin-top: 6px; }
