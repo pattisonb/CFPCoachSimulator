@@ -427,14 +427,16 @@
     quiet: "He felt ignored: call or visit to warm him back up. Contacts count half and he will not visit until then",
   };
   // his story in a sentence: what it means for recruiting him (the chip's title, and a line under the Profile's rows)
+  // his story in plain words; `detail` is what the story names (the legacy school, the hero's state, the mate)
   const STORY_TIPS = {
-    legacy: "His family has history at one program: it starts ahead, and its lowball or hollow promise costs double.",
-    hero: "His home state wants him to stay: schools there pull harder, and out-of-state pitches land softer unless they are playing time or NIL.",
-    package: "He comes with a teammate: he commits only where his teammate holds an offer, and they commit together.",
-    two_sport: "He could go pro in baseball on signing day: playing time pitches and NIL over his ask lower the risk.",
-    comeback: "He is coming back from an injury and is rated under what he is: schools that reached him early keep his loyalty.",
-    bloomer: "He is growing into a bigger prospect than his rating says: his stars jump midseason.",
+    legacy: (d) => `His family played at ${d || "one school"}, so ${d ? "they start" : "it starts"} with a head start on everyone else. If ${d ? "they lowball" : "it lowballs"} him or ${d ? "break" : "breaks"} a promise, it stings twice as much.`,
+    hero: () => "His home state wants him to stay. Schools in his state have the edge, and pitches from out of state land softer unless they sell playing time or NIL.",
+    package: () => "He comes with a teammate. He only commits where his teammate has an offer too, and they commit together.",
+    two_sport: () => "He could sign a pro baseball contract instead. Playing time pitches and NIL over his ask make that less likely.",
+    comeback: () => "He's coming back from an injury, so his rating sells him short. Schools that reached out early keep an edge with him.",
+    bloomer: () => "He's still growing into his game. His rating will jump during the season.",
   };
+  const storyTip = (tr) => (STORY_TIPS[tr.story_key] ? STORY_TIPS[tr.story_key](tr.story_detail) : null);
   const COOLED_WHY = { lowball: "Cooled: raise your offer first", promise: "Cooled: give him time", quiet: "Cooled: he wants to hear from you" };
   function badges(b, me) {
     const out = el("div", { class: "go-tags go-badges" });
@@ -1269,7 +1271,7 @@
         if (tr.personality) out.push(el("span", { class: "go-tag", "data-key": "trait:personality", text: tr.personality, title: "His personality: how he sounds on a call and how he reacts to you" }));
         if (tr.decider) out.push(el("span", { class: "go-tag", "data-key": "trait:decider", text: `Decides: ${tr.decider}`, title: "Who makes the final call on where he goes" }));
         if (tr.story_key) out.push(el("span", { class: `go-tag ${tr.story_key === "two_sport" && /High$/.test(tr.story_detail || "") ? "warn" : ""}`, "data-key": "trait:story",
-          text: tr.story_detail ? `${tr.story} · ${tr.story_detail}` : tr.story, title: STORY_TIPS[tr.story_key] || "His story" }));
+          text: tr.story_detail ? `${tr.story} · ${tr.story_detail}` : tr.story, title: storyTip(tr) || "His story" }));
         if (b.likes) out.push(el("span", { class: "go-tag good go-likes", "data-key": "likes", text: likesText(b.likes), title: likesLine(b.likes) }));
         if (b.visit) out.push(el("span", { class: "go-tag", "data-key": "visit", text: b.visit.done ? "Visited" : `Visit Wk ${b.visit.week}` }));
         if (b.portal && b.role) out.push(el("span", { class: `go-tag ${b.role === "Would Start" ? "good" : b.role === "Next in Line" ? "warn" : "muted"}`, "data-key": "role", text: b.role, title: "Where he would sit on your depth chart next season" }));
@@ -1878,7 +1880,7 @@
         traitRow("personality", "Personality", tr.personality),
         traitRow("decider", "Who Decides", tr.decider, tr.decider && tr.decider_topic ? `Cares About: ${PITCH_NAMES[tr.decider_topic] || tr.decider_topic}` : null),
         traitRow("story", "His Story", tr.story, tr.story_detail || null)]));
-      if (tr.story_key && STORY_TIPS[tr.story_key]) node.append(el("p", { class: "muted small go-story-line", "data-key": "story-tip", text: STORY_TIPS[tr.story_key] }));
+      if (storyTip(tr)) node.append(el("p", { class: "muted small go-story-line", "data-key": "story-tip", text: storyTip(tr) }));
     }
     // the evaluation, its summary line and our comp right under it
     if (p.evaluation) {
