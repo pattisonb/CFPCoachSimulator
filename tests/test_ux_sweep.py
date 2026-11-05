@@ -2006,8 +2006,7 @@ if __name__ == "__main__":
             page.fill("#rc-search", "zzzz")
             time.sleep(0.6)
             assert not page.query_selector(".go-row-recruit")
-            ids = [x["id"] for x in call(base, "/api/seasons")["seasons"]]
-            page.eval_on_selector(f"#season-list li >> nth={ids.index(B)}", "e => e.click()")      # in place: no reload
+            page.eval_on_selector(f"#season-list li[data-id='{B}']", "e => e.click()")      # in place: no reload (by id: tests running beside this one add saves)
             page.wait_for_function("(id) => location.search.includes(id)", arg=B, timeout=60_000)
             tab_click(page, "recruiting")
             page.wait_for_selector(".go-stages", timeout=120_000)

@@ -93,7 +93,7 @@
     for (const s of data.seasons) {
       const del = el("button", { class: "del", type: "button", title: "Delete this season", "aria-label": "Delete this season", text: "×" });
       del.addEventListener("click", (e) => { e.stopPropagation(); deleteSeason(s); });
-      const li = el("li", { onclick: () => openSeason(s.id) }, [
+      const li = el("li", { "data-id": s.id, onclick: () => openSeason(s.id) }, [
         el("span", { class: "teams", text: `${s.team_name} · ${s.career ? `Coach Career · ${s.year}` : "full"}` }),
         el("span", { class: "score", text: `${s.wins}-${s.losses}` }),
         el("span", { class: "when", text: `${s.offseason ? "Offseason" : s.done ? `Done · champion ${s.champion_name}` : `Through week ${s.current_week}`} · ${when(s.created_at)}` }),
