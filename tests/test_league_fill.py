@@ -29,6 +29,7 @@ MWC_SLUGS = sorted(s for s, c in league_file._builtin()["team_conf"].items() if 
 MWC = {"id": "mountain-west", "name": "Mountain West", "level": "FBS", "games": 8, "members": MWC_SLUGS + [SLUG]}
 MAX_LEE_74 = {"name": "Max Lee", "pos": "WR", "class": "SO", "overall": 74, "stars": 4}
 AL_CRUZ_PB82_RB78 = {"name": "Al Cruz", "pos": "LT", "class": "SR", "ratings": {"pass_block": 82, "run_block": 78}}
+TY_WEST_70_SP90 = {"name": "Ty West", "pos": "CB", "class": "JR", "overall": 70, "ratings": {"speed": 90}}
 
 
 def alder(**kw) -> dict:
@@ -91,11 +92,14 @@ def test_no_grade_sits_in_conference_spread():
 
 
 def test_given_ratings_kept_exactly():
-    roster, _ = fill(alder(roster=[MAX_LEE_74, AL_CRUZ_PB82_RB78] + names_only_rest), 58.0)
+    roster, _ = fill(alder(roster=[MAX_LEE_74, AL_CRUZ_PB82_RB78, TY_WEST_70_SP90] + names_only_rest), 58.0)
     by = {c["n"]: c for c in roster}
     assert by["Max Lee"]["o"] == 74 and league.overall(by["Max Lee"], ATTRS) == 74
     r = dict(zip(ATTRS, by["Al Cruz"]["r"]))
     assert (r["pass_block"], r["run_block"]) == (82, 78)
+    assert by["Al Cruz"]["o"] == league.overall(by["Al Cruz"], ATTRS)    # his filled skills hold his overall
+    r = dict(zip(ATTRS, by["Ty West"]["r"]))
+    assert r["speed"] == 90 and by["Ty West"]["o"] == 70 == league.overall(by["Ty West"], ATTRS)
 
 
 def test_complete_player_kept_and_moved_to_his_overall():
@@ -165,6 +169,63 @@ def test_same_file_and_seed_same_league():
     b = fill(names_only, 55.0, rng=random.Random("league-7-alder-tech"))
     assert json.dumps(a) == json.dumps(b)
     assert json.dumps(a) != json.dumps(fill(names_only, 55.0, rng=random.Random("league-8-alder-tech")))
+
+
+CLASSES = ("FR", "FRRS", "SO", "SORS", "JR", "JRRS", "SR", "SRRS")
+_BUILT = None
+
+
+def _built_in_by_class() -> tuple[dict, dict]:
+    """(class -> share of the built-in FBS players, class -> their mean room to potential per skill)."""
+    global _BUILT
+    if _BUILT is None:
+        room = {k: [] for k in CLASSES}
+        for t in league.from_base(league.FIRST_YEAR + 1)["teams"].values():
+            for c in t["roster"]:
+                room[c["cls"]].append(statistics.mean(c["g"]))
+        n = sum(len(v) for v in room.values())
+        _BUILT = ({k: len(v) / n for k, v in room.items()}, {k: statistics.mean(v) for k, v in room.items()})
+    return _BUILT
+
+
+_EMPTY = None
+
+
+def _empty_rosters():
+    global _EMPTY
+    if _EMPTY is None:
+        _EMPTY = [fill(alder(roster=[]), tgt, rng=random.Random(f"league-{seed}-alder-tech"))[0]
+                  for seed, tgt in enumerate((52.0, 56.0, 60.0, 64.0, 68.0, 72.0), 1)]
+    return _EMPTY
+
+
+def test_room_by_class_matches_built_in():
+    _, want = _built_in_by_class()
+    got = {k: [] for k in CLASSES}
+    for roster in _empty_rosters():
+        for c in roster:
+            got[c["cls"]].append(statistics.mean(c["g"]))
+            if c["cls"] == "SRRS":
+                assert not any(c["g"]), c
+    for k in CLASSES:
+        assert got[k] and abs(statistics.mean(got[k]) - want[k]) <= 1.5, (k, statistics.mean(got[k]), want[k])
+
+
+def test_starters_mostly_upperclassmen_and_class_mix():
+    share, _ = _built_in_by_class()
+    starters, mix = [], {k: 0 for k in CLASSES}
+    for roster in _empty_rosters():
+        by_pos = {}
+        for c in roster:
+            by_pos.setdefault(c["pos"], []).append(c)
+            mix[c["cls"]] += 1
+        for pos, ps in by_pos.items():
+            starters += sorted(ps, key=lambda c: -c["o"])[:league_fill._starters_at(F, pos)]
+    young = sum(c["cls"] in ("FR", "FRRS") for c in starters)
+    assert young <= len(starters) / 4, (young, len(starters))
+    n = sum(mix.values())
+    for k in CLASSES:
+        assert abs(mix[k] / n - share[k]) <= 0.04, (k, mix[k] / n, share[k])
 
 
 def test_team_meta():

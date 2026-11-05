@@ -25,7 +25,9 @@ UNIT_WEIGHT = {"offense": 0.45, "defense": 0.45, "special_teams": 0.1}   # leagu
 NUDGE_RANGE = (-30.0, 30.0)         # the common shift of the generated players' overalls, searched by bisection
 NUDGE_STEPS = 20
 NUDGE_CLOSE = 0.5                   # team overall points from the target that end the search
-TOPUP_CLASSES = ("FR", "SO", "JR", "SR")   # classes the added players take in turn within a group
+CLASS_MIX = {"FR": 0.151, "FRRS": 0.122, "SO": 0.086, "SORS": 0.149, "JR": 0.086, "JRRS": 0.153, "SR": 0.069, "SRRS": 0.185}  # *tune* added players' classes (the built-in FBS rosters' mix)
+CLASS_LEAD = {"SRRS": 0.0, "JRRS": 0.1, "SR": 0.15, "JR": 0.2, "SORS": 0.3, "SO": 0.4, "FRRS": 0.7, "FR": 0.85}  # *tune* how late in a group's order each class's first player comes (older first, so starters are mostly upperclassmen, as on the built-in rosters)
+ROOM_BY_CLASS = {"FR": 0.89, "FRRS": 0.99, "SO": 0.91, "SORS": 0.89, "JR": 0.99, "JRRS": 0.72, "SR": 0.68, "SRRS": 0.0}  # *tune* a generated player's share of a recruit's room to potential, by class (fit to the built-in rosters)
 _TEMPLATE_POS = {"FB": "HB"}        # positions with no recruit template borrow a neighbor's
 _LB = ("MIKE", "WILL", "SAM")       # the order league.lineup fills the linebacker spots
 
@@ -211,7 +213,8 @@ def fill_roster(team: dict, target: float, rng: random.Random, attrs: list[str],
         raw = level + SLOT_STEP[slot(pos, n)] + CLASS_STEP.get(cls, 0.0) + STAR_STEP.get(stars, 0.0) + rng.gauss(0, PLAYER_SD)
         tmpl = fit_overall(ours, pos, _clamp_overall(raw), attrs)
         pot = game_scale.potential_from_ea(recruits._potential(rng, tpos, s, ea), ours, pos)
-        room = {k: max(0, pot.get(k, ours[k]) - ours[k]) for k in attrs}
+        share = ROOM_BY_CLASS.get(cls, 1.0)
+        room = {k: int(round(share * max(0, pot.get(k, ours[k]) - ours[k]))) for k in attrs}
         return tmpl, arche, raw, room
 
     def coach(p: dict) -> str:
@@ -276,9 +279,8 @@ def fill_roster(team: dict, target: float, rng: random.Random, attrs: list[str],
     groups = _group_positions(formation)
     added: list[tuple[int, str]] = []
     for grp in offseason.FLOOR:
-        for n in range(max(0, want[grp] - counts[grp])):
+        for cls in _class_order(max(0, want[grp] - counts[grp])):
             pos = min(groups[grp], key=lambda pw: (at_pos.get(pw[0], 0) / pw[1] if pw[1] else float("inf")))[0]
-            cls = TOPUP_CLASSES[n % len(TOPUP_CLASSES)]
             tmpl, arche, raw, room = generate(pos, cls, None, at_pos.get(pos, 0))
             at_pos[pos] = at_pos.get(pos, 0) + 1
             p = {"class": cls}
@@ -328,6 +330,19 @@ def fill_roster(team: dict, target: float, rng: random.Random, attrs: list[str],
                 hi = mid
         out = best[1]
     return out, lines
+
+
+def _class_order(n: int) -> list[str]:
+    """The classes of n players added to a group, in the order they are added: CLASS_MIX's counts
+    (largest remainders), each class spread evenly through the order with the older ones first."""
+    if n <= 0:
+        return []
+    exact = {c: n * w / sum(CLASS_MIX.values()) for c, w in CLASS_MIX.items()}
+    count = {c: int(x) for c, x in exact.items()}
+    for c in sorted(exact, key=lambda c: (-(exact[c] - count[c]), CLASS_LEAD[c]))[:n - sum(count.values())]:
+        count[c] += 1
+    keys = [((i + CLASS_LEAD[c]) / count[c], CLASS_LEAD[c], c) for c in count for i in range(count[c])]
+    return [c for _, _, c in sorted(keys)]
 
 
 def _clamp_overall(x: float) -> int:
