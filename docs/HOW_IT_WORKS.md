@@ -2300,6 +2300,33 @@ Under
 removals of anything holding the watched element; the scroll must stay within 2 px), and the UX
 sweep does the same for every board action.
 
+### Board scrolling
+
+The Recruiting board and the Scouting Center share one scroll model. With the list and the pane side by
+side (760 px and up for the board, 900 px and up for the Scouting Center) the tab is at least the screen
+under the tab bar and the page itself does not scroll: `season.js` `boardFit` measures where the open tab
+starts (`--board-top`) and the room under it (`--board-below`), and the CSS (`recruiting.css`,
+`scouting.css`, "fits the screen") makes the tab a grid that fills that height. The list scrolls inside its
+card under the stage tabs (or chips), the search and the sort; the pane scrolls inside its own column under
+its pinned tab row. Both scrollers use `contain: size` (they add nothing to the tab's height) and
+`overscroll-behavior: contain` (a wheel at their end never moves the page or the other column). A window
+too short for the list's head and a few rows grows the tab instead. The closed Your Footprint bar is the
+list card's foot and Scouting Operations' bar sits under the report; opened, either spans the width under
+the board, the page scrolls to it and the two scrollers hand the wheel on at their ends. The Recruiting
+Timeline keeps its own cap but uses `overscroll-behavior: auto`, so at its end the wheel moves the pane.
+`ui.keepInView` scrolls a row's own scroll box (never the page): the selected row stays in view after a
+patch, after the arrow keys and on an address that names him. On a phone the page is the only scroller
+(the Recruiting pane is its full-screen sheet). `tests/test_board_scroll.py` checks all of it.
+
+Nothing jumps when content changes size. No tab row or chip row ever scrolls (a 1 px overflow draws classic
+scrollbars): the sub-tab strip wraps, and a phone's sideways stage and region rows hide their bar. A tab switch
+(`ui.js` `holdTabRow`, one capture listener for every `.go-subtabs` tab) keeps its tab row where it was: the
+next body fills at least the room under the row (`--tab-hold`), and a row pinned at the top of its scroll box
+opens the new tab at its top. Modals open at a fixed top (`--modal-top`) and grow down, never recentering; a
+tabbed or loading one (the Prospect Profile popup) keeps one height (`--modal-tall`) and scrolls its body, with
+its tab row pinned; a phone shows them full screen. A patch from the player's own action (`morph` with
+`pulse`) and an Office card filling in ease to their new height (`ui.glide`, 180 ms, instant under reduced motion).
+
 ### Deep links (`web/route.js`)
 
 Every place on the season page has a URL, so a refresh lands in the same place and Back goes where

@@ -63,9 +63,10 @@ def watch(page, selector: str, control: str = None, scrolled: bool = True):
     assert h, selector
     s = page.evaluate("""(el) => { const s = window.__smooth = { el, gone: 0, top: el.scrollTop, page: window.scrollY };
         s.mo = new MutationObserver((ms) => { for (const m of ms) for (const n of m.removedNodes) if (n === el || (n.nodeType === 1 && n.contains(el))) s.gone++; });
-        s.mo.observe(document.documentElement, { childList: true, subtree: true }); return { page: s.page, top: s.top }; }""", h)
-    if scrolled:
-        assert s["page"] > 0, f"the page is not scrolled ({s}), so the scroll check would pass for nothing"
+        s.mo.observe(document.documentElement, { childList: true, subtree: true });
+        return { page: s.page, top: s.top, fits: document.documentElement.scrollHeight <= innerHeight + 1 }; }""", h)
+    if scrolled:   # a board that fits the screen (tests/test_board_scroll.py) has no page scroll: its own scroll is the check
+        assert s["page"] > 0 or (s["fits"] and s["top"] > 0), f"neither the page nor the watched box is scrolled ({s}), so the scroll check would pass for nothing"
     return h
 
 
@@ -612,7 +613,9 @@ def check_header(page, base, sid) -> None:
     page.wait_for_function("() => /Akron/i.test(document.querySelector('#chip-name').textContent)", timeout=30_000)
     call(base, f"/api/season/{new_id}", method="DELETE")
     menu_pick(page, "Hide the Top Bar")                           # the bar hidden again, the default
-    # the Recruiting pane keeps below the sticky tab bar
+    # the Recruiting pane keeps below the sticky tab bar: the board fits the screen (tests/test_board_scroll.py), so
+    # with Your Footprint Map closed the page does not scroll and the pane starts under the bar
+    page.evaluate("() => { try { localStorage.setItem('cfp-map-open', '0'); } catch (e) {} }")
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#season:visible")
     tab_click(page, "recruiting")
@@ -621,9 +624,8 @@ def check_header(page, base, sid) -> None:
     page.wait_for_selector(".go-pane", timeout=30_000)
     page.evaluate("() => window.scrollTo(0, 800)")
     time.sleep(0.5)
-    if page.evaluate("() => window.scrollY") > 300:
-        r = page.evaluate("() => ({ pane: document.querySelector('.go-pane').getBoundingClientRect().top, bar: document.querySelector('#season-tabs').getBoundingClientRect().bottom })")
-        assert r["pane"] >= r["bar"] - 1, r
+    r = page.evaluate("() => ({ y: window.scrollY, pane: document.querySelector('.go-pane').getBoundingClientRect().top, bar: document.querySelector('#season-tabs').getBoundingClientRect().bottom })")
+    assert r["y"] == 0 and r["pane"] >= r["bar"] - 1, r
     page.evaluate("() => window.scrollTo(0, 0)")
 
 
@@ -1538,15 +1540,17 @@ if __name__ == "__main__":
             assert b["name"] in page.inner_text(".go-pane .go-pane-head")
             STAGE_WORD = {"cold": "Cold", "contact": "In Touch", "top": "Top 8", "visited": "Visited"}
             assert page.text_content(".go-pane .go-chip").strip() == STAGE_WORD.get(b["stage"], "Cold"), page.text_content(".go-pane .go-chip")
-            box = page.evaluate("() => { const p = document.querySelector('.go-pane'); const r = p.getBoundingClientRect(); return [r.top, r.bottom, getComputedStyle(p).position]; }")
-            assert box[2] == "sticky" and 0 <= box[0] < 400, box
-            # the pane sticks: scrolled down a long board, it is still on screen beside the list
-            assert board_n >= 20, f"the sticky check needs a long board: {board_n} rows"
-            page.evaluate("() => window.scrollTo(0, 1500)")
+            box = page.evaluate("() => { const p = document.querySelector('.go-pane'); const r = p.getBoundingClientRect(); return [r.top, r.bottom, getComputedStyle(p).overflowY]; }")
+            assert box[2] == "auto" and 0 <= box[0] < 400 and box[1] <= page.evaluate("innerHeight"), box
+            # the board fits the screen (tests/test_board_scroll.py): a long board scrolls in the list's card, the page
+            # stays put and the pane stays in view beside it
+            assert board_n >= 20, f"the board-scroll check needs a long board: {board_n} rows"
+            page.evaluate("() => { window.scrollTo(0, 1500); document.querySelector('.go-list-recruits').scrollTop = 1500; }")
             time.sleep(0.3)
-            top = page.evaluate("() => [window.scrollY, document.querySelector('.go-pane').getBoundingClientRect().top]")
-            assert top[0] >= 1000 and 0 <= top[1] <= 200, f"the pane stays in view while the board scrolls: scrollY, pane top = {top}"
+            top = page.evaluate("() => [window.scrollY, document.querySelector('.go-list-recruits').scrollTop, document.querySelector('.go-pane').getBoundingClientRect().top]")
+            assert top[0] == 0 and top[1] > 0 and 0 <= top[2] <= 400, f"the list scrolls in its card, the page stays and the pane stays in view: scrollY, list scroll, pane top = {top}"
             shot(page, "pane-sticky-1280-dark")
+            page.evaluate("() => { document.querySelector('.go-list-recruits').scrollTop = 0; }")
             page.evaluate("() => window.scrollTo(0, 0)")
             time.sleep(0.2)
             assert page.eval_on_selector_all(".go-pane .go-strip .go-stat .go-kicker", "els => els.map(e => e.textContent)") == ["Your Offer", "His List", "Scouted"], "three snapshot cells"
@@ -2272,6 +2276,7 @@ if __name__ == "__main__":
             page.click(f".go-row-recruit[data-pid='{x['id']}']")
             time.sleep(1.2)                       # the first pick's own smooth scroll ends
             page.evaluate("() => window.scrollTo(0, Math.max(window.scrollY, 120))")   # the page is scrolled, so a jump back to 0 would show
+            page.evaluate("() => { const p = document.querySelector('.go-pane'); p.scrollTop = Math.max(p.scrollTop, 60); }")   # and the pane, where the board fits the screen
             time.sleep(0.3)
             # Message: the step's Send goes busy, the step closes, the row and the pane update in place
             menu("message")

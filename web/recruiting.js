@@ -1089,7 +1089,7 @@
       const b = rows.find((r) => r.id === btns[j].dataset.pid);
       if (!b) return;
       if (phone()) { view.selected = b.id; markRows(); btns[j].focus(); }
-      else { choose(b); btns[j].focus({ preventScroll: true }); }
+      else { choose(b); btns[j].focus({ preventScroll: true }); ui().keepInView(btns[j]); }
     });
     boardEl = el("div", { class: "go-board" }, [el("section", { class: "go-card go-list-col", "aria-label": "Your board" }, [stagebar, needsDis, list])]);
     box.append(boardEl, mapEl);
@@ -1145,8 +1145,10 @@
       empty.hidden = rows.length > 0;
       footCount.textContent = `${v.board.length} on your board`;
       const focused = document.activeElement && list.contains(document.activeElement) ? document.activeElement.dataset.pid : null;
+      const was = list.querySelector(".go-row-recruit.selected"), seen = !was || ui().inView(was);   // the list scrolls in its card on a wide screen
       ui().reconcile(list, rows, (b) => b.id, row, patchRow);
       markRows();
+      if (seen && !phone()) ui().keepInView(list.querySelector(".go-row-recruit.selected"));        // a patch that moved his row keeps it in view
       if (focused) { const f = list.querySelector(`.go-row-recruit[data-pid="${focused}"]`); if (f && document.activeElement !== f) f.focus({ preventScroll: true }); }
       // the pane: patched for the same recruit, swapped (a cross-fade) for another, gone with the last row
       const cur = box.querySelector(".go-pane");
