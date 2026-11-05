@@ -1,0 +1,12 @@
+{
+  "name": "cfp-coach-simulator",
+  "version": "1.0.0",
+  "description": "CFP Coach Simulator - Coach a college football program through a career",
+  "private": true,
+  "scripts": {
+    "build": "python3 -m teamdata.build_teams && python3 tools/build_site.py"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^1.3.1"
+  }
+}
