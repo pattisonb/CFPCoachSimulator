@@ -2246,7 +2246,10 @@
     "name": "White",
     "hex": "#FFFFFF"
    },
-   "accent": null
+   "accent": {
+    "name": "Light Gray",
+    "hex": "#A7A9AC"
+   }
   },
   "rivals": [
    "c-michigan",
@@ -3284,7 +3287,10 @@
     "name": "Cream",
     "hex": "#EEEDEB"
    },
-   "accent": null
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
   },
   "rivals": [
    "purdue"
@@ -3944,7 +3950,10 @@
     "name": "White",
     "hex": "#FFFFFF"
    },
-   "accent": null
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
   },
   "rivals": [
    "louisville",
@@ -4833,7 +4842,10 @@
     "name": "Blue",
     "hex": "#00274C"
    },
-   "accent": null
+   "accent": {
+    "name": "Dark Gray",
+    "hex": "#3F4444"
+   }
   },
   "rivals": [
    "ohio-state",
@@ -4981,7 +4993,10 @@
     "name": "Gold",
     "hex": "#FFCC33"
    },
-   "accent": null
+   "accent": {
+    "name": "Dark Gray",
+    "hex": "#3C3D3F"
+   }
   },
   "rivals": [
    "wisconsin",
@@ -5568,7 +5583,10 @@
     "name": "Cream",
     "hex": "#F5F1E7"
    },
-   "accent": null
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
   },
   "rivals": [
    "iowa",
@@ -6086,7 +6104,10 @@
     "name": "White",
     "hex": "#FFFFFF"
    },
-   "accent": null
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
   },
   "rivals": [
    "illinois"
@@ -7050,7 +7071,10 @@
     "name": "Black",
     "hex": "#000000"
    },
-   "accent": null
+   "accent": {
+    "name": "Dark Gray",
+    "hex": "#3F4444"
+   }
   },
   "rivals": [
    "indiana",
@@ -7344,7 +7368,10 @@
     "name": "Gold",
     "hex": "#C4B581"
    },
-   "accent": null
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
   },
   "rivals": [],
   "fictional": false,
@@ -8452,7 +8479,10 @@
     "name": "White",
     "hex": "#FFFFFF"
    },
-   "accent": null
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
   },
   "rivals": [
    "texas",
@@ -10671,7 +10701,10 @@
     "name": "White",
     "hex": "#FFFFFF"
    },
-   "accent": null
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
   },
   "rivals": [
    "minnesota",

@@ -22,7 +22,10 @@
    "name": "Gold",
    "hex": "#C4B581"
   },
-  "accent": null
+  "accent": {
+   "name": "Black",
+   "hex": "#000000"
+  }
  },
  "rivals": [],
  "fictional": false,

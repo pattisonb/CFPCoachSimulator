@@ -2,7 +2,8 @@
 
 A team's pill is drawn as primary/secondary diagonal halves with the accent (third) color as
 its border. These 35 teams had no accent in `cfb_sim_data` (`colors.accent` was null). This
-file records where each new accent came from, or why a team still has none.
+file records where each new accent came from: 24 from official brand guides, 11 chosen by the
+player.
 
 The accents live in the source data: `cfb_sim_data/teams/<slug>.json` and
 `cfb_sim_data/teams_index.json` (the same `{"name", "hex"}` shape as every other color).
@@ -49,18 +50,23 @@ The accents live in the source data: `cfb_sim_data/teams/<slug>.json` and
 | w-michigan | Warm Gray | #B4AEA7 | https://wmich.edu/brand/visualidentity/color | First neutral (PMS 401). |
 | washington | Heritage Gold | #85754D | https://www.washington.edu/brand/colors/ | Primary palette. Husky Purple #32006E skipped (too close to the team purple). |
 
-## Teams left without an accent (11)
+## Teams with an accent chosen by the player (11)
 
-| Team | Color | Reason |
-|---|---|---|
-| e-michigan | none | No official color page could be read (emich.edu returned 403); only third-party sites list colors. |
-| indiana | none | The IU brand color page (iu.edu/brand/design/color.html) was unavailable (503); not verified. |
-| kentucky | none | brand.uky.edu shows its palette only as an image; the secondary hex values are only in a third-party copy of the guide. |
-| michigan | none | Athletics uses only maize and blue; the university color page (brand.umich.edu) returned 403, so its secondary palette was not verified. |
-| minnesota | none | The UMN color page returned 403; its secondary palette is reported to be only darker and lighter maroon and gold plus grays. |
-| nebraska | none | The athletics brand guide PDF (licensing.unl.edu) and ucomm.unl.edu returned 403; not verified. |
-| northwestern | none | The Northwestern brand color pages were unavailable (503); not verified. |
-| purdue | none | The Purdue Brand Studio pages were unavailable (503); search summaries disagreed on the supporting colors. |
-| sac-state | none | The Sac State secondary palette is shown only as an image and the web palette page returned 404. |
-| texas-a-m | none | The brand guide's secondary and accent swatches are unnamed near-blacks, grays and maroon tints; the school colors are maroon and white. |
-| wisconsin | none | The secondary palette is Dark Red (too close to Badger Red), a near-white gray and black (https://brand.wisc.edu/web/colors). |
+These schools' guides could not be read or listed no usable third color, so the player chose
+their accents.
+
+| Team | Color Name | Hex | Source | Notes |
+|---|---|---|---|---|
+| e-michigan | Light Gray | #A7A9AC | Chosen by the player | Their turf gray. |
+| indiana | Black | #000000 | Chosen by the player | |
+| kentucky | Black | #000000 | Chosen by the player | |
+| michigan | Dark Gray | #3F4444 | Chosen by the player | |
+| minnesota | Dark Gray | #3C3D3F | Chosen by the player | |
+| nebraska | Black | #000000 | Chosen by the player | |
+| northwestern | Black | #000000 | Chosen by the player | |
+| purdue | Dark Gray | #3F4444 | Chosen by the player | Purdue's secondary is already black; dark gray still reads as distinct on the pill border. |
+| sac-state | Black | #000000 | Chosen by the player | |
+| texas-a-m | Black | #000000 | Chosen by the player | |
+| wisconsin | Black | #000000 | Chosen by the player | |
+
+Every one of the 35 teams now has an accent.
