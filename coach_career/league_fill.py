@@ -6,13 +6,16 @@ the caller passes (random.Random(f"league-{seed}-{slug}")), in a fixed order, so
 always give the same league."""
 from __future__ import annotations
 
+import copy
+import hashlib
 import random
 import re
 import statistics as st
+from collections import Counter
 from functools import lru_cache
-from typing import Iterable
+from typing import Iterable, Optional
 
-from coach_career import league, league_file, offseason, recruits
+from coach_career import carousel, league, league_file, offseason, programs, recruits
 from teamdata import game_scale
 
 STRENGTH_GRADE = {"Elite": 95, "Strong": 75, "Average": 50, "Weak": 20}  # *tune* each word's place among the FBS teams (percentile)
@@ -373,3 +376,352 @@ def _compact(p: dict, pid: str, pos: str, cls: str, ours: dict, room: dict, arch
     if gpot:
         c["g"] = [max(0, int(gpot[k]) - ours[k]) if k in gpot else g for k, g in zip(attrs, c["g"])]
     return c
+
+
+
+# ---- A new team's coaches, program, recruiting model and identity; the career league ----------
+
+NEUTRAL_COLORS = {"primary": {"name": "Gray", "hex": "#5A6270"}, "secondary": {"name": "White", "hex": "#FFFFFF"}, "accent": None}  # *tune* a team without colors (no accent: the neutral pill border)
+NEW_STADIUM_CAPACITY = 30000  # *tune* a new team's stadium when the file gives none
+COACH_YEAR = league.FIRST_YEAR  # a generated coach's first season
+NEW_TEAM_TIER = "Group of 5"  # a new team's recruiting tier
+US_CENTER = (39.8283, -98.5795)  # a new team with no state or location
+_COACH_ROLES = league_file._COACH_ROLES
+_IDENTITY = ("name", "short_name", "abbreviation", "mascot", "city", "state", "conference", "colors", "stadium", "home_field", "rivals")
+
+
+def _state_center() -> dict[str, tuple[float, float]]:
+    out = {}
+    for state, towns in recruits.model()["generation"]["towns"].items():
+        pts = [(float(t[1]), float(t[2]), float(t[3])) for t in towns
+               if len(t) >= 4 and isinstance(t[2], (int, float)) and isinstance(t[3], (int, float))]
+        w = sum(n for n, _, _ in pts)
+        if pts and w > 0:
+            out[state] = (round(sum(n * a for n, a, _ in pts) / w, 4), round(sum(n * b for n, _, b in pts) / w, 4))
+    return out
+
+
+STATE_CENTER: dict[str, tuple[float, float]] = _state_center()   # each state's town-weighted center (recruits' towns)
+
+
+@lru_cache(maxsize=1)
+def _base_league() -> dict:
+    """The built-in league (read only): what new teams borrow coaches, styles and programs from."""
+    return league.from_base(league.FIRST_YEAR)
+
+
+def _members(conf: Optional[dict], lgd: dict) -> list[str]:
+    """The conference's built-in members (sorted); every built-in team for a new conference."""
+    mine = sorted(s for s in (conf or {}).get("members") or [] if s in lgd["teams"])
+    return mine or sorted(lgd["teams"])
+
+
+def _common(words: list) -> Optional[str]:
+    words = [w for w in words if w]
+    return min(set(words), key=lambda w: (-words.count(w), w)) if words else None
+
+
+def _median(vals: list, default=None):
+    vals = [v for v in vals if isinstance(v, (int, float)) and not isinstance(v, bool)]
+    return st.median(vals) if vals else default
+
+
+def _head(team: dict) -> dict:
+    c = team.get("coaches") or {}
+    return c.get("head_coach") or (c.get("head") if isinstance(c.get("head"), dict) else None) or {}
+
+
+def _schemes(conf: Optional[dict], lgd: dict) -> tuple[str, str, str]:
+    """(most common offensive philosophy, defensive philosophy, the first member carrying both) among the
+    conference's built-in head coaches (FBS-wide for a new conference)."""
+    mem = _members(conf, lgd)
+    sc = {s: lgd["teams"][s]["coaches"]["head_coach"].get("scheme") or {} for s in mem}
+    off = _common([v.get("offensive_philosophy") for v in sc.values()])
+    de = _common([v.get("defensive_philosophy") for v in sc.values() if v.get("offensive_philosophy") == off])
+    carrier = next(s for s in mem if sc[s].get("offensive_philosophy") == off and sc[s].get("defensive_philosophy") == de)
+    return off, de, carrier
+
+
+def _initials(name: str) -> str:
+    words = re.findall(r"[A-Za-z0-9]+", name)
+    return "".join(w[0] for w in words[:4]).upper() or name[:4].upper()
+
+
+def team_meta_doc(team: dict, conf_name: str) -> dict:
+    """A new team's identity in the source format (league.base_meta's shape), with the defaults filled in."""
+    name = team["name"].strip()
+    short = team.get("short_name") or name
+    hf = team.get("home_field")
+    if hf is None:
+        same = [league.base_meta(s) for s in league.base_slugs()
+                if not league.base_meta(s)["fictional"] and league.base_meta(s)["conference"] == conf_name]
+        if not same:
+            same = [league.base_meta(s) for s in league.base_slugs() if not league.base_meta(s)["fictional"]]
+        hf = int(round(_median([m["program"]["home_field_advantage"] for m in same], 50)))
+    prestige = team.get("prestige")
+    if prestige is None:
+        prestige = programs.BASE_DEFAULT["prestige"]
+    colors = dict(NEUTRAL_COLORS)
+    if isinstance(team.get("colors"), dict):
+        colors = {k: copy.deepcopy(team["colors"].get(k)) or (NEUTRAL_COLORS[k] if k != "accent" else None)
+                  for k in ("primary", "secondary", "accent")}
+    return {"slug": team["slug"], "school_name": name, "short_name": short,
+            "abbreviation": team.get("abbreviation") or _initials(name),
+            "mascot": team.get("mascot") or name.split()[-1], "city": team.get("city"), "state": team.get("state"),
+            "conference": conf_name, "subdivision": "FBS",
+            "stadium": copy.deepcopy(team.get("stadium")) or {"name": f"{short} Stadium", "capacity": NEW_STADIUM_CAPACITY, "surface": "turf"},
+            "colors": colors, "rivals": list(team.get("rivals") or []), "fictional": False,
+            "program": {"prestige": 1 + round(5 * prestige / 100), "home_field_advantage": hf, "generated": True},
+            "roster_size": len(team.get("roster") or []) or sum(offseason.TARGET.values())}
+
+
+def coaches_for(team: dict, conf: dict, lgd: dict, rng: random.Random) -> dict:
+    """A file team's staff in the league's form: each role the file leaves out is generated like the
+    coach market's hires (carousel.generated), carrying the conference's most common scheme; a given
+    name or rating replaces the generated one; a role given with full ratings is kept as given."""
+    slug = team["slug"]
+    given = team.get("coaches") or {}
+    off_c, def_c, carrier = _schemes(conf, lgd)
+    off = given.get("offense") if isinstance(given.get("offense"), str) else None
+    de = given.get("defense") if isinstance(given.get("defense"), str) else None
+    out = {}
+    for key, role in _COACH_ROLES:
+        g = given.get(key) if isinstance(given.get(key), dict) else {}
+        model_keys = set(lgd["teams"][carrier]["coaches"][role]["ratings"])
+        gr = g.get("ratings") if isinstance(g.get("ratings"), dict) else {}
+        if gr and model_keys <= set(gr):
+            c = copy.deepcopy(g)
+            c.pop("rating", None)
+        else:
+            c = carousel.generated(rng, lgd, role, slug, COACH_YEAR, like=lgd["teams"][carrier]["coaches"][role])
+            c.pop("alma_mater", None)
+            c.update(team_slug=slug, role=role, is_interim=False)
+            if g.get("name"):
+                c["name"] = str(g["name"]).strip()
+            c["ratings"].update({k: int(v) for k, v in gr.items() if k in c["ratings"]})
+            if g.get("rating") is not None:
+                shift = int(round(g["rating"])) - c["ratings"]["overall"]
+                c["ratings"] = {k: int(max(1, min(99, v + shift))) for k, v in c["ratings"].items()}
+                c["ratings"]["overall"] = int(round(g["rating"]))
+            c.setdefault("scheme", {})
+            if role == "head_coach":
+                c["scheme"]["offensive_philosophy"] = off_c
+                c["scheme"]["defensive_philosophy"] = def_c
+            elif role == "offensive_coordinator":
+                c["scheme"]["offensive_scheme"] = off_c
+            else:
+                c["scheme"]["defensive_scheme"] = def_c
+        sc = c.setdefault("scheme", {})
+        if off and role in ("head_coach", "offensive_coordinator"):
+            sc["offensive_philosophy" if role == "head_coach" else "offensive_scheme"] = off
+        if de and role in ("head_coach", "defensive_coordinator"):
+            sc["defensive_philosophy" if role == "head_coach" else "defensive_scheme"] = de
+        out[role] = c
+    return out
+
+
+def style_and_formation(team: dict, conf: dict, lgd: dict) -> tuple[str, dict]:
+    """(style, formation): the alphabetically first built-in conference member whose head coach plays the
+    team's head coach's offense (FBS-wide when none in the conference does); the conference's most common
+    scheme's carrier when no team plays it."""
+    want = (_head(team).get("scheme") or {}).get("offensive_philosophy") or (team.get("coaches") or {}).get("offense")
+    if not want:
+        want = _schemes(conf, lgd)[0]
+
+    def plays(s):
+        return (lgd["teams"][s]["coaches"]["head_coach"].get("scheme") or {}).get("offensive_philosophy") == want
+
+    mine = sorted(s for s in (conf or {}).get("members") or [] if s in lgd["teams"])
+    style = next((s for s in mine if plays(s)), None) or next((s for s in sorted(lgd["teams"]) if plays(s)), None)
+    style = style or _schemes(conf, lgd)[2]
+    return style, copy.deepcopy(lgd["teams"][style]["formation"])
+
+
+def program_for(team: dict, conf: dict, lgd: dict) -> dict:
+    """A new team's program (programs.init's shape): prestige from the file or the conference's mean,
+    winning, NIL and conference strength the conference's medians, a new program's market."""
+    mine = sorted(s for s in (conf or {}).get("members") or [] if s in lgd["teams"])
+    progs = [lgd["teams"][s]["program"] for s in mine]
+    pr = team.get("prestige")
+    if pr is None:
+        pr = st.mean(p["prestige"] for p in progs) if progs else programs.BASE_DEFAULT["prestige"]
+    p = {"history": float(pr), "prestige": float(pr)}
+    for k in ("winning", "nil", "conference"):
+        p[k] = float(_median([q[k] for q in progs], programs.BASE_DEFAULT[k]))
+    p["market"] = programs.MARKET_DEFAULT
+    hc = _head(team)
+    overall = (hc.get("ratings") or {}).get("overall", hc.get("rating"))
+    p["coach"] = float(overall) if overall is not None else programs.BASE_DEFAULT["coach"]
+    p["rating"] = round(programs.mix(p), 1)
+    p["tier"] = programs.tier_of(p["rating"])
+    return dict(p, market_base=p["market"], nil_base=p["nil"], winning_base=p["winning"], conference_base=p["conference"],
+                live=0.0, seasons=[], year=league.FIRST_YEAR - 1)
+
+
+def _tree_median(vals: list, missing_zero: bool = False):
+    """Per-key medians of number dicts (missing keys count as 0 when `missing_zero`)."""
+    keys = sorted({k for v in vals if isinstance(v, dict) for k in v})
+    out = {}
+    for k in keys:
+        col = [v.get(k, 0 if missing_zero else None) for v in vals if isinstance(v, dict)]
+        m = _median(col)
+        if m is not None:
+            out[k] = round(m, 3)
+    return out
+
+
+def _location(team: dict, members: list[dict]) -> list[float]:
+    if isinstance(team.get("lat"), (int, float)) and isinstance(team.get("lon"), (int, float)):
+        return [team["lat"], team["lon"]]
+    if team.get("state") in STATE_CENTER:
+        return list(STATE_CENTER[team["state"]])
+    locs = [m["location"] for m in members if m.get("location")]
+    return [round(st.mean(a for a, _ in locs), 4), round(st.mean(b for _, b in locs), 4)] if locs else list(US_CENTER)
+
+
+def recruiting_model_for(team: dict, conf: dict, strength: float) -> dict:
+    """A new team's recruiting model (recruiting_model.json's per-team shape): the conference members'
+    medians (FBS-wide for a new conference), the baseline of the built-in team nearest in strength."""
+    tms = recruits.model()["teams"]
+    strengths = {s: v for s, v in base_strengths().items() if s in tms}
+    mine = sorted(s for s in (conf or {}).get("members") or [] if s in strengths) or sorted(strengths)
+    rows = [tms[s] for s in mine]
+    in_state = round(_median([r.get("in_state_share") for r in rows], 0.0), 3)
+    nearest = min(sorted(strengths), key=lambda s: abs(strengths[s] - strength))
+    return {"tier": NEW_TEAM_TIER,
+            "class_size": {"mean": round(_median([(r.get("class_size") or {}).get("mean") for r in rows], 20.0), 1), "by_year": {}},
+            "star_share": _tree_median([r.get("star_share") or {} for r in rows], True),
+            "blue_chip_share": round(_median([r.get("blue_chip_share") for r in rows], 0.0), 3),
+            "positions_per_class": _tree_median([r.get("positions_per_class") or {} for r in rows], True),
+            "in_state_share": in_state,
+            "top_states": [[team["state"], in_state]] if team.get("state") else [],
+            "distance_miles": _tree_median([r.get("distance_miles") or {} for r in rows]),
+            "location": _location(team, rows), "last_season": None,
+            "strength": {"baseline": (tms[nearest].get("strength") or {}).get("baseline"), "by_class": {}}}
+
+
+def _meta_edit(slug: str, doc: dict, base_doc: dict, conf_name: str) -> dict:
+    """A built-in team's identity with the file's changes over it."""
+    m = copy.deepcopy(league.base_meta(slug))
+    for k_doc, k_meta in (("name", "school_name"), ("short_name", "short_name"), ("abbreviation", "abbreviation"),
+                          ("mascot", "mascot"), ("city", "city"), ("state", "state")):
+        if doc.get(k_doc) != base_doc.get(k_doc) and doc.get(k_doc) is not None:
+            m[k_meta] = doc[k_doc]
+    m["conference"] = conf_name
+    if doc.get("colors") != base_doc.get("colors") and isinstance(doc.get("colors"), dict):
+        m["colors"] = {k: copy.deepcopy(doc["colors"].get(k)) or (NEUTRAL_COLORS[k] if k != "accent" else None)
+                       for k in ("primary", "secondary", "accent")}
+    if doc.get("stadium") != base_doc.get("stadium") and isinstance(doc.get("stadium"), dict):
+        m["stadium"] = {**m.get("stadium", {}), **doc["stadium"]}
+    if doc.get("home_field") != base_doc.get("home_field") and doc.get("home_field") is not None:
+        m["program"] = {**m["program"], "home_field_advantage": doc["home_field"]}
+    if doc.get("rivals") != base_doc.get("rivals"):
+        stand_ins = [r for r in m.get("rivals") or [] if r in league.base_slugs() and league.base_meta(r)["fictional"]]
+        m["rivals"] = list(doc.get("rivals") or []) + stand_ins
+    return m
+
+
+def _depth(doc: dict, roster: list[dict]) -> dict:
+    by_name = {c["n"].strip().lower(): c["id"] for c in roster}
+    out = {}
+    for k, names in (doc.get("depth_chart") or {}).items():
+        role = league_file.POS_IN.get(k, k)
+        out.setdefault(role, []).extend(by_name[n.strip().lower()] for n in names or []
+                                        if isinstance(n, str) and n.strip().lower() in by_name)
+    return out
+
+
+def to_league(merged: dict, seed: int) -> tuple[dict, list[str]]:
+    """A merged, checked league file as a career league (state["league"]; league.from_base's shape) and
+    the import summary's sentences. Built-in teams the file leaves alone are the built-in league's."""
+    base = _base_league()
+    docs = league_file._builtin_docs()
+    lgd = league.from_base(league.FIRST_YEAR)
+    for s in merged["removed"]:
+        lgd["teams"].pop(s, None)
+    attrs = lgd["attrs"]
+    strengths = base_strengths()
+    conf_of = {s: c for c in merged["conferences"].values() for s in c["members"]}
+    added = set(merged["added"])
+    work = [s for s in sorted(set(merged["added"]) | set(merged["changed"])) if s in merged["teams"]]
+
+    refill = {s for s in work if s in added or merged["teams"][s].get("roster") != docs[s].get("roster")}
+    taken: set[str] = set()
+    for s, t in lgd["teams"].items():                # every kept player's id and name, and every id the file gives
+        if s not in refill:
+            for c in t["roster"]:
+                taken.add(c["id"])
+                taken.add(c["n"].strip().lower())
+    for s in refill:
+        taken.update(p["id"] for p in merged["teams"][s].get("roster") or [] if isinstance(p, dict) and p.get("id"))
+
+    models: dict[str, dict] = {}
+    fill_lines: list[str] = []
+    for slug in work:
+        doc = merged["teams"][slug]
+        conf = merged["conferences"].get(doc.get("conference")) or {"members": []}
+        conf_name = conf.get("name") or str(doc.get("conference"))
+        rng = random.Random(f"league-{seed}-{slug}")
+        new = slug in added
+        bdoc = docs.get(slug, {})
+        entry = lgd["teams"].setdefault(slug, {})
+        if new or doc.get("coaches") != bdoc.get("coaches"):
+            entry["coaches"] = coaches_for(doc, conf, base, rng)
+        built = {**doc, "coaches": entry["coaches"]}
+        if new:
+            style, formation = style_and_formation(built, conf, base)
+            entry["style"] = doc.get("style") or style
+            entry["formation"] = copy.deepcopy(doc.get("formation")) or formation
+            entry["program"] = program_for(built, conf, base)
+            entry["meta"] = team_meta_doc({**doc, "prestige": entry["program"]["prestige"]}, conf_name)
+        else:
+            if doc.get("formation") != bdoc.get("formation") and doc.get("formation"):
+                entry["formation"] = copy.deepcopy(doc["formation"])
+            if doc.get("style") != bdoc.get("style") and doc.get("style"):
+                entry["style"] = doc["style"]
+            if any(doc.get(k) != bdoc.get(k) for k in _IDENTITY):
+                entry["meta"] = _meta_edit(slug, doc, bdoc, conf_name)
+            if doc.get("prestige") != bdoc.get("prestige") and doc.get("prestige") is not None:
+                p = entry["program"]
+                p["prestige"] = p["history"] = float(doc["prestige"])
+                p["rating"] = round(programs.mix(p), 1)
+                p["tier"] = programs.tier_of(p["rating"])
+        if slug in refill:
+            target = strength_target(doc, conf, strengths)
+            team = {**doc, "formation": entry["formation"]}
+            if not new:
+                team.setdefault("short_name", league.base_meta(slug)["short_name"])
+            entry["roster"], more = fill_roster(team, target, rng, attrs, taken)
+            fill_lines += more
+            if "meta" in entry:
+                entry["meta"]["roster_size"] = len(entry["roster"])
+        else:
+            target = strengths.get(slug, st.median(strengths.values()))
+        if doc.get("depth_chart"):
+            entry["depth"] = _depth(doc, entry["roster"])
+        if new:
+            models[slug] = recruiting_model_for(doc, conf, target)
+        elif any(doc.get(k) != bdoc.get(k) for k in ("lat", "lon", "state")):
+            m = copy.deepcopy(recruits.model()["teams"].get(slug) or {})
+            if (doc.get("lat"), doc.get("lon")) != (bdoc.get("lat"), bdoc.get("lon")) and _location(doc, []) != list(US_CENTER):
+                m["location"] = _location(doc, [])
+            elif doc.get("state") in STATE_CENTER:      # moved to another state, no new lat/lon: the state's center
+                m["location"] = list(STATE_CENTER[doc["state"]])
+            if doc.get("state") != bdoc.get("state") and doc.get("state"):
+                share = m.get("in_state_share") or 0.0
+                m["top_states"] = [[doc["state"], share]] + [r for r in m.get("top_states") or []
+                                                             if r[0] not in (doc["state"], bdoc.get("state"))]
+            models[slug] = m
+
+    lgd["source"] = {"format": league_file.FORMAT, "name": merged["name"]}
+    lgd["recruiting_models"] = models
+    n_add, n_chg, n_rem = len(merged["added"]), len(merged["changed"]), len(merged["removed"])
+    lines = [f"{n_add} {'team' if n_add == 1 else 'teams'} added, {n_chg} changed and {n_rem} removed."] + fill_lines
+    return lgd, lines
+
+
+def league_seed(blob: bytes, seed: Optional[int]) -> int:
+    """The seed a league is filled with: the one asked for, else one read from the file's bytes."""
+    if seed is not None:
+        return int(seed)
+    return int(hashlib.sha256(bytes(blob)).hexdigest()[:8], 16)

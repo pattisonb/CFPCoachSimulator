@@ -234,6 +234,142 @@ def test_team_meta():
     assert league.team_meta(lgd, SLUG) is M and league.team_meta(lgd, "rice") is league.base_meta("rice")
 
 
+# ---- to_league: a new team's coaches, program, recruiting model and identity -------------------
+
+ALDER_FILE = {"format": "cfp-league/1", "name": "My League", "remove": ["kent-state"],
+              "conferences": [{"id": "big-sky-east", "name": "Big Sky East", "level": "FBS", "games": 0}],
+              "teams": [{"slug": SLUG, "name": "Alder Tech", "short_name": "Alder Tech", "abbreviation": "ATU", "mascot": "Owls",
+                         "city": "Bend", "state": "OR", "lat": 44.05, "lon": -121.31, "conference": "big-sky-east",
+                         "colors": {"primary": {"name": "Green", "hex": "#0B6E4F"}, "secondary": {"name": "White", "hex": "#FFFFFF"}},
+                         "strength": "Average", "prestige": 40, "rivals": ["oregon-state"],
+                         "coaches": {"head": {"name": "Pat Doe", "rating": 60}, "oc": {"name": "Sam Roe"}, "offense": "Air Raid"},
+                         "roster": [{"name": "Jay Smith", "pos": "QB", "class": "JR"}, {"name": "Max Lee", "pos": "WR", "class": "SO"}],
+                         "depth_chart": {"QB": ["Jay Smith"]}}]}
+minimal_new_team_file = {"format": "cfp-league/1",
+                         "teams": [{"slug": "owl-state", "name": "Owl State", "state": "OR", "conference": "mountain-west"}]}
+_TL = {}
+
+
+def _to_league(name, doc, seed=1):
+    if (name, seed) not in _TL:
+        assert league_file.validate(doc) == [], league_file.validate(doc)
+        _TL[name, seed] = league_fill.to_league(league_file.merge(doc), seed)
+    return _TL[name, seed]
+
+
+def test_new_team_complete():
+    lgd, lines = _to_league("alder", ALDER_FILE)
+    t = lgd["teams"]["alder-tech"]
+    assert {"roster", "coaches", "formation", "program", "meta", "style"} <= set(t)
+    assert t["coaches"]["head_coach"]["name"] == "Pat Doe" and t["coaches"]["head_coach"]["ratings"]["overall"] == 60
+    assert t["coaches"]["offensive_coordinator"]["name"] == "Sam Roe" and t["coaches"]["defensive_coordinator"]["name"]
+    assert t["coaches"]["head_coach"]["scheme"]["offensive_philosophy"] == "Air Raid"
+    assert t["coaches"]["offensive_coordinator"]["scheme"]["offensive_scheme"] == "Air Raid"
+    assert all(c["team_slug"] == "alder-tech" for c in t["coaches"].values())
+    assert t["meta"]["colors"]["primary"]["hex"] == "#0B6E4F" and t["meta"]["conference"] == "Big Sky East"
+    assert t["meta"]["colors"]["accent"] is None and t["meta"]["rivals"] == ["oregon-state"]
+    assert t["program"]["prestige"] == 40 == t["program"]["history"] and 1 <= t["program"]["tier"] <= 5
+    assert t["program"]["year"] == 2025 and t["program"]["coach"] == 60 and t["program"]["seasons"] == []
+    assert t["meta"]["program"]["prestige"] == 3 and t["meta"]["program"]["generated"] is True
+    assert lgd["recruiting_models"]["alder-tech"]["location"] == [44.05, -121.31]
+    assert lgd["recruiting_models"]["alder-tech"]["top_states"][0][0] == "OR"
+    assert lgd["source"]["name"] == "My League" and "kent-state" not in lgd["teams"]
+    assert lgd["year"] == 2026
+    assert lines[0] == "1 team added, 0 changed and 1 removed."
+    assert any(ln.startswith("Alder Tech: ") and "added to reach the position floors" in ln for ln in lines[1:])
+    ids = {c["n"]: c["id"] for c in t["roster"]}
+    assert t["depth"] == {"QB": [ids["Jay Smith"]]}
+    assert league.source_team(lgd, "alder-tech")["short_name"] == "Alder Tech"
+
+
+def test_new_team_style_matches_offense():
+    lgd, _ = _to_league("alder", ALDER_FILE)
+    t = lgd["teams"]["alder-tech"]
+    base = league.from_base(2026)["teams"]
+    assert base[t["style"]]["coaches"]["head_coach"]["scheme"]["offensive_philosophy"] == "Air Raid"
+    assert t["formation"] == base[t["style"]]["formation"]
+
+
+def test_defaults_derived():
+    lgd, lines = _to_league("owl", minimal_new_team_file)
+    m = lgd["teams"]["owl-state"]["meta"]
+    assert m["short_name"] == "Owl State" and m["abbreviation"] == "OS" and m["mascot"] == "State"
+    assert m["colors"]["accent"] is None and m["colors"] == league_fill.NEUTRAL_COLORS
+    assert m["rivals"] == [] and isinstance(m["program"]["home_field_advantage"], int) and m["conference"] == "Mountain West" and m["stadium"]["name"] == "Owl State Stadium"
+    assert lgd["recruiting_models"]["owl-state"]["location"] == list(league_fill.STATE_CENTER["OR"])
+    mwc = [s for s, c in league_file._builtin()["team_conf"].items() if c == "mountain-west"]
+    base = league.from_base(2026)["teams"]
+    want = statistics.mean(base[s]["program"]["prestige"] for s in mwc)
+    assert abs(lgd["teams"]["owl-state"]["program"]["prestige"] - want) < 1e-6
+    heads = [base[s]["coaches"]["head_coach"]["scheme"]["offensive_philosophy"] for s in mwc]
+    common = max(sorted(set(heads)), key=heads.count)
+    c = lgd["teams"]["owl-state"]["coaches"]
+    assert set(c) == {"head_coach", "offensive_coordinator", "defensive_coordinator"}
+    assert c["head_coach"]["scheme"]["offensive_philosophy"] == common
+    assert len(lgd["teams"]["owl-state"]["roster"]) == 85
+    assert lines[0] == "1 team added, 0 changed and 0 removed."
+    assert "source" in lgd and lgd["source"]["format"] == "cfp-league/1"
+
+
+def test_state_center():
+    lat, lon = league_fill.STATE_CENTER["OR"]
+    assert 42 < lat < 46.5 and -124.6 < lon < -116.5
+
+
+def test_to_league_deterministic():
+    doc = copy.deepcopy(ALDER_FILE)
+    a = league_fill.to_league(league_file.merge(doc), 3)
+    b = league_fill.to_league(league_file.merge(doc), 3)
+    assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+    c = league_fill.to_league(league_file.merge(doc), 4)
+    assert json.dumps(a[0]["teams"]["alder-tech"], sort_keys=True) != json.dumps(c[0]["teams"]["alder-tech"], sort_keys=True)
+
+
+def test_player_ids_unique_across_league():
+    doc = copy.deepcopy(ALDER_FILE)
+    doc["teams"][0]["roster"] = [{"name": "P0", "pos": "QB", "class": "JR"}]
+    doc["teams"][0].pop("depth_chart")
+    # a second new team claims the id the first one would generate for its P0
+    doc["teams"].append({"slug": "zeta-u", "name": "Zeta U", "state": "WA", "conference": "big-sky-east",
+                         "roster": [{"name": "Zed", "pos": "QB", "class": "JR", "id": "alder-tech-p0"}]})
+    assert league_file.validate(doc) == []
+    lgd, _ = league_fill.to_league(league_file.merge(doc), 1)
+    ids = [c["id"] for t in lgd["teams"].values() for c in t["roster"]]
+    assert len(ids) == len(set(ids))
+    assert {c["n"]: c["id"] for c in lgd["teams"]["zeta-u"]["roster"]}["Zed"] == "alder-tech-p0"
+    assert {c["n"]: c["id"] for c in lgd["teams"]["alder-tech"]["roster"]}["P0"] != "alder-tech-p0"
+
+
+def test_changed_builtin_team():
+    doc = {"format": "cfp-league/1", "name": "Rice Edit",
+           "teams": [{"slug": "rice", "prestige": 70, "colors": {"primary": {"name": "Red", "hex": "#AA0000"},
+                                                                  "secondary": {"name": "White", "hex": "#FFFFFF"}}}]}
+    lgd, lines = league_fill.to_league(league_file.merge(doc), 1)
+    base = league.from_base(2026)["teams"]
+    t = lgd["teams"]["rice"]
+    assert lines[0] == "0 teams added, 1 changed and 0 removed."
+    assert t["program"]["prestige"] == 70 == t["program"]["history"]
+    assert t["meta"]["colors"]["primary"]["hex"] == "#AA0000" and t["meta"]["colors"]["accent"] is None
+    assert t["meta"]["short_name"] == "Rice" and t["meta"]["rivals"] == league.base_meta("rice")["rivals"]
+    assert t["roster"] == base["rice"]["roster"] and t["coaches"] == base["rice"]["coaches"]
+    assert "rice" not in lgd.get("recruiting_models", {})
+    assert lgd["teams"]["smu"] == base["smu"]
+
+
+def test_moved_builtin_team_gets_a_recruiting_model():
+    doc = {"format": "cfp-league/1", "teams": [{"slug": "rice", "state": "OR"}, {"slug": "smu", "lat": 40.0, "lon": -100.0}]}
+    lgd, _ = league_fill.to_league(league_file.merge(doc), 1)
+    rm = lgd["recruiting_models"]
+    assert rm["rice"]["location"] == list(league_fill.STATE_CENTER["OR"]) and rm["rice"]["top_states"][0][0] == "OR"
+    assert rm["smu"]["location"] == [40.0, -100.0] and lgd["teams"]["rice"]["meta"]["state"] == "OR"
+
+
+def test_league_seed():
+    assert league_fill.league_seed(b"abc", 7) == 7
+    s = league_fill.league_seed(b"abc", None)
+    assert isinstance(s, int) and s == league_fill.league_seed(b"abc", None) != league_fill.league_seed(b"abd", None)
+
+
 if __name__ == "__main__":
     for _n, _f in sorted(globals().items()):
         if _n.startswith("test_"):
