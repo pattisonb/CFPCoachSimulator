@@ -485,9 +485,11 @@
       try { sel.pr = await api(s, `prospect/${encodeURIComponent(r.pid)}`); } catch (err) { /* the old read stands */ }
       paintIntel();
       // the Send that completed his report disabled itself: the focus moves on to the board button, never the page body
-      const a = document.activeElement;
-      if (!a || a === document.body || a.disabled) { const next = body.querySelector("#sc-board"); if (next) next.focus({ preventScroll: true }); }
-      cur.reload(r.pid);                              // the counts, the flags and every other row follow
+      const keepFocus = () => { const a = document.activeElement; if (!a || a === document.body || a.disabled) { const next = body.querySelector("#sc-board"); if (next) next.focus({ preventScroll: true }); } };
+      keepFocus();
+      // the counts, the flags and every other row follow; the browser may drop the focus off the disabled Send only now
+      // (its focus fix-up runs late), so the board button takes it again once the list has settled
+      Promise.resolve(cur.reload(r.pid)).then(() => requestAnimationFrame(keepFocus));
     }
     async function toggleBoard(btn) {
       const r = sel.row, p = sel.pr.public, on = !r.on_board;
