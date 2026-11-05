@@ -24,7 +24,7 @@
 
 /* the hero: the next game */
 .ofc-hero { padding: 20px !important; gap: 14px !important;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--ofc-team, var(--panel)) var(--ofc-mix), var(--panel)), var(--panel) 72%); }
+  background: var(--panel); border-top: 4px solid var(--ofc-team, var(--accent)) !important; }
 .ofc-hero-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px 16px; flex-wrap: wrap; }
 .ofc-hero-head > :first-child { min-width: 0; flex: 1 1 220px; }
 .ofc-title { font-weight: 800; font-size: 17px; margin-top: 4px; }
