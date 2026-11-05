@@ -22,7 +22,10 @@
    "name": "Gold",
    "hex": "#B7A57A"
   },
-  "accent": null
+  "accent": {
+   "name": "Heritage Gold",
+   "hex": "#85754D"
+  }
  },
  "rivals": [
   "washington-st",

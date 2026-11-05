@@ -22,7 +22,10 @@
    "name": "White",
    "hex": "#FFFFFF"
   },
-  "accent": null
+  "accent": {
+   "name": "Light Gray",
+   "hex": "#A7A9AC"
+  }
  },
  "rivals": [
   "c-michigan",

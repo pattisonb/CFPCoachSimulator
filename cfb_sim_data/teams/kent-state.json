@@ -22,7 +22,10 @@
    "name": "Gold",
    "hex": "#EAAB00"
   },
-  "accent": null
+  "accent": {
+   "name": "Light Blue",
+   "hex": "#2C8ECD"
+  }
  },
  "rivals": [
   "akron"

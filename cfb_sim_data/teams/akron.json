@@ -22,7 +22,10 @@
    "name": "Gold",
    "hex": "#A89968"
   },
-  "accent": null
+  "accent": {
+   "name": "Bright Blue",
+   "hex": "#1E63AF"
+  }
  },
  "rivals": [
   "kent-state"

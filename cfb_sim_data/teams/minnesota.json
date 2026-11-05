@@ -22,7 +22,10 @@
    "name": "Gold",
    "hex": "#FFCC33"
   },
-  "accent": null
+  "accent": {
+   "name": "Dark Gray",
+   "hex": "#3C3D3F"
+  }
  },
  "rivals": [
   "wisconsin",

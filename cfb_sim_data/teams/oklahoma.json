@@ -22,7 +22,10 @@
    "name": "Cream",
    "hex": "#FDF9D8"
   },
-  "accent": null
+  "accent": {
+   "name": "Dark Gray",
+   "hex": "#323232"
+  }
  },
  "rivals": [
   "texas",

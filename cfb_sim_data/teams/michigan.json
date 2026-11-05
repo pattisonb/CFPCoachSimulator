@@ -22,7 +22,10 @@
    "name": "Blue",
    "hex": "#00274C"
   },
-  "accent": null
+  "accent": {
+   "name": "Dark Gray",
+   "hex": "#3F4444"
+  }
  },
  "rivals": [
   "ohio-state",

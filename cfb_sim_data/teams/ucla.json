@@ -22,7 +22,10 @@
    "name": "Gold",
    "hex": "#F2A900"
   },
-  "accent": null
+  "accent": {
+   "name": "Darkest Blue",
+   "hex": "#003B5C"
+  }
  },
  "rivals": [
   "usc"

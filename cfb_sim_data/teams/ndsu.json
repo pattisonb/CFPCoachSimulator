@@ -22,7 +22,10 @@
    "name": "Yellow",
    "hex": "#FFC72A"
   },
-  "accent": null
+  "accent": {
+   "name": "Prairie Grass",
+   "hex": "#A0BD78"
+  }
  },
  "rivals": [],
  "fictional": false,

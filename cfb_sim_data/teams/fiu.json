@@ -22,7 +22,10 @@
    "name": "Gold",
    "hex": "#B6862C"
   },
-  "accent": null
+  "accent": {
+   "name": "Bright Gold",
+   "hex": "#FFCC00"
+  }
  },
  "rivals": [
   "fla-atlantic"
