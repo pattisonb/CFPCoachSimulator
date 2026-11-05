@@ -25,6 +25,7 @@ body { --pv-warn: var(--go-warn, #f5b942); }
 .pv-right { display: flex; flex-wrap: nowrap; align-items: stretch; gap: 6px; margin-left: auto; flex: none; }
 @container (max-width: 700px) {
   .pv-hero { flex-direction: column; align-items: stretch; }
+  .pv-who { flex-basis: auto; }   /* stacked, his 250 px basis would be a height: a tall empty band in a pane that scrolls */
   .pv-right { margin-left: 0; flex-wrap: wrap; }
   .pv-right > .pv-stat:first-child { border-left: 0; padding-left: 0; }
   .pv-badge { margin-left: auto; }
@@ -151,8 +152,10 @@ body { --pv-warn: var(--go-warn, #f5b942); }
 .pv-pri-v { display: flex; flex-direction: column; }
 .pv-snapshot .go-tags, .pv-snapshot .go-standing-text { margin: 0; }
 .pv-timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-/* a long history scrolls inside its own card, so Recruiting Notes and Recent Interest Changes stay in view */
-.pv-timeline-card .pv-timeline { max-height: var(--pv-timeline-max, 420px); overflow-y: auto; overscroll-behavior: contain; padding-right: 6px; }
+/* a long history scrolls inside its own card, so Recruiting Notes and Recent Interest Changes stay in view; at its top or
+   its end the wheel (or a finger) goes on to what holds it, the pane's column on a wide screen, the page or the sheet on
+   a phone, so it never traps the scroll (overscroll-behavior: auto, not contain) */
+.pv-timeline-card .pv-timeline { max-height: var(--pv-timeline-max, 420px); overflow-y: auto; overscroll-behavior: auto; padding-right: 6px; }
 .pv-timeline-card .pv-timeline:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (max-width: 700px) { .pv-timeline-card .pv-timeline { --pv-timeline-max: 360px; } }
 .pv-tl-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }

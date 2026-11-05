@@ -284,6 +284,8 @@
       desk.pid = pid;
       syncRoute();
       for (const li of list.children) { const on = li.dataset.pid === pid; li.classList.toggle("selected", on); const b = li.querySelector(".sc-row-btn"); if (b) b.setAttribute("aria-pressed", String(on)); }
+      const picked = list.querySelector(".sc-row.selected");
+      if (picked && !window.matchMedia("(max-width: 899px)").matches) ui().keepInView(picked);   // an address's prospect shows in the list's own scroll
       intel.__show(pid, st.rows.find((r) => r.pid === pid) || null);
     }
     function drawRow(r) {
@@ -377,7 +379,8 @@
     panel.__show = async (pid, row) => {
       if (!pid) { ui().morph(body, el("div", {}, [el("p", { class: "muted sc-intel-empty", text: "Nobody here yet: clear the search or a filter." })])); return; }
       const mine = ++sel.seq;
-      if (sel.pid !== pid) sel.look = null;
+      const other = sel.pid !== pid;
+      if (other) sel.look = null;
       sel.pid = pid;
       panel.setAttribute("aria-busy", "true");
       let pr;
@@ -395,6 +398,7 @@
       sel.row = row || (await rowFor(pid, pr));
       if (mine !== sel.seq) return;
       paintIntel();
+      if (other) panel.scrollTop = 0;   // a wide screen: the report scrolls in its column, and another prospect opens at his top
     };
     panel.__row = (row) => { if (sel.pid === row.pid) { sel.row = row; if (sel.pr) paintIntel(); } };
     panel.__focus = () => { if (window.matchMedia("(max-width: 899px)").matches) panel.scrollIntoView({ block: "start" }); };

@@ -1,6 +1,7 @@
 /* Shared UI helpers for every page: the toast stack, the change pulse, fades, keyed lists, a busy
    state for the control that acted, and an in-place patch (morph) so an action updates the screen
-   instead of rebuilding it, and the ⓘ tooltip. window.CFP.ui = { toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph, tip, placeTip }.
+   instead of rebuilding it, and the ⓘ tooltip. window.CFP.ui = { toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph, tip, placeTip,
+   scrollBoxOf, inView, keepInView }.
    Motion honors prefers-reduced-motion. Loaded after gameview.js (which makes window.CFP). */
 (function () {
   "use strict";
@@ -123,6 +124,31 @@
       prev = n;
     }
   }
+  // ----- a row in its own scroll box (the board's list, the Scouting Center's database) --------------
+  // scrollBoxOf(node): the nearest ancestor that scrolls up and down (never the page); inView(node): the node
+  // shows whole in it; keepInView(node): that box scrolls just enough to show the node whole, and the page
+  // never moves, so a row picked or patched in a list stays where the eye is
+  function scrollBoxOf(node) {
+    for (let box = node && node.parentElement; box && box !== document.body && box !== document.documentElement; box = box.parentElement) {
+      if (box.scrollHeight > box.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(box).overflowY)) return box;
+    }
+    return null;
+  }
+  function inView(node, pad = 0) {
+    const box = node && node.isConnected ? scrollBoxOf(node) : null;
+    if (!box) return true;
+    const r = node.getBoundingClientRect(), top = box.getBoundingClientRect().top + box.clientTop;
+    return r.top >= top + pad - 1 && r.bottom <= top + box.clientHeight - pad + 1;
+  }
+  function keepInView(node, pad = 8) {
+    const box = node && node.isConnected ? scrollBoxOf(node) : null;
+    if (!box) return;
+    const r = node.getBoundingClientRect(), b = box.getBoundingClientRect();
+    const up = r.top - (b.top + box.clientTop) - pad, down = r.bottom - (b.top + box.clientTop + box.clientHeight) + pad;
+    if (up < 0) box.scrollTop += up;
+    else if (down > 0) box.scrollTop += Math.min(down, up);
+  }
+
   function reconcile(container, rows, key, draw, patch) {
     const keyOf = typeof key === "function" ? key : (r) => r[key];
     const have = new Map();
@@ -347,7 +373,7 @@
     }
   }, true);
 
-  CFP.ui = { toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph, tip, placeTip };
+  CFP.ui = { toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph, tip, placeTip, scrollBoxOf, inView, keepInView };
   if (document.body) mount();
   else document.addEventListener("DOMContentLoaded", mount);
 })();

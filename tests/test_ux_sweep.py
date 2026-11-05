@@ -1538,15 +1538,17 @@ if __name__ == "__main__":
             assert b["name"] in page.inner_text(".go-pane .go-pane-head")
             STAGE_WORD = {"cold": "Cold", "contact": "In Touch", "top": "Top 8", "visited": "Visited"}
             assert page.text_content(".go-pane .go-chip").strip() == STAGE_WORD.get(b["stage"], "Cold"), page.text_content(".go-pane .go-chip")
-            box = page.evaluate("() => { const p = document.querySelector('.go-pane'); const r = p.getBoundingClientRect(); return [r.top, r.bottom, getComputedStyle(p).position]; }")
-            assert box[2] == "sticky" and 0 <= box[0] < 400, box
-            # the pane sticks: scrolled down a long board, it is still on screen beside the list
-            assert board_n >= 20, f"the sticky check needs a long board: {board_n} rows"
-            page.evaluate("() => window.scrollTo(0, 1500)")
+            box = page.evaluate("() => { const p = document.querySelector('.go-pane'); const r = p.getBoundingClientRect(); return [r.top, r.bottom, getComputedStyle(p).overflowY]; }")
+            assert box[2] == "auto" and 0 <= box[0] < 400 and box[1] <= page.evaluate("innerHeight"), box
+            # the board fits the screen (tests/test_board_scroll.py): a long board scrolls in the list's card, the page
+            # stays put and the pane stays in view beside it
+            assert board_n >= 20, f"the board-scroll check needs a long board: {board_n} rows"
+            page.evaluate("() => { window.scrollTo(0, 1500); document.querySelector('.go-list-recruits').scrollTop = 1500; }")
             time.sleep(0.3)
-            top = page.evaluate("() => [window.scrollY, document.querySelector('.go-pane').getBoundingClientRect().top]")
-            assert top[0] >= 1000 and 0 <= top[1] <= 200, f"the pane stays in view while the board scrolls: scrollY, pane top = {top}"
+            top = page.evaluate("() => [window.scrollY, document.querySelector('.go-list-recruits').scrollTop, document.querySelector('.go-pane').getBoundingClientRect().top]")
+            assert top[0] == 0 and top[1] > 0 and 0 <= top[2] <= 400, f"the list scrolls in its card, the page stays and the pane stays in view: scrollY, list scroll, pane top = {top}"
             shot(page, "pane-sticky-1280-dark")
+            page.evaluate("() => { document.querySelector('.go-list-recruits').scrollTop = 0; }")
             page.evaluate("() => window.scrollTo(0, 0)")
             time.sleep(0.2)
             assert page.eval_on_selector_all(".go-pane .go-strip .go-stat .go-kicker", "els => els.map(e => e.textContent)") == ["Your Offer", "His List", "Scouted"], "three snapshot cells"

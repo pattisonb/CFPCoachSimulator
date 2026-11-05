@@ -76,10 +76,6 @@
 .sc-pager { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .sc-pager .go-btn { min-height: 36px; min-width: 36px; padding: 0 10px; font-size: 13px; }
 .sc-gap { padding: 0 2px; }
-@media (min-width: 900px) {
-  /* the list scrolls inside its card so the page stays about one screen tall */
-  .sc-list-wrap { max-height: clamp(380px, calc(100vh - 420px), 720px); overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
-}
 
 /* the Player Intelligence Report */
 .sc-intel-head { border-bottom: 1px solid var(--border); padding-bottom: 10px; }
@@ -265,4 +261,31 @@
   .sc-stat { max-width: none; flex-basis: 40%; }
   .sc-actions { width: 100%; }
   .sc-actions .go-btn { flex: 1 1 auto; }
+}
+
+/* ----- the Scouting Center fits the screen (docs/HOW_IT_WORKS.md "Board scrolling"; the same model as the Recruiting board) -----
+   the database and the report side by side (900 px and up): the tab is at least the screen under the tab bar
+   (--board-top and --board-below, measured by season.js boardFit) and its two scrollers add nothing to its height
+   (contain: size), so the page never scrolls. The header's stat cards stay put. The database's rows scroll in its card
+   under the search and the filters, with the pager under them, and the card runs down to the bottom; the report scrolls
+   in its own column under its pinned tab row, with Scouting Operations' slim bar under it. Each scroller is contained,
+   so a wheel at its end never moves the page or the other column. A window too short for that grows the tab and the
+   page scrolls the rest. Scouting Operations, opened, spans the width under the two columns and the page scrolls to it
+   (the scrollers then hand the wheel on at their ends). Narrower, the page is the only scroller. */
+@media (min-width: 900px) {
+  #tab-scouting:not([hidden]) { display: grid; grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); grid-template-rows: auto 1fr auto;
+    grid-template-areas: "head head" "db intel" "db ops"; gap: 14px var(--pv-gap);
+    min-height: calc(100vh - var(--board-top, 0px) - var(--board-below, 16px)); min-height: calc(100dvh - var(--board-top, 0px) - var(--board-below, 16px)); }
+  #tab-scouting > .sc-main { display: contents; }
+  #tab-scouting > .sc-head { grid-area: head; }
+  #tab-scouting .sc-db { grid-area: db; min-height: 0; }
+  #tab-scouting .sc-db > * { flex: none; }
+  #tab-scouting .sc-list-wrap { flex: 1 1 0; contain: size; min-height: var(--board-list-min, 132px); overflow-y: auto; overscroll-behavior: contain; overflow-anchor: none;
+    margin: 0 -12px 0 -4px; padding: 3px 4px 12px; scrollbar-width: thin; }
+  #tab-scouting .sc-intel { grid-area: intel; contain: size; min-height: var(--board-pane-min, 300px); overflow-y: auto; overscroll-behavior: contain; padding-bottom: 24px; }
+  /* the report's tab row (Report · Looks · Profile and its buttons) pins over the column's top padding */
+  #tab-scouting .sc-intel .pv-tabrow { position: sticky; top: -16px; z-index: 2; background: var(--panel); }
+  #tab-scouting > .sc-ops { grid-area: ops; }
+  #tab-scouting:not([hidden]):has(> .sc-ops.open) { grid-template-rows: auto var(--board-open-h, 460px) auto; grid-template-areas: "head head" "db intel" "ops ops"; }
+  #tab-scouting:has(> .sc-ops.open) :is(.sc-list-wrap, .sc-intel) { overscroll-behavior: auto; }
 }
