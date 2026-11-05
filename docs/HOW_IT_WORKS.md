@@ -855,7 +855,10 @@ years he already is, and cut into the six shares exactly. Every Elite player is 
 Star players are Film Junkies (the furthest ahead 17% Coach's Dreams); Impact players 81% Quick
 Study, 11% Steady Grinder, 8% Film Junkie; Normal players 55% Steady Grinder, 30% Slow to Click,
 15% Set in His Ways. Potential: each attribute's career gain times the share of his career left,
-divided by what an average player realizes in that time, times a level from his stars (8,300
+divided by what an average player realizes in that time (or what he realizes at his own pace,
+when he learns faster: a Coach's Dream junior is not given room for twice his position's real
+career gain, which made the real top juniors gain 15-20 points in a career's first offseason),
+times a level from his stars (8,300
 players' stars ship in the model), his trait (Elite 1.35 to Normal 0.9) and 2% per point ahead.
 A fifth-year player has no room. One offseason over the whole league raises overall by 4.3
 (first-year players), 4.2, 3.8 and 3.3 (seniors), against real year-to-year steps of 2.2 to 5.8.
@@ -1447,8 +1450,17 @@ roster's make-up by group is the real 2026 mean (QB 4, RB 6, WR 11, TE 6, OL 15,
 (FRRS ... SRRS). A player who did not start may take his redshirt once: 78% of freshmen off
 the top of the depth chart, 35% of sophomores, 25% of juniors (half that for the next man up).
 Seniors leave; a senior with his redshirt unused who barely played stays a fifth year 60% of the
-time. The NFL draft has 257 picks, 97% from FBS, ranked by a draft score: the card overall
-times a position scale, plus a position value, plus noise (4 points). The scale and value are
+time. The NFL draft has 257 picks, 97% from FBS, ranked by a draft score. A prospect's grade is
+his card overall against this year's best draft-eligible players at his position (a z-score on
+the mean and spread of the top 8% there, at least 12: `draft_grades`), 40% of it against the best
+at every position (`DRAFT_ABS_SHARE`: a 99 is a 99); his score is his position group's value per
+point of grade (`DRAFT_VALUE`: quarterbacks steepest, then receivers, tackles, linebackers and
+edges; backs flattest; kickers and punters 0.5) times it, plus the group's step (`DRAFT_SHIFT`),
+plus noise (0.25). Graded within the year's pool, a position whose overalls run high or drift up
+over a career cannot take the round over: the old score, a value per raw overall point (5.0 for a
+quarterback, 3.9 for a receiver, 2.1 for a tackle), fitted to the first offseason, gave a played
+career's second offseason 24 to 28 quarterbacks and receivers in round one
+(tests/test_draft_positions.py). The value and step are
 fitted by `tools/calibrate_draft.py` to the real 2021-2025 drafts (`data/draft_targets.json`,
 counted by position bucket): round one has about 3.4 QB, 1.2 RB, 5.0 WR, 1.0 TE, 5.4 OT, 1.8
 IOL, 5.0 EDGE, 2.4 DL, 2.0 LB, 3.8 CB and 0.8 S a year; the whole draft 11 QB, 22 RB, 32 WR, 15
@@ -1572,7 +1584,11 @@ roster, spread 0.15, `TEAM_YEAR_SD`; both mean-preserving, so the league's pace 
 but teams have good and bad years and programs' paths part),
 times a pace by seasons in college (0.45, 0.7, 1.35, 1.35, then 1.0: real players gain little in
 their first offseasons and most in their third and fourth; a real 2026 player's seasons come from
-his class, and a transfer keeps his). A real 2026 underclassman's room to potential is 1.2 times
+his class, and a transfer keeps his), divided above an overall of 55 by 1 plus a tenth of the points
+over it (`DEV_TOP`, `DEV_TOP_SPAN`: the last points come slowest, so a 75 grows at a third of the
+pace; without it a career's 2027 seniors had about 125 players rated 85+ where the real 2026
+seniors had 25, at every position, and the draft's first round filled with them;
+tests/test_progression_realism.py). A real 2026 underclassman's room to potential is 1.2 times
 his seeded one (it ran short of a generated player's at the same class, and the Group of 5 dipped
 as those players became its upperclassmen). A generated player's room
 to potential is scaled by position group (`game_scale.ROOM`: 1.0 for backs to 1.63 for safeties),

@@ -51,16 +51,28 @@ REDSHIRT_CLASSES = ("FR", "SO", "JR")              # classes with a redshirt yea
 FIFTH_YEAR = 0.60                                  # a senior with his redshirt unused who barely played comes back
 DRAFT_PICKS = 257
 DRAFT_FROM_FBS = 0.97                              # the share of picks from FBS (the rest from lower levels)
-# the draft by position, fitted by tools/calibrate_draft.py to data/draft_targets.json (the 2021-2025 NFL
-# drafts' round-one and all-pick counts by position): his draft score is POSITION_SCALE[pos] * card overall
-# + POSITION_VALUE[pos] + noise, so quarterbacks and tackles go early and backs, tight ends and safeties late
-POSITION_VALUE = {"QB": -269.38, "HB": -28.91, "FB": -28.91, "WR": -193.15, "TE": -55.25, "LT": -73.69, "RT": -73.69, "LG": -73.1,
-                  "RG": -73.1, "C": -73.1, "LEDG": -84.02, "REDG": -84.02, "DT": -49.06, "SAM": -147.83, "MIKE": -147.83,
-                  "WILL": -147.83, "CB": -74.02, "FS": -52.39, "SS": -52.39, "K": -236.12, "P": -318.77}
-POSITION_SCALE = {"QB": 5.0, "HB": 1.607, "FB": 1.607, "WR": 3.871, "TE": 1.664, "LT": 2.105, "RT": 2.105, "LG": 1.932, "RG": 1.932,
-                  "C": 1.932, "LEDG": 2.127, "REDG": 2.127, "DT": 1.674, "SAM": 2.892, "MIKE": 2.892, "WILL": 2.892, "CB": 2.013,
-                  "FS": 1.579, "SS": 1.579, "K": 3.563, "P": 5.0}
-DRAFT_NOISE = 4.0
+# the draft by position. A prospect's grade is his card overall against this year's top draft-eligible
+# players at his position (a z-score on their mean and spread; DRAFT_ABS_SHARE of it against every
+# position's), so a position whose overalls run high, or drift up over a career, cannot take the first
+# round over (before, a score per raw overall point, steepest for QB and WR, did). His draft score is
+# DRAFT_VALUE[group] * grade + DRAFT_SHIFT[group] + noise: the NFL's positional value, quarterbacks,
+# tackles, edge rushers and corners early, backs, guards, linebackers, safeties and tight ends later,
+# specialists last. Fitted by tools/calibrate_draft.py to data/draft_targets.json (the 2021-2025 NFL
+# drafts' round-one and all-pick counts by position) *tune*
+DRAFT_GROUP = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OT", "RT": "OT", "LG": "IOL", "RG": "IOL", "C": "IOL",
+               "LEDG": "EDGE", "REDG": "EDGE", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "CB", "FS": "S", "SS": "S",
+               "K": "K", "P": "P"}
+DRAFT_VALUE = {"QB": 1.72, "RB": 0.642, "WR": 1.588, "TE": 0.881, "OT": 1.349, "IOL": 1.015, "EDGE": 1.225, "DL": 0.841,   # draft score per standard deviation of grade *tune*
+               "LB": 1.161, "CB": 0.968, "S": 0.857, "K": 0.5, "P": 0.5}
+DRAFT_SHIFT = {"QB": 0.219, "RB": -0.098, "WR": -0.375, "TE": -0.847, "OT": -0.002, "IOL": -0.807, "EDGE": -0.42, "DL": -0.568,   # a position's step up or down the board *tune*
+               "LB": -0.951, "CB": -0.272, "S": -0.965, "K": -1.582, "P": -1.524}
+DRAFT_NOISE = 0.25                                 # the scouts' disagreement, in standard deviations of grade *tune*
+DRAFT_REF_SHARE = 0.08                             # a grade is against the top this share of a position's draft-eligible players ... *tune*
+DRAFT_REF_MIN = 12                                 # ... at least this many of them *tune*
+DRAFT_MIN_SD = 4.0                                 # ... and their spread taken as at least this (card overall points) *tune*
+DRAFT_ABS_SHARE = 0.25                             # the share of a grade against every position's prospects, not his own (a 99 is a 99) *tune*
+DRAFT_RUN = 0.12                                   # the board steps the n-th player at a position down this much a place ... *tune*
+DRAFT_RUN_CAP = 6                                  # ... for at most this many places (needs spread a first round) *tune*
 # projected first-rounders almost always go (the real drafts: a handful of first-round underclassmen stay a year) *tune*
 DECLARE = ((16, 0.99), (32, 0.97), (64, 0.88), (100, 0.65), (160, 0.35), (257, 0.12), (10**9, 0.004))   # projected pick -> an underclassman declares
 UNDERCLASS_ELIGIBLE = {"JR", "JRRS", "SORS"}       # three years out of high school
@@ -109,6 +121,17 @@ DEV_RATE = 0.75                                    # coachability's pace on our 
 # real players gain little in their first offseasons and most in their third and fourth (the real rosters
 # by years in college: four-stars +1, +1, +5.5): the pace by seasons already played in the program *tune*
 YEAR_CURVE = (0.45, 0.7, 1.35, 1.35, 1.0)
+# the best get better slowest: above DEV_TOP (card overall) a player's pace is divided by 1 + his points over
+# it / DEV_TOP_SPAN, so the real rosters' top juniors (fast learners with big rooms and big seasons) do not
+# all become 85+ seniors: a career's senior classes keep the real 2026 seniors' top end (tests/test_progression_realism.py) *tune*
+DEV_TOP = 55
+DEV_TOP_SPAN = 10
+# a position group's pace against the league's: the real rosters' backs, quarterbacks and receivers peak
+# early and their senior classes sit lowest, linemen come on late (the real 2026 seniors by position),
+# where one pace for everyone left a career's skill-position seniors 2-5 points high and its linemen low.
+# Fitted with faked seasons (tests/test_progression_realism.py checks a played one) *tune*
+DEV_PACE = {"QB": 0.75, "RB": 0.5, "WR": 0.75, "TE": 1.28, "OT": 1.32, "IOL": 1.07, "EDGE": 1.16, "DL": 0.9, "LB": 1.19, "CB": 1.1,
+            "S": 0.94, "K": 0.51, "P": 0.84}
 PROGRAM_DEV = 0.35                                 # development rate per point of the program's recruiting baseline (the blue bloods' facilities and staffs: the top stays the top)
 PROGRAM_DEV_BELOW = 0.15                           # ... below the average program (the Group of 5 develops less, not half as much)
 TEAM_YEAR_SD = 0.15                                # a team's year: its strength program, culture and luck, one lognormal factor on everyone's growth
@@ -886,9 +909,32 @@ def _would_start(roster: list[dict], starters: dict) -> set:
     return out
 
 
-def draft_score(pos: str, overall: int, rng: random.Random) -> float:
-    """Where he projects: his card overall scaled by his position's draft value, plus noise."""
-    return POSITION_SCALE.get(pos, 1.0) * house(pos, overall) + POSITION_VALUE.get(pos, 0) + rng.gauss(0, DRAFT_NOISE)
+def draft_grades(players: list[dict]) -> dict[str, tuple[float, float]]:
+    """Each draft group's (mean, spread) of card overall over the top of this year's draft-eligible
+    `players` there (DRAFT_REF_SHARE of them, at least DRAFT_REF_MIN): the prospects the NFL looks at.
+    "*" is the same over every position."""
+    by: dict[str, list[int]] = {}
+    for p in players:
+        h = house(p["pos"], p["o"])
+        by.setdefault(DRAFT_GROUP.get(p["pos"], p["pos"]), []).append(h)
+        by.setdefault("*", []).append(h)
+    out = {}
+    for g, v in by.items():
+        top = sorted(v, reverse=True)[:max(DRAFT_REF_MIN, round(DRAFT_REF_SHARE * len(v)))]
+        out[g] = (st.mean(top), max(DRAFT_MIN_SD, st.pstdev(top) if len(top) > 1 else 0.0))
+    return out
+
+
+def draft_score(pos: str, overall: int, rng: random.Random, grades: Optional[dict] = None) -> float:
+    """Where he projects: his grade (his card overall against this year's draft-eligible players at
+    his position, and DRAFT_ABS_SHARE of it against all of them: draft_grades) times his position's
+    draft value, plus its shift and noise."""
+    g = DRAFT_GROUP.get(pos, pos)
+    h = house(pos, overall)
+    mean, sd = (grades or {}).get(g) or (40.0, 12.0)
+    mean_all, sd_all = (grades or {}).get("*") or (mean, sd)
+    z = (1 - DRAFT_ABS_SHARE) * (h - mean) / sd + DRAFT_ABS_SHARE * (h - mean_all) / sd_all
+    return DRAFT_VALUE.get(g, 1.0) * z + DRAFT_SHIFT.get(g, 0.0) + rng.gauss(0, DRAFT_NOISE)
 
 
 def elite(p: dict, games: Optional[dict] = None) -> bool:
@@ -903,12 +949,20 @@ def draft_scores(lgd: dict, rng: random.Random, games: Optional[dict] = None) ->
     """Every senior and draft-eligible underclassman scored, best first, and the underclassmen who
     declare by their projected pick (DECLARE; an elite one always does). games: team -> id -> games
     played this season (_games_played), for the elite rule."""
-    pool = []
-    for slug, t in lgd["teams"].items():
-        for p in t["roster"]:
-            if p["cls"] in ("SR", "SRRS") or p["cls"] in UNDERCLASS_ELIGIBLE:
-                pool.append((draft_score(p["pos"], p["o"], rng), slug, p))
+    eligible = [(slug, p) for slug, t in lgd["teams"].items() for p in t["roster"]
+                if p["cls"] in ("SR", "SRRS") or p["cls"] in UNDERCLASS_ELIGIBLE]
+    grades = draft_grades([p for _, p in eligible])
+    pool = [(draft_score(p["pos"], p["o"], rng, grades), slug, p) for slug, p in eligible]   # one draw each, in roster order as before
     pool.sort(key=lambda x: -x[0])
+    # the board's needs: each player at a group after its first few on the board steps down a little
+    # (thirty-two teams do not all want the same position), so no position empties or floods a round
+    seen: dict[str, int] = {}
+    runs = []
+    for score, slug, p in pool:
+        g = DRAFT_GROUP.get(p["pos"], p["pos"])
+        runs.append((score - DRAFT_RUN * min(seen.get(g, 0), DRAFT_RUN_CAP), slug, p))
+        seen[g] = seen.get(g, 0) + 1
+    pool = sorted(runs, key=lambda x: -x[0])
     declared = set()
     for i, (score, slug, p) in enumerate(pool, 1):
         if p["cls"] in UNDERCLASS_ELIGIBLE:
@@ -1527,6 +1581,8 @@ def develop(p: dict, attrs: list[str], factor: float, rng: random.Random) -> int
     """One offseason's growth on our scale: each skill closes part of its gap to potential at his
     coachability's rate times `factor`; his overall follows (our formula). Returns the overall gained."""
     rate = recruits.RATE.get(p.get("c"), 0.27) * factor * DEV_RATE * YEAR_CURVE[min(len(YEAR_CURVE) - 1, int(p.get("yrs") or 0))]
+    rate /= 1 + max(0, p["o"] - DEV_TOP) / DEV_TOP_SPAN       # the last points come slowest (DEV_TOP)
+    rate *= DEV_PACE.get(DRAFT_GROUP.get(p["pos"], ""), 1.0)  # ... and by position (DEV_PACE)
     new_r, new_g = [], []
     for v, g in zip(p["r"], p["g"]):
         step = int(round(min(g, g * rate * rng.uniform(0.8, 1.2)))) if g > 0 else 0
