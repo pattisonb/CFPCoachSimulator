@@ -504,7 +504,7 @@
       cur.patchHead(cur.v);
       paintIntel();
       ui().toast(on ? `${r.name} is on your board.` : hadOffer ? `${r.name} is off your board · offer pulled.` : `${r.name} is off your board.`, { ms: 2500 });
-      if (desk.board === "on") cur.reload(r.pid);
+      cur.reload(r.pid);          // a newer load: one still in flight from a Send (read before this change) must not put the old star back
     }
     return panel;
   }
