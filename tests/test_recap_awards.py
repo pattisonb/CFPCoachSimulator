@@ -82,18 +82,23 @@ def title_case(text: str) -> bool:
     return True
 
 
-def wait_idle(base, sid) -> None:
-    for _ in range(2400):
-        if call(base, f"/api/season/{sid}/status?since=0")["status"] != "running":
-            return
-        time.sleep(0.5)
-    raise AssertionError("the sim never finished")
-
-
 def advance_to(base, sid, week) -> None:
+    """Sim to a week through the API and wait for it: the job starts a moment after the call answers, so the
+    wait is for the week, not for the first idle status."""
     call(base, f"/api/season/{sid}/advance", {"to": week})
-    wait_idle(base, sid)
-    assert call(base, f"/api/season/{sid}")["current_week"] == week
+    reached, idle = None, 0
+    for _ in range(2400):
+        time.sleep(0.5)
+        if call(base, f"/api/season/{sid}/status?since=0")["status"] == "running":
+            idle = 0
+            continue
+        reached = call(base, f"/api/season/{sid}")["current_week"]
+        if reached == week:
+            return
+        idle += 1
+        if idle >= 10:                      # five seconds idle short of the week: the sim stopped
+            break
+    raise AssertionError(f"the sim stopped at week {reached}, not {week}")
 
 
 def clean(page, root: str, errors) -> None:
@@ -232,9 +237,9 @@ def check_recap(page, base, sid, errors) -> None:
     champ = page.inner_text("#tab-summary .rcp-champ")
     assert r["champion_name"] in champ and str(r["title_game"]["home_score"]) in champ and r["title_game"]["site"] in champ, champ
     assert r["title_game"]["home_record"] in champ and r["title_game"]["away_record"] in champ, champ
-    rounds = page.eval_on_selector_all("#tab-summary .rcp-round", "els => els.map(e => [e.querySelector('.go-kicker').textContent.trim(), e.querySelectorAll('.rcp-gm').length])")
-    assert [x[0] for x in rounds] == ["First Round", "Quarterfinals", "Semifinals", "National Championship"] and [x[1] for x in rounds] == [8, 4, 2, 1], rounds
-    assert page.eval_on_selector_all("#tab-summary .rcp-round .rcp-gm.won", "els => els.length") == 15, "a winner in bold in every played game"
+    rounds = page.eval_on_selector_all("#tab-summary .rcp-round", "els => els.map(e => [e.querySelector('.go-kicker').textContent.trim(), e.querySelectorAll('.rcp-pair').length])")
+    assert [x[0] for x in rounds] == ["First Round", "Quarterfinals", "Semifinals", "National Championship"] and [x[1] for x in rounds] == [4, 4, 2, 1], rounds
+    assert page.eval_on_selector_all("#tab-summary .rcp-round .rcp-gm.won", "els => els.length") == 11, "a winner in bold in every played game"
     assert "BOWL" in page.inner_text("#tab-summary .rcp-round >> nth=2").upper(), "the bowl name under a semifinal"
     # the Heisman
     h = s["heisman"]
