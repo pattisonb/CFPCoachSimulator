@@ -676,7 +676,7 @@ def to_league(merged: dict, seed: int) -> tuple[dict, list[str]]:
     for slug in work:
         doc = merged["teams"][slug]
         conf = merged["conferences"].get(doc.get("conference")) or {"members": []}
-        conf_name = conf.get("name") or str(doc.get("conference"))
+        conf_name = league_file.engine_name(merged, doc.get("conference"))   # a renamed built-in keeps its engine name
         rng = random.Random(f"league-{seed}-{slug}")
         new = slug in added
         bdoc = docs.get(slug, {})
@@ -740,6 +740,7 @@ def to_league(merged: dict, seed: int) -> tuple[dict, list[str]]:
     lgd["recruiting_models"] = models
     lgd["schedule_rules"] = league_file.schedule_rules(merged)   # the generator's rules_override (offseason.next_season)
     lgd["divisions"] = league_file.divisions(merged)             # season.divisions
+    lgd["conference_names"] = league_file.conference_names(merged)   # engine name -> the file's display name
     n_add, n_chg, n_rem = len(merged["added"]), len(merged["changed"]), len(merged["removed"])
     lines = [f"{n_add} {'team' if n_add == 1 else 'teams'} added, {n_chg} changed and {n_rem} removed."] + fill_lines
     return lgd, lines

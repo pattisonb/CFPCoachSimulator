@@ -48,7 +48,7 @@ def quick_teams(merged: dict) -> dict:
     removed ones, plus each added team with what the generator reads."""
     base = season.load_teams()
     teams = {s: t for s, t in base.items() if s not in merged["removed"]}
-    names = {cid: c["name"] for cid, c in merged["conferences"].items()}
+    names = {cid: league_file.engine_name(merged, cid) for cid in merged["conferences"]}
     for s, t in merged["teams"].items():
         if s in merged["added"] or s in merged["changed"]:
             teams[s] = {**copy.deepcopy(base.get(s, {})), "name": t["name"], "state": t.get("state"), "fictional": False,
@@ -145,6 +145,9 @@ def test_sun_belt_add_rebalances_divisions():
     for year, seed in ((2026, 1), (2026, 2), (2027, 3)):
         games, _ = generate(year, teams, r, seed)
         check_season(games, teams, r)
+        conf = Counter(s for g in games.values() if g["conference_game"] for s in (g["home"], g["away"]))
+        sb = [s for ms in d.values() for s in ms]
+        assert all(7 <= conf[s] <= 8 for s in sb), {s: conf[s] for s in sb}   # at most one league game short
         for div in d.values():
             for i, a in enumerate(div):
                 for b in div[i + 1:]:
@@ -244,6 +247,81 @@ def test_builtin_conference_widths_validate_passes():
         for year in (2026, 2028):
             games, _ = generate(year, teams, r, i)
             check_season(games, teams, r)
+
+
+RENAMED_SUN_BELT = {"format": "cfp-league/1",
+                    "conferences": [{"id": "sun-belt", "name": "Southern Belt", "level": "FBS", "games": 9}],
+                    "teams": [_new_team("gulf-coast-tech", "AL", "sun-belt")]}
+
+
+def test_renamed_conference_keeps_engine_name():
+    assert league_file.validate(RENAMED_SUN_BELT) == []
+    merged = league_file.merge(RENAMED_SUN_BELT)
+    lgd, _ = league_fill.to_league(merged, 1)
+    assert lgd["conference_names"] == {"Sun Belt": "Southern Belt"}
+    assert set(lgd["schedule_rules"]["conferences"]) == {"Sun Belt"} and set(lgd["divisions"]) == {"Sun Belt"}
+    assert lgd["schedule_rules"]["conferences"]["Sun Belt"]["games"] == 9
+    teams = built_teams(lgd)
+    members = sorted(s for s, t in teams.items() if t["conference"] == "Sun Belt")
+    assert members == sorted(merged["conferences"]["sun-belt"]["members"]) and "gulf-coast-tech" in members
+    assert not any(t["conference"] == "Southern Belt" for t in teams.values())
+    games, _ = generate(2026, teams, lgd["schedule_rules"])
+    check_season(games, teams, lgd["schedule_rules"])
+    conf = Counter(s for g in games.values() if g["conference_game"] for s in (g["home"], g["away"]))
+    assert all(8 <= conf[s] <= 9 for s in members) and max(conf[s] for s in members) == 9
+
+
+def test_rename_with_games_applies_games():
+    doc = {"format": "cfp-league/1", "conferences": [{"id": "mac", "name": "Mid-American", "level": "FBS", "games": 9}]}
+    merged = league_file.merge(doc)
+    r = league_file.schedule_rules(merged)
+    assert set(r["conferences"]) == {"MAC"} and r["conferences"]["MAC"]["games"] == 9 and "games_from" not in r["conferences"]["MAC"]
+    assert league_file.conference_names(merged) == {"MAC": "Mid-American"}
+    teams = quick_teams(merged)
+    games, _ = generate(2026, teams, r)
+    check_season(games, teams, r)
+    mac = [s for s, t in teams.items() if t["conference"] == "MAC"]
+    conf = Counter(s for g in games.values() if g["conference_game"] for s in (g["home"], g["away"]))
+    assert len(mac) == 13 and sum(conf[s] for s in mac) == 13 * 9 - 1 and max(conf[s] for s in mac) == 9
+    only_rename = league_file.merge({"format": "cfp-league/1", "conferences": [{"id": "mac", "name": "Mid-American", "games": 8}]})
+    assert league_file.schedule_rules(only_rename) == {"conferences": {}, "annual": []}   # a rename alone: the display name
+
+
+def test_renamed_power_conference_stays_power():
+    doc = {"format": "cfp-league/1", "conferences": [{"id": "sec", "name": "Southeastern", "level": "FBS", "games": 9}],
+           "teams": [_new_team("hawk-tech", "TX", "sec")]}
+    assert league_file.validate(doc) == []
+    merged = league_file.merge(doc)
+    r = league_file.schedule_rules(merged)
+    assert set(r["conferences"]) == {"SEC"} and "SEC" in schedule_gen.rules()["power"]
+    assert league_file.conference_names(merged) == {"SEC": "Southeastern"}
+    lgd, _ = league_fill.to_league(merged, 1)
+    assert lgd["teams"]["hawk-tech"]["meta"]["conference"] == "SEC"
+    teams = quick_teams(merged)
+    assert teams["hawk-tech"]["conference"] == "SEC"
+    games, hist = generate(2026, teams, r)
+    check_season(games, teams, r)
+    # Power status: a Group of Five team's game with an SEC team is a pay game at the SEC team's place, never returned
+    sec = {s for s, t in teams.items() if t["conference"] == "SEC"}
+    power = {s for s, t in teams.items() if t["conference"] in schedule_gen.rules()["power"]} | set(schedule_gen.rules()["power_independents"])
+    g5 = {s for s, t in teams.items() if not t["fictional"] and s not in power}
+    assert any(g["home"] in sec and g["away"] in g5 for g in games.values())
+    assert not any(g["home"] in g5 and g["away"] in sec for g in games.values())
+    assert not any({p["home"], p["away"]} & sec and {p["home"], p["away"]} & g5 for p in hist["pending"])
+
+
+def test_moved_team_keeps_rivalry():
+    doc = {"format": "cfp-league/1", "teams": [{"slug": "toledo", "conference": "mountain-west"}]}
+    assert league_file.validate(doc) == []
+    merged = league_file.merge(doc)
+    r = league_file.schedule_rules(merged)
+    assert {"teams": ["bowling-green", "toledo"], "name": ""} in r["annual"]
+    teams = quick_teams(merged)
+    assert teams["toledo"]["conference"] == "Mountain West"
+    games, _ = generate(2026, teams, r)
+    check_season(games, teams, r)
+    g = [g for g in games.values() if {g["home"], g["away"]} == {"bowling-green", "toledo"}]
+    assert len(g) == 1 and not g[0]["conference_game"]
 
 
 def test_builtin_rules_unchanged():

@@ -19,7 +19,7 @@ import json
 import random
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 RULES_FILE = ROOT / "data" / "schedule_rules.json"
@@ -235,9 +235,9 @@ def _by_conference(fbs: dict) -> dict[str, list[str]]:
 # ----- fixed games ---------------------------------------------------------------------------------
 
 def _fixed_games(year: int, fbs: dict, hist: dict, rng: random.Random, add, is_power, booked: set, room, games_so_far,
-                 extra_annual: tuple = ()) -> None:
+                 extra_annual: Sequence[dict] = ()) -> None:
     S = series()
-    for s in list(S["annual"]) + list(extra_annual):   # a league file's listed rivals after the built-in series                                 # annual series first: they outrank a new series
+    for s in list(S["annual"]) + list(extra_annual):   # annual series first (they outrank a new series), a league file's listed rivals last
         a, b = s["teams"]
         if a not in fbs or b not in fbs:
             continue

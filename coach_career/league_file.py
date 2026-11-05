@@ -648,15 +648,32 @@ def _base_members() -> dict[str, list[str]]:
     return out
 
 
+def engine_name(merged: dict, cid: str) -> str:
+    """The conference name the engine and the schedule rules use: a built-in conference keeps its
+    built-in name even when the file renames it (only its display name changes, conference_names);
+    a new conference's is its name in the file."""
+    builtin = _builtin()["conf_names"].get(cid)
+    if builtin is not None:
+        return builtin
+    c = merged["conferences"].get(cid)
+    return c["name"] if c else str(cid)
+
+
+def conference_names(merged: dict) -> dict:
+    """{engine name: display name} for each new or renamed conference (lgd["conference_names"])."""
+    b = _builtin()["conf_names"]
+    return {engine_name(merged, cid): c["name"] for cid, c in sorted(merged["conferences"].items())
+            if cid not in b or c["name"] != b[cid]}
+
+
 def _conf_changed(merged: dict, cid: str) -> bool:
-    """A built-in conference whose members, games or name the file changed."""
+    """A built-in conference whose members or games the file changed (a rename alone changes only its display name)."""
     b, c = _builtin(), merged["conferences"].get(cid)
-    return c is None or sorted(c["members"]) != _base_members().get(cid, []) or c["games"] != b["games"].get(cid, 0) \
-        or c["name"] != b["conf_names"].get(cid)
+    return c is None or sorted(c["members"]) != _base_members().get(cid, []) or c["games"] != b["games"].get(cid, 0)
 
 
 def divisions(merged: dict) -> dict:
-    """{conference name: {division: [slugs]}} for each conference that plays divisions
+    """{engine conference name: {division: [slugs]}} for each conference that plays divisions
     (season.DIVISIONS) and whose membership (or games) the file changed: the built-in divisions less
     the teams gone, each added member in the smaller division (a tie to the first alphabetically).
     {} (no divisions) when a division would be empty or too big for the conference's games."""
@@ -676,7 +693,7 @@ def divisions(merged: dict) -> dict:
             new[d].append(s)
         if not c or any(not ms for ms in new.values()) or max(len(ms) for ms in new.values()) - 1 > c["games"]:
             new = {}
-        out[c["name"] if c else conf_name] = new
+        out[conf_name] = new
     return out
 
 
@@ -685,7 +702,7 @@ def _new_rule(n: int, games: int) -> dict:
             "non_conference": {"games": 12 - games, "power_road": list(NEW_CONFERENCE_POWER_ROAD), "fcs_max": NEW_CONFERENCE_FCS_MAX}}
 
 
-def _trimmed_rule(base: dict, c: dict, divs: dict) -> dict:
+def _trimmed_rule(base: dict, c: dict, divs: dict, name: str) -> dict:
     """A built-in conference's rule for its merged members and games: the pairs, eight-game turns and
     round robin its teams no longer allow are dropped; its divisions are divisions()'s."""
     rule = copy.deepcopy(base)
@@ -708,8 +725,8 @@ def _trimmed_rule(base: dict, c: dict, divs: dict) -> dict:
             del rule["games_from"]
     if rule.get("round_robin") and n - 1 != games:
         del rule["round_robin"]
-    if c["name"] in divs:
-        d = divs[c["name"]]
+    if name in divs:
+        d = divs[name]
         if d:
             rule["divisions"] = d
             rule["cross_division"] = max(0, games - (min(len(ms) for ms in d.values()) - 1))
@@ -759,7 +776,7 @@ def schedule_rules(merged: dict) -> dict:
             elif R.get(b["conf_names"][cid]) is None:
                 work[cid] = None                        # the independents: scheduled team by team
             elif _conf_changed(merged, cid):
-                work[cid] = _trimmed_rule(R[b["conf_names"][cid]], c, divs)
+                work[cid] = _trimmed_rule(R[b["conf_names"][cid]], c, divs, b["conf_names"][cid])
                 out_ids.add(cid)
             else:
                 work[cid] = copy.deepcopy(R[b["conf_names"][cid]])
@@ -769,10 +786,14 @@ def schedule_rules(merged: dict) -> dict:
         rule_for(cid)
 
     def listed(slug: str) -> list:
+        """The rivals a team's schedule follows from the file: an added team's, a changed list, and for a
+        team that moved conference its built-in rivalries too (both ways), now perhaps across conferences."""
         rv = teams[slug].get("rivals") or []
-        if slug in merged["added"] or rv != (docs.get(slug) or {}).get("rivals"):
-            return [r for r in rv if isinstance(r, str)]
-        return []
+        out = list(rv) if slug in merged["added"] or rv != (docs.get(slug) or {}).get("rivals") else []
+        if slug in b["team_conf"] and teams[slug].get("conference") != b["team_conf"][slug]:
+            out += (docs.get(slug) or {}).get("rivals") or []
+            out += sorted(t for t, d in docs.items() if slug in (d.get("rivals") or []))
+        return [r for r in dict.fromkeys(out) if isinstance(r, str)]
 
     seen = {tuple(sorted(s["teams"])) for s in schedule_gen.series()["annual"]}
     annual = []
@@ -795,4 +816,4 @@ def schedule_rules(merged: dict) -> dict:
             if tuple(pair) not in seen:
                 seen.add(tuple(pair))
                 annual.append({"teams": pair, "name": ""})
-    return {"conferences": {confs[cid]["name"]: work[cid] for cid in sorted(out_ids)}, "annual": annual}
+    return {"conferences": {engine_name(merged, cid): work[cid] for cid in sorted(out_ids)}, "annual": annual}
