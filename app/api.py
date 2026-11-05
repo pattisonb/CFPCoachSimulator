@@ -476,14 +476,15 @@ def _fbs_cards(teams: dict) -> list[dict]:
 
 
 def _pend(blob: bytes, seed: Optional[int]) -> dict:
-    """league_file.check on `blob`, held as the pending league when it can start a career."""
+    """league_file.check on `blob`; the result replaces the pending league (a file that cannot start a
+    career, or one that collapses to the built-in league, leaves none). The checked league is final:
+    its fill seed is fixed here, and Start plays exactly it."""
     global _pending_league
     r = league_file.check(blob, seed)
+    _pending_league = None
     if r["ok"] and not r["builtin"]:
-        _pending_league = {"key": hashlib.sha256(bytes(blob)).hexdigest(), "seed": seed, "blob": bytes(blob),
+        _pending_league = {"key": hashlib.sha256(bytes(blob)).hexdigest(), "seed": r["seed"],
                            "lgd": r["league"], "engine": r["engine"], "games": r["games"], "real_polls": not r["structural"]}
-    elif r["ok"]:
-        _pending_league = None
     return r
 
 
@@ -505,9 +506,20 @@ def league_check(p: Params) -> dict:
     return {"ok": True, "errors": [], "summary": r["summary"], "key": _pending_league["key"], "teams": _fbs_cards(teams)}
 
 
+def _undo_start(cid: str) -> None:
+    """A Start that failed: its league file and save gone, the built-in league back in play (the
+    pending league stays, so Start can be tried again)."""
+    league.forget(cid)
+    if (season.SEASONS_DIR / f"{cid}.json").exists() or (season.SEASONS_DIR / cid).exists():
+        _delete_season_file(cid)
+    recruiting.use_league_models({})
+    season.use_league(season.TEAMS_FILE)
+
+
 def _start_from_league(key: str, team: str, seed: Optional[int], coach: Optional[dict]) -> dict:
-    """A new career from the pending league file: its teams file written as the career's 2026 league,
-    then the season with the file's league in its state (and its schedule when the file made one)."""
+    """A new career from the pending league file, saved: its teams file written as the career's 2026
+    league, then the season with the file's league in its state (and its schedule when the file made
+    one). `seed` is the season's own seed; the league is exactly the one checked."""
     global _pending_league
     pending = _pending_league
     if pending is None or pending["key"] != key:
@@ -517,27 +529,21 @@ def _start_from_league(key: str, team: str, seed: Optional[int], coach: Optional
         raise ApiError(404, f"unknown team {team}")
     if t["fictional"]:
         raise ApiError(404, "That team is an FCS stand-in: pick an FBS team.")
-    if seed is not None and seed != pending["seed"]:
-        r = _pend(pending["blob"], seed)
-        if not r["ok"]:
-            raise ApiError(409, r["errors"][0])
-        pending = _pending_league
     cid = uuid.uuid4().hex[:12]
-    out = league.path(cid, league.FIRST_YEAR)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    tmp = out.with_suffix(f".{os.getpid()}.tmp")
-    tmp.write_text(json.dumps(pending["engine"]), encoding="utf-8")
-    os.replace(tmp, out)
     lgd = pending["lgd"]
     try:
+        out = league.path(cid, league.FIRST_YEAR)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        tmp = out.with_suffix(f".{os.getpid()}.tmp")
+        tmp.write_text(json.dumps(pending["engine"]), encoding="utf-8")
+        os.replace(tmp, out)
         season.use_league(out)
         recruiting.use_league_models(lgd.get("recruiting_models") or {})
         state = season.new_season(team, "full", seed, coach=coach, career=True, schedule=pending["games"],
                                   league=lgd, career_id=cid, real_polls=pending["real_polls"])
+        season.save_season(state)
     except Exception:
-        league.forget(cid)
-        recruiting.use_league_models({})
-        season.use_league(season.TEAMS_FILE)
+        _undo_start(cid)
         raise
     _pending_league = None
     return state
@@ -563,12 +569,12 @@ def create_season(p: Params) -> dict:
         raise ApiError(400, "Coach Career starts from week 1")
     _check_not_running()
     if key != "builtin":
-        state = _start_from_league(key, team, seed, coach)
+        state = _start_from_league(key, team, seed, coach)       # saved
     else:
         recruiting.use_league_models({})
         season.use_league(season.TEAMS_FILE)          # a new career starts in the 2026 league
         state = season.new_season(team, mode, seed, coach=coach, career=True)
-    season.save_season(state)
+        season.save_season(state)
     _mark_changed()
     _hold(state)
     return season.summary(state)

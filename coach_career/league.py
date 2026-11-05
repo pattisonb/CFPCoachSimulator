@@ -413,7 +413,10 @@ def ensure_built(state: dict) -> Optional[Path]:
     if not out.exists():
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         tmp = out.with_suffix(f".{os.getpid()}.tmp")
-        tmp.write_text(json.dumps(build(lg, state.get("team"))), encoding="utf-8")
+        # an imported league's first season is the file app/api.py wrote at Start (league_file.check's
+        # build, no team by overall); later seasons put your team's depth by overall (league.lineup)
+        me = None if year <= FIRST_YEAR else state.get("team")
+        tmp.write_text(json.dumps(build(lg, me)), encoding="utf-8")
         os.replace(tmp, out)
     return out
 

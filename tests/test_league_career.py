@@ -6,12 +6,13 @@ import sys as _sys
 from pathlib import Path as _Path
 
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root
+import copy
 import json
 import shutil
 import tempfile
 
 from app import api
-from coach_career import league, league_file, offseason, programs, recruiting
+from coach_career import league, league_file, league_fill, offseason, programs, recruiting
 from sim import coaches, fcs_names, schedule_gen, season
 import test_offseason
 
@@ -88,6 +89,21 @@ def test_check_schedule_error_names_no_stand_in():
                                          "an FCS opponent cannot fill its 2026 schedule; Alder Tech too."]}, r
 
 
+def test_plain_reasons():
+    fcs = FCS_META[0]["slug"]
+    teams = {fcs: {"fictional": True, "name": "x"}, "alder-tech": {"fictional": False, "name": "Alder Tech"}}
+    got = league_file._plain(f"2 teams without 12 games in 2026: ['{fcs}', 'alder-tech']; can't fit", teams)
+    assert got == "2 teams without 12 games in 2026: an FCS opponent, Alder Tech; can't fit", got
+    assert league_file._plain("no Big Ten slate for 2026", {}, {"Big Ten": "Big Ten Plus"}) == "no Big Ten Plus slate for 2026"
+
+
+def _rename_only(name: str, suffix: str) -> dict:
+    b = league_file._builtin()
+    cid = next(iter(b["conf_names"]))
+    return {"format": "cfp-league/1", "name": name,
+            "conferences": [{"id": cid, "name": b["conf_names"][cid] + suffix, "games": b["games"][cid]}]}
+
+
 def test_check_rename_only_keeps_the_real_schedule():
     b = league_file._builtin()
     cid = next(iter(b["conf_names"]))
@@ -124,7 +140,18 @@ def test_refusals():
     assert not r["ok"] and r["errors"] and r["key"] is None and r["teams"] == []
 
 
-def test_new_team_program_values(st: dict):
+def test_stale_key_and_failed_check():
+    """Only the league checked last is pending: an older key is refused, and a failed check clears it."""
+    a = api_call("POST", "/api/league/check", body_bytes=league_file.dumps(_rename_only("League A", " A")))
+    b = api_call("POST", "/api/league/check", body_bytes=league_file.dumps(_rename_only("League B", " B")))
+    assert a["ok"] and b["ok"] and a["key"] != b["key"] and api._pending_league["key"] == b["key"]
+    assert "no longer loaded" in refused(lambda: api_call("POST", "/api/season", {"team": "smu", "seed": 1, "league": a["key"]}), 409)
+    assert not api_call("POST", "/api/league/check", body_bytes=b"{")["ok"]
+    assert api._pending_league is None
+    refused(lambda: api_call("POST", "/api/season", {"team": "smu", "seed": 1, "league": b["key"]}), 409)
+
+
+def _check_new_team_program_values(st: dict):
     """A new team in a new conference: its base program values from its prestige and its conference
     (a conference of new teams has no built-in members, so the game's defaults)."""
     alder, basalt = programs.get(st, "alder-tech"), programs.get(st, "basalt-state")
@@ -136,14 +163,61 @@ def test_new_team_program_values(st: dict):
     assert alder["rating"] > basalt["rating"]
 
 
+FILLS: list = []
+
+
+def _count_fills():
+    real = league_fill.to_league
+
+    def counted(*a, **k):
+        FILLS[0] += 1
+        return real(*a, **k)
+    league_fill.to_league = counted
+    FILLS[:] = [0]
+
+
+def _check_failed_starts_clean_up(key: str):
+    """A Start that fails in the season or in its save leaves no league file and no save, puts the
+    built-in league back, and keeps the pending league for another try."""
+    def files() -> set:
+        return set(league.CACHE_DIR.glob("*")) | set(season.SEASONS_DIR.glob("*"))
+    before = files()
+    for name in ("new_season", "save_season"):
+        real = getattr(season, name)
+
+        def boom(*a, _real=real, _name=name, **k):
+            if _name == "save_season":
+                _real(*a, **k)                     # a save written, then the failure
+            raise RuntimeError("disk full")
+        setattr(season, name, boom)
+        try:
+            refused(lambda: api_call("POST", "/api/season", {"team": "alder-tech", "seed": 4, "league": key}), 500)
+        finally:
+            setattr(season, name, real)
+        assert files() == before, (name, files() - before)
+        assert season._league_path == season.TEAMS_FILE and api._pending_league["key"] == key, name
+
+
 def full_career():
+    _count_fills()
     blob = league_file.dumps(ALDER_IN_NEW_TEN_TEAM_CONFERENCE)
     r = api_call("POST", "/api/league/check", body_bytes=blob)
     assert r["ok"] and not r["errors"] and any(t["slug"] == "alder-tech" for t in r["teams"]), r.get("errors")
     assert r["summary"]["added"] == 10 and r["summary"]["generated"] == 850 and all(sentence(x) for x in r["summary"]["lines"])
+    checked = copy.deepcopy({slug: t["roster"] for slug, t in api._pending_league["lgd"]["teams"].items()})
     refused(lambda: api_call("POST", "/api/season", {"team": "nowhere-u", "seed": 4, "league": r["key"]}), 404)
+    fcs = FCS_META[0]["slug"]
+    refused(lambda: api_call("POST", "/api/season", {"team": fcs, "seed": 4, "league": r["key"]}), 404)
+    _check_failed_starts_clean_up(r["key"])
     s = api_call("POST", "/api/season", {"team": "alder-tech", "mode": "full", "seed": 4, "league": r["key"]})
+    assert FILLS == [1], FILLS                       # checked without a seed, started with seed 4: one fill
     st = season.load_season(s["id"])
+    assert {slug: t["roster"] for slug, t in st["league"]["teams"].items()} == checked   # the league checked, exactly
+    # the 2026 teams file Start wrote is what ensure_built rebuilds (the browser keeps no data/leagues)
+    path = league.path(s["id"], 2026)
+    written = path.read_bytes()
+    path.unlink()
+    assert league.ensure_built(st) == path and path.read_bytes() == written
     assert st["league"]["source"]["name"] == "My League" and s["league"] == "My League"
     assert sum(1 for g in st["games"].values() if "alder-tech" in (g["home"], g["away"])) == 12
     assert any({g["home"], g["away"]} == {"alder-tech", "oregon-state"} for g in st["games"].values())
@@ -152,7 +226,7 @@ def full_career():
     teams = api_call("GET", f"/api/season/{s['id']}/teams")["teams"]
     assert any(t["slug"] == "alder-tech" and t["conference"] == "Big Sky East" for t in teams)
     refused(lambda: api_call("POST", "/api/season", {"team": "alder-tech", "seed": 4, "league": r["key"]}), 409)  # used up
-    test_new_team_program_values(st)
+    _check_new_team_program_values(st)
     season.advance_to(st, 2)                                          # real games, weeks 1-2
     assert all(g["played"] for g in st["games"].values() if g["week"] <= 2)
     test_offseason.finished(st)                                       # the rest of the season, faked
@@ -190,8 +264,10 @@ if __name__ == "__main__":
     try:
         test_check_errors()
         test_check_schedule_error_names_no_stand_in()
+        test_plain_reasons()
         test_check_rename_only_keeps_the_real_schedule()
         test_refusals()
+        test_stale_key_and_failed_check()
         test_collapsed_import_is_the_builtin_career()
         full_career()
     finally:

@@ -834,18 +834,22 @@ def schedule_rules(merged: dict) -> dict:
 
 # ---- Check: a file as the career it would start --------------------------------------------------
 
-def _plain(reason: str, teams: dict) -> str:
+def _plain(reason: str, teams: dict, conference_names: Optional[dict] = None) -> str:
     """A ScheduleError's reason for the page: each team slug as its name, an FCS stand-in as "an FCS
-    opponent" (never its slug or a real school), and no list brackets or quotes."""
+    opponent" (never its slug or a real school), a list without its brackets and quotes, and a
+    conference by its display name (lgd["conference_names"])."""
     from sim import season
+    names = conference_names or {}
 
     def word(m: re.Match) -> str:
         t = teams.get(m.group(0))
         if t is None:
             return m.group(0)
         return "an FCS opponent" if t.get("fictional") else season.team_display(m.group(0), teams)
-    text = re.sub(r"[a-z0-9]+(?:-[a-z0-9]+)*", word, str(reason))
-    return re.sub(r"[\[\]']", "", text).strip().rstrip(".") or "no schedule fits its conferences"
+    text = re.sub(r"\[([^\]]*)\]", lambda m: m.group(1).replace("'", "").replace('"', ""), str(reason))  # a list of slugs
+    text = re.sub(r"\bno (.+?) slate\b", lambda m: f"no {names.get(m.group(1), m.group(1))} slate", text)
+    text = re.sub(r"(?<![A-Za-z])[a-z0-9]+(?:-[a-z0-9]+)*", word, text)
+    return text.strip().rstrip(".") or "no schedule fits its conferences"
 
 
 def _count(n: int, one: str, many: str) -> str:
@@ -875,7 +879,7 @@ def check(blob: bytes, seed: Optional[int] = None) -> dict:
         return {"ok": True, "builtin": True,
                 "summary": {"name": merged["name"], **counts, "generated": 0,
                             "lines": ["The file matches the game's own league, so the career starts from it."]}}
-    seed = league_fill.league_seed(blob, seed)
+    seed = league_fill.league_seed(blob, seed)          # the fill seed, fixed here: Start plays exactly this league
     lgd, lines = league_fill.to_league(merged, seed)
     generated = sum(max(0, len(lgd["teams"][s]["roster"]) - len(merged["teams"][s].get("roster") or []))
                     for s in set(merged["added"]) | set(merged["changed"]) if s in lgd["teams"])
@@ -888,9 +892,10 @@ def check(blob: bytes, seed: Optional[int] = None) -> dict:
             games, lgd["schedule_history"] = schedule_gen.generate(
                 YEAR, teams, schedule_gen.empty_history(), random.Random(f"league-schedule-{seed}"), lgd["schedule_rules"])
         except schedule_gen.ScheduleError as e:
-            return {"ok": False, "errors": [f"The {YEAR} schedule could not be built for this league: {_plain(str(e), teams)}."]}
+            return {"ok": False, "errors": [f"The {YEAR} schedule could not be built for this league: {_plain(str(e), teams, lgd.get("conference_names"))}."]}
     lines.append(f"Generated {_count(generated, 'player', 'players')} in all." if generated else "Generated no players.")
     lines.append(f"The {YEAR} schedule is built from the file's conferences." if merged["structural"]
                  else f"The real {YEAR} schedule is kept.")
     return {"ok": True, "builtin": False, "league": lgd, "engine": engine, "games": games, "structural": merged["structural"],
+            "seed": seed,
             "summary": {"name": merged["name"], **counts, "generated": generated, "lines": lines}}
