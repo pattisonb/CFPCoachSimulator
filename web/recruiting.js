@@ -392,6 +392,28 @@
   // the tab he sits under
   const columnOf = (b) => (b.committed || b.signed ? "committed" : COLUMN_TIPS[b.stage] ? b.stage : "cold");
 
+  // an official visit's pill: "Visit Wk 6" until he goes, then "Visited". It is tied to the visited school's game that
+  // week (visit.game, coach_career/prospects.visit_view): hovering, focusing or tapping the pill shows that game, the
+  // week and opponent before it is played and its result after, in the game's result line ("Week 6: L 36–41 vs Ohio
+  // State", as the Rivalries card and the Office read a result). No game that week (a bye, a portal campus visit): no tip.
+  const visitLabel = (v) => (v.done ? "Visited" : `Visit Wk ${v.week}`);
+  function visitTipText(v, school) {
+    const g = v && v.game;
+    if (!g || g.week == null || !g.opponent_name) return null;
+    const vs = g.venue === "away" ? "at" : "vs";
+    if (g.played && g.points_for != null && g.points_against != null)
+      return `${school ? `${school}, ` : ""}Week ${g.week}: ${g.won ? "W" : "L"} ${g.points_for}–${g.points_against}${g.overtime ? " OT" : ""} ${vs} ${g.opponent_name}`;
+    return `His official visit${school ? ` to ${school}` : ""} is Week ${g.week}, ${vs} ${g.opponent_name}.`;
+  }
+  // the pill, wrapped as a [data-gtip] cell (the grade tooltips' document listeners show it) when there is a game to
+  // show; `school` names another school's visit (null: yours)
+  function visitPill(pill, v, pid, slug, school, attrs = {}) {
+    const text = visitTipText(v, school);
+    if (!text) { for (const [k, val] of Object.entries(attrs)) pill.setAttribute(k, val); return pill; }
+    const tipId = `tip-visit-${pid}-${slug}`;
+    return el("span", { class: "go-tip go-visit-tip", "data-gtip": "", tabindex: "0", "aria-describedby": tipId, ...attrs }, [pill,
+      el("span", { class: "go-tip-box", role: "tooltip", id: tipId, text })]);
+  }
   // what stands out about him, as small tags: the staff's finds, then today's need, offer, mood and commitment
   const genBadge = () => el("span", { class: "go-badge generational", text: "Generational", title: "Your staff's find after three looks: a once-in-a-generation talent every program in the country wants" });
   // "OC likes him": with his report complete, the read says he would start on your returning roster; the tag's title carries the sentence
@@ -506,7 +528,8 @@
       return el("div", { class: `pv-battle-row pv-rival ${you ? "you" : ""}`.trim(), role: "listitem", "data-key": x.school, "data-school": x.school }, [
         window.CFP.teamPill(x.school), el("span", { class: "pv-battle-name" }, [el("b", { text: x.name }), you ? el("span", { class: "muted small", text: " (Your School)" }) : null]),
         el("span", { class: "pv-battle-w", text: word }),
-        el("span", { class: "muted small pv-battle-marks", text: [x.offered ? "Offer" : "", x.visit ? (x.visit.done ? "Visited" : `Visit Wk ${x.visit.week}`) : ""].filter(Boolean).join(" · ") })]);
+        el("span", { class: "muted small pv-battle-marks" }, [x.offered ? "Offer" : "", x.offered && x.visit ? " · " : "",
+          x.visit ? visitPill(el("span", { class: "pv-visit", text: visitLabel(x.visit) }), x.visit, b.id, x.school, you ? null : x.name) : ""])]);
     })));
     return PV().card(title, parts, { key: "battle", cls: "pv-battle-card" });
   }
@@ -606,7 +629,7 @@
     if (tr.style_key) out.push(el("span", { class: "go-tag", "data-key": "trait:style", text: tr.commit_style, title: STYLE_TIPS[tr.style_key] || "How he commits" }));
     if (b.twist) out.push(el("span", { class: "go-tag warn", "data-key": "twist", text: b.twist.label, title: b.twist.line || TWIST_TIP }));
     if (b.likes) out.push(el("span", { class: "go-tag good go-likes", "data-key": "likes", text: likesText(b.likes), title: likesLine(b.likes) }));
-    if (b.visit) out.push(el("span", { class: "go-tag", "data-key": "visit", text: b.visit.done ? "Visited" : `Visit Wk ${b.visit.week}` }));
+    if (b.visit) out.push(visitPill(el("span", { class: "go-tag", text: visitLabel(b.visit) }), b.visit, b.id, me, null, { "data-key": "visit" }));
     if (b.portal && b.role) out.push(el("span", { class: `go-tag ${b.role === "Would Start" ? "good" : b.role === "Next in Line" ? "warn" : "muted"}`, "data-key": "role", text: b.role, title: "Where he would sit on your depth chart next season" }));
     for (const n of out) if (!n.dataset.key) n.dataset.key = tagKey(n.textContent);
     return out;
@@ -2156,7 +2179,9 @@
     const hide = (c) => { if (c && tipOf(c)) tipOf(c).classList.remove("show"); };
     const left = (e) => { const c = cellOf(e); if (c && !(e.relatedTarget && c.contains(e.relatedTarget))) hide(c); };
     document.addEventListener("mouseover", (e) => { const c = cellOf(e); if (c && !(e.relatedTarget && c.contains(e.relatedTarget))) show(c); });
-    document.addEventListener("mouseout", left);
+    // a cell with focus (tapped on a phone, or reached by the keyboard) keeps its tip when the pointer leaves: a tap's
+    // synthetic mouseout would otherwise close it at once; blur, Escape or a tap elsewhere close it
+    document.addEventListener("mouseout", (e) => { const c = cellOf(e); if (c && c.contains(document.activeElement)) return; left(e); });
     document.addEventListener("focusin", (e) => show(cellOf(e)));
     document.addEventListener("focusout", left);
     document.addEventListener("click", (e) => show(cellOf(e)));
