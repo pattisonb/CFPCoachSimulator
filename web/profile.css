@@ -188,3 +188,11 @@ body { --pv-warn: var(--go-warn, #f5b942); }
   .pv-attr > .pv-attr-w { grid-column: 2; text-align: left; }
   .pv-unc { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ----- tab switches hold still (web/ui.js holdTabRow; docs/HOW_IT_WORKS.md "Board scrolling") -----
+   the body under a tab row fills at least the room the row had under it, so a short tab never pulls its scroll box (or
+   the page) back and the row and everything above it stay where they were; in the popup the row pins to the top of its
+   scrolling body, as it does in the board's pane and the Scouting Center */
+.pv-tabrow ~ [role=tabpanel], .pv-tabrow ~ .go-sub-body, .pv-tabrow ~ .sc-sub-body { min-height: var(--tab-hold, 0px); }
+.modal-body .pv-popup > .pv-tabrow { position: sticky; top: -14px; z-index: 2; background: var(--panel); }
+@media (max-width: 700px) { .modal-body .pv-popup > .pv-tabrow { top: -12px; } }

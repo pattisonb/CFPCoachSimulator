@@ -1,7 +1,7 @@
 /* Shared UI helpers for every page: the toast stack, the change pulse, fades, keyed lists, a busy
    state for the control that acted, and an in-place patch (morph) so an action updates the screen
    instead of rebuilding it, and the ⓘ tooltip. window.CFP.ui = { toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph, tip, placeTip,
-   scrollBoxOf, inView, keepInView }.
+   scrollBoxOf, inView, keepInView, glide }.
    Motion honors prefers-reduced-motion. Loaded after gameview.js (which makes window.CFP). */
 (function () {
   "use strict";
@@ -223,12 +223,24 @@
   const TRANSIENT = ["go-changed", "go-fade-in", "go-leaving"];
   function morph(live, fresh, opts) {
     const changed = new Set(), born = [];
+    const acted = !!(opts && opts.pulse), h0 = acted ? live.getBoundingClientRect().height : 0;
     morphChildren(live, fresh, changed, born);
-    if (opts && opts.pulse) {
+    if (acted) {
       for (const n of born) fadeIn(n);
       for (const n of changed) if (n.isConnected && !born.includes(n)) pulse(n);
+      glide(live, h0);
     }
     return [...changed];
+  }
+  // glide(node, from): a card an action made taller or shorter eases to its new height (GLIDE_MS) instead of
+  // snapping, so what sits under it slides rather than jumps; a scroll box keeps its own size and is left alone.
+  // Instant under prefers-reduced-motion.
+  const GLIDE_MS = 180;   // *tune* how long a patched card takes to reach its new height
+  function glide(node, from) {
+    if (still() || !node.isConnected || !node.animate) return;
+    const to = node.getBoundingClientRect().height, cs = getComputedStyle(node);
+    if (Math.abs(to - from) < 2 || cs.display === "contents" || cs.display === "inline" || /(auto|scroll)/.test(cs.overflowY)) return;
+    node.animate([{ height: `${from}px`, overflow: "hidden" }, { height: `${to}px`, overflow: "hidden" }], { duration: GLIDE_MS, easing: "ease-out" });
   }
   function keyOfNode(n) { return n.nodeType === 1 ? n.getAttribute("data-key") || null : null; }
   function same(a, b) { return a.nodeType === b.nodeType && a.nodeName === b.nodeName; }
@@ -373,7 +385,42 @@
     }
   }, true);
 
-  CFP.ui = { toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph, tip, placeTip, scrollBoxOf, inView, keepInView };
+  // ----- a tab switch never moves its tab row ---------------------------------------------------
+  // A sub-tab (the board's pane, the Scouting Center, the Prospect Profile popup) swaps only the body under its tab row.
+  // Before the swap the next body is told to fill at least the room under the row (--tab-hold on the row's parent), so a
+  // short tab cannot pull its scroll box back; after it the row is put back where it was. A row pinned at the top of its
+  // scroll box (scrolled past) opens the new tab at its own top, under the row: every tab starts at its top.
+  function holdTabRow(e) {
+    const tab = e.target && e.target.closest ? e.target.closest(".go-subtabs [role=tab], .go-subtabs button[data-sub]") : null;
+    if (!tab) return;
+    const row = tab.closest(".pv-tabrow") || tab.closest(".go-subtabs"), host = row.parentElement;
+    if (!host) return;
+    const box = scrollBoxOf(row), r0 = row.getBoundingClientRect();
+    const bottom = box ? box.getBoundingClientRect().top + box.clientTop + box.clientHeight : window.innerHeight;
+    host.style.setProperty("--tab-hold", `${Math.max(0, Math.floor(bottom - r0.bottom))}px`);
+    const find = () => (row.isConnected ? row : host.querySelector(".pv-tabrow, .go-subtabs"));
+    const back = () => {
+      const r = find();
+      if (!r) return;
+      let top = r.getBoundingClientRect().top;
+      if (box && getComputedStyle(r).position === "sticky") {        // pinned: where it would sit unpinned
+        r.style.position = "static";
+        top = r.getBoundingClientRect().top;
+        r.style.position = "";
+      }
+      const d = top - r0.top;
+      if (Math.abs(d) < 0.5) return;
+      if (box) { if (box.isConnected) box.scrollTop += d; }
+      else window.scrollBy(0, d);
+    };
+    const at = () => (box ? box.scrollTop : window.scrollY);
+    let mark = null;
+    requestAnimationFrame(() => { back(); requestAnimationFrame(() => { back(); mark = at(); }); });
+    setTimeout(() => { if (mark === null || at() === mark) back(); }, 260);   // a body that arrives a moment later; never against the player's own scroll
+  }
+  document.addEventListener("click", holdTabRow, true);
+
+  CFP.ui = { toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph, tip, placeTip, scrollBoxOf, inView, keepInView, glide };
   if (document.body) mount();
   else document.addEventListener("DOMContentLoaded", mount);
 })();

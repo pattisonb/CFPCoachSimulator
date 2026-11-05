@@ -238,6 +238,77 @@ def stray(page, where: str) -> None:
     assert not bad, f"{where}: stray scrollbars or overflowing rows: {bad}"
 
 
+RECT = """(sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect();
+  return [r.top, r.left, r.width, r.height]; }"""
+SHOTS = os.environ.get("BOARD_SCROLL_SHOTS")   # a folder: the tab switches are saved there as a frame strip
+
+
+def same_rects(rects: dict, where: str) -> None:
+    first = next(iter(rects.values()))
+    for k, r in rects.items():
+        assert r and all(abs(a - b) <= 1 for a, b in zip(r, first)), f"{where}: it moved or changed size on {k}: {rects}"
+
+
+def switch(page, scope: str, sub: str) -> None:
+    page.click(f"{scope} .go-subtabs button[data-sub={sub}]")
+    page.wait_for_selector(f"{scope} .go-subtabs button[data-sub={sub}][aria-selected=true]", timeout=30_000)
+    page.wait_for_function("() => !document.querySelector('.sc-intel[aria-busy]')", timeout=30_000)
+    settle(page, 0.45)                               # past the row's settle (ui.js holdTabRow) and any glide
+
+
+def check_still(page, base, sid, pid) -> None:
+    """Tab switches hold still: the Prospect Profile popup keeps its place and size on every tab, and the tab row of the
+    popup, the board's pane and the Scouting Center's report stays where it is, scrolled or not, at 1280×800 and 400×760."""
+    for w, h in ((1280, 800), PHONE):
+        page.set_viewport_size({"width": w, "height": h})
+        # the popup, over the Scouting Center
+        page.goto(f"{base}/index.html?id={sid}&tab=scouting&spid={pid}")
+        page.wait_for_selector(".sc-intel .sc-full-profile", timeout=60_000)
+        page.click(".sc-intel .sc-full-profile")
+        page.wait_for_selector(".modal:not([hidden]) .pv-popup .go-subtabs", timeout=30_000)
+        settle(page, 0.6)
+        scope = ".modal:not([hidden])"
+        subs = page.eval_on_selector_all(f"{scope} .go-subtabs button[data-sub]", "els => els.map(e => e.dataset.sub)")
+        assert len(subs) == 4, subs
+        for scrolled in (0, 260):
+            panels, rows = {}, {}
+            for sub in subs + subs[:1]:
+                switch(page, scope, sub)
+                if scrolled and sub == subs[0] and not panels:
+                    page.evaluate("(y) => { document.querySelector('.modal:not([hidden]) .modal-body').scrollTop = y; }", scrolled)
+                    settle(page, 0.2)
+                key = f"{sub}{'' if sub not in panels else ' again'}"
+                panels[key] = page.evaluate(RECT, f"{scope} .modal-panel")
+                rows[key] = page.evaluate(RECT, f"{scope} .pv-popup > .pv-tabrow")
+                if SHOTS and not scrolled:
+                    page.screenshot(path=os.path.join(SHOTS, f"popup-{w}-{len(panels)}-{sub}.png"))
+            same_rects(panels, f"the popup at {w} (body scrolled {scrolled})")
+            same_rects(rows, f"the popup's tab row at {w} (body scrolled {scrolled})")
+        page.keyboard.press("Escape")
+        settle(page, 0.4)
+        # the Scouting Center's report
+        tops = {}
+        for sub in ("looks", "profile", "report", "looks"):
+            switch(page, ".sc-intel", sub)
+            tops[f"{sub}{len(tops)}"] = page.evaluate(RECT, ".sc-intel .pv-tabrow")
+        same_rects(tops, f"the Scouting Center's tab row at {w}")
+        # the board's pane (the sheet on a phone), first at its top, then scrolled past the hero
+        page.goto(f"{base}/index.html?id={sid}&tab=recruiting&pid={pid}")
+        page.wait_for_selector(".go-pane .go-subtabs button[data-sub=overview][aria-selected=true]", timeout=60_000)
+        settle(page, 0.6)
+        for scrolled in (0, 400):
+            tops = {}
+            for sub in ("scouting", "profile", "history", "overview", "scouting"):
+                switch(page, ".go-pane", sub)
+                if scrolled and not tops:
+                    page.evaluate("(y) => { document.querySelector('.go-pane.sheet') ? document.querySelector('.go-pane').scrollTop = y"
+                                  " : (getComputedStyle(document.querySelector('.go-pane')).overflowY === 'auto' ? document.querySelector('.go-pane').scrollTop = y : window.scrollTo(0, y)); }", scrolled)
+                    settle(page, 0.2)
+                tops[f"{sub}{len(tops)}"] = page.evaluate("() => document.querySelector('.go-pane > .pv-tabrow').getBoundingClientRect().top")
+            first = next(iter(tops.values()))
+            assert all(abs(t - first) <= 1 for t in tops.values()), f"the pane's tab row moved across tab switches at {w} (scrolled {scrolled}): {tops}"
+
+
 def check_no_stray_scrollbars(page, base, sid, pid) -> None:
     """No tab row or chip row on the board, the pane (or its sheet), the Scouting Center or the popup shows a scrollbar,
     on every sub-tab, at 1280 and 400."""
@@ -314,6 +385,7 @@ if __name__ == "__main__":
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.on("dialog", lambda d: d.dismiss())
             check_no_stray_scrollbars(page, base, A, ranked[0])
+            check_still(page, base, A, ranked[0])
             for size in DESKTOP:
                 for tab in SCREENS:
                     check_desktop(page, base, A, tab, size)

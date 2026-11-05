@@ -2308,6 +2308,15 @@ Timeline keeps its own cap but uses `overscroll-behavior: auto`, so at its end t
 patch, after the arrow keys and on an address that names him. On a phone the page is the only scroller
 (the Recruiting pane is its full-screen sheet). `tests/test_board_scroll.py` checks all of it.
 
+Nothing jumps when content changes size. No tab row or chip row ever scrolls (a 1 px overflow draws classic
+scrollbars): the sub-tab strip wraps, and a phone's sideways stage and region rows hide their bar. A tab switch
+(`ui.js` `holdTabRow`, one capture listener for every `.go-subtabs` tab) keeps its tab row where it was: the
+next body fills at least the room under the row (`--tab-hold`), and a row pinned at the top of its scroll box
+opens the new tab at its top. Modals open at a fixed top (`--modal-top`) and grow down, never recentering; a
+tabbed or loading one (the Prospect Profile popup) keeps one height (`--modal-tall`) and scrolls its body, with
+its tab row pinned; a phone shows them full screen. A patch from the player's own action (`morph` with
+`pulse`) and an Office card filling in ease to their new height (`ui.glide`, 180 ms, instant under reduced motion).
+
 ### Deep links (`web/route.js`)
 
 Every place on the season page has a URL, so a refresh lands in the same place and Back goes where

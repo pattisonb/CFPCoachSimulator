@@ -370,7 +370,8 @@
     sideCol.append(pulse, recruit, targets);
 
     // the reads land in place: each card swaps its loading line for the real one
-    const swap = (old, fresh) => { if (old.isConnected) { old.replaceWith(fresh); ui().fadeIn(fresh); } return fresh; };
+    // (a card that grows or shrinks as it fills eases to its height: the column under it slides, never jumps)
+    const swap = (old, fresh) => { if (old.isConnected) { const h0 = old.getBoundingClientRect().height; old.replaceWith(fresh); ui().fadeIn(fresh); ui().glide(fresh, h0); } return fresh; };
     H.api(`/api/season/${s.id}/office`).then((o) => {
       news = swap(news, newsCard(s, o.news || []));
       conf = swap(conf, confCard(s, o.conference));
