@@ -22,7 +22,10 @@
    "name": "Gold",
    "hex": "#B5A167"
   },
-  "accent": null
+  "accent": {
+   "name": "Warm Gray",
+   "hex": "#B4AEA7"
+  }
  },
  "rivals": [
   "c-michigan",

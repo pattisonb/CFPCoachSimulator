@@ -22,7 +22,10 @@
    "name": "Black",
    "hex": "#000000"
   },
-  "accent": null
+  "accent": {
+   "name": "Bluff",
+   "hex": "#453D3F"
+  }
  },
  "rivals": [
   "arkansas",

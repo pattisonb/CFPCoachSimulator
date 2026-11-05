@@ -22,7 +22,10 @@
    "name": "Yellow",
    "hex": "#FEE123"
   },
-  "accent": null
+  "accent": {
+   "name": "Dusk",
+   "hex": "#A2AAAD"
+  }
  },
  "rivals": [
   "oregon-state",

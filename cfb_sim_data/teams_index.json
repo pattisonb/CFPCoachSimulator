@@ -97,7 +97,10 @@
     "name": "Gold",
     "hex": "#A89968"
    },
-   "accent": null
+   "accent": {
+    "name": "Bright Blue",
+    "hex": "#1E63AF"
+   }
   },
   "rivals": [
    "kent-state"
@@ -1426,7 +1429,10 @@
     "name": "Gold",
     "hex": "#FFC82E"
    },
-   "accent": null
+   "accent": {
+    "name": "Red Accent",
+    "hex": "#EF3340"
+   }
   },
   "rivals": [
    "w-michigan",
@@ -2092,7 +2098,10 @@
     "name": "Gold",
     "hex": "#FFD200"
    },
-   "accent": null
+   "accent": {
+    "name": "Cool Gray",
+    "hex": "#BDBDBD"
+   }
   },
   "rivals": [
    "james-madison"
@@ -2383,7 +2392,10 @@
     "name": "Gold",
     "hex": "#B6862C"
    },
-   "accent": null
+   "accent": {
+    "name": "Bright Gold",
+    "hex": "#FFCC00"
+   }
   },
   "rivals": [
    "fla-atlantic"
@@ -3342,7 +3354,10 @@
     "name": "Black",
     "hex": "#000000"
    },
-   "accent": null
+   "accent": {
+    "name": "Cool Gray",
+    "hex": "#BBBCBC"
+   }
   },
   "rivals": [
    "iowa-state",
@@ -3856,7 +3871,10 @@
     "name": "Gold",
     "hex": "#EAAB00"
    },
-   "accent": null
+   "accent": {
+    "name": "Light Blue",
+    "hex": "#2C8ECD"
+   }
   },
   "rivals": [
    "akron"
@@ -4888,7 +4906,10 @@
     "name": "White",
     "hex": "#FFFFFF"
    },
-   "accent": null
+   "accent": {
+    "name": "Kelly Green",
+    "hex": "#008208"
+   }
   },
   "rivals": [
    "michigan",
@@ -5033,7 +5054,10 @@
     "name": "White",
     "hex": "#FFFFFF"
    },
-   "accent": null
+   "accent": {
+    "name": "Light Gray",
+    "hex": "#C1C6C8"
+   }
   },
   "rivals": [
    "ole-miss"
@@ -5103,7 +5127,10 @@
     "name": "Black",
     "hex": "#000000"
    },
-   "accent": null
+   "accent": {
+    "name": "Bluff",
+    "hex": "#453D3F"
+   }
   },
   "rivals": [
    "arkansas",
@@ -5176,7 +5203,10 @@
     "name": "White",
     "hex": "#FFFFFF"
    },
-   "accent": null
+   "accent": {
+    "name": "Black",
+    "hex": "#000000"
+   }
   },
   "rivals": [],
   "fictional": false,
@@ -5244,7 +5274,10 @@
     "name": "White",
     "hex": "#FFFFFF"
    },
-   "accent": null
+   "accent": {
+    "name": "Midnight Murphy",
+    "hex": "#343636"
+   }
   },
   "rivals": [
    "w-kentucky"
@@ -5464,7 +5497,10 @@
     "name": "Yellow",
     "hex": "#FFC72A"
    },
-   "accent": null
+   "accent": {
+    "name": "Prairie Grass",
+    "hex": "#A0BD78"
+   }
   },
   "rivals": [],
   "fictional": false,
@@ -5752,7 +5788,10 @@
     "name": "White",
     "hex": "#FFFFFF"
    },
-   "accent": null
+   "accent": {
+    "name": "Organ Mountain",
+    "hex": "#B6A5AD"
+   }
   },
   "rivals": [
    "utep",
@@ -6194,7 +6233,10 @@
     "name": "White",
     "hex": "#FFFFFF"
    },
-   "accent": null
+   "accent": {
+    "name": "Putnam",
+    "hex": "#756E65"
+   }
   },
   "rivals": [
    "miami-oh",
@@ -6339,7 +6381,10 @@
     "name": "Cream",
     "hex": "#FDF9D8"
    },
-   "accent": null
+   "accent": {
+    "name": "Dark Gray",
+    "hex": "#323232"
+   }
   },
   "rivals": [
    "texas",
@@ -6633,7 +6678,10 @@
     "name": "Yellow",
     "hex": "#FEE123"
    },
-   "accent": null
+   "accent": {
+    "name": "Dusk",
+    "hex": "#A2AAAD"
+   }
   },
   "rivals": [
    "oregon-state",
@@ -6778,7 +6826,10 @@
     "name": "White",
     "hex": "#FFFFFF"
    },
-   "accent": null
+   "accent": {
+    "name": "Beaver Blue",
+    "hex": "#1E407C"
+   }
   },
   "rivals": [
    "ohio-state",
@@ -8326,7 +8377,10 @@
     "name": "White",
     "hex": "#FFFFFF"
    },
-   "accent": null
+   "accent": {
+    "name": "Charcoal",
+    "hex": "#333F48"
+   }
   },
   "rivals": [
    "oklahoma",
@@ -8618,7 +8672,10 @@
     "name": "Gold",
     "hex": "#FFDA00"
    },
-   "accent": null
+   "accent": {
+    "name": "Magenta",
+    "hex": "#A2047D"
+   }
   },
   "rivals": [
    "bowling-green"
@@ -9058,7 +9115,10 @@
     "name": "Gold",
     "hex": "#F2A900"
    },
-   "accent": null
+   "accent": {
+    "name": "Darkest Blue",
+    "hex": "#003B5C"
+   }
   },
   "rivals": [
    "usc"
@@ -9422,7 +9482,10 @@
     "name": "Gold",
     "hex": "#FFCC00"
    },
-   "accent": null
+   "accent": {
+    "name": "Light Gray",
+    "hex": "#CCCCCC"
+   }
   },
   "rivals": [
    "ucla",
@@ -10088,7 +10151,10 @@
     "name": "White",
     "hex": "#FFFFFF"
    },
-   "accent": null
+   "accent": {
+    "name": "Gray",
+    "hex": "#333333"
+   }
   },
   "rivals": [
    "mtsu",
@@ -10159,7 +10225,10 @@
     "name": "Gold",
     "hex": "#B5A167"
    },
-   "accent": null
+   "accent": {
+    "name": "Warm Gray",
+    "hex": "#B4AEA7"
+   }
   },
   "rivals": [
    "c-michigan",
@@ -10305,7 +10374,10 @@
     "name": "Gold",
     "hex": "#B7A57A"
    },
-   "accent": null
+   "accent": {
+    "name": "Heritage Gold",
+    "hex": "#85754D"
+   }
   },
   "rivals": [
    "washington-st",

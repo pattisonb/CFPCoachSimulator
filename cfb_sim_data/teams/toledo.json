@@ -22,7 +22,10 @@
    "name": "Gold",
    "hex": "#FFDA00"
   },
-  "accent": null
+  "accent": {
+   "name": "Magenta",
+   "hex": "#A2047D"
+  }
  },
  "rivals": [
   "bowling-green"

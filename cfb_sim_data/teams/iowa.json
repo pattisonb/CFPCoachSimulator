@@ -22,7 +22,10 @@
    "name": "Black",
    "hex": "#000000"
   },
-  "accent": null
+  "accent": {
+   "name": "Cool Gray",
+   "hex": "#BBBCBC"
+  }
  },
  "rivals": [
   "iowa-state",
