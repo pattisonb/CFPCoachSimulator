@@ -5,7 +5,8 @@ vertical scroller per column; the wheel over the list moves the list (not the pa
 moves the pane; the last row and the pane's last card scroll fully into view; the list's search and the pane's tab row
 stay put; a recruit picked by the keyboard or by an address shows in the list's own scroll, and the page never moves.
 The Recruiting Timeline keeps its cap and hands the wheel on to the pane at its end. On a phone (400×760) the page is
-the only scroller: the list and the pane have no inner scroll (the Recruiting pane is its full-screen sheet).
+the only scroller: the list and the pane have no inner scroll (the Recruiting pane is its full-screen sheet). No tab
+row or chip row on the board, the pane, the sheet, the Scouting Center or the popup ever shows a scrollbar.
 Needs Playwright with a Chromium; without one it is skipped. (Run as a file: multiprocessing on Windows.)"""
 import os
 import random
@@ -35,10 +36,37 @@ SCREENS = {
 BOX = """(sel) => { const e = document.querySelector(sel); if (!e) return null; const cs = getComputedStyle(e), r = e.getBoundingClientRect();
   return { oy: cs.overflowY, ob: cs.overscrollBehaviorY, sh: e.scrollHeight, ch: e.clientHeight, st: e.scrollTop, top: r.top, bottom: r.top + e.clientTop + e.clientHeight }; }"""
 DOC = "() => ({ sh: document.documentElement.scrollHeight, ih: innerHeight, y: scrollY })"
-# the elements under a node that scroll up and down (a sideways tab strip's stray pixel is not a scroller)
+# the elements under a node that scroll up and down (a single stray pixel counts: a classic scrollbar shows for it)
 SCROLLERS = """(sel) => { const root = document.querySelector(sel); if (!root) return [];
-  return [root, ...root.querySelectorAll('*')].filter(e => /(auto|scroll)/.test(getComputedStyle(e).overflowY) && e.scrollHeight > e.clientHeight + 1)
+  return [root, ...root.querySelectorAll('*')].filter(e => /(auto|scroll)/.test(getComputedStyle(e).overflowY) && e.scrollHeight > e.clientHeight)
     .map(e => e.className || e.tagName); }"""
+# Stray scrollbars (the player's "wtf is this": a tab row with tiny ▲ ▼ and ◀ ▶ bars): under the boards, the pane, the
+# sheet and the popup, every box that may scroll (overflow auto or scroll) either is one of the intended scrollers or has
+# nothing to scroll in either direction; a row meant to slide sideways by finger hides its bar and never scrolls up and
+# down; and every tab row and chip row fits its box whatever its overflow says.
+SCROLL_OK = ".go-list-recruits, .go-pane, .sc-list-wrap, .sc-intel, .pv-timeline, .modal-body, .go-menu"
+SLIDE_OK = ".go-stages, .go-map-regions"
+ROWS = ".go-subtabs, .pv-tabrow, .go-stages, .sc-chips, .sc-tools, .sc-toolbar, .go-pane-chips, .go-tags, .pv-acts, .go-tools, .go-seg, .sc-pager"
+STRAY = """([ok, slide, rows]) => {
+  const roots = ['#tab-recruiting:not([hidden])', '#tab-scouting:not([hidden])', '.go-pane.sheet', '.modal:not([hidden])']
+    .flatMap(s => [...document.querySelectorAll(s)]);
+  const seen = new Set(), bad = [];
+  const name = (e) => e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + [...e.classList].map(c => '.' + c).join('');
+  for (const root of roots) for (const e of [root, ...root.querySelectorAll('*')]) {
+    if (seen.has(e) || !e.getClientRects().length) continue;
+    seen.add(e);
+    const cs = getComputedStyle(e), may = (v) => /(auto|scroll)/.test(v);
+    const over = { y: e.scrollHeight - e.clientHeight, x: e.scrollWidth - e.clientWidth };
+    if (e.matches(slide) && may(cs.overflowX)) {
+      if (cs.overflowY !== 'hidden' || cs.scrollbarWidth !== 'none') bad.push(name(e) + ' slides sideways with a visible bar or up and down: ' + cs.overflowY + ' ' + cs.scrollbarWidth);
+      continue;
+    }
+    if (e.matches(rows) && (over.y > 0 || over.x > 0)) { bad.push(name(e) + ' overflows its row: ' + JSON.stringify(over)); continue; }
+    if (e === root && e.classList.contains('tab-body')) { if (over.x > 0) bad.push(name(e) + ' scrolls sideways'); continue; }
+    if (e.matches(ok)) { if (over.x > 0 && may(cs.overflowX)) bad.push(name(e) + ' scrolls sideways: ' + over.x); continue; }
+    if ((may(cs.overflowY) && over.y > 0) || (may(cs.overflowX) && over.x > 0)) bad.push(name(e) + ' shows a stray scrollbar: ' + JSON.stringify(over) + ' ' + cs.overflowX + '/' + cs.overflowY);
+  }
+  return bad; }"""
 
 
 def box(page, sel):
@@ -205,6 +233,48 @@ def check_phone(page, base, sid) -> None:
     page.wait_for_selector(".go-pane.sheet", state="detached", timeout=10_000)
 
 
+def stray(page, where: str) -> None:
+    bad = page.evaluate(STRAY, [SCROLL_OK, SLIDE_OK, ROWS])
+    assert not bad, f"{where}: stray scrollbars or overflowing rows: {bad}"
+
+
+def check_no_stray_scrollbars(page, base, sid, pid) -> None:
+    """No tab row or chip row on the board, the pane (or its sheet), the Scouting Center or the popup shows a scrollbar,
+    on every sub-tab, at 1280 and 400."""
+    for w, h in ((1280, 800), PHONE):
+        page.set_viewport_size({"width": w, "height": h})
+        phone = w < 760
+        for sub in ("overview", "scouting", "profile", "history"):
+            page.goto(f"{base}/index.html?id={sid}&tab=recruiting&pid={pid}" + (f"&pane={sub}" if sub != "overview" else ""))
+            page.wait_for_selector(f".go-pane .go-subtabs button[data-sub={sub}][aria-selected=true]", timeout=60_000)
+            settle(page, 0.6)
+            stray(page, f"recruiting {sub} at {w}")
+            if phone:
+                break                                # a phone opens the sheet on the address's recruit once
+        if phone:
+            for sub in ("scouting", "profile", "history"):
+                page.click(f".go-pane .go-subtabs button[data-sub={sub}]")
+                page.wait_for_selector(f".go-pane .go-subtabs button[data-sub={sub}][aria-selected=true]", timeout=30_000)
+                settle(page, 0.5)
+                stray(page, f"recruiting sheet {sub} at {w}")
+        for sub in ("report", "looks", "profile"):
+            page.goto(f"{base}/index.html?id={sid}&tab=scouting&spid={pid}" + (f"&ssub={sub}" if sub != "report" else ""))
+            page.wait_for_selector(f".sc-intel .sc-subtabs button[data-sub={sub}][aria-selected=true]", timeout=60_000)
+            page.wait_for_function("() => !document.querySelector('.sc-intel[aria-busy]')", timeout=30_000)
+            settle(page, 0.6)
+            stray(page, f"scouting {sub} at {w}")
+        # the popup: his full profile over the Scouting Center
+        page.click(".sc-intel .sc-full-profile")
+        page.wait_for_selector(".modal:not([hidden]) .go-subtabs, .modal:not([hidden]) .pv-tabrow", timeout=30_000)
+        settle(page, 0.6)
+        for sub in page.eval_on_selector_all(".modal:not([hidden]) .go-subtabs button[data-sub]", "els => els.map(e => e.dataset.sub)"):
+            page.click(f".modal:not([hidden]) .go-subtabs button[data-sub={sub}]")
+            settle(page, 0.5)
+            stray(page, f"popup {sub} at {w}")
+        page.keyboard.press("Escape")
+        settle(page, 0.4)
+
+
 if __name__ == "__main__":
     try:
         from playwright.sync_api import sync_playwright
@@ -243,6 +313,7 @@ if __name__ == "__main__":
             errors = []
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.on("dialog", lambda d: d.dismiss())
+            check_no_stray_scrollbars(page, base, A, ranked[0])
             for size in DESKTOP:
                 for tab in SCREENS:
                     check_desktop(page, base, A, tab, size)
@@ -253,7 +324,7 @@ if __name__ == "__main__":
             browser.close()
         print("board scroll ok: on a wide screen the page stays still and the list and the pane each scroll in their own column "
               "(contained, the last row and card reachable, the search and the tab row put), the keyboard and an address keep the "
-              "pick in the list's view, the timeline hands the wheel to the pane, and on a phone the page is the only scroller")
+              "pick in the list's view, the timeline hands the wheel to the pane, and on a phone the page is the only scroller; no tab row or chip row shows a scrollbar at 1280 or 400")
     finally:
         try:
             call(base, f"/api/season/{A}", method="DELETE")

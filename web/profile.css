@@ -50,8 +50,8 @@ body { --pv-warn: var(--go-warn, #f5b942); }
 .pv-badge.bad .pv-thin > i { background: var(--bad); }
 
 /* ----- the tab row: the tabs, then the actions on the right ----- */
-.pv-tabrow { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0 8px; border-bottom: 1px solid var(--border); }
-.pv-tabrow > .go-subtabs { flex: 0 1 auto; align-self: stretch; align-items: flex-end; justify-content: flex-start; border-bottom: 0; min-width: 0; margin: 0; }
+.pv-tabrow { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0 8px; border-bottom: 0; box-shadow: inset 0 -1px 0 var(--border); }
+.pv-tabrow > .go-subtabs { flex: 0 1 auto; align-self: stretch; align-items: flex-end; justify-content: flex-start; border-bottom: 0; box-shadow: none; min-width: 0; margin: 0; }
 .pv-tabrow .go-subtabs button { min-height: 44px; font-weight: 700; font-size: 14px; }
 .pv-acts, .go-pane-act.pv-acts { flex: 0 1 auto; display: flex; flex-direction: row; flex-wrap: wrap; justify-content: flex-end; min-width: 0; align-items: center; gap: 8px; padding-bottom: 6px; margin-left: auto; }
 .pv-acts .go-btn { min-height: 44px; white-space: nowrap; }

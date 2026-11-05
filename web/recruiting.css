@@ -85,14 +85,16 @@
 .go-strip .go-stat-val { font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; }
 
 /* the sub-tabs */
-.go-subtabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+/* the strip never scrolls: no box a pixel short of its tabs, so no stray scrollbar (classic scrollbars show one
+   for a 1 px overflow); a narrow column wraps a tab to a second line instead */
+.go-subtabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 0; box-shadow: inset 0 -1px 0 var(--border); overflow: visible; }   /* the line is a shadow under the tabs, so the underline covers it without hanging past the box */
 /* the pane scrolls inside itself (it sticks beside a long board): the sub-tab strip pins to the top of that scroll
    box so a long profile never scrolls it away, and never shrinks (an overflow-x box may otherwise give way in the
    pane's column). On the desktop pane it pins over the card's top padding (top: minus that padding), flush under
    the border, so nothing shows through above it; on a phone the sheet's head is pinned too: the strip sits under
    it (--go-head-h) */
 .go-pane .go-subtabs { position: sticky; top: -20px; z-index: 2; background: var(--panel); flex: none; }
-.go-subtabs button { flex: none; min-height: 40px; padding: 0 12px; margin-bottom: -1px; border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none;
+.go-subtabs button { flex: none; min-height: 40px; padding: 0 12px; border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none;
   color: var(--muted); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
 .go-subtabs button:hover { color: var(--text); }
 .go-subtabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--go-primary, var(--accent)); }
@@ -150,7 +152,8 @@
 @media (max-width: 759px) {
   .go-board { grid-template-columns: minmax(0, 1fr); }
   .go-stagebar { flex-direction: column; align-items: stretch; }
-  .go-stages { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; padding-bottom: 2px; scrollbar-width: thin; }
+  .go-stages { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; max-width: 100%; padding-bottom: 2px; scrollbar-width: none; }   /* sideways by finger, never a scrollbar */
+  .go-stages::-webkit-scrollbar { display: none; }
   .go-tools { width: 100%; }
   .go-tools #rc-search { flex: 1 1 160px; min-width: 0; }
   .go-row-recruit { min-height: 60px; }
@@ -232,7 +235,8 @@
 
 /* The footprint map's zoom (us-map.js zoomer, recruiting.js mapCard): the region row, the dot labels, the cursor */
 .go-map-regions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
-@media (max-width: 759px) { .go-map-regions { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; } }   /* a phone: one row that scrolls */
+@media (max-width: 759px) { .go-map-regions { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; padding-bottom: 2px; scrollbar-width: none; }
+  .go-map-regions::-webkit-scrollbar { display: none; } }   /* a phone: one row that scrolls by finger, never a scrollbar */
 .go-map-regions .go-btn { flex: none; white-space: nowrap; }
 .go-map-regions .go-btn[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
 .go-map svg.us-map { touch-action: pan-x pan-y; aspect-ratio: 975 / 610; }                   /* one finger scrolls the page, two pinch the map */
