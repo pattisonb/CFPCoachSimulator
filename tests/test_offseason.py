@@ -39,13 +39,21 @@ if __name__ == "__main__":
     before = {p["slug"]: p.get("class") for t in season.load_teams().values() for p in t["offense"] + t["defense"]}
     off = offseason.start(st)
     lg = st["league"]
+    # Keep Them Home comes first (tests/test_retention.py, tests/test_offseason_order.py): nobody is
+    # drafted until your leavers have answered; then the draft runs on the final pool
+    assert off["stage"] == "retention", off["stage"]
+    assert not any(d["kind"] in ("draft", "undrafted") for d in off["departures"])
+    pending_draft = sum(1 for e in off["retention"]["players"] if e["intent"] == "draft")     # your early entrants wait on the retention step
+    assert pending_draft, "no early entrant of yours waits at Keep Them Home"
+    offseason.advance(st)
+    assert off["stage"] == "departures", off["stage"]
     kinds = collections.Counter(d["kind"] for d in off["departures"])
     teams = len(lg["teams"])
     # departures: seniors graduate, the draft takes its FBS share, some declare early, about 15%
     # of the rest enter the portal, a few quit
     assert 15 * teams <= kinds["graduated"] + kinds["draft"] <= 24 * teams, kinds
-    pending_draft = sum(1 for e in off["retention"]["players"] if e["intent"] == "draft")     # your early entrants wait on the retention step
-    assert kinds["draft"] + pending_draft == round(offseason.DRAFT_PICKS * offseason.DRAFT_FROM_FBS), (kinds["draft"], pending_draft)
+    assert kinds["draft"] == round(offseason.DRAFT_PICKS * offseason.DRAFT_FROM_FBS), kinds["draft"]
+    assert not kinds["declared"], "an early entrant was never placed by the draft"
     # the draft by position matches the real drafts (data/draft_targets.json, 2021-2025 averages):
     # each bucket's picks a draft within 5 or half the target; round one (32 picks, so one draft is
     # noisy) within 4 a bucket and 15 over all of them; tools/calibrate_draft.py averages nine drafts
@@ -86,8 +94,6 @@ if __name__ == "__main__":
     assert mine["departures"]["mine"] and all(d["team"] == "ohio-state" for d in mine["departures"]["mine"])
     # the portal as recruiting: four weeks, no stars, your offer with a pitch and a campus visit, entrants decide each week
     from coach_career import prospects, recruiting
-    offseason.advance(st)
-    assert off["stage"] == "retention", off["stage"]           # your leavers with eligibility left wait on you (tests/test_retention.py)
     offseason.advance(st)
     assert off["stage"] == "portal_w1" and st["recruiting"].get("portal") and st["recruiting"]["week"] == 1
     assert st.get("recruiting_last") and not st["recruiting_last"].get("portal")      # the signed class is kept

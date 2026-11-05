@@ -1,5 +1,5 @@
 """The offseason's redesigned screens (web/offseason.js, the player's six mockups) in a browser, at 1280 and
-400 px, light and dark, walking every stage of one career: the Overview, Departures, Keep Them Home, the four
+400 px, light and dark, walking every stage of one career: the Overview, Keep Them Home, Departures, the four
 portal weeks, Development, Staff and the Recap. On every page: the stage chip and the stepper agree with the
 API's stage, each card shows the API's numbers, nothing reads null/undefined/NaN, the page never scrolls
 sideways, labels are Title Case, cards in a row line up (tops and bottoms within 1 px, a lone card spans the
@@ -186,6 +186,10 @@ def check_departures(page, v: dict) -> None:
         kinds.setdefault(d["kind_name"], []).append(d)
     for k, rows in kinds.items():
         assert f"{k} · {len(rows)}".upper() in card.upper(), (k, card[:200])
+    stayed = v["departures"]["stayed"]                      # who you kept home: shown, never drafted
+    if stayed:
+        assert f"Stayed: You Kept Him Home · {len(stayed)}".upper() in card.upper(), card[:300]
+        assert not {s["id"] for s in stayed} & {d["id"] for d in v["departures"]["first_round"]}
     best = max(mine, key=lambda d: d["overall"])
     assert best["name"] in card, best
     league = text(page, "#tab-offseason .off-league")
@@ -288,44 +292,44 @@ def run(base: str, sid: str, browser) -> None:
     page.add_init_script("try { localStorage.setItem('cfp.theme', 'dark'); } catch (e) {}")
     page.goto(f"{base}/index.html?id={sid}")
     v = call(base, f"/api/season/{sid}/offseason")
-    assert v["stage"] == "departures"
+    assert v["stage"] == "retention"                                  # Keep Them Home first, then Departures
     # the tab opens on the Overview
     wait_page(page, "hub")
     stepper_ok(page, v)
     check_hub(page, v)
     every_combo(page, "0-overview")
+    assert primary(page) == "Advance to Keep Them Home", primary(page)
+    click_primary(page)
+    wait_page(page, "retention")
+    stepper_ok(page, v)
+    check_retention(page, v)
+    every_combo(page, "1-keep-them-home")
+    back(page)                                                        # Back: the Overview, the stage unchanged
+    assert call(base, f"/api/season/{sid}/offseason")["stage"] == "retention"
+    stepper_ok(page, v)
+    click_primary(page)
+    wait_page(page, "retention")
+    page.reload()                                                     # a reload lands on the page it was on
+    wait_page(page, "retention")
+    if v["review"] and not v["review"]["decided"]:                    # the AD waits for an answer before the offseason moves on
+        call(base, f"/api/season/{sid}/offseason/review", {"action": "nothing", "stage": "retention"})
+        page.reload(); wait_page(page, "retention")
     assert primary(page) == "Advance to Departures", primary(page)
     click_primary(page)
     wait_page(page, "departures")
+    v = call(base, f"/api/season/{sid}/offseason")
+    assert v["stage"] == "departures"
     stepper_ok(page, v)
     check_departures(page, v)
-    every_combo(page, "1-departures")
-    back(page)                                                        # Back: the Overview, the stage unchanged
-    assert call(base, f"/api/season/{sid}/offseason")["stage"] == "departures"
+    every_combo(page, "2-departures")
+    back(page)
+    stepper_ok(page, v)
+    assert primary(page) == "Advance to Departures", primary(page)
     click_primary(page)
     wait_page(page, "departures")
-    page.reload()                                                     # a reload lands on the page it was on
-    wait_page(page, "departures")
-    if v["review"] and not v["review"]["decided"]:                    # the AD waits for an answer before Departures moves on
-        call(base, f"/api/season/{sid}/offseason/review", {"action": "nothing", "stage": "departures"})
-        page.reload(); wait_page(page, "departures")
-    want = "Advance to Keep Them Home" if v["retention"] and v["retention"]["players"] else "Advance to Transfer Portal (Week 1)"
-    assert primary(page) == want, primary(page)
+    assert primary(page) == "Advance to Transfer Portal (Week 1)", primary(page)
     click_primary(page)
     v = call(base, f"/api/season/{sid}/offseason")
-    if v["stage"] == "retention":
-        wait_page(page, "retention")
-        stepper_ok(page, v)
-        check_retention(page, v)
-        every_combo(page, "2-keep-them-home")
-        back(page)
-        stepper_ok(page, v)
-        assert primary(page) == "Advance to Keep Them Home", primary(page)
-        click_primary(page)
-        wait_page(page, "retention")
-        assert primary(page) == "Advance to Transfer Portal (Week 1)", primary(page)
-        click_primary(page)
-        v = call(base, f"/api/season/{sid}/offseason")
     for week in (1, 2, 3, 4):
         wait_page(page, "portal")
         page.wait_for_function("(w) => document.querySelector('#tab-offseason .off-head').textContent.toUpperCase().includes(`WEEK ${w} OF 4`)", arg=week, timeout=120_000)

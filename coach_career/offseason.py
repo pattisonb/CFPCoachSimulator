@@ -3,8 +3,9 @@
 
 After national signing day `start` opens the offseason: the career's league is taken for next
 year (league.py), players leave (graduation, the NFL draft, the transfer portal, quitting) and
-the signed classes arrive. Then `advance` walks the stages: two transfer portal rounds, player
-development, staff changes, and `next_season` hands back the new season's state.
+the signed classes arrive. Then `advance` walks the stages: Keep Them Home (your leavers answer,
+then the draft runs), Departures (what happened), the portal's four weeks, player development,
+staff changes, and `next_season` hands back the new season's state.
 
     state["offseason"] = {"stage": one of STAGES, "year": next season, "departures": [event],
                           "portal": {"players": {id: entrant}, "round": 1}, "staff": {...}, "report": {...}}
@@ -21,7 +22,9 @@ from coach_career import position_fit
 from coach_career import recruits
 from teamdata import game_scale
 
-STAGES = ("departures", "retention", "portal_w1", "portal_w2", "portal_w3", "portal_w4", "development", "staff", "ready")
+# Keep Them Home first, then Departures: who wants out is decided at the start, the draft runs after your
+# answers (and the AI schools'), so Departures shows only what happened. Saves from the older order: migrate()
+STAGES = ("retention", "departures", "portal_w1", "portal_w2", "portal_w3", "portal_w4", "development", "staff", "ready")
 PORTAL_STAGES = ("portal_w1", "portal_w2", "portal_w3", "portal_w4")
 OLD_PORTAL = {"portal_1": "portal_w1", "portal_2": "portal_w2"}     # saves from the two-round portal
 STAGE_NAMES = {"departures": "Departures", "retention": "Keep Them Home", "portal_w1": "Transfer Portal, Week 1", "portal_w2": "Transfer Portal, Week 2",
@@ -58,8 +61,13 @@ POSITION_SCALE = {"QB": 5.0, "HB": 1.607, "FB": 1.607, "WR": 3.871, "TE": 1.664,
                   "C": 1.932, "LEDG": 2.127, "REDG": 2.127, "DT": 1.674, "SAM": 2.892, "MIKE": 2.892, "WILL": 2.892, "CB": 2.013,
                   "FS": 1.579, "SS": 1.579, "K": 3.563, "P": 5.0}
 DRAFT_NOISE = 4.0
-DECLARE = ((32, 0.95), (64, 0.88), (100, 0.65), (160, 0.35), (257, 0.12), (10**9, 0.004))   # projected pick -> an underclassman declares
+# projected first-rounders almost always go (the real drafts: a handful of first-round underclassmen stay a year) *tune*
+DECLARE = ((16, 0.99), (32, 0.97), (64, 0.88), (100, 0.65), (160, 0.35), (257, 0.12), (10**9, 0.004))   # projected pick -> an underclassman declares
 UNDERCLASS_ELIGIBLE = {"JR", "JRRS", "SORS"}       # three years out of high school
+ELITE_DECLARE = 95                                 # an eligible underclassman rated this (card overall) or better always declares ... *tune*
+ELITE_MIN_GAMES = 6                                # ... after a decent season: at least this many games played (half a regular season) *tune*
+ELITE_STAY = 0.02                                  # such a player stays this often, whatever you offer at Keep Them Home *tune*
+AI_KEEP_DRAFT = ((32, 0.03), (100, 0.08), (10**9, 0.2))   # an AI school talks an early entrant projected at this pick into staying (your odds offering nothing) *tune*
 PORTAL_BASE = {"FR": 0.05, "FRRS": 0.09, "SO": 0.10, "SORS": 0.12, "JR": 0.10, "JRRS": 0.12, "SR": 0.18}
 PORTAL_USAGE = {"starter": 0.12, "rotation": 0.65, "bench": 1.3}
 PORTAL_LOSING = 1.25                               # a losing season pushes players out
@@ -201,9 +209,10 @@ def start(state: dict) -> dict:
     _season_moves(state, lgd)
     record_seasons(state, lgd)
     usage = _usage()
-    deps, entrants, pending = _departures(state, lgd, usage)
+    draft: dict = {}
+    deps, entrants, pending = _departures(state, lgd, usage, draft=draft)
     signed = _sign_classes(state, lgd)
-    state["offseason"] = {"stage": "departures", "year": year, "departures": deps,
+    state["offseason"] = {"stage": STAGES[0], "year": year, "departures": deps, "draft": draft,
                           "portal": {"players": entrants, "round": 1, "offers": {}, "moves": []},
                           "signed": signed, "staff": None, "report": None, "performance": _performance(state),
                           "retention": {"players": _retention_entries(state, lgd, pending), "results": None, "spent": 0}}
@@ -251,6 +260,7 @@ class ReviewError(Exception):
 WARNING_BELOW = 40               # security under this: a warning from the AD
 CASE_GAIN = (2, 10)              # security a good case earns *tune*
 CHANGE_GAIN = 10                 # security for letting a coordinator go *tune*
+REVIEW_STAGES = ("retention", "departures")   # the AD's meeting is open until the portal does (the Overview shows it)
 REVIEW_OPTIONS = {"case": "Make your case", "change": "Offer a change on your staff", "year": "Ask for one more year",
                   "nothing": "Say nothing"}
 
@@ -305,8 +315,8 @@ def review_decide(state: dict, action: str, staff_id: Optional[str] = None) -> d
     from coach_career import carousel
     off = state.get("offseason") or {}
     rv = off.get("review")
-    if off.get("stage") != "departures" or not rv:
-        raise ReviewError(409, "the review is at the Departures step")
+    if off.get("stage") not in REVIEW_STAGES or not rv:
+        raise ReviewError(409, "the review is before the transfer portal opens")
     if rv["decided"]:
         raise ReviewError(409, "the AD has already decided")
     if action not in rv["options"]:
@@ -392,9 +402,10 @@ def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict
         peers = sorted((q for q in roster if GROUP.get(q["pos"], "S") == g), key=lambda q: -q["o"])
         n = recruiting.PORTAL_STARTERS.get(g, 1)
         role_next = "starter" if p["id"] in would_start else "rotation" if p in peers[:n + 2] else "bench"
-        intent = "draft" if ev["kind"] in ("draft", "undrafted") else "portal"
+        intent = "draft" if ev["kind"] == "declared" else "portal"
+        proj = ev.get("proj")                                   # his projected pick (None: projected to go undrafted)
         if intent == "draft":
-            key = "draft" if ev["kind"] == "draft" else "declared"
+            key = "draft" if proj else "declared"
             ahead = None
         elif use == "bench" and peers and peers[0]["id"] != p["id"]:
             key, ahead = "buried", peers[0]["n"]
@@ -418,7 +429,7 @@ def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict
         base = max(10, RETAIN_ASK[0] + RETAIN_ASK[1] * (ovr - 50)) * recruiting.ASK_POS.get(p["pos"], 1.0)
         if intent == "draft":
             kind = "nil"
-            ask = base * RETAIN_DRAFT * (1.5 if (ev.get("pick") or 10 ** 6) <= 100 else 1.0)
+            ask = base * RETAIN_DRAFT * (1.5 if (proj or 10 ** 6) <= 100 else 1.0)
         elif role_next == "starter":
             kind, ask = "nil", base
         else:
@@ -428,9 +439,10 @@ def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict
             ask = max(ask, shortfall)                                # he wants at least what the market pays over your tier
         out.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "overall": ovr, "stars": p.get("s"),
                     "role_now": use, "role_next": role_next, "intent": intent, "reason_key": key,
-                    "reason": REASONS[key].format(ahead=ahead, round=ev.get("round")),
+                    "reason": REASONS[key].format(ahead=ahead, round=min(7, (proj - 1) // 32 + 1) if proj else None),
                     "driver": item.get("driver"), "shortfall": shortfall or None,
-                    "draft_pick": ev.get("pick"), "draft_kind": ev["kind"] if intent == "draft" else None,
+                    "draft_pick": proj, "draft_kind": ("draft" if proj else "undrafted") if intent == "draft" else None,
+                    "elite": intent == "draft" and bool(item.get("elite")), "cls_now": ev["cls"],
                     "ask": {"kind": kind, "nil": int(5 * round(ask / 5)), "known": False},
                     "offers": {"nil": 0, "promise": False, "released": False}, "met": False})
     return out
@@ -453,7 +465,7 @@ def _retention_view(state: dict) -> Optional[dict]:
         row["role_now_name"], row["role_next_name"] = ROLE_NAMES[e["role_now"]], ROLE_NAMES[e["role_next"]]
         players.append(row)
     return {"players": players, "results": ret.get("results"), "spent": ret.get("spent", 0), "budget": budget,
-            "left": budget - ret.get("spent", 0)}
+            "left": budget - ret.get("spent", 0), "elite_stay": ELITE_STAY}
 
 
 ROLE_NAMES = {"starter": "Starter", "rotation": "Rotation", "bench": "Bench"}
@@ -474,6 +486,8 @@ def stay_chance(e: dict) -> float:
     hollow = bool(offers.get("promise")) and not honored
     if e["intent"] == "draft":
         pick = e.get("draft_pick") or 10 ** 6
+        if e.get("elite"):                       # rated ELITE_DECLARE or better after a decent season: a top pick, all but gone
+            return ELITE_STAY
         if pick <= 32:
             return min(0.08, 0.03 + 0.05 * nil_share)
         base = 0.08 if pick <= 100 else 0.2
@@ -548,18 +562,20 @@ def _resolve_retention(state: dict) -> None:
             ev = {"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": e["cls"], "team": me, "team_name": lg.base_meta(me)["short_name"],
                   "overall": e["overall"], "stars": p.get("s")}
             if e["intent"] == "draft":
-                ev.update(kind=e["draft_kind"], early=True)
-                if e["draft_kind"] == "draft":
-                    ev.update(pick=e["draft_pick"], round=min(7, (e["draft_pick"] - 1) // 32 + 1))
+                ev.update(kind="declared", early=True, proj=e.get("draft_pick"), cls=e.get("cls_now") or ev["cls"])   # the draft (_run_draft) places him
             else:
                 ev["kind"] = "portal"
                 off["portal"]["players"][p["id"]] = {"player": dict(p), "from": me, "from_name": ev["team_name"],
                                                      "offers": [], "signed": None, "usage": e["role_now"],
                                                      "driver": e.get("driver"), "shortfall": e.get("shortfall")}
             off["departures"].append(ev)
-        results.append({"id": e["id"], "name": e["name"], "pos": e["pos"], "intent": e["intent"], "status": "stayed" if stayed else "left",
+        results.append({"id": e["id"], "name": e["name"], "pos": e["pos"], "cls": e["cls"], "overall": e["overall"],
+                        "intent": e["intent"], "status": "stayed" if stayed else "left",
                         "chance": round(chance, 2), "nil": e["offers"].get("nil", 0) if stayed else 0, "promise": bool(e["offers"].get("promise")) and stayed})
     team["roster"] = [p for p in team["roster"] if p["id"] not in leaving]
+    rs = off.get("redshirts")
+    if rs and not rs.get("decided"):                 # Departures' redshirt calls: only for the players still here
+        rs["players"] = [x for x in rs["players"] if x["id"] not in leaving]
     ret["results"], ret["spent"] = results, spent
     recruiting.pool_record(state, me)["retained"] = spent
     recruiting.reset_caches()
@@ -756,15 +772,29 @@ def portal_odds(p: dict, use: str, ctx: dict) -> list[tuple[str, float]]:
     return parts
 
 
-def _departures(state: dict, lgd: dict, usage: dict, shifts: Optional[dict] = None) -> tuple[list[dict], dict, list[dict]]:
+def _departures(state: dict, lgd: dict, usage: dict, shifts: Optional[dict] = None,
+                draft: Optional[dict] = None) -> tuple[list[dict], dict, list[dict]]:
+    """Who wants out, decided at the offseason's start: seniors leaving ("graduated"; the draft takes
+    its picks from them later), underclassmen who declare ("declared", with their projected pick),
+    portal entrants and quitters. Yours with eligibility left wait on Keep Them Home; an AI school
+    talks some early entrants into staying (its own stream, after the departures draws). The draft
+    itself runs after Keep Them Home (_run_draft) from the scores kept in `draft` (filled here)."""
     rng = _rng(state, "departures")
+    keep_rng = _rng(state, "ai_retention")
     if shifts is None:
         shifts = program_shifts(state, lgd)
     attrs = _attrs(lgd)
     events, entrants = [], {}
     records = {slug: _record(state, slug) for slug in lgd["teams"]}
-    # the draft: seniors and the underclassmen who declare, ranked by draft score
-    declared, drafted = draft_board(lgd, rng)
+    games = _games_played(state)
+    # the draft board: seniors and the underclassmen who declare, ranked by draft score (the picks
+    # are projections until the draft runs after Keep Them Home)
+    pool, declared = draft_scores(lgd, rng, games)
+    fbs_picks = round(DRAFT_PICKS * DRAFT_FROM_FBS)
+    board = [x for x in pool if x[2]["cls"] in ("SR", "SRRS") or x[2]["id"] in declared]
+    drafted = {p["id"]: pick for pick, (score, slug, p) in enumerate(board[:fbs_picks], 1)}
+    if draft is not None:
+        draft.update(scores={p["id"]: round(score, 4) for score, slug, p in board}, done=False, ai_kept=[])
     leaving: dict[str, set] = {slug: set() for slug in lgd["teams"]}
     from sim import season
     from coach_career import recruiting
@@ -772,7 +802,6 @@ def _departures(state: dict, lgd: dict, usage: dict, shifts: Optional[dict] = No
     p4 = {slug: season._is_p4(slug, teams[slug]) for slug in lgd["teams"]}
     me = state.get("team")
     pending: list[dict] = []                 # your leavers with eligibility left: they wait on the retention step
-    games = _games_played(state)
     for slug, t in lgd["teams"].items():
         u = usage.get(slug, {})
         gp = games.get(slug, {})
@@ -787,11 +816,15 @@ def _departures(state: dict, lgd: dict, usage: dict, shifts: Optional[dict] = No
             ev = {"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "team": slug, "team_name": team_name,
                   "overall": house(p["pos"], p["o"]), "stars": p.get("s")}
             use = u.get(p["id"], "bench")
-            if p["id"] in drafted:
-                ev.update(kind="draft", pick=drafted[p["id"]], round=min(7, (drafted[p["id"]] - 1) // 32 + 1),
-                          early=p["cls"] not in ("SR", "SRRS"))
-            elif p["id"] in declared:
-                ev.update(kind="undrafted", early=True)
+            if p["id"] in declared:
+                ev.update(kind="declared", early=True, proj=drafted.get(p["id"]))
+                if slug != me and keep_rng.random() < ai_keep_chance(drafted.get(p["id"]), elite(p, gp if slug in games else None)):
+                    p["cls"] = NEXT_CLASS.get(p["cls"], p["cls"])              # his school kept him: back a class up
+                    if draft is not None:
+                        draft["ai_kept"].append(p["id"])
+                    continue
+            elif p["id"] in drafted:                                  # a senior projected to be drafted: he goes
+                ev.update(kind="graduated")
             elif p["cls"] == "SRRS" or (p["cls"] == "SR" and not (use == "bench" and rng.random() < FIFTH_YEAR)):
                 ev.update(kind="graduated")
             else:
@@ -825,13 +858,14 @@ def _departures(state: dict, lgd: dict, usage: dict, shifts: Optional[dict] = No
                     else:
                         p["cls"] = nxt
                         continue
-            if slug == me and (ev["kind"] == "portal" or (ev["kind"] in ("draft", "undrafted") and ev.get("early"))):
+            if slug == me and ev["kind"] in ("portal", "declared"):
                 # your leaver with eligibility left: he waits on the retention step, on the roster (a class
                 # up, as if he stays), out of the portal and the draft until you advance
                 gone = entrants.pop(p["id"], None) or {}
+                star = ev["kind"] == "declared" and elite(p, gp if slug in games else None)
                 p["cls"] = "SRRS" if p["cls"] == "SR" else NEXT_CLASS.get(p["cls"], p["cls"])
                 pending.append({"ev": ev, "use": use, "losing": losing, "winning": wins > losses, "p4": p4[slug],
-                                "driver": gone.get("driver"), "shortfall": gone.get("shortfall")})
+                                "driver": gone.get("driver"), "shortfall": gone.get("shortfall"), "elite": star})
                 continue
             events.append(ev)
             leaving[slug].add(p["id"])
@@ -857,25 +891,70 @@ def draft_score(pos: str, overall: int, rng: random.Random) -> float:
     return POSITION_SCALE.get(pos, 1.0) * house(pos, overall) + POSITION_VALUE.get(pos, 0) + rng.gauss(0, DRAFT_NOISE)
 
 
-def draft_board(lgd: dict, rng: random.Random) -> tuple[set, dict]:
-    """The draft: every senior and draft-eligible underclassman scored, the underclassmen who
-    declare by their projected pick (DECLARE), the first DRAFT_PICKS * DRAFT_FROM_FBS picked.
-    Returns (the ids who declared early, {id: pick})."""
+def elite(p: dict, games: Optional[dict] = None) -> bool:
+    """An eligible underclassman good enough that he always declares: rated ELITE_DECLARE or better
+    after a decent season (ELITE_MIN_GAMES played; a team with no season lines counts as played)."""
+    if p["cls"] not in UNDERCLASS_ELIGIBLE or house(p["pos"], p["o"]) < ELITE_DECLARE:
+        return False
+    return games is None or games.get(p["id"], 0) >= ELITE_MIN_GAMES
+
+
+def draft_scores(lgd: dict, rng: random.Random, games: Optional[dict] = None) -> tuple[list, set]:
+    """Every senior and draft-eligible underclassman scored, best first, and the underclassmen who
+    declare by their projected pick (DECLARE; an elite one always does). games: team -> id -> games
+    played this season (_games_played), for the elite rule."""
     pool = []
     for slug, t in lgd["teams"].items():
         for p in t["roster"]:
             if p["cls"] in ("SR", "SRRS") or p["cls"] in UNDERCLASS_ELIGIBLE:
                 pool.append((draft_score(p["pos"], p["o"], rng), slug, p))
     pool.sort(key=lambda x: -x[0])
-    fbs_picks = round(DRAFT_PICKS * DRAFT_FROM_FBS)
     declared = set()
     for i, (score, slug, p) in enumerate(pool, 1):
         if p["cls"] in UNDERCLASS_ELIGIBLE:
             chance = next(c for cut, c in DECLARE if i <= cut)
-            if rng.random() < chance:
+            # the draw is made either way, so the elite rule moves nobody else's
+            if rng.random() < chance or elite(p, None if games is None or slug not in games else games[slug]):
                 declared.add(p["id"])
+    return pool, declared
+
+
+def draft_board(lgd: dict, rng: random.Random, games: Optional[dict] = None) -> tuple[set, dict]:
+    """The draft: every senior and draft-eligible underclassman scored, the underclassmen who
+    declare by their projected pick (DECLARE), the first DRAFT_PICKS * DRAFT_FROM_FBS picked.
+    Returns (the ids who declared early, {id: pick})."""
+    pool, declared = draft_scores(lgd, rng, games)
+    fbs_picks = round(DRAFT_PICKS * DRAFT_FROM_FBS)
     board = [(score, slug, p) for score, slug, p in pool if p["cls"] in ("SR", "SRRS") or p["id"] in declared]
     return declared, {p["id"]: pick for pick, (score, slug, p) in enumerate(board[:fbs_picks], 1)}
+
+
+def ai_keep_chance(pick: Optional[int], elite_: bool) -> float:
+    """An AI school's chance to talk its early entrant into staying: your odds when you offer nothing."""
+    if elite_:
+        return ELITE_STAY
+    return next(c for cut, c in AI_KEEP_DRAFT if (pick or 10 ** 6) <= cut)
+
+
+def _run_draft(state: dict) -> None:
+    """The draft, after Keep Them Home: the final pool (seniors leaving, early entrants nobody kept)
+    by the draft scores drawn at the start; the first DRAFT_PICKS * DRAFT_FROM_FBS are picked, an
+    early entrant left over is undrafted. No new draws."""
+    off = state["offseason"]
+    d = off.get("draft")
+    if not d or d.get("done"):
+        return
+    scores = d["scores"]
+    pool = [ev for ev in off["departures"] if ev["id"] in scores and ev["kind"] in ("graduated", "declared")]
+    pool.sort(key=lambda ev: -scores[ev["id"]])
+    fbs_picks = round(DRAFT_PICKS * DRAFT_FROM_FBS)
+    for pick, ev in enumerate(pool, 1):
+        ev.pop("proj", None)
+        if pick <= fbs_picks:
+            ev.update(kind="draft", pick=pick, round=min(7, (pick - 1) // 32 + 1), early=bool(ev.get("early")))
+        elif ev["kind"] == "declared":
+            ev["kind"] = "undrafted"
+    d["done"] = True
 
 
 def _next_class(p: dict, use: str, rng: random.Random, games: int = 0) -> str:
@@ -2071,23 +2150,22 @@ def _take_job(state: dict, slug: str) -> None:
 
 def advance(state: dict) -> dict:
     """Finish the current stage and open the next one."""
+    migrate(state)
     off = state["offseason"]
     stage = off["stage"]
     from coach_career import recruiting
-    if stage == "departures":
+    if stage in REVIEW_STAGES:
         rv = off.get("review")
         if rv and not rv["decided"]:
             if not off.get("auto"):
                 raise ReviewError(409, "the AD is waiting for your answer")
             review_decide(state, "nothing")
-        _apply_redshirts(state)
-        if off.get("retention") is None:            # a save from before the retention step
-            _open_portal(state)
-            off["stage"] = "portal_w1" if recruiting.is_portal(state) else "portal_1"
-        else:
-            off["stage"] = "retention"
-    elif stage == "retention":
+    if stage == "retention":                         # your answers, then the draft on the final pool
         _resolve_retention(state)
+        _run_draft(state)
+        off["stage"] = "departures"
+    elif stage == "departures":
+        _apply_redshirts(state)
         _open_portal(state)
         off["stage"] = "portal_w1" if recruiting.is_portal(state) else "portal_1"
     elif stage in PORTAL_STAGES:
@@ -2129,6 +2207,43 @@ def advance(state: dict) -> dict:
         off["roles_filled"] = fill_roles(state)      # the schemes are set: every staff fills a role no one plays
         off["stage"] = "ready"
     return off
+
+
+def migrate(state: dict) -> None:
+    """A save from the older order (Departures first, the draft run at the start; no "draft" block)
+    carries on in this one. At Departures or Keep Them Home its draft results become a pool again,
+    in the order they were picked (the undrafted after, in their order): leaving seniors back to
+    "graduated", early entrants back to "declared" with the pick as their projection. At Departures
+    the stage becomes Keep Them Home (the AD's meeting and the redshirts are still open there and
+    at Departures); then the draft reruns after your answers. A save past both keeps its draft as
+    it was. Idempotent."""
+    off = state.get("offseason")
+    if not off or "draft" in off:
+        return
+    stage = off.get("stage")
+    if stage not in ("departures", "retention") or (stage == "departures" and off.get("retention") is None):
+        off["draft"] = {"scores": {}, "done": True, "legacy": True, "ai_kept": []}
+        return
+    scores, undrafted = {}, 0
+    for d in off.get("departures") or []:
+        if d["kind"] == "draft":
+            scores[d["id"]] = -float(d["pick"])
+            d["kind"] = "declared" if d.get("early") else "graduated"
+            if d.get("early"):
+                d["proj"] = d["pick"]
+            d.pop("pick", None)
+            d.pop("round", None)
+        elif d["kind"] == "undrafted":
+            undrafted += 1
+            scores[d["id"]] = -10000.0 - undrafted
+            d.update(kind="declared", proj=None)
+    for e in (off.get("retention") or {}).get("players") or []:
+        if e["intent"] == "draft":
+            undrafted += 1
+            scores[e["id"]] = -float(e["draft_pick"]) if e.get("draft_pick") else -10000.0 - undrafted
+    off["draft"] = {"scores": scores, "done": False, "legacy": True, "ai_kept": []}
+    if stage == "departures":
+        off["stage"] = "retention"
 
 
 def run_all(state: dict) -> None:
@@ -2235,7 +2350,7 @@ def next_season(state: dict) -> dict:
 # ----- what the page shows ----------------------------------------------------------------------
 
 KIND_NAMES = {"draft": "Drafted", "undrafted": "Declared, Undrafted", "graduated": "Graduated", "portal": "Transfer Portal",
-              "quit": "Left the Team"}
+              "quit": "Left the Team", "declared": "Declared for the Draft", "stayed": "Stayed: You Kept Him Home"}
 PT_NAMES = {1.0: "Would Start", 0.5: "Next in Line", 0.15: "Depth"}
 
 
@@ -2374,13 +2489,28 @@ def _portal_recap(state: dict) -> Optional[dict]:
             "signed_league": sum(1 for e in players.values() if e.get("signed"))}
 
 
+def _stayed(off: dict, roster: list[dict]) -> list[dict]:
+    """Your players kept home at Keep Them Home, for Departures ("Stayed: You Kept Him Home")."""
+    by_id = {c["id"]: c for c in roster}
+    out = []
+    for r in (off.get("retention") or {}).get("results") or []:
+        if r["status"] != "stayed":
+            continue
+        c = by_id.get(r["id"]) or {}
+        out.append({"id": r["id"], "name": r["name"], "pos": r["pos"], "intent": r["intent"], "kind": "stayed", "kind_name": KIND_NAMES["stayed"],
+                    "overall": r.get("overall") or (house(c["pos"], c["o"]) if c else 0), "cls": r.get("cls") or c.get("cls")})
+    return out
+
+
 def view(state: dict, position: Optional[str] = None, status: Optional[str] = None) -> dict:
     """The Offseason screen: where the offseason stands and what it means for your program."""
     from coach_career import recruiting
+    migrate(state)
     off = state["offseason"]
     me = state["team"]
     lgd = state["league"]
     deps = off["departures"]
+    drafted = (off.get("draft") or {}).get("done", True)
     kinds: dict[str, int] = {}
     for d in deps:
         kinds[d["kind"]] = kinds.get(d["kind"], 0) + 1
@@ -2401,9 +2531,12 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
         "stage": off["stage"], "stage_name": STAGE_NAMES[off["stage"]], "year": off["year"],
         "stages": [{"key": s, "name": STAGE_NAMES[s], "done": STAGES.index(s) < STAGES.index(cur),
                     "current": s == cur} for s in STAGES],
+        # what happened: shown once the draft has run (after Keep Them Home); your players you kept are "stayed"
         "departures": {"mine": [dict(d, kind_name=KIND_NAMES[d["kind"]]) for d in deps if d["team"] == me],
                        "league": kinds, "first_round": [d for d in sorted((d for d in deps if d["kind"] == "draft"), key=lambda d: d["pick"])][:32],
-                       "early_entrants": sum(1 for d in deps if d.get("early"))},
+                       "early_entrants": sum(1 for d in deps if d.get("early")), "drafted": drafted,
+                       "stayed": _stayed(off, lgd["teams"][me]["roster"])},
+        "review_open": off["stage"] in REVIEW_STAGES,
         "signed": off.get("signed", {}).get(me, 0),
         "retention": _retention_view(state),
         "redshirts": off.get("redshirts"),
