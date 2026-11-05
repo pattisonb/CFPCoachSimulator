@@ -151,6 +151,10 @@ body { --pv-warn: var(--go-warn, #f5b942); }
 .pv-pri-v { display: flex; flex-direction: column; }
 .pv-snapshot .go-tags, .pv-snapshot .go-standing-text { margin: 0; }
 .pv-timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+/* a long history scrolls inside its own card, so Recruiting Notes and Recent Interest Changes stay in view */
+.pv-timeline-card .pv-timeline { max-height: var(--pv-timeline-max, 420px); overflow-y: auto; overscroll-behavior: contain; padding-right: 6px; }
+.pv-timeline-card .pv-timeline:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 700px) { .pv-timeline-card .pv-timeline { --pv-timeline-max: 360px; } }
 .pv-tl-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .pv-tl-row:last-child { border-bottom: 0; }
 .pv-tl-icon { text-align: center; color: var(--muted); font-size: 16px; }
