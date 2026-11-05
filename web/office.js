@@ -26,7 +26,14 @@
   const abbr = (slug, name) => team(slug).abbreviation || name || team(slug).name || slug;
   const confShort = (c) => CONF_SHORT[c] || c;
   const weekName = (s, w) => (s.week_labels && s.week_labels[w]) || `Week ${w}`;
-  const dateText = (d) => (d ? new Date(d).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "");
+  // a game or week date as the kicker shows it; the data holds 2026 dates, so later seasons shift by a year
+  // (364 days keeps the weekday, as the Schedule tab does); never "Invalid Date"
+  const dateText = (d, s) => {
+    if (!d) return "";
+    const k = ((s && s.year) || 2026) - 2026;
+    const t = new Date(d).getTime() + k * 364 * 86400000;
+    return Number.isNaN(t) ? "" : new Date(t).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  };
   const recText = (r) => (r ? `${r.wins}-${r.losses}` : "0-0");
   const scoreText = (a, b) => `${a}–${b}`;
   const VENUE = { home: "Home Game", away: "Away Game", neutral: "Neutral Site" };
@@ -104,14 +111,14 @@
     const card = el("section", { class: "go-card ofc-hero go-game-next", "aria-label": "Next Game", ...(color ? { style: `--ofc-team:${color}` } : {}) });
     if (!g) {
       const w = s.current_week + 1;
-      card.append(el("div", { class: "ofc-hero-head" }, [el("div", {}, [kicker(`${weekName(s, w)}${(s.week_dates || {})[w] ? ` · ${dateText(s.week_dates[w])}` : ""}`),
+      card.append(el("div", { class: "ofc-hero-head" }, [el("div", {}, [kicker(`${weekName(s, w)}${((s.week_dates || {})[w] || {}).main ? ` · ${dateText(s.week_dates[w].main, s)}` : ""}`),
         el("div", { class: "ofc-title", text: "No Game This Week" })])]),
         el("p", { class: "muted ofc-hero-note", text: w > 14 ? "Your games are done for now: the rest of the postseason plays on." : "A week off: recruit, then sim the week." }),
         playRow(s));
       return card;
     }
     const bye = !thisWeek;
-    const k = `${bye ? "Bye This Week · Next Game · " : ""}${weekName(s, g.week)}${g.date ? ` · ${dateText(g.date)}` : ""}`;
+    const k = `${bye ? "Bye This Week · Next Game · " : ""}${weekName(s, g.week)}${g.date ? ` · ${dateText(g.date, s)}` : ""}`;
     const name = g.title || (g.rivalry && g.rivalry.name) || null;
     const head = el("div", { class: "ofc-hero-head" }, [
       el("div", { class: "ofc-hero-when" }, [kicker(k), name ? el("div", { class: "ofc-title", text: name }) : null,
