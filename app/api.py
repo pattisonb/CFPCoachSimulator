@@ -755,6 +755,9 @@ def _offseason_state(season_id: str, p: Optional[Params] = None) -> dict:
     offseason's stage: a click queued behind an advance is refused (409) instead of landing on a
     later stage or on the next season. Callers that omit it are not checked."""
     st = _career_state(season_id, change=True)
+    if st.get("offseason") and "draft" not in st["offseason"]:      # a save from the older order (Departures first)
+        offseason.migrate(st)
+        _save_loaded()
     drawn = _field(p, "stage", str, None) if p is not None else None
     if drawn is not None:
         off = st.get("offseason") if st.get("done") else None

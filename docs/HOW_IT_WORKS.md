@@ -1416,8 +1416,15 @@ IOL, 5.0 EDGE, 2.4 DL, 2.0 LB, 3.8 CB and 0.8 S a year; the whole draft 11 QB, 2
 TE, 23 OT, 23 IOL, 25 EDGE, 23 DL, 24 LB, 35 CB, 20 S, 2 K and 2 P. The sim's drafts land within
 a pick of those in round one and within three over seven rounds (before the fit it took no backs
 in round one, 3 a draft, and 40 corners). Underclassmen three years out of high school declare by
-projected pick (95% in the first round, 65% by pick 100, 12% by 257): about 55-80 a year (real
-58-82). The transfer portal takes 5% of freshmen to 18% of fifth-year
+projected pick (`DECLARE`: 99% in the top 16, 97% in the first round, 65% by pick 100, 12% by 257):
+about 50-75 a year (real 58-82). One rated `ELITE_DECLARE` (95) or better after a decent season
+(`ELITE_MIN_GAMES`: 6 games or more; a career's first season with no stat lines counts as played)
+always declares (`elite`). An AI school talks an early entrant into staying as often as you would
+by offering nothing (`AI_KEEP_DRAFT`: 3% for a projected first-rounder, 8% by pick 100, 20% after;
+an elite one `ELITE_STAY`, 2%), drawn on its own stream. Who wants out is decided when the
+offseason opens; the draft itself runs after Keep Them Home (`_run_draft`): the leaving seniors
+and the early entrants nobody kept, by the draft scores drawn at the start, so a player you keep
+is never drafted and The First Round is the final pool's. The transfer portal takes 5% of freshmen to 18% of fifth-year
 seniors, times 0.12 for starters, 0.65 for the next man up and 1.3 for the bench, and 1.25 after
 a losing year; a Group of 5 player with a card overall of 50 or more (a Power 4 starter) enters
 40% of the time to move up. About 1.2% quit a year (2.5 times as likely in a team's bottom 15%).
@@ -1445,7 +1452,7 @@ a slipping program or a weak coach), and the bottom tier loses about one starter
 year to the portal where the top tier loses a seventh of one (tiers 1 to 5: 0.14, 0.44, 0.41,
 0.78, 1.02).
 
-**Keep them home** (the step after Departures). Your players who mean to leave with eligibility
+**Keep them home** (the offseason's first step; Departures follows with what happened). Your players who mean to leave with eligibility
 left wait on you: transfers and early draft entrants (graduating seniors and quitters are gone
 either way). Each card says why he is going, from the factors that decided it: buried behind a
 named teammate, a rotation role, a losing year, a Power 4 program calling a Group of 5 standout,
@@ -1458,10 +1465,15 @@ promise is worth a few points, and he knows); NIL comes off next year's budget, 
 your recruits and your portal pool will not have, and the portal pool reads the smaller budget
 at once. When you advance each one stays or goes (`stay_chance`: 10% for nothing, about 75% at
 his ask, about 70% for a real starting role, 92% at most; a draft entrant projected in the first
-round stays at most 8%, a day-three projection about 20% plus what the NIL buys). A player you
+round stays at most 8%, one rated 95 or better after a decent season 2% whatever you offer (his
+card says so), a day-three projection about 20% plus what the NIL buys). A player you
 keep carries `kept` (his portal chance the next year is 0.7 times) and a promise `promised` (3
 times if the snaps do not come). The leavers join the portal class or the draft as they would
-have; the week 1 portal screen lists the answers. On Auto nobody is talked to. AI schools keep a
+have, and then the draft runs; Departures lists who stayed ("Stayed: You Kept Him Home") beside
+who left, and the week 1 portal screen lists the answers. A save from the older order (Departures
+first, the draft already run) is migrated when it loads (`migrate`): at Departures it goes back to
+Keep Them Home with its draft turned back into a pool (in the order it was picked), at Keep Them
+Home the draft reruns after the answers, past both it keeps its draft. On Auto nobody is talked to. AI schools keep a
 would-be portal entrant who would start for them a third of the time (`AI_KEEP`).
 
 **The portal is recruited like a class**, condensed to four weeks after national signing day
@@ -1798,17 +1810,17 @@ wins, AD goal met) = 100", "raised to the 85 portal fund" when the floor applied
 players home cost and what carries), the portal board's header shows the pool, and the next
 season's Programs tab says "NIL carried over: 25 (of 135 this year)" on your program's card.
 
-**The Offseason screen** (`web/offseason.js`, `web/offseason.css`) walks the steps: Departures,
-Keep Them Home, the Transfer Portal's four weeks, Development, Staff Changes, then the Recap. Every
+**The Offseason screen** (`web/offseason.js`, `web/offseason.css`) walks the steps: Keep Them Home,
+Departures, the Transfer Portal's four weeks, Development, Staff Changes, then the Recap. Every
 page has one frame: the title, a "Stage N of 9" chip and a pill stepper (✓ for a done step, the
 accent for the current one) on top; Back to Offseason on the left and the primary "Advance to …"
 (with Sim to Next Season beside it) at the bottom. In front of each stage sits the **Overview**: a
 hero with what the stage is for, your numbers (roster, class signed, open spots, portal placed),
 Your Meeting With the AD (the goal, your record, job security, his patience, your year, and your
 answer while he is still deciding), The Takeaway (his words and the NIL-for-the-portal math) and
-your program's history. The tab opens on it at Departures; its Advance opens the stage's own page
+your program's history. The tab opens on it at Keep Them Home; its Advance opens the stage's own page
 (no server call) and Back returns to it from any stage. Departures lists your leavers in folding
-groups ("+ N More" opens a long one), Around the League and The First Round, and keeps the
+groups ("+ N More" opens a long one) and the players you kept, Around the League and The First Round, and keeps the
 redshirt and position-change card. Keep Them Home shows each leaver's roles now and next year, why
 he wants out, and Meet, Promise a Start, Offer NIL and Let Him Go, each with a hint from the rules.
 A portal week wraps the recruiting board (drawn by `recruiting.js`, untouched) with the Portal

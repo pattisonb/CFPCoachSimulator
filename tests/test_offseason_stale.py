@@ -44,37 +44,37 @@ if __name__ == "__main__":
         sid = api.call("POST", "/api/season", {"team": ME, "mode": "full", "seed": 5, "career": True})["id"]
         finished(api.loaded_state()); api._save_loaded()
         v = api.call("GET", f"/api/season/{sid}/offseason")
-        assert v["stage"] == "departures"
+        assert v["stage"] == "retention"                  # Keep Them Home comes first, then Departures
+        ret = api.loaded_state()["offseason"]["retention"]["players"]
+        assert ret, "seed 5 has a leaver to talk to"
+        e0 = ret[0]
+        v = post(sid, "retain", {"pid": e0["id"], "action": "meet", "stage": "retention"})       # the current stage works
+        assert next(e for e in v["retention"]["players"] if e["id"] == e0["id"])["ask"]["known"]
         rs = v["redshirts"]["players"]
         assert rs, "seed 5 has a redshirt call to make"
         p0 = dict(rs[0])                        # a copy: the native view shares its dicts with the state
-        # the current stage: the action works
+        # a stage the offseason is not at (a page a step behind or ahead): refused, nothing changes
+        refused(sid, "redshirt", {"pid": p0["id"], "on": not p0["redshirt"], "stage": "departures"}, "Departures")
+        refused(sid, "redshirt", {"pid": p0["id"], "on": True, "stage": "nonsense"}, "an earlier stage")
+        # a double-clicked Advance: the first moves on, the second (drawn on Keep Them Home) is refused
+        v = post(sid, "advance", {"stage": "retention"})
+        assert v["stage"] == "departures", v["stage"]
+        refused(sid, "advance", {"stage": "retention"}, "Keep Them Home")
+        refused(sid, "retain", {"pid": e0["id"], "action": "promise", "stage": "retention"}, "Keep Them Home")
+        assert api.loaded_state()["offseason"]["stage"] == "departures", "the stale Advance skipped a stage"
+        # Departures: the action works with its stage, and without one (an old caller)
         v = post(sid, "redshirt", {"pid": p0["id"], "on": not p0["redshirt"], "stage": "departures"})
         now = next(p for p in v["redshirts"]["players"] if p["id"] == p0["id"])["redshirt"]
         assert now == (not p0["redshirt"])
-        # no stage: an old caller still works
         v = post(sid, "redshirt", {"pid": p0["id"], "on": p0["redshirt"]})
         assert next(p for p in v["redshirts"]["players"] if p["id"] == p0["id"])["redshirt"] == p0["redshirt"]
-        # a stage the offseason is not at (a page a step behind or ahead): refused, nothing changes
         refused(sid, "redshirt", {"pid": p0["id"], "on": not p0["redshirt"], "stage": "retention"}, "Keep Them Home")
-        refused(sid, "redshirt", {"pid": p0["id"], "on": True, "stage": "nonsense"}, "an earlier stage")
-
-        # a double-clicked Advance: the first moves on, the second (drawn on Departures) is refused
         v = post(sid, "advance", {"stage": "departures"})
-        nxt = v["stage"]
-        assert nxt in ("retention", "portal_w1"), nxt
+        assert v["stage"] == "portal_w1", v["stage"]
         refused(sid, "advance", {"stage": "departures"}, "Departures")
-        assert api.loaded_state()["offseason"]["stage"] == nxt, "the stale Advance skipped a stage"
         # a Departures action queued behind the advance lands nowhere
         refused(sid, "redshirt", {"pid": p0["id"], "on": not p0["redshirt"], "stage": "departures"}, "Departures")
         refused(sid, "position", {"pid": p0["id"], "pos": "QB", "stage": "departures"}, "Departures")
-        if nxt == "retention":
-            ret = api.loaded_state()["offseason"]["retention"]["players"]
-            e0 = ret[0]
-            v = post(sid, "retain", {"pid": e0["id"], "action": "meet", "stage": "retention"})       # the current stage works
-            assert next(e for e in v["retention"]["players"] if e["id"] == e0["id"])["ask"]["known"]
-            post(sid, "advance", {"stage": "retention"})
-            refused(sid, "retain", {"pid": e0["id"], "action": "promise", "stage": "retention"}, "Keep Them Home")
         assert api.loaded_state()["offseason"]["stage"] == "portal_w1"
         # every other offseason POST checks the stage too
         for what, body in (("portal", {"pid": "x", "on": True}), ("review", {"action": "accept"}), ("job", {"team": None}),
