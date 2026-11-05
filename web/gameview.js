@@ -34,8 +34,27 @@ window.CFP = (function () {
     node.style.setProperty("--c1", c1);
     node.style.setProperty("--c2", c2);
     if (c3) node.style.setProperty("--c3", c3);
-    node.title = t ? t.name : "";
+    node.title = teamName(slug);
     return node;
+  }
+
+  // A team's name as every page shows it: /api/teams names an FCS stand-in only by its region
+  // ("FCS Mid-Atlantic"), so a name read from here never shows anything else.
+  function teamName(slug, fallback) {
+    const t = teamsBySlug[slug];
+    return (t && t.name) || fallback || "";
+  }
+
+  // A box score with an FCS stand-in's side named by its label everywhere it shows: the header,
+  // the line score, the kickoff line, the injuries, the scoring plays and its players tab.
+  function boxNames(g) {
+    for (const side of ["home", "away"]) {
+      const t = teamsBySlug[g && g[`${side}_slug`]];
+      if (!t || !t.fictional || !g[side]) continue;
+      g[side].name = t.name;
+      for (const s of g.scoring_plays || []) if (s.team === side) s.team_name = t.name;
+    }
+    return g;
   }
 
   // ----- theme (dark / light) -------------------------------------------------
@@ -74,6 +93,7 @@ window.CFP = (function () {
   }
 
   function renderScoreboard(g, ids = GAME_IDS) {
+    boxNames(g);
     const row = $(ids.scoreRow);
     row.innerHTML = "";
     // the home side reads bar, name, score; the away side is its mirror: score, name, bar
@@ -405,6 +425,6 @@ window.CFP = (function () {
   }).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
   syncTree(document.body);
 
-  return { $, el, teamsBySlug, GAME_IDS, SBOX_IDS, teamColor, teamPill, applyTheme, renderScoreboard, renderScoring, renderTeamStats,
+  return { $, el, teamsBySlug, GAME_IDS, SBOX_IDS, teamColor, teamPill, teamName, boxNames, applyTheme, renderScoreboard, renderScoring, renderTeamStats,
            renderPlayers, renderDrives, label, quarterName, kindLabel, resultLabel, fieldPos, fmtTime };
 })();

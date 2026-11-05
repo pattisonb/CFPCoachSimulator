@@ -174,6 +174,7 @@
     H.api(`/api/season/${s.id}/game/${encodeURIComponent(g.event_id)}`).then((b) => {
       detail.innerHTML = "";
       if (!b || !b.home || !b.away) return;
+      window.CFP.boxNames(b);
       const mine = b.home_slug === s.team ? "home" : "away";
       const ts = b[mine].team_stats || {};
       const tfl = (b[mine].players || []).reduce((a, p) => a + Number((p.stats && p.stats.tackles_for_loss) || 0), 0);

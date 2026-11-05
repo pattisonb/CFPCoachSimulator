@@ -1,16 +1,14 @@
 {
- "slug": "alder-ridge-state",
- "school_name": "Alder Ridge State University",
- "short_name": "Alder Ridge St.",
- "abbreviation": "ARSU",
- "mascot": "Forgers",
- "city": "Alder Ridge",
+ "slug": "fcs-mid-atlantic",
+ "school_name": "FCS Mid-Atlantic",
+ "short_name": "FCS Mid-Atlantic",
+ "abbreviation": "FCS",
  "state": "PA",
  "region": "Mid-Atlantic",
- "conference": "Eight Rivers Football Conference",
+ "conference": "FCS",
  "subdivision": "FCS",
  "stadium": {
-  "name": "Furnace Hill Stadium",
+  "name": "FCS Mid-Atlantic Stadium",
   "capacity": 16500,
   "surface": "grass"
  },
@@ -29,7 +27,7 @@
   }
  },
  "rivals": [
-  "kestrel-bay"
+  "fcs-new-england"
  ],
  "fictional": true,
  "program": {
@@ -58,8 +56,8 @@
  },
  "coaches": {
   "head_coach": {
-   "coach_id": "alder-ridge-state:head_coach",
-   "team_slug": "alder-ridge-state",
+   "coach_id": "fcs-mid-atlantic:head_coach",
+   "team_slug": "fcs-mid-atlantic",
    "name": "Marcus Mabe",
    "since": 2025,
    "fictional": true,
@@ -88,8 +86,8 @@
    "ratings_generated": true
   },
   "offensive_coordinator": {
-   "coach_id": "alder-ridge-state:offensive_coordinator",
-   "team_slug": "alder-ridge-state",
+   "coach_id": "fcs-mid-atlantic:offensive_coordinator",
+   "team_slug": "fcs-mid-atlantic",
    "name": "Mark Kincaid",
    "since": 2025,
    "fictional": true,
@@ -116,8 +114,8 @@
    "ratings_generated": true
   },
   "defensive_coordinator": {
-   "coach_id": "alder-ridge-state:defensive_coordinator",
-   "team_slug": "alder-ridge-state",
+   "coach_id": "fcs-mid-atlantic:defensive_coordinator",
+   "team_slug": "fcs-mid-atlantic",
    "name": "Doug Strickland",
    "since": 2021,
    "fictional": true,
@@ -146,217 +144,217 @@
  "starters": {
   "offense": {
    "QB": [
-    "brandon-forsythe-alder-ridge-state"
+    "brandon-forsythe-fcs-mid-atlantic"
    ],
    "HB": [
-    "malik-delacroix-alder-ridge-state"
+    "malik-delacroix-fcs-mid-atlantic"
    ],
    "WR": [
-    "nico-dorsett-alder-ridge-state",
-    "nash-merriweather-alder-ridge-state",
-    "micah-okafor-alder-ridge-state"
+    "nico-dorsett-fcs-mid-atlantic",
+    "nash-merriweather-fcs-mid-atlantic",
+    "micah-okafor-fcs-mid-atlantic"
    ],
    "TE": [
-    "ryder-granger-alder-ridge-state"
+    "ryder-granger-fcs-mid-atlantic"
    ],
    "LT": [
-    "riley-granger-alder-ridge-state"
+    "riley-granger-fcs-mid-atlantic"
    ],
    "LG": [
-    "jayden-waddell-alder-ridge-state"
+    "jayden-waddell-fcs-mid-atlantic"
    ],
    "C": [
-    "rashad-granger-alder-ridge-state"
+    "rashad-granger-fcs-mid-atlantic"
    ],
    "RG": [
-    "zane-boudreaux-alder-ridge-state"
+    "zane-boudreaux-fcs-mid-atlantic"
    ],
    "RT": [
-    "dante-maddox-alder-ridge-state"
+    "dante-maddox-fcs-mid-atlantic"
    ]
   },
   "defense": {
    "LEDG": [
-    "isaiah-holcomb-alder-ridge-state"
+    "isaiah-holcomb-fcs-mid-atlantic"
    ],
    "REDG": [
-    "colton-nakamura-alder-ridge-state"
+    "colton-nakamura-fcs-mid-atlantic"
    ],
    "DT": [
-    "luca-abbott-alder-ridge-state",
-    "tristan-draper-alder-ridge-state"
+    "luca-abbott-fcs-mid-atlantic",
+    "tristan-draper-fcs-mid-atlantic"
    ],
    "LB": [
-    "hayden-lockett-alder-ridge-state",
-    "drew-bellamy-alder-ridge-state"
+    "hayden-lockett-fcs-mid-atlantic",
+    "drew-bellamy-fcs-mid-atlantic"
    ],
    "CB": [
-    "luca-stallworth-alder-ridge-state",
-    "malik-nettles-alder-ridge-state",
-    "corey-kimbrough-alder-ridge-state"
+    "luca-stallworth-fcs-mid-atlantic",
+    "malik-nettles-fcs-mid-atlantic",
+    "corey-kimbrough-fcs-mid-atlantic"
    ],
    "FS": [
-    "derrick-castellano-alder-ridge-state"
+    "derrick-castellano-fcs-mid-atlantic"
    ],
    "SS": [
-    "keegan-eason-alder-ridge-state"
+    "keegan-eason-fcs-mid-atlantic"
    ]
   },
   "special_teams": {
    "K": [
-    "kobe-redmond-alder-ridge-state"
+    "kobe-redmond-fcs-mid-atlantic"
    ],
    "P": [
-    "owen-draper-alder-ridge-state"
+    "owen-draper-fcs-mid-atlantic"
    ],
    "KR": [
-    "nash-merriweather-alder-ridge-state"
+    "nash-merriweather-fcs-mid-atlantic"
    ],
    "PR": [
-    "silas-montoya-alder-ridge-state"
+    "silas-montoya-fcs-mid-atlantic"
    ]
   }
  },
  "depth_chart": {
   "QB": [
-   "brandon-forsythe-alder-ridge-state",
-   "kenji-acosta-alder-ridge-state",
-   "keegan-satterfield-alder-ridge-state",
-   "jabari-waddell-alder-ridge-state"
+   "brandon-forsythe-fcs-mid-atlantic",
+   "kenji-acosta-fcs-mid-atlantic",
+   "keegan-satterfield-fcs-mid-atlantic",
+   "jabari-waddell-fcs-mid-atlantic"
   ],
   "HB": [
-   "malik-delacroix-alder-ridge-state",
-   "levi-jarrell-alder-ridge-state",
-   "jaxon-jarrell-alder-ridge-state",
-   "santiago-keeling-alder-ridge-state",
-   "damien-briscoe-alder-ridge-state",
-   "silas-montoya-alder-ridge-state",
-   "jermaine-ransom-alder-ridge-state"
+   "malik-delacroix-fcs-mid-atlantic",
+   "levi-jarrell-fcs-mid-atlantic",
+   "jaxon-jarrell-fcs-mid-atlantic",
+   "santiago-keeling-fcs-mid-atlantic",
+   "damien-briscoe-fcs-mid-atlantic",
+   "silas-montoya-fcs-mid-atlantic",
+   "jermaine-ransom-fcs-mid-atlantic"
   ],
   "FB": [],
   "WR": [
-   "nico-dorsett-alder-ridge-state",
-   "nash-merriweather-alder-ridge-state",
-   "micah-okafor-alder-ridge-state",
-   "hunter-redmond-alder-ridge-state",
-   "kenji-overstreet-alder-ridge-state",
-   "dawson-rhodes-alder-ridge-state",
-   "owen-wilder-alder-ridge-state",
-   "zaire-ingram-alder-ridge-state",
-   "rhett-eldridge-alder-ridge-state",
-   "nico-briscoe-alder-ridge-state"
+   "nico-dorsett-fcs-mid-atlantic",
+   "nash-merriweather-fcs-mid-atlantic",
+   "micah-okafor-fcs-mid-atlantic",
+   "hunter-redmond-fcs-mid-atlantic",
+   "kenji-overstreet-fcs-mid-atlantic",
+   "dawson-rhodes-fcs-mid-atlantic",
+   "owen-wilder-fcs-mid-atlantic",
+   "zaire-ingram-fcs-mid-atlantic",
+   "rhett-eldridge-fcs-mid-atlantic",
+   "nico-briscoe-fcs-mid-atlantic"
   ],
   "TE": [
-   "ryder-granger-alder-ridge-state",
-   "theo-mayfield-alder-ridge-state",
-   "malachi-redmond-alder-ridge-state",
-   "julian-harlan-alder-ridge-state",
-   "gabriel-paddock-alder-ridge-state",
-   "levi-yancey-alder-ridge-state"
+   "ryder-granger-fcs-mid-atlantic",
+   "theo-mayfield-fcs-mid-atlantic",
+   "malachi-redmond-fcs-mid-atlantic",
+   "julian-harlan-fcs-mid-atlantic",
+   "gabriel-paddock-fcs-mid-atlantic",
+   "levi-yancey-fcs-mid-atlantic"
   ],
   "LT": [
-   "riley-granger-alder-ridge-state",
-   "micah-mayfield-alder-ridge-state",
-   "lucas-corbett-alder-ridge-state",
-   "terrance-kimbrough-alder-ridge-state"
+   "riley-granger-fcs-mid-atlantic",
+   "micah-mayfield-fcs-mid-atlantic",
+   "lucas-corbett-fcs-mid-atlantic",
+   "terrance-kimbrough-fcs-mid-atlantic"
   ],
   "LG": [
-   "jayden-waddell-alder-ridge-state",
-   "carter-haskins-alder-ridge-state",
-   "grant-lindqvist-alder-ridge-state",
-   "miles-blackwell-alder-ridge-state"
+   "jayden-waddell-fcs-mid-atlantic",
+   "carter-haskins-fcs-mid-atlantic",
+   "grant-lindqvist-fcs-mid-atlantic",
+   "miles-blackwell-fcs-mid-atlantic"
   ],
   "C": [
-   "rashad-granger-alder-ridge-state",
-   "grady-beckett-alder-ridge-state",
-   "nash-kimbrough-alder-ridge-state",
-   "isaiah-ransom-alder-ridge-state"
+   "rashad-granger-fcs-mid-atlantic",
+   "grady-beckett-fcs-mid-atlantic",
+   "nash-kimbrough-fcs-mid-atlantic",
+   "isaiah-ransom-fcs-mid-atlantic"
   ],
   "RG": [
-   "zane-boudreaux-alder-ridge-state",
-   "cedric-bainbridge-alder-ridge-state",
-   "josiah-jarrell-alder-ridge-state",
-   "rico-greer-alder-ridge-state"
+   "zane-boudreaux-fcs-mid-atlantic",
+   "cedric-bainbridge-fcs-mid-atlantic",
+   "josiah-jarrell-fcs-mid-atlantic",
+   "rico-greer-fcs-mid-atlantic"
   ],
   "RT": [
-   "dante-maddox-alder-ridge-state",
-   "levi-brannon-alder-ridge-state",
-   "emmanuel-clemmons-alder-ridge-state",
-   "ethan-dempsey-alder-ridge-state"
+   "dante-maddox-fcs-mid-atlantic",
+   "levi-brannon-fcs-mid-atlantic",
+   "emmanuel-clemmons-fcs-mid-atlantic",
+   "ethan-dempsey-fcs-mid-atlantic"
   ],
   "LEDG": [
-   "isaiah-holcomb-alder-ridge-state",
-   "jace-rios-alder-ridge-state",
-   "kareem-nettles-alder-ridge-state",
-   "lucas-fairley-alder-ridge-state"
+   "isaiah-holcomb-fcs-mid-atlantic",
+   "jace-rios-fcs-mid-atlantic",
+   "kareem-nettles-fcs-mid-atlantic",
+   "lucas-fairley-fcs-mid-atlantic"
   ],
   "DT": [
-   "luca-abbott-alder-ridge-state",
-   "tristan-draper-alder-ridge-state",
-   "keon-ransom-alder-ridge-state",
-   "keon-merriweather-alder-ridge-state",
-   "brayden-adair-alder-ridge-state",
-   "solomon-dubois-alder-ridge-state"
+   "luca-abbott-fcs-mid-atlantic",
+   "tristan-draper-fcs-mid-atlantic",
+   "keon-ransom-fcs-mid-atlantic",
+   "keon-merriweather-fcs-mid-atlantic",
+   "brayden-adair-fcs-mid-atlantic",
+   "solomon-dubois-fcs-mid-atlantic"
   ],
   "REDG": [
-   "colton-nakamura-alder-ridge-state",
-   "zaire-hollins-alder-ridge-state",
-   "micah-oakes-alder-ridge-state"
+   "colton-nakamura-fcs-mid-atlantic",
+   "zaire-hollins-fcs-mid-atlantic",
+   "micah-oakes-fcs-mid-atlantic"
   ],
   "SAM": [
-   "micah-upshaw-alder-ridge-state",
-   "aaron-harlan-alder-ridge-state",
-   "dante-vance-alder-ridge-state",
-   "quincy-holcomb-alder-ridge-state"
+   "micah-upshaw-fcs-mid-atlantic",
+   "aaron-harlan-fcs-mid-atlantic",
+   "dante-vance-fcs-mid-atlantic",
+   "quincy-holcomb-fcs-mid-atlantic"
   ],
   "MIKE": [
-   "hayden-lockett-alder-ridge-state",
-   "terrance-overstreet-alder-ridge-state",
-   "lamar-ingram-alder-ridge-state",
-   "connor-burkett-alder-ridge-state"
+   "hayden-lockett-fcs-mid-atlantic",
+   "terrance-overstreet-fcs-mid-atlantic",
+   "lamar-ingram-fcs-mid-atlantic",
+   "connor-burkett-fcs-mid-atlantic"
   ],
   "WILL": [
-   "drew-bellamy-alder-ridge-state",
-   "kai-clemmons-alder-ridge-state",
-   "brady-dempsey-alder-ridge-state"
+   "drew-bellamy-fcs-mid-atlantic",
+   "kai-clemmons-fcs-mid-atlantic",
+   "brady-dempsey-fcs-mid-atlantic"
   ],
   "CB": [
-   "luca-stallworth-alder-ridge-state",
-   "malik-nettles-alder-ridge-state",
-   "corey-kimbrough-alder-ridge-state",
-   "jabari-fenwick-alder-ridge-state",
-   "justice-blackwell-alder-ridge-state",
-   "bo-brannon-alder-ridge-state"
+   "luca-stallworth-fcs-mid-atlantic",
+   "malik-nettles-fcs-mid-atlantic",
+   "corey-kimbrough-fcs-mid-atlantic",
+   "jabari-fenwick-fcs-mid-atlantic",
+   "justice-blackwell-fcs-mid-atlantic",
+   "bo-brannon-fcs-mid-atlantic"
   ],
   "FS": [
-   "derrick-castellano-alder-ridge-state",
-   "levi-colvin-alder-ridge-state",
-   "xavier-nakamura-alder-ridge-state"
+   "derrick-castellano-fcs-mid-atlantic",
+   "levi-colvin-fcs-mid-atlantic",
+   "xavier-nakamura-fcs-mid-atlantic"
   ],
   "SS": [
-   "keegan-eason-alder-ridge-state",
-   "jabari-whitlock-alder-ridge-state",
-   "warren-paddock-alder-ridge-state"
+   "keegan-eason-fcs-mid-atlantic",
+   "jabari-whitlock-fcs-mid-atlantic",
+   "warren-paddock-fcs-mid-atlantic"
   ],
   "K": [
-   "kobe-redmond-alder-ridge-state"
+   "kobe-redmond-fcs-mid-atlantic"
   ],
   "P": [
-   "owen-draper-alder-ridge-state"
+   "owen-draper-fcs-mid-atlantic"
   ]
  },
  "roster_size": 85,
  "roster": [
   {
-   "slug": "brandon-forsythe-alder-ridge-state",
+   "slug": "brandon-forsythe-fcs-mid-atlantic",
    "position": "QB",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Brandon Forsythe",
    "position_name": "Quarterback",
    "jersey": "5",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "5'10\"",
    "weight_lbs": 205,
@@ -629,15 +627,15 @@
    "fictional": true
   },
   {
-   "slug": "kenji-acosta-alder-ridge-state",
+   "slug": "kenji-acosta-fcs-mid-atlantic",
    "position": "QB",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Kenji Acosta",
    "position_name": "Quarterback",
    "jersey": "11",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "6'0\"",
    "weight_lbs": 200,
@@ -937,15 +935,15 @@
    "fictional": true
   },
   {
-   "slug": "keegan-satterfield-alder-ridge-state",
+   "slug": "keegan-satterfield-fcs-mid-atlantic",
    "position": "QB",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Keegan Satterfield",
    "position_name": "Quarterback",
    "jersey": "7",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'3\"",
    "weight_lbs": 210,
@@ -1212,15 +1210,15 @@
    "fictional": true
   },
   {
-   "slug": "jabari-waddell-alder-ridge-state",
+   "slug": "jabari-waddell-fcs-mid-atlantic",
    "position": "QB",
    "class": "FR",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Jabari Waddell",
    "position_name": "Quarterback",
    "jersey": "12",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman",
    "height": "6'0\"",
    "weight_lbs": 185,
@@ -1521,15 +1519,15 @@
    "fictional": true
   },
   {
-   "slug": "malik-delacroix-alder-ridge-state",
+   "slug": "malik-delacroix-fcs-mid-atlantic",
    "position": "HB",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Malik Delacroix",
    "position_name": "Halfback",
    "jersey": "20",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "5'9\"",
    "weight_lbs": 215,
@@ -1805,15 +1803,15 @@
    "fictional": true
   },
   {
-   "slug": "levi-jarrell-alder-ridge-state",
+   "slug": "levi-jarrell-fcs-mid-atlantic",
    "position": "HB",
    "class": "JR",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Levi Jarrell",
    "position_name": "Halfback",
    "jersey": "22",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior",
    "height": "5'9\"",
    "weight_lbs": 188,
@@ -2070,15 +2068,15 @@
    "fictional": true
   },
   {
-   "slug": "jaxon-jarrell-alder-ridge-state",
+   "slug": "jaxon-jarrell-fcs-mid-atlantic",
    "position": "HB",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Jaxon Jarrell",
    "position_name": "Halfback",
    "jersey": "23",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "6'0\"",
    "weight_lbs": 220,
@@ -2352,15 +2350,15 @@
    "fictional": true
   },
   {
-   "slug": "santiago-keeling-alder-ridge-state",
+   "slug": "santiago-keeling-fcs-mid-atlantic",
    "position": "HB",
    "class": "FR",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Santiago Keeling",
    "position_name": "Halfback",
    "jersey": "21",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman",
    "height": "6'0\"",
    "weight_lbs": 202,
@@ -2613,15 +2611,15 @@
    "fictional": true
   },
   {
-   "slug": "damien-briscoe-alder-ridge-state",
+   "slug": "damien-briscoe-fcs-mid-atlantic",
    "position": "HB",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Damien Briscoe",
    "position_name": "Halfback",
    "jersey": "24",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "6'1\"",
    "weight_lbs": 205,
@@ -2892,15 +2890,15 @@
    "fictional": true
   },
   {
-   "slug": "silas-montoya-alder-ridge-state",
+   "slug": "silas-montoya-fcs-mid-atlantic",
    "position": "HB",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Silas Montoya",
    "position_name": "Halfback",
    "jersey": "0",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "5'9\"",
    "weight_lbs": 200,
@@ -3187,15 +3185,15 @@
    "fictional": true
   },
   {
-   "slug": "jermaine-ransom-alder-ridge-state",
+   "slug": "jermaine-ransom-fcs-mid-atlantic",
    "position": "HB",
    "class": "SRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Jermaine Ransom",
    "position_name": "Halfback",
    "jersey": "39",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Senior (RS)",
    "height": "5'10\"",
    "weight_lbs": 209,
@@ -3486,15 +3484,15 @@
    "fictional": true
   },
   {
-   "slug": "nico-dorsett-alder-ridge-state",
+   "slug": "nico-dorsett-fcs-mid-atlantic",
    "position": "WR",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Nico Dorsett",
    "position_name": "Wide Receiver",
    "jersey": "2",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "6'0\"",
    "weight_lbs": 170,
@@ -3759,15 +3757,15 @@
    "fictional": true
   },
   {
-   "slug": "nash-merriweather-alder-ridge-state",
+   "slug": "nash-merriweather-fcs-mid-atlantic",
    "position": "WR",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Nash Merriweather",
    "position_name": "Wide Receiver",
    "jersey": "9",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "5'11\"",
    "weight_lbs": 181,
@@ -4025,15 +4023,15 @@
    "fictional": true
   },
   {
-   "slug": "micah-okafor-alder-ridge-state",
+   "slug": "micah-okafor-fcs-mid-atlantic",
    "position": "WR",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Micah Okafor",
    "position_name": "Wide Receiver",
    "jersey": "17",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "5'11\"",
    "weight_lbs": 190,
@@ -4310,15 +4308,15 @@
    "fictional": true
   },
   {
-   "slug": "hunter-redmond-alder-ridge-state",
+   "slug": "hunter-redmond-fcs-mid-atlantic",
    "position": "WR",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Hunter Redmond",
    "position_name": "Wide Receiver",
    "jersey": "85",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'0\"",
    "weight_lbs": 195,
@@ -4602,15 +4600,15 @@
    "fictional": true
   },
   {
-   "slug": "kenji-overstreet-alder-ridge-state",
+   "slug": "kenji-overstreet-fcs-mid-atlantic",
    "position": "WR",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Kenji Overstreet",
    "position_name": "Wide Receiver",
    "jersey": "6",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "5'11\"",
    "weight_lbs": 170,
@@ -4862,15 +4860,15 @@
    "fictional": true
   },
   {
-   "slug": "dawson-rhodes-alder-ridge-state",
+   "slug": "dawson-rhodes-fcs-mid-atlantic",
    "position": "WR",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Dawson Rhodes",
    "position_name": "Wide Receiver",
    "jersey": "15",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "5'10\"",
    "weight_lbs": 181,
@@ -5150,15 +5148,15 @@
    "fictional": true
   },
   {
-   "slug": "owen-wilder-alder-ridge-state",
+   "slug": "owen-wilder-fcs-mid-atlantic",
    "position": "WR",
    "class": "FR",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Owen Wilder",
    "position_name": "Wide Receiver",
    "jersey": "87",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman",
    "height": "5'11\"",
    "weight_lbs": 172,
@@ -5432,15 +5430,15 @@
    "fictional": true
   },
   {
-   "slug": "zaire-ingram-alder-ridge-state",
+   "slug": "zaire-ingram-fcs-mid-atlantic",
    "position": "WR",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Zaire Ingram",
    "position_name": "Wide Receiver",
    "jersey": "10",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "5'10\"",
    "weight_lbs": 183,
@@ -5723,15 +5721,15 @@
    "fictional": true
   },
   {
-   "slug": "rhett-eldridge-alder-ridge-state",
+   "slug": "rhett-eldridge-fcs-mid-atlantic",
    "position": "WR",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Rhett Eldridge",
    "position_name": "Wide Receiver",
    "jersey": "4",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "6'0\"",
    "weight_lbs": 175,
@@ -5993,15 +5991,15 @@
    "fictional": true
   },
   {
-   "slug": "nico-briscoe-alder-ridge-state",
+   "slug": "nico-briscoe-fcs-mid-atlantic",
    "position": "WR",
    "class": "SRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Nico Briscoe",
    "position_name": "Wide Receiver",
    "jersey": "8",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Senior (RS)",
    "height": "6'2\"",
    "weight_lbs": 182,
@@ -6253,15 +6251,15 @@
    "fictional": true
   },
   {
-   "slug": "ryder-granger-alder-ridge-state",
+   "slug": "ryder-granger-fcs-mid-atlantic",
    "position": "TE",
    "class": "SR",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Ryder Granger",
    "position_name": "Tight End",
    "jersey": "83",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Senior",
    "height": "6'3\"",
    "weight_lbs": 223,
@@ -6526,15 +6524,15 @@
    "fictional": true
   },
   {
-   "slug": "theo-mayfield-alder-ridge-state",
+   "slug": "theo-mayfield-fcs-mid-atlantic",
    "position": "TE",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Theo Mayfield",
    "position_name": "Tight End",
    "jersey": "44",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "6'4\"",
    "weight_lbs": 236,
@@ -6797,15 +6795,15 @@
    "fictional": true
   },
   {
-   "slug": "malachi-redmond-alder-ridge-state",
+   "slug": "malachi-redmond-fcs-mid-atlantic",
    "position": "TE",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Malachi Redmond",
    "position_name": "Tight End",
    "jersey": "18",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",
    "weight_lbs": 255,
@@ -7086,15 +7084,15 @@
    "fictional": true
   },
   {
-   "slug": "julian-harlan-alder-ridge-state",
+   "slug": "julian-harlan-fcs-mid-atlantic",
    "position": "TE",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Julian Harlan",
    "position_name": "Tight End",
    "jersey": "46",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "5'11\"",
    "weight_lbs": 188,
@@ -7377,15 +7375,15 @@
    "fictional": true
   },
   {
-   "slug": "gabriel-paddock-alder-ridge-state",
+   "slug": "gabriel-paddock-fcs-mid-atlantic",
    "position": "TE",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Gabriel Paddock",
    "position_name": "Tight End",
    "jersey": "88",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'4\"",
    "weight_lbs": 225,
@@ -7683,15 +7681,15 @@
    "fictional": true
   },
   {
-   "slug": "levi-yancey-alder-ridge-state",
+   "slug": "levi-yancey-fcs-mid-atlantic",
    "position": "TE",
    "class": "FR",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Levi Yancey",
    "position_name": "Tight End",
    "jersey": "86",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman",
    "height": "6'3\"",
    "weight_lbs": 210,
@@ -7985,15 +7983,15 @@
    "fictional": true
   },
   {
-   "slug": "riley-granger-alder-ridge-state",
+   "slug": "riley-granger-fcs-mid-atlantic",
    "position": "LT",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Riley Granger",
    "position_name": "Left Tackle",
    "jersey": "60",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",
    "weight_lbs": 300,
@@ -8234,15 +8232,15 @@
    "fictional": true
   },
   {
-   "slug": "micah-mayfield-alder-ridge-state",
+   "slug": "micah-mayfield-fcs-mid-atlantic",
    "position": "LT",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Micah Mayfield",
    "position_name": "Left Tackle",
    "jersey": "57",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "6'5\"",
    "weight_lbs": 295,
@@ -8517,15 +8515,15 @@
    "fictional": true
   },
   {
-   "slug": "lucas-corbett-alder-ridge-state",
+   "slug": "lucas-corbett-fcs-mid-atlantic",
    "position": "LT",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Lucas Corbett",
    "position_name": "Left Tackle",
    "jersey": "52",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "6'6\"",
    "weight_lbs": 295,
@@ -8804,15 +8802,15 @@
    "fictional": true
   },
   {
-   "slug": "terrance-kimbrough-alder-ridge-state",
+   "slug": "terrance-kimbrough-fcs-mid-atlantic",
    "position": "LT",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Terrance Kimbrough",
    "position_name": "Left Tackle",
    "jersey": "72",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'7\"",
    "weight_lbs": 285,
@@ -9062,15 +9060,15 @@
    "fictional": true
   },
   {
-   "slug": "jayden-waddell-alder-ridge-state",
+   "slug": "jayden-waddell-fcs-mid-atlantic",
    "position": "LG",
    "class": "SRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Jayden Waddell",
    "position_name": "Left Guard",
    "jersey": "75",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Senior (RS)",
    "height": "6'4\"",
    "weight_lbs": 290,
@@ -9335,15 +9333,15 @@
    "fictional": true
   },
   {
-   "slug": "carter-haskins-alder-ridge-state",
+   "slug": "carter-haskins-fcs-mid-atlantic",
    "position": "LG",
    "class": "FR",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Carter Haskins",
    "position_name": "Left Guard",
    "jersey": "58",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman",
    "height": "6'3\"",
    "weight_lbs": 310,
@@ -9612,15 +9610,15 @@
    "fictional": true
   },
   {
-   "slug": "grant-lindqvist-alder-ridge-state",
+   "slug": "grant-lindqvist-fcs-mid-atlantic",
    "position": "LG",
    "class": "FR",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Grant Lindqvist",
    "position_name": "Left Guard",
    "jersey": "54",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman",
    "height": "6'4\"",
    "weight_lbs": 305,
@@ -9865,15 +9863,15 @@
    "fictional": true
   },
   {
-   "slug": "miles-blackwell-alder-ridge-state",
+   "slug": "miles-blackwell-fcs-mid-atlantic",
    "position": "LG",
    "class": "SO",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Miles Blackwell",
    "position_name": "Left Guard",
    "jersey": "77",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore",
    "height": "6'4\"",
    "weight_lbs": 330,
@@ -10154,15 +10152,15 @@
    "fictional": true
   },
   {
-   "slug": "rashad-granger-alder-ridge-state",
+   "slug": "rashad-granger-fcs-mid-atlantic",
    "position": "C",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Rashad Granger",
    "position_name": "Center",
    "jersey": "61",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
    "weight_lbs": 300,
@@ -10425,15 +10423,15 @@
    "fictional": true
   },
   {
-   "slug": "grady-beckett-alder-ridge-state",
+   "slug": "grady-beckett-fcs-mid-atlantic",
    "position": "C",
    "class": "SO",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Grady Beckett",
    "position_name": "Center",
    "jersey": "70",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore",
    "height": "6'3\"",
    "weight_lbs": 320,
@@ -10702,15 +10700,15 @@
    "fictional": true
   },
   {
-   "slug": "nash-kimbrough-alder-ridge-state",
+   "slug": "nash-kimbrough-fcs-mid-atlantic",
    "position": "C",
    "class": "SO",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Nash Kimbrough",
    "position_name": "Center",
    "jersey": "66",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore",
    "height": "6'2\"",
    "weight_lbs": 296,
@@ -10990,15 +10988,15 @@
    "fictional": true
   },
   {
-   "slug": "isaiah-ransom-alder-ridge-state",
+   "slug": "isaiah-ransom-fcs-mid-atlantic",
    "position": "C",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Isaiah Ransom",
    "position_name": "Center",
    "jersey": "50",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'2\"",
    "weight_lbs": 290,
@@ -11250,15 +11248,15 @@
    "fictional": true
   },
   {
-   "slug": "zane-boudreaux-alder-ridge-state",
+   "slug": "zane-boudreaux-fcs-mid-atlantic",
    "position": "RG",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Zane Boudreaux",
    "position_name": "Right Guard",
    "jersey": "62",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "6'5\"",
    "weight_lbs": 320,
@@ -11530,15 +11528,15 @@
    "fictional": true
   },
   {
-   "slug": "cedric-bainbridge-alder-ridge-state",
+   "slug": "cedric-bainbridge-fcs-mid-atlantic",
    "position": "RG",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Cedric Bainbridge",
    "position_name": "Right Guard",
    "jersey": "65",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'4\"",
    "weight_lbs": 305,
@@ -11815,15 +11813,15 @@
    "fictional": true
   },
   {
-   "slug": "josiah-jarrell-alder-ridge-state",
+   "slug": "josiah-jarrell-fcs-mid-atlantic",
    "position": "RG",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Josiah Jarrell",
    "position_name": "Right Guard",
    "jersey": "76",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'3\"",
    "weight_lbs": 305,
@@ -12106,15 +12104,15 @@
    "fictional": true
   },
   {
-   "slug": "rico-greer-alder-ridge-state",
+   "slug": "rico-greer-fcs-mid-atlantic",
    "position": "RG",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Rico Greer",
    "position_name": "Right Guard",
    "jersey": "59",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 288,
@@ -12402,15 +12400,15 @@
    "fictional": true
   },
   {
-   "slug": "dante-maddox-alder-ridge-state",
+   "slug": "dante-maddox-fcs-mid-atlantic",
    "position": "RT",
    "class": "SRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Dante Maddox",
    "position_name": "Right Tackle",
    "jersey": "71",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Senior (RS)",
    "height": "6'6\"",
    "weight_lbs": 308,
@@ -12668,15 +12666,15 @@
    "fictional": true
   },
   {
-   "slug": "levi-brannon-alder-ridge-state",
+   "slug": "levi-brannon-fcs-mid-atlantic",
    "position": "RT",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Levi Brannon",
    "position_name": "Right Tackle",
    "jersey": "67",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "6'6\"",
    "weight_lbs": 285,
@@ -12928,15 +12926,15 @@
    "fictional": true
   },
   {
-   "slug": "emmanuel-clemmons-alder-ridge-state",
+   "slug": "emmanuel-clemmons-fcs-mid-atlantic",
    "position": "RT",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Emmanuel Clemmons",
    "position_name": "Right Tackle",
    "jersey": "55",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "6'5\"",
    "weight_lbs": 305,
@@ -13216,15 +13214,15 @@
    "fictional": true
   },
   {
-   "slug": "ethan-dempsey-alder-ridge-state",
+   "slug": "ethan-dempsey-fcs-mid-atlantic",
    "position": "RT",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Ethan Dempsey",
    "position_name": "Right Tackle",
    "jersey": "74",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "6'5\"",
    "weight_lbs": 285,
@@ -13474,15 +13472,15 @@
    "fictional": true
   },
   {
-   "slug": "isaiah-holcomb-alder-ridge-state",
+   "slug": "isaiah-holcomb-fcs-mid-atlantic",
    "position": "LEDG",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Isaiah Holcomb",
    "position_name": "Left Edge",
    "jersey": "33",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "6'5\"",
    "weight_lbs": 220,
@@ -13774,15 +13772,15 @@
    "fictional": true
   },
   {
-   "slug": "jace-rios-alder-ridge-state",
+   "slug": "jace-rios-fcs-mid-atlantic",
    "position": "LEDG",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Jace Rios",
    "position_name": "Left Edge",
    "jersey": "96",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
    "weight_lbs": 260,
@@ -14032,15 +14030,15 @@
    "fictional": true
   },
   {
-   "slug": "kareem-nettles-alder-ridge-state",
+   "slug": "kareem-nettles-fcs-mid-atlantic",
    "position": "LEDG",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Kareem Nettles",
    "position_name": "Left Edge",
    "jersey": "80",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'2\"",
    "weight_lbs": 255,
@@ -14325,15 +14323,15 @@
    "fictional": true
   },
   {
-   "slug": "lucas-fairley-alder-ridge-state",
+   "slug": "lucas-fairley-fcs-mid-atlantic",
    "position": "LEDG",
    "class": "SRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Lucas Fairley",
    "position_name": "Left Edge",
    "jersey": "17",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Senior (RS)",
    "height": "6'6\"",
    "weight_lbs": 250,
@@ -14612,15 +14610,15 @@
    "fictional": true
   },
   {
-   "slug": "luca-abbott-alder-ridge-state",
+   "slug": "luca-abbott-fcs-mid-atlantic",
    "position": "DT",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Luca Abbott",
    "position_name": "Defensive Tackle",
    "jersey": "41",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 315,
@@ -14894,15 +14892,15 @@
    "fictional": true
   },
   {
-   "slug": "tristan-draper-alder-ridge-state",
+   "slug": "tristan-draper-fcs-mid-atlantic",
    "position": "DT",
    "class": "SRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Tristan Draper",
    "position_name": "Defensive Tackle",
    "jersey": "95",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Senior (RS)",
    "height": "6'5\"",
    "weight_lbs": 270,
@@ -15175,15 +15173,15 @@
    "fictional": true
   },
   {
-   "slug": "keon-ransom-alder-ridge-state",
+   "slug": "keon-ransom-fcs-mid-atlantic",
    "position": "DT",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Keon Ransom",
    "position_name": "Defensive Tackle",
    "jersey": "93",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 280,
@@ -15454,15 +15452,15 @@
    "fictional": true
   },
   {
-   "slug": "keon-merriweather-alder-ridge-state",
+   "slug": "keon-merriweather-fcs-mid-atlantic",
    "position": "DT",
    "class": "FR",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Keon Merriweather",
    "position_name": "Defensive Tackle",
    "jersey": "97",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman",
    "height": "6'0\"",
    "weight_lbs": 304,
@@ -15743,15 +15741,15 @@
    "fictional": true
   },
   {
-   "slug": "brayden-adair-alder-ridge-state",
+   "slug": "brayden-adair-fcs-mid-atlantic",
    "position": "DT",
    "class": "SRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Brayden Adair",
    "position_name": "Defensive Tackle",
    "jersey": "68",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Senior (RS)",
    "height": "6'3\"",
    "weight_lbs": 280,
@@ -16041,15 +16039,15 @@
    "fictional": true
   },
   {
-   "slug": "solomon-dubois-alder-ridge-state",
+   "slug": "solomon-dubois-fcs-mid-atlantic",
    "position": "DT",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Solomon Dubois",
    "position_name": "Defensive Tackle",
    "jersey": "99",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
    "weight_lbs": 280,
@@ -16339,15 +16337,15 @@
    "fictional": true
   },
   {
-   "slug": "colton-nakamura-alder-ridge-state",
+   "slug": "colton-nakamura-fcs-mid-atlantic",
    "position": "REDG",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Colton Nakamura",
    "position_name": "Right Edge",
    "jersey": "0",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "6'1\"",
    "weight_lbs": 248,
@@ -16573,15 +16571,15 @@
    "fictional": true
   },
   {
-   "slug": "zaire-hollins-alder-ridge-state",
+   "slug": "zaire-hollins-fcs-mid-atlantic",
    "position": "REDG",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Zaire Hollins",
    "position_name": "Right Edge",
    "jersey": "9",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'4\"",
    "weight_lbs": 285,
@@ -16864,15 +16862,15 @@
    "fictional": true
   },
   {
-   "slug": "micah-oakes-alder-ridge-state",
+   "slug": "micah-oakes-fcs-mid-atlantic",
    "position": "REDG",
    "class": "FR",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Micah Oakes",
    "position_name": "Right Edge",
    "jersey": "91",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman",
    "height": "6'4\"",
    "weight_lbs": 285,
@@ -17132,15 +17130,15 @@
    "fictional": true
   },
   {
-   "slug": "micah-upshaw-alder-ridge-state",
+   "slug": "micah-upshaw-fcs-mid-atlantic",
    "position": "SAM",
    "class": "SRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Micah Upshaw",
    "position_name": "Sam Linebacker",
    "jersey": "4",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Senior (RS)",
    "height": "6'0\"",
    "weight_lbs": 225,
@@ -17401,15 +17399,15 @@
    "fictional": true
   },
   {
-   "slug": "aaron-harlan-alder-ridge-state",
+   "slug": "aaron-harlan-fcs-mid-atlantic",
    "position": "SAM",
    "class": "SRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Aaron Harlan",
    "position_name": "Sam Linebacker",
    "jersey": "16",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Senior (RS)",
    "height": "6'2\"",
    "weight_lbs": 220,
@@ -17672,15 +17670,15 @@
    "fictional": true
   },
   {
-   "slug": "dante-vance-alder-ridge-state",
+   "slug": "dante-vance-fcs-mid-atlantic",
    "position": "SAM",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Dante Vance",
    "position_name": "Sam Linebacker",
    "jersey": "15",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "6'2\"",
    "weight_lbs": 235,
@@ -17968,15 +17966,15 @@
    "fictional": true
   },
   {
-   "slug": "quincy-holcomb-alder-ridge-state",
+   "slug": "quincy-holcomb-fcs-mid-atlantic",
    "position": "SAM",
    "class": "FR",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Quincy Holcomb",
    "position_name": "Sam Linebacker",
    "jersey": "25",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman",
    "height": "6'0\"",
    "weight_lbs": 205,
@@ -18268,15 +18266,15 @@
    "fictional": true
   },
   {
-   "slug": "hayden-lockett-alder-ridge-state",
+   "slug": "hayden-lockett-fcs-mid-atlantic",
    "position": "MIKE",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Hayden Lockett",
    "position_name": "Mike Linebacker",
    "jersey": "51",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 316,
@@ -18548,15 +18546,15 @@
    "fictional": true
   },
   {
-   "slug": "terrance-overstreet-alder-ridge-state",
+   "slug": "terrance-overstreet-fcs-mid-atlantic",
    "position": "MIKE",
    "class": "FR",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Terrance Overstreet",
    "position_name": "Mike Linebacker",
    "jersey": "26",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman",
    "height": "6'0\"",
    "weight_lbs": 230,
@@ -18826,15 +18824,15 @@
    "fictional": true
   },
   {
-   "slug": "lamar-ingram-alder-ridge-state",
+   "slug": "lamar-ingram-fcs-mid-atlantic",
    "position": "MIKE",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Lamar Ingram",
    "position_name": "Mike Linebacker",
    "jersey": "3",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'3\"",
    "weight_lbs": 230,
@@ -19080,15 +19078,15 @@
    "fictional": true
   },
   {
-   "slug": "connor-burkett-alder-ridge-state",
+   "slug": "connor-burkett-fcs-mid-atlantic",
    "position": "MIKE",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Connor Burkett",
    "position_name": "Mike Linebacker",
    "jersey": "2",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 221,
@@ -19384,15 +19382,15 @@
    "fictional": true
   },
   {
-   "slug": "drew-bellamy-alder-ridge-state",
+   "slug": "drew-bellamy-fcs-mid-atlantic",
    "position": "WILL",
    "class": "SRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Drew Bellamy",
    "position_name": "Will Linebacker",
    "jersey": "44",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Senior (RS)",
    "height": "6'2\"",
    "weight_lbs": 227,
@@ -19659,15 +19657,15 @@
    "fictional": true
   },
   {
-   "slug": "kai-clemmons-alder-ridge-state",
+   "slug": "kai-clemmons-fcs-mid-atlantic",
    "position": "WILL",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Kai Clemmons",
    "position_name": "Will Linebacker",
    "jersey": "7",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "6'2\"",
    "weight_lbs": 219,
@@ -19921,15 +19919,15 @@
    "fictional": true
   },
   {
-   "slug": "brady-dempsey-alder-ridge-state",
+   "slug": "brady-dempsey-fcs-mid-atlantic",
    "position": "WILL",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Brady Dempsey",
    "position_name": "Will Linebacker",
    "jersey": "6",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "6'2\"",
    "weight_lbs": 220,
@@ -20203,15 +20201,15 @@
    "fictional": true
   },
   {
-   "slug": "luca-stallworth-alder-ridge-state",
+   "slug": "luca-stallworth-fcs-mid-atlantic",
    "position": "CB",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Luca Stallworth",
    "position_name": "Cornerback",
    "jersey": "23",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "5'10\"",
    "weight_lbs": 178,
@@ -20472,15 +20470,15 @@
    "fictional": true
   },
   {
-   "slug": "malik-nettles-alder-ridge-state",
+   "slug": "malik-nettles-fcs-mid-atlantic",
    "position": "CB",
    "class": "FR",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Malik Nettles",
    "position_name": "Cornerback",
    "jersey": "27",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman",
    "height": "5'11\"",
    "weight_lbs": 175,
@@ -20766,15 +20764,15 @@
    "fictional": true
   },
   {
-   "slug": "corey-kimbrough-alder-ridge-state",
+   "slug": "corey-kimbrough-fcs-mid-atlantic",
    "position": "CB",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Corey Kimbrough",
    "position_name": "Cornerback",
    "jersey": "18",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "6'0\"",
    "weight_lbs": 180,
@@ -21045,15 +21043,15 @@
    "fictional": true
   },
   {
-   "slug": "jabari-fenwick-alder-ridge-state",
+   "slug": "jabari-fenwick-fcs-mid-atlantic",
    "position": "CB",
    "class": "SORS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Jabari Fenwick",
    "position_name": "Cornerback",
    "jersey": "10",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "6'1\"",
    "weight_lbs": 180,
@@ -21335,15 +21333,15 @@
    "fictional": true
   },
   {
-   "slug": "justice-blackwell-alder-ridge-state",
+   "slug": "justice-blackwell-fcs-mid-atlantic",
    "position": "CB",
    "class": "SO",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Justice Blackwell",
    "position_name": "Cornerback",
    "jersey": "11",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Sophomore",
    "height": "6'2\"",
    "weight_lbs": 186,
@@ -21592,15 +21590,15 @@
    "fictional": true
   },
   {
-   "slug": "bo-brannon-alder-ridge-state",
+   "slug": "bo-brannon-fcs-mid-atlantic",
    "position": "CB",
    "class": "SRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Bo Brannon",
    "position_name": "Cornerback",
    "jersey": "21",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Senior (RS)",
    "height": "6'2\"",
    "weight_lbs": 180,
@@ -21882,15 +21880,15 @@
    "fictional": true
   },
   {
-   "slug": "derrick-castellano-alder-ridge-state",
+   "slug": "derrick-castellano-fcs-mid-atlantic",
    "position": "FS",
    "class": "FR",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Derrick Castellano",
    "position_name": "Free Safety",
    "jersey": "19",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman",
    "height": "5'10\"",
    "weight_lbs": 180,
@@ -22138,15 +22136,15 @@
    "fictional": true
   },
   {
-   "slug": "levi-colvin-alder-ridge-state",
+   "slug": "levi-colvin-fcs-mid-atlantic",
    "position": "FS",
    "class": "SRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Levi Colvin",
    "position_name": "Free Safety",
    "jersey": "35",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Senior (RS)",
    "height": "5'11\"",
    "weight_lbs": 197,
@@ -22439,15 +22437,15 @@
    "fictional": true
   },
   {
-   "slug": "xavier-nakamura-alder-ridge-state",
+   "slug": "xavier-nakamura-fcs-mid-atlantic",
    "position": "FS",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Xavier Nakamura",
    "position_name": "Free Safety",
    "jersey": "28",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",
    "weight_lbs": 175,
@@ -22740,15 +22738,15 @@
    "fictional": true
   },
   {
-   "slug": "keegan-eason-alder-ridge-state",
+   "slug": "keegan-eason-fcs-mid-atlantic",
    "position": "SS",
    "class": "SRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Keegan Eason",
    "position_name": "Strong Safety",
    "jersey": "30",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Senior (RS)",
    "height": "5'10\"",
    "weight_lbs": 180,
@@ -23030,15 +23028,15 @@
    "fictional": true
   },
   {
-   "slug": "jabari-whitlock-alder-ridge-state",
+   "slug": "jabari-whitlock-fcs-mid-atlantic",
    "position": "SS",
    "class": "JRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Jabari Whitlock",
    "position_name": "Strong Safety",
    "jersey": "8",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Junior (RS)",
    "height": "6'0\"",
    "weight_lbs": 193,
@@ -23328,15 +23326,15 @@
    "fictional": true
   },
   {
-   "slug": "warren-paddock-alder-ridge-state",
+   "slug": "warren-paddock-fcs-mid-atlantic",
    "position": "SS",
    "class": "FRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Warren Paddock",
    "position_name": "Strong Safety",
    "jersey": "32",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
    "weight_lbs": 195,
@@ -23622,15 +23620,15 @@
    "fictional": true
   },
   {
-   "slug": "kobe-redmond-alder-ridge-state",
+   "slug": "kobe-redmond-fcs-mid-atlantic",
    "position": "K",
    "class": "SRRS",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Kobe Redmond",
    "position_name": "Kicker",
    "jersey": "95",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Senior (RS)",
    "height": "5'11\"",
    "weight_lbs": 211,
@@ -23885,15 +23883,15 @@
    "fictional": true
   },
   {
-   "slug": "owen-draper-alder-ridge-state",
+   "slug": "owen-draper-fcs-mid-atlantic",
    "position": "P",
    "class": "FR",
-   "team_slug": "alder-ridge-state",
+   "team_slug": "fcs-mid-atlantic",
    "url": null,
    "name": "Owen Draper",
    "position_name": "Punter",
    "jersey": "49",
-   "team": "Alder Ridge St.",
+   "team": "FCS Mid-Atlantic",
    "class_year": "Freshman",
    "height": "6'0\"",
    "weight_lbs": 186,

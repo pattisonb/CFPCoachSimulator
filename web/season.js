@@ -3407,6 +3407,7 @@
     try {
       const g = await api(`/api/season/${s.id}/game/${encodeURIComponent(eventId)}`);
       if (!g || !g.home || !g.away) return false;
+      window.CFP.boxNames(g);
       window.CFP.currentBoxSlugs = { home: g.home_slug, away: g.away_slug };
       // the box score lives in #tab-box; it is rendered in place, then moved into the shared modal
       const node = state.boxNode || (state.boxNode = $("#tab-box"));
@@ -3873,7 +3874,7 @@
   async function openGameDay(eventId, info) {
     const s = state.season;
     let g;
-    try { g = await api(`/api/season/${s.id}/game/${eventId}`); } catch (err) { showAfterGameday(); toast(`Could not load the game: ${errText(err)}`, 3000); return; }
+    try { g = window.CFP.boxNames(await api(`/api/season/${s.id}/game/${eventId}`)); } catch (err) { showAfterGameday(); toast(`Could not load the game: ${errText(err)}`, 3000); return; }
     if (!g.drives || !g.drives.some((d) => d.log && d.log.length)) { showAfterGameday(); openBox(eventId); return; }
     gameday.g = g; gameday.eventId = eventId; gameday.moments = gdMoments(g); gameday.i = 0; gameday.speed = gdSpeed();
     clearTimeout(gameday.timer);

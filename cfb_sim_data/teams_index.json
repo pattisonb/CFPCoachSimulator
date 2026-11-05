@@ -223,80 +223,6 @@
   "roster_size": 85
  },
  {
-  "slug": "alder-ridge-state",
-  "school_name": "Alder Ridge State University",
-  "short_name": "Alder Ridge St.",
-  "abbreviation": "ARSU",
-  "mascot": "Forgers",
-  "city": "Alder Ridge",
-  "state": "PA",
-  "region": "Mid-Atlantic",
-  "conference": "Eight Rivers Football Conference",
-  "subdivision": "FCS",
-  "stadium": {
-   "name": "Furnace Hill Stadium",
-   "capacity": 16500,
-   "surface": "grass"
-  },
-  "colors": {
-   "primary": {
-    "name": "Ember Orange",
-    "hex": "#D4561B"
-   },
-   "secondary": {
-    "name": "Iron Gray",
-    "hex": "#3B3F45"
-   },
-   "accent": {
-    "name": "White",
-    "hex": "#FFFFFF"
-   }
-  },
-  "rivals": [
-   "kestrel-bay"
-  ],
-  "fictional": true,
-  "program": {
-   "prestige": 1,
-   "home_field_advantage": 43,
-   "generated": true
-  },
-  "team_ratings": {
-   "offense": 48.8,
-   "defense": 48.5,
-   "special_teams": 47.0,
-   "overall": 48.5,
-   "roster_avg": 39.8,
-   "position_groups": {
-    "QB": 48,
-    "RB": 49,
-    "WR": 48.7,
-    "TE": 44,
-    "OL": 50.4,
-    "DL": 49.2,
-    "LB": 55,
-    "DB": 45.4,
-    "K": 38,
-    "P": 56
-   }
-  },
-  "coaches": {
-   "head_coach": {
-    "name": "Marcus Mabe",
-    "overall": 34
-   },
-   "offensive_coordinator": {
-    "name": "Mark Kincaid",
-    "overall": 38
-   },
-   "defensive_coordinator": {
-    "name": "Doug Strickland",
-    "overall": 20
-   }
-  },
-  "roster_size": 85
- },
- {
   "slug": "app-st",
   "school_name": "Appalachian State University",
   "short_name": "App State",
@@ -1480,80 +1406,6 @@
   "roster_size": 85
  },
  {
-  "slug": "calder-springs",
-  "school_name": "Calder Springs University",
-  "short_name": "Calder Springs",
-  "abbreviation": "CSU",
-  "mascot": "Cottonmouths",
-  "city": "Calder Springs",
-  "state": "SC",
-  "region": "Southeast",
-  "conference": "Eight Rivers Football Conference",
-  "subdivision": "FCS",
-  "stadium": {
-   "name": "Live Oak Bowl",
-   "capacity": 14000,
-   "surface": "grass"
-  },
-  "colors": {
-   "primary": {
-    "name": "Forest Green",
-    "hex": "#1E4D2B"
-   },
-   "secondary": {
-    "name": "Old Gold",
-    "hex": "#C9A227"
-   },
-   "accent": {
-    "name": "Cream",
-    "hex": "#F3EBD3"
-   }
-  },
-  "rivals": [
-   "port-rennick-state"
-  ],
-  "fictional": true,
-  "program": {
-   "prestige": 1,
-   "home_field_advantage": 39,
-   "generated": true
-  },
-  "team_ratings": {
-   "offense": 47.5,
-   "defense": 47.4,
-   "special_teams": 40.5,
-   "overall": 46.8,
-   "roster_avg": 39.6,
-   "position_groups": {
-    "QB": 46,
-    "RB": 56,
-    "WR": 54,
-    "TE": 48,
-    "OL": 42.8,
-    "DL": 45.5,
-    "LB": 46,
-    "DB": 49.4,
-    "K": 37,
-    "P": 44
-   }
-  },
-  "coaches": {
-   "head_coach": {
-    "name": "Mike Caudill",
-    "overall": 20
-   },
-   "offensive_coordinator": {
-    "name": "Doug Ferrante",
-    "overall": 20
-   },
-   "defensive_coordinator": {
-    "name": "Wes Dorsey",
-    "overall": 23
-   }
-  },
-  "roster_size": 85
- },
- {
   "slug": "california",
   "school_name": "University of California, Berkeley",
   "short_name": "California",
@@ -1624,80 +1476,6 @@
    "defensive_coordinator": {
     "name": "Michael Hutchings",
     "overall": 59
-   }
-  },
-  "roster_size": 85
- },
- {
-  "slug": "cedar-sound",
-  "school_name": "Cedar Sound University",
-  "short_name": "Cedar Sound",
-  "abbreviation": "CSDU",
-  "mascot": "Orcas",
-  "city": "Cedar Sound",
-  "state": "WA",
-  "region": "Pacific Northwest",
-  "conference": "Eight Rivers Football Conference",
-  "subdivision": "FCS",
-  "stadium": {
-   "name": "Driftwood Field",
-   "capacity": 10400,
-   "surface": "turf"
-  },
-  "colors": {
-   "primary": {
-    "name": "Black",
-    "hex": "#101820"
-   },
-   "secondary": {
-    "name": "Evergreen",
-    "hex": "#2E7D5B"
-   },
-   "accent": {
-    "name": "White",
-    "hex": "#FFFFFF"
-   }
-  },
-  "rivals": [
-   "talus-peak"
-  ],
-  "fictional": true,
-  "program": {
-   "prestige": 1,
-   "home_field_advantage": 32,
-   "generated": true
-  },
-  "team_ratings": {
-   "offense": 41.2,
-   "defense": 46.3,
-   "special_teams": 38.0,
-   "overall": 43.2,
-   "roster_avg": 36.6,
-   "position_groups": {
-    "QB": 42,
-    "RB": 50,
-    "WR": 44.3,
-    "TE": 40,
-    "OL": 37.2,
-    "DL": 50,
-    "LB": 44.5,
-    "DB": 44,
-    "K": 34,
-    "P": 42
-   }
-  },
-  "coaches": {
-   "head_coach": {
-    "name": "Mark Westbrook",
-    "overall": 27
-   },
-   "offensive_coordinator": {
-    "name": "Mike Brandt",
-    "overall": 21
-   },
-   "defensive_coordinator": {
-    "name": "Dwayne Brandt",
-    "overall": 22
    }
   },
   "roster_size": 85
@@ -2367,6 +2145,582 @@
    "defensive_coordinator": {
     "name": "Jordon Hankins",
     "overall": 49
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "fcs-great-lakes",
+  "school_name": "FCS Great Lakes",
+  "short_name": "FCS Great Lakes",
+  "abbreviation": "FCS",
+  "state": "MI",
+  "region": "Great Lakes",
+  "conference": "FCS",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "FCS Great Lakes Stadium",
+   "capacity": 9800,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Maroon",
+    "hex": "#6B1E2E"
+   },
+   "secondary": {
+    "name": "Steel Silver",
+    "hex": "#A7ADB4"
+   },
+   "accent": {
+    "name": "Black",
+    "hex": "#111111"
+   }
+  },
+  "rivals": [
+   "fcs-plains"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 30,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 40.6,
+   "defense": 40.9,
+   "special_teams": 39.5,
+   "overall": 40.6,
+   "roster_avg": 34.1,
+   "position_groups": {
+    "QB": 38,
+    "RB": 50,
+    "WR": 44.3,
+    "TE": 37,
+    "OL": 38.8,
+    "DL": 39.8,
+    "LB": 40.5,
+    "DB": 42,
+    "K": 34,
+    "P": 45
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Brian Westbrook",
+    "overall": 20
+   },
+   "offensive_coordinator": {
+    "name": "Brian Strickland",
+    "overall": 21
+   },
+   "defensive_coordinator": {
+    "name": "Phil Westbrook",
+    "overall": 20
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "fcs-gulf-coast",
+  "school_name": "FCS Gulf Coast",
+  "short_name": "FCS Gulf Coast",
+  "abbreviation": "FCS",
+  "state": "TX",
+  "region": "Gulf Coast",
+  "conference": "FCS",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "FCS Gulf Coast Stadium",
+   "capacity": 18200,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Gulf Blue",
+    "hex": "#0069A8"
+   },
+   "secondary": {
+    "name": "Coral",
+    "hex": "#F26B4F"
+   },
+   "accent": {
+    "name": "Sand",
+    "hex": "#E8D9B5"
+   }
+  },
+  "rivals": [
+   "fcs-southeast"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 46,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 46.8,
+   "defense": 48.8,
+   "special_teams": 40.0,
+   "overall": 47.0,
+   "roster_avg": 40.0,
+   "position_groups": {
+    "QB": 42,
+    "RB": 63,
+    "WR": 50.7,
+    "TE": 42,
+    "OL": 45,
+    "DL": 49.5,
+    "LB": 42.5,
+    "DB": 50.8,
+    "K": 32,
+    "P": 48
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Kevin Westbrook",
+    "overall": 20
+   },
+   "offensive_coordinator": {
+    "name": "Wes Dorsey",
+    "overall": 28
+   },
+   "defensive_coordinator": {
+    "name": "Greg Westbrook",
+    "overall": 29
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "fcs-mid-atlantic",
+  "school_name": "FCS Mid-Atlantic",
+  "short_name": "FCS Mid-Atlantic",
+  "abbreviation": "FCS",
+  "state": "PA",
+  "region": "Mid-Atlantic",
+  "conference": "FCS",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "FCS Mid-Atlantic Stadium",
+   "capacity": 16500,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Ember Orange",
+    "hex": "#D4561B"
+   },
+   "secondary": {
+    "name": "Iron Gray",
+    "hex": "#3B3F45"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "fcs-new-england"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 43,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 48.8,
+   "defense": 48.5,
+   "special_teams": 47.0,
+   "overall": 48.5,
+   "roster_avg": 39.8,
+   "position_groups": {
+    "QB": 48,
+    "RB": 49,
+    "WR": 48.7,
+    "TE": 44,
+    "OL": 50.4,
+    "DL": 49.2,
+    "LB": 55,
+    "DB": 45.4,
+    "K": 38,
+    "P": 56
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Marcus Mabe",
+    "overall": 34
+   },
+   "offensive_coordinator": {
+    "name": "Mark Kincaid",
+    "overall": 38
+   },
+   "defensive_coordinator": {
+    "name": "Doug Strickland",
+    "overall": 20
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "fcs-mountain-west",
+  "school_name": "FCS Mountain West",
+  "short_name": "FCS Mountain West",
+  "abbreviation": "FCS",
+  "state": "CO",
+  "region": "Mountain West",
+  "conference": "FCS",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "FCS Mountain West Stadium",
+   "capacity": 12600,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Copper",
+    "hex": "#B5652B"
+   },
+   "secondary": {
+    "name": "Slate Blue",
+    "hex": "#2F4A63"
+   },
+   "accent": {
+    "name": "Snow",
+    "hex": "#F7F9FA"
+   }
+  },
+  "rivals": [
+   "fcs-pacific-northwest"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 36,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 44.1,
+   "defense": 48.4,
+   "special_teams": 45.5,
+   "overall": 46.2,
+   "roster_avg": 39.0,
+   "position_groups": {
+    "QB": 42,
+    "RB": 63,
+    "WR": 47,
+    "TE": 45,
+    "OL": 39.6,
+    "DL": 49.8,
+    "LB": 53.5,
+    "DB": 45.2,
+    "K": 48,
+    "P": 43
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Rick Vasquez",
+    "overall": 28
+   },
+   "offensive_coordinator": {
+    "name": "Bill Ashby",
+    "overall": 35
+   },
+   "defensive_coordinator": {
+    "name": "Wes Lindgren",
+    "overall": 32
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "fcs-new-england",
+  "school_name": "FCS New England",
+  "short_name": "FCS New England",
+  "abbreviation": "FCS",
+  "state": "ME",
+  "region": "New England",
+  "conference": "FCS",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "FCS New England Stadium",
+   "capacity": 11200,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Navy",
+    "hex": "#14284B"
+   },
+   "secondary": {
+    "name": "Seafoam",
+    "hex": "#5FB7A6"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "fcs-mid-atlantic"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 33,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 42.1,
+   "defense": 42.1,
+   "special_teams": 42.5,
+   "overall": 42.1,
+   "roster_avg": 35.4,
+   "position_groups": {
+    "QB": 37,
+    "RB": 46,
+    "WR": 43.3,
+    "TE": 38,
+    "OL": 44.4,
+    "DL": 42.5,
+    "LB": 42.5,
+    "DB": 41.6,
+    "K": 42,
+    "P": 43
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Marcus Caudill",
+    "overall": 35
+   },
+   "offensive_coordinator": {
+    "name": "Dwayne Ashby",
+    "overall": 20
+   },
+   "defensive_coordinator": {
+    "name": "Dale Tillman",
+    "overall": 20
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "fcs-pacific-northwest",
+  "school_name": "FCS Pacific Northwest",
+  "short_name": "FCS Pacific Northwest",
+  "abbreviation": "FCS",
+  "state": "WA",
+  "region": "Pacific Northwest",
+  "conference": "FCS",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "FCS Pacific Northwest Stadium",
+   "capacity": 10400,
+   "surface": "turf"
+  },
+  "colors": {
+   "primary": {
+    "name": "Black",
+    "hex": "#101820"
+   },
+   "secondary": {
+    "name": "Evergreen",
+    "hex": "#2E7D5B"
+   },
+   "accent": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  "rivals": [
+   "fcs-mountain-west"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 32,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 41.2,
+   "defense": 46.3,
+   "special_teams": 38.0,
+   "overall": 43.2,
+   "roster_avg": 36.6,
+   "position_groups": {
+    "QB": 42,
+    "RB": 50,
+    "WR": 44.3,
+    "TE": 40,
+    "OL": 37.2,
+    "DL": 50,
+    "LB": 44.5,
+    "DB": 44,
+    "K": 34,
+    "P": 42
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Mark Westbrook",
+    "overall": 27
+   },
+   "offensive_coordinator": {
+    "name": "Mike Brandt",
+    "overall": 21
+   },
+   "defensive_coordinator": {
+    "name": "Dwayne Brandt",
+    "overall": 22
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "fcs-plains",
+  "school_name": "FCS Plains",
+  "short_name": "FCS Plains",
+  "abbreviation": "FCS",
+  "state": "NE",
+  "region": "Plains",
+  "conference": "FCS",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "FCS Plains Stadium",
+   "capacity": 13500,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Crimson",
+    "hex": "#A3162D"
+   },
+   "secondary": {
+    "name": "Wheat",
+    "hex": "#E3C77A"
+   },
+   "accent": {
+    "name": "Black",
+    "hex": "#141414"
+   }
+  },
+  "rivals": [
+   "fcs-great-lakes"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 38,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 44.9,
+   "defense": 39.7,
+   "special_teams": 31.0,
+   "overall": 41.2,
+   "roster_avg": 35.7,
+   "position_groups": {
+    "QB": 43,
+    "RB": 49,
+    "WR": 49,
+    "TE": 38,
+    "OL": 44.2,
+    "DL": 39.5,
+    "LB": 40,
+    "DB": 39.8,
+    "K": 31,
+    "P": 31
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Lance Kincaid",
+    "overall": 20
+   },
+   "offensive_coordinator": {
+    "name": "Brian Rourke",
+    "overall": 20
+   },
+   "defensive_coordinator": {
+    "name": "Trent Dorsey",
+    "overall": 20
+   }
+  },
+  "roster_size": 85
+ },
+ {
+  "slug": "fcs-southeast",
+  "school_name": "FCS Southeast",
+  "short_name": "FCS Southeast",
+  "abbreviation": "FCS",
+  "state": "SC",
+  "region": "Southeast",
+  "conference": "FCS",
+  "subdivision": "FCS",
+  "stadium": {
+   "name": "FCS Southeast Stadium",
+   "capacity": 14000,
+   "surface": "grass"
+  },
+  "colors": {
+   "primary": {
+    "name": "Forest Green",
+    "hex": "#1E4D2B"
+   },
+   "secondary": {
+    "name": "Old Gold",
+    "hex": "#C9A227"
+   },
+   "accent": {
+    "name": "Cream",
+    "hex": "#F3EBD3"
+   }
+  },
+  "rivals": [
+   "fcs-gulf-coast"
+  ],
+  "fictional": true,
+  "program": {
+   "prestige": 1,
+   "home_field_advantage": 39,
+   "generated": true
+  },
+  "team_ratings": {
+   "offense": 47.5,
+   "defense": 47.4,
+   "special_teams": 40.5,
+   "overall": 46.8,
+   "roster_avg": 39.6,
+   "position_groups": {
+    "QB": 46,
+    "RB": 56,
+    "WR": 54,
+    "TE": 48,
+    "OL": 42.8,
+    "DL": 45.5,
+    "LB": 46,
+    "DB": 49.4,
+    "K": 37,
+    "P": 44
+   }
+  },
+  "coaches": {
+   "head_coach": {
+    "name": "Mike Caudill",
+    "overall": 20
+   },
+   "offensive_coordinator": {
+    "name": "Doug Ferrante",
+    "overall": 20
+   },
+   "defensive_coordinator": {
+    "name": "Wes Dorsey",
+    "overall": 23
    }
   },
   "roster_size": 85
@@ -3996,80 +4350,6 @@
    "defensive_coordinator": {
     "name": "Jay Bateman",
     "overall": 32
-   }
-  },
-  "roster_size": 85
- },
- {
-  "slug": "kestrel-bay",
-  "school_name": "Kestrel Bay University",
-  "short_name": "Kestrel Bay",
-  "abbreviation": "KBU",
-  "mascot": "Sea Wolves",
-  "city": "Kestrel Bay",
-  "state": "ME",
-  "region": "New England",
-  "conference": "Eight Rivers Football Conference",
-  "subdivision": "FCS",
-  "stadium": {
-   "name": "Harborview Field",
-   "capacity": 11200,
-   "surface": "turf"
-  },
-  "colors": {
-   "primary": {
-    "name": "Navy",
-    "hex": "#14284B"
-   },
-   "secondary": {
-    "name": "Seafoam",
-    "hex": "#5FB7A6"
-   },
-   "accent": {
-    "name": "White",
-    "hex": "#FFFFFF"
-   }
-  },
-  "rivals": [
-   "alder-ridge-state"
-  ],
-  "fictional": true,
-  "program": {
-   "prestige": 1,
-   "home_field_advantage": 33,
-   "generated": true
-  },
-  "team_ratings": {
-   "offense": 42.1,
-   "defense": 42.1,
-   "special_teams": 42.5,
-   "overall": 42.1,
-   "roster_avg": 35.4,
-   "position_groups": {
-    "QB": 37,
-    "RB": 46,
-    "WR": 43.3,
-    "TE": 38,
-    "OL": 44.4,
-    "DL": 42.5,
-    "LB": 42.5,
-    "DB": 41.6,
-    "K": 42,
-    "P": 43
-   }
-  },
-  "coaches": {
-   "head_coach": {
-    "name": "Marcus Caudill",
-    "overall": 35
-   },
-   "offensive_coordinator": {
-    "name": "Dwayne Ashby",
-    "overall": 20
-   },
-   "defensive_coordinator": {
-    "name": "Dale Tillman",
-    "overall": 20
    }
   },
   "roster_size": 85
@@ -6974,80 +7254,6 @@
   "roster_size": 85
  },
  {
-  "slug": "port-rennick-state",
-  "school_name": "Port Rennick State University",
-  "short_name": "Port Rennick St.",
-  "abbreviation": "PRSU",
-  "mascot": "Mariners",
-  "city": "Port Rennick",
-  "state": "TX",
-  "region": "Gulf Coast",
-  "conference": "Eight Rivers Football Conference",
-  "subdivision": "FCS",
-  "stadium": {
-   "name": "Seawall Stadium",
-   "capacity": 18200,
-   "surface": "turf"
-  },
-  "colors": {
-   "primary": {
-    "name": "Gulf Blue",
-    "hex": "#0069A8"
-   },
-   "secondary": {
-    "name": "Coral",
-    "hex": "#F26B4F"
-   },
-   "accent": {
-    "name": "Sand",
-    "hex": "#E8D9B5"
-   }
-  },
-  "rivals": [
-   "calder-springs"
-  ],
-  "fictional": true,
-  "program": {
-   "prestige": 1,
-   "home_field_advantage": 46,
-   "generated": true
-  },
-  "team_ratings": {
-   "offense": 46.8,
-   "defense": 48.8,
-   "special_teams": 40.0,
-   "overall": 47.0,
-   "roster_avg": 40.0,
-   "position_groups": {
-    "QB": 42,
-    "RB": 63,
-    "WR": 50.7,
-    "TE": 42,
-    "OL": 45,
-    "DL": 49.5,
-    "LB": 42.5,
-    "DB": 50.8,
-    "K": 32,
-    "P": 48
-   }
-  },
-  "coaches": {
-   "head_coach": {
-    "name": "Kevin Westbrook",
-    "overall": 20
-   },
-   "offensive_coordinator": {
-    "name": "Wes Dorsey",
-    "overall": 28
-   },
-   "defensive_coordinator": {
-    "name": "Greg Westbrook",
-    "overall": 29
-   }
-  },
-  "roster_size": 85
- },
- {
   "slug": "purdue",
   "school_name": "Purdue University",
   "short_name": "Purdue",
@@ -7117,80 +7323,6 @@
    "defensive_coordinator": {
     "name": "Kevin Kane",
     "overall": 59
-   }
-  },
-  "roster_size": 85
- },
- {
-  "slug": "red-prairie-state",
-  "school_name": "Red Prairie State University",
-  "short_name": "Red Prairie St.",
-  "abbreviation": "RPS",
-  "mascot": "Plainsmen",
-  "city": "Red Prairie",
-  "state": "NE",
-  "region": "Plains",
-  "conference": "Eight Rivers Football Conference",
-  "subdivision": "FCS",
-  "stadium": {
-   "name": "Windbreak Stadium",
-   "capacity": 13500,
-   "surface": "grass"
-  },
-  "colors": {
-   "primary": {
-    "name": "Crimson",
-    "hex": "#A3162D"
-   },
-   "secondary": {
-    "name": "Wheat",
-    "hex": "#E3C77A"
-   },
-   "accent": {
-    "name": "Black",
-    "hex": "#141414"
-   }
-  },
-  "rivals": [
-   "wendt-lake-tech"
-  ],
-  "fictional": true,
-  "program": {
-   "prestige": 1,
-   "home_field_advantage": 38,
-   "generated": true
-  },
-  "team_ratings": {
-   "offense": 44.9,
-   "defense": 39.7,
-   "special_teams": 31.0,
-   "overall": 41.2,
-   "roster_avg": 35.7,
-   "position_groups": {
-    "QB": 43,
-    "RB": 49,
-    "WR": 49,
-    "TE": 38,
-    "OL": 44.2,
-    "DL": 39.5,
-    "LB": 40,
-    "DB": 39.8,
-    "K": 31,
-    "P": 31
-   }
-  },
-  "coaches": {
-   "head_coach": {
-    "name": "Lance Kincaid",
-    "overall": 20
-   },
-   "offensive_coordinator": {
-    "name": "Brian Rourke",
-    "overall": 20
-   },
-   "defensive_coordinator": {
-    "name": "Trent Dorsey",
-    "overall": 20
    }
   },
   "roster_size": 85
@@ -8077,80 +8209,6 @@
    "defensive_coordinator": {
     "name": "Vince Kehres",
     "overall": 44
-   }
-  },
-  "roster_size": 85
- },
- {
-  "slug": "talus-peak",
-  "school_name": "Talus Peak University",
-  "short_name": "Talus Peak",
-  "abbreviation": "TPU",
-  "mascot": "Miners",
-  "city": "Talus Peak",
-  "state": "CO",
-  "region": "Mountain West",
-  "conference": "Eight Rivers Football Conference",
-  "subdivision": "FCS",
-  "stadium": {
-   "name": "Switchback Stadium",
-   "capacity": 12600,
-   "surface": "turf"
-  },
-  "colors": {
-   "primary": {
-    "name": "Copper",
-    "hex": "#B5652B"
-   },
-   "secondary": {
-    "name": "Slate Blue",
-    "hex": "#2F4A63"
-   },
-   "accent": {
-    "name": "Snow",
-    "hex": "#F7F9FA"
-   }
-  },
-  "rivals": [
-   "cedar-sound"
-  ],
-  "fictional": true,
-  "program": {
-   "prestige": 1,
-   "home_field_advantage": 36,
-   "generated": true
-  },
-  "team_ratings": {
-   "offense": 44.1,
-   "defense": 48.4,
-   "special_teams": 45.5,
-   "overall": 46.2,
-   "roster_avg": 39.0,
-   "position_groups": {
-    "QB": 42,
-    "RB": 63,
-    "WR": 47,
-    "TE": 45,
-    "OL": 39.6,
-    "DL": 49.8,
-    "LB": 53.5,
-    "DB": 45.2,
-    "K": 48,
-    "P": 43
-   }
-  },
-  "coaches": {
-   "head_coach": {
-    "name": "Rick Vasquez",
-    "overall": 28
-   },
-   "offensive_coordinator": {
-    "name": "Bill Ashby",
-    "overall": 35
-   },
-   "defensive_coordinator": {
-    "name": "Wes Lindgren",
-    "overall": 32
    }
   },
   "roster_size": 85
@@ -10524,80 +10582,6 @@
    "defensive_coordinator": {
     "name": "Trent Bray",
     "overall": 49
-   }
-  },
-  "roster_size": 85
- },
- {
-  "slug": "wendt-lake-tech",
-  "school_name": "Wendt Lake Polytechnic Institute",
-  "short_name": "Wendt Lake Tech",
-  "abbreviation": "WLT",
-  "mascot": "Freighters",
-  "city": "Wendt Lake",
-  "state": "MI",
-  "region": "Great Lakes",
-  "conference": "Eight Rivers Football Conference",
-  "subdivision": "FCS",
-  "stadium": {
-   "name": "Ore Dock Field",
-   "capacity": 9800,
-   "surface": "turf"
-  },
-  "colors": {
-   "primary": {
-    "name": "Maroon",
-    "hex": "#6B1E2E"
-   },
-   "secondary": {
-    "name": "Steel Silver",
-    "hex": "#A7ADB4"
-   },
-   "accent": {
-    "name": "Black",
-    "hex": "#111111"
-   }
-  },
-  "rivals": [
-   "red-prairie-state"
-  ],
-  "fictional": true,
-  "program": {
-   "prestige": 1,
-   "home_field_advantage": 30,
-   "generated": true
-  },
-  "team_ratings": {
-   "offense": 40.6,
-   "defense": 40.9,
-   "special_teams": 39.5,
-   "overall": 40.6,
-   "roster_avg": 34.1,
-   "position_groups": {
-    "QB": 38,
-    "RB": 50,
-    "WR": 44.3,
-    "TE": 37,
-    "OL": 38.8,
-    "DL": 39.8,
-    "LB": 40.5,
-    "DB": 42,
-    "K": 34,
-    "P": 45
-   }
-  },
-  "coaches": {
-   "head_coach": {
-    "name": "Brian Westbrook",
-    "overall": 20
-   },
-   "offensive_coordinator": {
-    "name": "Brian Strickland",
-    "overall": 21
-   },
-   "defensive_coordinator": {
-    "name": "Phil Westbrook",
-    "overall": 20
    }
   },
   "roster_size": 85

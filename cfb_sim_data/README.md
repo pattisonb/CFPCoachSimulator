@@ -1,6 +1,6 @@
 # College Football Sim Data — 2026 Season
 
-146 teams: 138 FBS teams with real 2026 details, and 8 fictional FCS schools. Total roster count is 12,410 players.
+146 teams: 138 FBS teams with real 2026 details, and 8 regional FCS stand-ins. Total roster count is 12,410 players.
 
 ## Files
 
@@ -11,7 +11,7 @@
 | `coaches.json` | All 438 coaches (head coach, offensive coordinator, defensive coordinator for each team) in one list |
 | `teams/<slug>.json` | One team, complete: details, colors, stadium, coaches, team ratings, starters, depth chart and full 85-man roster |
 
-The team slug (`ohio-state`, `smu`, `talus-peak`) is the ID used everywhere. A player's ID is their `slug`. Player IDs are unique across the whole league.
+The team slug (`ohio-state`, `smu`, `fcs-mountain-west`) is the ID used everywhere. A player's ID is their `slug`. Player IDs are unique across the whole league.
 
 ## Rating scale
 
@@ -65,20 +65,20 @@ The fields below are generated. They are not real-world or EA data, and each blo
 
 When a school has no one in a coordinator title (Washington's OC, for example), the block has `name: null` and `vacant: true`. Its ratings describe the unit the head coach runs.
 
-## The 8 FCS schools (Eight Rivers Football Conference)
+## The 8 FCS stand-ins
 
-These schools are fictional, and so are their players and coaches. Each roster was built from the makeup of a real low-tier FBS roster, using different player templates, with ratings lowered to FCS level. Team averages are 34–40, compared with 43–61 for FBS teams, and each school has a few standout players.
+FBS teams play their FCS games against one stand-in per region. A stand-in has no school name, mascot or town: its slug is `fcs-` and its region, and its name, short name and abbreviation are the region label ("FCS Mid-Atlantic", abbreviation "FCS"). Its players and coaches are fictional. Each roster was built from the makeup of a real low-tier FBS roster, using different player templates, with ratings lowered to FCS level. Team averages are 34–40, compared with 43–61 for FBS teams, and each stand-in has a few standout players.
 
-| School | Mascot | Location | Region |
-|---|---|---|---|
-| Kestrel Bay University | Sea Wolves | Kestrel Bay, ME | New England |
-| Alder Ridge State University | Forgers | Alder Ridge, PA | Mid-Atlantic |
-| Calder Springs University | Cottonmouths | Calder Springs, SC | Southeast |
-| Port Rennick State University | Mariners | Port Rennick, TX | Gulf Coast |
-| Wendt Lake Polytechnic Institute | Freighters | Wendt Lake, MI | Great Lakes |
-| Red Prairie State University | Plainsmen | Red Prairie, NE | Plains |
-| Talus Peak University | Miners | Talus Peak, CO | Mountain West |
-| Cedar Sound University | Orcas | Cedar Sound, WA | Pacific Northwest |
+| Slug | Name | Region |
+|---|---|---|
+| `fcs-new-england` | FCS New England | New England |
+| `fcs-mid-atlantic` | FCS Mid-Atlantic | Mid-Atlantic |
+| `fcs-southeast` | FCS Southeast | Southeast |
+| `fcs-gulf-coast` | FCS Gulf Coast | Gulf Coast |
+| `fcs-great-lakes` | FCS Great Lakes | Great Lakes |
+| `fcs-plains` | FCS Plains | Plains |
+| `fcs-mountain-west` | FCS Mountain West | Mountain West |
+| `fcs-pacific-northwest` | FCS Pacific Northwest | Pacific Northwest |
 
 ## What is not included yet
 

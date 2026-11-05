@@ -130,17 +130,17 @@
    ]
   },
   {
-   "name": "Eight Rivers Football Conference",
+   "name": "FCS",
    "subdivision": "FCS",
    "teams": [
-    "alder-ridge-state",
-    "calder-springs",
-    "cedar-sound",
-    "kestrel-bay",
-    "port-rennick-state",
-    "red-prairie-state",
-    "talus-peak",
-    "wendt-lake-tech"
+    "fcs-great-lakes",
+    "fcs-gulf-coast",
+    "fcs-mid-atlantic",
+    "fcs-mountain-west",
+    "fcs-new-england",
+    "fcs-pacific-northwest",
+    "fcs-plains",
+    "fcs-southeast"
    ]
   },
   {
@@ -244,9 +244,9 @@
   }
  ],
  "fcs_conference": {
-  "name": "Eight Rivers Football Conference",
-  "short_name": "Eight Rivers",
-  "abbreviation": "ERFC",
+  "name": "FCS",
+  "short_name": "FCS",
+  "abbreviation": "FCS",
   "subdivision": "FCS",
   "fictional": true
  },
