@@ -95,6 +95,13 @@ def base_meta(slug: str) -> dict:
     return _meta_of(base_team(slug))
 
 
+def team_meta(lgd: Optional[dict], slug: str) -> dict:
+    """A league team's identity: its own "meta" when the league carries one (a team from a league
+    file the game does not know), otherwise the base team's (base_meta)."""
+    meta = ((lgd or {}).get("teams") or {}).get(slug, {}).get("meta")
+    return meta if meta is not None else base_meta(slug)
+
+
 @lru_cache(maxsize=1)
 def base_slugs() -> tuple[str, ...]:
     if BASE_META_FILE.exists():
@@ -325,7 +332,7 @@ def team_ratings(roster: list[dict], starters: dict) -> dict:
 def source_team(league: dict, slug: str, by_overall: bool = False) -> dict:
     """One league team in the source format: the base team's identity, the league's roster,
     coaches and a lineup picked from the roster (`by_overall`: every role by overall, your team)."""
-    base = base_meta(slug)
+    base = team_meta(league, slug)
     entry = league["teams"][slug]
     roster = [expand(c, league["attrs"], base) for c in entry["roster"]]
     starters, depth = lineup(roster, entry["formation"], league["year"], by_overall)
