@@ -24,13 +24,26 @@ window.CFP = (function () {
   const SBOX_IDS = { scoreRow: "#sbox-score-row", quarters: "#sbox-quarters", meta: "#sbox-meta", scoring: "#sbox-scoring", team: "#sbox-team", home: "#sbox-home", away: "#sbox-away", drives: "#sbox-drives" };
 
   // A small square in the team's colors: primary and secondary split on a diagonal,
-  // the accent color as the border. Teams without an accent get a theme-aware ring.
+  // the accent color as the border. Teams without an accent get a theme-aware ring, and a
+  // white or black accent that would vanish into the page (white on the light theme, black
+  // on the dark one) is drawn in the theme's ink instead, so the pill still reads as three colors.
+  const ACCENT_LIGHT = 0.85, ACCENT_DARK = 0.03;   // relative luminance: above reads as white, below as black
+  function luminance(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
+    if (!m) return null;
+    const lin = (i) => { const c = parseInt(m[1].slice(i, i + 2), 16) / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * lin(0) + 0.7152 * lin(2) + 0.0722 * lin(4);
+  }
+  function accentClass(c3) {
+    const l = luminance(c3);
+    return l == null ? "" : l > ACCENT_LIGHT ? " accent-light" : l < ACCENT_DARK ? " accent-dark" : "";
+  }
   function teamPill(slug) {
     const t = teamsBySlug[slug];
     const col = (t && t.colors) || {};
     const c1 = col.primary || "#888", c2 = col.secondary || c1, c3 = col.accent;
     const node = document.createElement("span");
-    node.className = `pill-inline team-pill${c3 ? "" : " no-accent"}`;
+    node.className = `pill-inline team-pill${c3 ? accentClass(c3) : " no-accent"}`;
     node.style.setProperty("--c1", c1);
     node.style.setProperty("--c2", c2);
     if (c3) node.style.setProperty("--c3", c3);
