@@ -154,6 +154,11 @@ def test_size_and_width():
     assert league_file.validate(league_file.parse(league_file.builtin_bytes())) == []
 
 
+def fcs_conference() -> str:
+    """The stand-ins' conference name, read from the data (never written out here)."""
+    return next(league.base_meta(s)["conference"] for s in league.base_slugs() if league.base_meta(s)["fictional"])
+
+
 def test_fcs_never_named():
     fcs = next(s for s in league.base_slugs() if league.base_meta(s)["fictional"])
     m = league.base_meta(fcs)
@@ -161,8 +166,11 @@ def test_fcs_never_named():
                    {"slug": "zed", "name": "Zed", "conference": m["conference"], "rivals": [fcs]}],
                    "conferences": [{"id": "x", "name": m["conference"]}]}))
     assert "reserved for the game's FCS opponents" in out
+    # The fixed sentence says "FCS opponents" in general, and the stand-ins' conference is now just
+    # "FCS", so take that sentence out before looking for any stand-in's own names.
+    rest = out.replace("reserved for the game's FCS opponents", "")
     for word in (fcs, m["short_name"], m["conference"], m["school_name"]):
-        assert word not in out, word
+        assert word not in rest, word
 
 
 def test_errors_capped():
@@ -194,7 +202,7 @@ def test_other_rules():
     assert any("state must be" in e for e in errs(state="ZZ"))
     assert any("rival 'nowhere' is not a team" in e for e in errs(rivals=["nowhere"]))
     assert any("remove" in e and "not a team in the game" in e for e in league_file.validate(base_file(remove=["nowhere"])))
-    assert any("reserved" in e for e in league_file.validate(base_file(conferences=[{"id": "x", "name": "Eight Rivers Football Conference"}])))
+    assert any("reserved" in e for e in league_file.validate(base_file(conferences=[{"id": "x", "name": fcs_conference()}])))
     assert any("games must be" in e for e in league_file.validate(base_file(conferences=[{"id": "big-sky-east", "name": "B", "games": 12}])))
     assert any("limit is 85" in e for e in errs(roster=[dict(JAY, name=f"P{i}") for i in range(86)], depth_chart=None))
     assert any("stars must be" in e for e in errs(roster=[dict(JAY, stars=6)], depth_chart=None))
@@ -217,7 +225,7 @@ def test_huge_integers_give_sentences():
 def test_every_error_is_a_sentence():
     fcs = next(s for s in league.base_slugs() if league.base_meta(s)["fictional"])
     docs = [base_file(year=2027, remove=["nowhere", fcs]),
-            base_file(conferences=[{"id": "x", "name": "Eight Rivers Football Conference"}, {"id": "q"}, 5]),
+            base_file(conferences=[{"id": "x", "name": fcs_conference()}, {"id": "q"}, 5]),
             {"format": "cfp-league/1", "teams": [{"slug": "Bad Slug"}, 7, {"name": "No Slug"}, {"slug": "kent-state", "remove": 1, "level": "FCS",
              "conference": 5, "strength": [], "roster": [3, {"pos": 5, "class": "X", "ratings": {"speed": float("nan")}}], "depth_chart": {"ZZ": 4}}]}]
     docs.append(base_file())

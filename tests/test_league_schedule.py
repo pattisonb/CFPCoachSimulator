@@ -35,8 +35,14 @@ ONE_TEAM_NO_GAMES = {"format": "cfp-league/1", "remove": ["kent-state"],
                      "teams": [_new_team("alder-tech", "OR", "big-sky-east", rivals=["oregon-state"])]}
 
 # the generator's output for the built-in league before rules_override existed (seed 5, 2027 then 2028)
-BUILTIN_DIGESTS = {2027: "50b97395eaf19317120b8ba0dfdaa12a4940c87df3be27383323e991523b88e1",
-                   2028: "fff172fe1395a07e0fbdb4883c71f1768429edba4fc9b21a68a262b702f1d68a"}
+# Re-recorded after the FCS stand-ins were renamed (slugs fcs-<region>, see sim/fcs_names.py). Checked, not
+# assumed: the old digests (50b97395... and fff172fe...) were reproduced from the commit before the rename;
+# then the new output had every new stand-in slug turned back into its old slug (inside game ids too) and
+# each history pair key ("a|b", slugs sorted) re-sorted. Every game was identical, as were the home counts
+# and the pending list; the only differences were the slug text and the order inside those pair keys
+# (the new slugs sort differently from the old ones). Nothing in the schedule itself changed.
+BUILTIN_DIGESTS = {2027: "21b3559d1e7d979c9a5dfff7439b5c114dbeb5aa1e9b4508c0c4fb27fdf4ba4d",
+                   2028: "feb96c006de6d52dbfc8953f6a430bab1f3dcd55a9ea6fb4829b66769c6e4d22"}
 
 
 def built_teams(lgd: dict) -> dict:
