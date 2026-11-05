@@ -51,8 +51,7 @@
 .off-sim { border-width: 1px; }
 
 /* ---------- the Overview ---------- */
-.off-hero { background: linear-gradient(135deg, color-mix(in srgb, var(--home) 34%, var(--panel)), color-mix(in srgb, var(--home) 12%, var(--panel)));
-  border-color: color-mix(in srgb, var(--home) 40%, var(--border)) !important; justify-content: center; }
+.off-hero { background: var(--panel); border-top: 4px solid var(--team-primary, var(--home)) !important; justify-content: center; }
 .off-hero .off-hero-kick { color: var(--home-text); }
 .off-hero-title { font-size: clamp(22px, 2.6vw, 28px); font-weight: 900; line-height: 1.15; }
 .off-hero-line { margin: 0; font-size: 15px; line-height: 1.5; }
