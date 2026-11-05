@@ -137,7 +137,7 @@ def desktop(browser, base, sid, known, unknown, quiet, label, line, errs) -> Non
     pick_row(page, quiet)
     pane = page.inner_text(".go-pane").lower()            # (the chip is set in capitals)
     head = pane.split("his list")[0]
-    assert "quiet" in head and "tcu" not in head and "commit" not in head, head
+    assert "quiet" in head and "tcu" not in head and not re.search(r"commit(?!\s*style)", head), head      # "Commit Style" is a trait's label, not where he went
     no_null(page, "a quiet commit")
     # the week's report: the twist's line
     page.click("#season-tabs button[data-tab=office]")

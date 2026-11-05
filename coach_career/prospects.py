@@ -330,6 +330,8 @@ def report(state: dict, pid: str) -> Optional[dict]:
 
 def trait_hints(traits: dict) -> dict:
     """How each trait he has not shown yet is revealed: {trait: sentence}, for the traits the view leaves None."""
+    if traits.get("has_style") is False:            # no commit style to find: no hint for one
+        traits = {k: v for k, v in traits.items() if k != "commit_style"}
     return {k: TRAIT_HINTS[k] for k, v in traits.items() if v is None and k in TRAIT_HINTS}
 
 

@@ -117,7 +117,8 @@ def test_traits_hints(st) -> None:
     rc["reads"][pid] = tight(rc["prospects"][pid], 3)
     persona.learn(st, me, pid, "personality")
     pr = prospects.profile(st, pid, me)
-    assert pr["trait_hints"] == {}, pr["trait_hints"]
+    want = {"commit_style": prospects.TRAIT_HINTS["commit_style"]} if pr["traits"].get("has_style") and not pr["traits"].get("commit_style") else {}
+    assert pr["trait_hints"] == want, (pr["trait_hints"], want)       # a complete report and a call: only his commit style can still wait (a visit shows it)
     assert pr["need"] is not None and isinstance(pr["row"]["history"], list) and pr["row"]["id"] == pid
 
 

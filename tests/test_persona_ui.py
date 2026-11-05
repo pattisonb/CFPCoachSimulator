@@ -99,13 +99,14 @@ def desktop(browser, base, sid, first, visit, guarded, names, errs) -> None:
     assert not trait_chips(page), "no trait chip before anything is learned"
     open_profile(page)
     rows = profile_rows(page)
-    assert rows == {"decider": NOT_KNOWN, "cares": NOT_KNOWN, "personality": NOT_KNOWN, "story": NOT_KNOWN}, rows
+    style = {"commit_style": NOT_KNOWN} if "commit_style" in rows else {}       # Commit Style shows only for a recruit who has one
+    assert rows == {"decider": NOT_KNOWN, "cares": NOT_KNOWN, "personality": NOT_KNOWN, "story": NOT_KNOWN, **style}, rows
     assert page.text_content(".go-pane .go-trait[data-trait=personality] .go-trait-label").strip() == "Personality"
     assert page.text_content(".go-pane .go-trait[data-trait=decider] .go-trait-label").strip() == "Who Decides"
     assert page.text_content(".go-pane .go-trait[data-trait=cares] .go-trait-label").strip() == "Cares About"
-    assert page.eval_on_selector_all(".go-pane .go-trait .go-trait-val.muted", "els => els.length") == 4, "Not Known Yet is muted"
+    assert page.eval_on_selector_all(".go-pane .go-trait .go-trait-val.muted", "els => els.length") == len(rows), "Not Known Yet is muted"
     hints = page.eval_on_selector_all(".go-pane .go-trait .pv-hint", "els => els.map(e => e.textContent)")
-    assert len(hints) == 4 and all(h[0].isupper() and h.endswith(".") for h in hints), f"each unknown trait says how it shows: {hints}"
+    assert len(hints) == len(rows) and all(h[0].isupper() and h.endswith(".") for h in hints), f"each unknown trait says how it shows: {hints}"
     # switching recruits starts no pulse or fade
     page.evaluate(QUIET_WATCH, [".go-pane", ["go-changed", "go-fade-in"]])
     pick_row(page, visit)
@@ -311,7 +312,7 @@ def phone_board(browser, base, sid, first, errs) -> None:
     time.sleep(0.5)
     open_profile(page)
     rows = profile_rows(page)
-    assert all(v != "" for v in rows.values()) and set(rows) == {"personality", "decider", "cares", "story"}, rows
+    assert all(v != "" for v in rows.values()) and set(rows) - {"commit_style"} == {"personality", "decider", "cares", "story"}, rows
     assert page.evaluate("() => document.documentElement.scrollWidth <= innerWidth + 1"), "nothing scrolls sideways"
     no_null(page, "profile at 400")
     ctx.close()
