@@ -251,6 +251,43 @@ def test_add_and_remove_are_structural():
     assert m["conferences"]["big-sky-east"]["games"] == 8
 
 
+
+def _big12():
+    b = league_file._builtin()
+    cid = next(iter(b["conf_names"]))
+    return cid, b["conf_names"][cid]
+
+
+def test_conference_rename_alone():
+    cid, name = _big12()
+    m = league_file.merge({"format": "cfp-league/1", "conferences": [{"id": cid, "name": name + " Plus", "games": league_file._builtin()["games"][cid]}]})
+    assert not m["builtin"] and not m["structural"] and m["conferences_changed"] == [cid]
+    assert m["conferences"][cid]["name"] == name + " Plus"
+
+
+def test_conference_games_structural():
+    cid, name = _big12()
+    g = league_file._builtin()["games"][cid]
+    m = league_file.merge({"format": "cfp-league/1", "conferences": [{"id": cid, "name": name, "games": g + 1}]})
+    assert m["structural"] and not m["builtin"]
+
+
+def test_conference_by_name_resolves():
+    cid, name = _big12()
+    slug = league_file._builtin()["team_conf"] and next(s for s, c in league_file._builtin()["team_conf"].items() if c != cid)
+    m = league_file.merge({"format": "cfp-league/1", "teams": [{"slug": slug, "conference": name}]})
+    assert m["teams"][slug]["conference"] == cid and slug in m["conferences"][cid]["members"] and m["structural"]
+
+
+def test_merge_does_not_share_builtin_cache():
+    m = league_file.merge({"format": "cfp-league/1", "teams": [{"slug": "rice", "prestige": 55}]})
+    m["teams"]["rice"]["roster"].clear()
+    m["teams"]["kent-state"]["roster"].append({"x": 1})
+    m2 = league_file.merge(league_file.parse(league_file.builtin_bytes()))
+    assert m2["builtin"]
+    assert m2["teams"]["rice"] == league_file.team_doc(league.from_base(2027), "rice")
+
+
 if __name__ == "__main__":
     test_export_round_trips_to_from_base()
     test_export_is_byte_stable_and_fcs_free()

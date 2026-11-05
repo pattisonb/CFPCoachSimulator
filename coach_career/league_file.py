@@ -4,6 +4,7 @@ what the game has. The FCS stand-ins and their conference are never written (lea
 "fictional" flag says which they are)."""
 from __future__ import annotations
 
+import copy
 import json
 import re
 from functools import lru_cache
@@ -568,7 +569,7 @@ def merge(doc: dict) -> dict:
             return ref
         return next((cid for cid, name in b["conf_names"].items() if ref == name), ref)
 
-    teams = {s: d for s, d in base.items() if s not in remove}
+    teams = {s: copy.deepcopy(d) for s, d in base.items() if s not in remove}
     added, changed = [], []
     for t in doc.get("teams") or []:
         if not isinstance(t, dict) or not isinstance(t.get("slug"), str):
@@ -578,7 +579,7 @@ def merge(doc: dict) -> dict:
         if given.get("conference") is not None:
             given["conference"] = resolve(given["conference"])
         if slug in base:
-            merged = {**base[slug], **given}
+            merged = {**copy.deepcopy(base[slug]), **given}
             if merged != base[slug]:
                 changed.append(slug)
         else:
@@ -603,7 +604,10 @@ def merge(doc: dict) -> dict:
         base_members.setdefault(b["team_conf"][slug], []).append(slug)
     structural = bool(added or removed) or set(confs) != set(base_members) or any(
         confs[c]["members"] != base_members[c] or confs[c]["games"] != b["games"].get(c, 0) for c in confs)
+    conf_changed = sorted(c for c in confs if c in b["conf_names"]
+                          and (confs[c]["name"] != b["conf_names"][c] or confs[c]["level"] != LEVEL))
     added, changed = sorted(added), sorted(changed)
     name = doc.get("name") if isinstance(doc.get("name"), str) and doc["name"].strip() else DEFAULT_NAME
     return {"teams": teams, "added": added, "changed": changed, "removed": removed, "conferences": confs,
-            "structural": structural, "builtin": not (added or changed or removed or structural), "name": name}
+            "structural": structural, "conferences_changed": conf_changed,
+            "builtin": not (added or changed or removed or structural or conf_changed), "name": name}
