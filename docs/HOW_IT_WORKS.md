@@ -1218,8 +1218,8 @@ rank) and **Top Targets** (your hottest targets with their standing word; Board 
 Recruiting). The tab bar is two rows: the
 screens you act on (Office, Offseason once the season is over, Recruiting, Prospects, Scouting,
 Schedule, Depth Chart) and a League row that follows the calendar (Standings, Rankings, Stats
-and, in a career, **Programs** all year; Awards from week 4; Classes, Bracket and Bowls from selection week; Summary when the
-season is done). A plain season keeps every League tab. The Depth Chart button opens its own
+and, in a career, **Programs** all year; Awards from week 4; Classes, Bracket and Bowls from selection week; Season Recap
+all year, and the title game lands the player on it). A plain season keeps every League tab. The Depth Chart button opens its own
 screen (`web/depth/depth.js`, `index.html?id=…&screen=depth`, Back returns to the season): the
 team's most-used formations as the next game fills them (`formations_view`) or one position at a
 time (List view), a Players box of portraits, the Redshirts board and Availability; its moves,
@@ -2258,7 +2258,17 @@ week strip lets you look back at any week. Tabs:
 - **Bracket**: a projected bracket as soon as the first committee ranking exists (current
   conference leaders as projected champions), then the real bracket on selection day and
   the playoff results as the rounds are played.
-- **Summary**: the season in review (or the season so far): the national champion and
+- **Season Recap** (`web/recap.js`, `web/recap.css`, the `summary` tab and route key): the season in review once
+  the title game is played (the game lands the player on it; the Office stays a tap away), or the season so far
+  before that. A header card with the record and the **Season Grade** (`sim/grade.py` `season_grade`: a letter A+
+  to F read off the wins against the AD's goal, the conference title, how far the playoff run went, the bowl and
+  the final AP rank, with a one-sentence verdict per band: champion, playoff, met, bowl, missed, losing, fired; a
+  champion alone gets the A+; no randomness, nothing written), then Start the Offseason, Back to the Office, Awards
+  and Schedule. Two columns: the national champion and title game (its box score opens), the four playoff rounds,
+  the Heisman, your leaders, the conference champions and the final rankings on the left; Your Season (points,
+  the conference, non-conference, postseason and final rank, total offense, total defense and the turnover margin
+  with their national ranks), the highlights, the rivalries, the biggest surprise and disappointment and the
+  national leaders on the right. The review API carries: the national champion and
   title game, every playoff round, each conference's champion and title-game score, the
   final CFP ranking and AP poll, then your team's record, conference finish, postseason
   result, scoring, longest win streak, best win, worst loss, biggest win and closest loss,
@@ -2367,7 +2377,12 @@ worker processes), so a week there takes longer than under the dev server on a d
 The This week card simulates your next game 20 times. Those sims run in parallel on the
 worker pool when there is one (about 1 second instead of 4 on a desktop) and are
 cached for the week; a second request for the same game waits for the first instead of simulating
-it again. The Awards tab's live race is cached until more games are played (or god mode
+it again. The Awards tab opens on an **Overview** (`renderAwards`): the Heisman hero with four finalists, the
+national award cards (Offense, Defense, Special Teams and Player of the Year chips patch the grid in place with
+`reconcile`), the coach awards, your team's honors with a podium (honors, awards won, players and coaches), the
+consensus All-America team by unit and your conference's awards; the older views (My Team, Heisman, National,
+Coaches, All-America, Conference) stay as chips and in the `aview` route key. During the season the same layout is
+the live race ("Leader" instead of "Winner"). The live race is cached until more games are played (or god mode
 edits a player), and the award pools list each position group's eligible players once
 instead of scanning the whole league for every award (2.5 seconds to 1 on first load).
 If a progress check collides with the sim thread changing the season, it answers with
