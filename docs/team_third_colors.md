@@ -43,7 +43,7 @@ The accents live in the source data: `cfb_sim_data/teams/<slug>.json` and
 | oregon | Dusk | #A2AAAD | https://communications.uoregon.edu/colors | Secondary. Obsidian (black) and Night #3D4546 skipped (Night too close to the team green). |
 | penn-state | Beaver Blue | #1E407C | https://brand.psu.edu/design-toolkit/design-essentials | Primary color beside Nittany Navy and White Out. |
 | texas | Charcoal | #333F48 | https://umac.utexas.edu/brand-center/visual-identity/colors/ | PMS 432, first supportive secondary color; the name is UT's (e.g. https://cockrell.utexas.edu/communications-and-marketing/brand/colors). |
-| toledo | Magenta | #A2047D | https://www.utoledo.edu/offices/marketing/toolkit/index.html | The UToledo accent color; https://news.utoledo.edu/?p=87371 announces teal and magenta as accents to the school colors. |
+| toledo | Dark Blue | #000F3E | https://www.utoledo.edu/offices/marketing/toolkit/index.html | Chosen by the player over the guide's magenta accent; Dark Blue is the guide's first secondary color. |
 | ucla | Darkest Blue | #003B5C | https://designsystem.brand.ucla.edu/build/v2.6.0/docs/style-guide/colors.html | First secondary color. |
 | usc | Light Gray | #CCCCCC | https://identity.usc.edu/color/ | Secondary "Gray (30K)". |
 | w-kentucky | Gray | #333333 | https://www.wku.edu/marketingandcommunications/documents/wku-communication-and-branding-manual-2021.pdf | Primary "Gray" (Pantone Cool Gray 9) beside red and white. |
