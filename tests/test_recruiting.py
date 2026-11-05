@@ -323,7 +323,7 @@ if __name__ == "__main__":
     high = prospects._evaluation(star, {"athleticism": 88, "size_strength": 66, "technique": 82, "football_iq": 70, "potential": 86})   # the game's scale
     assert high["weaknesses"] == [] and len(high["solid"]) == 2, high
     low = prospects._evaluation(star, {"athleticism": 88, "size_strength": 40, "technique": 82, "football_iq": 70, "potential": 86})
-    assert len(low["weaknesses"]) == 1 and "Size and strength" in low["weaknesses"][0], low
+    assert len(low["weaknesses"]) == 1 and "size and strength" in low["weaknesses"][0].lower(), low      # the line names the group once, in a sentence
     # offers are capped at 1.5x open spots
     cap = recruiting.offer_cap(st, "ohio-state")
     assert 15 <= cap <= 45, cap

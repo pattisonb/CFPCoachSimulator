@@ -1699,6 +1699,8 @@
             title: looks >= 3 ? "His report is complete: 3 of 3 looks" : v.points_left < b.scout_cost ? "Not enough scouting points left this week." : ACT_TIPS.scout });
           if (looks >= 3 || !b.can_scout || v.points_left < b.scout_cost || b.scene) send.disabled = true;
           send.addEventListener("click", () => pick(b, "scout", send));
+          // until his profile arrives the cards say so (a scouted recruit never reads "Not Scouted" while it loads)
+          if (!prof && b.looks) return PV().grid(["Scouting Report", "Attributes"].map((t) => PV().card(t, [el("p", { class: "muted go-loading", text: "Loading his report…" })], { key: t === "Attributes" ? "attributes" : "report", cls: "pv-loading" })));
           return PV().grid(scoutCards(s, b, prof, { send: b.signed || b.committed === me ? null : send, link: true }));
         }
         if (k === "profile") return profileCards(s, b, me, prof);
