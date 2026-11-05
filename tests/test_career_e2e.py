@@ -50,12 +50,22 @@ def tab_click(page, tab: str) -> None:
     """Open a season tab as the player does: click it in the row, or, when the row has no room for it (it sits behind
     More ▾, web/season.js layoutTabs), pick it from More's menu."""
     sel = f"#season-tabs button[data-tab={tab}]"
-    if page.evaluate("(s) => document.querySelector(s).classList.contains('tab-ovf')", sel):
-        label = page.evaluate("(s) => document.querySelector(s).textContent.trim()", sel)
-        page.click("#tab-more")
-        page.click(f".go-menu .go-menu-item:has(b:text-is('{label}'))")
-    else:
-        page.click(sel)
+    hidden = "(s) => document.querySelector(s).classList.contains('tab-ovf')"
+    # the row lays out after the page shows (layoutTabs on load and resize): a tab visible at the first look can move
+    # behind More a moment later, so a click that does not land is followed by a fresh look
+    for _ in range(3):
+        if page.evaluate(hidden, sel):
+            label = page.evaluate("(s) => document.querySelector(s).textContent.trim()", sel)
+            page.click("#tab-more")
+            page.click(f".go-menu .go-menu-item:has(b:text-is('{label}'))")
+            return
+        try:
+            page.click(sel, timeout=5_000)
+            return
+        except Exception:
+            if not page.evaluate(hidden, sel):
+                raise
+    raise AssertionError(f"could not open the {tab} tab")
 
 
 def launch(p):
