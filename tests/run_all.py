@@ -7,7 +7,11 @@ of passing (CI must run the browser tests, not skip them). --retry N: a failed t
 to N times; one that then passes is reported as FLAKY (it still passes the run). With
 GITHUB_STEP_SUMMARY set, the result table is written there too. --shard I/N: run only the I-th of N
 groups (1-based), balanced by tests/durations.json (seconds per test from a CI run; a test missing
-there counts as DEFAULT_SECONDS), so CI runs the suite as N parallel jobs."""
+there counts as DEFAULT_SECONDS), so CI runs the suite as N parallel jobs.
+
+The tests save their seasons into a temporary folder of this run's own (CFP_SEASONS_DIR, which
+sim/season.py and every dev server the tests start read), removed at the end; data/seasons is never
+touched, so runs and tests side by side do not delete each other's saves."""
 import os
 import pathlib
 import re
@@ -19,7 +23,6 @@ HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
 SLOW = {"test_bowls.py", "test_awards.py", "test_review.py", "test_site_bundle.py", "test_sim_progress.py", "test_elite_draft.py"}   # full seasons (the bundle: a week, an offseason, a week): a few minutes each
 
-SEASONS = ROOT / "data" / "seasons"
 DEFAULT_SECONDS = 20     # a test not in durations.json yet (a new one)
 
 
@@ -38,10 +41,6 @@ def shard(tests: list, index: int, count: int) -> list:
     return sorted(groups[index - 1][1])
 
 
-def _saves() -> set:
-    return set(os.listdir(SEASONS)) if SEASONS.is_dir() else set()
-
-
 SKIP_NO_BROWSER = re.compile(r"\bskipped\b.*(Playwright|Chromium)", re.I)
 
 
@@ -49,7 +48,7 @@ def _run(t: pathlib.Path) -> tuple[bool, float, str, str]:
     t0 = time.perf_counter()
     # UTF-8 output: team and player names such as Hawaiʻi do not fit the Windows console code page
     r = subprocess.run([sys.executable, str(t)], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace",
-                       env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+                       env={**os.environ, "PYTHONIOENCODING": "utf-8", "CFP_SEASONS_DIR": str(SEASONS)})
     last = (r.stdout.strip().splitlines() or [""])[-1]
     ok = r.returncode == 0
     if ok and STRICT and SKIP_NO_BROWSER.search(last):
@@ -78,7 +77,10 @@ if __name__ == "__main__":
     if part:
         tests = shard(tests, *part)
     failed, flaky, rows = [], [], []
-    before = _saves()        # the saves the tests write (every one a new uuid) are removed at the end: a run was 26 GB once
+    # The tests save into a folder of this run's own (CFP_SEASONS_DIR), removed whole at the end: a run was 26 GB once.
+    # Never data/seasons: clearing what appeared there during the run took the saves of tests running beside it.
+    import tempfile
+    SEASONS = pathlib.Path(tempfile.mkdtemp(prefix="cfp-run-all-seasons-"))
     for t in tests:
         ok, dt, last, tail = _run(t)
         print(f"{'PASS' if ok else 'FAIL'}  {t.name:<26} {dt:6.1f}s  {last[:90]}", flush=True)
@@ -96,11 +98,10 @@ if __name__ == "__main__":
             print(tail)
         rows.append((t.name, "FLAKY" if t.name in flaky else "PASS" if ok else "FAIL", dt, last))
     import shutil
-    for name in _saves() - before:
-        path = SEASONS / name
-        shutil.rmtree(path, ignore_errors=True) if path.is_dir() else path.unlink(missing_ok=True)
+    for path in SEASONS.glob("*.json"):
         for league_file in (ROOT / "data" / "leagues").glob(f"{path.stem}-*.json"):   # its league teams files too: these were 2.6 GB of leftovers once
             league_file.unlink(missing_ok=True)
+    shutil.rmtree(SEASONS, ignore_errors=True)
     print(f"\n{len(tests) - len(failed)} of {len(tests)} passed" + (f" ({len(flaky)} flaky: {', '.join(flaky)})" if flaky else ""))
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:

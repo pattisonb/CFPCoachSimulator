@@ -85,14 +85,16 @@
 .go-strip .go-stat-val { font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; }
 
 /* the sub-tabs */
-.go-subtabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+/* the strip never scrolls: no box a pixel short of its tabs, so no stray scrollbar (classic scrollbars show one
+   for a 1 px overflow); a narrow column wraps a tab to a second line instead */
+.go-subtabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 0; box-shadow: inset 0 -1px 0 var(--border); overflow: visible; }   /* the line is a shadow under the tabs, so the underline covers it without hanging past the box */
 /* the pane scrolls inside itself (it sticks beside a long board): the sub-tab strip pins to the top of that scroll
    box so a long profile never scrolls it away, and never shrinks (an overflow-x box may otherwise give way in the
    pane's column). On the desktop pane it pins over the card's top padding (top: minus that padding), flush under
    the border, so nothing shows through above it; on a phone the sheet's head is pinned too: the strip sits under
    it (--go-head-h) */
 .go-pane .go-subtabs { position: sticky; top: -20px; z-index: 2; background: var(--panel); flex: none; }
-.go-subtabs button { flex: none; min-height: 40px; padding: 0 12px; margin-bottom: -1px; border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none;
+.go-subtabs button { flex: none; min-height: 40px; padding: 0 12px; border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none;
   color: var(--muted); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
 .go-subtabs button:hover { color: var(--text); }
 .go-subtabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--go-primary, var(--accent)); }
@@ -150,7 +152,8 @@
 @media (max-width: 759px) {
   .go-board { grid-template-columns: minmax(0, 1fr); }
   .go-stagebar { flex-direction: column; align-items: stretch; }
-  .go-stages { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; padding-bottom: 2px; scrollbar-width: thin; }
+  .go-stages { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; max-width: 100%; padding-bottom: 2px; scrollbar-width: none; }   /* sideways by finger, never a scrollbar */
+  .go-stages::-webkit-scrollbar { display: none; }
   .go-tools { width: 100%; }
   .go-tools #rc-search { flex: 1 1 160px; min-width: 0; }
   .go-row-recruit { min-height: 60px; }
@@ -232,7 +235,8 @@
 
 /* The footprint map's zoom (us-map.js zoomer, recruiting.js mapCard): the region row, the dot labels, the cursor */
 .go-map-regions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
-@media (max-width: 759px) { .go-map-regions { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; } }   /* a phone: one row that scrolls */
+@media (max-width: 759px) { .go-map-regions { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; padding-bottom: 2px; scrollbar-width: none; }
+  .go-map-regions::-webkit-scrollbar { display: none; } }   /* a phone: one row that scrolls by finger, never a scrollbar */
 .go-map-regions .go-btn { flex: none; white-space: nowrap; }
 .go-map-regions .go-btn[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
 .go-map svg.us-map { touch-action: pan-x pan-y; aspect-ratio: 975 / 610; }                   /* one finger scrolls the page, two pinch the map */
@@ -332,4 +336,41 @@
   .go-pane.sheet .go-pane-head { position: static; margin: 0; padding: 0; border: 0; }
   .go-pane.sheet .pv-tabrow { top: -12px; }
   .go-pane.sheet .pv-acts .pv-star { flex: none; }
+}
+
+/* ----- the board fits the screen (docs/HOW_IT_WORKS.md "Board scrolling") ----- */
+/* list and pane side by side: the tab is at least the screen under the tab bar (--board-top and --board-below,
+   measured by season.js boardFit) and its two scrollers add nothing to its height (contain: size), so the page itself
+   never scrolls. The header's budgets stay put. The list scrolls in its card under the stage tabs and the search, with
+   Your Footprint's toggle as the card's foot; the pane scrolls in its own column, top to bottom, under its pinned tab
+   row. Each scroller is contained, so a wheel at its end never moves the page or the other column. A window too short
+   for the list's head and a few rows (the *-min values) grows the tab instead and the page scrolls the rest. Your
+   Footprint Map, opened, spans the width under the board and the page scrolls to it (the scrollers then hand the wheel
+   on at their ends, so nothing sticks). A phone (under 760 px): the page scrolls and the pane is the full-screen sheet. */
+:root { --board-list-min: 132px; --board-pane-min: 300px; --board-open-h: max(460px, calc(100dvh - var(--sticky-top, 0px) - 32px)); }
+@media (min-width: 760px) {
+  #tab-recruiting:not([hidden]):has(> .go-board) { display: grid; grid-template-columns: minmax(300px, 350px) minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto; grid-template-areas: "head head" "list pane" "map pane"; gap: 14px var(--pv-gap); padding-bottom: 12px;
+    min-height: calc(100vh - var(--board-top, 0px) - var(--board-below, 16px)); min-height: calc(100dvh - var(--board-top, 0px) - var(--board-below, 16px)); }
+  #tab-recruiting > .go-board { display: contents; }
+  #tab-recruiting > .go-board-head { grid-area: head; margin: 0; }
+  #tab-recruiting .go-list-col { grid-area: list; min-height: 0; }
+  /* the list: its rows scroll, the stage tabs, the search and the sort above them stay; a little room on every side so
+     a focus ring or the selected row's border is never clipped, and room under the last row */
+  #tab-recruiting .go-list-recruits { flex: 1 1 0; contain: size; min-height: var(--board-list-min); overflow-y: auto; overscroll-behavior: contain; overflow-anchor: none;
+    margin: 0 -12px 0 -4px; padding: 3px 4px 12px; scrollbar-width: thin; }
+  #tab-recruiting .go-list-recruits > * { flex: none; }
+  /* Your Footprint, closed: the list card's foot (one toggle the card's width), so the pane runs to the bottom */
+  #tab-recruiting > .go-map { grid-area: map; margin: 0; }
+  #tab-recruiting > .go-map.closed { margin-top: -14px; border-top-style: dashed; border-radius: 0 0 16px 16px; }
+  #tab-recruiting:has(> .go-map.closed) .go-list-col { border-bottom: 0; border-radius: 16px 16px 0 0; padding-bottom: 12px; }
+  #tab-recruiting > .go-map.closed .go-map-head > .go-display { display: none; }
+  #tab-recruiting > .go-map.closed .go-map-toggle { flex: 1 1 auto; margin: 0; }
+  /* the pane: its own column's height, scrolling inside itself (no longer sticky beside a long page) */
+  #tab-recruiting .go-pane { grid-area: pane; position: relative; top: auto; max-height: none; contain: size; min-height: var(--board-pane-min);
+    overflow-y: auto; overscroll-behavior: contain; padding-bottom: 24px; }
+  /* the map opened: the board keeps one screen and the map spans the width under it; the page scrolls, and the two
+     scrollers hand the wheel to it at their ends */
+  #tab-recruiting:not([hidden]):has(> .go-map:not(.closed)) { grid-template-rows: auto var(--board-open-h) auto; grid-template-areas: "head head" "list pane" "map map"; }
+  #tab-recruiting:has(> .go-map:not(.closed)) :is(.go-list-recruits, .go-pane) { overscroll-behavior: auto; }
 }

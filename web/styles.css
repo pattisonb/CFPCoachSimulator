@@ -1494,3 +1494,21 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
 @media (max-width: 899px) { #tab-programs .go-program-bars { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 599px) { #tab-programs .go-program-bars { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 759px) { .go-full-box { min-height: 44px; } .go-game-head { min-height: 44px; } }
+
+/* ----- modals hold still: they open at a fixed top and grow down, never recentering as their content loads or changes;
+   a tabbed or loading window (the Prospect Profile popup, a player page with its tabs) keeps one height and scrolls its
+   body inside, so switching its tabs never resizes or moves it (docs/HOW_IT_WORKS.md "Board scrolling"). A phone: full screen. */
+:root { --modal-top: clamp(16px, 5vh, 48px); --modal-tall: 860px; }   /* *tune* the windows' top margin and the tabbed windows' height */
+.modal { align-items: flex-start; padding-top: var(--modal-top); }
+.modal-body { flex: 1 1 auto; min-height: 0; }
+.modal-panel { max-height: calc(100vh - 2 * var(--modal-top)); }
+.modal-panel:has(> .modal-body .pv-popup, > .modal-body [role=tablist], > .modal-body .tabs) { height: min(var(--modal-tall), calc(100vh - 2 * var(--modal-top))); }
+.modal.modal-nested { padding-top: calc(var(--modal-top) + 16px); }
+.modal.modal-nested .modal-panel { max-height: calc(100vh - 2 * var(--modal-top) - 16px); }
+.modal.modal-nested .modal-panel:has(> .modal-body .pv-popup, > .modal-body [role=tablist], > .modal-body .tabs) { height: min(var(--modal-tall), calc(100vh - 2 * var(--modal-top) - 16px)); }
+@media (max-width: 700px) {
+  .modal { padding-top: 0; align-items: stretch; }
+  .modal-panel, .modal-panel:has(> .modal-body .pv-popup, > .modal-body [role=tablist], > .modal-body .tabs) { height: 100dvh; max-height: 100dvh; }
+  .modal.modal-nested { padding-top: 28px; }
+  .modal.modal-nested .modal-panel, .modal.modal-nested .modal-panel:has(> .modal-body .pv-popup, > .modal-body [role=tablist], > .modal-body .tabs) { height: calc(100dvh - 28px); max-height: calc(100dvh - 28px); }
+}

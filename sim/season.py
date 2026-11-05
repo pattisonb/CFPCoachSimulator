@@ -51,7 +51,7 @@ TEAMS_FILE = ROOT / "data" / "engine_teams.json"
 SCHEDULES_FILE = ROOT / "data" / "schedules.json"
 FCS_MAP_FILE = ROOT / "data" / "fcs_map.json"
 HISTORY_POLLS = ROOT / "data" / "history" / "polls.json"
-SEASONS_DIR = ROOT / "data" / "seasons"
+SEASONS_DIR = Path(os.environ.get("CFP_SEASONS_DIR") or ROOT / "data" / "seasons")   # CFP_SEASONS_DIR: tests/run_all.py gives its tests a folder of their own
 
 LAST_REGULAR_WEEK = 14   # Aug 29 through Nov 28, 2026: fourteen Saturdays, so every team has a bye or two
 CCG_WEEK = 15            # Dec 4-5

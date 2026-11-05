@@ -1089,7 +1089,7 @@
       const b = rows.find((r) => r.id === btns[j].dataset.pid);
       if (!b) return;
       if (phone()) { view.selected = b.id; markRows(); btns[j].focus(); }
-      else { choose(b); btns[j].focus({ preventScroll: true }); }
+      else { choose(b); btns[j].focus({ preventScroll: true }); ui().keepInView(btns[j]); }
     });
     boardEl = el("div", { class: "go-board" }, [el("section", { class: "go-card go-list-col", "aria-label": "Your board" }, [stagebar, needsDis, list])]);
     box.append(boardEl, mapEl);
@@ -1145,8 +1145,10 @@
       empty.hidden = rows.length > 0;
       footCount.textContent = `${v.board.length} on your board`;
       const focused = document.activeElement && list.contains(document.activeElement) ? document.activeElement.dataset.pid : null;
+      const was = list.querySelector(".go-row-recruit.selected"), seen = !was || ui().inView(was);   // the list scrolls in its card on a wide screen
       ui().reconcile(list, rows, (b) => b.id, row, patchRow);
       markRows();
+      if (seen && !phone()) ui().keepInView(list.querySelector(".go-row-recruit.selected"));        // a patch that moved his row keeps it in view
       if (focused) { const f = list.querySelector(`.go-row-recruit[data-pid="${focused}"]`); if (f && document.activeElement !== f) f.focus({ preventScroll: true }); }
       // the pane: patched for the same recruit, swapped (a cross-fade) for another, gone with the last row
       const cur = box.querySelector(".go-pane");
@@ -2047,7 +2049,9 @@
       ui().on(who, "click", () => openProfile(s, r.id));
       const add = el("button", { type: "button", class: `go-btn pr-board ${r.on_board ? "on" : "primary"}`, text: r.on_board ? "✓ On Board" : "+ Board",
         "aria-pressed": String(!!r.on_board), "aria-label": boardLabel(r) });
-      ui().on(add, "click", (e) => { e.stopPropagation(); toggleBoard(r, add); });
+      // the button patched is the live one the player clicked (e.currentTarget): a reconcile morphs this row onto the
+      // row on screen and hands it this handler, so `add` here may be a fresh node that never reached the page
+      ui().on(add, "click", (e) => { e.stopPropagation(); toggleBoard(r, e.currentTarget); });
       const tr = el("tr", { class: "go-list-row rc-row pr-row", "data-key": r.id }, [
         el("td", { class: "pr-c-rank muted", text: `#${r.portal && r.portal_rank ? r.portal_rank : r.national_rank}` }),
         el("td", { class: "pr-c-who" }, [who]),
@@ -2121,8 +2125,8 @@
       const off = d.rows.filter((r) => !r.on_board);
       if (rec && off.length) {
         const all = el("button", { type: "button", class: "go-btn", "data-key": "add-all", text: `Add These ${off.length} to Your Board` });
-        ui().on(all, "click", async () => {
-          const added = await ui().busy(all, (async () => { let n = 0; for (const r of off) if (await setBoard(s, r.id, true)) { r.on_board = true; n++; } return n; })());
+        ui().on(all, "click", async (e) => {
+          const added = await ui().busy(e.currentTarget, (async () => { let n = 0; for (const r of off) if (await setBoard(s, r.id, true)) { r.on_board = true; n++; } return n; })());
           ui().toast(added === 1 ? "He is on your board." : "They are on your board.");
           fetchBoard();
           load();
