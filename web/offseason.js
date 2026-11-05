@@ -867,9 +867,12 @@
     if ((st.market || []).length) {
       const t = el("table", { class: "off-table" }, [el("thead", {}, [el("tr", {}, ["Coach", "Would Take", "Rating", "Why He Is Available", "Last Job"].map((h) => el("th", { text: h })))])]);
       const body = el("tbody");
+      // a role is a label (Title Case): "head coach" → "Head Coach", "defensive coordinator at Texas" → "Defensive Coordinator at Texas"
+      const roleCase = (t) => String(t || "").replace(/\b(head coach|offensive coordinator|defensive coordinator)\b/g, (r) => r.replace(/\b\w/g, (c) => c.toUpperCase()));
+      const cap = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t);
       for (const m of st.market) {
-        body.append(el("tr", {}, [el("td", { text: `${m.name}, ${m.age}` }), el("td", { text: m.roles.join(", ") }), el("td", { class: "num", text: String(m.rating) }),
-          el("td", { text: `${m.why}${m.sits_out ? " · sitting out this cycle" : ""}` }), el("td", { text: m.previous_job && m.previous_job !== m.why ? m.previous_job : "—" })]));
+        body.append(el("tr", {}, [el("td", { text: `${m.name}, ${m.age}` }), el("td", { text: m.roles.map(roleCase).join(", ") }), el("td", { class: "num", text: String(m.rating) }),
+          el("td", { text: `${cap(m.why)}${m.sits_out ? " · Sitting out this cycle" : ""}` }), el("td", { text: m.previous_job && m.previous_job !== m.why ? cap(roleCase(m.previous_job)) : "—" })]));
       }
       t.append(body);
       page.append(card("off-market", "market", [el("div", { class: "go-kicker" }, [`Coaches for Hire · The Top ${st.market.length} `,
