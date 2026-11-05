@@ -6,7 +6,7 @@ picker gains its teams in place; the page stays responsive through the whole che
 labels are Title Case, nothing scrolls sideways, no control row overflows, the controls sit inside the panel and are
 44 px on a phone; the four chips share a row at 1280; the team cards follow the league (pruned on a switch).
 Export League downloads the built-in league as valid `cfp-league/1` JSON; a check that throws toasts a sentence and
-puts the panel back on the built-in league; a 19-line summary folds behind Show All N Lines, which patches in every
+puts the panel back on the built-in league; a 20-line summary folds behind Show All N Lines, which patches in every
 line; Who Coaches? keeps Create a New Coach for the built-in league and replaces it with a sentence for an import;
 Start Career from the import opens a career at Alder Tech, and the save opened fresh shows the league's teams.
 The JS MAX_LEAGUE_BYTES is checked against coach_career/league_file.py's.
@@ -51,7 +51,7 @@ def good_doc() -> dict:
 
 
 def long_doc() -> dict:
-    """Sixteen new teams in two new conferences: a summary of 19 lines, long enough to fold behind Show All."""
+    """Sixteen new teams in two new conferences: a summary of 20 lines, long enough to fold behind Show All."""
     west = ["coast-tech", "redwood-state", "harbor-state", "summit-tech", "pacific-plains", "shasta-state", "tidewater", "sierra-tech"]
     return {"format": "cfp-league/1", "name": "Long League",
             "conferences": [{"id": "big-sky-east", "name": "Big Sky East", "level": "FBS", "games": 7},
@@ -157,7 +157,7 @@ def check_errors(page, bad: Path, tag: str) -> None:
     page.set_input_files("#league-file", str(bad))
     page.wait_for_selector("#league-result .league-errors li", timeout=60_000)
     errs = page.eval_on_selector_all("#league-result .league-errors li", "els => els.map(e => e.textContent)")
-    assert "Alder Tech, player 1 (Jay Smith): position 'WRR' is not a position." in errs, errs
+    assert "Alder Tech, player 1 (Jay Smith): position 'WRR' is not a position; use QB, RB, WR, TE, LT, LG, C, RG, RT, LEDG, DT, REDG, SAM, MIKE, WILL, CB, FS, SS, K, P or FB." in errs, errs
     assert "Kent State: the file removes it and also lists it; do one or the other." in errs, errs
     assert "Rice: the depth chart's QB list names Nobody Here, who is not on the roster." in errs, errs
     assert all(e[0].isupper() and e.endswith(".") for e in errs), errs
@@ -248,13 +248,13 @@ def check_thrown(page, good: Path) -> None:
 
 
 def check_long(page, long_file: Path, width: int, tag: str) -> None:
-    """A summary of 19 lines folds its team lines behind Show All N Lines (Title Case, 44 px on a phone), which
+    """A summary of 20 lines folds its team lines behind Show All N Lines (Title Case, 44 px on a phone), which
     patches in every line."""
     page.set_input_files("#league-file", str(long_file))
     page.wait_for_selector("#league-result .league-actions button:not(#btn-league-start)", timeout=180_000)
     more = page.query_selector("#league-result .league-actions button:not(#btn-league-start)")
     label = more.inner_text().strip()
-    assert label == "Show All 19 Lines" and title_case(label), label
+    assert label == "Show All 20 Lines" and title_case(label), label
     if width == 400:
         assert more.bounding_box()["height"] >= 44, "Show All is 44 px on a phone"
     shown = page.eval_on_selector_all("#league-result p.league-line", "els => els.map(e => e.textContent)")
@@ -262,7 +262,7 @@ def check_long(page, long_file: Path, width: int, tag: str) -> None:
     assert shown[-1] == "The 2026 schedule is built from the file's conferences.", shown
     start = page.query_selector("#btn-league-start")
     more.click()
-    page.wait_for_function("() => document.querySelectorAll('#league-result p.league-line').length === 19")
+    page.wait_for_function("() => document.querySelectorAll('#league-result p.league-line').length === 20")
     assert not page.query_selector("#league-result .league-actions button:not(#btn-league-start)"), "Show All goes once every line shows"
     assert page.evaluate("(a) => a === document.querySelector('#btn-league-start')", start), "Start Career is patched in place, not redrawn"
     check_layout(page, width, f"{tag} long summary")

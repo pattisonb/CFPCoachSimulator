@@ -1903,9 +1903,18 @@ conference are never written and cannot be named, removed or reused (`league.bas
 team only its `slug`, and every field it leaves out keeps the built-in value (a `roster` replaces
 the whole roster; `coaches` merge role by role). A player needs `name`, `pos` and `class`.
 `league_file.parse` and `validate` turn every problem into a sentence naming the team and the player
-("Rice, player 14 (Jay Smith): position 'WRR' is not a position."), at most `MAX_ERRORS` and then
-"And N more.". A new conference may not take a built-in conference's name (any case) or another new
-one's: its name is its engine name, which must be its own.
+("Rice, player 14 (Jay Smith): position 'WRR' is not a position; use QB, RB, …"), at most `MAX_ERRORS`
+and then "And N more." (`check` also gives `errors_total`, the full count the page's head shows). Every
+key the export writes is checked for its type, range or the game's own words: the team's `home_field`
+(`HOME_FIELD_RANGE`), `stadium`, `style` (a built-in slug), `formation` (known roles, 11 on offense and
+on defense), `colors`, the `offense`/`defense` scheme words; each coach's name, `rating`, `ratings`,
+`tendencies`, scheme words, `since`, flags and text; each player's `jersey`, `archetype`, `dev`,
+`coachability`, `abilities` (names and tiers the game knows), `hometown` (`MAX_HOMETOWN`), `years`
+(`YEARS_RANGE`) and `target_share` (`TARGET_SHARE_MIN` to the engine's `TARGET_MULT_MAX`). `strength`
+applies only to a roster the file gives: a built-in team that keeps its real roster is never nudged, so
+strength there is an error. A new conference may not take a built-in conference's name (any case) or
+another new one's: its name is its engine name, which must be its own. A built-in conference listed
+without `games` keeps its own.
 
 **Merging** (`league_file.merge`) is by slug: a team in the file replaces the built-in one, a new
 slug adds one, a team left out is unchanged and `remove` drops one. A team equal to its export is
@@ -1937,10 +1946,18 @@ new teams) and a new program's market. Filling takes about 0.2 s a team.
 **Check and Start Career.** `league_file.check(blob, seed)` parses, validates, merges and fills, then
 builds the engine's teams (`league.build`, the same build later seasons use) and season one's games;
 it returns the errors, or the career league, its engine teams, the games and the summary (teams
-added, changed and removed, players generated, one sentence each). `POST /api/league/check` takes
-the file's bytes (`?seed=` optional) and holds the result as the pending league under the
-SHA-256 of the bytes (`"builtin"` for a collapsed import); its answer lists the league's FBS teams
-for the picker. `POST /api/season` with that key writes the pending engine teams as the career's
+added, changed and removed, players generated, one sentence each; for a league that is not the built-in
+one, "Teams the file leaves alone play without the real 2026 depth charts and adjustments.", and a line
+for each listed conference with no teams, which is left out). Anything the fill or the build still throws
+is one sentence (the team's, `league_fill.TeamBuildError`, when it is one team's) with the traceback in
+the server's log, never a 500. At the end of every check it lets go of the built-in copies it read
+(`league_file.release_caches`: the export's team docs and rosters, the fill's base league), so a checked
+file holds about 37 MB until Start (157 MB before) and 8 MB once it is gone. `POST /api/league/check` takes
+the file's bytes (`?seed=` optional) and holds the career league (not its engine teams) as the pending
+league under the SHA-256 of the bytes (`"builtin"` for a collapsed import); its answer lists the league's
+FBS teams for the picker, a renamed conference by its new name. `POST /api/season` with that key builds the
+engine teams again (`league.build` of the pending league: the same bytes the check built, about 6 s) and
+writes them as the career's
 2026 league file (`data/leagues/<career id>-2026.json`), puts it in play with the league's recruiting
 models, and starts the season with the league in its state. Only one league is pending at a time;
 a stale key is refused ("That league file is no longer loaded; import it again."), and a failed

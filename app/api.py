@@ -535,11 +535,13 @@ def _pend(blob: bytes, seed: Optional[int]) -> dict:
     career, or one that collapses to the built-in league, leaves none). The checked league is final:
     its fill seed is fixed here, and Start plays exactly it."""
     global _pending_league
+    _pending_league = None                      # the last check's league goes before this one is built
     r = league_file.check(blob, seed)
-    _pending_league = None
     if r["ok"] and not r["builtin"]:
+        # not its engine teams file: Start builds it again from the league (league.build gives the same bytes),
+        # so the pending league holds only the league itself until then
         _pending_league = {"key": hashlib.sha256(bytes(blob)).hexdigest(), "seed": r["seed"],
-                           "lgd": r["league"], "engine": r["engine"], "games": r["games"], "real_polls": not r["structural"]}
+                           "lgd": r["league"], "games": r["games"], "real_polls": not r["structural"]}
     return r
 
 
@@ -559,7 +561,8 @@ def league_check(p: Params) -> dict:
     if r["builtin"]:
         return {"ok": True, "errors": [], "errors_total": 0, "summary": r["summary"], "key": "builtin", "teams": _fbs_cards(_all_teams())}
     teams = season.stand_in_names({s: dict(t) for s, t in r["engine"]["teams"].items()})
-    return {"ok": True, "errors": [], "errors_total": 0, "summary": r["summary"], "key": _pending_league["key"], "teams": _fbs_cards(teams)}
+    cards = _show_conferences(_fbs_cards(teams), _conference_names({"league": r["league"]}))  # renamed conferences by their new names
+    return {"ok": True, "errors": [], "errors_total": 0, "summary": r["summary"], "key": _pending_league["key"], "teams": cards}
 
 
 def _undo_start(cid: str) -> None:
@@ -580,7 +583,8 @@ def _start_from_league(key: str, team: str, seed: Optional[int], coach: Optional
     pending = _pending_league
     if pending is None or pending["key"] != key:
         raise ApiError(409, "That league file is no longer loaded; import it again.")
-    t = pending["engine"]["teams"].get(team)
+    engine = league.build(pending["lgd"])      # the checked league's teams file again: the bytes the check built
+    t = engine["teams"].get(team)
     if t is None:
         raise ApiError(404, f"unknown team {team}")
     if t["fictional"]:
@@ -591,7 +595,7 @@ def _start_from_league(key: str, team: str, seed: Optional[int], coach: Optional
         out = league.path(cid, league.FIRST_YEAR)
         out.parent.mkdir(parents=True, exist_ok=True)
         tmp = out.with_suffix(f".{os.getpid()}.tmp")
-        tmp.write_text(json.dumps(pending["engine"]), encoding="utf-8")
+        tmp.write_text(json.dumps(engine), encoding="utf-8")
         os.replace(tmp, out)
         season.use_league(out)
         recruiting.use_league_models(lgd.get("recruiting_models") or {})

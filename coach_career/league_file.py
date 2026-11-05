@@ -671,12 +671,12 @@ def problems(doc: dict) -> list[str]:
             if pos is None:
                 add(f"{who}: the position is required.")
             elif not isinstance(pos, str) or pos not in POS_IN:
-                add(f"{who}: position '{_say(pos)}' is not a position.")
+                add(f"{who}: position '{_say(pos)}' is not a position; use {_or(POSITIONS + ('FB',))}.")
             cls = p.get("class")
             if cls is None:
                 add(f"{who}: the class is required.")
             elif not isinstance(cls, str) or cls not in league.CLASSES:
-                add(f"{who}: class '{_say(cls)}' is not a class.")
+                add(f"{who}: class '{_say(cls)}' is not a class; use {_or(league.CLASSES)}.")
             if p.get("overall") is not None and not _is_int(p["overall"], 1, 99):
                 add(f"{who}: overall must be a whole number from 1 to 99.")
             for field in ("ratings", "potential"):
@@ -1082,6 +1082,11 @@ def _count(n: int, one: str, many: str) -> str:
     return f"{n} {one if n == 1 else many}"
 
 
+# a career league is built without the real 2026 depth charts and adjustments (league.build), so a team the
+# file leaves alone can read an overall a point or so off its built-in card on the picker
+UNTOUCHED_LINE = f"Teams the file leaves alone play without the real {YEAR} depth charts and adjustments."
+
+
 def _failed(errors: list[str], total: Optional[int] = None) -> dict:
     """A check that cannot start a career: its sentences (capped) and how many problems there are in all."""
     return {"ok": False, "errors": _capped(errors), "errors_total": len(errors) if total is None else total}
@@ -1091,7 +1096,8 @@ def check(blob: bytes, seed: Optional[int] = None) -> dict:
     """A league file read, checked, merged and filled: what Start Career needs. Errors as sentences
     ({"ok": False, "errors", "errors_total"}: at most MAX_ERRORS and "And N more.", and the full count); an
     import that changes nothing collapses to the built-in league ({"ok": True, "builtin": True, "summary"});
-    otherwise the career league (`league`), its engine teams file (`engine`, league.build's), season one's
+    otherwise the career league (`league`), its engine teams file (`engine`, league.build(league): the same
+    bytes when Start builds it again, so a caller need not keep it), season one's
     games (`games`: generated from the file's conferences with random.Random(f"league-schedule-{seed}") when
     the file changes the league's shape, else None for the real 2026 schedule), `structural` (merge's: no
     real 2026 AP poll then) and the summary ({"name", "added", "changed", "removed", "generated", "lines"};
@@ -1102,10 +1108,10 @@ def check(blob: bytes, seed: Optional[int] = None) -> dict:
         doc = parse(blob)
     except LeagueFileError as e:
         return _failed(e.errors)
-    errs = problems(doc)
-    if errs:
-        return _failed(errs)
     try:
+        errs = problems(doc)
+        if errs:
+            return _failed(errs)
         return _check_merged(doc, blob, seed)
     except league_fill.TeamBuildError as e:
         _log.error("league check: building %s failed", e.slug, exc_info=e.__cause__ or e)
@@ -1113,6 +1119,18 @@ def check(blob: bytes, seed: Optional[int] = None) -> dict:
     except Exception:  # noqa: BLE001 - the page shows a sentence; the traceback goes to the log
         _log.exception("league check failed")
         return _failed(["The game could not build a league from this file; compare it with an exported league file."])
+    finally:
+        release_caches()
+
+
+def release_caches() -> None:
+    """Drop the built-in league copies a check reads (the export's team docs, the rosters, the fill's base
+    league): about 70 MB that would otherwise stay for the life of the server, and for good in the browser
+    (Pyodide's heap never shrinks). The next check reads them again (a few seconds)."""
+    from coach_career import league_fill
+    _builtin_docs.cache_clear()
+    _builtin_rosters.cache_clear()
+    league_fill._base_league.cache_clear()
 
 
 def _check_merged(doc: dict, blob: bytes, seed: Optional[int]) -> dict:
@@ -1139,6 +1157,11 @@ def _check_merged(doc: dict, blob: bytes, seed: Optional[int]) -> dict:
                 YEAR, teams, schedule_gen.empty_history(), random.Random(f"league-schedule-{seed}"), lgd["schedule_rules"])
         except schedule_gen.ScheduleError as e:
             return _failed([f"The {YEAR} schedule could not be built for this league: {_plain(str(e), teams, lgd.get("conference_names"))}."])
+    if any(s in lgd["teams"] for s in _builtin()["slugs"] - set(merged["changed"])):
+        lines.insert(1, UNTOUCHED_LINE)
+    for c in doc.get("conferences") or []:              # validated: each has an id and a name
+        if c["id"] not in merged["conferences"]:
+            lines.append(f"{c['name'].strip()} has no teams, so the league leaves it out.")
     lines.append(f"Generated {_count(generated, 'player', 'players')} in all." if generated else "Generated no players.")
     lines.append(f"The {YEAR} schedule is built from the file's conferences." if merged["structural"]
                  else f"The real {YEAR} schedule is kept.")

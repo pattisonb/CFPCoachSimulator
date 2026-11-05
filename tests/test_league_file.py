@@ -98,7 +98,12 @@ def test_valid_base_file():
 
 
 def test_bad_position():
-    assert "Alder Tech, player 1 (Jay Smith): position 'WRR' is not a position." in errs(pos="WRR")
+    assert "Alder Tech, player 1 (Jay Smith): position 'WRR' is not a position; use QB, RB, WR, TE, LT, LG, C, RG, RT, LEDG, DT, REDG, SAM, MIKE, WILL, CB, FS, SS, K, P or FB." in errs(pos="WRR")
+
+
+def test_bad_class():
+    out = errs(roster=[dict(JAY, **{"class": "GR"}), MAX_], depth_chart=None)
+    assert "Alder Tech, player 1 (Jay Smith): class 'GR' is not a class; use FR, FRRS, SO, SORS, JR, JRRS, SR or SRRS." in out, out
 
 
 def test_unknown_conference():

@@ -114,6 +114,16 @@ def test_check_rename_only_keeps_the_real_schedule():
     s = r["summary"]
     assert s["name"] == "Renamed" and (s["added"], s["changed"], s["removed"], s["generated"]) == (0, 0, 0, 0)
     assert all(sentence(x) for x in s["lines"]), s["lines"]
+    assert s["lines"][1] == "Teams the file leaves alone play without the real 2026 depth charts and adjustments.", s["lines"]
+    # a conference the file lists with no teams is left out, and the summary says so
+    doc["conferences"].append({"id": "lone-star", "name": "Lone Star", "games": 0})
+    lone = league_file.check(league_file.dumps(doc), seed=2)
+    assert lone["ok"] and "Lone Star has no teams, so the league leaves it out." in lone["summary"]["lines"], lone["summary"]["lines"]
+    # Start builds the teams file again from the league alone: the same bytes the check built
+    assert json.dumps(league.build(r["league"])) == json.dumps(r["engine"])
+    # an unchanged export says nothing of the kind (it is the built-in league, adjustments and all)
+    lines = league_file.check(league_file.builtin_bytes())["summary"]["lines"]
+    assert not any("leaves alone" in x for x in lines), lines
 
 
 # ---- the API ---------------------------------------------------------------------------------------
@@ -148,6 +158,11 @@ def test_stale_key_and_failed_check():
     a = api_call("POST", "/api/league/check", body_bytes=league_file.dumps(_rename_only("League A", " A")))
     b = api_call("POST", "/api/league/check", body_bytes=league_file.dumps(_rename_only("League B", " B")))
     assert a["ok"] and b["ok"] and a["key"] != b["key"] and api._pending_league["key"] == b["key"]
+    # the picker shows a renamed conference by its new name (the engine keeps the old one)
+    old = league_file._builtin()["conf_names"][next(iter(league_file._builtin()["conf_names"]))]
+    confs = {t["conference"] for t in a["teams"]}
+    assert old + " A" in confs and old not in confs, sorted(confs)
+    assert "engine" not in api._pending_league                    # Start builds the teams file again
     assert "no longer loaded" in refused(lambda: api_call("POST", "/api/season", {"team": "smu", "seed": 1, "league": a["key"]}), 409)
     assert not api_call("POST", "/api/league/check", body_bytes=b"{")["ok"]
     assert api._pending_league is None
