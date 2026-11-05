@@ -245,12 +245,16 @@ if __name__ == "__main__":
     area = next(a for a, codes in recruiting.AREAS.items() if home in codes)
     staff[2]["area"] = area
     before = {pid: r["looks"] for pid, r in rc["reads"].items()}
+    open_before = {pid for pid in rc["prospects"] if recruiting.area_open(rc["reads"].get(pid))}
     recruiting.scout_week(st)
     assert unscouted not in rc["reads"], "your area scout looked at your own commit"
     prof = prospects.profile(st, unscouted, me)
     assert prof["can_scout"] is False and prof["our_grades"] is None and prof["looks"] == 0
-    neighbor = next(pid for pid, p_ in rc["prospects"].items() if p_["hometown"]["state"] == home and rc["status"][pid]["committed"] is None)
-    assert rc["reads"][neighbor]["looks"] == before.get(neighbor, 0) + recruiting.AREA_LOOK, "an uncommitted prospect in the area still gets his half look"
+    # a neighbor whose report is still open (one with a complete report is rightly passed by)
+    neighbor = next(pid for pid, p_ in rc["prospects"].items() if p_["hometown"]["state"] == home and rc["status"][pid]["committed"] is None
+                    and pid in open_before)
+    covering = sum(1 for m in staff if m.get("area") == area)      # each staff member in his area gives half a look
+    assert rc["reads"][neighbor]["looks"] == before.get(neighbor, 0) + recruiting.AREA_LOOK * covering, "an uncommitted prospect in the area still gets his half look"
     # an uncommitted prospect still gets his three looks from you, and no more: a Send adds a look, or what his report still needs
     assert prospects.profile(st, open_, me)["can_scout"] is True
     sends = 0
