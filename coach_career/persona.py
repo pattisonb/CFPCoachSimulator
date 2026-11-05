@@ -254,8 +254,10 @@ def _name_of(state: dict, pid: str) -> str:
 
 
 def _school_name(slug) -> str:
+    """A school's name for a line: an FCS stand-in is only ever its region label (season.team_display), never its placeholder name."""
     from sim import season
-    return (season.load_teams().get(slug) or {}).get("name", slug or "")
+    teams = season.load_teams()
+    return season.team_display(slug, teams) if slug in teams else (slug or "")
 
 
 def story_learned_line(state: dict, pid: str):
@@ -1048,6 +1050,11 @@ TWIST_CALL_LINE = 0.6      # *tune* how often a call's small talk is his twist w
 STYLE_CALL_LINE = 0.2      # *tune* how often a call's small talk is his commit style, once the school knows it
 
 
+def _teams() -> dict:
+    from sim import season
+    return season.load_teams()
+
+
 def _rival_name(slug) -> str:
     return _school_name(slug) if slug else ""
 
@@ -1241,8 +1248,7 @@ def _setup(state: dict, wk: _Week, pid: str, kind: str, rng: random.Random):
         if target > now:
             rc["lists"][pid][school] = round(rc["lists"][pid].get(school, 0.0) + target - now, 3)
         if p.get("nil_ask"):
-            p["nil_ask"] = int(round(p["nil_ask"] * LATE_ASK))
-            recruiting._ASKS.clear()
+            p["nil_ask"] = int(round(p["nil_ask"] * LATE_ASK))     # (recruiting._ASKS keys on his ask: no cache to clear)
         return ({"k": kind, "s": school, "w": 1},
                 f"{_rival_name(school)} offered late and jumped near the top of his list, and his NIL ask went up.")
     if kind == "family_move":                    # a new home in another state: proximity and a hero's state move with it
@@ -1268,7 +1274,10 @@ def _setup(state: dict, wk: _Week, pid: str, kind: str, rng: random.Random):
                 rc["nil"].get(s, {}).get("held", {}).pop(pid, None)
         return {"k": kind, "s": None, "w": GRADES_WEEKS}, "A grades scare has the academic schools backing off him."
     if kind == "beat":                           # he tells one of his top three which of its next opponents to beat
-        cands = [(s, g) for s in order[:3] for g in wk.games().get(s, ())]
+        teams = _teams()
+        # an opponent worth naming: an FBS team (an FCS stand-in is no measuring stick)
+        cands = [(s, g) for s in order[:3] for g in wk.games().get(s, ())
+                 if not (teams.get(g["away"] if g["home"] == s else g["home"]) or {}).get("fictional")]
         if not cands:
             return None
         s, g = rng.choice(cands)

@@ -443,7 +443,7 @@ def ask_from(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> in
     base = p["nil_ask"] * mult
     if not base:
         return 0
-    key = (state["id"], _ck(rc), state["current_week"], rc.get("week"), pid, slug, mult)
+    key = (state["id"], _ck(rc), state["current_week"], rc.get("week"), pid, slug, base)      # his ask itself in the key: a late offer raises it
     ask = _ASKS.get(key)
     if ask is None:
         if len(_ASKS) > 500_000:

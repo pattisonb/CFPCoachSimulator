@@ -329,7 +329,15 @@ def test_determinism_and_rate():
     per_blue = sum(1 for e in starts if e["pid"] in blue) / max(1, len(blue))
     assert 0.5 <= per <= 1.5, per
     assert per_blue >= per, (per_blue, per)
-    print(f"  determinism and rate ok: {per:.2f} twists a top-1000 recruit, {per_blue:.2f} a blue chip; {kinds}")
+    # an FCS stand-in's placeholder name never reaches a line: it is only ever its region label ("FCS Gulf Coast"),
+    # and no recruit asks a school to beat an FCS team
+    stand_ins = [t["name"] for t in season.load_teams().values() if t.get("fictional")]
+    texts = [e.get("line") or "" for e in rc["log"]] + [persona.twist_label(t) for t in (rc.get("twists") or {}).values()]
+    leaked = sorted({n for n in stand_ins for x in texts if n and n in x})
+    assert not leaked, f"FCS stand-in names in twist lines: {leaked}"
+    fbs_only = [e for e in starts if e["twist"] == "beat"]
+    assert all(not (season.load_teams().get(rc["twists"].get(e["pid"], {}).get("o")) or {}).get("fictional") for e in fbs_only if e["pid"] in (rc.get("twists") or {}))
+    print(f"  determinism and rate ok: {per:.2f} twists a top-1000 recruit, {per_blue:.2f} a blue chip; {kinds}; no stand-in names")
 
 
 if __name__ == "__main__":
