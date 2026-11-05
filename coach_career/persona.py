@@ -1239,8 +1239,7 @@ def _setup(state: dict, wk: _Week, pid: str, kind: str, rng: random.Random):
         if target > now:
             rc["lists"][pid][school] = round(rc["lists"][pid].get(school, 0.0) + target - now, 3)
         if p.get("nil_ask"):
-            p["nil_ask"] = int(round(p["nil_ask"] * LATE_ASK))
-            recruiting._ASKS.clear()
+            p["nil_ask"] = int(round(p["nil_ask"] * LATE_ASK))     # (recruiting._ASKS keys on his ask: no cache to clear)
         return ({"k": kind, "s": school, "w": 1},
                 f"{_rival_name(school)} offered late and jumped near the top of his list, and his NIL ask went up.")
     if kind == "family_move":                    # a new home in another state: proximity and a hero's state move with it
