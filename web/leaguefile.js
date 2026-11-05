@@ -13,7 +13,7 @@
   const MB = 1024 * 1024;
   const MAX_LEAGUE_BYTES = 64 * MB;   // the game's own limit (coach_career/league_file.py MAX_LEAGUE_BYTES): refused before reading
   const MAX_ERRORS_SHOWN = 60;        // *tune* error sentences listed before "and N more"
-  const MAX_LINES_SHOWN = 12;         // *tune* summary lines shown before Show All
+  const MAX_LINES_SHOWN = 12;         // *tune* summary lines shown before Show All (a summary at most 3 longer shows whole)
   const HELP = "Start from the game's own 2026 league, or import a league file (.json) to add, change or remove teams and conferences. Export League downloads the game's league as a file to edit.";
 
   // mode: "builtin" or "file"; key: the check's key ("builtin" for a file that changes nothing); view: what #league-result shows
@@ -71,7 +71,7 @@
     const chip = (k, n) => el("span", { class: "go-chip league-stat", "data-key": k }, [el("span", { class: "league-stat-k", text: k }), " ", el("b", { text: String(num(n)) })]);
     const lines = (s.lines || []).filter((x) => typeof x === "string" && x);
     // a long summary keeps its first line and its last two (the totals and the schedule) and folds the team lines between
-    const show = st.allLines || lines.length <= MAX_LINES_SHOWN ? lines
+    const show = st.allLines || lines.length <= MAX_LINES_SHOWN + 3 ? lines
       : [...lines.slice(0, MAX_LINES_SHOWN - 2), ...lines.slice(-2)];
     const out = [
       el("div", { class: "league-stats", "data-key": "stats" }, [chip("Teams Added", s.added), chip("Teams Changed", s.changed), chip("Teams Removed", s.removed), chip("Players Generated", s.generated)]),
