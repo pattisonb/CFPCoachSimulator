@@ -68,6 +68,9 @@
 .pr-who .go-badges { display: flex; gap: 6px; margin-top: 2px; }
 .pr-who .go-badges .go-badge { font-size: 10px; padding: 0 6px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .pr-c-status .go-tag { max-width: 170px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+/* a long school or read takes two lines in a wide font rather than push Ht and Wt off the card */
+.pr-table td.pr-c-status, .pr-table td.pr-c-pot { white-space: normal; }
+.pr-table .pr-c-status .go-tag, .pr-table .pr-c-pot .go-tag { display: inline-block; white-space: normal; max-width: 8.5em; line-height: 1.25; }
 .pr-c-stars .go-stars { font-size: 13px; letter-spacing: 0; }
 .pr-board { min-height: 36px; padding: 0 12px; font-size: 14px; white-space: nowrap; min-width: 96px; }
 .pr-board.on { border-width: 1px; }
@@ -88,9 +91,11 @@
 @container (max-width: 600px) {
   .pr-table { table-layout: fixed; }
   .pr-c-rank, .pr-c-pos, .pr-c-stars { display: none; }
-  .pr-c-int { width: 68px; }
-  .pr-table .pr-c-int .go-tag { padding: 2px 5px; font-size: 12px; }
-  .pr-c-act { width: 92px; }
+  .pr-c-int { width: 76px; }
+  .pr-table .pr-c-int .go-tag { padding: 2px 5px; font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .pr-c-act { width: 104px; }
+  .pr-table td.pr-c-act > * { max-width: 100%; }     /* the fixed columns hold their buttons in any font: nothing spills past the card */
+  .pr-table td.pr-c-act .go-btn { padding-inline: 8px; white-space: nowrap; }
   .pr-table .pr-who .go-list-id b { white-space: normal; overflow-wrap: anywhere; line-height: 1.2; }   /* a name takes two lines rather than lose letters */
   .pr-table .pr-who .go-list-id > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }
 }
