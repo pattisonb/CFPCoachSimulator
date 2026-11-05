@@ -504,7 +504,9 @@
       cur.patchHead(cur.v);
       paintIntel();
       ui().toast(on ? `${r.name} is on your board.` : hadOffer ? `${r.name} is off your board · offer pulled.` : `${r.name} is off your board.`, { ms: 2500 });
-      cur.reload(r.pid);          // a newer load: one still in flight from a Send (read before this change) must not put the old star back
+      // reload either way: a list read still in flight (a trip's reload) was taken before this change and would paint
+      // his old star back; the new load supersedes it (load's seq drops the older answer)
+      cur.reload(r.pid);
     }
     return panel;
   }

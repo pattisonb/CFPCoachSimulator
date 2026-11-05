@@ -1198,7 +1198,7 @@
     else if (t === "awards") renderAwards();
     else if (t === "stats") renderStats();
     else if (t === "offseason" && window.Offseason) window.Offseason.render(state.season, $("#tab-offseason"), recruitingHelpers);
-    else if (t === "office" && window.Recruiting) window.Recruiting.render(t, state.season, { ...recruitingHelpers, api: officeApi });
+    else if (t === "office" && window.Office) window.Office.render(state.season, $("#tab-office"), recruitingHelpers);
     else if (CAREER_TABS.includes(t) && window.Recruiting) window.Recruiting.render(t, state.season, recruitingHelpers);
   }
 
@@ -1250,7 +1250,7 @@
     else if (what === "selection") { if (s.current_week < 15) advance(15); }
     else if (what === "end") advance(20);
   }
-  // The Office's play card (recruiting.js hands its .go-play to this): Sim the week, Game day while
+  // The Office's play card (office.js puts it in the Next Game hero, Game Day first): Sim the week, Game day while
   // your game is unplayed, Sim to selection day until selection, Sim to signing day, and ▾ with the
   // week picker (sim through a week of your choosing; the recruiting weeks between run on Auto).
   function playCard(s) {
@@ -1274,19 +1274,12 @@
     });
     return [week, game, selection, end, s.current_week + 2 <= 20 ? more : null].filter(Boolean);
   }
-  // the Office's recruiting view, fetched once for the Office and the NIL line (a short memo)
-  const officeMemo = { path: null, at: 0, p: null };
-  function officeApi(path, options) {
-    if (options || !/\/recruiting$/.test(path)) return api(path, options);
-    if (officeMemo.p && officeMemo.path === path && Date.now() - officeMemo.at < 3000) return officeMemo.p;
-    officeMemo.path = path; officeMemo.at = Date.now(); officeMemo.p = api(path);
-    return officeMemo.p;
-  }
   // a career's new season: "NIL carried over: 25 (of 135 this year)" in the Programs tab's Your Program card
+  // (the Office reads /recruiting fresh each time it opens, so its plan follows hours just spent on the board)
   async function officeCarryLine(s, card) {
     if (!s.career || s.done || !card) return;
     let v;
-    try { v = await officeApi(`/api/season/${s.id}/recruiting`); } catch (e) { return; }
+    try { v = await api(`/api/season/${s.id}/recruiting`); } catch (e) { return; }
     const carry = v && v.nil ? Number(v.nil.carry || 0) : 0;
     if (!(carry > 0) || state.season !== s || !card.isConnected || card.querySelector(".go-nil-carry")) return;
     const head = card.querySelector(".go-program-head");

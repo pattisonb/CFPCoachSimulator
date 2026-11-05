@@ -1,4 +1,4 @@
-/* Coach Career on the season page, styled as a game: the Office (your week at a glance), the
+/* Coach Career on the season page, styled as a game (the Office is web/office.js): the
    Recruiting board (stage tabs, a list, one pane with the Recruit menu), Prospects (the
    class, filtered) and the Prospect Profile; the Scouting tab is web/scouting.js.
    window.Recruiting.render(tab, season, helpers); helpers from season.js: { api, postJSON, toast,
@@ -29,7 +29,6 @@
 
   const stars = (n) => "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
   const height = (inches) => `${Math.floor(inches / 12)}'${inches % 12}"`;
-  const pct = (x) => `${Math.round(100 * x)}%`;
   const ordinal = (n) => { const t = n % 100, u = n % 10; return `${n}${t > 10 && t < 14 ? "th" : u === 1 ? "st" : u === 2 ? "nd" : u === 3 ? "rd" : "th"}`; };
   // where he is from: "Washington, D.C." rather than "Washington, DC"
   const place = (h) => (h.state === "DC" ? "Washington, D.C." : `${h.city}, ${h.state}`);
@@ -45,7 +44,6 @@
   const plural = (pos) => ({ OL: "OL", DL: "DL", MLB: "LBs", ROLB: "LBs", LOLB: "LBs", LB: "LBs" }[pos] || `${pos}s`);
   const teamName = (slug) => (slug === "FCS" ? "an FCS program" : (window.CFP.teamsBySlug[slug] || {}).name || slug);
   const loading = (text) => el("p", { class: "muted go-loading", text });
-  const SIGNING_WEEK = 16, FINAL_WEEK = 20;       // the early signing period (selection week) and national signing day
   const WORDS = { commit: "verbally committed to", hard: "is now a hard commit to", flip: "flipped to", decommit: "decommitted from", signed: "signed with", offer: "was offered by",
                   asked_more: "wants more from", not_buying: "isn't buying the pitch from", hung_up: "has an unfinished call from" };
   // events that carry their own sentence (his story's, a twist, a hat ceremony, a commitment going soft)
@@ -214,7 +212,8 @@
   }
   // the History as text lines ("Week 4 · Call · Program Prestige · He lit up")
   function historyLines(events, me) { return historyItems(events, me).map((x) => [`Week ${x.week}`, x.text].filter(Boolean).join(" · ")); }
-  window.CFP.recruiting = { standingOf, byChance, historyLines };
+  // the Office (web/office.js) shares the ladder, the portraits, the week's What Changed card and the event words
+  window.CFP.recruiting = { standingOf, byChance, historyLines, avatar, reportCard, eventWord };
 
   // a topic in a sentence: "playing time", "NIL"
   const topicWord = (t) => (t === "nil" ? "NIL" : (PITCH_NAMES[t] || t).toLowerCase());
@@ -277,12 +276,6 @@
     ui().pulse(b);
   }
   function stat(k, val) { return el("div", { class: "go-stat" }, [el("div", { class: "go-kicker muted", text: k }), el("div", { class: "go-stat-val", text: val })]); }
-  function newsItem(s, e) {
-    // an event with its own sentence (a twist, a hat ceremony, a bloomer's jump) says it after his name; a recruit who went unsigned says so, with why
-    const said = e.kind === "unsigned" ? " went unsigned" : LINE_KINDS.has(e.kind) && e.line ? `: ${e.line}` : ` ${eventWord(e)}${e.school ? ` ${teamName(e.school)}` : ""}`;
-    return el("li", {}, [el("button", { type: "button", class: "go-link", text: e.name, onclick: () => openProfile(s, e.pid) }), said,
-      e.reason ? el("span", { class: "muted small", text: ` · ${e.reason}` }) : null]);
-  }
 
   // ----- the Office ------------------------------------------------------------------------------
 
@@ -334,212 +327,6 @@
     }
     t.append(body);
     return el("div", { class: "go-scroll" }, [t]);
-  }
-
-  // ----- the Office's games: Last Game (a quick box score) and Next Game (the matchup) ------------
-  const weekName = (s, w) => (s.week_labels && s.week_labels[w]) || `Week ${w}`;
-  const dateText = (d) => (d ? new Date(d).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "");
-  const recText = (r) => (r ? `${r.wins}-${r.losses}` : "0-0");
-  const venueWord = (g) => (g.venue === "away" ? "Road Game" : g.venue === "neutral" ? "Neutral Site" : "Home Game");
-  // the games the Office shows: the latest your team played, and the next it plays (this week's when unplayed)
-  function gamesOf(s) {
-    const sched = (s.schedule || []).filter((g) => g.opponent);
-    const last = sched.filter((g) => g.played).pop() || null;
-    const next = s.done ? null : sched.find((g) => !g.played && g.week >= s.current_week + 1) || null;
-    return { last, next };
-  }
-  function officeGames(s) {
-    const { last, next } = gamesOf(s);
-    if (!last && !next) return null;
-    const row = el("div", { class: `go-games${last && next ? " two" : ""}` });
-    if (last) row.append(lastGameCard(s, last));
-    if (next) row.append(nextGameCard(s, next));
-    return row;
-  }
-  // one side of a matchup: the mark, the rank, the name and the record
-  function sideLine(slug, name, rank, record, mine) {
-    return el("div", { class: `go-side${mine ? " mine" : ""}` }, [window.CFP.teamPill(slug),
-      rank ? el("span", { class: "go-rank", text: `#${rank}` }) : null, el("b", { class: "go-side-name", text: name }),
-      el("span", { class: "muted go-side-rec", text: record || "0-0" })]);
-  }
-  function nextGameCard(s, g) {
-    const thisWeek = g.week === s.current_week + 1;
-    const bye = !thisWeek && !s.done && s.current_week + 1 <= 14 && !(s.schedule || []).some((x) => x.week === s.current_week + 1 && x.opponent);
-    const myRank = s.my_rank && s.my_rank.rank;
-    const kicker = `${bye ? "Bye This Week · " : ""}Next Game · ${weekName(s, g.week)}${g.date ? ` · ${dateText(g.date)}` : ""}`;
-    const at = g.venue === "away";
-    const mine = sideLine(s.team, s.team_name, myRank, recText(s.record), true);
-    const them = sideLine(g.opponent, g.opponent_name, g.opponent_rank, g.opponent_record, false);
-    const edge = el("div", { class: "go-edge" });
-    const card = el("section", { class: "go-game go-game-next", "aria-label": "Next Game" }, [
-      el("div", { class: "go-kicker muted", text: kicker }),
-      el("div", { class: "go-sides" }, [mine, el("span", { class: "go-vs muted", text: at ? "at" : "vs" }), them]),
-      el("div", { class: "go-next-foot" }, [el("span", { class: "muted small go-venue", text: [venueWord(g), g.title, g.site].filter(Boolean).join(" · ") }), edge])]);
-    if (thisWeek) {
-      edge.append(el("span", { class: "muted small", text: "Scouting the matchup…" }));
-      H.api(`/api/season/${s.id}/preview?team=${s.team}`).then((pv) => {
-        const p = pv && pv.prediction;
-        edge.innerHTML = "";
-        if (!p) return;
-        edge.append(el("span", { class: "go-edge-item" }, [el("span", { class: "go-kicker muted", text: "Win Chance" }),
-            el("b", { class: p.win_prob >= 0.5 ? "good" : "bad", text: pct(p.win_prob) })]),
-          el("span", { class: "go-edge-item" }, [el("span", { class: "go-kicker muted", text: "Projected" }),
-            el("b", { text: `${Math.round(p.points_for)}–${Math.round(p.points_against)}` })]));
-      }).catch(() => { edge.innerHTML = ""; });
-    }
-    return card;
-  }
-  function lastGameCard(s, g) {
-    const res = g.won ? "W" : "L";
-    const card = el("section", { class: "go-game go-game-last", "aria-label": "Last Game" }, [
-      el("div", { class: "go-game-head" }, [el("div", { class: "go-kicker muted", text: `Last Game · ${weekName(s, g.week)}` })]),
-      el("div", { class: "go-final" }, [el("span", { class: `go-result ${g.won ? "good" : "bad"}`, text: res }),
-        el("span", { class: "go-display l go-final-score", text: `${g.points_for}–${g.points_against}` }),
-        el("span", { class: "go-final-opp" }, [el("span", { class: "muted", text: g.venue === "away" ? "at " : "vs " }), window.CFP.teamPill(g.opponent), ` ${g.opponent_name}`,
-          g.overtime ? el("span", { class: "muted", text: ` · ${g.overtime > 1 ? `${g.overtime}OT` : "OT"}` }) : null])])]);
-    if (!g.has_box || !g.event_id) return card;
-    const detail = el("div", { class: "go-box-mini" }, [el("span", { class: "muted small", text: "Loading the box score…" })]);
-    const full = el("button", { type: "button", class: "go-btn go-full-box", text: "Full Box Score" });
-    ui().on(full, "click", () => H.openBox(g.event_id));
-    card.querySelector(".go-game-head").append(full);     // in the card's head: the card stays short
-    card.append(detail);
-    H.api(`/api/season/${s.id}/game/${encodeURIComponent(g.event_id)}`).then((b) => {
-      detail.innerHTML = "";
-      if (!b || !b.home || !b.away) return;
-      detail.append(quarterTable(b), leadersList(b));
-    }).catch(() => { detail.innerHTML = ""; });
-    return card;
-  }
-  const SIDES = ["away", "home"];     // the box score reads away first
-  // the score by quarter, away first (as the box score reads)
-  function quarterTable(b) {
-    const ot = (b.home.overtime || []).length;
-    const cols = ["1", "2", "3", "4", ...(ot ? ["OT"] : []), "T"];
-    const abbr = (side) => { const t = window.CFP.teamsBySlug[b[`${side}_slug`]]; return (t && t.abbreviation) || b[side].name; };
-    const row = (side) => el("tr", { class: b.winner === side ? "won" : "" }, [el("th", { scope: "row" }, [window.CFP.teamPill(b[`${side}_slug`]), ` ${abbr(side)}`]),
-      ...(b[side].quarters || []).slice(0, 4).map((q) => el("td", { text: String(q) })),
-      ...(ot ? [el("td", { text: String((b[side].overtime || []).reduce((a, x) => a + x, 0)) })] : []),
-      el("td", { class: "total", text: String(b[side].score) })]);
-    const body = SIDES.map(row);
-    return el("table", { class: "go-quarters", "aria-label": "Score by quarter" }, [
-      el("thead", {}, [el("tr", {}, [el("th", { text: "" }), ...cols.map((c) => el("th", { scope: "col", text: c }))])]),
-      el("tbody", {}, body)]);
-  }
-  // the game's leaders, both teams: the top passer, rusher, receiver and defender
-  function leadersList(b) {
-    const all = [];
-    for (const side of SIDES) for (const p of b[side].players || []) all.push({ p, slug: b[`${side}_slug`] });
-    const st = (x, k) => (x.p.stats && x.p.stats[k]) || 0;
-    const best = (score, ok) => all.filter(ok).sort((a, z) => score(z) - score(a))[0];
-    const tds = (n, w) => (n ? `, ${n} ${w}` : "");
-    const rows = [];
-    const pass = best((x) => st(x, "pass_yards"), (x) => st(x, "pass_attempts") > 0);
-    if (pass) rows.push(["Passing", pass, `${st(pass, "pass_yards")} yds${tds(st(pass, "passing_touchdowns"), "TD")}${tds(st(pass, "interceptions_thrown"), "INT")}`]);
-    const rush = best((x) => st(x, "rush_yards"), (x) => st(x, "carries") > 0);
-    if (rush) rows.push(["Rushing", rush, `${st(rush, "rush_yards")} yds${tds(st(rush, "rushing_touchdowns"), "TD")}`]);
-    const rec = best((x) => st(x, "receiving_yards"), (x) => st(x, "receptions") > 0);
-    if (rec) rows.push(["Receiving", rec, `${st(rec, "receiving_yards")} yds${tds(st(rec, "receiving_touchdowns"), "TD")}`]);
-    const tk = (x) => st(x, "solo_tackles") + st(x, "assisted_tackles");
-    const def = best((x) => tk(x) + 3 * st(x, "sacks") + 4 * st(x, "interceptions"), (x) => tk(x) + st(x, "sacks") + st(x, "interceptions") > 0);
-    if (def) rows.push(["Defense", def, [`${tk(def)} tkl`, st(def, "sacks") ? `${st(def, "sacks")} sk` : "", st(def, "interceptions") ? `${st(def, "interceptions")} INT` : ""].filter(Boolean).join(", ")]);
-    const short = (n) => { const w = String(n).split(" "); return w.length > 1 ? `${w[0][0]}. ${w.slice(1).join(" ")}` : n; };
-    return el("ul", { class: "go-leaders" }, rows.map(([k, x, line]) => el("li", { title: `${x.p.name}, ${x.p.position}: ${line}` }, [el("span", { class: "go-kicker muted", text: k }),
-      el("span", { class: "go-leader-who" }, [window.CFP.teamPill(x.slug), el("b", { text: ` ${short(x.p.name)}` })]),
-      el("span", { class: "go-leader-line", text: line })])));
-  }
-  // one line: where you stand in your conference ("2nd in the Big Ten · 5-1 (3-0 Big Ten)"); an independent shows its record
-  function standingLine(s) {
-    const line = el("div", { class: "go-standing-line", "aria-label": "Your standing" }, [el("span", { text: recText(s.record) })]);
-    if (!s.record || !(s.record.wins + s.record.losses)) return line;
-    H.api(`/api/season/${s.id}/standings`).then((d) => {
-      const rows = (d && d.standings && d.standings[s.conference]) || [];
-      const r = rows.find((x) => x.slug === s.team);
-      if (!r) return;
-      const indep = /independent/i.test(s.conference || "");
-      line.textContent = indep ? `${r.wins}-${r.losses} · ${s.conference}`
-        : `${ordinal(r.conf_rank)} in the ${s.conference}${r.division ? ` ${r.division}` : ""} · ${r.wins}-${r.losses} (${r.conf_wins}-${r.conf_losses} ${s.conference})`;
-    }).catch(() => {});
-    return line;
-  }
-
-  async function renderOffice(s, box) {
-    box.innerHTML = "";
-    const me = s.team;
-    const next = s.done ? null : (s.schedule || []).find((g) => g.week === s.current_week + 1);
-    const week = el("section", { class: "go-card go-week", "aria-label": "This week" });
-    const rec = el("section", { class: "go-card go-rec", "aria-label": "Recruiting" }, [loading("Loading recruiting…")]);
-    box.append(el("div", { class: "go-office" }, [week, rec]));
-
-    const when = next && next.date ? ` · ${new Date(next.date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}` : "";
-    week.append(el("div", { class: "go-kicker", text: s.done ? "Season Complete" : `This Week · ${(s.week_labels && s.week_labels[s.current_week + 1]) || `Week ${s.current_week + 1}`}${when}` }));
-    const head = el("div", { class: "go-week-head" });
-    week.append(head);
-    if (s.current_week >= SIGNING_WEEK) {
-      const final = s.current_week >= FINAL_WEEK;
-      box.prepend(el("button", { type: "button", class: "go-signing", onclick: () => H.onChange("classes") }, [
-        el("span", { class: "go-display m", text: final ? "National Signing Day Is Done" : "The Early Signing Period Is Done" }),
-        el("span", { text: final ? "Every class is signed. See how yours ranks →" : "Commitments signed in December. See every school's class →" })]));
-    }
-    if (s.job) week.append(el("div", { class: `go-job ${s.job.security < 40 ? "bad" : s.job.security < 65 ? "warn" : "good"}` }, [
-      el("span", { class: "go-kicker muted", text: "Your AD's Goal" }), el("b", { text: ` ${s.job.goal}` }),
-      el("span", { class: "go-tag", text: `${s.job.mood}${s.job.ultimatum ? " · Ultimatum Year" : ""}` })]));
-    if (s.done) {
-      head.append(el("div", { class: "go-display xl", text: s.champion_name ? `${s.champion_name} Won It All` : "That's a Wrap" }));
-      week.append(el("div", { class: "go-play" }, [el("button", { type: "button", class: "go-btn primary big", text: "On to the Offseason →",
-        onclick: () => H.onChange("offseason") })]));
-    }
-    // the game: the last one played (a quick box score) beside the next one (the matchup); a phone stacks them
-    const games = officeGames(s);
-    if (s.done) { if (games) head.after(games); }
-    else if (games) head.replaceWith(games); else head.remove();
-    if (!s.done) week.querySelector(".go-kicker").after(standingLine(s));
-    const steps = el("div", { class: "go-steps" });
-    week.append(el("div", { class: "go-kicker muted", text: "Your Week" }), steps);
-    let reportBox = el("div");
-    week.append(reportBox);
-    if (!s.done) {
-      // the play card (season.js playCard): Sim the week, Game day, Sim to selection day, Sim to signing day, ▾ the week picker
-      week.append(el("div", { class: "go-play" }, H.playCard(s)));
-    }
-
-    let v;
-    try { v = await H.api(`/api/season/${s.id}/recruiting`); }
-    catch (err) { rec.innerHTML = ""; rec.append(loading(`Could not load recruiting: ${H.errText(err)}`)); return; }
-    const auto = v.auto_recruit !== "off";
-    const report = reportCard(s, v.report);
-    if (report) reportBox.replaceWith(report);
-    const recruitDone = auto || v.hours_left < 5;
-    const gameDone = !next || !next.opponent || !!next.played;
-    if (!s.done) {
-      steps.append(
-        step(recruitDone ? "✓" : "1", "Recruit", auto ? (v.auto_recruit === "week" ? "Auto-recruit this week" : "Auto-recruit all season") : `${v.hours_used} of ${v.hours} hours used`, recruitDone ? "done" : "now", () => H.onChange("recruiting")),
-        step(gameDone ? "✓" : "2", "Game Day", !next || !next.opponent ? (s.current_week + 1 > 14 ? "No game this week" : "Bye week") : next.played ? "Played" : "Coach it drive by drive", gameDone ? "done" : recruitDone ? "now" : "", () => H.play("gameday")),
-        step("3", "Advance", "Everyone else plays", recruitDone && gameDone ? "now" : "", () => H.play("advance")),
-      );
-    }
-    rec.innerHTML = "";
-    rec.append(el("div", { class: "go-card-head" }, [el("div", { class: "go-kicker", text: `Recruiting · Class of ${(s.year || 2026) + 1}` }),
-      el("button", { type: "button", class: "go-link", text: "Board →", onclick: () => H.onChange("recruiting") })]),
-      el("div", { class: "go-big-line" }, [el("span", { class: "go-display xl", text: String(v.committed) }),
-        el("span", { class: "muted", text: `of ${v.open_spots} spots committed${v.committed ? ` · class rank #${v.class_rank}` : ""}` })]),
-      el("div", { class: "go-mini" }, [stat("Hours Left", `${v.hours_left} / ${v.hours}`), stat("NIL Points", `${v.nil.left} / ${v.nil.budget}`)]),
-      el("div", { class: "go-kicker muted", text: "Hot Targets" }));
-    rec.append(v.targets.length
-      ? el("div", { class: "go-targets" }, v.targets.map((b) => {
-          const sd = standing(b, me);
-          return el("button", { type: "button", class: "go-target", onclick: () => openProfile(s, b.id) }, [avatar(b.id, "sm"),
-            el("span", { class: "go-target-text" }, [el("b", { text: b.name }), el("span", { class: "muted small", text: `${stars(b.stars)} ${b.display_pos || b.position} · #${b.national_rank} · ${sd.odds || ""}` })]),
-            el("span", { class: `go-tag ${sd.tone}`, text: sd.word })]);
-        }))
-      : el("p", { class: "muted", text: "Offer prospects on your board and your hottest targets show here." }));
-    rec.append(el("div", { class: "go-kicker muted", text: s.current_week ? "This Week's News" : "News" }));
-    rec.append(v.recap.length ? el("ul", { class: "go-news" }, v.recap.slice(-5).reverse().map((e) => newsItem(s, e)))
-      : el("p", { class: "muted", text: "No recruiting news yet. Commitments come over the fall." }));
-
-    function step(mark, title, sub, state, onclick) {
-      return el("button", { type: "button", class: `go-step ${state}`, onclick }, [el("span", { class: "go-step-mark", text: mark }),
-        el("span", { class: "go-step-text" }, [el("b", { text: title }), el("span", { class: "muted small", text: sub })])]);
-    }
   }
 
   // ----- the Recruiting board ----------------------------------------------------------------------
@@ -2299,8 +2086,7 @@
   function render(tab, season, helpers) {
     H = helpers;
     const box = document.getElementById(`tab-${tab}`);
-    if (tab === "office") renderOffice(season, box);
-    else if (tab === "programs") renderPrograms(season, box);
+    if (tab === "programs") renderPrograms(season, box);
     else if (tab === "recruiting") renderRecruiting(season, box);
     else if (tab === "prospects") renderProspects(season, box);
     else if (tab === "scouting") window.CFP.scouting.render(season, box, H);

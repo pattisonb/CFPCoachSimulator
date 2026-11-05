@@ -950,6 +950,13 @@ def programs_view(p: Params) -> dict:
     return {"you": me, "rows": rows, "tiers": programs.TIER_NAMES, "weights": programs.WEIGHTS}
 
 
+@route("GET", "/api/season/{season_id}/office")
+def office_view(p: Params) -> dict:
+    """The Office's own read: your program's news over the last weeks, your conference's latest results and your place."""
+    from coach_career import office
+    return office.office_view(_career_state(p.path["season_id"]))
+
+
 @route("GET", "/api/season/{season_id}/recruiting/report")
 def recruiting_reports(p: Params) -> dict:
     """The weekly reports kept (what changed for the prospects on your board), latest last."""
