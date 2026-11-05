@@ -1960,9 +1960,14 @@ the select stays on the built-in league; a league that checks shows four stat ch
 Changed, Teams Removed, Players Generated), the summary lines (a long one folds its team lines behind Show All)
 and Start Career, and the select gains "League: <name>". All of it is `ui.morph` patches. `window.LeagueFile`
 (`key()`, `teams()`, `onChange`, `onStart`, `reset`) is how `season.js` hears it: `#pick-team` is reconciled
-to the import's FBS teams in place (keyed by slug), their cards go into `teamsBySlug` while no season is open,
-Start Career is the existing Who Coaches? step, and `newSeason` posts `league: LeagueFile.key()` and resets the
-panel once the league is used. Opening a season whose summary names a `league` first merges
+to the import's FBS teams in place (keyed by slug), their cards go into `teamsBySlug` while no season is open
+(a switch of league prunes the cards to that league's teams; the stand-ins' stay), Start Career is the existing
+Who Coaches? step, and `newSeason` posts `league: LeagueFile.key()` and resets the panel once the league is used.
+With an import loaded, Who Coaches? has no Create a New Coach link (Your Coach is another page, and the import lives
+only in this one): a sentence says to create the coach first. A check that fails outright (no answer) puts the
+panel back on the built-in league. The picker's overall for an imported league is its engine build's
+(`league.build`, no real 2026 adjustments, the build every career plays from its first offseason on), so a team the
+file leaves alone can read a point or two off its built-in card. Opening a season whose summary names a `league` first merges
 `/api/season/{id}/teams` into `teamsBySlug` (a built-in career puts the built-in cards back). Export League
 fetches the relative `league.json` (written by `tools/build_site.py` beside the page; the dev server makes it)
 and downloads it as `league.json`.

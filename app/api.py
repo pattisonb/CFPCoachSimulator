@@ -471,7 +471,9 @@ def get_team(p: Params) -> dict:
 # ----- seasons -----------------------------------------------------------------
 
 def _fbs_cards(teams: dict) -> list[dict]:
-    """The team picker's cards for a league's FBS teams, by name."""
+    """The team picker's cards for a league's FBS teams, by name. For an imported league these are its engine
+    teams (league.build, a career league's build: no real 2026 adjustments, as every career plays from its first
+    offseason on), so a team the file leaves alone can read an overall a point or two off its built-in card."""
     return sorted((_team_card(t) for t in teams.values() if not t["fictional"]), key=lambda c: c["name"].casefold())
 
 

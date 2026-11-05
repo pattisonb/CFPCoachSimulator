@@ -1005,6 +1005,7 @@ table.stats tr.mine td.name { font-weight: 800; }
 .start-choice { display: grid; gap: 12px; }
 .start-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; }
 .start-card p { margin: 0; }
+.start-card p.start-coach-note { margin-top: 8px; }   /* an imported league: why there is no Create a New Coach link */
 .start-coaches { display: grid; gap: 6px; }
 .start-coach { display: flex; align-items: center; gap: 8px; text-align: left; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); color: var(--text); cursor: pointer; }
 .start-coach:hover { border-color: var(--accent); }
@@ -1488,7 +1489,7 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
 @media (max-width: 759px) { .go-full-box { min-height: 44px; } .go-game-head { min-height: 44px; } }
 
 /* ----- the New Career screen's League panel (web/leaguefile.js): the league a new career plays ----- */
-.league-panel { max-width: 760px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.league-panel { max-width: 840px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .league-panel[hidden] { display: none; }
 .league-head { display: flex; align-items: center; gap: 8px; }
 .league-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
@@ -1504,8 +1505,8 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
 .league-panel p.league-error-head { margin: 0 0 8px; color: var(--bad-text); font-weight: 600; }
 .league-errors { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
 .league-errors + p { margin-top: 8px; }
-.league-stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
-.league-panel .go-chip.league-stat { display: inline-flex; align-items: baseline; gap: 6px; min-height: 0; padding: 6px 12px; background: var(--panel-2);
+.league-stats { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }   /* the four on one row at 1280, even in a wide font */
+.league-panel .go-chip.league-stat { display: inline-flex; align-items: baseline; gap: 6px; min-height: 0; padding: 6px 10px; background: var(--panel-2);
   cursor: default; font-weight: 600; }
 .league-stat b { font-size: 15px; font-variant-numeric: tabular-nums; }
 .league-lines { display: flex; flex-direction: column; gap: 4px; }

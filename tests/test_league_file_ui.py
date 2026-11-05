@@ -4,8 +4,12 @@ an import with errors lists them as sentences and the select stays on the built-
 shows the four stat chips, the summary lines and Start Career, the select names the file's league and the team
 picker gains its teams in place; the page stays responsive through the whole check (busy, with a running count);
 labels are Title Case, nothing scrolls sideways, no control row overflows, the controls sit inside the panel and are
-44 px on a phone. Export League downloads the built-in league as valid `cfp-league/1` JSON; Start Career from the
-import opens a career at Alder Tech, and the save opened fresh shows the league's teams.
+44 px on a phone; the four chips share a row at 1280; the team cards follow the league (pruned on a switch).
+Export League downloads the built-in league as valid `cfp-league/1` JSON; a check that throws toasts a sentence and
+puts the panel back on the built-in league; a 19-line summary folds behind Show All N Lines, which patches in every
+line; Who Coaches? keeps Create a New Coach for the built-in league and replaces it with a sentence for an import;
+Start Career from the import opens a career at Alder Tech, and the save opened fresh shows the league's teams.
+The JS MAX_LEAGUE_BYTES is checked against coach_career/league_file.py's.
 Screenshots of the three states at each width and theme go to LEAGUE_SHOTS (default: a temporary folder).
 Needs Playwright with a Chromium; without one it is skipped. Slow (each import fills ten rosters). (Run as a file.)"""
 import json
@@ -44,6 +48,24 @@ def good_doc() -> dict:
             "teams": [new_team(s, st, **({"rivals": ["oregon-state"], "prestige": 40} if s == "alder-tech" else {}))
                       for s, st in zip(BIG_SKY_EAST, STATES)],
             "remove": ["kent-state"]}
+
+
+def long_doc() -> dict:
+    """Sixteen new teams in two new conferences: a summary of 19 lines, long enough to fold behind Show All."""
+    west = ["coast-tech", "redwood-state", "harbor-state", "summit-tech", "pacific-plains", "shasta-state", "tidewater", "sierra-tech"]
+    return {"format": "cfp-league/1", "name": "Long League",
+            "conferences": [{"id": "big-sky-east", "name": "Big Sky East", "level": "FBS", "games": 7},
+                            {"id": "pacific-west", "name": "Pacific West", "level": "FBS", "games": 7}],
+            "teams": [new_team(s, "OR") for s in BIG_SKY_EAST[:8]] + [new_team(s, "CA", conference="pacific-west") for s in west]}
+
+
+def js_max_league_bytes() -> int:
+    """web/leaguefile.js's MAX_LEAGUE_BYTES, as written there (`<n> * MB`, MB = 1024 * 1024)."""
+    src = (ROOT / "web" / "leaguefile.js").read_text(encoding="utf-8")
+    assert re.search(r"const MB = 1024 \* 1024;", src), "MB is 1024 * 1024"
+    m = re.search(r"const MAX_LEAGUE_BYTES = (\d+) \* MB;", src)
+    assert m, "web/leaguefile.js states MAX_LEAGUE_BYTES as <n> * MB"
+    return int(m.group(1)) * 1024 * 1024
 
 
 def bad_doc() -> dict:
@@ -132,7 +154,7 @@ def check_errors(page, bad: Path, tag: str) -> None:
     assert head[0].isupper() and head.endswith("."), head
 
 
-def check_good(page, good: Path, tag: str) -> None:
+def check_good(page, good: Path, tag: str, width: int = 1280) -> None:
     """An import that checks: busy (and responsive) the whole check, then the chips, the lines and Start Career."""
     t0 = time.time()
     page.set_input_files("#league-file", str(good))
@@ -166,6 +188,12 @@ def check_good(page, good: Path, tag: str) -> None:
     assert not page.eval_on_selector("#pick-team", "s => [...s.options].some(o => o.value === 'kent-state')"), "a removed team leaves the picker"
     assert page.evaluate("() => window.LeagueFile.key()") not in ("builtin", None)
     assert page.evaluate("() => window.LeagueFile.teams().some(t => t.slug === 'alder-tech')")
+    # the cards follow the league: the removed team's card is pruned, the added team's is there, the stand-ins stay
+    assert page.evaluate("() => !window.CFP.teamsBySlug['kent-state'] && window.CFP.teamsBySlug['alder-tech'].name === 'Alder Tech'"), "the cards follow the import"
+    assert page.evaluate("() => Object.values(window.CFP.teamsBySlug).some(t => t.fictional)"), "the FCS stand-ins' cards stay"
+    if width == 1280:     # the four chips on one row: their tops against each other, never a pixel width
+        tops = page.eval_on_selector_all("#league-result .go-chip", "els => els.map(e => Math.round(e.getBoundingClientRect().top))")
+        assert max(tops) - min(tops) <= 1, f"{tag}: the four chips sit on one row at 1280: {tops}"
 
 
 def check_back_to_builtin(page) -> None:
@@ -177,6 +205,54 @@ def check_back_to_builtin(page) -> None:
     assert page.evaluate("() => window.LeagueFile.key()") == "builtin"
     assert page.eval_on_selector("#pick-team", "s => [...s.options].some(o => o.value === 'kent-state') && ![...s.options].some(o => o.value === 'alder-tech')")
     assert page.evaluate("() => document.querySelector('#pick-team option[value=ohio-state]').__mark === 1"), "the picker is patched, not rebuilt"
+    assert page.evaluate("() => window.CFP.teamsBySlug['kent-state'] && !window.CFP.teamsBySlug['alder-tech']"), "the built-in cards come back, pruned"
+    # the built-in league keeps Who Coaches?'s Create a New Coach link
+    page.click("#btn-new")
+    page.wait_for_selector(".modal:not([hidden]) .start-card", timeout=30_000)
+    assert page.query_selector(".modal:not([hidden]) a[href*='coach.html']"), "the built-in league keeps Create a New Coach"
+    assert not page.query_selector(".modal:not([hidden]) .start-coach-note")
+    page.click("#modal-close")
+    page.wait_for_selector("#modal", state="hidden")
+
+
+def check_thrown(page, good: Path) -> None:
+    """A check that throws (the game unreachable): a toast in a sentence, and the panel back on the built-in league,
+    so the select, the picker and New Season agree."""
+    assert page.input_value("#pick-league") == "file"
+    page.route("**/api/league/check", lambda r: r.fulfill(status=500, content_type="application/json", body='{"detail":"disk full"}'))
+    try:
+        page.set_input_files("#league-file", str(good))
+        page.wait_for_function("(t) => [...document.querySelectorAll('#toasts .toast-item')].some(e => e.textContent.trim() === t)",
+                               arg="Could not check good.json: Disk full.", timeout=30_000)
+    finally:
+        page.unroute("**/api/league/check")
+    page.wait_for_function("() => !document.querySelector('#league-result .league-busy')")
+    assert page.input_value("#pick-league") == "builtin" and not page.query_selector("#pick-league option[value=file]")
+    assert page.evaluate("() => window.LeagueFile.key()") == "builtin"
+    assert not page.query_selector("#btn-league-start")
+    assert page.eval_on_selector("#pick-team", "s => [...s.options].some(o => o.value === 'kent-state')"), "the picker is back on the built-in teams"
+
+
+def check_long(page, long_file: Path, width: int, tag: str) -> None:
+    """A summary of 19 lines folds its team lines behind Show All N Lines (Title Case, 44 px on a phone), which
+    patches in every line."""
+    page.set_input_files("#league-file", str(long_file))
+    page.wait_for_selector("#league-result .league-actions button:not(#btn-league-start)", timeout=180_000)
+    more = page.query_selector("#league-result .league-actions button:not(#btn-league-start)")
+    label = more.inner_text().strip()
+    assert label == "Show All 19 Lines" and title_case(label), label
+    if width == 400:
+        assert more.bounding_box()["height"] >= 44, "Show All is 44 px on a phone"
+    shown = page.eval_on_selector_all("#league-result p.league-line", "els => els.map(e => e.textContent)")
+    assert len(shown) == 12 and shown[-2].startswith("Generated ") and shown[-2].endswith(" players in all."), shown
+    assert shown[-1] == "The 2026 schedule is built from the file's conferences.", shown
+    start = page.query_selector("#btn-league-start")
+    more.click()
+    page.wait_for_function("() => document.querySelectorAll('#league-result p.league-line').length === 19")
+    assert not page.query_selector("#league-result .league-actions button:not(#btn-league-start)"), "Show All goes once every line shows"
+    assert page.evaluate("(a) => a === document.querySelector('#btn-league-start')", start), "Start Career is patched in place, not redrawn"
+    check_layout(page, width, f"{tag} long summary")
+    page.screenshot(path=str(SHOTS / f"league-{tag}-long.png"), full_page=True)
 
 
 def check_export(page) -> None:
@@ -195,6 +271,9 @@ def check_start(page, base) -> str:
     page.wait_for_selector(".modal:not([hidden]) .start-card button.accent", timeout=30_000)
     title = page.inner_text("#modal-title")
     assert "Alder Tech" in title, title
+    note = page.inner_text(".modal:not([hidden]) .start-coach-note").strip()
+    assert note == "Create your coach on Your Coach before importing a league file; an imported league stays loaded only on this page.", note
+    assert not page.query_selector(".modal:not([hidden]) a[href*='coach.html']"), "no link that would lose the imported league"
     btn = page.query_selector(".modal:not([hidden]) .start-card button.accent")
     assert btn.inner_text().startswith("Start As"), btn.inner_text()
     btn.click()
@@ -239,13 +318,17 @@ def run(browser, base, files) -> None:
             check_errors(page, files["bad"], tag)
             check_layout(page, w, f"{tag} errors")
             page.screenshot(path=str(SHOTS / f"league-{tag}-errors.png"), full_page=True)
-            check_good(page, files["good"], tag)
+            check_good(page, files["good"], tag, w)
             check_layout(page, w, f"{tag} summary")
             page.screenshot(path=str(SHOTS / f"league-{tag}-summary.png"), full_page=True)
             if i == 0:
                 check_export(page)
                 check_back_to_builtin(page)
-                check_good(page, files["good"], tag)
+                check_good(page, files["good"], tag, w)
+                check_thrown(page, files["good"])
+            if i == 2:
+                check_long(page, files["long"], w, tag)
+                check_good(page, files["good"], tag, w)
             if i == len(COMBOS) - 1:
                 sid = check_start(page, base)
                 check_reopen(browser, base, sid)
@@ -269,8 +352,10 @@ if __name__ == "__main__":
         print("league file ui skipped: Playwright is not installed")
         raise SystemExit(0)
     from coach_career import league_file
+    assert js_max_league_bytes() == league_file.MAX_LEAGUE_BYTES, "web/leaguefile.js's limit is the game's"
     tmp = Path(tempfile.mkdtemp(prefix="cfp-league-ui-"))
-    files = {"good": tmp / "good.json", "bad": tmp / "bad.json", "big": tmp / "huge.json"}
+    files = {"good": tmp / "good.json", "bad": tmp / "bad.json", "big": tmp / "huge.json", "long": tmp / "long.json"}
+    files["long"].write_bytes(league_file.dumps(long_doc()))
     files["good"].write_bytes(league_file.dumps(good_doc()))
     files["bad"].write_bytes(league_file.dumps(bad_doc()))
     with open(files["big"], "wb") as f:     # sparse: 65 MB on paper, nothing on disk

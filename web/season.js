@@ -84,9 +84,15 @@
 
   // The team cards the page draws names, colors and coaches from (window.CFP.teamsBySlug): the built-in league's,
   // an import's on the New Career screen, or the open career's own league (a career from a league file).
-  // state.cardsFrom names which: "builtin", "import" or "<season id>:<year>".
+  // state.cardsFrom names which: "builtin", "import:<key>" or "<season id>:<year>".
+  // A switch of league prunes the cards to that league's slugs (a removed team leaves, an import's added team goes
+  // when the built-in league comes back); an import's cards are its FBS teams, so the stand-ins' cards stay.
   function mergeCards(cards, from) {
-    for (const t of cards || []) window.CFP.teamsBySlug[t.slug] = t;
+    const by = window.CFP.teamsBySlug;
+    const keep = new Set((cards || []).map((t) => t.slug));
+    if (from.startsWith("import")) for (const t of state.teams) if (t.fictional) keep.add(t.slug);
+    if (from !== state.cardsFrom) for (const slug of Object.keys(by)) if (!keep.has(slug)) delete by[slug];
+    for (const t of cards || []) by[t.slug] = t;
     state.cardsFrom = from;
   }
   // Before a season draws: its league's cards (/api/season/{id}/teams, a career from a league file), or the
@@ -117,7 +123,7 @@
   // and, with no season open, their cards
   function leagueChanged(lf) {
     const cards = lf.teams || state.teams;
-    if (!state.season) mergeCards(cards, lf.teams ? "import" : "builtin");
+    if (!state.season) mergeCards(cards, lf.teams ? `import:${lf.key}` : "builtin");
     fillPicker(cards);
   }
   const pickCard = (slug) => (state.pickCards && state.pickCards[slug]) || window.CFP.teamsBySlug[slug];
@@ -363,8 +369,13 @@
     ]);
     const list = el("div", { class: "start-coaches" }, [el("span", { class: "muted small-text", text: "Loading your coaches…" })]);
     mine.append(list);
-    const create = el("a", { class: "ghost small", href: `./coach.html?team=${encodeURIComponent(slug)}`, text: "Create a New Coach" });
-    mine.append(el("div", { class: "coach-actions" }, [create]));
+    // an imported league lives only in this page (and the game's pending check): Your Coach would lose it
+    if (window.LeagueFile && window.LeagueFile.key() !== "builtin") {
+      mine.append(el("p", { class: "muted small-text start-coach-note", text: "Create your coach on Your Coach before importing a league file; an imported league stays loaded only on this page." }));
+    } else {
+      const create = el("a", { class: "ghost small", href: `./coach.html?team=${encodeURIComponent(slug)}`, text: "Create a New Coach" });
+      mine.append(el("div", { class: "coach-actions" }, [create]));
+    }
     box.append(own, mine,
       el("p", { class: "muted small-text", text: `Either way the staff stays for the season: ${staff.offense || "the offensive coordinator"} and ${staff.defense || "the defensive coordinator"}. Staff changes come after the season.` }));
     if (inPlace && modalStack.length) swapModal(`Who coaches ${t.name || "your team"}?`, box);

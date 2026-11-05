@@ -22,6 +22,8 @@
   const ui = () => window.CFP.ui;
 
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  // a server's detail as a sentence of its own: a capital first letter and a closing period
+  const sentence = (t) => { const x = String(t || "").trim() || "Something went wrong"; return x[0].toUpperCase() + x.slice(1) + (/[.!?…]$/.test(x) ? "" : "."); };
   const num = (v) => (Number.isFinite(v) ? v : 0);
   function mbText(bytes) { return `${(bytes / MB).toFixed(1)} MB`; }
 
@@ -70,7 +72,8 @@
     const s = v.summary;
     const chip = (k, n) => el("span", { class: "go-chip league-stat", "data-key": k }, [el("span", { class: "league-stat-k", text: k }), " ", el("b", { text: String(num(n)) })]);
     const lines = (s.lines || []).filter((x) => typeof x === "string" && x);
-    // a long summary keeps its first line and its last two (the totals and the schedule) and folds the team lines between
+    // a summary over MAX_LINES_SHOWN + 3 lines shows its first MAX_LINES_SHOWN - 2 lines and its last two (the totals and
+    // the schedule); the team lines between fold behind Show All
     const show = st.allLines || lines.length <= MAX_LINES_SHOWN + 3 ? lines
       : [...lines.slice(0, MAX_LINES_SHOWN - 2), ...lines.slice(-2)];
     const out = [
@@ -79,15 +82,15 @@
     ];
     const actions = [];
     if (show.length < lines.length) {
-      const more = el("button", { type: "button", class: "ghost", text: `Show All ${lines.length} Lines` });
+      const more = el("button", { type: "button", class: "ghost", "data-key": "more", text: `Show All ${lines.length} Lines` });
       ui().on(more, "click", () => { st.allLines = true; drawResult(true); });
       actions.push(more);
     }
-    const start = el("button", { type: "button", class: "accent", id: "btn-league-start", text: "Start Career" });
+    const start = el("button", { type: "button", class: "accent", id: "btn-league-start", "data-key": "start", text: "Start Career" });
     ui().on(start, "click", startCareer);
     actions.push(start);
     out.push(el("div", { class: "league-actions", "data-key": "actions" }, actions));
-    out.push(el("p", { class: "muted league-hint", "data-key": "hint", text: "Pick your team in the team list, then choose Start Career." }));
+    out.push(el("p", { class: "muted league-hint", "data-key": "hint", text: "Pick your team in the team list at the top, then choose Start Career." }));
     return out;
   }
   function drawResult(pulse) {
@@ -134,12 +137,12 @@
     try { r = await ui().busy(sel, work); }
     catch (err) {
       st.view = null;
-      ui().toast(`Could not check ${fileName}: ${errText(err)}`, { ms: 6000, kind: "error" });
+      ui().toast(`Could not check ${fileName}: ${sentence(errText(err))}`, { ms: 6000, kind: "error" });
     } finally {
       clearInterval(tick);
       exp.disabled = false;
     }
-    if (!r) { drawResult(true); return; }
+    if (!r) { toBuiltin(); return; }      // the check failed: no league is pending, so the select, the picker and New Season agree on the built-in one
     if (!r.ok) {
       const errors = (r.errors || []).filter((e) => typeof e === "string" && e);
       st.view = { kind: "errors", file: fileName, errors: errors.length ? errors : ["The file could not be read."] };
@@ -198,7 +201,7 @@
     exp.addEventListener("click", () => {
       ui().busy(exp, exportLeague())
         .then(() => ui().toast("Exported the game's league as league.json."))
-        .catch((err) => ui().toast(`Could not export the league: ${errText(err)}`, { ms: 6000, kind: "error" }));
+        .catch((err) => ui().toast(`Could not export the league: ${sentence(errText(err))}`, { ms: 6000, kind: "error" }));
     });
     drawSelect();
   }
