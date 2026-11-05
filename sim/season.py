@@ -2928,12 +2928,32 @@ def game_rivalry(state: dict, g: dict, after: bool = False) -> Optional[dict]:
     return out
 
 
+def _file_rivalries(state: dict, slug: str, teams: dict) -> list[tuple[frozenset, dict]]:
+    """The rivalries a league file lists for its own teams (league.team_meta's "rivals") that the game's
+    rivalries file lacks: no trophy and no series before this season. None for the built-in league."""
+    from coach_career import league
+    lgd = state.get("league") or {}
+    own = {s for s, t in (lgd.get("teams") or {}).items() if t.get("meta") is not None}
+    if not own:
+        return []
+    opps = set(league.team_meta(lgd, slug).get("rivals") or []) if slug in own else set()
+    opps |= {s for s in own if slug in (league.team_meta(lgd, s).get("rivals") or [])}
+    out = []
+    for opp in sorted(opps):
+        pair = frozenset((slug, opp))
+        if opp == slug or opp not in teams or teams[opp].get("fictional") or pair in load_rivalries():
+            continue
+        a, b = sorted(pair, key=lambda x: teams[x]["name"])
+        out.append((pair, {"name": f"{teams[a]['name']} vs. {teams[b]['name']}", "teams": [a, b], "series": {}}))
+    return out
+
+
 def rivalries_view(state: dict, slug: str) -> dict:
     """Your rivals this season: the trophy, the series today and this season's meeting."""
     check_fbs(slug)
     teams = load_teams()
     out = []
-    for pair, riv in load_rivalries().items():
+    for pair, riv in list(load_rivalries().items()) + _file_rivalries(state, slug, teams):
         if not isinstance(pair, frozenset) or slug not in pair:
             continue
         opp = next(t for t in pair if t != slug)

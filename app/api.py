@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import urllib.parse
@@ -34,6 +35,7 @@ from coach_career import prospects
 from coach_career import recruiting
 from sim import coaches
 from sim import news
+from sim import polls
 from sim import season
 
 MAX_SAVE_BYTES = 40 * 1024 * 1024    # an uploaded career (gzip); a career with its recruiting class is about 5 MB compressed
@@ -147,12 +149,50 @@ def call(method: str, path: str, body: dict | bytes | None = None) -> dict | byt
         known_path = True
         if m == method:
             try:
-                return fn(Params(path=values, query=query, body=body))
+                out = fn(Params(path=values, query=query, body=body))
             except season.StandInError as e:     # a team page asked for an FCS stand-in: it has none
                 raise ApiError(404, str(e)) from e
+            if "season_id" in values and _loaded is not None and isinstance(out, dict):
+                out = _show_conferences(out, _conference_names(_loaded))
+            return out
     if known_path:
         raise ApiError(405, "method not allowed")
     raise ApiError(404, "not found")
+
+
+# ----- conference names -------------------------------------------------------
+# The engine (schedules, standings, polls, bowls, the AD's goals) keeps a built-in conference's built-in name
+# even when a career's league file renames it; the page shows the file's name (lgd["conference_names"]).
+# Every season route's answer passes through _show_conferences, and a conference the page sends back comes in
+# through _engine_conference.
+
+def _conference_names(state: dict) -> dict[str, str]:
+    """{engine name: display name} for the conferences a career's league renamed (none for the built-in league)."""
+    names = (state.get("league") or {}).get("conference_names") or {}
+    return {k: v for k, v in names.items() if k != v}
+
+
+def _show_conferences(out: Any, names: dict[str, str]) -> Any:
+    """`out` with every renamed conference shown by its display name: keys, values and words in sentences."""
+    if not names:
+        return out
+    pattern = re.compile(r"(?<![\w-])(" + "|".join(re.escape(k) for k in sorted(names, key=len, reverse=True)) + r")(?![\w-])")
+
+    def show(x: Any) -> Any:
+        if isinstance(x, str):
+            return pattern.sub(lambda m: names[m.group(1)], x) if pattern.search(x) else x
+        if isinstance(x, dict):
+            return {show(k): show(v) for k, v in x.items()}
+        if isinstance(x, list):
+            return [show(v) for v in x]
+        return x
+    return show(out)
+
+
+def _engine_conference(state: dict, name: Optional[str]) -> Optional[str]:
+    """A conference name the page sent (its display name) as the engine knows it."""
+    back = {v: k for k, v in _conference_names(state).items()}
+    return back.get(name, name) if name else name
 
 
 def call_js(method: str, path: str, body_json: str | None, body_bytes=None) -> str | bytes:
@@ -435,6 +475,8 @@ def _team_card(t: dict) -> dict:
     return {
         "slug": t["slug"], "name": t["name"], "school": t["school"], "abbreviation": t["abbreviation"],
         "mascot": t["mascot"], "conference": t["conference"], "subdivision": t["subdivision"],
+        # the bracket's conference groups by the engine's names (a league file may rename a conference on the page)
+        "group": "P4" if t["conference"] in polls.P4 else "G6" if t["conference"] in polls.G6 else "",
         "fictional": t["fictional"], "colors": t["colors"], "stadium": t["stadium"],
         "home_field_advantage": t["home_field_advantage"], "prestige": t["prestige"],
         "ratings": t["team_ratings"],
@@ -813,8 +855,9 @@ def _save_loaded() -> None:
 
 def _check_team(slug: str) -> None:
     """404 for a slug that is not a team, or is an FCS stand-in (those show only in the box
-    scores of their games, so no season view is about one)."""
-    if slug not in _all_teams():
+    scores of their games, so no season view is about one). Every caller has put its season's league in play
+    (_season_state), so a team of a career's own league (a league file's new team) is one, and a removed one is not."""
+    if slug not in season.load_teams():
         raise ApiError(404, "unknown team")
     try:
         season.check_fbs(slug)
@@ -1413,7 +1456,8 @@ def season_player_leaders(p: Params) -> dict:
     team = p.q("team")
     if team:
         _check_team(team)
-    return season.player_leaders_view(state, team or None, max(1, min(p.q("n", int, 5), 25)), p.q("conference") or None)
+    return season.player_leaders_view(state, team or None, max(1, min(p.q("n", int, 5), 25)),
+                                      _engine_conference(state, p.q("conference") or None))
 
 
 @route("GET", "/api/season/{season_id}/stats/players")
@@ -1424,6 +1468,6 @@ def season_player_stats(p: Params) -> dict:
         _check_team(team)
     try:
         return season.player_stats_view(state, team or None, p.q("cat", str, "passing"), p.q("limit", int, 100),
-                                        p.q("conference") or None)
+                                        _engine_conference(state, p.q("conference") or None))
     except ValueError as exc:
         raise ApiError(400, str(exc)) from exc

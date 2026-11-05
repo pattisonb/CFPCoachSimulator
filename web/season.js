@@ -126,6 +126,12 @@
     if (!state.season) mergeCards(cards, lf.teams ? `import:${lf.key}` : "builtin");
     fillPicker(cards);
   }
+  // The open league's team cards (window.CFP.teamsBySlug: the built-in league's, or a career's own), in /api/teams'
+  // order (FBS by name, then the FCS stand-ins): every team list and conference chip row of an open season reads these
+  function leagueTeams() {
+    const key = (t) => String(t.name || "").toLowerCase();
+    return Object.values(window.CFP.teamsBySlug).sort((a, b) => (a.fictional - b.fictional) || (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
+  }
   const pickCard = (slug) => (state.pickCards && state.pickCards[slug]) || window.CFP.teamsBySlug[slug];
 
   async function loadSeasons() {
@@ -1405,7 +1411,7 @@
     if (!state.season || !window.CFPDepth) return;
     if (push) route.set({ ...depthClear(), screen: "depth" }, { push: true, state: { cfpDepth: true } });
     window.CFPDepth.open({
-      host: $("#depth-screen"), season: () => state.season, teams: () => state.teams, api, postJSON, toast, errText, godMode, openPlayer, openSettings,
+      host: $("#depth-screen"), season: () => state.season, teams: leagueTeams, api, postJSON, toast, errText, godMode, openPlayer, openSettings,
       setParams: setDepthParams, close: () => closeDepth(true),
     }, params || new URLSearchParams());
   }
@@ -2693,7 +2699,7 @@
     const confs = fbsConferences();
     controls.append(confChips(confs, st.conf, (v) => { st.conf = v; renderSchedule(); }));
     const row = el("div", { class: "schedule-pick" });
-    const sel = el("select", { "aria-label": "Team" }, state.teams.filter((t) => !t.fictional && (!st.conf || t.conference === st.conf)).map((t) => el("option", { value: t.slug, text: t.slug === s.team ? `${t.name} (your team)` : t.name })));
+    const sel = el("select", { "aria-label": "Team" }, leagueTeams().filter((t) => !t.fictional && (!st.conf || t.conference === st.conf)).map((t) => el("option", { value: t.slug, text: t.slug === s.team ? `${t.name} (your team)` : t.name })));
     if (![...sel.options].some((o) => o.value === st.team)) st.team = sel.options.length ? sel.options[0].value : s.team;
     sel.value = st.team;
     sel.addEventListener("change", () => { st.team = sel.value; renderSchedule(); });
@@ -2786,7 +2792,7 @@
 
   // every FBS conference, alphabetically (the FCS stand-in teams are left out)
   function fbsConferences() {
-    return [...new Set(state.teams.filter((t) => !t.fictional).map((t) => t.conference))].sort();
+    return [...new Set(leagueTeams().filter((t) => !t.fictional).map((t) => t.conference))].sort();
   }
 
   // Conference picker as a row of chips (short names), shared by the stats tabs.
@@ -2929,7 +2935,7 @@
       renderSeasonPlayerStats();
     });
     const teamSel = el("select", { "aria-label": "Team" }, [el("option", { value: "", text: ps.conf ? `All ${ps.conf} teams` : "All teams (league leaders)" }),
-      ...state.teams.filter((t) => !t.fictional && (!ps.conf || t.conference === ps.conf)).map((t) => el("option", { value: t.slug, text: t.name }))]);
+      ...leagueTeams().filter((t) => !t.fictional && (!ps.conf || t.conference === ps.conf)).map((t) => el("option", { value: t.slug, text: t.name }))]);
     teamSel.value = ps.team;
     teamSel.addEventListener("change", () => { ps.team = teamSel.value; ps.data = ps.leaders = ps.roster = null; ps.sort = null; if (ps.view === "roster" && !ps.team) ps.view = "leaders"; renderSeasonPlayerStats(); });
     controls.append(confRow, teamSel);
@@ -3333,8 +3339,10 @@
   function projectField(cfp) {
     // Mirror the bracket rules on the client for the mid-season projection.
     const s = state.season;
-    const P4 = ["ACC", "Big Ten", "Big 12", "SEC"];
-    const G6 = new Set(["American Athletic Conference", "Conference USA", "MAC", "Mountain West", "Pac-12", "Sun Belt"]);
+    // the conference groups from the cards (a league file may show a conference under its own name)
+    const cards = leagueTeams().filter((t) => !t.fictional);
+    const P4 = [...new Set(cards.filter((t) => t.group === "P4").map((t) => t.conference))].sort();
+    const G6 = new Set(cards.filter((t) => t.group === "G6").map((t) => t.conference));
     const order = cfp.map((e) => e.team);
     const pos = {}; cfp.forEach((e) => { pos[e.team] = e.rank; });
     const leaders = {};
