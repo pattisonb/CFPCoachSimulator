@@ -58,8 +58,9 @@ def program_news(state: dict) -> list[dict]:
             item["rival_name"] = _school_name(e["rival"], teams)
         if e.get("action"):
             item["action"] = e["action"]
-        if e.get("reason"):
-            item["reason"] = e["reason"]          # a recruit of yours who went elsewhere: why not you
+        why = recruiting.lost_reason(e, lambda slug: _school_name(slug, teams)) if e.get("lost") else None
+        if why:
+            item["reason"] = why                  # a recruit of yours who went elsewhere: why not you
         if e.get("line"):                    # a bloomer's jump, a two-sport star going pro: the log's own sentence
             item["line"] = e["line"]
         items.append(item)
