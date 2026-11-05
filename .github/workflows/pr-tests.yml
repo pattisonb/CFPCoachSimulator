@@ -1,5 +1,5 @@
 # Every pull request to main is tested as it would land: the current main is merged into the PR
-# first and that merged tree is what gets built and tested. The full suite runs with a real
+# first and that merged tree is what gets built and tested, in four parallel parts (shard). The full suite runs with a real
 # Chromium (a browser test that skips fails here). PR Auto-merge (pr-automerge.yml) merges the PR
 # when this passes, and asks for a fresh run (workflow_dispatch) when main moved in between.
 # A run started that way never fires PR Auto-merge's workflow_run trigger (GitHub starts no
@@ -25,10 +25,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  # which PR and which main: decided once, so the four shards test the very same merged tree
+  prepare:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    outputs:
+      number: ${{ steps.pr.outputs.number }}
+      head: ${{ steps.pr.outputs.head }}
+      base: ${{ steps.merge.outputs.base }}
     steps:
       - name: Which pull request
         id: pr
@@ -86,6 +90,28 @@ jobs:
           path: ${{ runner.temp }}/tested/tested.json
           retention-days: 7
 
+  # the suite in four parallel parts (tests/run_all.py --shard, balanced by tests/durations.json)
+  shard:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.head }}
+          fetch-depth: 0
+
+      - name: Merge the same main the run recorded
+        env:
+          BASE_SHA: ${{ needs.prepare.outputs.base }}
+        run: |
+          git fetch --no-tags origin main
+          git -c user.name="PR Tests" -c user.email="pr-tests@users.noreply.github.com" merge --no-edit "$BASE_SHA"
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -111,20 +137,34 @@ jobs:
       - name: Build the site (what Pages will publish)
         run: python tools/build_site.py
 
-      - name: Full test suite (strict, one retry for a flaky test)
+      - name: Tests, part ${{ matrix.part }} of 4 (strict, one retry for a flaky test)
         env:
           SIM_WORKERS: "4"
           CFP_STRICT: "1"
-        run: python tests/run_all.py --strict --retry 1 2>&1 | tee "$RUNNER_TEMP/tests.log"; exit "${PIPESTATUS[0]}"
+        run: python tests/run_all.py --strict --retry 1 --shard ${{ matrix.part }}/4 2>&1 | tee "$RUNNER_TEMP/tests.log"; exit "${PIPESTATUS[0]}"
 
       - name: Keep the test log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-log
+          name: test-log-${{ matrix.part }}
           path: ${{ runner.temp }}/tests.log
           if-no-files-found: ignore
           retention-days: 14
+
+  # the one result PR Auto-merge reads (its job named "test"): every part passed
+  test:
+    needs: [prepare, shard]
+    if: always() && (github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every part passed
+        env:
+          PREPARE: ${{ needs.prepare.result }}
+          SHARDS: ${{ needs.shard.result }}
+        run: |
+          echo "prepare: $PREPARE, shards: $SHARDS"
+          test "$PREPARE" = "success" && test "$SHARDS" = "success"
 
   # a dispatched run (a re-test after main moved, or one started by hand) asks PR Auto-merge to look
   # at it; PR Auto-merge reads the result from GitHub, not from this job
