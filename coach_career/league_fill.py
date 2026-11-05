@@ -469,7 +469,8 @@ def team_meta_doc(team: dict, conf_name: str) -> dict:
             "abbreviation": team.get("abbreviation") or _initials(name),
             "mascot": team.get("mascot") or name.split()[-1], "city": team.get("city"), "state": team.get("state"),
             "conference": conf_name, "subdivision": "FBS",
-            "stadium": copy.deepcopy(team.get("stadium")) or {"name": f"{short} Stadium", "capacity": NEW_STADIUM_CAPACITY, "surface": "turf"},
+            "stadium": {"name": f"{short} Stadium", "capacity": NEW_STADIUM_CAPACITY, "surface": "turf",   # what the file leaves out
+                        **{k: v for k, v in copy.deepcopy(team.get("stadium") or {}).items() if v is not None}},
             "colors": colors, "rivals": list(team.get("rivals") or []), "fictional": False,
             "program": {"prestige": 1 + round(5 * prestige / 100), "home_field_advantage": hf, "generated": True},
             "roster_size": len(team.get("roster") or []) or sum(offseason.TARGET.values())}

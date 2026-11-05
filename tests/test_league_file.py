@@ -415,6 +415,10 @@ def test_new_team_fields_are_checked():
     for want in ("Alder Tech: the head coach's rating must be", "Alder Tech: offense 'Wishbone' is not a scheme",
                  "Alder Tech, player 1 (Jay Smith): abilities must be", "Alder Tech, player 1 (Jay Smith): years must be"):
         assert any(e.startswith(want) for e in out), (want, out)
+    # a new team's stadium keeps the defaults for what the file leaves out
+    from coach_career import league_fill
+    sd = league_fill.team_meta_doc({"slug": "alder-tech", "name": "Alder Tech", "stadium": {"capacity": 40000}}, "Big Sky East")["stadium"]
+    assert sd == {"name": "Alder Tech Stadium", "capacity": 40000, "surface": "turf"}, sd
 
 
 def test_a_fill_that_throws_is_a_sentence():
@@ -442,6 +446,32 @@ def test_a_fill_that_throws_is_a_sentence():
         league.build = real_build
     assert r == {"ok": False, "errors": ["The game could not build a league from this file; compare it with an exported league file."],
                  "errors_total": 1}, r
+
+
+def test_renamed_conference_keeps_its_games():
+    """A built-in conference given without `games` keeps its own games: a rename alone is not structural."""
+    doc = {"format": "cfp-league/1", "conferences": [{"id": "mac", "name": "Mid-American"}]}
+    assert league_file.validate(doc) == []
+    m = league_file.merge(doc)
+    assert m["conferences"]["mac"]["games"] == league_file._builtin()["games"]["mac"] and not m["structural"]
+    r = league_file.check(league_file.dumps(doc), seed=3)
+    assert r["ok"] and r["games"] is None, r.get("errors")
+    # games 0 given outright is still 0 (and the conference is then structural)
+    assert league_file.merge({"format": "cfp-league/1", "conferences": [{"id": "mac", "name": "MAC", "games": 0}]})["structural"]
+
+
+def test_strength_needs_a_roster():
+    """A built-in team that keeps its real roster is never nudged: strength there is a sentence."""
+    want = "Rice: strength applies only to a roster the file gives; add a roster or remove strength."
+    assert want in league_file.validate({"format": "cfp-league/1", "teams": [{"slug": "rice", "strength": "Elite"}]})
+    same = exported("rice")
+    same["strength"] = 60
+    assert want in league_file.validate({"format": "cfp-league/1", "teams": [same]})
+    given = exported("rice")
+    given["roster"] = given["roster"][:60]
+    given["strength"] = "Elite"
+    assert league_file.validate({"format": "cfp-league/1", "teams": [given]}) == []
+    assert errs(strength="Strong") == []                # a new team's strength is its fill target
 
 
 if __name__ == "__main__":

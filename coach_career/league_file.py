@@ -506,9 +506,9 @@ def problems(doc: dict) -> list[str]:
         lvl = c.get("level")
         if lvl is not None and lvl != LEVEL:
             add(f"{label}: level '{_say(lvl)}' is not supported; FCS games use the game's own opponents.")
-        games = c.get("games", 0)
-        if games is None:
-            games = 0
+        games = c.get("games")
+        if games is None:                   # a built-in conference keeps its own games; a new one plays none
+            games = b["games"].get(cid, 0)
         if not _is_int(games, 0, MAX_CONFERENCE_GAMES):
             add(f"{label}: games must be a whole number from 0 to {MAX_CONFERENCE_GAMES}.")
             games = 0
@@ -597,6 +597,10 @@ def problems(doc: dict) -> list[str]:
         st = t.get("strength")
         if st is not None and not (st in STRENGTH_WORDS if isinstance(st, str) else _is_num(st, 1, 100)):
             add(f"{label}: strength must be Elite, Strong, Average or Weak, or a number from 1 to 100.")
+        elif st is not None and is_builtin and (t.get("roster") is None or (
+                isinstance(t["roster"], list) and t["roster"] == (_builtin_docs().get(slug) or {}).get("roster"))):
+            # the fill aims a roster the file gives at the strength; a kept real roster is never nudged
+            add(f"{label}: strength applies only to a roster the file gives; add a roster or remove strength.")
         pr = t.get("prestige")
         if pr is not None and not _is_num(pr, 0, 100):
             add(f"{label}: prestige must be a number from 0 to 100.")
@@ -847,7 +851,9 @@ def merge(doc: dict) -> dict:
     for cid, mem in members.items():
         fc = file_confs.get(cid)
         if fc is not None:
-            games = fc.get("games") or 0
+            games = fc.get("games")
+            if games is None:               # a built-in conference given without games keeps its own
+                games = b["games"].get(cid, 0)
             name, level = fc["name"], fc.get("level") or LEVEL
         else:
             name, games, level = b["conf_names"].get(cid, cid), b["games"].get(cid, 0), LEVEL
