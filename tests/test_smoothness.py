@@ -301,8 +301,23 @@ def offseason_cases(page, base: str, sid: str) -> None:
     case = ready(page, ".off-review-acts button.go-act:has-text('Make your case')")
     assert_smooth(page, ".off-review", lambda: case.click(),
                   "You make your case to the AD", "Offseason: the review")
-    page.click("#tab-offseason .off-foot .go-btn.primary")                          # Advance to Departures: the stage's own page
-    page.wait_for_selector("#tab-offseason .off-page[data-page=departures] .off-roster", timeout=30_000)
+    page.click("#tab-offseason .off-foot .go-btn.primary")                          # Advance to Keep Them Home: the stage's own page
+    page.wait_for_selector(".off-keep .go-pcard", timeout=120_000)
+    time.sleep(0.6)
+    # Keep them home (the first step): meet, then an NIL offer
+    card = ".off-keep .go-pcard >> nth=0"
+    name = page.inner_text(f"{card} >> .go-name")
+    meet = ready(page, f"{card} >> button.go-act:has-text('Meet')")
+    assert_smooth(page, ".off-keep .go-pcard", lambda: meet.click(), f"Met with {name}", "Offseason: meet")
+    page.fill(f"{card} >> input.go-nil", "5")             # within next year's budget
+    nil = "5"
+    offer = ready(page, f"{card} >> button.go-act:has-text('Offer NIL')")
+    assert_smooth(page, ".off-keep .go-pcard", lambda: offer.click(),
+                  f"Offer to {name} · {int(nil)} NIL", "Offseason: retention offer")
+    # after the patches the stage's own button still acts on the screen (its handler is the live one)
+    page.click("#tab-offseason .off-actions .go-btn.primary")
+    page.wait_for_selector("#tab-offseason .off-page[data-page=departures] .off-roster", timeout=120_000)
+    assert call(base, f"/api/season/{sid}/offseason")["stage"] == "departures"
     time.sleep(0.4)
     # a redshirt at Departures
     b = ready(page, ".off-rs button.go-act:not([disabled])")
@@ -316,22 +331,6 @@ def offseason_cases(page, base: str, sid: str) -> None:
     pos = chip.inner_text().split()[0]
     assert_smooth(page, ".off-roster", lambda: chip.click(), f"{who} moves to {pos}", "Offseason: position change")
     assert page.eval_on_selector(".off-roster select.go-sel", "s => s.value") == picked, "the picker keeps the player"
-
-    # Keep them home: meet, then an NIL offer
-    call(base, f"/api/season/{sid}/offseason/advance", {})
-    assert call(base, f"/api/season/{sid}/offseason")["stage"] == "retention"
-    page.goto(f"{base}/index.html?id={sid}")
-    page.wait_for_selector(".off-keep .go-pcard", timeout=120_000)
-    time.sleep(0.6)
-    card = ".off-keep .go-pcard >> nth=0"
-    name = page.inner_text(f"{card} >> .go-name")
-    meet = ready(page, f"{card} >> button.go-act:has-text('Meet')")
-    assert_smooth(page, ".off-keep .go-pcard", lambda: meet.click(), f"Met with {name}", "Offseason: meet")
-    page.fill(f"{card} >> input.go-nil", "5")             # within next year's budget
-    nil = "5"
-    offer = ready(page, f"{card} >> button.go-act:has-text('Offer NIL')")
-    assert_smooth(page, ".off-keep .go-pcard", lambda: offer.click(),
-                  f"Offer to {name} · {int(nil)} NIL", "Offseason: retention offer")
 
     # after the patches the stage's own button still acts on the screen (its handler is the live one)
     page.click("#tab-offseason .off-actions .go-btn.primary")

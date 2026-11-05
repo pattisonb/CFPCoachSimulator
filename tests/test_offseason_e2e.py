@@ -28,8 +28,13 @@ def check_busy_advance(browser, base: str, sid: str) -> None:
     page.on("request", lambda r: posts.append(r.url) if r.method != "GET" and "/offseason/" in r.url else None)
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)
-    page.click("#tab-offseason .off-foot .go-btn.primary")                 # the Overview first: Advance to Departures
-    page.wait_for_selector("#tab-offseason .off-rs button", timeout=30_000)
+    page.click("#tab-offseason .off-foot .go-btn.primary")                 # the Overview first: Advance to Keep Them Home
+    page.wait_for_selector("#tab-offseason .off-page[data-page=retention]", timeout=30_000)
+    if not call(base, f"/api/season/{sid}/offseason")["review"]["decided"]:
+        call(base, f"/api/season/{sid}/offseason/review", {"action": "nothing", "stage": "retention"})
+    page.click("#tab-offseason .off-foot .go-btn.primary")                 # then Departures, where the redshirt toggles are
+    page.wait_for_selector("#tab-offseason .off-rs button", timeout=60_000)
+    posts.clear()                                                          # count from Sim to Next Season on
     page.once("dialog", lambda d: d.accept())
     page.click("#tab-offseason button:has-text('Sim to Next Season')")
     page.wait_for_selector("#tab-offseason .off-busy", timeout=30_000)
@@ -97,18 +102,18 @@ if __name__ == "__main__":
             page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)   # a finished career opens on the offseason
             assert page.is_visible("#season-tabs button[data-tab=offseason]")
             assert "OFFSEASON · ON TO 2027" in page.inner_text("#tab-offseason .off-head")   # it opens on the Overview
-            assert page.inner_text("#tab-offseason .go-btn.primary.big") == "Advance to Departures"
+            assert page.inner_text("#tab-offseason .go-btn.primary.big") == "Advance to Keep Them Home"
+            page.click("#tab-offseason .go-btn.primary.big")                           # Keep Them Home comes first: your leavers wait on you
+            page.wait_for_selector("#tab-offseason .off-page[data-page=retention]", timeout=30_000)
+            page.wait_for_selector("text=WANT OUT", timeout=60_000)
+            first = page.query_selector("button.go-act:has-text('Meet')")
+            if first:
+                first.click(); page.wait_for_selector("text=He wants", timeout=30_000)
+            assert page.inner_text("#tab-offseason .go-btn.primary.big") == "Advance to Departures", "the button says where it goes"
             page.click("#tab-offseason .go-btn.primary.big")
-            page.wait_for_selector("#tab-offseason .off-page[data-page=departures]", timeout=30_000)
+            page.wait_for_selector("#tab-offseason .off-page[data-page=departures]", timeout=60_000)   # then what happened: the draft ran after your answers
             assert "DEPARTURES" in page.inner_text("#tab-offseason .off-head")
             assert "LEAVING YOUR PROGRAM" in page.inner_text("#tab-offseason")
-            if "KEEP THEM HOME" in page.inner_text("#tab-offseason .go-btn.primary.big").upper():   # your leavers with eligibility left wait on you
-                assert page.inner_text("#tab-offseason .go-btn.primary.big").upper().startswith("ADVANCE TO"), "the button says where it goes"
-                page.click("#tab-offseason .go-btn.primary.big")                           # (the stages strip says it too: click the button)
-                page.wait_for_selector("text=WANT OUT", timeout=60_000)
-                first = page.query_selector("button.go-act:has-text('Meet')")
-                if first:
-                    first.click(); page.wait_for_selector("text=He wants", timeout=30_000)
             page.click("text=Advance to Transfer Portal (Week 1)")
             page.wait_for_selector("text=WEEK 1 OF 4", timeout=120_000)
             assert not page.query_selector(".off-board .go-row-recruit"), "the portal opens with an empty board"

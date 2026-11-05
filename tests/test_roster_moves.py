@@ -16,6 +16,8 @@ if __name__ == "__main__":
     finished(st)
     off = offseason.start(st)
     me = st["team"]
+    offseason.advance(st)                      # Keep Them Home first; the redshirt calls are Departures'
+    assert off["stage"] == "departures"
     rs = off["redshirts"]
     assert rs["players"] and all({"id", "name", "pos", "cls", "games", "team_games", "overall", "redshirt"} <= set(p) for p in rs["players"])
     assert all(p["games"] <= offseason.REDSHIRT_GAMES and not p["cls"].endswith("RS") and p["cls"] in ("FR", "SO", "JR") for p in rs["players"]), rs["players"][:2]

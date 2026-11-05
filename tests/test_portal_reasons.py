@@ -28,7 +28,7 @@ if __name__ == "__main__":
     st = season.new_season("ohio-state", "full", seed=5, career=True)
     finished(st)
     off = offseason.start(st)
-    offseason.advance(st)
+    assert off["stage"] == "retention"                  # Keep Them Home is the first step
     # the real step: no starter is "restless"
     assert all(not (e["role_now"] == "starter" and e["reason_key"] == "restless") for e in off["retention"]["players"])
     roster = st["league"]["teams"][st["team"]]["roster"]

@@ -75,8 +75,7 @@ if __name__ == "__main__":
     # the class budget no longer carries a retention deduction: nil_budget is the tier's number
     assert recruiting.nil_budget(st, me) == max(recruiting.NIL_FLOOR, five(recruiting.NIL_PER_TIER * programs.get(st, me)["nil"]))
 
-    # ----- keep them home spends from the pool; an ask past it is refused, never negative
-    offseason.advance(st)
+    # ----- keep them home (the first step) spends from the pool; an ask past it is refused, never negative
     assert off["stage"] == "retention"
     pool_me = pools[me]["pool"]
     view = offseason.view(st)["retention"]
@@ -96,6 +95,8 @@ if __name__ == "__main__":
     offer = min(pool_me, max(5, p0["ask"]["nil"]))
     offseason.retain(st, p0["id"], "nil", nil=offer)
     assert offseason.view(st)["retention"]["left"] == pool_me - offer
+    offseason.advance(st)
+    assert off["stage"] == "departures"
     offseason.advance(st)
     assert off["stage"] == "portal_w1"
     stayed = next(r for r in off["retention"]["results"] if r["id"] == p0["id"])["status"] == "stayed"
@@ -158,11 +159,11 @@ if __name__ == "__main__":
     st2 = season.new_season("ohio-state", "full", seed=6, career=True)
     finished(st2)
     off2 = offseason.start(st2)
-    offseason.advance(st2)
     st2.pop("nil_pool")
     st2.pop("nil_carry", None)
     assert offseason.view(st2)["retention"]["budget"] > 0
     assert st2["nil_pool"][me]["pool"] >= st2["nil_pool"][me]["floor"]
+    offseason.advance(st2)
     offseason.advance(st2)
     assert off2["stage"] == "portal_w1" and recruiting._nil(st2, me)["budget"] > 0
     st2.pop("nil_pool")

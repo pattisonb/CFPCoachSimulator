@@ -2459,35 +2459,39 @@ if __name__ == "__main__":
             off = page.inner_text("#tab-offseason")
             assert not OUT_OF_100.search(off), OUT_OF_100.search(off).group(0)
             assert not CLASS_CODE.search(off), CLASS_CODE.search(off).group(0)
-            # the Overview's Advance opens the Departures page (no server call): the same checks there
+            # the Overview's Advance opens the Keep Them Home page (no server call): the same checks there
             page.click("#tab-offseason .off-foot .go-btn.primary")
-            page.wait_for_selector("#tab-offseason .off-page[data-page=departures]", timeout=30_000)
-            dep = page.inner_text("#tab-offseason")
-            assert not OUT_OF_100.search(dep), OUT_OF_100.search(dep).group(0)
-            assert not CLASS_CODE.search(dep), CLASS_CODE.search(dep).group(0)
+            page.wait_for_selector("#tab-offseason .off-page[data-page=retention]", timeout=30_000)
+            page.wait_for_selector("text=WANT OUT", timeout=120_000)
+            time.sleep(0.8)
+            keep = page.inner_text("#tab-offseason")
+            assert not OUT_OF_100.search(keep), OUT_OF_100.search(keep).group(0)
+            assert not CLASS_CODE.search(keep), CLASS_CODE.search(keep).group(0)
             # "Sim to next season" asks first: dismissed, nothing moves
             n_dialogs = len(dialogs)
             page.click("#tab-offseason button:has-text('Sim to Next Season')")
             time.sleep(1)
             assert len(dialogs) == n_dialogs + 1, "skipping the whole offseason asks first"
-            assert call(base, f"/api/season/{B}/offseason")["stage"] == "departures"
-            call(base, f"/api/season/{B}/offseason/advance", {})
-            v = call(base, f"/api/season/{B}/offseason")
-            if v["stage"] == "retention":
-                page.goto(f"{base}/index.html?id={B}")
-                page.wait_for_selector("text=WANT OUT", timeout=120_000)
-                time.sleep(0.8)
+            assert call(base, f"/api/season/{B}/offseason")["stage"] == "retention"
+            if page.query_selector(".off-keep .go-pcard"):
                 clipped = not_clipped(page, ".off-keep-acts button b")
                 assert not clipped, clipped[:3]
-                keep = page.inner_text("#tab-offseason")
-                assert not CLASS_CODE.search(keep), CLASS_CODE.search(keep).group(0)
                 # letting a player go asks first
                 n_dialogs = len(dialogs)
                 page.click(".off-keep button.go-act:has-text('Let Him Go') >> nth=0")
                 time.sleep(0.8)
                 assert len(dialogs) == n_dialogs + 1, "letting a player go asks first"
                 assert "Letting him go" not in page.inner_text(".off-keep .go-pcard >> nth=0"), "a dismissed Let Him Go changes nothing"
-                call(base, f"/api/season/{B}/offseason/advance", {})
+            call(base, f"/api/season/{B}/offseason/advance", {})
+            # Departures after the answers: the same checks
+            assert call(base, f"/api/season/{B}/offseason")["stage"] == "departures"
+            page.goto(f"{base}/index.html?id={B}")
+            page.wait_for_selector("#tab-offseason .off-page[data-page=departures]", timeout=120_000)
+            time.sleep(0.8)
+            dep = page.inner_text("#tab-offseason")
+            assert not OUT_OF_100.search(dep), OUT_OF_100.search(dep).group(0)
+            assert not CLASS_CODE.search(dep), CLASS_CODE.search(dep).group(0)
+            call(base, f"/api/season/{B}/offseason/advance", {})
             # the portal board: a transfer has no star row
             page.goto(f"{base}/index.html?id={B}")
             page.wait_for_selector("text=WEEK 1 OF 4", timeout=120_000)

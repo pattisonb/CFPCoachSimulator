@@ -1,5 +1,6 @@
-"""Keep them home (offseason.py): after departures, your players who mean to leave with eligibility
-left (portal entrants, early draft entrants) wait on a retention step. You meet them (their ask),
+"""Keep them home (offseason.py): the offseason's first step, before Departures; your players who mean
+to leave with eligibility left (portal entrants, early draft entrants) wait on it, and the draft runs
+only after it. You meet them (their ask),
 promise a starting role (worth something only if your depth chart would start him), or offer NIL
 from your portal pool; when you advance, each stays or goes, the leavers join the portal or the
 draft, and the NIL you spent comes off the pool. AI schools keep a would-be entrant who
@@ -19,8 +20,6 @@ if __name__ == "__main__":
     finished(st)
     off = offseason.start(st)
     me, lg = st["team"], st["league"]
-    assert off["stage"] == "departures"
-    offseason.advance(st)
     assert off["stage"] == "retention", off["stage"]
     ret = off["retention"]
     players = ret["players"]
@@ -51,6 +50,8 @@ if __name__ == "__main__":
     assert offseason.stay_chance({**base, "ask": {"kind": "playing_time", "nil": 15, "known": True}, "offers": {"nil": 0, "promise": True}}) <= 0.3   # hollow: he would still sit
     assert offseason.stay_chance({**base, "role_next": "starter", "ask": {"kind": "playing_time", "nil": 15, "known": True}, "offers": {"nil": 0, "promise": True}}) >= 0.7
     assert offseason.stay_chance({**base, "intent": "draft", "draft_pick": 12, "offers": {"nil": 200, "promise": True}}) <= 0.12
+    # a 95+ entrant after a decent season (tests/test_elite_draft.py): nearly impossible to keep, whatever you offer
+    assert offseason.stay_chance({**base, "intent": "draft", "draft_pick": 1, "elite": True, "offers": {"nil": 10 ** 4, "promise": True}}) == offseason.ELITE_STAY <= 0.02
     assert offseason.stay_chance(base) <= 0.25                                                # nothing offered
     # offers: NIL for one, a promise for another; the rest go
     offseason.retain(st, p0["id"], "nil", nil=e0["ask"]["nil"])
@@ -59,8 +60,13 @@ if __name__ == "__main__":
         offseason.retain(st, p1["id"], "promise")
     spent = e0["ask"]["nil"]
     offseason.advance(st)
-    assert off["stage"] == "portal_w1", off["stage"]
+    assert off["stage"] == "departures", off["stage"]                  # the answers are in, then the draft: Departures shows it
     results = {r["id"]: r for r in off["retention"]["results"]}
+    stayed = {i for i, r in results.items() if r["status"] == "stayed"}
+    assert not any(d["id"] in stayed for d in off["departures"]), "a player who stayed is in the departures"
+    assert {s["id"] for s in offseason.view(st)["departures"]["stayed"]} == stayed
+    offseason.advance(st)
+    assert off["stage"] == "portal_w1", off["stage"]
     assert set(results) == {e["id"] for e in players} and all(r["status"] in ("stayed", "left") for r in results.values())
     roster_ids = {p["id"] for p in lg["teams"][me]["roster"]}
     rc = st["recruiting"]
@@ -85,16 +91,17 @@ if __name__ == "__main__":
     st2 = season.new_season("ohio-state", "full", seed=6, career=True)
     finished(st2)
     off2 = offseason.start(st2)
-    offseason.advance(st2)
     n = len(off2["retention"]["players"])
     off2["auto"] = True
     offseason.advance(st2)
     assert n == 0 or all(r["status"] == "left" for r in off2["retention"]["results"])
-    # a save from before the step: no retention block at departures goes straight to the portal
+    # a save from before the step (and the draft-after order): no retention block at departures goes straight to the portal
     st3 = season.new_season("ohio-state", "full", seed=7, career=True)
     finished(st3)
     off3 = offseason.start(st3)
     off3.pop("retention")
+    off3.pop("draft")
+    off3["stage"] = "departures"
     offseason.advance(st3)
     assert off3["stage"] == "portal_w1" and st3["recruiting"].get("portal")
     season.close_pool()

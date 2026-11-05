@@ -16,7 +16,7 @@
   const { el } = window.CFP;
   const GROUPS = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P"];
   const USAGE = { starter: "Started", rotation: "Rotation", bench: "Bench" };
-  const KIND_ORDER = ["draft", "undrafted", "graduated", "portal", "quit"];
+  const KIND_ORDER = ["draft", "undrafted", "graduated", "portal", "quit", "stayed"];
   const SHOWN = 6;                 // rows a long list shows before "+ N More"
   const FIRST_SHOWN = 8;           // first-round picks shown before "+ N More"
   const view = { position: "", status: "available", posPick: "", recapOpen: false,
@@ -44,6 +44,7 @@
     development: "Development", staff: "Staff Changes", ready: "Recap" };
   const PAGE_OF = { departures: "departures", retention: "retention", portal_1: "portal", portal_2: "portal", development: "development", staff: "staff", ready: "ready" };
   const pageName = (stage) => PAGE_OF[stage] || (stage.startsWith("portal_w") ? "portal" : "ready");
+  const isFirst = (v) => !!(v.stages && v.stages.length && v.stages[0].key === v.stage);   // Keep Them Home (an older save: Departures)
 
   // ----- small pieces -----------------------------------------------------------------------------
   const ICONS = {     // 24 px line icons (stroke currentColor), for Around the League and the Road Ahead
@@ -230,8 +231,7 @@
   function nextLabel(v) {
     const w = v.stage.startsWith("portal_w") ? Number(v.stage.slice(-1)) : 0;
     if (w) return w < 4 ? `Advance to Transfer Portal (Week ${w + 1})` : "Close the Portal and Advance";
-    return { departures: v.retention && v.retention.players.length ? "Advance to Keep Them Home" : v.retention ? "Advance to Transfer Portal (Week 1)" : "Advance to the Transfer Portal",
-      retention: "Advance to Transfer Portal (Week 1)", portal_1: "Advance to Portal Round 2", portal_2: "Close the Portal and Advance",
+    return { retention: "Advance to Departures", departures: v.retention ? "Advance to Transfer Portal (Week 1)" : "Advance to the Transfer Portal", portal_1: "Advance to Portal Round 2", portal_2: "Close the Portal and Advance",
       development: "Advance to Staff Changes", staff: "Finish the Offseason", ready: `Start the ${v.year} Season` }[v.stage];
   }
 
@@ -241,9 +241,9 @@
     drawn = { sid: s.id, stage: v.stage };
     last = { s, v };
     const key = `${s.id}:${v.stage}`;
-    if (view.pageFor !== key) {               // a stage (or career) drawn for the first time: the tab opens on the Overview at Departures
+    if (view.pageFor !== key) {               // a stage (or career) drawn for the first time: the tab opens on the Overview at the first step
       view.pageFor = key;
-      view.page = view.want || (v.stage === "departures" ? "hub" : "stage");
+      view.page = view.want || (isFirst(v) ? "hub" : "stage");
       view.more = {};
       if (v.stage !== "development") view.devTab = "redshirts";
     } else if (view.want) view.page = view.want;
@@ -291,8 +291,8 @@
 
   // ----- the Overview --------------------------------------------------------------------------------
   const HERO = {
-    departures: (v) => `Manage departures, keep key players and fill your roster from the portal for ${v.year}.`,
-    retention: () => "Players with eligibility left want out. Meet each one and decide who you keep.",
+    retention: (v) => `Keep key players home, see who left and fill your roster from the portal for ${v.year}.`,
+    departures: () => "Your answers are in and the draft is done. See who left, who was picked and who you kept.",
     portal: (v) => `Week ${v.portal.week} of ${v.portal.weeks}: recruit transfers on your board. Entrants with offers decide at the week's end.`,
     portal_old: () => "Offer transfers from the portal table. Entrants with offers pick a school when the round ends.",
     development: () => "The portal is closed. See who improved, check the redshirts and move players between positions.",
@@ -301,7 +301,7 @@
   function drawHub(s, v, page) {
     const kind = v.stage.startsWith("portal_w") ? "portal" : v.stage === "portal_1" || v.stage === "portal_2" ? "portal_old" : v.stage;
     const hero = card("off-hero", "hero", [el("div", { class: "go-kicker off-hero-kick", text: "Offseason" }),
-      el("div", { class: "off-hero-title", text: v.stage === "departures" ? "Ready for the Offseason" : `Up Next: ${LONG[v.stage]}` }),
+      el("div", { class: "off-hero-title", text: isFirst(v) ? "Ready for the Offseason" : `Up Next: ${LONG[v.stage]}` }),
       el("p", { class: "off-hero-line", text: (HERO[kind] || HERO.staff)(v) })]);
     const deciding = v.retention && !v.retention.results && v.retention.players.length ? v.retention.players.length : 0;
     const numbers = card("off-numbers-card", "numbers", [el("div", { class: "off-numbers" }, [
@@ -326,7 +326,7 @@
       if (r.fired) card_.append(el("p", { class: "bad-text", text: "Firing happens only at the end of a season; you will pick your next job at the Staff step." }));
       return card_;
     }
-    if (v.stage !== "departures") return card_;
+    if (!v.review_open) return card_;
     card_.append(el("p", { class: "muted off-ask", text: r.risk === "fire" ? "He is deciding whether to make a change. What do you say?"
       : "A warning. What do you say?" }));
     const acts = el("div", { class: "off-review-acts" });
@@ -508,13 +508,14 @@
     }
     if (v.fired) page.append(firedNote(v));
     const mine = v.departures.mine;
+    const all = mine.concat(v.departures.stayed || []);       // who left, then who you kept home
     const leaving = card("off-leaving", "leaving", [kicker(`Leaving Your Program · ${mine.length}`)]);
     for (const kind of KIND_ORDER) {
-      const rows = mine.filter((d) => d.kind === kind).sort((a, b) => (a.pick || 999) - (b.pick || 999) || b.overall - a.overall);
+      const rows = all.filter((d) => d.kind === kind).sort((a, b) => (a.pick || 999) - (b.pick || 999) || b.overall - a.overall);
       if (!rows.length) continue;
       const shown = cut(`kind-${kind}`, rows);
       const table = el("table", { class: "off-table off-dep-table" }, [el("thead", {}, [el("tr", {}, [el("th", { class: "off-mark-col", "aria-label": "Gone" }), el("th", { text: "Player" }), el("th", { class: "num", text: "Pos" }), el("th", { class: "num", text: "OVR" })])]),
-        el("tbody", {}, shown.map((d) => el("tr", { "data-key": d.id }, [el("td", { class: "off-mark", text: "✓" }),
+        el("tbody", {}, shown.map((d) => el("tr", { "data-key": d.id }, [el("td", { class: "off-mark", text: d.kind === "stayed" ? "↺" : "✓" }),
           el("td", {}, [el("b", { text: d.name }), d.kind === "draft" ? el("span", { class: "go-tag good off-pick", text: `Round ${d.round}, Pick ${d.pick}${d.early ? " · Early" : ""}` }) : null]),
           el("td", { class: "num", text: d.pos }), el("td", { class: "num", text: String(d.overall) })])))]);
       const det = el("details", { class: "off-group", "data-key": `kind-${kind}`, ...(view.closed[kind] ? {} : { open: "" }) }, [
@@ -522,7 +523,7 @@
       ui.on(det, "toggle", (ev) => { view.closed[kind] = !ev.currentTarget.open; });
       leaving.append(det);
     }
-    if (!mine.length) leaving.append(el("p", { class: "muted", text: "Nobody leaves." }));
+    if (!all.length) leaving.append(el("p", { class: "muted", text: "Nobody leaves." }));
     const lg = v.departures.league;
     const line = (ic, label, value) => el("li", {}, [icon(ic), el("span", { class: "muted", text: label }), el("b", { text: value })]);
     const league = card("off-league", "league", [kicker("Around the League"), el("ul", { class: "off-icons" }, [
@@ -555,8 +556,8 @@
       stat("Next Year's NIL", `${r.left} / ${r.budget}`), stat("NIL Committed", String(r.spent))]),
       el("p", { class: "muted small off-rules" }, [`${r.players.length} of your players with eligibility left mean to leave: transfers and early draft entrants. Meet each one to hear what it would take. `,
         "A promised starting role only counts if your depth chart would really start him; NIL comes out of next year's budget, so it is money you will not have for recruits or the portal. ",
-        "Nobody decides until you advance; graduating seniors are gone either way."])]);
-    if (!r.players.length) strip.append(el("p", { class: "muted", text: "Nobody with eligibility left wants out. Open the portal." }));
+        "Nobody decides until you advance, and the draft runs after: a player you keep is never drafted. Graduating seniors are gone either way."])]);
+    if (!r.players.length) strip.append(el("p", { class: "muted", text: "Nobody with eligibility left wants out. Advance to see who left." }));
     page.append(strip);
     const cards = el("div", { class: "go-cards off-keep", "data-key": "keep" });
     for (const e of r.players) {
@@ -568,6 +569,8 @@
         el("dl", { class: "off-roles" }, [el("div", {}, [el("dt", { text: "Now" }), el("dd", { text: e.role_now_name })]),
           el("div", { title: "Where he would sit on your depth chart next season" }, [el("dt", { text: "Next Year" }), el("dd", { class: e.role_next === "starter" ? "off-tone good" : "", text: e.role_next_name })])])]));
       c.append(el("p", { class: "off-why" }, [el("b", { text: "Why: " }), `${e.reason}${e.draft_pick ? ` (projected pick ${e.draft_pick})` : ""}${/[.!?]$/.test(e.reason || "") ? "" : "."}`]));
+      if (e.elite) c.append(el("p", { class: "small off-elite", "data-key": "elite" }, [el("b", { text: "Nearly Impossible to Keep: " }),
+        `Rated ${e.overall} after a strong season, he is a projected top pick. He stays about 1 in ${Math.round(1 / (r.elite_stay || 0.02))} times, whatever you offer.`]));
       const askText = !e.ask.known ? "Meet with him to hear what it would take."
         : e.ask.kind === "playing_time" ? `He wants a starting role${e.ask.nil ? `; short of that, about ${e.ask.nil} NIL would do it` : ""}.`
         : `He wants about ${e.ask.nil} NIL to stay.`;
