@@ -777,7 +777,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                twist=persona.twist_view(state, viewer, pid),
                hc_week=((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("hc_week"),
                done_this_week=[k for k, w in (((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("week") or {}).items()
-                               if w == state["current_week"]],
+                               if w == recruiting.contact_week(state)],
                nil=rc["nil"].get(viewer, {}).get("held", {}).get(pid, 0),
                need=recruiting.needs(state, viewer)[recruiting._group_of(rc["prospects"][pid])],
                ask=recruiting.ask_view(state, viewer, pid), cooled=recruiting.cooled(state, viewer, pid),

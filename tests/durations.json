@@ -15,6 +15,8 @@
 "test_coach_market.py": 14,
 "test_coachability_growth.py": 0,
 "test_commits.py": 2,
+"test_contact_limits.py": 55,
+"test_contact_menu.py": 16,
 "test_copy_case.py": 0,
 "test_copy_lines.py": 0,
 "test_deep_links.py": 21,

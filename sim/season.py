@@ -2360,6 +2360,7 @@ def load_season(season_id: str) -> Optional[dict]:
     if state.get("recruiting"):
         recruiting.upgrade_asks(state)     # careers saved before prospects had NIL asks
         recruiting.upgrade_generational(state)   # careers saved before generational prospects
+        recruiting.heal_contacts(state)    # careers saved with a call left open, or portal contact marks that never cleared
     return state
 
 
