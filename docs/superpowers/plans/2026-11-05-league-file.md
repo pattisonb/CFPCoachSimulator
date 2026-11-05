@@ -24,6 +24,7 @@
 - `python3 tests/test_sim_golden.py` stays byte-identical. Recruiting reads, flags and scenes are never in the digest.
 - Copy: labels, chips, buttons and options are Title Case. Errors and summary lines are sentences that start with a capital and end with a period. American spelling. No "null", "undefined" or "NaN" on the page.
 - FCS stand-in names, and their conference's name, never appear on the page or in an error. Do not hardcode stand-in slugs: read `league.base_meta(s)["fictional"]`. Another branch is renaming them.
+- FCS stand-in team names must never appear on the page; every display name goes through `season.team_display`. A separate branch, `fcs-names-purge`, may land on main while this work runs and rename the stand-in slugs to `fcs-<region>`. If it lands, merge main into `league-file` and adapt; no stand-in slug or name is hardcoded in code or tests.
 - Front end: actions patch in place (`window.CFP.ui`). Every URL is relative. Controls are at least 44 px tall on a phone. `tests/test_spacing.py` and `tests/test_ux_sweep.py` stay green. Browser layout assertions are font-robust (CI uses `tests/fonts-ci.conf`): compare boxes to each other and to the viewport, never to pixel constants that depend on text width.
 - Constants the player may want to tune are module-level, marked `*tune*`, with a one-line comment.
 - Commits end with the session's two attribution trailer lines. No model identifiers in code or commits.
@@ -626,6 +627,26 @@ Then Start Career, then "Start As …" in the coach modal. The season opens with
 - [ ] **Step 3: Implement** `web/leaguefile.js`, the markup, the `season.js` hooks and the styles as listed.
 - [ ] **Step 4: Run** `python3 tests/test_league_file_ui.py`, `python3 tests/test_copy_case.py`, `python3 tests/test_spacing.py`, `python3 tests/test_ux_sweep.py` and then `python3 tests/run_all.py`. Expected: all PASS. Golden is unchanged. Look at the scratchpad screenshots for both widths.
 - [ ] **Step 5: Commit** with `git commit -m "New Career screen: import and export a league file"`, then push the branch.
+
+---
+
+### Task 10: Every reader of team data uses the career's league
+
+**Files:**
+- Modify: every server route and engine reader that loads teams and does not yet read the career's league. Audit at least `sim/season.py` (`load_teams`, `TEAMS_FILE`, standings, rankings, stats, `team_display`), `app/api.py` (`/api/teams`, `/api/teams/{slug}`, programs, standings, rankings, stats, Office, the coach market, recruiting, offseason routes), `coach_career/*` (`base_meta` callers: `offseason.py`, `persona.py`, `carousel.py`, `office.py`, `programs.py`, `career.py`, `recruiting.py`, `prospects.py`, `scenes.py`, `position_fit.py`), `sim/form.py`, `sim/realdata.py`, `sim/news.py`, and the `web/` code that reads team cards or colors.
+- Test: `tests/test_league_readers.py` (Python audit) and `tests/test_league_tabs_e2e.py` (browser).
+
+**Interfaces:**
+- Consumes: `league.team_meta(lgd, slug)`, `league.league_slugs(lgd)`, `league.is_imported(state)`, `GET /api/season/{season_id}/teams`, `season.team_display`, the Task 8 imported career fixture (Alder Tech in a new ten-team conference, Kent State removed).
+- Produces: no new public API. Every reader that resolves a team's name, colors, conference, logo, program, roster or recruiting model resolves it through the career's league when the career has one (`state["league"]`), and through the built-in files only when it does not. A reader never raises for a slug that the career's league holds but the built-in data lacks.
+
+- [ ] **Step 1: Write the audit.** `grep -rn "load_teams\|engine_teams.json\|base_meta\|TEAMS_FILE" app coach_career sim web` and list every hit in the task report with its verdict (already league-aware, fixed here, or built-in by design with the reason).
+- [ ] **Step 2: Write the failing Python test** `tests/test_league_readers.py`. Start a career from the imported fixture with seed 7. Call every team-reading API route for Alder Tech and its conference, during the season, at an offseason stage and after `next_season`: team page, roster, schedule, standings, rankings, stats, programs, Office, coach market, recruiting board and pulls. Assert each returns 200, names "Alder Tech", carries its colors and its conference name, and that no response body contains "null", "undefined", "NaN", Kent State, or any FCS stand-in name (read the names from `league.base_meta(s)["fictional"]`, never hardcoded).
+- [ ] **Step 3: Run it.** Expected: FAIL on at least one reader.
+- [ ] **Step 4: Fix each reader** found in Step 1 to read the career's league. Keep the built-in path untouched when the career has no `league`.
+- [ ] **Step 5: Write the browser test** `tests/test_league_tabs_e2e.py`, in the pattern of `tests/test_career_e2e.py` and `tests/test_ux_sweep.py`, skipped without Playwright. Import the fixture through the New Career screen, start a career as Alder Tech, then click through every tab (and every offseason stage reachable by advancing) at 1280x900 and 400x860. On each tab assert: no console error and no failed request; "Alder Tech" appears where the coached team is shown; its conference name appears on Standings; no "null", "undefined" or "NaN" in the body; no FCS stand-in name; no horizontal scroll. Rerun it with the wide-font `FONTCONFIG_FILE` to check it is font-robust.
+- [ ] **Step 6: Run** `python3 tests/test_league_readers.py`, `python3 tests/test_league_tabs_e2e.py`, `python3 tests/test_sim_golden.py` (byte-identical) and `python3 tests/run_all.py`. Add both new tests to `tests/run_all.py` (`test_league_tabs_e2e.py` in `SLOW`).
+- [ ] **Step 7: Commit** with the message "Every team reader uses the career's league", then push the branch.
 
 ---
 
