@@ -204,6 +204,16 @@ def test_other_rules():
     assert any("slug 'Bad Slug' must be" in e for e in league_file.validate({"format": "cfp-league/1", "teams": [{"slug": "Bad Slug"}]}))
 
 
+def test_huge_integers_give_sentences():
+    big = int("9" * 400)
+    out = errs(roster=[dict(JAY, ratings={"speed": big}, potential={"speed": big}, overall=big, stars=big), MAX_], depth_chart=None)
+    for part in ("rating 'speed' must be", "potential 'speed' must be", "overall must be", "stars must be"):
+        assert any(part in e for e in out), (part, out)
+    out = league_file.validate(base_file(conferences=[{"id": "big-sky-east", "name": "Big Sky East", "games": big}]))
+    assert any("games must be" in e for e in out), out
+    assert all(e[0].isupper() and e.endswith(".") for e in out)
+
+
 def test_every_error_is_a_sentence():
     fcs = next(s for s in league.base_slugs() if league.base_meta(s)["fictional"])
     docs = [base_file(year=2027, remove=["nowhere", fcs]),

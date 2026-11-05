@@ -9,7 +9,7 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
-from coach_career import league, recruiting
+from coach_career import league, offseason, recruiting
 from teamdata import game_scale
 
 MAX_LEAGUE_BYTES = 64 * 1024 * 1024  # *tune* the largest league file read (the built-in export is about 22 MB)
@@ -193,7 +193,7 @@ def _builtin_rosters() -> dict:
 def _is_int(v, lo: int, hi: int) -> bool:
     if isinstance(v, bool) or not isinstance(v, (int, float)):
         return False
-    return v == v and v not in (float("inf"), float("-inf")) and float(v).is_integer() and lo <= v <= hi
+    return v == v and lo <= v <= hi and (isinstance(v, int) or v.is_integer())
 
 
 def _is_num(v, lo: float, hi: float) -> bool:
@@ -407,7 +407,6 @@ def validate(doc: dict) -> list[str]:
             continue
         if is_builtin:
             replaced_roster.add(slug)
-        from coach_career import offseason
         if len(roster) > offseason.ROSTER_LIMIT:
             add(f"{label}: the roster has {len(roster)} players; the limit is {offseason.ROSTER_LIMIT}.")
         names: dict[str, tuple[int, str]] = {}
