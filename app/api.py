@@ -720,6 +720,17 @@ def gameday_season(p: Params) -> dict:
     return {"status": "running", "done": week, "total": week + 1}
 
 
+def _champion_name(st: dict) -> Optional[str]:
+    """A saved season's champion by name, from its own league (a league file's new team) or the built-in teams."""
+    slug = st.get("champion")
+    if not slug:
+        return None
+    meta = (((st.get("league") or {}).get("teams") or {}).get(slug) or {}).get("meta")
+    if meta is not None:
+        return meta.get("short_name") or meta.get("name")
+    return _all_teams().get(slug, {}).get("name")
+
+
 @route("GET", "/api/seasons")
 def list_seasons(p: Params) -> dict:
     """The saved seasons, newest first. A season file can be several megabytes, so each
@@ -739,7 +750,7 @@ def list_seasons(p: Params) -> dict:
                 rec = season._records(st, include_playoff=True)[st["team"]]
                 card = {"id": st["id"], "team": st["team"], "team_name": st["team_name"], "mode": st["mode"],
                         "created_at": st["created_at"], "current_week": st["current_week"], "done": st["done"],
-                        "wins": rec["wins"], "losses": rec["losses"], "champion_name": _all_teams().get(st.get("champion") or "", {}).get("name"),
+                        "wins": rec["wins"], "losses": rec["losses"], "champion_name": _champion_name(st),
                         "year": st.get("year") or 2026, "career": bool(st.get("career")), "offseason": (st.get("offseason") or {}).get("stage")}
             except Exception:  # noqa: BLE001 - one unreadable file must not break the list
                 continue

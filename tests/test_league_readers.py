@@ -173,6 +173,15 @@ def run() -> None:
     check("next_season", nxt, ("name",))
     assert nxt["year"] == 2027 and api._loaded["league"]["conference_names"].get("MAC") == RENAMED
     season_routes(api._loaded["id"], api._loaded)            # 2027
+    # downloaded, deleted, and loaded back with the built-in league in play: the save's own league comes back
+    blob = lc.api_call("GET", f"{b}/export")
+    lc.api_call("DELETE", b)
+    season.use_league(season.TEAMS_FILE)
+    recruiting.use_league_models({})
+    back = lc.api_call("POST", "/api/season/import", body_bytes=bytes(blob))
+    check("import", back, ("name",))
+    assert back["team_name"] == "Alder Tech" and back["year"] == 2027, (back["team_name"], back["year"])
+    season_routes(sid, api._loaded)
     print(f"league readers ok ({len(SEEN)} responses)")
 
 
