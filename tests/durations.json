@@ -52,6 +52,7 @@
 "test_persona_scenes.py": 19,
 "test_persona_ui.py": 34,
 "test_pester.py": 9,
+"test_pill_ring.py": 25,
 "test_play_log.py": 1,
 "test_player_history.py": 16,
 "test_poll_behavior.py": 28,

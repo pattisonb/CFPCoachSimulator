@@ -43,6 +43,7 @@
   }
   const plural = (pos) => ({ OL: "OL", DL: "DL", MLB: "LBs", ROLB: "LBs", LOLB: "LBs", LB: "LBs" }[pos] || `${pos}s`);
   const teamName = (slug) => (slug === "FCS" ? "an FCS program" : (window.CFP.teamsBySlug[slug] || {}).name || slug);
+  const teamLabel = (slug) => (slug === "FCS" ? "an FCS Program" : teamName(slug));   // the same name in a label or chip (Title Case)
   const loading = (text) => el("p", { class: "muted go-loading", text });
   const WORDS = { commit: "verbally committed to", hard: "is now a hard commit to", flip: "flipped to", decommit: "decommitted from", signed: "signed with", offer: "was offered by",
                   asked_more: "wants more from", not_buying: "isn't buying the pitch from", hung_up: "has an unfinished call from" };
@@ -104,8 +105,8 @@
   function status(r) {
     if (r.pro) return "Went Pro in Baseball";
     if (r.quiet) return "Quiet";
-    if (r.signed) return r.signed === "FCS" ? "Signed With an FCS Program" : `Signed · ${teamName(r.signed)}`;
-    if (r.committed) return `${r.hard ? "Hard Commit" : "Verbal Commit"} · ${teamName(r.committed)}`;
+    if (r.signed) return r.signed === "FCS" ? "Signed With an FCS Program" : `Signed · ${teamLabel(r.signed)}`;
+    if (r.committed) return `${r.hard ? "Hard Commit" : "Verbal Commit"} · ${teamLabel(r.committed)}`;
     if (r.leaning_fcs) return "Leaning FCS";
     return "Uncommitted";
   }
@@ -124,10 +125,10 @@
     const st = b.standing || {};
     const school = b.signed || b.committed;
     if (school === me) return { word: "Yours", text: b.signed ? "Signed with you" : b.hard ? "Hard commit to you" : "Verbal commit to you", tone: "good", fill: 1 };
-    if (school && (b.signed || b.hard)) return { word: "Lost", text: `${b.signed ? "Signed" : "Hard commit"} · ${teamName(school)}`, odds: "Locked In", tone: "bad", fill: 0 };
+    if (school && (b.signed || b.hard)) return { word: "Lost", text: `${b.signed ? "Signed" : "Hard commit"} · ${teamLabel(school)}`, odds: b.signed ? "Signed Elsewhere" : "Locked In Elsewhere", tone: "bad", fill: 0 };
     if (school) {
-      if (st.pct == null) return { word: "Long Shot", text: `Verbal commit · ${teamName(school)}`, odds: "Offer him to try for a flip", tone: "warn", fill: 0 };
-      return { word: st.pct >= 0.3 ? "In It" : "Long Shot", text: `Verbal commit · ${teamName(school)}`,
+      if (st.pct == null) return { word: "Long Shot", text: `Verbal commit · ${teamLabel(school)}`, odds: "Offer him to try for a flip", tone: "warn", fill: 0 };
+      return { word: st.pct >= 0.3 ? "In It" : "Long Shot", text: `Verbal commit · ${teamLabel(school)}`,
                odds: st.hi != null && st.hi < 0.1 ? "A flip looks unlikely" : st.pct >= 0.3 ? "He could still flip to you" : "A flip is a long shot",
                certainty: st.certainty, tone: "warn", fill: st.pct, lo: st.lo, hi: st.hi };
     }
@@ -147,7 +148,7 @@
     if (!offered) return { word: "Not Offered", text: `${where} · not offered`, odds: "Offer to be in it", tone: "muted", fill: 0 };
     const close = mine.bar >= leader.bar - 0.1;
     const odds = close ? "Close Race" : mine.bar >= 0.15 ? "Behind, in the picture" : "Long Shot";
-    return { word: odds === "Long Shot" ? "Long Shot" : "In It", text: `${where} · ${teamName(leader.school)} leads`, odds, certainty: st.certainty,
+    return { word: odds === "Long Shot" ? "Long Shot" : "In It", text: `${where} · ${teamLabel(leader.school)} leads`, odds, certainty: st.certainty,
              tone: close ? "warn" : "muted", fill, lo: st.lo, hi: st.hi };
   }
   const standing = standingOf;
@@ -204,7 +205,8 @@
       else if (e.kind === "learned" || (LINE_KINDS.has(e.kind) && e.line)) bits = [e.line];     // what your staff learned; a bloomer's jump; a twist; a hat ceremony
       else if ((e.kind === "signed" || e.kind === "unsigned") && e.line) bits = [e.line];     // a recruit of yours went elsewhere: where, and why not you
       else if (e.kind === "promise_broken") bits = [`He heard you promised the same spot to ${e.about}`];
-      else if (HISTORY_WORDS[e.kind]) bits = [`${HISTORY_WORDS[e.kind]} ${teamName(e.school)}`];
+      else if (e.kind === "leaning_fcs") bits = ["Leaning toward an FCS program"];
+      else if (HISTORY_WORDS[e.kind]) bits = [`${HISTORY_WORDS[e.kind]} ${e.school ? teamName(e.school) : "an FCS program"}`];
       else bits = [`${eventWord(e)} ${e.school ? teamName(e.school) : ""}`.trim()];
       return { week: e.portal_week ?? e.week, text: bits.filter(Boolean).join(" · "), kind: e.kind === "contact" || e.kind === "pitch" ? e.action || actionOf.get(i) || "pitch" : e.kind };
     };
@@ -518,7 +520,7 @@
     const listed = (p.public.schools || []).filter((x) => x.school !== holder).sort((a, c) => (c.pct ?? -1) - (a.pct ?? -1));
     const committed = !b.signed;
     const quiet = committed && holder === me && listed.every((x) => (flip[x.school] || "None") === "None");
-    const title = b.signed ? "Who Else Offered" : holder === me ? "Who Else Is Calling" : "His Chance to Flip to Each";
+    const title = b.signed ? "His Final List" : holder === me ? "Who Else Is Calling" : "His Chance to Flip to Each";
     const parts = [commitBanner(b, me, p)];
     if (quiet) parts.push(el("p", { class: "muted go-nobody-close", "data-key": "quiet", text: "Nobody is close to pulling him away." }));
     else if (!listed.length) parts.push(el("p", { class: "muted pv-battle-empty", "data-key": "empty", text: "No other school recruited him." }));
@@ -570,7 +572,7 @@
       : flip.word === "Real" ? `${leader} is working him hard: a real chance he flips.`
       : `${leader} is close to flipping him.`;
     return el("div", { class: "go-commit rc-status", "data-key": "commit", style: holder === "FCS" ? "" : `background:${bg};color:${inkOn(col.primary)};border-color:${col.secondary || bg}` }, [
-      el("div", { class: "go-display m", text: `${b.signed ? "Signed With" : b.hard ? "Hard Commit to" : "Verbal Commit to"} ${teamName(holder)}` }), el("div", { class: "small", text: sub })]);
+      el("div", { class: "go-display m", text: `${b.signed ? "Signed With" : b.hard ? "Hard Commit to" : "Verbal Commit to"} ${teamLabel(holder)}` }), el("div", { class: "small", text: sub })]);
   }
   function snapshotCard(s, b, me) {
     const sd = standingOf(b, me);
@@ -895,8 +897,8 @@
     if (b.committed === me) return { text: "Committed to You", tone: "good" };
     if (b.pro) return { text: "Went Pro in Baseball", tone: "bad" };
     if (b.quiet) return { text: "Quiet", tone: "warn" };
-    if (b.signed) return { text: b.signed === "FCS" ? "Signed · an FCS Program" : `Signed · ${teamName(b.signed)}`, tone: "bad" };
-    if (b.committed) return { text: `${b.hard ? "Hard Commit" : "Verbal Commit"} · ${teamName(b.committed)}`, tone: b.hard ? "bad" : "warn" };
+    if (b.signed) return { text: `Signed · ${teamLabel(b.signed)}`, tone: "bad" };
+    if (b.committed) return { text: `${b.hard ? "Hard Commit" : "Verbal Commit"} · ${teamLabel(b.committed)}`, tone: b.hard ? "bad" : "warn" };
     const k = STAGE_NAMES[b.stage] ? b.stage : "cold";
     return { text: k === "visited" && portal ? "Campus Visit" : STAGE_NAMES[k], tone: "" };
   }
@@ -1089,7 +1091,7 @@
       const b = rows.find((r) => r.id === btns[j].dataset.pid);
       if (!b) return;
       if (phone()) { view.selected = b.id; markRows(); btns[j].focus(); }
-      else { choose(b); btns[j].focus({ preventScroll: true }); }
+      else { choose(b); btns[j].focus({ preventScroll: true }); ui().keepInView(btns[j]); }
     });
     boardEl = el("div", { class: "go-board" }, [el("section", { class: "go-card go-list-col", "aria-label": "Your board" }, [stagebar, needsDis, list])]);
     box.append(boardEl, mapEl);
@@ -1145,8 +1147,10 @@
       empty.hidden = rows.length > 0;
       footCount.textContent = `${v.board.length} on your board`;
       const focused = document.activeElement && list.contains(document.activeElement) ? document.activeElement.dataset.pid : null;
+      const was = list.querySelector(".go-row-recruit.selected"), seen = !was || ui().inView(was);   // the list scrolls in its card on a wide screen
       ui().reconcile(list, rows, (b) => b.id, row, patchRow);
       markRows();
+      if (seen && !phone()) ui().keepInView(list.querySelector(".go-row-recruit.selected"));        // a patch that moved his row keeps it in view
       if (focused) { const f = list.querySelector(`.go-row-recruit[data-pid="${focused}"]`); if (f && document.activeElement !== f) f.focus({ preventScroll: true }); }
       // the pane: patched for the same recruit, swapped (a cross-fade) for another, gone with the last row
       const cur = box.querySelector(".go-pane");
@@ -2047,7 +2051,9 @@
       ui().on(who, "click", () => openProfile(s, r.id));
       const add = el("button", { type: "button", class: `go-btn pr-board ${r.on_board ? "on" : "primary"}`, text: r.on_board ? "✓ On Board" : "+ Board",
         "aria-pressed": String(!!r.on_board), "aria-label": boardLabel(r) });
-      ui().on(add, "click", (e) => { e.stopPropagation(); toggleBoard(r, add); });
+      // the button patched is the live one the player clicked (e.currentTarget): a reconcile morphs this row onto the
+      // row on screen and hands it this handler, so `add` here may be a fresh node that never reached the page
+      ui().on(add, "click", (e) => { e.stopPropagation(); toggleBoard(r, e.currentTarget); });
       const tr = el("tr", { class: "go-list-row rc-row pr-row", "data-key": r.id }, [
         el("td", { class: "pr-c-rank muted", text: `#${r.portal && r.portal_rank ? r.portal_rank : r.national_rank}` }),
         el("td", { class: "pr-c-who" }, [who]),
@@ -2121,8 +2127,8 @@
       const off = d.rows.filter((r) => !r.on_board);
       if (rec && off.length) {
         const all = el("button", { type: "button", class: "go-btn", "data-key": "add-all", text: `Add These ${off.length} to Your Board` });
-        ui().on(all, "click", async () => {
-          const added = await ui().busy(all, (async () => { let n = 0; for (const r of off) if (await setBoard(s, r.id, true)) { r.on_board = true; n++; } return n; })());
+        ui().on(all, "click", async (e) => {
+          const added = await ui().busy(e.currentTarget, (async () => { let n = 0; for (const r of off) if (await setBoard(s, r.id, true)) { r.on_board = true; n++; } return n; })());
           ui().toast(added === 1 ? "He is on your board." : "They are on your board.");
           fetchBoard();
           load();

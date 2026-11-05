@@ -1221,8 +1221,8 @@ rank) and **Top Targets** (your hottest targets with their standing word; Board 
 Recruiting). The tab bar is two rows: the
 screens you act on (Office, Offseason once the season is over, Recruiting, Prospects, Scouting,
 Schedule, Depth Chart) and a League row that follows the calendar (Standings, Rankings, Stats
-and, in a career, **Programs** all year; Awards from week 4; Classes, Bracket and Bowls from selection week; Summary when the
-season is done). A plain season keeps every League tab. The Depth Chart button opens its own
+and, in a career, **Programs** all year; Awards from week 4; Classes, Bracket and Bowls from selection week; Season Recap
+all year, and the title game lands the player on it). A plain season keeps every League tab. The Depth Chart button opens its own
 screen (`web/depth/depth.js`, `index.html?id=…&screen=depth`, Back returns to the season): the
 team's most-used formations as the next game fills them (`formations_view`) or one position at a
 time (List view), a Players box of portraits, the Redshirts board and Availability; its moves,
@@ -2160,7 +2160,17 @@ week strip lets you look back at any week. Tabs:
 - **Bracket**: a projected bracket as soon as the first committee ranking exists (current
   conference leaders as projected champions), then the real bracket on selection day and
   the playoff results as the rounds are played.
-- **Summary**: the season in review (or the season so far): the national champion and
+- **Season Recap** (`web/recap.js`, `web/recap.css`, the `summary` tab and route key): the season in review once
+  the title game is played (the game lands the player on it; the Office stays a tap away), or the season so far
+  before that. A header card with the record and the **Season Grade** (`sim/grade.py` `season_grade`: a letter A+
+  to F read off the wins against the AD's goal, the conference title, how far the playoff run went, the bowl and
+  the final AP rank, with a one-sentence verdict per band: champion, playoff, met, bowl, missed, losing, fired; a
+  champion alone gets the A+; no randomness, nothing written), then Start the Offseason, Back to the Office, Awards
+  and Schedule. Two columns: the national champion and title game (its box score opens), the four playoff rounds,
+  the Heisman, your leaders, the conference champions and the final rankings on the left; Your Season (points,
+  the conference, non-conference, postseason and final rank, total offense, total defense and the turnover margin
+  with their national ranks), the highlights, the rivalries, the biggest surprise and disappointment and the
+  national leaders on the right. The review API carries: the national champion and
   title game, every playoff round, each conference's champion and title-game score, the
   final CFP ranking and AP poll, then your team's record, conference finish, postseason
   result, scoring, longest win streak, best win, worst loss, biggest win and closest loss,
@@ -2269,7 +2279,12 @@ worker processes), so a week there takes longer than under the dev server on a d
 The This week card simulates your next game 20 times. Those sims run in parallel on the
 worker pool when there is one (about 1 second instead of 4 on a desktop) and are
 cached for the week; a second request for the same game waits for the first instead of simulating
-it again. The Awards tab's live race is cached until more games are played (or god mode
+it again. The Awards tab opens on an **Overview** (`renderAwards`): the Heisman hero with four finalists, the
+national award cards (Offense, Defense, Special Teams and Player of the Year chips patch the grid in place with
+`reconcile`), the coach awards, your team's honors with a podium (honors, awards won, players and coaches), the
+consensus All-America team by unit and your conference's awards; the older views (My Team, Heisman, National,
+Coaches, All-America, Conference) stay as chips and in the `aview` route key. During the season the same layout is
+the live race ("Leader" instead of "Winner"). The live race is cached until more games are played (or god mode
 edits a player), and the award pools list each position group's eligible players once
 instead of scanning the whole league for every award (2.5 seconds to 1 on first load).
 If a progress check collides with the sim thread changing the season, it answers with
@@ -2320,6 +2335,33 @@ Under
 `tests/test_smoothness.py` measures all of it through the real page (a MutationObserver counts
 removals of anything holding the watched element; the scroll must stay within 2 px), and the UX
 sweep does the same for every board action.
+
+### Board scrolling
+
+The Recruiting board and the Scouting Center share one scroll model. With the list and the pane side by
+side (760 px and up for the board, 900 px and up for the Scouting Center) the tab is at least the screen
+under the tab bar and the page itself does not scroll: `season.js` `boardFit` measures where the open tab
+starts (`--board-top`) and the room under it (`--board-below`), and the CSS (`recruiting.css`,
+`scouting.css`, "fits the screen") makes the tab a grid that fills that height. The list scrolls inside its
+card under the stage tabs (or chips), the search and the sort; the pane scrolls inside its own column under
+its pinned tab row. Both scrollers use `contain: size` (they add nothing to the tab's height) and
+`overscroll-behavior: contain` (a wheel at their end never moves the page or the other column). A window
+too short for the list's head and a few rows grows the tab instead. The closed Your Footprint bar is the
+list card's foot and Scouting Operations' bar sits under the report; opened, either spans the width under
+the board, the page scrolls to it and the two scrollers hand the wheel on at their ends. The Recruiting
+Timeline keeps its own cap but uses `overscroll-behavior: auto`, so at its end the wheel moves the pane.
+`ui.keepInView` scrolls a row's own scroll box (never the page): the selected row stays in view after a
+patch, after the arrow keys and on an address that names him. On a phone the page is the only scroller
+(the Recruiting pane is its full-screen sheet). `tests/test_board_scroll.py` checks all of it.
+
+Nothing jumps when content changes size. No tab row or chip row ever scrolls (a 1 px overflow draws classic
+scrollbars): the sub-tab strip wraps, and a phone's sideways stage and region rows hide their bar. A tab switch
+(`ui.js` `holdTabRow`, one capture listener for every `.go-subtabs` tab) keeps its tab row where it was: the
+next body fills at least the room under the row (`--tab-hold`), and a row pinned at the top of its scroll box
+opens the new tab at its top. Modals open at a fixed top (`--modal-top`) and grow down, never recentering; a
+tabbed or loading one (the Prospect Profile popup) keeps one height (`--modal-tall`) and scrolls its body, with
+its tab row pinned; a phone shows them full screen. A patch from the player's own action (`morph` with
+`pulse`) and an Office card filling in ease to their new height (`ui.glide`, 180 ms, instant under reduced motion).
 
 ### Deep links (`web/route.js`)
 

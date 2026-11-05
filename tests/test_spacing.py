@@ -322,7 +322,7 @@ if __name__ == "__main__":
 
             # --- the finished career: Classes, Summary, then every offseason stage
             w.both("classes", lambda _: open_tab(page, base, B, "classes", ".go-class"))
-            w.both("summary", lambda _: open_tab(page, base, B, "summary", "#tab-summary .review-card"))
+            w.both("summary", lambda _: open_tab(page, base, B, "summary", "#tab-summary .rcp-main"))
             for _ in range(12):
                 stage = call(base, f"/api/season/{B}/offseason")["stage"]
                 def offseason(_):
