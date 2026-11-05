@@ -117,11 +117,12 @@
   // "Not Known Yet" with how it is revealed (hints, from the server). notes: a known trait's sentence (his story's tip).
   const TRAIT_LABELS = { decider: "Who Decides", personality: "Personality", story: "His Story", commit_style: "Commit Style", twist: "Twist" };
   const TRAIT_ORDER = ["decider", "cares", "personality", "story", "commit_style"];
-  const META = /_(key|detail|topic|hint|line|tip|label|known)$/;
+  const META = /_(key|detail|topic|hint|line|tip|label|known)$|^has_/;     // fields about a trait, not traits (has_style: he has one at all)
   function traitRows(traits, hints, opts = {}) {
     const tr = traits || {}, hint = hints || {};
     const names = opts.pitchNames || {};
-    const keys = Object.keys(tr).filter((k) => !META.test(k));
+    // a trait the server says he does not have (has_<x> false, e.g. no commit style) is no row at all
+    const keys = Object.keys(tr).filter((k) => !META.test(k) && typeof tr[k] !== "boolean" && !(k === "commit_style" && tr.has_style === false));
     const order = [...TRAIT_ORDER.filter((k) => k === "cares" || keys.includes(k)), ...keys.filter((k) => !TRAIT_ORDER.includes(k))];
     return order.map((k) => {
       if (k === "cares") {

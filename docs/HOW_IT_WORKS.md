@@ -3108,3 +3108,45 @@ On the page: the Profile's third row **His Story** (label · detail, muted Not K
 on what it means (`STORY_TIPS`), the pane chip `trait:story` ("Legacy · Florida", "Two-Sport · Draft
 Risk: Some"), History lines for `learned`, `bloomed` and `pro`, and What Changed lines for a jump or a
 pro decision. The board row patches in place (the Profile body's key carries `traits`).
+
+
+### Twists and Commit Style (`coach_career/persona.py`, spec section 3)
+
+**Commit Style** is a fixed draw per prospect (`style-{seed}-{pid}`, 20% each by `STYLES`), worked out when
+asked and never stored (a test or a save may set `commit_style` on `p["persona"]`); the portal has none.
+
+| Style | Rule (hook) |
+|---|---|
+| Early Bird | Commit odds ×`EARLY_ODDS` in Weeks 4–8 (`commit_odds_mult` in `_draws`); he commits at `HARD_AT − EARLY_FIRM` firmness (`start_firmness` in `_commit`). |
+| Signing Day | No commitment before signing day (`waits`); at the early signing period's step he takes the leader of his list with room, no roll (`signs_now`), and signs that week. The game has two signing days; he announces on the first, as most real signing-day recruits now do (the final one still takes whoever is left). |
+| Hat Ceremony | When his commit roll comes up he names a date `HAT_LEAD` weeks out (the early signing period at the latest) and his best `HAT_FINALISTS` (`_hat`, `rc["hats"][pid] = [week, finalists]`, a `hat` event, news for a blue chip). Until then nobody wins; on the day the best finalist with room does (`hat: true` on the commit); if none can take him he opens it back up. |
+| Quiet Commit | His commitment events carry `quiet: true`: out of the news, and every other school's view (`persona.shown_to`, `prospects.seen_status`: rows, profile, odds, flip words, classes) shows him as **Quiet**, uncommitted. His interest in every other school stops climbing (`persona.climbs` in `_add_points` and the twist gains). |
+| Needs Attention | Each week his school has not been in touch since the week before, his firmness drops `NEEDS_DROP` instead of firming up, hard commit or not (`_neglected` in `_firm_up`); `NEEDS_SILENT` such weeks unlock a hard commit (a `softened` event): he can flip again. |
+
+Discovery: an official visit with you, or your offer held `STYLE_OFFER_WEEKS` (`rc["offer_weeks"]`, your
+school's only), shows it at the week step (`learn_styles`, a `learned` History line); until then the
+Profile's **Commit Style** row says Not Known Yet. `view` adds `commit_style`, `style_key`, `has_style`.
+
+**Twists**: at the end of each week's step (`roll_twists`, its own stream `twists-{seed}-{week}` via
+`recruiting._rng`) every uncommitted prospect on any school's board without one rolls `TWIST_RATE` by his
+real stars; a hit draws a twist by `TWISTS` weight (`TWIST_TRIES` draws) and it takes effect only if it can
+happen to him (`_setup`). The active one is `rc["twists"][pid] = {"k", "s" (its school), "w" (weeks left),
+...}`; `twist_week` at the start of the next step plays out a game and counts the weeks down. A Family Move
+is kept for good in `rc["moved"][pid]`.
+
+| Twist | Effect |
+|---|---|
+| Surprise Visit | One of his next five schools past his top three (offered first, drawn toward strong programs by `SURPRISE_TILT`) gets an interest bonus `b` that puts it in his top three (`twist_bonus` in `interest`) for `SURPRISE_WEEKS`. A call or in-home visit from a school that was in his top three knocks it back (`knock_back`). |
+| At Your Game | One of his top five plays at home next week within `GAME_MILES`: a win adds `GAME_WIN − 1` (a `BLOWOUT` win `GAME_BLOWOUT − 1`) of his interest in that school, at most `GAME_CAP`; a loss cools him a week (`cooled_why` "game"). |
+| Hot Seat | His leader's head coach has AD security under `HOT_SEAT` (`carousel.ad`, read without saving: the league's from a second season on; a first season starts everyone off it): other schools' Coach pitches ×`HOT_SEAT_PITCH` for `HOT_SEAT_WEEKS`. The spec's "a firing at the review reopens its commits" is not built: the AD review and the carousel come after national signing day, when every commit has signed. |
+| Late Offer | A blue blood (program tier 1) with room that has not offered does (`_act`), enters at his second spot, and his ask rises `LATE_ASK`. Blue chips only (`LATE_FROM`). |
+| Family Move | His home becomes another class hometown in another state: proximity (`home_of` in `pull`) and a hero's state (`hero_state`) move. |
+| Grades Scare | The `ACADEMIC` AI schools drop him from their boards and offers and keep him off while it lasts; Academics pitches from anyone else ×`GRADES_PITCH` for `GRADES_WEEKS`. Only when an academic school is after him. |
+| Wants to See You Beat X | He names one of a top-three school's next `BEAT_AHEAD` opponents: the win adds `BEAT_WIN`, the loss takes `BEAT_LOSS`. Its events are `private`: only that school sees them. |
+
+Every twist logs a `twist` event with its sentence (the ending of a game twist or a knock-back carries
+`end: true`); they show in What Changed, History and, for a blue chip's late offer or surprise visit, the
+news. The profile and board row carry `twist` (`twist_view`: key, label, line, weeks left): the Profile's
+**What Happened** line under the traits (its name, weeks left and sentence), and a pane chip; the **Commit Style** sits on its own line under the traits row (the compact profile keeps that row to three) with its sentence as the title. Scenes: `scenes.TWIST_LINES` (his words while it
+is on: on a call `TWIST_CALL_LINE` of the time, always at a visit) and `scenes.STYLE_LINES` (once you know
+his style, `STYLE_CALL_LINE` of the calls). AI schools play by every rule.

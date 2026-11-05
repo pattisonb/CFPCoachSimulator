@@ -168,11 +168,11 @@ CLASS_ROOM = 2                             # a class tops out this far over the 
 OFFER_FACTOR = 1.5
 FCS_LINE = 4.0                             # best FBS interest under this: Leaning FCS *tune*
 FCS_NO_OFFER_WEEK = 8                      # from this week a prospect with no FBS offer leans FCS
-COMMIT_ODDS = ((0, 0.02), (6, 0.05), (12, 0.08), (16, 0.10), (20, 0.30))   # weekly base chance by week *tune*
+COMMIT_ODDS = ((0, 0.02), (6, 0.05), (9, 0.095), (12, 0.11), (16, 0.12), (20, 0.30))   # weekly base chance by week (raised from Week 9 on when a fifth of the class became Signing Day recruits) *tune*
 COMMIT_FREEZE_WEEKS = 3                     # nobody commits anywhere in the first weeks: time to scout and build a board before the class moves
-LEAD_SCALE = 5.0                           # interest lead worth a doubling of the base chance (5: with 140-160 hours a week leads run bigger, and 3 had over 92% signed by the early period) *tune*
+LEAD_SCALE = 4.0                           # interest lead worth a doubling of the base chance (4 with the commit styles; 5: with 140-160 hours a week leads run bigger, and 3 had over 92% signed by the early period) *tune*
 VISIT_BOOST = 1.6                          # after an official visit to the leader
-DECOMMIT_RATE = 0.8                        # weekly chance of a decommitment at an even race (0.8: AI schools now message every commit weekly, so commits firm faster; 0.45 left 5% of the top 300 decommitting) *tune*
+DECOMMIT_RATE = 1.4                        # weekly chance of a decommitment at an even race (1.4: Early Bird, Quiet Commit and Signing Day recruits flip less or never; 0.8: AI schools now message every commit weekly, so commits firm faster; 0.45 left 5% of the top 300 decommitting) *tune*
 # a commitment's firmness, 0-100: it starts soft and firms up only if the school keeps in touch *tune*
 FIRM_START, FIRM_VISIT = 40, 60            # at commitment (after an official visit there)
 FIRM_TOUCH, FIRM_DRIFT = 8, 3              # a week with a message, call or visit from the school / a quiet week (he still warms to you)
@@ -188,7 +188,7 @@ NATIONAL_TARGETS = 25                      # national targets on a board, times 
 BOARD_FACTOR = 3                           # an AI school's board holds this many prospects per open spot
 NATIONAL_REACH = 0.08                      # a blue-chip program's pull on four- and five-stars anywhere *tune*
 STAR_KEY = {5: "5*", 4: "4*", 3: "3*", 2: "2*"}
-AI_NIL = {5: 0.25, 4: 0.12, 3: 0.04, 2: 0.0}   # share of the budget an AI school puts on one offer by stars *tune*
+AI_NIL = {5: 0.30, 4: 0.15, 3: 0.04, 2: 0.0}   # share of the budget an AI school puts on one offer by stars (0.25/0.12 before the twists spread the blue chips) *tune*
 POS_247 = {"OT": "OL", "IOL": "OL"}
 ACADEMIC = {"stanford", "notre-dame", "northwestern", "duke", "vanderbilt", "rice", "california", "ucla", "michigan",
             "virginia", "georgia-tech", "wake-forest", "boston-college", "navy", "army", "air-force", "usc", "north-carolina"}
@@ -482,7 +482,8 @@ def is_lowball(nil: int, ask: int, share: float = LOWBALL) -> bool:
 
 COOLED_409 = {"lowball": "he has cooled on you after that offer: raise it to what he wants",
               "promise": "he has cooled on you after that promise: give him time",
-              "quiet": "he has cooled on you after you went quiet: call or visit to warm him back up"}
+              "quiet": "he has cooled on you after you went quiet: call or visit to warm him back up",
+              "game": "he has cooled on you after the loss he watched: give him a week"}
 
 
 def cooled(state: dict, slug: str, pid: str) -> bool:
@@ -832,7 +833,7 @@ def pull(state: dict, slug: str, pid: str, winning: bool = True) -> dict[str, fl
     season's standing, the part that holds all season)."""
     p = state["recruiting"]["prospects"][pid]
     loc = _team_model(slug).get("location")
-    miles = _miles(tuple(p["home"]), tuple(loc)) if loc else 1500.0
+    miles = _miles(tuple(persona.home_of(state, p)), tuple(loc)) if loc else 1500.0      # a Family Move takes his home along
     group = _group(p["ea_position"])
     starters = STARTERS.get(group, 2)
     from coach_career import programs
@@ -860,7 +861,8 @@ def strengths(state: dict, slug: str, pid: str) -> dict[str, float]:
     """Your program's strength on each topic for this prospect, 0-1: the school's pull on him
     (playing time from his place on the depth chart, winning, prestige, proximity, coach,
     academics) with NIL read as your offer against his ask (the program's level before an offer)."""
-    key = (state["id"], _ck(state["recruiting"]), pid, slug)
+    mv = state["recruiting"].get("moved")
+    key = (state["id"], _ck(state["recruiting"]), pid, slug, bool(mv) and pid in mv)
     static = _PULLS.get(key)
     if static is None:
         if len(_PULLS) > 2_000_000:
@@ -947,8 +949,10 @@ def weights(p: dict) -> dict[str, float]:
 
 
 def interest(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> float:
-    p = state["recruiting"]["prospects"][pid]
-    key = (state["id"], _ck(state["recruiting"]), pid, slug)
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    mv = rc.get("moved")
+    key = (state["id"], _ck(rc), pid, slug, bool(mv) and pid in mv)       # a Family Move changes his pulls
     static = _STATIC.get(key)
     if static is None:
         if len(_STATIC) > 2_000_000:
@@ -956,7 +960,10 @@ def interest(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> fl
         w = weights(p)
         static = _STATIC[key] = sum(w[t] * v for t, v in pull(state, slug, pid, winning=False).items())
     win = min(1.0, (win if win is not None else _winning(state)).get(slug, 0.5))
-    return persona.story_interest(state, slug, pid, PULL_SCALE * (static + weights(p)["winning"] * win)) + state["recruiting"]["lists"][pid].get(slug, 0.0)
+    out = persona.story_interest(state, slug, pid, PULL_SCALE * (static + weights(p)["winning"] * win)) + rc["lists"][pid].get(slug, 0.0)
+    tw = rc.get("twists")
+    tw = tw.get(pid) if tw else None
+    return out + tw["b"] if tw and tw["k"] == "surprise" and tw["s"] == slug else out      # persona.twist_bonus, inline: this runs often
 
 
 _STATIC: dict = {}       # a prospect's pulls that hold all season (everything but winning), per school
@@ -1172,7 +1179,7 @@ def _contact_points(state: dict, slug: str, p: dict, action: str, pitch: Optiona
     his priorities (or his decider's topic) counts by your strength there (and backfires where you
     are weak); any other topic counts a little. His personality scales it (persona.pitch_mult)."""
     pid = p["id"]
-    mult = persona.pitch_mult(state, pid, action, pitch, first_call) * persona.story_mult(state, slug, pid, pitch)
+    mult = persona.pitch_mult(state, pid, action, pitch, first_call) * persona.story_mult(state, slug, pid, pitch) * persona.twist_mult(state, slug, pid, pitch)
     if action == "offer":
         mult *= persona.offer_mult(state, pid)
     if pitch is None:
@@ -1370,7 +1377,8 @@ def _present(state: dict, slug: str, pid: str, scene: Optional[str], topics: Opt
     action = sc["action"]
     base = BASE_POINTS[action]
     first_call = action == "call" and not contact.get("calls")      # a scene's call is counted when its pitch lands
-    mult = {t: persona.pitch_mult(state, pid, action, t, first_call) * persona.story_mult(state, slug, pid, t) for t in topics}
+    mult = {t: persona.pitch_mult(state, pid, action, t, first_call) * persona.story_mult(state, slug, pid, t) * persona.twist_mult(state, slug, pid, t)
+            for t in topics}
     hits, back, raw = [], [], 0.0
     for t in topics:
         if not persona.counts_as_priority(state, pid, t):          # his priorities, or his decider's topic
@@ -1402,8 +1410,10 @@ MOVES_SHOWN = 3            # the biggest movers on his list a report names
 
 
 def _add_points(state: dict, slug: str, pid: str, points: float, action: str) -> None:
-    """Interest from an action this week: pending until the week step, with what earned it."""
+    """Interest from an action this week: pending until the week step, with what earned it (a Quiet
+    Commit's interest in the other schools does not climb)."""
     rc = state["recruiting"]
+    points = persona.climbs(state, slug, pid, points)
     rc.setdefault("pending", {}).setdefault(pid, {})[slug] = rc["pending"].get(pid, {}).get(slug, 0.0) + points
     why = rc.setdefault("why_week", {}).setdefault(pid, {}).setdefault(slug, {})
     why[action] = why.get(action, 0.0) + points
@@ -1474,7 +1484,7 @@ def _report(state: dict, week: int) -> dict:
     pids = list(dict.fromkeys(list(rc["board"]) + list(rc["offers"].get(me, []))))
     events, pestered = [], set()
     for e in rc["log"]:
-        if e["week"] != week or e["kind"] not in REPORT_KINDS:
+        if e["week"] != week or e["kind"] not in REPORT_KINDS or not persona.shown_to(e, me):
             continue
         if e["kind"] == "pester":                 # once per prospect per week, however many contacts wore on him
             if e["pid"] in pestered:
@@ -1511,7 +1521,7 @@ def _report(state: dict, week: int) -> dict:
 
 
 REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "pester", "promise_broken",
-                "bloomed", "pro")
+                "bloomed", "pro", "twist", "hat", "softened")
 CONTACT_KINDS = ("contact", "pitch", "raise_nil", "pull_offer", "answer", "present")   # your actions, logged for his History (not news)
 HISTORY_ONLY = CONTACT_KINDS + ("learned",)   # his History's alone: never the week's news (what your staff learned is his, not news)
 
@@ -1570,6 +1580,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         held = _nil(state, slug)["held"].pop(pid, None)
         if you:
             _event(state, "pull_offer", pid, slug, nil=held or 0)
+            (rc.get("offer_weeks") or {}).pop(pid, None)
         if rc["status"][pid]["committed"] == slug and not rc["status"][pid]["signed"]:   # you let your own verbal commit go
             rc["status"][pid].update(committed=None, firmness=None, hard=False)
             rc["commits_v"] = rc.get("commits_v", 0) + 1
@@ -1585,6 +1596,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             raise RecruitingError(409, "offer limit reached")
         ask = ask_from(state, slug, pid)
         offers.append(pid)
+        if you:                                    # four weeks holding your offer shows you his commit style
+            rc.setdefault("offer_weeks", {})[pid] = week
         if nil:
             _nil(state, slug)["held"][pid] = nil
         _event(state, "offer", pid, slug, nil=nil)
@@ -1676,6 +1689,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             contact.setdefault("week", {})[action] = week
         if action in ("call", "hc_visit"):
             persona.learn_on_contact(state, slug, pid, action)
+            persona.knock_back(state, slug, pid, action)       # a Surprise Visit's school: a top-three school's call or visit knocks it back
         if opens:                                     # your scene: the contact is marked, his lines and cue stored; no points until the pitch
             contact["asked"] = True if action == "hc_visit" or contact.get("asked") is True else "range"
             contact["last_contact"] = week
@@ -1766,6 +1780,12 @@ def _commits(state: dict) -> dict[str, int]:
 
 def signed_class(state: dict, slug: str) -> list[str]:
     return [pid for pid, st in state["recruiting"]["status"].items() if st["signed"] == slug]
+
+
+def _rng(state: dict, what: str) -> random.Random:
+    """A seeded stream of its own for `what` this week (twists): new randomness never moves an old draw."""
+    rc = state["recruiting"]
+    return random.Random(f"{what}-{rc['seed']}-{'portal-' if rc.get('portal') else ''}{state['current_week']}")
 
 
 def _event(state: dict, kind: str, pid: str, school: Optional[str] = None, **extra) -> dict:
@@ -1912,6 +1932,8 @@ def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None, co
         front, back = persona.board_front(state, slug)
         if front or back:
             board = list(dict.fromkeys([pid for pid in front if live(pid)] + board + [pid for pid in back if live(pid)]))
+        if rc.get("twists") and slug in ACADEMIC:      # a Grades Scare: the academic schools keep him off while it lasts
+            board = [pid for pid in board if not persona.scared_off(state, slug, pid)]
     rc["boards"][slug] = board
     if yours:
         before = {pid: by[slug]["n"] for pid, by in rc["contacts"].items() if slug in by}
@@ -2047,19 +2069,23 @@ def _offers_by_prospect(state: dict) -> dict[str, list[str]]:
     return out
 
 
-def _commit(state: dict, pid: str, slug: str, kind: str = "commit", pair: bool = True) -> Optional[tuple]:
+def _commit(state: dict, pid: str, slug: str, kind: str = "commit", pair: bool = True, **extra) -> Optional[tuple]:
     """He commits (or flips) to the school. A Package Deal's mate comes with him the same week when the
     school has offered him and he is free to move (not signed, not a hard commit elsewhere): returns
-    (mate, the school he left or None) when he moved, else None."""
+    (mate, the school he left or None) when he moved, else None. His commit style: an Early Bird starts
+    firmer; a Quiet Commit's event is marked quiet (no news, no other school sees it); `extra` rides on
+    the event (a Hat Ceremony's hat)."""
     rc = state["recruiting"]
     old = rc["status"][pid]["committed"]
     visited = bool((rc["visits"].get(pid, {}).get(slug) or {}).get("done"))
-    rc["status"][pid].update(committed=slug, fcs=False, firmness=FIRM_VISIT if visited else FIRM_START, hard=False)
+    firm = FIRM_VISIT if visited else FIRM_START
+    rc["status"][pid].update(committed=slug, fcs=False, firmness=persona.start_firmness(state, pid, firm) if slug != "FCS" else firm, hard=False)
     rc["commits_v"] = rc.get("commits_v", 0) + 1
     for school, n in rc["nil"].items():           # rivals' NIL packages for him are released
         if school != slug:
             n["held"].pop(pid, None)
-    _event(state, kind, pid, slug, **({"from": old} if old else {}))
+    (rc.get("hats") or {}).pop(pid, None)
+    _event(state, kind, pid, slug, **({"from": old} if old else {}), **(persona.quiet_mark(state, pid) if slug != "FCS" else {}), **extra)
     mate = persona.mate(state, pid) if pair and slug != "FCS" else None
     if not mate:
         return None
@@ -2068,7 +2094,7 @@ def _commit(state: dict, pid: str, slug: str, kind: str = "commit", pair: bool =
         return None
     was = ms["committed"] if ms["committed"] not in (None, "FCS") else None
     if was:
-        _event(state, "decommit", mate, was)
+        _event(state, "decommit", mate, was, **persona.quiet_mark(state, mate))
     _commit(state, mate, slug, "flip" if was else "commit", pair=False)
     return mate, was
 
@@ -2139,9 +2165,13 @@ def _firm_up(state: dict, week: int) -> None:
     win = _winning(state)
     for pid, st_ in rc["status"].items():
         school = st_["committed"]
-        if st_["signed"] or not school or school == "FCS" or st_.get("hard"):
+        if st_["signed"] or not school or school == "FCS":
             continue
         c = (rc["contacts"].get(pid) or {}).get(school) or {}
+        if persona.needs_attention(state, pid) and _neglected(state, pid, school, c, week):
+            continue                                   # Needs Attention: a quiet week from his school costs him, hard commit or not
+        if st_.get("hard"):
+            continue
         delta = FIRM_TOUCH if c.get("last_contact") == week else FIRM_DRIFT
         if rc["nil"].get(school, {}).get("held", {}).get(pid, 0) > 0 and pid in rc["offers"].get(school, []):
             delta += FIRM_NIL
@@ -2152,7 +2182,25 @@ def _firm_up(state: dict, week: int) -> None:
         st_["firmness"] = int(max(0, min(100, st_.get("firmness", FIRM_START) + delta)))
         if st_["firmness"] >= HARD_AT:
             st_["hard"] = True
-            _event(state, "hard", pid, school)
+            _event(state, "hard", pid, school, **persona.quiet_mark(state, pid))
+
+
+def _neglected(state: dict, pid: str, school: str, c: dict, week: int) -> bool:
+    """A Needs Attention commit his school has not been in touch with since the week before: his firmness
+    drops persona.NEEDS_DROP, hard commit or not, and persona.NEEDS_SILENT weeks of silence make a hard
+    commit flippable again (a "softened" event). True when it was such a week (no firming up then)."""
+    last = c.get("last_contact")
+    silent = week - 1 - (last if last is not None else week - 1 - persona.NEEDS_SILENT)
+    if silent < 1:
+        return False
+    st_ = state["recruiting"]["status"][pid]
+    st_["firmness"] = int(max(0, (st_.get("firmness") or FIRM_START) - persona.NEEDS_DROP))
+    if st_.get("hard") and silent >= persona.NEEDS_SILENT:
+        st_["hard"] = False
+        st_["firmness"] = min(st_["firmness"], HARD_AT - 1)
+        _event(state, "softened", pid, school, line=f"He has not heard from {persona._school_name(school)} in weeks, and his commitment is softening.",
+               **persona.quiet_mark(state, pid))
+    return True
 
 
 def _class_by_position(state: dict) -> dict[tuple, list[float]]:
@@ -2197,11 +2245,13 @@ class _Room:
 
 
 def _draws(state: dict, week: int, rng: random.Random) -> None:
+    from sim import season
     rc = state["recruiting"]
     room = _Room(state, flier=week >= LATE_MARKET)
     commits = room.commits
     base = 0.0 if week < COMMIT_FREEZE_WEEKS else _interp(COMMIT_ODDS, week)
     win, offered, by_pos = _winning(state), _offers_by_prospect(state), _class_by_position(state)
+    hats = rc.get("hats") or {}
 
     def score(slug: str, pid: str) -> float:
         """His interest less the crowd: recruits already committed there at his position, rated at least as high."""
@@ -2233,7 +2283,7 @@ def _draws(state: dict, week: int, rng: random.Random) -> None:
             rival = next(((v, s) for v, s in scores if s != st["committed"] and room(s, pid) and _pair_ok(state, s, pid, offered, room)), None)
             if rival and rng.random() < flip_weekly(state, pid, rival[0] - mine):
                 room.took(st["committed"], pid, -1)
-                _event(state, "decommit", pid, st["committed"])
+                _event(state, "decommit", pid, st["committed"], **persona.quiet_mark(state, pid))
                 took(rival[1], pid, _commit(state, pid, rival[1], "flip"))
             continue
         scores = [(v, s) for v, s in scores if room(s, pid) and _pair_ok(state, s, pid, offered, room)]
@@ -2244,12 +2294,47 @@ def _draws(state: dict, week: int, rng: random.Random) -> None:
                 _event(state, "leaning_fcs", pid)
         if not scores or lean:
             continue
-        top, leader = scores[0]
+        hat = hats.get(pid)                            # his Hat Ceremony: only his finalists can win, on the day he named
+        if hat:
+            scores = [(v, s) for v, s in scores if s in hat[1]]
+        top, leader = scores[0] if scores else (0.0, None)
         lead = top - (scores[1][0] if len(scores) > 1 else 0.8 * top)
         visited = (rc["visits"].get(pid, {}).get(leader) or {}).get("done")
-        odds = min(0.9, base * (0.5 + lead / LEAD_SCALE) * (VISIT_BOOST if visited else 1.0))
-        if rng.random() < odds:
+        style = persona.style(state, pid)
+        early = style == "early_bird" and persona.EARLY_WEEKS[0] <= week <= persona.EARLY_WEEKS[1]     # persona.commit_odds_mult
+        odds = min(0.9, base * (0.5 + lead / LEAD_SCALE) * (VISIT_BOOST if visited else 1.0) * (persona.EARLY_ODDS if early else 1.0))
+        roll = rng.random()                            # always drawn: his commit style never moves the stream
+        if hat:
+            if week >= hat[0]:
+                if leader:
+                    took(leader, pid, _commit(state, pid, leader, hat=True))
+                else:
+                    del hats[pid]                      # none of his finalists can take him: he opens it back up
+            continue
+        if style == "signing_day":
+            if week >= season.SELECTION_WEEK:          # Signing Day: no one until signing day, then his leader, no roll (persona.waits, signs_now)
+                took(leader, pid, _commit(state, pid, leader))
+            continue
+        if roll < odds:
+            if style == "hat":                         # a Hat Ceremony: he names a date and his finalists instead
+                _hat(state, pid, week, [s for _, s in scores[:persona.HAT_FINALISTS]])
+                continue
             took(leader, pid, _commit(state, pid, leader))
+
+
+def _hat(state: dict, pid: str, week: int, finalists: list) -> None:
+    """A Hat Ceremony named: persona.HAT_LEAD weeks out (on signing day at the latest, the early one when it
+    is still ahead), only his finalists can win. Kept in rc["hats"][pid] = [week, finalists]; a "hat" event."""
+    from sim import season
+    rc = state["recruiting"]
+    day = week + persona.HAT_LEAD
+    if week < season.SELECTION_WEEK:
+        day = min(day, season.SELECTION_WEEK)
+    rc.setdefault("hats", {})[pid] = [day, finalists]
+    names = [persona._school_name(s) for s in finalists]
+    said = names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}" if len(names) == 2 else f"{', '.join(names[:-1])}, and {names[-1]}"
+    _event(state, "hat", pid, None, finalists=finalists, day=day,
+           line=f"He will pick from {said} at a hat ceremony in Week {day}." if len(names) > 1 else f"He will announce at a hat ceremony in Week {day}.")
 
 
 def _pair_ok(state: dict, slug: str, pid: str, offered: dict, room) -> bool:
@@ -2282,6 +2367,9 @@ def _sign(state: dict, final: bool) -> None:
             if st["committed"]:
                 continue
             schools = set(offered.get(pid, [])) | set(rc["lists"][pid])
+            hat = (rc.get("hats") or {}).get(pid)          # his Hat Ceremony on signing day: his finalists, if one can take him
+            if hat and any(s in schools and room(s, pid) for s in hat[1]):
+                schools &= set(hat[1])
             scores = sorted(((interest(state, s, pid, win), s) for s in schools if room(s, pid) and _pair_ok(state, s, pid, offered, room)), reverse=True)
             if scores and scores[0][0] >= FCS_LINE:
                 pair = _commit(state, pid, scores[0][1])
@@ -2364,8 +2452,10 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     persona.cool_quiet(state, week)    # a recruit who loves the attention cools on a school gone quiet
     if not rc.get("portal"):
         persona.bloom(state, week)     # a Late Bloomer's jump: public, and the AI boards that fit him add him
+        persona.twist_week(state, week)    # his twist: a game he watched plays out; the ones run out end
     if not rc.get("portal"):
         _visits(state, week)
+        persona.learn_styles(state, week)  # an official visit or four weeks holding your offer: his commit style
     scout_week(state, week + 1 if rc.get("portal") else week)   # the portal's week counter moves after the step
     mine = state.get("team")
     mode = auto_mode(state)
@@ -2388,6 +2478,7 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
             _sign(state, final=False)
         if week >= season.FINAL_WEEK:
             _sign(state, final=True)
+        persona.roll_twists(state, week)   # the week's twists (their own stream, after every other draw)
     _snapshot_ranks(state, week)
     _report(state, week)
     rc["hours"] = {}

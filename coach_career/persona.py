@@ -184,13 +184,15 @@ def known(state: dict, slug: str, pid: str) -> dict:
     """What `slug` has learned about him: {"personality": bool, "decider": bool, "story": bool}. The
     player's staff knows his decider once its read holds DECIDER_LOOKS looks and his story at a complete
     report, logged or not (a save from before these were learned in look() never logged them); a public
-    story (story_public) is known to everyone."""
+    story (story_public) is known to everyone; his commit style once learned (learn_styles: an official
+    visit, or your offer held STYLE_OFFER_WEEKS)."""
     from coach_career import recruiting
     rc = state["recruiting"]
     k = ((rc.get("traits_known") or {}).get(slug) or {}).get(pid) or {}
     looks = recruiting.report_looks((rc.get("reads") or {}).get(pid)) if slug == state.get("team") else 0.0
     return {"personality": bool(k.get("personality")), "decider": bool(k.get("decider")) or looks >= DECIDER_LOOKS,
-            "story": bool(k.get("story")) or looks >= recruiting.REPORT_LOOKS or story_public(state, pid)}
+            "story": bool(k.get("story")) or looks >= recruiting.REPORT_LOOKS or story_public(state, pid),
+            "style": bool(k.get("style")) and style(state, pid) is not None}
 
 
 def learn(state: dict, slug: str, pid: str, trait: str) -> bool:
@@ -208,6 +210,13 @@ def learn(state: dict, slug: str, pid: str, trait: str) -> bool:
         line = story_learned_line(state, pid)
         if line:
             recruiting._event(state, "learned", pid, slug, trait=trait, line=line)
+        return True
+    if trait == "style":
+        k = style(state, pid)
+        if k is None:
+            mine[trait] = False
+            return False
+        recruiting._event(state, "learned", pid, slug, trait=trait, line=STYLE_LEARNED[k])
         return True
     d = of(state, pid)
     line = PERSONALITY_LINE[d["personality"]] if trait == "personality" else DECIDER_LINE[d["decider"]]
@@ -279,7 +288,10 @@ def view(state: dict, viewer: str, pid: str) -> dict:
             "decider_topic": d["decider_topic"] if k["decider"] else None,
             "story": (STORY_LABEL[kind] if kind else NO_STORY) if k["story"] else None,
             "story_key": kind,
-            "story_detail": story_detail(state, viewer, pid) if kind else None}
+            "story_detail": story_detail(state, viewer, pid) if kind else None,
+            "commit_style": STYLE_LABEL[style(state, pid)] if k["style"] else None,
+            "style_key": style(state, pid) if k["style"] else None,
+            "has_style": style(state, pid) is not None}
 
 
 # ----- how each personality and decider sounds in calls and in-home visits (scenes.py reads these) ------
@@ -731,7 +743,7 @@ def story_interest(state: dict, slug: str, pid: str, pull: float) -> float:
     toward a school in his state HERO_STATE times; his legacy school LEGACY_HEAD points ahead (a head
     start, not a place on his list: the school still has to recruit him)."""
     k, d = story(state, pid)
-    if k == "hero" and school_state(slug) == d.get("state"):
+    if k == "hero" and school_state(slug) == hero_state(state, pid, d):     # his state moves with a Family Move
         return pull * HERO_STATE
     if k == "legacy" and slug == d.get("school"):
         return pull + LEGACY_HEAD
@@ -747,7 +759,7 @@ def story_mult(state: dict, slug: str, pid: str, pitch) -> float:
         return 1.0
     if k == "legacy" and pitch in ("coach", "prestige") and slug != d.get("school"):
         return LEGACY_PITCH
-    if k == "hero" and pitch is not None and pitch not in HERO_FULL and school_state(slug) != d.get("state"):
+    if k == "hero" and pitch is not None and pitch not in HERO_FULL and school_state(slug) != hero_state(state, pid, d):
         return HERO_AWAY
     if k == "comeback" and ((state["recruiting"]["contacts"].get(pid) or {}).get(slug) or {}).get("loyal"):
         return LOYALTY
@@ -881,3 +893,492 @@ def pro_line(state: dict, slug: str) -> str:
     """His History's line when he goes pro in baseball instead of signing with the school."""
     from sim import season
     return f"He chose pro baseball over {(season.load_teams().get(slug) or {}).get('name', slug)}."
+
+
+# ----- commit style (spec section 3): how he commits -------------------------------------------------
+# A fixed draw per prospect (its own stream `style-{seed}-{pid}`), worked out when asked and never stored:
+# a test (or a save) may set it on his persona as "commit_style". The transfer portal has none (an entrant
+# decides inside four weeks). What is stored: a Hat Ceremony's date and finalists (rc["hats"]) and the week
+# you offered him (rc["offer_weeks"], your school's only: four weeks holding it shows you his style).
+
+STYLES = {"early_bird": 0.2, "signing_day": 0.2, "hat": 0.2, "quiet": 0.2, "needs_attention": 0.2}   # *tune* each style's share of the class
+STYLE_LABEL = {"early_bird": "Early Bird", "signing_day": "Signing Day", "hat": "Hat Ceremony", "quiet": "Quiet Commit",
+               "needs_attention": "Needs Attention"}
+EARLY_ODDS = 3.0           # *tune* an Early Bird's weekly commit odds in EARLY_WEEKS, times the usual
+EARLY_WEEKS = (4, 8)       # the weeks an Early Bird looks to commit (inclusive)
+EARLY_FIRM = 15            # *tune* an Early Bird starts his commitment this far under recruiting.HARD_AT
+HAT_LEAD = 2               # *tune* weeks between a Hat Ceremony's announcement and the hat (never past the early signing period)
+HAT_FINALISTS = 3          # the schools he names; only they can win
+NEEDS_DROP = 6             # *tune* a Needs Attention commit's firmness lost each week his school goes quiet
+NEEDS_SILENT = 3           # *tune* weeks of silence that make even his hard commit flippable again
+STYLE_OFFER_WEEKS = 4      # *tune* your offer held this many weeks shows you his commit style (as an official visit does)
+STYLE_LEARNED = {"early_bird": "Your staff learned he wants to commit early.",
+                 "signing_day": "Your staff learned he will wait for signing day.",
+                 "hat": "Your staff learned he plans a hat ceremony.",
+                 "quiet": "Your staff learned he will commit quietly.",
+                 "needs_attention": "Your staff learned he needs to hear from you every week."}
+
+
+@lru_cache(maxsize=40000)
+def _style_drawn(pid: str, seed) -> str:
+    return random.Random(f"style-{seed}-{pid}").choices(list(STYLES), weights=list(STYLES.values()))[0]
+
+
+def draw_style(pid: str, seed) -> str:
+    """His commit style: a fixed draw from the class seed and his id."""
+    return _style_drawn(pid, seed)
+
+
+def style(state: dict, pid: str):
+    """His commit style (None in the portal): the one a test or a save set on his persona, else his draw."""
+    rc = state["recruiting"]
+    if rc.get("portal"):
+        return None
+    forced = (rc["prospects"].get(pid) or {}).get("persona")
+    if forced and forced.get("commit_style"):
+        return forced["commit_style"]
+    return _style_drawn(pid, rc.get("seed", 0))
+
+
+def commit_odds_mult(state: dict, pid: str, week: int) -> float:
+    """An Early Bird's commit odds in Weeks 4-8: EARLY_ODDS times the usual."""
+    return EARLY_ODDS if EARLY_WEEKS[0] <= week <= EARLY_WEEKS[1] and style(state, pid) == "early_bird" else 1.0
+
+
+def start_firmness(state: dict, pid: str, firmness: int) -> int:
+    """How firm he is the week he commits: an Early Bird starts EARLY_FIRM under a hard commit."""
+    from coach_career import recruiting
+    return max(firmness, recruiting.HARD_AT - EARLY_FIRM) if style(state, pid) == "early_bird" else firmness
+
+
+def waits(state: dict, pid: str, week: int) -> bool:
+    """A Signing Day recruit commits to no one before signing day (the early signing period)."""
+    from sim import season
+    return week < season.SELECTION_WEEK and style(state, pid) == "signing_day"
+
+
+def signs_now(state: dict, pid: str, week: int) -> bool:
+    """A Signing Day recruit on signing day: he takes his leader, no roll."""
+    from sim import season
+    return week >= season.SELECTION_WEEK and style(state, pid) == "signing_day"
+
+
+def is_quiet(state: dict, pid: str) -> bool:
+    return style(state, pid) == "quiet"
+
+
+def hidden_from(state: dict, viewer: str, pid: str) -> bool:
+    """A Quiet Commit's commitment is his and his school's: every other school sees him as "Quiet", not where."""
+    st = state["recruiting"]["status"][pid]
+    return bool(st["committed"]) and not st["signed"] and st["committed"] not in (viewer, "FCS") and is_quiet(state, pid)
+
+
+def quiet_mark(state: dict, pid: str) -> dict:
+    """The mark a Quiet Commit's commitment events carry: kept out of the news and every other school's view."""
+    return {"quiet": True} if is_quiet(state, pid) else {}
+
+
+def shown_to(e: dict, viewer: str) -> bool:
+    """Whether a log event is the viewer's to see: a quiet commitment, or a twist he told one school, only that school's."""
+    return not (e.get("quiet") or e.get("private")) or e.get("school") == viewer
+
+
+def climbs(state: dict, slug: str, pid: str, points: float) -> float:
+    """A Quiet Commit's interest in the other schools stops climbing: their gains are lost (a loss still lands)."""
+    if points <= 0:
+        return points
+    st = state["recruiting"]["status"][pid]
+    if st["committed"] and not st["signed"] and st["committed"] not in (slug, "FCS") and is_quiet(state, pid):
+        return 0.0
+    return points
+
+
+def needs_attention(state: dict, pid: str) -> bool:
+    return style(state, pid) == "needs_attention"
+
+
+def learn_styles(state: dict, week: int) -> None:
+    """Your staff learns a prospect's commit style after an official visit with you, or once he has held
+    your offer STYLE_OFFER_WEEKS weeks."""
+    rc = state["recruiting"]
+    me = state.get("team")
+    if rc.get("portal") or not me:
+        return
+    held = rc.get("offer_weeks") or {}
+    for pid in rc["offers"].get(me, []):
+        if pid in held and week - held[pid] >= STYLE_OFFER_WEEKS:
+            learn(state, me, pid, "style")
+    for pid, by in rc["visits"].items():
+        if (by.get(me) or {}).get("done"):
+            learn(state, me, pid, "style")
+
+
+# ----- twists (spec section 3): what happens to him along the way --------------------------------------
+# A weekly roll per uncommitted prospect on any board (`twists-{seed}-{week}`, its own stream, at the end
+# of the week's step), TWIST_RATE by his real stars: about one twist a recruit a season, more for the blue
+# chips. One at a time; the active one is kept small in the save: rc["twists"][pid] = {"k": kind, "s": the
+# school it is about, "w": weeks left, and a few of the kind's own}. A Family Move is kept for good in
+# rc["moved"][pid] (his new home). Every school plays by the same twists.
+
+TWISTS = {"surprise": 0.15, "at_game": 0.14, "hot_seat": 0.10, "late_offer": 0.30, "family_move": 0.05,
+          "grades": 0.06, "beat": 0.20}    # *tune* each twist's weight among those that can happen to him
+TWIST_RATE = {5: 0.24, 4: 0.20, 3: 0.15, 2: 0.12}   # *tune* a prospect's weekly chance of a twist by his real stars
+TWIST_TRIES = 2            # *tune* a roll that hits draws a twist by weight; one that cannot happen to him draws once more, then none
+TWIST_LABEL = {"surprise": "Surprise Visit", "at_game": "At Your Game", "hot_seat": "Hot Seat", "late_offer": "Late Offer",
+               "family_move": "Family Move", "grades": "Grades Scare", "beat": "Wants to See You Beat {foe}"}
+SURPRISE_WEEKS = 2         # *tune* a surprise school sits in his top three this long, unless a top-three school calls or visits first
+SURPRISE_SPOT = (0.25, 0.35, 0.40)   # *tune* where in his top three it jumps: first, second, third
+SURPRISE_TILT = 3.0        # *tune* the surprise school is drawn by exp(this x the program's strength) among his next five
+GAME_MILES = 400           # *tune* a home game this close to him is one he goes to
+GAME_WIN, GAME_BLOWOUT = 1.3, 1.5    # *tune* a win (by BLOWOUT or more) at his game: his interest in the school this much
+BLOWOUT = 21
+GAME_CAP = 8.0             # *tune* ... the gain never more than this many interest points (an official visit's worth)
+HOT_SEAT = 30              # *tune* a head coach with AD security under this is on the hot seat (carousel)
+HOT_SEAT_WEEKS = 3
+HOT_SEAT_PITCH = 2.0       # *tune* another school's Coach pitch counts this much more against a hot-seat school
+LATE_ASK = 1.10            # *tune* a late blue-blood offer raises his ask this much
+LATE_FROM = 4              # *tune* a blue blood offers late only a prospect of this many real stars or more (3 filled the blue bloods with three-stars)
+GRADES_WEEKS = 3
+GRADES_PITCH = 2.0         # *tune* an Academics pitch from a school outside ACADEMIC counts this much more during a Grades Scare
+BEAT_AHEAD = 3             # he names one of the school's next this many opponents
+BEAT_WIN, BEAT_LOSS = 5.0, 3.0   # *tune* interest points the school he told gains with the win, loses with the loss
+TWIST_CALL_LINE = 0.6      # *tune* how often a call's small talk is his twist while it is on
+STYLE_CALL_LINE = 0.2      # *tune* how often a call's small talk is his commit style, once the school knows it
+
+
+def _rival_name(slug) -> str:
+    return _school_name(slug) if slug else ""
+
+
+def _twist(state: dict, pid: str):
+    tw = state["recruiting"].get("twists")
+    return tw.get(pid) if tw else None
+
+
+def twist_bonus(state: dict, slug: str, pid: str) -> float:
+    """A Surprise Visit's school sits in his top three: interest points over its own while it lasts."""
+    tw = _twist(state, pid)
+    return tw["b"] if tw and tw["k"] == "surprise" and tw["s"] == slug else 0.0
+
+
+def twist_mult(state: dict, slug: str, pid: str, pitch) -> float:
+    """What his twist does to a pitch's worth: another school's Coach pitch against a hot-seat school, an
+    Academics pitch from a school outside ACADEMIC during a Grades Scare."""
+    tw = _twist(state, pid)
+    if not tw or pitch is None:
+        return 1.0
+    if tw["k"] == "hot_seat" and pitch == "coach" and slug != tw["s"]:
+        return HOT_SEAT_PITCH
+    if tw["k"] == "grades" and pitch == "academics":
+        from coach_career import recruiting
+        return GRADES_PITCH if slug not in recruiting.ACADEMIC else 1.0
+    return 1.0
+
+
+def scared_off(state: dict, slug: str, pid: str) -> bool:
+    """An academic AI school keeps a prospect with a Grades Scare off its board while it lasts."""
+    tw = _twist(state, pid)
+    if not tw or tw["k"] != "grades" or slug == state.get("team"):
+        return False
+    from coach_career import recruiting
+    return slug in recruiting.ACADEMIC
+
+
+def knock_back(state: dict, slug: str, pid: str, action: str) -> None:
+    """A call or in-home visit from a school that was in his top three knocks a Surprise Visit's school back out."""
+    tw = _twist(state, pid)
+    if not tw or tw["k"] != "surprise" or slug not in tw.get("r", ()):
+        return
+    del state["recruiting"]["twists"][pid]
+    if slug == state.get("team"):
+        from coach_career import recruiting
+        what = "visit" if action == "hc_visit" else "call"
+        recruiting._event(state, "twist", pid, slug, twist="surprise", end=True, line=f"Your {what} knocked {_rival_name(tw['s'])} back out of his top three.")
+
+
+def moved(state: dict, pid: str):
+    """His new home after a Family Move ({"state", "city", "home"}), or None."""
+    m = state["recruiting"].get("moved")
+    return m.get(pid) if m else None
+
+
+def home_of(state: dict, p: dict) -> list:
+    """Where he lives now: his new home after a Family Move, else his own."""
+    m = moved(state, p["id"])
+    return m["home"] if m else p["home"]
+
+
+def hero_state(state: dict, pid: str, d: dict):
+    """A Hometown Hero's state: it moves with his family."""
+    m = moved(state, pid)
+    return m["state"] if m else d.get("state")
+
+
+def security(state: dict, slug: str):
+    """The head coach's AD security at the school (carousel.ad), read without drawing it into the save: the
+    career league's (a second season on), else the standing a first season starts from (carousel.STANDING:
+    nobody is on the hot seat in year one)."""
+    from coach_career import carousel
+    from sim import season
+    t = ((state.get("league") or {}).get("teams") or {}).get(slug) or season.load_teams().get(slug)
+    if not t or not (t.get("coaches") or {}).get("head_coach"):
+        return None
+    a = t.get("ad") or carousel.ad(dict(t), slug, season.season_year(state))
+    return a.get("security")
+
+
+class _Week:
+    """What a week's twists read, worked out once a step and only when asked: the coming games by school,
+    the hometowns a family can move to, the head coaches' security."""
+
+    def __init__(self, state: dict, week: int):
+        self.state, self.week = state, week
+        self._games = None
+        self._homes = None
+        self._sec: dict = {}
+
+    def games(self) -> dict:
+        if self._games is None:
+            by: dict = {}
+            for g in self.state["games"].values():
+                if g["played"] or g.get("kind") != "regular" or not (self.week < g["week"] <= self.week + BEAT_AHEAD):
+                    continue
+                by.setdefault(g["home"], []).append(g)
+                by.setdefault(g["away"], []).append(g)
+            for v in by.values():
+                v.sort(key=lambda g: (g["week"], g.get("event_id", "")))
+            self._games = by
+        return self._games
+
+    def homes(self) -> list:
+        if self._homes is None:
+            seen: dict = {}
+            for p in self.state["recruiting"]["prospects"].values():
+                h = p["hometown"]
+                if h.get("city") and h.get("state"):
+                    seen.setdefault((h["state"], h["city"]), p["home"])
+            self._homes = sorted((s, c, list(home)) for (s, c), home in seen.items())
+        return self._homes
+
+    def security(self, slug: str):
+        if slug not in self._sec:
+            self._sec[slug] = security(self.state, slug)
+        return self._sec[slug]
+
+
+def _his_schools(state: dict, pid: str) -> tuple:
+    """His schools (offered him or on his list), best first by interest, and their interest."""
+    from coach_career import recruiting
+    rc = state["recruiting"]
+    schools = set(rc["lists"][pid]) | {s for s, pids in rc["offers"].items() if pid in pids}
+    win = recruiting._winning(state)
+    vals = {s: recruiting.interest(state, s, pid, win) for s in schools}
+    return sorted(schools, key=lambda s: (-vals[s], s)), vals
+
+
+def _setup(state: dict, wk: _Week, pid: str, kind: str, rng: random.Random):
+    """The twist `kind` happens to him if it can: (its active record, its line) once it took effect; else None."""
+    from coach_career import programs, recruiting
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    me = state.get("team")
+    week = wk.week
+    order, vals = _his_schools(state, pid)
+    offered = {s for s, pids in rc["offers"].items() if pid in pids}
+    if kind == "surprise":                       # a school outside his top three (one that offered, if any) jumps into it
+        if len(order) < 4:
+            return None
+        outside = ([s for s in order[3:] if s in offered] or order[3:])[:5]
+        school = rng.choices(outside, weights=[math.exp(SURPRISE_TILT * recruiting._baseline(s)) for s in outside])[0]   # the big programs make the surprise trips
+        spot = rng.choices((0, 1, 2), weights=SURPRISE_SPOT)[0]
+        top3 = order[:3]
+        target = vals[top3[0]] + 0.5 if spot == 0 else (vals[top3[spot - 1]] + vals[top3[spot]]) / 2
+        bonus = max(0.0, round(target - vals[school], 3))
+        return ({"k": kind, "s": school, "w": SURPRISE_WEEKS, "b": bonus, "r": top3},
+                f"{_rival_name(school)} made a surprise visit and jumped into his top three.")
+    if kind == "at_game":                        # one of his top five plays at home next week, close to him
+        home = home_of(state, p)
+        ok = []
+        for s in order[:5]:
+            g = next((g for g in wk.games().get(s, ()) if g["home"] == s and g["week"] == week + 1), None)
+            loc = recruiting._team_model(s).get("location")
+            if g and loc and recruiting._miles(tuple(home), tuple(loc)) <= GAME_MILES:
+                ok.append((s, g))
+        if not ok:
+            return None
+        s, g = rng.choice(ok)
+        return ({"k": kind, "s": s, "w": 1, "g": g["week"], "o": g["away"]},
+                f"He plans to be at {_rival_name(s)}'s home game against {_rival_name(g['away'])} this week.")
+    if kind == "hot_seat":                       # his leader's head coach is on the hot seat
+        leader = order[0] if order else None
+        sec = wk.security(leader) if leader else None
+        if sec is None or sec >= HOT_SEAT:
+            return None
+        return ({"k": kind, "s": leader, "w": HOT_SEAT_WEEKS},
+                f"Talk that {_rival_name(leader)}'s head coach is on the hot seat has his other schools selling stability.")
+    if kind == "late_offer":                     # a blue blood that had not offered does, and he wants more
+        if _real(p)[0] < LATE_FROM:
+            return None
+        commits = recruiting._commits(state)
+        blue = [s for s in recruiting.fbs_schools(state) if s != me and s not in offered and programs.get(state, s)["tier"] == 1
+                and commits.get(s, 0) < recruiting.open_spots(state, s) and len(rc["offers"].get(s, [])) < recruiting.offer_cap(state, s)]
+        if not blue:
+            return None
+        win = recruiting._winning(state)
+        blue.sort(key=lambda s: (-recruiting.interest(state, s, pid, win), s))
+        school = rng.choice(blue[:3])
+        nil = min(recruiting.nil_left(state, school), round(recruiting._nil(state, school)["budget"] * recruiting.AI_NIL.get(recruiting.tier_of(p), 0)),
+                  round(recruiting.AI_OVER_ASK * recruiting.ask_from(state, school, pid, win)))
+        try:
+            recruiting._act(state, school, pid, "offer", pitch=recruiting.best_pitch(state, school, pid, required=True), nil=max(0, nil))
+        except recruiting.RecruitingError:
+            return None
+        rest = [vals[s] for s in order if s != school]
+        target = (rest[1] if len(rest) > 1 else rest[0] - 0.5) + 0.5 if rest else 0.0     # in at his second spot
+        now = recruiting.interest(state, school, pid)
+        if target > now:
+            rc["lists"][pid][school] = round(rc["lists"][pid].get(school, 0.0) + target - now, 3)
+        if p.get("nil_ask"):
+            p["nil_ask"] = int(round(p["nil_ask"] * LATE_ASK))
+            recruiting._ASKS.clear()
+        return ({"k": kind, "s": school, "w": 1},
+                f"{_rival_name(school)} offered late and jumped near the top of his list, and his NIL ask went up.")
+    if kind == "family_move":                    # a new home in another state: proximity and a hero's state move with it
+        cur = (moved(state, pid) or {}).get("state") or p["hometown"]["state"]
+        homes = [h for h in wk.homes() if h[0] != cur]
+        if not homes:
+            return None
+        st_, city, home = rng.choice(homes)
+        rc.setdefault("moved", {})[pid] = {"state": st_, "city": city, "home": home}
+        return {"k": kind, "s": None, "w": 1}, f"His family moved to {city}, {st_}."
+    if kind == "grades":                         # the academic AI schools drop him (their offers too) while it lasts
+        if not any(s != me and (s in offered or pid in (rc["boards"].get(s) or ())) for s in recruiting.ACADEMIC):
+            return None                          # no academic school is after him: nothing to scare off
+        for s in sorted(recruiting.ACADEMIC):
+            if s == me:
+                continue
+            board = rc["boards"].get(s)
+            if board and pid in board:
+                board.remove(pid)
+            if pid in rc["offers"].get(s, []):
+                rc["offers"][s].remove(pid)
+                recruiting._unmark(state, s, pid)
+                rc["nil"].get(s, {}).get("held", {}).pop(pid, None)
+        return {"k": kind, "s": None, "w": GRADES_WEEKS}, "A grades scare has the academic schools backing off him."
+    if kind == "beat":                           # he tells one of his top three which of its next opponents to beat
+        cands = [(s, g) for s in order[:3] for g in wk.games().get(s, ())]
+        if not cands:
+            return None
+        s, g = rng.choice(cands)
+        opp = g["away"] if g["home"] == s else g["home"]
+        return ({"k": kind, "s": s, "w": g["week"] - week, "g": g["week"], "o": opp},
+                f"He told {_rival_name(s)} he wants to see them beat {_rival_name(opp)}.")
+    return None
+
+
+def roll_twists(state: dict, week: int) -> list:
+    """The week's twists, at the end of its step: every uncommitted prospect on a board (any school's)
+    without one rolls TWIST_RATE (his real stars); one that hits draws a twist by weight, TWIST_TRIES times
+    at most, until one can happen to him (a twist that needs schools or games he lacks cannot). Logged as "twist" events (a Wants to See You Beat X is private to the school he told). Returns them."""
+    from coach_career import recruiting
+    from sim import season
+    rc = state["recruiting"]
+    if rc.get("portal") or week >= season.FINAL_WEEK:
+        return []
+    active = rc.setdefault("twists", {})
+    pool = set(rc.get("board") or ())
+    for b in rc["boards"].values():
+        pool.update(b)
+    rng = recruiting._rng(state, "twists")
+    wk = _Week(state, week)
+    out = []
+    pros = rc["prospects"]
+    for pid in sorted(pool, key=lambda q: (pros[q]["rank"], q)):
+        st = rc["status"][pid]
+        if st["signed"] or st["committed"] or pid in active:
+            continue
+        if rng.random() >= TWIST_RATE.get(_real(pros[pid])[0], TWIST_RATE[2]):
+            continue
+        left = dict(TWISTS)
+        for _ in range(TWIST_TRIES):
+            kind = rng.choices(list(left), weights=list(left.values()))[0]
+            del left[kind]
+            got = _setup(state, wk, pid, kind, rng)
+            if got:
+                tw, line = got
+                active[pid] = tw
+                out.append(recruiting._event(state, "twist", pid, tw.get("s"), twist=kind, line=line,
+                                             **({"private": True} if kind == "beat" else {})))
+                break
+    return out
+
+
+def twist_week(state: dict, week: int) -> None:
+    """The start of the week's step: an At Your Game or a Wants to See You Beat X plays out with the game
+    just played; every twist has a week less, and the ones run out end."""
+    rc = state["recruiting"]
+    active = rc.get("twists")
+    if not active:
+        return
+    for pid in sorted(active):
+        tw = active[pid]
+        if tw["k"] in ("at_game", "beat") and tw.get("g") == week:
+            _game_twist(state, pid, tw, week)
+        tw["w"] -= 1
+        if tw["w"] <= 0:
+            del active[pid]
+
+
+def _game_twist(state: dict, pid: str, tw: dict, week: int) -> None:
+    """His game played out: At Your Game, a win GAME_WIN (a blowout GAME_BLOWOUT) on his interest in the
+    school, a loss cools him a week; Wants to See You Beat X, BEAT_WIN for the win, BEAT_LOSS off for the loss."""
+    from coach_career import recruiting
+    rc = state["recruiting"]
+    s, opp = tw["s"], tw["o"]
+    g = next((g for g in state["games"].values() if g["week"] == week and g["played"] and {g["home"], g["away"]} == {s, opp}), None)
+    if g is None or rc["status"][pid]["signed"]:
+        return
+    mine = g["home_score"] - g["away_score"] if g["home"] == s else g["away_score"] - g["home_score"]
+    name, foe = _rival_name(s), _rival_name(opp)
+    lst = rc["lists"][pid]
+    if tw["k"] == "at_game":
+        if mine > 0:
+            mult = GAME_BLOWOUT if mine >= BLOWOUT else GAME_WIN
+            gain = climbs(state, s, pid, min(GAME_CAP, (mult - 1) * max(0.0, recruiting.interest(state, s, pid))))
+            lst[s] = round(lst.get(s, 0.0) + gain, 3)
+            line = f"He watched {name} blow out {foe} and loved every minute." if mine >= BLOWOUT else f"He watched {name} beat {foe} and came away impressed."
+        else:
+            recruiting._contact(state, s, pid)["cooled_until"] = week + 1
+            set_cooled_why(state, s, pid, "game")
+            line = f"He watched {name} lose to {foe} and left cooler on them."
+        recruiting._event(state, "twist", pid, s, twist="at_game", end=True, line=line)
+    else:
+        if mine > 0:
+            lst[s] = round(lst.get(s, 0.0) + climbs(state, s, pid, BEAT_WIN), 3)
+            line = f"{name} beat {foe}, just as he hoped."
+        else:
+            lst[s] = round(lst.get(s, 0.0) - BEAT_LOSS, 3)
+            line = f"{name} lost to {foe}, and he noticed."
+        recruiting._event(state, "twist", pid, s, twist="beat", end=True, line=line, private=True)
+
+
+def twist_label(tw: dict) -> str:
+    return TWIST_LABEL[tw["k"]].format(foe=_rival_name(tw.get("o")))
+
+
+def twist_view(state: dict, viewer: str, pid: str):
+    """His twist as `viewer` sees it on his profile and in the pane, or None (Wants to See You Beat X: only
+    the school he told): {"key", "label", "line", "weeks_left"}, the line its latest one."""
+    tw = _twist(state, pid)
+    if not tw or (tw["k"] == "beat" and tw["s"] != viewer):
+        return None
+    line = next((e.get("line") for e in reversed(state["recruiting"]["log"])
+                 if e["pid"] == pid and e["kind"] == "twist" and e.get("twist") == tw["k"] and shown_to(e, viewer)), None)
+    return {"key": tw["k"], "label": twist_label(tw), "line": line, "weeks_left": tw["w"]}
+
+
+def twist_fields(state: dict, pid: str) -> dict:
+    """A twist's placeholders for scenes: {rival} (the school it is about), {foe} (the opponent), {moved} (his new town)."""
+    tw = _twist(state, pid) or {}
+    m = moved(state, pid) or {}
+    return {"rival": _rival_name(tw.get("s")), "foe": _rival_name(tw.get("o")), "moved": m.get("city") or ""}
