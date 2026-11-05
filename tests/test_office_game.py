@@ -1,7 +1,8 @@
-"""The Office shows the game (round 3, office-tips): before your game this week a Next Game card (both teams, ranks,
-records, the venue, the win chance); after a sim the Last Game card (W or L and the final, the score by quarter, three or
-four leaders, Full Box Score opening the box-score modal with its box: token) beside the Next Game card; a bye shows the
-next opponent; a one-line conference standing that matches the Standings tab ("0-0" before any games). Your Program
+"""The Office shows the game (round 3, office-tips; the two-column redesign, web/office.js): before your game this week
+the Next Game hero (both teams, ranks, records, the venue, the win chance); after a sim the Last Game card (W or L and
+the final, the score by quarter, three or four leaders, Full Box Score opening the box-score modal with its box: token)
+beside This Week's Plan, under the hero; a bye shows the next opponent; a one-line conference standing in Program Pulse
+that matches the Standings tab ("SEC · 0-0" before any games). Your Program
 leaves the Office for the League's Programs tab (the card and every program's table, open), which a reload restores.
 Help lives in ⓘ tips: on a phone the Scouting Center's opens on a tap and closes on Escape, with no help line under the
 title. The Stats roster reads the season's own roster (its overall is the depth chart's and the player page's) and its
@@ -44,40 +45,48 @@ def clean(page, where="#season") -> None:
 def want_standing(base, sid) -> str:
     s = call(base, f"/api/season/{sid}")
     rec = s["record"]
+    short = {"American Athletic Conference": "American", "FBS Independent": "Independents"}.get(s["conference"], s["conference"])
     if not rec["wins"] + rec["losses"]:
-        return "0-0"
+        return f"{short} · 0-0"
     rows = call(base, f"/api/season/{sid}/standings")["standings"][s["conference"]]
     r = next(x for x in rows if x["slug"] == s["team"])
     if "independent" in s["conference"].lower():
-        return f"{r['wins']}-{r['losses']} · {s['conference']}"
+        return f"{short} · {r['wins']}-{r['losses']}"
     div = f" {r['division']}" if r.get("division") else ""
-    return f"{ordinal(r['conf_rank'])} in the {s['conference']}{div} · {r['wins']}-{r['losses']} ({r['conf_wins']}-{r['conf_losses']} {s['conference']})"
+    return f"{ordinal(r['conf_rank'])} in the {short}{div} · {r['conf_wins']}-{r['conf_losses']} {short}"
+
+
+def standing_line(page) -> str:
+    """Program Pulse's standing line, once the Office's read has filled it."""
+    page.wait_for_function("() => (document.querySelector('#tab-office .ofc-pulse .go-standing-line') || {}).textContent", timeout=60_000)
+    return page.inner_text("#tab-office .ofc-pulse .go-standing-line")
 
 
 def check_upcoming(page, base, sid) -> None:
     page.set_viewport_size({"width": 1280, "height": 900})
     s = call(base, f"/api/season/{sid}")
     g = next(x for x in s["schedule"] if x["week"] == s["current_week"] + 1)
-    open_tab(page, base, sid, "office", "#tab-office .go-games")
+    open_tab(page, base, sid, "office", "#tab-office .ofc-hero")
     assert not page.query_selector("#tab-office .go-game-last"), "no Last Game before the first game"
-    card = page.inner_text("#tab-office .go-game-next")
+    card = page.text_content("#tab-office .go-game-next")
     assert g["opponent_name"] in card and s["team_name"] in card, card
-    assert "Next Game" in page.text_content("#tab-office .go-game-next .go-kicker")
-    assert any(w in card for w in ("Home Game", "Road Game", "Neutral Site")), card
+    assert page.get_attribute("#tab-office .go-game-next", "aria-label") == "Next Game"
+    assert (s["week_labels"].get(str(g["week"])) or f"Week {g['week']}") in page.text_content("#tab-office .go-game-next .go-kicker")
+    assert any(w in card for w in ("Home Game", "Away Game", "Neutral Site")), card
     page.wait_for_function("() => /Win Chance/i.test(document.querySelector('#tab-office .go-game-next .go-edge').textContent)", timeout=60_000)
-    assert page.inner_text("#tab-office .go-standing-line") == "0-0", page.inner_text("#tab-office .go-standing-line")
-    assert page.query_selector("#tab-office .go-play [data-play=gameday]"), "Game Day stays on the play card"
+    assert standing_line(page) == want_standing(base, sid), (standing_line(page), want_standing(base, sid))
+    assert page.query_selector("#tab-office .go-game-next .go-play [data-play=gameday]"), "Game Day stays on the play card, in the hero"
     assert not page.query_selector("#tab-office .go-program"), "Your Program left the Office"
     clean(page)
 
 
 def check_bye(page, base, sid) -> None:
-    open_tab(page, base, sid, "office", "#tab-office .go-games")
+    open_tab(page, base, sid, "office", "#tab-office .ofc-hero")
     s = call(base, f"/api/season/{sid}")
     nxt = next(x for x in s["schedule"] if x["opponent"] and not x["played"])
     k = page.text_content("#tab-office .go-game-next .go-kicker")
     assert k.startswith("Bye This Week · Next Game · ") and (s["week_labels"].get(str(nxt["week"])) or f"Week {nxt['week']}") in k, k
-    assert nxt["opponent_name"] in page.inner_text("#tab-office .go-game-next")
+    assert nxt["opponent_name"] in page.text_content("#tab-office .go-game-next")
 
 
 def sim_week(page, base, sid) -> None:
@@ -99,13 +108,13 @@ def check_played(page, base, sid) -> None:
     assert q[0][:4] == [str(x) for x in box["away"]["quarters"][:4]] and q[1][-1] == str(box["home"]["score"]), (q, box["away"]["quarters"])
     leaders = page.eval_on_selector_all("#tab-office .go-leaders li .go-kicker", "els => els.map(e => e.textContent)")
     assert 3 <= len(leaders) <= 4 and leaders[:3] == ["Passing", "Rushing", "Receiving"], leaders
-    # both cards when there is a next game, side by side on a desktop
-    assert page.query_selector("#tab-office .go-games.two .go-game-next"), "Last Game beside Next Game"
-    r = page.evaluate("() => [...document.querySelectorAll('#tab-office .go-game')].map(c => c.getBoundingClientRect().top)")
-    assert len(r) == 2 and abs(r[0] - r[1]) < 2, f"side by side: {r}"
+    # the hero above, Last Game beside This Week's Plan under it on a desktop
+    assert page.query_selector("#tab-office .go-game-next"), "the Next Game hero stays"
+    r = page.evaluate("() => ['.go-game-next', '.go-game-last', '.ofc-plan'].map(s => document.querySelector('#tab-office ' + s).getBoundingClientRect()).map(b => [b.top, b.bottom])")
+    assert r[1][0] >= r[0][1] - 0.5 and abs(r[1][0] - r[2][0]) < 2, f"Last Game beside the plan, under the hero: {r}"
     # the standing line is the Standings tab's place and record
     want = want_standing(base, sid)
-    assert page.inner_text("#tab-office .go-standing-line") == want, (page.inner_text("#tab-office .go-standing-line"), want)
+    assert standing_line(page) == want, (standing_line(page), want)
     clean(page)
     # Full Box Score: the existing modal, its box: token in the address
     page.click("#tab-office .go-full-box")
@@ -124,7 +133,7 @@ def check_played(page, base, sid) -> None:
 def check_phone(page, base, sid) -> None:
     page.set_viewport_size({"width": 400, "height": 860})
     open_tab(page, base, sid, "office", "#tab-office .go-game-last .go-leaders li")
-    r = page.evaluate("() => [...document.querySelectorAll('#tab-office .go-game')].map(c => { const b = c.getBoundingClientRect(); return [b.top, b.bottom, b.right]; })")
+    r = page.evaluate("() => ['.go-game-next', '.go-game-last'].map(s => document.querySelector('#tab-office ' + s).getBoundingClientRect()).map(b => [b.top, b.bottom, b.right])")
     assert len(r) == 2 and r[1][0] >= r[0][1] - 0.5, f"a phone stacks the cards: {r}"
     assert all(x[2] <= 400.5 for x in r), r
     assert page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth + 1"), "no sideways scroll on the Office"
@@ -146,7 +155,7 @@ def check_programs(page, base, sid) -> None:
     assert not page.is_hidden("#tab-programs"), "a reload lands on Programs"
     clean(page)
     tab_click(page, "office")
-    page.wait_for_selector("#tab-office .go-games", timeout=60_000)
+    page.wait_for_selector("#tab-office .ofc-hero", timeout=60_000)
     assert not page.query_selector("#tab-office .go-program"), "no program card on the Office"
 
 
@@ -245,14 +254,14 @@ if __name__ == "__main__":
             check_bye(page, base, bye["id"])
             check_roster(page, base, play["id"])
             check_tip(page, base, play["id"])
-            open_tab(page, base, play["id"], "office", "#tab-office .go-games")
+            open_tab(page, base, play["id"], "office", "#tab-office .ofc-hero")
             sim_week(page, base, play["id"])
             check_played(page, base, play["id"])
             check_phone(page, base, play["id"])
             check_programs(page, base, play["id"])
             browser.close()
         assert not errors, errors
-        print("office game ok: Next Game before, Last Game beside Next Game after a sim (quarters, leaders, Full Box Score), a bye's next "
+        print("office game ok: Next Game before, Last Game beside the plan under the Next Game hero after a sim (quarters, leaders, Full Box Score), a bye's next "
               "opponent, the standing line, the Programs tab (and a reload), the Scouting ⓘ on a phone, the roster's OVR")
     finally:
         for sid in (play["id"], bye["id"]):
