@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from test_career_e2e import call, free_port, launch   # noqa: E402
+from test_career_e2e import call, free_port, launch, tab_click   # noqa: E402
 
 WIN = ".modal.modal-scene:not([hidden])"
 SHOTS = os.environ.get("SCENE_SHOTS")
@@ -64,7 +64,7 @@ def modal_tokens(page) -> list:
 def open_board(page, base, sid) -> None:
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#season:visible")
-    page.click("#season-tabs button[data-tab=recruiting]")
+    tab_click(page, "recruiting")   # through More ▾ on a phone
     page.wait_for_selector(".go-row-recruit", timeout=120_000)
     time.sleep(0.8)
 

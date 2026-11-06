@@ -178,7 +178,7 @@ def check_programs(page, base, sid) -> None:
     open_tab(page, base, sid, "programs", "#tab-programs .go-programs tbody tr")
     assert page.is_visible("#tab-programs .go-program .go-program-bars"), "Your Program's bars"
     assert page.is_visible("#tab-programs .go-programs"), "every program, open"
-    assert page.inner_text("#season-tabs button[data-tab=programs]") .strip().lower() == "programs"
+    assert page.text_content("#season-tabs button[data-tab=programs]").strip().lower() == "programs"   # the League menu's entry
     assert page.query_selector("#tab-programs .go-programs tr.mine"), "your row is marked"
     assert page.query_selector("#tab-programs .go-job"), "the AD's goal sits with the program"
     page.reload()

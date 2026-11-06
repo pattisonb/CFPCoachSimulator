@@ -1082,19 +1082,33 @@
     if (status) box.append(el("span", { text: ` · ${status}` }));
   }
 
-  // ----- the tab row never scrolls: the tabs that do not fit go behind "More ▾" (priority+ pattern) -----
+  // ----- the tab row never scrolls: the career tabs that do not fit go behind "More ▾" (priority+ pattern) -----
+  // The league tabs (Standings, Rankings and the rest, button.league) are not in the row at all: their buttons stay
+  // in the DOM (.tab-in-menu, display none) so selectTab, the address and the calendar keep working, and one
+  // "League ▾" button opens them as a menu (openTabLeague). It always keeps its slot, and reads "League: Standings ▾"
+  // (.active) while a league tab is open, so the open tab is always visible in the bar.
   // Measured synchronously (the classes come off, the widths are read, the final classes go on, all before the
   // browser paints), so nothing flashes or jumps. The open tab always keeps a slot; the last tab on the right
   // that would not fit makes way for it. Tab buttons stay in the DOM; an overflowed one only gets .tab-ovf.
   let tabsBusy = false;
+  const leagueTabs = () => [...$("#season-tabs .tab-row").querySelectorAll("button[data-tab].league")].filter((b) => !b.hidden);
+  function labelLeague() {
+    const league = $("#tab-league");
+    if (!league) return;
+    const cur = leagueTabs().find((b) => b.classList.contains("active"));
+    const name = cur ? cur.textContent.trim() : "";
+    league.textContent = cur ? `League: ${name} ▾` : "League ▾";
+    league.setAttribute("aria-label", cur ? `League: ${name}` : "League");
+    league.classList.toggle("active", !!cur);
+  }
   function layoutTabs() {
-    const row = $("#season-tabs .tab-row"), more = $("#tab-more");
+    const row = $("#season-tabs .tab-row"), more = $("#tab-more"), league = $("#tab-league");
     if (!row || !more || tabsBusy) return;
     tabsBusy = true;
     try {
-      const tabs = [...row.querySelectorAll("button[data-tab]")], divider = row.querySelector(".tab-divider");
+      labelLeague();
+      const tabs = [...row.querySelectorAll("button[data-tab]:not(.league)")];
       for (const b of tabs) b.classList.remove("tab-ovf");
-      if (divider) divider.classList.remove("tab-ovf");
       more.hidden = false; more.textContent = "More ▾"; more.classList.remove("active");
       const avail = row.clientWidth;
       if (avail > 0) {
@@ -1103,10 +1117,10 @@
         const shown = tabs.filter((b) => b.offsetWidth > 0);          // not hidden by the calendar or career mode
         const act = shown.find((b) => b.classList.contains("active"));
         const w = new Map(shown.map((b) => [b, wOf(b)]));
-        const wDiv = divider && divider.offsetWidth > 0 ? wOf(divider) : 0, wMore = wOf(more);
+        const wLeague = league && !league.hidden ? wOf(league) : 0, wMore = wOf(more);
         const width = (set, withMore) => {
-          const n = set.length + (withMore ? 1 : 0) + (wDiv && set.some((b) => b.classList.contains("league")) ? 1 : 0);
-          return set.reduce((a, b) => a + w.get(b), 0) + (wDiv && set.some((b) => b.classList.contains("league")) ? wDiv : 0) + (withMore ? wMore : 0) + gap * Math.max(0, n - 1);
+          const n = set.length + (wLeague ? 1 : 0) + (withMore ? 1 : 0);
+          return set.reduce((a, b) => a + w.get(b), 0) + wLeague + (withMore ? wMore : 0) + gap * Math.max(0, n - 1);
         };
         let keep = shown;
         if (width(shown, false) > avail + 0.5) {
@@ -1118,7 +1132,6 @@
         }
         const out = shown.filter((b) => !keep.includes(b));
         for (const b of out) b.classList.add("tab-ovf");
-        if (divider && !keep.some((b) => b.classList.contains("league"))) divider.classList.add("tab-ovf");
         more.hidden = !out.length;
         more.dataset.hidden = out.map((b) => b.dataset.tab).join(" ");
         const cur = out.find((b) => b.classList.contains("active"));    // guard: the open tab is never behind More
@@ -1138,17 +1151,26 @@
     const items = names.map((t) => ({ name: $(`#season-tabs button[data-tab=${t}]`).textContent.trim(), onPick: () => tabPick(t) }));
     if (items.length) openMenu(more, items, "More Tabs");
   }
+  // League ▾: the league tabs the calendar currently shows (tabsForTheCalendar), in the bar's order
+  function openTabLeague() {
+    const items = leagueTabs().map((b) => ({ name: b.textContent.trim(), current: b.classList.contains("active"), onPick: () => tabPick(b.dataset.tab) }));
+    if (items.length) openMenu($("#tab-league"), items, "League");
+  }
   let tabsObserver = null;
   {
     const row = $("#season-tabs .tab-row");
     $("#tab-more").addEventListener("click", openTabMore);
+    $("#tab-league").addEventListener("click", openTabLeague);
     if (window.ResizeObserver) new ResizeObserver(layoutTabs).observe(row);
     // a tab shown or hidden (career mode, the offseason, awards and the bracket appearing) re-flows the row
     if (window.MutationObserver) {
-      tabsObserver = new MutationObserver((recs) => { if (recs.some((r) => r.target !== $("#tab-more"))) layoutTabs(); });
+      tabsObserver = new MutationObserver((recs) => { if (recs.some((r) => r.target !== $("#tab-more") && r.target !== $("#tab-league"))) layoutTabs(); });
       tabsObserver.observe(row, { subtree: true, attributes: true, attributeFilter: ["hidden"] });
     }
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutTabs);
+    // the tab font (Barlow Condensed) loads only once the tabs show, after fonts.ready has resolved: a font that
+    // lands later changes the tabs' widths without resizing the row, so the row lays out again then
+    if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", layoutTabs);
   }
 
   function selectTab(name) {
@@ -1293,7 +1315,7 @@
 
   // Coach Career: the recruiting tabs (recruiting.js) and the week's steps under the header
   const CAREER_TABS = ["offseason", "office", "recruiting", "prospects", "scouting", "classes", "programs"];
-  // the League row follows the calendar in a career: the bracket and bowls once the field is set
+  // the League menu follows the calendar in a career: the bracket and bowls once the field is set
   // (as Championship Week ends), the awards once the races have a shape, the classes once signing opens,
   // the summary when the season is done; a plain season keeps every tab
   const SELECTION_WEEK = 16, AWARDS_FROM = 4;

@@ -47,9 +47,15 @@ def menu_pick(page, name: str) -> None:
 
 
 def tab_click(page, tab: str) -> None:
-    """Open a season tab as the player does: click it in the row, or, when the row has no room for it (it sits behind
-    More ▾, web/season.js layoutTabs), pick it from More's menu."""
+    """Open a season tab as the player does: a league tab (Standings, Rankings and the rest) from the League ▾ menu
+    (web/season.js openTabLeague); a career tab by its button in the row, or, when the row has no room for it (it
+    sits behind More ▾, layoutTabs), from More's menu."""
     sel = f"#season-tabs button[data-tab={tab}]"
+    if page.evaluate("(s) => document.querySelector(s).classList.contains('league')", sel):
+        label = page.evaluate("(s) => document.querySelector(s).textContent.trim()", sel)
+        page.click("#tab-league")
+        page.click(f".go-menu .go-menu-item:has(b:text-is('{label}'))")
+        return
     hidden = "(s) => document.querySelector(s).classList.contains('tab-ovf')"
     # the row lays out after the page shows (layoutTabs on load and resize): a tab visible at the first look can move
     # behind More a moment later, so a click that does not land is followed by a fresh look

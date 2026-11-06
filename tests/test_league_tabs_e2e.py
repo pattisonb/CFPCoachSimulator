@@ -91,7 +91,7 @@ def check(page, where: str, problems: list, standings: bool = False) -> None:
 
 def tabs(page) -> list[str]:
     return page.evaluate("""() => [...document.querySelectorAll('#season-tabs button[data-tab]')]
-        .filter((b) => !b.hidden && (b.classList.contains('tab-ovf') || b.offsetWidth > 0)).map((b) => b.dataset.tab)""")
+        .filter((b) => !b.hidden && (b.classList.contains('tab-ovf') || b.classList.contains('league') || b.offsetWidth > 0)).map((b) => b.dataset.tab)""")
 
 
 def sweep(page, where: str, problems: list, skip: tuple = ()) -> list[str]:

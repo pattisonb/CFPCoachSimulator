@@ -130,9 +130,9 @@ body.season-open.topbar-off .topbar { display: none; }
 .tabs { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
 .tab-row { display: flex; gap: 6px; flex-wrap: nowrap; align-items: center; min-width: 0; overflow: hidden; }   /* never scrolls sideways: tabs that do not fit go into More (web/season.js layoutTabs) */
 #season-tabs .tab-row .tab-ovf { display: none !important; }
+#season-tabs .tab-row .tab-in-menu { display: none !important; }   /* the league tabs: in the DOM for selectTab and the address, on screen only as the League ▾ menu (openTabLeague) */
 .tab-row button { white-space: nowrap; flex: none; }
-.tab-divider { flex: none; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 0 4px 0 10px; margin-left: 4px; border-left: 1px solid var(--border); }
-.tab-row button.league { font-size: 13px; padding: 5px 10px; }
+.tab-row .tab-league { margin-left: auto; }   /* League ▾ sits at the row's right end, after More ▾ */
 .tabs button { background: transparent; border-color: transparent; color: var(--muted); }
 .tabs button.active { background: var(--panel-2); color: var(--text); border-color: var(--border); }
 
@@ -1243,19 +1243,17 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-filterbar select { min-height: 40px; }
 
 /* the tab bar is the top of the page in a career, and a little slimmer: the team chip at its left end,
-   the tabs scrolling in one row, ☰ Menu at its right end (first on a phone) */
+   the career tabs in one row with League ▾ and More ▾, ☰ Menu at its right end (first on a phone) */
 body.career-mode #season-tabs { display: flex; flex-direction: row; align-items: center; gap: 4px 8px; margin-bottom: 12px; padding: 4px 6px;
   background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
 body.career-mode #season-tabs .tab-row { gap: 4px; flex: 1 1 auto; }
 body.career-mode #season-tabs button { flex: none; min-height: 36px; padding: 0 12px; border-radius: 10px; color: var(--text);
   font-family: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif; font-weight: 800; font-size: 17px; letter-spacing: 0.5px; text-transform: uppercase; }
-body.career-mode #season-tabs button.league { min-height: 36px; padding: 0 10px; font-size: 14px; font-weight: 700; color: var(--muted); }
-body.career-mode #season-tabs button.league.active { color: var(--go-primary-ink); }
-body.career-mode #season-tabs .tab-divider { border-color: var(--border); }
+body.career-mode #season-tabs .tab-league, body.career-mode #season-tabs .tab-more { padding: 0 10px; font-size: 15px; }
 @media (hover: hover) { body.career-mode #season-tabs button:hover:not(.active) { border-color: var(--border); background: var(--panel-2); } }
 body.career-mode #season-tabs button.active { background: var(--go-primary); color: var(--go-primary-ink); border-color: var(--go-primary); box-shadow: none; }
 @media (min-width: 861px) { body.career-mode #season-tabs { position: sticky; top: var(--topbar-h, 0px); z-index: 4; box-shadow: 0 6px 16px var(--shadow); } }
-@media (max-width: 759px) { body.career-mode #season-tabs button { min-height: 44px; padding: 0 9px; font-size: 15px; } body.career-mode #season-tabs button.league { min-height: 44px; font-size: 14px; } body.career-mode #season-tabs button[data-tab=classes] { margin-right: 0; } }
+@media (max-width: 759px) { body.career-mode #season-tabs button { min-height: 44px; padding: 0 9px; font-size: 15px; } body.career-mode #season-tabs .tab-league, body.career-mode #season-tabs .tab-more { padding: 0 8px; font-size: 14px; } }
 /* the week strip is for the season's screens, so the career screens leave it out (a one-week sim's bar still shows) */
 body.career-mode.on-career-tab #week-strip, body.career-mode.on-career-tab #week-date { display: none !important; }
 .go-sel { min-height: 44px; border-radius: 12px; }
