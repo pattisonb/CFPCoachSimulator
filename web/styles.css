@@ -1582,3 +1582,11 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
 .rcp-card.edge.good { --card-bar: var(--good); border-top-color: var(--border); }
 .rcp-card.edge.bad { --card-bar: var(--bad); border-top-color: var(--border); }
 .ofc .go-card > .go-kicker:first-child:not(.muted), .ofc .go-card > .go-card-head:first-child .go-kicker, .ofc .go-card > .go-game-head:first-child .go-kicker { color: inherit; }
+/* square corners (the player's call), and the Office hero's kicker line is its bar too */
+.go-card, .rcp-card, #tab-offseason .go-card { border-radius: 0; --card-radius: 0; }
+.ofc-hero { border-top: 1px solid var(--border) !important; --card-bar: var(--ofc-team, var(--go-primary, var(--accent))); }
+.ofc .go-card.ofc-hero > .ofc-hero-head:first-child { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; min-height: 42px; box-sizing: border-box;
+  margin: calc(-1 * var(--card-pad-y)) calc(-1 * var(--card-pad-x)) 14px; padding: 8px var(--card-pad-x); background: var(--card-bar); color: var(--card-bar-ink, var(--go-primary-ink, var(--accent-ink)));
+  border-radius: 0; font-size: 12px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
+.ofc .go-card.ofc-hero > .ofc-hero-head:first-child .go-kicker, .ofc .go-card.ofc-hero > .ofc-hero-head:first-child .ofc-kicker { color: inherit; }
+.ofc .go-card.ofc-hero > .ofc-hero-head:first-child .go-tag, .ofc .go-card.ofc-hero > .ofc-hero-head:first-child .go-pill { background: color-mix(in srgb, currentColor 16%, transparent); border-color: color-mix(in srgb, currentColor 45%, transparent); color: inherit; }
