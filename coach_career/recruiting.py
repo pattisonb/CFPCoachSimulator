@@ -68,7 +68,8 @@ WEEKLY_HOURS_BASE = 140                    # *tune* a school's recruiting hours 
 WEEKLY_HOURS_PER = 0.4                     # *tune* ... plus this many per rating point over 50 (about 150 for most schools)
 SCOUT_POINTS_BASE = 150                    # *tune* your scouting points a week with a best evaluator of 50 (about four full reports away from your areas) ...
 SCOUT_POINTS_PER = 2.0                     # *tune* ... plus this many per evaluation point over 50 (250 at 100)
-LOOK_COST = {"area": 10, "away": 15, "portal": 5}   # *tune* a Send's points: a prospect in a staffed area, one away from your scouts, a portal entrant
+LOOK_COST = {"home": 5, "area": 10, "away": 15, "portal": 5}   # *tune* a Send's points: a prospect close to home (his state, or HOME_MILES), one in a staffed area, one away from your scouts, a portal entrant
+HOME_MILES = 150                                     # *tune* a prospect this close to your campus is a "home" look, whatever his state
 SCENES = ("call", "hc_visit")              # your calls and in-home visits without a pitch open a scene (scenes.py)
 # looks come in trip units: a full report is REPORT_LOOKS looks and nothing goes past it (read["looks"] <= 3 always)
 REPORT_LOOKS = 3                           # a complete scouting report: three looks (flags, "our comp" and the SCOUTED line wait for it)
@@ -1087,13 +1088,34 @@ def covered_states(state: dict) -> set[str]:
     return {code for member in staff for code in AREAS.get(member.get("area"), [])}
 
 
+def near_home(state: dict, slug: str, pid: str) -> bool:
+    """Whether the prospect is close to your campus: his hometown state is your school's, or his home (after a
+    Family Move) lies within HOME_MILES of it."""
+    from sim import season
+    p = state["recruiting"]["prospects"][pid]
+    team_state = (season.load_teams().get(slug) or {}).get("state")
+    if team_state and p["hometown"]["state"] == team_state:
+        return True
+    loc = _team_model(slug).get("location")
+    return bool(loc) and _miles(tuple(persona.home_of(state, p)), tuple(loc)) <= HOME_MILES
+
+
 def look_cost(state: dict, slug: str, pid: str) -> int:
-    """What a Send on `pid` costs in scouting points: a portal entrant's is the cheapest, then one in an area a
-    staff scout covers, then one away from your scouts."""
+    """What a Send on `pid` costs in scouting points: a portal entrant's and a prospect's close to home (his state,
+    or within HOME_MILES of your campus) are the cheapest, then one in an area a staff scout covers, then one away
+    from your scouts. When less than a full look finishes his report (2.5 of 3 looks after a half-look week), the
+    Send costs half its tier, rounded up to a multiple of 5 (5 stays 5, 10 -> 5, 15 -> 10)."""
     if is_portal(state):
-        return LOOK_COST["portal"]
-    home = state["recruiting"]["prospects"][pid]["hometown"]["state"]
-    return LOOK_COST["area" if home in covered_states(state) else "away"]
+        full = LOOK_COST["portal"]
+    elif near_home(state, slug, pid):
+        full = LOOK_COST["home"]
+    else:
+        home = state["recruiting"]["prospects"][pid]["hometown"]["state"]
+        full = LOOK_COST["area" if home in covered_states(state) else "away"]
+    looks = (state["recruiting"].get("reads", {}).get(pid) or {}).get("looks", 0) or 0
+    if 0 < REPORT_LOOKS - looks < SEND_LOOK:
+        return 5 * math.ceil(full / 2 / 5)
+    return full
 
 
 def nil_budget(state: dict, slug: str) -> int:

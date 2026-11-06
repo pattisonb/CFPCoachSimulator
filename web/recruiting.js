@@ -338,7 +338,7 @@
 
   // ----- the Recruiting board ----------------------------------------------------------------------
 
-  const ACT_TIPS = { scout: "Send your best evaluator to see him: a look costs scouting points (5, 10 or 15, see the Scouting Center), any week, until his report is complete at three looks; a week in a scout's area is half a look, up to two" };
+  const ACT_TIPS = { scout: "Send your best evaluator to see him: a look costs scouting points (5 close to home: his state or within 150 miles of campus, 10 in a scout's area, 15 elsewhere; a portal entrant 5; half that when half a look finishes his report), any week, until his report is complete at three looks; a week in a scout's area is half a look, up to two" };
   // looks come in trip units (a Send one, an area week half, a full report three): a count shows its half only when it has one
   const fmtLooks = (n) => (Number.isInteger(Number(n)) ? String(Number(n)) : Number(n).toFixed(1));
 

@@ -43,21 +43,35 @@ def test_points_range():
         assert recruiting.best_evaluator(st) == rating and recruiting.scout_points(st, ME) == want and want % 5 == 0
 
 
-def pick(st, in_area):
+def pick(st, in_area, home=False):
+    """An unscouted, unsigned prospect: in your state (`home`), else in or out of a staffed area but not close to home."""
     rc = st["recruiting"]
     codes = {c for m in st["career"]["staff"] for c in recruiting.AREAS.get(m.get("area"), [])}
-    return next(q for q, p in rc["prospects"].items() if q not in rc["reads"]
-                and (p["hometown"]["state"] in codes) == in_area and not rc["status"][q]["signed"])
+    return next(q for q, p in rc["prospects"].items() if q not in rc["reads"] and not rc["status"][q]["signed"]
+                and (p["hometown"]["state"] == "OH") == home
+                and (home or ((p["hometown"]["state"] in codes) == in_area and not recruiting.near_home(st, ME, q))))
 
 
 def test_look_costs():
     st = fresh()
     st["career"]["staff"][0]["area"] = "Midwest"
-    near, far = pick(st, True), pick(st, False)
+    home, near, far = pick(st, True, home=True), pick(st, True), pick(st, False)
+    assert recruiting.look_cost(st, ME, home) == recruiting.LOOK_COST["home"] == 5
     assert recruiting.look_cost(st, ME, near) == recruiting.LOOK_COST["area"] == 10
     assert recruiting.look_cost(st, ME, far) == recruiting.LOOK_COST["away"] == 15
+    # close to home without the state: a prospect within HOME_MILES of the campus costs the home price too
+    rc = st["recruiting"]
+    close = next(q for q, p in rc["prospects"].items() if p["hometown"]["state"] != "OH" and recruiting.near_home(st, ME, q))
+    assert recruiting.look_cost(st, ME, close) == recruiting.LOOK_COST["home"]
     port = dict(st, recruiting=dict(st["recruiting"], portal=True))
     assert recruiting.look_cost(port, ME, near) == recruiting.LOOK_COST["portal"] == 5
+    # half a look finishes his report: half the tier, rounded up to a multiple of 5
+    for q, full, half in ((home, 5, 5), (near, 10, 5), (far, 15, 10)):
+        rc["reads"][q] = {"looks": recruiting.REPORT_LOOKS - 1, "by": {}, "g": {grp: [40.0, 60.0] for grp in recruiting.GROUPS}}
+        assert recruiting.look_cost(st, ME, q) == full, (q, full)          # a whole look still needed: the full tier
+        rc["reads"][q]["looks"] = recruiting.REPORT_LOOKS - 0.5
+        assert recruiting.look_cost(st, ME, q) == half, (q, half)
+        del rc["reads"][q]
 
 
 def test_send_spends_points_not_hours():

@@ -1318,7 +1318,10 @@ Scouting Center, master and detail, built from the player's mockup in the site's
   the read is: Confident, Could Change, Early Look), then the tabs **Report** (the Scouting Report and the
   Attributes card), **Looks** (Looks & Uncertainty with the flags, a coordinator's "Likes Him", this and last week's
   report lines on him and All Reports) and **Profile** (the traits and background cards). On the tab row: **Send Scout
-  · 10 Pts** (its row's `cost`: 10, 15 or 5; "· Finishes His Report" when one look is left; disabled with the reason
+  · 10 Pts** (its row's `cost`, `recruiting.look_cost` from `LOOK_COST`: 5 for a prospect close to home, in your school's
+  state or within `HOME_MILES` (150) of your campus after any Family Move, 10 in an area a staff scout covers, 15 away from
+  your scouts, 5 for a portal entrant; half the tier, rounded up to a multiple of 5 (5, 5, 10), when less than a full look
+  finishes his report, at 2.5 of 3 looks after a half-look area week; "· Finishes His Report" when one look is left; disabled with the reason
   under the row: "Not enough scouting points left this week.", or "His report is complete: 3 of 3 looks"), **View Full
   Profile** (the popup) and **Add to Board** / **Remove From Board** (the board's own confirm when that pulls a standing
   offer). The address keeps `ssub` (report, looks, profile); an old address's ratings or overview opens Report and
