@@ -289,7 +289,7 @@
     ["nil", "NIL", "The collective's tier, set by your AD"], ["market", "Market", "Crowds and TV"], ["conference", "Conference", "Your league's strength"],
     ["coach", "Coach", "Your rating and tenure"], ["pro", "Pro Pipeline", "The last ten drafts, by position"]];
 
-  // your program's living rating: the six metrics as bars and the tier (the League's Programs tab, with every program's table under it)
+  // your program's living rating: the seven metrics as bars and the tier (the League's Programs tab, with every program's table under it)
   function programCard(pv) {
     const you = pv.you;
     if (!you) return el("div");
@@ -297,7 +297,7 @@
     return el("section", { class: "go-card rcp-card lg-card edge go-program", "aria-label": "Your Program" }, [
       el("div", { class: "go-program-head lg-head" }, [el("span", { class: "go-kicker muted" }, ["Your Program ",
         ui().tip("Prestige and the market move slowly with results; your AD raises NIL after a year that meets his goal.", "Your Program")]),
-        el("span", { class: "go-tag", text: you.tier_name, title: "Where your program stands: its name, results, NIL, market, league and coach, moving slowly with what you do" })]),
+        el("span", { class: "go-tag", text: you.tier_name, title: "Where your program stands: its name, results, NIL, market, league, coach and pro pipeline, moving slowly with what you do" })]),
       el("h2", { class: "rcp-h1 lg-h2", text: you.name || "" }),
       el("div", { class: "go-program-bars" }, PROGRAM_METRICS.map(([k, label, tip]) => el("div", { class: "go-program-bar", title: tip }, [
         el("span", { class: "go-program-label", text: label }), el("i", {}, [el("b", { style: `width:${Math.max(2, Math.min(100, you[k]))}%` })]),
@@ -331,7 +331,7 @@
       el("span", { class: "go-kicker muted", text: "Your AD's Goal" }), el("b", { text: ` ${s.job.goal}` }),
       el("span", { class: "go-tag", text: `${s.job.mood}${s.job.ultimatum ? " · Ultimatum Year" : ""}` })]));
     root.append(card, el("section", { class: "go-card rcp-card lg-card go-programs-card", "aria-label": "Every Program" }, [
-      el("div", { class: "go-kicker muted" }, ["Every Program ", ui().tip("Every FBS program's standing on the same six measures, and what its AD expects this season.", "Every Program")]),
+      el("div", { class: "go-kicker muted" }, ["Every Program ", ui().tip("Every FBS program's standing on the same seven measures, and what its AD expects this season.", "Every Program")]),
       programsTable(pv)]));
     if (H.carryLine) H.carryLine(s, card);
   }

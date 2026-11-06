@@ -944,10 +944,10 @@ ask. A pitch on one of his priorities counts 1x to 4x by that strength (1 + 3 x 
 **Path to the League** is a pitch topic like the rest (spec
 `docs/superpowers/specs/2026-11-06-pro-pipeline-design.md`). Your strength on it at a school is that
 school's Pro Pipeline grade at his position group (OL the mean of OT and IOL, DL of EDGE and DL,
-athletes and kickers the overall grade), as a pull `_logistic(1.2 × (grade − 50) / 25)`. About one
+kickers and punters the overall grade, an athlete the group of his engine position), as a pull `_logistic(1.2 × (grade − 50) / 25)`. About one
 recruit in ten has it first (`PRIORITY_ODDS` pro 0.10; the portal 0.05, top transfers 0.08), and
 dads, trainers and high school coaches carry it as deciders. The lines claim a pipeline only when
-the strength is at `CLAIM_FROM`; below it they give the honest lead.
+the strength is at `CLAIM_FROM`; below it they give the honest lead, which says "be the first" only where the school has no pick at his group in ten drafts (`pro_any`) and "we've sent some" where it has. A kicker or punter's strength reads the overall grade, so the lines about his own spot wait for his own group's grade (`pro_spot`) and the rest speak of the program.
 
 **Stages:** cold until a contact, in touch, his top group (his top eight schools by
 interest, your offer in hand), visited, committed. An official visit needs his top group; an

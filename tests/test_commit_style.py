@@ -279,7 +279,7 @@ def test_season():
         assert first[q].get("quiet"), first[q]
     assert all(persona.style(st, e["pid"]) == "needs_attention" for e in rc["log"] if e["kind"] == "softened")
     by8 = lambda k: sum(1 for q in by[k] if first[q]["week"] <= 8) / max(1, len(by[k]))
-    assert by8("early_bird") > 1.3 * by8("needs_attention"), (by8("early_bird"), by8("needs_attention"))   # seeds 1-4 read 1.42 to 1.54 since the rating mix gained pro; was 1.5
+    assert by8("early_bird") > 1.3 * by8("needs_attention"), (by8("early_bird"), by8("needs_attention"))   # main already read 1.42 to 1.57 on seeds 1-4; the bound is not loosened because of the pro mix
     print(f"  season ok: committed by Week 8, Early Bird {by8('early_bird'):.2f} vs Needs Attention {by8('needs_attention'):.2f}; "
           f"{sum(1 for e in rc['log'] if e['kind'] == 'hat')} hat ceremonies, {sum(1 for e in rc['log'] if e['kind'] == 'softened')} softened")
 

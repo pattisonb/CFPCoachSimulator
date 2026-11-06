@@ -150,7 +150,7 @@ def pro_recompute(p: dict, year_now: int) -> None:
 
 
 GROUP_DRAFT = {"QB": ("QB",), "RB": ("RB",), "WR": ("WR",), "TE": ("TE",), "OL": ("OT", "IOL"), "DL": ("EDGE", "DL"),
-               "LB": ("LB",), "CB": ("CB",), "S": ("S",)}   # roster group -> the draft groups it reads (ATH, K and P read the overall grade)
+               "LB": ("LB",), "CB": ("CB",), "S": ("S",)}   # roster group -> the draft groups it reads (K and P read the overall grade; an athlete carries an engine position, so he reads that position's group)
 
 
 def pro_group_grade(p: dict, group: str) -> float:
