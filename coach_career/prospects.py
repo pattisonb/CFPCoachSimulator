@@ -782,12 +782,16 @@ def history_index(state: dict, viewer: str) -> dict[str, list[dict]]:
     return out
 
 
-def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None) -> dict:
+def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None, homes: Optional[list] = None) -> dict:
     """A board line adds your standing with him: your interest, the leader and his known priorities,
-    and his History (`history`: a `history_index` built once per view; without it, one pass for him)."""
+    and his History (`history`: a `history_index` built once per view; without it, one pass for him).
+    `homes`: your remaining home games (`recruiting.home_weekends`, once per view) for his `visit_weeks`,
+    the Official Visit picker's rows; in the portal (a campus visit, no game) the list is empty."""
     rc = state["recruiting"]
     if history is None:
         history = history_index(state, viewer)
+    if homes is None:
+        homes = [] if rc.get("portal") else recruiting.home_weekends(state, viewer)
     out = row(state, pid, viewer)
     schools = _schools(state, pid, viewer)
     seen = seen_status(state, pid, viewer)
@@ -795,6 +799,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
     out.update(interest=round(recruiting.interest(state, viewer, pid), 1) if mine is None else mine["interest"],
                leader=schools[0] if schools else None, schools=len(schools),
                visit=visit_view(state, viewer, (rc["visits"].get(pid) or {}).get(viewer)),
+               visit_weeks=recruiting.visit_weekends(state, viewer, pid, homes),
                priorities_known=list((rc["revealed"].get(viewer) or {}).get(pid, [])),
                traits=persona.view(state, viewer, pid),
                twist=persona.twist_view(state, viewer, pid),
@@ -1065,7 +1070,8 @@ def recruiting_view(state: dict) -> dict:
     week = state["current_week"]
     mine = set(rc["board"]) | set(offers)
     hist = history_index(state, me)
-    board = [board_row(state, pid, me, hist) for pid in rc["board"]]
+    homes = [] if rc.get("portal") else recruiting.home_weekends(state, me)
+    board = [board_row(state, pid, me, hist, homes) for pid in rc["board"]]
     recap = [e for e in rc["log"] if e["week"] == week and (e.get("school") == me or e.get("from") == me or e["pid"] in mine)
              and e["kind"] not in ("leaning_fcs",) + recruiting.HISTORY_ONLY and persona.shown_to(e, me)]
     return {

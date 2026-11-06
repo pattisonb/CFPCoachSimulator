@@ -244,6 +244,7 @@
     if (pitch) body.pitch = pitch;
     if (nil) body.nil = nil;
     if (opts.scene) body.scene = opts.scene;
+    if (opts.week != null) body.week = opts.week;     // an official visit's home weekend, picked in the Recruit menu
     const names = { message: "Message", call: "Call", hc_visit: "Head Coach Visit", official_visit: "Official Visit Invite", offer: "Offer", pull_offer: "Offer Pulled", raise_nil: "NIL Raised", scout: "Scouting Trip" };
     let r;
     try { r = await H.api(`/api/season/${s.id}/recruit`, H.postJSON(body)); }
@@ -1283,9 +1284,9 @@
     };
     // one action on him: the network call, its toast, then the board's re-fetch and patch. `control` is the button
     // that shows busy meanwhile and gets the focus back (the step's Send, or the Recruit button for a menu item).
-    function run(b, action, pitch, nil, control) {
+    function run(b, action, pitch, nil, control, opts = {}) {
       const job = (async () => {
-        const r = await act(s, b.id, action, pitch || null, nil, { silent: true, onScene: (sc) => openScene(b, sc) });
+        const r = await act(s, b.id, action, pitch || null, nil, { ...opts, silent: true, onScene: (sc) => openScene(b, sc) });
         if (!r) return null;
         ui().toast(SAID[action] ? SAID[action](b, nil) : `${action} done`);
         view.step = null;
@@ -1345,7 +1346,7 @@
       const f = list.querySelector(".go-row-recruit[aria-pressed=\"true\"]") || list.querySelector(".go-row-recruit");
       if (f) f.focus({ preventScroll: true });
     }
-    function pick(b, action, control) {
+    function pick(b, action, control, opts = {}) {
       const btn = control || box.querySelector("#rc-recruit");
       if (action === "message" || action === "offer" || action === "raise_nil") {
         view.step = { pid: b.id, kind: action };
@@ -1367,7 +1368,18 @@
           view.leave = { id: b.id, at: rows.findIndex((r) => r.id === b.id) };   // he may leave the tab (Top 8 needs an offer): the next row takes the pane
           run(b, action, null, null, btn).then(() => refocus(b));
         }
+      } else if (action === "official_visit" && opts.week != null) {   // the weekend picked in the menu's second step
+        run(b, action, null, null, btn, { week: opts.week }).then(() => refocus(b));
       } else run(b, action, null, null, btn).then(() => refocus(b));
+    }
+    // the Official Visit's second step: one row a home weekend you have left ("Wk 6 · vs #4 USC"), the first
+    // free one marked, a weekend he has at another school grayed with the reason, and Back at the top
+    function visitItems(b) {
+      const weeks = b.visit_weeks || [];
+      const rows = weeks.map((w) => ({ action: "visit_week", week: w.week, name: `Wk ${w.week} · vs ${w.opponent_rank ? `#${w.opponent_rank} ` : ""}${w.opponent_name}`,
+        cost: w.first ? "First Free Weekend" : "", why: w.taken_by ? `He's at ${w.taken_by} that weekend` : null }));
+      if (!rows.length) rows.push({ action: "visit_none", name: "No Home Games Left", cost: "", why: "No home game left for a visit" });
+      return [{ action: "back", name: "‹ Back", cost: "", why: null, back: true }, ...rows];
     }
     // the Recruit menu's items for him: every action with its cost, or the reason it waits
     function menuItems(b) {
@@ -1394,14 +1406,35 @@
     function openMenu(b, btn) {
       if (menuState) { closeMenu(true); return; }
       const sheet = phone();
-      const menu = el("div", { class: `go-menu ${sheet ? "sheet" : ""}`, role: "menu", tabindex: "-1", "aria-label": `Recruit ${b.name}` }, menuItems(b).map((it) => {
-        const item = el("button", { type: "button", class: "go-menu-item", role: "menuitem", "data-action": it.action, tabindex: "-1", ...(it.title ? { title: it.title } : {}) }, [
-          el("span", { class: "go-menu-main" }, [el("b", { text: it.name }), it.cost ? el("span", { class: "muted small go-menu-cost", text: it.cost }) : null]),
-          it.why ? el("span", { class: "go-menu-why", text: it.why }) : null]);
-        if (it.why) item.setAttribute("aria-disabled", "true");     // grayed, but reachable: the reason is read out
-        item.addEventListener("click", () => { if (it.why) return; closeMenu(true); pick(b, it.action); });   // the Recruit button holds the focus while the action is busy
-        return item;
-      }));
+      const menu = el("div", { class: `go-menu ${sheet ? "sheet" : ""}`, role: "menu", tabindex: "-1", "aria-label": `Recruit ${b.name}` });
+      // the menu's rows, drawn in place: the actions, or the Official Visit's weekends (its second step: Back returns)
+      const fill = (items, label) => {
+        menu.innerHTML = "";
+        menu.setAttribute("aria-label", label);
+        menu.append(...items.map((it) => {
+          const item = el("button", { type: "button", class: `go-menu-item${it.back ? " go-menu-back" : ""}`, role: "menuitem", "data-action": it.action, tabindex: "-1",
+            ...(it.week != null ? { "data-week": String(it.week) } : {}), ...(it.title ? { title: it.title } : {}) }, [
+            el("span", { class: "go-menu-main" }, [el("b", { text: it.name }), it.cost ? el("span", { class: "muted small go-menu-cost", text: it.cost }) : null]),
+            it.why ? el("span", { class: "go-menu-why", text: it.why }) : null]);
+          if (it.why) item.setAttribute("aria-disabled", "true");     // grayed, but reachable: the reason is read out
+          item.addEventListener("click", () => {
+            if (it.why) return;
+            if (it.back) { fill(menuItems(b), `Recruit ${b.name}`); focusFirst(); return; }
+            if (it.action === "official_visit" && !v.portal) { fill(visitItems(b), `Official Visit Weekend for ${b.name}`); focusFirst(".go-menu-item[data-action=visit_week]"); return; }   // step two: pick the weekend
+            closeMenu(true);                                             // the Recruit button holds the focus while the action is busy
+            if (it.action === "visit_week") pick(b, "official_visit", null, { week: it.week });
+            else pick(b, it.action);
+          });
+          return item;
+        }));
+        if (menuState && !sheet) menuState.onMove();                    // the list changed height: keep it inside the screen
+      };
+      // focus goes to the first live item (`among`: the weekends, past Back), or to the first item when every item waits (its reason is read out)
+      const focusFirst = (among = ".go-menu-item") => {
+        const first = menu.querySelector(`${among}:not([aria-disabled="true"])`) || menu.querySelector(".go-menu-item");
+        (first || menu).focus();
+      };
+      fill(menuItems(b), `Recruit ${b.name}`);
       menu.addEventListener("keydown", (e) => {
         if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeMenu(true); return; }
         if (e.key === "Tab") { e.preventDefault(); closeMenu(true); return; }
@@ -1434,9 +1467,7 @@
       window.addEventListener("resize", onMove);
       btn.setAttribute("aria-expanded", "true");
       menuState = { el: menu, backdrop, btn, onDoc, onMove };
-      // focus goes to the first live item, or to the first item when every item waits (its reason is read out)
-      const first = menu.querySelector(".go-menu-item:not([aria-disabled=\"true\"])") || menu.querySelector(".go-menu-item");
-      (first || menu).focus();
+      focusFirst();
     }
 
     // ----- the pane: everything about him, every action on him -----

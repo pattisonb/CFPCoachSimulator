@@ -888,9 +888,13 @@ actions have earned with him.
 **Your week.** Hours: `50 + (recruiting rating - 50) / 4`. A message costs 5, a call 15 (half
 the time he lets slip one of his priorities, `CALL_REVEAL`, and you come away with his ask as a
 range of about 15% either side, not the number), a head coach in-home visit 30 (once a month; it
-tells you one priority for sure and his number), an official visit invite 10 (at your next home
-game; a win sells, a 21-point loss hurts, a big stadium helps, and the weekend tells you all
-three of his priorities), a scouting trip 5 (one look by your best evaluator, any week, allowed
+tells you one priority for sure and his number), an official visit invite 10 (on a home weekend
+you pick: the Recruit menu's Official Visit opens a list of your regular-season home games still
+to play, "Wk 6 · vs #4 USC", the first weekend he has free marked; a weekend he already visits
+another school is grayed with that school's name, one official visit a weekend and one per school,
+no rebooking; the API's `week` on the act, which Auto-recruit and the AI schools never pass, so
+they take his first free weekend as before; a win sells, a 21-point loss hurts, a big stadium
+helps, and the weekend tells you all three of his priorities), a scouting trip 5 (one look by your best evaluator, any week, allowed
 while his report is short of complete; a prospect with a complete report shows his grades in one
 line on his card and at the top of his profile) and an offer nothing.
 **A commitment in words.** A committed recruit's profile (`prospects.flip_view`, the profile's
