@@ -38,3 +38,7 @@ data/market/
 dist/
 data/base_league.json
 data/base_meta.json
+
+# Node.js dependencies
+node_modules/
+package-lock.json
