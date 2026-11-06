@@ -64,7 +64,7 @@ def market_row(slug: str) -> dict:
 
 
 def mix(p: dict) -> float:
-    """The rating: the weighted mix of the six metrics."""
+    """The rating: the weighted mix of the seven metrics."""
     return sum(w * float(p.get(k, 0)) for k, w in WEIGHTS.items())
 
 
@@ -173,6 +173,8 @@ def season_score(wins: int, games: int, rank=None) -> float:
 def init(lgd: dict) -> None:
     """Every team in a league carries its program (from the base values) the first time it is asked."""
     for slug, t in lgd["teams"].items():
+        if "program" in t and "drafts" not in t["program"]:
+            upgrade(t["program"], slug)
         if "program" not in t:
             p = base(slug)
             p.setdefault("pro_groups", {})
@@ -181,12 +183,23 @@ def init(lgd: dict) -> None:
                                 live=0.0, seasons=[], year=lgd.get("year", 2026) - 1)
 
 
+def upgrade(p: dict, slug: str) -> None:
+    """A program from a save made before the Pro Pipeline: it takes the base's ten draft lines, pro and
+    pro_groups (copies), so the real decade is not lost, and its rating and tier follow."""
+    b = base(slug)
+    p["drafts"] = [[y, pts, dict(g)] for y, pts, g in b["drafts"]]
+    p["pro"] = b["pro"]
+    p["pro_groups"] = dict(b.get("pro_groups") or {})
+    p["rating"] = round(mix(p), 1)
+    p["tier"] = tier_of(p["rating"])
+
+
 def get(state: dict, slug: str) -> dict:
     """The program's metrics: from the career's league when it exists, else the base values."""
     lgd = state.get("league") if isinstance(state, dict) else None
     t = (lgd or {}).get("teams", {}).get(slug)
     if t:
-        if "program" not in t:
+        if "program" not in t or "drafts" not in t["program"]:
             init(lgd)
         return t["program"]
     return base(slug)

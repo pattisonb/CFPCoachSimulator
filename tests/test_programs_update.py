@@ -63,10 +63,31 @@ if __name__ == "__main__":
         p["drafts"] = p["drafts"][1:] + [[y, 0, {}]]
     programs.pro_recompute(p, off["year"] + programs.PRO_YEARS)
     assert p["pro"] == 0 and p["pro_groups"] == {}
-    # an old save: a program without drafts reads 0 and gets its ten lines
-    q = lgd["teams"]["akron"]["program"]; q.pop("drafts", None); q.pop("pro", None); q.pop("pro_groups", None); q["year"] = off["year"] - 1
+    # an old save: a program without the three keys keeps the base's real decade
+    q = lgd["teams"]["akron"]["program"]; b0 = programs.base("akron")
+    for k in ("drafts", "pro", "pro_groups"):
+        q.pop(k, None)
+    q["year"] = off["year"] - 1
+    programs.init(lgd)
+    assert len(q["drafts"]) == programs.PRO_YEARS and q["drafts"][-1][0] >= b0["drafts"][-1][0] and q["pro"] == b0["pro"] and q["pro_groups"] == b0["pro_groups"]
+    assert q["drafts"] is not b0["drafts"] and q["drafts"] == b0["drafts"]
+    for k in ("drafts", "pro", "pro_groups"):
+        q.pop(k, None)
     programs.update(st, res, ranks, year=off["year"], only=["akron"])
-    assert len(q["drafts"]) == programs.PRO_YEARS and q["pro"] >= 0 and isinstance(q["pro_groups"], dict)
+    assert len(q["drafts"]) == programs.PRO_YEARS and q["drafts"][-2] == b0["drafts"][-1] and isinstance(q["pro_groups"], dict)
+    # rows() works on a league whose programs were stripped of the three keys (and Alabama keeps its decade)
+    for t in lgd["teams"].values():
+        for k in ("drafts", "pro", "pro_groups"):
+            t["program"].pop(k, None)
+    rs = programs.rows(st)
+    assert rs and all("pro" in r and isinstance(r["pro_groups"], dict) for r in rs)
+    assert next(r for r in rs if r["team"] == "alabama")["pro"] == programs.base("alabama")["pro"]
+    # the offseason's tier probe leaves every real program's drafts as they were
+    snap = json.dumps({s: t["program"]["drafts"] for s, t in lgd["teams"].items()})
+    for t in lgd["teams"].values():
+        t["program"]["year"] = off["year"] - 1
+    offseason.program_shifts(st, lgd)
+    assert json.dumps({s: t["program"]["drafts"] for s, t in lgd["teams"].items()}) == snap
     # an unknown position is skipped, not a crash
     n = len(programs.draft_picks(st).get("akron", []))
     st["offseason"]["departures"].append({"id": "x", "team": "akron", "kind": "draft", "pos": "???", "round": 1})
