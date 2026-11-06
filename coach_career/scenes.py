@@ -147,7 +147,8 @@ TIRED = ["He is polite but short. He is not weighing you right now, and the call
 
 # his question about a named player (docs/superpowers/specs/2026-10-29-recruit-questions-design.md,
 # section 2): the player ahead of him on your roster ({ahead}, {ahead_cls} his class in words, {position}
-# the recruit's position), or another recruit you offered at his position ({other})
+# that player's roster position: a recruit listed as an athlete asks about your WR, never your "ATH"),
+# or another recruit you offered at his position ({other})
 QUESTION_LINES = {
     "roster": ["Is {ahead} still your {position} next year? I'm not coming to sit behind him.",
                "{ahead} is a {ahead_cls}. That's two more years of him. Where does that leave me?",
@@ -867,7 +868,7 @@ def question(state: dict, slug: str, pid: str, week: int) -> dict | None:
     ahead = recruiting.ahead_of(state, slug, pid)
     if ahead:
         text = rng.choice(QUESTION_LINES["roster"]).format(ahead=ahead["name"], ahead_cls=CLASS_WORDS.get(ahead["cls"], "veteran"),
-                                                           position=p["position"])
+                                                           position=ahead["position"])
         return {"kind": "roster", "text": text, "answer": None, "reply": None,
                 "about": {"id": ahead["slug"], "name": ahead["name"], "position": ahead["position"], "cls": ahead["cls"],
                           "ovr": ahead["ovr"], "last_year": ahead["last_year"]}}
