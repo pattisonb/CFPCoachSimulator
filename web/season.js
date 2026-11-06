@@ -1437,6 +1437,8 @@
     const s = state.season;
     if (!s) return;
     const st = statsState;
+    const root = $("#stats-root");
+    if (root) { root.style.cssText = leagueTeamStyle(s); $("#stats-kicker").textContent = leagueKicker(s); }
     const chips = $("#stats-chips");
     chips.innerHTML = "";
     for (const [v, label] of [["team", "Team Stats"], ["players", "Player Stats"]]) {
@@ -2800,6 +2802,17 @@
   // Conference picker as a row of chips (short names), shared by the stats tabs.
   const CONF_SHORT = { "American Athletic Conference": "American", "Conference USA": "CUSA", "Mountain West": "MW",
                        "FBS Independent": "Ind.", "FBS Independents": "Ind.", "Independent": "Ind." };
+  // the League tabs in the Recap's look (web/league.css): the player's color as --rcp-team on the .lg root (the team
+  // edge on his own card, the tint on his row) and the kicker that dates the page
+  function leagueTeamStyle(s) {
+    const t = (window.CFP.teamsBySlug || {})[s.team] || {};
+    return t.colors && t.colors.primary ? `--rcp-team:${t.colors.primary}` : "";
+  }
+  const leagueKicker = (s) => `${s.current_week > 0 ? `Through ${s.week_labels[s.current_week] || "Week " + s.current_week}` : "Preseason"} · ${s.year} Season`;
+  const leagueCard = (cls, children, attrs) => el("section", { class: `go-card rcp-card lg-card ${cls || ""}`, ...(attrs || {}) }, children);
+  const leagueHead = (kicker, title, controls) => el("div", { class: "lg-head" }, [
+    el("div", { class: "lg-head-title" }, [el("div", { class: "go-kicker muted", text: kicker }), title]), controls || null]);
+
   function confChips(confs, current, onPick) {
     const row = el("div", { class: "view-chips conf-chips", role: "group", "aria-label": "Conference" });
     for (const [value, label] of [["", "All"], ...confs.map((c) => [c, CONF_SHORT[c] || c])]) {
@@ -3092,7 +3105,10 @@
     const st = standingsState;
     if (st.conf === null) st.conf = state.standings[s.conference] ? s.conference : "";
     const confs = Object.keys(state.standings).sort();
-    box.append(el("div", { class: "stats-controls" }, [confChips(confs, st.conf, (v) => { st.conf = v; renderStandings(); })]));
+    const root = el("div", { class: "lg", style: leagueTeamStyle(s) });
+    box.append(root);
+    root.append(leagueCard("edge", [leagueHead(leagueKicker(s), el("h2", { class: "rcp-h1", text: "Standings" }),
+      confChips(confs, st.conf, (v) => { st.conf = v; renderStandings(); }))], { "aria-label": "Standings" }));
 
     const crownOf = (t) => [
       t.champion ? el("span", { class: "crown", text: "👑", title: "Conference champion", "aria-label": "Conference champion" }) : null,
@@ -3118,9 +3134,9 @@
 
     const fullTable = (rows, division) => {
       const table = el("table", { class: "stats standings-full" });
-      const heads = ["#", division || "Team", "Conf", "Overall", "Home", "Away", "PF", "PA", "Diff", "Streak", "Last game"];
-      const phone = new Set(["Home", "Away", "PF", "PA", "Diff", "Streak", "Last game"]);   // a phone shows #, team, conference and overall
-      table.appendChild(el("tr", {}, heads.map((h) => el("th", { text: h, class: `${[division || "Team", "Last game"].includes(h) ? "left" : ""} ${phone.has(h) ? "ph" : ""}` }))));
+      const heads = ["#", division || "Team", "Conf", "Overall", "Home", "Away", "PF", "PA", "Diff", "Streak", "Last Game"];
+      const phone = new Set(["Home", "Away", "PF", "PA", "Diff", "Streak", "Last Game"]);   // a phone shows #, team, conference and overall
+      table.appendChild(el("tr", {}, heads.map((h) => el("th", { text: h, class: `${[division || "Team", "Last Game"].includes(h) ? "left" : ""} ${phone.has(h) ? "ph" : ""}` }))));
       for (const t of rows) {
         const last = t.last ? `${t.last.won ? "W" : "L"} ${t.last.score} ${t.last.venue === "home" ? "vs" : t.last.venue === "away" ? "at" : "vs"} ${t.last.opponent_name}` : "–";
         table.appendChild(el("tr", { class: t.slug === s.team ? "mine" : "" }, [
@@ -3137,24 +3153,26 @@
       return table;
     };
 
+    // one card per conference: the conference's name as its title, "Your Conference" and the team edge on yours
     const blockFor = (conf, full) => {
       const rows = state.standings[conf];
       const divisions = [...new Set(rows.map((t) => t.division).filter(Boolean))];
       const make = full ? fullTable : compactTable;
       const tables = divisions.length ? divisions.map((d) => make(rows.filter((t) => t.division === d), d)) : [make(rows, null)];
-      return el("div", { class: "conf-block" }, [el("h3", { text: conf }), ...tables]);
+      const mine = conf === s.conference;
+      const champ = rows.find((t) => t.champion);
+      const note = full ? el("p", { class: "muted small-text", text: `${rows.length} teams · ${champ ? `champion ${champ.name}` : s.current_week >= 14 ? "title game played" : "through " + (s.week_labels[s.current_week] || "week " + s.current_week)} · conference record decides the order, then the tiebreak ladder.` }) : null;
+      return leagueCard(mine ? "edge" : "", [leagueHead(mine ? "Your Conference" : "Conference", el("h3", { class: "rcp-h1 lg-h2", text: conf })), note,
+        el("div", { class: "conf-block table-scroll" }, tables)], { "aria-label": conf });
     };
 
     if (st.conf && state.standings[st.conf]) {
-      const rows = state.standings[st.conf];
-      const champ = rows.find((t) => t.champion);
-      box.append(el("p", { class: "muted small-text", text: `${st.conf} · ${rows.length} teams · ${champ ? `champion ${champ.name}` : s.current_week >= 14 ? "title game played" : "through " + (s.week_labels[s.current_week] || "week " + s.current_week)} · conference record decides the order, then the tiebreak ladder.` }));
-      box.append(el("div", { class: "table-scroll" }, [blockFor(st.conf, true)]));
+      root.append(blockFor(st.conf, true));
     } else {
       const ordered = confs.slice().sort((a, b) => (a === s.conference ? -1 : b === s.conference ? 1 : a.localeCompare(b)));
-      const grid = el("div", { class: "conf-grid" });
+      const grid = el("div", { class: "lg-grid" });
       for (const conf of ordered) grid.appendChild(blockFor(conf, false));
-      box.appendChild(grid);
+      root.appendChild(grid);
     }
   }
 
