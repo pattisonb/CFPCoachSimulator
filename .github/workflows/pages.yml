@@ -1,11 +1,22 @@
 # Build the browser site (dist/) and publish it to GitHub Pages on every push to main.
 # One-time setting: the repository's Settings -> Pages -> Source: GitHub Actions.
+#
+# The Pages site doubles as a preview of any branch (Vercel's free plan runs out of preview
+# deployments): Run workflow with a branch name builds that branch instead of main, and the
+# repository variable PAGES_BRANCH (Settings -> Secrets and variables -> Actions -> Variables)
+# pins the site to a branch until it is cleared, so the merges that redeploy main in between do
+# not put main back. The page says which branch and commit it is (dist/preview.json).
 name: Pages
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to build (empty: PAGES_BRANCH if set, else main)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -23,7 +34,18 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Pick the branch
+        id: pick
+        env:
+          INPUT_BRANCH: ${{ inputs.branch }}
+          PINNED: ${{ vars.PAGES_BRANCH }}
+        run: |
+          ref="${INPUT_BRANCH:-${PINNED:-main}}"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          echo "Building branch $ref" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pick.outputs.ref }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -32,6 +54,11 @@ jobs:
         run: python -m teamdata.build_teams
       - name: Build the site
         run: python tools/build_site.py
+      - name: Stamp the preview
+        env:
+          REF: ${{ steps.pick.outputs.ref }}
+        run: |
+          printf '{"branch": "%s", "commit": "%s", "built": "%s"}\n' "$REF" "$(git rev-parse --short HEAD)" "$(date -u +%Y-%m-%dT%H:%MZ)" > dist/preview.json
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
