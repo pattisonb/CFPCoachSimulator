@@ -1184,7 +1184,7 @@ def test_conversation(page, base) -> None:
         assert not page.query_selector(".modal-scene .go-scene .go-scene-line.cue"), "the cue waits on your opening"
         assert "YOUR OPENING" in page.inner_text(".modal-scene .go-scene") and "WHAT YOU LEAD WITH" not in page.inner_text(".modal-scene .go-scene")
         chips = page.query_selector_all(".modal-scene .go-scene .go-present-chip")
-        assert len(chips) == 7 and all(c.get_attribute("aria-pressed") == "false" for c in chips)
+        assert len(chips) == 8 and all(c.get_attribute("aria-pressed") == "false" for c in chips)
         for c in chips[:3]:
             c.click()
         chips[3].click()
