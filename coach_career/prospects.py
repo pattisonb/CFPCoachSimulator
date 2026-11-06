@@ -861,28 +861,42 @@ def standing(state: dict, pid: str, viewer: str) -> dict:
 
 
 INTERESTED_TOP = 0.15             # "Interested in you": the prospects your school appeals to most, this share
-INTEREST_LEVELS = ((0.15, "High"), (0.5, "Medium"), (1.0, "Low"))
+INTEREST_LEVELS = ((0.15, "High"), (0.5, "Medium"), (1.0, "Low"))   # *tune* the shares of a star band shown High, then Medium; the rest Low
 
 
-def your_interest(state: dict, viewer: str, pids: list) -> tuple[dict, list]:
-    """Each prospect's interest in your school, and the cut-offs of the levels shown (High for the
-    top 15% of the class you can see, Medium for the next 35%, Low for the rest)."""
+def your_interest(state: dict, viewer: str, pids: list) -> tuple[dict, dict]:
+    """Each prospect's interest in your school, and the cut-offs of the levels shown, per star rating:
+    a prospect is graded against the prospects of his own star rating you can see (High for the top
+    15% of his star band, Medium for the next 35%, Low for the rest), so High means he likes you more
+    than most recruits of his caliber do, whatever his caliber. Returns `(values, cuts)`, `cuts` a
+    dict star -> the levels' cut-offs; a band with no prospects is graded Low."""
     win = recruiting._winning(state)
+    rc = state["recruiting"]
     vals = {pid: recruiting.interest(state, viewer, pid, win) for pid in pids}
-    ordered = sorted(vals.values(), reverse=True)
-    cuts = [ordered[min(len(ordered) - 1, int(share * len(ordered)))] if ordered else 0 for share, _ in INTEREST_LEVELS]
+    bands: dict[int, list] = {}
+    for pid in pids:
+        bands.setdefault(rc["prospects"][pid]["stars"], []).append(vals[pid])
+    cuts = {}
+    for stars, values in bands.items():
+        ordered = sorted(values, reverse=True)
+        cuts[stars] = [ordered[min(len(ordered) - 1, int(share * len(ordered)))] for share, _ in INTEREST_LEVELS]
     return vals, cuts
 
 
-def _level(value: float, cuts: list) -> str:
-    return next((name for (_, name), cut in zip(INTEREST_LEVELS, cuts) if value >= cut), "Low")
+def _level(value: float, stars: int, cuts: dict) -> str:
+    """The level shown for `value` against the cut-offs of his star band (`cuts[stars]`)."""
+    band = cuts.get(stars)
+    if not band:
+        return "Low"
+    return next((name for (_, name), cut in zip(INTEREST_LEVELS, band) if value >= cut), "Low")
 
 
 def search(state: dict, viewer: str, position: Optional[str] = None, stars: Optional[int] = None,
            home: Optional[str] = None, status: Optional[str] = None, q: Optional[str] = None,
            offset: int = 0, limit: int = 50, sort: str = "rank", group: Optional[str] = None) -> dict:
     """The class you can see, filtered and paged, by national rank (or by interest in your school:
-    `sort="interest"`, or `status="interested"` for those your school appeals to most)."""
+    `sort="interest"`, or `status="interested"` for those graded High: the prospects your school appeals
+    to most among recruits of their star rating)."""
     rc = state["recruiting"]
     q = (q or "").strip().lower()
     out = []
@@ -915,7 +929,7 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
             continue
         if status == "board" and pid not in rc["board"]:
             continue
-        if status == "interested" and (keen[pid] < cuts[0] or st["signed"]):
+        if status == "interested" and (_level(keen[pid], p["stars"], cuts) != "High" or st["signed"]):
             continue
         out.append(pid)
     if sort == "interest" or status == "interested":
@@ -926,7 +940,7 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
     rows = []
     for pid in out[offset:offset + limit]:
         r = row(state, pid, viewer)
-        r.update(interest_in_you=round(keen[pid], 1), interest_level=_level(keen[pid], cuts),
+        r.update(interest_in_you=round(keen[pid], 1), interest_level=_level(keen[pid], rc["prospects"][pid]["stars"], cuts),
                  can_scout=can_scout(state, viewer, pid), hard=bool(rc["status"][pid].get("hard")) and not rc["status"][pid]["signed"])
         if pid in recs:
             r["why"] = recs[pid]["why"]

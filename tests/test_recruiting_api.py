@@ -65,9 +65,9 @@ if __name__ == "__main__":
         assert hidden not in {r["id"] for r in everyone}
         named = search(sid, q=everyone[3]["name"].split()[-1].lower(), limit=200)["rows"]
         assert everyone[3]["id"] in {r["id"] for r in named}
-        # prospects already interested in your school, most interested first
+        # prospects already interested in your school (graded High within their star band), most interested first
         keen = search(sid, status="interested", limit=50)
-        assert 200 < keen["total"] < 1200 and keen["rows"][0]["interest_level"] == "High"
+        assert 200 < keen["total"] < 1200 and all(r["interest_level"] == "High" for r in keen["rows"])
         vals = [r["interest_in_you"] for r in keen["rows"]]
         assert vals == sorted(vals, reverse=True)
         by_pull = search(sid, sort="interest", limit=20)["rows"]

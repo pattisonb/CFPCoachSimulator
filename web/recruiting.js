@@ -2067,7 +2067,7 @@
         el("td", { class: "pr-c-wt", text: r.weight != null ? String(r.weight) : "—" }),
         el("td", { class: "pr-c-stars" }, [r.portal ? el("span", { text: clsWord(r.cls) || "—" }) : el("span", { class: "go-stars", text: stars(r.stars), "aria-label": `${r.stars} stars` })]),
         el("td", { class: "pr-c-status" }, [el("span", { class: `go-tag ${stTone}`, text: stText, title: stText })]),
-        el("td", { class: "pr-c-int" }, [el("span", { class: `go-tag ${INTEREST_TONE[r.interest_level] || ""}`, title: "How much your school appeals to him now", text: r.interest_level || "Low" })]),
+        el("td", { class: "pr-c-int" }, [el("span", { class: `go-tag ${INTEREST_TONE[r.interest_level] || ""}`, title: "How much your school appeals to him now, next to other recruits of his star rating", text: r.interest_level || "Low" })]),
         el("td", { class: "pr-c-pot" }, [el("span", { class: `go-tag ${potTone}`, title: pot ? "Your staff's read of his potential" : "Your staff has no read on him yet", text: potText(pot) })]),
         el("td", { class: "pr-c-act" }, [add])]);
       ui().on(tr, "click", (e) => { if (!e.target.closest("button, a, input, select")) openProfile(s, r.id); });
