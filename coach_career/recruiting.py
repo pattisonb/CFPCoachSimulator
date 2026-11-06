@@ -1368,6 +1368,9 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
     if action == "scout":                                   # the desk shows the trip's before/after from this, and the like a completed report earned
         from coach_career import prospects as pr
         out["look"] = dict(_LAST_LOOK[0], likes=pr.staff_likes(state, pid, slug))
+        read = rc["reads"].get(pid)                          # his looks and the read's potential range now: an open list patches its row from these
+        out["looks"] = pr.looks_out(read)
+        out["potential"] = list(grade_range(state, pid, "potential")) if read else None
     if opens:
         out["scene"] = rc["scenes"][slug][pid]
     return out

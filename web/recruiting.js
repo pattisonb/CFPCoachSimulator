@@ -251,6 +251,7 @@
       H.toast(`Could not do that: ${H.errText(err)}`, 4000);
       return null;
     }
+    if (action === "scout") scouted(pid, r);
     if (r.scene) { if (opts.onScene) opts.onScene(r.scene); else if (!opts.silent) H.toast(`${names[action]} open · finish it from his pane`, 3000); }
     else if (r.reaction) { if (!opts.silent) H.toast((REACTION_TOAST[r.reaction.kind] || REACTION_TOAST.polite)(pitch), 4000); if (opts.onReaction) opts.onReaction(r.reaction); }
     else if (opts.silent) { /* the board says what happened, in its own words */ }
@@ -258,6 +259,8 @@
     else H.toast(`${names[action]} done · ${r.hours_left} hours left${r.revealed ? ` · he cares about ${PITCH_NAMES[r.revealed].toLowerCase()}` : action === "call" ? " · he kept his cards close" : ""} · it lands at the week step`, 3000);
     return r;
   }
+  // a scouting trip landed (here or in the Scouting Center): the lists on screen patch his looks and his read in place
+  const scouted = (pid, r) => document.dispatchEvent(new CustomEvent("cfp:scouted", { detail: { pid, looks: r.looks, potential: r.potential || null } }));
   async function setBoard(s, pid, on) {
     try { await H.api(`/api/season/${s.id}/board`, H.postJSON({ pid, on })); return true; }
     catch (err) { H.toast(`Could not change your board: ${H.errText(err)}`, 4000); return false; }
@@ -480,23 +483,26 @@
   const PV = () => window.CFP.pv;
   const TONES = { good: "good", warn: "warn", bad: "bad" };
   const attr = (cond, attrs) => (cond ? attrs : {});
-  // the header: his status chip, his name (nameNode: the pane's button or the popup's heading), stars, Pos | Height | Weight,
-  // Hometown · #rank; Nat. Rank, Pos. Rank, Class; Your Chance in words with its bar. opts.stats / opts.badge replace those
-  // (the Scouting Center: Team Need, Potential); opts.chip replaces the status chip; opts.back: the phone sheet's Back.
+  // the header: his status chip, his name (nameNode: the pane's button or the popup's heading), stars, Pos · Archetype |
+  // Height | Weight, Hometown · Class of 2027 (the portal: From School); Nat. Rank and Pos. Rank in one strip (the portal:
+  // Portal Rank, Pos. Rank, Class); Your Chance in words, its bar only once you have a chance to measure (an offer, or his
+  // commitment elsewhere). opts.stats / opts.badge replace those (the Scouting Center: Team Need, Potential); opts.chip
+  // replaces the status chip; opts.back: the phone sheet's Back.
   function heroOf(b, me, opts = {}) {
     const portal = !!b.portal;
     const chip = opts.chip || chipOf(b, me, portal);
     const tag = el("span", { class: `go-chip pv-tag ${chip.tone || ""}`.trim(), "data-key": "chip", text: chip.text });
     const sd = standingOf(b, me);
     const pos = b.display_pos || b.position;
-    const badge = opts.badge || { kicker: "Your Chance", value: sd.odds || sd.word, tone: TONES[sd.tone] || "", fill: sd.fill || 0 };
+    const measured = sd.word !== "Not Offered" && sd.word !== "Lost";
+    const badge = opts.badge || { kicker: "Your Chance", value: sd.odds || sd.word, tone: TONES[sd.tone] || "", fill: measured ? sd.fill || 0 : null };
     const stats = opts.stats || [
       portal ? { key: "portal", label: "Portal Rank", value: b.portal_rank ? `#${b.portal_rank}` : "—" } : { key: "nat", label: "Nat. Rank", value: b.national_rank ? `#${b.national_rank}` : "—" },
       { key: "pos", label: "Pos. Rank", value: b.pos_rank ? `#${b.pos_rank}` : "—", sub: pos },
-      { key: "class", label: "Class", value: portal ? clsWord(b.cls) || "—" : b.class_of ? String(b.class_of) : "—" }];
-    const where = portal ? `From ${b.from_name}${b.portal_rank ? ` · #${b.portal_rank} in the Portal` : ""}` : `${place(b.hometown)}${b.national_rank ? ` · #${b.national_rank}` : ""}`;
+      portal ? { key: "class", label: "Class", value: clsWord(b.cls) || "—" } : null];
+    const where = portal ? `From ${b.from_name}` : `${place(b.hometown)}${b.class_of ? ` · Class of ${b.class_of}` : ""}`;
     return PV().hero({ avatar: avatar(b.id, "lg"), tag, nameNode: opts.nameNode, back: opts.back, stars: b.stars ? stars(b.stars) : null, starsLabel: b.stars ? `${b.stars} stars` : null,
-      pos, height: b.height_display, weight: b.weight_display, place: where, stats, badge });
+      pos, arch: opts.arch !== undefined ? opts.arch : b.archetype || null, height: b.height_display, weight: b.weight_display, place: where, stats, badge });
   }
   // a label and its value as one row (the snapshot's His Ask, the Background card)
   const kvRow = (key, label, value, hint) => el("div", { class: "pv-row", "data-key": key }, [el("span", { class: "pv-row-k", text: label }),
@@ -1858,7 +1864,9 @@
     if (r.leaning_fcs) return ["Leaning FCS", "muted"];
     return ["Uncommitted", ""];
   }
-  const potText = (p) => (!p ? "Unscouted" : p[0] === p[1] ? p[0] : `${p[0]} – ${p[1]}`);
+  const potText = (p) => (!p ? "Not Read" : p[0] === p[1] ? p[0] : `${p[0]} – ${p[1]}`);
+  // his looks in the Scouting Center's words: Not Yet, 1 of 3 Looks, Fully Scouted
+  const looksText = (n) => (n >= 3 ? ["Fully Scouted", "good"] : n > 0 ? [`${fmtLooks(n)} of 3 Looks`, "warn"] : ["Not Yet", "muted"]);
   const boardLabel = (r) => `${r.on_board ? "Remove" : "Add"} ${r.name} ${r.on_board ? "from" : "to"} your board`;
 
   async function renderProspects(s, box) {
@@ -1910,14 +1918,14 @@
     syncFilters();
     const listHead = el("div", { class: "go-row wrap go-list-head pr-list-head" });
     const HEADS = [["rank", "#"], ["who", "Prospect"], ["pos", "Pos"], ["ht", "Ht"], ["wt", "Wt"], ["stars", inPortal ? "Class" : "Stars"],
-      ["status", "Status"], ["int", "Interest in You"], ["pot", "Potential"], ["act", "Board"]];
+      ["status", "Status"], ["int", "Interest in You"], ["sc", "Scouted"], ["pot", "Potential"], ["act", "Board"]];
     const starsHead = el("th", { scope: "col", class: "pr-c-stars", text: inPortal ? "Class" : "Stars" });
     const thead = el("thead", {}, [el("tr", {}, HEADS.map(([k, t]) => (k === "stars" ? starsHead
       : el("th", { scope: "col", class: `pr-c-${k}`, text: t, ...(k === "act" ? { "aria-label": "Your Board" } : {}) }))))]);
     const tbody = el("tbody", { class: "rc-list" });
     const table = el("table", { class: "pr-table" }, [thead, tbody]);
     const tableWrap = el("div", { class: "pr-table-wrap" }, [table]);
-    // the columns give way when the words do not fit the card (a wide font, a long school name): Ht and Wt, then the potential, then
+    // the columns give way when the words do not fit the card (a wide font, a long school name): Ht and Wt, then Scouted and the potential, then
     // the status (the CSS drops them by the card's width too); measured again whenever the card changes width
     function fitTable() {
       const FIT = ["pr-fit-1", "pr-fit-2", "pr-fit-3"];
@@ -2051,6 +2059,7 @@
       const [stText, stTone] = statusShort(r, me);
       const pot = r.our_potential;
       const potTone = pot ? (POT_TONE[pot[1]] ?? "") : "muted";
+      const [scText, scTone] = looksText(Math.min(3, Number(r.looks) || 0));
       const hw = typeof r.height === "number" ? height(r.height) : (r.height || "—");
       const sub = r.portal ? `${clsWord(r.cls)} · ${r.from_name || ""}`.replace(/ · $/, "") : place(r.hometown);
       const who = el("button", { type: "button", class: "go-list-main pr-who" }, [avatar(r.id, "sm"),
@@ -2071,7 +2080,8 @@
         el("td", { class: "pr-c-stars" }, [r.portal ? el("span", { text: clsWord(r.cls) || "—" }) : el("span", { class: "go-stars", text: stars(r.stars), "aria-label": `${r.stars} stars` })]),
         el("td", { class: "pr-c-status" }, [el("span", { class: `go-tag ${stTone}`, text: stText, title: stText })]),
         el("td", { class: "pr-c-int" }, [el("span", { class: `go-tag ${INTEREST_TONE[r.interest_level] || ""}`, title: "How much your school appeals to him now, next to other recruits of his star rating", text: r.interest_level || "Low" })]),
-        el("td", { class: "pr-c-pot" }, [el("span", { class: `go-tag ${potTone}`, title: pot ? "Your staff's read of his potential" : "Your staff has no read on him yet", text: potText(pot) })]),
+        el("td", { class: "pr-c-sc" }, [el("span", { class: `pr-sc ${scTone}`, title: r.looks >= 3 ? "His report is complete: 3 of 3 looks" : r.looks > 0 ? `${fmtLooks(r.looks)} of 3 looks: each look narrows your staff's read` : "No look at him yet: send a scout", text: scText })]),
+        el("td", { class: "pr-c-pot" }, [el("span", { class: `go-tag ${potTone}`, title: pot ? `Your staff's read of his potential after ${fmtLooks(r.looks)} of 3 looks` : "Your staff has no read on him yet", text: potText(pot) })]),
         el("td", { class: "pr-c-act" }, [add])]);
       ui().on(tr, "click", (e) => { if (!e.target.closest("button, a, input, select")) openProfile(s, r.id); });
       return tr;
@@ -2100,6 +2110,22 @@
     function fetchBoard() {
       return H.api(`/api/season/${s.id}/recruiting`).then((v) => { if (!box.isConnected) return; ctx.board = v; drawMap(); }).catch(() => { /* the list works without the map */ });
     }
+
+    // a scouting trip (the Prospect Profile's Send a Scout, the board's Recruit menu, the Scouting Center) lands on his row in
+    // place: Scouted and Potential patched and pulsed, nothing else redrawn; the listener goes with the list
+    const onScouted = (e) => {
+      if (!tbody.isConnected) { document.removeEventListener("cfp:scouted", onScouted); return; }
+      const d = e.detail || {}, r = ctx.rows.find((x) => x.id === d.pid);
+      if (!r) return;
+      const first = !(Number(r.looks) > 0);
+      if (d.looks != null) r.looks = d.looks;
+      if ("potential" in d) r.our_potential = d.potential;
+      r.scouted = r.looks >= 3;
+      const tr = tbody.querySelector(`tr.pr-row[data-key="${CSS.escape(r.id)}"]`);
+      if (tr) { ui().morph(tr, drawRow(r)); for (const c of [".pr-c-sc .pr-sc", ".pr-c-pot .go-tag"]) { const n = tr.querySelector(c); if (n) ui().pulse(n); } }
+      if (first && r.looks > 0 && ctx.summary) { ctx.summary.footprint.evaluated += 1; drawSide(); }     // his first look: Your Footprint's Evaluated count
+    };
+    document.addEventListener("cfp:scouted", onScouted);
 
     let seq = 0;
     async function load(opts = {}) {
