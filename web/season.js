@@ -1294,14 +1294,16 @@
   // Coach Career: the recruiting tabs (recruiting.js) and the week's steps under the header
   const CAREER_TABS = ["offseason", "office", "recruiting", "prospects", "scouting", "classes", "programs"];
   // the League row follows the calendar in a career: the bracket and bowls once the field is set
-  // (selection week), the awards once the races have a shape, the classes once signing opens,
+  // (as Championship Week ends), the awards once the races have a shape, the classes once signing opens,
   // the summary when the season is done; a plain season keeps every tab
   const SELECTION_WEEK = 16, AWARDS_FROM = 4;
   function tabsForTheCalendar(s, career) {
     const show = { bracket: true, bowls: true, awards: true, classes: career };
     if (career) {
       const w = s.current_week || 0;
-      show.bracket = show.bowls = s.done || w >= SELECTION_WEEK;
+      // the bracket is built and the bowls are picked as Championship Week ends, so the Office can name your
+      // bowl or playoff game then: the tabs open with it, not a week later on Selection
+      show.bracket = show.bowls = s.done || w >= SELECTION_WEEK || !!s.bracket;
       show.awards = s.done || w >= AWARDS_FROM;
       show.classes = s.done || w >= SELECTION_WEEK;
     }
