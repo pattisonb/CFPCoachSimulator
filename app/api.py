@@ -1118,7 +1118,8 @@ def programs_view(p: Params) -> dict:
     st = _career_state(p.path["season_id"])
     rows = programs.rows(st)
     me = next((r for r in rows if r["team"] == st["team"]), None)
-    return {"you": me, "rows": rows, "tiers": programs.TIER_NAMES, "weights": programs.WEIGHTS}
+    return {"you": me, "rows": rows, "tiers": programs.TIER_NAMES, "weights": programs.WEIGHTS,
+            "words": [list(w) for w in programs.WORD_FLOORS], "group_order": list(programs.PRO_GROUP_ORDER)}
 
 
 @route("GET", "/api/season/{season_id}/office")

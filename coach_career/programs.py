@@ -12,6 +12,8 @@ MARKET = Path(__file__).resolve().parents[1] / "data" / "program_market.json"
 HISTORY = Path(__file__).resolve().parents[1] / "data" / "program_history.json"
 WEIGHTS = {"prestige": 0.30, "winning": 0.15, "nil": 0.15, "market": 0.10, "conference": 0.10, "coach": 0.10, "pro": 0.10}
 TIERS = ((76, 1), (65, 2), (50, 3), (35, 4))         # rating floors; below the last is tier 5
+WORD_FLOORS = (("Elite", 90), ("Excellent", 80), ("Strong", 70), ("Good", 60), ("Solid", 50), ("Fair", 40), ("Thin", 30), ("Weak", 0))   # a metric's grade words, by floor *tune*
+PRO_GROUP_ORDER = ("QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "K", "P")   # offseason.DRAFT_GROUP's groups, in its order
 TIER_NAMES = {1: "Blue Blood", 2: "Power", 3: "Solid", 4: "Group of 5", 5: "Bottom"}
 BASE_DEFAULT = {"history": 15.0, "prestige": 15.0, "winning": 20.0, "market": 25, "nil": 15.0, "conference": 10.0, "coach": 55.0, "pro": 0}
 RANK_BONUS = ((1, 0.8), (5, 0.5), (10, 0.35), (25, 0.35))     # a season's score: win share plus these (cumulative), max 3.0
@@ -305,6 +307,11 @@ def nil_move(team: dict, met: bool, losing: bool) -> None:
     p["tier"] = tier_of(p["rating"])
 
 
+def word_of(v: float) -> str:
+    """The grade word for a 0-100 metric."""
+    return next(w for w, f in WORD_FLOORS if v >= f)
+
+
 def rows(state: dict) -> list[dict]:
     """Every program for the page, by rating: the metrics, the tier and the AD's goal."""
     from sim import season
@@ -317,7 +324,7 @@ def rows(state: dict) -> list[dict]:
         p4 = season._is_p4(s, bt)
         out.append({"team": s, "name": bt["name"], "conference": bt["conference"], "tier": p["tier"], "tier_name": TIER_NAMES[p["tier"]],
                     "rating": p["rating"], "goal": goal_for(p["tier"], p4, p["rating"])["text"],
-                    **{k: p[k] for k in ("prestige", "winning", "nil", "market", "conference", "coach", "history")}})
+                    **{k: p[k] for k in ("prestige", "winning", "nil", "market", "conference", "coach", "history", "pro", "pro_groups")}})
     out.sort(key=lambda r: -r["rating"])
     for i, r in enumerate(out, 1):
         r["rank"] = i

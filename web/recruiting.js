@@ -281,10 +281,13 @@
 
   // ----- the Office ------------------------------------------------------------------------------
 
-  const METRIC_WORDS = (v) => (v >= 80 ? "Elite" : v >= 65 ? "Strong" : v >= 50 ? "Solid" : v >= 35 ? "Fair" : "Weak");
+  // the eight grade words, by floor (the server's programs.WORD_FLOORS rides in pv.words; this is the fallback)
+  const WORD_FLOORS = [["Elite", 90], ["Excellent", 80], ["Strong", 70], ["Good", 60], ["Solid", 50], ["Fair", 40], ["Thin", 30], ["Weak", 0]];
+  const GROUP_ORDER_PRO = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "K", "P"];
+  const METRIC_WORDS = (v, pv) => { const fl = (pv && pv.words && pv.words.length ? pv.words : WORD_FLOORS); return (fl.find(([, f]) => v >= f) || fl[fl.length - 1])[0]; };
   const PROGRAM_METRICS = [["prestige", "Prestige", "History and a decade of results"], ["winning", "Winning", "The last three seasons"],
     ["nil", "NIL", "The collective's tier, set by your AD"], ["market", "Market", "Crowds and TV"], ["conference", "Conference", "Your league's strength"],
-    ["coach", "Coach", "Your rating and tenure"]];
+    ["coach", "Coach", "Your rating and tenure"], ["pro", "Pro Pipeline", "The last ten drafts, by position"]];
 
   // your program's living rating: the six metrics as bars and the tier (the League's Programs tab, with every program's table under it)
   function programCard(pv) {
@@ -298,8 +301,18 @@
       el("h2", { class: "rcp-h1 lg-h2", text: you.name || "" }),
       el("div", { class: "go-program-bars" }, PROGRAM_METRICS.map(([k, label, tip]) => el("div", { class: "go-program-bar", title: tip }, [
         el("span", { class: "go-program-label", text: label }), el("i", {}, [el("b", { style: `width:${Math.max(2, Math.min(100, you[k]))}%` })]),
-        el("span", { class: "go-program-val", text: METRIC_WORDS(you[k]) })]))),
+        el("span", { class: "go-program-val", text: METRIC_WORDS(you[k] || 0, pv) })]))),
+      proGroups(pv, you),
     ]);
+  }
+
+  // the draft groups with a grade, best first: "WR Elite" (a group the program never sent reads Weak)
+  function proGroups(pv, you) {
+    const order = pv.group_order && pv.group_order.length ? pv.group_order : GROUP_ORDER_PRO;
+    const pg = you.pro_groups || {};
+    const list = order.map((g, i) => ({ g, v: pg[g] || 0, i })).sort((a, b) => b.v - a.v || a.i - b.i);
+    return el("div", { class: "go-program-groups", title: "The Pro Pipeline by draft position, best first" },
+      list.map((x) => el("span", { class: "go-tag", text: `${x.g} ${METRIC_WORDS(x.v, pv)}` })));
   }
 
   // the League's Programs tab: your program's card (with the AD's goal), then every program, open
@@ -324,12 +337,12 @@
   }
 
   function programsTable(pv) {
-    const t = el("table", { class: "stats go-programs" }, [el("thead", {}, [el("tr", {}, ["Program", "Standing", "Prestige", "Winning", "NIL", "Market", "Conf", "Coach", "The AD Expects"].map((h) => el("th", { text: h })))])]);
+    const t = el("table", { class: "stats go-programs" }, [el("thead", {}, [el("tr", {}, ["Program", "Standing", "Prestige", "Winning", "NIL", "Market", "Conf", "Coach", "Pro Pipeline", "The AD Expects"].map((h) => el("th", { text: h })))])]);
     const body = el("tbody");
     for (const r of pv.rows) {
       body.append(el("tr", { class: r.team === pv.you.team ? "mine" : "" }, [
         el("td", {}, [window.CFP.teamPill(r.team), ` ${r.name}`]), el("td", {}, [el("span", { class: "go-tag", text: r.tier_name })]),
-        ...["prestige", "winning", "nil", "market", "conference", "coach"].map((k) => el("td", { class: `word ${METRIC_WORDS(r[k]).toLowerCase()}`, text: METRIC_WORDS(r[k]) })),
+        ...["prestige", "winning", "nil", "market", "conference", "coach", "pro"].map((k) => { const w = METRIC_WORDS(r[k] || 0, pv); return el("td", { class: `word ${w.toLowerCase()}`, text: w }); }),
         el("td", { class: "small", text: r.goal })]));
     }
     t.append(body);
