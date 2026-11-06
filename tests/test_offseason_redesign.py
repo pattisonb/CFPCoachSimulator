@@ -2,7 +2,7 @@
 400 px, light and dark, walking every stage of one career: the Overview, Keep Them Home, Departures, the four
 portal weeks, Development, Staff and the Recap. On every page: the stage chip and the stepper agree with the
 API's stage, each card shows the API's numbers, nothing reads null/undefined/NaN, the page never scrolls
-sideways, labels are Title Case, cards in a row line up (tops and bottoms within 1 px, a lone card spans the
+sideways, labels are Title Case, cards in a row line up (tops within 1 px, each as tall as its content, a lone card spans the
 row) with one gap everywhere, and Back and Advance still work. Screenshots of every page go to SHOT_DIR when
 it is set. Needs Playwright with a Chromium; without one it is skipped. `python3 tests/test_offseason_redesign.py`"""
 import os
@@ -65,8 +65,9 @@ ROW_CHECK = """(gap) => {
         if (l.items[0].width < rr.width - 1) out.push(`a lone card ${Math.round(l.items[0].width)} of ${Math.round(rr.width)} px in ${row.className}`);
         continue;
       }
+      // a card is as tall as its content (never padded out to its neighbor): the row's cards share a top and none runs past the row
       const b = l.items.map((r) => r.bottom);
-      if (Math.max(...b) - Math.min(...b) > 1) out.push(`bottoms ${b.map(Math.round)} in ${row.className}`);
+      if (Math.max(...b) > rr.bottom + 1) out.push(`bottoms ${b.map(Math.round)} past the row's ${Math.round(rr.bottom)} in ${row.className}`);
       const xs = l.items.slice().sort((p, q) => p.left - q.left);
       for (let i = 1; i < xs.length; i++) { const g = xs[i].left - xs[i - 1].right; if (Math.abs(g - gap) > 1) out.push(`gap ${g} across in ${row.className}`); }
     }

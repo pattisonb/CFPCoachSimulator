@@ -1,24 +1,23 @@
 /* The League's Standings, Stats and Programs tabs in the Season Recap's look (web/recap.css): flat .rcp-card cards
    on the theme's panel, a kicker over each, condensed uppercase titles, muted secondary text, tabular numbers, a
-   4 px team-colored top edge (--rcp-team, set on the .lg root by season.js / recruiting.js) on your own card. The
+   bar over each in your team's color (styles.css .card-bar: the kicker and the title in the bar, the chips beside them). The
    tables keep table.stats (today's row density, crowns, rank badges, sortable headers and the phone's hidden .ph
    columns); only their headers and your row's tint take the Recap's. Standings' conferences sit two across above
    1000 px and one below; a phone stacks everything and keeps the 44 px chips (styles.css tap targets). */
 .lg { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 #tab-standings.panel.tab-body, #tab-stats.panel.tab-body, #tab-programs.panel.tab-body { overflow-x: hidden; }
-.lg .lg-card { gap: 10px; }
+.lg .lg-card { --card-gap: var(--gap-block, 12px); gap: var(--card-gap); }
 .lg .lg-card > p.small-text, .lg .lg-card > p.muted { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.4; }
 
 /* a card head: the kicker and the title on the left, the controls (chips, a tag) on the right */
 .lg-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; min-width: 0; }
 .lg-head-title { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.lg-head-title .go-kicker { color: var(--muted); }
 .lg .rcp-h1.lg-h2 { font-size: 24px; letter-spacing: 0.3px; color: var(--text); }   /* not the team theme's accent on h3 */
 .lg .lg-head > .view-chips, .lg .lg-head > .stats-chips { margin: 0; width: auto; }
 
 /* chips: the Recap's Awards look (a visible border, 13 px, 36 px tall; the phone rule lifts them to 44 px) */
 .lg .view-chips { gap: 8px; }
-.lg .view-chips .chip { min-height: 36px; padding: 0 12px; font-size: 13px; font-weight: 600; color: var(--text); border: 1px solid var(--border); border-radius: 999px; font-family: inherit; }
+.lg .view-chips .chip { min-height: 36px; padding: 0 12px; font-size: 13px; font-weight: 600; color: var(--text); border: 1px solid var(--border); font-family: inherit; }
 .lg .view-chips .chip:hover { border-color: var(--accent); }
 .lg .view-chips .chip.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 
@@ -40,10 +39,9 @@
 .lg .stats-controls select { font-family: inherit; }
 .lg .leaders-grid, .lg .roster-grid { margin-top: 0; }
 .lg .roster-head { margin: 0; }
-.lg .leader-card { border-radius: 10px; }
 
 /* Programs: your program's card and Every Program as Recap cards */
-.lg .go-program { padding: 16px; border-radius: 12px; gap: 10px; }
+.lg .go-program { --card-gap: var(--gap-block, 12px); gap: var(--card-gap); }
 .lg .go-programs-card { margin-top: 0; }
 .lg .go-program-head { gap: 8px 12px; }
 .lg .go-program-head { flex-wrap: nowrap; }

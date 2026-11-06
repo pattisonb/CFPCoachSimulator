@@ -68,8 +68,8 @@
   </header>
 
   <main class="season-layout">
-    <aside class="season-side" id="season-side">
-      <div class="section-head"><h2>Seasons</h2><span class="side-actions"><button id="btn-clear-seasons" class="ghost small" type="button" hidden>Clear All</button><button id="btn-hide-seasons" class="ghost small" type="button" title="Hide this list">Hide ‹</button></span></div>
+    <aside class="season-side panel" id="season-side">
+      <div class="card-bar section-head"><h2>Seasons</h2><span class="side-actions"><button id="btn-clear-seasons" class="ghost small" type="button" hidden>Clear All</button><button id="btn-hide-seasons" class="ghost small" type="button" title="Hide this list">Hide ‹</button></span></div>
       <ul id="season-list" class="history-list"><li class="muted">Loading seasons…</li></ul>
     </aside>
 
@@ -79,7 +79,7 @@
         <p id="season-loading" class="muted" hidden></p>
         <!-- the league a new career plays: the game's own, or a league file (web/leaguefile.js) -->
         <section id="league-panel" class="panel league-panel" aria-labelledby="league-title">
-          <div class="league-head"><h2 id="league-title">League</h2></div>
+          <div class="card-bar league-head"><h2 id="league-title">League</h2></div>
           <div class="league-row">
             <select id="pick-league" aria-label="League">
               <option value="builtin">League: Built-in</option>
@@ -173,7 +173,7 @@
           <!-- the Recap's look (web/league.css): one card, the view chips in its head, the filters and the table under it -->
           <div class="lg" id="stats-root">
             <section class="go-card rcp-card lg-card edge" aria-label="Stats">
-              <div class="lg-head">
+              <div class="card-bar lg-head">
                 <div class="lg-head-title"><div class="go-kicker muted" id="stats-kicker">League</div><h2 class="rcp-h1">Stats</h2></div>
                 <div class="view-chips stats-chips" id="stats-chips"></div>
               </div>

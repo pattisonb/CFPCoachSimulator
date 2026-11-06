@@ -315,7 +315,7 @@
     // the selection: the address's prospect, else the first row
     queueMicrotask(() => select(desk.pid || (st.rows[0] && st.rows[0].pid) || null));
     return el("section", { class: "go-card sc-panel sc-db", "aria-label": "Prospect Database" }, [
-      el("div", { class: "sc-panel-head" }, [el("div", {}, [el("h2", { class: "sc-h" }, ["Prospect Database ", ui().tip("Every prospect in the class: filter and sort the whole list.", "Prospect Database")])]), count]),
+      el("div", { class: "card-bar sc-panel-head" }, [el("div", {}, [el("h2", { class: "sc-h" }, ["Prospect Database ", ui().tip("Every prospect in the class: filter and sort the whole list.", "Prospect Database")])]), count]),
       search,
       el("div", { class: "sc-toolbar" }, [chips, el("div", { class: "sc-tools" }, [pos, sort])]),
       wrap, empty,
@@ -555,7 +555,7 @@
       el("span", { class: "muted small sc-ops-tag", text: "Staff assignments, regions and coverage" })]);
     const opsTip = ui().tip("Each scout takes a look at every prospect in his area each week: half a look, up to two. Pick the area each one covers.", "Scouting Operations");
     const manage = el("button", { type: "button", id: "sc-manage", class: "go-btn sc-manage", text: desk.ops ? "Hide Staff" : "Manage Staff", "aria-controls": "sc-ops-body" });
-    const bar = el("section", { class: `go-card sc-ops${desk.ops ? " open" : ""}`, "aria-label": "Scouting Operations" }, [el("div", { class: "sc-ops-head" }, [toggle, opsTip, summary, manage]), body]);
+    const bar = el("section", { class: `go-card sc-ops${desk.ops ? " open" : ""}`, "aria-label": "Scouting Operations" }, [el("div", { class: "card-bar sc-ops-head" }, [toggle, opsTip, summary, manage]), body]);
     const setOpen = (open) => {
       desk.ops = open;
       body.hidden = !open;
