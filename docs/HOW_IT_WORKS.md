@@ -1491,8 +1491,11 @@ a losing year; a Group of 5 player with a card overall of 50 or more (a Power 4 
 segments, each with its driver, and one draw against the sum: the segment it lands in is why he
 goes, stored on the entrant (`driver`) and on your leaver's Keep Them Home card, so the reason is
 the real cause, not a guess after the fact. The first segment is the role chance above (his
-class and role, a losing year, a Group of 5 standout moving up, a broken promise, a keep last
-year). The second is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
+class and role, a losing year, a Group of 5 standout moving up, a keep last year). A player
+promised a starting role (`promised`, from Keep Them Home or carried by a signed recruit or portal
+signee you told the job was his) who did not start adds a `promised` segment worth the rest of
+`PROMISE_BROKEN` (3) times the role chance; when the draw lands there his Keep Them Home card and
+the portal recap read "Was promised a starting role and did not get it". The next is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
 the recruit ask of the star tier his overall reads as, 60 for a five-star-equivalent, 30 a
 four, 8 a three, times his position), and his program's tier pays a starter `NIL_TIER_PAY` (60
 at tier 1, 40, 20, 8, 2 at tier 5); when his market is over that, his chance adds `NIL_PULL`
@@ -1526,7 +1529,9 @@ his ask, about 70% for a real starting role, 92% at most; a draft entrant projec
 round stays at most 8%, one rated 95 or better after a decent season 2% whatever you offer (his
 card says so), a day-three projection about 20% plus what the NIL buys). A player you
 keep carries `kept` (his portal chance the next year is 0.7 times) and a promise `promised` (3
-times if the snaps do not come). The leavers join the portal class or the draft as they would
+times if the snaps do not come; a recruit or portal entrant you promised the job on a call or
+visit carries the same `promised` onto your roster when he signs, `_sign_classes` and
+`_close_portal`, judged by the role he really played that season). The leavers join the portal class or the draft as they would
 have, and then the draft runs; Departures lists who stayed ("Stayed: You Kept Him Home") beside
 who left, and the week 1 portal screen lists the answers. A save from the older order (Departures
 first, the draft already run) is migrated when it loads (`migrate`): at Departures it goes back to
