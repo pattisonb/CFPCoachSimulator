@@ -71,7 +71,7 @@
 .ofc-step:hover { border-color: var(--muted); }
 .ofc-step.now { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .ofc-step-h { display: flex; align-items: center; gap: 8px; font-size: 15px; }
-.ofc-dot { flex: none; width: 24px; height: 24px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 13px; font-weight: 800; border: 1px solid var(--border); }
+.ofc-dot { flex: none; width: 24px; height: 24px; display: inline-grid; place-items: center; font-size: 13px; font-weight: 800; border: 1px solid var(--border); }
 .ofc-step.done .ofc-dot { background: var(--good); color: #04210f; border-color: var(--good); }
 .ofc-step.now .ofc-dot { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .ofc-step-sub { font-size: 13px; font-weight: 400; }

@@ -37,7 +37,7 @@
 .go-row-recruit:hover { background: var(--panel-2); border-color: var(--border); }
 .go-row-recruit[aria-pressed="true"] { background: var(--panel); border-color: var(--go-primary, var(--accent)); }
 .go-row-recruit:focus-visible { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: 1px; }
-.go-row-dot { width: 8px; height: 8px; border-radius: 50%; justify-self: center; background: transparent; }
+.go-row-dot { width: 8px; height: 8px; justify-self: center; background: transparent; }
 .go-row-dot.up { background: var(--good); }
 .go-row-dot.down { background: var(--bad); }
 .go-row-id { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
@@ -142,6 +142,7 @@
 .go-menu-main { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .go-menu-main b { font-size: 15px; }
 .go-menu-why { font-size: 12px; color: var(--muted); }
+.go-menu-item.go-menu-back b { color: var(--muted); font-weight: 600; }      /* the Official Visit picker's Back row */
 .go-menu-backdrop { position: fixed; inset: 0; z-index: 69; background: rgba(5, 8, 18, 0.45); }
 .go-menu.sheet { left: 0; right: 0; bottom: 0; top: auto; max-width: none; max-height: 82vh; border-width: 1px 0 0;
   padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px)); }

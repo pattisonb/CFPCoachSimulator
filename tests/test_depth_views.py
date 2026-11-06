@@ -15,6 +15,17 @@ if __name__ == "__main__":
     for role, row in rows.items():
         assert row["starters"] == sum(1 for p in row["players"] if p["starter"]) or role in ("KR", "PR"), (role, row["starters"])
     assert rows["WR"]["starters"] >= 2 and rows["QB"]["starters"] == 1 and rows["KR"]["starters"] == 1
+    # the returner list: one scale for everyone (a linebacker's own scale read any return rating as 99),
+    # the league's designated returners at its 50 mark, and no linemen, quarterbacks or kickers
+    kr = season.position_candidates(st, "ohio-state", "KR")["players"]
+    assert not any(r["position"] in ("OL", "DL", "QB", "K", "P") for r in kr), [r["position"] for r in kr]
+    best = max(kr, key=lambda r: r["rating"])
+    assert best["position"] in ("WR", "CB", "RB", "S", "TE"), best
+    for r in kr:
+        if r["position"] in ("MLB", "ROLB", "LOLB"):
+            assert r["rating"] <= best["rating"], (r, best)
+    scale = season._house_scale()[("KR", "return_rating")]
+    assert 40 <= scale[0] <= 70, scale     # a typical designated returner, in engine units, is the 50 mark
 
     wr = season.position_candidates(st, "ohio-state", "WR")
     assert wr["starters"] == rows["WR"]["starters"]

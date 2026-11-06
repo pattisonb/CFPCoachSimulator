@@ -23,7 +23,7 @@
   border: 1px solid var(--border); background: var(--panel-2); font-weight: 700; font-size: 13.5px; color: var(--muted); white-space: nowrap; }
 .off-step.done { color: var(--text); }
 .off-step.now { color: var(--text); border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-.off-step-mark { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border);
+.off-step-mark { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; border: 1px solid var(--border);
   font-size: 12px; font-weight: 800; }
 .off-step.done .off-step-mark { background: var(--good); border-color: var(--good); color: #04210f; }
 .off-step.now .off-step-mark { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
@@ -148,17 +148,14 @@
 .off-keep-acts .go-act.alt { border-color: color-mix(in srgb, var(--accent) 60%, var(--border)); }
 .off-keep-acts .go-act.alt span { color: var(--muted); opacity: 1; }
 
-/* ---------- the portal weeks: the board's wrapper (its cards are recruiting.js's own) ---------- */
-.off-board { display: contents; }
-.off-portal > .off-board > * { grid-column: 1 / -1; order: 2; min-width: 0; margin: 0; }
-.off-portal > .off-board > :first-child { order: -1; }
-.off-board > .go-board-head { background: var(--panel); border: 1px solid var(--border); padding: var(--card-pad) var(--card-pad);
-  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; }
-.off-board > .go-board-head > .go-display:first-child { display: none; }
-.off-board > .go-board-head > .go-meters { flex: 1 1 420px; }   /* the page's own title says the week */
-.off-board > .go-empty { text-align: center; align-items: center; --card-pad-y: 40px; }
-.off-board > .go-empty .go-display { font-size: 22px; text-transform: none; }
-.off-board > .go-empty p { max-width: 640px; }
+/* ---------- the portal weeks: Your Portal Board (the board itself is the Recruiting tab's) ---------- */
+.off-your-board { display: flex; flex-direction: column; gap: 14px; }
+.off-board-lines li { grid-template-columns: auto minmax(0, 1fr) auto; }
+.off-board-lines .go-avatar.sm { width: 32px; height: 32px; }
+.off-board-who { min-width: 0; }
+.off-board-who b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.off-board-foot { margin-top: auto; padding-top: 4px; }
+.off-board-foot .go-btn { width: 100%; }
 .off-bullets { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; line-height: 1.5; }
 .off-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .off-lines li { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto auto; align-items: center; gap: 4px 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
@@ -220,7 +217,7 @@ p .off-contract { margin-left: 6px; }
 .off-busy { position: sticky; top: 8px; z-index: 5; flex-direction: row !important; align-items: center; gap: 14px !important; border: 1px solid var(--accent) !important; margin-bottom: 16px; }
 .off-busy .go-kicker { color: var(--accent-text); }
 .off-busy p { margin: 4px 0 0; }
-.off-busy-spin { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--accent); border-right-color: transparent; animation: go-spin 800ms linear infinite; }
+.off-busy-spin { flex: none; width: 22px; height: 22px; border: 3px solid var(--accent); border-right-color: transparent; animation: go-spin 800ms linear infinite; }
 .off-held > :not(.off-busy) { opacity: 0.55; }
 @media (prefers-reduced-motion: reduce) { .off-busy-spin { animation: none; } }
 

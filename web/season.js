@@ -533,6 +533,7 @@
           newsStop();
           if (j.paused) toast("Paused. Advance when you are ready.", 3000);
           barDone(j.status !== "error");
+          tabDone(j.status !== "error", j.record);
           hideSimOverlay();
           if (j.status === "error") toast(`Simulation error: ${j.error}`, 6000);
           const s = await api(`/api/season/${state.season.id}`);
@@ -613,12 +614,91 @@
     if (simBtn) simBtn.textContent = "Simming…";
     if (span > 1) showSimOverlay(j);
     barReport(p);
+    tabSim(j, p);
   }
 
   // What the sim is doing, from the engine's stage: "Playing Week 6 games · 34 of 61", "Recruiting week", "Saving".
   function stageLine(j) {
     const stage = j.stage || "Getting ready";
     return j.games_total ? `${stage} · ${j.games_done} of ${j.games_total}` : stage;
+  }
+
+  // ----- the browser tab: the dynasty's name, and the sim's progress while you are on another tab -----
+  // The title reads "Ohio State Dynasty"; while a sim runs it leads with the progress and your record
+  // ("42% · 4-1 · Wk 6 · Ohio State Dynasty") and the favicon wears a progress ring in your color, so
+  // a tab in the background still tells you where the sim is. When it ends the tab says so ("Done · 9-3
+  // · …", a full green ring; "Sim Failed" and red on an error) until you come back to it.
+  const TAB_BASE = "Coach Career · CFP Coach Simulator";
+  const tab = { icon: null, img: null, links: null, hrefs: null, timer: null, waiting: false };
+  function dynastyTitle(s) {
+    const t = window.CFP.teamsBySlug[s.team] || {};
+    return `${t.name || s.team_name || "Coach Career"} Dynasty`;
+  }
+  function tabTitle(text) { if (document.title !== text) document.title = text; }
+  function tabLinks() {
+    if (!tab.links) {
+      tab.links = Array.from(document.querySelectorAll("link[rel='icon']"));
+      tab.hrefs = tab.links.map((l) => [l.getAttribute("href"), l.getAttribute("type")]);
+    }
+    return tab.links;
+  }
+  function tabIconReset() {
+    if (!tab.links) return;
+    tab.links.forEach((l, i) => { l.setAttribute("href", tab.hrefs[i][0]); if (tab.hrefs[i][1]) l.setAttribute("type", tab.hrefs[i][1]); else l.removeAttribute("type"); });
+  }
+  // the favicon with a ring: `p` 0-1 of the way round, `tone` "run" (your color), "done" (green) or "fail" (red)
+  function tabIcon(p, tone) {
+    const links = tabLinks();
+    if (!links.length) return;
+    if (!tab.img) {
+      tab.img = new Image();
+      tab.img.src = (tab.hrefs.find(([h]) => /\.svg$/.test(h)) || tab.hrefs[0])[0];
+      tab.img.onload = () => { if (state.simming || tab.waiting) tabIcon(tab.lastP, tab.lastTone); };
+    }
+    tab.lastP = p; tab.lastTone = tone;
+    const c = tab.icon || (tab.icon = document.createElement("canvas"));
+    c.width = c.height = 64;
+    const g = c.getContext("2d");
+    g.clearRect(0, 0, 64, 64);
+    if (tab.img.complete && tab.img.naturalWidth) g.drawImage(tab.img, 0, 0, 64, 64);
+    const color = tone === "done" ? "#2e9e5b" : tone === "fail" ? "#d9403c" : (getComputedStyle(document.body).getPropertyValue("--go-primary").trim() || "#f5b942");
+    g.lineWidth = 9; g.lineCap = "butt";
+    g.strokeStyle = "rgba(0,0,0,0.55)"; g.beginPath(); g.arc(32, 32, 26.5, 0, Math.PI * 2); g.stroke();
+    g.strokeStyle = color; g.beginPath(); g.arc(32, 32, 26.5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.03, Math.min(1, p))); g.stroke();
+    const url = c.toDataURL("image/png");
+    for (const l of links) { l.setAttribute("href", url); l.setAttribute("type", "image/png"); }
+  }
+  function tabIdle(s) {
+    if (tab.waiting) return;                       // "Done" stays until you have seen it (tabBack)
+    if (tab.timer) { clearTimeout(tab.timer); tab.timer = null; }
+    document.removeEventListener("visibilitychange", tabBack);
+    tabIconReset();
+    tabTitle(s ? dynastyTitle(s) : TAB_BASE);
+  }
+  function tabSim(j, p) {
+    const s = state.season;
+    if (tab.waiting) { tab.waiting = false; if (tab.timer) { clearTimeout(tab.timer); tab.timer = null; } document.removeEventListener("visibilitychange", tabBack); }
+    const r = state.liveRecord || s.record || { wins: 0, losses: 0 };
+    const pct = Math.min(99, Math.max(0, Math.round((Number(p) || 0) * 100)));
+    const wk = Math.min((j.done != null ? j.done : s.current_week) + 1, 20);
+    tabTitle(`${pct}% · ${r.wins}-${r.losses} · Wk ${wk} · ${dynastyTitle(s)}`);
+    tabIcon(p, "run");
+  }
+  function tabDone(ok, record) {
+    const s = state.season;
+    const r = record || state.liveRecord || s.record || { wins: 0, losses: 0 };
+    tabTitle(`${ok ? "Done" : "Sim Failed"} · ${r.wins}-${r.losses} · ${dynastyTitle(s)}`);
+    tabIcon(1, ok ? "done" : "fail");
+    tab.waiting = true;
+    // the word stays while the tab is in the background, and clears a moment after you come back
+    if (document.hidden) document.addEventListener("visibilitychange", tabBack);
+    else tabBack();
+  }
+  function tabBack() {
+    if (document.hidden) return;
+    document.removeEventListener("visibilitychange", tabBack);
+    if (tab.timer) clearTimeout(tab.timer);
+    tab.timer = setTimeout(() => { tab.timer = null; tab.waiting = false; if (!state.simming) tabIdle(state.season); }, 2500);
   }
 
   // ----- the sim bar ------------------------------------------------------------------------------
@@ -939,7 +1019,7 @@
     $("#season-empty").hidden = true;
     $("#season").hidden = false;
     state.liveRecord = null;
-    document.title = "Coach Career · CFP Coach Simulator";
+    tabIdle(s);
     for (const a of document.querySelectorAll(".site-nav a")) a.classList.toggle("active", a.dataset.nav === "season");
     renderCareerSteps(s);
     setBusy(false);

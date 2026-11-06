@@ -247,7 +247,7 @@ table.compare td.better { font-weight: 800; }
 button.news-bubble { cursor: pointer; }
 button.news-bubble:hover { border-color: var(--accent); }
 .news-bubble .team-pill { flex: none; margin-top: 3px; }
-.news-icon { flex: none; width: 12px; height: 12px; margin-top: 4px; border-radius: 50%; background: var(--accent); }
+.news-icon { flex: none; width: 12px; height: 12px; margin-top: 4px; background: var(--accent); }
 .news-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .news-week { font-size: 12px; }
 .news-bubble.news-upset { border-left: 3px solid var(--accent); }
@@ -270,7 +270,7 @@ button.news-bubble:hover { border-color: var(--accent); }
 /* the control that acted, while its request is out: off, with a small spinner */
 @keyframes go-spin { to { transform: rotate(360deg); } }
 .go-busy { position: relative; cursor: progress; }
-.go-busy::after { content: ""; display: inline-block; width: 0.8em; height: 0.8em; margin-left: 6px; vertical-align: -0.1em; border-radius: 50%;
+.go-busy::after { content: ""; display: inline-block; width: 0.8em; height: 0.8em; margin-left: 6px; vertical-align: -0.1em;
   border: 2px solid currentColor; border-right-color: transparent; opacity: 0.7; animation: go-spin 700ms linear infinite; }
 @media (prefers-reduced-motion: reduce) {
   .go-changed, .go-fade-in, .go-leaving, .toast-item, .go-busy::after { animation: none !important; transition: none !important; }
@@ -822,7 +822,7 @@ body:not(.team-theme) .hdr-rank { background: var(--panel-2); border-color: var(
 .gd-fd[hidden], .gd-gain[hidden] { display: none; }
 .gd-gain { position: absolute; top: 20px; height: 10px; background: rgba(255,255,255,0.35); transition: left 0.4s ease, width 0.4s ease; }
 .gd-gain.loss { background: rgba(220, 60, 60, 0.6); }
-.gd-ball { position: absolute; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #8b4513; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.5); transition: left 0.45s ease; z-index: 3; display: flex; align-items: center; justify-content: center; }
+.gd-ball { position: absolute; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; background: #8b4513; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.5); transition: left 0.45s ease; z-index: 3; display: flex; align-items: center; justify-content: center; }
 .gd-arrow { position: absolute; top: -16px; font-size: 11px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
 .gd-ball.home .gd-arrow { left: 12px; }
 .gd-ball.away .gd-arrow { right: 12px; }
@@ -863,7 +863,7 @@ body:not(.team-theme) .hdr-rank { background: var(--panel-2); border-color: var(
 .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid var(--border); background: var(--panel-2); }
 .settings-text { min-width: 0; }
 .switch { position: relative; width: 46px; height: 26px; background: var(--border); border: 0; padding: 0; flex: none; cursor: pointer; transition: background 0.2s; }
-.switch .knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.switch .knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; background: #fff; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
 .switch.on { background: var(--good); }
 .switch.on .knob { left: 23px; }
 .rating-row.edited .rating-label { color: var(--accent-text); font-weight: 600; }
@@ -991,7 +991,7 @@ table.stats tr.mine td.name { font-weight: 800; }
 .coach-ovr b { font-size: 28px; }
 .coach-colors select { margin-left: 4px; }
 .swatches { display: flex; flex-wrap: wrap; }
-.swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); padding: 0; cursor: pointer; }
+.swatch { width: 28px; height: 28px; border: 2px solid var(--border); padding: 0; cursor: pointer; }
 .swatch.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
 .coach-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
 .coach-item { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center; border: 1px solid var(--border); background: var(--panel-2); }
@@ -1002,8 +1002,7 @@ table.stats tr.mine td.name { font-weight: 800; }
 @media (max-width: 860px) { .coach-main { grid-template-columns: 1fr; } .coach-preview { position: static; order: -1; } }
 
 /* season page: your coach's portrait before his line */
-.coach-line-pic { display: inline-block; width: 36px; height: 36px; vertical-align: middle; margin-right: 8px;
-  border-radius: 50%; overflow: hidden; background: #f4f6fb; box-shadow: 0 0 0 2px rgba(255,255,255,0.7); }
+.coach-line-pic { display: inline-block; width: 36px; height: 36px; vertical-align: middle; margin-right: 8px; overflow: hidden; background: #f4f6fb; box-shadow: 0 0 0 2px rgba(255,255,255,0.7); }
 .coach-line-pic svg { width: 100%; height: 115%; display: block; }
 .coach-line a { color: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
 
@@ -1019,7 +1018,7 @@ table.stats tr.mine td.name { font-weight: 800; }
 
 /* Coach Career: the week's steps and the recruiting tabs (recruiting.js) */
 .career-steps { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 4px; }
-.career-step b { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: var(--accent-ink, #fff); font-size: 12px; }
+.career-step b { display: inline-grid; place-items: center; width: 20px; height: 20px; background: var(--accent); color: var(--accent-ink, #fff); font-size: 12px; }
 .rc-head { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px 16px; align-items: end; margin-bottom: 6px; }
 .rc-meter .progress { margin: 4px 0 0; }
 .rc-meter-label { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
@@ -1044,7 +1043,7 @@ table.stats tr.mine td.name { font-weight: 800; }
 .rc-profile-name { font-size: 20px; text-transform: none; color: var(--text); letter-spacing: 0; margin: 0 0 10px; }
 .rc-loading { padding: 24px 0; text-align: center; }
 .rc-profile-head { display: grid; grid-template-columns: 84px 1fr; gap: 12px; align-items: center; }
-.rc-avatar { display: block; width: 84px; height: 84px; border-radius: 50%; overflow: hidden; background: var(--panel-2); }
+.rc-avatar { display: block; width: 84px; height: 84px; overflow: hidden; background: var(--panel-2); }
 .rc-avatar svg { width: 100%; height: 115%; display: block; }
 .rc-status { font-weight: 700; margin-top: 4px; }
 .rc-profile-actions { margin: 10px 0 0; }
@@ -1095,7 +1094,7 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-step { display: flex; align-items: center; gap: 12px; background: var(--panel-2); border: 2px solid transparent; color: var(--text); text-align: left; cursor: pointer; font: inherit; }
 .go-step.now { border-color: var(--go-primary, var(--accent)); }
 .go-step.done { border-color: var(--good); }
-.go-step-mark { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: var(--border); color: var(--text); }
+.go-step-mark { flex: none; width: 32px; height: 32px; display: grid; place-items: center; font-weight: 800; background: var(--border); color: var(--text); }
 .go-step.now .go-step-mark { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); }
 .go-step.done .go-step-mark { background: var(--good); color: #0b1020; }
 .go-step-text { display: flex; flex-direction: column; }
@@ -1113,7 +1112,7 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-tag.warn { color: var(--go-warn-text); border-color: color-mix(in srgb, var(--go-warn) 45%, var(--border)); }
 .go-tag.bad { color: var(--bad-text); }
 .go-tag.muted { color: var(--muted); }
-.go-avatar { flex: none; display: block; width: 52px; height: 52px; border-radius: 50%; overflow: hidden; background: var(--panel-2); }
+.go-avatar { flex: none; display: block; width: 52px; height: 52px; overflow: hidden; background: var(--panel-2); }
 .go-avatar.sm { width: 38px; height: 38px; }
 .go-avatar.lg { width: 92px; height: 92px; }
 .go-avatar svg { width: 100%; height: 115%; display: block; }
@@ -1305,8 +1304,8 @@ body.career-mode.on-career-tab .season-weeks { padding-bottom: 6px; }
    keep the title line its own height */
 .go-info-wrap { display: inline-flex; vertical-align: middle; }
 button.go-info { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; min-height: 36px; min-width: 36px; margin: -8px -4px;
-  padding: 0; border: 0; background: transparent; color: var(--muted); cursor: help; box-shadow: none; border-radius: 50%; flex: none; }
-.go-info-i { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid currentColor;
+  padding: 0; border: 0; background: transparent; color: var(--muted); cursor: help; box-shadow: none; flex: none; }
+.go-info-i { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border: 1.5px solid currentColor;
   font: italic 700 13px/1 Georgia, "Times New Roman", serif; }
 button.go-info:hover, button.go-info:focus-visible, button.go-info[aria-expanded="true"] { color: var(--text); background: transparent; }
 button.go-info:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
@@ -1388,7 +1387,7 @@ body.career-mode { --us-staffed: color-mix(in srgb, var(--go-primary, var(--acce
 .go-map-swatch { width: 12px; height: 12px; background: var(--us-open); border: 1px solid var(--border); flex: none; }
 .go-map-legend li.staffed .go-map-swatch { background: var(--us-staffed); border-color: var(--go-primary, var(--accent)); }
 .go-map-key { margin: 6px 0; }
-.go-map-chip { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; }
+.go-map-chip { display: inline-block; width: 10px; height: 10px; vertical-align: middle; }
 .go-map-chip.good { background: var(--good); } .go-map-chip.warn { background: var(--go-warn, #e39b14); } .go-map-chip.bad { background: var(--bad); } .go-map-chip.muted { background: var(--muted); }
 .go-map-table-wrap { margin-top: 8px; overflow-x: auto; }
 .go-map-table { border-collapse: collapse; width: 100%; font-size: 13px; }
@@ -1511,7 +1510,7 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
 #league-result:empty { display: none; }
 .league-busy { --card-pad-y: 10px; --card-pad-x: 12px; display: flex; align-items: center; gap: 10px; border: 1px solid var(--border); background: var(--panel-2); }
 .league-busy p { flex: 1 1 auto; min-width: 0; }
-.league-spinner { flex: none; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--text); animation: go-spin 0.8s linear infinite; }
+.league-spinner { flex: none; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--text); animation: go-spin 0.8s linear infinite; }
 .league-clock { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; }
 .league-panel p.league-error-head { margin: 0 0 8px; color: var(--bad-text); font-weight: 600; }
 .league-errors { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
@@ -1558,8 +1557,8 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
    everywhere: no rectangle in the career UI has a radius (circles stay circles; the big team tiles keep 4 px). */
 :root { --radius: 0; --card-pad: 20px; --card-pad-nested: 14px; --card-bar-h: 42px; --card-bar-gap: 16px; }   /* *tune* the cards' padding, the bar's height, the room between a bar and its body */
 @media (max-width: 720px) { :root { --card-pad: 14px; } }
-button, input, select, textarea { border-radius: 0; }
-.team-pill.big, .team-pill.xl, .ofc-pill-l, .ofc-pill-m, .review-big .team-pill, .champ-banner .team-pill, .off-hero-mark .team-pill { border-radius: 4px; }
+button, input, select, textarea { }
+.team-pill.big, .team-pill.xl, .ofc-pill-l, .ofc-pill-m, .review-big .team-pill, .champ-banner .team-pill, .off-hero-mark .team-pill { }
 /* one padding for every card; a page's own rule sets --card-pad-y and --card-pad-x where a card must differ */
 :where(.go-card, .rcp-card, .panel, .review-card, .leader-card, .pr-card, .pr-main, .sc-panel, .go-map, .start-card, .bowl-card, .go-pcard, .coach-item, .team-card, .league-busy, .aw-card, .rc-staff-card) {
   padding: var(--card-pad-y, var(--card-pad)) var(--card-pad-x, var(--card-pad)); }

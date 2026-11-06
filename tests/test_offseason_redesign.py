@@ -31,8 +31,8 @@ TITLE_CHECK = """() => {
                'button.go-btn', '.go-act > b', '.off-title', 'summary .go-kicker'];
   const bad = [];
   for (const n of box.querySelectorAll(sel.join(','))) {
-    // the board is recruiting.js's; a candidate card is one button of sentences; the Staff step's development reasons keep their case (.off-dev)
-    if (n.closest('.off-board') || n.closest('.off-cand') || n.closest('.off-dev') || !n.offsetParent) continue;
+    // a candidate card is one button of sentences; the Staff step's development reasons keep their case (.off-dev)
+    if (n.closest('.off-cand') || n.closest('.off-dev') || !n.offsetParent) continue;
     const c = n.cloneNode(true);
     for (const w of c.querySelectorAll('.go-info-wrap')) w.remove();        // the (i) tip's sentence is not the label
     const t = c.textContent.replace(/[→←✓⏭·:(),+−]/g, ' ').trim();
@@ -132,7 +132,7 @@ def generic(page, label: str, combo: tuple) -> None:
     assert not rows, (label, name, rows[:6])
     if width <= 400:
         short = page.evaluate("""() => [...document.querySelectorAll('#tab-offseason .off-page button, #tab-offseason .off-head button')]
-            .filter((b) => b.offsetParent && !b.closest('.off-board') && b.getBoundingClientRect().height < 43.5).map((b) => b.textContent.trim().slice(0, 30))""")
+            .filter((b) => b.offsetParent && b.getBoundingClientRect().height < 43.5).map((b) => b.textContent.trim().slice(0, 30))""")
         assert not short, (label, name, short[:5])
     if SHOT_DIR:
         page.screenshot(path=f"{SHOT_DIR}/{label}-{name}.png", full_page=True)
@@ -236,7 +236,19 @@ def check_portal(page, v: dict) -> None:
     if kept and p["week"] == 1:
         ans = text(page, "#tab-offseason .off-answers")
         assert kept[0]["name"] in ans, ans
-    page.wait_for_selector("#tab-offseason .off-board .go-meters", timeout=60_000)
+    # Your Portal Board in brief: the count, your offers out of the allowance, the top entrants (or the empty line), the button
+    assert not page.query_selector("#tab-offseason .off-board"), "the board itself is the Recruiting tab's"
+    bd = p["board"]
+    card = text(page, "#tab-offseason .off-your-board")
+    assert "YOUR PORTAL BOARD" in card.upper() and "Recruit on the Board →" in card, card   # the kicker is set in capitals
+    assert f"{len(p['offers'])} / {len(p['offers']) + p['offers_left']}" in card, card
+    if bd["count"]:
+        rows = page.query_selector_all("#tab-offseason .off-your-board li")
+        assert 0 < len(rows) <= 6 and len(rows) == min(6, bd["count"]), (len(rows), bd["count"])
+        names = {r["name"] for r in bd["rows"]}
+        assert all(any(n in r.inner_text() for n in names) for r in rows), card
+    else:
+        assert "Nobody on your board yet" in card, card
 
 
 def check_development(page, v: dict) -> None:
