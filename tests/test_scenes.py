@@ -126,7 +126,7 @@ def test_present(st: dict, pid: str, sc: dict) -> None:
     rc = st["recruiting"]
     p = rc["prospects"][pid]
     p["persona"] = {"personality": "business", "decider": "self", "decider_topic": None}     # a plain recruit: a Guarded or Shy one names no topic on a call
-    topics = [t for t in recruiting.PITCHES if t not in p["priorities"]][:3]
+    topics = [t for t in recruiting.PITCHES if not persona.counts_as_priority(st, pid, t)][:3]
     r = act(st, pid, "present", scene=sc["id"], topics=topics)
     sc2 = r["scene"]
     assert sc2 is rc["scenes"][ME][pid] and sc2["presented"] == topics and sc2["present"]["kind"] == "polite" and r["points"] == 0.0 and r["hit"] == []
@@ -173,7 +173,7 @@ def test_present_points(st: dict, used: set) -> None:
     pid = cold(st, used, fit("hit"))
     p, s = rc["prospects"][pid], recruiting.strengths(st, ME, pid)
     strong = max((t for t in p["priorities"] if s[t] >= recruiting.BACKFIRE), key=lambda t: s[t])
-    others = [t for t in recruiting.PITCHES if t not in p["priorities"]][:2]
+    others = [t for t in recruiting.PITCHES if not persona.counts_as_priority(st, pid, t)][:2]
     sc = act(st, pid, "call")["scene"]
     before = recruiting.pending(st, ME, pid)
     r = act(st, pid, "present", scene=sc["id"], topics=[strong] + others)
@@ -193,7 +193,7 @@ def test_present_points(st: dict, used: set) -> None:
     pid = cold(st, used, fit("quiet"))
     p, s = rc["prospects"][pid], recruiting.strengths(st, ME, pid)
     weak = next(t for t in p["priorities"] if s[t] < recruiting.BACKFIRE)
-    others = [t for t in recruiting.PITCHES if t not in p["priorities"]][:2]
+    others = [t for t in recruiting.PITCHES if not persona.counts_as_priority(st, pid, t)][:2]
     sc = act(st, pid, "call")["scene"]
     r = act(st, pid, "present", scene=sc["id"], topics=others[:1] + [weak] + others[1:])
     want = -recruiting.BACKFIRE_COST * recruiting.PRESENT_HIT * recruiting.BASE_POINTS["call"]

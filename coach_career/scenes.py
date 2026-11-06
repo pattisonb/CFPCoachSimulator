@@ -32,7 +32,7 @@ QUESTION_RATE = float(os.environ.get("CFP_QUESTION_RATE", "0.6"))
 # the topics as he would say them, for two-sided cues
 PHRASES = {"proximity": "staying close to home", "playing_time": "getting on the field early",
            "prestige": "a big-name program", "winning": "winning right away", "nil": "the NIL side of it",
-           "coach": "the coaches I'd play for", "academics": "getting a real degree"}
+           "coach": "the coaches I'd play for", "academics": "getting a real degree", "pro": "getting to the league"}
 
 LINES: dict[str, dict[str, list[str]]] = {
     "proximity": {
@@ -132,6 +132,20 @@ LINES: dict[str, dict[str, list[str]]] = {
         "quiet": ["...I don't know much about the classes there.",
                   "My mom's going to ask about the academics. I don't know what to tell her.",
                   "Yeah. I was hoping for a stronger school."],
+    },
+    "pro": {
+        "cue": ["Honestly, Coach? I'm trying to play on Sundays. Who gets {position}s there?",
+                "My trainer keeps a list of who puts guys in the league. I look at it.",
+                "I want to get drafted. That's the whole plan."],
+        "hit": ["You put {position}s in the league. That's what I'm chasing.",
+                "Sundays. That's the dream, Coach, and you've got the receipts.",
+                "First-rounders at my spot? Say less."],
+        "polite": ["Cool. The league's a long way off, though.",
+                   "Yeah, I know who you've sent. Not my biggest thing.",
+                   "That's nice. I just want to play ball first."],
+        "quiet": ["...Who was the last {position} you got drafted, Coach?",
+                  "My trainer says nobody gets drafted from there. I don't know.",
+                  "I'll have to look that up."],
     },
     "_two_sided": {
         "cue": ["Honestly, Coach? It's {a} or {b}. I go back and forth.",
@@ -245,7 +259,8 @@ LEAD_LINES = {"proximity": "You'd be close, {first}. Your folks could make every
               "winning": "We're built to win now, and we are not slowing down.",
               "nil": "The collective takes care of our guys. That's real, and it's yours.",
               "coach": "I'm not going anywhere. You'd play for me every year you're here.",
-              "academics": "The degree here means something. Your mom will like that part."}
+              "academics": "The degree here means something. Your mom will like that part.",
+              "pro": "We put {position}s in the league, {first}. Scouts know the way here."}
 
 # ----- what is true (the lines that claim something agree with the game's facts) ---------------------------
 CLAIM_FROM = 0.6          # *tune* a topic's strength from which your lines claim it outright (the page's Strong); under it they speak honestly
@@ -257,7 +272,8 @@ LEAD_HONEST = {"proximity": "It's a trip from {town}, I know. We'll make your fo
                "prestige": "We're not the biggest name out there yet. Come help us make it one.",
                "nil": "The collective is still growing, but it takes care of our guys.",
                "coach": "I know what people are saying. I'm here to build this, and I want you in it.",
-               "academics": "You'll get your degree here. We make sure our guys finish."}
+               "academics": "You'll get your degree here. We make sure our guys finish.",
+               "pro": "I won't tell you we've sent a lot of guys to Sundays. Come be the first one everybody remembers."}
 # your Winning Now lead by the season's form (`facts`): this season's record, the last game, the conference record and
 # the program's recent history decide which is true; "hot" and "pre_up" are LEAD_LINES["winning"] (or the ranked line)
 LEAD_WINNING = {"ranked": "We're ranked, we're winning, and we are not slowing down.",
@@ -285,10 +301,12 @@ HONEST_HIT = {"proximity": ["It's a drive, but my folks could make some games. T
               "nil": ["It's not the biggest number, but it helps back home.",
                       "Okay. That's a start, Coach."],
               "academics": ["A degree's a degree, Coach. My mom will still want to hear that.",
-                            "Good. I want something for after football."]}
+                            "Good. I want something for after football."],
+              "pro": ["Be the first? Okay. I like that, Coach.",
+                      "Nobody's done it from there yet. Maybe that's me."]}
 # your opening's three things on a topic you cannot claim, as you say them (PHRASES are his words and your claims)
 SAID_HONEST = {"proximity": "a home away from home", "playing_time": "a fair shot to compete",
-               "prestige": "a program you can help build", "winning": "building a winner", "academics": "getting your degree"}
+               "prestige": "a program you can help build", "winning": "building a winner", "academics": "getting your degree", "pro": "a path to Sundays"}
 # the claim each line makes (by its template): the `truth` key that must hold ("!key": must not; a tuple: all of them); any line not
 # listed claims nothing. A line whose claim is false gives way to one in its pool that holds, else the honest one.
 NEEDS = {
@@ -316,6 +334,9 @@ NEEDS = {
     "Okay. That takes care of a lot back home.": "nil",
     "That's a real school, Coach. That counts for a lot.": "academics",
     "My mom is going to love that. The degree matters.": "academics",
+    "You put {position}s in the league. That's what I'm chasing.": "pro",
+    "Sundays. That's the dream, Coach, and you've got the receipts.": "pro",
+    "First-rounders at my spot? Say less.": "pro",
 }
 
 
@@ -359,12 +380,12 @@ def facts(state: dict, slug: str, week: int | None = None) -> dict:
 
 def truth(state: dict, slug: str, pid: str, week: int | None = None) -> dict:
     """Which topics your lines may claim to him: a strength of CLAIM_FROM or better (proximity, playing
-    time, prestige, NIL, academics); Winning Now by the season's form (`facts`), "history" by the
+    time, prestige, NIL, academics, Pro Pipeline); Winning Now by the season's form (`facts`), "history" by the
     program's last three seasons; The Head Coach unless the talk is that your job is not safe (his Hot
     Seat twist about you). `form` and `facts` ride along."""
     fx = facts(state, slug, week)
     st_ = recruiting.strengths(state, slug, pid)
-    out = {t: st_[t] >= CLAIM_FROM for t in ("proximity", "playing_time", "prestige", "nil", "academics")}
+    out = {t: st_[t] >= CLAIM_FROM for t in ("proximity", "playing_time", "prestige", "nil", "academics", "pro")}
     tw = persona._twist(state, pid)
     out.update(winning=fx["form"] in ("hot", "winning", "pre_up"), history=fx["history"],
                coach=not (tw and tw["k"] == "hot_seat" and tw.get("s") == slug), form=fx["form"], facts=fx)

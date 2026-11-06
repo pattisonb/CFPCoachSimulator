@@ -8,7 +8,7 @@
   "use strict";
   const { el } = window.CFP;
   const PITCH_NAMES = { proximity: "Close to Home", playing_time: "Playing Time", prestige: "Program Prestige", winning: "Winning Now",
-                        nil: "NIL", coach: "The Head Coach", academics: "Academics" };
+                        nil: "NIL", coach: "The Head Coach", academics: "Academics", pro: "Path to the League" };
   const GROUP_NAMES = { athleticism: "Athleticism", size_strength: "Size & Strength", technique: "Technique", football_iq: "Football IQ",
                         potential: "Potential", coachability: "Coachability" };
   const STATUS = [["", "Any Status"], ["interested", "Interested in You"], ["open", "Uncommitted"], ["committed", "Committed"], ["signed", "Signed"], ["leaning_fcs", "Leaning FCS"],

@@ -27,4 +27,12 @@ if __name__ == "__main__":
     assert 0.22 <= share <= 0.38, share
     first = sum(1 for pr in rc["prospects"].values() if pr["priorities"][0] == "pro") / len(rc["prospects"])
     assert 0.07 <= first <= 0.13, first
+    from coach_career import scenes
+    assert scenes.PHRASES["pro"] == "getting to the league" and scenes.SAID_HONEST["pro"] == "a path to Sundays"
+    assert all(k in scenes.LINES["pro"] and len(scenes.LINES["pro"][k]) == 3 for k in ("cue", "hit", "polite", "quiet"))
+    assert all(scenes.NEEDS.get(line) == "pro" for line in scenes.LINES["pro"]["hit"])
+    assert "{position}" in scenes.LEAD_LINES["pro"] and "Sundays" in scenes.LEAD_HONEST["pro"] and len(scenes.HONEST_HIT["pro"]) == 2
+    assert scenes.truth(st, "ohio-state", wr)["pro"] is True and scenes.truth(st, "army", wr)["pro"] is False
+    js = (_Path(__file__).resolve().parents[1] / "web" / "recruiting.js").read_text()
+    assert 'pro: "Path to the League"' in js
     print(f"pro pitch ok: Ohio State WR {osu['pro']:.2f} vs San José State {sjsu['pro']:.2f}; {share:.0%} of the class carry it, {first:.0%} first")
