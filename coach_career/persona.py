@@ -667,7 +667,7 @@ STORY_LINES: dict[str, dict[str, list[str]]] = {
                 "You want me, you want {mate} too. That's the deal, Coach.",
                 "{mate} is my guy. We're doing this together."],
         "family": ["He and {mate} are a package, Coach. Two offers, or no deal.",
-                   "Those two boys have been inseparable since grade school. They want to go together.",
+                   "{first} and {mate} have been inseparable since grade school. They want to go together.",
                    "If you want our son, you'll need a spot for {mate} too."],
     },
     "two_sport": {
