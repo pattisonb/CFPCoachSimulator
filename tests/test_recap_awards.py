@@ -326,6 +326,14 @@ def check_awards(page, base, sid, errors) -> None:
     cards = page.eval_on_selector_all("#tab-awards .aw-cards[data-group=national] .aw-card", "els => els.map(e => e.querySelector('.go-kicker').textContent)")
     assert len(cards) == len(d["national"]["awards"]) + len([a for a in d["postseason"]["awards"] if a["kind"] != "coach"]), cards
     assert "Maxwell Award" in cards and "Doak Walker Award" in cards, cards
+    # what an award is for waits behind the ⓘ beside its name, not on the card
+    first = "#tab-awards .aw-cards[data-group=national] .aw-card >> nth=0"
+    assert page.eval_on_selector(first, "c => !c.querySelector('.aw-card-head small')"), "the blurb is off the bar"
+    assert page.eval_on_selector(first, "c => c.querySelector('.aw-card-head button.go-info') !== null"), "an ⓘ beside the name"
+    page.hover(f"{first} >> .aw-card-head button.go-info")
+    page.wait_for_selector(f"{first} >> .aw-card-head .go-info-box.show", timeout=5_000)
+    blurb = page.inner_text(f"{first} >> .aw-card-head .go-info-box")
+    assert blurb[0].isupper() and blurb.endswith("."), blurb
     tags = page.eval_on_selector_all("#tab-awards .aw-card .go-tag", "els => els.map(e => e.textContent.trim())")
     assert tags and all(t == "Winner" for t in tags), set(tags)
     w = d["national"]["awards"][0]["winner"]

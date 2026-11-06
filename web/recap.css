@@ -170,7 +170,7 @@ button.rcp-hl-row:hover { background: color-mix(in srgb, var(--text) 6%, transpa
 .aw-cards > :only-child { grid-column: 1 / -1; }
 .aw-card { --card-gap: 8px; --card-bar-bg: var(--rcp-gold); --card-bar-ink: #1b1b1b; background: var(--panel); border: 1px solid var(--border); min-width: 0; display: flex; flex-direction: column; gap: var(--card-gap); }
 .aw-card.mine { --card-bar-bg: var(--rcp-team, var(--accent)); --card-bar-ink: var(--rcp-team-ink, var(--accent-ink)); }
-.aw-card-head small { text-align: right; }
+.aw-card-head { justify-content: flex-start; }
 .aw-win { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 .aw-win b { display: block; font-size: 17px; }
 .aw-win small { display: block; color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
