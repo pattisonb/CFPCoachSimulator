@@ -760,7 +760,7 @@
       el("tbody", {}, cut("rs", rs.players, 10).map((p) => el("tr", { "data-key": p.id }, [el("td", {}, [el("b", { text: p.name })]), el("td", { class: "num", text: p.pos }), el("td", { class: "num", text: String(p.overall) }),
         el("td", { class: "num", text: `${p.games} / ${p.team_games}` }), el("td", {}, [el("span", { class: `go-tag ${p.redshirt ? "good" : "muted"}`, text: decision(p) })])])))])])
       : el("p", { class: "muted", text: "Nobody on your roster could take a redshirt this year." });
-    const improved = [el("div", { class: "go-kicker" }, ["Who Improved ", ui.tip("Every returning player grows toward his potential at his coachability's pace, faster under good developers and faster still after a big year: production and honors raise a player's ceiling and his pace.", "Who Improved")]),
+    const improved = [el("div", { class: "go-kicker" }, ["Who Improved ", ui.tip("Every returning player grows toward his potential at his coachability's pace, faster under good developers and faster still after a big year: production and honors raise a player's ceiling and his pace, and a freshman or sophomore who started learns at a full year's pace.", "Who Improved")]),
       el("p", { class: "muted", text: `${r.walk_ons} walk-ons and lower-level transfers joined around the league to fill out rosters.` }),
       el("div", { class: "go-kicker muted off-sub", text: `The Top ${r.mine.length}` }), el("ul", { class: "off-list off-dev-list" }, r.mine.map(devRow))];
     const transfers = [el("div", { class: "go-kicker", text: `Your Transfers · ${(r.transfers || []).length}` }),

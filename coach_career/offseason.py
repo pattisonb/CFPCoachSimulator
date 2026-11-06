@@ -121,6 +121,11 @@ DEV_RATE = 0.75                                    # coachability's pace on our 
 # real players gain little in their first offseasons and most in their third and fourth (the real rosters
 # by years in college: four-stars +1, +1, +5.5): the pace by seasons already played in the program *tune*
 YEAR_CURVE = (0.45, 0.7, 1.35, 1.35, 1.0)
+# ... but a season as a starter is a full year of learning whatever his class: a freshman or sophomore who
+# played at least half his team's games (production rated against the average starter: _performance's z)
+# develops at this pace or his year's, whichever is more (a true freshman quarterback who threw for 3,400
+# yards gained one point on 0.45) *tune*
+STARTER_YEAR = 1.0
 # the best get better slowest: above DEV_TOP (card overall) a player's pace is divided by 1 + his points over
 # it / DEV_TOP_SPAN, so the real rosters' top juniors (fast learners with big rooms and big seasons) do not
 # all become 85+ seniors: a career's senior classes keep the real 2026 seniors' top end (tests/test_progression_realism.py) *tune*
@@ -1597,10 +1602,17 @@ def _coach_title(coaches: dict, pos: str) -> str:
     return f"Coach {last[-1]}" if last else "His Coaches"
 
 
-def develop(p: dict, attrs: list[str], factor: float, rng: random.Random) -> int:
+def year_pace(p: dict, starter: bool = False) -> float:
+    """His pace by seasons in college (YEAR_CURVE), lifted to STARTER_YEAR after a season as a starter."""
+    pace = YEAR_CURVE[min(len(YEAR_CURVE) - 1, int(p.get("yrs") or 0))]
+    return max(pace, STARTER_YEAR) if starter else pace
+
+
+def develop(p: dict, attrs: list[str], factor: float, rng: random.Random, starter: bool = False) -> int:
     """One offseason's growth on our scale: each skill closes part of its gap to potential at his
-    coachability's rate times `factor`; his overall follows (our formula). Returns the overall gained."""
-    rate = recruits.RATE.get(p.get("c"), 0.27) * factor * DEV_RATE * YEAR_CURVE[min(len(YEAR_CURVE) - 1, int(p.get("yrs") or 0))]
+    coachability's rate times `factor` and his year's pace (`starter`: he played a starter's season,
+    year_pace); his overall follows (our formula). Returns the overall gained."""
+    rate = recruits.RATE.get(p.get("c"), 0.27) * factor * DEV_RATE * year_pace(p, starter)
     rate /= 1 + max(0, p["o"] - DEV_TOP) / DEV_TOP_SPAN       # the last points come slowest (DEV_TOP)
     rate *= DEV_PACE.get(DRAFT_GROUP.get(p["pos"], ""), 1.0)  # ... and by position (DEV_PACE)
     rate = min(DEV_YEAR_CAP, rate)                            # no offseason closes more than half his room (DEV_YEAR_CAP)
@@ -1862,7 +1874,10 @@ def _develop_all(state: dict) -> dict:
                     p["c"] = new
                     why.append(coachability_note(new, case, _coach_title(t["coaches"], p["pos"])))
                     moves["down" if case == "benched" else "up"] += 1
-            g = develop(p, attrs, coach_factor(t["coaches"], p["pos"]) * mult * program_factor(state, slug), rng)
+            starter = (perf.get(p["id"]) or {}).get("z") is not None
+            if starter and year_pace(p, True) > year_pace(p):
+                why.append(f"Started as a {'freshman' if int(p.get('yrs') or 0) == 0 else 'sophomore'}")
+            g = develop(p, attrs, coach_factor(t["coaches"], p["pos"]) * mult * program_factor(state, slug), rng, starter)
             p["yrs"] = p.get("yrs", 0) + 1
             gains.append(g)
             if slug == state["team"]:
