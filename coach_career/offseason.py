@@ -238,6 +238,8 @@ def start(state: dict) -> dict:
     lgd = state.get("league") or lg.from_base(year)
     lgd["year"] = year
     state["league"] = lgd
+    for t in lgd["teams"].values():         # a league file's depth chart is its first season's only
+        t.pop("depth", None)
     coach_names.distinct(state, built=built)     # one coach, one name: your coach's record is yours, no one doubles up
     _season_moves(state, lgd)
     record_seasons(state, lgd)
@@ -592,7 +594,7 @@ def _resolve_retention(state: dict) -> None:
             spent += e["offers"].get("nil", 0)
         elif p is not None:
             leaving.add(p["id"])
-            ev = {"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": e["cls"], "team": me, "team_name": lg.base_meta(me)["short_name"],
+            ev = {"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": e["cls"], "team": me, "team_name": lg.team_meta(state.get("league"), me)["short_name"],
                   "overall": e["overall"], "stars": p.get("s")}
             if e["intent"] == "draft":
                 ev.update(kind="declared", early=True, proj=e.get("draft_pick"), cls=e.get("cls_now") or ev["cls"])   # the draft (_run_draft) places him
@@ -844,7 +846,7 @@ def _departures(state: dict, lgd: dict, usage: dict, shifts: Optional[dict] = No
         ctx = _program_context(lgd, slug, losing, p4[slug], shifts)
         os_ = sorted(q["o"] for q in t["roster"])
         low = os_[max(0, int(len(os_) * 0.15) - 1)] if os_ else 0
-        team_name = lg.base_meta(slug)["short_name"]
+        team_name = lg.team_meta(state.get("league"), slug)["short_name"]
         for p in t["roster"]:
             ev = {"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "team": slug, "team_name": team_name,
                   "overall": house(p["pos"], p["o"]), "stars": p.get("s")}
@@ -1325,7 +1327,7 @@ def _prestige(state: dict, slug: str) -> float:
 def entrant_interest(state: dict, lgd: dict, slug: str, e: dict, rng: Optional[random.Random] = None) -> float:
     p = e["player"]
     wins, losses = _record(state, slug)
-    home = 1.0 if lg.base_meta(slug).get("state") == p.get("home") else 0.0
+    home = 1.0 if lg.team_meta(state.get("league"), slug).get("state") == p.get("home") else 0.0
     noise = rng.gauss(0, PICK_NOISE) if rng else 0.0
     return (PT_WEIGHT * playing_time(lgd, slug, p) + _prestige(state, slug)
             + WIN_WEIGHT * wins / max(1, wins + losses) + HOME_WEIGHT * home + noise)
@@ -2221,7 +2223,7 @@ def _take_job(state: dict, slug: str) -> None:
         carousel.ad(lgd["teams"][s], s)["security"] = carousel.START_SECURITY
     state["offseason"]["move_to"] = slug
     state["offseason"]["coaching_changes"].append({"team": slug, "role": "head_coach", "new": "You", "reason": "hired",
-                                                   "from": f"head coach at {lg.base_meta(me)['short_name']}"})
+                                                   "from": f"head coach at {lg.team_meta(state.get('league'), me)['short_name']}"})
 
 
 # ----- walking the stages -----------------------------------------------------------------------
@@ -2375,6 +2377,7 @@ def next_season(state: dict) -> dict:
     team = off.get("move_to") or state["team"]
     # your team's default depth chart is by overall (league.lineup); the season's depth-chart
     # overrides and redshirts are this season's and are not carried (new_season starts clean)
+    recruiting.use_league_models(lgd.get("recruiting_models") or {})
     season.use_league(lg.ensure_built({"id": state["id"], "league": lgd, "year": year, "team": team}))
     teams = season.load_teams()
     # every program's last three records, for the coaching carousel
@@ -2387,7 +2390,8 @@ def next_season(state: dict) -> dict:
     # the year's schedule, built the way the conferences build theirs; the league carries the history it needs
     from sim import schedule_gen
     teams = season.load_teams()
-    games, lgd["schedule_history"] = schedule_gen.generate(year, teams, lgd.get("schedule_history"), _rng(state, "schedule"))
+    games, lgd["schedule_history"] = schedule_gen.generate(year, teams, lgd.get("schedule_history"), _rng(state, "schedule"),
+                                                          lgd.get("schedule_rules"))
     new = season.new_season(team, "full", seed=_rng(state, "seed").randrange(1 << 30), coach=state.get("coach"), year=year, schedule=games)
     new.update(id=state["id"], created_at=state["created_at"], league=lgd, settings=state.get("settings", new["settings"]))
     car = state["career"]
@@ -2489,7 +2493,7 @@ def portal_rows(state: dict, position: Optional[str] = None, status: Optional[st
         rows.append({"id": pid, "name": p["n"], "pos": p["pos"], "group": GROUP[p["pos"]], "cls": p["cls"],
                      "overall": house(p["pos"], p["o"]), "stars": p.get("s"), "from": e["from"], "from_name": e["from_name"],
                      "last_year": e.get("usage"), "home": p.get("home"), "fit": PT_NAMES[pt], "offered": pid in mine,
-                     "signed": e["signed"], "signed_name": lg.base_meta(e["signed"])["short_name"] if e["signed"] else None,
+                     "signed": e["signed"], "signed_name": lg.team_meta(state.get("league"), e["signed"])["short_name"] if e["signed"] else None,
                      "offers": len(e["offers"])})
     rows.sort(key=lambda r: (bool(r["signed"]), -r["overall"]))
     return rows[:limit]
@@ -2498,12 +2502,12 @@ def portal_rows(state: dict, position: Optional[str] = None, status: Optional[st
 RECAP_STAGES = ("development", "staff", "ready")
 
 
-def _school_name(slug: Optional[str]) -> str:
+def _school_name(state: dict, slug: Optional[str]) -> str:
     """A school's short name for the recap; a player who left FBS has none."""
     if not slug:
         return "out of FBS"
     try:
-        return lg.base_meta(slug)["short_name"]
+        return lg.team_meta(state.get("league"), slug)["short_name"]
     except (KeyError, FileNotFoundError):
         return slug
 
@@ -2524,7 +2528,7 @@ def portal_away(state: dict) -> list[dict]:
         p = players[e["pid"]]["player"]
         to = e.get("school")
         out[e["pid"]] = {"id": e["pid"], "name": p["n"], "pos": p["pos"], "overall": house(p["pos"], p["o"]),
-                         "to": to, "to_name": _school_name(to), "walk_on": bool(e.get("walk_on")), "week": e.get("portal_week"),
+                         "to": to, "to_name": _school_name(state, to), "walk_on": bool(e.get("walk_on")), "week": e.get("portal_week"),
                          "why": e["lost"], "line": recruiting.lost_line(e, recruiting.school_name),
                          "reason": recruiting.lost_reason(e, recruiting.school_name)}
     return sorted(out.values(), key=lambda r: (-(r["week"] or 0), -r["overall"]))
@@ -2553,13 +2557,13 @@ def _portal_recap(state: dict) -> Optional[dict]:
         if to == me:
             p = by_id.get(pid) or e["player"]
             signed.append({"id": pid, "name": p["n"], "pos": p["pos"], "cls": p["cls"], "overall": house(p["pos"], p["o"]),
-                           "from": e["from"], "from_name": e.get("from_name") or _school_name(e["from"]),
+                           "from": e["from"], "from_name": e.get("from_name") or _school_name(state, e["from"]),
                            "walk_on": bool(p.get("walk_on")) or pid in walk_ons})
         elif e.get("from") == me:
             p = e["player"]
             d = left.get(pid) or {}
             lost.append({"id": pid, "name": p["n"], "pos": p["pos"], "cls": d.get("cls") or p["cls"],
-                         "overall": d.get("overall") or house(p["pos"], p["o"]), "to": to, "to_name": _school_name(to),
+                         "overall": d.get("overall") or house(p["pos"], p["o"]), "to": to, "to_name": _school_name(state, to),
                          "reason": reasons.get(pid)})
     signed.sort(key=lambda r: -r["overall"])
     lost.sort(key=lambda r: -r["overall"])

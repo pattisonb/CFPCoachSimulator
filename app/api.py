@@ -13,11 +13,15 @@ browser then persists its files).
 """
 from __future__ import annotations
 
+import functools
+import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import urllib.parse
+import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
@@ -26,11 +30,13 @@ if sys.platform == "emscripten":                 # in the browser: no worker pro
 
 from coach_career import career
 from coach_career import league
+from coach_career import league_file
 from coach_career import offseason
 from coach_career import prospects
 from coach_career import recruiting
 from sim import coaches
 from sim import news
+from sim import polls
 from sim import season
 
 MAX_SAVE_BYTES = 40 * 1024 * 1024    # an uploaded career (gzip); a career with its recruiting class is about 5 MB compressed
@@ -144,12 +150,60 @@ def call(method: str, path: str, body: dict | bytes | None = None) -> dict | byt
         known_path = True
         if m == method:
             try:
-                return fn(Params(path=values, query=query, body=body))
+                out = fn(Params(path=values, query=query, body=body))
             except season.StandInError as e:     # a team page asked for an FCS stand-in: it has none
                 raise ApiError(404, str(e)) from e
+            if "season_id" in values and _loaded is not None and isinstance(out, dict):
+                out = _show_conferences(out, _conference_names(_loaded))
+            return out
     if known_path:
         raise ApiError(405, "method not allowed")
     raise ApiError(404, "not found")
+
+
+# ----- conference names -------------------------------------------------------
+# The engine (schedules, standings, polls, bowls, the AD's goals) keeps a built-in conference's built-in name
+# even when a career's league file renames it; the page shows the file's name (lgd["conference_names"]).
+# Every season route's answer passes through _show_conferences, and a conference the page sends back comes in
+# through _engine_conference.
+
+def _conference_names(state: dict) -> dict[str, str]:
+    """{engine name: display name} for the conferences a career's league renamed (none for the built-in league)."""
+    names = (state.get("league") or {}).get("conference_names") or {}
+    return {k: v for k, v in names.items() if k != v}
+
+
+@functools.lru_cache(maxsize=8)
+def _conference_pattern(engine_names: tuple[str, ...]) -> re.Pattern:
+    """One whole-word pattern for a career's renamed conferences, longest name first, compiled once per set."""
+    return re.compile(r"(?<![\w-])(" + "|".join(re.escape(k) for k in sorted(engine_names, key=len, reverse=True)) + r")(?![\w-])")
+
+
+def _show_conferences(out: Any, names: dict[str, str]) -> Any:
+    """`out` with every renamed conference shown by its display name. The whole-word rewrite reaches every string
+    in the answer: dict keys, values, and free text (news, scene lines, reasons), so a team or player name that
+    holds a renamed conference's built-in name as a whole word is rewritten too. The built-in league (no renames)
+    passes through untouched. league_file.validate keeps every display name its conference's own, so no two keys
+    can meet."""
+    if not names:
+        return out
+    pattern = _conference_pattern(tuple(sorted(names)))
+
+    def show(x: Any) -> Any:
+        if isinstance(x, str):
+            return pattern.sub(lambda m: names[m.group(1)], x) if pattern.search(x) else x
+        if isinstance(x, dict):
+            return {show(k): show(v) for k, v in x.items()}
+        if isinstance(x, list):
+            return [show(v) for v in x]
+        return x
+    return show(out)
+
+
+def _engine_conference(state: dict, name: Optional[str]) -> Optional[str]:
+    """A conference name the page sent (its display name) as the engine knows it."""
+    back = {v: k for k, v in _conference_names(state).items()}
+    return back.get(name, name) if name else name
 
 
 def call_js(method: str, path: str, body_json: str | None, body_bytes=None) -> str | bytes:
@@ -189,6 +243,7 @@ _job: dict = {}                      # its job record (an advance or game day in
 _changed: bool = False               # a season or coach file was written or deleted since changed() was last read
 _cards: dict[str, tuple[float, dict]] = {}   # season id -> (file mtime, card) for the seasons list
 _teams: dict[str, dict] = {}         # the 2026 teams (data/engine_teams.json), read on first use
+_pending_league: dict | None = None  # the league file last checked (/api/league/check), until a career starts from it
 
 
 def changed() -> bool:
@@ -222,8 +277,8 @@ def _idle_job(state: dict) -> dict:
 
 
 def _activate(state: dict) -> None:
-    """Put the season's league in play (a career's later seasons have their own, league.py)."""
-    season.use_league(league.ensure_built(state) or season.TEAMS_FILE)
+    """Put the season's league in play (a career's later seasons, or one from a league file, have their own, league.py)."""
+    season.activate(state)
 
 
 def _hold(state: dict) -> None:
@@ -431,6 +486,8 @@ def _team_card(t: dict) -> dict:
     return {
         "slug": t["slug"], "name": t["name"], "school": t["school"], "abbreviation": t["abbreviation"],
         "mascot": t["mascot"], "conference": t["conference"], "subdivision": t["subdivision"],
+        # the bracket's conference groups by the engine's names (a league file may rename a conference on the page)
+        "group": "P4" if t["conference"] in polls.P4 else "G6" if t["conference"] in polls.G6 else "",
         "fictional": t["fictional"], "colors": t["colors"], "stadium": t["stadium"],
         "home_field_advantage": t["home_field_advantage"], "prestige": t["prestige"],
         "ratings": t["team_ratings"],
@@ -466,14 +523,102 @@ def get_team(p: Params) -> dict:
 
 # ----- seasons -----------------------------------------------------------------
 
+def _fbs_cards(teams: dict) -> list[dict]:
+    """The team picker's cards for a league's FBS teams, by name. For an imported league these are its engine
+    teams (league.build, a career league's build: no real 2026 adjustments, as every career plays from its first
+    offseason on), so a team the file leaves alone can read an overall a point or two off its built-in card."""
+    return sorted((_team_card(t) for t in teams.values() if not t["fictional"]), key=lambda c: c["name"].casefold())
+
+
+def _pend(blob: bytes, seed: Optional[int]) -> dict:
+    """league_file.check on `blob`; the result replaces the pending league (a file that cannot start a
+    career, or one that collapses to the built-in league, leaves none). The checked league is final:
+    its fill seed is fixed here, and Start plays exactly it."""
+    global _pending_league
+    _pending_league = None                      # the last check's league goes before this one is built
+    r = league_file.check(blob, seed)
+    if r["ok"] and not r["builtin"]:
+        # not its engine teams file: Start builds it again from the league (league.build gives the same bytes),
+        # so the pending league holds only the league itself until then
+        _pending_league = {"key": hashlib.sha256(bytes(blob)).hexdigest(), "seed": r["seed"],
+                           "lgd": r["league"], "games": r["games"], "real_polls": not r["structural"]}
+    return r
+
+
+@route("POST", "/api/league/check")
+def league_check(p: Params) -> dict:
+    """A league file (the body is its bytes) checked for New Career: its errors as sentences, or its
+    summary and the teams a career can start with; `key` names it for POST /api/season ("builtin" when
+    it changes nothing). `?seed=` fills it with that seed (otherwise one read from the file). `errors_total`: how
+    many problems the file has in all (the list stops at league_file.MAX_ERRORS and "And N more.")."""
+    blob = p.body
+    if not isinstance(blob, (bytes, bytearray)):
+        raise ApiError(422, "body is required")
+    _check_not_running()
+    r = _pend(bytes(blob), p.q("seed", int, None))
+    if not r["ok"]:
+        return {"ok": False, "errors": r["errors"], "errors_total": r["errors_total"], "summary": None, "key": None, "teams": []}
+    if r["builtin"]:
+        return {"ok": True, "errors": [], "errors_total": 0, "summary": r["summary"], "key": "builtin", "teams": _fbs_cards(_all_teams())}
+    teams = season.stand_in_names({s: dict(t) for s, t in r["engine"]["teams"].items()})
+    cards = _show_conferences(_fbs_cards(teams), _conference_names({"league": r["league"]}))  # renamed conferences by their new names
+    return {"ok": True, "errors": [], "errors_total": 0, "summary": r["summary"], "key": _pending_league["key"], "teams": cards}
+
+
+def _undo_start(cid: str) -> None:
+    """A Start that failed: its league file and save gone, the built-in league back in play (the
+    pending league stays, so Start can be tried again)."""
+    league.forget(cid)
+    if (season.SEASONS_DIR / f"{cid}.json").exists() or (season.SEASONS_DIR / cid).exists():
+        _delete_season_file(cid)
+    recruiting.use_league_models({})
+    season.use_league(season.TEAMS_FILE)
+
+
+def _start_from_league(key: str, team: str, seed: Optional[int], coach: Optional[dict]) -> dict:
+    """A new career from the pending league file, saved: its teams file written as the career's 2026
+    league, then the season with the file's league in its state (and its schedule when the file made
+    one). `seed` is the season's own seed; the league is exactly the one checked."""
+    global _pending_league
+    pending = _pending_league
+    if pending is None or pending["key"] != key:
+        raise ApiError(409, "That league file is no longer loaded; import it again.")
+    engine = league.build(pending["lgd"])      # the checked league's teams file again: the bytes the check built
+    t = engine["teams"].get(team)
+    if t is None:
+        raise ApiError(404, f"unknown team {team}")
+    if t["fictional"]:
+        raise ApiError(404, "That team is an FCS stand-in: pick an FBS team.")
+    cid = uuid.uuid4().hex[:12]
+    lgd = pending["lgd"]
+    try:
+        out = league.path(cid, league.FIRST_YEAR)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        tmp = out.with_suffix(f".{os.getpid()}.tmp")
+        tmp.write_text(json.dumps(engine), encoding="utf-8")
+        os.replace(tmp, out)
+        season.use_league(out)
+        recruiting.use_league_models(lgd.get("recruiting_models") or {})
+        state = season.new_season(team, "full", seed, coach=coach, career=True, schedule=pending["games"],
+                                  league=lgd, career_id=cid, real_polls=pending["real_polls"])
+        season.save_season(state)
+    except Exception:
+        _undo_start(cid)
+        raise
+    _pending_league = None
+    return state
+
+
 @route("POST", "/api/season")
 def create_season(p: Params) -> dict:
-    """A new Coach Career (the only mode; a `career` field in the body is ignored)."""
+    """A new Coach Career (the only mode; a `career` field in the body is ignored). `league`: the key
+    /api/league/check gave for a league file ("builtin" or absent: the game's own league)."""
     team = _field(p, "team", str)
     mode = _field(p, "mode", str, "full")
     seed = _field(p, "seed", int, None)
     coach_id = _field(p, "coach", str, None)
-    if _team(team)["fictional"]:
+    key = _field(p, "league", str, "builtin")
+    if key == "builtin" and _team(team)["fictional"]:
         raise ApiError(404, f"{_team(team)['name']} is an FCS stand-in: pick an FBS team")
     coach = None
     if coach_id:
@@ -483,9 +628,13 @@ def create_season(p: Params) -> dict:
     if mode != "full":
         raise ApiError(400, "Coach Career starts from week 1")
     _check_not_running()
-    season.use_league(season.TEAMS_FILE)          # a new career starts in the 2026 league
-    state = season.new_season(team, mode, seed, coach=coach, career=True)
-    season.save_season(state)
+    if key != "builtin":
+        state = _start_from_league(key, team, seed, coach)       # saved
+    else:
+        recruiting.use_league_models({})
+        season.use_league(season.TEAMS_FILE)          # a new career starts in the 2026 league
+        state = season.new_season(team, mode, seed, coach=coach, career=True)
+        season.save_season(state)
     _mark_changed()
     _hold(state)
     return season.summary(state)
@@ -587,6 +736,17 @@ def gameday_season(p: Params) -> dict:
     return {"status": "running", "done": week, "total": week + 1}
 
 
+def _champion_name(st: dict) -> Optional[str]:
+    """A saved season's champion by name, from its own league (a league file's new team) or the built-in teams."""
+    slug = st.get("champion")
+    if not slug:
+        return None
+    meta = (((st.get("league") or {}).get("teams") or {}).get(slug) or {}).get("meta")
+    if meta is not None:
+        return meta.get("short_name") or meta.get("name")
+    return _all_teams().get(slug, {}).get("name")
+
+
 @route("GET", "/api/seasons")
 def list_seasons(p: Params) -> dict:
     """The saved seasons, newest first. A season file can be several megabytes, so each
@@ -606,7 +766,7 @@ def list_seasons(p: Params) -> dict:
                 rec = season._records(st, include_playoff=True)[st["team"]]
                 card = {"id": st["id"], "team": st["team"], "team_name": st["team_name"], "mode": st["mode"],
                         "created_at": st["created_at"], "current_week": st["current_week"], "done": st["done"],
-                        "wins": rec["wins"], "losses": rec["losses"], "champion_name": _all_teams().get(st.get("champion") or "", {}).get("name"),
+                        "wins": rec["wins"], "losses": rec["losses"], "champion_name": _champion_name(st),
                         "year": st.get("year") or 2026, "career": bool(st.get("career")), "offseason": (st.get("offseason") or {}).get("stage")}
             except Exception:  # noqa: BLE001 - one unreadable file must not break the list
                 continue
@@ -618,6 +778,13 @@ def list_seasons(p: Params) -> dict:
 @route("GET", "/api/season/{season_id}")
 def get_season(p: Params) -> dict:
     return season.summary(_season_state(p.path["season_id"]))
+
+
+@route("GET", "/api/season/{season_id}/teams")
+def season_teams(p: Params) -> dict:
+    """The team cards of the league this season plays (a career from a league file has its own teams)."""
+    _season_state(p.path["season_id"])          # puts its league in play
+    return {"teams": [_team_card(t) for t in season.load_teams().values()]}
 
 
 def _delete_season_file(season_id: str) -> bool:
@@ -715,8 +882,9 @@ def _save_loaded() -> None:
 
 def _check_team(slug: str) -> None:
     """404 for a slug that is not a team, or is an FCS stand-in (those show only in the box
-    scores of their games, so no season view is about one)."""
-    if slug not in _all_teams():
+    scores of their games, so no season view is about one). Every caller has put its season's league in play
+    (_season_state), so a team of a career's own league (a league file's new team) is one, and a removed one is not."""
+    if slug not in season.load_teams():
         raise ApiError(404, "unknown team")
     try:
         season.check_fbs(slug)
@@ -1315,7 +1483,8 @@ def season_player_leaders(p: Params) -> dict:
     team = p.q("team")
     if team:
         _check_team(team)
-    return season.player_leaders_view(state, team or None, max(1, min(p.q("n", int, 5), 25)), p.q("conference") or None)
+    return season.player_leaders_view(state, team or None, max(1, min(p.q("n", int, 5), 25)),
+                                      _engine_conference(state, p.q("conference") or None))
 
 
 @route("GET", "/api/season/{season_id}/stats/players")
@@ -1326,6 +1495,6 @@ def season_player_stats(p: Params) -> dict:
         _check_team(team)
     try:
         return season.player_stats_view(state, team or None, p.q("cat", str, "passing"), p.q("limit", int, 100),
-                                        p.q("conference") or None)
+                                        _engine_conference(state, p.q("conference") or None))
     except ValueError as exc:
         raise ApiError(400, str(exc)) from exc

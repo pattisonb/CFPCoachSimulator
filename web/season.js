@@ -74,16 +74,65 @@
   async function loadTeams() {
     const data = await api("/api/teams");
     state.teams = data.teams;
+    mergeCards(data.teams, "builtin");
+    fillPicker(data.teams);
     const sel = $("#pick-team");
-    // one alphabetical list (the API sorts by name); the conference rides in the label
-    for (const t of data.teams) {
-      window.CFP.teamsBySlug[t.slug] = t;
-      if (!t.fictional) sel.appendChild(el("option", { value: t.slug, text: `${t.name} (${t.ratings.overall.toFixed(0)} OVR) · ${CONF_SHORT[t.conference] || t.conference}` }));
-    }
     const params = new URLSearchParams(location.search);
-    if (params.get("team") && window.CFP.teamsBySlug[params.get("team")]) sel.value = params.get("team");
+    if (params.get("team") && state.pickCards[params.get("team")]) sel.value = params.get("team");
     else sel.value = "ohio-state";
   }
+
+  // The team cards the page draws names, colors and coaches from (window.CFP.teamsBySlug): the built-in league's,
+  // an import's on the New Career screen, or the open career's own league (a career from a league file).
+  // state.cardsFrom names which: "builtin", "import:<key>" or "<season id>:<year>".
+  // A switch of league prunes the cards to that league's slugs (a removed team leaves, an import's added team goes
+  // when the built-in league comes back); an import's cards are its FBS teams, so the stand-ins' cards stay.
+  function mergeCards(cards, from) {
+    const by = window.CFP.teamsBySlug;
+    const keep = new Set((cards || []).map((t) => t.slug));
+    if (from.startsWith("import")) for (const t of state.teams) if (t.fictional) keep.add(t.slug);
+    if (from !== state.cardsFrom) for (const slug of Object.keys(by)) if (!keep.has(slug)) delete by[slug];
+    for (const t of cards || []) by[t.slug] = t;
+    state.cardsFrom = from;
+  }
+  // Before a season draws: its league's cards (/api/season/{id}/teams, a career from a league file), or the
+  // built-in cards back for a career in the game's own league. A failed fetch draws with the cards there are.
+  async function leagueCards(s) {
+    const want = s && s.league ? `${s.id}:${s.year}` : "builtin";
+    if (state.cardsFrom === want) return;
+    if (want === "builtin") { mergeCards(state.teams, "builtin"); return; }
+    try { mergeCards((await api(`/api/season/${encodeURIComponent(s.id)}/teams`)).teams, want); }
+    catch (err) { /* the season still opens; names fall back to what the page has */ }
+  }
+  // The team picker (#pick-team): one alphabetical list of FBS teams (the API sorts by name), the conference in
+  // the label, patched in place (keyed by slug) when the league changes; state.pickCards are the cards behind it.
+  function teamLabel(t) {
+    const ovr = t.ratings && Number.isFinite(t.ratings.overall) ? ` (${t.ratings.overall.toFixed(0)} OVR)` : "";
+    const conf = CONF_SHORT[t.conference] || t.conference || "";
+    return `${t.name}${ovr}${conf ? ` · ${conf}` : ""}`;
+  }
+  function fillPicker(cards) {
+    const sel = $("#pick-team"), keep = sel.value;
+    const rows = (cards || []).filter((t) => !t.fictional);
+    state.pickCards = Object.fromEntries(rows.map((t) => [t.slug, t]));
+    window.CFP.ui.reconcile(sel, rows, "slug", (t) => el("option", { value: t.slug, text: teamLabel(t) }),
+      (n, t) => { const x = teamLabel(t); if (n.textContent !== x) n.textContent = x; });
+    if (keep && state.pickCards[keep]) sel.value = keep;
+  }
+  // The League panel picked a league (an import checked, or back to the built-in one): its teams in the picker,
+  // and, with no season open, their cards
+  function leagueChanged(lf) {
+    const cards = lf.teams || state.teams;
+    if (!state.season) mergeCards(cards, lf.teams ? `import:${lf.key}` : "builtin");
+    fillPicker(cards);
+  }
+  // The open league's team cards (window.CFP.teamsBySlug: the built-in league's, or a career's own), in /api/teams'
+  // order (FBS by name, then the FCS stand-ins): every team list and conference chip row of an open season reads these
+  function leagueTeams() {
+    const key = (t) => String(t.name || "").toLowerCase();
+    return Object.values(window.CFP.teamsBySlug).sort((a, b) => (a.fictional - b.fictional) || (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
+  }
+  const pickCard = (slug) => (state.pickCards && state.pickCards[slug]) || window.CFP.teamsBySlug[slug];
 
   async function loadSeasons() {
     const data = await api("/api/seasons");
@@ -252,6 +301,7 @@
   // the empty state shows the start-a-season instructions, or a note in their place (loading, or why loading failed)
   function startNote(text) {
     $("#season-intro").hidden = !!text;
+    $("#league-panel").hidden = !!text;
     $("#season-loading").hidden = !text;
     $("#season-loading").textContent = text || "";
   }
@@ -309,7 +359,7 @@
   // coach page). The team's coordinators stay for the season either way.
   async function chooseCoach(mode, inPlace) {
     const slug = $("#pick-team").value;
-    const t = window.CFP.teamsBySlug[slug] || {};
+    const t = pickCard(slug) || {};
     const staff = t.staff || {};
     const box = el("div", { class: "start-choice" });
     const own = el("div", { class: "start-card" }, [
@@ -325,8 +375,13 @@
     ]);
     const list = el("div", { class: "start-coaches" }, [el("span", { class: "muted small-text", text: "Loading your coaches…" })]);
     mine.append(list);
-    const create = el("a", { class: "ghost small", href: `./coach.html?team=${encodeURIComponent(slug)}`, text: "Create a New Coach" });
-    mine.append(el("div", { class: "coach-actions" }, [create]));
+    // an imported league lives only in this page (and the game's pending check): Your Coach would lose it
+    if (window.LeagueFile && window.LeagueFile.key() !== "builtin") {
+      mine.append(el("p", { class: "muted small-text start-coach-note", text: "Create your coach on Your Coach before importing a league file; an imported league stays loaded only on this page." }));
+    } else {
+      const create = el("a", { class: "ghost small", href: `./coach.html?team=${encodeURIComponent(slug)}`, text: "Create a New Coach" });
+      mine.append(el("div", { class: "coach-actions" }, [create]));
+    }
     box.append(own, mine,
       el("p", { class: "muted small-text", text: `Either way the staff stays for the season: ${staff.offense || "the offensive coordinator"} and ${staff.defense || "the defensive coordinator"}. Staff changes come after the season.` }));
     if (inPlace && modalStack.length) swapModal(`Who coaches ${t.name || "your team"}?`, box);
@@ -350,10 +405,13 @@
     const team = $("#pick-team").value;
     $("#btn-new").disabled = true;
     // building a season takes a few seconds (schedules, rosters, preseason polls): say so
-    const teamName = (window.CFP.teamsBySlug[team] || {}).name || "your team";
+    const teamName = (pickCard(team) || {}).name || "your team";
+    const lf = window.LeagueFile, league = lf ? lf.key() : "builtin";
     toast(`Setting up the ${teamName} season: schedule, rosters and preseason polls…`);
     try {
-      const s = await api("/api/season", postJSON({ team, mode, coach: coach || null, career: mode === "full" }));
+      const s = await api("/api/season", postJSON({ team, mode, coach: coach || null, career: mode === "full", league }));
+      if (lf) lf.reset();                  // the checked league is used up: the New Career screen is back on the built-in one
+      await leagueCards(s);
       history.replaceState(null, "", `?id=${s.id}`);
       showSeason(s);
       loadSeasons();
@@ -397,6 +455,7 @@
       const s = await api(`/api/season/${id}`);
       if (n !== openSeq) return;
       if (!want) history.replaceState(null, "", `?id=${encodeURIComponent(s.id)}`);
+      await leagueCards(s);
       state.pendingRoute = want || null;
       try { showSeason(s); } finally { state.pendingRoute = null; }
       loadSeasons();
@@ -1399,7 +1458,7 @@
     if (!state.season || !window.CFPDepth) return;
     if (push) route.set({ ...depthClear(), screen: "depth" }, { push: true, state: { cfpDepth: true } });
     window.CFPDepth.open({
-      host: $("#depth-screen"), season: () => state.season, teams: () => state.teams, api, postJSON, toast, errText, godMode, openPlayer, openSettings,
+      host: $("#depth-screen"), season: () => state.season, teams: leagueTeams, api, postJSON, toast, errText, godMode, openPlayer, openSettings,
       setParams: setDepthParams, close: () => closeDepth(true),
     }, params || new URLSearchParams());
   }
@@ -2637,7 +2696,7 @@
     const confs = fbsConferences();
     controls.append(confChips(confs, st.conf, (v) => { st.conf = v; renderSchedule(); }));
     const row = el("div", { class: "schedule-pick" });
-    const sel = el("select", { "aria-label": "Team" }, state.teams.filter((t) => !t.fictional && (!st.conf || t.conference === st.conf)).map((t) => el("option", { value: t.slug, text: t.slug === s.team ? `${t.name} (your team)` : t.name })));
+    const sel = el("select", { "aria-label": "Team" }, leagueTeams().filter((t) => !t.fictional && (!st.conf || t.conference === st.conf)).map((t) => el("option", { value: t.slug, text: t.slug === s.team ? `${t.name} (your team)` : t.name })));
     if (![...sel.options].some((o) => o.value === st.team)) st.team = sel.options.length ? sel.options[0].value : s.team;
     sel.value = st.team;
     sel.addEventListener("change", () => { st.team = sel.value; renderSchedule(); });
@@ -2730,7 +2789,7 @@
 
   // every FBS conference, alphabetically (the FCS stand-in teams are left out)
   function fbsConferences() {
-    return [...new Set(state.teams.filter((t) => !t.fictional).map((t) => t.conference))].sort();
+    return [...new Set(leagueTeams().filter((t) => !t.fictional).map((t) => t.conference))].sort();
   }
 
   // Conference picker as a row of chips (short names), shared by the stats tabs.
@@ -2873,7 +2932,7 @@
       renderSeasonPlayerStats();
     });
     const teamSel = el("select", { "aria-label": "Team" }, [el("option", { value: "", text: ps.conf ? `All ${ps.conf} teams` : "All teams (league leaders)" }),
-      ...state.teams.filter((t) => !t.fictional && (!ps.conf || t.conference === ps.conf)).map((t) => el("option", { value: t.slug, text: t.name }))]);
+      ...leagueTeams().filter((t) => !t.fictional && (!ps.conf || t.conference === ps.conf)).map((t) => el("option", { value: t.slug, text: t.name }))]);
     teamSel.value = ps.team;
     teamSel.addEventListener("change", () => { ps.team = teamSel.value; ps.data = ps.leaders = ps.roster = null; ps.sort = null; if (ps.view === "roster" && !ps.team) ps.view = "leaders"; renderSeasonPlayerStats(); });
     controls.append(confRow, teamSel);
@@ -3277,8 +3336,12 @@
   function projectField(cfp) {
     // Mirror the bracket rules on the client for the mid-season projection.
     const s = state.season;
-    const P4 = ["ACC", "Big Ten", "Big 12", "SEC"];
-    const G6 = new Set(["American Athletic Conference", "Conference USA", "MAC", "Mountain West", "Pac-12", "Sun Belt"]);
+    // the conference groups from the cards (a league file may show a conference under its own name)
+    const cards = leagueTeams().filter((t) => !t.fictional);
+    const P4 = [...new Set(cards.filter((t) => t.group === "P4").map((t) => t.conference))].sort();
+    // a new conference's teams carry group "" and are never the projected top Group of Six, as in sim/polls.py's
+    // build_bracket (its G6 is the game's six conferences by name)
+    const G6 = new Set(cards.filter((t) => t.group === "G6").map((t) => t.conference));
     const order = cfp.map((e) => e.team);
     const pos = {}; cfp.forEach((e) => { pos[e.team] = e.rank; });
     const leaders = {};
@@ -3963,6 +4026,11 @@
   // ----- wiring ------------------------------------------------------------
 
   $("#btn-new").addEventListener("click", () => { if (!held()) chooseCoach("full"); });
+  // the League panel (web/leaguefile.js): its league's teams in the picker, and its Start Career
+  if (window.LeagueFile) {
+    window.LeagueFile.onChange(leagueChanged);
+    window.LeagueFile.onStart(() => { if (!held()) chooseCoach("full"); });
+  }
   $("#btn-pause").addEventListener("click", pauseSim);
   $("#btn-seasons").addEventListener("click", () => setSidebar($("#btn-seasons").getAttribute("aria-pressed") !== "true"));
   $("#btn-download-career").addEventListener("click", () => {
@@ -3975,6 +4043,7 @@
     if (!file) return;
     try {
       const s = await window.CareerSave.upload(file);
+      await leagueCards(s);
       history.replaceState(null, "", `?id=${s.id}`);
       showSeason(s);
       loadSeasons().catch(() => {});

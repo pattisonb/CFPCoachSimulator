@@ -1918,6 +1918,125 @@ and under every row stacks. `tests/test_offseason_redesign.py` walks every stage
 light and dark. **Sim to Next Season** runs every step on Auto. Your program's history (record,
 final AP rank, titles, class rank, players drafted) grows a row a year.
 
+## Coach Career: a league from a file (`coach_career/league_file.py`, `coach_career/league_fill.py`)
+
+Design: docs/superpowers/specs/2026-11-05-league-file-design.md.
+
+**The format.** One JSON file, `"format": "cfp-league/1"`, with a `name`, an optional `year` (2026),
+`remove` (slugs), `conferences` (`id`, `name`, `level` FBS, `games`) and `teams`. The built-in league
+exports losslessly in it (`league_file.export_document`, about 22 MB); the FCS stand-ins and their
+conference are never written and cannot be named, removed or reused (`league.base_meta`'s
+`fictional` flag says which they are). A new team needs `slug`, `name` and `conference`; a built-in
+team only its `slug`, and every field it leaves out keeps the built-in value (a `roster` replaces
+the whole roster; `coaches` merge role by role). A player needs `name`, `pos` and `class`.
+`league_file.parse` and `validate` turn every problem into a sentence naming the team and the player
+("Rice, player 14 (Jay Smith): position 'WRR' is not a position; use QB, RB, …"), at most `MAX_ERRORS`
+and then "And N more." (`check` also gives `errors_total`, the full count the page's head shows). Every
+key the export writes is checked for its type, range or the game's own words: the team's `home_field`
+(`HOME_FIELD_RANGE`), `stadium`, `style` (a built-in slug), `formation` (known roles, 11 on offense and
+on defense), `colors`, the `offense`/`defense` scheme words; each coach's name, `rating`, `ratings`,
+`tendencies`, scheme words, `since`, flags and text; each player's `jersey`, `archetype`, `dev`,
+`coachability`, `abilities` (names and tiers the game knows), `hometown` (`MAX_HOMETOWN`), `years`
+(`YEARS_RANGE`) and `target_share` (`TARGET_SHARE_MIN` to the engine's `TARGET_MULT_MAX`). `strength`
+applies only to a roster the file gives: a built-in team that keeps its real roster is never nudged, so
+strength there is an error. A new conference may not take a built-in conference's name (any case) or
+another new one's: its name is its engine name, which must be its own. A built-in conference listed
+without `games` keeps its own.
+
+**Merging** (`league_file.merge`) is by slug: a team in the file replaces the built-in one, a new
+slug adds one, a team left out is unchanged and `remove` drops one. A team equal to its export is
+not "changed". The merge reports `added`, `changed`, `removed`, `conferences`, `structural` (a team
+added or removed, or a conference's members or games changed) and `builtin`. A built-in conference
+keeps its engine name when the file renames it: only its display name changes
+(`lgd["conference_names"]`, engine name to display name), so a rename alone is a change but not
+structural.
+
+**Collapse.** An import that changes nothing (`builtin`) is the built-in league: the career starts
+exactly as a New Career with no file does, with no `league` in its state, the real 2026 rosters,
+schedule and polls, and the golden digest cannot move.
+
+**Filling** (`league_fill.to_league`), team by team in slug order, each from its own stream
+`random.Random(f"league-{seed}-{slug}")`: the strength target (the file's `strength` word or number,
+`STRENGTH_GRADE` places a word among the FBS teams, otherwise the conference's built-in mean, a new
+conference the FBS median); given `overall` and `ratings` kept exactly; every other player generated
+from the recruits' position templates by depth slot (`SLOT_STEP`), class (`CLASS_STEP`), stars
+(`STAR_STEP`) and `PLAYER_SD`; an empty roster filled to 85 by `offseason.TARGET`, a short group
+topped up to `offseason.FLOOR` (added classes by `CLASS_MIX`, older first by `CLASS_LEAD`); then one
+common nudge of the generated players (bisection over `NUDGE_RANGE`, `NUDGE_STEPS`, to within
+`NUDGE_CLOSE`) lands the team on its target. Potential room follows `ROOM_BY_CLASS`. A new team's
+coaches come from the coach market's generator, its colors default to `NEUTRAL_COLORS`, its stadium
+to `NEW_STADIUM_CAPACITY`, its recruiting tier to `NEW_TEAM_TIER`, and its program (prestige,
+history) from the file's `prestige` or its conference's mean, with winning, NIL and conference
+strength its conference's medians (the game's defaults, `programs.BASE_DEFAULT`, for a conference of
+new teams) and a new program's market. Filling takes about 0.2 s a team.
+
+**Check and Start Career.** `league_file.check(blob, seed)` parses, validates, merges and fills, then
+builds the engine's teams (`league.build`, the same build later seasons use) and season one's games;
+it returns the errors, or the career league, its engine teams, the games and the summary (teams
+added, changed and removed, players generated, one sentence each; for a league that is not the built-in
+one, "Teams the file leaves alone play without the real 2026 depth charts and adjustments.", and a line
+for each listed conference with no teams, which is left out). Anything the fill or the build still throws
+is one sentence (the team's, `league_fill.TeamBuildError`, when it is one team's) with the traceback in
+the server's log, never a 500. At the end of every check it lets go of the built-in copies it read
+(`league_file.release_caches`: the export's team docs and rosters, the fill's base league), so a checked
+file holds about 37 MB until Start (157 MB before) and 8 MB once it is gone. `POST /api/league/check` takes
+the file's bytes (`?seed=` optional) and holds the career league (not its engine teams) as the pending
+league under the SHA-256 of the bytes (`"builtin"` for a collapsed import); its answer lists the league's
+FBS teams for the picker, a renamed conference by its new name. `POST /api/season` with that key builds the
+engine teams again (`league.build` of the pending league: the same bytes the check built, about 6 s) and
+writes them as the career's
+2026 league file (`data/leagues/<career id>-2026.json`), puts it in play with the league's recruiting
+models, and starts the season with the league in its state. Only one league is pending at a time;
+a stale key is refused ("That league file is no longer loaded; import it again."), and a failed
+check leaves none. The checked league is final: its fill seed is fixed at Check, and Start's `seed`
+is the season's own and never refills it. A Start that fails (in the season or its save) removes its
+league file and save and puts the built-in league back; the pending league stays for another try.
+`league.ensure_built` rebuilds a missing first-season file of an imported league the way Start wrote
+it (no team by overall), byte for byte (the browser keeps no `data/leagues`).
+
+**The New Career screen** (`web/leaguefile.js`, the League panel in `#season-empty`). "League: Built-in" by
+default; "Import League File…" opens a .json picker. A file over `MAX_LEAGUE_BYTES` (64 MB) is refused from
+`file.size` before it is read, with Python's sentence as a toast; otherwise its bytes go to
+`/api/league/check` (the dev server passes that path's body on as bytes whatever its Content-Type). The check
+runs in the worker (or the dev server), so the page stays live: the select is busy, Export waits, and
+`#league-result` shows "Checking <file>: …" with a running clock. Errors come back as a list of sentences and
+the select stays on the built-in league; a league that checks shows four stat chips (Teams Added, Teams
+Changed, Teams Removed, Players Generated), the summary lines (a long one folds its team lines behind Show All)
+and Start Career, and the select gains "League: <name>". All of it is `ui.morph` patches. `window.LeagueFile`
+(`key()`, `teams()`, `onChange`, `onStart`, `reset`) is how `season.js` hears it: `#pick-team` is reconciled
+to the import's FBS teams in place (keyed by slug), their cards go into `teamsBySlug` while no season is open
+(a switch of league prunes the cards to that league's teams; the stand-ins' stay), Start Career is the existing
+Who Coaches? step, and `newSeason` posts `league: LeagueFile.key()` and resets the panel once the league is used.
+With an import loaded, Who Coaches? has no Create a New Coach link (Your Coach is another page, and the import lives
+only in this one): a sentence says to create the coach first. A check that fails outright (no answer) puts the
+panel back on the built-in league. The picker's overall for an imported league is its engine build's
+(`league.build`, no real 2026 adjustments, the build every career plays from its first offseason on), so a team the
+file leaves alone can read a point or two off its built-in card. Opening a season whose summary names a `league` first merges
+`/api/season/{id}/teams` into `teamsBySlug` (a built-in career puts the built-in cards back). Export League
+fetches the relative `league.json` (written by `tools/build_site.py` beside the page; the dev server makes it)
+and downloads it as `league.json`.
+
+**The season-one schedule.** When the merge is structural, 2026 is generated by the schedule
+generator from the merged conferences (`league_file.schedule_rules`: each conference's `games`,
+listed rivalries as protected pairs or annual series, divisions from `league_file.divisions`) with
+`random.Random(f"league-schedule-{seed}")` and an empty history (`schedule_gen.empty_history`); the
+preseason poll comes from team ratings, not the real AP poll. A generator failure is an import error,
+"The 2026 schedule could not be built for this league: …", with teams by name and any FCS stand-in as
+"an FCS opponent". Otherwise (a team edited, a conference renamed) the real 2026 schedule and the real
+preseason poll are kept.
+
+**The save.** The filled league is the career's `state["league"]` from season one: the structure
+`coach_career/league.py` keeps from the first offseason on, plus `source` (the file's format and
+name, which `league.is_imported` reads and the season summary shows as `league`),
+`recruiting_models`, `schedule_rules`, `divisions`, `conference_names` and, when 2026 was generated,
+`schedule_history` (2027 is scheduled from it). `league.ensure_built` rebuilds the 2026 file from it
+when missing, and `offseason.next_season` carries it on like any career league; program history, AD
+goals, recruiting (distance from the team's location), the coach market and NIL budgets all read it.
+
+**Seeds.** The fill seed is the one asked for, or one read from the file's bytes
+(`league_fill.league_seed`); the same file and seed always give the same league and the same 2026
+schedule. The season's own seed is the career's, as always.
+
 ## Player stat lines against real box scores
 
 `tools/fetch_boxscores.py` downloads every played game's box score from the NCAA GraphQL feed

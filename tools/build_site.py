@@ -21,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from coach_career import league  # noqa: E402
+from coach_career import league, league_file  # noqa: E402
 
 PACKAGES = ("engine", "sim", "coach_career", "teamdata", "app")     # their .py files only
 # the data a career reads through a season, its offseason and the next season's first week
@@ -72,6 +72,7 @@ def build(out: Path = ROOT / "dist") -> dict:
             dest = out / p.relative_to(web)
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(p, dest)
+    league_file.write_builtin(out / "league.json")      # the built-in league as a file (the New Career screen's Export League)
     files = _game_files()
     with zipfile.ZipFile(out / "game.zip", "w", compression=zipfile.ZIP_DEFLATED) as z:
         for f in files:
