@@ -22,7 +22,7 @@ def test_injury_after_with() -> None:
 
 
 def test_topic_case_in_his_reply() -> None:
-    for phrase in scenes.PHRASES.values():
+    for phrase in list(scenes.PHRASES.values()) + list(scenes.SAID_HONEST.values()):
         for line in scenes.PRESENT_LINES["hit"]:
             text = line.format(topic=phrase, Topic=phrase[0].upper() + phrase[1:])
             assert text[0].isupper(), text

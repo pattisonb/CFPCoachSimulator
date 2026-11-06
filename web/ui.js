@@ -279,7 +279,7 @@
         continue;
       }
       if (name === "class") {
-        const cur = a.className.split(/\s+/).filter((c) => c && !TRANSIENT.includes(c)), nxt = value.split(/\s+/).filter(Boolean);
+        const cur = (a.getAttribute("class") || "").split(/\s+/).filter((c) => c && !TRANSIENT.includes(c)), nxt = value.split(/\s+/).filter(Boolean);
         if (cur.join(" ") !== nxt.join(" ")) { a.setAttribute("class", [...nxt, ...TRANSIENT.filter((c) => a.classList.contains(c))].join(" ")); attrChanged = true; }
         continue;
       }
