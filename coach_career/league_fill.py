@@ -566,6 +566,7 @@ def program_for(team: dict, conf: dict, lgd: dict) -> dict:
     for k in ("winning", "nil", "conference"):
         p[k] = float(_median([q[k] for q in progs], programs.BASE_DEFAULT[k]))
     p["market"] = programs.MARKET_DEFAULT
+    p["pro"], p["pro_groups"], p["drafts"] = 0, {}, programs.empty_drafts(league.FIRST_YEAR - 1)
     hc = _head(team)
     overall = (hc.get("ratings") or {}).get("overall", hc.get("rating"))
     p["coach"] = float(overall) if overall is not None else programs.BASE_DEFAULT["coach"]

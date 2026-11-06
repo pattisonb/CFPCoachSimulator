@@ -79,8 +79,9 @@ def _history() -> dict:
     return _cache["history"]
 
 
-def _empty_drafts(year_now: int) -> list:
-    return [[y, 0, {}] for y in range(year_now - PRO_YEARS, year_now)]
+def empty_drafts(year_before: int) -> list:
+    """Ten draft lines with no picks, the newest being `year_before`'s."""
+    return [[y, 0, {}] for y in range(year_before - PRO_YEARS + 1, year_before + 1)]
 
 
 def base(slug: str) -> dict:
@@ -88,7 +89,7 @@ def base(slug: str) -> dict:
     p = _history()["teams"].get(slug)
     if p:
         return dict(p)
-    p = dict(BASE_DEFAULT, market=market(slug), pro_groups={}, drafts=_empty_drafts(2026))
+    p = dict(BASE_DEFAULT, market=market(slug), pro_groups={}, drafts=empty_drafts(2025))
     p["rating"] = round(mix(p), 1)
     p["tier"] = tier_of(p["rating"])
     return p
@@ -140,9 +141,10 @@ def pro_group_scores(lines: list, year_now: int) -> dict:
 def pro_recompute(p: dict, year_now: int) -> None:
     """Set a program's pro and pro_groups (0-100) from its draft lines on the fixed scales."""
     sc = _history().get("scales", {})
-    p["pro"] = scaled(pro_score(p["drafts"], year_now), sc["pro"]) if "pro" in sc else 0
+    lines = p.get("drafts") or []
+    p["pro"] = scaled(pro_score(lines, year_now), sc["pro"]) if lines and "pro" in sc else 0
     gs = sc.get("pro_group", {})
-    p["pro_groups"] = {g: scaled(v, gs[g]) if g in gs else 0 for g, v in pro_group_scores(p["drafts"], year_now).items()}
+    p["pro_groups"] = {g: scaled(v, gs[g]) if g in gs else 0 for g, v in pro_group_scores(lines, year_now).items()}
 
 
 def season_score(wins: int, games: int, rank=None) -> float:
@@ -159,7 +161,7 @@ def init(lgd: dict) -> None:
         if "program" not in t:
             p = base(slug)
             p.setdefault("pro_groups", {})
-            p["drafts"] = [[y, pts, dict(g)] for y, pts, g in p["drafts"]] if p.get("drafts") else _empty_drafts(lgd.get("year", 2026))
+            p["drafts"] = [[y, pts, dict(g)] for y, pts, g in p["drafts"]] if p.get("drafts") else empty_drafts(lgd.get("year", 2026) - 1)
             t["program"] = dict(p, market_base=p["market"], nil_base=p["nil"], winning_base=p["winning"], conference_base=p["conference"],
                                 live=0.0, seasons=[], year=lgd.get("year", 2026) - 1)
 

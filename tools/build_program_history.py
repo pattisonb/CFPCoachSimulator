@@ -10,7 +10,8 @@
     nil         the NIL tier: from the recruiting baseline (the same budget nil_budget gave) and the market
     conference  the conference's strength: the mean engine rating of its members
     coach       the head coach's overall rating and tenure
-    pro         data/nfl_drafts.json: the last ten drafts' picks by round, the newest five counting double
+    pro         data/nfl_drafts.json: the last ten drafts' picks by round, the newest five counting double;
+                each position group is scaled on its own, its median taken over the programs with a pick in it
     rating      the mix; tier 1-5
 
 Writes data/program_history.json.    python tools/build_program_history.py
@@ -132,14 +133,15 @@ def build() -> dict:
     SCALES["pro_group"] = {}
     for g in sorted({g for gr in group_raw.values() for g in gr}):
         vals = {s: group_raw[s].get(g, 0.0) for s in fbs}
-        lo, hi = min(vals.values()), max(vals.values())
-        if hi > lo:
-            for s, v in scale_fixed(vals, lo, hi, MEDIAN_TARGET, f"pro_group.{g}").items():
-                if group_raw[s].get(g):
-                    pro_groups[s][g] = round(v, 1)
-            SCALES["pro_group"][g] = SCALES.pop(f"pro_group.{g}")
-        else:
-            SCALES["pro_group"][g] = {"lo": 0, "hi": 1, "k": 1}
+        hi = max(vals.values())
+        if hi <= 0:
+            continue                    # no scale written: scaled() yields 0 through the missing-scale path
+        have = {s: v for s, v in vals.items() if v > 0}
+        share = st.median(v / hi for v in have.values())
+        k = math.log(MEDIAN_TARGET / 100) / math.log(share) if 0 < share < 1 else 1.0
+        SCALES["pro_group"][g] = {"lo": 0.0, "hi": hi, "k": k}
+        for s, v in have.items():
+            pro_groups[s][g] = round(programs.scaled(v, SCALES["pro_group"][g]), 1)
     out = {}
     for s in fbs:
         hc = (teams[s].get("coaches") or {}).get("head_coach") or {}
