@@ -2030,7 +2030,8 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
     need, commits = needs(state, slug), commits_by_group(state, slug)
     for pid in list(offers):                   # a group at its cap: the open offers there are pulled (no more chasing flips), yours by hand kept
         if pid not in kept and rc["status"][pid]["committed"] != slug and not rc["status"][pid]["signed"] \
-                and commits[_group_of(rc["prospects"][pid])] >= group_cap(need, _group_of(rc["prospects"][pid])):
+                and not is_generational(state, pid) \
+                and commits[_group_of(rc["prospects"][pid])] >= group_cap(need, _group_of(rc["prospects"][pid])):   # a generational talent is never pulled for a full group
             offers.remove(pid)
             _nil(state, slug)["held"].pop(pid, None)
     open_ = offers_by_group(state, slug)
