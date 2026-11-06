@@ -199,7 +199,11 @@ def check_timeline(page, base, sid, pid, size) -> None:
     before = box(page, SCREENS["recruiting"]["pane"])
     wheel_over(page, ".go-pane .pv-timeline", 200)
     after = box(page, SCREENS["recruiting"]["pane"])
-    assert after["st"] > before["st"] and doc(page)["y"] == 0, f"{where}: at the timeline's end the wheel goes on to the pane, never the page: {before['st']} -> {after['st']}"
+    assert doc(page)["y"] == 0, f"{where}: at the timeline's end the wheel never reaches the page"
+    # the pane takes the wheel when it has anything left to show (the timeline card is only as tall as the notes
+    # beside it, so on a tall screen the History tab can fit the pane whole, and then nothing moves)
+    if before["sh"] - before["ch"] - before["st"] > 2:
+        assert after["st"] > before["st"], f"{where}: at the timeline's end the wheel goes on to the pane: {before['st']} -> {after['st']}"
 
 
 def check_phone(page, base, sid) -> None:
