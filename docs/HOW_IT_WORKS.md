@@ -939,13 +939,17 @@ pitch picker shows it as strong, fair or weak): playing time from where he would
 your record and poll, prestige, proximity, coach, academics, and NIL as your offer against his
 ask. A pitch on one of his priorities counts 1x to 4x by that strength (1 + 3 x strength); under
 25% it backfires (he isn't buying it: minus half the action's worth); any other topic counts
-0.3x to 0.7x. **Path to the League** is a pitch topic like the rest (spec
+0.3x to 0.7x.
+
+**Path to the League** is a pitch topic like the rest (spec
 `docs/superpowers/specs/2026-11-06-pro-pipeline-design.md`). Your strength on it at a school is that
 school's Pro Pipeline grade at his position group (OL the mean of OT and IOL, DL of EDGE and DL,
 athletes and kickers the overall grade), as a pull `_logistic(1.2 × (grade − 50) / 25)`. About one
 recruit in ten has it first (`PRIORITY_ODDS` pro 0.10; the portal 0.05, top transfers 0.08), and
 dads, trainers and high school coaches carry it as deciders. The lines claim a pipeline only when
-the strength is at `CLAIM_FROM`; below it they give the honest lead. **Stages:** cold until a contact, in touch, his top group (his top eight schools by
+the strength is at `CLAIM_FROM`; below it they give the honest lead.
+
+**Stages:** cold until a contact, in touch, his top group (his top eight schools by
 interest, your offer in hand), visited, committed. An official visit needs his top group; an
 offer before any contact counts half. AI boards start warm (the staff has evaluated and spoken to
 everyone on them, one priority known) and pitch the strongest priority they know. Each contact
@@ -1699,14 +1703,14 @@ Every program in a career's league carries a living rating, seven metrics on 0-1
 | pro | the Pro Pipeline: the last ten NFL drafts, each pick weighted by round (round 1 counts 4, round 2 counts 3, round 3 counts 2, later rounds 1), the newest five years counted double, on a fixed scale so the best program is 100 and the median about 40; a grade per position group is made the same way, over the programs with a pick in that group | every offseason the career's draft becomes the year's line and the oldest year drops; ten empty years take a factory to 0 |
 
 The rating is 0.30 prestige + 0.15 winning + 0.15 NIL + 0.10 market + 0.10 conference + 0.10
-coach + 0.10 pro; tiers are 1 at 76 and up (blue blood), 2 at 65, 3 at 50, 4 at 35, 5 below (at the start 7,
-13, 34, 25 and 59 programs). **History** (`tools/build_program_history.py`, from the coaching
+coach + 0.10 pro; tiers are 1 at 76 and up (blue blood), 2 at 65, 3 at 50, 4 at 35, 5 below (at the start 9,
+11, 34, 25 and 59 programs). **History** (`tools/build_program_history.py`, from the coaching
 records in `data/recruiting/coaches.json`: every FBS head coach's seasons since 1995 with wins,
 games and the final AP rank) is the recency-weighted mean season score 1995-2025 (half-life 12
 years), blended 65/35 with the recruiting baseline (class strength 2005-2026) and scaled so the
-best program is 100 and the median 39: Alabama 100, Ohio State 98, Georgia 93, Oklahoma 82,
+best program is 100 and the median 39 (the history column; the starting rating itself runs on the mix above): Alabama 100, Ohio State 98, Georgia 93, Oklahoma 82,
 Oregon 80, Texas 80, LSU 79, Clemson and Michigan 78. The starting top 25 by rating holds 21 of a
-reasonable 2026 top 25 (Indiana, Missouri, Nebraska and South Carolina in for Utah, Wisconsin,
+reasonable 2026 top 25 (Missouri, Nebraska, South Carolina and TCU in for Utah, Wisconsin,
 Oklahoma State and Kansas State). Ten straight 12-0 seasons lift a mid Power 4 program about 20
 rating points (tier 3 to tier 1, prestige +11, market +14, NIL to the cap); ten 2-10 seasons at
 Alabama take about 17 (tier 1 to 2, prestige 97 to 76): a decade moves a program about a tier.
@@ -1716,8 +1720,8 @@ The starting draft lines are the 2016-2025 NFL drafts, which `tools/fetch_drafts
 Wikipedia's player-selection tables into `data/nfl_drafts.json` (each program's picks by year, round
 and position group) and `tools/build_program_history.py` turns into the `pro` and `pro_groups`
 values in `data/program_history.json`: Alabama 100, Georgia 94, Ohio State 94, Michigan 86, LSU 85,
-Penn State 79, the median 40. The Programs tab shows the grade as a bar and, under the bars, a chip
-for each position group the program has drafted from; the Every Program table has a Pro Pipeline
+Penn State 79, the median about 40. The Programs tab shows the grade as a bar and, under the bars, a chip
+for every position group, best first (a group with no picks reads Weak); the Every Program table has a Pro Pipeline
 column.
 
 **What reads it.** The AD's goal follows the tier (1: the playoff; 2: nine wins; 3: eight; 4: seven and a
