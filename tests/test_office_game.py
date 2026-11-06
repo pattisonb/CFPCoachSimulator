@@ -141,7 +141,8 @@ def check_week_strip(page, base, sid) -> None:
     Season Recap and Bowls show the season as it stands and leave it out."""
     open_tab(page, base, sid, "standings", "#tab-standings table")
     assert page.eval_on_selector("#week-strip", "e => e.offsetParent === null"), "no week strip on Standings"
-    page.click("#season-tabs button[data-tab=rankings]")
+    page.click("#tab-league")                              # the league tabs live behind League ▾
+    page.click(".go-menu .go-menu-item:has(b:text-is('Rankings'))")
     page.wait_for_selector("#tab-rankings:not([hidden])")
     assert page.eval_on_selector("#week-strip", "e => e.offsetParent !== null"), "the week strip on Rankings"
 
