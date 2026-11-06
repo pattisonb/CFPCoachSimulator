@@ -68,7 +68,7 @@
     const changed = () => renderPreview();
 
     // identity
-    const id = el("section", { class: "panel coach-section" }, [el("h3", { text: "Identity" })]);
+    const id = el("section", { class: "panel coach-section" }, [el("div", { class: "card-bar" }, [el("h3", { text: "Identity" })])]);
     const text = (key, ph, max = 30) => { const i = el("input", { type: "text", value: c[key] || "", placeholder: ph, maxlength: String(max) }); i.addEventListener("input", () => { c[key] = i.value; changed(); }); return i; };
     const age = el("input", { type: "number", min: "28", max: "75", value: String(c.age) });
     age.addEventListener("input", () => { c.age = Number(age.value) || 42; changed(); });
@@ -83,7 +83,7 @@
     f.append(id);
 
     // archetype and ratings
-    const arch = el("section", { class: "panel coach-section" }, [el("h3", { text: "Archetype and Ratings" })]);
+    const arch = el("section", { class: "panel coach-section" }, [el("div", { class: "card-bar" }, [el("h3", { text: "Archetype and Ratings" })])]);
     const archSel = select(c.archetype, Object.keys(OPT.archetypes).map((a) => [a, a]), (v) => {
       c.archetype = v; c.ratings = clone(OPT.archetypes[v].ratings); renderForm();
     });
@@ -113,7 +113,7 @@
     f.append(arch);
 
     // coaching style
-    const sty = el("section", { class: "panel coach-section" }, [el("h3", { text: "Coaching Style" }),
+    const sty = el("section", { class: "panel coach-section" }, [el("div", { class: "card-bar" }, [el("h3", { text: "Coaching Style" })]),
       el("p", { class: "muted small-text", text: "50 is the FBS average. These change how the team plays on a side of the ball the coach calls. The team's coordinators stay for the season; staff changes come after it." })]);
     const offSel = select(c.offense_scheme, Object.keys(OPT.offense_schemes).map((s) => [s, s]), (v) => { c.offense_scheme = v; renderForm(); });
     const defSel = select(c.defense_scheme, Object.keys(OPT.defense_schemes).map((s) => [s, s]), (v) => { c.defense_scheme = v; renderForm(); });
@@ -138,7 +138,7 @@
     f.append(sty);
 
     // look
-    const look = el("section", { class: "panel coach-section" }, [el("h3", { text: "Look" })]);
+    const look = el("section", { class: "panel coach-section" }, [el("div", { class: "card-bar" }, [el("h3", { text: "Look" })])]);
     const lg = el("div", { class: "coach-grid" });
     const names = { skin: "Skin Tone", hair: "Hair", hair_color: "Hair Color", facial_hair: "Facial Hair", glasses: "Glasses", headwear: "Headwear", outfit: "Sideline Outfit" };
     for (const [k, opts] of Object.entries(OPT.look)) {
@@ -158,7 +158,7 @@
     f.append(look);
 
     // background
-    const bg = el("section", { class: "panel coach-section" }, [el("h3", { text: "Background" })]);
+    const bg = el("section", { class: "panel coach-section" }, [el("div", { class: "card-bar" }, [el("h3", { text: "Background" })])]);
     const ta = el("textarea", { rows: "5", maxlength: "1500", placeholder: "The coach's story. Write your own, or fill it in from the choices above." });
     ta.value = c.background || "";
     ta.addEventListener("input", () => { c.background = ta.value; changed(); });

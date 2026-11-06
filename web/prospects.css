@@ -19,13 +19,11 @@
 
 /* the two columns */
 .pr-lay { display: grid; grid-template-columns: minmax(0, 1fr) 288px; gap: 16px; align-items: stretch; }
-.pr-main { min-width: 0; display: flex; flex-direction: column; gap: 14px; padding: 16px; }
+.pr-main { --card-pad-x: 16px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }   /* the list card has no bar; its table keeps every column at 1280 */
 .pr-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .pr-side > .pr-card:last-child { flex: 1 1 auto; }
-.pr-card { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.pr-card-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 10px; }
-#tab-prospects .pr-kick { margin: 0; color: var(--muted); }
-.pr-more { min-height: 36px; padding: 0 4px; border: 0; background: none; color: var(--go-warn-text, var(--accent)); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap; border-radius: 8px; }
+.pr-card { --card-gap: 12px; display: flex; flex-direction: column; gap: var(--card-gap); min-width: 0; }
+.pr-more { min-height: 36px; padding: 0 4px; border: 0; background: none; color: var(--go-warn-text, var(--accent)); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap; }
 .pr-more:hover { text-decoration: underline; }
 .pr-more:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 
@@ -36,9 +34,9 @@
 
 /* the filters */
 .pr-filters { gap: 8px; }
-.pr-filters .pr-search { flex: 1 1 240px; min-width: 0; min-height: 44px; border-radius: 12px; }
+.pr-filters .pr-search { flex: 1 1 240px; min-width: 0; min-height: 44px; }
 .pr-filters .pr-sel { flex: 0 1 auto; min-width: 0; max-width: 100%; }
-.pr-filters .pr-rec { min-height: 44px; border-radius: 12px; font-weight: 700; white-space: nowrap; }
+.pr-filters .pr-rec { min-height: 44px; font-weight: 700; white-space: nowrap; }
 .pr-filters .pr-rec.on { background: var(--go-warn, var(--accent)); border-color: var(--go-warn, var(--accent)); color: #1a1200; }
 .pr-list-head { margin: 0; gap: 8px 12px; align-items: center; justify-content: space-between; }
 .pr-list-head p { margin: 0; flex: 1 1 260px; }
@@ -52,13 +50,13 @@
 .pr-table th.pr-c-int { white-space: normal; min-width: 64px; }     /* "Interest in You" may take two lines: the word under it is short */
 .pr-table td { font-size: 14px; padding: 6px 5px; border-bottom: 1px solid var(--border); vertical-align: middle; white-space: nowrap; }
 /* a row keeps the list's class names (.go-list-row, .go-list-main: tests and the other screens' hooks), not their card look */
-.pr-table tr.pr-row { display: table-row; background: none; border: 0; border-radius: 0; padding: 0; cursor: pointer; }
+.pr-table tr.pr-row { display: table-row; background: none; border: 0; padding: 0; cursor: pointer; }
 .pr-table tr.pr-row:hover > td { background: color-mix(in srgb, var(--text) 4%, transparent); }
 .pr-c-rank { width: 36px; font-variant-numeric: tabular-nums; }
 .pr-c-who { white-space: normal; min-width: 0; }
 .pr-c-ht, .pr-c-wt { font-variant-numeric: tabular-nums; }
 .pr-c-act { text-align: right; width: 1%; }
-.pr-table .pr-who.go-list-main { display: flex; flex: none; align-items: center; gap: 10px; min-height: 44px; width: 100%; padding: 2px 4px; border-radius: 10px; }
+.pr-table .pr-who.go-list-main { display: flex; flex: none; align-items: center; gap: 10px; min-height: 44px; width: 100%; padding: 2px 4px; }
 .pr-table .pr-who.go-list-main:hover { background: none; }
 .pr-who .go-list-id { min-width: 0; gap: 1px; }
 .pr-who .go-list-id b { font-size: 15px; }
@@ -126,7 +124,7 @@
 .pr-top { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .pr-top li + li { border-top: 1px solid var(--border); }
 .pr-top-row { display: grid; grid-template-columns: 30px 32px minmax(0, 1fr) auto; gap: 8px; align-items: center; width: 100%; min-height: 56px; padding: 6px 2px;
-  border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; border-radius: 10px; }
+  border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .pr-top-row:hover { background: color-mix(in srgb, var(--text) 4%, transparent); }
 .pr-top-rank { font-variant-numeric: tabular-nums; }
 .pr-top-id { display: flex; flex-direction: column; min-width: 0; }
@@ -142,7 +140,6 @@
 /* a phone: one column, 44 px controls, the meters as the total over four star counts */
 @media (max-width: 759px) {
   .pr-side { grid-template-columns: minmax(0, 1fr); }
-  .pr-main { padding: 14px 12px; }
   .pr-meters { grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; gap: 10px 0; }
   .pr-meter:first-child { grid-column: 1 / -1; flex-direction: row; align-items: baseline; gap: 8px; }
   .pr-meter:nth-child(2) { border-left: 0; padding-left: 0; }

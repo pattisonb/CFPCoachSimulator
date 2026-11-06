@@ -62,7 +62,7 @@
   function reportCard(s, report) {
     if (!report || !report.rows.length) return null;
     const card = el("section", { class: "go-card go-report", "aria-label": "What changed" });
-    card.append(el("div", { class: "go-kicker", text: `What Changed · After ${report.week === 0 ? "the Preseason" : `Week ${report.week}`}` }));
+    card.append(el("div", { class: "card-bar" }, [el("div", { class: "go-kicker", text: `What Changed · After ${report.week === 0 ? "the Preseason" : `Week ${report.week}`}` })]));
     // the week in a glance: only prospects where something happened to you (your place moved, a
     // decision, an ask), the biggest first, one line each; his list on the card has the rest
     const BIG = new Set(["commit", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "bloomed", "pro", "twist", "hat", "softened", "promise_kept"]);
@@ -294,7 +294,7 @@
     if (!you) return el("div");
     // a Recap card (web/league.css): the kicker and the standing tag in the head, the program's name as the title
     return el("section", { class: "go-card rcp-card lg-card edge go-program", "aria-label": "Your Program" }, [
-      el("div", { class: "go-program-head lg-head" }, [el("span", { class: "go-kicker muted" }, ["Your Program ",
+      el("div", { class: "card-bar go-program-head lg-head" }, [el("span", { class: "go-kicker muted" }, ["Your Program ",
         ui().tip("Prestige and the market move slowly with results; your AD raises NIL after a year that meets his goal.", "Your Program")]),
         el("span", { class: "go-tag", text: you.tier_name, title: "Where your program stands: its name, results, NIL, market, league and coach, moving slowly with what you do" })]),
       el("h2", { class: "rcp-h1 lg-h2", text: you.name || "" }),
@@ -313,14 +313,14 @@
     catch (err) { box.innerHTML = ""; box.append(el("p", { class: "muted", text: `Could not load the programs: ${H.errText(err)}` })); return; }
     box.innerHTML = "";
     const t = (window.CFP.teamsBySlug || {})[s.team] || {};
-    const root = el("div", { class: "lg", style: t.colors && t.colors.primary ? `--rcp-team:${t.colors.primary}` : "" });
+    const root = el("div", { class: "lg", style: window.CFP.teamVars(s.team) });
     box.append(root);
     const card = programCard(pv);
     if (s.job) card.append(el("div", { class: `go-job ${s.job.security < 40 ? "bad" : s.job.security < 65 ? "warn" : "good"}` }, [
       el("span", { class: "go-kicker muted", text: "Your AD's Goal" }), el("b", { text: ` ${s.job.goal}` }),
       el("span", { class: "go-tag", text: `${s.job.mood}${s.job.ultimatum ? " · Ultimatum Year" : ""}` })]));
     root.append(card, el("section", { class: "go-card rcp-card lg-card go-programs-card", "aria-label": "Every Program" }, [
-      el("div", { class: "go-kicker muted" }, ["Every Program ", ui().tip("Every FBS program's standing on the same six measures, and what its AD expects this season.", "Every Program")]),
+      el("div", { class: "card-bar" }, [el("div", { class: "go-kicker muted" }, ["Every Program ", ui().tip("Every FBS program's standing on the same six measures, and what its AD expects this season.", "Every Program")])]),
       programsTable(pv)]));
     if (H.carryLine) H.carryLine(s, card);
   }
@@ -887,7 +887,7 @@
     const tiny = window.matchMedia("(max-width: 359px)").matches;
     body.append(tiny ? "" : regions, tiny ? "" : el("div", { class: "go-map-svg" }, [svg]), legend, key,
       dots.length ? "" : el("p", { class: "muted small", text: "Nobody on your board yet: add prospects and they appear here." }), el("div", { class: "go-row" }, [tBtn]), table);
-    card.append(el("div", { class: "go-map-head" }, [el("div", { class: "go-display l", text: "Your Footprint" }), hint, toggle]), body);
+    card.append(el("div", { class: "card-bar go-map-head" }, [el("div", { class: "go-display l", text: "Your Footprint" }), hint, toggle]), body);
     return card;
   }
 
@@ -1594,7 +1594,7 @@
     // Message, Offer… and Raise NIL… happen here, under the head: the pitch (not for a raise), the NIL points (not for a message)
     function stepView(b, kind) {
       const st = el("div", { class: "go-step", role: "group", "aria-label": kind === "message" ? `Message ${b.name}` : kind === "offer" ? `Offer ${b.name}` : `Raise your NIL offer to ${b.name}` });
-      st.append(el("div", { class: "go-kicker", text: kind === "message" ? "Message · 5 Hours" : kind === "offer" ? "Offer · No Hours" : "Raise NIL · No Hours" }));
+      st.append(el("div", { class: "card-bar" }, [el("div", { class: "go-kicker", text: kind === "message" ? "Message · 5 Hours" : kind === "offer" ? "Offer · No Hours" : "Raise NIL · No Hours" })]));
       const pitch = kind === "raise_nil" ? null : pitchSelect(b);
       if (pitch) st.append(el("label", { for: "rc-pitch" }, [el("span", { class: "small", text: "Your Pitch" }), pitch]));
       let nil = null;
@@ -1627,7 +1627,7 @@
       const scene = b.scene, visit = scene.action === "hc_visit", what = visit ? "visit" : "call";
       let chosen = (scene.cue && scene.cue.topics[0]) || "";
       const sc = el("section", { class: "go-scene", tabindex: "-1", "aria-label": `${visit ? "In-home visit" : "Call"} with ${b.name}` });
-      sc.append(el("div", { class: "go-scene-head" }, [avatar(b.id), el("div", {}, [el("div", { class: "go-kicker", text: visit ? "In His Home" : "On the Phone" }), el("b", { text: b.name })])]));
+      sc.append(el("div", { class: "card-bar go-scene-head" }, [el("div", { class: "go-scene-who" }, [avatar(b.id), el("div", { class: "go-kicker", text: `${visit ? "In His Home" : "On the Phone"} · ${b.name}` })])]));
       // the turns: yours right in a muted bubble, his left, the room centered in italics; the cue keeps its frame
       const convo = el("div", { class: "go-scene-lines go-convo", role: "log", "aria-label": `The ${what}` });
       const turnEl = (t) => {
@@ -1787,7 +1787,7 @@
     function questionView(b, scene) {
       const q = scene.question;
       const wrap = el("div", { class: "go-question", role: "group", "aria-label": `${b.name} asks` });
-      wrap.append(el("div", { class: "go-kicker", text: "He Asks" }),
+      wrap.append(el("div", { class: "card-bar" }, [el("div", { class: "go-kicker", text: "He Asks" })]),
         el("p", { class: "go-question-line" }, [el("q", { text: q.text }), el("span", { class: "muted small", text: ` — ${b.name}` })]));
       // his reply's tone: a straight answer or a promise he believes reads good, a promise he has heard before bad, a sidestep muted
       const replyTone = (qq) => (qq.answer === "deflect" ? "muted" : qq.answer === "promise" && (qq.truthful === false || qq.reply === HOLLOW_REPLY) ? "bad" : "good");
@@ -1942,7 +1942,7 @@
 
     function card(kicker, key, right, body) {
       return el("section", { class: "go-card pr-card", "data-key": key, "aria-label": kicker }, [
-        el("div", { class: "pr-card-head" }, [el("h3", { class: "pv-kick pr-kick", text: kicker }), right || null]), ...body]);
+        el("div", { class: "card-bar pr-card-head" }, [el("h3", { class: "pv-kick pr-kick", text: kicker }), right || null]), ...body]);
     }
     // the map in the footprint card: your areas (shaded where a scout works), your board as dots; a state tap filters
     function drawMap() {
@@ -2309,7 +2309,7 @@
     const mine = d.schools.find((c) => c.yours);
     box.append(el("div", { class: "go-filterbar" }, [el("div", { class: "go-display l", text: `Class Rankings · ${(s.year || 2026) + 1}` }),
       el("span", { class: "go-pill", text: d.phase === "Signed" ? `Signed · ${d.fcs} Went to FCS Programs` : d.phase === "Recruiting" ? "Commitments So Far" : "Early Signing Period Done" })]));
-    if (mine) box.append(el("div", { class: "go-card go-myclass" }, [el("div", { class: "go-kicker", text: "Your Class" }),
+    if (mine) box.append(el("div", { class: "go-card go-myclass" }, [el("div", { class: "card-bar" }, [el("div", { class: "go-kicker", text: "Your Class" })]),
       el("div", { class: "go-big-line" }, [el("span", { class: "go-display xl", text: mine.count ? `#${mine.rank}` : "—" }),
         el("span", { class: "muted", text: mine.count ? `${mine.count} ${d.phase === "Signed" ? "signed" : "committed"} · ${starLine(mine.stars)}` : "No commitments yet" })])]));
     const list = el("ol", { class: "go-list go-classes" });

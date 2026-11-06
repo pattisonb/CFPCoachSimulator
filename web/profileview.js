@@ -22,7 +22,7 @@
   }
   // a card: its kicker (Title Case), an optional ⓘ and a right-hand note, then its body. opts.wide spans the grid's row.
   function card(kicker, body, opts = {}) {
-    const head = el("div", { class: "pv-card-head" }, [el("h3", { class: "pv-kick", text: kicker }), opts.sub ? el("span", { class: "muted small pv-kick-sub", text: opts.sub }) : null,
+    const head = el("div", { class: "card-bar pv-card-head" }, [el("h3", { class: "pv-kick", text: kicker }), opts.sub ? el("span", { class: "muted small pv-kick-sub", text: opts.sub }) : null,
       opts.tip ? window.CFP.ui.tip(opts.tip, kicker) : null, opts.right ? el("span", { class: "pv-card-right" }, [].concat(opts.right)) : null]);
     return el("section", { class: `pv-card ${opts.wide ? "pv-wide" : ""} ${opts.cls || ""}`.trim(), "data-key": opts.key || kicker, "aria-label": kicker }, [head, ...[].concat(body)]);
   }

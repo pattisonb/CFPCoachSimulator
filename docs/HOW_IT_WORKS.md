@@ -1202,8 +1202,10 @@ first three weeks (`COMMIT_FREEZE_WEEKS`), so there is time to scout and build a
 the class moves. A school's weekly hours are a multiple of 5.
 
 **The screens** (`web/recruiting.js`; the Office is `web/office.js` and `web/office.css`). A career
-opens on the **Office**, two columns (one below 900 px). On the left: the **Next Game** hero (the
-week and date, the game's name or rivalry, a Home Game / Away Game / Neutral Site chip, both teams
+opens on the **Office**, one grid of three columns whose rows line up (one column below 900 px): **Next Game**
+two columns wide beside Program Pulse, This Week's Plan (with Last Game) beside Recruiting Pulse, What Changed across,
+then Program News, Around the Conference and Top Targets as one row. The **Next Game** hero's bar is its kicker line (the
+week and date, with the Home Game / Away Game / Neutral Site chip in it), then the game's name or rivalry, both teams
 with marks, ranks, mascots and records; for this week's game the **Win Chance**, the game preview's
 simulated win probability shown between 1% and 99%, and the projected score; then the play card
 with **Game Day** first while your game is unplayed). Once Game Day is played and the week not yet
@@ -1739,7 +1741,7 @@ candidates and generated coaches are drawn against the rating on the baseline's 
 fitted so the ratings line up with the recruiting baseline). Recruiting's prestige pull reads
 0.6 × prestige + 0.4 × rating and the NIL pull the NIL tier; the portal's prestige and the
 program's share of development read the rating. The League's **Programs** tab shows your
-program's card (a Recap card with the team edge: the standing as a tag beside the kicker, the
+program's card (a Recap card whose bar carries the kicker with the standing as a tag beside it, the
 program's name as the title, the six metrics as bars read in words: elite 80 and up, strong 65,
 solid 50, fair 35, weak below; the AD's goal) and, open under it, the Every Program card, a table
 of the same words (it left the Office in round 3 to give the game the room). `tools/check_programs.py`
@@ -2323,10 +2325,10 @@ week strip lets you look back at any week. Tabs:
   percentage with the conferences' tiebreak ladder (below). After championship week the
   champion carries a crown and the title-game loser a silver medal; hover a rank to see
   which tiebreak placed a team. Standings, Stats and Programs wear the Season Recap's look
-  (`web/league.css` on top of `recap.css`: `.rcp-card` cards on the panel, a kicker over each,
-  condensed uppercase titles, the team-colored top edge on your own card, the tables kept as
-  `table.stats`). Standings is a head card (the week, the title, the conference chips), then one
-  card per conference with its name as the title, yours first as "Your Conference" with the edge;
+  (`web/league.css` on top of `recap.css`: `.rcp-card` cards on the panel, each with its bar in
+  your team's color carrying the title with the kicker beside it and the controls at its right, the tables kept as
+  `table.stats`). Standings is a head card that is only its bar (the title, the week, the conference chips), then one
+  card per conference with its name as its bar's title, yours first as "Your Conference";
   All lays them two across above 1000 px and one below.
 - **AP Poll**: the poll released after the selected week, with each team's move.
 - **CFP Rankings**: the committee's ranking after weeks 9 through 13 and the final one
@@ -2340,7 +2342,7 @@ week strip lets you look back at any week. Tabs:
   to F read off the wins against the AD's goal, the conference title, how far the playoff run went, the bowl and
   the final AP rank, with a one-sentence verdict per band: champion, playoff, met, bowl, missed, losing, fired; a
   champion alone gets the A+; no randomness, nothing written), then Start the Offseason, Back to the Office, Awards
-  and Schedule. Two columns: the national champion and title game (its box score opens), the four playoff rounds,
+  and Schedule. Two columns: the national champion and title game (its box score opens), the four playoff rounds in a Playoff card of their own,
   the Heisman, your leaders, the conference champions and the final rankings on the left; Your Season (points,
   the conference, non-conference, postseason and final rank, total offense, total defense and the turnover margin
   with their national ranks), the highlights, the rivalries, the biggest surprise and disappointment and the
@@ -2476,6 +2478,30 @@ whichever contrasts more. The page background is washed in the primary at the to
 and panel headings and the active tab take the accent. Michigan is maize on dark and navy on light, Penn State is
 navy on light and white on dark, Oregon is green on light and yellow on dark, and so on;
 the accent is re-picked when the theme toggle flips.
+
+### Cards and bars (`web/styles.css` ".card-bar")
+
+Every card with a header wears the player's Season Recap mockup: a solid bar in the team's primary color, flush with
+the card's top and sides, the title in it as 12 px bold uppercase letter-spaced type in the color's ink (`--go-primary`
+and `--go-primary-ink` in a career, the team theme's primary in a plain season, the accent before a team is picked).
+The page code puts one class, `card-bar`, on each card's header element and the one rule set in `styles.css` does the
+rest: whatever heading sits in it (a kicker, an `h2`, a `.rcp-h1`, a `.pv-kick`) reads as the bar's title, a secondary
+line beside it (the League look's kicker, a date, a note) reads lighter without caps, and every control in the bar
+(the Board → link, a tag like the program tier, an ⓘ, the view chips, the Home Game pill, a button) takes the ink.
+A card about another team sets `--card-bar-bg` and `--card-bar-ink` (`CFP.teamVars(slug)` gives both as `--rcp-team`
+and `--rcp-team-ink`: the recap's National Champion, an award's winner); the recap's gold, good and bad variants and his
+reaction's tones are the same two variables, so the old edge lines (`.rcp-card.edge`, the Office hero's top border) are
+gone. A card that is only its bar (Standings' head card, a folded Transfer Portal Recap, the closed Footprint map) ends
+with it. Cards share one padding (`--card-pad`: 20 px, 14 on a phone; nested cards such as the pane's, a scene or his
+question 14) that the bar reads to bleed to the edges, and a card laid out with a flex gap says so in `--card-gap` so
+the bar keeps 16 px to the body; rows of cards are CSS grids with explicit rows that line up across columns (the Office,
+the offseason's rows), each card as tall as its content, the list cards filling their row. Corners are square
+everywhere in the career UI: no card, bar, button, pill, tag, chip, input, select, table, modal, menu or panel has a
+radius (`--radius: 0`, every page stylesheet lost its `border-radius` lines); circles (avatars, the step marks, the
+star dots) stay circles, and the big team tiles keep 4 px. The depth chart screen keeps its own square, ink-headed
+look. `tests/test_office_redesign.py`, `tests/test_recap_awards.py`, `tests/test_spacing.py` and
+`tests/test_offseason_redesign.py` check the bars, the alignment, the padding and the 36 px (44 on a phone) controls
+in a bar.
 
 ### Smooth actions (`web/ui.js`)
 

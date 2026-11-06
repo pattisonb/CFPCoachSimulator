@@ -1,34 +1,34 @@
-/* The Office (web/office.js): two columns, the week on the left and the program's pulse on the right; one
-   column below 900 px. Colors are the site's theme tokens (styles.css :root and the light theme); the hero
-   takes a wash of your team's primary color (--ofc-team), lighter in the light theme. */
-:root { --ofc-mix: 30%; }
-:root[data-theme="light"] { --ofc-mix: 9%; }
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --ofc-mix: 9%; } }
-
+/* The Office (web/office.js): one grid of three columns whose rows line up: Next Game (two columns wide) beside
+   Program Pulse, This Week's Plan (with Last Game) beside Recruiting Pulse, What Changed across, then Program News,
+   Around the Conference and Top Targets as one row; one column below 900 px. Every card's header is its bar
+   (styles.css .card-bar); a card is as tall as its content, the three list cards fill their row. Colors are the
+   site's theme tokens (styles.css :root and the light theme). */
 .ofc { display: flex; flex-direction: column; gap: 0; }
-.ofc-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-.ofc-main, .ofc-side { display: grid; gap: 16px; align-content: start; min-width: 0; }
-.ofc-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 16px; align-items: stretch; min-width: 0; }
+.ofc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.ofc-grid > * { min-width: 0; }
+.ofc-grid > .ofc-hero, .ofc-grid > .ofc-row { grid-column: 1 / 3; }
+.ofc-grid > .ofc-report-slot, .ofc-grid > .go-report { grid-column: 1 / -1; }
+.ofc-grid > .ofc-report-slot:empty { display: none; }
+.ofc-grid > :is(.ofc-news, .ofc-conf, .ofc-targets) { align-self: stretch; }
+.ofc-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 16px; align-items: start; min-width: 0; }
 .ofc-row > :only-child { grid-column: 1 / -1; }
-.ofc .go-card { padding: 16px; border-radius: 12px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
-.ofc .go-card > .go-kicker, .ofc .go-card-head .go-kicker { color: var(--muted); }
+.ofc .go-card { --card-gap: 10px; min-width: 0; display: flex; flex-direction: column; gap: var(--card-gap); }
 .ofc .go-loading { padding: 10px 0; }
 .ofc-big { font-size: 40px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
 .ofc-ink { color: var(--text); font-weight: 700; }
 .ofc-stars { color: var(--accent-text); letter-spacing: 1px; }
 .ofc-when { font-size: 13px; white-space: nowrap; }
-.ofc-chip { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-2);
+.ofc-chip { display: inline-flex; align-items: center; padding: 4px 12px; border: 1px solid var(--border); background: var(--panel-2);
   font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; color: var(--text); }
-.ofc-pill-l { width: 64px; height: 64px; border-radius: 16px; margin: 0; flex: none; border-width: 3px; }
-.ofc-pill-m { width: 40px; height: 40px; border-radius: 10px; margin: 0; flex: none; border-width: 2px; }
+.ofc-pill-l { width: 64px; height: 64px; margin: 0; flex: none; border-width: 3px; }
+.ofc-pill-m { width: 40px; height: 40px; margin: 0; flex: none; border-width: 2px; }
 
 /* the hero: the next game */
-.ofc-hero { padding: 20px !important; gap: 14px !important;
-  background: var(--panel); border-top: 4px solid var(--ofc-team, var(--accent)) !important; }
-.ofc-hero-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px 16px; flex-wrap: wrap; }
+.ofc-hero { --card-gap: 14px; gap: var(--card-gap); background: var(--panel); }
 .ofc-hero-head > :first-child { min-width: 0; flex: 1 1 220px; }
-.ofc-title { font-weight: 800; font-size: 17px; margin-top: 4px; }
+.ofc-title { font-weight: 800; font-size: 17px; }
 .ofc-site { margin-top: 2px; }
+.ofc-hero-name { display: flex; flex-direction: column; gap: 2px; }
 .ofc-hero-note { margin: 0; }
 .ofc-match { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px; margin: 4px 0; }
 .ofc-match-one { grid-template-columns: minmax(0, 1fr); }
@@ -43,7 +43,7 @@
 .ofc-edge { display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 20px; }
 .ofc-odds { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; max-width: 520px; }
 .ofc-odds b { font-size: 20px; font-variant-numeric: tabular-nums; }
-.ofc-odds-bar { display: block; height: 10px; border-radius: 5px; overflow: hidden; background: color-mix(in srgb, var(--away) 65%, transparent); }
+.ofc-odds-bar { display: block; height: 10px; overflow: hidden; background: color-mix(in srgb, var(--away) 65%, transparent); }
 .ofc-odds-bar i { display: block; height: 100%; background: var(--home); }
 .ofc-projected b { color: var(--text); font-variant-numeric: tabular-nums; }
 .ofc-play { justify-content: center; }
@@ -55,19 +55,18 @@
 
 /* Last Game */
 .ofc .go-game-last { background: var(--panel); border: 1px solid var(--border); }
-.ofc .go-game-head { margin: 0; min-height: 36px; }
 .ofc-score { display: flex; align-items: center; justify-content: space-around; gap: 10px; flex-wrap: nowrap; }
 .ofc-score-mid { display: inline-flex; align-items: center; gap: 10px; }
 .ofc-final-opp { text-align: center; }
 .ofc-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); text-align: center; border-top: 1px solid var(--border); padding-top: 10px; }
 .ofc-stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
 .ofc-stat span { color: var(--muted); font-size: 12.5px; }
-.ofc .go-result.small { width: 22px; height: 22px; border-radius: 5px; font-size: 13px; margin-right: 6px; }
+.ofc .go-result.small { width: 22px; height: 22px; font-size: 13px; margin-right: 6px; }
 
 /* This Week's Plan */
 .ofc-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; gap: 10px; }
 .ofc-steps li { display: flex; }
-.ofc-step { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px; border-radius: 10px; text-align: left;
+.ofc-step { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px; text-align: left;
   border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit; cursor: pointer; }
 .ofc-step:hover { border-color: var(--muted); }
 .ofc-step.now { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
@@ -101,8 +100,7 @@
 .ofc-kv-line { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
 .ofc-kv-rows span b { font-variant-numeric: tabular-nums; }
 .ofc-target-list { display: flex; flex-direction: column; gap: 8px; }
-.ofc-target { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 4px 4px 12px; border: 0; border-bottom: 1px solid var(--border);
-  border-radius: 0; background: none; color: var(--text); text-align: left; font: inherit; cursor: pointer; width: 100%; }
+.ofc-target { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 4px 4px 12px; border: 0; border-bottom: 1px solid var(--border); background: none; color: var(--text); text-align: left; font: inherit; cursor: pointer; width: 100%; }
 .ofc-target:last-child { border-bottom: 0; padding-bottom: 4px; }
 .ofc-target:hover { background: var(--panel-2); }
 .ofc-target-text { display: flex; flex-direction: column; min-width: 0; }
@@ -113,6 +111,7 @@
 /* one column below 900 px; a phone stacks everything */
 @media (max-width: 899px) {
   .ofc-grid, .ofc-row { grid-template-columns: minmax(0, 1fr); }
+  .ofc-grid > *, .ofc-grid > .ofc-hero, .ofc-grid > .ofc-row, .ofc-grid > .ofc-report-slot, .ofc-grid > .go-report { grid-column: auto; }
 }
 @media (max-width: 599px) {
   .ofc-steps { grid-template-columns: minmax(0, 1fr); grid-auto-flow: row; }
@@ -121,9 +120,8 @@
   .ofc-team { flex-direction: column; align-items: flex-start; gap: 8px; }
   .ofc-team.theirs { flex-direction: column; align-items: flex-end; }
   .ofc-team-name { font-size: 20px; white-space: normal; }
-  .ofc-pill-l { width: 48px; height: 48px; border-radius: 12px; }
+  .ofc-pill-l { width: 48px; height: 48px; }
   .ofc-match { gap: 8px; }
-  .ofc-hero { padding: 16px !important; }
   .ofc-big { font-size: 34px; }
   .ofc-feed li { flex-direction: column; gap: 2px; }
   .ofc-results li { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }

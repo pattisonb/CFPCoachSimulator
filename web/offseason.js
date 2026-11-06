@@ -79,7 +79,7 @@
       sub ? el("div", { class: "muted small", text: sub }) : null]);
   }
   const card = (cls, key, kids) => el("section", { class: `go-card ${cls || ""}`, "data-key": key }, kids);
-  const kicker = (text, extra) => el("div", { class: "go-kicker" }, [text, extra || null]);
+  const kicker = (text, extra) => el("div", { class: "card-bar" }, [el("div", { class: "go-kicker" }, [text, extra || null])]);   // a card's header: its bar (styles.css .card-bar)
   // a row of cards: two equal columns ("g2") or two to one ("g21"); a lone card (or an odd last one) spans the row
   function row(kind, key, items) {
     const kids = items.filter(Boolean);
@@ -300,11 +300,11 @@
   };
   function drawHub(s, v, page) {
     const kind = v.stage.startsWith("portal_w") ? "portal" : v.stage === "portal_1" || v.stage === "portal_2" ? "portal_old" : v.stage;
-    const hero = card("off-hero", "hero", [el("div", { class: "go-kicker off-hero-kick", text: "Offseason" }),
+    const hero = card("off-hero", "hero", [kicker("Offseason"),
       el("div", { class: "off-hero-title", text: isFirst(v) ? "Ready for the Offseason" : `Up Next: ${LONG[v.stage]}` }),
       el("p", { class: "off-hero-line", text: (HERO[kind] || HERO.staff)(v) })]);
     const deciding = v.retention && !v.retention.results && v.retention.players.length ? v.retention.players.length : 0;
-    const numbers = card("off-numbers-card", "numbers", [el("div", { class: "off-numbers" }, [
+    const numbers = card("off-numbers-card", "numbers", [kicker("By the Numbers"), el("div", { class: "off-numbers" }, [
       stat("Roster", `${v.roster} / ${v.roster_limit || 85}`, deciding ? `${deciding} deciding whether to stay` : null), stat("Class Signed", String(v.signed)),
       stat("Open Spots", String(v.open_spots)), stat("Portal Placed", `${v.portal.signed} of ${v.portal.entrants}`)])]);
     page.append(row("g2", "hub-top", [hero, numbers]));
@@ -380,7 +380,7 @@
   function holdTab(box) {
     const cover = el("section", { class: "go-card off-busy", role: "status", "data-key": "busy" }, [
       el("span", { class: "off-busy-spin", "aria-hidden": "true" }),
-      el("div", {}, [el("div", { class: "go-kicker", text: "Working Through the Offseason" }),
+      el("div", {}, [el("div", { class: "go-kicker off-busy-kick", text: "Working Through the Offseason" }),
         el("p", { class: "muted small", text: "This takes a moment; everything waits until it is done." })])]);
     const under = [...box.children];
     for (const n of under) n.inert = true;
@@ -697,7 +697,7 @@
   // at Staff and Ready: one line that opens on click (a patch keeps whether the player opened it: view.recapOpen)
   function recapFolded(v) {
     const rec = v.portal_recap;
-    const det = el("details", { class: "go-card off-recap", "data-key": "recap", ...(view.recapOpen ? { open: "" } : {}) }, [el("summary", { class: "off-recap-sum" }, [el("span", { class: "go-kicker", text: "Transfer Portal Recap" }),
+    const det = el("details", { class: "go-card off-recap", "data-key": "recap", ...(view.recapOpen ? { open: "" } : {}) }, [el("summary", { class: "card-bar off-recap-sum" }, [el("span", { class: "go-kicker", text: "Transfer Portal Recap" }),
       el("span", { class: "muted", text: `Portal: +${rec.signed.length} / −${rec.lost.length} · details` })]), el("p", { class: "off-recap-line", text: recapLine(rec) }), recapLists(rec)]);
     ui.on(det, "toggle", (ev) => { view.recapOpen = ev.currentTarget.open; });
     return det;
@@ -738,14 +738,14 @@
       el("tbody", {}, cut("rs", rs.players, 10).map((p) => el("tr", { "data-key": p.id }, [el("td", {}, [el("b", { text: p.name })]), el("td", { class: "num", text: p.pos }), el("td", { class: "num", text: String(p.overall) }),
         el("td", { class: "num", text: `${p.games} / ${p.team_games}` }), el("td", {}, [el("span", { class: `go-tag ${p.redshirt ? "good" : "muted"}`, text: decision(p) })])])))])])
       : el("p", { class: "muted", text: "Nobody on your roster could take a redshirt this year." });
-    const improved = [el("div", { class: "go-kicker" }, ["Who Improved ", ui.tip("Every returning player grows toward his potential at his coachability's pace, faster under good developers and faster still after a big year: production and honors raise a player's ceiling and his pace.", "Who Improved")]),
+    const improved = [kicker("Who Improved ", ui.tip("Every returning player grows toward his potential at his coachability's pace, faster under good developers and faster still after a big year: production and honors raise a player's ceiling and his pace.", "Who Improved")),
       el("p", { class: "muted", text: `${r.walk_ons} walk-ons and lower-level transfers joined around the league to fill out rosters.` }),
       el("div", { class: "go-kicker muted off-sub", text: `The Top ${r.mine.length}` }), el("ul", { class: "off-list off-dev-list" }, r.mine.map(devRow))];
-    const transfers = [el("div", { class: "go-kicker", text: `Your Transfers · ${(r.transfers || []).length}` }),
+    const transfers = [kicker(`Your Transfers · ${(r.transfers || []).length}`),
       (r.transfers || []).length ? el("ul", { class: "off-list off-dev-list" }, r.transfers.map(devRow)) : el("p", { class: "muted", text: "No transfers joined your roster." }),
       rec ? recapLists(rec) : null];
     const panels = card("off-panel", "dev-panel", [
-      panel("redshirts", "", [el("div", { class: "go-kicker", text: "Redshirts" }), rsPanel, rs ? more("rs", rs.players.length - 10) : null]),
+      panel("redshirts", "", [kicker("Redshirts"), rsPanel, rs ? more("rs", rs.players.length - 10) : null]),
       panel("positions", "off-roster", positionMoves(s, v, patching)),
       panel("improved", "", improved),
       panel("transfers", "", transfers)]);
@@ -875,8 +875,8 @@
           el("td", { text: `${cap(m.why)}${m.sits_out ? " · Sitting out this cycle" : ""}` }), el("td", { text: m.previous_job && m.previous_job !== m.why ? cap(roleCase(m.previous_job)) : "—" })]));
       }
       t.append(body);
-      page.append(card("off-market", "market", [el("div", { class: "go-kicker" }, [`Coaches for Hire · The Top ${st.market.length} `,
-        ui.tip("The coaching market: fired and let-go coaches, head coaches from the FCS and lower divisions, NFL assistants and position coaches. Open a job on your staff to hire from it.", "Coaches for Hire")]),
+      page.append(card("off-market", "market", [kicker(`Coaches for Hire · The Top ${st.market.length} `,
+        ui.tip("The coaching market: fired and let-go coaches, head coaches from the FCS and lower divisions, NFL assistants and position coaches. Open a job on your staff to hire from it.", "Coaches for Hire")),
       el("div", { class: "off-scroll" }, [t])]));
     }
   }
