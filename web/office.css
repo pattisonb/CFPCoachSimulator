@@ -12,7 +12,7 @@
 .ofc-grid > :is(.ofc-news, .ofc-conf, .ofc-targets) { align-self: stretch; }
 .ofc-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 16px; align-items: start; min-width: 0; }
 .ofc-row > :only-child { grid-column: 1 / -1; }
-.ofc .go-card { --card-gap: 10px; min-width: 0; display: flex; flex-direction: column; gap: var(--card-gap); }
+.ofc .go-card { --card-gap: var(--gap-block, 12px); min-width: 0; display: flex; flex-direction: column; gap: var(--card-gap); }
 .ofc .go-loading { padding: 10px 0; }
 .ofc-big { font-size: 40px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
 .ofc-ink { color: var(--text); font-weight: 700; }
@@ -66,7 +66,7 @@
 /* This Week's Plan */
 .ofc-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; gap: 10px; }
 .ofc-steps li { display: flex; }
-.ofc-step { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px; text-align: left;
+.ofc-step { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px; text-align: left;
   border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit; cursor: pointer; }
 .ofc-step:hover { border-color: var(--muted); }
 .ofc-step.now { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
@@ -94,10 +94,10 @@
 .ofc-pulse-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .ofc .go-standing-line { font-size: 14px; font-weight: 600; color: var(--muted); margin: 0; }
 .ofc .go-standing-line:empty { display: none; }
-.ofc-kv { display: flex; flex-direction: column; gap: 6px; border-left: 1px solid var(--border); padding-left: 16px; min-width: 0; }
+.ofc-kv { display: flex; flex-direction: column; gap: 8px; border-left: 1px solid var(--border); padding-left: 16px; min-width: 0; }
 .ofc-kv .ofc-label { font-size: 11px; }
-.ofc-kv .ofc-label ~ .ofc-label { margin-top: 6px; }
-.ofc-kv-line { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
+.ofc-kv .ofc-label ~ .ofc-label { margin-top: 8px; }
+.ofc-kv-line { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
 .ofc-kv-rows span b { font-variant-numeric: tabular-nums; }
 .ofc-target-list { display: flex; flex-direction: column; gap: 8px; }
 .ofc-target { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 4px 4px 12px; border: 0; border-bottom: 1px solid var(--border); background: none; color: var(--text); text-align: left; font: inherit; cursor: pointer; width: 100%; }

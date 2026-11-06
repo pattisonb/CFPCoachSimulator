@@ -12,17 +12,17 @@
 .pr-title { overflow-wrap: anywhere; }
 .pr-count { margin: 0; font-size: 15px; }
 .pr-meters { display: grid; grid-template-columns: repeat(5, minmax(72px, auto)); gap: 4px 0; }
-.pr-meter { display: flex; flex-direction: column; gap: 2px; padding: 2px 18px; border-left: 1px solid var(--border); min-width: 0; }
+.pr-meter { display: flex; flex-direction: column; gap: 4px; padding: 2px 18px; border-left: 1px solid var(--border); min-width: 0; }
 .pr-meter:first-child { border-left: 0; padding-left: 0; }
 .pr-meter b { font-size: 22px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pr-meter span { font-size: 13px; white-space: nowrap; }
 
 /* the two columns */
 .pr-lay { display: grid; grid-template-columns: minmax(0, 1fr) 288px; gap: 16px; align-items: stretch; }
-.pr-main { --card-pad-x: 16px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }   /* the list card has no bar; its table keeps every column at 1280 */
+.pr-main { --card-pad-x: 14px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }   /* the list card has no bar; its table keeps every column at 1280 */
 .pr-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .pr-side > .pr-card:last-child { flex: 1 1 auto; }
-.pr-card { --card-gap: 12px; display: flex; flex-direction: column; gap: var(--card-gap); min-width: 0; }
+.pr-card { --card-gap: var(--gap-block, 12px); display: flex; flex-direction: column; gap: var(--card-gap); min-width: 0; }
 .pr-more { min-height: 36px; padding: 0 4px; border: 0; background: none; color: var(--go-warn-text, var(--accent)); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap; }
 .pr-more:hover { text-decoration: underline; }
 .pr-more:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
@@ -56,7 +56,7 @@
 .pr-c-who { white-space: normal; min-width: 0; }
 .pr-c-ht, .pr-c-wt { font-variant-numeric: tabular-nums; }
 .pr-c-act { text-align: right; width: 1%; }
-.pr-table .pr-who.go-list-main { display: flex; flex: none; align-items: center; gap: 8px; min-height: 44px; width: 100%; padding: 2px 4px; }
+.pr-table .pr-who.go-list-main { display: flex; flex: none; align-items: center; gap: 8px; min-height: 44px; width: 100%; padding: 2px 2px; }
 .pr-table .pr-who.go-list-main:hover { background: none; }
 .pr-who .go-list-id { min-width: 0; gap: 1px; }
 .pr-table .pr-who .go-avatar.sm { width: 32px; height: 32px; }
@@ -64,7 +64,7 @@
 /* a long name wraps rather than push the table past its card (the phone's fixed layout cuts it with an ellipsis instead) */
 .pr-table .pr-who .go-list-id b, .pr-table .pr-who .go-list-id > span { white-space: normal; overflow-wrap: anywhere; }
 .pr-who .go-badges:empty { display: none; }
-.pr-who .go-badges { display: flex; gap: 6px; margin-top: 2px; }
+.pr-who .go-badges { display: flex; gap: 8px; margin-top: 4px; }
 .pr-who .go-badges .go-badge { font-size: 10px; padding: 0 6px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .pr-c-status .go-tag { max-width: 150px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
 /* a long school or read takes two lines in a wide font rather than push Ht and Wt off the card */

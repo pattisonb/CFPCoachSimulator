@@ -4,7 +4,7 @@
 
 /* ----- the stage row: tabs with counts, the search and the sort ----- */
 .go-stagebar { display: flex; justify-content: space-between; align-items: center; gap: 10px 16px; flex-wrap: wrap; }
-.go-stages { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.go-stages { display: flex; flex-wrap: wrap; gap: var(--gap-inline, 8px); min-width: 0; }
 .go-stages button { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px; border: 1px solid var(--border);
   background: transparent; color: var(--text); font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; white-space: nowrap; }
 .go-stages button b { font-size: 12px; line-height: 18px; min-width: 18px; padding: 0 6px; text-align: center; background: var(--panel-2); color: var(--muted); }
@@ -59,7 +59,7 @@
 /* the pane's column gap already spaces the tag row: no extra margin above or below it */
 .go-pane > .go-tags { margin-block: 0; }
 .go-pane-id { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
-.go-pane-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }    /* his status chip, and "OC likes him" when a coordinator vouches for him */
+.go-pane-chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-inline, 8px); }    /* his status chip, and "OC likes him" when a coordinator vouches for him */
 .go-pane-name { font-size: 18px; line-height: 1.2; text-align: left; overflow-wrap: anywhere; }
 .go-pane .go-chip { min-height: 0; padding: 3px 10px; border: 1px solid var(--border); background: var(--panel-2); font-size: 11px; font-weight: 700;
   letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; cursor: default; margin-top: 2px; }

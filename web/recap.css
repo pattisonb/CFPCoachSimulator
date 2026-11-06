@@ -9,7 +9,7 @@
 
 .rcp, .aw { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 #tab-summary.panel.tab-body, #tab-awards.panel.tab-body { overflow-x: hidden; }
-.rcp-card { --card-gap: 10px; min-width: 0; display: flex; flex-direction: column; gap: var(--card-gap); background: var(--panel); border: 1px solid var(--border); }
+.rcp-card { --card-gap: var(--gap-block, 12px); min-width: 0; display: flex; flex-direction: column; gap: var(--card-gap); background: var(--panel); border: 1px solid var(--border); }
 .rcp-card.edge { --card-bar-bg: var(--rcp-team, var(--go-primary, var(--team-primary, var(--accent)))); --card-bar-ink: var(--rcp-team-ink, var(--go-primary-ink, var(--team-primary-ink, var(--accent-ink)))); }
 .rcp-card.edge.gold { --card-bar-bg: var(--rcp-gold); --card-bar-ink: #1b1b1b; }
 .rcp-card.edge.good { --card-bar-bg: var(--good); --card-bar-ink: #04210f; }
@@ -88,7 +88,7 @@ button.rcp-gm:hover { background: color-mix(in srgb, var(--text) 6%, transparent
 /* tables */
 .rcp-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .rcp-table th { text-align: left; color: var(--muted); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px; border-bottom: 1px solid var(--border); font-weight: 700; white-space: nowrap; }
-.rcp-table td { padding: 7px 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.rcp-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 .rcp-table tr:last-child td { border-bottom: 0; }
 .rcp-table td.n, .rcp-table th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .rcp-table td.k { color: var(--muted); white-space: nowrap; }
@@ -98,7 +98,7 @@ button.rcp-gm:hover { background: color-mix(in srgb, var(--text) 6%, transparent
 .rcp-table tr.clickable:hover td { background: color-mix(in srgb, var(--text) 6%, transparent); }
 .rcp-table .team-pill { margin-right: 8px; vertical-align: -1px; }
 .rcp-table td b { font-weight: 700; }
-.rcp-table td .pos { color: var(--muted); font-size: 11px; margin-left: 6px; }
+.rcp-table td .pos { color: var(--muted); font-size: 11px; margin-left: 8px; }
 .rcp-table-sub { color: var(--muted); font-size: 12.5px; margin-top: 1px; }
 .rcp .rivalry-table { font-size: 13px; }
 .rcp .rivalry-table td.name { min-width: 110px; }
@@ -110,7 +110,7 @@ button.rcp-gm:hover { background: color-mix(in srgb, var(--text) 6%, transparent
 .rcp-snap b { display: block; font-size: 30px; font-weight: 900; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .rcp-snap span { color: var(--muted); font-size: 12.5px; }
 .rcp-kv { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.rcp-kv > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rcp-kv > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .rcp-kv b { font-size: 18px; font-weight: 800; }
 .rcp-kv .rcp-kv-note { color: var(--muted); font-size: 13px; font-weight: 400; }
 .rcp-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
@@ -165,7 +165,7 @@ button.rcp-hl-row:hover { background: color-mix(in srgb, var(--text) 6%, transpa
 .aw-col { display: grid; gap: 16px; align-content: start; min-width: 0; }
 .aw-grp { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; min-height: 36px; }
 .aw-grp > .go-kicker { color: var(--muted); }
-.aw-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.aw-filters { display: flex; flex-wrap: wrap; gap: 8px; }
 .aw-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; align-items: stretch; }
 .aw-cards > :only-child { grid-column: 1 / -1; }
 .aw-card { --card-gap: 8px; --card-bar-bg: var(--rcp-gold); --card-bar-ink: #1b1b1b; background: var(--panel); border: 1px solid var(--border); min-width: 0; display: flex; flex-direction: column; gap: var(--card-gap); }

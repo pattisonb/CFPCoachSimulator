@@ -6,7 +6,7 @@
    1000 px and one below; a phone stacks everything and keeps the 44 px chips (styles.css tap targets). */
 .lg { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 #tab-standings.panel.tab-body, #tab-stats.panel.tab-body, #tab-programs.panel.tab-body { overflow-x: hidden; }
-.lg .lg-card { --card-gap: 10px; gap: var(--card-gap); }
+.lg .lg-card { --card-gap: var(--gap-block, 12px); gap: var(--card-gap); }
 .lg .lg-card > p.small-text, .lg .lg-card > p.muted { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.4; }
 
 /* a card head: the kicker and the title on the left, the controls (chips, a tag) on the right */
@@ -41,7 +41,7 @@
 .lg .roster-head { margin: 0; }
 
 /* Programs: your program's card and Every Program as Recap cards */
-.lg .go-program { --card-gap: 10px; gap: var(--card-gap); }
+.lg .go-program { --card-gap: var(--gap-block, 12px); gap: var(--card-gap); }
 .lg .go-programs-card { margin-top: 0; }
 .lg .go-program-head { gap: 8px 12px; }
 .lg .go-program-head { flex-wrap: nowrap; }

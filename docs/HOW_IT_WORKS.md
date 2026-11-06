@@ -2527,6 +2527,15 @@ look. `tests/test_office_redesign.py`, `tests/test_recap_awards.py`, `tests/test
 `tests/test_offseason_redesign.py` check the bars, the alignment, the padding and the 36 px (44 on a phone) controls
 in a bar.
 
+**Spacing** (`styles.css` "the spacing pass"): four tokens applied by rules, not one-offs. `--gap-inline` (8 px) sits
+between inline siblings: every row of chips, tags, pills, badges or buttons, and an inline tag after a word (the YOU
+tag, a rank badge, a position after a name) keeps it as a left margin. `--gap-label` (10 px) sits between a label and
+its value on one line; a value under its label sits 4 px below it (every stat tile, the pane's snapshot, the recap's
+numbers). `--gap-block` (12 px) is the gap between a card's stacked blocks (the bar keeps its 16 px to the body). List
+and table rows keep `--row-pad` (6 px) above and below (the Prospects table keeps 4 px sides so its ten columns fit at
+1280). Nothing inside a bar sits closer than `--bar-inset` (12 px) to the bar's edge; a bar's title and its ⓘ or
+control are 10 px apart. `tests/test_spacing.py` is the gate.
+
 ### The browser tab (`web/season.js`, `tabIdle`, `tabSim`, `tabDone`)
 
 An open career names the tab after the dynasty ("Ohio State Dynasty"). While a sim runs the title
