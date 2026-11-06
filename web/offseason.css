@@ -166,7 +166,7 @@
 .off-filters { margin-top: 4px; }
 
 /* ---------- Development ---------- */
-.off-dev-stats { justify-content: center; }
+.off-dev-stats .off-strip3 { margin-block: auto; }   /* the strip sits centered under its bar (the bar stays flush with the top) */
 .off-plusminus { display: flex; gap: 36px; }
 .off-plusminus > div { display: flex; flex-direction: column; }
 .off-plus, .off-minus { font-size: 30px; font-weight: 900; line-height: 1.1; }
