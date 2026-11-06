@@ -2479,8 +2479,8 @@ The This week card simulates your next game 20 times. Those sims run in parallel
 worker pool when there is one (about 1 second instead of 4 on a desktop) and are
 cached for the week; a second request for the same game waits for the first instead of simulating
 it again. The Awards tab opens on an **Overview** (`renderAwards`): the Heisman hero with four finalists, the
-national award cards (Offense, Defense, Special Teams and Player of the Year chips patch the grid in place with
-`reconcile`), the coach awards, your team's honors with a podium (honors, awards won, players and coaches), the
+national award cards (what each award is for waits behind the ⓘ beside its name in the card's bar; Offense,
+Defense, Special Teams and Player of the Year chips patch the grid in place with `reconcile`), the coach awards, your team's honors with a podium (honors, awards won, players and coaches), the
 consensus All-America team by unit and your conference's awards; the older views (My Team, Heisman, National,
 Coaches, All-America, Conference) stay as chips and in the `aview` route key. During the season the same layout is
 the live race ("Leader" instead of "Winner"). The live race is cached until more games are played (or god mode

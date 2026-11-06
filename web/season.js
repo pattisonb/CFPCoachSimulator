@@ -2196,7 +2196,7 @@
     const list = live ? (a.race || a.finalists || []) : (a.finalists || []);
     const w = list[0];
     const card = el("div", { class: `aw-card ${w && w.team === s.team ? "mine" : ""}`, "data-key": a.name }, [
-      el("div", { class: "card-bar aw-card-head" }, [awKicker(a.name), a.honors ? el("small", { text: awSentence(a.honors) }) : null])]);
+      el("div", { class: "card-bar aw-card-head" }, [awKicker(a.name), a.honors ? window.CFP.ui.tip(awSentence(a.honors), a.name) : null])]);   // what it is for waits behind ⓘ
     if (!w) { card.append(el("div", { class: "aw-empty", text: "No eligible players yet." })); return card; }
     card.append(el("div", { class: "aw-win" }, [awPill(w.team, "big"), el("span", {}, [awName(w), el("small", { text: awWhoLine(w, mode) })]),
       el("span", { class: "go-tag gold", text: live ? "Leader" : "Winner" })]));
