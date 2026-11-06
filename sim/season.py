@@ -2334,18 +2334,44 @@ def save_season(state: dict) -> Path:
     SEASONS_DIR.mkdir(parents=True, exist_ok=True)
     path = SEASONS_DIR / f"{state['id']}.json"
     path.write_text(json.dumps(state), encoding="utf-8")
+    _note_current(path)
     return path
+
+
+# season file -> (its mtime_ns, size) when it was last known to hold today's FCS names: written here from
+# a loaded (so renamed) season, or scanned by load_season. A file seen unchanged since is not scanned again,
+# so switching between saved seasons does not re-run the rename's regex over megabytes of save each time.
+_names_current: dict[Path, tuple[int, int]] = {}
+
+
+def _file_key(path: Path) -> Optional[tuple[int, int]]:
+    try:
+        st = path.stat()
+    except OSError:
+        return None
+    return st.st_mtime_ns, st.st_size
+
+
+def _note_current(path: Path) -> None:
+    key = _file_key(path)
+    if key is not None:
+        _names_current[path] = key
 
 
 def load_season(season_id: str) -> Optional[dict]:
     path = SEASONS_DIR / f"{season_id}.json"
     if not path.exists():
         return None
-    text = path.read_text(encoding="utf-8")
-    renamed = fcs_names.rewrite_text(text)
-    if renamed is not text:               # saved before the FCS stand-ins were named for their regions
-        path.write_text(renamed, encoding="utf-8")
-        _rename_stand_ins_files(season_id)
+    seen = _names_current.get(path)
+    if seen is not None and seen == _file_key(path):
+        renamed = path.read_text(encoding="utf-8")
+    else:
+        text = path.read_text(encoding="utf-8")
+        renamed = fcs_names.rewrite_text(text)
+        if renamed is not text:               # saved before the FCS stand-ins were named for their regions
+            path.write_text(renamed, encoding="utf-8")
+            _rename_stand_ins_files(season_id)
+        _note_current(path)
     state = json.loads(renamed)
     # seasons saved before the FCS stand-ins were anonymised still carry "Duquesne (as ...)"
     for g in state["games"].values():

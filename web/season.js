@@ -93,7 +93,7 @@
     for (const s of data.seasons) {
       const del = el("button", { class: "del", type: "button", title: "Delete this season", "aria-label": "Delete this season", text: "×" });
       del.addEventListener("click", (e) => { e.stopPropagation(); deleteSeason(s); });
-      const li = el("li", { "data-id": s.id, onclick: () => openSeason(s.id) }, [
+      const li = el("li", { "data-id": s.id, onclick: () => pickSeason(s.id) }, [
         el("span", { class: "teams", text: `${s.team_name} · ${s.career ? `Coach Career · ${s.year}` : "full"}` }),
         el("span", { class: "score", text: `${s.wins}-${s.losses}` }),
         el("span", { class: "when", text: `${s.offseason ? "Offseason" : s.done ? `Done · champion ${s.champion_name}` : `Through week ${s.current_week}`} · ${when(s.created_at)}` }),
@@ -193,7 +193,7 @@
     for (const x of list) {
       const status = x.offseason ? "Offseason" : x.done ? `Done · champion ${x.champion_name}` : `Through week ${x.current_week}`;
       items.push({ name: `${x.team_name} · ${x.career ? `Coach Career · ${x.year}` : "full"}`, cost: `${x.wins}-${x.losses}`, why: `${status} · ${when(x.created_at)}`,
-                   current: !!(state.season && state.season.id === x.id), onPick: () => { if (held()) return; if (!state.season || state.season.id !== x.id) openSeason(x.id); } });
+                   current: !!(state.season && state.season.id === x.id), onPick: () => pickSeason(x.id) });
     }
     items.push({ heading: "" });
     items.push({ name: "New Season", why: "Pick a team and who coaches it", onPick: newSeasonFlow, disabled: !!state.simming });
@@ -362,19 +362,47 @@
     finally { $("#btn-new").disabled = false; }
   }
 
+  // A saved season picked from the Seasons menu or the side list. While a sim runs the season in play
+  // cannot be swapped out (the server would hold the request until the week is done, then switch under
+  // the sim): say so instead. The open itself can take seconds (a big save, a later season's league
+  // built again after a reload), so a toast and the menu button's busy state show it is under way.
+  const SIM_HOLD_TEXT = "Wait for the sim to finish, then switch seasons.";
+  let picking = null;             // the season id a pick is opening
+  function pickSeason(id) {
+    if (held()) return;
+    if (state.simming) { toast(SIM_HOLD_TEXT, 3000); return; }
+    if (picking === id || (!picking && state.season && state.season.id === id)) return;
+    const card = (state.seasons || []).find((x) => x.id === id);
+    picking = id;
+    toast(`Opening ${card ? card.team_name : "the season"}…`);
+    const note = stickyToast;
+    const run = openSeason(id).finally(() => {
+      if (picking === id) picking = null;
+      if (note && stickyToast === note) hideToast();
+    });
+    const btn = $("#btn-seasons-menu");
+    if (btn && !btn.hidden) window.CFP.ui.busy(btn, run);
+    return run;
+  }
+
   // want: a route to land on (a refresh, a link, Back to another save): its tab, view, depth chart and
-  // modals; without one the save opens where a fresh open does and the address is just its id
+  // modals; without one the save opens where a fresh open does and the address is just its id.
+  // Opens are numbered: one overtaken by a later pick does not draw.
+  let openSeq = 0;
   async function openSeason(id, want) {
+    const n = ++openSeq;
     newsReset();
     news.since = null;
     try {
       const s = await api(`/api/season/${id}`);
+      if (n !== openSeq) return;
       if (!want) history.replaceState(null, "", `?id=${encodeURIComponent(s.id)}`);
       state.pendingRoute = want || null;
       try { showSeason(s); } finally { state.pendingRoute = null; }
       loadSeasons();
       if (want) await landOn(want);
     } catch (err) {
+      if (n !== openSeq) return;
       toast(`Could not open the season: ${errText(err)}`, 4000);
       if (!state.season) startNote(`Could not load the season: ${errText(err)}`);
     }

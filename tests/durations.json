@@ -99,6 +99,7 @@
 "test_scouting.py": 6,
 "test_scouting_desk.py": 8,
 "test_scouting_layout.py": 10,
+"test_season_switch.py": 30,
 "test_sim_golden.py": 7,
 "test_sim_progress.py": 33,
 "test_site_bundle.py": 22,
