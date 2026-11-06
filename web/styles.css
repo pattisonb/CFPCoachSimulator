@@ -1550,3 +1550,35 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
   .modal.modal-nested { padding-top: 28px; }
   .modal.modal-nested .modal-panel, .modal.modal-nested .modal-panel:has(> .modal-body .pv-popup, > .modal-body [role=tablist], > .modal-body .tabs) { height: calc(100dvh - 28px); max-height: calc(100dvh - 28px); }
 }
+
+/* ----- card bars: a card's header is a bar in the team's color, flush with the card's top (the player's ask: every
+   container with a header gets the Season Recap mockup's bar instead of a line of color along the top). A card's
+   padding and radius are variables so the bar can bleed to the edges whatever the breakpoint. ----- */
+.go-card { --card-pad-y: 20px; --card-pad-x: 20px; --card-radius: 16px; }
+.rcp-card { --card-pad-y: 16px; --card-pad-x: 16px; --card-radius: 12px; }
+#tab-offseason .go-card { --card-pad-y: 20px; --card-pad-x: 22px; --card-radius: 14px; }
+@media (max-width: 720px) { .go-card { --card-pad-y: 14px; --card-pad-x: 14px; --card-radius: 14px; } #tab-offseason .go-card { --card-pad-y: 16px; --card-pad-x: 16px; } }
+.go-card > .go-kicker:first-child:not(.muted), .go-card > .go-card-head:first-child, .go-card > .go-game-head:first-child,
+.rcp-card > .go-kicker:first-child, .go-card > .lg-head:first-child, .go-card > .sc-panel-head:first-child, .go-card > .sc-ops-head:first-child,
+.go-card > .pv-card-head:first-child, .go-card > .pr-card-head:first-child, .go-card > .go-map-head:first-child, .go-card > .off-head:first-child,
+.go-card > .go-pane-head:first-child, .go-card > .go-program-head:first-child {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; min-height: 42px; box-sizing: border-box;
+  margin: calc(-1 * var(--card-pad-y)) calc(-1 * var(--card-pad-x)) 14px; padding: 8px var(--card-pad-x);
+  background: var(--card-bar, var(--go-primary, var(--accent))); color: var(--card-bar-ink, var(--go-primary-ink, var(--accent-ink)));
+  border-radius: calc(var(--card-radius) - 1px) calc(var(--card-radius) - 1px) 0 0;
+  font-size: 12px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase;
+}
+.go-card > .go-kicker:first-child:not(.muted) { display: block; }
+.go-card > :first-child .go-kicker, .rcp-card > .go-kicker:first-child, .go-card > :first-child .go-kicker.muted, .go-card > :first-child .lg-head-title .go-kicker { color: inherit; }
+.go-card > :first-child .go-kicker.muted { opacity: 0.85; }
+.go-card > :first-child .go-link, .go-card > :first-child button.go-link { color: inherit; text-decoration-color: currentColor; }
+.go-card > :first-child .go-tag { background: color-mix(in srgb, currentColor 16%, transparent); border-color: color-mix(in srgb, currentColor 45%, transparent); color: inherit; }
+.go-card > :first-child .go-tip, .go-card > :first-child .tip { color: inherit; border-color: currentColor; opacity: 0.9; }
+.go-card > :first-child .go-btn.ghost, .go-card > :first-child button.ghost { color: inherit; border-color: color-mix(in srgb, currentColor 45%, transparent); }
+.go-card > :first-child .rcp-h1, .go-card > :first-child h2, .go-card > :first-child h3 { color: inherit; }
+/* the recap's edge cards: the edge line goes, the team's color is the bar */
+.rcp-card.edge { border-top: 1px solid var(--border); --card-bar: var(--rcp-team, var(--go-primary, var(--accent))); }
+.rcp-card.edge.gold { --card-bar: var(--rcp-gold); --card-bar-ink: #1b1b1b; border-top-color: var(--border); }
+.rcp-card.edge.good { --card-bar: var(--good); border-top-color: var(--border); }
+.rcp-card.edge.bad { --card-bar: var(--bad); border-top-color: var(--border); }
+.ofc .go-card > .go-kicker:first-child:not(.muted), .ofc .go-card > .go-card-head:first-child .go-kicker, .ofc .go-card > .go-game-head:first-child .go-kicker { color: inherit; }
