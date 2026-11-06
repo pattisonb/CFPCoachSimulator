@@ -2495,7 +2495,8 @@ gone. A card that is only its bar (Standings' head card, a folded Transfer Porta
 with it. Cards share one padding (`--card-pad`: 20 px, 14 on a phone; nested cards such as the pane's, a scene or his
 question 14) that the bar reads to bleed to the edges, and a card laid out with a flex gap says so in `--card-gap` so
 the bar keeps 16 px to the body; rows of cards are CSS grids with explicit rows that line up across columns (the Office,
-the offseason's rows), each card as tall as its content, the list cards filling their row. Corners are square
+the offseason's rows), each card as tall as its content, the list cards filling their row (the offseason's pairs share a
+height, so an answer that shortens one card never pulls the page out from under the player). Corners are square
 everywhere in the career UI: no card, bar, button, pill, tag, chip, input, select, table, modal, menu or panel has a
 radius (`--radius: 0`, every page stylesheet lost its `border-radius` lines); circles (avatars, the step marks, the
 star dots) stay circles, and the big team tiles keep 4 px. The depth chart screen keeps its own square, ink-headed

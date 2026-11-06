@@ -4,6 +4,9 @@
    stretch them to one height; one gap (--off-gap) across and down; at 760 px and under every row stacks.
    Button and tag rows take their gap from the spacing pass at the end of styles.css. */
 #tab-offseason { --off-gap: 16px; }
+/* the tab is always at least a screen tall, so an answer that shortens a card (the AD's review) never shortens the page
+   under the player and pulls the scroll with it (tests/test_smoothness.py) */
+#tab-offseason:not([hidden]) { min-height: 100vh; }
 .off-page { display: flex; flex-direction: column; gap: var(--off-gap); min-width: 0; }
 .off-page > :not(.card-bar) { min-width: 0; margin: 0; }
 
@@ -26,7 +29,7 @@
 .off-step.now .off-step-mark { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 
 /* ---------- rows of cards ---------- */
-.off-row { display: grid; gap: var(--off-gap); align-items: start; min-width: 0; }   /* a card is as tall as its content, never padded out to its neighbor */
+.off-row { display: grid; gap: var(--off-gap); align-items: stretch; min-width: 0; }   /* the pair share a height: an answer that shortens one card never shortens the page under the player (tests/test_smoothness.py) */
 .off-g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .off-g21 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
 .off-row > .off-span { grid-column: 1 / -1; }

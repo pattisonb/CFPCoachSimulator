@@ -552,7 +552,7 @@
     const r = v.retention;
     const retain = (ev, pid, action, said, nil) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/retain`, staged({ pid, action, nil: nil || 0 })), said,
       { fail: (err) => H.toast(`Could not do that: ${H.errText(err)}`, 4000) });
-    const strip = card("off-keep-strip", "keep-head", [el("div", { class: "off-strip3" }, [stat("Players Want Out", String(r.players.length)),
+    const strip = card("off-keep-strip", "keep-head", [kicker("Keep Them Home"), el("div", { class: "off-strip3" }, [stat("Players Want Out", String(r.players.length)),
       stat("Next Year's NIL", `${r.left} / ${r.budget}`), stat("NIL Committed", String(r.spent))]),
       el("p", { class: "muted small off-rules" }, [`${r.players.length} of your players with eligibility left mean to leave: transfers and early draft entrants. Meet each one to hear what it would take. `,
         "A promised starting role only counts if your depth chart would really start him; NIL comes out of next year's budget, so it is money you will not have for recruits or the portal. ",
@@ -715,7 +715,7 @@
     const r = v.report || { mine: [], transfers: [], walk_ons: 0 };
     const rs = v.redshirts;
     const picked = rs ? rs.players.filter((p) => p.redshirt).length : 0;
-    const stats = card("off-dev-stats", "dev-stats", [el("div", { class: "off-strip3" }, [stat("Roster Size", `${v.roster} / ${v.roster_limit || 85}`),
+    const stats = card("off-dev-stats", "dev-stats", [kicker("Your Roster"), el("div", { class: "off-strip3" }, [stat("Roster Size", `${v.roster} / ${v.roster_limit || 85}`),
       stat("Redshirts", rs ? `${picked} / ${rs.players.length}` : "0"), stat("Position Changes", String((v.position_changes || []).length))])]);
     const rec = v.portal_recap;
     const recap = rec ? card("off-recap", "recap", [kicker("Transfer Portal Recap"), el("div", { class: "off-plusminus" }, [
