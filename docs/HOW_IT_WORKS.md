@@ -1222,9 +1222,9 @@ your place). On the right: **Program Pulse** (record, the conference standing li
 SEC · 3-0 SEC", the Standings tab's place, the last game, the AD's goal and mood), **Recruiting
 Pulse** (commitments of spots, Recruiting Hours, NIL Points, Scouting Points, Spots Filled, class
 rank) and **Top Targets** (your hottest targets with their standing word; Board → opens
-Recruiting). The tab bar is two rows: the
+Recruiting). The tab bar is one row of the
 screens you act on (Office, Offseason once the season is over, Recruiting, Prospects, Scouting,
-Schedule, Depth Chart) and a League row that follows the calendar (Standings, Rankings, Stats
+Schedule, Depth Chart) with a **League ▾** menu at its right end that follows the calendar (Standings, Rankings, Stats
 and, in a career, **Programs** all year; Awards from week 4; Classes from selection week; Bracket and Bowls as soon as Championship Week is played (the field is set then, so the Office can name your bowl or playoff game); Season Recap
 all year, and the title game lands the player on it). A plain season keeps every League tab. The Depth Chart button opens its own
 screen (`web/depth/depth.js`, `index.html?id=…&screen=depth`, Back returns to the season): the
@@ -1852,21 +1852,36 @@ runs. The week strip keeps its own panel on the screens that show a picked week 
 Rankings, Bracket); the career screens and the screens that show the season as it stands (Standings,
 Stats, Awards, Season Recap, Bowls) leave it out, and a one-week sim's bar still shows there.
 
-**The tab row never scrolls: More ▾** (`season.js` `layoutTabs`, `openTabMore`). The tabs show left to
-right until the row is full; the ones that do not fit go behind a **More ▾** button at the row's end (it
+**The League menu: League ▾** (`season.js` `openTabLeague`, `labelLeague`). The career tabs (Office or
+Offseason, Recruiting, Prospects, Scouting, Schedule, Depth Chart) are the row; the league tabs (Standings, Rankings,
+Stats, Programs, Classes, Bracket, Bowls, Awards, Season Recap, `button.league`) are never in it. One **League ▾**
+button at the row's right end (`#tab-league`, `aria-haspopup="menu"`, `aria-expanded`) opens them as the same
+`.go-menu` dropdown as ☰ Menu (a bottom sheet on a phone), listing the league tabs the calendar currently shows
+(`tabsForTheCalendar`) in the bar's order, the open one marked `aria-current`. While a league tab is open the
+button reads **League: Standings ▾**, carries `.active` and `aria-label="League: Standings"`, so the open tab is always
+visible in the bar. The league tabs' `button[data-tab]` elements stay in the DOM, hidden (`.tab-in-menu`,
+`display: none`), so `selectTab`, deep links (`?tab=standings`), `tabsForTheCalendar` and the `.active` bookkeeping
+work unchanged; picking an item runs the same `tabPick` as a click. Escape and an outside click close the menu
+and the focus returns to the button, as every `.go-menu` does. The League button always keeps its slot: `layoutTabs`
+counts its width before the career tabs, so it never overflows and is never clipped.
+
+**The tab row never scrolls: More ▾** (`season.js` `layoutTabs`, `openTabMore`). The career tabs show left to
+right until the row is full; the ones that do not fit go behind a **More ▾** button after them (it
 exists only while something overflows, `aria-haspopup="menu"`, and opens the same dropdown as ☰ Menu through
 `openMenu`). The open tab always keeps a slot: when it would overflow it takes the last visible slot and the tab
-it displaces goes into More (a guard labels the button "More: Awards ▾" if the open tab were ever behind it).
+it displaces goes into More (a guard labels the button "More: Scouting ▾" if the open tab were ever behind it).
 Picking a tab from More runs the same `tabPick` as clicking it, so the address and the depth chart behave
 alike. The tab buttons stay in the DOM; an overflowed one only carries `.tab-ovf` (`display: none`), and
 the row is `overflow: hidden`, so it cannot scroll at any width. **No flash:** the measuring is synchronous.
-`layoutTabs` takes `.tab-ovf` off, reads the widths, puts the final classes on, all in one task before the
-browser paints, so no intermediate row is ever drawn and nothing fades or pulses. It runs from a
-`ResizeObserver` on the row (window, chip text), a `MutationObserver` on the tabs' `hidden` attributes (career
-mode, the offseason, Bracket/Bowls/Awards/Summary appearing) and from `selectTab` (the active tab). On a phone
-the row drops to its own line under ☰ Menu and the chip when they leave it less than 14rem. Tests that click a
-tab use `tab_click` (`tests/test_career_e2e.py`), which goes through More when the tab is overflowed.
-`tests/test_tab_overflow.py` checks it at 1280, 1024, 768 and 400.
+`layoutTabs` takes `.tab-ovf` off, reads the widths (League ▾ and, if needed, More ▾ included), puts the final
+classes on, all in one task before the browser paints, so no intermediate row is ever drawn and nothing fades or
+pulses. It runs from a `ResizeObserver` on the row (window, chip text), a `MutationObserver` on the tabs' `hidden`
+attributes (career mode, the offseason, Bracket/Bowls/Awards/Summary appearing), from `selectTab` (the active tab)
+and when a font finishes loading (`document.fonts` `loadingdone`: the tab font lands after the tabs show, and the
+widths it changes do not resize the row). On a phone the row drops to its own line under ☰ Menu and the chip when
+they leave it less than 14rem. Tests that click a tab use `tab_click` (`tests/test_career_e2e.py`), which goes
+through League ▾ for a league tab and through More ▾ when a career tab is overflowed. `tests/test_tab_overflow.py`
+checks both at 1280, 1024, 768 and 400.
 
 **The top bar is hidden while a season is open.** **☰ Menu** at the right end of the tab bar (first
 on a phone, before the chip) is a dropdown: ⚙ Settings (waits while a sim runs), Download Career (a
