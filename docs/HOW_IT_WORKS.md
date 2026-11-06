@@ -1259,7 +1259,21 @@ he asks about a named player on that call (the starter ahead of him, or another 
 offered), the scene shows his line with three answers (straight, a promise, a sidestep; each button a Title Case
 label, Tell Him Straight, Make Him a Promise or Sidestep It, over the line you say) and
 locks the pitch until you pick one; his reply comes back in place (no toast) and History keeps
-the answer (`Told him straight about …`, `Promised him the job over …`). The pane, the Prospect Profile popup and the
+the answer (`Told him straight about …`, `Promised him the job over …`). A Package Deal asks about his
+mate instead whenever his or his family's package line is said (a first call, a call once you know
+his story, every in-home visit; `scenes.package_about`, the mate a prospect in the class not yet
+signed): the question's three answers ride on it (`answers`, by whether you have offered the mate).
+Not offered: **Tell Him Straight** ("I can't promise Khalil a spot today. I'll look at him.", nothing
+either way), **Promise Him an Offer** ("Khalil gets an offer this week. You have my word.": a
+`package` promise on his contact, kept the week step the mate holds your offer within
+`PACKAGE_PROMISE_WEEKS` (2) of it for `PACKAGE_KEPT` (2) points and a `promise_kept` line, "Khalil got
+his offer. You kept your word, Coach.", broken after that without it: he cools `COOL_WEEKS`, or a
+commit's firmness drops `PROMISE_RIVAL`, with a `promise_broken` event), **Sidestep It**. Already
+offered: the family's or his line says so instead of demanding it ("You offered Khalil too. That means
+a lot in this house.", `persona.STORY_LINES_OFFERED`), and **Already Offered Him** ("I offered Khalil
+already. Two spots, both yours.") earns `ANSWER_STRAIGHT` plus `PACKAGE_OFFERED` (1). History words
+them `Promised an offer to Khalil Telfair`, `Told him Khalil Telfair already has an offer`, and a
+broken one `Khalil Telfair never got the offer you promised`. The pane, the Prospect Profile popup and the
 Scouting Center draw a recruit with one set of pieces (`web/profileview.js`, `web/profile.css`): a hero (his status chip,
 avatar, name, stars, Pos | Height | Weight with the position as the game shows it, `display_pos`: an EDGE who plays DT
 reads DT everywhere; Hometown · #rank; Nat. Rank, Pos. Rank, Class; a Your Chance badge in the ladder's words with a
@@ -1499,8 +1513,11 @@ a losing year; a Group of 5 player with a card overall of 50 or more (a Power 4 
 segments, each with its driver, and one draw against the sum: the segment it lands in is why he
 goes, stored on the entrant (`driver`) and on your leaver's Keep Them Home card, so the reason is
 the real cause, not a guess after the fact. The first segment is the role chance above (his
-class and role, a losing year, a Group of 5 standout moving up, a broken promise, a keep last
-year). The second is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
+class and role, a losing year, a Group of 5 standout moving up, a keep last year). A player
+promised a starting role (`promised`, from Keep Them Home or carried by a signed recruit or portal
+signee you told the job was his) who did not start adds a `promised` segment worth the rest of
+`PROMISE_BROKEN` (3) times the role chance; when the draw lands there his Keep Them Home card and
+the portal recap read "Was promised a starting role and did not get it". The next is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
 the recruit ask of the star tier his overall reads as, 60 for a five-star-equivalent, 30 a
 four, 8 a three, times his position), and his program's tier pays a starter `NIL_TIER_PAY` (60
 at tier 1, 40, 20, 8, 2 at tier 5); when his market is over that, his chance adds `NIL_PULL`
@@ -1534,7 +1551,9 @@ his ask, about 70% for a real starting role, 92% at most; a draft entrant projec
 round stays at most 8%, one rated 95 or better after a decent season 2% whatever you offer (his
 card says so), a day-three projection about 20% plus what the NIL buys). A player you
 keep carries `kept` (his portal chance the next year is 0.7 times) and a promise `promised` (3
-times if the snaps do not come). The leavers join the portal class or the draft as they would
+times if the snaps do not come; a recruit or portal entrant you promised the job on a call or
+visit carries the same `promised` onto your roster when he signs, `_sign_classes` and
+`_close_portal`, judged by the role he really played that season). The leavers join the portal class or the draft as they would
 have, and then the draft runs; Departures lists who stayed ("Stayed: You Kept Him Home") beside
 who left, and the week 1 portal screen lists the answers. A save from the older order (Departures
 first, the draft already run) is migrated when it loads (`migrate`): at Departures it goes back to

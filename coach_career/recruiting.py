@@ -111,6 +111,9 @@ ANSWER_HOLLOW = 2.0                        # ... and what a hollow one costs (he
 PROMISE_MARGIN = 5                         # a roster promise holds when he is within this of the player ahead, or that player is in his last year *tune: tools/check_recruiting.py*
 LAST_YEAR = {"JR", "JRRS"}                 # this season's class of a player in his last year next season (the portal's rosters already read next season: LEAVING)
 PROMISE_RIVAL = 20                         # firmness lost when the other recruit you promised him over commits to you too
+PACKAGE_OFFERED = 1.0                      # a Package Deal's question (scenes.question "package") when his mate already holds your offer: on top of ANSWER_STRAIGHT *tune*
+PACKAGE_PROMISE_WEEKS = 2                  # you promised his mate an offer: kept when the mate holds it within this many weeks, broken after *tune*
+PACKAGE_KEPT = 2.0                         # what a kept Package Deal promise earns at the week step it is kept *tune*
 ASK_MORE = (1.5, 1.25)                     # a rival's NIL this much over yours, with you in his top group: his ask from you rises this much
 TOP_GROUP = 8                              # the schools he is seriously considering: his top this many by interest
 # pestering: contacts past his patience from a school he is not considering cost it *tune*
@@ -1380,7 +1383,11 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
     ANSWER_STRAIGHT and tells you he cares about playing time; a promise earns ANSWER_PROMISE when
     he can believe it (`promise_holds`) and
     otherwise costs ANSWER_HOLLOW and cools him a week; a deflection does nothing. The points go on
-    the scene's action; the answer and his reply are kept on the scene, a promise on his contact."""
+    the scene's action; the answer and his reply are kept on the scene, a promise on his contact.
+    A Package Deal's question ("package", about his mate): straight earns ANSWER_STRAIGHT plus
+    PACKAGE_OFFERED when his mate already holds your offer and nothing otherwise (you will look at
+    him); a promise earns nothing now and waits on the offer (`_promises`: kept within
+    PACKAGE_PROMISE_WEEKS for PACKAGE_KEPT, broken after)."""
     from coach_career import scenes
     rc = state["recruiting"]
     p = rc["prospects"].get(pid)
@@ -1401,7 +1408,15 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
     contact = _contact(state, slug, pid)
     week = state["current_week"]
     points, truthful, revealed = 0.0, None, []
-    if answer == "straight":
+    package = q.get("kind") == "package"
+    if package:
+        offered = q["about"]["pid"] in rc["offers"].get(slug, [])
+        q["about"]["offered"] = offered                                 # as it stands when you answer
+        if answer == "straight" and offered:
+            points = ANSWER_STRAIGHT + PACKAGE_OFFERED
+        elif answer == "promise":
+            contact.setdefault("promises", []).append({"kind": "package", "about": dict(q["about"]), "week": week, "broken": None, "kept": None})
+    elif answer == "straight":
         points = ANSWER_STRAIGHT
         seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
         if "playing_time" not in seen:
@@ -1419,7 +1434,8 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
         contact.setdefault("promises", []).append({"kind": q["kind"], "about": q["about"], "week": week, "broken": None})
     q["answer"] = answer
     q["reply"] = scenes.answer_reply(state, slug, pid, q, answer, truthful)
-    _event(state, "answer", pid, slug, action=sc["action"], answer=answer, about=q["about"]["name"], truthful=truthful)
+    _event(state, "answer", pid, slug, action=sc["action"], answer=answer, about=q["about"]["name"], truthful=truthful,
+           **({"question": "package", "offered": bool(q["about"].get("offered"))} if package else {}))
     if points:
         _add_points(state, slug, pid, points, sc["action"])
     return {"scene": sc, "points": points, "truthful": truthful, "revealed": revealed, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
@@ -1599,7 +1615,7 @@ def _report(state: dict, week: int) -> dict:
 
 
 REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "pester", "promise_broken",
-                "bloomed", "pro", "twist", "hat", "softened")
+                "promise_kept", "bloomed", "pro", "twist", "hat", "softened")
 CONTACT_KINDS = ("contact", "pitch", "raise_nil", "pull_offer", "answer", "present")   # your actions, logged for his History (not news)
 HISTORY_ONLY = CONTACT_KINDS + ("learned",)   # his History's alone: never the week's news (what your staff learned is his, not news)
 
@@ -2216,19 +2232,35 @@ def _promises(state: dict, week: int) -> None:
     """Promises follow him (spec section 4): a recruit told he was the one over another recruit
     (a "recruit" promise) remembers when that recruit commits to the school too, once: committed
     to the school, his firmness drops PROMISE_RIVAL (a hard commit is immune); otherwise he cools on
-    it for COOL_WEEKS. The promise is marked broken and a promise_broken event logged either way."""
+    it for COOL_WEEKS. The promise is marked broken and a promise_broken event logged either way.
+    A Package Deal's mate promised an offer (a "package" promise) is kept the week step the mate
+    holds the school's offer, within PACKAGE_PROMISE_WEEKS of the promise (PACKAGE_KEPT points land
+    on his list, a promise_kept event with his line), and broken the same way as above once that
+    many weeks pass without it."""
+    from coach_career import scenes
     rc = state["recruiting"]
     for pid, by in rc["contacts"].items():
         for slug, c in by.items():
             for pr in c.get("promises") or ():
-                if pr["kind"] != "recruit" or pr.get("broken") is not None:
-                    continue
-                other = rc["status"].get(pr["about"].get("pid"))
-                if not other or slug not in (other["committed"], other["signed"]):
+                if pr["kind"] not in ("recruit", "package") or pr.get("broken") is not None or pr.get("kept") is not None:
                     continue
                 st_ = rc["status"][pid]
                 if st_["signed"]:
                     continue
+                mate = pr["about"].get("pid")
+                if pr["kind"] == "package":
+                    if mate in rc["offers"].get(slug, []):
+                        pr["kept"] = week
+                        rc["lists"][pid][slug] = rc["lists"][pid].get(slug, 0.0) + persona.climbs(state, slug, pid, PACKAGE_KEPT)
+                        _event(state, "promise_kept", pid, slug, about=pr["about"]["name"], other=mate,
+                               line=scenes.PROMISE_KEPT_LINE.format(mate=pr["about"]["name"]))
+                        continue
+                    if week - pr["week"] < PACKAGE_PROMISE_WEEKS:
+                        continue
+                else:
+                    other = rc["status"].get(mate)
+                    if not other or slug not in (other["committed"], other["signed"]):
+                        continue
                 if st_["committed"] == slug:
                     if st_.get("hard"):
                         continue
@@ -2237,7 +2269,7 @@ def _promises(state: dict, week: int) -> None:
                     c["cooled_until"] = week + COOL_WEEKS
                     persona.set_cooled_why(state, slug, pid, "promise")
                 pr["broken"] = week
-                _event(state, "promise_broken", pid, slug, about=pr["about"]["name"], other=pr["about"].get("pid"))
+                _event(state, "promise_broken", pid, slug, about=pr["about"]["name"], other=mate, **({"why": "package"} if pr["kind"] == "package" else {}))
 
 
 def _firm_up(state: dict, week: int) -> None:
