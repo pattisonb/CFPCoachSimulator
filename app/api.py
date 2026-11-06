@@ -409,6 +409,17 @@ def _status(state: dict, since: Optional[int]) -> dict:
     return out
 
 
+def _where(exc: BaseException) -> str:
+    """The error with where it broke, for the page's toast: the innermost frame of our own code
+    ("unsupported operand type(s) for +: 'NoneType' and 'float' (nil_move, programs.py:218)")."""
+    import traceback
+    frames = [f for f in traceback.extract_tb(exc.__traceback__) if "site-packages" not in f.filename and "/lib/python" not in f.filename]
+    if not frames:
+        return str(exc)
+    f = frames[-1]
+    return f"{exc} ({f.name}, {os.path.basename(f.filename)}:{f.lineno})"
+
+
 def step(report: Callable[[str], None] | None = None) -> dict | None:
     """Play the running job's next unit: one week of an advance, or your game on game day.
     Saves the season, moves the job on (back to idle when the run is over, paused or done)
@@ -457,7 +468,7 @@ def step(report: Callable[[str], None] | None = None) -> dict | None:
         if saved is not None:
             _hold(saved)
             state = _loaded
-        _job.update(status="error", error=str(exc), stage=None, stop=False, since=since)
+        _job.update(status="error", error=_where(exc), stage=None, stop=False, since=since)
     out = _status(state, _job.get("since"))
     if report is not None:
         report(json.dumps(out))
