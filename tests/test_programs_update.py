@@ -31,6 +31,7 @@ if __name__ == "__main__":
     keys = {"history", "prestige", "winning", "market", "market_base", "nil", "conference", "coach", "rating", "tier", "seasons"}
     assert all(keys <= set(t["program"]) for t in lgd["teams"].values()), "a team without its program"
     before = {s: dict(t["program"]) for s, t in lgd["teams"].items()}
+    offseason._run_draft(st)                                             # the draft has run by the Staff step
     res = carousel._results(st)
     ranks = programs.final_ranks(st)
     assert ranks and 1 <= min(ranks.values()) and len(ranks) >= 25
@@ -45,6 +46,31 @@ if __name__ == "__main__":
     assert lgd["teams"][champ]["program"]["winning"] >= 60, lgd["teams"][champ]["program"]["winning"]
     programs.update(st, res, ranks)                                      # once a year
     assert len(lgd["teams"][champ]["program"]["seasons"]) == 1
+    from coach_career import offseason
+    picks = programs.draft_picks(st)
+    assert sum(len(v) for v in picks.values()) >= 150, sum(len(v) for v in picks.values())
+    for s, t in lgd["teams"].items():
+        p = t["program"]
+        assert len(p["drafts"]) == programs.PRO_YEARS and p["drafts"][-1][0] == off["year"] - 1 and p["drafts"][0][0] == off["year"] - programs.PRO_YEARS
+        assert p["drafts"][-1][1] == sum(programs.pick_points(r) for r, _ in picks.get(s, []))
+        assert 0 <= p["pro"] <= 100 and all(0 <= v <= 100 for v in p["pro_groups"].values())
+    before = {s: t["program"]["pro"] for s, t in lgd["teams"].items()}
+    programs.update(st, res, ranks, year=off["year"])            # the same year again: nothing added twice
+    assert all(len(t["program"]["drafts"]) == programs.PRO_YEARS and t["program"]["pro"] == before[s] for s, t in lgd["teams"].items())
+    # ten empty drafts take a factory to the floor
+    p = lgd["teams"]["alabama"]["program"]
+    for y in range(off["year"], off["year"] + programs.PRO_YEARS):
+        p["drafts"] = p["drafts"][1:] + [[y, 0, {}]]
+    programs.pro_recompute(p, off["year"] + programs.PRO_YEARS)
+    assert p["pro"] == 0 and p["pro_groups"] == {}
+    # an old save: a program without drafts reads 0 and gets its ten lines
+    q = lgd["teams"]["akron"]["program"]; q.pop("drafts", None); q.pop("pro", None); q.pop("pro_groups", None); q["year"] = off["year"] - 1
+    programs.update(st, res, ranks, year=off["year"], only=["akron"])
+    assert len(q["drafts"]) == programs.PRO_YEARS and q["pro"] >= 0 and isinstance(q["pro_groups"], dict)
+    # an unknown position is skipped, not a crash
+    n = len(programs.draft_picks(st).get("akron", []))
+    st["offseason"]["departures"].append({"id": "x", "team": "akron", "kind": "draft", "pos": "???", "round": 1})
+    assert len(programs.draft_picks(st).get("akron", [])) == n
     # NIL moves by the AD's hand: up after a goal met, down after a losing year
     t = lgd["teams"]["ohio-state"]["program"]
     t["nil"] = 60.0

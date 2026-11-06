@@ -198,6 +198,20 @@ def final_ranks(state: dict) -> dict[str, int]:
     return {e["team"]: e["rank"] for e in polls[str(weeks[0])]["ap"]}
 
 
+def draft_picks(state: dict) -> dict:
+    """This offseason's draft by school: team slug -> [(round, position group)] from the departure
+    events that were drafted; a position with no draft group is skipped."""
+    from coach_career import offseason
+    out: dict = {}
+    for ev in ((state.get("offseason") or {}).get("departures") or []):
+        if ev.get("kind") != "draft":
+            continue
+        g = offseason.DRAFT_GROUP.get(ev.get("pos"))
+        if g:
+            out.setdefault(ev["team"], []).append((ev.get("round", 7), g))
+    return out
+
+
 def update(state: dict, results: dict, ranks: dict, year: Optional[int] = None, only=None) -> None:
     """The offseason's move of every program's metrics (once a year): the season joins the last
     ten, winning is the last three (3-2-1), prestige and the market's live part step toward their
@@ -211,6 +225,7 @@ def update(state: dict, results: dict, ranks: dict, year: Optional[int] = None, 
     wsc = sc.get("winning") or {"lo": 0.0, "hi": 3.0, "k": 1.0}
     csc = sc.get("conference") or {"lo": 40.0, "hi": 70.0, "k": 1.0}
     teams = season.load_teams()
+    picks = draft_picks(state)
     conf_members: dict[str, list[float]] = {}
     for s, t in lgd["teams"].items():
         bt = teams.get(s)
@@ -256,6 +271,9 @@ def update(state: dict, results: dict, ranks: dict, year: Optional[int] = None, 
         bt = teams.get(s)
         if bt and bt["conference"] in conf_score:
             p["conference"] = round(conf_score[bt["conference"]], 1)
+        p.setdefault("drafts", empty_drafts(year - 2))
+        p["drafts"] = (p["drafts"] + [draft_line(year - 1, picks.get(s, []))])[-PRO_YEARS:]    # a new list: a probe's copy never writes back
+        pro_recompute(p, year - 1)
         p["rating"] = round(mix(p), 1)
         p["tier"] = tier_of(p["rating"])
         p["year"] = year
