@@ -410,7 +410,7 @@
     function paintIntel() {
       const { row: r, pr } = sel, p = pr.public;
       const P = R().parts, me = s.team;
-      const b = pr.row || { id: r.pid, name: p.name, stars: p.stars, position: p.position, display_pos: p.display_pos, hometown: p.hometown, national_rank: p.national_rank,
+      const b = pr.row || { id: r.pid, name: p.name, stars: p.stars, position: p.position, display_pos: p.display_pos, archetype: p.archetype, class_of: p.class_of, hometown: p.hometown, national_rank: p.national_rank,
         pos_rank: p.pos_rank, height_display: p.height_display, weight_display: p.weight_display, looks: pr.looks, traits: pr.traits, priorities_known: p.priorities_known, list: [] };
       const looks = Math.min(REPORT_LOOKS, r.looks || 0), complete = looks >= REPORT_LOOKS;
       const sp = complete ? ["Fully Scouted", "good"] : looks > 0 ? [`${fmtLooks(looks)} of ${REPORT_LOOKS} Looks`, "warn"] : ["Unscouted", "muted"];

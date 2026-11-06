@@ -478,23 +478,26 @@
   const PV = () => window.CFP.pv;
   const TONES = { good: "good", warn: "warn", bad: "bad" };
   const attr = (cond, attrs) => (cond ? attrs : {});
-  // the header: his status chip, his name (nameNode: the pane's button or the popup's heading), stars, Pos | Height | Weight,
-  // Hometown · #rank; Nat. Rank, Pos. Rank, Class; Your Chance in words with its bar. opts.stats / opts.badge replace those
-  // (the Scouting Center: Team Need, Potential); opts.chip replaces the status chip; opts.back: the phone sheet's Back.
+  // the header: his status chip, his name (nameNode: the pane's button or the popup's heading), stars, Pos · Archetype |
+  // Height | Weight, Hometown · Class of 2027 (the portal: From School); Nat. Rank and Pos. Rank in one strip (the portal:
+  // Portal Rank, Pos. Rank, Class); Your Chance in words, its bar only once you have a chance to measure (an offer, or his
+  // commitment elsewhere). opts.stats / opts.badge replace those (the Scouting Center: Team Need, Potential); opts.chip
+  // replaces the status chip; opts.back: the phone sheet's Back.
   function heroOf(b, me, opts = {}) {
     const portal = !!b.portal;
     const chip = opts.chip || chipOf(b, me, portal);
     const tag = el("span", { class: `go-chip pv-tag ${chip.tone || ""}`.trim(), "data-key": "chip", text: chip.text });
     const sd = standingOf(b, me);
     const pos = b.display_pos || b.position;
-    const badge = opts.badge || { kicker: "Your Chance", value: sd.odds || sd.word, tone: TONES[sd.tone] || "", fill: sd.fill || 0 };
+    const measured = sd.word !== "Not Offered" && sd.word !== "Lost";
+    const badge = opts.badge || { kicker: "Your Chance", value: sd.odds || sd.word, tone: TONES[sd.tone] || "", fill: measured ? sd.fill || 0 : null };
     const stats = opts.stats || [
       portal ? { key: "portal", label: "Portal Rank", value: b.portal_rank ? `#${b.portal_rank}` : "—" } : { key: "nat", label: "Nat. Rank", value: b.national_rank ? `#${b.national_rank}` : "—" },
       { key: "pos", label: "Pos. Rank", value: b.pos_rank ? `#${b.pos_rank}` : "—", sub: pos },
-      { key: "class", label: "Class", value: portal ? clsWord(b.cls) || "—" : b.class_of ? String(b.class_of) : "—" }];
-    const where = portal ? `From ${b.from_name}${b.portal_rank ? ` · #${b.portal_rank} in the Portal` : ""}` : `${place(b.hometown)}${b.national_rank ? ` · #${b.national_rank}` : ""}`;
+      portal ? { key: "class", label: "Class", value: clsWord(b.cls) || "—" } : null];
+    const where = portal ? `From ${b.from_name}` : `${place(b.hometown)}${b.class_of ? ` · Class of ${b.class_of}` : ""}`;
     return PV().hero({ avatar: avatar(b.id, "lg"), tag, nameNode: opts.nameNode, back: opts.back, stars: b.stars ? stars(b.stars) : null, starsLabel: b.stars ? `${b.stars} stars` : null,
-      pos, height: b.height_display, weight: b.weight_display, place: where, stats, badge });
+      pos, arch: opts.arch !== undefined ? opts.arch : b.archetype || null, height: b.height_display, weight: b.weight_display, place: where, stats, badge });
   }
   // a label and its value as one row (the snapshot's His Ask, the Background card)
   const kvRow = (key, label, value, hint) => el("div", { class: "pv-row", "data-key": key }, [el("span", { class: "pv-row-k", text: label }),

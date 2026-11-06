@@ -1261,9 +1261,11 @@ label, Tell Him Straight, Make Him a Promise or Sidestep It, over the line you s
 locks the pitch until you pick one; his reply comes back in place (no toast) and History keeps
 the answer (`Told him straight about …`, `Promised him the job over …`). The pane, the Prospect Profile popup and the
 Scouting Center draw a recruit with one set of pieces (`web/profileview.js`, `web/profile.css`): a hero (his status chip,
-avatar, name, stars, Pos | Height | Weight with the position as the game shows it, `display_pos`: an EDGE who plays DT
-reads DT everywhere; Hometown · #rank; Nat. Rank, Pos. Rank, Class; a Your Chance badge in the ladder's words with a
-bar), a tab row (Overview, Scouting, Profile, History, with Recruit ▾ and the ☆ watch star on its right; it stays pinned
+avatar, name, stars, Pos · Archetype | Height | Weight with the position as the game shows it, `display_pos`: an EDGE
+who plays DT reads DT everywhere, and his archetype after it, "DT · Run Stopper"; Hometown · Class of 2027 (the portal:
+From School); Nat. Rank and Pos. Rank in one bordered strip (the portal adds Class), so no number shows twice; a Your
+Chance badge in the ladder's words, its bar only once there is a chance to measure, an offer or his commitment elsewhere),
+a tab row (Overview, Scouting, Profile, History, with Recruit ▾ and the ☆ watch star on its right; it stays pinned
 at the top of the pane while the cards scroll) and cards in a two-column grid (one column on a narrow pane; a card alone
 on its row spans it; one gap token, `--pv-gap`, across and down; cards in a row stretch to one height).
 **Overview**: the Recruiting Battle (his list as ranked rows, your school marked; a committed recruit's other schools
