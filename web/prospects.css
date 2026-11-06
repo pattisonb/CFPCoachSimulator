@@ -47,10 +47,10 @@
 .pr-table-wrap { min-width: 0; }
 .pr-table { width: 100%; border-collapse: collapse; }
 .pr-table[hidden] { display: none; }
-.pr-table th { text-align: left; font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 8px 5px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.pr-table th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 8px 4px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 .pr-table th.pr-c-act { text-align: right; }
 .pr-table th.pr-c-int { white-space: normal; min-width: 64px; }     /* "Interest in You" may take two lines: the word under it is short */
-.pr-table td { font-size: 14px; padding: 6px 5px; border-bottom: 1px solid var(--border); vertical-align: middle; white-space: nowrap; }
+.pr-table td { font-size: 14px; padding: 6px 4px; border-bottom: 1px solid var(--border); vertical-align: middle; white-space: nowrap; }
 /* a row keeps the list's class names (.go-list-row, .go-list-main: tests and the other screens' hooks), not their card look */
 .pr-table tr.pr-row { display: table-row; background: none; border: 0; border-radius: 0; padding: 0; cursor: pointer; }
 .pr-table tr.pr-row:hover > td { background: color-mix(in srgb, var(--text) 4%, transparent); }
@@ -58,21 +58,26 @@
 .pr-c-who { white-space: normal; min-width: 0; }
 .pr-c-ht, .pr-c-wt { font-variant-numeric: tabular-nums; }
 .pr-c-act { text-align: right; width: 1%; }
-.pr-table .pr-who.go-list-main { display: flex; flex: none; align-items: center; gap: 10px; min-height: 44px; width: 100%; padding: 2px 4px; border-radius: 10px; }
+.pr-table .pr-who.go-list-main { display: flex; flex: none; align-items: center; gap: 8px; min-height: 44px; width: 100%; padding: 2px 4px; border-radius: 10px; }
 .pr-table .pr-who.go-list-main:hover { background: none; }
 .pr-who .go-list-id { min-width: 0; gap: 1px; }
+.pr-table .pr-who .go-avatar.sm { width: 32px; height: 32px; }
 .pr-who .go-list-id b { font-size: 15px; }
 /* a long name wraps rather than push the table past its card (the phone's fixed layout cuts it with an ellipsis instead) */
 .pr-table .pr-who .go-list-id b, .pr-table .pr-who .go-list-id > span { white-space: normal; overflow-wrap: anywhere; }
 .pr-who .go-badges:empty { display: none; }
 .pr-who .go-badges { display: flex; gap: 6px; margin-top: 2px; }
 .pr-who .go-badges .go-badge { font-size: 10px; padding: 0 6px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-.pr-c-status .go-tag { max-width: 170px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+.pr-c-status .go-tag { max-width: 150px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
 /* a long school or read takes two lines in a wide font rather than push Ht and Wt off the card */
-.pr-table td.pr-c-status, .pr-table td.pr-c-pot { white-space: normal; }
-.pr-table .pr-c-status .go-tag, .pr-table .pr-c-pot .go-tag { display: inline-block; white-space: normal; max-width: 8.5em; line-height: 1.25; }
-.pr-c-stars .go-stars { font-size: 13px; letter-spacing: 0; }
-.pr-board { min-height: 36px; padding: 0 12px; font-size: 14px; white-space: nowrap; min-width: 96px; }
+.pr-table td.pr-c-status, .pr-table td.pr-c-pot, .pr-table td.pr-c-sc { white-space: normal; }
+.pr-table .pr-c-status .go-tag, .pr-table .pr-c-pot .go-tag { display: inline-block; white-space: normal; max-width: 7.5em; line-height: 1.25; }
+/* Scouted as words, not a chip (the row holds three chips already): "1 of 3 Looks" and "Fully Scouted" on two short lines */
+.pr-table .pr-sc { display: inline-block; white-space: normal; max-width: 4.6em; line-height: 1.2; font-size: 12.5px; font-weight: 600; color: var(--muted); border-radius: 6px; }
+.pr-table .pr-sc.warn { color: var(--go-warn-text, var(--accent)); }
+.pr-table .pr-sc.good { color: var(--good-text, var(--good)); }
+.pr-c-stars .go-stars { font-size: 12px; letter-spacing: 0; }
+.pr-board { min-height: 36px; padding: 0 8px; font-size: 13.5px; white-space: nowrap; min-width: 88px; }
 .pr-board.on { border-width: 1px; }
 .pr-empty { margin: 0; }
 .pr-empty[hidden] { display: none; }
@@ -80,14 +85,14 @@
 .pr-pager .go-btn { min-height: 36px; }
 .pr-page-text { font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-/* the list card narrows before the screen does: Ht and Wt go first, then the potential and the status */
+/* the list card narrows before the screen does: Ht and Wt go first, then Scouted and the potential, then the status */
 .pr-main { container-type: inline-size; }
 /* and when the words still do not fit (a wide font, a long school name), web/recruiting.js fitTable() drops columns in the same order */
 .pr-table.pr-fit-1 .pr-c-ht, .pr-table.pr-fit-1 .pr-c-wt { display: none; }
-.pr-table.pr-fit-2 .pr-c-pot { display: none; }
+.pr-table.pr-fit-2 .pr-c-pot, .pr-table.pr-fit-2 .pr-c-sc { display: none; }
 .pr-table.pr-fit-3 .pr-c-status { display: none; }
 @container (max-width: 700px) { .pr-c-ht, .pr-c-wt { display: none; } }
-@container (max-width: 620px) { .pr-c-pot, .pr-c-status { display: none; } }
+@container (max-width: 620px) { .pr-c-pot, .pr-c-sc, .pr-c-status { display: none; } }
 @container (max-width: 600px) {
   .pr-table { table-layout: fixed; }
   .pr-c-rank, .pr-c-pos, .pr-c-stars { display: none; }

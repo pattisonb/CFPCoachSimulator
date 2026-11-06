@@ -9,7 +9,7 @@
    - Right, the Player Intelligence Report on the selected prospect: portrait, name, position, hometown, national
      rank, stars and a status pill; Potential, Team Need and Report boxes; the sub-tabs Ratings (your staff's grade
      words as bars, never numbers the scouting does not reveal), Overview (the profile's summary) and Scouting (his
-     looks, flags, a coordinator's word, this and last week's reads); Send Scout (its cost in scouting points: 10, 15 or 5) and Add to / Remove from Board,
+     looks, flags, a coordinator's word, this and last week's reads); Send Scout (its cost in scouting points: 5 close to home or in the portal, 10 in a scout's area, 15 elsewhere; half that when half a look finishes his report) and Add to / Remove from Board,
      both patched in place with a toast; View Full Profile opens the profile modal.
    - Bottom, Scouting Operations: a bar that opens the staff rows (area dropdown, contract, narrowed bar, coverage).
    - All Reports (a modal, token "reports" or "reports:last_week|flags"): This Week · Last Week · Flags by scout.
@@ -410,7 +410,7 @@
     function paintIntel() {
       const { row: r, pr } = sel, p = pr.public;
       const P = R().parts, me = s.team;
-      const b = pr.row || { id: r.pid, name: p.name, stars: p.stars, position: p.position, display_pos: p.display_pos, hometown: p.hometown, national_rank: p.national_rank,
+      const b = pr.row || { id: r.pid, name: p.name, stars: p.stars, position: p.position, display_pos: p.display_pos, archetype: p.archetype, class_of: p.class_of, hometown: p.hometown, national_rank: p.national_rank,
         pos_rank: p.pos_rank, height_display: p.height_display, weight_display: p.weight_display, looks: pr.looks, traits: pr.traits, priorities_known: p.priorities_known, list: [] };
       const looks = Math.min(REPORT_LOOKS, r.looks || 0), complete = looks >= REPORT_LOOKS;
       const sp = complete ? ["Fully Scouted", "good"] : looks > 0 ? [`${fmtLooks(looks)} of ${REPORT_LOOKS} Looks`, "warn"] : ["Unscouted", "muted"];
@@ -478,6 +478,7 @@
       const look = res.look || null;
       if (look && look.after && look.after.potential) r.potential = look.after.potential;
       if (look && "likes" in look) r.likes = look.likes;
+      document.dispatchEvent(new CustomEvent("cfp:scouted", { detail: { pid: r.pid, looks: res.looks != null ? res.looks : r.looks, potential: res.potential || r.potential || null } }));
       cur.st.left = res.hours_left;
       cur.st.points = Math.max(0, cur.st.points - (r.cost || 0));      // the trip's cost (the desk's `cost`); the next load reads the week's truth
       sel.look = look;

@@ -414,7 +414,8 @@ REASONS = {"buried": "Buried on the depth chart behind {ahead}", "snaps": "Wants
            "losing": "A losing year", "move_up": "A Power 4 program is calling", "restless": "Restless: no starting role in sight",
            "deal": "Chasing a bigger NIL deal", "last_year": "One year left and he wants a bigger stage", "fresh_start": "Wants a fresh start",
            "draft": "Projects as a round {round} pick", "declared": "Believes he is ready for the NFL",
-           "better_coach": "Wants a better coach", "slipping": "The program is slipping"}
+           "better_coach": "Wants a better coach", "slipping": "The program is slipping",
+           "promised": "Was promised a starting role and did not get it"}
 
 
 def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict]:
@@ -442,6 +443,8 @@ def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict
         if intent == "draft":
             key = "draft" if proj else "declared"
             ahead = None
+        elif item.get("driver") == "promised":
+            key, ahead = "promised", None                          # the promise he was given is why he goes, before his role
         elif use == "bench" and peers and peers[0]["id"] != p["id"]:
             key, ahead = "buried", peers[0]["n"]
         elif use == "rotation":
@@ -780,8 +783,9 @@ def _program_context(lgd: dict, slug: str, losing: bool, p4: bool, shifts: dict)
 
 def portal_odds(p: dict, use: str, ctx: dict) -> list[tuple[str, float]]:
     """A player's portal chance this offseason as segments that add up to it, each with its driver:
-    "role" (his class, his role, a losing year, a Group of 5 standout moving up, a promise broken,
-    a keep last year), "deal" (NIL under his market at his program's tier), "slipping" or
+    "role" (his class, his role, a losing year, a Group of 5 standout moving up, a keep last year),
+    "promised" (a starting role promised, at Keep Them Home or as a recruit, that he did not get: the
+    rest of PROMISE_BROKEN times), "deal" (NIL under his market at his program's tier), "slipping" or
     "better_coach" (PROGRAM_PULL). One draw against the sum; the segment it lands in is why."""
     from coach_career import recruiting
     year = ctx["year"]
@@ -790,11 +794,12 @@ def portal_odds(p: dict, use: str, ctx: dict) -> list[tuple[str, float]]:
     if not ctx["p4"] and ovr >= TRANSFER_UP_FROM:
         base = max(base, TRANSFER_UP)                           # a Group of 5 standout moves up
     kept = p.get("kept") == year - 1
-    if p.get("promised") == year - 1 and use != "starter":
-        base *= PROMISE_BROKEN                                  # promised a starting role and did not get it
-    elif kept:
+    broken = p.get("promised") == year - 1 and use != "starter"   # promised a starting role (Keep Them Home, or as a recruit) and did not get it
+    if kept and not broken:
         base *= KEPT_STAY
     parts = [("role", base)]
+    if broken:
+        parts.append(("promised", base * (PROMISE_BROKEN - 1)))   # its own segment: when the draw lands here the promise is why he goes
     if use in ("starter", "rotation") and not kept:              # a kept player was paid this year
         market = recruiting.market_value(p["pos"], ovr)
         shortfall = market - NIL_TIER_PAY.get(ctx["tier"], NIL_TIER_PAY[5])
@@ -1464,6 +1469,9 @@ def _close_portal(state: dict) -> None:
         team = lgd["teams"][school]
         p["j"] = _jersey(team["roster"], p["pos"], rng)
         p["transfer"] = e["from"]
+        contact = (rc.get("contacts") or {}).get(pid, {}).get(school) or {}
+        if any(pr["kind"] == "roster" for pr in contact.get("promises") or ()):
+            p["promised"] = lgd["year"]                    # told the job was his in the portal: the same promise a signed recruit carries (PROMISE_BROKEN reads it)
         if not st_.get("signed"):
             p["walk_on"] = p["preferred"] = True
             st_["signed"] = school
