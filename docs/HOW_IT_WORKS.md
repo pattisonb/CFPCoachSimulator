@@ -1320,7 +1320,10 @@ Scouting Center, master and detail, built from the player's mockup in the site's
   the read is: Confident, Could Change, Early Look), then the tabs **Report** (the Scouting Report and the
   Attributes card), **Looks** (Looks & Uncertainty with the flags, a coordinator's "Likes Him", this and last week's
   report lines on him and All Reports) and **Profile** (the traits and background cards). On the tab row: **Send Scout
-  · 10 Pts** (its row's `cost`: 10, 15 or 5; "· Finishes His Report" when one look is left; disabled with the reason
+  · 10 Pts** (its row's `cost`, `recruiting.look_cost` from `LOOK_COST`: 5 for a prospect close to home, in your school's
+  state or within `HOME_MILES` (150) of your campus after any Family Move, 10 in an area a staff scout covers, 15 away from
+  your scouts, 5 for a portal entrant; half the tier, rounded up to a multiple of 5 (5, 5, 10), when less than a full look
+  finishes his report, at 2.5 of 3 looks after a half-look area week; "· Finishes His Report" when one look is left; disabled with the reason
   under the row: "Not enough scouting points left this week.", or "His report is complete: 3 of 3 looks"), **View Full
   Profile** (the popup) and **Add to Board** / **Remove From Board** (the board's own confirm when that pulls a standing
   offer). The address keeps `ssub` (report, looks, profile); an old address's ratings or overview opens Report and
@@ -1364,7 +1367,7 @@ mockup in the site's theme tokens, flat (no gradient; the board button is the pa
   Board"), Position, Stars, State, Status and Sort, then the table: #, the avatar, name and hometown (and his find
   badges), Pos (the game's position, `display_pos`), Ht, Wt, Stars, Status ("Uncommitted", "Verbal: School", "Hard
   Commit: School", "Signed: School"; the school's name is `season.team_display`, so an FCS stand-in never shows),
-  Interest in You (High, Medium or Low), Scouted (the Scouting Center's words: "Not Yet", "1 of 3 Looks", "Fully
+  Interest in You (High, Medium or Low, graded against prospects of his star rating), Scouted (the Scouting Center's words: "Not Yet", "1 of 3 Looks", "Fully
   Scouted"), Potential (your staff's read after his looks, "Strong" or "Elite – All-American", or "Not Read" before a
   look; never the truth) and **+ Board** / **✓ On Board**. A row opens the Prospect Profile. 50 to a page. A scouting
   trip sent from anywhere (the profile's Send a Scout, the board's Recruit menu, the Scouting Center) lands on his row in
@@ -1393,9 +1396,14 @@ chance as a range that narrows as signing day nears (plus or minus 25 points at 
 week 8, 4 from week 13), labeled Early Read, Taking Shape or Solid Read. Class rank weighs each
 class's best commitments most (each counts 0.85 times the one before).
 
-**Interested in you** (a Prospects filter and sort): the 15% of the class your school appeals
-to most right now (his interest in you: distance, playing time, prestige, winning, NIL, the coach,
-academics and what you have done), most interested first; every row shows High, Medium or Low.
+**Interested in you** (a Prospects filter and sort): the prospects graded High right now, most
+interested first (his interest in you: distance, playing time, prestige, winning, NIL, the coach,
+academics and what you have done); every row shows High, Medium or Low. A prospect is graded against
+the prospects of his own star rating you can see (`prospects.your_interest`, `INTEREST_LEVELS`: the top
+15% of his star band is High, the next 35% Medium, the rest Low), not against the whole class: interest
+in any one school rises with a prospect's stars, so grading the class as one made the pages the player
+reads first, the top of the national ranking, mostly High. High means he likes you more than most
+recruits of his caliber do.
 
 **Classes**: every FBS school's class ranked nationally (as class rank: best commitments count
 most), each opening to its recruits; the Office points to it after the early signing period

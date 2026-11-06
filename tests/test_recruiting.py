@@ -434,4 +434,21 @@ if __name__ == "__main__":
     assert all("firmness" in r for r in prospects.recruiting_view(st3)["board"] if r["committed"] == "ohio-state")
     rc3["status"][a]["firmness"] = 100
     assert recruiting.flip_weekly(st3, a, 50.0) == 0.0 and recruiting.flip_weekly(st3, b, 50.0) > 0.0
+    # interest levels are graded within a prospect's star band: about 15% of every band is High, so the top of the
+    # national ranking (where interest in any school runs highest) is no longer mostly High for a Group of 5 school
+    stk = season.new_season("kent-state", "full", seed=11, career=True)
+    visk = recruiting.prospect_list(stk)
+    valsk, cutsk = prospects.your_interest(stk, "kent-state", visk)
+    lvl = lambda q: prospects._level(valsk[q], stk["recruiting"]["prospects"][q]["stars"], cutsk)
+    bands = {}
+    for q in visk:
+        bands.setdefault(stk["recruiting"]["prospects"][q]["stars"], []).append(lvl(q))
+    for stars, levels in bands.items():
+        if len(levels) >= 30:
+            share = levels.count("High") / len(levels)
+            assert 0.10 <= share <= 0.20, (stars, share)
+    top50 = [lvl(q) for q in visk[:50]]
+    assert top50.count("High") < 25, top50.count("High")
+    keen_rows = prospects.search(stk, "kent-state", status="interested", limit=100)["rows"]
+    assert keen_rows and all(r["interest_level"] == "High" for r in keen_rows)
     print(f"recruiting ok: {len(rc['prospects'])} prospects; TX 3-star {tx['name']} priorities {tx['priorities']}")

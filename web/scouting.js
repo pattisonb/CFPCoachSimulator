@@ -9,7 +9,7 @@
    - Right, the Player Intelligence Report on the selected prospect: portrait, name, position, hometown, national
      rank, stars and a status pill; Potential, Team Need and Report boxes; the sub-tabs Ratings (your staff's grade
      words as bars, never numbers the scouting does not reveal), Overview (the profile's summary) and Scouting (his
-     looks, flags, a coordinator's word, this and last week's reads); Send Scout (its cost in scouting points: 10, 15 or 5) and Add to / Remove from Board,
+     looks, flags, a coordinator's word, this and last week's reads); Send Scout (its cost in scouting points: 5 close to home or in the portal, 10 in a scout's area, 15 elsewhere; half that when half a look finishes his report) and Add to / Remove from Board,
      both patched in place with a toast; View Full Profile opens the profile modal.
    - Bottom, Scouting Operations: a bar that opens the staff rows (area dropdown, contract, narrowed bar, coverage).
    - All Reports (a modal, token "reports" or "reports:last_week|flags"): This Week · Last Week · Flags by scout.
