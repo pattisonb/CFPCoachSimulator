@@ -134,8 +134,14 @@ if __name__ == "__main__":
         assert q and q["kind"] == "roster" and q["about"]["name"] == want["name"] and q["about"]["id"] == want["slug"], q
         assert q["answer"] is None and q["reply"] is None and want["name"] in q["text"] and "None" not in q["text"]
         p = rc["prospects"][pid]
-        f = {"ahead": want["name"], "ahead_cls": scenes.CLASS_WORDS[want["class"]], "position": p["position"]}
+        f = {"ahead": want["name"], "ahead_cls": scenes.CLASS_WORDS[want["class"]], "position": want["position"]}
         assert q["text"] in [line.format(**f) for line in scenes.QUESTION_LINES["roster"]], q["text"]
+        assert "ATH" not in q["text"], q["text"]     # the position is the roster player's, never the recruit's "ATH"
+        # an athlete's question names the roster player's position, whichever line the draw picks
+        ath = next(q2 for q2 in rc["prospects"] if rc["prospects"][q2]["position"] == "ATH" and recruiting.ahead_of(st, ME, q2))
+        a = recruiting.ahead_of(st, ME, ath)
+        lines = [line.format(ahead=a["name"], ahead_cls=scenes.CLASS_WORDS.get(a["cls"], "veteran"), position=a["position"]) for line in scenes.QUESTION_LINES["roster"]]
+        assert all("ATH" not in ln and a["position"] in ln for ln in lines[:1]), lines
         assert q["text"] not in sc["lines"], "the question is its own field, not a line"
         # the pitch waits on the answer; a wrong or missing scene is refused
         refused(lambda: R(sid, "recruit", {"pid": pid, "action": "pitch", "scene": sc["id"], "pitch": "winning"}), 409, "answer him first")
