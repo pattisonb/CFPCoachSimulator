@@ -1147,7 +1147,9 @@ def _check_merged(doc: dict, blob: bytes, seed: Optional[int]) -> dict:
     lgd, lines = league_fill.to_league(merged, seed)
     generated = sum(max(0, len(lgd["teams"][s]["roster"]) - len(merged["teams"][s].get("roster") or []))
                     for s in set(merged["added"]) | set(merged["changed"]) if s in lgd["teams"])
-    engine = league.build(lgd)
+    from coach_career import coach_names
+    coach_names.distinct({"league": lgd})   # one coach, one name, as every load applies it: the teams file Start
+    engine = league.build(lgd)              # writes is then the one a rebuild from the saved league gives, byte for byte
     games = None
     if merged["structural"]:
         # the teams as season.load_teams shows them (the stand-ins by region), as offseason.next_season passes them
