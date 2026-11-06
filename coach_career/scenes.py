@@ -9,7 +9,7 @@ A scene is `turns`: [{who: "you" | "him" | "note", text}] in order (an in-home v
 than himself adds one {who: "family", label: the decider's label, text}); `lines` (his turns' texts) stays
 one release for the page's old readers. Lines are in his voice (or yours), present tense, short, no
 numbers (an in-home visit's ask is in words). They take {name}, {first}, {town}, {state}, {school},
-{position}, {role} ("start", "compete" or "wait"), {record} (the school's won-lost in words; {rec} the same
+{position} ({positions} its plural in words), {role} ("start", "compete" or "wait"), {record} (the school's won-lost in words; {rec} the same
 to go inside a sentence, {conf} its conference record), {coach}
 (your last name), {opponent} and {result} ("beat" / "lost to": your last game, or the opener before
 one), {leader} (the school leading his list, "" when none or you) and {week_word}. Lines fit a high
@@ -134,14 +134,14 @@ LINES: dict[str, dict[str, list[str]]] = {
                   "Yeah. I was hoping for a stronger school."],
     },
     "pro": {
-        "cue": ["Honestly, Coach? I'm trying to play on Sundays. Who gets {position}s there?",
+        "cue": ["Honestly, Coach? I'm trying to play on Sundays. Who gets {positions} there?",
                 "My trainer keeps a list of who puts guys in the league. I look at it.",
                 "I want to get drafted. That's the whole plan."],
-        "hit": ["You put {position}s in the league. That's what I'm chasing.",
+        "hit": ["You put {positions} in the league. That's what I'm chasing.",
                 "Sundays. That's the dream, Coach, and you've got the receipts.",
                 "First-rounders at my spot? Say less."],
         "polite": ["Cool. The league's a long way off, though.",
-                   "Yeah, I know who you've sent. Not my biggest thing.",
+                   "Yeah, I know what you've got. Not my biggest thing.",
                    "That's nice. I just want to play ball first."],
         "quiet": ["...Who was the last {position} you got drafted, Coach?",
                   "My trainer says nobody gets drafted from there. I don't know.",
@@ -260,7 +260,8 @@ LEAD_LINES = {"proximity": "You'd be close, {first}. Your folks could make every
               "nil": "The collective takes care of our guys. That's real, and it's yours.",
               "coach": "I'm not going anywhere. You'd play for me every year you're here.",
               "academics": "The degree here means something. Your mom will like that part.",
-              "pro": "We put {position}s in the league, {first}. Scouts know the way here."}
+              "pro": "We put {positions} in the league, {first}. Scouts know the way here."}
+LEAD_PRO_PROGRAM = "We put guys in the league, {first}. Scouts know the way here."   # pro holds but not at his spot (a kicker or punter)
 
 # ----- what is true (the lines that claim something agree with the game's facts) ---------------------------
 CLAIM_FROM = 0.6          # *tune* a topic's strength from which your lines claim it outright (the page's Strong); under it they speak honestly
@@ -274,6 +275,7 @@ LEAD_HONEST = {"proximity": "It's a trip from {town}, I know. We'll make your fo
                "coach": "I know what people are saying. I'm here to build this, and I want you in it.",
                "academics": "You'll get your degree here. We make sure our guys finish.",
                "pro": "I won't tell you we've sent a lot of guys to Sundays. Come be the first one everybody remembers."}
+LEAD_HONEST_PRO_SOME = "We've sent some, {first}. You could be the next one."   # under the claim line, with a pick at his group in ten years
 # your Winning Now lead by the season's form (`facts`): this season's record, the last game, the conference record and
 # the program's recent history decide which is true; "hot" and "pre_up" are LEAD_LINES["winning"] (or the ranked line)
 LEAD_WINNING = {"ranked": "We're ranked, we're winning, and we are not slowing down.",
@@ -303,7 +305,9 @@ HONEST_HIT = {"proximity": ["It's a drive, but my folks could make some games. T
               "academics": ["A degree's a degree, Coach. My mom will still want to hear that.",
                             "Good. I want something for after football."],
               "pro": ["Be the first? Okay. I like that, Coach.",
-                      "Nobody's done it from there yet. Maybe that's me."]}
+                      "Nobody's done it from there yet. Maybe that's me."],
+              "pro_some": ["Some have made it from here. I could be next.",
+                           "You've sent a few? Then I could be one of them."]}   # `pro` when nothing was drafted at his group in ten years, `pro_some` when something was
 # your opening's three things on a topic you cannot claim, as you say them (PHRASES are his words and your claims)
 SAID_HONEST = {"proximity": "a home away from home", "playing_time": "a fair shot to compete",
                "prestige": "a program you can help build", "winning": "building a winner", "academics": "getting your degree", "pro": "a path to Sundays"}
@@ -334,9 +338,9 @@ NEEDS = {
     "Okay. That takes care of a lot back home.": "nil",
     "That's a real school, Coach. That counts for a lot.": "academics",
     "My mom is going to love that. The degree matters.": "academics",
-    "You put {position}s in the league. That's what I'm chasing.": "pro",
+    "You put {positions} in the league. That's what I'm chasing.": ("pro", "pro_spot"),
     "Sundays. That's the dream, Coach, and you've got the receipts.": "pro",
-    "First-rounders at my spot? Say less.": "pro",
+    "First-rounders at my spot? Say less.": ("pro", "pro_spot"),
 }
 
 
@@ -386,10 +390,26 @@ def truth(state: dict, slug: str, pid: str, week: int | None = None) -> dict:
     fx = facts(state, slug, week)
     st_ = recruiting.strengths(state, slug, pid)
     out = {t: st_[t] >= CLAIM_FROM for t in ("proximity", "playing_time", "prestige", "nil", "academics", "pro")}
+    out.update(pro_truth(state, slug, pid, out["pro"]))
     tw = persona._twist(state, pid)
     out.update(winning=fx["form"] in ("hot", "winning", "pre_up"), history=fx["history"],
                coach=not (tw and tw["k"] == "hot_seat" and tw.get("s") == slug), form=fx["form"], facts=fx)
     return out
+
+
+def pro_truth(state: dict, slug: str, pid: str, pro: bool) -> dict:
+    """The Pro Pipeline facts a line may need: `pro_any`, the school has a pick at his group in its ten drafts (a kicker, a
+    punter or any group without draft keys: any pick at all); `pro_spot`, the claim holds at his own spot (the strength for
+    most; a kicker or punter, his own group's grade at CLAIM_FROM, since his strength reads the overall grade)."""
+    from coach_career import programs
+    p = state["recruiting"]["prospects"][pid]
+    pr = programs.get(state, slug)
+    group = recruiting._group(p["ea_position"])
+    keys = programs.GROUP_DRAFT.get(group)
+    lines = pr.get("drafts") or []
+    any_ = any(g in keys and pts > 0 for _, _, gs in lines for g, pts in gs.items()) if keys else any(pts > 0 for _, pts, _ in lines)
+    spot = pro if group not in ("K", "P") else (pr.get("pro_groups") or {}).get(group, 0) >= 100 * CLAIM_FROM
+    return {"pro_any": any_, "pro_spot": bool(spot)}
 
 
 def _holds(line: str, tr: dict) -> bool:
@@ -423,6 +443,8 @@ def lead_line(tr: dict, pitch: str) -> str:
         if key is None:
             return LEAD_WINNING["ranked"] if tr["form"] == "hot" and tr["facts"]["rank"] else LEAD_LINES["winning"]
         return LEAD_WINNING[key]
+    if pitch == "pro":
+        return (LEAD_LINES["pro"] if tr.get("pro_spot", True) else LEAD_PRO_PROGRAM) if tr["pro"] else LEAD_HONEST_PRO_SOME if tr.get("pro_any") else LEAD_HONEST["pro"]
     return LEAD_LINES[pitch] if tr[pitch] else LEAD_HONEST[pitch]
 
 
@@ -448,8 +470,10 @@ def true_line(tr: dict, topic: str, kind: str, line: str, sid: str) -> tuple[str
                 pool = [x for x in LINES["winning"]["hit"] if _holds(x, tr)]
             else:
                 pool = WIN_DOUBT.get(key) or WIN_DOUBT[key.split("_")[0]]
+        elif topic == "pro" and tr.get("pro"):                    # the claim holds for the program, not at his spot: a line that holds
+            pool = [x for x in LINES["pro"]["hit"] if _holds(x, tr)]
         else:
-            pool = HONEST_HIT.get(topic) or []
+            pool = HONEST_HIT.get("pro_some" if topic == "pro" and tr.get("pro_any") else topic) or []
     else:
         pool = [x for x in LINES[topic][kind] if _holds(x, tr)]
     return (rng.choice(pool), True) if pool else (line, False)
@@ -533,7 +557,7 @@ STYLE_LINES: dict[str, list[str]] = {
 TABLES = {"PERSONA_LINES": persona.LINES, "NO_TOPIC": persona.NO_TOPIC, "DECIDER_LINES": persona.DECIDER_LINES, "STORY_LINES": persona.STORY_LINES, "LINES": LINES, "TIRED": TIRED, "OPEN": OPEN, "VISIT_OPEN": VISIT_OPEN, "CONTEXT": CONTEXT, "PRESENT_SAID": PRESENT_SAID,
           "PRESENT_LINES": PRESENT_LINES, "ASK": ASK, "LEAD_LINES": LEAD_LINES, "LEAD_HONEST": LEAD_HONEST, "LEAD_WINNING": LEAD_WINNING,
           "WIN_DOUBT": WIN_DOUBT, "HONEST_HIT": HONEST_HIT, "FAMILY": FAMILY, "TWIST_LINES": TWIST_LINES, "STYLE_LINES": STYLE_LINES}
-FIELDS = ("name", "first", "town", "state", "school", "position", "role", "record", "rec", "conf", "coach", "opponent", "result", "leader",
+FIELDS = ("name", "first", "town", "state", "school", "position", "positions", "role", "record", "rec", "conf", "coach", "opponent", "result", "leader",
           "week_word", "a", "b", "x", "y", "z", "topic", "Topic", "legacy", "mate", "rival", "foe", "moved")
 
 _ONES = ("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen "
@@ -626,6 +650,10 @@ def leader_of(state: dict, slug: str, pid: str) -> str:
     return (season.load_teams().get(lead) or {}).get("name", lead)
 
 
+PLURAL = {"QB": "quarterbacks", "RB": "backs", "WR": "receivers", "TE": "tight ends", "OT": "tackles", "IOL": "interior linemen", "EDGE": "edge rushers",
+          "DL": "defensive linemen", "LB": "linebackers", "CB": "corners", "S": "safeties", "K": "kickers", "P": "punters", "ATH": "athletes"}
+
+
 def _fields(state: dict, slug: str, p: dict, week: int | None = None) -> dict:
     from sim import season
     team = season.load_teams().get(slug) or {}
@@ -633,7 +661,7 @@ def _fields(state: dict, slug: str, p: dict, week: int | None = None) -> dict:
     game, nxt = last_game(state, slug, week), next_game(state, slug, week)
     record = _record(state, slug)
     return {"name": p["name"], "first": p["name"].split()[0], "town": p["hometown"]["city"] or p["hometown"]["state"],   # a transfer has no town on file
-            "state": p["hometown"]["state"], "school": team.get("name", slug), "position": p["position"],
+            "state": p["hometown"]["state"], "school": team.get("name", slug), "position": p["position"], "positions": PLURAL.get(p["position"], "players"),
             "role": _role(state, slug, p["id"]), "record": record, "rec": record[:1].lower() + record[1:], "conf": _conf(state, slug),
             "coach": coach_name(state, slug),
             "opponent": game["opponent"] if game else nxt["opponent"] if nxt else "", "result": ("beat" if game["won"] else "lost to") if game else "",

@@ -30,8 +30,21 @@ if __name__ == "__main__":
     from coach_career import scenes
     assert scenes.PHRASES["pro"] == "getting to the league" and scenes.SAID_HONEST["pro"] == "a path to Sundays"
     assert all(k in scenes.LINES["pro"] and len(scenes.LINES["pro"][k]) == 3 for k in ("cue", "hit", "polite", "quiet"))
-    assert all(scenes.NEEDS.get(line) == "pro" for line in scenes.LINES["pro"]["hit"])
-    assert "{position}" in scenes.LEAD_LINES["pro"] and "Sundays" in scenes.LEAD_HONEST["pro"] and len(scenes.HONEST_HIT["pro"]) == 2
+    need = lambda line: (lambda n: (n,) if isinstance(n, str) else tuple(n or ()))(scenes.NEEDS.get(line))
+    assert all("pro" in need(line) for line in scenes.LINES["pro"]["hit"])
+    assert "{positions}" in scenes.LEAD_LINES["pro"] and "Sundays" in scenes.LEAD_HONEST["pro"] and len(scenes.HONEST_HIT["pro"]) == 2 and len(scenes.HONEST_HIT["pro_some"]) == 2
+    # honest where picks exist (Iowa has tackles drafted), the first-one lines only at a school with none; plurals are words; a kicker's spot is his own group
+    ia, rb = scenes.truth(st, "iowa", wr), scenes.truth(st, "army", wr)
+    assert rb["pro_any"] is False and scenes.lead_line(rb, "pro") == scenes.LEAD_HONEST["pro"] and not rb["pro_spot"]
+    assert scenes.truth(st, "ohio-state", wr)["pro_any"] is True
+    assert scenes.lead_line({"pro": False, "pro_any": True}, "pro") == scenes.LEAD_HONEST_PRO_SOME
+    assert scenes.true_line({"pro": False, "pro_any": True, "form": "hot", "history": True}, "pro", "hit", scenes.LINES["pro"]["hit"][0], "t")[0] in scenes.HONEST_HIT["pro_some"]
+    assert scenes.true_line({"pro": False, "pro_any": False, "form": "hot", "history": True}, "pro", "hit", scenes.LINES["pro"]["hit"][0], "t")[0] in scenes.HONEST_HIT["pro"]
+    assert scenes.true_line({"pro": True, "pro_spot": False}, "pro", "hit", scenes.LINES["pro"]["hit"][0], "t")[0] == scenes.LINES["pro"]["hit"][1]
+    assert scenes.lead_line({"pro": True, "pro_spot": False}, "pro") == scenes.LEAD_PRO_PROGRAM
+    assert set(scenes.PLURAL) >= {"QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "K", "P", "ATH"} and all(not v.endswith("Ss") for v in scenes.PLURAL.values())
+    kt = scenes.truth(st, "ohio-state", k)
+    assert kt["pro_spot"] == (programs.get(st, "ohio-state")["pro_groups"].get(rc["prospects"][k]["ea_position"], 0) >= 100 * scenes.CLAIM_FROM)
     assert scenes.truth(st, "ohio-state", wr)["pro"] is True and scenes.truth(st, "army", wr)["pro"] is False
     js = (_Path(__file__).resolve().parents[1] / "web" / "recruiting.js").read_text()
     assert 'pro: "Path to the League"' in js
