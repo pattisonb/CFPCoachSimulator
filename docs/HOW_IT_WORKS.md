@@ -86,7 +86,12 @@ pull request gets a preview deployment with its own link. `game.zip`, `version.j
 The old GitHub Pages address still builds the same `dist/` on every push to `main`
 (`.github/workflows/pages.yml`) and shows a strip pointing to the new site, because careers
 are saved in the browser per address: a player opens theirs there, uses Download Career, and
-Load Career on the new site.
+Load Career on the new site. It also serves as a preview of any branch when Vercel's free plan
+runs out of preview deployments: in the repository's Actions, run the Pages workflow with a
+branch name to build that branch, or set the repository variable `PAGES_BRANCH` (Settings,
+Secrets and variables, Actions, Variables) to pin the site to a branch until it is cleared, so
+the merges that redeploy `main` in between do not put `main` back. The build writes
+`dist/preview.json` (branch, commit, build time) and the strip says which branch the copy is.
 
 The data refresh tools (`tools/fetch_*.py`, `tools/forward_test.py`, the realism and
 calibration tools) stay on the owner's computer; what they write under `data/` is

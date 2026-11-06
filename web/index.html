@@ -38,10 +38,12 @@
 <body>
   <!-- the old address (GitHub Pages) still runs the game, so careers saved there stay reachable; it points players to the new one -->
   <div class="moved-banner" id="moved-banner" hidden>
-    <p><b>The game has moved to <a href="https://cfp-coach-simulator.vercel.app/">cfp-coach-simulator.vercel.app</a>.</b> Careers are saved per address: to bring one along, open it here, use Download Career, then Load Career on the new site.</p>
+    <p><b>The game has moved to <a href="https://cfp-coach-simulator.vercel.app/">cfp-coach-simulator.vercel.app</a>.</b> Careers are saved per address: to bring one along, open it here, use Download Career, then Load Career on the new site. <span id="preview-stamp"></span></p>
     <a class="moved-go" href="https://cfp-coach-simulator.vercel.app/">Go to the New Site</a>
   </div>
-  <script>if (/\.github\.io$/.test(location.hostname)) document.getElementById("moved-banner").hidden = false;</script>
+  <script>if (/\.github\.io$/.test(location.hostname)) { document.getElementById("moved-banner").hidden = false;
+    fetch("./preview.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
+      if (p && p.branch) document.getElementById("preview-stamp").textContent = `This copy is a preview of the ${p.branch} branch (${p.commit}, built ${p.built}).`; }).catch(() => {}); }</script>
   <header class="topbar" id="site-topbar">
     <div class="brand">
       <a class="brand-link" href="./" aria-label="CFP Coach Simulator home">
