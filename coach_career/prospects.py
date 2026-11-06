@@ -760,7 +760,8 @@ def _stage_move(state: dict, pid: str, viewer: str) -> Optional[str]:
 HISTORY_SHOWN = 40                           # a board row's History: his newest log entries, this many
 HIS_OWN = ("commit", "hard", "flip", "decommit", "signed", "leaning_fcs", "bloomed", "pro", "twist", "hat", "softened")   # his own moves: every school's show (persona.shown_to: a quiet one, a private one, only its school)
 PRO = "Pro Baseball"                          # where a Two-Sport recruit who took the baseball money went
-HISTORY_KEYS = ("week", "portal_week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful", "topics", "hit", "line")
+HISTORY_KEYS = ("week", "portal_week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful", "topics", "hit", "line",
+                "question", "offered", "why")   # a Package Deal question's answer (about his mate, offered or not), a promise broken over his mate
 
 
 def history_index(state: dict, viewer: str) -> dict[str, list[dict]]:

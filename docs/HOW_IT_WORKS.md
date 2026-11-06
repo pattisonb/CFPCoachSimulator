@@ -1259,7 +1259,21 @@ he asks about a named player on that call (the starter ahead of him, or another 
 offered), the scene shows his line with three answers (straight, a promise, a sidestep; each button a Title Case
 label, Tell Him Straight, Make Him a Promise or Sidestep It, over the line you say) and
 locks the pitch until you pick one; his reply comes back in place (no toast) and History keeps
-the answer (`Told him straight about …`, `Promised him the job over …`). The pane, the Prospect Profile popup and the
+the answer (`Told him straight about …`, `Promised him the job over …`). A Package Deal asks about his
+mate instead whenever his or his family's package line is said (a first call, a call once you know
+his story, every in-home visit; `scenes.package_about`, the mate a prospect in the class not yet
+signed): the question's three answers ride on it (`answers`, by whether you have offered the mate).
+Not offered: **Tell Him Straight** ("I can't promise Khalil a spot today. I'll look at him.", nothing
+either way), **Promise Him an Offer** ("Khalil gets an offer this week. You have my word.": a
+`package` promise on his contact, kept the week step the mate holds your offer within
+`PACKAGE_PROMISE_WEEKS` (2) of it for `PACKAGE_KEPT` (2) points and a `promise_kept` line, "Khalil got
+his offer. You kept your word, Coach.", broken after that without it: he cools `COOL_WEEKS`, or a
+commit's firmness drops `PROMISE_RIVAL`, with a `promise_broken` event), **Sidestep It**. Already
+offered: the family's or his line says so instead of demanding it ("You offered Khalil too. That means
+a lot in this house.", `persona.STORY_LINES_OFFERED`), and **Already Offered Him** ("I offered Khalil
+already. Two spots, both yours.") earns `ANSWER_STRAIGHT` plus `PACKAGE_OFFERED` (1). History words
+them `Promised an offer to Khalil Telfair`, `Told him Khalil Telfair already has an offer`, and a
+broken one `Khalil Telfair never got the offer you promised`. The pane, the Prospect Profile popup and the
 Scouting Center draw a recruit with one set of pieces (`web/profileview.js`, `web/profile.css`): a hero (his status chip,
 avatar, name, stars, Pos | Height | Weight with the position as the game shows it, `display_pos`: an EDGE who plays DT
 reads DT everywhere; Hometown · #rank; Nat. Rank, Pos. Rank, Class; a Your Chance badge in the ladder's words with a

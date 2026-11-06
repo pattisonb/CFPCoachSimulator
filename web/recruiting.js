@@ -48,7 +48,7 @@
   const WORDS = { commit: "verbally committed to", hard: "is now a hard commit to", flip: "flipped to", decommit: "decommitted from", signed: "signed with", offer: "was offered by",
                   asked_more: "wants more from", not_buying: "isn't buying the pitch from", hung_up: "has an unfinished call from" };
   // events that carry their own sentence (his story's, a twist, a hat ceremony, a commitment going soft)
-  const LINE_KINDS = new Set(["bloomed", "pro", "twist", "hat", "softened"]);
+  const LINE_KINDS = new Set(["bloomed", "pro", "twist", "hat", "softened", "promise_kept"]);
   const eventWord = (e) => (e.kind === "hung_up" && e.action === "hc_visit" ? "has an unfinished visit from" : WORDS[e.kind] || e.kind);
   const WHY = { message: "Message", call: "Call", hc_visit: "HC Visit", official_visit: "Official Visit", offer: "Offer", raise_nil: "NIL Raised" };
   const LINE_LABELS = { pass_yards: "pass yds", passing_touchdowns: "TD", interceptions_thrown: "INT", rush_yards: "rush yds", carries: "car", rushing_touchdowns: "TD",
@@ -65,7 +65,7 @@
     card.append(el("div", { class: "go-kicker", text: `What Changed · After ${report.week === 0 ? "the Preseason" : `Week ${report.week}`}` }));
     // the week in a glance: only prospects where something happened to you (your place moved, a
     // decision, an ask), the biggest first, one line each; his list on the card has the rest
-    const BIG = new Set(["commit", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "bloomed", "pro", "twist", "hat", "softened"]);
+    const BIG = new Set(["commit", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "bloomed", "pro", "twist", "hat", "softened", "promise_kept"]);
     const weight = (r) => (r.rank !== r.prev_rank ? 2 : 0) + r.events.filter((e) => BIG.has(e.kind)).length * 3 + (r.moves.some((m) => m.you) ? 1 : 0);
     const rows = report.rows.filter((r) => weight(r) > 0).sort((a, b) => weight(b) - weight(a));
     if (!rows.length) return null;
@@ -200,11 +200,13 @@
       else if (e.kind === "not_buying") bits = ["He isn't buying your pitch"];
       else if (e.kind === "pester") bits = [`He tuned out your ${e.action === "hc_visit" ? "visit" : e.action === "call" ? "call" : "message"}`];
       else if (e.kind === "present") bits = [`Presented ${(e.topics || []).map((t) => lowerName(t)).join(", ")}`, e.hit == null ? "He gave nothing away" : LANDED[e.hit] || `${e.hit} landed`];
+      else if (e.kind === "answer" && e.question === "package") bits = [e.answer === "promise" ? `Promised an offer to ${e.about}`      // his Package Deal: about his mate
+        : e.answer === "deflect" ? `Sidestepped his question about ${e.about}` : e.offered ? `Told him ${e.about} already has an offer` : `Told him straight about ${e.about}`];
       else if (e.kind === "answer") bits = [e.answer === "promise" ? `Promised him the job over ${e.about}${e.truthful === false ? " (he did not buy it)" : ""}`
         : e.answer === "deflect" ? `Sidestepped his question about ${e.about}` : `Told him straight about ${e.about}`];
       else if (e.kind === "learned" || (LINE_KINDS.has(e.kind) && e.line)) bits = [e.line];     // what your staff learned; a bloomer's jump; a twist; a hat ceremony
       else if ((e.kind === "signed" || e.kind === "unsigned") && e.line) bits = [e.line];     // a recruit of yours went elsewhere: where, and why not you
-      else if (e.kind === "promise_broken") bits = [`He heard you promised the same spot to ${e.about}`];
+      else if (e.kind === "promise_broken") bits = [e.why === "package" ? `${e.about} never got the offer you promised` : `He heard you promised the same spot to ${e.about}`];
       else if (e.kind === "leaning_fcs") bits = ["Leaning toward an FCS program"];
       else if (HISTORY_WORDS[e.kind]) bits = [`${HISTORY_WORDS[e.kind]} ${e.school ? teamName(e.school) : "an FCS program"}`];
       else bits = [`${eventWord(e)} ${e.school ? teamName(e.school) : ""}`.trim()];
@@ -720,7 +722,7 @@
   // ----- History: the Recruiting Timeline, Recruiting Notes from what you know, Recent Interest Changes -----
   const KIND_CHIP = { message: "Message", call: "Call", hc_visit: "Visit", official_visit: "Visit", pitch: "Pitch", offer: "Offer", raise_nil: "NIL", pull_offer: "Offer",
     learned: "Scout", present: "Call", answer: "Call", hung_up: "Call", asked_more: "NIL", not_buying: "Pitch", pester: "Contact", commit: "Commit", hard: "Commit",
-    flip: "Commit", decommit: "Commit", signed: "Signed", leaning_fcs: "Commit", bloomed: "News", pro: "News", promise_broken: "Promise" };
+    flip: "Commit", decommit: "Commit", signed: "Signed", leaning_fcs: "Commit", bloomed: "News", pro: "News", promise_broken: "Promise", promise_kept: "Promise" };
   const KIND_ICON = { message: "✉", call: "☎", hc_visit: "⌂", official_visit: "⌂", pitch: "☎", offer: "✎", raise_nil: "$", pull_offer: "✕", learned: "◉",
     present: "☎", answer: "☎", hung_up: "☎", asked_more: "$", commit: "⚑", hard: "⚑", flip: "⚑", decommit: "⚑", signed: "✔", leaning_fcs: "⚑", bloomed: "★", pro: "★" };
   const PERSONALITY_NOTE = { Cocky: "He is cocky: he wants to hear how good he is.", Shy: "He is shy: he opens up slowly.", Guarded: "He is guarded: he keeps what he wants to himself.",
@@ -1791,9 +1793,10 @@
       const replyTone = (qq) => (qq.answer === "deflect" ? "muted" : qq.answer === "promise" && (qq.truthful === false || qq.reply === HOLLOW_REPLY) ? "bad" : "good");
       const replyView = (qq) => el("p", { class: `go-question-reply ${replyTone(qq)}`, role: "status", tabindex: "-1", text: qq.reply || "" });
       if (q.answer) { wrap.append(replyView(q)); return wrap; }
-      const copy = ANSWER_COPY[q.kind] || ANSWER_COPY.roster;
+      // a Package Deal's question carries its own three answers (about his mate: by whether you have offered him); the rest use the tables
+      const copy = ANSWER_COPY[q.kind] || ANSWER_COPY.roster, own = q.answers || {};
       const acts = el("div", { class: "go-row wrap go-answers" }, ANSWERS.map((k) => {
-        const btn = el("button", { type: "button", class: "go-btn go-answer", "data-answer": k }, [el("b", { class: "go-answer-label", text: ANSWER_LABELS[k] }), el("q", { class: "muted small go-answer-line", text: copy[k] })]);
+        const btn = el("button", { type: "button", class: "go-btn go-answer", "data-answer": k }, [el("b", { class: "go-answer-label", text: (own[k] || {}).label || ANSWER_LABELS[k] }), el("q", { class: "muted small go-answer-line", text: (own[k] || {}).text || copy[k] })]);
         btn.addEventListener("click", () => ui().busy(btn, (async () => {
           let r;
           try { r = await H.api(`/api/season/${s.id}/recruit`, H.postJSON({ pid: b.id, action: "answer", scene: scene.id, answer: k })); }
