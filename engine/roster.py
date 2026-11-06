@@ -322,9 +322,9 @@ class Team:
         td = self.tendencies or {}
         if lead.depth == 1:         # the team's real 2026 split, when its real lead back leads
             if td.get("rb1_share") is not None:
-                feature = lead_feature_for_share(td["rb1_share"])    # observed share (derive_tendencies.py)
+                feature = lead_feature_for_share(td["rb1_share"])    # observed share (data/observed_tendencies.json)
             elif td.get("rb_lead_feature") is not None:
-                feature = td["rb_lead_feature"]                       # tools/tune_from_real.py, when there is no observed share
+                feature = td["rb_lead_feature"]                       # data/real_adjustments.json, when there is no observed share
         ret_lo, ret_hi = cfg.RB_LEAD_RETURN_CHANCE
         profile = (cfg.RB_LEAD_OUT_CHANCE * (1 - feature) ** cfg.RB_LEAD_OUT_CURVE,
                    ret_lo + (ret_hi - ret_lo) * feature ** cfg.RB_LEAD_CURVE)

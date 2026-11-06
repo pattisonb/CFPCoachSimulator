@@ -368,7 +368,7 @@ SCRAMBLE_SHARE = 4.0      # points of a team's rushes that are QB scrambles (the
 
 def apply_observed_tendencies(teams: list[dict], only: Optional[set] = None, styles: Optional[dict] = None) -> int:
     """Replace generated coach tendencies with what each team has actually done in 2026
-    (derive_tendencies.py), scaled to the engine's tendency effects. Teams without box
+    (derived from the real box scores), scaled to the engine's tendency effects. Teams without box
     scores keep the generated values; so do teams not in `only` (when given). `styles`: a
     team plays another real team's observed style (a career's new head coach brings one)."""
     if not OBSERVED.exists():
@@ -415,8 +415,8 @@ SCHEME_OVERRIDES = json.loads(SCHEME_FILE.read_text(encoding="utf-8")) if SCHEME
 
 
 LB_ROLES = ("SAM", "MIKE", "WILL")
-LB_POOL = "LB_POOL"             # tools/tune_from_real.py: every linebacker by real usage, across the three roles
-SPECIALISTS = "SPECIALISTS"     # tools/tune_from_real.py: {"K" or "P": slug} for a specialist listed at the other spot
+LB_POOL = "LB_POOL"             # real_adjustments: every linebacker by real usage, across the three roles
+SPECIALISTS = "SPECIALISTS"     # real_adjustments: {"K" or "P": slug} for a specialist listed at the other spot
 
 
 MANUAL_RATINGS = ROOT / "data" / "manual_ratings.json"
@@ -449,7 +449,7 @@ def apply_manual_ratings(teams: list[dict], manual: Optional[dict] = None) -> in
 
 
 def apply_real_adjustments(teams: list[dict], means: dict) -> tuple[int, int]:
-    """Apply data/real_adjustments.json (tools/tune_from_real.py): rating nudges in engine
+    """Apply data/real_adjustments.json (tuned from the real 2026 box scores): rating nudges in engine
     points, then depth orders by real usage, keeping each role's number of starters.
     Linebacker starters are picked across SAM, MIKE and WILL from one usage order (the
     engine plays them in that order), and a real kicker or punter listed at the other
