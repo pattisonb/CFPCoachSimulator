@@ -1591,7 +1591,9 @@ roster, spread 0.15, `TEAM_YEAR_SD`; both mean-preserving, so the league's pace 
 but teams have good and bad years and programs' paths part),
 times a pace by seasons in college (0.45, 0.7, 1.35, 1.35, then 1.0: real players gain little in
 their first offseasons and most in their third and fourth; a real 2026 player's seasons come from
-his class, and a transfer keeps his), divided above an overall of 55 by 1 plus a tenth of the points
+his class, and a transfer keeps his; a freshman or sophomore who played a starter's season, at
+least half his team's games with his production rated against the average starter, learns at a full
+year's pace instead, `STARTER_YEAR` 1.0, and Who Improved says "Started as a freshman"), divided above an overall of 55 by 1 plus a tenth of the points
 over it (`DEV_TOP`, `DEV_TOP_SPAN`: the last points come slowest, so a 75 grows at a third of the
 pace; without it a career's 2027 seniors had about 125 players rated 85+ where the real 2026
 seniors had 25, at every position, and the draft's first round filled with them;
