@@ -59,6 +59,11 @@ def watch(page, selector: str, control: str = None, scrolled: bool = True):
     if control:
         page.eval_on_selector(control, "e => e.scrollIntoView({ block: 'nearest' })")
         time.sleep(0.3)
+        if scrolled:   # the control already sat in the first screen (CI's fonts and data decide that): scroll the page so it sits
+            page.eval_on_selector(control, """e => { if (window.scrollY > 0) return;   // near the top, and the scroll check has a baseline
+                const room = document.documentElement.scrollHeight - innerHeight, top = e.getBoundingClientRect().top - 12;
+                if (room > 0 && top > 0) window.scrollTo(0, Math.min(room, top)); }""")
+            time.sleep(0.3)
     h = page.query_selector(selector)
     assert h, selector
     s = page.evaluate("""(el) => { const s = window.__smooth = { el, gone: 0, top: el.scrollTop, page: window.scrollY };

@@ -1896,6 +1896,7 @@ def position_candidates(state: dict, slug: str, role: str) -> dict:
     ss = (state.get("season_stats") or {}).get(slug, {}).get("players", {})
     injured = (state.get("injuries") or {}).get(slug, {})
     yours = bool(state.get("career")) and slug == state.get("team") and not state.get("done")
+    dev = development_reads(state, slug)
     pos = "KR" if role in ("KR", "PR") else ROLE_POSITION.get(role, role)
     current = depth_order(state, slug, role)
     columns = DEPTH_COLUMNS.get(role, [])
@@ -1912,7 +1913,7 @@ def position_candidates(state: dict, slug: str, role: str) -> dict:
                      "rating": rating, "natural": shown_overall(p), "starter": bool(p.get("in_game")),
                      "in_role": p["slug"] in current, "spot": (current.index(p["slug"]) + 1) if p["slug"] in current else None,
                      "games": rec["games"] if rec else 0, "headline": awards.headline({"stats": st}, group) if st else "",
-                     "dev_trait": p.get("dev_trait"), "archetype": p.get("archetype"),
+                     **dev.get(p["slug"], {}), "archetype": p.get("archetype"),
                      "moved_from": (moves.get(p.get("slug")) or {}).get("from"),
                      "attrs": {k: (p.get("attributes") or {}).get(k) for k in columns},
                      "injury": {"type": inj["type"], "weeks_left": inj["weeks_left"]} if (inj := injured.get(f"{p['name']}|{p['position']}")) else None,
@@ -1985,6 +1986,7 @@ def _depth_card(state: dict, slug: str):
     injured = (state.get("injuries") or {}).get(slug, {})
     yours = bool(state.get("career")) and slug == state.get("team") and not state.get("done")   # your roster: redshirt in place
     moves = position_changes(state, slug)
+    dev = development_reads(state, slug)                     # your roster: coachability and potential
 
     def card(p: dict, role: str) -> dict:
         inj = injured.get(f"{p['name']}|{p['position']}")
@@ -1996,7 +1998,7 @@ def _depth_card(state: dict, slug: str):
         return {"name": p["name"], "slug": p.get("slug"), "position": p["position"], "role": p.get("role"), "depth": p.get("depth"), "class": p.get("class"),
                 "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"), "overall": shown_overall(p, base_by_slug.get(p.get("slug"))),
                 "starter": bool(p.get("in_game")), "games": rec["games"] if rec else 0,
-                "dev_trait": p.get("dev_trait"), "archetype": p.get("archetype"),
+                **dev.get(p.get("slug"), {}), "archetype": p.get("archetype"),
                 "form": round(player_form(state, slug, p["name"], p["position"]), 2) if morale_on(state) else 0.0,
                 "headline": awards.headline({"stats": st}, group) if st else "",
                 "injury": {"type": inj["type"], "weeks_left": inj["weeks_left"], "returns_week": state["current_week"] + inj["weeks_left"]} if inj else None,
@@ -2360,6 +2362,10 @@ def load_season(season_id: str) -> Optional[dict]:
     if state.get("recruiting"):
         recruiting.upgrade_asks(state)     # careers saved before prospects had NIL asks
         recruiting.upgrade_generational(state)   # careers saved before generational prospects
+        recruiting.heal_contacts(state)    # careers saved with a call left open, or portal contact marks that never cleared
+    if state.get("career"):
+        from coach_career import coach_names
+        coach_names.distinct(state)        # careers saved with one coach in two jobs or two coaches under one name
     return state
 
 
@@ -3126,6 +3132,14 @@ def _coach_line(state: dict, team: dict) -> dict:
     """Who is coaching your team this season, for the season page header: your created coach
     (the Your coach page) or the team's own head coach, and who runs each side."""
     coach = state.get("coach")
+    # a career's coordinators are its staff's (coach_names: the data's head coach doubling as OC is his own man there)
+    names = {s["role"]: s["name"] for s in ((state.get("career") or {}).get("staff") or []) if s.get("role") in ("OC", "DC")}
+    if names:
+        cs = {**(team.get("coaches") or {})}
+        for role, key in (("OC", "offensive_coordinator"), ("DC", "defensive_coordinator")):
+            if role in names and cs.get(key):
+                cs[key] = {**cs[key], "name": names[role]}
+        team = {**team, "coaches": cs}
     if coach:
         return {**{k: coach.get(k) for k in ("id", "first_name", "last_name", "archetype", "offense_scheme",
                                               "defense_scheme", "calls_offense", "calls_defense", "look")},
@@ -3845,6 +3859,32 @@ def team_data(state: dict, slug: str) -> dict:
     return with_edits(load_teams()[slug], team_edits(state, slug))
 
 
+def development_reads(state: dict, slug: str) -> dict[str, dict]:
+    """player slug -> {"coachability": his level (recruits.COACHABILITY's words), "coach_level": 1
+    (Coach's Dream) to 6 (Set in His Ways), "potential_word": the word for his projected overall at
+    his potential (the scouting report's Potential headline words)} for your own roster only: the coach knows his
+    players; anyone else's (a future portal entrant among them) stays hidden. From the career's league
+    once it has one, else the real 2026 players' seeded values (league.base_development)."""
+    if not slug or slug != state.get("team"):
+        return {}
+    from coach_career import league as lg, recruits
+    from teamdata import game_scale
+    levels = [name for name, _, _ in recruits.COACHABILITY]
+    lgd = state.get("league") or {}
+    roster = ((lgd.get("teams") or {}).get(slug) or {}).get("roster")
+    if roster:
+        attrs = lgd.get("attrs") or game_scale.keys()
+        pairs = {c["id"]: (c.get("c"), game_scale.overall(lg.potential(c, attrs), c["pos"])) for c in roster}
+    else:
+        pairs = lg.base_development()
+    out = {}
+    for p in load_teams()[slug]["offense"] + load_teams()[slug]["defense"]:
+        c, pot = pairs.get(p.get("slug"), (None, 0))
+        if c in levels:
+            out[p["slug"]] = {"coachability": c, "coach_level": levels.index(c) + 1, **({"potential_word": recruiting.word(pot)} if pot else {})}
+    return out
+
+
 def edit_player(state: dict, slug: str, player_slug: str, changes: dict) -> dict:
     """Store god-mode changes to one player. Ratings are whole numbers 0-99; the class, the
     development trait and the size must be real values. Names and positions stay as they
@@ -4137,7 +4177,8 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         "class": p.get("class"), "class_name": CLASS_NAMES.get(p.get("class") or "", p.get("class")), "height": p.get("height"),
         "weight": p.get("weight"), "jersey": p.get("jersey"), "dev_trait": p.get("dev_trait"), "starter": bool(p.get("in_game")),
         "injured": injured, "overall": shown_overall(p, base_p), "stars": recruit_stars(base_p), "ratings": ratings,
-        "edited": sorted(player_edits(state, team).get(p.get("slug"), {}).keys()), "editable_classes": list(CLASS_NAMES), "dev_traits": list(DEV_TRAITS),
+        "edited": sorted(player_edits(state, team).get(p.get("slug"), {}).keys()), "editable_classes": list(CLASS_NAMES),
+        **development_reads(state, team).get(p.get("slug"), {}),
         "key_ratings": key_ratings,
         # ratings v2: the position's attributes, the measurables, play style and traits
         "attributes": [{"key": k, "label": ratings_v2.ATTRIBUTES[k][0], "group": ratings_v2.ATTRIBUTES[k][1],
