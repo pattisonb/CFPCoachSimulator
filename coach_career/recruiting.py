@@ -1292,6 +1292,34 @@ def _home_game_left(state: dict, slug: str, pid: Optional[str] = None) -> Option
     return min(weeks) if weeks else None
 
 
+def home_weekends(state: dict, slug: str) -> list[dict]:
+    """The school's regular-season home games still to play after this week, in order, as the visit picker
+    lists them: {week, label (the week's label), opponent, opponent_name, opponent_rank (the current top 25,
+    or None)}. One list per view: `visit_weekends` adds what is per prospect."""
+    from sim import season
+    teams = season.load_teams()
+    ranks = season.rank_map(state, state["current_week"])
+    games = sorted((g for g in state["games"].values()
+                    if g["home"] == slug and g["kind"] == "regular" and not g["played"] and g["week"] > state["current_week"]),
+                   key=lambda g: g["week"])
+    return [{"week": g["week"], "label": season.week_label(g["week"]), "opponent": g["away"],
+             "opponent_name": season.team_display(g["away"], teams), "opponent_rank": ranks.get(g["away"])} for g in games]
+
+
+def visit_weekends(state: dict, slug: str, pid: str, homes: Optional[list] = None) -> list[dict]:
+    """The school's home weekends for him: `home_weekends` plus `taken_by` (the name of the school he
+    visits that weekend, or None) and `first` (the one the game books without a week picked)."""
+    homes = home_weekends(state, slug) if homes is None else homes
+    taken = {v["week"]: s for s, v in (state["recruiting"]["visits"].get(pid) or {}).items() if s != slug}
+    out, seen = [], False
+    for h in homes:
+        held = taken.get(h["week"])
+        first = held is None and not seen
+        seen = seen or first
+        out.append(dict(h, taken_by=school_name(held) if held else None, first=first))
+    return out
+
+
 def manual_offers(state: dict, slug: str) -> set[str]:
     """Your offers made by hand (through `act`), which Auto-recruit never pulls; empty for any
     other school (Auto-recruit's own offers and the AI's are never marked)."""
@@ -1312,11 +1340,13 @@ _LAST_LOOK: list = [None]        # the trip's look entry, for the scout action's
 
 
 def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
-        scene: Optional[str] = None, answer: Optional[str] = None, topics: Optional[list] = None) -> dict:
+        scene: Optional[str] = None, answer: Optional[str] = None, topics: Optional[list] = None,
+        week: Optional[int] = None) -> dict:
     """One recruiting action by `slug` on prospect `pid` this week. Its interest lands at the week
     step (you see his list move next week), so this returns no interest. Your call or in-home visit
     without a pitch opens a scene (returned); `answer` with the scene's id fields his question
-    (`_answer`); `pitch` with the scene's id finishes it and returns his reaction. Raises RecruitingError."""
+    (`_answer`); `pitch` with the scene's id finishes it and returns his reaction. `week`: the home
+    weekend an official visit is for (none: his first free one). Raises RecruitingError."""
     rc = state["recruiting"]
     if action == "answer":
         return _answer(state, slug, pid, scene, answer)
@@ -1334,7 +1364,7 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
             _event(state, "pitch", pid, slug, action=sc["action"], pitch=pitch, reaction=said["kind"])
         return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed}}
     opens = slug == state.get("team") and action in SCENES and pitch is None
-    revealed = _act(state, slug, pid, action, pitch, nil, opens=opens)
+    revealed = _act(state, slug, pid, action, pitch, nil, opens=opens, visit_week=week)
     if action in ("offer", "raise_nil") and slug == state.get("team"):     # your offer or your NIL by hand: Auto-recruit leaves it be
         marks = rc.setdefault("manual_offers", [])
         if pid not in marks:
@@ -1592,11 +1622,14 @@ def latest_report(state: dict) -> Optional[dict]:
 
 
 def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
-         scale: float = 1.0, scene: Optional[str] = None, opens: bool = False, auto: bool = False) -> Optional[str]:
+         scale: float = 1.0, scene: Optional[str] = None, opens: bool = False, auto: bool = False,
+         visit_week: Optional[int] = None) -> Optional[str]:
     """The one action path every school takes (yours, the AI's, Auto-recruit's). Only `act` passes
     `opens` (your call or visit with no pitch: a scene, no points yet) and `scene` (the pitch that
     finishes it); every other caller keeps the one-shot path. `auto`: Auto-recruit's contact, which
-    never pesters him."""
+    never pesters him. `visit_week`: the home weekend an official visit is for, one of your remaining
+    regular-season home games he has not booked elsewhere (only you pick one; Auto-recruit and the
+    AI take his first free weekend)."""
     rc = state["recruiting"]
     p = rc["prospects"].get(pid)
     if p is None:
@@ -1698,6 +1731,13 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             contact.update(asked=True, last_contact=week)
             contact.pop("pester", None)
             points = BASE_POINTS["official_visit"]
+        elif visit_week is not None:               # the weekend you picked: one of your home games left, free on his side
+            if visit_week not in {h["week"] for h in home_weekends(state, slug)}:
+                raise RecruitingError(409, "That is not a home weekend you have left.")
+            taken = {v["week"]: s for s, v in rc["visits"].get(pid, {}).items() if s != slug}
+            if visit_week in taken:
+                raise RecruitingError(409, f"He is visiting {school_name(taken[visit_week])} that weekend.")
+            rc["visits"].setdefault(pid, {})[slug] = {"week": visit_week, "done": False}
         else:
             game_week = _home_game_left(state, slug, pid)
             if game_week is None:

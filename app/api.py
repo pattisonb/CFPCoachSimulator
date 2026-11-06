@@ -1168,9 +1168,10 @@ def recruit_action(p: Params) -> dict:
     pid, action = _field(p, "pid", str), _field(p, "action", str)
     pitch, nil, scene = _field(p, "pitch", str, None), _field(p, "nil", int, 0), _field(p, "scene", str, None)
     answer, topics = _field(p, "answer", str, None), _field(p, "topics", list, None)
+    week = _field(p, "week", int, None)                # an official visit's home weekend, when you picked one
     if pid not in recruiting.visible(st):
         raise ApiError(404, "unknown prospect")
-    out = _recruiting_call(recruiting.act, st, st["team"], pid, action, pitch, nil, scene, answer, topics)
+    out = _recruiting_call(recruiting.act, st, st["team"], pid, action, pitch, nil, scene, answer, topics, week)
     _save_loaded()
     return out
 
