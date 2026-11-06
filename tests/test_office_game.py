@@ -114,6 +114,39 @@ def sim_week(page, base, sid) -> None:
     time.sleep(1.0)
 
 
+def check_gameday(page, base, sid) -> None:
+    """Game Day alone (the week not advanced): the hero leads with your result and still shows the next game;
+    it never calls a week you just played a bye."""
+    page.wait_for_selector("#tab-office .go-play [data-play=gameday]:not([disabled])", timeout=60_000)
+    page.click("#tab-office .go-play [data-play=gameday]")
+    page.wait_for_selector("#gd-skip", timeout=600_000)          # the game plays drive by drive: skip to the final
+    page.click("#gd-skip")
+    page.wait_for_selector(".modal:not([hidden]) .modal-close", timeout=60_000)   # the box score opens on the final
+    page.click(".modal:not([hidden]) .modal-close")
+    page.wait_for_selector("#tab-office .go-game-last .go-leaders li", timeout=120_000)
+    time.sleep(1.0)
+    s = call(base, f"/api/season/{sid}")
+    this = next(x for x in s["schedule"] if x["opponent"] and x["week"] == s["current_week"] + 1)
+    nxt = next(x for x in s["schedule"] if x["opponent"] and not x["played"])
+    assert this["played"] and not nxt["played"], (this, nxt)
+    k = page.text_content("#tab-office .go-game-next .go-kicker")
+    want = f"{'Won' if this['won'] else 'Lost'} {this['points_for']}–{this['points_against']} This Week · Next Game · "
+    assert k.startswith(want) and "Bye" not in k and (s["week_labels"].get(str(nxt["week"])) or f"Week {nxt['week']}") in k, (k, want)
+    assert nxt["opponent_name"] in page.text_content("#tab-office .go-game-next")
+    assert page.query_selector("#tab-office .go-play [data-play=advance]:not([disabled])"), "Advance is next"
+
+
+def check_week_strip(page, base, sid) -> None:
+    """The week strip (Pre, W1 ... Title) is for the screens that show a picked week; Standings, Stats, Awards,
+    Season Recap and Bowls show the season as it stands and leave it out."""
+    open_tab(page, base, sid, "standings", "#tab-standings table")
+    assert page.eval_on_selector("#week-strip", "e => e.offsetParent === null"), "no week strip on Standings"
+    page.click("#season-tabs button[data-tab=rankings]")
+    page.wait_for_selector("#tab-rankings:not([hidden])")
+    assert page.eval_on_selector("#week-strip", "e => e.offsetParent !== null"), "the week strip on Rankings"
+    clean(page)
+
+
 def check_played(page, base, sid) -> None:
     s = call(base, f"/api/season/{sid}")
     last = [x for x in s["schedule"] if x["played"] and x["opponent"]][-1]
@@ -280,10 +313,12 @@ if __name__ == "__main__":
             page.on("dialog", lambda d: d.dismiss())
             check_upcoming(page, base, play["id"])
             check_bye(page, base, bye["id"])
+            check_week_strip(page, base, bye["id"])
             check_no_game(page, base, done["id"])
             check_roster(page, base, play["id"])
             check_tip(page, base, play["id"])
             open_tab(page, base, play["id"], "office", "#tab-office .ofc-hero")
+            check_gameday(page, base, play["id"])
             sim_week(page, base, play["id"])
             check_played(page, base, play["id"])
             check_phone(page, base, play["id"])
