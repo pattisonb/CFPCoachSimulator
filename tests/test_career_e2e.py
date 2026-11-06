@@ -59,12 +59,19 @@ def tab_click(page, tab: str) -> None:
     hidden = "(s) => document.querySelector(s).classList.contains('tab-ovf')"
     # the row lays out after the page shows (layoutTabs on load and resize): a tab visible at the first look can move
     # behind More a moment later, so a click that does not land is followed by a fresh look
-    for _ in range(3):
+    for _ in range(4):
         if page.evaluate(hidden, sel):
             label = page.evaluate("(s) => document.querySelector(s).textContent.trim()", sel)
             page.click("#tab-more")
-            page.click(f".go-menu .go-menu-item:has(b:text-is('{label}'))")
-            return
+            try:
+                page.click(f".go-menu .go-menu-item:has(b:text-is('{label}'))", timeout=5_000)
+                return
+            except Exception:
+                # the row re-laid out between the look and the menu (a font arriving, layoutTabs on
+                # fonts loadingdone), so More no longer lists it: close the menu and look again
+                page.keyboard.press("Escape")
+                time.sleep(0.3)
+                continue
         try:
             page.click(sel, timeout=5_000)
             return

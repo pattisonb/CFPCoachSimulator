@@ -984,7 +984,7 @@
   }
   // the week strip's panel: the season's screens; a career screen shows it only for a one-week sim's bar
   function syncWeeksPanel() {
-    const onCareer = document.body.classList.contains("career-mode") && CAREER_TABS.includes(state.tab);
+    const onCareer = document.body.classList.contains("career-mode") && (CAREER_TABS.includes(state.tab) || NO_WEEK_TABS.includes(state.tab));
     const bar = !$("#season-progress").hidden || !$("#season-progress-text").hidden;
     $("#season-weeks").hidden = onCareer && !bar;
   }
@@ -1180,6 +1180,7 @@
     for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "programs", "office", "offseason", "recruiting", "prospects", "scouting", "classes"]) $(`#tab-${t}`).hidden = t !== name;
     document.body.classList.toggle("on-office", name === "office");
     document.body.classList.toggle("on-career-tab", CAREER_TABS.includes(name));
+    document.body.classList.toggle("no-week-strip", NO_WEEK_TABS.includes(name));
     document.body.classList.toggle("on-offseason", name === "offseason");
     syncWeeksPanel();
     boardFit();
@@ -1315,6 +1316,8 @@
 
   // Coach Career: the recruiting tabs (recruiting.js) and the week's steps under the header
   const CAREER_TABS = ["offseason", "office", "recruiting", "prospects", "scouting", "classes", "programs"];
+  // league tabs that show the season as it stands, never a picked week: the week strip stays off them
+  const NO_WEEK_TABS = ["standings", "stats", "awards", "summary", "bowls"];
   // the League menu follows the calendar in a career: the bracket and bowls once the field is set
   // (as Championship Week ends), the awards once the races have a shape, the classes once signing opens,
   // the summary when the season is done; a plain season keeps every tab

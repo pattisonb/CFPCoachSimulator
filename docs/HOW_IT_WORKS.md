@@ -1206,8 +1206,9 @@ opens on the **Office**, two columns (one below 900 px). On the left: the **Next
 week and date, the game's name or rivalry, a Home Game / Away Game / Neutral Site chip, both teams
 with marks, ranks, mascots and records; for this week's game the **Win Chance**, the game preview's
 simulated win probability shown between 1% and 99%, and the projected score; then the play card
-with **Game Day** first while your game is unplayed). On a bye it says "Bye This Week" and names
-the next opponent; a week with no game left says so; once the season is over it is the Season
+with **Game Day** first while your game is unplayed). Once Game Day is played and the week not yet
+advanced, the kicker leads with your result ("Won 83–0 This Week · Next Game · Week 5"). On a bye it
+says "Bye This Week" and names the next opponent; a week with no game left says so; once the season is over it is the Season
 Complete card with **On to the Offseason**. Under it **Last Game** (W or L and the final, Pass
 Yds, Rush Yds, TFL and Sacks for your side, the score by quarter, the game's top passer, rusher,
 receiver and defender, and **Full Box Score**, the box-score modal with its `box:` token) beside
@@ -1847,8 +1848,9 @@ chip**: the team mark, the school, then small "#7 · 3-1 · Week 5" (the rank on
 once the committee ranks; "Offseason" once the games are done, "Final" for an older plain season).
 Its title carries the longer line the banner used to show (the next game, the sim date, the
 champion). A sim's statuses patch it week by week (`liveHead`), so the record ticks up while it
-runs. The week strip keeps its own panel on the season's screens (Schedule, Standings, Rankings
-and the rest); the career screens leave it out, and a one-week sim's bar shows there.
+runs. The week strip keeps its own panel on the screens that show a picked week (Games, Schedule,
+Rankings, Bracket); the career screens and the screens that show the season as it stands (Standings,
+Stats, Awards, Season Recap, Bowls) leave it out, and a one-week sim's bar still shows there.
 
 **The League menu: League ▾** (`season.js` `openTabLeague`, `labelLeague`). The career tabs (Office or
 Offseason, Recruiting, Prospects, Scouting, Schedule, Depth Chart) are the row; the league tabs (Standings, Rankings,
