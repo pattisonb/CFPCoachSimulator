@@ -2489,6 +2489,16 @@ and panel headings and the active tab take the accent. Michigan is maize on dark
 navy on light and white on dark, Oregon is green on light and yellow on dark, and so on;
 the accent is re-picked when the theme toggle flips.
 
+### The browser tab (`web/season.js`, `tabIdle`, `tabSim`, `tabDone`)
+
+An open career names the tab after the dynasty ("Ohio State Dynasty"). While a sim runs the title
+leads with the progress and your record ("42% · 4-1 · Wk 6 · Ohio State Dynasty") and the favicon
+wears a progress ring in your primary color (the page's own icon drawn on a canvas with the ring
+over it, the `link rel="icon"` hrefs swapped to the PNG), so a tab in the background still says where
+the sim is. When it ends the title reads "Done · 9-3 · …" with a full green ring ("Sim Failed" and
+red on an error) and stays that way while the tab is hidden; a moment after you come back the name
+and the real favicon return. `tests/test_tab_status.py` drives a week and checks each state.
+
 ### Smooth actions (`web/ui.js`)
 
 An action patches the screen in place; it never rebuilds the part of the page the player is
