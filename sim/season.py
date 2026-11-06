@@ -229,7 +229,28 @@ def _house_scale() -> dict:
         p4 = p4_vals.get(gk) or vals
         k_hi, k_lo = slopes.get(gk[0], (1.5, 1.5))
         _scale_cache[gk] = (st.median(p4), k_hi, k_lo)
+    # the returner scale is one scale for every position (a linebacker's own would put any return
+    # rating above the linebackers' 1 at 99): the league's designated returners are its 50 mark
+    rets = [v for slug, t in teams.items() if not t["fictional"]
+            for p in t["offense"] + t["defense"] if p.get("slug") in (t.get("kick_returner"), t.get("punt_returner"))
+            for v in [p.get("return_rating")] if isinstance(v, (int, float))]
+    if len(rets) > 1:
+        sd = st.pstdev(rets)
+        k_hi = max(0.5, min(4.0, 15 / sd if sd > 1.0 else 2.0))
+        _scale_cache[("KR", "return_rating")] = (st.median(rets), k_hi, k_hi * BELOW)
     return _scale_cache
+
+
+RETURN_POSITIONS_OUT = ("K", "P", "OL", "DL", "QB")   # never returners, as the engine's best_returner has it
+
+
+def return_value(p: dict) -> int:
+    """A player's return rating in engine units: the roster's, else what the engine falls back to
+    (speed and elusiveness, roster.return_skill)."""
+    v = p.get("return_rating")
+    if isinstance(v, (int, float)):
+        return int(v)
+    return int(round(((p.get("speed") or 50) + ((p.get("attributes") or {}).get("elusiveness") or p.get("elusiveness") or 50)) / 2))
 
 
 def house_value(pos: str, key: str, v: float) -> int:
@@ -247,7 +268,8 @@ def house_to_engine(pos: str, key: str, ours: float) -> int:
 
 
 def display_rating(p: dict, key: str, value: Optional[float] = None) -> int:
-    return house_value(p["position"], key, p.get(key) if value is None else value)
+    pos = "KR" if key == "return_rating" else p["position"]      # the return rating is on the returners' scale, whoever he is
+    return house_value(pos, key, p.get(key) if value is None else value)
 
 
 def engine_rating(p: dict, key: str, ours: float) -> int:
@@ -1924,7 +1946,9 @@ def position_candidates(state: dict, slug: str, role: str) -> dict:
     moves = position_changes(state, slug)
     rows = []
     for p in team["offense"] + team["defense"]:
-        rating = (house_value(p["position"], "return_rating", int(p.get("return_rating") or 0)) if pos == "KR"
+        if pos == "KR" and p["position"] in RETURN_POSITIONS_OUT and p["slug"] not in current:
+            continue                                  # linemen, quarterbacks and kickers never return (the engine agrees)
+        rating = (house_value("KR", "return_rating", return_value(p)) if pos == "KR"
                   else shown_overall(p) if same_group(pos, p["position"]) else house_value(pos, "overall", overall_at(p, pos)))
         rec = ss.get(f"{p['name']}|{p['position']}")
         st = rec["stats"] if rec else {}

@@ -209,7 +209,9 @@ personnel on offense, nickel on defense); the rest of the 85-man roster rotates 
 **Returners are roles, not roster slots.** The designated kick and punt returners return
 kicks whether or not they start. If a team has no designated returner, the engine picks
 the best return rating: 35% EA kick-return skill, 20% speed, 15% acceleration, 15%
-elusiveness, 10% vision, 5% ball security. Return yardage and return-touchdown odds use
+elusiveness, 10% vision, 5% ball security. On the page every player's returner rating sits on one
+scale, whatever his position (the league's designated returners are its 50 mark), and the
+KR and PR lists leave out linemen, quarterbacks and kickers. Return yardage and return-touchdown odds use
 the same rating.
 
 **Punts** (`_attempt_punt` in `engine/drive_functions.py`, constants `PUNT_*` in
