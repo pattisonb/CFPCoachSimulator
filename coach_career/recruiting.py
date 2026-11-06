@@ -337,6 +337,41 @@ def is_generational(state: dict, pid: str) -> bool:
     return not rc.get("portal") and pid in (rc.get("generational") or ())
 
 
+_STEP_WEEK: list = [None]        # the season week whose step is running (weekly_step), else None
+
+
+def contact_week(state: dict) -> int:
+    """The recruiting week a message or call counts against (WEEKLY_ONCE): the week whose step lands
+    it. Your actions now land at the next step (the current week plus one); Auto-recruit's and the
+    AI's, made during a step, land at that step. So your staff on Auto never use up the week you are
+    about to play. In the portal it is the portal's own week (the season's week stands still there)."""
+    rc = state["recruiting"]
+    if rc.get("portal"):
+        return rc.get("week") or 1
+    return _STEP_WEEK[0] if _STEP_WEEK[0] is not None else state["current_week"] + 1
+
+
+def heal_contacts(state: dict) -> bool:
+    """A career saved with a call or visit left open from an earlier week (it never closed), or in
+    the portal with message and call marks from the season's frozen week (they never cleared): both
+    blocked a contact for good. Drops them. Returns whether anything changed."""
+    rc = state.get("recruiting") or {}
+    changed = False
+    for slug, by in list((rc.get("scenes") or {}).items()):
+        for pid in [q for q, sc in by.items() if sc.get("week") != state.get("current_week")]:
+            del by[pid]
+            changed = True
+    if rc.get("portal"):
+        weeks = range(1, (rc.get("weeks") or PORTAL_WEEKS) + 1)
+        for by in (rc.get("contacts") or {}).values():
+            for c in by.values():
+                marks = c.get("week") or {}
+                for action in [a for a, w in marks.items() if w not in weeks]:
+                    del marks[action]
+                    changed = True
+    return changed
+
+
 def upgrade_generational(state: dict) -> bool:
     """A career saved before generational prospects: draw its class's. Returns whether it did."""
     rc = state.get("recruiting") or {}
@@ -1286,7 +1321,7 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
         return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed}}
     opens = slug == state.get("team") and action in SCENES and pitch is None
     revealed = _act(state, slug, pid, action, pitch, nil, opens=opens)
-    if action == "offer" and slug == state.get("team"):     # your offer by hand: Auto-recruit leaves it be
+    if action in ("offer", "raise_nil") and slug == state.get("team"):     # your offer or your NIL by hand: Auto-recruit leaves it be
         marks = rc.setdefault("manual_offers", [])
         if pid not in marks:
             marks.append(pid)
@@ -1565,7 +1600,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
     contact = rc["contacts"].setdefault(pid, {}).setdefault(slug, {"n": 0, "hc_week": None})
     week, revealed, points = state["current_week"], None, 0.0
     you = slug == state.get("team")                   # your actions go in the log for his History (the AI's are not kept)
-    if action in WEEKLY_ONCE and (contact.get("week") or {}).get(action) == week:
+    if action in WEEKLY_ONCE and (contact.get("week") or {}).get(action) == contact_week(state):
         raise RecruitingError(409, f"you already {'messaged' if action == 'message' else 'called'} him this week")
     if action == "scout" and report_complete(rc["reads"].get(pid)):
         raise RecruitingError(409, f"his report is complete: {REPORT_LOOKS} of {REPORT_LOOKS} looks")
@@ -1693,7 +1728,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         if you:                                       # a message, call or in-home visit (a scene's pitch is logged when it lands)
             _event(state, "contact", pid, slug, action=action, **({"pitch": pitch} if pitch else {}))
         if action in WEEKLY_ONCE:
-            contact.setdefault("week", {})[action] = week
+            contact.setdefault("week", {})[action] = contact_week(state)
         if action in ("call", "hc_visit"):
             persona.learn_on_contact(state, slug, pid, action)
             persona.knock_back(state, slug, pid, action)       # a Surprise Visit's school: a top-three school's call or visit knocks it back
@@ -2008,7 +2043,9 @@ def _auto_week(state: dict, slug: str, rng: random.Random, board: list, spots_le
                     open_[_group_of(q)] += 1
                 except RecruitingError:
                     pass
-    for pid in offers:                          # asked for more: raise once to his ask, as the budget allows
+    for pid in offers:                          # asked for more: raise once to his ask, as the budget allows (your hand's NIL stays yours)
+        if pid in kept:
+            continue
         c = _contact(state, slug, pid)
         if c.get("asked_more") and not c.get("ai_raised") and rc["status"][pid]["committed"] in (None, slug):
             want = min(ask_from(state, slug, pid, win), _nil(state, slug)["held"].get(pid, 0) + nil_left(state, slug))
@@ -2472,6 +2509,14 @@ def weekly_step(state: dict, week: int, auto_user: bool = False) -> list[dict]:
     """The recruiting week after `week`'s games: visits, every AI school (and yours on Auto),
     commitment draws, signing, then the hours reset. Returns the week's events. In the portal
     `week` is the portal week (1-4) and entrants decide at each step instead of committing."""
+    _STEP_WEEK[0] = state["current_week"]      # the contacts made in the step count against the week it lands (contact_week)
+    try:
+        return _weekly_step(state, week, auto_user)
+    finally:
+        _STEP_WEEK[0] = None
+
+
+def _weekly_step(state: dict, week: int, auto_user: bool) -> list[dict]:
     from sim import season
     rc = state["recruiting"]
     start_log = len(rc["log"])
@@ -2902,12 +2947,18 @@ def make_staff(state: dict) -> list[dict]:
     from sim import season
     t = season.load_teams()[state["team"]]
     rng = random.Random(f"staff-{state.get('rng_state', 0)}-{state['team']}")
-    taken = {p["name"].lower() for p in state["recruiting"]["prospects"].values()}
+    from coach_career import coach_names
+    you = (state.get("career") or {}).get("coach")
+    hc_name = (you or {}).get("name") or ((t.get("coaches") or {}).get("head_coach") or {}).get("name")
+    # no recruiter shares a prospect's name, a coach's or yours (coach_names: one coach, one name)
+    taken = {p["name"].lower() for p in state["recruiting"]["prospects"].values()} | coach_names.base_names() | {(hc_name or "").lower()}
     staff = []
     for sid, role, key in (("oc", "OC", "offensive_coordinator"), ("dc", "DC", "defensive_coordinator")):
         c = (t.get("coaches") or {}).get(key) or {}
         r = c.get("ratings") or {}
-        staff.append({"id": sid, "role": role, "name": c.get("name") or role, "evaluation": int(r.get("player_development", 60)),
+        name = coach_names.coordinator_name(state["team"], key, c.get("name") or "", hc_name, bool(you)) or role
+        taken.add(name.lower())
+        staff.append({"id": sid, "role": role, "name": name, "evaluation": int(r.get("player_development", 60)),
                       "recruiting": int(r.get("recruiting", 60))})
     for i in range(1, 4):
         staff.append({"id": f"r{i}", "role": "Recruiter", "name": recruits._name(rng, taken),

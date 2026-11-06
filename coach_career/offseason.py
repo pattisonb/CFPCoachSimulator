@@ -232,10 +232,13 @@ def start(state: dict) -> dict:
     from sim import season
     if state.get("offseason"):
         return state["offseason"]
+    from coach_career import coach_names
     year = season.season_year(state) + 1
+    built = not state.get("league")
     lgd = state.get("league") or lg.from_base(year)
     lgd["year"] = year
     state["league"] = lgd
+    coach_names.distinct(state, built=built)     # one coach, one name: your coach's record is yours, no one doubles up
     _season_moves(state, lgd)
     record_seasons(state, lgd)
     usage = _usage()
@@ -1973,12 +1976,23 @@ def _new_coach(lgd: dict, role: str, slug: str, year: int, rng: random.Random, l
     (a little below: a first-time hire), scheme and tendencies from `like` (the program's
     predecessor) or a random coach."""
     import json
+    from coach_career import carousel
     model = rng.choice(_coach_pool(lgd, role))
     base = json.loads(json.dumps(like or model))
     ratings = {k: int(max(30, min(95, v + rng.gauss(-2, 6)))) for k, v in model["ratings"].items()}
-    base.update(name=recruits._name(rng, set()), ratings=ratings, since=year, coach_id=f"{slug}:{role}:{year}",
+    base.update(name=recruits._name(rng, carousel._taken_names(lgd)), ratings=ratings, since=year, coach_id=f"{slug}:{role}:{year}",
                 previous_job="Promoted from the staff", ratings_generated=True)
     return base
+
+
+def _staff_taken(state: dict) -> set[str]:
+    """The names a candidate for your staff may not have (lowercase, as recruits._name checks):
+    every coach in the league and the market, your staff and you."""
+    from coach_career import carousel, coach_names
+    taken = carousel._taken_names(state["league"]) if state.get("league") else set()
+    taken |= {s["name"].lower() for s in state["career"]["staff"]}
+    mine = coach_names.player_name(state)
+    return taken | ({mine.lower()} if mine else set())
 
 
 STAFF_ROLES = {"OC": "offensive_coordinator", "DC": "defensive_coordinator"}
@@ -2012,7 +2026,7 @@ def _staff_changes(state: dict, poached: list[str], why: Optional[dict] = None, 
     staff = state["career"]["staff"]
     year = state["offseason"]["year"]
     leaving, candidates, reasons, renewed, turned_down = [], {}, {}, [], {}
-    taken = {s["name"] for s in staff}
+    taken = _staff_taken(state)
     for s in staff:
         if s["role"] in STAFF_ROLES:
             gone = STAFF_ROLES[s["role"]] in poached
@@ -2125,7 +2139,7 @@ def open_role(state: dict, staff_id: str) -> dict:
     off.setdefault("coaching_changes", []).append({"team": me, "role": key or "recruiter", "old": s["name"], "reason": "let go"})
     off.setdefault("staff_open", {})[s["id"]] = "was let go"
     staff_off["leaving"].append(s["id"])
-    staff_off["candidates"][s["id"]] = _candidates(state, s, _rng(state, f"open-{s['id']}"), {x["name"] for x in state["career"]["staff"]})
+    staff_off["candidates"][s["id"]] = _candidates(state, s, _rng(state, f"open-{s['id']}"), _staff_taken(state))
     return staff_off
 
 

@@ -56,6 +56,13 @@ gains `rate x coach factor x (potential - current) x random (0.8 to 1.2)`.
 - **It can change:** a breakout year, awards or a new position coach can move a player up a level;
   off-field trouble or a lost year down.
 - **Recruits:** not tied to stars (some two-stars are Coach's Dreams). Hidden until scouted.
+- **On your roster:** the coach knows his own players, so the player page and the depth chart show
+  each one's true level ("Coachability: Quick Study") and his potential in the scouting report's
+  Potential words ("Potential: Strong"), from the career's league or, in the first season, the real
+  players' seeded values (`season.development_reads`). Nobody else's roster shows either, so a
+  future portal entrant's coachability stays a read. EA's development trait is kept on the real
+  players only to seed their potential once (`TRAIT_ROOM`); every generated player carries a
+  placeholder "Normal", and the game never shows it.
 
 ## 3. What you know: staff reads that only get sharper
 

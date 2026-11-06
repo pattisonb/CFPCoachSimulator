@@ -730,14 +730,14 @@ body.modal-open { overflow: hidden; }
 
 .tag.dev { display: inline-flex; align-items: center; gap: 4px; }
 
-/* development trait: its own line, colored by tier */
-.player-dev { margin-top: 8px; }
-.tag.dev { gap: 6px; padding: 4px 10px; font-size: 12px; color: var(--text); background: color-mix(in srgb, var(--dev-color) 14%, var(--panel)); border-color: var(--dev-color); }
-.tag.dev b { color: var(--dev-color); }
-.dev-normal { --dev-color: #8a94ad; }
-.dev-impact { --dev-color: #2f8f5b; }
-.dev-star { --dev-color: #d9a21b; }
-.dev-elite { --dev-color: #a24ad6; }
+/* your player's Coachability and Potential: their own line, the coachability tag's border by level (1 Coach's Dream ... 6 Set in His Ways) */
+.player-dev { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.tag.dev { --dev-color: #8a94ad; gap: 6px; padding: 4px 10px; font-size: 12px; color: var(--text); background: color-mix(in srgb, var(--dev-color) 14%, var(--panel)); border-color: var(--dev-color); }
+.tag.dev b { color: var(--text); }
+.tag.dev.coach-1 { --dev-color: #a24ad6; }
+.tag.dev.coach-2 { --dev-color: #d9a21b; }
+.tag.dev.coach-3 { --dev-color: #2f8f5b; }
+.tag.dev.coach-5, .tag.dev.coach-6 { --dev-color: #c0663a; }
 
 .recruit-stars { display: inline-flex; gap: 1px; margin-left: 10px; vertical-align: middle; font-size: 16px; line-height: 1; }
 .recruit-stars .rs { color: var(--border); }

@@ -89,6 +89,22 @@ def check_bye(page, base, sid) -> None:
     assert nxt["opponent_name"] in page.text_content("#tab-office .go-game-next")
 
 
+def check_no_game(page, base, sid) -> None:
+    """Championship Week for a team not in a title game: the hero's kicker names the week and its date, never
+    "Invalid Date" (the week's dates are a {start, end, main} record, not a date)."""
+    open_tab(page, base, sid, "office", "#tab-office .ofc-hero")
+    s = call(base, f"/api/season/{sid}")
+    hero = page.text_content("#tab-office .go-game-next .ofc-hero-head .go-kicker")
+    assert "No Game This Week" in page.text_content("#tab-office .go-game-next"), hero
+    w = str(s["current_week"] + 1)
+    assert "Invalid" not in hero and (s["week_labels"].get(w) or f"Week {w}") in hero, hero
+    main = ((s.get("week_dates") or {}).get(w) or {}).get("main")
+    assert main, w
+    from datetime import date
+    d = date.fromisoformat(main)
+    assert d.strftime("%b") in hero and str(d.day) in hero, (hero, main)
+
+
 def sim_week(page, base, sid) -> None:
     page.wait_for_selector("#tab-office .go-play [data-play=advance]:not([disabled])", timeout=60_000)
     page.click("#tab-office .go-play [data-play=advance]")
@@ -218,6 +234,16 @@ def pick_team(season):
     return season.new_season(play, "full", seed=5, career=True), season.new_season(bye, "full", seed=6, career=True)
 
 
+def pick_done(season):
+    """A career at Championship Week whose team is not in a title game (no game of its own this week)."""
+    for slug in ("rice", "kent-state", "akron", "umass", "kennesaw-state"):
+        st = season.new_season(slug, "full", seed=7, career=True)
+        season.advance_to(st, season.CCG_WEEK - 1)
+        if not any(g["week"] == season.CCG_WEEK and slug in (g["home"], g["away"]) for g in st["games"].values()):
+            return st
+    raise AssertionError("every probe team made its conference title game")
+
+
 if __name__ == "__main__":
     try:
         from playwright.sync_api import sync_playwright
@@ -229,6 +255,8 @@ if __name__ == "__main__":
     assert play and bye, "a team with a week-1 game and one with a week-1 bye"
     season.save_season(play)
     season.save_season(bye)
+    done = pick_done(season)
+    season.save_season(done)
     port = free_port()
     base = f"http://127.0.0.1:{port}"
     server = subprocess.Popen([sys.executable, "tools/dev_server.py"], cwd=ROOT, env={**os.environ, "PORT": str(port)},
@@ -252,6 +280,7 @@ if __name__ == "__main__":
             page.on("dialog", lambda d: d.dismiss())
             check_upcoming(page, base, play["id"])
             check_bye(page, base, bye["id"])
+            check_no_game(page, base, done["id"])
             check_roster(page, base, play["id"])
             check_tip(page, base, play["id"])
             open_tab(page, base, play["id"], "office", "#tab-office .ofc-hero")
@@ -264,7 +293,7 @@ if __name__ == "__main__":
         print("office game ok: Next Game before, Last Game beside the plan under the Next Game hero after a sim (quarters, leaders, Full Box Score), a bye's next "
               "opponent, the standing line, the Programs tab (and a reload), the Scouting ⓘ on a phone, the roster's OVR")
     finally:
-        for sid in (play["id"], bye["id"]):
+        for sid in (play["id"], bye["id"], done["id"]):
             try:
                 call(base, f"/api/season/{sid}", method="DELETE")
             except Exception:  # noqa: BLE001
