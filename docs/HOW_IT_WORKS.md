@@ -138,7 +138,7 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `tools/calibrate.py` | Per-team stat benchmarks against FBS 2025 averages (`league` mode uses the real rosters) |
 | `tools/fetch_linescores.py`, `tools/calibrate_late.py` | Quarter scores 2014-2025 and the late-game comparison (close games, comebacks, overtime) |
 | `tools/fetch_boxscores.py` | Downloads every played game's player box score into `data/boxscores/` |
-| `tools/derive_tendencies.py` | Each team's real 2026 pass rate, pace and usage shares, used by `teamdata/build_teams.py` |
+| `data/observed_tendencies.json`, `data/real_adjustments.json` | Each team's real 2026 pass rate, pace and usage shares, and the depth-chart and usage nudges from the real box scores; committed, read by `teamdata/build_teams.py` (the tools that derived them are gone) |
 | `tools/calibrate_players.py` | Compares sim player lines and usage shares with the real box scores |
 | `tools/forward_test.py` | Freezes the sim's picks for the next week of real games, then scores them once played |
 | `data/predictions/` | The frozen weekly picks (`weekNN.json`) and their score reports (`weekNN_score.*`) |
@@ -155,7 +155,6 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `web/recruiting.js`, `web/scouting.js`, `web/careersave.js` | The Recruiting, Prospects and Scouting tabs; Download career and Load career (`.ccsave` files) |
 | `tools/check_recruiting.py` | Plays career seasons and holds their recruiting to the real classes |
 | `tools/clean_data.py` | Clears the generated data that piles up under `data/` (orphan league files, box scores without a season, long-run output) and the site build (`dist/`, `data/base_*.json`); dry run by default |
-| `tools/export_ratings.py` | Every real player's ratings and potential on the game's scale as one JSON file (`data/player_ratings.json`, generated) |
 
 ## API
 
@@ -3008,7 +3007,9 @@ to 74.0%, Brier 0.182 both; real-versus-sim wins correlation 0.62 to 0.66;
 `calibrate_season.py 30` 74.5%, MAE 12.4, slope 1.02).
 
 Weekly refresh, in order: `python tools/fetch_results.py`, `python tools/fetch_boxscores.py`,
-`python tools/derive_tendencies.py`, `python -m teamdata.build_teams`, then the three calibration scripts.
+`python -m teamdata.build_teams`, then the three calibration scripts (`tools/derive_tendencies.py`
+and `tools/tune_from_real.py`, which wrote `data/observed_tendencies.json` and
+`data/real_adjustments.json` from the box scores, are gone; those files are committed as tuned).
 footballdb.com (season team stat tables, past seasons) is reachable from Python as well
 and is a good cross-check for the team-level numbers; NCAA.com stays the primary source.
 

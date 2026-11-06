@@ -90,8 +90,9 @@ Ratings start from EA College Football's ratings and run from 1 to 99 on our own
 | About 40 | A typical Power 4 backup or Group of 5 starter |
 | 99 | The top of the scale |
 
-Rosters follow how teams really play in 2026. Depth charts and who gets the ball are
-updated from the real box scores, so the real starting quarterback and lead back usually
+Rosters follow how teams really played in 2026. Depth charts and who gets the ball were
+tuned from the real box scores (committed as `data/real_adjustments.json` and
+`data/observed_tendencies.json`), so the real starting quarterback and lead back usually
 start in the sim too.
 
 ## How realistic is it?
@@ -145,7 +146,7 @@ The site is static and hosted on Vercel at <https://cfp-coach-simulator.vercel.a
 `python3 tools/build_site.py`, which writes `dist/`. Every push to `main` deploys there.
 Every pull request also gets its own preview link, built from that branch, which Vercel posts
 on the pull request, so a change can be played before it merges. The data refresh tools
-(real results, rosters, polls) stay on the owner's computer; their output is committed and
+(real results, polls) stay on the owner's computer; their output is committed and
 goes out with the next push.
 
 The old address, <https://pattisonb.github.io/CFPCoachSimulator/>, still runs the game
