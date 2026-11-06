@@ -293,6 +293,9 @@ def seed_real_players(players: list[dict]) -> dict[str, dict]:
         rng = random.Random(f"real-{p['slug']}")
         left = max(0, CAREER_YEARS - y)
         realized = sum(share * (1 - (1 - rate) ** left) for _, rate, share in COACHABILITY) if left else 1.0
+        # ... and a quick learner realizes his room faster than the mix: his room is what he realizes at
+        # his own pace, so a Coach's Dream junior does not gain twice his position's real career gain
+        realized = max(realized, 1 - (1 - RATE[level_name]) ** left) if left else 1.0
         level = math.exp(rng.gauss(-POTENTIAL_SD ** 2 / 2, POTENTIAL_SD))
         level *= STAR_ROOM.get(s, UNKNOWN_STAR_ROOM) * TRAIT_ROOM.get(p.get("dev_trait"), 1.0) * math.exp(AHEAD_ROOM * ahead)
         level = max(LEVEL_RANGE[0], min(LEVEL_RANGE[1], level))
