@@ -372,14 +372,18 @@ def test_recruit_question(page) -> None:
 
 
 def test_portal_nil_title(page, base, sid) -> None:
-    """The portal board's title carries the NIL pool (the API's nil.pool), and its meter reads against the pool."""
+    """The portal board (the Recruiting tab's in a portal week): its title carries the NIL pool (the API's nil.pool),
+    its meter reads against the pool, and a transfer has no star row."""
     v = call(base, f"/api/season/{sid}/recruiting")
     assert v["portal"] and v["nil"]["pool"] is not None, v["nil"]
-    # the board's own title (recruiting.js) stays in the page for readers; the offseason's header shows the week on screen
-    page.wait_for_selector("#tab-offseason .rc-head .go-display", state="attached", timeout=30_000)
-    title = page.eval_on_selector("#tab-offseason .rc-head .go-display", "e => e.textContent").strip().upper()
+    tab_click(page, "recruiting")
+    page.wait_for_selector("#tab-recruiting .rc-head .go-display", timeout=120_000)
+    time.sleep(0.8)
+    title = page.eval_on_selector("#tab-recruiting .rc-head .go-display", "e => e.textContent").strip().upper()
     assert title == f"TRANSFER PORTAL · WEEK {v['portal']['week']} OF {v['portal']['weeks']} · {v['nil']['pool']} NIL", title
-    assert f"{v['nil']['left']} / {v['nil']['pool']}" in page.inner_text("#tab-offseason .rc-head .go-meters")
+    assert f"{v['nil']['left']} / {v['nil']['pool']}" in page.inner_text("#tab-recruiting .rc-head .go-meters")
+    hollow = page.evaluate("() => [...document.querySelectorAll('.go-row-recruit .go-stars, .go-pane .go-stars')].filter(e => /^☆+$/.test(e.textContent.trim())).length")
+    assert hollow == 0, f"{hollow} transfer rows show an empty star row"
 
 
 # ----- the Scouting tab (web/scouting.js): the scouts, the queue, the reports and the flags -----
@@ -2520,12 +2524,12 @@ if __name__ == "__main__":
             assert not OUT_OF_100.search(dep), OUT_OF_100.search(dep).group(0)
             assert not CLASS_CODE.search(dep), CLASS_CODE.search(dep).group(0)
             call(base, f"/api/season/{B}/offseason/advance", {})
-            # the portal board: a transfer has no star row
+            # the portal week: your board in brief on the offseason page, the board itself on the Recruiting tab
             page.goto(f"{base}/index.html?id={B}")
             page.wait_for_selector("text=WEEK 1 OF 4", timeout=120_000)
             time.sleep(0.8)
-            hollow = page.evaluate("() => [...document.querySelectorAll('.go-row-recruit .go-stars, .go-pane .go-stars')].filter(e => /^☆+$/.test(e.textContent.trim())).length")
-            assert hollow == 0, f"{hollow} transfer rows show an empty star row"
+            assert not page.query_selector("#tab-offseason .off-board"), "the board is no longer embedded in the offseason page"
+            assert "Recruit on the Board →" in page.inner_text("#tab-offseason .off-your-board")
             test_portal_nil_title(page, base, B)
             page.set_viewport_size({"width": 400, "height": 860})
             tab_click(page, "prospects")

@@ -1965,8 +1965,12 @@ your program's history. The tab opens on it at Keep Them Home; its Advance opens
 groups ("+ N More" opens a long one) and the players you kept, Around the League and The First Round, and keeps the
 redshirt and position-change card. Keep Them Home shows each leaver's roles now and next year, why
 he wants out, and Meet, Promise a Start, Offer NIL and Let Him Go, each with a hint from the rules.
-A portal week wraps the recruiting board (drawn by `recruiting.js`, untouched) with the Portal
-Overview, Keep Them Home's answers and your moves. Development has the portal's +/− and tabs for
+A portal week shows the Portal Overview, Keep Them Home's answers, your moves, who got away and
+Your Portal Board: a compact card (the count on your board, your offers out of the week's allowance,
+your open spots, the top six entrants by your chance with the board's own standing word, "Nobody on
+your board yet" when it is empty) with Recruit on the Board →, which opens the Recruiting tab, where
+the board itself is drawn (`recruiting.js`, untouched; the card reads `portal.board` on the
+offseason view, `coach_career/offseason.py` `portal_board`). Development has the portal's +/− and tabs for
 Redshirts, Position Changes, Who Improved and Your Transfers beside the top improvements. The Recap
 lists the key results and the road ahead (the schedule, the next class, the AD's goal for the
 coming season). Cards in a row share one height, one 16 px gap runs across and down, and at 760 px

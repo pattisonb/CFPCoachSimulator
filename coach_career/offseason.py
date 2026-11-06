@@ -2542,6 +2542,34 @@ def portal_away(state: dict) -> list[dict]:
     return sorted(out.values(), key=lambda r: (-(r["week"] or 0), -r["overall"]))
 
 
+def portal_board(state: dict) -> dict:
+    """Your portal board for the offseason page's compact card: how many entrants are on it and each
+    one as a short line with what the board's standing ladder reads (his list, your offer, where he
+    stands, whether you have room), so the page's chip agrees with the Recruiting tab. The week he
+    signed (`signed_week`) comes from the log; an unsigned entrant has no known decision week."""
+    from coach_career import prospects, recruiting
+    rc = state.get("recruiting") or {}
+    me = state["team"]
+    portal = state["offseason"]["portal"]
+    offers = rc.get("offers", {}).get(me, [])
+    signed_week = {e["pid"]: e.get("portal_week") for e in rc.get("log", []) if e["kind"] == "signed"}
+    rows = []
+    for pid in rc.get("board") or []:
+        e = portal["players"].get(pid)
+        st = rc["status"].get(pid)
+        if not e or not st:
+            continue
+        p = e["player"]
+        seen = prospects.seen_status(state, pid, me)
+        rows.append({"id": pid, "name": p["n"], "pos": p["pos"], "overall": house(p["pos"], p["o"]), "portal_rank": rc["prospects"][pid].get("portal_rank"),
+                     "offered": pid in offers, "signed": seen["signed"], "committed": seen["committed"],
+                     "hard": bool(seen.get("hard")) and not seen["signed"],
+                     "list": [dict(x, you=x["school"] == me) for x in prospects._schools(state, pid, me)[:5]],
+                     "standing": prospects.standing(state, pid, me), "no_room": recruiting.no_room(state, me, pid),
+                     "signed_week": signed_week.get(pid) if seen["signed"] else None})
+    return {"count": len(rows), "rows": rows}
+
+
 def _portal_recap(state: dict) -> Optional[dict]:
     """After the portal closes: who you got out of it (and where from), who you lost to it (where he
     went and why he left, from the retention step), against the whole portal's numbers. None before
@@ -2646,6 +2674,7 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
                                    else max(0, math.ceil(PORTAL_OFFER_FACTOR * my_spots(lgd, me, portal)) - len(portal["offers"].get(me, [])))),
                    "moves_mine": my_moves,
                    "away": portal_away(state) if new_portal else [],
+                   "board": portal_board(state) if new_portal and off["stage"] in PORTAL_STAGES else None,
                    "rows": portal_rows(state, position, status) if off["stage"] in ("portal_1", "portal_2") else []},
         "portal_recap": _portal_recap(state),
         "report": off.get("report") and {"mine": off["report"]["development"]["mine"][:25],

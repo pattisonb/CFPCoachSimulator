@@ -145,17 +145,14 @@
 .off-keep-acts .go-act.alt { border-color: color-mix(in srgb, var(--accent) 60%, var(--border)); }
 .off-keep-acts .go-act.alt span { color: var(--muted); opacity: 1; }
 
-/* ---------- the portal weeks: the board's wrapper (its cards are recruiting.js's own) ---------- */
-.off-board { display: contents; }
-.off-portal > .off-board > * { grid-column: 1 / -1; order: 2; min-width: 0; margin: 0; }
-.off-portal > .off-board > :first-child { order: -1; }
-.off-board > .go-board-head { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px 22px;
-  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; }
-.off-board > .go-board-head > .go-display:first-child { display: none; }
-.off-board > .go-board-head > .go-meters { flex: 1 1 420px; }   /* the page's own title says the week */
-.off-board > .go-empty { text-align: center; align-items: center; padding: 40px 22px; }
-.off-board > .go-empty .go-display { font-size: 22px; text-transform: none; }
-.off-board > .go-empty p { max-width: 640px; }
+/* ---------- the portal weeks: Your Portal Board (the board itself is the Recruiting tab's) ---------- */
+.off-your-board { display: flex; flex-direction: column; gap: 14px; }
+.off-board-lines li { grid-template-columns: auto minmax(0, 1fr) auto; }
+.off-board-lines .go-avatar.sm { width: 32px; height: 32px; }
+.off-board-who { min-width: 0; }
+.off-board-who b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.off-board-foot { margin-top: auto; padding-top: 4px; }
+.off-board-foot .go-btn { width: 100%; }
 .off-bullets { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; line-height: 1.5; }
 .off-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .off-lines li { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto auto; align-items: center; gap: 4px 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
