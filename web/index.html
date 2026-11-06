@@ -98,7 +98,7 @@
 
       <div id="season" hidden>
         <nav class="tabs" id="season-tabs" aria-label="Season sections">
-          <!-- the tab bar is the top of the page in a season: the team chip, the tabs, and ☰ Menu (it shows the top bar) -->
+          <!-- the tab bar is the top of the page in a season: the team chip, the career tabs, League ▾ (the league tabs), More ▾ (what did not fit) and ☰ Menu (it shows the top bar) -->
           <span id="team-chip" class="team-chip"><span id="chip-pill" class="chip-pill"></span><span class="chip-text"><b id="chip-name"></b><small id="chip-line"></small></span></span>
           <div class="tab-row">
             <button data-tab="office" type="button" hidden>Office</button>
@@ -109,17 +109,18 @@
             <button data-tab="schedule" class="active" type="button">Schedule</button>
             <button data-tab="depth" type="button">Depth Chart</button>
             <button data-tab="games" type="button" hidden>Games</button>
-            <span class="tab-divider" aria-hidden="true">League</span>
-            <button data-tab="standings" class="league" type="button">Standings</button>
-            <button data-tab="rankings" class="league" type="button">Rankings</button>
-            <button data-tab="stats" class="league" type="button">Stats</button>
-            <button data-tab="programs" class="league" type="button" hidden>Programs</button>
-            <button data-tab="classes" class="league" type="button" hidden>Classes</button>
-            <button data-tab="bracket" class="league" type="button">Bracket</button>
-            <button data-tab="bowls" class="league" type="button">Bowls</button>
-            <button data-tab="awards" class="league" type="button">Awards</button>
-            <button data-tab="summary" class="league" type="button">Season Recap</button>
+            <!-- the league tabs live behind League ▾ (season.js openTabLeague): their buttons stay in the DOM, hidden, for selectTab and the address -->
+            <button data-tab="standings" class="league tab-in-menu" type="button">Standings</button>
+            <button data-tab="rankings" class="league tab-in-menu" type="button">Rankings</button>
+            <button data-tab="stats" class="league tab-in-menu" type="button">Stats</button>
+            <button data-tab="programs" class="league tab-in-menu" type="button" hidden>Programs</button>
+            <button data-tab="classes" class="league tab-in-menu" type="button" hidden>Classes</button>
+            <button data-tab="bracket" class="league tab-in-menu" type="button">Bracket</button>
+            <button data-tab="bowls" class="league tab-in-menu" type="button">Bowls</button>
+            <button data-tab="awards" class="league tab-in-menu" type="button">Awards</button>
+            <button data-tab="summary" class="league tab-in-menu" type="button">Season Recap</button>
             <button id="tab-more" class="tab-more" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="More" title="The tabs that do not fit" hidden>More ▾</button>
+            <button id="tab-league" class="tab-league" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="League" title="Standings, Rankings, Stats and the rest of the league">League ▾</button>
           </div>
           <button id="btn-menu" class="ghost tab-menu" type="button" aria-haspopup="menu" aria-expanded="false" title="Settings, Download Career and the top bar">☰ Menu</button>
         </nav>
