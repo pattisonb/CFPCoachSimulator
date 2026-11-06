@@ -59,11 +59,8 @@ def watch(page, selector: str, control: str = None, scrolled: bool = True):
     if control:
         page.eval_on_selector(control, "e => e.scrollIntoView({ block: 'nearest' })")
         time.sleep(0.3)
-        if scrolled:   # the control already sat in the first screen (CI's fonts and data decide that): scroll the page so it sits
-            page.eval_on_selector(control, """e => { if (window.scrollY > 0) return;   // near the top, and the scroll check has a baseline
-                const room = document.documentElement.scrollHeight - innerHeight, top = e.getBoundingClientRect().top - 12;
-                if (room > 0 && top > 0) window.scrollTo(0, Math.min(room, top)); }""")
-            time.sleep(0.3)
+        # no scrolling the page to give the check a baseline here: a control put near the top sits under the sticky tab
+        # bar, so Playwright's click scrolls it back out first and that reads as a jump the page never made
     h = page.query_selector(selector)
     assert h, selector
     s = page.evaluate("""(el) => { const s = window.__smooth = { el, gone: 0, top: el.scrollTop, page: window.scrollY };
@@ -2418,12 +2415,20 @@ if __name__ == "__main__":
             before = dict(page.evaluate("() => [...document.querySelectorAll('.go-stages button[data-stage]')].map(b => [b.dataset.stage, +b.querySelector('b').textContent])"))
             menu("message")
             page.wait_for_selector(".go-pane .go-step select#rc-pitch")
+            # CI's case on every machine: a screen-tall spacer above the board puts Send below the fold, so bringing it
+            # into view scrolls the page by hundreds of px, and sending must leave that scroll where it was
+            page.evaluate("() => { const t = document.querySelector('#tab-recruiting'), d = document.createElement('div'); d.id = 'ux-spacer'; d.style.height = innerHeight + 'px'; t.before(d); }")
             h = watch(page, ".go-pane", ".go-pane .go-step button.go-step-go")
+            sent = page.eval_on_selector(".go-pane .go-step button.go-step-go", """e => { const r = e.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+                return { y: window.scrollY, clear: e.contains(hit) }; }""")
+            assert sent["y"] >= 300 and sent["clear"], f"Send sits below a page scrolled by hundreds of px, nothing covering it: {sent}"
             n = draws(page)
             page.click(".go-pane .go-step button.go-step-go")
             toasted(page, f"Message sent to {cold['name']} · 5 hours")
             settle(page, n)
             smooth(page, h, "Message from the Cold tab")
+            assert page.evaluate("() => window.scrollY") == sent["y"], "the page stays where it was scrolled"
+            page.evaluate("() => { document.getElementById('ux-spacer').remove(); window.scrollTo(0, 0); }")
             assert not page.query_selector(f".go-row-recruit[data-pid='{cold['id']}']"), "the row left the Cold tab"
             assert cold["name"] in page.inner_text(".go-pane .go-pane-head"), "the pane stays on him"
             assert page.eval_on_selector_all(".go-row-recruit[aria-pressed=true]", "els => els.length") == 0, "no other row is picked"
