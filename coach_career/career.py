@@ -83,9 +83,16 @@ def _looks_like_career(state) -> bool:
         return False
     c = state.get("career")
     return (isinstance(c, dict) and {"year", "settings", "saved_week", "saved_at"} <= set(c)
-            and state.get("mode") == "full" and state.get("team") in season.load_teams()
+            and state.get("mode") == "full" and (state.get("team") in _own_teams(state) or state.get("team") in season.load_teams())
             and isinstance(state.get("games"), dict) and isinstance(state.get("recruiting"), dict)
             and isinstance(state.get("current_week"), int))
+
+
+def _own_teams(state: dict) -> dict:
+    """The teams of a save's own league (a career from a league file plays teams the built-in league lacks)."""
+    lgd = state.get("league")
+    teams = lgd.get("teams") if isinstance(lgd, dict) else None
+    return teams if isinstance(teams, dict) else {}
 
 
 def write_save(state: dict, boxes: dict) -> None:

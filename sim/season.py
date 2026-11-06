@@ -164,8 +164,11 @@ def use_league(path: Optional[Path]) -> None:
 
 
 def activate(state: dict) -> None:
-    """Make `state`'s league the one in play (a career past its first season plays its own)."""
+    """Make `state`'s league the one in play (a career past its first season, or one from a league
+    file, plays its own), with its recruiting models."""
     from coach_career import league
+    from coach_career import recruiting
+    recruiting.use_league_models((state.get("league") or {}).get("recruiting_models") or {})
     use_league(league.ensure_built(state))
 
 
@@ -530,13 +533,17 @@ def _fill_open_dates(games: dict, teams: dict) -> int:
 
 def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, fill_open_dates: bool = True,
                coach: Optional[dict] = None, career: bool = False, year: int = 2026,
-               schedule: Optional[dict] = None) -> dict:
+               schedule: Optional[dict] = None, league: Optional[dict] = None, career_id: Optional[str] = None,
+               real_polls: bool = True) -> dict:
     """A new season from the 2026 schedule, or from `schedule` (a generated later year's games,
     sim/schedule_gen.py, keyed by event id). `fill_open_dates` adds a game for teams whose
     schedule has an unannounced date (the real 2026 page turns it off: it shows only real games).
     `career`: a Coach Career (career.py), which starts from week 1. `year`: a career's later
     season (the active league's rosters, offseason.py), which gets no real polls; without a
-    generated `schedule` it replays the 2026 games with home and away swapped every other year."""
+    generated `schedule` it replays the 2026 games with home and away swapped every other year.
+    `league`: a career from a league file (league_file.check's, already in play through use_league),
+    stored with id `career_id` before the career starts. `real_polls=False`: the preseason poll comes
+    from the ratings (_rating_poll), not the real 2026 AP poll (a league whose shape the file changed)."""
     if career and mode != "full":
         raise ValueError("Coach Career starts from week 1")
     teams = load_teams()
@@ -598,7 +605,12 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
         "form": form_teams, "player_form": form_players,
         "rng_state": rng.randrange(1 << 30), "year": year,
     }
-    real_polls = _real_polls_2026(teams) if year == 2026 else {}
+    if league is not None:
+        state["league"] = league
+        if career_id:
+            state["id"] = career_id
+    use_real = real_polls and year == 2026
+    real_polls = _real_polls_2026(teams) if use_real else {}
     real = real_polls if mode == "remaining" else {}
     preseason = real_polls.get(0) or _rating_poll(teams)
     ap_params, _ = polls.load_params()
@@ -608,7 +620,7 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
     pre_full = polls.rank(state["scores"], {}, tiers, ap_params, n=25 + AP_OTHERS)
     pre_others = [t for t in pre_full if t not in set(preseason[:25])][:AP_OTHERS]
     pre_votes = _ap_votes(state, preseason[:25] + pre_others, tiers, ap_params, 0)
-    real_pre = _real_ap_votes_2026(0, teams) if year == 2026 else None
+    real_pre = _real_ap_votes_2026(0, teams) if use_real else None
     if real_pre and real_pre[0][:25] == preseason[:25]:
         preseason, pre_others, pre_votes = real_pre[0], real_pre[1] or pre_others, {**pre_votes, **real_pre[2]}
     # week=0: the preseason poll shows 0-0 even in "remaining" mode, where games are already played
@@ -698,8 +710,15 @@ def _opponents(state: dict) -> dict[str, list[dict]]:
     return out
 
 
-def division_of(conference: str, slug: str) -> Optional[str]:
-    for name, members in DIVISIONS.get(conference, {}).items():
+def divisions(state: dict) -> dict:
+    """The conferences that play divisions in this state's league: the built-in ones with a league
+    file's over them (league_file.divisions); a conference mapped to {} plays without."""
+    out = {**DIVISIONS, **(((state or {}).get("league") or {}).get("divisions") or {})}
+    return {c: d for c, d in out.items() if d}
+
+
+def division_of(conference: str, slug: str, divs: Optional[dict] = None) -> Optional[str]:
+    for name, members in (DIVISIONS if divs is None else divs).get(conference, {}).items():
         if slug in members:
             return name
     return None
@@ -851,17 +870,18 @@ def standings(state: dict) -> dict[str, list[dict]]:
     opp = _opponents(state)
     rank_pos = _ranking_positions(state)
     form = _team_form(state, teams)
+    divs = divisions(state)
     table: dict[str, list[dict]] = {}
     for slug, t in teams.items():
         if t["fictional"]:
             continue
-        r = {"slug": slug, "name": t["name"], "division": division_of(t["conference"], slug), **rec[slug], **form[slug]}
+        r = {"slug": slug, "name": t["name"], "division": division_of(t["conference"], slug, divs), **rec[slug], **form[slug]}
         table.setdefault(t["conference"], []).append(r)
 
     for conf, rows in table.items():
-        if conf in DIVISIONS:
+        if conf in divs:
             ordered = []
-            for div in DIVISIONS[conf]:
+            for div in divs[conf]:
                 group = _order_rows([r for r in rows if r["division"] == div], rows, opp, rank_pos)
                 for i, r in enumerate(group, 1):
                     r["conf_rank"] = i
@@ -1413,13 +1433,14 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
 
 def _ccg_matchups(state: dict, teams: dict) -> list[dict]:
     table = standings(state)
+    divs = divisions(state)
     out = []
     for conf, rows in table.items():
         if conf in polls.INDEPENDENT or len(rows) < 4:
             continue
-        if conf in DIVISIONS:
+        if conf in divs:
             # division winners; the better record (conference, then overall, then margin) is the higher seed
-            winners = [next(r for r in rows if r["division"] == div and r["conf_rank"] == 1) for div in DIVISIONS[conf]]
+            winners = [next(r for r in rows if r["division"] == div and r["conf_rank"] == 1) for div in divs[conf]]
             winners.sort(key=lambda r: (-(r["conf_wins"] / max(1, r["conf_wins"] + r["conf_losses"])),
                                         -(r["wins"] / max(1, r["wins"] + r["losses"])), -(r["points_for"] - r["points_against"])))
             a, b = winners[0], winners[1]
@@ -1431,7 +1452,7 @@ def _ccg_matchups(state: dict, teams: dict) -> list[dict]:
                     "home": a["slug"], "away": b["slug"], "home_display": a["name"], "away_display": b["name"],
                     "conference_game": False, "played": False, "home_score": None, "away_score": None, "overtime": 0,
                     "real": False, "kind": "ccg", "conference": conf, "title": f"{conf} Championship", "site": site,
-                    "divisions": [a.get("division"), b.get("division")] if conf in DIVISIONS else None})
+                    "divisions": [a.get("division"), b.get("division")] if conf in divs else None})
     return out
 
 
@@ -2939,12 +2960,37 @@ def game_rivalry(state: dict, g: dict, after: bool = False) -> Optional[dict]:
     return out
 
 
+def _file_rivalries(state: dict, slug: str, teams: dict) -> list[tuple[frozenset, dict]]:
+    """The rivalries a league file lists for a team it adds (league.team_meta's "rivals"; the file may also list the
+    new team among a game team's rivals): no trophy and no series before this season. A pair of the game's own
+    teams is never one, even when the file edits either of them (league_fill gives an edited team a "meta" too):
+    their rivalries stay the game's. None for the built-in league."""
+    from coach_career import league
+    lgd = state.get("league") or {}
+    own = {s for s, t in (lgd.get("teams") or {}).items() if t.get("meta") is not None}
+    if not own:
+        return []
+    base = set(league.base_slugs())
+    opps = set(league.team_meta(lgd, slug).get("rivals") or []) if slug in own else set()
+    opps |= {s for s in own if slug in (league.team_meta(lgd, s).get("rivals") or [])}
+    out = []
+    for opp in sorted(opps):
+        pair = frozenset((slug, opp))
+        if pair <= base:                     # two of the game's teams: the game's rivalries file decides
+            continue
+        if opp == slug or opp not in teams or teams[opp].get("fictional") or pair in load_rivalries():
+            continue
+        a, b = sorted(pair, key=lambda x: teams[x]["name"])
+        out.append((pair, {"name": f"{teams[a]['name']} vs. {teams[b]['name']}", "teams": [a, b], "series": {}}))
+    return out
+
+
 def rivalries_view(state: dict, slug: str) -> dict:
     """Your rivals this season: the trophy, the series today and this season's meeting."""
     check_fbs(slug)
     teams = load_teams()
     out = []
-    for pair, riv in load_rivalries().items():
+    for pair, riv in list(load_rivalries().items()) + _file_rivalries(state, slug, teams):
         if not isinstance(pair, frozenset) or slug not in pair:
             continue
         opp = next(t for t in pair if t != slug)
@@ -3209,6 +3255,7 @@ def summary(state: dict) -> dict:
         "injury_count": sum(len(state["injuries"][k]) for k in fbs_only(teams) & state.get("injuries", {}).keys()),
         "my_awards": awards.my_awards(state, state["awards"]) if state.get("awards") else [],
         "career": state.get("career"),
+        "league": ((state.get("league") or {}).get("source") or {}).get("name"),   # a career from a league file
     }
 
 

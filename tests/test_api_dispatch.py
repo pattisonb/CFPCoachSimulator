@@ -247,7 +247,8 @@ EXPECTED = {("GET", "/api/season/{season_id}/week/{week}"), ("GET", "/api/season
             ("POST", "/api/season/{season_id}/depth/{slug}"), ("GET", "/api/season/{season_id}/depth/{slug}/position/{role}"),
             ("GET", "/api/season/{season_id}/depth/{slug}/formations"), ("GET", "/api/season/{season_id}/depth/{slug}/roster"),
             ("GET", "/api/season/{season_id}/injuries"), ("GET", "/api/season/{season_id}/awards"),
-            ("GET", "/api/season/{season_id}/player")}
+            ("GET", "/api/season/{season_id}/player"),
+            ("POST", "/api/league/check"), ("POST", "/api/season"), ("GET", "/api/season/{season_id}/teams")}   # a career from a league file
 
 
 def test_every_career_route_registered():

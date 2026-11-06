@@ -18,6 +18,7 @@ save heals). Its draws are its own seeded streams: nothing in the season or the 
 """
 from __future__ import annotations
 
+import json
 import random
 from typing import Optional
 
@@ -29,10 +30,24 @@ INITIALS = "ABCDEFGHJKLMNPRSTW"      # middle initials a renamed real coach may 
 OWN_STAFF_JOB = "Promoted from the staff"   # the previous job of a coordinator split off a play-calling head coach
 
 
+_base_names: dict[str, set[str]] = {}   # the names in a teams file, by path: a few KB, so the file need not stay loaded
+
+
 def base_names() -> set[str]:
-    """Every coach name in the 2026 data (lowercase): the real coaches."""
+    """Every coach name in the 2026 data (lowercase): the real coaches. Read from the loaded teams when the
+    game has them, else from the file alone (a league file check runs before any career is open, and must
+    not leave the whole built-in league cached behind it)."""
     from sim import season
-    return {c["name"].lower() for t in season.load_teams().values()
+    if season._teams_cache:
+        teams = season._teams_cache
+    else:
+        key = str(season._league_path)
+        if key not in _base_names:
+            teams = json.loads(season._league_path.read_text(encoding="utf-8"))["teams"]
+            _base_names[key] = {c["name"].lower() for t in teams.values()
+                                for c in (t.get("coaches") or {}).values() if c and c.get("name")}
+        return set(_base_names[key])
+    return {c["name"].lower() for t in teams.values()
             for c in (t.get("coaches") or {}).values() if c and c.get("name")}
 
 
@@ -85,6 +100,8 @@ def player_name(state: dict) -> Optional[str]:
     rec = your_record(state)
     if rec and rec.get("name"):
         return rec["name"]
+    if not state.get("team"):           # a league alone (a league file check): no one is you yet
+        return None
     from sim import season
     t = season.load_teams().get(state.get("team")) or {}
     return ((t.get("coaches") or {}).get("head_coach") or {}).get("name")

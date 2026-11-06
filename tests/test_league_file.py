@@ -1,0 +1,491 @@
+"""The built-in league as a file (coach_career/league_file.py): the export reads back into exactly
+the league from_base builds, is byte-stable, and never mentions the FCS stand-ins."""
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root
+import json
+
+from coach_career import league, league_file
+from teamdata import game_scale
+
+
+def test_export_round_trips_to_from_base():
+    doc = league_file.export_document()
+    attrs = game_scale.keys()
+    base = league.from_base(2027)
+    rebuilt = {d["slug"]: league_file.to_league_team(d, attrs) for d in doc["teams"]}
+    for slug, entry in base["teams"].items():
+        want = {k: entry[k] for k in ("roster", "coaches", "formation")}
+        got = {k: rebuilt[slug][k] for k in ("roster", "coaches", "formation")}
+        assert json.dumps(got, sort_keys=True) == json.dumps(want, sort_keys=True), slug
+    assert set(rebuilt) == set(base["teams"])
+
+
+def test_export_is_byte_stable_and_fcs_free():
+    a = league_file.dumps(league_file.export_document())
+    assert a == league_file.dumps(json.loads(a)) == league_file.builtin_bytes()
+    fictional = [league.base_meta(s) for s in league.base_slugs() if league.base_meta(s)["fictional"]]
+    assert fictional
+    text = a.decode("utf-8")
+    for m in fictional:
+        assert f'"{m["slug"]}"' not in text and m["short_name"] not in text
+        assert m["conference"] not in text
+    assert json.loads(a)["format"] == "cfp-league/1"
+
+
+def test_shape_and_conferences():
+    doc = league_file.export_document()
+    assert doc["name"] == "Built-in League" and doc["year"] == 2026
+    assert league_file.conference_id("American Athletic Conference") == "american-athletic-conference"
+    ids = {c["id"]: c for c in doc["conferences"]}
+    assert ids["sec"]["games"] == 9 and ids["fbs-independent"]["games"] == 0
+    assert all(t["conference"] in ids for t in doc["teams"])
+    smu = next(t for t in doc["teams"] if t["slug"] == "smu")
+    assert smu["name"] == "Southern Methodist University" and "lat" in smu and "style" not in smu
+    assert set(smu["coaches"]) == {"head", "oc", "dc", "offense", "defense"}
+    p = smu["roster"][0]
+    assert len(p["ratings"]) == 54 and p["hometown"] == "TX"
+    assert all(q["pos"] != "HB" for t in doc["teams"] for q in t["roster"])
+
+
+# ---- parse and validate ---------------------------------------------------------------------------
+
+import copy
+
+JAY = {"name": "Jay Smith", "pos": "QB", "class": "JR"}
+MAX_ = {"name": "Max Lee", "pos": "WR", "class": "SO"}
+ALDER = {"slug": "alder-tech", "name": "Alder Tech", "short_name": "Alder Tech", "abbreviation": "ATU", "mascot": "Owls",
+         "city": "Bend", "state": "OR", "lat": 44.05, "lon": -121.31, "conference": "big-sky-east", "level": "FBS",
+         "colors": {"primary": {"name": "Green", "hex": "#0B6E4F"}}, "strength": "Average", "prestige": 40,
+         "rivals": ["oregon-state"], "roster": [dict(JAY), dict(MAX_)], "depth_chart": {"QB": ["Jay Smith"]}}
+
+
+def member(i):
+    return {"slug": f"bse-{i}", "name": f"Big Sky {i}", "conference": "big-sky-east"}
+
+
+def base_file(**over):
+    """A valid one-team file: Alder Tech plus nine more members of Big Sky East (8 games)."""
+    doc = {"format": "cfp-league/1", "conferences": [{"id": "big-sky-east", "name": "Big Sky East", "level": "FBS", "games": 8}],
+           "teams": [copy.deepcopy(ALDER)] + [member(i) for i in range(9)]}
+    doc.update(over)
+    return doc
+
+
+def errs(**team_over):
+    doc = base_file()
+    roster = team_over.pop("roster", None)
+    if roster is not None:
+        doc["teams"][0]["roster"] = roster
+    if "pos" in team_over:
+        doc["teams"][0]["roster"][0]["pos"] = team_over.pop("pos")
+    doc["teams"][0].update(team_over)
+    return league_file.validate(doc)
+
+
+def raises(fn, text):
+    try:
+        fn()
+    except league_file.LeagueFileError as e:
+        assert any(text in m for m in e.errors), e.errors
+        return
+    raise AssertionError("no LeagueFileError")
+
+
+def test_valid_base_file():
+    assert league_file.validate(base_file()) == []
+
+
+def test_bad_position():
+    assert "Alder Tech, player 1 (Jay Smith): position 'WRR' is not a position; use QB, RB, WR, TE, LT, LG, C, RG, RT, LEDG, DT, REDG, SAM, MIKE, WILL, CB, FS, SS, K, P or FB." in errs(pos="WRR")
+
+
+def test_bad_class():
+    out = errs(roster=[dict(JAY, **{"class": "GR"}), MAX_], depth_chart=None)
+    assert "Alder Tech, player 1 (Jay Smith): class 'GR' is not a class; use FR, FRRS, SO, SORS, JR, JRRS, SR or SRRS." in out, out
+
+
+def test_unknown_conference():
+    assert "Alder Tech: conference 'big-sky-e' is not in the file or the game." in errs(conference="big-sky-e")
+
+
+def test_duplicate_slug():
+    doc = base_file()
+    doc["teams"].append(copy.deepcopy(ALDER))
+    assert any("is used by two teams" in e for e in league_file.validate(doc))
+
+
+def test_bad_json():
+    raises(lambda: league_file.parse(b'{"format": "cfp-league/1",'), "The file is not valid JSON")
+    raises(lambda: league_file.parse(b'{"format": "cfp-league/1", "year": NaN}'), "The file is not valid JSON")
+    raises(lambda: league_file.parse(b"\xff\xfe"), "not UTF-8")
+    raises(lambda: league_file.parse(b"[1]"), "top level must be an object")
+
+
+def test_wrong_format():
+    raises(lambda: league_file.parse(b'{"format": "cfp-league/2"}'), "The file's format is 'cfp-league/2'; this game reads 'cfp-league/1'.")
+
+
+def test_depth_chart_unknown_player():
+    assert "Alder Tech: the depth chart's QB list names Jay Smyth, who is not on the roster." in errs(depth_chart={"QB": ["Jay Smyth"]})
+    # a team that keeps its built-in roster is checked against that roster
+    out = league_file.validate({"format": "cfp-league/1", "teams": [{"slug": "kent-state", "depth_chart": {"QB": ["Nobody Here"]}}]})
+    assert "Kent State: the depth chart's QB list names Nobody Here, who is not on the roster." in out
+
+
+def test_duplicate_player_names():
+    assert "Alder Tech: players 1 and 3 are both named Jay Smith; give each a different name." in errs(roster=[JAY, MAX_, dict(JAY, name="jay smith")], depth_chart=None)
+
+
+def test_remove_and_list():
+    f = {"format": "cfp-league/1", "remove": ["kent-state"], "teams": [{"slug": "kent-state"}]}
+    assert "Kent State: the file removes it and also lists it; do one or the other." in league_file.validate(f)
+
+
+def test_conference_too_small():
+    doc = base_file()
+    doc["teams"] = doc["teams"][:3]
+    assert "Big Sky East: 3 teams can't play 8 conference games each; it needs at least 9." in league_file.validate(doc)
+    mwc = [s for s in league.base_slugs() if not league.base_meta(s)["fictional"] and league.base_meta(s)["conference"] == "Mountain West"]
+    f = {"format": "cfp-league/1", "remove": mwc[:5]}
+    assert any("Mountain West: " in e and "it needs at least" in e for e in league_file.validate(f))
+
+
+def test_size_and_width():
+    raises(lambda: league_file.parse(b" " * (league_file.MAX_LEAGUE_BYTES + 1)), "The file is 64.0 MB; the game reads league files up to 64 MB.")
+    doc = {"format": "cfp-league/1", "teams": [{"slug": f"new-{i}", "name": f"New {i}", "conference": "sec"} for i in range(300)]}
+    assert any("FBS teams" in e and "256" in e for e in league_file.validate(doc))
+    assert league_file.validate(league_file.parse(league_file.builtin_bytes())) == []
+
+
+def fcs_conference() -> str:
+    """The stand-ins' conference name, read from the data (never written out here)."""
+    return next(league.base_meta(s)["conference"] for s in league.base_slugs() if league.base_meta(s)["fictional"])
+
+
+def test_fcs_never_named():
+    fcs = next(s for s in league.base_slugs() if league.base_meta(s)["fictional"])
+    m = league.base_meta(fcs)
+    out = " ".join(league_file.validate({"format": "cfp-league/1", "remove": [fcs], "teams": [{"slug": fcs, "name": "X", "conference": m["conference"]},
+                   {"slug": "zed", "name": "Zed", "conference": m["conference"], "rivals": [fcs]}],
+                   "conferences": [{"id": "x", "name": m["conference"]}]}))
+    assert "reserved for the game's FCS opponents" in out
+    # The fixed sentence says "FCS opponents" in general, and the stand-ins' conference is now just
+    # "FCS", so take that sentence out before looking for any stand-in's own names.
+    rest = out.replace("reserved for the game's FCS opponents", "")
+    for word in (fcs, m["short_name"], m["conference"], m["school_name"]):
+        assert word not in rest, word
+
+
+def test_errors_capped():
+    doc = base_file()
+    doc["teams"][0]["roster"] = [{"name": f"P {i}", "pos": "WRR", "class": "FR"} for i in range(80)]
+    doc["teams"][0].pop("depth_chart")
+    e = league_file.validate(doc)
+    assert len(e) == league_file.MAX_ERRORS + 1 and e[-1] == "And 30 more."
+    # check() gives the same capped list and the full count, so the page can say how many there are in all
+    r = league_file.check(league_file.dumps(doc))
+    assert r["errors"] == e and r["errors_total"] == 80, (len(r["errors"]), r.get("errors_total"))
+
+
+def test_bad_rating_values():
+    for bad in ("high", 120, 0, 75.5, None.__class__.__name__, True):
+        out = errs(roster=[dict(JAY, ratings={"speed": bad}), MAX_], depth_chart=None)
+        assert any(e.startswith("Alder Tech, player 1 (Jay Smith): rating 'speed'") for e in out), (bad, out)
+    out = errs(roster=[dict(JAY, ratings={"nonsense": 50}, potential={"speed": 100}, overall=0), MAX_], depth_chart=None)
+    assert any("rating 'nonsense' is not a skill" in e for e in out)
+    assert any("potential 'speed' must be a whole number" in e for e in out)
+    assert any("overall must be" in e for e in out)
+    assert errs(roster=[dict(JAY, ratings={"speed": 80}), MAX_], depth_chart=None) == []   # missing skills are legal
+
+
+def test_other_rules():
+    assert any("level 'FCS' is not supported; FCS games use the game's own opponents." in e for e in errs(level="FCS"))
+    assert "The file's year is 2027; careers start in 2026, so use 2026 or leave it out." in league_file.validate(base_file(year=2027))
+    assert any("strength must be" in e for e in errs(strength="Huge"))
+    assert errs(strength=55) == []
+    assert any("hex" in e for e in errs(colors={"primary": {"hex": "green"}}))
+    assert any("lat must be" in e for e in errs(lat=91))
+    assert any("state must be" in e for e in errs(state="ZZ"))
+    assert any("rival 'nowhere' is not a team" in e for e in errs(rivals=["nowhere"]))
+    assert any("remove" in e and "not a team in the game" in e for e in league_file.validate(base_file(remove=["nowhere"])))
+    assert any("reserved" in e for e in league_file.validate(base_file(conferences=[{"id": "x", "name": fcs_conference()}])))
+    assert any("games must be" in e for e in league_file.validate(base_file(conferences=[{"id": "big-sky-east", "name": "B", "games": 12}])))
+    assert any("limit is 85" in e for e in errs(roster=[dict(JAY, name=f"P{i}") for i in range(86)], depth_chart=None))
+    assert any("stars must be" in e for e in errs(roster=[dict(JAY, stars=6)], depth_chart=None))
+    assert any("height must be" in e for e in errs(roster=[dict(JAY, height=20)], depth_chart=None))
+    assert any("weight must be" in e for e in errs(roster=[dict(JAY, weight=999)], depth_chart=None))
+    assert any("id 'kevin-jennings' is already used" in e for e in errs(roster=[dict(JAY, id="kevin-jennings")], depth_chart=None))
+    assert any("slug 'Bad Slug' must be" in e for e in league_file.validate({"format": "cfp-league/1", "teams": [{"slug": "Bad Slug"}]}))
+
+
+def test_huge_integers_give_sentences():
+    big = int("9" * 400)
+    out = errs(roster=[dict(JAY, ratings={"speed": big}, potential={"speed": big}, overall=big, stars=big), MAX_], depth_chart=None)
+    for part in ("rating 'speed' must be", "potential 'speed' must be", "overall must be", "stars must be"):
+        assert any(part in e for e in out), (part, out)
+    out = league_file.validate(base_file(conferences=[{"id": "big-sky-east", "name": "Big Sky East", "games": big}]))
+    assert any("games must be" in e for e in out), out
+    assert all(e[0].isupper() and e.endswith(".") for e in out)
+
+
+def test_every_error_is_a_sentence():
+    fcs = next(s for s in league.base_slugs() if league.base_meta(s)["fictional"])
+    docs = [base_file(year=2027, remove=["nowhere", fcs]),
+            base_file(conferences=[{"id": "x", "name": fcs_conference()}, {"id": "q"}, 5]),
+            {"format": "cfp-league/1", "teams": [{"slug": "Bad Slug"}, 7, {"name": "No Slug"}, {"slug": "kent-state", "remove": 1, "level": "FCS",
+             "conference": 5, "strength": [], "roster": [3, {"pos": 5, "class": "X", "ratings": {"speed": float("nan")}}], "depth_chart": {"ZZ": 4}}]}]
+    docs.append(base_file())
+    docs[-1]["teams"][0]["roster"] = [dict(JAY, pos="WRR", ratings={"speed": 500, "foo": 1}, stars=9), dict(MAX_, **{"class": "ZZ"})]
+    out = [e for d in docs for e in league_file.validate(d)]
+    assert out and all(e[0].isupper() and e.endswith(".") for e in out), [e for e in out if not (e[0].isupper() and e.endswith("."))]
+    assert not any(w in e for e in out for w in ("None", "null", "undefined", "NaN"))
+
+
+
+# ---- merge ----------------------------------------------------------------------------------------
+
+def test_unchanged_export_collapses():
+    m = league_file.merge(league_file.parse(league_file.builtin_bytes()))
+    assert m["builtin"] and not (m["added"] or m["changed"] or m["removed"] or m["structural"])
+
+
+def test_one_team_file():
+    m = league_file.merge({"format": "cfp-league/1", "teams": [{"slug": "rice", "prestige": 55}]})
+    assert m["changed"] == ["rice"] and not m["structural"] and len(m["teams"]) == 138 and not m["builtin"]
+    assert m["teams"]["rice"]["roster"] == league_file.team_doc(league.from_base(2027), "rice")["roster"]
+    assert m["name"] == "Imported League"
+
+
+def test_add_and_remove_are_structural():
+    doc = base_file(remove=["kent-state"])
+    m = league_file.merge(doc)
+    assert m["added"] == sorted(["alder-tech"] + [f"bse-{i}" for i in range(9)])
+    assert m["removed"] == ["kent-state"] and m["structural"]
+    assert "kent-state" not in m["teams"] and "alder-tech" in m["conferences"]["big-sky-east"]["members"]
+    assert m["conferences"]["big-sky-east"]["games"] == 8
+
+
+
+def _big12():
+    b = league_file._builtin()
+    cid = next(iter(b["conf_names"]))
+    return cid, b["conf_names"][cid]
+
+
+def test_conference_rename_alone():
+    cid, name = _big12()
+    m = league_file.merge({"format": "cfp-league/1", "conferences": [{"id": cid, "name": name + " Plus", "games": league_file._builtin()["games"][cid]}]})
+    assert not m["builtin"] and not m["structural"] and m["conferences_changed"] == [cid]
+    assert m["conferences"][cid]["name"] == name + " Plus"
+
+
+def test_conference_games_structural():
+    cid, name = _big12()
+    g = league_file._builtin()["games"][cid]
+    m = league_file.merge({"format": "cfp-league/1", "conferences": [{"id": cid, "name": name, "games": g + 1}]})
+    assert m["structural"] and not m["builtin"]
+
+
+def test_conference_by_name_resolves():
+    cid, name = _big12()
+    slug = league_file._builtin()["team_conf"] and next(s for s, c in league_file._builtin()["team_conf"].items() if c != cid)
+    m = league_file.merge({"format": "cfp-league/1", "teams": [{"slug": slug, "conference": name}]})
+    assert m["teams"][slug]["conference"] == cid and slug in m["conferences"][cid]["members"] and m["structural"]
+
+
+def test_new_conference_named_like_a_builtin():
+    # a new conference's engine name is its name, so a built-in conference's name (any case) would be shared
+    cid, name = _big12()
+    for given in (name, name.upper()):
+        doc = base_file(conferences=[{"id": "big-sky-east", "name": given, "level": "FBS", "games": 8}])
+        assert (f"Conference 1 ({given}): that name belongs to a conference in the game; give the new conference its own name, "
+                f"or use the id '{cid}' to change that one.") in league_file.validate(doc)
+    two = base_file(conferences=[{"id": "big-sky-east", "name": "Big Sky East", "games": 8}, {"id": "bse-2", "name": "big sky east", "games": 0}])
+    assert "Conference 2 (big sky east): another conference in the file is named Big Sky East; give each its own name." in league_file.validate(two)
+    # the built-in conference by its own id, renamed or not, is still an edit of that conference
+    assert league_file.validate({"format": "cfp-league/1", "conferences": [{"id": cid, "name": name, "games": league_file._builtin()["games"][cid]}]}) == []
+
+
+def test_renamed_conference_names_stay_their_own():
+    """A renamed built-in conference shows by its new name (lgd["conference_names"]), so that name may not be another
+    conference's: another built-in one's (any case), a new one's in the file, or another renamed one's."""
+    games = league_file._builtin()["games"]
+    conf = lambda cid, name: {"id": cid, "name": name, "games": games.get(cid, 8)}
+    errs = league_file.validate({"format": "cfp-league/1", "conferences": [conf("pac-12", "mac")]})
+    assert "Conference 1 (mac): that name belongs to another conference in the game; give it its own name." in errs, errs
+    errs = league_file.validate({"format": "cfp-league/1", "conferences": [conf("big-sky-east", "Big Sky East"), conf("pac-12", "Big Sky East")]})
+    assert "Conference 2 (Big Sky East): another conference in the file is named Big Sky East; give each its own name." in errs, errs
+    errs = league_file.validate({"format": "cfp-league/1", "conferences": [conf("mac", "Lake Erie League"), conf("pac-12", "lake erie league")]})
+    assert "Conference 2 (lake erie league): another conference in the file is named Lake Erie League; give each its own name." in errs, errs
+    assert league_file.validate({"format": "cfp-league/1", "conferences": [conf("mac", "Lake Erie League")]}) == []
+
+
+def test_merge_does_not_share_builtin_cache():
+    m = league_file.merge({"format": "cfp-league/1", "teams": [{"slug": "rice", "prestige": 55}]})
+    m["teams"]["rice"]["roster"].clear()
+    m["teams"]["kent-state"]["roster"].append({"x": 1})
+    m2 = league_file.merge(league_file.parse(league_file.builtin_bytes()))
+    assert m2["builtin"]
+    assert m2["teams"]["rice"] == league_file.team_doc(league.from_base(2027), "rice")
+
+
+# ---- every exported field is checked: a wrong type or value is a sentence, never a crash --------------
+
+_EXPORT: list = []
+
+
+def exported(slug: str = "rice") -> dict:
+    """A built-in team as the export writes it (a fresh copy)."""
+    if not _EXPORT:
+        _EXPORT.append({t["slug"]: t for t in json.loads(league_file.builtin_bytes())["teams"]})
+    return copy.deepcopy(_EXPORT[0][slug])
+
+
+def _set(d: dict, path: str, value):
+    keys = path.split(".")
+    for k in keys[:-1]:
+        d = d[int(k)] if isinstance(d, list) else d[k]
+    d[keys[-1]] = value
+
+
+# (path into the exported Rice, a wrong value, a part of the sentence that must come back)
+FIELD_CASES = [
+    ("home_field", "70", "Rice: home field must be a number from 0 to 100."),
+    ("home_field", 150, "Rice: home field must be a number from 0 to 100."),
+    ("stadium", "Rice Stadium", "Rice: the stadium must list its name, capacity and surface."),
+    ("stadium.capacity", "lots", "Rice: the stadium's capacity must be a whole number from 0 to 200000."),
+    ("stadium.surface", "ice", "Rice: the stadium's surface must be grass or turf."),
+    ("stadium.name", 5, "Rice: the stadium's name must be text."),
+    ("style", "nowhere", "Rice: style 'nowhere' is not a team in the game; use a built-in team's slug."),
+    ("style", 5, "Rice: style must be a built-in team's slug."),
+    ("formation", "4-3", "Rice: the formation must list the offense, defense and special teams roles and their counts."),
+    ("formation.offense.QB", "1", "Rice: the formation's offense QB count must be a whole number from 0 to 11."),
+    ("formation.offense.QB", 2, "Rice: the formation's offense must have 11 players; it has 12."),
+    ("formation.defense.XX", 1, "Rice: the formation's defense role 'XX' is not a role in the game; use LEDG,"),
+    ("coaches.offense", "Wishbone", "Rice: offense 'Wishbone' is not a scheme in the game; use Air Raid,"),
+    ("coaches.defense", 5, "Rice: defense must be a scheme word"),
+    ("coaches.head.rating", "60", "Rice: the head coach's rating must be a whole number from 1 to 99."),
+    ("coaches.head.ratings.overall", "x", "Rice: the head coach's rating 'overall' must be a whole number from 1 to 99."),
+    ("coaches.head.ratings.speed", 50, "Rice: the head coach's rating 'speed' is not a head coach rating; use overall,"),
+    ("coaches.oc.ratings", [1, 2], "Rice: the offensive coordinator's ratings must list ratings and their values."),
+    ("coaches.head.scheme.offensive_philosophy", "Wishbone", "Rice: the head coach's offensive philosophy 'Wishbone' is not a scheme in the game; use Air Raid,"),
+    ("coaches.dc.scheme.defensive_scheme", 4, "Rice: the defensive coordinator's defensive scheme must be a scheme word"),
+    ("coaches.head.tendencies.aggressiveness", 300, "Rice: the head coach's tendency 'aggressiveness' must be a number from 0 to 100."),
+    ("coaches.head.name", 5, "Rice: the head coach's name must be text."),
+    ("coaches.head.since", "x", "Rice: the head coach's 'since' must be a year such as 2024."),
+    ("coaches.head.is_interim", "no", "Rice: the head coach's 'is_interim' must be true or false."),
+    ("coaches.oc.role", "head_coach", "Rice: the offensive coordinator's 'role' must be offensive_coordinator or left out."),
+    ("roster.0.abilities", [{"name": "Workhorse"}], "Rice, player 1 (Jacurri Brown): ability 1 needs a name and a tier."),
+    ("roster.0.abilities", "Workhorse", "Rice, player 1 (Jacurri Brown): abilities must be a list of names and tiers."),
+    ("roster.0.abilities", [{"name": "Speed", "tier": "Gold"}], "Rice, player 1 (Jacurri Brown): ability 'Speed' is not an ability in the game."),
+    ("roster.0.abilities", [{"name": "Workhorse", "tier": "Mega"}], "Rice, player 1 (Jacurri Brown): ability tier 'Mega' must be Locked, Bronze, Silver, Gold or Platinum."),
+    ("roster.0.target_share", "lots", "Rice, player 1 (Jacurri Brown): target share must be a number from 0.3 to 2."),
+    ("roster.0.target_share", 5, "Rice, player 1 (Jacurri Brown): target share must be a number from 0.3 to 2."),
+    ("roster.0.years", "two", "Rice, player 1 (Jacurri Brown): years must be a whole number from 0 to 6."),
+    ("roster.0.years", 9, "Rice, player 1 (Jacurri Brown): years must be a whole number from 0 to 6."),
+    ("roster.0.dev", "Super", "Rice, player 1 (Jacurri Brown): dev 'Super' must be Normal, Impact, Star or Elite."),
+    ("roster.0.coachability", "Lazy", "Rice, player 1 (Jacurri Brown): coachability 'Lazy' must be Coach's Dream, Film Junkie, Quick Study, Steady Grinder, Slow to Click or Set in His Ways."),
+    ("roster.0.archetype", "Wizard", "Rice, player 1 (Jacurri Brown): archetype 'Wizard' is not an archetype in the game."),
+    ("roster.0.jersey", "AB", "Rice, player 1 (Jacurri Brown): jersey must be a whole number from 0 to 99."),
+    ("roster.0.jersey", 120, "Rice, player 1 (Jacurri Brown): jersey must be a whole number from 0 to 99."),
+    ("roster.0.hometown", 5, "Rice, player 1 (Jacurri Brown): hometown must be text of at most 40 characters."),
+    ("roster.0.hometown", "x" * 41, "Rice, player 1 (Jacurri Brown): hometown must be text of at most 40 characters."),
+    ("colors.primary.name", 5, "Rice: the primary color's name must be text."),
+]
+
+
+def test_every_exported_field_is_checked():
+    """Each case changes one field of the exported Rice; check() answers with that sentence (no exception)."""
+    for path, value, want in FIELD_CASES:
+        t = exported()
+        _set(t, path, value)
+        r = league_file.check(league_file.dumps({"format": "cfp-league/1", "teams": [t]}))
+        assert not r["ok"], (path, value)
+        assert any(e.startswith(want) for e in r["errors"]), (path, value, r["errors"])
+        assert all(e[0].isupper() and e.endswith(".") for e in r["errors"]), r["errors"]
+    # the export's own values all pass, and a valid edit of each field passes too
+    t = exported()
+    t["home_field"], t["stadium"]["capacity"], t["style"] = 70, 50000, "smu"
+    t["coaches"]["head"]["rating"], t["roster"][0]["jersey"], t["roster"][0]["years"] = 60, 7, 2
+    t["roster"][0]["abilities"] = [{"name": "Workhorse", "tier": "Gold"}]
+    assert league_file.validate({"format": "cfp-league/1", "teams": [t]}) == []
+
+
+def test_new_team_fields_are_checked():
+    """A new team's coaches and players go through the same table (no built-in staff to merge over)."""
+    out = errs(coaches={"head": {"name": "Pat Doe", "rating": "60"}, "offense": "Wishbone"},
+               roster=[dict(JAY, abilities="Speed", years="two"), MAX_], depth_chart=None)
+    for want in ("Alder Tech: the head coach's rating must be", "Alder Tech: offense 'Wishbone' is not a scheme",
+                 "Alder Tech, player 1 (Jay Smith): abilities must be", "Alder Tech, player 1 (Jay Smith): years must be"):
+        assert any(e.startswith(want) for e in out), (want, out)
+    # a new team's stadium keeps the defaults for what the file leaves out
+    from coach_career import league_fill
+    sd = league_fill.team_meta_doc({"slug": "alder-tech", "name": "Alder Tech", "stadium": {"capacity": 40000}}, "Big Sky East")["stadium"]
+    assert sd == {"name": "Alder Tech Stadium", "capacity": 40000, "surface": "turf"}, sd
+
+
+def test_a_fill_that_throws_is_a_sentence():
+    """Anything that still escapes the fill or the build is one sentence naming the team, never a crash."""
+    from coach_career import league_fill
+    real = league_fill.fill_roster
+
+    def boom(*a, **k):
+        raise TypeError("unsupported operand type(s)")
+    league_fill.fill_roster = boom
+    try:
+        r = league_file.check(league_file.dumps({"format": "cfp-league/1", "teams": [dict(exported("rice"), roster=[dict(JAY)])]}))
+    finally:
+        league_fill.fill_roster = real
+    assert r == {"ok": False, "errors": ["Rice: the game could not build this team from the file; compare it with an exported league file."],
+                 "errors_total": 1}, r
+    real_build = league.build
+
+    def boom_build(*a, **k):
+        raise KeyError("x")
+    league.build = boom_build
+    try:
+        r = league_file.check(league_file.dumps({"format": "cfp-league/1", "teams": [{"slug": "rice", "prestige": 55}]}))
+    finally:
+        league.build = real_build
+    assert r == {"ok": False, "errors": ["The game could not build a league from this file; compare it with an exported league file."],
+                 "errors_total": 1}, r
+
+
+def test_renamed_conference_keeps_its_games():
+    """A built-in conference given without `games` keeps its own games: a rename alone is not structural."""
+    doc = {"format": "cfp-league/1", "conferences": [{"id": "mac", "name": "Mid-American"}]}
+    assert league_file.validate(doc) == []
+    m = league_file.merge(doc)
+    assert m["conferences"]["mac"]["games"] == league_file._builtin()["games"]["mac"] and not m["structural"]
+    r = league_file.check(league_file.dumps(doc), seed=3)
+    assert r["ok"] and r["games"] is None, r.get("errors")
+    # games 0 given outright is still 0 (and the conference is then structural)
+    assert league_file.merge({"format": "cfp-league/1", "conferences": [{"id": "mac", "name": "MAC", "games": 0}]})["structural"]
+
+
+def test_strength_needs_a_roster():
+    """A built-in team that keeps its real roster is never nudged: strength there is a sentence."""
+    want = "Rice: strength applies only to a roster the file gives; add a roster or remove strength."
+    assert want in league_file.validate({"format": "cfp-league/1", "teams": [{"slug": "rice", "strength": "Elite"}]})
+    same = exported("rice")
+    same["strength"] = 60
+    assert want in league_file.validate({"format": "cfp-league/1", "teams": [same]})
+    given = exported("rice")
+    given["roster"] = given["roster"][:60]
+    given["strength"] = "Elite"
+    assert league_file.validate({"format": "cfp-league/1", "teams": [given]}) == []
+    assert errs(strength="Strong") == []                # a new team's strength is its fill target
+
+
+if __name__ == "__main__":
+    test_export_round_trips_to_from_base()
+    test_export_is_byte_stable_and_fcs_free()
+    test_shape_and_conferences()
+    test_renamed_conference_names_stay_their_own()
+    print("ok")
+
+    for _n, _f in sorted(globals().items()):
+        if _n.startswith("test_") and _n not in ("test_export_round_trips_to_from_base", "test_export_is_byte_stable_and_fcs_free", "test_shape_and_conferences"):
+            _f()

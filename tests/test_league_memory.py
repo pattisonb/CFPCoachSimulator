@@ -32,4 +32,23 @@ if __name__ == "__main__":
     # the full base file is still there for a fictional stand-in (never in the league)
     fict = next(s for s in league.base_slugs() if league.base_meta(s)["fictional"])
     assert league.base_team(fict)["roster"]
-    print(f"league memory ok: building from the base files holds {held:.0f} MB, peaks {peak:.0f} MB")
+    # a league file checked for New Career: the pending league holds the league alone until Start (not its
+    # engine teams file, Start builds that again), and the built-in copies the check read are let go
+    from app import api
+    from coach_career import league_file
+    gc.collect()
+    tracemalloc.start()
+    before = tracemalloc.get_traced_memory()[0]
+    r = api._pend(league_file.dumps({"format": "cfp-league/1", "teams": [{"slug": "rice", "prestige": 55}]}), None)
+    assert r["ok"] and not r["builtin"] and api._pending_league is not None
+    del r
+    gc.collect()
+    pending = (tracemalloc.get_traced_memory()[0] - before) / 1e6
+    api._pending_league = None
+    gc.collect()
+    idle = (tracemalloc.get_traced_memory()[0] - before) / 1e6
+    tracemalloc.stop()
+    assert pending < 60, f"a checked league file holds {pending:.0f} MB until Start; it was 157 MB with its engine and the caches"
+    assert idle < 25, f"a check leaves {idle:.0f} MB behind once its league is gone; it was 88 MB of cached built-in copies"
+    print(f"league memory ok: building from the base files holds {held:.0f} MB, peaks {peak:.0f} MB; "
+          f"a checked file holds {pending:.0f} MB pending, {idle:.0f} MB after")
