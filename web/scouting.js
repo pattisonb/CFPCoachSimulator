@@ -478,6 +478,7 @@
       const look = res.look || null;
       if (look && look.after && look.after.potential) r.potential = look.after.potential;
       if (look && "likes" in look) r.likes = look.likes;
+      document.dispatchEvent(new CustomEvent("cfp:scouted", { detail: { pid: r.pid, looks: res.looks != null ? res.looks : r.looks, potential: res.potential || r.potential || null } }));
       cur.st.left = res.hours_left;
       cur.st.points = Math.max(0, cur.st.points - (r.cost || 0));      // the trip's cost (the desk's `cost`); the next load reads the week's truth
       sel.look = look;
