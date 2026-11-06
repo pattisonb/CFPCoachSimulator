@@ -290,10 +290,12 @@
   function programCard(pv) {
     const you = pv.you;
     if (!you) return el("div");
-    return el("section", { class: "go-card go-program", "aria-label": "Your Program" }, [
-      el("div", { class: "go-program-head" }, [el("span", { class: "go-kicker" }, ["Your Program ",
+    // a Recap card (web/league.css): the kicker and the standing tag in the head, the program's name as the title
+    return el("section", { class: "go-card rcp-card lg-card edge go-program", "aria-label": "Your Program" }, [
+      el("div", { class: "go-program-head lg-head" }, [el("span", { class: "go-kicker muted" }, ["Your Program ",
         ui().tip("Prestige and the market move slowly with results; your AD raises NIL after a year that meets his goal.", "Your Program")]),
         el("span", { class: "go-tag", text: you.tier_name, title: "Where your program stands: its name, results, NIL, market, league and coach, moving slowly with what you do" })]),
+      el("h2", { class: "rcp-h1 lg-h2", text: you.name || "" }),
       el("div", { class: "go-program-bars" }, PROGRAM_METRICS.map(([k, label, tip]) => el("div", { class: "go-program-bar", title: tip }, [
         el("span", { class: "go-program-label", text: label }), el("i", {}, [el("b", { style: `width:${Math.max(2, Math.min(100, you[k]))}%` })]),
         el("span", { class: "go-program-val", text: METRIC_WORDS(you[k]) })]))),
@@ -308,12 +310,15 @@
     try { pv = await H.api(`/api/season/${s.id}/programs`); }
     catch (err) { box.innerHTML = ""; box.append(el("p", { class: "muted", text: `Could not load the programs: ${H.errText(err)}` })); return; }
     box.innerHTML = "";
+    const t = (window.CFP.teamsBySlug || {})[s.team] || {};
+    const root = el("div", { class: "lg", style: t.colors && t.colors.primary ? `--rcp-team:${t.colors.primary}` : "" });
+    box.append(root);
     const card = programCard(pv);
     if (s.job) card.append(el("div", { class: `go-job ${s.job.security < 40 ? "bad" : s.job.security < 65 ? "warn" : "good"}` }, [
       el("span", { class: "go-kicker muted", text: "Your AD's Goal" }), el("b", { text: ` ${s.job.goal}` }),
       el("span", { class: "go-tag", text: `${s.job.mood}${s.job.ultimatum ? " · Ultimatum Year" : ""}` })]));
-    box.append(card, el("section", { class: "go-card go-programs-card", "aria-label": "Every Program" }, [
-      el("div", { class: "go-kicker" }, ["Every Program ", ui().tip("Every FBS program's standing on the same six measures, and what its AD expects this season.", "Every Program")]),
+    root.append(card, el("section", { class: "go-card rcp-card lg-card go-programs-card", "aria-label": "Every Program" }, [
+      el("div", { class: "go-kicker muted" }, ["Every Program ", ui().tip("Every FBS program's standing on the same six measures, and what its AD expects this season.", "Every Program")]),
       programsTable(pv)]));
     if (H.carryLine) H.carryLine(s, card);
   }

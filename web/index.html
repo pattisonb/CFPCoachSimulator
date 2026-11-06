@@ -29,6 +29,7 @@
   <link rel="stylesheet" href="./profile.css" />
   <link rel="stylesheet" href="./office.css" />
   <link rel="stylesheet" href="./recap.css" />
+  <link rel="stylesheet" href="./league.css" />
   <link rel="stylesheet" href="./scouting.css" />
   <link rel="stylesheet" href="./prospects.css" />
   <link rel="stylesheet" href="./depth/depth-globals.css" />
@@ -167,9 +168,17 @@
         <div class="panel tab-body" id="tab-summary" hidden></div>
         <div class="panel tab-body" id="tab-awards" hidden></div>
         <div class="panel tab-body" id="tab-stats" hidden>
-          <div class="view-chips stats-chips" id="stats-chips"></div>
-          <div id="tab-teamstats" hidden></div>
-          <div id="tab-playerstats" hidden></div>
+          <!-- the Recap's look (web/league.css): one card, the view chips in its head, the filters and the table under it -->
+          <div class="lg" id="stats-root">
+            <section class="go-card rcp-card lg-card edge" aria-label="Stats">
+              <div class="lg-head">
+                <div class="lg-head-title"><div class="go-kicker muted" id="stats-kicker">League</div><h2 class="rcp-h1">Stats</h2></div>
+                <div class="view-chips stats-chips" id="stats-chips"></div>
+              </div>
+              <div id="tab-teamstats" hidden></div>
+              <div id="tab-playerstats" hidden></div>
+            </section>
+          </div>
         </div>
         <div class="tab-body go-tab" id="tab-office" hidden></div>
         <div class="tab-body go-tab" id="tab-offseason" hidden></div>
@@ -177,7 +186,7 @@
         <div class="panel tab-body" id="tab-prospects" hidden></div>
         <div class="panel tab-body" id="tab-scouting" hidden></div>
         <div class="panel tab-body" id="tab-classes" hidden></div>
-        <div class="tab-body go-tab" id="tab-programs" hidden></div>
+        <div class="panel tab-body" id="tab-programs" hidden></div>
         <div id="tab-box" hidden>
           <div class="scoreboard panel">
             <div class="score-row" id="sbox-score-row"></div>

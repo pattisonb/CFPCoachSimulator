@@ -1711,8 +1711,9 @@ candidates and generated coaches are drawn against the rating on the baseline's 
 fitted so the ratings line up with the recruiting baseline). Recruiting's prestige pull reads
 0.6 × prestige + 0.4 × rating and the NIL pull the NIL tier; the portal's prestige and the
 program's share of development read the rating. The League's **Programs** tab shows your
-program's card (the six metrics as bars read in words: elite 80 and up, strong 65, solid 50, fair
-35, weak below; the standing as a tag; the AD's goal) and, open under it, every program in a table
+program's card (a Recap card with the team edge: the standing as a tag beside the kicker, the
+program's name as the title, the six metrics as bars read in words: elite 80 and up, strong 65,
+solid 50, fair 35, weak below; the AD's goal) and, open under it, the Every Program card, a table
 of the same words (it left the Office in round 3 to give the game the room). `tools/check_programs.py`
 checks the starting top 25 and, over a run, that the top 25 keeps at least 18 of its starting
 members; `tools/long_run.py` prints the same each season.
@@ -2292,7 +2293,12 @@ week strip lets you look back at any week. Tabs:
 - **My Schedule**, **Standings**: every conference, ordered by conference winning
   percentage with the conferences' tiebreak ladder (below). After championship week the
   champion carries a crown and the title-game loser a silver medal; hover a rank to see
-  which tiebreak placed a team.
+  which tiebreak placed a team. Standings, Stats and Programs wear the Season Recap's look
+  (`web/league.css` on top of `recap.css`: `.rcp-card` cards on the panel, a kicker over each,
+  condensed uppercase titles, the team-colored top edge on your own card, the tables kept as
+  `table.stats`). Standings is a head card (the week, the title, the conference chips), then one
+  card per conference with its name as the title, yours first as "Your Conference" with the edge;
+  All lays them two across above 1000 px and one below.
 - **AP Poll**: the poll released after the selected week, with each team's move.
 - **CFP Rankings**: the committee's ranking after weeks 9 through 13 and the final one
   after championship week, the 2026 release calendar (Nov 3, 10, 17, 24, Dec 1, Dec 6).
@@ -2832,7 +2838,9 @@ the box score. The Games and My Schedule tabs show each playoff game's bowl name
 
 ### Team and player stats all season
 
-Two more tabs, **Team Stats** and **Player Stats**, work at any point in the season. Full
+Two more tabs, **Team Stats** and **Player Stats**, work at any point in the season, under one
+Stats card (the view chips in its head, the conference, team and category filters under them,
+then the table, `web/index.html` and `renderStats`). Full
 box scores are kept only for your own games, so for every simulated game the workers send
 back a compact line per team (team totals, situational counts, plays, possession, and
 each player's stat line) that is summed into the season as it goes. Team Stats is a
