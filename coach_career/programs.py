@@ -147,6 +147,19 @@ def pro_recompute(p: dict, year_now: int) -> None:
     p["pro_groups"] = {g: scaled(v, gs[g]) if g in gs else 0 for g, v in pro_group_scores(lines, year_now).items()}
 
 
+GROUP_DRAFT = {"QB": ("QB",), "RB": ("RB",), "WR": ("WR",), "TE": ("TE",), "OL": ("OT", "IOL"), "DL": ("EDGE", "DL"),
+               "LB": ("LB",), "CB": ("CB",), "S": ("S",)}   # roster group -> the draft groups it reads (ATH, K and P read the overall grade)
+
+
+def pro_group_grade(p: dict, group: str) -> float:
+    """A program's Pro Pipeline grade at a roster group (the mean of its draft groups; any other group, the overall grade)."""
+    keys = GROUP_DRAFT.get(group)
+    if not keys:
+        return p.get("pro", 0)
+    pg = p.get("pro_groups") or {}
+    return sum(pg.get(k, 0) for k in keys) / len(keys)
+
+
 def season_score(wins: int, games: int, rank=None) -> float:
     """A season's score: win share plus the AP finish (top 25 and top 10 0.35 each, top 5 0.5, number one 0.8)."""
     s = wins / games if games else 0.0

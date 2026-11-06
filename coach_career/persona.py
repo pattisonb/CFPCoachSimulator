@@ -14,8 +14,8 @@ PERSONALITY_LABEL = {"cocky": "Cocky", "shy": "Shy", "guarded": "Guarded", "atte
 DECIDERS = {"self": 0.30, "mom": 0.20, "dad": 0.15, "grandma": 0.10, "hs_coach": 0.15, "trainer": 0.10}   # who decides, by share *tune*
 DECIDER_LABEL = {"self": "Himself", "mom": "Mom", "dad": "Dad", "grandma": "Grandmother", "hs_coach": "High School Coach", "trainer": "Trainer"}
 PORTAL_DECIDERS = ("self", "mom", "dad", "trainer")   # a transfer's decider: no high school coach or grandmother (their shares renormalized)
-DECIDER_TOPICS = {"self": (), "mom": ("proximity", "academics"), "dad": ("nil", "playing_time"), "grandma": ("proximity", "coach"),
-                  "hs_coach": ("coach", "playing_time", "winning"), "trainer": ("nil",)}   # what each decider cares about
+DECIDER_TOPICS = {"self": (), "mom": ("proximity", "academics"), "dad": ("nil", "playing_time", "pro"), "grandma": ("proximity", "coach"),
+                  "hs_coach": ("coach", "playing_time", "winning", "pro"), "trainer": ("nil", "pro")}   # what each decider cares about
 
 
 def draw(pid: str, seed, portal: bool = False) -> dict:

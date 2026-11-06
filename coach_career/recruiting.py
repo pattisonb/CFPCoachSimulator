@@ -24,12 +24,13 @@ from teamdata import game_scale
 from coach_career import persona, recruits
 
 ROOT = Path(__file__).resolve().parents[1]   # the project root
-PITCHES = ("proximity", "playing_time", "prestige", "winning", "nil", "coach", "academics")
+PITCHES = ("proximity", "playing_time", "prestige", "winning", "nil", "coach", "pro", "academics")
 # how often each topic is a prospect's priority (drawn without replacement for his top three) *tune*
-PRIORITY_ODDS = {"proximity": 0.20, "playing_time": 0.18, "prestige": 0.16, "winning": 0.14, "nil": 0.14,
-                 "coach": 0.12, "academics": 0.06}
+PRIORITY_ODDS = {"proximity": 0.18, "playing_time": 0.17, "prestige": 0.14, "winning": 0.13, "nil": 0.13,
+                 "coach": 0.10, "pro": 0.10, "academics": 0.05}
 PRIORITY_WEIGHTS = (0.35, 0.25, 0.15)      # his first, second and third priority; the rest share 0.25 *tune*
 OTHER_WEIGHT = 0.25
+PRO_PULL_K = 1.2                           # how steeply a Pro Pipeline grade away from 50 moves the Path to the League pull *tune*
 PULL_SCALE = 10.0                          # interest points for a pull of 1.0 at full weight *tune*
 PROXIMITY_MILES = 300.0                    # distance pull exp(-miles / this) *tune*
 PROXIMITY_FLOOR = 0.05
@@ -140,8 +141,8 @@ FLAG_HOLD = 4.0                            # a flag found stays until the read m
 LOOK_LOG_KEEP = 30                         # the look log keeps this many of a scout's looks a week (flags, then potential, then the rest)
 # the transfer portal as recruiting (offseason.py runs it): four weeks after signing day *tune*
 PORTAL_WEEKS = 4
-PORTAL_PRIORITY_ODDS = {"playing_time": 0.45, "nil": 0.20, "winning": 0.15, "proximity": 0.10, "prestige": 0.07, "coach": 0.03}
-PORTAL_TOP_PRIORITY_ODDS = {"nil": 0.35, "winning": 0.25, "playing_time": 0.18, "prestige": 0.12, "proximity": 0.06, "coach": 0.04}
+PORTAL_PRIORITY_ODDS = {"playing_time": 0.40, "nil": 0.20, "winning": 0.15, "proximity": 0.10, "prestige": 0.07, "pro": 0.05, "coach": 0.03}
+PORTAL_TOP_PRIORITY_ODDS = {"nil": 0.30, "winning": 0.22, "playing_time": 0.18, "prestige": 0.12, "pro": 0.08, "proximity": 0.06, "coach": 0.04}
 PORTAL_TOP_TIER = 4                        # an entrant rated a four-star or better draws his priorities from PORTAL_TOP_PRIORITY_ODDS: the best transfers chase NIL and a contender
 PORTAL_NATIONAL = 40                       # the best entrants by portal rank are on every Power 4 board (the whole country chases them)
 PORTAL_STARTERS = {"QB": 1, "RB": 1, "WR": 3, "TE": 1, "OL": 5, "DL": 4, "LB": 3, "CB": 2, "S": 2, "K": 1, "P": 1}   # a group's starters: an entrant better than the last of them is an upgrade, taken past the group's cap
@@ -896,6 +897,7 @@ def pull(state: dict, slug: str, pid: str, winning: bool = True) -> dict[str, fl
         **({"winning": min(1.0, on_field(state, slug, state["current_week"]))} if winning else {}),
         "nil": _logistic(1.4 * zn),
         "coach": min(1.0, max(0.0, 0.5 + 1.5 * _coach_edge(state, slug))),
+        "pro": _logistic(PRO_PULL_K * (programs.pro_group_grade(pr, group) - 50) / 25),
         "academics": 0.9 if slug in ACADEMIC else 0.5,
     }
 
