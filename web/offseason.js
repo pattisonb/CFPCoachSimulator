@@ -8,8 +8,9 @@
      the Overview ("hub"): the hero, your numbers, the AD's meeting, the takeaway and your history. The
        tab opens on it at Departures; Back from any stage returns to it; its primary button opens the
        stage the offseason is on (no call to the server).
-     the stage's own page: Departures, Keep Them Home, the portal weeks (the recruiting board, drawn by
-       recruiting.js, wrapped), Development, Staff, and the Recap at Ready (no Overview, no Back).
+     the stage's own page: Departures, Keep Them Home, the portal weeks (the rules, your moves, who got away and
+       a compact Your Portal Board card; the board itself is the Recruiting tab's, drawn by recruiting.js),
+       Development, Staff, and the Recap at Ready (no Overview, no Back).
    Which page shows (view.page) and Development's tab (view.devTab) are in the address (opage, odev). */
 (function () {
   "use strict";
@@ -19,6 +20,7 @@
   const KIND_ORDER = ["draft", "undrafted", "graduated", "portal", "quit", "stayed"];
   const SHOWN = 6;                 // rows a long list shows before "+ N More"
   const FIRST_SHOWN = 8;           // first-round picks shown before "+ N More"
+  const BOARD_SHOWN = 6;           // entrants the portal week's Your Portal Board card lists
   const view = { position: "", status: "available", posPick: "", recapOpen: false,
                  page: "stage", pageFor: null, want: null, devTab: "redshirts", more: {}, closed: {} };
   const ui = window.CFP.ui;
@@ -235,8 +237,7 @@
       development: "Advance to Staff Changes", staff: "Finish the Offseason", ready: `Start the ${v.year} Season` }[v.stage];
   }
 
-  // the stage drawn into root; patching: drawn off screen to patch the live one (the portal board
-  // keeps itself: recruiting.js draws it once)
+  // the stage drawn into root; patching: drawn off screen to patch the live one
   function draw(s, v, root, patching) {     // root: the live box, or a detached one to patch from (handlers use BOX)
     drawn = { sid: s.id, stage: v.stage };
     last = { s, v };
@@ -293,7 +294,7 @@
   const HERO = {
     retention: (v) => `Keep key players home, see who left and fill your roster from the portal for ${v.year}.`,
     departures: () => "Your answers are in and the draft is done. See who left, who was picked and who you kept.",
-    portal: (v) => `Week ${v.portal.week} of ${v.portal.weeks}: recruit transfers on your board. Entrants with offers decide at the week's end.`,
+    portal: (v) => `Week ${v.portal.week} of ${v.portal.weeks}: recruit transfers on your board on the Recruiting tab. Entrants with offers decide at the week's end.`,
     portal_old: () => "Offer transfers from the portal table. Entrants with offers pick a school when the round ends.",
     development: () => "The portal is closed. See who improved, check the redshirts and move players between positions.",
     staff: () => "Fill the jobs on your staff, hire from the coaching market and see the carousel around the league.",
@@ -597,7 +598,7 @@
     if (r.players.length) page.append(cards);
   }
 
-  // ----- the transfer portal, week by week: the rules, the answers from Keep Them Home, your moves, and the board
+  // ----- the transfer portal, week by week: the rules, the answers from Keep Them Home, your moves, and your board in brief
   function movesCard(s, moves) {
     return card("off-moves", "moves", [kicker("Your Moves"), el("ul", { class: "off-lines" }, moves.map((m) => el("li", { "data-key": `${m.id}-${m.to}` }, [
       icon("swap"), el("b", { text: m.name }), el("span", { class: "muted", text: `${m.pos} · ${m.overall} OVR` }),
@@ -622,11 +623,32 @@
     const moves = p.moves_mine || [];
     const away = p.away || [];
     const awayCard = away.length ? card("off-away", "away", [kicker(`Who Got Away · ${away.length}`), awayList(away)]) : null;
-    const board = el("div", { class: "off-board", "data-key": "board", "data-keep": "" });     // the board draws and patches itself (recruiting.js)
-    const items = [overview, answers, moves.length ? movesCard(s, moves) : null, awayCard].filter(Boolean);
+    const items = [overview, boardCard(s, v), answers, moves.length ? movesCard(s, moves) : null, awayCard].filter(Boolean);
     if (items.length % 2 === 1) items[items.length - 1].classList.add("off-span");
-    page.append(el("div", { class: "off-row off-g2 off-portal", "data-key": "portal" }, [...items, board]));
-    if (!patching) window.Recruiting.board(s, board, H);
+    page.append(el("div", { class: "off-row off-g2 off-portal", "data-key": "portal" }, items));
+  }
+  // Your Portal Board: a compact card in place of the board itself (that is the Recruiting tab's): the count, your
+  // offers out of the week's allowance, your open spots, the top entrants by your chance with the board's own standing
+  // word (recruiting.js's ladder, so the chip agrees with the tab), and the button that opens the tab
+  function boardCard(s, v) {
+    const p = v.portal;
+    const bd = p.board || { count: 0, rows: [] };
+    const R = window.CFP.recruiting;
+    const offers = (p.offers || []).length;
+    const top = bd.rows.slice().sort(R.byChance(s.team)).slice(0, BOARD_SHOWN);
+    const go = el("button", { type: "button", class: "go-btn primary off-board-go", text: "Recruit on the Board →" });
+    ui.on(go, "click", () => H.onChange("recruiting"));
+    return card("off-your-board", "board", [kicker("Your Portal Board"),
+      el("div", { class: "off-strip3" }, [stat("On Your Board", String(bd.count)), stat("Offers Out", `${offers} / ${offers + p.offers_left}`), stat("Open Spots", String(v.open_spots))]),
+      top.length ? el("ul", { class: "off-lines off-board-lines" }, top.map((b) => {
+        const sd = R.standingOf(b, s.team);
+        const word = sd.odds === "No Room" ? "No Room" : sd.word;
+        return el("li", { "data-key": b.id }, [avatar(b.id, "sm"), el("div", { class: "off-board-who" }, [el("b", { text: b.name }),
+          el("div", { class: "muted small", text: `${b.pos} · ${b.overall} OVR${b.signed_week ? ` · Signed Week ${b.signed_week}` : ""}` })]),
+          el("span", { class: `go-tag ${sd.tone}`, text: word, ...(sd.odds === "No Room" && b.no_room ? { title: b.no_room.tip } : {}) })]);
+      })) : el("p", { class: "muted", text: "Nobody on your board yet. Pick entrants on the Prospects tab, then recruit them on the Recruiting tab." }),
+      bd.count > top.length ? el("p", { class: "muted small", text: `And ${bd.count - top.length} more on the Recruiting tab.` }) : null,
+      el("div", { class: "off-board-foot" }, [go])]);
   }
 
   // a recruit of yours who went elsewhere, in a sentence: "Zach Lutmer signed with Georgia. You had no roster spot left for him."
