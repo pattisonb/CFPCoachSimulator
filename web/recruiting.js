@@ -338,7 +338,7 @@
 
   // ----- the Recruiting board ----------------------------------------------------------------------
 
-  const ACT_TIPS = { scout: "Send your best evaluator to see him: a look costs scouting points (5, 10 or 15, see the Scouting Center), any week, until his report is complete at three looks; a week in a scout's area is half a look, up to two" };
+  const ACT_TIPS = { scout: "Send your best evaluator to see him: a look costs scouting points (5 close to home: his state or within 150 miles of campus, 10 in a scout's area, 15 elsewhere; a portal entrant 5; half that when half a look finishes his report), any week, until his report is complete at three looks; a week in a scout's area is half a look, up to two" };
   // looks come in trip units (a Send one, an area week half, a full report three): a count shows its half only when it has one
   const fmtLooks = (n) => (Number.isInteger(Number(n)) ? String(Number(n)) : Number(n).toFixed(1));
 
@@ -2067,7 +2067,7 @@
         el("td", { class: "pr-c-wt", text: r.weight != null ? String(r.weight) : "—" }),
         el("td", { class: "pr-c-stars" }, [r.portal ? el("span", { text: clsWord(r.cls) || "—" }) : el("span", { class: "go-stars", text: stars(r.stars), "aria-label": `${r.stars} stars` })]),
         el("td", { class: "pr-c-status" }, [el("span", { class: `go-tag ${stTone}`, text: stText, title: stText })]),
-        el("td", { class: "pr-c-int" }, [el("span", { class: `go-tag ${INTEREST_TONE[r.interest_level] || ""}`, title: "How much your school appeals to him now", text: r.interest_level || "Low" })]),
+        el("td", { class: "pr-c-int" }, [el("span", { class: `go-tag ${INTEREST_TONE[r.interest_level] || ""}`, title: "How much your school appeals to him now, next to other recruits of his star rating", text: r.interest_level || "Low" })]),
         el("td", { class: "pr-c-pot" }, [el("span", { class: `go-tag ${potTone}`, title: pot ? "Your staff's read of his potential" : "Your staff has no read on him yet", text: potText(pot) })]),
         el("td", { class: "pr-c-act" }, [add])]);
       ui().on(tr, "click", (e) => { if (!e.target.closest("button, a, input, select")) openProfile(s, r.id); });
