@@ -209,7 +209,9 @@ personnel on offense, nickel on defense); the rest of the 85-man roster rotates 
 **Returners are roles, not roster slots.** The designated kick and punt returners return
 kicks whether or not they start. If a team has no designated returner, the engine picks
 the best return rating: 35% EA kick-return skill, 20% speed, 15% acceleration, 15%
-elusiveness, 10% vision, 5% ball security. Return yardage and return-touchdown odds use
+elusiveness, 10% vision, 5% ball security. On the page every player's returner rating sits on one
+scale, whatever his position (the league's designated returners are its 50 mark), and the
+KR and PR lists leave out linemen, quarterbacks and kickers. Return yardage and return-touchdown odds use
 the same rating.
 
 **Punts** (`_attempt_punt` in `engine/drive_functions.py`, constants `PUNT_*` in
@@ -886,9 +888,13 @@ actions have earned with him.
 **Your week.** Hours: `50 + (recruiting rating - 50) / 4`. A message costs 5, a call 15 (half
 the time he lets slip one of his priorities, `CALL_REVEAL`, and you come away with his ask as a
 range of about 15% either side, not the number), a head coach in-home visit 30 (once a month; it
-tells you one priority for sure and his number), an official visit invite 10 (at your next home
-game; a win sells, a 21-point loss hurts, a big stadium helps, and the weekend tells you all
-three of his priorities), a scouting trip 5 (one look by your best evaluator, any week, allowed
+tells you one priority for sure and his number), an official visit invite 10 (on a home weekend
+you pick: the Recruit menu's Official Visit opens a list of your regular-season home games still
+to play, "Wk 6 · vs #4 USC", the first weekend he has free marked; a weekend he already visits
+another school is grayed with that school's name, one official visit a weekend and one per school,
+no rebooking; the API's `week` on the act, which Auto-recruit and the AI schools never pass, so
+they take his first free weekend as before; a win sells, a 21-point loss hurts, a big stadium
+helps, and the weekend tells you all three of his priorities), a scouting trip 5 (one look by your best evaluator, any week, allowed
 while his report is short of complete; a prospect with a complete report shows his grades in one
 line on his card and at the top of his profile) and an offer nothing.
 **A commitment in words.** A committed recruit's profile (`prospects.flip_view`, the profile's
@@ -1259,11 +1265,27 @@ he asks about a named player on that call (the starter ahead of him, or another 
 offered), the scene shows his line with three answers (straight, a promise, a sidestep; each button a Title Case
 label, Tell Him Straight, Make Him a Promise or Sidestep It, over the line you say) and
 locks the pitch until you pick one; his reply comes back in place (no toast) and History keeps
-the answer (`Told him straight about …`, `Promised him the job over …`). The pane, the Prospect Profile popup and the
+the answer (`Told him straight about …`, `Promised him the job over …`). A Package Deal asks about his
+mate instead whenever his or his family's package line is said (a first call, a call once you know
+his story, every in-home visit; `scenes.package_about`, the mate a prospect in the class not yet
+signed): the question's three answers ride on it (`answers`, by whether you have offered the mate).
+Not offered: **Tell Him Straight** ("I can't promise Khalil a spot today. I'll look at him.", nothing
+either way), **Promise Him an Offer** ("Khalil gets an offer this week. You have my word.": a
+`package` promise on his contact, kept the week step the mate holds your offer within
+`PACKAGE_PROMISE_WEEKS` (2) of it for `PACKAGE_KEPT` (2) points and a `promise_kept` line, "Khalil got
+his offer. You kept your word, Coach.", broken after that without it: he cools `COOL_WEEKS`, or a
+commit's firmness drops `PROMISE_RIVAL`, with a `promise_broken` event), **Sidestep It**. Already
+offered: the family's or his line says so instead of demanding it ("You offered Khalil too. That means
+a lot in this house.", `persona.STORY_LINES_OFFERED`), and **Already Offered Him** ("I offered Khalil
+already. Two spots, both yours.") earns `ANSWER_STRAIGHT` plus `PACKAGE_OFFERED` (1). History words
+them `Promised an offer to Khalil Telfair`, `Told him Khalil Telfair already has an offer`, and a
+broken one `Khalil Telfair never got the offer you promised`. The pane, the Prospect Profile popup and the
 Scouting Center draw a recruit with one set of pieces (`web/profileview.js`, `web/profile.css`): a hero (his status chip,
-avatar, name, stars, Pos | Height | Weight with the position as the game shows it, `display_pos`: an EDGE who plays DT
-reads DT everywhere; Hometown · #rank; Nat. Rank, Pos. Rank, Class; a Your Chance badge in the ladder's words with a
-bar), a tab row (Overview, Scouting, Profile, History, with Recruit ▾ and the ☆ watch star on its right; it stays pinned
+avatar, name, stars, Pos · Archetype | Height | Weight with the position as the game shows it, `display_pos`: an EDGE
+who plays DT reads DT everywhere, and his archetype after it, "DT · Run Stopper"; Hometown · Class of 2027 (the portal:
+From School); Nat. Rank and Pos. Rank in one bordered strip (the portal adds Class), so no number shows twice; a Your
+Chance badge in the ladder's words, its bar only once there is a chance to measure, an offer or his commitment elsewhere),
+a tab row (Overview, Scouting, Profile, History, with Recruit ▾ and the ☆ watch star on its right; it stays pinned
 at the top of the pane while the cards scroll) and cards in a two-column grid (one column on a narrow pane; a card alone
 on its row spans it; one gap token, `--pv-gap`, across and down; cards in a row stretch to one height).
 **Overview**: the Recruiting Battle (his list as ranked rows, your school marked; a committed recruit's other schools
@@ -1318,7 +1340,10 @@ Scouting Center, master and detail, built from the player's mockup in the site's
   the read is: Confident, Could Change, Early Look), then the tabs **Report** (the Scouting Report and the
   Attributes card), **Looks** (Looks & Uncertainty with the flags, a coordinator's "Likes Him", this and last week's
   report lines on him and All Reports) and **Profile** (the traits and background cards). On the tab row: **Send Scout
-  · 10 Pts** (its row's `cost`: 10, 15 or 5; "· Finishes His Report" when one look is left; disabled with the reason
+  · 10 Pts** (its row's `cost`, `recruiting.look_cost` from `LOOK_COST`: 5 for a prospect close to home, in your school's
+  state or within `HOME_MILES` (150) of your campus after any Family Move, 10 in an area a staff scout covers, 15 away from
+  your scouts, 5 for a portal entrant; half the tier, rounded up to a multiple of 5 (5, 5, 10), when less than a full look
+  finishes his report, at 2.5 of 3 looks after a half-look area week; "· Finishes His Report" when one look is left; disabled with the reason
   under the row: "Not enough scouting points left this week.", or "His report is complete: 3 of 3 looks"), **View Full
   Profile** (the popup) and **Add to Board** / **Remove From Board** (the board's own confirm when that pulls a standing
   offer). The address keeps `ssub` (report, looks, profile); an old address's ratings or overview opens Report and
@@ -1362,9 +1387,13 @@ mockup in the site's theme tokens, flat (no gradient; the board button is the pa
   Board"), Position, Stars, State, Status and Sort, then the table: #, the avatar, name and hometown (and his find
   badges), Pos (the game's position, `display_pos`), Ht, Wt, Stars, Status ("Uncommitted", "Verbal: School", "Hard
   Commit: School", "Signed: School"; the school's name is `season.team_display`, so an FCS stand-in never shows),
-  Interest in You (High, Medium or Low), Potential (your staff's read, "Strong" or "Elite – All-American", or
-  "Unscouted"; never the truth) and **+ Board** / **✓ On Board**. A row opens the Prospect Profile. 50 to a page.
-  As the card narrows the columns give way (Ht and Wt, then Potential, then Status; `fitTable` measures, so a wide
+  Interest in You (High, Medium or Low, graded against prospects of his star rating), Scouted (the Scouting Center's words: "Not Yet", "1 of 3 Looks", "Fully
+  Scouted"), Potential (your staff's read after his looks, "Strong" or "Elite – All-American", or "Not Read" before a
+  look; never the truth) and **+ Board** / **✓ On Board**. A row opens the Prospect Profile. 50 to a page. A scouting
+  trip sent from anywhere (the profile's Send a Scout, the board's Recruit menu, the Scouting Center) lands on his row in
+  place: the recruit action answers with his `looks` and his `potential` range, the page raises `cfp:scouted`, and an
+  open list morphs his Scouted and Potential cells (and bumps Your Footprint's Evaluated on a first look), no reload.
+  As the card narrows the columns give way (Ht and Wt, then Scouted and Potential, then Status; `fitTable` measures, so a wide
   font or a long school name never pushes the table past its card); on a phone a row is the name, the interest
   and the board button. On a desktop the list scrolls inside its card and the side column sets the row's height.
 - **The side column**: **Your Footprint** (the game's map, `us-map.js`: your scouts' areas and your board as dots; a
@@ -1387,9 +1416,14 @@ chance as a range that narrows as signing day nears (plus or minus 25 points at 
 week 8, 4 from week 13), labeled Early Read, Taking Shape or Solid Read. Class rank weighs each
 class's best commitments most (each counts 0.85 times the one before).
 
-**Interested in you** (a Prospects filter and sort): the 15% of the class your school appeals
-to most right now (his interest in you: distance, playing time, prestige, winning, NIL, the coach,
-academics and what you have done), most interested first; every row shows High, Medium or Low.
+**Interested in you** (a Prospects filter and sort): the prospects graded High right now, most
+interested first (his interest in you: distance, playing time, prestige, winning, NIL, the coach,
+academics and what you have done); every row shows High, Medium or Low. A prospect is graded against
+the prospects of his own star rating you can see (`prospects.your_interest`, `INTEREST_LEVELS`: the top
+15% of his star band is High, the next 35% Medium, the rest Low), not against the whole class: interest
+in any one school rises with a prospect's stars, so grading the class as one made the pages the player
+reads first, the top of the national ranking, mostly High. High means he likes you more than most
+recruits of his caliber do.
 
 **Classes**: every FBS school's class ranked nationally (as class rank: best commitments count
 most), each opening to its recruits; the Office points to it after the early signing period
@@ -1491,8 +1525,11 @@ a losing year; a Group of 5 player with a card overall of 50 or more (a Power 4 
 segments, each with its driver, and one draw against the sum: the segment it lands in is why he
 goes, stored on the entrant (`driver`) and on your leaver's Keep Them Home card, so the reason is
 the real cause, not a guess after the fact. The first segment is the role chance above (his
-class and role, a losing year, a Group of 5 standout moving up, a broken promise, a keep last
-year). The second is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
+class and role, a losing year, a Group of 5 standout moving up, a keep last year). A player
+promised a starting role (`promised`, from Keep Them Home or carried by a signed recruit or portal
+signee you told the job was his) who did not start adds a `promised` segment worth the rest of
+`PROMISE_BROKEN` (3) times the role chance; when the draw lands there his Keep Them Home card and
+the portal recap read "Was promised a starting role and did not get it". The next is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
 the recruit ask of the star tier his overall reads as, 60 for a five-star-equivalent, 30 a
 four, 8 a three, times his position), and his program's tier pays a starter `NIL_TIER_PAY` (60
 at tier 1, 40, 20, 8, 2 at tier 5); when his market is over that, his chance adds `NIL_PULL`
@@ -1526,7 +1563,9 @@ his ask, about 70% for a real starting role, 92% at most; a draft entrant projec
 round stays at most 8%, one rated 95 or better after a decent season 2% whatever you offer (his
 card says so), a day-three projection about 20% plus what the NIL buys). A player you
 keep carries `kept` (his portal chance the next year is 0.7 times) and a promise `promised` (3
-times if the snaps do not come). The leavers join the portal class or the draft as they would
+times if the snaps do not come; a recruit or portal entrant you promised the job on a call or
+visit carries the same `promised` onto your roster when he signs, `_sign_classes` and
+`_close_portal`, judged by the role he really played that season). The leavers join the portal class or the draft as they would
 have, and then the draft runs; Departures lists who stayed ("Stayed: You Kept Him Home") beside
 who left, and the week 1 portal screen lists the answers. A save from the older order (Departures
 first, the draft already run) is migrated when it loads (`migrate`): at Departures it goes back to
