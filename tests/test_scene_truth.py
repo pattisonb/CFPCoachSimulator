@@ -206,7 +206,7 @@ def test_preseason_and_even() -> None:
     every = {x for k in scenes.LINES.values() for v in k.values() for x in v}
     for line, need in scenes.NEEDS.items():
         for k in (need,) if isinstance(need, str) else need:
-            assert line in every and k.lstrip("!") in ("proximity", "playing_time", "prestige", "nil", "academics", "winning", "history"), line
+            assert line in every and k.lstrip("!") in ("proximity", "playing_time", "prestige", "nil", "academics", "winning", "history", "pro"), line
     for line in [x for v in scenes.WIN_DOUBT.values() for x in v] + [x for v in scenes.HONEST_HIT.values() for x in v] \
             + list(scenes.LEAD_WINNING.values()) + list(scenes.LEAD_HONEST.values()):
         text = line.format(**dict({k: "x" for k in scenes.FIELDS}, record="Two and five", school="North Texas", town="Spring"))
