@@ -10,6 +10,7 @@
     nil         the NIL tier: from the recruiting baseline (the same budget nil_budget gave) and the market
     conference  the conference's strength: the mean engine rating of its members
     coach       the head coach's overall rating and tenure
+    pro         data/nfl_drafts.json: the last ten drafts' picks by round, the newest five counting double
     rating      the mix; tier 1-5
 
 Writes data/program_history.json.    python tools/build_program_history.py
@@ -31,6 +32,7 @@ from coach_career import programs
 from sim import season
 from sim.teamnames import build_matcher, match
 
+DRAFTS = ROOT / "data" / "nfl_drafts.json"
 COACHES = ROOT / "data" / "recruiting" / "coaches.json"
 OUT = ROOT / "data" / "program_history.json"
 FIRST, LAST = 1995, 2025
@@ -115,6 +117,29 @@ def build() -> dict:
     hi, lo = max(conf_raw.values()), min(conf_raw.values())
     SCALES["conference"] = {"lo": lo, "hi": hi, "k": 1.0}
     conference = {c: programs.scaled(v, SCALES["conference"]) for c, v in conf_raw.items()}
+    # pro pipeline: the last ten drafts (2016-2025), points by round, per program and position group
+    picks = json.loads(DRAFTS.read_text(encoding="utf-8"))["picks"]
+    by_team: dict = defaultdict(lambda: defaultdict(list))
+    for pk in picks:
+        if pk["team"] != "other" and pk["group"]:
+            by_team[pk["team"]][pk["year"]].append((pk["round"], pk["group"]))
+    years = range(LAST - programs.PRO_YEARS + 1, LAST + 1)
+    drafts = {s: [programs.draft_line(y, by_team[s].get(y, [])) for y in years] for s in fbs}
+    pro_raw = {s: programs.pro_score(drafts[s], LAST) for s in fbs}
+    pro = scale_fixed(pro_raw, 0.0, max(pro_raw.values()), MEDIAN_TARGET, "pro")
+    group_raw = {s: programs.pro_group_scores(drafts[s], LAST) for s in fbs}
+    pro_groups: dict = {s: {} for s in fbs}
+    SCALES["pro_group"] = {}
+    for g in sorted({g for gr in group_raw.values() for g in gr}):
+        vals = {s: group_raw[s].get(g, 0.0) for s in fbs}
+        lo, hi = min(vals.values()), max(vals.values())
+        if hi > lo:
+            for s, v in scale_fixed(vals, lo, hi, MEDIAN_TARGET, f"pro_group.{g}").items():
+                if group_raw[s].get(g):
+                    pro_groups[s][g] = round(v, 1)
+            SCALES["pro_group"][g] = SCALES.pop(f"pro_group.{g}")
+        else:
+            SCALES["pro_group"][g] = {"lo": 0, "hi": 1, "k": 1}
     out = {}
     for s in fbs:
         hc = (teams[s].get("coaches") or {}).get("head_coach") or {}
@@ -122,7 +147,8 @@ def build() -> dict:
         coach = max(0.0, min(100.0, (hc.get("ratings") or {}).get("overall", 60) + 3 * min(5, tenure) - 5))
         nil = max(10.0, min(100.0, 50 + 25 * base_z[s] * 0.7 + 0.3 * (programs.market(s) - 50)))
         p = {"history": round(history.get(s, 15.0), 1), "winning": round(winning[s], 1), "market": programs.market(s),
-             "nil": round(nil, 1), "conference": round(conference[teams[s]["conference"]], 1), "coach": round(coach, 1)}
+             "nil": round(nil, 1), "conference": round(conference[teams[s]["conference"]], 1), "coach": round(coach, 1),
+             "pro": round(pro[s], 1), "pro_groups": pro_groups[s], "drafts": drafts[s]}
         p["prestige"] = p["history"]
         p["rating"] = round(programs.mix(p), 1)
         p["tier"] = programs.tier_of(p["rating"])
