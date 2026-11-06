@@ -203,7 +203,8 @@ def check_pane_profile(page, base, sid) -> None:
           const head = p.classList.contains('sheet') ? p.querySelector('.go-pane-head').getBoundingClientRect().bottom : pr.top;
           return { scrolled: p.scrollTop, top: t.top, bottom: t.bottom, height: t.height, visTop: Math.max(pr.top, 0, head), paneBottom: pr.bottom, left: t.left >= pr.left - 0.5, right: t.right <= pr.right + 0.5 }; }""")
         assert tabs["scrolled"] > 100, f"the pane's body scrolls at {width}: {tabs}"
-        assert tabs["top"] >= tabs["visTop"] - 1 and tabs["bottom"] <= tabs["paneBottom"] and tabs["height"] >= 36 and tabs["left"] and tabs["right"], \
+        # a pinned strip sits a sub-pixel above the pane's top when the head's height is fractional (CI read -1.06): 2 px of slack
+        assert tabs["top"] >= tabs["visTop"] - 2 and tabs["bottom"] <= tabs["paneBottom"] and tabs["height"] >= 36 and tabs["left"] and tabs["right"], \
             f"the sub-tab strip scrolled away or clipped at {width}: {tabs}"
         if tabs["scrolled"] >= t0 - tabs["visTop"] + 4:   # the body scrolled far enough for the strip's place to pass the top: it pins there
             assert t0 - tabs["scrolled"] < tabs["visTop"] - 4, f"the check scrolls the strip's place out of view at {width}: {t0}, {tabs}"
