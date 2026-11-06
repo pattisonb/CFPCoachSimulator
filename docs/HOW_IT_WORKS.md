@@ -888,9 +888,13 @@ actions have earned with him.
 **Your week.** Hours: `50 + (recruiting rating - 50) / 4`. A message costs 5, a call 15 (half
 the time he lets slip one of his priorities, `CALL_REVEAL`, and you come away with his ask as a
 range of about 15% either side, not the number), a head coach in-home visit 30 (once a month; it
-tells you one priority for sure and his number), an official visit invite 10 (at your next home
-game; a win sells, a 21-point loss hurts, a big stadium helps, and the weekend tells you all
-three of his priorities), a scouting trip 5 (one look by your best evaluator, any week, allowed
+tells you one priority for sure and his number), an official visit invite 10 (on a home weekend
+you pick: the Recruit menu's Official Visit opens a list of your regular-season home games still
+to play, "Wk 6 · vs #4 USC", the first weekend he has free marked; a weekend he already visits
+another school is grayed with that school's name, one official visit a weekend and one per school,
+no rebooking; the API's `week` on the act, which Auto-recruit and the AI schools never pass, so
+they take his first free weekend as before; a win sells, a 21-point loss hurts, a big stadium
+helps, and the weekend tells you all three of his priorities), a scouting trip 5 (one look by your best evaluator, any week, allowed
 while his report is short of complete; a prospect with a complete report shows his grades in one
 line on his card and at the top of his profile) and an offer nothing.
 **A commitment in words.** A committed recruit's profile (`prospects.flip_view`, the profile's
@@ -1277,9 +1281,11 @@ already. Two spots, both yours.") earns `ANSWER_STRAIGHT` plus `PACKAGE_OFFERED`
 them `Promised an offer to Khalil Telfair`, `Told him Khalil Telfair already has an offer`, and a
 broken one `Khalil Telfair never got the offer you promised`. The pane, the Prospect Profile popup and the
 Scouting Center draw a recruit with one set of pieces (`web/profileview.js`, `web/profile.css`): a hero (his status chip,
-avatar, name, stars, Pos | Height | Weight with the position as the game shows it, `display_pos`: an EDGE who plays DT
-reads DT everywhere; Hometown · #rank; Nat. Rank, Pos. Rank, Class; a Your Chance badge in the ladder's words with a
-bar), a tab row (Overview, Scouting, Profile, History, with Recruit ▾ and the ☆ watch star on its right; it stays pinned
+avatar, name, stars, Pos · Archetype | Height | Weight with the position as the game shows it, `display_pos`: an EDGE
+who plays DT reads DT everywhere, and his archetype after it, "DT · Run Stopper"; Hometown · Class of 2027 (the portal:
+From School); Nat. Rank and Pos. Rank in one bordered strip (the portal adds Class), so no number shows twice; a Your
+Chance badge in the ladder's words, its bar only once there is a chance to measure, an offer or his commitment elsewhere),
+a tab row (Overview, Scouting, Profile, History, with Recruit ▾ and the ☆ watch star on its right; it stays pinned
 at the top of the pane while the cards scroll) and cards in a two-column grid (one column on a narrow pane; a card alone
 on its row spans it; one gap token, `--pv-gap`, across and down; cards in a row stretch to one height).
 **Overview**: the Recruiting Battle (his list as ranked rows, your school marked; a committed recruit's other schools
@@ -1381,9 +1387,13 @@ mockup in the site's theme tokens, flat (no gradient; the board button is the pa
   Board"), Position, Stars, State, Status and Sort, then the table: #, the avatar, name and hometown (and his find
   badges), Pos (the game's position, `display_pos`), Ht, Wt, Stars, Status ("Uncommitted", "Verbal: School", "Hard
   Commit: School", "Signed: School"; the school's name is `season.team_display`, so an FCS stand-in never shows),
-  Interest in You (High, Medium or Low, graded against prospects of his star rating), Potential (your staff's read, "Strong" or "Elite – All-American", or
-  "Unscouted"; never the truth) and **+ Board** / **✓ On Board**. A row opens the Prospect Profile. 50 to a page.
-  As the card narrows the columns give way (Ht and Wt, then Potential, then Status; `fitTable` measures, so a wide
+  Interest in You (High, Medium or Low, graded against prospects of his star rating), Scouted (the Scouting Center's words: "Not Yet", "1 of 3 Looks", "Fully
+  Scouted"), Potential (your staff's read after his looks, "Strong" or "Elite – All-American", or "Not Read" before a
+  look; never the truth) and **+ Board** / **✓ On Board**. A row opens the Prospect Profile. 50 to a page. A scouting
+  trip sent from anywhere (the profile's Send a Scout, the board's Recruit menu, the Scouting Center) lands on his row in
+  place: the recruit action answers with his `looks` and his `potential` range, the page raises `cfp:scouted`, and an
+  open list morphs his Scouted and Potential cells (and bumps Your Footprint's Evaluated on a first look), no reload.
+  As the card narrows the columns give way (Ht and Wt, then Scouted and Potential, then Status; `fitTable` measures, so a wide
   font or a long school name never pushes the table past its card); on a phone a row is the name, the interest
   and the board button. On a desktop the list scrolls inside its card and the side column sets the row's height.
 - **The side column**: **Your Footprint** (the game's map, `us-map.js`: your scouts' areas and your board as dots; a

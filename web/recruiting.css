@@ -143,6 +143,7 @@
 .go-menu-main { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .go-menu-main b { font-size: 15px; }
 .go-menu-why { font-size: 12px; color: var(--muted); }
+.go-menu-item.go-menu-back b { color: var(--muted); font-weight: 600; }      /* the Official Visit picker's Back row */
 .go-menu-backdrop { position: fixed; inset: 0; z-index: 69; background: rgba(5, 8, 18, 0.45); }
 .go-menu.sheet { left: 0; right: 0; bottom: 0; top: auto; max-width: none; max-height: 82vh; border-radius: 16px 16px 0 0; border-width: 1px 0 0;
   padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px)); }

@@ -199,6 +199,29 @@ if __name__ == "__main__":
         _rc._visits(st_, vw)
         game.update(played=False)
         assert len(known(fresh)) == 3, known(fresh)
+        # the Official Visit picker: the board row lists your home weekends (`visit_weeks`), and the route's `week`
+        # books the one you picked; a week with no home game, or one he visits elsewhere, is 409 in a sentence
+        picked = next(r["id"] for r in search(sid, stars=3, state="TX", limit=50)["rows"]
+                      if r["id"] not in st_["recruiting"]["visits"] and not st_["recruiting"]["status"][r["id"]]["committed"])
+        R(sid, "board", {"pid": picked, "on": True})
+        st_["recruiting"]["hours"]["ohio-state"] = 100
+        weeks = next(b for b in G(sid, "recruiting")["board"] if b["id"] == picked)["visit_weeks"]
+        assert weeks and weeks[0]["first"] and all(w["taken_by"] is None for w in weeks), weeks
+        assert all({"week", "label", "opponent", "opponent_name", "opponent_rank", "taken_by", "first"} <= set(w) for w in weeks), weeks
+        refused(lambda: R(sid, "recruit", {"pid": picked, "action": "official_visit", "week": "soon"}), 422)
+        _top = _rc.top_group
+        _rc.top_group = lambda state, q, *a, **k: ["ohio-state"]         # he is considering us
+        try:
+            refused(lambda: R(sid, "recruit", {"pid": picked, "action": "official_visit", "week": 99}), 409)
+            if len(weeks) >= 2:
+                st_["recruiting"]["visits"][picked] = {"michigan": {"week": weeks[1]["week"], "done": False}}
+                assert next(b for b in G(sid, "recruiting")["board"] if b["id"] == picked)["visit_weeks"][1]["taken_by"] == "Michigan"
+                refused(lambda: R(sid, "recruit", {"pid": picked, "action": "official_visit", "week": weeks[1]["week"]}), 409)
+            R(sid, "recruit", {"pid": picked, "action": "official_visit", "week": weeks[-1]["week"]})
+            assert st_["recruiting"]["visits"][picked]["ohio-state"] == {"week": weeks[-1]["week"], "done": False}
+        finally:
+            _rc.top_group = _top
+        R(sid, "board", {"pid": picked, "on": False})
         # out of hours: 409
         while True:
             try:
