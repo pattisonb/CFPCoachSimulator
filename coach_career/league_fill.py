@@ -30,7 +30,7 @@ NUDGE_STEPS = 20
 NUDGE_CLOSE = 0.5                   # team overall points from the target that end the search
 CLASS_MIX = {"FR": 0.151, "FRRS": 0.122, "SO": 0.086, "SORS": 0.149, "JR": 0.086, "JRRS": 0.153, "SR": 0.069, "SRRS": 0.185}  # *tune* added players' classes (the built-in FBS rosters' mix)
 CLASS_LEAD = {"SRRS": 0.0, "JRRS": 0.1, "SR": 0.15, "JR": 0.2, "SORS": 0.3, "SO": 0.4, "FRRS": 0.7, "FR": 0.85}  # *tune* how late in a group's order each class's first player comes (older first, so starters are mostly upperclassmen, as on the built-in rosters)
-ROOM_BY_CLASS = {"FR": 0.89, "FRRS": 0.99, "SO": 0.91, "SORS": 0.89, "JR": 0.99, "JRRS": 0.72, "SR": 0.68, "SRRS": 0.0}  # *tune* a generated player's share of a recruit's room to potential, by class (fit to the built-in rosters)
+ROOM_BY_CLASS = {"FR": 0.84, "FRRS": 0.93, "SO": 0.86, "SORS": 0.82, "JR": 0.86, "JRRS": 0.65, "SR": 0.61, "SRRS": 0.0}  # *tune* a generated player's share of a recruit's room to potential, by class (fit to the built-in rosters)
 _TEMPLATE_POS = {"FB": "HB"}        # positions with no recruit template borrow a neighbor's
 _LB = ("MIKE", "WILL", "SAM")       # the order league.lineup fills the linebacker spots
 
