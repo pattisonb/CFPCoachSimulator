@@ -268,7 +268,8 @@ def house_to_engine(pos: str, key: str, ours: float) -> int:
 
 
 def display_rating(p: dict, key: str, value: Optional[float] = None) -> int:
-    return house_value(p["position"], key, p.get(key) if value is None else value)
+    pos = "KR" if key == "return_rating" else p["position"]      # the return rating is on the returners' scale, whoever he is
+    return house_value(pos, key, p.get(key) if value is None else value)
 
 
 def engine_rating(p: dict, key: str, ours: float) -> int:
