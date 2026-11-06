@@ -1225,7 +1225,7 @@ rank) and **Top Targets** (your hottest targets with their standing word; Board 
 Recruiting). The tab bar is two rows: the
 screens you act on (Office, Offseason once the season is over, Recruiting, Prospects, Scouting,
 Schedule, Depth Chart) and a League row that follows the calendar (Standings, Rankings, Stats
-and, in a career, **Programs** all year; Awards from week 4; Classes, Bracket and Bowls from selection week; Season Recap
+and, in a career, **Programs** all year; Awards from week 4; Classes from selection week; Bracket and Bowls as soon as Championship Week is played (the field is set then, so the Office can name your bowl or playoff game); Season Recap
 all year, and the title game lands the player on it). A plain season keeps every League tab. The Depth Chart button opens its own
 screen (`web/depth/depth.js`, `index.html?id=…&screen=depth`, Back returns to the season): the
 team's most-used formations as the next game fills them (`formations_view`) or one position at a

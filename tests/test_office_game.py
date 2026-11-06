@@ -144,6 +144,21 @@ def check_week_strip(page, base, sid) -> None:
     page.click("#season-tabs button[data-tab=rankings]")
     page.wait_for_selector("#tab-rankings:not([hidden])")
     assert page.eval_on_selector("#week-strip", "e => e.offsetParent !== null"), "the week strip on Rankings"
+
+
+def check_selected(page, base, sid) -> None:
+    """Championship Week played: the bracket is built and the bowls are picked, so the Office can already name your
+    next game. The Bracket and Bowls tabs open with it (never a bowl in the Office with no Bowls tab to see)."""
+    open_tab(page, base, sid, "office", "#tab-office .ofc-hero")
+    s = call(base, f"/api/season/{sid}")
+    assert s["bracket"] and s["bowls"], "the bracket and the bowls are set once Championship Week is played"
+    hid = page.evaluate("() => ['bracket', 'bowls'].map(t => document.querySelector(`#season-tabs button[data-tab=${t}]`).hidden)")
+    assert hid == [False, False], f"Bracket and Bowls tabs hidden after Championship Week: {hid}"
+    nxt = next((x for x in s["schedule"] if x["opponent"] and not x["played"]), None)
+    if nxt:   # your bowl or playoff game is in the Office; the Bowls tab has the real lineup, not a projection
+        assert nxt["opponent_name"] in page.text_content("#tab-office .go-game-next")
+    open_tab(page, base, sid, "bowls", "#tab-bowls h3")
+    assert "Projected" not in page.text_content("#tab-bowls h3"), page.text_content("#tab-bowls h3")
     clean(page)
 
 
@@ -290,6 +305,9 @@ if __name__ == "__main__":
     season.save_season(bye)
     done = pick_done(season)
     season.save_season(done)
+    selected = season.new_season("rice", "full", seed=7, career=True)   # Championship Week played: the field is set
+    season.advance_to(selected, season.CCG_WEEK)
+    season.save_season(selected)
     port = free_port()
     base = f"http://127.0.0.1:{port}"
     server = subprocess.Popen([sys.executable, "tools/dev_server.py"], cwd=ROOT, env={**os.environ, "PORT": str(port)},
@@ -315,6 +333,7 @@ if __name__ == "__main__":
             check_bye(page, base, bye["id"])
             check_week_strip(page, base, bye["id"])
             check_no_game(page, base, done["id"])
+            check_selected(page, base, selected["id"])
             check_roster(page, base, play["id"])
             check_tip(page, base, play["id"])
             open_tab(page, base, play["id"], "office", "#tab-office .ofc-hero")
@@ -328,7 +347,7 @@ if __name__ == "__main__":
         print("office game ok: Next Game before, Last Game beside the plan under the Next Game hero after a sim (quarters, leaders, Full Box Score), a bye's next "
               "opponent, the standing line, the Programs tab (and a reload), the Scouting ⓘ on a phone, the roster's OVR")
     finally:
-        for sid in (play["id"], bye["id"], done["id"]):
+        for sid in (play["id"], bye["id"], done["id"], selected["id"]):
             try:
                 call(base, f"/api/season/{sid}", method="DELETE")
             except Exception:  # noqa: BLE001
