@@ -1782,9 +1782,11 @@ candidates and generated coaches are drawn against the rating on the baseline's 
 fitted so the ratings line up with the recruiting baseline). Recruiting's prestige pull reads
 0.6 × prestige + 0.4 × rating and the NIL pull the NIL tier; the portal's prestige and the
 program's share of development read the rating. The League's **Programs** tab shows your
-program's card (a Recap card whose bar carries the kicker with the standing as a tag beside it, the
-program's name as the title, the seven metrics as bars read in words: Elite 90, Excellent 80, Strong 70,
-Good 60, Solid 50, Fair 40, Thin 30, Weak below; the AD's goal) and, open under it, the Every Program card, a table
+program's card (a Recap card whose bar carries the kicker with the standing as a tag at its right; a hero row
+with the team's pill, its name and conference and three headline readings, Prestige, Market and Pro Pipeline;
+under it two columns, School Grades with the seven metrics as bars read in words: Elite 90, Excellent 80, Strong 70,
+Good 60, Solid 50, Fair 40, Thin 30, Weak below, and Position Pro Potential with a chip per draft group, best first,
+the strong ones in green; the AD's goal in the footer) and, open under it, the Every Program card, a table
 of the same words (it left the Office in round 3 to give the game the room). `tools/check_programs.py`
 checks the starting top 25 and, over a run, that the top 25 keeps at least 18 of its starting
 members; `tools/long_run.py` prints the same each season.

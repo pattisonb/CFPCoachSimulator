@@ -1,6 +1,6 @@
-"""The Programs tab shows the Pro Pipeline: a bar in Your Program with one of the eight grade words, the draft-position
-chips under the bars (best first, "WR Elite"), a Pro Pipeline column in Every Program, and the chips wrap on a phone
-with no sideways scroll. Needs Playwright with a Chromium; skipped without one. (Run as a file.)"""
+"""The Programs tab shows the Pro Pipeline: a headline reading and a bar in Your Program with one of the eight grade words,
+the draft-position chips in the Position Pro Potential column (best first, "WR Elite"), a Pro Pipeline column in Every
+Program, and the chips wrap on a phone with no sideways scroll. Needs Playwright with a Chromium; skipped without one. (Run as a file.)"""
 import os
 import re
 import subprocess
