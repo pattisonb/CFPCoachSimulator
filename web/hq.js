@@ -576,8 +576,10 @@
     if (!bare || (SMALL.has(bare.replace(/[^a-z]/g, "")) && i > 0 && i < all.length - 1 && !/[,:]$/.test(all[i - 1]))) return w;
     return w.replace(/[A-Za-z]/, (c) => c.toUpperCase());
   }).join(" ");
+  // a recruit's stars as a number, "4★", where room is short (a name line that must stay one line)
+  const starsShort = (n) => (n == null ? null : el("span", { class: "hq-stars hq-stars-short", "aria-label": `${n} Stars`, text: `${n}★` }));
   const kit = {
-    el, stars, title,
+    el, stars, starsShort, title,
     empty: (text) => el("p", { class: "hq-empty-line", text }),
     // [[value, label], ...] as big numbers
     stats: (pairs) => el("div", { class: "hq-stats" }, pairs.map(([v, k]) => el("div", { class: "hq-stat" }, [el("b", { text: String(v) }), el("span", { text: k })]))),

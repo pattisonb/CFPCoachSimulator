@@ -100,7 +100,7 @@
         root.replaceChildren(el("div", { class: "hq-tiles" }, rows.map((r) => {
           const t = el("button", { type: "button", class: "hq-tile", "data-key": r.pid, "aria-label": `Open ${r.name}'s Report` }, [
             el("span", { class: "hq-tile-name", text: r.name }),
-            el("span", { class: "hq-tile-line" }, [el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars)]),
+            el("span", { class: "hq-tile-line" }, [el("span", { class: "hq-sub", text: pos(r) }), k.starsShort(r.stars)]),
             el("span", { class: "hq-tile-line" }, [potential(r.potential) ? el("span", { class: "go-tag", text: potential(r.potential) }) : null,
               short(r) ? el("span", { class: "hq-sub", text: looksText(r.looks) }) : null]),
             tag(r) ? el("span", { class: "go-tag hq-tile-flag", text: tag(r) }) : null,
@@ -128,7 +128,7 @@
         const layer = el("div", { class: "hq-scout-detail", "data-key": `detail-${r.pid}` }, [
           el("div", { class: "hq-detail-nav" }, [back, el("span", { class: "hq-grow hq-sub", text: `${i + 1} of ${rows.length}` }), prev, next]),
           // name, position and stars on one line; the looks (while his report is short) and his tag under it
-          el("div", { class: "hq-detail-head" }, [el("b", { class: "hq-detail-name", text: r.name }), el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars)]),
+          el("div", { class: "hq-detail-head" }, [el("b", { class: "hq-detail-name", text: r.name }), el("span", { class: "hq-sub", text: pos(r) }), k.starsShort(r.stars)]),
           short(r) || tag(r) ? el("div", { class: "hq-detail-sub" }, [short(r) ? el("span", { class: "hq-sub", text: looksText(r.looks) }) : null,
             tag(r) ? el("span", { class: "go-tag", text: tag(r) }) : null]) : null,
           grades,

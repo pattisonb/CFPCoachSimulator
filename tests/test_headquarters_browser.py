@@ -759,6 +759,7 @@ def check_scouted(page, base, sid) -> None:
     assert page.inner_text(f"{card} .hq-scout-detail .hq-detail-name").strip() == tiles[0]
     head = page.eval_on_selector(f"{card} .hq-detail-head", "e => ({h: e.getBoundingClientRect().height, tags: e.querySelectorAll('.go-tag').length, text: e.textContent})")
     assert head["h"] <= 34 and head["tags"] == 0, f"name, position and stars on one line, tags below: {head}"
+    assert re.search(r"[1-5]★", head["text"]) and "☆" not in head["text"] and head["text"].count("★") == 1, f"stars as a number here: {head['text']}"
     whole = page.inner_text(card) + " ".join(page.eval_on_selector_all(f"{card} .hq-scout-detail", "els => els.map(e => e.textContent)"))
     assert "3 of 3 Looks" not in whole, "Scouted Players never says 3 of 3 Looks: a complete report goes without saying"
     grades = page.eval_on_selector_all(f"{card} .hq-grade", "els => els.map(e => e.textContent.trim())")
