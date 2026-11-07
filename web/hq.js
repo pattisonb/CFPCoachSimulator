@@ -44,6 +44,7 @@
     if (name === "programs") return `/api/season/${id}/programs`;
     if (name === "classes") return `/api/season/${id}/classes`;
     if (name === "prospects") return `/api/season/${id}/prospects?limit=50`;
+    if (name === "depth") return `/api/season/${id}/depth/${encodeURIComponent(s.team)}`;
     if (name === "hq") {
       const want = new Set();
       for (const c of view.cards) { const w = registry.get(c.widget); if (ready(w)) for (const x of w.want || []) want.add(x); }
@@ -74,6 +75,8 @@
       size, sample: !!sample, season: view.season, helpers: H, api: H.api, postJSON: H.postJSON,
       act: (kind, who, button) => (sample ? Promise.resolve(false) : act(kind, who, button)),
       openProfile: (pid) => { if (!sample && window.Recruiting) window.Recruiting.openProfile(view.season, pid); },
+      // after a widget saves something of its own (tasks, goals): refetch those sources and redraw the cards that read them
+      refresh: (names) => (sample ? Promise.resolve() : refresh(names)),
       go: (tab) => { if (!sample && H.onChange) H.onChange(tab); },
     };
   }
@@ -267,14 +270,20 @@
       return false;
     }
     ui().toast(kind === "board" ? `Added ${who.name} to your board.` : `Your staff will take a look at ${who.name}.`);
-    if (!view) return true;
-    const fresh = ACT_SOURCES[kind].filter((n) => view.data[n]);
-    for (const n of fresh) delete view.data[n];
+    if (view) await refresh(ACT_SOURCES[kind]);
+    return true;
+  }
+  // drop the named sources from the visit's cache and redraw, in place, every card that reads one of them
+  async function refresh(names) {
+    if (!view) return;
+    for (const key of Object.keys(view.data)) {
+      const name = key.startsWith("/api/") ? "hq" : key;          // the gap reads are cached by their URL
+      if (names.includes(name)) delete view.data[key];
+    }
     for (const node of view.box.querySelectorAll(".hq-grid > .hq-card")) {
       const c = view.cards.find((x) => x.id === node.dataset.key), w = c && registry.get(c.widget);
-      if (w && w.sources.some((n) => fresh.includes(n))) fillCard(node, c, { morph: true });
+      if (w && w.sources.some((n) => names.includes(n))) fillCard(node, c, { morph: true });
     }
-    return true;
   }
 
   // ----- the drawer -----------------------------------------------------------------------------------

@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 from test_career_e2e import call, free_port, launch   # noqa: E402
 
 BAD = ("null", "undefined", "NaN")
-MIN_WIDGETS = 16      # the ready widgets (spec section 7)
+MIN_WIDGETS = 27      # the ready widgets (spec section 7 and Round 2)
 SMALL = {"a", "an", "the", "of", "to", "for", "and", "or", "in", "on", "at", "by", "vs"}
 EMPTY_LINE = "Build your Headquarters. Add widgets for recruiting and scouting."
 
@@ -93,7 +93,7 @@ def check_empty_and_drawer(page, base, sid) -> None:
     assert page.is_visible(".hq-drawer"), "the drawer opens by itself on an empty Headquarters"
     soon = page.eval_on_selector_all(".hq-drawer .hq-entry.soon",
                                      "els => els.map(e => [e.querySelector('.go-tag') && e.querySelector('.go-tag').textContent, !!e.querySelector('.hq-entry-add')])")
-    assert len(soon) >= 12, soon
+    assert len(soon) >= 1, soon            # Staff Assignments, until its mechanic is designed
     assert all(t == "Coming Soon" and not add for t, add in soon), soon
     labels = page.eval_on_selector_all(".hq-drawer .hq-entry-title, .hq-drawer .hq-cat, .hq-drawer button, #tab-headquarters .hq-head button",
                                        "els => els.filter(e => e.offsetParent).map(e => e.textContent.trim()).filter(Boolean)")
@@ -363,6 +363,53 @@ def check_no_stars(page) -> None:
     assert page.evaluate("() => HQ.kit.stars(null) === null && HQ.kit.stars(undefined) === null"), "stars for a recruit with none"
 
 
+# ----- round 2: tasks, goals and What-If ------------------------------------------------------------------------
+
+def check_tasks_goals(page, base, sid) -> None:
+    """Add a task and check it off, edit the commits goal, ask What-If: each saved, each back after a reload."""
+    page.set_viewport_size({"width": 1280, "height": 900})
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "tasks", "size": "M"},
+                                                            {"id": "c2", "widget": "goals", "size": "M"},
+                                                            {"id": "c3", "widget": "what-if", "size": "M"}]})
+    call(base, f"/api/season/{sid}/headquarters/plan", {"tasks": [], "goals": {}})
+    open_hq(page, base, sid)
+    for w in ("tasks", "goals", "what-if"):
+        check_card_clean(page, w)
+    tasks = "#tab-headquarters .hq-card[data-widget='tasks']"
+    page.fill(f"{tasks} .hq-task-input", "Call the top corner.")
+    page.press(f"{tasks} .hq-task-input", "Enter")
+    page.wait_for_selector(f"{tasks} li.hq-task:has-text('Call the top corner.')")
+    page.click(f"{tasks} li.hq-task:has-text('Call the top corner.') .hq-task-done")
+    for _ in range(60):
+        saved = call(base, f"/api/season/{sid}/headquarters?want=tasks")["tasks"]
+        if saved and saved[0]["done"]:
+            break
+        time.sleep(0.25)
+    assert saved == [{"id": saved[0]["id"], "text": "Call the top corner.", "done": True}], saved
+    goals = "#tab-headquarters .hq-card[data-widget='goals']"
+    page.click(f"{goals} .hq-goal[data-goal='commits'] .hq-goal-edit")
+    page.fill(f"{goals} .hq-goal[data-goal='commits'] .hq-goal-input", "12")
+    page.press(f"{goals} .hq-goal[data-goal='commits'] .hq-goal-input", "Enter")
+    for _ in range(60):
+        g = {x["id"]: x for x in call(base, f"/api/season/{sid}/headquarters?want=goals")["goals"]}
+        if g["commits"]["target"] == 12:
+            break
+        time.sleep(0.25)
+    assert g["commits"]["target"] == 12, g["commits"]
+    wif = "#tab-headquarters .hq-card[data-widget='what-if']"
+    opts = page.eval_on_selector_all(f"{wif} select option", "os => os.map(o => o.value).filter(Boolean)")
+    if opts:
+        page.select_option(f"{wif} select", opts[0])
+        page.wait_for_selector(f"{wif} .hq-whatif-result", timeout=30_000)
+        text = page.inner_text(f"{wif} .hq-whatif-result")
+        assert "If He Commits" in text and not re.search(r"\b(null|undefined|NaN)\b", text), text
+    open_hq(page, base, sid)
+    check_card_clean(page, "tasks")
+    assert page.is_checked(f"{tasks} li.hq-task:has-text('Call the top corner.') .hq-task-done")
+    assert "12" in page.inner_text(f"{goals} .hq-goal[data-goal='commits']")
+    save_settled(page)
+
+
 def live_career(base) -> str:
     """A career three weeks in with a board: the widgets have real data to draw."""
     sid = call(base, "/api/season", {"team": "georgia", "seed": 7})["id"]
@@ -444,11 +491,12 @@ if __name__ == "__main__":
             check_drag_steady(page, base, live)
             check_save_flushed(page, base, live)
             check_no_stars(page)
+            check_tasks_goals(page, base, live)
             browser.close()
         assert not errors, errors
         print("headquarters page ok: empty canvas and drawer; Coming Soon tagged; add; a broken widget contained; "
               "an unknown widget skipped; a refused save keeps the page; every widget live at every size and in the drawer; "
-              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout")
+              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If")
     finally:
         for s in made:
             try:

@@ -1486,9 +1486,22 @@ file with a sample; the canvas, drawer and saving need nothing.
 fetched once for the visit whatever the number of widgets reading it; a source no placed widget names is never
 fetched. Ready: Class at a Glance, Week's Resources, Top Targets, Class Needs, Visit Schedule, Recent Commits,
 Recruiting Activity, Commitment Tracker, Hot and Cold Movers, Class Breakdown, Recruiting Rankings, Recruit Search,
-Scouting Queue, Flags, Area Scouts, Program Comparison. Coming Soon (`hq-widgets/planned.js`): tasks, goals, alerts,
-staff assignments, scholarships, a calendar, what-if, senior impact, roster losses, position battles, offer
-efficiency, board health.
+Scouting Queue, Flags, Area Scouts, Program Comparison, and (round 2, `hq-widgets/outlook.js`) Alerts and Needs
+Attention, Board Health, Offer Efficiency, Position Battle Board (source `depth`), Scholarship Budget, Recruiting
+Calendar, What-If, Senior Impact and Retention, Roster Loss Projections, Recruiting Tasks and Recruiting Goals.
+Coming Soon (`hq-widgets/planned.js`): Staff Assignments, which needs a recruiting mechanic of its own.
+
+**Round 2's reads** (`want=` on the same route): `contacts` (the last week you contacted, pitched or offered each
+board recruit, from the log; an offered target `STALE_WEEKS` without one reads as going stale), `outlook` (your
+roster's projected departures as words: seniors graduate, draft-eligible underclassmen from `DRAFT_POSSIBLE` /
+`DRAFT_LIKELY` overall may declare, every other player's portal chance by the offseason's own
+`PORTAL_BASE x PORTAL_USAGE x PORTAL_LOSING` read as Low, Some or High at `TRANSFER_SOME` / `TRANSFER_HIGH`; a
+projection, the offseason decides), `whatif&pid=` (your class rank now and if he commits, ranked as `class_rank`
+ranks, and his group's need now and after; changes nothing), `goals` (commits, top-100 recruits and class rank:
+your targets or the defaults, `TOP100_GOAL` and `RANK_GOAL` by tier; the rank goal is unranked until you have a
+commit) and `tasks`. `POST /api/season/{id}/headquarters/plan` stores `tasks` (at most `MAX_TASKS`, text 1-120
+characters) and goal targets (1-200); a bad shape is a 400 and nothing is stored. A widget that saves its own data
+calls `ctx.refresh(sources)` after, which redraws in place every card reading those sources.
 
 **The routes.** `GET /api/season/{id}/headquarters` returns `{"layout": {"cards": [{"id", "widget", "size"}]}}`, and
 with `want=commits,movers` the reads no view had: your commits by week from the recruiting log (a commit or flip to

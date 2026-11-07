@@ -103,3 +103,19 @@
   .hq-list .go-link, .hq-viewall, .hq-undo { min-height: 44px; }
 }
 .hq-undo { min-height: 36px; margin-left: 6px; padding: 0 6px; }
+
+/* round 2: tasks and goals */
+.hq-task-done { min-width: 44px; min-height: 44px; padding: 0; font-size: 18px; font-weight: 700; }
+.hq-task-done[aria-checked="true"] { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
+.hq-task.done .hq-grow { text-decoration: line-through; color: var(--muted); }
+.hq-task-del { min-width: 44px; padding: 0; }
+.hq-suggestions { margin-top: 8px; }
+.hq-goal + .hq-goal { margin-top: 14px; }
+.hq-goal-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
+.hq-goal-edit { min-height: 32px; }
+.hq-goal-input { width: 100px; }
+.hq-whatif-out { margin-top: 12px; }
+@media (max-width: 699px), (pointer: coarse) { .hq-goal-edit { min-height: 44px; } }
+.hq .go-meter-fill.warn, .hq-drawer .go-meter-fill.warn { background: var(--go-warn, #d4a017); }
+.hq .go-meter-fill.bad, .hq-drawer .go-meter-fill.bad { background: var(--bad); }
+.hq .go-meter-fill:not(.good, .warn, .bad), .hq-drawer .go-meter-fill:not(.good, .warn, .bad) { background: var(--go-primary, var(--accent)); }
