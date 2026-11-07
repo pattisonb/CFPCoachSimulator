@@ -1475,7 +1475,8 @@ sheet on a phone): categories, a search, and a preview of each widget drawn from
 calls nothing. Edit Layout lays its controls over each card on a see-through layer, so no card changes size or place, and
 shows each card's drag handle (hidden on a phone; while dragging, the card follows the pointer, a
 dashed placeholder shows where it will land, the other cards slide to make room, and Escape puts it back),
-a bottom edge to drag for the card's height (snapped to 40 px, 120 to 1600, saved as the card's `h`; a
+a bottom edge to drag for the card's height (snapped to 40 px, or to a neighbor's bottom edge within `SNAP_PX` with a
+guide line showing it, dragging on past letting go; 120 to 1600, saved as the card's `h`; a
 double-click or Home goes back to Auto, the arrow keys step it; a phone has Auto, Tall and Extra Tall chips instead), size chips, move buttons and remove
 (a toast with Undo). The layout saves `HQ_SAVE_DELAY` ms after the last change; a refused save toasts "Couldn't
 save your layout." and keeps the page. An empty Headquarters opens with the drawer open.

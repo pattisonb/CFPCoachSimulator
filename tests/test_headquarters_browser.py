@@ -614,6 +614,47 @@ def check_edit_overlay(page, base, sid) -> None:
     page.set_viewport_size({"width": 1280, "height": 900})
 
 
+def check_resize_snap(page, base, sid) -> None:
+    """Resizing snaps a card's bottom to a neighbor's bottom when it comes close, with a guide line; dragging on past
+    lets go. Nothing is forced."""
+    page.set_viewport_size({"width": 1440, "height": 1200})
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "top-targets", "size": "M"},
+                                                            {"id": "c2", "widget": "scout-queue", "size": "M"}]})
+    open_hq(page, base, sid)
+    for w in ("top-targets", "scout-queue"):
+        check_card_clean(page, w)
+    page.click("#tab-headquarters .hq-edit-toggle")
+    time.sleep(0.4)
+    box = lambda w: page.locator(f"#tab-headquarters .hq-card[data-widget='{w}']").bounding_box()
+    tt, sq = box("top-targets"), box("scout-queue")
+    target = tt["y"] + tt["height"]
+    assert abs((sq["y"] + sq["height"]) - target) > 30, f"the test needs two different heights: {tt} {sq}"
+    r = page.locator("#tab-headquarters .hq-card[data-widget='scout-queue'] .hq-resize").bounding_box()
+    x, y0 = r["x"] + r["width"] / 2, r["y"] + r["height"] / 2
+    bottom0 = sq["y"] + sq["height"]                  # mouse y = y0 + (the bottom wanted - where the drag began)
+    page.mouse.move(x, y0)
+    page.mouse.down()
+    page.mouse.move(x, y0 + (target + 7 - bottom0), steps=8)
+    time.sleep(0.2)
+    sq = box("scout-queue")
+    assert abs(sq["y"] + sq["height"] - target) <= 1, f"close to the neighbor's bottom, it snaps to it: {sq['y'] + sq['height']} vs {target}"
+    assert page.is_visible("#tab-headquarters .hq-guide"), "a guide line shows the alignment"
+    page.mouse.move(x, y0 + (target + 70 - bottom0), steps=4)
+    time.sleep(0.2)
+    sq = box("scout-queue")
+    assert abs(sq["y"] + sq["height"] - target) > 30 and not page.is_visible("#tab-headquarters .hq-guide"), "dragged on past, it lets go"
+    page.mouse.move(x, y0 + (target + 5 - bottom0), steps=4)
+    page.mouse.up()
+    time.sleep(0.3)
+    sq = box("scout-queue")
+    assert abs(sq["y"] + sq["height"] - target) <= 1 and not page.is_visible("#tab-headquarters .hq-guide")
+    page.click("#tab-headquarters .hq-edit-toggle")
+    save_settled(page)
+    saved = {c["widget"]: c for c in call(base, f"/api/season/{sid}/headquarters")["layout"]["cards"]}
+    assert abs(saved["scout-queue"]["h"] - round(sq["height"])) <= 1, saved
+    page.set_viewport_size({"width": 1280, "height": 900})
+
+
 def live_career(base) -> str:
     """A career three weeks in with a board: the widgets have real data to draw."""
     sid = call(base, "/api/season", {"team": "georgia", "seed": 7})["id"]
@@ -666,7 +707,7 @@ if __name__ == "__main__":
             live = live_career(base)
             made.append(live)
             if only_review:
-                for f in (check_edit_overlay, check_resize, check_drag_live, check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
+                for f in (check_resize_snap, check_edit_overlay, check_resize, check_drag_live, check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
                     try:
                         f(page, base, live)
                         print("  pass", f.__name__)
@@ -701,11 +742,12 @@ if __name__ == "__main__":
             check_drag_live(page, base, live)
             check_resize(page, base, live)
             check_edit_overlay(page, base, live)
+            check_resize_snap(page, base, live)
             browser.close()
         assert not errors, errors
         print("headquarters page ok: empty canvas and drawer; Coming Soon tagged; add; a broken widget contained; "
               "an unknown widget skipped; a refused save keeps the page; every widget live at every size and in the drawer; "
-              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside; masonry packing; a live drag; heights by the edge and by chips; edit controls over the cards")
+              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside; masonry packing; a live drag; heights by the edge and by chips; edit controls over the cards; heights snap to neighbors")
     finally:
         for s in made:
             try:

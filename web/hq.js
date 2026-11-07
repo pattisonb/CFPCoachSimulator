@@ -23,6 +23,7 @@
   // heights: none is Auto (the card fits its content up to --hq-card-h, then scrolls); a set height is px
   const H_STEP = 40, H_MIN = 120, H_MAX = 1600;     // *tune* the edge snaps to this; the limits match headquarters.CARD_H
   const H_CHIPS = [["", "Auto"], [560, "Tall"], [800, "Extra Tall"]];     // *tune* a phone's height chips
+  const SNAP_PX = 14;               // *tune* how close a card's bottom comes to a neighbor's before it snaps to it
   const snapH = (px) => Math.max(H_MIN, Math.min(H_MAX, Math.round(px / H_STEP) * H_STEP));
   function applyHeight(node, c) {
     node.classList.toggle("hq-set-h", !!c.h);
@@ -342,7 +343,21 @@
   }
 
   // ----- heights: drag a card's bottom edge (snapped, the grid making room as it grows); a double-click is Auto ----
-  function setH(c, h) { if (h) c.h = snapH(h); else delete c.h; }
+  // the bottom edge of a card beside this one (columns not shared) within SNAP_PX of y, the nearest; else null
+  const spanOf = (n) => { const m = /(\d+)\s*\/\s*span\s*(\d+)/.exec(n.style.gridColumn || ""); return m ? [+m[1], +m[1] + +m[2] - 1] : [1, 1]; };
+  function snapTo(n, y) {
+    const [a0, a1] = spanOf(n);
+    let best = null;
+    for (const m of view.box.querySelectorAll(".hq-grid > .hq-card")) {
+      if (m === n) continue;
+      const [b0, b1] = spanOf(m);
+      if (!(b1 < a0 || b0 > a1)) continue;          // same columns: it moves with this card, not beside it
+      const bottom = m.getBoundingClientRect().bottom;
+      if (Math.abs(bottom - y) <= SNAP_PX && (best == null || Math.abs(bottom - y) < Math.abs(best - y))) best = bottom;
+    }
+    return best;
+  }
+  function setH(c, h) { if (h) c.h = Math.max(H_MIN, Math.min(H_MAX, Math.round(h))); else delete c.h; }
   function resizeEdge(c) {
     const edge = el("button", { type: "button", class: "hq-resize", "aria-label": "Drag to Resize", title: "Drag to resize. Double-click for Auto." });
     const node = () => view.box.querySelector(`.hq-card[data-key="${c.id}"]`);
@@ -355,8 +370,24 @@
       const y0 = e.clientY, h0 = n.getBoundingClientRect().height;
       let h = h0;
       n.classList.add("hq-set-h", "hq-resizing");
-      const move = (ev) => { h = snapH(h0 + ev.clientY - y0); n.style.height = `${h}px`; pack(); };
+      const guide = el("div", { class: "hq-guide", "aria-hidden": "true", hidden: "" });
+      view.box.appendChild(guide);
+      const move = (ev) => {
+        const top = n.getBoundingClientRect().top, want = h0 + ev.clientY - y0;
+        const b = snapTo(n, top + want);
+        if (b != null && b - top >= H_MIN) {          // close to a neighbor's bottom: line up with it, and say so
+          h = Math.round(b - top);
+          guide.style.top = `${b - view.box.getBoundingClientRect().top}px`;
+          guide.hidden = false;
+        } else {
+          h = snapH(want);
+          guide.hidden = true;
+        }
+        n.style.height = `${h}px`;
+        pack();
+      };
       const up = () => {
+        guide.remove();
         window.removeEventListener("pointermove", move);
         window.removeEventListener("pointerup", up);
         window.removeEventListener("pointercancel", up);
