@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 from test_career_e2e import call, free_port, launch   # noqa: E402
 
 BAD = ("null", "undefined", "NaN")
-MIN_WIDGETS = 27      # the ready widgets (spec section 7 and Round 2)
+MIN_WIDGETS = 28      # the ready widgets (spec section 7, Round 2 and Scouted Players)
 SMALL = {"a", "an", "the", "of", "to", "for", "and", "or", "in", "on", "at", "by", "vs"}
 EMPTY_LINE = "Build your Headquarters. Add widgets for recruiting and scouting."
 
@@ -709,6 +709,36 @@ def check_bar_gaps(page, base, sid) -> None:
     page.set_viewport_size({"width": 1280, "height": 900})
 
 
+def check_scouted(page, base, sid) -> None:
+    """Scouted Players: every prospect your staff has looked at as tiles; a tile opens his report with all six grades,
+    the arrows step through them, Back to All returns to the tiles."""
+    rows = call(base, f"/api/season/{sid}/prospects?limit=12")["rows"]
+    for r in rows[5:8]:
+        try:
+            call(base, f"/api/season/{sid}/recruit", {"pid": r["id"], "action": "scout"})
+        except Exception:  # noqa: BLE001 - out of points or a complete report: the others are enough
+            pass
+    page.set_viewport_size({"width": 1440, "height": 1100})
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "scouted", "size": "L"}]})
+    open_hq(page, base, sid)
+    check_card_clean(page, "scouted")
+    card = "#tab-headquarters .hq-card[data-widget='scouted']"
+    tiles = page.eval_on_selector_all(f"{card} .hq-tile", "els => els.map(e => e.querySelector('.hq-tile-name').textContent.trim())")
+    assert len(tiles) >= 2, tiles
+    page.click(f"{card} .hq-tile >> nth=0")
+    page.wait_for_selector(f"{card} .hq-scout-detail .hq-grade", timeout=30_000)
+    assert page.inner_text(f"{card} .hq-scout-detail .hq-detail-name").strip() == tiles[0]
+    grades = page.eval_on_selector_all(f"{card} .hq-grade", "els => els.map(e => e.textContent.trim())")
+    assert len(grades) == 6 and all(g for g in grades), grades
+    page.click(f"{card} .hq-detail-next")
+    page.wait_for_function("([c, n]) => { const e = document.querySelector(c + ' .hq-detail-name'); return e && e.textContent.trim() === n; }",
+                           arg=[card, tiles[1]], timeout=30_000)
+    page.click(f"{card} .hq-detail-back")
+    page.wait_for_selector(f"{card} .hq-tile", timeout=10_000)
+    check_card_clean(page, "scouted")
+    page.set_viewport_size({"width": 1280, "height": 900})
+
+
 def live_career(base) -> str:
     """A career three weeks in with a board: the widgets have real data to draw."""
     sid = call(base, "/api/season", {"team": "georgia", "seed": 7})["id"]
@@ -761,7 +791,7 @@ if __name__ == "__main__":
             live = live_career(base)
             made.append(live)
             if only_review:
-                for f in (check_bar_gaps, check_resize_snap, check_edit_overlay, check_resize, check_drag_live, check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
+                for f in (check_scouted, check_bar_gaps, check_resize_snap, check_edit_overlay, check_resize, check_drag_live, check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
                     try:
                         f(page, base, live)
                         print("  pass", f.__name__)
@@ -798,11 +828,12 @@ if __name__ == "__main__":
             check_edit_overlay(page, base, live)
             check_resize_snap(page, base, live)
             check_bar_gaps(page, base, live)
+            check_scouted(page, base, live)
             browser.close()
         assert not errors, errors
         print("headquarters page ok: empty canvas and drawer; Coming Soon tagged; add; a broken widget contained; "
               "an unknown widget skipped; a refused save keeps the page; every widget live at every size and in the drawer; "
-              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside; masonry packing; a live drag; heights by the edge and by chips; edit controls over the cards; heights snap to neighbors; room under headers, thin headers on Recruiting and Scouting")
+              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside; masonry packing; a live drag; heights by the edge and by chips; edit controls over the cards; heights snap to neighbors; room under headers, thin headers on Recruiting and Scouting; Scouted Players")
     finally:
         for s in made:
             try:

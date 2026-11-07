@@ -71,4 +71,69 @@
           `${looks === 1 ? "1 Look" : `${looks} Looks`}${y.flags ? ` · ${y.flags} ${y.flags === 1 ? "Flag" : "Flags"}` : ""}`];
       }));
     } });
+
+  // ----- Scouted Players: every prospect your staff has looked at, at a glance; a tile opens his report -----------
+  const GRADE_NAMES = [["potential", "Potential"], ["athleticism", "Athleticism"], ["size_strength", "Size & Strength"],
+    ["technique", "Technique"], ["football_iq", "Football IQ"], ["coachability", "Coachability"]];
+  const viewing = new Map();                     // season id -> the pid whose report is open (kept across redraws)
+  const SAMPLE_SCOUTED = { queue: [
+    { pid: "s1", name: "Marques Williams", position: "EDGE", stars: 5, looks: 3, potential: ["Elite", "Elite"], on_board: true, flags: ["gem"] },
+    { pid: "s2", name: "Aden Neal", position: "OT", stars: 4, looks: 2, potential: ["Solid", "Strong"], on_board: false, flags: [] },
+    { pid: "s3", name: "Davis Hammond", position: "QB", stars: 4, looks: 1, potential: ["Fair", "Strong"], on_board: true, flags: [] },
+    { pid: "s4", name: "Robert Soles", position: "LB", stars: 3, looks: 3, potential: ["Strong", "Strong"], on_board: false, flags: [] }] };
+  reg({ id: "scouted", title: "Scouted Players", blurb: "Every prospect your staff has looked at, at a glance. Open one to step through their reports.",
+    sizes: ["M", "L"], size: "L", sources: ["scouted"], sample: { scouted: SAMPLE_SCOUTED },
+    draw: (d, ctx) => {
+      const rows = (d.scouted.queue || []);
+      if (!rows.length) return k.empty("No scouted players yet. Send scouts from the Scouting Queue or the Scouting tab.");
+      const root = el("div", { class: "hq-scouted" });
+      const key = ctx.season ? ctx.season.id : "sample";
+      const tag = (r) => (r.flags && r.flags.length ? FLAG_WORDS[r.flags[0]] || k.title(r.flags[0]) : r.likes ? `${(r.likes && r.likes.who) || "Staff"} Likes Him` : null);
+      const grid = () => {
+        viewing.delete(key);
+        root.replaceChildren(el("div", { class: "hq-tiles" }, rows.map((r) => {
+          const t = el("button", { type: "button", class: "hq-tile", "data-key": r.pid, "aria-label": `Open ${r.name}'s Report` }, [
+            el("span", { class: "hq-tile-name", text: r.name }),
+            el("span", { class: "hq-tile-line" }, [el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars)]),
+            el("span", { class: "hq-tile-line" }, [potential(r.potential) ? el("span", { class: "go-tag", text: potential(r.potential) }) : null,
+              el("span", { class: "hq-sub", text: looksText(r.looks) })]),
+            tag(r) ? el("span", { class: "go-tag hq-tile-flag", text: tag(r) }) : null,
+          ]);
+          on(t, "click", () => { if (!ctx.sample) detail(rows.indexOf(r)); });
+          return t;
+        })));
+      };
+      const detail = (i) => {
+        const r = rows[i];
+        viewing.set(key, r.pid);
+        const prev = el("button", { type: "button", class: "go-btn hq-detail-prev", text: "◀", "aria-label": "Previous Player", disabled: i === 0 ? "" : null });
+        const next = el("button", { type: "button", class: "go-btn hq-detail-next", text: "▶", "aria-label": "Next Player", disabled: i === rows.length - 1 ? "" : null });
+        const back = el("button", { type: "button", class: "go-btn hq-detail-back", text: "Back to All" });
+        on(prev, "click", () => detail(i - 1));
+        on(next, "click", () => detail(i + 1));
+        on(back, "click", grid);
+        const grades = el("div", { class: "hq-grades" }, [el("p", { class: "muted hq-wait", text: "Loading his report…" })]);
+        const profile = el("button", { type: "button", class: "go-btn", text: "Open Profile" });
+        on(profile, "click", () => ctx.openProfile(r.pid));
+        root.replaceChildren(el("div", { class: "hq-scout-detail", "data-key": `detail-${r.pid}` }, [
+          el("div", { class: "hq-detail-nav" }, [back, el("span", { class: "hq-grow hq-sub", text: `${i + 1} of ${rows.length}` }), prev, next]),
+          el("div", { class: "hq-detail-head" }, [el("b", { class: "hq-detail-name", text: r.name }), el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars),
+            el("span", { class: "hq-sub", text: looksText(r.looks) }), tag(r) ? el("span", { class: "go-tag", text: tag(r) }) : null]),
+          grades,
+          el("div", { class: "hq-detail-acts" }, [profile, addButton(ctx, r)]),
+        ]));
+        ctx.api(`/api/season/${encodeURIComponent(ctx.season.id)}/prospect/${encodeURIComponent(r.pid)}`).then((pr) => {
+          if (!grades.isConnected) return;
+          const g = pr.our_grades || {};
+          const home = pr.hometown ? `${pr.hometown.city}, ${pr.hometown.state}` : null;
+          grades.replaceChildren(
+            ...(home || pr.archetype ? [el("p", { class: "hq-empty-line", text: [pr.archetype, home].filter(Boolean).join(" · ") })] : []),
+            el("div", { class: "hq-grade-grid" }, GRADE_NAMES.map(([id, label]) => el("div", { class: "hq-grade" }, [
+              el("span", { class: "hq-sub", text: label }), el("b", { text: potential(g[id]) || "Not Seen Yet" })]))));
+        }).catch(() => { if (grades.isConnected) grades.replaceChildren(k.empty("His report didn't load. Open his profile instead.")); });
+      };
+      const open = viewing.get(key), at = rows.findIndex((r) => r.pid === open);
+      if (at >= 0 && !ctx.sample) detail(at); else grid();
+      return root;
+    } });
 })();

@@ -1498,7 +1498,9 @@ Recruiting Activity, Commitment Tracker, Hot and Cold Movers, Class Breakdown, R
 Scouting Queue, Flags, Area Scouts, Program Comparison, and (round 2, `hq-widgets/outlook.js`) Alerts and Needs
 Attention, Board Health, Offer Efficiency, Position Battle Board (source `depth`), Scholarship Budget, Recruiting
 Calendar, What-If, Senior Impact and Retention, Roster Loss Projections, Recruiting Tasks and Recruiting Goals.
-Coming Soon (`hq-widgets/planned.js`): Staff Assignments, which needs a recruiting mechanic of its own.
+Scouted Players (source `scouted`: the Scouting desk's scouted prospects by potential) shows them as tiles; a tile
+opens his report (the six grades from his profile's `our_grades`, as words) with arrows to step through and Back to
+All. Coming Soon (`hq-widgets/planned.js`): Staff Assignments, which needs a recruiting mechanic of its own.
 
 **Round 2's reads** (`want=` on the same route): `contacts` (the last week you contacted, pitched or offered each
 board recruit, from the log; an offered target `STALE_WEEKS` without one reads as going stale), `outlook` (your
