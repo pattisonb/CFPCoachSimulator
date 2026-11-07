@@ -525,6 +525,61 @@ def check_drag_live(page, base, sid) -> None:
     page.set_viewport_size({"width": 1280, "height": 900})
 
 
+def check_resize(page, base, sid) -> None:
+    """Heights: Auto by default; in Edit Layout, drag a card's bottom edge to set its height (snapped, the grid
+    making room), double-click the edge for Auto again; on a phone, the Auto, Tall and Extra Tall chips."""
+    page.set_viewport_size({"width": 1440, "height": 1400})
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "scout-queue", "size": "M"},
+                                                            {"id": "c2", "widget": "class-glance", "size": "S"},
+                                                            {"id": "c3", "widget": "resources", "size": "S"}]})
+    open_hq(page, base, sid)
+    for w in ("scout-queue", "class-glance", "resources"):
+        check_card_clean(page, w)
+    card = "#tab-headquarters .hq-card[data-widget='scout-queue']"
+    page.click("#tab-headquarters .hq-edit-toggle")
+    time.sleep(0.4)
+    h0 = page.locator(card).bounding_box()["height"]
+    r = page.locator(f"{card} .hq-resize").bounding_box()
+    page.mouse.move(r["x"] + r["width"] / 2, r["y"] + r["height"] / 2)
+    page.mouse.down()
+    page.mouse.move(r["x"] + r["width"] / 2, r["y"] + r["height"] / 2 + 300, steps=10)
+    page.mouse.up()
+    time.sleep(0.4)
+    h1 = page.locator(card).bounding_box()["height"]
+    assert h1 >= h0 + 250 and abs(h1 - (h0 + 300)) <= 40, f"the edge drag sets the height, snapped: {h0} -> {h1}"
+    boxes = page.eval_on_selector_all("#tab-headquarters .hq-card", "els => els.map(e => { const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; })")
+    for i, a in enumerate(boxes):
+        for b in boxes[i + 1:]:
+            assert a[2] <= b[0] + 1 or b[2] <= a[0] + 1 or a[3] <= b[1] + 1 or b[3] <= a[1] + 1, f"cards overlap after a resize: {boxes}"
+    save_settled(page)
+    saved = {c["widget"]: c for c in call(base, f"/api/season/{sid}/headquarters")["layout"]["cards"]}
+    assert abs(saved["scout-queue"].get("h", 0) - h1) <= 1, saved
+    open_hq(page, base, sid)
+    check_card_clean(page, "scout-queue")
+    assert abs(page.locator(card).bounding_box()["height"] - h1) <= 1, "the height comes back after a reload"
+    page.click("#tab-headquarters .hq-edit-toggle")
+    page.dblclick(f"{card} .hq-resize")
+    time.sleep(0.4)
+    assert page.locator(card).bounding_box()["height"] <= 410, "a double-click on the edge goes back to Auto"
+    save_settled(page)
+    assert "h" not in {c["widget"]: c for c in call(base, f"/api/season/{sid}/headquarters")["layout"]["cards"]}["scout-queue"]
+    # a phone: chips, no edge
+    page.set_viewport_size({"width": 400, "height": 860})
+    open_hq(page, base, sid)
+    check_card_clean(page, "scout-queue")
+    page.click("#tab-headquarters .hq-edit-toggle")
+    assert not page.is_visible(f"{card} .hq-resize"), "no edge to drag on a phone"
+    page.click(f"{card} .hq-height[data-h='560']")
+    time.sleep(0.4)
+    assert abs(page.locator(card).bounding_box()["height"] - 560) <= 2, page.locator(card).bounding_box()
+    page.click(f"{card} .hq-height[data-h='']")
+    time.sleep(0.4)
+    assert page.locator(card).bounding_box()["height"] <= 430
+    page.click("#tab-headquarters .hq-edit-toggle")
+    save_settled(page)
+    page.set_viewport_size({"width": 1280, "height": 900})
+
+
 def live_career(base) -> str:
     """A career three weeks in with a board: the widgets have real data to draw."""
     sid = call(base, "/api/season", {"team": "georgia", "seed": 7})["id"]
@@ -577,7 +632,7 @@ if __name__ == "__main__":
             live = live_career(base)
             made.append(live)
             if only_review:
-                for f in (check_drag_live, check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
+                for f in (check_resize, check_drag_live, check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
                     try:
                         f(page, base, live)
                         print("  pass", f.__name__)
@@ -610,11 +665,12 @@ if __name__ == "__main__":
             check_scrolls(page, base, live)
             check_masonry(page, base, live)
             check_drag_live(page, base, live)
+            check_resize(page, base, live)
             browser.close()
         assert not errors, errors
         print("headquarters page ok: empty canvas and drawer; Coming Soon tagged; add; a broken widget contained; "
               "an unknown widget skipped; a refused save keeps the page; every widget live at every size and in the drawer; "
-              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside; masonry packing; a live drag")
+              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside; masonry packing; a live drag; heights by the edge and by chips")
     finally:
         for s in made:
             try:

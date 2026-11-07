@@ -1473,7 +1473,9 @@ past that. The grid repacks when a card changes height, the width changes, or a 
 removed. Add Widget opens the drawer (from the right; a bottom
 sheet on a phone): categories, a search, and a preview of each widget drawn from its own sample data, so the drawer
 calls nothing. Edit Layout shows each card's drag handle (hidden on a phone; while dragging, the card follows the pointer, a
-dashed placeholder shows where it will land, the other cards slide to make room, and Escape puts it back), size chips, move buttons and remove
+dashed placeholder shows where it will land, the other cards slide to make room, and Escape puts it back),
+a bottom edge to drag for the card's height (snapped to 40 px, 120 to 1600, saved as the card's `h`; a
+double-click or Home goes back to Auto, the arrow keys step it; a phone has Auto, Tall and Extra Tall chips instead), size chips, move buttons and remove
 (a toast with Undo). The layout saves `HQ_SAVE_DELAY` ms after the last change; a refused save toasts "Couldn't
 save your layout." and keeps the page. An empty Headquarters opens with the drawer open.
 
@@ -1513,7 +1515,8 @@ with `want=commits,movers` the reads no view had: your commits by week from the 
 you gained, a decommit lost; what you held before the log counts in the first week, so the last total is your
 commits now) and the latest report's risers and fallers on your board (`MOVERS_SHOWN` each; the page shows your
 standing in words). `POST` with `{"cards": [...]}` stores the layout in `career.headquarters`: at most
-`HQ_MAX_CARDS`, ids of lowercase letters, digits and dashes, sizes S, M or L, card ids unique; a bad shape is a 400
+`HQ_MAX_CARDS`, ids of lowercase letters, digits and dashes, sizes S, M or L, an optional height `h` within
+`CARD_H`, card ids unique; a bad shape is a 400
 and nothing is stored. Widget ids are not checked, so a newer page's widget in an older save is kept, and the page
 skips one it does not know. An old save reads as an empty layout. Nothing here touches the season sim.
 

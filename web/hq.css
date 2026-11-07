@@ -123,3 +123,17 @@
 @media (max-width: 699px), (pointer: coarse) {
   .hq-list .go-btn, .hq-search-row input, .hq-search-row .go-btn, .hq-search-row .go-chip { min-height: 44px; }
 }
+
+/* heights: Auto fits the content up to the cap; a set height is the player's (hq.js applyHeight) */
+.hq-card.hq-set-h { max-height: none; }
+.hq-card { position: relative; }
+.hq-resize { display: none; position: absolute; left: 0; right: 0; bottom: -6px; height: 14px; min-height: 0; padding: 0; border: 0; background: transparent; cursor: ns-resize; z-index: 2; }
+.hq-resize::after { content: ""; position: absolute; left: 50%; top: 4px; width: 48px; height: 5px; margin-left: -24px; border-radius: 3px; background: var(--muted); opacity: 0.7; }
+.hq-editing .hq-resize { display: block; }
+.hq-card.hq-resizing { outline-style: solid; }
+.hq-heights { display: none; gap: 6px; }
+.hq-heights .go-chip { min-height: 44px; }
+@media (max-width: 699px), (pointer: coarse) {
+  .hq-editing .hq-resize { display: none; }
+  .hq-editing .hq-heights { display: flex; }
+}

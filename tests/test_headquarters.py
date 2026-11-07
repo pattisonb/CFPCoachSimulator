@@ -185,6 +185,17 @@ def plan_refused(sid: str) -> None:
         raise AssertionError(f"expected a 400 for {str(body)[:80]}")
 
 
+def heights_kept(sid: str) -> None:
+    """A card's chosen height (h, px) saves with the layout; no h is Auto; a bad h is refused."""
+    cards = [{"id": "c1", "widget": "top-targets", "size": "M", "h": 640}, card(2, "flags", "S")]
+    assert POST(sid, {"cards": cards})["layout"]["cards"] == cards
+    assert GET(sid)["layout"]["cards"] == cards
+    refused(sid, {"cards": [{"id": "c1", "widget": "top-targets", "size": "M", "h": 40}]})
+    refused(sid, {"cards": [{"id": "c1", "widget": "top-targets", "size": "M", "h": 5000}]})
+    refused(sid, {"cards": [{"id": "c1", "widget": "top-targets", "size": "M", "h": "tall"}]})
+    refused(sid, {"cards": [{"id": "c1", "widget": "top-targets", "size": "M", "h": True}]})
+
+
 if __name__ == "__main__":
     import shutil
     import tempfile
@@ -195,6 +206,7 @@ if __name__ == "__main__":
         round_trip(sid)
         unknown_kept(sid)
         bad_layouts(sid)
+        heights_kept(sid)
         sim_untouched(sid)
         gap_data(sid)
         pid = contacts_from_log(sid)

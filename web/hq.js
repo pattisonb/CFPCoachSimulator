@@ -20,6 +20,15 @@
   const HQ_ROW = 4, HQ_GAP = 16;    // the masonry's row unit and the gap under every card (px; hq.css's grid-auto-rows and column-gap)
   const EMPTY_LINE = "Build your Headquarters. Add widgets for recruiting and scouting.";
   const SIZE_NAMES = { S: "Small", M: "Medium", L: "Large" };
+  // heights: none is Auto (the card fits its content up to --hq-card-h, then scrolls); a set height is px
+  const H_STEP = 40, H_MIN = 120, H_MAX = 1600;     // *tune* the edge snaps to this; the limits match headquarters.CARD_H
+  const H_CHIPS = [["", "Auto"], [560, "Tall"], [800, "Extra Tall"]];     // *tune* a phone's height chips
+  const snapH = (px) => Math.max(H_MIN, Math.min(H_MAX, Math.round(px / H_STEP) * H_STEP));
+  function applyHeight(node, c) {
+    node.classList.toggle("hq-set-h", !!c.h);
+    node.style.height = c.h ? `${c.h}px` : "";
+    for (const b of node.querySelectorAll(".hq-height")) b.setAttribute("aria-pressed", String(String(c.h || "") === b.dataset.h));
+  }
   const CATS = [["all", "All"], ["recruiting", "Recruiting"], ["scouting", "Scouting"], ["program", "Program"]];
   // what each inline action changes: the sources refetched after it
   // (prospects is not refetched: Recruit Search keeps the player's own search and flips its own buttons)
@@ -123,7 +132,13 @@
     ui().on(earlier, "click", () => move(c.id, -1));
     ui().on(later, "click", () => move(c.id, +1));
     ui().on(remove, "click", () => removeCard(c.id));
-    return el("div", { class: "hq-edit" }, [handle, sizes, el("span", { class: "hq-edit-gap" }), earlier, later, remove]);
+    // a phone's height chips (the bottom edge is the wide screen's way)
+    const heights = el("div", { class: "hq-heights", role: "group", "aria-label": "Height" }, H_CHIPS.map(([h, label]) => {
+      const b = el("button", { type: "button", class: "go-chip hq-height", "data-h": String(h), "aria-pressed": String(String(c.h || "") === String(h)), text: label });
+      ui().on(b, "click", () => change((cards) => { setH(cards[i()], h || null); }));
+      return b;
+    }));
+    return el("div", { class: "hq-edit" }, [handle, sizes, heights, el("span", { class: "hq-edit-gap" }), earlier, later, remove]);
   }
   function cardNode(c) {
     const w = registry.get(c.widget);
@@ -133,13 +148,16 @@
       el("div", { class: "card-bar hq-bar" }, [el("h3", { class: "go-kicker", text: w.title }), all]),
       editBar(c, w),
       el("div", { class: "hq-body" }, [el("p", { class: "muted hq-wait", text: "Loading…" })]),
+      resizeEdge(c),
     ]);
+    applyHeight(node, c);
     fillCard(node, c);
     if (watcher) watcher.observe(node);
     return node;
   }
   function patchCard(node, c) {
     const w = registry.get(c.widget);
+    applyHeight(node, c);
     if (node.dataset.size !== c.size) {
       node.dataset.size = c.size;
       for (const b of node.querySelectorAll(".hq-card-size")) b.setAttribute("aria-pressed", String(b.dataset.size === c.size));
@@ -241,7 +259,7 @@
   let queued = null;               // the save waiting for its delay: sent at once if the page redraws first
   function queueSave() {
     clearTimeout(timer);
-    const s = view.season, cards = view.cards.map((c) => ({ id: c.id, widget: c.widget, size: c.size }));
+    const s = view.season, cards = view.cards.map((c) => ({ id: c.id, widget: c.widget, size: c.size, ...(c.h ? { h: c.h } : {}) }));
     queued = async () => {
       clearTimeout(timer);
       timer = null;
@@ -317,6 +335,42 @@
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
     window.addEventListener("keydown", key, true);
+  }
+
+  // ----- heights: drag a card's bottom edge (snapped, the grid making room as it grows); a double-click is Auto ----
+  function setH(c, h) { if (h) c.h = snapH(h); else delete c.h; }
+  function resizeEdge(c) {
+    const edge = el("button", { type: "button", class: "hq-resize", "aria-label": "Drag to Resize", title: "Drag to resize. Double-click for Auto." });
+    const node = () => view.box.querySelector(`.hq-card[data-key="${c.id}"]`);
+    const commit = (h) => change((cards) => { const x = cards.find((y) => y.id === c.id); if (x) setH(x, h); });
+    edge.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      const n = node();
+      if (!n) return;
+      const y0 = e.clientY, h0 = n.getBoundingClientRect().height;
+      let h = h0;
+      n.classList.add("hq-set-h", "hq-resizing");
+      const move = (ev) => { h = snapH(h0 + ev.clientY - y0); n.style.height = `${h}px`; pack(); };
+      const up = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        window.removeEventListener("pointercancel", up);
+        n.classList.remove("hq-resizing");
+        if (Math.abs(h - h0) >= H_STEP / 2) commit(h); else applyHeight(n, view.cards.find((x) => x.id === c.id) || c);
+        pack();
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up);
+      window.addEventListener("pointercancel", up);
+    });
+    edge.addEventListener("dblclick", () => commit(null));
+    edge.addEventListener("keydown", (e) => {           // the keyboard's way: arrows step the height, Home is Auto
+      const n = node(), cur = (view.cards.find((x) => x.id === c.id) || {}).h || (n ? n.getBoundingClientRect().height : 400);
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); commit(cur + (e.key === "ArrowDown" ? H_STEP : -H_STEP)); }
+      if (e.key === "Home") { e.preventDefault(); commit(null); }
+    });
+    return edge;
   }
 
   // ----- inline actions -------------------------------------------------------------------------------

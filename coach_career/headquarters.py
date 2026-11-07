@@ -8,6 +8,7 @@ from typing import Optional
 from coach_career import recruiting
 
 HQ_MAX_CARDS = 40        # *tune* the most cards a Headquarters holds
+CARD_H = (120, 1600)     # *tune* the shortest and tallest height (px) a player may give a card; none is Auto
 MOVERS_SHOWN = 5         # *tune* risers and fallers each the Hot and Cold Movers widget gets
 SIZES = ("S", "M", "L")
 _ID = re.compile(r"^[a-z0-9-]{1,40}$")
@@ -45,8 +46,11 @@ def set_layout(state: dict, cards) -> dict:
             raise LayoutError("A widget's size is S, M or L.")
         if cid in seen:
             raise LayoutError("Each card id appears once.")
+        h = c.get("h")
+        if h is not None and (isinstance(h, bool) or not isinstance(h, int) or not CARD_H[0] <= h <= CARD_H[1]):
+            raise LayoutError(f"A card's height is Auto or {CARD_H[0]} to {CARD_H[1]} pixels.")
         seen.add(cid)
-        out.append({"id": cid, "widget": widget, "size": size})
+        out.append({"id": cid, "widget": widget, "size": size, **({"h": h} if h is not None else {})})
     _hq(state)["cards"] = out
     return layout(state)
 
