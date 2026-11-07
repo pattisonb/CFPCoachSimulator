@@ -88,6 +88,7 @@
       if (!rows.length) return k.empty("No scouted players yet. Send scouts from the Scouting Queue or the Scouting tab.");
       const root = el("div", { class: "hq-scouted" });
       const key = ctx.season ? ctx.season.id : "sample";
+      const short = (r) => (r.looks || 0) < 3;      // here a complete report goes without saying: the looks show only while short
       const tag = (r) => (r.flags && r.flags.length ? FLAG_WORDS[r.flags[0]] || k.title(r.flags[0]) : r.likes ? `${(r.likes && r.likes.who) || "Staff"} Likes Him` : null);
       // the report lies over the card's content, under its header, so the card never changes size (one Scouted
       // Players card a Headquarters; found by its widget id, since a redraw keeps the live card, not this draw's root)
@@ -101,7 +102,7 @@
             el("span", { class: "hq-tile-name", text: r.name }),
             el("span", { class: "hq-tile-line" }, [el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars)]),
             el("span", { class: "hq-tile-line" }, [potential(r.potential) ? el("span", { class: "go-tag", text: potential(r.potential) }) : null,
-              el("span", { class: "hq-sub", text: looksText(r.looks) })]),
+              short(r) ? el("span", { class: "hq-sub", text: looksText(r.looks) }) : null]),
             tag(r) ? el("span", { class: "go-tag hq-tile-flag", text: tag(r) }) : null,
           ]);
           on(t, "click", () => { if (!ctx.sample) detail(rows.indexOf(r)); });
@@ -126,8 +127,10 @@
         const bar = c.querySelector(".hq-bar");
         const layer = el("div", { class: "hq-scout-detail", "data-key": `detail-${r.pid}` }, [
           el("div", { class: "hq-detail-nav" }, [back, el("span", { class: "hq-grow hq-sub", text: `${i + 1} of ${rows.length}` }), prev, next]),
-          el("div", { class: "hq-detail-head" }, [el("b", { class: "hq-detail-name", text: r.name }), el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars),
-            el("span", { class: "hq-sub", text: looksText(r.looks) }), tag(r) ? el("span", { class: "go-tag", text: tag(r) }) : null]),
+          // name, position and stars on one line; the looks (while his report is short) and his tag under it
+          el("div", { class: "hq-detail-head" }, [el("b", { class: "hq-detail-name", text: r.name }), el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars)]),
+          short(r) || tag(r) ? el("div", { class: "hq-detail-sub" }, [short(r) ? el("span", { class: "hq-sub", text: looksText(r.looks) }) : null,
+            tag(r) ? el("span", { class: "go-tag", text: tag(r) }) : null]) : null,
           grades,
           el("div", { class: "hq-detail-acts" }, [profile, addButton(ctx, r)]),
         ]);

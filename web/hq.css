@@ -124,7 +124,7 @@
 .hq .go-meter-fill.warn, .hq-drawer .go-meter-fill.warn { background: var(--go-warn, #d4a017); }
 .hq .go-meter-fill.bad, .hq-drawer .go-meter-fill.bad { background: var(--bad); }
 @media (max-width: 699px) { .hq { --hq-card-h: 420px; } }
-.hq-body .hq-table th { position: sticky; top: 0; z-index: 1; background: var(--panel); }
+.hq-body .hq-table th { position: sticky; top: -12px; z-index: 2; background: var(--panel); }   /* -12: over the body's top padding */
 /* a phone: the compact controls go back to 44 px (house rule) */
 @media (max-width: 699px), (pointer: coarse) {
   .hq-list .go-btn, .hq-search-row input, .hq-search-row .go-btn, .hq-search-row .go-chip { min-height: 44px; }
@@ -162,7 +162,9 @@
 .hq-editing .hq-scout-detail { display: none; }
 .hq-detail-nav, .hq-detail-head, .hq-detail-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .hq-detail-nav .go-btn, .hq-detail-acts .go-btn { min-height: 36px; padding: 0 12px; font-size: 13px; }
-.hq-detail-head { margin: 10px 0 6px; }
+.hq-detail-head { margin: 10px 0 4px; flex-wrap: nowrap; white-space: nowrap; min-width: 0; }
+.hq-detail-head .hq-detail-name { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.hq-detail-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 4px; }
 .hq-detail-name { font-size: 18px; }
 .hq-grade-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin: 8px 0 12px; }
 .hq-grade { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--border); }

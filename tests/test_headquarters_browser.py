@@ -696,6 +696,13 @@ def check_bar_gaps(page, base, sid) -> None:
       return [e.dataset.widget, Math.round(Math.min(first.getBoundingClientRect().top, inner.getBoundingClientRect().top) - bar.bottom)];
     })""")
     assert all(g >= 10 for _, g in gaps), f"room under every header: {gaps}"
+    # a scrolled table: its pinned header row sits at the very top of the card's content, no rows showing above it
+    body = "#tab-headquarters .hq-card[data-widget='senior-impact'] .hq-body"
+    page.eval_on_selector(body, "b => { b.scrollTop = 120; }")
+    time.sleep(0.2)
+    hits = page.eval_on_selector(body, """b => { const r = b.getBoundingClientRect();
+      return [2, 6, 10, 14].map(dy => { const e = document.elementFromPoint(r.left + 30, r.top + dy); return e ? (e.closest('thead') ? 'head' : e.closest('tbody') ? 'row' : e.className || e.tagName) : null; }); }""")
+    assert "row" not in hits, f"rows show above the pinned header: {hits}"
     for tab, wait in (("recruiting", ".go-row-recruit, .go-board, .card-bar"), ("scouting", ".sc-list, .card-bar")):
         page.goto(f"{base}/index.html?id={sid}&tab={tab}")
         page.wait_for_selector(f"#tab-{tab} .card-bar", timeout=120_000)
@@ -718,6 +725,11 @@ def check_scouted(page, base, sid) -> None:
             call(base, f"/api/season/{sid}/recruit", {"pid": r["id"], "action": "scout"})
         except Exception:  # noqa: BLE001 - out of points or a complete report: the others are enough
             pass
+    for _ in range(3):                                # one complete report: three looks
+        try:
+            call(base, f"/api/season/{sid}/recruit", {"pid": rows[9]["id"], "action": "scout"})
+        except Exception:  # noqa: BLE001
+            break
     page.set_viewport_size({"width": 1440, "height": 1100})
     card = "#tab-headquarters .hq-card[data-widget='scouted']"
     size_of = lambda: (lambda b: (round(b["width"]), round(b["height"])))(page.locator(card).bounding_box())
@@ -745,6 +757,10 @@ def check_scouted(page, base, sid) -> None:
     page.click(f"{card} .hq-tile >> nth=0")
     page.wait_for_selector(f"{card} .hq-scout-detail .hq-grade", timeout=30_000)
     assert page.inner_text(f"{card} .hq-scout-detail .hq-detail-name").strip() == tiles[0]
+    head = page.eval_on_selector(f"{card} .hq-detail-head", "e => ({h: e.getBoundingClientRect().height, tags: e.querySelectorAll('.go-tag').length, text: e.textContent})")
+    assert head["h"] <= 34 and head["tags"] == 0, f"name, position and stars on one line, tags below: {head}"
+    whole = page.inner_text(card) + " ".join(page.eval_on_selector_all(f"{card} .hq-scout-detail", "els => els.map(e => e.textContent)"))
+    assert "3 of 3 Looks" not in whole, "Scouted Players never says 3 of 3 Looks: a complete report goes without saying"
     grades = page.eval_on_selector_all(f"{card} .hq-grade", "els => els.map(e => e.textContent.trim())")
     assert len(grades) == 6 and all(g for g in grades), grades
     page.click(f"{card} .hq-detail-next")
