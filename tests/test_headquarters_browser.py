@@ -211,7 +211,7 @@ def check_actions(page, base, sid, fresh) -> None:
     check_card_clean(page, "scout-queue")
     add = page.locator(f"{card} .hq-add-board:not([disabled])").first
     add.click()
-    page.wait_for_function("(c) => [...document.querySelectorAll(c + ' .hq-add-board')].some(b => b.disabled && b.textContent.trim() === 'On Your Board')", arg=card, timeout=30_000)
+    page.wait_for_function("(c) => [...document.querySelectorAll(c + ' .hq-add-board')].some(b => b.disabled && b.textContent.trim() === 'On Board')", arg=card, timeout=30_000)
 
 
 # ----- Task 5: the whole flow at 1280, the phone at 400 ------------------------------------------------------
@@ -419,8 +419,12 @@ def check_scrolls(page, base, sid) -> None:
     open_hq(page, base, sid)
     for w in ("recruit-search", "calendar", "class-glance"):
         check_card_clean(page, w)
-    hs = page.eval_on_selector_all("#tab-headquarters .hq-card", "els => els.map(e => Math.round(e.getBoundingClientRect().height))")
-    assert max(hs) - min(hs) <= 1 and max(hs) <= 460, f"cards should share one fixed height: {hs}"
+    h = dict(page.eval_on_selector_all("#tab-headquarters .hq-card", "els => els.map(e => [e.dataset.widget, Math.round(e.getBoundingClientRect().height)])"))
+    assert max(h.values()) <= 460, f"no card taller than its cap: {h}"
+    assert h["class-glance"] <= 220, f"a short widget's card fits its content, no empty box: {h}"
+    sr = "#tab-headquarters .hq-card[data-widget='recruit-search']"
+    top = page.eval_on_selector(f"{sr} .hq-body", "b => Math.round(b.querySelector('.hq-list li').getBoundingClientRect().top - b.getBoundingClientRect().top)")
+    assert top <= 70, f"Recruit Search: its controls take one compact row, the results start right under: {top}px"
     body = "#tab-headquarters .hq-card[data-widget='recruit-search'] .hq-body"
     info = page.eval_on_selector(body, "b => ({over: getComputedStyle(b).overflowY, sh: b.scrollHeight, ch: b.clientHeight})")
     assert info["over"] == "auto" and info["sh"] > info["ch"], f"a long widget scrolls in its body: {info}"

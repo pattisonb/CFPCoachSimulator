@@ -12,8 +12,8 @@
   const looksText = (n) => `${n || 0} of 3 Looks`;
   const potential = (p) => (!p || !p.length ? null : p[0] === p[p.length - 1] ? p[0] : `${p[0]} to ${p[p.length - 1]}`);
   const addButton = (ctx, r) => {
-    const b = el("button", { type: "button", class: "go-btn hq-add-board", text: r.on_board ? "On Your Board" : "Add to Board", disabled: r.on_board ? "" : null });
-    on(b, "click", async () => { if (await ctx.act("board", { pid: r.pid, name: r.name }, b)) { b.textContent = "On Your Board"; b.disabled = true; } });
+    const b = el("button", { type: "button", class: "go-btn hq-add-board", text: r.on_board ? "On Board" : "Add", "aria-label": r.on_board ? `${r.name} Is on Your Board` : `Add ${r.name} to Your Board`, disabled: r.on_board ? "" : null });
+    on(b, "click", async () => { if (await ctx.act("board", { pid: r.pid, name: r.name }, b)) { b.textContent = "On Board"; b.disabled = true; } });
     return b;
   };
 
@@ -35,7 +35,7 @@
       const rows = (d.scouting.queue || []).filter((r) => r.looks < 3).slice(0, k.rowsFor(ctx.size));
       if (!rows.length) return k.empty("Every prospect in view has a complete report.");
       return k.list(rows.map((r) => {
-        const send = r.can_send ? el("button", { type: "button", class: "go-btn hq-send-scout", text: "Send Scout" }) : null;
+        const send = r.can_send ? el("button", { type: "button", class: "go-btn hq-send-scout", text: "Scout", "aria-label": `Send a Scout to ${r.name}` }) : null;
         if (send) on(send, "click", () => ctx.act("scout", { pid: r.pid, name: r.name }, send));
         const pot = ctx.size === "L" ? potential(r.potential) : null;
         return { key: r.pid, cells: [k.name(ctx, r.pid, r.name), el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars),

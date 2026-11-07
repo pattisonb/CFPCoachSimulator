@@ -206,10 +206,10 @@
       const fill = (rows) => {
         if (!rows.length) { out.replaceChildren(k.empty("No recruits match that search.")); return; }
         out.replaceChildren(k.list(rows.slice(0, k.rowsFor(ctx.size)).map((r) => {
-          const add = el("button", { type: "button", class: "go-btn hq-add-board", text: r.on_board ? "On Your Board" : "Add to Board", disabled: r.on_board ? "" : null });
-          on(add, "click", async () => { if (await ctx.act("board", { pid: r.id, name: r.name }, add)) { add.textContent = "On Your Board"; add.disabled = true; } });
-          const scout = ctx.size === "L" && !r.scouted ? el("button", { type: "button", class: "go-btn hq-send-scout", text: "Send Scout" }) : null;
-          if (scout) on(scout, "click", async () => { if (await ctx.act("scout", { pid: r.id, name: r.name }, scout)) { scout.textContent = "Scout Sent"; scout.disabled = true; } });
+          const add = el("button", { type: "button", class: "go-btn hq-add-board", text: r.on_board ? "On Board" : "Add", "aria-label": r.on_board ? `${r.name} Is on Your Board` : `Add ${r.name} to Your Board`, disabled: r.on_board ? "" : null });
+          on(add, "click", async () => { if (await ctx.act("board", { pid: r.id, name: r.name }, add)) { add.textContent = "On Board"; add.disabled = true; } });
+          const scout = ctx.size === "L" && !r.scouted ? el("button", { type: "button", class: "go-btn hq-send-scout", text: "Scout", "aria-label": `Send a Scout to ${r.name}` }) : null;
+          if (scout) on(scout, "click", async () => { if (await ctx.act("scout", { pid: r.id, name: r.name }, scout)) { scout.textContent = "Sent"; scout.disabled = true; } });
           return { key: r.id, cells: [k.name(ctx, r.id, r.name), el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars), scout, add] };
         })));
       };
@@ -233,6 +233,6 @@
         return b;
       }));
       fill((d.prospects && d.prospects.rows) || []);
-      return el("div", {}, [el("div", { class: "hq-search-row" }, [input, go]), chips, out]);
+      return el("div", {}, [el("div", { class: "hq-search-row" }, [input, go, ...chips.childNodes]), out]);
     } });
 })();
