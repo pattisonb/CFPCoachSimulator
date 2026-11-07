@@ -601,7 +601,7 @@ def check_header(page, base, sid) -> None:
     # one tab row
     assert page.evaluate("() => document.querySelectorAll('#season-tabs .tab-row').length") == 1, "one tab row"
     assert page.evaluate("() => document.querySelectorAll('#season > nav.tabs').length") == 1, "one tab bar"
-    assert page.evaluate("() => document.querySelectorAll('#season-tabs button[data-tab]').length") == 17, "every tab of the old two rows, and Programs"
+    assert page.evaluate("() => document.querySelectorAll('#season-tabs button[data-tab]').length") == 18, "every tab of the old two rows, Programs and Headquarters"
     assert page.evaluate("() => document.querySelectorAll('#season-tabs .tab-divider').length") == 0, "no League label: League ▾ is a menu"
     assert page.evaluate("() => { const b = document.querySelector('#season-tabs .tab-row #tab-league'); return b && b.offsetWidth > 0 && b.textContent.trim() === 'League ▾'; }"), "League ▾ in the row"
     assert page.evaluate("() => [...document.querySelectorAll('#season-tabs button.league')].every((b) => getComputedStyle(b).display === 'none')"), "the league tabs are not in the row"
