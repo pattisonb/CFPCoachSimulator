@@ -652,6 +652,28 @@ def check_resize_snap(page, base, sid) -> None:
     save_settled(page)
     saved = {c["widget"]: c for c in call(base, f"/api/season/{sid}/headquarters")["layout"]["cards"]}
     assert abs(saved["scout-queue"]["h"] - round(sq["height"])) <= 1, saved
+    # a neighbor only a few pixels off: the snap still sticks when you let go
+    tt_h = round(page.locator("#tab-headquarters .hq-card[data-widget='top-targets']").bounding_box()["height"])
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "top-targets", "size": "M"},
+                                                            {"id": "c2", "widget": "scout-queue", "size": "M", "h": tt_h + 8}]})
+    open_hq(page, base, sid)
+    for w in ("top-targets", "scout-queue"):
+        check_card_clean(page, w)
+    page.click("#tab-headquarters .hq-edit-toggle")
+    time.sleep(0.4)
+    tt, sq = box("top-targets"), box("scout-queue")
+    target, bottom0 = tt["y"] + tt["height"], sq["y"] + sq["height"]
+    r = page.locator("#tab-headquarters .hq-card[data-widget='scout-queue'] .hq-resize").bounding_box()
+    x, y0 = r["x"] + r["width"] / 2, r["y"] + r["height"] / 2
+    page.mouse.move(x, y0)
+    page.mouse.down()
+    page.mouse.move(x, y0 + (target - 2 - bottom0), steps=4)
+    page.mouse.up()
+    time.sleep(0.3)
+    sq = box("scout-queue")
+    assert abs(sq["y"] + sq["height"] - target) <= 1, f"a small snap sticks after the drop: {sq['y'] + sq['height']} vs {target}"
+    page.click("#tab-headquarters .hq-edit-toggle")
+    save_settled(page)
     page.set_viewport_size({"width": 1280, "height": 900})
 
 

@@ -368,11 +368,13 @@
       const n = node();
       if (!n) return;
       const y0 = e.clientY, h0 = n.getBoundingClientRect().height;
-      let h = h0;
+      let h = h0, moved = false;                      // a press that never moved is a click, not a resize
       n.classList.add("hq-set-h", "hq-resizing");
       const guide = el("div", { class: "hq-guide", "aria-hidden": "true", hidden: "" });
       view.box.appendChild(guide);
       const move = (ev) => {
+        if (Math.abs(ev.clientY - y0) > 3) moved = true;
+        if (!moved) return;
         const top = n.getBoundingClientRect().top, want = h0 + ev.clientY - y0;
         const b = snapTo(n, top + want);
         if (b != null && b - top >= H_MIN) {          // close to a neighbor's bottom: line up with it, and say so
@@ -392,7 +394,7 @@
         window.removeEventListener("pointerup", up);
         window.removeEventListener("pointercancel", up);
         n.classList.remove("hq-resizing");
-        if (Math.abs(h - h0) >= H_STEP / 2) commit(h); else applyHeight(n, view.cards.find((x) => x.id === c.id) || c);
+        if (moved) commit(h); else applyHeight(n, view.cards.find((x) => x.id === c.id) || c);   // any real drag keeps its height, a small snap included
         pack();
       };
       window.addEventListener("pointermove", move);
