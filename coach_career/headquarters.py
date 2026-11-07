@@ -47,7 +47,7 @@ def set_layout(state: dict, cards) -> dict:
             raise LayoutError("Each card id appears once.")
         seen.add(cid)
         out.append({"id": cid, "widget": widget, "size": size})
-    state["career"]["headquarters"] = {"cards": out}
+    _hq(state)["cards"] = out
     return layout(state)
 
 
@@ -103,3 +103,174 @@ def movers(state: dict) -> dict:
         (up if rank < prev else down).append(row)
     key = lambda x: (-x["places"], x["name"])
     return {"up": sorted(up, key=key)[:MOVERS_SHOWN], "down": sorted(down, key=key)[:MOVERS_SHOWN]}
+
+
+# ----- round 2: the reads behind the planned widgets (spec "Round 2") ----------------------------------------
+
+STALE_WEEKS = 3          # *tune* weeks without contact before an offered target reads as going stale (the page's rule)
+DRAFT_LIKELY = 90        # *tune* a draft-eligible underclassman rated this (card overall) or better is likely to declare
+DRAFT_POSSIBLE = 84      # *tune* ... and this or better might
+TRANSFER_HIGH = 0.15     # *tune* a projected portal chance this high reads "High"
+TRANSFER_SOME = 0.07     # *tune* ... and this high "Some"; under it "Low"
+TOP100_GOAL = {1: 5, 2: 3, 3: 1, 4: 1, 5: 1}        # *tune* the default top-100 recruits goal by program tier
+RANK_GOAL = {1: 10, 2: 25, 3: 40, 4: 60, 5: 80}     # *tune* the default class rank goal by program tier
+GOAL_IDS = ("commits", "top100", "rank")
+GOAL_TITLES = {"commits": "Sign Your Class", "top100": "Land Top 100 Recruits", "rank": "Finish in the Top"}
+MAX_TASKS = 60           # *tune* the most tasks a Headquarters keeps
+TASK_TEXT = 120          # the longest a task's text may be
+
+
+def _hq(state: dict) -> dict:
+    return state["career"].setdefault("headquarters", {"cards": []})
+
+
+def last_contacts(state: dict) -> dict:
+    """The last week you contacted, pitched or offered each recruit on your board, from the recruiting log
+    (the portal's weeks in the portal). A recruit you never contacted is left out."""
+    rc, me = state["recruiting"], state["team"]
+    portal = bool(rc.get("portal"))
+    board = set(rc.get("board") or [])
+    out: dict = {}
+    for e in rc.get("log") or []:
+        if e.get("school") != me or e.get("pid") not in board or e.get("kind") not in recruiting.CONTACT_KINDS + ("offer",):
+            continue
+        w = e.get("portal_week") if portal else e.get("week")
+        if w is not None:
+            out[e["pid"]] = max(int(w), out.get(e["pid"], 0))
+    return out
+
+
+def _word(chance: float) -> str:
+    return "High" if chance >= TRANSFER_HIGH else "Some" if chance >= TRANSFER_SOME else "Low"
+
+
+def outlook(state: dict) -> dict:
+    """Your roster's projected departures, as words: seniors graduate, draft-eligible underclassmen may declare
+    (by overall), and every player's portal chance by the offseason's own odds (class, role, a losing year).
+    A projection: the offseason decides."""
+    from coach_career import offseason
+    from sim import season
+    me = state["team"]
+    view = season.depth_roster_view(state, me)
+    r = season._records(state).get(me) or {}
+    losing = r.get("wins", 0) < r.get("losses", 0)
+    players = []
+    for p in view.get("players") or []:
+        cls = p.get("class") or ""
+        use = "starter" if p.get("starter") else "rotation" if (p.get("depth") or 99) <= 2 else "bench"
+        base = cls.replace("RS", "") if cls not in offseason.PORTAL_BASE else cls
+        chance = offseason.PORTAL_BASE.get(cls, offseason.PORTAL_BASE.get(base, 0.1)) * offseason.PORTAL_USAGE[use] * (offseason.PORTAL_LOSING if losing else 1.0)
+        ovr = int(p.get("overall") or 0)
+        draft = None
+        if cls in offseason.UNDERCLASS_ELIGIBLE:
+            draft = "Likely" if ovr >= DRAFT_LIKELY else "Possible" if ovr >= DRAFT_POSSIBLE else None
+        grad = cls in ("SR", "SRRS")
+        players.append({"slug": p.get("slug"), "name": p.get("name"), "position": p.get("position"), "class": cls,
+                        "overall": ovr, "starter": bool(p.get("starter")), "use": use,
+                        "leaving": "graduation" if grad else None, "draft": draft,
+                        "transfer": None if grad else _word(chance)})     # a senior graduates: no portal word
+    counts = {"graduation": sum(1 for p in players if p["leaving"]), "draft": sum(1 for p in players if p["draft"]),
+              "draft_likely": sum(1 for p in players if p["draft"] == "Likely"),
+              "transfer_high": sum(1 for p in players if p["transfer"] == "High"),
+              "transfer_some": sum(1 for p in players if p["transfer"] == "Some"),
+              "roster": len(players), "losing": losing}
+    return {"players": players, "counts": counts}
+
+
+def _class_points(rc: dict, extra: Optional[tuple] = None) -> dict:
+    """Each school's class points as prospects.class_rank counts them; extra (school, pid) adds one commit."""
+    from coach_career import prospects
+    by: dict = {}
+    for pid, st in rc["status"].items():
+        school = st["signed"] or st["committed"]
+        if extra and pid == extra[1]:
+            continue
+        if school and school != "FCS":
+            by.setdefault(school, []).append(rc["prospects"][pid]["composite"])
+    if extra:
+        by.setdefault(extra[0], []).append(rc["prospects"][extra[1]]["composite"])
+    return {s: sum(c * prospects.CLASS_DECAY ** i for i, c in enumerate(sorted(v, reverse=True))) for s, v in by.items()}
+
+
+def what_if(state: dict, pid: str) -> dict:
+    """Your class rank now and if he commits to you, and his group's need now and after. Changes nothing."""
+    from coach_career import prospects
+    rc, me = prospects.class_rc(state), state["team"]
+    if pid not in rc["prospects"]:
+        raise LayoutError("Unknown recruit.")
+    fbs = recruiting.fbs_schools(state)
+    rank = lambda pts: 1 + sum(1 for s in fbs if pts.get(s, 0.0) > pts.get(me, 0.0))
+    st = rc["status"][pid]
+    mine = (st["signed"] or st["committed"]) == me
+    p = rc["prospects"][pid]
+    group = recruiting._group_of(p)
+    need = int(recruiting.needs(state, me).get(group, 0))
+    return {"pid": pid, "name": p["name"], "group": group, "rank_now": prospects.class_rank(state, me),
+            "rank_if": prospects.class_rank(state, me) if mine else rank(_class_points(rc, (me, pid))),
+            "need_now": need, "need_if": need if mine else max(0, need - 1)}
+
+
+def _tier(state: dict) -> int:
+    from coach_career import programs
+    me = state["team"]
+    row = next((r for r in programs.rows(state) if r["team"] == me), None)
+    return int((row or {}).get("tier") or 3)
+
+
+def goals(state: dict) -> list:
+    """The three class goals: target (yours, or the default), now, and met."""
+    from coach_career import prospects
+    rc, me = prospects.class_rc(state), state["team"]
+    saved = _hq(state).get("goals") or {}
+    mine = [pid for pid, st in rc["status"].items() if (st["signed"] or st["committed"]) == me]
+    tier = _tier(state)
+    committed = len([1 for s in state["recruiting"]["status"].values() if s["committed"] == me])
+    defaults = {"commits": committed + recruiting.open_spots(state, me), "top100": TOP100_GOAL.get(tier, 1), "rank": RANK_GOAL.get(tier, 40)}
+    now = {"commits": committed, "top100": sum(1 for pid in mine if rc["prospects"][pid]["rank"] <= 100),
+           "rank": prospects.class_rank(state, me) if mine else None}       # no commits: unranked, not first
+    out = []
+    for g in GOAL_IDS:
+        target = int(saved.get(g) or defaults[g])
+        met = (now[g] is not None and now[g] <= target) if g == "rank" else now[g] >= target
+        out.append({"id": g, "title": GOAL_TITLES[g], "target": target, "now": now[g], "met": met, "default": g not in saved})
+    return out
+
+
+def tasks(state: dict) -> list:
+    return [dict(t) for t in _hq(state).get("tasks") or []]
+
+
+def set_plan(state: dict, body: dict) -> dict:
+    """Store tasks and goal targets (either optional); check every field first, so a bad one stores nothing."""
+    if not isinstance(body, dict):
+        raise LayoutError("The plan must be an object.")
+    new_tasks, new_goals = None, None
+    if "tasks" in body:
+        ts = body["tasks"]
+        if not isinstance(ts, list) or len(ts) > MAX_TASKS:
+            raise LayoutError(f"Tasks are a list of at most {MAX_TASKS}.")
+        seen, new_tasks = set(), []
+        for t in ts:
+            if not isinstance(t, dict) or not (isinstance(t.get("id"), str) and _ID.match(t["id"])) or t["id"] in seen:
+                raise LayoutError("Each task needs its own short lowercase id.")
+            text = t.get("text")
+            if not isinstance(text, str) or not text.strip() or len(text) > TASK_TEXT:
+                raise LayoutError(f"A task's text is 1 to {TASK_TEXT} characters.")
+            if not isinstance(t.get("done"), bool):
+                raise LayoutError("A task is done or not.")
+            seen.add(t["id"])
+            new_tasks.append({"id": t["id"], "text": text.strip(), "done": t["done"]})
+    if "goals" in body:
+        gs = body["goals"]
+        if not isinstance(gs, dict) or any(k not in GOAL_IDS for k in gs):
+            raise LayoutError("Goals are commits, top100 and rank.")
+        for v in gs.values():
+            if isinstance(v, bool) or not isinstance(v, int) or not 1 <= v <= 200:
+                raise LayoutError("A goal is a whole number from 1 to 200.")
+        new_goals = dict(gs)
+    hq = _hq(state)
+    if new_tasks is not None:
+        hq["tasks"] = new_tasks
+    if new_goals is not None:
+        hq["goals"] = dict(hq.get("goals") or {}, **new_goals)
+    return {"tasks": tasks(state), "goals": goals(state)}

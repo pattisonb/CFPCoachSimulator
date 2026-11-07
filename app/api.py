@@ -1151,6 +1151,32 @@ def headquarters_view(p: Params) -> dict:
         out["commits"] = headquarters.commits_by_week(st)
     if "movers" in want:
         out["movers"] = headquarters.movers(st)
+    if "contacts" in want:
+        out["contacts"] = headquarters.last_contacts(st)
+    if "outlook" in want:
+        out["outlook"] = headquarters.outlook(st)
+    if "goals" in want:
+        out["goals"] = headquarters.goals(st)
+    if "tasks" in want:
+        out["tasks"] = headquarters.tasks(st)
+    if "whatif" in want:
+        try:
+            out["whatif"] = headquarters.what_if(st, p.q("pid") or "")
+        except headquarters.LayoutError as e:
+            raise ApiError(404, e.message) from e
+    return out
+
+
+@route("POST", "/api/season/{season_id}/headquarters/plan")
+def headquarters_plan(p: Params) -> dict:
+    """Store Headquarters' tasks and goal targets ({"tasks": [...], "goals": {...}}, either optional); a bad shape is a 400."""
+    from coach_career import headquarters
+    st = _career_state(p.path["season_id"])
+    try:
+        out = headquarters.set_plan(st, p.body)
+    except headquarters.LayoutError as e:
+        raise ApiError(400, e.message) from e
+    _save_loaded()
     return out
 
 
