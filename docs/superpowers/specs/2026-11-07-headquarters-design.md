@@ -255,3 +255,49 @@ or "NaN" on the page: an empty widget says why in a sentence ("No official visit
 
 Copies of a widget, per-card settings, widgets outside recruiting and scouting, retiring the Recruiting
 tab, and every planned widget's own system.
+
+## Round 2: the planned widgets (agreed November 7)
+
+Eleven of the twelve planned widgets become ready; Staff Assignments stays Coming Soon (it needs a recruiting
+mechanic of its own, designed separately). Nothing here changes how games or recruiting play; the golden test
+stays byte-identical.
+
+### Reads added to `GET /api/season/{id}/headquarters` (`want=`)
+
+- **`contacts`:** `{pid: week}`, the last week you contacted, pitched or offered each recruit on your board,
+  from the recruiting log (portal weeks in the portal).
+- **`outlook`:** your roster's projected departures, from `season.depth_roster_view`: each player's `leaving`
+  (`graduation` for SR and SRRS), `draft` word for draft-eligible underclassmen (`offseason.UNDERCLASS_ELIGIBLE`:
+  "Likely" from `DRAFT_LIKELY` overall, "Possible" from `DRAFT_POSSIBLE`, *tune*), and `transfer` word from the
+  offseason's own odds, `PORTAL_BASE[class] × PORTAL_USAGE[use] × PORTAL_LOSING` when losing ("High" from
+  `TRANSFER_HIGH`, "Some" from `TRANSFER_SOME`, else "Low"); counts by reason. Words only; a projection.
+- **`goals`:** the three class goals with `target`, `now` and `met`: commits (default: commits plus open spots),
+  top-100 recruits (default by your program's tier) and class rank (default by tier); a saved target replaces a
+  default.
+- **`tasks`:** the saved task list.
+- **`whatif` with `pid`:** your class rank now and if he commits (his composite added to your class, ranked as
+  `class_rank` ranks), his group and your need there now and after. Changes nothing.
+
+### `POST /api/season/{id}/headquarters/plan`
+
+`{"tasks": [{"id", "text", "done"}], "goals": {"commits"|"top100"|"rank": target}}`, either key optional. Tasks:
+at most 60, ids as card ids, text 1-120 characters, `done` a bool. Goal targets whole numbers 1-200. A bad
+shape is a 400 and nothing is stored. Stored in `career.headquarters` beside the layout.
+
+### The widgets
+
+| Widget | Sources | Notes |
+|---|---|---|
+| Alerts and Needs Attention | board, hq (contacts) | Rules: an offered target uncontacted 3 weeks (`STALE_WEEKS`), a top target with no looks, a need with nobody on your board, an offer out to a recruit hard-committed elsewhere, many offers unused from week 8. Each names the recruit or the position. |
+| Board Health | board, hq (contacts) | Active, Going Stale, At Risk (a long shot, or behind), Unscouted: counts over bars. |
+| Offer Efficiency | board | Offered, Visited, Committed as a funnel; each rate as a word (Strong, Fair, Low). |
+| Position Battle Board | depth | Each role's starter and top challenger; Secure (5+ overall apart), Close (2-4), Open (0-1). |
+| Scholarship Budget | board | Commits against the class's spots, the open spots, the roster limit of 85. |
+| Recruiting Calendar | board, the season | Your games ahead, booked official visits, the early signing period (week 16), National Signing Day (week 20). |
+| What-If | board | Pick a target; the widget asks for `whatif` and shows the rank and need now and if he commits. |
+| Senior Impact and Retention | hq (outlook) | Seniors and draft-eligible starters, each with words for why and how likely he leaves. |
+| Roster Loss Projections | hq (outlook) | Graduation, the draft and the portal: how many, in counts and words. |
+| Recruiting Tasks | hq (tasks), board, hq (contacts) | Add, check off, delete; suggested tasks from the alerts, one tap to add. |
+| Recruiting Goals | hq (goals) | Three goals with progress bars; edit a target in place. |
+
+A new source, `depth` (`GET /depth/{your team}`), feeds the Position Battle Board.
