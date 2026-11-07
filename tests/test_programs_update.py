@@ -31,6 +31,7 @@ if __name__ == "__main__":
     keys = {"history", "prestige", "winning", "market", "market_base", "nil", "conference", "coach", "rating", "tier", "seasons"}
     assert all(keys <= set(t["program"]) for t in lgd["teams"].values()), "a team without its program"
     before = {s: dict(t["program"]) for s, t in lgd["teams"].items()}
+    offseason._run_draft(st)                                             # the draft has run by the Staff step
     res = carousel._results(st)
     ranks = programs.final_ranks(st)
     assert ranks and 1 <= min(ranks.values()) and len(ranks) >= 25
@@ -45,6 +46,52 @@ if __name__ == "__main__":
     assert lgd["teams"][champ]["program"]["winning"] >= 60, lgd["teams"][champ]["program"]["winning"]
     programs.update(st, res, ranks)                                      # once a year
     assert len(lgd["teams"][champ]["program"]["seasons"]) == 1
+    from coach_career import offseason
+    picks = programs.draft_picks(st)
+    assert sum(len(v) for v in picks.values()) >= 150, sum(len(v) for v in picks.values())
+    for s, t in lgd["teams"].items():
+        p = t["program"]
+        assert len(p["drafts"]) == programs.PRO_YEARS and p["drafts"][-1][0] == off["year"] - 1 and p["drafts"][0][0] == off["year"] - programs.PRO_YEARS
+        assert p["drafts"][-1][1] == sum(programs.pick_points(r) for r, _ in picks.get(s, []))
+        assert 0 <= p["pro"] <= 100 and all(0 <= v <= 100 for v in p["pro_groups"].values())
+    before = {s: t["program"]["pro"] for s, t in lgd["teams"].items()}
+    programs.update(st, res, ranks, year=off["year"])            # the same year again: nothing added twice
+    assert all(len(t["program"]["drafts"]) == programs.PRO_YEARS and t["program"]["pro"] == before[s] for s, t in lgd["teams"].items())
+    # ten empty drafts take a factory to the floor
+    p = lgd["teams"]["alabama"]["program"]
+    for y in range(off["year"], off["year"] + programs.PRO_YEARS):
+        p["drafts"] = p["drafts"][1:] + [[y, 0, {}]]
+    programs.pro_recompute(p, off["year"] + programs.PRO_YEARS)
+    assert p["pro"] == 0 and p["pro_groups"] == {}
+    # an old save: a program without the three keys keeps the base's real decade
+    q = lgd["teams"]["akron"]["program"]; b0 = programs.base("akron")
+    for k in ("drafts", "pro", "pro_groups"):
+        q.pop(k, None)
+    q["year"] = off["year"] - 1
+    programs.init(lgd)
+    assert len(q["drafts"]) == programs.PRO_YEARS and q["drafts"][-1][0] >= b0["drafts"][-1][0] and q["pro"] == b0["pro"] and q["pro_groups"] == b0["pro_groups"]
+    assert q["drafts"] is not b0["drafts"] and q["drafts"] == b0["drafts"]
+    for k in ("drafts", "pro", "pro_groups"):
+        q.pop(k, None)
+    programs.update(st, res, ranks, year=off["year"], only=["akron"])
+    assert len(q["drafts"]) == programs.PRO_YEARS and q["drafts"][-2] == b0["drafts"][-1] and isinstance(q["pro_groups"], dict)
+    # rows() works on a league whose programs were stripped of the three keys (and Alabama keeps its decade)
+    for t in lgd["teams"].values():
+        for k in ("drafts", "pro", "pro_groups"):
+            t["program"].pop(k, None)
+    rs = programs.rows(st)
+    assert rs and all("pro" in r and isinstance(r["pro_groups"], dict) for r in rs)
+    assert next(r for r in rs if r["team"] == "alabama")["pro"] == programs.base("alabama")["pro"]
+    # the offseason's tier probe leaves every real program's drafts as they were
+    snap = json.dumps({s: t["program"]["drafts"] for s, t in lgd["teams"].items()})
+    for t in lgd["teams"].values():
+        t["program"]["year"] = off["year"] - 1
+    offseason.program_shifts(st, lgd)
+    assert json.dumps({s: t["program"]["drafts"] for s, t in lgd["teams"].items()}) == snap
+    # an unknown position is skipped, not a crash
+    n = len(programs.draft_picks(st).get("akron", []))
+    st["offseason"]["departures"].append({"id": "x", "team": "akron", "kind": "draft", "pos": "???", "round": 1})
+    assert len(programs.draft_picks(st).get("akron", [])) == n
     # NIL moves by the AD's hand: up after a goal met, down after a losing year
     t = lgd["teams"]["ohio-state"]["program"]
     t["nil"] = 60.0

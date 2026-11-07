@@ -45,6 +45,11 @@ def league_check(lgd: dict) -> tuple[bool, str]:
     top10 = sorted(now, key=lambda s: -now[s]["rating"])[:10]
     print("  top 10 now:", [(s, round(now[s]["rating"]), round(now[s]["prestige"]), round(now[s]["winning"]), round(now[s]["nil"])) for s in top10])
     ok = kept >= KEEP_AT_LEAST and tiers[1] >= 4
+    real = [sum(line[1] for line in v["drafts"][i:i + 1]) for v in d.values() for i in range(len(v.get("drafts") or []))]
+    years = max(1, len(next(iter(d.values())).get("drafts") or [1]))
+    mean = sum(real) / years
+    career = sum(p["drafts"][-1][1] for p in now.values() if p.get("drafts"))
+    print(f"  draft points a year: career {career} vs real mean {mean:.0f}")
     return ok, (f"league {lgd.get('year')}: top 25 keeps {kept} of the starting 25 (need {KEEP_AT_LEAST}); tiers {tiers}; "
                 f"biggest prestige drift from history {[(s, round(v, 1)) for s, v in big]}")
 

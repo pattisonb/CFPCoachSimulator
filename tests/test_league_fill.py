@@ -11,7 +11,7 @@ import random
 import shutil
 import statistics
 
-from coach_career import league, league_file, league_fill, offseason
+from coach_career import league, league_file, league_fill, offseason, programs
 from teamdata import game_scale
 
 ATTRS = game_scale.keys()
@@ -271,6 +271,10 @@ def test_new_team_complete():
     assert t["meta"]["colors"]["accent"] is None and t["meta"]["rivals"] == ["oregon-state"]
     assert t["program"]["prestige"] == 40 == t["program"]["history"] and 1 <= t["program"]["tier"] <= 5
     assert t["program"]["year"] == 2025 and t["program"]["coach"] == 60 and t["program"]["seasons"] == []
+    pg = t["program"]
+    assert pg["pro"] == 0 and pg["pro_groups"] == {} and len(pg["drafts"]) == 10 and pg["drafts"][-1][0] == league.FIRST_YEAR - 1
+    programs.pro_recompute(pg, league.FIRST_YEAR - 1)
+    assert pg["pro"] == 0 and pg["pro_groups"] == {}
     assert t["meta"]["program"]["prestige"] == 3 and t["meta"]["program"]["generated"] is True
     assert lgd["recruiting_models"]["alder-tech"]["location"] == [44.05, -121.31]
     assert lgd["recruiting_models"]["alder-tech"]["top_states"][0][0] == "OR"

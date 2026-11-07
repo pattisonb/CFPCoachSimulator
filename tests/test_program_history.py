@@ -34,4 +34,23 @@ if __name__ == "__main__":
     b = programs.base("ohio-state")
     assert b["tier"] == 1 and programs.z_of(b["rating"]) > 1.2 and programs.z_of(programs.base("akron")["rating"]) < -0.8
     assert programs.base("ndsu")["tier"] == 5
+    from coach_career import programs
+    assert programs.pick_points(1) == 4 and programs.pick_points(3) == 2 and programs.pick_points(7) == 1
+    line = programs.draft_line(2025, [(1, "WR"), (2, "CB"), (7, "WR")])
+    assert line == [2025, 8, {"WR": 5, "CB": 3}]
+    lines = [[y, 1, {"QB": 1}] for y in range(2016, 2026)]
+    assert programs.pro_score(lines, 2025) == 15 and programs.pro_group_scores(lines, 2025) == {"QB": 15}   # five old at 1, five new at 2
+    assert programs.pro_score([[2010, 50, {"QB": 50}]] + lines, 2025) == 15, "only the last ten lines count"
+    for s in fbs:
+        p = d[s]
+        assert 0 <= p["pro"] <= 100 and len(p["drafts"]) == 10 and p["drafts"][0][0] == 2016 and p["drafts"][-1][0] == 2025, (s, p.get("pro"))
+        assert all(0 <= v <= 100 for v in p["pro_groups"].values())
+    assert d["alabama"]["pro"] == 100 and d["ohio-state"]["pro"] >= 85 and d["georgia"]["pro"] >= 85
+    assert d["army"]["pro"] == 0 and d["army"]["pro_groups"] == {} and d["kent-state"]["pro"] == 0
+    pro = [d[s]["pro"] for s in fbs]
+    assert 32 <= st.median(pro) <= 48, st.median(pro)
+    assert d["ohio-state"]["pro_groups"]["WR"] >= 80 and d["alabama"]["pro_groups"].get("OT", 0) >= 60
+    sc = json.loads(programs.HISTORY.read_text(encoding="utf-8"))["scales"]
+    assert sc["pro"]["lo"] == 0 and sc["pro"]["hi"] > 0 and set(sc["pro_group"]) >= {"QB", "WR", "OT", "EDGE", "CB"}
+    assert abs(sum(programs.WEIGHTS.values()) - 1.0) < 1e-9 and programs.WEIGHTS["pro"] == 0.10
     print(f"program history ok: top {top[:8]}, tiers {counts}, history median {st.median(hist):.0f}")

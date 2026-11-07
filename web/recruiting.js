@@ -8,7 +8,7 @@
   "use strict";
   const { el } = window.CFP;
   const PITCH_NAMES = { proximity: "Close to Home", playing_time: "Playing Time", prestige: "Program Prestige", winning: "Winning Now",
-                        nil: "NIL", coach: "The Head Coach", academics: "Academics" };
+                        nil: "NIL", coach: "The Head Coach", academics: "Academics", pro: "Path to the League" };
   const GROUP_NAMES = { athleticism: "Athleticism", size_strength: "Size & Strength", technique: "Technique", football_iq: "Football IQ",
                         potential: "Potential", coachability: "Coachability" };
   const STATUS = [["", "Any Status"], ["interested", "Interested in You"], ["open", "Uncommitted"], ["committed", "Committed"], ["signed", "Signed"], ["leaning_fcs", "Leaning FCS"],
@@ -287,12 +287,15 @@
 
   // ----- the Office ------------------------------------------------------------------------------
 
-  const METRIC_WORDS = (v) => (v >= 80 ? "Elite" : v >= 65 ? "Strong" : v >= 50 ? "Solid" : v >= 35 ? "Fair" : "Weak");
+  // the eight grade words, by floor (the server's programs.WORD_FLOORS rides in pv.words; this is the fallback)
+  const WORD_FLOORS = [["Elite", 90], ["Excellent", 80], ["Strong", 70], ["Good", 60], ["Solid", 50], ["Fair", 40], ["Thin", 30], ["Weak", 0]];
+  const GROUP_ORDER_PRO = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "K", "P"];
+  const METRIC_WORDS = (v, pv) => { const fl = (pv && pv.words && pv.words.length ? pv.words : WORD_FLOORS); return (fl.find(([, f]) => v >= f) || fl[fl.length - 1])[0]; };
   const PROGRAM_METRICS = [["prestige", "Prestige", "History and a decade of results"], ["winning", "Winning", "The last three seasons"],
     ["nil", "NIL", "The collective's tier, set by your AD"], ["market", "Market", "Crowds and TV"], ["conference", "Conference", "Your league's strength"],
-    ["coach", "Coach", "Your rating and tenure"]];
+    ["coach", "Coach", "Your rating and tenure"], ["pro", "Pro Pipeline", "The last ten drafts, by position"]];
 
-  // your program's living rating: the six metrics as bars and the tier (the League's Programs tab, with every program's table under it)
+  // your program's living rating: the seven metrics as bars and the tier (the League's Programs tab, with every program's table under it)
   function programCard(pv) {
     const you = pv.you;
     if (!you) return el("div");
@@ -300,12 +303,22 @@
     return el("section", { class: "go-card rcp-card lg-card edge go-program", "aria-label": "Your Program" }, [
       el("div", { class: "card-bar go-program-head lg-head" }, [el("span", { class: "go-kicker muted" }, ["Your Program ",
         ui().tip("Prestige and the market move slowly with results; your AD raises NIL after a year that meets his goal.", "Your Program")]),
-        el("span", { class: "go-tag", text: you.tier_name, title: "Where your program stands: its name, results, NIL, market, league and coach, moving slowly with what you do" })]),
+        el("span", { class: "go-tag", text: you.tier_name, title: "Where your program stands: its name, results, NIL, market, league, coach and pro pipeline, moving slowly with what you do" })]),
       el("h2", { class: "rcp-h1 lg-h2", text: you.name || "" }),
       el("div", { class: "go-program-bars" }, PROGRAM_METRICS.map(([k, label, tip]) => el("div", { class: "go-program-bar", title: tip }, [
         el("span", { class: "go-program-label", text: label }), el("i", {}, [el("b", { style: `width:${Math.max(2, Math.min(100, you[k]))}%` })]),
-        el("span", { class: "go-program-val", text: METRIC_WORDS(you[k]) })]))),
+        el("span", { class: "go-program-val", text: METRIC_WORDS(you[k] || 0, pv) })]))),
+      proGroups(pv, you),
     ]);
+  }
+
+  // the draft groups with a grade, best first: "WR Elite" (a group the program never sent reads Weak)
+  function proGroups(pv, you) {
+    const order = pv.group_order && pv.group_order.length ? pv.group_order : GROUP_ORDER_PRO;
+    const pg = you.pro_groups || {};
+    const list = order.map((g, i) => ({ g, v: pg[g] || 0, i })).sort((a, b) => b.v - a.v || a.i - b.i);
+    return el("div", { class: "go-program-groups", title: "The Pro Pipeline by draft position, best first" },
+      list.map((x) => el("span", { class: "go-tag", text: `${x.g} ${METRIC_WORDS(x.v, pv)}` })));
   }
 
   // the League's Programs tab: your program's card (with the AD's goal), then every program, open
@@ -324,18 +337,18 @@
       el("span", { class: "go-kicker muted", text: "Your AD's Goal" }), el("b", { text: ` ${s.job.goal}` }),
       el("span", { class: "go-tag", text: `${s.job.mood}${s.job.ultimatum ? " · Ultimatum Year" : ""}` })]));
     root.append(card, el("section", { class: "go-card rcp-card lg-card go-programs-card", "aria-label": "Every Program" }, [
-      el("div", { class: "card-bar" }, [el("div", { class: "go-kicker muted" }, ["Every Program ", ui().tip("Every FBS program's standing on the same six measures, and what its AD expects this season.", "Every Program")])]),
+      el("div", { class: "card-bar" }, [el("div", { class: "go-kicker muted" }, ["Every Program ", ui().tip("Every FBS program's standing on the same seven measures, and what its AD expects this season.", "Every Program")])]),
       programsTable(pv)]));
     if (H.carryLine) H.carryLine(s, card);
   }
 
   function programsTable(pv) {
-    const t = el("table", { class: "stats go-programs" }, [el("thead", {}, [el("tr", {}, ["Program", "Standing", "Prestige", "Winning", "NIL", "Market", "Conf", "Coach", "The AD Expects"].map((h) => el("th", { text: h })))])]);
+    const t = el("table", { class: "stats go-programs" }, [el("thead", {}, [el("tr", {}, ["Program", "Standing", "Prestige", "Winning", "NIL", "Market", "Conf", "Coach", "Pro Pipeline", "The AD Expects"].map((h) => el("th", { text: h })))])]);
     const body = el("tbody");
     for (const r of pv.rows) {
       body.append(el("tr", { class: r.team === pv.you.team ? "mine" : "" }, [
         el("td", {}, [window.CFP.teamPill(r.team), ` ${r.name}`]), el("td", {}, [el("span", { class: "go-tag", text: r.tier_name })]),
-        ...["prestige", "winning", "nil", "market", "conference", "coach"].map((k) => el("td", { class: `word ${METRIC_WORDS(r[k]).toLowerCase()}`, text: METRIC_WORDS(r[k]) })),
+        ...["prestige", "winning", "nil", "market", "conference", "coach", "pro"].map((k) => { const w = METRIC_WORDS(r[k] || 0, pv); return el("td", { class: `word ${w.toLowerCase()}`, text: w }); }),
         el("td", { class: "small", text: r.goal })]));
     }
     t.append(body);

@@ -46,5 +46,9 @@ if __name__ == "__main__":
             up += 1
     assert moves and up == len(moves), (up, len(moves), moves[:3])
     assert all(c.get("tier") for c in changes if c["reason"] == "hired" and c["role"] == "head_coach")
+    # the eight grade words, and the Pro Pipeline on every row
+    assert programs.word_of(92) == "Elite" and programs.word_of(80) == "Excellent" and programs.word_of(69.9) == "Good" and programs.word_of(29) == "Weak"
+    r = programs.rows(st)
+    assert "pro" in r[0] and isinstance(r[0]["pro_groups"], dict)
     season.close_pool()
     print(f"program readers ok: {len(moves)} head coaches moved, all up; Ohio State budget {b_osu}, Akron {b_akr}")

@@ -153,7 +153,7 @@ def assert_chance_order(page, board: list, me: str) -> None:
 
 
 PITCH = {"proximity": "Close to Home", "playing_time": "Playing Time", "prestige": "Program Prestige", "winning": "Winning Now",
-         "nil": "NIL", "coach": "The Head Coach", "academics": "Academics"}
+         "nil": "NIL", "coach": "The Head Coach", "academics": "Academics", "pro": "Path to the League"}
 REACTION = {"hit": "He lit up", "polite": "Polite", "quiet": "He went quiet", "tired": "He is tired of this", "guarded": "He gave nothing away"}
 GONE = "heard".title()     # the word the cue tag used to print: the page never shows it now
 HISTORY_EMPTY = "Nothing with him yet: no contact, no offer."
@@ -1189,7 +1189,7 @@ def test_conversation(page, base) -> None:
         assert not page.query_selector(".modal-scene .go-scene .go-scene-line.cue"), "the cue waits on your opening"
         assert "YOUR OPENING" in page.inner_text(".modal-scene .go-scene") and "WHAT YOU LEAD WITH" not in page.inner_text(".modal-scene .go-scene")
         chips = page.query_selector_all(".modal-scene .go-scene .go-present-chip")
-        assert len(chips) == 7 and all(c.get_attribute("aria-pressed") == "false" for c in chips)
+        assert len(chips) == 8 and all(c.get_attribute("aria-pressed") == "false" for c in chips)
         for c in chips[:3]:
             c.click()
         chips[3].click()

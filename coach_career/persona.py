@@ -14,8 +14,9 @@ PERSONALITY_LABEL = {"cocky": "Cocky", "shy": "Shy", "guarded": "Guarded", "atte
 DECIDERS = {"self": 0.30, "mom": 0.20, "dad": 0.15, "grandma": 0.10, "hs_coach": 0.15, "trainer": 0.10}   # who decides, by share *tune*
 DECIDER_LABEL = {"self": "Himself", "mom": "Mom", "dad": "Dad", "grandma": "Grandmother", "hs_coach": "High School Coach", "trainer": "Trainer"}
 PORTAL_DECIDERS = ("self", "mom", "dad", "trainer")   # a transfer's decider: no high school coach or grandmother (their shares renormalized)
-DECIDER_TOPICS = {"self": (), "mom": ("proximity", "academics"), "dad": ("nil", "playing_time"), "grandma": ("proximity", "coach"),
-                  "hs_coach": ("coach", "playing_time", "winning"), "trainer": ("nil",)}   # what each decider cares about
+DECIDER_TOPICS = {"self": (), "mom": ("proximity", "academics"), "dad": ("nil", "playing_time", "pro"), "grandma": ("proximity", "coach"),
+                  "hs_coach": ("coach", "playing_time", "winning", "pro"), "trainer": ("nil", "pro")}   # what each decider cares about
+_TOPICS_BEFORE_PRO = {d: tuple(t for t in ts if t != "pro") for d, ts in DECIDER_TOPICS.items()}   # the tuples the first draw reads, so a saved class keeps its topics
 
 
 def draw(pid: str, seed, portal: bool = False) -> dict:
@@ -29,7 +30,10 @@ def draw(pid: str, seed, portal: bool = False) -> dict:
         rng = random.Random(f"persona-portal-{seed}-{pid}")
         decider = rng.choices(PORTAL_DECIDERS, weights=[DECIDERS[d] for d in PORTAL_DECIDERS])[0]
     topics = DECIDER_TOPICS[decider]
-    return {"personality": personality, "decider": decider, "decider_topic": rng.choice(topics) if topics else None}
+    topic = rng.choice(_TOPICS_BEFORE_PRO[decider]) if topics else None      # the draw as it was before Pro Pipeline
+    if "pro" in topics and random.Random(f"persona-pro-{seed}-{pid}").random() < 1 / len(topics):
+        topic = "pro"                                                      # its own stream: Path to the League takes its share
+    return {"personality": personality, "decider": decider, "decider_topic": topic}
 
 
 @lru_cache(maxsize=20000)

@@ -156,6 +156,8 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `coach_career/carousel.py` | The coaching carousel: AD goals, firings, hires, the coaching market |
 | `coach_career/programs.py` | Program ratings: every program's living rating (prestige, winning, NIL, market, conference, coach), its tier and the AD's goal |
 | `tools/build_program_history.py`, `tools/build_program_market.py`, `tools/check_programs.py` | The starting values (thirty seasons of results; real crowds and TV) in `data/program_history.json` and `data/program_market.json`; the drift check |
+| `tools/fetch_drafts.py` | Downloads the 2016-2025 NFL drafts from Wikipedia's player-selection tables into `data/nfl_drafts.json` |
+| `data/nfl_drafts.json` | Every program's draft picks by year, round and position group: the source of the Pro Pipeline grade |
 | `tools/check_carousel.py` | Plays quick offseasons and counts the carousel's churn against real years |
 | `web/recruiting.js`, `web/scouting.js`, `web/careersave.js` | The Recruiting, Prospects and Scouting tabs; Download career and Load career (`.ccsave` files) |
 | `tools/check_recruiting.py` | Plays career seasons and holds their recruiting to the real classes |
@@ -948,7 +950,17 @@ pitch picker shows it as strong, fair or weak): playing time from where he would
 your record and poll, prestige, proximity, coach, academics, and NIL as your offer against his
 ask. A pitch on one of his priorities counts 1x to 4x by that strength (1 + 3 x strength); under
 25% it backfires (he isn't buying it: minus half the action's worth); any other topic counts
-0.3x to 0.7x. **Stages:** cold until a contact, in touch, his top group (his top eight schools by
+0.3x to 0.7x.
+
+**Path to the League** is a pitch topic like the rest (spec
+`docs/superpowers/specs/2026-11-06-pro-pipeline-design.md`). Your strength on it at a school is that
+school's Pro Pipeline grade at his position group (OL the mean of OT and IOL, DL of EDGE and DL,
+kickers and punters the overall grade, an athlete the group of his engine position), as a pull `_logistic(1.2 × (grade − 50) / 25)`. About one
+recruit in ten has it first (`PRIORITY_ODDS` pro 0.10; the portal 0.05, top transfers 0.08), and
+dads, trainers and high school coaches carry it as deciders. The lines claim a pipeline only when
+the strength is at `CLAIM_FROM`; below it they give the honest lead, which says "be the first" only where the school has no pick at his group in ten drafts (`pro_any`) and "we've sent some" where it has. A kicker or punter's strength reads the overall grade, so the lines about his own spot wait for his own group's grade (`pro_spot`) and the rest speak of the program.
+
+**Stages:** cold until a contact, in touch, his top group (his top eight schools by
 interest, your offer in hand), visited, committed. An official visit needs his top group; an
 offer before any contact counts half. AI boards start warm (the staff has evaluated and spoken to
 everyone on them, one priority known) and pitch the strongest priority they know. Each contact
@@ -1725,7 +1737,7 @@ six seasons gave 25 head coaching changes a year (15 fired, 5 retired, 5 hired a
 the NFL; real FBS years run 25-30) and 63 coordinator changes (real: 60-80).
 
 **Program ratings** (`coach_career/programs.py`, spec `docs/superpowers/specs/2026-10-26-program-ratings-design.md`).
-Every program in a career's league carries a living rating, six metrics on 0-100 kept in
+Every program in a career's league carries a living rating, seven metrics on 0-100 kept in
 `lgd["teams"][slug]["program"]` and moved every offseason by `programs.update` (run by the carousel):
 
 | metric | what | moves |
@@ -1736,19 +1748,29 @@ Every program in a career's league carries a living rating, six metrics on 0-100
 | market | crowds and TV | a fixed base (below) plus a live part that steps at most 3 a year toward 0.3 × (winning − its real 2023-25 winning), capped at ±8 where the building is full (base 85+) and ±18 elsewhere; a new head coach's first year adds 1.5 |
 | conference | the conference's strength | the mean engine rating of its members, on the 2026 scale, anchored to its start (half of any change counts) |
 | coach | the head coach's appeal | his overall plus 3 a year of tenure up to five, minus 5 |
+| pro | the Pro Pipeline: the last ten NFL drafts, each pick weighted by round (round 1 counts 4, round 2 counts 3, round 3 counts 2, later rounds 1), the newest five years counted double, on a fixed scale so the best program is 100 and the median about 40; a grade per position group is made the same way, over the programs with a pick in that group | every offseason the career's draft becomes the year's line and the oldest year drops; ten empty years take a factory to 0 |
 
-The rating is 0.35 prestige + 0.20 winning + 0.15 NIL + 0.10 market + 0.10 conference + 0.10
-coach; tiers are 1 at 76 and up (blue blood), 2 at 65, 3 at 50, 4 at 35, 5 below (at the start 7,
-13, 34, 25 and 59 programs). **History** (`tools/build_program_history.py`, from the coaching
+The rating is 0.30 prestige + 0.15 winning + 0.15 NIL + 0.10 market + 0.10 conference + 0.10
+coach + 0.10 pro; tiers are 1 at 76 and up (blue blood), 2 at 65, 3 at 50, 4 at 35, 5 below (at the start 9,
+11, 34, 25 and 59 programs). **History** (`tools/build_program_history.py`, from the coaching
 records in `data/recruiting/coaches.json`: every FBS head coach's seasons since 1995 with wins,
 games and the final AP rank) is the recency-weighted mean season score 1995-2025 (half-life 12
 years), blended 65/35 with the recruiting baseline (class strength 2005-2026) and scaled so the
-best program is 100 and the median 39: Alabama 100, Ohio State 98, Georgia 93, Oklahoma 82,
+best program is 100 and the median 39 (the history column; the starting rating itself runs on the mix above): Alabama 100, Ohio State 98, Georgia 93, Oklahoma 82,
 Oregon 80, Texas 80, LSU 79, Clemson and Michigan 78. The starting top 25 by rating holds 21 of a
-reasonable 2026 top 25 (Indiana, Missouri, Nebraska and South Carolina in for Utah, Wisconsin,
+reasonable 2026 top 25 (Missouri, Nebraska, South Carolina and TCU in for Utah, Wisconsin,
 Oklahoma State and Kansas State). Ten straight 12-0 seasons lift a mid Power 4 program about 20
 rating points (tier 3 to tier 1, prestige +11, market +14, NIL to the cap); ten 2-10 seasons at
 Alabama take about 17 (tier 1 to 2, prestige 97 to 76): a decade moves a program about a tier.
+
+**Pro Pipeline** (`coach_career/programs.py`, spec `docs/superpowers/specs/2026-11-06-pro-pipeline-design.md`).
+The starting draft lines are the 2016-2025 NFL drafts, which `tools/fetch_drafts.py` reads from
+Wikipedia's player-selection tables into `data/nfl_drafts.json` (each program's picks by year, round
+and position group) and `tools/build_program_history.py` turns into the `pro` and `pro_groups`
+values in `data/program_history.json`: Alabama 100, Georgia 94, Ohio State 94, Michigan 86, LSU 85,
+Penn State 79, the median about 40. The Programs tab shows the grade as a bar and, under the bars, a chip
+for every position group, best first (a group with no picks reads Weak); the Every Program table has a Pro Pipeline
+column.
 
 **What reads it.** The AD's goal follows the tier (1: the playoff; 2: nine wins; 3: eight; 4: seven and a
 bowl; 5: a bowl; a Group of 5 program rated 42 or more: its conference) and his
@@ -1761,8 +1783,8 @@ fitted so the ratings line up with the recruiting baseline). Recruiting's presti
 0.6 × prestige + 0.4 × rating and the NIL pull the NIL tier; the portal's prestige and the
 program's share of development read the rating. The League's **Programs** tab shows your
 program's card (a Recap card whose bar carries the kicker with the standing as a tag beside it, the
-program's name as the title, the six metrics as bars read in words: elite 80 and up, strong 65,
-solid 50, fair 35, weak below; the AD's goal) and, open under it, the Every Program card, a table
+program's name as the title, the seven metrics as bars read in words: Elite 90, Excellent 80, Strong 70,
+Good 60, Solid 50, Fair 40, Thin 30, Weak below; the AD's goal) and, open under it, the Every Program card, a table
 of the same words (it left the Office in round 3 to give the game the room). `tools/check_programs.py`
 checks the starting top 25 and, over a run, that the top 25 keeps at least 18 of its starting
 members; `tools/long_run.py` prints the same each season.
