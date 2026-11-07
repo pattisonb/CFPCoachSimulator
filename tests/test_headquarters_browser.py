@@ -266,7 +266,7 @@ def check_phone(page, base, sid) -> None:
     before = order(page)
     page.click(f"#tab-headquarters .hq-card[data-widget='{before[0]}'] .hq-later")
     assert order(page) == [before[1], before[0], *before[2:]], order(page)
-    short = page.eval_on_selector_all("#tab-headquarters .hq-edit button, #tab-headquarters .hq-head button",
+    short = page.eval_on_selector_all("#tab-headquarters button:not([disabled]), #tab-headquarters input",
                                       "els => els.filter(e => e.offsetParent).map(e => [e.textContent.trim(), e.getBoundingClientRect().height]).filter(x => x[1] < 44)")
     assert not short, f"controls under 44 px: {short}"
     assert page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth + 1"), "sideways scroll at 400 px"
@@ -280,6 +280,87 @@ def check_phone(page, base, sid) -> None:
     page.click(".hq-drawer .hq-close")
     save_settled(page)
     page.set_viewport_size({"width": 1280, "height": 900})
+
+
+# ----- the final review's findings ----------------------------------------------------------------------------
+
+def check_search_handlers(page, base, sid) -> None:
+    """Recruit Search after Add to Board: the searched rows stay, and each row's buttons still act on that row."""
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "recruit-search", "size": "L"}]})
+    open_hq(page, base, sid)
+    card = "#tab-headquarters .hq-card[data-widget='recruit-search']"
+    check_card_clean(page, "recruit-search")
+    rows = call(base, f"/api/season/{sid}/prospects?limit=400")["rows"]
+    last = next(r["name"].split()[-1] for r in rows[200:] if not r["on_board"] and len(r["name"].split()[-1]) > 4)
+    page.fill(f"{card} input[type=search]", last)
+    page.click(f"{card} .hq-search-row .go-btn")
+    page.wait_for_function("([c, q]) => { const n = [...document.querySelectorAll(c + ' li .go-link')]; return n.length && n.every(x => x.textContent.includes(q)); }",
+                           arg=[card, last], timeout=30_000)
+    names = lambda: page.eval_on_selector_all(f"{card} li .go-link", "els => els.map(e => e.textContent.trim())")
+    before = names()
+    for i in range(min(2, len(before))):
+        li = page.locator(f"{card} li").nth(i)
+        name = li.locator(".go-link").inner_text().strip()
+        btn = li.locator(".hq-add-board")
+        if btn.is_disabled():
+            continue
+        btn.click()
+        page.wait_for_function("(n) => [...document.querySelectorAll('.toast-item')].some(t => t.textContent.includes('Added ' + n + ' to'))", arg=name, timeout=30_000)
+        time.sleep(1.0)
+        assert names() == before, f"the searched rows changed after an action: {names()[:4]} vs {before[:4]}"
+
+
+def check_hq_want(page, base, sid) -> None:
+    """Commitment Tracker added after Hot and Cold Movers in one visit still gets its commits."""
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "movers", "size": "M"}]})
+    open_hq(page, base, sid)
+    check_card_clean(page, "movers")
+    if page.is_visible(".hq-drawer"):
+        page.click(".hq-drawer .hq-close")
+    add_from_drawer(page, "commit-tracker")
+    check_card_clean(page, "commit-tracker")
+    assert "Total Commits" in page.inner_text("#tab-headquarters .hq-card[data-widget='commit-tracker']")
+    page.click(".hq-drawer .hq-close")
+    save_settled(page)
+
+
+def check_drag_steady(page, base, sid) -> None:
+    """A Small card dragged onto a Large one's left half, with many small moves, lands before it."""
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "program-compare", "size": "L"},
+                                                            {"id": "c2", "widget": "class-glance", "size": "S"}]})
+    open_hq(page, base, sid)
+    page.click("#tab-headquarters .hq-edit-toggle")
+    h = page.locator("#tab-headquarters .hq-card[data-widget='class-glance'] .hq-drag").bounding_box()
+    t = page.locator("#tab-headquarters .hq-card[data-widget='program-compare']").bounding_box()
+    page.mouse.move(h["x"] + h["width"] / 2, h["y"] + h["height"] / 2)
+    page.mouse.down()
+    page.mouse.move(t["x"] + 40, t["y"] + 60, steps=6)
+    for dx in range(0, 30, 3):
+        page.mouse.move(t["x"] + 40 + dx, t["y"] + 60 + dx)
+    page.mouse.up()
+    assert order(page) == ["class-glance", "program-compare"], order(page)
+    page.click("#tab-headquarters .hq-edit-toggle")
+    save_settled(page)
+
+
+def check_save_flushed(page, base, sid) -> None:
+    """A removal then a tab switch inside the save delay still reaches the server."""
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "class-glance", "size": "S"},
+                                                            {"id": "c2", "widget": "class-needs", "size": "S"}]})
+    open_hq(page, base, sid)
+    page.click("#tab-headquarters .hq-edit-toggle")
+    page.click("#tab-headquarters .hq-card[data-widget='class-needs'] .hq-remove")
+    page.evaluate("() => document.querySelector('#season-tabs button[data-tab=recruiting]').click()")
+    page.evaluate("() => document.querySelector('#season-tabs button[data-tab=headquarters]').click()")
+    page.wait_for_selector("#tab-headquarters .hq-head")
+    save_settled(page)
+    saved = [c["widget"] for c in call(base, f"/api/season/{sid}/headquarters")["layout"]["cards"]]
+    assert saved == ["class-glance"], saved
+
+
+def check_no_stars(page) -> None:
+    """A transfer has no star rating: no empty stars, no 'null Stars'."""
+    assert page.evaluate("() => HQ.kit.stars(null) === null && HQ.kit.stars(undefined) === null"), "stars for a recruit with none"
 
 
 def live_career(base) -> str:
@@ -325,12 +406,32 @@ if __name__ == "__main__":
             errors = []
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.on("dialog", lambda d: d.dismiss())
-            check_empty_and_drawer(page, base, sid)
-            check_add_and_contained(page)
-            check_unknown_skipped(page, base, sid)
-            check_save_refused(page, base, sid)
+            only_review = os.environ.get("HQ_REVIEW_ONLY") == "1"      # a quicker loop over the final review's checks alone
+            if not only_review:
+                check_empty_and_drawer(page, base, sid)
+                check_add_and_contained(page)
+                check_unknown_skipped(page, base, sid)
+                check_save_refused(page, base, sid)
             live = live_career(base)
             made.append(live)
+            if only_review:
+                for f in (check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
+                    try:
+                        f(page, base, live)
+                        print("  pass", f.__name__)
+                    except AssertionError as e:
+                        print("  FAIL", f.__name__, str(e)[:160])
+                try:
+                    check_no_stars(page)
+                    print("  pass check_no_stars")
+                except AssertionError as e:
+                    print("  FAIL check_no_stars", e)
+                page.set_viewport_size({"width": 400, "height": 860})
+                open_hq(page, base, live)
+                short = page.eval_on_selector_all("#tab-headquarters button:not([disabled]), #tab-headquarters input",
+                                                  "els => els.filter(e => e.offsetParent).map(e => [e.textContent.trim() || e.placeholder, Math.round(e.getBoundingClientRect().height)]).filter(x => x[1] < 44)")
+                print("  phone controls under 44 px:", short[:6])
+                raise SystemExit(0)
             check_sweep(page, base, live, lambda sizes, size: size)
             check_sweep(page, base, live, lambda sizes, size: sizes[-1])
             check_sweep(page, base, sid, lambda sizes, size: sizes[0])      # a new career: nothing on the board yet
@@ -338,6 +439,11 @@ if __name__ == "__main__":
             check_actions(page, base, live, sid)
             check_flow(page, base, live)
             check_phone(page, base, live)
+            check_search_handlers(page, base, live)
+            check_hq_want(page, base, live)
+            check_drag_steady(page, base, live)
+            check_save_flushed(page, base, live)
+            check_no_stars(page)
             browser.close()
         assert not errors, errors
         print("headquarters page ok: empty canvas and drawer; Coming Soon tagged; add; a broken widget contained; "

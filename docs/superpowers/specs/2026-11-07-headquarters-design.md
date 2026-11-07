@@ -194,7 +194,7 @@ Both routes are in `app/api.py`, so the dev server and the in-browser runtime se
 - **Recruiting Rankings:** the national top five classes and your row.
 - **Recruit Search:** a search box and quick searches (Top 100, In State, Needs at a position);
   results with stars, position and the two actions.
-- **Scouting Queue:** prospects on your board short of a complete report, with Send Scout.
+- **Scouting Queue:** the Prospect Database's first page short of a complete report, on your board or not, with Send Scout and Add to Board.
 - **Flags:** your staff's flags, with Add to Board for those not on it.
 - **Area Scouts:** each area scout's area and this week's looks.
 - **Program Comparison:** your program against schools you pick (default: the class rankings' top

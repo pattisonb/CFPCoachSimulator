@@ -4,6 +4,7 @@
 (function () {
   "use strict";
   const HQ = window.HQ, k = HQ.kit, el = k.el;
+  const on = (n, t, f) => window.CFP.ui.on(n, t, f);     // handlers a patch can hand to the live node
   const reg = (w) => HQ.register(Object.assign({ category: "scouting", status: "ready", sources: ["scouting"], viewAll: "scouting" }, w));
   const pos = (r) => r.display_pos || r.position || "";
   const FLAG_WORDS = { generational: "Generational", gem: "Gem", bust: "Bust Risk" };
@@ -12,7 +13,7 @@
   const potential = (p) => (!p || !p.length ? null : p[0] === p[p.length - 1] ? p[0] : `${p[0]} to ${p[p.length - 1]}`);
   const addButton = (ctx, r) => {
     const b = el("button", { type: "button", class: "go-btn hq-add-board", text: r.on_board ? "On Your Board" : "Add to Board", disabled: r.on_board ? "" : null });
-    b.addEventListener("click", async () => { if (await ctx.act("board", { pid: r.pid, name: r.name }, b)) { b.textContent = "On Your Board"; b.disabled = true; } });
+    on(b, "click", async () => { if (await ctx.act("board", { pid: r.pid, name: r.name }, b)) { b.textContent = "On Your Board"; b.disabled = true; } });
     return b;
   };
 
@@ -35,10 +36,10 @@
       if (!rows.length) return k.empty("Every prospect in view has a complete report.");
       return k.list(rows.map((r) => {
         const send = r.can_send ? el("button", { type: "button", class: "go-btn hq-send-scout", text: "Send Scout" }) : null;
-        if (send) send.addEventListener("click", () => ctx.act("scout", { pid: r.pid, name: r.name }, send));
+        if (send) on(send, "click", () => ctx.act("scout", { pid: r.pid, name: r.name }, send));
         const pot = ctx.size === "L" ? potential(r.potential) : null;
-        return [k.name(ctx, r.pid, r.name), el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars),
-          el("span", { class: "hq-sub hq-looks", text: looksText(r.looks) }), pot ? el("span", { class: "go-tag", text: pot }) : null, send, addButton(ctx, r)];
+        return { key: r.pid, cells: [k.name(ctx, r.pid, r.name), el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars),
+          el("span", { class: "hq-sub hq-looks", text: looksText(r.looks) }), pot ? el("span", { class: "go-tag", text: pot }) : null, send, addButton(ctx, r)] };
       }));
     } });
 
@@ -50,8 +51,8 @@
       if (!rows.length) return k.empty("No flags yet. Your staff flags prospects once their reports are complete.");
       return k.list(rows.map((f) => {
         const word = f.flag === "likes" ? `${ROLE_SHORT[f.likes] || f.likes || "Staff"} Likes Him` : FLAG_WORDS[f.flag] || k.title(f.flag);
-        return [el("span", { class: "go-tag", text: word }), k.name(ctx, f.pid, f.name), el("span", { class: "hq-sub", text: pos(f) }),
-          ctx.size === "M" ? addButton(ctx, { pid: f.pid, name: f.name, on_board: !!f.on_board }) : null];
+        return { key: `${f.pid}-${f.flag}`, cells: [el("span", { class: "go-tag", text: word }), k.name(ctx, f.pid, f.name), el("span", { class: "hq-sub", text: pos(f) }),
+          ctx.size === "M" ? addButton(ctx, { pid: f.pid, name: f.name, on_board: !!f.on_board }) : null] };
       }));
     } });
 

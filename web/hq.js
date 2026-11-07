@@ -21,7 +21,8 @@
   const SIZE_NAMES = { S: "Small", M: "Medium", L: "Large" };
   const CATS = [["all", "All"], ["recruiting", "Recruiting"], ["scouting", "Scouting"], ["program", "Program"]];
   // what each inline action changes: the sources refetched after it
-  const ACT_SOURCES = { board: ["board", "scouting", "prospects"], scout: ["scouting", "board", "prospects"] };
+  // (prospects is not refetched: Recruit Search keeps the player's own search and flips its own buttons)
+  const ACT_SOURCES = { board: ["board", "scouting"], scout: ["scouting", "board"] };
 
   const registry = new Map();
   let H = null;                    // season.js helpers (api, postJSON, toast, onChange, errText)
@@ -52,11 +53,13 @@
   }
   // the sources the placed widgets need, fetched once each (a fetch in flight is shared)
   function fetchSource(name, fresh) {
-    if (!fresh && view.data[name]) return view.data[name];
     const url = sourceUrl(name, view.season);
+    const key = name === "hq" ? url : name;          // the gap reads: one fetch per set of reads asked for
+    if (!fresh && view.data[key]) return view.data[key];
     const p = url ? H.api(url) : Promise.reject(new Error(`unknown source ${name}`));
-    view.data[name] = p;
-    p.catch(() => { if (view && view.data[name] === p) delete view.data[name]; });
+    view.data[key] = p;
+    const mine = view;
+    p.catch(() => { if (mine.data[key] === p) delete mine.data[key]; });
     return p;
   }
   async function dataFor(w, fresh) {
@@ -187,23 +190,29 @@
     change((cards) => { cards.splice(at, 1); });
     const t = ui().toast(`Removed ${w.title}.`, { ms: 6000 });
     const undo = el("button", { type: "button", class: "go-link hq-undo", text: "Undo" });
+    const mine = view;
     undo.addEventListener("click", () => {
-      if (!view || view.cards.some((c) => c.id === gone.id)) return;
+      if (view !== mine || view.cards.some((c) => c.id === gone.id)) return;
       change((cards) => { cards.splice(Math.min(at, cards.length), 0, gone); }, { pulse: gone.id });
     });
     if (t) t.append(" ", undo);
   }
+  let queued = null;               // the save waiting for its delay: sent at once if the page redraws first
   function queueSave() {
     clearTimeout(timer);
     const s = view.season, cards = view.cards.map((c) => ({ id: c.id, widget: c.widget, size: c.size }));
-    timer = setTimeout(async () => {
+    queued = async () => {
+      clearTimeout(timer);
       timer = null;
+      queued = null;
       pending++;
       try { await H.api(`/api/season/${encodeURIComponent(s.id)}/headquarters`, H.postJSON({ cards })); }
       catch (e) { ui().toast("Couldn't save your layout.", { kind: "error" }); }
       finally { pending--; }
-    }, HQ_SAVE_DELAY);
+    };
+    timer = setTimeout(queued, HQ_SAVE_DELAY);
   }
+  function flushSave() { if (queued) queued(); }
 
   // ----- dragging: the card itself moves through the grid as the pointer passes other cards -------------
   function startDrag(e, id) {
@@ -221,8 +230,11 @@
         return ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom;
       });
       if (!over) return;
-      const kids = [...grid.children];
-      grid.insertBefore(node, kids.indexOf(node) < kids.indexOf(over) ? over.nextSibling : over);
+      // the half of that card under the pointer decides the side, so the card never flips back and forth
+      const r = over.getBoundingClientRect();
+      const before = getComputedStyle(grid).gridTemplateColumns.split(" ").length > 1 ? ev.clientX < r.left + r.width / 2 : ev.clientY < r.top + r.height / 2;
+      const ref = before ? over : over.nextSibling;
+      if (ref !== node && node.nextSibling !== ref) grid.insertBefore(node, ref);
     };
     const done = () => {
       window.removeEventListener("pointermove", moveTo);
@@ -354,7 +366,7 @@
   }
   async function render(season, box, helpers) {
     H = helpers;
-    clearTimeout(timer);
+    flushSave();
     view = { season, box, cards: [], data: {}, editing: false, cat: "all", q: "" };
     const mine = view;
     box.classList.add("hq");
@@ -389,7 +401,8 @@
   }
 
   // ----- the kit: pieces every widget draws with ---------------------------------------------------------
-  const stars = (n) => el("span", { class: "hq-stars", "aria-label": `${n} Stars`, text: "★".repeat(n || 0) + "☆".repeat(Math.max(0, 5 - (n || 0))) });
+  // a recruit's stars; a transfer has none, and gets nothing rather than five empty stars
+  const stars = (n) => (n == null ? null : el("span", { class: "hq-stars", "aria-label": `${n} Stars`, text: "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n)) }));
   // a label in Title Case, small words lowercase inside it ("Behind, in the picture" -> "Behind, In the Picture")
   const SMALL = new Set(["a", "an", "the", "of", "to", "for", "and", "or", "in", "on", "at", "by"]);
   const title = (text) => String(text || "").split(" ").map((w, i, all) => {
@@ -403,7 +416,8 @@
     // [[value, label], ...] as big numbers
     stats: (pairs) => el("div", { class: "hq-stats" }, pairs.map(([v, k]) => el("div", { class: "hq-stat" }, [el("b", { text: String(v) }), el("span", { text: k })]))),
     // rows of [node or text, ...] as a list
-    list: (rows) => el("ul", { class: "hq-list" }, rows.map((cells) => el("li", {}, cells))),
+    // rows: cells, or { key, cells } (a keyed row keeps its own node when the card is patched)
+    list: (rows) => el("ul", { class: "hq-list" }, rows.map((r) => (Array.isArray(r) ? el("li", {}, r) : el("li", { "data-key": r.key }, r.cells)))),
     // a table: heads, rows of cells, and which row is yours
     table: (heads, rows, mine) => el("table", { class: "hq-table" }, [
       el("thead", {}, el("tr", {}, heads.map((h) => el("th", { text: h })))),
@@ -417,7 +431,7 @@
     // a recruit's name that opens his profile
     name: (ctx, pid, text) => {
       const b = el("button", { type: "button", class: "go-link hq-grow", text });
-      b.addEventListener("click", () => ctx.openProfile(pid));
+      ui().on(b, "click", () => ctx.openProfile(pid));
       return b;
     },
     // a small line chart over points [[x label, y], ...]

@@ -97,3 +97,9 @@
 .hq-quick .go-chip { min-height: 44px; }
 .hq-donut { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .hq-donut svg { width: 110px; height: 110px; flex: none; }
+
+/* a phone: every control in Headquarters at least 44 px tall (house rule) */
+@media (max-width: 699px), (pointer: coarse) {
+  .hq-list .go-link, .hq-viewall, .hq-undo { min-height: 44px; }
+}
+.hq-undo { min-height: 36px; margin-left: 6px; padding: 0 6px; }

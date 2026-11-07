@@ -5,6 +5,7 @@
 (function () {
   "use strict";
   const HQ = window.HQ, k = HQ.kit, el = k.el;
+  const on = (n, t, f) => window.CFP.ui.on(n, t, f);     // handlers a patch can hand to the live node
   const rec = () => window.CFP.recruiting || {};
   const teamName = (slug) => ((window.CFP.teamsBySlug || {})[slug] || {}).name || slug;
   const me = (ctx) => ctx.season && ctx.season.team;
@@ -206,10 +207,10 @@
         if (!rows.length) { out.replaceChildren(k.empty("No recruits match that search.")); return; }
         out.replaceChildren(k.list(rows.slice(0, k.rowsFor(ctx.size)).map((r) => {
           const add = el("button", { type: "button", class: "go-btn hq-add-board", text: r.on_board ? "On Your Board" : "Add to Board", disabled: r.on_board ? "" : null });
-          add.addEventListener("click", async () => { if (await ctx.act("board", { pid: r.id, name: r.name }, add)) { add.textContent = "On Your Board"; add.disabled = true; } });
+          on(add, "click", async () => { if (await ctx.act("board", { pid: r.id, name: r.name }, add)) { add.textContent = "On Your Board"; add.disabled = true; } });
           const scout = ctx.size === "L" && !r.scouted ? el("button", { type: "button", class: "go-btn hq-send-scout", text: "Send Scout" }) : null;
-          if (scout) scout.addEventListener("click", () => ctx.act("scout", { pid: r.id, name: r.name }, scout));
-          return [k.name(ctx, r.id, r.name), el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars), scout, add];
+          if (scout) on(scout, "click", async () => { if (await ctx.act("scout", { pid: r.id, name: r.name }, scout)) { scout.textContent = "Scout Sent"; scout.disabled = true; } });
+          return { key: r.id, cells: [k.name(ctx, r.id, r.name), el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars), scout, add] };
         })));
       };
       const search = async (params) => {
