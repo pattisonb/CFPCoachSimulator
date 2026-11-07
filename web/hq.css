@@ -2,7 +2,7 @@
    Cards use the shared .go-card and .card-bar; sizes span 1, 2 or 4 columns. */
 .hq { position: relative; }
 .hq-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; margin-bottom: 16px; }
-.hq-title h2 { margin: 0; }
+.hq-title h2 { margin: 0; font-size: 30px; line-height: 1.1; letter-spacing: 0.02em; text-transform: uppercase; }
 .hq-title p { margin: 4px 0 0; }
 .hq-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .hq-empty { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-bottom: 16px; }
@@ -32,8 +32,11 @@
 .hq-editing .hq-edit { display: flex; }
 .hq-edit-gap { flex: 1; }
 .hq-edit .go-btn { min-height: 44px; padding: 0 12px; font-size: 14px; }
+.hq-edit :is(.hq-earlier, .hq-later, .hq-remove) { min-width: 44px; padding: 0; font-size: 12px; }
 .hq-sizes { display: flex; gap: 6px; }
 .hq-sizes .go-chip { min-height: 44px; min-width: 44px; }
+.hq :is(.hq-sizes, .hq-cats) .go-chip[aria-pressed="true"], .hq-drawer :is(.hq-sizes, .hq-cats) .go-chip[aria-pressed="true"] {
+  background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
 .hq-drag { min-height: 44px; min-width: 44px; border: 2px dashed var(--border); background: transparent; color: var(--muted); font-size: 20px; cursor: grab; touch-action: none; }
 .hq-editing .hq-card { outline: 2px dashed color-mix(in srgb, var(--muted) 45%, transparent); outline-offset: 3px; }
 .hq-card.hq-dragging { opacity: 0.55; outline-style: solid; cursor: grabbing; }
@@ -61,9 +64,9 @@
 }
 
 /* shared widget pieces (web/hq-widgets/*.js) */
-.hq-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; }
+.hq-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 10px; }
 .hq-stat { text-align: center; padding: 6px 4px; }
-.hq-stat b { display: block; font-size: 26px; line-height: 1.1; }
+.hq-stat b { display: block; font-size: 24px; line-height: 1.1; white-space: nowrap; }
 .hq-stat span { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
 .hq-list { list-style: none; margin: 0; padding: 0; }
 .hq-list li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); min-width: 0; }
@@ -76,15 +79,16 @@
 .hq-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .hq-table th { text-align: left; font-size: 11px; color: var(--muted); font-weight: 700; padding: 4px 6px; border-bottom: 1px solid var(--border); }
 .hq-table td { padding: 6px; border-bottom: 1px solid var(--border); }
-.hq-table tr.mine td { font-weight: 700; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.hq-table tr.mine td { font-weight: 700; background: color-mix(in srgb, var(--go-primary, var(--accent)) 16%, transparent); }
+.hq-input { min-height: 44px; padding: 0 12px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font: inherit; font-size: 15px; }
 .hq-meter + .hq-meter { margin-top: 10px; }
 .hq-empty-line { margin: 4px 0; color: var(--muted); }
 .hq-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
 .hq-split h4 { margin: 0 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .hq-chart { width: 100%; height: 120px; display: block; }
-.hq-chart .line { fill: none; stroke: var(--accent); stroke-width: 2.5; }
-.hq-chart .area { fill: color-mix(in srgb, var(--accent) 18%, transparent); }
-.hq-chart .dot { fill: var(--accent); }
+.hq-chart .line { fill: none; stroke: var(--go-primary, var(--accent)); stroke-width: 2.5; }
+.hq-chart .area { fill: color-mix(in srgb, var(--go-primary, var(--accent)) 18%, transparent); }
+.hq-chart .dot { fill: var(--go-primary, var(--accent)); }
 .hq-chart text { fill: var(--muted); font-size: 10px; }
 .hq-up { color: var(--good); font-weight: 700; } .hq-down { color: var(--bad); font-weight: 700; }
 .hq-search-row { display: flex; gap: 8px; margin-bottom: 8px; }

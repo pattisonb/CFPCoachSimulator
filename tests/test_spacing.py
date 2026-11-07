@@ -258,7 +258,10 @@ if __name__ == "__main__":
             page.wait_for_selector("button.go-btn:has-text('Add These')", timeout=120_000)
             page.click("button.go-btn:has-text('Add These')")
             time.sleep(4)
-            for tab, wait in (("office", ".ofc-hero"), ("programs", ".go-programs"), ("recruiting", ".go-row-recruit"), ("prospects", ".go-list-row"),
+            # Headquarters with two widgets placed (its drawer and edit mode are checked by test_headquarters_browser.py)
+            call(base, f"/api/season/{A}/headquarters", {"cards": [{"id": "c1", "widget": "class-glance", "size": "S"},
+                                                                  {"id": "c2", "widget": "top-targets", "size": "M"}]})
+            for tab, wait in (("office", ".ofc-hero"), ("headquarters", ".hq-card .hq-stats"), ("programs", ".go-programs"), ("recruiting", ".go-row-recruit"), ("prospects", ".go-list-row"),
                               ("scouting", ".sc-list .sc-row"), ("depth", ".dc-card"), ("schedule", ".schedule-pick")):
                 w.both(tab, lambda _w, tab=tab, wait=wait: open_tab(page, base, A, tab, wait))
 

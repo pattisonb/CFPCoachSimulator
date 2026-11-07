@@ -1460,6 +1460,45 @@ it, except while a sim runs. A career is 100-300 MB in memory.
 **Download Career** saves the state with every box score as a `.ccsave` file. Prospects store
 their EA ratings as lists in one key order, so a new career's save is under 1.5 MB.
 
+## Headquarters: a dashboard the player builds (`web/hq.js`, `web/hq-widgets/`, `coach_career/headquarters.py`)
+
+Spec `docs/superpowers/specs/2026-11-07-headquarters-design.md`. A career tab beside Recruiting: a blank canvas the
+player fills from a catalog of recruiting and scouting widgets. Recruiting and the other tabs are unchanged.
+
+**The canvas.** A grid of four columns from 1200 px, two from 700 px, one below. A widget is Small (one column),
+Medium (two) or Large (the row), in the order the player set. Add Widget opens the drawer (from the right; a bottom
+sheet on a phone): categories, a search, and a preview of each widget drawn from its own sample data, so the drawer
+calls nothing. Edit Layout shows each card's drag handle (hidden on a phone), size chips, move buttons and remove
+(a toast with Undo). The layout saves `HQ_SAVE_DELAY` ms after the last change; a refused save toasts "Couldn't
+save your layout." and keeps the page. An empty Headquarters opens with the drawer open.
+
+**A widget** is one `HQ.register({...})`: `id` (saved in layouts, never renamed), `title`, `category` (recruiting,
+scouting, program), `blurb`, `sizes` and `size`, `sources`, `sample`, `draw(data, ctx)`, optional `viewAll` (a tab)
+and `want` (the gap reads it needs), and `status` ("soon" lists it as Coming Soon with no Add). `draw` gets its
+sources already fetched and returns the card body; `ctx` carries `size`, `season`, `act(kind, who, button)` (kinds
+`board` and `scout`: the action, a toast, then the sources it changes refetched and the cards that read them
+patched in place), `openProfile(pid)` and `api` (for a widget's own controls, as Recruit Search's box). A widget
+that throws shows "Couldn't Load This Widget" in its own card. `HQ.kit` holds the shared pieces (stats, list,
+table, meter, stars, a line chart, Title Case). To add a widget: register it in the right `web/hq-widgets/*.js`
+file with a sample; the canvas, drawer and saving need nothing.
+
+**Sources.** `board` (`/recruiting`), `scouting`, `programs`, `classes`, `prospects` and `hq` (below), each
+fetched once for the visit whatever the number of widgets reading it; a source no placed widget names is never
+fetched. Ready: Class at a Glance, Week's Resources, Top Targets, Class Needs, Visit Schedule, Recent Commits,
+Recruiting Activity, Commitment Tracker, Hot and Cold Movers, Class Breakdown, Recruiting Rankings, Recruit Search,
+Scouting Queue, Flags, Area Scouts, Program Comparison. Coming Soon (`hq-widgets/planned.js`): tasks, goals, alerts,
+staff assignments, scholarships, a calendar, what-if, senior impact, roster losses, position battles, offer
+efficiency, board health.
+
+**The routes.** `GET /api/season/{id}/headquarters` returns `{"layout": {"cards": [{"id", "widget", "size"}]}}`, and
+with `want=commits,movers` the reads no view had: your commits by week from the recruiting log (a commit or flip to
+you gained, a decommit lost; what you held before the log counts in the first week, so the last total is your
+commits now) and the latest report's risers and fallers on your board (`MOVERS_SHOWN` each; the page shows your
+standing in words). `POST` with `{"cards": [...]}` stores the layout in `career.headquarters`: at most
+`HQ_MAX_CARDS`, ids of lowercase letters, digits and dashes, sizes S, M or L, card ids unique; a bad shape is a 400
+and nothing is stored. Widget ids are not checked, so a newer page's widget in an older save is kept, and the page
+skips one it does not know. An old save reads as an empty layout. Nothing here touches the season sim.
+
 ## Coach Career: the offseason and many seasons (`coach_career/league.py`, `coach_career/offseason.py`)
 
 Design: docs/superpowers/specs/2026-10-23-career-offseason-design.md.

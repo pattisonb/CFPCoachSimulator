@@ -110,9 +110,9 @@
         ui().on(b, "click", () => change((cards) => { cards[i()].size = s; }));
         return b;
       })) : null;
-    const earlier = el("button", { type: "button", class: "go-btn hq-earlier", text: "Earlier", "aria-label": "Move Earlier" });
-    const later = el("button", { type: "button", class: "go-btn hq-later", text: "Later", "aria-label": "Move Later" });
-    const remove = el("button", { type: "button", class: "go-btn hq-remove", text: "Remove" });
+    const earlier = el("button", { type: "button", class: "go-btn hq-earlier", text: "◀", "aria-label": "Move Earlier", title: "Move Earlier" });
+    const later = el("button", { type: "button", class: "go-btn hq-later", text: "▶", "aria-label": "Move Later", title: "Move Later" });
+    const remove = el("button", { type: "button", class: "go-btn hq-remove", text: "✕", "aria-label": `Remove ${w.title}`, title: "Remove" });
     ui().on(earlier, "click", () => move(c.id, -1));
     ui().on(later, "click", () => move(c.id, +1));
     ui().on(remove, "click", () => removeCard(c.id));
@@ -212,8 +212,7 @@
     const node = grid.querySelector(`.hq-card[data-key="${id}"]`);
     if (!node) return;
     e.preventDefault();
-    const handle = e.currentTarget;
-    try { handle.setPointerCapture(e.pointerId); } catch (_) { /* a synthetic event */ }
+    // the move and the release are heard on the window: moving the card in the page drops any pointer capture
     node.classList.add("hq-dragging");
     const moveTo = (ev) => {
       const over = [...grid.children].find((n) => {
@@ -226,9 +225,9 @@
       grid.insertBefore(node, kids.indexOf(node) < kids.indexOf(over) ? over.nextSibling : over);
     };
     const done = () => {
-      handle.removeEventListener("pointermove", moveTo);
-      handle.removeEventListener("pointerup", done);
-      handle.removeEventListener("pointercancel", done);
+      window.removeEventListener("pointermove", moveTo);
+      window.removeEventListener("pointerup", done);
+      window.removeEventListener("pointercancel", done);
       node.classList.remove("hq-dragging");
       const order = [...grid.querySelectorAll(".hq-card")].map((n) => n.dataset.key);
       const before = placed().map((c) => c.id);
@@ -238,9 +237,9 @@
       ui().pulse(node);
       queueSave();
     };
-    handle.addEventListener("pointermove", moveTo);
-    handle.addEventListener("pointerup", done);
-    handle.addEventListener("pointercancel", done);
+    window.addEventListener("pointermove", moveTo);
+    window.addEventListener("pointerup", done);
+    window.addEventListener("pointercancel", done);
   }
 
   // ----- inline actions -------------------------------------------------------------------------------
@@ -315,7 +314,7 @@
     const list = [...registry.values()].sort((a, b) => { const x = order(a), y = order(b); return x[0] - y[0] || x[1] - y[1]; });
     const close = el("button", { type: "button", class: "go-btn hq-close", text: "Close" });
     ui().on(close, "click", () => openDrawer(false));
-    const search = el("input", { type: "search", class: "go-sel hq-search", placeholder: "Search Widgets", "aria-label": "Search Widgets" });
+    const search = el("input", { type: "search", class: "hq-input hq-search", placeholder: "Search Widgets", "aria-label": "Search Widgets" });
     search.addEventListener("input", () => { view.q = search.value; syncDrawer(); });
     const cats = el("div", { class: "hq-cats", role: "group", "aria-label": "Category" }, CATS.map(([k, label]) => {
       const b = el("button", { type: "button", class: "go-chip hq-cat", "data-cat": k, "aria-pressed": String(k === view.cat), text: label });

@@ -214,6 +214,74 @@ def check_actions(page, base, sid, fresh) -> None:
     page.wait_for_function("(c) => [...document.querySelectorAll(c + ' .hq-add-board')].some(b => b.disabled && b.textContent.trim() === 'On Your Board')", arg=card, timeout=30_000)
 
 
+# ----- Task 5: the whole flow at 1280, the phone at 400 ------------------------------------------------------
+
+def order(page) -> list:
+    return [w for w, _ in cards(page)]
+
+
+def check_flow(page, base, sid) -> None:
+    """Add three, resize one, drag one, remove and Undo, Done; a reload brings the same layout back."""
+    page.set_viewport_size({"width": 1280, "height": 900})
+    call(base, f"/api/season/{sid}/headquarters", {"cards": []})
+    open_hq(page, base, sid)
+    for w in ("class-glance", "top-targets", "class-needs"):
+        add_from_drawer(page, w)
+    page.click(".hq-drawer .hq-close")
+    assert order(page) == ["class-glance", "top-targets", "class-needs"], order(page)
+    page.click("#tab-headquarters .hq-edit-toggle")
+    assert page.inner_text("#tab-headquarters .hq-edit-toggle").strip() == "Done"
+    page.click("#tab-headquarters .hq-card[data-widget='class-glance'] .hq-card-size[data-size='M']")
+    assert ["class-glance", "M"] in cards(page), cards(page)
+    # drag Class Needs onto Class at a Glance: it lands first
+    h = page.locator("#tab-headquarters .hq-card[data-widget='class-needs'] .hq-drag").bounding_box()
+    t = page.locator("#tab-headquarters .hq-card[data-widget='class-glance']").bounding_box()
+    page.mouse.move(h["x"] + h["width"] / 2, h["y"] + h["height"] / 2)
+    page.mouse.down()
+    page.mouse.move(t["x"] + 20, t["y"] + 20, steps=8)
+    page.mouse.up()
+    assert order(page) == ["class-needs", "class-glance", "top-targets"], order(page)
+    # remove and Undo: it comes back where it was
+    page.click("#tab-headquarters .hq-card[data-widget='class-glance'] .hq-remove")
+    assert order(page) == ["class-needs", "top-targets"], order(page)
+    page.click(".toast-item .hq-undo")
+    assert order(page) == ["class-needs", "class-glance", "top-targets"], order(page)
+    page.click("#tab-headquarters .hq-edit-toggle")
+    assert not page.is_visible("#tab-headquarters .hq-edit"), "edit controls hide after Done"
+    save_settled(page)
+    want = cards(page)
+    open_hq(page, base, sid)
+    assert cards(page) == want, (cards(page), want)
+
+
+def check_phone(page, base, sid) -> None:
+    """At 400 px: one column, no drag handle, the move buttons reorder, every control 44 px tall, no sideways
+    scroll, the drawer a bottom sheet."""
+    page.set_viewport_size({"width": 400, "height": 860})
+    open_hq(page, base, sid)
+    cols = page.evaluate("() => getComputedStyle(document.querySelector('#tab-headquarters .hq-grid')).gridTemplateColumns.split(' ').length")
+    assert cols == 1, cols
+    page.click("#tab-headquarters .hq-edit-toggle")
+    assert not page.is_visible("#tab-headquarters .hq-drag"), "no drag handle on a phone"
+    before = order(page)
+    page.click(f"#tab-headquarters .hq-card[data-widget='{before[0]}'] .hq-later")
+    assert order(page) == [before[1], before[0], *before[2:]], order(page)
+    short = page.eval_on_selector_all("#tab-headquarters .hq-edit button, #tab-headquarters .hq-head button",
+                                      "els => els.filter(e => e.offsetParent).map(e => [e.textContent.trim(), e.getBoundingClientRect().height]).filter(x => x[1] < 44)")
+    assert not short, f"controls under 44 px: {short}"
+    assert page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth + 1"), "sideways scroll at 400 px"
+    page.click("#tab-headquarters .hq-edit-toggle")
+    page.click("#tab-headquarters .hq-add-widget")
+    box = page.locator(".hq-drawer").bounding_box()
+    assert abs(box["y"] + box["height"] - 860) <= 2 and box["width"] >= 398, box
+    short = page.eval_on_selector_all(".hq-drawer button:not([disabled]), .hq-drawer input",
+                                      "els => els.filter(e => e.offsetParent).map(e => [e.textContent.trim() || e.placeholder, e.getBoundingClientRect().height]).filter(x => x[1] < 44)")
+    assert not short, f"drawer controls under 44 px: {short}"
+    page.click(".hq-drawer .hq-close")
+    save_settled(page)
+    page.set_viewport_size({"width": 1280, "height": 900})
+
+
 def live_career(base) -> str:
     """A career three weeks in with a board: the widgets have real data to draw."""
     sid = call(base, "/api/season", {"team": "georgia", "seed": 7})["id"]
@@ -268,10 +336,13 @@ if __name__ == "__main__":
             check_sweep(page, base, sid, lambda sizes, size: sizes[0])      # a new career: nothing on the board yet
             check_previews(page)
             check_actions(page, base, live, sid)
+            check_flow(page, base, live)
+            check_phone(page, base, live)
             browser.close()
         assert not errors, errors
         print("headquarters page ok: empty canvas and drawer; Coming Soon tagged; add; a broken widget contained; "
-              "an unknown widget skipped; a refused save keeps the page; every widget live at every size and in the drawer")
+              "an unknown widget skipped; a refused save keeps the page; every widget live at every size and in the drawer; "
+              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout")
     finally:
         for s in made:
             try:

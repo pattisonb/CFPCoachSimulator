@@ -171,7 +171,7 @@
       const ns = "http://www.w3.org/2000/svg", svg = document.createElementNS(ns, "svg");
       svg.setAttribute("viewBox", "0 0 42 42");
       svg.setAttribute("role", "img");
-      const tones = { 5: "var(--accent)", 4: "var(--good)", 3: "var(--muted)", 2: "var(--border)" };
+      const tones = { 5: "var(--go-primary, var(--accent))", 4: "var(--good)", 3: "var(--muted)", 2: "var(--border)" };
       let at = 25;
       for (const [n, c] of counts) {
         const seg = (100 * c) / total, circ = document.createElementNS(ns, "circle");
@@ -188,9 +188,9 @@
     draw: (d, ctx) => {
       const all = d.classes.schools || [];
       const isMine = (r) => r.yours || r.school === me(ctx);
-      const top = all.slice(0, 5).map((r, i) => [i + 1, r]);
+      const top = all.slice(0, 5).map((r, i) => [r.rank || i + 1, r]);
       const at = all.findIndex(isMine);
-      if (at >= 5) top.push([at + 1, all[at]]);
+      if (at >= 5) top.push([all[at].rank || at + 1, all[at]]);
       if (!top.length) return k.empty("No school has a commit yet.");
       return k.table(["#", "School", "Commits", "5-Star"], top.map(([n, r]) => [String(n), r.name, String(r.count), String((r.stars || {})[5] || 0)]),
         (i) => isMine(top[i][1]));
@@ -219,7 +219,7 @@
         try { const r = await ctx.api(`/api/season/${encodeURIComponent(ctx.season.id)}/prospects?${q}`); fill(r.rows || []); }
         catch (e) { out.replaceChildren(k.empty("The search didn't work. Try again.")); }
       };
-      const input = el("input", { type: "search", class: "go-sel", placeholder: "Search by Name", "aria-label": "Search Recruits by Name" });
+      const input = el("input", { type: "search", class: "hq-input", placeholder: "Search by Name", "aria-label": "Search Recruits by Name" });
       const go = el("button", { type: "button", class: "go-btn", text: "Search" });
       go.addEventListener("click", () => search({ q: input.value.trim() }));
       input.addEventListener("keydown", (e) => { if (e.key === "Enter") search({ q: input.value.trim() }); });
