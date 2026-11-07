@@ -18,8 +18,10 @@
 /* the column count is --hq-cols, which pack() reads: the computed track list also counts a wider layout's leftovers */
 @media (max-width: 1199px) { .hq-grid { --hq-cols: 2; } }
 @media (max-width: 699px) { .hq-grid { --hq-cols: 1; } }
-.hq-bar { gap: 8px 12px; }
-.hq-viewall { min-height: 32px; }
+/* thin headers: the room goes to the content (the shared bar is 42 px; *tune* --card-bar-h here) */
+.hq-card { --card-bar-h: 30px; --card-bar-gap: 12px; }
+.hq-bar { gap: 8px 12px; padding-top: 1px; padding-bottom: 1px; font-size: 11px; }
+.hq-card .hq-bar .hq-viewall { min-height: 26px; padding: 0 2px; }
 .hq-body { flex: 1 1 auto; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .hq-bar, .hq-edit { flex: none; }
 .hq-body > :first-child { margin-top: 0; }
@@ -102,7 +104,7 @@
 
 /* a phone: every control in Headquarters at least 44 px tall (house rule) */
 @media (max-width: 699px), (pointer: coarse) {
-  .hq-list .go-link, .hq-viewall, .hq-undo { min-height: 44px; }
+  .hq-list .go-link, .hq-card .hq-bar .hq-viewall, .hq-undo { min-height: 44px; }
 }
 .hq-undo { min-height: 36px; margin-left: 6px; padding: 0 6px; }
 

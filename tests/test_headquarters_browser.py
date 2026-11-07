@@ -441,6 +441,8 @@ def check_scrolls(page, base, sid) -> None:
     y0 = page.evaluate("() => window.scrollY")
     page.eval_on_selector(body, "b => { b.scrollTop = 200; }")
     assert page.eval_on_selector(body, "b => b.scrollTop") > 0 and page.evaluate("() => window.scrollY") == y0
+    bars = page.eval_on_selector_all("#tab-headquarters .hq-card .hq-bar", "els => els.map(e => Math.round(e.getBoundingClientRect().height))")
+    assert max(bars) <= 34, f"thin card headers on a wide screen, the room goes to the content: {bars}"
     rows = page.eval_on_selector_all(f"{body} li", "els => els.length")
     assert rows > 8, f"a scrolling widget shows more than one screen of rows: {rows}"
     page.set_viewport_size({"width": 400, "height": 860})
