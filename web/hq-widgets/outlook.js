@@ -35,8 +35,8 @@
   };
   const SAMPLE_CONTACTS = { s1: 6, s3: 5, s4: 1 };
   const SAMPLE_OUTLOOK = {
-    players: [{ name: "Marcus Lane", position: "CB", class: "SR", overall: 88, starter: true, leaving: "graduation", draft: null, transfer: null },
-      { name: "Caleb Ford", position: "OT", class: "JR", overall: 91, starter: true, leaving: null, draft: "Likely", transfer: "Low" },
+    players: [{ name: "Marcus Lane", position: "CB", class: "SR", overall: 88, starter: true, leaving: "graduation", draft: null, transfer: null, replacement: { pid: "s1", name: "Marcus Williams", status: "Offered" } },
+      { name: "Caleb Ford", position: "OT", class: "JR", overall: 91, starter: true, leaving: null, draft: "Likely", transfer: "Low", replacement: { pid: "s2", name: "Caleb Mitchell", status: "Committed" } },
       { name: "Drew Hill", position: "WR", class: "SO", overall: 74, starter: false, leaving: null, draft: null, transfer: "High" }],
     counts: { graduation: 17, draft: 2, draft_likely: 1, transfer_high: 9, transfer_some: 12, roster: 85 },
   };
@@ -192,15 +192,22 @@
     } });
 
   // ----- Senior Impact and Retention ------------------------------------------------------------------------------
-  reg({ id: "senior-impact", title: "Senior Impact and Retention", category: "program", blurb: "Your seniors and draft-eligible starters, and how likely each is to leave.",
+  reg({ id: "senior-impact", title: "Senior Impact and Retention", category: "program", blurb: "Your seniors and draft-eligible starters, how likely each is to leave, and the recruit who could take his place.",
     sizes: ["M", "L"], size: "M", sources: ["hq"], want: ["outlook"], sample: { hq: { outlook: SAMPLE_OUTLOOK } }, viewAll: "depth",
     draw: (d, ctx) => {
       const ps = ((d.hq.outlook || {}).players || []).filter((p) => p.leaving || p.draft || (p.starter && p.transfer === "High"))
         .sort((a, b) => (b.starter - a.starter) || (b.overall - a.overall));
       if (!ps.length) return k.empty("Nobody on your roster looks likely to leave.");
       const why = (p) => (p.leaving ? "Graduating" : p.draft ? `Draft: ${p.draft}` : "Transfer Risk");
-      return k.table(["Player", "Pos", "Class", "Role", "Outlook"], ps.slice(0, k.rowsFor(ctx.size)).map((p) =>
-        [p.name, p.position, p.class, p.starter ? "Starter" : "Reserve", el("span", { class: "go-tag", text: why(p) })]));
+      // his replacement: the best recruit at his position who is yours (committed, offered, on your board)
+      const rep = (p) => (p.replacement
+        ? el("span", { class: "hq-rep" }, [k.name(ctx, p.replacement.pid, p.replacement.name), el("span", { class: "go-tag", text: p.replacement.status })])
+        : el("span", { class: "hq-sub", text: "Nobody Yet" }));
+      const rows = ps.slice(0, k.rowsFor(ctx.size));
+      return ctx.size === "L"
+        ? k.table(["Player", "Pos", "Class", "Role", "Outlook", "Replacement"], rows.map((p) =>
+          [p.name, p.position, p.class, p.starter ? "Starter" : "Reserve", el("span", { class: "go-tag", text: why(p) }), rep(p)]))
+        : k.table(["Player", "Pos", "Outlook", "Replacement"], rows.map((p) => [p.name, p.position, el("span", { class: "go-tag", text: why(p) }), rep(p)]));
     } });
 
   // ----- Roster Loss Projections ---------------------------------------------------------------------------------

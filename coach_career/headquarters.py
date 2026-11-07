@@ -169,16 +169,50 @@ def outlook(state: dict) -> dict:
         if cls in offseason.UNDERCLASS_ELIGIBLE:
             draft = "Likely" if ovr >= DRAFT_LIKELY else "Possible" if ovr >= DRAFT_POSSIBLE else None
         grad = cls in ("SR", "SRRS")
-        players.append({"slug": p.get("slug"), "name": p.get("name"), "position": p.get("position"), "class": cls,
+        group = offseason.GROUP.get(p.get("role")) or offseason.GROUP.get(p.get("position")) or p.get("position")
+        players.append({"slug": p.get("slug"), "name": p.get("name"), "position": p.get("position"), "group": group, "class": cls,
                         "overall": ovr, "starter": bool(p.get("starter")), "use": use,
                         "leaving": "graduation" if grad else None, "draft": draft,
                         "transfer": None if grad else _word(chance)})     # a senior graduates: no portal word
+    _replacements(state, players)
     counts = {"graduation": sum(1 for p in players if p["leaving"]), "draft": sum(1 for p in players if p["draft"]),
               "draft_likely": sum(1 for p in players if p["draft"] == "Likely"),
               "transfer_high": sum(1 for p in players if p["transfer"] == "High"),
               "transfer_some": sum(1 for p in players if p["transfer"] == "Some"),
               "roster": len(players), "losing": losing}
     return {"players": players, "counts": counts}
+
+
+REPLACE_ORDER = ("Committed", "Offered", "On Board")
+
+
+def _replacements(state: dict, players: list) -> None:
+    """Each player likely to leave (graduating, a likely or possible declare, a High portal risk) gets the best high
+    school recruit at his group who is yours: committed to you first, then offered, then on your board, best
+    national rank first. One recruit replaces one player; the best leaving player (starter, then overall) picks first."""
+    from coach_career import prospects
+    rc, me = prospects.class_rc(state), state["team"]
+    offered = set(state["recruiting"].get("offers", {}).get(me, [])) if rc is state["recruiting"] else set()
+    board = set(state["recruiting"].get("board") or []) if rc is state["recruiting"] else set()
+    pool: dict = {}
+    for pid, st in rc["status"].items():
+        school = st["signed"] or st["committed"]
+        status = "Committed" if school == me else None if school else "Offered" if pid in offered else "On Board" if pid in board else None
+        if status is None:
+            continue
+        p = rc["prospects"][pid]
+        pool.setdefault(recruiting._group_of(p), []).append((REPLACE_ORDER.index(status), p["rank"], pid, status))
+    for g in pool:
+        pool[g].sort()
+    for p in players:
+        p["replacement"] = None
+    leaving = [p for p in players if p["leaving"] or p["draft"] or p["transfer"] == "High"]
+    for p in sorted(leaving, key=lambda x: (not x["starter"], -x["overall"])):
+        cands = pool.get(p["group"]) or []
+        if cands:
+            _, _, pid, status = cands.pop(0)
+            q = rc["prospects"][pid]
+            p["replacement"] = {"pid": pid, "name": q["name"], "stars": q["stars"], "position": q["position"], "status": status}
 
 
 def _class_points(rc: dict, extra: Optional[tuple] = None) -> dict:

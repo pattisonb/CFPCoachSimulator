@@ -145,3 +145,6 @@
 /* resizing: the guide line where a card's bottom lines up with a neighbor's */
 .hq-guide { position: absolute; left: 0; right: 0; height: 0; border-top: 2px dashed var(--go-primary, var(--accent)); z-index: 6; pointer-events: none; }
 .hq-guide[hidden] { display: none; }
+.hq-rep { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.hq-rep .go-link { min-height: 0; }
+@media (max-width: 699px), (pointer: coarse) { .hq-rep .go-link { min-height: 44px; } }

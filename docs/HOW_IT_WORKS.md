@@ -1505,7 +1505,8 @@ board recruit, from the log; an offered target `STALE_WEEKS` without one reads a
 roster's projected departures as words: seniors graduate, draft-eligible underclassmen from `DRAFT_POSSIBLE` /
 `DRAFT_LIKELY` overall may declare, every other player's portal chance by the offseason's own
 `PORTAL_BASE x PORTAL_USAGE x PORTAL_LOSING` read as Low, Some or High at `TRANSFER_SOME` / `TRANSFER_HIGH`; a
-projection, the offseason decides), `whatif&pid=` (your class rank now and if he commits, ranked as `class_rank`
+projection, the offseason decides; each player likely to leave gets a `replacement`, the best high school recruit at
+his group who is yours, committed first, then offered, then on your board, one recruit for one player), `whatif&pid=` (your class rank now and if he commits, ranked as `class_rank`
 ranks, and his group's need now and after; changes nothing), `goals` (commits, top-100 recruits and class rank:
 your targets or the defaults, `TOP100_GOAL` and `RANK_GOAL` by tier; the rank goal is unranked until you have a
 commit) and `tasks`. `POST /api/season/{id}/headquarters/plan` stores `tasks` (at most `MAX_TASKS`, text 1-120

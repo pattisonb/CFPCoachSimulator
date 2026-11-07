@@ -91,6 +91,7 @@ def sim_untouched(sid: str) -> None:
     def season_only() -> str:
         st = json.loads(json.dumps(api.loaded_state(), default=str))
         st["career"].pop("headquarters", None)
+        st["career"].pop("saved_at", None)          # the save's own clock (to the second): bookkeeping, not the season
         return json.dumps(st, sort_keys=True)
     before = season_only()
     POST(sid, {"cards": [card(1), card(2, "flags", "S")]})
@@ -196,6 +197,26 @@ def heights_kept(sid: str) -> None:
     refused(sid, {"cards": [{"id": "c1", "widget": "top-targets", "size": "M", "h": True}]})
 
 
+def replacements(sid: str) -> None:
+    """Each leaving player's replacement: the best high school recruit at his group, yours first (committed), then
+    offered, then on your board; one recruit replaces one player."""
+    o = GET(sid, "?want=outlook")["outlook"]
+    leaving = [p for p in o["players"] if p["leaving"] and p["group"]]
+    assert leaving, "a roster always has seniors"
+    g = leaving[0]["group"]
+    rows = api.call("GET", f"/api/season/{sid}/prospects?limit=400")["rows"]
+    pick = next(r for r in rows if r["group"] == g and not r["committed"] and not r["on_board"])
+    api.call("POST", f"/api/season/{sid}/board", {"pid": pick["id"], "on": True})
+    o = GET(sid, "?want=outlook")["outlook"]
+    reps = [p["replacement"] for p in o["players"] if p["leaving"] and p["group"] == g and p["replacement"]]
+    assert reps, f"a recruit on your board at {g} replaces a leaving {g}"
+    assert all(r["status"] in ("Committed", "Offered", "On Board") and r["name"] and r["pid"] for r in reps), reps
+    assert any(r["pid"] == pick["id"] for r in reps), (pick["id"], reps)
+    every = [p["replacement"]["pid"] for p in o["players"] if p.get("replacement")]
+    assert len(every) == len(set(every)), "one recruit replaces one player"
+    assert all(p.get("replacement") is None for p in o["players"] if not (p["leaving"] or p["draft"] or p["transfer"] == "High"))
+
+
 if __name__ == "__main__":
     import shutil
     import tempfile
@@ -211,6 +232,7 @@ if __name__ == "__main__":
         gap_data(sid)
         pid = contacts_from_log(sid)
         outlook_words(sid)
+        replacements(sid)
         whatif_moves_rank(sid, pid)
         whatif_committed_unchanged(sid)
         goals_defaults_and_saved(sid)
