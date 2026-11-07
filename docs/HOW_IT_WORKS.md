@@ -1466,7 +1466,11 @@ Spec `docs/superpowers/specs/2026-11-07-headquarters-design.md`. A career tab be
 player fills from a catalog of recruiting and scouting widgets. Recruiting and the other tabs are unchanged.
 
 **The canvas.** A grid of four columns from 1200 px, two from 700 px, one below. A widget is Small (one column),
-Medium (two) or Large (the row), in the order the player set. Add Widget opens the drawer (from the right; a bottom
+Medium (two) or Large (the row). Cards pack like masonry (`pack()` in `web/hq.js`): each, in the player's
+order, goes to the column or columns with the most room, on 4 px grid rows, so the gap under every card is the same
+16 px and short cards stack beside a tall one; a card is as tall as its content up to `--hq-card-h` and scrolls inside
+past that. The grid repacks when a card changes height, the width changes, or a card is added, moved, resized or
+removed. Add Widget opens the drawer (from the right; a bottom
 sheet on a phone): categories, a search, and a preview of each widget drawn from its own sample data, so the drawer
 calls nothing. Edit Layout shows each card's drag handle (hidden on a phone), size chips, move buttons and remove
 (a toast with Undo). The layout saves `HQ_SAVE_DELAY` ms after the last change; a refused save toasts "Couldn't

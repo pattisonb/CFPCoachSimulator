@@ -72,7 +72,8 @@ HQ.register({
 
 **The grid.** CSS grid: four columns from 1200 px, two from 700 px, one below. Small spans one column,
 Medium two, Large the full row; on two columns Medium and Large fill the row; on one column everything
-does. Cards flow in saved order (no dense packing: what you arranged is what you see). Cards in a row
+does. Cards pack like masonry in saved order: each goes to the column(s) with the most room, so the gap under
+every card is the same and rows need not line up (changed November 7 at the player's request). Cards in a row
 share a height; lists show a set number of rows by size (Small 5, Medium 8, Large 12) and "View All"
 covers the rest.
 

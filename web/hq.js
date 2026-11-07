@@ -17,6 +17,7 @@
   };
 
   const HQ_SAVE_DELAY = 600;       // *tune* ms after the last change before the layout saves
+  const HQ_ROW = 4, HQ_GAP = 16;    // the masonry's row unit and the gap under every card (px; hq.css's grid-auto-rows and column-gap)
   const EMPTY_LINE = "Build your Headquarters. Add widgets for recruiting and scouting.";
   const SIZE_NAMES = { S: "Small", M: "Medium", L: "Large" };
   const CATS = [["all", "All"], ["recruiting", "Recruiting"], ["scouting", "Scouting"], ["program", "Program"]];
@@ -134,6 +135,7 @@
       el("div", { class: "hq-body" }, [el("p", { class: "muted hq-wait", text: "Loading…" })]),
     ]);
     fillCard(node, c);
+    if (watcher) watcher.observe(node);
     return node;
   }
   function patchCard(node, c) {
@@ -147,11 +149,35 @@
     void w;
   }
 
+  // ----- masonry: each card, in order, goes to the column(s) with the most room ----------------------------
+  // Small spans one column, Medium two (one on a phone), Large them all. Repacked when any card changes height,
+  // the grid's width changes, a card is added, moved, resized or removed.
+  let packing = false, watcher = null;
+  function pack() {
+    packing = false;
+    const grid = view && view.box.querySelector(".hq-grid");
+    if (!grid || !grid.isConnected) return;
+    const cols = getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length || 1;
+    const h = new Array(cols).fill(0);
+    for (const n of grid.children) {
+      if (!n.classList.contains("hq-card") || n.__leaving) continue;
+      const w = n.dataset.size === "L" ? cols : n.dataset.size === "M" ? Math.min(2, cols) : 1;
+      let at = 0, top = Infinity;
+      for (let c = 0; c + w <= cols; c++) { const t = Math.max(...h.slice(c, c + w)); if (t < top) { top = t; at = c; } }
+      const rows = Math.max(1, Math.ceil((n.getBoundingClientRect().height + HQ_GAP) / HQ_ROW));
+      n.style.gridColumn = `${at + 1} / span ${w}`;
+      n.style.gridRow = `${top + 1} / span ${rows}`;
+      for (let c = at; c < at + w; c++) h[c] = top + rows;
+    }
+  }
+  function queuePack() { if (!packing) { packing = true; requestAnimationFrame(pack); } }
+
   // ----- the layout -----------------------------------------------------------------------------------
   const placed = () => view.cards.filter((c) => ready(registry.get(c.widget)));
   function drawGrid(opts = {}) {
     const grid = view.box.querySelector(".hq-grid");
     ui().reconcile(grid, placed(), "id", cardNode, patchCard);
+    pack();
     if (opts.pulse) { const n = grid.querySelector(`.hq-card[data-key="${opts.pulse}"]`); if (n) { ui().pulse(n); n.scrollIntoView({ block: "nearest", behavior: "smooth" }); } }
     view.box.querySelector(".hq-empty").hidden = placed().length > 0;
     syncDrawer();
@@ -237,7 +263,7 @@
       const r = over.getBoundingClientRect();
       const before = getComputedStyle(grid).gridTemplateColumns.split(" ").length > 1 ? ev.clientX < r.left + r.width / 2 : ev.clientY < r.top + r.height / 2;
       const ref = before ? over : over.nextSibling;
-      if (ref !== node && node.nextSibling !== ref) grid.insertBefore(node, ref);
+      if (ref !== node && node.nextSibling !== ref) { grid.insertBefore(node, ref); pack(); }
     };
     const done = () => {
       window.removeEventListener("pointermove", moveTo);
@@ -376,6 +402,8 @@
   async function render(season, box, helpers) {
     H = helpers;
     flushSave();
+    if (watcher) watcher.disconnect();
+    watcher = "ResizeObserver" in window ? new ResizeObserver(queuePack) : null;
     view = { season, box, cards: [], data: {}, editing: false, cat: "all", q: "" };
     const mine = view;
     box.classList.add("hq");
@@ -405,6 +433,7 @@
       el("div", { class: "hq-grid" }),
       drawerNode(),
     );
+    if (watcher) watcher.observe(box.querySelector(".hq-grid"));
     drawGrid();
     if (!placed().length) openDrawer(true);
   }

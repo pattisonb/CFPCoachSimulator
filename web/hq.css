@@ -9,20 +9,14 @@
 .hq-empty[hidden] { display: none; }
 .hq-empty p { margin: 0; font-size: 16px; }
 
-.hq-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: start; }
+/* masonry: hq.js pack() places each card in the column(s) with the most room, on rows of HQ_ROW px, so the gap
+   under a card is always the grid's gap and short cards stack beside a tall one (the columns follow the width) */
+.hq-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 4px; column-gap: 16px; row-gap: 0; align-items: start; }
 /* a card is as tall as its content up to a cap; past the cap its body scrolls, never the page (--hq-card-h, *tune*) */
 .hq { --hq-card-h: 400px; }
 .hq-card { display: flex; flex-direction: column; min-width: 0; grid-column: span 1; max-height: var(--hq-card-h); }
-.hq-card[data-size="M"] { grid-column: span 2; }
-.hq-card[data-size="L"] { grid-column: 1 / -1; }
-@media (max-width: 1199px) {
-  .hq-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .hq-card[data-size="M"], .hq-card[data-size="L"] { grid-column: 1 / -1; }
-}
-@media (max-width: 699px) {
-  .hq-grid { grid-template-columns: minmax(0, 1fr); }
-  .hq-card, .hq-card[data-size] { grid-column: 1 / -1; }
-}
+@media (max-width: 1199px) { .hq-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 699px) { .hq-grid { grid-template-columns: minmax(0, 1fr); } }
 .hq-bar { gap: 8px 12px; }
 .hq-viewall { min-height: 32px; }
 .hq-body { flex: 1 1 auto; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }

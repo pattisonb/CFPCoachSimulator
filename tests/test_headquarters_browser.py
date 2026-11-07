@@ -233,6 +233,10 @@ def check_flow(page, base, sid) -> None:
     assert page.inner_text("#tab-headquarters .hq-edit-toggle").strip() == "Done"
     page.click("#tab-headquarters .hq-card[data-widget='class-glance'] .hq-card-size[data-size='M']")
     assert ["class-glance", "M"] in cards(page), cards(page)
+    for w in ("class-glance", "top-targets", "class-needs"):
+        check_card_clean(page, w)
+    time.sleep(0.5)                                  # the resize has repacked the grid
+    page.evaluate("() => window.scrollTo(0, 0)")
     # drag Class Needs onto Class at a Glance: it lands first
     h = page.locator("#tab-headquarters .hq-card[data-widget='class-needs'] .hq-drag").bounding_box()
     t = page.locator("#tab-headquarters .hq-card[data-widget='class-glance']").bounding_box()
@@ -328,8 +332,13 @@ def check_drag_steady(page, base, sid) -> None:
     """A Small card dragged onto a Large one's left half, with many small moves, lands before it."""
     call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "program-compare", "size": "L"},
                                                             {"id": "c2", "widget": "class-glance", "size": "S"}]})
+    page.set_viewport_size({"width": 1280, "height": 1400})      # both cards in view: the mouse only reaches what shows
     open_hq(page, base, sid)
+    check_card_clean(page, "program-compare")
+    check_card_clean(page, "class-glance")
     page.click("#tab-headquarters .hq-edit-toggle")
+    page.evaluate("() => window.scrollTo(0, 0)")
+    time.sleep(0.3)
     h = page.locator("#tab-headquarters .hq-card[data-widget='class-glance'] .hq-drag").bounding_box()
     t = page.locator("#tab-headquarters .hq-card[data-widget='program-compare']").bounding_box()
     page.mouse.move(h["x"] + h["width"] / 2, h["y"] + h["height"] / 2)
@@ -338,9 +347,10 @@ def check_drag_steady(page, base, sid) -> None:
     for dx in range(0, 30, 3):
         page.mouse.move(t["x"] + 40 + dx, t["y"] + 60 + dx)
     page.mouse.up()
-    assert order(page) == ["class-glance", "program-compare"], order(page)
+    assert order(page) == ["class-glance", "program-compare"], (order(page), h, t)
     page.click("#tab-headquarters .hq-edit-toggle")
     save_settled(page)
+    page.set_viewport_size({"width": 1280, "height": 900})
 
 
 def check_save_flushed(page, base, sid) -> None:
@@ -440,6 +450,33 @@ def check_scrolls(page, base, sid) -> None:
     page.set_viewport_size({"width": 1280, "height": 900})
 
 
+def check_masonry(page, base, sid) -> None:
+    """Cards pack like masonry: the same gap everywhere, no overlap, and a short card stacks under another short card
+    beside a tall one instead of waiting for the row to end."""
+    page.set_viewport_size({"width": 1440, "height": 900})
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "position-battles", "size": "M"},
+                                                            {"id": "c2", "widget": "class-glance", "size": "S"},
+                                                            {"id": "c3", "widget": "resources", "size": "S"},
+                                                            {"id": "c4", "widget": "scholarships", "size": "S"},
+                                                            {"id": "c5", "widget": "flags", "size": "S"}]})
+    open_hq(page, base, sid)
+    for w in ("position-battles", "class-glance", "resources", "scholarships", "flags"):
+        check_card_clean(page, w)
+    time.sleep(0.5)
+    r = dict(page.eval_on_selector_all("#tab-headquarters .hq-card", "els => els.map(e => { const b = e.getBoundingClientRect(); return [e.dataset.widget, [b.left, b.top, b.right, b.bottom]]; })"))
+    names = list(r)
+    for i, a in enumerate(names):                    # no two cards overlap
+        for b in names[i + 1:]:
+            A, B = r[a], r[b]
+            assert A[2] <= B[0] + 1 or B[2] <= A[0] + 1 or A[3] <= B[1] + 1 or B[3] <= A[1] + 1, f"{a} overlaps {b}: {A} {B}"
+    tall, under = r["position-battles"], r["scholarships"]
+    above = r["class-glance"] if abs(r["class-glance"][0] - under[0]) < 2 else r["resources"]
+    assert abs(above[0] - under[0]) < 2, f"Scholarship Budget stacks under a short card: {r}"
+    gap = under[1] - above[3]
+    assert 10 <= gap <= 22, f"the gap under a card is the grid's gap, not the end of a row: {gap}px {r}"
+    assert under[1] < tall[3], f"it sits beside the tall card, not below it: {r}"
+
+
 def live_career(base) -> str:
     """A career three weeks in with a board: the widgets have real data to draw."""
     sid = call(base, "/api/season", {"team": "georgia", "seed": 7})["id"]
@@ -492,7 +529,7 @@ if __name__ == "__main__":
             live = live_career(base)
             made.append(live)
             if only_review:
-                for f in (check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
+                for f in (check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
                     try:
                         f(page, base, live)
                         print("  pass", f.__name__)
@@ -523,11 +560,12 @@ if __name__ == "__main__":
             check_no_stars(page)
             check_tasks_goals(page, base, live)
             check_scrolls(page, base, live)
+            check_masonry(page, base, live)
             browser.close()
         assert not errors, errors
         print("headquarters page ok: empty canvas and drawer; Coming Soon tagged; add; a broken widget contained; "
               "an unknown widget skipped; a refused save keeps the page; every widget live at every size and in the drawer; "
-              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside")
+              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside; masonry packing")
     finally:
         for s in made:
             try:
