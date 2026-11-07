@@ -68,9 +68,12 @@ def test_tables() -> None:
             out = line.format(**f)
             assert "{" not in out and "}" not in out, (name, line)
             assert out.strip(), (name, line)
-    qf = {"ahead": "X", "ahead_cls": "X", "position": "X", "other": "X"}
+    qf = {"ahead": "X", "ahead_cls": "X", "position": "X", "other": "X", "mate": "X"}
     for line in walk(scenes.QUESTION_LINES):
         assert "{" not in line.format(**qf), line
+    for table in scenes.PACKAGE_ANSWERS.values():                 # the Package Deal's answers: a Title Case label over a line naming his mate
+        for label, line in table.values():
+            assert "{" not in line.format(mate="X") and label[0].isupper() and line.rstrip().endswith("."), (label, line)
     for line in scenes.LINES["_two_sided"]["cue"]:
         assert line.rstrip().endswith("."), line
         assert "{a}" in line and "{b}" in line and line[:line.index("{a}")].strip(), f"a two-sided cue needs a lead-in before {{a}}: {line}"

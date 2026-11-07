@@ -170,6 +170,13 @@ QUESTION_LINES = {
     "recruit": ["You offered {other} too. Which one of us do you actually want?",
                 "I saw {other} post your offer. You telling him the same thing you're telling me?",
                 "If {other} commits first, is there still a spot for me?"],
+    # the Package Deal, once his or his family's line brought his mate up ({mate}): the mate without your offer, or holding it
+    "package": ["So what about {mate}, Coach? Is there a spot for him?",
+                "{mate} hasn't heard from you. Is he getting an offer?",
+                "Where does {mate} stand with you? I need to know before I decide."],
+    "package_offered": ["{mate} showed me your offer. We're both in this together, right?",
+                        "You offered {mate}. Is that spot his for real?",
+                        "{mate} has your offer. Just tell me you mean it for both of us."],
 }
 ANSWERS = ("straight", "promise", "deflect")
 # your reply buttons: a Title Case label (what the button says) over your line, by the question's kind
@@ -183,11 +190,26 @@ ANSWER_COPY = {
                 "promise": "You're the one I want.",
                 "deflect": "Let's talk about what you'd bring."},
 }
-# what he says back: a promise he believes ("promise") or one he has heard before ("hollow")
+# the Package Deal's answers (scenes.question kind "package"): the label and your line by answer, the mate without
+# your offer or holding it ("straight" differs: you have offered him, or you will look at him); {mate} his name
+PACKAGE_ANSWERS = {
+    False: {"straight": ("Tell Him Straight", "I can't promise {mate} a spot today. I'll look at him."),
+            "promise": ("Promise Him an Offer", "{mate} gets an offer this week. You have my word."),
+            "deflect": ("Sidestep It", "Let's talk about what you'd bring.")},
+    True: {"straight": ("Already Offered Him", "I offered {mate} already. Two spots, both yours."),
+           "promise": ("Promise Him an Offer", "{mate}'s offer stands. He signs with you, no questions."),
+           "deflect": ("Sidestep It", "Let's talk about what you'd bring.")},
+}
+# what he says back: a promise he believes ("promise") or one he has heard before ("hollow"); the Package Deal's
+# straight answer once his mate holds your offer ("package_offered"), and his promise, which waits on the offer ("package")
 REPLY_LINES = {"straight": "Fair. At least you're not blowing smoke.",
                "promise": "That's what I needed to hear, Coach.",
                "hollow": "I've heard that one before.",
-               "deflect": "...Okay."}
+               "deflect": "...Okay.",
+               "package_offered": "That's all we needed to hear, Coach.",
+               "package": "Then we'll be watching for it."}
+# the Package Deal promise kept (recruiting._promises): his History's line, {mate} his mate
+PROMISE_KEPT_LINE = "{mate} got his offer. You kept your word, Coach."
 CLASS_WORDS = {"FR": "freshman", "FRRS": "redshirt freshman", "SO": "sophomore", "SORS": "redshirt sophomore",
                "JR": "junior", "JRRS": "redshirt junior", "SR": "senior", "SRRS": "redshirt senior"}
 
@@ -554,7 +576,8 @@ STYLE_LINES: dict[str, list[str]] = {
 }
 
 # every table of lines (tests format each line with FIELDS)
-TABLES = {"PERSONA_LINES": persona.LINES, "NO_TOPIC": persona.NO_TOPIC, "DECIDER_LINES": persona.DECIDER_LINES, "STORY_LINES": persona.STORY_LINES, "LINES": LINES, "TIRED": TIRED, "OPEN": OPEN, "VISIT_OPEN": VISIT_OPEN, "CONTEXT": CONTEXT, "PRESENT_SAID": PRESENT_SAID,
+TABLES = {"PERSONA_LINES": persona.LINES, "NO_TOPIC": persona.NO_TOPIC, "DECIDER_LINES": persona.DECIDER_LINES, "STORY_LINES": persona.STORY_LINES,
+          "STORY_LINES_OFFERED": persona.STORY_LINES_OFFERED, "LINES": LINES, "TIRED": TIRED, "OPEN": OPEN, "VISIT_OPEN": VISIT_OPEN, "CONTEXT": CONTEXT, "PRESENT_SAID": PRESENT_SAID,
           "PRESENT_LINES": PRESENT_LINES, "ASK": ASK, "LEAD_LINES": LEAD_LINES, "LEAD_HONEST": LEAD_HONEST, "LEAD_WINNING": LEAD_WINNING,
           "WIN_DOUBT": WIN_DOUBT, "HONEST_HIT": HONEST_HIT, "FAMILY": FAMILY, "TWIST_LINES": TWIST_LINES, "STYLE_LINES": STYLE_LINES}
 FIELDS = ("name", "first", "town", "state", "school", "position", "positions", "role", "record", "rec", "conf", "coach", "opponent", "result", "leader",
@@ -778,10 +801,12 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
     else:
         said = _persona_line(state, pid, sid, "visit_open" if action == "hc_visit" else "open", f,
                              pool=("visit_open" if action == "hc_visit" else "open", "small_talk")) or context
+    story = None                                                      # his story's line, when it is said (a Package Deal's brings his question)
     if action == "call" and not tired and not (game and game["week"] >= week - 1):    # his story, once you know it (a Package Deal's first call: always)
         first = not ((rc["contacts"].get(pid) or {}).get(slug) or {}).get("calls")
-        said = (twist_line(state, slug, pid, sid, f) or persona.story_line(state, slug, pid, sid, "him", f, action, first_call=first)
-                or style_line(state, slug, pid, sid, f) or said)      # what happened to him first, then his story, then how he means to commit
+        news = twist_line(state, slug, pid, sid, f)
+        story = None if news else persona.story_line(state, slug, pid, sid, "him", f, action, first_call=first)
+        said = news or story or style_line(state, slug, pid, sid, f) or said      # what happened to him first, then his story, then how he means to commit
     turns.append(_turn("him", said))
     if action == "hc_visit":                                          # in his living room what happened to him always comes up
         news = twist_line(state, slug, pid, sid, f, always=True)
@@ -789,19 +814,20 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
             turns.append(_turn("him", news))
     told = None                                                       # his story at a visit: the decider brings it up, or he does
     if action == "hc_visit" and d["decider"] != "self":               # the one who decides speaks
-        fam = persona.story_line(state, slug, pid, sid, "family", f, action) \
-            or random.Random(f"persona-line-{sid}-family").choice(persona.DECIDER_LINES[d["decider"]]).format(**f)
+        story = persona.story_line(state, slug, pid, sid, "family", f, action)
+        fam = story or random.Random(f"persona-line-{sid}-family").choice(persona.DECIDER_LINES[d["decider"]]).format(**f)
         told = fam
         turns.append({"who": "family", "label": persona.DECIDER_LABEL[d["decider"]], "text": fam})
         persona.learn(state, slug, pid, "decider")                    # the family is in the room: you see who decides
     elif action == "hc_visit":
-        told = persona.story_line(state, slug, pid, sid, "him", f, action)
+        told = story = persona.story_line(state, slug, pid, sid, "him", f, action)
         if told:
             turns.append(_turn("him", told))
     if action == "hc_visit" and persona.story(state, pid)[0] and told:
         persona.learn(state, slug, pid, "story")                      # it came up in his living room: now you know
     sc = {"id": sid, "action": action, "week": week, "turns": turns, "lines": [],
-          "cue": None, "ask": recruiting.ask_view(state, slug, pid), "question": None, "presented": None, "tired": tired}
+          "cue": None, "ask": recruiting.ask_view(state, slug, pid), "question": None, "presented": None, "tired": tired,
+          "package": package_about(state, slug, pid) if story else None}      # his mate was brought up: the question after your opening
     _lines(sc)
     return sc
 
@@ -871,7 +897,7 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
     sc["cue"] = c
     if sc["action"] == "hc_visit":
         sc["turns"].append(_turn("note", ask_note(state, slug, pid, sc["ask"])))
-    sc["question"] = question(state, slug, pid, week)
+    sc["question"] = question(state, slug, pid, week, sc.get("package"))
     if sc["question"]:
         sc["turns"].append(_turn("him", QUESTION_INTRO))
     sc["presented"] = list(topics)
@@ -902,13 +928,36 @@ def ask_note(state: dict, slug: str, pid: str, ask: dict) -> str:
     return f"His dad wants to know about NIL: they're looking for {about}{n}. You have {left} NIL left."
 
 
-def question(state: dict, slug: str, pid: str, week: int) -> dict | None:
+def package_about(state: dict, slug: str, pid: str) -> dict | None:
+    """A Package Deal's mate as the scene keeps him for the question: {pid, name, offered} when he is a
+    prospect in the class still to be had (not signed), else None."""
+    rc = state["recruiting"]
+    m = persona.mate(state, pid)
+    if not m or m not in rc["prospects"] or (rc["status"].get(m) or {}).get("signed"):
+        return None
+    return {"pid": m, "name": rc["prospects"][m]["name"], "offered": m in rc["offers"].get(slug, [])}
+
+
+def package_answers(about: dict) -> dict:
+    """The Package Deal question's three answers, filled: {answer: {label, text}}."""
+    table = PACKAGE_ANSWERS[bool(about.get("offered"))]
+    return {k: {"label": label, "text": text.format(mate=about["name"])} for k, (label, text) in table.items()}
+
+
+def question(state: dict, slug: str, pid: str, week: int, package: dict | None = None) -> dict | None:
     """His question about a named player, QUESTION_RATE of the time when playing time is one of his
     priorities (its own RNG: no other draw moves): the best returning player at his group on your
     roster rated at least as high ("roster"), else the highest-ranked other recruit you offered at
-    his group who is uncommitted or yours ("recruit"); neither, no question."""
+    his group who is uncommitted or yours ("recruit"); neither, no question. A scene where his
+    Package Deal came up (`package`, scenes.package_about) asks about his mate instead ("package":
+    always, its own draw for the line; the answers ride on the question, by whether you offered him)."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
+    if package:
+        about = {**package, "offered": package["pid"] in rc["offers"].get(slug, [])}   # as it stands when he asks
+        rng = random.Random(f"question-package-{rc['seed']}-{slug}-{pid}-{week}")
+        text = rng.choice(QUESTION_LINES["package_offered" if about["offered"] else "package"]).format(mate=about["name"])
+        return {"kind": "package", "text": text, "answer": None, "reply": None, "about": about, "answers": package_answers(about)}
     if "playing_time" not in p["priorities"]:
         return None
     rng = random.Random(f"question-{rc['seed']}-{slug}-{pid}-{week}")
@@ -931,7 +980,14 @@ def question(state: dict, slug: str, pid: str, week: int) -> dict | None:
 
 
 def answer_reply(state: dict, slug: str, pid: str, question: dict, answer: str, truthful: bool | None) -> str:
-    """What he says back to your answer (a hollow promise gets its own line)."""
+    """What he says back to your answer (a hollow promise gets its own line; the Package Deal's promise
+    waits on the offer, and its straight answer once his mate holds your offer has its own)."""
+    if question.get("kind") == "package":
+        if answer == "promise":
+            return REPLY_LINES["package"]
+        if answer == "straight" and question["about"].get("offered"):
+            return REPLY_LINES["package_offered"]
+        return REPLY_LINES[answer]
     if answer == "promise" and not truthful:
         return REPLY_LINES["hollow"]
     return REPLY_LINES[answer]

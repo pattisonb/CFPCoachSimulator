@@ -14,9 +14,10 @@
 
   const team = (slug) => (window.CFP.teamsBySlug || {})[slug] || {};
   const colorOf = (slug) => (team(slug).colors && team(slug).colors.primary) || "";
-  const edgeStyle = (slug) => (colorOf(slug) ? { style: `--rcp-team:${colorOf(slug)}` } : {});
+  const edgeStyle = (slug) => (colorOf(slug) ? { style: window.CFP.teamVars(slug) } : {});   // the card's bar in that team's color
   const ordinal = (n) => { const t = n % 100, u = n % 10; return `${n}${t > 10 && t < 14 ? "th" : u === 1 ? "st" : u === 2 ? "nd" : u === 3 ? "rd" : "th"}`; };
   const kicker = (text) => el("div", { class: "go-kicker muted", text });
+  const bar = (text, ...rest) => el("div", { class: "card-bar" }, [kicker(text), ...rest]);   // a card's header as its bar (styles.css .card-bar)
   const num = (v, digits) => (typeof v === "number" ? (digits == null ? String(v) : v.toFixed(digits)) : "–");
   function pill(slug, size) {
     const p = window.CFP.teamPill(slug);
@@ -32,15 +33,14 @@
   // ----- the header: the title, the record, the grade and the verdict ----------------------------------------
   function header(s, r) {
     const m = r.mine;
-    const title = el("div", { class: "rcp-head-title" }, [
-      el("h2", { class: "rcp-h1", text: r.done ? "Season Recap" : "Season So Far" }),
-      kicker(r.done ? `${r.year} Season Complete` : `Through ${r.current_week > 0 ? weekName(s, r.current_week) : "the Preseason"} · ${r.year} Season`)]);
+    const title = el("div", { class: "rcp-head-title" }, [el("h2", { class: "rcp-h1", text: r.done ? "Season Recap" : "Season So Far" })]);
+    const head = bar(r.done ? `${r.year} Season Complete` : `Through ${r.current_week > 0 ? weekName(s, r.current_week) : "the Preseason"} · ${r.year} Season`);
     const rec = el("div", { class: "rcp-head-stat" }, [el("b", { class: "rcp-num", text: `${m.wins}-${m.losses}` }), kicker(m.name)]);
     const g = r.done && r.grade;
     const tone = !g ? "" : /^A/.test(g.grade) ? "" : /^[BC]/.test(g.grade) ? "warn" : "bad";
-    return card("edge rcp-head", [title, rec,
+    return card("edge rcp-head", [head, el("div", { class: "rcp-head-body" }, [title, rec,
       g ? el("div", { class: `rcp-head-stat grade ${tone}` }, [el("b", { text: g.grade }), kicker("Season Grade")]) : null,
-      g ? el("p", { class: "rcp-verdict", text: g.line }) : null].filter(Boolean), { "aria-label": "Season Recap", ...edgeStyle(m.team) });
+      g ? el("p", { class: "rcp-verdict", text: g.line }) : null].filter(Boolean))], { "aria-label": "Season Recap", ...edgeStyle(m.team) });
   }
 
   function actions(s, r) {
@@ -72,7 +72,7 @@
 
   function championCard(r) {
     const g = r.title_game;
-    const kids = [kicker(r.done && r.champion ? "National Champion" : "National Championship")];
+    const kids = [bar(r.done && r.champion ? "National Champion" : "National Championship")];
     if (g && g.played) {
       kids.push(el("div", { class: "rcp-match" }, [side(g, "home"), el("div", { class: "rcp-vs", text: `FINAL${g.overtime ? ` · ${g.overtime > 1 ? g.overtime : ""}OT` : ""}` }), side(g, "away", true)]));
       const site = el("div", { class: "rcp-site" }, [g.site ? `${g.site} · ` : ""]);
@@ -83,8 +83,13 @@
       if (g) kids.push(el("div", { class: "rcp-site", text: `${g.away_name} vs ${g.home_name}${g.site ? ` · ${g.site}` : ""}` }));
       else kids.push(el("div", { class: "rcp-site", text: "The title game is played after the semifinals." }));
     }
-    if (r.rounds.length) {
-      kids.push(kicker("Playoff"));
+    return card("edge rcp-champ", kids, { "aria-label": "National Champion", ...(r.champion ? edgeStyle(r.champion) : {}) });
+  }
+  // the four rounds, their own card under the champion's
+  function playoffCard(r) {
+    if (!r.rounds.length) return null;
+    const kids = [bar("Playoff")];
+    {
       const rounds = el("div", { class: "rcp-rounds" });
       for (const rd of r.rounds) {
         const col = el("div", { class: "rcp-round" }, [kicker(ROUND_NAMES[rd.round] || rd.round)]);
@@ -103,7 +108,7 @@
       }
       kids.push(rounds);
     }
-    return card("edge rcp-champ", kids, { "aria-label": "National Champion", ...(r.champion ? edgeStyle(r.champion) : {}) });
+    return card("rcp-playoff", kids, { "aria-label": "Playoff" });
   }
   const ROUND_NAMES = { "First round": "First Round", Quarterfinals: "Quarterfinals", Semifinals: "Semifinals", "National championship": "National Championship" };
 
@@ -112,11 +117,11 @@
     const h = s.heisman;
     if (!h || !h.winner) return null;
     const w = h.winner;
-    const c = card("edge gold rcp-heis", [pill(w.team, "xl"),
-      el("div", { class: "rcp-heis-text" }, [kicker("Heisman Trophy"),
+    const c = card("edge gold rcp-heis-card", [bar("Heisman Trophy"), el("div", { class: "rcp-heis" }, [pill(w.team, "xl"),
+      el("div", { class: "rcp-heis-text" }, [
         el("div", { class: "rcp-who" }, [el("span", { text: w.name, ...H.playerAttrs(w.team, w.name, w.position) }), el("small", { text: `${w.position} · ${w.team_name} · ${w.line}` })]),
         h.finalists && h.finalists.length > 1 ? el("div", { class: "rcp-foot", text: `Finalists: ${h.finalists.filter((f) => f.name !== w.name).map((f) => `${f.name} (${f.team_name})`).join(", ")}.` }) : null]),
-      el("div", { class: "rcp-pts" }, [el("b", { text: Number(w.points).toLocaleString() }), el("span", { text: `points · ${Number(h.share).toFixed(1)}% of possible` })])],
+      el("div", { class: "rcp-pts" }, [el("b", { text: Number(w.points).toLocaleString() }), el("span", { text: `points · ${Number(h.share).toFixed(1)}% of possible` })])])],
       { "aria-label": "Heisman Trophy" });
     const open = el("button", { type: "button", class: "rcp-link", text: "Open the Vote" });
     window.CFP.ui.on(open, "click", () => H.openAwards("heisman"));
@@ -140,7 +145,7 @@
     for (const [slot, p, line] of rows) {
       t.append(el("tr", {}, [el("td", { class: "k", text: p.position || slot }), el("td", {}, [el("b", { text: p.name, ...H.playerAttrs(r.mine.team, p.name, p.position) }), el("div", { class: "rcp-table-sub", text: line(p) })])]));
     }
-    return card("", [kicker("Team Leaders"), rows.length ? t : el("div", { class: "aw-empty", text: "No games played yet." })], { "aria-label": "Team Leaders" });
+    return card("", [bar("Team Leaders"), rows.length ? t : el("div", { class: "aw-empty", text: "No games played yet." })], { "aria-label": "Team Leaders" });
   }
 
   function championsCard(r) {
@@ -152,7 +157,7 @@
       if (g && g.has_box) { tr.title = "Open the box score"; window.CFP.ui.on(tr, "click", () => H.openBox(g.event_id)); }
       t.append(tr);
     }
-    return card("", [kicker("Conference Champions"), r.champions.length ? t : el("div", { class: "aw-empty", text: "The title games are played in championship week." })], { "aria-label": "Conference Champions" });
+    return card("", [bar("Conference Champions"), r.champions.length ? t : el("div", { class: "aw-empty", text: "The title games are played in championship week." })], { "aria-label": "Conference Champions" });
   }
 
   function rankingsCard(r) {
@@ -162,7 +167,7 @@
     for (const e of list.slice(0, 6)) t.append(el("tr", { class: e.team === r.mine.team ? "mine" : "" }, [el("td", { class: "k rcp-num", text: String(e.rank) }), el("td", {}, [pill(e.team), e.name]), el("td", { class: "n", text: e.record })]));
     const all = el("button", { type: "button", class: "rcp-link", text: "View All 25" });
     window.CFP.ui.on(all, "click", () => H.openRankings());
-    return card("", [kicker(r.done ? "Final Rankings" : "Rankings"), list.length ? t : el("div", { class: "aw-empty", text: "No poll yet." }), el("div", {}, [all])], { "aria-label": "Final Rankings" });
+    return card("", [bar(r.done ? "Final Rankings" : "Rankings"), list.length ? t : el("div", { class: "aw-empty", text: "No poll yet." }), el("div", {}, [all])], { "aria-label": "Final Rankings" });
   }
 
   // ----- your season ---------------------------------------------------------------------------------------------
@@ -183,7 +188,7 @@
     const tile = (label, x, fmt) => el("div", { class: "rcp-tile" }, [el("b", { text: x ? fmt(x.value) : "–" }), el("span", { text: label }), el("small", { text: x ? `${ordinal(x.rank)} of ${x.of}` : "No league stats" })]);
     const tiles = el("div", { class: "rcp-tiles" }, [tile("Total Offense", ts && ts.total_offense, (v) => num(v, 1)), tile("Total Defense", ts && ts.total_defense, (v) => num(v, 1)),
       tile("Turnover Margin", ts && ts.turnover_margin, (v) => (v > 0 ? `+${v}` : String(v)))]);
-    return card("edge rcp-mine", [kicker("Your Season"), snap, kv, tiles], { "aria-label": "Your Season", ...edgeStyle(m.team) });
+    return card("edge rcp-mine", [bar("Your Season"), snap, kv, tiles], { "aria-label": "Your Season", ...edgeStyle(m.team) });
   }
 
   const PLAYOFF_WHEN = { 17: "First Round", 18: "Quarterfinals", 19: "Semifinals", 20: "Title Game" };
@@ -198,7 +203,7 @@
           ` ${l.venue === "away" ? "at" : "vs"} ${l.opponent_rank ? `#${l.opponent_rank} ` : ""}${l.opponent_name}`]),
         el("span", { class: "rcp-hl-when", text: when })]));
     }
-    return card("", [kicker("Highlights"), rows.length ? list : el("div", { class: "aw-empty", text: "No games played yet." })], { "aria-label": "Highlights" });
+    return card("", [bar("Highlights"), rows.length ? list : el("div", { class: "aw-empty", text: "No games played yet." })], { "aria-label": "Highlights" });
   }
 
   // one sentence on a team's AP path: where it started, its peak, where it ended
@@ -220,7 +225,7 @@
   function storyCard(s, r, title, rows, cls) {
     if (!rows.length) return null;
     const [first, ...rest] = rows;
-    const kids = [kicker(title), el("div", { class: "rcp-story-big" }, [pill(first.team, "mid"), `${first.name} ${first.record}`]),
+    const kids = [bar(title), el("div", { class: "rcp-story-big" }, [pill(first.team, "mid"), `${first.name} ${first.record}`]),
       el("p", { text: `${confShort(first.conference)}. ${expl(s, r, first, cls)}` })];
     if (rest.length) kids.push(el("div", { class: "rcp-foot" }, rest.map((x) => el("div", {}, [pill(x.team), `${x.name} ${x.record} — ${expl(s, r, x, cls)}`]))));
     return card(`edge ${cls === "surprise" ? "good" : "bad"} rcp-story`, kids, { "aria-label": title });
@@ -230,8 +235,8 @@
     const N = r.national_leaders || {};
     const cols = [["Passing", N.passing, (p) => `${st(p, "pass_yards").toLocaleString()} yds`], ["Rushing", N.rushing, (p) => `${st(p, "rush_yards").toLocaleString()} yds`],
       ["Receiving", N.receiving, (p) => `${st(p, "receiving_yards").toLocaleString()} yds`], ["Sacks", N.sacks, (p) => `${num(st(p, "sacks"), Number.isInteger(st(p, "sacks")) ? 0 : 1)}`]].filter(([, p]) => p);
-    if (!cols.length) return card("", [kicker("National Leaders"), el("div", { class: "aw-empty", text: r.done || r.current_week > 0 ? "This season kept no league-wide stats; start a new season to see national leaders." : "No games played yet." })], { "aria-label": "National Leaders" });
-    return card("", [kicker("National Leaders"), el("div", { class: "rcp-lead" }, cols.map(([k, p, big]) => el("div", {}, [kicker(k),
+    if (!cols.length) return card("", [bar("National Leaders"), el("div", { class: "aw-empty", text: r.done || r.current_week > 0 ? "This season kept no league-wide stats; start a new season to see national leaders." : "No games played yet." })], { "aria-label": "National Leaders" });
+    return card("", [bar("National Leaders"), el("div", { class: "rcp-lead" }, cols.map(([k, p, big]) => el("div", {}, [kicker(k),
       el("b", { text: p.name, ...H.playerAttrs(p.team, p.name, p.position) }), el("span", {}, [pill(p.team), `${p.team_name} · ${big(p)}`])])))], { "aria-label": "National Leaders" });
   }
 
@@ -245,7 +250,7 @@
     try { r = await H.api(`/api/season/${s.id}/review`); } catch (err) { root.innerHTML = ""; root.append(el("p", { class: "muted", text: `Could not load this: ${H.errText(err)}` })); return; }
     if (!root.isConnected) return;
     root.innerHTML = "";
-    const left = el("div", { class: "rcp-col" }, [championCard(r), heismanCard(s),
+    const left = el("div", { class: "rcp-col" }, [championCard(r), playoffCard(r), heismanCard(s),
       el("div", { class: "rcp-row" }, [leadersCard(r), championsCard(r), rankingsCard(r)])]);
     const rivalries = el("div", { class: "rcp-rivalries" });
     const right = el("div", { class: "rcp-col" }, [mineCard(s, r), highlightsCard(s, r), rivalries,

@@ -172,6 +172,13 @@ if __name__ == "__main__":
             for line in lines:
                 out = line.format(**fill)
                 assert out[0].isupper() and out.rstrip()[-1] in ".!?" and not any(ch.isdigit() for ch in line), line
+    for kind, table in persona.STORY_LINES_OFFERED.items():          # the Package Deal once his mate holds your offer: the same shape
+        assert set(table) == {"him", "family"} and kind in persona.STORIES, kind
+        for who, lines in table.items():
+            assert len(lines) >= 3, (kind, who)
+            for line in lines:
+                out = line.format(**fill)
+                assert "{mate}" in line and out[0].isupper() and out.rstrip()[-1] in ".!?" and not any(ch.isdigit() for ch in line), line
     for kind, line in persona.STORY_LEARNED.items():
         assert line.format(school="X", mate="Y").startswith("Your staff learned he ") and line.endswith("."), line
 

@@ -34,6 +34,17 @@ window.CFP = (function () {
     const lin = (i) => { const c = parseInt(m[1].slice(i, i + 2), 16) / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
     return 0.2126 * lin(0) + 0.7152 * lin(2) + 0.0722 * lin(4);
   }
+  // the ink that reads on a color: black on a light one, white on a dark one (the bars of cards about another team)
+  function inkFor(hex) {
+    const l = luminance(hex);
+    return l == null || l < 0.18 ? "#ffffff" : "#1a1200";
+  }
+  // a card about one team: its primary as --rcp-team with the ink that reads on it (styles.css .card-bar, recap.css)
+  function teamVars(slug) {
+    const t = teamsBySlug[slug];
+    const c = t && t.colors && t.colors.primary;
+    return c ? `--rcp-team:${c};--rcp-team-ink:${inkFor(c)}` : "";
+  }
   function accentClass(c3) {
     const l = luminance(c3);
     return l == null ? "" : l > ACCENT_LIGHT ? " accent-light" : l < ACCENT_DARK ? " accent-dark" : "";
@@ -438,6 +449,6 @@ window.CFP = (function () {
   }).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
   syncTree(document.body);
 
-  return { $, el, teamsBySlug, GAME_IDS, SBOX_IDS, teamColor, teamPill, teamName, boxNames, applyTheme, renderScoreboard, renderScoring, renderTeamStats,
+  return { $, el, teamsBySlug, GAME_IDS, SBOX_IDS, teamColor, teamPill, inkFor, teamVars, teamName, boxNames, applyTheme, renderScoreboard, renderScoring, renderTeamStats,
            renderPlayers, renderDrives, label, quarterName, kindLabel, resultLabel, fieldPos, fmtTime };
 })();

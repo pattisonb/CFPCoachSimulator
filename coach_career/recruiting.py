@@ -69,7 +69,8 @@ WEEKLY_HOURS_BASE = 140                    # *tune* a school's recruiting hours 
 WEEKLY_HOURS_PER = 0.4                     # *tune* ... plus this many per rating point over 50 (about 150 for most schools)
 SCOUT_POINTS_BASE = 150                    # *tune* your scouting points a week with a best evaluator of 50 (about four full reports away from your areas) ...
 SCOUT_POINTS_PER = 2.0                     # *tune* ... plus this many per evaluation point over 50 (250 at 100)
-LOOK_COST = {"area": 10, "away": 15, "portal": 5}   # *tune* a Send's points: a prospect in a staffed area, one away from your scouts, a portal entrant
+LOOK_COST = {"home": 5, "area": 10, "away": 15, "portal": 5}   # *tune* a Send's points: a prospect close to home (his state, or HOME_MILES), one in a staffed area, one away from your scouts, a portal entrant
+HOME_MILES = 150                                     # *tune* a prospect this close to your campus is a "home" look, whatever his state
 SCENES = ("call", "hc_visit")              # your calls and in-home visits without a pitch open a scene (scenes.py)
 # looks come in trip units: a full report is REPORT_LOOKS looks and nothing goes past it (read["looks"] <= 3 always)
 REPORT_LOOKS = 3                           # a complete scouting report: three looks (flags, "our comp" and the SCOUTED line wait for it)
@@ -111,6 +112,9 @@ ANSWER_HOLLOW = 2.0                        # ... and what a hollow one costs (he
 PROMISE_MARGIN = 5                         # a roster promise holds when he is within this of the player ahead, or that player is in his last year *tune: tools/check_recruiting.py*
 LAST_YEAR = {"JR", "JRRS"}                 # this season's class of a player in his last year next season (the portal's rosters already read next season: LEAVING)
 PROMISE_RIVAL = 20                         # firmness lost when the other recruit you promised him over commits to you too
+PACKAGE_OFFERED = 1.0                      # a Package Deal's question (scenes.question "package") when his mate already holds your offer: on top of ANSWER_STRAIGHT *tune*
+PACKAGE_PROMISE_WEEKS = 2                  # you promised his mate an offer: kept when the mate holds it within this many weeks, broken after *tune*
+PACKAGE_KEPT = 2.0                         # what a kept Package Deal promise earns at the week step it is kept *tune*
 ASK_MORE = (1.5, 1.25)                     # a rival's NIL this much over yours, with you in his top group: his ask from you rises this much
 TOP_GROUP = 8                              # the schools he is seriously considering: his top this many by interest
 # pestering: contacts past his patience from a school he is not considering cost it *tune*
@@ -1089,13 +1093,34 @@ def covered_states(state: dict) -> set[str]:
     return {code for member in staff for code in AREAS.get(member.get("area"), [])}
 
 
+def near_home(state: dict, slug: str, pid: str) -> bool:
+    """Whether the prospect is close to your campus: his hometown state is your school's, or his home (after a
+    Family Move) lies within HOME_MILES of it."""
+    from sim import season
+    p = state["recruiting"]["prospects"][pid]
+    team_state = (season.load_teams().get(slug) or {}).get("state")
+    if team_state and p["hometown"]["state"] == team_state:
+        return True
+    loc = _team_model(slug).get("location")
+    return bool(loc) and _miles(tuple(persona.home_of(state, p)), tuple(loc)) <= HOME_MILES
+
+
 def look_cost(state: dict, slug: str, pid: str) -> int:
-    """What a Send on `pid` costs in scouting points: a portal entrant's is the cheapest, then one in an area a
-    staff scout covers, then one away from your scouts."""
+    """What a Send on `pid` costs in scouting points: a portal entrant's and a prospect's close to home (his state,
+    or within HOME_MILES of your campus) are the cheapest, then one in an area a staff scout covers, then one away
+    from your scouts. When less than a full look finishes his report (2.5 of 3 looks after a half-look week), the
+    Send costs half its tier, rounded up to a multiple of 5 (5 stays 5, 10 -> 5, 15 -> 10)."""
     if is_portal(state):
-        return LOOK_COST["portal"]
-    home = state["recruiting"]["prospects"][pid]["hometown"]["state"]
-    return LOOK_COST["area" if home in covered_states(state) else "away"]
+        full = LOOK_COST["portal"]
+    elif near_home(state, slug, pid):
+        full = LOOK_COST["home"]
+    else:
+        home = state["recruiting"]["prospects"][pid]["hometown"]["state"]
+        full = LOOK_COST["area" if home in covered_states(state) else "away"]
+    looks = (state["recruiting"].get("reads", {}).get(pid) or {}).get("looks", 0) or 0
+    if 0 < REPORT_LOOKS - looks < SEND_LOOK:
+        return 5 * math.ceil(full / 2 / 5)
+    return full
 
 
 def nil_budget(state: dict, slug: str) -> int:
@@ -1294,6 +1319,34 @@ def _home_game_left(state: dict, slug: str, pid: Optional[str] = None) -> Option
     return min(weeks) if weeks else None
 
 
+def home_weekends(state: dict, slug: str) -> list[dict]:
+    """The school's regular-season home games still to play after this week, in order, as the visit picker
+    lists them: {week, label (the week's label), opponent, opponent_name, opponent_rank (the current top 25,
+    or None)}. One list per view: `visit_weekends` adds what is per prospect."""
+    from sim import season
+    teams = season.load_teams()
+    ranks = season.rank_map(state, state["current_week"])
+    games = sorted((g for g in state["games"].values()
+                    if g["home"] == slug and g["kind"] == "regular" and not g["played"] and g["week"] > state["current_week"]),
+                   key=lambda g: g["week"])
+    return [{"week": g["week"], "label": season.week_label(g["week"]), "opponent": g["away"],
+             "opponent_name": season.team_display(g["away"], teams), "opponent_rank": ranks.get(g["away"])} for g in games]
+
+
+def visit_weekends(state: dict, slug: str, pid: str, homes: Optional[list] = None) -> list[dict]:
+    """The school's home weekends for him: `home_weekends` plus `taken_by` (the name of the school he
+    visits that weekend, or None) and `first` (the one the game books without a week picked)."""
+    homes = home_weekends(state, slug) if homes is None else homes
+    taken = {v["week"]: s for s, v in (state["recruiting"]["visits"].get(pid) or {}).items() if s != slug}
+    out, seen = [], False
+    for h in homes:
+        held = taken.get(h["week"])
+        first = held is None and not seen
+        seen = seen or first
+        out.append(dict(h, taken_by=school_name(held) if held else None, first=first))
+    return out
+
+
 def manual_offers(state: dict, slug: str) -> set[str]:
     """Your offers made by hand (through `act`), which Auto-recruit never pulls; empty for any
     other school (Auto-recruit's own offers and the AI's are never marked)."""
@@ -1314,11 +1367,13 @@ _LAST_LOOK: list = [None]        # the trip's look entry, for the scout action's
 
 
 def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
-        scene: Optional[str] = None, answer: Optional[str] = None, topics: Optional[list] = None) -> dict:
+        scene: Optional[str] = None, answer: Optional[str] = None, topics: Optional[list] = None,
+        week: Optional[int] = None) -> dict:
     """One recruiting action by `slug` on prospect `pid` this week. Its interest lands at the week
     step (you see his list move next week), so this returns no interest. Your call or in-home visit
     without a pitch opens a scene (returned); `answer` with the scene's id fields his question
-    (`_answer`); `pitch` with the scene's id finishes it and returns his reaction. Raises RecruitingError."""
+    (`_answer`); `pitch` with the scene's id finishes it and returns his reaction. `week`: the home
+    weekend an official visit is for (none: his first free one). Raises RecruitingError."""
     rc = state["recruiting"]
     if action == "answer":
         return _answer(state, slug, pid, scene, answer)
@@ -1336,7 +1391,7 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
             _event(state, "pitch", pid, slug, action=sc["action"], pitch=pitch, reaction=said["kind"])
         return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed}}
     opens = slug == state.get("team") and action in SCENES and pitch is None
-    revealed = _act(state, slug, pid, action, pitch, nil, opens=opens)
+    revealed = _act(state, slug, pid, action, pitch, nil, opens=opens, visit_week=week)
     if action in ("offer", "raise_nil") and slug == state.get("team"):     # your offer or your NIL by hand: Auto-recruit leaves it be
         marks = rc.setdefault("manual_offers", [])
         if pid not in marks:
@@ -1345,6 +1400,9 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
     if action == "scout":                                   # the desk shows the trip's before/after from this, and the like a completed report earned
         from coach_career import prospects as pr
         out["look"] = dict(_LAST_LOOK[0], likes=pr.staff_likes(state, pid, slug))
+        read = rc["reads"].get(pid)                          # his looks and the read's potential range now: an open list patches its row from these
+        out["looks"] = pr.looks_out(read)
+        out["potential"] = list(grade_range(state, pid, "potential")) if read else None
     if opens:
         out["scene"] = rc["scenes"][slug][pid]
     return out
@@ -1360,7 +1418,11 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
     ANSWER_STRAIGHT and tells you he cares about playing time; a promise earns ANSWER_PROMISE when
     he can believe it (`promise_holds`) and
     otherwise costs ANSWER_HOLLOW and cools him a week; a deflection does nothing. The points go on
-    the scene's action; the answer and his reply are kept on the scene, a promise on his contact."""
+    the scene's action; the answer and his reply are kept on the scene, a promise on his contact.
+    A Package Deal's question ("package", about his mate): straight earns ANSWER_STRAIGHT plus
+    PACKAGE_OFFERED when his mate already holds your offer and nothing otherwise (you will look at
+    him); a promise earns nothing now and waits on the offer (`_promises`: kept within
+    PACKAGE_PROMISE_WEEKS for PACKAGE_KEPT, broken after)."""
     from coach_career import scenes
     rc = state["recruiting"]
     p = rc["prospects"].get(pid)
@@ -1381,7 +1443,15 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
     contact = _contact(state, slug, pid)
     week = state["current_week"]
     points, truthful, revealed = 0.0, None, []
-    if answer == "straight":
+    package = q.get("kind") == "package"
+    if package:
+        offered = q["about"]["pid"] in rc["offers"].get(slug, [])
+        q["about"]["offered"] = offered                                 # as it stands when you answer
+        if answer == "straight" and offered:
+            points = ANSWER_STRAIGHT + PACKAGE_OFFERED
+        elif answer == "promise":
+            contact.setdefault("promises", []).append({"kind": "package", "about": dict(q["about"]), "week": week, "broken": None, "kept": None})
+    elif answer == "straight":
         points = ANSWER_STRAIGHT
         seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
         if "playing_time" not in seen:
@@ -1399,7 +1469,8 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
         contact.setdefault("promises", []).append({"kind": q["kind"], "about": q["about"], "week": week, "broken": None})
     q["answer"] = answer
     q["reply"] = scenes.answer_reply(state, slug, pid, q, answer, truthful)
-    _event(state, "answer", pid, slug, action=sc["action"], answer=answer, about=q["about"]["name"], truthful=truthful)
+    _event(state, "answer", pid, slug, action=sc["action"], answer=answer, about=q["about"]["name"], truthful=truthful,
+           **({"question": "package", "offered": bool(q["about"].get("offered"))} if package else {}))
     if points:
         _add_points(state, slug, pid, points, sc["action"])
     return {"scene": sc, "points": points, "truthful": truthful, "revealed": revealed, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
@@ -1579,7 +1650,7 @@ def _report(state: dict, week: int) -> dict:
 
 
 REPORT_KINDS = ("offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "pester", "promise_broken",
-                "bloomed", "pro", "twist", "hat", "softened")
+                "promise_kept", "bloomed", "pro", "twist", "hat", "softened")
 CONTACT_KINDS = ("contact", "pitch", "raise_nil", "pull_offer", "answer", "present")   # your actions, logged for his History (not news)
 HISTORY_ONLY = CONTACT_KINDS + ("learned",)   # his History's alone: never the week's news (what your staff learned is his, not news)
 
@@ -1594,11 +1665,14 @@ def latest_report(state: dict) -> Optional[dict]:
 
 
 def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
-         scale: float = 1.0, scene: Optional[str] = None, opens: bool = False, auto: bool = False) -> Optional[str]:
+         scale: float = 1.0, scene: Optional[str] = None, opens: bool = False, auto: bool = False,
+         visit_week: Optional[int] = None) -> Optional[str]:
     """The one action path every school takes (yours, the AI's, Auto-recruit's). Only `act` passes
     `opens` (your call or visit with no pitch: a scene, no points yet) and `scene` (the pitch that
     finishes it); every other caller keeps the one-shot path. `auto`: Auto-recruit's contact, which
-    never pesters him."""
+    never pesters him. `visit_week`: the home weekend an official visit is for, one of your remaining
+    regular-season home games he has not booked elsewhere (only you pick one; Auto-recruit and the
+    AI take his first free weekend)."""
     rc = state["recruiting"]
     p = rc["prospects"].get(pid)
     if p is None:
@@ -1700,6 +1774,13 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             contact.update(asked=True, last_contact=week)
             contact.pop("pester", None)
             points = BASE_POINTS["official_visit"]
+        elif visit_week is not None:               # the weekend you picked: one of your home games left, free on his side
+            if visit_week not in {h["week"] for h in home_weekends(state, slug)}:
+                raise RecruitingError(409, "That is not a home weekend you have left.")
+            taken = {v["week"]: s for s, v in rc["visits"].get(pid, {}).items() if s != slug}
+            if visit_week in taken:
+                raise RecruitingError(409, f"He is visiting {school_name(taken[visit_week])} that weekend.")
+            rc["visits"].setdefault(pid, {})[slug] = {"week": visit_week, "done": False}
         else:
             game_week = _home_game_left(state, slug, pid)
             if game_week is None:
@@ -2197,19 +2278,35 @@ def _promises(state: dict, week: int) -> None:
     """Promises follow him (spec section 4): a recruit told he was the one over another recruit
     (a "recruit" promise) remembers when that recruit commits to the school too, once: committed
     to the school, his firmness drops PROMISE_RIVAL (a hard commit is immune); otherwise he cools on
-    it for COOL_WEEKS. The promise is marked broken and a promise_broken event logged either way."""
+    it for COOL_WEEKS. The promise is marked broken and a promise_broken event logged either way.
+    A Package Deal's mate promised an offer (a "package" promise) is kept the week step the mate
+    holds the school's offer, within PACKAGE_PROMISE_WEEKS of the promise (PACKAGE_KEPT points land
+    on his list, a promise_kept event with his line), and broken the same way as above once that
+    many weeks pass without it."""
+    from coach_career import scenes
     rc = state["recruiting"]
     for pid, by in rc["contacts"].items():
         for slug, c in by.items():
             for pr in c.get("promises") or ():
-                if pr["kind"] != "recruit" or pr.get("broken") is not None:
-                    continue
-                other = rc["status"].get(pr["about"].get("pid"))
-                if not other or slug not in (other["committed"], other["signed"]):
+                if pr["kind"] not in ("recruit", "package") or pr.get("broken") is not None or pr.get("kept") is not None:
                     continue
                 st_ = rc["status"][pid]
                 if st_["signed"]:
                     continue
+                mate = pr["about"].get("pid")
+                if pr["kind"] == "package":
+                    if mate in rc["offers"].get(slug, []):
+                        pr["kept"] = week
+                        rc["lists"][pid][slug] = rc["lists"][pid].get(slug, 0.0) + persona.climbs(state, slug, pid, PACKAGE_KEPT)
+                        _event(state, "promise_kept", pid, slug, about=pr["about"]["name"], other=mate,
+                               line=scenes.PROMISE_KEPT_LINE.format(mate=pr["about"]["name"]))
+                        continue
+                    if week - pr["week"] < PACKAGE_PROMISE_WEEKS:
+                        continue
+                else:
+                    other = rc["status"].get(mate)
+                    if not other or slug not in (other["committed"], other["signed"]):
+                        continue
                 if st_["committed"] == slug:
                     if st_.get("hard"):
                         continue
@@ -2218,7 +2315,7 @@ def _promises(state: dict, week: int) -> None:
                     c["cooled_until"] = week + COOL_WEEKS
                     persona.set_cooled_why(state, slug, pid, "promise")
                 pr["broken"] = week
-                _event(state, "promise_broken", pid, slug, about=pr["about"]["name"], other=pr["about"].get("pid"))
+                _event(state, "promise_broken", pid, slug, about=pr["about"]["name"], other=mate, **({"why": "package"} if pr["kind"] == "package" else {}))
 
 
 def _firm_up(state: dict, week: int) -> None:

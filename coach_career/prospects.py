@@ -760,7 +760,8 @@ def _stage_move(state: dict, pid: str, viewer: str) -> Optional[str]:
 HISTORY_SHOWN = 40                           # a board row's History: his newest log entries, this many
 HIS_OWN = ("commit", "hard", "flip", "decommit", "signed", "leaning_fcs", "bloomed", "pro", "twist", "hat", "softened")   # his own moves: every school's show (persona.shown_to: a quiet one, a private one, only its school)
 PRO = "Pro Baseball"                          # where a Two-Sport recruit who took the baseball money went
-HISTORY_KEYS = ("week", "portal_week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful", "topics", "hit", "line")
+HISTORY_KEYS = ("week", "portal_week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful", "topics", "hit", "line",
+                "question", "offered", "why")   # a Package Deal question's answer (about his mate, offered or not), a promise broken over his mate
 
 
 def history_index(state: dict, viewer: str) -> dict[str, list[dict]]:
@@ -781,12 +782,16 @@ def history_index(state: dict, viewer: str) -> dict[str, list[dict]]:
     return out
 
 
-def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None) -> dict:
+def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None, homes: Optional[list] = None) -> dict:
     """A board line adds your standing with him: your interest, the leader and his known priorities,
-    and his History (`history`: a `history_index` built once per view; without it, one pass for him)."""
+    and his History (`history`: a `history_index` built once per view; without it, one pass for him).
+    `homes`: your remaining home games (`recruiting.home_weekends`, once per view) for his `visit_weeks`,
+    the Official Visit picker's rows; in the portal (a campus visit, no game) the list is empty."""
     rc = state["recruiting"]
     if history is None:
         history = history_index(state, viewer)
+    if homes is None:
+        homes = [] if rc.get("portal") else recruiting.home_weekends(state, viewer)
     out = row(state, pid, viewer)
     schools = _schools(state, pid, viewer)
     seen = seen_status(state, pid, viewer)
@@ -794,6 +799,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
     out.update(interest=round(recruiting.interest(state, viewer, pid), 1) if mine is None else mine["interest"],
                leader=schools[0] if schools else None, schools=len(schools),
                visit=visit_view(state, viewer, (rc["visits"].get(pid) or {}).get(viewer)),
+               visit_weeks=recruiting.visit_weekends(state, viewer, pid, homes),
                priorities_known=list((rc["revealed"].get(viewer) or {}).get(pid, [])),
                traits=persona.view(state, viewer, pid),
                twist=persona.twist_view(state, viewer, pid),
@@ -861,28 +867,42 @@ def standing(state: dict, pid: str, viewer: str) -> dict:
 
 
 INTERESTED_TOP = 0.15             # "Interested in you": the prospects your school appeals to most, this share
-INTEREST_LEVELS = ((0.15, "High"), (0.5, "Medium"), (1.0, "Low"))
+INTEREST_LEVELS = ((0.15, "High"), (0.5, "Medium"), (1.0, "Low"))   # *tune* the shares of a star band shown High, then Medium; the rest Low
 
 
-def your_interest(state: dict, viewer: str, pids: list) -> tuple[dict, list]:
-    """Each prospect's interest in your school, and the cut-offs of the levels shown (High for the
-    top 15% of the class you can see, Medium for the next 35%, Low for the rest)."""
+def your_interest(state: dict, viewer: str, pids: list) -> tuple[dict, dict]:
+    """Each prospect's interest in your school, and the cut-offs of the levels shown, per star rating:
+    a prospect is graded against the prospects of his own star rating you can see (High for the top
+    15% of his star band, Medium for the next 35%, Low for the rest), so High means he likes you more
+    than most recruits of his caliber do, whatever his caliber. Returns `(values, cuts)`, `cuts` a
+    dict star -> the levels' cut-offs; a band with no prospects is graded Low."""
     win = recruiting._winning(state)
+    rc = state["recruiting"]
     vals = {pid: recruiting.interest(state, viewer, pid, win) for pid in pids}
-    ordered = sorted(vals.values(), reverse=True)
-    cuts = [ordered[min(len(ordered) - 1, int(share * len(ordered)))] if ordered else 0 for share, _ in INTEREST_LEVELS]
+    bands: dict[int, list] = {}
+    for pid in pids:
+        bands.setdefault(rc["prospects"][pid]["stars"], []).append(vals[pid])
+    cuts = {}
+    for stars, values in bands.items():
+        ordered = sorted(values, reverse=True)
+        cuts[stars] = [ordered[min(len(ordered) - 1, int(share * len(ordered)))] for share, _ in INTEREST_LEVELS]
     return vals, cuts
 
 
-def _level(value: float, cuts: list) -> str:
-    return next((name for (_, name), cut in zip(INTEREST_LEVELS, cuts) if value >= cut), "Low")
+def _level(value: float, stars: int, cuts: dict) -> str:
+    """The level shown for `value` against the cut-offs of his star band (`cuts[stars]`)."""
+    band = cuts.get(stars)
+    if not band:
+        return "Low"
+    return next((name for (_, name), cut in zip(INTEREST_LEVELS, band) if value >= cut), "Low")
 
 
 def search(state: dict, viewer: str, position: Optional[str] = None, stars: Optional[int] = None,
            home: Optional[str] = None, status: Optional[str] = None, q: Optional[str] = None,
            offset: int = 0, limit: int = 50, sort: str = "rank", group: Optional[str] = None) -> dict:
     """The class you can see, filtered and paged, by national rank (or by interest in your school:
-    `sort="interest"`, or `status="interested"` for those your school appeals to most)."""
+    `sort="interest"`, or `status="interested"` for those graded High: the prospects your school appeals
+    to most among recruits of their star rating)."""
     rc = state["recruiting"]
     q = (q or "").strip().lower()
     out = []
@@ -915,7 +935,7 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
             continue
         if status == "board" and pid not in rc["board"]:
             continue
-        if status == "interested" and (keen[pid] < cuts[0] or st["signed"]):
+        if status == "interested" and (_level(keen[pid], p["stars"], cuts) != "High" or st["signed"]):
             continue
         out.append(pid)
     if sort == "interest" or status == "interested":
@@ -926,7 +946,7 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
     rows = []
     for pid in out[offset:offset + limit]:
         r = row(state, pid, viewer)
-        r.update(interest_in_you=round(keen[pid], 1), interest_level=_level(keen[pid], cuts),
+        r.update(interest_in_you=round(keen[pid], 1), interest_level=_level(keen[pid], rc["prospects"][pid]["stars"], cuts),
                  can_scout=can_scout(state, viewer, pid), hard=bool(rc["status"][pid].get("hard")) and not rc["status"][pid]["signed"])
         if pid in recs:
             r["why"] = recs[pid]["why"]
@@ -1050,7 +1070,8 @@ def recruiting_view(state: dict) -> dict:
     week = state["current_week"]
     mine = set(rc["board"]) | set(offers)
     hist = history_index(state, me)
-    board = [board_row(state, pid, me, hist) for pid in rc["board"]]
+    homes = [] if rc.get("portal") else recruiting.home_weekends(state, me)
+    board = [board_row(state, pid, me, hist, homes) for pid in rc["board"]]
     recap = [e for e in rc["log"] if e["week"] == week and (e.get("school") == me or e.get("from") == me or e["pid"] in mine)
              and e["kind"] not in ("leaning_fcs",) + recruiting.HISTORY_ONLY and persona.shown_to(e, me)]
     return {

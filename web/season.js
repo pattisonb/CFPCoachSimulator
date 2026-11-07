@@ -533,6 +533,7 @@
           newsStop();
           if (j.paused) toast("Paused. Advance when you are ready.", 3000);
           barDone(j.status !== "error");
+          tabDone(j.status !== "error", j.record);
           hideSimOverlay();
           if (j.status === "error") toast(`Simulation error: ${j.error}`, 6000);
           const s = await api(`/api/season/${state.season.id}`);
@@ -613,12 +614,91 @@
     if (simBtn) simBtn.textContent = "Simming…";
     if (span > 1) showSimOverlay(j);
     barReport(p);
+    tabSim(j, p);
   }
 
   // What the sim is doing, from the engine's stage: "Playing Week 6 games · 34 of 61", "Recruiting week", "Saving".
   function stageLine(j) {
     const stage = j.stage || "Getting ready";
     return j.games_total ? `${stage} · ${j.games_done} of ${j.games_total}` : stage;
+  }
+
+  // ----- the browser tab: the dynasty's name, and the sim's progress while you are on another tab -----
+  // The title reads "Ohio State Dynasty"; while a sim runs it leads with the progress and your record
+  // ("42% · 4-1 · Wk 6 · Ohio State Dynasty") and the favicon wears a progress ring in your color, so
+  // a tab in the background still tells you where the sim is. When it ends the tab says so ("Done · 9-3
+  // · …", a full green ring; "Sim Failed" and red on an error) until you come back to it.
+  const TAB_BASE = "Coach Career · CFP Coach Simulator";
+  const tab = { icon: null, img: null, links: null, hrefs: null, timer: null, waiting: false };
+  function dynastyTitle(s) {
+    const t = window.CFP.teamsBySlug[s.team] || {};
+    return `${t.name || s.team_name || "Coach Career"} Dynasty`;
+  }
+  function tabTitle(text) { if (document.title !== text) document.title = text; }
+  function tabLinks() {
+    if (!tab.links) {
+      tab.links = Array.from(document.querySelectorAll("link[rel='icon']"));
+      tab.hrefs = tab.links.map((l) => [l.getAttribute("href"), l.getAttribute("type")]);
+    }
+    return tab.links;
+  }
+  function tabIconReset() {
+    if (!tab.links) return;
+    tab.links.forEach((l, i) => { l.setAttribute("href", tab.hrefs[i][0]); if (tab.hrefs[i][1]) l.setAttribute("type", tab.hrefs[i][1]); else l.removeAttribute("type"); });
+  }
+  // the favicon with a ring: `p` 0-1 of the way round, `tone` "run" (your color), "done" (green) or "fail" (red)
+  function tabIcon(p, tone) {
+    const links = tabLinks();
+    if (!links.length) return;
+    if (!tab.img) {
+      tab.img = new Image();
+      tab.img.src = (tab.hrefs.find(([h]) => /\.svg$/.test(h)) || tab.hrefs[0])[0];
+      tab.img.onload = () => { if (state.simming || tab.waiting) tabIcon(tab.lastP, tab.lastTone); };
+    }
+    tab.lastP = p; tab.lastTone = tone;
+    const c = tab.icon || (tab.icon = document.createElement("canvas"));
+    c.width = c.height = 64;
+    const g = c.getContext("2d");
+    g.clearRect(0, 0, 64, 64);
+    if (tab.img.complete && tab.img.naturalWidth) g.drawImage(tab.img, 0, 0, 64, 64);
+    const color = tone === "done" ? "#2e9e5b" : tone === "fail" ? "#d9403c" : (getComputedStyle(document.body).getPropertyValue("--go-primary").trim() || "#f5b942");
+    g.lineWidth = 9; g.lineCap = "butt";
+    g.strokeStyle = "rgba(0,0,0,0.55)"; g.beginPath(); g.arc(32, 32, 26.5, 0, Math.PI * 2); g.stroke();
+    g.strokeStyle = color; g.beginPath(); g.arc(32, 32, 26.5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.03, Math.min(1, p))); g.stroke();
+    const url = c.toDataURL("image/png");
+    for (const l of links) { l.setAttribute("href", url); l.setAttribute("type", "image/png"); }
+  }
+  function tabIdle(s) {
+    if (tab.waiting) return;                       // "Done" stays until you have seen it (tabBack)
+    if (tab.timer) { clearTimeout(tab.timer); tab.timer = null; }
+    document.removeEventListener("visibilitychange", tabBack);
+    tabIconReset();
+    tabTitle(s ? dynastyTitle(s) : TAB_BASE);
+  }
+  function tabSim(j, p) {
+    const s = state.season;
+    if (tab.waiting) { tab.waiting = false; if (tab.timer) { clearTimeout(tab.timer); tab.timer = null; } document.removeEventListener("visibilitychange", tabBack); }
+    const r = state.liveRecord || s.record || { wins: 0, losses: 0 };
+    const pct = Math.min(99, Math.max(0, Math.round((Number(p) || 0) * 100)));
+    const wk = Math.min((j.done != null ? j.done : s.current_week) + 1, 20);
+    tabTitle(`${pct}% · ${r.wins}-${r.losses} · Wk ${wk} · ${dynastyTitle(s)}`);
+    tabIcon(p, "run");
+  }
+  function tabDone(ok, record) {
+    const s = state.season;
+    const r = record || state.liveRecord || s.record || { wins: 0, losses: 0 };
+    tabTitle(`${ok ? "Done" : "Sim Failed"} · ${r.wins}-${r.losses} · ${dynastyTitle(s)}`);
+    tabIcon(1, ok ? "done" : "fail");
+    tab.waiting = true;
+    // the word stays while the tab is in the background, and clears a moment after you come back
+    if (document.hidden) document.addEventListener("visibilitychange", tabBack);
+    else tabBack();
+  }
+  function tabBack() {
+    if (document.hidden) return;
+    document.removeEventListener("visibilitychange", tabBack);
+    if (tab.timer) clearTimeout(tab.timer);
+    tab.timer = setTimeout(() => { tab.timer = null; tab.waiting = false; if (!state.simming) tabIdle(state.season); }, 2500);
   }
 
   // ----- the sim bar ------------------------------------------------------------------------------
@@ -939,7 +1019,7 @@
     $("#season-empty").hidden = true;
     $("#season").hidden = false;
     state.liveRecord = null;
-    document.title = "Coach Career · CFP Coach Simulator";
+    tabIdle(s);
     for (const a of document.querySelectorAll(".site-nav a")) a.classList.toggle("active", a.dataset.nav === "season");
     renderCareerSteps(s);
     setBusy(false);
@@ -1738,7 +1818,7 @@
     allBtn.addEventListener("click", () => openAllRatings(p));
     const editedAttrs = new Set(p.edited_attributes || []);
     const nEdited = attrs.length ? editedAttrs.size : edited.size;
-    const rat = el("div", { class: "leader-card player-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: attrs.length ? `${p.position} attributes (${attrs.length})` : `${p.position} ratings` }), el("span", { class: "muted small-text", text: nEdited ? `edited in god mode (${nEdited})` : "50 = average Power 4 starter · green 75+, red under 55" }), el("span", { class: "card-actions" }, [allBtn, editBtn])])]);
+    const rat = el("div", { class: "leader-card player-card" }, [el("div", { class: "card-bar leader-head" }, [el("h4", { text: attrs.length ? `${p.position} attributes (${attrs.length})` : `${p.position} ratings` }), el("span", { class: "muted small-text", text: nEdited ? `edited in god mode (${nEdited})` : "50 = average Power 4 starter · green 75+, red under 55" }), el("span", { class: "card-actions" }, [allBtn, editBtn])])]);
     if (editBtn) editBtn.addEventListener("click", () => { editBtn.hidden = true; rat.append(playerEditForm(p, rat)); });
     if (attrs.length) {
       // ratings v2: grouped, physical first, each with what it does on hover
@@ -1763,7 +1843,7 @@
     grid.append(rat);
 
     // ranks
-    const rk = el("div", { class: "leader-card player-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: "Where He Ranks" }), el("span", { class: "muted small-text", text: p.ranks.length ? "FBS · conference" : "" })])]);
+    const rk = el("div", { class: "leader-card player-card" }, [el("div", { class: "card-bar leader-head" }, [el("h4", { text: "Where He Ranks" }), el("span", { class: "muted small-text", text: p.ranks.length ? "FBS · conference" : "" })])]);
     if (!p.ranks.length) rk.append(el("p", { class: "muted small-text", text: p.games ? "Not enough games to rank yet." : "No games played yet." }));
     for (const r of p.ranks) {
       rk.append(el("div", { class: "leader-row" }, [
@@ -2020,7 +2100,7 @@
   function awardCard(a, live, mode) {
     // one award as a leader card: winner (or leader) on top, then the rest of the top five
     const card = el("div", { class: "leader-card award-card" });
-    card.append(el("div", { class: "leader-head" }, [el("h4", { text: a.name }), a.honors ? el("span", { class: "muted small-text", text: a.honors }) : null]));
+    card.append(el("div", { class: "card-bar leader-head" }, [el("h4", { text: a.name }), a.honors ? el("span", { class: "muted small-text", text: a.honors }) : null]));
     const list = live ? (a.race || a.finalists || []) : (a.finalists || []);
     if (!list.length) { card.append(el("p", { class: "muted small-text", text: "No eligible players yet." })); return card; }
     list.forEach((c, i) => {
@@ -2078,10 +2158,11 @@
   const awUnit = (slot) => (AW_OFFENSE.has(slot) ? "offense" : AW_SPECIAL.has(slot) ? "special" : "defense");
   const awKind = (a) => (["mvp", "mvp_team", "freshman"].includes(a.kind) ? "poy" : OFFENSE_KINDS.has(a.kind) ? "offense" : DEFENSE_KINDS.has(a.kind) ? "defense" : ST_KINDS.has(a.kind) ? "special" : "poy");
   const awKicker = (text) => el("div", { class: "go-kicker muted", text });
+  const awBar = (text, ...rest) => el("div", { class: "card-bar" }, [awKicker(text), ...rest]);   // a card's header as its bar (styles.css .card-bar)
   const awPill = (slug, size) => { const p = teamPill(slug); if (size) p.classList.add(size); return p; };
   const awConfShort = (c) => ({ "American Athletic Conference": "American", "FBS Independent": "Independents" })[c] || c || "";
   const awSentence = (text) => (text ? text[0].toUpperCase() + text.slice(1).replace(/\.?$/, ".") : "");
-  const awTeamStyle = (s) => { const t = window.CFP.teamsBySlug[s.team]; return t && t.colors && t.colors.primary ? { style: `--rcp-team:${t.colors.primary}` } : {}; };
+  const awTeamStyle = (s) => (window.CFP.teamVars(s.team) ? { style: window.CFP.teamVars(s.team) } : {});
   // a row of chips that keeps its highlight by itself (aria-pressed), then calls onPick
   function awChips(items, current, onPick, cls = "") {
     const row = el("div", { class: `aw-views ${cls}` });
@@ -2100,8 +2181,8 @@
       ? `Live race through ${through}: who would win if the voting were held now. Conference awards are given after championship week, the Heisman and national awards in selection week, the postseason awards after the title game.`
       : `Conference awards given after championship week${given >= 15 ? "; Heisman, national awards and All-America teams in selection week" : ""}${given >= 19 ? "; postseason awards after the national championship" : ""}.`;
     const kick = live ? `${s.year} · Live Race · Through ${s.week_labels[s.current_week] || `Week ${s.current_week}`}` : `${s.year} · Final · ${given >= 15 ? "Given in Selection Week" : "Conference Awards In"}`;
-    return el("section", { class: "go-card rcp-card edge gold aw-head", "aria-label": "Awards" }, [
-      el("div", { class: "rcp-head-title" }, [el("h2", { class: "rcp-h1", text: "Awards" }), awKicker(kick)]), el("p", { class: "aw-note", text: note })]);
+    return el("section", { class: "go-card rcp-card edge gold aw-head", "aria-label": "Awards" }, [awBar(kick),
+      el("div", { class: "aw-head-body" }, [el("div", { class: "rcp-head-title" }, [el("h2", { class: "rcp-h1", text: "Awards" })]), el("p", { class: "aw-note", text: note })])]);
   }
   // the name, the position and class (or the coach's role) and the team of one finalist
   function awWhoLine(c, mode) {
@@ -2115,7 +2196,7 @@
     const list = live ? (a.race || a.finalists || []) : (a.finalists || []);
     const w = list[0];
     const card = el("div", { class: `aw-card ${w && w.team === s.team ? "mine" : ""}`, "data-key": a.name }, [
-      el("div", { class: "aw-card-head" }, [awKicker(a.name), a.honors ? el("small", { text: awSentence(a.honors) }) : null])]);
+      el("div", { class: "card-bar aw-card-head" }, [awKicker(a.name), a.honors ? window.CFP.ui.tip(awSentence(a.honors), a.name) : null])]);   // what it is for waits behind ⓘ
     if (!w) { card.append(el("div", { class: "aw-empty", text: "No eligible players yet." })); return card; }
     card.append(el("div", { class: "aw-win" }, [awPill(w.team, "big"), el("span", {}, [awName(w), el("small", { text: awWhoLine(w, mode) })]),
       el("span", { class: "go-tag gold", text: live ? "Leader" : "Winner" })]));
@@ -2169,7 +2250,7 @@
       list.append(el("div", { class: "aw-row" }, [el("span", {}, [el("b", { text: r.who, ...(player ? playerAttrs(s.team, r.who, r.position) : {}) }),
         el("small", { text: [r.position, r.award, r.line].filter(Boolean).join(" · ") })]), el("span", { class: `aw-res ${r.rank === 0 ? "w" : ""}`, text: awPlace(r) })]));
     }
-    const kids = [awKicker(`${s.team_name} Awards and Honors`), pod];
+    const kids = [awBar(`${s.team_name} Awards and Honors`), pod];
     if (!rows.length) kids.push(el("div", { class: "aw-empty", text: live ? "Nobody from your team is in a top five yet." : "No awards or placements this season." }));
     else kids.push(list);
     if (rows.length > shown.length) { const b = el("button", { type: "button", class: "rcp-link", text: `View All ${rows.length}` }); window.CFP.ui.on(b, "click", () => showAwardsView("mine")); kids.push(el("div", {}, [b])); }
@@ -2177,7 +2258,7 @@
   }
   function consensusCard(s, nat, live) {
     const aa = nat && nat.all_america;
-    const kids = [awKicker("Consensus All-America")];
+    const kids = [awBar("Consensus All-America")];
     if (live || !aa) { kids.push(el("div", { class: "aw-empty", text: "The All-America teams are named in selection week." })); return el("section", { class: "go-card rcp-card aw-aa-card", "aria-label": "Consensus All-America" }, kids); }
     const st = awardsState;
     if (!["offense", "defense", "special"].includes(st.unit)) st.unit = "offense";
@@ -2201,7 +2282,7 @@
     const confs = live ? (nat && nat.conference) || {} : d.conference || {};
     const conf = d.my_conference;
     const entry = confs[conf];
-    const kids = [awKicker(`${awConfShort(conf)} Awards`)];
+    const kids = [awBar(`${awConfShort(conf)} Awards`)];
     if (!entry || !(entry.awards || []).length) kids.push(el("div", { class: "aw-empty", text: live ? "No conference races yet." : "This conference gives no awards." }));
     else {
       const list = el("div", { class: "aw-list" });
@@ -2219,15 +2300,15 @@
     return el("section", { class: "go-card rcp-card aw-conf", "aria-label": "Conference Awards" }, kids);
   }
   function heismanHeroNew(s, h, live) {
-    if (!h || !h.winner) return el("section", { class: "go-card rcp-card edge gold aw-heis", "aria-label": "Heisman Trophy" }, [awKicker("Heisman Trophy"), el("div", { class: "aw-empty", text: "No Heisman race yet. Advance a week." })]);
+    if (!h || !h.winner) return el("section", { class: "go-card rcp-card edge gold aw-heis-card", "aria-label": "Heisman Trophy" }, [awBar("Heisman Trophy"), el("div", { class: "aw-empty", text: "No Heisman race yet. Advance a week." })]);
     const w = h.winner;
     const others = (h.candidates || []).filter((c) => !(c.name === w.name && c.team === w.team)).slice(0, 4);
-    const hero = el("section", { class: `go-card rcp-card edge gold aw-heis ${w.team === s.team ? "mine" : ""}`, "aria-label": "Heisman Trophy" }, [awPill(w.team, "xl"),
-      el("div", { class: "rcp-heis-text" }, [awKicker(live ? "Heisman Straw Poll" : "Heisman Trophy"),
+    const hero = el("section", { class: `go-card rcp-card edge gold aw-heis-card ${w.team === s.team ? "mine" : ""}`, "aria-label": "Heisman Trophy" }, [awBar(live ? "Heisman Straw Poll" : "Heisman Trophy"), el("div", { class: "aw-heis" }, [awPill(w.team, "xl"),
+      el("div", { class: "rcp-heis-text" }, [
         el("div", { class: "rcp-who" }, [el("span", { text: w.name, ...playerAttrs(w.team, w.name, w.position) }), el("small", { text: `${w.position}${classLabel(w.class)} · ${w.team_name} · ${w.line}` })])]),
       el("div", { class: "rcp-pts" }, [el("b", { text: Number(w.points).toLocaleString() }), el("span", { text: live ? `points · ${h.ballots} ballots` : `points · ${h.share}% of possible` })]),
       el("div", { class: "aw-fin" }, others.map((c, i) => el("div", { class: c.team === s.team ? "mine" : "" }, [awPill(c.team, "mid"), el("span", {}, [awName(c), el("small", { text: `${c.position}${classLabel(c.class)} · ${c.team_name} · ${headlineOf(c)}` })]),
-        el("span", { class: "aw-place", text: ORD(i + 1) })])))]);
+        el("span", { class: "aw-place", text: ORD(i + 1) })])))])]);
     const open = el("button", { type: "button", class: "rcp-link", text: live ? "Open the Straw Poll" : "Open the Vote" });
     window.CFP.ui.on(open, "click", () => showAwardsView("heisman"));
     hero.querySelector(".rcp-heis-text").append(el("div", {}, [open]));
@@ -2423,8 +2504,8 @@
       const played = b.played;
       const aw = played && b.away_score > b.home_score, hw = played && b.home_score > b.away_score;
       const c = el("div", { class: `bowl-card ${b.mine && s.team ? "mine" : ""} ${b.has_box ? "clickable" : ""}` });
-      c.append(el("div", { class: "bowl-head" }, [
-        el("b", { text: b.name }), el("span", { class: "muted small-text", text: ` ${b.date}${b.time ? " · " + b.time : ""} · ${b.site || ""}` }),
+      c.append(el("div", { class: "card-bar bowl-head" }, [
+        el("b", { text: b.name }), el("span", { class: "muted small-text", text: `${b.date}${b.time ? " · " + b.time : ""} · ${b.site || ""}` }),
       ]));
       if (b.unfilled) {
         c.append(el("div", { class: "muted", text: "No eligible teams left for this bowl." }));
@@ -2574,7 +2655,7 @@
     box.append(el("h3", { text: `Injury Report · ${s.team_name}` }));
     if (!mine.length) box.append(el("p", { class: "muted small-text", text: "Nobody out this week." }));
     else box.append(injuryTable(mine, false));
-    const head = el("div", { class: "leader-head" }, [el("h4", { text: `Around the League · ${s.injury_count || 0} Players Out` }), el("span", { class: "muted small-text", text: "Show" })]);
+    const head = el("div", { class: "card-bar leader-head" }, [el("h4", { text: `Around the League · ${s.injury_count || 0} Players Out` }), el("span", { class: "muted small-text", text: "Show" })]);
     const holder = el("div", { hidden: true });
     head.addEventListener("click", async () => {
       holder.hidden = !holder.hidden;
@@ -2584,7 +2665,7 @@
         catch (err) { holder.append(el("p", { class: "muted", text: `Could not load this: ${errText(err)}` })); }
       }
     });
-    box.append(el("div", { class: "injury-league" }, [head, holder]));
+    box.append(el("div", { class: "injury-league leader-card" }, [head, holder]));
   }
 
   // ----- this week: the next game, a prediction, the injury report ----------------
@@ -2596,8 +2677,8 @@
     const key = `${s.id}|${s.current_week}|${(s.schedule || []).filter((g) => g.played).length}|${d.team}`;
     let data = thisWeekState.key === key ? thisWeekState.data : null;
     if (!data) {
-      card.append(el("div", { class: "review-label", text: "This Week" }), el("p", { class: "muted small-text", text: "Simulating the matchup…" }));
-      try { data = await api(`/api/season/${s.id}/preview?team=${d.team}`); } catch (err) { card.innerHTML = ""; card.append(el("div", { class: "review-label", text: "This Week" }), el("p", { class: "muted small-text", text: `Could not load this: ${errText(err)}` })); return; }
+      card.append(el("div", { class: "card-bar review-label", text: "This Week" }), el("p", { class: "muted small-text", text: "Simulating the matchup…" }));
+      try { data = await api(`/api/season/${s.id}/preview?team=${d.team}`); } catch (err) { card.innerHTML = ""; card.append(el("div", { class: "card-bar review-label", text: "This Week" }), el("p", { class: "muted small-text", text: `Could not load this: ${errText(err)}` })); return; }
       thisWeekState.key = key; thisWeekState.data = data;
     }
     if (!card.isConnected) return;
@@ -2611,7 +2692,7 @@
     };
     if (!g) {
       const wkLabel = data.week ? (s.week_labels[data.week] || `Week ${data.week}`) : "";
-      card.append(el("div", { class: "review-label", text: data.reason === "bye" ? `Bye this week${wkLabel ? " · " + wkLabel : ""}` : "This week" }),
+      card.append(el("div", { class: "card-bar review-label", text: data.reason === "bye" ? `Bye This Week${wkLabel ? " · " + wkLabel : ""}` : "This Week" }),
         el("p", { class: "muted", text: data.reason === "done" ? "Season complete." : data.reason === "bye" ? "No game this week." : "No game left on the schedule." }));
       if (data.reason === "bye") injuryReport();
       return;
@@ -2620,7 +2701,7 @@
     const wk = s.week_labels[g.week] || `Week ${g.week}`;
     const dateText = g.date && /^\d{4}-\d{2}-\d{2}/.test(g.date) ? fmtDay(g.date.slice(0, 10), true) : (g.date || ((s.week_dates || {})[g.week] || {}).main ? fmtDay(s.week_dates[g.week].main, true) : "");
     const where = g.venue === "home" ? "Home" : g.venue === "away" ? "Away" : "Neutral site";
-    card.append(el("div", { class: "review-label", text: g.played ? `This week · ${wk} · Final` : `This week · ${wk}` }));
+    card.append(el("div", { class: "card-bar review-label", text: g.played ? `This Week · ${wk} · Final` : `This Week · ${wk}` }));
     const oppLine = el("div", { class: "review-big" }, [
       el("span", { class: "muted", text: `${g.venue === "away" ? "at" : "vs"} ` }), g.opponent_rank ? el("span", { class: "rank", text: `#${g.opponent_rank} ` }) : null, teamPill(g.opponent), g.opponent_name,
       el("span", { class: "pos", text: `${g.opponent_record ? g.opponent_record + " · " : ""}${where}${g.title ? " · " + g.title : ""}` }),
@@ -2828,11 +2909,12 @@
   // edge on his own card, the tint on his row) and the kicker that dates the page
   function leagueTeamStyle(s) {
     const t = (window.CFP.teamsBySlug || {})[s.team] || {};
-    return t.colors && t.colors.primary ? `--rcp-team:${t.colors.primary}` : "";
+    return window.CFP.teamVars(s.team);
   }
   const leagueKicker = (s) => `${s.current_week > 0 ? `Through ${s.week_labels[s.current_week] || "Week " + s.current_week}` : "Preseason"} · ${s.year} Season`;
   const leagueCard = (cls, children, attrs) => el("section", { class: `go-card rcp-card lg-card ${cls || ""}`, ...(attrs || {}) }, children);
-  const leagueHead = (kicker, title, controls) => el("div", { class: "lg-head" }, [
+  // a card's head is its bar (styles.css .card-bar): the title with the kicker beside it, the controls at its right
+  const leagueHead = (kicker, title, controls) => el("div", { class: "card-bar lg-head" }, [
     el("div", { class: "lg-head-title" }, [el("div", { class: "go-kicker muted", text: kicker }), title]), controls || null]);
 
   function confChips(confs, current, onPick) {
@@ -3014,7 +3096,7 @@
       const rows = L[cat] || [];
       if (!rows.length) continue;
       const card = el("div", { class: "leader-card panel-2" });
-      const head = el("div", { class: "leader-head" }, [el("h4", { text: title }), el("span", { class: "muted small-text", text: "Full Table ›" })]);
+      const head = el("div", { class: "card-bar leader-head" }, [el("h4", { text: title }), el("span", { class: "muted small-text", text: "Full Table ›" })]);
       head.addEventListener("click", () => { ps.view = LEADER_TO_TABLE[cat] || cat; ps.sort = null; renderSeasonPlayerStats(); });
       card.append(head);
       rows.forEach((p, i) => {
@@ -3094,7 +3176,7 @@
       const players = (groups.get(label) || []).slice().sort((a, b) => b.starter - a.starter || b.overall - a.overall);
       if (!players.length) continue;
       const card = el("div", { class: "leader-card panel-2" });
-      card.append(el("div", { class: "leader-head" }, [el("h4", { text: label }), el("span", { class: "muted small-text", text: `${players.length} Players` }),
+      card.append(el("div", { class: "card-bar leader-head" }, [el("h4", { text: label }), el("span", { class: "muted small-text", text: `${players.length} Players` }),
         el("span", { class: "roster-ovr-head muted small-text" }, ["OVR", window.CFP.ui.tip(OVR_TIP, "Overall")])]));
       players.forEach((p, i) => {
         card.append(el("div", { class: `leader-row ${p.starter ? "top" : ""}` }, [
@@ -3713,7 +3795,7 @@
     let data;
     try { data = await api(`/api/season/${s.id}/rivalries`); } catch (err) { return; }
     if (!data.rivalries.length || !box.isConnected) return;
-    const card = el("div", { class: "review-card rivalries" }, [el("div", { class: "review-label", text: "Rivalries" })]);
+    const card = el("div", { class: "review-card rivalries" }, [el("div", { class: "card-bar review-label", text: "Rivalries" })]);
     const table = el("table", { class: "stats rivalry-table" });
     table.append(el("tr", {}, ["Rival", "Trophy", "This Season", "Series"].map((h, i) => el("th", { class: `left ${i === 1 ? "ph" : ""}`, text: h }))));
     for (const r of data.rivalries) {
@@ -3787,8 +3869,8 @@
     );
     const gameLine = (x) => el("span", {}, [x.venue === "away" ? "at " : x.venue === "neutral" ? "vs " : "vs ", x.rank_now ? el("span", { class: "rank", text: `#${x.rank_now} ` }) : null, teamPill(x.opp), x.opp_name, el("span", { class: "muted small-text", text: ` (${x.opp_record}) ${x.pf}–${x.pa}${x.rank_then && x.rank_then !== x.rank_now ? ` · #${x.rank_then} at the time` : ""}` })]);
     node.append(el("div", { class: "leaders-grid resume-grid" }, [
-      el("div", { class: "leader-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: "Best Win" })]), r.best_win ? gameLine(r.best_win) : el("span", { class: "muted", text: "No wins yet." })]),
-      el("div", { class: "leader-card" }, [el("div", { class: "leader-head" }, [el("h4", { text: "Worst Loss" })]), r.worst_loss ? gameLine(r.worst_loss) : el("span", { class: "muted", text: "Unbeaten." })]),
+      el("div", { class: "leader-card" }, [el("div", { class: "card-bar leader-head" }, [el("h4", { text: "Best Win" })]), r.best_win ? gameLine(r.best_win) : el("span", { class: "muted", text: "No wins yet." })]),
+      el("div", { class: "leader-card" }, [el("div", { class: "card-bar leader-head" }, [el("h4", { text: "Worst Loss" })]), r.worst_loss ? gameLine(r.worst_loss) : el("span", { class: "muted", text: "Unbeaten." })]),
     ]));
     const table = el("table", { class: "stats resume-games" });
     table.append(el("tr", {}, ["Wk", "Opponent", "Rank then", "Rank now", "Their record", "Result", ""].map((h, i) => el("th", { class: `${i === 1 ? "left" : ""} ${[2, 4].includes(i) ? "ph" : ""}`, text: h }))));

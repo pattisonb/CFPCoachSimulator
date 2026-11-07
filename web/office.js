@@ -41,6 +41,7 @@
   const winPct = (p) => Math.min(99, Math.max(1, Math.round(100 * Number(p))));
   const loading = (text) => el("p", { class: "muted go-loading", text });
   const kicker = (text, muted) => el("div", { class: `go-kicker${muted ? " muted" : ""}`, text });
+  const bar = (text, ...rest) => el("div", { class: "card-bar" }, [kicker(text), ...rest]);   // a card's header: the bar (styles.css .card-bar)
   function pill(slug, size) {
     const p = window.CFP.teamPill(slug);
     if (size) p.classList.add(`ofc-pill-${size}`);
@@ -114,8 +115,8 @@
     const card = el("section", { class: "go-card ofc-hero go-game-next", "aria-label": "Next Game", ...(color ? { style: `--ofc-team:${color}` } : {}) });
     if (!g) {
       const w = s.current_week + 1;
-      card.append(el("div", { class: "ofc-hero-head" }, [el("div", {}, [kicker(played ? result : `${weekName(s, w)}${((s.week_dates || {})[w] || {}).main ? ` · ${dateText(s.week_dates[w].main, s)}` : ""}`),
-        el("div", { class: "ofc-title", text: played ? "Next Game Not Set Yet" : "No Game This Week" })])]),
+      card.append(el("div", { class: "card-bar ofc-hero-head" }, [kicker(played ? result : `${weekName(s, w)}${((s.week_dates || {})[w] || {}).main ? ` · ${dateText(s.week_dates[w].main, s)}` : ""}`)]),
+        el("div", { class: "ofc-title", text: played ? "Next Game Not Set Yet" : "No Game This Week" }),
         el("p", { class: "muted ofc-hero-note", text: played ? "Advance the week: everyone else plays, then what comes next is set." : w > 14 ? "Your games are done for now: the rest of the postseason plays on." : "A week off: recruit, then sim the week." }),
         playRow(s));
       return card;
@@ -123,15 +124,13 @@
     const bye = !thisWeek && !played;
     const k = `${played ? `${result} · Next Game · ` : bye ? "Bye This Week · Next Game · " : ""}${weekName(s, g.week)}${g.date ? ` · ${dateText(g.date, s)}` : ""}`;
     const name = g.title || (g.rivalry && g.rivalry.name) || null;
-    const head = el("div", { class: "ofc-hero-head" }, [
-      el("div", { class: "ofc-hero-when" }, [kicker(k), name ? el("div", { class: "ofc-title", text: name }) : null,
-        g.site ? el("div", { class: "muted small ofc-site", text: g.site }) : null]),
-      el("span", { class: "ofc-chip go-venue", text: VENUE[g.venue] || "Home Game" })]);
+    const head = el("div", { class: "card-bar ofc-hero-head" }, [el("div", { class: "ofc-hero-when" }, [kicker(k)]), el("span", { class: "ofc-chip go-venue", text: VENUE[g.venue] || "Home Game" })]);
+    const title = (name || g.site) ? el("div", { class: "ofc-hero-name" }, [name ? el("div", { class: "ofc-title", text: name }) : null, g.site ? el("div", { class: "muted small ofc-site", text: g.site }) : null]) : null;
     const myRank = s.my_rank && s.my_rank.rank;
     const match = el("div", { class: "ofc-match go-sides" }, [side(s.team, s.team_name, myRank, recText(s.record), true),
       el("span", { class: "ofc-vs go-vs", text: g.venue === "away" ? "at" : "vs" }),
       side(g.opponent, g.opponent_name, g.opponent_rank, g.opponent_record, false)]);
-    card.append(head, match);
+    card.append(head, ...(title ? [title] : []), match);
     if (thisWeek) {
       const edge = el("div", { class: "go-edge ofc-edge" }, [el("span", { class: "muted small", text: "Scouting the matchup…" })]);
       card.append(edge);
@@ -157,9 +156,8 @@
     const color = team(s.team).colors && team(s.team).colors.primary;
     const stage = s.offseason_stage && STAGE_NAMES[s.offseason_stage];
     return el("section", { class: "go-card ofc-hero ofc-done", "aria-label": "Season Complete", ...(color ? { style: `--ofc-team:${color}` } : {}) }, [
-      el("div", { class: "ofc-hero-head" }, [el("div", {}, [kicker(`Season Complete · ${s.year || ""}`.trim()),
-        el("div", { class: "go-display xl ofc-done-title", text: s.champion_name ? `${s.champion_name} Won It All` : "That's a Wrap" })]),
-        el("span", { class: "ofc-chip", text: stage ? `Offseason · ${stage}` : "Offseason" })]),
+      el("div", { class: "card-bar ofc-hero-head" }, [kicker(`Season Complete · ${s.year || ""}`.trim()), el("span", { class: "ofc-chip", text: stage ? `Offseason · ${stage}` : "Offseason" })]),
+      el("div", { class: "go-display xl ofc-done-title", text: s.champion_name ? `${s.champion_name} Won It All` : "That's a Wrap" }),
       el("div", { class: "ofc-match ofc-match-one" }, [side(s.team, s.team_name, s.my_rank && s.my_rank.rank, recText(s.record), true)]),
       el("p", { class: "muted ofc-hero-note", text: "The offseason is next: departures, the transfer portal, your staff and your meeting with the AD." }),
       el("div", { class: "go-play ofc-play" }, [el("button", { type: "button", class: "go-btn primary big ofc-go", text: "On to the Offseason →", onclick: () => H.onChange("offseason") })])]);
@@ -171,7 +169,7 @@
     const full = g.has_box && g.event_id ? el("button", { type: "button", class: "go-btn go-full-box", text: "Full Box Score" }) : null;
     if (full) ui().on(full, "click", () => H.openBox(g.event_id));
     const card = el("section", { class: "go-card go-game go-game-last", "aria-label": "Last Game" }, [
-      el("div", { class: "go-game-head" }, [kicker(`Last Game · ${weekName(s, g.week)}`), full]),
+      el("div", { class: "card-bar go-game-head" }, [kicker(`Last Game · ${weekName(s, g.week)}`), full]),
       el("div", { class: "go-final ofc-score" }, [pill(s.team, "m"),
         el("span", { class: "ofc-score-mid" }, [el("span", { class: `go-result ${g.won ? "good" : "bad"}`, text: g.won ? "W" : "L" }),
           el("span", { class: "ofc-big go-final-score", text: scoreText(g.points_for, g.points_against) })]),
@@ -234,7 +232,7 @@
   // ----- This Week's Plan ------------------------------------------------------------------------------
   function planCard(s, steps) {
     const act = { recruit: () => H.onChange("recruiting"), gameday: () => H.play("gameday"), advance: () => H.play("advance") };
-    return el("section", { class: "go-card ofc-plan", "aria-label": "This Week's Plan" }, [kicker("This Week's Plan"),
+    return el("section", { class: "go-card ofc-plan", "aria-label": "This Week's Plan" }, [bar("This Week's Plan"),
       el("ol", { class: "ofc-steps" }, steps.map((x, i) => el("li", {}, [el("button", { type: "button", class: `ofc-step ${x.state}`, "data-step": x.key,
         ...(x.state === "now" ? { "aria-current": "step" } : {}), onclick: act[x.key] }, [
         el("span", { class: "ofc-step-h" }, [el("span", { class: "ofc-dot", "aria-hidden": "true", text: x.done ? "✓" : String(i + 1) }), el("b", { text: x.title })]),
@@ -257,7 +255,7 @@
       n.reason ? el("span", { class: "muted small", text: ` ${n.reason}` }) : null];
   }
   function newsCard(s, items) {
-    const card = el("section", { class: "go-card ofc-news", "aria-label": "Program News" }, [kicker("Program News")]);
+    const card = el("section", { class: "go-card ofc-news", "aria-label": "Program News" }, [bar("Program News")]);
     if (!items) { card.append(loading("Loading the news…")); return card; }
     if (!items.length) { card.append(el("p", { class: "muted", text: "No program news yet. Results and recruiting moves show here as the weeks go." })); return card; }
     card.append(el("ul", { class: "ofc-feed" }, items.map((n) => el("li", {}, [el("span", { class: "ofc-feed-text" }, newsLine(s, n)),
@@ -266,7 +264,7 @@
   }
   function confCard(s, c) {
     const name = c ? confShort(c.name) : confShort(s.conference);
-    const card = el("section", { class: "go-card ofc-conf", "aria-label": `Around the ${name}` }, [kicker(`Around the ${name}`)]);
+    const card = el("section", { class: "go-card ofc-conf", "aria-label": `Around the ${name}` }, [bar(`Around the ${name}`)]);
     if (!c) { card.append(loading("Loading the scores…")); return card; }
     if (!c.games.length) card.append(el("p", { class: "muted", text: "No results yet. The scores show here after the first games." }));
     else card.append(el("ul", { class: "ofc-results" }, c.games.map((g) => {
@@ -310,7 +308,7 @@
       el("span", { class: "ofc-kv-line ofc-goal" }, [el("b", { text: job.goal }),
         el("span", { class: `go-tag ${job.security < 40 ? "bad" : job.security < 65 ? "warn" : "good"}`, text: `${job.mood}${job.ultimatum ? " · Ultimatum Year" : ""}` })]));
     const rank = s.my_rank && s.my_rank.rank;
-    return el("section", { class: "go-card ofc-pulse", "aria-label": "Program Pulse" }, [kicker("Program Pulse"),
+    return el("section", { class: "go-card ofc-pulse", "aria-label": "Program Pulse" }, [bar("Program Pulse"),
       el("div", { class: "ofc-pulse-grid" }, [
         el("div", { class: "ofc-pulse-main" }, [el("div", { class: "ofc-big", text: recText(s.record) }),
           el("div", { class: "go-standing-line", "aria-label": "Your standing" }),
@@ -318,7 +316,7 @@
         el("div", { class: "ofc-kv" }, kv)])]);
   }
   function recruitCard(s, v) {
-    const card = el("section", { class: "go-card ofc-recruit", "aria-label": "Recruiting Pulse" }, [kicker("Recruiting Pulse")]);
+    const card = el("section", { class: "go-card ofc-recruit", "aria-label": "Recruiting Pulse" }, [bar("Recruiting Pulse")]);
     if (!v) { card.append(loading("Loading recruiting…")); return card; }
     const row = (val, label) => el("span", {}, [el("b", { text: val }), ` ${label}`]);
     card.append(el("div", { class: "ofc-pulse-grid" }, [
@@ -329,8 +327,7 @@
     return card;
   }
   function targetsCard(s, v) {
-    const card = el("section", { class: "go-card ofc-targets", "aria-label": "Top Targets" }, [el("div", { class: "go-card-head" }, [kicker("Top Targets"),
-      el("button", { type: "button", class: "go-link ofc-board", text: "Board →", onclick: () => H.onChange("recruiting") })])]);
+    const card = el("section", { class: "go-card ofc-targets", "aria-label": "Top Targets" }, [bar("Top Targets", el("button", { type: "button", class: "go-link ofc-board", text: "Board →", onclick: () => H.onChange("recruiting") }))]);
     if (!v) { card.append(loading("Loading your board…")); return card; }
     const list = (v.targets && v.targets.length ? v.targets : (v.board || []).filter((b) => !b.committed && !b.signed)).slice(0, 4);
     if (!list.length) { card.append(el("p", { class: "muted", text: "Add prospects to your board and your top targets show here." })); return card; }
@@ -360,25 +357,23 @@
         el("span", { class: "go-display m", text: final ? "National Signing Day Is Done" : "The Early Signing Period Is Done" }),
         el("span", { text: final ? "Every class is signed. See how yours ranks →" : "Commitments signed in December. See every school's class →" })]));
     }
-    const main = el("div", { class: "ofc-main" }), sideCol = el("div", { class: "ofc-side" });
-    page.append(el("div", { class: "ofc-grid" }, [main, sideCol]));
-
-    main.append(heroCard(s, games));
+    const grid = el("div", { class: "ofc-grid" });
+    page.append(grid);
+    // row by row: Next Game beside Program Pulse; Last Game and This Week's Plan beside Recruiting Pulse; What Changed
+    // across; Program News, Around the Conference and Top Targets as one row (office.css lays the grid out)
+    const pulse = pulseCard(s, games);
+    grid.append(heroCard(s, games), pulse);
     const row1 = el("div", { class: "ofc-row" });
     if (games.last) row1.append(lastGameCard(s, games.last));
-    const planSlot = s.done ? null : el("section", { class: "go-card ofc-plan", "aria-label": "This Week's Plan" }, [kicker("This Week's Plan"), loading("Loading your week…")]);
+    const planSlot = s.done ? null : el("section", { class: "go-card ofc-plan", "aria-label": "This Week's Plan" }, [bar("This Week's Plan"), loading("Loading your week…")]);
     if (planSlot) row1.append(planSlot);
-    if (row1.children.length) main.append(row1);
-    const reportSlot = el("div", { class: "ofc-report-slot" });
-    main.append(reportSlot);
-    const row2 = el("div", { class: "ofc-row" });
-    let news = newsCard(s, null), conf = confCard(s, null);
-    row2.append(news, conf);
-    main.append(row2);
-
-    const pulse = pulseCard(s, games);
     let recruit = recruitCard(s, null), targets = targetsCard(s, null);
-    sideCol.append(pulse, recruit, targets);
+    if (row1.children.length) grid.append(row1);
+    grid.append(recruit);
+    const reportSlot = el("div", { class: "ofc-report-slot" });
+    grid.append(reportSlot);
+    let news = newsCard(s, null), conf = confCard(s, null);
+    grid.append(news, conf, targets);
 
     // the reads land in place: each card swaps its loading line for the real one
     // (a card that grows or shrinks as it fills eases to its height: the column under it slides, never jumps)
@@ -389,7 +384,7 @@
       const line = pulse.querySelector(".go-standing-line");
       line.textContent = standingText(s, o.conference);
     }).catch((err) => {
-      news = swap(news, el("section", { class: "go-card ofc-news" }, [kicker("Program News"), el("p", { class: "muted", text: `Could not load the news: ${H.errText(err)}` })]));
+      news = swap(news, el("section", { class: "go-card ofc-news" }, [bar("Program News"), el("p", { class: "muted", text: `Could not load the news: ${H.errText(err)}` })]));
       conf.querySelector(".go-loading")?.remove();
     });
     let v;

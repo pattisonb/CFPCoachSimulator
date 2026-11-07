@@ -83,6 +83,23 @@ def events(st: dict, pid: str, kind: str) -> list[dict]:
     return [e for e in st["recruiting"]["log"] if e["pid"] == pid and e["kind"] == kind]
 
 
+def package(st: dict, pid: str, mate: str, decider: str = "mom") -> None:
+    """A Package Deal pair, set on both (his persona: the story and who decides at his visit)."""
+    for a, b, lead in ((pid, mate, True), (mate, pid, False)):
+        st["recruiting"]["prospects"][a]["persona"] = {"personality": "cocky", "decider": decider if lead else "self", "decider_topic": "proximity" if lead and decider != "self" else None,
+                                                       "story": "package", "story_data": {"mate": b, "lead": lead}, "commit_style": "hat"}
+
+
+def visit(sid: str, pid: str) -> dict:
+    """An in-home visit, presented with three topics that are not his (as `call`)."""
+    st = api.loaded_state()
+    st["recruiting"]["hours"][ME] = 100
+    sc = R(sid, "recruit", {"pid": pid, "action": "hc_visit"})["scene"]
+    assert sc["question"] is None
+    misses = [t for t in recruiting.PITCHES if not persona.counts_as_priority(st, pid, t)][:3]
+    return R(sid, "recruit", {"pid": pid, "action": "present", "scene": sc["id"], "topics": misses})["scene"]
+
+
 if __name__ == "__main__":
     import shutil
     import tempfile
@@ -282,6 +299,121 @@ if __name__ == "__main__":
             assert rc["status"][pid9]["firmness"] == recruiting.HARD_AT and not events(st, pid9, "promise_broken")
         finally:
             recruiting._returning = returning
+
+        # ----- the Package Deal: his mate comes up, and the question is about him -----
+        assert (recruiting.PACKAGE_OFFERED, recruiting.PACKAGE_PROMISE_WEEKS, recruiting.PACKAGE_KEPT) == (1.0, 2, 2.0)
+        assert scenes.PACKAGE_ANSWERS[False]["straight"] == ("Tell Him Straight", "I can't promise {mate} a spot today. I'll look at him.")
+        assert scenes.PACKAGE_ANSWERS[False]["promise"] == ("Promise Him an Offer", "{mate} gets an offer this week. You have my word.")
+        assert scenes.PACKAGE_ANSWERS[True]["straight"] == ("Already Offered Him", "I offered {mate} already. Two spots, both yours.")
+        assert scenes.PACKAGE_ANSWERS[True]["deflect"] == scenes.PACKAGE_ANSWERS[False]["deflect"] == ("Sidestep It", "Let's talk about what you'd bring.")
+        pa, ma = cold(st, False, used), cold(st, False, used)            # no playing-time priority: the package question needs none
+        package(st, pa, ma, "mom")
+        mname = rc["prospects"][ma]["name"]
+        f = scenes._fields(st, ME, rc["prospects"][pa], week)
+        rc["hours"][ME] = 100
+        sc_a = R(sid, "recruit", {"pid": pa, "action": "hc_visit"})["scene"]
+        fam = [t for t in sc_a["turns"] if t["who"] == "family"]
+        assert fam and fam[0]["text"] in [x.format(**f) for x in persona.STORY_LINES["package"]["family"]], fam
+        assert sc_a["package"] == {"pid": ma, "name": mname, "offered": False}, sc_a["package"]
+        misses = [t for t in recruiting.PITCHES if not persona.counts_as_priority(st, pa, t)][:3]
+        sc_a = R(sid, "recruit", {"pid": pa, "action": "present", "scene": sc_a["id"], "topics": misses})["scene"]
+        qa = sc_a["question"]
+        assert qa["kind"] == "package" and qa["about"] == {"pid": ma, "name": mname, "offered": False}, qa
+        assert qa["text"] in [x.format(mate=mname) for x in scenes.QUESTION_LINES["package"]], qa["text"]
+        assert [qa["answers"][k]["label"] for k in scenes.ANSWERS] == ["Tell Him Straight", "Promise Him an Offer", "Sidestep It"]
+        assert qa["answers"]["promise"]["text"] == f"{mname} gets an offer this week. You have my word."
+        assert qa["answers"]["straight"]["text"] == f"I can't promise {mname} a spot today. I'll look at him."
+        r = answer(sid, pa, sc_a, "promise")
+        assert r["points"] == 0 and r["truthful"] is None and r["scene"]["question"]["reply"] == "Then we'll be watching for it."
+        pr_a = rc["contacts"][pa][ME]["promises"][0]
+        assert pr_a["kind"] == "package" and pr_a["about"]["pid"] == ma and pr_a["week"] == week and pr_a["kept"] is None and pr_a["broken"] is None
+        ev = events(st, pa, "answer")[-1]
+        assert ev["question"] == "package" and ev["offered"] is False and ev["answer"] == "promise" and ev["about"] == mname
+        recruiting._promises(st, week)
+        assert pr_a["kept"] is None and pr_a["broken"] is None and not events(st, pa, "promise_kept")
+        # you offer his mate the next week: kept, a few points on his list, his line
+        before = rc["lists"][pa].get(ME, 0.0)
+        rc["hours"][ME] = 100
+        R(sid, "recruit", {"pid": ma, "action": "offer", "pitch": "winning"})
+        recruiting._promises(st, week + 1)
+        assert pr_a["kept"] == week + 1 and pr_a["broken"] is None
+        assert abs(rc["lists"][pa][ME] - before - recruiting.PACKAGE_KEPT) < 1e-9
+        pk = events(st, pa, "promise_kept")
+        assert len(pk) == 1 and pk[0]["about"] == mname and pk[0]["line"] == f"{mname} got his offer. You kept your word, Coach." and pk[0]["school"] == ME
+        recruiting._promises(st, week + 5)
+        assert len(events(st, pa, "promise_kept")) == 1 and not events(st, pa, "promise_broken"), "kept once, never broken"
+        assert "promise_kept" in recruiting.REPORT_KINDS
+        # a promise with no offer behind it: broken after PACKAGE_PROMISE_WEEKS, he cools on you
+        pb_, mb = cold(st, False, used), cold(st, False, used)
+        package(st, pb_, mb, "self")                                   # he decides himself: his own line brings his mate up
+        sc_b = visit(sid, pb_)
+        mb_name = rc["prospects"][mb]["name"]
+        f = scenes._fields(st, ME, rc["prospects"][pb_], week)
+        assert any(t in [x.format(**f) for x in persona.STORY_LINES["package"]["him"]] for t in sc_b["lines"]), sc_b["lines"]
+        assert sc_b["question"]["kind"] == "package" and sc_b["question"]["about"]["pid"] == mb
+        answer(sid, pb_, sc_b, "promise")
+        for w in range(week, week + recruiting.PACKAGE_PROMISE_WEEKS):
+            recruiting._promises(st, w)
+            assert not events(st, pb_, "promise_broken") and "cooled_until" not in rc["contacts"][pb_][ME], w
+        broke = week + recruiting.PACKAGE_PROMISE_WEEKS
+        recruiting._promises(st, broke)
+        pb_ev = events(st, pb_, "promise_broken")
+        assert len(pb_ev) == 1 and pb_ev[0]["about"] == mb_name and pb_ev[0]["why"] == "package" and pb_ev[0]["other"] == mb, pb_ev
+        assert rc["contacts"][pb_][ME]["cooled_until"] == broke + recruiting.COOL_WEEKS
+        assert rc["contacts"][pb_][ME]["promises"][0]["broken"] == broke
+        recruiting._promises(st, broke + 1)
+        assert len(events(st, pb_, "promise_broken")) == 1
+        # committed to you when it breaks: his firmness drops instead
+        pc, mc = cold(st, False, used), cold(st, False, used)
+        package(st, pc, mc, "dad")
+        sc_c = visit(sid, pc)
+        assert sc_c["question"]["kind"] == "package"
+        answer(sid, pc, sc_c, "promise")
+        recruiting._commit(st, pc, ME)
+        firm0 = rc["status"][pc]["firmness"]
+        recruiting._promises(st, week + recruiting.PACKAGE_PROMISE_WEEKS)
+        assert rc["status"][pc]["firmness"] == max(0, firm0 - recruiting.PROMISE_RIVAL) and len(events(st, pc, "promise_broken")) == 1
+        # his mate already holds your offer: the family's line says so, and Already Offered Him earns the bonus
+        pd_, md = cold(st, False, used), cold(st, False, used)
+        package(st, pd_, md, "mom")
+        md_name = rc["prospects"][md]["name"]
+        rc["hours"][ME] = 100
+        R(sid, "recruit", {"pid": md, "action": "offer", "pitch": "winning"})
+        rc["hours"][ME] = 100
+        sc_d = R(sid, "recruit", {"pid": pd_, "action": "hc_visit"})["scene"]
+        f = scenes._fields(st, ME, rc["prospects"][pd_], week)
+        fam = [t for t in sc_d["turns"] if t["who"] == "family"]
+        assert fam[0]["text"] in [x.format(**f) for x in persona.STORY_LINES_OFFERED["package"]["family"]], fam
+        assert "You offered {mate} too. That means a lot in this house." in persona.STORY_LINES_OFFERED["package"]["family"]
+        assert sc_d["package"]["offered"] is True
+        misses = [t for t in recruiting.PITCHES if not persona.counts_as_priority(st, pd_, t)][:3]
+        sc_d = R(sid, "recruit", {"pid": pd_, "action": "present", "scene": sc_d["id"], "topics": misses})["scene"]
+        qd = sc_d["question"]
+        assert qd["kind"] == "package" and qd["about"]["offered"] is True
+        assert qd["text"] in [x.format(mate=md_name) for x in scenes.QUESTION_LINES["package_offered"]], qd["text"]
+        assert qd["answers"]["straight"] == {"label": "Already Offered Him", "text": f"I offered {md_name} already. Two spots, both yours."}
+        assert qd["answers"]["deflect"]["label"] == "Sidestep It"
+        known_d = list((rc["revealed"].get(ME) or {}).get(pd_) or [])
+        r = answer(sid, pd_, sc_d, "straight")
+        assert r["points"] == recruiting.ANSWER_STRAIGHT + recruiting.PACKAGE_OFFERED and r["revealed"] == [] and r["truthful"] is None
+        assert r["scene"]["question"]["reply"] == "That's all we needed to hear, Coach."
+        assert list((rc["revealed"].get(ME) or {}).get(pd_) or []) == known_d, "about his mate, not playing time"
+        ev = events(st, pd_, "answer")[-1]
+        assert ev["question"] == "package" and ev["offered"] is True and ev["answer"] == "straight"
+        assert not rc["contacts"][pd_][ME].get("promises")
+        # not offered, told straight: nothing either way; a sidestep the same
+        pe, me_ = cold(st, False, used), cold(st, False, used)
+        package(st, pe, me_, "mom")
+        sc_e = visit(sid, pe)
+        r = answer(sid, pe, sc_e, "straight")
+        assert r["points"] == 0 and r["scene"]["question"]["reply"] == scenes.REPLY_LINES["straight"] and not rc["contacts"][pe][ME].get("promises")
+        # his mate signed elsewhere: no package question (his story line still plays)
+        pf, mf = cold(st, False, used), cold(st, False, used)
+        package(st, pf, mf, "mom")
+        rc["status"][mf]["signed"] = "ohio-state"
+        rc["hours"][ME] = 100
+        sc_f = R(sid, "recruit", {"pid": pf, "action": "hc_visit"})["scene"]
+        assert sc_f["package"] is None
 
         # ----- the week advancing with an open question: the scene goes, no promise is recorded -----
         pid10 = None

@@ -121,6 +121,11 @@ DEV_RATE = 0.75                                    # coachability's pace on our 
 # real players gain little in their first offseasons and most in their third and fourth (the real rosters
 # by years in college: four-stars +1, +1, +5.5): the pace by seasons already played in the program *tune*
 YEAR_CURVE = (0.45, 0.7, 1.35, 1.35, 1.0)
+# ... but a season as a starter is a full year of learning whatever his class: a freshman or sophomore who
+# played at least half his team's games (production rated against the average starter: _performance's z)
+# develops at this pace or his year's, whichever is more (a true freshman quarterback who threw for 3,400
+# yards gained one point on 0.45) *tune*
+STARTER_YEAR = 1.0
 # the best get better slowest: above DEV_TOP (card overall) a player's pace is divided by 1 + his points over
 # it / DEV_TOP_SPAN, so the real rosters' top juniors (fast learners with big rooms and big seasons) do not
 # all become 85+ seniors: a career's senior classes keep the real 2026 seniors' top end (tests/test_progression_realism.py) *tune*
@@ -414,7 +419,8 @@ REASONS = {"buried": "Buried on the depth chart behind {ahead}", "snaps": "Wants
            "losing": "A losing year", "move_up": "A Power 4 program is calling", "restless": "Restless: no starting role in sight",
            "deal": "Chasing a bigger NIL deal", "last_year": "One year left and he wants a bigger stage", "fresh_start": "Wants a fresh start",
            "draft": "Projects as a round {round} pick", "declared": "Believes he is ready for the NFL",
-           "better_coach": "Wants a better coach", "slipping": "The program is slipping"}
+           "better_coach": "Wants a better coach", "slipping": "The program is slipping",
+           "promised": "Was promised a starting role and did not get it"}
 
 
 def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict]:
@@ -442,6 +448,8 @@ def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict
         if intent == "draft":
             key = "draft" if proj else "declared"
             ahead = None
+        elif item.get("driver") == "promised":
+            key, ahead = "promised", None                          # the promise he was given is why he goes, before his role
         elif use == "bench" and peers and peers[0]["id"] != p["id"]:
             key, ahead = "buried", peers[0]["n"]
         elif use == "rotation":
@@ -780,8 +788,9 @@ def _program_context(lgd: dict, slug: str, losing: bool, p4: bool, shifts: dict)
 
 def portal_odds(p: dict, use: str, ctx: dict) -> list[tuple[str, float]]:
     """A player's portal chance this offseason as segments that add up to it, each with its driver:
-    "role" (his class, his role, a losing year, a Group of 5 standout moving up, a promise broken,
-    a keep last year), "deal" (NIL under his market at his program's tier), "slipping" or
+    "role" (his class, his role, a losing year, a Group of 5 standout moving up, a keep last year),
+    "promised" (a starting role promised, at Keep Them Home or as a recruit, that he did not get: the
+    rest of PROMISE_BROKEN times), "deal" (NIL under his market at his program's tier), "slipping" or
     "better_coach" (PROGRAM_PULL). One draw against the sum; the segment it lands in is why."""
     from coach_career import recruiting
     year = ctx["year"]
@@ -790,11 +799,12 @@ def portal_odds(p: dict, use: str, ctx: dict) -> list[tuple[str, float]]:
     if not ctx["p4"] and ovr >= TRANSFER_UP_FROM:
         base = max(base, TRANSFER_UP)                           # a Group of 5 standout moves up
     kept = p.get("kept") == year - 1
-    if p.get("promised") == year - 1 and use != "starter":
-        base *= PROMISE_BROKEN                                  # promised a starting role and did not get it
-    elif kept:
+    broken = p.get("promised") == year - 1 and use != "starter"   # promised a starting role (Keep Them Home, or as a recruit) and did not get it
+    if kept and not broken:
         base *= KEPT_STAY
     parts = [("role", base)]
+    if broken:
+        parts.append(("promised", base * (PROMISE_BROKEN - 1)))   # its own segment: when the draw lands here the promise is why he goes
     if use in ("starter", "rotation") and not kept:              # a kept player was paid this year
         market = recruiting.market_value(p["pos"], ovr)
         shortfall = market - NIL_TIER_PAY.get(ctx["tier"], NIL_TIER_PAY[5])
@@ -1464,6 +1474,9 @@ def _close_portal(state: dict) -> None:
         team = lgd["teams"][school]
         p["j"] = _jersey(team["roster"], p["pos"], rng)
         p["transfer"] = e["from"]
+        contact = (rc.get("contacts") or {}).get(pid, {}).get(school) or {}
+        if any(pr["kind"] == "roster" for pr in contact.get("promises") or ()):
+            p["promised"] = lgd["year"]                    # told the job was his in the portal: the same promise a signed recruit carries (PROMISE_BROKEN reads it)
         if not st_.get("signed"):
             p["walk_on"] = p["preferred"] = True
             st_["signed"] = school
@@ -1589,10 +1602,17 @@ def _coach_title(coaches: dict, pos: str) -> str:
     return f"Coach {last[-1]}" if last else "His Coaches"
 
 
-def develop(p: dict, attrs: list[str], factor: float, rng: random.Random) -> int:
+def year_pace(p: dict, starter: bool = False) -> float:
+    """His pace by seasons in college (YEAR_CURVE), lifted to STARTER_YEAR after a season as a starter."""
+    pace = YEAR_CURVE[min(len(YEAR_CURVE) - 1, int(p.get("yrs") or 0))]
+    return max(pace, STARTER_YEAR) if starter else pace
+
+
+def develop(p: dict, attrs: list[str], factor: float, rng: random.Random, starter: bool = False) -> int:
     """One offseason's growth on our scale: each skill closes part of its gap to potential at his
-    coachability's rate times `factor`; his overall follows (our formula). Returns the overall gained."""
-    rate = recruits.RATE.get(p.get("c"), 0.27) * factor * DEV_RATE * YEAR_CURVE[min(len(YEAR_CURVE) - 1, int(p.get("yrs") or 0))]
+    coachability's rate times `factor` and his year's pace (`starter`: he played a starter's season,
+    year_pace); his overall follows (our formula). Returns the overall gained."""
+    rate = recruits.RATE.get(p.get("c"), 0.27) * factor * DEV_RATE * year_pace(p, starter)
     rate /= 1 + max(0, p["o"] - DEV_TOP) / DEV_TOP_SPAN       # the last points come slowest (DEV_TOP)
     rate *= DEV_PACE.get(DRAFT_GROUP.get(p["pos"], ""), 1.0)  # ... and by position (DEV_PACE)
     rate = min(DEV_YEAR_CAP, rate)                            # no offseason closes more than half his room (DEV_YEAR_CAP)
@@ -1854,7 +1874,10 @@ def _develop_all(state: dict) -> dict:
                     p["c"] = new
                     why.append(coachability_note(new, case, _coach_title(t["coaches"], p["pos"])))
                     moves["down" if case == "benched" else "up"] += 1
-            g = develop(p, attrs, coach_factor(t["coaches"], p["pos"]) * mult * program_factor(state, slug), rng)
+            starter = (perf.get(p["id"]) or {}).get("z") is not None
+            if starter and year_pace(p, True) > year_pace(p):
+                why.append(f"Started as a {'freshman' if int(p.get('yrs') or 0) == 0 else 'sophomore'}")
+            g = develop(p, attrs, coach_factor(t["coaches"], p["pos"]) * mult * program_factor(state, slug), rng, starter)
             p["yrs"] = p.get("yrs", 0) + 1
             gains.append(g)
             if slug == state["team"]:
@@ -2534,6 +2557,34 @@ def portal_away(state: dict) -> list[dict]:
     return sorted(out.values(), key=lambda r: (-(r["week"] or 0), -r["overall"]))
 
 
+def portal_board(state: dict) -> dict:
+    """Your portal board for the offseason page's compact card: how many entrants are on it and each
+    one as a short line with what the board's standing ladder reads (his list, your offer, where he
+    stands, whether you have room), so the page's chip agrees with the Recruiting tab. The week he
+    signed (`signed_week`) comes from the log; an unsigned entrant has no known decision week."""
+    from coach_career import prospects, recruiting
+    rc = state.get("recruiting") or {}
+    me = state["team"]
+    portal = state["offseason"]["portal"]
+    offers = rc.get("offers", {}).get(me, [])
+    signed_week = {e["pid"]: e.get("portal_week") for e in rc.get("log", []) if e["kind"] == "signed"}
+    rows = []
+    for pid in rc.get("board") or []:
+        e = portal["players"].get(pid)
+        st = rc["status"].get(pid)
+        if not e or not st:
+            continue
+        p = e["player"]
+        seen = prospects.seen_status(state, pid, me)
+        rows.append({"id": pid, "name": p["n"], "pos": p["pos"], "overall": house(p["pos"], p["o"]), "portal_rank": rc["prospects"][pid].get("portal_rank"),
+                     "offered": pid in offers, "signed": seen["signed"], "committed": seen["committed"],
+                     "hard": bool(seen.get("hard")) and not seen["signed"],
+                     "list": [dict(x, you=x["school"] == me) for x in prospects._schools(state, pid, me)[:5]],
+                     "standing": prospects.standing(state, pid, me), "no_room": recruiting.no_room(state, me, pid),
+                     "signed_week": signed_week.get(pid) if seen["signed"] else None})
+    return {"count": len(rows), "rows": rows}
+
+
 def _portal_recap(state: dict) -> Optional[dict]:
     """After the portal closes: who you got out of it (and where from), who you lost to it (where he
     went and why he left, from the retention step), against the whole portal's numbers. None before
@@ -2638,6 +2689,7 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
                                    else max(0, math.ceil(PORTAL_OFFER_FACTOR * my_spots(lgd, me, portal)) - len(portal["offers"].get(me, [])))),
                    "moves_mine": my_moves,
                    "away": portal_away(state) if new_portal else [],
+                   "board": portal_board(state) if new_portal and off["stage"] in PORTAL_STAGES else None,
                    "rows": portal_rows(state, position, status) if off["stage"] in ("portal_1", "portal_2") else []},
         "portal_recap": _portal_recap(state),
         "report": off.get("report") and {"mine": off["report"]["development"]["mine"][:25],

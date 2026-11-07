@@ -3,7 +3,7 @@ browser at 1280 and 400 px in the light and the dark theme: the header (Prospect
 class by star level, all read from the API's summary); Your Needs chips (the count still to fill, ✓ when covered; a
 tap filters the list to the position); the filters still filter (stars, position, status, search, Recommended for You,
 the sort) and live in the address, a refresh keeping them; the table's columns (Pos is the game's position, Potential
-your staff's read or Unscouted, never the truth); + Board patches the row and the footprint's count in place (the table
+your staff's read or Not Read, with Scouted beside it, never the truth); + Board and a Send a Scout patch the row and the footprint's count in place (the table
 is never redrawn) and ✓ On Board takes him off again; Your Footprint is the game's US map with the API's counts and
 View Map opens the full map; Class Outlook is your commits of the spots and by star level as plain counts (no targets);
 Top Uncommitted is the class's best three without a commitment, and View All lists the uncommitted; a row opens the
@@ -143,20 +143,21 @@ def check_filters(page, base, sid, errors) -> None:
 
 def check_table(page, base, sid, errors) -> None:
     heads = page.eval_on_selector_all("#tab-prospects .pr-table thead th", "els => els.map(e => e.textContent)")
-    assert heads == ["#", "Prospect", "Pos", "Ht", "Wt", "Stars", "Status", "Interest in You", "Potential", "Board"], heads
+    assert heads == ["#", "Prospect", "Pos", "Ht", "Wt", "Stars", "Status", "Interest in You", "Scouted", "Potential", "Board"], heads
     rows = api(base, sid)["rows"]
     cells = page.eval_on_selector_all(ROWS, """els => els.map(e => ({id: e.dataset.key, rank: e.querySelector('.pr-c-rank').textContent,
       name: e.querySelector('.go-list-id b').textContent, pos: e.querySelector('.pr-c-pos').textContent, status: e.querySelector('.pr-c-status').textContent,
-      int: e.querySelector('.pr-c-int').textContent, pot: e.querySelector('.pr-c-pot').textContent, act: e.querySelector('.pr-c-act').textContent}))""")
+      int: e.querySelector('.pr-c-int').textContent, sc: e.querySelector('.pr-c-sc').textContent, pot: e.querySelector('.pr-c-pot').textContent, act: e.querySelector('.pr-c-act').textContent}))""")
     assert [c["id"] for c in cells] == [r["id"] for r in rows]
     for c, r in zip(cells, rows):
         assert c["rank"] == f"#{r['national_rank']}" and c["name"] == r["name"]
         assert c["pos"] == r["display_pos"], (c["pos"], r["display_pos"], r["ea_position"])
         assert c["int"] == r["interest_level"] and c["int"] in ("High", "Medium", "Low")
-        p = r["our_potential"]
-        assert c["pot"] == ("Unscouted" if not p else p[0] if p[0] == p[1] else f"{p[0]} – {p[1]}"), (c["pot"], p)
+        p, looks = r["our_potential"], r["looks"]
+        assert c["pot"] == ("Not Read" if not p else p[0] if p[0] == p[1] else f"{p[0]} – {p[1]}"), (c["pot"], p)
+        assert c["sc"] == ("Fully Scouted" if looks >= 3 else f"{looks} of 3 Looks" if looks else "Not Yet"), (c["sc"], looks)
         assert c["act"] == ("✓ On Board" if r["on_board"] else "+ Board")
-    assert any(c["pot"] == "Unscouted" for c in cells) and any(c["pot"] != "Unscouted" for c in cells), "scouted and unscouted rows both show"
+    assert any(c["pot"] == "Not Read" and c["sc"] == "Not Yet" for c in cells) and any(c["sc"] == "Fully Scouted" and c["pot"] != "Not Read" for c in cells), "scouted and unscouted rows both show"
     st = {c["status"] for c in cells}
     assert "Uncommitted" in st and any(s.startswith("Verbal: ") for s in st), st
     # a row opens his Prospect Profile over the tab
@@ -190,6 +191,31 @@ def check_board_toggle(page, base, sid, errors) -> None:
     page.wait_for_function("(id) => document.querySelector(`tr.pr-row[data-key='${id}'] .pr-board`).textContent === '+ Board'", arg=r["id"], timeout=10_000)
     assert count() == before and page.evaluate("([a, b]) => a.isConnected && b.isConnected", [tbody, tr])
     assert not modals_open(page), "the board button never opens his profile"
+    assert not errors, errors
+
+
+def check_scout_in_place(page, base, sid, errors) -> None:
+    """Send a Scout from the Prospect Profile opened off a row: the row's Scouted and Potential cells follow in place
+    (1 of 3 Looks and the read's range), with no redraw of the table and no reload of the list."""
+    rows = api(base, sid)["rows"]
+    r = next(x for x in rows if not x["looks"] and x["can_scout"] and not x["committed"] and not x["signed"])
+    tbody = page.query_selector("#tab-prospects .pr-table tbody")
+    tr = page.query_selector(f"{ROWS}[data-key='{r['id']}']")
+    assert page.inner_text(f"{ROWS}[data-key='{r['id']}'] .pr-c-sc") == "Not Yet" and page.inner_text(f"{ROWS}[data-key='{r['id']}'] .pr-c-pot") == "Not Read"
+    page.click(f"{ROWS}[data-key='{r['id']}'] .pr-c-int")
+    page.wait_for_selector(".modal:not([hidden]) .rc-profile-name", timeout=60_000)
+    page.click(".modal:not([hidden]) .go-subtabs button[data-sub=scouting]")
+    page.wait_for_selector(".modal:not([hidden]) [data-key=report] .go-btn:has-text('Send a Scout')", timeout=30_000)
+    page.click(".modal:not([hidden]) [data-key=report] .go-btn:has-text('Send a Scout')")
+    page.wait_for_function("(id) => document.querySelector(`tr.pr-row[data-key='${id}'] .pr-c-sc`).textContent === '1 of 3 Looks'", arg=r["id"], timeout=30_000)
+    after = next(x for x in api(base, sid)["rows"] if x["id"] == r["id"])
+    p = after["our_potential"]
+    assert after["looks"] == 1 and p, after
+    assert page.inner_text(f"{ROWS}[data-key='{r['id']}'] .pr-c-pot") == (p[0] if p[0] == p[1] else f"{p[0]} – {p[1]}"), "the row's Potential is the read's range"
+    assert page.evaluate("([a, b]) => a.isConnected && b.isConnected", [tbody, tr]), "a Send patches the row in place"
+    page.click(".modal:not([hidden]) .modal-close")
+    wait_url(page, lambda q: not q["modal"], "no modal")
+    assert page.inner_text(f"{ROWS}[data-key='{r['id']}'] .pr-c-sc") == "1 of 3 Looks", "the patched row stands once the profile closes"
     assert not errors, errors
 
 
@@ -325,7 +351,7 @@ if __name__ == "__main__":
     st = season.new_season("smu", "full", seed=71, career=True)
     rc = st["recruiting"]
     ranked = sorted(recruiting.visible(st), key=lambda pid: rc["prospects"][pid]["rank"])
-    for i, pid in enumerate(ranked[2:40:3]):          # reads on some of the top of the class: Potential words and Unscouted side by side
+    for i, pid in enumerate(ranked[2:40:3]):          # reads on some of the top of the class: Potential words and Not Read side by side
         recruiting.look(st, pid, 90, random.Random(f"prospects-{i}"), by="trip", weight=recruiting.REPORT_LOOKS)
     # commitments: two of the top ten elsewhere (Verbal: School), two to you (the Class Outlook counts)
     fbs = [t for t in recruiting.fbs_schools(st) if t != "smu"]
@@ -369,6 +395,7 @@ if __name__ == "__main__":
             check_needs(page, base, A, errors)
             check_filters(page, base, A, errors)
             check_board_toggle(page, base, A, errors)
+            check_scout_in_place(page, base, A, errors)
             check_side(page, base, A, errors)
             page.select_option("select[aria-label=Status]", "committed")      # long status words: Verbal: School, Hard Commit: School
             wait_rows(page, "rows.length > 0")
@@ -386,7 +413,7 @@ if __name__ == "__main__":
             # a phone: the board toggle still patches in place
             check_board_toggle(page, base, A, errors)
             browser.close()
-        print("prospects redesign ok: the header, Your Needs, every filter (and the address), the table's columns, + Board in place, "
+        print("prospects redesign ok: the header, Your Needs, every filter (and the address), the table's columns, + Board and a Send a Scout in place, "
               "Your Footprint's map and counts, Class Outlook without targets, Top Uncommitted, the profile from a row; at 1280, 900 and 400 "
               "in both themes: no sideways scroll, flat, Title Case, no FCS stand-in, 44 px on a phone, the cards aligned")
     finally:

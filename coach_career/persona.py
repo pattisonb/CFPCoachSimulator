@@ -615,6 +615,12 @@ def mate(state: dict, pid: str):
     return d.get("mate") if k == "package" else None
 
 
+def mate_offered(state: dict, slug: str, pid: str) -> bool:
+    """Whether the school has offered a Package Deal's mate."""
+    m = mate(state, pid)
+    return bool(m) and m in state["recruiting"]["offers"].get(slug, [])
+
+
 def rerank(rc: dict) -> None:
     """The class ranked 1..N again by the shown composite (ties keep their order)."""
     pros = rc["prospects"]
@@ -699,6 +705,18 @@ STORY_LINES: dict[str, dict[str, list[str]]] = {
                    "He's still growing, Coach. You haven't seen the best of him."],
     },
 }
+# the Package Deal once the school has offered his mate: the line acknowledges it instead of demanding it
+# (scenes.open_scene; the same {mate}); any other story keeps its one pool
+STORY_LINES_OFFERED: dict[str, dict[str, list[str]]] = {
+    "package": {
+        "him": ["{mate} showed me your offer, Coach. That's the one thing I needed to see.",
+                "You offered {mate} too. Me and him have been waiting on a school to do that.",
+                "{mate} got your offer. Now we're both listening."],
+        "family": ["You offered {mate} too. That means a lot in this house.",
+                   "He and {mate} have been inseparable since grade school, and you offered both. We noticed.",
+                   "{mate}'s mother called us about your offer. That's the kind of thing we remember."],
+    },
+}
 # his History's sentence when your staff finds out (a public story is never news to them)
 STORY_LEARNED = {"legacy": "Your staff learned he is a legacy at {school}.",
                  "hero": "Your staff learned he is a hometown hero.",
@@ -724,7 +742,10 @@ def story_line(state: dict, slug: str, pid: str, scene_id: str, who: str, f: dic
     if k is None:
         return None
     rng = random.Random(f"story-line-{scene_id}-{who}")
-    line = rng.choice(STORY_LINES[k][who])
+    table = STORY_LINES[k]
+    if k in STORY_LINES_OFFERED and mate_offered(state, slug, pid):   # his mate holds the school's offer: the line says so
+        table = STORY_LINES_OFFERED[k]
+    line = rng.choice(table[who])
     if action == "call":
         if not (k == "package" and first_call):          # All Business skips the small talk, his story's too
             if of(state, pid)["personality"] == "business" or not known(state, slug, pid)["story"] or rng.random() >= STORY_CALL_LINE:

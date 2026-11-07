@@ -86,7 +86,12 @@ pull request gets a preview deployment with its own link. `game.zip`, `version.j
 The old GitHub Pages address still builds the same `dist/` on every push to `main`
 (`.github/workflows/pages.yml`) and shows a strip pointing to the new site, because careers
 are saved in the browser per address: a player opens theirs there, uses Download Career, and
-Load Career on the new site.
+Load Career on the new site. It also serves as a preview of any branch when Vercel's free plan
+runs out of preview deployments: in the repository's Actions, run the Pages workflow with a
+branch name to build that branch, or set the repository variable `PAGES_BRANCH` (Settings,
+Secrets and variables, Actions, Variables) to pin the site to a branch until it is cleared, so
+the merges that redeploy `main` in between do not put `main` back. The build writes
+`dist/preview.json` (branch, commit, build time) and the strip says which branch the copy is.
 
 The data refresh tools (`tools/fetch_*.py`, `tools/forward_test.py`, the realism and
 calibration tools) stay on the owner's computer; what they write under `data/` is
@@ -211,7 +216,9 @@ personnel on offense, nickel on defense); the rest of the 85-man roster rotates 
 **Returners are roles, not roster slots.** The designated kick and punt returners return
 kicks whether or not they start. If a team has no designated returner, the engine picks
 the best return rating: 35% EA kick-return skill, 20% speed, 15% acceleration, 15%
-elusiveness, 10% vision, 5% ball security. Return yardage and return-touchdown odds use
+elusiveness, 10% vision, 5% ball security. On the page every player's returner rating sits on one
+scale, whatever his position (the league's designated returners are its 50 mark), and the
+KR and PR lists leave out linemen, quarterbacks and kickers. Return yardage and return-touchdown odds use
 the same rating.
 
 **Punts** (`_attempt_punt` in `engine/drive_functions.py`, constants `PUNT_*` in
@@ -888,9 +895,13 @@ actions have earned with him.
 **Your week.** Hours: `50 + (recruiting rating - 50) / 4`. A message costs 5, a call 15 (half
 the time he lets slip one of his priorities, `CALL_REVEAL`, and you come away with his ask as a
 range of about 15% either side, not the number), a head coach in-home visit 30 (once a month; it
-tells you one priority for sure and his number), an official visit invite 10 (at your next home
-game; a win sells, a 21-point loss hurts, a big stadium helps, and the weekend tells you all
-three of his priorities), a scouting trip 5 (one look by your best evaluator, any week, allowed
+tells you one priority for sure and his number), an official visit invite 10 (on a home weekend
+you pick: the Recruit menu's Official Visit opens a list of your regular-season home games still
+to play, "Wk 6 · vs #4 USC", the first weekend he has free marked; a weekend he already visits
+another school is grayed with that school's name, one official visit a weekend and one per school,
+no rebooking; the API's `week` on the act, which Auto-recruit and the AI schools never pass, so
+they take his first free weekend as before; a win sells, a 21-point loss hurts, a big stadium
+helps, and the weekend tells you all three of his priorities), a scouting trip 5 (one look by your best evaluator, any week, allowed
 while his report is short of complete; a prospect with a complete report shows his grades in one
 line on his card and at the top of his profile) and an offer nothing.
 **A commitment in words.** A committed recruit's profile (`prospects.flip_view`, the profile's
@@ -1214,8 +1225,10 @@ first three weeks (`COMMIT_FREEZE_WEEKS`), so there is time to scout and build a
 the class moves. A school's weekly hours are a multiple of 5.
 
 **The screens** (`web/recruiting.js`; the Office is `web/office.js` and `web/office.css`). A career
-opens on the **Office**, two columns (one below 900 px). On the left: the **Next Game** hero (the
-week and date, the game's name or rivalry, a Home Game / Away Game / Neutral Site chip, both teams
+opens on the **Office**, one grid of three columns whose rows line up (one column below 900 px): **Next Game**
+two columns wide beside Program Pulse, This Week's Plan (with Last Game) beside Recruiting Pulse, What Changed across,
+then Program News, Around the Conference and Top Targets as one row. The **Next Game** hero's bar is its kicker line (the
+week and date, with the Home Game / Away Game / Neutral Site chip in it), then the game's name or rivalry, both teams
 with marks, ranks, mascots and records; for this week's game the **Win Chance**, the game preview's
 simulated win probability shown between 1% and 99%, and the projected score; then the play card
 with **Game Day** first while your game is unplayed). Once Game Day is played and the week not yet
@@ -1271,11 +1284,27 @@ he asks about a named player on that call (the starter ahead of him, or another 
 offered), the scene shows his line with three answers (straight, a promise, a sidestep; each button a Title Case
 label, Tell Him Straight, Make Him a Promise or Sidestep It, over the line you say) and
 locks the pitch until you pick one; his reply comes back in place (no toast) and History keeps
-the answer (`Told him straight about …`, `Promised him the job over …`). The pane, the Prospect Profile popup and the
+the answer (`Told him straight about …`, `Promised him the job over …`). A Package Deal asks about his
+mate instead whenever his or his family's package line is said (a first call, a call once you know
+his story, every in-home visit; `scenes.package_about`, the mate a prospect in the class not yet
+signed): the question's three answers ride on it (`answers`, by whether you have offered the mate).
+Not offered: **Tell Him Straight** ("I can't promise Khalil a spot today. I'll look at him.", nothing
+either way), **Promise Him an Offer** ("Khalil gets an offer this week. You have my word.": a
+`package` promise on his contact, kept the week step the mate holds your offer within
+`PACKAGE_PROMISE_WEEKS` (2) of it for `PACKAGE_KEPT` (2) points and a `promise_kept` line, "Khalil got
+his offer. You kept your word, Coach.", broken after that without it: he cools `COOL_WEEKS`, or a
+commit's firmness drops `PROMISE_RIVAL`, with a `promise_broken` event), **Sidestep It**. Already
+offered: the family's or his line says so instead of demanding it ("You offered Khalil too. That means
+a lot in this house.", `persona.STORY_LINES_OFFERED`), and **Already Offered Him** ("I offered Khalil
+already. Two spots, both yours.") earns `ANSWER_STRAIGHT` plus `PACKAGE_OFFERED` (1). History words
+them `Promised an offer to Khalil Telfair`, `Told him Khalil Telfair already has an offer`, and a
+broken one `Khalil Telfair never got the offer you promised`. The pane, the Prospect Profile popup and the
 Scouting Center draw a recruit with one set of pieces (`web/profileview.js`, `web/profile.css`): a hero (his status chip,
-avatar, name, stars, Pos | Height | Weight with the position as the game shows it, `display_pos`: an EDGE who plays DT
-reads DT everywhere; Hometown · #rank; Nat. Rank, Pos. Rank, Class; a Your Chance badge in the ladder's words with a
-bar), a tab row (Overview, Scouting, Profile, History, with Recruit ▾ and the ☆ watch star on its right; it stays pinned
+avatar, name, stars, Pos · Archetype | Height | Weight with the position as the game shows it, `display_pos`: an EDGE
+who plays DT reads DT everywhere, and his archetype after it, "DT · Run Stopper"; Hometown · Class of 2027 (the portal:
+From School); Nat. Rank and Pos. Rank in one bordered strip (the portal adds Class), so no number shows twice; a Your
+Chance badge in the ladder's words, its bar only once there is a chance to measure, an offer or his commitment elsewhere),
+a tab row (Overview, Scouting, Profile, History, with Recruit ▾ and the ☆ watch star on its right; it stays pinned
 at the top of the pane while the cards scroll) and cards in a two-column grid (one column on a narrow pane; a card alone
 on its row spans it; one gap token, `--pv-gap`, across and down; cards in a row stretch to one height).
 **Overview**: the Recruiting Battle (his list as ranked rows, your school marked; a committed recruit's other schools
@@ -1330,7 +1359,10 @@ Scouting Center, master and detail, built from the player's mockup in the site's
   the read is: Confident, Could Change, Early Look), then the tabs **Report** (the Scouting Report and the
   Attributes card), **Looks** (Looks & Uncertainty with the flags, a coordinator's "Likes Him", this and last week's
   report lines on him and All Reports) and **Profile** (the traits and background cards). On the tab row: **Send Scout
-  · 10 Pts** (its row's `cost`: 10, 15 or 5; "· Finishes His Report" when one look is left; disabled with the reason
+  · 10 Pts** (its row's `cost`, `recruiting.look_cost` from `LOOK_COST`: 5 for a prospect close to home, in your school's
+  state or within `HOME_MILES` (150) of your campus after any Family Move, 10 in an area a staff scout covers, 15 away from
+  your scouts, 5 for a portal entrant; half the tier, rounded up to a multiple of 5 (5, 5, 10), when less than a full look
+  finishes his report, at 2.5 of 3 looks after a half-look area week; "· Finishes His Report" when one look is left; disabled with the reason
   under the row: "Not enough scouting points left this week.", or "His report is complete: 3 of 3 looks"), **View Full
   Profile** (the popup) and **Add to Board** / **Remove From Board** (the board's own confirm when that pulls a standing
   offer). The address keeps `ssub` (report, looks, profile); an old address's ratings or overview opens Report and
@@ -1374,9 +1406,13 @@ mockup in the site's theme tokens, flat (no gradient; the board button is the pa
   Board"), Position, Stars, State, Status and Sort, then the table: #, the avatar, name and hometown (and his find
   badges), Pos (the game's position, `display_pos`), Ht, Wt, Stars, Status ("Uncommitted", "Verbal: School", "Hard
   Commit: School", "Signed: School"; the school's name is `season.team_display`, so an FCS stand-in never shows),
-  Interest in You (High, Medium or Low), Potential (your staff's read, "Strong" or "Elite – All-American", or
-  "Unscouted"; never the truth) and **+ Board** / **✓ On Board**. A row opens the Prospect Profile. 50 to a page.
-  As the card narrows the columns give way (Ht and Wt, then Potential, then Status; `fitTable` measures, so a wide
+  Interest in You (High, Medium or Low, graded against prospects of his star rating), Scouted (the Scouting Center's words: "Not Yet", "1 of 3 Looks", "Fully
+  Scouted"), Potential (your staff's read after his looks, "Strong" or "Elite – All-American", or "Not Read" before a
+  look; never the truth) and **+ Board** / **✓ On Board**. A row opens the Prospect Profile. 50 to a page. A scouting
+  trip sent from anywhere (the profile's Send a Scout, the board's Recruit menu, the Scouting Center) lands on his row in
+  place: the recruit action answers with his `looks` and his `potential` range, the page raises `cfp:scouted`, and an
+  open list morphs his Scouted and Potential cells (and bumps Your Footprint's Evaluated on a first look), no reload.
+  As the card narrows the columns give way (Ht and Wt, then Scouted and Potential, then Status; `fitTable` measures, so a wide
   font or a long school name never pushes the table past its card); on a phone a row is the name, the interest
   and the board button. On a desktop the list scrolls inside its card and the side column sets the row's height.
 - **The side column**: **Your Footprint** (the game's map, `us-map.js`: your scouts' areas and your board as dots; a
@@ -1399,9 +1435,14 @@ chance as a range that narrows as signing day nears (plus or minus 25 points at 
 week 8, 4 from week 13), labeled Early Read, Taking Shape or Solid Read. Class rank weighs each
 class's best commitments most (each counts 0.85 times the one before).
 
-**Interested in you** (a Prospects filter and sort): the 15% of the class your school appeals
-to most right now (his interest in you: distance, playing time, prestige, winning, NIL, the coach,
-academics and what you have done), most interested first; every row shows High, Medium or Low.
+**Interested in you** (a Prospects filter and sort): the prospects graded High right now, most
+interested first (his interest in you: distance, playing time, prestige, winning, NIL, the coach,
+academics and what you have done); every row shows High, Medium or Low. A prospect is graded against
+the prospects of his own star rating you can see (`prospects.your_interest`, `INTEREST_LEVELS`: the top
+15% of his star band is High, the next 35% Medium, the rest Low), not against the whole class: interest
+in any one school rises with a prospect's stars, so grading the class as one made the pages the player
+reads first, the top of the national ranking, mostly High. High means he likes you more than most
+recruits of his caliber do.
 
 **Classes**: every FBS school's class ranked nationally (as class rank: best commitments count
 most), each opening to its recruits; the Office points to it after the early signing period
@@ -1503,8 +1544,11 @@ a losing year; a Group of 5 player with a card overall of 50 or more (a Power 4 
 segments, each with its driver, and one draw against the sum: the segment it lands in is why he
 goes, stored on the entrant (`driver`) and on your leaver's Keep Them Home card, so the reason is
 the real cause, not a guess after the fact. The first segment is the role chance above (his
-class and role, a losing year, a Group of 5 standout moving up, a broken promise, a keep last
-year). The second is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
+class and role, a losing year, a Group of 5 standout moving up, a keep last year). A player
+promised a starting role (`promised`, from Keep Them Home or carried by a signed recruit or portal
+signee you told the job was his) who did not start adds a `promised` segment worth the rest of
+`PROMISE_BROKEN` (3) times the role chance; when the draw lands there his Keep Them Home card and
+the portal recap read "Was promised a starting role and did not get it". The next is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
 the recruit ask of the star tier his overall reads as, 60 for a five-star-equivalent, 30 a
 four, 8 a three, times his position), and his program's tier pays a starter `NIL_TIER_PAY` (60
 at tier 1, 40, 20, 8, 2 at tier 5); when his market is over that, his chance adds `NIL_PULL`
@@ -1538,7 +1582,9 @@ his ask, about 70% for a real starting role, 92% at most; a draft entrant projec
 round stays at most 8%, one rated 95 or better after a decent season 2% whatever you offer (his
 card says so), a day-three projection about 20% plus what the NIL buys). A player you
 keep carries `kept` (his portal chance the next year is 0.7 times) and a promise `promised` (3
-times if the snaps do not come). The leavers join the portal class or the draft as they would
+times if the snaps do not come; a recruit or portal entrant you promised the job on a call or
+visit carries the same `promised` onto your roster when he signs, `_sign_classes` and
+`_close_portal`, judged by the role he really played that season). The leavers join the portal class or the draft as they would
 have, and then the draft runs; Departures lists who stayed ("Stayed: You Kept Him Home") beside
 who left, and the week 1 portal screen lists the answers. A save from the older order (Departures
 first, the draft already run) is migrated when it loads (`migrate`): at Departures it goes back to
@@ -1603,7 +1649,9 @@ roster, spread 0.15, `TEAM_YEAR_SD`; both mean-preserving, so the league's pace 
 but teams have good and bad years and programs' paths part),
 times a pace by seasons in college (0.45, 0.7, 1.35, 1.35, then 1.0: real players gain little in
 their first offseasons and most in their third and fourth; a real 2026 player's seasons come from
-his class, and a transfer keeps his), divided above an overall of 55 by 1 plus a tenth of the points
+his class, and a transfer keeps his; a freshman or sophomore who played a starter's season, at
+least half his team's games with his production rated against the average starter, learns at a full
+year's pace instead, `STARTER_YEAR` 1.0, and Who Improved says "Started as a freshman"), divided above an overall of 55 by 1 plus a tenth of the points
 over it (`DEV_TOP`, `DEV_TOP_SPAN`: the last points come slowest, so a 75 grows at a third of the
 pace; without it a career's 2027 seniors had about 125 players rated 85+ where the real 2026
 seniors had 25, at every position, and the draft's first round filled with them;
@@ -1734,7 +1782,7 @@ candidates and generated coaches are drawn against the rating on the baseline's 
 fitted so the ratings line up with the recruiting baseline). Recruiting's prestige pull reads
 0.6 × prestige + 0.4 × rating and the NIL pull the NIL tier; the portal's prestige and the
 program's share of development read the rating. The League's **Programs** tab shows your
-program's card (a Recap card with the team edge: the standing as a tag beside the kicker, the
+program's card (a Recap card whose bar carries the kicker with the standing as a tag beside it, the
 program's name as the title, the seven metrics as bars read in words: Elite 90, Excellent 80, Strong 70,
 Good 60, Solid 50, Fair 40, Thin 30, Weak below; the AD's goal) and, open under it, the Every Program card, a table
 of the same words (it left the Office in round 3 to give the game the room). `tools/check_programs.py`
@@ -1948,8 +1996,12 @@ your program's history. The tab opens on it at Keep Them Home; its Advance opens
 groups ("+ N More" opens a long one) and the players you kept, Around the League and The First Round, and keeps the
 redshirt and position-change card. Keep Them Home shows each leaver's roles now and next year, why
 he wants out, and Meet, Promise a Start, Offer NIL and Let Him Go, each with a hint from the rules.
-A portal week wraps the recruiting board (drawn by `recruiting.js`, untouched) with the Portal
-Overview, Keep Them Home's answers and your moves. Development has the portal's +/− and tabs for
+A portal week shows the Portal Overview, Keep Them Home's answers, your moves, who got away and
+Your Portal Board: a compact card (the count on your board, your offers out of the week's allowance,
+your open spots, the top six entrants by your chance with the board's own standing word, "Nobody on
+your board yet" when it is empty) with Recruit on the Board →, which opens the Recruiting tab, where
+the board itself is drawn (`recruiting.js`, untouched; the card reads `portal.board` on the
+offseason view, `coach_career/offseason.py` `portal_board`). Development has the portal's +/− and tabs for
 Redshirts, Position Changes, Who Improved and Your Transfers beside the top improvements. The Recap
 lists the key results and the road ahead (the schedule, the next class, the AD's goal for the
 coming season). Cards in a row share one height, one 16 px gap runs across and down, and at 760 px
@@ -2318,10 +2370,10 @@ week strip lets you look back at any week. Tabs:
   percentage with the conferences' tiebreak ladder (below). After championship week the
   champion carries a crown and the title-game loser a silver medal; hover a rank to see
   which tiebreak placed a team. Standings, Stats and Programs wear the Season Recap's look
-  (`web/league.css` on top of `recap.css`: `.rcp-card` cards on the panel, a kicker over each,
-  condensed uppercase titles, the team-colored top edge on your own card, the tables kept as
-  `table.stats`). Standings is a head card (the week, the title, the conference chips), then one
-  card per conference with its name as the title, yours first as "Your Conference" with the edge;
+  (`web/league.css` on top of `recap.css`: `.rcp-card` cards on the panel, each with its bar in
+  your team's color carrying the title with the kicker beside it and the controls at its right, the tables kept as
+  `table.stats`). Standings is a head card that is only its bar (the title, the week, the conference chips), then one
+  card per conference with its name as its bar's title, yours first as "Your Conference";
   All lays them two across above 1000 px and one below.
 - **AP Poll**: the poll released after the selected week, with each team's move.
 - **CFP Rankings**: the committee's ranking after weeks 9 through 13 and the final one
@@ -2335,7 +2387,7 @@ week strip lets you look back at any week. Tabs:
   to F read off the wins against the AD's goal, the conference title, how far the playoff run went, the bowl and
   the final AP rank, with a one-sentence verdict per band: champion, playoff, met, bowl, missed, losing, fired; a
   champion alone gets the A+; no randomness, nothing written), then Start the Offseason, Back to the Office, Awards
-  and Schedule. Two columns: the national champion and title game (its box score opens), the four playoff rounds,
+  and Schedule. Two columns: the national champion and title game (its box score opens), the four playoff rounds in a Playoff card of their own,
   the Heisman, your leaders, the conference champions and the final rankings on the left; Your Season (points,
   the conference, non-conference, postseason and final rank, total offense, total defense and the turnover margin
   with their national ranks), the highlights, the rivalries, the biggest surprise and disappointment and the
@@ -2449,8 +2501,8 @@ The This week card simulates your next game 20 times. Those sims run in parallel
 worker pool when there is one (about 1 second instead of 4 on a desktop) and are
 cached for the week; a second request for the same game waits for the first instead of simulating
 it again. The Awards tab opens on an **Overview** (`renderAwards`): the Heisman hero with four finalists, the
-national award cards (Offense, Defense, Special Teams and Player of the Year chips patch the grid in place with
-`reconcile`), the coach awards, your team's honors with a podium (honors, awards won, players and coaches), the
+national award cards (what each award is for waits behind the ⓘ beside its name in the card's bar; Offense,
+Defense, Special Teams and Player of the Year chips patch the grid in place with `reconcile`), the coach awards, your team's honors with a podium (honors, awards won, players and coaches), the
 consensus All-America team by unit and your conference's awards; the older views (My Team, Heisman, National,
 Coaches, All-America, Conference) stay as chips and in the `aview` route key. During the season the same layout is
 the live race ("Leader" instead of "Winner"). The live race is cached until more games are played (or god mode
@@ -2471,6 +2523,50 @@ whichever contrasts more. The page background is washed in the primary at the to
 and panel headings and the active tab take the accent. Michigan is maize on dark and navy on light, Penn State is
 navy on light and white on dark, Oregon is green on light and yellow on dark, and so on;
 the accent is re-picked when the theme toggle flips.
+
+### Cards and bars (`web/styles.css` ".card-bar")
+
+Every card with a header wears the player's Season Recap mockup: a solid bar in the team's primary color, flush with
+the card's top and sides, the title in it as 12 px bold uppercase letter-spaced type in the color's ink (`--go-primary`
+and `--go-primary-ink` in a career, the team theme's primary in a plain season, the accent before a team is picked).
+The page code puts one class, `card-bar`, on each card's header element and the one rule set in `styles.css` does the
+rest: whatever heading sits in it (a kicker, an `h2`, a `.rcp-h1`, a `.pv-kick`) reads as the bar's title, a secondary
+line beside it (the League look's kicker, a date, a note) reads lighter without caps, and every control in the bar
+(the Board → link, a tag like the program tier, an ⓘ, the view chips, the Home Game pill, a button) takes the ink.
+A card about another team sets `--card-bar-bg` and `--card-bar-ink` (`CFP.teamVars(slug)` gives both as `--rcp-team`
+and `--rcp-team-ink`: the recap's National Champion, an award's winner); the recap's gold, good and bad variants and his
+reaction's tones are the same two variables, so the old edge lines (`.rcp-card.edge`, the Office hero's top border) are
+gone. A card that is only its bar (Standings' head card, a folded Transfer Portal Recap, the closed Footprint map) ends
+with it. Cards share one padding (`--card-pad`: 20 px, 14 on a phone; nested cards such as the pane's, a scene or his
+question 14) that the bar reads to bleed to the edges, and a card laid out with a flex gap says so in `--card-gap` so
+the bar keeps 16 px to the body; rows of cards are CSS grids with explicit rows that line up across columns (the Office,
+the offseason's rows), each card as tall as its content, the list cards filling their row (the offseason's pairs share a
+height, so an answer that shortens one card never pulls the page out from under the player). Corners are square
+everywhere in the career UI: no card, bar, button, pill, tag, chip, input, select, table, modal, menu or panel has a
+radius (`--radius: 0`, every page stylesheet lost its `border-radius` lines); circles (avatars, the step marks, the
+star dots) stay circles, and the big team tiles keep 4 px. The depth chart screen keeps its own square, ink-headed
+look. `tests/test_office_redesign.py`, `tests/test_recap_awards.py`, `tests/test_spacing.py` and
+`tests/test_offseason_redesign.py` check the bars, the alignment, the padding and the 36 px (44 on a phone) controls
+in a bar.
+
+**Spacing** (`styles.css` "the spacing pass"): four tokens applied by rules, not one-offs. `--gap-inline` (8 px) sits
+between inline siblings: every row of chips, tags, pills, badges or buttons, and an inline tag after a word (the YOU
+tag, a rank badge, a position after a name) keeps it as a left margin. `--gap-label` (10 px) sits between a label and
+its value on one line; a value under its label sits 4 px below it (every stat tile, the pane's snapshot, the recap's
+numbers). `--gap-block` (12 px) is the gap between a card's stacked blocks (the bar keeps its 16 px to the body). List
+and table rows keep `--row-pad` (6 px) above and below (the Prospects table keeps 4 px sides so its ten columns fit at
+1280). Nothing inside a bar sits closer than `--bar-inset` (12 px) to the bar's edge; a bar's title and its ⓘ or
+control are 10 px apart. `tests/test_spacing.py` is the gate.
+
+### The browser tab (`web/season.js`, `tabIdle`, `tabSim`, `tabDone`)
+
+An open career names the tab after the dynasty ("Ohio State Dynasty"). While a sim runs the title
+leads with the progress and your record ("42% · 4-1 · Wk 6 · Ohio State Dynasty") and the favicon
+wears a progress ring in your primary color (the page's own icon drawn on a canvas with the ring
+over it, the `link rel="icon"` hrefs swapped to the PNG), so a tab in the background still says where
+the sim is. When it ends the title reads "Done · 9-3 · …" with a full green ring ("Sim Failed" and
+red on an error) and stays that way while the tab is hidden; a moment after you come back the name
+and the real favicon return. `tests/test_tab_status.py` drives a week and checks each state.
 
 ### Smooth actions (`web/ui.js`)
 

@@ -267,9 +267,21 @@ def check_recap(page, base, sid, errors) -> None:
     assert r["national_leaders"]["passing"]["name"] in nat and r["national_leaders"]["sacks"]["name"] in nat, nat
     if r["mine"]["leaders"].get("passer"):
         assert r["mine"]["leaders"]["passer"]["name"] in page.inner_text("#tab-summary .rcp-row")
-    # the edges: the champion's color on top of the champion card, yours on Your Season
-    edge = page.evaluate("() => [getComputedStyle(document.querySelector('#tab-summary .rcp-champ')).borderTopWidth, getComputedStyle(document.querySelector('#tab-summary .rcp-mine')).borderTopWidth, getComputedStyle(document.querySelector('#tab-summary .rcp-champ')).backgroundImage]")
-    assert edge[0] == "4px" and edge[1] == "4px" and edge[2] == "none", edge
+    # the bars: the champion card's bar in the champion's color, Your Season's in yours, both flush with the card's
+    # top (no edge line, no wash), the title in the ink, square corners
+    edge = page.evaluate("""() => {
+      const bar = (sel) => { const c = document.querySelector(sel), b = c.querySelector(':scope > .card-bar'); const cs = getComputedStyle(b), cc = getComputedStyle(c);
+        const r = b.getBoundingClientRect(), cr = c.getBoundingClientRect();
+        return { bg: cs.backgroundColor, ink: cs.color, top: Math.round(r.top - cr.top), left: Math.round(r.left - cr.left), width: Math.round(cr.width - r.width),
+                 edge: cc.borderTopWidth, wash: cc.backgroundImage, radius: cc.borderRadius, barRadius: cs.borderRadius, caps: cs.textTransform, size: cs.fontSize }; };
+      return [bar('#tab-summary .rcp-champ'), bar('#tab-summary .rcp-mine')]; }""")
+    for b in edge:
+        assert b["edge"] == "1px" and b["wash"] == "none" and b["radius"] == "0px" and b["barRadius"] == "0px", b
+        assert b["top"] == 1 and b["left"] == 1 and b["width"] == 2, b           # flush with the card's top and sides (inside its 1 px border)
+        assert b["caps"] == "uppercase" and b["size"] == "12px", b
+        assert b["bg"] not in ("rgba(0, 0, 0, 0)", "transparent") and b["ink"] != b["bg"], b
+    mine_bar, champ_bar = edge[1]["bg"], edge[0]["bg"]
+    assert mine_bar == page.evaluate("() => getComputedStyle(document.body).getPropertyValue('--go-primary').trim() && getComputedStyle(document.querySelector('#tab-summary .rcp-mine > .card-bar')).backgroundColor")
     clean(page, "#tab-summary", errors)
     def columns(width):
         n = page.evaluate("() => getComputedStyle(document.querySelector('#tab-summary .rcp-main')).gridTemplateColumns.split(' ').length")
@@ -314,6 +326,14 @@ def check_awards(page, base, sid, errors) -> None:
     cards = page.eval_on_selector_all("#tab-awards .aw-cards[data-group=national] .aw-card", "els => els.map(e => e.querySelector('.go-kicker').textContent)")
     assert len(cards) == len(d["national"]["awards"]) + len([a for a in d["postseason"]["awards"] if a["kind"] != "coach"]), cards
     assert "Maxwell Award" in cards and "Doak Walker Award" in cards, cards
+    # what an award is for waits behind the ⓘ beside its name, not on the card
+    first = "#tab-awards .aw-cards[data-group=national] .aw-card >> nth=0"
+    assert page.eval_on_selector(first, "c => !c.querySelector('.aw-card-head small')"), "the blurb is off the bar"
+    assert page.eval_on_selector(first, "c => c.querySelector('.aw-card-head button.go-info') !== null"), "an ⓘ beside the name"
+    page.hover(f"{first} >> .aw-card-head button.go-info")
+    page.wait_for_selector(f"{first} >> .aw-card-head .go-info-box.show", timeout=5_000)
+    blurb = page.inner_text(f"{first} >> .aw-card-head .go-info-box")
+    assert blurb[0].isupper() and blurb.endswith("."), blurb
     tags = page.eval_on_selector_all("#tab-awards .aw-card .go-tag", "els => els.map(e => e.textContent.trim())")
     assert tags and all(t == "Winner" for t in tags), set(tags)
     w = d["national"]["awards"][0]["winner"]
