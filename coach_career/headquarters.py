@@ -215,6 +215,40 @@ def _replacements(state: dict, players: list) -> None:
             p["replacement"] = {"pid": pid, "name": q["name"], "stars": q["stars"], "position": q["position"], "status": status}
 
 
+def next_year(state: dict) -> dict:
+    """Next year's roster by group, as it stands: everyone the outlook keeps (seniors graduate) a class up, best overall
+    first, with his draft or portal word; your commits (and signees) in their groups as freshmen; each group's target,
+    the headcount filled, and `need`, recruiting.needs_detail's (which allows for the usual attrition and early leavers,
+    so it can be more than target - filled)."""
+    from coach_career import offseason, prospects
+    me = state["team"]
+    detail = recruiting.needs_detail(state, me)
+    groups = {g: {"group": g, "target": int(d.get("target") or 0), "players": [], "commits": []} for g, d in detail.items()}
+    for p in outlook(state)["players"]:
+        if p["leaving"] or p["group"] not in groups:
+            continue
+        groups[p["group"]]["players"].append({"name": p["name"], "position": p["position"], "class_now": p["class"],
+                                              "class_next": offseason.NEXT_CLASS.get(p["class"], p["class"]), "overall": p["overall"],
+                                              "starter": p["starter"], "draft": p["draft"], "transfer": p["transfer"]})
+    rc = prospects.class_rc(state)
+    for pid, st in rc["status"].items():
+        if (st["signed"] or st["committed"]) != me:
+            continue
+        q = rc["prospects"][pid]
+        g = recruiting._group_of(q)
+        if g in groups:
+            groups[g]["commits"].append({"pid": pid, "name": q["name"], "position": q["position"], "stars": q["stars"],
+                                         "signed": st["signed"] == me, "hard": bool(st.get("hard")), "rank": q["rank"]})
+    out = []
+    for g in groups.values():
+        g["players"].sort(key=lambda x: -x["overall"])
+        g["commits"].sort(key=lambda x: x["rank"])
+        g["filled"] = len(g["players"]) + len(g["commits"])
+        g["need"] = int(detail[g["group"]].get("need") or 0)     # the game's own need: it allows for the usual attrition, as Class Needs
+        out.append(g)
+    return {"groups": out}
+
+
 def _class_points(rc: dict, extra: Optional[tuple] = None) -> dict:
     """Each school's class points as prospects.class_rank counts them; extra (school, pid) adds one commit."""
     from coach_career import prospects

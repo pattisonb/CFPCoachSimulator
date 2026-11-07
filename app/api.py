@@ -1155,6 +1155,8 @@ def headquarters_view(p: Params) -> dict:
         out["contacts"] = headquarters.last_contacts(st)
     if "outlook" in want:
         out["outlook"] = headquarters.outlook(st)
+    if "next_year" in want:
+        out["next_year"] = headquarters.next_year(st)
     if "goals" in want:
         out["goals"] = headquarters.goals(st)
     if "tasks" in want:

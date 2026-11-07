@@ -217,6 +217,33 @@ def replacements(sid: str) -> None:
     assert all(p.get("replacement") is None for p in o["players"] if not (p["leaving"] or p["draft"] or p["transfer"] == "High"))
 
 
+def next_year_roster(sid: str) -> None:
+    """Next year's depth chart by group: returning players a class up (seniors gone), your commits in their group, and
+    each group's spots against its target."""
+    from coach_career import offseason, recruiting as rec
+    ny = GET(sid, "?want=next_year")["next_year"]
+    groups = {g["group"]: g for g in ny["groups"]}
+    rv = api.call("GET", f"/api/season/{sid}/recruiting")
+    assert set(groups) == set(rv["needs_detail"]), (sorted(groups), sorted(rv["needs_detail"]))
+    for g in groups.values():
+        assert g["target"] == rv["needs_detail"][g["group"]]["target"], g["group"]
+        assert g["filled"] == len(g["players"]) + len(g["commits"]) and g["need"] == rv["needs_detail"][g["group"]]["need"], g
+        for p in g["players"]:
+            assert p["class_now"] not in ("SR", "SRRS"), f"a senior graduates: {p}"
+            assert p["class_next"] == offseason.NEXT_CLASS.get(p["class_now"], p["class_now"]), p
+        overalls = [p["overall"] for p in g["players"]]
+        assert overalls == sorted(overalls, reverse=True), "best first"
+    # a commit shows in his group at once
+    st = api.loaded_state()
+    rc = st["recruiting"]
+    pid = next(q for q, s_ in rc["status"].items() if not s_["committed"] and not s_["signed"])
+    rc["status"][pid]["committed"] = ME
+    g = rec._group_of(rc["prospects"][pid])
+    ny = {x["group"]: x for x in GET(sid, "?want=next_year")["next_year"]["groups"]}
+    assert any(c["pid"] == pid and c["name"] and 1 <= c["stars"] <= 5 for c in ny[g]["commits"]), ny[g]["commits"]
+    rc["status"][pid]["committed"] = None
+
+
 if __name__ == "__main__":
     import shutil
     import tempfile
@@ -233,6 +260,7 @@ if __name__ == "__main__":
         pid = contacts_from_log(sid)
         outlook_words(sid)
         replacements(sid)
+        next_year_roster(sid)
         whatif_moves_rank(sid, pid)
         whatif_committed_unchanged(sid)
         goals_defaults_and_saved(sid)

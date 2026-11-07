@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 from test_career_e2e import call, free_port, launch   # noqa: E402
 
 BAD = ("null", "undefined", "NaN")
-MIN_WIDGETS = 28      # the ready widgets (spec section 7, Round 2 and Scouted Players)
+MIN_WIDGETS = 29      # the ready widgets (spec section 7, Round 2, Scouted Players, Next Year's Depth Chart)
 SMALL = {"a", "an", "the", "of", "to", "for", "and", "or", "in", "on", "at", "by", "vs"}
 EMPTY_LINE = "Build your Headquarters. Add widgets for recruiting and scouting."
 
@@ -779,6 +779,20 @@ def check_scouted(page, base, sid) -> None:
     page.set_viewport_size({"width": 1280, "height": 900})
 
 
+def check_next_depth(page, base, sid) -> None:
+    """Next Year's Depth Chart: a block per position group, each player with next year's class, the group's need."""
+    page.set_viewport_size({"width": 1440, "height": 1000})
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "next-depth", "size": "L"}]})
+    open_hq(page, base, sid)
+    check_card_clean(page, "next-depth")
+    card = "#tab-headquarters .hq-card[data-widget='next-depth']"
+    groups = page.eval_on_selector_all(f"{card} .hq-group", "els => els.map(e => e.dataset.key)")
+    assert len(groups) >= 10 and "QB" in groups and "OL" in groups, groups
+    classes = page.eval_on_selector_all(f"{card} .hq-group .hq-next-class", "els => els.map(e => e.textContent.trim())")
+    assert classes and not any(c in ("FR", "FRRS") for c in classes if c != "Commit"), f"next year nobody returning is a freshman: {set(classes)}"
+    page.set_viewport_size({"width": 1280, "height": 900})
+
+
 def live_career(base) -> str:
     """A career three weeks in with a board: the widgets have real data to draw."""
     sid = call(base, "/api/season", {"team": "georgia", "seed": 7})["id"]
@@ -831,7 +845,7 @@ if __name__ == "__main__":
             live = live_career(base)
             made.append(live)
             if only_review:
-                for f in (check_scouted, check_bar_gaps, check_resize_snap, check_edit_overlay, check_resize, check_drag_live, check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
+                for f in (check_next_depth, check_scouted, check_bar_gaps, check_resize_snap, check_edit_overlay, check_resize, check_drag_live, check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
                     try:
                         f(page, base, live)
                         print("  pass", f.__name__)
@@ -869,11 +883,12 @@ if __name__ == "__main__":
             check_resize_snap(page, base, live)
             check_bar_gaps(page, base, live)
             check_scouted(page, base, live)
+            check_next_depth(page, base, live)
             browser.close()
         assert not errors, errors
         print("headquarters page ok: empty canvas and drawer; Coming Soon tagged; add; a broken widget contained; "
               "an unknown widget skipped; a refused save keeps the page; every widget live at every size and in the drawer; "
-              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside; masonry packing; a live drag; heights by the edge and by chips; edit controls over the cards; heights snap to neighbors; room under headers, thin headers on Recruiting and Scouting; Scouted Players")
+              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside; masonry packing; a live drag; heights by the edge and by chips; edit controls over the cards; heights snap to neighbors; room under headers, thin headers on Recruiting and Scouting; Scouted Players; Next Year's Depth Chart")
     finally:
         for s in made:
             try:

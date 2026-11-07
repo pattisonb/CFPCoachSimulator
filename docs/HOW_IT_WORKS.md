@@ -1500,7 +1500,9 @@ Attention, Board Health, Offer Efficiency, Position Battle Board (source `depth`
 Calendar, What-If, Senior Impact and Retention, Roster Loss Projections, Recruiting Tasks and Recruiting Goals.
 Scouted Players (source `scouted`: the Scouting desk's scouted prospects by potential) shows them as tiles; a tile
 opens his report (the six grades from his profile's `our_grades`, as words) with arrows to step through and Back to
-All. Coming Soon (`hq-widgets/planned.js`): Staff Assignments, which needs a recruiting mechanic of its own.
+All. Next Year's Depth Chart (`want=next_year`: every player the outlook keeps a class up by `offseason.NEXT_CLASS`,
+best overall first, your commits and signees in their groups as they come in, and each group's need from
+`recruiting.needs_detail`, which allows for the usual attrition, so Class Needs and this agree). Coming Soon (`hq-widgets/planned.js`): Staff Assignments, which needs a recruiting mechanic of its own.
 
 **Round 2's reads** (`want=` on the same route): `contacts` (the last week you contacted, pitched or offered each
 board recruit, from the log; an offered target `STALE_WEEKS` without one reads as going stale), `outlook` (your

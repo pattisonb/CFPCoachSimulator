@@ -26,4 +26,32 @@
         ? [r.name, r.tier_name, word(r.prestige, floors), word(r.winning, floors), word(r.nil, floors), word(r.pro, floors)]
         : [r.name, word(r.prestige, floors), word(r.winning, floors), word(r.nil, floors)]), (i) => rows[i].team === mine);
     } });
+
+  // ----- Next Year's Depth Chart: next year's roster by group, a class up, with your commits as they come in ---------
+  const el = k.el;
+  const SAMPLE_NEXT = { groups: [
+    { group: "QB", target: 4, filled: 3, need: 1, players: [{ name: "J. Sanders", position: "QB", class_next: "SR", overall: 88, starter: true },
+      { name: "D. Williams", position: "QB", class_next: "SO", overall: 74 }], commits: [{ pid: "s1", name: "Marcus Williams", stars: 5, position: "QB" }] },
+    { group: "WR", target: 11, filled: 9, need: 2, players: [{ name: "D. Thomas", position: "WR", class_next: "JR", overall: 85, draft: "Possible" },
+      { name: "R. Davis", position: "WR", class_next: "SO", overall: 79 }], commits: [] }] };
+  HQ.register({ id: "next-depth", title: "Next Year's Depth Chart", category: "program", status: "ready",
+    blurb: "Next year's roster by position: who returns a class up, your commits as they come in, and what each group still needs.",
+    sizes: ["M", "L"], size: "L", sources: ["hq"], want: ["next_year"], sample: { hq: { next_year: SAMPLE_NEXT } }, viewAll: "depth",
+    draw: (d, ctx) => {
+      const groups = (d.hq.next_year || {}).groups || [];
+      if (!groups.length) return k.empty("No roster to project yet.");
+      const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+      return el("div", { class: "hq-groups" }, groups.map((g) => el("section", { class: "hq-group", "data-key": g.group }, [
+        el("div", { class: "hq-group-head" }, [el("b", { text: g.group }),
+          el("span", { class: "hq-sub hq-grow", text: `${g.players.length} Returning${g.commits.length ? ` · ${plural(g.commits.length, "Commit")}` : ""}` }),
+          el("span", { class: `go-tag${g.need > 0 ? "" : " hq-full"}`, text: g.need > 0 ? `Need ${g.need}` : "Full" })]),
+        k.list([
+          ...g.commits.map((c) => ({ key: `c-${c.pid}`, cells: [el("span", { class: "go-tag hq-next-class hq-commit", text: c.signed ? "Signed" : "Commit" }),
+            k.name(ctx, c.pid, c.name), el("span", { class: "hq-sub", text: c.position }), k.starsShort(c.stars)] })),
+          ...g.players.map((p, i) => ({ key: `p-${g.group}-${i}-${p.name}`, cells: [el("span", { class: "go-tag hq-next-class", text: p.class_next }),
+            el("span", { class: "hq-grow", text: p.name }), p.draft ? el("span", { class: "hq-sub", text: `Draft: ${p.draft}` }) : null,
+            el("span", { class: "hq-sub", text: String(p.overall) })] })),
+        ]),
+      ])));
+    } });
 })();

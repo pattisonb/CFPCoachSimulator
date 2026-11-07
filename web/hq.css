@@ -171,3 +171,11 @@
 .hq-grade-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin: 8px 0 12px; }
 .hq-grade { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--border); }
 @media (max-width: 699px), (pointer: coarse) { .hq-detail-nav .go-btn, .hq-detail-acts .go-btn { min-height: 44px; } }
+
+/* Next Year's Depth Chart: a block per group (two or three across when the card is wide) */
+.hq-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px 16px; }
+.hq-group-head { display: flex; align-items: center; gap: 8px; padding-bottom: 4px; border-bottom: 2px solid var(--go-primary, var(--accent)); }
+.hq-group .hq-list li { padding: 3px 0; }
+.hq-next-class { min-width: 44px; text-align: center; }
+.hq-commit { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
+.hq-full { opacity: 0.7; }
