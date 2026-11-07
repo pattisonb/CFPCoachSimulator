@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 WEB = ROOT / "web"
 
-PAGES = ["season.js", "leaguefile.js", "offseason.js", "coach.js", "gameview.js", "us-map.js", "recruiting.js", "office.js", "recap.js", "scouting.js", "profileview.js", "index.html", "coach.html", "depth/depth.js", "hq.js", "hq-widgets/planned.js"]
+PAGES = ["season.js", "leaguefile.js", "offseason.js", "coach.js", "gameview.js", "us-map.js", "recruiting.js", "office.js", "recap.js", "scouting.js", "profileview.js", "index.html", "coach.html", "depth/depth.js", "hq.js", "hq-widgets/recruiting.js", "hq-widgets/planned.js"]
 
 SMALL = {"a", "an", "the", "of", "to", "for", "and", "or", "in", "on", "at", "by"}
 ALLOW = {line.strip() for line in (ROOT / "tests" / "copy_case_allow.txt").read_text(encoding="utf-8").splitlines()

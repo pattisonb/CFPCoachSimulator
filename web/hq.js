@@ -391,8 +391,15 @@
 
   // ----- the kit: pieces every widget draws with ---------------------------------------------------------
   const stars = (n) => el("span", { class: "hq-stars", "aria-label": `${n} Stars`, text: "★".repeat(n || 0) + "☆".repeat(Math.max(0, 5 - (n || 0))) });
+  // a label in Title Case, small words lowercase inside it ("Behind, in the picture" -> "Behind, In the Picture")
+  const SMALL = new Set(["a", "an", "the", "of", "to", "for", "and", "or", "in", "on", "at", "by"]);
+  const title = (text) => String(text || "").split(" ").map((w, i, all) => {
+    const bare = w.replace(/^[^A-Za-z]+/, "").toLowerCase();
+    if (!bare || (SMALL.has(bare.replace(/[^a-z]/g, "")) && i > 0 && i < all.length - 1 && !/[,:]$/.test(all[i - 1]))) return w;
+    return w.replace(/[A-Za-z]/, (c) => c.toUpperCase());
+  }).join(" ");
   const kit = {
-    el, stars,
+    el, stars, title,
     empty: (text) => el("p", { class: "hq-empty-line", text }),
     // [[value, label], ...] as big numbers
     stats: (pairs) => el("div", { class: "hq-stats" }, pairs.map(([v, k]) => el("div", { class: "hq-stat" }, [el("b", { text: String(v) }), el("span", { text: k })]))),
