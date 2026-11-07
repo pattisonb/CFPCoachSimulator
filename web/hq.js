@@ -153,14 +153,19 @@
   // Small spans one column, Medium two (one on a phone), Large them all. Repacked when any card changes height,
   // the grid's width changes, a card is added, moved, resized or removed.
   let packing = false, watcher = null;
-  function pack() {
+  const stillMotion = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const PACK_MS = 170;              // *tune* how long a card takes to slide to its new place
+  // pack({animate, from}): place the cards (and a drag's placeholder); with animate, every card that moved slides
+  // from where it was (from: rects taken before the change, else now)
+  function pack(opts = {}) {
     packing = false;
     const grid = view && view.box.querySelector(".hq-grid");
     if (!grid || !grid.isConnected) return;
+    const items = [...grid.children].filter((n) => (n.classList.contains("hq-card") || n.classList.contains("hq-placeholder")) && !n.__leaving);
+    const from = opts.animate && !stillMotion() ? opts.from || new Map(items.map((n) => [n, n.getBoundingClientRect()])) : null;
     const cols = getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length || 1;
     const h = new Array(cols).fill(0);
-    for (const n of grid.children) {
-      if (!n.classList.contains("hq-card") || n.__leaving) continue;
+    for (const n of items) {
       const w = n.dataset.size === "L" ? cols : n.dataset.size === "M" ? Math.min(2, cols) : 1;
       let at = 0, top = Infinity;
       for (let c = 0; c + w <= cols; c++) { const t = Math.max(...h.slice(c, c + w)); if (t < top) { top = t; at = c; } }
@@ -168,6 +173,13 @@
       n.style.gridColumn = `${at + 1} / span ${w}`;
       n.style.gridRow = `${top + 1} / span ${rows}`;
       for (let c = at; c < at + w; c++) h[c] = top + rows;
+    }
+    if (!from) return;
+    for (const n of items) {
+      const a = from.get(n), b = n.getBoundingClientRect();
+      if (!a || !n.animate) continue;
+      const dx = a.left - b.left, dy = a.top - b.top;
+      if (Math.abs(dx) > 1 || Math.abs(dy) > 1) n.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }], { duration: PACK_MS, easing: "ease-out" });
     }
   }
   function queuePack() { if (!packing) { packing = true; requestAnimationFrame(pack); } }
@@ -243,44 +255,68 @@
   }
   function flushSave() { if (queued) queued(); }
 
-  // ----- dragging: the card itself moves through the grid as the pointer passes other cards -------------
+  // ----- dragging: the card lifts and follows the pointer; a placeholder shows where it will land -------------
+  // The other cards slide to make room as the placeholder moves; the half of the card under the pointer decides the
+  // side, so nothing flips back and forth. The drop puts the card where the placeholder is; Escape puts it back.
   function startDrag(e, id) {
     if (e.button !== 0) return;
     const grid = view.box.querySelector(".hq-grid");
     const node = grid.querySelector(`.hq-card[data-key="${id}"]`);
     if (!node) return;
     e.preventDefault();
-    // the move and the release are heard on the window: moving the card in the page drops any pointer capture
+    const r0 = node.getBoundingClientRect();
+    const dx = e.clientX - r0.left, dy = e.clientY - r0.top;
+    const home = node.nextSibling;
+    const ph = el("div", { class: "hq-placeholder", "data-size": node.dataset.size, "aria-hidden": "true" });
+    ph.style.height = `${r0.height}px`;
+    const from = new Map([...grid.children].map((n) => [n, n.getBoundingClientRect()]));
+    grid.insertBefore(ph, node);
+    from.set(ph, r0);
+    view.box.appendChild(node);                       // lifted off the grid while it moves
+    Object.assign(node.style, { position: "fixed", left: `${r0.left}px`, top: `${r0.top}px`, width: `${r0.width}px`, height: `${r0.height}px`, margin: "0", zIndex: "70", pointerEvents: "none" });
     node.classList.add("hq-dragging");
+    pack({ animate: true, from });
+    const two = () => getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length > 1;
     const moveTo = (ev) => {
+      node.style.left = `${ev.clientX - dx}px`;
+      node.style.top = `${ev.clientY - dy}px`;
       const over = [...grid.children].find((n) => {
-        if (n === node || !n.classList.contains("hq-card")) return false;
+        if (!n.classList.contains("hq-card")) return false;
         const r = n.getBoundingClientRect();
         return ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom;
       });
       if (!over) return;
-      // the half of that card under the pointer decides the side, so the card never flips back and forth
       const r = over.getBoundingClientRect();
-      const before = getComputedStyle(grid).gridTemplateColumns.split(" ").length > 1 ? ev.clientX < r.left + r.width / 2 : ev.clientY < r.top + r.height / 2;
+      const before = two() ? ev.clientX < r.left + r.width / 2 : ev.clientY < r.top + r.height / 2;
       const ref = before ? over : over.nextSibling;
-      if (ref !== node && node.nextSibling !== ref) { grid.insertBefore(node, ref); pack(); }
+      if (ref !== ph && ph.nextSibling !== ref) { grid.insertBefore(ph, ref); pack({ animate: true }); }
     };
-    const done = () => {
+    const done = (cancel) => {
       window.removeEventListener("pointermove", moveTo);
-      window.removeEventListener("pointerup", done);
-      window.removeEventListener("pointercancel", done);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      window.removeEventListener("keydown", key, true);
+      if (cancel === true) grid.insertBefore(ph, home && home.parentNode === grid ? home : null);
+      const landing = new Map([...grid.children].map((n) => [n, n.getBoundingClientRect()]));
+      landing.set(node, node.getBoundingClientRect());
+      grid.insertBefore(node, ph);
+      ph.remove();
+      for (const k of ["position", "left", "top", "width", "height", "margin", "zIndex", "pointerEvents"]) node.style[k] = "";
       node.classList.remove("hq-dragging");
+      pack({ animate: true, from: landing });
       const order = [...grid.querySelectorAll(".hq-card")].map((n) => n.dataset.key);
       const before = placed().map((c) => c.id);
       if (order.join() === before.join()) return;
       const rest = view.cards.filter((c) => !order.includes(c.id));      // unknown widgets keep their place at the end
       view.cards = [...order.map((k) => view.cards.find((c) => c.id === k)), ...rest];
-      ui().pulse(node);
       queueSave();
     };
+    const up = () => done(false);
+    const key = (ev) => { if (ev.key === "Escape") { ev.preventDefault(); ev.stopPropagation(); done(true); } };
     window.addEventListener("pointermove", moveTo);
-    window.addEventListener("pointerup", done);
-    window.addEventListener("pointercancel", done);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    window.addEventListener("keydown", key, true);
   }
 
   // ----- inline actions -------------------------------------------------------------------------------

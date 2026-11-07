@@ -477,6 +477,54 @@ def check_masonry(page, base, sid) -> None:
     assert under[1] < tall[3], f"it sits beside the tall card, not below it: {r}"
 
 
+def check_drag_live(page, base, sid) -> None:
+    """While dragging, the card follows the pointer and a placeholder shows where it will land, the other cards making
+    room as you go; the drop puts it there; Escape puts it back."""
+    page.set_viewport_size({"width": 1440, "height": 1400})
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "class-glance", "size": "S"},
+                                                            {"id": "c2", "widget": "resources", "size": "S"},
+                                                            {"id": "c3", "widget": "scholarships", "size": "S"},
+                                                            {"id": "c4", "widget": "flags", "size": "S"}]})
+    open_hq(page, base, sid)
+    for w in ("class-glance", "resources", "scholarships", "flags"):
+        check_card_clean(page, w)
+    page.click("#tab-headquarters .hq-edit-toggle")
+    time.sleep(0.4)
+    box = lambda w: page.locator(f"#tab-headquarters .hq-card[data-widget='{w}']").bounding_box()
+    h = page.locator("#tab-headquarters .hq-card[data-widget='flags'] .hq-drag").bounding_box()
+    t = box("class-glance")
+    page.mouse.move(h["x"] + h["width"] / 2, h["y"] + h["height"] / 2)
+    page.mouse.down()
+    px, py = t["x"] + 30, t["y"] + 40
+    page.mouse.move(px, py, steps=10)
+    time.sleep(0.3)
+    assert page.is_visible("#tab-headquarters .hq-placeholder"), "a placeholder shows where the card will land"
+    f = box("flags")
+    assert f["x"] - 60 <= px <= f["x"] + f["width"] + 60 and f["y"] - 60 <= py <= f["y"] + f["height"] + 60, f"the card follows the pointer: {f} vs {(px, py)}"
+    slots = page.eval_on_selector_all("#tab-headquarters .hq-grid > *", "els => els.map(e => e.classList.contains('hq-placeholder') ? 'PLACE' : e.dataset.widget)")
+    assert slots.index("PLACE") < slots.index("class-glance"), f"the placeholder moved ahead of the card under the pointer: {slots}"
+    ph = page.locator("#tab-headquarters .hq-placeholder").bounding_box()
+    assert abs(ph["x"] - t["x"]) < 4, f"the others made room: the placeholder took the first slot {ph} {t}"
+    page.mouse.up()
+    time.sleep(0.4)
+    assert not page.is_visible("#tab-headquarters .hq-placeholder")
+    assert order(page)[0] == "flags", order(page)
+    # Escape mid-drag puts the card back where it was
+    before = order(page)
+    h = page.locator("#tab-headquarters .hq-card[data-widget='flags'] .hq-drag").bounding_box()
+    t = box("scholarships")
+    page.mouse.move(h["x"] + h["width"] / 2, h["y"] + h["height"] / 2)
+    page.mouse.down()
+    page.mouse.move(t["x"] + t["width"] - 20, t["y"] + 40, steps=10)
+    page.keyboard.press("Escape")
+    page.mouse.up()
+    time.sleep(0.4)
+    assert order(page) == before and not page.is_visible("#tab-headquarters .hq-placeholder"), (order(page), before)
+    page.click("#tab-headquarters .hq-edit-toggle")
+    save_settled(page)
+    page.set_viewport_size({"width": 1280, "height": 900})
+
+
 def live_career(base) -> str:
     """A career three weeks in with a board: the widgets have real data to draw."""
     sid = call(base, "/api/season", {"team": "georgia", "seed": 7})["id"]
@@ -529,7 +577,7 @@ if __name__ == "__main__":
             live = live_career(base)
             made.append(live)
             if only_review:
-                for f in (check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
+                for f in (check_drag_live, check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
                     try:
                         f(page, base, live)
                         print("  pass", f.__name__)
@@ -561,11 +609,12 @@ if __name__ == "__main__":
             check_tasks_goals(page, base, live)
             check_scrolls(page, base, live)
             check_masonry(page, base, live)
+            check_drag_live(page, base, live)
             browser.close()
         assert not errors, errors
         print("headquarters page ok: empty canvas and drawer; Coming Soon tagged; add; a broken widget contained; "
               "an unknown widget skipped; a refused save keeps the page; every widget live at every size and in the drawer; "
-              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside; masonry packing")
+              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside; masonry packing; a live drag")
     finally:
         for s in made:
             try:

@@ -36,7 +36,9 @@
   background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
 .hq-drag { min-height: 44px; min-width: 44px; border: 2px dashed var(--border); background: transparent; color: var(--muted); font-size: 20px; cursor: grab; touch-action: none; }
 .hq-editing .hq-card { outline: 2px dashed color-mix(in srgb, var(--muted) 45%, transparent); outline-offset: 3px; }
-.hq-card.hq-dragging { opacity: 0.55; outline-style: solid; cursor: grabbing; }
+/* a drag: the card lifts and follows the pointer; the placeholder holds the spot it will land in */
+.hq-card.hq-dragging { opacity: 0.94; outline: none; cursor: grabbing; box-shadow: 0 14px 36px rgba(0, 0, 0, 0.32); }
+.hq-placeholder { border: 2px dashed var(--muted); background: color-mix(in srgb, var(--muted) 12%, transparent); }
 @media (max-width: 699px), (pointer: coarse) { .hq-drag { display: none; } }
 
 /* the drawer: from the right on a wide screen, a bottom sheet on a phone */
