@@ -1703,7 +1703,7 @@ def _league_marks(state: dict) -> dict[str, dict[str, int]]:
     """Each program's year on the _staff_marks scale: offense (O) and defense (D) by points a game against
     the FBS (top third +2, bottom third -2), the win share third (W), the class rank (class: top 25 +2,
     outside the top 70 -1)."""
-    from coach_career import prospects, recruiting
+    from coach_career import prospects
     from sim import season
     ss = state.get("season_stats") or {}
     out: dict[str, dict[str, int]] = {slug: {} for slug in state["league"]["teams"]}
@@ -1725,17 +1725,11 @@ def _league_marks(state: dict) -> dict[str, dict[str, int]]:
     recs = season._records(state, include_playoff=True)
     thirds([s for _, s in sorted(((r["wins"] / max(1, r["wins"] + r["losses"]), s) for s, r in recs.items() if s in out), reverse=True)], "W")
     try:
-        rc = prospects.class_rc(state)
-        by_school: dict[str, list] = {}
-        for pid, st_ in rc["status"].items():
-            school = st_["signed"] or st_["committed"]
-            if school and school != "FCS":
-                by_school.setdefault(school, []).append(rc["prospects"][pid]["composite"])
-        points = {s: sum(c * prospects.CLASS_DECAY ** i for i, c in enumerate(sorted(v, reverse=True))) for s, v in by_school.items()}
-        fbs = list(recruiting.fbs_schools(state))
+        table = prospects.class_table(state)          # the league's own verdict: every commitment counts
+        points = {s: t["points"] for s, t in table.items() if t["pids"]}
         if len(points) >= CLASS_MARK_MIN:              # a season without recruiting (a tool's quick loop) is nobody's verdict
             for slug in out:
-                cr = 1 + sum(1 for s in fbs if points.get(s, 0.0) > points.get(slug, 0.0))
+                cr = table[slug]["rank"] if slug in table else 1 + len(points)
                 out[slug]["class"] = STAFF_MARK if cr <= 25 and points.get(slug) else -1 if cr > 70 or not points.get(slug) else 0
     except Exception:  # noqa: BLE001
         pass
