@@ -475,6 +475,15 @@ def check_masonry(page, base, sid) -> None:
     gap = under[1] - above[3]
     assert 10 <= gap <= 22, f"the gap under a card is the grid's gap, not the end of a row: {gap}px {r}"
     assert under[1] < tall[3], f"it sits beside the tall card, not below it: {r}"
+    # the window narrows to a phone with the page open: one column, nothing overlapping
+    page.set_viewport_size({"width": 400, "height": 900})
+    time.sleep(0.6)
+    r = page.eval_on_selector_all("#tab-headquarters .hq-card", "els => els.map(e => { const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; })")
+    assert len({round(x[0]) for x in r}) == 1, f"one column after narrowing the window: {r}"
+    for i, A in enumerate(r):
+        for B in r[i + 1:]:
+            assert A[3] <= B[1] + 1 or B[3] <= A[1] + 1, f"cards overlap after narrowing the window: {r}"
+    page.set_viewport_size({"width": 1440, "height": 900})
 
 
 def check_drag_live(page, base, sid) -> None:
@@ -580,6 +589,31 @@ def check_resize(page, base, sid) -> None:
     page.set_viewport_size({"width": 1280, "height": 900})
 
 
+def check_edit_overlay(page, base, sid) -> None:
+    """Edit Layout lays its controls over each card on a see-through layer: no card changes size."""
+    page.set_viewport_size({"width": 1440, "height": 1000})
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "class-glance", "size": "M"},
+                                                            {"id": "c2", "widget": "flags", "size": "S"},
+                                                            {"id": "c3", "widget": "top-targets", "size": "M"}]})
+    open_hq(page, base, sid)
+    for w in ("class-glance", "flags", "top-targets"):
+        check_card_clean(page, w)
+    time.sleep(0.3)
+    sizes = lambda: page.eval_on_selector_all("#tab-headquarters .hq-card", "els => els.map(e => { const b = e.getBoundingClientRect(); return [e.dataset.widget, Math.round(b.width), Math.round(b.height), Math.round(b.top)]; })")
+    before = sizes()
+    page.click("#tab-headquarters .hq-edit-toggle")
+    time.sleep(0.4)
+    assert sizes() == before, f"no card changes size or place in Edit Layout: {before} vs {sizes()}"
+    over = page.eval_on_selector("#tab-headquarters .hq-card[data-widget='class-glance'] .hq-edit",
+                                 "e => ({pos: getComputedStyle(e).position, shown: !!e.offsetParent, bg: getComputedStyle(e).backgroundColor})")
+    assert over["pos"] == "absolute" and over["shown"], over
+    assert "rgba" in over["bg"] or "color(" in over["bg"], f"the layer is see-through: {over}"
+    page.click("#tab-headquarters .hq-edit-toggle")
+    time.sleep(0.3)
+    assert sizes() == before
+    page.set_viewport_size({"width": 1280, "height": 900})
+
+
 def live_career(base) -> str:
     """A career three weeks in with a board: the widgets have real data to draw."""
     sid = call(base, "/api/season", {"team": "georgia", "seed": 7})["id"]
@@ -632,7 +666,7 @@ if __name__ == "__main__":
             live = live_career(base)
             made.append(live)
             if only_review:
-                for f in (check_resize, check_drag_live, check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
+                for f in (check_edit_overlay, check_resize, check_drag_live, check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
                     try:
                         f(page, base, live)
                         print("  pass", f.__name__)
@@ -666,11 +700,12 @@ if __name__ == "__main__":
             check_masonry(page, base, live)
             check_drag_live(page, base, live)
             check_resize(page, base, live)
+            check_edit_overlay(page, base, live)
             browser.close()
         assert not errors, errors
         print("headquarters page ok: empty canvas and drawer; Coming Soon tagged; add; a broken widget contained; "
               "an unknown widget skipped; a refused save keeps the page; every widget live at every size and in the drawer; "
-              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside; masonry packing; a live drag; heights by the edge and by chips")
+              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside; masonry packing; a live drag; heights by the edge and by chips; edit controls over the cards")
     finally:
         for s in made:
             try:

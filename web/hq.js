@@ -138,7 +138,8 @@
       ui().on(b, "click", () => change((cards) => { setH(cards[i()], h || null); }));
       return b;
     }));
-    return el("div", { class: "hq-edit" }, [handle, sizes, heights, el("span", { class: "hq-edit-gap" }), earlier, later, remove]);
+    // laid over the card on a see-through layer in Edit Layout (hq.css), so no card changes size
+    return el("div", { class: "hq-edit" }, [el("span", { class: "hq-edit-title", text: w.title }), handle, sizes, heights, earlier, later, remove]);
   }
   function cardNode(c) {
     const w = registry.get(c.widget);
@@ -181,7 +182,7 @@
     if (!grid || !grid.isConnected) return;
     const items = [...grid.children].filter((n) => (n.classList.contains("hq-card") || n.classList.contains("hq-placeholder")) && !n.__leaving);
     const from = opts.animate && !stillMotion() ? opts.from || new Map(items.map((n) => [n, n.getBoundingClientRect()])) : null;
-    const cols = getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length || 1;
+    const cols = columnsOf(grid);
     const h = new Array(cols).fill(0);
     for (const n of items) {
       const w = n.dataset.size === "L" ? cols : n.dataset.size === "M" ? Math.min(2, cols) : 1;
@@ -200,6 +201,9 @@
       if (Math.abs(dx) > 1 || Math.abs(dy) > 1) n.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }], { duration: PACK_MS, easing: "ease-out" });
     }
   }
+  // the grid's column count from hq.css's --hq-cols (never the computed tracks: after the window narrows they still
+  // hold the wider layout's columns until the cards are moved off them)
+  function columnsOf(grid) { return Math.max(1, parseInt(getComputedStyle(grid).getPropertyValue("--hq-cols"), 10) || 1); }
   function queuePack() { if (!packing) { packing = true; requestAnimationFrame(pack); } }
 
   // ----- the layout -----------------------------------------------------------------------------------
@@ -294,7 +298,7 @@
     Object.assign(node.style, { position: "fixed", left: `${r0.left}px`, top: `${r0.top}px`, width: `${r0.width}px`, height: `${r0.height}px`, margin: "0", zIndex: "70", pointerEvents: "none" });
     node.classList.add("hq-dragging");
     pack({ animate: true, from });
-    const two = () => getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length > 1;
+    const two = () => columnsOf(grid) > 1;
     const moveTo = (ev) => {
       node.style.left = `${ev.clientX - dx}px`;
       node.style.top = `${ev.clientY - dy}px`;

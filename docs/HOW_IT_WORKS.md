@@ -1472,7 +1472,8 @@ order, goes to the column or columns with the most room, on 4 px grid rows, so t
 past that. The grid repacks when a card changes height, the width changes, or a card is added, moved, resized or
 removed. Add Widget opens the drawer (from the right; a bottom
 sheet on a phone): categories, a search, and a preview of each widget drawn from its own sample data, so the drawer
-calls nothing. Edit Layout shows each card's drag handle (hidden on a phone; while dragging, the card follows the pointer, a
+calls nothing. Edit Layout lays its controls over each card on a see-through layer, so no card changes size or place, and
+shows each card's drag handle (hidden on a phone; while dragging, the card follows the pointer, a
 dashed placeholder shows where it will land, the other cards slide to make room, and Escape puts it back),
 a bottom edge to drag for the card's height (snapped to 40 px, 120 to 1600, saved as the card's `h`; a
 double-click or Home goes back to Auto, the arrow keys step it; a phone has Auto, Tall and Extra Tall chips instead), size chips, move buttons and remove

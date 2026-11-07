@@ -11,12 +11,13 @@
 
 /* masonry: hq.js pack() places each card in the column(s) with the most room, on rows of HQ_ROW px, so the gap
    under a card is always the grid's gap and short cards stack beside a tall one (the columns follow the width) */
-.hq-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 4px; column-gap: 16px; row-gap: 0; align-items: start; }
+.hq-grid { --hq-cols: 4; display: grid; grid-template-columns: repeat(var(--hq-cols), minmax(0, 1fr)); grid-auto-rows: 4px; column-gap: 16px; row-gap: 0; align-items: start; }
 /* a card is as tall as its content up to a cap; past the cap its body scrolls, never the page (--hq-card-h, *tune*) */
 .hq { --hq-card-h: 400px; }
 .hq-card { display: flex; flex-direction: column; min-width: 0; grid-column: span 1; max-height: var(--hq-card-h); }
-@media (max-width: 1199px) { .hq-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 699px) { .hq-grid { grid-template-columns: minmax(0, 1fr); } }
+/* the column count is --hq-cols, which pack() reads: the computed track list also counts a wider layout's leftovers */
+@media (max-width: 1199px) { .hq-grid { --hq-cols: 2; } }
+@media (max-width: 699px) { .hq-grid { --hq-cols: 1; } }
 .hq-bar { gap: 8px 12px; }
 .hq-viewall { min-height: 32px; }
 .hq-body { flex: 1 1 auto; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
@@ -25,9 +26,11 @@
 .hq-failed, .hq-wait { margin: 4px 0; }
 
 /* edit mode: the controls show only while Edit Layout is on */
-.hq-edit { display: none; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+/* Edit Layout: the controls lie over the whole card on a see-through layer; the card keeps its size and place */
+.hq-edit { display: none; position: absolute; inset: 0; z-index: 3; flex-wrap: wrap; align-content: center; align-items: center; justify-content: center;
+  gap: 8px; padding: 10px; overflow-y: auto; background: color-mix(in srgb, var(--panel) 82%, transparent); backdrop-filter: blur(2px); }
 .hq-editing .hq-edit { display: flex; }
-.hq-edit-gap { flex: 1; }
+.hq-edit-title { flex: 1 0 100%; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text); }
 .hq-edit .go-btn { min-height: 44px; padding: 0 12px; font-size: 14px; }
 .hq-edit :is(.hq-earlier, .hq-later, .hq-remove) { min-width: 44px; padding: 0; font-size: 12px; }
 .hq-sizes { display: flex; gap: 6px; }
@@ -127,7 +130,7 @@
 /* heights: Auto fits the content up to the cap; a set height is the player's (hq.js applyHeight) */
 .hq-card.hq-set-h { max-height: none; }
 .hq-card { position: relative; }
-.hq-resize { display: none; position: absolute; left: 0; right: 0; bottom: -6px; height: 14px; min-height: 0; padding: 0; border: 0; background: transparent; cursor: ns-resize; z-index: 2; }
+.hq-resize { display: none; position: absolute; left: 0; right: 0; bottom: -6px; height: 14px; min-height: 0; padding: 0; border: 0; background: transparent; cursor: ns-resize; z-index: 4; }
 .hq-resize::after { content: ""; position: absolute; left: 50%; top: 4px; width: 48px; height: 5px; margin-left: -24px; border-radius: 3px; background: var(--muted); opacity: 0.7; }
 .hq-editing .hq-resize { display: block; }
 .hq-card.hq-resizing { outline-style: solid; }
