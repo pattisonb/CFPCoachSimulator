@@ -754,19 +754,25 @@ def check_scouted(page, base, sid) -> None:
     check_card_clean(page, "scouted")
     tiles = page.eval_on_selector_all(f"{card} .hq-tile", "els => els.map(e => e.querySelector('.hq-tile-name').textContent.trim())")
     assert len(tiles) >= 2, tiles
-    page.click(f"{card} .hq-tile >> nth=0")
+    tagged = page.eval_on_selector_all(f"{card} .hq-tile", "els => els.map((e, i) => e.querySelector('.hq-tile-flag') ? i : -1).filter(i => i >= 0)")
+    first = tagged[0] if tagged else 0
+    page.click(f"{card} .hq-tile >> nth={first}")
     page.wait_for_selector(f"{card} .hq-scout-detail .hq-grade", timeout=30_000)
-    assert page.inner_text(f"{card} .hq-scout-detail .hq-detail-name").strip() == tiles[0]
+    assert page.inner_text(f"{card} .hq-scout-detail .hq-detail-name").strip() == tiles[first]
     head = page.eval_on_selector(f"{card} .hq-detail-head", "e => ({h: e.getBoundingClientRect().height, tags: e.querySelectorAll('.go-tag').length, text: e.textContent})")
-    assert head["h"] <= 34 and head["tags"] == 0, f"name, position and stars on one line, tags below: {head}"
+    assert head["h"] <= 34, f"name, position, stars and his tag on one line: {head}"
+    assert not page.query_selector(f"{card} .hq-detail-sub .go-tag"), "his tag sits on the name line, not under it"
+    stars_full = page.eval_on_selector_all(f"{card} .hq-tile .hq-stars", "els => els.map(e => e.textContent)")
+    assert stars_full and all(len(t) == 5 for t in stars_full), f"the tiles keep the full row of star icons: {stars_full}"
     assert re.search(r"[1-5]★", head["text"]) and "☆" not in head["text"] and head["text"].count("★") == 1, f"stars as a number here: {head['text']}"
     whole = page.inner_text(card) + " ".join(page.eval_on_selector_all(f"{card} .hq-scout-detail", "els => els.map(e => e.textContent)"))
     assert "3 of 3 Looks" not in whole, "Scouted Players never says 3 of 3 Looks: a complete report goes without saying"
     grades = page.eval_on_selector_all(f"{card} .hq-grade", "els => els.map(e => e.textContent.trim())")
     assert len(grades) == 6 and all(g for g in grades), grades
-    page.click(f"{card} .hq-detail-next")
-    page.wait_for_function("([c, n]) => { const e = document.querySelector(c + ' .hq-detail-name'); return e && e.textContent.trim() === n; }",
-                           arg=[card, tiles[1]], timeout=30_000)
+    if first < len(tiles) - 1:
+        page.click(f"{card} .hq-detail-next")
+        page.wait_for_function("([c, n]) => { const e = document.querySelector(c + ' .hq-detail-name'); return e && e.textContent.trim() === n; }",
+                               arg=[card, tiles[first + 1]], timeout=30_000)
     page.click(f"{card} .hq-detail-back")
     page.wait_for_selector(f"{card} .hq-tile", timeout=10_000)
     check_card_clean(page, "scouted")
