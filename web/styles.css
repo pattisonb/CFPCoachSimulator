@@ -1337,7 +1337,31 @@ button.go-info:focus-visible { outline: 2px solid var(--accent); outline-offset:
 .go-program-bar { grid-template-columns: 92px minmax(0, 1fr) 64px; }
 .go-programs td.word { font-size: 12.5px; color: var(--muted); } .go-programs td.elite, .go-programs td.excellent, .go-programs td.strong { color: var(--text); font-weight: 600; }
 .go-programs td.thin, .go-programs td.weak { color: var(--muted); font-weight: 400; }
-.go-program-groups { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+/* the Your Program card's rows: the hero (pill, name and conference; three headline readings), two columns under it */
+.go-program-hero { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
+.go-program-who { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.go-program-who .team-pill { width: 56px; height: 56px; flex: none; }
+.go-program-names { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.go-program-names .rcp-h1 { margin: 0; }
+.go-program-conf { font-size: 14px; }
+.go-program-stats { display: flex; flex-wrap: wrap; gap: 0; }
+.go-program-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 22px; border-left: 1px solid var(--border); min-width: 120px; }
+.go-program-stat:first-child { border-left: 0; }
+.go-program-stat-l { font-size: 13px; color: var(--muted); }
+.go-program-stat-v { font-size: 26px; line-height: 1.1; font-weight: 800; letter-spacing: -0.3px; color: var(--text); }
+.go-program-stat.elite .go-program-stat-v, .go-program-stat.excellent .go-program-stat-v, .go-program-stat.strong .go-program-stat-v { color: var(--good); }
+.go-program-stat.thin .go-program-stat-v, .go-program-stat.weak .go-program-stat-v { color: var(--muted); }
+.go-program-body { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px 28px; padding-top: 12px; border-top: 1px solid var(--border); }
+.go-program-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.go-program-col + .go-program-col { border-left: 1px solid var(--border); padding-left: 28px; }
+.go-program-h { white-space: nowrap; }
+.go-program-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 8px; }
+.go-program-groups .go-tag { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 56px; padding: 6px 8px; font-size: 12px; line-height: 1.2; text-align: center; }
+.go-program-groups .go-tag b { font-size: 12px; letter-spacing: 0.6px; }
+.go-program-groups .go-tag span { font-weight: 700; font-size: 14px; letter-spacing: 0; text-transform: none; }
+.go-program-groups .go-tag.elite, .go-program-groups .go-tag.excellent, .go-program-groups .go-tag.strong { border-color: var(--good); }
+.go-program-groups .go-tag.elite span, .go-program-groups .go-tag.excellent span, .go-program-groups .go-tag.strong span { color: var(--good); }
+.go-program-groups .go-tag.thin span, .go-program-groups .go-tag.weak span { color: var(--muted); }
 .go-program-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .go-programs td { text-align: left; } .go-programs td.num { text-align: right; } .go-programs .team-pill { vertical-align: middle; }
 .go-programs tr.mine td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
@@ -1495,9 +1519,18 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
 .go-game-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; margin: -6px 0 -4px; }
 .go-full-box { min-height: 36px; padding: 0 12px; font-size: 13px; }
 .go-programs-card { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
-#tab-programs .go-program-bars { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-@media (max-width: 899px) { #tab-programs .go-program-bars { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 599px) { #tab-programs .go-program-bars { grid-template-columns: minmax(0, 1fr); } }
+#tab-programs .go-program-bars { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 20px; }
+@media (max-width: 899px) {
+  .go-program-body { grid-template-columns: minmax(0, 1fr); }
+  .go-program-col + .go-program-col { border-left: 0; padding-left: 0; padding-top: 12px; border-top: 1px solid var(--border); }
+}
+@media (max-width: 599px) {
+  #tab-programs .go-program-bars { grid-template-columns: minmax(0, 1fr); }
+  .go-program-stats { width: 100%; justify-content: space-between; }
+  .go-program-stat { min-width: 0; flex: 1 1 0; padding: 6px 8px; }
+  .go-program-stat-v { font-size: 20px; }
+  .go-program-who .team-pill { width: 44px; height: 44px; }
+}
 @media (max-width: 759px) { .go-full-box { min-height: 44px; } .go-game-head { min-height: 44px; } }
 
 /* ----- the New Career screen's League panel (web/leaguefile.js): the league a new career plays ----- */

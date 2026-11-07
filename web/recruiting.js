@@ -295,30 +295,44 @@
     ["nil", "NIL", "The collective's tier, set by your AD"], ["market", "Market", "Crowds and TV"], ["conference", "Conference", "Your league's strength"],
     ["coach", "Coach", "Your rating and tenure"], ["pro", "Pro Pipeline", "The last ten drafts, by position"]];
 
-  // your program's living rating: the seven metrics as bars and the tier (the League's Programs tab, with every program's table under it)
+  // your program's living rating (the League's Programs tab, with every program's table under it): the bar holds the kicker
+  // and the standing; a hero row with the team's pill, its name and conference and three headline readings (prestige,
+  // market, pro pipeline); then two columns, the seven metrics as bars under School Grades and the draft groups as chips
+  // under Position Pro Potential; the AD's goal in a footer (renderPrograms)
+  const HEADLINE = [["prestige", "Prestige"], ["market", "Market"], ["pro", "Pro Pipeline"]];
   function programCard(pv) {
     const you = pv.you;
     if (!you) return el("div");
-    // a Recap card (web/league.css): the kicker and the standing tag in the head, the program's name as the title
+    const word = (k) => METRIC_WORDS(you[k] || 0, pv);
+    const stat = ([k, label]) => el("div", { class: `go-program-stat ${word(k).toLowerCase()}` }, [
+      el("span", { class: "go-program-stat-l", text: label }), el("b", { class: "go-program-stat-v", text: word(k) })]);
     return el("section", { class: "go-card rcp-card lg-card edge go-program", "aria-label": "Your Program" }, [
       el("div", { class: "card-bar go-program-head lg-head" }, [el("span", { class: "go-kicker muted" }, ["Your Program ",
         ui().tip("Prestige and the market move slowly with results; your AD raises NIL after a year that meets his goal.", "Your Program")]),
         el("span", { class: "go-tag", text: you.tier_name, title: "Where your program stands: its name, results, NIL, market, league, coach and pro pipeline, moving slowly with what you do" })]),
-      el("h2", { class: "rcp-h1 lg-h2", text: you.name || "" }),
-      el("div", { class: "go-program-bars" }, PROGRAM_METRICS.map(([k, label, tip]) => el("div", { class: "go-program-bar", title: tip }, [
-        el("span", { class: "go-program-label", text: label }), el("i", {}, [el("b", { style: `width:${Math.max(2, Math.min(100, you[k]))}%` })]),
-        el("span", { class: "go-program-val", text: METRIC_WORDS(you[k] || 0, pv) })]))),
-      proGroups(pv, you),
+      el("div", { class: "go-program-hero" }, [
+        el("div", { class: "go-program-who" }, [window.CFP.teamPill ? window.CFP.teamPill(you.team) : null,
+          el("div", { class: "go-program-names" }, [el("h2", { class: "rcp-h1 lg-h2", text: you.name || "" }), el("span", { class: "muted go-program-conf", text: ((window.CFP.teamsBySlug || {})[you.team] || {}).conference || "" })])]),
+        el("div", { class: "go-program-stats" }, HEADLINE.map(stat))]),
+      el("div", { class: "go-program-body" }, [
+        el("div", { class: "go-program-col" }, [el("div", { class: "go-kicker muted go-program-h" }, ["School Grades ",
+          ui().tip("The seven measures behind your standing, each in one of eight words: Elite, Excellent, Strong, Good, Solid, Fair, Thin, Weak.", "School Grades")]),
+          el("div", { class: "go-program-bars" }, PROGRAM_METRICS.map(([k, label, tip]) => el("div", { class: "go-program-bar", title: tip }, [
+            el("span", { class: "go-program-label", text: label }), el("i", {}, [el("b", { style: `width:${Math.max(2, Math.min(100, you[k]))}%` })]),
+            el("span", { class: "go-program-val", text: word(k) })])))]),
+        el("div", { class: "go-program-col" }, [el("div", { class: "go-kicker muted go-program-h" }, ["Position Pro Potential ",
+          ui().tip("Where your program's last ten drafts came from, by draft position, best first; a position it never sent reads Weak.", "Position Pro Potential")]),
+          proGroups(pv, you)])]),
     ]);
   }
 
-  // the draft groups with a grade, best first: "WR Elite" (a group the program never sent reads Weak)
+  // the draft groups with a grade, best first: a chip "WR Elite" (a group the program never sent reads Weak)
   function proGroups(pv, you) {
     const order = pv.group_order && pv.group_order.length ? pv.group_order : GROUP_ORDER_PRO;
     const pg = you.pro_groups || {};
     const list = order.map((g, i) => ({ g, v: pg[g] || 0, i })).sort((a, b) => b.v - a.v || a.i - b.i);
     return el("div", { class: "go-program-groups", title: "The Pro Pipeline by draft position, best first" },
-      list.map((x) => el("span", { class: "go-tag", text: `${x.g} ${METRIC_WORDS(x.v, pv)}` })));
+      list.map((x) => { const w = METRIC_WORDS(x.v, pv); return el("span", { class: `go-tag ${w.toLowerCase()}` }, [el("b", { text: x.g }), " ", el("span", { text: w })]); }));
   }
 
   // the League's Programs tab: your program's card (with the AD's goal), then every program, open
