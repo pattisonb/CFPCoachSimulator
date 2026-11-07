@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 from test_career_e2e import call, free_port, launch   # noqa: E402
 
 BAD = ("null", "undefined", "NaN")
-MIN_WIDGETS = 12      # the ready widgets so far
+MIN_WIDGETS = 16      # the ready widgets (spec section 7)
 SMALL = {"a", "an", "the", "of", "to", "for", "and", "or", "in", "on", "at", "by", "vs"}
 EMPTY_LINE = "Build your Headquarters. Add widgets for recruiting and scouting."
 
@@ -192,6 +192,28 @@ def check_previews(page) -> None:
     page.click(".hq-drawer .hq-close")
 
 
+def check_actions(page, base, sid, fresh) -> None:
+    """Send Scout and Add to Board inside the Scouting Queue: a toast, and the card patched in place."""
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "scout-queue", "size": "M"}]})
+    open_hq(page, base, sid)
+    card = "#tab-headquarters .hq-card[data-widget='scout-queue']"
+    check_card_clean(page, "scout-queue")
+    row = page.locator(f"{card} li", has=page.locator(".hq-send-scout")).first
+    name = row.locator(".go-link").inner_text().strip()
+    looks0 = row.locator(".hq-looks").inner_text().strip()
+    row.locator(".hq-send-scout").click()
+    page.wait_for_function("(n) => [...document.querySelectorAll('.toast-item')].some(t => t.textContent.includes(n))", arg=name, timeout=30_000)
+    page.wait_for_function("([c, n, was]) => { const li = [...document.querySelectorAll(c + ' li')].find(x => x.querySelector('.go-link') && x.querySelector('.go-link').textContent.trim() === n);"
+                           " return li && li.querySelector('.hq-looks').textContent.trim() !== was; }", arg=[card, name, looks0], timeout=30_000)
+    # Add to Board on a career with nothing on its board yet
+    call(base, f"/api/season/{fresh}/headquarters", {"cards": [{"id": "c1", "widget": "scout-queue", "size": "M"}]})
+    open_hq(page, base, fresh)
+    check_card_clean(page, "scout-queue")
+    add = page.locator(f"{card} .hq-add-board:not([disabled])").first
+    add.click()
+    page.wait_for_function("(c) => [...document.querySelectorAll(c + ' .hq-add-board')].some(b => b.disabled && b.textContent.trim() === 'On Your Board')", arg=card, timeout=30_000)
+
+
 def live_career(base) -> str:
     """A career three weeks in with a board: the widgets have real data to draw."""
     sid = call(base, "/api/season", {"team": "georgia", "seed": 7})["id"]
@@ -245,6 +267,7 @@ if __name__ == "__main__":
             check_sweep(page, base, live, lambda sizes, size: sizes[-1])
             check_sweep(page, base, sid, lambda sizes, size: sizes[0])      # a new career: nothing on the board yet
             check_previews(page)
+            check_actions(page, base, live, sid)
             browser.close()
         assert not errors, errors
         print("headquarters page ok: empty canvas and drawer; Coming Soon tagged; add; a broken widget contained; "
