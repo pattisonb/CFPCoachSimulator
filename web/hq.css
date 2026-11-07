@@ -157,6 +157,9 @@
 .hq-tile:hover { border-color: var(--go-primary, var(--accent)); }
 .hq-tile-name { font-weight: 700; font-size: 14px; }
 .hq-tile-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.hq-scout-detail { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; overflow-y: auto; overscroll-behavior: contain;
+  padding: 12px var(--card-pad-x, var(--card-pad)) var(--card-pad); background: var(--panel); }
+.hq-editing .hq-scout-detail { display: none; }
 .hq-detail-nav, .hq-detail-head, .hq-detail-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .hq-detail-nav .go-btn, .hq-detail-acts .go-btn { min-height: 36px; padding: 0 12px; font-size: 13px; }
 .hq-detail-head { margin: 10px 0 6px; }

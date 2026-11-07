@@ -719,10 +719,27 @@ def check_scouted(page, base, sid) -> None:
         except Exception:  # noqa: BLE001 - out of points or a complete report: the others are enough
             pass
     page.set_viewport_size({"width": 1440, "height": 1100})
+    card = "#tab-headquarters .hq-card[data-widget='scouted']"
+    size_of = lambda: (lambda b: (round(b["width"]), round(b["height"])))(page.locator(card).bounding_box())
+    for size in ("S", "M"):                          # a report opens over the tiles: the card never changes size
+        call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "scouted", "size": size}]})
+        open_hq(page, base, sid)
+        check_card_clean(page, "scouted")
+        time.sleep(0.3)
+        before = size_of()
+        page.click(f"{card} .hq-tile >> nth=0")
+        page.wait_for_selector(f"{card} .hq-scout-detail .hq-grade", timeout=30_000)
+        time.sleep(0.3)
+        assert size_of() == before, f"{size}: opening a report keeps the card's size: {before} -> {size_of()}"
+        page.click(f"{card} .hq-detail-next")
+        time.sleep(0.4)
+        assert size_of() == before, f"{size}: stepping keeps the card's size"
+        page.click(f"{card} .hq-detail-back")
+        time.sleep(0.3)
+        assert size_of() == before and not page.is_visible(f"{card} .hq-scout-detail"), f"{size}: back to the tiles, same size"
     call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "scouted", "size": "L"}]})
     open_hq(page, base, sid)
     check_card_clean(page, "scouted")
-    card = "#tab-headquarters .hq-card[data-widget='scouted']"
     tiles = page.eval_on_selector_all(f"{card} .hq-tile", "els => els.map(e => e.querySelector('.hq-tile-name').textContent.trim())")
     assert len(tiles) >= 2, tiles
     page.click(f"{card} .hq-tile >> nth=0")

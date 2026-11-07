@@ -82,15 +82,20 @@
     { pid: "s3", name: "Davis Hammond", position: "QB", stars: 4, looks: 1, potential: ["Fair", "Strong"], on_board: true, flags: [] },
     { pid: "s4", name: "Robert Soles", position: "LB", stars: 3, looks: 3, potential: ["Strong", "Strong"], on_board: false, flags: [] }] };
   reg({ id: "scouted", title: "Scouted Players", blurb: "Every prospect your staff has looked at, at a glance. Open one to step through their reports.",
-    sizes: ["M", "L"], size: "L", sources: ["scouted"], sample: { scouted: SAMPLE_SCOUTED },
+    sizes: ["S", "M", "L"], size: "M", sources: ["scouted"], sample: { scouted: SAMPLE_SCOUTED },
     draw: (d, ctx) => {
       const rows = (d.scouted.queue || []);
       if (!rows.length) return k.empty("No scouted players yet. Send scouts from the Scouting Queue or the Scouting tab.");
       const root = el("div", { class: "hq-scouted" });
       const key = ctx.season ? ctx.season.id : "sample";
       const tag = (r) => (r.flags && r.flags.length ? FLAG_WORDS[r.flags[0]] || k.title(r.flags[0]) : r.likes ? `${(r.likes && r.likes.who) || "Staff"} Likes Him` : null);
+      // the report lies over the card's content, under its header, so the card never changes size (one Scouted
+      // Players card a Headquarters; found by its widget id, since a redraw keeps the live card, not this draw's root)
+      const cardEl = () => document.querySelector('#tab-headquarters .hq-card[data-widget="scouted"]');
+      const closeReport = () => { const c = cardEl(); if (c) for (const o of c.querySelectorAll(".hq-scout-detail")) o.remove(); };
       const grid = () => {
         viewing.delete(key);
+        closeReport();
         root.replaceChildren(el("div", { class: "hq-tiles" }, rows.map((r) => {
           const t = el("button", { type: "button", class: "hq-tile", "data-key": r.pid, "aria-label": `Open ${r.name}'s Report` }, [
             el("span", { class: "hq-tile-name", text: r.name }),
@@ -115,13 +120,19 @@
         const grades = el("div", { class: "hq-grades" }, [el("p", { class: "muted hq-wait", text: "Loading his report…" })]);
         const profile = el("button", { type: "button", class: "go-btn", text: "Open Profile" });
         on(profile, "click", () => ctx.openProfile(r.pid));
-        root.replaceChildren(el("div", { class: "hq-scout-detail", "data-key": `detail-${r.pid}` }, [
+        const c = cardEl();
+        if (!c) return;
+        closeReport();
+        const bar = c.querySelector(".hq-bar");
+        const layer = el("div", { class: "hq-scout-detail", "data-key": `detail-${r.pid}` }, [
           el("div", { class: "hq-detail-nav" }, [back, el("span", { class: "hq-grow hq-sub", text: `${i + 1} of ${rows.length}` }), prev, next]),
           el("div", { class: "hq-detail-head" }, [el("b", { class: "hq-detail-name", text: r.name }), el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars),
             el("span", { class: "hq-sub", text: looksText(r.looks) }), tag(r) ? el("span", { class: "go-tag", text: tag(r) }) : null]),
           grades,
           el("div", { class: "hq-detail-acts" }, [profile, addButton(ctx, r)]),
-        ]));
+        ]);
+        layer.style.top = `${bar ? bar.offsetTop + bar.offsetHeight : 0}px`;
+        c.appendChild(layer);
         ctx.api(`/api/season/${encodeURIComponent(ctx.season.id)}/prospect/${encodeURIComponent(r.pid)}`).then((pr) => {
           if (!grades.isConnected) return;
           const g = pr.our_grades || {};
@@ -133,7 +144,8 @@
         }).catch(() => { if (grades.isConnected) grades.replaceChildren(k.empty("His report didn't load. Open his profile instead.")); });
       };
       const open = viewing.get(key), at = rows.findIndex((r) => r.pid === open);
-      if (at >= 0 && !ctx.sample) detail(at); else grid();
+      grid();
+      if (at >= 0 && !ctx.sample) { viewing.set(key, open); requestAnimationFrame(() => detail(at)); }   // a redraw keeps an open report
       return root;
     } });
 })();
