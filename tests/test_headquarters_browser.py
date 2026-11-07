@@ -158,6 +158,7 @@ def check_card_clean(page, widget: str) -> None:
     assert "Couldn't Load This Widget" not in body, f"{widget} failed to draw"
     for bad in BAD:
         assert not re.search(rf"\b{bad}\b", body), f"{bad!r} in {widget}: {body[:300]}"
+    assert "[object" not in body.lower(), f"an object printed as text in {widget}: {body[:300]}"
     labels = page.eval_on_selector_all(f"{sel} .card-bar h3, {sel} th, {sel} .hq-body button, {sel} .go-tag, {sel} .hq-stat span, {sel} h4",
                                        "els => els.filter(e => e.offsetParent).map(e => e.textContent.trim()).filter(Boolean)")
     bad = [t for t in labels if not title_case(t)]
@@ -679,6 +680,35 @@ def check_resize_snap(page, base, sid) -> None:
     page.set_viewport_size({"width": 1280, "height": 900})
 
 
+def check_bar_gaps(page, base, sid) -> None:
+    """Room between every card's header and its content; thin headers on the Recruiting and Scouting tabs too."""
+    page.set_viewport_size({"width": 1440, "height": 1000})
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "tasks", "size": "M"},
+                                                            {"id": "c2", "widget": "movers", "size": "M"},
+                                                            {"id": "c3", "widget": "senior-impact", "size": "L"}]})
+    open_hq(page, base, sid)
+    for w in ("tasks", "movers", "senior-impact"):
+        check_card_clean(page, w)
+    gaps = page.eval_on_selector_all("#tab-headquarters .hq-card", """els => els.map(e => {
+      const bar = e.querySelector('.hq-bar').getBoundingClientRect();
+      const first = e.querySelector('.hq-body').firstElementChild;
+      const inner = first.firstElementChild || first;
+      return [e.dataset.widget, Math.round(Math.min(first.getBoundingClientRect().top, inner.getBoundingClientRect().top) - bar.bottom)];
+    })""")
+    assert all(g >= 10 for _, g in gaps), f"room under every header: {gaps}"
+    for tab, wait in (("recruiting", ".go-row-recruit, .go-board, .card-bar"), ("scouting", ".sc-list, .card-bar")):
+        page.goto(f"{base}/index.html?id={sid}&tab={tab}")
+        page.wait_for_selector(f"#tab-{tab} .card-bar", timeout=120_000)
+        time.sleep(0.6)
+        # every bar no taller than its tallest child needs: 34 px for a title, the control's own height plus a little for a bar holding one
+        bars = page.eval_on_selector_all(f"#tab-{tab} .card-bar", """els => els.filter(e => e.offsetParent).map(e => [Math.round(e.getBoundingClientRect().height),
+          Math.max(0, ...[...e.querySelectorAll('*')].map(k => Math.round(k.getBoundingClientRect().height)))])""")
+        assert bars, f"no bars on the {tab} tab"
+        fat = [b for b in bars if b[0] > max(34, b[1] + 4)]
+        assert not fat, f"thin headers on the {tab} tab (height, tallest child): {fat}"
+    page.set_viewport_size({"width": 1280, "height": 900})
+
+
 def live_career(base) -> str:
     """A career three weeks in with a board: the widgets have real data to draw."""
     sid = call(base, "/api/season", {"team": "georgia", "seed": 7})["id"]
@@ -731,7 +761,7 @@ if __name__ == "__main__":
             live = live_career(base)
             made.append(live)
             if only_review:
-                for f in (check_resize_snap, check_edit_overlay, check_resize, check_drag_live, check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
+                for f in (check_bar_gaps, check_resize_snap, check_edit_overlay, check_resize, check_drag_live, check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
                     try:
                         f(page, base, live)
                         print("  pass", f.__name__)
@@ -767,11 +797,12 @@ if __name__ == "__main__":
             check_resize(page, base, live)
             check_edit_overlay(page, base, live)
             check_resize_snap(page, base, live)
+            check_bar_gaps(page, base, live)
             browser.close()
         assert not errors, errors
         print("headquarters page ok: empty canvas and drawer; Coming Soon tagged; add; a broken widget contained; "
               "an unknown widget skipped; a refused save keeps the page; every widget live at every size and in the drawer; "
-              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside; masonry packing; a live drag; heights by the edge and by chips; edit controls over the cards; heights snap to neighbors")
+              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside; masonry packing; a live drag; heights by the edge and by chips; edit controls over the cards; heights snap to neighbors; room under headers, thin headers on Recruiting and Scouting")
     finally:
         for s in made:
             try:

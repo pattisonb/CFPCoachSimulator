@@ -1590,7 +1590,11 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
    padding (--card-pad: 20 px, 14 on a phone; nested cards 14) that the bar reads to bleed to the edges, and a card
    that lays its body out with a flex gap says so in --card-gap so the bar keeps 16 px to the body. Corners are square
    everywhere: no rectangle in the career UI has a radius (circles stay circles; the big team tiles keep 4 px). */
-:root { --radius: 0; --card-pad: 20px; --card-pad-nested: 14px; --card-bar-h: 42px; --card-bar-gap: 16px; }   /* *tune* the cards' padding, the bar's height, the room between a bar and its body */
+:root { --radius: 0; --card-pad: 20px; --card-pad-nested: 14px; --card-bar-h: 42px; --card-bar-gap: 16px; }
+/* the Recruiting and Scouting tabs (and Headquarters, hq.css): thinner bars, the room goes to the content; a bar
+   holding a full-size control stays as tall as the control */
+:is(#tab-recruiting, #tab-scouting) { --card-bar-h: 30px; }
+:is(#tab-recruiting, #tab-scouting) .card-bar { padding-top: 1px; padding-bottom: 1px; }   /* *tune* the cards' padding, the bar's height, the room between a bar and its body */
 @media (max-width: 720px) { :root { --card-pad: 14px; } }
 button, input, select, textarea { }
 .team-pill.big, .team-pill.xl, .ofc-pill-l, .ofc-pill-m, .review-big .team-pill, .champ-banner .team-pill, .off-hero-mark .team-pill { }

@@ -23,7 +23,7 @@
       { pid: "s2", name: "Aden Neal", position: "OT", stars: 4, looks: 0, can_send: true, on_board: false },
       { pid: "s3", name: "Davis Hammond", position: "QB", stars: 4, looks: 2, can_send: true, on_board: true, potential: ["Solid", "Strong"] }],
     flags: [{ pid: "s4", name: "Robert Soles", position: "LB", stars: 3, flag: "gem", likes: null, on_board: false },
-      { pid: "s5", name: "James Clanton", position: "LB", stars: 4, flag: "likes", likes: "DC", on_board: true }],
+      { pid: "s5", name: "James Clanton", position: "LB", stars: 4, flag: "likes", likes: { who: "DC", name: "Matt Patricia", text: "He would start for us." }, on_board: true }],
     scouts: [{ id: "a1", name: "Mark Johnson", role: "Area Scout", area: "Texas", evaluation_word: "Strong", yield: { looks: 6.5, flags: 1 } },
       { id: "a2", name: "Chris Williams", role: "Area Scout", area: "Florida", evaluation_word: "Solid", yield: { looks: 4, flags: 0 } }],
   };
@@ -50,7 +50,9 @@
       const rows = (d.scouting.flags || []).slice(0, k.rowsFor(ctx.size));
       if (!rows.length) return k.empty("No flags yet. Your staff flags prospects once their reports are complete.");
       return k.list(rows.map((f) => {
-        const word = f.flag === "likes" ? `${ROLE_SHORT[f.likes] || f.likes || "Staff"} Likes Him` : FLAG_WORDS[f.flag] || k.title(f.flag);
+        // likes is your coordinator's word on him, {who: "OC" | "DC", name, text}, as the Scouting tab shows it
+        const who = f.likes && typeof f.likes === "object" ? f.likes.who : f.likes;
+        const word = f.flag === "likes" ? `${ROLE_SHORT[who] || who || "Staff"} Likes Him` : FLAG_WORDS[f.flag] || k.title(f.flag);
         return { key: `${f.pid}-${f.flag}`, cells: [el("span", { class: "go-tag", text: word }), k.name(ctx, f.pid, f.name), el("span", { class: "hq-sub", text: pos(f) }),
           ctx.size === "M" ? addButton(ctx, { pid: f.pid, name: f.name, on_board: !!f.on_board }) : null] };
       }));
