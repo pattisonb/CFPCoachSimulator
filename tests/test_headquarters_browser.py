@@ -410,6 +410,32 @@ def check_tasks_goals(page, base, sid) -> None:
     save_settled(page)
 
 
+def check_scrolls(page, base, sid) -> None:
+    """Every card keeps its height; a long widget scrolls inside its own body, and the page does not move."""
+    page.set_viewport_size({"width": 1280, "height": 900})
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "recruit-search", "size": "M"},
+                                                            {"id": "c2", "widget": "calendar", "size": "M"},
+                                                            {"id": "c3", "widget": "class-glance", "size": "S"}]})
+    open_hq(page, base, sid)
+    for w in ("recruit-search", "calendar", "class-glance"):
+        check_card_clean(page, w)
+    hs = page.eval_on_selector_all("#tab-headquarters .hq-card", "els => els.map(e => Math.round(e.getBoundingClientRect().height))")
+    assert max(hs) - min(hs) <= 1 and max(hs) <= 460, f"cards should share one fixed height: {hs}"
+    body = "#tab-headquarters .hq-card[data-widget='recruit-search'] .hq-body"
+    info = page.eval_on_selector(body, "b => ({over: getComputedStyle(b).overflowY, sh: b.scrollHeight, ch: b.clientHeight})")
+    assert info["over"] == "auto" and info["sh"] > info["ch"], f"a long widget scrolls in its body: {info}"
+    y0 = page.evaluate("() => window.scrollY")
+    page.eval_on_selector(body, "b => { b.scrollTop = 200; }")
+    assert page.eval_on_selector(body, "b => b.scrollTop") > 0 and page.evaluate("() => window.scrollY") == y0
+    rows = page.eval_on_selector_all(f"{body} li", "els => els.length")
+    assert rows > 8, f"a scrolling widget shows more than one screen of rows: {rows}"
+    page.set_viewport_size({"width": 400, "height": 860})
+    open_hq(page, base, sid)
+    hs = page.eval_on_selector_all("#tab-headquarters .hq-card", "els => els.map(e => Math.round(e.getBoundingClientRect().height))")
+    assert max(hs) <= 480, f"cards keep a fixed height on a phone too: {hs}"
+    page.set_viewport_size({"width": 1280, "height": 900})
+
+
 def live_career(base) -> str:
     """A career three weeks in with a board: the widgets have real data to draw."""
     sid = call(base, "/api/season", {"team": "georgia", "seed": 7})["id"]
@@ -462,7 +488,7 @@ if __name__ == "__main__":
             live = live_career(base)
             made.append(live)
             if only_review:
-                for f in (check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
+                for f in (check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
                     try:
                         f(page, base, live)
                         print("  pass", f.__name__)
@@ -492,11 +518,12 @@ if __name__ == "__main__":
             check_save_flushed(page, base, live)
             check_no_stars(page)
             check_tasks_goals(page, base, live)
+            check_scrolls(page, base, live)
             browser.close()
         assert not errors, errors
         print("headquarters page ok: empty canvas and drawer; Coming Soon tagged; add; a broken widget contained; "
               "an unknown widget skipped; a refused save keeps the page; every widget live at every size and in the drawer; "
-              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If")
+              "Send Scout and Add to Board in place; add, resize, drag, remove and Undo, reload; the phone layout; tasks, goals and What-If; cards scroll inside")
     finally:
         for s in made:
             try:

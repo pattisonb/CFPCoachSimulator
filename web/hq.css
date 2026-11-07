@@ -10,7 +10,9 @@
 .hq-empty p { margin: 0; font-size: 16px; }
 
 .hq-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
-.hq-card { display: flex; flex-direction: column; min-width: 0; grid-column: span 1; }
+/* every card one fixed height; what does not fit scrolls inside its body, never the page (--hq-card-h, *tune*) */
+.hq { --hq-card-h: 400px; }
+.hq-card { display: flex; flex-direction: column; min-width: 0; grid-column: span 1; height: var(--hq-card-h); }
 .hq-card[data-size="M"] { grid-column: span 2; }
 .hq-card[data-size="L"] { grid-column: 1 / -1; }
 @media (max-width: 1199px) {
@@ -23,7 +25,8 @@
 }
 .hq-bar { gap: 8px 12px; }
 .hq-viewall { min-height: 32px; }
-.hq-body { flex: 1; min-width: 0; }
+.hq-body { flex: 1 1 auto; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.hq-bar, .hq-edit { flex: none; }
 .hq-body > :first-child { margin-top: 0; }
 .hq-failed, .hq-wait { margin: 4px 0; }
 
@@ -118,4 +121,5 @@
 @media (max-width: 699px), (pointer: coarse) { .hq-goal-edit { min-height: 44px; } }
 .hq .go-meter-fill.warn, .hq-drawer .go-meter-fill.warn { background: var(--go-warn, #d4a017); }
 .hq .go-meter-fill.bad, .hq-drawer .go-meter-fill.bad { background: var(--bad); }
-.hq .go-meter-fill:not(.good, .warn, .bad), .hq-drawer .go-meter-fill:not(.good, .warn, .bad) { background: var(--go-primary, var(--accent)); }
+@media (max-width: 699px) { .hq { --hq-card-h: 420px; } }
+.hq-body .hq-table th { position: sticky; top: 0; z-index: 1; background: var(--panel); }

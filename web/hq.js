@@ -465,7 +465,8 @@
       return svg;
     },
     // how many rows a list shows at a size
-    rowsFor: (size) => ({ S: 5, M: 8, L: 12 }[size] || 5),
+    // how many rows a list holds at a size (the card's body scrolls, so these are generous)
+    rowsFor: (size) => ({ S: 20, M: 30, L: 50 }[size] || 20),
   };
 
   window.HQ = {
