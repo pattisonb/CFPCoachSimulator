@@ -192,7 +192,7 @@ if __name__ == "__main__":
                 page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)
                 time.sleep(0.5)
                 n = page.evaluate("() => document.querySelectorAll('#season-tabs button[data-tab]').length")
-                assert n == 17, n
+                assert n == 18, n           # Headquarters is the 18th tab
                 check_width(page, width, phone=width <= 400)
                 check_league(page, width, phone=width <= 400)
             # a league tab opened from the address shows on the League button (never behind More, never clipped)

@@ -1140,6 +1140,62 @@ def office_view(p: Params) -> dict:
     return office.office_view(_career_state(p.path["season_id"]))
 
 
+@route("GET", "/api/season/{season_id}/headquarters")
+def headquarters_view(p: Params) -> dict:
+    """Headquarters: the saved widget layout, and with `want` (commits, movers) the reads no other view has."""
+    from coach_career import headquarters
+    st = _career_state(p.path["season_id"])
+    want = {w for w in (p.q("want") or "").split(",") if w}
+    out = {"layout": headquarters.layout(st)}
+    if "commits" in want:
+        out["commits"] = headquarters.commits_by_week(st)
+    if "movers" in want:
+        out["movers"] = headquarters.movers(st)
+    if "contacts" in want:
+        out["contacts"] = headquarters.last_contacts(st)
+    if "outlook" in want:
+        out["outlook"] = headquarters.outlook(st)
+    if "next_year" in want:
+        out["next_year"] = headquarters.next_year(st)
+    if "goals" in want:
+        out["goals"] = headquarters.goals(st)
+    if "tasks" in want:
+        out["tasks"] = headquarters.tasks(st)
+    if "whatif" in want:
+        try:
+            out["whatif"] = headquarters.what_if(st, p.q("pid") or "")
+        except headquarters.LayoutError as e:
+            raise ApiError(404, e.message) from e
+    return out
+
+
+@route("POST", "/api/season/{season_id}/headquarters/plan")
+def headquarters_plan(p: Params) -> dict:
+    """Store Headquarters' tasks and goal targets ({"tasks": [...], "goals": {...}}, either optional); a bad shape is a 400."""
+    from coach_career import headquarters
+    st = _career_state(p.path["season_id"])
+    try:
+        out = headquarters.set_plan(st, p.body)
+    except headquarters.LayoutError as e:
+        raise ApiError(400, e.message) from e
+    _save_loaded()
+    return out
+
+
+@route("POST", "/api/season/{season_id}/headquarters")
+def headquarters_save(p: Params) -> dict:
+    """Store the Headquarters layout ({"cards": [{"id", "widget", "size"}]}); a bad shape is a 400, nothing stored."""
+    from coach_career import headquarters
+    st = _career_state(p.path["season_id"])
+    body = p.body if isinstance(p.body, dict) else {}
+    try:
+        out = headquarters.set_layout(st, body.get("cards"))
+    except headquarters.LayoutError as e:
+        raise ApiError(400, e.message) from e
+    _save_loaded()
+    return {"layout": out}
+
+
 @route("GET", "/api/season/{season_id}/recruiting/report")
 def recruiting_reports(p: Params) -> dict:
     """The weekly reports kept (what changed for the prospects on your board), latest last."""

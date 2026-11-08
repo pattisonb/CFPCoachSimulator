@@ -1257,7 +1257,7 @@
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
     layoutTabs();   // the open tab always keeps a slot in the row
-    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "programs", "office", "offseason", "recruiting", "prospects", "scouting", "classes"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "programs", "office", "offseason", "recruiting", "headquarters", "prospects", "scouting", "classes"]) $(`#tab-${t}`).hidden = t !== name;
     document.body.classList.toggle("on-office", name === "office");
     document.body.classList.toggle("on-career-tab", CAREER_TABS.includes(name));
     document.body.classList.toggle("no-week-strip", NO_WEEK_TABS.includes(name));
@@ -1273,7 +1273,7 @@
   // the open modals (modal=<kind>:<arg>, bottom to top). A top-level tab or a modal pushes a history entry; a
   // filter, a sort, a sub-tab or another recruit replaces it. Writing the address never redraws anything.
   const route = window.CFP.route;
-  const TABS = ["office", "offseason", "recruiting", "prospects", "scouting", "classes", "games", "schedule", "standings", "rankings", "stats", "programs", "bracket", "bowls", "awards", "summary"];
+  const TABS = ["office", "offseason", "recruiting", "headquarters", "prospects", "scouting", "classes", "games", "schedule", "standings", "rankings", "stats", "programs", "bracket", "bowls", "awards", "summary"];
   const BOARD_KEYS = ["stage", "sort", "pid", "pane"];
   const TAB_KEYS = { recruiting: BOARD_KEYS, offseason: [...BOARD_KEYS, "opos", "ostatus", "opage", "odev"], prospects: ["ppos", "pstars", "pstate", "pstatus", "psort", "pgroup", "ppage"],
     scouting: ["qboard", "spid", "ssub", "sops"], rankings: ["poll"], stats: ["stats", "steam", "sview"], awards: ["aview"] };
@@ -1391,11 +1391,12 @@
     else if (t === "stats") renderStats();
     else if (t === "offseason" && window.Offseason) window.Offseason.render(state.season, $("#tab-offseason"), recruitingHelpers);
     else if (t === "office" && window.Office) window.Office.render(state.season, $("#tab-office"), recruitingHelpers);
+    else if (t === "headquarters" && window.HQ) window.HQ.render(state.season, $("#tab-headquarters"), recruitingHelpers);
     else if (CAREER_TABS.includes(t) && window.Recruiting) window.Recruiting.render(t, state.season, recruitingHelpers);
   }
 
   // Coach Career: the recruiting tabs (recruiting.js) and the week's steps under the header
-  const CAREER_TABS = ["offseason", "office", "recruiting", "prospects", "scouting", "classes", "programs"];
+  const CAREER_TABS = ["offseason", "office", "recruiting", "headquarters", "prospects", "scouting", "classes", "programs"];
   // league tabs that show the season as it stands, never a picked week: the week strip stays off them
   const NO_WEEK_TABS = ["standings", "stats", "awards", "summary", "bowls"];
   // the League menu follows the calendar in a career: the bracket and bowls once the field is set

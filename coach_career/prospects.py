@@ -1272,7 +1272,7 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
         likes = staff_likes(state, pid, me)
         for flag in recruiting._flags(state, pid) + (["likes"] if likes else []):
             flags.append({"pid": pid, "name": p["name"], "position": p["position"], "stars": p["stars"], "flag": flag,
-                          "looks": looks_out(rc["reads"][pid]), "likes": likes,
+                          "looks": looks_out(rc["reads"][pid]), "likes": likes, "on_board": pid in rc["board"],
                           "standing_word": _standing_word(state, pid, me)})
     flags.sort(key=lambda f: (FLAG_ORDER.index(f["flag"]), rc["prospects"][f["pid"]]["rank"]))
     return {"hours": recruiting.weekly_hours(state, me), "hours_left": hours_left, "points_left": points_left,
