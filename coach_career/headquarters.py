@@ -249,36 +249,28 @@ def next_year(state: dict) -> dict:
     return {"groups": out}
 
 
-def _class_points(rc: dict, extra: Optional[tuple] = None) -> dict:
-    """Each school's class points as prospects.class_rank counts them; extra (school, pid) adds one commit."""
-    from coach_career import prospects
-    by: dict = {}
-    for pid, st in rc["status"].items():
-        school = st["signed"] or st["committed"]
-        if extra and pid == extra[1]:
-            continue
-        if school and school != "FCS":
-            by.setdefault(school, []).append(rc["prospects"][pid]["composite"])
-    if extra:
-        by.setdefault(extra[0], []).append(rc["prospects"][extra[1]]["composite"])
-    return {s: sum(c * prospects.CLASS_DECAY ** i for i, c in enumerate(sorted(v, reverse=True))) for s, v in by.items()}
-
-
 def what_if(state: dict, pid: str) -> dict:
-    """Your class rank now and if he commits to you, and his group's need now and after. Changes nothing."""
+    """Your class rank now and if he commits to you, and his group's need now and after. Changes nothing. Both ranks
+    come from prospects.class_table as you see it (another school's Quiet Commit left out), so the rank if he commits
+    is the rank you get when he does."""
     from coach_career import prospects
     rc, me = prospects.class_rc(state), state["team"]
     if pid not in rc["prospects"]:
         raise LayoutError("Unknown recruit.")
-    fbs = recruiting.fbs_schools(state)
-    rank = lambda pts: 1 + sum(1 for s in fbs if pts.get(s, 0.0) > pts.get(me, 0.0))
+    table = prospects.class_table(state, me)
     st = rc["status"][pid]
     mine = (st["signed"] or st["committed"]) == me
     p = rc["prospects"][pid]
     group = recruiting._group_of(p)
     need = int(recruiting.needs(state, me).get(group, 0))
-    return {"pid": pid, "name": p["name"], "group": group, "rank_now": prospects.class_rank(state, me),
-            "rank_if": prospects.class_rank(state, me) if mine else rank(_class_points(rc, (me, pid))),
+    rank_now = table[me]["rank"]
+    if mine:
+        rank_if = rank_now
+    else:
+        comps = sorted([rc["prospects"][q]["composite"] for q in table[me]["pids"] if q != pid] + [p["composite"]], reverse=True)
+        points = sum(c * prospects.CLASS_DECAY ** i for i, c in enumerate(comps))
+        rank_if = 1 + sum(1 for slug, t in table.items() if slug != me and t["points"] > points)
+    return {"pid": pid, "name": p["name"], "group": group, "rank_now": rank_now, "rank_if": rank_if,
             "need_now": need, "need_if": need if mine else max(0, need - 1)}
 
 

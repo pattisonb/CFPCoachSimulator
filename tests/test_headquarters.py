@@ -140,6 +140,20 @@ def whatif_moves_rank(sid: str, pid: str) -> None:
     assert json.dumps(api.loaded_state()["recruiting"]["status"], sort_keys=True) == before, "What-If changes nothing"
 
 
+def whatif_matches_a_real_commit(sid: str, pid: str) -> None:
+    """What-If's rank if he commits is the class rank you really get when he commits (one ranking for both)."""
+    from coach_career import prospects
+    w = GET(sid, f"?want=whatif&pid={pid}")["whatif"]
+    st = api.loaded_state()
+    status = st["recruiting"]["status"][pid]
+    was = status["committed"]
+    status["committed"] = ME
+    try:
+        assert prospects.class_rank(st, ME) == w["rank_if"], (prospects.class_rank(st, ME), w)
+    finally:
+        status["committed"] = was
+
+
 def whatif_committed_unchanged(sid: str) -> None:
     st = api.loaded_state()
     mine = next((pid for pid, s in st["recruiting"]["status"].items() if s["committed"] == ME), None)
@@ -263,6 +277,7 @@ if __name__ == "__main__":
         next_year_roster(sid)
         whatif_moves_rank(sid, pid)
         whatif_committed_unchanged(sid)
+        whatif_matches_a_real_commit(sid, pid)
         goals_defaults_and_saved(sid)
         plan_round_trip(sid)
         plan_refused(sid)
